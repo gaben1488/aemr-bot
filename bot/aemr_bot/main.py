@@ -5,6 +5,7 @@ import logging
 
 from maxapi import Bot, Dispatcher
 
+from aemr_bot import health
 from aemr_bot.config import settings
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import register_handlers
@@ -111,6 +112,15 @@ async def main() -> None:
 
     asyncio.create_task(_recover())
 
+    # /healthz: always on. Webhook mode also serves it from FastAPI, but in
+    # polling mode this is the only endpoint, so we can't skip it.
+    health_runner = None
+    if settings.bot_mode == "polling":
+        health_runner = await health.start(
+            host=settings.webhook_host, port=settings.webhook_port
+        )
+        asyncio.create_task(health.heartbeat_pulse())
+
     send_admin_text, send_admin_document = _build_admin_senders(bot)
     scheduler = cron_service.build_scheduler(send_admin_document, send_admin_text)
     scheduler.start()
@@ -124,6 +134,8 @@ async def main() -> None:
             await dp.start_polling(bot)
     finally:
         scheduler.shutdown(wait=False)
+        if health_runner is not None:
+            await health_runner.cleanup()
 
 
 if __name__ == "__main__":

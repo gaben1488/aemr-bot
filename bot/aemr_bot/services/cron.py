@@ -29,6 +29,30 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
         coalesce=True,
     )
 
+    last_alert_state = {"healthy": True}
+
+    async def selfcheck():
+        from aemr_bot.health import heartbeat
+        was_healthy = last_alert_state["healthy"]
+        is_healthy = heartbeat.is_fresh()
+        # Only notify on transitions, not on every tick.
+        if was_healthy and not is_healthy:
+            await send_admin_text(
+                "⚠️ Бот не отвечает на проверку здоровья (heartbeat stale). "
+                "Возможно завис главный цикл — проверьте логи и перезапустите контейнер."
+            )
+        elif not was_healthy and is_healthy:
+            await send_admin_text("✅ Бот восстановил отзывчивость.")
+        last_alert_state["healthy"] = is_healthy
+
+    scheduler.add_job(
+        selfcheck,
+        CronTrigger(minute="*/5", timezone=TZ),
+        name="health-selfcheck",
+        max_instances=1,
+        coalesce=True,
+    )
+
     async def monthly_report():
         try:
             async with session_scope() as session:
