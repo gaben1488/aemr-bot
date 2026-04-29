@@ -55,7 +55,18 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
         return True
 
     target_user_id = appeal.user.max_user_id
-    sent = await event.bot.send_message(chat_id=target_user_id, text=text)
+    try:
+        sent = await event.bot.send_message(chat_id=target_user_id, text=text)
+    except Exception as exc:  # noqa: BLE001
+        await event.bot.send_message(
+            chat_id=event.chat_id,
+            text=(
+                f"⚠️ Не удалось доставить ответ жителю по обращению #{appeal.id}: {exc}.\n"
+                "Возможно, житель удалил диалог или заблокировал бота. "
+                "Обращение остаётся в работе."
+            ),
+        )
+        return True
     delivered_mid = getattr(sent, "message_id", None) or getattr(getattr(sent, "body", None), "mid", None)
 
     async with session_scope() as session:

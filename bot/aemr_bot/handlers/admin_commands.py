@@ -179,12 +179,15 @@ def register(dp: Dispatcher) -> None:
             await event.message.answer("Используйте: /setting <key> <value>")
             return
         key, raw_value = parts
-        # Try parse as JSON, fall back to raw string
         import json
         try:
             value = json.loads(raw_value)
         except json.JSONDecodeError:
             value = raw_value
+        ok, reason = settings_store.validate(key, value)
+        if not ok:
+            await event.message.answer(f"⚠️ Настройка не обновлена: {reason}")
+            return
         async with session_scope() as session:
             await settings_store.set_value(session, key, value)
             await operators_service.write_audit(

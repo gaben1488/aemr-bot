@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -39,6 +39,18 @@ class Settings(BaseSettings):
 
     seed_dir: Path = Field(Path("/app/seed"), alias="SEED_DIR")
     log_level: str = Field("INFO", alias="LOG_LEVEL")
+
+    @model_validator(mode="after")
+    def _enforce_webhook_secret(self):
+        if self.bot_mode == "webhook":
+            if not self.webhook_url:
+                raise ValueError("WEBHOOK_URL is required when BOT_MODE=webhook")
+            if not self.webhook_secret or len(self.webhook_secret) < 16:
+                raise ValueError(
+                    "WEBHOOK_SECRET is required and must be at least 16 chars when BOT_MODE=webhook. "
+                    "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+                )
+        return self
 
 
 settings = Settings()

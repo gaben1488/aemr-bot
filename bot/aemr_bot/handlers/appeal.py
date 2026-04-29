@@ -150,6 +150,8 @@ def _schedule_collect_timeout(event, max_user_id: int):
             await _finalize_appeal(event, max_user_id)
         except asyncio.CancelledError:
             return
+        finally:
+            _collect_timers.pop(max_user_id, None)
 
     _collect_timers[max_user_id] = asyncio.create_task(_runner())
 
