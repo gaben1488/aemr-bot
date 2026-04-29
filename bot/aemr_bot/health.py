@@ -52,7 +52,7 @@ async def _healthz(request: web.Request) -> web.Response:
     return web.json_response(payload, status=200 if fresh else 503)
 
 
-async def start(host: str = "0.0.0.0", port: int = 8080) -> web.AppRunner:
+async def start(host: str = "0.0.0.0", port: int = 8080) -> web.AppRunner:  # nosec B104 — bind inside container, expose via Nginx
     """Start /healthz on (host, port). Returns AppRunner so the caller can stop it."""
     app = web.Application()
     app.router.add_get("/healthz", _healthz)

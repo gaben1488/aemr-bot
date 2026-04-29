@@ -3,6 +3,8 @@ handler in handlers/appeal.py. No decorators here — registering two
 @dp.message_created() handlers risks double-processing or shadowing.
 """
 
+import logging
+
 from maxapi import Dispatcher
 from maxapi.types import MessageCreated
 
@@ -14,6 +16,8 @@ from aemr_bot.services import card_format
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import get_chat_id, get_user_id
+
+log = logging.getLogger(__name__)
 
 
 def _extract_reply_target_mid(message_body) -> str | None:
@@ -78,6 +82,9 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
 
     async with session_scope() as session:
         appeal_full = await appeals_service.get_by_id(session, appeal.id)
+        if appeal_full is None:
+            log.warning("appeal #%s vanished between get_by_admin_message_id and reload", appeal.id)
+            return True
         await appeals_service.add_operator_message(
             session,
             appeal=appeal_full,

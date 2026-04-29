@@ -44,7 +44,7 @@ async def upload_bytes(bot, content: bytes, suffix: str = ".bin") -> str | None:
     in this library version takes a path; deletes it after upload."""
     try:
         from maxapi.enums.upload_type import UploadType
-        from maxapi.types.input_media import InputMedia, InputMediaBuffer
+        from maxapi.types.input_media import InputMediaBuffer
     except Exception:
         log.exception("maxapi upload symbols unavailable")
         return None

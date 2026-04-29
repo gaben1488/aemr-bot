@@ -104,8 +104,10 @@ async def _ping_healthcheck() -> None:
 async def _backup_db() -> None:
     """Pipe pg_dump → gpg → rclone, all via asyncio subprocesses so the bot's
     event loop keeps spinning while a multi-second dump runs."""
-    if not all([settings.backup_s3_bucket, settings.backup_gpg_passphrase]):
-        log.info("backup skipped: S3 or GPG passphrase not configured")
+    bucket = settings.backup_s3_bucket
+    passphrase = settings.backup_gpg_passphrase
+    if not bucket or not passphrase:
+        log.info("backup skipped: S3 bucket or GPG passphrase not configured")
         return
 
     out: Path | None = None
@@ -128,7 +130,7 @@ async def _backup_db() -> None:
         # out of any shell. Read end is inherited; write end closes after we
         # push the bytes so gpg sees EOF.
         r_fd, w_fd = os.pipe()
-        os.write(w_fd, settings.backup_gpg_passphrase.encode())
+        os.write(w_fd, passphrase.encode())
         os.close(w_fd)
 
         dump = await asyncio.create_subprocess_exec(
@@ -136,13 +138,16 @@ async def _backup_db() -> None:
             stdout=asyncio.subprocess.PIPE,
             env=env,
         )
+        if dump.stdout is None:
+            os.close(r_fd)
+            raise RuntimeError("pg_dump did not provide stdout pipe")
         try:
             gpg = await asyncio.create_subprocess_exec(
                 "gpg", "--batch", "--yes",
                 "--passphrase-fd", str(r_fd),
                 "--symmetric", "--cipher-algo", "AES256",
                 "-o", str(out),
-                stdin=dump.stdout,
+                stdin=dump.stdout,  # type: ignore[arg-type]  # asyncio types are too narrow; StreamReader works at runtime
                 pass_fds=(r_fd,),
             )
         finally:
@@ -156,9 +161,9 @@ async def _backup_db() -> None:
 
         rclone = await asyncio.create_subprocess_exec(
             "rclone", "copy", str(out),
-            f":s3,provider=Other,access_key_id={settings.backup_s3_access_key},"
-            f"secret_access_key={settings.backup_s3_secret_key},"
-            f"endpoint={settings.backup_s3_endpoint}:{settings.backup_s3_bucket}/",
+            f":s3,provider=Other,access_key_id={settings.backup_s3_access_key or ''},"
+            f"secret_access_key={settings.backup_s3_secret_key or ''},"
+            f"endpoint={settings.backup_s3_endpoint or ''}:{bucket}/",
         )
         rc = await rclone.wait()
         if rc != 0:

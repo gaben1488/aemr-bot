@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     bot_mode: Literal["polling", "webhook"] = Field("polling", alias="BOT_MODE")
     webhook_url: str | None = Field(None, alias="WEBHOOK_URL")
     webhook_secret: str | None = Field(None, alias="WEBHOOK_SECRET")
-    webhook_host: str = Field("0.0.0.0", alias="WEBHOOK_HOST")
+    webhook_host: str = Field("0.0.0.0", alias="WEBHOOK_HOST")  # nosec B104 — bind inside container, Nginx fronts the public port
     webhook_port: int = Field(8080, alias="WEBHOOK_PORT")
 
     database_url: str = Field(..., alias="DATABASE_URL")
@@ -38,7 +38,7 @@ class Settings(BaseSettings):
 
     backup_hour: int = Field(3, alias="BACKUP_HOUR")
     backup_minute: int = Field(0, alias="BACKUP_MINUTE")
-    backup_tmp_dir: str = Field("/tmp", alias="BACKUP_TMP_DIR")
+    backup_tmp_dir: str = Field("/tmp", alias="BACKUP_TMP_DIR")  # nosec B108 — container-local, override via env
 
     backup_s3_endpoint: str | None = Field(None, alias="BACKUP_S3_ENDPOINT")
     backup_s3_bucket: str | None = Field(None, alias="BACKUP_S3_BUCKET")

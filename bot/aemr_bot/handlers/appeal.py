@@ -7,8 +7,6 @@ from typing import Any
 from maxapi import Dispatcher
 from maxapi.types import MessageCallback, MessageCreated
 
-log = logging.getLogger(__name__)
-
 from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import DialogState
@@ -28,6 +26,8 @@ from aemr_bot.utils.event import (
     get_payload,
     get_user_id,
 )
+
+log = logging.getLogger(__name__)
 
 _collect_timers: dict[int, asyncio.Task] = {}
 

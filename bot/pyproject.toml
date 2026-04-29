@@ -40,6 +40,13 @@ include = ["aemr_bot*"]
 line-length = 100
 target-version = "py312"
 
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+# Pydantic Settings reads from env, mypy can't see the call-site validates that.
+# SQLAlchemy 2.0 Result has .rowcount but its type stubs hide it on the union.
+disable_error_code = ["call-arg", "attr-defined"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
