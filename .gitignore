@@ -1,0 +1,45 @@
+# Secrets and env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / mini-app
+node_modules/
+admin/dist/
+admin/.vite/
+*.log
+
+# Database
+*.sqlite
+*.sqlite3
+postgres_data/
+redis_data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Build artefacts
+dist/
+build/
+*.tar
+*.tar.gz
+
+# Local data
+uploads/
+backups/
+logs/
