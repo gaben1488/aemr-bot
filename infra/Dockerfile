@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED=1 \
     TZ=Asia/Kamchatka
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        postgresql-client gnupg ca-certificates curl tzdata \
+        postgresql-client gnupg ca-certificates curl tzdata unzip \
     && curl https://rclone.org/install.sh | bash \
     && rm -rf /var/lib/apt/lists/*
 
