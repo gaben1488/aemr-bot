@@ -18,9 +18,9 @@ from dataclasses import dataclass
 
 from aiohttp import web
 
-log = logging.getLogger(__name__)
+from aemr_bot.config import settings as cfg
 
-HEALTHCHECK_STALE_SECONDS = 120
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -30,9 +30,11 @@ class Heartbeat:
     def beat(self) -> None:
         self.last_beat = time.monotonic()
 
-    def is_fresh(self, max_age: float = HEALTHCHECK_STALE_SECONDS) -> bool:
+    def is_fresh(self, max_age: float | None = None) -> bool:
         if self.last_beat == 0.0:
             return False
+        if max_age is None:
+            max_age = cfg.healthcheck_stale_seconds
         return (time.monotonic() - self.last_beat) <= max_age
 
 
@@ -62,7 +64,7 @@ async def start(host: str = "0.0.0.0", port: int = 8080) -> web.AppRunner:
     return runner
 
 
-async def heartbeat_pulse(interval: float = 30.0):
+async def heartbeat_pulse(interval: float | None = None):
     """Background task: keep the heartbeat fresh while the bot's polling loop is alive.
 
     Call this once at startup. It coexists with whatever main loop the bot
@@ -70,6 +72,8 @@ async def heartbeat_pulse(interval: float = 30.0):
     that owns the dispatcher, so /healthz stays green as long as that loop
     is responsive.
     """
+    if interval is None:
+        interval = cfg.healthcheck_pulse_seconds
     while True:
         heartbeat.beat()
         await asyncio.sleep(interval)

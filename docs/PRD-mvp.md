@@ -1,6 +1,6 @@
 # PRD MVP: «Администрация ЕМР. Обратная связь»
 
-**Статус:** v3 (FSM-воронка, 11 тематик без выбора района)
+**Статус:** v4 (после фаз A и B шлифовки: idempotency, healthcheck-алерты, async-backup, реальный XLSX/PDF upload, FSM в отдельных функциях)
 **Дата:** 2026-04-29
 **Связано с:** [ADR-001](ADR-001-architecture.md), [PRIVACY](PRIVACY.md)
 
@@ -132,7 +132,13 @@ PREVIOUS VERSION OF SECTION 3.1 (free-text appeal collection).
 
 **Производительность.** Long polling cycle — `timeout=90`, `limit=100`. Ответ жителю на действие интерфейса — ≤2 секунды на 95-м перцентиле.
 
-**Доступность.** Целевой uptime 99% на MVP. Внешний мониторинг через Healthchecks.io бесплатно: APScheduler-задача каждые 5 минут пингует уникальный URL, при пропуске пинга Healthchecks шлёт алерт в e-mail и в админ-группу MAX.
+**Доступность.** Целевой uptime 99% на MVP. Внешний мониторинг через UptimeRobot на `/healthz` (порт `WEBHOOK_PORT`, дефолт 8080). Внутренний `selfcheck`-крон каждые `HEALTHCHECK_INTERVAL_MIN` проверяет heartbeat и шлёт транзишн-алерт в админ-группу MAX. Опциональный outbound-пинг на `HEALTHCHECK_URL` для Healthchecks.io.
+
+**Идемпотентность.** Outer-middleware `IdempotencyMiddleware` отбрасывает дубликаты Update'ов через unique-индекс `events.idempotency_key`. Критично для webhook-режима с ретраями MAX.
+
+**Восстановление после рестарта.** При старте `recover_stuck_funnels` параллельно финализирует пользователей, оставшихся в `AWAITING_SUMMARY` дольше `APPEAL_TIMEOUT`. Пустые submissions сбрасываются в IDLE.
+
+**Бэкап БД.** Раз в сутки в `BACKUP_HOUR:BACKUP_MINUTE` асинхронный pipeline `pg_dump → gpg → rclone` без блокировки event-loop.
 
 **Лимит MAX.** 30 rps на исходящие — соблюдаем (на MVP естественный поток далеко ниже).
 

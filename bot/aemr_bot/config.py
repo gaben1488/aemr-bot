@@ -28,6 +28,17 @@ class Settings(BaseSettings):
     sla_response_hours: int = Field(4, alias="SLA_RESPONSE_HOURS")
     appeal_collect_timeout_seconds: int = Field(60, alias="APPEAL_TIMEOUT")
     answer_max_chars: int = Field(300, alias="ANSWER_MAX_CHARS")
+    name_max_chars: int = Field(120, alias="NAME_MAX_CHARS")
+    address_max_chars: int = Field(500, alias="ADDRESS_MAX_CHARS")
+    recover_batch_size: int = Field(1000, alias="RECOVER_BATCH_SIZE")
+
+    healthcheck_stale_seconds: int = Field(120, alias="HEALTHCHECK_STALE_SECONDS")
+    healthcheck_pulse_seconds: int = Field(30, alias="HEALTHCHECK_PULSE_SECONDS")
+    healthcheck_interval_minutes: int = Field(5, alias="HEALTHCHECK_INTERVAL_MIN")
+
+    backup_hour: int = Field(3, alias="BACKUP_HOUR")
+    backup_minute: int = Field(0, alias="BACKUP_MINUTE")
+    backup_tmp_dir: str = Field("/tmp", alias="BACKUP_TMP_DIR")
 
     backup_s3_endpoint: str | None = Field(None, alias="BACKUP_S3_ENDPOINT")
     backup_s3_bucket: str | None = Field(None, alias="BACKUP_S3_BUCKET")

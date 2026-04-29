@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import logging
-import subprocess
+import os
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlparse
 
 import aiohttp
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -23,7 +25,11 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
 
     scheduler.add_job(
         _backup_db,
-        CronTrigger(hour=3, minute=0, timezone=TZ),
+        CronTrigger(
+            hour=settings.backup_hour,
+            minute=settings.backup_minute,
+            timezone=TZ,
+        ),
         name="db-backup",
         max_instances=1,
         coalesce=True,
@@ -35,7 +41,6 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
         from aemr_bot.health import heartbeat
         was_healthy = last_alert_state["healthy"]
         is_healthy = heartbeat.is_fresh()
-        # Only notify on transitions, not on every tick.
         if was_healthy and not is_healthy:
             await send_admin_text(
                 "⚠️ Бот не отвечает на проверку здоровья (heartbeat stale). "
@@ -47,7 +52,7 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
 
     scheduler.add_job(
         selfcheck,
-        CronTrigger(minute="*/5", timezone=TZ),
+        CronTrigger(minute=f"*/{settings.healthcheck_interval_minutes}", timezone=TZ),
         name="health-selfcheck",
         max_instances=1,
         coalesce=True,
@@ -58,7 +63,11 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
             async with session_scope() as session:
                 content, title, count = await stats_service.build_xlsx(session, "month")
             filename = f"appeals_month_{datetime.now(TZ):%Y-%m-%d}.xlsx"
-            await send_admin_document(filename=filename, content=content, caption=f"📊 Статистика {title} ({count} обращений)")
+            await send_admin_document(
+                filename=filename,
+                content=content,
+                caption=f"📊 Статистика {title} ({count} обращений)",
+            )
         except Exception:
             log.exception("monthly report failed")
 
@@ -73,7 +82,7 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
     if settings.healthcheck_url:
         scheduler.add_job(
             _ping_healthcheck,
-            CronTrigger(minute="*/5", timezone=TZ),
+            CronTrigger(minute=f"*/{settings.healthcheck_interval_minutes}", timezone=TZ),
             name="healthcheck-ping",
             max_instances=1,
             coalesce=True,
@@ -92,17 +101,18 @@ async def _ping_healthcheck() -> None:
         log.warning("healthcheck ping failed", exc_info=True)
 
 
-def _backup_db() -> None:
+async def _backup_db() -> None:
+    """Pipe pg_dump → gpg → rclone, all via asyncio subprocesses so the bot's
+    event loop keeps spinning while a multi-second dump runs."""
     if not all([settings.backup_s3_bucket, settings.backup_gpg_passphrase]):
         log.info("backup skipped: S3 or GPG passphrase not configured")
         return
 
     out: Path | None = None
     try:
-        from urllib.parse import urlparse
-
         parsed = urlparse(settings.database_url.replace("+asyncpg", ""))
         env = {
+            **os.environ,
             "PGHOST": parsed.hostname or "localhost",
             "PGPORT": str(parsed.port or 5432),
             "PGUSER": parsed.username or "",
@@ -111,51 +121,48 @@ def _backup_db() -> None:
         }
 
         ts = datetime.now(TZ).strftime("%Y%m%d_%H%M%S")
-        out = Path(f"/tmp/aemr-{ts}.sql.gpg")
+        out = Path(settings.backup_tmp_dir) / f"aemr-{ts}.sql.gpg"
+        out.parent.mkdir(parents=True, exist_ok=True)
 
-        # Avoid passing passphrase via shell (command injection vector). Pipe pg_dump
-        # to gpg, feeding the passphrase through a dedicated read end of an os.pipe.
-        import os
+        # Pass passphrase to gpg through an os.pipe — keeps it out of argv and
+        # out of any shell. Read end is inherited; write end closes after we
+        # push the bytes so gpg sees EOF.
         r_fd, w_fd = os.pipe()
-        try:
-            os.write(w_fd, settings.backup_gpg_passphrase.encode())
-        finally:
-            os.close(w_fd)
+        os.write(w_fd, settings.backup_gpg_passphrase.encode())
+        os.close(w_fd)
 
-        dump = subprocess.Popen(
-            ["pg_dump", "--no-owner", "--no-acl"],
-            stdout=subprocess.PIPE,
+        dump = await asyncio.create_subprocess_exec(
+            "pg_dump", "--no-owner", "--no-acl",
+            stdout=asyncio.subprocess.PIPE,
             env=env,
         )
         try:
-            gpg = subprocess.Popen(
-                [
-                    "gpg", "--batch", "--yes",
-                    "--passphrase-fd", str(r_fd),
-                    "--symmetric", "--cipher-algo", "AES256",
-                    "-o", str(out),
-                ],
+            gpg = await asyncio.create_subprocess_exec(
+                "gpg", "--batch", "--yes",
+                "--passphrase-fd", str(r_fd),
+                "--symmetric", "--cipher-algo", "AES256",
+                "-o", str(out),
                 stdin=dump.stdout,
                 pass_fds=(r_fd,),
             )
-            if dump.stdout:
-                dump.stdout.close()
-            gpg.wait()
         finally:
             os.close(r_fd)
 
-        if gpg.returncode != 0:
-            raise RuntimeError(f"gpg failed with code {gpg.returncode}")
-        if dump.wait() != 0:
-            raise RuntimeError(f"pg_dump failed with code {dump.returncode}")
+        gpg_rc, dump_rc = await asyncio.gather(gpg.wait(), dump.wait())
+        if gpg_rc != 0:
+            raise RuntimeError(f"gpg failed with code {gpg_rc}")
+        if dump_rc != 0:
+            raise RuntimeError(f"pg_dump failed with code {dump_rc}")
 
-        rclone_cmd = [
+        rclone = await asyncio.create_subprocess_exec(
             "rclone", "copy", str(out),
             f":s3,provider=Other,access_key_id={settings.backup_s3_access_key},"
             f"secret_access_key={settings.backup_s3_secret_key},"
             f"endpoint={settings.backup_s3_endpoint}:{settings.backup_s3_bucket}/",
-        ]
-        subprocess.run(rclone_cmd, check=True)
+        )
+        rc = await rclone.wait()
+        if rc != 0:
+            raise RuntimeError(f"rclone failed with code {rc}")
         log.info("backup done: %s", out.name)
     except Exception:
         log.exception("backup failed")

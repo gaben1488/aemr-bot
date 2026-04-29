@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from pathlib import Path
 
 from maxapi import Bot, Dispatcher
 
@@ -27,6 +28,8 @@ async def _seed_settings():
 
 
 def _build_admin_senders(bot: Bot):
+    from aemr_bot.services import uploads
+
     async def send_admin_text(text: str):
         if not settings.admin_group_id:
             return
@@ -35,20 +38,17 @@ def _build_admin_senders(bot: Bot):
     async def send_admin_document(filename: str, content: bytes, caption: str = ""):
         if not settings.admin_group_id:
             return
-        # Per MAX Bot API (Макс.docx, section 8): files are uploaded via
-        # bot.api.upload_file(...) and then attached via attachments=[file.to_json()].
-        # Exact symbol names depend on the installed maxapi version — try the most
-        # common shape, fall back to a text-only summary.
-        try:
-            uploaded = await bot.api.upload_file(source=content, filename=filename)
-            await bot.send_message(
-                chat_id=settings.admin_group_id,
-                text=caption or filename,
-                attachments=[uploaded.to_json()],
+        token = await uploads.upload_bytes(bot, content, suffix=Path(filename).suffix or ".bin")
+        if token is None:
+            await send_admin_text(
+                f"{caption}\n(файл {filename} — загрузка не удалась, см. логи)"
             )
-        except Exception as exc:  # noqa: BLE001
-            log.warning("file upload failed (%s); sending text summary instead", exc)
-            await send_admin_text(f"{caption}\n(файл {filename} — загрузка не удалась, см. логи)")
+            return
+        await bot.send_message(
+            chat_id=settings.admin_group_id,
+            text=caption or filename,
+            attachments=[uploads.file_attachment(token)],
+        )
 
     return send_admin_text, send_admin_document
 

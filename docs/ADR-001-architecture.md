@@ -1,6 +1,6 @@
 # ADR-001: Архитектура MVP «Администрация ЕМР. Обратная связь»
 
-**Статус:** v3 (FSM-воронка, webhook в prod, одна общая группа, 11 тематик)
+**Статус:** v4 (после фаз A и B пред-релизной шлифовки: idempotency middleware, async-backup, healthcheck-сторож, recover_stuck_funnels, единый `_persist_and_dispatch_appeal`, FSM в state-handler-функциях, реальный upload XLSX/PDF)
 **Дата:** 2026-04-29
 **Автор:** filat (с участием Claude Code)
 
@@ -226,6 +226,20 @@ docker compose exec bot alembic upgrade head
 - Расширенная аналитика, дашборды.
 - Интеграция с Битрикс24, ЦУР, ГИС ЖКХ или иными внешними системами.
 - Мини-приложение MAX для специалистов (если станет ясно, что групповой чат не закрывает потребность).
+
+## 7a. Эксплуатационные компоненты (после фазы A/B)
+
+**Healthcheck.** `bot/aemr_bot/health.py` поднимает aiohttp-сервер на `WEBHOOK_PORT` с эндпойнтом `/healthz`. Внутри — singleton `Heartbeat` обновляется фоновой задачей `heartbeat_pulse` каждые `HEALTHCHECK_PULSE_SECONDS`. Если main-loop завис, heartbeat перестаёт обновляться, и `/healthz` отдаёт 503 после `HEALTHCHECK_STALE_SECONDS`. На это завязаны два потребителя: внешний UptimeRobot (направляется на публичный URL) и внутренний `selfcheck` cron-job, постящий в админ-группу транзишн-алерты «упало/восстановилось».
+
+**Idempotency.** `services/idempotency.py::claim` строит ключ из update_type + `callback_id`/`mid`/`seq` + timestamp + chat/user, делает `INSERT ON CONFLICT DO NOTHING` в `events` и возвращает True/False. Подключается через outer-middleware в `handlers/__init__.py::IdempotencyMiddleware`. Дубликаты от MAX (особенно при webhook-retries) молча отбрасываются перед тем, как попадут в любой обработчик.
+
+**Recovery.** `handlers/appeal.py::recover_stuck_funnels` запускается через `asyncio.create_task` при старте. Через `users_service.find_stuck_in_summary(idle_seconds)` находит пользователей в `AWAITING_SUMMARY`, чей `updated_at` старше таймаута, и параллельно через `asyncio.gather` финализирует их обращения. Empty-submissions (нет ни текста, ни вложений) сбрасываются в `IDLE`, чтобы не зацикливаться.
+
+**Async backup.** `services/cron.py::_backup_db` теперь полностью async через `asyncio.create_subprocess_exec` для `pg_dump | gpg | rclone`. Event-loop не блокируется на время дампа.
+
+**Upload.** `services/uploads.py` — единый адаптер над `bot.upload_media`. Используется и `services/policy.py` (PDF на старте) и `_build_admin_senders` в `main.py` (XLSX по `/stats` и в ежемесячном отчёте). Клейн `services/cron.py::send_admin_document` теперь реально доставляет файл, а не текстовый fallback.
+
+**FSM-handlers.** `handlers/appeal.py::on_message` — чистый диспатчер по `_STATE_HANDLERS` map. Каждое состояние — отдельная функция (`_on_awaiting_contact`, `_on_awaiting_name`, ...) с одинаковой сигнатурой `(event, body, text_body, max_user_id, op_reply)`. Добавление нового состояния — это новая функция и одна строка в map.
 
 ## 8. Что меняется при изменении вводных
 

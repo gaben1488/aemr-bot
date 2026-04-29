@@ -69,13 +69,16 @@ async def update_dialog_data(session: AsyncSession, max_user_id: int, patch: dic
 async def find_stuck_in_summary(
     session: AsyncSession,
     idle_seconds: int,
-    limit: int = 1000,
+    limit: int | None = None,
 ) -> list[int]:
     """Return max_user_id of users stuck in AWAITING_SUMMARY past idle_seconds.
 
     Limit guards against pathological cases (e.g. 10k stuck rows after a long
     outage would otherwise produce 10k bot API calls during startup recovery).
     """
+    if limit is None:
+        from aemr_bot.config import settings as cfg
+        limit = cfg.recover_batch_size
     threshold = datetime.now(timezone.utc) - timedelta(seconds=idle_seconds)
     result = await session.scalars(
         select(User.max_user_id)

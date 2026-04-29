@@ -308,7 +308,6 @@ def register(dp: Dispatcher) -> None:
             return
         body = get_message_body(event)
 
-        # Branch A: admin group → maybe an operator reply via reply-to
         if cfg.admin_group_id and chat_id == cfg.admin_group_id:
             await op_reply.handle_operator_reply(event, body, text_body)
             return
@@ -318,71 +317,86 @@ def register(dp: Dispatcher) -> None:
             return
 
         async with session_scope() as session:
-            user = await users_service.get_or_create(
+            await users_service.get_or_create(
                 session,
                 max_user_id=max_user_id,
                 first_name=get_first_name(event),
             )
+            user = await users_service.get_or_create(session, max_user_id=max_user_id)
             state = DialogState(user.dialog_state)
 
-        if state == DialogState.AWAITING_CONTACT:
-            phone = extract_phone(body)
-            if phone:
-                async with session_scope() as session:
-                    await users_service.set_phone(session, max_user_id, phone)
-                    user = await users_service.get_or_create(session, max_user_id=max_user_id)
-                if not user.first_name or user.first_name == "Удалено":
-                    await event.message.answer(texts.CONTACT_RECEIVED, attachments=[keyboards.cancel_keyboard()])
-                    async with session_scope() as session:
-                        await users_service.set_state(session, max_user_id, DialogState.AWAITING_NAME)
-                else:
-                    await _ask_contact_or_skip(event, max_user_id)
-            else:
-                await event.message.answer(
-                    "Нажмите кнопку «Поделиться контактом», чтобы передать номер.",
-                    attachments=[keyboards.contact_request_keyboard()],
-                )
-            return
+        handler = _STATE_HANDLERS.get(state)
+        if handler is not None:
+            await handler(event, body, text_body, max_user_id, op_reply)
 
-        if state == DialogState.AWAITING_NAME:
-            name = text_body.strip()[:120]
-            if not name:
-                await event.message.answer("Имя не должно быть пустым. Введите ещё раз.")
-                return
-            async with session_scope() as session:
-                await users_service.set_first_name(session, max_user_id, name)
-                await users_service.set_state(session, max_user_id, DialogState.AWAITING_ADDRESS)
-            await event.message.answer(texts.NAME_RECEIVED, attachments=[keyboards.cancel_keyboard()])
-            return
 
-        if state == DialogState.AWAITING_ADDRESS:
-            address = text_body.strip()[:500]
-            if not address:
-                await event.message.answer("Адрес не должен быть пустым. Введите ещё раз.")
-                return
-            async with session_scope() as session:
-                await users_service.update_dialog_data(session, max_user_id, {"address": address})
-            await _ask_topic(event, max_user_id)
-            return
+async def _on_awaiting_contact(event, body, text_body, max_user_id, op_reply):
+    phone = extract_phone(body)
+    if phone is None:
+        await event.message.answer(
+            "Нажмите кнопку «Поделиться контактом», чтобы передать номер.",
+            attachments=[keyboards.contact_request_keyboard()],
+        )
+        return
 
-        if state == DialogState.AWAITING_SUMMARY:
-            chunk = text_body.strip()
-            atts = collect_attachments(body)
-            async with session_scope() as session:
-                user = await users_service.get_or_create(session, max_user_id=max_user_id)
-                data = dict(user.dialog_data or {})
-                if chunk:
-                    data.setdefault("summary_chunks", []).append(chunk)
-                if atts:
-                    data.setdefault("attachments", []).extend(atts)
-                user.dialog_data = data
-                await session.flush()
-            _schedule_collect_timeout(event, max_user_id)
-            return
+    async with session_scope() as session:
+        await users_service.set_phone(session, max_user_id, phone)
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
 
-        if state == DialogState.IDLE:
-            # Idle: try to reopen an answered appeal as a follow-up; fall back to menu hint.
-            handled = await op_reply.handle_user_followup(event, text_body)
-            if not handled:
-                await event.message.answer(texts.UNKNOWN_INPUT, attachments=[keyboards.main_menu()])
-            return
+    if not user.first_name or user.first_name == "Удалено":
+        async with session_scope() as session:
+            await users_service.set_state(session, max_user_id, DialogState.AWAITING_NAME)
+        await event.message.answer(texts.CONTACT_RECEIVED, attachments=[keyboards.cancel_keyboard()])
+    else:
+        await _ask_contact_or_skip(event, max_user_id)
+
+
+async def _on_awaiting_name(event, body, text_body, max_user_id, op_reply):
+    name = text_body.strip()[: cfg.name_max_chars]
+    if not name:
+        await event.message.answer("Имя не должно быть пустым. Введите ещё раз.")
+        return
+    async with session_scope() as session:
+        await users_service.set_first_name(session, max_user_id, name)
+        await users_service.set_state(session, max_user_id, DialogState.AWAITING_ADDRESS)
+    await event.message.answer(texts.NAME_RECEIVED, attachments=[keyboards.cancel_keyboard()])
+
+
+async def _on_awaiting_address(event, body, text_body, max_user_id, op_reply):
+    address = text_body.strip()[: cfg.address_max_chars]
+    if not address:
+        await event.message.answer("Адрес не должен быть пустым. Введите ещё раз.")
+        return
+    async with session_scope() as session:
+        await users_service.update_dialog_data(session, max_user_id, {"address": address})
+    await _ask_topic(event, max_user_id)
+
+
+async def _on_awaiting_summary(event, body, text_body, max_user_id, op_reply):
+    chunk = text_body.strip()
+    atts = collect_attachments(body)
+    async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        data = dict(user.dialog_data or {})
+        if chunk:
+            data.setdefault("summary_chunks", []).append(chunk)
+        if atts:
+            data.setdefault("attachments", []).extend(atts)
+        user.dialog_data = data
+        await session.flush()
+    _schedule_collect_timeout(event, max_user_id)
+
+
+async def _on_idle(event, body, text_body, max_user_id, op_reply):
+    handled = await op_reply.handle_user_followup(event, text_body)
+    if not handled:
+        await event.message.answer(texts.UNKNOWN_INPUT, attachments=[keyboards.main_menu()])
+
+
+_STATE_HANDLERS = {
+    DialogState.AWAITING_CONTACT: _on_awaiting_contact,
+    DialogState.AWAITING_NAME: _on_awaiting_name,
+    DialogState.AWAITING_ADDRESS: _on_awaiting_address,
+    DialogState.AWAITING_SUMMARY: _on_awaiting_summary,
+    DialogState.IDLE: _on_idle,
+}

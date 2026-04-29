@@ -74,19 +74,19 @@ def register(dp: Dispatcher) -> None:
             await event.message.answer(texts.OP_STATS_EMPTY)
             return
         filename = f"appeals_{period}_{datetime.now():%Y-%m-%d}.xlsx"
-        # The exact upload API depends on maxapi version. We use raw bytes.
-        try:
-            await event.bot.send_document(
-                chat_id=get_chat_id(event),
-                source=content,
-                filename=filename,
-                caption=f"📊 Статистика {title} ({count} обращений)",
-            )
-        except AttributeError:
+        from aemr_bot.services import uploads
+        token = await uploads.upload_bytes(event.bot, content, suffix=".xlsx")
+        if token is None:
             await event.message.answer(
-                f"Сформирован XLSX за {title} ({count} обращений). "
-                "Загрузка файлов API ещё не подключена — обновите maxapi."
+                f"Сформирован XLSX за {title} ({count} обращений), "
+                "но загрузить файл не удалось. См. логи бота."
             )
+            return
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=f"📊 Статистика {title} ({count} обращений). Файл: {filename}",
+            attachments=[uploads.file_attachment(token)],
+        )
 
     @dp.message_created(Command("reopen"))
     async def cmd_reopen(event: MessageCreated):
