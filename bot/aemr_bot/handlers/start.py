@@ -5,7 +5,7 @@ from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import operators as ops_service
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import get_first_name, get_user_id, reply
+from aemr_bot.utils.event import get_chat_id, get_first_name, get_user_id, reply
 
 
 async def _ensure_user(event):
@@ -70,7 +70,7 @@ def register(dp: Dispatcher) -> None:
     async def _(event: MessageCreated):
         max_user_id = get_user_id(event) or "?"
         first_name = get_first_name(event) or ""
-        chat_id = getattr(event, "chat_id", "?")
+        chat_id = get_chat_id(event) or "?"
         await reply(
             event,
             "🛠 whoami\n"

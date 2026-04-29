@@ -259,8 +259,9 @@ def register(dp: Dispatcher) -> None:
     async def on_message(event: MessageCreated):
         from aemr_bot.handlers import operator_reply as op_reply
 
-        chat_id = getattr(event, "chat_id", None)
+        chat_id = get_chat_id(event)
         if chat_id is None:
+            log.warning("message_created without chat_id — event.get_ids() returned None")
             return
 
         text_body = get_message_text(event)
