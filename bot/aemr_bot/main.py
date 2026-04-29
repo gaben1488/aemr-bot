@@ -101,6 +101,13 @@ async def main() -> None:
     except Exception:
         log.exception("policy upload failed; will fall back to URL consent")
 
+    # Finalize any funnels that were stuck in AWAITING_SUMMARY when we last died.
+    try:
+        from aemr_bot.handlers.appeal import recover_stuck_funnels
+        await recover_stuck_funnels(bot)
+    except Exception:
+        log.exception("recover_stuck_funnels failed")
+
     send_admin_text, send_admin_document = _build_admin_senders(bot)
     scheduler = cron_service.build_scheduler(send_admin_document, send_admin_text)
     scheduler.start()

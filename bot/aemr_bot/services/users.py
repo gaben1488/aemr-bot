@@ -66,10 +66,35 @@ async def update_dialog_data(session: AsyncSession, max_user_id: int, patch: dic
     return data
 
 
+async def find_stuck_in_summary(session: AsyncSession, idle_seconds: int) -> list[User]:
+    """Return users in AWAITING_SUMMARY whose dialog has been quiet for >= idle_seconds.
+
+    Used at startup to finalize funnels that were interrupted by a bot restart —
+    the citizen typed everything, never pressed Submit, and the in-memory timer
+    died with the previous process.
+    """
+    from datetime import timedelta
+    threshold = datetime.now(timezone.utc) - timedelta(seconds=idle_seconds)
+    result = await session.scalars(
+        select(User).where(
+            User.dialog_state == DialogState.AWAITING_SUMMARY.value,
+            User.updated_at <= threshold,
+        )
+    )
+    return list(result)
+
+
 async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
+    """Anonymize the user and revoke the PDN consent (152-FZ art. 9 §2)."""
     result = await session.execute(
         update(User)
         .where(User.max_user_id == max_user_id)
-        .values(first_name="Удалено", phone=None, dialog_state=DialogState.IDLE.value, dialog_data={})
+        .values(
+            first_name="Удалено",
+            phone=None,
+            consent_pdn_at=None,
+            dialog_state=DialogState.IDLE.value,
+            dialog_data={},
+        )
     )
     return result.rowcount > 0

@@ -18,9 +18,81 @@ from aemr_bot.services import card_format
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.attachments import collect_attachments, extract_phone
-from aemr_bot.utils.event import ack_callback, get_chat_id, get_message_text, get_payload, get_user_id
+from aemr_bot.utils.event import (
+    ack_callback,
+    get_chat_id,
+    get_first_name,
+    get_message_body,
+    get_message_text,
+    get_payload,
+    get_user_id,
+)
 
 _collect_timers: dict[int, asyncio.Task] = {}
+
+
+async def recover_stuck_funnels(bot) -> int:
+    """Finalize funnels that were left in AWAITING_SUMMARY after a restart.
+
+    Called once at startup. Returns the count of funnels finalized.
+    """
+    async with session_scope() as session:
+        users = await users_service.find_stuck_in_summary(
+            session, idle_seconds=cfg.appeal_collect_timeout_seconds
+        )
+
+    finalized = 0
+    for user in users:
+        try:
+            await _finalize_appeal_for(bot, user.max_user_id)
+            finalized += 1
+        except Exception:
+            log.exception("recover: failed to finalize for user %s", user.max_user_id)
+    if finalized:
+        log.info("recovered %d stuck funnels", finalized)
+    return finalized
+
+
+async def _finalize_appeal_for(bot, max_user_id: int) -> None:
+    """Variant of _finalize_appeal that doesn't need an inbound event."""
+    async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        data: dict[str, Any] = dict(user.dialog_data or {})
+        summary_chunks = data.get("summary_chunks", []) or []
+        summary = "\n".join(summary_chunks).strip()
+        attachments = data.get("attachments", []) or []
+        if not summary and not attachments:
+            await users_service.reset_state(session, max_user_id)
+            return
+        appeal = await appeals_service.create_appeal(
+            session,
+            user=user,
+            address=data.get("address", ""),
+            topic=data.get("topic", ""),
+            summary=summary,
+            attachments=attachments,
+        )
+        await users_service.reset_state(session, max_user_id)
+
+    card_text = card_format.admin_card(appeal, user)
+    if cfg.admin_group_id:
+        try:
+            sent = await bot.send_message(chat_id=cfg.admin_group_id, text=card_text)
+            mid = getattr(sent, "message_id", None) or getattr(getattr(sent, "body", None), "mid", None)
+            if mid:
+                async with session_scope() as session:
+                    await appeals_service.set_admin_message_id(session, appeal.id, str(mid))
+        except Exception:
+            log.exception("recover: admin card delivery failed for appeal #%s", appeal.id)
+
+    try:
+        await bot.send_message(
+            user_id=max_user_id,
+            text=texts.APPEAL_ACCEPTED.format(number=appeal.id, sla_hours=cfg.sla_response_hours),
+            attachments=[keyboards.main_menu()],
+        )
+    except Exception:
+        log.exception("recover: ack to user %s failed for appeal #%s", max_user_id, appeal.id)
 
 
 async def _send_to_admin_card(bot, text: str) -> str | None:
@@ -74,16 +146,14 @@ async def _ask_contact_or_skip(event, max_user_id: int):
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         if not user.phone:
-            await users_service.set_state(session, max_user_id, DialogState.AWAITING_CONTACT, data={})
+            target_state = DialogState.AWAITING_CONTACT
         elif not user.first_name or user.first_name == "Удалено":
-            await users_service.set_state(session, max_user_id, DialogState.AWAITING_NAME, data={})
+            target_state = DialogState.AWAITING_NAME
         else:
-            await users_service.set_state(session, max_user_id, DialogState.AWAITING_ADDRESS, data={})
+            target_state = DialogState.AWAITING_ADDRESS
+        await users_service.set_state(session, max_user_id, target_state, data={})
 
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        state = DialogState(user.dialog_state)
-
+    state = target_state
     if state == DialogState.AWAITING_CONTACT:
         await event.bot.send_message(
             chat_id=get_chat_id(event),
@@ -132,8 +202,21 @@ async def _finalize_appeal(event, max_user_id: int):
         data: dict[str, Any] = dict(user.dialog_data or {})
         address = data.get("address", "")
         topic = data.get("topic", "")
-        summary = "\n".join(data.get("summary_chunks", []))
-        attachments = data.get("attachments", [])
+        summary_chunks = data.get("summary_chunks", []) or []
+        summary = "\n".join(summary_chunks).strip()
+        attachments = data.get("attachments", []) or []
+
+        # Reject empty submissions: at least one of text or attachment is required.
+        if not summary and not attachments:
+            await event.bot.send_message(
+                chat_id=get_chat_id(event),
+                text=(
+                    "Опишите суть обращения текстом или прикрепите фото. "
+                    "Без описания обращение не принимается."
+                ),
+                attachments=[keyboards.submit_or_cancel_keyboard()],
+            )
+            return
 
         appeal = await appeals_service.create_appeal(
             session,
@@ -267,7 +350,7 @@ def register(dp: Dispatcher) -> None:
         text_body = get_message_text(event)
         if text_body.startswith("/"):
             return
-        body = getattr(event.message, "body", None) or event.message
+        body = get_message_body(event)
 
         # Branch A: admin group → maybe an operator reply via reply-to
         if cfg.admin_group_id and chat_id == cfg.admin_group_id:
@@ -278,7 +361,6 @@ def register(dp: Dispatcher) -> None:
         if max_user_id is None:
             return
 
-        from aemr_bot.utils.event import get_first_name
         async with session_scope() as session:
             user = await users_service.get_or_create(
                 session,
@@ -288,20 +370,7 @@ def register(dp: Dispatcher) -> None:
             state = DialogState(user.dialog_state)
 
         if state == DialogState.AWAITING_CONTACT:
-            try:
-                _msg = getattr(event, "message", None)
-                _body = getattr(_msg, "body", None)
-                _atts = getattr(_body, "attachments", None) if _body else None
-                _shape = []
-                for a in _atts or []:
-                    t = getattr(a, "type", None)
-                    p = getattr(a, "payload", None)
-                    p_keys = list(p.__dict__.keys()) if p and hasattr(p, "__dict__") else (list(p.keys()) if isinstance(p, dict) else None)
-                    _shape.append({"type": str(t), "payload_keys": p_keys})
-                log.info("AWAITING_CONTACT: text=%r attachments=%s", text_body, _shape)
-            except Exception:
-                log.exception("debug log failed")
-            phone = extract_phone(getattr(event.message, "body", None) or event.message)
+            phone = extract_phone(body)
             if phone:
                 async with session_scope() as session:
                     await users_service.set_phone(session, max_user_id, phone)
@@ -342,7 +411,7 @@ def register(dp: Dispatcher) -> None:
 
         if state == DialogState.AWAITING_SUMMARY:
             chunk = text_body.strip()
-            atts = collect_attachments(getattr(event.message, "body", None) or event.message)
+            atts = collect_attachments(body)
             async with session_scope() as session:
                 user = await users_service.get_or_create(session, max_user_id=max_user_id)
                 data = dict(user.dialog_data or {})

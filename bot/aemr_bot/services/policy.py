@@ -39,20 +39,15 @@ async def _do_upload(bot) -> str | None:
         return None
 
     try:
-        from maxapi.enums.upload_type import UploadType  # type: ignore
-        from maxapi.types.input_media import InputMedia  # type: ignore
+        from maxapi.enums.upload_type import UploadType
+        from maxapi.types.input_media import InputMedia
     except Exception:
         log.exception("maxapi upload symbols unavailable")
         return None
 
-    try:
-        media = InputMedia(type=UploadType.FILE, path=str(path))
-    except TypeError:
-        try:
-            media = InputMedia(type=UploadType.FILE, source=str(path))
-        except Exception:
-            log.exception("failed to construct InputMedia")
-            return None
+    # Verified InputMedia signature (love-apples/maxapi/types/input_media.py):
+    #   InputMedia(path: str, type: UploadType | None = None)
+    media = InputMedia(path=str(path), type=UploadType.FILE)
 
     try:
         result = await bot.upload_media(media)

@@ -107,6 +107,14 @@ def get_message_link(event: Any):
     return getattr(msg, "link", None)
 
 
+def get_message_body(event: Any):
+    """Return the MessageBody (with .text/.attachments/.link), or None."""
+    msg = getattr(event, "message", None)
+    if msg is None:
+        return None
+    return getattr(msg, "body", None) or msg
+
+
 def get_message_attachments(event: Any) -> list:
     msg = getattr(event, "message", None)
     if msg is None:

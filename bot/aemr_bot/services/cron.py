@@ -131,7 +131,12 @@ def _backup_db() -> None:
             f"endpoint={settings.backup_s3_endpoint}:{settings.backup_s3_bucket}/",
         ]
         subprocess.run(rclone_cmd, check=True)
-        out.unlink(missing_ok=True)
         log.info("backup done: %s", out.name)
     except Exception:
         log.exception("backup failed")
+    finally:
+        try:
+            if "out" in locals() and out.exists():
+                out.unlink()
+        except Exception:
+            log.warning("failed to remove temp backup file %s", out, exc_info=True)
