@@ -43,3 +43,6 @@ build/
 uploads/
 backups/
 logs/
+
+# Claude Code agent worktrees
+.claude/worktrees/
