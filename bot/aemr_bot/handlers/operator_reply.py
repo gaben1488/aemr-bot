@@ -13,7 +13,7 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import get_user_id
+from aemr_bot.utils.event import get_chat_id, get_user_id
 
 
 def _extract_reply_target_mid(message_body) -> str | None:
@@ -49,22 +49,24 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
 
         appeal = await appeals_service.get_by_admin_message_id(session, target_mid)
         if appeal is None:
-            await event.bot.send_message(chat_id=event.chat_id, text=texts.ADMIN_REPLY_NO_APPEAL)
+            await event.bot.send_message(chat_id=get_chat_id(event), text=texts.ADMIN_REPLY_NO_APPEAL)
             return True
 
     if len(text) > cfg.answer_max_chars:
         await event.bot.send_message(
-            chat_id=event.chat_id,
+            chat_id=get_chat_id(event),
             text=texts.ADMIN_REPLY_TOO_LONG.format(limit=cfg.answer_max_chars, actual=len(text)),
         )
         return True
 
     target_user_id = appeal.user.max_user_id
     try:
-        sent = await event.bot.send_message(chat_id=target_user_id, text=text)
+        # IMPORTANT: deliver to the citizen by user_id (not chat_id) — we never
+        # stored their personal-dialog chat_id, only their MAX user_id.
+        sent = await event.bot.send_message(user_id=target_user_id, text=text)
     except Exception as exc:  # noqa: BLE001
         await event.bot.send_message(
-            chat_id=event.chat_id,
+            chat_id=get_chat_id(event),
             text=(
                 f"⚠️ Не удалось доставить ответ жителю по обращению #{appeal.id}: {exc}.\n"
                 "Возможно, житель удалил диалог или заблокировал бота. "
@@ -92,7 +94,7 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
         )
 
     await event.bot.send_message(
-        chat_id=event.chat_id,
+        chat_id=get_chat_id(event),
         text=texts.ADMIN_REPLY_DELIVERED.format(number=appeal.id),
     )
     return True
@@ -100,7 +102,7 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
 
 async def handle_user_followup(event: MessageCreated, text: str) -> bool:
     """Citizen wrote in private dialog while idle — reopen answered appeal if any."""
-    max_user_id = getattr(event.user, "user_id", None) if getattr(event, "user", None) else None
+    max_user_id = get_user_id(event)
     if max_user_id is None:
         return False
 

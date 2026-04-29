@@ -12,11 +12,11 @@ from aemr_bot.services import operators as operators_service
 from aemr_bot.services import settings_store
 from aemr_bot.services import stats as stats_service
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import get_message_text, get_user_id
+from aemr_bot.utils.event import get_chat_id, get_message_text, get_user_id
 
 
 def _is_admin_chat(event) -> bool:
-    chat_id = getattr(event, "chat_id", None)
+    chat_id = get_chat_id(event)
     return cfg.admin_group_id is not None and chat_id == cfg.admin_group_id
 
 
@@ -77,7 +77,7 @@ def register(dp: Dispatcher) -> None:
         # The exact upload API depends on maxapi version. We use raw bytes.
         try:
             await event.bot.send_document(
-                chat_id=event.chat_id,
+                chat_id=get_chat_id(event),
                 source=content,
                 filename=filename,
                 caption=f"📊 Статистика {title} ({count} обращений)",

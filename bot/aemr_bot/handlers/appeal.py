@@ -18,7 +18,7 @@ from aemr_bot.services import card_format
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.attachments import collect_attachments, extract_phone
-from aemr_bot.utils.event import ack_callback, get_message_text, get_payload, get_user_id
+from aemr_bot.utils.event import ack_callback, get_chat_id, get_message_text, get_payload, get_user_id
 
 _collect_timers: dict[int, asyncio.Task] = {}
 
@@ -48,7 +48,7 @@ async def _start_appeal_flow(event, max_user_id: int):
 
     if policy_url is not None:
         await event.bot.send_message(
-            chat_id=event.chat_id,
+            chat_id=get_chat_id(event),
             text=texts.CONSENT_REQUEST.format(policy_url=policy_url),
             attachments=[keyboards.consent_keyboard()],
         )
@@ -73,19 +73,19 @@ async def _ask_contact_or_skip(event, max_user_id: int):
 
     if state == DialogState.AWAITING_CONTACT:
         await event.bot.send_message(
-            chat_id=event.chat_id,
+            chat_id=get_chat_id(event),
             text=texts.CONTACT_REQUEST,
             attachments=[keyboards.contact_request_keyboard()],
         )
     elif state == DialogState.AWAITING_NAME:
         await event.bot.send_message(
-            chat_id=event.chat_id,
+            chat_id=get_chat_id(event),
             text=texts.CONTACT_RECEIVED,
             attachments=[keyboards.cancel_keyboard()],
         )
     elif state == DialogState.AWAITING_ADDRESS:
         await event.bot.send_message(
-            chat_id=event.chat_id,
+            chat_id=get_chat_id(event),
             text=texts.NAME_RECEIVED,
             attachments=[keyboards.cancel_keyboard()],
         )
@@ -96,7 +96,7 @@ async def _ask_topic(event, max_user_id: int):
         topics = await settings_store.get(session, "topics") or ["Другое"]
         await users_service.set_state(session, max_user_id, DialogState.AWAITING_TOPIC)
     await event.bot.send_message(
-        chat_id=event.chat_id,
+        chat_id=get_chat_id(event),
         text=texts.ADDRESS_RECEIVED,
         attachments=[keyboards.topics_keyboard(topics)],
     )
@@ -106,7 +106,7 @@ async def _ask_summary(event, max_user_id: int):
     async with session_scope() as session:
         await users_service.set_state(session, max_user_id, DialogState.AWAITING_SUMMARY)
     await event.bot.send_message(
-        chat_id=event.chat_id,
+        chat_id=get_chat_id(event),
         text=texts.TOPIC_RECEIVED,
         attachments=[keyboards.submit_or_cancel_keyboard()],
     )
@@ -142,7 +142,7 @@ async def _finalize_appeal(event, max_user_id: int):
 
     try:
         await event.bot.send_message(
-            chat_id=event.chat_id,
+            chat_id=get_chat_id(event),
             text=texts.APPEAL_ACCEPTED.format(number=appeal.id, sla_hours=cfg.sla_response_hours),
             attachments=[keyboards.main_menu()],
         )
@@ -194,7 +194,7 @@ def register(dp: Dispatcher) -> None:
                 await users_service.reset_state(session, max_user_id)
             await ack_callback(event)
             await event.bot.send_message(
-                chat_id=event.chat_id,
+                chat_id=get_chat_id(event),
                 text=texts.CONSENT_DECLINED,
                 attachments=[keyboards.main_menu()],
             )
@@ -208,7 +208,7 @@ def register(dp: Dispatcher) -> None:
                 timer.cancel()
             await ack_callback(event)
             await event.bot.send_message(
-                chat_id=event.chat_id,
+                chat_id=get_chat_id(event),
                 text=texts.CANCELLED,
                 attachments=[keyboards.main_menu()],
             )

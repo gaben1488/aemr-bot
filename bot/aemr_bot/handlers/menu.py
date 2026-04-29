@@ -6,11 +6,12 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
+from aemr_bot.utils.event import ack_callback, get_chat_id
 
 
 async def open_main_menu(event):
     await event.bot.send_message(
-        chat_id=event.chat_id,
+        chat_id=get_chat_id(event),
         text=texts.WELCOME,
         attachments=[keyboards.main_menu()],
     )
@@ -22,14 +23,14 @@ async def open_my_appeals(event, max_user_id: int):
         appeals = await appeals_service.list_for_user(session, user.id, limit=20)
     if not appeals:
         await event.bot.send_message(
-            chat_id=event.chat_id,
+            chat_id=get_chat_id(event),
             text=texts.APPEAL_LIST_EMPTY,
             attachments=[keyboards.back_to_menu_keyboard()],
         )
         return
     items = [(a.id, card_format.appeal_list_label(a)) for a in appeals]
     await event.bot.send_message(
-        chat_id=event.chat_id,
+        chat_id=get_chat_id(event),
         text="Ваши обращения:",
         attachments=[keyboards.my_appeals_list_keyboard(items)],
     )
@@ -39,11 +40,11 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id(session, appeal_id)
         if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
-            await event.bot.send_message(chat_id=event.chat_id, text="Обращение не найдено.")
+            await event.bot.send_message(chat_id=get_chat_id(event), text="Обращение не найдено.")
             return
         text = card_format.user_card(appeal)
     await event.bot.send_message(
-        chat_id=event.chat_id,
+        chat_id=get_chat_id(event),
         text=text,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -54,7 +55,7 @@ async def open_contacts(event):
         recep = await settings_store.get(session, "electronic_reception_url")
         udth = await settings_store.get(session, "udth_schedule_url")
     await event.bot.send_message(
-        chat_id=event.chat_id,
+        chat_id=get_chat_id(event),
         text=texts.CONTACTS_MENU_TITLE,
         attachments=[keyboards.contacts_menu_keyboard(recep, udth)],
     )
@@ -64,7 +65,7 @@ async def open_appointment(event):
     async with session_scope() as session:
         text = await settings_store.get(session, "appointment_text")
     await event.bot.send_message(
-        chat_id=event.chat_id,
+        chat_id=get_chat_id(event),
         text=text or "Информация скоро появится.",
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -83,7 +84,7 @@ async def open_emergency(event):
             lines.append(f"• {name}: {phone}")
         body = "\n".join(lines)
     await event.bot.send_message(
-        chat_id=event.chat_id,
+        chat_id=get_chat_id(event),
         text=body,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -91,8 +92,6 @@ async def open_emergency(event):
 
 async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
     """Try to handle a menu/contacts/appeal-show callback. Return True if handled."""
-    from aemr_bot.utils.event import ack_callback
-
     if payload == "menu:main":
         await ack_callback(event)
         await open_main_menu(event)
