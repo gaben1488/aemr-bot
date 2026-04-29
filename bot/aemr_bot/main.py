@@ -9,6 +9,7 @@ from aemr_bot.config import settings
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import register_handlers
 from aemr_bot.services import cron as cron_service
+from aemr_bot.services import policy as policy_service
 from aemr_bot.services import settings_store
 
 log = logging.getLogger("aemr_bot")
@@ -93,6 +94,12 @@ async def main() -> None:
     )
 
     await _seed_settings()
+
+    # Upload privacy PDF once on startup; ignore failures so the bot still starts.
+    try:
+        await policy_service.ensure_uploaded(bot)
+    except Exception:
+        log.exception("policy upload failed; will fall back to URL consent")
 
     send_admin_text, send_admin_document = _build_admin_senders(bot)
     scheduler = cron_service.build_scheduler(send_admin_document, send_admin_text)

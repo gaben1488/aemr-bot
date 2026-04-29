@@ -43,14 +43,27 @@ async def _start_appeal_flow(event, max_user_id: int):
         if not user.consent_pdn_at:
             await users_service.set_state(session, max_user_id, DialogState.AWAITING_CONSENT, data={})
             policy_url = await settings_store.get(session, "policy_url")
+            policy_token = await settings_store.get(session, "policy_pdf_token")
         else:
             policy_url = None
+            policy_token = None
 
-    if policy_url is not None:
+    if policy_url is not None or policy_token is not None:
+        attachments: list = [keyboards.consent_keyboard()]
+        if policy_token:
+            from aemr_bot.services.policy import build_file_attachment
+            attachments.insert(0, build_file_attachment(policy_token))
+            text = (
+                "Перед оформлением обращения нужно ваше согласие на обработку "
+                "персональных данных в соответствии с 152-ФЗ. Полный текст политики — "
+                "в прикреплённом PDF.\n\nНажмите «Согласен», чтобы продолжить."
+            )
+        else:
+            text = texts.CONSENT_REQUEST.format(policy_url=policy_url)
         await event.bot.send_message(
             chat_id=get_chat_id(event),
-            text=texts.CONSENT_REQUEST.format(policy_url=policy_url),
-            attachments=[keyboards.consent_keyboard()],
+            text=text,
+            attachments=attachments,
         )
         return
 
@@ -274,6 +287,19 @@ def register(dp: Dispatcher) -> None:
             state = DialogState(user.dialog_state)
 
         if state == DialogState.AWAITING_CONTACT:
+            try:
+                _msg = getattr(event, "message", None)
+                _body = getattr(_msg, "body", None)
+                _atts = getattr(_body, "attachments", None) if _body else None
+                _shape = []
+                for a in _atts or []:
+                    t = getattr(a, "type", None)
+                    p = getattr(a, "payload", None)
+                    p_keys = list(p.__dict__.keys()) if p and hasattr(p, "__dict__") else (list(p.keys()) if isinstance(p, dict) else None)
+                    _shape.append({"type": str(t), "payload_keys": p_keys})
+                log.info("AWAITING_CONTACT: text=%r attachments=%s", text_body, _shape)
+            except Exception:
+                log.exception("debug log failed")
             phone = extract_phone(getattr(event.message, "body", None) or event.message)
             if phone:
                 async with session_scope() as session:

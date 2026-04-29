@@ -18,6 +18,7 @@ RUN pip install --upgrade pip && pip install -e /app
 COPY bot/aemr_bot /app/aemr_bot
 COPY bot/alembic.ini /app/alembic.ini
 COPY seed /app/seed
+COPY docs/PRIVACY.pdf /app/seed/PRIVACY.pdf
 
 ENV SEED_DIR=/app/seed
 
