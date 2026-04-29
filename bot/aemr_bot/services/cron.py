@@ -88,12 +88,41 @@ def _backup_db() -> None:
         ts = datetime.now(TZ).strftime("%Y%m%d_%H%M%S")
         out = Path(f"/tmp/aemr-{ts}.sql.gpg")
 
-        cmd = (
-            "pg_dump --no-owner --no-acl "
-            f"| gpg --batch --yes --passphrase '{settings.backup_gpg_passphrase}' "
-            f"--symmetric --cipher-algo AES256 -o {out}"
+        # Avoid passing passphrase via shell (command injection vector). Pipe pg_dump
+        # to gpg, feeding the passphrase through a dedicated read end of an os.pipe.
+        import os
+        r_fd, w_fd = os.pipe()
+        try:
+            os.write(w_fd, settings.backup_gpg_passphrase.encode())
+        finally:
+            os.close(w_fd)
+
+        dump = subprocess.Popen(
+            ["pg_dump", "--no-owner", "--no-acl"],
+            stdout=subprocess.PIPE,
+            env=env,
         )
-        subprocess.run(["sh", "-c", cmd], check=True, env={**env})
+        try:
+            gpg = subprocess.Popen(
+                [
+                    "gpg", "--batch", "--yes",
+                    "--passphrase-fd", str(r_fd),
+                    "--symmetric", "--cipher-algo", "AES256",
+                    "-o", str(out),
+                ],
+                stdin=dump.stdout,
+                pass_fds=(r_fd,),
+            )
+            if dump.stdout:
+                dump.stdout.close()
+            gpg.wait()
+        finally:
+            os.close(r_fd)
+
+        if gpg.returncode != 0:
+            raise RuntimeError(f"gpg failed with code {gpg.returncode}")
+        if dump.wait() != 0:
+            raise RuntimeError(f"pg_dump failed with code {dump.returncode}")
 
         rclone_cmd = [
             "rclone", "copy", str(out),

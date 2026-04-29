@@ -67,3 +67,19 @@ def register(dp: Dispatcher) -> None:
     @dp.message_created(Command("forget"))
     async def _(event: MessageCreated):
         await cmd_forget(event)
+
+    @dp.message_created(Command("whoami"))
+    async def _(event: MessageCreated):
+        # Bootstrap helper: tells caller their max_user_id and the current chat_id.
+        # Use it once after creating the admin group to fill ADMIN_GROUP_ID
+        # and to register operators in the DB.
+        user = getattr(event, "user", None)
+        max_user_id = getattr(user, "user_id", "?") if user else "?"
+        first_name = getattr(user, "first_name", "") if user else ""
+        chat_id = getattr(event, "chat_id", "?")
+        await event.message.answer(
+            "🛠 whoami\n"
+            f"max_user_id: {max_user_id}\n"
+            f"first_name: {first_name}\n"
+            f"chat_id: {chat_id}"
+        )

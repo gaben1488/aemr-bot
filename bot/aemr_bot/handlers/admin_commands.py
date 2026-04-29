@@ -5,6 +5,7 @@ from maxapi.types import Command, MessageCreated
 
 from aemr_bot import texts
 from aemr_bot.config import settings as cfg
+from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import operators as operators_service
@@ -18,14 +19,31 @@ def _is_admin_chat(event) -> bool:
     return cfg.admin_group_id is not None and chat_id == cfg.admin_group_id
 
 
-async def _ensure_operator(event) -> bool:
+async def _get_operator(event):
+    """Return the active Operator for the message author, or None."""
     if not _is_admin_chat(event):
-        return False
+        return None
     author_id = getattr(event.user, "user_id", None) if getattr(event, "user", None) else None
     if author_id is None:
-        return False
+        return None
     async with session_scope() as session:
-        return await operators_service.is_operator(session, author_id)
+        return await operators_service.get(session, author_id)
+
+
+async def _ensure_operator(event) -> bool:
+    return (await _get_operator(event)) is not None
+
+
+async def _ensure_role(event, *allowed: OperatorRole) -> bool:
+    op = await _get_operator(event)
+    if op is None:
+        return False
+    if op.role not in {r.value for r in allowed}:
+        await event.message.answer(
+            f"Команда доступна только ролям: {', '.join(r.value for r in allowed)}"
+        )
+        return False
+    return True
 
 
 def _parse_arg(text: str) -> str:
@@ -116,7 +134,7 @@ def register(dp: Dispatcher) -> None:
 
     @dp.message_created(Command("erase"))
     async def cmd_erase(event: MessageCreated):
-        if not await _ensure_operator(event):
+        if not await _ensure_role(event, OperatorRole.IT):
             return
         body = getattr(event.message, "body", None) or event.message
         arg = _parse_arg(getattr(body, "text", "") or "")
@@ -144,7 +162,7 @@ def register(dp: Dispatcher) -> None:
 
     @dp.message_created(Command("setting"))
     async def cmd_setting(event: MessageCreated):
-        if not await _ensure_operator(event):
+        if not await _ensure_role(event, OperatorRole.IT):
             return
         body = getattr(event.message, "body", None) or event.message
         text = getattr(body, "text", "") or ""
