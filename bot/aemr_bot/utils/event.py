@@ -59,6 +59,39 @@ async def ack_callback(event: Any, notification: str = "") -> None:
             return
 
 
+def get_payload(event: Any) -> str:
+    """Pull callback payload regardless of where maxapi stores it."""
+    cb = getattr(event, "callback", None)
+    if cb is not None:
+        p = getattr(cb, "payload", None)
+        if p:
+            return p
+    p = getattr(event, "payload", None)
+    return p or ""
+
+
+def get_message_text(event: Any) -> str:
+    """Pull text from a MessageCreated event regardless of body shape."""
+    msg = getattr(event, "message", None)
+    if msg is None:
+        return ""
+    body = getattr(msg, "body", None)
+    if body is not None:
+        text = getattr(body, "text", None)
+        if text is not None:
+            return text
+    return getattr(msg, "text", None) or ""
+
+
+def get_message_link(event: Any):
+    """Pull the link object (reply/forward) from a MessageCreated body."""
+    msg = getattr(event, "message", None)
+    if msg is None:
+        return None
+    body = getattr(msg, "body", None) or msg
+    return getattr(body, "link", None)
+
+
 async def reply(event: Any, text: str, attachments: list | None = None):
     """Send a reply that works whether the event is MessageCreated, MessageCallback, or BotStarted."""
     attachments = attachments or []

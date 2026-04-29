@@ -12,6 +12,7 @@ from aemr_bot.services import operators as operators_service
 from aemr_bot.services import settings_store
 from aemr_bot.services import stats as stats_service
 from aemr_bot.services import users as users_service
+from aemr_bot.utils.event import get_message_text, get_user_id
 
 
 def _is_admin_chat(event) -> bool:
@@ -23,7 +24,7 @@ async def _get_operator(event):
     """Return the active Operator for the message author, or None."""
     if not _is_admin_chat(event):
         return None
-    author_id = getattr(event.user, "user_id", None) if getattr(event, "user", None) else None
+    author_id = get_user_id(event)
     if author_id is None:
         return None
     async with session_scope() as session:
@@ -51,13 +52,18 @@ def _parse_arg(text: str) -> str:
     return parts[1].strip() if len(parts) > 1 else ""
 
 
+def _get_text(event) -> str:
+    """Read raw text from a command event (uses utils.event.get_message_text)."""
+    return get_message_text(event)
+
+
 def register(dp: Dispatcher) -> None:
     @dp.message_created(Command("stats"))
     async def cmd_stats(event: MessageCreated):
         if not await _ensure_operator(event):
             return
-        body = getattr(event.message, "body", None) or event.message
-        text = getattr(body, "text", "") or ""
+        text = _get_text(event)
+
         period = (_parse_arg(text) or "today").lower()
         if period not in {"today", "week", "month"}:
             await event.message.answer("Используйте: /stats today | week | month")
@@ -86,8 +92,7 @@ def register(dp: Dispatcher) -> None:
     async def cmd_reopen(event: MessageCreated):
         if not await _ensure_operator(event):
             return
-        body = getattr(event.message, "body", None) or event.message
-        arg = _parse_arg(getattr(body, "text", "") or "")
+        arg = _parse_arg(_get_text(event))
         try:
             appeal_id = int(arg)
         except ValueError:
@@ -98,7 +103,7 @@ def register(dp: Dispatcher) -> None:
             if ok:
                 await operators_service.write_audit(
                     session,
-                    operator_max_user_id=event.user.user_id,
+                    operator_max_user_id=get_user_id(event),
                     action="reopen",
                     target=f"appeal #{appeal_id}",
                 )
@@ -111,8 +116,7 @@ def register(dp: Dispatcher) -> None:
     async def cmd_close(event: MessageCreated):
         if not await _ensure_operator(event):
             return
-        body = getattr(event.message, "body", None) or event.message
-        arg = _parse_arg(getattr(body, "text", "") or "")
+        arg = _parse_arg(_get_text(event))
         try:
             appeal_id = int(arg)
         except ValueError:
@@ -123,7 +127,7 @@ def register(dp: Dispatcher) -> None:
             if ok:
                 await operators_service.write_audit(
                     session,
-                    operator_max_user_id=event.user.user_id,
+                    operator_max_user_id=get_user_id(event),
                     action="close",
                     target=f"appeal #{appeal_id}",
                 )
@@ -136,8 +140,7 @@ def register(dp: Dispatcher) -> None:
     async def cmd_erase(event: MessageCreated):
         if not await _ensure_role(event, OperatorRole.IT):
             return
-        body = getattr(event.message, "body", None) or event.message
-        arg = _parse_arg(getattr(body, "text", "") or "")
+        arg = _parse_arg(_get_text(event))
         if not arg.startswith("max_user_id="):
             await event.message.answer("Используйте: /erase max_user_id=<id>")
             return
@@ -151,7 +154,7 @@ def register(dp: Dispatcher) -> None:
             if ok:
                 await operators_service.write_audit(
                     session,
-                    operator_max_user_id=event.user.user_id,
+                    operator_max_user_id=get_user_id(event),
                     action="erase",
                     target=f"user max_id={target_id}",
                 )
@@ -164,8 +167,8 @@ def register(dp: Dispatcher) -> None:
     async def cmd_setting(event: MessageCreated):
         if not await _ensure_role(event, OperatorRole.IT):
             return
-        body = getattr(event.message, "body", None) or event.message
-        text = getattr(body, "text", "") or ""
+        text = _get_text(event)
+
         arg = _parse_arg(text)
 
         if not arg or arg == "list":
@@ -192,7 +195,7 @@ def register(dp: Dispatcher) -> None:
             await settings_store.set_value(session, key, value)
             await operators_service.write_audit(
                 session,
-                operator_max_user_id=event.user.user_id,
+                operator_max_user_id=get_user_id(event),
                 action="setting_update",
                 target=key,
                 details={"value": value},

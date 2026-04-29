@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from typing import Any
 
 from maxapi import Dispatcher
 from maxapi.types import MessageCallback, MessageCreated
+
+log = logging.getLogger(__name__)
 
 from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
@@ -15,16 +18,21 @@ from aemr_bot.services import card_format
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.attachments import collect_attachments, extract_phone
-from aemr_bot.utils.event import ack_callback
+from aemr_bot.utils.event import ack_callback, get_message_text, get_payload, get_user_id
 
 _collect_timers: dict[int, asyncio.Task] = {}
 
 
 async def _send_to_admin_card(bot, text: str) -> str | None:
-    """Send formatted card into admin group, return its message_id."""
+    """Send formatted card into admin group. Returns admin message_id or None on failure."""
     if not cfg.admin_group_id:
+        log.warning("ADMIN_GROUP_ID is not set — admin card not delivered")
         return None
-    sent = await bot.send_message(chat_id=cfg.admin_group_id, text=text)
+    try:
+        sent = await bot.send_message(chat_id=cfg.admin_group_id, text=text)
+    except Exception:
+        log.exception("failed to deliver admin card to chat_id=%s", cfg.admin_group_id)
+        return None
     mid = getattr(sent, "message_id", None) or getattr(getattr(sent, "body", None), "mid", None)
     return str(mid) if mid is not None else None
 
@@ -132,11 +140,14 @@ async def _finalize_appeal(event, max_user_id: int):
         if admin_mid:
             await appeals_service.set_admin_message_id(session, appeal.id, admin_mid)
 
-    await event.bot.send_message(
-        chat_id=event.chat_id,
-        text=texts.APPEAL_ACCEPTED.format(number=appeal.id, sla_hours=cfg.sla_response_hours),
-        attachments=[keyboards.main_menu()],
-    )
+    try:
+        await event.bot.send_message(
+            chat_id=event.chat_id,
+            text=texts.APPEAL_ACCEPTED.format(number=appeal.id, sla_hours=cfg.sla_response_hours),
+            attachments=[keyboards.main_menu()],
+        )
+    except Exception:
+        log.exception("failed to confirm appeal #%s to user", appeal.id)
 
 
 def _schedule_collect_timeout(event, max_user_id: int):
@@ -160,9 +171,10 @@ def _schedule_collect_timeout(event, max_user_id: int):
 def register(dp: Dispatcher) -> None:
     @dp.message_callback()
     async def on_callback(event: MessageCallback):
-        payload = (event.callback.payload or "") if hasattr(event, "callback") else ""
-        max_user_id = getattr(event.user, "user_id", None) if getattr(event, "user", None) else None
+        payload = get_payload(event)
+        max_user_id = get_user_id(event)
         if max_user_id is None:
+            log.warning("callback without user_id, payload=%r — skipped", payload)
             return
 
         if payload == "menu:new_appeal":
@@ -238,25 +250,26 @@ def register(dp: Dispatcher) -> None:
         if chat_id is None:
             return
 
-        body = getattr(event.message, "body", None) or event.message
-        text_body = getattr(body, "text", None) or ""
+        text_body = get_message_text(event)
         if text_body.startswith("/"):
             return
+        body = getattr(event.message, "body", None) or event.message
 
         # Branch A: admin group → maybe an operator reply via reply-to
         if cfg.admin_group_id and chat_id == cfg.admin_group_id:
             await op_reply.handle_operator_reply(event, body, text_body)
             return
 
-        max_user_id = getattr(event.user, "user_id", None) if getattr(event, "user", None) else None
+        max_user_id = get_user_id(event)
         if max_user_id is None:
             return
 
+        from aemr_bot.utils.event import get_first_name
         async with session_scope() as session:
             user = await users_service.get_or_create(
                 session,
                 max_user_id=max_user_id,
-                first_name=getattr(event.user, "first_name", None),
+                first_name=get_first_name(event),
             )
             state = DialogState(user.dialog_state)
 

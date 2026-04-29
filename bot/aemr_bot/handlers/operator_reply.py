@@ -13,6 +13,7 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
+from aemr_bot.utils.event import get_user_id
 
 
 def _extract_reply_target_mid(message_body) -> str | None:
@@ -20,10 +21,14 @@ def _extract_reply_target_mid(message_body) -> str | None:
     link = getattr(message_body, "link", None)
     if link is None:
         return None
-    link_type = getattr(link, "type", None) or (link.get("type") if isinstance(link, dict) else None)
+    link_type = getattr(link, "type", None)
+    if link_type is None and isinstance(link, dict):
+        link_type = link.get("type")
     if link_type != "reply":
         return None
-    mid = getattr(link, "mid", None) or (link.get("mid") if isinstance(link, dict) else None)
+    mid = getattr(link, "mid", None)
+    if mid is None and isinstance(link, dict):
+        mid = link.get("mid")
     return str(mid) if mid is not None else None
 
 
@@ -33,7 +38,7 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
     if target_mid is None:
         return False
 
-    author_id = getattr(event.user, "user_id", None) if getattr(event, "user", None) else None
+    author_id = get_user_id(event)
     if author_id is None:
         return False
 
