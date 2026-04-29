@@ -37,6 +37,28 @@ def get_first_name(event: Any) -> str | None:
     return None
 
 
+async def ack_callback(event: Any, notification: str = "") -> None:
+    """Acknowledge a callback button press (best-effort).
+
+    Different maxapi versions expose the call as event.answer_on_callback,
+    event.answer_callback, or event.answer. We try them in order and swallow
+    AttributeError so a missing method never breaks the handler.
+    """
+    for name in ("answer_on_callback", "answer_callback", "answer"):
+        method = getattr(event, name, None)
+        if callable(method):
+            try:
+                await method(notification=notification)
+            except TypeError:
+                try:
+                    await method({"notification": notification})
+                except Exception:
+                    return
+            except Exception:
+                return
+            return
+
+
 async def reply(event: Any, text: str, attachments: list | None = None):
     """Send a reply that works whether the event is MessageCreated, MessageCallback, or BotStarted."""
     attachments = attachments or []

@@ -1,5 +1,4 @@
 from maxapi import Dispatcher
-from maxapi.types import MessageCallback
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
@@ -90,44 +89,49 @@ async def open_emergency(event):
     )
 
 
+async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
+    """Try to handle a menu/contacts/appeal-show callback. Return True if handled."""
+    from aemr_bot.utils.event import ack_callback
+
+    if payload == "menu:main":
+        await ack_callback(event)
+        await open_main_menu(event)
+        return True
+
+    if payload == "menu:my_appeals":
+        if max_user_id is None:
+            return True
+        await ack_callback(event)
+        await open_my_appeals(event, max_user_id)
+        return True
+
+    if payload == "menu:contacts":
+        await ack_callback(event)
+        await open_contacts(event)
+        return True
+
+    if payload == "contacts:appointment":
+        await ack_callback(event)
+        await open_appointment(event)
+        return True
+
+    if payload == "contacts:emergency":
+        await ack_callback(event)
+        await open_emergency(event)
+        return True
+
+    if payload.startswith("appeal:show:") and max_user_id is not None:
+        try:
+            appeal_id = int(payload.split(":")[2])
+        except (IndexError, ValueError):
+            return True
+        await ack_callback(event)
+        await show_appeal(event, appeal_id, max_user_id)
+        return True
+
+    return False
+
+
 def register(dp: Dispatcher) -> None:
-    @dp.message_callback()
-    async def on_callback(event: MessageCallback):
-        payload = (event.callback.payload or "") if hasattr(event, "callback") else ""
-        max_user_id = getattr(event.user, "user_id", None) if getattr(event, "user", None) else None
-
-        if payload == "menu:main":
-            await event.answer_on_callback(notification="")
-            await open_main_menu(event)
-            return
-
-        if payload == "menu:my_appeals":
-            if max_user_id is None:
-                return
-            await event.answer_on_callback(notification="")
-            await open_my_appeals(event, max_user_id)
-            return
-
-        if payload == "menu:contacts":
-            await event.answer_on_callback(notification="")
-            await open_contacts(event)
-            return
-
-        if payload == "contacts:appointment":
-            await event.answer_on_callback(notification="")
-            await open_appointment(event)
-            return
-
-        if payload == "contacts:emergency":
-            await event.answer_on_callback(notification="")
-            await open_emergency(event)
-            return
-
-        if payload.startswith("appeal:show:") and max_user_id is not None:
-            try:
-                appeal_id = int(payload.split(":")[2])
-            except (IndexError, ValueError):
-                return
-            await event.answer_on_callback(notification="")
-            await show_appeal(event, appeal_id, max_user_id)
-            return
+    """No-op: callback routing is owned by handlers/appeal.py."""
+    return None

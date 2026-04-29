@@ -15,6 +15,7 @@ from aemr_bot.services import card_format
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.attachments import collect_attachments, extract_phone
+from aemr_bot.utils.event import ack_callback
 
 _collect_timers: dict[int, asyncio.Task] = {}
 
@@ -165,21 +166,21 @@ def register(dp: Dispatcher) -> None:
             return
 
         if payload == "menu:new_appeal":
-            await event.answer_on_callback(notification="")
+            await ack_callback(event)
             await _start_appeal_flow(event, max_user_id)
             return
 
         if payload == "consent:yes":
             async with session_scope() as session:
                 await users_service.set_consent(session, max_user_id)
-            await event.answer_on_callback(notification=texts.CONSENT_ACCEPTED)
+            await ack_callback(event, texts.CONSENT_ACCEPTED)
             await _ask_contact_or_skip(event, max_user_id)
             return
 
         if payload == "consent:no":
             async with session_scope() as session:
                 await users_service.reset_state(session, max_user_id)
-            await event.answer_on_callback(notification="")
+            await ack_callback(event)
             await event.bot.send_message(
                 chat_id=event.chat_id,
                 text=texts.CONSENT_DECLINED,
@@ -193,7 +194,7 @@ def register(dp: Dispatcher) -> None:
             timer = _collect_timers.pop(max_user_id, None)
             if timer and not timer.done():
                 timer.cancel()
-            await event.answer_on_callback(notification="")
+            await ack_callback(event)
             await event.bot.send_message(
                 chat_id=event.chat_id,
                 text=texts.CANCELLED,
@@ -213,7 +214,7 @@ def register(dp: Dispatcher) -> None:
                     await users_service.update_dialog_data(session, max_user_id, {"topic": chosen})
                 else:
                     return
-            await event.answer_on_callback(notification="")
+            await ack_callback(event)
             await _ask_summary(event, max_user_id)
             return
 
@@ -221,9 +222,13 @@ def register(dp: Dispatcher) -> None:
             timer = _collect_timers.pop(max_user_id, None)
             if timer and not timer.done():
                 timer.cancel()
-            await event.answer_on_callback(notification="")
+            await ack_callback(event)
             await _finalize_appeal(event, max_user_id)
             return
+
+        # Fall through to menu/contacts/appeal-show handlers
+        from aemr_bot.handlers import menu as menu_handlers
+        await menu_handlers.handle_callback(event, payload, max_user_id)
 
     @dp.message_created()
     async def on_message(event: MessageCreated):
