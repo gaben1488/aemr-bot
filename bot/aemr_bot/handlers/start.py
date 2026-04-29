@@ -3,13 +3,14 @@ from maxapi.types import BotStarted, Command, MessageCreated
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
+from aemr_bot.services import operators as ops_service
 from aemr_bot.services import users as users_service
+from aemr_bot.utils.event import get_first_name, get_user_id, reply
 
 
 async def _ensure_user(event):
-    user = getattr(event, "user", None) or getattr(event.message, "sender", None)
-    max_user_id = getattr(user, "user_id", None) if user else None
-    first_name = getattr(user, "first_name", None) if user else None
+    max_user_id = get_user_id(event)
+    first_name = get_first_name(event)
     if max_user_id is None:
         return None
     async with session_scope() as session:
@@ -18,25 +19,22 @@ async def _ensure_user(event):
 
 async def cmd_start(event):
     await _ensure_user(event)
-    await event.message.answer(texts.WELCOME, attachments=[keyboards.main_menu()])
+    await reply(event, texts.WELCOME, attachments=[keyboards.main_menu()])
 
 
 async def cmd_help(event):
-    await event.message.answer(texts.HELP_USER, attachments=[keyboards.main_menu()])
+    await reply(event, texts.HELP_USER, attachments=[keyboards.main_menu()])
 
 
 async def cmd_menu(event):
-    await event.message.answer(texts.WELCOME, attachments=[keyboards.main_menu()])
+    await reply(event, texts.WELCOME, attachments=[keyboards.main_menu()])
 
 
 async def cmd_forget(event):
-    user = getattr(event, "user", None) or getattr(event.message, "sender", None)
-    max_user_id = getattr(user, "user_id", None) if user else None
+    max_user_id = get_user_id(event)
     if max_user_id is None:
         return
     async with session_scope() as session:
-        from aemr_bot.services import operators as ops_service
-
         await users_service.erase_pdn(session, max_user_id)
         await ops_service.write_audit(
             session,
@@ -44,7 +42,7 @@ async def cmd_forget(event):
             action="self_erase",
             target=f"user max_id={max_user_id}",
         )
-    await event.message.answer(texts.ERASE_REQUESTED)
+    await reply(event, texts.ERASE_REQUESTED)
 
 
 def register(dp: Dispatcher) -> None:
@@ -70,16 +68,13 @@ def register(dp: Dispatcher) -> None:
 
     @dp.message_created(Command("whoami"))
     async def _(event: MessageCreated):
-        # Bootstrap helper: tells caller their max_user_id and the current chat_id.
-        # Use it once after creating the admin group to fill ADMIN_GROUP_ID
-        # and to register operators in the DB.
-        user = getattr(event, "user", None)
-        max_user_id = getattr(user, "user_id", "?") if user else "?"
-        first_name = getattr(user, "first_name", "") if user else ""
+        max_user_id = get_user_id(event) or "?"
+        first_name = get_first_name(event) or ""
         chat_id = getattr(event, "chat_id", "?")
-        await event.message.answer(
+        await reply(
+            event,
             "🛠 whoami\n"
             f"max_user_id: {max_user_id}\n"
             f"first_name: {first_name}\n"
-            f"chat_id: {chat_id}"
+            f"chat_id: {chat_id}",
         )
