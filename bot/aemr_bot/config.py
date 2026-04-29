@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -39,6 +39,28 @@ class Settings(BaseSettings):
 
     seed_dir: Path = Field(Path("/app/seed"), alias="SEED_DIR")
     log_level: str = Field("INFO", alias="LOG_LEVEL")
+
+    @field_validator(
+        "admin_group_id",
+        "coordinator_max_user_id",
+        "webhook_url",
+        "webhook_secret",
+        "backup_s3_endpoint",
+        "backup_s3_bucket",
+        "backup_s3_access_key",
+        "backup_s3_secret_key",
+        "backup_gpg_passphrase",
+        "healthcheck_url",
+        mode="before",
+    )
+    @classmethod
+    def _empty_str_to_none(cls, v):
+        # Treat empty string and stray inline comments from .env as None for optional fields.
+        if isinstance(v, str):
+            stripped = v.strip()
+            if not stripped or stripped.startswith("#"):
+                return None
+        return v
 
     @model_validator(mode="after")
     def _enforce_webhook_secret(self):
