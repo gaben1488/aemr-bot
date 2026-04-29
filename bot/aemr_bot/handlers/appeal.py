@@ -20,6 +20,7 @@ from aemr_bot.services import users as users_service
 from aemr_bot.utils.attachments import collect_attachments, extract_phone
 from aemr_bot.utils.event import (
     ack_callback,
+    extract_message_id,
     get_chat_id,
     get_first_name,
     get_message_body,
@@ -32,67 +33,34 @@ _collect_timers: dict[int, asyncio.Task] = {}
 
 
 async def recover_stuck_funnels(bot) -> int:
-    """Finalize funnels that were left in AWAITING_SUMMARY after a restart.
-
-    Called once at startup. Returns the count of funnels finalized.
-    """
+    """Finalize funnels left in AWAITING_SUMMARY after a restart. Run once at startup."""
     async with session_scope() as session:
-        users = await users_service.find_stuck_in_summary(
+        ids = await users_service.find_stuck_in_summary(
             session, idle_seconds=cfg.appeal_collect_timeout_seconds
         )
+    if not ids:
+        return 0
 
-    finalized = 0
-    for user in users:
-        try:
-            await _finalize_appeal_for(bot, user.max_user_id)
-            finalized += 1
-        except Exception:
-            log.exception("recover: failed to finalize for user %s", user.max_user_id)
+    results = await asyncio.gather(
+        *(_persist_and_dispatch_appeal(bot, uid) for uid in ids),
+        return_exceptions=True,
+    )
+
+    # Empty submissions never get a re-prompt at recovery time — drop them to
+    # IDLE so they don't reappear in every subsequent recover() pass.
+    empty_ids = [uid for uid, r in zip(ids, results) if r is False]
+    if empty_ids:
+        async with session_scope() as session:
+            for uid in empty_ids:
+                await users_service.reset_state(session, uid)
+
+    finalized = sum(1 for r in results if r is True)
+    failed = sum(1 for r in results if isinstance(r, BaseException))
+    if failed:
+        log.warning("recover: %d/%d funnels failed", failed, len(ids))
     if finalized:
         log.info("recovered %d stuck funnels", finalized)
     return finalized
-
-
-async def _finalize_appeal_for(bot, max_user_id: int) -> None:
-    """Variant of _finalize_appeal that doesn't need an inbound event."""
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        data: dict[str, Any] = dict(user.dialog_data or {})
-        summary_chunks = data.get("summary_chunks", []) or []
-        summary = "\n".join(summary_chunks).strip()
-        attachments = data.get("attachments", []) or []
-        if not summary and not attachments:
-            await users_service.reset_state(session, max_user_id)
-            return
-        appeal = await appeals_service.create_appeal(
-            session,
-            user=user,
-            address=data.get("address", ""),
-            topic=data.get("topic", ""),
-            summary=summary,
-            attachments=attachments,
-        )
-        await users_service.reset_state(session, max_user_id)
-
-    card_text = card_format.admin_card(appeal, user)
-    if cfg.admin_group_id:
-        try:
-            sent = await bot.send_message(chat_id=cfg.admin_group_id, text=card_text)
-            mid = getattr(sent, "message_id", None) or getattr(getattr(sent, "body", None), "mid", None)
-            if mid:
-                async with session_scope() as session:
-                    await appeals_service.set_admin_message_id(session, appeal.id, str(mid))
-        except Exception:
-            log.exception("recover: admin card delivery failed for appeal #%s", appeal.id)
-
-    try:
-        await bot.send_message(
-            user_id=max_user_id,
-            text=texts.APPEAL_ACCEPTED.format(number=appeal.id, sla_hours=cfg.sla_response_hours),
-            attachments=[keyboards.main_menu()],
-        )
-    except Exception:
-        log.exception("recover: ack to user %s failed for appeal #%s", max_user_id, appeal.id)
 
 
 async def _send_to_admin_card(bot, text: str) -> str | None:
@@ -105,8 +73,44 @@ async def _send_to_admin_card(bot, text: str) -> str | None:
     except Exception:
         log.exception("failed to deliver admin card to chat_id=%s", cfg.admin_group_id)
         return None
-    mid = getattr(sent, "message_id", None) or getattr(getattr(sent, "body", None), "mid", None)
-    return str(mid) if mid is not None else None
+    return extract_message_id(sent)
+
+
+async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool:
+    """Create an Appeal from accumulated dialog_data, post the admin card,
+    confirm to citizen by user_id. Returns True on persist+dispatch, False on
+    empty submission. Raises only on storage failure."""
+    async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        data: dict[str, Any] = dict(user.dialog_data or {})
+        summary = "\n".join(data.get("summary_chunks") or []).strip()
+        attachments = data.get("attachments") or []
+        if not summary and not attachments:
+            return False
+        appeal = await appeals_service.create_appeal(
+            session,
+            user=user,
+            address=data.get("address", ""),
+            topic=data.get("topic", ""),
+            summary=summary,
+            attachments=attachments,
+        )
+        await users_service.reset_state(session, max_user_id)
+
+    admin_mid = await _send_to_admin_card(bot, card_format.admin_card(appeal, user))
+    if admin_mid:
+        async with session_scope() as session:
+            await appeals_service.set_admin_message_id(session, appeal.id, admin_mid)
+
+    try:
+        await bot.send_message(
+            user_id=max_user_id,
+            text=texts.APPEAL_ACCEPTED.format(number=appeal.id, sla_hours=cfg.sla_response_hours),
+            attachments=[keyboards.main_menu()],
+        )
+    except Exception:
+        log.exception("ack to user %s failed for appeal #%s", max_user_id, appeal.id)
+    return True
 
 
 async def _start_appeal_flow(event, max_user_id: int):
@@ -153,25 +157,17 @@ async def _ask_contact_or_skip(event, max_user_id: int):
             target_state = DialogState.AWAITING_ADDRESS
         await users_service.set_state(session, max_user_id, target_state, data={})
 
-    state = target_state
-    if state == DialogState.AWAITING_CONTACT:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=texts.CONTACT_REQUEST,
-            attachments=[keyboards.contact_request_keyboard()],
-        )
-    elif state == DialogState.AWAITING_NAME:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=texts.CONTACT_RECEIVED,
-            attachments=[keyboards.cancel_keyboard()],
-        )
-    elif state == DialogState.AWAITING_ADDRESS:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=texts.NAME_RECEIVED,
-            attachments=[keyboards.cancel_keyboard()],
-        )
+    prompt_for = {
+        DialogState.AWAITING_CONTACT: (texts.CONTACT_REQUEST, keyboards.contact_request_keyboard()),
+        DialogState.AWAITING_NAME: (texts.CONTACT_RECEIVED, keyboards.cancel_keyboard()),
+        DialogState.AWAITING_ADDRESS: (texts.NAME_RECEIVED, keyboards.cancel_keyboard()),
+    }
+    text, keyboard = prompt_for[target_state]
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=text,
+        attachments=[keyboard],
+    )
 
 
 async def _ask_topic(event, max_user_id: int):
@@ -196,54 +192,14 @@ async def _ask_summary(event, max_user_id: int):
 
 
 async def _finalize_appeal(event, max_user_id: int):
-    """Persist accumulated data into Appeal, post card to admin group, reset FSM."""
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        data: dict[str, Any] = dict(user.dialog_data or {})
-        address = data.get("address", "")
-        topic = data.get("topic", "")
-        summary_chunks = data.get("summary_chunks", []) or []
-        summary = "\n".join(summary_chunks).strip()
-        attachments = data.get("attachments", []) or []
-
-        # Reject empty submissions: at least one of text or attachment is required.
-        if not summary and not attachments:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
-                text=(
-                    "Опишите суть обращения текстом или прикрепите фото. "
-                    "Без описания обращение не принимается."
-                ),
-                attachments=[keyboards.submit_or_cancel_keyboard()],
-            )
-            return
-
-        appeal = await appeals_service.create_appeal(
-            session,
-            user=user,
-            address=address,
-            topic=topic,
-            summary=summary,
-            attachments=attachments,
-        )
-
-        await users_service.reset_state(session, max_user_id)
-
-    card_text = card_format.admin_card(appeal, user)
-    admin_mid = await _send_to_admin_card(event.bot, card_text)
-
-    async with session_scope() as session:
-        if admin_mid:
-            await appeals_service.set_admin_message_id(session, appeal.id, admin_mid)
-
-    try:
+    """Submit-button / timeout entry point. Sends a re-prompt on empty input."""
+    persisted = await _persist_and_dispatch_appeal(event.bot, max_user_id)
+    if not persisted:
         await event.bot.send_message(
             chat_id=get_chat_id(event),
-            text=texts.APPEAL_ACCEPTED.format(number=appeal.id, sla_hours=cfg.sla_response_hours),
-            attachments=[keyboards.main_menu()],
+            text=texts.APPEAL_EMPTY_REJECTED,
+            attachments=[keyboards.submit_or_cancel_keyboard()],
         )
-    except Exception:
-        log.exception("failed to confirm appeal #%s to user", appeal.id)
 
 
 def _schedule_collect_timeout(event, max_user_id: int):

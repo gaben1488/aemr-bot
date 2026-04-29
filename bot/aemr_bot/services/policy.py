@@ -45,8 +45,6 @@ async def _do_upload(bot) -> str | None:
         log.exception("maxapi upload symbols unavailable")
         return None
 
-    # Verified InputMedia signature (love-apples/maxapi/types/input_media.py):
-    #   InputMedia(path: str, type: UploadType | None = None)
     media = InputMedia(path=str(path), type=UploadType.FILE)
 
     try:

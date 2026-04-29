@@ -112,7 +112,20 @@ def get_message_body(event: Any):
     msg = getattr(event, "message", None)
     if msg is None:
         return None
-    return getattr(msg, "body", None) or msg
+    return getattr(msg, "body", None)
+
+
+def extract_message_id(sent: Any) -> str | None:
+    """Pull a message_id from a SendedMessage / Message-like object."""
+    mid = getattr(sent, "message_id", None)
+    if mid is not None:
+        return str(mid)
+    body = getattr(sent, "body", None)
+    if body is not None:
+        mid = getattr(body, "mid", None)
+        if mid is not None:
+            return str(mid)
+    return None
 
 
 def get_message_attachments(event: Any) -> list:

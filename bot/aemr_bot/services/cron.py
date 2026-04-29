@@ -73,6 +73,7 @@ def _backup_db() -> None:
         log.info("backup skipped: S3 or GPG passphrase not configured")
         return
 
+    out: Path | None = None
     try:
         from urllib.parse import urlparse
 
@@ -135,8 +136,8 @@ def _backup_db() -> None:
     except Exception:
         log.exception("backup failed")
     finally:
-        try:
-            if "out" in locals() and out.exists():
-                out.unlink()
-        except Exception:
-            log.warning("failed to remove temp backup file %s", out, exc_info=True)
+        if out is not None:
+            try:
+                out.unlink(missing_ok=True)
+            except Exception:
+                log.warning("failed to remove temp backup file %s", out, exc_info=True)

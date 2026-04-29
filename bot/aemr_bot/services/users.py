@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,20 +66,24 @@ async def update_dialog_data(session: AsyncSession, max_user_id: int, patch: dic
     return data
 
 
-async def find_stuck_in_summary(session: AsyncSession, idle_seconds: int) -> list[User]:
-    """Return users in AWAITING_SUMMARY whose dialog has been quiet for >= idle_seconds.
+async def find_stuck_in_summary(
+    session: AsyncSession,
+    idle_seconds: int,
+    limit: int = 1000,
+) -> list[int]:
+    """Return max_user_id of users stuck in AWAITING_SUMMARY past idle_seconds.
 
-    Used at startup to finalize funnels that were interrupted by a bot restart —
-    the citizen typed everything, never pressed Submit, and the in-memory timer
-    died with the previous process.
+    Limit guards against pathological cases (e.g. 10k stuck rows after a long
+    outage would otherwise produce 10k bot API calls during startup recovery).
     """
-    from datetime import timedelta
     threshold = datetime.now(timezone.utc) - timedelta(seconds=idle_seconds)
     result = await session.scalars(
-        select(User).where(
+        select(User.max_user_id)
+        .where(
             User.dialog_state == DialogState.AWAITING_SUMMARY.value,
             User.updated_at <= threshold,
         )
+        .limit(limit)
     )
     return list(result)
 
