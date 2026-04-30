@@ -15,7 +15,11 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.attachments import collect_attachments, extract_phone
+from aemr_bot.utils.attachments import (
+    collect_attachments,
+    deserialize_for_relay,
+    extract_phone,
+)
 from aemr_bot.utils.event import (
     ack_callback,
     extract_message_id,
@@ -76,6 +80,47 @@ async def _send_to_admin_card(bot, text: str) -> str | None:
     return extract_message_id(sent)
 
 
+async def _relay_attachments_to_admin(
+    bot,
+    *,
+    appeal_id: int,
+    admin_mid: str | None,
+    stored_attachments: list[dict],
+) -> None:
+    """Forward citizen-supplied photos/geo/files into the admin group as a reply
+    to the card. Best-effort: failures are logged and don't break the appeal flow."""
+    if not cfg.admin_group_id or not stored_attachments:
+        return
+    relayable = deserialize_for_relay(stored_attachments)
+    if not relayable:
+        return
+    try:
+        from maxapi.enums.message_link_type import MessageLinkType
+        from maxapi.types.message import NewMessageLink
+    except Exception:
+        log.exception("maxapi link types unavailable; relaying without reply link")
+        MessageLinkType = None  # type: ignore[assignment]
+        NewMessageLink = None  # type: ignore[assignment]
+
+    link = None
+    if admin_mid and MessageLinkType is not None and NewMessageLink is not None:
+        try:
+            link = NewMessageLink(type=MessageLinkType.REPLY, mid=admin_mid)
+        except Exception:
+            log.exception("failed to build NewMessageLink for admin_mid=%s", admin_mid)
+            link = None
+
+    try:
+        await bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=f"📎 Вложения к обращению #{appeal_id}",
+            attachments=relayable,
+            link=link,
+        )
+    except Exception:
+        log.exception("failed to relay attachments for appeal #%s", appeal_id)
+
+
 async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool:
     """Create an Appeal from accumulated dialog_data, post the admin card,
     confirm to citizen by user_id. Returns True on persist+dispatch, False on
@@ -101,6 +146,13 @@ async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool:
     if admin_mid:
         async with session_scope() as session:
             await appeals_service.set_admin_message_id(session, appeal.id, admin_mid)
+
+    await _relay_attachments_to_admin(
+        bot,
+        appeal_id=appeal.id,
+        admin_mid=admin_mid,
+        stored_attachments=attachments,
+    )
 
     try:
         await bot.send_message(
@@ -334,7 +386,7 @@ async def _on_awaiting_contact(event, body, text_body, max_user_id, op_reply):
     phone = extract_phone(body)
     if phone is None:
         await event.message.answer(
-            "Нажмите кнопку «Поделиться контактом», чтобы передать номер.",
+            texts.CONTACT_RETRY,
             attachments=[keyboards.contact_request_keyboard()],
         )
         return
@@ -354,7 +406,7 @@ async def _on_awaiting_contact(event, body, text_body, max_user_id, op_reply):
 async def _on_awaiting_name(event, body, text_body, max_user_id, op_reply):
     name = text_body.strip()[: cfg.name_max_chars]
     if not name:
-        await event.message.answer("Имя не должно быть пустым. Введите ещё раз.")
+        await event.message.answer(texts.NAME_EMPTY)
         return
     async with session_scope() as session:
         await users_service.set_first_name(session, max_user_id, name)
@@ -365,7 +417,7 @@ async def _on_awaiting_name(event, body, text_body, max_user_id, op_reply):
 async def _on_awaiting_address(event, body, text_body, max_user_id, op_reply):
     address = text_body.strip()[: cfg.address_max_chars]
     if not address:
-        await event.message.answer("Адрес не должен быть пустым. Введите ещё раз.")
+        await event.message.answer(texts.ADDRESS_EMPTY)
         return
     async with session_scope() as session:
         await users_service.update_dialog_data(session, max_user_id, {"address": address})
