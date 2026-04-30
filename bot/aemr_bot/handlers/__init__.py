@@ -14,8 +14,35 @@ class IdempotencyMiddleware(BaseMiddleware):
         return await handler(event_object, data)
 
 
+def _attach_outer_middleware(dp: Dispatcher, middleware: BaseMiddleware) -> None:
+    """Attach an outer middleware compatible with both maxapi attribute names.
+
+    Newer maxapi (≥ post-2025-07) exposes a list `dp.outer_middlewares`.
+    Older 0.6.0-ish revisions only had a singular `dp.outer_middleware`
+    (sometimes a list, sometimes a single value). We probe in order and
+    fall back to the public method if both attributes are missing.
+    """
+    bucket = getattr(dp, "outer_middlewares", None)
+    if isinstance(bucket, list):
+        bucket.append(middleware)
+        return
+    bucket = getattr(dp, "outer_middleware", None)
+    if isinstance(bucket, list):
+        bucket.append(middleware)
+        return
+    register = getattr(dp, "register_outer_middleware", None)
+    if callable(register):
+        register(middleware)
+        return
+    raise RuntimeError(
+        "maxapi.Dispatcher does not expose an outer-middleware hook in any "
+        "known shape — verify maxapi version (need a release that supports "
+        "outer middlewares)."
+    )
+
+
 def register_handlers(dp: Dispatcher) -> None:
-    dp.outer_middlewares.append(IdempotencyMiddleware())
+    _attach_outer_middleware(dp, IdempotencyMiddleware())
     start.register(dp)
     menu.register(dp)
     appeal.register(dp)
