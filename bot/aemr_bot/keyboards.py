@@ -6,11 +6,14 @@ from maxapi.types import (
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
 
-def main_menu():
+def main_menu(electronic_reception_url: str | None = None):
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="📝 Написать обращение", payload="menu:new_appeal"))
     kb.row(CallbackButton(text="📂 Мои обращения", payload="menu:my_appeals"))
-    kb.row(CallbackButton(text="📞 Контакты", payload="menu:contacts"))
+    if electronic_reception_url:
+        kb.row(LinkButton(text="🌐 Электронная приёмная", url=electronic_reception_url))
+    kb.row(CallbackButton(text="📋 Приём граждан", payload="menu:appointment"))
+    kb.row(CallbackButton(text="📚 Полезная информация", payload="menu:useful_info"))
     return kb.as_markup()
 
 
@@ -84,16 +87,19 @@ def back_to_menu_keyboard():
     return kb.as_markup()
 
 
-def contacts_menu_keyboard(
-    electronic_reception_url: str,
-    udth_schedule_url: str,
+def useful_info_keyboard(
+    udth_schedule_url: str | None = None,
     udth_schedule_intermunicipal_url: str | None = None,
 ):
     kb = InlineKeyboardBuilder()
-    kb.row(LinkButton(text="🌐 Электронная приёмная", url=electronic_reception_url))
-    kb.row(CallbackButton(text="📋 Приём граждан", payload="contacts:appointment"))
-    kb.row(CallbackButton(text="🚨 Экстренные службы", payload="contacts:emergency"))
-    kb.row(LinkButton(text="🚌 Муниципальные маршруты", url=udth_schedule_url))
+    kb.row(
+        CallbackButton(
+            text="☎️ Телефоны экстренных и аварийных служб",
+            payload="info:emergency",
+        )
+    )
+    if udth_schedule_url:
+        kb.row(LinkButton(text="🚌 Муниципальные маршруты", url=udth_schedule_url))
     if udth_schedule_intermunicipal_url:
         kb.row(
             LinkButton(
@@ -101,6 +107,11 @@ def contacts_menu_keyboard(
                 url=udth_schedule_intermunicipal_url,
             )
         )
-    kb.row(CallbackButton(text="📞 Диспетчерские автотранспорта", payload="contacts:dispatchers"))
+    kb.row(
+        CallbackButton(
+            text="📞 Диспетчерские автотранспорта",
+            payload="info:dispatchers",
+        )
+    )
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()

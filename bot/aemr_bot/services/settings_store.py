@@ -11,7 +11,9 @@ from aemr_bot.db.models import Setting
 DEFAULTS: dict[str, Any] = {
     "welcome_text": None,
     "consent_text": None,
-    "policy_url": "https://example.org/privacy",
+    "policy_url": (
+        "https://elizovomr.ru/storage/attachments/2024/08/15/U9XfgiWRETCF0KKT.pdf"
+    ),
     "electronic_reception_url": "https://kamgov.ru/questions",
     "udth_schedule_url": (
         "http://udth.elizovomr.ru/storage/attachments/2025/12/30/9mP303lEBVH13yMj.pdf"
@@ -23,9 +25,9 @@ DEFAULTS: dict[str, Any] = {
     ),
     "appointment_text": (
         "Приём граждан временно исполняющим полномочия Главы Елизовского "
-        "района А.С. Гончаровым проводится два раза в месяц "
-        "(1 и 3 среда каждого месяца) по предварительной записи.\n\n"
-        "Запись на приём: 8 (415-31) 7-25-29."
+        "района А.С. Гончаровым осуществляется два раза в месяц "
+        "(1 и 3 среда каждого месяца) по предварительной записи. "
+        "Записаться на приём необходимо по телефону 8 (415-31) 7-25-29."
     ),
     "emergency_contacts": [],
     "transport_dispatcher_contacts": [],

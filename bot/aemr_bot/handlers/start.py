@@ -23,17 +23,26 @@ async def _ensure_user(event):
         return await users_service.get_or_create(session, max_user_id=max_user_id, first_name=first_name)
 
 
+async def _build_main_menu():
+    """Read the electronic-reception URL from settings and assemble the
+    main menu so the «Электронная приёмная» link button shows up. Returns
+    a markup ready to drop into bot.send_message."""
+    async with session_scope() as session:
+        recep_url = await settings_store.get(session, "electronic_reception_url")
+    return keyboards.main_menu(recep_url)
+
+
 async def cmd_start(event):
     await _ensure_user(event)
-    await reply(event, texts.WELCOME, attachments=[keyboards.main_menu()])
+    await reply(event, texts.WELCOME, attachments=[await _build_main_menu()])
 
 
 async def cmd_help(event):
-    await reply(event, texts.HELP_USER, attachments=[keyboards.main_menu()])
+    await reply(event, texts.HELP_USER, attachments=[await _build_main_menu()])
 
 
 async def cmd_menu(event):
-    await reply(event, texts.WELCOME, attachments=[keyboards.main_menu()])
+    await reply(event, texts.WELCOME, attachments=[await _build_main_menu()])
 
 
 async def cmd_policy(event):

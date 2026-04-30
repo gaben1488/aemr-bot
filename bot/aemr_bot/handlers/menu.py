@@ -10,10 +10,12 @@ from aemr_bot.utils.event import ack_callback, get_chat_id
 
 
 async def open_main_menu(event):
+    async with session_scope() as session:
+        recep_url = await settings_store.get(session, "electronic_reception_url")
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.WELCOME,
-        attachments=[keyboards.main_menu()],
+        attachments=[keyboards.main_menu(recep_url)],
     )
 
 
@@ -67,17 +69,14 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
     )
 
 
-async def open_contacts(event):
+async def open_useful_info(event):
     async with session_scope() as session:
-        recep = await settings_store.get(session, "electronic_reception_url")
         udth = await settings_store.get(session, "udth_schedule_url")
         udth_inter = await settings_store.get(session, "udth_schedule_intermunicipal_url")
     await event.bot.send_message(
         chat_id=get_chat_id(event),
-        text=texts.CONTACTS_MENU_TITLE,
-        attachments=[
-            keyboards.contacts_menu_keyboard(recep, udth, udth_inter)
-        ],
+        text=texts.USEFUL_INFO_TITLE,
+        attachments=[keyboards.useful_info_keyboard(udth, udth_inter)],
     )
 
 
@@ -97,12 +96,24 @@ async def open_emergency(event):
     if not contacts:
         body = "Список контактов скоро появится."
     else:
-        lines = ["🚨 Экстренные службы:\n"]
+        # Group by 'section' if present; ungrouped items fall under «Прочее»
+        # so legacy seed-data without sections keeps rendering.
+        grouped: dict[str, list[dict]] = {}
+        order: list[str] = []
         for item in contacts:
-            name = item.get("name", "—")
-            phone = item.get("phone", "—")
-            lines.append(f"• {name}: {phone}")
-        body = "\n".join(lines)
+            section = item.get("section") or "Прочее"
+            if section not in grouped:
+                grouped[section] = []
+                order.append(section)
+            grouped[section].append(item)
+        blocks: list[str] = ["☎️ Телефоны экстренных и аварийных служб"]
+        for section in order:
+            blocks.append(f"\n{section}:")
+            for item in grouped[section]:
+                name = item.get("name", "—")
+                phone = item.get("phone", "—")
+                blocks.append(f"• {name} — {phone}")
+        body = "\n".join(blocks)
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=body,
@@ -154,22 +165,22 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
         await open_my_appeals(event, max_user_id, page=page)
         return True
 
-    if payload == "menu:contacts":
+    if payload == "menu:useful_info":
         await ack_callback(event)
-        await open_contacts(event)
+        await open_useful_info(event)
         return True
 
-    if payload == "contacts:appointment":
+    if payload == "menu:appointment":
         await ack_callback(event)
         await open_appointment(event)
         return True
 
-    if payload == "contacts:emergency":
+    if payload == "info:emergency":
         await ack_callback(event)
         await open_emergency(event)
         return True
 
-    if payload == "contacts:dispatchers":
+    if payload == "info:dispatchers":
         await ack_callback(event)
         await open_dispatchers(event)
         return True
