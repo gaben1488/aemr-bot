@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint, types, security
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./bot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: bot/pyproject.toml
+      - name: Install
+        run: pip install --upgrade pip && pip install -e ".[dev]"
+      - name: Ruff
+        run: python -m ruff check aemr_bot/
+      - name: MyPy
+        run: python -m mypy aemr_bot/
+      - name: Bandit (medium and above)
+        run: python -m bandit -r aemr_bot/ -ll
+
+  test:
+    name: Pytest with Postgres 16
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: aemr_test
+          POSTGRES_USER: aemr
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: ./bot
+    env:
+      BOT_TOKEN: ci-test-token
+      DATABASE_URL: postgresql+asyncpg://aemr:test@localhost:5432/aemr_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: bot/pyproject.toml
+      - name: Install
+        run: pip install --upgrade pip && pip install -e ".[dev]"
+      - name: Run pytest
+        run: python -m pytest tests/ -v --tb=short
+
+  docker-build:
+    name: Docker build smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/Dockerfile
+          push: false
+          tags: aemr-bot:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
