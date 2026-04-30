@@ -1,7 +1,7 @@
 # ADR-001: Архитектура MVP «Администрация ЕМР. Обратная связь»
 
-**Статус:** v4 (после фаз A и B пред-релизной шлифовки: idempotency middleware, async-backup, healthcheck-сторож, recover_stuck_funnels, единый `_persist_and_dispatch_appeal`, FSM в state-handler-функциях, реальный upload XLSX/PDF)
-**Дата:** 2026-04-29
+**Статус:** v5 (после фазы C — pre-launch UX features, ops tooling, harden и alignment под Стандарт качества АЕМР)
+**Дата:** 2026-04-30
 **Автор:** filat (с участием Claude Code)
 
 ## 1. Контекст
@@ -247,3 +247,77 @@ docker compose exec bot alembic upgrade head
 - Куратор хочет жёсткое разделение АЕМР↔ЕГП → создаём вторую админ-группу, в `settings` указываем `admin_group_id_egp`, добавляем правило маршрутизации в `settings.egp_keywords` (ключевые слова темы ЕГП).
 - Появятся подписки и broadcast → добавляем поля `consent_chs`, `consent_events` в `users` и таблицы `broadcasts`, `broadcast_deliveries`. Это чистая надстройка, ломать MVP не придётся.
 - Бот вырастает до федеральных функций (приём обращений по 59-ФЗ) → пересматриваем УЗ и провайдера.
+
+## 9. Изменения после фазы C (итерации 1 и 2)
+
+Эти изменения внесены поверх архитектуры разделов 1–8 без её переписывания. Каждый пункт — фиксация фактического состояния кода и обоснование решения.
+
+### 9.1 FSM-хранилище: Postgres JSONB, не Redis
+
+`users.dialog_state` (`String(32)`) + `users.dialog_data` (JSONB) остаются основным хранилищем FSM. Перенос в Redis рассматривался как теоретическая оптимизация при росте >1k одновременных активных воронок. Для АЕМР это сценарий «никогда»: население района ~70 тысяч человек, проникновение гос-цифровых сервисов 3–5%, активных воронок одновременно — десятки в часы пик, единицы ночью. Пиковая нагрузка 1–2 UPDATE/секунду, Postgres проглатывает не замечая. Триггер пересмотра — устойчивые >500 одновременных воронок по метрикам диагностики (`/diag`).
+
+### 9.2 Idempotency-middleware — обязательный, не «страховка»
+
+Раздел 7a описывал idempotency как опциональный компонент. По факту `IdempotencyMiddleware` подключён как `outer_middleware` в `handlers/__init__.py::register_handlers` и срабатывает на каждый update до любого handler'а. Дубликаты Update от MAX (редкие в polling, частые при webhook-retries) молча отбрасываются на уровне INSERT-ON-CONFLICT в `events`. Без middleware переход на webhook давал бы дубли карточек в админ-группе.
+
+### 9.3 Recovery stuck funnels — fire-and-forget при старте
+
+`handlers/appeal.py::recover_stuck_funnels` запускается через `asyncio.create_task` в `main.py::main()` и не блокирует старт диспетчера. Empty-submissions (нет ни текста, ни вложений) сбрасываются в IDLE, чтобы не зацикливаться при каждом перезапуске. Ограничение batch-recovery: `RECOVER_BATCH_SIZE=1000` — защита от патологии «10k застрявших воронок после многочасового downtime → 10k API-вызовов при старте».
+
+### 9.4 Long-polling timeout — настраиваемый параметр, не интервал
+
+`POLLING_TIMEOUT_SECONDS` (default `30`, диапазон `0..90`) задаёт **серверный** timeout `getUpdates` MAX — сколько MAX держит соединение ожидая событий. Это не интервал между запросами клиента; long-polling возвращает либо при появлении события, либо по timeout. Чем выше timeout — тем меньше пустых round-trip'ов в idle (важно при rate-limit 2 RPS на бота с 11 мая 2026), тем медленнее реакция на shutdown. Default 30s — баланс. Реализация — monkey-patch на bound-метод `bot.get_updates` в `main.py::_install_polling_timeout`, потому что `maxapi.Dispatcher.start_polling` не пробрасывает timeout-параметр дальше. Если когда-то будем форкать maxapi — это первый кандидат на upstream-PR.
+
+### 9.5 Зависимость maxapi — без форка до триггера
+
+`maxapi` от `love-apples` остаётся community-библиотекой без SLA. Версия в `pyproject.toml` пин'нится через `~=0.6` (compatible release): патчи прилетают, breaking minor — нет. Решение о форке принимается по одному из триггеров: `(a)` 3+ месяца без коммитов в upstream И открытые critical issues, либо `(b)` обнаруженная security-уязвимость без реакции мейнтейнера в течение 14 дней. Ежеквартальная проверка активности репозитория — задача на координатора.
+
+### 9.6 Attachments relay в админ-группу
+
+Фото / видео / геолокация / файлы из обращения теперь пересылаются в админ-группу вторым сообщением (после текстовой карточки), привязанным `NewMessageLink(type=REPLY, mid=admin_card_mid)`. Сохранённые в `appeals.attachments` (JSONB) словари десериализуются обратно в pydantic-модели через `TypeAdapter(Attachments)` из maxapi и передаются в `bot.send_message(attachments=[...])`. Контакт-вложения исключены — телефон уже в карточке, дублирование PII не нужно. Каждое сообщение с вложениями ограничено `ATTACHMENTS_PER_RELAY_MESSAGE=10`, batch'и пронумерованы «(2/3)» и т. д. для читаемости.
+
+### 9.7 Bulk-регистрация операторов: `/add_operators` IT-only
+
+Команда принимает многострочный input `<max_user_id> <role> <ФИО>`, upsert каждого оператора с записью в `audit_log`. После второго прохода security-review команда переведена с `IT|COORDINATOR` на **только `IT`** — coordinator-tier мог через эту команду выдать себе IT-роль и потом дёрнуть `/erase`/`/setting` (privilege escalation). Дополнительно запрещена самомодификация (`actor_id == target_id`) даже для IT — изменения собственной роли идут только через psql-эскалацию из RUNBOOK.
+
+### 9.8 Команда `/policy` жителю
+
+Житель в любой момент пишет `/policy` и получает PRIVACY.pdf файлом. Fallback-цепочка: `(1)` cached token из `settings.policy_pdf_token` (заполняется один раз при старте через `policy_service.ensure_uploaded`) → `(2)` on-demand upload PDF и кеширование токена → `(3)` ссылка на URL из `settings.policy_url` → `(4)` сообщение об ошибке с предложением написать координатору. Команда добавлена в `/help`.
+
+### 9.9 Стандарт качества ответов АЕМР
+
+Тексты в `texts.py` приведены в соответствие с Приложением 2 к Постановлению Администрации Елизовского муниципального района № 2129 от 19.12.2025 (Стандарт качества ответов на сообщения из открытых источников). Прошёл humanizer + clarify: убраны em-dash склейки, hedging-обороты, канцеляризмы, аббревиатуры (АЕМР раскрыто в citizen-facing строках), passive voice заменён на active. Operator-side ответы (через handler `handle_operator_reply`) пока без auto-validator против Стандарта — отложено в фазу 4 (см. 9.14).
+
+### 9.10 Race protection в финализации обращения
+
+`_persist_and_dispatch_appeal` обёрнут в per-user `asyncio.Lock` (`_user_locks: dict[int, asyncio.Lock]`). Защищает от двойного клика «Отправить», race между timer-firing и user-clicking submit, race между cancel и timer. Внутри lock — idempotency-проверка по `user.dialog_state == IDLE`: второй concurrent-вызов после успешной финализации первого видит IDLE и bail без создания дубля Appeal/admin-карточки. Single-instance only — горизонтальное масштабирование (>1 контейнер бота) сломает эту схему; для много-инстансной деплойки понадобится `pg_advisory_xact_lock` или Redis-lock.
+
+### 9.11 Hard caps на пользовательский ввод
+
+| Параметр | Default | Назначение |
+|---|---|---|
+| `SUMMARY_MAX_CHARS` | 2000 | Cap на cumulative chunks `summary_chunks` — оставляет headroom внутри 4000-char admin-карточки |
+| `ATTACHMENTS_MAX_PER_APPEAL` | 20 | Cap на attachments per appeal — выше уровня — silent drop с `log.info` |
+| `ATTACHMENTS_PER_RELAY_MESSAGE` | 10 | Batch size для relay — обходит недокументированный server-cap MAX |
+| `VCF_INFO_MAX_CHARS` | 10000 | Cap на vcf_info parsing в `extract_phone` — против hostile multi-MB contact |
+
+Все env-tunable через `Field(alias=...)` в `config.py`.
+
+### 9.12 Pagination в «Мои обращения»
+
+Список обращений жителя выводится по 5 на страницу с inline-кнопками навигации `⬅️ N/M ➡️`. В каждом ряду — emoji статуса + текстовый статус («Новое», «В работе», «Завершено», «Закрыто без ответа») + дата + первые 32 символа summary. Callback `appeals:page:N` обрабатывается в `handlers/menu.py::handle_callback`. Размер страницы — константа `MY_APPEALS_PAGE_SIZE = 5`.
+
+### 9.13 Реальные данные АЕМР вместо заглушек
+
+`seed/welcome.md`, `seed/contacts.json`, `seed/transport_dispatchers.json` (новый), и `settings_store.DEFAULTS` обновлены под данные, присланные администрацией: kamgov.ru/questions для электронной приёмной, PDF муниципальных маршрутов УДТХ, kamgov.ru/mintrans для межмуниципальных, текст приёма граждан А.С. Гончарова (1 и 3 среда месяца, запись по 8 (415-31) 7-25-29), номера экстренных служб (112, ЕДДС, 101/102/103, Камчатскэнерго ЦЭС и горячая линия, Теплоэнерго, Водоканал), 5 номеров диспетчерских автотранспорта по группам маршрутов. В SCHEMA добавлены ключи `udth_schedule_intermunicipal_url` и `transport_dispatcher_contacts`. Меню «Контакты» расширено: ссылка на межмуниципальные маршруты + кнопка «Диспетчерские автотранспорта» (callback → список).
+
+### 9.14 Что дополнительно отложено (фаза D)
+
+В дополнение к Section 7:
+
+- **Разделение ролей** в одной группе — отказались. Все авторизованные в админ-группе считаются операторами с одинаковыми правами на ответ; гранулярные роли (coordinator/aemr/egp/it) остаются только для команд `/erase` / `/setting` / `/add_operators`.
+- **Маршрутизация обращений по адресу** (Елизовское ГП → ЕГП-группа, остальные → АЕМР) — отложено. Шаблон таблицы поселений готов в `docs/RUNBOOK.md`, реализация — после первой полусотни обращений и оценки реальной нагрузки.
+- **LLM-помощник оператору** («перепиши короче / мягче / по чек-листу») — отказались. Оператор отвечает руками; auto-validator против Стандарта качества (рекомендательная подсветка нарушений п. 5/6/9/11) — кандидат на фазу 4 если сценарий проявит себя.
+- **Автоматическая классификация тем** обращения — отказались. Жители выбирают тематику из списка вручную на шаге `AWAITING_TOPIC`.
+- **Форк maxapi** — только при триггере (см. 9.5).
+- **Подсказки шаблонов оператору** из `agent_export/operator_templates.json` — отказались. Сохраняем JSON в репо как референс для будущих UX-итераций.
