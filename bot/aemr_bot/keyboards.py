@@ -57,10 +57,23 @@ def topics_keyboard(topics: list[str]):
     return kb.as_markup()
 
 
-def my_appeals_list_keyboard(appeals: list[tuple[int, str]]):
+def my_appeals_list_keyboard(
+    appeals: list[tuple[int, str]],
+    *,
+    page: int = 1,
+    total_pages: int = 1,
+):
     kb = InlineKeyboardBuilder()
     for appeal_id, label in appeals:
         kb.row(CallbackButton(text=label, payload=f"appeal:show:{appeal_id}"))
+    if total_pages > 1:
+        nav: list[CallbackButton] = []
+        if page > 1:
+            nav.append(CallbackButton(text="⬅️", payload=f"appeals:page:{page - 1}"))
+        nav.append(CallbackButton(text=f"{page}/{total_pages}", payload="appeals:page:noop"))
+        if page < total_pages:
+            nav.append(CallbackButton(text="➡️", payload=f"appeals:page:{page + 1}"))
+        kb.row(*nav)
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()
 

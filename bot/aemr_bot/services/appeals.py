@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import desc, select, update
+from sqlalchemy import desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -84,14 +84,28 @@ async def get_by_admin_message_id(session: AsyncSession, admin_message_id: str) 
     )
 
 
-async def list_for_user(session: AsyncSession, user_id: int, limit: int = 20) -> list[Appeal]:
+async def list_for_user(
+    session: AsyncSession,
+    user_id: int,
+    limit: int = 20,
+    offset: int = 0,
+) -> list[Appeal]:
     res = await session.scalars(
         select(Appeal)
         .where(Appeal.user_id == user_id)
         .order_by(desc(Appeal.created_at))
         .limit(limit)
+        .offset(offset)
     )
     return list(res)
+
+
+async def count_for_user(session: AsyncSession, user_id: int) -> int:
+    return (
+        await session.scalar(
+            select(func.count()).select_from(Appeal).where(Appeal.user_id == user_id)
+        )
+    ) or 0
 
 
 async def set_admin_message_id(session: AsyncSession, appeal_id: int, mid: str) -> None:

@@ -17,22 +17,39 @@ async def open_main_menu(event):
     )
 
 
-async def open_my_appeals(event, max_user_id: int):
+MY_APPEALS_PAGE_SIZE = 5
+
+
+async def open_my_appeals(event, max_user_id: int, page: int = 1):
+    page = max(1, page)
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        appeals = await appeals_service.list_for_user(session, user.id, limit=20)
-    if not appeals:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=texts.APPEAL_LIST_EMPTY,
-            attachments=[keyboards.back_to_menu_keyboard()],
+        total = await appeals_service.count_for_user(session, user.id)
+        if total == 0:
+            await event.bot.send_message(
+                chat_id=get_chat_id(event),
+                text=texts.APPEAL_LIST_EMPTY,
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
+        total_pages = max(1, (total + MY_APPEALS_PAGE_SIZE - 1) // MY_APPEALS_PAGE_SIZE)
+        page = min(page, total_pages)
+        offset = (page - 1) * MY_APPEALS_PAGE_SIZE
+        appeals = await appeals_service.list_for_user(
+            session, user.id, limit=MY_APPEALS_PAGE_SIZE, offset=offset
         )
-        return
     items = [(a.id, card_format.appeal_list_label(a)) for a in appeals]
+    header = (
+        f"Ваши обращения (стр. {page}/{total_pages}, всего {total}):"
+        if total_pages > 1
+        else f"Ваши обращения (всего {total}):"
+    )
     await event.bot.send_message(
         chat_id=get_chat_id(event),
-        text="Ваши обращения:",
-        attachments=[keyboards.my_appeals_list_keyboard(items)],
+        text=header,
+        attachments=[
+            keyboards.my_appeals_list_keyboard(items, page=page, total_pages=total_pages)
+        ],
     )
 
 
@@ -102,6 +119,19 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
             return True
         await ack_callback(event)
         await open_my_appeals(event, max_user_id)
+        return True
+
+    if payload.startswith("appeals:page:") and max_user_id is not None:
+        suffix = payload.split(":", 2)[2]
+        if suffix == "noop":
+            await ack_callback(event)
+            return True
+        try:
+            page = int(suffix)
+        except ValueError:
+            return True
+        await ack_callback(event)
+        await open_my_appeals(event, max_user_id, page=page)
         return True
 
     if payload == "menu:contacts":

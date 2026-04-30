@@ -8,7 +8,18 @@ Verified against love-apples/maxapi sources:
 * payload.vcf is a property that parses vcf_info into VcfInfo with .phone.
 """
 
+from __future__ import annotations
+
+import logging
 from typing import Any
+
+log = logging.getLogger(__name__)
+
+# Types we relay back into admin chat. Excludes:
+#   contact — phone is already in the admin card; sending the vCard duplicates PII;
+#   inline_keyboard — never originates from a citizen anyway;
+#   share/sticker — irrelevant for an appeal.
+RELAYABLE_TYPES = frozenset({"image", "video", "audio", "file", "location"})
 
 
 def _attachment_to_dict(att: Any) -> dict:
@@ -99,3 +110,50 @@ def is_contact_attachment(att: Any) -> bool:
     if t is None and isinstance(att, dict):
         t = att.get("type")
     return str(t).lower() == "contact"
+
+
+def _normalize_type(att: dict) -> str:
+    return str(att.get("type", "")).lower()
+
+
+def count_by_type(stored: list[dict]) -> dict[str, int]:
+    """Count attachments grouped by type — used to render the admin-card header."""
+    counts: dict[str, int] = {}
+    for att in stored:
+        if not isinstance(att, dict):
+            continue
+        kind = _normalize_type(att)
+        if kind:
+            counts[kind] = counts.get(kind, 0) + 1
+    return counts
+
+
+def deserialize_for_relay(stored: list[dict]) -> list:
+    """Hydrate stored dicts back into pydantic Attachment objects so send_message
+    can dump them back into the API payload. Drops PII-bearing or non-relayable
+    types. Returns an empty list if maxapi is unavailable, so callers stay safe.
+    """
+    if not stored:
+        return []
+    try:
+        from pydantic import TypeAdapter
+
+        from maxapi.types.attachments import Attachments
+    except Exception:
+        log.exception("maxapi attachment types unavailable; skipping relay")
+        return []
+
+    adapter: TypeAdapter = TypeAdapter(Attachments)
+    out: list = []
+    for raw in stored:
+        if not isinstance(raw, dict):
+            continue
+        if _normalize_type(raw) not in RELAYABLE_TYPES:
+            continue
+        try:
+            out.append(adapter.validate_python(raw))
+        except Exception as e:
+            # Schema drift in MAX or trimmed payload — skip this one,
+            # don't block the whole appeal dispatch.
+            log.warning("attachment %s failed to deserialize: %r", _normalize_type(raw), e)
+    return out

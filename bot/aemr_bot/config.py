@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     healthcheck_pulse_seconds: int = Field(30, alias="HEALTHCHECK_PULSE_SECONDS")
     healthcheck_interval_minutes: int = Field(5, alias="HEALTHCHECK_INTERVAL_MIN")
 
+    # Long-polling timeout passed to MAX getUpdates. Higher = fewer empty
+    # round-trips when the bot is idle (better for the 2 RPS rate limit);
+    # lower = faster startup-shutdown reaction window. Server cap is 90s.
+    polling_timeout_seconds: int = Field(30, alias="POLLING_TIMEOUT_SECONDS", ge=0, le=90)
+
     backup_hour: int = Field(3, alias="BACKUP_HOUR")
     backup_minute: int = Field(0, alias="BACKUP_MINUTE")
     backup_tmp_dir: str = Field("/tmp", alias="BACKUP_TMP_DIR")  # nosec B108 — container-local, override via env

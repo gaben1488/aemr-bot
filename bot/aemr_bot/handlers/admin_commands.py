@@ -230,3 +230,68 @@ def register(dp: Dispatcher) -> None:
         if not _is_admin_chat(event):
             return
         await event.message.answer(texts.OP_HELP)
+
+    @dp.message_created(Command("add_operators"))
+    async def cmd_add_operators(event: MessageCreated):
+        if not await _ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+            return
+        text = _get_text(event)
+        # /add_operators may be followed by either a single line or multiple
+        # lines — drop the command token and parse what's left.
+        parts = text.split(maxsplit=1)
+        body = parts[1] if len(parts) > 1 else ""
+        if not body.strip():
+            await event.message.answer(texts.OP_ADD_OPERATORS_USAGE)
+            return
+
+        valid_roles = {r.value for r in OperatorRole}
+        added = 0
+        updated = 0
+        errors: list[str] = []
+        actor_id = get_user_id(event)
+
+        async with session_scope() as session:
+            for raw_line in body.splitlines():
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = line.split(maxsplit=2)
+                if len(parts) < 3:
+                    errors.append(f"«{line}» — нужно: <max_user_id> <role> <ФИО>")
+                    continue
+                id_str, role_str, full_name = parts
+                try:
+                    target_id = int(id_str)
+                except ValueError:
+                    errors.append(f"«{line}» — max_user_id не число")
+                    continue
+                role_value = role_str.lower()
+                if role_value not in valid_roles:
+                    errors.append(
+                        f"«{line}» — роль «{role_str}» неизвестна, "
+                        f"доступны: {', '.join(sorted(valid_roles))}"
+                    )
+                    continue
+                role_enum = OperatorRole(role_value)
+                existed = await operators_service.get(session, target_id) is not None
+                await operators_service.upsert(
+                    session, max_user_id=target_id, full_name=full_name, role=role_enum
+                )
+                await operators_service.write_audit(
+                    session,
+                    operator_max_user_id=actor_id,
+                    action="operator_upsert",
+                    target=f"user max_id={target_id}",
+                    details={"role": role_value, "full_name": full_name},
+                )
+                if existed:
+                    updated += 1
+                else:
+                    added += 1
+
+        report = texts.OP_ADD_OPERATORS_RESULT.format(
+            added=added, updated=updated, errors=len(errors)
+        )
+        if errors:
+            report += "\n\nОшибки:\n" + "\n".join(f"• {e}" for e in errors)
+        await event.message.answer(report)

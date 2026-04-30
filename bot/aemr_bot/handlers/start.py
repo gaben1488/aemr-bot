@@ -1,11 +1,17 @@
+import logging
+
 from maxapi import Dispatcher
 from maxapi.types import BotStarted, Command, MessageCreated
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import operators as ops_service
+from aemr_bot.services import policy as policy_service
+from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import get_chat_id, get_first_name, get_user_id, reply
+
+log = logging.getLogger(__name__)
 
 
 async def _ensure_user(event):
@@ -28,6 +34,43 @@ async def cmd_help(event):
 
 async def cmd_menu(event):
     await reply(event, texts.WELCOME, attachments=[keyboards.main_menu()])
+
+
+async def cmd_policy(event):
+    """Send the privacy policy PDF to the citizen on demand."""
+    chat_id = get_chat_id(event)
+    if chat_id is None:
+        return
+
+    async with session_scope() as session:
+        token = await settings_store.get(session, policy_service.POLICY_TOKEN_KEY)
+        policy_url = await settings_store.get(session, "policy_url")
+
+    bot = getattr(event, "bot", None)
+
+    # Cold start safety: try to upload the PDF if the token hasn't been cached
+    # yet (e.g. first runs after deploy where startup upload silently failed).
+    if not token and bot is not None:
+        try:
+            token = await policy_service.ensure_uploaded(bot)
+        except Exception:
+            log.exception("on-demand policy upload failed")
+
+    if token and bot is not None:
+        try:
+            await bot.send_message(
+                chat_id=chat_id,
+                text=texts.POLICY_DELIVERED,
+                attachments=[policy_service.build_file_attachment(token)],
+            )
+            return
+        except Exception:
+            log.exception("policy file delivery failed; falling back to URL")
+
+    if policy_url:
+        await reply(event, texts.POLICY_FALLBACK_URL.format(policy_url=policy_url))
+    else:
+        await reply(event, texts.POLICY_UNAVAILABLE)
 
 
 async def cmd_forget(event):
@@ -65,6 +108,10 @@ def register(dp: Dispatcher) -> None:
     @dp.message_created(Command("forget"))
     async def _(event: MessageCreated):
         await cmd_forget(event)
+
+    @dp.message_created(Command("policy"))
+    async def _(event: MessageCreated):
+        await cmd_policy(event)
 
     @dp.message_created(Command("whoami"))
     async def _(event: MessageCreated):

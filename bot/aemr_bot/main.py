@@ -22,6 +22,28 @@ dp = Dispatcher()
 register_handlers(dp)
 
 
+def _install_polling_timeout(bot: Bot, timeout: int) -> None:
+    """Pin the long-poll timeout used by Dispatcher.start_polling.
+
+    maxapi calls bot.get_updates(marker=...) without timeout, falling back to
+    the server default. We override the bound method on this instance so every
+    GetUpdates request carries our timeout — which controls how long MAX holds
+    the request when there are no events. Tuning this trades empty-round-trip
+    rate against rate-limit headroom; see settings.polling_timeout_seconds.
+    """
+    original = bot.get_updates
+
+    async def get_updates_with_timeout(*args, **kwargs):
+        kwargs.setdefault("timeout", timeout)
+        return await original(*args, **kwargs)
+
+    bot.get_updates = get_updates_with_timeout  # type: ignore[method-assign]
+
+
+if settings.bot_mode == "polling":
+    _install_polling_timeout(bot, settings.polling_timeout_seconds)
+
+
 async def _seed_settings():
     async with session_scope() as session:
         await settings_store.seed_if_empty(session)
