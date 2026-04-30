@@ -12,10 +12,23 @@ DEFAULTS: dict[str, Any] = {
     "welcome_text": None,
     "consent_text": None,
     "policy_url": "https://example.org/privacy",
-    "electronic_reception_url": "https://example.org/reception",
-    "udth_schedule_url": "https://example.org/udth",
-    "appointment_text": "Приём граждан проводится по предварительной записи. Телефон записи: +7 (415-31) 0-00-00.",
+    "electronic_reception_url": "https://kamgov.ru/questions",
+    "udth_schedule_url": (
+        "http://udth.elizovomr.ru/storage/attachments/2025/12/30/9mP303lEBVH13yMj.pdf"
+    ),
+    "udth_schedule_intermunicipal_url": (
+        "https://kamgov.ru/mintrans/current_activities/"
+        "raspisania-dvizenia-passazirskogo-avtomobilnogo-transporta-"
+        "mezmunicipalnogo-soobsenia-v-kamcatskom-krae"
+    ),
+    "appointment_text": (
+        "Приём граждан временно исполняющим полномочия Главы Елизовского "
+        "района А.С. Гончаровым проводится два раза в месяц "
+        "(1 и 3 среда каждого месяца) по предварительной записи.\n\n"
+        "Запись на приём: 8 (415-31) 7-25-29."
+    ),
     "emergency_contacts": [],
+    "transport_dispatcher_contacts": [],
     "topics": [],
 }
 
@@ -27,8 +40,14 @@ SCHEMA: dict[str, dict] = {
     "policy_url": {"type": str, "url": True},
     "electronic_reception_url": {"type": str, "url": True},
     "udth_schedule_url": {"type": str, "url": True},
+    "udth_schedule_intermunicipal_url": {"type": str, "url": True},
     "appointment_text": {"type": str, "min_len": 1, "max_len": 2000},
     "emergency_contacts": {"type": list, "min_items": 1, "item_keys": {"name", "phone"}},
+    "transport_dispatcher_contacts": {
+        "type": list,
+        "min_items": 1,
+        "item_keys": {"routes", "phone"},
+    },
     "topics": {"type": list, "min_items": 1, "max_items": 30, "item_type": str},
 }
 
@@ -107,6 +126,8 @@ async def seed_if_empty(session: AsyncSession) -> None:
         seed_pairs["topics"] = topics
     if (contacts := _read_seed_json("contacts.json")) is not None:
         seed_pairs["emergency_contacts"] = contacts
+    if (dispatchers := _read_seed_json("transport_dispatchers.json")) is not None:
+        seed_pairs["transport_dispatcher_contacts"] = dispatchers
     if (welcome := _read_seed_text("welcome.md")) is not None:
         seed_pairs["welcome_text"] = welcome
     if (consent := _read_seed_text("consent.md")) is not None:

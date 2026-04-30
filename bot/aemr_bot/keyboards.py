@@ -87,11 +87,20 @@ def back_to_menu_keyboard():
 def contacts_menu_keyboard(
     electronic_reception_url: str,
     udth_schedule_url: str,
+    udth_schedule_intermunicipal_url: str | None = None,
 ):
     kb = InlineKeyboardBuilder()
     kb.row(LinkButton(text="🌐 Электронная приёмная", url=electronic_reception_url))
     kb.row(CallbackButton(text="📋 Приём граждан", payload="contacts:appointment"))
     kb.row(CallbackButton(text="🚨 Экстренные службы", payload="contacts:emergency"))
-    kb.row(LinkButton(text="🚌 Расписание автобусов УДТХ", url=udth_schedule_url))
+    kb.row(LinkButton(text="🚌 Муниципальные маршруты", url=udth_schedule_url))
+    if udth_schedule_intermunicipal_url:
+        kb.row(
+            LinkButton(
+                text="🚍 Межмуниципальные маршруты",
+                url=udth_schedule_intermunicipal_url,
+            )
+        )
+    kb.row(CallbackButton(text="📞 Диспетчерские автотранспорта", payload="contacts:dispatchers"))
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()

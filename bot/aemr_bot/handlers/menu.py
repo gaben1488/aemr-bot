@@ -71,10 +71,13 @@ async def open_contacts(event):
     async with session_scope() as session:
         recep = await settings_store.get(session, "electronic_reception_url")
         udth = await settings_store.get(session, "udth_schedule_url")
+        udth_inter = await settings_store.get(session, "udth_schedule_intermunicipal_url")
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.CONTACTS_MENU_TITLE,
-        attachments=[keyboards.contacts_menu_keyboard(recep, udth)],
+        attachments=[
+            keyboards.contacts_menu_keyboard(recep, udth, udth_inter)
+        ],
     )
 
 
@@ -100,6 +103,23 @@ async def open_emergency(event):
             phone = item.get("phone", "—")
             lines.append(f"• {name}: {phone}")
         body = "\n".join(lines)
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=body,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
+
+
+async def open_dispatchers(event):
+    async with session_scope() as session:
+        items = await settings_store.get(session, "transport_dispatcher_contacts") or []
+    if not items:
+        body = "Список диспетчерских скоро появится."
+    else:
+        body = "📞 Диспетчерские автотранспорта:\n\n" + "\n\n".join(
+            f"• {item.get('routes', '—')}\n  {item.get('phone', '—')}"
+            for item in items
+        )
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=body,
@@ -147,6 +167,11 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
     if payload == "contacts:emergency":
         await ack_callback(event)
         await open_emergency(event)
+        return True
+
+    if payload == "contacts:dispatchers":
+        await ack_callback(event)
+        await open_dispatchers(event)
         return True
 
     if payload.startswith("appeal:show:") and max_user_id is not None:
