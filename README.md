@@ -6,21 +6,72 @@
 
 Образец UX — бот «Солодов. Обратная связь» (правительство Камчатского края).
 
+## Quick start за пять минут
+
+Полный гайд для разработчика — в [DEVELOPER.md](docs/DEVELOPER.md). Здесь только кратчайший путь до «работает».
+
+**Prerequisites:** Docker Desktop с включённым WSL2 (для Windows), Git с доступом к этому репозиторию, аккаунт в MAX. Python 3.12 на хосте опционален — нужен только для `pytest` и помощников из `scripts/`.
+
+```bash
+git clone https://github.com/gaben1488/aemr-bot.git
+cd aemr-bot/infra
+cp .env.example .env
+```
+
+Открой `.env` и впиши минимум три значения:
+
+```ini
+BOT_TOKEN=<токен от @MasterBot в MAX>
+POSTGRES_PASSWORD=local-test-pass
+DATABASE_URL=postgresql+asyncpg://aemr:local-test-pass@db:5432/aemr
+```
+
+`BOT_TOKEN` получаешь у `@MasterBot` в MAX (`/newbot` → мастер). Документация: <https://dev.max.ru/docs-api>. `ADMIN_GROUP_ID` оставь пустым — заполнишь после первого старта (см. [SETUP.md](docs/SETUP.md)).
+
+Запустить:
+
+```bash
+docker compose up --build bot
+```
+
+В логах должно появиться `Starting in long polling mode` и `dispatcher Бот: @<твой_бот>`. После этого открой бот в MAX, нажми «Старт» — должно прилететь приветствие и три кнопки.
+
+**Прогнать тесты** (требует Postgres-контейнер):
+
+```bash
+docker compose up -d db
+cd ../bot
+DATABASE_URL=postgresql+asyncpg://aemr:local-test-pass@localhost:5432/aemr pytest -q
+```
+
+**Что делать дальше:**
+
+- [DEVELOPER.md](docs/DEVELOPER.md) — детальный гайд: вход в воронку, отладка, миграции, тесты с моком Bot.
+- [SETUP.md](docs/SETUP.md) — как добавить бота в админ-группу, получить `ADMIN_GROUP_ID`, зарегистрировать операторов через `/add_operators`.
+- [RUNBOOK.md](docs/RUNBOOK.md) — операционные процедуры: ответить, закрыть, выгрузить статистику, удалить ПДн, восстановиться из бэкапа.
+- [ADR-001](docs/ADR-001-architecture.md) и [PRD-mvp](docs/PRD-mvp.md) — архитектура и спецификация.
+- [docs/db-schema.md](docs/db-schema.md) — ER-диаграмма базы данных.
+
 ## Состав репозитория
 
 ```
 aemr-bot/
 ├─ docs/
-│  ├─ ADR-001-architecture.md     архитектурное решение MVP
+│  ├─ ADR-001-architecture.md     архитектурное решение MVP + изменения по фазам
 │  ├─ PRD-mvp.md                  спецификация продукта
-│  └─ PRIVACY.md                  политика обработки ПДн
+│  ├─ DEVELOPER.md                гайд для разработчика (полный)
+│  ├─ SETUP.md                    как настроить админ-группу и операторов
+│  ├─ RUNBOOK.md                  операционные процедуры координатора и ИТ
+│  ├─ PRIVACY.md                  политика обработки ПДн (+ PRIVACY.pdf)
+│  └─ db-schema.md                ER-диаграмма базы данных
 ├─ bot/                           Python-сервис: бот + БД + крон
-├─ infra/                         docker-compose, .env.example
-├─ seed/                          начальные данные (контакты, шаблоны)
+│  ├─ aemr_bot/                   пакет (handlers, services, db, utils)
+│  └─ tests/                      pytest на сервисный слой
+├─ infra/                         docker-compose, .env.example, Dockerfile, nginx
+├─ seed/                          стартовые данные (welcome, согласие, контакты, тематики, диспетчерские)
+├─ scripts/                       однократные утилиты (генерация PDF и т.п.)
 └─ .gitignore
 ```
-
-На текущей фазе готовы только `docs/`. Скелет кода — следующий шаг.
 
 ## Стек
 
