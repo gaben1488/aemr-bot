@@ -233,7 +233,13 @@ def register(dp: Dispatcher) -> None:
 
     @dp.message_created(Command("add_operators"))
     async def cmd_add_operators(event: MessageCreated):
-        if not await _ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        # IT-only: bulk role assignment is a privilege-escalation primitive
+        # (the actor controls the role string they hand out). Coordinator
+        # role intentionally lacks /erase and /setting; allowing it to grant
+        # IT here would let a coordinator promote themselves and then wipe
+        # PII or change live settings. Keep this in lockstep with /erase
+        # and /setting authorization.
+        if not await _ensure_role(event, OperatorRole.IT):
             return
         text = _get_text(event)
         # /add_operators may be followed by either a single line or multiple
@@ -273,6 +279,14 @@ def register(dp: Dispatcher) -> None:
                     )
                     continue
                 role_enum = OperatorRole(role_value)
+                # Defense-in-depth: never let an actor rewrite their own role
+                # row through this command. Role changes for self must go
+                # through psql / runbook escalation so they're explicit.
+                if actor_id is not None and target_id == actor_id:
+                    errors.append(
+                        f"«{line}» — нельзя изменить свою роль через эту команду"
+                    )
+                    continue
                 existed = await operators_service.get(session, target_id) is not None
                 await operators_service.upsert(
                     session, max_user_id=target_id, full_name=full_name, role=role_enum
