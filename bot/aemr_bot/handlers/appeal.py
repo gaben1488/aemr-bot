@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from typing import Any
 
 from maxapi import Dispatcher
@@ -33,7 +34,25 @@ from aemr_bot.utils.event import (
 
 log = logging.getLogger(__name__)
 
+# Citizen-name / address must contain at least one alphanumeric — guards
+# against "👍", "...", "`````" and similar one-glyph submissions.
+_HAS_ALNUM = re.compile(r"[A-Za-zА-Яа-яЁё0-9]")
+
 _collect_timers: dict[int, asyncio.Task] = {}
+_user_locks: dict[int, asyncio.Lock] = {}
+
+
+def _get_user_lock(max_user_id: int) -> asyncio.Lock:
+    """Per-user lock so concurrent submit/cancel/timer paths don't double-dispatch.
+
+    Single-instance only — if we ever scale to multiple bot processes, this
+    falls apart and we need pg_advisory_xact_lock or a Redis lock.
+    """
+    lock = _user_locks.get(max_user_id)
+    if lock is None:
+        lock = asyncio.Lock()
+        _user_locks[max_user_id] = lock
+    return lock
 
 
 async def recover_stuck_funnels(bot) -> int:
@@ -110,37 +129,63 @@ async def _relay_attachments_to_admin(
             log.exception("failed to build NewMessageLink for admin_mid=%s", admin_mid)
             link = None
 
-    try:
-        await bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=f"📎 Вложения к обращению #{appeal_id}",
-            attachments=relayable,
-            link=link,
+    # Chunk attachments per message — MAX server attachment limit isn't
+    # documented; staying under attachments_per_relay_message keeps each
+    # send_message comfortably within whatever server-side cap exists.
+    chunk_size = max(1, cfg.attachments_per_relay_message)
+    batches = [relayable[i:i + chunk_size] for i in range(0, len(relayable), chunk_size)]
+    total_batches = len(batches)
+    for idx, batch in enumerate(batches, start=1):
+        header = (
+            f"📎 Вложения к обращению #{appeal_id}"
+            if total_batches == 1
+            else f"📎 Вложения к обращению #{appeal_id} ({idx}/{total_batches})"
         )
-    except Exception:
-        log.exception("failed to relay attachments for appeal #%s", appeal_id)
+        try:
+            await bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=header,
+                attachments=batch,
+                link=link,
+            )
+        except Exception:
+            log.exception(
+                "failed to relay attachment batch %d/%d for appeal #%s",
+                idx, total_batches, appeal_id,
+            )
 
 
 async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool:
     """Create an Appeal from accumulated dialog_data, post the admin card,
     confirm to citizen by user_id. Returns True on persist+dispatch, False on
-    empty submission. Raises only on storage failure."""
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        data: dict[str, Any] = dict(user.dialog_data or {})
-        summary = "\n".join(data.get("summary_chunks") or []).strip()
-        attachments = data.get("attachments") or []
-        if not summary and not attachments:
-            return False
-        appeal = await appeals_service.create_appeal(
-            session,
-            user=user,
-            address=data.get("address", ""),
-            topic=data.get("topic", ""),
-            summary=summary,
-            attachments=attachments,
-        )
-        await users_service.reset_state(session, max_user_id)
+    empty submission. Raises only on storage failure.
+
+    Guarded by per-user asyncio.Lock so a double-click on «Отправить» (or a
+    timer firing while the user is also clicking submit) cannot create two
+    appeals — the second call sees IDLE state and bails.
+    """
+    async with _get_user_lock(max_user_id):
+        async with session_scope() as session:
+            user = await users_service.get_or_create(session, max_user_id=max_user_id)
+            # Idempotency: if state is already IDLE, the previous concurrent
+            # call already finalized this funnel — don't double-dispatch.
+            if user.dialog_state == DialogState.IDLE.value:
+                log.info("dispatch skipped for user %s — state already IDLE", max_user_id)
+                return False
+            data: dict[str, Any] = dict(user.dialog_data or {})
+            summary = "\n".join(data.get("summary_chunks") or []).strip()
+            attachments = data.get("attachments") or []
+            if not summary and not attachments:
+                return False
+            appeal = await appeals_service.create_appeal(
+                session,
+                user=user,
+                address=data.get("address", ""),
+                topic=data.get("topic", ""),
+                summary=summary,
+                attachments=attachments,
+            )
+            await users_service.reset_state(session, max_user_id)
 
     admin_mid = await _send_to_admin_card(bot, card_format.admin_card(appeal, user))
     if admin_mid:
@@ -405,7 +450,8 @@ async def _on_awaiting_contact(event, body, text_body, max_user_id, op_reply):
 
 async def _on_awaiting_name(event, body, text_body, max_user_id, op_reply):
     name = text_body.strip()[: cfg.name_max_chars]
-    if not name:
+    if not name or not _HAS_ALNUM.search(name):
+        # Empty / whitespace-only / emoji-only / punctuation-only — reject.
         await event.message.answer(texts.NAME_EMPTY)
         return
     async with session_scope() as session:
@@ -416,7 +462,7 @@ async def _on_awaiting_name(event, body, text_body, max_user_id, op_reply):
 
 async def _on_awaiting_address(event, body, text_body, max_user_id, op_reply):
     address = text_body.strip()[: cfg.address_max_chars]
-    if not address:
+    if not address or not _HAS_ALNUM.search(address):
         await event.message.answer(texts.ADDRESS_EMPTY)
         return
     async with session_scope() as session:
@@ -430,10 +476,36 @@ async def _on_awaiting_summary(event, body, text_body, max_user_id, op_reply):
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         data = dict(user.dialog_data or {})
+
         if chunk:
-            data.setdefault("summary_chunks", []).append(chunk)
+            existing_chunks: list[str] = data.setdefault("summary_chunks", [])
+            current_total = sum(len(c) for c in existing_chunks)
+            remaining = cfg.summary_max_chars - current_total
+            if remaining <= 0:
+                # Cap reached — drop silently. Logged for ops, not surfaced
+                # to citizen (would be noise; bot already has enough text).
+                log.info(
+                    "summary cap %d reached for user %s, dropping chunk of %d chars",
+                    cfg.summary_max_chars,
+                    max_user_id,
+                    len(chunk),
+                )
+            else:
+                existing_chunks.append(chunk[:remaining])
+
         if atts:
-            data.setdefault("attachments", []).extend(atts)
+            existing_atts: list = data.setdefault("attachments", [])
+            cap = cfg.attachments_max_per_appeal - len(existing_atts)
+            if cap <= 0:
+                log.info(
+                    "attachment cap %d reached for user %s, dropping %d attachments",
+                    cfg.attachments_max_per_appeal,
+                    max_user_id,
+                    len(atts),
+                )
+            else:
+                existing_atts.extend(atts[:cap])
+
         user.dialog_data = data
         await session.flush()
     _schedule_collect_timeout(event, max_user_id)

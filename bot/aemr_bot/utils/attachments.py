@@ -21,6 +21,11 @@ log = logging.getLogger(__name__)
 #   share/sticker — irrelevant for an appeal.
 RELAYABLE_TYPES = frozenset({"image", "video", "audio", "file", "location"})
 
+# Hard cap for vcf_info parser — a malformed or hostile contact attachment
+# could ship megabytes of text and make us splitlines() the whole thing
+# trying to find a TEL: prefix. 10k chars is far above any real vCard.
+VCF_INFO_MAX_CHARS = 10_000
+
 
 def _attachment_to_dict(att: Any) -> dict:
     if hasattr(att, "model_dump"):
@@ -95,7 +100,17 @@ def extract_phone(message: Any) -> str | None:
             vcf_info = vcf_info or payload.get("vcf_info") or payload.get("vcfInfo")
 
         if vcf_info:
-            for line in str(vcf_info).replace("\r\n", "\n").splitlines():
+            vcf_str = str(vcf_info)
+            if len(vcf_str) > VCF_INFO_MAX_CHARS:
+                # Hostile or malformed contact — don't splitlines() megabytes
+                # of text just to find a TEL: prefix.
+                log.warning(
+                    "vcf_info length %d exceeds %d; truncating before parse",
+                    len(vcf_str),
+                    VCF_INFO_MAX_CHARS,
+                )
+                vcf_str = vcf_str[:VCF_INFO_MAX_CHARS]
+            for line in vcf_str.replace("\r\n", "\n").splitlines():
                 upper = line.upper()
                 if upper.startswith("TEL"):
                     _, _, value = line.partition(":")

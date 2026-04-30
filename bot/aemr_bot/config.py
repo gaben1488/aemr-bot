@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     answer_max_chars: int = Field(300, alias="ANSWER_MAX_CHARS")
     name_max_chars: int = Field(120, alias="NAME_MAX_CHARS")
     address_max_chars: int = Field(500, alias="ADDRESS_MAX_CHARS")
+    # Per-appeal hard caps. summary 2000 leaves headroom inside the 4000-char
+    # admin card; 20 attachments is generous for a single citizen complaint.
+    summary_max_chars: int = Field(2000, alias="SUMMARY_MAX_CHARS")
+    attachments_max_per_appeal: int = Field(20, alias="ATTACHMENTS_MAX_PER_APPEAL")
+    # MAX server attachment-per-message limit isn't documented; chunk relay
+    # output to be safe.
+    attachments_per_relay_message: int = Field(10, alias="ATTACHMENTS_PER_RELAY_MESSAGE")
     recover_batch_size: int = Field(1000, alias="RECOVER_BATCH_SIZE")
 
     healthcheck_stale_seconds: int = Field(120, alias="HEALTHCHECK_STALE_SECONDS")
