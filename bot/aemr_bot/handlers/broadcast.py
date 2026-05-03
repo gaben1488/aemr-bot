@@ -108,15 +108,27 @@ def _drop_expired_wizards() -> None:
 
 async def _start_wizard(event) -> None:
     if not await _ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        log.info(
+            "broadcast: wizard NOT started — caller failed _ensure_role "
+            "(needs it/coordinator)"
+        )
         return
     _drop_expired_wizards()
     actor_id = get_user_id(event)
     if actor_id is None:
+        log.warning("broadcast: wizard NOT started — no user_id in event")
         return
     _wizards[actor_id] = _WizardState(step="awaiting_text")
-    await event.message.answer(
-        texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars)
-    )
+    log.info("broadcast: wizard started for operator max_user_id=%s", actor_id)
+    if event.message is not None:
+        await event.message.answer(
+            texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars)
+        )
+    else:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars),
+        )
 
 
 async def _handle_wizard_text(event, text_body: str) -> bool:
@@ -128,6 +140,10 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
     state = _wizards.get(actor_id)
     if state is None or state.step != "awaiting_text":
         return False
+    log.info(
+        "broadcast: wizard text accepted — operator=%s text_len=%d",
+        actor_id, len(text_body),
+    )
 
     if state.expired():
         _wizards.pop(actor_id, None)
@@ -207,6 +223,10 @@ async def _handle_confirm(event) -> None:
         )
         broadcast_id = broadcast.id
 
+    log.info(
+        "broadcast: confirmed by operator=%s — broadcast_id=%s subscribers=%d",
+        actor_id, broadcast_id, count,
+    )
     asyncio.create_task(_run_broadcast(event.bot, broadcast_id, state.text, count))
 
 

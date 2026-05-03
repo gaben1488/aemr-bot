@@ -152,3 +152,18 @@ def broadcast_stop_keyboard(broadcast_id: int):
         )
     )
     return kb.as_markup()
+
+
+def op_help_keyboard():
+    """Quick-action keyboard pinned in the admin chat — closest thing MAX has
+    to a Telegram-style menu button. Each callback fires the corresponding
+    flow without typing a command."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(text="📊 Статистика за сегодня", payload="op:stats_today")
+    )
+    kb.row(CallbackButton(text="📢 Сделать рассылку", payload="op:broadcast"))
+    kb.row(
+        CallbackButton(text="📋 Все команды", payload="op:help_full")
+    )
+    return kb.as_markup()

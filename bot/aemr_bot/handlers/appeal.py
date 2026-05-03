@@ -407,6 +407,22 @@ def register(dp: Dispatcher) -> None:
                 await broadcast_handler._handle_stop(event, bid)
                 return
 
+        # /op_help quick-action buttons.
+        if payload.startswith("op:"):
+            from aemr_bot.handlers import admin_commands, broadcast as broadcast_handler
+            if payload == "op:stats_today":
+                await ack_callback(event)
+                await admin_commands.run_stats_today(event)
+                return
+            if payload == "op:broadcast":
+                await ack_callback(event)
+                await broadcast_handler._start_wizard(event)
+                return
+            if payload == "op:help_full":
+                await ack_callback(event)
+                await admin_commands.show_full_help(event)
+                return
+
         # Fall through to menu/contacts/appeal-show handlers
         from aemr_bot.handlers import menu as menu_handlers
         await menu_handlers.handle_callback(event, payload, max_user_id)

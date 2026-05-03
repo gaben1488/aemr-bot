@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from maxapi import Dispatcher
@@ -13,6 +14,8 @@ from aemr_bot.services import settings_store
 from aemr_bot.services import stats as stats_service
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import get_chat_id, get_message_text, get_user_id
+
+log = logging.getLogger(__name__)
 
 
 def _is_admin_chat(event) -> bool:
@@ -55,6 +58,44 @@ def _parse_arg(text: str) -> str:
 def _get_text(event) -> str:
     """Read raw text from a command event (uses utils.event.get_message_text)."""
     return get_message_text(event)
+
+
+async def run_stats_today(event) -> None:
+    """Same payload as /stats today, but invokable from a callback button.
+    Reaches the same code path: sends the XLSX into the admin group."""
+    if not await _ensure_operator(event):
+        return
+    async with session_scope() as session:
+        content, title, count = await stats_service.build_xlsx(session, "today")
+    if count == 0:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id, text=texts.OP_STATS_EMPTY
+        )
+        return
+    filename = f"appeals_today_{datetime.now():%Y-%m-%d}.xlsx"
+    from aemr_bot.services import uploads
+    token = await uploads.upload_bytes(event.bot, content, suffix=".xlsx")
+    if token is None:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=(
+                f"Сформирован XLSX за {title} ({count} обращений), "
+                "но загрузить файл не удалось. См. логи бота."
+            ),
+        )
+        return
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=f"📊 Статистика {title} ({count} обращений). Файл: {filename}",
+        attachments=[uploads.file_attachment(token)],
+    )
+
+
+async def show_full_help(event) -> None:
+    """Plain-text /op_help, no keyboard. Triggered by «📋 Все команды» button."""
+    if not _is_admin_chat(event):
+        return
+    await event.bot.send_message(chat_id=cfg.admin_group_id, text=texts.OP_HELP)
 
 
 def register(dp: Dispatcher) -> None:
@@ -141,25 +182,45 @@ def register(dp: Dispatcher) -> None:
         if not await _ensure_role(event, OperatorRole.IT):
             return
         arg = _parse_arg(_get_text(event))
-        if not arg.startswith("max_user_id="):
-            await event.message.answer("Используйте: /erase max_user_id=<id>")
+        usage_msg = (
+            "Используйте: /erase max_user_id=<id> или /erase phone=+7..."
+        )
+        if not arg:
+            await event.message.answer(usage_msg)
             return
-        try:
-            target_id = int(arg.split("=", 1)[1])
-        except ValueError:
-            await event.message.answer("Некорректный max_user_id.")
+
+        target_id: int | None = None
+        if arg.startswith("max_user_id="):
+            try:
+                target_id = int(arg.split("=", 1)[1])
+            except ValueError:
+                await event.message.answer("Некорректный max_user_id.")
+                return
+            async with session_scope() as session:
+                ok = await users_service.erase_pdn(session, target_id)
+        elif arg.startswith("phone="):
+            phone = arg.split("=", 1)[1].strip()
+            if not phone:
+                await event.message.answer("Не указан телефон. Пример: /erase phone=+79001234567")
+                return
+            async with session_scope() as session:
+                target_id = await users_service.erase_pdn_by_phone(session, phone)
+            ok = target_id is not None
+        else:
+            await event.message.answer(usage_msg)
             return
-        async with session_scope() as session:
-            ok = await users_service.erase_pdn(session, target_id)
-            if ok:
+
+        if ok and target_id is not None:
+            async with session_scope() as session:
                 await operators_service.write_audit(
                     session,
                     operator_max_user_id=get_user_id(event),
                     action="erase",
                     target=f"user max_id={target_id}",
                 )
-        if ok:
-            await event.message.answer(texts.OP_USER_ERASED.format(max_user_id=target_id))
+            await event.message.answer(
+                texts.OP_USER_ERASED.format(max_user_id=target_id)
+            )
         else:
             await event.message.answer("Пользователь не найден.")
 
@@ -229,7 +290,26 @@ def register(dp: Dispatcher) -> None:
     async def cmd_op_help(event: MessageCreated):
         if not _is_admin_chat(event):
             return
-        await event.message.answer(texts.OP_HELP)
+        from aemr_bot import keyboards as kbds
+        from aemr_bot.utils.event import extract_message_id
+
+        sent = await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_HELP,
+            attachments=[kbds.op_help_keyboard()],
+        )
+        # Best-effort pin so the operator memo is always near the top of the
+        # admin group. Если уже что-то закреплено — pin перезапишет, MAX
+        # позволяет одно закреплённое сообщение на чат. Не критично если
+        # операция упадёт — координатор всегда может вызвать /op_help снова.
+        mid = extract_message_id(sent) if sent is not None else None
+        if mid:
+            try:
+                await event.bot.pin_message(
+                    chat_id=cfg.admin_group_id, message_id=mid, notify=False
+                )
+            except Exception:
+                log.exception("pin_message for /op_help failed")
 
     @dp.message_created(Command("add_operators"))
     async def cmd_add_operators(event: MessageCreated):

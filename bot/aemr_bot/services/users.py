@@ -105,3 +105,40 @@ async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
         )
     )
     return result.rowcount > 0
+
+
+def _normalize_phone(phone: str) -> str:
+    """Match-friendly phone normalization: keep digits, drop everything else.
+
+    Citizens hand in phones in any format the contact button gives MAX —
+    «+7 (415-31) 7-25-29», «89001234567», «79001234567». Operators in the
+    admin chat type whatever they remember. We compare digits-only and
+    optionally trim a leading 7/8 country prefix.
+    """
+    digits = "".join(ch for ch in phone if ch.isdigit())
+    if len(digits) == 11 and digits[0] in {"7", "8"}:
+        digits = digits[1:]
+    return digits
+
+
+async def find_by_phone(session: AsyncSession, phone: str) -> User | None:
+    """Look up a user by phone, tolerant to formatting differences."""
+    target = _normalize_phone(phone)
+    if not target:
+        return None
+    candidates = await session.scalars(select(User).where(User.phone.is_not(None)))
+    for user in candidates:
+        if _normalize_phone(user.phone or "") == target:
+            return user
+    return None
+
+
+async def erase_pdn_by_phone(session: AsyncSession, phone: str) -> int | None:
+    """Erase by phone — returns the max_user_id of the affected row, or None
+    if no match. Caller can use the id for /erase confirmation message
+    and audit log."""
+    user = await find_by_phone(session, phone)
+    if user is None:
+        return None
+    ok = await erase_pdn(session, user.max_user_id)
+    return user.max_user_id if ok else None

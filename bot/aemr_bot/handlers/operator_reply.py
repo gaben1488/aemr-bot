@@ -53,16 +53,29 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
     """Operator replied to the admin-group card. Returns True if handled."""
     target_mid = _extract_reply_target_mid(event)
     if target_mid is None:
+        log.info(
+            "operator_reply: no reply-link in event.message — message ignored "
+            "(operator wrote in admin group without using reply/swipe)"
+        )
         return False
 
     author_id = get_user_id(event)
     if author_id is None:
+        log.warning("operator_reply: no user_id in event")
         return False
 
     async with session_scope() as session:
         operator = await operators_service.get(session, author_id)
         if operator is None:
+            log.info(
+                "operator_reply: user_id=%s replied but is not in operators table",
+                author_id,
+            )
             return False
+        log.info(
+            "operator_reply: detected — operator_id=%s reply_to_mid=%s text_len=%d",
+            operator.id, target_mid, len(text),
+        )
 
         appeal = await appeals_service.get_by_admin_message_id(session, target_mid)
         if appeal is None:
