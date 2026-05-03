@@ -15,21 +15,34 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import get_chat_id, get_user_id
+from aemr_bot.utils.event import get_chat_id, get_message_link, get_user_id
 
 log = logging.getLogger(__name__)
 
 
-def _extract_reply_target_mid(message_body) -> str | None:
-    """Pull mid of the message being replied to from a MAX message body."""
-    link = getattr(message_body, "link", None)
+def _extract_reply_target_mid(event) -> str | None:
+    """Pull `mid` of the message being replied to.
+
+    Verified against love-apples/maxapi `Message.link: LinkedMessage | None`
+    (NOT `MessageBody.link` — body never had this field, that was a bug from
+    the initial integration). Reply detection therefore must read from the
+    Message object, which lives at `event.message.link`. We accept dict
+    fallback in case of schema drift, and tolerate enum vs string for `type`.
+    """
+    link = get_message_link(event)
     if link is None:
         return None
+
     link_type = getattr(link, "type", None)
     if link_type is None and isinstance(link, dict):
         link_type = link.get("type")
-    if link_type != "reply":
+    if link_type is None:
         return None
+    # MessageLinkType.REPLY may arrive as the StrEnum ("reply"), as the enum
+    # member, or as the bare string. Coerce both sides to lowercase strings.
+    if str(link_type).lower().endswith("reply") is False:
+        return None
+
     mid = getattr(link, "mid", None)
     if mid is None and isinstance(link, dict):
         mid = link.get("mid")
@@ -38,7 +51,7 @@ def _extract_reply_target_mid(message_body) -> str | None:
 
 async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
     """Operator replied to the admin-group card. Returns True if handled."""
-    target_mid = _extract_reply_target_mid(body)
+    target_mid = _extract_reply_target_mid(event)
     if target_mid is None:
         return False
 

@@ -53,6 +53,7 @@ def admin_card(appeal: Appeal, user: User) -> str:
         address=appeal.address or "—",
         topic=appeal.topic or "—",
         summary=appeal.summary or "—",
+        answer_limit=settings.answer_max_chars,
     )
     if summary_line:
         body = f"{body}\n──────────\n{summary_line}"
