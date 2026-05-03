@@ -62,14 +62,24 @@ def _extract_reply_target_mid(event) -> str | None:
         log.info("operator_reply: link.type=%r is not reply — skip", link_type)
         return None
 
-    mid = getattr(link, "mid", None)
+    # In current love-apples/maxapi LinkedMessage doesn't expose `mid` at the
+    # top level — the original-message id lives in the nested MessageBody at
+    # link.message.mid. Older revisions sometimes exposed link.mid directly,
+    # so we fall through to that as a backup. Same chain for dict-shape link
+    # if pydantic schema drifts back to JSON dump.
+    mid = None
+    inner = getattr(link, "message", None)
+    if inner is not None:
+        mid = getattr(inner, "mid", None)
     if mid is None and isinstance(link, dict):
-        mid = link.get("mid")
+        inner_dict = link.get("message")
+        if isinstance(inner_dict, dict):
+            mid = inner_dict.get("mid")
     if mid is None:
-        # Last branch we hadn't logged. If the user reports «reply not working»
-        # and only this branch fires, we'll see it here. Likely cause: maxapi
-        # exposes the original-message id under a different attribute name
-        # (e.g. `original_mid`, `reply_to_mid`).
+        mid = getattr(link, "mid", None)
+        if mid is None and isinstance(link, dict):
+            mid = link.get("mid")
+    if mid is None:
         try:
             link_repr = (
                 link.model_dump(by_alias=False)
@@ -79,7 +89,7 @@ def _extract_reply_target_mid(event) -> str | None:
         except Exception:
             link_repr = repr(link)
         log.info(
-            "operator_reply: link.type=reply but mid is None — link=%r",
+            "operator_reply: link.type=reply but no mid anywhere — link=%r",
             link_repr,
         )
         return None
