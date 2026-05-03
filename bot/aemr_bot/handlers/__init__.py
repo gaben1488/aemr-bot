@@ -1,7 +1,14 @@
 from maxapi import Dispatcher
 from maxapi.filters.middleware import BaseMiddleware
 
-from aemr_bot.handlers import admin_commands, appeal, menu, operator_reply, start
+from aemr_bot.handlers import (
+    admin_commands,
+    appeal,
+    broadcast,
+    menu,
+    operator_reply,
+    start,
+)
 from aemr_bot.services import idempotency
 
 
@@ -45,3 +52,4 @@ def register_handlers(dp: Dispatcher) -> None:
     appeal.register(dp)
     operator_reply.register(dp)
     admin_commands.register(dp)
+    broadcast.register(dp)

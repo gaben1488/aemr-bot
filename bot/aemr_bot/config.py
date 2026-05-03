@@ -48,6 +48,18 @@ class Settings(BaseSettings):
     # lower = faster startup-shutdown reaction window. Server cap is 90s.
     polling_timeout_seconds: int = Field(30, alias="POLLING_TIMEOUT_SECONDS", ge=0, le=90)
 
+    # Broadcast / subscription. Rate-limit стоит ниже MAX-лимита 2 RPS, чтобы
+    # обычная активность бота (ответы оператора, новые карточки) не упиралась
+    # в потолок одновременно с рассылкой.
+    broadcast_max_chars: int = Field(1000, alias="BROADCAST_MAX_CHARS")
+    broadcast_rate_limit_per_sec: float = Field(
+        1.0, alias="BROADCAST_RATE_LIMIT_PER_SEC"
+    )
+    broadcast_progress_update_sec: int = Field(
+        5, alias="BROADCAST_PROGRESS_UPDATE_SEC"
+    )
+    broadcast_wizard_ttl_sec: int = Field(300, alias="BROADCAST_WIZARD_TTL_SEC")
+
     backup_hour: int = Field(3, alias="BACKUP_HOUR")
     backup_minute: int = Field(0, alias="BACKUP_MINUTE")
     backup_tmp_dir: str = Field("/tmp", alias="BACKUP_TMP_DIR")  # nosec B108 — container-local, override via env

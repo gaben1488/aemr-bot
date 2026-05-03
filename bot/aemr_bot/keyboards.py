@@ -90,6 +90,8 @@ def back_to_menu_keyboard():
 def useful_info_keyboard(
     udth_schedule_url: str | None = None,
     udth_schedule_intermunicipal_url: str | None = None,
+    *,
+    subscribe_label: str = "🔔 Подписаться на новости",
 ):
     kb = InlineKeyboardBuilder()
     kb.row(
@@ -113,5 +115,40 @@ def useful_info_keyboard(
             payload="info:dispatchers",
         )
     )
+    kb.row(CallbackButton(text=subscribe_label, payload="info:subscribe_toggle"))
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
+    return kb.as_markup()
+
+
+def broadcast_unsubscribe_keyboard():
+    """Inline button under each broadcast message — one-tap unsubscribe."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="🔕 Отписаться от рассылки",
+            payload="broadcast:unsubscribe",
+        )
+    )
+    return kb.as_markup()
+
+
+def broadcast_confirm_keyboard():
+    """Wizard step — operator confirms or aborts the prepared broadcast."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(text="✅ Разослать", payload="broadcast:confirm"),
+        CallbackButton(text="❌ Отмена", payload="broadcast:abort"),
+    )
+    return kb.as_markup()
+
+
+def broadcast_stop_keyboard(broadcast_id: int):
+    """Emergency-stop button visible to all operators while a send is running."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="⛔ Экстренно остановить",
+            payload=f"broadcast:stop:{broadcast_id}",
+        )
+    )
     return kb.as_markup()

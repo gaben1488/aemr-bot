@@ -5,6 +5,7 @@ from maxapi.types import BotStarted, Command, MessageCreated
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
+from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as ops_service
 from aemr_bot.services import policy as policy_service
 from aemr_bot.services import settings_store
@@ -82,6 +83,33 @@ async def cmd_policy(event):
         await reply(event, texts.POLICY_UNAVAILABLE)
 
 
+async def cmd_subscribe(event):
+    max_user_id = get_user_id(event)
+    if max_user_id is None:
+        return
+    async with session_scope() as session:
+        await users_service.get_or_create(session, max_user_id=max_user_id)
+        already = await broadcasts_service.is_subscribed(session, max_user_id)
+        if already:
+            await reply(event, texts.SUBSCRIBE_ALREADY_ON)
+            return
+        await broadcasts_service.set_subscription(session, max_user_id, True)
+    await reply(event, texts.SUBSCRIBE_CONFIRMED)
+
+
+async def cmd_unsubscribe(event):
+    max_user_id = get_user_id(event)
+    if max_user_id is None:
+        return
+    async with session_scope() as session:
+        already = await broadcasts_service.is_subscribed(session, max_user_id)
+        if not already:
+            await reply(event, texts.UNSUBSCRIBE_ALREADY_OFF)
+            return
+        await broadcasts_service.set_subscription(session, max_user_id, False)
+    await reply(event, texts.UNSUBSCRIBE_CONFIRMED)
+
+
 async def cmd_forget(event):
     max_user_id = get_user_id(event)
     if max_user_id is None:
@@ -121,6 +149,14 @@ def register(dp: Dispatcher) -> None:
     @dp.message_created(Command("policy"))
     async def _(event: MessageCreated):
         await cmd_policy(event)
+
+    @dp.message_created(Command("subscribe"))
+    async def _(event: MessageCreated):
+        await cmd_subscribe(event)
+
+    @dp.message_created(Command("unsubscribe"))
+    async def _(event: MessageCreated):
+        await cmd_unsubscribe(event)
 
     @dp.message_created(Command("whoami"))
     async def _(event: MessageCreated):

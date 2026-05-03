@@ -79,6 +79,32 @@ erDiagram
         jsonb value
         timestamptz updated_at
     }
+
+    broadcasts ||--o{ broadcast_deliveries : "broadcast_id"
+    operators ||--o{ broadcasts : "created_by_operator_id"
+    users ||--o{ broadcast_deliveries : "user_id"
+
+    broadcasts {
+        int id PK
+        int created_by_operator_id FK
+        text text
+        int subscriber_count_at_start
+        timestamptz started_at
+        timestamptz finished_at
+        string status
+        int delivered_count
+        int failed_count
+        string admin_message_id
+        timestamptz created_at
+    }
+
+    broadcast_deliveries {
+        int id PK
+        int broadcast_id FK
+        int user_id FK
+        timestamptz delivered_at
+        text error
+    }
 ```
 
 ## Таблицы по назначению
@@ -92,6 +118,8 @@ erDiagram
 | `events` | Лог сырых Update от MAX для idempotency и debugging | 30 дней |
 | `audit_log` | Действия операторов (ответ, закрытие, удаление ПДн, изменение настроек) | бессрочно |
 | `settings` | Редактируемые из БД параметры (URL электронной приёмной, тексты, контакты) | бессрочно |
+| `broadcasts` | Метаданные рассылок: текст, кто отправил, счётчики, статус | бессрочно |
+| `broadcast_deliveries` | По одной строке на каждую попытку доставки (житель × рассылка) | бессрочно (рассмотрим ретенцию по жалобам) |
 
 ## Ключевые инварианты
 

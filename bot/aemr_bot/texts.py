@@ -118,8 +118,25 @@ HELP_USER = (
     "/menu — главное меню\n"
     "/help — эта справка\n"
     "/policy — политика обработки персональных данных (PDF)\n"
+    "/subscribe — подписаться на новости АЕМР\n"
+    "/unsubscribe — отписаться от новостей\n"
     "/forget — запросить удаление моих данных"
 )
+
+SUBSCRIBE_BUTTON_ON = "🔔 Подписаться на новости"
+SUBSCRIBE_BUTTON_OFF = "🔕 Отписаться от новостей"
+
+SUBSCRIBE_CONFIRMED = (
+    "Готово, Вы подписаны на новости Администрации Елизовского "
+    "муниципального района. Отписаться можно в любой момент — "
+    "командой /unsubscribe или кнопкой под рассылкой."
+)
+SUBSCRIBE_ALREADY_ON = "Вы уже подписаны на новости. /unsubscribe — отписаться."
+UNSUBSCRIBE_CONFIRMED = "Подписка отключена. Вернуть — командой /subscribe."
+UNSUBSCRIBE_ALREADY_OFF = "Вы не подписаны. /subscribe — подписаться."
+
+BROADCAST_HEADER = "📢 Объявление от Администрации Елизовского муниципального района"
+BROADCAST_UNSUBSCRIBE_BUTTON = "🔕 Отписаться от рассылки"
 
 POLICY_DELIVERED = (
     "Политика обработки персональных данных Администрации Елизовского "
@@ -189,3 +206,43 @@ OP_SETTING_NOT_FOUND = (
     "Например: policy_url, sla_response_hours, electronic_reception_url."
 )
 OP_STATS_EMPTY = "За выбранный период обращений не было."
+
+# Broadcast / рассылка ---------------------------------------------------------
+
+OP_BROADCAST_PROMPT = (
+    "Введите текст рассылки одним сообщением. Лимит {limit} символов. "
+    "/cancel чтобы отменить."
+)
+OP_BROADCAST_TOO_LONG = (
+    "Текст длиннее {limit} символов (сейчас {actual}). "
+    "Сократите и пришлите ещё раз."
+)
+OP_BROADCAST_CANCELLED_BY_USER = "Подготовка рассылки отменена."
+OP_BROADCAST_NO_SUBSCRIBERS = (
+    "Подписчиков нет, рассылать некому. /broadcast — попробовать позже."
+)
+OP_BROADCAST_PREVIEW = (
+    "📢 Предпросмотр:\n──────────\n{text}\n──────────\n"
+    "Разослать {count} подписчикам?"
+)
+OP_BROADCAST_STARTED = "Рассылка #{number} запущена.\n⏳ 0/{total}"
+OP_BROADCAST_PROGRESS = (
+    "Рассылка #{number}\n"
+    "⏳ {delivered}/{total} доставлено{failed_suffix}"
+)
+OP_BROADCAST_FAILED_SUFFIX = ", {failed} не доставлено"
+OP_BROADCAST_DONE = (
+    "✅ Рассылка #{number} завершена.\n"
+    "Доставлено: {delivered} из {total}.{failed_line}"
+)
+OP_BROADCAST_FAILED_LINE = "\nНе доставлено: {failed}."
+OP_BROADCAST_CANCELLED = (
+    "⛔ Рассылка #{number} остановлена.\n"
+    "Доставлено до остановки: {delivered} из {total}."
+)
+OP_BROADCAST_LIST_EMPTY = "Рассылок ещё не было."
+OP_BROADCAST_LIST_HEADER = "Последние рассылки:\n"
+OP_BROADCAST_LIST_ITEM = "#{number} · {created_at} · {status} · {delivered}/{total}"
+OP_BROADCAST_WIZARD_EXPIRED = (
+    "Ввод текста занял слишком долго, мастер закрыт. /broadcast — начать заново."
+)

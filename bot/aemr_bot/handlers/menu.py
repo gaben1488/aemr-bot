@@ -3,10 +3,11 @@ from maxapi import Dispatcher
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import appeals as appeals_service
+from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import card_format
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import ack_callback, get_chat_id
+from aemr_bot.utils.event import ack_callback, get_chat_id, get_user_id
 
 
 async def open_main_menu(event):
@@ -70,13 +71,46 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
 
 
 async def open_useful_info(event):
+    max_user_id = get_user_id(event)
     async with session_scope() as session:
         udth = await settings_store.get(session, "udth_schedule_url")
         udth_inter = await settings_store.get(session, "udth_schedule_intermunicipal_url")
+        subscribed = (
+            await broadcasts_service.is_subscribed(session, max_user_id)
+            if max_user_id is not None
+            else False
+        )
+    label = (
+        texts.SUBSCRIBE_BUTTON_OFF if subscribed else texts.SUBSCRIBE_BUTTON_ON
+    )
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.USEFUL_INFO_TITLE,
-        attachments=[keyboards.useful_info_keyboard(udth, udth_inter)],
+        attachments=[
+            keyboards.useful_info_keyboard(udth, udth_inter, subscribe_label=label)
+        ],
+    )
+
+
+async def toggle_subscription(event, max_user_id: int) -> None:
+    async with session_scope() as session:
+        await users_service.get_or_create(session, max_user_id=max_user_id)
+        currently = await broadcasts_service.is_subscribed(session, max_user_id)
+        await broadcasts_service.set_subscription(session, max_user_id, not currently)
+    confirmation = (
+        texts.UNSUBSCRIBE_CONFIRMED if currently else texts.SUBSCRIBE_CONFIRMED
+    )
+    await event.bot.send_message(chat_id=get_chat_id(event), text=confirmation)
+
+
+async def handle_broadcast_unsubscribe(event, max_user_id: int) -> None:
+    """One-tap unsubscribe via the button under each broadcast message."""
+    async with session_scope() as session:
+        already = await broadcasts_service.is_subscribed(session, max_user_id)
+        if already:
+            await broadcasts_service.set_subscription(session, max_user_id, False)
+    await event.bot.send_message(
+        chat_id=get_chat_id(event), text=texts.UNSUBSCRIBE_CONFIRMED
     )
 
 
@@ -183,6 +217,16 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
     if payload == "info:dispatchers":
         await ack_callback(event)
         await open_dispatchers(event)
+        return True
+
+    if payload == "info:subscribe_toggle" and max_user_id is not None:
+        await ack_callback(event)
+        await toggle_subscription(event, max_user_id)
+        return True
+
+    if payload == "broadcast:unsubscribe" and max_user_id is not None:
+        await ack_callback(event)
+        await handle_broadcast_unsubscribe(event, max_user_id)
         return True
 
     if payload.startswith("appeal:show:") and max_user_id is not None:

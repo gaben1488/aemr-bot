@@ -49,6 +49,9 @@ class User(Base):
     phone: Mapped[str | None] = mapped_column(String(32))
     consent_pdn_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    subscribed_broadcast: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
     dialog_state: Mapped[str] = mapped_column(String(32), default=DialogState.IDLE.value, server_default=DialogState.IDLE.value)
     dialog_data: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -130,3 +133,53 @@ class Setting(Base):
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[dict | list | str | int | float | bool | None] = mapped_column(JSONB)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class BroadcastStatus(StrEnum):
+    DRAFT = "draft"
+    SENDING = "sending"
+    DONE = "done"
+    CANCELLED = "cancelled"
+    FAILED = "failed"
+
+
+class Broadcast(Base):
+    __tablename__ = "broadcasts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_by_operator_id: Mapped[int | None] = mapped_column(
+        ForeignKey("operators.id", ondelete="SET NULL")
+    )
+    text: Mapped[str] = mapped_column(Text)
+    subscriber_count_at_start: Mapped[int]
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(
+        String(16), default=BroadcastStatus.DRAFT.value, server_default=BroadcastStatus.DRAFT.value, index=True
+    )
+    delivered_count: Mapped[int] = mapped_column(default=0, server_default="0")
+    failed_count: Mapped[int] = mapped_column(default=0, server_default="0")
+    admin_message_id: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+
+    deliveries: Mapped[list["BroadcastDelivery"]] = relationship(
+        back_populates="broadcast", cascade="all, delete-orphan"
+    )
+
+
+class BroadcastDelivery(Base):
+    __tablename__ = "broadcast_deliveries"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    broadcast_id: Mapped[int] = mapped_column(
+        ForeignKey("broadcasts.id", ondelete="CASCADE"), index=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error: Mapped[str | None] = mapped_column(Text)
+
+    broadcast: Mapped[Broadcast] = relationship(back_populates="deliveries")

@@ -387,6 +387,26 @@ def register(dp: Dispatcher) -> None:
             await _finalize_appeal(event, max_user_id)
             return
 
+        # Broadcast wizard callbacks (operator-side) live in their own handler;
+        # delegate so we don't register a second @dp.message_callback().
+        if payload.startswith("broadcast:") and not payload.startswith(
+            "broadcast:unsubscribe"
+        ):
+            from aemr_bot.handlers import broadcast as broadcast_handler
+            if payload == "broadcast:confirm":
+                await broadcast_handler._handle_confirm(event)
+                return
+            if payload == "broadcast:abort":
+                await broadcast_handler._handle_abort(event)
+                return
+            if payload.startswith("broadcast:stop:"):
+                try:
+                    bid = int(payload.split(":", 2)[2])
+                except (IndexError, ValueError):
+                    return
+                await broadcast_handler._handle_stop(event, bid)
+                return
+
         # Fall through to menu/contacts/appeal-show handlers
         from aemr_bot.handlers import menu as menu_handlers
         await menu_handlers.handle_callback(event, payload, max_user_id)
@@ -406,6 +426,14 @@ def register(dp: Dispatcher) -> None:
         body = get_message_body(event)
 
         if cfg.admin_group_id and chat_id == cfg.admin_group_id:
+            # Broadcast wizard step «awaiting_text» captures the next plain
+            # message from this operator before it falls through to reply
+            # handling. Other messages (replies on cards, regular chat) keep
+            # going to operator_reply as before.
+            from aemr_bot.handlers import broadcast as broadcast_handler
+            consumed = await broadcast_handler._handle_wizard_text(event, text_body)
+            if consumed:
+                return
             await op_reply.handle_operator_reply(event, body, text_body)
             return
 
