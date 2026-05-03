@@ -40,5 +40,5 @@ async def ensure_uploaded(bot, *, force: bool = False) -> str | None:
     return token
 
 
-def build_file_attachment(token: str) -> dict:
+def build_file_attachment(token: str):
     return uploads.file_attachment(token)

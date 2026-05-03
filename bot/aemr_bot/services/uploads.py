@@ -77,6 +77,23 @@ async def upload_bytes(bot, content: bytes, suffix: str = ".bin") -> str | None:
             pass
 
 
-def file_attachment(token: str) -> dict:
-    """Serialize a file-type attachment for /messages."""
-    return {"type": "file", "payload": {"token": token}}
+def file_attachment(token: str):
+    """Build a file-type attachment for `bot.send_message(attachments=...)`.
+
+    Earlier revisions of this function returned a plain dict. That worked on
+    newer maxapi releases (which special-case dict items in send_message) but
+    crashed on the version pinned in our container with
+    `AttributeError: 'dict' object has no attribute 'model_dump'` — that
+    revision iterates attachments and unconditionally calls `att.model_dump()`,
+    so every item must be a Pydantic model. Returning AttachmentUpload
+    directly works on both flavors: send_message either calls
+    `att.model_dump()` (older path) or recognizes it as AttachmentUpload via
+    isinstance check (newer path).
+    """
+    from maxapi.enums.upload_type import UploadType
+    from maxapi.types.attachments.upload import AttachmentPayload, AttachmentUpload
+
+    return AttachmentUpload(
+        type=UploadType.FILE,
+        payload=AttachmentPayload(token=token),
+    )
