@@ -28,10 +28,7 @@ services:
       - "127.0.0.1:8080:8080"
     restart: unless-stopped
 
-  # Webhook stack — nginx + certbot. Поднимается только при работе бота
-  # в webhook-режиме (BOT_MODE=webhook). На MVP в polling-режиме не нужен,
-  # поэтому изолирован в profile "webhook" и по умолчанию не запускается.
-  # Запуск: `docker compose --profile webhook up -d`.
+  # Webhook-only stack; enable with: docker compose --profile webhook up -d
   nginx:
     profiles: ["webhook"]
     image: nginx:1.27-alpine

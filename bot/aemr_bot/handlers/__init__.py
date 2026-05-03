@@ -15,29 +15,26 @@ class IdempotencyMiddleware(BaseMiddleware):
 
 
 def _attach_outer_middleware(dp: Dispatcher, middleware: BaseMiddleware) -> None:
-    """Attach an outer middleware compatible with both maxapi attribute names.
+    """Attach a middleware as outer across maxapi versions.
 
-    Newer maxapi (≥ post-2025-07) exposes a list `dp.outer_middlewares`.
-    Older 0.6.0-ish revisions only had a singular `dp.outer_middleware`
-    (sometimes a list, sometimes a single value). We probe in order and
-    fall back to the public method if both attributes are missing.
+    The shape differs between releases: 0.9.18+ exposes a callable method
+    `outer_middleware(mw)`; HEAD has a list `outer_middlewares`; older
+    0.9.0–0.9.17 only had `middlewares`, where outer means insert-at-front.
     """
+    add = getattr(dp, "outer_middleware", None)
+    if callable(add):
+        add(middleware)
+        return
     bucket = getattr(dp, "outer_middlewares", None)
     if isinstance(bucket, list):
         bucket.append(middleware)
         return
-    bucket = getattr(dp, "outer_middleware", None)
+    bucket = getattr(dp, "middlewares", None)
     if isinstance(bucket, list):
-        bucket.append(middleware)
-        return
-    register = getattr(dp, "register_outer_middleware", None)
-    if callable(register):
-        register(middleware)
+        bucket.insert(0, middleware)
         return
     raise RuntimeError(
-        "maxapi.Dispatcher does not expose an outer-middleware hook in any "
-        "known shape — verify maxapi version (need a release that supports "
-        "outer middlewares)."
+        "maxapi.Dispatcher exposes no middleware hook — check installed version"
     )
 
 
