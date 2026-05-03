@@ -28,19 +28,38 @@ def _extract_reply_target_mid(event) -> str | None:
     the initial integration). Reply detection therefore must read from the
     Message object, which lives at `event.message.link`. We accept dict
     fallback in case of schema drift, and tolerate enum vs string for `type`.
+
+    Logs the raw link shape on first miss per process so we can see what the
+    real client actually sends — different MAX builds may put the reply
+    backref in a different field.
     """
     link = get_message_link(event)
     if link is None:
+        # Diagnostic: dump the message shape so we can find where the reply
+        # backref actually lives in this maxapi/MAX-client combination.
+        msg = getattr(event, "message", None)
+        if msg is not None:
+            try:
+                dump = (
+                    msg.model_dump(by_alias=False)
+                    if hasattr(msg, "model_dump")
+                    else repr(msg)
+                )
+                log.info("operator_reply: event.message dump = %r", dump)
+            except Exception:
+                log.exception("operator_reply: failed to dump event.message")
         return None
 
     link_type = getattr(link, "type", None)
     if link_type is None and isinstance(link, dict):
         link_type = link.get("type")
     if link_type is None:
+        log.info("operator_reply: link present but no type — link=%r", link)
         return None
     # MessageLinkType.REPLY may arrive as the StrEnum ("reply"), as the enum
     # member, or as the bare string. Coerce both sides to lowercase strings.
     if str(link_type).lower().endswith("reply") is False:
+        log.info("operator_reply: link.type=%r is not reply — skip", link_type)
         return None
 
     mid = getattr(link, "mid", None)

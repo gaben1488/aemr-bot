@@ -282,11 +282,45 @@ async def _send_one(bot, user, broadcast_id: int, body_text: str) -> str | None:
 
 async def _run_broadcast(bot, broadcast_id: int, text: str, total: int) -> None:
     """Background task: ship a prepared broadcast to all eligible subscribers,
-    edit a progress message in the admin group, honor the cancel flag."""
+    edit a progress message in the admin group, honor the cancel flag.
 
+    All errors swallowed and logged — this runs from asyncio.create_task,
+    so an unhandled exception would otherwise be silent until garbage
+    collection.
+    """
+    try:
+        await _run_broadcast_impl(bot, broadcast_id, text, total)
+    except Exception:
+        log.exception(
+            "broadcast: _run_broadcast_impl crashed for broadcast_id=%s",
+            broadcast_id,
+        )
+        # Best-effort flip status to failed so /broadcast list shows it.
+        try:
+            async with session_scope() as session:
+                await broadcasts_service.mark_finished(
+                    session,
+                    broadcast_id,
+                    status=BroadcastStatus.FAILED,
+                    delivered=0,
+                    failed=0,
+                )
+        except Exception:
+            log.exception(
+                "broadcast: failed to mark broadcast_id=%s as failed",
+                broadcast_id,
+            )
+
+
+async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> None:
     body = f"{texts.BROADCAST_HEADER}\n\n{text}"
     delivered = 0
     failed = 0
+
+    log.info(
+        "broadcast: starting send loop — broadcast_id=%s total=%d",
+        broadcast_id, total,
+    )
 
     # Start: post header in admin group, capture admin_message_id for edits.
     sent = None
@@ -299,6 +333,10 @@ async def _run_broadcast(bot, broadcast_id: int, text: str, total: int) -> None:
     except Exception:
         log.exception("failed to post broadcast start in admin group")
     admin_mid = extract_message_id(sent) if sent is not None else None
+    log.info(
+        "broadcast: admin start-message admin_mid=%s (None means edit_message will be skipped)",
+        admin_mid,
+    )
 
     async with session_scope() as session:
         await broadcasts_service.mark_started(session, broadcast_id, admin_mid)
@@ -378,29 +416,46 @@ async def _run_broadcast(bot, broadcast_id: int, text: str, total: int) -> None:
             delivered=delivered,
             failed=failed,
         )
+    log.info(
+        "broadcast: finished — broadcast_id=%s status=%s delivered=%d failed=%d",
+        broadcast_id, final_status.value, delivered, failed,
+    )
+
+    if cancelled:
+        final_text = texts.OP_BROADCAST_CANCELLED.format(
+            number=broadcast_id, delivered=delivered, total=total
+        )
+    else:
+        failed_line = (
+            texts.OP_BROADCAST_FAILED_LINE.format(failed=failed) if failed else ""
+        )
+        final_text = texts.OP_BROADCAST_DONE.format(
+            number=broadcast_id,
+            delivered=delivered,
+            total=total,
+            failed_line=failed_line,
+        )
 
     if admin_mid is not None:
-        if cancelled:
-            final_text = texts.OP_BROADCAST_CANCELLED.format(
-                number=broadcast_id, delivered=delivered, total=total
-            )
-        else:
-            failed_line = (
-                texts.OP_BROADCAST_FAILED_LINE.format(failed=failed) if failed else ""
-            )
-            final_text = texts.OP_BROADCAST_DONE.format(
-                number=broadcast_id,
-                delivered=delivered,
-                total=total,
-                failed_line=failed_line,
-            )
         try:
             await bot.edit_message(message_id=admin_mid, text=final_text)
+            return
         except Exception:
             log.exception(
                 "failed to edit final progress message for broadcast #%s",
                 broadcast_id,
             )
+
+    # Fallback: edit_message failed or there was no admin_mid to edit. Post
+    # the final summary as a fresh message so the operator still sees the
+    # outcome.
+    try:
+        await bot.send_message(chat_id=cfg.admin_group_id, text=final_text)
+    except Exception:
+        log.exception(
+            "failed to post fallback final summary for broadcast #%s",
+            broadcast_id,
+        )
 
 
 def _format_dt(dt: datetime | None) -> str:

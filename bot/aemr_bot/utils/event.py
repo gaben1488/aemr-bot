@@ -116,15 +116,41 @@ def get_message_body(event: Any):
 
 
 def extract_message_id(sent: Any) -> str | None:
-    """Pull a message_id from a SendedMessage / Message-like object."""
-    mid = getattr(sent, "message_id", None)
-    if mid is not None:
-        return str(mid)
+    """Pull a message_id from anything maxapi might hand back.
+
+    Verified shapes (in order of likelihood given current maxapi):
+    * `SendedMessage` from bot.send_message — has `.message: Message`,
+      where `Message.body: MessageBody` and `MessageBody.mid: str`.
+    * Bare `Message` — has `.body.mid` directly.
+    * `EditedMessage` and other wrappers — usually mirror SendedMessage.
+
+    We also keep the legacy `.message_id` / direct `.body.mid` fallbacks
+    so older revisions of maxapi still parse correctly.
+    """
+    if sent is None:
+        return None
+
+    # SendedMessage / EditedMessage wrapper.
+    inner = getattr(sent, "message", None)
+    if inner is not None:
+        body = getattr(inner, "body", None)
+        if body is not None:
+            mid = getattr(body, "mid", None)
+            if mid is not None:
+                return str(mid)
+
+    # Bare Message.
     body = getattr(sent, "body", None)
     if body is not None:
         mid = getattr(body, "mid", None)
         if mid is not None:
             return str(mid)
+
+    # Legacy: object with `.message_id` directly.
+    mid = getattr(sent, "message_id", None)
+    if mid is not None:
+        return str(mid)
+
     return None
 
 
