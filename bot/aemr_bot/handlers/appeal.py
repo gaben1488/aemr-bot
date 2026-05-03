@@ -421,20 +421,28 @@ def register(dp: Dispatcher) -> None:
             return
 
         text_body = get_message_text(event)
-        if text_body.startswith("/"):
-            return
         body = get_message_body(event)
 
         if cfg.admin_group_id and chat_id == cfg.admin_group_id:
-            # Broadcast wizard step «awaiting_text» captures the next plain
-            # message from this operator before it falls through to reply
-            # handling. Other messages (replies on cards, regular chat) keep
-            # going to operator_reply as before.
+            # Broadcast wizard takes priority over slash-filtering so that
+            # /cancel works mid-wizard. _handle_wizard_text returns False
+            # when no wizard is active for this operator, so it's safe to
+            # call on every admin-group message.
             from aemr_bot.handlers import broadcast as broadcast_handler
             consumed = await broadcast_handler._handle_wizard_text(event, text_body)
             if consumed:
                 return
+            if text_body.startswith("/"):
+                # Slash command without an active wizard. Admin-side command
+                # handlers (admin_commands.py, broadcast.py) registered before
+                # this catch-all already had their chance — drop silently.
+                return
             await op_reply.handle_operator_reply(event, body, text_body)
+            return
+
+        # Citizen DM: slash-prefixed text has command handlers registered
+        # earlier; if we got here, none matched — drop silently.
+        if text_body.startswith("/"):
             return
 
         max_user_id = get_user_id(event)

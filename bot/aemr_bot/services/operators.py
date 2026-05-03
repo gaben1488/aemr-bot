@@ -48,3 +48,35 @@ async def write_audit(
         )
     )
     await session.flush()
+
+
+async def has_any_it(session: AsyncSession) -> bool:
+    op = await session.scalar(
+        select(Operator).where(
+            Operator.role == OperatorRole.IT.value, Operator.is_active.is_(True)
+        )
+    )
+    return op is not None
+
+
+async def bootstrap_it_from_env(
+    session: AsyncSession,
+    *,
+    max_user_id: int,
+    full_name: str,
+) -> bool:
+    """Cold-start the first IT operator from env, if no IT exists yet.
+
+    Idempotent: returns True if a row was inserted/updated, False if an
+    active IT was already present (no-op). Lets `BOOTSTRAP_IT_MAX_USER_ID`
+    replace the manual psql INSERT step from RUNBOOK §6.1.
+    """
+    if await has_any_it(session):
+        return False
+    await upsert(
+        session,
+        max_user_id=max_user_id,
+        full_name=full_name,
+        role=OperatorRole.IT,
+    )
+    return True

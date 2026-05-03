@@ -12,6 +12,7 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import register_handlers
 from aemr_bot.handlers.appeal import recover_stuck_funnels
 from aemr_bot.services import cron as cron_service
+from aemr_bot.services import operators as operators_service
 from aemr_bot.services import policy as policy_service
 from aemr_bot.services import settings_store
 
@@ -118,6 +119,25 @@ async def main() -> None:
     )
 
     await _seed_settings()
+
+    # Cold-start the first IT operator from env if none exists yet.
+    if settings.bootstrap_it_max_user_id is not None:
+        try:
+            async with session_scope() as session:
+                inserted = await operators_service.bootstrap_it_from_env(
+                    session,
+                    max_user_id=settings.bootstrap_it_max_user_id,
+                    full_name=(
+                        settings.bootstrap_it_full_name or "ИТ-специалист"
+                    ),
+                )
+            if inserted:
+                log.info(
+                    "bootstrapped IT operator from env: max_user_id=%s",
+                    settings.bootstrap_it_max_user_id,
+                )
+        except Exception:
+            log.exception("bootstrap_it_from_env failed")
 
     # Upload privacy PDF once on startup; ignore failures so the bot still starts.
     try:

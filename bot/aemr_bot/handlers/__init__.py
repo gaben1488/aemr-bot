@@ -46,10 +46,25 @@ def _attach_outer_middleware(dp: Dispatcher, middleware: BaseMiddleware) -> None
 
 
 def register_handlers(dp: Dispatcher) -> None:
+    """Register handlers in command-first, catch-all-last order.
+
+    `appeal.register` installs a `@dp.message_created()` without filters
+    that is the catch-all citizen funnel router. maxapi dispatches handlers
+    of the same update_type in registration order and stops at the first
+    matching one — so the catch-all must come AFTER every Command-filtered
+    handler, otherwise it silently swallows /stats, /reopen, /broadcast etc.
+    before they reach their own decorators.
+
+    `start.register` is fine to put first because all of its handlers ARE
+    command-filtered. `menu.register` and `operator_reply.register` are
+    no-ops kept for symmetry — actual callback / message routing for them
+    lives in `appeal.on_callback` / `appeal.on_message`.
+    """
     _attach_outer_middleware(dp, IdempotencyMiddleware())
     start.register(dp)
-    menu.register(dp)
-    appeal.register(dp)
-    operator_reply.register(dp)
     admin_commands.register(dp)
     broadcast.register(dp)
+    menu.register(dp)
+    operator_reply.register(dp)
+    # Catch-all last: see docstring above.
+    appeal.register(dp)

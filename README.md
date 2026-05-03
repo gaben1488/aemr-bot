@@ -21,12 +21,12 @@ cp .env.example .env
 Открой `.env` и впиши минимум три значения:
 
 ```ini
-BOT_TOKEN=<токен от @MasterBot в MAX>
+BOT_TOKEN=<токен с max.ru/business → раздел «Боты»>
 POSTGRES_PASSWORD=local-test-pass
 DATABASE_URL=postgresql+asyncpg://aemr:local-test-pass@db:5432/aemr
 ```
 
-`BOT_TOKEN` получаешь у `@MasterBot` в MAX (`/newbot` → мастер). Документация: <https://dev.max.ru/docs-api>. `ADMIN_GROUP_ID` оставь пустым — заполнишь после первого старта (см. [SETUP.md](docs/SETUP.md)).
+`BOT_TOKEN` получаешь на <https://max.ru/business> → войти как админ организации → раздел «Боты» → создать бота или открыть существующего → скопировать Bot API token. Документация: <https://dev.max.ru/docs-api>. `ADMIN_GROUP_ID` оставь пустым — заполнишь после первого старта (см. [SETUP.md](docs/SETUP.md)).
 
 Запустить:
 
@@ -105,7 +105,7 @@ aemr-bot/
 
 ## С чего начать
 
-1. Зарегистрировать тестового бота через `@MasterBot` в MAX, получить токен.
+1. Зарегистрировать тестового бота на <https://max.ru/business> в разделе «Боты», получить токен.
 2. Создать две служебные группы в MAX: для приёма обращений и для ЕГП-команды.
 3. Купить виртуалку (рекомендация — Aeza CLT-2: 2 vCPU / 4 ГБ / 60 ГБ NVMe, ~1 700 ₽/мес).
 4. Запустить скелет кода (создаётся следующим шагом, после ревью документов).

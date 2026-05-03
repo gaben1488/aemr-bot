@@ -22,7 +22,21 @@ class Settings(BaseSettings):
     database_url: str = Field(..., alias="DATABASE_URL")
 
     admin_group_id: int | None = Field(None, alias="ADMIN_GROUP_ID")
-    coordinator_max_user_id: int | None = Field(None, alias="COORDINATOR_MAX_USER_ID")
+
+    # Personal max_user_id'и операторов. На текущей фазе используются для
+    # двух целей: (1) cold-start первого IT при пустой таблице operators
+    # без psql, (2) опциональная адресная отправка системных алертов в личку
+    # IT-у или координатору, если в админ-группе их слишком много (пока не
+    # реализовано — placeholder под будущее использование).
+    bootstrap_it_max_user_id: int | None = Field(
+        None, alias="BOOTSTRAP_IT_MAX_USER_ID"
+    )
+    bootstrap_it_full_name: str | None = Field(
+        None, alias="BOOTSTRAP_IT_FULL_NAME"
+    )
+    coordinator_max_user_id: int | None = Field(
+        None, alias="COORDINATOR_MAX_USER_ID"
+    )
 
     timezone: str = Field("Asia/Kamchatka", alias="TZ")
     sla_response_hours: int = Field(4, alias="SLA_RESPONSE_HOURS")
@@ -77,6 +91,8 @@ class Settings(BaseSettings):
 
     @field_validator(
         "admin_group_id",
+        "bootstrap_it_max_user_id",
+        "bootstrap_it_full_name",
         "coordinator_max_user_id",
         "webhook_url",
         "webhook_secret",
