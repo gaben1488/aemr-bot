@@ -129,6 +129,33 @@ def register(dp: Dispatcher) -> None:
             attachments=[uploads.file_attachment(token)],
         )
 
+    @dp.message_created(Command("reply"))
+    async def cmd_reply(event: MessageCreated):
+        if not _is_admin_chat(event):
+            return
+        text = _get_text(event)
+        # /reply <appeal_id> <text...>
+        parts = text.split(maxsplit=2)
+        if len(parts) < 3:
+            await event.message.answer(
+                "Используйте: /reply <номер_обращения> <текст ответа>\n"
+                "Например: /reply 42 Здравствуйте, ваше обращение рассмотрено."
+            )
+            return
+        try:
+            appeal_id = int(parts[1])
+        except ValueError:
+            await event.message.answer(
+                f"«{parts[1]}» — не номер обращения. Пример: /reply 42 ваш текст."
+            )
+            return
+        reply_text = parts[2].strip()
+        if not reply_text:
+            await event.message.answer("Текст ответа не может быть пустым.")
+            return
+        from aemr_bot.handlers import operator_reply as op_reply
+        await op_reply.handle_command_reply(event, appeal_id, reply_text)
+
     @dp.message_created(Command("reopen"))
     async def cmd_reopen(event: MessageCreated):
         if not await _ensure_operator(event):

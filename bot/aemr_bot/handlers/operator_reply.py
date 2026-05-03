@@ -65,11 +65,113 @@ def _extract_reply_target_mid(event) -> str | None:
     mid = getattr(link, "mid", None)
     if mid is None and isinstance(link, dict):
         mid = link.get("mid")
-    return str(mid) if mid is not None else None
+    if mid is None:
+        # Last branch we hadn't logged. If the user reports «reply not working»
+        # and only this branch fires, we'll see it here. Likely cause: maxapi
+        # exposes the original-message id under a different attribute name
+        # (e.g. `original_mid`, `reply_to_mid`).
+        try:
+            link_repr = (
+                link.model_dump(by_alias=False)
+                if hasattr(link, "model_dump")
+                else repr(link)
+            )
+        except Exception:
+            link_repr = repr(link)
+        log.info(
+            "operator_reply: link.type=reply but mid is None — link=%r",
+            link_repr,
+        )
+        return None
+    log.info(
+        "operator_reply: extracted reply target mid=%s from link.type=%r",
+        mid, link_type,
+    )
+    return str(mid)
+
+
+async def _deliver_operator_reply(
+    event,
+    *,
+    appeal,
+    operator,
+    text: str,
+    audit_action: str,
+) -> bool:
+    """Common path for delivering an operator's reply to a citizen.
+
+    Used both by handle_operator_reply (swipe-to-reply mechanism, which
+    depends on Message.link being populated by the MAX client) and by
+    cmd_reply (explicit /reply <appeal_id> <text> command, which works
+    on every client regardless of swipe support).
+
+    Returns True if a definitive answer was given to the operator (either
+    delivered, or politely refused due to length / undeliverable). Returns
+    False only on the dedupe path when target_mid was None and the operator
+    didn't actually intend to reply.
+    """
+    if len(text) > cfg.answer_max_chars:
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=texts.ADMIN_REPLY_TOO_LONG.format(
+                limit=cfg.answer_max_chars, actual=len(text)
+            ),
+        )
+        return True
+
+    target_user_id = appeal.user.max_user_id
+    try:
+        # IMPORTANT: deliver to the citizen by user_id (not chat_id) — we never
+        # stored their personal-dialog chat_id, only their MAX user_id.
+        sent = await event.bot.send_message(user_id=target_user_id, text=text)
+    except Exception as exc:  # noqa: BLE001
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=(
+                f"⚠️ Не удалось доставить ответ жителю по обращению #{appeal.id}: {exc}.\n"
+                "Возможно, житель удалил диалог или заблокировал бота. "
+                "Обращение остаётся в работе."
+            ),
+        )
+        return True
+    from aemr_bot.utils.event import extract_message_id
+    delivered_mid = extract_message_id(sent)
+
+    async with session_scope() as session:
+        appeal_full = await appeals_service.get_by_id(session, appeal.id)
+        if appeal_full is None:
+            log.warning(
+                "appeal #%s vanished between lookup and reload", appeal.id
+            )
+            return True
+        await appeals_service.add_operator_message(
+            session,
+            appeal=appeal_full,
+            text=text,
+            operator_id=operator.id,
+            max_message_id=delivered_mid,
+        )
+        await operators_service.write_audit(
+            session,
+            operator_max_user_id=operator.max_user_id,
+            action=audit_action,
+            target=f"appeal #{appeal.id}",
+            details={"chars": len(text)},
+        )
+
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=texts.ADMIN_REPLY_DELIVERED.format(number=appeal.id),
+    )
+    return True
 
 
 async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
-    """Operator replied to the admin-group card. Returns True if handled."""
+    """Operator replied to the admin-group card via swipe/«Ответить».
+
+    Returns True if handled, False if the message wasn't a reply at all
+    (so the dispatcher can route it elsewhere — currently nowhere).
+    """
     target_mid = _extract_reply_target_mid(event)
     if target_mid is None:
         log.info(
@@ -98,58 +200,60 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
 
         appeal = await appeals_service.get_by_admin_message_id(session, target_mid)
         if appeal is None:
-            await event.bot.send_message(chat_id=get_chat_id(event), text=texts.ADMIN_REPLY_NO_APPEAL)
+            await event.bot.send_message(
+                chat_id=get_chat_id(event), text=texts.ADMIN_REPLY_NO_APPEAL
+            )
             return True
 
-    if len(text) > cfg.answer_max_chars:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=texts.ADMIN_REPLY_TOO_LONG.format(limit=cfg.answer_max_chars, actual=len(text)),
-        )
-        return True
+    return await _deliver_operator_reply(
+        event,
+        appeal=appeal,
+        operator=operator,
+        text=text,
+        audit_action="reply",
+    )
 
-    target_user_id = appeal.user.max_user_id
-    try:
-        # IMPORTANT: deliver to the citizen by user_id (not chat_id) — we never
-        # stored their personal-dialog chat_id, only their MAX user_id.
-        sent = await event.bot.send_message(user_id=target_user_id, text=text)
-    except Exception as exc:  # noqa: BLE001
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=(
-                f"⚠️ Не удалось доставить ответ жителю по обращению #{appeal.id}: {exc}.\n"
-                "Возможно, житель удалил диалог или заблокировал бота. "
-                "Обращение остаётся в работе."
-            ),
-        )
-        return True
-    delivered_mid = getattr(sent, "message_id", None) or getattr(getattr(sent, "body", None), "mid", None)
+
+async def handle_command_reply(event, appeal_id: int, text: str) -> None:
+    """`/reply N <text>` from the admin group — alternative to swipe-reply.
+
+    Useful when the MAX client doesn't put a reply-link on the swiped
+    message (varies by client/version), or when the operator prefers
+    explicit commands. Same delivery path, same audit, same answer-cap.
+    """
+    if not cfg.admin_group_id or get_chat_id(event) != cfg.admin_group_id:
+        return
+
+    author_id = get_user_id(event)
+    if author_id is None:
+        return
 
     async with session_scope() as session:
-        appeal_full = await appeals_service.get_by_id(session, appeal.id)
-        if appeal_full is None:
-            log.warning("appeal #%s vanished between get_by_admin_message_id and reload", appeal.id)
-            return True
-        await appeals_service.add_operator_message(
-            session,
-            appeal=appeal_full,
-            text=text,
-            operator_id=operator.id,
-            max_message_id=str(delivered_mid) if delivered_mid is not None else None,
-        )
-        await operators_service.write_audit(
-            session,
-            operator_max_user_id=author_id,
-            action="reply",
-            target=f"appeal #{appeal.id}",
-            details={"chars": len(text)},
-        )
+        operator = await operators_service.get(session, author_id)
+        if operator is None:
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id, text=texts.OP_NOT_AUTHORIZED
+            )
+            return
+        appeal = await appeals_service.get_by_id(session, appeal_id)
+        if appeal is None:
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
+            )
+            return
 
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
-        text=texts.ADMIN_REPLY_DELIVERED.format(number=appeal.id),
+    log.info(
+        "command_reply: operator_id=%s appeal=%s text_len=%d",
+        operator.id, appeal_id, len(text),
     )
-    return True
+    await _deliver_operator_reply(
+        event,
+        appeal=appeal,
+        operator=operator,
+        text=text,
+        audit_action="reply_via_command",
+    )
 
 
 async def handle_user_followup(event: MessageCreated, text: str) -> bool:
