@@ -22,8 +22,8 @@ cp .env.example .env
 
 ```ini
 BOT_TOKEN=<токен с max.ru/business → раздел «Боты»>
-POSTGRES_PASSWORD=local-test-pass
-DATABASE_URL=postgresql+asyncpg://aemr:local-test-pass@db:5432/aemr
+POSTGRES_PASSWORD=abrakadabra
+DATABASE_URL=postgresql+asyncpg://aemr:abrakadabra@db:5432/aemr
 ```
 
 `BOT_TOKEN` берётся так. Зайдите на <https://max.ru/business> под учётной записью администратора организации. Откройте раздел «Боты». Создайте нового бота или откройте существующего. Скопируйте Bot API token. Документация платформы — <https://dev.max.ru/docs-api>. Параметр `ADMIN_GROUP_ID` оставьте пустым. Его заполните после первого запуска (см. [SETUP.md](docs/SETUP.md)).
