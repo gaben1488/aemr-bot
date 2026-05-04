@@ -30,6 +30,29 @@ services:
       # Локальные еженедельные pg_dump'ы. Named-volume переживает пересборки
       # контейнера. Восстановление — см. RUNBOOK §7.
       - backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/healthz >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    # Hardening:
+    # - read_only: rootfs is immutable; everything writable goes through
+    #   tmpfs or named volumes.
+    # - tmpfs /tmp: pip wheels and tempfiles use /tmp during runtime.
+    # - mem_limit: a runaway broadcast or pathological FSM can't OOM the host.
+    # - pids_limit: cap fork-bombs from any subprocess (pg_dump, gpg, rclone).
+    # - cap_drop ALL + no-new-privileges: no need for any Linux capability.
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 200
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
   # Webhook-only stack; enable with: docker compose --profile webhook up -d

@@ -10,6 +10,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && curl https://rclone.org/install.sh | bash \
     && rm -rf /var/lib/apt/lists/*
 
+# Non-root user. Fixed UID/GID so the named volume `backups` keeps the
+# same ownership across rebuilds and on hosts where bind-mounts are used.
+RUN groupadd --system --gid 1000 botuser \
+    && useradd --system --uid 1000 --gid 1000 --create-home --home-dir /home/botuser botuser
+
 WORKDIR /app
 
 COPY bot/pyproject.toml /app/pyproject.toml
@@ -20,6 +25,13 @@ COPY bot/alembic.ini /app/alembic.ini
 COPY seed /app/seed
 COPY docs/PRIVACY.pdf /app/seed/PRIVACY.pdf
 
+# /backups is the named volume mount target. Pre-create it so chown runs
+# at build time; compose will mount over it but ownership of the mount
+# point stays for the volume.
+RUN mkdir -p /backups && chown -R botuser:botuser /app /backups
+
 ENV SEED_DIR=/app/seed
+
+USER botuser
 
 CMD ["sh", "-c", "alembic upgrade head && python -m aemr_bot.main"]

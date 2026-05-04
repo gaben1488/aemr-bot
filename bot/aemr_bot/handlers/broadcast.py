@@ -329,6 +329,14 @@ async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> 
         if cfg.broadcast_rate_limit_per_sec > 0
         else 1.0
     )
+    # Adaptive progress step. The configured BROADCAST_PROGRESS_UPDATE_SEC
+    # default (5) is right for a 50–200 recipient broadcast — operators
+    # see ~10 progress updates. On a tiny broadcast (5 recipients × 1
+    # sec) the bar would update once at the very end; on a very long
+    # one (1000 recipients) MAX rate-limits the edits. Tighten the step
+    # for short sends so the bar moves visibly.
+    estimated_total_sec = max(1.0, total * rate_delay)
+    progress_step_sec = min(cfg.broadcast_progress_update_sec, estimated_total_sec / 10)
     last_progress_at = time.monotonic()
     cancelled = False
 
@@ -364,7 +372,7 @@ async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> 
         now = time.monotonic()
         if (
             admin_mid is not None
-            and now - last_progress_at >= cfg.broadcast_progress_update_sec
+            and now - last_progress_at >= progress_step_sec
         ):
             last_progress_at = now
             async with session_scope() as upd_session:

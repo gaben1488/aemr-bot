@@ -10,10 +10,6 @@ async def get(session: AsyncSession, max_user_id: int) -> Operator | None:
     )
 
 
-async def is_operator(session: AsyncSession, max_user_id: int) -> bool:
-    return await get(session, max_user_id) is not None
-
-
 async def upsert(
     session: AsyncSession,
     max_user_id: int,

@@ -41,15 +41,40 @@ class Heartbeat:
 heartbeat = Heartbeat()
 
 
+async def _ping_db() -> bool:
+    """SELECT 1 against the live engine. Returns False on any failure.
+
+    A bot with a frozen DB connection can keep its asyncio event-loop
+    spinning (and the heartbeat green) while every operation that
+    actually touches data hangs. Without this ping, /healthz is a
+    half-truth — it would return OK while citizens see no responses.
+    """
+    from sqlalchemy import text
+
+    from aemr_bot.db.session import session_scope
+
+    try:
+        async with session_scope() as session:
+            await session.execute(text("SELECT 1"))
+        return True
+    except Exception:
+        log.warning("healthz: DB ping failed", exc_info=True)
+        return False
+
+
 async def _healthz(request: web.Request) -> web.Response:
     fresh = heartbeat.is_fresh()
+    db_ok = await _ping_db()
+    ok = fresh and db_ok
     payload = {
-        "ok": fresh,
+        "ok": ok,
+        "heartbeat_fresh": fresh,
+        "db_ok": db_ok,
         "last_beat_age_seconds": (
             None if heartbeat.last_beat == 0.0 else round(time.monotonic() - heartbeat.last_beat, 1)
         ),
     }
-    return web.json_response(payload, status=200 if fresh else 503)
+    return web.json_response(payload, status=200 if ok else 503)
 
 
 async def start(host: str = "0.0.0.0", port: int = 8080) -> web.AppRunner:  # nosec B104 — bind inside container, expose via Nginx

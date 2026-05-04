@@ -36,24 +36,27 @@ def _get_text(event) -> str:
     return get_message_text(event)
 
 
-async def run_stats_today(event) -> None:
-    """Same payload as /stats today, but invokable from a callback button.
-    Reaches the same code path: sends the XLSX into the admin group."""
-    if not await _ensure_operator(event):
-        return
-    async with session_scope() as session:
-        content, title, count = await stats_service.build_xlsx(session, "today")
-    if count == 0:
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id, text=texts.OP_STATS_EMPTY
-        )
-        return
-    filename = f"appeals_today_{datetime.now():%Y-%m-%d}.xlsx"
+async def _send_stats_xlsx(event, period: str, *, target_chat_id: int | None = None) -> None:
+    """Build the XLSX for `period` and post it into the admin group.
+
+    Single source of truth for both /stats <period> and the «📊 Статистика
+    за сегодня» quick-action button. `target_chat_id` lets callers route
+    to the current chat (default: current event) or explicitly to the
+    admin group regardless of where the trigger came from.
+    """
     from aemr_bot.services import uploads
+
+    chat_id = target_chat_id if target_chat_id is not None else get_chat_id(event)
+    async with session_scope() as session:
+        content, title, count = await stats_service.build_xlsx(session, period)
+    if count == 0:
+        await event.bot.send_message(chat_id=chat_id, text=texts.OP_STATS_EMPTY)
+        return
+    filename = f"appeals_{period}_{datetime.now():%Y-%m-%d}.xlsx"
     token = await uploads.upload_bytes(event.bot, content, suffix=".xlsx")
     if token is None:
         await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
+            chat_id=chat_id,
             text=(
                 f"Сформирован XLSX за {title} ({count} обращений), "
                 "но загрузить файл не удалось. См. логи бота."
@@ -61,10 +64,18 @@ async def run_stats_today(event) -> None:
         )
         return
     await event.bot.send_message(
-        chat_id=cfg.admin_group_id,
+        chat_id=chat_id,
         text=f"📊 Статистика {title} ({count} обращений). Файл: {filename}",
         attachments=[uploads.file_attachment(token)],
     )
+
+
+async def run_stats_today(event) -> None:
+    """Same payload as /stats today, invoked from a callback button.
+    Routes the file to the admin group (where the panel was clicked)."""
+    if not await _ensure_operator(event):
+        return
+    await _send_stats_xlsx(event, "today", target_chat_id=cfg.admin_group_id)
 
 
 async def show_full_help(event) -> None:
@@ -79,31 +90,11 @@ def register(dp: Dispatcher) -> None:
     async def cmd_stats(event: MessageCreated):
         if not await _ensure_operator(event):
             return
-        text = _get_text(event)
-
-        period = (_parse_arg(text) or "today").lower()
+        period = (_parse_arg(_get_text(event)) or "today").lower()
         if period not in {"today", "week", "month"}:
             await event.message.answer("Используйте: /stats today | week | month")
             return
-        async with session_scope() as session:
-            content, title, count = await stats_service.build_xlsx(session, period)
-        if count == 0:
-            await event.message.answer(texts.OP_STATS_EMPTY)
-            return
-        filename = f"appeals_{period}_{datetime.now():%Y-%m-%d}.xlsx"
-        from aemr_bot.services import uploads
-        token = await uploads.upload_bytes(event.bot, content, suffix=".xlsx")
-        if token is None:
-            await event.message.answer(
-                f"Сформирован XLSX за {title} ({count} обращений), "
-                "но загрузить файл не удалось. См. логи бота."
-            )
-            return
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=f"📊 Статистика {title} ({count} обращений). Файл: {filename}",
-            attachments=[uploads.file_attachment(token)],
-        )
+        await _send_stats_xlsx(event, period)
 
     @dp.message_created(Command("reply"))
     async def cmd_reply(event: MessageCreated):
@@ -288,18 +279,56 @@ def register(dp: Dispatcher) -> None:
             return
         from sqlalchemy import func, select
 
-        from aemr_bot.db.models import Appeal, Event, User
+        from aemr_bot.db.models import (
+            Appeal,
+            AppealStatus,
+            Broadcast,
+            BroadcastStatus,
+            Event,
+            User,
+        )
 
         async with session_scope() as session:
             users_total = await session.scalar(select(func.count()).select_from(User))
+            users_blocked = await session.scalar(
+                select(func.count()).select_from(User).where(User.is_blocked.is_(True))
+            )
+            users_subscribed = await session.scalar(
+                select(func.count()).select_from(User).where(
+                    User.subscribed_broadcast.is_(True),
+                    User.is_blocked.is_(False),
+                )
+            )
             appeals_total = await session.scalar(select(func.count()).select_from(Appeal))
+            appeals_in_progress = await session.scalar(
+                select(func.count()).select_from(Appeal).where(
+                    Appeal.status.in_([
+                        AppealStatus.NEW.value,
+                        AppealStatus.IN_PROGRESS.value,
+                    ])
+                )
+            )
+            broadcasts_done = await session.scalar(
+                select(func.count()).select_from(Broadcast).where(
+                    Broadcast.status == BroadcastStatus.DONE.value
+                )
+            )
+            broadcasts_failed = await session.scalar(
+                select(func.count()).select_from(Broadcast).where(
+                    Broadcast.status == BroadcastStatus.FAILED.value
+                )
+            )
+            events_total = await session.scalar(select(func.count()).select_from(Event))
             last_event = await session.scalar(select(func.max(Event.received_at)))
 
         await event.message.answer(
             "🛠️ Диагностика:\n"
-            f"• Пользователей: {users_total or 0}\n"
-            f"• Обращений: {appeals_total or 0}\n"
-            f"• Последнее событие: {last_event or '—'}\n"
+            f"• Жителей: {users_total or 0} "
+            f"(подписаны: {users_subscribed or 0}, заблокированы: {users_blocked or 0})\n"
+            f"• Обращений: {appeals_total or 0} "
+            f"(в работе: {appeals_in_progress or 0})\n"
+            f"• Рассылок: ✅ {broadcasts_done or 0} / ⚠️ {broadcasts_failed or 0}\n"
+            f"• События: всего {events_total or 0}, последнее {last_event or '—'}\n"
             f"• Режим: {cfg.bot_mode}\n"
             f"• Лимит ответа: {cfg.answer_max_chars}\n"
             f"• SLA: {cfg.sla_response_hours}ч"

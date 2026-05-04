@@ -23,8 +23,31 @@ TZ = ZoneInfo(settings.timezone)
 def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler(timezone=TZ)
 
+    async def backup_with_alert():
+        """Wrap _backup_db so a failed weekly dump is loud, not silent.
+
+        Without this, a broken backup chain (disk full, gpg key gone,
+        Postgres permissions changed) only shows up in the bot log —
+        which nobody reads on Sunday at 03:00. The admin group needs
+        to know the next morning, before the next week's run.
+        """
+        try:
+            out = await _backup_db()
+            if out is None:
+                await send_admin_text(
+                    "⚠️ Еженедельный бэкап БД не выполнен. См. логи бота: "
+                    "обычно это либо BACKUP_LOCAL_DIR не задан, либо упал "
+                    "pg_dump. Сделайте /backup вручную, как только разберётесь."
+                )
+        except Exception:
+            log.exception("backup_with_alert wrapper failed")
+            await send_admin_text(
+                "⚠️ Еженедельный бэкап БД упал с исключением. "
+                "Срочно проверьте логи и снимите бэкап вручную через /backup."
+            )
+
     scheduler.add_job(
-        _backup_db,
+        backup_with_alert,
         CronTrigger(
             day_of_week=settings.backup_day_of_week,
             hour=settings.backup_hour,
@@ -32,6 +55,41 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
             timezone=TZ,
         ),
         name="db-backup",
+        max_instances=1,
+        coalesce=True,
+    )
+
+    async def events_retention():
+        """Drop events older than 30 days.
+
+        events table backs idempotency dedupe — a key only needs to be
+        remembered as long as MAX might re-deliver the same Update.
+        After 30 days that's vanishingly unlikely, and the table would
+        otherwise grow unbounded with full Update payloads (which
+        contain PII for citizen messages).
+        """
+        try:
+            from datetime import timedelta
+
+            from sqlalchemy import delete
+
+            from aemr_bot.db.models import Event
+
+            cutoff = datetime.now(TZ) - timedelta(days=30)
+            async with session_scope() as session:
+                result = await session.execute(
+                    delete(Event).where(Event.received_at < cutoff)
+                )
+                purged = result.rowcount or 0
+            if purged:
+                log.info("events retention: purged %d rows older than %s", purged, cutoff.date())
+        except Exception:
+            log.exception("events retention failed")
+
+    scheduler.add_job(
+        events_retention,
+        CronTrigger(hour=4, minute=0, timezone=TZ),
+        name="events-retention",
         max_instances=1,
         coalesce=True,
     )

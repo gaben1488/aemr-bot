@@ -4,13 +4,12 @@ Subscribers are users who explicitly opted in via /subscribe or the
 «Подписаться на новости» button. Blocked users (`is_blocked=true`) and
 anonymized users (after /erase, `first_name='Удалено'`) are excluded
 from the recipient list automatically — see `count_subscribers` and
-`iter_subscribers`.
+`list_subscriber_targets`.
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import AsyncIterator
 
 from sqlalchemy import desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,27 +49,14 @@ async def count_subscribers(session: AsyncSession) -> int:
     ) or 0
 
 
-async def iter_subscribers(session: AsyncSession) -> AsyncIterator[User]:
-    """Yield eligible subscribers ordered by id (stable order across runs)."""
-    result = await session.scalars(
-        select(User).where(_eligible_filter()).order_by(User.id)
-    )
-    for user in result:
-        yield user
-
-
 async def list_subscriber_targets(
     session: AsyncSession,
 ) -> list[tuple[int, int]]:
     """Snapshot eligible subscribers as (db_id, max_user_id) tuples.
 
-    Used by the broadcast send loop to avoid holding a transaction open
-    for the entire send. With rate-limit 1 msg/sec and N recipients the
-    naive `async for user in iter_subscribers(session)` loop pins the
-    outer transaction for N seconds — long enough to block VACUUM and
-    pile up WAL on a 1k+ recipient broadcast. Reading id pairs into a
-    plain list closes the transaction immediately and the loop iterates
-    over Python data.
+    The send loop iterates over plain Python data so the transaction
+    closes immediately. Holding it open for an N-second send would
+    block VACUUM and pile up WAL on a long broadcast.
     """
     result = await session.execute(
         select(User.id, User.max_user_id).where(_eligible_filter()).order_by(User.id)

@@ -47,6 +47,10 @@ class User(Base):
     max_user_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
     first_name: Mapped[str | None] = mapped_column(String(120))
     phone: Mapped[str | None] = mapped_column(String(32))
+    # Digits-only normalized phone, kept in sync with `phone` by
+    # services/users.py::_normalize_phone. Indexed for /erase phone=
+    # lookup that scales beyond a few hundred users.
+    phone_normalized: Mapped[str | None] = mapped_column(String(32), index=True)
     consent_pdn_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     subscribed_broadcast: Mapped[bool] = mapped_column(

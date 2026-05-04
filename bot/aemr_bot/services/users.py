@@ -6,6 +6,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from aemr_bot.db.models import DialogState, User
 
 
+def _normalize_phone(phone: str) -> str:
+    """Match-friendly phone normalization: keep digits, drop everything else.
+
+    Citizens hand in phones in any format the contact button gives MAX —
+    «+7 (415-31) 7-25-29», «89001234567», «79001234567». Operators in the
+    admin chat type whatever they remember. We compare digits-only and
+    optionally trim a leading 7/8 country prefix.
+    """
+    digits = "".join(ch for ch in phone if ch.isdigit())
+    if len(digits) == 11 and digits[0] in {"7", "8"}:
+        digits = digits[1:]
+    return digits
+
+
 async def get_or_create(session: AsyncSession, max_user_id: int, first_name: str | None = None) -> User:
     user = await session.scalar(select(User).where(User.max_user_id == max_user_id))
     if user is None:
@@ -29,8 +43,12 @@ async def set_consent(session: AsyncSession, max_user_id: int) -> None:
 
 
 async def set_phone(session: AsyncSession, max_user_id: int, phone: str) -> None:
+    # Keep phone_normalized in sync — it's the indexed column find_by_phone
+    # reads, and any drift from `phone` would silently break /erase phone=.
     await session.execute(
-        update(User).where(User.max_user_id == max_user_id).values(phone=phone)
+        update(User)
+        .where(User.max_user_id == max_user_id)
+        .values(phone=phone, phone_normalized=_normalize_phone(phone) or None)
     )
 
 
@@ -105,6 +123,7 @@ async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
         .values(
             first_name="Удалено",
             phone=None,
+            phone_normalized=None,
             consent_pdn_at=None,
             dialog_state=DialogState.IDLE.value,
             dialog_data={},
@@ -115,30 +134,22 @@ async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
     return result.rowcount > 0
 
 
-def _normalize_phone(phone: str) -> str:
-    """Match-friendly phone normalization: keep digits, drop everything else.
-
-    Citizens hand in phones in any format the contact button gives MAX —
-    «+7 (415-31) 7-25-29», «89001234567», «79001234567». Operators in the
-    admin chat type whatever they remember. We compare digits-only and
-    optionally trim a leading 7/8 country prefix.
-    """
-    digits = "".join(ch for ch in phone if ch.isdigit())
-    if len(digits) == 11 and digits[0] in {"7", "8"}:
-        digits = digits[1:]
-    return digits
-
-
 async def find_by_phone(session: AsyncSession, phone: str) -> User | None:
-    """Look up a user by phone, tolerant to formatting differences."""
+    """Look up a user by phone, tolerant to formatting differences.
+
+    Reads the indexed `phone_normalized` column so this is O(log n) on
+    the index instead of a full-table scan + Python normalize-and-match
+    loop. Inserts/updates of `phone` are responsible for keeping
+    `phone_normalized` in sync (see `set_phone`, the citizen-flow
+    contact handler in handlers/appeal.py, and the 0003 migration's
+    backfill for legacy rows).
+    """
     target = _normalize_phone(phone)
     if not target:
         return None
-    candidates = await session.scalars(select(User).where(User.phone.is_not(None)))
-    for user in candidates:
-        if _normalize_phone(user.phone or "") == target:
-            return user
-    return None
+    return await session.scalar(
+        select(User).where(User.phone_normalized == target)
+    )
 
 
 async def erase_pdn_by_phone(session: AsyncSession, phone: str) -> int | None:
