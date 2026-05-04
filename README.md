@@ -49,6 +49,7 @@ DATABASE_URL=postgresql+asyncpg://aemr:local-test-pass@localhost:5432/aemr pytes
 - [DEVELOPER.md](docs/DEVELOPER.md) — детальный гайд: вход в воронку, отладка, миграции, тесты с моком Bot, известные особенности `maxapi`.
 - [SETUP.md](docs/SETUP.md) — как добавить бота в админ-группу, получить `ADMIN_GROUP_ID`, выполнить cold-start первого ИТ-оператора через `BOOTSTRAP_IT_*`, зарегистрировать остальных через `/add_operators`.
 - [RUNBOOK.md](docs/RUNBOOK.md) — операционные процедуры: ответить на обращение, запустить рассылку, выгрузить статистику, удалить ПДн, снять и восстановить бэкап.
+- [COMMANDS.md](docs/COMMANDS.md) — все CLI-команды админа в одном файле (генерация секретов, установка, бэкап/restore, миграции, мониторинг Postgres, аварийные процедуры).
 - [ADR-001](docs/ADR-001-architecture.md) и [PRD-mvp](docs/PRD-mvp.md) — архитектура и спецификация продукта.
 - [docs/architecture-diagrams.md](docs/architecture-diagrams.md) — BPMN жизненного цикла обращения, flowchart обработки событий, sequence-диаграммы доставки ответа и рассылки, схема развёртывания.
 - [docs/db-schema.md](docs/db-schema.md) — ER-диаграмма базы данных.
