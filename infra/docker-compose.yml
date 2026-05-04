@@ -1,9 +1,12 @@
 services:
   db:
-    # Pinned by digest so `docker compose pull` cannot silently move us to
-    # a new minor with breaking init-script changes. Bump together with a
-    # tested smoke run; do not auto-update.
-    image: postgres:16.4-alpine@sha256:0e7af4eef9e21586df90f8aa27ca97df21a16ddffec9ff5708a6b46c1ed1d05c
+    # Pinned by tag + digest so `docker compose pull` не утянет втихую новый
+    # минор с поломанными init-скриптами. Обновлять вместе со смоук-тестом,
+    # автоматическое обновление не включаем.
+    #
+    # Как обновить digest: `docker pull postgres:16-alpine`, скопировать
+    # значение из строки «Digest: sha256:...» в строку ниже.
+    image: postgres:16-alpine@sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-aemr}
       POSTGRES_USER: ${POSTGRES_USER:-aemr}
