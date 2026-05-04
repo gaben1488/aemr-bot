@@ -74,15 +74,29 @@ class Settings(BaseSettings):
     )
     broadcast_wizard_ttl_sec: int = Field(300, alias="BROADCAST_WIZARD_TTL_SEC")
 
+    # Расписание бэкапа: каждое воскресенье в 03:00 (по timezone бота).
+    # day_of_week — crontab-style: sun, mon, ..., sat или "*" для каждого дня.
+    backup_day_of_week: str = Field("sun", alias="BACKUP_DAY_OF_WEEK")
     backup_hour: int = Field(3, alias="BACKUP_HOUR")
     backup_minute: int = Field(0, alias="BACKUP_MINUTE")
     backup_tmp_dir: str = Field("/tmp", alias="BACKUP_TMP_DIR")  # nosec B108 — container-local, override via env
 
+    # Локальный бэкап: путь внутри контейнера, обычно смонтирован в named volume
+    # `backups` (см. docker-compose). Если пусто — локальные бэкапы не сохраняются.
+    backup_local_dir: str | None = Field("/backups", alias="BACKUP_LOCAL_DIR")
+    # Сколько последних файлов хранить. 8 еженедельных ≈ 2 месяца истории.
+    backup_keep_count: int = Field(8, alias="BACKUP_KEEP_COUNT")
+
+    # gpg-шифрование опционально: если passphrase пустой — храним plain SQL.
+    backup_gpg_passphrase: str | None = Field(None, alias="BACKUP_GPG_PASSPHRASE")
+
+    # S3 опционально: если задан endpoint+bucket+keys, доп. заливаем в облако.
+    # Пусто — храним только локально. Для self-hosted без облачного хранилища
+    # оставить пустыми.
     backup_s3_endpoint: str | None = Field(None, alias="BACKUP_S3_ENDPOINT")
     backup_s3_bucket: str | None = Field(None, alias="BACKUP_S3_BUCKET")
     backup_s3_access_key: str | None = Field(None, alias="BACKUP_S3_ACCESS_KEY")
     backup_s3_secret_key: str | None = Field(None, alias="BACKUP_S3_SECRET_KEY")
-    backup_gpg_passphrase: str | None = Field(None, alias="BACKUP_GPG_PASSPHRASE")
 
     healthcheck_url: str | None = Field(None, alias="HEALTHCHECK_URL")
 
@@ -96,6 +110,7 @@ class Settings(BaseSettings):
         "coordinator_max_user_id",
         "webhook_url",
         "webhook_secret",
+        "backup_local_dir",
         "backup_s3_endpoint",
         "backup_s3_bucket",
         "backup_s3_access_key",

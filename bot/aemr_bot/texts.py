@@ -195,6 +195,7 @@ OP_HELP = (
     "/setting list — список настроек (it)\n"
     "/setting <key> <value> — изменить настройку (it)\n"
     "/add_operators — bulk-регистрация операторов (it)\n"
+    "/backup — снять pg_dump прямо сейчас (it)\n"
     "/diag — диагностика бота"
 )
 

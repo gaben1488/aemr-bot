@@ -26,6 +26,10 @@ services:
         condition: service_healthy
     ports:
       - "127.0.0.1:8080:8080"
+    volumes:
+      # Локальные еженедельные pg_dump'ы. Named-volume переживает пересборки
+      # контейнера. Восстановление — см. RUNBOOK §7.
+      - backups:/backups
     restart: unless-stopped
 
   # Webhook-only stack; enable with: docker compose --profile webhook up -d
@@ -57,3 +61,4 @@ services:
 
 volumes:
   db_data:
+  backups:

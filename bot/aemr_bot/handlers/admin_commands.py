@@ -313,6 +313,32 @@ def register(dp: Dispatcher) -> None:
             f"• SLA: {cfg.sla_response_hours}ч"
         )
 
+    @dp.message_created(Command("backup"))
+    async def cmd_backup(event: MessageCreated):
+        if not await _ensure_role(event, OperatorRole.IT):
+            return
+        from aemr_bot.services import cron as cron_service
+
+        await event.message.answer(
+            "🗄️ Запускаю pg_dump… Это может занять несколько секунд."
+        )
+        try:
+            out = await cron_service._backup_db()
+        except Exception as e:
+            await event.message.answer(f"⚠️ Бэкап упал: {e}")
+            return
+        if out is None:
+            await event.message.answer(
+                "⚠️ Бэкап не выполнен. Проверьте логи бота "
+                "(`docker compose logs bot --tail 50`)."
+            )
+            return
+        size_kb = out.stat().st_size // 1024
+        await event.message.answer(
+            f"✅ Бэкап готов: `{out.name}` ({size_kb} КБ).\n"
+            f"Лежит в named-volume `backups` контейнера."
+        )
+
     @dp.message_created(Command("op_help"))
     async def cmd_op_help(event: MessageCreated):
         if not _is_admin_chat(event):

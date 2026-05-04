@@ -215,28 +215,55 @@ docker compose up -d --build bot
 
 ### 7. Работа с бэкапами
 
-Раз в сутки в 03:00 по Камчатке APScheduler делает `pg_dump`, шифрует gpg-passphrase'ом из `.env` и заливает в S3-совместимое хранилище (Yandex Object Storage). Хранение — последние 30 файлов, ротация автоматическая через rclone.
+**Расписание.** Каждое воскресенье в 03:00 по Камчатке APScheduler делает `pg_dump` и сохраняет файл в named-volume `backups` (внутри контейнера — `/backups/aemr-YYYYMMDD_HHMMSS.sql`). Хранятся последние 8 файлов (≈2 месяца истории), ротация автоматическая. Если задан `BACKUP_GPG_PASSPHRASE` — файлы шифруются gpg AES256 (`*.sql.gpg`), без этого — plain SQL. Если дополнительно заданы `BACKUP_S3_*` — копия льётся в S3-совместимое хранилище (для self-hosted без облака — оставить пустыми).
 
-**Восстановление из бэкапа:**
+**Снять бэкап вручную.** В админ-группе ИТ:
 
-```bash
-# Скачать последний бэкап локально
-rclone copy yandex:aemr-bot-backups/aemr-2026-04-28_03-00-00.sql.gpg /tmp/
-
-# Расшифровать
-gpg --batch --passphrase "$BACKUP_GPG_PASSPHRASE" \
-    --decrypt /tmp/aemr-2026-04-28_03-00-00.sql.gpg > /tmp/aemr.sql
-
-# Накатить на чистую БД
-docker compose down
-docker volume rm infra_db_data
-docker compose up -d db
-sleep 10
-cat /tmp/aemr.sql | docker compose exec -T db psql -U aemr -d aemr
-docker compose up -d bot
+```
+/backup
 ```
 
-Перед боевым восстановлением **обязательно тренируйте процедуру** на тестовом стенде — потеря данных при восстановлении из gpg-archive страшнее любого инцидента.
+Бот выдаёт `pg_dump` и отвечает «✅ Бэкап готов: aemr-20260504_113000.sql (12 КБ).» Полезно перед миграциями БД и перед удалением тестовых данных.
+
+**Где лежат файлы.**
+
+```bash
+# Список бэкапов в named-volume:
+docker compose exec bot ls -lh /backups/
+
+# Размер volume (общий):
+docker volume inspect infra_backups
+```
+
+**Скопировать бэкап на хост.**
+
+```powershell
+# В корне проекта. Создаёт папку backups\ на хосте.
+docker compose -f infra\docker-compose.yml cp bot:/backups/aemr-20260504_113000.sql.gpg .\backups\
+```
+
+**Восстановление из бэкапа.**
+
+```powershell
+# Если plain SQL:
+docker compose -f infra\docker-compose.yml down
+docker volume rm infra_db_data
+docker compose -f infra\docker-compose.yml up -d db
+Start-Sleep -Seconds 10
+Get-Content backups\aemr-20260504_113000.sql | docker compose -f infra\docker-compose.yml exec -T db psql -U aemr -d aemr
+docker compose -f infra\docker-compose.yml up -d bot
+```
+
+```bash
+# Если зашифрован gpg:
+gpg --batch --passphrase "$BACKUP_GPG_PASSPHRASE" \
+    --decrypt backups/aemr-20260504_113000.sql.gpg > backups/aemr.sql
+# Дальше как с plain SQL выше.
+```
+
+Перед боевым восстановлением **обязательно тренируйте процедуру** на тестовом стенде — потеря данных при ошибке в восстановлении страшнее любого инцидента.
+
+**Если сервер был выключен в момент еженедельного триггера** — APScheduler с in-memory jobstore не наверстывает пропущенные запуски. На следующее воскресенье цикл продолжится. На критических периодах (после деплоя, перед миграцией) делайте `/backup` руками.
 
 ### 8. Сбросить тестовые данные перед запуском в продакшен
 
