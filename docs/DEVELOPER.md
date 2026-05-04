@@ -70,46 +70,54 @@ BOOTSTRAP_IT_FULL_NAME=Иванов И.И.
 ```
 aemr-bot/
 ├─ bot/aemr_bot/           Python-пакет
-│  ├─ main.py              entrypoint, переключатель polling/webhook
-│  ├─ config.py            Settings из .env (Pydantic)
+│  ├─ main.py              entrypoint, переключатель polling/webhook, recover_after_restart
+│  ├─ config.py            Settings из .env (Pydantic), валидаторы
 │  ├─ health.py            /healthz + Heartbeat singleton
-│  ├─ texts.py             все тексты, что отправляет бот
-│  ├─ keyboards.py         inline-клавиатуры
+│  ├─ texts.py             все тексты, что отправляет бот (humanizer + clarify пройдены)
+│  ├─ keyboards.py         inline-клавиатуры (главное меню, подменю, op_help)
 │  ├─ db/
-│  │  ├─ models.py         7 таблиц SQLAlchemy
-│  │  ├─ session.py        async-engine
-│  │  └─ alembic/          миграции
+│  │  ├─ models.py         9 таблиц SQLAlchemy (см. db-schema.md)
+│  │  ├─ session.py        async-engine, session_scope
+│  │  └─ alembic/          миграции (0001_initial, 0002_broadcast)
 │  ├─ handlers/
 │  │  ├─ __init__.py       register_handlers + IdempotencyMiddleware
-│  │  ├─ start.py          /start, /menu, /help, /forget, /whoami
-│  │  ├─ menu.py           главное меню, Мои обращения, Контакты
-│  │  ├─ appeal.py         FSM-воронка (по функции на состояние)
-│  │  ├─ operator_reply.py обработка реплая в админ-группе
-│  │  └─ admin_commands.py /stats, /reopen, /close, /erase, /setting, /diag
+│  │  ├─ _auth.py          ensure_operator / ensure_role / get_operator
+│  │  ├─ start.py          /start, /menu, /help, /forget, /policy, /subscribe, /unsubscribe, /whoami
+│  │  ├─ menu.py           главное меню, Мои обращения, подменю «Полезная информация»
+│  │  ├─ appeal.py         FSM-воронка обращения (per-user lock, _drop_user_lock)
+│  │  ├─ operator_reply.py reply через свайп и /reply, citizen-followup
+│  │  ├─ broadcast.py      /broadcast wizard, прогресс-бар, экстренный стоп
+│  │  └─ admin_commands.py /stats, /reopen, /close, /erase, /setting, /add_operators,
+│  │                       /diag, /op_help, /backup, /op_help callback'и
 │  ├─ services/
-│  │  ├─ users.py          CRUD пользователя + FSM-операции
+│  │  ├─ users.py          CRUD пользователя + FSM-операции, find_by_phone, erase_pdn
 │  │  ├─ operators.py      регистрация операторов + audit_log
-│  │  ├─ appeals.py        CRUD обращений
-│  │  ├─ card_format.py    форматирование карточки в админ-группу и «Мои обращения»
+│  │  ├─ appeals.py        CRUD обращений, find_active_for_user, get_by_admin_message_id
+│  │  ├─ broadcasts.py     create/start/finish, deliveries, subscribers
+│  │  ├─ card_format.py    форматирование карточки, formal letter wrap для жителя
 │  │  ├─ stats.py          формирование XLSX через openpyxl
-│  │  ├─ policy.py         кеш токена PRIVACY.pdf
-│  │  ├─ uploads.py        upload_path / upload_bytes / file_attachment
-│  │  ├─ idempotency.py    отбраковка дублей Update-ов
-│  │  ├─ settings_store.py редактируемые из админки настройки
-│  │  └─ cron.py           APScheduler: бэкап + selfcheck + healthcheck-ping + monthly stats
+│  │  ├─ policy.py         кеш токена PRIVACY.pdf, build_file_attachment
+│  │  ├─ uploads.py        upload_path / upload_bytes / build AttachmentUpload
+│  │  ├─ idempotency.py    отбраковка дублей Update-ов через events
+│  │  ├─ settings_store.py редактируемые из админки настройки + DEFAULTS
+│  │  └─ cron.py           APScheduler: db-backup, monthly-stats, healthcheck-pulse
 │  └─ utils/
-│     ├─ event.py          адаптер над maxapi event-объектами
+│     ├─ event.py          адаптер над maxapi event-объектами, is_admin_chat,
+│     │                    extract_message_id, get_message_link
 │     └─ attachments.py    парсинг VCF и сериализация attachments
 ├─ infra/
 │  ├─ Dockerfile           python:3.12-slim, pinned by digest
-│  ├─ docker-compose.yml   db + bot + nginx + certbot
-│  ├─ nginx/feedback.conf  reverse-proxy (используется в webhook-режиме)
+│  ├─ docker-compose.yml   db + bot (+ nginx + certbot в профиле webhook)
+│  ├─ nginx/feedback.conf  reverse-proxy для webhook-режима
+│  ├─ certbot/             конфиг Let's Encrypt
 │  ├─ init-letsencrypt.sh  первое получение сертификата
-│  └─ .env.example
-├─ seed/                   topics.json, contacts.json, welcome.md, consent.md, PRIVACY.pdf
+│  └─ .env.example         шаблон со всеми ключами и комментариями
+├─ seed/                   topics.json, contacts.json, transport_dispatchers.json,
+│                          welcome.md, consent.md, PRIVACY.pdf
 ├─ scripts/
-│  └─ generate_privacy_pdf.py   regenerate PRIVACY.pdf from PRIVACY.md
-└─ docs/                   ADR, PRD, PRIVACY, RUNBOOK, DEVELOPER (этот файл)
+│  ├─ generate_privacy_pdf.py    regenerate PRIVACY.pdf from PRIVACY.md
+│  └─ reset_test_data.sql        полная зачистка тестовых данных перед prod
+└─ docs/                   ADR-001, PRD-mvp, PRIVACY, SETUP, RUNBOOK, DEVELOPER, db-schema
 ```
 
 ## Где править что
@@ -149,7 +157,7 @@ cd bot
 pytest tests/ -v
 ```
 
-Сейчас в `tests/` пять тестов на сервисный слой. Они **не работают на in-memory SQLite** из-за PostgreSQL-specific JSONB; если нужно гонять — либо поднимай локальный Postgres и подменяй `DATABASE_URL`, либо воспользуйся `testcontainers` (на рассмотрение в фазе C). Это известный tech-debt, см. `docs/PHASE_C` (если ещё не написан).
+Сейчас в `tests/` тесты на сервисный слой. Они **не работают на in-memory SQLite** из-за PostgreSQL-specific JSONB; если нужно гонять — либо поднимай локальный Postgres и подменяй `DATABASE_URL`, либо подключи `testcontainers`. Это известное направление развития, см. [ADR-001 §11](ADR-001-architecture.md).
 
 При добавлении новой логики писать тесты в той же папке. Покрывать: бизнес-сценарии, граничные случаи, security-чувствительные пути (роли, валидаторы, лимиты).
 
@@ -170,6 +178,30 @@ pytest tests/ -v
 5. Push в `origin`, открой PR на `main` через `gh pr create`.
 6. После апрува — squash merge в `main`. На сервере `git pull && docker compose up -d --build bot && docker compose exec bot alembic upgrade head`.
 
+## Известные особенности `maxapi`
+
+`love-apples/maxapi` — community-обёртка над Bot API MAX. Удобна, но местами протекает: модели не покрывают все поля сервера, имена полей не совпадают с документацией, а некоторые методы возвращают объекты, которых нет в типизации. Вот граблищи, на которые мы наступали — оставлены здесь, чтобы на них больше никто не наступал.
+
+**1. `Message.link.message.mid`, не `Message.link.mid`.** Когда оператор делает свайп-reply в админ-группе, в событии приходит `Message.link: LinkedMessage`. Сам `link.mid` пуст — id исходного сообщения лежит на один уровень глубже, в `link.message.mid` (у nested `MessageBody`). Видно в `_extract_reply_target_mid`/`_mid_from_link` в `handlers/operator_reply.py`. На отдельных версиях клиента pydantic-обёртка оборачивается в dict — отсюда двойная попытка.
+
+**2. `bot.send_message(...)` возвращает `SendedMessage`, не `Message`.** У результата нет `.message_id` напрямую — id лежит в `result.message.body.mid`. Адаптер `extract_message_id` в `utils/event.py` снимает оба варианта (через `getattr` цепочку) и работает на None-входе тоже. Используется при сохранении `appeals.admin_message_id` и `messages.max_message_id`.
+
+**3. `upload_file` возвращает `AttachmentUpload`, а не плоский dict.** Старая ревизия `maxapi` отдавала `dict`, текущая — pydantic-модель. Сериализация для отправки в `attachments=[...]` идёт через `.model_dump(by_alias=True)` или конкретные конструкторы (`PhotoAttachment`, `FileAttachment`). См. `services/uploads.py` и `services/policy.py::build_file_attachment`.
+
+**4. Порядок регистрации хендлеров важен.** `Dispatcher` берёт первый матч. Если зарегистрировать `message_created` без фильтра раньше, чем `message_created(Command(...))` — команда не сработает. Все универсальные обработчики регистрируются в `handlers/appeal.py` последними; команды и callback'и — раньше. Любая правка `register_handlers` в `handlers/__init__.py` требует прогнать smoke-тест из админ-группы.
+
+**5. Citizen-flow guard через `is_admin_chat`.** Обработчики, рассчитанные на жителя (`/start`, главное меню, «Написать обращение»), оборачиваются в `if is_admin_chat(event): return` на уровне регистрации. Иначе оператор, написавший в служебной группе, попадёт в воронку как «житель», получит welcome-меню и заведётся в `users`. Шаблон вынесен в `utils/event.py::is_admin_chat`.
+
+**6. Идемпотентность через `events.idempotency_key`.** MAX иногда повторно шлёт один и тот же Update (например, при повторном запросе после таймаута). `IdempotencyMiddleware` пишет в `events` уникальный ключ (`update_id` или комбинация полей) и пропускает дубликат. Любое новое поле, способное менять обработку, надо включать в ключ — иначе тихо потеряем сообщение.
+
+**7. Recovery застрявших FSM-сессий.** Если бот рестартанул в середине воронки, `dialog_state` пользователя застывает. На старте `recover_after_restart` пробегает по застрявшим сессиям пачками (`RECOVER_BATCH_SIZE`) и шлёт жителю «Бот перезапустился, давайте начнём сначала», обнуляет FSM. Без этого житель будет навсегда залипать в `AWAITING_SUMMARY`.
+
+**8. Отладочный дамп `event.message`.** Когда что-то идёт не так с парсингом события (новые типы вложений, изменение схемы maxapi после релиза), включай `LOG_LEVEL=DEBUG` — `dispatcher` пишет полный pydantic-дамп. Раньше дампили вручную через `log.info(repr(event.message))`; не делай так в production-логах, ПДн утекут в журнал.
+
+**9. Per-user FSM lock в `appeal.py`.** Два сообщения от одного жителя за миллисекунды (свайп-share-photo + текст) могут параллельно изменить `dialog_data`. `_user_locks: dict[int, asyncio.Lock]` сериализует обработку на уровне пользователя; `_drop_user_lock` удаляет lock после завершения, чтобы dict не рос неограниченно.
+
+**10. Long-polling timeout.** `POLLING_TIMEOUT_SECONDS=30` — серверный timeout `getUpdates`, не интервал между запросами. Чем выше — тем меньше пустых round-trip'ов в idle, потолок MAX — 90 сек. На 0 бот будет хлестать API на 2 RPS rate-limit и кончит свой бюджет за минуты.
+
 ## Полезные ссылки
 
 - Bot API MAX: [`dev.max.ru/docs/chatbots`](https://dev.max.ru/docs/chatbots)
@@ -180,7 +212,9 @@ pytest tests/ -v
 
 ## Дальнейшее чтение
 
-- `docs/ADR-001-architecture.md` — архитектурное решение и его эволюция (v1 → v4).
-- `docs/PRD-mvp.md` — функциональные требования.
+- `docs/ADR-001-architecture.md` — архитектурное решение и его уточнения после первичной реализации.
+- `docs/PRD-mvp.md` — функциональные требования (v6 — production-ready).
+- `docs/SETUP.md` — пошаговая настройка админ-группы и регистрация операторов.
 - `docs/RUNBOOK.md` — операционная инструкция координатору и ИТ.
+- `docs/db-schema.md` — ER-диаграмма базы и инварианты.
 - `docs/PRIVACY.md` — текст политики ПДн.
