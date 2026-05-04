@@ -162,7 +162,7 @@
 
 **Race protection.** `_persist_and_dispatch_appeal` обёрнут в per-user `asyncio.Lock` с idempotency-проверкой по `dialog_state == IDLE`. Защищает от двойного клика «Отправить», race timer/cancel и повторных submit. Single-instance only.
 
-**Доступность.** Целевой uptime 99% на MVP. Внешний мониторинг через UptimeRobot на `/healthz` (порт `WEBHOOK_PORT`, дефолт 8080). Внутренний `selfcheck`-крон каждые `HEALTHCHECK_INTERVAL_MIN` минут проверяет heartbeat и шлёт transition-алерт в админ-группу. Опциональный outbound-пинг на `HEALTHCHECK_URL` для Healthchecks.io.
+**Доступность.** Целевой uptime 99% на MVP. Бот self-host'ится без публичного inbound-доступа (long polling), поэтому основной мониторинг — внутренний: `selfcheck`-крон каждые `HEALTHCHECK_INTERVAL_MIN` минут проверяет heartbeat и шлёт transition-алерт в админ-группу при потере отзывчивости. Compose-healthcheck бьёт `/healthz` локально (`127.0.0.1:8080`). Если у админа есть свой health-collector внутри корпоративной сети — опционально включается outbound-пинг на `HEALTHCHECK_URL`.
 
 **Идемпотентность.** Outer-middleware `IdempotencyMiddleware` отбрасывает дубликаты Update'ов через unique-индекс `events.idempotency_key`. Критично для webhook-режима с ретраями MAX и не лишнее в polling.
 

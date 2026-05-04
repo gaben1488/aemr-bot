@@ -295,34 +295,24 @@ flowchart LR
 
     Citizen([Житель MAX]):::ext
     Operator([Оператор MAX<br/>в админ-группе]):::ext
-    External([UptimeRobot /<br/>healthcheck-ping]):::ext
 
-    BotContainer[bot:<br/>Python 3.12<br/>maxapi + APScheduler<br/>aiohttp /healthz]:::bot
-    DBContainer[(db:<br/>PostgreSQL 16)]:::db
-
-    NginxContainer[nginx<br/>reverse-proxy]:::opt
-    CertbotContainer[certbot<br/>Let's Encrypt]:::opt
+    BotContainer[bot:<br/>Python 3.12<br/>maxapi + APScheduler<br/>aiohttp /healthz<br/>127.0.0.1 only]:::bot
+    DBContainer[(db:<br/>PostgreSQL 16<br/>internal network)]:::db
 
     BackupVol[(named-volume<br/>/backups/<br/>aemr-*.sql.gpg)]:::db
-    S3([S3-совместимое<br/>хранилище]):::opt
 
-    MAX([MAX platform-api]):::ext
+    MAX([MAX platform-api<br/>platform-api.max.ru]):::ext
+    HCInternal[selfcheck cron<br/>→ алерт в админ-группу]:::bot
 
-    Citizen <-->|long-polling /<br/>webhook| MAX
-    Operator <-->|long-polling /<br/>webhook| MAX
+    Citizen <-->|outbound long-polling| MAX
+    Operator <-->|outbound long-polling| MAX
     MAX <--> BotContainer
     BotContainer <--> DBContainer
-    BotContainer -->|еженедельно<br/>pg_dump → gpg| BackupVol
-    BotContainer -.->|опционально<br/>rclone| S3
-
-    External -->|GET /healthz| BotContainer
-
-    BotContainer -.->|webhook-режим| NginxContainer
-    NginxContainer -.->|TLS| MAX
-    CertbotContainer -.->|обновление<br/>сертификата| NginxContainer
+    BotContainer -->|еженедельно<br/>pg_dump → gpg AES-256| BackupVol
+    BotContainer --- HCInternal
 ```
 
-Сплошные линии — то, что включено по умолчанию (long-polling, локальный backup). Пунктир — опциональные надстройки (webhook-стек поднимается профилем `webhook`, S3-выгрузка — при заполненных `BACKUP_S3_*`).
+Self-host, long polling. Бот ходит **только исходящими** запросами на `platform-api.max.ru`. Никаких inbound-портов наружу не публикуется: `/healthz` слушает `127.0.0.1:8080` для compose-healthcheck, БД — только во внутренней docker-сети, S3-аплоад опционален и тоже исходящий. Webhook-стек (nginx + certbot) лежит в опциональном compose-профиле `webhook` для возможной будущей миграции, но **в production не используется**.
 
 ## 7. Состояния обращения (state machine)
 

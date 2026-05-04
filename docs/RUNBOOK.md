@@ -308,7 +308,7 @@ Get-Content scripts\reset_test_data.sql | docker compose -f infra\docker-compose
 - Поддержка MAX для разработчиков: `partner_support@max.ru`
 - Документация Bot API: `dev.max.ru/docs/chatbots`
 - Репозиторий бота: `github.com/gaben1488/aemr-bot` (приватный)
-- Серверный хостинг: TBD (Aeza CLT-2 или VK Cloud, по решению ИБ-специалиста АЕМР)
+- Серверный хостинг: self-host на оборудовании АЕМР (адрес сервера и контакт ответственного — в журнале админа)
 
 ## История изменений документа
 

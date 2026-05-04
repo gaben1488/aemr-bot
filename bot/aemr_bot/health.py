@@ -2,11 +2,14 @@
 
 Uses a single global Heartbeat instance updated from the polling/dispatcher
 loops. /healthz returns 200 if the heartbeat is fresh (less than
-``HEALTHCHECK_STALE_SECONDS`` ago), 503 otherwise.
+``HEALTHCHECK_STALE_SECONDS`` ago) AND the DB pings, 503 otherwise.
 
-Liveness probes (Docker, UptimeRobot, Healthchecks.io) hit this endpoint;
-when it goes red we know the bot's main loop has stalled even if the
-process is still up.
+In self-host long-polling mode the bot has no public inbound port —
+/healthz is bound to 127.0.0.1 and consumed by the compose healthcheck
+block plus the internal ``selfcheck`` cron job. No external pinger
+(UptimeRobot/Healthchecks.io etc.) is in the loop; an internal
+health-collector inside the customer's network can opt in via the
+outbound HEALTHCHECK_URL pulse.
 """
 
 from __future__ import annotations
@@ -63,9 +66,9 @@ async def _ping_db() -> bool:
 
 
 # Cache the DB-ping result for a short window so that a busy chain of
-# external probes (compose healthcheck every 30s + UptimeRobot every 60s
-# + Nginx upstream check) doesn't multiply into a flurry of trivial
-# SELECTs that compete with real handlers for the small connection pool.
+# probes (compose healthcheck every 30s plus any internal pinger the
+# admin wires up) doesn't multiply into a flurry of trivial SELECTs
+# that compete with real handlers for the small connection pool.
 _DB_PING_CACHE_TTL = 10.0
 _db_ping_cache: dict[str, float | bool] = {"value": False, "checked_at": 0.0}
 

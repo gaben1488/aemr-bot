@@ -224,7 +224,7 @@ docker compose exec bot alembic upgrade head
 
 ## 7a. Эксплуатационные компоненты
 
-**Healthcheck.** `bot/aemr_bot/health.py` поднимает aiohttp-сервер на `WEBHOOK_PORT` с эндпойнтом `/healthz`. Внутри — singleton `Heartbeat` обновляется фоновой задачей `heartbeat_pulse` каждые `HEALTHCHECK_PULSE_SECONDS`. Если main-loop завис, heartbeat перестаёт обновляться, и `/healthz` отдаёт 503 после `HEALTHCHECK_STALE_SECONDS`. На это завязаны два потребителя: внешний UptimeRobot (направляется на публичный URL) и внутренний `selfcheck` cron-job, постящий в админ-группу транзишн-алерты «упало/восстановилось».
+**Healthcheck.** `bot/aemr_bot/health.py` поднимает aiohttp-сервер на `WEBHOOK_PORT` (default 8080) с эндпойнтом `/healthz`. В compose порт публикуется на `127.0.0.1:8080` — только для локального compose-healthcheck'а, наружу `/healthz` не выставляется (self-host, никаких inbound-портов). Внутри — singleton `Heartbeat` обновляется фоновой задачей `heartbeat_pulse` каждые `HEALTHCHECK_PULSE_SECONDS`. Если main-loop завис, heartbeat перестаёт обновляться, и `/healthz` отдаёт 503 после `HEALTHCHECK_STALE_SECONDS`. Основной потребитель — внутренний `selfcheck` cron-job, постящий в админ-группу транзишн-алерты «упало/восстановилось». Опционально, если у админа есть свой health-collector внутри корпоративной сети — outbound-пинг на `HEALTHCHECK_URL`.
 
 **Idempotency.** `services/idempotency.py::claim` строит ключ из update_type + `callback_id`/`mid`/`seq` + timestamp + chat/user, делает `INSERT ON CONFLICT DO NOTHING` в `events` и возвращает True/False. Подключается через outer-middleware в `handlers/__init__.py::IdempotencyMiddleware`. Дубликаты от MAX (особенно при webhook-retries) молча отбрасываются перед тем, как попадут в любой обработчик.
 
@@ -238,7 +238,7 @@ docker compose exec bot alembic upgrade head
 
 ## 8. Что меняется при изменении вводных
 
-- Безопасник АЕМР требует аттестации провайдера → меняем VPS на Selectel/VK Cloud, остальное не трогаем.
+- Безопасник АЕМР требует аттестации хостинга → пересматриваем серверное окружение в рамках self-host'а (другая стойка, другая ОС-конфигурация). Облачные провайдеры в этом проекте не используются.
 - Куратор хочет жёсткое разделение АЕМР↔ЕГП → создаём вторую админ-группу, в `settings` указываем `admin_group_id_egp`, добавляем правило маршрутизации в `settings.egp_keywords` (ключевые слова темы ЕГП).
 - Появятся подписки и broadcast → добавляем поля `consent_chs`, `consent_events` в `users` и таблицы `broadcasts`, `broadcast_deliveries`. Это чистая надстройка, ломать MVP не придётся.
 - Бот вырастает до федеральных функций (приём обращений по 59-ФЗ) → пересматриваем УЗ и провайдера.
@@ -426,7 +426,7 @@ Self-hosted-friendly default: для одного сервера без обла
 - **Webhook-режим** вместо long-polling. Готовая инфраструктура (nginx + certbot + endpoint `/max/webhook` с валидацией секрета) лежит в опциональном compose-профиле `webhook`. Переключение — изменение `BOT_MODE=webhook` и подъём профиля. Имеет смысл при росте нагрузки или при введении MAX'ом более жёстких лимитов на polling.
 - **Форк `love-apples/maxapi`.** Сейчас upstream активный (последний коммит — апрель 2026). Триггер форка: 3+ месяца без активности upstream И открытые critical issues, либо security-уязвимость без реакции мейнтейнера в течение 14 дней. При срабатывании — форк в `gaben1488/maxapi` под МСУ-контролем.
 - **Точечное восстановление БД (PITR).** Сейчас pg_dump раз в неделю. PITR через WAL archiving в S3 даёт восстановление на любую секунду между бэкапами, ценой постоянной отправки WAL-файлов в облако. Имеет смысл после значимого роста объёма данных.
-- **Managed Postgres** вместо self-hosted. Yandex Cloud Managed PostgreSQL или подобное — снимает с нас бэкапы, мониторинг, обновления версий. Цена — порядка 1500-3000 ₽/мес.
+- **Managed Postgres** вместо self-hosted. Гипотетически снимает с нас бэкапы, мониторинг, обновления версий — но входит в противоречие с принятой моделью self-host'а заказчика и не рассматривается без отдельного решения АЕМР.
 
 ### Аналитика
 
