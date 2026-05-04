@@ -129,6 +129,7 @@ Acceptance: все ✓ + 24 часа без падений на тестовом
 
 - **Этот документ** (`docs/HANDOFF.md`).
 - **[COMMANDS.md](COMMANDS.md)** — единая шпаргалка всех CLI-команд для админа (генерация секретов, установка, бэкап и восстановление с расшифровкой gpg, миграции, мониторинг Postgres, аварийные процедуры, smoke-test).
+- **[BOT_COMMANDS.md](BOT_COMMANDS.md)** — полный справочник команд и кнопок самого бота в MAX (для оператора и жителя): синтаксис, кто может вызвать, лимиты, audit-эффект, edge cases.
 - [README.md](../README.md), [SETUP.md](SETUP.md), [RUNBOOK.md](RUNBOOK.md), [DEVELOPER.md](DEVELOPER.md), [ADR-001-architecture.md](ADR-001-architecture.md), [PRD-mvp.md](PRD-mvp.md), [db-schema.md](db-schema.md), [architecture-diagrams.md](architecture-diagrams.md).
 - Доступ к приватному репозиторию `github.com/gaben1488/aemr-bot`.
 - Контакты эскалации: ИТ-координатор (имя, телефон, email), разработчик (имя, контакт).
