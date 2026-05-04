@@ -130,10 +130,11 @@ async def _deliver_operator_reply(
         return True
 
     target_user_id = appeal.user.max_user_id
+    formatted_text = card_format.citizen_reply(appeal, text)
     try:
         # IMPORTANT: deliver to the citizen by user_id (not chat_id) — we never
         # stored their personal-dialog chat_id, only their MAX user_id.
-        sent = await event.bot.send_message(user_id=target_user_id, text=text)
+        sent = await event.bot.send_message(user_id=target_user_id, text=formatted_text)
     except Exception as exc:  # noqa: BLE001
         await event.bot.send_message(
             chat_id=get_chat_id(event),

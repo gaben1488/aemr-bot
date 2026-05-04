@@ -68,6 +68,21 @@ def admin_followup(appeal: Appeal, user: User, text: str) -> str:
     )
 
 
+def citizen_reply(appeal: Appeal, reply_text: str) -> str:
+    """Wrap the operator's plain-text reply in a formal letter-style frame
+    so the citizen sees who answered and on which appeal, not just a bare
+    message in their DM with the bot."""
+    from aemr_bot.texts import CITIZEN_REPLY_TEMPLATE
+
+    return CITIZEN_REPLY_TEMPLATE.format(
+        number=appeal.id,
+        created_at=_local(appeal.created_at),
+        topic=appeal.topic or "—",
+        address=appeal.address or "—",
+        reply_text=reply_text,
+    )
+
+
 def user_card(appeal: Appeal) -> str:
     emoji, label = STATUS_LABELS.get(appeal.status, ("•", appeal.status))
     return APPEAL_CARD_TEMPLATE.format(
