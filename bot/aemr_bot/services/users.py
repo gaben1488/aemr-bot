@@ -92,7 +92,13 @@ async def find_stuck_in_summary(
 
 
 async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
-    """Anonymize the user and revoke the PDN consent (152-FZ art. 9 §2)."""
+    """Anonymize the user and revoke the PDN consent (152-FZ art. 9 §2).
+
+    Revoking consent also drops the broadcast subscription and flips
+    is_blocked so the user is excluded from the broadcast subscribers
+    query — sending them anything afterwards would be processing their
+    data without consent.
+    """
     result = await session.execute(
         update(User)
         .where(User.max_user_id == max_user_id)
@@ -102,6 +108,8 @@ async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
             consent_pdn_at=None,
             dialog_state=DialogState.IDLE.value,
             dialog_data={},
+            subscribed_broadcast=False,
+            is_blocked=True,
         )
     )
     return result.rowcount > 0
