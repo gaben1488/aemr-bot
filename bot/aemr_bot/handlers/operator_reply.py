@@ -1,6 +1,5 @@
-"""Operator-reply and citizen-followup logic, called from the unified message_created
-handler in handlers/appeal.py. No decorators here — registering two
-@dp.message_created() handlers risks double-processing or shadowing.
+"""Operator-reply and citizen-followup logic, called from the unified
+message_created handler in handlers/appeal.py.
 """
 
 import logging
@@ -15,89 +14,55 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import get_chat_id, get_message_link, get_user_id
+from aemr_bot.utils.event import (
+    extract_message_id,
+    get_chat_id,
+    get_message_link,
+    get_user_id,
+)
 
 log = logging.getLogger(__name__)
 
 
+def _mid_from_link(link) -> str | None:
+    """Pull message-id from either the pydantic LinkedMessage or its dict
+    fallback. love-apples/maxapi keeps it at `link.message.mid`; older
+    revisions had `link.mid`. We try both."""
+    inner = getattr(link, "message", None)
+    if inner is not None:
+        mid = getattr(inner, "mid", None)
+        if mid is not None:
+            return str(mid)
+    if isinstance(link, dict):
+        inner_dict = link.get("message")
+        if isinstance(inner_dict, dict) and inner_dict.get("mid"):
+            return str(inner_dict["mid"])
+        if link.get("mid"):
+            return str(link["mid"])
+    mid = getattr(link, "mid", None)
+    return str(mid) if mid is not None else None
+
+
 def _extract_reply_target_mid(event) -> str | None:
-    """Pull `mid` of the message being replied to.
+    """Pull `mid` of the message being replied to from `event.message.link`.
 
-    Verified against love-apples/maxapi `Message.link: LinkedMessage | None`
-    (NOT `MessageBody.link` — body never had this field, that was a bug from
-    the initial integration). Reply detection therefore must read from the
-    Message object, which lives at `event.message.link`. We accept dict
-    fallback in case of schema drift, and tolerate enum vs string for `type`.
-
-    Logs the raw link shape on first miss per process so we can see what the
-    real client actually sends — different MAX builds may put the reply
-    backref in a different field.
+    Verified against love-apples/maxapi: `Message.link: LinkedMessage | None`
+    holds the reply/forward backref. The original message id lives at
+    `link.message.mid` (the nested MessageBody), not at `link.mid`.
     """
     link = get_message_link(event)
     if link is None:
-        # Diagnostic: dump the message shape so we can find where the reply
-        # backref actually lives in this maxapi/MAX-client combination.
-        msg = getattr(event, "message", None)
-        if msg is not None:
-            try:
-                dump = (
-                    msg.model_dump(by_alias=False)
-                    if hasattr(msg, "model_dump")
-                    else repr(msg)
-                )
-                log.info("operator_reply: event.message dump = %r", dump)
-            except Exception:
-                log.exception("operator_reply: failed to dump event.message")
         return None
 
     link_type = getattr(link, "type", None)
     if link_type is None and isinstance(link, dict):
         link_type = link.get("type")
-    if link_type is None:
-        log.info("operator_reply: link present but no type — link=%r", link)
-        return None
-    # MessageLinkType.REPLY may arrive as the StrEnum ("reply"), as the enum
-    # member, or as the bare string. Coerce both sides to lowercase strings.
-    if str(link_type).lower().endswith("reply") is False:
-        log.info("operator_reply: link.type=%r is not reply — skip", link_type)
+    # MessageLinkType.REPLY can arrive as the StrEnum value, the enum
+    # member, or a plain string — match by lowercased suffix.
+    if link_type is None or not str(link_type).lower().endswith("reply"):
         return None
 
-    # In current love-apples/maxapi LinkedMessage doesn't expose `mid` at the
-    # top level — the original-message id lives in the nested MessageBody at
-    # link.message.mid. Older revisions sometimes exposed link.mid directly,
-    # so we fall through to that as a backup. Same chain for dict-shape link
-    # if pydantic schema drifts back to JSON dump.
-    mid = None
-    inner = getattr(link, "message", None)
-    if inner is not None:
-        mid = getattr(inner, "mid", None)
-    if mid is None and isinstance(link, dict):
-        inner_dict = link.get("message")
-        if isinstance(inner_dict, dict):
-            mid = inner_dict.get("mid")
-    if mid is None:
-        mid = getattr(link, "mid", None)
-        if mid is None and isinstance(link, dict):
-            mid = link.get("mid")
-    if mid is None:
-        try:
-            link_repr = (
-                link.model_dump(by_alias=False)
-                if hasattr(link, "model_dump")
-                else repr(link)
-            )
-        except Exception:
-            link_repr = repr(link)
-        log.info(
-            "operator_reply: link.type=reply but no mid anywhere — link=%r",
-            link_repr,
-        )
-        return None
-    log.info(
-        "operator_reply: extracted reply target mid=%s from link.type=%r",
-        mid, link_type,
-    )
-    return str(mid)
+    return _mid_from_link(link)
 
 
 async def _deliver_operator_reply(
@@ -145,7 +110,6 @@ async def _deliver_operator_reply(
             ),
         )
         return True
-    from aemr_bot.utils.event import extract_message_id
     delivered_mid = extract_message_id(sent)
 
     async with session_scope() as session:
@@ -269,17 +233,19 @@ async def handle_command_reply(event, appeal_id: int, text: str) -> None:
 
 async def handle_user_followup(event: MessageCreated, text: str) -> bool:
     """Citizen wrote in private dialog while idle — reopen answered appeal if any."""
+    from aemr_bot.db.models import AppealStatus, DialogState
+
     max_user_id = get_user_id(event)
     if max_user_id is None:
         return False
 
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        if user.dialog_state != "idle":
+        if user.dialog_state != DialogState.IDLE.value:
             return False
         active = await appeals_service.find_active_for_user(session, user.id)
 
-    if active is None or active.status != "answered":
+    if active is None or active.status != AppealStatus.ANSWERED.value:
         return False
 
     async with session_scope() as session:

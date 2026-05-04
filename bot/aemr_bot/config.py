@@ -23,19 +23,14 @@ class Settings(BaseSettings):
 
     admin_group_id: int | None = Field(None, alias="ADMIN_GROUP_ID")
 
-    # Personal max_user_id'и операторов. На текущей фазе используются для
-    # двух целей: (1) cold-start первого IT при пустой таблице operators
-    # без psql, (2) опциональная адресная отправка системных алертов в личку
-    # IT-у или координатору, если в админ-группе их слишком много (пока не
-    # реализовано — placeholder под будущее использование).
+    # Cold-start первого IT-оператора без psql. При первом старте, если в
+    # таблице operators нет ни одной активной записи с ролью `it`, бот
+    # вставит её из этих env-переменных. На повторных стартах — no-op.
     bootstrap_it_max_user_id: int | None = Field(
         None, alias="BOOTSTRAP_IT_MAX_USER_ID"
     )
     bootstrap_it_full_name: str | None = Field(
         None, alias="BOOTSTRAP_IT_FULL_NAME"
-    )
-    coordinator_max_user_id: int | None = Field(
-        None, alias="COORDINATOR_MAX_USER_ID"
     )
 
     timezone: str = Field("Asia/Kamchatka", alias="TZ")
@@ -79,7 +74,6 @@ class Settings(BaseSettings):
     backup_day_of_week: str = Field("sun", alias="BACKUP_DAY_OF_WEEK")
     backup_hour: int = Field(3, alias="BACKUP_HOUR")
     backup_minute: int = Field(0, alias="BACKUP_MINUTE")
-    backup_tmp_dir: str = Field("/tmp", alias="BACKUP_TMP_DIR")  # nosec B108 — container-local, override via env
 
     # Локальный бэкап: путь внутри контейнера, обычно смонтирован в named volume
     # `backups` (см. docker-compose). Если пусто — локальные бэкапы не сохраняются.
@@ -107,7 +101,6 @@ class Settings(BaseSettings):
         "admin_group_id",
         "bootstrap_it_max_user_id",
         "bootstrap_it_full_name",
-        "coordinator_max_user_id",
         "webhook_url",
         "webhook_secret",
         "backup_local_dir",

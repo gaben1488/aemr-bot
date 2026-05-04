@@ -4,27 +4,27 @@ from maxapi import Dispatcher
 from maxapi.types import BotStarted, Command, MessageCreated
 
 from aemr_bot import keyboards, texts
-from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as ops_service
 from aemr_bot.services import policy as policy_service
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import get_chat_id, get_first_name, get_user_id, reply
+from aemr_bot.utils.event import (
+    get_chat_id,
+    get_first_name,
+    get_user_id,
+    is_admin_chat,
+    reply,
+)
 
 log = logging.getLogger(__name__)
 
 
-def _is_admin_chat(event) -> bool:
-    """True when the event came from the configured admin group.
-
-    Citizen-flow commands (/start, /menu, /policy, /subscribe etc.) и
-    bot_started в админ-группе не имеют смысла: оператор не житель,
-    welcome-меню там лишнее, плюс /start/start_appeal_flow создавали бы
-    запись в `users` для каждого оператора, который однажды нажал /start.
-    """
-    return cfg.admin_group_id is not None and get_chat_id(event) == cfg.admin_group_id
+# Citizen-flow handlers ниже отбрасываются в админ-группе через is_admin_chat.
+# Алиас оставлен с подчёркиванием, чтобы внутри файла читалось как локальная
+# гард-функция и не путалось с неймспейсом utils.event.
+_is_admin_chat = is_admin_chat
 
 
 async def _ensure_user(event):

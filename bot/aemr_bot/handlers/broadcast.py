@@ -32,14 +32,15 @@ from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import BroadcastStatus, OperatorRole
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._auth import ensure_role, get_operator
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.utils.event import (
     ack_callback,
     extract_message_id,
-    get_chat_id,
     get_message_text,
     get_user_id,
+    is_admin_chat,
 )
 
 log = logging.getLogger(__name__)
@@ -70,33 +71,11 @@ class _WizardState:
 _wizards: dict[int, _WizardState] = {}
 
 
-def _is_admin_chat(event) -> bool:
-    chat_id = get_chat_id(event)
-    return cfg.admin_group_id is not None and chat_id == cfg.admin_group_id
-
-
-async def _get_operator(event):
-    if not _is_admin_chat(event):
-        return None
-    author_id = get_user_id(event)
-    if author_id is None:
-        return None
-    async with session_scope() as session:
-        return await operators_service.get(session, author_id)
-
-
-async def _ensure_role(event, *allowed: OperatorRole) -> bool:
-    """Same shape as admin_commands._ensure_role but local — operator returned
-    is needed to record audit entries with the actor's row id."""
-    op = await _get_operator(event)
-    if op is None:
-        return False
-    if op.role not in {r.value for r in allowed}:
-        await event.message.answer(
-            f"Команда доступна только ролям: {', '.join(r.value for r in allowed)}"
-        )
-        return False
-    return True
+# Use shared auth helpers via short module-private aliases. Keep names with
+# leading underscore to flag this is operator-side machinery, not citizen.
+_is_admin_chat = is_admin_chat
+_get_operator = get_operator
+_ensure_role = ensure_role
 
 
 def _drop_expired_wizards() -> None:
@@ -332,7 +311,7 @@ async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> 
         )
     except Exception:
         log.exception("failed to post broadcast start in admin group")
-    admin_mid = extract_message_id(sent) if sent is not None else None
+    admin_mid = extract_message_id(sent)
     log.info(
         "broadcast: admin start-message admin_mid=%s (None means edit_message will be skipped)",
         admin_mid,

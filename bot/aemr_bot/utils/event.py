@@ -53,6 +53,22 @@ def get_chat_id(event: Any) -> int | None:
     return get_ids(event)[0]
 
 
+def is_admin_chat(event: Any) -> bool:
+    """True если событие пришло из админ-группы, заданной ADMIN_GROUP_ID.
+
+    Используется handler'ами на двух осях: (а) фильтр citizen-flow команд
+    (start.py запрещает /start, /menu и т.п. в админ-группе), (б) фильтр
+    операторских команд (admin_commands.py / broadcast.py разрешают /reply,
+    /broadcast и т.д. только в админ-группе). Канонический источник —
+    единственный, чтобы случайное расхождение в условии не сломало одну из
+    проверок незаметно.
+    """
+    # Локальный импорт ради избежания circular dep utils.event ↔ config.
+    from aemr_bot.config import settings
+
+    return settings.admin_group_id is not None and get_chat_id(event) == settings.admin_group_id
+
+
 def get_user_id(event: Any) -> int | None:
     return get_ids(event)[1]
 

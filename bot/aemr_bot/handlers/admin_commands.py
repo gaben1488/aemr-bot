@@ -8,46 +8,22 @@ from aemr_bot import texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import settings_store
 from aemr_bot.services import stats as stats_service
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import get_chat_id, get_message_text, get_user_id
+from aemr_bot.utils.event import get_chat_id, get_message_text, get_user_id, is_admin_chat
 
 log = logging.getLogger(__name__)
 
 
-def _is_admin_chat(event) -> bool:
-    chat_id = get_chat_id(event)
-    return cfg.admin_group_id is not None and chat_id == cfg.admin_group_id
-
-
-async def _get_operator(event):
-    """Return the active Operator for the message author, or None."""
-    if not _is_admin_chat(event):
-        return None
-    author_id = get_user_id(event)
-    if author_id is None:
-        return None
-    async with session_scope() as session:
-        return await operators_service.get(session, author_id)
-
-
-async def _ensure_operator(event) -> bool:
-    return (await _get_operator(event)) is not None
-
-
-async def _ensure_role(event, *allowed: OperatorRole) -> bool:
-    op = await _get_operator(event)
-    if op is None:
-        return False
-    if op.role not in {r.value for r in allowed}:
-        await event.message.answer(
-            f"Команда доступна только ролям: {', '.join(r.value for r in allowed)}"
-        )
-        return False
-    return True
+# Local aliases for backward-compat with existing call sites in this file.
+_is_admin_chat = is_admin_chat
+_get_operator = get_operator
+_ensure_operator = ensure_operator
+_ensure_role = ensure_role
 
 
 def _parse_arg(text: str) -> str:
@@ -355,7 +331,7 @@ def register(dp: Dispatcher) -> None:
         # admin group. Если уже что-то закреплено — pin перезапишет, MAX
         # позволяет одно закреплённое сообщение на чат. Не критично если
         # операция упадёт — координатор всегда может вызвать /op_help снова.
-        mid = extract_message_id(sent) if sent is not None else None
+        mid = extract_message_id(sent)
         if mid:
             try:
                 await event.bot.pin_message(

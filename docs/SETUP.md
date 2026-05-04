@@ -95,10 +95,9 @@ chat_id: <chat_id группы>
 
 ```
 ADMIN_GROUP_ID=-1001234567890
-COORDINATOR_MAX_USER_ID=<max_user_id координатора>
 ```
 
-`COORDINATOR_MAX_USER_ID` опционален — нужен только для адресной отправки алертов. Перезапусти бота:
+Перезапусти бота:
 
 ```bash
 docker compose up -d --force-recreate bot

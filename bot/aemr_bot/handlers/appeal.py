@@ -45,14 +45,24 @@ _user_locks: dict[int, asyncio.Lock] = {}
 def _get_user_lock(max_user_id: int) -> asyncio.Lock:
     """Per-user lock so concurrent submit/cancel/timer paths don't double-dispatch.
 
-    Single-instance only — if we ever scale to multiple bot processes, this
-    falls apart and we need pg_advisory_xact_lock or a Redis lock.
+    Single-instance only — at horizontal scale this would need
+    pg_advisory_xact_lock or a Redis lock.
     """
     lock = _user_locks.get(max_user_id)
     if lock is None:
         lock = asyncio.Lock()
         _user_locks[max_user_id] = lock
     return lock
+
+
+def _drop_user_lock(max_user_id: int) -> None:
+    """Release the lock object after a funnel has fully terminated. Keeps
+    `_user_locks` from growing unbounded as more citizens cycle through
+    the bot. Safe to call when no one holds the lock — the dict-pop is
+    idempotent."""
+    lock = _user_locks.get(max_user_id)
+    if lock is not None and not lock.locked():
+        _user_locks.pop(max_user_id, None)
 
 
 async def recover_stuck_funnels(bot) -> int:
@@ -207,6 +217,10 @@ async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool:
         )
     except Exception:
         log.exception("ack to user %s failed for appeal #%s", max_user_id, appeal.id)
+
+    # Освобождаем lock-объект — funnel завершён, новая воронка получит свой.
+    # Без этого `_user_locks` копит запись на каждого жителя навечно.
+    _drop_user_lock(max_user_id)
     return True
 
 
@@ -373,6 +387,7 @@ def register(dp: Dispatcher) -> None:
             timer = _collect_timers.pop(max_user_id, None)
             if timer and not timer.done():
                 timer.cancel()
+            _drop_user_lock(max_user_id)
             await ack_callback(event)
             await event.bot.send_message(
                 chat_id=get_chat_id(event),
@@ -484,12 +499,11 @@ def register(dp: Dispatcher) -> None:
             return
 
         async with session_scope() as session:
-            await users_service.get_or_create(
+            user = await users_service.get_or_create(
                 session,
                 max_user_id=max_user_id,
                 first_name=get_first_name(event),
             )
-            user = await users_service.get_or_create(session, max_user_id=max_user_id)
             state = DialogState(user.dialog_state)
 
         handler = _STATE_HANDLERS.get(state)
