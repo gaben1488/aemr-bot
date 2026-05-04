@@ -39,22 +39,22 @@
 
 Идемпотентность — через unique constraint на `events.idempotency_key` (берём `update_id` или комбинацию `update_type + message_id + timestamp`).
 
-Команды бота для жителя: `/start`, `/menu`, `/help`. Главное меню — три inline-кнопки.
+Команды бота для жителя: `/start`, `/menu`, `/help`, `/policy`, `/subscribe`, `/unsubscribe`, `/forget`, `/whoami`. Главное меню — пять inline-кнопок.
 
 Команды бота в админ-группе:
 
 - `/stats today` / `/stats week` / `/stats month` — XLSX-выгрузка обращений за период.
 - `/reopen NNN` — вернуть обращение в статус «в работе».
 - `/close NNN` — закрыть обращение без ответа.
-- `/help` — список команд для операторов.
+- `/op_help` — закрепляемая памятка с inline-кнопками для операторов.
 
 ### 3.2 PostgreSQL
 
-Единое хранилище. Шесть таблиц:
+Единое хранилище. Основные таблицы (полный актуальный набор — 9, см. [db-schema.md](db-schema.md)):
 
 <!-- prev: users — без dialog_state/dialog_data, с last_name. Поля FSM появились после перехода на пошаговую анкету; last_name убран по просьбе куратора (только имя). -->
 - **users** — житель: `id`, `max_user_id`, `first_name`, `phone`, `consent_pdn_at`, `is_blocked`, `dialog_state`, `dialog_data` (JSONB для FSM).
-- **operators** — оператор: `id`, `max_user_id`, `role` (`coordinator`, `it`, `egp`), `full_name`, `is_active`. Привязка к группе — через `admin_group_id` в `settings`.
+- **operators** — оператор: `id`, `max_user_id`, `role` (`coordinator`, `aemr`, `egp`, `it`), `full_name`, `is_active`. Привязка к группе — через `admin_group_id` в `settings`.
 <!-- prev: appeals хранил только статусы и метки; текст обращения жил в messages как серия from_user.
      После перехода на FSM-анкету address/topic/summary стали отдельными полями. Если когда-нибудь
      вернём «быстрый режим» свободного текста — старая модель тоже подойдёт, нужно будет лишь сделать
@@ -64,7 +64,7 @@
 - **events** — лог сырых Update-ов от MAX: `id`, `idempotency_key` (unique), `update_type`, `payload` (JSONB), `received_at`. Бессрочно; авто-чистку оставляем на будущее (см. §11).
 - **audit_log** — действия операторов: `id`, `operator_max_user_id`, `action`, `target` (`appeal #NNN` или `user max_id=…`), `details`, `created_at`. Бессрочно.
 
-**settings** — таблица-словарь для редактируемых из БД параметров: URL электронной приёмной, расписание приёма, контакты экстренных служб (JSON), тексты приветствия и согласия, темы обращений. Седьмая таблица в первоначальном дизайне, де-факто конфиг.
+**settings** — таблица-словарь для редактируемых из БД параметров: URL электронной приёмной, расписание приёма, контакты экстренных служб (JSON), тексты приветствия и согласия, темы обращений. Де-факто конфиг.
 
 Позже, при добавлении рассылки, появились ещё две таблицы — `broadcasts` и `broadcast_deliveries` (см. §10 «Рассылка по подписчикам»), плюс в `users` добавлен флаг `subscribed_broadcast`. Полная актуальная схема — в [db-schema.md](db-schema.md). Полный набор схем (BPMN жизненного цикла обращения, flowchart обработки события, sequence-диаграммы операторского ответа и рассылки, схема развёртывания, FSM-state machines) — в [architecture-diagrams.md](architecture-diagrams.md).
 
@@ -107,7 +107,7 @@
 
 - **Координатор АЕМР** (вы) — добавлен в админ-группу, отвечает на обращения, имеет доступ к `/stats`, `/reopen`, `/close`.
 - **ИТ-специалист** — добавлен в группу, видит всё, использует те же команды плюс `/diag` для диагностики бота, `/setting`, `/erase`, `/add_operators`, `/backup`.
-- **Специалист ЕГП по ответам** — отдельная служебная группа (`admin_group_id_egp`), либо в основной группе с указанием на конкретные обращения через упоминание `@username`. На MVP делаем простейший вариант: одна общая админ-группа, ЕГП-специалист добавлен как обычный оператор. Если потребуется разделение — отдельную группу включим во вторую неделю.
+- **Специалист ЕГП по ответам** — отдельная служебная группа (`admin_group_id_egp`), либо в основной группе с указанием на конкретные обращения через упоминание `@username`. На MVP делаем простейший вариант: одна общая админ-группа, ЕГП-специалист добавлен как обычный оператор. Если потребуется разделение — это направление развития (см. §11).
 
 ### 3.4 Инфраструктура
 
@@ -115,8 +115,9 @@
                 Internet ◄──── long polling (исходящий) ──── bot ───► PostgreSQL
                                                               │
                                                               └─► APScheduler
-                                                                  (ежесуточный
-                                                                   бэкап в S3)
+                                                                  (еженедельный
+                                                                   pg_dump в named-volume,
+                                                                   опционально gpg+S3)
 ```
 
 Один VPS. Два контейнера в `docker-compose`:
@@ -158,7 +159,7 @@ PREVIOUS VERSION OF SECTION 3.5 (kept for context — citizen wrote free text wi
 
 ### 3.5 Поток данных от жителя до ответа (FSM-воронка)
 
-Главное меню жителя — три кнопки: «Написать обращение», «Мои обращения», «Контакты». Согласие на ПДн запрашивается **внутри** воронки «Написать обращение», а не сразу после `/start` — пользователь может посмотреть контакты и свои прошлые обращения без согласия.
+Главное меню жителя — пять кнопок: «Написать обращение», «Мои обращения», «Электронная приёмная», «Приём граждан», «Полезная информация». Согласие на ПДн запрашивается **внутри** воронки «Написать обращение», а не сразу после `/start` — пользователь может посмотреть контакты и свои прошлые обращения без согласия.
 
 Воронка приёма обращения — пошаговый wizard, состояние хранится в `users.dialog_state`, накопленные данные — в `users.dialog_data` JSONB. Шаги:
 
@@ -199,7 +200,7 @@ PREVIOUS VERSION OF SECTION 3.5 (kept for context — citizen wrote free text wi
 
 **Не требуется** для УЗ-4: аттестация провайдера, СКЗИ, аттестация ИСПДн, расширенная модель угроз.
 
-**Удаление по запросу.** Команда `/erase max_user_id=NNN` от ИТ-специалиста в админ-группе или текстовая команда жителя в боте `/forget`. Алгоритм: `users.first_name='Удалено'`, `users.last_name=''`, `users.phone=NULL`, удаление `messages.attachments`, запись в `audit_log`. Завершается за минуту, в течение 24 часов как требует 152-ФЗ.
+**Удаление по запросу.** Команда `/erase max_user_id=NNN` или `/erase phone=+7...` от ИТ-специалиста в админ-группе либо текстовая команда жителя в боте `/forget`. Алгоритм: `users.first_name='Удалено'`, `users.phone=NULL`, `users.consent_pdn_at=NULL`, сброс FSM-состояния, `is_blocked=true`, `subscribed_broadcast=false`, запись в `audit_log`. Завершается за минуту, в течение 24 часов как требует 152-ФЗ.
 
 ## 6. Развёртывание и CI/CD
 
@@ -231,7 +232,7 @@ docker compose exec bot alembic upgrade head
 
 **Async backup.** `services/cron.py::_backup_db` теперь полностью async через `asyncio.create_subprocess_exec` для `pg_dump | gpg | rclone`. Event-loop не блокируется на время дампа.
 
-**Upload.** `services/uploads.py` — единый адаптер над `bot.upload_media`. Используется и `services/policy.py` (PDF на старте) и `_build_admin_senders` в `main.py` (XLSX по `/stats` и в ежемесячном отчёте). Клейн `services/cron.py::send_admin_document` теперь реально доставляет файл, а не текстовый fallback.
+**Upload.** `services/uploads.py` — единый адаптер над `bot.upload_media`. Используется и `services/policy.py` (PDF на старте) и `_build_admin_senders` в `main.py` (XLSX по `/stats` и в ежемесячном отчёте). Клиент `services/cron.py::send_admin_document` теперь реально доставляет файл, а не текстовый fallback.
 
 **FSM-handlers.** `handlers/appeal.py::on_message` — чистый диспатчер по `_STATE_HANDLERS` map. Каждое состояние — отдельная функция (`_on_awaiting_contact`, `_on_awaiting_name`, ...) с одинаковой сигнатурой `(event, body, text_body, max_user_id, op_reply)`. Добавление нового состояния — это новая функция и одна строка в map.
 
