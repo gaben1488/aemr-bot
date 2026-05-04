@@ -1,63 +1,66 @@
 # Шпаргалка команд администратора
 
-Один файл со всеми командами, которые нужны для эксплуатации aemr-bot. Скопировать, выполнить, не вспоминать. Все команды рассчитаны на self-host: бот и Postgres крутятся в `docker compose` на одном сервере под Linux.
+Один файл со всеми командами для эксплуатации aemr-bot. Скопировал, выполнил, забыл. Все команды рассчитаны на размещение на собственном сервере (self-host): бот и Postgres (система управления базами данных PostgreSQL) работают в Docker Compose (оркестратор контейнеров) на одном Linux-сервере.
 
-Команды сгруппированы по сценариям. Внутри сценария — порядок выполнения сверху вниз.
+Команды разбиты по сценариям. Внутри сценария — порядок выполнения сверху вниз.
 
 > **Соглашения.**
-> - `~/aemr-bot` — корень репозитория на сервере (поменяй, если у тебя другой путь).
-> - Все `docker compose` команды выполняются из `~/aemr-bot/infra/`.
-> - `aemr` — имя БД и пользователя (значение `POSTGRES_USER` / `POSTGRES_DB`).
-> - Если в команде встречается `<...>` — это плейсхолдер, замени на реальное значение.
+> - `~/aemr-bot` — корень репозитория на сервере. Подставь свой путь, если он другой.
+> - Все команды `docker compose` запускаются из каталога `~/aemr-bot/infra/`.
+> - `aemr` — имя базы данных и пользователя. Это значения переменных `POSTGRES_USER` и `POSTGRES_DB`.
+> - Если в команде встречается `<...>` — это место для подстановки. Замени на реальное значение.
 
 ## Содержание
 
-1. [Генерация секретов перед первым деплоем](#1-генерация-секретов-перед-первым-деплоем)
+1. [Генерация секретов перед первым развёртыванием](#1-генерация-секретов-перед-первым-развёртыванием)
 2. [Первичная установка](#2-первичная-установка)
 3. [Ежедневная эксплуатация](#3-ежедневная-эксплуатация)
 4. [Логи и диагностика](#4-логи-и-диагностика)
 5. [Резервное копирование](#5-резервное-копирование)
 6. [Восстановление из бэкапа](#6-восстановление-из-бэкапа)
-7. [Миграции БД](#7-миграции-бд)
-8. [Postgres мониторинг](#8-postgres-мониторинг)
+7. [Миграции базы данных](#7-миграции-базы-данных)
+8. [Мониторинг Postgres](#8-мониторинг-postgres)
 9. [Регистрация и управление операторами](#9-регистрация-и-управление-операторами)
 10. [Аварийные процедуры](#10-аварийные-процедуры)
-11. [Smoke-test после изменений](#11-smoke-test-после-изменений)
+11. [Проверочный прогон после изменений](#11-проверочный-прогон-после-изменений)
 
 ---
 
-## 1. Генерация секретов перед первым деплоем
+## 1. Генерация секретов перед первым развёртыванием
 
-Все три значения генерируются **на твоей рабочей машине** (не на сервере), записываются в менеджер паролей и потом подставляются в `.env` на сервере.
+Все три значения генерируются **на твоей рабочей машине**, а не на сервере. Запиши их в менеджер паролей. Потом подставь в файл `.env` на сервере.
 
 ```bash
-# POSTGRES_PASSWORD — пароль пользователя aemr в Postgres-контейнере
+# POSTGRES_PASSWORD — пароль пользователя aemr в контейнере Postgres
 python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 
-# BACKUP_GPG_PASSPHRASE — passphrase для gpg-AES256 шифрования pg_dump
+# BACKUP_GPG_PASSPHRASE — кодовая фраза для шифрования бэкапов через GPG-AES256.
+# GPG — система симметричного шифрования. pg_dump — штатная утилита Postgres
+# для выгрузки содержимого базы.
 python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 
-# WEBHOOK_SECRET — нужен только если включаешь webhook-режим (на self-host MVP не нужен)
+# WEBHOOK_SECRET — нужен только при включении режима webhook.
+# Для размещения на собственном сервере в варианте MVP не нужен.
 python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
-`BOT_TOKEN` не генерируется — берётся на портале <https://max.ru/business> → раздел «Боты» → создать или открыть бота → скопировать Bot API token.
+`BOT_TOKEN` не генерируется. Его берут на портале <https://max.ru/business>. Раздел «Боты». Создать или открыть бота. Скопировать значение Bot API token.
 
-**Правило:** ровно те же значения `POSTGRES_PASSWORD` подставляются в обе строки `.env`:
+**Правило:** одно и то же значение `POSTGRES_PASSWORD` подставляется в обе строки `.env`:
 
 ```ini
 POSTGRES_PASSWORD=tQ_Y3w0c8KkS0lN8...x9xp
 DATABASE_URL=postgresql+asyncpg://aemr:tQ_Y3w0c8KkS0lN8...x9xp@db:5432/aemr
 ```
 
-Если расходятся — бот при старте падает с `password authentication failed`.
+Если значения расходятся, бот при старте падает с ошибкой `password authentication failed`.
 
-`BACKUP_GPG_PASSPHRASE` обязательно сохрани в **двух независимых местах** (менеджер паролей администратора + offline-копия у руководителя). Утрата passphrase = все накопленные `.sql.gpg` бесполезный шифротекст.
+`BACKUP_GPG_PASSPHRASE` сохрани в **двух независимых местах**: менеджер паролей администратора и оффлайн-копия у руководителя. Потеря этой кодовой фразы означает, что все накопленные файлы `.sql.gpg` превращаются в бесполезный шифротекст.
 
 ## 2. Первичная установка
 
 ```bash
-# На сервере под пользователем aemr (не root), с уже установленным docker
+# На сервере под пользователем aemr (не root). Docker должен быть уже установлен.
 git clone https://github.com/gaben1488/aemr-bot.git ~/aemr-bot
 cd ~/aemr-bot/infra
 
@@ -69,7 +72,7 @@ chmod 600 .env
 #   BOT_TOKEN, POSTGRES_PASSWORD, DATABASE_URL, BACKUP_GPG_PASSPHRASE, TZ
 nano .env
 
-# Собрать и поднять
+# Собрать и запустить
 docker compose build
 docker compose up -d
 
@@ -81,32 +84,32 @@ docker compose ps
 curl -fsS http://127.0.0.1:8080/healthz | python3 -m json.tool
 # Ожидание: HTTP 200, JSON с "ok": true, "db_ok": true
 
-# Проверить миграции
+# Проверить миграции (изменения схемы базы данных с версионностью)
 docker compose exec bot alembic current
 # Ожидание: 0004 (или новее) — последняя ревизия из bot/aemr_bot/db/alembic/versions/
 ```
 
-После этого нужно настроить `ADMIN_GROUP_ID` и операторов — см. [SETUP.md](SETUP.md) §3–§6, либо коротко [§9](#9-регистрация-и-управление-операторами) этого файла.
+Дальше нужно настроить `ADMIN_GROUP_ID` и операторов. См. [SETUP.md](SETUP.md), §3–§6. Кратко — в [§9](#9-регистрация-и-управление-операторами) этого файла.
 
 ## 3. Ежедневная эксплуатация
 
 ```bash
 cd ~/aemr-bot/infra
 
-# Старт всего стека
+# Запуск всего стека
 docker compose up -d
 
-# Стоп
+# Остановка
 docker compose stop
 
-# Полный рестарт бота (например, после смены .env)
+# Полный перезапуск бота (например, после правки .env)
 docker compose up -d --force-recreate bot
 
 # Применить новый код после git pull
 git pull
 docker compose up -d --build bot
 
-# Применить миграции после pull (обычно срабатывают сами в CMD контейнера)
+# Применить миграции после git pull. Бот делает это сам в стартовой команде контейнера.
 docker compose exec bot alembic upgrade head
 ```
 
@@ -122,7 +125,7 @@ docker compose logs --since 24h bot | grep -iE "error|exception|warning"
 # Логи Postgres
 docker compose logs --tail=200 db
 
-# Состояние контейнеров и ресурсов
+# Состояние контейнеров и потребление ресурсов
 docker compose ps
 docker stats --no-stream
 
@@ -131,42 +134,42 @@ curl -fsS http://127.0.0.1:8080/healthz | python3 -m json.tool
 ```
 
 В админ-группе MAX в любой момент:
-- `/diag` — счётчики жителей, обращений, рассылок, событий + конфиг.
+- `/diag` — счётчики жителей, обращений, рассылок, событий и текущая конфигурация.
 - `/op_help` — закрепляемая панель быстрых действий.
 
 ## 5. Резервное копирование
 
 ```bash
-# Список существующих бэкапов в named-volume
+# Список существующих бэкапов в именованном томе (named volume) Docker
 docker compose exec bot ls -lh /backups/
 
-# Снять бэкап вручную (любой момент, доступно роли it в админ-группе через /backup,
-# но и из shell тоже можно)
+# Снять бэкап вручную в любой момент. Доступно роли it в админ-группе через /backup,
+# но и из shell тоже работает.
 docker compose exec bot python -c "
 import asyncio
 from aemr_bot.services.cron import _backup_db
 print(asyncio.run(_backup_db()))
 "
-# Ожидание: путь к новому файлу .sql.gpg (или .sql если passphrase пустой)
+# Ожидание: путь к новому файлу .sql.gpg (или .sql, если кодовая фраза пуста)
 
-# Скопировать конкретный бэкап на хост (вне контейнера) для офлайн-хранения
+# Скопировать конкретный бэкап на хост (вне контейнера) для оффлайн-хранения
 docker compose cp bot:/backups/aemr-20260504_030000.sql.gpg ~/backups/
 
-# Размер named-volume
+# Размер именованного тома
 docker volume inspect infra_backups --format '{{ .Mountpoint }}' \
   | xargs -I {} du -sh {}
 ```
 
-Расписание автоматических бэкапов — каждое воскресенье в 03:00 (`BACKUP_DAY_OF_WEEK`, `BACKUP_HOUR`, `BACKUP_MINUTE` в `.env`). Ротация: последние 8 файлов (`BACKUP_KEEP_LAST`).
+Расписание автоматических бэкапов: каждое воскресенье в 03:00. Параметры в `.env` — `BACKUP_DAY_OF_WEEK`, `BACKUP_HOUR`, `BACKUP_MINUTE`. Срок хранения: последние 8 файлов, параметр `BACKUP_KEEP_LAST`.
 
 ## 6. Восстановление из бэкапа
 
-Это та самая процедура, которую **обязательно** прогнать на тестовом стенде до go-live.
+Это та самая процедура, которую **обязательно** надо прогнать на тестовом стенде до боевого запуска.
 
-### 6.1. Расшифровать gpg-бэкап
+### 6.1. Расшифровать бэкап GPG
 
 ```bash
-# Если файл лежит в /backups внутри контейнера — расшифровать на месте
+# Если файл лежит в /backups внутри контейнера — расшифровываем на месте.
 docker compose exec -e GPG_PASSPHRASE="$(grep ^BACKUP_GPG_PASSPHRASE= .env | cut -d= -f2-)" \
   bot sh -c '
     gpg --batch --passphrase "$GPG_PASSPHRASE" \
@@ -175,40 +178,40 @@ docker compose exec -e GPG_PASSPHRASE="$(grep ^BACKUP_GPG_PASSPHRASE= .env | cut
     ls -lh /tmp/aemr-restore.sql
   '
 
-# Проверка целостности — первая строка должна содержать pg_dump-сигнатуру
+# Проверка целостности. Первая строка должна содержать сигнатуру pg_dump.
 docker compose exec bot head -3 /tmp/aemr-restore.sql
 # Ожидание: -- PostgreSQL database dump
 ```
 
-### 6.2. Восстановить в чистую БД (drill на тестовом стенде)
+### 6.2. Восстановить в чистую БД (учебная отработка на тестовом стенде)
 
 ```bash
-# Создать одноразовую тестовую БД, не трогая prod-aemr
+# Создать одноразовую тестовую базу. Боевую aemr не трогаем.
 docker compose exec db createdb -U aemr aemr_restore_test
 
-# Залить в неё расшифрованный дамп
+# Залить в неё расшифрованный дамп через psql — клиент командной строки PostgreSQL.
 docker compose exec bot sh -c \
   'cat /tmp/aemr-restore.sql | psql -h db -U aemr -d aemr_restore_test'
 
-# Sanity check — должны вернуться ненулевые цифры
+# Проверка вменяемости. Должны вернуться ненулевые цифры.
 docker compose exec db psql -U aemr -d aemr_restore_test -c \
   "SELECT count(*) AS users FROM users; SELECT count(*) AS appeals FROM appeals;"
 
-# Удалить тестовую БД после проверки
+# Удалить тестовую базу после проверки
 docker compose exec db dropdb -U aemr aemr_restore_test
 
-# Удалить расшифрованный SQL — он содержит ПДн в открытом виде
+# Удалить расшифрованный SQL — он содержит персональные данные в открытом виде
 docker compose exec bot rm /tmp/aemr-restore.sql
 ```
 
-### 6.3. Полное восстановление прода (после катастрофы)
+### 6.3. Полное восстановление продакшена после катастрофы
 
 ```bash
-# 1. Остановить бот, чтобы новые записи не мешали
+# 1. Остановить бота, чтобы новые записи не мешали
 cd ~/aemr-bot/infra
 docker compose stop bot
 
-# 2. Уронить и пересоздать БД
+# 2. Удалить и пересоздать базу
 docker compose exec db dropdb -U aemr aemr
 docker compose exec db createdb -U aemr aemr
 
@@ -220,23 +223,24 @@ docker compose exec -e GPG_PASSPHRASE="$(grep ^BACKUP_GPG_PASSPHRASE= .env | cut
       | psql -h db -U aemr -d aemr
   '
 
-# 4. Поднять бот — Alembic не нужен, миграции уже в дампе
+# 4. Запустить бота. Alembic (инструмент управления миграциями БД) запускать не надо —
+#    миграции уже зашиты в дамп.
 docker compose start bot
 
-# 5. Проверить, что бот завёлся
+# 5. Проверить, что бот стартовал
 docker compose logs --tail=50 bot
 curl -fsS http://127.0.0.1:8080/healthz
 ```
 
-**Если бэкап без gpg** (passphrase в `.env` был пустой) — пропустить шаг с `gpg --decrypt`, вместо `gpg ... | psql` использовать `cat /backups/aemr-...sql | psql ...`.
+**Если бэкап без GPG** (кодовая фраза в `.env` была пустой), пропусти шаг с `gpg --decrypt`. Вместо `gpg ... | psql` используй `cat /backups/aemr-...sql | psql ...`.
 
-## 7. Миграции БД
+## 7. Миграции базы данных
 
 ```bash
-# Текущая ревизия в БД
+# Текущая ревизия в базе
 docker compose exec bot alembic current
 
-# Применить все pending-миграции (обычно бот делает это сам в CMD)
+# Применить все ожидающие миграции. Бот делает это сам в стартовой команде контейнера.
 docker compose exec bot alembic upgrade head
 
 # Откатить одну ревизию назад
@@ -245,18 +249,18 @@ docker compose exec bot alembic downgrade -1
 # История ревизий
 docker compose exec bot alembic history
 
-# Сгенерировать новую миграцию из изменений в models.py (только для разработчика)
+# Сгенерировать новую миграцию из изменений в models.py — только для разработчика
 docker compose exec bot alembic revision --autogenerate -m "describe what changed"
 ```
 
-После генерации **обязательно прочитать сгенерированный файл** — autogenerate иногда ошибается с типами JSONB и enum.
+После генерации **обязательно прочитать сгенерированный файл**. Автогенерация ошибается на типах JSONB и enum.
 
-## 8. Postgres мониторинг
+## 8. Мониторинг Postgres
 
-10 проверок, которые админ может прогнать раз в неделю-месяц.
+Десять проверок. Прогоняй их раз в неделю или раз в месяц.
 
 ```bash
-# 1. Размер таблиц + индексов (топ-10)
+# 1. Размер таблиц с индексами (топ-10)
 docker compose exec db psql -U aemr -d aemr -c "
 SELECT schemaname||'.'||relname AS table,
        pg_size_pretty(pg_total_relation_size(relid)) AS total,
@@ -265,7 +269,8 @@ FROM pg_catalog.pg_statio_user_tables
 ORDER BY pg_total_relation_size(relid) DESC LIMIT 10;
 "
 
-# 2. Bloat / dead tuples
+# 2. Раздувание таблиц и устаревшие строки (bloat и dead tuples).
+#    Колонка last_autovacuum показывает время последней автоматической очистки.
 docker compose exec db psql -U aemr -d aemr -c "
 SELECT relname, n_live_tup, n_dead_tup,
        round(100.0*n_dead_tup/NULLIF(n_live_tup,0),1) AS dead_pct,
@@ -274,7 +279,7 @@ FROM pg_stat_user_tables
 ORDER BY n_dead_tup DESC LIMIT 10;
 "
 
-# 3. Индексы, к которым никто не обращается (кандидаты на drop в будущем)
+# 3. Индексы, к которым никто не обращается. Кандидаты на удаление в будущем.
 docker compose exec db psql -U aemr -d aemr -c "
 SELECT relname, indexrelname, idx_scan
 FROM pg_stat_user_indexes WHERE idx_scan = 0 ORDER BY relname;
@@ -287,20 +292,21 @@ SELECT pid, usename, state, wait_event_type, wait_event,
 FROM pg_stat_activity WHERE state != 'idle' ORDER BY query_start;
 "
 
-# 5. Долгие запросы (>5 секунд)
+# 5. Долгие запросы — больше 5 секунд
 docker compose exec db psql -U aemr -d aemr -c "
 SELECT pid, now()-query_start AS dur, left(query,120)
 FROM pg_stat_activity
 WHERE state='active' AND now()-query_start > interval '5 seconds';
 "
 
-# 6. Размер БД и количество WAL-файлов
+# 6. Размер базы и количество файлов журнала упреждающей записи (WAL)
 docker compose exec db psql -U aemr -d aemr -c "
 SELECT pg_size_pretty(pg_database_size('aemr')) AS db_size,
        (SELECT count(*) FROM pg_ls_waldir()) AS wal_files;
 "
 
-# 7. Принудительный VACUUM ANALYZE на горячих таблицах
+# 7. Принудительный VACUUM ANALYZE на активно пишущихся таблицах.
+#    VACUUM — штатная команда Postgres для уборки устаревших строк.
 docker compose exec db psql -U aemr -d aemr -c "
 VACUUM (ANALYZE, VERBOSE) events;
 VACUUM (ANALYZE, VERBOSE) broadcast_deliveries;
@@ -309,89 +315,90 @@ VACUUM (ANALYZE, VERBOSE) broadcast_deliveries;
 # 8. Проверка миграций
 docker compose exec bot alembic current
 
-# 9. Проверка целостности последнего бэкапа
+# 9. Проверка наличия и размера последнего бэкапа
 docker compose exec bot sh -c 'ls -t /backups/aemr-*.gpg | head -1 | xargs -I {} stat -c "%n %s байт %y" {}'
 
-# 10. Дисковое использование на сервере
+# 10. Использование диска на сервере
 df -h | grep -E "Filesystem|/$|docker"
 ```
 
 ## 9. Регистрация и управление операторами
 
-Делается в основном через бота в админ-группе MAX, но shell-fallback есть.
+Основной путь — через бота в админ-группе MAX. Резервный путь через shell тоже работает.
 
 ```bash
 # Посмотреть всех операторов
 docker compose exec db psql -U aemr -d aemr -c \
   "SELECT id, max_user_id, role, full_name, active FROM operators ORDER BY id;"
 
-# Деактивировать оператора (например, при увольнении) — мягкое удаление
+# Деактивировать оператора при увольнении. Это мягкое удаление.
 docker compose exec db psql -U aemr -d aemr -c \
   "UPDATE operators SET active=false WHERE max_user_id=<их_id>;"
 
-# Сменить роль оператора через psql (бот это сам не умеет — защита от self-promote)
+# Сменить роль оператора через psql. Бот этого не умеет — защита от самоповышения.
 docker compose exec db psql -U aemr -d aemr -c \
   "UPDATE operators SET role='it' WHERE max_user_id=<их_id>;"
 
-# Аварийно вписать первого ИТ-оператора, если bootstrap не сработал
+# Аварийно вписать первого ИТ-оператора, если автоматическая инициализация не сработала
 docker compose exec db psql -U aemr -d aemr -c \
   "INSERT INTO operators (max_user_id, full_name, role, active)
    VALUES (<id>, 'Иванов И.И.', 'it', true);"
 ```
 
-В норме регистрация идёт через `/add_operators` в админ-группе — см. [RUNBOOK §2](RUNBOOK.md).
+Штатно регистрация идёт через команду `/add_operators` в админ-группе. См. [RUNBOOK §2](RUNBOOK.md).
 
 ## 10. Аварийные процедуры
 
 ```bash
-# Бот молчит, контейнер живой — простой рестарт
+# Бот молчит, контейнер живой — простой перезапуск
 docker compose restart bot
 
 # Бот молчит, контейнер мёртв
 docker compose up -d bot
 
-# БД недоступна
+# База недоступна
 docker compose logs --tail=100 db
 docker compose restart db
 sleep 10
 docker compose restart bot
 
-# Откат на предыдущую версию (тег)
+# Откат на предыдущую версию по тегу
 git fetch --tags
 git log --oneline -5
 git checkout <предыдущий_тег>
 docker compose up -d --build bot
 
-# Откат миграции после неудачного апгрейда
+# Откат миграции после неудачного обновления
 docker compose exec bot alembic downgrade -1
 
-# Сброс тестовых данных перед прод-запуском (НЕ В ПРОДЕ!)
+# Сброс тестовых данных перед запуском в продакшен. НЕ ЗАПУСКАТЬ В ПРОДАКШЕНЕ.
 cat ../scripts/reset_test_data.sql | \
   docker compose exec -T db psql -U aemr -d aemr
 
-# Полная пересборка контейнера (если что-то совсем сломано)
+# Полная пересборка контейнера, если что-то совсем сломано
 docker compose down
 docker compose up -d --build
 ```
 
-## 11. Smoke-test после изменений
+## 11. Проверочный прогон после изменений
 
-Минимальный набор проверок после деплоя или рестарта.
+Минимальный набор проверок после развёртывания или перезапуска.
 
 ```bash
 # 1. Контейнеры здоровы
 docker compose ps
-# Ожидание: оба сервиса "running (healthy)"
+# Ожидание: оба сервиса в статусе "running (healthy)"
 
-# 2. Healthz отвечает
+# 2. /healthz отвечает
 curl -fsS http://127.0.0.1:8080/healthz | python3 -m json.tool
 # Ожидание: "ok": true, "db_ok": true
 
-# 3. Бот аутентифицировался в MAX (видно в логах после старта)
+# 3. Бот авторизован в MAX. Видно в логах после старта.
 docker compose logs --tail=50 bot | grep -iE "long polling|first_name|@"
 # Ожидание: строка вида "Бот: @<имя_бота> first_name=... id=..."
 
-# 4. APScheduler-задачи зарегистрированы
+# 4. Задачи планировщика APScheduler зарегистрированы.
+#    APScheduler — встроенный планировщик задач, аналог cron внутри процесса бота.
 docker compose logs bot | grep -iE "scheduler|added job"
 # Ожидание: 4 задачи — db-backup, events-retention, health-selfcheck, monthly-stats
 
@@ -405,4 +412,4 @@ docker compose exec bot alembic current
 #    /diag из админ-группы → ожидаемые счётчики
 ```
 
-Если все 6 шагов прошли — деплой принят. Иначе — `docker compose logs bot` и в [RUNBOOK §5](RUNBOOK.md) (что делать, если бот молчит).
+Если все шесть шагов прошли — развёртывание принято. Иначе — `docker compose logs bot` и [RUNBOOK §5](RUNBOOK.md), что делать, если бот молчит.
