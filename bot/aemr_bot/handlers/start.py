@@ -4,6 +4,7 @@ from maxapi import Dispatcher
 from maxapi.types import BotStarted, Command, MessageCreated
 
 from aemr_bot import keyboards, texts
+from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as ops_service
@@ -13,6 +14,17 @@ from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import get_chat_id, get_first_name, get_user_id, reply
 
 log = logging.getLogger(__name__)
+
+
+def _is_admin_chat(event) -> bool:
+    """True when the event came from the configured admin group.
+
+    Citizen-flow commands (/start, /menu, /policy, /subscribe etc.) и
+    bot_started в админ-группе не имеют смысла: оператор не житель,
+    welcome-меню там лишнее, плюс /start/start_appeal_flow создавали бы
+    запись в `users` для каждого оператора, который однажды нажал /start.
+    """
+    return cfg.admin_group_id is not None and get_chat_id(event) == cfg.admin_group_id
 
 
 async def _ensure_user(event):
@@ -126,36 +138,59 @@ async def cmd_forget(event):
 
 
 def register(dp: Dispatcher) -> None:
+    # Все citizen-flow обработчики ниже стоят на guard'е _is_admin_chat:
+    # в админ-группе они тихо отбрасываются, чтобы операторы не получали
+    # welcome-меню и не попадали в `users` как «жители».
+    # /whoami — единственное исключение, оно работает в обоих направлениях:
+    # нужно как для жителя (узнать свой max_user_id), так и для оператора
+    # (узнать chat_id админ-группы при первом старте).
+
     @dp.bot_started()
     async def _(event: BotStarted):
+        if _is_admin_chat(event):
+            return
         await cmd_start(event)
 
     @dp.message_created(Command("start"))
     async def _(event: MessageCreated):
+        if _is_admin_chat(event):
+            return
         await cmd_start(event)
 
     @dp.message_created(Command("help"))
     async def _(event: MessageCreated):
+        if _is_admin_chat(event):
+            return
         await cmd_help(event)
 
     @dp.message_created(Command("menu"))
     async def _(event: MessageCreated):
+        if _is_admin_chat(event):
+            return
         await cmd_menu(event)
 
     @dp.message_created(Command("forget"))
     async def _(event: MessageCreated):
+        if _is_admin_chat(event):
+            return
         await cmd_forget(event)
 
     @dp.message_created(Command("policy"))
     async def _(event: MessageCreated):
+        if _is_admin_chat(event):
+            return
         await cmd_policy(event)
 
     @dp.message_created(Command("subscribe"))
     async def _(event: MessageCreated):
+        if _is_admin_chat(event):
+            return
         await cmd_subscribe(event)
 
     @dp.message_created(Command("unsubscribe"))
     async def _(event: MessageCreated):
+        if _is_admin_chat(event):
+            return
         await cmd_unsubscribe(event)
 
     @dp.message_created(Command("whoami"))

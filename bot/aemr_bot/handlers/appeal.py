@@ -326,6 +326,24 @@ def register(dp: Dispatcher) -> None:
             log.warning("callback without user_id, payload=%r — skipped", payload)
             return
 
+        # Citizen-flow callbacks (menu:*, consent:*, topic:*, appeal:*,
+        # info:*, cancel) не должны срабатывать в админ-группе. Иначе
+        # любое случайное нажатие на старую цитированную inline-кнопку
+        # запустит воронку обращения от имени оператора и засорит таблицу
+        # users. В админ-чате пропускаем только admin-flow:
+        # broadcast:{confirm,abort,stop:N} и op:*. broadcast:unsubscribe —
+        # citizen-side, шлётся из личного broadcast'а, в админ-чате тоже
+        # не нужен.
+        chat_id = get_chat_id(event)
+        if cfg.admin_group_id and chat_id == cfg.admin_group_id:
+            is_admin_callback = payload.startswith("op:") or (
+                payload.startswith("broadcast:")
+                and payload != "broadcast:unsubscribe"
+            )
+            if not is_admin_callback:
+                await ack_callback(event)
+                return
+
         if payload == "menu:new_appeal":
             await ack_callback(event)
             await _start_appeal_flow(event, max_user_id)
