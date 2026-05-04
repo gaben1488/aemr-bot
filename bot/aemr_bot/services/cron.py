@@ -3,16 +3,18 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
 
 import aiohttp
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from sqlalchemy import delete
 from zoneinfo import ZoneInfo
 
 from aemr_bot.config import settings
+from aemr_bot.db.models import Event
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import stats as stats_service
 
@@ -69,12 +71,6 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
         contain PII for citizen messages).
         """
         try:
-            from datetime import timedelta
-
-            from sqlalchemy import delete
-
-            from aemr_bot.db.models import Event
-
             cutoff = datetime.now(TZ) - timedelta(days=30)
             async with session_scope() as session:
                 result = await session.execute(

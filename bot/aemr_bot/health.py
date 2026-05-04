@@ -62,9 +62,27 @@ async def _ping_db() -> bool:
         return False
 
 
+# Cache the DB-ping result for a short window so that a busy chain of
+# external probes (compose healthcheck every 30s + UptimeRobot every 60s
+# + Nginx upstream check) doesn't multiply into a flurry of trivial
+# SELECTs that compete with real handlers for the small connection pool.
+_DB_PING_CACHE_TTL = 10.0
+_db_ping_cache: dict[str, float | bool] = {"value": False, "checked_at": 0.0}
+
+
+async def _ping_db_cached() -> bool:
+    now = time.monotonic()
+    if now - float(_db_ping_cache["checked_at"]) < _DB_PING_CACHE_TTL:
+        return bool(_db_ping_cache["value"])
+    ok = await _ping_db()
+    _db_ping_cache["value"] = ok
+    _db_ping_cache["checked_at"] = now
+    return ok
+
+
 async def _healthz(request: web.Request) -> web.Response:
     fresh = heartbeat.is_fresh()
-    db_ok = await _ping_db()
+    db_ok = await _ping_db_cached()
     ok = fresh and db_ok
     payload = {
         "ok": ok,

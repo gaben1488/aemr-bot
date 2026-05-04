@@ -1,6 +1,9 @@
 services:
   db:
-    image: postgres:16-alpine
+    # Pinned by digest so `docker compose pull` cannot silently move us to
+    # a new minor with breaking init-script changes. Bump together with a
+    # tested smoke run; do not auto-update.
+    image: postgres:16.4-alpine@sha256:0e7af4eef9e21586df90f8aa27ca97df21a16ddffec9ff5708a6b46c1ed1d05c
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-aemr}
       POSTGRES_USER: ${POSTGRES_USER:-aemr}

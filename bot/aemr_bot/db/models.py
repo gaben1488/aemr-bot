@@ -86,7 +86,9 @@ class Appeal(Base):
     summary: Mapped[str | None] = mapped_column(Text)
     attachments: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     admin_message_id: Mapped[str | None] = mapped_column(String(64))
-    assigned_operator_id: Mapped[int | None] = mapped_column(ForeignKey("operators.id", ondelete="SET NULL"))
+    assigned_operator_id: Mapped[int | None] = mapped_column(
+        ForeignKey("operators.id", ondelete="SET NULL"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
     answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -104,7 +106,9 @@ class Message(Base):
     text: Mapped[str | None] = mapped_column(Text)
     attachments: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     max_message_id: Mapped[str | None] = mapped_column(String(64))
-    operator_id: Mapped[int | None] = mapped_column(ForeignKey("operators.id", ondelete="SET NULL"))
+    operator_id: Mapped[int | None] = mapped_column(
+        ForeignKey("operators.id", ondelete="SET NULL"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     appeal: Mapped[Appeal] = relationship(back_populates="messages")

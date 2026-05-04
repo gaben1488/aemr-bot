@@ -141,15 +141,17 @@ async def reap_orphaned_sending(session: AsyncSession) -> int:
     operator who tries to start a new broadcast while this one is "still
     in progress".
 
+    `finished_at` is left NULL — we don't actually know when the send
+    stopped, and stamping it with the reaper time would silently lie in
+    `/broadcast list` ("finished N seconds ago" when actually finished
+    when the process crashed hours ago).
+
     Returns the number of rows flipped, for logging.
     """
     result = await session.execute(
         update(Broadcast)
         .where(Broadcast.status == BroadcastStatus.SENDING.value)
-        .values(
-            status=BroadcastStatus.FAILED.value,
-            finished_at=datetime.now(timezone.utc),
-        )
+        .values(status=BroadcastStatus.FAILED.value)
     )
     return result.rowcount or 0
 
