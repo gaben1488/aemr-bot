@@ -66,7 +66,7 @@
 
 **settings** — таблица-словарь для редактируемых из БД параметров: URL электронной приёмной, расписание приёма, контакты экстренных служб (JSON), тексты приветствия и согласия, темы обращений. Седьмая таблица в первоначальном дизайне, де-факто конфиг.
 
-Позже, при добавлении рассылки, появились ещё две таблицы — `broadcasts` и `broadcast_deliveries` (см. §10 «Рассылка по подписчикам»), плюс в `users` добавлен флаг `subscribed_broadcast`. Полная актуальная схема — в [db-schema.md](db-schema.md).
+Позже, при добавлении рассылки, появились ещё две таблицы — `broadcasts` и `broadcast_deliveries` (см. §10 «Рассылка по подписчикам»), плюс в `users` добавлен флаг `subscribed_broadcast`. Полная актуальная схема — в [db-schema.md](db-schema.md). Полный набор схем (BPMN жизненного цикла обращения, flowchart обработки события, sequence-диаграммы операторского ответа и рассылки, схема развёртывания, FSM-state machines) — в [architecture-diagrams.md](architecture-diagrams.md).
 
 Индексы: `users.max_user_id` (unique), `events.idempotency_key` (unique), `appeals.status`, `appeals.created_at`, `messages.appeal_id`, `messages.created_at`.
 

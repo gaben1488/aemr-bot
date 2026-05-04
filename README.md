@@ -50,6 +50,7 @@ DATABASE_URL=postgresql+asyncpg://aemr:local-test-pass@localhost:5432/aemr pytes
 - [SETUP.md](docs/SETUP.md) — как добавить бота в админ-группу, получить `ADMIN_GROUP_ID`, выполнить cold-start первого ИТ-оператора через `BOOTSTRAP_IT_*`, зарегистрировать остальных через `/add_operators`.
 - [RUNBOOK.md](docs/RUNBOOK.md) — операционные процедуры: ответить на обращение, запустить рассылку, выгрузить статистику, удалить ПДн, снять и восстановить бэкап.
 - [ADR-001](docs/ADR-001-architecture.md) и [PRD-mvp](docs/PRD-mvp.md) — архитектура и спецификация продукта.
+- [docs/architecture-diagrams.md](docs/architecture-diagrams.md) — BPMN жизненного цикла обращения, flowchart обработки событий, sequence-диаграммы доставки ответа и рассылки, схема развёртывания.
 - [docs/db-schema.md](docs/db-schema.md) — ER-диаграмма базы данных.
 
 ## Состав репозитория
@@ -63,6 +64,7 @@ aemr-bot/
 │  ├─ SETUP.md                    как настроить админ-группу и операторов
 │  ├─ RUNBOOK.md                  операционные процедуры координатора и ИТ
 │  ├─ PRIVACY.md                  политика обработки ПДн (+ PRIVACY.pdf)
+│  ├─ architecture-diagrams.md    BPMN, flowchart, sequence, state-схемы
 │  └─ db-schema.md                ER-диаграмма базы данных
 ├─ bot/                           Python-сервис: бот + БД + крон
 │  ├─ aemr_bot/                   пакет (handlers, services, db, utils)
