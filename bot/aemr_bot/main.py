@@ -11,6 +11,7 @@ from aemr_bot.config import settings
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import register_handlers
 from aemr_bot.handlers.appeal import recover_stuck_funnels
+from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import cron as cron_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import policy as policy_service
@@ -144,6 +145,19 @@ async def main() -> None:
         await policy_service.ensure_uploaded(bot)
     except Exception:
         log.exception("policy upload failed; will fall back to URL consent")
+
+    # Reap any broadcast left in SENDING by the previous process. Without
+    # this they would sit as SENDING forever — see services/broadcasts.py.
+    try:
+        async with session_scope() as session:
+            reaped = await broadcasts_service.reap_orphaned_sending(session)
+        if reaped:
+            log.warning(
+                "marked %d orphaned broadcast(s) as failed (left in SENDING by previous process)",
+                reaped,
+            )
+    except Exception:
+        log.exception("reap_orphaned_sending failed")
 
     # Recovery shouldn't block dispatcher startup — fire-and-forget.
     async def _recover():

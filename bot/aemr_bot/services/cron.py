@@ -181,7 +181,14 @@ async def _run_pg_dump_encrypted(
 
 async def _upload_to_s3(out_path: Path) -> None:
     """Optional S3 upload via rclone. Raises on failure — caller decides
-    whether to swallow."""
+    whether to swallow.
+
+    Credentials are passed via RCLONE_CONFIG_* environment variables, not
+    in the argv connection string. The argv form (`access_key=...`) leaks
+    via `ps`, `/proc/<pid>/cmdline`, and any docker-compose log scraper
+    that captures process snapshots — exactly the wrong place for a
+    secret. The env-var form keeps them inside the rclone process.
+    """
     if not (
         settings.backup_s3_bucket
         and settings.backup_s3_endpoint
@@ -189,12 +196,18 @@ async def _upload_to_s3(out_path: Path) -> None:
         and settings.backup_s3_secret_key
     ):
         return
+    env = os.environ.copy()
+    env.update({
+        "RCLONE_CONFIG_BACKUPS3_TYPE": "s3",
+        "RCLONE_CONFIG_BACKUPS3_PROVIDER": "Other",
+        "RCLONE_CONFIG_BACKUPS3_ACCESS_KEY_ID": settings.backup_s3_access_key,
+        "RCLONE_CONFIG_BACKUPS3_SECRET_ACCESS_KEY": settings.backup_s3_secret_key,
+        "RCLONE_CONFIG_BACKUPS3_ENDPOINT": settings.backup_s3_endpoint,
+    })
     rclone = await asyncio.create_subprocess_exec(
         "rclone", "copy", str(out_path),
-        f":s3,provider=Other,"
-        f"access_key_id={settings.backup_s3_access_key},"
-        f"secret_access_key={settings.backup_s3_secret_key},"
-        f"endpoint={settings.backup_s3_endpoint}:{settings.backup_s3_bucket}/",
+        f"backups3:{settings.backup_s3_bucket}/",
+        env=env,
     )
     rc = await rclone.wait()
     if rc != 0:
@@ -232,6 +245,14 @@ async def _backup_db() -> Path | None:
             await _run_pg_dump_encrypted(out, env, passphrase or "")
         else:
             await _run_pg_dump(out, env)
+        # Tighten permissions to 0600 — the dump contains user phones,
+        # appeal text and operator audit log. Default container umask
+        # leaves it world-readable, which is wrong for a PII artifact
+        # even inside a single-tenant volume.
+        try:
+            os.chmod(out, 0o600)
+        except OSError:
+            log.warning("could not chmod backup %s to 0600", out.name)
         log.info("backup written: %s (%d bytes)", out.name, out.stat().st_size)
     except Exception:
         log.exception("backup failed during pg_dump")

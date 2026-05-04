@@ -198,7 +198,10 @@ async def _handle_confirm(event) -> None:
             operator_max_user_id=actor_id,
             action="broadcast_send",
             target=f"broadcast #{broadcast.id}",
-            details={"text": state.text, "subscriber_count": count},
+            # Don't duplicate the full text into audit_log — it already lives
+            # in broadcasts.text. Keep only metadata so audit_log stays light
+            # and doesn't become a second copy of broadcast bodies.
+            details={"chars": len(state.text), "subscriber_count": count},
         )
         broadcast_id = broadcast.id
 
@@ -246,15 +249,16 @@ def _format_progress(
     )
 
 
-async def _send_one(bot, user, broadcast_id: int, body_text: str) -> str | None:
+async def _send_one(bot, max_user_id: int, body_text: str) -> str | None:
     """Returns None on success, error string on failure."""
     try:
         await bot.send_message(
-            user_id=user.max_user_id,
+            user_id=max_user_id,
             text=body_text,
             attachments=[keyboards.broadcast_unsubscribe_keyboard()],
         )
     except Exception as e:
+        # Truncate to keep error column bounded; full traceback lives in logs.
         return repr(e)[:500]
     return None
 
@@ -328,61 +332,66 @@ async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> 
     last_progress_at = time.monotonic()
     cancelled = False
 
+    # Snapshot the recipient list and close the session — holding a
+    # transaction for the whole send (one row per second × N) would block
+    # VACUUM and bloat WAL on a long broadcast. See list_subscriber_targets.
     async with session_scope() as session:
-        async for user in broadcasts_service.iter_subscribers(session):
-            # Re-check cancel flag in a fresh session — admin click flips it.
-            async with session_scope() as flag_session:
-                status = await broadcasts_service.get_status(
-                    flag_session, broadcast_id
-                )
-            if status == BroadcastStatus.CANCELLED.value:
-                cancelled = True
-                break
+        targets = await broadcasts_service.list_subscriber_targets(session)
 
-            error = await _send_one(bot, user, broadcast_id, body)
-            async with session_scope() as delivery_session:
-                await broadcasts_service.record_delivery(
-                    delivery_session,
-                    broadcast_id=broadcast_id,
-                    user_id=user.id,
-                    error=error,
-                )
-            if error is None:
-                delivered += 1
-            else:
-                failed += 1
+    for user_db_id, user_max_user_id in targets:
+        # Re-check cancel flag in a fresh session — admin click flips it.
+        async with session_scope() as flag_session:
+            status = await broadcasts_service.get_status(
+                flag_session, broadcast_id
+            )
+        if status == BroadcastStatus.CANCELLED.value:
+            cancelled = True
+            break
 
-            now = time.monotonic()
-            if (
-                admin_mid is not None
-                and now - last_progress_at >= cfg.broadcast_progress_update_sec
-            ):
-                last_progress_at = now
-                async with session_scope() as upd_session:
-                    await broadcasts_service.update_progress(
-                        upd_session,
-                        broadcast_id,
+        error = await _send_one(bot, user_max_user_id, body)
+        async with session_scope() as delivery_session:
+            await broadcasts_service.record_delivery(
+                delivery_session,
+                broadcast_id=broadcast_id,
+                user_id=user_db_id,
+                error=error,
+            )
+        if error is None:
+            delivered += 1
+        else:
+            failed += 1
+
+        now = time.monotonic()
+        if (
+            admin_mid is not None
+            and now - last_progress_at >= cfg.broadcast_progress_update_sec
+        ):
+            last_progress_at = now
+            async with session_scope() as upd_session:
+                await broadcasts_service.update_progress(
+                    upd_session,
+                    broadcast_id,
+                    delivered=delivered,
+                    failed=failed,
+                )
+            try:
+                await bot.edit_message(
+                    message_id=admin_mid,
+                    text=_format_progress(
+                        broadcast_id=broadcast_id,
+                        total=total,
                         delivered=delivered,
                         failed=failed,
-                    )
-                try:
-                    await bot.edit_message(
-                        message_id=admin_mid,
-                        text=_format_progress(
-                            broadcast_id=broadcast_id,
-                            total=total,
-                            delivered=delivered,
-                            failed=failed,
-                        ),
-                        attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
-                    )
-                except Exception:
-                    log.exception(
-                        "failed to edit progress message for broadcast #%s",
-                        broadcast_id,
-                    )
+                    ),
+                    attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
+                )
+            except Exception:
+                log.exception(
+                    "failed to edit progress message for broadcast #%s",
+                    broadcast_id,
+                )
 
-            await asyncio.sleep(rate_delay)
+        await asyncio.sleep(rate_delay)
 
     final_status = (
         BroadcastStatus.CANCELLED if cancelled else BroadcastStatus.DONE

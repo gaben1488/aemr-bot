@@ -94,6 +94,21 @@ async def _deliver_operator_reply(
         )
         return True
 
+    # 152-FZ guard: after /erase or /forget the citizen has revoked PDN
+    # consent. is_blocked is the canonical "do not contact" flag — never
+    # send anything to a blocked user even if the operator hits reply on
+    # an old card by mistake.
+    if appeal.user.is_blocked:
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=(
+                f"⚠️ Не могу доставить ответ по обращению #{appeal.id}: "
+                f"житель отозвал согласие на обработку ПДн или был "
+                f"анонимизирован. Свяжитесь с ним по телефону из карточки."
+            ),
+        )
+        return True
+
     target_user_id = appeal.user.max_user_id
     formatted_text = card_format.citizen_reply(appeal, text)
     try:
@@ -101,12 +116,20 @@ async def _deliver_operator_reply(
         # stored their personal-dialog chat_id, only their MAX user_id.
         sent = await event.bot.send_message(user_id=target_user_id, text=formatted_text)
     except Exception as exc:  # noqa: BLE001
+        # Show only the exception class name to the admin chat — `repr(exc)`
+        # from maxapi often carries the request body (operator's reply text,
+        # target user_id) which would land in admin-group history. Full
+        # exception with stack lives in the bot log for diagnostics.
+        log.exception(
+            "operator_reply: delivery failed for appeal=%s user_id=%s",
+            appeal.id, target_user_id,
+        )
         await event.bot.send_message(
             chat_id=get_chat_id(event),
             text=(
-                f"⚠️ Не удалось доставить ответ жителю по обращению #{appeal.id}: {exc}.\n"
-                "Возможно, житель удалил диалог или заблокировал бота. "
-                "Обращение остаётся в работе."
+                f"⚠️ Не удалось доставить ответ жителю по обращению #{appeal.id} "
+                f"({type(exc).__name__}). Возможно, житель удалил диалог или "
+                f"заблокировал бота. Обращение остаётся в работе."
             ),
         )
         return True
@@ -242,6 +265,10 @@ async def handle_user_followup(event: MessageCreated, text: str) -> bool:
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         if user.dialog_state != DialogState.IDLE.value:
+            return False
+        # Anonymized / blocked user — do not surface their text to the admin
+        # group as a "follow-up". Their consent has been revoked.
+        if user.is_blocked:
             return False
         active = await appeals_service.find_active_for_user(session, user.id)
 

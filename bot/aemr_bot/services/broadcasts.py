@@ -59,6 +59,25 @@ async def iter_subscribers(session: AsyncSession) -> AsyncIterator[User]:
         yield user
 
 
+async def list_subscriber_targets(
+    session: AsyncSession,
+) -> list[tuple[int, int]]:
+    """Snapshot eligible subscribers as (db_id, max_user_id) tuples.
+
+    Used by the broadcast send loop to avoid holding a transaction open
+    for the entire send. With rate-limit 1 msg/sec and N recipients the
+    naive `async for user in iter_subscribers(session)` loop pins the
+    outer transaction for N seconds — long enough to block VACUUM and
+    pile up WAL on a 1k+ recipient broadcast. Reading id pairs into a
+    plain list closes the transaction immediately and the loop iterates
+    over Python data.
+    """
+    result = await session.execute(
+        select(User.id, User.max_user_id).where(_eligible_filter()).order_by(User.id)
+    )
+    return [(row[0], row[1]) for row in result.all()]
+
+
 async def create_broadcast(
     session: AsyncSession,
     *,
@@ -124,6 +143,29 @@ async def request_cancel(session: AsyncSession, broadcast_id: int) -> bool:
         .values(status=BroadcastStatus.CANCELLED.value)
     )
     return result.rowcount > 0
+
+
+async def reap_orphaned_sending(session: AsyncSession) -> int:
+    """On startup, flip every Broadcast.SENDING row to FAILED.
+
+    A SENDING row at startup means the previous bot process died mid-send
+    (crash, OOM, container kill, host reboot). The send loop didn't reach
+    its finally-block to call mark_finished, so the row would otherwise
+    sit forever as SENDING — confusing /broadcast list and blocking any
+    operator who tries to start a new broadcast while this one is "still
+    in progress".
+
+    Returns the number of rows flipped, for logging.
+    """
+    result = await session.execute(
+        update(Broadcast)
+        .where(Broadcast.status == BroadcastStatus.SENDING.value)
+        .values(
+            status=BroadcastStatus.FAILED.value,
+            finished_at=datetime.now(timezone.utc),
+        )
+    )
+    return result.rowcount or 0
 
 
 async def get_status(session: AsyncSession, broadcast_id: int) -> str | None:

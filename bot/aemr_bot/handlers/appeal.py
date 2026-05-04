@@ -174,54 +174,66 @@ async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool:
     timer firing while the user is also clicking submit) cannot create two
     appeals — the second call sees IDLE state and bails.
     """
-    async with _get_user_lock(max_user_id):
-        async with session_scope() as session:
-            user = await users_service.get_or_create(session, max_user_id=max_user_id)
-            # Idempotency: if state is already IDLE, the previous concurrent
-            # call already finalized this funnel — don't double-dispatch.
-            if user.dialog_state == DialogState.IDLE.value:
-                log.info("dispatch skipped for user %s — state already IDLE", max_user_id)
-                return False
-            data: dict[str, Any] = dict(user.dialog_data or {})
-            summary = "\n".join(data.get("summary_chunks") or []).strip()
-            attachments = data.get("attachments") or []
-            if not summary and not attachments:
-                return False
-            appeal = await appeals_service.create_appeal(
-                session,
-                user=user,
-                address=data.get("address", ""),
-                topic=data.get("topic", ""),
-                summary=summary,
-                attachments=attachments,
-            )
-            await users_service.reset_state(session, max_user_id)
-
-    admin_mid = await _send_to_admin_card(bot, card_format.admin_card(appeal, user))
-    if admin_mid:
-        async with session_scope() as session:
-            await appeals_service.set_admin_message_id(session, appeal.id, admin_mid)
-
-    await _relay_attachments_to_admin(
-        bot,
-        appeal_id=appeal.id,
-        admin_mid=admin_mid,
-        stored_attachments=attachments,
-    )
-
+    # Always drop the per-user lock entry on exit (success, no-op, or
+    # exception). Otherwise `_user_locks` keeps a row per unique citizen
+    # forever — which is bounded by population but pointless growth.
     try:
-        await bot.send_message(
-            user_id=max_user_id,
-            text=texts.APPEAL_ACCEPTED.format(number=appeal.id, sla_hours=cfg.sla_response_hours),
-            attachments=[keyboards.main_menu()],
-        )
-    except Exception:
-        log.exception("ack to user %s failed for appeal #%s", max_user_id, appeal.id)
+        async with _get_user_lock(max_user_id):
+            async with session_scope() as session:
+                user = await users_service.get_or_create(session, max_user_id=max_user_id)
+                # Idempotency: if state is already IDLE, the previous concurrent
+                # call already finalized this funnel — don't double-dispatch.
+                if user.dialog_state == DialogState.IDLE.value:
+                    log.info("dispatch skipped for user %s — state already IDLE", max_user_id)
+                    return False
+                data: dict[str, Any] = dict(user.dialog_data or {})
+                summary = "\n".join(data.get("summary_chunks") or []).strip()
+                attachments = data.get("attachments") or []
+                if not summary and not attachments:
+                    return False
+                appeal = await appeals_service.create_appeal(
+                    session,
+                    user=user,
+                    address=data.get("address", ""),
+                    topic=data.get("topic", ""),
+                    summary=summary,
+                    attachments=attachments,
+                )
+                await users_service.reset_state(session, max_user_id)
 
-    # Освобождаем lock-объект — funnel завершён, новая воронка получит свой.
-    # Без этого `_user_locks` копит запись на каждого жителя навечно.
-    _drop_user_lock(max_user_id)
-    return True
+        admin_mid = await _send_to_admin_card(bot, card_format.admin_card(appeal, user))
+        if admin_mid:
+            async with session_scope() as session:
+                await appeals_service.set_admin_message_id(session, appeal.id, admin_mid)
+        else:
+            # The admin card never made it to the group — operators can't
+            # swipe-reply to it. /reply N still works, but they need to
+            # know the appeal exists. Surface it loudly in logs so the
+            # operator-on-call can repost manually if necessary.
+            log.warning(
+                "appeal #%s created but admin card was not posted (admin_mid=None)",
+                appeal.id,
+            )
+
+        await _relay_attachments_to_admin(
+            bot,
+            appeal_id=appeal.id,
+            admin_mid=admin_mid,
+            stored_attachments=attachments,
+        )
+
+        try:
+            await bot.send_message(
+                user_id=max_user_id,
+                text=texts.APPEAL_ACCEPTED.format(number=appeal.id, sla_hours=cfg.sla_response_hours),
+                attachments=[keyboards.main_menu()],
+            )
+        except Exception:
+            log.exception("ack to user %s failed for appeal #%s", max_user_id, appeal.id)
+
+        return True
+    finally:
+        _drop_user_lock(max_user_id)
 
 
 async def _start_appeal_flow(event, max_user_id: int):
@@ -373,6 +385,7 @@ def register(dp: Dispatcher) -> None:
         if payload == "consent:no":
             async with session_scope() as session:
                 await users_service.reset_state(session, max_user_id)
+            _drop_user_lock(max_user_id)
             await ack_callback(event)
             await event.bot.send_message(
                 chat_id=get_chat_id(event),

@@ -193,34 +193,40 @@ def register(dp: Dispatcher) -> None:
             return
 
         target_id: int | None = None
+        phone: str = ""
         if arg.startswith("max_user_id="):
             try:
                 target_id = int(arg.split("=", 1)[1])
             except ValueError:
                 await event.message.answer("Некорректный max_user_id.")
                 return
-            async with session_scope() as session:
-                ok = await users_service.erase_pdn(session, target_id)
         elif arg.startswith("phone="):
             phone = arg.split("=", 1)[1].strip()
             if not phone:
                 await event.message.answer("Не указан телефон. Пример: /erase phone=+79001234567")
                 return
-            async with session_scope() as session:
-                target_id = await users_service.erase_pdn_by_phone(session, phone)
-            ok = target_id is not None
         else:
             await event.message.answer(usage_msg)
             return
 
-        if ok and target_id is not None:
-            async with session_scope() as session:
+        # Anonymization and the audit_log entry must commit atomically
+        # under 152-FZ — without this, a DB hiccup between the two could
+        # leave PII wiped without a trace of who triggered it.
+        async with session_scope() as session:
+            if target_id is not None:
+                ok = await users_service.erase_pdn(session, target_id)
+            else:
+                target_id = await users_service.erase_pdn_by_phone(session, phone)
+                ok = target_id is not None
+            if ok and target_id is not None:
                 await operators_service.write_audit(
                     session,
                     operator_max_user_id=get_user_id(event),
                     action="erase",
                     target=f"user max_id={target_id}",
                 )
+
+        if ok and target_id is not None:
             await event.message.answer(
                 texts.OP_USER_ERASED.format(max_user_id=target_id)
             )
@@ -255,6 +261,16 @@ def register(dp: Dispatcher) -> None:
         if not ok:
             await event.message.answer(f"⚠️ Настройка не обновлена: {reason}")
             return
+        # The full new value lives in `settings.value` — duplicating it into
+        # audit_log makes the audit table a second store of welcome texts,
+        # contact lists and similar, which we don't want growing unbounded
+        # and which may contain PII if an operator pastes citizen data into
+        # a free-text key by mistake. Audit only the kind/length.
+        details_meta: dict[str, object] = {"kind": type(value).__name__}
+        if isinstance(value, str):
+            details_meta["chars"] = len(value)
+        elif isinstance(value, list):
+            details_meta["items"] = len(value)
         async with session_scope() as session:
             await settings_store.set_value(session, key, value)
             await operators_service.write_audit(
@@ -262,7 +278,7 @@ def register(dp: Dispatcher) -> None:
                 operator_max_user_id=get_user_id(event),
                 action="setting_update",
                 target=key,
-                details={"value": value},
+                details=details_meta,
             )
         await event.message.answer(texts.OP_SETTING_UPDATED.format(key=key))
 
