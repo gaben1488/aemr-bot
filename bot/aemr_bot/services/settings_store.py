@@ -16,7 +16,7 @@ DEFAULTS: dict[str, Any] = {
     ),
     "electronic_reception_url": "https://kamgov.ru/questions",
     "udth_schedule_url": (
-        "http://udth.elizovomr.ru/storage/attachments/2025/12/30/9mP303lEBVH13yMj.pdf"
+        "https://udth.elizovomr.ru/publikatsiia/raspisanie-prigorodnykh-avtobusov"
     ),
     "udth_schedule_intermunicipal_url": (
         "https://kamgov.ru/mintrans/current_activities/"
@@ -32,6 +32,18 @@ DEFAULTS: dict[str, Any] = {
     "emergency_contacts": [],
     "transport_dispatcher_contacts": [],
     "topics": [],
+    "localities": [
+        "Елизово",
+        "Вулканное городское поселение",
+        "Корякское сельское поселение",
+        "Начикинское сельское поселение",
+        "Николаевское сельское поселение",
+        "Новоавачинское сельское поселение",
+        "Новолесновское сельское поселение",
+        "Паратунское сельское поселение",
+        "Пионерское сельское поселение",
+        "Раздольненское сельское поселение",
+    ],
 }
 
 # Whitelist of editable keys with their accepted Python types and any extra rules.
@@ -51,6 +63,7 @@ SCHEMA: dict[str, dict] = {
         "item_keys": {"routes", "phone"},
     },
     "topics": {"type": list, "min_items": 1, "max_items": 30, "item_type": str},
+    "localities": {"type": list, "min_items": 1, "max_items": 30, "item_type": str},
 }
 
 

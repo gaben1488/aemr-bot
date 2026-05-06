@@ -22,3 +22,10 @@ infra/certbot/conf
 infra/certbot/www
 backups
 *.log
+
+# Локальные бэкапы файлов перед правкой не должны попадать в образ
+# (Windows-style: «admin_commands — копия.py» и т.п.).
+**/* — копия.*
+**/*— копия*.*
+*.bak
+*.orig

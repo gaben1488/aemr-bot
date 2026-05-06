@@ -50,6 +50,7 @@ def admin_card(appeal: Appeal, user: User) -> str:
         number=appeal.id,
         name=user.first_name or "—",
         phone=user.phone or "—",
+        locality=appeal.locality or "—",
         address=appeal.address or "—",
         topic=appeal.topic or "—",
         summary=appeal.summary or "—",
@@ -78,6 +79,7 @@ def citizen_reply(appeal: Appeal, reply_text: str) -> str:
         number=appeal.id,
         created_at=_local(appeal.created_at),
         topic=appeal.topic or "—",
+        locality=appeal.locality or "—",
         address=appeal.address or "—",
         reply_text=reply_text,
     )
@@ -90,6 +92,7 @@ def user_card(appeal: Appeal) -> str:
         created_at=_local(appeal.created_at),
         status_emoji=emoji,
         status_label=label,
+        locality=appeal.locality or "—",
         address=appeal.address or "—",
         topic=appeal.topic or "—",
         summary=appeal.summary or "—",

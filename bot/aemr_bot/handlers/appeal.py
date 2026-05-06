@@ -34,8 +34,8 @@ from aemr_bot.utils.event import (
 
 log = logging.getLogger(__name__)
 
-# Citizen-name / address must contain at least one alphanumeric — guards
-# against "👍", "...", "`````" and similar one-glyph submissions.
+# Имя жителя / адрес должны содержать хотя бы один буквенно-цифровой символ — это защищает
+# от отправки "👍", "...", "`````" и подобных бессмысленных сообщений (состоящих из одного символа).
 _HAS_ALNUM = re.compile(r"[A-Za-zА-Яа-яЁё0-9]")
 
 _collect_timers: dict[int, asyncio.Task] = {}
@@ -43,10 +43,11 @@ _user_locks: dict[int, asyncio.Lock] = {}
 
 
 def _get_user_lock(max_user_id: int) -> asyncio.Lock:
-    """Per-user lock so concurrent submit/cancel/timer paths don't double-dispatch.
+    """Блокировка для каждого пользователя, чтобы параллельные пути отправки/отмены/таймера
+    не приводили к двойной диспетчеризации.
 
-    Single-instance only — at horizontal scale this would need
-    pg_advisory_xact_lock or a Redis lock.
+    Только для одного экземпляра приложения — при горизонтальном масштабировании
+    потребуется pg_advisory_xact_lock или блокировка через Redis.
     """
     lock = _user_locks.get(max_user_id)
     if lock is None:
@@ -56,17 +57,17 @@ def _get_user_lock(max_user_id: int) -> asyncio.Lock:
 
 
 def _drop_user_lock(max_user_id: int) -> None:
-    """Release the lock object after a funnel has fully terminated. Keeps
-    `_user_locks` from growing unbounded as more citizens cycle through
-    the bot. Safe to call when no one holds the lock — the dict-pop is
-    idempotent."""
+    """Освобождает объект блокировки после полного завершения воронки. Предотвращает
+    бесконечное разрастание словаря `_user_locks` по мере прохождения пользователей
+    через бота. Безопасно вызывать, когда никто не удерживает блокировку — операция dict-pop
+    идемпотентна."""
     lock = _user_locks.get(max_user_id)
     if lock is not None and not lock.locked():
         _user_locks.pop(max_user_id, None)
 
 
 async def recover_stuck_funnels(bot) -> int:
-    """Finalize funnels left in AWAITING_SUMMARY after a restart. Run once at startup."""
+    """Завершает воронки, оставшиеся в состоянии AWAITING_SUMMARY после перезапуска. Запускается один раз при старте."""
     async with session_scope() as session:
         ids = await users_service.find_stuck_in_summary(
             session, idle_seconds=cfg.appeal_collect_timeout_seconds
@@ -79,8 +80,8 @@ async def recover_stuck_funnels(bot) -> int:
         return_exceptions=True,
     )
 
-    # Empty submissions never get a re-prompt at recovery time — drop them to
-    # IDLE so they don't reappear in every subsequent recover() pass.
+    # Пустые обращения никогда не получают повторный запрос при восстановлении — сбрасываем их
+    # в состояние IDLE, чтобы они не появлялись при каждом последующем проходе recover().
     empty_ids = [uid for uid, r in zip(ids, results) if r is False]
     if empty_ids:
         async with session_scope() as session:
@@ -90,21 +91,21 @@ async def recover_stuck_funnels(bot) -> int:
     finalized = sum(1 for r in results if r is True)
     failed = sum(1 for r in results if isinstance(r, BaseException))
     if failed:
-        log.warning("recover: %d/%d funnels failed", failed, len(ids))
+        log.warning("восстановление: %d/%d воронок завершились с ошибкой", failed, len(ids))
     if finalized:
-        log.info("recovered %d stuck funnels", finalized)
+        log.info("восстановлено %d застрявших воронок", finalized)
     return finalized
 
 
 async def _send_to_admin_card(bot, text: str) -> str | None:
-    """Send formatted card into admin group. Returns admin message_id or None on failure."""
+    """Отправляет отформатированную карточку в админ-группу. Возвращает message_id администратора или None при ошибке."""
     if not cfg.admin_group_id:
-        log.warning("ADMIN_GROUP_ID is not set — admin card not delivered")
+        log.warning("ADMIN_GROUP_ID не установлен — карточка для администратора не доставлена")
         return None
     try:
         sent = await bot.send_message(chat_id=cfg.admin_group_id, text=text)
     except Exception:
-        log.exception("failed to deliver admin card to chat_id=%s", cfg.admin_group_id)
+        log.exception("не удалось доставить карточку администратора в chat_id=%s", cfg.admin_group_id)
         return None
     return extract_message_id(sent)
 
@@ -116,8 +117,8 @@ async def _relay_attachments_to_admin(
     admin_mid: str | None,
     stored_attachments: list[dict],
 ) -> None:
-    """Forward citizen-supplied photos/geo/files into the admin group as a reply
-    to the card. Best-effort: failures are logged and don't break the appeal flow."""
+    """Пересылает предоставленные жителем фото/гео/файлы в админ-группу как ответ
+    на карточку. Выполняется по мере возможности: ошибки логируются и не прерывают процесс создания обращения."""
     if not cfg.admin_group_id or not stored_attachments:
         return
     relayable = deserialize_for_relay(stored_attachments)
@@ -127,7 +128,7 @@ async def _relay_attachments_to_admin(
         from maxapi.enums.message_link_type import MessageLinkType
         from maxapi.types.message import NewMessageLink
     except Exception:
-        log.exception("maxapi link types unavailable; relaying without reply link")
+        log.exception("типы ссылок maxapi недоступны; пересылка выполняется без ссылки на ответ")
         MessageLinkType = None  # type: ignore[assignment]
         NewMessageLink = None  # type: ignore[assignment]
 
@@ -136,12 +137,12 @@ async def _relay_attachments_to_admin(
         try:
             link = NewMessageLink(type=MessageLinkType.REPLY, mid=admin_mid)
         except Exception:
-            log.exception("failed to build NewMessageLink for admin_mid=%s", admin_mid)
+            log.exception("не удалось собрать NewMessageLink для admin_mid=%s", admin_mid)
             link = None
 
-    # Chunk attachments per message — MAX server attachment limit isn't
-    # documented; staying under attachments_per_relay_message keeps each
-    # send_message comfortably within whatever server-side cap exists.
+    # Разбиваем вложения на пакеты для сообщений — лимит вложений на сервере MAX
+    # не задокументирован; сохранение количества ниже attachments_per_relay_message позволяет
+    # каждому send_message комфортно вписываться в любые серверные ограничения.
     chunk_size = max(1, cfg.attachments_per_relay_message)
     batches = [relayable[i:i + chunk_size] for i in range(0, len(relayable), chunk_size)]
     total_batches = len(batches)
@@ -160,32 +161,32 @@ async def _relay_attachments_to_admin(
             )
         except Exception:
             log.exception(
-                "failed to relay attachment batch %d/%d for appeal #%s",
+                "не удалось переслать пакет вложений %d/%d для обращения #%s",
                 idx, total_batches, appeal_id,
             )
 
 
-async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool:
-    """Create an Appeal from accumulated dialog_data, post the admin card,
-    confirm to citizen by user_id. Returns True on persist+dispatch, False on
-    empty submission. Raises only on storage failure.
+async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | None:
+    """Создает обращение (Appeal) из накопленных данных dialog_data, публикует карточку для админов,
+    подтверждает жителю по user_id. Возвращает True при успешном сохранении и отправке, False при
+    пустом обращении. Исключения вызываются только при ошибке БД.
 
-    Guarded by per-user asyncio.Lock so a double-click on «Отправить» (or a
-    timer firing while the user is also clicking submit) cannot create two
-    appeals — the second call sees IDLE state and bails.
+    Защищено через asyncio.Lock для каждого пользователя, поэтому двойной клик на «Отправить» (или
+    срабатывание таймера во время нажатия пользователем кнопки отправки) не может создать два
+    обращения — второй вызов увидит состояние IDLE и прервется.
     """
-    # Always drop the per-user lock entry on exit (success, no-op, or
-    # exception). Otherwise `_user_locks` keeps a row per unique citizen
-    # forever — which is bounded by population but pointless growth.
+    # Всегда удаляем запись блокировки пользователя при выходе (успех, бездействие или
+    # исключение). Иначе `_user_locks` будет вечно хранить строку для каждого уникального 
+    # гражданина — что ограничено населением, но ведет к бессмысленному росту.
     try:
         async with _get_user_lock(max_user_id):
             async with session_scope() as session:
                 user = await users_service.get_or_create(session, max_user_id=max_user_id)
-                # Idempotency: if state is already IDLE, the previous concurrent
-                # call already finalized this funnel — don't double-dispatch.
+                # Идемпотентность: если состояние уже IDLE, то предыдущий параллельный
+                # вызов уже завершил эту воронку — не отправляем дважды.
                 if user.dialog_state == DialogState.IDLE.value:
-                    log.info("dispatch skipped for user %s — state already IDLE", max_user_id)
-                    return False
+                    log.info("отправка пропущена для пользователя %s — состояние уже IDLE", max_user_id)
+                    return None
                 data: dict[str, Any] = dict(user.dialog_data or {})
                 summary = "\n".join(data.get("summary_chunks") or []).strip()
                 attachments = data.get("attachments") or []
@@ -194,6 +195,7 @@ async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool:
                 appeal = await appeals_service.create_appeal(
                     session,
                     user=user,
+                    locality=data.get("locality") or None,
                     address=data.get("address", ""),
                     topic=data.get("topic", ""),
                     summary=summary,
@@ -206,12 +208,12 @@ async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool:
             async with session_scope() as session:
                 await appeals_service.set_admin_message_id(session, appeal.id, admin_mid)
         else:
-            # The admin card never made it to the group — operators can't
-            # swipe-reply to it. /reply N still works, but they need to
-            # know the appeal exists. Surface it loudly in logs so the
-            # operator-on-call can repost manually if necessary.
+            # Карточка для администраторов не попала в группу — операторы не смогут
+            # ответить на неё свайпом. Команда /reply N всё ещё работает, но им нужно
+            # знать, что обращение существует. Выводим это ярко в логи, чтобы
+            # дежурный оператор мог при необходимости переслать её вручную.
             log.warning(
-                "appeal #%s created but admin card was not posted (admin_mid=None)",
+                "обращение #%s создано, но карточка администратора не была опубликована (admin_mid=None)",
                 appeal.id,
             )
 
@@ -225,11 +227,11 @@ async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool:
         try:
             await bot.send_message(
                 user_id=max_user_id,
-                text=texts.APPEAL_ACCEPTED.format(number=appeal.id, sla_hours=cfg.sla_response_hours),
+                text=texts.APPEAL_ACCEPTED.format(number=appeal.id),
                 attachments=[keyboards.main_menu()],
             )
         except Exception:
-            log.exception("ack to user %s failed for appeal #%s", max_user_id, appeal.id)
+            log.exception("подтверждение жителю %s не удалось для обращения #%s", max_user_id, appeal.id)
 
         return True
     finally:
@@ -277,19 +279,49 @@ async def _ask_contact_or_skip(event, max_user_id: int):
         elif not user.first_name or user.first_name == "Удалено":
             target_state = DialogState.AWAITING_NAME
         else:
-            target_state = DialogState.AWAITING_ADDRESS
+            target_state = DialogState.AWAITING_LOCALITY
         await users_service.set_state(session, max_user_id, target_state, data={})
+
+    if target_state == DialogState.AWAITING_LOCALITY:
+        await _ask_locality(event, max_user_id)
+        return
 
     prompt_for = {
         DialogState.AWAITING_CONTACT: (texts.CONTACT_REQUEST, keyboards.contact_request_keyboard()),
         DialogState.AWAITING_NAME: (texts.CONTACT_RECEIVED, keyboards.cancel_keyboard()),
-        DialogState.AWAITING_ADDRESS: (texts.NAME_RECEIVED, keyboards.cancel_keyboard()),
     }
     text, keyboard = prompt_for[target_state]
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=text,
         attachments=[keyboard],
+    )
+
+
+async def _ask_locality(event, max_user_id: int):
+    """Шаг «Населённый пункт». Перед адресом, после имени.
+
+    Разделение нужно координаторам АЕМР: обращения по разным поселениям
+    идут к разным территориальным управлениям. Раньше всё писалось одной
+    строкой в поле `address`, и распределить было сложно.
+    """
+    async with session_scope() as session:
+        localities = await settings_store.get(session, "localities") or ["Елизово"]
+        await users_service.set_state(session, max_user_id, DialogState.AWAITING_LOCALITY)
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=texts.NAME_RECEIVED,
+        attachments=[keyboards.localities_keyboard(localities)],
+    )
+
+
+async def _ask_address(event, max_user_id: int):
+    async with session_scope() as session:
+        await users_service.set_state(session, max_user_id, DialogState.AWAITING_ADDRESS)
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=texts.LOCALITY_RECEIVED,
+        attachments=[keyboards.cancel_keyboard()],
     )
 
 
@@ -315,9 +347,9 @@ async def _ask_summary(event, max_user_id: int):
 
 
 async def _finalize_appeal(event, max_user_id: int):
-    """Submit-button / timeout entry point. Sends a re-prompt on empty input."""
+    """Точка входа по кнопке сабмита / таймауту. Отправляет повторный запрос при пустом вводе."""
     persisted = await _persist_and_dispatch_appeal(event.bot, max_user_id)
-    if not persisted:
+    if persisted is False:
         await event.bot.send_message(
             chat_id=get_chat_id(event),
             text=texts.APPEAL_EMPTY_REJECTED,
@@ -326,7 +358,7 @@ async def _finalize_appeal(event, max_user_id: int):
 
 
 def _schedule_collect_timeout(event, max_user_id: int):
-    """Cancel any previous timer and start a new one for this user."""
+    """Отменяет любой предыдущий таймер и запускает новый для этого пользователя."""
     existing = _collect_timers.get(max_user_id)
     if existing and not existing.done():
         existing.cancel()
@@ -349,17 +381,16 @@ def register(dp: Dispatcher) -> None:
         payload = get_payload(event)
         max_user_id = get_user_id(event)
         if max_user_id is None:
-            log.warning("callback without user_id, payload=%r — skipped", payload)
+            log.warning("коллбэк без user_id, payload=%r — пропущен", payload)
             return
 
-        # Citizen-flow callbacks (menu:*, consent:*, topic:*, appeal:*,
+        # Коллбэки пользовательского флоу (menu:*, consent:*, topic:*, appeal:*,
         # info:*, cancel) не должны срабатывать в админ-группе. Иначе
         # любое случайное нажатие на старую цитированную inline-кнопку
         # запустит воронку обращения от имени оператора и засорит таблицу
         # users. В админ-чате пропускаем только admin-flow:
         # broadcast:{confirm,abort,stop:N} и op:*. broadcast:unsubscribe —
-        # citizen-side, шлётся из личного broadcast'а, в админ-чате тоже
-        # не нужен.
+        # на стороне гражданина, шлётся из личной рассылки, в админ-чате тоже не нужен.
         chat_id = get_chat_id(event)
         if cfg.admin_group_id and chat_id == cfg.admin_group_id:
             is_admin_callback = payload.startswith("op:") or (
@@ -409,6 +440,22 @@ def register(dp: Dispatcher) -> None:
             )
             return
 
+        if payload.startswith("locality:"):
+            try:
+                idx = int(payload.split(":")[1])
+            except (IndexError, ValueError):
+                return
+            async with session_scope() as session:
+                localities = await settings_store.get(session, "localities") or []
+                if 0 <= idx < len(localities):
+                    chosen = localities[idx]
+                    await users_service.update_dialog_data(session, max_user_id, {"locality": chosen})
+                else:
+                    return
+            await ack_callback(event)
+            await _ask_address(event, max_user_id)
+            return
+
         if payload.startswith("topic:"):
             try:
                 idx = int(payload.split(":")[1])
@@ -433,8 +480,8 @@ def register(dp: Dispatcher) -> None:
             await _finalize_appeal(event, max_user_id)
             return
 
-        # Broadcast wizard callbacks (operator-side) live in their own handler;
-        # delegate so we don't register a second @dp.message_callback().
+        # Коллбэки мастера рассылок (на стороне оператора) находятся в собственном обработчике;
+        # делегируем их, чтобы не регистрировать второй @dp.message_callback().
         if payload.startswith("broadcast:") and not payload.startswith(
             "broadcast:unsubscribe"
         ):
@@ -453,7 +500,7 @@ def register(dp: Dispatcher) -> None:
                 await broadcast_handler._handle_stop(event, bid)
                 return
 
-        # /op_help quick-action buttons.
+        # Кнопки быстрых действий для /op_help.
         if payload.startswith("op:"):
             from aemr_bot.handlers import admin_commands, broadcast as broadcast_handler
             if payload == "op:stats_today":
@@ -469,7 +516,7 @@ def register(dp: Dispatcher) -> None:
                 await admin_commands.show_full_help(event)
                 return
 
-        # Fall through to menu/contacts/appeal-show handlers
+        # Переход к обработчикам меню/контактов/просмотра обращений
         from aemr_bot.handlers import menu as menu_handlers
         await menu_handlers.handle_callback(event, payload, max_user_id)
 
@@ -479,31 +526,31 @@ def register(dp: Dispatcher) -> None:
 
         chat_id = get_chat_id(event)
         if chat_id is None:
-            log.warning("message_created without chat_id — event.get_ids() returned None")
+            log.warning("message_created без chat_id — event.get_ids() вернул None")
             return
 
         text_body = get_message_text(event)
         body = get_message_body(event)
 
         if cfg.admin_group_id and chat_id == cfg.admin_group_id:
-            # Broadcast wizard takes priority over slash-filtering so that
-            # /cancel works mid-wizard. _handle_wizard_text returns False
-            # when no wizard is active for this operator, so it's safe to
-            # call on every admin-group message.
+            # Мастер рассылок имеет приоритет над фильтрацией слэшей, чтобы
+            # команда /cancel работала внутри мастера. _handle_wizard_text возвращает False,
+            # когда для этого оператора нет активного мастера, поэтому её безопасно
+            # вызывать для каждого сообщения в админ-группе.
             from aemr_bot.handlers import broadcast as broadcast_handler
             consumed = await broadcast_handler._handle_wizard_text(event, text_body)
             if consumed:
                 return
             if text_body.startswith("/"):
-                # Slash command without an active wizard. Admin-side command
-                # handlers (admin_commands.py, broadcast.py) registered before
-                # this catch-all already had their chance — drop silently.
+                # Слэш-команда без активного мастера. Обработчики команд на стороне администратора
+                # (admin_commands.py, broadcast.py), зарегистрированные до
+                # этого перехватчика, уже имели свой шанс — молча игнорируем.
                 return
             await op_reply.handle_operator_reply(event, body, text_body)
             return
 
-        # Citizen DM: slash-prefixed text has command handlers registered
-        # earlier; if we got here, none matched — drop silently.
+        # Личные сообщения гражданина: для текста со слэшем обработчики команд зарегистрированы
+        # ранее; если мы попали сюда, ни один не совпал — молча игнорируем.
         if text_body.startswith("/"):
             return
 
@@ -548,13 +595,20 @@ async def _on_awaiting_contact(event, body, text_body, max_user_id, op_reply):
 async def _on_awaiting_name(event, body, text_body, max_user_id, op_reply):
     name = text_body.strip()[: cfg.name_max_chars]
     if not name or not _HAS_ALNUM.search(name):
-        # Empty / whitespace-only / emoji-only / punctuation-only — reject.
-        await event.message.answer(texts.NAME_EMPTY)
-        return
+        # Пустая строка / только пробелы / только эмодзи / только пунктуация.
+        # Пытаемся подтянуть имя из профиля MAX как запасной путь.
+        name = get_first_name(event)
+        if not name or name == "Удалено":
+            await event.message.answer(texts.NAME_EMPTY)
+            return
+        name = name[: cfg.name_max_chars]
+
     async with session_scope() as session:
         await users_service.set_first_name(session, max_user_id, name)
-        await users_service.set_state(session, max_user_id, DialogState.AWAITING_ADDRESS)
-    await event.message.answer(texts.NAME_RECEIVED, attachments=[keyboards.cancel_keyboard()])
+    # Дальше — выбор населённого пункта. Само сообщение со списком уходит
+    # из `_ask_locality`, чтобы поведение совпадало с веткой повторного
+    # обращения, где имя и телефон уже заполнены.
+    await _ask_locality(event, max_user_id)
 
 
 async def _on_awaiting_address(event, body, text_body, max_user_id, op_reply):
@@ -579,10 +633,10 @@ async def _on_awaiting_summary(event, body, text_body, max_user_id, op_reply):
             current_total = sum(len(c) for c in existing_chunks)
             remaining = cfg.summary_max_chars - current_total
             if remaining <= 0:
-                # Cap reached — drop silently. Logged for ops, not surfaced
-                # to citizen (would be noise; bot already has enough text).
+                # Лимит достигнут — молча отбрасываем. Логируется для операторов, не выводится
+                # гражданину (это был бы лишний шум; у бота и так достаточно текста).
                 log.info(
-                    "summary cap %d reached for user %s, dropping chunk of %d chars",
+                    "лимит текста %d достигнут для пользователя %s, отбрасываем фрагмент из %d символов",
                     cfg.summary_max_chars,
                     max_user_id,
                     len(chunk),
@@ -595,7 +649,7 @@ async def _on_awaiting_summary(event, body, text_body, max_user_id, op_reply):
             cap = cfg.attachments_max_per_appeal - len(existing_atts)
             if cap <= 0:
                 log.info(
-                    "attachment cap %d reached for user %s, dropping %d attachments",
+                    "лимит вложений %d достигнут для пользователя %s, отбрасываем %d вложений",
                     cfg.attachments_max_per_appeal,
                     max_user_id,
                     len(atts),
@@ -608,6 +662,19 @@ async def _on_awaiting_summary(event, body, text_body, max_user_id, op_reply):
     _schedule_collect_timeout(event, max_user_id)
 
 
+async def _on_awaiting_locality(event, body, text_body, max_user_id, op_reply):
+    """Житель прислал текст вместо нажатия на кнопку населённого пункта.
+    Повторно показываем клавиатуру со списком, чтобы выбор оставался
+    предсказуемым (свободный ввод сюда не закладываем — координаторам
+    проще работать со стандартным списком поселений)."""
+    async with session_scope() as session:
+        localities = await settings_store.get(session, "localities") or ["Елизово"]
+    await event.message.answer(
+        texts.LOCALITY_REQUEST,
+        attachments=[keyboards.localities_keyboard(localities)],
+    )
+
+
 async def _on_idle(event, body, text_body, max_user_id, op_reply):
     handled = await op_reply.handle_user_followup(event, text_body)
     if not handled:
@@ -617,6 +684,7 @@ async def _on_idle(event, body, text_body, max_user_id, op_reply):
 _STATE_HANDLERS = {
     DialogState.AWAITING_CONTACT: _on_awaiting_contact,
     DialogState.AWAITING_NAME: _on_awaiting_name,
+    DialogState.AWAITING_LOCALITY: _on_awaiting_locality,
     DialogState.AWAITING_ADDRESS: _on_awaiting_address,
     DialogState.AWAITING_SUMMARY: _on_awaiting_summary,
     DialogState.IDLE: _on_idle,

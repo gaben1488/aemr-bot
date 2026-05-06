@@ -15,6 +15,7 @@ class DialogState(StrEnum):
     AWAITING_CONSENT = "awaiting_consent"
     AWAITING_CONTACT = "awaiting_contact"
     AWAITING_NAME = "awaiting_name"
+    AWAITING_LOCALITY = "awaiting_locality"
     AWAITING_ADDRESS = "awaiting_address"
     AWAITING_TOPIC = "awaiting_topic"
     AWAITING_SUMMARY = "awaiting_summary"
@@ -81,6 +82,7 @@ class Appeal(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     status: Mapped[str] = mapped_column(String(32), default=AppealStatus.NEW.value, server_default=AppealStatus.NEW.value, index=True)
+    locality: Mapped[str | None] = mapped_column(String(120))
     address: Mapped[str | None] = mapped_column(String(500))
     topic: Mapped[str | None] = mapped_column(String(120))
     summary: Mapped[str | None] = mapped_column(Text)

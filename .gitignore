@@ -46,3 +46,15 @@ logs/
 
 # Claude Code agent worktrees
 .claude/worktrees/
+
+# Локальные бэкапы файлов перед правкой
+# (Windows-style: «admin_commands — копия.py», VS Code «file.py.bak» и т.п.).
+# Если хочется сохранить — кладите в _local-backup/ вне пакета.
+**/* — копия.*
+**/*— копия*.*
+*.bak
+*.orig
+
+# Локальные документы юриста, пока не утверждены
+docs/PRIVACY base.md
+docs/PRIVACY base.pdf

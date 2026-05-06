@@ -49,6 +49,7 @@ async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, in
         "Создано",
         "Имя",
         "Телефон",
+        "Населённый пункт",
         "Адрес",
         "Тематика",
         "Суть",
@@ -80,6 +81,7 @@ async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, in
             a.created_at.astimezone(TZ).strftime("%d.%m.%Y %H:%M"),
             a.user.first_name if a.user else "",
             a.user.phone if a.user else "",
+            a.locality or "",
             a.address or "",
             a.topic or "",
             a.summary or "",
@@ -89,7 +91,7 @@ async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, in
             in_sla,
         ])
 
-    widths = [6, 18, 16, 18, 36, 24, 60, 18, 60, 14, 12]
+    widths = [6, 18, 16, 18, 28, 36, 24, 60, 18, 60, 14, 12]
     for col_idx, width in enumerate(widths, start=1):
         ws.column_dimensions[ws.cell(row=1, column=col_idx).column_letter].width = width
     for row in ws.iter_rows(min_row=2):

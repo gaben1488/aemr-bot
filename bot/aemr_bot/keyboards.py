@@ -47,15 +47,23 @@ def submit_or_cancel_keyboard():
 
 
 def topics_keyboard(topics: list[str]):
+    """Тематики обращения. По одной кнопке в ряд: иначе MAX обрезает
+    длинные названия в стиле «Управляющие компани…». У Солодова такой же
+    одностолбчатый макет — текст всегда читается полностью."""
     kb = InlineKeyboardBuilder()
-    pair: list[CallbackButton] = []
     for idx, topic in enumerate(topics):
-        pair.append(CallbackButton(text=topic, payload=f"topic:{idx}"))
-        if len(pair) == 2:
-            kb.row(*pair)
-            pair = []
-    if pair:
-        kb.row(*pair)
+        kb.row(CallbackButton(text=topic, payload=f"topic:{idx}"))
+    kb.row(CallbackButton(text="Отмена", payload="cancel"))
+    return kb.as_markup()
+
+
+def localities_keyboard(localities: list[str]):
+    """Населённые пункты Елизовского муниципального района. По одной кнопке
+    в ряд по той же причине, что и тематики: длинные названия вроде
+    «Раздольненское сельское поселение» не помещаются в две колонки."""
+    kb = InlineKeyboardBuilder()
+    for idx, locality in enumerate(localities):
+        kb.row(CallbackButton(text=locality, payload=f"locality:{idx}"))
     kb.row(CallbackButton(text="Отмена", payload="cancel"))
     return kb.as_markup()
 

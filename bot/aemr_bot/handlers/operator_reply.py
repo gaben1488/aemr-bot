@@ -1,8 +1,9 @@
-"""Operator-reply and citizen-followup logic, called from the unified
-message_created handler in handlers/appeal.py.
+"""Логика ответов операторов и дополнительных сообщений от жителей, вызывается
+из единого обработчика message_created в handlers/appeal.py.
 """
 
 import logging
+import re
 
 from maxapi import Dispatcher
 from maxapi.types import MessageCreated
@@ -25,9 +26,9 @@ log = logging.getLogger(__name__)
 
 
 def _mid_from_link(link) -> str | None:
-    """Pull message-id from either the pydantic LinkedMessage or its dict
-    fallback. love-apples/maxapi keeps it at `link.message.mid`; older
-    revisions had `link.mid`. We try both."""
+    """Извлекает message-id из Pydantic-модели LinkedMessage или её словарного
+    представления (dict fallback). love-apples/maxapi хранит его в `link.message.mid`; 
+    в старых версиях было `link.mid`. Пробуем оба варианта."""
     inner = getattr(link, "message", None)
     if inner is not None:
         mid = getattr(inner, "mid", None)
@@ -44,11 +45,11 @@ def _mid_from_link(link) -> str | None:
 
 
 def _extract_reply_target_mid(event) -> str | None:
-    """Pull `mid` of the message being replied to from `event.message.link`.
+    """Извлекает `mid` сообщения, на которое отвечают, из `event.message.link`.
 
-    Verified against love-apples/maxapi: `Message.link: LinkedMessage | None`
-    holds the reply/forward backref. The original message id lives at
-    `link.message.mid` (the nested MessageBody), not at `link.mid`.
+    Проверено на love-apples/maxapi: `Message.link: LinkedMessage | None`
+    содержит обратную ссылку на ответ/пересылку. ID оригинального сообщения находится в
+    `link.message.mid` (вложенный MessageBody), а не в `link.mid`.
     """
     link = get_message_link(event)
     if link is None:
@@ -57,8 +58,8 @@ def _extract_reply_target_mid(event) -> str | None:
     link_type = getattr(link, "type", None)
     if link_type is None and isinstance(link, dict):
         link_type = link.get("type")
-    # MessageLinkType.REPLY can arrive as the StrEnum value, the enum
-    # member, or a plain string — match by lowercased suffix.
+    # MessageLinkType.REPLY может прийти как значение StrEnum, элемент
+    # перечисления или обычная строка — проверяем по суффиксу в нижнем регистре.
     if link_type is None or not str(link_type).lower().endswith("reply"):
         return None
 
@@ -73,17 +74,17 @@ async def _deliver_operator_reply(
     text: str,
     audit_action: str,
 ) -> bool:
-    """Common path for delivering an operator's reply to a citizen.
+    """Общий путь для доставки ответа оператора жителю.
 
-    Used both by handle_operator_reply (swipe-to-reply mechanism, which
-    depends on Message.link being populated by the MAX client) and by
-    cmd_reply (explicit /reply <appeal_id> <text> command, which works
-    on every client regardless of swipe support).
+    Используется как в handle_operator_reply (механизм ответа свайпом, который
+    зависит от заполнения Message.link клиентом MAX), так и в cmd_reply
+    (явная команда /reply <appeal_id> <text>, работающая на любых клиентах
+    независимо от поддержки свайпов).
 
-    Returns True if a definitive answer was given to the operator (either
-    delivered, or politely refused due to length / undeliverable). Returns
-    False only on the dedupe path when target_mid was None and the operator
-    didn't actually intend to reply.
+    Возвращает True, если оператору дан окончательный ответ (сообщение доставлено,
+    либо вежливо отклонено из-за длины / невозможности доставки). Возвращает
+    False только при дедупликации, когда target_mid равен None и оператор
+    на самом деле не собирался отвечать.
     """
     if len(text) > cfg.answer_max_chars:
         await event.bot.send_message(
@@ -94,10 +95,10 @@ async def _deliver_operator_reply(
         )
         return True
 
-    # 152-FZ guard: after /erase or /forget the citizen has revoked PDN
-    # consent. is_blocked is the canonical "do not contact" flag — never
-    # send anything to a blocked user even if the operator hits reply on
-    # an old card by mistake.
+    # Защита по 152-ФЗ: после /erase или /forget житель отозвал согласие на обработку ПДн.
+    # is_blocked является каноничным маркером "не связываться" — никогда не отправляем
+    # сообщения заблокированному пользователю, даже если оператор по ошибке ответил на
+    # старую карточку.
     if appeal.user.is_blocked:
         await event.bot.send_message(
             chat_id=get_chat_id(event),
@@ -112,14 +113,14 @@ async def _deliver_operator_reply(
     target_user_id = appeal.user.max_user_id
     formatted_text = card_format.citizen_reply(appeal, text)
     try:
-        # IMPORTANT: deliver to the citizen by user_id (not chat_id) — we never
-        # stored their personal-dialog chat_id, only their MAX user_id.
+        # ВАЖНО: доставляем сообщение жителю по user_id (а не chat_id) — мы не
+        # сохраняли chat_id их личного диалога, только их MAX user_id.
         sent = await event.bot.send_message(user_id=target_user_id, text=formatted_text)
     except Exception as exc:  # noqa: BLE001
-        # Show only the exception class name to the admin chat — `repr(exc)`
-        # from maxapi often carries the request body (operator's reply text,
-        # target user_id) which would land in admin-group history. Full
-        # exception with stack lives in the bot log for diagnostics.
+        # Показываем в админ-чате только имя класса исключения — `repr(exc)`
+        # из maxapi часто содержит тело запроса (текст ответа оператора,
+        # целевой user_id), что может осесть в истории админ-группы. Полная
+        # ошибка со стеком пишется в логи бота для диагностики.
         log.exception(
             "operator_reply: delivery failed for appeal=%s user_id=%s",
             appeal.id, target_user_id,
@@ -165,43 +166,72 @@ async def _deliver_operator_reply(
 
 
 async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
-    """Operator replied to the admin-group card via swipe/«Ответить».
+    """Оператор ответил на карточку в админ-группе свайпом/«Ответить».
 
-    Returns True if handled, False if the message wasn't a reply at all
-    (so the dispatcher can route it elsewhere — currently nowhere).
+    Возвращает True, если обработано, и False, если сообщение вообще не было
+    ответом (чтобы диспетчер мог перенаправить его дальше — на данный момент никуда).
     """
     target_mid = _extract_reply_target_mid(event)
-    if target_mid is None:
+    appeal_id_from_text = None
+
+    # Дополнительная проверка: если target_mid отсутствует (например, для сообщений из /open_tickets),
+    # пытаемся извлечь номер обращения прямо из текста сообщения, на которое отвечают.
+    link = get_message_link(event)
+    if link:
+        replied_text = ""
+        inner = getattr(link, "message", None)
+        if inner:
+            replied_text = getattr(inner, "text", "")
+        elif isinstance(link, dict):
+            inner_dict = link.get("message", {})
+            if isinstance(inner_dict, dict):
+                replied_text = inner_dict.get("text", "")
+            else:
+                replied_text = link.get("text", "")
+        
+        if replied_text:
+            match = re.search(r"Обращение #(\d+)", replied_text)
+            if match:
+                appeal_id_from_text = int(match.group(1))
+
+    if target_mid is None and appeal_id_from_text is None:
         log.info(
-            "operator_reply: no reply-link in event.message — message ignored "
-            "(operator wrote in admin group without using reply/swipe)"
+            "operator_reply: нет ссылки-ответа в event.message — сообщение проигнорировано "
+            "(оператор написал в админ-группу без использования ответа/свайпа)"
         )
         return False
 
     author_id = get_user_id(event)
     if author_id is None:
-        log.warning("operator_reply: no user_id in event")
+        log.warning("operator_reply: нет user_id в событии")
         return False
 
     async with session_scope() as session:
         operator = await operators_service.get(session, author_id)
         if operator is None:
             log.info(
-                "operator_reply: user_id=%s replied but is not in operators table",
+                "operator_reply: user_id=%s ответил, но не найден в таблице операторов",
                 author_id,
             )
             return False
-        log.info(
-            "operator_reply: detected — operator_id=%s reply_to_mid=%s text_len=%d",
-            operator.id, target_mid, len(text),
-        )
+            
+        appeal = None
+        if target_mid:
+            appeal = await appeals_service.get_by_admin_message_id(session, target_mid)
+        
+        if appeal is None and appeal_id_from_text:
+            appeal = await appeals_service.get_by_id(session, appeal_id_from_text)
 
-        appeal = await appeals_service.get_by_admin_message_id(session, target_mid)
         if appeal is None:
             await event.bot.send_message(
                 chat_id=get_chat_id(event), text=texts.ADMIN_REPLY_NO_APPEAL
             )
             return True
+
+        log.info(
+            "operator_reply: обнаружено — operator_id=%s reply_to_mid=%s text_len=%d",
+            operator.id, target_mid, len(text),
+        )
 
     return await _deliver_operator_reply(
         event,
@@ -213,11 +243,11 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
 
 
 async def handle_command_reply(event, appeal_id: int, text: str) -> None:
-    """`/reply N <text>` from the admin group — alternative to swipe-reply.
+    """Команда `/reply N <текст>` из админ-группы — альтернатива ответу свайпом.
 
-    Useful when the MAX client doesn't put a reply-link on the swiped
-    message (varies by client/version), or when the operator prefers
-    explicit commands. Same delivery path, same audit, same answer-cap.
+    Полезна, когда клиент MAX не прикрепляет ссылку-ответ к сообщению при свайпе
+    (зависит от клиента/версии), или если оператор предпочитает использовать
+    явные команды. Тот же путь доставки, тот же аудит, те же лимиты на ответ.
     """
     if not cfg.admin_group_id or get_chat_id(event) != cfg.admin_group_id:
         return
@@ -255,7 +285,8 @@ async def handle_command_reply(event, appeal_id: int, text: str) -> None:
 
 
 async def handle_user_followup(event: MessageCreated, text: str) -> bool:
-    """Citizen wrote in private dialog while idle — reopen answered appeal if any."""
+    """Житель написал в личный диалог, находясь в состоянии ожидания (idle) —
+    переоткрываем отвеченное обращение, если оно есть."""
     from aemr_bot.db.models import AppealStatus, DialogState
 
     max_user_id = get_user_id(event)
@@ -266,8 +297,8 @@ async def handle_user_followup(event: MessageCreated, text: str) -> bool:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         if user.dialog_state != DialogState.IDLE.value:
             return False
-        # Anonymized / blocked user — do not surface their text to the admin
-        # group as a "follow-up". Their consent has been revoked.
+        # Анонимизированный / заблокированный пользователь — не выводим его текст
+        # в админ-группу как "дополнительное сообщение". Его согласие было отозвано.
         if user.is_blocked:
             return False
         active = await appeals_service.find_active_for_user(session, user.id)
@@ -292,5 +323,5 @@ async def handle_user_followup(event: MessageCreated, text: str) -> bool:
 
 
 def register(dp: Dispatcher) -> None:
-    """No-op: message_created routing is owned by handlers/appeal.py."""
+    """Пустышка (No-op): маршрутизация message_created управляется в handlers/appeal.py."""
     return None

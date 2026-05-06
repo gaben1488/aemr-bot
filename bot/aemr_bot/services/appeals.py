@@ -14,10 +14,12 @@ async def create_appeal(
     topic: str,
     summary: str,
     attachments: list,
+    locality: str | None = None,
 ) -> Appeal:
     appeal = Appeal(
         user_id=user.id,
         status=AppealStatus.NEW.value,
+        locality=locality,
         address=address,
         topic=topic,
         summary=summary,

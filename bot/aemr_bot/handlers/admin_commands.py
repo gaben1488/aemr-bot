@@ -19,7 +19,7 @@ from aemr_bot.utils.event import get_chat_id, get_message_text, get_user_id, is_
 log = logging.getLogger(__name__)
 
 
-# Local aliases for backward-compat with existing call sites in this file.
+# Локальные псевдонимы для обратной совместимости с существующими вызовами в этом файле.
 _is_admin_chat = is_admin_chat
 _get_operator = get_operator
 _ensure_operator = ensure_operator
@@ -32,17 +32,16 @@ def _parse_arg(text: str) -> str:
 
 
 def _get_text(event) -> str:
-    """Read raw text from a command event (uses utils.event.get_message_text)."""
+    """Чтение необработанного текста из события команды (использует utils.event.get_message_text)."""
     return get_message_text(event)
 
 
 async def _send_stats_xlsx(event, period: str, *, target_chat_id: int | None = None) -> None:
-    """Build the XLSX for `period` and post it into the admin group.
+    """Сформировать XLSX за `period` и опубликовать его в админ-группе.
 
-    Single source of truth for both /stats <period> and the «📊 Статистика
-    за сегодня» quick-action button. `target_chat_id` lets callers route
-    to the current chat (default: current event) or explicitly to the
-    admin group regardless of where the trigger came from.
+    Единый источник истины как для /stats <период>, так и для кнопки быстрого действия «📊 Статистика
+    за сегодня». `target_chat_id` позволяет направлять в текущий чат (по умолчанию: текущее событие) 
+    или явно в админскую группу, независимо от того, откуда пришел триггер.
     """
     from aemr_bot.services import uploads
 
@@ -71,21 +70,82 @@ async def _send_stats_xlsx(event, period: str, *, target_chat_id: int | None = N
 
 
 async def run_stats_today(event) -> None:
-    """Same payload as /stats today, invoked from a callback button.
-    Routes the file to the admin group (where the panel was clicked)."""
+    """То же действие, что и /stats today, вызывается по кнопке callback.
+    Направляет файл в админ-группу (где была нажата кнопка)."""
     if not await _ensure_operator(event):
         return
     await _send_stats_xlsx(event, "today", target_chat_id=cfg.admin_group_id)
 
 
 async def show_full_help(event) -> None:
-    """Plain-text /op_help, no keyboard. Triggered by «📋 Все команды» button."""
+    """Текстовая команда /op_help, без клавиатуры. Вызывается кнопкой «📋 Все команды»."""
     if not _is_admin_chat(event):
         return
     await event.bot.send_message(chat_id=cfg.admin_group_id, text=texts.OP_HELP)
 
 
 def register(dp: Dispatcher) -> None:
+    @dp.message_created(Command("open_tickets"))
+    async def cmd_open_tickets(event: MessageCreated):
+        """Список открытых обращений в админ-группу.
+
+        Доступно любой роли оператора. На swipe-reply по этим карточкам
+        реагирует регулярка `r"Обращение #(\\d+)"` в `operator_reply.py`,
+        потому что у этих сообщений нет `appeals.admin_message_id` —
+        оригинальная карточка уже была опубликована при создании.
+        """
+        if not await _ensure_operator(event):
+            return
+
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+
+        from aemr_bot.db.models import Appeal, AppealStatus
+
+        # Один SELECT с подгрузкой user через selectinload — иначе на каждое
+        # обращение был бы отдельный запрос к БД (классический N+1).
+        async with session_scope() as session:
+            query = (
+                select(Appeal)
+                .where(
+                    Appeal.status.in_(
+                        [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+                    )
+                )
+                .options(selectinload(Appeal.user))
+                .order_by(Appeal.created_at)
+            )
+            open_appeals = (await session.scalars(query)).all()
+
+        if not open_appeals:
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text="🎉 Нет открытых или неотвеченных обращений.",
+            )
+            return
+
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=f"⏳ Найдено неотвеченных обращений: {len(open_appeals)}",
+        )
+
+        for appeal in open_appeals:
+            user_name = appeal.user.first_name if appeal.user else "—"
+            user_id_text = appeal.user.max_user_id if appeal.user else "—"
+            text = (
+                f"❗️ Обращение #{appeal.id}\n"
+                f"👤 От: {user_name}\n"
+                f"🆔 ID: {user_id_text}\n"
+                f"📍 Населённый пункт: {appeal.locality or '—'}\n"
+                f"🏠 Адрес: {appeal.address or '—'}\n"
+                f"🏷️ Тематика: {appeal.topic or '—'}\n\n"
+                f"📝 Текст обращения:\n{appeal.summary or '—'}"
+            )
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=text,
+            )
+
     @dp.message_created(Command("stats"))
     async def cmd_stats(event: MessageCreated):
         if not await _ensure_operator(event):
@@ -101,7 +161,7 @@ def register(dp: Dispatcher) -> None:
         if not _is_admin_chat(event):
             return
         text = _get_text(event)
-        # /reply <appeal_id> <text...>
+        # /reply <id_обращения> <текст...>
         parts = text.split(maxsplit=2)
         if len(parts) < 3:
             await event.message.answer(
@@ -200,9 +260,9 @@ def register(dp: Dispatcher) -> None:
             await event.message.answer(usage_msg)
             return
 
-        # Anonymization and the audit_log entry must commit atomically
-        # under 152-FZ — without this, a DB hiccup between the two could
-        # leave PII wiped without a trace of who triggered it.
+        # Анонимизация и запись в audit_log должны фиксироваться атомарно
+        # согласно 152-ФЗ — без этого сбой в БД между этими двумя действиями мог бы
+        # оставить ПДн стертыми без следа того, кто это инициировал.
         async with session_scope() as session:
             if target_id is not None:
                 ok = await users_service.erase_pdn(session, target_id)
@@ -252,11 +312,11 @@ def register(dp: Dispatcher) -> None:
         if not ok:
             await event.message.answer(f"⚠️ Настройка не обновлена: {reason}")
             return
-        # The full new value lives in `settings.value` — duplicating it into
-        # audit_log makes the audit table a second store of welcome texts,
-        # contact lists and similar, which we don't want growing unbounded
-        # and which may contain PII if an operator pastes citizen data into
-        # a free-text key by mistake. Audit only the kind/length.
+        # Полное новое значение хранится в `settings.value` — его дублирование в
+        # audit_log сделает таблицу аудита вторым хранилищем приветственных текстов,
+        # списков контактов и т.п., чего мы не хотим, так как она будет бесконтрольно расти
+        # и может содержать ПДн, если оператор по ошибке вставит данные гражданина в
+        # текстовый ключ. Аудируем только тип/длину.
         details_meta: dict[str, object] = {"kind": type(value).__name__}
         if isinstance(value, str):
             details_meta["chars"] = len(value)
@@ -372,8 +432,8 @@ def register(dp: Dispatcher) -> None:
             text=texts.OP_HELP,
             attachments=[kbds.op_help_keyboard()],
         )
-        # Best-effort pin so the operator memo is always near the top of the
-        # admin group. Если уже что-то закреплено — pin перезапишет, MAX
+        # Попытка закрепить (best-effort), чтобы памятка оператора всегда была близко к верху
+        # админ-группы. Если уже что-то закреплено — pin перезапишет, MAX
         # позволяет одно закреплённое сообщение на чат. Не критично если
         # операция упадёт — координатор всегда может вызвать /op_help снова.
         mid = extract_message_id(sent)
@@ -383,21 +443,21 @@ def register(dp: Dispatcher) -> None:
                     chat_id=cfg.admin_group_id, message_id=mid, notify=False
                 )
             except Exception:
-                log.exception("pin_message for /op_help failed")
+                log.exception("pin_message для /op_help не удался")
 
     @dp.message_created(Command("add_operators"))
     async def cmd_add_operators(event: MessageCreated):
-        # IT-only: bulk role assignment is a privilege-escalation primitive
-        # (the actor controls the role string they hand out). Coordinator
-        # role intentionally lacks /erase and /setting; allowing it to grant
-        # IT here would let a coordinator promote themselves and then wipe
-        # PII or change live settings. Keep this in lockstep with /erase
-        # and /setting authorization.
+        # Только для IT: массовое назначение ролей — это примитив повышения привилегий
+        # (актор контролирует строку роли, которую он выдает). Роль координатора
+        # намеренно не имеет команд /erase и /setting; разрешение ей выдавать права
+        # IT здесь позволило бы координатору повысить себя и затем стереть
+        # ПДн или изменить настройки. Держите это в строгом соответствии
+        # с авторизацией /erase и /setting.
         if not await _ensure_role(event, OperatorRole.IT):
             return
         text = _get_text(event)
-        # /add_operators may be followed by either a single line or multiple
-        # lines — drop the command token and parse what's left.
+        # /add_operators может сопровождаться либо одной строкой, либо несколькими
+        # строками — отбрасываем токен команды и разбираем то, что осталось.
         parts = text.split(maxsplit=1)
         body = parts[1] if len(parts) > 1 else ""
         if not body.strip():
@@ -433,9 +493,9 @@ def register(dp: Dispatcher) -> None:
                     )
                     continue
                 role_enum = OperatorRole(role_value)
-                # Defense-in-depth: never let an actor rewrite their own role
-                # row through this command. Role changes for self must go
-                # through psql / runbook escalation so they're explicit.
+                # Глубокая защита: никогда не позволяйте актору переписывать свою собственную
+                # строку роли через эту команду. Изменения ролей для себя должны происходить
+                # через psql / эскалацию runbook, чтобы они были явными.
                 if actor_id is not None and target_id == actor_id:
                     errors.append(
                         f"«{line}» — нельзя изменить свою роль через эту команду"
