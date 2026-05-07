@@ -14,7 +14,7 @@ def main_menu(
     """Главное меню жителя.
 
     Кнопка подписки на новости вынесена сюда из подменю «Полезная
-    информация»: задача «не пропустить ЧС или объявление района» —
+    информация»: задача «не пропустить ЧС или объявление округа» —
     одна из ключевых, и закапывать её в подменю значит терять
     подписчиков. Текст кнопки отражает текущее состояние подписки,
     чтобы один и тот же тап работал и как «подписаться», и как
@@ -74,7 +74,7 @@ def topics_keyboard(topics: list[str]):
 
 
 def localities_keyboard(localities: list[str]):
-    """Населённые пункты Елизовского муниципального района. По одной кнопке
+    """Населённые пункты Елизовского муниципального округа. По одной кнопке
     в ряд по той же причине, что и тематики: длинные названия вроде
     «Раздольненское сельское поселение» не помещаются в две колонки."""
     kb = InlineKeyboardBuilder()
@@ -181,13 +181,26 @@ def broadcast_stop_keyboard(broadcast_id: int):
 def op_help_keyboard():
     """Клавиатура быстрых действий, закреплённая в админ-чате: ближайший
     аналог telegram-кнопки меню, который есть в MAX. Каждое нажатие
-    запускает соответствующий сценарий без ввода команды."""
+    запускает соответствующий сценарий без ввода команды.
+
+    Цель — свести к минимуму команды, которые приходится набирать
+    руками. Команды с обязательными аргументами (/reply, /reopen,
+    /close, /erase, /setting, /add_operators) остаются текстовыми;
+    всё остальное живёт здесь."""
     kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="📋 Открытые обращения", payload="op:open_tickets"))
     kb.row(
-        CallbackButton(text="📊 Статистика за сегодня", payload="op:stats_today")
+        CallbackButton(text="📊 За сегодня", payload="op:stats_today"),
+        CallbackButton(text="📊 За неделю", payload="op:stats_week"),
     )
-    kb.row(CallbackButton(text="📢 Сделать рассылку", payload="op:broadcast"))
+    kb.row(CallbackButton(text="📊 За месяц", payload="op:stats_month"))
     kb.row(
-        CallbackButton(text="📋 Все команды", payload="op:help_full")
+        CallbackButton(text="📢 Сделать рассылку", payload="op:broadcast"),
+        CallbackButton(text="📜 История рассылок", payload="op:broadcast_list"),
     )
+    kb.row(
+        CallbackButton(text="🛠 Диагностика", payload="op:diag"),
+        CallbackButton(text="💾 Снять бэкап", payload="op:backup"),
+    )
+    kb.row(CallbackButton(text="📋 Все команды", payload="op:help_full"))
     return kb.as_markup()

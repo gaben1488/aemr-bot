@@ -77,11 +77,196 @@ async def run_stats_today(event) -> None:
     await _send_stats_xlsx(event, "today", target_chat_id=cfg.admin_group_id)
 
 
+async def run_stats(event, period: str) -> None:
+    """Универсальный обработчик кнопок «📊 За неделю/За месяц». period —
+    одно из today|week|month, как у /stats."""
+    if period not in {"today", "week", "month"}:
+        return
+    if not await _ensure_operator(event):
+        return
+    await _send_stats_xlsx(event, period, target_chat_id=cfg.admin_group_id)
+
+
 async def show_full_help(event) -> None:
     """Текстовая команда /op_help, без клавиатуры. Вызывается кнопкой «📋 Все команды»."""
     if not _is_admin_chat(event):
         return
     await event.bot.send_message(chat_id=cfg.admin_group_id, text=texts.OP_HELP)
+
+
+async def run_open_tickets(event) -> None:
+    """То же, что /open_tickets — список неотвеченных обращений в админ-группу.
+    Вызывается кнопкой «📋 Открытые обращения»."""
+    if not await _ensure_operator(event):
+        return
+    await _do_open_tickets(event)
+
+
+async def run_diag(event) -> None:
+    """То же, что /diag — короткая сводка состояния бота. Вызывается кнопкой «🛠 Диагностика»."""
+    if not await _ensure_operator(event):
+        return
+    await _do_diag(event)
+
+
+async def run_backup(event) -> None:
+    """То же, что /backup — снять pg_dump в named-volume. Вызывается кнопкой «💾 Снять бэкап»."""
+    if not await _ensure_role(event, OperatorRole.IT):
+        return
+    await _do_backup(event)
+
+
+async def _do_open_tickets(event) -> None:
+    """Список открытых обращений в админ-группу. Общая реализация для
+    команды /open_tickets и кнопки «📋 Открытые обращения»."""
+    from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
+
+    from aemr_bot.db.models import Appeal, AppealStatus
+
+    async with session_scope() as session:
+        query = (
+            select(Appeal)
+            .where(
+                Appeal.status.in_(
+                    [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+                )
+            )
+            .options(selectinload(Appeal.user))
+            .order_by(Appeal.created_at)
+        )
+        open_appeals = (await session.scalars(query)).all()
+
+    if not open_appeals:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text="🎉 Нет открытых или неотвеченных обращений.",
+        )
+        return
+
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=f"⏳ Найдено неотвеченных обращений: {len(open_appeals)}",
+    )
+
+    for appeal in open_appeals:
+        user_name = appeal.user.first_name if appeal.user else "—"
+        user_id_text = appeal.user.max_user_id if appeal.user else "—"
+        # Служебный маркер `[appeal:N]` в конце — это стабильный токен,
+        # по которому handlers/operator_reply.py находит обращение при
+        # свайп-ответе на эту карточку. Не убирать и не переписывать.
+        text = (
+            f"❗️ Обращение #{appeal.id}\n"
+            f"👤 От: {user_name}\n"
+            f"🆔 ID: {user_id_text}\n"
+            f"📍 Населённый пункт: {appeal.locality or '—'}\n"
+            f"🏠 Адрес: {appeal.address or '—'}\n"
+            f"🏷️ Тематика: {appeal.topic or '—'}\n\n"
+            f"📝 Текст обращения:\n{appeal.summary or '—'}\n\n"
+            f"[appeal:{appeal.id}]"
+        )
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=text,
+        )
+
+
+async def _do_diag(event) -> None:
+    """Сводка состояния. Общая реализация для команды /diag и кнопки «🛠 Диагностика»."""
+    from sqlalchemy import func, select
+
+    from aemr_bot.db.models import (
+        Appeal,
+        AppealStatus,
+        Broadcast,
+        BroadcastStatus,
+        Event,
+        User,
+    )
+
+    async with session_scope() as session:
+        users_total = await session.scalar(select(func.count()).select_from(User))
+        users_blocked = await session.scalar(
+            select(func.count()).select_from(User).where(User.is_blocked.is_(True))
+        )
+        users_subscribed = await session.scalar(
+            select(func.count()).select_from(User).where(
+                User.subscribed_broadcast.is_(True),
+                User.is_blocked.is_(False),
+            )
+        )
+        appeals_total = await session.scalar(select(func.count()).select_from(Appeal))
+        appeals_in_progress = await session.scalar(
+            select(func.count()).select_from(Appeal).where(
+                Appeal.status.in_([
+                    AppealStatus.NEW.value,
+                    AppealStatus.IN_PROGRESS.value,
+                ])
+            )
+        )
+        broadcasts_done = await session.scalar(
+            select(func.count()).select_from(Broadcast).where(
+                Broadcast.status == BroadcastStatus.DONE.value
+            )
+        )
+        broadcasts_failed = await session.scalar(
+            select(func.count()).select_from(Broadcast).where(
+                Broadcast.status == BroadcastStatus.FAILED.value
+            )
+        )
+        events_total = await session.scalar(select(func.count()).select_from(Event))
+        last_event = await session.scalar(select(func.max(Event.received_at)))
+
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=(
+            "🛠️ Диагностика:\n"
+            f"• Жителей: {users_total or 0} "
+            f"(подписаны: {users_subscribed or 0}, заблокированы: {users_blocked or 0})\n"
+            f"• Обращений: {appeals_total or 0} "
+            f"(в работе: {appeals_in_progress or 0})\n"
+            f"• Рассылок: ✅ {broadcasts_done or 0} / ⚠️ {broadcasts_failed or 0}\n"
+            f"• События: всего {events_total or 0}, последнее {last_event or '—'}\n"
+            f"• Режим: {cfg.bot_mode}\n"
+            f"• Лимит ответа: {cfg.answer_max_chars}\n"
+            f"• SLA: {cfg.sla_response_hours}ч"
+        ),
+    )
+
+
+async def _do_backup(event) -> None:
+    """Снять pg_dump прямо сейчас. Общая реализация для команды /backup и
+    кнопки «💾 Снять бэкап»."""
+    from aemr_bot.services import cron as cron_service
+
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text="🗄️ Запускаю pg_dump… Это может занять несколько секунд.",
+    )
+    try:
+        out = await cron_service._backup_db()
+    except Exception as e:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id, text=f"⚠️ Бэкап упал: {e}"
+        )
+        return
+    if out is None:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=(
+                "⚠️ Бэкап не выполнен. Проверьте логи бота "
+                "(`docker compose logs bot --tail 50`)."
+            ),
+        )
+        return
+    size_kb = out.stat().st_size // 1024
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=(
+            f"✅ Бэкап готов: `{out.name}` ({size_kb} КБ).\n"
+            f"Лежит в named-volume `backups` контейнера."
+        ),
+    )
 
 
 def register(dp: Dispatcher) -> None:
@@ -96,59 +281,7 @@ def register(dp: Dispatcher) -> None:
         """
         if not await _ensure_operator(event):
             return
-
-        from sqlalchemy import select
-        from sqlalchemy.orm import selectinload
-
-        from aemr_bot.db.models import Appeal, AppealStatus
-
-        # Один SELECT с подгрузкой user через selectinload — иначе на каждое
-        # обращение был бы отдельный запрос к БД (классический N+1).
-        async with session_scope() as session:
-            query = (
-                select(Appeal)
-                .where(
-                    Appeal.status.in_(
-                        [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
-                    )
-                )
-                .options(selectinload(Appeal.user))
-                .order_by(Appeal.created_at)
-            )
-            open_appeals = (await session.scalars(query)).all()
-
-        if not open_appeals:
-            await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text="🎉 Нет открытых или неотвеченных обращений.",
-            )
-            return
-
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=f"⏳ Найдено неотвеченных обращений: {len(open_appeals)}",
-        )
-
-        for appeal in open_appeals:
-            user_name = appeal.user.first_name if appeal.user else "—"
-            user_id_text = appeal.user.max_user_id if appeal.user else "—"
-            # Служебный маркер `[appeal:N]` в конце — это стабильный токен,
-            # по которому handlers/operator_reply.py находит обращение при
-            # свайп-ответе на эту карточку. Не убирать и не переписывать.
-            text = (
-                f"❗️ Обращение #{appeal.id}\n"
-                f"👤 От: {user_name}\n"
-                f"🆔 ID: {user_id_text}\n"
-                f"📍 Населённый пункт: {appeal.locality or '—'}\n"
-                f"🏠 Адрес: {appeal.address or '—'}\n"
-                f"🏷️ Тематика: {appeal.topic or '—'}\n\n"
-                f"📝 Текст обращения:\n{appeal.summary or '—'}\n\n"
-                f"[appeal:{appeal.id}]"
-            )
-            await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text=text,
-            )
+        await _do_open_tickets(event)
 
     @dp.message_created(Command("stats"))
     async def cmd_stats(event: MessageCreated):
@@ -341,88 +474,13 @@ def register(dp: Dispatcher) -> None:
     async def cmd_diag(event: MessageCreated):
         if not await _ensure_operator(event):
             return
-        from sqlalchemy import func, select
-
-        from aemr_bot.db.models import (
-            Appeal,
-            AppealStatus,
-            Broadcast,
-            BroadcastStatus,
-            Event,
-            User,
-        )
-
-        async with session_scope() as session:
-            users_total = await session.scalar(select(func.count()).select_from(User))
-            users_blocked = await session.scalar(
-                select(func.count()).select_from(User).where(User.is_blocked.is_(True))
-            )
-            users_subscribed = await session.scalar(
-                select(func.count()).select_from(User).where(
-                    User.subscribed_broadcast.is_(True),
-                    User.is_blocked.is_(False),
-                )
-            )
-            appeals_total = await session.scalar(select(func.count()).select_from(Appeal))
-            appeals_in_progress = await session.scalar(
-                select(func.count()).select_from(Appeal).where(
-                    Appeal.status.in_([
-                        AppealStatus.NEW.value,
-                        AppealStatus.IN_PROGRESS.value,
-                    ])
-                )
-            )
-            broadcasts_done = await session.scalar(
-                select(func.count()).select_from(Broadcast).where(
-                    Broadcast.status == BroadcastStatus.DONE.value
-                )
-            )
-            broadcasts_failed = await session.scalar(
-                select(func.count()).select_from(Broadcast).where(
-                    Broadcast.status == BroadcastStatus.FAILED.value
-                )
-            )
-            events_total = await session.scalar(select(func.count()).select_from(Event))
-            last_event = await session.scalar(select(func.max(Event.received_at)))
-
-        await event.message.answer(
-            "🛠️ Диагностика:\n"
-            f"• Жителей: {users_total or 0} "
-            f"(подписаны: {users_subscribed or 0}, заблокированы: {users_blocked or 0})\n"
-            f"• Обращений: {appeals_total or 0} "
-            f"(в работе: {appeals_in_progress or 0})\n"
-            f"• Рассылок: ✅ {broadcasts_done or 0} / ⚠️ {broadcasts_failed or 0}\n"
-            f"• События: всего {events_total or 0}, последнее {last_event or '—'}\n"
-            f"• Режим: {cfg.bot_mode}\n"
-            f"• Лимит ответа: {cfg.answer_max_chars}\n"
-            f"• SLA: {cfg.sla_response_hours}ч"
-        )
+        await _do_diag(event)
 
     @dp.message_created(Command("backup"))
     async def cmd_backup(event: MessageCreated):
         if not await _ensure_role(event, OperatorRole.IT):
             return
-        from aemr_bot.services import cron as cron_service
-
-        await event.message.answer(
-            "🗄️ Запускаю pg_dump… Это может занять несколько секунд."
-        )
-        try:
-            out = await cron_service._backup_db()
-        except Exception as e:
-            await event.message.answer(f"⚠️ Бэкап упал: {e}")
-            return
-        if out is None:
-            await event.message.answer(
-                "⚠️ Бэкап не выполнен. Проверьте логи бота "
-                "(`docker compose logs bot --tail 50`)."
-            )
-            return
-        size_kb = out.stat().st_size // 1024
-        await event.message.answer(
-            f"✅ Бэкап готов: `{out.name}` ({size_kb} КБ).\n"
-            f"Лежит в named-volume `backups` контейнера."
-        )
+        await _do_backup(event)
 
     @dp.message_created(Command("op_help"))
     async def cmd_op_help(event: MessageCreated):

@@ -19,6 +19,7 @@ from aemr_bot.services import users as users_service
 from aemr_bot.utils.attachments import (
     collect_attachments,
     deserialize_for_relay,
+    extract_contact_name,
     extract_phone,
 )
 from aemr_bot.utils.event import (
@@ -300,7 +301,7 @@ async def _ask_contact_or_skip(event, max_user_id: int):
 async def _ask_locality(event, max_user_id: int):
     """Шаг «Населённый пункт». Перед адресом, после имени.
 
-    Разделение нужно координаторам АЕМР: обращения по разным поселениям
+    Разделение нужно координаторам АЕМО: обращения по разным поселениям
     идут к разным территориальным управлениям. Раньше всё писалось одной
     строкой в поле `address`, и распределить было сложно.
     """
@@ -424,6 +425,7 @@ def register(dp: Dispatcher) -> None:
             try:
                 idx = int(payload.split(":")[1])
             except (IndexError, ValueError):
+                await ack_callback(event)
                 return
             async with session_scope() as session:
                 localities = await settings_store.get(session, "localities") or []
@@ -431,6 +433,11 @@ def register(dp: Dispatcher) -> None:
                     chosen = localities[idx]
                     await users_service.update_dialog_data(session, max_user_id, {"locality": chosen})
                 else:
+                    await ack_callback(event)
+                    log.warning(
+                        "locality:%s out of range (have %d), user=%s",
+                        idx, len(localities), max_user_id,
+                    )
                     return
             await ack_callback(event)
             await _ask_address(event, max_user_id)
@@ -440,6 +447,7 @@ def register(dp: Dispatcher) -> None:
             try:
                 idx = int(payload.split(":")[1])
             except (IndexError, ValueError):
+                await ack_callback(event)
                 return
             async with session_scope() as session:
                 topics = await settings_store.get(session, "topics") or []
@@ -447,6 +455,11 @@ def register(dp: Dispatcher) -> None:
                     chosen = topics[idx]
                     await users_service.update_dialog_data(session, max_user_id, {"topic": chosen})
                 else:
+                    await ack_callback(event)
+                    log.warning(
+                        "topic:%s out of range (have %d), user=%s",
+                        idx, len(topics), max_user_id,
+                    )
                     return
             await ack_callback(event)
             await _ask_summary(event, max_user_id)
@@ -479,16 +492,41 @@ def register(dp: Dispatcher) -> None:
                 await broadcast_handler._handle_stop(event, bid)
                 return
 
-        # Кнопки быстрых действий для /op_help.
+        # Кнопки быстрых действий для /op_help. Цель — свести количество
+        # команд, которые оператору приходится набирать руками, к минимуму.
         if payload.startswith("op:"):
             from aemr_bot.handlers import admin_commands, broadcast as broadcast_handler
             if payload == "op:stats_today":
                 await ack_callback(event)
                 await admin_commands.run_stats_today(event)
                 return
+            if payload == "op:stats_week":
+                await ack_callback(event)
+                await admin_commands.run_stats(event, "week")
+                return
+            if payload == "op:stats_month":
+                await ack_callback(event)
+                await admin_commands.run_stats(event, "month")
+                return
+            if payload == "op:open_tickets":
+                await ack_callback(event)
+                await admin_commands.run_open_tickets(event)
+                return
+            if payload == "op:diag":
+                await ack_callback(event)
+                await admin_commands.run_diag(event)
+                return
+            if payload == "op:backup":
+                await ack_callback(event)
+                await admin_commands.run_backup(event)
+                return
             if payload == "op:broadcast":
                 await ack_callback(event)
                 await broadcast_handler._start_wizard(event)
+                return
+            if payload == "op:broadcast_list":
+                await ack_callback(event)
+                await broadcast_handler._list_broadcasts(event)
                 return
             if payload == "op:help_full":
                 await ack_callback(event)
@@ -551,7 +589,14 @@ def register(dp: Dispatcher) -> None:
 
 
 async def _on_awaiting_contact(event, body, text_body, max_user_id, op_reply):
+    # Сначала пробуем достать телефон из contact-вложения. Если его нет
+    # (старые клиенты MAX, либо житель напечатал номер текстом) — берём
+    # цифры из текстового тела как запасной путь.
     phone = extract_phone(body)
+    if phone is None and text_body:
+        digits_match = re.search(r"\+?\d[\d\s\-()]{9,}\d", text_body)
+        if digits_match:
+            phone = digits_match.group(0)
     if phone is None:
         await event.message.answer(
             texts.CONTACT_RETRY,
@@ -559,9 +604,19 @@ async def _on_awaiting_contact(event, body, text_body, max_user_id, op_reply):
         )
         return
 
+    # Имя из contact-вложения. Если житель шарит свой профиль через
+    # RequestContactButton — оно уже там, ручной шаг AWAITING_NAME можно
+    # пропустить.
+    contact_name = extract_contact_name(body)
+
     async with session_scope() as session:
         await users_service.set_phone(session, max_user_id, phone)
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        if contact_name and (not user.first_name or user.first_name == "Удалено"):
+            cleaned = contact_name.strip()[: cfg.name_max_chars]
+            if cleaned and _HAS_ALNUM.search(cleaned):
+                await users_service.set_first_name(session, max_user_id, cleaned)
+                user.first_name = cleaned
 
     if not user.first_name or user.first_name == "Удалено":
         async with session_scope() as session:
