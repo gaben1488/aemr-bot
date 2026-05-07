@@ -307,6 +307,11 @@ def register(dp: Dispatcher) -> None:
 
     @dp.message_created(Command("whoami"))
     async def _(event: MessageCreated):
+        # /whoami работает ТОЛЬКО в админ-группе. У жителя в личке эта
+        # команда не нужна и сбивает с толку — IDs не используются в
+        # пользовательских сценариях. В личке тихо игнорируем.
+        if not _is_admin_chat(event):
+            return
         max_user_id = get_user_id(event) or "?"
         first_name = get_first_name(event) or ""
         chat_id = get_chat_id(event) or "?"

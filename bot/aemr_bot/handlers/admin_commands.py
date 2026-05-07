@@ -81,7 +81,11 @@ async def run_stats_today(event) -> None:
 
 async def run_stats(event, period: str) -> None:
     """Универсальный обработчик кнопок «📊 За …». period — один из
-    today | week | month | quarter | half_year | year | all."""
+    today | week | month | quarter | half_year | year | all.
+
+    После выгрузки сразу возвращаем оператора к главной панели —
+    чтобы не висеть с подменю «выбрать период» когда уже всё сделано.
+    """
     from aemr_bot.services.stats import VALID_PERIODS
 
     if period not in VALID_PERIODS:
@@ -89,6 +93,20 @@ async def run_stats(event, period: str) -> None:
     if not await _ensure_operator(event):
         return
     await _send_stats_xlsx(event, period, target_chat_id=cfg.admin_group_id)
+    await show_op_menu(event, pin=False)
+
+
+async def run_stats_menu(event) -> None:
+    """Открыть подменю «📊 Статистика» — выбор периода."""
+    from aemr_bot import keyboards as kbds
+
+    if not await _ensure_operator(event):
+        return
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text="Выгрузка XLSX. Выберите период:",
+        attachments=[kbds.op_stats_menu_keyboard()],
+    )
 
 
 async def show_full_help(event) -> None:

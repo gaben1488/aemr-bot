@@ -33,7 +33,7 @@ DEFAULTS: dict[str, Any] = {
     "transport_dispatcher_contacts": [],
     "topics": [],
     "localities": [
-        "Елизово",
+        "Елизовское ГП",
         "Вулканное ГП",
         "Корякское СП",
         "Начикинское СП",

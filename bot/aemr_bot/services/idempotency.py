@@ -91,10 +91,26 @@ async def claim(event: Any) -> bool:
         or getattr(getattr(event, "__class__", None), "__name__", "unknown")
     )
 
-    payload: dict = {}
+    # Храним только summary события — без полного дампа, который содержал
+    # бы phone, имя и текст обращения жителя. Полный payload жил бы в
+    # таблице events 30 дней, попадал в backup и в логи восстановления —
+    # это лишняя поверхность для ПДн. Для целей идемпотентности достаточно
+    # знать тип, mid и таймстамп.
+    payload: dict = {"summary_only": True}
     try:
         if hasattr(event, "model_dump"):
-            payload = event.model_dump(mode="json", exclude={"bot"})
+            full = event.model_dump(mode="json", exclude={"bot"})
+            # Достаём только метаданные, не текст и вложения.
+            payload = {
+                "update_type": full.get("update_type"),
+                "timestamp": full.get("timestamp"),
+                "chat_id": (full.get("message", {}) or {}).get("recipient", {}).get("chat_id")
+                            if isinstance(full.get("message"), dict) else None,
+                "user_id": (full.get("message", {}) or {}).get("sender", {}).get("user_id")
+                            if isinstance(full.get("message"), dict) else None,
+                "mid": (full.get("message", {}) or {}).get("body", {}).get("mid")
+                            if isinstance(full.get("message"), dict) else None,
+            }
     except Exception:
         payload = {"_serialization_error": True}
 

@@ -6,9 +6,12 @@ ENV PYTHONUNBUFFERED=1 \
     TZ=Asia/Kamchatka
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        postgresql-client gnupg ca-certificates curl tzdata unzip \
-    && curl https://rclone.org/install.sh | bash \
+        postgresql-client gnupg ca-certificates curl tzdata unzip rclone \
     && rm -rf /var/lib/apt/lists/*
+# rclone берём из debian apt вместо `curl rclone.org/install.sh | bash`:
+# любой будущий компромет домена rclone.org исполнялся бы как root в
+# образе. Версия из apt чуть старше (1.60 на bookworm), но достаточна
+# для S3-аплоада бэкапов; функциональность не урезана.
 
 # Non-root user. Fixed UID/GID so the named volume `backups` keeps the
 # same ownership across rebuilds and on hosts where bind-mounts are used.

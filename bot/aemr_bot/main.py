@@ -160,7 +160,6 @@ async def _register_bot_commands(bot: Bot) -> None:
         BotCommand(name="subscribe", description="Подписаться на новости"),
         BotCommand(name="unsubscribe", description="Отписаться от новостей"),
         BotCommand(name="forget", description="Удалить мои данные"),
-        BotCommand(name="whoami", description="Показать мой ID"),
     ]
     await bot.set_my_commands(*commands)
     log.info("set_my_commands: зарегистрировано %d команд жителя", len(commands))

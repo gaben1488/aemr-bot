@@ -17,9 +17,7 @@ TZ = ZoneInfo(settings.timezone)
 _ATTACHMENT_LABELS = {
     "image": "фото",
     "video": "видео",
-    "audio": "голосовых",
     "file": "файлов",
-    "location": "геолокация",
 }
 
 
@@ -38,7 +36,7 @@ def attachments_summary_line(attachments: list[dict]) -> str:
     for kind, label in _ATTACHMENT_LABELS.items():
         n = counts.get(kind, 0)
         if n:
-            parts.append(f"{label} {n}" if kind != "location" else label)
+            parts.append(f"{label} {n}")
     if not parts:
         return ""
     return "Вложения: " + ", ".join(parts)

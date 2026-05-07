@@ -39,14 +39,31 @@ def _attachment_to_dict(att: Any) -> dict:
     return {}
 
 
+# К обращениям принимаем только текст, фото, видео и файлы. Голосовые,
+# геолокация, контакты и share-карточки бот молча игнорирует — оператор
+# не работает с этими типами в потоке обращений, лишний шум в админ-
+# группе их только запутывает.
+ALLOWED_APPEAL_TYPES = {"image", "video", "file"}
+
+
 def collect_attachments(message: Any) -> list[dict]:
-    """Взять вложения из тела сообщения MAX и сериализовать для хранения."""
+    """Взять вложения из тела сообщения MAX и сериализовать для хранения.
+
+    Пропускает только разрешённые типы вложений (см. ALLOWED_APPEAL_TYPES).
+    Audio/location/contact/share — отбрасываются молча, чтобы не плодить
+    в админ-группе нерелевантный поток.
+    """
     out: list[dict] = []
     body = message
     if hasattr(body, "body") and getattr(body, "body", None) is not None:
         body = body.body
     raw = getattr(body, "attachments", None) or []
     for att in raw:
+        att_type = getattr(att, "type", None)
+        if att_type is None and isinstance(att, dict):
+            att_type = att.get("type")
+        if str(att_type).lower() not in ALLOWED_APPEAL_TYPES:
+            continue
         out.append(_attachment_to_dict(att))
     return out
 

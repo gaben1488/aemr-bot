@@ -206,6 +206,45 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         coalesce=True,
     )
 
+    async def appeals_5y_retention():
+        """Раз в сутки обнуляем текстовое содержимое обращений старше
+        5 лет (152-ФЗ ст. 5 ч. 7 + Приказ Минкультуры о номенклатуре дел).
+
+        Записи appeals и messages не удаляются — остаются для подсчёта
+        статистики «было обращение N в N-году», но summary/text/attachments
+        чистятся. Жителя к этому моменту уже обезличил pdn-retention,
+        так что в БД остаются только метаданные (даты, статусы, числа).
+        """
+        try:
+            from aemr_bot.services import appeals as appeals_service
+
+            async with session_scope() as session:
+                purged_a, purged_m = await appeals_service.purge_old_appeals_content(
+                    session, years=5
+                )
+            if purged_a or purged_m:
+                log.info(
+                    "appeals_5y_retention: обнулено обращений=%d, сообщений=%d",
+                    purged_a, purged_m,
+                )
+                await send_admin_text(
+                    f"📜 Архивная очистка по 5-летнему сроку: обнулён "
+                    f"текст у {purged_a} обращений и {purged_m} сообщений. "
+                    f"Метаданные (даты, статусы) сохранены."
+                )
+        except Exception:
+            log.exception("appeals_5y_retention crashed")
+
+    scheduler.add_job(
+        appeals_5y_retention,
+        # Раз в сутки в 04:45 Камчатка — после events-retention (04:00)
+        # и pdn-retention (04:30). Цепочка ретеншенов в одну ночь.
+        CronTrigger(hour=4, minute=45, timezone=TZ),
+        name="appeals-5y-retention",
+        max_instances=1,
+        coalesce=True,
+    )
+
     async def pdn_retention_check():
         """152-ФЗ ст. 21 ч. 5: после отзыва согласия оператор обязан
         прекратить обработку и уничтожить ПДн в срок 30 дней.
@@ -377,12 +416,39 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         except Exception:
             log.exception("sla_overdue_check failed")
 
+    # SLA-проверка двухрежимная:
+    # • В рабочее время Камчатки (пн–сб, 09:00–17:59) — каждые 30 минут
+    #   (:10 и :40), чтобы координатор видел просрочку быстро.
+    # • Вне рабочего времени и в воскресенье — раз в час (минута :10).
+    # Минута :10 везде, чтобы не сливаться с pulse (:00, :05, :30).
     scheduler.add_job(
         sla_overdue_check,
-        # На 10-й минуте каждого часа — чтобы пульс (минута :00) и
-        # SLA-проверка не сливались в одно неразличимое сообщение.
-        CronTrigger(minute=10, timezone=TZ),
-        name="sla-overdue-check",
+        CronTrigger(
+            day_of_week="mon-sat",
+            hour="9-17",
+            minute="10,40",
+            timezone=TZ,
+        ),
+        name="sla-overdue-workhours",
+        max_instances=1,
+        coalesce=True,
+    )
+    scheduler.add_job(
+        sla_overdue_check,
+        CronTrigger(
+            day_of_week="mon-sat",
+            hour="0-8,18-23",
+            minute=10,
+            timezone=TZ,
+        ),
+        name="sla-overdue-offhours",
+        max_instances=1,
+        coalesce=True,
+    )
+    scheduler.add_job(
+        sla_overdue_check,
+        CronTrigger(day_of_week="sun", hour="*", minute=10, timezone=TZ),
+        name="sla-overdue-sunday",
         max_instances=1,
         coalesce=True,
     )
@@ -439,14 +505,23 @@ def _rotate_backups(directory: Path, keep: int, suffix: str) -> None:
 async def _run_pg_dump(out_path: Path, env: dict[str, str]) -> None:
     """Простой `pg_dump > out_path` через asyncio.subprocess, чтобы
     цикл событий не блокировался. Используется, когда шифрование gpg
-    выключено."""
-    with open(out_path, "wb") as f:
+    выключено.
+
+    open() — синхронный системный вызов; на полупустом NVMe микросекунды,
+    но раз в неделю в 03:00 этим можно пренебречь. Если бэкапы начнут
+    запускаться в горячей фазе (по /backup от оператора), стоит обернуть
+    в asyncio.to_thread.
+    """
+    f = await asyncio.to_thread(open, out_path, "wb")
+    try:
         proc = await asyncio.create_subprocess_exec(
             "pg_dump", "--no-owner", "--no-acl",
             stdout=f,
             env=env,
         )
         rc = await proc.wait()
+    finally:
+        await asyncio.to_thread(f.close)
     if rc != 0:
         raise RuntimeError(f"pg_dump failed with code {rc}")
 

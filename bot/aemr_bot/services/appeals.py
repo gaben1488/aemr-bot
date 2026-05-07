@@ -230,6 +230,82 @@ async def count_open(session: AsyncSession) -> int:
     ) or 0
 
 
+async def purge_old_appeals_content(
+    session: AsyncSession, *, years: int = 5
+) -> tuple[int, int]:
+    """Стереть текстовые поля и attachments у обращений, закрытых
+    больше N лет назад. Сами строки appeal/messages остаются — это
+    нужно для статистики количества и сохранения связи с обезличенным
+    жителем. Содержимое (summary, text сообщений, attachments) NULL'ится.
+
+    Срок 5 лет — стандарт делопроизводства в органах власти (по приказу
+    Минкультуры о номенклатуре дел) и одновременно соответствует
+    152-ФЗ ст. 5 ч. 7 «срок хранения ПДн не должен превышать сроков,
+    необходимых для целей обработки».
+
+    Возвращает (purged_appeals, purged_messages).
+    """
+    threshold = datetime.now(timezone.utc) - timedelta(days=365 * years)
+    appeals_result = await session.execute(
+        update(Appeal)
+        .where(
+            Appeal.status.in_(
+                [AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value]
+            ),
+            Appeal.closed_at.isnot(None),
+            Appeal.closed_at <= threshold,
+            Appeal.summary.isnot(None),
+        )
+        .values(summary=None, attachments=[])
+    )
+    purged_appeals = appeals_result.rowcount or 0
+
+    # Сообщения переписки (followup жителя, ответ оператора) — обнуляем
+    # text у сообщений, чьё обращение уже было обнулено. Сделать одним
+    # UPDATE через подзапрос проще, чем итерироваться.
+    msg_result = await session.execute(
+        update(Message)
+        .where(
+            Message.appeal_id.in_(
+                select(Appeal.id).where(
+                    Appeal.summary.is_(None),
+                    Appeal.closed_at <= threshold,
+                )
+            ),
+            Message.text.isnot(None),
+        )
+        .values(text=None, attachments=[])
+    )
+    purged_messages = msg_result.rowcount or 0
+    return purged_appeals, purged_messages
+
+
+async def find_last_address_for_user(
+    session: AsyncSession, user_id: int
+) -> tuple[str, str] | None:
+    """Последний (locality, address), которые житель уже подавал.
+
+    Используется в воронке нового обращения: если предыдущий раз
+    житель писал по тому же адресу, бот предложит «использовать тот же
+    адрес?» — пропускаются два шага. Берём из последнего обращения с
+    заполненными обоими полями (locality и address); если их нет —
+    возвращаем None и воронка спрашивает заново.
+    """
+    res = await session.scalar(
+        select(Appeal)
+        .where(
+            Appeal.user_id == user_id,
+            Appeal.locality.isnot(None),
+            Appeal.address.isnot(None),
+        )
+        .order_by(desc(Appeal.created_at))
+        .limit(1)
+    )
+    if res is None or not res.locality or not res.address:
+        return None
+    return res.locality, res.address
+
+
 async def find_active_for_user(session: AsyncSession, user_id: int) -> Appeal | None:
     """Последнее живое обращение жителя.
 

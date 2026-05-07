@@ -27,7 +27,7 @@ def main_menu(
 ):
     """Главное меню жителя.
 
-    Кнопка подписки на новости вынесена сюда из подменю «Полезная
+    Кнопка подписки на рассылку вынесена сюда из подменю «Полезная
     информация»: задача «не пропустить ЧС или объявление округа» —
     одна из ключевых, и закапывать её в подменю значит терять
     подписчиков. Текст кнопки отражает текущее состояние подписки,
@@ -43,13 +43,13 @@ def main_menu(
     if subscribed:
         kb.row(
             CallbackButton(
-                text="🔕 Отписаться от новостей", payload="info:subscribe_off"
+                text="🔕 Отписаться от рассылки", payload="info:subscribe_off"
             )
         )
     else:
         kb.row(
             CallbackButton(
-                text="🔔 Подписаться на новости", payload="info:subscribe_on"
+                text="🔔 Подписаться на рассылку", payload="info:subscribe_on"
             )
         )
     if electronic_reception_url:
@@ -157,6 +157,17 @@ def topics_keyboard(topics: list[str]):
     return kb.as_markup()
 
 
+def reuse_address_keyboard():
+    """Кнопки «использовать тот же адрес / указать новый» в первом шаге
+    воронки, если у жителя уже есть прошлое обращение с заполненным
+    населённым пунктом и адресом. Экономит два шага FSM."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="✅ Тот же адрес", payload="addr:reuse"))
+    kb.row(CallbackButton(text="📍 Указать новый", payload="addr:new"))
+    kb.row(CallbackButton(text="❌ Отмена", payload="cancel"))
+    return kb.as_markup()
+
+
 def localities_keyboard(localities: list[str]):
     """Населённые пункты Елизовского муниципального округа. По одной кнопке
     в ряд по той же причине, что и тематики: длинные названия вроде
@@ -245,13 +256,13 @@ def useful_info_keyboard(
     if subscribed:
         kb.row(
             CallbackButton(
-                text="🔕 Отписаться от новостей", payload="info:subscribe_off"
+                text="🔕 Отписаться от рассылки", payload="info:subscribe_off"
             )
         )
     else:
         kb.row(
             CallbackButton(
-                text="🔔 Подписаться на новости", payload="info:subscribe_on"
+                text="🔔 Подписаться на рассылку", payload="info:subscribe_on"
             )
         )
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
@@ -303,6 +314,23 @@ def broadcast_stop_keyboard(broadcast_id: int):
             payload=f"broadcast:stop:{broadcast_id}",
         )
     )
+    return kb.as_markup()
+
+
+def op_stats_menu_keyboard():
+    """Подменю «📊 Статистика» — выбор периода. По одной кнопке в ряд:
+    длинные подписи («За полгода», «За всё время») в две колонки
+    обрезаются на узких экранах MAX. После клика по периоду бот
+    отправляет XLSX и возвращает оператору главную панель /op_help."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="📊 За сегодня", payload="op:stats_today"))
+    kb.row(CallbackButton(text="📊 За неделю", payload="op:stats_week"))
+    kb.row(CallbackButton(text="📊 За месяц", payload="op:stats_month"))
+    kb.row(CallbackButton(text="📊 За квартал", payload="op:stats_quarter"))
+    kb.row(CallbackButton(text="📊 За полгода", payload="op:stats_half_year"))
+    kb.row(CallbackButton(text="📊 За год", payload="op:stats_year"))
+    kb.row(CallbackButton(text="📊 За всё время", payload="op:stats_all"))
+    kb.row(CallbackButton(text="↩️ Отмена", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -462,19 +490,7 @@ def op_help_keyboard(
     if open_count is not None:
         open_label = f"📋 Открытые обращения ({open_count})"
     kb.row(CallbackButton(text=open_label, payload="op:open_tickets"))
-    kb.row(
-        CallbackButton(text="📊 День", payload="op:stats_today"),
-        CallbackButton(text="📊 Неделя", payload="op:stats_week"),
-        CallbackButton(text="📊 Месяц", payload="op:stats_month"),
-    )
-    kb.row(
-        CallbackButton(text="📊 Квартал", payload="op:stats_quarter"),
-        CallbackButton(text="📊 Полгода", payload="op:stats_half_year"),
-    )
-    kb.row(
-        CallbackButton(text="📊 Год", payload="op:stats_year"),
-        CallbackButton(text="📊 Всё время", payload="op:stats_all"),
-    )
+    kb.row(CallbackButton(text="📊 Статистика", payload="op:stats_menu"))
     if can_broadcast:
         kb.row(
             CallbackButton(text="📢 Сделать рассылку", payload="op:broadcast"),

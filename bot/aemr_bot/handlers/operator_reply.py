@@ -462,10 +462,10 @@ async def handle_user_followup(
         # Если в дополнении пришли фото/файлы — relay-им их в админ-группу
         # тоже, чтобы оператор видел контекст, а не только текст.
         if attachments:
-            from aemr_bot.handlers.appeal import _relay_attachments_to_admin
+            from aemr_bot.services.admin_relay import relay_attachments_to_admin
 
             try:
-                await _relay_attachments_to_admin(
+                await relay_attachments_to_admin(
                     event.bot,
                     appeal_id=active.id,
                     admin_mid=None,

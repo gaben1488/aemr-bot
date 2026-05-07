@@ -18,6 +18,19 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    # Hardening DB. Postgres-контейнеру нужны несколько capabilities
+    # для chown'а data-каталога, но всё, что не из этого набора —
+    # сбрасываем. no-new-privileges предотвращает setuid-эскалации.
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_READ_SEARCH
+      - FOWNER
+      - SETGID
+      - SETUID
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
   bot:

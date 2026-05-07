@@ -18,7 +18,6 @@ from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.attachments import (
     collect_attachments,
-    deserialize_for_relay,
     extract_contact_name,
     extract_phone,
 )
@@ -142,60 +141,10 @@ async def _send_to_admin_card(
     return extract_message_id(sent)
 
 
-async def _relay_attachments_to_admin(
-    bot,
-    *,
-    appeal_id: int,
-    admin_mid: str | None,
-    stored_attachments: list[dict],
-) -> None:
-    """Пересылает предоставленные жителем фото/гео/файлы в админ-группу как ответ
-    на карточку. Выполняется по мере возможности: ошибки логируются и не прерывают процесс создания обращения."""
-    if not cfg.admin_group_id or not stored_attachments:
-        return
-    relayable = deserialize_for_relay(stored_attachments)
-    if not relayable:
-        return
-    try:
-        from maxapi.enums.message_link_type import MessageLinkType
-        from maxapi.types.message import NewMessageLink
-    except Exception:
-        log.exception("типы ссылок maxapi недоступны; пересылка выполняется без ссылки на ответ")
-        MessageLinkType = None  # type: ignore[assignment]
-        NewMessageLink = None  # type: ignore[assignment]
-
-    link = None
-    if admin_mid and MessageLinkType is not None and NewMessageLink is not None:
-        try:
-            link = NewMessageLink(type=MessageLinkType.REPLY, mid=admin_mid)
-        except Exception:
-            log.exception("не удалось собрать NewMessageLink для admin_mid=%s", admin_mid)
-            link = None
-
-    # Разбиваем вложения на пакеты для сообщений — лимит вложений на сервере MAX
-    # не задокументирован; сохранение количества ниже attachments_per_relay_message позволяет
-    # каждому send_message комфортно вписываться в любые серверные ограничения.
-    chunk_size = max(1, cfg.attachments_per_relay_message)
-    batches = [relayable[i:i + chunk_size] for i in range(0, len(relayable), chunk_size)]
-    total_batches = len(batches)
-    for idx, batch in enumerate(batches, start=1):
-        header = (
-            f"📎 Вложения к обращению #{appeal_id}"
-            if total_batches == 1
-            else f"📎 Вложения к обращению #{appeal_id} ({idx}/{total_batches})"
-        )
-        try:
-            await bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text=header,
-                attachments=batch,
-                link=link,
-            )
-        except Exception:
-            log.exception(
-                "не удалось переслать пакет вложений %d/%d для обращения #%s",
-                idx, total_batches, appeal_id,
-            )
+# _relay_attachments_to_admin перенесён в services/admin_relay.py
+# (см. relay_attachments_to_admin), чтобы не было кросс-хендлерных
+# импортов: operator_reply.py и appeal.py теперь оба зовут общую
+# сервисную функцию.
 
 
 async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | None:
@@ -255,7 +204,9 @@ async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | None:
                 appeal.id,
             )
 
-        await _relay_attachments_to_admin(
+        from aemr_bot.services.admin_relay import relay_attachments_to_admin
+
+        await relay_attachments_to_admin(
             bot,
             appeal_id=appeal.id,
             admin_mid=admin_mid,
@@ -395,6 +346,12 @@ async def _ask_contact_or_skip(event, max_user_id: int):
         await users_service.set_state(session, max_user_id, target_state, data={})
 
     if target_state == DialogState.AWAITING_LOCALITY:
+        # Перед обычной клавиатурой со списком поселений пробуем
+        # предложить «использовать тот же адрес» — экономит два шага
+        # для жителей, которые подают повторное обращение по тому же
+        # объекту. Если прошлого адреса нет — обычный путь.
+        if await _ask_address_or_reuse(event, max_user_id):
+            return
         await _ask_locality(event, max_user_id)
         return
 
@@ -410,6 +367,30 @@ async def _ask_contact_or_skip(event, max_user_id: int):
     )
 
 
+async def _ask_address_or_reuse(event, max_user_id: int) -> bool:
+    """Предложить жителю «использовать тот же адрес» если он уже подавал
+    обращение. Возвращает True, если показали reuse-prompt — тогда
+    воронка ждёт callback addr:reuse / addr:new и не идёт в _ask_locality.
+    False означает «прошлого адреса нет, спрашивайте обычным путём».
+    """
+    async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        last = await appeals_service.find_last_address_for_user(session, user.id)
+    if last is None:
+        return False
+    locality, address = last
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=(
+            f"В прошлый раз вы писали по этому адресу:\n"
+            f"📍 {locality}, {address}\n\n"
+            f"Использовать его снова или указать новый?"
+        ),
+        attachments=[keyboards.reuse_address_keyboard()],
+    )
+    return True
+
+
 async def _ask_locality(event, max_user_id: int):
     """Шаг «Населённый пункт». Перед адресом, после имени.
 
@@ -418,7 +399,7 @@ async def _ask_locality(event, max_user_id: int):
     строкой в поле `address`, и распределить было сложно.
     """
     async with session_scope() as session:
-        localities = await settings_store.get(session, "localities") or ["Елизово"]
+        localities = await settings_store.get(session, "localities") or ["Елизовское ГП"]
         await users_service.set_state(session, max_user_id, DialogState.AWAITING_LOCALITY)
     await event.bot.send_message(
         chat_id=get_chat_id(event),
@@ -537,6 +518,32 @@ def register(dp: Dispatcher) -> None:
             await open_main_menu(event)
             return
 
+        if payload == "addr:reuse":
+            await ack_callback(event)
+            async with session_scope() as session:
+                user = await users_service.get_or_create(session, max_user_id=max_user_id)
+                last = await appeals_service.find_last_address_for_user(session, user.id)
+            if last is None:
+                # Между показом промпта и кликом обращение могло быть
+                # обезличено retention-кроном — fallback к обычному пути.
+                await _ask_locality(event, max_user_id)
+                return
+            locality, address = last
+            async with session_scope() as session:
+                await users_service.set_state(
+                    session,
+                    max_user_id,
+                    DialogState.AWAITING_TOPIC,
+                    data={"locality": locality, "address": address},
+                )
+            await _ask_topic(event, max_user_id)
+            return
+
+        if payload == "addr:new":
+            await ack_callback(event)
+            await _ask_locality(event, max_user_id)
+            return
+
         if payload.startswith("locality:"):
             try:
                 idx = int(payload.split(":")[1])
@@ -615,9 +622,18 @@ def register(dp: Dispatcher) -> None:
         # команд, которые оператору приходится набирать руками, к минимуму.
         if payload.startswith("op:"):
             from aemr_bot.handlers import admin_commands, broadcast as broadcast_handler
+            if payload == "op:menu":
+                await ack_callback(event)
+                await admin_commands.show_op_menu(event, pin=False)
+                return
+            if payload == "op:stats_menu":
+                await ack_callback(event)
+                await admin_commands.run_stats_menu(event)
+                return
             if payload == "op:stats_today":
                 await ack_callback(event)
                 await admin_commands.run_stats_today(event)
+                await admin_commands.show_op_menu(event, pin=False)
                 return
             if payload == "op:stats_week":
                 await ack_callback(event)
@@ -815,7 +831,7 @@ def register(dp: Dispatcher) -> None:
             }
             citizen = {
                 "start", "menu", "help", "policy", "subscribe",
-                "unsubscribe", "forget", "whoami", "cancel",
+                "unsubscribe", "forget", "cancel",
             }
             if cmd in operator_only:
                 await event.message.answer(
@@ -901,9 +917,10 @@ async def _on_awaiting_name(event, body, text_body, max_user_id):
 
     async with session_scope() as session:
         await users_service.set_first_name(session, max_user_id, name)
-    # Дальше — выбор населённого пункта. Само сообщение со списком уходит
-    # из `_ask_locality`, чтобы поведение совпадало с веткой повторного
-    # обращения, где имя и телефон уже заполнены.
+    # Перед выбором населённого пункта пробуем предложить «тот же
+    # адрес», если житель уже подавал обращение. Иначе обычный путь.
+    if await _ask_address_or_reuse(event, max_user_id):
+        return
     await _ask_locality(event, max_user_id)
 
 
@@ -959,7 +976,7 @@ async def _on_awaiting_locality(event, body, text_body, max_user_id):
     предсказуемым (свободный ввод сюда не закладываем — координаторам
     проще работать со стандартным списком поселений)."""
     async with session_scope() as session:
-        localities = await settings_store.get(session, "localities") or ["Елизово"]
+        localities = await settings_store.get(session, "localities") or ["Елизовское ГП"]
     await event.message.answer(
         texts.LOCALITY_REQUEST,
         attachments=[keyboards.localities_keyboard(localities)],
