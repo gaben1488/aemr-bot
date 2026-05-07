@@ -65,7 +65,7 @@ aemr-bot/
 │  ├─ DEVELOPER.md                гайд для разработчика, особенности maxapi
 │  ├─ SETUP.md                    как настроить админ-группу и операторов
 │  ├─ RUNBOOK.md                  операционные процедуры координатора и ИТ
-│  ├─ PRIVACY.md                  политика обработки ПДн (+ PRIVACY.pdf)
+│  ├─ Политика.md                  политика обработки ПДн (+ PRIVACY.pdf)
 │  ├─ architecture-diagrams.md    BPMN, flowchart, sequence, state-схемы
 │  └─ db-schema.md                схема базы данных
 ├─ bot/                           Python-сервис: бот + БД + крон
@@ -80,7 +80,7 @@ aemr-bot/
 ├─ seed/                          стартовые данные: приветствие, согласие,
 │                                 контакты, тематики, диспетчерские, PRIVACY.pdf
 ├─ scripts/
-│  ├─ generate_privacy_pdf.py     повторная генерация PRIVACY.pdf из PRIVACY.md
+│  ├─ generate_privacy_pdf.py     повторная генерация PRIVACY.pdf из Политика.md
 │  └─ reset_test_data.sql         полная зачистка тестовых данных перед prod
 └─ .gitignore
 ```

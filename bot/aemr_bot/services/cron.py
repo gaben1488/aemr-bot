@@ -26,12 +26,13 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler(timezone=TZ)
 
     async def backup_with_alert():
-        """Wrap _backup_db so a failed weekly dump is loud, not silent.
+        """Обёртка над _backup_db: упавший еженедельный дамп должен
+        быть громким, а не тихим.
 
-        Without this, a broken backup chain (disk full, gpg key gone,
-        Postgres permissions changed) only shows up in the bot log —
-        which nobody reads on Sunday at 03:00. The admin group needs
-        to know the next morning, before the next week's run.
+        Без этого сломанная цепочка бэкапов (нет места на диске, пропал
+        gpg-ключ, поменялись права Postgres) видна только в логах бота,
+        а их никто не читает в воскресенье в 03:00. Админ-группа должна
+        узнать утром, до следующего еженедельного запуска.
         """
         try:
             out = await _backup_db()
@@ -62,13 +63,14 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
     )
 
     async def events_retention():
-        """Drop events older than 30 days.
+        """Удалить события старше 30 дней.
 
-        events table backs idempotency dedupe — a key only needs to be
-        remembered as long as MAX might re-deliver the same Update.
-        After 30 days that's vanishingly unlikely, and the table would
-        otherwise grow unbounded with full Update payloads (which
-        contain PII for citizen messages).
+        Таблица events нужна для защиты от повторов (idempotency): ключ
+        нужно помнить ровно столько, сколько MAX может повторно отдать
+        тот же Update. Через 30 дней это исчезающе маловероятно, иначе
+        таблица растёт без ограничений вместе с полными полезными
+        нагрузками (Update payload), которые содержат персональные
+        данные граждан.
         """
         try:
             cutoff = datetime.now(TZ) - timedelta(days=30)
@@ -169,7 +171,7 @@ def _build_pg_env() -> dict[str, str]:
 
 
 def _rotate_backups(directory: Path, keep: int, suffix: str) -> None:
-    """Drop oldest backup files beyond `keep`. Sorted by mtime descending."""
+    """Удалить самые старые файлы бэкапов сверх `keep`. Сортировка по mtime по убыванию."""
     files = sorted(
         directory.glob(f"aemr-*{suffix}"),
         key=lambda p: p.stat().st_mtime,
@@ -184,8 +186,9 @@ def _rotate_backups(directory: Path, keep: int, suffix: str) -> None:
 
 
 async def _run_pg_dump(out_path: Path, env: dict[str, str]) -> None:
-    """Plain `pg_dump > out_path` via asyncio.subprocess so the event loop
-    keeps spinning. Used when gpg encryption is disabled."""
+    """Простой `pg_dump > out_path` через asyncio.subprocess, чтобы
+    цикл событий не блокировался. Используется, когда шифрование gpg
+    выключено."""
     with open(out_path, "wb") as f:
         proc = await asyncio.create_subprocess_exec(
             "pg_dump", "--no-owner", "--no-acl",
@@ -200,8 +203,8 @@ async def _run_pg_dump(out_path: Path, env: dict[str, str]) -> None:
 async def _run_pg_dump_encrypted(
     out_path: Path, env: dict[str, str], passphrase: str
 ) -> None:
-    """`pg_dump | gpg --symmetric > out_path`. Passphrase via os.pipe to keep
-    it out of argv and shell."""
+    """`pg_dump | gpg --symmetric > out_path`. Парольная фраза через
+    os.pipe, чтобы она не попала в argv и в shell."""
     r_fd, w_fd = os.pipe()
     os.write(w_fd, passphrase.encode())
     os.close(w_fd)
@@ -220,7 +223,7 @@ async def _run_pg_dump_encrypted(
             "--passphrase-fd", str(r_fd),
             "--symmetric", "--cipher-algo", "AES256",
             "-o", str(out_path),
-            stdin=dump.stdout,  # type: ignore[arg-type]  # StreamReader works at runtime
+            stdin=dump.stdout,  # type: ignore[arg-type]  # StreamReader работает в рантайме
             pass_fds=(r_fd,),
         )
     finally:
@@ -234,14 +237,15 @@ async def _run_pg_dump_encrypted(
 
 
 async def _upload_to_s3(out_path: Path) -> None:
-    """Optional S3 upload via rclone. Raises on failure — caller decides
-    whether to swallow.
+    """Опциональная загрузка в S3 через rclone. Бросает исключение при
+    сбое, вызывающий код сам решает, проглатывать его или нет.
 
-    Credentials are passed via RCLONE_CONFIG_* environment variables, not
-    in the argv connection string. The argv form (`access_key=...`) leaks
-    via `ps`, `/proc/<pid>/cmdline`, and any docker-compose log scraper
-    that captures process snapshots — exactly the wrong place for a
-    secret. The env-var form keeps them inside the rclone process.
+    Учётные данные передаются через переменные окружения
+    RCLONE_CONFIG_*, а не в строке подключения через argv. Форма с argv
+    (`access_key=...`) утекает через `ps`, `/proc/<pid>/cmdline` и любой
+    сборщик логов docker-compose, делающий снимки процессов: это совсем
+    не то место, где должны лежать секреты. Форма с env-переменными
+    держит их внутри процесса rclone.
     """
     if not (
         settings.backup_s3_bucket
@@ -270,12 +274,14 @@ async def _upload_to_s3(out_path: Path) -> None:
 
 
 async def _backup_db() -> Path | None:
-    """Weekly pg_dump → optional gpg → save locally → optional S3.
+    """Еженедельный pg_dump → опционально gpg → сохранить локально →
+    опционально S3.
 
-    Self-hosted-friendly: by default only saves to a local volume
-    (`/backups`) with rotation. S3 and gpg are both opt-in via env.
-    Returns the path on disk if a backup was successfully written, None
-    on failure. Caller `_backup_db_job` swallows exceptions and logs.
+    Сделано под self-hosted: по умолчанию сохраняет только в локальный
+    том (`/backups`) с ротацией. S3 и gpg включаются через переменные
+    окружения. Возвращает путь к успешно записанному бэкапу либо None
+    при сбое. Вызывающий код `_backup_db_job` глотает исключения и
+    пишет в лог.
     """
     local_dir = (
         Path(settings.backup_local_dir) if settings.backup_local_dir else None
@@ -299,10 +305,11 @@ async def _backup_db() -> Path | None:
             await _run_pg_dump_encrypted(out, env, passphrase or "")
         else:
             await _run_pg_dump(out, env)
-        # Tighten permissions to 0600 — the dump contains user phones,
-        # appeal text and operator audit log. Default container umask
-        # leaves it world-readable, which is wrong for a PII artifact
-        # even inside a single-tenant volume.
+        # Ужесточить права до 0600. Дамп содержит телефоны пользователей,
+        # тексты обращений и операторский audit-лог. Стандартная umask
+        # контейнера оставляет файл доступным на чтение всем, а это
+        # неприемлемо для артефакта с персональными данными даже внутри
+        # тома одного арендатора.
         try:
             os.chmod(out, 0o600)
         except OSError:
@@ -316,10 +323,10 @@ async def _backup_db() -> Path | None:
             pass
         return None
 
-    # Rotation — keep last N files in this directory.
+    # Ротация: оставляем последние N файлов в этом каталоге.
     _rotate_backups(target_dir, settings.backup_keep_count, suffix)
 
-    # Optional remote upload — failure here doesn't invalidate the local copy.
+    # Опциональная отправка наружу: сбой здесь не отменяет локальную копию.
     try:
         await _upload_to_s3(out)
     except Exception:

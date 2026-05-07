@@ -129,7 +129,7 @@ def useful_info_keyboard(
 
 
 def broadcast_unsubscribe_keyboard():
-    """Inline button under each broadcast message — one-tap unsubscribe."""
+    """Inline-кнопка под каждым сообщением рассылки — отписка в одно нажатие."""
     kb = InlineKeyboardBuilder()
     kb.row(
         CallbackButton(
@@ -141,7 +141,7 @@ def broadcast_unsubscribe_keyboard():
 
 
 def broadcast_confirm_keyboard():
-    """Wizard step — operator confirms or aborts the prepared broadcast."""
+    """Шаг анкеты: оператор подтверждает или отменяет подготовленную рассылку."""
     kb = InlineKeyboardBuilder()
     kb.row(
         CallbackButton(text="✅ Разослать", payload="broadcast:confirm"),
@@ -151,7 +151,7 @@ def broadcast_confirm_keyboard():
 
 
 def broadcast_stop_keyboard(broadcast_id: int):
-    """Emergency-stop button visible to all operators while a send is running."""
+    """Кнопка экстренной остановки, видимая всем операторам, пока идёт рассылка."""
     kb = InlineKeyboardBuilder()
     kb.row(
         CallbackButton(
@@ -163,9 +163,9 @@ def broadcast_stop_keyboard(broadcast_id: int):
 
 
 def op_help_keyboard():
-    """Quick-action keyboard pinned in the admin chat — closest thing MAX has
-    to a Telegram-style menu button. Each callback fires the corresponding
-    flow without typing a command."""
+    """Клавиатура быстрых действий, закреплённая в админ-чате: ближайший
+    аналог telegram-кнопки меню, который есть в MAX. Каждое нажатие
+    запускает соответствующий сценарий без ввода команды."""
     kb = InlineKeyboardBuilder()
     kb.row(
         CallbackButton(text="📊 Статистика за сегодня", payload="op:stats_today")

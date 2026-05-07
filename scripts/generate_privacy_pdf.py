@@ -1,10 +1,16 @@
-"""Generate PRIVACY.pdf from docs/PRIVACY.md using reportlab.
+"""Собирает PRIVACY.pdf из docs/Политика.md через reportlab.
 
-Renders Russian text with system Arial. Reportlab's Paragraph engine handles
-long URLs cleanly via word-wrap with explicit break points.
+Рендерит русский текст системным Arial. Движок Paragraph из reportlab
+аккуратно обрабатывает длинные ссылки благодаря переносу слов с явными
+точками разрыва.
 
-Run:
+Запуск:
     python scripts/generate_privacy_pdf.py
+
+Имя итогового файла остаётся PRIVACY.pdf, потому что оно зашито в
+коде бота (`bot/aemr_bot/services/policy.py::POLICY_PDF_REL`) и в
+`infra/Dockerfile`. Переименование PDF потребует синхронных правок
+обоих этих мест.
 """
 
 from __future__ import annotations
@@ -22,7 +28,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "docs" / "PRIVACY.md"
+SRC = ROOT / "docs" / "Политика.md"
 OUT = ROOT / "docs" / "PRIVACY.pdf"
 
 WIN_FONTS = Path("C:/Windows/Fonts")
@@ -74,7 +80,7 @@ def parse_blocks(md: str) -> list[tuple[str, str]]:
 
 
 def render_inline(text: str) -> str:
-    """Convert markdown inline marks to reportlab's mini-HTML."""
+    """Перевести инлайн-разметку markdown в мини-HTML reportlab."""
     text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     text = re.sub(r"`([^`]+)`", r'<font face="Courier">\1</font>', text)
     text = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", text)

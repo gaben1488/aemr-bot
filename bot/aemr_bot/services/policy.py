@@ -1,4 +1,5 @@
-"""Cache the privacy-policy file token in settings so the upload runs once."""
+"""Кэшировать файловый токен политики конфиденциальности в settings,
+чтобы загрузка выполнялась один раз."""
 
 from __future__ import annotations
 

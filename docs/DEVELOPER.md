@@ -115,7 +115,7 @@ aemr-bot/
 ├─ seed/                   topics.json, contacts.json, transport_dispatchers.json,
 │                          welcome.md, consent.md, PRIVACY.pdf
 ├─ scripts/
-│  ├─ generate_privacy_pdf.py    повторная генерация PRIVACY.pdf из PRIVACY.md
+│  ├─ generate_privacy_pdf.py    повторная генерация PRIVACY.pdf из Политика.md
 │  └─ reset_test_data.sql        полная зачистка тестовых данных перед prod
 └─ docs/                   ADR-001, PRD-mvp, PRIVACY, SETUP, RUNBOOK, DEVELOPER, db-schema
 ```
@@ -132,7 +132,7 @@ aemr-bot/
 | Изменить лимиты или таймауты | `bot/aemr_bot/config.py` (с alias-ом для .env) и `infra/.env.example` |
 | Добавить новую таблицу или поле | `bot/aemr_bot/db/models.py` + миграция через Alembic |
 | Сменить версию зависимости | `bot/pyproject.toml` (compatible-release `~=`) |
-| Поменять политику конфиденциальности | `docs/PRIVACY.md` → `python scripts/generate_privacy_pdf.py` → закоммитить `docs/PRIVACY.pdf` |
+| Поменять политику конфиденциальности | `docs/Политика.md` → `python scripts/generate_privacy_pdf.py` → закоммитить `docs/PRIVACY.pdf` |
 
 ## Миграции базы данных
 
@@ -150,6 +150,220 @@ docker compose exec bot alembic downgrade -1
 ```
 
 После генерации **обязательно прочитайте файл миграции**. Автоматическая генерация иногда ошибается с типами JSONB и enum-полями. Файл попадает в `bot/aemr_bot/db/alembic/versions/`.
+
+## Работа с базой данных
+
+Здесь собрано всё, что чаще всего нужно при отладке, локальном тестировании и эксплуатации БД. Краткие ответы на типовые «как сделать» и «что делать, если». Полная шпаргалка эксплуатационных команд — в [COMMANDS.md](COMMANDS.md). Здесь — взгляд разработчика.
+
+### Подключение к живой БД
+
+```bash
+# Открыть psql внутри контейнера db. Удобно для разовых запросов.
+docker compose exec db psql -U aemr -d aemr
+
+# Один SQL без захода в интерактивный режим.
+docker compose exec db psql -U aemr -d aemr -c "SELECT count(*) FROM appeals;"
+
+# Подключиться с хоста через DBeaver / IntelliJ Database Tools.
+# Сначала выпустить порт наружу, поправив docker-compose.yml:
+#   db:
+#     ports: ["127.0.0.1:5432:5432"]
+# Хост: 127.0.0.1, порт 5432, БД aemr, пользователь aemr, пароль из .env.
+# В прод не публикуем — только на dev-стенде.
+```
+
+### Состояние схемы
+
+```bash
+# Текущая версия миграции
+docker compose exec bot alembic current
+# Ожидание: 0005 или новее
+
+# История ревизий
+docker compose exec bot alembic history --verbose
+
+# Список таблиц
+docker compose exec db psql -U aemr -d aemr -c "\dt"
+
+# Описание конкретной таблицы (колонки, типы, индексы)
+docker compose exec db psql -U aemr -d aemr -c "\d+ appeals"
+
+# Все индексы
+docker compose exec db psql -U aemr -d aemr -c "\di"
+
+# Текущий пользователь, БД, версия Postgres
+docker compose exec db psql -U aemr -d aemr -c "SELECT current_user, current_database(), version();"
+```
+
+### Очистка тестовых данных
+
+В репозитории лежит готовый скрипт `scripts/reset_test_data.sql`. Он удаляет обращения, сообщения, события, рассылки, журнал действий и пользователей-жителей. Сохраняет только `operators`, `settings` и схему. Подходит на тестовом стенде между прогонами smoke-тестов.
+
+```bash
+# Запуск с хоста (Linux/macOS)
+cat scripts/reset_test_data.sql | docker compose exec -T db psql -U aemr -d aemr
+
+# То же из PowerShell
+Get-Content scripts/reset_test_data.sql | docker compose exec -T db psql -U aemr -d aemr
+```
+
+**Не запускайте в production.** В скрипте нет защиты «вы уверены». Выполнили — удалили реальные обращения.
+
+Если нужна жёсткая очистка только одной таблицы (например, после стресс-теста рассылки):
+
+```bash
+docker compose exec db psql -U aemr -d aemr -c "TRUNCATE broadcast_deliveries, broadcasts CASCADE;"
+docker compose exec db psql -U aemr -d aemr -c "TRUNCATE events;"
+```
+
+`TRUNCATE` быстрее, чем `DELETE`. Сбрасывает счётчик `id`. Уважает CASCADE.
+
+### Полное пересоздание базы (когда совсем сломалось)
+
+```bash
+cd ~/aemr-bot/infra
+docker compose down -v   # ключ -v снесёт volume db_data вместе с контейнером
+docker compose up -d --build
+# Контейнер db инициализируется заново. Alembic в стартовой команде бота
+# прогонит все миграции с нуля и создаст пустую схему.
+```
+
+Это эквивалент «удалить и поставить заново». Полезно, когда:
+- состояние схемы не совпадает с миграциями (откатывали миграцию вручную, что-то сломалось);
+- нужна гарантированно чистая БД для воспроизведения бага;
+- сменили `POSTGRES_PASSWORD` после первого старта (см. [COMMANDS.md §10а](COMMANDS.md)).
+
+**Все данные пропадут.** На production делайте только после успешного бэкапа.
+
+### Просмотр содержимого таблиц
+
+```sql
+-- Все жители за последние сутки
+SELECT id, max_user_id, first_name, phone, dialog_state, created_at
+FROM users
+WHERE created_at > now() - interval '1 day'
+ORDER BY id DESC;
+
+-- Открытые обращения
+SELECT id, user_id, status, locality, address, topic, created_at
+FROM appeals
+WHERE status IN ('new', 'in_progress')
+ORDER BY created_at;
+
+-- Сообщения по конкретному обращению
+SELECT direction, text, created_at
+FROM messages
+WHERE appeal_id = 42
+ORDER BY created_at;
+
+-- Последние 50 действий операторов
+SELECT created_at, operator_max_user_id, action, target, details
+FROM audit_log
+ORDER BY id DESC LIMIT 50;
+
+-- Счётчики по статусам обращений
+SELECT status, count(*) FROM appeals GROUP BY status;
+
+-- Топ-5 жителей по числу обращений
+SELECT u.max_user_id, u.first_name, count(a.id) AS appeals
+FROM users u JOIN appeals a ON a.user_id = u.id
+GROUP BY u.id ORDER BY appeals DESC LIMIT 5;
+
+-- Подписчики рассылки
+SELECT count(*) FROM users
+WHERE subscribed_broadcast = true AND is_blocked = false;
+```
+
+### Точечные правки данных
+
+Иногда без ручного UPDATE не обойтись. Все примеры — через `docker compose exec db psql`.
+
+```sql
+-- Сменить роль оператора (бот эту операцию не умеет — защита от
+-- самоповышения, см. handlers/admin_commands.py::cmd_add_operators).
+UPDATE operators SET role='it' WHERE max_user_id=165729385;
+
+-- Деактивировать оператора (мягкое удаление).
+UPDATE operators SET is_active=false WHERE max_user_id=165729385;
+
+-- Принудительно закрыть зависшее обращение.
+UPDATE appeals SET status='closed', closed_at=now() WHERE id=42;
+
+-- Отвязать обращение от оператора (при увольнении).
+UPDATE appeals SET assigned_operator_id=NULL WHERE assigned_operator_id=<op_id>;
+
+-- Сбросить состояние воронки у конкретного жителя
+-- (обычно срабатывает само при рестарте через recover_stuck_funnels).
+UPDATE users SET dialog_state='idle', dialog_data='{}'::jsonb
+WHERE max_user_id=165729385;
+
+-- Снять флаг is_blocked, если поставили по ошибке.
+UPDATE users SET is_blocked=false WHERE max_user_id=165729385;
+```
+
+После любой ручной правки таблицы `users.dialog_data` или `appeals.attachments` (это JSONB-поля) убедитесь, что данные валидны — приложение читает их через Pydantic-модели и упадёт на битом JSON.
+
+### Частые проблемы и как их чинить
+
+**`InvalidPasswordError: password authentication failed for user "aemr"`.** Подробный разбор и два варианта починки — в [COMMANDS.md §10а](COMMANDS.md). Кратко: при первом запуске `POSTGRES_PASSWORD` записывается в данные тома и больше не перечитывается. После ротации пароля либо снести том (`docker compose down -v`), либо сделать `ALTER USER` в живой БД.
+
+**`alembic.util.exc.CommandError: Can't locate revision identified by '0005'`.** Файл миграции есть, а ревизия не найдена. Скорее всего, приложили миграцию из ветки, которая ещё не была вмержена. Откат: переключиться на нужную ветку и сделать `alembic upgrade head`.
+
+**`sqlalchemy.exc.OperationalError: ... ssl negotiation packet`.** Бот пытается подключиться к Postgres до того, как контейнер `db` стал готов. В compose это закрывается параметром `depends_on.condition: service_healthy`. Если ошибка повторяется, проверьте здоровье `db`: `docker compose ps`. У сервиса должен быть статус `healthy`. Если нет — `docker compose logs --tail=100 db`.
+
+**`Table 'X' doesn't exist` или `column 'Y' does not exist`.** Не накатили миграцию. Запустите `docker compose exec bot alembic upgrade head` и проверьте `alembic current`.
+
+**Расхождение моделей и миграций.** Бывает после правки `models.py` без последующей `alembic revision --autogenerate`. Проверка:
+```bash
+docker compose exec bot alembic check
+# Если ругается «Target database is not up to date» — нужны новые миграции.
+```
+
+**Свет на рост `events`.** Таблица `events` пишется на каждый Update от MAX (защита от повторов). При высоком трафике может разрастись. Автоматическая чистка раз в сутки удаляет записи старше 30 дней (см. `services/cron.py::events_retention`). Если задача не отрабатывает, проверьте логи: `docker compose logs bot | grep events`.
+
+**Долгий запрос в Postgres подвисает.** Найти и прервать:
+```sql
+SELECT pid, now()-query_start AS dur, left(query,120)
+FROM pg_stat_activity
+WHERE state='active' AND now()-query_start > interval '30 seconds';
+
+-- Прервать запрос
+SELECT pg_cancel_backend(<pid>);
+-- Если не помогло — жёстко
+SELECT pg_terminate_backend(<pid>);
+```
+
+**Раздутие таблицы (bloat).** Запустите принудительную очистку:
+```sql
+VACUUM (ANALYZE, VERBOSE) events;
+VACUUM (ANALYZE, VERBOSE) broadcast_deliveries;
+```
+
+**JSONB не индексируется.** В коде по полям `users.dialog_data`, `appeals.attachments`, `audit_log.details` мы не ищем — только читаем по PK/FK. GIN-индексы не нужны. Если добавляете запрос `WHERE attachments @> '...'`, сначала добавьте индекс отдельной миграцией.
+
+**`ix_users_phone_normalized` не используется.** После миграции `0003` поиск по телефону идёт по этому индексу. Если `find_by_phone` всё ещё медленный, проверьте, что `phone_normalized` заполняется. Все вставки и обновления `phone` должны идти через `services/users.set_phone` — он синхронно обновляет нормализованное поле. Прямой `UPDATE users SET phone=...` в обход сервисного слоя ломает инвариант.
+
+### Смена пароля БД (ротация на живой системе)
+
+Полная процедура — в [COMMANDS.md §10а](COMMANDS.md). Если коротко:
+
+```bash
+# 1. На живой БД сменить пароль на новый.
+docker compose exec db psql -U aemr -c "ALTER USER aemr WITH PASSWORD '<новый>';"
+# 2. Подставить новое значение в .env (одинаково в POSTGRES_PASSWORD и в DATABASE_URL).
+# 3. docker compose up -d --force-recreate bot
+```
+
+### Резервное копирование и восстановление
+
+Полностью описано в [COMMANDS.md §5–§6](COMMANDS.md) и в [RUNBOOK.md §7](RUNBOOK.md). Тут — короткий ориентир для разработчика:
+
+- Бэкапы лежат в named-volume `infra_backups`, путь внутри контейнера — `/backups/`.
+- Имя файла: `aemr-YYYYMMDD_HHMMSS.sql.gpg` если задан `BACKUP_GPG_PASSPHRASE`, иначе `.sql`.
+- Снять бэкап вручную: `/backup` в админ-группе MAX (доступно роли `it`).
+- Восстановить — `gpg --decrypt ... | psql -U aemr -d aemr`.
+
+При разработке миграций **всегда** прогоняйте проверочное восстановление на тестовом стенде до коммита: «миграция, которую не пробовали откатывать, может однажды не откатиться».
 
 ## Тесты
 
@@ -261,4 +475,4 @@ pytest tests/ -v
 - `docs/RUNBOOK.md` — операционная инструкция координатору и ИТ.
 - `docs/architecture-diagrams.md` — BPMN, flowchart, sequence-диаграммы.
 - `docs/db-schema.md` — схема базы и инварианты.
-- `docs/PRIVACY.md` — текст политики ПДн.
+- `docs/Политика.md` — текст политики ПДн.

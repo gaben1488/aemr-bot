@@ -25,13 +25,14 @@ register_handlers(dp)
 
 
 def _install_polling_timeout(bot: Bot, timeout: int) -> None:
-    """Pin the long-poll timeout used by Dispatcher.start_polling.
+    """Зафиксировать таймаут long-poll, который использует Dispatcher.start_polling.
 
-    maxapi calls bot.get_updates(marker=...) without timeout, falling back to
-    the server default. We override the bound method on this instance so every
-    GetUpdates request carries our timeout — which controls how long MAX holds
-    the request when there are no events. Tuning this trades empty-round-trip
-    rate against rate-limit headroom; see settings.polling_timeout_seconds.
+    maxapi вызывает bot.get_updates(marker=...) без таймаута и откатывается
+    на серверный по умолчанию. Мы переопределяем метод на этом экземпляре,
+    чтобы каждый запрос GetUpdates нёс наш таймаут. Он управляет тем, как
+    долго MAX держит запрос при отсутствии событий. Настройка торгует
+    частотой пустых обращений против запаса по rate-limit. См.
+    settings.polling_timeout_seconds.
     """
     original = bot.get_updates
 
@@ -77,10 +78,10 @@ def _build_admin_senders(bot: Bot):
     return send_admin_text, send_admin_document
 
 
-# Webhook handler — registered at module load so dp.init_serve() picks it up.
-# Per Макс.docx section 12 (Quick Start Python webhook):
+# Обработчик webhook'а регистрируется при загрузке модуля, чтобы dp.init_serve() его подхватил.
+# По Макс.docx раздел 12 (Quick Start Python webhook):
 #   from maxapi.methods.types.getted_updates import process_update_webhook
-#   @dp.webhook_post('/...') → returns 2xx, then dp.handle(event) processes it.
+#   @dp.webhook_post('/...') → возвращает 2xx, затем dp.handle(event) обрабатывает событие.
 if settings.bot_mode == "webhook":
     from fastapi import Request
     from fastapi.responses import JSONResponse
@@ -121,7 +122,7 @@ async def main() -> None:
 
     await _seed_settings()
 
-    # Cold-start the first IT operator from env if none exists yet.
+    # На холодном старте создаём первого ИТ-оператора из env, если ни одного ещё нет.
     if settings.bootstrap_it_max_user_id is not None:
         try:
             async with session_scope() as session:
@@ -140,14 +141,14 @@ async def main() -> None:
         except Exception:
             log.exception("bootstrap_it_from_env failed")
 
-    # Upload privacy PDF once on startup; ignore failures so the bot still starts.
+    # Один раз на старте загружаем PDF с политикой приватности; ошибки игнорируем, чтобы бот всё равно поднялся.
     try:
         await policy_service.ensure_uploaded(bot)
     except Exception:
         log.exception("policy upload failed; will fall back to URL consent")
 
-    # Reap any broadcast left in SENDING by the previous process. Without
-    # this they would sit as SENDING forever — see services/broadcasts.py.
+    # Подбираем рассылки, которые предыдущий процесс оставил в SENDING.
+    # Без этого они бы навсегда висели в SENDING. См. services/broadcasts.py.
     try:
         async with session_scope() as session:
             reaped = await broadcasts_service.reap_orphaned_sending(session)
@@ -159,7 +160,7 @@ async def main() -> None:
     except Exception:
         log.exception("reap_orphaned_sending failed")
 
-    # Recovery shouldn't block dispatcher startup — fire-and-forget.
+    # Восстановление не должно блокировать старт диспетчера — запускаем и забываем.
     async def _recover():
         try:
             await recover_stuck_funnels(bot)
@@ -168,8 +169,8 @@ async def main() -> None:
 
     asyncio.create_task(_recover())
 
-    # /healthz: always on. Webhook mode also serves it from FastAPI, but in
-    # polling mode this is the only endpoint, so we can't skip it.
+    # /healthz: всегда поднят. В режиме webhook его раздаёт FastAPI, но в
+    # режиме polling это единственная точка входа, поэтому пропустить нельзя.
     health_runner = None
     if settings.bot_mode == "polling":
         health_runner = await health.start(

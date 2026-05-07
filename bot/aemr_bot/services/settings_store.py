@@ -46,8 +46,9 @@ DEFAULTS: dict[str, Any] = {
     ],
 }
 
-# Whitelist of editable keys with their accepted Python types and any extra rules.
-# /setting <key> <value> rejects anything outside this map.
+# Белый список ключей, которые можно править, с допустимыми Python-типами и
+# дополнительными правилами. /setting <key> <value> отклоняет всё, чего нет в
+# этой карте.
 SCHEMA: dict[str, dict] = {
     "welcome_text": {"type": str, "min_len": 1, "max_len": 4000},
     "consent_text": {"type": str, "min_len": 1, "max_len": 4000},
@@ -68,7 +69,7 @@ SCHEMA: dict[str, dict] = {
 
 
 def validate(key: str, value: Any) -> tuple[bool, str]:
-    """Return (ok, message). Message is the reason on failure or 'ok' on success."""
+    """Возвращает (ok, message). В сообщении — причина при ошибке или 'ok' при успехе."""
     if key not in SCHEMA:
         return False, f"Unknown key '{key}'. Allowed: {sorted(SCHEMA)}"
     rule = SCHEMA[key]
@@ -133,7 +134,7 @@ def _read_seed_text(name: str) -> str | None:
 
 
 async def seed_if_empty(session: AsyncSession) -> None:
-    """Populate settings from /seed only when key is missing."""
+    """Заполнить настройки из /seed только для отсутствующих ключей."""
     existing = set(await session.scalars(select(Setting.key)))
 
     seed_pairs: dict[str, Any] = {}

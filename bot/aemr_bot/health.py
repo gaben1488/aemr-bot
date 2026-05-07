@@ -1,15 +1,15 @@
-"""Tiny aiohttp /healthz server. Always running, regardless of bot mode.
+"""Маленький aiohttp-сервер /healthz. Работает всегда, независимо от режима бота.
 
-Uses a single global Heartbeat instance updated from the polling/dispatcher
-loops. /healthz returns 200 if the heartbeat is fresh (less than
-``HEALTHCHECK_STALE_SECONDS`` ago) AND the DB pings, 503 otherwise.
+Использует один глобальный экземпляр Heartbeat, обновляемый из циклов
+polling/диспетчера. /healthz возвращает 200, если пульс свежий (моложе
+``HEALTHCHECK_STALE_SECONDS`` секунд) И база отвечает на ping, иначе 503.
 
-In self-host long-polling mode the bot has no public inbound port —
-/healthz is bound to 127.0.0.1 and consumed by the compose healthcheck
-block plus the internal ``selfcheck`` cron job. No external pinger
-(UptimeRobot/Healthchecks.io etc.) is in the loop; an internal
-health-collector inside the customer's network can opt in via the
-outbound HEALTHCHECK_URL pulse.
+В режиме self-host с long-polling у бота нет публично доступного входящего
+порта: /healthz слушает на 127.0.0.1 и используется блоком healthcheck в
+docker-compose плюс внутренней cron-задачей ``selfcheck``. Внешние
+пингеры (UptimeRobot, Healthchecks.io и т. п.) не задействованы; внутренний
+сборщик здоровья из сети заказчика может подключиться через исходящий
+импульс на HEALTHCHECK_URL.
 """
 
 from __future__ import annotations
@@ -45,12 +45,12 @@ heartbeat = Heartbeat()
 
 
 async def _ping_db() -> bool:
-    """SELECT 1 against the live engine. Returns False on any failure.
+    """SELECT 1 на живом движке. Возвращает False при любой ошибке.
 
-    A bot with a frozen DB connection can keep its asyncio event-loop
-    spinning (and the heartbeat green) while every operation that
-    actually touches data hangs. Without this ping, /healthz is a
-    half-truth — it would return OK while citizens see no responses.
+    Бот с зависшим соединением к БД может крутить asyncio-цикл (и пульс
+    останется зелёным), пока каждая операция, которая реально лезет в
+    данные, виснет. Без этого ping'а /healthz отдавал бы половину правды:
+    OK, при этом жители не видят ответов.
     """
     from sqlalchemy import text
 
@@ -65,10 +65,11 @@ async def _ping_db() -> bool:
         return False
 
 
-# Cache the DB-ping result for a short window so that a busy chain of
-# probes (compose healthcheck every 30s plus any internal pinger the
-# admin wires up) doesn't multiply into a flurry of trivial SELECTs
-# that compete with real handlers for the small connection pool.
+# Кэшируем результат ping'а БД на короткий интервал, чтобы плотная серия
+# проверок (healthcheck в compose каждые 30 секунд плюс любой внутренний
+# пингер, который подключит админ) не превращалась в шквал тривиальных
+# SELECT'ов, конкурирующих с настоящими обработчиками за маленький пул
+# соединений.
 _DB_PING_CACHE_TTL = 10.0
 _db_ping_cache: dict[str, float | bool] = {"value": False, "checked_at": 0.0}
 
@@ -98,8 +99,8 @@ async def _healthz(request: web.Request) -> web.Response:
     return web.json_response(payload, status=200 if ok else 503)
 
 
-async def start(host: str = "0.0.0.0", port: int = 8080) -> web.AppRunner:  # nosec B104 — bind inside container, expose via Nginx
-    """Start /healthz on (host, port). Returns AppRunner so the caller can stop it."""
+async def start(host: str = "0.0.0.0", port: int = 8080) -> web.AppRunner:  # nosec B104 — слушаем внутри контейнера, наружу выставляет Nginx
+    """Запустить /healthz на (host, port). Возвращает AppRunner, чтобы вызывающий мог его остановить."""
     app = web.Application()
     app.router.add_get("/healthz", _healthz)
     runner = web.AppRunner(app)
@@ -111,12 +112,12 @@ async def start(host: str = "0.0.0.0", port: int = 8080) -> web.AppRunner:  # no
 
 
 async def heartbeat_pulse(interval: float | None = None):
-    """Background task: keep the heartbeat fresh while the bot's polling loop is alive.
+    """Фоновая задача: держит пульс свежим, пока жив polling-цикл бота.
 
-    Call this once at startup. It coexists with whatever main loop the bot
-    uses — its job is solely to update the timestamp from the asyncio loop
-    that owns the dispatcher, so /healthz stays green as long as that loop
-    is responsive.
+    Вызвать один раз на старте. Сосуществует с любым основным циклом
+    бота. Её работа — только обновлять таймстемп из того же asyncio-цикла,
+    которому принадлежит диспетчер, чтобы /healthz оставался зелёным,
+    пока этот цикл откликается.
     """
     if interval is None:
         interval = cfg.healthcheck_pulse_seconds

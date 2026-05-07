@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     bot_mode: Literal["polling", "webhook"] = Field("polling", alias="BOT_MODE")
     webhook_url: str | None = Field(None, alias="WEBHOOK_URL")
     webhook_secret: str | None = Field(None, alias="WEBHOOK_SECRET")
-    webhook_host: str = Field("0.0.0.0", alias="WEBHOOK_HOST")  # nosec B104 — bind inside container, Nginx fronts the public port
+    webhook_host: str = Field("0.0.0.0", alias="WEBHOOK_HOST")  # nosec B104 — слушаем внутри контейнера, наружу выставляет Nginx
     webhook_port: int = Field(8080, alias="WEBHOOK_PORT")
 
     database_url: str = Field(..., alias="DATABASE_URL")
@@ -39,12 +39,13 @@ class Settings(BaseSettings):
     answer_max_chars: int = Field(300, alias="ANSWER_MAX_CHARS")
     name_max_chars: int = Field(120, alias="NAME_MAX_CHARS")
     address_max_chars: int = Field(500, alias="ADDRESS_MAX_CHARS")
-    # Per-appeal hard caps. summary 2000 leaves headroom inside the 4000-char
-    # admin card; 20 attachments is generous for a single citizen complaint.
+    # Жёсткие ограничения на одно обращение. summary 2000 оставляет запас
+    # внутри 4000-символьной карточки в админке; 20 вложений — с запасом
+    # для одного обращения от жителя.
     summary_max_chars: int = Field(2000, alias="SUMMARY_MAX_CHARS")
     attachments_max_per_appeal: int = Field(20, alias="ATTACHMENTS_MAX_PER_APPEAL")
-    # MAX server attachment-per-message limit isn't documented; chunk relay
-    # output to be safe.
+    # Лимит на число вложений в одном сообщении сервера MAX не задокументирован;
+    # на всякий случай режем пересылку на куски.
     attachments_per_relay_message: int = Field(10, alias="ATTACHMENTS_PER_RELAY_MESSAGE")
     recover_batch_size: int = Field(1000, alias="RECOVER_BATCH_SIZE")
 
@@ -52,9 +53,10 @@ class Settings(BaseSettings):
     healthcheck_pulse_seconds: int = Field(30, alias="HEALTHCHECK_PULSE_SECONDS")
     healthcheck_interval_minutes: int = Field(5, alias="HEALTHCHECK_INTERVAL_MIN")
 
-    # Long-polling timeout passed to MAX getUpdates. Higher = fewer empty
-    # round-trips when the bot is idle (better for the 2 RPS rate limit);
-    # lower = faster startup-shutdown reaction window. Server cap is 90s.
+    # Таймаут long-polling, передаваемый в MAX getUpdates. Больше — меньше
+    # пустых обращений к серверу, когда бот простаивает (лучше для лимита
+    # 2 RPS). Меньше — быстрее реагирует окно старта-остановки. Потолок
+    # сервера 90 секунд.
     polling_timeout_seconds: int = Field(30, alias="POLLING_TIMEOUT_SECONDS", ge=0, le=90)
 
     # Broadcast / subscription. Rate-limit стоит ниже MAX-лимита 2 RPS, чтобы
@@ -114,7 +116,7 @@ class Settings(BaseSettings):
     )
     @classmethod
     def _empty_str_to_none(cls, v):
-        # Treat empty string and stray inline comments from .env as None for optional fields.
+        # Для необязательных полей пустую строку и случайные inline-комментарии из .env считаем None.
         if isinstance(v, str):
             stripped = v.strip()
             if not stripped or stripped.startswith("#"):

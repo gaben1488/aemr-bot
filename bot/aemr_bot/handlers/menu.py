@@ -104,7 +104,7 @@ async def toggle_subscription(event, max_user_id: int) -> None:
 
 
 async def handle_broadcast_unsubscribe(event, max_user_id: int) -> None:
-    """One-tap unsubscribe via the button under each broadcast message."""
+    """Отписка в одно нажатие через кнопку под каждым сообщением рассылки."""
     async with session_scope() as session:
         already = await broadcasts_service.is_subscribed(session, max_user_id)
         if already:
@@ -130,8 +130,9 @@ async def open_emergency(event):
     if not contacts:
         body = "Список контактов скоро появится."
     else:
-        # Group by 'section' if present; ungrouped items fall under «Прочее»
-        # so legacy seed-data without sections keeps rendering.
+        # Группируем по полю 'section', если оно есть; элементы без секции
+        # попадают в «Прочее», чтобы старые seed-данные без секций
+        # продолжали отображаться.
         grouped: dict[str, list[dict]] = {}
         order: list[str] = []
         for item in contacts:
@@ -173,7 +174,7 @@ async def open_dispatchers(event):
 
 
 async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
-    """Try to handle a menu/contacts/appeal-show callback. Return True if handled."""
+    """Пробует обработать нажатие меню, контактов или показа обращения. Возвращает True, если обработано."""
     if payload == "menu:main":
         await ack_callback(event)
         await open_main_menu(event)
@@ -242,5 +243,5 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
 
 
 def register(dp: Dispatcher) -> None:
-    """No-op: callback routing is owned by handlers/appeal.py."""
+    """Заглушка: маршрутизацией нажатий владеет handlers/appeal.py."""
     return None

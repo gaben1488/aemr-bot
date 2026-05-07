@@ -1,12 +1,12 @@
-"""Add users.phone_normalized + index, backfill existing rows.
+"""Добавление users.phone_normalized с индексом и заполнение по существующим строкам.
 
 Revision ID: 0003
 Revises: 0002
 Create Date: 2026-05-04
 
-A digits-only mirror of users.phone, kept in sync by the application
-layer (services/users.py::_normalize_phone). Backed by a btree index
-so /erase phone=... lookups don't full-scan users.
+Зеркало users.phone из одних цифр. Поддерживается прикладным слоем
+(services/users.py::_normalize_phone). Поверх лежит btree-индекс, чтобы
+поиск /erase phone=... не делал полный скан users.
 """
 from typing import Sequence, Union
 
@@ -30,8 +30,8 @@ def upgrade() -> None:
         ["phone_normalized"],
     )
 
-    # Backfill: digits-only with leading 7/8 stripped from 11-digit
-    # numbers. Mirrors services/users.py::_normalize_phone exactly.
+    # Заполнение: оставляем только цифры, у 11-значных номеров отрезаем ведущие 7 или 8.
+    # В точности повторяет services/users.py::_normalize_phone.
     op.execute(
         """
         UPDATE users

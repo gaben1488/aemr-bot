@@ -61,11 +61,13 @@ async def bootstrap_it_from_env(
     max_user_id: int,
     full_name: str,
 ) -> bool:
-    """Cold-start the first IT operator from env, if no IT exists yet.
+    """Холодный старт первого IT-оператора из переменной окружения,
+    если активного IT ещё нет.
 
-    Idempotent: returns True if a row was inserted/updated, False if an
-    active IT was already present (no-op). Lets `BOOTSTRAP_IT_MAX_USER_ID`
-    replace the manual psql INSERT step from RUNBOOK §6.1.
+    Идемпотентно: возвращает True, если запись была вставлена или
+    обновлена, и False, если активный IT уже существует (тогда ничего
+    не делает). Позволяет `BOOTSTRAP_IT_MAX_USER_ID` заменить ручной
+    шаг INSERT через psql из RUNBOOK §6.1.
     """
     if await has_any_it(session):
         return False

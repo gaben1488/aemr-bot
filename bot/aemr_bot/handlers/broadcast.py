@@ -1,18 +1,18 @@
-"""Broadcast wizard and dispatch loop.
+"""Мастер рассылок и цикл их отправки.
 
-Operator workflow in the admin chat:
+Сценарий оператора в админ-чате:
 
-  1. /broadcast               → bot prompts for the text
-  2. operator types text      → bot shows preview with subscriber count
-  3. operator clicks ✅       → bot starts a background send task
-  4. background task          → ships the broadcast at 1 msg/sec, edits a
-                                 progress message in the admin group every
-                                 BROADCAST_PROGRESS_UPDATE_SEC seconds
-  5. anyone clicks ⛔ stop    → status flips to cancelled, loop exits
+  1. /broadcast               → бот просит ввести текст.
+  2. оператор вводит текст    → бот показывает предпросмотр с числом подписчиков.
+  3. оператор жмёт ✅          → бот запускает фоновую задачу отправки.
+  4. фоновая задача           → шлёт рассылку со скоростью 1 сообщение в секунду,
+                                 редактирует сообщение прогресса в админ-группе
+                                 раз в BROADCAST_PROGRESS_UPDATE_SEC секунд.
+  5. любой жмёт ⛔ stop       → статус переключается в cancelled, цикл выходит.
 
-Wizard state (steps 1-3) lives in process memory only — operators are not
-in the `users` table, and a half-finished wizard is cheap to redo. State is
-auto-evicted after BROADCAST_WIZARD_TTL_SEC.
+Состояние мастера (шаги 1–3) живёт только в памяти процесса. Операторов нет
+в таблице `users`, а недозаполненный мастер дёшево пройти заново. Состояние
+вытесняется автоматически по истечении BROADCAST_WIZARD_TTL_SEC.
 """
 
 from __future__ import annotations
@@ -66,20 +66,20 @@ class _WizardState:
         self.expires_at = time.monotonic() + cfg.broadcast_wizard_ttl_sec
 
 
-# Per-operator wizard state. Single-instance only — multi-replica deployment
-# would need Redis or pg_advisory_lock-backed state.
+# Состояние мастера для каждого оператора. Только для одного экземпляра приложения.
+# При горизонтальном масштабировании потребуется хранение в Redis или через pg_advisory_lock.
 _wizards: dict[int, _WizardState] = {}
 
 
-# Use shared auth helpers via short module-private aliases. Keep names with
-# leading underscore to flag this is operator-side machinery, not citizen.
+# Локальные псевдонимы общих хелперов авторизации. Подчёркивание в начале имени
+# подчёркивает, что это служебные средства для админ-стороны, не для жителя.
 _is_admin_chat = is_admin_chat
 _get_operator = get_operator
 _ensure_role = ensure_role
 
 
 def _drop_expired_wizards() -> None:
-    """Sweep stale wizards. Called opportunistically on each new wizard event."""
+    """Чистит просроченные мастера. Вызывается попутно при каждом новом событии мастера."""
     stale = [uid for uid, st in _wizards.items() if st.expired()]
     for uid in stale:
         _wizards.pop(uid, None)
@@ -111,8 +111,8 @@ async def _start_wizard(event) -> None:
 
 
 async def _handle_wizard_text(event, text_body: str) -> bool:
-    """Called from the global on_message router when the author has an active
-    awaiting_text wizard. Returns True if the message was consumed."""
+    """Вызывается из глобального обработчика on_message, когда у автора активен
+    мастер в шаге awaiting_text. Возвращает True, если сообщение поглощено."""
     actor_id = get_user_id(event)
     if actor_id is None:
         return False
@@ -143,7 +143,7 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         )
         return True
     if not text:
-        # Empty — re-prompt without changing state.
+        # Пусто. Просим ввести ещё раз, состояние не меняем.
         await event.message.answer(
             texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars)
         )
@@ -198,9 +198,9 @@ async def _handle_confirm(event) -> None:
             operator_max_user_id=actor_id,
             action="broadcast_send",
             target=f"broadcast #{broadcast.id}",
-            # Don't duplicate the full text into audit_log — it already lives
-            # in broadcasts.text. Keep only metadata so audit_log stays light
-            # and doesn't become a second copy of broadcast bodies.
+            # Не дублируем полный текст в audit_log: он уже хранится в broadcasts.text.
+            # Оставляем только метаданные, чтобы audit_log оставался лёгким и не
+            # превращался во второе хранилище тел рассылок.
             details={"chars": len(state.text), "subscriber_count": count},
         )
         broadcast_id = broadcast.id
@@ -224,7 +224,7 @@ async def _handle_abort(event) -> None:
 
 
 async def _handle_stop(event, broadcast_id: int) -> None:
-    """Anyone in the admin group can stop a running broadcast."""
+    """Любой участник админ-группы может остановить идущую рассылку."""
     if not _is_admin_chat(event):
         await ack_callback(event)
         return
@@ -250,7 +250,7 @@ def _format_progress(
 
 
 async def _send_one(bot, max_user_id: int, body_text: str) -> str | None:
-    """Returns None on success, error string on failure."""
+    """Возвращает None при успехе и строку с ошибкой при сбое."""
     try:
         await bot.send_message(
             user_id=max_user_id,
@@ -258,18 +258,17 @@ async def _send_one(bot, max_user_id: int, body_text: str) -> str | None:
             attachments=[keyboards.broadcast_unsubscribe_keyboard()],
         )
     except Exception as e:
-        # Truncate to keep error column bounded; full traceback lives in logs.
+        # Обрезаем, чтобы поле с ошибкой не разрасталось. Полный стек живёт в логах.
         return repr(e)[:500]
     return None
 
 
 async def _run_broadcast(bot, broadcast_id: int, text: str, total: int) -> None:
-    """Background task: ship a prepared broadcast to all eligible subscribers,
-    edit a progress message in the admin group, honor the cancel flag.
+    """Фоновая задача: отправляет подготовленную рассылку всем подходящим подписчикам,
+    редактирует сообщение прогресса в админ-группе, реагирует на флаг отмены.
 
-    All errors swallowed and logged — this runs from asyncio.create_task,
-    so an unhandled exception would otherwise be silent until garbage
-    collection.
+    Все ошибки гасятся и логируются. Задача запускается через asyncio.create_task,
+    поэтому необработанное исключение иначе осталось бы незамеченным до сборки мусора.
     """
     try:
         await _run_broadcast_impl(bot, broadcast_id, text, total)
@@ -278,7 +277,7 @@ async def _run_broadcast(bot, broadcast_id: int, text: str, total: int) -> None:
             "broadcast: _run_broadcast_impl crashed for broadcast_id=%s",
             broadcast_id,
         )
-        # Best-effort flip status to failed so /broadcast list shows it.
+        # По возможности переводим статус в failed, чтобы /broadcast list это показывал.
         try:
             async with session_scope() as session:
                 await broadcasts_service.mark_finished(
@@ -305,7 +304,7 @@ async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> 
         broadcast_id, total,
     )
 
-    # Start: post header in admin group, capture admin_message_id for edits.
+    # Старт: публикуем заголовок в админ-группе, запоминаем admin_message_id для правок.
     sent = None
     try:
         sent = await bot.send_message(
@@ -329,25 +328,25 @@ async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> 
         if cfg.broadcast_rate_limit_per_sec > 0
         else 1.0
     )
-    # Adaptive progress step. The configured BROADCAST_PROGRESS_UPDATE_SEC
-    # default (5) is right for a 50–200 recipient broadcast — operators
-    # see ~10 progress updates. On a tiny broadcast (5 recipients × 1
-    # sec) the bar would update once at the very end; on a very long
-    # one (1000 recipients) MAX rate-limits the edits. Tighten the step
-    # for short sends so the bar moves visibly.
+    # Адаптивный шаг прогресса. Значение BROADCAST_PROGRESS_UPDATE_SEC по
+    # умолчанию (5 сек) подходит для рассылки на 50–200 получателей: оператор
+    # видит около 10 обновлений. На совсем короткой рассылке (5 получателей × 1 сек)
+    # полоска обновилась бы один раз в самом конце; на очень длинной (1000 получателей)
+    # MAX начнёт ограничивать частоту правок. Для коротких отправок ужимаем шаг,
+    # чтобы прогресс двигался заметно.
     estimated_total_sec = max(1.0, total * rate_delay)
     progress_step_sec = min(cfg.broadcast_progress_update_sec, estimated_total_sec / 10)
     last_progress_at = time.monotonic()
     cancelled = False
 
-    # Snapshot the recipient list and close the session — holding a
-    # transaction for the whole send (one row per second × N) would block
-    # VACUUM and bloat WAL on a long broadcast. See list_subscriber_targets.
+    # Снимаем список получателей и закрываем сессию. Удержание одной транзакции
+    # на всю отправку (одна строка в секунду на N получателей) блокирует VACUUM
+    # и раздувает WAL при длинной рассылке. См. list_subscriber_targets.
     async with session_scope() as session:
         targets = await broadcasts_service.list_subscriber_targets(session)
 
     for user_db_id, user_max_user_id in targets:
-        # Re-check cancel flag in a fresh session — admin click flips it.
+        # Перепроверяем флаг отмены в свежей сессии: его переключает клик из админ-чата.
         async with session_scope() as flag_session:
             status = await broadcasts_service.get_status(
                 flag_session, broadcast_id
@@ -442,9 +441,8 @@ async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> 
                 broadcast_id,
             )
 
-    # Fallback: edit_message failed or there was no admin_mid to edit. Post
-    # the final summary as a fresh message so the operator still sees the
-    # outcome.
+    # Запасной путь: edit_message не сработал, либо admin_mid не было. Публикуем
+    # итог отдельным сообщением, чтобы оператор всё равно увидел результат.
     try:
         await bot.send_message(chat_id=cfg.admin_group_id, text=final_text)
     except Exception:
@@ -483,12 +481,12 @@ async def _list_broadcasts(event) -> None:
 
 
 def register(dp: Dispatcher) -> None:
-    """Register only `/broadcast` here. Wizard callbacks (confirm/abort/stop)
-    are routed from `handlers.appeal.on_callback` via delegation, and the
-    citizen-side `broadcast:unsubscribe` is handled by `handlers.menu`. We
-    deliberately don't add a second `@dp.message_callback()` to avoid
-    double-dispatch: maxapi runs every registered handler for each event,
-    and a second one would duplicate every ack."""
+    """Регистрируем только `/broadcast`. Коллбэки мастера (confirm/abort/stop)
+    маршрутизируются из `handlers.appeal.on_callback` делегированием, а кнопка
+    жителя `broadcast:unsubscribe` обрабатывается в `handlers.menu`. Второй
+    `@dp.message_callback()` намеренно не добавляем, чтобы избежать двойной
+    диспетчеризации: maxapi вызывает каждый зарегистрированный обработчик для
+    каждого события, и второй такой обработчик дублировал бы каждый ack."""
 
     @dp.message_created(Command("broadcast"))
     async def cmd_broadcast(event: MessageCreated):

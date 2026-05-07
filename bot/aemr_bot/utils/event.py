@@ -1,20 +1,21 @@
-"""Adapter over maxapi event objects.
+"""Адаптер поверх объектов событий maxapi.
 
-Verified against love-apples/maxapi sources (maxapi/types/updates/*):
-* MessageCreated has event.message (Message); event.get_ids() -> (chat_id, user_id).
-* MessageCallback has event.callback (with .user, .payload, .callback_id) and
-  optional event.message; event.get_ids() returns chat_id from message.recipient
-  if message is present, else None.
-* BotStarted has event.chat_id and event.user directly; event.get_ids() works.
+Сверено с исходниками love-apples/maxapi (maxapi/types/updates/*):
+* MessageCreated имеет event.message (Message); event.get_ids() -> (chat_id, user_id).
+* MessageCallback имеет event.callback (с .user, .payload, .callback_id) и
+  опциональный event.message; event.get_ids() возвращает chat_id из
+  message.recipient, если есть message, иначе None.
+* BotStarted имеет event.chat_id и event.user напрямую; event.get_ids() работает.
 
-Always prefer event.get_ids() when both ids are needed; the helpers below do that.
+Когда нужны оба id, всегда предпочитайте event.get_ids(); вспомогательные
+функции ниже именно так и делают.
 """
 
 from typing import Any
 
 
 def get_ids(event: Any) -> tuple[int | None, int | None]:
-    """Return (chat_id, user_id) regardless of event type."""
+    """Вернуть (chat_id, user_id) независимо от типа события."""
     fn = getattr(event, "get_ids", None)
     if callable(fn):
         try:
@@ -23,7 +24,7 @@ def get_ids(event: Any) -> tuple[int | None, int | None]:
         except Exception:
             pass
 
-    # Fallbacks for unknown event shapes
+    # Запасные варианты для неизвестных форм события
     chat_id = getattr(event, "chat_id", None)
     user_id = None
 
@@ -124,7 +125,7 @@ def get_message_link(event: Any):
 
 
 def get_message_body(event: Any):
-    """Return the MessageBody (with .text/.attachments/.link), or None."""
+    """Вернуть MessageBody (с .text/.attachments/.link) либо None."""
     msg = getattr(event, "message", None)
     if msg is None:
         return None
@@ -132,21 +133,21 @@ def get_message_body(event: Any):
 
 
 def extract_message_id(sent: Any) -> str | None:
-    """Pull a message_id from anything maxapi might hand back.
+    """Вытащить message_id из чего угодно, что может вернуть maxapi.
 
-    Verified shapes (in order of likelihood given current maxapi):
-    * `SendedMessage` from bot.send_message — has `.message: Message`,
-      where `Message.body: MessageBody` and `MessageBody.mid: str`.
-    * Bare `Message` — has `.body.mid` directly.
-    * `EditedMessage` and other wrappers — usually mirror SendedMessage.
+    Подтверждённые формы (в порядке вероятности для текущего maxapi):
+    * `SendedMessage` из bot.send_message — имеет `.message: Message`,
+      где `Message.body: MessageBody` и `MessageBody.mid: str`.
+    * Голый `Message` — имеет `.body.mid` напрямую.
+    * `EditedMessage` и прочие обёртки — повторяют форму SendedMessage.
 
-    We also keep the legacy `.message_id` / direct `.body.mid` fallbacks
-    so older revisions of maxapi still parse correctly.
+    Также оставляем запасные пути через `.message_id` и прямой `.body.mid`,
+    чтобы старые версии maxapi тоже разбирались корректно.
     """
     if sent is None:
         return None
 
-    # SendedMessage / EditedMessage wrapper.
+    # Обёртка SendedMessage / EditedMessage.
     inner = getattr(sent, "message", None)
     if inner is not None:
         body = getattr(inner, "body", None)
@@ -155,14 +156,14 @@ def extract_message_id(sent: Any) -> str | None:
             if mid is not None:
                 return str(mid)
 
-    # Bare Message.
+    # Голый Message.
     body = getattr(sent, "body", None)
     if body is not None:
         mid = getattr(body, "mid", None)
         if mid is not None:
             return str(mid)
 
-    # Legacy: object with `.message_id` directly.
+    # Унаследованный путь: объект с `.message_id` напрямую.
     mid = getattr(sent, "message_id", None)
     if mid is not None:
         return str(mid)
@@ -181,10 +182,11 @@ def get_message_attachments(event: Any) -> list:
 
 
 async def send(event: Any, text: str, attachments: list | None = None):
-    """Send a message in response to any event type.
+    """Отправить сообщение в ответ на событие любого типа.
 
-    Routes through event.bot.send_message with whichever id is available.
-    Prefers chat_id (works for groups and dialogs), falls back to user_id.
+    Маршрутизирует через event.bot.send_message с тем id, который
+    доступен. Предпочитает chat_id (работает и для групп, и для
+    диалогов), при его отсутствии откатывается к user_id.
     """
     bot = getattr(event, "bot", None)
     if bot is None:
@@ -200,7 +202,7 @@ async def send(event: Any, text: str, attachments: list | None = None):
 
 async def send_to(event: Any, *, chat_id: int | None = None, user_id: int | None = None,
                   text: str = "", attachments: list | None = None):
-    """Send a message to an explicit target via event.bot."""
+    """Отправить сообщение явно указанному адресату через event.bot."""
     bot = getattr(event, "bot", None)
     if bot is None:
         return None
@@ -213,9 +215,9 @@ async def send_to(event: Any, *, chat_id: int | None = None, user_id: int | None
 
 
 async def ack_callback(event: Any, notification: str = "") -> None:
-    """Acknowledge a callback button press.
+    """Подтвердить нажатие кнопки (callback).
 
-    For MessageCallback, the verified method is event.ack(notification=...).
+    Для MessageCallback подтверждённый метод — event.ack(notification=...).
     """
     fn = getattr(event, "ack", None)
     if callable(fn):
@@ -225,6 +227,6 @@ async def ack_callback(event: Any, notification: str = "") -> None:
             pass
 
 
-# Legacy alias kept for clarity
+# Унаследованный псевдоним, оставлен ради ясности
 async def reply(event: Any, text: str, attachments: list | None = None):
     return await send(event, text, attachments)

@@ -28,8 +28,8 @@ def _local(dt: datetime) -> str:
 
 
 def attachments_summary_line(attachments: list[dict]) -> str:
-    """Render a single-line summary of citizen-supplied attachments for the
-    admin card. Returns empty string if there's nothing presentable.
+    """Однострочная сводка по вложениям гражданина для карточки в
+    админ-чате. Возвращает пустую строку, если показать нечего.
     """
     counts = count_by_type(attachments or [])
     if not counts:
@@ -70,9 +70,9 @@ def admin_followup(appeal: Appeal, user: User, text: str) -> str:
 
 
 def citizen_reply(appeal: Appeal, reply_text: str) -> str:
-    """Wrap the operator's plain-text reply in a formal letter-style frame
-    so the citizen sees who answered and on which appeal, not just a bare
-    message in their DM with the bot."""
+    """Обернуть текстовый ответ оператора в формальную рамку письма,
+    чтобы гражданин видел, кто ответил и по какому обращению, а не
+    голое сообщение в личке с ботом."""
     from aemr_bot.texts import CITIZEN_REPLY_TEMPLATE
 
     return CITIZEN_REPLY_TEMPLATE.format(

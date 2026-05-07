@@ -13,7 +13,7 @@ from aemr_bot.services import idempotency
 
 
 class IdempotencyMiddleware(BaseMiddleware):
-    """Drop duplicate updates before they reach handlers."""
+    """Отбрасывает дубликаты событий до того, как они доходят до обработчиков."""
 
     async def __call__(self, handler, event_object, data):
         if not await idempotency.claim(event_object):
@@ -22,11 +22,12 @@ class IdempotencyMiddleware(BaseMiddleware):
 
 
 def _attach_outer_middleware(dp: Dispatcher, middleware: BaseMiddleware) -> None:
-    """Attach a middleware as outer across maxapi versions.
+    """Подключить промежуточный слой как внешний в разных версиях maxapi.
 
-    The shape differs between releases: 0.9.18+ exposes a callable method
-    `outer_middleware(mw)`; HEAD has a list `outer_middlewares`; older
-    0.9.0–0.9.17 only had `middlewares`, where outer means insert-at-front.
+    Форма меняется от выпуска к выпуску: 0.9.18+ предоставляет вызываемый
+    метод `outer_middleware(mw)`; в HEAD есть список `outer_middlewares`;
+    в более ранних 0.9.0–0.9.17 был только `middlewares`, где «внешний»
+    означает вставку в начало списка.
     """
     add = getattr(dp, "outer_middleware", None)
     if callable(add):
@@ -41,24 +42,26 @@ def _attach_outer_middleware(dp: Dispatcher, middleware: BaseMiddleware) -> None
         bucket.insert(0, middleware)
         return
     raise RuntimeError(
-        "maxapi.Dispatcher exposes no middleware hook — check installed version"
+        "у maxapi.Dispatcher нет точки подключения middleware — проверьте установленную версию"
     )
 
 
 def register_handlers(dp: Dispatcher) -> None:
-    """Register handlers in command-first, catch-all-last order.
+    """Регистрирует обработчики в порядке: команды первыми, catch-all последним.
 
-    `appeal.register` installs a `@dp.message_created()` without filters
-    that is the catch-all citizen funnel router. maxapi dispatches handlers
-    of the same update_type in registration order and stops at the first
-    matching one — so the catch-all must come AFTER every Command-filtered
-    handler, otherwise it silently swallows /stats, /reopen, /broadcast etc.
-    before they reach their own decorators.
+    `appeal.register` ставит `@dp.message_created()` без фильтров — это
+    catch-all-маршрутизатор анкеты для жителя. maxapi обрабатывает
+    обработчики одного и того же update_type в порядке регистрации и
+    останавливается на первом подошедшем. Поэтому catch-all обязан идти
+    ПОСЛЕ каждого обработчика с фильтром Command, иначе он молча проглотит
+    /stats, /reopen, /broadcast и прочее ещё до того, как они дойдут до
+    своих декораторов.
 
-    `start.register` is fine to put first because all of its handlers ARE
-    command-filtered. `menu.register` and `operator_reply.register` are
-    no-ops kept for symmetry — actual callback / message routing for them
-    lives in `appeal.on_callback` / `appeal.on_message`.
+    `start.register` спокойно ставится первым, потому что у всех его
+    обработчиков ЕСТЬ фильтр-команда. `menu.register` и
+    `operator_reply.register` — пустые заглушки, оставлены для симметрии:
+    реальная маршрутизация нажатий и сообщений для них живёт в
+    `appeal.on_callback` / `appeal.on_message`.
     """
     _attach_outer_middleware(dp, IdempotencyMiddleware())
     start.register(dp)
@@ -66,5 +69,5 @@ def register_handlers(dp: Dispatcher) -> None:
     broadcast.register(dp)
     menu.register(dp)
     operator_reply.register(dp)
-    # Catch-all last: see docstring above.
+    # Catch-all последним: см. докстринг выше.
     appeal.register(dp)

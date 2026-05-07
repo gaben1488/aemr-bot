@@ -1,12 +1,14 @@
-"""Upload helpers around bot.upload_media + file attachment serialization.
+"""Помощники для загрузки файлов поверх bot.upload_media и сериализации
+файлового вложения.
 
-MAX expects a two-step flow (Макс.docx §8): get an upload URL, push the file
-bytes to it, then attach `{type, payload: {token}}` to a message. The maxapi
-library wraps that as `bot.upload_media(InputMedia | InputMediaBuffer)`,
-returning an AttachmentUpload with `.payload.token`.
+MAX ждёт двухшагового потока (Макс.docx §8): получить URL для загрузки,
+отправить туда байты файла, затем приложить `{type, payload: {token}}` к
+сообщению. Библиотека maxapi оборачивает это в
+`bot.upload_media(InputMedia | InputMediaBuffer)`, возвращая
+AttachmentUpload с `.payload.token`.
 
-Both PRIVACY.pdf (cached at startup) and the on-demand XLSX exports use this
-module so the call shape stays consistent in one place.
+И PRIVACY.pdf (кэшируется при старте), и XLSX-выгрузки по запросу
+используют этот модуль, чтобы форма вызова была одинаковой в одном месте.
 """
 
 from __future__ import annotations
@@ -19,7 +21,7 @@ log = logging.getLogger(__name__)
 
 
 async def upload_path(bot, path: Path) -> str | None:
-    """Upload a file from disk. Returns the MAX file token, or None on failure."""
+    """Загрузить файл с диска. Возвращает файловый токен MAX или None при сбое."""
     try:
         from maxapi.enums.upload_type import UploadType
         from maxapi.types.input_media import InputMedia
@@ -40,8 +42,9 @@ async def upload_path(bot, path: Path) -> str | None:
 
 
 async def upload_bytes(bot, content: bytes, suffix: str = ".bin") -> str | None:
-    """Upload an in-memory blob. Writes to a temp file because InputMedia
-    in this library version takes a path; deletes it after upload."""
+    """Загрузить блоб из памяти. Пишет во временный файл, потому что в
+    этой версии библиотеки InputMedia принимает путь; удаляет файл
+    после загрузки."""
     try:
         from maxapi.enums.upload_type import UploadType
         from maxapi.types.input_media import InputMediaBuffer
@@ -49,8 +52,8 @@ async def upload_bytes(bot, content: bytes, suffix: str = ".bin") -> str | None:
         log.exception("maxapi upload symbols unavailable")
         return None
 
-    # Prefer InputMediaBuffer if the version exposes a usable signature;
-    # fall back to a temp file otherwise.
+    # Предпочитаем InputMediaBuffer, если в версии есть рабочая сигнатура.
+    # Иначе откатываемся на временный файл.
     if InputMediaBuffer is not None:
         try:
             media = InputMediaBuffer(buffer=content, type=UploadType.FILE)
@@ -78,17 +81,17 @@ async def upload_bytes(bot, content: bytes, suffix: str = ".bin") -> str | None:
 
 
 def file_attachment(token: str):
-    """Build a file-type attachment for `bot.send_message(attachments=...)`.
+    """Собрать вложение типа file для `bot.send_message(attachments=...)`.
 
-    Earlier revisions of this function returned a plain dict. That worked on
-    newer maxapi releases (which special-case dict items in send_message) but
-    crashed on the version pinned in our container with
-    `AttributeError: 'dict' object has no attribute 'model_dump'` — that
-    revision iterates attachments and unconditionally calls `att.model_dump()`,
-    so every item must be a Pydantic model. Returning AttachmentUpload
-    directly works on both flavors: send_message either calls
-    `att.model_dump()` (older path) or recognizes it as AttachmentUpload via
-    isinstance check (newer path).
+    Прежние версии этой функции возвращали обычный dict. На новых
+    релизах maxapi (где send_message специально обрабатывает dict-элементы)
+    это работало, но в версии, закреплённой в нашем контейнере, падало с
+    `AttributeError: 'dict' object has no attribute 'model_dump'`: та
+    версия итерирует вложения и безусловно зовёт `att.model_dump()`,
+    то есть каждый элемент должен быть моделью Pydantic. Возврат
+    AttachmentUpload напрямую работает в обоих случаях. send_message
+    либо вызывает `att.model_dump()` (старый путь), либо распознаёт его
+    как AttachmentUpload через isinstance (новый путь).
     """
     from maxapi.enums.upload_type import UploadType
     from maxapi.types.attachments.upload import AttachmentPayload, AttachmentUpload

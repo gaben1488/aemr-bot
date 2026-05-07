@@ -1,26 +1,26 @@
-"""Add FK indexes for hot lookups + per-table autovacuum tuning.
+"""Индексы по внешним ключам для частых выборок и настройка autovacuum для отдельных таблиц.
 
 Revision ID: 0004
 Revises: 0003
 Create Date: 2026-05-04
 
-Two thematically related changes that are dirt-cheap and don't deserve
-separate migrations:
+Два тематически связанных изменения, оба дешёвые. Заводить под каждое
+отдельную миграцию нет смысла:
 
-1. Indexes on `appeals.assigned_operator_id` and `messages.operator_id`.
-   Both are FKs without btree indexes. "Find appeals/messages handled
-   by operator X" sequential-scans, and ON DELETE SET NULL also scans
-   the entire child table when an operator row is deactivated. On the
-   MVP scale this is invisible; on a full-year archive (5k+ messages)
-   it starts mattering.
+1. Индексы по `appeals.assigned_operator_id` и `messages.operator_id`.
+   Оба столбца — внешние ключи без btree-индекса. Запрос «найти обращения
+   или сообщения, которые вёл оператор X» делает полный скан, а
+   ON DELETE SET NULL при деактивации строки оператора тоже идёт
+   последовательно по всей дочерней таблице. На MVP-объёме это незаметно,
+   но на годовом архиве (5 тыс. и более сообщений) уже мешает.
 
-2. Per-table autovacuum tuning for `events` and `broadcast_deliveries`.
-   `events` gets one INSERT per Update from MAX plus a daily DELETE of
-   30+ day rows (events_retention cron). The default 20%-dead trigger
-   for autovacuum is too lax — bloat accumulates between vacuum cycles.
-   `broadcast_deliveries` gets a flurry of UPDATE on `delivered_at` /
-   `error` per send, same story. Drop scale_factor to 5% so autovacuum
-   chases the writes.
+2. Настройка autovacuum для `events` и `broadcast_deliveries`. В `events`
+   на каждый Update от MAX идёт один INSERT плюс ежесуточный DELETE строк
+   старше 30 дней (cron events_retention). Дефолтный порог в 20% мёртвых
+   строк слишком мягкий: между циклами vacuum таблица распухает.
+   У `broadcast_deliveries` своя история: на каждую отправку идёт
+   серия UPDATE по `delivered_at` и `error`. Снижаем scale_factor до 5%,
+   чтобы autovacuum успевал за записью.
 """
 from typing import Sequence, Union
 

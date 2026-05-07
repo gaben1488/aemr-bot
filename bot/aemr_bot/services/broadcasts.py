@@ -1,9 +1,9 @@
-"""Broadcast subscription and dispatch service.
+"""Сервис подписки и рассылки новостей.
 
-Subscribers are users who explicitly opted in via /subscribe or the
-«Подписаться на новости» button. Blocked users (`is_blocked=true`) and
-anonymized users (after /erase, `first_name='Удалено'`) are excluded
-from the recipient list automatically — see `count_subscribers` and
+Подписчики — пользователи, давшие явное согласие через /subscribe или
+кнопку «Подписаться на новости». Заблокированные (`is_blocked=true`) и
+обезличенные (после /erase, `first_name='Удалено'`) автоматически
+исключаются из списка получателей. См. `count_subscribers` и
 `list_subscriber_targets`.
 """
 
@@ -33,7 +33,7 @@ async def set_subscription(
 
 
 def _eligible_filter():
-    """SQLAlchemy expression that selects only deliverable users."""
+    """SQLAlchemy-выражение, отбирающее только тех, кому можно доставить."""
     return (
         (User.subscribed_broadcast.is_(True))
         & (User.is_blocked.is_(False))
@@ -52,11 +52,11 @@ async def count_subscribers(session: AsyncSession) -> int:
 async def list_subscriber_targets(
     session: AsyncSession,
 ) -> list[tuple[int, int]]:
-    """Snapshot eligible subscribers as (db_id, max_user_id) tuples.
+    """Снимок подходящих подписчиков как кортежей (db_id, max_user_id).
 
-    The send loop iterates over plain Python data so the transaction
-    closes immediately. Holding it open for an N-second send would
-    block VACUUM and pile up WAL on a long broadcast.
+    Цикл отправки работает уже с обычными питоновскими данными, чтобы
+    транзакция закрылась сразу. Если держать её открытой на всё время
+    рассылки, это заблокирует VACUUM и накопит WAL при долгой рассылке.
     """
     result = await session.execute(
         select(User.id, User.max_user_id).where(_eligible_filter()).order_by(User.id)
@@ -117,9 +117,9 @@ async def mark_finished(
 
 
 async def request_cancel(session: AsyncSession, broadcast_id: int) -> bool:
-    """Set status to cancelled. Returns True if the broadcast was sending,
-    False if it was already in a terminal state — caller can use this to
-    detect a no-op cancel."""
+    """Перевести статус в «отменено». Возвращает True, если рассылка
+    шла, и False, если она уже была в терминальном состоянии. По этому
+    флагу вызывающий код понимает, что отмена ничего не изменила."""
     result = await session.execute(
         update(Broadcast)
         .where(
@@ -132,21 +132,21 @@ async def request_cancel(session: AsyncSession, broadcast_id: int) -> bool:
 
 
 async def reap_orphaned_sending(session: AsyncSession) -> int:
-    """On startup, flip every Broadcast.SENDING row to FAILED.
+    """При старте перевести каждую запись Broadcast.SENDING в FAILED.
 
-    A SENDING row at startup means the previous bot process died mid-send
-    (crash, OOM, container kill, host reboot). The send loop didn't reach
-    its finally-block to call mark_finished, so the row would otherwise
-    sit forever as SENDING — confusing /broadcast list and blocking any
-    operator who tries to start a new broadcast while this one is "still
-    in progress".
+    Запись со статусом SENDING на старте означает, что предыдущий процесс
+    бота умер посреди рассылки (падение, OOM, остановка контейнера,
+    перезагрузка хоста). Цикл отправки не дошёл до finally-блока с
+    mark_finished, и запись осталась бы навсегда в SENDING. Это путает
+    /broadcast list и блокирует оператора, который пробует запустить
+    новую рассылку при «всё ещё идущей» старой.
 
-    `finished_at` is left NULL — we don't actually know when the send
-    stopped, and stamping it with the reaper time would silently lie in
-    `/broadcast list` ("finished N seconds ago" when actually finished
-    when the process crashed hours ago).
+    Поле `finished_at` остаётся NULL: точное время остановки рассылки
+    неизвестно, а штамп времени запуска reaper тихо солгал бы в
+    `/broadcast list` («закончено N секунд назад», хотя на самом деле
+    процесс упал часы назад).
 
-    Returns the number of rows flipped, for logging.
+    Возвращает число переведённых записей для лога.
     """
     result = await session.execute(
         update(Broadcast)

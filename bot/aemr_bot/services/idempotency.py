@@ -1,11 +1,14 @@
-"""Persist a fingerprint of every incoming MAX update for idempotent dispatch.
+"""Хранить отпечаток каждого входящего обновления MAX для защиты от
+повторов (idempotency) при диспетчеризации.
 
-In long-polling the MAX server occasionally redelivers updates after a network
-hiccup. In webhook mode duplicates are routine — MAX retries on any non-2xx,
-and asymmetric network errors mean we sometimes process the same payload twice.
+В режиме long-polling сервер MAX иногда повторно доставляет обновления
+после сетевого сбоя. В режиме webhook дубли — обычное дело: MAX
+повторяет любую не-2xx, а несимметричные сетевые ошибки приводят к
+двойной обработке одного и того же payload.
 
-Strategy: build a stable key per update, INSERT it into events with a unique
-constraint, and short-circuit if the row already exists.
+Стратегия: построить устойчивый ключ для обновления, выполнить INSERT в
+events с уникальным ограничением и не делать ничего, если запись уже
+существует.
 """
 
 from __future__ import annotations
@@ -25,8 +28,9 @@ MAX_KEY_LENGTH = 255
 
 
 def build_idempotency_key(event: Any) -> str | None:
-    """Compose a unique key from event fields. Returns None when nothing usable
-    is available (rare; we'd rather process such an event than drop it)."""
+    """Собрать уникальный ключ из полей события. Возвращает None, когда
+    подходящих полей нет (редко, и в этом случае лучше обработать
+    событие, чем выкинуть его)."""
     update_type = (
         getattr(event, "update_type", None)
         or getattr(getattr(event, "__class__", None), "__name__", "unknown")
@@ -75,8 +79,9 @@ def build_idempotency_key(event: Any) -> str | None:
 
 
 async def claim(event: Any) -> bool:
-    """Attempt to claim the event for processing. Returns True if this is the
-    first time we see it (proceed), False if it's a duplicate (skip)."""
+    """Попытаться застолбить событие для обработки. Возвращает True,
+    если видим его впервые (можно обрабатывать), и False, если это дубль
+    (пропустить)."""
     key = build_idempotency_key(event)
     if key is None:
         return True

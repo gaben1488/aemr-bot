@@ -1,4 +1,4 @@
-"""broadcast subscription and tables
+"""подписка на рассылку и связанные таблицы
 
 Revision ID: 0002
 Revises: 0001

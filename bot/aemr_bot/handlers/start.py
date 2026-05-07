@@ -37,9 +37,9 @@ async def _ensure_user(event):
 
 
 async def _build_main_menu():
-    """Read the electronic-reception URL from settings and assemble the
-    main menu so the «Электронная приёмная» link button shows up. Returns
-    a markup ready to drop into bot.send_message."""
+    """Читает URL электронной приёмной из настроек и собирает главное
+    меню так, чтобы появилась кнопка-ссылка «Электронная приёмная».
+    Возвращает разметку, готовую к передаче в bot.send_message."""
     async with session_scope() as session:
         recep_url = await settings_store.get(session, "electronic_reception_url")
     return keyboards.main_menu(recep_url)
@@ -59,7 +59,7 @@ async def cmd_menu(event):
 
 
 async def cmd_policy(event):
-    """Send the privacy policy PDF to the citizen on demand."""
+    """По запросу отправляет жителю PDF с политикой обработки персональных данных."""
     chat_id = get_chat_id(event)
     if chat_id is None:
         return
@@ -70,8 +70,9 @@ async def cmd_policy(event):
 
     bot = getattr(event, "bot", None)
 
-    # Cold start safety: try to upload the PDF if the token hasn't been cached
-    # yet (e.g. first runs after deploy where startup upload silently failed).
+    # Подстраховка на холодном старте: пробуем загрузить PDF, если токен
+    # ещё не закэширован, например на первых запусках после деплоя, когда
+    # стартовая загрузка молча упала.
     if not token and bot is not None:
         try:
             token = await policy_service.ensure_uploaded(bot)

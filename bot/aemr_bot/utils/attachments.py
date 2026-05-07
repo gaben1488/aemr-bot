@@ -1,11 +1,11 @@
-"""Helpers for parsing message attachments from maxapi events.
+"""Помощники для разбора вложений сообщения из событий maxapi.
 
-Verified against love-apples/maxapi sources:
-* MessageBody.attachments is list[Attachments] where each item is an
-  Attachment with .type (AttachmentType enum value) and .payload.
-* For CONTACT attachments, payload is ContactAttachmentPayload with
-  vcf_info: str and max_info: User | None.
-* payload.vcf is a property that parses vcf_info into VcfInfo with .phone.
+Сверено с исходниками love-apples/maxapi:
+* MessageBody.attachments — это list[Attachments], где каждый элемент —
+  Attachment с .type (значение enum AttachmentType) и .payload.
+* Для вложений типа CONTACT payload — это ContactAttachmentPayload с
+  vcf_info: str и max_info: User | None.
+* payload.vcf — свойство, которое разбирает vcf_info в VcfInfo с .phone.
 """
 
 from __future__ import annotations
@@ -15,15 +15,16 @@ from typing import Any
 
 log = logging.getLogger(__name__)
 
-# Types we relay back into admin chat. Excludes:
-#   contact — phone is already in the admin card; sending the vCard duplicates PII;
-#   inline_keyboard — never originates from a citizen anyway;
-#   share/sticker — irrelevant for an appeal.
+# Типы, которые мы пересылаем в админ-чат. Исключаем:
+#   contact — телефон уже в карточке оператора, vCard продублирует ПДн;
+#   inline_keyboard — от гражданина и так никогда не приходит;
+#   share/sticker — для обращения не нужны.
 RELAYABLE_TYPES = frozenset({"image", "video", "audio", "file", "location"})
 
-# Hard cap for vcf_info parser — a malformed or hostile contact attachment
-# could ship megabytes of text and make us splitlines() the whole thing
-# trying to find a TEL: prefix. 10k chars is far above any real vCard.
+# Жёсткая верхняя граница для парсера vcf_info: испорченный или
+# вредоносный contact-attachment может прислать мегабайты текста и
+# заставить нас сплитить всё это в поисках префикса TEL:. 10k символов —
+# выше любого реального vCard.
 VCF_INFO_MAX_CHARS = 10_000
 
 
@@ -39,7 +40,7 @@ def _attachment_to_dict(att: Any) -> dict:
 
 
 def collect_attachments(message: Any) -> list[dict]:
-    """Take attachments from a MAX message body and serialize for storage."""
+    """Взять вложения из тела сообщения MAX и сериализовать для хранения."""
     out: list[dict] = []
     body = message
     if hasattr(body, "body") and getattr(body, "body", None) is not None:
@@ -51,10 +52,10 @@ def collect_attachments(message: Any) -> list[dict]:
 
 
 def extract_phone(message: Any) -> str | None:
-    """Extract phone number from a contact-type attachment in the message body.
+    """Достать номер телефона из вложения типа contact в теле сообщения.
 
-    Works on a MessageBody, a Message, or even an Update (we drill down).
-    Returns None if no contact found.
+    Работает по MessageBody, по Message и даже по Update (мы спускаемся
+    вглубь). Возвращает None, если контакт не найден.
     """
     body = message
     if hasattr(body, "body") and getattr(body, "body", None) is not None:
@@ -74,7 +75,7 @@ def extract_phone(message: Any) -> str | None:
         if payload is None:
             continue
 
-        # Object form: ContactAttachmentPayload
+        # Форма объекта: ContactAttachmentPayload
         max_info = getattr(payload, "max_info", None)
         if max_info is not None:
             for attr in ("phone", "phone_number"):
@@ -90,7 +91,7 @@ def extract_phone(message: Any) -> str | None:
 
         vcf_info = getattr(payload, "vcf_info", None) or getattr(payload, "vcfInfo", None)
 
-        # Dict form: model_dump fallback
+        # Форма dict: запасной путь через model_dump
         if isinstance(payload, dict):
             mi = payload.get("max_info") or {}
             if isinstance(mi, dict):
@@ -102,8 +103,8 @@ def extract_phone(message: Any) -> str | None:
         if vcf_info:
             vcf_str = str(vcf_info)
             if len(vcf_str) > VCF_INFO_MAX_CHARS:
-                # Hostile or malformed contact — don't splitlines() megabytes
-                # of text just to find a TEL: prefix.
+                # Вредоносный или сломанный контакт. Не сплитим мегабайты
+                # текста ради поиска префикса TEL:.
                 log.warning(
                     "vcf_info length %d exceeds %d; truncating before parse",
                     len(vcf_str),
@@ -132,7 +133,7 @@ def _normalize_type(att: dict) -> str:
 
 
 def count_by_type(stored: list[dict]) -> dict[str, int]:
-    """Count attachments grouped by type — used to render the admin-card header."""
+    """Подсчитать вложения по типам. Используется для отрисовки заголовка карточки в админ-чате."""
     counts: dict[str, int] = {}
     for att in stored:
         if not isinstance(att, dict):
@@ -144,9 +145,10 @@ def count_by_type(stored: list[dict]) -> dict[str, int]:
 
 
 def deserialize_for_relay(stored: list[dict]) -> list:
-    """Hydrate stored dicts back into pydantic Attachment objects so send_message
-    can dump them back into the API payload. Drops PII-bearing or non-relayable
-    types. Returns an empty list if maxapi is unavailable, so callers stay safe.
+    """Развернуть сохранённые словари обратно в pydantic-объекты Attachment,
+    чтобы send_message смог снова сбросить их в полезную нагрузку API.
+    Откидывает типы с ПДн и непересылаемые типы. Возвращает пустой
+    список, если maxapi недоступен, чтобы вызывающий код не падал.
     """
     if not stored:
         return []
@@ -168,7 +170,8 @@ def deserialize_for_relay(stored: list[dict]) -> list:
         try:
             out.append(adapter.validate_python(raw))
         except Exception as e:
-            # Schema drift in MAX or trimmed payload — skip this one,
-            # don't block the whole appeal dispatch.
+            # Расхождение схемы на стороне MAX или урезанный payload.
+            # Пропускаем это вложение, чтобы не заблокировать отправку
+            # всего обращения.
             log.warning("attachment %s failed to deserialize: %r", _normalize_type(raw), e)
     return out

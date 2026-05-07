@@ -7,12 +7,12 @@ from aemr_bot.db.models import DialogState, User
 
 
 def _normalize_phone(phone: str) -> str:
-    """Match-friendly phone normalization: keep digits, drop everything else.
+    """Нормализация телефона под сравнение: оставляем цифры, остальное убираем.
 
-    Citizens hand in phones in any format the contact button gives MAX —
-    «+7 (415-31) 7-25-29», «89001234567», «79001234567». Operators in the
-    admin chat type whatever they remember. We compare digits-only and
-    optionally trim a leading 7/8 country prefix.
+    Граждане сдают телефон в любом формате, который кнопка контакта в
+    MAX отдаёт: «+7 (415-31) 7-25-29», «89001234567», «79001234567».
+    Операторы в админ-чате печатают то, что помнят. Сравниваем только
+    цифры, при необходимости срезаем ведущий код страны 7 или 8.
     """
     digits = "".join(ch for ch in phone if ch.isdigit())
     if len(digits) == 11 and digits[0] in {"7", "8"}:
@@ -43,8 +43,9 @@ async def set_consent(session: AsyncSession, max_user_id: int) -> None:
 
 
 async def set_phone(session: AsyncSession, max_user_id: int, phone: str) -> None:
-    # Keep phone_normalized in sync — it's the indexed column find_by_phone
-    # reads, and any drift from `phone` would silently break /erase phone=.
+    # Держим phone_normalized в синхроне с phone: это индексированная колонка,
+    # из которой читает find_by_phone, и любое расхождение тихо сломает
+    # /erase phone=.
     await session.execute(
         update(User)
         .where(User.max_user_id == max_user_id)
@@ -89,10 +90,12 @@ async def find_stuck_in_summary(
     idle_seconds: int,
     limit: int | None = None,
 ) -> list[int]:
-    """Return max_user_id of users stuck in AWAITING_SUMMARY past idle_seconds.
+    """Вернуть max_user_id пользователей, застрявших в AWAITING_SUMMARY
+    дольше idle_seconds.
 
-    Limit guards against pathological cases (e.g. 10k stuck rows after a long
-    outage would otherwise produce 10k bot API calls during startup recovery).
+    Лимит защищает от патологических случаев: например, 10 тысяч
+    застрявших строк после долгого простоя иначе породят 10 тысяч
+    вызовов API бота при восстановлении на старте.
     """
     if limit is None:
         from aemr_bot.config import settings as cfg
@@ -110,12 +113,11 @@ async def find_stuck_in_summary(
 
 
 async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
-    """Anonymize the user and revoke the PDN consent (152-FZ art. 9 §2).
+    """Обезличить пользователя и отозвать согласие ПДн (152-ФЗ, ст. 9 §2).
 
-    Revoking consent also drops the broadcast subscription and flips
-    is_blocked so the user is excluded from the broadcast subscribers
-    query — sending them anything afterwards would be processing their
-    data without consent.
+    Отзыв согласия снимает подписку на рассылку и поднимает is_blocked,
+    чтобы пользователь не попадал в выборку подписчиков. Иначе любая
+    последующая отправка ему была бы обработкой данных без согласия.
     """
     result = await session.execute(
         update(User)
@@ -135,14 +137,14 @@ async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
 
 
 async def find_by_phone(session: AsyncSession, phone: str) -> User | None:
-    """Look up a user by phone, tolerant to formatting differences.
+    """Найти пользователя по телефону, не споткнувшись о различия в формате.
 
-    Reads the indexed `phone_normalized` column so this is O(log n) on
-    the index instead of a full-table scan + Python normalize-and-match
-    loop. Inserts/updates of `phone` are responsible for keeping
-    `phone_normalized` in sync (see `set_phone`, the citizen-flow
-    contact handler in handlers/appeal.py, and the 0003 migration's
-    backfill for legacy rows).
+    Читает индексированную колонку `phone_normalized`, поэтому это
+    O(log n) по индексу, а не полный скан таблицы с нормализацией и
+    сравнением в Python-цикле. Вставки и обновления `phone` обязаны
+    держать `phone_normalized` в синхроне. См. `set_phone`, обработчик
+    контакта в потоке гражданина в handlers/appeal.py и заполнение
+    наследных строк в миграции 0003.
     """
     target = _normalize_phone(phone)
     if not target:
@@ -153,9 +155,9 @@ async def find_by_phone(session: AsyncSession, phone: str) -> User | None:
 
 
 async def erase_pdn_by_phone(session: AsyncSession, phone: str) -> int | None:
-    """Erase by phone — returns the max_user_id of the affected row, or None
-    if no match. Caller can use the id for /erase confirmation message
-    and audit log."""
+    """Удалить по телефону. Возвращает max_user_id затронутой записи
+    или None, если совпадения нет. Вызывающий код использует id для
+    подтверждения /erase и записи в audit-лог."""
     user = await find_by_phone(session, phone)
     if user is None:
         return None
