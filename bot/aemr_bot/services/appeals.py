@@ -183,6 +183,27 @@ async def close(session: AsyncSession, appeal_id: int) -> bool:
     return result.rowcount > 0
 
 
+async def list_unanswered(session: AsyncSession) -> list[Appeal]:
+    """Все открытые обращения (NEW + IN_PROGRESS) с догруженным user.
+
+    Используется напоминалкой `working_hours_open_reminder`. На входе
+    операторской логике делим список в Python на две группы — те, что в
+    SLA, и просроченные — отдельным проходом по `sla_response_hours`.
+    Один SQL вместо двух.
+    """
+    res = await session.scalars(
+        select(Appeal)
+        .options(selectinload(Appeal.user))
+        .where(
+            Appeal.status.in_(
+                [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+            )
+        )
+        .order_by(Appeal.created_at)
+    )
+    return list(res)
+
+
 async def find_overdue_unanswered(
     session: AsyncSession, sla_hours: int
 ) -> list[Appeal]:

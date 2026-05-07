@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -379,15 +379,98 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         coalesce=True,
     )
 
-    async def sla_overdue_check():
-        """Раз в час проверяем, какие обращения висят дольше SLA без ответа,
-        и пушим список в служебную группу. Тишина в чате намеренна:
-        если ничего не просрочено — нет сообщения. Иначе оператор
-        получит «по нулям» каждый час, привыкнет, перестанет читать.
-
-        Лимит до 10 строк в одном сообщении: больше — значит у команды
-        проблема нагрузки, нужно открывать /open_tickets и разбираться.
+    async def _send_with_open_tickets_button(text: str) -> None:
+        """Сообщение в админ-группу с кнопкой «📋 Открытые обращения»
+        под ним. Используется напоминалками: оператор тапает и попадает
+        в полный список с действиями.
         """
+        if not settings.admin_group_id:
+            return
+        try:
+            from aemr_bot import keyboards as kbds
+            from maxapi.types import CallbackButton
+            from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+
+            kb = InlineKeyboardBuilder()
+            kb.row(
+                CallbackButton(
+                    text="📋 Открытые обращения",
+                    payload="op:open_tickets",
+                )
+            )
+            await bot.send_message(
+                chat_id=settings.admin_group_id,
+                text=text,
+                attachments=[kb.as_markup()],
+            )
+            # kbds — для хедер-парсера, чтобы линтер не съел импорт
+            _ = kbds  # noqa: F841
+        except Exception:
+            log.exception("send admin reminder with button failed")
+
+    def _format_appeal_lines(appeals: list, *, max_rows: int = 10) -> list[str]:
+        """Унифицированный рендер строк «# id · имя · локалити · висит Nч»
+        для напоминалок. Список ограничен max_rows; если приходится
+        обрезать — добавляется хвостик «… ещё K».
+        """
+        now = datetime.now(TZ)
+        lines: list[str] = []
+        for ap in appeals[:max_rows]:
+            created_local = (
+                ap.created_at.astimezone(TZ) if ap.created_at else now
+            )
+            age_h = int((now - created_local).total_seconds() // 3600)
+            name = (ap.user.first_name or "—") if ap.user else "—"
+            lines.append(
+                f"• #{ap.id} · {name} · {ap.locality or '—'} · "
+                f"висит {age_h}ч"
+            )
+        if len(appeals) > max_rows:
+            lines.append(f"… ещё {len(appeals) - max_rows}.")
+        return lines
+
+    async def working_hours_open_reminder():
+        """Раз в час, ТОЛЬКО в рабочее время (пн–сб 09:00–17:59 Камчатка).
+
+        Напоминание о всех неответленных обращениях — без разделения
+        на «в SLA» и «просрочено». Если открытых нет — тишина (по
+        нулям не пишем, чтобы оператор не привык игнорировать).
+
+        Под сообщением кнопка «📋 Открытые обращения» — тап открывает
+        полный список с кнопками действий по каждому.
+        """
+        try:
+            from aemr_bot.services import appeals as appeals_service
+
+            async with session_scope() as session:
+                appeals = await appeals_service.list_unanswered(session)
+            if not appeals:
+                return
+            threshold = datetime.now(timezone.utc) - timedelta(
+                hours=settings.sla_response_hours
+            )
+            in_sla = [a for a in appeals if a.created_at > threshold]
+            overdue = [a for a in appeals if a.created_at <= threshold]
+            header = (
+                f"📋 Открытых обращений: {len(appeals)} "
+                f"(в SLA — {len(in_sla)}, просрочено — {len(overdue)})"
+            )
+            lines = [header, ""]
+            if overdue:
+                lines.append(f"⚠️ Просрочено по SLA ({settings.sla_response_hours}ч):")
+                lines.extend(_format_appeal_lines(overdue))
+                lines.append("")
+            if in_sla:
+                lines.append("🆕 В SLA:")
+                lines.extend(_format_appeal_lines(in_sla))
+            await _send_with_open_tickets_button("\n".join(lines).rstrip())
+        except Exception:
+            log.exception("working_hours_open_reminder crashed")
+
+    async def working_hours_overdue_reminder():
+        """Раз в час на :40 — отдельное напоминание ТОЛЬКО о просроченных.
+        Вместе с :10 даёт «каждые полчаса для просрочки». Если нет
+        просроченных — тишина."""
         try:
             from aemr_bot.services import appeals as appeals_service
 
@@ -397,58 +480,49 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
                 )
             if not overdue:
                 return
-            now = datetime.now(TZ)
             lines = [
                 f"⚠️ Просрочено по SLA ({settings.sla_response_hours}ч): "
-                f"{len(overdue)} обращ."
+                f"{len(overdue)} обращений."
             ]
-            for ap in overdue[:10]:
-                created_local = ap.created_at.astimezone(TZ) if ap.created_at else now
-                age_h = int((now - created_local).total_seconds() // 3600)
-                name = (ap.user.first_name or "—") if ap.user else "—"
-                lines.append(
-                    f"• #{ap.id} · {name} · {ap.locality or '—'} · "
-                    f"висит {age_h}ч"
-                )
-            if len(overdue) > 10:
-                lines.append(f"… и ещё {len(overdue) - 10}. Откройте «📋 Открытые обращения».")
-            await send_admin_text("\n".join(lines))
+            lines.extend(_format_appeal_lines(overdue))
+            await _send_with_open_tickets_button("\n".join(lines))
         except Exception:
-            log.exception("sla_overdue_check failed")
+            log.exception("working_hours_overdue_reminder crashed")
 
-    # SLA-проверка двухрежимная:
-    # • В рабочее время Камчатки (пн–сб, 09:00–17:59) — каждые 30 минут
-    #   (:10 и :40), чтобы координатор видел просрочку быстро.
-    # • Вне рабочего времени и в воскресенье — раз в час (минута :10).
-    # Минута :10 везде, чтобы не сливаться с pulse (:00, :05, :30).
+    # Расписание напоминалок — ТОЛЬКО в рабочее время Камчатки (пн–сб
+    # 09:00–17:59). В нерабочее время и в воскресенье сигналы молчат:
+    # дёргать оператора в выходные смысла нет, он всё равно увидит
+    # утром понедельника по обзору.
+    #
+    # • working_hours_open_reminder на :10 — раз в час обзор всех
+    #   неответленных (in-SLA + просроченные). Если ничего нет — тихо.
+    # • working_hours_overdue_reminder на :40 — раз в час напоминание
+    #   ТОЛЬКО о просроченных. Вместе с :10 это даёт каждые 30 минут
+    #   для просрочки и раз в час для in-SLA, как и просил оператор.
+    #
+    # Минуты :10/:40 выбраны так, чтобы не сливаться с pulse-workhours
+    # (:00/:30) — операторы видят «бот жив» и «есть открытые» отдельно.
     scheduler.add_job(
-        sla_overdue_check,
+        working_hours_open_reminder,
         CronTrigger(
             day_of_week="mon-sat",
             hour="9-17",
-            minute="10,40",
-            timezone=TZ,
-        ),
-        name="sla-overdue-workhours",
-        max_instances=1,
-        coalesce=True,
-    )
-    scheduler.add_job(
-        sla_overdue_check,
-        CronTrigger(
-            day_of_week="mon-sat",
-            hour="0-8,18-23",
             minute=10,
             timezone=TZ,
         ),
-        name="sla-overdue-offhours",
+        name="open-reminder-workhours",
         max_instances=1,
         coalesce=True,
     )
     scheduler.add_job(
-        sla_overdue_check,
-        CronTrigger(day_of_week="sun", hour="*", minute=10, timezone=TZ),
-        name="sla-overdue-sunday",
+        working_hours_overdue_reminder,
+        CronTrigger(
+            day_of_week="mon-sat",
+            hour="9-17",
+            minute=40,
+            timezone=TZ,
+        ),
+        name="overdue-reminder-workhours",
         max_instances=1,
         coalesce=True,
     )
