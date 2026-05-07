@@ -121,6 +121,78 @@ def extract_phone(message: Any) -> str | None:
     return None
 
 
+def extract_contact_name(message: Any) -> str | None:
+    """Имя из расшаренного контакта.
+
+    MAX в payload contact-вложения отдаёт либо `max_info.first_name`
+    (когда житель шарит свой собственный профиль через
+    RequestContactButton), либо vCF-структуру с полем `FN:` или
+    `name`. Подбираем оба варианта. Возвращаем None, если ничего
+    приемлемого не нашли.
+
+    Без этого житель проходил бы шаг «как к вам обращаться» вручную
+    даже после того, как уже отдал контакт, в котором его имя есть.
+    """
+    body = message
+    if hasattr(body, "body") and getattr(body, "body", None) is not None:
+        body = body.body
+    raw = getattr(body, "attachments", None) or []
+
+    for att in raw:
+        att_type = getattr(att, "type", None)
+        if att_type is None and isinstance(att, dict):
+            att_type = att.get("type")
+        if str(att_type).lower() != "contact":
+            continue
+
+        payload = getattr(att, "payload", None)
+        if payload is None and isinstance(att, dict):
+            payload = att.get("payload")
+        if payload is None:
+            continue
+
+        # Pydantic-форма: max_info с first_name
+        max_info = getattr(payload, "max_info", None)
+        if max_info is not None:
+            for attr in ("first_name", "name"):
+                val = getattr(max_info, attr, None)
+                if val:
+                    return str(val).strip() or None
+
+        vcf_obj = getattr(payload, "vcf", None)
+        if vcf_obj is not None:
+            for attr in ("first_name", "name", "fn"):
+                val = getattr(vcf_obj, attr, None)
+                if val:
+                    return str(val).strip() or None
+
+        # Dict-fallback
+        if isinstance(payload, dict):
+            mi = payload.get("max_info") or {}
+            if isinstance(mi, dict):
+                for k in ("first_name", "name"):
+                    if mi.get(k):
+                        return str(mi[k]).strip() or None
+
+        # Сырой vCF: ищем строку «FN:Имя»
+        vcf_info = getattr(payload, "vcf_info", None) or getattr(payload, "vcfInfo", None)
+        if vcf_info is None and isinstance(payload, dict):
+            vcf_info = payload.get("vcf_info") or payload.get("vcfInfo")
+        if vcf_info:
+            vcf_str = str(vcf_info)
+            if len(vcf_str) > VCF_INFO_MAX_CHARS:
+                vcf_str = vcf_str[:VCF_INFO_MAX_CHARS]
+            for line in vcf_str.replace("\r\n", "\n").splitlines():
+                upper = line.upper()
+                if upper.startswith("FN:") or upper.startswith("FN;"):
+                    _, _, value = line.partition(":")
+                    val = value.strip()
+                    if val:
+                        return val
+
+    return None
+
+
 def is_contact_attachment(att: Any) -> bool:
     t = getattr(att, "type", None)
     if t is None and isinstance(att, dict):

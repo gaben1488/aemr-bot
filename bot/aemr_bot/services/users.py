@@ -35,10 +35,19 @@ async def has_consent(session: AsyncSession, max_user_id: int) -> bool:
 
 
 async def set_consent(session: AsyncSession, max_user_id: int) -> None:
+    # Заодно снимаем is_blocked: житель мог раньше воспользоваться
+    # /forget, что выставляет is_blocked=true. Если он вернулся,
+    # дал согласие заново — это явное «свяжитесь со мной снова»,
+    # блокировка устаревает. Без этого сброса оператор увидит
+    # «Не могу доставить ответ — житель отозвал согласие», хотя
+    # на самом деле согласие свежее.
     await session.execute(
         update(User)
         .where(User.max_user_id == max_user_id)
-        .values(consent_pdn_at=datetime.now(timezone.utc))
+        .values(
+            consent_pdn_at=datetime.now(timezone.utc),
+            is_blocked=False,
+        )
     )
 
 
@@ -149,9 +158,27 @@ async def find_by_phone(session: AsyncSession, phone: str) -> User | None:
     target = _normalize_phone(phone)
     if not target:
         return None
-    return await session.scalar(
-        select(User).where(User.phone_normalized == target)
-    )
+    rows = (
+        await session.scalars(
+            select(User).where(User.phone_normalized == target).limit(2)
+        )
+    ).all()
+    if len(rows) == 0:
+        return None
+    if len(rows) > 1:
+        # Один номер у нескольких жителей (например, муж и жена на
+        # одной симке). Возвращаем None: пусть оператор уточнит
+        # `max_user_id` явно через карточку обращения. Иначе /erase
+        # phone= сотрёт случайного из совпавших.
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "find_by_phone: найдено %d совпадений по %s, требуется "
+            "уточнение max_user_id",
+            len(rows), target,
+        )
+        return None
+    return rows[0]
 
 
 async def erase_pdn_by_phone(session: AsyncSession, phone: str) -> int | None:

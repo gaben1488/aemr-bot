@@ -54,8 +54,26 @@ async def _build_main_menu(max_user_id: int | None = None):
     return keyboards.main_menu(recep_url, subscribed=subscribed)
 
 
+async def _reset_funnel_if_stuck(max_user_id: int | None) -> None:
+    """Если житель набрал /start посреди воронки — сбрасываем состояние.
+
+    Без сброса любое следующее сообщение пошло бы в обработчик того
+    шага, в котором житель застрял (адрес, имя и т.п.), и сценарий
+    «начать заново» молча не сработал бы.
+    """
+    if max_user_id is None:
+        return
+    from aemr_bot.db.models import DialogState
+
+    async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        if user.dialog_state and user.dialog_state != DialogState.IDLE.value:
+            await users_service.reset_state(session, max_user_id)
+
+
 async def cmd_start(event):
     await _ensure_user(event)
+    await _reset_funnel_if_stuck(get_user_id(event))
     await reply(event, texts.WELCOME, attachments=[await _build_main_menu(get_user_id(event))])
 
 
@@ -64,6 +82,7 @@ async def cmd_help(event):
 
 
 async def cmd_menu(event):
+    await _reset_funnel_if_stuck(get_user_id(event))
     await reply(event, texts.WELCOME, attachments=[await _build_main_menu(get_user_id(event))])
 
 

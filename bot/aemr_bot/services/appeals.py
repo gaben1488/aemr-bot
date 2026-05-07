@@ -135,11 +135,25 @@ async def close(session: AsyncSession, appeal_id: int) -> bool:
 
 
 async def find_active_for_user(session: AsyncSession, user_id: int) -> Appeal | None:
+    """Последнее живое обращение жителя.
+
+    «Живое» = не закрытое окончательно. Сюда попадают обращения
+    в статусах NEW (только что создано), IN_PROGRESS (оператор взял
+    в работу) и ANSWERED (ответ отправлен, но житель ещё может
+    написать «спасибо, но ещё одно» — это переоткроет обращение
+    через handle_user_followup).
+    """
     return await session.scalar(
         select(Appeal)
         .where(
             Appeal.user_id == user_id,
-            Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
+            Appeal.status.in_(
+                [
+                    AppealStatus.NEW.value,
+                    AppealStatus.IN_PROGRESS.value,
+                    AppealStatus.ANSWERED.value,
+                ]
+            ),
         )
         .order_by(desc(Appeal.created_at))
     )

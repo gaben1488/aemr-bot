@@ -111,7 +111,7 @@ async def test_reopen_and_close(session):
 
 @pytest.mark.asyncio
 async def test_erase_pdn(session):
-    user = await users_service.get_or_create(session, max_user_id=42, first_name="Пётр")
+    await users_service.get_or_create(session, max_user_id=42, first_name="Пётр")
     await users_service.set_phone(session, 42, "89991112233")
 
     assert await users_service.erase_pdn(session, 42) is True

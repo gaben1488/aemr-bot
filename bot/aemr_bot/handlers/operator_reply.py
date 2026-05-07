@@ -4,6 +4,7 @@
 
 import logging
 import re
+import time as _time
 
 from maxapi import Dispatcher
 from maxapi.types import MessageCreated
@@ -23,6 +24,28 @@ from aemr_bot.utils.event import (
 )
 
 log = logging.getLogger(__name__)
+
+
+# Защита от двойного ответа: оператор за пару секунд может нажать
+# свайп-reply и параллельно набрать /reply N. Оба пути доходят до
+# `_deliver_operator_reply` независимо. Без дедупликации житель
+# получит две одинаковые копии ответа, в `messages` ляжет два
+# дубля. Запоминаем последний ответ в памяти процесса и режем
+# повтор того же текста на то же обращение в окне 10 секунд.
+_recent_replies: dict[tuple[int, int], tuple[str, float]] = {}
+_REPLY_DEDUPE_WINDOW_SEC = 10.0
+
+
+def _is_duplicate_reply(operator_id: int, appeal_id: int, text: str) -> bool:
+    key = (operator_id, appeal_id)
+    prev = _recent_replies.get(key)
+    now = _time.monotonic()
+    if prev is not None:
+        prev_text, prev_at = prev
+        if prev_text == text and now - prev_at <= _REPLY_DEDUPE_WINDOW_SEC:
+            return True
+    _recent_replies[key] = (text, now)
+    return False
 
 
 def _mid_from_link(link) -> str | None:
@@ -92,6 +115,13 @@ async def _deliver_operator_reply(
             text=texts.ADMIN_REPLY_TOO_LONG.format(
                 limit=cfg.answer_max_chars, actual=len(text)
             ),
+        )
+        return True
+
+    if _is_duplicate_reply(operator.id, appeal.id, text):
+        log.info(
+            "operator_reply: дубль за %.1fс отбит — operator=%s appeal=%s",
+            _REPLY_DEDUPE_WINDOW_SEC, operator.id, appeal.id,
         )
         return True
 
