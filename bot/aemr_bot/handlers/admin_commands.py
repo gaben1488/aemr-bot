@@ -94,6 +94,34 @@ async def show_full_help(event) -> None:
     await event.bot.send_message(chat_id=cfg.admin_group_id, text=texts.OP_HELP)
 
 
+async def show_op_menu(event, *, pin: bool = False) -> None:
+    """Показать памятку оператора с клавиатурой быстрых действий.
+
+    pin=True — закрепляем сообщение (для /op_help), чтобы памятка всегда
+    была близко к верху группы. MAX держит одно закреплённое сообщение
+    на чат. /menu, /start, /help в админке зовут эту же функцию с
+    pin=False — это «открой меню сейчас», закреплять не нужно.
+    """
+    from aemr_bot import keyboards as kbds
+    from aemr_bot.utils.event import extract_message_id
+
+    sent = await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_HELP,
+        attachments=[kbds.op_help_keyboard()],
+    )
+    if not pin:
+        return
+    mid = extract_message_id(sent)
+    if mid:
+        try:
+            await event.bot.pin_message(
+                chat_id=cfg.admin_group_id, message_id=mid, notify=False
+            )
+        except Exception:
+            log.exception("pin_message для /op_help не удался")
+
+
 async def run_open_tickets(event) -> None:
     """То же, что /open_tickets — список неотвеченных обращений в админ-группу.
     Вызывается кнопкой «📋 Открытые обращения»."""
@@ -486,26 +514,7 @@ def register(dp: Dispatcher) -> None:
     async def cmd_op_help(event: MessageCreated):
         if not _is_admin_chat(event):
             return
-        from aemr_bot import keyboards as kbds
-        from aemr_bot.utils.event import extract_message_id
-
-        sent = await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_HELP,
-            attachments=[kbds.op_help_keyboard()],
-        )
-        # Попытка закрепить (best-effort), чтобы памятка оператора всегда была близко к верху
-        # админ-группы. Если уже что-то закреплено — pin перезапишет, MAX
-        # позволяет одно закреплённое сообщение на чат. Не критично если
-        # операция упадёт — координатор всегда может вызвать /op_help снова.
-        mid = extract_message_id(sent)
-        if mid:
-            try:
-                await event.bot.pin_message(
-                    chat_id=cfg.admin_group_id, message_id=mid, notify=False
-                )
-            except Exception:
-                log.exception("pin_message для /op_help не удался")
+        await show_op_menu(event, pin=True)
 
     @dp.message_created(Command("add_operators"))
     async def cmd_add_operators(event: MessageCreated):

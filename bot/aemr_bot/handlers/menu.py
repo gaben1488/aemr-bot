@@ -114,6 +114,51 @@ async def handle_broadcast_unsubscribe(event, max_user_id: int) -> None:
     )
 
 
+async def open_settings(event):
+    """Подменю «Настройки и помощь» с кнопками-дубликатами для команд /help,
+    /policy, /forget. Цель — чтобы житель не запоминал команды."""
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=texts.SETTINGS_MENU_TITLE,
+        attachments=[keyboards.settings_menu_keyboard()],
+    )
+
+
+async def open_help(event):
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=texts.HELP_USER,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
+
+
+async def ask_forget_confirm(event):
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=texts.ERASE_CONFIRM,
+        attachments=[keyboards.forget_confirm_keyboard()],
+    )
+
+
+async def do_forget(event, max_user_id: int):
+    """Кнопочный аналог /forget. Логика та же, что в start.cmd_forget,
+    но без необходимости набирать команду."""
+    from aemr_bot.services import operators as ops_service
+
+    async with session_scope() as session:
+        await users_service.erase_pdn(session, max_user_id)
+        await ops_service.write_audit(
+            session,
+            operator_max_user_id=max_user_id,
+            action="self_erase",
+            target=f"user max_id={max_user_id}",
+        )
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=texts.ERASE_REQUESTED,
+    )
+
+
 async def open_appointment(event):
     async with session_scope() as session:
         text = await settings_store.get(session, "appointment_text")
@@ -208,6 +253,33 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
     if payload == "menu:appointment":
         await ack_callback(event)
         await open_appointment(event)
+        return True
+
+    if payload == "menu:settings":
+        await ack_callback(event)
+        await open_settings(event)
+        return True
+
+    if payload == "settings:help":
+        await ack_callback(event)
+        await open_help(event)
+        return True
+
+    if payload == "settings:policy":
+        await ack_callback(event)
+        from aemr_bot.handlers.start import cmd_policy
+
+        await cmd_policy(event)
+        return True
+
+    if payload == "settings:forget_ask":
+        await ack_callback(event)
+        await ask_forget_confirm(event)
+        return True
+
+    if payload == "settings:forget_yes" and max_user_id is not None:
+        await ack_callback(event)
+        await do_forget(event, max_user_id)
         return True
 
     if payload == "info:emergency":

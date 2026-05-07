@@ -30,6 +30,32 @@ def main_menu(
         kb.row(LinkButton(text="🌐 Электронная приёмная", url=electronic_reception_url))
     kb.row(CallbackButton(text="📋 Приём граждан", payload="menu:appointment"))
     kb.row(CallbackButton(text="📚 Полезная информация", payload="menu:useful_info"))
+    kb.row(CallbackButton(text="⚙️ Настройки и помощь", payload="menu:settings"))
+    return kb.as_markup()
+
+
+def settings_menu_keyboard():
+    """Подменю «Настройки и помощь». Дублирует команды /help, /policy
+    и /forget кнопками — чтобы житель мог их найти, не зная синтаксиса."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="🆘 Помощь и команды", payload="settings:help"))
+    kb.row(CallbackButton(text="📄 Политика данных", payload="settings:policy"))
+    kb.row(
+        CallbackButton(text="🗑️ Удалить мои данные", payload="settings:forget_ask")
+    )
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
+    return kb.as_markup()
+
+
+def forget_confirm_keyboard():
+    """Подтверждение удаления ПДн жителя. Действие необратимо: записывает
+    «Удалено» в first_name, обнуляет phone и поднимает is_blocked. Поэтому
+    отдельный шаг подтверждения, чтобы случайный тап не стёр данные."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(text="✅ Да, удалить", payload="settings:forget_yes"),
+        CallbackButton(text="❌ Не удалять", payload="menu:settings"),
+    )
     return kb.as_markup()
 
 
@@ -163,6 +189,14 @@ def broadcast_confirm_keyboard():
         CallbackButton(text="✅ Разослать", payload="broadcast:confirm"),
         CallbackButton(text="❌ Отмена", payload="broadcast:abort"),
     )
+    return kb.as_markup()
+
+
+def broadcast_cancel_keyboard():
+    """Кнопка отмены под промптом «введите текст рассылки». Чтобы оператор
+    мог выйти из мастера в один тап вместо набора /cancel."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="❌ Отменить рассылку", payload="broadcast:abort"))
     return kb.as_markup()
 
 

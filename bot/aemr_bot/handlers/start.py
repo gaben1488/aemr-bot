@@ -174,6 +174,12 @@ def register(dp: Dispatcher) -> None:
     # нужно как для жителя (узнать свой max_user_id), так и для оператора
     # (узнать chat_id админ-группы при первом старте).
 
+    # /start, /menu, /help работают в обоих контекстах:
+    # • в личке с жителем — показывают welcome-меню (cmd_start/menu/help);
+    # • в админ-группе — открывают памятку оператора с кнопками быстрых
+    #   действий. Цель: оператор не должен запоминать, что в его чате
+    #   команда называется /op_help, а в личке у жителя — /help. Любая
+    #   привычная команда работает в обоих местах.
     @dp.bot_started()
     async def _(event: BotStarted):
         if _is_admin_chat(event):
@@ -183,18 +189,27 @@ def register(dp: Dispatcher) -> None:
     @dp.message_created(Command("start"))
     async def _(event: MessageCreated):
         if _is_admin_chat(event):
+            from aemr_bot.handlers import admin_commands
+
+            await admin_commands.show_op_menu(event, pin=False)
             return
         await cmd_start(event)
 
     @dp.message_created(Command("help"))
     async def _(event: MessageCreated):
         if _is_admin_chat(event):
+            from aemr_bot.handlers import admin_commands
+
+            await admin_commands.show_op_menu(event, pin=False)
             return
         await cmd_help(event)
 
     @dp.message_created(Command("menu"))
     async def _(event: MessageCreated):
         if _is_admin_chat(event):
+            from aemr_bot.handlers import admin_commands
+
+            await admin_commands.show_op_menu(event, pin=False)
             return
         await cmd_menu(event)
 

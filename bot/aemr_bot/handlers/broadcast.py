@@ -99,14 +99,15 @@ async def _start_wizard(event) -> None:
         return
     _wizards[actor_id] = _WizardState(step="awaiting_text")
     log.info("broadcast: wizard started for operator max_user_id=%s", actor_id)
+    prompt = texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars)
+    cancel_kb = keyboards.broadcast_cancel_keyboard()
     if event.message is not None:
-        await event.message.answer(
-            texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars)
-        )
+        await event.message.answer(prompt, attachments=[cancel_kb])
     else:
         await event.bot.send_message(
             chat_id=cfg.admin_group_id,
-            text=texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars),
+            text=prompt,
+            attachments=[cancel_kb],
         )
 
 
