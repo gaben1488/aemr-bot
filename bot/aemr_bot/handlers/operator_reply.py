@@ -66,6 +66,16 @@ def consume_reply_intent(operator_id: int) -> int | None:
     return appeal_id
 
 
+def drop_reply_intent(operator_id: int) -> int | None:
+    """Сбросить намерение принудительно (кнопка «❌ Отменить ответ» или
+    /cancel в админ-чате). Возвращает appeal_id, на который было
+    нацелено, чтобы вызывающий код мог показать «отменено для #N»."""
+    item = _reply_intent.pop(operator_id, None)
+    if item is None:
+        return None
+    return item[0]
+
+
 def _is_duplicate_reply(operator_id: int, appeal_id: int, text: str) -> bool:
     key = (operator_id, appeal_id)
     prev = _recent_replies.get(key)
@@ -369,17 +379,30 @@ async def handle_command_reply(event, appeal_id: int, text: str) -> None:
     )
 
 
-async def handle_user_followup(event: MessageCreated, text: str) -> bool:
+async def handle_user_followup(
+    event: MessageCreated,
+    text: str,
+    *,
+    body=None,
+) -> bool:
     """Житель написал в личный диалог, находясь в состоянии ожидания (idle).
 
     Цепляем сообщение к последнему живому обращению жителя — NEW,
     IN_PROGRESS или ANSWERED. Сценарий «забыл приложить фото» (NEW),
     «уточнение пока в работе» (IN_PROGRESS) и классический «спасибо,
-    но ещё одно» (ANSWERED — обращение переоткрывается). Без этого
-    дополнения улетали в обработчик idle и получали «не понял
-    сообщение», а оператор видел разорванный диалог в админ-группе.
+    но ещё одно» (ANSWERED — обращение переоткрывается).
+
+    body — оригинальное message body, нужно чтобы достать вложения и
+    тоже пришить их к followup. Без этого дослан фото-уточнение
+    превращалось в пустой followup без файла. Если body не передан
+    (legacy-вызов), вложения пропускаются.
+
+    Шум-фильтр: для ANSWERED-обращений короткие реплики «спасибо»,
+    «ок», «хорошо», «принято» и подобные не переоткрывают обращение.
+    Это снимает SLA-метрик-шум в админ-группе.
     """
     from aemr_bot.db.models import AppealStatus, DialogState
+    from aemr_bot.utils.attachments import collect_attachments
 
     max_user_id = get_user_id(event)
     if max_user_id is None:
@@ -398,6 +421,19 @@ async def handle_user_followup(event: MessageCreated, text: str) -> bool:
     if active is None:
         return False
 
+    # Шум-фильтр для ANSWERED. Короткие благодарности не переоткрывают.
+    if active.status == AppealStatus.ANSWERED.value:
+        normalized = (text or "").strip().lower().rstrip("!.?")
+        thanks_set = {
+            "спасибо", "спасибо!", "спс", "благодарю", "благодарность",
+            "ок", "окей", "хорошо", "понял", "понятно", "принято",
+            "thanks", "thx", "ok",
+        }
+        if normalized in thanks_set:
+            return False  # тихо игнорируем — пусть idle ответит обычной подсказкой
+
+    attachments = collect_attachments(body) if body is not None else []
+
     # ANSWERED — переоткрываем (житель пришёл с уточнением после ответа).
     # NEW / IN_PROGRESS — статус не трогаем, просто пришиваем сообщение
     # к обращению как followup-комментарий.
@@ -408,13 +444,27 @@ async def handle_user_followup(event: MessageCreated, text: str) -> bool:
             session,
             appeal=active,
             text=text,
-            attachments=[],
+            attachments=attachments,
         )
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         followup = card_format.admin_followup(active, user, text)
 
     if cfg.admin_group_id:
         await event.bot.send_message(chat_id=cfg.admin_group_id, text=followup)
+        # Если в дополнении пришли фото/файлы — relay-им их в админ-группу
+        # тоже, чтобы оператор видел контекст, а не только текст.
+        if attachments:
+            from aemr_bot.handlers.appeal import _relay_attachments_to_admin
+
+            try:
+                await _relay_attachments_to_admin(
+                    event.bot,
+                    appeal_id=active.id,
+                    admin_mid=None,
+                    stored_attachments=attachments,
+                )
+            except Exception:
+                log.exception("relay followup attachments failed")
     return True
 
 

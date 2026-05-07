@@ -121,6 +121,49 @@ async def find_stuck_in_summary(
     return list(result)
 
 
+async def find_stuck_in_funnel(
+    session: AsyncSession,
+    idle_seconds: int,
+    limit: int | None = None,
+) -> list[tuple[int, str]]:
+    """Все жители, застрявшие в любом промежуточном шаге воронки дольше
+    `idle_seconds`. Возвращает [(max_user_id, dialog_state), ...].
+
+    Используется фоновым watchdog'ом — раз в N часов сканирует и
+    деликатно сбрасывает зависшие воронки в IDLE с напоминанием.
+    Без этого житель, начавший «Написать обращение» и закрывший MAX,
+    получает любой следующий текст в обработчик «продолжай шаг», а
+    случайное «привет» через неделю запишется как имя/адрес/тема.
+
+    Список состояний — все ожидания КРОМЕ AWAITING_SUMMARY: тот
+    обрабатывается отдельно через find_stuck_in_summary с другим
+    набором действий (там есть собранные attachments, которые надо
+    финализировать как обращение).
+    """
+    if limit is None:
+        from aemr_bot.config import settings as cfg
+        limit = cfg.recover_batch_size
+    pending_states = [
+        DialogState.AWAITING_CONSENT.value,
+        DialogState.AWAITING_CONTACT.value,
+        DialogState.AWAITING_NAME.value,
+        DialogState.AWAITING_LOCALITY.value,
+        DialogState.AWAITING_ADDRESS.value,
+        DialogState.AWAITING_TOPIC.value,
+    ]
+    threshold = datetime.now(timezone.utc) - timedelta(seconds=idle_seconds)
+    result = await session.execute(
+        select(User.max_user_id, User.dialog_state)
+        .where(
+            User.dialog_state.in_(pending_states),
+            User.updated_at <= threshold,
+            User.is_blocked.is_(False),
+        )
+        .limit(limit)
+    )
+    return [(row[0], row[1]) for row in result]
+
+
 async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
     """Обезличить пользователя и отозвать согласие ПДн (152-ФЗ, ст. 9 §2).
 

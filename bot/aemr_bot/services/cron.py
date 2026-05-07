@@ -199,6 +199,72 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
         coalesce=True,
     )
 
+    async def funnel_watchdog():
+        """Раз в час смотрим, кто завис в воронке (AWAITING_CONSENT,
+        AWAITING_CONTACT, AWAITING_NAME, AWAITING_LOCALITY,
+        AWAITING_ADDRESS, AWAITING_TOPIC) дольше 24 часов. Сбрасываем
+        состояние в IDLE и шлём короткое напоминание с кнопкой «открыть
+        меню». Без этого житель, начавший воронку и забывший про неё на
+        неделю, при следующем «привет» попадал в обработчик зависшего
+        шага: «привет» записывалось как имя или адрес.
+
+        Лимит cfg.recover_batch_size защищает от лавины при первом
+        запуске после простоя.
+        """
+        try:
+            from aemr_bot.services import users as users_service
+
+            cutoff_seconds = 24 * 3600  # сутки
+            async with session_scope() as session:
+                stuck = await users_service.find_stuck_in_funnel(
+                    session, idle_seconds=cutoff_seconds
+                )
+            if not stuck:
+                return
+            log.info(
+                "funnel_watchdog: %d жителей зависли в воронке, сбрасываем",
+                len(stuck),
+            )
+            # Сбрасываем по одному — каждый в своей транзакции, чтобы
+            # один сбой не рушил весь батч.
+            from aemr_bot import keyboards as kbds
+
+            # bot отдельно — APScheduler-job изолирован, дёргаем bot
+            # из main через замыкание на send_admin_text/send_admin_document
+            # не подходит (это служебная группа). Используем общий import.
+            from aemr_bot.main import bot
+
+            for max_user_id, _state in stuck:
+                try:
+                    async with session_scope() as session:
+                        await users_service.reset_state(session, max_user_id)
+                    await bot.send_message(
+                        user_id=max_user_id,
+                        text=(
+                            "Похоже, вы начали оформлять обращение, но не "
+                            "закончили. Я сбросил черновик — если хотите "
+                            "снова, откройте меню кнопкой ниже."
+                        ),
+                        attachments=[kbds.back_to_menu_keyboard()],
+                    )
+                except Exception:
+                    log.exception(
+                        "funnel_watchdog: не удалось сбросить max_user_id=%s",
+                        max_user_id,
+                    )
+        except Exception:
+            log.exception("funnel_watchdog crashed")
+
+    scheduler.add_job(
+        funnel_watchdog,
+        # Раз в час, минута :15, чтобы не пересекаться ни с pulse (:00/:05/:30),
+        # ни с SLA-алёртом (:10).
+        CronTrigger(minute=15, timezone=TZ),
+        name="funnel-watchdog",
+        max_instances=1,
+        coalesce=True,
+    )
+
     async def sla_overdue_check():
         """Раз в час проверяем, какие обращения висят дольше SLA без ответа,
         и пушим список в служебную группу. Тишина в чате намеренна:

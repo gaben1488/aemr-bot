@@ -112,16 +112,27 @@ async def cmd_policy(event):
             await bot.send_message(
                 chat_id=chat_id,
                 text=texts.POLICY_DELIVERED,
-                attachments=[policy_service.build_file_attachment(token)],
+                attachments=[
+                    policy_service.build_file_attachment(token),
+                    keyboards.back_to_menu_keyboard(),
+                ],
             )
             return
         except Exception:
             log.exception("policy file delivery failed; falling back to URL")
 
     if policy_url:
-        await reply(event, texts.POLICY_FALLBACK_URL.format(policy_url=policy_url))
+        await reply(
+            event,
+            texts.POLICY_FALLBACK_URL.format(policy_url=policy_url),
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
     else:
-        await reply(event, texts.POLICY_UNAVAILABLE)
+        await reply(
+            event,
+            texts.POLICY_UNAVAILABLE,
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
 
 
 async def cmd_subscribe(event):
@@ -162,6 +173,11 @@ async def cmd_unsubscribe(event):
     if max_user_id is None:
         return
     async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        # Заблокированный житель не получает рассылку в любом случае —
+        # отвечать ему «вы отписаны» бессмысленно. Молча игнорируем.
+        if user.is_blocked:
+            return
         already = await broadcasts_service.is_subscribed(session, max_user_id)
         if not already:
             await reply(
@@ -190,11 +206,26 @@ async def cmd_forget(event):
             action="self_erase",
             target=f"user max_id={max_user_id}",
         )
-    await reply(
-        event,
-        texts.ERASE_REQUESTED,
-        attachments=[keyboards.back_to_menu_keyboard()],
-    )
+    # После /forget пользователь is_blocked=true — даже если он нажмёт
+    # «↩ В меню», его ждут блокировочные сообщения. Поэтому отправляем
+    # просто текст без клавиатуры — это последняя точка взаимодействия.
+    await reply(event, texts.ERASE_REQUESTED)
+
+
+async def cmd_cancel(event):
+    """Сбрасывает текущий шаг воронки и возвращает в меню. Без этого
+    житель набирающий /cancel мог получить тишину (если в каком-то
+    шаге не было ясной кнопки «Отмена»).
+    """
+    from aemr_bot.handlers.menu import open_main_menu
+
+    max_user_id = get_user_id(event)
+    if max_user_id is None:
+        return
+    async with session_scope() as session:
+        await users_service.reset_state(session, max_user_id)
+    await reply(event, texts.CANCELLED)
+    await open_main_menu(event)
 
 
 def register(dp: Dispatcher) -> None:
@@ -249,6 +280,12 @@ def register(dp: Dispatcher) -> None:
         if _is_admin_chat(event):
             return
         await cmd_forget(event)
+
+    @dp.message_created(Command("cancel"))
+    async def _(event: MessageCreated):
+        if _is_admin_chat(event):
+            return
+        await cmd_cancel(event)
 
     @dp.message_created(Command("policy"))
     async def _(event: MessageCreated):

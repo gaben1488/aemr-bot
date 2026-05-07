@@ -37,11 +37,32 @@ async def ensure_operator(event) -> bool:
 async def ensure_role(event, *allowed: OperatorRole) -> bool:
     """True, если автор события имеет одну из ролей `allowed`. При отказе
     отправляет в чат русский текст-отказ, чтобы оператор видел, почему
-    команда проигнорирована."""
+    команда проигнорирована.
+
+    Для callback-событий (нажатие inline-кнопки) дополнительно делаем
+    `ack_callback`, иначе MAX держит спиннер на кнопке у оператора, пока
+    клиент не сдастся по таймауту. Без этого UX «кнопка не нажимается»
+    выглядит ровно как «бот завис».
+    """
     op = await get_operator(event)
     if op is None:
+        # Не оператор — для callback тоже нужен ack, чтобы кнопка не висела.
+        try:
+            from aemr_bot.utils.event import ack_callback
+
+            if hasattr(event, "callback") and getattr(event, "callback", None):
+                await ack_callback(event)
+        except Exception:
+            pass
         return False
     if op.role not in {r.value for r in allowed}:
+        try:
+            from aemr_bot.utils.event import ack_callback
+
+            if hasattr(event, "callback") and getattr(event, "callback", None):
+                await ack_callback(event)
+        except Exception:
+            pass
         await event.message.answer(
             f"Команда доступна только ролям: {', '.join(r.value for r in allowed)}"
         )

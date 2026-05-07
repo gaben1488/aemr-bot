@@ -15,13 +15,34 @@ async def open_main_menu(event):
     состоянию: если житель уже подписан — «Отписаться», иначе
     «Подписаться». Без этого кнопка из «↩️ В меню» всегда показывала
     «Подписаться», даже если житель только что подписался.
+
+    Заблокированному жителю отдаём урезанное меню: только «Полезная
+    информация» и приёмная. Остальные кнопки всё равно ведут к
+    блокировочным сообщениям, проще их не показывать.
     """
     max_user_id = get_user_id(event)
     async with session_scope() as session:
         recep_url = await settings_store.get(session, "electronic_reception_url")
+        is_blocked = False
         subscribed = False
         if max_user_id is not None:
-            subscribed = await broadcasts_service.is_subscribed(session, max_user_id)
+            user = await users_service.get_or_create(session, max_user_id=max_user_id)
+            is_blocked = user.is_blocked
+            if not is_blocked:
+                subscribed = await broadcasts_service.is_subscribed(session, max_user_id)
+
+    if is_blocked:
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=(
+                "Ваш аккаунт заблокирован — подача обращений и подписка "
+                "недоступны. Доступные разделы — ниже. Если блокировка "
+                "ошибочна, обратитесь к координатору Администрации."
+            ),
+            attachments=[keyboards.blocked_user_menu(recep_url)],
+        )
+        return
+
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.WELCOME,
@@ -109,6 +130,10 @@ async def do_subscribe(event, max_user_id: int) -> None:
     сменить состояние. Это закрывает баг старого toggle-варианта, где
     кнопка из устаревшего меню могла отписать жителя в ответ на тап
     «Подписаться».
+
+    Если согласие отозвано или не давалось — даём кнопку «Дать согласие»
+    рядом с сообщением, чтобы не отправлять жителя кружным путём через
+    «Настройки → Согласие на ПДн → Дать согласие».
     """
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
@@ -122,12 +147,13 @@ async def do_subscribe(event, max_user_id: int) -> None:
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
-        # 152-ФЗ: рассылка — обработка ПДн. Без активного согласия — отказ.
+        # 152-ФЗ: рассылка — обработка ПДн. Без активного согласия — отказ
+        # с прямой кнопкой «Дать согласие», чтобы житель не блуждал по меню.
         if not user.consent_pdn_at:
             await event.bot.send_message(
                 chat_id=get_chat_id(event),
                 text=texts.SUBSCRIBE_REQUIRES_CONSENT,
-                attachments=[keyboards.back_to_menu_keyboard()],
+                attachments=[keyboards.give_consent_keyboard()],
             )
             return
         already = await broadcasts_service.is_subscribed(session, max_user_id)
@@ -177,11 +203,22 @@ async def do_unsubscribe(event, max_user_id: int) -> None:
 
 
 async def handle_broadcast_unsubscribe(event, max_user_id: int) -> None:
-    """Отписка в одно нажатие через кнопку под каждым сообщением рассылки."""
+    """Отписка в одно нажатие через кнопку под каждым сообщением рассылки.
+
+    Если житель уже не подписан (например, отписался ранее по другой
+    кнопке, а потом тапнул здесь же на старом сообщении рассылки) —
+    отвечаем «вы и так не подписаны», не делая лишний UPDATE.
+    """
     async with session_scope() as session:
         already = await broadcasts_service.is_subscribed(session, max_user_id)
-        if already:
-            await broadcasts_service.set_subscription(session, max_user_id, False)
+        if not already:
+            await event.bot.send_message(
+                chat_id=get_chat_id(event),
+                text=texts.UNSUBSCRIBE_ALREADY_OFF,
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
+        await broadcasts_service.set_subscription(session, max_user_id, False)
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.UNSUBSCRIBE_CONFIRMED,

@@ -56,6 +56,15 @@ async def add_operator_message(
     operator_id: int | None,
     max_message_id: str | None,
 ) -> Message:
+    """Сохранить ответ оператора и перевести обращение в ANSWERED.
+
+    Если обращение уже CLOSED — не «оживляем» его молчком: статус
+    не трогаем, чтобы было видно «оператор ответил по закрытому
+    обращению» (исторически фиксируется через message-запись плюс
+    audit_log от вызывающего кода). Без этой защиты повторный клик
+    «✉️ Ответить» под старой карточкой закрытого обращения переписал
+    бы статус CLOSED→ANSWERED де-факто переоткрытие без аудита.
+    """
     msg = Message(
         appeal_id=appeal.id,
         direction=MessageDirection.FROM_OPERATOR.value,
@@ -64,8 +73,9 @@ async def add_operator_message(
         operator_id=operator_id,
     )
     session.add(msg)
-    appeal.status = AppealStatus.ANSWERED.value
-    appeal.answered_at = datetime.now(timezone.utc)
+    if appeal.status != AppealStatus.CLOSED.value:
+        appeal.status = AppealStatus.ANSWERED.value
+        appeal.answered_at = datetime.now(timezone.utc)
     if operator_id:
         appeal.assigned_operator_id = operator_id
     await session.flush()
@@ -117,18 +127,37 @@ async def set_admin_message_id(session: AsyncSession, appeal_id: int, mid: str) 
 
 
 async def reopen(session: AsyncSession, appeal_id: int) -> bool:
+    """Возобновить обращение: ANSWERED/CLOSED → IN_PROGRESS.
+
+    Если обращение уже NEW/IN_PROGRESS, ничего не меняем и возвращаем
+    False — повторный клик кнопки «🔁 Возобновить» не должен переписывать
+    timestamps и плодить ложные записи в audit_log.
+    """
     result = await session.execute(
         update(Appeal)
-        .where(Appeal.id == appeal_id)
+        .where(
+            Appeal.id == appeal_id,
+            Appeal.status.in_(
+                [AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value]
+            ),
+        )
         .values(status=AppealStatus.IN_PROGRESS.value, answered_at=None, closed_at=None)
     )
     return result.rowcount > 0
 
 
 async def close(session: AsyncSession, appeal_id: int) -> bool:
+    """Закрыть обращение без ответа.
+
+    Если обращение уже CLOSED, ничего не меняем — повторный клик
+    «⛔ Закрыть» не должен переписывать closed_at.
+    """
     result = await session.execute(
         update(Appeal)
-        .where(Appeal.id == appeal_id)
+        .where(
+            Appeal.id == appeal_id,
+            Appeal.status != AppealStatus.CLOSED.value,
+        )
         .values(status=AppealStatus.CLOSED.value, closed_at=datetime.now(timezone.utc))
     )
     return result.rowcount > 0

@@ -120,9 +120,15 @@ async def _send_to_admin_card(
         return None
     attachments = None
     if appeal_id is not None and status is not None:
+        # is_it=True: кнопки блокировки и удаления ПДн рендерим всегда —
+        # серверная авторизация всё равно проверит роль через
+        # `_ensure_role(IT)` в обработчике клика. Скрывать кнопки от
+        # координатора/специалиста значило бы прятать UI, который видит
+        # серверный guard, и наоборот: серверный guard работает в любом
+        # случае. MAX inline-кнопка видна всем участникам чата.
         attachments = [
             keyboards.appeal_admin_actions(
-                appeal_id, status, user_blocked=user_blocked
+                appeal_id, status, is_it=True, user_blocked=user_blocked
             )
         ]
     try:
@@ -301,6 +307,30 @@ async def _start_appeal_flow(event, max_user_id: int):
             policy_url = None
             policy_token = None
 
+    # Если у жителя НЕТ согласия и НЕТ ни URL, ни PDF — это конфигурационный
+    # сбой (settings_store не сидирован). Не пропускаем дальше: иначе житель
+    # попадёт на запрос телефона, минуя шаг согласия, что нарушит 152-ФЗ.
+    # Вместо этого молча просим прийти позже и алёртим оператора.
+    if (
+        await _has_consent_step_pending(max_user_id)
+        and policy_url is None
+        and policy_token is None
+    ):
+        log.error(
+            "policy_url и policy_pdf_token оба пусты — воронка остановлена "
+            "для max_user_id=%s. Сидируйте settings_store.",
+            max_user_id,
+        )
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=(
+                "Сервис временно недоступен — не настроен текст политики "
+                "обработки данных. Сообщили координатору; попробуйте позже."
+            ),
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+        return
+
     if policy_url is not None or policy_token is not None:
         attachments: list = [keyboards.consent_keyboard()]
         if policy_token:
@@ -321,6 +351,14 @@ async def _start_appeal_flow(event, max_user_id: int):
         return
 
     await _ask_contact_or_skip(event, max_user_id)
+
+
+async def _has_consent_step_pending(max_user_id: int) -> bool:
+    """Проверяет, нужен ли жителю шаг согласия (true когда consent_pdn_at пуст).
+    Используется для определения «нам нужна политика, а её нет»."""
+    async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        return user.consent_pdn_at is None
 
 
 async def _ask_contact_or_skip(event, max_user_id: int):
@@ -616,6 +654,9 @@ def register(dp: Dispatcher) -> None:
                     return
                 await admin_commands.run_reply_intent(event, aid)
                 return
+            if payload == "op:reply_cancel":
+                await admin_commands.run_reply_cancel(event)
+                return
             if payload.startswith("op:reopen:"):
                 try:
                     aid = int(payload.split(":", 2)[2])
@@ -681,14 +722,31 @@ def register(dp: Dispatcher) -> None:
         body = get_message_body(event)
 
         if cfg.admin_group_id and chat_id == cfg.admin_group_id:
-            # Мастер рассылок имеет приоритет над фильтрацией слэшей, чтобы
-            # команда /cancel работала внутри мастера. _handle_wizard_text возвращает False,
-            # когда для этого оператора нет активного мастера, поэтому её безопасно
-            # вызывать для каждого сообщения в админ-группе.
             from aemr_bot.handlers import (
                 admin_commands as admin_cmd_module,
                 broadcast as broadcast_handler,
             )
+
+            # /cancel в админ-чате — глобальный сброс: чистит все wizard'ы
+            # и reply-intent оператора. Без этого «потерявшийся» оператор
+            # (запустил wizard, ушёл, вернулся через час) не имеет способа
+            # выйти, кроме перезагрузки бота.
+            if text_body.strip().lower() in ("/cancel", "/cancel@aemo_chat_bot"):
+                operator_id = get_user_id(event)
+                if operator_id is not None:
+                    broadcast_handler._wizards.pop(operator_id, None)
+                    admin_cmd_module._op_wizards.pop(operator_id, None)
+                    op_reply.drop_reply_intent(operator_id)
+                await event.bot.send_message(
+                    chat_id=cfg.admin_group_id,
+                    text="Текущие мастера и черновики ответа сброшены.",
+                )
+                return
+
+            # Мастер рассылок имеет приоритет над фильтрацией слэшей.
+            # _handle_wizard_text возвращает False, когда для этого
+            # оператора нет активного мастера, поэтому её безопасно
+            # вызывать для каждого сообщения в админ-группе.
             consumed = await broadcast_handler._handle_wizard_text(event, text_body)
             if consumed:
                 return
@@ -870,17 +928,65 @@ async def _on_awaiting_locality(event, body, text_body, max_user_id, op_reply):
     )
 
 
+async def _on_awaiting_topic(event, body, text_body, max_user_id, op_reply):
+    """Житель пишет текст вместо тапа по кнопке тематики. Показываем
+    клавиатуру со списком тем заново. Свободный ввод не принимаем —
+    координаторам нужны стабильные категории для маршрутизации."""
+    async with session_scope() as session:
+        topics = await settings_store.get(session, "topics") or []
+    if not topics:
+        # Список тем не сидирован — нельзя продолжать. Сбрасываем шаг
+        # и возвращаем в меню, чтобы житель не висел в воронке без выхода.
+        async with session_scope() as session:
+            await users_service.reset_state(session, max_user_id)
+        await event.message.answer(
+            "Список тем сейчас пуст — сообщили координатору. "
+            "Попробуйте позже.",
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+        return
+    await event.message.answer(
+        "Выберите тематику кнопкой ниже:",
+        attachments=[keyboards.topics_keyboard(topics)],
+    )
+
+
+async def _on_awaiting_consent(event, body, text_body, max_user_id, op_reply):
+    """Житель пишет текст вместо тапа кнопок «Согласен/Отказаться».
+    Возвращаем клавиатуру согласия. Без этого ввод любого текста на этом
+    шаге уходил в /dev/null — бот выглядел как мёртвый."""
+    async with session_scope() as session:
+        policy_url = await settings_store.get(session, "policy_url")
+    if policy_url:
+        text = texts.CONSENT_REQUEST.format(policy_url=policy_url)
+    else:
+        text = (
+            "Чтобы принять обращение, нам нужно ваше согласие на "
+            "обработку персональных данных по 152-ФЗ. Нажмите «Согласен», "
+            "чтобы продолжить."
+        )
+    await event.message.answer(text, attachments=[keyboards.consent_keyboard()])
+
+
 async def _on_idle(event, body, text_body, max_user_id, op_reply):
-    handled = await op_reply.handle_user_followup(event, text_body)
-    if not handled:
-        await event.message.answer(texts.UNKNOWN_INPUT, attachments=[keyboards.main_menu()])
+    """IDLE — нет активной воронки. Сначала пытаемся пришить сообщение
+    к последнему живому обращению как followup; если ничего активного
+    нет — отвечаем подсказкой и показываем меню с актуальным subscribed."""
+    handled = await op_reply.handle_user_followup(event, text_body, body=body)
+    if handled:
+        return
+    from aemr_bot.handlers.menu import open_main_menu
+    await event.message.answer(texts.UNKNOWN_INPUT)
+    await open_main_menu(event)
 
 
 _STATE_HANDLERS = {
+    DialogState.AWAITING_CONSENT: _on_awaiting_consent,
     DialogState.AWAITING_CONTACT: _on_awaiting_contact,
     DialogState.AWAITING_NAME: _on_awaiting_name,
     DialogState.AWAITING_LOCALITY: _on_awaiting_locality,
     DialogState.AWAITING_ADDRESS: _on_awaiting_address,
+    DialogState.AWAITING_TOPIC: _on_awaiting_topic,
     DialogState.AWAITING_SUMMARY: _on_awaiting_summary,
     DialogState.IDLE: _on_idle,
 }

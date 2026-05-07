@@ -6,6 +6,20 @@ from maxapi.types import (
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
 
+def blocked_user_menu(electronic_reception_url: str | None = None):
+    """Урезанное меню для заблокированного жителя. После /forget или
+    ручной блокировки оператором у жителя is_blocked=true: подавать
+    обращения и подписываться нельзя. Но «Полезная информация» —
+    публичные контакты экстренных служб — остаётся доступна, потому
+    что это статика, не привязанная к ПДн жителя.
+    """
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="📚 Полезная информация", payload="menu:useful_info"))
+    if electronic_reception_url:
+        kb.row(LinkButton(text="🌐 Электронная приёмная", url=electronic_reception_url))
+    return kb.as_markup()
+
+
 def main_menu(
     electronic_reception_url: str | None = None,
     *,
@@ -184,6 +198,25 @@ def my_appeals_list_keyboard(
 
 def back_to_menu_keyboard():
     kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
+    return kb.as_markup()
+
+
+def cancel_reply_intent_keyboard():
+    """Кнопка «❌ Отменить» под подсказкой ввода ответа. Без неё intent
+    мог жить 5 минут, и любой следующий текст оператора уходил жителю —
+    в т.ч. случайные «окей», текст для другого обращения, ввод wizard'а."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="❌ Отменить ответ", payload="op:reply_cancel"))
+    return kb.as_markup()
+
+
+def give_consent_keyboard():
+    """Используется когда жителю нужно дать согласие, чтобы продолжить
+    (например, тапнул «Подписаться» без активного согласия). Прямая
+    кнопка короче пути «Настройки → Согласие на ПДн → Дать согласие»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="✅ Дать согласие", payload="settings:consent_give"))
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()
 
@@ -404,7 +437,12 @@ def appeal_admin_actions(
     return kb.as_markup()
 
 
-def op_help_keyboard(*, open_count: int | None = None, is_it: bool = False):
+def op_help_keyboard(
+    *,
+    open_count: int | None = None,
+    is_it: bool = False,
+    can_broadcast: bool = False,
+):
     """Клавиатура быстрых действий, закреплённая в админ-чате: ближайший
     аналог telegram-кнопки меню, который есть в MAX. Каждое нажатие
     запускает соответствующий сценарий без ввода команды.
@@ -418,7 +456,11 @@ def op_help_keyboard(*, open_count: int | None = None, is_it: bool = False):
     видел нагрузку.
 
     is_it — если оператор IT, показываем дополнительный ряд админ-
-    кнопок (управление операторами, настройки, удалить ПДн).
+    кнопок (управление операторами, настройки, удалить ПДн, бэкап).
+
+    can_broadcast — IT и COORDINATOR могут запускать рассылки. Для
+    AEMR/EGP кнопки рассылок и истории не показываем — они всё равно
+    получили бы отказ от _ensure_role и плодили бы шум в чате.
     """
     kb = InlineKeyboardBuilder()
     open_label = "📋 Открытые обращения"
@@ -430,14 +472,15 @@ def op_help_keyboard(*, open_count: int | None = None, is_it: bool = False):
         CallbackButton(text="📊 За неделю", payload="op:stats_week"),
     )
     kb.row(CallbackButton(text="📊 За месяц", payload="op:stats_month"))
-    kb.row(
-        CallbackButton(text="📢 Сделать рассылку", payload="op:broadcast"),
-        CallbackButton(text="📜 История рассылок", payload="op:broadcast_list"),
-    )
-    kb.row(
-        CallbackButton(text="🛠 Диагностика", payload="op:diag"),
-        CallbackButton(text="💾 Снять бэкап" if is_it else "💾 Бэкап (it)", payload="op:backup"),
-    )
+    if can_broadcast:
+        kb.row(
+            CallbackButton(text="📢 Сделать рассылку", payload="op:broadcast"),
+            CallbackButton(text="📜 История рассылок", payload="op:broadcast_list"),
+        )
+    diag_row = [CallbackButton(text="🛠 Диагностика", payload="op:diag")]
+    if is_it:
+        diag_row.append(CallbackButton(text="💾 Снять бэкап", payload="op:backup"))
+    kb.row(*diag_row)
     if is_it:
         # Админ-ряд для IT: всё, что раньше было только текстовыми командами
         # с аргументами — теперь по кнопке через wizard.

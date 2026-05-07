@@ -118,11 +118,19 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
     from aemr_bot.utils.event import extract_message_id
 
     is_it = False
+    can_broadcast = False
     open_count: int | None = None
     async with session_scope() as session:
         op = await _get_operator(event)
         if op is not None:
             is_it = op.role == OperatorRole.IT.value
+            # Право рассылать имеют IT и COORDINATOR. Для AEMR/EGP
+            # кнопки рассылок не показываем — иначе после клика они
+            # получали бы отказ от _ensure_role.
+            can_broadcast = op.role in {
+                OperatorRole.IT.value,
+                OperatorRole.COORDINATOR.value,
+            }
         try:
             open_count = await appeals_service.count_open(session)
         except Exception:
@@ -131,7 +139,11 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
     sent = await event.bot.send_message(
         chat_id=cfg.admin_group_id,
         text=texts.OP_HELP.format(answer_limit=cfg.answer_max_chars),
-        attachments=[kbds.op_help_keyboard(open_count=open_count, is_it=is_it)],
+        attachments=[
+            kbds.op_help_keyboard(
+                open_count=open_count, is_it=is_it, can_broadcast=can_broadcast
+            )
+        ],
     )
     if not pin:
         return
@@ -243,6 +255,14 @@ async def run_operators_action(event, payload: str) -> None:
     suffix = payload.removeprefix("op:opadd:")
     await ack_callback(event)
     if suffix == "start":
+        # Сбрасываем чужие wizard'ы и reply-intent этого оператора, чтобы
+        # ввод max_user_id не утёк в текст рассылки или в ответ жителю.
+        from aemr_bot.handlers import broadcast as broadcast_handler
+        from aemr_bot.handlers import operator_reply as op_reply
+
+        broadcast_handler._wizards.pop(operator_id, None)
+        op_reply.drop_reply_intent(operator_id)
+
         _op_wizard_set(operator_id, step="awaiting_id")
         await event.bot.send_message(
             chat_id=cfg.admin_group_id,
@@ -552,7 +572,17 @@ async def run_reply_intent(event, appeal_id: int) -> None:
     оператора в in-memory словаре. Следующее текстовое сообщение от
     этого оператора в админ-группе доставляется как /reply <appeal_id>
     <текст> — без свайпа и команды.
+
+    Защиты:
+    - запрещаем reply-intent на CLOSED-обращение, чтобы не было
+      «бесшумного переоткрытия» через ответ;
+    - запрещаем для is_blocked жителя — доставка всё равно отвалится;
+    - сбрасываем активные wizard'ы (broadcast, add-operator) этого
+      оператора, чтобы следующий текст не утёк туда.
     """
+    from aemr_bot import keyboards as kbds
+    from aemr_bot.db.models import AppealStatus
+    from aemr_bot.handlers import broadcast as broadcast_handler
     from aemr_bot.handlers import operator_reply as op_reply
     from aemr_bot.utils.event import ack_callback
 
@@ -560,11 +590,48 @@ async def run_reply_intent(event, appeal_id: int) -> None:
         await ack_callback(event)
         return
     if not await _ensure_operator(event):
+        await ack_callback(event)
         return
     operator_id = get_user_id(event)
     if operator_id is None:
         await ack_callback(event)
         return
+
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id(session, appeal_id)
+    if appeal is None:
+        await ack_callback(event)
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
+        )
+        return
+    if appeal.status == AppealStatus.CLOSED.value:
+        await ack_callback(event)
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=(
+                f"Обращение #{appeal_id} закрыто. Сначала верните его в "
+                f"работу кнопкой «🔁 Возобновить» под карточкой."
+            ),
+        )
+        return
+    if appeal.user is None or appeal.user.is_blocked:
+        await ack_callback(event)
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=(
+                f"Житель по обращению #{appeal_id} заблокирован — ответ не "
+                f"будет доставлен. Снимите блокировку или ответьте по телефону."
+            ),
+        )
+        return
+
+    # Сбрасываем чужие wizard'ы того же оператора, чтобы следующий
+    # текст не ушёл в рассылку или wizard добавления. См. F-003.
+    broadcast_handler._wizards.pop(operator_id, None)
+    _op_wizards.pop(operator_id, None)
+
     op_reply.remember_reply_intent(operator_id, appeal_id)
     await ack_callback(event, f"Ответ на #{appeal_id}")
     await event.bot.send_message(
@@ -572,9 +639,31 @@ async def run_reply_intent(event, appeal_id: int) -> None:
         text=(
             f"✉️ Введите текст ответа на обращение #{appeal_id}.\n"
             f"Лимит {cfg.answer_max_chars} символов. Просто отправьте "
-            f"следующее сообщение в этот чат."
+            f"следующее сообщение в этот чат, либо «Отменить» ниже."
         ),
+        attachments=[kbds.cancel_reply_intent_keyboard()],
     )
+
+
+async def run_reply_cancel(event) -> None:
+    """Кнопка «❌ Отменить ответ» под подсказкой ввода. Сбрасывает
+    reply_intent оператора, чтобы случайный следующий текст не ушёл
+    жителю на запомненное обращение."""
+    from aemr_bot.handlers import operator_reply as op_reply
+    from aemr_bot.utils.event import ack_callback
+
+    operator_id = get_user_id(event)
+    if operator_id is None:
+        await ack_callback(event)
+        return
+    cancelled_appeal = op_reply.drop_reply_intent(operator_id)
+    await ack_callback(event)
+    if cancelled_appeal is not None:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=f"Ответ на обращение #{cancelled_appeal} отменён.",
+        )
+    # Если intent уже истёк или не было — молча, чтобы не плодить шум.
 
 
 async def run_reopen(event, appeal_id: int) -> None:
@@ -778,6 +867,7 @@ async def _do_open_tickets(event) -> None:
                 kbds.appeal_admin_actions(
                     appeal.id,
                     appeal.status,
+                    is_it=True,
                     user_blocked=bool(appeal.user and appeal.user.is_blocked),
                 )
             ],

@@ -97,6 +97,18 @@ async def _start_wizard(event) -> None:
     if actor_id is None:
         log.warning("broadcast: wizard NOT started — no user_id in event")
         return
+    # Сбрасываем чужие wizard'ы и reply-intent этого оператора — иначе
+    # текст рассылки уйдёт в wizard добавления оператора или жителю
+    # как ответ. См. F-003 в operator-аудите.
+    try:
+        from aemr_bot.handlers import admin_commands as admin_cmd_module
+        from aemr_bot.handlers import operator_reply as op_reply
+
+        admin_cmd_module._op_wizards.pop(actor_id, None)
+        op_reply.drop_reply_intent(actor_id)
+    except Exception:
+        log.exception("broadcast: cleanup чужих wizard'ов упал, продолжаем")
+
     _wizards[actor_id] = _WizardState(step="awaiting_text")
     log.info("broadcast: wizard started for operator max_user_id=%s", actor_id)
     prompt = texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars)
