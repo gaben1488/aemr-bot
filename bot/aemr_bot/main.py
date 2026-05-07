@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import sys
 from pathlib import Path
 
 from maxapi import Bot, Dispatcher
+from maxapi.exceptions.max import InvalidToken
 
 from aemr_bot import health
 from aemr_bot.config import settings
@@ -114,11 +116,51 @@ if settings.bot_mode == "webhook":
         return JSONResponse({"ok": True})
 
 
+async def _preflight_check_token(bot: Bot) -> None:
+    """Один лёгкий запрос к MAX до политики и до dispatcher.
+
+    Цель — получить понятную диагностику при битом токене.
+    Без preflight первый сетевой вызов делал `policy_service.ensure_uploaded`,
+    падал с InvalidToken; внутри maxapi aiohttp-сессия закрывалась, и
+    дальнейший `dp.start_polling` уходил в `RuntimeError: Session is closed`.
+    Контейнер уходил в restart-loop без внятной первопричины.
+
+    Здесь мы ловим InvalidToken явно и выходим с осмысленным сообщением,
+    чтобы оператор видел `❌ BOT_TOKEN неверный` вместо стектрейса
+    aiohttp. Сетевые ошибки (MAX временно недоступен) не считаем
+    смертельными — пишем warning и продолжаем, dispatcher переподключится.
+    """
+    try:
+        info = await bot.get_me()
+    except InvalidToken:
+        log.error(
+            "❌ BOT_TOKEN неверный или просрочен. "
+            "Проверьте значение в infra/.env и токен бота в max.ru/business. "
+            "Контейнер выйдет, чтобы избежать restart-loop."
+        )
+        sys.exit(1)
+    except Exception:
+        log.warning(
+            "preflight: get_me() упал по сети. Продолжаем — dispatcher "
+            "сам переподключится. Если бот не оживёт, проверьте сеть и токен.",
+            exc_info=True,
+        )
+        return
+    name = getattr(info, "first_name", None) or getattr(info, "name", "?")
+    bot_id = getattr(info, "user_id", None) or getattr(info, "id", "?")
+    log.info("preflight: токен валидный — бот %s (id=%s)", name, bot_id)
+
+
 async def main() -> None:
     logging.basicConfig(
         level=settings.log_level,
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
+
+    # Сначала проверяем токен MAX, до любых других сетевых операций.
+    # См. _preflight_check_token: без этого первый сбой (политика, рассылки)
+    # ронял aiohttp-сессию и dispatcher падал на «Session is closed».
+    await _preflight_check_token(bot)
 
     await _seed_settings()
 
