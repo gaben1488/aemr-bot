@@ -136,23 +136,65 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
         coalesce=True,
     )
 
-    async def hourly_pulse():
-        """Раз в час шлёт в служебную группу короткое подтверждение
-        «бот жив». Если такого сообщения нет в назначенное время —
-        значит с ботом что-то не так. Это второй контур мониторинга
-        поверх selfcheck: тот ловит зависший event-loop, а пульс
-        ловит ситуацию «процесс упал, контейнер не перезапустился».
+    async def pulse():
+        """Шлёт в служебную группу короткое подтверждение «бот жив».
+
+        Расписание двухрежимное:
+        • В нерабочее время (22:00–08:59 по Камчатке и воскресенье) —
+          раз в час, в минуту :05. Достаточно, чтобы заметить «процесс
+          упал и не перезапустился» к началу рабочего дня.
+        • В рабочее время (пн–сб, 09:00–17:59) — каждые полчаса
+          (минуты :00 и :30). Команде важно видеть, что бот жив именно
+          когда жители активно пишут.
+
+        Минута :05 в нерабочем режиме и :00/:30 в рабочем выбраны так,
+        чтобы пульс не сливался с SLA-алёртом (минута :10) — операторы
+        видят два разных по смыслу сообщения отдельно.
+
+        Это второй контур мониторинга поверх selfcheck: тот ловит
+        зависший event-loop, а пульс — ситуацию «процесс упал,
+        контейнер не перезапустился». Без этого внешнего сигнала
+        тишина легко проходит мимо.
         """
         try:
             now = datetime.now(TZ).strftime("%H:%M")
             await send_admin_text(f"🟢 Бот работает. {now}")
         except Exception:
-            log.exception("hourly_pulse failed")
+            log.exception("pulse failed")
 
+    # Нерабочий пульс: раз в час, минута :05. Только когда «не рабочее
+    # время» — в крон-выражении ниже это часы 22..23 и 0..8, плюс
+    # воскресенье (день недели sun). Часы и минуты вычисляются
+    # cron-trigger'ом строго в TZ (Камчатка).
     scheduler.add_job(
-        hourly_pulse,
-        CronTrigger(minute=0, timezone=TZ),
-        name="hourly-pulse",
+        pulse,
+        CronTrigger(
+            day_of_week="mon-sat",
+            hour="0-8,22,23",
+            minute=5,
+            timezone=TZ,
+        ),
+        name="pulse-offhours",
+        max_instances=1,
+        coalesce=True,
+    )
+    scheduler.add_job(
+        pulse,
+        CronTrigger(day_of_week="sun", hour="*", minute=5, timezone=TZ),
+        name="pulse-sunday",
+        max_instances=1,
+        coalesce=True,
+    )
+    # Рабочий пульс: пн–сб, 09:00–17:59 по Камчатке, каждые 30 мин (:00 и :30).
+    scheduler.add_job(
+        pulse,
+        CronTrigger(
+            day_of_week="mon-sat",
+            hour="9-17",
+            minute="0,30",
+            timezone=TZ,
+        ),
+        name="pulse-workhours",
         max_instances=1,
         coalesce=True,
     )

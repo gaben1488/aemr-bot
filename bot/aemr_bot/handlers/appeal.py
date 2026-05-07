@@ -103,6 +103,7 @@ async def _send_to_admin_card(
     *,
     appeal_id: int | None = None,
     status: str | None = None,
+    user_blocked: bool = False,
 ) -> str | None:
     """Отправляет отформатированную карточку в админ-группу. Возвращает
     message_id администратора или None при ошибке.
@@ -110,13 +111,20 @@ async def _send_to_admin_card(
     Если переданы appeal_id и status — снизу прицепляется клавиатура
     действий («✉️ Ответить», «⛔ Закрыть», «🔁 Возобновить»). Без них
     (например, при followup-сообщении) клавиатуру не добавляем.
+
+    user_blocked — текущее состояние блокировки жителя; влияет на
+    label IT-кнопки (Заблокировать ↔ Разблокировать).
     """
     if not cfg.admin_group_id:
         log.warning("ADMIN_GROUP_ID не установлен — карточка для администратора не доставлена")
         return None
     attachments = None
     if appeal_id is not None and status is not None:
-        attachments = [keyboards.appeal_admin_actions(appeal_id, status)]
+        attachments = [
+            keyboards.appeal_admin_actions(
+                appeal_id, status, user_blocked=user_blocked
+            )
+        ]
     try:
         kwargs: dict = {"chat_id": cfg.admin_group_id, "text": text}
         if attachments is not None:
@@ -226,6 +234,7 @@ async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | None:
             card_format.admin_card(appeal, user),
             appeal_id=appeal.id,
             status=appeal.status,
+            user_blocked=user.is_blocked,
         )
         if admin_mid:
             async with session_scope() as session:
@@ -264,6 +273,20 @@ async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | None:
 async def _start_appeal_flow(event, max_user_id: int):
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        # Заблокированный житель (после /forget или ручной блокировки оператором):
+        # не можем принимать новые обращения, нужно сначала разблокировать
+        # либо самому жителю восстановить согласие через настройки.
+        if user.is_blocked:
+            await event.bot.send_message(
+                chat_id=get_chat_id(event),
+                text=(
+                    "Сейчас вы не можете подать обращение: ваш аккаунт "
+                    "помечен как заблокированный. Если это ошибка — "
+                    "обратитесь к оператору."
+                ),
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
         if not user.consent_pdn_at:
             await users_service.set_state(session, max_user_id, DialogState.AWAITING_CONSENT, data={})
             policy_url = await settings_store.get(session, "policy_url")
@@ -566,6 +589,13 @@ def register(dp: Dispatcher) -> None:
                 await ack_callback(event)
                 await admin_commands.run_settings_menu(event)
                 return
+            if payload == "op:audience":
+                await ack_callback(event)
+                await admin_commands.run_audience_menu(event)
+                return
+            if payload.startswith("op:aud:"):
+                await admin_commands.run_audience_action(event, payload)
+                return
             # Кнопки действий под карточкой обращения
             # (op:reply:N, op:reopen:N, op:close:N, op:erase:N).
             if payload.startswith("op:reply:"):
@@ -599,6 +629,22 @@ def register(dp: Dispatcher) -> None:
                     await ack_callback(event)
                     return
                 await admin_commands.run_erase_for_appeal(event, aid)
+                return
+            if payload.startswith("op:block:"):
+                try:
+                    aid = int(payload.split(":", 2)[2])
+                except (IndexError, ValueError):
+                    await ack_callback(event)
+                    return
+                await admin_commands.run_block_for_appeal(event, aid, blocked=True)
+                return
+            if payload.startswith("op:unblock:"):
+                try:
+                    aid = int(payload.split(":", 2)[2])
+                except (IndexError, ValueError):
+                    await ack_callback(event)
+                    return
+                await admin_commands.run_block_for_appeal(event, aid, blocked=False)
                 return
             # Wizard-ы IT (роли проверяются внутри обработчиков):
             if payload.startswith("op:opadd:"):

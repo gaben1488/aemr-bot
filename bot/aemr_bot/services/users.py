@@ -136,6 +136,7 @@ async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
             phone=None,
             phone_normalized=None,
             consent_pdn_at=None,
+            consent_revoked_at=datetime.now(timezone.utc),
             dialog_state=DialogState.IDLE.value,
             dialog_data={},
             subscribed_broadcast=False,
@@ -143,6 +144,103 @@ async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
         )
     )
     return result.rowcount > 0
+
+
+async def revoke_consent(session: AsyncSession, max_user_id: int) -> bool:
+    """Мягкий отзыв согласия: сохраняем имя/телефон и историю обращений,
+    но помечаем согласие отозванным.
+
+    В отличие от `erase_pdn`, это не «удаление меня из системы», а
+    «прекратите использовать мои данные для новых обращений и рассылок».
+    Сценарий: житель не хочет получать рассылку, не хочет писать новые
+    обращения, но не возражает, чтобы оператор закрыл уже открытые.
+
+    Что делаем: consent_pdn_at=NULL, consent_revoked_at=now,
+    subscribed_broadcast=false, dialog_state=IDLE (на случай, если
+    житель отзывал прямо посреди воронки). is_blocked НЕ ставим —
+    доставка ответов оператора по уже открытым обращениям должна
+    продолжать работать (право на ответ по 59-ФЗ).
+    """
+    result = await session.execute(
+        update(User)
+        .where(User.max_user_id == max_user_id)
+        .values(
+            consent_pdn_at=None,
+            consent_revoked_at=datetime.now(timezone.utc),
+            subscribed_broadcast=False,
+            dialog_state=DialogState.IDLE.value,
+            dialog_data={},
+        )
+    )
+    return result.rowcount > 0
+
+
+async def set_blocked(
+    session: AsyncSession, max_user_id: int, *, blocked: bool
+) -> bool:
+    """Поднять/снять флаг is_blocked.
+
+    Используется кнопкой «🚫 Заблокировать жителя» в карточке обращения
+    и админ-меню «Подписчики и согласия». Заблокированному пользователю
+    бот не доставляет ничего: ни ответы оператора, ни рассылки.
+    Если житель потом снова напишет /start — гард в обработчиках
+    проверит is_blocked и не пустит дальше.
+    """
+    result = await session.execute(
+        update(User)
+        .where(User.max_user_id == max_user_id)
+        .values(is_blocked=blocked)
+    )
+    return result.rowcount > 0
+
+
+async def list_subscribers(session: AsyncSession, *, limit: int = 20) -> list[User]:
+    """Активные подписчики на рассылку. Используется в IT-меню «Аудитория»."""
+    res = await session.scalars(
+        select(User)
+        .where(User.subscribed_broadcast.is_(True), User.is_blocked.is_(False))
+        .order_by(User.updated_at.desc())
+        .limit(limit)
+    )
+    return list(res)
+
+
+async def list_consented(session: AsyncSession, *, limit: int = 20) -> list[User]:
+    """Жители с активным согласием на ПДн. Это все, кто проходил воронку
+    хотя бы раз и не отзывал согласие."""
+    res = await session.scalars(
+        select(User)
+        .where(User.consent_pdn_at.isnot(None))
+        .order_by(User.consent_pdn_at.desc())
+        .limit(limit)
+    )
+    return list(res)
+
+
+async def list_blocked(session: AsyncSession, *, limit: int = 20) -> list[User]:
+    """Заблокированные пользователи — после /forget или ручной блокировки IT."""
+    res = await session.scalars(
+        select(User)
+        .where(User.is_blocked.is_(True))
+        .order_by(User.updated_at.desc())
+        .limit(limit)
+    )
+    return list(res)
+
+
+async def can_post_new_appeal(session: AsyncSession, max_user_id: int) -> bool:
+    """Можно ли жителю подать НОВОЕ обращение прямо сейчас.
+
+    Условия: согласие активно (consent_pdn_at не NULL) и не отозвано;
+    бот не заблокировал пользователя. Если согласие никогда не давалось,
+    результат тоже False — воронка попросит дать согласие в первом шаге.
+    """
+    user = await session.scalar(select(User).where(User.max_user_id == max_user_id))
+    if user is None:
+        return False
+    if user.is_blocked:
+        return False
+    return user.consent_pdn_at is not None
 
 
 async def find_by_phone(session: AsyncSession, phone: str) -> User | None:

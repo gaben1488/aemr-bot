@@ -49,6 +49,7 @@ async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, in
         "Создано",
         "Имя",
         "Телефон",
+        "max_user_id",
         "Населённый пункт",
         "Адрес",
         "Тематика",
@@ -57,6 +58,10 @@ async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, in
         "Ответ оператора",
         "Время ответа, ч",
         "В SLA (4ч)",
+        "Согласие на ПДн",
+        "Согласие отозвано",
+        "Подписан на рассылку",
+        "Заблокирован",
     ]
     ws.append(headers)
     for cell in ws[1]:
@@ -64,6 +69,12 @@ async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, in
         cell.alignment = Alignment(vertical="top", wrap_text=True)
 
     sla_seconds = settings.sla_response_hours * 3600
+
+    def _fmt_dt(dt) -> str:
+        if dt is None:
+            return ""
+        return dt.astimezone(TZ).strftime("%d.%m.%Y %H:%M")
+
     for a in appeals:
         operator_reply = next(
             (m.text for m in reversed(a.messages) if m.direction == "from_operator"),
@@ -76,11 +87,13 @@ async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, in
         else:
             elapsed_hours = None
             in_sla = ""
+        u = a.user
         ws.append([
             a.id,
-            a.created_at.astimezone(TZ).strftime("%d.%m.%Y %H:%M"),
-            a.user.first_name if a.user else "",
-            a.user.phone if a.user else "",
+            _fmt_dt(a.created_at),
+            u.first_name if u else "",
+            u.phone if u else "",
+            u.max_user_id if u else "",
             a.locality or "",
             a.address or "",
             a.topic or "",
@@ -89,9 +102,13 @@ async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, in
             operator_reply or "",
             elapsed_hours if elapsed_hours is not None else "",
             in_sla,
+            _fmt_dt(u.consent_pdn_at) if u else "",
+            _fmt_dt(u.consent_revoked_at) if u else "",
+            "да" if (u and u.subscribed_broadcast) else "нет",
+            "да" if (u and u.is_blocked) else "нет",
         ])
 
-    widths = [6, 18, 16, 18, 28, 36, 24, 60, 18, 60, 14, 12]
+    widths = [6, 18, 16, 18, 14, 28, 36, 24, 60, 18, 60, 14, 12, 18, 18, 14, 14]
     for col_idx, width in enumerate(widths, start=1):
         ws.column_dimensions[ws.cell(row=1, column=col_idx).column_letter].width = width
     for row in ws.iter_rows(min_row=2):

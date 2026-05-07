@@ -119,40 +119,30 @@ if settings.bot_mode == "webhook":
 async def _register_bot_commands(bot: Bot) -> None:
     """Прописать список команд в /-меню MAX, чтобы они видны при наборе слэша.
 
-    Список общий: те же команды и для жителя в личке, и для оператора в
-    служебной группе. Внутри обработчиков уже стоят guard'ы по контексту
-    (`is_admin_chat`), поэтому показ команды в подсказке не означает,
-    что она реально сработает в этом чате — просто становится
-    обнаружимой. Описания держим короткими (≤ 50 символов), потому что
-    MAX режет длинные на узких экранах.
+    MAX Bot API не поддерживает раздельные scopes (нет аналога
+    `BotCommandScopeChat` в Telegram). Set_my_commands записывает один
+    список для всех пользователей — и для жителя в личке, и для
+    оператора в служебной группе. Поэтому здесь только команды жителя.
+    Оператор и так пользуется кнопочной панелью /op_help; полный
+    справочник его команд — в самой панели и в RUNBOOK. Вывод операторских
+    команд здесь засорил бы подсказки у обычного жителя именами вроде
+    /erase, /setting, /reply — это плохая UX и мини-намёк злоумышленнику
+    о наличии админских команд.
     """
     from maxapi.types import BotCommand
 
     commands = [
         BotCommand(name="start", description="Открыть меню"),
         BotCommand(name="menu", description="Открыть меню"),
-        BotCommand(name="help", description="Справка по командам"),
+        BotCommand(name="help", description="Справка"),
         BotCommand(name="policy", description="Политика обработки данных"),
         BotCommand(name="subscribe", description="Подписаться на новости"),
         BotCommand(name="unsubscribe", description="Отписаться от новостей"),
         BotCommand(name="forget", description="Удалить мои данные"),
-        BotCommand(name="whoami", description="Мой ID"),
-        BotCommand(name="op_help", description="Памятка оператора"),
-        BotCommand(name="open_tickets", description="Открытые обращения"),
-        BotCommand(name="reply", description="Ответить по обращению (operator)"),
-        BotCommand(name="reopen", description="Вернуть обращение в работу"),
-        BotCommand(name="close", description="Закрыть обращение без ответа"),
-        BotCommand(name="stats", description="Статистика today/week/month"),
-        BotCommand(name="broadcast", description="Рассылка подписчикам"),
-        BotCommand(name="diag", description="Диагностика бота"),
-        BotCommand(name="erase", description="Удалить ПДн (it)"),
-        BotCommand(name="setting", description="Настройки бота (it)"),
-        BotCommand(name="add_operators", description="Регистрация операторов (it)"),
-        BotCommand(name="backup", description="Снять pg_dump (it)"),
-        BotCommand(name="cancel", description="Отменить текущее действие"),
+        BotCommand(name="whoami", description="Показать мой ID"),
     ]
     await bot.set_my_commands(*commands)
-    log.info("set_my_commands: зарегистрировано %d команд", len(commands))
+    log.info("set_my_commands: зарегистрировано %d команд жителя", len(commands))
 
 
 async def _preflight_check_token(bot: Bot) -> None:

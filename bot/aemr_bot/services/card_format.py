@@ -41,11 +41,17 @@ def attachments_summary_line(attachments: list[dict]) -> str:
             parts.append(f"{label} {n}" if kind != "location" else label)
     if not parts:
         return ""
-    return "📎 Вложения: " + ", ".join(parts)
+    return "Вложения: " + ", ".join(parts)
 
 
 def admin_card(appeal: Appeal, user: User) -> str:
-    summary_line = attachments_summary_line(appeal.attachments or [])
+    """Карточка обращения в служебной группе — единый стиль независимо от
+    того, есть вложения или нет.
+
+    Раньше было «то 2, то 3 разделителя в зависимости от наличия фото».
+    Теперь блок «Вложения» всегда добавляется внутри тела через ту же
+    линию, что и остальные секции, без второй декоративной полосы.
+    """
     body = ADMIN_CARD_TEMPLATE.format(
         number=appeal.id,
         name=user.first_name or "—",
@@ -56,8 +62,9 @@ def admin_card(appeal: Appeal, user: User) -> str:
         summary=appeal.summary or "—",
         answer_limit=settings.answer_max_chars,
     )
+    summary_line = attachments_summary_line(appeal.attachments or [])
     if summary_line:
-        body = f"{body}\n──────────\n{summary_line}"
+        body = f"{body}\n{summary_line}"
     return body
 
 

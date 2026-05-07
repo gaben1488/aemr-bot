@@ -93,7 +93,10 @@ async def show_full_help(event) -> None:
     """Текстовая команда /op_help, без клавиатуры. Вызывается кнопкой «📋 Все команды»."""
     if not _is_admin_chat(event):
         return
-    await event.bot.send_message(chat_id=cfg.admin_group_id, text=texts.OP_HELP)
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_HELP.format(answer_limit=cfg.answer_max_chars),
+    )
 
 
 async def show_op_menu(event, *, pin: bool = False) -> None:
@@ -377,6 +380,138 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
     return False
 
 
+async def run_audience_menu(event) -> None:
+    """Меню «📊 Аудитория и согласия» для IT — точка входа в три списка."""
+    from aemr_bot import keyboards as kbds
+
+    if not await _ensure_role(event, OperatorRole.IT):
+        return
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=(
+            "📊 Аудитория и согласия\n"
+            "────────────────\n"
+            "Выберите выборку. Показываем по 20 записей; для большего "
+            "объёма используйте /stats или прямой SQL."
+        ),
+        attachments=[kbds.op_audience_menu_keyboard()],
+    )
+
+
+async def run_audience_action(event, payload: str) -> None:
+    """Обработчик `op:aud:*`. Подменю — три категории списков; точечные
+    действия рядом с записью — блок/разблок и удаление ПДн.
+
+    Формат payload:
+    `op:aud:subs|consent|blocked` — открыть категорию
+    `op:aud:block|unblock|erase:<max_user_id>` — действие над пользователем
+    """
+    from aemr_bot import keyboards as kbds
+    from aemr_bot.utils.event import ack_callback
+
+    if not await _ensure_role(event, OperatorRole.IT):
+        return
+    suffix = payload.removeprefix("op:aud:")
+    await ack_callback(event)
+    actor_id = get_user_id(event)
+
+    # Сначала проверим точечные действия по max_user_id.
+    if ":" in suffix:
+        action, target_str = suffix.split(":", 1)
+        try:
+            target_id = int(target_str)
+        except ValueError:
+            return
+        if action == "block":
+            async with session_scope() as session:
+                ok = await users_service.set_blocked(
+                    session, target_id, blocked=True
+                )
+                if ok:
+                    await operators_service.write_audit(
+                        session,
+                        operator_max_user_id=actor_id,
+                        action="block",
+                        target=f"user max_id={target_id}",
+                    )
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_USER_BLOCKED.format(max_user_id=target_id)
+                if ok
+                else "Не удалось.",
+            )
+            return
+        if action == "unblock":
+            async with session_scope() as session:
+                ok = await users_service.set_blocked(
+                    session, target_id, blocked=False
+                )
+                if ok:
+                    await operators_service.write_audit(
+                        session,
+                        operator_max_user_id=actor_id,
+                        action="unblock",
+                        target=f"user max_id={target_id}",
+                    )
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_USER_UNBLOCKED.format(max_user_id=target_id)
+                if ok
+                else "Не удалось.",
+            )
+            return
+        if action == "erase":
+            async with session_scope() as session:
+                ok = await users_service.erase_pdn(session, target_id)
+                if ok:
+                    await operators_service.write_audit(
+                        session,
+                        operator_max_user_id=actor_id,
+                        action="erase",
+                        target=f"user max_id={target_id}",
+                    )
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_USER_ERASED.format(max_user_id=target_id)
+                if ok
+                else "Не удалось.",
+            )
+            return
+
+    # Иначе — открыть выборку.
+    async with session_scope() as session:
+        if suffix == "subs":
+            users = await users_service.list_subscribers(session)
+            header = f"📩 Подписчики (показано {len(users)}):"
+        elif suffix == "consent":
+            users = await users_service.list_consented(session)
+            header = f"🔐 Дали согласие на ПДн (показано {len(users)}):"
+        elif suffix == "blocked":
+            users = await users_service.list_blocked(session)
+            header = f"🚫 Заблокированные (показано {len(users)}):"
+        else:
+            return
+
+    if not users:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=f"{header}\n\nСписок пуст.",
+        )
+        return
+    await event.bot.send_message(chat_id=cfg.admin_group_id, text=header)
+    for u in users:
+        name = u.first_name or "—"
+        phone = u.phone or "—"
+        line = f"#{u.max_user_id} · {name} · {phone}"
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=line,
+            attachments=[
+                kbds.op_audience_user_actions(u.max_user_id, blocked=u.is_blocked)
+            ],
+        )
+
+
 async def run_settings_action(event, payload: str) -> None:
     """`op:setkey:<key>` — показать текущее значение настройки и шаблон
     команды для редактирования. Полный wizard для каждого типа значения
@@ -494,6 +629,45 @@ async def run_close(event, appeal_id: int) -> None:
     )
 
 
+async def run_block_for_appeal(event, appeal_id: int, *, blocked: bool) -> None:
+    """Кнопки «🚫 Заблокировать жителя» / «✅ Разблокировать» под карточкой.
+    Доступно только роли it. Поднимает/снимает users.is_blocked.
+    Открытые обращения этого жителя при блокировке остаются в БД, но
+    доставка ответов на них отказывает (после блока is_blocked=true).
+    Разблокировка восстанавливает право получать ответы и подавать новые.
+    """
+    from aemr_bot.utils.event import ack_callback
+
+    if not await _ensure_role(event, OperatorRole.IT):
+        return
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id(session, appeal_id)
+        if appeal is None or appeal.user is None:
+            await ack_callback(event)
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
+            )
+            return
+        target_id = appeal.user.max_user_id
+        ok = await users_service.set_blocked(session, target_id, blocked=blocked)
+        if ok:
+            await operators_service.write_audit(
+                session,
+                operator_max_user_id=get_user_id(event),
+                action="block" if blocked else "unblock",
+                target=f"user max_id={target_id}",
+            )
+    await ack_callback(event)
+    if ok:
+        msg = (
+            texts.OP_USER_BLOCKED if blocked else texts.OP_USER_UNBLOCKED
+        ).format(max_user_id=target_id)
+    else:
+        msg = "Не удалось обновить статус. См. логи."
+    await event.bot.send_message(chat_id=cfg.admin_group_id, text=msg)
+
+
 async def run_erase_for_appeal(event, appeal_id: int) -> None:
     """Кнопка «🗑 Удалить ПДн жителя» в карточке обращения (только для it).
     Находит max_user_id жителя по обращению и стирает его данные."""
@@ -600,7 +774,13 @@ async def _do_open_tickets(event) -> None:
         await event.bot.send_message(
             chat_id=cfg.admin_group_id,
             text=text,
-            attachments=[kbds.appeal_admin_actions(appeal.id, appeal.status)],
+            attachments=[
+                kbds.appeal_admin_actions(
+                    appeal.id,
+                    appeal.status,
+                    user_blocked=bool(appeal.user and appeal.user.is_blocked),
+                )
+            ],
         )
 
 

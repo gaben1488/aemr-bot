@@ -98,8 +98,21 @@ async def open_useful_info(event):
 
 async def toggle_subscription(event, max_user_id: int) -> None:
     async with session_scope() as session:
-        await users_service.get_or_create(session, max_user_id=max_user_id)
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        if user.is_blocked:
+            return
         currently = await broadcasts_service.is_subscribed(session, max_user_id)
+        # Перейти из «не подписан» в «подписан» можно только при
+        # активном согласии — рассылка требует обработки ПДн (152-ФЗ).
+        # Отписаться можно в любом состоянии (отзыв подписки — это
+        # волеизъявление, согласие на него не нужно).
+        if not currently and not user.consent_pdn_at:
+            await event.bot.send_message(
+                chat_id=get_chat_id(event),
+                text=texts.SUBSCRIBE_REQUIRES_CONSENT,
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
         await broadcasts_service.set_subscription(session, max_user_id, not currently)
     confirmation = (
         texts.UNSUBSCRIBE_CONFIRMED if currently else texts.SUBSCRIBE_CONFIRMED
@@ -147,6 +160,70 @@ async def ask_forget_confirm(event):
         chat_id=get_chat_id(event),
         text=texts.ERASE_CONFIRM,
         attachments=[keyboards.forget_confirm_keyboard()],
+    )
+
+
+def _format_dt_local(dt) -> str:
+    from zoneinfo import ZoneInfo
+
+    from aemr_bot.config import settings as cfg
+
+    if dt is None:
+        return "—"
+    return dt.astimezone(ZoneInfo(cfg.timezone)).strftime("%d.%m.%Y %H:%M")
+
+
+async def show_consent_status(event, max_user_id: int):
+    """Карточка состояния согласия. Показывает один из трёх вариантов
+    (активно / отозвано / никогда не давалось) и кнопки действий.
+    """
+    async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    consent_active = user.consent_pdn_at is not None
+    if consent_active:
+        text = texts.CONSENT_STATUS_ACTIVE.format(
+            given_at=_format_dt_local(user.consent_pdn_at)
+        )
+    elif user.consent_revoked_at is not None:
+        text = texts.CONSENT_STATUS_REVOKED.format(
+            revoked_at=_format_dt_local(user.consent_revoked_at)
+        )
+    else:
+        text = texts.CONSENT_STATUS_NEVER
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=text,
+        attachments=[keyboards.consent_status_keyboard(consent_active=consent_active)],
+    )
+
+
+async def ask_consent_revoke_confirm(event):
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=texts.CONSENT_REVOKE_CONFIRM,
+        attachments=[keyboards.consent_revoke_confirm_keyboard()],
+    )
+
+
+async def do_consent_revoke(event, max_user_id: int):
+    """Мягкий отзыв согласия через кнопку. Подписка отключается,
+    дальнейшие новые обращения требуют дать согласие заново.
+    Открытые на момент отзыва обращения остаются в работе.
+    """
+    from aemr_bot.services import operators as ops_service
+
+    async with session_scope() as session:
+        await users_service.revoke_consent(session, max_user_id)
+        await ops_service.write_audit(
+            session,
+            operator_max_user_id=max_user_id,
+            action="self_consent_revoke",
+            target=f"user max_id={max_user_id}",
+        )
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=texts.CONSENT_REVOKED_OK,
+        attachments=[keyboards.back_to_menu_keyboard()],
     )
 
 
@@ -291,6 +368,30 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
     if payload == "settings:forget_yes" and max_user_id is not None:
         await ack_callback(event)
         await do_forget(event, max_user_id)
+        return True
+
+    if payload == "settings:consent_status" and max_user_id is not None:
+        await ack_callback(event)
+        await show_consent_status(event, max_user_id)
+        return True
+
+    if payload == "settings:consent_revoke_ask":
+        await ack_callback(event)
+        await ask_consent_revoke_confirm(event)
+        return True
+
+    if payload == "settings:consent_revoke_yes" and max_user_id is not None:
+        await ack_callback(event)
+        await do_consent_revoke(event, max_user_id)
+        return True
+
+    if payload == "settings:consent_give" and max_user_id is not None:
+        # Запускаем воронку обращения — она сама на первом шаге попросит
+        # согласие, потому что consent_pdn_at пуст после отзыва.
+        await ack_callback(event)
+        from aemr_bot.handlers.appeal import _start_appeal_flow
+
+        await _start_appeal_flow(event, max_user_id)
         return True
 
     if payload == "info:emergency":

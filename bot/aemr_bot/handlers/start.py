@@ -129,7 +129,18 @@ async def cmd_subscribe(event):
     if max_user_id is None:
         return
     async with session_scope() as session:
-        await users_service.get_or_create(session, max_user_id=max_user_id)
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        if user.is_blocked:
+            return
+        # 152-ФЗ: рассылка — это обработка ПДн (по факту, отправка
+        # сообщения по идентификатору жителя). Без согласия нельзя.
+        if not user.consent_pdn_at:
+            await reply(
+                event,
+                texts.SUBSCRIBE_REQUIRES_CONSENT,
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
         already = await broadcasts_service.is_subscribed(session, max_user_id)
         if already:
             await reply(

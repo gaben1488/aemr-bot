@@ -35,15 +35,54 @@ def main_menu(
 
 
 def settings_menu_keyboard():
-    """Подменю «Настройки и помощь». Дублирует команды /help, /policy
-    и /forget кнопками — чтобы житель мог их найти, не зная синтаксиса."""
+    """Подменю «Настройки и помощь». Кнопки покрывают /help, /policy,
+    /forget плюс отдельную точку для согласия на ПДн — отзыв и просмотр.
+
+    Блок «Согласие на ПДн» намеренно отдельной кнопкой, не внутри
+    «Удалить мои данные». Пользователь может хотеть отозвать согласие,
+    но сохранить историю обращений в архиве; «удалить» — это полное
+    обезличивание плюс блокировка.
+    """
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="🆘 Помощь и команды", payload="settings:help"))
     kb.row(CallbackButton(text="📄 Политика данных", payload="settings:policy"))
     kb.row(
+        CallbackButton(text="🔐 Согласие на ПДн", payload="settings:consent_status"),
+    )
+    kb.row(
         CallbackButton(text="🗑️ Удалить мои данные", payload="settings:forget_ask")
     )
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
+    return kb.as_markup()
+
+
+def consent_status_keyboard(*, consent_active: bool):
+    """Кнопки на экране «Согласие на ПДн». Если согласие активно — даём
+    «Отозвать» и «Открыть политику». Если отозвано или не давалось —
+    «Дать согласие» (запускает воронку с шагом согласия)."""
+    kb = InlineKeyboardBuilder()
+    if consent_active:
+        kb.row(
+            CallbackButton(text="❌ Отозвать согласие", payload="settings:consent_revoke_ask"),
+        )
+    else:
+        kb.row(
+            CallbackButton(text="✅ Дать согласие", payload="settings:consent_give"),
+        )
+    kb.row(CallbackButton(text="📄 Политика данных", payload="settings:policy"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="menu:settings"))
+    return kb.as_markup()
+
+
+def consent_revoke_confirm_keyboard():
+    """Подтверждение отзыва согласия. Кнопка «Не отзывать» возвращает
+    в карточку согласия, а не в главное меню — чтобы человек видел
+    свой текущий статус сразу после отказа."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(text="✅ Да, отозвать", payload="settings:consent_revoke_yes"),
+        CallbackButton(text="❌ Не отзывать", payload="settings:consent_status"),
+    )
     return kb.as_markup()
 
 
@@ -253,18 +292,56 @@ def op_settings_keys_keyboard(keys: list[str]):
     return kb.as_markup()
 
 
+def op_audience_menu_keyboard():
+    """Меню «📊 Аудитория и согласия» в админ-панели для роли it.
+    Три выборки: подписчики, давшие согласие, заблокированные.
+    Каждая открывается отдельным сообщением со списком до 20 записей."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="📩 Подписчики", payload="op:aud:subs"))
+    kb.row(CallbackButton(text="🔐 Дали согласие", payload="op:aud:consent"))
+    kb.row(CallbackButton(text="🚫 Заблокированные", payload="op:aud:blocked"))
+    return kb.as_markup()
+
+
+def op_audience_user_actions(max_user_id: int, *, blocked: bool):
+    """Кнопки действий рядом с конкретным жителем в выводе «Аудитория».
+    Минимальный набор: разблок/блок и удаление ПДн. Подписку можно
+    отозвать через `/setting` или попросить жителя отписаться."""
+    kb = InlineKeyboardBuilder()
+    if blocked:
+        kb.row(
+            CallbackButton(
+                text="✅ Разблокировать", payload=f"op:aud:unblock:{max_user_id}"
+            ),
+        )
+    else:
+        kb.row(
+            CallbackButton(
+                text="🚫 Заблокировать", payload=f"op:aud:block:{max_user_id}"
+            ),
+        )
+    kb.row(
+        CallbackButton(
+            text="🗑 Удалить ПДн", payload=f"op:aud:erase:{max_user_id}"
+        ),
+    )
+    return kb.as_markup()
+
+
 def appeal_admin_actions(
     appeal_id: int,
     status: str,
     *,
     is_it: bool = False,
+    user_blocked: bool = False,
 ):
     """Кнопки действий под карточкой обращения в админ-группе.
 
     Набор кнопок зависит от статуса:
     - new / in_progress: «✉️ Ответить», «⛔ Закрыть без ответа»
     - answered / closed: «🔁 Возобновить»
-    Везде, дополнительно для роли it: «🗑 Удалить ПДн жителя».
+    Для роли it дополнительно: «🚫 Заблокировать жителя» (или
+    «✅ Разблокировать», если уже заблокирован) и «🗑 Удалить ПДн жителя».
 
     Цель — снять зависимость от свайп-ответа (часть клиентов MAX его
     не поддерживает) и от помнить-номер для команд /reopen N, /close N.
@@ -291,11 +368,15 @@ def appeal_admin_actions(
             ),
         )
     if is_it:
+        block_label = (
+            "✅ Разблокировать" if user_blocked else "🚫 Заблокировать"
+        )
+        block_payload = (
+            f"op:unblock:{appeal_id}" if user_blocked else f"op:block:{appeal_id}"
+        )
         kb.row(
-            CallbackButton(
-                text="🗑 Удалить ПДн жителя",
-                payload=f"op:erase:{appeal_id}",
-            )
+            CallbackButton(text=block_label, payload=block_payload),
+            CallbackButton(text="🗑 Удалить ПДн", payload=f"op:erase:{appeal_id}"),
         )
     return kb.as_markup()
 
@@ -341,5 +422,6 @@ def op_help_keyboard(*, open_count: int | None = None, is_it: bool = False):
             CallbackButton(text="👥 Операторы", payload="op:operators"),
             CallbackButton(text="⚙️ Настройки бота", payload="op:settings"),
         )
+        kb.row(CallbackButton(text="📊 Аудитория и согласия", payload="op:audience"))
     kb.row(CallbackButton(text="📋 Все команды", payload="op:help_full"))
     return kb.as_markup()

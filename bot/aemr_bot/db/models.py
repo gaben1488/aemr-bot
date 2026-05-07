@@ -53,6 +53,13 @@ class User(Base):
     # `/erase phone=`, чтобы он работал и за пределами пары сотен жителей.
     phone_normalized: Mapped[str | None] = mapped_column(String(32), index=True)
     consent_pdn_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Когда житель явно отозвал согласие через кнопку «Отозвать согласие»
+    # или через /forget. Используется как точка отсечения «до отзыва /
+    # после отзыва»: открытые на момент отзыва обращения остаются в работе
+    # и ответ оператора по ним доставляется (право жителя на ответ по
+    # 59-ФЗ не зависит от 152-ФЗ); новые обращения после отзыва — нет,
+    # нужно дать согласие заново.
+    consent_revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     subscribed_broadcast: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
