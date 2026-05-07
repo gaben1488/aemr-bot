@@ -183,12 +183,18 @@ def broadcast_unsubscribe_keyboard():
 
 
 def broadcast_confirm_keyboard():
-    """Шаг анкеты: оператор подтверждает или отменяет подготовленную рассылку."""
+    """Шаг анкеты: оператор подтверждает, переписывает или отменяет рассылку.
+
+    Кнопка «Изменить текст» возвращает мастер в шаг awaiting_text без
+    потери уже введённого. Раньше для исправления опечатки приходилось
+    отменять и заново вводить текст с нуля.
+    """
     kb = InlineKeyboardBuilder()
     kb.row(
         CallbackButton(text="✅ Разослать", payload="broadcast:confirm"),
-        CallbackButton(text="❌ Отмена", payload="broadcast:abort"),
+        CallbackButton(text="✏️ Изменить текст", payload="broadcast:edit"),
     )
+    kb.row(CallbackButton(text="❌ Отмена", payload="broadcast:abort"))
     return kb.as_markup()
 
 
@@ -212,17 +218,109 @@ def broadcast_stop_keyboard(broadcast_id: int):
     return kb.as_markup()
 
 
-def op_help_keyboard():
+def op_operators_menu_keyboard():
+    """Меню «👥 Операторы» в админ-панели для роли it."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="➕ Добавить", payload="op:opadd:start"))
+    kb.row(CallbackButton(text="📋 Список", payload="op:opadd:list"))
+    kb.row(CallbackButton(text="❌ Отмена", payload="op:opadd:cancel"))
+    return kb.as_markup()
+
+
+def op_role_picker_keyboard():
+    """Шаг 2 wizard'а добавления оператора — выбор роли. Четыре кнопки
+    в одну строку: it, coordinator, aemr, egp. Самомодификация (попытка
+    выдать it самому себе) ловится в обработчике."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(text="it", payload="op:opadd:role:it"),
+        CallbackButton(text="coordinator", payload="op:opadd:role:coordinator"),
+    )
+    kb.row(
+        CallbackButton(text="aemr", payload="op:opadd:role:aemr"),
+        CallbackButton(text="egp", payload="op:opadd:role:egp"),
+    )
+    kb.row(CallbackButton(text="❌ Отмена", payload="op:opadd:cancel"))
+    return kb.as_markup()
+
+
+def op_settings_keys_keyboard(keys: list[str]):
+    """Список ключей /setting — по одной кнопке на строку (длинные имена).
+    Тап → текущее значение и шаблон команды редактирования."""
+    kb = InlineKeyboardBuilder()
+    for key in keys:
+        kb.row(CallbackButton(text=key, payload=f"op:setkey:{key}"))
+    return kb.as_markup()
+
+
+def appeal_admin_actions(
+    appeal_id: int,
+    status: str,
+    *,
+    is_it: bool = False,
+):
+    """Кнопки действий под карточкой обращения в админ-группе.
+
+    Набор кнопок зависит от статуса:
+    - new / in_progress: «✉️ Ответить», «⛔ Закрыть без ответа»
+    - answered / closed: «🔁 Возобновить»
+    Везде, дополнительно для роли it: «🗑 Удалить ПДн жителя».
+
+    Цель — снять зависимость от свайп-ответа (часть клиентов MAX его
+    не поддерживает) и от помнить-номер для команд /reopen N, /close N.
+    Кнопка «Ответить» переводит оператора в состояние ожидания текста:
+    следующее его сообщение в админ-группе доставляется как ответ
+    жителю по этому обращению.
+    """
+    kb = InlineKeyboardBuilder()
+    open_states = {"new", "in_progress"}
+    closed_states = {"answered", "closed"}
+    if status in open_states:
+        kb.row(
+            CallbackButton(text="✉️ Ответить", payload=f"op:reply:{appeal_id}"),
+        )
+        kb.row(
+            CallbackButton(
+                text="⛔ Закрыть без ответа", payload=f"op:close:{appeal_id}"
+            ),
+        )
+    elif status in closed_states:
+        kb.row(
+            CallbackButton(
+                text="🔁 Возобновить", payload=f"op:reopen:{appeal_id}"
+            ),
+        )
+    if is_it:
+        kb.row(
+            CallbackButton(
+                text="🗑 Удалить ПДн жителя",
+                payload=f"op:erase:{appeal_id}",
+            )
+        )
+    return kb.as_markup()
+
+
+def op_help_keyboard(*, open_count: int | None = None, is_it: bool = False):
     """Клавиатура быстрых действий, закреплённая в админ-чате: ближайший
     аналог telegram-кнопки меню, который есть в MAX. Каждое нажатие
     запускает соответствующий сценарий без ввода команды.
 
     Цель — свести к минимуму команды, которые приходится набирать
-    руками. Команды с обязательными аргументами (/reply, /reopen,
-    /close, /erase, /setting, /add_operators) остаются текстовыми;
-    всё остальное живёт здесь."""
+    руками. Команды с обязательными аргументами для роли it (/erase,
+    /setting, /add_operators) проводятся через кнопочный wizard.
+
+    open_count — число открытых обращений; если задано, показывается
+    рядом с кнопкой «Открытые обращения», чтобы координатор сразу
+    видел нагрузку.
+
+    is_it — если оператор IT, показываем дополнительный ряд админ-
+    кнопок (управление операторами, настройки, удалить ПДн).
+    """
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="📋 Открытые обращения", payload="op:open_tickets"))
+    open_label = "📋 Открытые обращения"
+    if open_count is not None:
+        open_label = f"📋 Открытые обращения ({open_count})"
+    kb.row(CallbackButton(text=open_label, payload="op:open_tickets"))
     kb.row(
         CallbackButton(text="📊 За сегодня", payload="op:stats_today"),
         CallbackButton(text="📊 За неделю", payload="op:stats_week"),
@@ -234,7 +332,14 @@ def op_help_keyboard():
     )
     kb.row(
         CallbackButton(text="🛠 Диагностика", payload="op:diag"),
-        CallbackButton(text="💾 Снять бэкап", payload="op:backup"),
+        CallbackButton(text="💾 Снять бэкап" if is_it else "💾 Бэкап (it)", payload="op:backup"),
     )
+    if is_it:
+        # Админ-ряд для IT: всё, что раньше было только текстовыми командами
+        # с аргументами — теперь по кнопке через wizard.
+        kb.row(
+            CallbackButton(text="👥 Операторы", payload="op:operators"),
+            CallbackButton(text="⚙️ Настройки бота", payload="op:settings"),
+        )
     kb.row(CallbackButton(text="📋 Все команды", payload="op:help_full"))
     return kb.as_markup()

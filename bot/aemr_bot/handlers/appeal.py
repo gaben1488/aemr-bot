@@ -97,13 +97,31 @@ async def recover_stuck_funnels(bot) -> int:
     return finalized
 
 
-async def _send_to_admin_card(bot, text: str) -> str | None:
-    """Отправляет отформатированную карточку в админ-группу. Возвращает message_id администратора или None при ошибке."""
+async def _send_to_admin_card(
+    bot,
+    text: str,
+    *,
+    appeal_id: int | None = None,
+    status: str | None = None,
+) -> str | None:
+    """Отправляет отформатированную карточку в админ-группу. Возвращает
+    message_id администратора или None при ошибке.
+
+    Если переданы appeal_id и status — снизу прицепляется клавиатура
+    действий («✉️ Ответить», «⛔ Закрыть», «🔁 Возобновить»). Без них
+    (например, при followup-сообщении) клавиатуру не добавляем.
+    """
     if not cfg.admin_group_id:
         log.warning("ADMIN_GROUP_ID не установлен — карточка для администратора не доставлена")
         return None
+    attachments = None
+    if appeal_id is not None and status is not None:
+        attachments = [keyboards.appeal_admin_actions(appeal_id, status)]
     try:
-        sent = await bot.send_message(chat_id=cfg.admin_group_id, text=text)
+        kwargs: dict = {"chat_id": cfg.admin_group_id, "text": text}
+        if attachments is not None:
+            kwargs["attachments"] = attachments
+        sent = await bot.send_message(**kwargs)
     except Exception:
         log.exception("не удалось доставить карточку администратора в chat_id=%s", cfg.admin_group_id)
         return None
@@ -203,7 +221,12 @@ async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | None:
                 )
                 await users_service.reset_state(session, max_user_id)
 
-        admin_mid = await _send_to_admin_card(bot, card_format.admin_card(appeal, user))
+        admin_mid = await _send_to_admin_card(
+            bot,
+            card_format.admin_card(appeal, user),
+            appeal_id=appeal.id,
+            status=appeal.status,
+        )
         if admin_mid:
             async with session_scope() as session:
                 await appeals_service.set_admin_message_id(session, appeal.id, admin_mid)
@@ -484,6 +507,9 @@ def register(dp: Dispatcher) -> None:
             if payload == "broadcast:abort":
                 await broadcast_handler._handle_abort(event)
                 return
+            if payload == "broadcast:edit":
+                await broadcast_handler._handle_edit(event)
+                return
             if payload.startswith("broadcast:stop:"):
                 try:
                     bid = int(payload.split(":", 2)[2])
@@ -532,6 +558,55 @@ def register(dp: Dispatcher) -> None:
                 await ack_callback(event)
                 await admin_commands.show_full_help(event)
                 return
+            if payload == "op:operators":
+                await ack_callback(event)
+                await admin_commands.run_operators_menu(event)
+                return
+            if payload == "op:settings":
+                await ack_callback(event)
+                await admin_commands.run_settings_menu(event)
+                return
+            # Кнопки действий под карточкой обращения
+            # (op:reply:N, op:reopen:N, op:close:N, op:erase:N).
+            if payload.startswith("op:reply:"):
+                try:
+                    aid = int(payload.split(":", 2)[2])
+                except (IndexError, ValueError):
+                    await ack_callback(event)
+                    return
+                await admin_commands.run_reply_intent(event, aid)
+                return
+            if payload.startswith("op:reopen:"):
+                try:
+                    aid = int(payload.split(":", 2)[2])
+                except (IndexError, ValueError):
+                    await ack_callback(event)
+                    return
+                await admin_commands.run_reopen(event, aid)
+                return
+            if payload.startswith("op:close:"):
+                try:
+                    aid = int(payload.split(":", 2)[2])
+                except (IndexError, ValueError):
+                    await ack_callback(event)
+                    return
+                await admin_commands.run_close(event, aid)
+                return
+            if payload.startswith("op:erase:"):
+                try:
+                    aid = int(payload.split(":", 2)[2])
+                except (IndexError, ValueError):
+                    await ack_callback(event)
+                    return
+                await admin_commands.run_erase_for_appeal(event, aid)
+                return
+            # Wizard-ы IT (роли проверяются внутри обработчиков):
+            if payload.startswith("op:opadd:"):
+                await admin_commands.run_operators_action(event, payload)
+                return
+            if payload.startswith("op:setkey:"):
+                await admin_commands.run_settings_action(event, payload)
+                return
 
         # Переход к обработчикам меню/контактов/просмотра обращений
         from aemr_bot.handlers import menu as menu_handlers
@@ -554,8 +629,16 @@ def register(dp: Dispatcher) -> None:
             # команда /cancel работала внутри мастера. _handle_wizard_text возвращает False,
             # когда для этого оператора нет активного мастера, поэтому её безопасно
             # вызывать для каждого сообщения в админ-группе.
-            from aemr_bot.handlers import broadcast as broadcast_handler
+            from aemr_bot.handlers import (
+                admin_commands as admin_cmd_module,
+                broadcast as broadcast_handler,
+            )
             consumed = await broadcast_handler._handle_wizard_text(event, text_body)
+            if consumed:
+                return
+            # Wizard «👥 Операторы → Добавить» — перехват на шаге awaiting_id
+            # / awaiting_name. Возвращает True, если поглощено.
+            consumed = await admin_cmd_module.handle_operators_wizard_text(event, text_body)
             if consumed:
                 return
             if text_body.startswith("/"):

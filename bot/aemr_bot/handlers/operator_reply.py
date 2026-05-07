@@ -36,6 +36,36 @@ _recent_replies: dict[tuple[int, int], tuple[str, float]] = {}
 _REPLY_DEDUPE_WINDOW_SEC = 10.0
 
 
+# Намерение оператора ответить на обращение (после нажатия кнопки
+# «✉️ Ответить» в карточке): operator_id → (appeal_id, expires_at).
+# Следующее текстовое сообщение от этого оператора в админ-группе
+# доставляется как /reply <appeal_id> <текст> без нужды свайпать
+# или помнить номер. Окно — 5 минут; дольше держать опасно (оператор
+# может забыть про намерение и случайно отправить житель чужой текст).
+_reply_intent: dict[int, tuple[int, float]] = {}
+_REPLY_INTENT_TTL_SEC = 300.0
+
+
+def remember_reply_intent(operator_id: int, appeal_id: int) -> None:
+    """Запомнить, что оператор сейчас собирается отвечать на обращение."""
+    _reply_intent[operator_id] = (appeal_id, _time.monotonic() + _REPLY_INTENT_TTL_SEC)
+
+
+def consume_reply_intent(operator_id: int) -> int | None:
+    """Достать и сбросить намерение, если оно ещё не протухло.
+
+    Возвращает appeal_id, если оператор недавно нажимал «✉️ Ответить» и
+    окно не истекло. Сбрасывает запись — namesake intent одноразовое.
+    """
+    item = _reply_intent.pop(operator_id, None)
+    if item is None:
+        return None
+    appeal_id, expires_at = item
+    if _time.monotonic() > expires_at:
+        return None
+    return appeal_id
+
+
 def _is_duplicate_reply(operator_id: int, appeal_id: int, text: str) -> bool:
     key = (operator_id, appeal_id)
     prev = _recent_replies.get(key)
@@ -200,7 +230,23 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
 
     Возвращает True, если обработано, и False, если сообщение вообще не было
     ответом (чтобы диспетчер мог перенаправить его дальше — на данный момент никуда).
+
+    Сначала смотрим, есть ли «намерение ответить» от кнопки «✉️ Ответить»
+    под карточкой обращения. Если есть — следующий текст оператора в
+    админ-группе уходит как ответ по этому обращению, без свайпа и без
+    /reply N. Это третий путь ответа после свайпа и команды.
     """
+    author_id = get_user_id(event)
+    if author_id is not None:
+        intent_appeal_id = consume_reply_intent(author_id)
+        if intent_appeal_id is not None:
+            log.info(
+                "operator_reply: kbd-intent — operator=%s appeal=%s text_len=%d",
+                author_id, intent_appeal_id, len(text),
+            )
+            await handle_command_reply(event, intent_appeal_id, text)
+            return True
+
     target_mid = _extract_reply_target_mid(event)
     appeal_id_from_text = None
 
@@ -241,7 +287,6 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
         )
         return False
 
-    author_id = get_user_id(event)
     if author_id is None:
         log.warning("operator_reply: нет user_id в событии")
         return False
@@ -325,8 +370,15 @@ async def handle_command_reply(event, appeal_id: int, text: str) -> None:
 
 
 async def handle_user_followup(event: MessageCreated, text: str) -> bool:
-    """Житель написал в личный диалог, находясь в состоянии ожидания (idle) —
-    переоткрываем отвеченное обращение, если оно есть."""
+    """Житель написал в личный диалог, находясь в состоянии ожидания (idle).
+
+    Цепляем сообщение к последнему живому обращению жителя — NEW,
+    IN_PROGRESS или ANSWERED. Сценарий «забыл приложить фото» (NEW),
+    «уточнение пока в работе» (IN_PROGRESS) и классический «спасибо,
+    но ещё одно» (ANSWERED — обращение переоткрывается). Без этого
+    дополнения улетали в обработчик idle и получали «не понял
+    сообщение», а оператор видел разорванный диалог в админ-группе.
+    """
     from aemr_bot.db.models import AppealStatus, DialogState
 
     max_user_id = get_user_id(event)
@@ -343,11 +395,15 @@ async def handle_user_followup(event: MessageCreated, text: str) -> bool:
             return False
         active = await appeals_service.find_active_for_user(session, user.id)
 
-    if active is None or active.status != AppealStatus.ANSWERED.value:
+    if active is None:
         return False
 
+    # ANSWERED — переоткрываем (житель пришёл с уточнением после ответа).
+    # NEW / IN_PROGRESS — статус не трогаем, просто пришиваем сообщение
+    # к обращению как followup-комментарий.
     async with session_scope() as session:
-        await appeals_service.reopen(session, active.id)
+        if active.status == AppealStatus.ANSWERED.value:
+            await appeals_service.reopen(session, active.id)
         await appeals_service.add_user_message(
             session,
             appeal=active,

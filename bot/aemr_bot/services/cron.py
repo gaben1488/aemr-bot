@@ -157,6 +157,53 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
         coalesce=True,
     )
 
+    async def sla_overdue_check():
+        """Раз в час проверяем, какие обращения висят дольше SLA без ответа,
+        и пушим список в служебную группу. Тишина в чате намеренна:
+        если ничего не просрочено — нет сообщения. Иначе оператор
+        получит «по нулям» каждый час, привыкнет, перестанет читать.
+
+        Лимит до 10 строк в одном сообщении: больше — значит у команды
+        проблема нагрузки, нужно открывать /open_tickets и разбираться.
+        """
+        try:
+            from aemr_bot.services import appeals as appeals_service
+
+            async with session_scope() as session:
+                overdue = await appeals_service.find_overdue_unanswered(
+                    session, settings.sla_response_hours
+                )
+            if not overdue:
+                return
+            now = datetime.now(TZ)
+            lines = [
+                f"⚠️ Просрочено по SLA ({settings.sla_response_hours}ч): "
+                f"{len(overdue)} обращ."
+            ]
+            for ap in overdue[:10]:
+                created_local = ap.created_at.astimezone(TZ) if ap.created_at else now
+                age_h = int((now - created_local).total_seconds() // 3600)
+                name = (ap.user.first_name or "—") if ap.user else "—"
+                lines.append(
+                    f"• #{ap.id} · {name} · {ap.locality or '—'} · "
+                    f"висит {age_h}ч"
+                )
+            if len(overdue) > 10:
+                lines.append(f"… и ещё {len(overdue) - 10}. Откройте «📋 Открытые обращения».")
+            await send_admin_text("\n".join(lines))
+        except Exception:
+            log.exception("sla_overdue_check failed")
+
+    scheduler.add_job(
+        sla_overdue_check,
+        # На 10-й минуте каждого часа — чтобы пульс (минута :00) и
+        # SLA-проверка не сливались в одно неразличимое сообщение.
+        CronTrigger(minute=10, timezone=TZ),
+        name="sla-overdue-check",
+        max_instances=1,
+        coalesce=True,
+    )
+
     if settings.healthcheck_url:
         scheduler.add_job(
             _ping_healthcheck,

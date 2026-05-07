@@ -46,6 +46,14 @@ async def write_audit(
     await session.flush()
 
 
+async def list_active(session: AsyncSession) -> list[Operator]:
+    """Все активные операторы — для списка «👥 Список» в меню IT."""
+    res = await session.scalars(
+        select(Operator).where(Operator.is_active.is_(True)).order_by(Operator.role, Operator.full_name)
+    )
+    return list(res)
+
+
 async def has_any_it(session: AsyncSession) -> bool:
     op = await session.scalar(
         select(Operator).where(

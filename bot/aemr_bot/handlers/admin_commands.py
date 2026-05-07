@@ -1,4 +1,6 @@
+import json
 import logging
+import time as _time_op
 from datetime import datetime
 
 from maxapi import Dispatcher
@@ -101,14 +103,32 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
     была близко к верху группы. MAX держит одно закреплённое сообщение
     на чат. /menu, /start, /help в админке зовут эту же функцию с
     pin=False — это «открой меню сейчас», закреплять не нужно.
+
+    Перед показом смотрим, сколько обращений висит без ответа, и какая
+    роль у автора события: счётчик и админ-ряд кнопок собираются по
+    этим данным. Один раз на показ менюшки — дешевле, чем хранить
+    локальный кэш.
     """
     from aemr_bot import keyboards as kbds
+    from aemr_bot.db.models import OperatorRole
+    from aemr_bot.services import appeals as appeals_service
     from aemr_bot.utils.event import extract_message_id
+
+    is_it = False
+    open_count: int | None = None
+    async with session_scope() as session:
+        op = await _get_operator(event)
+        if op is not None:
+            is_it = op.role == OperatorRole.IT.value
+        try:
+            open_count = await appeals_service.count_open(session)
+        except Exception:
+            log.exception("count_open failed; кнопку без счётчика покажем")
 
     sent = await event.bot.send_message(
         chat_id=cfg.admin_group_id,
         text=texts.OP_HELP,
-        attachments=[kbds.op_help_keyboard()],
+        attachments=[kbds.op_help_keyboard(open_count=open_count, is_it=is_it)],
     )
     if not pin:
         return
@@ -128,6 +148,388 @@ async def run_open_tickets(event) -> None:
     if not await _ensure_operator(event):
         return
     await _do_open_tickets(event)
+
+
+# Wizard добавления оператора (in-memory, под /op:operators).
+# Шаги: idle → awaiting_id → awaiting_role → awaiting_name. ID и ФИО —
+# текстом, роль — отдельной кнопкой. На каждом шаге доступна «Отмена»;
+# по таймауту 5 минут wizard сбрасывается.
+_op_wizards: dict[int, dict] = {}
+_OP_WIZARD_TTL_SEC = 300.0
+
+
+def _op_wizard_get(operator_id: int) -> dict | None:
+    state = _op_wizards.get(operator_id)
+    if state is None:
+        return None
+    if _time_op.monotonic() > state.get("expires_at", 0):
+        _op_wizards.pop(operator_id, None)
+        return None
+    return state
+
+
+def _op_wizard_set(operator_id: int, **kwargs) -> dict:
+    state = _op_wizards.get(operator_id) or {}
+    state.update(kwargs)
+    state["expires_at"] = _time_op.monotonic() + _OP_WIZARD_TTL_SEC
+    _op_wizards[operator_id] = state
+    return state
+
+
+def _op_wizard_drop(operator_id: int) -> None:
+    _op_wizards.pop(operator_id, None)
+
+
+async def run_operators_menu(event) -> None:
+    """Меню «👥 Операторы» в админ-панели для роли it. Точка входа в
+    кнопочный wizard добавления оператора и просмотра списка."""
+    from aemr_bot import keyboards as kbds
+
+    if not await _ensure_role(event, OperatorRole.IT):
+        return
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=(
+            "👥 Управление операторами\n"
+            "──────────\n"
+            "Здесь можно зарегистрировать нового сотрудника или посмотреть "
+            "текущий список. Снять оператора с роли пока можно только через "
+            "/add_operators с тем же max_user_id и нужной ролью."
+        ),
+        attachments=[kbds.op_operators_menu_keyboard()],
+    )
+
+
+async def run_settings_menu(event) -> None:
+    """Меню «⚙️ Настройки бота» в админ-панели для роли it. Список ключей
+    с возможностью посмотреть текущее значение и подсказать команду
+    для редактирования."""
+    from aemr_bot import keyboards as kbds
+    from aemr_bot.services import settings_store
+
+    if not await _ensure_role(event, OperatorRole.IT):
+        return
+    async with session_scope() as session:
+        keys = await settings_store.list_keys(session)
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=(
+            "⚙️ Настройки бота\n"
+            "──────────\n"
+            "Тапните ключ, чтобы увидеть текущее значение и шаблон команды "
+            "для изменения. Сложные ключи (списки, объекты) удобнее править "
+            "командой /setting <ключ> <JSON> — для них кнопка пока показывает "
+            "только текущее значение."
+        ),
+        attachments=[kbds.op_settings_keys_keyboard(keys)],
+    )
+
+
+async def run_operators_action(event, payload: str) -> None:
+    """Подменю «Операторы»: добавить, список, отмена. payload вида
+    `op:opadd:start` / `op:opadd:role:N` / `op:opadd:cancel` /
+    `op:opadd:list`."""
+    from aemr_bot.utils.event import ack_callback
+
+    if not await _ensure_role(event, OperatorRole.IT):
+        return
+    operator_id = get_user_id(event)
+    if operator_id is None:
+        await ack_callback(event)
+        return
+    suffix = payload.removeprefix("op:opadd:")
+    await ack_callback(event)
+    if suffix == "start":
+        _op_wizard_set(operator_id, step="awaiting_id")
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=(
+                "👥 Шаг 1 из 3 — введите max_user_id будущего оператора.\n"
+                "Узнать его — попросите человека написать боту в личке /whoami "
+                "и прислать вам число из ответа."
+            ),
+        )
+        return
+    if suffix == "list":
+        async with session_scope() as session:
+            ops = await operators_service.list_active(session)
+        if not ops:
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text="Список операторов пуст.",
+            )
+            return
+        lines = ["👥 Активные операторы:"]
+        for op in ops:
+            lines.append(
+                f"• #{op.max_user_id} · {op.role} · {op.full_name}"
+            )
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text="\n".join(lines),
+        )
+        return
+    if suffix == "cancel":
+        _op_wizard_drop(operator_id)
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text="Регистрация оператора отменена.",
+        )
+        return
+    if suffix.startswith("role:"):
+        role = suffix.split(":", 1)[1]
+        valid = {r.value for r in OperatorRole}
+        if role not in valid:
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=f"Роль «{role}» неизвестна.",
+            )
+            return
+        state = _op_wizard_get(operator_id)
+        if state is None or state.get("step") != "awaiting_role":
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text="Мастер закрыт. Откройте «👥 Операторы → Добавить» заново.",
+            )
+            return
+        _op_wizard_set(operator_id, role=role, step="awaiting_name")
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=(
+                f"👥 Шаг 3 из 3 — роль {role} выбрана. Теперь введите ФИО "
+                f"оператора одним сообщением. Например: «Иванова Анна Петровна»."
+            ),
+        )
+
+
+async def handle_operators_wizard_text(event, text: str) -> bool:
+    """Перехватчик текстовых сообщений в админ-группе на стороне wizard'а
+    «Добавить оператора». Возвращает True, если сообщение поглощено."""
+    operator_id = get_user_id(event)
+    if operator_id is None:
+        return False
+    state = _op_wizard_get(operator_id)
+    if state is None:
+        return False
+    step = state.get("step")
+    if step == "awaiting_id":
+        try:
+            target_id = int(text.strip())
+        except ValueError:
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text="Это не число. Введите max_user_id (целое положительное).",
+            )
+            return True
+        _op_wizard_set(operator_id, target_id=target_id, step="awaiting_role")
+        from aemr_bot import keyboards as kbds
+
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=(
+                f"👥 Шаг 2 из 3 — id {target_id} принят. Выберите роль:"
+            ),
+            attachments=[kbds.op_role_picker_keyboard()],
+        )
+        return True
+    if step == "awaiting_name":
+        full_name = text.strip()
+        if len(full_name) < 2:
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text="ФИО слишком короткое. Введите полностью.",
+            )
+            return True
+        target_id = int(state["target_id"])
+        role = state["role"]
+        # Самомодификация через wizard заблокирована, как и в /add_operators.
+        if target_id == operator_id:
+            _op_wizard_drop(operator_id)
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text="Изменить свою роль через мастера нельзя.",
+            )
+            return True
+        async with session_scope() as session:
+            existed = await operators_service.get(session, target_id) is not None
+            await operators_service.upsert(
+                session,
+                max_user_id=target_id,
+                full_name=full_name,
+                role=OperatorRole(role),
+            )
+            await operators_service.write_audit(
+                session,
+                operator_max_user_id=operator_id,
+                action="operator_upsert",
+                target=f"user max_id={target_id}",
+                details={"role": role, "full_name": full_name},
+            )
+        _op_wizard_drop(operator_id)
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=(
+                f"✅ {'Обновлено' if existed else 'Добавлено'}: "
+                f"{full_name} · {role} · #{target_id}"
+            ),
+        )
+        return True
+    return False
+
+
+async def run_settings_action(event, payload: str) -> None:
+    """`op:setkey:<key>` — показать текущее значение настройки и шаблон
+    команды для редактирования. Полный wizard для каждого типа значения
+    был бы перегружен; это компромисс между «кнопками» и «текстом»."""
+    from aemr_bot.services import settings_store
+    from aemr_bot.utils.event import ack_callback
+
+    if not await _ensure_role(event, OperatorRole.IT):
+        return
+    key = payload.removeprefix("op:setkey:")
+    if not key:
+        await ack_callback(event)
+        return
+    async with session_scope() as session:
+        value = await settings_store.get(session, key)
+    rendered = json.dumps(value, ensure_ascii=False, indent=2) if value is not None else "—"
+    if len(rendered) > 1500:
+        rendered = rendered[:1500] + "\n…(значение обрезано)"
+    rule = settings_store.SCHEMA.get(key, {})
+    expected = rule.get("type", "?")
+    expected_name = expected.__name__ if hasattr(expected, "__name__") else str(expected)
+    await ack_callback(event)
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=(
+            f"⚙️ Настройка «{key}» (тип {expected_name})\n"
+            f"──────────\n"
+            f"Текущее значение:\n{rendered}\n"
+            f"──────────\n"
+            f"Изменить: /setting {key} <новое значение>\n"
+            f"Для списков и объектов передавайте JSON."
+        ),
+    )
+
+
+async def run_reply_intent(event, appeal_id: int) -> None:
+    """Кнопка «✉️ Ответить» под карточкой обращения. Запоминает намерение
+    оператора в in-memory словаре. Следующее текстовое сообщение от
+    этого оператора в админ-группе доставляется как /reply <appeal_id>
+    <текст> — без свайпа и команды.
+    """
+    from aemr_bot.handlers import operator_reply as op_reply
+    from aemr_bot.utils.event import ack_callback
+
+    if not _is_admin_chat(event):
+        await ack_callback(event)
+        return
+    if not await _ensure_operator(event):
+        return
+    operator_id = get_user_id(event)
+    if operator_id is None:
+        await ack_callback(event)
+        return
+    op_reply.remember_reply_intent(operator_id, appeal_id)
+    await ack_callback(event, f"Ответ на #{appeal_id}")
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=(
+            f"✉️ Введите текст ответа на обращение #{appeal_id}.\n"
+            f"Лимит {cfg.answer_max_chars} символов. Просто отправьте "
+            f"следующее сообщение в этот чат."
+        ),
+    )
+
+
+async def run_reopen(event, appeal_id: int) -> None:
+    """Кнопочный аналог /reopen N — возобновить обращение."""
+    from aemr_bot.utils.event import ack_callback
+
+    if not await _ensure_operator(event):
+        return
+    async with session_scope() as session:
+        ok = await appeals_service.reopen(session, appeal_id)
+        if ok:
+            await operators_service.write_audit(
+                session,
+                operator_max_user_id=get_user_id(event),
+                action="reopen",
+                target=f"appeal #{appeal_id}",
+            )
+    await ack_callback(event)
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=(
+            texts.OP_APPEAL_REOPENED.format(number=appeal_id)
+            if ok
+            else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
+        ),
+    )
+
+
+async def run_close(event, appeal_id: int) -> None:
+    """Кнопочный аналог /close N — закрыть обращение без ответа."""
+    from aemr_bot.utils.event import ack_callback
+
+    if not await _ensure_operator(event):
+        return
+    async with session_scope() as session:
+        ok = await appeals_service.close(session, appeal_id)
+        if ok:
+            await operators_service.write_audit(
+                session,
+                operator_max_user_id=get_user_id(event),
+                action="close",
+                target=f"appeal #{appeal_id}",
+            )
+    await ack_callback(event)
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=(
+            texts.OP_APPEAL_CLOSED.format(number=appeal_id)
+            if ok
+            else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
+        ),
+    )
+
+
+async def run_erase_for_appeal(event, appeal_id: int) -> None:
+    """Кнопка «🗑 Удалить ПДн жителя» в карточке обращения (только для it).
+    Находит max_user_id жителя по обращению и стирает его данные."""
+    from aemr_bot.utils.event import ack_callback
+
+    if not await _ensure_role(event, OperatorRole.IT):
+        return
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id(session, appeal_id)
+        if appeal is None or appeal.user is None:
+            await ack_callback(event)
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
+            )
+            return
+        target_id = appeal.user.max_user_id
+        ok = await users_service.erase_pdn(session, target_id)
+        if ok:
+            await operators_service.write_audit(
+                session,
+                operator_max_user_id=get_user_id(event),
+                action="erase",
+                target=f"user max_id={target_id}",
+            )
+    await ack_callback(event)
+    if ok:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_USER_ERASED.format(max_user_id=target_id),
+        )
+    else:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text="Пользователь не найден.",
+        )
 
 
 async def run_diag(event) -> None:
@@ -177,6 +579,8 @@ async def _do_open_tickets(event) -> None:
         text=f"⏳ Найдено неотвеченных обращений: {len(open_appeals)}",
     )
 
+    from aemr_bot import keyboards as kbds
+
     for appeal in open_appeals:
         user_name = appeal.user.first_name if appeal.user else "—"
         user_id_text = appeal.user.max_user_id if appeal.user else "—"
@@ -196,6 +600,7 @@ async def _do_open_tickets(event) -> None:
         await event.bot.send_message(
             chat_id=cfg.admin_group_id,
             text=text,
+            attachments=[kbds.appeal_admin_actions(appeal.id, appeal.status)],
         )
 
 

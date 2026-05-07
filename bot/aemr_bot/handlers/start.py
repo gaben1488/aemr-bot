@@ -132,10 +132,18 @@ async def cmd_subscribe(event):
         await users_service.get_or_create(session, max_user_id=max_user_id)
         already = await broadcasts_service.is_subscribed(session, max_user_id)
         if already:
-            await reply(event, texts.SUBSCRIBE_ALREADY_ON)
+            await reply(
+                event,
+                texts.SUBSCRIBE_ALREADY_ON,
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
             return
         await broadcasts_service.set_subscription(session, max_user_id, True)
-    await reply(event, texts.SUBSCRIBE_CONFIRMED)
+    await reply(
+        event,
+        texts.SUBSCRIBE_CONFIRMED,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
 
 
 async def cmd_unsubscribe(event):
@@ -145,10 +153,18 @@ async def cmd_unsubscribe(event):
     async with session_scope() as session:
         already = await broadcasts_service.is_subscribed(session, max_user_id)
         if not already:
-            await reply(event, texts.UNSUBSCRIBE_ALREADY_OFF)
+            await reply(
+                event,
+                texts.UNSUBSCRIBE_ALREADY_OFF,
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
             return
         await broadcasts_service.set_subscription(session, max_user_id, False)
-    await reply(event, texts.UNSUBSCRIBE_CONFIRMED)
+    await reply(
+        event,
+        texts.UNSUBSCRIBE_CONFIRMED,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
 
 
 async def cmd_forget(event):
@@ -163,7 +179,11 @@ async def cmd_forget(event):
             action="self_erase",
             target=f"user max_id={max_user_id}",
         )
-    await reply(event, texts.ERASE_REQUESTED)
+    await reply(
+        event,
+        texts.ERASE_REQUESTED,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
 
 
 def register(dp: Dispatcher) -> None:

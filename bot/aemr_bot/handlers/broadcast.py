@@ -224,6 +224,29 @@ async def _handle_abort(event) -> None:
     )
 
 
+async def _handle_edit(event) -> None:
+    """Кнопка «✏️ Изменить текст» в превью. Возвращает мастер в шаг
+    ожидания текста, сохраняя текущее состояние авторства, но обнуляя
+    предыдущий текст. Оператор просто введёт новый — превью пересоберётся."""
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        await ack_callback(event)
+        return
+    state = _wizards.get(actor_id)
+    if state is None:
+        await ack_callback(event, "Мастер закрыт.")
+        return
+    state.step = "awaiting_text"
+    state.text = ""
+    state.renew()
+    await ack_callback(event)
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars),
+        attachments=[keyboards.broadcast_cancel_keyboard()],
+    )
+
+
 async def _handle_stop(event, broadcast_id: int) -> None:
     """Любой участник админ-группы может остановить идущую рассылку."""
     if not _is_admin_chat(event):

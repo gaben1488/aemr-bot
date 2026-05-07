@@ -60,7 +60,11 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id(session, appeal_id)
         if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
-            await event.bot.send_message(chat_id=get_chat_id(event), text="Обращение не найдено.")
+            await event.bot.send_message(
+                chat_id=get_chat_id(event),
+                text="Обращение не найдено.",
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
             return
         text = card_format.user_card(appeal)
     await event.bot.send_message(
@@ -100,7 +104,11 @@ async def toggle_subscription(event, max_user_id: int) -> None:
     confirmation = (
         texts.UNSUBSCRIBE_CONFIRMED if currently else texts.SUBSCRIBE_CONFIRMED
     )
-    await event.bot.send_message(chat_id=get_chat_id(event), text=confirmation)
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=confirmation,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
 
 
 async def handle_broadcast_unsubscribe(event, max_user_id: int) -> None:
@@ -110,7 +118,9 @@ async def handle_broadcast_unsubscribe(event, max_user_id: int) -> None:
         if already:
             await broadcasts_service.set_subscription(session, max_user_id, False)
     await event.bot.send_message(
-        chat_id=get_chat_id(event), text=texts.UNSUBSCRIBE_CONFIRMED
+        chat_id=get_chat_id(event),
+        text=texts.UNSUBSCRIBE_CONFIRMED,
+        attachments=[keyboards.back_to_menu_keyboard()],
     )
 
 
@@ -156,6 +166,7 @@ async def do_forget(event, max_user_id: int):
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.ERASE_REQUESTED,
+        attachments=[keyboards.back_to_menu_keyboard()],
     )
 
 

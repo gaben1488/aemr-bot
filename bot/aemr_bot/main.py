@@ -116,6 +116,45 @@ if settings.bot_mode == "webhook":
         return JSONResponse({"ok": True})
 
 
+async def _register_bot_commands(bot: Bot) -> None:
+    """Прописать список команд в /-меню MAX, чтобы они видны при наборе слэша.
+
+    Список общий: те же команды и для жителя в личке, и для оператора в
+    служебной группе. Внутри обработчиков уже стоят guard'ы по контексту
+    (`is_admin_chat`), поэтому показ команды в подсказке не означает,
+    что она реально сработает в этом чате — просто становится
+    обнаружимой. Описания держим короткими (≤ 50 символов), потому что
+    MAX режет длинные на узких экранах.
+    """
+    from maxapi.types import BotCommand
+
+    commands = [
+        BotCommand(name="start", description="Открыть меню"),
+        BotCommand(name="menu", description="Открыть меню"),
+        BotCommand(name="help", description="Справка по командам"),
+        BotCommand(name="policy", description="Политика обработки данных"),
+        BotCommand(name="subscribe", description="Подписаться на новости"),
+        BotCommand(name="unsubscribe", description="Отписаться от новостей"),
+        BotCommand(name="forget", description="Удалить мои данные"),
+        BotCommand(name="whoami", description="Мой ID"),
+        BotCommand(name="op_help", description="Памятка оператора"),
+        BotCommand(name="open_tickets", description="Открытые обращения"),
+        BotCommand(name="reply", description="Ответить по обращению (operator)"),
+        BotCommand(name="reopen", description="Вернуть обращение в работу"),
+        BotCommand(name="close", description="Закрыть обращение без ответа"),
+        BotCommand(name="stats", description="Статистика today/week/month"),
+        BotCommand(name="broadcast", description="Рассылка подписчикам"),
+        BotCommand(name="diag", description="Диагностика бота"),
+        BotCommand(name="erase", description="Удалить ПДн (it)"),
+        BotCommand(name="setting", description="Настройки бота (it)"),
+        BotCommand(name="add_operators", description="Регистрация операторов (it)"),
+        BotCommand(name="backup", description="Снять pg_dump (it)"),
+        BotCommand(name="cancel", description="Отменить текущее действие"),
+    ]
+    await bot.set_my_commands(*commands)
+    log.info("set_my_commands: зарегистрировано %d команд", len(commands))
+
+
 async def _preflight_check_token(bot: Bot) -> None:
     """Один лёгкий запрос к MAX до политики и до dispatcher.
 
@@ -161,6 +200,16 @@ async def main() -> None:
     # См. _preflight_check_token: без этого первый сбой (политика, рассылки)
     # ронял aiohttp-сессию и dispatcher падал на «Session is closed».
     await _preflight_check_token(bot)
+
+    # Регистрируем команды в /-меню MAX. Без этого житель и оператор видят
+    # пустую подсказку при наборе слэша. set_my_commands перезаписывает
+    # список целиком — при удалении команды из словаря ниже она исчезнет
+    # из подсказок MAX тоже. Список общий для жителя и оператора:
+    # бот сам внутри команд проверяет, в каком чате он.
+    try:
+        await _register_bot_commands(bot)
+    except Exception:
+        log.exception("set_my_commands failed; продолжаем без подсказок в /-меню")
 
     await _seed_settings()
 
