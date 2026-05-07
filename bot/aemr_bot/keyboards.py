@@ -22,10 +22,22 @@ def main_menu(
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="📝 Написать обращение", payload="menu:new_appeal"))
     kb.row(CallbackButton(text="📂 Мои обращения", payload="menu:my_appeals"))
-    subscribe_text = (
-        "🔕 Отписаться от новостей" if subscribed else "🔔 Подписаться на новости"
-    )
-    kb.row(CallbackButton(text=subscribe_text, payload="info:subscribe_toggle"))
+    # Идемпотентные payload'ы вместо toggle: чтобы кнопка из «старого»
+    # сообщения, где состояние уже изменилось, не перевернула подписку
+    # обратно. Если житель жмёт «Подписаться», бот не отписывает его в
+    # ответ, а просто говорит «уже подписаны».
+    if subscribed:
+        kb.row(
+            CallbackButton(
+                text="🔕 Отписаться от новостей", payload="info:subscribe_off"
+            )
+        )
+    else:
+        kb.row(
+            CallbackButton(
+                text="🔔 Подписаться на новости", payload="info:subscribe_on"
+            )
+        )
     if electronic_reception_url:
         kb.row(LinkButton(text="🌐 Электронная приёмная", url=electronic_reception_url))
     kb.row(CallbackButton(text="📋 Приём граждан", payload="menu:appointment"))
@@ -180,7 +192,7 @@ def useful_info_keyboard(
     udth_schedule_url: str | None = None,
     udth_schedule_intermunicipal_url: str | None = None,
     *,
-    subscribe_label: str = "🔔 Подписаться на новости",
+    subscribed: bool = False,
 ):
     kb = InlineKeyboardBuilder()
     kb.row(
@@ -204,7 +216,18 @@ def useful_info_keyboard(
             payload="info:dispatchers",
         )
     )
-    kb.row(CallbackButton(text=subscribe_label, payload="info:subscribe_toggle"))
+    if subscribed:
+        kb.row(
+            CallbackButton(
+                text="🔕 Отписаться от новостей", payload="info:subscribe_off"
+            )
+        )
+    else:
+        kb.row(
+            CallbackButton(
+                text="🔔 Подписаться на новости", payload="info:subscribe_on"
+            )
+        )
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()
 

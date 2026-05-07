@@ -130,7 +130,7 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
 
     sent = await event.bot.send_message(
         chat_id=cfg.admin_group_id,
-        text=texts.OP_HELP,
+        text=texts.OP_HELP.format(answer_limit=cfg.answer_max_chars),
         attachments=[kbds.op_help_keyboard(open_count=open_count, is_it=is_it)],
     )
     if not pin:

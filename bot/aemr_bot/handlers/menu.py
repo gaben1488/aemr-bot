@@ -11,12 +11,21 @@ from aemr_bot.utils.event import ack_callback, get_chat_id, get_user_id
 
 
 async def open_main_menu(event):
+    """Главное меню жителя. Кнопка подписки рендерится по актуальному
+    состоянию: если житель уже подписан — «Отписаться», иначе
+    «Подписаться». Без этого кнопка из «↩️ В меню» всегда показывала
+    «Подписаться», даже если житель только что подписался.
+    """
+    max_user_id = get_user_id(event)
     async with session_scope() as session:
         recep_url = await settings_store.get(session, "electronic_reception_url")
+        subscribed = False
+        if max_user_id is not None:
+            subscribed = await broadcasts_service.is_subscribed(session, max_user_id)
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.WELCOME,
-        attachments=[keyboards.main_menu(recep_url)],
+        attachments=[keyboards.main_menu(recep_url, subscribed=subscribed)],
     )
 
 
@@ -84,42 +93,85 @@ async def open_useful_info(event):
             if max_user_id is not None
             else False
         )
-    label = (
-        texts.SUBSCRIBE_BUTTON_OFF if subscribed else texts.SUBSCRIBE_BUTTON_ON
-    )
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.USEFUL_INFO_TITLE,
         attachments=[
-            keyboards.useful_info_keyboard(udth, udth_inter, subscribe_label=label)
+            keyboards.useful_info_keyboard(udth, udth_inter, subscribed=subscribed)
         ],
     )
 
 
-async def toggle_subscription(event, max_user_id: int) -> None:
+async def do_subscribe(event, max_user_id: int) -> None:
+    """Идемпотентная подписка через кнопку «🔔 Подписаться».
+
+    Если житель уже подписан — отвечаем «уже подписаны», не trying to
+    сменить состояние. Это закрывает баг старого toggle-варианта, где
+    кнопка из устаревшего меню могла отписать жителя в ответ на тап
+    «Подписаться».
+    """
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         if user.is_blocked:
+            await event.bot.send_message(
+                chat_id=get_chat_id(event),
+                text=(
+                    "Подписка недоступна: ваш аккаунт заблокирован. "
+                    "Если это ошибка — обратитесь к оператору."
+                ),
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
             return
-        currently = await broadcasts_service.is_subscribed(session, max_user_id)
-        # Перейти из «не подписан» в «подписан» можно только при
-        # активном согласии — рассылка требует обработки ПДн (152-ФЗ).
-        # Отписаться можно в любом состоянии (отзыв подписки — это
-        # волеизъявление, согласие на него не нужно).
-        if not currently and not user.consent_pdn_at:
+        # 152-ФЗ: рассылка — обработка ПДн. Без активного согласия — отказ.
+        if not user.consent_pdn_at:
             await event.bot.send_message(
                 chat_id=get_chat_id(event),
                 text=texts.SUBSCRIBE_REQUIRES_CONSENT,
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
-        await broadcasts_service.set_subscription(session, max_user_id, not currently)
-    confirmation = (
-        texts.UNSUBSCRIBE_CONFIRMED if currently else texts.SUBSCRIBE_CONFIRMED
-    )
+        already = await broadcasts_service.is_subscribed(session, max_user_id)
+        if already:
+            await event.bot.send_message(
+                chat_id=get_chat_id(event),
+                text=texts.SUBSCRIBE_ALREADY_ON,
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
+        await broadcasts_service.set_subscription(session, max_user_id, True)
     await event.bot.send_message(
         chat_id=get_chat_id(event),
-        text=confirmation,
+        text=texts.SUBSCRIBE_CONFIRMED,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
+
+
+async def do_unsubscribe(event, max_user_id: int) -> None:
+    """Идемпотентная отписка через кнопку «🔕 Отписаться»."""
+    async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        # Заблокированному отписка тоже не нужна — он уже не получает
+        # рассылку. Но на всякий случай отметим subscribed=false.
+        if user.is_blocked:
+            await broadcasts_service.set_subscription(session, max_user_id, False)
+            await event.bot.send_message(
+                chat_id=get_chat_id(event),
+                text=texts.UNSUBSCRIBE_CONFIRMED,
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
+        already = await broadcasts_service.is_subscribed(session, max_user_id)
+        if not already:
+            await event.bot.send_message(
+                chat_id=get_chat_id(event),
+                text=texts.UNSUBSCRIBE_ALREADY_OFF,
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
+        await broadcasts_service.set_subscription(session, max_user_id, False)
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=texts.UNSUBSCRIBE_CONFIRMED,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
 
@@ -404,9 +456,25 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
         await open_dispatchers(event)
         return True
 
+    if payload == "info:subscribe_on" and max_user_id is not None:
+        await ack_callback(event)
+        await do_subscribe(event, max_user_id)
+        return True
+
+    if payload == "info:subscribe_off" and max_user_id is not None:
+        await ack_callback(event)
+        await do_unsubscribe(event, max_user_id)
+        return True
+
+    # Совместимость со старыми меню в чатах: кнопка с payload
+    # `info:subscribe_toggle` уйдёт сама собой при обновлении меню,
+    # но если житель прямо сейчас тапнет на старое сообщение — не
+    # бросаем тап молча. Маршрутизируем в идемпотентный subscribe_on:
+    # если уже подписан, увидит «уже подписаны», ни одно состояние
+    # не перевернётся.
     if payload == "info:subscribe_toggle" and max_user_id is not None:
         await ack_callback(event)
-        await toggle_subscription(event, max_user_id)
+        await do_subscribe(event, max_user_id)
         return True
 
     if payload == "broadcast:unsubscribe" and max_user_id is not None:

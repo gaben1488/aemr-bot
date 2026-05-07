@@ -257,10 +257,16 @@ async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | None:
         )
 
         try:
+            from aemr_bot.services import broadcasts as bcast_svc
+            from aemr_bot.services import settings_store as ss
+
+            async with session_scope() as session:
+                recep_url = await ss.get(session, "electronic_reception_url")
+                subscribed = await bcast_svc.is_subscribed(session, max_user_id)
             await bot.send_message(
                 user_id=max_user_id,
                 text=texts.APPEAL_ACCEPTED.format(number=appeal.id),
-                attachments=[keyboards.main_menu()],
+                attachments=[keyboards.main_menu(recep_url, subscribed=subscribed)],
             )
         except Exception:
             log.exception("подтверждение жителю %s не удалось для обращения #%s", max_user_id, appeal.id)
@@ -448,11 +454,13 @@ def register(dp: Dispatcher) -> None:
                 await users_service.reset_state(session, max_user_id)
             _drop_user_lock(max_user_id)
             await ack_callback(event)
+            from aemr_bot.handlers.menu import open_main_menu
+
             await event.bot.send_message(
                 chat_id=get_chat_id(event),
                 text=texts.CONSENT_DECLINED,
-                attachments=[keyboards.main_menu()],
             )
+            await open_main_menu(event)
             return
 
         if payload == "cancel":
@@ -460,11 +468,13 @@ def register(dp: Dispatcher) -> None:
                 await users_service.reset_state(session, max_user_id)
             _drop_user_lock(max_user_id)
             await ack_callback(event)
+            from aemr_bot.handlers.menu import open_main_menu
+
             await event.bot.send_message(
                 chat_id=get_chat_id(event),
                 text=texts.CANCELLED,
-                attachments=[keyboards.main_menu()],
             )
+            await open_main_menu(event)
             return
 
         if payload.startswith("locality:"):
@@ -695,9 +705,36 @@ def register(dp: Dispatcher) -> None:
             await op_reply.handle_operator_reply(event, body, text_body)
             return
 
-        # Личные сообщения гражданина: для текста со слэшем обработчики команд зарегистрированы
-        # ранее; если мы попали сюда, ни один не совпал — молча игнорируем.
+        # Личные сообщения гражданина: текст со слэшем не дошёл ни до
+        # одного зарегистрированного хендлера команды. Это либо команда
+        # оператора, набранная жителем по ошибке, либо опечатка в имени
+        # команды жителя. Чтобы не обижать тишиной, отвечаем подсказкой.
         if text_body.startswith("/"):
+            head = text_body.split(maxsplit=1)[0]
+            cmd = head.lstrip("/").split("@", 1)[0].lower()
+            operator_only = {
+                "reply", "reopen", "close", "stats", "broadcast", "erase",
+                "setting", "add_operators", "backup", "diag", "op_help",
+                "open_tickets",
+            }
+            citizen = {
+                "start", "menu", "help", "policy", "subscribe",
+                "unsubscribe", "forget", "whoami", "cancel",
+            }
+            if cmd in operator_only:
+                await event.message.answer(
+                    "Эта команда работает только в служебной группе у "
+                    "операторов. Жителю она недоступна. Откройте /menu "
+                    "или /help — там что доступно вам."
+                )
+            elif cmd not in citizen:
+                await event.message.answer(
+                    f"Команда /{cmd} не распознана. Откройте /menu или /help — "
+                    f"там полный список доступных команд."
+                )
+            # Если команда из citizen-набора, но обработчик её не нашёл —
+            # значит реальный хендлер просто не сработал; молчим, чтобы
+            # не дублировать собственный ответ.
             return
 
         max_user_id = get_user_id(event)
