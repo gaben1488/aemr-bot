@@ -463,10 +463,18 @@ def op_help_keyboard(
         open_label = f"📋 Открытые обращения ({open_count})"
     kb.row(CallbackButton(text=open_label, payload="op:open_tickets"))
     kb.row(
-        CallbackButton(text="📊 За сегодня", payload="op:stats_today"),
-        CallbackButton(text="📊 За неделю", payload="op:stats_week"),
+        CallbackButton(text="📊 День", payload="op:stats_today"),
+        CallbackButton(text="📊 Неделя", payload="op:stats_week"),
+        CallbackButton(text="📊 Месяц", payload="op:stats_month"),
     )
-    kb.row(CallbackButton(text="📊 За месяц", payload="op:stats_month"))
+    kb.row(
+        CallbackButton(text="📊 Квартал", payload="op:stats_quarter"),
+        CallbackButton(text="📊 Полгода", payload="op:stats_half_year"),
+    )
+    kb.row(
+        CallbackButton(text="📊 Год", payload="op:stats_year"),
+        CallbackButton(text="📊 Всё время", payload="op:stats_all"),
+    )
     if can_broadcast:
         kb.row(
             CallbackButton(text="📢 Сделать рассылку", payload="op:broadcast"),

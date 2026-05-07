@@ -112,6 +112,26 @@ async def list_for_user(
     return list(res)
 
 
+async def count_recent_for_user(
+    session: AsyncSession, user_id: int, *, hours: int = 1
+) -> int:
+    """Сколько обращений жителя за последние `hours` часов.
+
+    Используется как rate-limit при создании нового обращения: если
+    житель прислал 3+ обращения за час, отказываемся принимать
+    четвёртое и предлагаем дополнить уже открытое. Защита от
+    случайного спама и от злоупотреблений.
+    """
+    threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
+    return (
+        await session.scalar(
+            select(func.count())
+            .select_from(Appeal)
+            .where(Appeal.user_id == user_id, Appeal.created_at >= threshold)
+        )
+    ) or 0
+
+
 async def count_for_user(session: AsyncSession, user_id: int) -> int:
     return (
         await session.scalar(

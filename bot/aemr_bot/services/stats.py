@@ -14,17 +14,38 @@ from aemr_bot.db.models import Appeal, AppealStatus
 TZ = ZoneInfo(settings.timezone)
 
 
-def period_window(period: str) -> tuple[datetime, datetime, str]:
+VALID_PERIODS = ("today", "week", "month", "quarter", "half_year", "year", "all")
+
+
+def period_window(period: str) -> tuple[datetime | None, datetime, str]:
+    """Окно периода для /stats. Возвращает (start_utc, end_utc, title).
+
+    Для `all` start_utc=None — выгрузка идёт без нижнего фильтра по дате,
+    то есть «за всё время существования бота». Все остальные значения
+    дают конкретный start.
+    """
     now = datetime.now(TZ)
+    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
     if period == "today":
-        start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        start = midnight
         title = f"за сегодня {start:%d.%m.%Y}"
     elif period == "week":
-        start = (now - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
+        start = midnight - timedelta(days=7)
         title = f"за 7 дней с {start:%d.%m.%Y}"
     elif period == "month":
-        start = (now - timedelta(days=30)).replace(hour=0, minute=0, second=0, microsecond=0)
+        start = midnight - timedelta(days=30)
         title = f"за 30 дней с {start:%d.%m.%Y}"
+    elif period == "quarter":
+        start = midnight - timedelta(days=90)
+        title = f"за квартал с {start:%d.%m.%Y}"
+    elif period == "half_year":
+        start = midnight - timedelta(days=183)
+        title = f"за полгода с {start:%d.%m.%Y}"
+    elif period == "year":
+        start = midnight - timedelta(days=365)
+        title = f"за год с {start:%d.%m.%Y}"
+    elif period == "all":
+        return None, now.astimezone(timezone.utc), "за всё время"
     else:
         raise ValueError(f"Unknown period: {period}")
     return start.astimezone(timezone.utc), now.astimezone(timezone.utc), title
@@ -32,12 +53,15 @@ def period_window(period: str) -> tuple[datetime, datetime, str]:
 
 async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, int]:
     start, end, title = period_window(period)
-    res = await session.scalars(
+    query = (
         select(Appeal)
         .options(selectinload(Appeal.user), selectinload(Appeal.messages))
-        .where(Appeal.created_at >= start, Appeal.created_at <= end)
+        .where(Appeal.created_at <= end)
         .order_by(Appeal.created_at)
     )
+    if start is not None:
+        query = query.where(Appeal.created_at >= start)
+    res = await session.scalars(query)
     appeals = list(res)
 
     wb = Workbook()

@@ -260,6 +260,64 @@ async def list_consented(session: AsyncSession, *, limit: int = 20) -> list[User
     return list(res)
 
 
+async def find_pending_pdn_retention(
+    session: AsyncSession,
+    *,
+    days_after_revoke: int,
+    limit: int = 1000,
+) -> list[int]:
+    """Жители, у которых нужно обезличить ПДн по сроку 152-ФЗ ст. 21 ч. 5.
+
+    Условия отбора:
+    - consent_revoked_at не NULL и старше `days_after_revoke` дней;
+    - first_name ещё не «Удалено» (значит обезличивание не выполнено);
+    - is_blocked != true ИЛИ phone не NULL — то есть процедура не была
+      доведена до конца. Признак «обезличен» — first_name='Удалено'
+      (его ставит erase_pdn).
+
+    Открытые обращения этого жителя по 59-ФЗ должны быть обработаны до
+    обезличивания: проверка делается на стороне вызывающего кода
+    (в cron-job) — если обращения NEW/IN_PROGRESS остаются, жителя
+    пропускаем и попробуем на следующий день.
+
+    Возвращает max_user_id жителей под отбор. Лимит защищает от
+    лавины при первом запуске после долгого простоя.
+    """
+    threshold = datetime.now(timezone.utc) - timedelta(days=days_after_revoke)
+    res = await session.scalars(
+        select(User.max_user_id)
+        .where(
+            User.consent_revoked_at.isnot(None),
+            User.consent_revoked_at <= threshold,
+            User.first_name != "Удалено",
+        )
+        .limit(limit)
+    )
+    return list(res)
+
+
+async def has_open_appeals(session: AsyncSession, user_id: int) -> bool:
+    """Есть ли у жителя живые обращения (NEW/IN_PROGRESS).
+
+    Использует таблицу appeals напрямую через select(). Нужно для
+    retention-крона: жителя нельзя обезличить, пока его обращения
+    в работе — это нарушит 59-ФЗ право на ответ.
+    """
+    from aemr_bot.db.models import Appeal, AppealStatus
+
+    row = await session.scalar(
+        select(Appeal.id)
+        .where(
+            Appeal.user_id == user_id,
+            Appeal.status.in_(
+                [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+            ),
+        )
+        .limit(1)
+    )
+    return row is not None
+
+
 async def list_blocked(session: AsyncSession, *, limit: int = 20) -> list[User]:
     """Заблокированные пользователи — после /forget или ручной блокировки IT."""
     res = await session.scalars(

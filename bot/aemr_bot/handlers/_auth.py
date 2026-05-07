@@ -8,10 +8,14 @@
 
 from __future__ import annotations
 
+import logging
+
 from aemr_bot.db.models import Operator, OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import operators as operators_service
 from aemr_bot.utils.event import get_user_id, is_admin_chat
+
+log = logging.getLogger(__name__)
 
 
 async def get_operator(event) -> Operator | None:
@@ -53,7 +57,9 @@ async def ensure_role(event, *allowed: OperatorRole) -> bool:
             if hasattr(event, "callback") and getattr(event, "callback", None):
                 await ack_callback(event)
         except Exception:
-            pass
+            # ack_callback может упасть, если событие — message_created
+            # (не callback) — это OK. Запасной путь без падения.
+            log.debug("ack_callback skipped in ensure_role refusal", exc_info=True)
         return False
     if op.role not in {r.value for r in allowed}:
         try:
@@ -62,7 +68,9 @@ async def ensure_role(event, *allowed: OperatorRole) -> bool:
             if hasattr(event, "callback") and getattr(event, "callback", None):
                 await ack_callback(event)
         except Exception:
-            pass
+            # ack_callback может упасть, если событие — message_created
+            # (не callback) — это OK. Запасной путь без падения.
+            log.debug("ack_callback skipped in ensure_role refusal", exc_info=True)
         await event.message.answer(
             f"Команда доступна только ролям: {', '.join(r.value for r in allowed)}"
         )

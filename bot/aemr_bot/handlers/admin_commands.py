@@ -80,9 +80,11 @@ async def run_stats_today(event) -> None:
 
 
 async def run_stats(event, period: str) -> None:
-    """Универсальный обработчик кнопок «📊 За неделю/За месяц». period —
-    одно из today|week|month, как у /stats."""
-    if period not in {"today", "week", "month"}:
+    """Универсальный обработчик кнопок «📊 За …». period — один из
+    today | week | month | quarter | half_year | year | all."""
+    from aemr_bot.services.stats import VALID_PERIODS
+
+    if period not in VALID_PERIODS:
         return
     if not await _ensure_operator(event):
         return
@@ -988,11 +990,16 @@ def register(dp: Dispatcher) -> None:
 
     @dp.message_created(Command("stats"))
     async def cmd_stats(event: MessageCreated):
+        from aemr_bot.services.stats import VALID_PERIODS
+
         if not await _ensure_operator(event):
             return
         period = (_parse_arg(_get_text(event)) or "today").lower()
-        if period not in {"today", "week", "month"}:
-            await event.message.answer("Используйте: /stats today | week | month")
+        if period not in VALID_PERIODS:
+            await event.message.answer(
+                "Используйте: /stats today | week | month | quarter | "
+                "half_year | year | all"
+            )
             return
         await _send_stats_xlsx(event, period)
 

@@ -206,6 +206,78 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         coalesce=True,
     )
 
+    async def pdn_retention_check():
+        """152-ФЗ ст. 21 ч. 5: после отзыва согласия оператор обязан
+        прекратить обработку и уничтожить ПДн в срок 30 дней.
+
+        Раз в сутки ищем жителей, у которых consent_revoked_at старше
+        30 дней, и обезличиваем их персоналку (erase_pdn). Открытые
+        обращения по 59-ФЗ должны быть закрыты до обезличивания —
+        пропускаем таких жителей до следующего дня.
+
+        Без этого крона ПДн отозвавших согласие висели бы в БД
+        бессрочно, что — формально — нарушение закона.
+        """
+        try:
+            from aemr_bot.services import operators as ops_service
+            from aemr_bot.services import users as users_service
+
+            async with session_scope() as session:
+                candidates = await users_service.find_pending_pdn_retention(
+                    session, days_after_revoke=30
+                )
+            if not candidates:
+                return
+            log.info(
+                "pdn_retention: %d жителей под обезличивание", len(candidates)
+            )
+            erased = 0
+            skipped_open = 0
+            for max_user_id in candidates:
+                try:
+                    async with session_scope() as session:
+                        # Получаем User по max_user_id, чтобы взять id
+                        # для проверки обращений (FK через user_id).
+                        user = await users_service.get_or_create(
+                            session, max_user_id=max_user_id
+                        )
+                        if await users_service.has_open_appeals(session, user.id):
+                            skipped_open += 1
+                            continue
+                        ok = await users_service.erase_pdn(session, max_user_id)
+                        if ok:
+                            await ops_service.write_audit(
+                                session,
+                                operator_max_user_id=None,
+                                action="auto_erase_pdn_retention",
+                                target=f"user max_id={max_user_id}",
+                                details={"reason": "152-FZ ст.21 ч.5, 30 дней после отзыва"},
+                            )
+                            erased += 1
+                except Exception:
+                    log.exception(
+                        "pdn_retention: не удалось обезличить max_user_id=%s",
+                        max_user_id,
+                    )
+            if erased or skipped_open:
+                await send_admin_text(
+                    f"🛡 Авто-обезличивание ПДн (152-ФЗ): "
+                    f"обработано {erased}, отложено {skipped_open} "
+                    f"(есть открытые обращения)."
+                )
+        except Exception:
+            log.exception("pdn_retention_check crashed")
+
+    scheduler.add_job(
+        pdn_retention_check,
+        # Раз в сутки в 04:30 по Камчатке — после events-retention (04:00),
+        # до начала рабочего дня операторов.
+        CronTrigger(hour=4, minute=30, timezone=TZ),
+        name="pdn-retention",
+        max_instances=1,
+        coalesce=True,
+    )
+
     async def funnel_watchdog():
         """Раз в час смотрим, кто завис в воронке (AWAITING_CONSENT,
         AWAITING_CONTACT, AWAITING_NAME, AWAITING_LOCALITY,

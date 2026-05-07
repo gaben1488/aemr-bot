@@ -76,7 +76,16 @@ async def bootstrap_it_from_env(
     обновлена, и False, если активный IT уже существует (тогда ничего
     не делает). Позволяет `BOOTSTRAP_IT_MAX_USER_ID` заменить ручной
     шаг INSERT через psql из RUNBOOK §6.1.
+
+    Advisory lock защищает от гонки при параллельном старте двух
+    процессов: оба видят пустую таблицу, оба пытаются вставить — без
+    lock'а получили бы две IT-записи (если bootstrap_it_max_user_id
+    различался по env). Lock-ID 0xAE57B07 — фиксированный, чтобы не
+    пересекался с приложенческими advisory-locks.
     """
+    from sqlalchemy import text as sql_text
+
+    await session.execute(sql_text("SELECT pg_advisory_xact_lock(:lid)"), {"lid": 0xAE57B07})
     if await has_any_it(session):
         return False
     await upsert(

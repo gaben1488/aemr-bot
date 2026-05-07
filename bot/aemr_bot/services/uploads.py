@@ -77,7 +77,7 @@ async def upload_bytes(bot, content: bytes, suffix: str = ".bin") -> str | None:
         try:
             tmp_path.unlink(missing_ok=True)
         except Exception:
-            pass
+            log.debug("temp file unlink failed: %s", tmp_path, exc_info=True)
 
 
 def file_attachment(token: str):

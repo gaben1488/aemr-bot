@@ -289,6 +289,28 @@ async def _start_appeal_flow(event, max_user_id: int):
         # не можем принимать новые обращения, нужно сначала разблокировать
         # либо самому жителю восстановить согласие через настройки.
         if user.is_blocked:
+            pass  # обработка ниже
+        else:
+            # Rate-limit: житель не может создать больше 3 обращений за час.
+            # Защита от спама и случайных дублей. Если упирается в лимит,
+            # скорее всего у жителя уже есть открытое обращение — туда и
+            # надо дополнять.
+            recent = await appeals_service.count_recent_for_user(
+                session, user.id, hours=1
+            )
+            if recent >= 3:
+                await event.bot.send_message(
+                    chat_id=get_chat_id(event),
+                    text=(
+                        "Вы создали несколько обращений за последний час. "
+                        "Чтобы не дублировать, дополните уже открытое — "
+                        "просто отправьте сообщение в этот чат, оно "
+                        "пришьётся к последнему обращению."
+                    ),
+                    attachments=[keyboards.back_to_menu_keyboard()],
+                )
+                return
+        if user.is_blocked:
             await event.bot.send_message(
                 chat_id=get_chat_id(event),
                 text=(
@@ -604,6 +626,22 @@ def register(dp: Dispatcher) -> None:
             if payload == "op:stats_month":
                 await ack_callback(event)
                 await admin_commands.run_stats(event, "month")
+                return
+            if payload == "op:stats_quarter":
+                await ack_callback(event)
+                await admin_commands.run_stats(event, "quarter")
+                return
+            if payload == "op:stats_half_year":
+                await ack_callback(event)
+                await admin_commands.run_stats(event, "half_year")
+                return
+            if payload == "op:stats_year":
+                await ack_callback(event)
+                await admin_commands.run_stats(event, "year")
+                return
+            if payload == "op:stats_all":
+                await ack_callback(event)
+                await admin_commands.run_stats(event, "all")
                 return
             if payload == "op:open_tickets":
                 await ack_callback(event)

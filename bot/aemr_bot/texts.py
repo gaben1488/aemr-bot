@@ -283,7 +283,7 @@ OP_HELP = (
     "/reply N <текст> — ответить по обращению N\n"
     "/reopen N — вернуть в работу\n"
     "/close N — закрыть без ответа\n"
-    "/stats today | week | month — выгрузка XLSX\n"
+    "/stats today | week | month | quarter | half_year | year | all — XLSX\n"
     "/open_tickets — список открытых обращений\n"
     "/diag — диагностика бота\n\n"
     "Рассылки (coordinator, it)\n"
