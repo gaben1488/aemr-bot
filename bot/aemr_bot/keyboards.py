@@ -485,6 +485,10 @@ def op_help_keyboard(
     AEMR/EGP кнопки рассылок и истории не показываем — они всё равно
     получили бы отказ от _ensure_role и плодили бы шум в чате.
     """
+    # Все кнопки по одной в строку — длинные русские подписи
+    # («📜 История рассылок», «👥 Операторы», «📊 Аудитория и согласия»)
+    # в две колонки на узких экранах MAX обрезаются до «...». Один ряд —
+    # один смысл, ничего не теряется.
     kb = InlineKeyboardBuilder()
     open_label = "📋 Открытые обращения"
     if open_count is not None:
@@ -492,20 +496,12 @@ def op_help_keyboard(
     kb.row(CallbackButton(text=open_label, payload="op:open_tickets"))
     kb.row(CallbackButton(text="📊 Статистика", payload="op:stats_menu"))
     if can_broadcast:
-        kb.row(
-            CallbackButton(text="📢 Сделать рассылку", payload="op:broadcast"),
-            CallbackButton(text="📜 История рассылок", payload="op:broadcast_list"),
-        )
-    diag_row = [CallbackButton(text="🛠 Диагностика", payload="op:diag")]
+        kb.row(CallbackButton(text="📢 Сделать рассылку", payload="op:broadcast"))
+        kb.row(CallbackButton(text="📜 История рассылок", payload="op:broadcast_list"))
+    kb.row(CallbackButton(text="🛠 Диагностика", payload="op:diag"))
     if is_it:
-        diag_row.append(CallbackButton(text="💾 Снять бэкап", payload="op:backup"))
-    kb.row(*diag_row)
-    if is_it:
-        # Админ-ряд для IT: всё, что раньше было только текстовыми командами
-        # с аргументами — теперь по кнопке через wizard.
-        kb.row(
-            CallbackButton(text="👥 Операторы", payload="op:operators"),
-            CallbackButton(text="⚙️ Настройки бота", payload="op:settings"),
-        )
+        kb.row(CallbackButton(text="💾 Снять бэкап", payload="op:backup"))
+        kb.row(CallbackButton(text="👥 Операторы", payload="op:operators"))
+        kb.row(CallbackButton(text="⚙️ Настройки бота", payload="op:settings"))
         kb.row(CallbackButton(text="📊 Аудитория и согласия", payload="op:audience"))
     return kb.as_markup()
