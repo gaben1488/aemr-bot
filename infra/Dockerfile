@@ -23,7 +23,7 @@ RUN pip install --upgrade pip && pip install -e /app
 COPY bot/aemr_bot /app/aemr_bot
 COPY bot/alembic.ini /app/alembic.ini
 COPY seed /app/seed
-COPY ["docs/Политика.pdf", "/app/seed/Политика.pdf"]
+COPY docs/PRIVACY.pdf /app/seed/PRIVACY.pdf
 
 # /backups is the named volume mount target. Pre-create it so chown runs
 # at build time; compose will mount over it but ownership of the mount

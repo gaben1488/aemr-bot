@@ -28,7 +28,11 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "docs" / "Политика.md"
-OUT = ROOT / "docs" / "Политика.pdf"
+# На диске PDF лежит под латинским именем — Docker buildkit не справляется
+# с unicode в инструкции COPY. Имя, которое видит житель в чате MAX,
+# подменяется на русское при загрузке файла, см.
+# bot/aemr_bot/services/policy.py::POLICY_PDF_DISPLAY_NAME.
+OUT = ROOT / "docs" / "PRIVACY.pdf"
 
 WIN_FONTS = Path("C:/Windows/Fonts")
 FONT_REGULAR = WIN_FONTS / "arial.ttf"
