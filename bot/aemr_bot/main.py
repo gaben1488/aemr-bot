@@ -25,6 +25,21 @@ bot = Bot(settings.bot_token)
 dp = Dispatcher()
 register_handlers(dp)
 
+# Strong references к фоновым asyncio-таскам. По документации Python 3.11+
+# event loop хранит лишь слабую ссылку на task'и из `asyncio.create_task`,
+# и сборщик мусора может прервать их посреди работы. Особенно опасно для
+# рассылок (`_run_broadcast`) и `_recover` на старте. Кладём task сюда,
+# в done_callback вычищаем, чтобы set не рос.
+_BACKGROUND_TASKS: set[asyncio.Task] = set()
+
+
+def spawn_background_task(coro, *, name: str | None = None) -> asyncio.Task:
+    """Запустить корутину в фоне с защитой от GC."""
+    task = asyncio.create_task(coro, name=name)
+    _BACKGROUND_TASKS.add(task)
+    task.add_done_callback(_BACKGROUND_TASKS.discard)
+    return task
+
 
 def _install_polling_timeout(bot: Bot, timeout: int) -> None:
     """Зафиксировать таймаут long-poll, который использует Dispatcher.start_polling.
@@ -96,8 +111,14 @@ if settings.bot_mode == "webhook":
     @dp.webhook_post("/max/webhook")
     async def _max_webhook(request: Request):
         if settings.webhook_secret:
-            got = request.headers.get("X-Max-Secret") or request.query_params.get("secret")
-            if got != settings.webhook_secret:
+            # Сравнение через hmac.compare_digest — защита от timing-oracle
+            # на проверке секрета. И только заголовок X-Max-Secret: query-
+            # параметр откладывается в логи nginx, в Referer и в браузерную
+            # историю — это утечка секрета в эфемерные логи.
+            import hmac
+
+            got = request.headers.get("X-Max-Secret") or ""
+            if not hmac.compare_digest(got, settings.webhook_secret):
                 return JSONResponse({"error": "forbidden"}, status_code=403)
         try:
             event_json = await request.json()
@@ -110,7 +131,7 @@ if settings.bot_mode == "webhook":
                     except Exception:
                         log.exception("update handling failed")
 
-                asyncio.create_task(_handle())
+                spawn_background_task(_handle(), name="webhook_dispatch")
         except Exception:
             log.exception("webhook decode failed")
         return JSONResponse({"ok": True})
@@ -248,7 +269,7 @@ async def main() -> None:
         except Exception:
             log.exception("recover_stuck_funnels failed")
 
-    asyncio.create_task(_recover())
+    spawn_background_task(_recover(), name="recover_stuck_funnels")
 
     # /healthz: всегда поднят. В режиме webhook его раздаёт FastAPI, но в
     # режиме polling это единственная точка входа, поэтому пропустить нельзя.
@@ -257,10 +278,15 @@ async def main() -> None:
         health_runner = await health.start(
             host=settings.webhook_host, port=settings.webhook_port
         )
-        asyncio.create_task(health.heartbeat_pulse())
+        spawn_background_task(health.heartbeat_pulse(), name="heartbeat_pulse")
 
     send_admin_text, send_admin_document = _build_admin_senders(bot)
-    scheduler = cron_service.build_scheduler(send_admin_document, send_admin_text)
+    # bot отдаём в build_scheduler, чтобы сервисы не импортировали `main`
+    # лазево (P0-2). Цикл services → main был хрупкий: любой рефакторинг
+    # main.py мог сломать cron-job.
+    scheduler = cron_service.build_scheduler(
+        bot, send_admin_document, send_admin_text
+    )
     scheduler.start()
 
     try:

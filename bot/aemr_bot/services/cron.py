@@ -22,7 +22,14 @@ log = logging.getLogger(__name__)
 TZ = ZoneInfo(settings.timezone)
 
 
-def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
+def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOScheduler:
+    """Собрать APScheduler со всеми job'ами бота.
+
+    bot принимаем явным параметром, чтобы services не импортировал точку
+    входа `main.bot` лазево. Раньше funnel_watchdog грузил `from
+    aemr_bot.main import bot` внутри замыкания — это создавало цикл
+    services → main, незаметный до рефакторинга main.py.
+    """
     scheduler = AsyncIOScheduler(timezone=TZ)
 
     async def backup_with_alert():
@@ -226,13 +233,9 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
                 len(stuck),
             )
             # Сбрасываем по одному — каждый в своей транзакции, чтобы
-            # один сбой не рушил весь батч.
+            # один сбой не рушил весь батч. bot захвачен через замыкание
+            # build_scheduler — без цикла services → main.
             from aemr_bot import keyboards as kbds
-
-            # bot отдельно — APScheduler-job изолирован, дёргаем bot
-            # из main через замыкание на send_admin_text/send_admin_document
-            # не подходит (это служебная группа). Используем общий import.
-            from aemr_bot.main import bot
 
             for max_user_id, _state in stuck:
                 try:

@@ -85,17 +85,31 @@ async def _ping_db_cached() -> bool:
 
 
 async def _healthz(request: web.Request) -> web.Response:
+    """/healthz: liveness/readiness.
+
+    Полная диагностика (heartbeat_fresh, db_ok, last_beat_age) выдаётся
+    только локальным запросам — Docker healthcheck и self-ping. Внешним
+    клиентам (через nginx, на всякий случай если попадёт) отдаём только
+    `{"ok": ...}`: операционная информация — это бесплатная разведка
+    окна обслуживания для атакующего.
+    """
     fresh = heartbeat.is_fresh()
     db_ok = await _ping_db_cached()
     ok = fresh and db_ok
-    payload = {
-        "ok": ok,
-        "heartbeat_fresh": fresh,
-        "db_ok": db_ok,
-        "last_beat_age_seconds": (
-            None if heartbeat.last_beat == 0.0 else round(time.monotonic() - heartbeat.last_beat, 1)
-        ),
-    }
+    remote = request.remote or ""
+    is_local = remote in ("127.0.0.1", "::1", "localhost", "")
+    if is_local:
+        payload: dict = {
+            "ok": ok,
+            "heartbeat_fresh": fresh,
+            "db_ok": db_ok,
+            "last_beat_age_seconds": (
+                None if heartbeat.last_beat == 0.0
+                else round(time.monotonic() - heartbeat.last_beat, 1)
+            ),
+        }
+    else:
+        payload = {"ok": ok}
     return web.json_response(payload, status=200 if ok else 503)
 
 

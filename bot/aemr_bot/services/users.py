@@ -271,21 +271,6 @@ async def list_blocked(session: AsyncSession, *, limit: int = 20) -> list[User]:
     return list(res)
 
 
-async def can_post_new_appeal(session: AsyncSession, max_user_id: int) -> bool:
-    """Можно ли жителю подать НОВОЕ обращение прямо сейчас.
-
-    Условия: согласие активно (consent_pdn_at не NULL) и не отозвано;
-    бот не заблокировал пользователя. Если согласие никогда не давалось,
-    результат тоже False — воронка попросит дать согласие в первом шаге.
-    """
-    user = await session.scalar(select(User).where(User.max_user_id == max_user_id))
-    if user is None:
-        return False
-    if user.is_blocked:
-        return False
-    return user.consent_pdn_at is not None
-
-
 async def find_by_phone(session: AsyncSession, phone: str) -> User | None:
     """Найти пользователя по телефону, не споткнувшись о различия в формате.
 
@@ -311,12 +296,17 @@ async def find_by_phone(session: AsyncSession, phone: str) -> User | None:
         # одной симке). Возвращаем None: пусть оператор уточнит
         # `max_user_id` явно через карточку обращения. Иначе /erase
         # phone= сотрёт случайного из совпавших.
+        # В лог пишем только хеш — чистый номер в логах docker
+        # переживёт events-retention и попадает в log shipper'ы,
+        # которые 152-ФЗ erasure не обходит.
+        import hashlib
         import logging
 
+        digest = hashlib.sha256(target.encode()).hexdigest()[:8]
         logging.getLogger(__name__).warning(
-            "find_by_phone: найдено %d совпадений по %s, требуется "
-            "уточнение max_user_id",
-            len(rows), target,
+            "find_by_phone: найдено %d совпадений по phone#%s, "
+            "требуется уточнение max_user_id",
+            len(rows), digest,
         )
         return None
     return rows[0]

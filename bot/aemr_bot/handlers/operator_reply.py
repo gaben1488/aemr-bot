@@ -85,6 +85,16 @@ def _is_duplicate_reply(operator_id: int, appeal_id: int, text: str) -> bool:
         if prev_text == text and now - prev_at <= _REPLY_DEDUPE_WINDOW_SEC:
             return True
     _recent_replies[key] = (text, now)
+    # Чистим протухшие записи раз в N вставок, чтобы dict не рос
+    # бесконечно. За год при ~1 ответе/день у одного оператора — сотни
+    # записей; не катастрофа, но утечка. Делаем это здесь, а не отдельным
+    # cron-job: новые записи и так возникают только при работе бота.
+    if len(_recent_replies) > 256:
+        cutoff = now - _REPLY_DEDUPE_WINDOW_SEC * 6
+        for k in list(_recent_replies.keys()):
+            _, t = _recent_replies[k]
+            if t < cutoff:
+                _recent_replies.pop(k, None)
     return False
 
 
@@ -280,13 +290,11 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
                 replied_text = link.get("text", "")
 
         if replied_text:
+            # ТОЛЬКО служебный маркер `[appeal:N]`, который генерирует
+            # сам бот. Прежний fallback на «Обращение #N» опасен: операторы
+            # в админ-чате обсуждают обращения этой же фразой, и свайп
+            # на сообщение коллеги отправлял бы текст случайному жителю.
             match = re.search(r"\[appeal:(\d+)\]", replied_text)
-            if match is None:
-                # Fallback на старый формат для сообщений, опубликованных
-                # до введения служебного маркера. Удалить через 1-2 месяца
-                # после деплоя, когда такие карточки уйдут из реальной
-                # переписки.
-                match = re.search(r"Обращение #(\d+)", replied_text)
             if match:
                 appeal_id_from_text = int(match.group(1))
 

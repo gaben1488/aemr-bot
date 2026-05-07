@@ -32,7 +32,7 @@ from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import BroadcastStatus, OperatorRole
 from aemr_bot.db.session import session_scope
-from aemr_bot.handlers._auth import ensure_role, get_operator
+from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.utils.event import (
@@ -76,6 +76,7 @@ _wizards: dict[int, _WizardState] = {}
 _is_admin_chat = is_admin_chat
 _get_operator = get_operator
 _ensure_role = ensure_role
+_ensure_operator = ensure_operator
 
 
 def _drop_expired_wizards() -> None:
@@ -222,7 +223,17 @@ async def _handle_confirm(event) -> None:
         "broadcast: confirmed by operator=%s — broadcast_id=%s subscribers=%d",
         actor_id, broadcast_id, count,
     )
-    asyncio.create_task(_run_broadcast(event.bot, broadcast_id, state.text, count))
+    # Strong ref: без spawn_background_task GC может прервать рассылку
+    # посреди списка получателей (Python 3.11+ держит только weakref на
+    # таску из голого create_task). Конкретно для рассылки это значило
+    # бы потерянные доставки и broadcast в статусе SENDING без
+    # завершения.
+    from aemr_bot.main import spawn_background_task
+
+    spawn_background_task(
+        _run_broadcast(event.bot, broadcast_id, state.text, count),
+        name=f"broadcast_{broadcast_id}",
+    )
 
 
 async def _handle_abort(event) -> None:
@@ -260,8 +271,14 @@ async def _handle_edit(event) -> None:
 
 
 async def _handle_stop(event, broadcast_id: int) -> None:
-    """Любой участник админ-группы может остановить идущую рассылку."""
+    """Остановить идущую рассылку. Доступно только зарегистрированным
+    операторам — чтобы случайный гость в админ-группе или удалённый из
+    БД member, у которого ещё не удалили доступ к чату, не мог
+    отменить срочное объявление о ЧС."""
     if not _is_admin_chat(event):
+        await ack_callback(event)
+        return
+    if not await _ensure_operator(event):
         await ack_callback(event)
         return
     async with session_scope() as session:

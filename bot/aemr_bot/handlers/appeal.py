@@ -809,10 +809,10 @@ def register(dp: Dispatcher) -> None:
 
         handler = _STATE_HANDLERS.get(state)
         if handler is not None:
-            await handler(event, body, text_body, max_user_id, op_reply)
+            await handler(event, body, text_body, max_user_id)
 
 
-async def _on_awaiting_contact(event, body, text_body, max_user_id, op_reply):
+async def _on_awaiting_contact(event, body, text_body, max_user_id):
     # Сначала пробуем достать телефон из contact-вложения. Если его нет
     # (старые клиенты MAX, либо житель напечатал номер текстом) — берём
     # цифры из текстового тела как запасной путь.
@@ -850,7 +850,7 @@ async def _on_awaiting_contact(event, body, text_body, max_user_id, op_reply):
         await _ask_contact_or_skip(event, max_user_id)
 
 
-async def _on_awaiting_name(event, body, text_body, max_user_id, op_reply):
+async def _on_awaiting_name(event, body, text_body, max_user_id):
     name = text_body.strip()[: cfg.name_max_chars]
     if not name or not _HAS_ALNUM.search(name):
         # Пустая строка / только пробелы / только эмодзи / только пунктуация.
@@ -869,7 +869,7 @@ async def _on_awaiting_name(event, body, text_body, max_user_id, op_reply):
     await _ask_locality(event, max_user_id)
 
 
-async def _on_awaiting_address(event, body, text_body, max_user_id, op_reply):
+async def _on_awaiting_address(event, body, text_body, max_user_id):
     address = text_body.strip()[: cfg.address_max_chars]
     if not address or not _HAS_ALNUM.search(address):
         await event.message.answer(texts.ADDRESS_EMPTY)
@@ -879,7 +879,7 @@ async def _on_awaiting_address(event, body, text_body, max_user_id, op_reply):
     await _ask_topic(event, max_user_id)
 
 
-async def _on_awaiting_summary(event, body, text_body, max_user_id, op_reply):
+async def _on_awaiting_summary(event, body, text_body, max_user_id):
     """Один шаг сути: первое же непустое сообщение или вложение —
     это и есть обращение. Сохраняем текст, режем по жёстким лимитам,
     собираем все вложения этого сообщения и сразу финализируем.
@@ -915,7 +915,7 @@ async def _on_awaiting_summary(event, body, text_body, max_user_id, op_reply):
     await _finalize_appeal(event, max_user_id)
 
 
-async def _on_awaiting_locality(event, body, text_body, max_user_id, op_reply):
+async def _on_awaiting_locality(event, body, text_body, max_user_id):
     """Житель прислал текст вместо нажатия на кнопку населённого пункта.
     Повторно показываем клавиатуру со списком, чтобы выбор оставался
     предсказуемым (свободный ввод сюда не закладываем — координаторам
@@ -928,7 +928,7 @@ async def _on_awaiting_locality(event, body, text_body, max_user_id, op_reply):
     )
 
 
-async def _on_awaiting_topic(event, body, text_body, max_user_id, op_reply):
+async def _on_awaiting_topic(event, body, text_body, max_user_id):
     """Житель пишет текст вместо тапа по кнопке тематики. Показываем
     клавиатуру со списком тем заново. Свободный ввод не принимаем —
     координаторам нужны стабильные категории для маршрутизации."""
@@ -951,7 +951,7 @@ async def _on_awaiting_topic(event, body, text_body, max_user_id, op_reply):
     )
 
 
-async def _on_awaiting_consent(event, body, text_body, max_user_id, op_reply):
+async def _on_awaiting_consent(event, body, text_body, max_user_id):
     """Житель пишет текст вместо тапа кнопок «Согласен/Отказаться».
     Возвращаем клавиатуру согласия. Без этого ввод любого текста на этом
     шаге уходил в /dev/null — бот выглядел как мёртвый."""
@@ -968,14 +968,16 @@ async def _on_awaiting_consent(event, body, text_body, max_user_id, op_reply):
     await event.message.answer(text, attachments=[keyboards.consent_keyboard()])
 
 
-async def _on_idle(event, body, text_body, max_user_id, op_reply):
+async def _on_idle(event, body, text_body, max_user_id):
     """IDLE — нет активной воронки. Сначала пытаемся пришить сообщение
     к последнему живому обращению как followup; если ничего активного
     нет — отвечаем подсказкой и показываем меню с актуальным subscribed."""
+    from aemr_bot.handlers import operator_reply as op_reply
+    from aemr_bot.handlers.menu import open_main_menu
+
     handled = await op_reply.handle_user_followup(event, text_body, body=body)
     if handled:
         return
-    from aemr_bot.handlers.menu import open_main_menu
     await event.message.answer(texts.UNKNOWN_INPUT)
     await open_main_menu(event)
 

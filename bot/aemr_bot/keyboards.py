@@ -146,13 +146,6 @@ def cancel_keyboard():
     return kb.as_markup()
 
 
-def submit_or_cancel_keyboard():
-    kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="✅ Отправить", payload="appeal:submit"))
-    kb.row(CallbackButton(text="Отмена", payload="cancel"))
-    return kb.as_markup()
-
-
 def topics_keyboard(topics: list[str]):
     """Тематики обращения. По одной кнопке в ряд: иначе MAX обрезает
     длинные названия в стиле «Управляющие компани…». У Солодова такой же
@@ -405,9 +398,11 @@ def appeal_admin_actions(
     следующее его сообщение в админ-группе доставляется как ответ
     жителю по этому обращению.
     """
+    from aemr_bot.db.models import AppealStatus
+
     kb = InlineKeyboardBuilder()
-    open_states = {"new", "in_progress"}
-    closed_states = {"answered", "closed"}
+    open_states = {AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value}
+    closed_states = {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}
     if status in open_states:
         kb.row(
             CallbackButton(text="✉️ Ответить", payload=f"op:reply:{appeal_id}"),

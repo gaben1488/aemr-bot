@@ -193,13 +193,6 @@ def extract_contact_name(message: Any) -> str | None:
     return None
 
 
-def is_contact_attachment(att: Any) -> bool:
-    t = getattr(att, "type", None)
-    if t is None and isinstance(att, dict):
-        t = att.get("type")
-    return str(t).lower() == "contact"
-
-
 def _normalize_type(att: dict) -> str:
     return str(att.get("type", "")).lower()
 
