@@ -109,14 +109,6 @@ async def run_stats_menu(event) -> None:
     )
 
 
-async def show_full_help(event) -> None:
-    """Текстовая команда /op_help, без клавиатуры. Вызывается кнопкой «📋 Все команды»."""
-    if not _is_admin_chat(event):
-        return
-    await event.bot.send_message(
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_HELP.format(answer_limit=cfg.answer_max_chars),
-    )
 
 
 async def show_op_menu(event, *, pin: bool = False) -> None:

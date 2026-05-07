@@ -508,5 +508,4 @@ def op_help_keyboard(
             CallbackButton(text="⚙️ Настройки бота", payload="op:settings"),
         )
         kb.row(CallbackButton(text="📊 Аудитория и согласия", payload="op:audience"))
-    kb.row(CallbackButton(text="📋 Все команды", payload="op:help_full"))
     return kb.as_markup()

@@ -679,10 +679,6 @@ def register(dp: Dispatcher) -> None:
                 await ack_callback(event)
                 await broadcast_handler._list_broadcasts(event)
                 return
-            if payload == "op:help_full":
-                await ack_callback(event)
-                await admin_commands.show_full_help(event)
-                return
             if payload == "op:operators":
                 await ack_callback(event)
                 await admin_commands.run_operators_menu(event)
