@@ -132,6 +132,9 @@ def register(dp: Dispatcher) -> None:
         for appeal in open_appeals:
             user_name = appeal.user.first_name if appeal.user else "—"
             user_id_text = appeal.user.max_user_id if appeal.user else "—"
+            # Служебный маркер `[appeal:N]` в конце — это стабильный токен,
+            # по которому handlers/operator_reply.py находит обращение при
+            # свайп-ответе на эту карточку. Не убирать и не переписывать.
             text = (
                 f"❗️ Обращение #{appeal.id}\n"
                 f"👤 От: {user_name}\n"
@@ -139,7 +142,8 @@ def register(dp: Dispatcher) -> None:
                 f"📍 Населённый пункт: {appeal.locality or '—'}\n"
                 f"🏠 Адрес: {appeal.address or '—'}\n"
                 f"🏷️ Тематика: {appeal.topic or '—'}\n\n"
-                f"📝 Текст обращения:\n{appeal.summary or '—'}"
+                f"📝 Текст обращения:\n{appeal.summary or '—'}\n\n"
+                f"[appeal:{appeal.id}]"
             )
             await event.bot.send_message(
                 chat_id=cfg.admin_group_id,

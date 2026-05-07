@@ -174,8 +174,12 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
     target_mid = _extract_reply_target_mid(event)
     appeal_id_from_text = None
 
-    # Дополнительная проверка: если target_mid отсутствует (например, для сообщений из /open_tickets),
-    # пытаемся извлечь номер обращения прямо из текста сообщения, на которое отвечают.
+    # Запасной путь для свайп-ответов на сообщения из /open_tickets:
+    # у них нет admin_message_id в БД, потому что карточка опубликована
+    # отдельно от обращения. В тексте таких сообщений в самом конце
+    # стоит стабильный служебный маркер вида «[appeal:NNN]» — ищем
+    # именно его, а не человеческие фразы типа «Обращение #N», которые
+    # легко уйдут при правке копирайта.
     link = get_message_link(event)
     if link:
         replied_text = ""
@@ -188,9 +192,15 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
                 replied_text = inner_dict.get("text", "")
             else:
                 replied_text = link.get("text", "")
-        
+
         if replied_text:
-            match = re.search(r"Обращение #(\d+)", replied_text)
+            match = re.search(r"\[appeal:(\d+)\]", replied_text)
+            if match is None:
+                # Fallback на старый формат для сообщений, опубликованных
+                # до введения служебного маркера. Удалить через 1-2 месяца
+                # после деплоя, когда такие карточки уйдут из реальной
+                # переписки.
+                match = re.search(r"Обращение #(\d+)", replied_text)
             if match:
                 appeal_id_from_text = int(match.group(1))
 

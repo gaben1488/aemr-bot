@@ -1,4 +1,4 @@
-"""Собирает PRIVACY.pdf из docs/Политика.md через reportlab.
+"""Собирает docs/Политика.pdf из docs/Политика.md через reportlab.
 
 Рендерит русский текст системным Arial. Движок Paragraph из reportlab
 аккуратно обрабатывает длинные ссылки благодаря переносу слов с явными
@@ -7,10 +7,9 @@
 Запуск:
     python scripts/generate_privacy_pdf.py
 
-Имя итогового файла остаётся PRIVACY.pdf, потому что оно зашито в
-коде бота (`bot/aemr_bot/services/policy.py::POLICY_PDF_REL`) и в
-`infra/Dockerfile`. Переименование PDF потребует синхронных правок
-обоих этих мест.
+Имя файла должно совпадать с константой POLICY_PDF_REL в
+`bot/aemr_bot/services/policy.py` и с путём COPY в `infra/Dockerfile`.
+Если переименовываете — правьте все три места одновременно.
 """
 
 from __future__ import annotations
@@ -29,7 +28,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "docs" / "Политика.md"
-OUT = ROOT / "docs" / "PRIVACY.pdf"
+OUT = ROOT / "docs" / "Политика.pdf"
 
 WIN_FONTS = Path("C:/Windows/Fonts")
 FONT_REGULAR = WIN_FONTS / "arial.ttf"

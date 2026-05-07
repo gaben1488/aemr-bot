@@ -136,6 +136,27 @@ def build_scheduler(send_admin_document, send_admin_text) -> AsyncIOScheduler:
         coalesce=True,
     )
 
+    async def hourly_pulse():
+        """Раз в час шлёт в служебную группу короткое подтверждение
+        «бот жив». Если такого сообщения нет в назначенное время —
+        значит с ботом что-то не так. Это второй контур мониторинга
+        поверх selfcheck: тот ловит зависший event-loop, а пульс
+        ловит ситуацию «процесс упал, контейнер не перезапустился».
+        """
+        try:
+            now = datetime.now(TZ).strftime("%H:%M")
+            await send_admin_text(f"🟢 Бот работает. {now}")
+        except Exception:
+            log.exception("hourly_pulse failed")
+
+    scheduler.add_job(
+        hourly_pulse,
+        CronTrigger(minute=0, timezone=TZ),
+        name="hourly-pulse",
+        max_instances=1,
+        coalesce=True,
+    )
+
     if settings.healthcheck_url:
         scheduler.add_job(
             _ping_healthcheck,

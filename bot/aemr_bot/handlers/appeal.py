@@ -38,7 +38,6 @@ log = logging.getLogger(__name__)
 # от отправки "👍", "...", "`````" и подобных бессмысленных сообщений (состоящих из одного символа).
 _HAS_ALNUM = re.compile(r"[A-Za-zА-Яа-яЁё0-9]")
 
-_collect_timers: dict[int, asyncio.Task] = {}
 _user_locks: dict[int, asyncio.Lock] = {}
 
 
@@ -342,37 +341,21 @@ async def _ask_summary(event, max_user_id: int):
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.TOPIC_RECEIVED,
-        attachments=[keyboards.submit_or_cancel_keyboard()],
+        attachments=[keyboards.cancel_keyboard()],
     )
 
 
 async def _finalize_appeal(event, max_user_id: int):
-    """Точка входа по кнопке сабмита / таймауту. Отправляет повторный запрос при пустом вводе."""
+    """Финализация обращения. Вызывается сразу после первого непустого
+    сообщения жителя в шаге AWAITING_SUMMARY — без таймера и без
+    отдельной кнопки «Отправить». На пустой ввод отвечаем подсказкой."""
     persisted = await _persist_and_dispatch_appeal(event.bot, max_user_id)
     if persisted is False:
         await event.bot.send_message(
             chat_id=get_chat_id(event),
             text=texts.APPEAL_EMPTY_REJECTED,
-            attachments=[keyboards.submit_or_cancel_keyboard()],
+            attachments=[keyboards.cancel_keyboard()],
         )
-
-
-def _schedule_collect_timeout(event, max_user_id: int):
-    """Отменяет любой предыдущий таймер и запускает новый для этого пользователя."""
-    existing = _collect_timers.get(max_user_id)
-    if existing and not existing.done():
-        existing.cancel()
-
-    async def _runner():
-        try:
-            await asyncio.sleep(cfg.appeal_collect_timeout_seconds)
-            await _finalize_appeal(event, max_user_id)
-        except asyncio.CancelledError:
-            return
-        finally:
-            _collect_timers.pop(max_user_id, None)
-
-    _collect_timers[max_user_id] = asyncio.create_task(_runner())
 
 
 def register(dp: Dispatcher) -> None:
@@ -428,9 +411,6 @@ def register(dp: Dispatcher) -> None:
         if payload == "cancel":
             async with session_scope() as session:
                 await users_service.reset_state(session, max_user_id)
-            timer = _collect_timers.pop(max_user_id, None)
-            if timer and not timer.done():
-                timer.cancel()
             _drop_user_lock(max_user_id)
             await ack_callback(event)
             await event.bot.send_message(
@@ -473,9 +453,8 @@ def register(dp: Dispatcher) -> None:
             return
 
         if payload == "appeal:submit":
-            timer = _collect_timers.pop(max_user_id, None)
-            if timer and not timer.done():
-                timer.cancel()
+            # Кнопка «Отправить» осталась в старых сообщениях клиента, которые
+            # ещё могут крутиться у жителя в чате. Финализируем как обычно.
             await ack_callback(event)
             await _finalize_appeal(event, max_user_id)
             return
@@ -622,44 +601,39 @@ async def _on_awaiting_address(event, body, text_body, max_user_id, op_reply):
 
 
 async def _on_awaiting_summary(event, body, text_body, max_user_id, op_reply):
+    """Один шаг сути: первое же непустое сообщение или вложение —
+    это и есть обращение. Сохраняем текст, режем по жёстким лимитам,
+    собираем все вложения этого сообщения и сразу финализируем.
+
+    Без таймера тишины и без кнопки «Отправить»: житель не должен
+    ждать минуту и нажимать дополнительную кнопку. Если в одном
+    сообщении нет ни текста, ни вложений — отвечаем подсказкой и
+    остаёмся в этом же состоянии."""
     chunk = text_body.strip()
     atts = collect_attachments(body)
+    if not chunk and not atts:
+        await event.message.answer(
+            texts.APPEAL_EMPTY_REJECTED,
+            attachments=[keyboards.cancel_keyboard()],
+        )
+        return
+
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         data = dict(user.dialog_data or {})
 
+        summary_chunks: list[str] = data.setdefault("summary_chunks", [])
         if chunk:
-            existing_chunks: list[str] = data.setdefault("summary_chunks", [])
-            current_total = sum(len(c) for c in existing_chunks)
-            remaining = cfg.summary_max_chars - current_total
-            if remaining <= 0:
-                # Лимит достигнут — молча отбрасываем. Логируется для операторов, не выводится
-                # гражданину (это был бы лишний шум; у бота и так достаточно текста).
-                log.info(
-                    "лимит текста %d достигнут для пользователя %s, отбрасываем фрагмент из %d символов",
-                    cfg.summary_max_chars,
-                    max_user_id,
-                    len(chunk),
-                )
-            else:
-                existing_chunks.append(chunk[:remaining])
+            summary_chunks.append(chunk[: cfg.summary_max_chars])
 
         if atts:
             existing_atts: list = data.setdefault("attachments", [])
-            cap = cfg.attachments_max_per_appeal - len(existing_atts)
-            if cap <= 0:
-                log.info(
-                    "лимит вложений %d достигнут для пользователя %s, отбрасываем %d вложений",
-                    cfg.attachments_max_per_appeal,
-                    max_user_id,
-                    len(atts),
-                )
-            else:
-                existing_atts.extend(atts[:cap])
+            existing_atts.extend(atts[: cfg.attachments_max_per_appeal])
 
         user.dialog_data = data
         await session.flush()
-    _schedule_collect_timeout(event, max_user_id)
+
+    await _finalize_appeal(event, max_user_id)
 
 
 async def _on_awaiting_locality(event, body, text_body, max_user_id, op_reply):

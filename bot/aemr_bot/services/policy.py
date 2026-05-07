@@ -12,7 +12,7 @@ from aemr_bot.services import settings_store, uploads
 
 log = logging.getLogger(__name__)
 
-POLICY_PDF_REL = "PRIVACY.pdf"
+POLICY_PDF_REL = "Политика.pdf"
 POLICY_TOKEN_KEY = "policy_pdf_token"
 
 

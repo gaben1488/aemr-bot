@@ -36,26 +36,35 @@ async def _ensure_user(event):
         return await users_service.get_or_create(session, max_user_id=max_user_id, first_name=first_name)
 
 
-async def _build_main_menu():
-    """Читает URL электронной приёмной из настроек и собирает главное
-    меню так, чтобы появилась кнопка-ссылка «Электронная приёмная».
-    Возвращает разметку, готовую к передаче в bot.send_message."""
+async def _build_main_menu(max_user_id: int | None = None):
+    """Собирает главное меню с актуальным состоянием кнопки подписки.
+
+    Если жителя удаётся идентифицировать по `max_user_id`, кнопка
+    подписки покажет либо «🔔 Подписаться на новости» (для не-
+    подписанных), либо «🔕 Отписаться от новостей» (для подписанных).
+    Без идентификации показываем приглашение подписаться по умолчанию.
+    """
     async with session_scope() as session:
         recep_url = await settings_store.get(session, "electronic_reception_url")
-    return keyboards.main_menu(recep_url)
+        subscribed = False
+        if max_user_id is not None:
+            subscribed = await broadcasts_service.is_subscribed(
+                session, max_user_id
+            )
+    return keyboards.main_menu(recep_url, subscribed=subscribed)
 
 
 async def cmd_start(event):
     await _ensure_user(event)
-    await reply(event, texts.WELCOME, attachments=[await _build_main_menu()])
+    await reply(event, texts.WELCOME, attachments=[await _build_main_menu(get_user_id(event))])
 
 
 async def cmd_help(event):
-    await reply(event, texts.HELP_USER, attachments=[await _build_main_menu()])
+    await reply(event, texts.HELP_USER, attachments=[await _build_main_menu(get_user_id(event))])
 
 
 async def cmd_menu(event):
-    await reply(event, texts.WELCOME, attachments=[await _build_main_menu()])
+    await reply(event, texts.WELCOME, attachments=[await _build_main_menu(get_user_id(event))])
 
 
 async def cmd_policy(event):

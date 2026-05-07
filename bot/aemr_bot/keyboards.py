@@ -6,10 +6,26 @@ from maxapi.types import (
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
 
-def main_menu(electronic_reception_url: str | None = None):
+def main_menu(
+    electronic_reception_url: str | None = None,
+    *,
+    subscribed: bool = False,
+):
+    """Главное меню жителя.
+
+    Кнопка подписки на новости вынесена сюда из подменю «Полезная
+    информация»: задача «не пропустить ЧС или объявление района» —
+    одна из ключевых, и закапывать её в подменю значит терять
+    подписчиков. Текст кнопки отражает текущее состояние подписки,
+    чтобы один и тот же тап работал и как «подписаться», и как
+    «отписаться»."""
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="📝 Написать обращение", payload="menu:new_appeal"))
     kb.row(CallbackButton(text="📂 Мои обращения", payload="menu:my_appeals"))
+    subscribe_text = (
+        "🔕 Отписаться от новостей" if subscribed else "🔔 Подписаться на новости"
+    )
+    kb.row(CallbackButton(text=subscribe_text, payload="info:subscribe_toggle"))
     if electronic_reception_url:
         kb.row(LinkButton(text="🌐 Электронная приёмная", url=electronic_reception_url))
     kb.row(CallbackButton(text="📋 Приём граждан", payload="menu:appointment"))
