@@ -35,17 +35,22 @@ async def has_consent(session: AsyncSession, max_user_id: int) -> bool:
 
 
 async def set_consent(session: AsyncSession, max_user_id: int) -> None:
-    # Заодно снимаем is_blocked: житель мог раньше воспользоваться
-    # /forget, что выставляет is_blocked=true. Если он вернулся,
-    # дал согласие заново — это явное «свяжитесь со мной снова»,
-    # блокировка устаревает. Без этого сброса оператор увидит
-    # «Не могу доставить ответ — житель отозвал согласие», хотя
-    # на самом деле согласие свежее.
+    """Дать (или возобновить) согласие на обработку ПДн.
+
+    Снимаем is_blocked: житель мог раньше воспользоваться /forget или
+    его блокировал IT, потом вернулся и дал согласие заново — это
+    явное «свяжитесь со мной снова», блокировка устаревает.
+
+    Обнуляем consent_revoked_at: иначе свежее согласие соседствует
+    с давним отзывом, и retention-cron через 30 дней с того отзыва
+    обезличит жителя несмотря на актуальное согласие.
+    """
     await session.execute(
         update(User)
         .where(User.max_user_id == max_user_id)
         .values(
             consent_pdn_at=datetime.now(timezone.utc),
+            consent_revoked_at=None,
             is_blocked=False,
         )
     )
@@ -257,7 +262,32 @@ async def set_blocked(
     /forget — там житель просто уходит и может вернуться. Здесь
     он действительно отрезан: ответы оператора не доставляются,
     рассылки не приходят, /start показывает урезанное меню.
+
+    При блокировке автоматически закрываем все NEW/IN_PROGRESS
+    обращения этого жителя — иначе они продолжают тикать в
+    SLA-просрочке и спамить алёрты в админ-чат, хотя отвечать на
+    них всё равно нельзя (доставка отказывает по is_blocked).
     """
+    from aemr_bot.db.models import Appeal, AppealStatus
+
+    if blocked:
+        user_id = await session.scalar(
+            select(User.id).where(User.max_user_id == max_user_id)
+        )
+        if user_id is not None:
+            await session.execute(
+                update(Appeal)
+                .where(
+                    Appeal.user_id == user_id,
+                    Appeal.status.in_(
+                        [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+                    ),
+                )
+                .values(
+                    status=AppealStatus.CLOSED.value,
+                    closed_at=datetime.now(timezone.utc),
+                )
+            )
     result = await session.execute(
         update(User)
         .where(User.max_user_id == max_user_id)
@@ -319,6 +349,11 @@ async def find_pending_pdn_retention(
             User.consent_revoked_at.isnot(None),
             User.consent_revoked_at <= threshold,
             User.first_name != "Удалено",
+            # Если жителю дано свежее согласие после отзыва, retention
+            # не должен его обезличить. set_consent теперь обнуляет
+            # consent_revoked_at, но дублируем условие здесь как
+            # дополнительную защиту.
+            User.consent_pdn_at.is_(None),
         )
         .limit(limit)
     )

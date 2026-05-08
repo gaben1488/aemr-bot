@@ -245,9 +245,45 @@ async def open_help(event):
 
 
 async def ask_forget_confirm(event):
+    """Подтверждение удаления данных. Если у жителя есть открытые
+    обращения, перечисляем их в подтверждении — без явного списка
+    житель не понимает, что именно потеряет (вопрос «обращения будут
+    закрыты» он легко прочитает как «решены», а не «выкинуты»).
+    """
+    from aemr_bot.services import appeals as appeals_service
+
+    max_user_id = get_user_id(event)
+    open_lines: list[str] = []
+    if max_user_id is not None:
+        async with session_scope() as session:
+            user = await users_service.get_or_create(session, max_user_id=max_user_id)
+            active = await appeals_service.list_unanswered(session)
+            mine = [a for a in active if a.user_id == user.id]
+        for ap in mine[:5]:
+            topic = ap.topic or "—"
+            from datetime import datetime
+            from zoneinfo import ZoneInfo
+
+            from aemr_bot.config import settings as cfg
+
+            created = ap.created_at.astimezone(ZoneInfo(cfg.timezone)) if ap.created_at else None
+            created_str = created.strftime("%d.%m.%Y") if isinstance(created, datetime) else "—"
+            open_lines.append(f"• #{ap.id} от {created_str} · {topic}")
+        if len(mine) > 5:
+            open_lines.append(f"… и ещё {len(mine) - 5}.")
+
+    text = texts.ERASE_CONFIRM
+    if open_lines:
+        text = (
+            f"{text}\n\n"
+            f"Сейчас у вас в работе {len(open_lines)} обращ.:\n"
+            + "\n".join(open_lines)
+            + "\n\nПри удалении они будут закрыты без ответа."
+        )
+
     await event.bot.send_message(
         chat_id=get_chat_id(event),
-        text=texts.ERASE_CONFIRM,
+        text=text,
         attachments=[keyboards.forget_confirm_keyboard()],
     )
 
@@ -298,10 +334,20 @@ async def do_consent_revoke(event, max_user_id: int):
     """Мягкий отзыв согласия через кнопку. Подписка отключается,
     дальнейшие новые обращения требуют дать согласие заново.
     Открытые на момент отзыва обращения остаются в работе.
+
+    Параллельно отправляем плашку в служебную группу: оператор должен
+    знать, что по конкретному обращению согласие отозвано — иначе он
+    напишет ответ в обычном порядке, попадёт в гард доставки и
+    получит «не могу доставить, согласие отозвано» уже постфактум.
     """
+    from aemr_bot.config import settings as cfg
+    from aemr_bot.services import appeals as appeals_service
     from aemr_bot.services import operators as ops_service
 
     async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        active = await appeals_service.list_unanswered(session)
+        my_open = [a for a in active if a.user_id == user.id]
         await users_service.revoke_consent(session, max_user_id)
         await ops_service.write_audit(
             session,
@@ -314,14 +360,42 @@ async def do_consent_revoke(event, max_user_id: int):
         text=texts.CONSENT_REVOKED_OK,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
+    # Уведомляем админ-группу про отзыв с конкретным списком открытых
+    # обращений — чтобы оператор не тратил время на подготовку ответа
+    # для жителя, который отозвался.
+    if my_open and cfg.admin_group_id:
+        ids = ", ".join(f"#{a.id}" for a in my_open)
+        try:
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=(
+                    f"⚠️ Житель отозвал согласие на ПДн.\n"
+                    f"Открытые обращения этого жителя: {ids}.\n"
+                    f"Доставка ответов жителю по ним заблокирована — "
+                    f"свяжитесь по телефону, если он сохранён, или "
+                    f"закройте обращения через карточку."
+                ),
+            )
+        except Exception:
+            pass
 
 
 async def do_forget(event, max_user_id: int):
     """Кнопочный аналог /forget. Логика та же, что в start.cmd_forget,
-    но без необходимости набирать команду."""
+    но без необходимости набирать команду.
+
+    Перед обнулением считаем открытые обращения, чтобы потом сказать
+    админ-группе, какие карточки можно убирать из работы.
+    """
+    from aemr_bot.config import settings as cfg
+    from aemr_bot.services import appeals as appeals_service
     from aemr_bot.services import operators as ops_service
 
+    closed_ids: list[int] = []
     async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        active = await appeals_service.list_unanswered(session)
+        closed_ids = [a.id for a in active if a.user_id == user.id]
         await users_service.erase_pdn(session, max_user_id)
         await ops_service.write_audit(
             session,
@@ -334,6 +408,20 @@ async def do_forget(event, max_user_id: int):
         text=texts.ERASE_REQUESTED,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
+    # Сообщаем админ-группе, что карточки этого жителя в работе можно
+    # убрать — обращения уже CLOSED, отвечать некому.
+    if closed_ids and cfg.admin_group_id:
+        ids = ", ".join(f"#{i}" for i in closed_ids)
+        try:
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=(
+                    f"🗑 Житель удалил данные. Закрыто без ответа: {ids}.\n"
+                    f"Карточки в чате устарели — отвечать не требуется."
+                ),
+            )
+        except Exception:
+            pass
 
 
 async def open_appointment(event):

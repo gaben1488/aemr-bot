@@ -102,12 +102,19 @@ async def list_for_user(
     limit: int = 20,
     offset: int = 0,
 ) -> list[Appeal]:
+    """Список обращений жителя для экрана «📂 Мои обращения».
+
+    Если житель отзывал согласие — обращения, поданные до точки
+    отзыва, в списке не показываем. После /forget человек
+    концептуально новый, ему незачем видеть свою прошлую жизнь.
+    Записи в БД сохраняются для статистики и аудита.
+    """
+    user = await session.scalar(select(User).where(User.id == user_id))
+    query = select(Appeal).where(Appeal.user_id == user_id)
+    if user is not None and user.consent_revoked_at is not None:
+        query = query.where(Appeal.created_at > user.consent_revoked_at)
     res = await session.scalars(
-        select(Appeal)
-        .where(Appeal.user_id == user_id)
-        .order_by(desc(Appeal.created_at))
-        .limit(limit)
-        .offset(offset)
+        query.order_by(desc(Appeal.created_at)).limit(limit).offset(offset)
     )
     return list(res)
 
@@ -133,11 +140,17 @@ async def count_recent_for_user(
 
 
 async def count_for_user(session: AsyncSession, user_id: int) -> int:
-    return (
-        await session.scalar(
-            select(func.count()).select_from(Appeal).where(Appeal.user_id == user_id)
-        )
-    ) or 0
+    """Счётчик обращений жителя для пагинации «📂 Мои обращения».
+
+    Симметрично с list_for_user: после отзыва согласия обращения до
+    точки отзыва из счётчика тоже исключаем — иначе пагинация
+    показывает «1/3» при пустых видимых страницах.
+    """
+    user = await session.scalar(select(User).where(User.id == user_id))
+    query = select(func.count()).select_from(Appeal).where(Appeal.user_id == user_id)
+    if user is not None and user.consent_revoked_at is not None:
+        query = query.where(Appeal.created_at > user.consent_revoked_at)
+    return (await session.scalar(query)) or 0
 
 
 async def set_admin_message_id(session: AsyncSession, appeal_id: int, mid: str) -> None:
@@ -311,8 +324,16 @@ async def find_last_address_for_user(
     адрес?» — пропускаются два шага. Берём из последнего обращения с
     заполненными обоими полями (locality и address); если их нет —
     возвращаем None и воронка спрашивает заново.
+
+    Если житель отзывал согласие — обращения старше точки отзыва
+    игнорируем. После отзыва человек концептуально «новый», и
+    подсовывать ему адрес из прошлой жизни — неправильно. Берём
+    только обращения, поданные ПОСЛЕ последнего consent_revoked_at.
     """
-    res = await session.scalar(
+    user = await session.scalar(select(User).where(User.id == user_id))
+    if user is None:
+        return None
+    query = (
         select(Appeal)
         .where(
             Appeal.user_id == user_id,
@@ -322,6 +343,9 @@ async def find_last_address_for_user(
         .order_by(desc(Appeal.created_at))
         .limit(1)
     )
+    if user.consent_revoked_at is not None:
+        query = query.where(Appeal.created_at > user.consent_revoked_at)
+    res = await session.scalar(query)
     if res is None or not res.locality or not res.address:
         return None
     return res.locality, res.address
