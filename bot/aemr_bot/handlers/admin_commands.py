@@ -859,18 +859,20 @@ async def _do_open_tickets(event) -> None:
     for appeal in open_appeals:
         user_name = appeal.user.first_name if appeal.user else "—"
         user_id_text = appeal.user.max_user_id if appeal.user else "—"
-        # Служебный маркер `[appeal:N]` в конце — это стабильный токен,
-        # по которому handlers/operator_reply.py находит обращение при
-        # свайп-ответе на эту карточку. Не убирать и не переписывать.
+        # Служебный маркер `🆔 №N` в конце — стабильный токен, по которому
+        # handlers/operator_reply.py находит обращение при свайп-ответе.
+        # Раньше был «[appeal:N]» — выглядел как код. Сейчас читаемо
+        # для оператора и однозначно для regex (комбинация «🆔 №»
+        # не встретится в обычном тексте обращения).
         text = (
             f"❗️ Обращение #{appeal.id}\n"
             f"👤 От: {user_name}\n"
-            f"🆔 ID: {user_id_text}\n"
+            f"📞 ID жителя: {user_id_text}\n"
             f"📍 Населённый пункт: {appeal.locality or '—'}\n"
             f"🏠 Адрес: {appeal.address or '—'}\n"
             f"🏷️ Тематика: {appeal.topic or '—'}\n\n"
             f"📝 Текст обращения:\n{appeal.summary or '—'}\n\n"
-            f"[appeal:{appeal.id}]"
+            f"🆔 №{appeal.id}"
         )
         await event.bot.send_message(
             chat_id=cfg.admin_group_id,

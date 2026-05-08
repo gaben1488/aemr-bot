@@ -101,7 +101,7 @@ ADMIN_FOLLOWUP_TEMPLATE = (
     "От: {name}\n\n"
     "────────────────\n"
     "{text}\n\n"
-    "[appeal:{number}]"
+    "🆔 №{number}"
 )
 
 ADMIN_REPLY_DELIVERED = (
