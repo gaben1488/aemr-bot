@@ -165,12 +165,42 @@ async def find_stuck_in_funnel(
 
 
 async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
-    """Обезличить пользователя и отозвать согласие ПДн (152-ФЗ, ст. 9 §2).
+    """Обезличить жителя и отозвать согласие ПДн.
 
-    Отзыв согласия снимает подписку на рассылку и поднимает is_blocked,
-    чтобы пользователь не попадал в выборку подписчиков. Иначе любая
-    последующая отправка ему была бы обработкой данных без согласия.
+    Что делаем: имя — «Удалено», телефон обнулён, согласие отозвано,
+    подписка снята, FSM в IDLE. is_blocked НЕ ставится: «удалить мои
+    данные» — это сценарий «начать с чистого листа», а не «забанить
+    себя». Если житель захочет вернуться, он откроет /start и пройдёт
+    воронку как новый пользователь.
+
+    is_blocked остаётся за IT-блокировкой через карточку обращения —
+    это отдельная процедура для случаев злоупотреблений.
+
+    Открытые обращения этого жителя автоматически закрываем без
+    ответа: продолжать переписку «от Удалено» неестественно для
+    оператора, а сам житель решил уйти. Если у обращения уже был
+    ответ (статус ANSWERED), оставляем — ответ был доставлен,
+    обращение фактически отработано.
     """
+    from aemr_bot.db.models import Appeal, AppealStatus
+
+    user_row = await session.scalar(
+        select(User.id).where(User.max_user_id == max_user_id)
+    )
+    if user_row is not None:
+        await session.execute(
+            update(Appeal)
+            .where(
+                Appeal.user_id == user_row,
+                Appeal.status.in_(
+                    [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+                ),
+            )
+            .values(
+                status=AppealStatus.CLOSED.value,
+                closed_at=datetime.now(timezone.utc),
+            )
+        )
     result = await session.execute(
         update(User)
         .where(User.max_user_id == max_user_id)
@@ -183,7 +213,6 @@ async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
             dialog_state=DialogState.IDLE.value,
             dialog_data={},
             subscribed_broadcast=False,
-            is_blocked=True,
         )
     )
     return result.rowcount > 0
@@ -221,13 +250,13 @@ async def revoke_consent(session: AsyncSession, max_user_id: int) -> bool:
 async def set_blocked(
     session: AsyncSession, max_user_id: int, *, blocked: bool
 ) -> bool:
-    """Поднять/снять флаг is_blocked.
+    """Поднять/снять флаг is_blocked. Только для IT.
 
-    Используется кнопкой «🚫 Заблокировать жителя» в карточке обращения
-    и админ-меню «Подписчики и согласия». Заблокированному пользователю
-    бот не доставляет ничего: ни ответы оператора, ни рассылки.
-    Если житель потом снова напишет /start — гард в обработчиках
-    проверит is_blocked и не пустит дальше.
+    is_blocked — это IT-блокировка за злоупотребления (бот-спам,
+    оскорбления оператора, мошенничество). НЕ ставится при
+    /forget — там житель просто уходит и может вернуться. Здесь
+    он действительно отрезан: ответы оператора не доставляются,
+    рассылки не приходят, /start показывает урезанное меню.
     """
     result = await session.execute(
         update(User)

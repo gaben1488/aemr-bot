@@ -310,8 +310,8 @@ async def _start_appeal_flow(event, max_user_id: int):
             from aemr_bot.services.policy import build_file_attachment
             attachments.insert(0, build_file_attachment(policy_token))
             text = (
-                "Перед оформлением обращения нужно ваше согласие на обработку "
-                "персональных данных в соответствии с 152-ФЗ. Полный текст политики — "
+                "Перед оформлением обращения нужно ваше согласие на "
+                "обработку персональных данных. Полный текст политики — "
                 "в прикреплённом PDF.\n\nНажмите «Согласен», чтобы продолжить."
             )
         else:
@@ -1013,7 +1013,7 @@ async def _on_awaiting_consent(event, body, text_body, max_user_id):
     else:
         text = (
             "Чтобы принять обращение, нам нужно ваше согласие на "
-            "обработку персональных данных по 152-ФЗ. Нажмите «Согласен», "
+            "обработку персональных данных. Нажмите «Согласен», "
             "чтобы продолжить."
         )
     await event.message.answer(text, attachments=[keyboards.consent_keyboard()])

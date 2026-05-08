@@ -300,8 +300,8 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
                     )
             if erased or skipped_open:
                 await send_admin_text(
-                    f"🛡 Авто-обезличивание ПДн (152-ФЗ): "
-                    f"обработано {erased}, отложено {skipped_open} "
+                    f"🛡 Архивная очистка ПДн по сроку: "
+                    f"обезличено {erased}, отложено {skipped_open} "
                     f"(есть открытые обращения)."
                 )
         except Exception:
