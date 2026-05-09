@@ -164,24 +164,24 @@ def consent_keyboard():
 def contact_request_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(RequestContactButton(text="📲 Поделиться контактом"))
-    kb.row(CallbackButton(text="Отмена", payload="cancel"))
+    kb.row(CallbackButton(text="❌ Отмена", payload="cancel"))
     return kb.as_markup()
 
 
 def cancel_keyboard():
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="Отмена", payload="cancel"))
+    kb.row(CallbackButton(text="❌ Отмена", payload="cancel"))
     return kb.as_markup()
 
 
 def topics_keyboard(topics: list[str]):
-    """Тематики обращения. По одной кнопке в ряд: иначе MAX обрезает
+    """Темы обращения. По одной кнопке в ряд: иначе MAX обрезает
     длинные названия в стиле «Управляющие компани…». У Солодова такой же
     одностолбчатый макет — текст всегда читается полностью."""
     kb = InlineKeyboardBuilder()
     for idx, topic in enumerate(topics):
         kb.row(CallbackButton(text=topic, payload=f"topic:{idx}"))
-    kb.row(CallbackButton(text="Отмена", payload="cancel"))
+    kb.row(CallbackButton(text="❌ Отмена", payload="cancel"))
     return kb.as_markup()
 
 
@@ -203,7 +203,7 @@ def localities_keyboard(localities: list[str]):
     kb = InlineKeyboardBuilder()
     for idx, locality in enumerate(localities):
         kb.row(CallbackButton(text=locality, payload=f"locality:{idx}"))
-    kb.row(CallbackButton(text="Отмена", payload="cancel"))
+    kb.row(CallbackButton(text="❌ Отмена", payload="cancel"))
     return kb.as_markup()
 
 
@@ -285,7 +285,7 @@ def subscribe_mini_consent_keyboard():
     телефона/имени, потому что для рассылки это не нужно)."""
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="✅ Подписаться", payload="subscribe:confirm"))
-    kb.row(CallbackButton(text="↩️ Отмена", payload="menu:main"))
+    kb.row(CallbackButton(text="❌ Отмена", payload="menu:main"))
     return kb.as_markup()
 
 
