@@ -1,5 +1,7 @@
 """Тесты на services/geo.py — локальный reverse geocoding ЕМО.
 
+Также защита от регрессий FSM-воронки (правильные поля User vs Operator).
+
 Координаты — из Wikidata P625 (центры населённых пунктов), точные.
 Если эти тесты упадут после обновления seed/geo/*.geojson — значит
 данные OSM сильно изменились и нужно посмотреть верификатор:
@@ -120,3 +122,24 @@ class TestFindAddress:
         # Не crash; результат может быть none либо bogus, но без
         # исключения — главное чтобы бот не упал
         assert r.confidence in ("none", "low", "medium", "high")
+
+
+class TestUserModelFields:
+    """Регрессионная проверка: модель User имеет first_name (не full_name).
+
+    Это поле читается в _ask_locality для echo-feedback. В прошлом был
+    баг: написал user.full_name (поле Operator) вместо user.first_name —
+    AttributeError при первом тапе на «Выбрать населённый пункт».
+    """
+
+    def test_user_has_first_name_not_full_name(self) -> None:
+        from aemr_bot.db.models import User
+        # Поля декларации SQLAlchemy
+        cols = {c.name for c in User.__table__.columns}
+        assert "first_name" in cols, "User должен иметь поле first_name"
+        assert "full_name" not in cols, "full_name — поле Operator, не User"
+
+    def test_operator_has_full_name(self) -> None:
+        from aemr_bot.db.models import Operator
+        cols = {c.name for c in Operator.__table__.columns}
+        assert "full_name" in cols

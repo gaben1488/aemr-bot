@@ -400,7 +400,9 @@ async def _ask_locality(event, max_user_id: int):
     """
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        name = (user.full_name or "").strip()
+        # У жителя имя в `first_name` (модель User). `full_name` — это
+        # поле модели Operator, не жителя.
+        name = (user.first_name or "").strip()
         localities = await settings_store.get(session, "localities") or ["Елизовское ГП"]
         await users_service.set_state(session, max_user_id, DialogState.AWAITING_LOCALITY)
     await event.bot.send_message(
