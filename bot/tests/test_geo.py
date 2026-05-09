@@ -106,3 +106,17 @@ class TestFindAddress:
         assert r.locality == "Елизовское ГП"
         # confidence любой кроме none
         assert r.confidence != "none"
+
+    def test_invalid_coordinates_dont_crash(self) -> None:
+        """Нечисловые / экстремальные координаты не должны вызывать crash."""
+        # Северный полюс
+        r = find_address(89.99, 0.0)
+        assert r.locality is None
+        assert r.confidence == "none"
+
+        # NaN — должен корректно обработаться (or пропуститься в shapely)
+        import math
+        r = find_address(math.nan, math.nan)
+        # Не crash; результат может быть none либо bogus, но без
+        # исключения — главное чтобы бот не упал
+        assert r.confidence in ("none", "low", "medium", "high")

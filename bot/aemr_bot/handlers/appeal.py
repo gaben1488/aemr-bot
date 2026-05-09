@@ -577,81 +577,95 @@ def register(dp: Dispatcher) -> None:
             await _ask_address(event, max_user_id)
             return
 
-        # Подтверждение определённого через геолокацию адреса
-        # (см. _on_location_attachment в этом же файле).
-        if payload == "geo:confirm":
+        # Подтверждение / редактирование определённого через геолокацию
+        # адреса. Все три callback'а guard'им наличием detected_locality
+        # в dialog_data — иначе это стейл-кнопка из старого сообщения,
+        # ack'аем и молча пропускаем (без перевода жителя в воронку
+        # обращения с пустым стейтом).
+        if payload in ("geo:confirm", "geo:edit_address", "geo:other_locality"):
             await ack_callback(event)
             async with session_scope() as session:
                 user = await users_service.get_or_create(
                     session, max_user_id=max_user_id
                 )
+                state = user.dialog_state
                 data = dict(user.dialog_data or {})
-                detected_address = (data.get("detected_street") or "").strip()
+            if state != DialogState.AWAITING_GEO_CONFIRM.value or not data.get(
+                "detected_locality"
+            ):
+                log.info(
+                    "geo callback %s ignored: state=%s, has_detected=%s, user=%s",
+                    payload, state, bool(data.get("detected_locality")), max_user_id,
+                )
+                return
+
+            if payload == "geo:confirm":
+                detected_street = (data.get("detected_street") or "").strip()
                 detected_house = (data.get("detected_house_number") or "").strip()
-                if detected_address and detected_house:
-                    full_addr = f"{detected_address}, д. {detected_house}"
-                elif detected_address:
-                    full_addr = detected_address
+                if detected_street and detected_house:
+                    full_addr = f"{detected_street}, д. {detected_house}"
+                elif detected_street:
+                    full_addr = detected_street
                 else:
                     full_addr = ""
+                async with session_scope() as session:
+                    if full_addr:
+                        await users_service.update_dialog_data(
+                            session, max_user_id, {"address": full_addr}
+                        )
+                        await users_service.set_state(
+                            session, max_user_id, DialogState.AWAITING_TOPIC
+                        )
+                    else:
+                        await users_service.set_state(
+                            session, max_user_id, DialogState.AWAITING_ADDRESS
+                        )
                 if full_addr:
-                    await users_service.update_dialog_data(
-                        session, max_user_id, {"address": full_addr}
-                    )
-                    await users_service.set_state(
-                        session, max_user_id, DialogState.AWAITING_TOPIC
-                    )
+                    await _ask_topic(event, max_user_id)
                 else:
-                    # Только locality определилось — переходим к ручному адресу
+                    await _ask_address(event, max_user_id)
+                return
+
+            if payload == "geo:edit_address":
+                # Стираем street/house, оставляем locality, переходим
+                # к ручному вводу адреса.
+                async with session_scope() as session:
+                    user = await users_service.get_or_create(
+                        session, max_user_id=max_user_id
+                    )
+                    fresh = dict(user.dialog_data or {})
+                    for k in ("detected_street", "detected_house_number"):
+                        fresh.pop(k, None)
+                    user.dialog_data = fresh
+                    await session.flush()
                     await users_service.set_state(
                         session, max_user_id, DialogState.AWAITING_ADDRESS
                     )
-            # Если адрес уже подставлен — сразу к теме; иначе — к ручному адресу
-            if full_addr:
-                await _ask_topic(event, max_user_id)
-            else:
                 await _ask_address(event, max_user_id)
-            return
+                return
 
-        if payload == "geo:edit_address":
-            await ack_callback(event)
-            async with session_scope() as session:
-                # Стираем определённый street/house, оставляем только locality
-                user = await users_service.get_or_create(
-                    session, max_user_id=max_user_id
-                )
-                data = dict(user.dialog_data or {})
-                for k in ("detected_street", "detected_house_number"):
-                    data.pop(k, None)
-                user.dialog_data = data
-                await session.flush()
-                await users_service.set_state(
-                    session, max_user_id, DialogState.AWAITING_ADDRESS
-                )
-            await _ask_address(event, max_user_id)
-            return
-
-        if payload == "geo:other_locality":
-            # Житель не согласен с определённым населённым пунктом —
-            # стираем detected_* и возвращаем выбор из списка
-            await ack_callback(event)
-            async with session_scope() as session:
-                user = await users_service.get_or_create(
-                    session, max_user_id=max_user_id
-                )
-                data = dict(user.dialog_data or {})
-                for k in (
-                    "locality",
-                    "detected_street",
-                    "detected_house_number",
-                    "detected_lat",
-                    "detected_lon",
-                ):
-                    data.pop(k, None)
-                user.dialog_data = data
-                await session.flush()
-            await _ask_locality(event, max_user_id)
-            return
+            if payload == "geo:other_locality":
+                # Житель не согласен с определённым посёлком — стираем
+                # всю geo-инфу и возвращаемся к выбору из списка.
+                async with session_scope() as session:
+                    user = await users_service.get_or_create(
+                        session, max_user_id=max_user_id
+                    )
+                    fresh = dict(user.dialog_data or {})
+                    for k in (
+                        "locality",
+                        "detected_locality",
+                        "detected_street",
+                        "detected_house_number",
+                        "detected_lat",
+                        "detected_lon",
+                        "detected_confidence",
+                    ):
+                        fresh.pop(k, None)
+                    user.dialog_data = fresh
+                    await session.flush()
+                await _ask_locality(event, max_user_id)
+                return
 
         if payload.startswith("topic:"):
             try:
