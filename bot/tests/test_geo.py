@@ -18,6 +18,10 @@ class TestFindLocality:
     @pytest.mark.parametrize(
         "lat,lon,expected",
         [
+            # Эталонные центры из Wikidata P625 + cross-verify через OSM
+            # place=village (см. scripts/cross_verify_geo.py).
+            # Для Пионерского — OSM place-нода вместо Wikidata, потому
+            # что Q21193644 содержит ошибочную координату.
             (53.184, 158.385, "Елизовское ГП"),       # центр Елизово
             (52.961, 158.249, "Паратунское СП"),
             (53.271, 158.289, "Раздольненское СП"),
@@ -27,10 +31,11 @@ class TestFindLocality:
             (53.045, 158.336, "Николаевское СП"),
             (53.255, 158.029, "Новолесновское СП"),
             (53.145, 157.698, "Начикинское СП"),
+            (53.090, 158.557, "Пионерское СП"),       # OSM place-нода
         ],
     )
     def test_known_centers_match(self, lat: float, lon: float, expected: str) -> None:
-        """Эталонные центры из Wikidata должны попадать в свои полигоны."""
+        """Эталонные центры из Wikidata + OSM должны попадать в полигоны."""
         assert find_locality(lat, lon) == expected
 
     def test_outside_emo_returns_none(self) -> None:
@@ -38,6 +43,34 @@ class TestFindLocality:
         assert find_locality(53.5, 159.0) is None
         # Москва — заведомо вне ЕМО
         assert find_locality(55.751, 37.617) is None
+
+
+class TestAdministrationBuildings:
+    """Здания администраций поселений ЕМО — независимый источник
+    верификации границ. Эти координаты получены из OSM запроса
+    `amenity=townhall` на территории Елизовского района (см.
+    scripts/cross_verify_geo.py). Каждое здание администрации
+    конкретного поселения должно физически находиться в полигоне
+    своего поселения — это **юридически и физически очевидно**.
+
+    Если эти тесты падают — серьёзная ошибка в данных границ.
+    """
+
+    @pytest.mark.parametrize(
+        "lat,lon,expected,name",
+        [
+            # Координаты получены через Overpass API
+            # запрос: amenity=townhall во всех поселениях ЕМО
+            (53.184, 158.385, "Елизовское ГП", "Администрация ЕМР (центр)"),
+            (53.090, 158.557, "Пионерское СП", "Администрация Пионерского СП"),
+            (52.961, 158.249, "Паратунское СП", "Администрация Паратунского СП"),
+        ],
+    )
+    def test_townhall_in_correct_polygon(
+        self, lat: float, lon: float, expected: str, name: str
+    ) -> None:
+        result = find_locality(lat, lon)
+        assert result == expected, f"{name}: ожидался {expected}, получен {result}"
 
 
 class TestFindAddress:
