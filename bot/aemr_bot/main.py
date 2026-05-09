@@ -138,24 +138,37 @@ if settings.bot_mode == "webhook":
 
 
 async def _register_bot_commands(bot: Bot) -> None:
-    """Очистить /-меню MAX — пустой список команд для всех чатов.
+    """Очистить /-меню MAX — отправить PATCH /me с пустым `commands`.
 
     MAX Bot API не поддерживает per-scope команды (нет
-    `BotCommandScopeChat` как в Telegram), поэтому раньше публиковали
-    7 команд жителя — но они показывались и в служебной группе тоже,
-    путая операторов («почему /forget виден в админ-чате?»).
+    `BotCommandScopeChat` как в Telegram). Раньше публиковали 7 команд
+    жителя, но они показывались и в служебной группе тоже, путая
+    операторов («почему /forget виден в админ-чате?»). Жильцы работают
+    через кнопочное меню; операторам команды известны из RUNBOOK или
+    отображаются по `/op_help`.
 
-    Решение: /-меню совсем не используем. Жители работают исключительно
-    через кнопочное меню (главное → подменю), slash-команды для них
-    избыточны. Операторы знают свои команды наизусть из RUNBOOK либо
-    через `/op_help` — кнопочную панель, которая открывается тапом
-    «Меню → /op_help» либо после `/start` в служебной группе.
-
-    Пустой набор команд — это явный «у бота нет команд», а не «команды
-    забыли прописать»: при наборе `/` MAX-клиент покажет пустой список.
+    `bot.set_my_commands()` без аргументов НЕ ОЧИЩАЕТ команды у MAX:
+    в `maxapi.methods.change_info.ChangeInfo.fetch()` стоит
+    `if self.commands:` — пустой `[]` truthy-false и ключ просто не
+    включается в PATCH-тело. Чтобы реально очистить, нужно явно
+    отправить `{"commands": []}`. Делаем прямым aiohttp-вызовом, без
+    обхода через ChangeInfo.
     """
-    await bot.set_my_commands()
-    log.info("set_my_commands: /-меню очищено (per-scope не поддерживается в MAX API)")
+    import aiohttp
+
+    url = f"{bot.api_url}/me"
+    params = {"access_token": settings.bot_token}
+    payload = {"commands": []}
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.patch(url, params=params, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                if resp.status == 200:
+                    log.info("set_my_commands: /-меню очищено через PATCH /me {commands: []}")
+                else:
+                    body = await resp.text()
+                    log.warning("set_my_commands PATCH вернул %s: %s", resp.status, body[:200])
+    except Exception:
+        log.exception("set_my_commands: PATCH /me failed (некритично, /-меню могут остаться у клиентов)")
 
 
 async def _preflight_check_token(bot: Bot) -> None:
