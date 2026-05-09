@@ -1089,6 +1089,31 @@ async def _on_awaiting_followup_text(event, body, text_body, max_user_id):
         )
         return
 
+    # Если согласие отозвано между нажатием «📎 Дополнить» и присылкой
+    # текста — followup в админ-чат не идёт. 152-ФЗ ст. 21 ч. 5: после
+    # отзыва обработка прекращается, в том числе входящих сообщений.
+    if user.consent_pdn_at is None:
+        async with session_scope() as session:
+            await users_service.reset_state(session, max_user_id)
+        await event.message.answer(
+            "Согласие на обработку отозвано — дополнение не отправлено. "
+            "Чтобы продолжить, откройте /start и дайте согласие заново.",
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+        return
+
+    # Если оператор закрыл обращение между нажатием и присылкой —
+    # не «оживляем» его followup'ом. Возвращаем в меню.
+    if appeal.status == AppealStatus.CLOSED.value:
+        async with session_scope() as session:
+            await users_service.reset_state(session, max_user_id)
+        await event.message.answer(
+            "Обращение уже закрыто. Если ситуация повторилась — "
+            "откройте его в «📂 Мои обращения» и нажмите «🔁 Подать похожее».",
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+        return
+
     text = (text_body or "").strip()
     attachments = collect_attachments(body)
     if not text and not attachments:

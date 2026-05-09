@@ -15,7 +15,6 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
 from aemr_bot.services import operators as operators_service
-from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import (
     extract_message_id,
     get_chat_id,
@@ -239,13 +238,30 @@ async def _deliver_operator_reply(
     # - consent_pdn_at IS NULL И обращение подано ДО revoked_at →
     #   доставка разрешена (прощальный ответ оператора по уже принятому
     #   до отзыва обращению).
-    user = appeal.user
+    # Перечитываем User свежей сессией непосредственно перед отправкой.
+    # Защита от гонки: житель мог тапнуть «🗑 Стереть» в момент, когда
+    # оператор печатал ответ. erase_pdn перевешивает appeals на
+    # anonymous-user и физически удаляет запись жителя; объект `appeal.user`
+    # в памяти оператора остался устаревшим. Если не перечитать —
+    # отправим ответ постфактум удалённому жителю.
+    async with session_scope() as session:
+        fresh_appeal = await appeals_service.get_by_id(session, appeal.id)
+    if fresh_appeal is None or fresh_appeal.user is None:
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=(
+                f"⚠️ Не могу доставить ответ по обращению #{appeal.id}: "
+                f"обращение или его автор не найдены."
+            ),
+        )
+        return True
+    user = fresh_appeal.user
     hard_forbidden = user.is_blocked or user.first_name == "Удалено"
     revoked_after_appeal = (
         user.consent_pdn_at is None
         and user.consent_revoked_at is not None
-        and appeal.created_at is not None
-        and appeal.created_at >= user.consent_revoked_at
+        and fresh_appeal.created_at is not None
+        and fresh_appeal.created_at >= user.consent_revoked_at
     )
     no_consent_ever = (
         user.consent_pdn_at is None and user.consent_revoked_at is None
@@ -261,8 +277,8 @@ async def _deliver_operator_reply(
         )
         return True
 
-    target_user_id = appeal.user.max_user_id
-    formatted_text = card_format.citizen_reply(appeal, text)
+    target_user_id = user.max_user_id
+    formatted_text = card_format.citizen_reply(fresh_appeal, text)
     try:
         # ВАЖНО: доставляем сообщение жителю по user_id (а не chat_id) — мы не
         # сохраняли chat_id их личного диалога, только их MAX user_id.
@@ -458,101 +474,6 @@ async def handle_command_reply(event, appeal_id: int, text: str) -> None:
         text=text,
         audit_action="reply_via_command",
     )
-
-
-async def handle_user_followup(
-    event: MessageCreated,
-    text: str,
-    *,
-    body=None,
-) -> bool:
-    """Житель написал в личный диалог, находясь в состоянии ожидания (idle).
-
-    Цепляем сообщение к последнему живому обращению жителя — NEW,
-    IN_PROGRESS или ANSWERED. Сценарий «забыл приложить фото» (NEW),
-    «уточнение пока в работе» (IN_PROGRESS) и классический «спасибо,
-    но ещё одно» (ANSWERED — обращение переоткрывается).
-
-    body — оригинальное message body, нужно чтобы достать вложения и
-    тоже пришить их к followup. Без этого дослан фото-уточнение
-    превращалось в пустой followup без файла. Если body не передан
-    (legacy-вызов), вложения пропускаются.
-
-    Шум-фильтр: для ANSWERED-обращений короткие реплики «спасибо»,
-    «ок», «хорошо», «принято» и подобные не переоткрывают обращение.
-    Это снимает SLA-метрик-шум в админ-группе.
-    """
-    from aemr_bot.db.models import AppealStatus, DialogState
-    from aemr_bot.utils.attachments import collect_attachments
-
-    max_user_id = get_user_id(event)
-    if max_user_id is None:
-        return False
-
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        if user.dialog_state != DialogState.IDLE.value:
-            return False
-        # Анонимизированный / заблокированный пользователь — не выводим его текст
-        # в админ-группу как "дополнительное сообщение". Его согласие было отозвано.
-        if user.is_blocked:
-            return False
-        # Если согласие отозвано — followup в админ-группу не идёт.
-        # Это прямое нарушение 152-ФЗ ст. 21 ч. 5: после отзыва
-        # обработка должна быть прекращена, в том числе обработка
-        # входящих сообщений жителя.
-        if user.consent_pdn_at is None:
-            return False
-        active = await appeals_service.find_active_for_user(session, user.id)
-
-    if active is None:
-        return False
-
-    # Шум-фильтр для ANSWERED. Короткие благодарности не переоткрывают.
-    if active.status == AppealStatus.ANSWERED.value:
-        normalized = (text or "").strip().lower().rstrip("!.?")
-        thanks_set = {
-            "спасибо", "спасибо!", "спс", "благодарю", "благодарность",
-            "ок", "окей", "хорошо", "понял", "понятно", "принято",
-            "thanks", "thx", "ok",
-        }
-        if normalized in thanks_set:
-            return False  # тихо игнорируем — пусть idle ответит обычной подсказкой
-
-    attachments = collect_attachments(body) if body is not None else []
-
-    # ANSWERED — переоткрываем (житель пришёл с уточнением после ответа).
-    # NEW / IN_PROGRESS — статус не трогаем, просто пришиваем сообщение
-    # к обращению как followup-комментарий.
-    async with session_scope() as session:
-        if active.status == AppealStatus.ANSWERED.value:
-            await appeals_service.reopen(session, active.id)
-        await appeals_service.add_user_message(
-            session,
-            appeal=active,
-            text=text,
-            attachments=attachments,
-        )
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        followup = card_format.admin_followup(active, user, text)
-
-    if cfg.admin_group_id:
-        await event.bot.send_message(chat_id=cfg.admin_group_id, text=followup)
-        # Если в дополнении пришли фото/файлы — relay-им их в админ-группу
-        # тоже, чтобы оператор видел контекст, а не только текст.
-        if attachments:
-            from aemr_bot.services.admin_relay import relay_attachments_to_admin
-
-            try:
-                await relay_attachments_to_admin(
-                    event.bot,
-                    appeal_id=active.id,
-                    admin_mid=None,
-                    stored_attachments=attachments,
-                )
-            except Exception:
-                log.exception("relay followup attachments failed")
-    return True
 
 
 def register(dp: Dispatcher) -> None:

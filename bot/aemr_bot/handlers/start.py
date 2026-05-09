@@ -137,62 +137,30 @@ async def cmd_policy(event):
 
 
 async def cmd_subscribe(event):
+    """Команда /subscribe — единый путь с кнопкой «🔔 Подписаться».
+
+    Раньше команда требовала полного consent_pdn_at и не записывала
+    consent_broadcast_at — что нарушало 152-ФЗ ст. 9 ч. 1 (конкретное
+    согласие именно на цель «рассылка»). Теперь делегирует в
+    `menu.do_subscribe`, который покажет короткий экран мини-согласия
+    при первом тапе и проставит consent_broadcast_at в `do_subscribe_confirm`.
+    """
+    from aemr_bot.handlers.menu import do_subscribe
+
     max_user_id = get_user_id(event)
     if max_user_id is None:
         return
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        if user.is_blocked:
-            return
-        # 152-ФЗ: рассылка — это обработка ПДн (по факту, отправка
-        # сообщения по идентификатору жителя). Без согласия нельзя.
-        if not user.consent_pdn_at:
-            await reply(
-                event,
-                texts.SUBSCRIBE_REQUIRES_CONSENT,
-                attachments=[keyboards.back_to_menu_keyboard()],
-            )
-            return
-        already = await broadcasts_service.is_subscribed(session, max_user_id)
-        if already:
-            await reply(
-                event,
-                texts.SUBSCRIBE_ALREADY_ON,
-                attachments=[keyboards.back_to_menu_keyboard()],
-            )
-            return
-        await broadcasts_service.set_subscription(session, max_user_id, True)
-    await reply(
-        event,
-        texts.SUBSCRIBE_CONFIRMED,
-        attachments=[keyboards.back_to_menu_keyboard()],
-    )
+    await do_subscribe(event, max_user_id)
 
 
 async def cmd_unsubscribe(event):
+    """Команда /unsubscribe — единый путь с кнопкой «🔕 Отписаться»."""
+    from aemr_bot.handlers.menu import do_unsubscribe
+
     max_user_id = get_user_id(event)
     if max_user_id is None:
         return
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        # Заблокированный житель не получает рассылку в любом случае —
-        # отвечать ему «вы отписаны» бессмысленно. Молча игнорируем.
-        if user.is_blocked:
-            return
-        already = await broadcasts_service.is_subscribed(session, max_user_id)
-        if not already:
-            await reply(
-                event,
-                texts.UNSUBSCRIBE_ALREADY_OFF,
-                attachments=[keyboards.back_to_menu_keyboard()],
-            )
-            return
-        await broadcasts_service.set_subscription(session, max_user_id, False)
-    await reply(
-        event,
-        texts.UNSUBSCRIBE_CONFIRMED,
-        attachments=[keyboards.back_to_menu_keyboard()],
-    )
+    await do_unsubscribe(event, max_user_id)
 
 
 async def cmd_forget(event):

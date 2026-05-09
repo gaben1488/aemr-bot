@@ -250,16 +250,6 @@ def cancel_reply_intent_keyboard():
     return kb.as_markup()
 
 
-def give_consent_keyboard():
-    """Используется когда жителю нужно дать согласие, чтобы продолжить
-    (например, тапнул «Подписаться» без активного согласия). Прямая
-    кнопка короче пути «Настройки → Согласие на ПДн → Дать согласие»."""
-    kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="✅ Дать согласие", payload="settings:consent_give"))
-    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
-    return kb.as_markup()
-
-
 def subscribe_mini_consent_keyboard():
     """Экран мини-согласия на рассылку. Два варианта: подтвердить и
     отменить. После подтверждения тап «✅ Подписаться» проставляет

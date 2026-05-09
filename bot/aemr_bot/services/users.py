@@ -1,9 +1,16 @@
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.db.models import DialogState, User
+
+# Постоянный ключ Postgres advisory-lock для пути «создать anonymous user
+# on-the-fly». Используется только в get_anonymous_user_id, чтобы две
+# параллельные корутины не пробивали UNIQUE на max_user_id одновременно.
+# Любая bigint-константа подойдёт; выбрана не-нулевая, чтобы не
+# спутаться с дефолтами.
+_ANONYMOUS_USER_LOCK_KEY = 0x4145_4D52_414E_4F4E  # 'AEMR_ANON' в hex
 
 
 def _normalize_phone(phone: str) -> str:
@@ -155,6 +162,11 @@ async def find_stuck_in_funnel(
         DialogState.AWAITING_LOCALITY.value,
         DialogState.AWAITING_ADDRESS.value,
         DialogState.AWAITING_TOPIC.value,
+        # Житель тапнул «📎 Дополнить», но не дописал текст. Без watchdog
+        # FSM остаётся в AWAITING_FOLLOWUP_TEXT навсегда; следующее
+        # «привет» через неделю уйдёт в обработчик дополнения и
+        # запишется как followup случайному обращению.
+        DialogState.AWAITING_FOLLOWUP_TEXT.value,
     ]
     threshold = datetime.now(timezone.utc) - timedelta(seconds=idle_seconds)
     result = await session.execute(
@@ -176,9 +188,26 @@ async def get_anonymous_user_id(session: AsyncSession) -> int:
     какой-то причине нет (тест, ручное вмешательство), создаём
     on-the-fly: это безопасно, потому что max_user_id=ANONYMOUS_MAX_USER_ID
     — фиксированный sentinel.
+
+    Защита от гонки: две параллельные erase_pdn-корутины могли
+    одновременно увидеть «записи нет» и попытаться INSERT, упав на
+    UNIQUE(max_user_id). Перед созданием берём transactional advisory
+    lock на фиксированный ключ — постгрес сам сериализует параллельные
+    транзакции на этом участке, lock освобождается на commit/rollback.
     """
     from aemr_bot.db.models import ANONYMOUS_MAX_USER_ID
 
+    anon_id = await session.scalar(
+        select(User.id).where(User.max_user_id == ANONYMOUS_MAX_USER_ID)
+    )
+    if anon_id is not None:
+        return anon_id
+    await session.execute(
+        text("SELECT pg_advisory_xact_lock(:key)"),
+        {"key": _ANONYMOUS_USER_LOCK_KEY},
+    )
+    # Повторное чтение под локом: соседняя транзакция могла за это время
+    # создать запись, и мы должны её вернуть, а не пытаться вставить вторую.
     anon_id = await session.scalar(
         select(User.id).where(User.max_user_id == ANONYMOUS_MAX_USER_ID)
     )
@@ -321,6 +350,10 @@ async def set_blocked(
                 .values(
                     status=AppealStatus.CLOSED.value,
                     closed_at=datetime.now(timezone.utc),
+                    # Помечаем «закрыто из-за отзыва/блокировки», чтобы
+                    # кнопка «🔁 Возобновить» под карточкой не показывалась
+                    # оператору — гард доставки всё равно откажет.
+                    closed_due_to_revoke=True,
                 )
             )
     result = await session.execute(
