@@ -397,6 +397,70 @@ async def open_help(event):
     )
 
 
+async def open_goodbye(event):
+    """Экран A4 «👋 Уйти из бота» — три утверждённые опции в одном шаге.
+
+    Заменяет два прежних entry point'а из Настроек («🔐 Согласие на ПДн»
+    и «🗑 Удалить мои данные»). Объяснительный текст в `GOODBYE_PROMPT`
+    переводит юридические термины в жизненные ситуации, чтобы пенсионер
+    понимал «что мне выбрать», а не «что значит отозвать согласие».
+    """
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=texts.GOODBYE_PROMPT,
+        attachments=[keyboards.goodbye_keyboard()],
+    )
+
+
+async def ask_goodbye_revoke_confirm(event):
+    """Подтверждение «прощального» отзыва согласия из A4-экрана.
+
+    Текст подтверждения тот же, что в `ask_consent_revoke_confirm`
+    (CONSENT_REVOKE_CONFIRM) — он уже написан под новую парадигму
+    «оператор обязательно ответит, через 30 дней автоудаление».
+    Меняется только клавиатура — возврат на отказ ведёт обратно в
+    A4-экран, а не в карточку «Согласие на ПДн» (которой больше нет).
+    """
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=texts.CONSENT_REVOKE_CONFIRM,
+        attachments=[keyboards.goodbye_revoke_confirm_keyboard()],
+    )
+
+
+async def ask_goodbye_erase_confirm(event):
+    """Подтверждение полного стирания из A4-экрана.
+
+    Текст и список жизненных последствий — тот же `ERASE_CONFIRM`, что
+    в старом entry point'е через «🗑 Удалить мои данные». Возврат на
+    отказ — в A4-экран, а не в Настройки: жильцу логичнее ещё раз
+    рассмотреть две оставшиеся опции, чем уйти на уровень выше.
+    """
+    from aemr_bot.services import appeals as appeals_service
+
+    max_user_id = get_user_id(event)
+    open_lines: list[str] = []
+    if max_user_id is not None:
+        async with session_scope() as session:
+            user = await users_service.get_or_create(session, max_user_id=max_user_id)
+            active = await appeals_service.list_unanswered(session)
+            mine = [a for a in active if a.user_id == user.id]
+            for ap in mine:
+                open_lines.append(
+                    f"#{ap.id} от {ap.created_at.strftime('%d.%m.%Y') if ap.created_at else '—'} · "
+                    f"{ap.topic or 'без темы'}"
+                )
+    text = texts.ERASE_CONFIRM
+    if open_lines:
+        text += "\n\nСейчас у вас в работе:\n• " + "\n• ".join(open_lines)
+        text += "\n\nПри стирании эти обращения закроются без ответа."
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=text,
+        attachments=[keyboards.goodbye_erase_confirm_keyboard()],
+    )
+
+
 async def ask_forget_confirm(event):
     """Подтверждение удаления данных. Если у жителя есть открытые
     обращения, перечисляем их в подтверждении — без явного списка
@@ -722,6 +786,41 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
         from aemr_bot.handlers.appeal import _start_appeal_flow
 
         await _start_appeal_flow(event, max_user_id)
+        return True
+
+    # A4 «👋 Уйти из бота» — три жизненных опции в одном экране.
+    # Старые callback-цепочки settings:consent_revoke_ask /
+    # settings:forget_ask остались выше для совместимости с уже
+    # отправленными сообщениями (если житель тапнет на старую карточку),
+    # но новые точки входа — только через goodbye:*.
+    if payload == "settings:goodbye":
+        await ack_callback(event)
+        await open_goodbye(event)
+        return True
+
+    if payload == "goodbye:unsub" and max_user_id is not None:
+        await ack_callback(event)
+        await do_unsubscribe(event, max_user_id)
+        return True
+
+    if payload == "goodbye:revoke_ask":
+        await ack_callback(event)
+        await ask_goodbye_revoke_confirm(event)
+        return True
+
+    if payload == "goodbye:revoke_yes" and max_user_id is not None:
+        await ack_callback(event)
+        await do_consent_revoke(event, max_user_id)
+        return True
+
+    if payload == "goodbye:erase_ask":
+        await ack_callback(event)
+        await ask_goodbye_erase_confirm(event)
+        return True
+
+    if payload == "goodbye:erase_yes" and max_user_id is not None:
+        await ack_callback(event)
+        await do_forget(event, max_user_id)
         return True
 
     if payload == "info:emergency":

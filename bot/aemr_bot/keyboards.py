@@ -61,65 +61,74 @@ def main_menu(
 
 
 def settings_menu_keyboard():
-    """Подменю «Настройки и помощь». Кнопки покрывают /help, /policy,
-    /forget плюс отдельную точку для согласия на ПДн — отзыв и просмотр.
+    """Подменю «Настройки и помощь». Три точки входа:
 
-    Блок «Согласие на ПДн» намеренно отдельной кнопкой, не внутри
-    «Удалить мои данные». Пользователь может хотеть отозвать согласие,
-    но сохранить историю обращений в архиве; «удалить» — это полное
-    обезличивание плюс блокировка.
+    - «📋 Помощь и команды» — список команд жителя.
+    - «📄 Политика данных» — открыть PDF/ссылку на политику.
+    - «👋 Уйти из бота» — A4-сценарий с тремя опциями (отписка,
+      прощальный отзыв согласия, полное удаление). Раньше было два
+      отдельных пункта — «🔐 Согласие на ПДн» и «🗑 Удалить мои данные» —
+      и пенсионер не понимал, чем они отличаются. Теперь одна точка
+      входа, внутри — выбор сценария по жизненной ситуации.
     """
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="🆘 Помощь и команды", payload="settings:help"))
+    kb.row(CallbackButton(text="📋 Помощь и команды", payload="settings:help"))
     kb.row(CallbackButton(text="📄 Политика данных", payload="settings:policy"))
-    kb.row(
-        CallbackButton(text="🔐 Согласие на ПДн", payload="settings:consent_status"),
-    )
-    kb.row(
-        CallbackButton(text="🗑️ Удалить мои данные", payload="settings:forget_ask")
-    )
+    kb.row(CallbackButton(text="👋 Уйти из бота", payload="settings:goodbye"))
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()
 
 
-def consent_status_keyboard(*, consent_active: bool):
-    """Кнопки на экране «Согласие на ПДн». Если согласие активно — даём
-    «Отозвать» и «Открыть политику». Если отозвано или не давалось —
-    «Дать согласие» (запускает воронку с шагом согласия)."""
+def goodbye_keyboard():
+    """Экран «👋 Уйти из бота» — три утверждённые жизненные опции.
+
+    Формулировки взяты из утверждённой UX-сессии: каждая фраза описывает
+    ситуацию жителя, не технический термин. «Отозвать согласие» / «удалить
+    данные» — это IT-язык; «попрощаться, но дождаться ответа» — язык
+    человека, который пришёл сюда не из любви к 152-ФЗ.
+
+    Семантика опций:
+    - 🔕 «Не хочу получать рассылку» — subscribed_broadcast=false,
+      consent_pdn остаётся, обращения работают как и раньше.
+    - 👋 «Хочу попрощаться, но дождаться ответа на обращение» — revoke_consent:
+      consent_pdn=NULL, consent_revoked_at=now; рассылка off; новые
+      обращения нельзя; на уже поданные ДО отзыва оператор отвечает
+      «прощальным» ответом (см. _deliver_operator_reply); через 30 дней
+      без активности retention-cron автоматически обезличит данные.
+    - ❌ «Стереть данные обо мне прямо сейчас» — erase_pdn немедленно:
+      имя/телефон стираются, открытые обращения закрываются (закрытые
+      и анонимизированные через anonymous-user остаются для статистики),
+      запись жителя физически удаляется. Бот «забудет» жителя.
+    - ↩️ «Передумал, остаюсь» — назад в Настройки.
+    """
     kb = InlineKeyboardBuilder()
-    if consent_active:
-        kb.row(
-            CallbackButton(text="❌ Отозвать согласие", payload="settings:consent_revoke_ask"),
-        )
-    else:
-        kb.row(
-            CallbackButton(text="✅ Дать согласие", payload="settings:consent_give"),
-        )
-    kb.row(CallbackButton(text="📄 Политика данных", payload="settings:policy"))
-    kb.row(CallbackButton(text="↩️ Назад", payload="menu:settings"))
+    kb.row(CallbackButton(text="🔕 Не хочу получать рассылку", payload="goodbye:unsub"))
+    kb.row(CallbackButton(text="👋 Хочу попрощаться, но дождаться ответа на обращение", payload="goodbye:revoke_ask"))
+    kb.row(CallbackButton(text="❌ Стереть данные обо мне прямо сейчас", payload="goodbye:erase_ask"))
+    kb.row(CallbackButton(text="↩️ Передумал, остаюсь", payload="menu:settings"))
     return kb.as_markup()
 
 
-def consent_revoke_confirm_keyboard():
-    """Подтверждение отзыва согласия. Кнопка «Не отзывать» возвращает
-    в карточку согласия, а не в главное меню — чтобы человек видел
-    свой текущий статус сразу после отказа."""
+def goodbye_revoke_confirm_keyboard():
+    """Подтверждение «прощального» отзыва согласия. Возврат — в экран
+    «Уйти из бота», чтобы человек, передумавший на этом шаге, видел все
+    три опции, а не сразу «Назад» в Настройки."""
     kb = InlineKeyboardBuilder()
     kb.row(
-        CallbackButton(text="✅ Да, отозвать", payload="settings:consent_revoke_yes"),
-        CallbackButton(text="❌ Не отзывать", payload="settings:consent_status"),
+        CallbackButton(text="✅ Да, попрощаться", payload="goodbye:revoke_yes"),
+        CallbackButton(text="❌ Не отзывать", payload="settings:goodbye"),
     )
     return kb.as_markup()
 
 
-def forget_confirm_keyboard():
-    """Подтверждение удаления ПДн жителя. Действие необратимо: записывает
-    «Удалено» в first_name, обнуляет phone и поднимает is_blocked. Поэтому
-    отдельный шаг подтверждения, чтобы случайный тап не стёр данные."""
+def goodbye_erase_confirm_keyboard():
+    """Подтверждение полного стирания. Действие необратимо в смысле
+    «бот не узнает вас при возврате», поэтому шаг подтверждения отдельный.
+    Возврат на отказ — в «Уйти из бота», логика та же что у revoke."""
     kb = InlineKeyboardBuilder()
     kb.row(
-        CallbackButton(text="✅ Да, удалить", payload="settings:forget_yes"),
-        CallbackButton(text="❌ Не удалять", payload="menu:settings"),
+        CallbackButton(text="✅ Да, стереть", payload="goodbye:erase_yes"),
+        CallbackButton(text="❌ Не стирать", payload="settings:goodbye"),
     )
     return kb.as_markup()
 
