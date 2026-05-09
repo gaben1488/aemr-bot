@@ -157,11 +157,15 @@ async def _register_bot_commands(bot: Bot) -> None:
     import aiohttp
 
     url = f"{bot.api_url}/me"
-    params = {"access_token": settings.bot_token}
+    # API MAX перешёл на Authorization-header; access_token в query
+    # теперь возвращает 401. Префикс «Bearer» НЕ нужен: maxapi внутри
+    # тоже передаёт токен напрямую (см. bot.py:153 — `self.headers =
+    # {"Authorization": self.__token}`). Подкладываем то же самое.
+    headers = {"Authorization": settings.bot_token}
     payload = {"commands": []}
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.patch(url, params=params, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+            async with session.patch(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                 if resp.status == 200:
                     log.info("set_my_commands: /-меню очищено через PATCH /me {commands: []}")
                 else:
