@@ -1020,16 +1020,113 @@ async def _on_awaiting_consent(event, body, text_body, max_user_id):
 
 
 async def _on_idle(event, body, text_body, max_user_id):
-    """IDLE — нет активной воронки. Сначала пытаемся пришить сообщение
-    к последнему живому обращению как followup; если ничего активного
-    нет — отвечаем подсказкой и показываем меню с актуальным subscribed."""
-    from aemr_bot.handlers import operator_reply as op_reply
-    from aemr_bot.handlers.menu import open_main_menu
+    """IDLE — нет активной воронки.
 
-    handled = await op_reply.handle_user_followup(event, text_body, body=body)
-    if handled:
+    Раньше был «магический followup»: любое сообщение жителя в IDLE
+    автоматически пришивалось к его последнему живому обращению, без
+    подтверждения. Это путало пенсионеров — они не знали, что текст
+    «дошёл», и куда именно. Теперь дополнение работает только через
+    явную кнопку «📎 Дополнить» в карточке обращения.
+
+    Если у жителя есть открытые обращения и он пишет в IDLE — отвечаем
+    подсказкой с кнопкой, которая открывает «📂 Мои обращения». Иначе —
+    обычная подсказка.
+    """
+    from aemr_bot.handlers.menu import open_main_menu
+    from aemr_bot.services import appeals as appeals_service
+
+    async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        active = await appeals_service.find_active_for_user(session, user.id)
+
+    if active is not None:
+        # У жителя есть открытое или недавно отвеченное обращение —
+        # подскажем, как явно дополнить. Без магии.
+        await event.message.answer(
+            "Не понял сообщение. Если хотите дополнить уже поданное "
+            "обращение — откройте «📂 Мои обращения» и нажмите "
+            "«📎 Дополнить» в карточке нужного обращения.",
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
         return
     await event.message.answer(texts.UNKNOWN_INPUT)
+    await open_main_menu(event)
+
+
+async def _on_awaiting_followup_text(event, body, text_body, max_user_id):
+    """Житель нажал «📎 Дополнить» в карточке обращения. Принимаем
+    текст и/или вложения — пришиваем к обращению из dialog_data,
+    отправляем в админ-чат как «📩 Дополнение к обращению #N»,
+    подтверждаем жителю и возвращаем в меню.
+
+    Если обращение было ANSWERED — переоткрываем (житель пришёл с
+    уточнением после ответа).
+    """
+    from aemr_bot.db.models import AppealStatus
+    from aemr_bot.handlers.menu import open_main_menu
+    from aemr_bot.services import appeals as appeals_service
+    from aemr_bot.services import card_format
+    from aemr_bot.services.admin_relay import relay_attachments_to_admin
+
+    async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        appeal_id = (user.dialog_data or {}).get("appeal_id")
+        appeal = (
+            await appeals_service.get_by_id(session, int(appeal_id))
+            if appeal_id
+            else None
+        )
+
+    if appeal is None or appeal.user_id != user.id:
+        # Обращение пропало (удалили, перевешали на anonymous) или
+        # принадлежит другому — выходим из режима, отправляем в меню.
+        async with session_scope() as session:
+            await users_service.reset_state(session, max_user_id)
+        await event.message.answer(
+            "Обращение, которое вы хотели дополнить, недоступно. "
+            "Откройте «📂 Мои обращения» — выберите актуальное.",
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+        return
+
+    text = (text_body or "").strip()
+    attachments = collect_attachments(body)
+    if not text and not attachments:
+        await event.message.answer(
+            "Опишите дополнение к обращению одним сообщением или "
+            "приложите фото, видео или файл.",
+            attachments=[keyboards.cancel_keyboard()],
+        )
+        return
+
+    async with session_scope() as session:
+        if appeal.status == AppealStatus.ANSWERED.value:
+            await appeals_service.reopen(session, appeal.id)
+        await appeals_service.add_user_message(
+            session,
+            appeal=appeal,
+            text=text or None,
+            attachments=attachments,
+        )
+        await users_service.reset_state(session, max_user_id)
+        followup = card_format.admin_followup(appeal, user, text or "(без текста)")
+
+    if cfg.admin_group_id:
+        await event.bot.send_message(chat_id=cfg.admin_group_id, text=followup)
+        if attachments:
+            try:
+                await relay_attachments_to_admin(
+                    event.bot,
+                    appeal_id=appeal.id,
+                    admin_mid=None,
+                    stored_attachments=attachments,
+                )
+            except Exception:
+                log.exception("relay followup attachments failed")
+
+    await event.message.answer(
+        f"✅ Дополнение отправлено оператору по обращению #{appeal.id}."
+    )
     await open_main_menu(event)
 
 
@@ -1041,5 +1138,6 @@ _STATE_HANDLERS = {
     DialogState.AWAITING_ADDRESS: _on_awaiting_address,
     DialogState.AWAITING_TOPIC: _on_awaiting_topic,
     DialogState.AWAITING_SUMMARY: _on_awaiting_summary,
+    DialogState.AWAITING_FOLLOWUP_TEXT: _on_awaiting_followup_text,
     DialogState.IDLE: _on_idle,
 }

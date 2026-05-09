@@ -19,6 +19,18 @@ class DialogState(StrEnum):
     AWAITING_ADDRESS = "awaiting_address"
     AWAITING_TOPIC = "awaiting_topic"
     AWAITING_SUMMARY = "awaiting_summary"
+    # Житель явно нажал «📎 Дополнить» в карточке обращения — ждём от
+    # него текст и/или вложения, потом пришиваем к выбранному
+    # обращению. dialog_data['appeal_id'] — id целевого обращения.
+    AWAITING_FOLLOWUP_TEXT = "awaiting_followup_text"
+
+
+# Sentinel max_user_id для технической записи anonymous user. После
+# полного удаления (erase_pdn) обращения жителя переподвешиваются на
+# эту запись через UPDATE appeals.user_id, исходная запись физически
+# удаляется. -1 выбран как значение, которое не может встретиться в
+# MAX (там user_id положительные BigInt). См. миграцию 0007.
+ANONYMOUS_MAX_USER_ID = -1
 
 
 class AppealStatus(StrEnum):
@@ -60,6 +72,10 @@ class User(Base):
     # 59-ФЗ не зависит от 152-ФЗ); новые обращения после отзыва — нет,
     # нужно дать согласие заново.
     consent_revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Отдельное согласие на рассылку. Подписка не требует полного
+    # согласия на ПДн (имя/телефон) — для отправки broadcast нужен
+    # только max_user_id. См. миграцию 0007 и services/broadcasts.
+    consent_broadcast_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     subscribed_broadcast: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
@@ -70,6 +86,27 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     appeals: Mapped[list["Appeal"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+
+    @property
+    def contact_forbidden(self) -> bool:
+        """Канонический «нельзя связываться» — три маркера в одном.
+
+        Используется в гардах доставки (operator_reply, broadcasts).
+        Любой из трёх — отказ:
+        - is_blocked: IT-блокировка за злоупотребления;
+        - consent_pdn_at IS NULL: согласие не активно (отзыв или новый);
+        - first_name == 'Удалено': данные обезличены (после erase_pdn).
+
+        У anonymous-user тоже True (он создаётся с is_blocked=true и
+        first_name='Удалено') — на него никогда не должно ничего
+        отправляться, на него только переподвешиваются обращения после
+        удаления.
+        """
+        return (
+            self.is_blocked
+            or self.consent_pdn_at is None
+            or self.first_name == "Удалено"
+        )
 
 
 class Operator(Base):
@@ -101,6 +138,12 @@ class Appeal(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
     answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # True, если обращение закрыто из-за отзыва согласия или удаления
+    # данных. Используется чтобы не показывать оператору кнопку
+    # «🔁 Возобновить» — гард доставки всё равно откажет.
+    closed_due_to_revoke: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
 
     user: Mapped[User] = relationship(back_populates="appeals")
     messages: Mapped[list["Message"]] = relationship(back_populates="appeal", cascade="all, delete-orphan", order_by="Message.created_at")

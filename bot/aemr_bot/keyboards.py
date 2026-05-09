@@ -179,6 +179,41 @@ def localities_keyboard(localities: list[str]):
     return kb.as_markup()
 
 
+def user_appeal_card_keyboard(appeal_id: int, status: str):
+    """Кнопки под карточкой обращения у жителя.
+
+    NEW/IN_PROGRESS/ANSWERED — «📎 Дополнить»: явный путь пришить
+    дополнение к обращению (раньше работала «магия» — любое сообщение
+    в IDLE автоматически пришивалось, без подтверждения; пенсионеры
+    путались).
+
+    CLOSED — «🔁 Подать похожее»: новая воронка с тем же адресом и
+    тематикой, житель только пишет суть. Сценарий «опять не вывозят
+    мусор по тому же адресу».
+    """
+    from aemr_bot.db.models import AppealStatus
+
+    kb = InlineKeyboardBuilder()
+    if status in {
+        AppealStatus.NEW.value,
+        AppealStatus.IN_PROGRESS.value,
+        AppealStatus.ANSWERED.value,
+    }:
+        kb.row(
+            CallbackButton(
+                text="📎 Дополнить", payload=f"appeal:followup:{appeal_id}"
+            )
+        )
+    elif status == AppealStatus.CLOSED.value:
+        kb.row(
+            CallbackButton(
+                text="🔁 Подать похожее", payload=f"appeal:repeat:{appeal_id}"
+            )
+        )
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
+    return kb.as_markup()
+
+
 def my_appeals_list_keyboard(
     appeals: list[tuple[int, str]],
     *,
@@ -222,6 +257,17 @@ def give_consent_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="✅ Дать согласие", payload="settings:consent_give"))
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
+    return kb.as_markup()
+
+
+def subscribe_mini_consent_keyboard():
+    """Экран мини-согласия на рассылку. Два варианта: подтвердить и
+    отменить. После подтверждения тап «✅ Подписаться» проставляет
+    consent_broadcast_at и subscribed_broadcast=True (без воронки
+    телефона/имени, потому что для рассылки это не нужно)."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="✅ Подписаться", payload="subscribe:confirm"))
+    kb.row(CallbackButton(text="↩️ Отмена", payload="menu:main"))
     return kb.as_markup()
 
 
@@ -411,6 +457,7 @@ def appeal_admin_actions(
     *,
     is_it: bool = False,
     user_blocked: bool = False,
+    closed_due_to_revoke: bool = False,
 ):
     """Кнопки действий под карточкой обращения в админ-группе.
 
@@ -420,11 +467,11 @@ def appeal_admin_actions(
     Для роли it дополнительно: «🚫 Заблокировать жителя» (или
     «✅ Разблокировать», если уже заблокирован) и «🗑 Удалить ПДн жителя».
 
-    Цель — снять зависимость от свайп-ответа (часть клиентов MAX его
-    не поддерживает) и от помнить-номер для команд /reopen N, /close N.
-    Кнопка «Ответить» переводит оператора в состояние ожидания текста:
-    следующее его сообщение в админ-группе доставляется как ответ
-    жителю по этому обращению.
+    closed_due_to_revoke=True — обращение закрыто из-за отзыва согласия
+    или удаления данных жителем. Возобновлять бессмысленно: гард
+    доставки в `_deliver_operator_reply` всё равно откажет (consent
+    отозван). Поэтому кнопку «🔁 Возобновить» не показываем — экономим
+    оператору время на тыкание в неработающую кнопку.
     """
     from aemr_bot.db.models import AppealStatus
 
@@ -440,7 +487,7 @@ def appeal_admin_actions(
                 text="⛔ Закрыть без ответа", payload=f"op:close:{appeal_id}"
             ),
         )
-    elif status in closed_states:
+    elif status in closed_states and not closed_due_to_revoke:
         kb.row(
             CallbackButton(
                 text="🔁 Возобновить", payload=f"op:reopen:{appeal_id}"

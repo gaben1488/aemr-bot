@@ -5,6 +5,7 @@ from maxapi.types import BotStarted, Command, MessageCreated
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
+from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as ops_service
 from aemr_bot.services import policy as policy_service
@@ -198,18 +199,78 @@ async def cmd_forget(event):
     max_user_id = get_user_id(event)
     if max_user_id is None:
         return
+    # Аудит ставим ДО erase, потому что после удаления записи user
+    # пропадает max_user_id из таблицы users — но в audit_log
+    # operator_max_user_id остаётся как метка «было такое действие
+    # от такого человека».
     async with session_scope() as session:
-        await users_service.erase_pdn(session, max_user_id)
         await ops_service.write_audit(
             session,
             operator_max_user_id=max_user_id,
             action="self_erase",
             target=f"user max_id={max_user_id}",
         )
-    # После /forget пользователь is_blocked=true — даже если он нажмёт
-    # «↩ В меню», его ждут блокировочные сообщения. Поэтому отправляем
-    # просто текст без клавиатуры — это последняя точка взаимодействия.
+        await users_service.erase_pdn(session, max_user_id)
     await reply(event, texts.ERASE_REQUESTED)
+
+
+async def cmd_export(event):
+    """Скрытая команда: житель получает JSON со своими обращениями
+    (право субъекта по 152-ФЗ ст. 14). Не публикуется в /-меню MAX.
+
+    Состав: список обращений с темой, статусом, датами, ответом
+    оператора. Без admin-пометок и системных полей.
+    """
+    import json
+    from datetime import datetime
+
+    max_user_id = get_user_id(event)
+    if max_user_id is None:
+        return
+    async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        appeals = await appeals_service.list_for_user(session, user.id, limit=500)
+        appeals_payload = []
+        for ap in appeals:
+            answer = next(
+                (
+                    m.text
+                    for m in reversed(ap.messages or [])
+                    if m.direction == "from_operator"
+                ),
+                None,
+            )
+            appeals_payload.append(
+                {
+                    "id": ap.id,
+                    "created_at": ap.created_at.isoformat() if ap.created_at else None,
+                    "status": ap.status,
+                    "locality": ap.locality,
+                    "address": ap.address,
+                    "topic": ap.topic,
+                    "summary": ap.summary,
+                    "answered_at": ap.answered_at.isoformat() if ap.answered_at else None,
+                    "closed_at": ap.closed_at.isoformat() if ap.closed_at else None,
+                    "operator_answer": answer,
+                }
+            )
+        export = {
+            "exported_at": datetime.now().isoformat(),
+            "max_user_id": user.max_user_id,
+            "first_name": user.first_name,
+            "phone": user.phone,
+            "consent_pdn_at": user.consent_pdn_at.isoformat() if user.consent_pdn_at else None,
+            "consent_revoked_at": user.consent_revoked_at.isoformat() if user.consent_revoked_at else None,
+            "consent_broadcast_at": user.consent_broadcast_at.isoformat() if user.consent_broadcast_at else None,
+            "subscribed_broadcast": user.subscribed_broadcast,
+            "appeals": appeals_payload,
+        }
+    await reply(
+        event,
+        "Ваши данные:\n\n```\n"
+        + json.dumps(export, ensure_ascii=False, indent=2)
+        + "\n```",
+    )
 
 
 async def cmd_cancel(event):
@@ -286,6 +347,15 @@ def register(dp: Dispatcher) -> None:
         if _is_admin_chat(event):
             return
         await cmd_cancel(event)
+
+    # /export — скрытая команда, не публикуется в /-меню MAX. Право
+    # субъекта на выгрузку своих ПДн (152-ФЗ ст. 14). Реальные
+    # запросы редкие; нужно для регуляторных проверок.
+    @dp.message_created(Command("export"))
+    async def _(event: MessageCreated):
+        if _is_admin_chat(event):
+            return
+        await cmd_export(event)
 
     @dp.message_created(Command("policy"))
     async def _(event: MessageCreated):

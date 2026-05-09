@@ -104,17 +104,33 @@ async def list_for_user(
 ) -> list[Appeal]:
     """Список обращений жителя для экрана «📂 Мои обращения».
 
+    Сортировка: открытые сверху, завершённые внизу. В рамках каждой
+    группы — по дате создания, новые первыми. Это удобнее простого
+    «по дате»: житель сразу видит то, по чему ещё ждёт ответа.
+
     Если житель отзывал согласие — обращения, поданные до точки
     отзыва, в списке не показываем. После /forget человек
     концептуально новый, ему незачем видеть свою прошлую жизнь.
     Записи в БД сохраняются для статистики и аудита.
     """
+    from sqlalchemy import case
+
     user = await session.scalar(select(User).where(User.id == user_id))
     query = select(Appeal).where(Appeal.user_id == user_id)
     if user is not None and user.consent_revoked_at is not None:
         query = query.where(Appeal.created_at > user.consent_revoked_at)
+    # Приоритет статусов: открытые (NEW, IN_PROGRESS) — 0, ANSWERED — 1,
+    # CLOSED — 2. ORDER BY priority ASC, created_at DESC.
+    status_priority = case(
+        (Appeal.status == AppealStatus.NEW.value, 0),
+        (Appeal.status == AppealStatus.IN_PROGRESS.value, 0),
+        (Appeal.status == AppealStatus.ANSWERED.value, 1),
+        else_=2,
+    )
     res = await session.scalars(
-        query.order_by(desc(Appeal.created_at)).limit(limit).offset(offset)
+        query.order_by(status_priority, desc(Appeal.created_at))
+        .limit(limit)
+        .offset(offset)
     )
     return list(res)
 

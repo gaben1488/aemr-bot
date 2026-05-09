@@ -86,7 +86,114 @@ async def open_my_appeals(event, max_user_id: int, page: int = 1):
     )
 
 
+async def start_appeal_followup(event, appeal_id: int, max_user_id: int):
+    """Кнопка «📎 Дополнить» под карточкой обращения у жителя.
+
+    Ставит state в AWAITING_FOLLOWUP_TEXT, сохраняет appeal_id в
+    dialog_data. Следующее сообщение жителя (текст и/или вложения)
+    пришивается к этому обращению через `_on_awaiting_followup_text`
+    в appeal.py.
+    """
+    from aemr_bot.db.models import AppealStatus, DialogState
+
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id(session, appeal_id)
+        if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
+            await event.bot.send_message(
+                chat_id=get_chat_id(event),
+                text="Обращение не найдено.",
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
+        # Дополнять можно только живые обращения. CLOSED — отдельный
+        # путь «Подать похожее», сюда не должен попадать (кнопки нет
+        # в карточке закрытого), но защищаемся на случай гонки.
+        if appeal.status == AppealStatus.CLOSED.value:
+            await event.bot.send_message(
+                chat_id=get_chat_id(event),
+                text=(
+                    "Обращение уже закрыто. Если ситуация повторилась — "
+                    "кнопка «🔁 Подать похожее» создаст новое с тем же адресом."
+                ),
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
+        await users_service.set_state(
+            session,
+            max_user_id,
+            DialogState.AWAITING_FOLLOWUP_TEXT,
+            data={"appeal_id": appeal_id},
+        )
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=(
+            f"Опишите дополнение к обращению #{appeal_id} одним сообщением. "
+            f"Можно приложить фото, видео или файл."
+        ),
+        attachments=[keyboards.cancel_keyboard()],
+    )
+
+
+async def start_appeal_repeat(event, appeal_id: int, max_user_id: int):
+    """Кнопка «🔁 Подать похожее» под карточкой закрытого обращения.
+
+    Запускает воронку нового обращения с уже заполненными locality,
+    address и topic из старого. Жителю остаётся только написать суть
+    проблемы — это сценарий «опять не вывозят мусор по тому же адресу»,
+    когда переписывать всё с нуля раздражает.
+    """
+    from aemr_bot.db.models import DialogState
+
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id(session, appeal_id)
+        if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
+            await event.bot.send_message(
+                chat_id=get_chat_id(event),
+                text="Обращение не найдено.",
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
+        if not (appeal.locality and appeal.address):
+            # Старое обращение без адреса (теоретически может случиться,
+            # если оно было создано до миграции с шагом локалити). Тогда
+            # просто запускаем обычную воронку.
+            from aemr_bot.handlers.appeal import _start_appeal_flow
+
+            await _start_appeal_flow(event, max_user_id)
+            return
+        await users_service.set_state(
+            session,
+            max_user_id,
+            DialogState.AWAITING_SUMMARY,
+            data={
+                "locality": appeal.locality,
+                "address": appeal.address,
+                "topic": appeal.topic,
+            },
+        )
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=(
+            f"Подаём новое обращение с теми же данными:\n"
+            f"📍 {appeal.locality}, {appeal.address}\n"
+            f"🏷 {appeal.topic or '—'}\n\n"
+            f"Опишите суть одним сообщением. Можно приложить фото, видео "
+            f"или файл."
+        ),
+        attachments=[keyboards.cancel_keyboard()],
+    )
+
+
 async def show_appeal(event, appeal_id: int, max_user_id: int):
+    """Карточка обращения у жителя.
+
+    Кнопки зависят от статуса:
+    - NEW / IN_PROGRESS / ANSWERED — «📎 Дополнить» (явный путь
+      пришить уточнение к открытому/недавно отвеченному обращению).
+    - CLOSED — «🔁 Подать похожее» (создать новое с тем же адресом
+      и тематикой; раньше нужно было пройти всю воронку с нуля).
+    - Везде «↩ В меню».
+    """
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id(session, appeal_id)
         if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
@@ -97,10 +204,11 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
             )
             return
         text = card_format.user_card(appeal)
+        status = appeal.status
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=text,
-        attachments=[keyboards.back_to_menu_keyboard()],
+        attachments=[keyboards.user_appeal_card_keyboard(appeal_id, status)],
     )
 
 
@@ -147,13 +255,15 @@ async def do_subscribe(event, max_user_id: int) -> None:
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
-        # 152-ФЗ: рассылка — обработка ПДн. Без активного согласия — отказ
-        # с прямой кнопкой «Дать согласие», чтобы житель не блуждал по меню.
-        if not user.consent_pdn_at:
+        # Если мини-согласия на рассылку ещё нет — показываем короткий
+        # экран. Раньше тут запрашивалось полное согласие на ПДн через
+        # воронку обращения; это было избыточно для цели «отправить
+        # рассылку», нарушение ст. 5 ч. 5 (минимизация).
+        if not user.consent_broadcast_at:
             await event.bot.send_message(
                 chat_id=get_chat_id(event),
-                text=texts.SUBSCRIBE_REQUIRES_CONSENT,
-                attachments=[keyboards.give_consent_keyboard()],
+                text=texts.SUBSCRIBE_MINI_CONSENT,
+                attachments=[keyboards.subscribe_mini_consent_keyboard()],
             )
             return
         already = await broadcasts_service.is_subscribed(session, max_user_id)
@@ -165,6 +275,49 @@ async def do_subscribe(event, max_user_id: int) -> None:
             )
             return
         await broadcasts_service.set_subscription(session, max_user_id, True)
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=texts.SUBSCRIBE_CONFIRMED,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
+
+
+async def do_subscribe_confirm(event, max_user_id: int) -> None:
+    """Тап «✅ Подписаться» на экране мини-согласия. Проставляет
+    consent_broadcast_at и subscribed_broadcast=True."""
+    from datetime import datetime, timezone
+
+    from aemr_bot.services import operators as ops_service
+    from sqlalchemy import update as sql_update
+
+    from aemr_bot.db.models import User
+
+    async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        if user.is_blocked:
+            await event.bot.send_message(
+                chat_id=get_chat_id(event),
+                text=(
+                    "Подписка недоступна: ваш аккаунт заблокирован. "
+                    "Если это ошибка — обратитесь к оператору."
+                ),
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
+        await session.execute(
+            sql_update(User)
+            .where(User.max_user_id == max_user_id)
+            .values(
+                consent_broadcast_at=datetime.now(timezone.utc),
+                subscribed_broadcast=True,
+            )
+        )
+        await ops_service.write_audit(
+            session,
+            operator_max_user_id=max_user_id,
+            action="self_subscribe_broadcast",
+            target=f"user max_id={max_user_id}",
+        )
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.SUBSCRIBE_CONFIRMED,
@@ -586,6 +739,11 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
         await do_subscribe(event, max_user_id)
         return True
 
+    if payload == "subscribe:confirm" and max_user_id is not None:
+        await ack_callback(event)
+        await do_subscribe_confirm(event, max_user_id)
+        return True
+
     if payload == "info:subscribe_off" and max_user_id is not None:
         await ack_callback(event)
         await do_unsubscribe(event, max_user_id)
@@ -614,6 +772,24 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
             return True
         await ack_callback(event)
         await show_appeal(event, appeal_id, max_user_id)
+        return True
+
+    if payload.startswith("appeal:followup:") and max_user_id is not None:
+        try:
+            appeal_id = int(payload.split(":")[2])
+        except (IndexError, ValueError):
+            return True
+        await ack_callback(event)
+        await start_appeal_followup(event, appeal_id, max_user_id)
+        return True
+
+    if payload.startswith("appeal:repeat:") and max_user_id is not None:
+        try:
+            appeal_id = int(payload.split(":")[2])
+        except (IndexError, ValueError):
+            return True
+        await ack_callback(event)
+        await start_appeal_repeat(event, appeal_id, max_user_id)
         return True
 
     return False

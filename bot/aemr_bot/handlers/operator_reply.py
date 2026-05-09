@@ -77,6 +77,16 @@ def drop_reply_intent(operator_id: int) -> int | None:
 
 
 def _is_duplicate_reply(operator_id: int, appeal_id: int, text: str) -> bool:
+    """Дедуп ответа оператора в памяти процесса (быстрый первый рубеж).
+
+    Окно 10 секунд, ключ — (operator_id, appeal_id, text). Если за это
+    окно тот же оператор отправил тот же текст по тому же обращению —
+    дубль. Защищает от двойного клика «✉️ Ответить» + параллельной
+    команды /reply.
+
+    Только для одного процесса. Многопроцессный дедуп — через БД,
+    см. `_is_duplicate_reply_db` в этом же файле.
+    """
     key = (operator_id, appeal_id)
     prev = _recent_replies.get(key)
     now = _time.monotonic()
@@ -85,10 +95,6 @@ def _is_duplicate_reply(operator_id: int, appeal_id: int, text: str) -> bool:
         if prev_text == text and now - prev_at <= _REPLY_DEDUPE_WINDOW_SEC:
             return True
     _recent_replies[key] = (text, now)
-    # Чистим протухшие записи раз в N вставок, чтобы dict не рос
-    # бесконечно. За год при ~1 ответе/день у одного оператора — сотни
-    # записей; не катастрофа, но утечка. Делаем это здесь, а не отдельным
-    # cron-job: новые записи и так возникают только при работе бота.
     if len(_recent_replies) > 256:
         cutoff = now - _REPLY_DEDUPE_WINDOW_SEC * 6
         for k in list(_recent_replies.keys()):
@@ -96,6 +102,36 @@ def _is_duplicate_reply(operator_id: int, appeal_id: int, text: str) -> bool:
             if t < cutoff:
                 _recent_replies.pop(k, None)
     return False
+
+
+async def _is_duplicate_reply_db(
+    operator_id: int, appeal_id: int, text: str
+) -> bool:
+    """Дедуп через таблицу events (idempotency_key) — второй рубеж.
+
+    Работает между процессами: если завтра поднимем второй экземпляр
+    бота, оба будут видеть общий events.idempotency_key и одна реплика
+    отбросит дубль другой.
+
+    Ключ — `reply:{operator}:{appeal}:{hash(text)}`. TTL 30 дней
+    (стандартный retention events). За окно дедупа 10 секунд этого
+    хватает с запасом.
+    """
+    import hashlib
+
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+    key = f"reply:{operator_id}:{appeal_id}:{digest}"
+    from aemr_bot.services import idempotency
+
+    # `idempotency.try_mark_processed_raw` возвращает True если ключ
+    # был свободен и мы его заняли. False — значит уже был дубль.
+    try:
+        return not await idempotency.try_mark_processed_raw(key, "reply_dedup")
+    except Exception:
+        # БД-дедуп — best-effort: если что-то упало, fallback на
+        # in-memory _is_duplicate_reply, который уже защитил выше.
+        log.exception("DB dedup failed, fallback to in-memory only")
+        return False
 
 
 def _mid_from_link(link) -> str | None:
@@ -170,27 +206,51 @@ async def _deliver_operator_reply(
 
     if _is_duplicate_reply(operator.id, appeal.id, text):
         log.info(
-            "operator_reply: дубль за %.1fс отбит — operator=%s appeal=%s",
+            "operator_reply: дубль за %.1fс отбит (in-memory) — operator=%s appeal=%s",
             _REPLY_DEDUPE_WINDOW_SEC, operator.id, appeal.id,
         )
         return True
+    # Второй рубеж — БД-уровень. Защищает от race между процессами,
+    # если когда-то будет horizontal scaling. Сейчас работает один
+    # процесс, БД-дедуп страхует in-memory от падения.
+    if await _is_duplicate_reply_db(operator.id, appeal.id, text):
+        log.info(
+            "operator_reply: дубль отбит (БД) — operator=%s appeal=%s",
+            operator.id, appeal.id,
+        )
+        return True
 
-    # Защита от доставки: три маркера «не связываться».
+    # Защита от доставки. Парадигма «прощальный ответ»: после отзыва
+    # согласия оператор может ответить через бот ОДИН раз по обращениям,
+    # поданным ДО точки отзыва. Это закрывает обещание текста кнопки
+    # «👋 Хочу попрощаться, но дождаться ответа» и одновременно
+    # соблюдает 152-ФЗ ст. 21 ч. 5 — для НОВЫХ обращений после отзыва
+    # обработки нет.
     #
-    # is_blocked — IT-блокировка за злоупотребления.
-    # consent_pdn_at IS NULL — житель отозвал согласие или никогда не давал.
-    # first_name == 'Удалено' — данные обезличены через retention или /forget.
+    # Жёсткие отказы (без исключений):
+    # - is_blocked: IT-блокировка за злоупотребления;
+    # - first_name == 'Удалено': житель полностью удалён, max_user_id
+    #   был переподвешен на anonymous-user (либо это сам anonymous);
+    #   персональные данные физически отсутствуют.
     #
-    # Любой из трёх — отказ. Раньше проверка была только по is_blocked, но
-    # его не выставляли ни revoke_consent, ни erase_pdn — жителю улетал
-    # ответ оператора, несмотря на отзыв.
+    # Условный отказ (если согласие отозвано):
+    # - consent_pdn_at IS NULL И обращение подано ПОСЛЕ revoked_at →
+    #   отказ (новое обращение после отзыва — обработки быть не должно).
+    # - consent_pdn_at IS NULL И обращение подано ДО revoked_at →
+    #   доставка разрешена (прощальный ответ оператора по уже принятому
+    #   до отзыва обращению).
     user = appeal.user
-    contact_forbidden = (
-        user.is_blocked
-        or user.consent_pdn_at is None
-        or user.first_name == "Удалено"
+    hard_forbidden = user.is_blocked or user.first_name == "Удалено"
+    revoked_after_appeal = (
+        user.consent_pdn_at is None
+        and user.consent_revoked_at is not None
+        and appeal.created_at is not None
+        and appeal.created_at >= user.consent_revoked_at
     )
-    if contact_forbidden:
+    no_consent_ever = (
+        user.consent_pdn_at is None and user.consent_revoked_at is None
+    )
+    if hard_forbidden or revoked_after_appeal or no_consent_ever:
         await event.bot.send_message(
             chat_id=get_chat_id(event),
             text=(

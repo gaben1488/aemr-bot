@@ -130,3 +130,33 @@ async def claim(event: Any) -> bool:
     except Exception:
         log.exception("idempotency claim failed; defaulting to process")
         return True
+
+
+async def try_mark_processed_raw(key: str, kind: str) -> bool:
+    """Простая обёртка над insert into events для произвольного ключа.
+
+    Используется для дедупа, не связанного с MAX-Update — например,
+    дедуп ответов оператора между процессами (см. operator_reply.
+    _is_duplicate_reply_db). Возвращает True если ключ свободен (мы
+    его заняли), False если уже занят (дубль).
+
+    Хранится 30 дней по общему events-retention.
+    """
+    try:
+        async with session_scope() as session:
+            stmt = (
+                pg_insert(Event)
+                .values(
+                    idempotency_key=key,
+                    update_type=kind,
+                    payload={"raw_dedup": True},
+                )
+                .on_conflict_do_nothing(index_elements=[Event.idempotency_key])
+            )
+            result = await session.execute(stmt)
+            return (result.rowcount or 0) > 0
+    except IntegrityError:
+        return False
+    except Exception:
+        log.exception("raw idempotency claim failed; defaulting to process")
+        return True

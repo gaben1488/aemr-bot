@@ -883,6 +883,7 @@ async def _do_open_tickets(event) -> None:
                     appeal.status,
                     is_it=True,
                     user_blocked=bool(appeal.user and appeal.user.is_blocked),
+                    closed_due_to_revoke=bool(appeal.closed_due_to_revoke),
                 )
             ],
         )

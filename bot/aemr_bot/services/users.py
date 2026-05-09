@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.db.models import DialogState, User
@@ -169,74 +169,108 @@ async def find_stuck_in_funnel(
     return [(row[0], row[1]) for row in result]
 
 
+async def get_anonymous_user_id(session: AsyncSession) -> int:
+    """Вернуть users.id для технической записи anonymous user.
+
+    Запись создаётся миграцией 0007 и не должна исчезать. Если её по
+    какой-то причине нет (тест, ручное вмешательство), создаём
+    on-the-fly: это безопасно, потому что max_user_id=ANONYMOUS_MAX_USER_ID
+    — фиксированный sentinel.
+    """
+    from aemr_bot.db.models import ANONYMOUS_MAX_USER_ID
+
+    anon_id = await session.scalar(
+        select(User.id).where(User.max_user_id == ANONYMOUS_MAX_USER_ID)
+    )
+    if anon_id is not None:
+        return anon_id
+    user = User(
+        max_user_id=ANONYMOUS_MAX_USER_ID,
+        first_name="Удалено",
+        is_blocked=True,
+    )
+    session.add(user)
+    await session.flush()
+    return user.id
+
+
 async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
-    """Обезличить жителя и отозвать согласие ПДн.
+    """Полное физическое удаление жителя.
 
-    Что делаем: имя — «Удалено», телефон обнулён, согласие отозвано,
-    подписка снята, FSM в IDLE. is_blocked НЕ ставится: «удалить мои
-    данные» — это сценарий «начать с чистого листа», а не «забанить
-    себя». Если житель захочет вернуться, он откроет /start и пройдёт
-    воронку как новый пользователь.
+    1. Все NEW/IN_PROGRESS обращения этого жителя закрываются
+       (`closed_due_to_revoke=true`, чтобы оператор не пытался их
+       возобновить — гард доставки всё равно откажет).
+    2. Все обращения жителя (любого статуса) переподвешиваются на
+       техническую запись «anonymous user» через UPDATE appeals.user_id.
+       Так статистика количества обращений сохраняется, а ПДн
+       физически уходят.
+    3. Запись жителя в users **физически удаляется**. При следующем
+       заходе того же max_user_id создаётся свежая запись — бот не
+       узнаёт жителя.
 
-    is_blocked остаётся за IT-блокировкой через карточку обращения —
-    это отдельная процедура для случаев злоупотреблений.
-
-    Открытые обращения этого жителя автоматически закрываем без
-    ответа: продолжать переписку «от Удалено» неестественно для
-    оператора, а сам житель решил уйти. Если у обращения уже был
-    ответ (статус ANSWERED), оставляем — ответ был доставлен,
-    обращение фактически отработано.
+    Это требование 152-ФЗ ст. 21 ч. 5 (уничтожение ПДн в срок 30
+    дней после отзыва) — мы делаем сразу. Возврат через /start
+    проходит воронку с нуля, без всяких следов прошлого.
     """
     from aemr_bot.db.models import Appeal, AppealStatus
 
     user_row = await session.scalar(
         select(User.id).where(User.max_user_id == max_user_id)
     )
-    if user_row is not None:
-        await session.execute(
-            update(Appeal)
-            .where(
-                Appeal.user_id == user_row,
-                Appeal.status.in_(
-                    [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
-                ),
-            )
-            .values(
-                status=AppealStatus.CLOSED.value,
-                closed_at=datetime.now(timezone.utc),
-            )
+    if user_row is None:
+        return False
+    # 1. Закрыть открытые обращения с флагом closed_due_to_revoke,
+    #    чтобы кнопка «🔁 Возобновить» под ними не показывалась
+    #    оператору (всё равно гард доставки откажет).
+    await session.execute(
+        update(Appeal)
+        .where(
+            Appeal.user_id == user_row,
+            Appeal.status.in_(
+                [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+            ),
         )
-    result = await session.execute(
-        update(User)
-        .where(User.max_user_id == max_user_id)
         .values(
-            first_name="Удалено",
-            phone=None,
-            phone_normalized=None,
-            consent_pdn_at=None,
-            consent_revoked_at=datetime.now(timezone.utc),
-            dialog_state=DialogState.IDLE.value,
-            dialog_data={},
-            subscribed_broadcast=False,
+            status=AppealStatus.CLOSED.value,
+            closed_at=datetime.now(timezone.utc),
+            closed_due_to_revoke=True,
         )
     )
-    return result.rowcount > 0
+    # 2. Переподвесить ВСЕ обращения этого жителя (любого статуса) на
+    #    anonymous-запись. Статистика количества обращений за период
+    #    остаётся, имя/телефон жителя физически уходят.
+    anonymous_id = await get_anonymous_user_id(session)
+    await session.execute(
+        update(Appeal)
+        .where(Appeal.user_id == user_row)
+        .values(user_id=anonymous_id, closed_due_to_revoke=True)
+    )
+    # 3. Физически удалить запись жителя. cascade='all, delete-orphan'
+    #    в модели User.appeals сюда не сработает — обращения уже
+    #    отвязаны через UPDATE выше.
+    await session.execute(delete(User).where(User.id == user_row))
+    return True
 
 
 async def revoke_consent(session: AsyncSession, max_user_id: int) -> bool:
-    """Мягкий отзыв согласия: сохраняем имя/телефон и историю обращений,
-    но помечаем согласие отозванным.
+    """Мягкий отзыв согласия: имя/телефон сохраняются (на случай
+    звонка оператора по уже поданным обращениям), но согласие на
+    обработку снимается, рассылка отключается.
 
-    В отличие от `erase_pdn`, это не «удаление меня из системы», а
-    «прекратите использовать мои данные для новых обращений и рассылок».
-    Сценарий: житель не хочет получать рассылку, не хочет писать новые
-    обращения, но не возражает, чтобы оператор закрыл уже открытые.
+    Что делаем:
+    - consent_pdn_at = NULL, consent_revoked_at = now;
+    - subscribed_broadcast = false, consent_broadcast_at = NULL
+      (рассылка тоже off — текст «Подписка отключится» так обещает);
+    - dialog_state = IDLE (если житель отзывал посреди воронки);
+    - **Открытые обращения остаются** в работе. Доставка ответа
+      оператора по ним разрешается гардом `_deliver_operator_reply`
+      (см. правило: appeal.created_at < user.consent_revoked_at →
+      доставка пройдёт). После ответа обращение CLOSED, через 30
+      дней без активности cron `pdn_retention_check` физически
+      удаляет жителя через erase_pdn.
 
-    Что делаем: consent_pdn_at=NULL, consent_revoked_at=now,
-    subscribed_broadcast=false, dialog_state=IDLE (на случай, если
-    житель отзывал прямо посреди воронки). is_blocked НЕ ставим —
-    доставка ответов оператора по уже открытым обращениям должна
-    продолжать работать (право на ответ по 59-ФЗ).
+    is_blocked НЕ ставится: житель может передумать и дать согласие
+    заново через /start.
     """
     result = await session.execute(
         update(User)
@@ -245,6 +279,7 @@ async def revoke_consent(session: AsyncSession, max_user_id: int) -> bool:
             consent_pdn_at=None,
             consent_revoked_at=datetime.now(timezone.utc),
             subscribed_broadcast=False,
+            consent_broadcast_at=None,
             dialog_state=DialogState.IDLE.value,
             dialog_data={},
         )
