@@ -191,8 +191,6 @@ UNSUBSCRIBE_ALREADY_OFF:
 BROADCAST_HEADER (заголовок каждой рассылки):
 Объявление Администрации Елизовского муниципального округа
 ────────────────
-
-BROADCAST_UNSUBSCRIBE_BUTTON: 🔕 Отписаться от рассылки
 ```
 
 ### Политика ПДн — [code]
@@ -217,9 +215,6 @@ CANCELLED:
 
 UNKNOWN_INPUT:
 Не понял сообщение. Откройте меню кнопкой /menu или /help — там список команд.
-
-CONTACTS_MENU_TITLE:
-Выберите раздел:
 
 USEFUL_INFO_TITLE:
 Полезная информация — выберите раздел:
@@ -344,9 +339,6 @@ OP_USER_UNBLOCKED:
 
 OP_SETTING_UPDATED:
 Настройка «{key}» обновлена.
-
-OP_SETTING_NOT_FOUND:
-Настройка «{key}» не найдена. Список ключей — кнопка «⚙️ Настройки бота» или команда /setting list.
 
 OP_STATS_EMPTY:
 За выбранный период обращений не было.

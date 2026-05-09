@@ -58,3 +58,4 @@ logs/
 # Локальные документы юриста, пока не утверждены
 docs/PRIVACY base.md
 docs/PRIVACY base.pdf
+_local-backup/

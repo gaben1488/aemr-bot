@@ -742,7 +742,8 @@ flowchart TD
     StateDispatch -->|AWAITING_ADDRESS| OnAddr[_on_awaiting_address]:::handler
     StateDispatch -->|AWAITING_TOPIC| OnTopic[_on_awaiting_topic]:::handler
     StateDispatch -->|AWAITING_SUMMARY| OnSum[_on_awaiting_summary]:::handler
-    StateDispatch -->|IDLE| FollowupHandler[operator_reply.py::<br/>handle_user_followup]:::handler
+    StateDispatch -->|AWAITING_FOLLOWUP_TEXT| OnFollowup[_on_awaiting_followup_text]:::handler
+    StateDispatch -->|IDLE| Idle[_on_idle:<br/>подсказка о кнопке «📎 Дополнить»]:::handler
 
     OnSum --> AppendChunk[(users.dialog_data<br/>summary_chunks++,<br/>attachments++)]:::db
     AppendChunk --> ResetTimer[Reset 60s timer]:::handler
@@ -767,7 +768,7 @@ flowchart TD
 
     CitizenCb -->|menu:* / consent:* /<br/>info:* / topic:N /<br/>locality:* /<br/>appeal:show:N / cancel| OnCallback[appeal.py::on_callback]:::handler
     AdminCb -->|broadcast:confirm/<br/>broadcast:abort/<br/>broadcast:stop:N/<br/>broadcast:unsubscribe| BcastCb[broadcast.py]:::handler
-    AdminCb -->|op:stats_today/<br/>op:broadcast/<br/>op:help_full| OpHelpCb[admin_commands.py::<br/>op_help callbacks]:::handler
+    AdminCb -->|op:stats_today/<br/>op:broadcast/<br/>op:open_tickets/<br/>op:reply:N/<br/>op:close:N/<br/>op:reopen:N| OpHelpCb[admin_commands.py::<br/>op_help callbacks]:::handler
 ```
 
 ### 3. Диаграмма последовательности: доставка ответа оператора

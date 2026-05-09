@@ -86,27 +86,13 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     appeals: Mapped[list["Appeal"]] = relationship(back_populates="user", cascade="all, delete-orphan")
-
-    @property
-    def contact_forbidden(self) -> bool:
-        """Канонический «нельзя связываться» — три маркера в одном.
-
-        Используется в гардах доставки (operator_reply, broadcasts).
-        Любой из трёх — отказ:
-        - is_blocked: IT-блокировка за злоупотребления;
-        - consent_pdn_at IS NULL: согласие не активно (отзыв или новый);
-        - first_name == 'Удалено': данные обезличены (после erase_pdn).
-
-        У anonymous-user тоже True (он создаётся с is_blocked=true и
-        first_name='Удалено') — на него никогда не должно ничего
-        отправляться, на него только переподвешиваются обращения после
-        удаления.
-        """
-        return (
-            self.is_blocked
-            or self.consent_pdn_at is None
-            or self.first_name == "Удалено"
-        )
+    # «Нельзя связываться» — гард, разный в разных местах:
+    # - broadcasts._eligible_filter — SQL-уровень: subscribed_broadcast +
+    #   consent_broadcast_at + NOT is_blocked + first_name != 'Удалено';
+    # - operator_reply._deliver_operator_reply — Python-уровень с
+    #   исключением для «прощального ответа» по обращениям ДО revoke.
+    # Объединяющего @property специально нет: семантика отличается, и
+    # унификация даст ложную уверенность «один canonical-гард».
 
 
 class Operator(Base):

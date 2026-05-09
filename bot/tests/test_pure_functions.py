@@ -233,3 +233,57 @@ def test_extract_contact_name_from_max_info() -> None:
         },
     )()
     assert extract_contact_name(body) == "Алексей"
+
+
+# ---------- calendar_ru.is_workday / is_holiday ----------
+
+
+def test_is_holiday_includes_loaded_dates(monkeypatch, tmp_path) -> None:
+    """Загружает фейковый seed/holidays.json и проверяет, что 9 мая
+    распознаётся как праздник, а 7 мая (рабочий чт) — нет."""
+    from datetime import date
+
+    import aemr_bot.services.calendar_ru as cal
+
+    fake = tmp_path / "holidays.json"
+    fake.write_text('{"2026": ["2026-05-09", "2026-05-11"]}', encoding="utf-8")
+    monkeypatch.setattr(cal, "HOLIDAYS_PATH", fake)
+    cal._load_holidays.cache_clear()
+
+    assert cal.is_holiday(date(2026, 5, 9))
+    assert cal.is_holiday(date(2026, 5, 11))
+    assert not cal.is_holiday(date(2026, 5, 7))
+
+
+def test_is_workday_handles_sunday_and_holiday(monkeypatch, tmp_path) -> None:
+    from datetime import date
+
+    import aemr_bot.services.calendar_ru as cal
+
+    fake = tmp_path / "holidays.json"
+    fake.write_text('{"2026": ["2026-05-09"]}', encoding="utf-8")
+    monkeypatch.setattr(cal, "HOLIDAYS_PATH", fake)
+    cal._load_holidays.cache_clear()
+
+    # 2026-05-10 — воскресенье
+    assert not cal.is_workday(date(2026, 5, 10))
+    # 2026-05-09 — суббота, но праздник (День Победы)
+    assert not cal.is_workday(date(2026, 5, 9))
+    # 2026-05-12 — обычный вторник
+    assert cal.is_workday(date(2026, 5, 12))
+
+
+def test_is_workday_falls_back_when_holidays_missing(monkeypatch, tmp_path) -> None:
+    """Без файла holidays.json считаем рабочими все дни кроме воскресенья.
+    Это безопасный fallback: лучше избыточный reminder чем тишина в
+    рабочий день."""
+    from datetime import date
+    from pathlib import Path
+
+    import aemr_bot.services.calendar_ru as cal
+
+    monkeypatch.setattr(cal, "HOLIDAYS_PATH", Path(tmp_path) / "missing.json")
+    cal._load_holidays.cache_clear()
+
+    assert cal.is_workday(date(2026, 5, 9))   # суббота — рабочий
+    assert not cal.is_workday(date(2026, 5, 10))  # воскресенье — нет

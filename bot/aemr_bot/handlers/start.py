@@ -304,15 +304,22 @@ def register(dp: Dispatcher) -> None:
             return
         await cmd_menu(event)
 
+    # Жильцовые команды в админ-чате не работают, но раньше тихо
+    # игнорировались — оператор тапал и не понимал почему ничего не
+    # происходит. Теперь отвечаем явной подсказкой: «команда для жителя,
+    # тут /op_help». MAX Bot API не поддерживает per-scope команды, и
+    # эти имена остаются в /-меню для всех чатов.
     @dp.message_created(Command("forget"))
     async def _(event: MessageCreated):
         if _is_admin_chat(event):
+            await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
         await cmd_forget(event)
 
     @dp.message_created(Command("cancel"))
     async def _(event: MessageCreated):
         if _is_admin_chat(event):
+            await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
         await cmd_cancel(event)
 
@@ -322,24 +329,28 @@ def register(dp: Dispatcher) -> None:
     @dp.message_created(Command("export"))
     async def _(event: MessageCreated):
         if _is_admin_chat(event):
+            await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
         await cmd_export(event)
 
     @dp.message_created(Command("policy"))
     async def _(event: MessageCreated):
         if _is_admin_chat(event):
+            await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
         await cmd_policy(event)
 
     @dp.message_created(Command("subscribe"))
     async def _(event: MessageCreated):
         if _is_admin_chat(event):
+            await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
         await cmd_subscribe(event)
 
     @dp.message_created(Command("unsubscribe"))
     async def _(event: MessageCreated):
         if _is_admin_chat(event):
+            await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
         await cmd_unsubscribe(event)
 

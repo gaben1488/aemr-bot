@@ -171,16 +171,6 @@ def extract_message_id(sent: Any) -> str | None:
     return None
 
 
-def get_message_attachments(event: Any) -> list:
-    msg = getattr(event, "message", None)
-    if msg is None:
-        return []
-    body = getattr(msg, "body", None)
-    if body is None:
-        return []
-    return getattr(body, "attachments", None) or []
-
-
 async def send(event: Any, text: str, attachments: list | None = None):
     """Отправить сообщение в ответ на событие любого типа.
 

@@ -17,6 +17,7 @@ from aemr_bot.config import settings
 from aemr_bot.db.models import Event
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import stats as stats_service
+from aemr_bot.services.calendar_ru import is_workday
 
 log = logging.getLogger(__name__)
 TZ = ZoneInfo(settings.timezone)
@@ -430,7 +431,8 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         return lines
 
     async def working_hours_open_reminder():
-        """Раз в час, ТОЛЬКО в рабочее время (пн–сб 09:00–17:59 Камчатка).
+        """Раз в час, ТОЛЬКО в рабочее время (пн–сб 09:00–17:59 Камчатка)
+        и НЕ в государственные праздники РФ.
 
         Напоминание о всех неответленных обращениях — без разделения
         на «в SLA» и «просрочено». Если открытых нет — тишина (по
@@ -440,6 +442,8 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         полный список с кнопками действий по каждому.
         """
         try:
+            if not is_workday(datetime.now(TZ).date()):
+                return
             from aemr_bot.services import appeals as appeals_service
 
             async with session_scope() as session:
@@ -470,8 +474,10 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
     async def working_hours_overdue_reminder():
         """Раз в час на :40 — отдельное напоминание ТОЛЬКО о просроченных.
         Вместе с :10 даёт «каждые полчаса для просрочки». Если нет
-        просроченных — тишина."""
+        просроченных — тишина. В госпраздники РФ молчит."""
         try:
+            if not is_workday(datetime.now(TZ).date()):
+                return
             from aemr_bot.services import appeals as appeals_service
 
             async with session_scope() as session:
