@@ -577,6 +577,82 @@ def register(dp: Dispatcher) -> None:
             await _ask_address(event, max_user_id)
             return
 
+        # Подтверждение определённого через геолокацию адреса
+        # (см. _on_location_attachment в этом же файле).
+        if payload == "geo:confirm":
+            await ack_callback(event)
+            async with session_scope() as session:
+                user = await users_service.get_or_create(
+                    session, max_user_id=max_user_id
+                )
+                data = dict(user.dialog_data or {})
+                detected_address = (data.get("detected_street") or "").strip()
+                detected_house = (data.get("detected_house_number") or "").strip()
+                if detected_address and detected_house:
+                    full_addr = f"{detected_address}, д. {detected_house}"
+                elif detected_address:
+                    full_addr = detected_address
+                else:
+                    full_addr = ""
+                if full_addr:
+                    await users_service.update_dialog_data(
+                        session, max_user_id, {"address": full_addr}
+                    )
+                    await users_service.set_state(
+                        session, max_user_id, DialogState.AWAITING_TOPIC
+                    )
+                else:
+                    # Только locality определилось — переходим к ручному адресу
+                    await users_service.set_state(
+                        session, max_user_id, DialogState.AWAITING_ADDRESS
+                    )
+            # Если адрес уже подставлен — сразу к теме; иначе — к ручному адресу
+            if full_addr:
+                await _ask_topic(event, max_user_id)
+            else:
+                await _ask_address(event, max_user_id)
+            return
+
+        if payload == "geo:edit_address":
+            await ack_callback(event)
+            async with session_scope() as session:
+                # Стираем определённый street/house, оставляем только locality
+                user = await users_service.get_or_create(
+                    session, max_user_id=max_user_id
+                )
+                data = dict(user.dialog_data or {})
+                for k in ("detected_street", "detected_house_number"):
+                    data.pop(k, None)
+                user.dialog_data = data
+                await session.flush()
+                await users_service.set_state(
+                    session, max_user_id, DialogState.AWAITING_ADDRESS
+                )
+            await _ask_address(event, max_user_id)
+            return
+
+        if payload == "geo:other_locality":
+            # Житель не согласен с определённым населённым пунктом —
+            # стираем detected_* и возвращаем выбор из списка
+            await ack_callback(event)
+            async with session_scope() as session:
+                user = await users_service.get_or_create(
+                    session, max_user_id=max_user_id
+                )
+                data = dict(user.dialog_data or {})
+                for k in (
+                    "locality",
+                    "detected_street",
+                    "detected_house_number",
+                    "detected_lat",
+                    "detected_lon",
+                ):
+                    data.pop(k, None)
+                user.dialog_data = data
+                await session.flush()
+            await _ask_locality(event, max_user_id)
+            return
+
         if payload.startswith("topic:"):
             try:
                 idx = int(payload.split(":")[1])
@@ -978,16 +1054,108 @@ async def _on_awaiting_summary(event, body, text_body, max_user_id):
 
 
 async def _on_awaiting_locality(event, body, text_body, max_user_id):
-    """Житель прислал текст вместо нажатия на кнопку населённого пункта.
-    Повторно показываем клавиатуру со списком, чтобы выбор оставался
-    предсказуемым (свободный ввод сюда не закладываем — координаторам
-    проще работать со стандартным списком поселений)."""
+    """Житель прислал что-то вместо нажатия на кнопку населённого пункта.
+
+    Если это **геолокация** — определяем населённый пункт и адрес через
+    локальную базу OSM (см. `services/geo.py`) и переходим в подтверждение
+    `AWAITING_GEO_CONFIRM`. Если просто текст — повторно показываем
+    клавиатуру со списком поселений (свободный ввод не принимаем —
+    координаторам нужны стабильные категории для маршрутизации).
+    """
+    from aemr_bot.utils.attachments import extract_location
+
+    location = extract_location(body)
+    if location is not None:
+        await _handle_location_for_locality(event, max_user_id, location)
+        return
+
     async with session_scope() as session:
         localities = await settings_store.get(session, "localities") or ["Елизовское ГП"]
     await event.message.answer(
         texts.LOCALITY_REQUEST,
         attachments=[keyboards.localities_keyboard(localities)],
     )
+
+
+async def _handle_location_for_locality(
+    event, max_user_id: int, location: tuple[float, float]
+) -> None:
+    """Житель поделился координатами на шаге AWAITING_LOCALITY.
+
+    Определяем поселение и адрес через `services.geo`, сохраняем в
+    dialog_data как `detected_*`, переводим в AWAITING_GEO_CONFIRM и
+    показываем подтверждающий экран. Право жителя исправить — через
+    кнопки экрана.
+    """
+    from aemr_bot.services import geo as geo_service
+
+    lat, lon = location
+    result = geo_service.find_address(lat, lon)
+
+    if result.locality is None:
+        # Точка вне ЕМО — оставляем шаг как есть, просим выбрать вручную
+        async with session_scope() as session:
+            localities = await settings_store.get(session, "localities") or ["Елизовское ГП"]
+        await event.message.answer(
+            texts.GEO_OUTSIDE_EMO,
+            attachments=[keyboards.localities_keyboard(localities)],
+        )
+        return
+
+    # Сохраняем найденное в dialog_data + locality (на случай если житель
+    # подтвердит) и переводим в AWAITING_GEO_CONFIRM
+    detected_data = {
+        "locality": result.locality,
+        "detected_locality": result.locality,
+        "detected_street": result.street or "",
+        "detected_house_number": result.house_number or "",
+        "detected_lat": lat,
+        "detected_lon": lon,
+        "detected_confidence": result.confidence,
+    }
+    async with session_scope() as session:
+        await users_service.update_dialog_data(
+            session, max_user_id, detected_data
+        )
+        await users_service.set_state(
+            session, max_user_id, DialogState.AWAITING_GEO_CONFIRM
+        )
+
+    if result.street and result.house_number:
+        text = texts.GEO_DETECTED_FULL.format(
+            locality=result.locality,
+            address=f"{result.street}, д. {result.house_number}",
+        )
+    elif result.street:
+        text = texts.GEO_DETECTED_FULL.format(
+            locality=result.locality,
+            address=result.street,
+        )
+    else:
+        text = texts.GEO_DETECTED_LOCALITY_ONLY.format(locality=result.locality)
+
+    await event.message.answer(text, attachments=[keyboards.geo_confirm_keyboard()])
+
+
+async def _on_awaiting_geo_confirm(event, body, text_body, max_user_id):
+    """Житель прислал что-то вместо нажатия кнопки на экране
+    подтверждения. Просто повторно показываем подтверждающий экран —
+    кнопки решают за житель что делать дальше."""
+    async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        data = dict(user.dialog_data or {})
+    locality = data.get("detected_locality") or data.get("locality") or "?"
+    street = data.get("detected_street") or ""
+    house = data.get("detected_house_number") or ""
+    if street and house:
+        text = texts.GEO_DETECTED_FULL.format(
+            locality=locality, address=f"{street}, д. {house}"
+        )
+    elif street:
+        text = texts.GEO_DETECTED_FULL.format(locality=locality, address=street)
+    else:
+        text = texts.GEO_DETECTED_LOCALITY_ONLY.format(locality=locality)
+    await event.message.answer(text, attachments=[keyboards.geo_confirm_keyboard()])
 
 
 async def _on_awaiting_topic(event, body, text_body, max_user_id):
@@ -1171,6 +1339,7 @@ _STATE_HANDLERS = {
     DialogState.AWAITING_CONTACT: _on_awaiting_contact,
     DialogState.AWAITING_NAME: _on_awaiting_name,
     DialogState.AWAITING_LOCALITY: _on_awaiting_locality,
+    DialogState.AWAITING_GEO_CONFIRM: _on_awaiting_geo_confirm,
     DialogState.AWAITING_ADDRESS: _on_awaiting_address,
     DialogState.AWAITING_TOPIC: _on_awaiting_topic,
     DialogState.AWAITING_SUMMARY: _on_awaiting_summary,

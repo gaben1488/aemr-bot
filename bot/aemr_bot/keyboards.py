@@ -3,6 +3,9 @@ from maxapi.types import (
     LinkButton,
     RequestContactButton,
 )
+from maxapi.types.attachments.buttons.request_geo_location_button import (
+    RequestGeoLocationButton,
+)
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
 
@@ -199,10 +202,33 @@ def reuse_address_keyboard():
 def localities_keyboard(localities: list[str]):
     """Населённые пункты Елизовского муниципального округа. По одной кнопке
     в ряд по той же причине, что и тематики: длинные названия вроде
-    «Раздольненское сельское поселение» не помещаются в две колонки."""
+    «Раздольненское сельское поселение» не помещаются в две колонки.
+
+    Сверху — кнопка «📍 Поделиться геолокацией»: бот определит поселение
+    и адрес автоматически по координатам через локальную базу OSM
+    (см. `services/geo.py`). Без интернет-зависимости от внешних
+    геокодеров. Если житель тапнет — попадёт в `AWAITING_GEO_CONFIRM`.
+    """
     kb = InlineKeyboardBuilder()
+    kb.row(RequestGeoLocationButton(text="📍 Поделиться геолокацией", quick=False))
     for idx, locality in enumerate(localities):
         kb.row(CallbackButton(text=locality, payload=f"locality:{idx}"))
+    kb.row(CallbackButton(text="❌ Отмена", payload="cancel"))
+    return kb.as_markup()
+
+
+def geo_confirm_keyboard():
+    """Подтверждение определённого по геолокации адреса.
+
+    Три варианта:
+    - ✅ всё правильно — продолжаем воронку с автоадресом
+    - ✏️ исправить — пропускаем автоадрес, переходим к ручному вводу адреса
+    - 🔙 другой населённый пункт — возврат к выбору поселения
+    """
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="✅ Всё правильно", payload="geo:confirm"))
+    kb.row(CallbackButton(text="✏️ Исправить адрес", payload="geo:edit_address"))
+    kb.row(CallbackButton(text="🔙 Другой населённый пункт", payload="geo:other_locality"))
     kb.row(CallbackButton(text="❌ Отмена", payload="cancel"))
     return kb.as_markup()
 

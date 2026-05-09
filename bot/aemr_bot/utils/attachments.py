@@ -68,6 +68,45 @@ def collect_attachments(message: Any) -> list[dict]:
     return out
 
 
+def extract_location(message: Any) -> tuple[float, float] | None:
+    """Достать (latitude, longitude) из вложения типа location.
+
+    MAX присылает его, когда житель тапает кнопку RequestGeoLocationButton.
+    Возвращает None, если в сообщении нет вложения типа location либо
+    координаты не парсятся.
+    """
+    body = message
+    if hasattr(body, "body") and getattr(body, "body", None) is not None:
+        body = body.body
+    raw = getattr(body, "attachments", None) or []
+
+    for att in raw:
+        att_type = getattr(att, "type", None)
+        if att_type is None and isinstance(att, dict):
+            att_type = att.get("type")
+        if str(att_type).lower() != "location":
+            continue
+
+        # Координаты могут лежать в payload либо прямо на attachment,
+        # в зависимости от версии maxapi. Пробуем оба варианта.
+        for src in (getattr(att, "payload", None), att):
+            if src is None:
+                continue
+            for lat_attr, lon_attr in (
+                ("latitude", "longitude"),
+                ("lat", "lon"),
+                ("lat", "lng"),
+            ):
+                lat = getattr(src, lat_attr, None) if not isinstance(src, dict) else src.get(lat_attr)
+                lon = getattr(src, lon_attr, None) if not isinstance(src, dict) else src.get(lon_attr)
+                if lat is not None and lon is not None:
+                    try:
+                        return (float(lat), float(lon))
+                    except (TypeError, ValueError):
+                        continue
+    return None
+
+
 def extract_phone(message: Any) -> str | None:
     """Достать номер телефона из вложения типа contact в теле сообщения.
 

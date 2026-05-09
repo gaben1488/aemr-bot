@@ -23,6 +23,11 @@ class DialogState(StrEnum):
     # него текст и/или вложения, потом пришиваем к выбранному
     # обращению. dialog_data['appeal_id'] — id целевого обращения.
     AWAITING_FOLLOWUP_TEXT = "awaiting_followup_text"
+    # Житель поделился геолокацией на шаге AWAITING_LOCALITY — бот
+    # определил поселение и адрес через services/geo.py и просит
+    # подтверждения. dialog_data сохраняет: detected_locality,
+    # detected_street, detected_house_number, detected_lat, detected_lon.
+    AWAITING_GEO_CONFIRM = "awaiting_geo_confirm"
 
 
 # Sentinel max_user_id для технической записи anonymous user. После
