@@ -23,6 +23,62 @@ log = logging.getLogger(__name__)
 TZ = ZoneInfo(settings.timezone)
 
 
+# Module-level helpers (вынесены из build_scheduler для тестируемости и
+# снятия nested-closure шума. Часть плана CRON_REFACTOR_PLAN.md этап 1).
+
+def _format_appeal_lines(appeals: list, *, max_rows: int = 10) -> list[str]:
+    """Унифицированный рендер строк «# id · имя · локалити · висит Nч»
+    для напоминалок. Список ограничен max_rows; если приходится
+    обрезать — добавляется хвостик «… ещё K».
+    """
+    now = datetime.now(TZ)
+    lines: list[str] = []
+    for ap in appeals[:max_rows]:
+        created_local = (
+            ap.created_at.astimezone(TZ) if ap.created_at else now
+        )
+        age_h = int((now - created_local).total_seconds() // 3600)
+        name = (ap.user.first_name or "—") if ap.user else "—"
+        lines.append(
+            f"• #{ap.id} · {name} · {ap.locality or '—'} · "
+            f"висит {age_h}ч"
+        )
+    if len(appeals) > max_rows:
+        lines.append(f"… ещё {len(appeals) - max_rows}.")
+    return lines
+
+
+async def _send_with_open_tickets_button(bot, text: str) -> None:
+    """Сообщение в админ-группу с кнопкой «📋 Открытые обращения»
+    под ним. Используется напоминалками: оператор тапает и попадает
+    в полный список с действиями.
+
+    bot принимается явным параметром (раньше захватывался через closure
+    в build_scheduler). Это упрощает unit-тесты и снимает sneaky-импорт
+    из main.
+    """
+    if not settings.admin_group_id:
+        return
+    try:
+        from maxapi.types import CallbackButton
+        from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+
+        kb = InlineKeyboardBuilder()
+        kb.row(
+            CallbackButton(
+                text="📋 Открытые обращения",
+                payload="op:open_tickets",
+            )
+        )
+        await bot.send_message(
+            chat_id=settings.admin_group_id,
+            text=text,
+            attachments=[kb.as_markup()],
+        )
+    except Exception:
+        log.exception("send admin reminder with button failed")
+
+
 def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOScheduler:
     """Собрать APScheduler со всеми job'ами бота.
 
@@ -380,55 +436,8 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         coalesce=True,
     )
 
-    async def _send_with_open_tickets_button(text: str) -> None:
-        """Сообщение в админ-группу с кнопкой «📋 Открытые обращения»
-        под ним. Используется напоминалками: оператор тапает и попадает
-        в полный список с действиями.
-        """
-        if not settings.admin_group_id:
-            return
-        try:
-            from aemr_bot import keyboards as kbds
-            from maxapi.types import CallbackButton
-            from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
-
-            kb = InlineKeyboardBuilder()
-            kb.row(
-                CallbackButton(
-                    text="📋 Открытые обращения",
-                    payload="op:open_tickets",
-                )
-            )
-            await bot.send_message(
-                chat_id=settings.admin_group_id,
-                text=text,
-                attachments=[kb.as_markup()],
-            )
-            # kbds — для хедер-парсера, чтобы линтер не съел импорт
-            _ = kbds  # noqa: F841
-        except Exception:
-            log.exception("send admin reminder with button failed")
-
-    def _format_appeal_lines(appeals: list, *, max_rows: int = 10) -> list[str]:
-        """Унифицированный рендер строк «# id · имя · локалити · висит Nч»
-        для напоминалок. Список ограничен max_rows; если приходится
-        обрезать — добавляется хвостик «… ещё K».
-        """
-        now = datetime.now(TZ)
-        lines: list[str] = []
-        for ap in appeals[:max_rows]:
-            created_local = (
-                ap.created_at.astimezone(TZ) if ap.created_at else now
-            )
-            age_h = int((now - created_local).total_seconds() // 3600)
-            name = (ap.user.first_name or "—") if ap.user else "—"
-            lines.append(
-                f"• #{ap.id} · {name} · {ap.locality or '—'} · "
-                f"висит {age_h}ч"
-            )
-        if len(appeals) > max_rows:
-            lines.append(f"… ещё {len(appeals) - max_rows}.")
-        return lines
+    # _send_with_open_tickets_button и _format_appeal_lines вынесены на
+    # module-level (см. начало файла). В замыкании ниже вызываем напрямую.
 
     async def working_hours_open_reminder():
         """Раз в час, ТОЛЬКО в рабочее время (пн–сб 09:00–17:59 Камчатка)
@@ -467,7 +476,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             if in_sla:
                 lines.append("🆕 В SLA:")
                 lines.extend(_format_appeal_lines(in_sla))
-            await _send_with_open_tickets_button("\n".join(lines).rstrip())
+            await _send_with_open_tickets_button(bot, "\n".join(lines).rstrip())
         except Exception:
             log.exception("working_hours_open_reminder crashed")
 
@@ -491,7 +500,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
                 f"{len(overdue)} обращений."
             ]
             lines.extend(_format_appeal_lines(overdue))
-            await _send_with_open_tickets_button("\n".join(lines))
+            await _send_with_open_tickets_button(bot, "\n".join(lines))
         except Exception:
             log.exception("working_hours_overdue_reminder crashed")
 
