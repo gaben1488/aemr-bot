@@ -111,10 +111,13 @@ async def test_reopen_and_close(session):
 
 @pytest.mark.asyncio
 async def test_erase_pdn(session):
+    """erase_pdn — hard delete + anonymous-user pattern (Вариант 3,
+    утверждено 2026-05). Запись физически удаляется; следующий get_or_create
+    создаёт нового жителя без имени и без телефона — бот «не узнаёт» его."""
     await users_service.get_or_create(session, max_user_id=42, first_name="Пётр")
     await users_service.set_phone(session, 42, "89991112233")
 
     assert await users_service.erase_pdn(session, 42) is True
     refreshed = await users_service.get_or_create(session, max_user_id=42)
-    assert refreshed.first_name == "Удалено"
+    assert refreshed.first_name is None
     assert refreshed.phone is None

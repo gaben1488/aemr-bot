@@ -162,7 +162,7 @@ async def _register_bot_commands(bot: Bot) -> None:
     # тоже передаёт токен напрямую (см. bot.py:153 — `self.headers =
     # {"Authorization": self.__token}`). Подкладываем то же самое.
     headers = {"Authorization": settings.bot_token}
-    payload = {"commands": []}
+    payload: dict[str, list] = {"commands": []}
     try:
         async with aiohttp.ClientSession() as session:
             async with session.patch(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
