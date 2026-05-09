@@ -239,3 +239,153 @@ docker compose exec db psql -U aemr -d aemr -c \
 | PRIVACY.pdf, тексты и контакты при первом запуске | `seed/*.json`, `seed/welcome.md`, `seed/PRIVACY.pdf` | редактируете файлы в репозитории, перезапускаете контейнер. `seed_if_empty` обновит БД только при отсутствующих ключах. |
 
 Полный список редактируемых ключей — `/setting list` в служебной группе.
+
+## Развёртывание на собственном сервере (Ubuntu 20.04)
+
+Раздел описывает чистую установку с нуля на VPS с Ubuntu 20.04 LTS, 2 ядрами и 4 ГБ оперативной памяти. Для проверки использовался сервер `193.233.244.217`. Полностью применим к любой машине с такой же ОС.
+
+### Минимальные требования
+
+- 2 vCPU, 4 ГБ RAM, 60 ГБ диска;
+- Ubuntu 20.04 или 22.04 LTS, чистая установка;
+- Прямой исходящий доступ в интернет на 443/TCP — бот сам опрашивает MAX, входящие порты не нужны;
+- SSH-доступ под пользователем с правом `sudo`.
+
+Долгий polling и однопроцессный бот спокойно живут в этих лимитах: установка занимает у бота около 250 МБ резидентной памяти, у Postgres — 80–120 МБ.
+
+### Шаг A. Базовая подготовка системы
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y ca-certificates curl gnupg git ufw
+```
+
+Настроим брандмауэр. SSH открываем, всё остальное — закрыто:
+
+```bash
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp
+sudo ufw enable
+```
+
+Healthcheck бота слушает `127.0.0.1:8080` внутри хоста и наружу не публикуется — в `ufw` правил для него заводить не нужно.
+
+### Шаг B. Установка Docker Engine и Compose-плагина
+
+В Ubuntu 20.04 в стандартных репозиториях лежит устаревший `docker.io` без `docker compose`. Подключаем официальный репозиторий Docker:
+
+```bash
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+    sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+Проверка:
+
+```bash
+sudo docker --version          # Docker version 27.x
+sudo docker compose version    # Docker Compose version v2.x
+```
+
+Чтобы не писать `sudo` перед каждой командой Docker:
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+### Шаг C. Клонирование репозитория
+
+Боту нужно одно место — выбираем `/opt/aemr-bot`:
+
+```bash
+sudo mkdir -p /opt/aemr-bot
+sudo chown $USER:$USER /opt/aemr-bot
+git clone <URL_РЕПОЗИТОРИЯ> /opt/aemr-bot
+cd /opt/aemr-bot
+```
+
+### Шаг D. Настройка `.env`
+
+```bash
+cd /opt/aemr-bot/infra
+cp .env.example .env
+chmod 600 .env
+```
+
+Открываем `.env` и заполняем минимум:
+
+- `BOT_TOKEN` — из max.ru/business (см. Шаг 1 этого документа);
+- `BOT_MODE=polling` — для собственного сервера это значение по умолчанию;
+- `POSTGRES_PASSWORD` — сильная парольная фраза 32+ символов: `python3 -c "import secrets; print(secrets.token_urlsafe(32))"`. Это же значение должно стоять в `DATABASE_URL`;
+- `ADMIN_GROUP_ID` — пока пусто, заполним после первого запуска (см. Шаг E);
+- `BOOTSTRAP_IT_MAX_USER_ID` и `BOOTSTRAP_IT_FULL_NAME` — `max_user_id` и ФИО ответственного за бота. Узнать `max_user_id` — написать боту в личке `/whoami` (см. Шаг 4 выше);
+- `BACKUP_GPG_PASSPHRASE` — для production обязательно. Бэкапы база содержит ПДн, незашифрованный дамп лежать на диске не должен.
+
+### Шаг E. Первый запуск
+
+```bash
+cd /opt/aemr-bot/infra
+docker compose pull
+docker compose up -d --build
+docker compose ps
+```
+
+В колонке `STATUS` обоих сервисов должно быть `Up (healthy)` через 30–60 секунд. Если у `bot` — `Up (unhealthy)`, смотрите логи: `docker compose logs -f bot`.
+
+Дальше нужно получить `chat_id` служебной группы. Возвращаемся к Шагу 4 этого документа: создаём группу в MAX, добавляем бота, пишем `/whoami`. Полученное число (отрицательное, например `-74181728103785`) кладём в `.env`:
+
+```bash
+nano /opt/aemr-bot/infra/.env
+# поправили ADMIN_GROUP_ID=-74181728103785
+docker compose up -d --force-recreate bot
+```
+
+Перезапуск нужен — `.env` читается только при старте контейнера.
+
+### Шаг F. Проверка работоспособности
+
+```bash
+docker compose ps                            # оба healthy
+docker compose logs --tail 50 bot            # последние строки лога без ERROR
+curl -fsS http://127.0.0.1:8080/healthz      # ответ 200, JSON со state="ok"
+```
+
+Дальше пройдите весь сценарий из Шага 8 (проверочный прогон) — он гарантированно покрывает воронку, ответ оператора и реоткрытие.
+
+### Шаг G. Резервное копирование и план восстановления
+
+Локальный pg_dump раз в неделю выполняется автоматически (cron-job `db-backup`, см. RUNBOOK §7). Файлы копятся в named-volume `backups`. Команды для проверки:
+
+```bash
+docker compose exec bot ls -lh /backups
+docker compose exec bot cat /backups/last-backup.log
+```
+
+Файлы лежат на диске Docker (`/var/lib/docker/volumes/infra_backups`). Уносить их с сервера — ответственность ИТ-отдела: внешний скрипт `rsync`/`scp` по cron на отдельный хост. Без внешней копии локальный backup защищает только от логической ошибки в БД, но не от потери самой VPS.
+
+### Шаг H. Обновление бота
+
+```bash
+cd /opt/aemr-bot
+git pull
+cd infra
+docker compose up -d --build
+docker compose logs --tail 100 -f bot
+```
+
+Alembic мигрирует БД сам при старте. Если миграция падает — контейнер перезапускается; смотрите `docker compose logs --tail 200 bot | grep -A20 alembic`.
+
+### Памятка по системным ресурсам
+
+С 4 ГБ RAM на этой машине spare-памяти достаточно для всего, кроме одновременной работы с очень большой рассылкой и работающим pg_dump. Если планируете рассылку на 50 000+ человек, проверьте, что бэкап не запланирован одновременно: `BACKUP_HOUR`/`BACKUP_DAY_OF_WEEK` в `.env`. Лимит контейнера бота — 512 МБ RAM (`mem_limit` в `docker-compose.yml`); при стабильном превышении контейнер OOM-перезапустится без падения хоста.
