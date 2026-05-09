@@ -215,15 +215,12 @@ async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | None:
 
         try:
             from aemr_bot.services import broadcasts as bcast_svc
-            from aemr_bot.services import settings_store as ss
-
             async with session_scope() as session:
-                recep_url = await ss.get(session, "electronic_reception_url")
                 subscribed = await bcast_svc.is_subscribed(session, max_user_id)
             await bot.send_message(
                 user_id=max_user_id,
                 text=texts.APPEAL_ACCEPTED.format(number=appeal.id),
-                attachments=[keyboards.main_menu(recep_url, subscribed=subscribed)],
+                attachments=[keyboards.main_menu(subscribed=subscribed)],
             )
         except Exception:
             log.exception("подтверждение жителю %s не удалось для обращения #%s", max_user_id, appeal.id)

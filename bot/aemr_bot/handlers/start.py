@@ -41,18 +41,17 @@ async def _build_main_menu(max_user_id: int | None = None):
     """Собирает главное меню с актуальным состоянием кнопки подписки.
 
     Если жителя удаётся идентифицировать по `max_user_id`, кнопка
-    подписки покажет либо «🔔 Подписаться на новости» (для не-
-    подписанных), либо «🔕 Отписаться от новостей» (для подписанных).
+    подписки покажет либо «🔔 Подписаться на рассылку» (для не-
+    подписанных), либо «🔕 Не хочу получать рассылку» (для подписанных).
     Без идентификации показываем приглашение подписаться по умолчанию.
     """
-    async with session_scope() as session:
-        recep_url = await settings_store.get(session, "electronic_reception_url")
-        subscribed = False
-        if max_user_id is not None:
+    subscribed = False
+    if max_user_id is not None:
+        async with session_scope() as session:
             subscribed = await broadcasts_service.is_subscribed(
                 session, max_user_id
             )
-    return keyboards.main_menu(recep_url, subscribed=subscribed)
+    return keyboards.main_menu(subscribed=subscribed)
 
 
 async def _reset_funnel_if_stuck(max_user_id: int | None) -> None:

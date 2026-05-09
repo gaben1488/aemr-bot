@@ -22,14 +22,18 @@ async def open_main_menu(event):
     """
     max_user_id = get_user_id(event)
     async with session_scope() as session:
-        recep_url = await settings_store.get(session, "electronic_reception_url")
         is_blocked = False
         subscribed = False
+        recep_url = None
         if max_user_id is not None:
             user = await users_service.get_or_create(session, max_user_id=max_user_id)
             is_blocked = user.is_blocked
             if not is_blocked:
                 subscribed = await broadcasts_service.is_subscribed(session, max_user_id)
+            else:
+                # Заблокированному оставляем электронную приёмную как
+                # запасной канал — это сохранение прав, не привилегия.
+                recep_url = await settings_store.get(session, "electronic_reception_url")
 
     if is_blocked:
         await event.bot.send_message(
@@ -46,7 +50,7 @@ async def open_main_menu(event):
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.WELCOME,
-        attachments=[keyboards.main_menu(recep_url, subscribed=subscribed)],
+        attachments=[keyboards.main_menu(subscribed=subscribed)],
     )
 
 
@@ -642,12 +646,20 @@ async def do_forget(event, max_user_id: int):
 
 
 async def open_appointment(event):
+    """Подменю «🏛 Приём граждан» — расписание + электронная приёмная.
+
+    Электронная приёмная (LinkButton на сайт администрации) переехала
+    сюда из главного меню. Логика: житель видит обе формы обращения
+    в одном месте — записаться на очный приём или сразу отправить
+    запрос через электронную форму.
+    """
     async with session_scope() as session:
         text = await settings_store.get(session, "appointment_text")
+        recep_url = await settings_store.get(session, "electronic_reception_url")
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=text or "Информация скоро появится.",
-        attachments=[keyboards.back_to_menu_keyboard()],
+        attachments=[keyboards.appointment_keyboard(recep_url)],
     )
 
 

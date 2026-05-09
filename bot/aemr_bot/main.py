@@ -138,31 +138,24 @@ if settings.bot_mode == "webhook":
 
 
 async def _register_bot_commands(bot: Bot) -> None:
-    """Прописать список команд в /-меню MAX, чтобы они видны при наборе слэша.
+    """Очистить /-меню MAX — пустой список команд для всех чатов.
 
-    MAX Bot API не поддерживает раздельные scopes (нет аналога
-    `BotCommandScopeChat` в Telegram). Set_my_commands записывает один
-    список для всех пользователей — и для жителя в личке, и для
-    оператора в служебной группе. Поэтому здесь только команды жителя.
-    Оператор и так пользуется кнопочной панелью /op_help; полный
-    справочник его команд — в самой панели и в RUNBOOK. Вывод операторских
-    команд здесь засорил бы подсказки у обычного жителя именами вроде
-    /erase, /setting, /reply — это плохая UX и мини-намёк злоумышленнику
-    о наличии админских команд.
+    MAX Bot API не поддерживает per-scope команды (нет
+    `BotCommandScopeChat` как в Telegram), поэтому раньше публиковали
+    7 команд жителя — но они показывались и в служебной группе тоже,
+    путая операторов («почему /forget виден в админ-чате?»).
+
+    Решение: /-меню совсем не используем. Жители работают исключительно
+    через кнопочное меню (главное → подменю), slash-команды для них
+    избыточны. Операторы знают свои команды наизусть из RUNBOOK либо
+    через `/op_help` — кнопочную панель, которая открывается тапом
+    «Меню → /op_help» либо после `/start` в служебной группе.
+
+    Пустой набор команд — это явный «у бота нет команд», а не «команды
+    забыли прописать»: при наборе `/` MAX-клиент покажет пустой список.
     """
-    from maxapi.types import BotCommand
-
-    commands = [
-        BotCommand(name="start", description="Открыть меню"),
-        BotCommand(name="menu", description="Открыть меню"),
-        BotCommand(name="help", description="Справка"),
-        BotCommand(name="policy", description="Политика обработки данных"),
-        BotCommand(name="subscribe", description="Подписаться на новости"),
-        BotCommand(name="unsubscribe", description="Отписаться от новостей"),
-        BotCommand(name="forget", description="Удалить мои данные"),
-    ]
-    await bot.set_my_commands(*commands)
-    log.info("set_my_commands: зарегистрировано %d команд жителя", len(commands))
+    await bot.set_my_commands()
+    log.info("set_my_commands: /-меню очищено (per-scope не поддерживается в MAX API)")
 
 
 async def _preflight_check_token(bot: Bot) -> None:

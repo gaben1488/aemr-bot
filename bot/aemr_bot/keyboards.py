@@ -21,18 +21,21 @@ def blocked_user_menu(electronic_reception_url: str | None = None):
 
 
 def main_menu(
-    electronic_reception_url: str | None = None,
     *,
     subscribed: bool = False,
 ):
     """Главное меню жителя.
 
-    Кнопка подписки на рассылку вынесена сюда из подменю «Полезная
-    информация»: задача «не пропустить ЧС или объявление округа» —
-    одна из ключевых, и закапывать её в подменю значит терять
-    подписчиков. Текст кнопки отражает текущее состояние подписки,
-    чтобы один и тот же тап работал и как «подписаться», и как
-    «отписаться»."""
+    Структура (вариант 3, утверждено 2026-05-09):
+    - Написать обращение, Мои обращения — горячие действия первыми тапами
+    - Подписка/отписка — динамическая кнопка-toggle, текст зависит
+      от текущего статуса подписки
+    - Приём граждан, Полезная информация, Настройки — три подменю
+
+    Кнопка подписки динамическая: «🔔 Подписаться на рассылку» если
+    ещё не подписан, «🔕 Не хочу получать рассылку» если подписан.
+    Электронная приёмная (LinkButton) переехала в подменю «Приём
+    граждан», чтобы главное меню осталось на 6 кнопках без скролла."""
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="📝 Написать обращение", payload="menu:new_appeal"))
     kb.row(CallbackButton(text="📂 Мои обращения", payload="menu:my_appeals"))
@@ -43,7 +46,7 @@ def main_menu(
     if subscribed:
         kb.row(
             CallbackButton(
-                text="🔕 Отписаться от рассылки", payload="info:subscribe_off"
+                text="🔕 Не хочу получать рассылку", payload="info:subscribe_off"
             )
         )
     else:
@@ -52,11 +55,27 @@ def main_menu(
                 text="🔔 Подписаться на рассылку", payload="info:subscribe_on"
             )
         )
+    # Электронная приёмная переехала в подменю «Приём граждан» — там она
+    # стоит рядом с расписанием очного приёма, и пенсионер видит обе
+    # формы обращения в администрацию в одном экране.
+    kb.row(CallbackButton(text="🏛 Приём граждан", payload="menu:appointment"))
+    kb.row(CallbackButton(text="ℹ️ Полезная информация", payload="menu:useful_info"))
+    kb.row(CallbackButton(text="⚙️ Настройки и помощь", payload="menu:settings"))
+    return kb.as_markup()
+
+
+def appointment_keyboard(electronic_reception_url: str | None = None):
+    """Подменю «🏛 Приём граждан» — расписание очного приёма + ссылка
+    на электронную приёмную (если задана).
+
+    Расписание приходит как текст из `settings.appointment_text`
+    (редактируется через /setting). Электронная приёмная — внешняя
+    форма на сайте администрации, открывается LinkButton'ом.
+    """
+    kb = InlineKeyboardBuilder()
     if electronic_reception_url:
         kb.row(LinkButton(text="🌐 Электронная приёмная", url=electronic_reception_url))
-    kb.row(CallbackButton(text="📋 Приём граждан", payload="menu:appointment"))
-    kb.row(CallbackButton(text="📚 Полезная информация", payload="menu:useful_info"))
-    kb.row(CallbackButton(text="⚙️ Настройки и помощь", payload="menu:settings"))
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()
 
 
