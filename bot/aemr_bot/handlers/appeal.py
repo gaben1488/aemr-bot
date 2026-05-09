@@ -394,44 +394,58 @@ async def _ask_locality(event, max_user_id: int):
     Разделение нужно координаторам АЕМО: обращения по разным поселениям
     идут к разным территориальным управлениям. Раньше всё писалось одной
     строкой в поле `address`, и распределить было сложно.
+
+    Echo-feedback: первой строкой подтверждаем «✓ Имя: <имя>», чтобы
+    житель видел, что предыдущий шаг закрыт и зафиксирован.
     """
     async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        name = (user.full_name or "").strip()
         localities = await settings_store.get(session, "localities") or ["Елизовское ГП"]
         await users_service.set_state(session, max_user_id, DialogState.AWAITING_LOCALITY)
     await event.bot.send_message(
         chat_id=get_chat_id(event),
-        text=texts.NAME_RECEIVED,
+        text=texts.NAME_RECEIVED.format(name=name or "записано"),
         attachments=[keyboards.localities_keyboard(localities)],
     )
 
 
 async def _ask_address(event, max_user_id: int):
+    """Шаг «Адрес». Echo-feedback: «✓ Населённый пункт: <выбор>»."""
     async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        locality = (user.dialog_data or {}).get("locality", "записан")
         await users_service.set_state(session, max_user_id, DialogState.AWAITING_ADDRESS)
     await event.bot.send_message(
         chat_id=get_chat_id(event),
-        text=texts.LOCALITY_RECEIVED,
+        text=texts.LOCALITY_RECEIVED.format(locality=locality),
         attachments=[keyboards.cancel_keyboard()],
     )
 
 
 async def _ask_topic(event, max_user_id: int):
+    """Шаг «Тематика». Echo-feedback: «✓ Адрес: <введённый адрес>»."""
     async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        address = (user.dialog_data or {}).get("address", "записан")
         topics = await settings_store.get(session, "topics") or ["Другое"]
         await users_service.set_state(session, max_user_id, DialogState.AWAITING_TOPIC)
     await event.bot.send_message(
         chat_id=get_chat_id(event),
-        text=texts.ADDRESS_RECEIVED,
+        text=texts.ADDRESS_RECEIVED.format(address=address),
         attachments=[keyboards.topics_keyboard(topics)],
     )
 
 
 async def _ask_summary(event, max_user_id: int):
+    """Шаг «Описание сути». Echo-feedback: «✓ Тема: <выбранная тематика>»."""
     async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        topic = (user.dialog_data or {}).get("topic", "выбрана")
         await users_service.set_state(session, max_user_id, DialogState.AWAITING_SUMMARY)
     await event.bot.send_message(
         chat_id=get_chat_id(event),
-        text=texts.TOPIC_RECEIVED,
+        text=texts.TOPIC_RECEIVED.format(topic=topic),
         attachments=[keyboards.cancel_keyboard()],
     )
 
