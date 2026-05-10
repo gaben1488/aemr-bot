@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -60,6 +60,9 @@ class MessageDirection(StrEnum):
 
 class User(Base):
     __tablename__ = "users"
+    # UC создаётся миграцией 0001 (Column unique=True). Дублируем в модели,
+    # иначе alembic check видит drift (миграция → БД имеет UC, модель → нет).
+    __table_args__ = (UniqueConstraint("max_user_id", name="users_max_user_id_key"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     max_user_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
@@ -102,6 +105,9 @@ class User(Base):
 
 class Operator(Base):
     __tablename__ = "operators"
+    __table_args__ = (
+        UniqueConstraint("max_user_id", name="operators_max_user_id_key"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     max_user_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
@@ -159,6 +165,9 @@ class Message(Base):
 
 class Event(Base):
     __tablename__ = "events"
+    __table_args__ = (
+        UniqueConstraint("idempotency_key", name="events_idempotency_key_key"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     idempotency_key: Mapped[str] = mapped_column(String(255), unique=True, index=True)

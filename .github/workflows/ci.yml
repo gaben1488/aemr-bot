@@ -85,14 +85,11 @@ jobs:
         # alembic check (1.9+) сравнивает Base.metadata с последней
         # миграцией. Падает если кто-то изменил Mapped[..] и забыл
         # сгенерировать миграцию через alembic revision --autogenerate.
-        # continue-on-error: исторический drift по 3 UniqueConstraint
-        # (events.idempotency_key, operators.max_user_id, users.max_user_id)
-        # накопился до настройки этой проверки и не блокирует upgrade head.
-        # Заменить на hard fail когда схема будет приведена к консистентности.
-        continue-on-error: true
+        # Drift по 3 UniqueConstraint починен в db/models.py через
+        # __table_args__. Hard fail возвращён.
         run: |
           DATABASE_URL=postgresql+asyncpg://aemr:test@localhost:5432/aemr_alembic_check \
-            python -m alembic check || echo "::warning::alembic check drift detected (см. логи)"
+            python -m alembic check
 
   docker-build:
     name: Docker build smoke test
