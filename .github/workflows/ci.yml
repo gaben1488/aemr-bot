@@ -71,11 +71,13 @@ jobs:
       - name: Alembic — upgrade head на чистую БД
         # Ловит: orphan/duplicate parent revisions, синтакс в migration-
         # файлах, опечатки в model imports внутри миграций.
+        # psql -d postgres: служебная БД (по умолчанию psql идёт в
+        # БД с именем USER, которой здесь нет).
         env:
           PGPASSWORD: test
         run: |
-          psql -h localhost -U aemr -c "DROP DATABASE IF EXISTS aemr_alembic_check;"
-          psql -h localhost -U aemr -c "CREATE DATABASE aemr_alembic_check;"
+          psql -h localhost -U aemr -d postgres -c "DROP DATABASE IF EXISTS aemr_alembic_check;"
+          psql -h localhost -U aemr -d postgres -c "CREATE DATABASE aemr_alembic_check;"
           DATABASE_URL=postgresql+asyncpg://aemr:test@localhost:5432/aemr_alembic_check \
             python -m alembic upgrade head
 
