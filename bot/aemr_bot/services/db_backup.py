@@ -113,9 +113,17 @@ async def _run_pg_dump_encrypted(
     # его держит pg_dump.
     os.close(data_w)
 
+    # Контейнер с read_only: true — у gpg нет права создавать
+    # ~/.gnupg для своих ключей. Перенаправляем HOMEDIR в /tmp,
+    # который смонтирован как tmpfs и доступен для записи.
+    gpg_home = "/tmp/.gnupg"
+    os.makedirs(gpg_home, mode=0o700, exist_ok=True)
+
     try:
         gpg = await asyncio.create_subprocess_exec(
-            "gpg", "--batch", "--yes",
+            "gpg",
+            "--homedir", gpg_home,
+            "--batch", "--yes",
             "--passphrase-fd", str(pp_r),
             "--symmetric", "--cipher-algo", "AES256",
             "-o", str(out_path),
