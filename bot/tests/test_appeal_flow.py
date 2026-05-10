@@ -212,6 +212,10 @@ async def test_purge_old_appeals_5y_retention(session):
     )
     assert purged_a >= 1
 
+    # SQLAlchemy identity map хранит старые версии объектов после
+    # bulk UPDATE — expire_all сбрасывает кэш и заставит переселектить.
+    session.expire_all()
+
     # Старое — текст и attachments обнулены, метаданные на месте
     old_after = await appeals_service.get_by_id(session, old.id)
     assert old_after is not None
