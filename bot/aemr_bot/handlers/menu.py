@@ -161,7 +161,7 @@ async def start_appeal_repeat(event, appeal_id: int, max_user_id: int):
             # Старое обращение без адреса (теоретически может случиться,
             # если оно было создано до миграции с шагом локалити). Тогда
             # просто запускаем обычную воронку.
-            from aemr_bot.handlers.appeal import _start_appeal_flow
+            from aemr_bot.handlers.appeal_funnel import start_appeal_flow as _start_appeal_flow
 
             await _start_appeal_flow(event, max_user_id)
             return
@@ -795,7 +795,7 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
         # Запускаем воронку обращения — она сама на первом шаге попросит
         # согласие, потому что consent_pdn_at пуст после отзыва.
         await ack_callback(event)
-        from aemr_bot.handlers.appeal import _start_appeal_flow
+        from aemr_bot.handlers.appeal_funnel import start_appeal_flow as _start_appeal_flow
 
         await _start_appeal_flow(event, max_user_id)
         return True
