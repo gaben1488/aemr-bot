@@ -473,6 +473,9 @@ def register(dp: Dispatcher) -> None:
         if max_user_id is None:
             log.warning("коллбэк без user_id, payload=%r — пропущен", payload)
             return
+        # Диагностика geo-flow: видеть какие callback'и идут в момент
+        # отладки. Снимем после стабилизации.
+        log.info("on_callback: user=%s payload=%r", max_user_id, payload)
 
         # Коллбэки пользовательского флоу (menu:*, consent:*, topic:*, appeal:*,
         # info:*, cancel) не должны срабатывать в админ-группе. Иначе
@@ -1117,6 +1120,10 @@ async def _handle_location_for_locality(
 
     lat, lon = location
     result = geo_service.find_address(lat, lon)
+    log.info(
+        "geo result for user=%s: locality=%r street=%r house=%r conf=%s",
+        max_user_id, result.locality, result.street, result.house_number, result.confidence,
+    )
 
     if result.locality is None:
         # Точка вне ЕМО — оставляем шаг как есть, просим выбрать вручную
@@ -1160,7 +1167,11 @@ async def _handle_location_for_locality(
     else:
         text = texts.GEO_DETECTED_LOCALITY_ONLY.format(locality=result.locality)
 
-    await event.message.answer(text, attachments=[keyboards.geo_confirm_keyboard()])
+    try:
+        await event.message.answer(text, attachments=[keyboards.geo_confirm_keyboard()])
+        log.info("geo: sent confirm screen to user=%s", max_user_id)
+    except Exception:
+        log.exception("geo: failed to send confirm screen to user=%s", max_user_id)
 
 
 async def _on_awaiting_geo_confirm(event, body, text_body, max_user_id):
