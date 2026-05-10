@@ -59,3 +59,8 @@ logs/
 docs/PRIVACY base.md
 docs/PRIVACY base.pdf
 _local-backup/
+
+# pytest-cov runtime артефакт — не коммитить
+.coverage
+htmlcov/
+
