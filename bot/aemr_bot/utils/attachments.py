@@ -88,14 +88,19 @@ def extract_location(message: Any) -> tuple[float, float] | None:
     if not raw:
         return None
 
-    # Диагностический лог: при каждом сообщении с attachments в шаге
-    # AWAITING_LOCALITY мы хотим видеть какие типы пришли. Без этого
-    # отлаживать geo-flow в production невозможно.
-    types_seen = []
-    for att in raw:
-        t = getattr(att, "type", None) or (att.get("type") if isinstance(att, dict) else None)
-        types_seen.append(str(t))
-    log.info("extract_location: attachments seen=%s", types_seen)
+    # 152-ФЗ: координаты жителя — ПДн. Раньше тут был `log.info` с
+    # полным дампом payload (lat/lon в plain text), что НАРУШАЛО
+    # /erase (логи json-file 10MB×3 переживают erase). Теперь только
+    # debug + только TYPE без координат.
+    if log.isEnabledFor(logging.DEBUG):
+        types_seen = [
+            str(
+                getattr(att, "type", None)
+                or (att.get("type") if isinstance(att, dict) else None)
+            )
+            for att in raw
+        ]
+        log.debug("extract_location: attachments types=%s", types_seen)
 
     for att in raw:
         att_type = getattr(att, "type", None)
@@ -105,15 +110,6 @@ def extract_location(message: Any) -> tuple[float, float] | None:
         # работает напрямую без str().lower() трюков.
         if att_type != "location" and str(att_type).lower() != "location":
             continue
-
-        # Дамп attachment — увидеть точный формат что прислал MAX.
-        try:
-            dumped = att.model_dump(by_alias=False) if hasattr(att, "model_dump") else (
-                att if isinstance(att, dict) else dict(att.__dict__) if hasattr(att, "__dict__") else "?"
-            )
-            log.info("extract_location: location attachment payload=%r", dumped)
-        except Exception:
-            log.exception("extract_location: dump failed")
 
         # Координаты могут лежать в нескольких местах: для Location-
         # модели maxapi — прямо на att; для dict — в att или att.payload;
@@ -148,9 +144,10 @@ def extract_location(message: Any) -> tuple[float, float] | None:
                 if lat is not None and lon is not None:
                     try:
                         result = (float(lat), float(lon))
-                        log.info(
-                            "extract_location: parsed from %s using %s/%s",
-                            label, lat_attr, lon_attr,
+                        # Без значений координат в info-логе (PII).
+                        log.debug(
+                            "extract_location: parsed from %s/%s",
+                            label, lat_attr,
                         )
                         return result
                     except (TypeError, ValueError):

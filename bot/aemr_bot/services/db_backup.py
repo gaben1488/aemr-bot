@@ -169,7 +169,19 @@ async def backup_db() -> Path | None:
     target_dir = local_dir
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    passphrase = settings.backup_gpg_passphrase
+    # Параноидальная проверка: пустая строка в env "" даст truthy False,
+    # но если кто-то поставит passphrase из 1 символа — gpg запустится
+    # с тривиально расшифровываемым ключом и создаст fake-encrypted файл
+    # с расширением .sql.gpg. Минимум 12 символов — иначе бэкап без
+    # шифрования с предупреждением в лог.
+    passphrase = (settings.backup_gpg_passphrase or "").strip()
+    if passphrase and len(passphrase) < 12:
+        log.error(
+            "BACKUP_GPG_PASSPHRASE длиной %d — слишком короткая для AES-256. "
+            "Бэкап НЕ зашифрован. Установите фразу ≥12 символов.",
+            len(passphrase),
+        )
+        passphrase = ""
     encrypt = bool(passphrase)
     suffix = ".sql.gpg" if encrypt else ".sql"
     ts = datetime.now(TZ).strftime("%Y%m%d_%H%M%S")

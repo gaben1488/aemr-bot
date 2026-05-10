@@ -313,7 +313,9 @@ async def revoke_consent(session: AsyncSession, max_user_id: int) -> bool:
             dialog_data={},
         )
     )
-    return result.rowcount > 0
+    # rowcount может быть -1 в asyncpg для UPDATE без точного знания
+    # числа строк. (rowcount or 0) > 0 страхует от false-positive.
+    return (result.rowcount or 0) > 0
 
 
 async def set_blocked(

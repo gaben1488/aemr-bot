@@ -81,7 +81,7 @@ async def recover_stuck_funnels(bot) -> int:
 
     # Пустые обращения никогда не получают повторный запрос при восстановлении — сбрасываем их
     # в состояние IDLE, чтобы они не появлялись при каждом последующем проходе recover().
-    empty_ids = [uid for uid, r in zip(ids, results) if r is False]
+    empty_ids = [uid for uid, r in zip(ids, results, strict=True) if r is False]
     if empty_ids:
         async with session_scope() as session:
             for uid in empty_ids:
@@ -473,9 +473,11 @@ def register(dp: Dispatcher) -> None:
         if max_user_id is None:
             log.warning("коллбэк без user_id, payload=%r — пропущен", payload)
             return
-        # Диагностика geo-flow: видеть какие callback'и идут в момент
-        # отладки. Снимем после стабилизации.
-        log.info("on_callback: user=%s payload=%r", max_user_id, payload)
+        # Только префикс payload в info — полный payload может содержать
+        # appeal_id жителя или другие идентификаторы. Полный лог — debug.
+        prefix = payload.split(":", 1)[0] if payload else ""
+        log.debug("on_callback: user=%s payload=%r", max_user_id, payload)
+        log.info("on_callback: user=%s payload_prefix=%s", max_user_id, prefix)
 
         # Коллбэки пользовательского флоу (menu:*, consent:*, topic:*, appeal:*,
         # info:*, cancel) не должны срабатывать в админ-группе. Иначе
@@ -1056,15 +1058,19 @@ async def _on_awaiting_summary(event, body, text_body, max_user_id):
 
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        # dict() — shallow copy. Nested list (summary_chunks, attachments)
+        # должен быть отдельной копией, иначе append мутирует list,
+        # лежащий в SQLAlchemy-tracked user.dialog_data ДО flush.
+        # При сбое flush JSONB останется в неконсистентном состоянии.
         data = dict(user.dialog_data or {})
+        data["summary_chunks"] = list(data.get("summary_chunks") or [])
+        data["attachments"] = list(data.get("attachments") or [])
 
-        summary_chunks: list[str] = data.setdefault("summary_chunks", [])
         if chunk:
-            summary_chunks.append(chunk[: cfg.summary_max_chars])
+            data["summary_chunks"].append(chunk[: cfg.summary_max_chars])
 
         if atts:
-            existing_atts: list = data.setdefault("attachments", [])
-            existing_atts.extend(atts[: cfg.attachments_max_per_appeal])
+            data["attachments"].extend(atts[: cfg.attachments_max_per_appeal])
 
         user.dialog_data = data
         await session.flush()
@@ -1120,9 +1126,11 @@ async def _handle_location_for_locality(
 
     lat, lon = location
     result = geo_service.find_address(lat, lon)
+    # Локалити можно логировать (это публичная категория поселения),
+    # но не точный адрес жителя — это ПДн. Только confidence.
     log.info(
-        "geo result for user=%s: locality=%r street=%r house=%r conf=%s",
-        max_user_id, result.locality, result.street, result.house_number, result.confidence,
+        "geo result for user=%s: locality=%r conf=%s",
+        max_user_id, result.locality, result.confidence,
     )
 
     if result.locality is None:

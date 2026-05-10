@@ -121,3 +121,96 @@ async def test_erase_pdn(session):
     refreshed = await users_service.get_or_create(session, max_user_id=42)
     assert refreshed.first_name is None
     assert refreshed.phone is None
+
+
+@pytest.mark.asyncio
+async def test_revoke_consent_152fz(session):
+    """152-ФЗ: revoke_consent отзывает согласие, обнуляет рассылку и
+    воронку, но НЕ удаляет запись (это делает /erase или 30-дневный
+    retention). После revoke has_consent → False, повторный revoke
+    идемпотентен (вернёт False — нечего обновлять)."""
+    await users_service.get_or_create(session, max_user_id=99, first_name="Анна")
+    await users_service.set_consent(session, 99)
+    await users_service.set_phone(session, 99, "+79991234567")
+    assert await users_service.has_consent(session, 99) is True
+
+    # Revoke сработал
+    assert await users_service.revoke_consent(session, 99) is True
+
+    # Состояние после revoke
+    user = await users_service.get_or_create(session, max_user_id=99)
+    assert user.consent_pdn_at is None
+    assert user.consent_revoked_at is not None
+    assert user.subscribed_broadcast is False
+    assert user.dialog_state == DialogState.IDLE.value
+    assert user.dialog_data == {}
+    assert await users_service.has_consent(session, 99) is False
+    # Имя/телефон ОСТАЮТСЯ — будут стёрты только через 30 дней или /erase
+    assert user.first_name == "Анна"
+    assert user.phone == "+79991234567"
+
+
+@pytest.mark.asyncio
+async def test_anonymous_user_singleton(session):
+    """get_anonymous_user_id должен быть идемпотентным: повторные вызовы
+    возвращают один и тот же id, advisory lock защищает от race condition.
+    Если упадёт — каждый /erase создаст НОВУЮ anonymous-запись и appeals
+    разойдутся по разным «anonymous» жителям, ломая статистику."""
+    id1 = await users_service.get_anonymous_user_id(session)
+    id2 = await users_service.get_anonymous_user_id(session)
+    id3 = await users_service.get_anonymous_user_id(session)
+    assert id1 == id2 == id3
+    # И только одна запись в БД
+    from aemr_bot.db.models import ANONYMOUS_MAX_USER_ID, User
+    from sqlalchemy import select
+    rows = (await session.execute(
+        select(User).where(User.max_user_id == ANONYMOUS_MAX_USER_ID)
+    )).scalars().all()
+    assert len(rows) == 1
+
+
+@pytest.mark.asyncio
+async def test_purge_old_appeals_5y_retention(session):
+    """152-ФЗ: тексты обращений старше 5 лет должны обнуляться, но
+    сама запись и метаданные (дата, статус, тематика) сохраняются для
+    статистики. Это требование Минкультуры о номенклатуре дел."""
+    from datetime import datetime, timezone, timedelta
+    from sqlalchemy import update
+    from aemr_bot.db.models import Appeal
+
+    user = await users_service.get_or_create(session, max_user_id=88, first_name="X")
+    await users_service.set_phone(session, 88, "+70000000000")
+    user = await users_service.get_or_create(session, max_user_id=88)
+
+    # Старое обращение (6 лет назад)
+    old = await appeals_service.create_appeal(
+        session, user=user, address="ул. Старая, 1", topic="Дороги",
+        summary="Очень старая жалоба", attachments=[{"type": "image", "id": "x"}],
+    )
+    # Свежее обращение
+    fresh = await appeals_service.create_appeal(
+        session, user=user, address="ул. Свежая, 2", topic="Мусор",
+        summary="Свежая жалоба", attachments=[],
+    )
+    # Фейкаем дату старого на 6 лет назад
+    six_y_ago = datetime.now(timezone.utc) - timedelta(days=365 * 6)
+    await session.execute(
+        update(Appeal).where(Appeal.id == old.id).values(created_at=six_y_ago)
+    )
+    await session.flush()
+
+    purged_a, purged_m = await appeals_service.purge_old_appeals_content(
+        session, years=5
+    )
+    assert purged_a >= 1
+
+    # Старое — текст и attachments обнулены, метаданные на месте
+    old_after = await appeals_service.get_by_id(session, old.id)
+    assert old_after is not None
+    assert old_after.summary is None
+    assert old_after.attachments == []
+    assert old_after.topic == "Дороги"  # метаданные
+
+    # Свежее не тронуто
+    fresh_after = await appeals_service.get_by_id(session, fresh.id)
+    assert fresh_after.summary == "Свежая жалоба"

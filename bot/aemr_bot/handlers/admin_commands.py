@@ -1111,6 +1111,20 @@ def register(dp: Dispatcher) -> None:
             except ValueError:
                 await event.message.answer("Некорректный max_user_id.")
                 return
+            # Защита от стирания anonymous-user sentinel: эта запись
+            # держит ВСЕ обезличенные обращения после прошлых /erase.
+            # Стирание её сломает FK-цепочку и потеряет статистику
+            # анонимизированных обращений (152-ФЗ обязывает хранить
+            # appeals 5 лет даже после удаления ПДн жителя).
+            from aemr_bot.db.models import ANONYMOUS_MAX_USER_ID
+            if target_id == ANONYMOUS_MAX_USER_ID:
+                await event.message.answer(
+                    f"⛔ Запрещено: max_user_id={ANONYMOUS_MAX_USER_ID} — "
+                    "это техническая запись anonymous-user, на которой "
+                    "висят обезличенные обращения по 152-ФЗ. "
+                    "Стирать нельзя."
+                )
+                return
         elif arg.startswith("phone="):
             phone = arg.split("=", 1)[1].strip()
             if not phone:
