@@ -192,10 +192,18 @@ async def test_purge_old_appeals_5y_retention(session):
         session, user=user, address="ул. Свежая, 2", topic="Мусор",
         summary="Свежая жалоба", attachments=[],
     )
-    # Фейкаем дату старого на 6 лет назад
+    # purge смотрит closed_at + status ∈ (ANSWERED, CLOSED).
+    # Закрываем старое обращение и фейкаем closed_at на 6 лет назад.
+    from aemr_bot.db.models import AppealStatus
     six_y_ago = datetime.now(timezone.utc) - timedelta(days=365 * 6)
     await session.execute(
-        update(Appeal).where(Appeal.id == old.id).values(created_at=six_y_ago)
+        update(Appeal)
+        .where(Appeal.id == old.id)
+        .values(
+            created_at=six_y_ago,
+            closed_at=six_y_ago,
+            status=AppealStatus.CLOSED.value,
+        )
     )
     await session.flush()
 

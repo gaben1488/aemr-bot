@@ -198,8 +198,9 @@ async def _job_pulse(send_admin_text) -> None:
     try:
         now = datetime.now(TZ).strftime("%H:%M")
         await send_admin_text(f"🟢 Бот работает. {now}")
+        log.info("pulse: sent admin heartbeat at %s", now)
     except Exception:
-        log.exception("pulse failed")
+        log.exception("pulse failed (send_admin_text raised)")
 
 
 async def _job_appeals_5y_retention(send_admin_text) -> None:
