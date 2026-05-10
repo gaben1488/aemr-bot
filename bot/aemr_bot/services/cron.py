@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 import aiohttp
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.date import DateTrigger
 from sqlalchemy import delete
 from zoneinfo import ZoneInfo
 
@@ -201,6 +202,31 @@ async def _job_pulse(send_admin_text) -> None:
         log.info("pulse: sent admin heartbeat at %s", now)
     except Exception:
         log.exception("pulse failed (send_admin_text raised)")
+
+
+async def _job_startup_pulse(send_admin_text) -> None:
+    """Catch-up pulse при старте/рестарте процесса.
+
+    APScheduler не догоняет тики, пропущенные пока контейнер был
+    остановлен (`docker compose up --build` гасит процесс на 30–90 сек).
+    Если рестарт пришёлся на момент cron-триггера — pulse 21:05
+    теряется молча, и админы видят «тишину», хотя бот живой.
+
+    Вместо persistent jobstore (jobs в БД, шаги настройки + миграции)
+    — единый stateless хук: при старте бота отправляем «🟢 Бот
+    запущен/перезапущен. [время]». Дешевле, прозрачнее, всегда виден
+    факт рестарта, что само по себе ценно для дежурного.
+
+    Запускается через `scheduler.add_job(..., trigger=DateTrigger(...))`
+    с задержкой 5 секунд после старта — даём scheduler'у инициализироваться
+    и MAX-сессии установиться.
+    """
+    try:
+        now = datetime.now(TZ).strftime("%H:%M")
+        await send_admin_text(f"🟢 Бот запущен/перезапущен. {now}")
+        log.info("startup-pulse: sent recovery heartbeat at %s", now)
+    except Exception:
+        log.exception("startup-pulse failed (send_admin_text raised)")
 
 
 async def _job_appeals_5y_retention(send_admin_text) -> None:
@@ -459,6 +485,21 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         functools.partial(_job_monthly_report, send_admin_document),
         CronTrigger(day=1, hour=9, minute=0, timezone=TZ),
         name="monthly-stats",
+        max_instances=1,
+        coalesce=True,
+    )
+
+    # Startup pulse — однократно через 5 секунд после старта.
+    # Закрывает gap «pulse 21:05 не пришёл» при docker compose up --build:
+    # APScheduler не догоняет cron-триггеры, пропущенные пока процесс
+    # был остановлен. См. docstring _job_startup_pulse.
+    scheduler.add_job(
+        functools.partial(_job_startup_pulse, send_admin_text),
+        DateTrigger(
+            run_date=datetime.now(TZ) + timedelta(seconds=5),
+            timezone=TZ,
+        ),
+        name="startup-pulse",
         max_instances=1,
         coalesce=True,
     )

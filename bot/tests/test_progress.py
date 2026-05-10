@@ -5,6 +5,7 @@
 """
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
@@ -17,29 +18,32 @@ from aemr_bot.services.progress import (
 
 
 class TestRenderProgressBar:
-    def test_first_stage_has_zero_filled(self) -> None:
+    def test_first_stage_bar_layout(self) -> None:
         text = render_progress(stage="name")
-        # ▓░░░░ — 0 заполнено, 5 пусто (мы НА первом шаге, до него ничего)
-        assert "░░░░░" in text
-        assert "Шаг 1/5" in text
+        # Шаг 1/5: 0 done, current=name (idx 0), 4 future.
+        # Бар: 🟦⬜⬜⬜⬜
+        assert "🟦⬜⬜⬜⬜" in text
+        assert "<code>1 / 5</code>" in text
 
-    def test_third_stage(self) -> None:
+    def test_third_stage_bar_layout(self) -> None:
         text = render_progress(
             stage="address", name="Иван", locality="Елизовское ГП"
         )
-        # ▓▓░░░ — 2 заполнено (имя + локалити пройдены)
-        assert "▓▓░░░" in text
-        assert "Шаг 3/5" in text
+        # Шаг 3/5: 2 done, current=address (idx 2), 2 future.
+        # Бар: 🟢🟢🟦⬜⬜
+        assert "🟢🟢🟦⬜⬜" in text
+        assert "<code>3 / 5</code>" in text
 
-    def test_last_stage(self) -> None:
+    def test_last_stage_bar_layout(self) -> None:
         text = render_progress(
             stage="summary",
             name="Иван", locality="Елизовское ГП",
             address="ул. Ленина, 5", topic="Дороги",
         )
-        # ▓▓▓▓░ — 4 заполнено
-        assert "▓▓▓▓░" in text
-        assert "Шаг 5/5" in text
+        # Шаг 5/5: 4 done, current=summary (idx 4), 0 future.
+        # Бар: 🟢🟢🟢🟢🟦
+        assert "🟢🟢🟢🟢🟦" in text
+        assert "<code>5 / 5</code>" in text
 
     def test_unknown_stage_raises(self) -> None:
         with pytest.raises(ValueError, match="unknown stage"):
@@ -47,57 +51,78 @@ class TestRenderProgressBar:
 
 
 class TestRenderProgressContent:
-    def test_completed_steps_show_value(self) -> None:
+    def test_completed_steps_bold_value(self) -> None:
         text = render_progress(
             stage="topic", name="Иван", locality="Елизово", address="ул. Ленина, 5"
         )
-        # 3 завершённых шага должны иметь ✅ + значение
-        assert "✅ Имя: Иван" in text
-        assert "✅ Населённый пункт: Елизово" in text
-        assert "✅ Адрес: ул. Ленина, 5" in text
+        # Завершённые шаги — ✓ + label + · + <b>value</b>
+        assert "✓ Имя · <b>Иван</b>" in text
+        assert "✓ Населённый пункт · <b>Елизово</b>" in text
+        assert "✓ Адрес · <b>ул. Ленина, 5</b>" in text
 
-    def test_current_step_has_blue_marker_and_prompt(self) -> None:
+    def test_current_step_blockquote_prompt(self) -> None:
         text = render_progress(stage="address", name="X", locality="Y")
-        # Текущий шаг — 🔵 с подсказкой что делать
-        assert "🔵 Адрес —" in text
-        assert "улица" in text  # подсказка
+        # Текущий шаг — ▶ <b>label</b> + <blockquote>prompt</blockquote>
+        assert "▶ <b>Адрес</b>" in text
+        assert "<blockquote>" in text
+        assert "улица" in text  # подсказка внутри blockquote
 
-    def test_future_steps_have_white_marker_no_value(self) -> None:
+    def test_future_steps_have_circle_marker_no_value(self) -> None:
         text = render_progress(stage="locality", name="Иван")
         # locality — current; address/topic/summary — future
-        # Future = "⚪ Адрес" БЕЗ значения и без подсказки
-        assert "⚪ Адрес" in text
-        assert "⚪ Тема" in text
-        assert "⚪ Суть" in text
-        # И никаких подсказок «улица и дом» в future-секциях:
-        # text для future — только лейбл
+        # Future = "○ <label>" БЕЗ значения, без bold, без blockquote
+        assert "○ Адрес" in text
+        assert "○ Тема" in text
+        assert "○ Суть" in text
         future_lines = [
-            line for line in text.split("\n") if line.startswith("⚪")
+            line for line in text.split("\n") if line.startswith("○")
         ]
         for line in future_lines:
-            assert ":" not in line  # значения не показываем
+            assert "·" not in line  # значения не показываем
+            assert "<b>" not in line  # будущее не выделяем
 
     def test_empty_value_falls_back_to_dash(self) -> None:
-        """Если в dialog_data пусто (например пользователь нажал
-        skip) — completed-шаг показывает «—» вместо value."""
+        """Если в dialog_data пусто (skip / пропуск) — completed-шаг
+        показывает «—» вместо value."""
         text = render_progress(stage="topic", name="", locality="X", address="Y")
-        assert "✅ Имя: —" in text
+        assert "✓ Имя · <b>—</b>" in text
+
+
+class TestRenderProgressEscape:
+    """HTML-escape значений жителя — защита от поломки парсинга."""
+
+    def test_escapes_angle_brackets_in_name(self) -> None:
+        text = render_progress(stage="locality", name="<script>alert(1)</script>")
+        # Тег НЕ должен попасть в финальный текст как есть
+        assert "<script>" not in text
+        assert "&lt;script&gt;" in text
+
+    def test_escapes_ampersand_in_address(self) -> None:
+        text = render_progress(
+            stage="topic", name="Иван", locality="Елизово",
+            address="ул. AT&T, 5",
+        )
+        assert "AT&amp;T" in text
+        # А наши собственные HTML-теги остаются — render не трогает шаблон
+        assert "<b>" in text
+
+    def test_strip_whitespace_in_value(self) -> None:
+        text = render_progress(stage="locality", name="  Иван  ")
+        assert "<b>Иван</b>" in text
 
 
 class TestRenderProgressHeader:
-    def test_has_emoji_title(self) -> None:
+    def test_has_emoji_title_with_bold(self) -> None:
         text = render_progress(stage="name")
-        assert text.startswith("📋 Подача обращения")
+        assert text.startswith("📋 <b>Подача обращения</b>")
 
 
 class TestSendOrEditProgress:
-    """send_or_edit_progress: либо edit, либо новое сообщение."""
+    """send_or_edit_progress: либо edit, либо новое сообщение, всегда с format."""
 
     @pytest.mark.asyncio
     async def test_no_existing_mid_sends_new(self) -> None:
         bot = AsyncMock()
-        # send_message возвращает SendedMessage-like с body.mid="m-1"
-        from types import SimpleNamespace
         bot.send_message.return_value = SimpleNamespace(
             message=SimpleNamespace(body=SimpleNamespace(mid="m-1"))
         )
@@ -105,12 +130,14 @@ class TestSendOrEditProgress:
         mid, edited = await send_or_edit_progress(
             bot,
             chat_id=42,
-            dialog_data={},  # нет progress_message_id
+            dialog_data={},
             text="step 1",
             attachments=[],
         )
         bot.edit_message.assert_not_called()
         bot.send_message.assert_called_once()
+        # format-параметр должен быть передан
+        assert "format" in bot.send_message.call_args.kwargs
         assert mid == "m-1"
         assert edited is False
 
@@ -126,9 +153,12 @@ class TestSendOrEditProgress:
             text="step 2",
             attachments=[],
         )
-        bot.edit_message.assert_called_once_with(
-            message_id="m-old", text="step 2", attachments=[]
-        )
+        bot.edit_message.assert_called_once()
+        kwargs = bot.edit_message.call_args.kwargs
+        assert kwargs["message_id"] == "m-old"
+        assert kwargs["text"] == "step 2"
+        assert kwargs["attachments"] == []
+        assert "format" in kwargs
         bot.send_message.assert_not_called()
         assert mid == "m-old"
         assert edited is True
@@ -137,7 +167,6 @@ class TestSendOrEditProgress:
     async def test_edit_failure_falls_back_to_new(self) -> None:
         bot = AsyncMock()
         bot.edit_message.side_effect = RuntimeError("API rate limit")
-        from types import SimpleNamespace
         bot.send_message.return_value = SimpleNamespace(
             message=SimpleNamespace(body=SimpleNamespace(mid="m-new"))
         )

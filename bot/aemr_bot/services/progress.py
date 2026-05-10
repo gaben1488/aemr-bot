@@ -7,16 +7,18 @@ ADDRESS_RECEIVED / TOPIC_RECEIVED + summary-prompt) **одним**
 Идея:
 - В `dialog_data` хранится `progress_message_id` — mid сообщения,
   которое мы редактируем при переходе на следующий шаг.
-- Каждый шаг вызывает `render_progress(stage, ...)` — получает текст
-  с прогресс-баром «▓▓▓░░ Шаг 3/5» и списком шагов с галочками.
+- Каждый шаг вызывает `render_progress(stage, ...)` — получает HTML-
+  отформатированный текст с цветным баром, моноширинным счётчиком,
+  bold-значениями и blockquote-подсказкой текущего шага.
 - Helper `send_or_edit_progress(bot, chat_id, dialog_data, text,
   attachments)` либо редактирует существующее сообщение, либо шлёт
-  новое (fallback при API-ошибке).
+  новое (fallback при API-ошибке). Передаёт `format=ParseMode.HTML`.
 
 Pure-функция `render_progress` — тестируется без моков MAX.
 """
 from __future__ import annotations
 
+import html
 import logging
 from typing import Literal
 
@@ -46,20 +48,38 @@ _STAGE_PROMPTS: dict[Stage, str] = {
     ),
 }
 
-_PROGRESS_FILLED = "▓"
-_PROGRESS_EMPTY = "░"
+# Цветные квадраты вместо ASCII ▓░ — крупнее, читаются на маленьких
+# экранах, единая высота на любом клиенте MAX (Android/iOS/Web).
+# Зелёный = пройдено, синий = текущий, белый = впереди.
+_BAR_DONE = "🟢"
+_BAR_CURRENT = "🟦"
+_BAR_FUTURE = "⬜"
 
-# Иконки шагов
-_DONE = "✅"
-_CURRENT = "🔵"
-_FUTURE = "⚪"
+# Иконки строк-шагов
+_DONE = "✓"
+_CURRENT = "▶"
+_FUTURE = "○"
 
 
-def _progress_bar(current_idx: int, total: int) -> str:
-    """«▓▓▓░░» где current_idx = количество ЗАВЕРШЁННЫХ шагов
-    (на котором сейчас стоит пользователь = current_idx; всё что до —
-    completed)."""
-    return _PROGRESS_FILLED * current_idx + _PROGRESS_EMPTY * (total - current_idx)
+def _esc(value: str | None) -> str:
+    """HTML-escape значений жителя. Имя «<script>» или адрес с & не
+    должны ломать рендер. quote=False — кавычки внутри text-узла
+    не интерпретируются MAX-парсером, экранировать их вредно для UX."""
+    return html.escape((value or "").strip(), quote=False)
+
+
+def _render_bar(current_idx: int, total: int) -> str:
+    """Строка из total квадратов: done (🟢) до current_idx, current (🟦)
+    в позиции current_idx, future (⬜) после."""
+    parts: list[str] = []
+    for i in range(total):
+        if i < current_idx:
+            parts.append(_BAR_DONE)
+        elif i == current_idx:
+            parts.append(_BAR_CURRENT)
+        else:
+            parts.append(_BAR_FUTURE)
+    return "".join(parts)
 
 
 def render_progress(
@@ -70,12 +90,22 @@ def render_progress(
     address: str | None = None,
     topic: str | None = None,
 ) -> str:
-    """Текст прогресс-карты для текущего шага.
+    """HTML-отформатированный текст прогресс-карты.
 
-    Логика:
-    - Шаги до текущего = ✅ + значение (что ввёл житель)
-    - Текущий шаг = 🔵 + лейбл + подсказка что сделать
-    - Будущие шаги = ⚪ + лейбл (без подсказок)
+    Структура:
+        📋 <b>Подача обращения</b>
+        🟢🟢🟦⬜⬜  <code>3 / 5</code>
+
+        ✓ Имя · <b>Иван</b>
+        ✓ Населённый пункт · <b>Елизовское ГП</b>
+        ▶ <b>Адрес</b>
+        <blockquote>Укажите адрес — улица и дом</blockquote>
+        ○ Тема
+        ○ Суть
+
+    Используется MAX `format=ParseMode.HTML`. Значения жителя
+    пропускаются через html.escape — иначе «<script>» в имени или
+    & в адресе сломают парсинг.
 
     Аргументы name/locality/address/topic — значения уже введённых
     шагов. Передаются only те, что уже завершены.
@@ -86,7 +116,8 @@ def render_progress(
         raise ValueError(f"unknown stage {stage!r}") from e
 
     total = len(_STAGES)
-    bar = _progress_bar(current_idx, total)
+    bar = _render_bar(current_idx, total)
+    counter = f"<code>{current_idx + 1} / {total}</code>"
     values: dict[Stage, str | None] = {
         "name": name,
         "locality": locality,
@@ -99,15 +130,16 @@ def render_progress(
     for i, st in enumerate(_STAGES):
         label = _STAGE_LABELS[st]
         if i < current_idx:
-            value = (values[st] or "").strip() or "—"
-            lines.append(f"{_DONE} {label}: {value}")
+            value = _esc(values[st]) or "—"
+            lines.append(f"{_DONE} {label} · <b>{value}</b>")
         elif i == current_idx:
             prompt = _STAGE_PROMPTS[st]
-            lines.append(f"{_CURRENT} {label} — {prompt}")
+            lines.append(f"{_CURRENT} <b>{label}</b>")
+            lines.append(f"<blockquote>{prompt}</blockquote>")
         else:
             lines.append(f"{_FUTURE} {label}")
 
-    header = f"📋 Подача обращения\n{bar}  Шаг {current_idx + 1}/{total}"
+    header = f"📋 <b>Подача обращения</b>\n{bar}  {counter}"
     return header + "\n\n" + "\n".join(lines)
 
 
@@ -119,7 +151,7 @@ async def send_or_edit_progress(
     text: str,
     attachments: list,
 ) -> tuple[str | None, bool]:
-    """Отправить или отредактировать прогресс-сообщение.
+    """Отправить или отредактировать прогресс-сообщение в HTML-режиме.
 
     Поведение:
     - Если в `dialog_data['progress_message_id']` есть mid — пробуем
@@ -128,12 +160,24 @@ async def send_or_edit_progress(
       сообщение, возвращаем (новый_mid, edited=False).
     - Если в dialog_data нет mid — сразу шлём новое сообщение.
 
+    `format=ParseMode.HTML` передаётся всегда — render_progress
+    выдаёт HTML-разметку. Если из maxapi нельзя импортировать enum
+    (будущие версии без bc), молча шлём без format — текст всё равно
+    пройдёт, просто с видимыми тегами в худшем случае.
+
     Caller должен сохранить возвращённый mid в dialog_data при
     edited=False (новое сообщение).
 
     Returns: (message_id, was_edited).
     """
     from aemr_bot.utils.event import extract_message_id
+
+    try:
+        from maxapi.enums.parse_mode import ParseMode
+
+        fmt = ParseMode.HTML
+    except Exception:  # pragma: no cover — защита от breaking changes
+        fmt = None
 
     existing_mid = dialog_data.get("progress_message_id") if dialog_data else None
 
@@ -143,6 +187,7 @@ async def send_or_edit_progress(
                 message_id=existing_mid,
                 text=text,
                 attachments=attachments,
+                format=fmt,
             )
             return existing_mid, True
         except Exception:
@@ -158,6 +203,7 @@ async def send_or_edit_progress(
             chat_id=chat_id,
             text=text,
             attachments=attachments,
+            format=fmt,
         )
     except Exception:
         log.exception("send_or_edit_progress: send_message failed too")

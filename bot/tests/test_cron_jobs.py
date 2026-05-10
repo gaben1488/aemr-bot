@@ -75,6 +75,26 @@ class TestPulse:
         await cron._job_pulse(send)
 
 
+class TestStartupPulse:
+    """_job_startup_pulse — catch-up хеартбит при рестарте процесса."""
+
+    @pytest.mark.asyncio
+    async def test_startup_pulse_sends_recovery_text(self) -> None:
+        send = AsyncMock()
+        await cron._job_startup_pulse(send)
+        send.assert_called_once()
+        text = send.call_args.args[0]
+        # Текст должен явно отличать от обычного pulse, чтобы дежурный
+        # видел «это рестарт», а не «штатный тик».
+        assert "перезапущен" in text
+
+    @pytest.mark.asyncio
+    async def test_startup_pulse_swallows_exception(self) -> None:
+        send = AsyncMock(side_effect=RuntimeError("network down"))
+        # Не должно бросить — иначе scheduler не запустится.
+        await cron._job_startup_pulse(send)
+
+
 class TestBackupWithAlert:
     """_job_backup_with_alert — обёртка над _backup_db с алёртами."""
 
