@@ -83,31 +83,49 @@ async def _run_pg_dump_encrypted(
     out_path: Path, env: dict[str, str], passphrase: str
 ) -> None:
     """`pg_dump | gpg --symmetric > out_path`. Парольная фраза через
-    os.pipe, чтобы она не попала в argv и в shell.
+    os.pipe, чтобы она не попала в argv и в shell. Сами процессы
+    соединяем через ОС-pipe (Unix way) — asyncio StreamReader как
+    stdin не работает в Python 3.12 (нет .fileno() у StreamReader).
     """
-    r_fd, w_fd = os.pipe()
-    os.write(w_fd, passphrase.encode())
-    os.close(w_fd)
+    # Pipe для passphrase
+    pp_r, pp_w = os.pipe()
+    # Записать passphrase синхронно перед запуском gpg, и сразу
+    # закрыть write-конец чтобы gpg не блокировался читая EOF.
+    os.write(pp_w, passphrase.encode() + b"\n")
+    os.close(pp_w)
 
-    dump = await asyncio.create_subprocess_exec(
-        "pg_dump", "--no-owner", "--no-acl",
-        stdout=asyncio.subprocess.PIPE,
-        env=env,
-    )
-    if dump.stdout is None:
-        os.close(r_fd)
-        raise RuntimeError("pg_dump did not provide stdout pipe")
+    # Pipe для данных pg_dump → gpg
+    data_r, data_w = os.pipe()
+
+    try:
+        dump = await asyncio.create_subprocess_exec(
+            "pg_dump", "--no-owner", "--no-acl",
+            stdout=data_w,
+            env=env,
+            pass_fds=(data_w,),
+        )
+    except Exception:
+        os.close(pp_r)
+        os.close(data_r)
+        os.close(data_w)
+        raise
+    # write-конец data-pipe больше не нужен в нашем процессе:
+    # его держит pg_dump.
+    os.close(data_w)
+
     try:
         gpg = await asyncio.create_subprocess_exec(
             "gpg", "--batch", "--yes",
-            "--passphrase-fd", str(r_fd),
+            "--passphrase-fd", str(pp_r),
             "--symmetric", "--cipher-algo", "AES256",
             "-o", str(out_path),
-            stdin=dump.stdout,  # type: ignore[arg-type]
-            pass_fds=(r_fd,),
+            stdin=data_r,
+            pass_fds=(pp_r, data_r),
         )
     finally:
-        os.close(r_fd)
+        # read-концы держат gpg-дочка; в родителе закрываем.
+        os.close(pp_r)
+        os.close(data_r)
 
     gpg_rc, dump_rc = await asyncio.gather(gpg.wait(), dump.wait())
     if gpg_rc != 0:
