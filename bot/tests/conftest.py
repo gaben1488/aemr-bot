@@ -5,19 +5,25 @@ import pytest
 import pytest_asyncio
 
 os.environ.setdefault("BOT_TOKEN", "test-token")
-os.environ.setdefault("DATABASE_URL", "")
+# Pseudo-URL по умолчанию: pure-тесты импортируют модули с engine-
+# on-import (db/session.py, services/idempotency.py) без падения.
+# Используем sqlite+aiosqlite — aiosqlite есть в dev-deps локально и
+# не требует asyncpg. Реальный DATABASE_URL ставится через CI env или
+# локальной переменной до запуска — и перебивает этот default через
+# setdefault-семантику.
+_PSEUDO_DB = "sqlite+aiosqlite:///:memory:"
+os.environ.setdefault("DATABASE_URL", _PSEUDO_DB)
 os.environ.setdefault("ADMIN_GROUP_ID", "123")
 
 DATABASE_URL = os.environ["DATABASE_URL"]
-
-# Pure-юнит-тесты (нормализация телефона, валидация settings и т.п.) не
-# требуют Postgres и должны проходить локально даже без поднятой БД.
-# Скип целевой только для DB-фикстуры — иначе скипалась бы вся сюита.
+# Pure-юнит-тесты не требуют Postgres. Маркер «реальная БД» — postgresql
+# в URL (модели используют JSONB, sqlite не подойдёт).
+_HAS_REAL_DB = DATABASE_URL.startswith("postgresql")
 
 
 @pytest_asyncio.fixture
 async def session() -> AsyncIterator:
-    if not DATABASE_URL or DATABASE_URL.startswith("sqlite"):
+    if not _HAS_REAL_DB or DATABASE_URL.startswith("sqlite"):
         pytest.skip(
             "Test requires PostgreSQL (models use JSONB). "
             "Set DATABASE_URL=postgresql+asyncpg://... before running pytest."

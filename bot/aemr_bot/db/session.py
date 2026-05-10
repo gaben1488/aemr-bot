@@ -5,17 +5,25 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from aemr_bot.config import settings
 
-engine = create_async_engine(
-    settings.database_url,
-    pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
-    # 30 минут: переподключение после Postgres failover/restart
-    # либо обрыва TCP. Без этого pool отдаёт мёртвые соединения,
-    # pool_pre_ping ловит, но даёт лишний RTT на каждый запрос.
-    pool_recycle=1800,
-    echo=False,
-)
+def _engine_kwargs() -> dict:
+    """Параметры создания engine. SQLite (для unit-тестов) использует
+    StaticPool и не принимает pool_size/max_overflow/pool_recycle —
+    отдаём только universal-параметры."""
+    base: dict = {"echo": False}
+    if settings.database_url.startswith("postgresql"):
+        base.update(
+            pool_pre_ping=True,
+            pool_size=5,
+            max_overflow=10,
+            # 30 минут: переподключение после Postgres failover/restart
+            # либо обрыва TCP. Без этого pool отдаёт мёртвые соединения,
+            # pool_pre_ping ловит, но даёт лишний RTT на каждый запрос.
+            pool_recycle=1800,
+        )
+    return base
+
+
+engine = create_async_engine(settings.database_url, **_engine_kwargs())
 
 SessionFactory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
