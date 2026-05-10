@@ -74,22 +74,64 @@ def extract_location(message: Any) -> tuple[float, float] | None:
     MAX присылает его, когда житель тапает кнопку RequestGeoLocationButton.
     Возвращает None, если в сообщении нет вложения типа location либо
     координаты не парсятся.
+
+    Поля из maxapi.types.attachments.location.Location (наследует
+    Attachment): `latitude`, `longitude` лежат прямо на attachment,
+    не в .payload. Для совместимости с возможными альтернативными
+    форматами проверяем также .payload и lat/lon, lat/lng.
     """
     body = message
     if hasattr(body, "body") and getattr(body, "body", None) is not None:
         body = body.body
     raw = getattr(body, "attachments", None) or []
 
+    if not raw:
+        return None
+
+    # Диагностический лог: при каждом сообщении с attachments в шаге
+    # AWAITING_LOCALITY мы хотим видеть какие типы пришли. Без этого
+    # отлаживать geo-flow в production невозможно.
+    types_seen = []
+    for att in raw:
+        t = getattr(att, "type", None) or (att.get("type") if isinstance(att, dict) else None)
+        types_seen.append(str(t))
+    log.info("extract_location: attachments seen=%s", types_seen)
+
     for att in raw:
         att_type = getattr(att, "type", None)
         if att_type is None and isinstance(att, dict):
             att_type = att.get("type")
-        if str(att_type).lower() != "location":
+        # Для maxapi: type приходит как str-Enum «location» — равенство
+        # работает напрямую без str().lower() трюков.
+        if att_type != "location" and str(att_type).lower() != "location":
             continue
 
-        # Координаты могут лежать в payload либо прямо на attachment,
-        # в зависимости от версии maxapi. Пробуем оба варианта.
-        for src in (getattr(att, "payload", None), att):
+        # Дамп attachment — увидеть точный формат что прислал MAX.
+        try:
+            dumped = att.model_dump(by_alias=False) if hasattr(att, "model_dump") else (
+                att if isinstance(att, dict) else dict(att.__dict__) if hasattr(att, "__dict__") else "?"
+            )
+            log.info("extract_location: location attachment payload=%r", dumped)
+        except Exception:
+            log.exception("extract_location: dump failed")
+
+        # Координаты могут лежать в нескольких местах: для Location-
+        # модели maxapi — прямо на att; для dict — в att или att.payload;
+        # для legacy формата — в att.payload.location.
+        att_payload = (
+            att.get("payload") if isinstance(att, dict)
+            else getattr(att, "payload", None)
+        )
+        candidates = [
+            ("att", att),
+            ("att.payload", att_payload),
+        ]
+        if isinstance(att, dict):
+            candidates.append(("att[location]", att.get("location")))
+            if isinstance(att_payload, dict):
+                candidates.append(("att[payload][location]", att_payload.get("location")))
+
+        for label, src in candidates:
             if src is None:
                 continue
             for lat_attr, lon_attr in (
@@ -97,13 +139,24 @@ def extract_location(message: Any) -> tuple[float, float] | None:
                 ("lat", "lon"),
                 ("lat", "lng"),
             ):
-                lat = getattr(src, lat_attr, None) if not isinstance(src, dict) else src.get(lat_attr)
-                lon = getattr(src, lon_attr, None) if not isinstance(src, dict) else src.get(lon_attr)
+                if isinstance(src, dict):
+                    lat = src.get(lat_attr)
+                    lon = src.get(lon_attr)
+                else:
+                    lat = getattr(src, lat_attr, None)
+                    lon = getattr(src, lon_attr, None)
                 if lat is not None and lon is not None:
                     try:
-                        return (float(lat), float(lon))
+                        result = (float(lat), float(lon))
+                        log.info(
+                            "extract_location: parsed from %s using %s/%s",
+                            label, lat_attr, lon_attr,
+                        )
+                        return result
                     except (TypeError, ValueError):
                         continue
+
+    log.warning("extract_location: location-attachment найден, но координаты не извлечены")
     return None
 
 

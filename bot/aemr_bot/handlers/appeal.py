@@ -1080,8 +1080,18 @@ async def _on_awaiting_locality(event, body, text_body, max_user_id):
     """
     from aemr_bot.utils.attachments import extract_location
 
+    # Диагностика geo-flow: при каждом сообщении в этом state логируем
+    # тип контента, чтобы при «не работает» сразу видеть пришло ли
+    # вообще attachment от MAX или это просто текст.
+    raw_atts = getattr(body, "attachments", None) or []
+    log.info(
+        "awaiting_locality: user=%s text=%r attachments_count=%d",
+        max_user_id, (text_body or "")[:50], len(raw_atts),
+    )
+
     location = extract_location(body)
     if location is not None:
+        log.info("awaiting_locality: got location user=%s", max_user_id)
         await _handle_location_for_locality(event, max_user_id, location)
         return
 
