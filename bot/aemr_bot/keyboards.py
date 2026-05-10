@@ -155,6 +155,40 @@ def goodbye_erase_confirm_keyboard():
     return kb.as_markup()
 
 
+# Алиасы для callback'ов из handlers/menu.py — settings:forget_ask /
+# settings:consent_status / settings:consent_revoke_ask. Семантически
+# идентичны goodbye_erase / goodbye_revoke (тот же необратимый отзыв
+# и стирание), но callback-payload'ы разные. Чтобы не плодить дубли
+# логики — переиспользуем уже отлаженные клавиатуры.
+def forget_confirm_keyboard():
+    """settings:forget_ask — экран подтверждения /forget от жителя.
+    Эквивалент goodbye_erase_confirm_keyboard."""
+    return goodbye_erase_confirm_keyboard()
+
+
+def consent_revoke_confirm_keyboard():
+    """settings:consent_revoke_ask — экран подтверждения отзыва
+    согласия из карточки «Согласие на ПДн». Эквивалент
+    goodbye_revoke_confirm_keyboard."""
+    return goodbye_revoke_confirm_keyboard()
+
+
+def consent_status_keyboard(*, consent_active: bool):
+    """Кнопки под карточкой статуса согласия (settings:consent_status).
+
+    Если согласие активно — показываем кнопку «👋 Уйти из бота» —
+    житель может отозвать или стереть данные через утверждённую
+    воронку goodbye. Если согласия нет (отозвано или никогда не давалось)
+    — только «↩️ В меню», потому что отзывать нечего, а дать согласие
+    можно только через воронку «📝 Написать обращение».
+    """
+    kb = InlineKeyboardBuilder()
+    if consent_active:
+        kb.row(CallbackButton(text="👋 Уйти из бота", payload="settings:goodbye"))
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
+    return kb.as_markup()
+
+
 def consent_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(
