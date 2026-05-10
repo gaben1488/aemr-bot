@@ -955,14 +955,14 @@ async def _do_diag(event) -> None:
 async def _do_backup(event) -> None:
     """Снять pg_dump прямо сейчас. Общая реализация для команды /backup и
     кнопки «💾 Снять бэкап»."""
-    from aemr_bot.services import cron as cron_service
+    from aemr_bot.services import db_backup
 
     await event.bot.send_message(
         chat_id=cfg.admin_group_id,
         text="🗄️ Запускаю pg_dump… Это может занять несколько секунд.",
     )
     try:
-        out = await cron_service._backup_db()
+        out = await db_backup.backup_db()
     except Exception as e:
         await event.bot.send_message(
             chat_id=cfg.admin_group_id, text=f"⚠️ Бэкап упал: {e}"
