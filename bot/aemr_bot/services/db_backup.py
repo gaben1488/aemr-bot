@@ -114,9 +114,12 @@ async def _run_pg_dump_encrypted(
     os.close(data_w)
 
     # Контейнер с read_only: true — у gpg нет права создавать
-    # ~/.gnupg для своих ключей. Перенаправляем HOMEDIR в /tmp,
-    # который смонтирован как tmpfs и доступен для записи.
-    gpg_home = "/tmp/.gnupg"
+    # ~/.gnupg для своих ключей. Перенаправляем HOMEDIR в TMPDIR
+    # (контейнер монтирует tmpfs:/tmp:128m), что безопасно: tmpfs
+    # видна только нашему процессу, и режим 0o700 закрывает доступ
+    # другим UID. Жёсткое имя «.gnupg» под TMPDIR — стандартный
+    # путь gpg-инсталляции.
+    gpg_home = os.path.join(os.environ.get("TMPDIR", "/tmp"), ".gnupg")  # nosec B108
     os.makedirs(gpg_home, mode=0o700, exist_ok=True)
 
     try:
