@@ -8,15 +8,61 @@
 
 Сюда вынесена чистая сервисная функция; handler-ы импортируют её через
 обычный публичный путь.
+
+Retry-loop: каждый batch отправляется до 3 раз с экспоненциальным
+бэкофом (0.5/1.0/2.0 сек). Без этого сетевая дрожь в момент
+finalize_appeal приводила к потере вложений у оператора (БД-запись
+уже сделана commit'ом, retry на handler-уровне нет). Полноценный
+outbox-pattern (durable queue + worker) отложен до v2.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from aemr_bot.config import settings as cfg
 from aemr_bot.utils.attachments import deserialize_for_relay
 
 log = logging.getLogger(__name__)
+
+_RELAY_MAX_ATTEMPTS = 3
+# Экспоненциальный бэкоф: 0.5s, 1.0s, 2.0s. Между попытками —
+# короткая пауза, чтобы не поджарить MAX rate-limit (2 RPS).
+_RELAY_BASE_DELAY_SEC = 0.5
+
+
+async def _send_with_retry(send_coro_factory, *, batch_idx: int,
+                           total_batches: int, appeal_id: int) -> bool:
+    """Запустить send_coro_factory() с retry. Возвращает True при успехе.
+
+    `send_coro_factory` — callable без аргументов, возвращающий
+    свежую coroutine. Вызывается заново на каждой попытке: однажды
+    выполненную coroutine пере-await'ить нельзя.
+    """
+    delay = _RELAY_BASE_DELAY_SEC
+    last_exc: BaseException | None = None
+    for attempt in range(1, _RELAY_MAX_ATTEMPTS + 1):
+        try:
+            await send_coro_factory()
+            return True
+        except Exception as exc:
+            last_exc = exc
+            if attempt < _RELAY_MAX_ATTEMPTS:
+                log.info(
+                    "relay batch %d/%d for #%s — attempt %d failed (%s), "
+                    "retry через %.1fs",
+                    batch_idx, total_batches, appeal_id, attempt,
+                    type(exc).__name__, delay,
+                )
+                await asyncio.sleep(delay)
+                delay *= 2
+    log.exception(
+        "relay batch %d/%d for #%s ОКОНЧАТЕЛЬНО не удался после %d "
+        "попыток: %r",
+        batch_idx, total_batches, appeal_id, _RELAY_MAX_ATTEMPTS,
+        last_exc,
+    )
+    return False
 
 
 async def relay_attachments_to_admin(
@@ -74,15 +120,18 @@ async def relay_attachments_to_admin(
             if total_batches == 1
             else f"Вложения к обращению #{appeal_id} ({idx}/{total_batches})"
         )
-        try:
-            await bot.send_message(
+
+        # Замыкание: каждая попытка строит свежий kwargs (на случай
+        # если maxapi мутирует переданное при ошибке).
+        def _factory(_batch=batch, _header=header):
+            return bot.send_message(
                 chat_id=cfg.admin_group_id,
-                text=header,
-                attachments=batch,
+                text=_header,
+                attachments=_batch,
                 link=link,
             )
-        except Exception:
-            log.exception(
-                "не удалось переслать пакет вложений %d/%d для обращения #%s",
-                idx, total_batches, appeal_id,
-            )
+
+        await _send_with_retry(
+            _factory, batch_idx=idx, total_batches=total_batches,
+            appeal_id=appeal_id,
+        )

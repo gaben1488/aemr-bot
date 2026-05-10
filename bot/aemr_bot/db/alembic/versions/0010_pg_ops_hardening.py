@@ -46,16 +46,34 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _current_dbname() -> str:
+    """Имя текущей БД. ALTER DATABASE требует литерал (current_database()
+    — функция, в DDL не работает: «syntax error at or near (»). Получаем
+    через SELECT и подставляем как identifier."""
+    bind = op.get_bind()
+    return bind.execute(_text("SELECT current_database()")).scalar_one()
+
+
+# Локальный импорт sa.text — чтобы не тащить тяжёлый sa в namespace
+# миграции; заодно понятнее, что используется именно для read-only
+# query, не DDL.
+from sqlalchemy import text as _text  # noqa: E402
+
+
 def upgrade() -> None:
-    # Получаем имя текущей БД, чтобы не зашивать «aemr»: в CI и в
-    # alembic_check используется `aemr_alembic_check`, а в проде —
-    # ${POSTGRES_DB}. ALTER DATABASE применяется только если миграция
-    # запущена с правом OWNER на эту БД (бот таким правом обладает).
+    # ALTER DATABASE применяется только если миграция запущена с
+    # правом OWNER на эту БД (бот таким правом обладает). Имя БД
+    # читаем динамически — в CI это aemr_alembic_check, в проде ${POSTGRES_DB}.
+    dbname = _current_dbname()
+    # Имя БД безопасно квотируем через psycopg/asyncpg-совместимый
+    # формат «"name"». Здесь нельзя использовать parameterized DDL:
+    # ALTER DATABASE не принимает $1 для имени БД.
+    quoted = '"' + dbname.replace('"', '""') + '"'
     op.execute(
-        "ALTER DATABASE current_database() SET statement_timeout = '30s'"
+        f"ALTER DATABASE {quoted} SET statement_timeout = '30s'"
     )
     op.execute(
-        "ALTER DATABASE current_database() "
+        f"ALTER DATABASE {quoted} "
         "SET idle_in_transaction_session_timeout = '60s'"
     )
 
@@ -67,8 +85,10 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    dbname = _current_dbname()
+    quoted = '"' + dbname.replace('"', '""') + '"'
     op.execute("DROP EXTENSION IF EXISTS pg_stat_statements")
     op.execute(
-        "ALTER DATABASE current_database() RESET idle_in_transaction_session_timeout"
+        f"ALTER DATABASE {quoted} RESET idle_in_transaction_session_timeout"
     )
-    op.execute("ALTER DATABASE current_database() RESET statement_timeout")
+    op.execute(f"ALTER DATABASE {quoted} RESET statement_timeout")
