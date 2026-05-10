@@ -212,17 +212,19 @@ async def test_purge_old_appeals_5y_retention(session):
     )
     assert purged_a >= 1
 
-    # SQLAlchemy identity map хранит старые версии объектов после
-    # bulk UPDATE — expire_all сбрасывает кэш и заставит переселектить.
-    session.expire_all()
+    # Прямой SELECT через session.execute() — не использует
+    # identity map, читает свежие значения после bulk UPDATE.
+    from sqlalchemy import select
+    rows = (await session.execute(
+        select(Appeal.id, Appeal.summary, Appeal.attachments, Appeal.topic)
+        .where(Appeal.id.in_([old.id, fresh.id]))
+    )).all()
+    by_id = {r[0]: r for r in rows}
 
     # Старое — текст и attachments обнулены, метаданные на месте
-    old_after = await appeals_service.get_by_id(session, old.id)
-    assert old_after is not None
-    assert old_after.summary is None
-    assert old_after.attachments == []
-    assert old_after.topic == "Дороги"  # метаданные
+    assert by_id[old.id][1] is None  # summary
+    assert by_id[old.id][2] == []  # attachments
+    assert by_id[old.id][3] == "Дороги"  # topic — метаданные сохраняются
 
     # Свежее не тронуто
-    fresh_after = await appeals_service.get_by_id(session, fresh.id)
-    assert fresh_after.summary == "Свежая жалоба"
+    assert by_id[fresh.id][1] == "Свежая жалоба"

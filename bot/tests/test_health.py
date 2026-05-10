@@ -22,9 +22,10 @@ class TestHeartbeat:
     def test_after_beat_with_explicit_max_age(self) -> None:
         hb = Heartbeat()
         hb.beat()
-        # max_age=0 — даже только что обновлённый считается fresh
-        # (monotonic() - last == 0, 0 <= 0)
-        assert hb.is_fresh(max_age=0.0)
+        # max_age=10 секунд — только что обновлённый точно считается fresh.
+        # max_age=0 не подходит: между beat() и вызовом is_fresh() идут
+        # микросекунды, и 0 <= 0.000001 == False.
+        assert hb.is_fresh(max_age=10.0)
 
     def test_stale_after_long_time(self) -> None:
         hb = Heartbeat()
