@@ -168,6 +168,22 @@ async def _persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | None:
                 if user.dialog_state == DialogState.IDLE.value:
                     log.info("отправка пропущена для пользователя %s — состояние уже IDLE", max_user_id)
                     return None
+                # Rate-limit ВНУТРИ lock'а закрывает TOCTOU-окно:
+                # ранее проверка делалась только в _start_appeal_flow,
+                # а финализация шла без re-check. При двойной воронке
+                # с двух устройств обе доходили до создания appeal —
+                # обходя «3 за час». Здесь проверяем под lock'ом, перед
+                # commit'ом — атомарно.
+                recent = await appeals_service.count_recent_for_user(
+                    session, user.id, hours=1
+                )
+                if recent >= 3:
+                    log.warning(
+                        "rate-limit hit at finalize for user=%s (recent=%d), "
+                        "appeal not created", max_user_id, recent,
+                    )
+                    await users_service.reset_state(session, max_user_id)
+                    return False
                 data: dict[str, Any] = dict(user.dialog_data or {})
                 summary = "\n".join(data.get("summary_chunks") or []).strip()
                 attachments = data.get("attachments") or []

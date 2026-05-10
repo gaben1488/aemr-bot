@@ -68,6 +68,25 @@ jobs:
       - name: Run pytest
         run: python -m pytest tests/ -v --tb=short
 
+      - name: Alembic — upgrade head на чистую БД
+        # Ловит: orphan/duplicate parent revisions, синтакс в migration-
+        # файлах, опечатки в model imports внутри миграций.
+        env:
+          PGPASSWORD: test
+        run: |
+          psql -h localhost -U aemr -c "DROP DATABASE IF EXISTS aemr_alembic_check;"
+          psql -h localhost -U aemr -c "CREATE DATABASE aemr_alembic_check;"
+          DATABASE_URL=postgresql+asyncpg://aemr:test@localhost:5432/aemr_alembic_check \
+            python -m alembic upgrade head
+
+      - name: Alembic — модели == миграции (alembic check)
+        # alembic check (1.9+) сравнивает Base.metadata с последней
+        # миграцией. Падает если кто-то изменил Mapped[..] и забыл
+        # сгенерировать миграцию через alembic revision --autogenerate.
+        run: |
+          DATABASE_URL=postgresql+asyncpg://aemr:test@localhost:5432/aemr_alembic_check \
+            python -m alembic check
+
   docker-build:
     name: Docker build smoke test
     runs-on: ubuntu-latest
