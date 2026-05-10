@@ -214,68 +214,108 @@ async def ask_address_or_reuse(event, max_user_id: int) -> bool:
     return True
 
 
-async def ask_locality(event, max_user_id: int):
-    """Шаг «Населённый пункт». Echo: «✓ Имя: <имя>»."""
+async def _show_progress_step(
+    event,
+    max_user_id: int,
+    *,
+    stage: str,
+    next_state: DialogState,
+    keyboard,
+) -> None:
+    """Универсальный helper для шагов воронки: рендерит прогресс-карту,
+    обновляет существующее сообщение через edit_message либо шлёт новое
+    (см. services/progress.send_or_edit_progress), сохраняет mid в
+    dialog_data['progress_message_id'].
+
+    После рефакторинга 2026-05-10 заменяет 5 отдельных echo-сообщений
+    одним постоянно-обновляемым. См. services/progress.py для деталей.
+    """
+    from aemr_bot.services.progress import render_progress, send_or_edit_progress
+
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        # User.first_name (не full_name — это поле Operator).
-        name = (user.first_name or "").strip()
+        data = dict(user.dialog_data or {})
+        await users_service.set_state(session, max_user_id, next_state)
+
+    # Завершённые шаги собираем из dialog_data + user.first_name.
+    name = (user.first_name or "").strip() or None
+    text = render_progress(
+        stage=stage,  # type: ignore[arg-type]
+        name=name,
+        locality=data.get("locality") or None,
+        address=data.get("address") or None,
+        topic=data.get("topic") or None,
+    )
+
+    new_mid, edited = await send_or_edit_progress(
+        event.bot,
+        chat_id=get_chat_id(event),
+        dialog_data=data,
+        text=text,
+        attachments=[keyboard],
+    )
+
+    # Сохранить mid если новое сообщение (edit использовал прежний mid —
+    # ничего сохранять не нужно).
+    if not edited and new_mid:
+        async with session_scope() as session:
+            await users_service.update_dialog_data(
+                session, max_user_id, {"progress_message_id": new_mid}
+            )
+
+
+async def ask_locality(event, max_user_id: int):
+    """Шаг «Населённый пункт». Прогресс-карта с галочкой имени."""
+    async with session_scope() as session:
         localities = await settings_store.get(session, "localities") or [
             "Елизовское ГП"
         ]
-        await users_service.set_state(
-            session, max_user_id, DialogState.AWAITING_LOCALITY
-        )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
-        text=texts.NAME_RECEIVED.format(name=name or "записано"),
-        attachments=[keyboards.localities_keyboard(localities)],
+    await _show_progress_step(
+        event,
+        max_user_id,
+        stage="locality",
+        next_state=DialogState.AWAITING_LOCALITY,
+        keyboard=keyboards.localities_keyboard(localities),
     )
 
 
 async def ask_address(event, max_user_id: int):
-    """Шаг «Адрес». Echo: «✓ Населённый пункт: <выбор>»."""
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        locality = (user.dialog_data or {}).get("locality", "записан")
-        await users_service.set_state(
-            session, max_user_id, DialogState.AWAITING_ADDRESS
-        )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
-        text=texts.LOCALITY_RECEIVED.format(locality=locality),
-        attachments=[keyboards.cancel_keyboard()],
+    """Шаг «Адрес». Прогресс-карта с галочкой локалити."""
+    await _show_progress_step(
+        event,
+        max_user_id,
+        stage="address",
+        next_state=DialogState.AWAITING_ADDRESS,
+        keyboard=keyboards.cancel_keyboard(),
     )
 
 
 async def ask_topic(event, max_user_id: int):
-    """Шаг «Тема». Echo: «✓ Адрес: <введённый>»."""
+    """Шаг «Тема». Прогресс-карта с галочкой адреса."""
     async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        address = (user.dialog_data or {}).get("address", "записан")
         topics = await settings_store.get(session, "topics") or ["Другое"]
-        await users_service.set_state(
-            session, max_user_id, DialogState.AWAITING_TOPIC
-        )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
-        text=texts.ADDRESS_RECEIVED.format(address=address),
-        attachments=[keyboards.topics_keyboard(topics)],
+    await _show_progress_step(
+        event,
+        max_user_id,
+        stage="topic",
+        next_state=DialogState.AWAITING_TOPIC,
+        keyboard=keyboards.topics_keyboard(topics),
     )
 
 
 async def ask_summary(event, max_user_id: int):
-    """Шаг «Описание сути». Echo: «✓ Тема: <выбранная>»."""
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
-        topic = (user.dialog_data or {}).get("topic", "выбрана")
-        await users_service.set_state(
-            session, max_user_id, DialogState.AWAITING_SUMMARY
-        )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
-        text=texts.TOPIC_RECEIVED.format(topic=topic),
-        attachments=[keyboards.cancel_keyboard()],
+    """Шаг «Описание сути». Прогресс-карта с галочкой темы.
+
+    На этом шаге показываем cancel-клавиатуру и ждём следующее
+    непустое сообщение (текст / фото / видео / файл) — финализация
+    в on_awaiting_summary.
+    """
+    await _show_progress_step(
+        event,
+        max_user_id,
+        stage="summary",
+        next_state=DialogState.AWAITING_SUMMARY,
+        keyboard=keyboards.cancel_keyboard(),
     )
 
 

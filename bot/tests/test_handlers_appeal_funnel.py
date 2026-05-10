@@ -26,7 +26,14 @@ pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi"
 
 def _make_event(*, chat_id: int = 100, user_id: int = 42, text: str = "") -> SimpleNamespace:
     bot = MagicMock()
-    bot.send_message = AsyncMock()
+    # send_message возвращает SendedMessage-like — нужно для
+    # services/progress.send_or_edit_progress → extract_message_id.
+    bot.send_message = AsyncMock(
+        return_value=SimpleNamespace(
+            message=SimpleNamespace(body=SimpleNamespace(mid="m-progress"))
+        )
+    )
+    bot.edit_message = AsyncMock()
     return SimpleNamespace(
         bot=bot,
         message=SimpleNamespace(
@@ -89,6 +96,8 @@ class TestAskFunnelSteps:
                    AsyncMock(return_value=user)), \
              patch("aemr_bot.handlers.appeal_funnel.users_service.set_state",
                    AsyncMock()), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data",
+                   AsyncMock()), \
              patch("aemr_bot.handlers.appeal_funnel.settings_store.get",
                    AsyncMock(return_value=["Елизовское ГП", "Паратунское СП"])):
             await appeal_funnel.ask_locality(event, max_user_id=42)
@@ -99,12 +108,14 @@ class TestAskFunnelSteps:
         from aemr_bot.handlers import appeal_funnel
 
         event = _make_event()
-        user = SimpleNamespace(dialog_data={"locality": "Корякское СП"})
+        user = SimpleNamespace(first_name="Иван", dialog_data={"locality": "Корякское СП"})
         with patch("aemr_bot.handlers.appeal_funnel.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
                    AsyncMock(return_value=user)), \
              patch("aemr_bot.handlers.appeal_funnel.users_service.set_state",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data",
                    AsyncMock()):
             await appeal_funnel.ask_address(event, max_user_id=42)
         text = event.bot.send_message.call_args.kwargs.get("text", "")
@@ -115,12 +126,14 @@ class TestAskFunnelSteps:
         from aemr_bot.handlers import appeal_funnel
 
         event = _make_event()
-        user = SimpleNamespace(dialog_data={"address": "Ленина 1"})
+        user = SimpleNamespace(first_name="Иван", dialog_data={"address": "Ленина 1"})
         with patch("aemr_bot.handlers.appeal_funnel.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
                    AsyncMock(return_value=user)), \
              patch("aemr_bot.handlers.appeal_funnel.users_service.set_state",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data",
                    AsyncMock()), \
              patch("aemr_bot.handlers.appeal_funnel.settings_store.get",
                    AsyncMock(return_value=["Дороги", "ЖКХ"])):
@@ -133,12 +146,14 @@ class TestAskFunnelSteps:
         from aemr_bot.handlers import appeal_funnel
 
         event = _make_event()
-        user = SimpleNamespace(dialog_data={"topic": "Дороги"})
+        user = SimpleNamespace(first_name="Иван", dialog_data={"topic": "Дороги"})
         with patch("aemr_bot.handlers.appeal_funnel.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
                    AsyncMock(return_value=user)), \
              patch("aemr_bot.handlers.appeal_funnel.users_service.set_state",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data",
                    AsyncMock()):
             await appeal_funnel.ask_summary(event, max_user_id=42)
         text = event.bot.send_message.call_args.kwargs.get("text", "")
