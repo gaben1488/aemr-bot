@@ -38,6 +38,43 @@ async def _fake_session_scope():
     yield MagicMock()
 
 
+# --- _mask_phone (PII protection in admin lists) -----------------------------
+
+
+class TestMaskPhone:
+    def test_none_returns_dash(self) -> None:
+        from aemr_bot.handlers.admin_audience import _mask_phone
+
+        assert _mask_phone(None) == "—"
+
+    def test_empty_returns_dash(self) -> None:
+        from aemr_bot.handlers.admin_audience import _mask_phone
+
+        assert _mask_phone("") == "—"
+
+    def test_full_ru_phone_masked(self) -> None:
+        from aemr_bot.handlers.admin_audience import _mask_phone
+
+        # 11-значные RU номера показываются как +7***LAST4
+        assert _mask_phone("+79991234567") == "+7***4567"
+        assert _mask_phone("89991234567") == "+7***4567"
+        assert _mask_phone("79991234567") == "+7***4567"
+
+    def test_short_garbage_kept_as_is(self) -> None:
+        """Если телефон короче 4 цифр — это явно мусор; маскировать
+        там нечего. Пусть оператор увидит, что номер сломан."""
+        from aemr_bot.handlers.admin_audience import _mask_phone
+
+        assert _mask_phone("ab") == "ab"
+        assert _mask_phone("123") == "123"
+
+    def test_non_ru_format(self) -> None:
+        from aemr_bot.handlers.admin_audience import _mask_phone
+
+        # Без российского префикса (7/8 в начале и >=11 цифр) — generic +***LAST4
+        assert _mask_phone("+1234567") == "+***4567"
+
+
 # --- admin_audience -----------------------------------------------------------
 
 

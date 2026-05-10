@@ -87,12 +87,17 @@ async def _run_pg_dump_encrypted(
     соединяем через ОС-pipe (Unix way) — asyncio StreamReader как
     stdin не работает в Python 3.12 (нет .fileno() у StreamReader).
     """
-    # Pipe для passphrase
+    # Pipe для passphrase. Запись делаем через executor, потому что
+    # синхронный os.write блокирует event-loop: при passphrase >64KB
+    # или забитом OS pipe-буфере (если gpg ещё не запущен и не читает
+    # на той стороне) write зависнет, а с ним замрёт весь бот. Для
+    # типичных 30-символьных паролей буфер заведомо больше — но это
+    # не повод полагаться на «обычно норм».
     pp_r, pp_w = os.pipe()
-    # Записать passphrase синхронно перед запуском gpg, и сразу
-    # закрыть write-конец чтобы gpg не блокировался читая EOF.
-    os.write(pp_w, passphrase.encode() + b"\n")
-    os.close(pp_w)
+    try:
+        await asyncio.to_thread(os.write, pp_w, passphrase.encode() + b"\n")
+    finally:
+        os.close(pp_w)
 
     # Pipe для данных pg_dump → gpg
     data_r, data_w = os.pipe()

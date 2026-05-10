@@ -28,6 +28,18 @@ TZ = ZoneInfo(settings.timezone)
 # тик cron'а.
 _SELFCHECK_HEALTHY = {"healthy": True}
 
+# Misfire grace window для всех cron jobs.
+#
+# APScheduler по умолчанию даёт job 1 секунду на отработку триггера —
+# дальше тик помечается misfire и выбрасывается. При типичном
+# `docker compose up --build` процесс стартует через 30–90 сек после
+# триггера → cron'ы молча теряются (например pulse-tick в :05, а
+# реальный старт scheduler в :07). 120 сек закрывают окно типичного
+# compose-redeploy. Дублей не будет благодаря `coalesce=True` —
+# несколько просроченных тиков сольются в один. Для daily/weekly job
+# параметр безвреден — там тик раз в 86400 сек.
+_MISFIRE_GRACE_SEC = 120
+
 
 # ---- Module-level helpers (вынесены из build_scheduler для тестируемости) ----
 
@@ -460,6 +472,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         name="db-backup",
         max_instances=1,
         coalesce=True,
+        misfire_grace_time=_MISFIRE_GRACE_SEC,
     )
 
     # Ежедневная очистка events (idempotency-ключи)
@@ -469,6 +482,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         name="events-retention",
         max_instances=1,
         coalesce=True,
+        misfire_grace_time=_MISFIRE_GRACE_SEC,
     )
 
     # Selfcheck heartbeat
@@ -478,6 +492,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         name="health-selfcheck",
         max_instances=1,
         coalesce=True,
+        misfire_grace_time=_MISFIRE_GRACE_SEC,
     )
 
     # Месячный отчёт
@@ -487,6 +502,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         name="monthly-stats",
         max_instances=1,
         coalesce=True,
+        misfire_grace_time=_MISFIRE_GRACE_SEC,
     )
 
     # Startup pulse — однократно через 5 секунд после старта.
@@ -502,6 +518,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         name="startup-pulse",
         max_instances=1,
         coalesce=True,
+        misfire_grace_time=_MISFIRE_GRACE_SEC,
     )
 
     # Pulse — три расписания. См. docstring _job_pulse.
@@ -512,6 +529,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         name="pulse-offhours",
         max_instances=1,
         coalesce=True,
+        misfire_grace_time=_MISFIRE_GRACE_SEC,
     )
     scheduler.add_job(
         pulse_partial,
@@ -519,6 +537,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         name="pulse-sunday",
         max_instances=1,
         coalesce=True,
+        misfire_grace_time=_MISFIRE_GRACE_SEC,
     )
     scheduler.add_job(
         pulse_partial,
@@ -526,6 +545,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         name="pulse-workhours",
         max_instances=1,
         coalesce=True,
+        misfire_grace_time=_MISFIRE_GRACE_SEC,
     )
 
     # 5-летняя архивация обращений
@@ -535,6 +555,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         name="appeals-5y-retention",
         max_instances=1,
         coalesce=True,
+        misfire_grace_time=_MISFIRE_GRACE_SEC,
     )
 
     # PDn-retention (152-ФЗ 30 дней после revoke)
@@ -544,6 +565,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         name="pdn-retention",
         max_instances=1,
         coalesce=True,
+        misfire_grace_time=_MISFIRE_GRACE_SEC,
     )
 
     # Funnel watchdog: сброс зависших воронок
@@ -553,6 +575,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         name="funnel-watchdog",
         max_instances=1,
         coalesce=True,
+        misfire_grace_time=_MISFIRE_GRACE_SEC,
     )
 
     # Напоминалки в рабочее время Камчатки
@@ -562,6 +585,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         name="open-reminder-workhours",
         max_instances=1,
         coalesce=True,
+        misfire_grace_time=_MISFIRE_GRACE_SEC,
     )
     scheduler.add_job(
         functools.partial(_job_working_hours_overdue_reminder, bot),
@@ -569,6 +593,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         name="overdue-reminder-workhours",
         max_instances=1,
         coalesce=True,
+        misfire_grace_time=_MISFIRE_GRACE_SEC,
     )
 
     if settings.healthcheck_url:
@@ -578,6 +603,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             name="healthcheck-ping",
             max_instances=1,
             coalesce=True,
+            misfire_grace_time=_MISFIRE_GRACE_SEC,
         )
 
     return scheduler

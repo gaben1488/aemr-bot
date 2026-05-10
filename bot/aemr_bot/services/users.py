@@ -96,6 +96,27 @@ async def reset_state(session: AsyncSession, max_user_id: int) -> None:
 
 
 async def update_dialog_data(session: AsyncSession, max_user_id: int, patch: dict) -> dict:
+    """Read-modify-write апдейт jsonb dialog_data с защитой от гонки.
+
+    Без advisory-lock два параллельных callback'а одного жителя
+    (например, нажал две кнопки подряд) делают read-modify-write на
+    одной строке — последний writer переписывает изменения первого.
+    `pg_advisory_xact_lock(max_user_id)` сериализует параллельные
+    транзакции по этому конкретному `max_user_id`, не трогая других
+    жителей. Lock освобождается на commit/rollback автоматически.
+
+    На SQLite (тесты с `_PSEUDO_DB`) advisory_xact_lock отсутствует —
+    игнорируем ошибку и идём дальше: для unit-тестов гонок нет.
+    """
+    try:
+        await session.execute(
+            text("SELECT pg_advisory_xact_lock(:key)"),
+            {"key": int(max_user_id)},
+        )
+    except Exception:
+        # SQLite / unsupported backend — без lock-а живём, в production
+        # это postgres и lock работает.
+        pass
     user = await session.scalar(select(User).where(User.max_user_id == max_user_id))
     if user is None:
         return {}

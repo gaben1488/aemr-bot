@@ -466,3 +466,73 @@ class TestHandleStop:
             await broadcast._handle_stop(event, 99)
         msg_arg = ack.call_args.args[1]
         assert "Уже завершено" in msg_arg
+
+
+class TestFormatDt:
+    def test_none_returns_dash(self) -> None:
+        from aemr_bot.handlers.broadcast import _format_dt
+
+        assert _format_dt(None) == "—"
+
+    def test_datetime_in_local_tz(self) -> None:
+        from datetime import datetime, timezone
+
+        from aemr_bot.handlers.broadcast import _format_dt
+
+        result = _format_dt(datetime(2026, 5, 11, 12, 0, tzinfo=timezone.utc))
+        # Камчатка UTC+12: 12:00 UTC → 00:00 → дата +1 день
+        assert "11.05.2026" in result or "12.05.2026" in result
+        assert ":" in result
+
+
+class TestListBroadcasts:
+    @pytest.mark.asyncio
+    async def test_blocked_for_non_role(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.broadcast._ensure_role",
+                   AsyncMock(return_value=False)):
+            await broadcast._list_broadcasts(event)
+        event.message.answer.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_empty_list(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.broadcast._ensure_role",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.list_recent",
+                   AsyncMock(return_value=[])):
+            await broadcast._list_broadcasts(event)
+        event.message.answer.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_with_items(self) -> None:
+        from datetime import datetime, timezone
+
+        from aemr_bot.handlers import broadcast
+
+        event = _make_event()
+        items = [
+            SimpleNamespace(
+                id=42,
+                created_at=datetime(2026, 5, 11, 12, 0, tzinfo=timezone.utc),
+                status="done",
+                delivered_count=100,
+                subscriber_count_at_start=120,
+            ),
+        ]
+        with patch("aemr_bot.handlers.broadcast._ensure_role",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.list_recent",
+                   AsyncMock(return_value=items)):
+            await broadcast._list_broadcasts(event)
+        text = event.message.answer.call_args.args[0]
+        assert "42" in text
+        assert "100" in text

@@ -32,6 +32,25 @@ register_handlers(dp)
 # в done_callback вычищаем, чтобы set не рос.
 _BACKGROUND_TASKS: set[asyncio.Task] = set()
 
+# Semaphore-окно для входящих webhook'ов. Без ограничения каждый POST
+# в /max/webhook порождает asyncio.create_task(...) — флуд (1000 RPS
+# или ботнет) получает unbounded task spawn → OOM при mem_limit=512m
+# в docker-compose. С 32 параллельными dispatchers очередь FastAPI
+# держит остальные на 200ms+ — клиенты MAX перетягивают, но процесс
+# не падает. 32 — компромисс между throughput и memory pressure;
+# увеличивать только после реальных нагрузочных замеров.
+_WEBHOOK_CONCURRENCY = 32
+_WEBHOOK_SEMAPHORE: asyncio.Semaphore | None = None
+
+
+def _get_webhook_semaphore() -> asyncio.Semaphore:
+    """Lazy-init семафора. Создавать на module-level нельзя — нет
+    активного event loop при импорте main.py."""
+    global _WEBHOOK_SEMAPHORE
+    if _WEBHOOK_SEMAPHORE is None:
+        _WEBHOOK_SEMAPHORE = asyncio.Semaphore(_WEBHOOK_CONCURRENCY)
+    return _WEBHOOK_SEMAPHORE
+
 
 def spawn_background_task(coro, *, name: str | None = None) -> asyncio.Task:
     """Запустить корутину в фоне с защитой от GC."""
@@ -126,10 +145,12 @@ if settings.bot_mode == "webhook":
                 event_object = await process_update_webhook(event_json=event_json, bot=bot)
 
                 async def _handle():
-                    try:
-                        await dp.handle(event_object)
-                    except Exception:
-                        log.exception("update handling failed")
+                    sem = _get_webhook_semaphore()
+                    async with sem:  # bounded concurrency, защита от флуда
+                        try:
+                            await dp.handle(event_object)
+                        except Exception:
+                            log.exception("update handling failed")
 
                 spawn_background_task(_handle(), name="webhook_dispatch")
         except Exception:

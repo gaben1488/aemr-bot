@@ -140,7 +140,7 @@ async def run_audience_action(event, payload: str) -> None:
     await event.bot.send_message(chat_id=cfg.admin_group_id, text=header)
     for u in users:
         name = u.first_name or "—"
-        phone = u.phone or "—"
+        phone = _mask_phone(u.phone)
         line = f"#{u.max_user_id} · {name} · {phone}"
         await event.bot.send_message(
             chat_id=cfg.admin_group_id,
@@ -149,3 +149,23 @@ async def run_audience_action(event, payload: str) -> None:
                 kbds.op_audience_user_actions(u.max_user_id, blocked=u.is_blocked)
             ],
         )
+
+
+def _mask_phone(phone: str | None) -> str:
+    """Маскирование телефона для admin-выборок: «+7***1234».
+
+    PII в admin-чате попадает в backup MAX-серверов и в скриншоты
+    операторов; 152-ФЗ erasure эту копию не достанет. Полный номер
+    нужен реально только при /erase phone= — точечно. В list-выводах
+    оставляем 4 последние цифры и страновой префикс для распознавания.
+    Если телефон не задан — «—»; если короче 4 цифр (мусор) —
+    показываем как есть, скрывать там нечего.
+    """
+    if not phone:
+        return "—"
+    digits = "".join(ch for ch in phone if ch.isdigit())
+    if len(digits) < 4:
+        return phone
+    tail = digits[-4:]
+    prefix = "+7" if digits[0] in {"7", "8"} and len(digits) >= 11 else "+"
+    return f"{prefix}***{tail}"

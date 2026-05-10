@@ -212,13 +212,21 @@ async def close(session: AsyncSession, appeal_id: int) -> bool:
     return result.rowcount > 0
 
 
-async def list_unanswered(session: AsyncSession) -> list[Appeal]:
+async def list_unanswered(
+    session: AsyncSession, *, limit: int = 500
+) -> list[Appeal]:
     """Все открытые обращения (NEW + IN_PROGRESS) с догруженным user.
 
     Используется напоминалкой `working_hours_open_reminder`. На входе
     операторской логике делим список в Python на две группы — те, что в
     SLA, и просроченные — отдельным проходом по `sla_response_hours`.
     Один SQL вместо двух.
+
+    LIMIT 500 — защита от лавины: на годовом архиве с тысячами
+    открытых обращений (если оператор в отпуске) cron-напоминалка
+    иначе вытащит всё разом и в `_format_appeal_lines` обрежется
+    до 10, но БД-запрос уже отдал всё. Для обычной работы 500
+    заведомо больше реальной очереди.
     """
     res = await session.scalars(
         select(Appeal)
@@ -229,6 +237,7 @@ async def list_unanswered(session: AsyncSession) -> list[Appeal]:
             )
         )
         .order_by(Appeal.created_at)
+        .limit(limit)
     )
     return list(res)
 
