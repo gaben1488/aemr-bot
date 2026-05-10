@@ -35,31 +35,36 @@ _recent_replies: dict[tuple[int, int], tuple[str, float]] = {}
 _REPLY_DEDUPE_WINDOW_SEC = 10.0
 
 
-# Намерение оператора ответить на обращение (после нажатия кнопки
-# «✉️ Ответить» в карточке): operator_id → (appeal_id, expires_at).
-# Следующее текстовое сообщение от этого оператора в админ-группе
-# доставляется как /reply <appeal_id> <текст> без нужды свайпать
-# или помнить номер. Окно — 5 минут; дольше держать опасно (оператор
-# может забыть про намерение и случайно отправить житель чужой текст).
-_reply_intent: dict[int, tuple[int, float]] = {}
+# Намерение оператора ответить на обращение хранится в едином
+# хранилище services/wizard_registry — раньше существовало две копии
+# (тут и в registry), что ломалось при `clear_all_for(operator_id)`
+# из /cancel. Сейчас этот модуль — тонкий wrapper над registry для
+# обратной совместимости (тесты и внешние вызовы импортируют отсюда).
 _REPLY_INTENT_TTL_SEC = 300.0
 
 
 def remember_reply_intent(operator_id: int, appeal_id: int) -> None:
     """Запомнить, что оператор сейчас собирается отвечать на обращение."""
-    _reply_intent[operator_id] = (appeal_id, _time.monotonic() + _REPLY_INTENT_TTL_SEC)
+    from aemr_bot.services import wizard_registry as _wr
+
+    _wr.set_reply_intent(
+        operator_id, appeal_id, _time.monotonic() + _REPLY_INTENT_TTL_SEC
+    )
 
 
 def consume_reply_intent(operator_id: int) -> int | None:
     """Достать и сбросить намерение, если оно ещё не протухло.
 
     Возвращает appeal_id, если оператор недавно нажимал «✉️ Ответить» и
-    окно не истекло. Сбрасывает запись — namesake intent одноразовое.
+    окно не истекло. Сбрасывает запись — intent одноразовое.
     """
-    item = _reply_intent.pop(operator_id, None)
+    from aemr_bot.services import wizard_registry as _wr
+
+    item = _wr.get_reply_intent(operator_id)
     if item is None:
         return None
     appeal_id, expires_at = item
+    _wr.drop_reply_intent(operator_id)
     if _time.monotonic() > expires_at:
         return None
     return appeal_id
@@ -69,9 +74,12 @@ def drop_reply_intent(operator_id: int) -> int | None:
     """Сбросить намерение принудительно (кнопка «❌ Отменить ответ» или
     /cancel в админ-чате). Возвращает appeal_id, на который было
     нацелено, чтобы вызывающий код мог показать «отменено для #N»."""
-    item = _reply_intent.pop(operator_id, None)
+    from aemr_bot.services import wizard_registry as _wr
+
+    item = _wr.get_reply_intent(operator_id)
     if item is None:
         return None
+    _wr.drop_reply_intent(operator_id)
     return item[0]
 
 

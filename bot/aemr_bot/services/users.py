@@ -3,7 +3,14 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import delete, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from aemr_bot.db.models import DialogState, User
+from aemr_bot.config import settings as cfg
+from aemr_bot.db.models import (
+    ANONYMOUS_MAX_USER_ID,
+    Appeal,
+    AppealStatus,
+    DialogState,
+    User,
+)
 
 # Постоянный ключ Postgres advisory-lock для пути «создать anonymous user
 # on-the-fly». Используется только в get_anonymous_user_id, чтобы две
@@ -140,7 +147,7 @@ async def find_stuck_in_summary(
     вызовов API бота при восстановлении на старте.
     """
     if limit is None:
-        from aemr_bot.config import settings as cfg
+
         limit = cfg.recover_batch_size
     threshold = datetime.now(timezone.utc) - timedelta(seconds=idle_seconds)
     result = await session.scalars(
@@ -174,7 +181,7 @@ async def find_stuck_in_funnel(
     финализировать как обращение).
     """
     if limit is None:
-        from aemr_bot.config import settings as cfg
+
         limit = cfg.recover_batch_size
     pending_states = [
         DialogState.AWAITING_CONSENT.value,
@@ -216,7 +223,7 @@ async def get_anonymous_user_id(session: AsyncSession) -> int:
     lock на фиксированный ключ — постгрес сам сериализует параллельные
     транзакции на этом участке, lock освобождается на commit/rollback.
     """
-    from aemr_bot.db.models import ANONYMOUS_MAX_USER_ID
+
 
     anon_id = await session.scalar(
         select(User.id).where(User.max_user_id == ANONYMOUS_MAX_USER_ID)
@@ -262,7 +269,7 @@ async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
     дней после отзыва) — мы делаем сразу. Возврат через /start
     проходит воронку с нуля, без всяких следов прошлого.
     """
-    from aemr_bot.db.models import Appeal, AppealStatus
+
 
     user_row = await session.scalar(
         select(User.id).where(User.max_user_id == max_user_id)
@@ -355,7 +362,7 @@ async def set_blocked(
     SLA-просрочке и спамить алёрты в админ-чат, хотя отвечать на
     них всё равно нельзя (доставка отказывает по is_blocked).
     """
-    from aemr_bot.db.models import Appeal, AppealStatus
+
 
     if blocked:
         user_id = await session.scalar(
@@ -458,7 +465,7 @@ async def has_open_appeals(session: AsyncSession, user_id: int) -> bool:
     retention-крона: жителя нельзя обезличить, пока его обращения
     в работе — это нарушит 59-ФЗ право на ответ.
     """
-    from aemr_bot.db.models import Appeal, AppealStatus
+
 
     row = await session.scalar(
         select(Appeal.id)

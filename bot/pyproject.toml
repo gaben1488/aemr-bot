@@ -17,6 +17,7 @@ dependencies = [
     "pydantic-settings~=2.6",
     "openpyxl~=3.1",
     "python-dotenv~=1.0",
+    "python-dateutil~=2.9",
     "aiohttp~=3.10",
     # shapely — для services/geo.py: point-in-polygon по 10 поселениям
     # ЕМО + spatial-index по зданиям. Локально, без внешних API.

@@ -7,6 +7,17 @@ services:
     # Как обновить digest: `docker pull postgres:16-alpine`, скопировать
     # значение из строки «Digest: sha256:...» в строку ниже.
     image: postgres:16-alpine@sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50
+    # pg_stat_statements должен быть в shared_preload_libraries ДО старта
+    # Postgres — иначе CREATE EXTENSION в миграции 0010 проходит, но
+    # статистика не собирается. Загружаем модуль и track=all (включая
+    # ROLLBACK и без идентификатора), чтобы видеть top-N медленных
+    # запросов через `select * from pg_stat_statements`.
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+      - "-c"
+      - "pg_stat_statements.track=all"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-aemr}
       POSTGRES_USER: ${POSTGRES_USER:-aemr}

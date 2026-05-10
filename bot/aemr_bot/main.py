@@ -292,6 +292,35 @@ async def main() -> None:
     except Exception:
         log.exception("reap_orphaned_sending failed")
 
+    # Hydrate wizard state из БД (миграция 0011) — закрывает «оператор
+    # потерял регистрацию сотрудника при docker compose up --build».
+    # GC просроченных записей делает hydrate сам. На chicken-and-egg
+    # проблем нет: in-memory dict'ы уже инициализированы пустыми;
+    # hydrate просто наполняет.
+    try:
+        from aemr_bot.services import wizard_persist
+        async with session_scope() as session:
+            op_n, _ = await wizard_persist.hydrate_into_registry(session)
+        # op-wizards в admin_operators._op_wizards — отдельный dict от
+        # wizard_registry. Копируем туда же, чтобы handlers (которые
+        # читают свой собственный dict) увидели восстановленное.
+        if op_n:
+            from aemr_bot.handlers import admin_operators
+            from aemr_bot.services import wizard_registry as _wr
+            for op_id, state in _wr._op_wizards.items():  # noqa: SLF001
+                # Восстанавливаем expires_at в monotonic-форму:
+                # реальный TTL уже отсчитан в БД, оставшийся остаток
+                # неизвестен — даём свежий полный TTL. Хуже не будет:
+                # оператор увидит свой шаг и продолжит.
+                local = dict(state)
+                local["expires_at"] = (
+                    admin_operators._time_op.monotonic()
+                    + admin_operators._OP_WIZARD_TTL_SEC
+                )
+                admin_operators._op_wizards[op_id] = local  # noqa: SLF001
+    except Exception:
+        log.exception("wizard hydrate failed; работаем без восстановленных wizards")
+
     # Восстановление не должно блокировать старт диспетчера — запускаем и забываем.
     async def _recover():
         try:

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+from dateutil.relativedelta import relativedelta
 from sqlalchemy import desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -304,7 +305,11 @@ async def purge_old_appeals_content(
 
     Возвращает (purged_appeals, purged_messages).
     """
-    threshold = datetime.now(timezone.utc) - timedelta(days=365 * years)
+    # `relativedelta(years=N)` корректно учитывает високосные — иначе
+    # `timedelta(days=365*N)` теряет ~1 день за 4 года, и за 5-летний
+    # порог retention обращения, поданные ровно 5 лет назад, могут
+    # не попасть в первую же ночь. Не критично, но честнее.
+    threshold = datetime.now(timezone.utc) - relativedelta(years=years)
     appeals_result = await session.execute(
         update(Appeal)
         .where(

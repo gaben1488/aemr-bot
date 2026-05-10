@@ -34,7 +34,11 @@
 """
 from __future__ import annotations
 
+import asyncio
+import logging
 from typing import Any
+
+log = logging.getLogger(__name__)
 
 # ---- Internal storage (private to this module) ----------------------------
 
@@ -158,3 +162,130 @@ def reset_all() -> None:
     _broadcast_wizards.clear()
     _reply_intent.clear()
     _recent_replies.clear()
+
+
+# ---- Persistence hooks (миграция 0011) -----------------------------------
+#
+# Best-effort fire-and-forget сохранение wizard state в БД через
+# services/wizard_persist. Зачем: in-memory dict'ы выше — primary cache,
+# но рестарт бота терял state. Эти хуки сохраняют state в Postgres
+# таблицу wizard_state без блокировки caller'а.
+#
+# Дизайн: handlers продолжают звать sync-функции (set_op_wizard,
+# clear_op_wizard и т.д.) — а эти хуки автоматически spawn'ят background
+# task, который запишет в БД. На старте бота `wizard_persist.hydrate_*`
+# подгружает обратно в in-memory.
+#
+# Если БД-запись упала — лог warning, in-memory остаётся правильным.
+# Если caller вне event-loop'а (тесты, импорт-сайд-эффекты) — тихий
+# no-op без ошибок.
+
+
+def _spawn_persist(coro_factory) -> None:
+    """Запустить async-coro в фоне, если есть running loop. Без него —
+    no-op (юнит-тесты импортируют модуль вне asyncio context'а)."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return
+    try:
+        loop.create_task(coro_factory())
+    except Exception:
+        log.warning("wizard_registry: persist task spawn failed", exc_info=False)
+
+
+async def _persist_save_op(operator_id: int, state: dict[str, Any]) -> None:
+    try:
+        from aemr_bot.db.session import session_scope
+        from aemr_bot.services import wizard_persist
+
+        async with session_scope() as session:
+            await wizard_persist.save_op_wizard(session, operator_id, state)
+    except Exception:
+        log.warning(
+            "wizard_registry: persist op-wizard for %s failed", operator_id,
+            exc_info=False,
+        )
+
+
+async def _persist_delete_op(operator_id: int) -> None:
+    try:
+        from aemr_bot.db.session import session_scope
+        from aemr_bot.services import wizard_persist
+
+        async with session_scope() as session:
+            await wizard_persist.delete_op_wizard(session, operator_id)
+    except Exception:
+        log.warning(
+            "wizard_registry: delete op-wizard for %s failed", operator_id,
+            exc_info=False,
+        )
+
+
+async def _persist_save_broadcast(
+    operator_id: int, state: dict[str, Any]
+) -> None:
+    try:
+        from aemr_bot.db.session import session_scope
+        from aemr_bot.services import wizard_persist
+
+        async with session_scope() as session:
+            await wizard_persist.save_broadcast_wizard(
+                session, operator_id, state
+            )
+    except Exception:
+        log.warning(
+            "wizard_registry: persist broadcast-wizard for %s failed",
+            operator_id, exc_info=False,
+        )
+
+
+async def _persist_delete_broadcast(operator_id: int) -> None:
+    try:
+        from aemr_bot.db.session import session_scope
+        from aemr_bot.services import wizard_persist
+
+        async with session_scope() as session:
+            await wizard_persist.delete_broadcast_wizard(
+                session, operator_id
+            )
+    except Exception:
+        log.warning(
+            "wizard_registry: delete broadcast-wizard for %s failed",
+            operator_id, exc_info=False,
+        )
+
+
+def schedule_persist_op(
+    operator_id: int, state: dict[str, Any] | None = None
+) -> None:
+    """После set/update/clear op-wizard — синхронизировать с БД в фоне.
+
+    Если `state` передан явно — используем его (handler хранит свой
+    собственный dict, не registry's). Если не передан — берём из
+    registry. None в обоих случаях = delete.
+    """
+    if state is None:
+        state = _op_wizards.get(operator_id)
+    if state is None:
+        _spawn_persist(lambda: _persist_delete_op(operator_id))
+    else:
+        # Копия dict, чтобы фоновая запись видела immutable snapshot.
+        snapshot = dict(state)
+        _spawn_persist(lambda: _persist_save_op(operator_id, snapshot))
+
+
+def schedule_persist_broadcast(
+    operator_id: int, state: dict[str, Any] | None = None
+) -> None:
+    """После set/update/clear broadcast-wizard — синхронизировать с БД.
+
+    `state` см. docstring `schedule_persist_op`.
+    """
+    if state is None:
+        state = _broadcast_wizards.get(operator_id)
+    if state is None:
+        _spawn_persist(lambda: _persist_delete_broadcast(operator_id))
+    else:
+        snapshot = dict(state)
+        _spawn_persist(lambda: _persist_save_broadcast(operator_id, snapshot))

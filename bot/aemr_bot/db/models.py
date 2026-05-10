@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Index, String, Text, UniqueConstraint, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -62,7 +62,31 @@ class User(Base):
     __tablename__ = "users"
     # UC создаётся миграцией 0001 (Column unique=True). Дублируем в модели,
     # иначе alembic check видит drift (миграция → БД имеет UC, модель → нет).
-    __table_args__ = (UniqueConstraint("max_user_id", name="users_max_user_id_key"),)
+    #
+    # Partial-индексы из миграции 0009 декларируем здесь, чтобы alembic
+    # autogenerate не пытался их «удалить» при сравнении модели и БД.
+    # postgresql_where + postgresql_using фиксируют partial-условие;
+    # SQLAlchemy транслирует это в `WHERE <expr>` при создании индекса.
+    __table_args__ = (
+        UniqueConstraint("max_user_id", name="users_max_user_id_key"),
+        Index(
+            "ix_users_pending_pdn_retention",
+            "consent_revoked_at",
+            postgresql_where=text("consent_revoked_at IS NOT NULL"),
+        ),
+        Index(
+            "ix_users_subscribed_active",
+            "subscribed_broadcast",
+            "is_blocked",
+            postgresql_where=text("subscribed_broadcast = true"),
+        ),
+        Index(
+            "ix_users_stuck_in_funnel",
+            "dialog_state",
+            "updated_at",
+            postgresql_where=text("is_blocked = false"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     max_user_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
@@ -243,3 +267,37 @@ class BroadcastDelivery(Base):
     error: Mapped[str | None] = mapped_column(Text)
 
     broadcast: Mapped[Broadcast] = relationship(back_populates="deliveries")
+
+
+class WizardState(Base):
+    """Persistence для wizard state'а оператора (миграция 0011).
+
+    Закрывает проблему «оператор посреди регистрации/рассылки потерял
+    state на рестарте бота». In-memory dict'ы в services/wizard_registry
+    остаются primary cache (быстро); эта таблица — durability layer.
+
+    На старте бота `wizard_persist.hydrate_into_registry()` загружает
+    активные (не expired) записи в in-memory. На каждый set/clear
+    handler параллельно зовёт `await wizard_persist.save/delete`.
+    """
+
+    __tablename__ = "wizard_state"
+    __table_args__ = (
+        UniqueConstraint(
+            "kind", "operator_max_user_id",
+            name="uq_wizard_state_kind_operator",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kind: Mapped[str] = mapped_column(String(32))
+    operator_max_user_id: Mapped[int] = mapped_column(BigInteger)
+    state: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), index=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )

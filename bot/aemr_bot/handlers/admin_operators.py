@@ -48,11 +48,19 @@ def _op_wizard_set(operator_id: int, **kwargs) -> dict:
     state.update(kwargs)
     state["expires_at"] = _time_op.monotonic() + _OP_WIZARD_TTL_SEC
     _op_wizards[operator_id] = state
+    # Best-effort persist в БД, чтобы wizard переживал рестарт бота
+    # (миграция 0011 + services/wizard_persist). expires_at — monotonic
+    # offset, в БД не нужен (там свой DateTime ttl).
+    snapshot = {k: v for k, v in state.items() if k != "expires_at"}
+    from aemr_bot.services import wizard_registry as _wr
+    _wr.schedule_persist_op(operator_id, snapshot)
     return state
 
 
 def _op_wizard_drop(operator_id: int) -> None:
     _op_wizards.pop(operator_id, None)
+    from aemr_bot.services import wizard_registry as _wr
+    _wr.schedule_persist_op(operator_id, None)
 
 
 async def run_operators_menu(event) -> None:

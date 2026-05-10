@@ -44,7 +44,8 @@ class TestReplyIntent:
         from aemr_bot.handlers import operator_reply as opr
 
         # Очищаем перед тестом (state модуля).
-        opr._reply_intent.clear()
+        from aemr_bot.services import wizard_registry as _wr
+        _wr._reply_intent.clear()
         opr.remember_reply_intent(operator_id=7, appeal_id=42)
         assert opr.consume_reply_intent(7) == 42
         # Второй вызов — пусто.
@@ -53,7 +54,8 @@ class TestReplyIntent:
     def test_drop_returns_appeal_id(self) -> None:
         from aemr_bot.handlers import operator_reply as opr
 
-        opr._reply_intent.clear()
+        from aemr_bot.services import wizard_registry as _wr
+        _wr._reply_intent.clear()
         opr.remember_reply_intent(operator_id=8, appeal_id=99)
         assert opr.drop_reply_intent(8) == 99
         assert opr.consume_reply_intent(8) is None
@@ -61,15 +63,17 @@ class TestReplyIntent:
     def test_drop_when_no_intent(self) -> None:
         from aemr_bot.handlers import operator_reply as opr
 
-        opr._reply_intent.clear()
+        from aemr_bot.services import wizard_registry as _wr
+        _wr._reply_intent.clear()
         assert opr.drop_reply_intent(123) is None
 
     def test_intent_expires(self) -> None:
         from aemr_bot.handlers import operator_reply as opr
+        from aemr_bot.services import wizard_registry as _wr
 
-        opr._reply_intent.clear()
-        # Ставим истёкшее намерение вручную.
-        opr._reply_intent[5] = (10, time.monotonic() - 1.0)
+        _wr._reply_intent.clear()
+        # Ставим истёкшее намерение вручную через registry API.
+        _wr.set_reply_intent(5, 10, time.monotonic() - 1.0)
         assert opr.consume_reply_intent(5) is None
 
 

@@ -27,11 +27,19 @@ jobs:
       - name: Install
         run: pip install --upgrade pip && pip install -e ".[dev]"
       - name: Ruff
-        run: python -m ruff check aemr_bot/
+        run: python -m ruff check --output-format=github aemr_bot/
       - name: MyPy
         run: python -m mypy aemr_bot/
       - name: Bandit (medium and above)
         run: python -m bandit -r aemr_bot/ -ll
+      - name: pip-audit (CVE сканирование зависимостей)
+        # Soft-fail (`|| true`) на первой интеграции — не валим CI на
+        # ещё-не-известные CVE в текущих pin'ах. После недели чистых
+        # запусков убрать «|| true», сделать hard-fail. Whitelist для
+        # явно известных и принятых CVE — через --ignore-vuln=PYSEC-...
+        run: |
+          pip install pip-audit
+          python -m pip_audit --strict --progress-spinner off || true
 
   test:
     name: Pytest with Postgres 16
@@ -90,6 +98,23 @@ jobs:
         run: |
           DATABASE_URL=postgresql+asyncpg://aemr:test@localhost:5432/aemr_alembic_check \
             python -m alembic check
+
+      - name: Alembic round-trip (downgrade base ↔ upgrade head)
+        # Ловит broken downgrade(): typo в drop_index/drop_column,
+        # забытая обратная операция, неверная revision-ссылка. Без
+        # этого теста сломанный downgrade обнаруживается только при
+        # реальной попытке отката в production — там уже поздно.
+        env:
+          PGPASSWORD: test
+        run: |
+          psql -h localhost -U aemr -d postgres -c "DROP DATABASE IF EXISTS aemr_alembic_roundtrip;"
+          psql -h localhost -U aemr -d postgres -c "CREATE DATABASE aemr_alembic_roundtrip;"
+          DATABASE_URL=postgresql+asyncpg://aemr:test@localhost:5432/aemr_alembic_roundtrip \
+            python -m alembic upgrade head
+          DATABASE_URL=postgresql+asyncpg://aemr:test@localhost:5432/aemr_alembic_roundtrip \
+            python -m alembic downgrade base
+          DATABASE_URL=postgresql+asyncpg://aemr:test@localhost:5432/aemr_alembic_roundtrip \
+            python -m alembic upgrade head
 
   docker-build:
     name: Docker build smoke test

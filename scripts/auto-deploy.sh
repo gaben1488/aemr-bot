@@ -8,6 +8,12 @@
 #
 # Идемпотентен: если ничего не изменилось — выходит, контейнер не трогает.
 # Лог пишется в /var/log/aemr-bot-deploy.log с ротацией через journald (logger).
+#
+# Health-gate с автоматическим rollback (2026-05-11):
+# Если новый образ не отвечает на /healthz через 60 секунд после старта,
+# скрипт автоматически откатывается на предыдущий коммит (PREV_LOCAL) и
+# пересобирает. Дежурный получает алерт через journald + logger.
+# Без этого сломанный коммит крутил restart-loop до ручного вмешательства.
 
 set -euo pipefail
 
@@ -15,6 +21,8 @@ REPO_DIR=/home/aemr/aemr-bot
 COMPOSE_DIR=$REPO_DIR/infra
 SSH_KEY=/root/.ssh/aemr-bot-deploy
 LOG_TAG=aemr-bot-deploy
+HEALTH_TIMEOUT_SEC=60
+HEALTH_POLL_INTERVAL_SEC=5
 
 # Git с явным ssh-ключом (deploy-key) — даже если у root есть свой github-ключ,
 # для этого репо берём именно deploy-key (минимум прав).
@@ -38,6 +46,9 @@ fi
 
 logger -t "$LOG_TAG" "new commits: $LOCAL → $REMOTE, redeploying"
 
+# Запоминаем предыдущий рабочий коммит — пригодится для rollback'а.
+PREV_LOCAL=$LOCAL
+
 # Сохраняем .env (в git его нет, при reset --hard не пострадает,
 # но на всякий случай делаем копию)
 cp "$COMPOSE_DIR/.env" /tmp/aemr-bot.env.bak.$$
@@ -54,13 +65,42 @@ fi
 # Пересборка от пользователя aemr (он в docker-group)
 su - aemr -c "cd $COMPOSE_DIR && docker compose up -d --build" 2>&1 | logger -t "$LOG_TAG"
 
-# Проверка healthcheck через 30 сек
-sleep 30
-if curl -fsS --max-time 10 http://127.0.0.1:8080/healthz >/dev/null 2>&1; then
-    logger -t "$LOG_TAG" "deploy ok: $REMOTE healthy"
+# Health-gate: ждём до HEALTH_TIMEOUT_SEC секунд /healthz=200.
+# Опрашиваем каждые HEALTH_POLL_INTERVAL_SEC, чтобы не «висеть» все 60.
+healthy=0
+elapsed=0
+while [ "$elapsed" -lt "$HEALTH_TIMEOUT_SEC" ]; do
+    if curl -fsS --max-time 5 http://127.0.0.1:8080/healthz >/dev/null 2>&1; then
+        healthy=1
+        break
+    fi
+    sleep "$HEALTH_POLL_INTERVAL_SEC"
+    elapsed=$((elapsed + HEALTH_POLL_INTERVAL_SEC))
+done
+
+if [ "$healthy" -eq 1 ]; then
+    logger -t "$LOG_TAG" "deploy ok: $REMOTE healthy после ${elapsed}s"
     rm -f /tmp/aemr-bot.env.bak.$$
-else
-    logger -t "$LOG_TAG" "DEPLOY FAILED: /healthz unreachable after 30s, manual check required"
-    # Не делаем автоматический rollback: лучше человек посмотрит логи и решит.
-    exit 1
+    exit 0
 fi
+
+# Health-gate провалился — auto-rollback на предыдущий коммит.
+logger -t "$LOG_TAG" "DEPLOY FAILED: /healthz unreachable за ${HEALTH_TIMEOUT_SEC}s, ROLLBACK на $PREV_LOCAL"
+git reset --hard "$PREV_LOCAL" --quiet
+chown -R aemr:aemr "$REPO_DIR"
+if ! head -1 "$COMPOSE_DIR/docker-compose.yml" | grep -q "^name: aemr-bot"; then
+    sed -i '1i name: aemr-bot\n' "$COMPOSE_DIR/docker-compose.yml"
+fi
+su - aemr -c "cd $COMPOSE_DIR && docker compose up -d --build" 2>&1 | logger -t "$LOG_TAG"
+
+# Дать предыдущему коммиту 30 сек подняться. Мы этому не верим в смысле
+# health-check (если предыдущий тоже сломан, нам некуда откатываться) —
+# просто фиксируем факт и возвращаем non-zero, чтобы дежурный получил
+# алерт через journald.
+sleep 30
+if curl -fsS --max-time 5 http://127.0.0.1:8080/healthz >/dev/null 2>&1; then
+    logger -t "$LOG_TAG" "ROLLBACK ok: вернулись на $PREV_LOCAL"
+else
+    logger -t "$LOG_TAG" "ROLLBACK FAILED: предыдущий коммит тоже не отвечает, требуется ручное вмешательство"
+fi
+exit 1
