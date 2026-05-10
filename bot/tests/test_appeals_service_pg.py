@@ -183,6 +183,11 @@ async def test_close_idempotent(session) -> None:
 
 @pytest.mark.asyncio
 async def test_find_active_for_user_returns_latest(session) -> None:
+    """Несколько обращений с одинаковым created_at (микросекундная
+    точность исчерпана) порядок не гарантируют — используем явный
+    UPDATE для разнесения timestamps."""
+    from sqlalchemy import update
+
     user = await users_service.get_or_create(session, max_user_id=1, first_name="A")
     first = await appeals_service.create_appeal(
         session, user=user, address="A", topic="T", summary="первое", attachments=[]
@@ -190,10 +195,16 @@ async def test_find_active_for_user_returns_latest(session) -> None:
     second = await appeals_service.create_appeal(
         session, user=user, address="A", topic="T", summary="второе", attachments=[]
     )
+    # «Состарим» first на 1 час назад, чтобы second был свежее.
+    await session.execute(
+        update(Appeal).where(Appeal.id == first.id)
+        .values(created_at=datetime.now(timezone.utc) - timedelta(hours=1))
+    )
+    await session.flush()
+
     active = await appeals_service.find_active_for_user(session, user.id)
     assert active is not None
     assert active.id == second.id  # последнее по created_at
-    assert first.id is not None
 
 
 @pytest.mark.asyncio
