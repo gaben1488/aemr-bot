@@ -8,8 +8,8 @@ ADDRESS_RECEIVED / TOPIC_RECEIVED + summary-prompt) **одним**
 - В `dialog_data` хранится `progress_message_id` — mid сообщения,
   которое мы редактируем при переходе на следующий шаг.
 - Каждый шаг вызывает `render_progress(stage, ...)` — получает HTML-
-  отформатированный текст с цветным баром, моноширинным счётчиком,
-  bold-значениями и blockquote-подсказкой текущего шага.
+  отформатированный текст с коротким счётчиком, уже введёнными данными
+  и подсказкой текущего шага.
 - Helper `send_or_edit_progress(bot, chat_id, dialog_data, text,
   attachments)` либо редактирует существующее сообщение, либо шлёт
   новое (fallback при API-ошибке). Передаёт `format=ParseMode.HTML`.
@@ -28,7 +28,7 @@ Stage = Literal["name", "locality", "address", "topic", "summary"]
 
 # Порядок шагов воронки. Имя идёт после контакта (контакт — отдельный
 # pre-step, не показывается в прогрессе). Шаги из этого списка —
-# те, на которых строится прогресс-бар.
+# те, на которых строится счётчик шага.
 _STAGES: tuple[Stage, ...] = ("name", "locality", "address", "topic", "summary")
 _STAGE_LABELS: dict[Stage, str] = {
     "name": "Имя",
@@ -48,17 +48,8 @@ _STAGE_PROMPTS: dict[Stage, str] = {
     ),
 }
 
-# Цветные квадраты вместо ASCII ▓░ — крупнее, читаются на маленьких
-# экранах, единая высота на любом клиенте MAX (Android/iOS/Web).
-# Зелёный = пройдено, синий = текущий, белый = впереди.
-_BAR_DONE = "🟢"
-_BAR_CURRENT = "🟦"
-_BAR_FUTURE = "⬜"
-
-# Иконки строк-шагов
 _DONE = "✓"
 _CURRENT = "▶"
-_FUTURE = "○"
 
 
 def _esc(value: str | None) -> str:
@@ -66,20 +57,6 @@ def _esc(value: str | None) -> str:
     должны ломать рендер. quote=False — кавычки внутри text-узла
     не интерпретируются MAX-парсером, экранировать их вредно для UX."""
     return html.escape((value or "").strip(), quote=False)
-
-
-def _render_bar(current_idx: int, total: int) -> str:
-    """Строка из total квадратов: done (🟢) до current_idx, current (🟦)
-    в позиции current_idx, future (⬜) после."""
-    parts: list[str] = []
-    for i in range(total):
-        if i < current_idx:
-            parts.append(_BAR_DONE)
-        elif i == current_idx:
-            parts.append(_BAR_CURRENT)
-        else:
-            parts.append(_BAR_FUTURE)
-    return "".join(parts)
 
 
 def render_progress(
@@ -92,32 +69,26 @@ def render_progress(
 ) -> str:
     """HTML-отформатированный текст прогресс-карты.
 
-    Структура:
-        📋 <b>Подача обращения</b>
-        🟢🟢🟦⬜⬜  <code>3 / 5</code>
+    Структура намеренно короткая: без цветных баров, квадратов, кружков
+    и полного списка будущих этапов. На маленьких экранах MAX они
+    создавали визуальный шум и выглядели сложнее самой воронки.
+
+        📋 <b>Подача обращения</b> · <code>2 / 5</code>
 
         ✓ Имя · <b>Иван</b>
-        ✓ Населённый пункт · <b>Елизовское ГП</b>
-        ▶ <b>Адрес</b>
-        <blockquote>Укажите адрес — улица и дом</blockquote>
-        ○ Тема
-        ○ Суть
+        ▶ <b>Населённый пункт</b>
+        <blockquote>Выберите населённый пункт ниже</blockquote>
 
     Используется MAX `format=ParseMode.HTML`. Значения жителя
     пропускаются через html.escape — иначе «<script>» в имени или
     & в адресе сломают парсинг.
-
-    Аргументы name/locality/address/topic — значения уже введённых
-    шагов. Передаются only те, что уже завершены.
     """
     try:
         current_idx = _STAGES.index(stage)
     except ValueError as e:
         raise ValueError(f"unknown stage {stage!r}") from e
 
-    total = len(_STAGES)
-    bar = _render_bar(current_idx, total)
-    counter = f"<code>{current_idx + 1} / {total}</code>"
+    counter = f"<code>{current_idx + 1} / {len(_STAGES)}</code>"
     values: dict[Stage, str | None] = {
         "name": name,
         "locality": locality,
@@ -127,19 +98,16 @@ def render_progress(
     }
 
     lines: list[str] = []
-    for i, st in enumerate(_STAGES):
-        label = _STAGE_LABELS[st]
-        if i < current_idx:
-            value = _esc(values[st]) or "—"
-            lines.append(f"{_DONE} {label} · <b>{value}</b>")
-        elif i == current_idx:
-            prompt = _STAGE_PROMPTS[st]
-            lines.append(f"{_CURRENT} <b>{label}</b>")
-            lines.append(f"<blockquote>{prompt}</blockquote>")
-        else:
-            lines.append(f"{_FUTURE} {label}")
+    for st in _STAGES[:current_idx]:
+        value = _esc(values[st]) or "—"
+        lines.append(f"{_DONE} {_STAGE_LABELS[st]} · <b>{value}</b>")
 
-    header = f"📋 <b>Подача обращения</b>\n{bar}  {counter}"
+    current_label = _STAGE_LABELS[stage]
+    current_prompt = _STAGE_PROMPTS[stage]
+    lines.append(f"{_CURRENT} <b>{current_label}</b>")
+    lines.append(f"<blockquote>{current_prompt}</blockquote>")
+
+    header = f"📋 <b>Подача обращения</b> · {counter}"
     return header + "\n\n" + "\n".join(lines)
 
 
