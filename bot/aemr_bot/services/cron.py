@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import functools
 import logging
 from datetime import datetime, timedelta, timezone
@@ -39,6 +40,8 @@ _SELFCHECK_HEALTHY = {"healthy": True}
 # несколько просроченных тиков сольются в один. Для daily/weekly job
 # параметр безвреден — там тик раз в 86400 сек.
 _MISFIRE_GRACE_SEC = 120
+
+_ADMIN_SEND_RETRY_DELAYS_SEC = (2, 5, 10)
 
 
 # ---- Module-level helpers (вынесены из build_scheduler для тестируемости) ----
@@ -91,6 +94,37 @@ async def _send_with_open_tickets_button(bot, text: str) -> None:
         )
     except Exception:
         log.exception("send admin reminder with button failed")
+
+
+async def _send_admin_text_with_retry(send_admin_text, text: str, *, context: str) -> bool:
+    """Отправить служебное сообщение в админ-группу с коротким retry.
+
+    Пульс и сообщение о рестарте не должны теряться из-за одного
+    сетевого сбоя MAX, короткого rate-limit или задержки сразу после
+    старта контейнера. Если все попытки не удались, job не роняет
+    scheduler-loop, но оставляет понятный лог.
+    """
+    attempts = len(_ADMIN_SEND_RETRY_DELAYS_SEC) + 1
+    for attempt in range(1, attempts + 1):
+        try:
+            await send_admin_text(text)
+            return True
+        except Exception:
+            if attempt >= attempts:
+                log.exception(
+                    "%s: не удалось отправить служебное сообщение после %d попыток",
+                    context, attempts,
+                )
+                return False
+            delay = _ADMIN_SEND_RETRY_DELAYS_SEC[attempt - 1]
+            log.warning(
+                "%s: отправка служебного сообщения не удалась, повтор через %s сек. "
+                "Попытка %d/%d",
+                context, delay, attempt, attempts,
+                exc_info=True,
+            )
+            await asyncio.sleep(delay)
+    return False
 
 
 # ============================================================================
@@ -164,12 +198,19 @@ async def _job_selfcheck(send_admin_text) -> None:
     was_healthy = _SELFCHECK_HEALTHY["healthy"]
     is_healthy = heartbeat.is_fresh()
     if was_healthy and not is_healthy:
-        await send_admin_text(
-            "⚠️ Бот не отвечает на проверку здоровья (heartbeat stale). "
-            "Возможно завис главный цикл — проверьте логи и перезапустите контейнер."
+        await _send_admin_text_with_retry(
+            send_admin_text,
+            "⚠️ Проверка здоровья: бот перестал отвечать на внутренний heartbeat. "
+            "Возможное состояние: завис главный цикл. Проверьте логи и "
+            "перезапустите контейнер, если бот не восстановится автоматически.",
+            context="health-selfcheck-stale",
         )
     elif not was_healthy and is_healthy:
-        await send_admin_text("✅ Бот восстановил отзывчивость.")
+        await _send_admin_text_with_retry(
+            send_admin_text,
+            "✅ Проверка здоровья: бот снова отвечает на внутренний heartbeat.",
+            context="health-selfcheck-recovered",
+        )
     _SELFCHECK_HEALTHY["healthy"] = is_healthy
 
 
@@ -191,29 +232,24 @@ async def _job_monthly_report(send_admin_document) -> None:
 async def _job_pulse(send_admin_text) -> None:
     """Шлёт в служебную группу короткое подтверждение «бот жив».
 
-    Расписание двухрежимное:
-    • В нерабочее время (22:00–08:59 по Камчатке и воскресенье) —
-      раз в час, в минуту :05. Достаточно, чтобы заметить «процесс
-      упал и не перезапустился» к началу рабочего дня.
-    • В рабочее время (пн–сб, 09:00–17:59) — каждые полчаса
-      (минуты :00 и :30). Команде важно видеть, что бот жив именно
-      когда жители активно пишут.
+    Расписание:
+    • В рабочее время (пн–сб, 09:00–17:59 по Камчатке) — каждые
+      полчаса, в минуты :00 и :30.
+    • В остальное время понедельника–субботы и весь день воскресенья —
+      раз в час, в минуту :05.
 
-    Минута :05 в нерабочем режиме и :00/:30 в рабочем выбраны так,
-    чтобы пульс не сливался с SLA-алёртом (минута :10) — операторы
-    видят два разных по смыслу сообщения отдельно.
-
-    Это второй контур мониторинга поверх selfcheck: тот ловит
-    зависший event-loop, а пульс — ситуацию «процесс упал, контейнер
-    не перезапустился». Без этого внешнего сигнала тишина легко
-    проходит мимо.
+    Это второй контур мониторинга поверх selfcheck: selfcheck ловит
+    зависший event-loop, а пульс показывает дежурному, что процесс
+    жив и может отправлять сообщения в админ-группу.
     """
-    try:
-        now = datetime.now(TZ).strftime("%H:%M")
-        await send_admin_text(f"🟢 Бот работает. {now}")
+    now = datetime.now(TZ).strftime("%H:%M")
+    sent = await _send_admin_text_with_retry(
+        send_admin_text,
+        f"🟢 Пульс: бот работает. Время проверки: {now}.",
+        context="pulse",
+    )
+    if sent:
         log.info("pulse: sent admin heartbeat at %s", now)
-    except Exception:
-        log.exception("pulse failed (send_admin_text raised)")
 
 
 async def _job_startup_pulse(send_admin_text) -> None:
@@ -221,24 +257,21 @@ async def _job_startup_pulse(send_admin_text) -> None:
 
     APScheduler не догоняет тики, пропущенные пока контейнер был
     остановлен (`docker compose up --build` гасит процесс на 30–90 сек).
-    Если рестарт пришёлся на момент cron-триггера — pulse 21:05
-    теряется молча, и админы видят «тишину», хотя бот живой.
-
-    Вместо persistent jobstore (jobs в БД, шаги настройки + миграции)
-    — единый stateless хук: при старте бота отправляем «🟢 Бот
-    запущен/перезапущен. [время]». Дешевле, прозрачнее, всегда виден
-    факт рестарта, что само по себе ценно для дежурного.
+    Если рестарт пришёлся на момент cron-триггера — регулярный pulse
+    может потеряться. Поэтому отдельно отправляем сообщение о старте.
 
     Запускается через `scheduler.add_job(..., trigger=DateTrigger(...))`
     с задержкой 5 секунд после старта — даём scheduler'у инициализироваться
     и MAX-сессии установиться.
     """
-    try:
-        now = datetime.now(TZ).strftime("%H:%M")
-        await send_admin_text(f"🟢 Бот запущен/перезапущен. {now}")
+    now = datetime.now(TZ).strftime("%H:%M")
+    sent = await _send_admin_text_with_retry(
+        send_admin_text,
+        f"🔄 Рестарт: процесс бота запущен заново. Время запуска: {now}.",
+        context="startup-pulse",
+    )
+    if sent:
         log.info("startup-pulse: sent recovery heartbeat at %s", now)
-    except Exception:
-        log.exception("startup-pulse failed (send_admin_text raised)")
 
 
 async def _job_appeals_5y_retention(send_admin_text) -> None:
@@ -525,7 +558,10 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
     pulse_partial = functools.partial(_job_pulse, send_admin_text)
     scheduler.add_job(
         pulse_partial,
-        CronTrigger(day_of_week="mon-sat", hour="0-8,22,23", minute=5, timezone=TZ),
+        # Пн–сб вечером 18:00–21:59 раньше выпадали из расписания:
+        # workhours заканчивался в 17:59, а offhours начинался только в 22:00.
+        # Из-за этого пульсы могли пропадать на четыре часа без реального сбоя.
+        CronTrigger(day_of_week="mon-sat", hour="0-8,18-23", minute=5, timezone=TZ),
         name="pulse-offhours",
         max_instances=1,
         coalesce=True,
