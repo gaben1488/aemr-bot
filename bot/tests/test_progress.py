@@ -17,33 +17,30 @@ from aemr_bot.services.progress import (
 )
 
 
-class TestRenderProgressBar:
-    def test_first_stage_bar_layout(self) -> None:
+class TestRenderProgressCounter:
+    def test_first_stage_counter_layout(self) -> None:
         text = render_progress(stage="name")
-        # Шаг 1/5: 0 done, current=name (idx 0), 4 future.
-        # Бар: 🟦⬜⬜⬜⬜
-        assert "🟦⬜⬜⬜⬜" in text
         assert "<code>1 / 5</code>" in text
+        assert "🟦⬜⬜⬜⬜" not in text
+        assert "▶ <b>Имя</b>" in text
 
-    def test_third_stage_bar_layout(self) -> None:
+    def test_third_stage_counter_layout(self) -> None:
         text = render_progress(
             stage="address", name="Иван", locality="Елизовское ГП"
         )
-        # Шаг 3/5: 2 done, current=address (idx 2), 2 future.
-        # Бар: 🟢🟢🟦⬜⬜
-        assert "🟢🟢🟦⬜⬜" in text
         assert "<code>3 / 5</code>" in text
+        assert "🟢🟢🟦⬜⬜" not in text
+        assert "▶ <b>Адрес</b>" in text
 
-    def test_last_stage_bar_layout(self) -> None:
+    def test_last_stage_counter_layout(self) -> None:
         text = render_progress(
             stage="summary",
             name="Иван", locality="Елизовское ГП",
             address="ул. Ленина, 5", topic="Дороги",
         )
-        # Шаг 5/5: 4 done, current=summary (idx 4), 0 future.
-        # Бар: 🟢🟢🟢🟢🟦
-        assert "🟢🟢🟢🟢🟦" in text
         assert "<code>5 / 5</code>" in text
+        assert "🟢🟢🟢🟢🟦" not in text
+        assert "▶ <b>Суть</b>" in text
 
     def test_unknown_stage_raises(self) -> None:
         with pytest.raises(ValueError, match="unknown stage"):
@@ -67,19 +64,17 @@ class TestRenderProgressContent:
         assert "<blockquote>" in text
         assert "улица" in text  # подсказка внутри blockquote
 
-    def test_future_steps_have_circle_marker_no_value(self) -> None:
+    def test_future_steps_are_not_rendered(self) -> None:
         text = render_progress(stage="locality", name="Иван")
-        # locality — current; address/topic/summary — future
-        # Future = "○ <label>" БЕЗ значения, без bold, без blockquote
-        assert "○ Адрес" in text
-        assert "○ Тема" in text
-        assert "○ Суть" in text
-        future_lines = [
-            line for line in text.split("\n") if line.startswith("○")
-        ]
-        for line in future_lines:
-            assert "·" not in line  # значения не показываем
-            assert "<b>" not in line  # будущее не выделяем
+        # Новый компактный UX: будущие этапы не показываются, чтобы не
+        # перегружать экран. Остаются только завершённые шаги, текущий
+        # шаг и короткий счётчик 2 / 5.
+        assert "<code>2 / 5</code>" in text
+        assert "✓ Имя · <b>Иван</b>" in text
+        assert "▶ <b>Населённый пункт</b>" in text
+        assert "○ Адрес" not in text
+        assert "○ Тема" not in text
+        assert "○ Суть" not in text
 
     def test_empty_value_falls_back_to_dash(self) -> None:
         """Если в dialog_data пусто (skip / пропуск) — completed-шаг
@@ -199,6 +194,6 @@ class TestSendOrEditProgress:
 class TestStagesIntegrity:
     def test_five_stages_in_order(self) -> None:
         """Регрессия: порядок шагов — name, locality, address, topic, summary.
-        Если кто-то изменит этот порядок — прогресс-бар сбросится по логике
-        в render_progress."""
+        Если кто-то изменит этот порядок — счётчик этапов собьётся по
+        логике в render_progress."""
         assert _STAGES == ("name", "locality", "address", "topic", "summary")
