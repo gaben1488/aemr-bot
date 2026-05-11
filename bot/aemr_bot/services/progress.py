@@ -181,6 +181,24 @@ async def send_or_edit_progress(
 
     existing_mid = dialog_data.get("progress_message_id") if dialog_data else None
 
+    # Если адрес был определён через геолокацию, подтверждающий geo-экран
+    # остаётся отдельным сообщением с inline-кнопками. Переход к тематике
+    # через edit_message визуально выглядит как «кнопка ничего не сделала»:
+    # житель остаётся глазами на старом geo-сообщении и повторно жмёт
+    # уже устаревшие geo:* callback'и, которые FSM корректно игнорирует.
+    # Поэтому именно экран «Тема» после geo-flow отправляем новым сообщением.
+    if (
+        existing_mid
+        and dialog_data.get("detected_locality")
+        and "▶ <b>Тема</b>" in text
+    ):
+        log.info(
+            "send_or_edit_progress: force new topic message after geo-flow, "
+            "old progress_message_id=%s",
+            existing_mid,
+        )
+        existing_mid = None
+
     if existing_mid:
         try:
             await bot.edit_message(
