@@ -42,7 +42,9 @@ class TestSelfcheck:
         with patch("aemr_bot.health.heartbeat.is_fresh", return_value=False):
             await cron._job_selfcheck(send)
         send.assert_called_once()
-        assert "не отвечает" in send.call_args.args[0]
+        text = send.call_args.args[0]
+        assert "Проверка здоровья" in text
+        assert "перестал отвечать" in text
         assert cron._SELFCHECK_HEALTHY["healthy"] is False
 
     @pytest.mark.asyncio
@@ -52,7 +54,9 @@ class TestSelfcheck:
         with patch("aemr_bot.health.heartbeat.is_fresh", return_value=True):
             await cron._job_selfcheck(send)
         send.assert_called_once()
-        assert "восстановил" in send.call_args.args[0]
+        text = send.call_args.args[0]
+        assert "Проверка здоровья" in text
+        assert "снова отвечает" in text
         assert cron._SELFCHECK_HEALTHY["healthy"] is True
 
 
@@ -65,14 +69,25 @@ class TestPulse:
         await cron._job_pulse(send)
         send.assert_called_once()
         text = send.call_args.args[0]
-        assert "Бот работает" in text
+        assert "Пульс" in text
+        assert "бот работает" in text
+        assert "Время проверки" in text
+
+    @pytest.mark.asyncio
+    async def test_pulse_retries_on_transient_failure(self) -> None:
+        send = AsyncMock(side_effect=[RuntimeError("network down"), None])
+        with patch("asyncio.sleep", AsyncMock()) as sleep:
+            await cron._job_pulse(send)
+        assert send.call_count == 2
+        sleep.assert_called_once_with(cron._ADMIN_SEND_RETRY_DELAYS_SEC[0])
 
     @pytest.mark.asyncio
     async def test_pulse_swallows_exception(self) -> None:
         """Если send упал — pulse не должен ронять scheduler-loop."""
         send = AsyncMock(side_effect=RuntimeError("network down"))
-        # Не должно бросить исключение наружу
-        await cron._job_pulse(send)
+        with patch("asyncio.sleep", AsyncMock()):
+            await cron._job_pulse(send)
+        assert send.call_count == len(cron._ADMIN_SEND_RETRY_DELAYS_SEC) + 1
 
 
 class TestStartupPulse:
@@ -86,13 +101,24 @@ class TestStartupPulse:
         text = send.call_args.args[0]
         # Текст должен явно отличать от обычного pulse, чтобы дежурный
         # видел «это рестарт», а не «штатный тик».
-        assert "перезапущен" in text
+        assert "Рестарт" in text
+        assert "процесс бота запущен заново" in text
+
+    @pytest.mark.asyncio
+    async def test_startup_pulse_retries_on_transient_failure(self) -> None:
+        send = AsyncMock(side_effect=[RuntimeError("network down"), None])
+        with patch("asyncio.sleep", AsyncMock()) as sleep:
+            await cron._job_startup_pulse(send)
+        assert send.call_count == 2
+        sleep.assert_called_once_with(cron._ADMIN_SEND_RETRY_DELAYS_SEC[0])
 
     @pytest.mark.asyncio
     async def test_startup_pulse_swallows_exception(self) -> None:
         send = AsyncMock(side_effect=RuntimeError("network down"))
         # Не должно бросить — иначе scheduler не запустится.
-        await cron._job_startup_pulse(send)
+        with patch("asyncio.sleep", AsyncMock()):
+            await cron._job_startup_pulse(send)
+        assert send.call_count == len(cron._ADMIN_SEND_RETRY_DELAYS_SEC) + 1
 
 
 class TestBackupWithAlert:
@@ -186,9 +212,7 @@ class TestBuildScheduler:
     """build_scheduler — регистрация всех jobs."""
 
     def test_all_jobs_registered(self) -> None:
-        """После рефакторинга должны быть зарегистрированы все 13 jobs:
-        backup, events, selfcheck, monthly, 3×pulse, 5y, pdn, funnel,
-        2×workhours-reminder."""
+        """После рефакторинга должны быть зарегистрированы все основные jobs."""
         bot = MagicMock()
         sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
         names = {j.name for j in sched.get_jobs()}
@@ -197,6 +221,7 @@ class TestBuildScheduler:
             "events-retention",
             "health-selfcheck",
             "monthly-stats",
+            "startup-pulse",
             "pulse-offhours",
             "pulse-sunday",
             "pulse-workhours",
@@ -208,3 +233,11 @@ class TestBuildScheduler:
         }
         # healthcheck-ping появляется только если settings.healthcheck_url задан
         assert expected.issubset(names), f"missing: {expected - names}"
+
+    def test_offhours_pulse_covers_evening_gap(self) -> None:
+        """Регрессия: пн–сб 18:00–21:59 не должны выпадать из пульсов."""
+        bot = MagicMock()
+        sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
+        job = next(j for j in sched.get_jobs() if j.name == "pulse-offhours")
+        trigger_text = str(job.trigger)
+        assert "18-23" in trigger_text
