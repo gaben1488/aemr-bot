@@ -17,4 +17,7 @@ def can_append(status: str | None) -> bool:
 
 
 def install() -> None:
+    from aemr_bot.services import flow_prompts
+
+    flow_prompts.install()
     log.info("fsm policy installed")
