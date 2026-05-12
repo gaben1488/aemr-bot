@@ -120,6 +120,12 @@ async def mark_finished(
     delivered: int,
     failed: int,
 ) -> None:
+    if status == BroadcastStatus.FAILED and delivered == 0 and failed == 0:
+        # Защитный слой на уровне сервиса: старый wrapper рассылки при
+        # непредвиденной ошибке передавал нули. Если доставки уже были
+        # записаны, сохраняем реальные счётчики, чтобы оператор не
+        # запустил повторную рассылку вслепую.
+        delivered, failed = await count_delivery_results(session, broadcast_id)
     await session.execute(
         update(Broadcast)
         .where(Broadcast.id == broadcast_id)
@@ -203,7 +209,7 @@ async def count_delivery_results(
 ) -> tuple[int, int]:
     """Посчитать уже записанные результаты доставки рассылки.
 
-    Используется аварийным wrapper'ом `_run_broadcast`: если цикл упал
+    Используется сервисным защитным слоем: если цикл отправки остановился
     после частичной отправки, нельзя помечать рассылку как `failed` с
     нулевыми счётчиками. Часть жителей могла уже получить сообщение, а
     `broadcast_deliveries` — содержать строки. Счётчики должны отражать
