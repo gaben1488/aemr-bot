@@ -35,11 +35,13 @@ jobs:
       - name: pip-audit (CVE scan; hard fail)
         run: |
           # `pip install -e .[dev]` устанавливает локальный пакет aemr-bot
-          # как editable distribution. Его нет на PyPI, поэтому `--strict`
-          # должен пропускать только editable root-package, а реальные
-          # сторонние зависимости всё равно audited и валят CI при CVE.
-          python -m pip_audit --strict --skip-editable --progress-spinner off --format=json --output=pip-audit.json
-          python -m pip_audit --strict --skip-editable --progress-spinner off
+          # как editable distribution. Его нет на PyPI. Поэтому аудитим
+          # frozen requirements без editable root-package; реальные внешние
+          # зависимости остаются в списке и валят CI при CVE.
+          python -m pip freeze --exclude-editable > audit-requirements.txt
+          grep -vE '^(aemr-bot|aemr_bot)(==| @ )' audit-requirements.txt > audit-requirements.thirdparty.txt
+          python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off --format=json --output=pip-audit.json
+          python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off
       - name: Upload security report
         uses: actions/upload-artifact@v4
         if: always()
