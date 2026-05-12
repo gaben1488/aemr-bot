@@ -32,13 +32,24 @@ jobs:
         run: python -m mypy aemr_bot/
       - name: Bandit (medium and above)
         run: python -m bandit -r aemr_bot/ -ll
-      - name: pip-audit (CVE scan; non-blocking report)
-        # Пока оставляем soft-fail, но сохраняем отчёт артефактом.
-        # Следующий шаг — allowlist принятых CVE и hard-fail без `|| true`.
+      - name: pip-audit (CVE scan; hard fail)
         run: |
-          pip install pip-audit
-          python -m pip_audit --strict --progress-spinner off --format=json --output=pip-audit.json || true
-          python -m pip_audit --strict --progress-spinner off || true
+          # `pip install -e .[dev]` устанавливает локальный пакет aemr-bot
+          # как editable distribution. Его нет на PyPI. Поэтому аудитим
+          # frozen requirements без editable root-package; реальные внешние
+          # зависимости остаются в списке и валят CI при CVE.
+          python -m pip freeze --exclude-editable > audit-requirements.txt
+          grep -vE '^(aemr-bot|aemr_bot)(==| @ )' audit-requirements.txt > audit-requirements.thirdparty.txt
+          set +e
+          python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off --format=json --output=pip-audit.json
+          audit_status=$?
+          if [ -s pip-audit.json ]; then
+            echo "pip-audit JSON report:"
+            cat pip-audit.json
+          fi
+          echo "pip-audit human report:"
+          python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off || true
+          exit "$audit_status"
       - name: Upload security report
         uses: actions/upload-artifact@v4
         if: always()
@@ -46,6 +57,23 @@ jobs:
           name: pip-audit-report
           path: bot/pip-audit.json
           if-no-files-found: ignore
+      - name: Install shellcheck
+        working-directory: .
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Shellcheck deployment scripts
+        working-directory: .
+        run: |
+          mapfile -t scripts < <(
+            find . -type f -name '*.sh' \
+              -not -path './.git/*' \
+              -not -path './bot/.venv/*' \
+              -not -path './bot/.pytest_cache/*'
+          )
+          if [ "${#scripts[@]}" -eq 0 ]; then
+            echo "No shell scripts found."
+            exit 0
+          fi
+          shellcheck "${scripts[@]}"
 
   test:
     name: Pytest with Postgres 16

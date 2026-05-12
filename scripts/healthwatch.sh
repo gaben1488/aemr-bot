@@ -57,8 +57,9 @@ logger -t "$LOG_TAG" "/livez unreachable (consecutive fails=$fails)"
 
 if [ "$fails" -eq "$MAX_FAILS_BEFORE_RESTART" ]; then
     logger -t "$LOG_TAG" "auto-restart of bot container triggered by liveness failure"
-    cd "$COMPOSE_DIR" && docker compose restart bot >/dev/null 2>&1 || \
+    if ! (cd "$COMPOSE_DIR" && docker compose restart bot >/dev/null 2>&1); then
         logger -t "$LOG_TAG" "docker compose restart failed"
+    fi
 fi
 
 if [ "$fails" -ge "$MAX_FAILS_BEFORE_ALERT" ]; then
