@@ -83,9 +83,7 @@ async def set_phone(session: AsyncSession, max_user_id: int, phone: str) -> None
 
 
 async def set_first_name(session: AsyncSession, max_user_id: int, first_name: str) -> None:
-    await session.execute(
-        update(User).where(User.max_user_id == max_user_id).values(first_name=first_name)
-    )
+    await session.execute(update(User).where(User.max_user_id == max_user_id).values(first_name=first_name))
 
 
 async def set_state(session: AsyncSession, max_user_id: int, state: DialogState, data: dict | None = None) -> None:
@@ -427,10 +425,21 @@ async def set_blocked(
 
 
 async def list_subscribers(session: AsyncSession, *, limit: int = 20) -> list[User]:
-    """Активные подписчики на рассылку. Используется в IT-меню «Аудитория»."""
+    """Активные подписчики на рассылку для IT-меню «Аудитория».
+
+    Синхронизировано с services.broadcasts._eligible_filter(): список
+    показывает только тех, кому рассылка действительно может уйти.
+    Старый вариант показывал legacy-подписчиков без consent_broadcast_at,
+    хотя broadcast-send их уже исключал.
+    """
     res = await session.scalars(
         select(User)
-        .where(User.subscribed_broadcast.is_(True), User.is_blocked.is_(False))
+        .where(
+            User.subscribed_broadcast.is_(True),
+            User.consent_broadcast_at.isnot(None),
+            User.is_blocked.is_(False),
+            User.first_name != "Удалено",
+        )
         .order_by(User.updated_at.desc())
         .limit(limit)
     )
@@ -438,11 +447,18 @@ async def list_subscribers(session: AsyncSession, *, limit: int = 20) -> list[Us
 
 
 async def list_consented(session: AsyncSession, *, limit: int = 20) -> list[User]:
-    """Жители с активным согласием на ПДн. Это все, кто проходил воронку
-    хотя бы раз и не отзывал согласие."""
+    """Жители с активным согласием на ПДн.
+
+    Обезличенные sentinel/удалённые записи исключаются из операторской
+    выборки, даже если в старой или тестовой БД остался consent_pdn_at.
+    """
     res = await session.scalars(
         select(User)
-        .where(User.consent_pdn_at.isnot(None))
+        .where(
+            User.consent_pdn_at.isnot(None),
+            User.is_blocked.is_(False),
+            User.first_name != "Удалено",
+        )
         .order_by(User.consent_pdn_at.desc())
         .limit(limit)
     )

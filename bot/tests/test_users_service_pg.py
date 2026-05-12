@@ -210,14 +210,23 @@ class TestListSubscribers:
         user1 = await users_service.get_or_create(session, max_user_id=1, first_name="A")
         user2 = await users_service.get_or_create(session, max_user_id=2, first_name="B")
         # subscribed_broadcast и is_blocked правится прямым UPDATE: в
-        # services/users нет публичного set_subscribed.
+        # services/users нет публичного set_subscribed. После миграции
+        # 0008 активная рассылка требует ещё и consent_broadcast_at.
+        now = datetime.now(timezone.utc)
         await session.execute(
-            update(User).where(User.id == user1.id).values(subscribed_broadcast=True)
+            update(User).where(User.id == user1.id).values(
+                subscribed_broadcast=True,
+                consent_broadcast_at=now,
+            )
         )
         # user2 заблокирован — из списка исключается, даже если subscribed
         await session.execute(
             update(User).where(User.id == user2.id)
-            .values(subscribed_broadcast=True, is_blocked=True)
+            .values(
+                subscribed_broadcast=True,
+                consent_broadcast_at=now,
+                is_blocked=True,
+            )
         )
         await session.flush()
         subs = await users_service.list_subscribers(session)
