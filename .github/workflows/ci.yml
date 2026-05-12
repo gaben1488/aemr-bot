@@ -40,8 +40,16 @@ jobs:
           # зависимости остаются в списке и валят CI при CVE.
           python -m pip freeze --exclude-editable > audit-requirements.txt
           grep -vE '^(aemr-bot|aemr_bot)(==| @ )' audit-requirements.txt > audit-requirements.thirdparty.txt
+          set +e
           python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off --format=json --output=pip-audit.json
-          python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off
+          audit_status=$?
+          if [ -s pip-audit.json ]; then
+            echo "pip-audit JSON report:"
+            cat pip-audit.json
+          fi
+          echo "pip-audit human report:"
+          python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off || true
+          exit "$audit_status"
       - name: Upload security report
         uses: actions/upload-artifact@v4
         if: always()
