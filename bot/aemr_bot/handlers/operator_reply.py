@@ -48,6 +48,19 @@ _REPLY_DEDUPE_WINDOW_SEC = 10.0
 _REPLY_INTENT_TTL_SEC = 300.0
 
 
+async def _safe_admin_notice(event, text: str) -> None:
+    """Попытаться сообщить оператору о проблеме, не ломая основной handler.
+
+    Эта функция используется только в аварийных ветках. Если в этот же
+    момент MAX не принимает сообщение в админ-группу, handler не должен
+    падать второй раз поверх уже обработанной первопричины.
+    """
+    try:
+        await event.bot.send_message(chat_id=get_chat_id(event), text=text)
+    except Exception:
+        log.exception("operator_reply: failed to send admin notice")
+
+
 def remember_reply_intent(operator_id: int, appeal_id: int) -> None:
     """Запомнить, что оператор сейчас собирается отвечать на обращение."""
     from aemr_bot.services import wizard_registry as _wr
@@ -320,9 +333,9 @@ async def _deliver_operator_reply(
             "operator_reply: delivery failed for appeal=%s user_id=%s",
             appeal.id, target_user_id,
         )
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=(
+        await _safe_admin_notice(
+            event,
+            (
                 f"⚠️ Не удалось доставить ответ жителю по обращению #{appeal.id} "
                 f"({type(exc).__name__}). Возможно, житель удалил диалог или "
                 f"заблокировал бота. Обращение остаётся в работе."
@@ -338,9 +351,9 @@ async def _deliver_operator_reply(
                 log.warning(
                     "appeal #%s vanished between delivery and DB write", appeal.id
                 )
-                await event.bot.send_message(
-                    chat_id=get_chat_id(event),
-                    text=(
+                await _safe_admin_notice(
+                    event,
+                    (
                         f"⚠️ Ответ по обращению #{appeal.id} доставлен жителю, "
                         f"но обращение исчезло перед записью в БД. "
                         f"Не повторяйте ответ вслепую; проверьте логи."
@@ -366,9 +379,9 @@ async def _deliver_operator_reply(
             "operator_reply: delivered but local DB/audit write failed — appeal=%s delivered_mid=%s",
             appeal.id, delivered_mid,
         )
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=(
+        await _safe_admin_notice(
+            event,
+            (
                 f"⚠️ Ответ по обращению #{appeal.id} доставлен жителю, "
                 f"но запись в базе или audit_log не завершилась. "
                 f"Не повторяйте ответ вслепую; проверьте логи и состояние БД."
