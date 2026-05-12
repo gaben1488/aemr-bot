@@ -28,6 +28,7 @@ dependencies = [
 dev = [
     "pytest~=8.3",
     "pytest-asyncio~=0.24",
+    "pytest-cov~=6.0",
     "ruff~=0.7",
     "mypy~=1.13",
     "bandit~=1.7",
@@ -57,3 +58,19 @@ disable_error_code = ["call-arg", "attr-defined"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["aemr_bot"]
+omit = [
+    "aemr_bot/__main__.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+precision = 1
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
