@@ -76,6 +76,20 @@ def test_clear_geo_detected_can_drop_locality() -> None:
     assert cleaned == {"summary_chunks": ["текст"]}
 
 
+def test_clear_geo_detected_can_drop_progress_message() -> None:
+    cleaned = appeal._clear_geo_detected(
+        {
+            "locality": "Елизовское ГП",
+            "progress_message_id": "old-progress-mid",
+            "detected_locality": "Елизовское ГП",
+            "detected_street": "Ленина",
+        },
+        drop_progress_message=True,
+    )
+
+    assert cleaned == {"locality": "Елизовское ГП"}
+
+
 @asynccontextmanager
 async def _fake_session_scope_for_state(dialog_state: DialogState):
     yield SimpleNamespace(dialog_state=dialog_state.value)
@@ -100,6 +114,35 @@ async def test_stale_topic_callback_is_acked_and_ignored() -> None:
 
     assert allowed is False
     ack.assert_called_once_with(event)
+
+
+@pytest.mark.asyncio
+async def test_stale_geo_callback_while_awaiting_address_gets_visible_notice() -> None:
+    event = SimpleNamespace(bot=MagicMock())
+    get_or_create = AsyncMock(
+        return_value=SimpleNamespace(dialog_state=DialogState.AWAITING_ADDRESS.value)
+    )
+    ack = AsyncMock()
+    send_to_citizen = AsyncMock()
+
+    @asynccontextmanager
+    async def fake_scope():
+        yield MagicMock()
+
+    with patch("aemr_bot.handlers.appeal.session_scope", fake_scope), patch(
+        "aemr_bot.handlers.appeal.users_service.get_or_create", get_or_create
+    ), patch("aemr_bot.handlers.appeal.ack_callback", ack), patch(
+        "aemr_bot.handlers.appeal._send_to_citizen", send_to_citizen
+    ):
+        allowed = await appeal._ensure_funnel_callback_state(event, 7, "geo:confirm")
+
+    assert allowed is False
+    ack.assert_called_once_with(event, appeal._GEO_AWAITING_ADDRESS_NOTICE)
+    send_to_citizen.assert_called_once_with(
+        event,
+        7,
+        text=appeal._GEO_AWAITING_ADDRESS_NOTICE,
+    )
 
 
 @pytest.mark.asyncio
