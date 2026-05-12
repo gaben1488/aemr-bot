@@ -9,11 +9,11 @@
 # Идемпотентен: если ничего не изменилось — выходит, контейнер не трогает.
 # Лог пишется в /var/log/aemr-bot-deploy.log с ротацией через journald (logger).
 #
-# Health-gate с автоматическим rollback (2026-05-11):
-# Если новый образ не отвечает на /healthz через 60 секунд после старта,
+# Health-gate с автоматическим rollback:
+# Если новый образ не отвечает на /livez через 60 секунд после старта,
 # скрипт автоматически откатывается на предыдущий коммит (PREV_LOCAL) и
-# пересобирает. Дежурный получает алерт через journald + logger.
-# Без этого сломанный коммит крутил restart-loop до ручного вмешательства.
+# пересобирает. /readyz диагностирует БД, но НЕ управляет rollback: краткая
+# проблема Postgres не должна откатывать валидный код.
 
 set -euo pipefail
 
@@ -23,6 +23,8 @@ SSH_KEY=/root/.ssh/aemr-bot-deploy
 LOG_TAG=aemr-bot-deploy
 HEALTH_TIMEOUT_SEC=60
 HEALTH_POLL_INTERVAL_SEC=5
+LIVE_URL=http://127.0.0.1:8080/livez
+READY_URL=http://127.0.0.1:8080/readyz
 
 # Git с явным ssh-ключом (deploy-key) — даже если у root есть свой github-ключ,
 # для этого репо берём именно deploy-key (минимум прав).
@@ -65,12 +67,12 @@ fi
 # Пересборка от пользователя aemr (он в docker-group)
 su - aemr -c "cd $COMPOSE_DIR && docker compose up -d --build" 2>&1 | logger -t "$LOG_TAG"
 
-# Health-gate: ждём до HEALTH_TIMEOUT_SEC секунд /healthz=200.
+# Health-gate: ждём до HEALTH_TIMEOUT_SEC секунд /livez=200.
 # Опрашиваем каждые HEALTH_POLL_INTERVAL_SEC, чтобы не «висеть» все 60.
 healthy=0
 elapsed=0
 while [ "$elapsed" -lt "$HEALTH_TIMEOUT_SEC" ]; do
-    if curl -fsS --max-time 5 http://127.0.0.1:8080/healthz >/dev/null 2>&1; then
+    if curl -fsS --max-time 5 "$LIVE_URL" >/dev/null 2>&1; then
         healthy=1
         break
     fi
@@ -79,13 +81,16 @@ while [ "$elapsed" -lt "$HEALTH_TIMEOUT_SEC" ]; do
 done
 
 if [ "$healthy" -eq 1 ]; then
-    logger -t "$LOG_TAG" "deploy ok: $REMOTE healthy после ${elapsed}s"
+    logger -t "$LOG_TAG" "deploy ok: $REMOTE livez healthy после ${elapsed}s"
+    if ! curl -fsS --max-time 5 "$READY_URL" >/dev/null 2>&1; then
+        logger -t "$LOG_TAG" "deploy warning: /livez ok, но /readyz failed — проверьте БД/зависимости без rollback"
+    fi
     rm -f /tmp/aemr-bot.env.bak.$$
     exit 0
 fi
 
 # Health-gate провалился — auto-rollback на предыдущий коммит.
-logger -t "$LOG_TAG" "DEPLOY FAILED: /healthz unreachable за ${HEALTH_TIMEOUT_SEC}s, ROLLBACK на $PREV_LOCAL"
+logger -t "$LOG_TAG" "DEPLOY FAILED: /livez unreachable за ${HEALTH_TIMEOUT_SEC}s, ROLLBACK на $PREV_LOCAL"
 git reset --hard "$PREV_LOCAL" --quiet
 chown -R aemr:aemr "$REPO_DIR"
 if ! head -1 "$COMPOSE_DIR/docker-compose.yml" | grep -q "^name: aemr-bot"; then
@@ -98,9 +103,12 @@ su - aemr -c "cd $COMPOSE_DIR && docker compose up -d --build" 2>&1 | logger -t 
 # просто фиксируем факт и возвращаем non-zero, чтобы дежурный получил
 # алерт через journald.
 sleep 30
-if curl -fsS --max-time 5 http://127.0.0.1:8080/healthz >/dev/null 2>&1; then
+if curl -fsS --max-time 5 "$LIVE_URL" >/dev/null 2>&1; then
     logger -t "$LOG_TAG" "ROLLBACK ok: вернулись на $PREV_LOCAL"
+    if ! curl -fsS --max-time 5 "$READY_URL" >/dev/null 2>&1; then
+        logger -t "$LOG_TAG" "ROLLBACK warning: /livez ok, но /readyz failed — причина вероятно в БД/зависимостях"
+    fi
 else
-    logger -t "$LOG_TAG" "ROLLBACK FAILED: предыдущий коммит тоже не отвечает, требуется ручное вмешательство"
+    logger -t "$LOG_TAG" "ROLLBACK FAILED: предыдущий коммит тоже не отвечает на /livez, требуется ручное вмешательство"
 fi
 exit 1
