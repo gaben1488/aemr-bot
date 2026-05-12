@@ -1,15 +1,21 @@
-"""Маленький aiohttp-сервер /healthz. Работает всегда, независимо от режима бота.
+"""Маленький aiohttp-сервер здоровья процесса.
 
-Использует один глобальный экземпляр Heartbeat, обновляемый из циклов
-polling/диспетчера. /healthz возвращает 200, если пульс свежий (моложе
-``HEALTHCHECK_STALE_SECONDS`` секунд) И база отвечает на ping, иначе 503.
+Контуры разделены намеренно:
 
-В режиме self-host с long-polling у бота нет публично доступного входящего
-порта: /healthz слушает на 127.0.0.1 и используется блоком healthcheck в
-docker-compose плюс внутренней cron-задачей ``selfcheck``. Внешние
-пингеры (UptimeRobot, Healthchecks.io и т. п.) не задействованы; внутренний
-сборщик здоровья из сети заказчика может подключиться через исходящий
-импульс на HEALTHCHECK_URL.
+* ``/livez`` — liveness. Возвращает 200, если жив asyncio-loop бота
+  и heartbeat свежий. Не трогает БД. Этот endpoint используют Docker
+  healthcheck, внешняя watchdog-перезапускалка и auto-deploy health-gate.
+  Иначе краткая проблема Postgres превращалась в рестарт/rollback
+  заведомо живого процесса.
+* ``/readyz`` — readiness. Возвращает 200, если heartbeat свежий и БД
+  отвечает на ``SELECT 1``. Это endpoint для диагностики и будущего
+  балансировщика/webhook-readiness, но не для автоматического рестарта.
+* ``/healthz`` оставлен как backward-compatible alias ``/readyz`` для
+  ручных проверок и старых runbook-команд.
+
+В режиме self-host с long-polling порт слушает 127.0.0.1 на хосте через
+Docker port binding. Операционная детализация отдаётся только локальным
+клиентам; внешним — только ``{"ok": ...}``.
 """
 
 from __future__ import annotations
@@ -49,8 +55,8 @@ async def _ping_db() -> bool:
 
     Бот с зависшим соединением к БД может крутить asyncio-цикл (и пульс
     останется зелёным), пока каждая операция, которая реально лезет в
-    данные, виснет. Без этого ping'а /healthz отдавал бы половину правды:
-    OK, при этом жители не видят ответов.
+    данные, виснет. Поэтому DB-ping нужен для readiness, но не должен
+    управлять liveness/restart-политикой контейнера.
     """
     from sqlalchemy import text
 
@@ -61,15 +67,13 @@ async def _ping_db() -> bool:
             await session.execute(text("SELECT 1"))
         return True
     except Exception:
-        log.warning("healthz: DB ping failed", exc_info=True)
+        log.warning("readyz: DB ping failed", exc_info=True)
         return False
 
 
 # Кэшируем результат ping'а БД на короткий интервал, чтобы плотная серия
-# проверок (healthcheck в compose каждые 30 секунд плюс любой внутренний
-# пингер, который подключит админ) не превращалась в шквал тривиальных
-# SELECT'ов, конкурирующих с настоящими обработчиками за маленький пул
-# соединений.
+# readiness-проверок не превращалась в шквал тривиальных SELECT'ов,
+# конкурирующих с настоящими обработчиками за маленький пул соединений.
 _DB_PING_CACHE_TTL = 10.0
 _db_ping_cache: dict[str, float | bool] = {"value": False, "checked_at": 0.0}
 
@@ -84,53 +88,79 @@ async def _ping_db_cached() -> bool:
     return ok
 
 
-async def _healthz(request: web.Request) -> web.Response:
-    """/healthz: liveness/readiness.
-
-    Полная диагностика (heartbeat_fresh, db_ok, last_beat_age) выдаётся
-    только локальным запросам — Docker healthcheck и self-ping. Внешним
-    клиентам (через nginx, на всякий случай если попадёт) отдаём только
-    `{"ok": ...}`: операционная информация — это бесплатная разведка
-    окна обслуживания для атакующего.
-    """
-    fresh = heartbeat.is_fresh()
-    db_ok = await _ping_db_cached()
-    ok = fresh and db_ok
+def _is_local_request(request: web.Request) -> bool:
     remote = request.remote or ""
-    is_local = remote in ("127.0.0.1", "::1", "localhost", "")
-    if is_local:
+    return remote in ("127.0.0.1", "::1", "localhost", "")
+
+
+def _last_beat_age_seconds() -> float | None:
+    if heartbeat.last_beat == 0.0:
+        return None
+    return round(time.monotonic() - heartbeat.last_beat, 1)
+
+
+async def _status_response(request: web.Request, *, include_db: bool) -> web.Response:
+    fresh = heartbeat.is_fresh()
+    db_ok = await _ping_db_cached() if include_db else None
+    ok = fresh and (bool(db_ok) if include_db else True)
+
+    # Полная диагностика только локальным запросам — Docker healthcheck,
+    # watchdog и ручная проверка на сервере. Внешним клиентам не отдаём
+    # operational-информацию о БД и возрасте heartbeat.
+    if _is_local_request(request):
         payload: dict = {
             "ok": ok,
             "heartbeat_fresh": fresh,
-            "db_ok": db_ok,
-            "last_beat_age_seconds": (
-                None if heartbeat.last_beat == 0.0
-                else round(time.monotonic() - heartbeat.last_beat, 1)
-            ),
+            "last_beat_age_seconds": _last_beat_age_seconds(),
         }
+        if include_db:
+            payload["db_ok"] = bool(db_ok)
     else:
         payload = {"ok": ok}
+
     return web.json_response(payload, status=200 if ok else 503)
 
 
+async def _livez(request: web.Request) -> web.Response:
+    """Liveness: процесс и event-loop живы. БД намеренно не проверяется."""
+    return await _status_response(request, include_db=False)
+
+
+async def _readyz(request: web.Request) -> web.Response:
+    """Readiness: процесс жив и БД доступна."""
+    return await _status_response(request, include_db=True)
+
+
+async def _healthz(request: web.Request) -> web.Response:
+    """Backward-compatible alias для старых ручных проверок.
+
+    Сохраняем старую семантику ``/healthz`` как readiness, чтобы команда
+    ``curl /healthz`` по-прежнему показывала и heartbeat, и DB status.
+    Автоматический restart/rollback теперь должен смотреть на ``/livez``.
+    """
+    return await _readyz(request)
+
+
 async def start(host: str = "0.0.0.0", port: int = 8080) -> web.AppRunner:  # nosec B104 — слушаем внутри контейнера, наружу выставляет Nginx
-    """Запустить /healthz на (host, port). Возвращает AppRunner, чтобы вызывающий мог его остановить."""
+    """Запустить health-сервер. Возвращает AppRunner для shutdown."""
     app = web.Application()
+    app.router.add_get("/livez", _livez)
+    app.router.add_get("/readyz", _readyz)
     app.router.add_get("/healthz", _healthz)
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, host, port)
     await site.start()
-    log.info("healthcheck listening on %s:%s/healthz", host, port)
+    log.info("healthcheck listening on %s:%s (/livez, /readyz, /healthz)", host, port)
     return runner
 
 
 async def heartbeat_pulse(interval: float | None = None):
-    """Фоновая задача: держит пульс свежим, пока жив polling-цикл бота.
+    """Фоновая задача: держит пульс свежим, пока жив asyncio-loop бота.
 
     Вызвать один раз на старте. Сосуществует с любым основным циклом
     бота. Её работа — только обновлять таймстемп из того же asyncio-цикла,
-    которому принадлежит диспетчер, чтобы /healthz оставался зелёным,
+    которому принадлежит диспетчер, чтобы liveness оставался зелёным,
     пока этот цикл откликается.
     """
     if interval is None:
