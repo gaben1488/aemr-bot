@@ -40,6 +40,7 @@ from aemr_bot.utils.attachments import (
 from aemr_bot.utils.event import (
     get_chat_id,
     get_first_name,
+    get_user_id,
 )
 
 log = logging.getLogger(__name__)
@@ -253,6 +254,7 @@ async def _show_progress_step(
     new_mid, edited = await send_or_edit_progress(
         event.bot,
         chat_id=get_chat_id(event),
+        user_id=get_user_id(event) or max_user_id,
         dialog_data=data,
         text=text,
         attachments=[keyboard],
