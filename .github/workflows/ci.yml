@@ -64,8 +64,7 @@ jobs:
         working-directory: .
         run: |
           mapfile -t scripts < <(
-            find . -type f \
-              \( -name '*.sh' -o -path './scripts/*' -o -path './infra/scripts/*' \) \
+            find . -type f -name '*.sh' \
               -not -path './.git/*' \
               -not -path './bot/.venv/*' \
               -not -path './bot/.pytest_cache/*'
