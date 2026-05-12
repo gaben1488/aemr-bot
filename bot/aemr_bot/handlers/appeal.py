@@ -2,14 +2,14 @@
 
 После рефакторинга 2026-05-10 этот файл — тонкий dispatcher:
 - `register(dp)` подключается из main.py при старте
-- Внутри: один `@dp.message_callback()` (большой dispatch по payload)
+- Внутри: один `@dp.message_callback()` (dispatch по payload)
   и один `@dp.message_created()` (state-таблица + admin-flow)
 
-Реальная логика разнесена по 3 модулям:
+Реальная логика разнесена по 4 модулям:
 - `appeal_runtime.py` — locks, `recover_stuck_funnels`, `persist_and_dispatch_appeal`
 - `appeal_funnel.py` — FSM-шаги воронки (ask_*, on_awaiting_*) + followup
-- `appeal_geo.py` — geo-flow (geo:* callbacks обрабатываются здесь
-  внутри register(), но logic state-handler в appeal_geo)
+- `appeal_geo.py` — geo-flow
+- `callback_router.py` — реестр callback-групп, чат-контекст и безопасный parse id
 
 `recover_stuck_funnels` ре-экспортируется отсюда — main.py делает
 `from aemr_bot.handlers.appeal import recover_stuck_funnels` и не
@@ -26,7 +26,7 @@ from aemr_bot import texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import DialogState
 from aemr_bot.db.session import session_scope
-from aemr_bot.handlers import appeal_funnel, appeal_geo
+from aemr_bot.handlers import appeal_funnel, appeal_geo, callback_router
 from aemr_bot.handlers.appeal_runtime import (
     drop_user_lock,
     recover_stuck_funnels,
@@ -53,7 +53,6 @@ __all__ = ["register", "recover_stuck_funnels"]
 
 # State-таблица: какой handler вызывать в каком DialogState когда
 # житель прислал что-то нерелевантное (текст вместо кнопки и т.п.).
-# Импортируем functions из подмодулей.
 _STATE_HANDLERS = {
     DialogState.AWAITING_CONSENT: appeal_funnel.on_awaiting_consent,
     DialogState.AWAITING_CONTACT: appeal_funnel.on_awaiting_contact,
@@ -83,15 +82,11 @@ def register(dp: Dispatcher) -> None:
         log.info("on_callback: user=%s payload_prefix=%s", max_user_id, prefix)
 
         # Коллбэки пользовательского флоу не должны срабатывать в
-        # админ-группе. В админ-чате пропускаем только admin-flow:
-        # broadcast:{confirm,abort,stop:N} и op:*.
+        # админ-группе. В админ-чате пропускаем только admin-flow, который
+        # явно перечислен в callback_router.EXACT_ROUTES/PREFIX_ROUTES.
         chat_id = get_chat_id(event)
         if cfg.admin_group_id and chat_id == cfg.admin_group_id:
-            is_admin_callback = payload.startswith("op:") or (
-                payload.startswith("broadcast:")
-                and payload != "broadcast:unsubscribe"
-            )
-            if not is_admin_callback:
+            if not callback_router.is_admin_callback(payload):
                 await ack_callback(event)
                 return
 
@@ -166,9 +161,8 @@ def register(dp: Dispatcher) -> None:
             return
 
         if payload.startswith("locality:"):
-            try:
-                idx = int(payload.split(":")[1])
-            except (IndexError, ValueError):
+            idx = callback_router.parse_int_tail(payload, "locality:")
+            if idx is None:
                 await ack_callback(event)
                 return
             async with session_scope() as session:
@@ -279,9 +273,8 @@ def register(dp: Dispatcher) -> None:
                 return
 
         if payload.startswith("topic:"):
-            try:
-                idx = int(payload.split(":")[1])
-            except (IndexError, ValueError):
+            idx = callback_router.parse_int_tail(payload, "topic:")
+            if idx is None:
                 await ack_callback(event)
                 return
             async with session_scope() as session:
@@ -314,6 +307,7 @@ def register(dp: Dispatcher) -> None:
             "broadcast:unsubscribe"
         ):
             from aemr_bot.handlers import broadcast as broadcast_handler
+
             if payload == "broadcast:confirm":
                 await broadcast_handler._handle_confirm(event)
                 return
@@ -324,9 +318,9 @@ def register(dp: Dispatcher) -> None:
                 await broadcast_handler._handle_edit(event)
                 return
             if payload.startswith("broadcast:stop:"):
-                try:
-                    bid = int(payload.split(":", 2)[2])
-                except (IndexError, ValueError):
+                bid = callback_router.parse_int_tail(payload, "broadcast:stop:")
+                if bid is None:
+                    await ack_callback(event)
                     return
                 await broadcast_handler._handle_stop(event, bid)
                 return
@@ -337,6 +331,7 @@ def register(dp: Dispatcher) -> None:
                 admin_commands,
                 broadcast as broadcast_handler,
             )
+
             if payload == "op:menu":
                 await ack_callback(event)
                 await admin_commands.show_op_menu(event, pin=False)
@@ -410,9 +405,8 @@ def register(dp: Dispatcher) -> None:
                 await admin_commands.run_audience_action(event, payload)
                 return
             if payload.startswith("op:reply:"):
-                try:
-                    aid = int(payload.split(":", 2)[2])
-                except (IndexError, ValueError):
+                aid = callback_router.parse_int_tail(payload, "op:reply:")
+                if aid is None:
                     await ack_callback(event)
                     return
                 await admin_commands.run_reply_intent(event, aid)
@@ -421,41 +415,36 @@ def register(dp: Dispatcher) -> None:
                 await admin_commands.run_reply_cancel(event)
                 return
             if payload.startswith("op:reopen:"):
-                try:
-                    aid = int(payload.split(":", 2)[2])
-                except (IndexError, ValueError):
+                aid = callback_router.parse_int_tail(payload, "op:reopen:")
+                if aid is None:
                     await ack_callback(event)
                     return
                 await admin_commands.run_reopen(event, aid)
                 return
             if payload.startswith("op:close:"):
-                try:
-                    aid = int(payload.split(":", 2)[2])
-                except (IndexError, ValueError):
+                aid = callback_router.parse_int_tail(payload, "op:close:")
+                if aid is None:
                     await ack_callback(event)
                     return
                 await admin_commands.run_close(event, aid)
                 return
             if payload.startswith("op:erase:"):
-                try:
-                    aid = int(payload.split(":", 2)[2])
-                except (IndexError, ValueError):
+                aid = callback_router.parse_int_tail(payload, "op:erase:")
+                if aid is None:
                     await ack_callback(event)
                     return
                 await admin_commands.run_erase_for_appeal(event, aid)
                 return
             if payload.startswith("op:block:"):
-                try:
-                    aid = int(payload.split(":", 2)[2])
-                except (IndexError, ValueError):
+                aid = callback_router.parse_int_tail(payload, "op:block:")
+                if aid is None:
                     await ack_callback(event)
                     return
                 await admin_commands.run_block_for_appeal(event, aid, blocked=True)
                 return
             if payload.startswith("op:unblock:"):
-                try:
-                    aid = int(payload.split(":", 2)[2])
-                except (IndexError, ValueError):
+                aid = callback_router.parse_int_tail(payload, "op:unblock:")
+                if aid is None:
                     await ack_callback(event)
                     return
                 await admin_commands.run_block_for_appeal(event, aid, blocked=False)
@@ -470,6 +459,7 @@ def register(dp: Dispatcher) -> None:
 
         # Переход к обработчикам меню/контактов/просмотра обращений
         from aemr_bot.handlers import menu as menu_handlers
+
         await menu_handlers.handle_callback(event, payload, max_user_id)
 
     @dp.message_created()
@@ -522,13 +512,28 @@ def register(dp: Dispatcher) -> None:
             head = text_body.split(maxsplit=1)[0]
             cmd = head.lstrip("/").split("@", 1)[0].lower()
             operator_only = {
-                "reply", "reopen", "close", "stats", "broadcast", "erase",
-                "setting", "add_operators", "backup", "diag", "op_help",
+                "reply",
+                "reopen",
+                "close",
+                "stats",
+                "broadcast",
+                "erase",
+                "setting",
+                "add_operators",
+                "backup",
+                "diag",
+                "op_help",
                 "open_tickets",
             }
             citizen = {
-                "start", "menu", "help", "policy", "subscribe",
-                "unsubscribe", "forget", "cancel",
+                "start",
+                "menu",
+                "help",
+                "policy",
+                "subscribe",
+                "unsubscribe",
+                "forget",
+                "cancel",
             }
             if cmd in operator_only:
                 await event.message.answer(
