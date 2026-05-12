@@ -9,6 +9,7 @@ from aemr_bot.db.models import (
     Appeal,
     AppealStatus,
     DialogState,
+    Message,
     User,
 )
 
@@ -251,23 +252,50 @@ async def get_anonymous_user_id(session: AsyncSession) -> int:
     return user.id
 
 
+async def _redact_appeal_payloads_for_user(session: AsyncSession, user_id: int) -> tuple[int, int]:
+    """Стереть свободный текст и вложения по всем обращениям жителя.
+
+    Это отдельный шаг от удаления строки users. Без него `/erase` удалял
+    имя и телефон, но оставлял ПДн в фактическом теле обращения:
+    address, summary, messages.text, attachments. Для муниципальной
+    статистики сохраняются только метаданные: дата, статус, тема,
+    населённый пункт и факт обращения.
+    """
+    appeal_ids = select(Appeal.id).where(Appeal.user_id == user_id)
+    appeals_result = await session.execute(
+        update(Appeal)
+        .where(Appeal.user_id == user_id)
+        .values(address=None, summary=None, attachments=[])
+    )
+    messages_result = await session.execute(
+        update(Message)
+        .where(Message.appeal_id.in_(appeal_ids))
+        .values(text=None, attachments=[])
+    )
+    return appeals_result.rowcount or 0, messages_result.rowcount or 0
+
+
 async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
-    """Полное физическое удаление жителя.
+    """Полное удаление ПДн жителя из рабочей БД.
 
     1. Все NEW/IN_PROGRESS обращения этого жителя закрываются
        (`closed_due_to_revoke=true`, чтобы оператор не пытался их
        возобновить — гард доставки всё равно откажет).
-    2. Все обращения жителя (любого статуса) переподвешиваются на
+    2. Свободный текст и вложения по обращениям стираются: address,
+       summary, messages.text, attachments. Именно там чаще всего
+       повторяются имя, телефон, адрес квартиры, фото и другие ПДн.
+    3. Все обращения жителя (любого статуса) переподвешиваются на
        техническую запись «anonymous user» через UPDATE appeals.user_id.
-       Так статистика количества обращений сохраняется, а ПДн
-       физически уходят.
-    3. Запись жителя в users **физически удаляется**. При следующем
-       заходе того же max_user_id создаётся свежая запись — бот не
-       узнаёт жителя.
+       Так статистика количества обращений сохраняется, а связь с
+       конкретным MAX-пользователем физически уходит.
+    4. Запись жителя в users физически удаляется. При следующем заходе
+       того же max_user_id создаётся свежая запись — бот не узнаёт
+       жителя.
 
-    Это требование 152-ФЗ ст. 21 ч. 5 (уничтожение ПДн в срок 30
-    дней после отзыва) — мы делаем сразу. Возврат через /start
-    проходит воронку с нуля, без всяких следов прошлого.
+    Ограничение: уже отправленные сообщения в MAX-чатах этим кодом не
+    удаляются, потому что это внешнее хранилище мессенджера. Поэтому
+    операторский регламент не должен обещать удаление исторических
+    сообщений из клиента MAX.
     """
 
 
@@ -293,7 +321,11 @@ async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
             closed_due_to_revoke=True,
         )
     )
-    # 2. Переподвесить ВСЕ обращения этого жителя (любого статуса) на
+    # 2. Стереть фактическое содержимое обращений/сообщений до
+    #    переподвешивания на anonymous-user. Метаданные оставляем для
+    #    статистики и аудита количества обращений.
+    await _redact_appeal_payloads_for_user(session, user_row)
+    # 3. Переподвесить ВСЕ обращения этого жителя (любого статуса) на
     #    anonymous-запись. Статистика количества обращений за период
     #    остаётся, имя/телефон жителя физически уходят.
     anonymous_id = await get_anonymous_user_id(session)
@@ -302,7 +334,7 @@ async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
         .where(Appeal.user_id == user_row)
         .values(user_id=anonymous_id, closed_due_to_revoke=True)
     )
-    # 3. Физически удалить запись жителя. cascade='all, delete-orphan'
+    # 4. Физически удалить запись жителя. cascade='all, delete-orphan'
     #    в модели User.appeals сюда не сработает — обращения уже
     #    отвязаны через UPDATE выше.
     await session.execute(delete(User).where(User.id == user_row))
