@@ -1,5 +1,5 @@
-"""Тесты handlers/start.py — команды жителя /start, /help, /menu, /policy,
-/subscribe, /unsubscribe, /forget, /export, /cancel, /whoami.
+"""Тесты handlers/start.py — команды жителя /start, /help, /menu, /rules,
+/policy, /subscribe, /unsubscribe, /forget, /export, /cancel, /whoami.
 
 Локально skip без maxapi; в CI работает."""
 from __future__ import annotations
@@ -145,6 +145,19 @@ class TestCmdHelp:
         event.bot.send_message.assert_called_once()
         from aemr_bot import texts
         assert event.bot.send_message.call_args.kwargs.get("text") == texts.HELP_USER
+
+
+class TestCmdRules:
+    @pytest.mark.asyncio
+    async def test_responds_with_rules_text(self) -> None:
+        from aemr_bot import texts
+        from aemr_bot.handlers import start
+
+        event = _make_event()
+        await start.cmd_rules(event)
+
+        event.bot.send_message.assert_called_once()
+        assert event.bot.send_message.call_args.kwargs.get("text") == texts.RULES_TEXT
 
 
 class TestCmdMenu:

@@ -83,9 +83,10 @@ def appointment_keyboard(electronic_reception_url: str | None = None):
 
 
 def settings_menu_keyboard():
-    """Подменю «Настройки и помощь». Три точки входа:
+    """Подменю «Настройки и помощь». Основные точки входа:
 
     - «📋 Помощь и команды» — список команд жителя.
+    - «📜 Правила пользования» — порядок работы бота и ограничения.
     - «📄 Политика данных» — открыть PDF/ссылку на политику.
     - «👋 Уйти из бота» — A4-сценарий с тремя опциями (отписка,
       прощальный отзыв согласия, полное удаление). Раньше было два
@@ -95,6 +96,7 @@ def settings_menu_keyboard():
     """
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="📋 Помощь и команды", payload="settings:help"))
+    kb.row(CallbackButton(text="📜 Правила пользования", payload="settings:rules"))
     kb.row(CallbackButton(text="📄 Политика данных", payload="settings:policy"))
     kb.row(CallbackButton(text="👋 Уйти из бота", payload="settings:goodbye"))
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
@@ -270,14 +272,12 @@ def geo_confirm_keyboard():
 def user_appeal_card_keyboard(appeal_id: int, status: str):
     """Кнопки под карточкой обращения у жителя.
 
-    NEW/IN_PROGRESS/ANSWERED — «📎 Дополнить»: явный путь пришить
-    дополнение к обращению (раньше работала «магия» — любое сообщение
-    в IDLE автоматически пришивалось, без подтверждения; пенсионеры
-    путались).
+    NEW/IN_PROGRESS — «📎 Дополнить»: явный путь уточнить открытое
+    обращение. Любое сообщение в IDLE не пришивается автоматически.
 
-    CLOSED — «🔁 Подать похожее»: новая воронка с тем же адресом и
-    тематикой, житель только пишет суть. Сценарий «опять не вывозят
-    мусор по тому же адресу».
+    ANSWERED/CLOSED — «🔁 Подать похожее»: новая воронка с тем же
+    адресом и тематикой. Новое обращение помечается как связанное с
+    отвеченным или закрытым вопросом.
     """
     from aemr_bot.db.models import AppealStatus
 
@@ -285,14 +285,13 @@ def user_appeal_card_keyboard(appeal_id: int, status: str):
     if status in {
         AppealStatus.NEW.value,
         AppealStatus.IN_PROGRESS.value,
-        AppealStatus.ANSWERED.value,
     }:
         kb.row(
             CallbackButton(
                 text="📎 Дополнить", payload=f"appeal:followup:{appeal_id}"
             )
         )
-    elif status == AppealStatus.CLOSED.value:
+    elif status in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
         kb.row(
             CallbackButton(
                 text="🔁 Подать похожее", payload=f"appeal:repeat:{appeal_id}"

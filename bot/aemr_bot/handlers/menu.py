@@ -1,4 +1,5 @@
-from maxapi import Dispatcher
+import logging
+from typing import Any
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
@@ -8,6 +9,8 @@ from aemr_bot.services import card_format
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import ack_callback, get_chat_id, get_user_id
+
+log = logging.getLogger(__name__)
 
 
 async def open_main_menu(event):
@@ -95,8 +98,9 @@ async def start_appeal_followup(event, appeal_id: int, max_user_id: int):
 
     Ставит state в AWAITING_FOLLOWUP_TEXT, сохраняет appeal_id в
     dialog_data. Следующее сообщение жителя (текст и/или вложения)
-    пришивается к этому обращению через `_on_awaiting_followup_text`
-    в appeal.py.
+    пришивается только к открытому обращению. По отвеченному или
+    закрытому вопросу создаём новое связанное обращение через
+    «🔁 Подать похожее».
     """
     from aemr_bot.db.models import AppealStatus, DialogState
 
@@ -109,15 +113,17 @@ async def start_appeal_followup(event, appeal_id: int, max_user_id: int):
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
-        # Дополнять можно только живые обращения. CLOSED — отдельный
-        # путь «Подать похожее», сюда не должен попадать (кнопки нет
-        # в карточке закрытого), но защищаемся на случай гонки.
-        if appeal.status == AppealStatus.CLOSED.value:
+        # Дополнять можно только неотвеченные обращения. ANSWERED/CLOSED
+        # считаются завершёнными: повтор по ним — новое связанное
+        # обращение, чтобы история не «оживала» задним числом.
+        if appeal.status in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
             await event.bot.send_message(
                 chat_id=get_chat_id(event),
                 text=(
-                    "Обращение уже закрыто. Если ситуация повторилась — "
-                    "кнопка «🔁 Подать похожее» создаст новое с тем же адресом."
+                    "Это обращение уже завершено. Если вопрос повторился "
+                    "или ответ нужно обсудить отдельно, откройте карточку "
+                    "и нажмите «🔁 Подать похожее» — бот создаст новое "
+                    "связанное обращение."
                 ),
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
@@ -139,14 +145,14 @@ async def start_appeal_followup(event, appeal_id: int, max_user_id: int):
 
 
 async def start_appeal_repeat(event, appeal_id: int, max_user_id: int):
-    """Кнопка «🔁 Подать похожее» под карточкой закрытого обращения.
+    """Кнопка «🔁 Подать похожее» под карточкой завершённого обращения.
 
     Запускает воронку нового обращения с уже заполненными locality,
     address и topic из старого. Жителю остаётся только написать суть
-    проблемы — это сценарий «опять не вывозят мусор по тому же адресу»,
-    когда переписывать всё с нуля раздражает.
+    проблемы. Если старое обращение было ANSWERED/CLOSED, новое
+    обращение получит пометку связи с отвеченным или закрытым вопросом.
     """
-    from aemr_bot.db.models import DialogState
+    from aemr_bot.db.models import AppealStatus, DialogState
 
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id(session, appeal_id)
@@ -165,20 +171,35 @@ async def start_appeal_repeat(event, appeal_id: int, max_user_id: int):
 
             await _start_appeal_flow(event, max_user_id)
             return
+        data: dict[str, Any] = {
+            "locality": appeal.locality,
+            "address": appeal.address,
+            "topic": appeal.topic,
+        }
+        if appeal.status in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
+            data.update(
+                {
+                    "repeat_source_appeal_id": appeal.id,
+                    "repeat_source_status": appeal.status,
+                    "repeat_source_topic": appeal.topic,
+                }
+            )
         await users_service.set_state(
             session,
             max_user_id,
             DialogState.AWAITING_SUMMARY,
-            data={
-                "locality": appeal.locality,
-                "address": appeal.address,
-                "topic": appeal.topic,
-            },
+            data=data,
         )
+    if appeal.status == AppealStatus.ANSWERED.value:
+        context = "по уже отвеченному вопросу"
+    elif appeal.status == AppealStatus.CLOSED.value:
+        context = "по закрытому вопросу"
+    else:
+        context = "с теми же данными"
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=(
-            f"Подаём новое обращение с теми же данными:\n"
+            f"Подаём новое обращение {context}:\n"
             f"📍 {appeal.locality}, {appeal.address}\n"
             f"🏷 {appeal.topic or '—'}\n\n"
             f"Опишите суть одним сообщением. Можно приложить фото, видео "
@@ -192,10 +213,8 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
     """Карточка обращения у жителя.
 
     Кнопки зависят от статуса:
-    - NEW / IN_PROGRESS / ANSWERED — «📎 Дополнить» (явный путь
-      пришить уточнение к открытому/недавно отвеченному обращению).
-    - CLOSED — «🔁 Подать похожее» (создать новое с тем же адресом
-      и тематикой; раньше нужно было пройти всю воронку с нуля).
+    - NEW / IN_PROGRESS — «📎 Дополнить» для уточнения открытого обращения.
+    - ANSWERED / CLOSED — «🔁 Подать похожее» для нового связанного обращения.
     - Везде «↩ В меню».
     """
     async with session_scope() as session:
@@ -238,9 +257,9 @@ async def open_useful_info(event):
 async def do_subscribe(event, max_user_id: int) -> None:
     """Идемпотентная подписка через кнопку «🔔 Подписаться».
 
-    Если житель уже подписан — отвечаем «уже подписаны», не trying to
-    сменить состояние. Это закрывает баг старого toggle-варианта, где
-    кнопка из устаревшего меню могла отписать жителя в ответ на тап
+    Если житель уже подписан — отвечаем «уже подписаны», не меняя
+    состояние. Это закрывает баг старого toggle-варианта, где кнопка
+    из устаревшего меню могла отписать жителя в ответ на тап
     «Подписаться».
 
     Если согласие отозвано или не давалось — даём кнопку «Дать согласие»
@@ -397,6 +416,14 @@ async def open_help(event):
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.HELP_USER,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
+
+
+async def open_rules(event):
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=texts.RULES_TEXT,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
 
@@ -598,7 +625,7 @@ async def do_consent_revoke(event, max_user_id: int):
                 ),
             )
         except Exception:
-            pass
+            log.debug("не удалось уведомить админ-группу об отзыве согласия", exc_info=True)
 
 
 async def do_forget(event, max_user_id: int):
@@ -642,7 +669,7 @@ async def do_forget(event, max_user_id: int):
                 ),
             )
         except Exception:
-            pass
+            log.debug("не удалось уведомить админ-группу об удалении данных", exc_info=True)
 
 
 async def open_appointment(event):
@@ -757,6 +784,11 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
     if payload == "settings:help":
         await ack_callback(event)
         await open_help(event)
+        return True
+
+    if payload == "settings:rules":
+        await ack_callback(event)
+        await open_rules(event)
         return True
 
     if payload == "settings:policy":
@@ -904,8 +936,3 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
         return True
 
     return False
-
-
-def register(dp: Dispatcher) -> None:
-    """Заглушка: маршрутизацией нажатий владеет handlers/appeal.py."""
-    return None

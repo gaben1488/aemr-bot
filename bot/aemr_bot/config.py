@@ -16,7 +16,8 @@ class Settings(BaseSettings):
     bot_mode: Literal["polling", "webhook"] = Field("polling", alias="BOT_MODE")
     webhook_url: str | None = Field(None, alias="WEBHOOK_URL")
     webhook_secret: str | None = Field(None, alias="WEBHOOK_SECRET")
-    webhook_host: str = Field("0.0.0.0", alias="WEBHOOK_HOST")  # nosec B104 — слушаем внутри контейнера, наружу выставляет Nginx
+    # Слушаем внутри контейнера; наружу сервис выставляет Nginx.
+    webhook_host: str = Field("0.0.0.0", alias="WEBHOOK_HOST")  # nosec
     webhook_port: int = Field(8080, alias="WEBHOOK_PORT")
 
     database_url: str = Field(..., alias="DATABASE_URL")

@@ -219,6 +219,23 @@ async def test_find_active_excludes_closed(session) -> None:
 
 
 @pytest.mark.asyncio
+async def test_find_active_excludes_answered(session) -> None:
+    user = await users_service.get_or_create(session, max_user_id=1, first_name="A")
+    appeal = await appeals_service.create_appeal(
+        session, user=user, address="A", topic="T", summary="x", attachments=[]
+    )
+    await appeals_service.add_operator_message(
+        session,
+        appeal=appeal,
+        text="Ответ",
+        operator_id=None,
+        max_message_id=None,
+    )
+    active = await appeals_service.find_active_for_user(session, user.id)
+    assert active is None
+
+
+@pytest.mark.asyncio
 async def test_find_last_address_for_user(session) -> None:
     user = await users_service.get_or_create(session, max_user_id=1, first_name="A")
     await appeals_service.create_appeal(

@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import delete, select, text, update
@@ -14,11 +15,12 @@ from aemr_bot.db.models import (
 )
 
 # Постоянный ключ Postgres advisory-lock для пути «создать anonymous user
-# on-the-fly». Используется только в get_anonymous_user_id, чтобы две
+# на лету». Используется только в get_anonymous_user_id, чтобы две
 # параллельные корутины не пробивали UNIQUE на max_user_id одновременно.
 # Любая bigint-константа подойдёт; выбрана не-нулевая, чтобы не
 # спутаться с дефолтами.
 _ANONYMOUS_USER_LOCK_KEY = 0x4145_4D52_414E_4F4E  # 'AEMR_ANON' в hex
+log = logging.getLogger(__name__)
 
 
 def _normalize_phone(phone: str) -> str:
@@ -122,7 +124,7 @@ async def update_dialog_data(session: AsyncSession, max_user_id: int, patch: dic
     except Exception:
         # SQLite / unsupported backend — без lock-а живём, в production
         # это postgres и lock работает.
-        pass
+        log.debug("advisory-lock недоступен для backend тестов", exc_info=True)
     user = await session.scalar(select(User).where(User.max_user_id == max_user_id))
     if user is None:
         return {}

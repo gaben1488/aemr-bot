@@ -167,6 +167,27 @@ class TestStartAppealFollowup:
         text = event.bot.send_message.call_args.kwargs.get("text", "")
         assert "закрыто" in text.lower() or "Подать похожее" in text
 
+    @pytest.mark.asyncio
+    async def test_answered_appeal_blocks_followup_and_points_to_repeat(self) -> None:
+        from aemr_bot.db.models import AppealStatus
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        appeal = MagicMock()
+        appeal.user.max_user_id = 42
+        appeal.status = AppealStatus.ANSWERED.value
+        set_state = AsyncMock()
+        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.menu.appeals_service.get_by_id",
+                   AsyncMock(return_value=appeal)), \
+             patch("aemr_bot.handlers.menu.users_service.set_state", set_state):
+            await menu.start_appeal_followup(event, appeal_id=1, max_user_id=42)
+
+        set_state.assert_not_called()
+        text = event.bot.send_message.call_args.kwargs.get("text", "")
+        assert "новое" in text.lower()
+        assert "Подать похожее" in text
+
 
 class TestStartAppealRepeat:
     @pytest.mark.asyncio
@@ -197,6 +218,34 @@ class TestStartAppealRepeat:
                    AsyncMock()) as start_flow:
             await menu.start_appeal_repeat(event, appeal_id=1, max_user_id=42)
         start_flow.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_answered_repeat_marks_dialog_data(self) -> None:
+        from aemr_bot.db.models import AppealStatus, DialogState
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        appeal = MagicMock()
+        appeal.id = 7
+        appeal.user.max_user_id = 42
+        appeal.locality = "Елизовское ГП"
+        appeal.address = "Ленина, 1"
+        appeal.topic = "Дороги"
+        appeal.status = AppealStatus.ANSWERED.value
+        set_state = AsyncMock()
+        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.menu.appeals_service.get_by_id",
+                   AsyncMock(return_value=appeal)), \
+             patch("aemr_bot.handlers.menu.users_service.set_state", set_state):
+            await menu.start_appeal_repeat(event, appeal_id=7, max_user_id=42)
+
+        set_state.assert_called_once()
+        args = set_state.call_args.args
+        kwargs = set_state.call_args.kwargs
+        assert args[2] == DialogState.AWAITING_SUMMARY
+        data = kwargs["data"]
+        assert data["repeat_source_appeal_id"] == 7
+        assert data["repeat_source_status"] == AppealStatus.ANSWERED.value
 
 
 class TestShowAppeal:
@@ -381,6 +430,33 @@ class TestSimpleScreens:
 
         event = _make_event()
         await menu.open_help(event)
+        event.bot.send_message.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_open_rules(self) -> None:
+        from aemr_bot import texts
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        await menu.open_rules(event)
+
+        event.bot.send_message.assert_called_once()
+        assert event.bot.send_message.call_args.kwargs.get("text") == texts.RULES_TEXT
+
+    @pytest.mark.asyncio
+    async def test_settings_rules_callback_opens_rules(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.menu.ack_callback", AsyncMock()) as ack:
+            handled = await menu.handle_callback(
+                event,
+                payload="settings:rules",
+                max_user_id=42,
+            )
+
+        assert handled is True
+        ack.assert_called_once()
         event.bot.send_message.assert_called_once()
 
     @pytest.mark.asyncio

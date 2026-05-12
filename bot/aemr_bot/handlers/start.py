@@ -22,7 +22,7 @@ from aemr_bot.utils.event import (
 log = logging.getLogger(__name__)
 
 
-# Citizen-flow handlers ниже отбрасываются в админ-группе через is_admin_chat.
+# Обработчики жителя ниже отбрасываются в админ-группе через is_admin_chat.
 # Алиас оставлен с подчёркиванием, чтобы внутри файла читалось как локальная
 # гард-функция и не путалось с неймспейсом utils.event.
 _is_admin_chat = is_admin_chat
@@ -79,6 +79,10 @@ async def cmd_start(event):
 
 async def cmd_help(event):
     await reply(event, texts.HELP_USER, attachments=[await _build_main_menu(get_user_id(event))])
+
+
+async def cmd_rules(event):
+    await reply(event, texts.RULES_TEXT, attachments=[keyboards.back_to_menu_keyboard()])
 
 
 async def cmd_menu(event):
@@ -338,6 +342,13 @@ def register(dp: Dispatcher) -> None:
             await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
         await cmd_policy(event)
+
+    @dp.message_created(Command("rules"))
+    async def _(event: MessageCreated):
+        if _is_admin_chat(event):
+            await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
+            return
+        await cmd_rules(event)
 
     @dp.message_created(Command("subscribe"))
     async def _(event: MessageCreated):

@@ -124,7 +124,7 @@ async def _run_pg_dump_encrypted(
     # видна только нашему процессу, и режим 0o700 закрывает доступ
     # другим UID. Жёсткое имя «.gnupg» под TMPDIR — стандартный
     # путь gpg-инсталляции.
-    gpg_home = os.path.join(os.environ.get("TMPDIR", "/tmp"), ".gnupg")  # nosec B108
+    gpg_home = os.path.join(os.environ.get("TMPDIR", "/tmp"), ".gnupg")  # nosec
     os.makedirs(gpg_home, mode=0o700, exist_ok=True)
 
     try:
@@ -205,7 +205,8 @@ async def backup_db() -> Path | None:
 
     # Параноидальная проверка: пустая строка в env "" даст truthy False,
     # но если кто-то поставит passphrase из 1 символа — gpg запустится
-    # с тривиально расшифровываемым ключом и создаст fake-encrypted файл
+    # с тривиально расшифровываемым ключом и создаст формально
+    # зашифрованный файл, который легко вскрыть
     # с расширением .sql.gpg. Минимум 12 символов — иначе бэкап без
     # шифрования с предупреждением в лог.
     passphrase = (settings.backup_gpg_passphrase or "").strip()
@@ -215,7 +216,7 @@ async def backup_db() -> Path | None:
             "Бэкап НЕ зашифрован. Установите фразу ≥12 символов.",
             len(passphrase),
         )
-        passphrase = ""
+        passphrase = ""  # nosec B105 - это сброс небезопасной фразы, не секрет.
     encrypt = bool(passphrase)
     suffix = ".sql.gpg" if encrypt else ".sql"
     ts = datetime.now(TZ).strftime("%Y%m%d_%H%M%S")
@@ -239,7 +240,7 @@ async def backup_db() -> Path | None:
         try:
             out.unlink(missing_ok=True)
         except Exception:
-            pass
+            log.warning("не удалось удалить неполный файл бэкапа %s", out.name, exc_info=True)
         return None
 
     _rotate_backups(target_dir, settings.backup_keep_count, suffix)

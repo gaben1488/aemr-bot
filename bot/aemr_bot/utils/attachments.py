@@ -33,7 +33,7 @@ def _attachment_to_dict(att: Any) -> dict:
         try:
             return att.model_dump(by_alias=False)
         except Exception:
-            pass
+            log.debug("не удалось преобразовать attachment через model_dump", exc_info=True)
     if isinstance(att, dict):
         return att
     return {}

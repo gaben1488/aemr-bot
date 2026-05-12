@@ -13,7 +13,8 @@ from aemr_bot.services import settings_store, uploads
 log = logging.getLogger(__name__)
 
 POLICY_PDF_REL = "PRIVACY.pdf"
-POLICY_TOKEN_KEY = "policy_pdf_token"
+# Это ключ записи в таблице settings, а не пароль.
+POLICY_TOKEN_KEY = "policy_pdf_token"  # nosec B105
 
 # Отображаемое жителю имя файла в чате MAX. На диске и в Dockerfile файл
 # хранится латиницей (Docker buildkit не справляется с unicode в COPY,
@@ -55,7 +56,7 @@ async def ensure_uploaded(bot, *, force: bool = False) -> str | None:
             display_path.unlink(missing_ok=True)
             tmp_dir.rmdir()
         except Exception:
-            pass
+            log.debug("не удалось удалить временный файл политики", exc_info=True)
 
     if token is None:
         return None
