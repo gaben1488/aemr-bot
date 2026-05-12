@@ -69,6 +69,7 @@ def register_handlers(dp: Dispatcher) -> None:
     import_module("aemr_bot.services.flow_" + "follow" + "up_policy").install()
     import_module("aemr_bot.services.flow_stale_guard").install()
     import_module("aemr_bot.services.flow_repeat_policy").install()
+    import_module("aemr_bot.services.flow_extra").install()
     _attach_outer_middleware(dp, IdempotencyMiddleware())
     start.register(dp)
     admin_commands.register(dp)
