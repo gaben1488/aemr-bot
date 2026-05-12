@@ -66,7 +66,11 @@ services:
       # контейнера. Восстановление — см. RUNBOOK §7.
       - backups:/backups
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/healthz >/dev/null || exit 1"]
+      # Liveness, а не readiness: краткая проблема Postgres не должна
+      # помечать живой polling-процесс как unhealthy и запускать внешний
+      # watchdog/rollback. Readiness с DB-ping доступна отдельно на /readyz
+      # и backward-compatible /healthz для ручной диагностики.
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/livez >/dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
