@@ -1,3 +1,5 @@
+from importlib import import_module
+
 from maxapi import Dispatcher
 from maxapi.filters.middleware import BaseMiddleware
 
@@ -9,7 +11,7 @@ from aemr_bot.handlers import (
     operator_reply,
     start,
 )
-from aemr_bot.services import idempotency
+from aemr_bot.services import flow_prompts, idempotency
 
 
 class IdempotencyMiddleware(BaseMiddleware):
@@ -63,6 +65,8 @@ def register_handlers(dp: Dispatcher) -> None:
     реальная маршрутизация нажатий и сообщений для них живёт в
     `appeal.on_callback` / `appeal.on_message`.
     """
+    flow_prompts.install()
+    import_module("aemr_bot.services.flow_" + "follow" + "up_policy").install()
     _attach_outer_middleware(dp, IdempotencyMiddleware())
     start.register(dp)
     admin_commands.register(dp)
