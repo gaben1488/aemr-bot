@@ -16,6 +16,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 
@@ -132,13 +133,32 @@ async def claim(event: Any) -> bool:
         return True
 
 
+async def has_processed_raw(key: str) -> bool:
+    """Проверить наличие произвольного idempotency-ключа без записи.
+
+    Нужен для операций, где claim-before-work опасен. Например, при
+    ответе оператора жителю нельзя занимать ключ до доставки: если
+    отправка или запись в БД сорвётся, повтор должен быть возможен.
+    Поэтому вызывающий сначала проверяет наличие успешного ключа, делает
+    работу, и только после безопасной точки вызывает
+    `try_mark_processed_raw`.
+    """
+    try:
+        async with session_scope() as session:
+            event_id = await session.scalar(
+                select(Event.id).where(Event.idempotency_key == key).limit(1)
+            )
+            return event_id is not None
+    except Exception:
+        log.exception("raw idempotency lookup failed; defaulting to process")
+        return False
+
+
 async def try_mark_processed_raw(key: str, kind: str) -> bool:
     """Простая обёртка над insert into events для произвольного ключа.
 
-    Используется для дедупа, не связанного с MAX-Update — например,
-    дедуп ответов оператора между процессами (см. operator_reply.
-    _is_duplicate_reply_db). Возвращает True если ключ свободен (мы
-    его заняли), False если уже занят (дубль).
+    Используется для дедупа, не связанного с MAX-Update. Возвращает True
+    если ключ свободен (мы его заняли), False если уже занят (дубль).
 
     Хранится 30 дней по общему events-retention.
     """
