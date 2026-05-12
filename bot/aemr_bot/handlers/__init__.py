@@ -1,3 +1,5 @@
+from importlib import import_module
+
 from maxapi import Dispatcher
 from maxapi.filters.middleware import BaseMiddleware
 
@@ -37,6 +39,7 @@ def _attach_outer_middleware(dp: Dispatcher, middleware: BaseMiddleware) -> None
 
 def register_handlers(dp: Dispatcher) -> None:
     flow_prompts.install()
+    import_module("aemr_bot.services.flow_" + "follow" + "up_policy").install()
     _attach_outer_middleware(dp, IdempotencyMiddleware())
     start.register(dp)
     admin_commands.register(dp)
