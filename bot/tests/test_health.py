@@ -1,7 +1,9 @@
-"""Тесты на bot/aemr_bot/health.py — Heartbeat и /healthz endpoint."""
+"""Тесты на bot/aemr_bot/health.py — Heartbeat и health endpoints."""
 from __future__ import annotations
 
+import json
 import time
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -65,3 +67,58 @@ class TestPingDb:
         ):
             result = await health._ping_db()
         assert result is False
+
+
+class TestHealthEndpoints:
+    @pytest.mark.asyncio
+    async def test_livez_checks_heartbeat_only_not_db(self) -> None:
+        from aemr_bot import health
+
+        request = SimpleNamespace(remote="127.0.0.1")
+        with (
+            patch.object(health.heartbeat, "is_fresh", return_value=True),
+            patch(
+                "aemr_bot.health._ping_db_cached",
+                new=AsyncMock(side_effect=AssertionError("DB must not be pinged")),
+            ),
+        ):
+            response = await health._livez(request)
+
+        assert response.status == 200
+        payload = json.loads(response.text)
+        assert payload["ok"] is True
+        assert payload["heartbeat_fresh"] is True
+        assert "db_ok" not in payload
+
+    @pytest.mark.asyncio
+    async def test_readyz_requires_db(self) -> None:
+        from aemr_bot import health
+
+        request = SimpleNamespace(remote="127.0.0.1")
+        with (
+            patch.object(health.heartbeat, "is_fresh", return_value=True),
+            patch("aemr_bot.health._ping_db_cached", new=AsyncMock(return_value=False)),
+        ):
+            response = await health._readyz(request)
+
+        assert response.status == 503
+        payload = json.loads(response.text)
+        assert payload["ok"] is False
+        assert payload["heartbeat_fresh"] is True
+        assert payload["db_ok"] is False
+
+    @pytest.mark.asyncio
+    async def test_healthz_keeps_readiness_semantics(self) -> None:
+        from aemr_bot import health
+
+        request = SimpleNamespace(remote="127.0.0.1")
+        with (
+            patch.object(health.heartbeat, "is_fresh", return_value=True),
+            patch("aemr_bot.health._ping_db_cached", new=AsyncMock(return_value=True)),
+        ):
+            response = await health._healthz(request)
+
+        assert response.status == 200
+        payload = json.loads(response.text)
+        assert payload["ok"] is True
+        assert payload["db_ok"] is True
