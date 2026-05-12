@@ -32,6 +32,7 @@ from aemr_bot.handlers.appeal_runtime import (
     drop_user_lock,
     recover_stuck_funnels,
 )
+from aemr_bot.services import admin_events
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
@@ -76,6 +77,7 @@ _GEO_DETECTED_KEYS = (
     "detected_confidence",
 )
 
+_STALE_CALLBACK_NOTICE = "Эта карточка уже не актуальна. Используйте текущий шаг."
 _GEO_AWAITING_ADDRESS_NOTICE = "Я уже жду адрес текстом. Введите адрес сообщением."
 
 
@@ -136,7 +138,7 @@ async def _ensure_funnel_callback_state(
         return True
 
     if current is None:
-        # Unit-test fakes often expose no real dialog_state.
+        # Тестовые заглушки иногда не содержат настоящего dialog_state.
         return True
 
     expected_values = {state.value for state in expected}
@@ -165,7 +167,7 @@ async def _ensure_funnel_callback_state(
                 exc_info=True,
             )
     else:
-        await ack_callback(event)
+        await ack_callback(event, _STALE_CALLBACK_NOTICE)
     return False
 
 
@@ -240,6 +242,7 @@ def register(dp: Dispatcher) -> None:
             async with session_scope() as session:
                 await users_service.set_consent(session, max_user_id)
             await ack_callback(event, texts.CONSENT_ACCEPTED)
+            await admin_events.notify_consent_given(event.bot, max_user_id=max_user_id)
             await appeal_funnel.ask_contact_or_skip(event, max_user_id)
             return
 

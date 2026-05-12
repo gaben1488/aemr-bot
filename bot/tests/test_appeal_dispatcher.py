@@ -130,15 +130,19 @@ class TestCallbackConsent:
         event = _make_callback_event(payload="consent:yes")
         set_consent = AsyncMock()
         ask_contact = AsyncMock()
+        notify = AsyncMock()
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.appeal.users_service.set_consent",
                    set_consent), \
+             patch("aemr_bot.handlers.appeal.admin_events.notify_consent_given",
+                   notify), \
              patch("aemr_bot.handlers.appeal.appeal_funnel.ask_contact_or_skip",
                    ask_contact), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await on_callback(event)
         set_consent.assert_called_once()
+        notify.assert_called_once_with(event.bot, max_user_id=7)
         ask_contact.assert_called_once()
 
     @pytest.mark.asyncio

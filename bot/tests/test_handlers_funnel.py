@@ -144,6 +144,34 @@ class TestOnAwaitingAddress:
         msg = event.message.answer.call_args.args[0]
         assert "Укажите" in msg or "адрес" in msg.lower()
 
+    @pytest.mark.asyncio
+    async def test_valid_address_opens_topic_as_new_message(self) -> None:
+        """После ручного адреса следующая карточка должна идти ниже сообщения жителя."""
+        from aemr_bot.handlers import appeal_funnel
+
+        event = _make_event()
+        ask_topic = AsyncMock()
+        with patch(
+            "aemr_bot.handlers.appeal_funnel.session_scope"
+        ) as mock_scope, patch(
+            "aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data",
+            AsyncMock(),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.ask_topic",
+            ask_topic,
+        ):
+            mock_scope.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
+            mock_scope.return_value.__aexit__ = AsyncMock(return_value=None)
+
+            await appeal_funnel.on_awaiting_address(
+                event,
+                body=None,
+                text_body="Ленина, 5",
+                max_user_id=42,
+            )
+
+        ask_topic.assert_called_once_with(event, 42, force_new_message=True)
+
 
 class TestOnAwaitingName:
     @pytest.mark.asyncio

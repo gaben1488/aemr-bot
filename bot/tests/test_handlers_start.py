@@ -261,12 +261,15 @@ class TestCmdForget:
         event = _make_event()
         write_audit = AsyncMock()
         erase = AsyncMock()
+        notify = AsyncMock()
         with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.start.ops_service.write_audit", write_audit), \
-             patch("aemr_bot.handlers.start.users_service.erase_pdn", erase):
+             patch("aemr_bot.handlers.start.users_service.erase_pdn", erase), \
+             patch("aemr_bot.handlers.start.admin_events.notify_data_erased", notify):
             await start.cmd_forget(event)
         write_audit.assert_called_once()
         erase.assert_called_once()
+        notify.assert_called_once_with(event.bot, max_user_id=42, closed_appeal_ids=[])
 
 
 class TestCmdCancel:

@@ -243,15 +243,14 @@ async def _show_progress_step(
     keyboard,
     force_new_message: bool = False,
 ) -> None:
-    """Универсальный helper для шагов воронки: рендерит прогресс-карту,
+    """Общий помощник для шагов воронки: рендерит прогресс-карту,
     обновляет существующее сообщение через edit_message либо шлёт новое
     (см. services/progress.send_or_edit_progress), сохраняет mid в
     dialog_data['progress_message_id'].
 
-    `force_new_message=True` используется для переходов, где edit старого
-    сообщения создаёт ложный UX. Типичный пример — geo-confirm: экран
-    подтверждения адреса остаётся отдельным сообщением с устаревающими
-    inline-кнопками, а следующую тематику надо отправить новым сообщением.
+    `force_new_message=True` используется там, где редактирование старой
+    карточки ломает порядок ленты: после геоподтверждения или ручного
+    ввода адреса следующая карточка должна появиться ниже действия жителя.
     """
     from aemr_bot.services.progress import render_progress, send_or_edit_progress
 
@@ -437,7 +436,7 @@ async def on_awaiting_address(event, body, text_body, max_user_id):
         await users_service.update_dialog_data(
             session, max_user_id, {"address": address}
         )
-    await ask_topic(event, max_user_id)
+    await ask_topic(event, max_user_id, force_new_message=True)
 
 
 async def on_awaiting_summary(event, body, text_body, max_user_id):

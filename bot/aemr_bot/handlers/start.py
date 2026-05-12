@@ -5,6 +5,7 @@ from maxapi.types import BotStarted, Command, MessageCreated
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
+from aemr_bot.services import admin_events
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as ops_service
@@ -182,6 +183,11 @@ async def cmd_forget(event):
             target=f"user max_id={max_user_id}",
         )
         await users_service.erase_pdn(session, max_user_id)
+    await admin_events.notify_data_erased(
+        event.bot,
+        max_user_id=max_user_id,
+        closed_appeal_ids=[],
+    )
     await reply(event, texts.ERASE_REQUESTED)
 
 

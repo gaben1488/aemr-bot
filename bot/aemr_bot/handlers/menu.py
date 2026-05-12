@@ -3,6 +3,7 @@ from typing import Any
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
+from aemr_bot.services import admin_events
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import card_format
@@ -298,6 +299,7 @@ async def do_subscribe(event, max_user_id: int) -> None:
             )
             return
         await broadcasts_service.set_subscription(session, max_user_id, True)
+    await admin_events.notify_broadcast_subscribed(event.bot, max_user_id=max_user_id)
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.SUBSCRIBE_CONFIRMED,
@@ -341,6 +343,7 @@ async def do_subscribe_confirm(event, max_user_id: int) -> None:
             action="self_subscribe_broadcast",
             target=f"user max_id={max_user_id}",
         )
+    await admin_events.notify_broadcast_subscribed(event.bot, max_user_id=max_user_id)
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.SUBSCRIBE_CONFIRMED,
@@ -371,6 +374,11 @@ async def do_unsubscribe(event, max_user_id: int) -> None:
             )
             return
         await broadcasts_service.set_subscription(session, max_user_id, False)
+    await admin_events.notify_broadcast_unsubscribed(
+        event.bot,
+        max_user_id=max_user_id,
+        source="меню",
+    )
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.UNSUBSCRIBE_CONFIRMED,
@@ -395,6 +403,11 @@ async def handle_broadcast_unsubscribe(event, max_user_id: int) -> None:
             )
             return
         await broadcasts_service.set_subscription(session, max_user_id, False)
+    await admin_events.notify_broadcast_unsubscribed(
+        event.bot,
+        max_user_id=max_user_id,
+        source="кнопка под рассылкой",
+    )
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.UNSUBSCRIBE_CONFIRMED,
@@ -588,7 +601,6 @@ async def do_consent_revoke(event, max_user_id: int):
     напишет ответ в обычном порядке, попадёт в гард доставки и
     получит «не могу доставить, согласие отозвано» уже постфактум.
     """
-    from aemr_bot.config import settings as cfg
     from aemr_bot.services import appeals as appeals_service
     from aemr_bot.services import operators as ops_service
 
@@ -608,24 +620,11 @@ async def do_consent_revoke(event, max_user_id: int):
         text=texts.CONSENT_REVOKED_OK,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
-    # Уведомляем админ-группу про отзыв с конкретным списком открытых
-    # обращений — чтобы оператор не тратил время на подготовку ответа
-    # для жителя, который отозвался.
-    if my_open and cfg.admin_group_id:
-        ids = ", ".join(f"#{a.id}" for a in my_open)
-        try:
-            await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text=(
-                    f"⚠️ Житель отозвал согласие на ПДн.\n"
-                    f"Открытые обращения этого жителя: {ids}.\n"
-                    f"Доставка ответов жителю по ним заблокирована — "
-                    f"свяжитесь по телефону, если он сохранён, или "
-                    f"закройте обращения через карточку."
-                ),
-            )
-        except Exception:
-            log.debug("не удалось уведомить админ-группу об отзыве согласия", exc_info=True)
+    await admin_events.notify_consent_revoked(
+        event.bot,
+        max_user_id=max_user_id,
+        open_appeal_ids=[a.id for a in my_open],
+    )
 
 
 async def do_forget(event, max_user_id: int):
@@ -635,7 +634,6 @@ async def do_forget(event, max_user_id: int):
     Перед обнулением считаем открытые обращения, чтобы потом сказать
     админ-группе, какие карточки можно убирать из работы.
     """
-    from aemr_bot.config import settings as cfg
     from aemr_bot.services import appeals as appeals_service
     from aemr_bot.services import operators as ops_service
 
@@ -656,20 +654,11 @@ async def do_forget(event, max_user_id: int):
         text=texts.ERASE_REQUESTED,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
-    # Сообщаем админ-группе, что карточки этого жителя в работе можно
-    # убрать — обращения уже CLOSED, отвечать некому.
-    if closed_ids and cfg.admin_group_id:
-        ids = ", ".join(f"#{i}" for i in closed_ids)
-        try:
-            await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text=(
-                    f"🗑 Житель удалил данные. Закрыто без ответа: {ids}.\n"
-                    f"Карточки в чате устарели — отвечать не требуется."
-                ),
-            )
-        except Exception:
-            log.debug("не удалось уведомить админ-группу об удалении данных", exc_info=True)
+    await admin_events.notify_data_erased(
+        event.bot,
+        max_user_id=max_user_id,
+        closed_appeal_ids=closed_ids,
+    )
 
 
 async def open_appointment(event):
