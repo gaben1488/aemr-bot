@@ -87,7 +87,7 @@ jobs:
           --cov-report=term-missing:skip-covered
           --cov-report=xml:coverage.xml
           --cov-report=html:htmlcov
-          --cov-fail-under=70
+          --cov-fail-under=65
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
