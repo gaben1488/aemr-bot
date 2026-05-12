@@ -132,7 +132,10 @@ class TestSendOrEditProgress:
         bot.edit_message.assert_not_called()
         bot.send_message.assert_called_once()
         # format-параметр должен быть передан
-        assert "format" in bot.send_message.call_args.kwargs
+        kwargs = bot.send_message.call_args.kwargs
+        assert kwargs["chat_id"] == 42
+        assert kwargs["user_id"] is None
+        assert "format" in kwargs
         assert mid == "m-1"
         assert edited is False
 
@@ -177,6 +180,52 @@ class TestSendOrEditProgress:
         bot.edit_message.assert_not_called()
         bot.send_message.assert_called_once()
         assert mid == "m-forced"
+        assert edited is False
+
+    @pytest.mark.asyncio
+    async def test_callback_without_chat_id_sends_by_user_id(self) -> None:
+        """Регрессия geo-confirm: MessageCallback в личке может прийти без chat_id.
+
+        В этом случае после нажатия «✅ Всё правильно» состояние уже
+        меняется, но новая карточка с темами должна уйти по user_id, а
+        не молча потеряться из-за chat_id=None.
+        """
+        bot = AsyncMock()
+        bot.send_message.return_value = SimpleNamespace(
+            message=SimpleNamespace(body=SimpleNamespace(mid="m-user"))
+        )
+
+        mid, edited = await send_or_edit_progress(
+            bot,
+            chat_id=None,
+            user_id=777,
+            dialog_data={},
+            text="step after geo confirm",
+            attachments=[],
+        )
+
+        bot.send_message.assert_called_once()
+        kwargs = bot.send_message.call_args.kwargs
+        assert kwargs["chat_id"] is None
+        assert kwargs["user_id"] == 777
+        assert mid == "m-user"
+        assert edited is False
+
+    @pytest.mark.asyncio
+    async def test_missing_chat_and_user_id_returns_none_without_send(self) -> None:
+        bot = AsyncMock()
+
+        mid, edited = await send_or_edit_progress(
+            bot,
+            chat_id=None,
+            user_id=None,
+            dialog_data={},
+            text="step",
+            attachments=[],
+        )
+
+        bot.send_message.assert_not_called()
+        assert mid is None
         assert edited is False
 
     @pytest.mark.asyncio
