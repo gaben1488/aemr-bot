@@ -10,6 +10,7 @@
 - set_blocked: ставит/снимает, закрывает открытые обращения
 - find_by_phone: один матч, ноль, два (возвращает None и логирует)
 - erase_pdn_by_phone
+- erase_pdn: переподвеска на anonymous + стирание свободного текста/attachments
 - list_subscribers / list_consented / list_blocked
 - find_pending_pdn_retention: окно, исключения по first_name='Удалено'
 - has_open_appeals
@@ -22,9 +23,11 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from aemr_bot.db.models import (
+    ANONYMOUS_MAX_USER_ID,
     Appeal,
     AppealStatus,
     DialogState,
+    Message,
     User,
 )
 from aemr_bot.services import appeals as appeals_service
@@ -131,6 +134,72 @@ class TestErasePdnByPhone:
     async def test_no_match_returns_none(self, session) -> None:
         result = await users_service.erase_pdn_by_phone(session, "+79990000000")
         assert result is None
+
+
+class TestErasePdn:
+    @pytest.mark.asyncio
+    async def test_erases_user_and_redacts_appeal_payloads(self, session) -> None:
+        from sqlalchemy import select
+
+        user = await users_service.get_or_create(
+            session, max_user_id=777, first_name="Иван"
+        )
+        await users_service.set_phone(session, 777, "+79992223344")
+        appeal = await appeals_service.create_appeal(
+            session,
+            user=user,
+            address="ул. Ленина, 13, кв. 7",
+            topic="Дороги",
+            summary="Меня зовут Иван, телефон +79992223344, проблема у квартиры 7",
+            attachments=[{"type": "photo", "token": "secret-media-token"}],
+            locality="Елизово",
+        )
+        await appeals_service.add_user_message(
+            session,
+            appeal,
+            text="Дополнение: Иван, +79992223344",
+            attachments=[{"type": "file", "token": "secret-file-token"}],
+        )
+        await appeals_service.add_operator_message(
+            session,
+            appeal,
+            text="Ответ операторa с пересказом адреса ул. Ленина, 13",
+            operator_id=None,
+            max_message_id="op-mid-1",
+        )
+
+        ok = await users_service.erase_pdn(session, 777)
+        assert ok is True
+        await session.flush()
+
+        assert await session.scalar(select(User).where(User.max_user_id == 777)) is None
+        anonymous = await session.scalar(
+            select(User).where(User.max_user_id == ANONYMOUS_MAX_USER_ID)
+        )
+        assert anonymous is not None
+
+        stored_appeal = await session.scalar(select(Appeal).where(Appeal.id == appeal.id))
+        assert stored_appeal is not None
+        assert stored_appeal.user_id == anonymous.id
+        assert stored_appeal.address is None
+        assert stored_appeal.summary is None
+        assert stored_appeal.attachments == []
+        assert stored_appeal.topic == "Дороги"
+        assert stored_appeal.locality == "Елизово"
+        assert stored_appeal.closed_due_to_revoke is True
+
+        messages = (
+            await session.scalars(
+                select(Message).where(Message.appeal_id == appeal.id).order_by(Message.id)
+            )
+        ).all()
+        assert len(messages) == 2
+        assert all(msg.text is None for msg in messages)
+        assert all(msg.attachments == [] for msg in messages)
+
+    @pytest.mark.asyncio
+    async def test_missing_user_returns_false(self, session) -> None:
+        assert await users_service.erase_pdn(session, 404404) is False
 
 
 class TestListSubscribers:
