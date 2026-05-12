@@ -14,6 +14,7 @@ from maxapi.types import MessageCreated
 
 from aemr_bot import texts
 from aemr_bot.config import settings as cfg
+from aemr_bot.db.models import AppealStatus
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
@@ -175,7 +176,7 @@ async def _mark_reply_success_recorded(key: str | None) -> None:
 
 def _mid_from_link(link) -> str | None:
     """Извлекает message-id из Pydantic-модели LinkedMessage или её словарного
-    представления (dict fallback). love-apples/maxapi хранит его в `link.message.mid`; 
+    представления (dict fallback). love-apples/maxapi хранит его в `link.message.mid`;
     в старых версиях было `link.mid`. Пробуем оба варианта."""
     inner = getattr(link, "message", None)
     if inner is not None:
@@ -296,6 +297,18 @@ async def _deliver_operator_reply(
             ),
         )
         return True
+
+    if fresh_appeal.status == AppealStatus.CLOSED.value:
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=(
+                f"⚠️ Не могу доставить ответ по обращению #{appeal.id}: "
+                f"обращение уже закрыто. Если ответ всё же нужен, "
+                f"сначала возобновите обращение через /reopen {appeal.id}."
+            ),
+        )
+        return True
+
     user = fresh_appeal.user
     hard_forbidden = user.is_blocked or user.first_name == "Удалено"
     revoked_after_appeal = (
@@ -304,9 +317,7 @@ async def _deliver_operator_reply(
         and fresh_appeal.created_at is not None
         and fresh_appeal.created_at >= user.consent_revoked_at
     )
-    no_consent_ever = (
-        user.consent_pdn_at is None and user.consent_revoked_at is None
-    )
+    no_consent_ever = user.consent_pdn_at is None and user.consent_revoked_at is None
     if hard_forbidden or revoked_after_appeal or no_consent_ever:
         await event.bot.send_message(
             chat_id=get_chat_id(event),
