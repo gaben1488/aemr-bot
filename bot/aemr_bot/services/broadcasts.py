@@ -197,6 +197,42 @@ async def record_delivery(
     await session.flush()
 
 
+async def count_delivery_results(
+    session: AsyncSession,
+    broadcast_id: int,
+) -> tuple[int, int]:
+    """Посчитать уже записанные результаты доставки рассылки.
+
+    Используется аварийным wrapper'ом `_run_broadcast`: если цикл упал
+    после частичной отправки, нельзя помечать рассылку как `failed` с
+    нулевыми счётчиками. Часть жителей могла уже получить сообщение, а
+    `broadcast_deliveries` — содержать строки. Счётчики должны отражать
+    фактические записи доставки, чтобы оператор не запускал повторную
+    рассылку вслепую.
+    """
+    delivered = (
+        await session.scalar(
+            select(func.count())
+            .select_from(BroadcastDelivery)
+            .where(
+                BroadcastDelivery.broadcast_id == broadcast_id,
+                BroadcastDelivery.error.is_(None),
+            )
+        )
+    ) or 0
+    failed = (
+        await session.scalar(
+            select(func.count())
+            .select_from(BroadcastDelivery)
+            .where(
+                BroadcastDelivery.broadcast_id == broadcast_id,
+                BroadcastDelivery.error.isnot(None),
+            )
+        )
+    ) or 0
+    return int(delivered), int(failed)
+
+
 async def update_progress(
     session: AsyncSession,
     broadcast_id: int,
