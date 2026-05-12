@@ -34,8 +34,12 @@ jobs:
         run: python -m bandit -r aemr_bot/ -ll
       - name: pip-audit (CVE scan; hard fail)
         run: |
-          python -m pip_audit --strict --progress-spinner off --format=json --output=pip-audit.json
-          python -m pip_audit --strict --progress-spinner off
+          # `pip install -e .[dev]` устанавливает локальный пакет aemr-bot
+          # как editable distribution. Его нет на PyPI, поэтому `--strict`
+          # должен пропускать только editable root-package, а реальные
+          # сторонние зависимости всё равно audited и валят CI при CVE.
+          python -m pip_audit --strict --skip-editable --progress-spinner off --format=json --output=pip-audit.json
+          python -m pip_audit --strict --skip-editable --progress-spinner off
       - name: Upload security report
         uses: actions/upload-artifact@v4
         if: always()
