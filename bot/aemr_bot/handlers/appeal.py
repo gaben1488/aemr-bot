@@ -76,6 +76,8 @@ _GEO_DETECTED_KEYS = (
     "detected_confidence",
 )
 
+_GEO_AWAITING_ADDRESS_NOTICE = "Я уже жду адрес текстом. Введите адрес сообщением."
+
 
 def _state_value(raw: Any) -> str | None:
     if isinstance(raw, DialogState):
@@ -148,16 +150,42 @@ async def _ensure_funnel_callback_state(
         sorted(expected_values),
         max_user_id,
     )
-    await ack_callback(event)
+    if payload.startswith("geo:") and current == DialogState.AWAITING_ADDRESS.value:
+        await ack_callback(event, _GEO_AWAITING_ADDRESS_NOTICE)
+        try:
+            await _send_to_citizen(
+                event,
+                max_user_id,
+                text=_GEO_AWAITING_ADDRESS_NOTICE,
+            )
+        except Exception:
+            log.debug(
+                "failed to send stale geo awaiting-address notice to user=%s",
+                max_user_id,
+                exc_info=True,
+            )
+    else:
+        await ack_callback(event)
     return False
 
 
-def _clear_geo_detected(data: dict | None, *, drop_locality: bool = False) -> dict:
+def _clear_geo_detected(
+    data: dict | None,
+    *,
+    drop_locality: bool = False,
+    drop_progress_message: bool = False,
+) -> dict:
     cleaned = dict(data or {})
     for key in _GEO_DETECTED_KEYS:
         cleaned.pop(key, None)
     if drop_locality:
         cleaned.pop("locality", None)
+    if drop_progress_message:
+        # После geo-confirm старый progress_message_id обычно указывает
+        # на карточку выбора населённого пункта выше по чату. Если его
+        # оставить, следующий шаг редактируется в старом сообщении, а
+        # житель продолжает видеть активную geo-карточку как «зависшую».
+        cleaned.pop("progress_message_id", None)
     return cleaned
 
 
@@ -186,7 +214,10 @@ def register(dp: Dispatcher) -> None:
         # appeal_id жителя или другие идентификаторы. Полный — debug.
         prefix = payload.split(":", 1)[0] if payload else ""
         log.debug("on_callback: user=%s payload=%r", max_user_id, payload)
-        log.info("on_callback: user=%s payload_prefix=%s", max_user_id, prefix)
+        if prefix == "geo":
+            log.info("on_callback: user=%s payload=%s", max_user_id, payload)
+        else:
+            log.info("on_callback: user=%s payload_prefix=%s", max_user_id, prefix)
 
         # Коллбэки пользовательского флоу не должны срабатывать в
         # админ-группе. В админ-чате пропускаем только admin-flow, который
@@ -336,7 +367,10 @@ def register(dp: Dispatcher) -> None:
                         session,
                         max_user_id=max_user_id,
                     )
-                    fresh = _clear_geo_detected(user.dialog_data or data)
+                    fresh = _clear_geo_detected(
+                        user.dialog_data or data,
+                        drop_progress_message=not bool(full_addr),
+                    )
                     if full_addr:
                         fresh["address"] = full_addr
                         user.dialog_state = DialogState.AWAITING_TOPIC.value
@@ -360,7 +394,10 @@ def register(dp: Dispatcher) -> None:
                         session,
                         max_user_id=max_user_id,
                     )
-                    user.dialog_data = _clear_geo_detected(user.dialog_data or data)
+                    user.dialog_data = _clear_geo_detected(
+                        user.dialog_data or data,
+                        drop_progress_message=True,
+                    )
                     user.dialog_state = DialogState.AWAITING_ADDRESS.value
                     await session.flush()
                 await appeal_funnel.ask_address(event, max_user_id)
@@ -375,6 +412,7 @@ def register(dp: Dispatcher) -> None:
                     user.dialog_data = _clear_geo_detected(
                         user.dialog_data or data,
                         drop_locality=True,
+                        drop_progress_message=True,
                     )
                     user.dialog_state = DialogState.AWAITING_LOCALITY.value
                     await session.flush()
