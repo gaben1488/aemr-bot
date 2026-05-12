@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from dateutil.relativedelta import relativedelta
-from sqlalchemy import desc, func, select, update
+from sqlalchemy import desc, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -182,11 +182,17 @@ async def reopen(session: AsyncSession, appeal_id: int) -> bool:
     Если обращение уже NEW/IN_PROGRESS, ничего не меняем и возвращаем
     False — повторный клик кнопки «🔁 Возобновить» не должен переписывать
     timestamps и плодить ложные записи в audit_log.
+
+    Обращения, закрытые из-за отзыва согласия, удаления ПДн или ручной
+    блокировки (`closed_due_to_revoke=true`), не переоткрываются. Иначе
+    операторская кнопка могла бы вернуть в работу обращение, по которому
+    доставка ответа всё равно запрещена guard'ами ПДн.
     """
     result = await session.execute(
         update(Appeal)
         .where(
             Appeal.id == appeal_id,
+            Appeal.closed_due_to_revoke.is_(False),
             Appeal.status.in_(
                 [AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value]
             ),
@@ -310,33 +316,30 @@ async def purge_old_appeals_content(
     # порог retention обращения, поданные ровно 5 лет назад, могут
     # не попасть в первую же ночь. Не критично, но честнее.
     threshold = datetime.now(timezone.utc) - relativedelta(years=years)
+    closed_old_appeals = select(Appeal.id).where(
+        Appeal.status.in_([AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value]),
+        Appeal.closed_at.isnot(None),
+        Appeal.closed_at <= threshold,
+    )
     appeals_result = await session.execute(
         update(Appeal)
         .where(
-            Appeal.status.in_(
-                [AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value]
-            ),
-            Appeal.closed_at.isnot(None),
-            Appeal.closed_at <= threshold,
-            Appeal.summary.isnot(None),
+            Appeal.id.in_(closed_old_appeals),
+            or_(Appeal.summary.isnot(None), Appeal.attachments != []),
         )
         .values(summary=None, attachments=[])
     )
     purged_appeals = appeals_result.rowcount or 0
 
     # Сообщения переписки (followup жителя, ответ оператора) — обнуляем
-    # text у сообщений, чьё обращение уже было обнулено. Сделать одним
-    # UPDATE через подзапрос проще, чем итерироваться.
+    # text/attachments у сообщений закрытых старых обращений. Важно
+    # проверять отдельно attachments: после раннего ручного стирания text
+    # уже может быть NULL, но file/photo payload ещё не пустой.
     msg_result = await session.execute(
         update(Message)
         .where(
-            Message.appeal_id.in_(
-                select(Appeal.id).where(
-                    Appeal.summary.is_(None),
-                    Appeal.closed_at <= threshold,
-                )
-            ),
-            Message.text.isnot(None),
+            Message.appeal_id.in_(closed_old_appeals),
+            or_(Message.text.isnot(None), Message.attachments != []),
         )
         .values(text=None, attachments=[])
     )
