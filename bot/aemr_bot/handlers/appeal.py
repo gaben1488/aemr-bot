@@ -232,7 +232,11 @@ def register(dp: Dispatcher) -> None:
                             session, max_user_id, DialogState.AWAITING_ADDRESS
                         )
                 if full_addr:
-                    await appeal_funnel.ask_topic(event, max_user_id)
+                    await appeal_funnel.ask_topic(
+                        event,
+                        max_user_id,
+                        force_new_message=True,
+                    )
                 else:
                     await appeal_funnel.ask_address(event, max_user_id)
                 return
