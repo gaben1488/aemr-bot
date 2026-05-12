@@ -2,6 +2,9 @@
 из единого обработчика message_created в handlers/appeal.py.
 """
 
+from __future__ import annotations
+
+import hashlib
 import logging
 import re
 import time as _time
@@ -14,6 +17,7 @@ from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
+from aemr_bot.services import idempotency
 from aemr_bot.services import operators as operators_service
 from aemr_bot.utils.event import (
     extract_message_id,
@@ -29,8 +33,9 @@ log = logging.getLogger(__name__)
 # свайп-reply и параллельно набрать /reply N. Оба пути доходят до
 # `_deliver_operator_reply` независимо. Без дедупликации житель
 # получит две одинаковые копии ответа, в `messages` ляжет два
-# дубля. Запоминаем последний ответ в памяти процесса и режем
-# повтор того же текста на то же обращение в окне 10 секунд.
+# дубля. Запоминаем только УСПЕШНО завершённый ответ: до доставки и
+# записи в БД этот guard не должен отравлять retry после технического
+# сбоя.
 _recent_replies: dict[tuple[int, int], tuple[str, float]] = {}
 _REPLY_DEDUPE_WINDOW_SEC = 10.0
 
@@ -83,62 +88,76 @@ def drop_reply_intent(operator_id: int) -> int | None:
     return item[0]
 
 
-def _is_duplicate_reply(operator_id: int, appeal_id: int, text: str) -> bool:
-    """Дедуп ответа оператора в памяти процесса (быстрый первый рубеж).
+def _has_recent_successful_reply(operator_id: int, appeal_id: int, text: str) -> bool:
+    """Проверить короткий UX-дедуп без изменения состояния.
 
-    Окно 10 секунд, ключ — (operator_id, appeal_id, text). Если за это
-    окно тот же оператор отправил тот же текст по тому же обращению —
-    дубль. Защищает от двойного клика «✉️ Ответить» + параллельной
-    команды /reply.
-
-    Только для одного процесса. Многопроцессный дедуп — через БД,
-    см. `_is_duplicate_reply_db` в этом же файле.
+    В старой реализации сама проверка сразу записывала ключ. Из-за этого
+    retry после ошибки доставки или записи в БД мог быть отвергнут как
+    дубль. Теперь проверка и фиксация разделены.
     """
     key = (operator_id, appeal_id)
     prev = _recent_replies.get(key)
     now = _time.monotonic()
-    if prev is not None:
-        prev_text, prev_at = prev
-        if prev_text == text and now - prev_at <= _REPLY_DEDUPE_WINDOW_SEC:
-            return True
-    _recent_replies[key] = (text, now)
+    if prev is None:
+        return False
+    prev_text, prev_at = prev
+    return prev_text == text and now - prev_at <= _REPLY_DEDUPE_WINDOW_SEC
+
+
+def _remember_successful_reply(operator_id: int, appeal_id: int, text: str) -> None:
+    """Запомнить только успешно завершённый ответ."""
+    now = _time.monotonic()
+    _recent_replies[(operator_id, appeal_id)] = (text, now)
     if len(_recent_replies) > 256:
         cutoff = now - _REPLY_DEDUPE_WINDOW_SEC * 6
         for k in list(_recent_replies.keys()):
             _, t = _recent_replies[k]
             if t < cutoff:
                 _recent_replies.pop(k, None)
-    return False
 
 
-async def _is_duplicate_reply_db(
-    operator_id: int, appeal_id: int, text: str
-) -> bool:
-    """Дедуп через таблицу events (idempotency_key) — второй рубеж.
+def _is_duplicate_reply(operator_id: int, appeal_id: int, text: str) -> bool:
+    """Backward-compatible alias для тестов/старых импортов.
 
-    Работает между процессами: если завтра поднимем второй экземпляр
-    бота, оба будут видеть общий events.idempotency_key и одна реплика
-    отбросит дубль другой.
-
-    Ключ — `reply:{operator}:{appeal}:{hash(text)}`. TTL 30 дней
-    (стандартный retention events). За окно дедупа 10 секунд этого
-    хватает с запасом.
+    Семантика теперь безопасная: функция только проверяет recent-success
+    guard и не занимает ключ. Для записи успешного ответа использовать
+    `_remember_successful_reply`.
     """
-    import hashlib
+    return _has_recent_successful_reply(operator_id, appeal_id, text)
 
+
+def _reply_success_key(
+    event,
+    *,
+    operator_id: int,
+    appeal_id: int,
+    text: str,
+) -> str | None:
+    """Идемпотентность успешного ответа по source message/update.
+
+    Ключ строится от входящего MAX-сообщения оператора, а не только от
+    пары (оператор, обращение, текст). Поэтому повторная доставка того
+    же update после успешной обработки будет отбита, но новое сообщение
+    с тем же текстом после технического сбоя не будет заблокировано.
+    """
+    source_key = idempotency.build_idempotency_key(event)
+    if source_key is None:
+        return None
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
-    key = f"reply:{operator_id}:{appeal_id}:{digest}"
-    from aemr_bot.services import idempotency
+    key = f"reply_ok:{operator_id}:{appeal_id}:{digest}:{source_key}"
+    return key[: idempotency.MAX_KEY_LENGTH]
 
-    # `idempotency.try_mark_processed_raw` возвращает True если ключ
-    # был свободен и мы его заняли. False — значит уже был дубль.
-    try:
-        return not await idempotency.try_mark_processed_raw(key, "reply_dedup")
-    except Exception:
-        # БД-дедуп — best-effort: если что-то упало, fallback на
-        # in-memory _is_duplicate_reply, который уже защитил выше.
-        log.exception("DB dedup failed, fallback to in-memory only")
+
+async def _is_reply_success_recorded(key: str | None) -> bool:
+    if key is None:
         return False
+    return await idempotency.has_processed_raw(key)
+
+
+async def _mark_reply_success_recorded(key: str | None) -> None:
+    if key is None:
+        return
+    await idempotency.try_mark_processed_raw(key, "reply_success")
 
 
 def _mid_from_link(link) -> str | None:
@@ -211,18 +230,19 @@ async def _deliver_operator_reply(
         )
         return True
 
-    if _is_duplicate_reply(operator.id, appeal.id, text):
+    if _has_recent_successful_reply(operator.id, appeal.id, text):
         log.info(
-            "operator_reply: дубль за %.1fс отбит (in-memory) — operator=%s appeal=%s",
+            "operator_reply: дубль за %.1fс отбит (recent-success) — operator=%s appeal=%s",
             _REPLY_DEDUPE_WINDOW_SEC, operator.id, appeal.id,
         )
         return True
-    # Второй рубеж — БД-уровень. Защищает от race между процессами,
-    # если когда-то будет horizontal scaling. Сейчас работает один
-    # процесс, БД-дедуп страхует in-memory от падения.
-    if await _is_duplicate_reply_db(operator.id, appeal.id, text):
+
+    success_key = _reply_success_key(
+        event, operator_id=operator.id, appeal_id=appeal.id, text=text
+    )
+    if await _is_reply_success_recorded(success_key):
         log.info(
-            "operator_reply: дубль отбит (БД) — operator=%s appeal=%s",
+            "operator_reply: повтор уже успешно обработанного source-update отбит — operator=%s appeal=%s",
             operator.id, appeal.id,
         )
         return True
@@ -311,27 +331,53 @@ async def _deliver_operator_reply(
         return True
     delivered_mid = extract_message_id(sent)
 
-    async with session_scope() as session:
-        appeal_full = await appeals_service.get_by_id(session, appeal.id)
-        if appeal_full is None:
-            log.warning(
-                "appeal #%s vanished between lookup and reload", appeal.id
+    try:
+        async with session_scope() as session:
+            appeal_full = await appeals_service.get_by_id(session, appeal.id)
+            if appeal_full is None:
+                log.warning(
+                    "appeal #%s vanished between delivery and DB write", appeal.id
+                )
+                await event.bot.send_message(
+                    chat_id=get_chat_id(event),
+                    text=(
+                        f"⚠️ Ответ по обращению #{appeal.id} доставлен жителю, "
+                        f"но обращение исчезло перед записью в БД. "
+                        f"Не повторяйте ответ вслепую; проверьте логи."
+                    ),
+                )
+                return True
+            await appeals_service.add_operator_message(
+                session,
+                appeal=appeal_full,
+                text=text,
+                operator_id=operator.id,
+                max_message_id=delivered_mid,
             )
-            return True
-        await appeals_service.add_operator_message(
-            session,
-            appeal=appeal_full,
-            text=text,
-            operator_id=operator.id,
-            max_message_id=delivered_mid,
+            await operators_service.write_audit(
+                session,
+                operator_max_user_id=operator.max_user_id,
+                action=audit_action,
+                target=f"appeal #{appeal.id}",
+                details={"chars": len(text)},
+            )
+    except Exception:
+        log.exception(
+            "operator_reply: delivered but local DB/audit write failed — appeal=%s delivered_mid=%s",
+            appeal.id, delivered_mid,
         )
-        await operators_service.write_audit(
-            session,
-            operator_max_user_id=operator.max_user_id,
-            action=audit_action,
-            target=f"appeal #{appeal.id}",
-            details={"chars": len(text)},
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=(
+                f"⚠️ Ответ по обращению #{appeal.id} доставлен жителю, "
+                f"но запись в базе или audit_log не завершилась. "
+                f"Не повторяйте ответ вслепую; проверьте логи и состояние БД."
+            ),
         )
+        return True
+
+    await _mark_reply_success_recorded(success_key)
+    _remember_successful_reply(operator.id, appeal.id, text)
 
     await event.bot.send_message(
         chat_id=get_chat_id(event),
@@ -414,11 +460,11 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
                 author_id,
             )
             return False
-            
+
         appeal = None
         if target_mid:
             appeal = await appeals_service.get_by_admin_message_id(session, target_mid)
-        
+
         if appeal is None and appeal_id_from_text:
             appeal = await appeals_service.get_by_id(session, appeal_id_from_text)
 
