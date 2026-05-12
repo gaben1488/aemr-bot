@@ -4,14 +4,16 @@
 
 Покрываем:
 - remember_reply_intent / consume_reply_intent / drop_reply_intent
-- _is_duplicate_reply (in-memory, окно 10с)
+- recent-success dedupe: проверка не отравляет retry, запись только после success
 - _mid_from_link / _extract_reply_target_mid (Pydantic / dict)
-- _deliver_operator_reply: too_long, no_consent, blocked, success
+- _deliver_operator_reply: too_long, blocked/no-consent, vanished, send error,
+  DB/audit write error, success
 """
 from __future__ import annotations
 
 import time
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -37,6 +39,28 @@ def _make_event(*, chat_id: int = 100, user_id: int = 7) -> SimpleNamespace:
 @asynccontextmanager
 async def _fake_session_scope():
     yield MagicMock()
+
+
+def _fresh_appeal(*, user=None, appeal_id: int = 1) -> SimpleNamespace:
+    if user is None:
+        user = SimpleNamespace(
+            is_blocked=False,
+            first_name="Иван",
+            consent_pdn_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            consent_revoked_at=None,
+            max_user_id=42,
+        )
+    return SimpleNamespace(
+        id=appeal_id,
+        user=user,
+        created_at=datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc),
+        topic="Дороги",
+        locality="Елизово",
+        address="ул. Ленина, д. 1",
+        status="new",
+        summary="яма",
+        attachments=[],
+    )
 
 
 class TestReplyIntent:
@@ -77,25 +101,33 @@ class TestReplyIntent:
         assert opr.consume_reply_intent(5) is None
 
 
-class TestIsDuplicateReply:
+class TestRecentSuccessfulReplyDedupe:
     def test_first_reply_is_unique(self) -> None:
         from aemr_bot.handlers import operator_reply as opr
 
         opr._recent_replies.clear()
         assert opr._is_duplicate_reply(1, 100, "text-A") is False
 
-    def test_same_text_in_window_is_dupe(self) -> None:
+    def test_check_does_not_poison_retry(self) -> None:
         from aemr_bot.handlers import operator_reply as opr
 
         opr._recent_replies.clear()
-        opr._is_duplicate_reply(1, 100, "text-A")
+        assert opr._is_duplicate_reply(1, 100, "text-A") is False
+        # Вторая проверка тоже False: ключ не занят, пока ответ не завершился успешно.
+        assert opr._is_duplicate_reply(1, 100, "text-A") is False
+
+    def test_successful_same_text_in_window_is_dupe(self) -> None:
+        from aemr_bot.handlers import operator_reply as opr
+
+        opr._recent_replies.clear()
+        opr._remember_successful_reply(1, 100, "text-A")
         assert opr._is_duplicate_reply(1, 100, "text-A") is True
 
     def test_different_text_not_dupe(self) -> None:
         from aemr_bot.handlers import operator_reply as opr
 
         opr._recent_replies.clear()
-        opr._is_duplicate_reply(1, 100, "first")
+        opr._remember_successful_reply(1, 100, "first")
         assert opr._is_duplicate_reply(1, 100, "second") is False
 
 
@@ -191,9 +223,9 @@ class TestDeliverOperatorReply:
         operator.id = 7
         operator.max_user_id = 42
 
-        # Заранее запоминаем «такой ответ уже был».
+        # Заранее запоминаем только успешный ответ.
         opr._recent_replies.clear()
-        opr._is_duplicate_reply(operator.id, appeal.id, "X")
+        opr._remember_successful_reply(operator.id, appeal.id, "X")
         with patch.object(opr.cfg, "answer_max_chars", 1000):
             handled = await opr._deliver_operator_reply(
                 event, appeal=appeal, operator=operator,
@@ -201,6 +233,24 @@ class TestDeliverOperatorReply:
             )
         assert handled is True
         # Не должно быть send_message — дубль молча отбит.
+        event.bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_success_key_dupe_skipped(self) -> None:
+        from aemr_bot.handlers import operator_reply as opr
+
+        event = _make_event()
+        appeal = MagicMock(id=1)
+        operator = MagicMock(id=7, max_user_id=42)
+
+        with patch.object(opr.cfg, "answer_max_chars", 1000), \
+             patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
+                   AsyncMock(return_value=True)):
+            handled = await opr._deliver_operator_reply(
+                event, appeal=appeal, operator=operator,
+                text="уже ушло", audit_action="reply",
+            )
+        assert handled is True
         event.bot.send_message.assert_not_called()
 
     @pytest.mark.asyncio
@@ -221,16 +271,14 @@ class TestDeliverOperatorReply:
             consent_revoked_at=None,
             max_user_id=42,
         )
-        fresh_appeal = SimpleNamespace(
-            id=1, user=fresh_user, created_at=None
-        )
+        fresh_appeal = _fresh_appeal(user=fresh_user)
         opr._recent_replies.clear()
         with patch.object(opr.cfg, "answer_max_chars", 1000), \
              patch("aemr_bot.handlers.operator_reply.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
                    AsyncMock(return_value=fresh_appeal)), \
-             patch("aemr_bot.handlers.operator_reply._is_duplicate_reply_db",
+             patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
                    AsyncMock(return_value=False)):
             handled = await opr._deliver_operator_reply(
                 event, appeal=appeal, operator=operator,
@@ -258,7 +306,7 @@ class TestDeliverOperatorReply:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
                    AsyncMock(return_value=None)), \
-             patch("aemr_bot.handlers.operator_reply._is_duplicate_reply_db",
+             patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
                    AsyncMock(return_value=False)):
             handled = await opr._deliver_operator_reply(
                 event, appeal=appeal, operator=operator,
@@ -267,6 +315,112 @@ class TestDeliverOperatorReply:
         assert handled is True
         text = event.bot.send_message.call_args.kwargs.get("text", "")
         assert "не найдены" in text.lower() or "не могу" in text.lower()
+
+    @pytest.mark.asyncio
+    async def test_delivery_error_does_not_poison_retry(self) -> None:
+        from aemr_bot.handlers import operator_reply as opr
+
+        event = _make_event()
+        event.bot.send_message = AsyncMock(side_effect=RuntimeError("max down"))
+        appeal = MagicMock(id=1)
+        operator = MagicMock(id=7, max_user_id=42)
+        fresh_appeal = _fresh_appeal()
+
+        opr._recent_replies.clear()
+        with patch.object(opr.cfg, "answer_max_chars", 1000), \
+             patch("aemr_bot.handlers.operator_reply.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
+                   AsyncMock(return_value=fresh_appeal)), \
+             patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.operator_reply._mark_reply_success_recorded",
+                   AsyncMock()) as mark_success:
+            handled = await opr._deliver_operator_reply(
+                event, appeal=appeal, operator=operator,
+                text="попытка", audit_action="reply",
+            )
+
+        assert handled is True
+        mark_success.assert_not_called()
+        assert opr._is_duplicate_reply(operator.id, appeal.id, "попытка") is False
+
+    @pytest.mark.asyncio
+    async def test_db_write_error_after_delivery_is_traceable_and_not_marked_success(self) -> None:
+        from aemr_bot.handlers import operator_reply as opr
+
+        event = _make_event()
+        event.bot.send_message = AsyncMock(
+            side_effect=[SimpleNamespace(body=SimpleNamespace(mid="out-1")), None]
+        )
+        appeal = MagicMock(id=1)
+        operator = MagicMock(id=7, max_user_id=42)
+        fresh_appeal = _fresh_appeal()
+
+        opr._recent_replies.clear()
+        with patch.object(opr.cfg, "answer_max_chars", 1000), \
+             patch("aemr_bot.handlers.operator_reply.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
+                   AsyncMock(side_effect=[fresh_appeal, fresh_appeal])), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
+                   AsyncMock(side_effect=RuntimeError("db write failed"))), \
+             patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.operator_reply._mark_reply_success_recorded",
+                   AsyncMock()) as mark_success:
+            handled = await opr._deliver_operator_reply(
+                event, appeal=appeal, operator=operator,
+                text="ответ", audit_action="reply",
+            )
+
+        assert handled is True
+        mark_success.assert_not_called()
+        assert opr._is_duplicate_reply(operator.id, appeal.id, "ответ") is False
+        assert event.bot.send_message.call_count == 2
+        warning_text = event.bot.send_message.call_args.kwargs.get("text", "")
+        assert "доставлен" in warning_text.lower()
+        assert "баз" in warning_text.lower() or "audit" in warning_text.lower()
+
+    @pytest.mark.asyncio
+    async def test_success_marks_source_key_and_recent_success(self) -> None:
+        from aemr_bot.handlers import operator_reply as opr
+
+        event = _make_event()
+        event.bot.send_message = AsyncMock(
+            side_effect=[SimpleNamespace(body=SimpleNamespace(mid="out-1")), None]
+        )
+        appeal = MagicMock(id=1)
+        operator = MagicMock(id=7, max_user_id=42)
+        fresh_appeal = _fresh_appeal()
+
+        opr._recent_replies.clear()
+        with patch.object(opr.cfg, "answer_max_chars", 1000), \
+             patch("aemr_bot.handlers.operator_reply.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
+                   AsyncMock(side_effect=[fresh_appeal, fresh_appeal])), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
+                   AsyncMock()) as add_message, \
+             patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
+                   AsyncMock()) as write_audit, \
+             patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.operator_reply._mark_reply_success_recorded",
+                   AsyncMock()) as mark_success:
+            handled = await opr._deliver_operator_reply(
+                event, appeal=appeal, operator=operator,
+                text="ответ", audit_action="reply",
+            )
+
+        assert handled is True
+        add_message.assert_called_once()
+        write_audit.assert_called_once()
+        mark_success.assert_called_once()
+        assert opr._is_duplicate_reply(operator.id, appeal.id, "ответ") is True
+        assert event.bot.send_message.call_count == 2
 
 
 class TestHandleCommandReply:
