@@ -115,6 +115,7 @@ async def send_or_edit_progress(
     bot,
     *,
     chat_id: int | None,
+    user_id: int | None = None,
     dialog_data: dict,
     text: str,
     attachments: list,
@@ -138,6 +139,12 @@ async def send_or_edit_progress(
     выдаёт HTML-разметку. Если из maxapi нельзя импортировать enum
     (будущие версии без bc), молча шлём без format — текст всё равно
     пройдёт, просто с видимыми тегами в худшем случае.
+
+    Для MessageCallback MAX иногда не отдаёт `chat_id` в событии
+    callback'а. Типичный симптом — житель нажал «✅ Всё правильно»
+    после геолокации, состояние в БД перешло дальше, но новая карточка
+    с темами не отправилась. Поэтому fallback-send использует `user_id`,
+    если `chat_id` отсутствует.
 
     Caller должен сохранить возвращённый mid в dialog_data при
     edited=False (новое сообщение).
@@ -176,10 +183,17 @@ async def send_or_edit_progress(
                 exc_info=False,
             )
 
-    # Fallback / первый раз: новое сообщение
+    # Fallback / первый раз: новое сообщение. В личных callback'ах
+    # chat_id может отсутствовать, поэтому при его отсутствии отправляем
+    # по user_id. Если нет обоих идентификаторов — это уже битое событие.
+    if chat_id is None and user_id is None:
+        log.error("send_or_edit_progress: no chat_id and no user_id for send_message")
+        return None, False
+
     try:
         sent = await bot.send_message(
             chat_id=chat_id,
+            user_id=None if chat_id is not None else user_id,
             text=text,
             attachments=attachments,
             format=fmt,
