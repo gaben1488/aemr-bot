@@ -32,13 +32,10 @@ jobs:
         run: python -m mypy aemr_bot/
       - name: Bandit (medium and above)
         run: python -m bandit -r aemr_bot/ -ll
-      - name: pip-audit (CVE scan; non-blocking report)
-        # Пока оставляем soft-fail, но сохраняем отчёт артефактом.
-        # Следующий шаг — allowlist принятых CVE и hard-fail без `|| true`.
+      - name: pip-audit (CVE scan; hard fail)
         run: |
-          pip install pip-audit
-          python -m pip_audit --strict --progress-spinner off --format=json --output=pip-audit.json || true
-          python -m pip_audit --strict --progress-spinner off || true
+          python -m pip_audit --strict --progress-spinner off --format=json --output=pip-audit.json
+          python -m pip_audit --strict --progress-spinner off
       - name: Upload security report
         uses: actions/upload-artifact@v4
         if: always()
@@ -46,6 +43,24 @@ jobs:
           name: pip-audit-report
           path: bot/pip-audit.json
           if-no-files-found: ignore
+      - name: Install shellcheck
+        working-directory: .
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Shellcheck deployment scripts
+        working-directory: .
+        run: |
+          mapfile -t scripts < <(
+            find . -type f \
+              \( -name '*.sh' -o -path './scripts/*' -o -path './infra/scripts/*' \) \
+              -not -path './.git/*' \
+              -not -path './bot/.venv/*' \
+              -not -path './bot/.pytest_cache/*'
+          )
+          if [ "${#scripts[@]}" -eq 0 ]; then
+            echo "No shell scripts found."
+            exit 0
+          fi
+          shellcheck "${scripts[@]}"
 
   test:
     name: Pytest with Postgres 16
