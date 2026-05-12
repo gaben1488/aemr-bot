@@ -159,6 +159,27 @@ class TestSendOrEditProgress:
         assert edited is True
 
     @pytest.mark.asyncio
+    async def test_force_new_message_skips_edit_even_with_existing_mid(self) -> None:
+        bot = AsyncMock()
+        bot.send_message.return_value = SimpleNamespace(
+            message=SimpleNamespace(body=SimpleNamespace(mid="m-forced"))
+        )
+
+        mid, edited = await send_or_edit_progress(
+            bot,
+            chat_id=42,
+            dialog_data={"progress_message_id": "m-old"},
+            text="step after geo",
+            attachments=[],
+            force_new_message=True,
+        )
+
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_called_once()
+        assert mid == "m-forced"
+        assert edited is False
+
+    @pytest.mark.asyncio
     async def test_edit_failure_falls_back_to_new(self) -> None:
         bot = AsyncMock()
         bot.edit_message.side_effect = RuntimeError("API rate limit")

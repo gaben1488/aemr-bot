@@ -221,14 +221,17 @@ async def _show_progress_step(
     stage: str,
     next_state: DialogState,
     keyboard,
+    force_new_message: bool = False,
 ) -> None:
     """Универсальный helper для шагов воронки: рендерит прогресс-карту,
     обновляет существующее сообщение через edit_message либо шлёт новое
     (см. services/progress.send_or_edit_progress), сохраняет mid в
     dialog_data['progress_message_id'].
 
-    После рефакторинга 2026-05-10 заменяет 5 отдельных echo-сообщений
-    одним постоянно-обновляемым. См. services/progress.py для деталей.
+    `force_new_message=True` используется для переходов, где edit старого
+    сообщения создаёт ложный UX. Типичный пример — geo-confirm: экран
+    подтверждения адреса остаётся отдельным сообщением с устаревающими
+    inline-кнопками, а следующую тематику надо отправить новым сообщением.
     """
     from aemr_bot.services.progress import render_progress, send_or_edit_progress
 
@@ -253,6 +256,7 @@ async def _show_progress_step(
         dialog_data=data,
         text=text,
         attachments=[keyboard],
+        force_new_message=force_new_message,
     )
 
     # Сохранить mid если новое сообщение (edit использовал прежний mid —
@@ -290,7 +294,12 @@ async def ask_address(event, max_user_id: int):
     )
 
 
-async def ask_topic(event, max_user_id: int):
+async def ask_topic(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+):
     """Шаг «Тема». Прогресс-карта с галочкой адреса."""
     async with session_scope() as session:
         topics = await settings_store.get(session, "topics") or ["Другое"]
@@ -300,6 +309,7 @@ async def ask_topic(event, max_user_id: int):
         stage="topic",
         next_state=DialogState.AWAITING_TOPIC,
         keyboard=keyboards.topics_keyboard(topics),
+        force_new_message=force_new_message,
     )
 
 
