@@ -187,6 +187,10 @@ async def find_stuck_in_funnel(
         DialogState.AWAITING_CONTACT.value,
         DialogState.AWAITING_NAME.value,
         DialogState.AWAITING_LOCALITY.value,
+        # Geo-confirm — такой же промежуточный шаг, как выбор поселения
+        # или адрес. Раньше watchdog его не видел, и зависшая карточка
+        # после геолокации могла оставаться навсегда.
+        DialogState.AWAITING_GEO_CONFIRM.value,
         DialogState.AWAITING_ADDRESS.value,
         DialogState.AWAITING_TOPIC.value,
         # Житель тапнул «📎 Дополнить», но не дописал текст. Без watchdog

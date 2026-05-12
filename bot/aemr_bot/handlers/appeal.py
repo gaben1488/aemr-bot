@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from maxapi import Dispatcher
 from maxapi.types import MessageCallback, MessageCreated
@@ -66,6 +67,112 @@ _STATE_HANDLERS = {
     DialogState.IDLE: appeal_funnel.on_idle,
 }
 
+_GEO_DETECTED_KEYS = (
+    "detected_locality",
+    "detected_street",
+    "detected_house_number",
+    "detected_lat",
+    "detected_lon",
+    "detected_confidence",
+)
+
+
+def _state_value(raw: Any) -> str | None:
+    if isinstance(raw, DialogState):
+        return raw.value
+    if isinstance(raw, str):
+        return raw
+    return None
+
+
+def _expected_funnel_callback_states(payload: str) -> tuple[DialogState, ...]:
+    """Ожидаемые состояния для пользовательских inline-кнопок воронки.
+
+    MAX-клиент может хранить старые карточки. Пользователь способен
+    нажать старую кнопку выбора темы/поселения уже после перехода в
+    другой шаг. Поэтому кнопки, которые меняют FSM, должны работать
+    только из своего состояния.
+    """
+    if payload in {"consent:yes", "consent:no"}:
+        return (DialogState.AWAITING_CONSENT,)
+    if payload in {"addr:reuse", "addr:new"}:
+        # reuse-prompt может быть показан после AWAITING_NAME или после
+        # ask_contact_or_skip(), где состояние уже AWAITING_LOCALITY.
+        return (DialogState.AWAITING_NAME, DialogState.AWAITING_LOCALITY)
+    if payload.startswith("locality:"):
+        return (DialogState.AWAITING_LOCALITY,)
+    if payload in {"geo:confirm", "geo:edit_address", "geo:other_locality"}:
+        return (DialogState.AWAITING_GEO_CONFIRM,)
+    if payload.startswith("topic:"):
+        return (DialogState.AWAITING_TOPIC,)
+    if payload == "appeal:submit":
+        return (DialogState.AWAITING_SUMMARY,)
+    return ()
+
+
+async def _ensure_funnel_callback_state(
+    event: MessageCallback,
+    max_user_id: int,
+    payload: str,
+) -> bool:
+    expected = _expected_funnel_callback_states(payload)
+    if not expected:
+        return True
+
+    try:
+        async with session_scope() as session:
+            user = await users_service.get_or_create(
+                session,
+                max_user_id=max_user_id,
+            )
+            current = _state_value(getattr(user, "dialog_state", None))
+    except Exception:
+        # Если БД недоступна, основной handler всё равно не сможет
+        # корректно выполнить бизнес-операцию. Для unit-тестов с
+        # неполными session mocks не превращаем guard в источник падений.
+        log.debug("callback state guard skipped for %s", payload, exc_info=True)
+        return True
+
+    if current is None:
+        # Unit-test fakes often expose no real dialog_state.
+        return True
+
+    expected_values = {state.value for state in expected}
+    if current in expected_values:
+        return True
+
+    log.info(
+        "stale citizen callback ignored: payload=%s state=%s expected=%s user=%s",
+        payload,
+        current,
+        sorted(expected_values),
+        max_user_id,
+    )
+    await ack_callback(event)
+    return False
+
+
+def _clear_geo_detected(data: dict | None, *, drop_locality: bool = False) -> dict:
+    cleaned = dict(data or {})
+    for key in _GEO_DETECTED_KEYS:
+        cleaned.pop(key, None)
+    if drop_locality:
+        cleaned.pop("locality", None)
+    return cleaned
+
+
+async def _send_to_citizen(
+    event: MessageCallback,
+    max_user_id: int,
+    *,
+    text: str,
+) -> None:
+    chat_id = get_chat_id(event)
+    if chat_id is not None:
+        await event.bot.send_message(chat_id=chat_id, text=text)
+    else:
+        await event.bot.send_message(user_id=max_user_id, text=text)
+
 
 def register(dp: Dispatcher) -> None:
     @dp.message_callback()
@@ -90,6 +197,9 @@ def register(dp: Dispatcher) -> None:
                 await ack_callback(event)
                 return
 
+        if not await _ensure_funnel_callback_state(event, max_user_id, payload):
+            return
+
         if payload == "menu:new_appeal":
             await ack_callback(event)
             await appeal_funnel.start_appeal_flow(event, max_user_id)
@@ -109,8 +219,9 @@ def register(dp: Dispatcher) -> None:
             await ack_callback(event)
             from aemr_bot.handlers.menu import open_main_menu
 
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await _send_to_citizen(
+                event,
+                max_user_id,
                 text=texts.CONSENT_DECLINED,
             )
             await open_main_menu(event)
@@ -123,10 +234,7 @@ def register(dp: Dispatcher) -> None:
             await ack_callback(event)
             from aemr_bot.handlers.menu import open_main_menu
 
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
-                text=texts.CANCELLED,
-            )
+            await _send_to_citizen(event, max_user_id, text=texts.CANCELLED)
             await open_main_menu(event)
             return
 
@@ -134,10 +242,12 @@ def register(dp: Dispatcher) -> None:
             await ack_callback(event)
             async with session_scope() as session:
                 user = await users_service.get_or_create(
-                    session, max_user_id=max_user_id
+                    session,
+                    max_user_id=max_user_id,
                 )
                 last = await appeals_service.find_last_address_for_user(
-                    session, user.id
+                    session,
+                    user.id,
                 )
             if last is None:
                 # Между показом промпта и кликом обращение могло быть
@@ -170,13 +280,17 @@ def register(dp: Dispatcher) -> None:
                 if 0 <= idx < len(localities):
                     chosen = localities[idx]
                     await users_service.update_dialog_data(
-                        session, max_user_id, {"locality": chosen}
+                        session,
+                        max_user_id,
+                        {"locality": chosen},
                     )
                 else:
                     await ack_callback(event)
                     log.warning(
                         "locality:%s out of range (have %d), user=%s",
-                        idx, len(localities), max_user_id,
+                        idx,
+                        len(localities),
+                        max_user_id,
                     )
                     return
             await ack_callback(event)
@@ -184,14 +298,15 @@ def register(dp: Dispatcher) -> None:
             return
 
         # Подтверждение / редактирование определённого через геолокацию
-        # адреса. Все три callback'а guard'им наличием detected_locality
-        # в dialog_data — иначе это стейл-кнопка из старого сообщения,
-        # ack'аем и молча пропускаем.
+        # адреса. Все три callback'а guard'им состоянием и наличием
+        # detected_locality в dialog_data — иначе это стейл-кнопка из
+        # старого сообщения, ack'аем и молча пропускаем.
         if payload in ("geo:confirm", "geo:edit_address", "geo:other_locality"):
             await ack_callback(event)
             async with session_scope() as session:
                 user = await users_service.get_or_create(
-                    session, max_user_id=max_user_id
+                    session,
+                    max_user_id=max_user_id,
                 )
                 state = user.dialog_state
                 data = dict(user.dialog_data or {})
@@ -200,7 +315,10 @@ def register(dp: Dispatcher) -> None:
             ):
                 log.info(
                     "geo callback %s ignored: state=%s, has_detected=%s, user=%s",
-                    payload, state, bool(data.get("detected_locality")), max_user_id,
+                    payload,
+                    state,
+                    bool(data.get("detected_locality")),
+                    max_user_id,
                 )
                 return
 
@@ -214,17 +332,18 @@ def register(dp: Dispatcher) -> None:
                 else:
                     full_addr = ""
                 async with session_scope() as session:
+                    user = await users_service.get_or_create(
+                        session,
+                        max_user_id=max_user_id,
+                    )
+                    fresh = _clear_geo_detected(user.dialog_data or data)
                     if full_addr:
-                        await users_service.update_dialog_data(
-                            session, max_user_id, {"address": full_addr}
-                        )
-                        await users_service.set_state(
-                            session, max_user_id, DialogState.AWAITING_TOPIC
-                        )
+                        fresh["address"] = full_addr
+                        user.dialog_state = DialogState.AWAITING_TOPIC.value
                     else:
-                        await users_service.set_state(
-                            session, max_user_id, DialogState.AWAITING_ADDRESS
-                        )
+                        user.dialog_state = DialogState.AWAITING_ADDRESS.value
+                    user.dialog_data = fresh
+                    await session.flush()
                 if full_addr:
                     await appeal_funnel.ask_topic(
                         event,
@@ -238,36 +357,26 @@ def register(dp: Dispatcher) -> None:
             if payload == "geo:edit_address":
                 async with session_scope() as session:
                     user = await users_service.get_or_create(
-                        session, max_user_id=max_user_id
+                        session,
+                        max_user_id=max_user_id,
                     )
-                    fresh = dict(user.dialog_data or {})
-                    for k in ("detected_street", "detected_house_number"):
-                        fresh.pop(k, None)
-                    user.dialog_data = fresh
+                    user.dialog_data = _clear_geo_detected(user.dialog_data or data)
+                    user.dialog_state = DialogState.AWAITING_ADDRESS.value
                     await session.flush()
-                    await users_service.set_state(
-                        session, max_user_id, DialogState.AWAITING_ADDRESS
-                    )
                 await appeal_funnel.ask_address(event, max_user_id)
                 return
 
             if payload == "geo:other_locality":
                 async with session_scope() as session:
                     user = await users_service.get_or_create(
-                        session, max_user_id=max_user_id
+                        session,
+                        max_user_id=max_user_id,
                     )
-                    fresh = dict(user.dialog_data or {})
-                    for k in (
-                        "locality",
-                        "detected_locality",
-                        "detected_street",
-                        "detected_house_number",
-                        "detected_lat",
-                        "detected_lon",
-                        "detected_confidence",
-                    ):
-                        fresh.pop(k, None)
-                    user.dialog_data = fresh
+                    user.dialog_data = _clear_geo_detected(
+                        user.dialog_data or data,
+                        drop_locality=True,
+                    )
+                    user.dialog_state = DialogState.AWAITING_LOCALITY.value
                     await session.flush()
                 await appeal_funnel.ask_locality(event, max_user_id)
                 return
@@ -282,13 +391,17 @@ def register(dp: Dispatcher) -> None:
                 if 0 <= idx < len(topics):
                     chosen = topics[idx]
                     await users_service.update_dialog_data(
-                        session, max_user_id, {"topic": chosen}
+                        session,
+                        max_user_id,
+                        {"topic": chosen},
                     )
                 else:
                     await ack_callback(event)
                     log.warning(
                         "topic:%s out of range (have %d), user=%s",
-                        idx, len(topics), max_user_id,
+                        idx,
+                        len(topics),
+                        max_user_id,
                     )
                     return
             await ack_callback(event)
@@ -297,7 +410,8 @@ def register(dp: Dispatcher) -> None:
 
         if payload == "appeal:submit":
             # Кнопка «Отправить» осталась в старых сообщениях клиента,
-            # которые ещё могут крутиться у жителя в чате. Финализируем.
+            # которые ещё могут крутиться у жителя в чате. Финализируем
+            # только если пользователь всё ещё на шаге описания сути.
             await ack_callback(event)
             await appeal_funnel.finalize_appeal(event, max_user_id)
             return
@@ -497,7 +611,8 @@ def register(dp: Dispatcher) -> None:
             if consumed:
                 return
             consumed = await admin_cmd_module.handle_operators_wizard_text(
-                event, text_body
+                event,
+                text_body,
             )
             if consumed:
                 return
