@@ -5,11 +5,8 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'scripts/make_repo_index.py'
-      - 'REPO_INDEX.md'
-      - '.github/workflows/repo-index.yml'
-      - '.gitignore'
+    paths-ignore:
+      - 'aemr-bot-index.md'
 
 permissions:
   contents: write
@@ -40,7 +37,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f aemr-bot-index.md
+          git add aemr-bot-index.md
           if git diff --cached --quiet; then
             echo "Repository index is already up to date."
             exit 0
