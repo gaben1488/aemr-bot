@@ -14,7 +14,7 @@ def _callback_event(*, mid: str = "m-old"):
         bot=bot,
         callback=SimpleNamespace(),
         message=SimpleNamespace(body=SimpleNamespace(mid=mid)),
-        get_ids=lambda: {"chat_id": 42, "user_id": 777},
+        get_ids=lambda: (42, 777),
     )
 
 
@@ -24,7 +24,7 @@ def _message_event():
         bot=bot,
         callback=None,
         message=SimpleNamespace(body=SimpleNamespace(mid="incoming-user-message")),
-        get_ids=lambda: {"chat_id": 42, "user_id": 777},
+        get_ids=lambda: (42, 777),
     )
 
 
