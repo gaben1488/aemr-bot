@@ -22,6 +22,25 @@ async def test_notify_consent_given_sends_to_admin_group() -> None:
 
 
 @pytest.mark.asyncio
+async def test_notify_consent_revoked_points_to_final_reply() -> None:
+    from aemr_bot.services import admin_events
+
+    bot = AsyncMock()
+    with patch("aemr_bot.services.admin_events.cfg.admin_group_id", 777):
+        await admin_events.notify_consent_revoked(
+            bot,
+            max_user_id=42,
+            open_appeal_ids=[10, 11],
+        )
+
+    text = bot.send_message.call_args.kwargs["text"]
+    assert "финального ответа" in text.lower()
+    assert "#10" in text
+    assert "#11" in text
+    assert "телефон" not in text.lower()
+
+
+@pytest.mark.asyncio
 async def test_notify_skips_when_admin_group_is_not_configured() -> None:
     from aemr_bot.services import admin_events
 

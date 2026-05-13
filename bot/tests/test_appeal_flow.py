@@ -126,12 +126,20 @@ async def test_erase_pdn(session):
 @pytest.mark.asyncio
 async def test_revoke_consent_152fz(session):
     """152-ФЗ: revoke_consent отзывает согласие, обнуляет рассылку и
-    воронку, но НЕ удаляет запись (это делает /erase или 30-дневный
-    retention). После revoke has_consent → False, повторный revoke
-    идемпотентен (вернёт False — нечего обновлять)."""
-    await users_service.get_or_create(session, max_user_id=99, first_name="Анна")
+    воронку, но НЕ удаляет запись сразу: фактическое обезличивание делает
+    /erase или 30-дневный retention. Открытые обращения остаются в работе
+    для финального ответа оператора."""
+    user = await users_service.get_or_create(session, max_user_id=99, first_name="Анна")
     await users_service.set_consent(session, 99)
     await users_service.set_phone(session, 99, "+79991234567")
+    appeal = await appeals_service.create_appeal(
+        session,
+        user=user,
+        address="Ленина, 1",
+        topic="Дороги",
+        summary="Яма",
+        attachments=[],
+    )
     assert await users_service.has_consent(session, 99) is True
 
     # Revoke сработал
@@ -148,6 +156,10 @@ async def test_revoke_consent_152fz(session):
     # Имя/телефон ОСТАЮТСЯ — будут стёрты только через 30 дней или /erase
     assert user.first_name == "Анна"
     assert user.phone == "+79991234567"
+    open_appeal = await appeals_service.get_by_id(session, appeal.id)
+    assert open_appeal.status == AppealStatus.NEW.value
+    assert open_appeal.closed_due_to_revoke is False
+    assert open_appeal.closed_at is None
 
 
 @pytest.mark.asyncio

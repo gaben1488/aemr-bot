@@ -14,6 +14,59 @@ from aemr_bot.utils.event import ack_callback, get_chat_id, get_user_id
 log = logging.getLogger(__name__)
 
 
+def _callback_mid(event) -> str | None:
+    """mid сообщения, на котором нажали кнопку.
+
+    MAX позволяет редактировать именно это сообщение. Для обычных команд
+    callback отсутствует — тогда меню отправляется новым сообщением.
+    """
+    if getattr(event, "callback", None) is None:
+        return None
+    body = getattr(getattr(event, "message", None), "body", None)
+    mid = getattr(body, "mid", None)
+    return str(mid) if mid else None
+
+
+async def _send_or_edit_menu(
+    event,
+    *,
+    text: str,
+    attachments: list | None = None,
+    force_new_message: bool = False,
+) -> None:
+    """Показать экран меню.
+
+    Если экран открыт нажатием кнопки, редактируем текущую карточку — как
+    в воронке подачи обращения. Если это команда или редактирование не
+    удалось, отправляем новое сообщение.
+    """
+    attachments = attachments or []
+    mid = None if force_new_message else _callback_mid(event)
+    if mid and hasattr(event.bot, "edit_message"):
+        try:
+            await event.bot.edit_message(
+                message_id=mid,
+                text=text,
+                attachments=attachments,
+            )
+            return
+        except Exception:
+            log.info(
+                "menu: edit_message %s failed, fallback to send",
+                mid,
+                exc_info=False,
+            )
+
+    chat_id = get_chat_id(event)
+    user_id = None if chat_id is not None else get_user_id(event)
+    await event.bot.send_message(
+        chat_id=chat_id,
+        user_id=user_id,
+        text=text,
+        attachments=attachments,
+    )
+
+
 async def open_main_menu(event):
     """Главное меню жителя. Кнопка подписки рендерится по актуальному
     состоянию: если житель уже подписан — «Отписаться», иначе
@@ -40,8 +93,8 @@ async def open_main_menu(event):
                 recep_url = await settings_store.get(session, "electronic_reception_url")
 
     if is_blocked:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
+        await _send_or_edit_menu(
+            event,
             text=(
                 "Ваш аккаунт заблокирован — подача обращений и подписка "
                 "недоступны. Доступные разделы — ниже. Если блокировка "
@@ -51,8 +104,8 @@ async def open_main_menu(event):
         )
         return
 
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=texts.WELCOME,
         attachments=[keyboards.main_menu(subscribed=subscribed)],
     )
@@ -67,8 +120,8 @@ async def open_my_appeals(event, max_user_id: int, page: int = 1):
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         total = await appeals_service.count_for_user(session, user.id)
         if total == 0:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await _send_or_edit_menu(
+                event,
                 text=texts.APPEAL_LIST_EMPTY,
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
@@ -85,8 +138,8 @@ async def open_my_appeals(event, max_user_id: int, page: int = 1):
         if total_pages > 1
         else f"Ваши обращения (всего {total}):"
     )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=header,
         attachments=[
             keyboards.my_appeals_list_keyboard(items, page=page, total_pages=total_pages)
@@ -108,8 +161,8 @@ async def start_appeal_followup(event, appeal_id: int, max_user_id: int):
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id(session, appeal_id)
         if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await _send_or_edit_menu(
+                event,
                 text="Обращение не найдено.",
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
@@ -118,8 +171,8 @@ async def start_appeal_followup(event, appeal_id: int, max_user_id: int):
         # считаются завершёнными: повтор по ним — новое связанное
         # обращение, чтобы история не «оживала» задним числом.
         if appeal.status in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await _send_or_edit_menu(
+                event,
                 text=(
                     "Это обращение уже завершено. Если вопрос повторился "
                     "или ответ нужно обсудить отдельно, откройте карточку "
@@ -135,8 +188,8 @@ async def start_appeal_followup(event, appeal_id: int, max_user_id: int):
             DialogState.AWAITING_FOLLOWUP_TEXT,
             data={"appeal_id": appeal_id},
         )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=(
             f"Опишите дополнение к обращению #{appeal_id} одним сообщением. "
             f"Можно приложить фото, видео или файл."
@@ -158,8 +211,8 @@ async def start_appeal_repeat(event, appeal_id: int, max_user_id: int):
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id(session, appeal_id)
         if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await _send_or_edit_menu(
+                event,
                 text="Обращение не найдено.",
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
@@ -197,8 +250,8 @@ async def start_appeal_repeat(event, appeal_id: int, max_user_id: int):
         context = "по закрытому вопросу"
     else:
         context = "с теми же данными"
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=(
             f"Подаём новое обращение {context}:\n"
             f"📍 {appeal.locality}, {appeal.address}\n"
@@ -221,16 +274,16 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id(session, appeal_id)
         if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await _send_or_edit_menu(
+                event,
                 text="Обращение не найдено.",
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
         text = card_format.user_card(appeal)
         status = appeal.status
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=text,
         attachments=[keyboards.user_appeal_card_keyboard(appeal_id, status)],
     )
@@ -246,8 +299,8 @@ async def open_useful_info(event):
             if max_user_id is not None
             else False
         )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=texts.USEFUL_INFO_TITLE,
         attachments=[
             keyboards.useful_info_keyboard(udth, udth_inter, subscribed=subscribed)
@@ -270,8 +323,8 @@ async def do_subscribe(event, max_user_id: int) -> None:
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         if user.is_blocked:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await _send_or_edit_menu(
+                event,
                 text=(
                     "Подписка недоступна: ваш аккаунт заблокирован. "
                     "Если это ошибка — обратитесь к оператору."
@@ -284,24 +337,24 @@ async def do_subscribe(event, max_user_id: int) -> None:
         # воронку обращения; это было избыточно для цели «отправить
         # рассылку», нарушение ст. 5 ч. 5 (минимизация).
         if not user.consent_broadcast_at:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await _send_or_edit_menu(
+                event,
                 text=texts.SUBSCRIBE_MINI_CONSENT,
                 attachments=[keyboards.subscribe_mini_consent_keyboard()],
             )
             return
         already = await broadcasts_service.is_subscribed(session, max_user_id)
         if already:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await _send_or_edit_menu(
+                event,
                 text=texts.SUBSCRIBE_ALREADY_ON,
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
         await broadcasts_service.set_subscription(session, max_user_id, True)
     await admin_events.notify_broadcast_subscribed(event.bot, max_user_id=max_user_id)
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=texts.SUBSCRIBE_CONFIRMED,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -320,8 +373,8 @@ async def do_subscribe_confirm(event, max_user_id: int) -> None:
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         if user.is_blocked:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await _send_or_edit_menu(
+                event,
                 text=(
                     "Подписка недоступна: ваш аккаунт заблокирован. "
                     "Если это ошибка — обратитесь к оператору."
@@ -344,8 +397,8 @@ async def do_subscribe_confirm(event, max_user_id: int) -> None:
             target=f"user max_id={max_user_id}",
         )
     await admin_events.notify_broadcast_subscribed(event.bot, max_user_id=max_user_id)
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=texts.SUBSCRIBE_CONFIRMED,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -359,16 +412,16 @@ async def do_unsubscribe(event, max_user_id: int) -> None:
         # рассылку. Но на всякий случай отметим subscribed=false.
         if user.is_blocked:
             await broadcasts_service.set_subscription(session, max_user_id, False)
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await _send_or_edit_menu(
+                event,
                 text=texts.UNSUBSCRIBE_CONFIRMED,
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
         already = await broadcasts_service.is_subscribed(session, max_user_id)
         if not already:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await _send_or_edit_menu(
+                event,
                 text=texts.UNSUBSCRIBE_ALREADY_OFF,
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
@@ -379,8 +432,8 @@ async def do_unsubscribe(event, max_user_id: int) -> None:
         max_user_id=max_user_id,
         source="меню",
     )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=texts.UNSUBSCRIBE_CONFIRMED,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -418,24 +471,24 @@ async def handle_broadcast_unsubscribe(event, max_user_id: int) -> None:
 async def open_settings(event):
     """Подменю «Настройки и помощь» с кнопками-дубликатами для команд /help,
     /policy, /forget. Цель — чтобы житель не запоминал команды."""
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=texts.SETTINGS_MENU_TITLE,
         attachments=[keyboards.settings_menu_keyboard()],
     )
 
 
 async def open_help(event):
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=texts.HELP_USER,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
 
 
 async def open_rules(event):
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=texts.RULES_TEXT,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -449,8 +502,8 @@ async def open_goodbye(event):
     переводит юридические термины в жизненные ситуации, чтобы пенсионер
     понимал «что мне выбрать», а не «что значит отозвать согласие».
     """
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=texts.GOODBYE_PROMPT,
         attachments=[keyboards.goodbye_keyboard()],
     )
@@ -460,13 +513,13 @@ async def ask_goodbye_revoke_confirm(event):
     """Подтверждение «прощального» отзыва согласия из A4-экрана.
 
     Текст подтверждения тот же, что в `ask_consent_revoke_confirm`
-    (CONSENT_REVOKE_CONFIRM) — он уже написан под новую парадигму
-    «оператор обязательно ответит, через 30 дней автоудаление».
+    (CONSENT_REVOKE_CONFIRM) — он описывает финальный ответ по уже
+    открытым обращениям и автоудаление через 30 дней без активности.
     Меняется только клавиатура — возврат на отказ ведёт обратно в
     A4-экран, а не в карточку «Согласие на ПДн» (которой больше нет).
     """
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=texts.CONSENT_REVOKE_CONFIRM,
         attachments=[keyboards.goodbye_revoke_confirm_keyboard()],
     )
@@ -498,8 +551,8 @@ async def ask_goodbye_erase_confirm(event):
     if open_lines:
         text += "\n\nСейчас у вас в работе:\n• " + "\n• ".join(open_lines)
         text += "\n\nПри стирании эти обращения закроются без ответа."
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=text,
         attachments=[keyboards.goodbye_erase_confirm_keyboard()],
     )
@@ -542,8 +595,8 @@ async def ask_forget_confirm(event):
             + "\n\nПри удалении они будут закрыты без ответа."
         )
 
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=text,
         attachments=[keyboards.forget_confirm_keyboard()],
     )
@@ -576,30 +629,31 @@ async def show_consent_status(event, max_user_id: int):
         )
     else:
         text = texts.CONSENT_STATUS_NEVER
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=text,
         attachments=[keyboards.consent_status_keyboard(consent_active=consent_active)],
     )
 
 
 async def ask_consent_revoke_confirm(event):
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=texts.CONSENT_REVOKE_CONFIRM,
         attachments=[keyboards.consent_revoke_confirm_keyboard()],
     )
 
 
 async def do_consent_revoke(event, max_user_id: int):
-    """Мягкий отзыв согласия через кнопку. Подписка отключается,
-    дальнейшие новые обращения требуют дать согласие заново.
-    Открытые на момент отзыва обращения остаются в работе.
+    """Отзыв согласия через кнопку.
 
-    Параллельно отправляем плашку в служебную группу: оператор должен
-    знать, что по конкретному обращению согласие отозвано — иначе он
-    напишет ответ в обычном порядке, попадёт в гард доставки и
-    получит «не могу доставить, согласие отозвано» уже постфактум.
+    Подписка отключается, новые обращения требуют нового согласия.
+    Открытые на момент отзыва обращения остаются в работе: оператор
+    отправляет по ним финальный ответ через бот, после чего стандартный
+    механизм ответа закрывает обращение.
+
+    В служебную группу отправляем уведомление и повторяем карточки
+    открытых обращений, чтобы сотрудник не искал их в истории чата.
     """
     from aemr_bot.services import appeals as appeals_service
     from aemr_bot.services import operators as ops_service
@@ -615,8 +669,8 @@ async def do_consent_revoke(event, max_user_id: int):
             action="self_consent_revoke",
             target=f"user max_id={max_user_id}",
         )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=texts.CONSENT_REVOKED_OK,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -625,6 +679,17 @@ async def do_consent_revoke(event, max_user_id: int):
         max_user_id=max_user_id,
         open_appeal_ids=[a.id for a in my_open],
     )
+    if my_open:
+        from aemr_bot.handlers.appeal_runtime import send_to_admin_card
+
+        for appeal in my_open:
+            await send_to_admin_card(
+                event.bot,
+                card_format.admin_card(appeal, user),
+                appeal_id=appeal.id,
+                status=appeal.status,
+                user_blocked=user.is_blocked,
+            )
 
 
 async def do_forget(event, max_user_id: int):
@@ -649,8 +714,8 @@ async def do_forget(event, max_user_id: int):
             action="self_erase",
             target=f"user max_id={max_user_id}",
         )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=texts.ERASE_REQUESTED,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -672,8 +737,8 @@ async def open_appointment(event):
     async with session_scope() as session:
         text = await settings_store.get(session, "appointment_text")
         recep_url = await settings_store.get(session, "electronic_reception_url")
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=text or "Информация скоро появится.",
         attachments=[keyboards.appointment_keyboard(recep_url)],
     )
@@ -704,8 +769,8 @@ async def open_emergency(event):
                 phone = item.get("phone", "—")
                 blocks.append(f"• {name} — {phone}")
         body = "\n".join(blocks)
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=body,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -721,8 +786,8 @@ async def open_dispatchers(event):
             f"• {item.get('routes', '—')}\n  {item.get('phone', '—')}"
             for item in items
         )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await _send_or_edit_menu(
+        event,
         text=body,
         attachments=[keyboards.back_to_menu_keyboard()],
     )

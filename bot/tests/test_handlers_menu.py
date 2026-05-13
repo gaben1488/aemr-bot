@@ -40,6 +40,19 @@ def _make_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleNamespace:
     )
 
 
+def _make_callback_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleNamespace:
+    """Callback-event: есть исходный mid, поэтому меню должно редактироваться."""
+    event = _make_event(chat_id=chat_id, user_id=user_id)
+    event.bot.edit_message = AsyncMock()
+    event.callback = SimpleNamespace(
+        payload="",
+        callback_id="cb-1",
+        user=SimpleNamespace(user_id=user_id),
+    )
+    event.ack = AsyncMock()
+    return event
+
+
 @asynccontextmanager
 async def _fake_session_scope():
     """asynccontextmanager-mock для session_scope, отдаёт MagicMock как сессию."""
@@ -478,6 +491,47 @@ class TestConsentAndEraseNotifications:
         notify.assert_called_once_with(event.bot, max_user_id=42, open_appeal_ids=[])
 
     @pytest.mark.asyncio
+    async def test_consent_revoke_reposts_open_cards_for_final_reply(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        user = SimpleNamespace(
+            id=1,
+            first_name="Анна",
+            phone="+79991234567",
+            is_blocked=False,
+        )
+        appeal = SimpleNamespace(
+            id=9,
+            user_id=1,
+            locality="Елизовское ГП",
+            address="Ленина, 1",
+            topic="Дороги",
+            summary="Яма",
+            attachments=[],
+            status="new",
+        )
+        notify = AsyncMock()
+        repost = AsyncMock()
+        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.menu.users_service.get_or_create",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.services.appeals.list_unanswered",
+                   AsyncMock(return_value=[appeal])), \
+             patch("aemr_bot.handlers.menu.users_service.revoke_consent",
+                   AsyncMock()), \
+             patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
+             patch("aemr_bot.handlers.menu.admin_events.notify_consent_revoked",
+                   notify), \
+             patch("aemr_bot.handlers.appeal_runtime.send_to_admin_card",
+                   repost):
+            await menu.do_consent_revoke(event, max_user_id=42)
+
+        notify.assert_called_once_with(event.bot, max_user_id=42, open_appeal_ids=[9])
+        repost.assert_called_once()
+        assert repost.call_args.kwargs["appeal_id"] == 9
+
+    @pytest.mark.asyncio
     async def test_forget_notifies_admin_about_deleted_data(self) -> None:
         from aemr_bot.handlers import menu
 
@@ -556,6 +610,32 @@ class TestSimpleScreens:
 
         assert handled is True
         ack.assert_called_once()
+        event.bot.send_message.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_callback_screen_edits_current_card(self) -> None:
+        from aemr_bot import texts
+        from aemr_bot.handlers import menu
+
+        event = _make_callback_event()
+        await menu.open_settings(event)
+
+        event.bot.edit_message.assert_called_once()
+        kwargs = event.bot.edit_message.call_args.kwargs
+        assert kwargs["message_id"] == "m-1"
+        assert kwargs["text"] == texts.SETTINGS_MENU_TITLE
+        event.bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_callback_screen_falls_back_to_new_message_when_edit_fails(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_callback_event()
+        event.bot.edit_message.side_effect = RuntimeError("MAX edit failed")
+
+        await menu.open_settings(event)
+
+        event.bot.edit_message.assert_called_once()
         event.bot.send_message.assert_called_once()
 
     @pytest.mark.asyncio

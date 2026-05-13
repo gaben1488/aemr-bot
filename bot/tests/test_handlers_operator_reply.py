@@ -290,6 +290,51 @@ class TestDeliverOperatorReply:
         assert "не могу доставить" in text.lower() or "Не могу" in text
 
     @pytest.mark.asyncio
+    async def test_revoked_consent_allows_final_reply_for_older_appeal(self) -> None:
+        from aemr_bot.handlers import operator_reply as opr
+
+        event = _make_event()
+        event.bot.send_message = AsyncMock(
+            side_effect=[SimpleNamespace(body=SimpleNamespace(mid="out-1")), None]
+        )
+        appeal = MagicMock()
+        appeal.id = 1
+        operator = MagicMock()
+        operator.id = 7
+        operator.max_user_id = 42
+
+        fresh_user = SimpleNamespace(
+            is_blocked=False,
+            first_name="Иван",
+            consent_pdn_at=None,
+            consent_revoked_at=datetime(2026, 5, 2, 12, 0, tzinfo=timezone.utc),
+            max_user_id=42,
+        )
+        fresh_appeal = _fresh_appeal(user=fresh_user)
+        opr._recent_replies.clear()
+        with patch.object(opr.cfg, "answer_max_chars", 1000), \
+             patch("aemr_bot.handlers.operator_reply.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
+                   AsyncMock(return_value=fresh_appeal)), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
+                   AsyncMock()) as add_message, \
+             patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.operator_reply._mark_reply_success_recorded",
+                   AsyncMock()):
+            handled = await opr._deliver_operator_reply(
+                event, appeal=appeal, operator=operator,
+                text="ответ", audit_action="reply",
+            )
+
+        assert handled is True
+        assert event.bot.send_message.call_args_list[0].kwargs["user_id"] == 42
+        add_message.assert_called_once()
+
+    @pytest.mark.asyncio
     async def test_appeal_vanished_in_db_returns_handled(self) -> None:
         from aemr_bot.handlers import operator_reply as opr
 
