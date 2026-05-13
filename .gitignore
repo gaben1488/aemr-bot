@@ -64,3 +64,6 @@ _local-backup/
 .coverage
 htmlcov/
 
+# Generated local LLM repository indexes
+aemr-bot-index.md
+aemr-bot-tree.md
