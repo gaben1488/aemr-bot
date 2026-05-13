@@ -328,6 +328,7 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
             return
         log.info("pdn_retention: %d жителей под обезличивание", len(candidates))
         erased = 0
+        erased_ids: list[int] = []
         skipped_open = 0
         for max_user_id in candidates:
             try:
@@ -348,11 +349,23 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                             details={"reason": "152-FZ ст.21 ч.5, 30 дней после отзыва"},
                         )
                         erased += 1
+                        erased_ids.append(max_user_id)
             except Exception:
                 log.exception(
                     "pdn_retention: не удалось обезличить max_user_id=%s",
                     max_user_id,
                 )
+        for erased_id in erased_ids:
+            await _send_admin_text_with_retry(
+                send_admin_text,
+                (
+                    "🛡 Данные по отозванному согласию фактически обезличены.\n"
+                    f"MAX user id: {erased_id}\n"
+                    "Основание: прошло 30 дней после отзыва согласия, "
+                    "открытых обращений нет."
+                ),
+                context="pdn_retention",
+            )
         if erased or skipped_open:
             await send_admin_text(
                 f"🛡 Архивная очистка ПДн по сроку: "

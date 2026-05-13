@@ -129,9 +129,19 @@ async def handle_location_for_locality(
         text = texts.GEO_DETECTED_LOCALITY_ONLY.format(locality=result.locality)
 
     try:
-        await event.message.answer(
+        sent = await event.message.answer(
             text, attachments=[keyboards.geo_confirm_keyboard()]
         )
+        from aemr_bot.utils.event import extract_message_id
+
+        progress_mid = extract_message_id(sent)
+        if progress_mid:
+            async with session_scope() as session:
+                await users_service.update_dialog_data(
+                    session,
+                    max_user_id,
+                    {"progress_message_id": progress_mid},
+                )
         log.info("geo: sent confirm screen to user=%s", max_user_id)
     except Exception:
         log.exception("geo: failed to send confirm screen to user=%s", max_user_id)

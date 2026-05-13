@@ -334,7 +334,7 @@ def register(dp: Dispatcher) -> None:
         # Подтверждение / редактирование определённого через геолокацию
         # адреса. Все три callback'а guard'им состоянием и наличием
         # detected_locality в dialog_data — иначе это стейл-кнопка из
-        # старого сообщения, ack'аем и молча пропускаем.
+        # старого сообщения.
         if payload in ("geo:confirm", "geo:edit_address", "geo:other_locality"):
             await ack_callback(event)
             async with session_scope() as session:
@@ -370,10 +370,7 @@ def register(dp: Dispatcher) -> None:
                         session,
                         max_user_id=max_user_id,
                     )
-                    fresh = _clear_geo_detected(
-                        user.dialog_data or data,
-                        drop_progress_message=not bool(full_addr),
-                    )
+                    fresh = _clear_geo_detected(user.dialog_data or data)
                     if full_addr:
                         fresh["address"] = full_addr
                         user.dialog_state = DialogState.AWAITING_TOPIC.value
@@ -382,11 +379,7 @@ def register(dp: Dispatcher) -> None:
                     user.dialog_data = fresh
                     await session.flush()
                 if full_addr:
-                    await appeal_funnel.ask_topic(
-                        event,
-                        max_user_id,
-                        force_new_message=True,
-                    )
+                    await appeal_funnel.ask_topic(event, max_user_id)
                 else:
                     await appeal_funnel.ask_address(event, max_user_id)
                 return
@@ -397,10 +390,7 @@ def register(dp: Dispatcher) -> None:
                         session,
                         max_user_id=max_user_id,
                     )
-                    user.dialog_data = _clear_geo_detected(
-                        user.dialog_data or data,
-                        drop_progress_message=True,
-                    )
+                    user.dialog_data = _clear_geo_detected(user.dialog_data or data)
                     user.dialog_state = DialogState.AWAITING_ADDRESS.value
                     await session.flush()
                 await appeal_funnel.ask_address(event, max_user_id)
@@ -415,7 +405,6 @@ def register(dp: Dispatcher) -> None:
                     user.dialog_data = _clear_geo_detected(
                         user.dialog_data or data,
                         drop_locality=True,
-                        drop_progress_message=True,
                     )
                     user.dialog_state = DialogState.AWAITING_LOCALITY.value
                     await session.flush()

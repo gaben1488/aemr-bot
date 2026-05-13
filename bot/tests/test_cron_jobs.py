@@ -12,6 +12,7 @@
 """
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -161,6 +162,36 @@ class TestEventsRetention:
         # Нет реальной БД в unit-тестах → session_scope упадёт →
         # должно проглотиться try/except внутри.
         await cron._job_events_retention()
+
+
+class TestPdnRetention:
+    """_job_pdn_retention_check — фактическое обезличивание после отзыва согласия."""
+
+    @pytest.mark.asyncio
+    async def test_notifies_admin_after_actual_erasure(self) -> None:
+        send = AsyncMock()
+        session = AsyncMock()
+        user = MagicMock()
+        user.id = 100
+
+        @asynccontextmanager
+        async def fake_scope():
+            yield session
+
+        with patch("aemr_bot.services.cron.session_scope", fake_scope), \
+             patch("aemr_bot.services.users.find_pending_pdn_retention",
+                   AsyncMock(return_value=[42])), \
+             patch("aemr_bot.services.users.get_or_create",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.services.users.has_open_appeals",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.services.users.erase_pdn",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.services.operators.write_audit", AsyncMock()):
+            await cron._job_pdn_retention_check(send)
+
+        texts = [call.args[0] for call in send.call_args_list]
+        assert any("30 дней" in text and "42" in text for text in texts)
 
 
 class TestFunnelWatchdog:

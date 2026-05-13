@@ -285,6 +285,108 @@ class TestCallbackLocality:
         ask_address.assert_not_called()
 
 
+class TestCallbackGeo:
+    @pytest.mark.asyncio
+    async def test_geo_confirm_with_address_edits_current_card(
+        self, captured_handlers
+    ) -> None:
+        on_callback, _ = captured_handlers
+        event = _make_callback_event(payload="geo:confirm")
+        user = SimpleNamespace(
+            dialog_state="awaiting_geo_confirm",
+            dialog_data={
+                "locality": "Елизовское ГП",
+                "detected_locality": "Елизовское ГП",
+                "detected_street": "Ленина",
+                "detected_house_number": "5",
+                "progress_message_id": "m-geo",
+            },
+        )
+        ask_topic = AsyncMock()
+
+        @asynccontextmanager
+        async def fake_scope():
+            yield AsyncMock()
+
+        with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
+             patch("aemr_bot.handlers.appeal.session_scope", fake_scope), \
+             patch("aemr_bot.handlers.appeal.users_service.get_or_create",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.appeal.appeal_funnel.ask_topic",
+                   ask_topic), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await on_callback(event)
+
+        ask_topic.assert_called_once_with(event, 7)
+        assert user.dialog_data["progress_message_id"] == "m-geo"
+
+    @pytest.mark.asyncio
+    async def test_geo_edit_address_keeps_progress_card(
+        self, captured_handlers
+    ) -> None:
+        on_callback, _ = captured_handlers
+        event = _make_callback_event(payload="geo:edit_address")
+        user = SimpleNamespace(
+            dialog_state="awaiting_geo_confirm",
+            dialog_data={
+                "locality": "Елизовское ГП",
+                "detected_locality": "Елизовское ГП",
+                "detected_street": "Ленина",
+                "progress_message_id": "m-geo",
+            },
+        )
+        ask_address = AsyncMock()
+
+        @asynccontextmanager
+        async def fake_scope():
+            yield AsyncMock()
+
+        with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
+             patch("aemr_bot.handlers.appeal.session_scope", fake_scope), \
+             patch("aemr_bot.handlers.appeal.users_service.get_or_create",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.appeal.appeal_funnel.ask_address",
+                   ask_address), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await on_callback(event)
+
+        ask_address.assert_called_once_with(event, 7)
+        assert user.dialog_data["progress_message_id"] == "m-geo"
+
+    @pytest.mark.asyncio
+    async def test_geo_other_locality_keeps_progress_card(
+        self, captured_handlers
+    ) -> None:
+        on_callback, _ = captured_handlers
+        event = _make_callback_event(payload="geo:other_locality")
+        user = SimpleNamespace(
+            dialog_state="awaiting_geo_confirm",
+            dialog_data={
+                "locality": "Елизовское ГП",
+                "detected_locality": "Елизовское ГП",
+                "detected_street": "Ленина",
+                "progress_message_id": "m-geo",
+            },
+        )
+        ask_locality = AsyncMock()
+
+        @asynccontextmanager
+        async def fake_scope():
+            yield AsyncMock()
+
+        with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
+             patch("aemr_bot.handlers.appeal.session_scope", fake_scope), \
+             patch("aemr_bot.handlers.appeal.users_service.get_or_create",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.appeal.appeal_funnel.ask_locality",
+                   ask_locality), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await on_callback(event)
+
+        ask_locality.assert_called_once_with(event, 7)
+        assert user.dialog_data["progress_message_id"] == "m-geo"
+
+
 class TestCallbackTopic:
     @pytest.mark.asyncio
     async def test_topic_valid_idx(self, captured_handlers) -> None:
