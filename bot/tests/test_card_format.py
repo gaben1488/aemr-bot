@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from aemr_bot.services.card_format import (
+    admin_card,
     appeal_list_label,
     attachments_summary_line,
 )
@@ -38,6 +39,33 @@ class TestAttachmentsSummaryLine:
         """audio не разрешён в _ATTACHMENT_LABELS → не попадает в summary."""
         result = attachments_summary_line([{"type": "audio"}])
         assert result == ""
+
+
+class TestAdminCard:
+    def test_shows_user_followup_inside_card(self) -> None:
+        appeal = SimpleNamespace(
+            id=18,
+            locality="Елизовское ГП",
+            address="ул. Ленина, 5",
+            topic="Дороги",
+            summary="Яма во дворе.",
+            attachments=[],
+            messages=[
+                SimpleNamespace(
+                    direction="from_user",
+                    text="Уточнение: яма у второго подъезда.",
+                    attachments=[],
+                )
+            ],
+        )
+        user = SimpleNamespace(first_name="Сергей", phone="+79991234567")
+
+        result = admin_card(appeal, user)
+
+        assert "Суть:" in result
+        assert "Яма во дворе." in result
+        assert "Дополнение к обращению:" in result
+        assert "яма у второго подъезда" in result
 
 
 class TestAppealListLabel:

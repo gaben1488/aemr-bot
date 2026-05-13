@@ -3,7 +3,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from aemr_bot.config import settings
-from aemr_bot.db.models import Appeal, User
+from aemr_bot.db.models import Appeal, MessageDirection, User
 from aemr_bot.texts import (
     ADMIN_CARD_TEMPLATE,
     ADMIN_FOLLOWUP_TEMPLATE,
@@ -42,6 +42,52 @@ def attachments_summary_line(attachments: list[dict]) -> str:
     return "Вложения: " + ", ".join(parts)
 
 
+def _clip(text: str, limit: int = 900) -> str:
+    text = text.strip()
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1].rstrip() + "…"
+
+
+def _loaded_messages(appeal: Appeal) -> list:
+    """Берём только уже загруженные messages.
+
+    У SQLAlchemy lazy-load в async-коде может упасть MissingGreenlet, если
+    случайно обратиться к незагруженной связи. Поэтому смотрим в __dict__:
+    selectinload положит туда список, а незагруженную связь не трогаем.
+    """
+    messages = getattr(appeal, "__dict__", {}).get("messages")
+    return list(messages or [])
+
+
+def admin_followups_block(appeal: Appeal) -> str:
+    followups = [
+        msg for msg in _loaded_messages(appeal)
+        if getattr(msg, "direction", None) == MessageDirection.FROM_USER.value
+    ]
+    if not followups:
+        return ""
+
+    hidden_count = max(0, len(followups) - 5)
+    visible = followups[-5:]
+    title = "Дополнение к обращению:" if len(visible) == 1 else "Дополнения к обращению:"
+    lines = ["────────────────", title]
+    if hidden_count:
+        lines.append(f"Ранее было ещё {hidden_count} дополнений.")
+    for idx, msg in enumerate(visible, start=1):
+        text = (getattr(msg, "text", None) or "").strip()
+        attachments = getattr(msg, "attachments", None) or []
+        attach_line = attachments_summary_line(attachments)
+        body = _clip(text) if text else "Без текста."
+        if attach_line:
+            body = f"{body}\n{attach_line}"
+        if len(visible) == 1:
+            lines.append(body)
+        else:
+            lines.append(f"{idx}. {body}")
+    return "\n".join(lines)
+
+
 def admin_card(appeal: Appeal, user: User) -> str:
     """Карточка обращения в служебной группе — единый стиль независимо от
     того, есть вложения или нет.
@@ -63,6 +109,9 @@ def admin_card(appeal: Appeal, user: User) -> str:
     summary_line = attachments_summary_line(appeal.attachments or [])
     if summary_line:
         body = f"{body}\n{summary_line}"
+    followups = admin_followups_block(appeal)
+    if followups:
+        body = f"{body}\n\n{followups}"
     return body
 
 

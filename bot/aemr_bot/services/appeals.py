@@ -89,6 +89,16 @@ async def get_by_id(session: AsyncSession, appeal_id: int) -> Appeal | None:
     )
 
 
+async def get_by_id_with_messages(
+    session: AsyncSession, appeal_id: int
+) -> Appeal | None:
+    return await session.scalar(
+        select(Appeal)
+        .options(selectinload(Appeal.user), selectinload(Appeal.messages))
+        .where(Appeal.id == appeal_id)
+    )
+
+
 async def get_by_admin_message_id(session: AsyncSession, admin_message_id: str) -> Appeal | None:
     return await session.scalar(
         select(Appeal)

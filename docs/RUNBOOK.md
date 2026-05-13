@@ -778,6 +778,11 @@ DATABASE_URL=postgresql+asyncpg://aemr:tQ_Y3w0c8KkS0lN8...x9xp@db:5432/aemr
 
 Если значения расходятся, бот при старте падает с `password authentication failed` (см. §«Аварийные процедуры»).
 
+Если `docker compose` останавливается с `Set POSTGRES_PASSWORD in infra/.env`,
+это не авария БД, а защита конфигурации: пароль не задан. Создайте `.env` из
+`.env.example`, заполните `POSTGRES_PASSWORD` и повторите запуск. Стек не должен
+стартовать с пустым паролем.
+
 `BACKUP_GPG_PASSPHRASE` сохрани в **двух независимых местах**: менеджер паролей администратора и оффлайн-копия у руководителя. Потеря фразы превращает все накопленные `.sql.gpg` в бесполезный шифротекст.
 
 ## Логи и диагностика (`docker compose logs`, `/healthz`)

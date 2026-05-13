@@ -540,6 +540,7 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     from aemr_bot.handlers.menu import open_main_menu
     from aemr_bot.services import card_format
     from aemr_bot.services.admin_relay import relay_attachments_to_admin
+    from aemr_bot.utils.event import extract_message_id
 
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
@@ -602,17 +603,51 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             text=text or None,
             attachments=attachments,
         )
+        updated_appeal = await appeals_service.get_by_id_with_messages(
+            session, appeal.id
+        )
         await users_service.reset_state(session, max_user_id)
-        followup = card_format.admin_followup(appeal, user, text or "(без текста)")
+        appeal_for_card = updated_appeal or appeal
+        user_for_card = getattr(appeal_for_card, "user", None) or user
+        followup = card_format.admin_followup(
+            appeal_for_card, user_for_card, text or "(без текста)"
+        )
+
+    admin_mid = getattr(appeal_for_card, "admin_message_id", None)
+    followup_mid = None
+    admin_card_updated = False
+    if cfg.admin_group_id and admin_mid:
+        try:
+            await event.bot.edit_message(
+                message_id=admin_mid,
+                text=card_format.admin_card(appeal_for_card, user_for_card),
+                attachments=[
+                    keyboards.appeal_admin_actions(
+                        appeal_for_card.id,
+                        appeal_for_card.status,
+                        is_it=True,
+                        user_blocked=bool(getattr(user_for_card, "is_blocked", False)),
+                        closed_due_to_revoke=bool(
+                            getattr(appeal_for_card, "closed_due_to_revoke", False)
+                        ),
+                    )
+                ],
+            )
+            admin_card_updated = True
+        except Exception:
+            log.exception("edit admin appeal card after followup failed")
+
+    if cfg.admin_group_id and not admin_card_updated:
+        sent = await event.bot.send_message(chat_id=cfg.admin_group_id, text=followup)
+        followup_mid = extract_message_id(sent)
 
     if cfg.admin_group_id:
-        await event.bot.send_message(chat_id=cfg.admin_group_id, text=followup)
         if attachments:
             try:
                 await relay_attachments_to_admin(
                     event.bot,
                     appeal_id=appeal.id,
-                    admin_mid=None,
+                    admin_mid=admin_mid if admin_card_updated else followup_mid,
                     stored_attachments=attachments,
                 )
             except Exception:

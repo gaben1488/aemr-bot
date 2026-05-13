@@ -12,7 +12,7 @@ import logging
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, get_operator
-from aemr_bot.utils.event import get_message_text
+from aemr_bot.utils.event import get_message_text, send_or_edit_screen
 
 log = logging.getLogger(__name__)
 
@@ -59,7 +59,8 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
         except Exception:
             log.exception("count_open failed; кнопку без счётчика покажем")
 
-    sent = await event.bot.send_message(
+    sent = await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=texts.OP_HELP.format(answer_limit=cfg.answer_max_chars),
         attachments=[
@@ -67,6 +68,7 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
                 open_count=open_count, is_it=is_it, can_broadcast=can_broadcast
             )
         ],
+        force_new_message=pin,
     )
     if not pin:
         return
@@ -127,13 +129,15 @@ async def _do_open_tickets(event) -> None:
         open_appeals = (await session.scalars(query)).all()
 
     if not open_appeals:
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text="🎉 Нет открытых или неотвеченных обращений.",
         )
         return
 
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=f"⏳ Найдено неотвеченных обращений: {len(open_appeals)}",
     )
@@ -214,7 +218,8 @@ async def _do_diag(event) -> None:
         events_total = await session.scalar(select(func.count()).select_from(Event))
         last_event = await session.scalar(select(func.max(Event.received_at)))
 
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=(
             "🛠️ Диагностика:\n"

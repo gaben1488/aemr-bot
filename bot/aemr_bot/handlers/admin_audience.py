@@ -14,7 +14,7 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import get_user_id
+from aemr_bot.utils.event import get_user_id, send_or_edit_screen
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +25,8 @@ async def run_audience_menu(event) -> None:
 
     if not await ensure_role(event, OperatorRole.IT):
         return
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=(
             "📊 Аудитория и согласия\n"
@@ -73,7 +74,8 @@ async def run_audience_action(event, payload: str) -> None:
                         action="block",
                         target=f"user max_id={target_id}",
                     )
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text=texts.OP_USER_BLOCKED.format(max_user_id=target_id)
                 if ok
@@ -92,7 +94,8 @@ async def run_audience_action(event, payload: str) -> None:
                         action="unblock",
                         target=f"user max_id={target_id}",
                     )
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text=texts.OP_USER_UNBLOCKED.format(max_user_id=target_id)
                 if ok
@@ -109,7 +112,8 @@ async def run_audience_action(event, payload: str) -> None:
                         action="erase",
                         target=f"user max_id={target_id}",
                     )
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text=texts.OP_USER_ERASED.format(max_user_id=target_id)
                 if ok
@@ -132,12 +136,13 @@ async def run_audience_action(event, payload: str) -> None:
             return
 
     if not users:
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text=f"{header}\n\nСписок пуст.",
         )
         return
-    await event.bot.send_message(chat_id=cfg.admin_group_id, text=header)
+    await send_or_edit_screen(event, chat_id=cfg.admin_group_id, text=header)
     for u in users:
         name = u.first_name or "—"
         phone = _mask_phone(u.phone)

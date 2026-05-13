@@ -21,7 +21,7 @@ from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.services import operators as operators_service
-from aemr_bot.utils.event import get_user_id
+from aemr_bot.utils.event import get_user_id, send_or_edit_screen
 
 log = logging.getLogger(__name__)
 
@@ -70,7 +70,8 @@ async def run_operators_menu(event) -> None:
 
     if not await ensure_role(event, OperatorRole.IT):
         return
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=(
             "👥 Управление операторами\n"
@@ -106,7 +107,8 @@ async def run_operators_action(event, payload: str) -> None:
         op_reply.drop_reply_intent(operator_id)
 
         _op_wizard_set(operator_id, step="awaiting_id")
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text=(
                 "👥 Шаг 1 из 3 — введите max_user_id будущего оператора.\n"
@@ -119,7 +121,8 @@ async def run_operators_action(event, payload: str) -> None:
         async with session_scope() as session:
             ops = await operators_service.list_active(session)
         if not ops:
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text="Список операторов пуст.",
             )
@@ -127,14 +130,16 @@ async def run_operators_action(event, payload: str) -> None:
         lines = ["👥 Активные операторы:"]
         for op in ops:
             lines.append(f"• #{op.max_user_id} · {op.role} · {op.full_name}")
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text="\n".join(lines),
         )
         return
     if suffix == "cancel":
         _op_wizard_drop(operator_id)
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text="Регистрация оператора отменена.",
         )
@@ -143,20 +148,23 @@ async def run_operators_action(event, payload: str) -> None:
         role = suffix.split(":", 1)[1]
         valid = {r.value for r in OperatorRole}
         if role not in valid:
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text=f"Роль «{role}» неизвестна.",
             )
             return
         state = _op_wizard_get(operator_id)
         if state is None or state.get("step") != "awaiting_role":
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text="Мастер закрыт. Откройте «👥 Операторы → Добавить» заново.",
             )
             return
         _op_wizard_set(operator_id, role=role, step="awaiting_name")
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text=(
                 f"👥 Шаг 3 из 3 — роль {role} выбрана. Теперь введите ФИО "

@@ -174,6 +174,66 @@ def extract_message_id(sent: Any) -> str | None:
     return None
 
 
+def get_callback_message_id(event: Any) -> str | None:
+    """mid сообщения, на котором нажали кнопку.
+
+    MAX умеет редактировать это сообщение через edit_message. Командные
+    сообщения и обычный текст callback не имеют — для них отправляем новый
+    экран.
+    """
+    if getattr(event, "callback", None) is None:
+        return None
+    body = getattr(getattr(event, "message", None), "body", None)
+    mid = getattr(body, "mid", None)
+    return str(mid) if mid else None
+
+
+async def send_or_edit_screen(
+    event: Any,
+    *,
+    text: str,
+    attachments: list | None = None,
+    force_new_message: bool = False,
+    chat_id: int | None = None,
+    user_id: int | None = None,
+):
+    """Показать экран бота без лишнего шума в чате.
+
+    Правило UX: нажатие кнопки меняет текущую карточку, а видимое
+    сообщение человека (текст, гео, файл, фото) приводит к новому ответу
+    бота ниже этого сообщения. Поэтому callback сначала пробуем
+    редактировать, а команды/текстовые шаги отправляем новым сообщением.
+    """
+    bot = getattr(event, "bot", None)
+    if bot is None:
+        return None
+    attachments = attachments or []
+    mid = None if force_new_message else get_callback_message_id(event)
+    if mid and hasattr(bot, "edit_message"):
+        try:
+            return await bot.edit_message(
+                message_id=mid,
+                text=text,
+                attachments=attachments,
+            )
+        except Exception:
+            log.info(
+                "edit_message %s failed, fallback to send_message",
+                mid,
+                exc_info=False,
+            )
+
+    event_chat_id, event_user_id = get_ids(event)
+    target_chat_id = chat_id if chat_id is not None else event_chat_id
+    target_user_id = user_id if user_id is not None else event_user_id
+    return await bot.send_message(
+        chat_id=target_chat_id,
+        user_id=None if target_chat_id is not None else target_user_id,
+        text=text,
+        attachments=attachments,
+    )
+
+
 async def send(event: Any, text: str, attachments: list | None = None):
     """Отправить сообщение в ответ на событие любого типа.
 

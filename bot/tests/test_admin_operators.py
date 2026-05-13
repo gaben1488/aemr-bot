@@ -32,6 +32,17 @@ def _make_event(*, user_id: int = 7) -> SimpleNamespace:
     )
 
 
+def _make_callback_event(*, user_id: int = 7) -> SimpleNamespace:
+    event = _make_event(user_id=user_id)
+    event.bot.edit_message = AsyncMock()
+    event.callback = SimpleNamespace(
+        payload="op:operators",
+        callback_id="cb-1",
+        user=SimpleNamespace(user_id=user_id),
+    )
+    return event
+
+
 @asynccontextmanager
 async def _fake_session_scope():
     yield MagicMock()
@@ -117,6 +128,17 @@ class TestOperatorsMenu:
                    AsyncMock(return_value=True)):
             await admin_operators.run_operators_menu(event)
         event.bot.send_message.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_callback_edits_current_menu_card(self) -> None:
+        from aemr_bot.handlers import admin_operators
+
+        event = _make_callback_event()
+        with patch("aemr_bot.handlers.admin_operators.ensure_role",
+                   AsyncMock(return_value=True)):
+            await admin_operators.run_operators_menu(event)
+        event.bot.edit_message.assert_called_once()
+        event.bot.send_message.assert_not_called()
 
 
 # --- run_operators_action -----------------------------------------------------

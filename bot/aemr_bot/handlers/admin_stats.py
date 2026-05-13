@@ -11,7 +11,7 @@ from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator
 from aemr_bot.services import stats as stats_service
-from aemr_bot.utils.event import get_chat_id
+from aemr_bot.utils.event import get_chat_id, send_or_edit_screen
 
 
 async def _send_stats_xlsx(
@@ -70,7 +70,8 @@ async def run_stats_menu(event) -> None:
 
     if not await ensure_operator(event):
         return
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text="Выгрузка XLSX. Выберите период:",
         attachments=[kbds.op_stats_menu_keyboard()],

@@ -315,6 +315,85 @@ class TestOnAwaitingFollowupText:
         text = event.message.answer.call_args.args[0]
         assert "закрыто" in text.lower() or "Подать похожее" in text
 
+    @pytest.mark.asyncio
+    async def test_success_updates_original_admin_card(self) -> None:
+        from aemr_bot.handlers import appeal_funnel
+
+        event = _make_event()
+        user = SimpleNamespace(
+            id=1,
+            max_user_id=42,
+            first_name="Сергей",
+            phone="+79991234567",
+            is_blocked=False,
+            dialog_data={"appeal_id": 5},
+            consent_pdn_at=datetime.now(timezone.utc),
+        )
+        appeal = SimpleNamespace(
+            id=5,
+            user_id=1,
+            user=user,
+            status="new",
+            locality="Елизовское ГП",
+            address="ул. Ленина, 5",
+            topic="Дороги",
+            summary="Яма во дворе.",
+            attachments=[],
+            messages=[],
+            admin_message_id="admin-mid-5",
+        )
+        updated_appeal = SimpleNamespace(
+            **{
+                **appeal.__dict__,
+                "messages": [
+                    SimpleNamespace(
+                        direction="from_user",
+                        text="Уточнение: яма у второго подъезда.",
+                        attachments=[],
+                    )
+                ],
+            }
+        )
+        reset = AsyncMock()
+        with patch(
+            "aemr_bot.handlers.appeal_funnel.session_scope",
+            _fake_session_scope,
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
+            AsyncMock(return_value=user),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.users_service.reset_state",
+            reset,
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.appeals_service.get_by_id",
+            AsyncMock(return_value=appeal),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.appeals_service.get_by_id_with_messages",
+            AsyncMock(return_value=updated_appeal),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.appeals_service.add_user_message",
+            AsyncMock(),
+        ), patch(
+            "aemr_bot.config.settings.admin_group_id",
+            555,
+        ), patch(
+            "aemr_bot.handlers.menu.open_main_menu",
+            AsyncMock(),
+        ):
+            await appeal_funnel.on_awaiting_followup_text(
+                event,
+                body=SimpleNamespace(attachments=[]),
+                text_body="Уточнение: яма у второго подъезда.",
+                max_user_id=42,
+            )
+
+        reset.assert_called_once()
+        event.bot.edit_message.assert_called_once()
+        assert event.bot.edit_message.call_args.kwargs["message_id"] == "admin-mid-5"
+        edited_text = event.bot.edit_message.call_args.kwargs["text"]
+        assert "Дополнение к обращению:" in edited_text
+        assert "второго подъезда" in edited_text
+
 
 class TestOnIdle:
     @pytest.mark.asyncio

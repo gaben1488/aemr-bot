@@ -12,6 +12,7 @@ from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.services import settings_store
+from aemr_bot.utils.event import send_or_edit_screen
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +27,8 @@ async def run_settings_menu(event) -> None:
         return
     async with session_scope() as session:
         keys = await settings_store.list_keys(session)
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=(
             "⚙️ Настройки бота\n"
@@ -63,7 +65,8 @@ async def run_settings_action(event, payload: str) -> None:
     expected = rule.get("type", "?")
     expected_name = expected.__name__ if hasattr(expected, "__name__") else str(expected)
     await ack_callback(event)
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=(
             f"⚙️ Настройка «{key}» (тип {expected_name})\n"
