@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-13 04:45:24 UTC`
+Generated at: `2026-05-13 05:13:20 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `154`
 Max file size: `300 KB`
@@ -14,7 +14,7 @@ The committed template `.env.example` is allowed because it should not contain l
 
 - `.dockerignore` (539 bytes)
 - `.github/workflows/ci.yml` (7186 bytes)
-- `.github/workflows/repo-index.yml` (1210 bytes)
+- `.github/workflows/repo-index.yml` (1117 bytes)
 - `.gitignore` (1088 bytes)
 - `_local-backup/PRODUCT_BRIEF_internal.md` (26651 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
@@ -172,6 +172,7 @@ The committed template `.env.example` is allowed because it should not contain l
 
 The following files were skipped intentionally:
 
+- `aemr-bot-index.md` — output file
 - `bot/aemr_bot/db/alembic/script.py.mako` — non-text extension
 - `docs/PRIVACY.pdf` — excluded glob
 - `infra/init-letsencrypt.sh` — non-text extension
@@ -419,8 +420,8 @@ jobs:
 
 ### `.github/workflows/repo-index.yml`
 
-Size: `1210` bytes  
-SHA-256: `a1537f779365657bcbba61e61b8f689da6ec321a4540b797737d7495977a2ab5`
+Size: `1117` bytes  
+SHA-256: `119de3fd3be7064f237a3c0bd850741c4b9f2b1608161c51ad8f06921b7ed5d4`
 
 ```yaml
 name: Generate repository index
@@ -430,11 +431,8 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'scripts/make_repo_index.py'
-      - 'REPO_INDEX.md'
-      - '.github/workflows/repo-index.yml'
-      - '.gitignore'
+    paths-ignore:
+      - 'aemr-bot-index.md'
 
 permissions:
   contents: write
@@ -465,7 +463,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f aemr-bot-index.md
+          git add aemr-bot-index.md
           if git diff --cached --quiet; then
             echo "Repository index is already up to date."
             exit 0
