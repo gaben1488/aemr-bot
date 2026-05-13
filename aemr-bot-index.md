@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-13 05:13:20 UTC`
+Generated at: `2026-05-13 05:14:16 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `154`
 Max file size: `300 KB`
@@ -15,7 +15,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `.dockerignore` (539 bytes)
 - `.github/workflows/ci.yml` (7186 bytes)
 - `.github/workflows/repo-index.yml` (1117 bytes)
-- `.gitignore` (1088 bytes)
+- `.gitignore` (1061 bytes)
 - `_local-backup/PRODUCT_BRIEF_internal.md` (26651 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
 - `bot/aemr_bot/config.py` (7477 bytes)
@@ -474,8 +474,8 @@ jobs:
 
 ### `.gitignore`
 
-Size: `1088` bytes  
-SHA-256: `d7bf550502c27bde4199df2ba58b90c0088feda4c1ebc330bbf16bd5c9d9876f`
+Size: `1061` bytes  
+SHA-256: `5c105b9e50126d71e2d7cc068b611e326568807bd2a7eaf890bc11939b627ceb`
 
 ```gitignore
 # Secrets and env
@@ -493,7 +493,7 @@ __pycache__/
 venv/
 .pytest_cache/
 .mypy_cache/
-.ruff_cache/
+.ruff_cache
 
 # Node / mini-app
 node_modules/
@@ -544,8 +544,7 @@ _local-backup/
 .coverage
 htmlcov/
 
-# Generated local LLM repository indexes
-aemr-bot-index.md
+# Optional local tree-only index
 aemr-bot-tree.md
 ```
 
