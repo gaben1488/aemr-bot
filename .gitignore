@@ -13,7 +13,7 @@ __pycache__/
 venv/
 .pytest_cache/
 .mypy_cache/
-.ruff_cache/
+.ruff_cache
 
 # Node / mini-app
 node_modules/
@@ -64,6 +64,5 @@ _local-backup/
 .coverage
 htmlcov/
 
-# Generated local LLM repository indexes
-aemr-bot-index.md
+# Optional local tree-only index
 aemr-bot-tree.md
