@@ -33,6 +33,7 @@ from aemr_bot.handlers.appeal_runtime import (
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
+from aemr_bot.services.cards import send_or_edit_card
 from aemr_bot.utils.attachments import (
     collect_attachments,
     extract_contact_name,
@@ -56,6 +57,10 @@ async def start_appeal_flow(event, max_user_id: int):
     Проверяет: блокировка, rate-limit, согласие на ПДн. При нужде шлёт
     запрос согласия + клавиатуру; иначе — переход к следующему шагу
     (контакт/имя/адрес).
+
+    UX-правило карточек здесь принципиальное: если вход был callback'ом,
+    следующий экран воронки редактирует нажатую карточку. Если вход был
+    командой или иным сообщением, карточка отправляется новой.
     """
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
@@ -73,8 +78,8 @@ async def start_appeal_flow(event, max_user_id: int):
                 )
                 return
         if user.is_blocked:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await send_or_edit_card(
+                event,
                 text=(
                     "Сейчас вы не можете подать обращение: ваш аккаунт "
                     "помечен как заблокированный. Если это ошибка — "
@@ -107,8 +112,8 @@ async def start_appeal_flow(event, max_user_id: int):
             "для max_user_id=%s. Сидируйте settings_store.",
             max_user_id,
         )
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
+        await send_or_edit_card(
+            event,
             text=(
                 "Сервис временно недоступен — не настроен текст политики "
                 "обработки данных. Сообщили координатору; попробуйте позже."
@@ -129,11 +134,7 @@ async def start_appeal_flow(event, max_user_id: int):
             )
         else:
             text = texts.CONSENT_REQUEST.format(policy_url=policy_url)
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=text,
-            attachments=attachments,
-        )
+        await send_or_edit_card(event, text=text, attachments=attachments)
         return
 
     await ask_contact_or_skip(event, max_user_id)
@@ -145,7 +146,12 @@ async def _has_consent_step_pending(max_user_id: int) -> bool:
         return user.consent_pdn_at is None
 
 
-async def _send_rate_limit_message(event, *, has_open_unanswered: bool) -> None:
+async def _send_rate_limit_message(
+    event,
+    *,
+    has_open_unanswered: bool,
+    force_new_message: bool = False,
+) -> None:
     if has_open_unanswered:
         text = (
             "Лимит новых обращений временно исчерпан: можно создать не больше "
@@ -161,17 +167,23 @@ async def _send_rate_limit_message(event, *, has_open_unanswered: bool) -> None:
             "Сейчас у вас нет неотвеченного обращения, которое можно "
             "дополнить. Пожалуйста, дождитесь сброса лимита и попробуйте позже."
         )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await send_or_edit_card(
+        event,
         text=text,
         attachments=[keyboards.back_to_menu_keyboard()],
+        force_new_message=force_new_message,
     )
 
 
 # ---- _ask_* — переходы на следующий шаг -----------------------------------
 
 
-async def ask_contact_or_skip(event, max_user_id: int):
+async def ask_contact_or_skip(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+):
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         if not user.phone:
@@ -187,9 +199,17 @@ async def ask_contact_or_skip(event, max_user_id: int):
         # предложить «использовать тот же адрес» — экономит два шага
         # для жителей, которые подают повторное обращение по тому же
         # объекту. Если прошлого адреса нет — обычный путь.
-        if await ask_address_or_reuse(event, max_user_id):
+        if await ask_address_or_reuse(
+            event,
+            max_user_id,
+            force_new_message=force_new_message,
+        ):
             return
-        await ask_locality(event, max_user_id)
+        await ask_locality(
+            event,
+            max_user_id,
+            force_new_message=force_new_message,
+        )
         return
 
     prompt_for = {
@@ -203,14 +223,20 @@ async def ask_contact_or_skip(event, max_user_id: int):
         ),
     }
     text, keyboard = prompt_for[target_state]
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await send_or_edit_card(
+        event,
         text=text,
         attachments=[keyboard],
+        force_new_message=force_new_message,
     )
 
 
-async def ask_address_or_reuse(event, max_user_id: int) -> bool:
+async def ask_address_or_reuse(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+) -> bool:
     """Предложить жителю «использовать тот же адрес» если он уже подавал
     обращение. Возвращает True, если показали reuse-prompt — тогда
     воронка ждёт callback addr:reuse / addr:new и не идёт в ask_locality.
@@ -222,15 +248,23 @@ async def ask_address_or_reuse(event, max_user_id: int) -> bool:
     if last is None:
         return False
     locality, address = last
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    mid, _ = await send_or_edit_card(
+        event,
         text=(
             f"В прошлый раз вы писали по этому адресу:\n"
             f"📍 {locality}, {address}\n\n"
             f"Использовать его снова или указать новый?"
         ),
         attachments=[keyboards.reuse_address_keyboard()],
+        force_new_message=force_new_message,
     )
+    if mid:
+        async with session_scope() as session:
+            await users_service.update_dialog_data(
+                session,
+                max_user_id,
+                {"progress_message_id": mid},
+            )
     return True
 
 
@@ -249,8 +283,8 @@ async def _show_progress_step(
     dialog_data['progress_message_id'].
 
     `force_new_message=True` используется там, где редактирование старой
-    карточки ломает порядок ленты: после геоподтверждения или ручного
-    ввода адреса следующая карточка должна появиться ниже действия жителя.
+    карточки ломает порядок ленты: после видимого ввода жителя следующая
+    карточка должна появиться ниже его действия.
     """
     from aemr_bot.services.progress import render_progress, send_or_edit_progress
 
@@ -288,7 +322,12 @@ async def _show_progress_step(
             )
 
 
-async def ask_locality(event, max_user_id: int):
+async def ask_locality(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+):
     """Шаг «Населённый пункт». Прогресс-карта с галочкой имени."""
     async with session_scope() as session:
         localities = await settings_store.get(session, "localities") or [
@@ -300,10 +339,16 @@ async def ask_locality(event, max_user_id: int):
         stage="locality",
         next_state=DialogState.AWAITING_LOCALITY,
         keyboard=keyboards.localities_keyboard(localities),
+        force_new_message=force_new_message,
     )
 
 
-async def ask_address(event, max_user_id: int):
+async def ask_address(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+):
     """Шаг «Адрес». Прогресс-карта с галочкой локалити."""
     await _show_progress_step(
         event,
@@ -311,6 +356,7 @@ async def ask_address(event, max_user_id: int):
         stage="address",
         next_state=DialogState.AWAITING_ADDRESS,
         keyboard=keyboards.cancel_keyboard(),
+        force_new_message=force_new_message,
     )
 
 
@@ -333,7 +379,12 @@ async def ask_topic(
     )
 
 
-async def ask_summary(event, max_user_id: int):
+async def ask_summary(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+):
     """Шаг «Описание сути». Прогресс-карта с галочкой темы.
 
     На этом шаге показываем cancel-клавиатуру и ждём следующее
@@ -346,6 +397,7 @@ async def ask_summary(event, max_user_id: int):
         stage="summary",
         next_state=DialogState.AWAITING_SUMMARY,
         keyboard=keyboards.cancel_keyboard(),
+        force_new_message=force_new_message,
     )
 
 
@@ -358,12 +410,17 @@ async def finalize_appeal(event, max_user_id: int):
         async with session_scope() as session:
             user = await users_service.get_or_create(session, max_user_id=max_user_id)
             active = await appeals_service.find_active_for_user(session, user.id)
-        await _send_rate_limit_message(event, has_open_unanswered=active is not None)
+        await _send_rate_limit_message(
+            event,
+            has_open_unanswered=active is not None,
+            force_new_message=True,
+        )
     elif persisted is False:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
+        await send_or_edit_card(
+            event,
             text=texts.APPEAL_EMPTY_REJECTED,
             attachments=[keyboards.cancel_keyboard()],
+            force_new_message=True,
         )
 
 
@@ -406,7 +463,7 @@ async def on_awaiting_contact(event, body, text_body, max_user_id):
             texts.CONTACT_RECEIVED, attachments=[keyboards.cancel_keyboard()]
         )
     else:
-        await ask_contact_or_skip(event, max_user_id)
+        await ask_contact_or_skip(event, max_user_id, force_new_message=True)
 
 
 async def on_awaiting_name(event, body, text_body, max_user_id):
@@ -422,9 +479,9 @@ async def on_awaiting_name(event, body, text_body, max_user_id):
 
     async with session_scope() as session:
         await users_service.set_first_name(session, max_user_id, name)
-    if await ask_address_or_reuse(event, max_user_id):
+    if await ask_address_or_reuse(event, max_user_id, force_new_message=True):
         return
-    await ask_locality(event, max_user_id)
+    await ask_locality(event, max_user_id, force_new_message=True)
 
 
 async def on_awaiting_address(event, body, text_body, max_user_id):
