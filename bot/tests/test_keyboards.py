@@ -34,6 +34,12 @@ class TestSimpleKeyboards:
     def test_settings_menu_keyboard(self) -> None:
         kb = keyboards.settings_menu_keyboard()
         assert kb is not None
+        buttons = [button for row in kb.payload.buttons for button in row]
+        assert any(
+            button.text == "📜 Правила пользования"
+            and button.payload == "settings:rules"
+            for button in buttons
+        )
 
     def test_goodbye_keyboard(self) -> None:
         kb = keyboards.goodbye_keyboard()
@@ -126,3 +132,31 @@ class TestAppealAdminActions:
             user_blocked=False,
         )
         assert kb is not None
+
+
+class TestUserAppealCardKeyboard:
+    def _payloads(self, kb) -> set[str]:
+        return {button.payload for row in kb.payload.buttons for button in row}
+
+    def test_answered_appeal_creates_repeat_not_followup(self) -> None:
+        from aemr_bot.db.models import AppealStatus
+
+        kb = keyboards.user_appeal_card_keyboard(
+            appeal_id=42,
+            status=AppealStatus.ANSWERED.value,
+        )
+
+        payloads = self._payloads(kb)
+        assert "appeal:repeat:42" in payloads
+        assert "appeal:followup:42" not in payloads
+
+    def test_open_appeal_can_be_followed_up(self) -> None:
+        from aemr_bot.db.models import AppealStatus
+
+        kb = keyboards.user_appeal_card_keyboard(
+            appeal_id=42,
+            status=AppealStatus.IN_PROGRESS.value,
+        )
+
+        payloads = self._payloads(kb)
+        assert "appeal:followup:42" in payloads

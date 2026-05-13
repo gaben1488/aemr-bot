@@ -385,12 +385,11 @@ async def find_last_address_for_user(
 
 
 async def find_active_for_user(session: AsyncSession, user_id: int) -> Appeal | None:
-    """Последнее живое обращение жителя.
+    """Последнее неотвеченное обращение жителя.
 
-    «Живое» = не закрытое окончательно. Сюда попадают обращения
-    в статусах NEW (только что создано), IN_PROGRESS (оператор взял
-    в работу) и ANSWERED (ответ отправлен, житель ещё может вернуться
-    с уточнением через кнопку «📎 Дополнить»).
+    Сюда попадают только NEW и IN_PROGRESS. Если обращение уже ANSWERED
+    или CLOSED, повтор по нему оформляется новым связанным обращением,
+    а не переоткрытием старого.
 
     Используется в IDLE-обработчике, чтобы подсказать жителю с активным
     обращением «откройте Мои обращения и нажмите Дополнить», а не
@@ -404,7 +403,6 @@ async def find_active_for_user(session: AsyncSession, user_id: int) -> Appeal | 
                 [
                     AppealStatus.NEW.value,
                     AppealStatus.IN_PROGRESS.value,
-                    AppealStatus.ANSWERED.value,
                 ]
             ),
         )

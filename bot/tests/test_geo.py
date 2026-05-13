@@ -9,6 +9,9 @@
 """
 from __future__ import annotations
 
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
 from aemr_bot.services.geo import find_address, find_locality
@@ -143,3 +146,47 @@ class TestUserModelFields:
         from aemr_bot.db.models import Operator
         cols = {c.name for c in Operator.__table__.columns}
         assert "full_name" in cols
+
+
+class TestGeoConfirmCard:
+    @pytest.mark.asyncio
+    async def test_location_confirm_message_id_is_saved_for_button_edits(self) -> None:
+        from aemr_bot.handlers import appeal_geo
+
+        event = SimpleNamespace(
+            message=SimpleNamespace(
+                answer=AsyncMock(
+                    return_value=SimpleNamespace(
+                        message=SimpleNamespace(
+                            body=SimpleNamespace(mid="m-geo-confirm")
+                        )
+                    )
+                )
+            )
+        )
+        result = SimpleNamespace(
+            locality="Елизовское ГП",
+            street="Ленина",
+            house_number="5",
+            confidence="high",
+        )
+        update_dialog_data = AsyncMock()
+
+        with patch("aemr_bot.services.geo.find_address", return_value=result), \
+             patch("aemr_bot.handlers.appeal_geo.session_scope") as scope, \
+             patch("aemr_bot.handlers.appeal_geo.users_service.update_dialog_data",
+                   update_dialog_data), \
+             patch("aemr_bot.handlers.appeal_geo.users_service.set_state",
+                   AsyncMock()):
+            scope.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
+            scope.return_value.__aexit__ = AsyncMock(return_value=None)
+
+            await appeal_geo.handle_location_for_locality(
+                event,
+                max_user_id=42,
+                location=(53.184, 158.385),
+            )
+
+        assert update_dialog_data.call_args_list[-1].args[2] == {
+            "progress_message_id": "m-geo-confirm"
+        }

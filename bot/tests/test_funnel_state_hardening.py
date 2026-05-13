@@ -113,7 +113,7 @@ async def test_stale_topic_callback_is_acked_and_ignored() -> None:
         allowed = await appeal._ensure_funnel_callback_state(event, 7, "topic:0")
 
     assert allowed is False
-    ack.assert_called_once_with(event)
+    ack.assert_called_once_with(event, appeal._STALE_CALLBACK_NOTICE)
 
 
 @pytest.mark.asyncio

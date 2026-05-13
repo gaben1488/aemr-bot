@@ -1,5 +1,5 @@
-"""Тесты handlers/start.py — команды жителя /start, /help, /menu, /policy,
-/subscribe, /unsubscribe, /forget, /export, /cancel, /whoami.
+"""Тесты handlers/start.py — команды жителя /start, /help, /menu, /rules,
+/policy, /subscribe, /unsubscribe, /forget, /export, /cancel, /whoami.
 
 Локально skip без maxapi; в CI работает."""
 from __future__ import annotations
@@ -147,6 +147,19 @@ class TestCmdHelp:
         assert event.bot.send_message.call_args.kwargs.get("text") == texts.HELP_USER
 
 
+class TestCmdRules:
+    @pytest.mark.asyncio
+    async def test_responds_with_rules_text(self) -> None:
+        from aemr_bot import texts
+        from aemr_bot.handlers import start
+
+        event = _make_event()
+        await start.cmd_rules(event)
+
+        event.bot.send_message.assert_called_once()
+        assert event.bot.send_message.call_args.kwargs.get("text") == texts.RULES_TEXT
+
+
 class TestCmdMenu:
     @pytest.mark.asyncio
     async def test_responds_with_welcome(self) -> None:
@@ -248,12 +261,15 @@ class TestCmdForget:
         event = _make_event()
         write_audit = AsyncMock()
         erase = AsyncMock()
+        notify = AsyncMock()
         with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.start.ops_service.write_audit", write_audit), \
-             patch("aemr_bot.handlers.start.users_service.erase_pdn", erase):
+             patch("aemr_bot.handlers.start.users_service.erase_pdn", erase), \
+             patch("aemr_bot.handlers.start.admin_events.notify_data_erased", notify):
             await start.cmd_forget(event)
         write_audit.assert_called_once()
         erase.assert_called_once()
+        notify.assert_called_once_with(event.bot, max_user_id=42, closed_appeal_ids=[])
 
 
 class TestCmdCancel:

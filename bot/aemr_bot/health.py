@@ -141,7 +141,10 @@ async def _healthz(request: web.Request) -> web.Response:
     return await _readyz(request)
 
 
-async def start(host: str = "0.0.0.0", port: int = 8080) -> web.AppRunner:  # nosec B104 — слушаем внутри контейнера, наружу выставляет Nginx
+async def start(
+    host: str = "0.0.0.0",  # nosec
+    port: int = 8080,
+) -> web.AppRunner:
     """Запустить health-сервер. Возвращает AppRunner для shutdown."""
     app = web.Application()
     app.router.add_get("/livez", _livez)

@@ -4,8 +4,8 @@ version = "0.1.0"
 description = "Чат-бот Администрации Елизовского муниципального района в MAX"
 requires-python = ">=3.12"
 dependencies = [
-    # Compatible-release (~=) pins minor versions to allow patch updates but
-    # block surprise breaking changes. Re-evaluate quarterly.
+    # Совместимые версии (~=) разрешают патчи, но не пропускают внезапные
+    # breaking changes. Пересматривать раз в квартал.
     "maxapi~=0.6",
     "fastapi~=0.115",
     "uvicorn[standard]~=0.32",
@@ -26,12 +26,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    # pytest 8.4.2 is vulnerable to CVE-2025-71176; keep the lower
-    # bound at the first fixed release reported by pip-audit.
+    # pytest 8.4.2 уязвим к CVE-2025-71176; нижняя граница стоит на
+    # первой исправленной версии по данным pip-audit.
     "pytest>=9.0.3,<10",
-    # pytest-asyncio 0.24-0.26 declare pytest<9. 1.3.0 adds pytest 9
-    # support, so bump the plugin together with pytest instead of
-    # silencing pip-audit or forcing an incompatible resolver state.
+    # pytest-asyncio 0.24-0.26 требуют pytest<9. Версия 1.3.0 добавляет
+    # поддержку pytest 9, поэтому обновляем плагин вместе с pytest, а не
+    # глушим pip-audit и не форсируем несовместимый resolver.
     "pytest-asyncio>=1.3,<2",
     "pytest-cov~=6.0",
     "ruff~=0.7",
@@ -57,8 +57,8 @@ target-version = "py312"
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true
-# Pydantic Settings reads from env, mypy can't see the call-site validates that.
-# SQLAlchemy 2.0 Result has .rowcount but its type stubs hide it on the union.
+# Pydantic Settings читает env-переменные, mypy не видит эту валидацию.
+# У SQLAlchemy 2.0 Result есть .rowcount, но type stubs скрывают его на union.
 disable_error_code = ["call-arg", "attr-defined"]
 
 [tool.pytest.ini_options]

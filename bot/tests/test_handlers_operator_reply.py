@@ -477,12 +477,3 @@ class TestHandleCommandReply:
                    AsyncMock(return_value=None)):
             await opr.handle_command_reply(event, appeal_id=999, text="test")
         event.bot.send_message.assert_called_once()
-
-
-class TestRegister:
-    def test_register_is_noop(self) -> None:
-        from aemr_bot.handlers import operator_reply as opr
-
-        # register должен молча принимать любой dispatcher и ничего не делать
-        result = opr.register(MagicMock())
-        assert result is None

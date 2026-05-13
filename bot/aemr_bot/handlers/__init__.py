@@ -5,8 +5,6 @@ from aemr_bot.handlers import (
     admin_commands,
     appeal,
     broadcast,
-    menu,
-    operator_reply,
     start,
 )
 from aemr_bot.services import idempotency
@@ -58,16 +56,13 @@ def register_handlers(dp: Dispatcher) -> None:
     своих декораторов.
 
     `start.register` спокойно ставится первым, потому что у всех его
-    обработчиков ЕСТЬ фильтр-команда. `menu.register` и
-    `operator_reply.register` — пустые заглушки, оставлены для симметрии:
-    реальная маршрутизация нажатий и сообщений для них живёт в
-    `appeal.on_callback` / `appeal.on_message`.
+    обработчиков ЕСТЬ фильтр-команда. Нажатия меню и ответы операторов
+    маршрутизируются из `appeal.on_callback` / `appeal.on_message`, поэтому
+    отдельные register-заглушки для них не нужны.
     """
     _attach_outer_middleware(dp, IdempotencyMiddleware())
     start.register(dp)
     admin_commands.register(dp)
     broadcast.register(dp)
-    menu.register(dp)
-    operator_reply.register(dp)
     # Catch-all последним: см. докстринг выше.
     appeal.register(dp)

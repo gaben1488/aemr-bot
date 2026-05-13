@@ -9,7 +9,6 @@ import logging
 import re
 import time as _time
 
-from maxapi import Dispatcher
 from maxapi.types import MessageCreated
 
 from aemr_bot import texts
@@ -552,8 +551,3 @@ async def handle_command_reply(event, appeal_id: int, text: str) -> None:
         text=text,
         audit_action="reply_via_command",
     )
-
-
-def register(dp: Dispatcher) -> None:
-    """Пустышка (No-op): маршрутизация message_created управляется в handlers/appeal.py."""
-    return None

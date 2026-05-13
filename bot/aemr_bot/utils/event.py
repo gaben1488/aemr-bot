@@ -11,7 +11,10 @@
 функции ниже именно так и делают.
 """
 
+import logging
 from typing import Any
+
+log = logging.getLogger(__name__)
 
 
 def get_ids(event: Any) -> tuple[int | None, int | None]:
@@ -22,7 +25,7 @@ def get_ids(event: Any) -> tuple[int | None, int | None]:
             chat_id, user_id = fn()
             return chat_id, user_id
         except Exception:
-            pass
+            log.debug("event.get_ids() вернул ошибку, используем fallback", exc_info=True)
 
     # Запасные варианты для неизвестных форм события
     chat_id = getattr(event, "chat_id", None)
@@ -214,7 +217,7 @@ async def ack_callback(event: Any, notification: str = "") -> None:
         try:
             await fn(notification=notification or None)
         except Exception:
-            pass
+            log.debug("не удалось подтвердить callback", exc_info=True)
 
 
 # Унаследованный псевдоним, оставлен ради ясности

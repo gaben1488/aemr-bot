@@ -67,6 +67,40 @@ def test_period_window_unknown_raises() -> None:
         period_window("decade")
 
 
+# ---------- repeat appeal context ----------
+
+
+def test_apply_repeat_context_for_answered_appeal() -> None:
+    from aemr_bot.db.models import AppealStatus
+    from aemr_bot.handlers.appeal_runtime import _apply_repeat_context
+
+    topic, summary = _apply_repeat_context(
+        topic="Дороги",
+        summary="Проблема повторилась.",
+        data={
+            "repeat_source_appeal_id": 15,
+            "repeat_source_status": AppealStatus.ANSWERED.value,
+        },
+    )
+
+    assert topic == "Обратная связь по отвеченному вопросу: Дороги"
+    assert "Связано с обращением #15" in summary
+    assert "Проблема повторилась." in summary
+
+
+def test_apply_repeat_context_without_source_keeps_texts() -> None:
+    from aemr_bot.handlers.appeal_runtime import _apply_repeat_context
+
+    topic, summary = _apply_repeat_context(
+        topic="ЖКХ",
+        summary="Текст обращения.",
+        data={},
+    )
+
+    assert topic == "ЖКХ"
+    assert summary == "Текст обращения."
+
+
 # ---------- settings_store.validate ----------
 
 

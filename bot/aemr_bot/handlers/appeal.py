@@ -32,6 +32,7 @@ from aemr_bot.handlers.appeal_runtime import (
     drop_user_lock,
     recover_stuck_funnels,
 )
+from aemr_bot.services import admin_events
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
@@ -76,6 +77,7 @@ _GEO_DETECTED_KEYS = (
     "detected_confidence",
 )
 
+_STALE_CALLBACK_NOTICE = "Эта карточка уже не актуальна. Используйте текущий шаг."
 _GEO_AWAITING_ADDRESS_NOTICE = "Я уже жду адрес текстом. Введите адрес сообщением."
 
 
@@ -136,7 +138,7 @@ async def _ensure_funnel_callback_state(
         return True
 
     if current is None:
-        # Unit-test fakes often expose no real dialog_state.
+        # Тестовые заглушки иногда не содержат настоящего dialog_state.
         return True
 
     expected_values = {state.value for state in expected}
@@ -165,7 +167,7 @@ async def _ensure_funnel_callback_state(
                 exc_info=True,
             )
     else:
-        await ack_callback(event)
+        await ack_callback(event, _STALE_CALLBACK_NOTICE)
     return False
 
 
@@ -240,6 +242,7 @@ def register(dp: Dispatcher) -> None:
             async with session_scope() as session:
                 await users_service.set_consent(session, max_user_id)
             await ack_callback(event, texts.CONSENT_ACCEPTED)
+            await admin_events.notify_consent_given(event.bot, max_user_id=max_user_id)
             await appeal_funnel.ask_contact_or_skip(event, max_user_id)
             return
 
@@ -331,7 +334,7 @@ def register(dp: Dispatcher) -> None:
         # Подтверждение / редактирование определённого через геолокацию
         # адреса. Все три callback'а guard'им состоянием и наличием
         # detected_locality в dialog_data — иначе это стейл-кнопка из
-        # старого сообщения, ack'аем и молча пропускаем.
+        # старого сообщения.
         if payload in ("geo:confirm", "geo:edit_address", "geo:other_locality"):
             await ack_callback(event)
             async with session_scope() as session:
@@ -367,10 +370,7 @@ def register(dp: Dispatcher) -> None:
                         session,
                         max_user_id=max_user_id,
                     )
-                    fresh = _clear_geo_detected(
-                        user.dialog_data or data,
-                        drop_progress_message=not bool(full_addr),
-                    )
+                    fresh = _clear_geo_detected(user.dialog_data or data)
                     if full_addr:
                         fresh["address"] = full_addr
                         user.dialog_state = DialogState.AWAITING_TOPIC.value
@@ -379,11 +379,7 @@ def register(dp: Dispatcher) -> None:
                     user.dialog_data = fresh
                     await session.flush()
                 if full_addr:
-                    await appeal_funnel.ask_topic(
-                        event,
-                        max_user_id,
-                        force_new_message=True,
-                    )
+                    await appeal_funnel.ask_topic(event, max_user_id)
                 else:
                     await appeal_funnel.ask_address(event, max_user_id)
                 return
@@ -394,10 +390,7 @@ def register(dp: Dispatcher) -> None:
                         session,
                         max_user_id=max_user_id,
                     )
-                    user.dialog_data = _clear_geo_detected(
-                        user.dialog_data or data,
-                        drop_progress_message=True,
-                    )
+                    user.dialog_data = _clear_geo_detected(user.dialog_data or data)
                     user.dialog_state = DialogState.AWAITING_ADDRESS.value
                     await session.flush()
                 await appeal_funnel.ask_address(event, max_user_id)
@@ -412,7 +405,6 @@ def register(dp: Dispatcher) -> None:
                     user.dialog_data = _clear_geo_detected(
                         user.dialog_data or data,
                         drop_locality=True,
-                        drop_progress_message=True,
                     )
                     user.dialog_state = DialogState.AWAITING_LOCALITY.value
                     await session.flush()

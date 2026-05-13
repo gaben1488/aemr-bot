@@ -5,6 +5,7 @@ from maxapi.types import BotStarted, Command, MessageCreated
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
+from aemr_bot.services import admin_events
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as ops_service
@@ -22,7 +23,7 @@ from aemr_bot.utils.event import (
 log = logging.getLogger(__name__)
 
 
-# Citizen-flow handlers ниже отбрасываются в админ-группе через is_admin_chat.
+# Обработчики жителя ниже отбрасываются в админ-группе через is_admin_chat.
 # Алиас оставлен с подчёркиванием, чтобы внутри файла читалось как локальная
 # гард-функция и не путалось с неймспейсом utils.event.
 _is_admin_chat = is_admin_chat
@@ -79,6 +80,10 @@ async def cmd_start(event):
 
 async def cmd_help(event):
     await reply(event, texts.HELP_USER, attachments=[await _build_main_menu(get_user_id(event))])
+
+
+async def cmd_rules(event):
+    await reply(event, texts.RULES_TEXT, attachments=[keyboards.back_to_menu_keyboard()])
 
 
 async def cmd_menu(event):
@@ -178,6 +183,11 @@ async def cmd_forget(event):
             target=f"user max_id={max_user_id}",
         )
         await users_service.erase_pdn(session, max_user_id)
+    await admin_events.notify_data_erased(
+        event.bot,
+        max_user_id=max_user_id,
+        closed_appeal_ids=[],
+    )
     await reply(event, texts.ERASE_REQUESTED)
 
 
@@ -338,6 +348,13 @@ def register(dp: Dispatcher) -> None:
             await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
         await cmd_policy(event)
+
+    @dp.message_created(Command("rules"))
+    async def _(event: MessageCreated):
+        if _is_admin_chat(event):
+            await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
+            return
+        await cmd_rules(event)
 
     @dp.message_created(Command("subscribe"))
     async def _(event: MessageCreated):

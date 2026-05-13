@@ -18,7 +18,7 @@ from typing import Any
 
 from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
-from aemr_bot.db.models import DialogState
+from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
@@ -36,11 +36,13 @@ _HAS_ALNUM = re.compile(r"[A-Za-zА-Яа-яЁё0-9]")
 # один-инстанс — при горизонтальном масштабировании потребуется
 # pg_advisory_xact_lock или Redis-lock. См. _persist_and_dispatch_appeal.
 _user_locks: dict[int, asyncio.Lock] = {}
+PERSIST_RATE_LIMITED = "rate_limited"
 
 
 def get_user_lock(max_user_id: int) -> asyncio.Lock:
     """Блокировка для каждого пользователя, чтобы параллельные пути
-    отправки/отмены/таймера не приводили к двойной диспетчеризации.
+    отправки, отмены и восстановления после перезапуска не приводили к
+    двойной диспетчеризации.
 
     Только для одного экземпляра приложения — при горизонтальном
     масштабировании потребуется pg_advisory_xact_lock или Redis.
@@ -138,16 +140,44 @@ async def send_to_admin_card(
     return extract_message_id(sent)
 
 
-async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | None:
+def _apply_repeat_context(
+    *,
+    topic: str,
+    summary: str,
+    data: dict[str, Any],
+) -> tuple[str, str]:
+    source_id = data.get("repeat_source_appeal_id")
+    source_status = data.get("repeat_source_status")
+    if not source_id or source_status not in {
+        AppealStatus.ANSWERED.value,
+        AppealStatus.CLOSED.value,
+    }:
+        return topic, summary
+
+    if source_status == AppealStatus.ANSWERED.value:
+        label = "обратная связь по отвеченному вопросу"
+    else:
+        label = "обратная связь по закрытому вопросу"
+
+    base_topic = (data.get("repeat_source_topic") or topic or "без темы").strip()
+    marked_topic = f"{label.capitalize()}: {base_topic}"[:120]
+    marked_summary = (
+        f"Связано с обращением #{source_id}: {label}.\n\n{summary}"
+    )[: cfg.summary_max_chars]
+    return marked_topic, marked_summary
+
+
+async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | None:
     """Создает обращение (Appeal) из накопленных данных dialog_data,
     публикует карточку для админов, подтверждает жителю по user_id.
     Возвращает True при успешном сохранении и отправке, False при
-    пустом обращении или rate-limit hit, None — если состояние уже IDLE.
+    пустом обращении, PERSIST_RATE_LIMITED при превышении лимита, None —
+    если состояние уже IDLE.
 
     Защищено через asyncio.Lock для каждого пользователя, поэтому
-    двойной клик на «Отправить» (или срабатывание таймера во время
-    нажатия пользователем кнопки отправки) не может создать два
-    обращения — второй вызов увидит состояние IDLE и прервется.
+    повторная доставка одного и того же события или восстановление после
+    перезапуска не может создать два обращения — второй вызов увидит
+    состояние IDLE и прервется.
 
     Rate-limit ВНУТРИ lock'а закрывает TOCTOU-окно: ранее проверка
     делалась только в _start_appeal_flow, а финализация шла без
@@ -170,23 +200,28 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | None:
                 )
                 if recent >= 3:
                     log.warning(
-                        "rate-limit hit at finalize for user=%s (recent=%d), "
-                        "appeal not created",
+                        "лимит новых обращений при финализации: user=%s, "
+                        "recent=%d, обращение не создано",
                         max_user_id, recent,
                     )
                     await users_service.reset_state(session, max_user_id)
-                    return False
+                    return PERSIST_RATE_LIMITED
                 data: dict[str, Any] = dict(user.dialog_data or {})
                 summary = "\n".join(data.get("summary_chunks") or []).strip()
                 attachments = data.get("attachments") or []
                 if not summary and not attachments:
                     return False
+                topic, summary = _apply_repeat_context(
+                    topic=data.get("topic", ""),
+                    summary=summary,
+                    data=data,
+                )
                 appeal = await appeals_service.create_appeal(
                     session,
                     user=user,
                     locality=data.get("locality") or None,
                     address=data.get("address", ""),
-                    topic=data.get("topic", ""),
+                    topic=topic,
                     summary=summary,
                     attachments=attachments,
                 )

@@ -167,6 +167,27 @@ class TestStartAppealFollowup:
         text = event.bot.send_message.call_args.kwargs.get("text", "")
         assert "закрыто" in text.lower() or "Подать похожее" in text
 
+    @pytest.mark.asyncio
+    async def test_answered_appeal_blocks_followup_and_points_to_repeat(self) -> None:
+        from aemr_bot.db.models import AppealStatus
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        appeal = MagicMock()
+        appeal.user.max_user_id = 42
+        appeal.status = AppealStatus.ANSWERED.value
+        set_state = AsyncMock()
+        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.menu.appeals_service.get_by_id",
+                   AsyncMock(return_value=appeal)), \
+             patch("aemr_bot.handlers.menu.users_service.set_state", set_state):
+            await menu.start_appeal_followup(event, appeal_id=1, max_user_id=42)
+
+        set_state.assert_not_called()
+        text = event.bot.send_message.call_args.kwargs.get("text", "")
+        assert "новое" in text.lower()
+        assert "Подать похожее" in text
+
 
 class TestStartAppealRepeat:
     @pytest.mark.asyncio
@@ -197,6 +218,34 @@ class TestStartAppealRepeat:
                    AsyncMock()) as start_flow:
             await menu.start_appeal_repeat(event, appeal_id=1, max_user_id=42)
         start_flow.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_answered_repeat_marks_dialog_data(self) -> None:
+        from aemr_bot.db.models import AppealStatus, DialogState
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        appeal = MagicMock()
+        appeal.id = 7
+        appeal.user.max_user_id = 42
+        appeal.locality = "Елизовское ГП"
+        appeal.address = "Ленина, 1"
+        appeal.topic = "Дороги"
+        appeal.status = AppealStatus.ANSWERED.value
+        set_state = AsyncMock()
+        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.menu.appeals_service.get_by_id",
+                   AsyncMock(return_value=appeal)), \
+             patch("aemr_bot.handlers.menu.users_service.set_state", set_state):
+            await menu.start_appeal_repeat(event, appeal_id=7, max_user_id=42)
+
+        set_state.assert_called_once()
+        args = set_state.call_args.args
+        kwargs = set_state.call_args.kwargs
+        assert args[2] == DialogState.AWAITING_SUMMARY
+        data = kwargs["data"]
+        assert data["repeat_source_appeal_id"] == 7
+        assert data["repeat_source_status"] == AppealStatus.ANSWERED.value
 
 
 class TestShowAppeal:
@@ -274,15 +323,43 @@ class TestSubscribeFlow:
             is_blocked=False, consent_broadcast_at=datetime.now(timezone.utc)
         )
         set_sub = AsyncMock()
+        notify = AsyncMock()
         with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.users_service.get_or_create",
                    AsyncMock(return_value=user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=False)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.set_subscription",
-                   set_sub):
+                   set_sub), \
+             patch("aemr_bot.handlers.menu.admin_events.notify_broadcast_subscribed",
+                   notify):
             await menu.do_subscribe(event, max_user_id=42)
         set_sub.assert_called_once()
+        notify.assert_called_once_with(event.bot, max_user_id=42)
+
+    @pytest.mark.asyncio
+    async def test_subscribe_confirm_records_and_notifies(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        session = AsyncMock()
+        user = SimpleNamespace(is_blocked=False)
+        notify = AsyncMock()
+
+        @asynccontextmanager
+        async def fake_scope():
+            yield session
+
+        with patch("aemr_bot.handlers.menu.session_scope", fake_scope), \
+             patch("aemr_bot.handlers.menu.users_service.get_or_create",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
+             patch("aemr_bot.handlers.menu.admin_events.notify_broadcast_subscribed",
+                   notify):
+            await menu.do_subscribe_confirm(event, max_user_id=42)
+
+        session.execute.assert_called_once()
+        notify.assert_called_once_with(event.bot, max_user_id=42)
 
 
 class TestUnsubscribe:
@@ -325,15 +402,19 @@ class TestUnsubscribe:
         event = _make_event()
         user = SimpleNamespace(is_blocked=False)
         set_sub = AsyncMock()
+        notify = AsyncMock()
         with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.users_service.get_or_create",
                    AsyncMock(return_value=user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.set_subscription",
-                   set_sub):
+                   set_sub), \
+             patch("aemr_bot.handlers.menu.admin_events.notify_broadcast_unsubscribed",
+                   notify):
             await menu.do_unsubscribe(event, max_user_id=42)
         set_sub.assert_called_once()
+        notify.assert_called_once_with(event.bot, max_user_id=42, source="меню")
 
 
 class TestBroadcastUnsubscribe:
@@ -349,6 +430,73 @@ class TestBroadcastUnsubscribe:
         from aemr_bot import texts
         text = event.bot.send_message.call_args.kwargs.get("text", "")
         assert text == texts.UNSUBSCRIBE_ALREADY_OFF
+
+    @pytest.mark.asyncio
+    async def test_unsubscribe_from_broadcast_notifies_admin(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        set_sub = AsyncMock()
+        notify = AsyncMock()
+        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.menu.broadcasts_service.set_subscription",
+                   set_sub), \
+             patch("aemr_bot.handlers.menu.admin_events.notify_broadcast_unsubscribed",
+                   notify):
+            await menu.handle_broadcast_unsubscribe(event, max_user_id=42)
+
+        set_sub.assert_called_once()
+        notify.assert_called_once_with(
+            event.bot,
+            max_user_id=42,
+            source="кнопка под рассылкой",
+        )
+
+
+class TestConsentAndEraseNotifications:
+    @pytest.mark.asyncio
+    async def test_consent_revoke_notifies_even_without_open_appeals(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        user = SimpleNamespace(id=1)
+        notify = AsyncMock()
+        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.menu.users_service.get_or_create",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.services.appeals.list_unanswered",
+                   AsyncMock(return_value=[])), \
+             patch("aemr_bot.handlers.menu.users_service.revoke_consent",
+                   AsyncMock()), \
+             patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
+             patch("aemr_bot.handlers.menu.admin_events.notify_consent_revoked",
+                   notify):
+            await menu.do_consent_revoke(event, max_user_id=42)
+
+        notify.assert_called_once_with(event.bot, max_user_id=42, open_appeal_ids=[])
+
+    @pytest.mark.asyncio
+    async def test_forget_notifies_admin_about_deleted_data(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        user = SimpleNamespace(id=1)
+        appeal = SimpleNamespace(id=9, user_id=1)
+        notify = AsyncMock()
+        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.menu.users_service.get_or_create",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.services.appeals.list_unanswered",
+                   AsyncMock(return_value=[appeal])), \
+             patch("aemr_bot.handlers.menu.users_service.erase_pdn", AsyncMock()), \
+             patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
+             patch("aemr_bot.handlers.menu.admin_events.notify_data_erased",
+                   notify):
+            await menu.do_forget(event, max_user_id=42)
+
+        notify.assert_called_once_with(event.bot, max_user_id=42, closed_appeal_ids=[9])
 
 
 class TestSimpleScreens:
@@ -381,6 +529,33 @@ class TestSimpleScreens:
 
         event = _make_event()
         await menu.open_help(event)
+        event.bot.send_message.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_open_rules(self) -> None:
+        from aemr_bot import texts
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        await menu.open_rules(event)
+
+        event.bot.send_message.assert_called_once()
+        assert event.bot.send_message.call_args.kwargs.get("text") == texts.RULES_TEXT
+
+    @pytest.mark.asyncio
+    async def test_settings_rules_callback_opens_rules(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.menu.ack_callback", AsyncMock()) as ack:
+            handled = await menu.handle_callback(
+                event,
+                payload="settings:rules",
+                max_user_id=42,
+            )
+
+        assert handled is True
+        ack.assert_called_once()
         event.bot.send_message.assert_called_once()
 
     @pytest.mark.asyncio

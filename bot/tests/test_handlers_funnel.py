@@ -80,6 +80,9 @@ class TestStartAppealFlow:
             "aemr_bot.handlers.appeal_funnel.appeals_service.count_recent_for_user",
             AsyncMock(return_value=5),
         ), patch(
+            "aemr_bot.handlers.appeal_funnel.appeals_service.find_active_for_user",
+            AsyncMock(return_value=SimpleNamespace(id=7)),
+        ), patch(
             "aemr_bot.handlers.appeal_funnel.session_scope"
         ) as mock_scope:
             mock_scope.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
@@ -91,6 +94,41 @@ class TestStartAppealFlow:
         event.bot.send_message.assert_called()
         text = event.bot.send_message.call_args.kwargs.get("text", "")
         assert "час" in text.lower()
+        assert "Мои обращения" in text
+        assert "Дополнить" in text
+        assert "просто отправьте" not in text
+
+    @pytest.mark.asyncio
+    async def test_rate_limit_without_open_appeal_waits_for_reset(self) -> None:
+        """Если неотвеченного обращения нет, дополнять нечего — ждём сброс лимита."""
+        from aemr_bot.handlers import appeal_funnel
+
+        event = _make_event()
+        with patch(
+            "aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
+            AsyncMock(
+                return_value=SimpleNamespace(
+                    is_blocked=False, consent_pdn_at=None, id=1
+                )
+            ),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.appeals_service.count_recent_for_user",
+            AsyncMock(return_value=5),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.appeals_service.find_active_for_user",
+            AsyncMock(return_value=None),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.session_scope"
+        ) as mock_scope:
+            mock_scope.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
+            mock_scope.return_value.__aexit__ = AsyncMock(return_value=None)
+
+            await appeal_funnel.start_appeal_flow(event, max_user_id=42)
+
+        text = event.bot.send_message.call_args.kwargs.get("text", "")
+        assert "лимит" in text.lower()
+        assert "позже" in text.lower() or "сброс" in text.lower()
+        assert "Дополнить" not in text
 
 
 class TestOnAwaitingAddress:
@@ -105,6 +143,34 @@ class TestOnAwaitingAddress:
         event.message.answer.assert_called()
         msg = event.message.answer.call_args.args[0]
         assert "Укажите" in msg or "адрес" in msg.lower()
+
+    @pytest.mark.asyncio
+    async def test_valid_address_opens_topic_as_new_message(self) -> None:
+        """После ручного адреса следующая карточка должна идти ниже сообщения жителя."""
+        from aemr_bot.handlers import appeal_funnel
+
+        event = _make_event()
+        ask_topic = AsyncMock()
+        with patch(
+            "aemr_bot.handlers.appeal_funnel.session_scope"
+        ) as mock_scope, patch(
+            "aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data",
+            AsyncMock(),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.ask_topic",
+            ask_topic,
+        ):
+            mock_scope.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
+            mock_scope.return_value.__aexit__ = AsyncMock(return_value=None)
+
+            await appeal_funnel.on_awaiting_address(
+                event,
+                body=None,
+                text_body="Ленина, 5",
+                max_user_id=42,
+            )
+
+        ask_topic.assert_called_once_with(event, 42, force_new_message=True)
 
 
 class TestOnAwaitingName:

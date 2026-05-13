@@ -1,4 +1,4 @@
-"""FSM-воронка приёма обращения и followup.
+"""FSM-воронка приёма обращения и явного дополнения.
 
 Выделено из handlers/appeal.py (рефакторинг 2026-05-10).
 
@@ -27,6 +27,7 @@ from aemr_bot.db.models import DialogState
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers.appeal_runtime import (
     _HAS_ALNUM,
+    PERSIST_RATE_LIMITED,
     persist_and_dispatch_appeal,
 )
 from aemr_bot.services import appeals as appeals_service
@@ -65,15 +66,10 @@ async def start_appeal_flow(event, max_user_id: int):
                 session, user.id, hours=1
             )
             if recent >= 3:
-                await event.bot.send_message(
-                    chat_id=get_chat_id(event),
-                    text=(
-                        "Вы создали несколько обращений за последний час. "
-                        "Чтобы не дублировать, дополните уже открытое — "
-                        "просто отправьте сообщение в этот чат, оно "
-                        "пришьётся к последнему обращению."
-                    ),
-                    attachments=[keyboards.back_to_menu_keyboard()],
+                active = await appeals_service.find_active_for_user(session, user.id)
+                await _send_rate_limit_message(
+                    event,
+                    has_open_unanswered=active is not None,
                 )
                 return
         if user.is_blocked:
@@ -147,6 +143,29 @@ async def _has_consent_step_pending(max_user_id: int) -> bool:
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         return user.consent_pdn_at is None
+
+
+async def _send_rate_limit_message(event, *, has_open_unanswered: bool) -> None:
+    if has_open_unanswered:
+        text = (
+            "Лимит новых обращений временно исчерпан: можно создать не больше "
+            "3 обращений за последний час.\n\n"
+            "У вас есть неотвеченное обращение. Если нужно уточнить детали "
+            "по нему, откройте «📂 Мои обращения», выберите это обращение "
+            "и нажмите «📎 Дополнить»."
+        )
+    else:
+        text = (
+            "Лимит новых обращений временно исчерпан: можно создать не больше "
+            "3 обращений за последний час.\n\n"
+            "Сейчас у вас нет неотвеченного обращения, которое можно "
+            "дополнить. Пожалуйста, дождитесь сброса лимита и попробуйте позже."
+        )
+    await event.bot.send_message(
+        chat_id=get_chat_id(event),
+        text=text,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
 
 
 # ---- _ask_* — переходы на следующий шаг -----------------------------------
@@ -224,15 +243,14 @@ async def _show_progress_step(
     keyboard,
     force_new_message: bool = False,
 ) -> None:
-    """Универсальный helper для шагов воронки: рендерит прогресс-карту,
+    """Общий помощник для шагов воронки: рендерит прогресс-карту,
     обновляет существующее сообщение через edit_message либо шлёт новое
     (см. services/progress.send_or_edit_progress), сохраняет mid в
     dialog_data['progress_message_id'].
 
-    `force_new_message=True` используется для переходов, где edit старого
-    сообщения создаёт ложный UX. Типичный пример — geo-confirm: экран
-    подтверждения адреса остаётся отдельным сообщением с устаревающими
-    inline-кнопками, а следующую тематику надо отправить новым сообщением.
+    `force_new_message=True` используется там, где редактирование старой
+    карточки ломает порядок ленты: после геоподтверждения или ручного
+    ввода адреса следующая карточка должна появиться ниже действия жителя.
     """
     from aemr_bot.services.progress import render_progress, send_or_edit_progress
 
@@ -336,7 +354,12 @@ async def finalize_appeal(event, max_user_id: int):
     жителя в шаге AWAITING_SUMMARY — без таймера и без отдельной
     кнопки «Отправить». На пустой ввод отвечаем подсказкой."""
     persisted = await persist_and_dispatch_appeal(event.bot, max_user_id)
-    if persisted is False:
+    if persisted == PERSIST_RATE_LIMITED:
+        async with session_scope() as session:
+            user = await users_service.get_or_create(session, max_user_id=max_user_id)
+            active = await appeals_service.find_active_for_user(session, user.id)
+        await _send_rate_limit_message(event, has_open_unanswered=active is not None)
+    elif persisted is False:
         await event.bot.send_message(
             chat_id=get_chat_id(event),
             text=texts.APPEAL_EMPTY_REJECTED,
@@ -413,7 +436,7 @@ async def on_awaiting_address(event, body, text_body, max_user_id):
         await users_service.update_dialog_data(
             session, max_user_id, {"address": address}
         )
-    await ask_topic(event, max_user_id)
+    await ask_topic(event, max_user_id, force_new_message=True)
 
 
 async def on_awaiting_summary(event, body, text_body, max_user_id):
@@ -509,8 +532,8 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     админ-чат как «📩 Дополнение к обращению #N», подтверждаем жителю
     и возвращаем в меню.
 
-    Если обращение было ANSWERED — переоткрываем (житель пришёл с
-    уточнением после ответа).
+    Отвеченные и закрытые обращения не переоткрываем. Повтор по ним
+    оформляется новым связанным обращением через «🔁 Подать похожее».
     """
     from aemr_bot.config import settings as cfg
     from aemr_bot.db.models import AppealStatus
@@ -538,7 +561,7 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         return
 
     # Если согласие отозвано между нажатием «📎 Дополнить» и присылкой
-    # текста — followup в админ-чат не идёт. 152-ФЗ ст. 21 ч. 5: после
+    # текста — дополнение в админ-чат не идёт. 152-ФЗ ст. 21 ч. 5: после
     # отзыва обработка прекращается, в том числе входящих сообщений.
     if user.consent_pdn_at is None:
         async with session_scope() as session:
@@ -550,13 +573,13 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         )
         return
 
-    # Если оператор закрыл обращение между нажатием и присылкой —
-    # не «оживляем» его followup'ом.
-    if appeal.status == AppealStatus.CLOSED.value:
+    # Если оператор ответил или закрыл обращение между нажатием и
+    # присылкой текста — не возвращаем его в работу дополнением.
+    if appeal.status in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
         async with session_scope() as session:
             await users_service.reset_state(session, max_user_id)
         await event.message.answer(
-            "Обращение уже закрыто. Если ситуация повторилась — "
+            "Обращение уже завершено. Если ситуация повторилась — "
             "откройте его в «📂 Мои обращения» и нажмите «🔁 Подать похожее».",
             attachments=[keyboards.back_to_menu_keyboard()],
         )
@@ -573,8 +596,6 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         return
 
     async with session_scope() as session:
-        if appeal.status == AppealStatus.ANSWERED.value:
-            await appeals_service.reopen(session, appeal.id)
         await appeals_service.add_user_message(
             session,
             appeal=appeal,
