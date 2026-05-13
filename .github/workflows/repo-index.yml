@@ -1,0 +1,49 @@
+name: Generate repository index
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/make_repo_index.py'
+      - 'REPO_INDEX.md'
+      - '.github/workflows/repo-index.yml'
+      - '.gitignore'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repo-index-main
+  cancel-in-progress: true
+
+jobs:
+  generate-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate full repository index
+        run: |
+          python scripts/make_repo_index.py --output aemr-bot-index.md --max-file-kb 300
+
+      - name: Commit generated index
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f aemr-bot-index.md
+          if git diff --cached --quiet; then
+            echo "Repository index is already up to date."
+            exit 0
+          fi
+          git commit -m "Update generated repository index"
+          git push
