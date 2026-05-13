@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-13 08:23:27 UTC`
+Generated at: `2026-05-13 22:36:36 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `154`
 Max file size: `300 KB`
@@ -37,14 +37,14 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/__init__.py` (3303 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (9743 bytes)
-- `bot/aemr_bot/handlers/admin_audience.py` (7102 bytes)
+- `bot/aemr_bot/handlers/admin_audience.py` (7215 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17442 bytes)
-- `bot/aemr_bot/handlers/admin_operators.py` (10036 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (10527 bytes)
-- `bot/aemr_bot/handlers/admin_settings.py` (3454 bytes)
-- `bot/aemr_bot/handlers/admin_stats.py` (2984 bytes)
+- `bot/aemr_bot/handlers/admin_operators.py` (10193 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (10631 bytes)
+- `bot/aemr_bot/handlers/admin_settings.py` (3531 bytes)
+- `bot/aemr_bot/handlers/admin_stats.py` (3017 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (30056 bytes)
-- `bot/aemr_bot/handlers/appeal_funnel.py` (28164 bytes)
+- `bot/aemr_bot/handlers/appeal_funnel.py` (29637 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7608 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (12632 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (23016 bytes)
@@ -58,10 +58,10 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (6055 bytes)
-- `bot/aemr_bot/services/appeals.py` (18140 bytes)
+- `bot/aemr_bot/services/appeals.py` (18415 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (10444 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
-- `bot/aemr_bot/services/card_format.py` (3950 bytes)
+- `bot/aemr_bot/services/card_format.py` (5938 bytes)
 - `bot/aemr_bot/services/cron.py` (31012 bytes)
 - `bot/aemr_bot/services/db_backup.py` (11038 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
@@ -78,7 +78,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/texts.py` (28379 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
-- `bot/aemr_bot/utils/event.py` (8518 bytes)
+- `bot/aemr_bot/utils/event.py` (10894 bytes)
 - `bot/alembic.ini` (619 bytes)
 - `bot/pyproject.toml` (2583 bytes)
 - `bot/tests/__init__.py` (0 bytes)
@@ -86,7 +86,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_appeal_ops.py` (20049 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
 - `bot/tests/test_admin_handlers_small.py` (21991 bytes)
-- `bot/tests/test_admin_operators.py` (15322 bytes)
+- `bot/tests/test_admin_operators.py` (16108 bytes)
 - `bot/tests/test_admin_panel.py` (11325 bytes)
 - `bot/tests/test_appeal_dispatcher.py` (22940 bytes)
 - `bot/tests/test_appeal_flow.py` (10960 bytes)
@@ -96,7 +96,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_broadcasts_service_pg.py` (3786 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
 - `bot/tests/test_callback_router.py` (8287 bytes)
-- `bot/tests/test_card_format.py` (3700 bytes)
+- `bot/tests/test_card_format.py` (4677 bytes)
 - `bot/tests/test_cron_jobs.py` (11797 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (11168 bytes)
@@ -105,7 +105,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_final_p1_regressions.py` (5856 bytes)
 - `bot/tests/test_funnel_state_hardening.py` (6301 bytes)
 - `bot/tests/test_geo.py` (9324 bytes)
-- `bot/tests/test_handlers_appeal_funnel.py` (16405 bytes)
+- `bot/tests/test_handlers_appeal_funnel.py` (19343 bytes)
 - `bot/tests/test_handlers_auth_broadcast.py` (7088 bytes)
 - `bot/tests/test_handlers_funnel.py` (9386 bytes)
 - `bot/tests/test_handlers_menu.py` (27632 bytes)
@@ -134,25 +134,25 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/archive/TELEGRAM_ANALYTICS_INSIGHTS.md` (15860 bytes)
 - `docs/archive/WEBHOOK_PLAN.md` (10983 bytes)
 - `docs/BACKUP_RESTORE_TEST.md` (5705 bytes)
-- `docs/COPY.md` (38622 bytes)
-- `docs/DEVELOPER.md` (125841 bytes)
-- `docs/HOW_IT_WORKS.md` (14121 bytes)
+- `docs/COPY.md` (39665 bytes)
+- `docs/DEVELOPER.md` (126919 bytes)
+- `docs/HOW_IT_WORKS.md` (15203 bytes)
 - `docs/PRD.md` (60725 bytes)
 - `docs/PRIVACY_DRAFT.md` (24293 bytes)
 - `docs/README.md` (3107 bytes)
 - `docs/ROLLBACK.md` (7410 bytes)
 - `docs/RULES.md` (8624 bytes)
-- `docs/RUNBOOK.md` (83864 bytes)
+- `docs/RUNBOOK.md` (84267 bytes)
 - `docs/RUNBOOK_PDN_ERASURE.md` (7846 bytes)
-- `docs/SETUP.md` (35571 bytes)
+- `docs/SETUP.md` (36165 bytes)
 - `docs/VPS_SMOKE_CHECKLIST.md` (5736 bytes)
 - `docs/Политика.md` (6113 bytes)
 - `docs/Политика_v2.md` (28793 bytes)
 - `infra/.env.example` (7517 bytes)
-- `infra/docker-compose.yml` (5272 bytes)
+- `infra/docker-compose.yml` (5346 bytes)
 - `infra/Dockerfile` (1655 bytes)
 - `infra/nginx/feedback.conf` (976 bytes)
-- `README.md` (18153 bytes)
+- `README.md` (18494 bytes)
 - `REPO_INDEX.md` (2264 bytes)
 - `scripts/build_geo_database.py` (9300 bytes)
 - `scripts/cross_verify_geo.py` (12519 bytes)
@@ -2840,8 +2840,8 @@ async def run_erase_for_appeal(event, appeal_id: int) -> None:
 
 ### `bot/aemr_bot/handlers/admin_audience.py`
 
-Size: `7102` bytes  
-SHA-256: `15eb1f5176e186bf7d67b038a95e83960d190a83fa52f54876c6c26df1a3bd98`
+Size: `7215` bytes  
+SHA-256: `02e451f77e505c24b81bf20666158c917276a248d8d03c260a93285a64df17f4`
 
 ```python
 """Меню «📊 Аудитория и согласия» — IT-выборки + точечные действия
@@ -2860,7 +2860,7 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import get_user_id
+from aemr_bot.utils.event import get_user_id, send_or_edit_screen
 
 log = logging.getLogger(__name__)
 
@@ -2871,7 +2871,8 @@ async def run_audience_menu(event) -> None:
 
     if not await ensure_role(event, OperatorRole.IT):
         return
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=(
             "📊 Аудитория и согласия\n"
@@ -2919,7 +2920,8 @@ async def run_audience_action(event, payload: str) -> None:
                         action="block",
                         target=f"user max_id={target_id}",
                     )
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text=texts.OP_USER_BLOCKED.format(max_user_id=target_id)
                 if ok
@@ -2938,7 +2940,8 @@ async def run_audience_action(event, payload: str) -> None:
                         action="unblock",
                         target=f"user max_id={target_id}",
                     )
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text=texts.OP_USER_UNBLOCKED.format(max_user_id=target_id)
                 if ok
@@ -2955,7 +2958,8 @@ async def run_audience_action(event, payload: str) -> None:
                         action="erase",
                         target=f"user max_id={target_id}",
                     )
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text=texts.OP_USER_ERASED.format(max_user_id=target_id)
                 if ok
@@ -2978,12 +2982,13 @@ async def run_audience_action(event, payload: str) -> None:
             return
 
     if not users:
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text=f"{header}\n\nСписок пуст.",
         )
         return
-    await event.bot.send_message(chat_id=cfg.admin_group_id, text=header)
+    await send_or_edit_screen(event, chat_id=cfg.admin_group_id, text=header)
     for u in users:
         name = u.first_name or "—"
         phone = _mask_phone(u.phone)
@@ -3465,8 +3470,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/admin_operators.py`
 
-Size: `10036` bytes  
-SHA-256: `aef1ebd5c54ce9183a87d5d510d3a353e82d8c6cbbb32b5d9c9d4ec748156f68`
+Size: `10193` bytes  
+SHA-256: `0c2369aa2760596729248f9a96ecf450a373b61d86089b18c6fc71793699062e`
 
 ```python
 """Управление операторами через wizard «👥 Добавить».
@@ -3492,7 +3497,7 @@ from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.services import operators as operators_service
-from aemr_bot.utils.event import get_user_id
+from aemr_bot.utils.event import get_user_id, send_or_edit_screen
 
 log = logging.getLogger(__name__)
 
@@ -3541,7 +3546,8 @@ async def run_operators_menu(event) -> None:
 
     if not await ensure_role(event, OperatorRole.IT):
         return
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=(
             "👥 Управление операторами\n"
@@ -3577,7 +3583,8 @@ async def run_operators_action(event, payload: str) -> None:
         op_reply.drop_reply_intent(operator_id)
 
         _op_wizard_set(operator_id, step="awaiting_id")
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text=(
                 "👥 Шаг 1 из 3 — введите max_user_id будущего оператора.\n"
@@ -3590,7 +3597,8 @@ async def run_operators_action(event, payload: str) -> None:
         async with session_scope() as session:
             ops = await operators_service.list_active(session)
         if not ops:
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text="Список операторов пуст.",
             )
@@ -3598,14 +3606,16 @@ async def run_operators_action(event, payload: str) -> None:
         lines = ["👥 Активные операторы:"]
         for op in ops:
             lines.append(f"• #{op.max_user_id} · {op.role} · {op.full_name}")
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text="\n".join(lines),
         )
         return
     if suffix == "cancel":
         _op_wizard_drop(operator_id)
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text="Регистрация оператора отменена.",
         )
@@ -3614,20 +3624,23 @@ async def run_operators_action(event, payload: str) -> None:
         role = suffix.split(":", 1)[1]
         valid = {r.value for r in OperatorRole}
         if role not in valid:
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text=f"Роль «{role}» неизвестна.",
             )
             return
         state = _op_wizard_get(operator_id)
         if state is None or state.get("step") != "awaiting_role":
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text="Мастер закрыт. Откройте «👥 Операторы → Добавить» заново.",
             )
             return
         _op_wizard_set(operator_id, role=role, step="awaiting_name")
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text=(
                 f"👥 Шаг 3 из 3 — роль {role} выбрана. Теперь введите ФИО "
@@ -3711,8 +3724,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `10527` bytes  
-SHA-256: `aca6ea72db1a7806864aa0bf61597ffd8fa927425cb3f148b8be65acebe81f5c`
+Size: `10631` bytes  
+SHA-256: `7ccbbcce1f1c879bc53f47fc42d0ab8d22dae131e89cb5ba9c64dd7a5c333476`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -3729,7 +3742,7 @@ import logging
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, get_operator
-from aemr_bot.utils.event import get_message_text
+from aemr_bot.utils.event import get_message_text, send_or_edit_screen
 
 log = logging.getLogger(__name__)
 
@@ -3776,7 +3789,8 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
         except Exception:
             log.exception("count_open failed; кнопку без счётчика покажем")
 
-    sent = await event.bot.send_message(
+    sent = await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=texts.OP_HELP.format(answer_limit=cfg.answer_max_chars),
         attachments=[
@@ -3784,6 +3798,7 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
                 open_count=open_count, is_it=is_it, can_broadcast=can_broadcast
             )
         ],
+        force_new_message=pin,
     )
     if not pin:
         return
@@ -3844,13 +3859,15 @@ async def _do_open_tickets(event) -> None:
         open_appeals = (await session.scalars(query)).all()
 
     if not open_appeals:
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text="🎉 Нет открытых или неотвеченных обращений.",
         )
         return
 
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=f"⏳ Найдено неотвеченных обращений: {len(open_appeals)}",
     )
@@ -3931,7 +3948,8 @@ async def _do_diag(event) -> None:
         events_total = await session.scalar(select(func.count()).select_from(Event))
         last_event = await session.scalar(select(func.max(Event.received_at)))
 
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=(
             "🛠️ Диагностика:\n"
@@ -3984,8 +4002,8 @@ async def _do_backup(event) -> None:
 
 ### `bot/aemr_bot/handlers/admin_settings.py`
 
-Size: `3454` bytes  
-SHA-256: `f7677f1df6d01a161f58d899a38882a96431041f3126342c72d8f97c6b92a145`
+Size: `3531` bytes  
+SHA-256: `344df3f6899d7c67cd84b6c438b2c7efa096e7a6b5d19b1478bf3817acf5444e`
 
 ```python
 """Управление настройками бота через /setting и кнопочный меню.
@@ -4002,6 +4020,7 @@ from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.services import settings_store
+from aemr_bot.utils.event import send_or_edit_screen
 
 log = logging.getLogger(__name__)
 
@@ -4016,7 +4035,8 @@ async def run_settings_menu(event) -> None:
         return
     async with session_scope() as session:
         keys = await settings_store.list_keys(session)
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=(
             "⚙️ Настройки бота\n"
@@ -4053,7 +4073,8 @@ async def run_settings_action(event, payload: str) -> None:
     expected = rule.get("type", "?")
     expected_name = expected.__name__ if hasattr(expected, "__name__") else str(expected)
     await ack_callback(event)
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=(
             f"⚙️ Настройка «{key}» (тип {expected_name})\n"
@@ -4068,8 +4089,8 @@ async def run_settings_action(event, payload: str) -> None:
 
 ### `bot/aemr_bot/handlers/admin_stats.py`
 
-Size: `2984` bytes  
-SHA-256: `49a538636a55a382c273c51a9a918719a24abfd3cb03b79dbdc1254977928599`
+Size: `3017` bytes  
+SHA-256: `f0671b139043e764f82e2e2de7a698290aa8d50d971f16e674483f28cdfe99ff`
 
 ```python
 """Статистика для оператора — XLSX за период.
@@ -4085,7 +4106,7 @@ from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator
 from aemr_bot.services import stats as stats_service
-from aemr_bot.utils.event import get_chat_id
+from aemr_bot.utils.event import get_chat_id, send_or_edit_screen
 
 
 async def _send_stats_xlsx(
@@ -4144,7 +4165,8 @@ async def run_stats_menu(event) -> None:
 
     if not await ensure_operator(event):
         return
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text="Выгрузка XLSX. Выберите период:",
         attachments=[kbds.op_stats_menu_keyboard()],
@@ -4871,8 +4893,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/appeal_funnel.py`
 
-Size: `28164` bytes  
-SHA-256: `9e64774b6da6d777a175f194421eaa7d29c89e8e70bbdb140bafff4a39ff92fc`
+Size: `29637` bytes  
+SHA-256: `b4a1fb9c3a63221b0d2446008b3d9c4b05230a999fbdc074fc6569eb4cebcee2`
 
 ```python
 """FSM-воронка приёма обращения и явного дополнения.
@@ -5417,6 +5439,7 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     from aemr_bot.handlers.menu import open_main_menu
     from aemr_bot.services import card_format
     from aemr_bot.services.admin_relay import relay_attachments_to_admin
+    from aemr_bot.utils.event import extract_message_id
 
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
@@ -5479,17 +5502,51 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             text=text or None,
             attachments=attachments,
         )
+        updated_appeal = await appeals_service.get_by_id_with_messages(
+            session, appeal.id
+        )
         await users_service.reset_state(session, max_user_id)
-        followup = card_format.admin_followup(appeal, user, text or "(без текста)")
+        appeal_for_card = updated_appeal or appeal
+        user_for_card = getattr(appeal_for_card, "user", None) or user
+        followup = card_format.admin_followup(
+            appeal_for_card, user_for_card, text or "(без текста)"
+        )
+
+    admin_mid = getattr(appeal_for_card, "admin_message_id", None)
+    followup_mid = None
+    admin_card_updated = False
+    if cfg.admin_group_id and admin_mid:
+        try:
+            await event.bot.edit_message(
+                message_id=admin_mid,
+                text=card_format.admin_card(appeal_for_card, user_for_card),
+                attachments=[
+                    keyboards.appeal_admin_actions(
+                        appeal_for_card.id,
+                        appeal_for_card.status,
+                        is_it=True,
+                        user_blocked=bool(getattr(user_for_card, "is_blocked", False)),
+                        closed_due_to_revoke=bool(
+                            getattr(appeal_for_card, "closed_due_to_revoke", False)
+                        ),
+                    )
+                ],
+            )
+            admin_card_updated = True
+        except Exception:
+            log.exception("edit admin appeal card after followup failed")
+
+    if cfg.admin_group_id and not admin_card_updated:
+        sent = await event.bot.send_message(chat_id=cfg.admin_group_id, text=followup)
+        followup_mid = extract_message_id(sent)
 
     if cfg.admin_group_id:
-        await event.bot.send_message(chat_id=cfg.admin_group_id, text=followup)
         if attachments:
             try:
                 await relay_attachments_to_admin(
                     event.bot,
                     appeal_id=appeal.id,
-                    admin_mid=None,
+                    admin_mid=admin_mid if admin_card_updated else followup_mid,
                     stored_attachments=attachments,
                 )
             except Exception:
@@ -10052,8 +10109,8 @@ async def relay_attachments_to_admin(
 
 ### `bot/aemr_bot/services/appeals.py`
 
-Size: `18140` bytes  
-SHA-256: `69707e783b50c34d21bb941c6c1be739c79543f47e84335ef835047ca2137069`
+Size: `18415` bytes  
+SHA-256: `f1b8116bee9c3af8ad8e5b0ce5610c649d573e76313d59f0b699c050fe672bfa`
 
 ```python
 from datetime import datetime, timedelta, timezone
@@ -10144,6 +10201,16 @@ async def add_operator_message(
 async def get_by_id(session: AsyncSession, appeal_id: int) -> Appeal | None:
     return await session.scalar(
         select(Appeal).options(selectinload(Appeal.user)).where(Appeal.id == appeal_id)
+    )
+
+
+async def get_by_id_with_messages(
+    session: AsyncSession, appeal_id: int
+) -> Appeal | None:
+    return await session.scalar(
+        select(Appeal)
+        .options(selectinload(Appeal.user), selectinload(Appeal.messages))
+        .where(Appeal.id == appeal_id)
     )
 
 
@@ -10827,8 +10894,8 @@ def is_workday(d: date) -> bool:
 
 ### `bot/aemr_bot/services/card_format.py`
 
-Size: `3950` bytes  
-SHA-256: `c7170dae38214fd9b04dd29f73bc74a1298e500bd87240d7810f2fa0b96a5167`
+Size: `5938` bytes  
+SHA-256: `dbd84c9b95bd3a9a3abd71ee4848a4510df7efca78f20c7334debb45b413b526`
 
 ```python
 from datetime import datetime
@@ -10836,7 +10903,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from aemr_bot.config import settings
-from aemr_bot.db.models import Appeal, User
+from aemr_bot.db.models import Appeal, MessageDirection, User
 from aemr_bot.texts import (
     ADMIN_CARD_TEMPLATE,
     ADMIN_FOLLOWUP_TEMPLATE,
@@ -10875,6 +10942,52 @@ def attachments_summary_line(attachments: list[dict]) -> str:
     return "Вложения: " + ", ".join(parts)
 
 
+def _clip(text: str, limit: int = 900) -> str:
+    text = text.strip()
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1].rstrip() + "…"
+
+
+def _loaded_messages(appeal: Appeal) -> list:
+    """Берём только уже загруженные messages.
+
+    У SQLAlchemy lazy-load в async-коде может упасть MissingGreenlet, если
+    случайно обратиться к незагруженной связи. Поэтому смотрим в __dict__:
+    selectinload положит туда список, а незагруженную связь не трогаем.
+    """
+    messages = getattr(appeal, "__dict__", {}).get("messages")
+    return list(messages or [])
+
+
+def admin_followups_block(appeal: Appeal) -> str:
+    followups = [
+        msg for msg in _loaded_messages(appeal)
+        if getattr(msg, "direction", None) == MessageDirection.FROM_USER.value
+    ]
+    if not followups:
+        return ""
+
+    hidden_count = max(0, len(followups) - 5)
+    visible = followups[-5:]
+    title = "Дополнение к обращению:" if len(visible) == 1 else "Дополнения к обращению:"
+    lines = ["────────────────", title]
+    if hidden_count:
+        lines.append(f"Ранее было ещё {hidden_count} дополнений.")
+    for idx, msg in enumerate(visible, start=1):
+        text = (getattr(msg, "text", None) or "").strip()
+        attachments = getattr(msg, "attachments", None) or []
+        attach_line = attachments_summary_line(attachments)
+        body = _clip(text) if text else "Без текста."
+        if attach_line:
+            body = f"{body}\n{attach_line}"
+        if len(visible) == 1:
+            lines.append(body)
+        else:
+            lines.append(f"{idx}. {body}")
+    return "\n".join(lines)
+
+
 def admin_card(appeal: Appeal, user: User) -> str:
     """Карточка обращения в служебной группе — единый стиль независимо от
     того, есть вложения или нет.
@@ -10896,6 +11009,9 @@ def admin_card(appeal: Appeal, user: User) -> str:
     summary_line = attachments_summary_line(appeal.attachments or [])
     if summary_line:
         body = f"{body}\n{summary_line}"
+    followups = admin_followups_block(appeal)
+    if followups:
+        body = f"{body}\n\n{followups}"
     return body
 
 
@@ -15088,8 +15204,8 @@ def deserialize_for_relay(stored: list[dict]) -> list:
 
 ### `bot/aemr_bot/utils/event.py`
 
-Size: `8518` bytes  
-SHA-256: `8e05808c35a7a1f532c6abba6513b76f6fe88cc2c25dbf1fbcfe8775f2566817`
+Size: `10894` bytes  
+SHA-256: `8bfb9af43562610ccc1a720055c8dc969d31de671f7d5edc6c80b66d8a5586b9`
 
 ```python
 """Адаптер поверх объектов событий maxapi.
@@ -15266,6 +15382,66 @@ def extract_message_id(sent: Any) -> str | None:
         return str(mid)
 
     return None
+
+
+def get_callback_message_id(event: Any) -> str | None:
+    """mid сообщения, на котором нажали кнопку.
+
+    MAX умеет редактировать это сообщение через edit_message. Командные
+    сообщения и обычный текст callback не имеют — для них отправляем новый
+    экран.
+    """
+    if getattr(event, "callback", None) is None:
+        return None
+    body = getattr(getattr(event, "message", None), "body", None)
+    mid = getattr(body, "mid", None)
+    return str(mid) if mid else None
+
+
+async def send_or_edit_screen(
+    event: Any,
+    *,
+    text: str,
+    attachments: list | None = None,
+    force_new_message: bool = False,
+    chat_id: int | None = None,
+    user_id: int | None = None,
+):
+    """Показать экран бота без лишнего шума в чате.
+
+    Правило UX: нажатие кнопки меняет текущую карточку, а видимое
+    сообщение человека (текст, гео, файл, фото) приводит к новому ответу
+    бота ниже этого сообщения. Поэтому callback сначала пробуем
+    редактировать, а команды/текстовые шаги отправляем новым сообщением.
+    """
+    bot = getattr(event, "bot", None)
+    if bot is None:
+        return None
+    attachments = attachments or []
+    mid = None if force_new_message else get_callback_message_id(event)
+    if mid and hasattr(bot, "edit_message"):
+        try:
+            return await bot.edit_message(
+                message_id=mid,
+                text=text,
+                attachments=attachments,
+            )
+        except Exception:
+            log.info(
+                "edit_message %s failed, fallback to send_message",
+                mid,
+                exc_info=False,
+            )
+
+    event_chat_id, event_user_id = get_ids(event)
+    target_chat_id = chat_id if chat_id is not None else event_chat_id
+    target_user_id = user_id if user_id is not None else event_user_id
+    return await bot.send_message(
+        chat_id=target_chat_id,
+        user_id=None if target_chat_id is not None else target_user_id,
+        text=text,
+        attachments=attachments,
+    )
 
 
 async def send(event: Any, text: str, attachments: list | None = None):
@@ -16559,8 +16735,8 @@ class TestRunStatsToday:
 
 ### `bot/tests/test_admin_operators.py`
 
-Size: `15322` bytes  
-SHA-256: `2aac2061b20bc18213ab9b451b3fceb384608a4f383a482481a46efbc042a8cb`
+Size: `16108` bytes  
+SHA-256: `f63ee7ca2535e16a8242c37beaab66a6e3bd2ab8782dc16fd56c4ff78f4a268c`
 
 ```python
 """Тесты для handlers/admin_operators — wizard добавления оператора
@@ -16595,6 +16771,17 @@ def _make_event(*, user_id: int = 7) -> SimpleNamespace:
             body=SimpleNamespace(text="", attachments=[], mid="m-1"),
         ),
     )
+
+
+def _make_callback_event(*, user_id: int = 7) -> SimpleNamespace:
+    event = _make_event(user_id=user_id)
+    event.bot.edit_message = AsyncMock()
+    event.callback = SimpleNamespace(
+        payload="op:operators",
+        callback_id="cb-1",
+        user=SimpleNamespace(user_id=user_id),
+    )
+    return event
 
 
 @asynccontextmanager
@@ -16682,6 +16869,17 @@ class TestOperatorsMenu:
                    AsyncMock(return_value=True)):
             await admin_operators.run_operators_menu(event)
         event.bot.send_message.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_callback_edits_current_menu_card(self) -> None:
+        from aemr_bot.handlers import admin_operators
+
+        event = _make_callback_event()
+        with patch("aemr_bot.handlers.admin_operators.ensure_role",
+                   AsyncMock(return_value=True)):
+            await admin_operators.run_operators_menu(event)
+        event.bot.edit_message.assert_called_once()
+        event.bot.send_message.assert_not_called()
 
 
 # --- run_operators_action -----------------------------------------------------
@@ -19440,8 +19638,8 @@ class TestMalformedAdminPayloads:
 
 ### `bot/tests/test_card_format.py`
 
-Size: `3700` bytes  
-SHA-256: `7a0d765f0e5b4d38d9a17426c596adbe4034b3cb70defc3aee41ce35e65b24f3`
+Size: `4677` bytes  
+SHA-256: `4ccbd459dc799afae866633f42a8a6f2dadd6f17cf6ac242d67776f13afb1441`
 
 ```python
 """Тесты на services/card_format — рендер карточек обращений.
@@ -19454,6 +19652,7 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from aemr_bot.services.card_format import (
+    admin_card,
     appeal_list_label,
     attachments_summary_line,
 )
@@ -19484,6 +19683,33 @@ class TestAttachmentsSummaryLine:
         """audio не разрешён в _ATTACHMENT_LABELS → не попадает в summary."""
         result = attachments_summary_line([{"type": "audio"}])
         assert result == ""
+
+
+class TestAdminCard:
+    def test_shows_user_followup_inside_card(self) -> None:
+        appeal = SimpleNamespace(
+            id=18,
+            locality="Елизовское ГП",
+            address="ул. Ленина, 5",
+            topic="Дороги",
+            summary="Яма во дворе.",
+            attachments=[],
+            messages=[
+                SimpleNamespace(
+                    direction="from_user",
+                    text="Уточнение: яма у второго подъезда.",
+                    attachments=[],
+                )
+            ],
+        )
+        user = SimpleNamespace(first_name="Сергей", phone="+79991234567")
+
+        result = admin_card(appeal, user)
+
+        assert "Суть:" in result
+        assert "Яма во дворе." in result
+        assert "Дополнение к обращению:" in result
+        assert "яма у второго подъезда" in result
 
 
 class TestAppealListLabel:
@@ -21005,8 +21231,8 @@ class TestGeoConfirmCard:
 
 ### `bot/tests/test_handlers_appeal_funnel.py`
 
-Size: `16405` bytes  
-SHA-256: `5eff91fddb9a141c3767ffd803f7e830cfa927c369f456f5926784fb0a9a7c88`
+Size: `19343` bytes  
+SHA-256: `b085d3ee6a33c1080324b88839eac9d7a5bbf7d766e9a79a5c21155559289289`
 
 ```python
 """Расширенные тесты handlers/appeal_funnel — состояния воронки и
@@ -21325,6 +21551,85 @@ class TestOnAwaitingFollowupText:
         reset.assert_called_once()
         text = event.message.answer.call_args.args[0]
         assert "закрыто" in text.lower() or "Подать похожее" in text
+
+    @pytest.mark.asyncio
+    async def test_success_updates_original_admin_card(self) -> None:
+        from aemr_bot.handlers import appeal_funnel
+
+        event = _make_event()
+        user = SimpleNamespace(
+            id=1,
+            max_user_id=42,
+            first_name="Сергей",
+            phone="+79991234567",
+            is_blocked=False,
+            dialog_data={"appeal_id": 5},
+            consent_pdn_at=datetime.now(timezone.utc),
+        )
+        appeal = SimpleNamespace(
+            id=5,
+            user_id=1,
+            user=user,
+            status="new",
+            locality="Елизовское ГП",
+            address="ул. Ленина, 5",
+            topic="Дороги",
+            summary="Яма во дворе.",
+            attachments=[],
+            messages=[],
+            admin_message_id="admin-mid-5",
+        )
+        updated_appeal = SimpleNamespace(
+            **{
+                **appeal.__dict__,
+                "messages": [
+                    SimpleNamespace(
+                        direction="from_user",
+                        text="Уточнение: яма у второго подъезда.",
+                        attachments=[],
+                    )
+                ],
+            }
+        )
+        reset = AsyncMock()
+        with patch(
+            "aemr_bot.handlers.appeal_funnel.session_scope",
+            _fake_session_scope,
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
+            AsyncMock(return_value=user),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.users_service.reset_state",
+            reset,
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.appeals_service.get_by_id",
+            AsyncMock(return_value=appeal),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.appeals_service.get_by_id_with_messages",
+            AsyncMock(return_value=updated_appeal),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.appeals_service.add_user_message",
+            AsyncMock(),
+        ), patch(
+            "aemr_bot.config.settings.admin_group_id",
+            555,
+        ), patch(
+            "aemr_bot.handlers.menu.open_main_menu",
+            AsyncMock(),
+        ):
+            await appeal_funnel.on_awaiting_followup_text(
+                event,
+                body=SimpleNamespace(attachments=[]),
+                text_body="Уточнение: яма у второго подъезда.",
+                max_user_id=42,
+            )
+
+        reset.assert_called_once()
+        event.bot.edit_message.assert_called_once()
+        assert event.bot.edit_message.call_args.kwargs["message_id"] == "admin-mid-5"
+        edited_text = event.bot.edit_message.call_args.kwargs["text"]
+        assert "Дополнение к обращению:" in edited_text
+        assert "второго подъезда" in edited_text
 
 
 class TestOnIdle:
@@ -27960,8 +28265,8 @@ Restore-test не пройден, если:
 
 ### `docs/COPY.md`
 
-Size: `38622` bytes  
-SHA-256: `937545022777ab21eaad449e16ba499bb8f95c6bc32c6fe6a273935bd8b0c6be`
+Size: `39665` bytes  
+SHA-256: `9a11faca12741ddbe368bf63e70d515d48f840848f3408a897826a7d88785e14`
 
 ```markdown
 # Все тексты бота — для ручной редактуры
@@ -27973,6 +28278,7 @@ SHA-256: `937545022777ab21eaad449e16ba499bb8f95c6bc32c6fe6a273935bd8b0c6be`
 - `seed/welcome.md` — приветствие, тоже идёт через `welcome_text` ключ.
 - `bot/aemr_bot/keyboards.py` — подписи кнопок, эмодзи, payload'ы.
 - `docs/RULES.md` — полный текст правил пользования ботом. Краткая версия для интерфейса дублируется в `bot/aemr_bot/texts.py`.
+- Остальные короткие служебные фразы живут рядом с обработчиками (`handlers/menu.py`, `handlers/appeal_funnel.py`, `handlers/admin_*.py`). Перед запуском проверяйте их командой `rg -n "\"[^\"]*[А-Яа-яЁё][^\"]*\"" bot/aemr_bot`.
 
 Каждый блок ниже отмечен признаком: **[code]** — править файл и пересобирать контейнер; **[setting]** — править через `/setting <key> <value>` без рестарта; **[seed]** — править файл и применить через `seed_if_empty` (только при пустом ключе).
 
@@ -28099,7 +28405,7 @@ APPEAL_CARD_TEMPLATE (для жителя):
 
 Населённый пункт: {locality}
 Адрес: {address}
-Тематика: {topic}
+Тема: {topic}
 
 Суть:
 {summary}
@@ -28243,7 +28549,16 @@ closed       → ⛔ Закрыто без ответа
 {summary}
 
 ────────────────
-Ответ — кнопкой «Ответить» под этой карточкой или свайпом. Лимит {answer_limit} символов.
+Ответ — кнопкой «✉️ Ответить» под карточкой или потяните карточку влево. Лимит {answer_limit} символов.
+
+Если житель нажал «📎 Дополнить» и прислал текст, бот добавляет ниже блок:
+
+────────────────
+Дополнение к обращению:
+{text}
+
+Если дополнений несколько, заголовок становится «Дополнения к обращению:»,
+показываются последние пять, старые остаются в таблице messages.
 
 ADMIN_FOLLOWUP_TEMPLATE:
 Дополнение к обращению #{number}
@@ -28252,6 +28567,9 @@ ADMIN_FOLLOWUP_TEMPLATE:
 ────────────────
 {text}
 
+Этот шаблон теперь запасной: используется, если MAX не дал отредактировать
+исходную карточку обращения.
+
 ADMIN_REPLY_DELIVERED:
 Ответ ушёл жителю. Обращение #{number} закрыто.
 
@@ -28259,7 +28577,7 @@ ADMIN_REPLY_TOO_LONG:
 Ответ длиннее {limit} символов (сейчас {actual}). Жителю ничего не ушло. Сократите и пришлите ещё раз.
 
 ADMIN_REPLY_NO_APPEAL:
-Не понял, к какому обращению ответ. Сделайте свайп на карточку или нажмите «Ответить» под ней.
+Не понял, к какому обращению ответ. Потяните карточку обращения влево или нажмите «✉️ Ответить» под ней.
 ```
 
 ---
@@ -28678,8 +28996,8 @@ https://kamgov.ru/mintrans/current_activities/raspisania-dvizenia-passazirskogo-
 
 ### `docs/DEVELOPER.md`
 
-Size: `125841` bytes  
-SHA-256: `2ae7a523e9d003dbcf5d9588f0b87ea131a0da8eec418fd7f6b3d4565c043b80`
+Size: `126919` bytes  
+SHA-256: `67263f02621c50bd469432dd1857eb59ea85175dad6cff1df90bf45f4265bd62`
 
 ```markdown
 # Гайд для разработчика
@@ -28719,6 +29037,8 @@ DATABASE_URL=postgresql+asyncpg://aemr:local-test-pass@db:5432/aemr
 ```
 
 Остальные параметры оставьте как есть. `BOT_MODE=polling`, `WEBHOOK_*`, `BACKUP_*`, `HEALTHCHECK_URL`, `ADMIN_GROUP_ID` пока пустые. Заполните их после первого запуска.
+
+`docker compose` теперь падает с понятной ошибкой `Set POSTGRES_PASSWORD in infra/.env`, если пароль не задан. Это защита от случайного запуска Postgres с пустым паролем; предупреждение `POSTGRES_PASSWORD variable is not set` больше не должно превращаться в рабочий контейнер.
 
 **Получить тестовый токен.** Откройте <https://max.ru/business>. Войдите как админ организации. Раздел «Боты» → «Создать бота» (или откройте существующего) → скопируйте Bot API token. Если у вас уже есть основной бот АЕМО, попросите у владельца сгенерировать отдельный тестовый.
 
@@ -28886,7 +29206,7 @@ aemr-bot/
 
 Электронная приёмная переехала из главного меню в подменю «Приём граждан» — там она стоит рядом с расписанием очного приёма, и житель видит обе формы обращения в одном экране. /-меню MAX очищено — `set_my_commands()` без аргументов; жители работают через кнопочное меню, а slash-команды остаются запасным ручным путём.
 
-Меню жителя использует тот же UX-приём, что и прогресс-карточка воронки: если экран открыт callback-кнопкой и у события есть `message.body.mid`, `handlers.menu._send_or_edit_menu()` пробует `edit_message`. Если это команда или MAX отказал в редактировании, бот отправляет новое сообщение.
+Меню жителя и операторские подменю используют тот же UX-приём, что и прогресс-карточка воронки: если экран открыт callback-кнопкой и у события есть `message.body.mid`, helper `utils.event.send_or_edit_screen()` пробует `edit_message`. Если это команда, видимый текстовый шаг или MAX отказал в редактировании, бот отправляет новое сообщение.
 
 ### Сценарий «👋 Уйти из бота» (4 кнопки, утверждённый UX)
 
@@ -29736,7 +30056,7 @@ flowchart LR
 
 ### Пересылка вложений в административную группу
 
-Фото, видео, геолокация и файлы из обращения пересылаются в административную группу вторым сообщением (после текстовой карточки). Сообщение привязывается к карточке через `NewMessageLink(type=REPLY, mid=admin_card_mid)`. Сохранённые в `appeals.attachments` (JSONB) словари десериализуются обратно в pydantic-модели через `TypeAdapter(Attachments)` из библиотеки `maxapi` и передаются в `bot.send_message(attachments=[...])`. Контактные вложения исключены: телефон уже в карточке, дублировать ПДн не нужно. Каждое сообщение с вложениями ограничено `ATTACHMENTS_PER_RELAY_MESSAGE=10`. Партии пронумерованы «(2/3)» и так далее для удобства чтения.
+Фото, видео, геолокация и файлы из обращения пересылаются в административную группу вторым сообщением (после текстовой карточки). Сообщение привязывается к карточке через `NewMessageLink(type=REPLY, mid=admin_card_mid)`. Текстовые дополнения жителя через «📎 Дополнить» бот сначала пытается вписать в исходную карточку обращения через `edit_message`; если MAX отказал, отправляет отдельную карточку «Дополнение к обращению #N». Вложения из дополнения пересылаются отдельным reply-сообщением к карточке или к fallback-сообщению. Сохранённые в `appeals.attachments` и `messages.attachments` (JSONB) словари десериализуются обратно в pydantic-модели через `TypeAdapter(Attachments)` из библиотеки `maxapi` и передаются в `bot.send_message(attachments=[...])`. Контактные вложения исключены: телефон уже в карточке, дублировать ПДн не нужно. Каждое сообщение с вложениями ограничено `ATTACHMENTS_PER_RELAY_MESSAGE=10`. Партии пронумерованы «(2/3)» и так далее для удобства чтения.
 
 ## Часть VII — Миграции базы данных
 
@@ -29944,8 +30264,8 @@ docker compose exec bot alembic upgrade head
 
 ### `docs/HOW_IT_WORKS.md`
 
-Size: `14121` bytes  
-SHA-256: `4b6d98882d1233aa9df6503bd71c4d7b22bdc1d9a4af28bdd1c0f08e81e56d08`
+Size: `15203` bytes  
+SHA-256: `40ea8306455566749b34ae2d8d250f5bc5beec47878baac4e1adbae797405b03`
 
 ```markdown
 # Как работает бот
@@ -30040,6 +30360,11 @@ PDF политики. Без согласия подать обращение н
 
 Новое обращение приходит в служебную группу карточкой: номер, имя, телефон,
 населённый пункт, адрес, тема, суть, сведения о вложениях и кнопки действий.
+Если житель позже добавил текстовое уточнение, бот старается обновить эту же
+карточку: под блоком «Суть» появляется блок «Дополнение к обращению». Так
+оператор видит всю актуальную суть вопроса в одном месте. Вложения из
+дополнения всё равно приходят отдельным сообщением-ответом к карточке, потому
+что файл или фото нельзя «вписать» в старый текст.
 
 Оператор отвечает двумя способами:
 
@@ -30056,6 +30381,11 @@ PDF политики. Без согласия подать обращение н
 
 Открытые обращения (`new`, `in_progress`) можно дополнить только кнопкой
 «Дополнить» в карточке.
+
+Текстовое дополнение добавляется в карточку обращения в служебной группе. Если
+MAX не дал отредактировать старую карточку, бот отправит отдельное сообщение
+«Дополнение к обращению #N» — это запасной вариант, чтобы уточнение не
+потерялось.
 
 Отвеченные и закрытые обращения не переоткрываются жителем. Если вопрос
 повторился, кнопка «Подать похожее» создаёт новое связанное обращение с тем же
@@ -30914,8 +31244,8 @@ SHA-256: `2baf9d0f41bc7780f3300a085c6f9be8ef58168fb6b93ec4428dedc38cd84cee`
 
 ### `docs/RUNBOOK.md`
 
-Size: `83864` bytes  
-SHA-256: `c1521b67a1af1859cced401053981d4e0d5d73b38cbc458f1de078c935719f91`
+Size: `84267` bytes  
+SHA-256: `3f017f0eae93e53f685b989b0ca199bcc23d495aedfcbea184d24a1a71984674`
 
 ```markdown
 # Регламент работы координатора и ИТ-специалиста
@@ -31698,6 +32028,11 @@ DATABASE_URL=postgresql+asyncpg://aemr:tQ_Y3w0c8KkS0lN8...x9xp@db:5432/aemr
 
 Если значения расходятся, бот при старте падает с `password authentication failed` (см. §«Аварийные процедуры»).
 
+Если `docker compose` останавливается с `Set POSTGRES_PASSWORD in infra/.env`,
+это не авария БД, а защита конфигурации: пароль не задан. Создайте `.env` из
+`.env.example`, заполните `POSTGRES_PASSWORD` и повторите запуск. Стек не должен
+стартовать с пустым паролем.
+
 `BACKUP_GPG_PASSPHRASE` сохрани в **двух независимых местах**: менеджер паролей администратора и оффлайн-копия у руководителя. Потеря фразы превращает все накопленные `.sql.gpg` в бесполезный шифротекст.
 
 ## Логи и диагностика (`docker compose logs`, `/healthz`)
@@ -32166,8 +32501,8 @@ SHA-256: `62c3906e605db6cb5388855e30f8f8715e930845a66a7c42af859b496e5fca20`
 
 ### `docs/SETUP.md`
 
-Size: `35571` bytes  
-SHA-256: `816c9b5a87a6b9a985c4e740ba97ae300db9707358b679f774afc3790c05f8ae`
+Size: `36165` bytes  
+SHA-256: `ead044f654c4e371fd7f30bf02c975f05f2450f872351ee6996bb0be7d796d37`
 
 ```markdown
 # Настройка бота и служебной группы — от А до Я
@@ -32375,7 +32710,7 @@ docker compose exec db psql -U aemr -d aemr -c \
 3. **Служебная группа.** Через секунду в группе появится текстовая карточка с #N, в ней — населённый пункт, адрес, тематика, текст. Под карточкой — кнопки действий: «✉️ Ответить», «🔄 В работу», «⛔ Закрыть» и для it/coordinator — «🚫 Заблокировать». Ниже ответом свайпом — фото жителя. Если фото не пришло — проверьте логи бота на `failed to relay attachments` (см. RUNBOOK).
 4. **Ответ оператора.** Координатор отвечает свайпом на карточку. Пишет ответ ≤300 символов. Отправляет. В группе появляется «✉️ Ответ ушёл жителю. Обращение #N закрыто.»
 5. **Доставка.** В личке у жителя должно быть сообщение от бота с шапкой «📬 Ответ Администрации Елизовского муниципального округа» и текстом ответа.
-6. **Дополнение.** Житель открывает «📂 Мои обращения», выбирает открытое неотвеченное обращение и нажимает «📎 Дополнить». После текста или вложения в группе появляется «Дополнение к обращению #N».
+6. **Дополнение.** Житель открывает «📂 Мои обращения», выбирает открытое неотвеченное обращение и нажимает «📎 Дополнить». После текста в служебной группе обновляется исходная карточка обращения: появляется блок «Дополнение к обращению». Если есть фото, видео или файл, они приходят отдельным ответом к карточке.
 7. **Меню оператора.** В служебной группе наберите `/op_help` (или `/menu`, `/start`, `/help` — работают так же). Бот покажет панель с кнопками быстрых действий и закрепит её.
 8. **/-меню в MAX.** В личке у бота наберите `/`. MAX-клиент не должен показывать опубликованный список команд бота: на старте бот очищает /-меню для всех чатов. Команды вроде `/start` и `/help` всё равно работают, если набрать их вручную.
 9. **Меню `/op_help` по ролям.** В служебной группе наберите `/op_help` под учёткой `it`. Должно прийти сообщение с **до 13 кнопок** (зависит от наличия счётчика открытых обращений), сверху — «📋 Открытые обращения (N)» со счётчиком N. Под учёткой `coordinator` — **до 9 кнопок**, без админских («Операторы», «Настройки бота», «Аудитория и согласия», «Снять бэкап»). Счётчик `(N)` виден всем ролям.
@@ -32503,6 +32838,11 @@ chmod 600 .env
 - `ADMIN_GROUP_ID` — пока пусто, заполним после первого запуска (см. Шаг E);
 - `BOOTSTRAP_IT_MAX_USER_ID` и `BOOTSTRAP_IT_FULL_NAME` — `max_user_id` и ФИО ответственного за бота. Узнать `max_user_id` — написать боту в личке `/whoami` (см. Шаг 4 выше);
 - `BACKUP_GPG_PASSPHRASE` — для production обязательно. Бэкапы база содержит ПДн, незашифрованный дамп лежать на диске не должен.
+
+Если `docker compose` пишет `Set POSTGRES_PASSWORD in infra/.env`, значит файл
+`.env` не создан или пароль пустой. Не запускайте стек с пустым паролем:
+сначала заполните `POSTGRES_PASSWORD`, затем тем же значением обновите пароль
+внутри `DATABASE_URL`.
 
 ### Шаг E. Первый запуск
 
@@ -33228,8 +33568,8 @@ SEED_DIR=/app/seed
 
 ### `infra/docker-compose.yml`
 
-Size: `5272` bytes  
-SHA-256: `7106cdbbdd36dddb0df21de35259fa21dabcf7bd28fb66e45fe71b781b3a5a68`
+Size: `5346` bytes  
+SHA-256: `563a4047b9b48980495d9213a1e1bcb6b0ba9be4cdebfff191b91983ccea4b95`
 
 ```yaml
 services:
@@ -33255,7 +33595,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-aemr}
       POSTGRES_USER: ${POSTGRES_USER:-aemr}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in infra/.env}
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -33289,7 +33629,7 @@ services:
       dockerfile: infra/Dockerfile
     env_file: .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-aemr}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-aemr}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-aemr}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in infra/.env}@db:5432/${POSTGRES_DB:-aemr}
     depends_on:
       db:
         condition: service_healthy
@@ -33470,8 +33810,8 @@ server {
 
 ### `README.md`
 
-Size: `18153` bytes  
-SHA-256: `6dd5623009a0e11ee6c47e8e7aa00adaf348b4e763585e3e1904bd57239f9fb9`
+Size: `18494` bytes  
+SHA-256: `5f0730f4595ffb1554d897dc76c9d5dfddb8d7e771b756d0317b0868cafdbcfb`
 
 ```markdown
 # Администрация ЕМО. Обратная связь
@@ -33503,6 +33843,8 @@ DATABASE_URL=postgresql+asyncpg://aemr:abrakadabra@db:5432/aemr
 ```
 
 `BOT_TOKEN` берётся так. Зайдите на <https://max.ru/business> под учётной записью администратора организации. Откройте раздел «Боты». Создайте нового бота или откройте существующего. Скопируйте Bot API token. Документация платформы — <https://dev.max.ru/docs-api>. Параметр `ADMIN_GROUP_ID` оставьте пустым. Его заполните после первого запуска (см. [SETUP.md](docs/SETUP.md)).
+
+Compose намеренно не стартует без `POSTGRES_PASSWORD` в `infra/.env`: это лучше, чем тихо поднять Postgres с пустым паролем. Если видите ошибку `Set POSTGRES_PASSWORD in infra/.env`, скопируйте `.env.example` в `.env` и заполните пароль.
 
 Запуск:
 
