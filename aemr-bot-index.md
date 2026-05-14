@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-14 04:03:56 UTC`
+Generated at: `2026-05-14 06:32:53 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `154`
+Indexed files: `157`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -136,6 +136,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/BACKUP_RESTORE_TEST.md` (5705 bytes)
 - `docs/COPY.md` (51220 bytes)
 - `docs/DEVELOPER.md` (126919 bytes)
+- `docs/handover.html` (56336 bytes)
 - `docs/HOW_IT_WORKS.md` (15203 bytes)
 - `docs/PRD.md` (60725 bytes)
 - `docs/PRIVACY_DRAFT.md` (24293 bytes)
@@ -144,7 +145,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/RULES.md` (8624 bytes)
 - `docs/RUNBOOK.md` (84267 bytes)
 - `docs/RUNBOOK_PDN_ERASURE.md` (7846 bytes)
+- `docs/SECURITY.md` (28645 bytes)
 - `docs/SETUP.md` (36165 bytes)
+- `docs/SYSADMIN.md` (22830 bytes)
 - `docs/VPS_SMOKE_CHECKLIST.md` (5736 bytes)
 - `docs/Политика.md` (6113 bytes)
 - `docs/Политика_v2.md` (28793 bytes)
@@ -31078,6 +31081,1229 @@ docker compose exec bot alembic upgrade head
 - `docs/COMMANDS.md` — полная шпаргалка эксплуатационных команд.
 ```
 
+### `docs/handover.html`
+
+Size: `56336` bytes  
+SHA-256: `b4082a067e5a7245968de13baa2607a55d3f3528a310a9622e105fc3010bc719`
+
+```html
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>aemr-bot — handover</title>
+  <style>
+    :root {
+      --bg: #0e1116;
+      --bg-elev: #161b22;
+      --bg-card: #1c2128;
+      --fg: #e6edf3;
+      --fg-dim: #8b949e;
+      --fg-dimmer: #6e7681;
+      --border: #30363d;
+      --accent: #58a6ff;
+      --accent-soft: #1f6feb33;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --orange: #ff8c42;
+      --code-bg: #0d1117;
+      --shadow: 0 1px 0 rgba(255,255,255,0.04), 0 8px 24px rgba(0,0,0,0.4);
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #ffffff;
+        --bg-elev: #f6f8fa;
+        --bg-card: #ffffff;
+        --fg: #1f2328;
+        --fg-dim: #59636e;
+        --fg-dimmer: #818b98;
+        --border: #d0d7de;
+        --accent: #0969da;
+        --accent-soft: #0969da11;
+        --green: #1a7f37;
+        --yellow: #9a6700;
+        --red: #cf222e;
+        --orange: #bc4c00;
+        --code-bg: #f6f8fa;
+        --shadow: 0 1px 0 rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.05);
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    }
+    code, pre, kbd {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 24px 96px;
+    }
+    header.hero {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px;
+      background: linear-gradient(180deg, var(--bg-card), var(--bg-elev));
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+    header.hero h1 {
+      margin: 0 0 6px;
+      font-size: 26px;
+      letter-spacing: -0.02em;
+    }
+    header.hero .sub {
+      color: var(--fg-dim);
+      font-size: 14px;
+    }
+    .pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      color: var(--fg-dim);
+      font-size: 12px;
+    }
+    .pill.ok { color: var(--green); border-color: color-mix(in oklab, var(--green) 40%, var(--border)); }
+    .pill.warn { color: var(--yellow); border-color: color-mix(in oklab, var(--yellow) 40%, var(--border)); }
+    .pill.danger { color: var(--red); border-color: color-mix(in oklab, var(--red) 40%, var(--border)); }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .toolbar input[type=search] {
+      flex: 1;
+      min-width: 240px;
+      padding: 9px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--fg);
+      font: inherit;
+    }
+    .toolbar input[type=search]:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -1px;
+    }
+
+    nav.tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+    nav.tabs button {
+      background: transparent;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      color: var(--fg-dim);
+      padding: 10px 14px;
+      cursor: pointer;
+      font: inherit;
+      white-space: nowrap;
+    }
+    nav.tabs button:hover { color: var(--fg); }
+    nav.tabs button.active {
+      color: var(--fg);
+      border-bottom-color: var(--accent);
+    }
+
+    section.tab { display: none; }
+    section.tab.active { display: block; }
+
+    h2 {
+      font-size: 20px;
+      letter-spacing: -0.01em;
+      margin: 28px 0 8px;
+      padding-top: 8px;
+    }
+    h3 {
+      font-size: 16px;
+      margin: 18px 0 6px;
+      color: var(--fg);
+    }
+    h2:first-child, h3:first-child { margin-top: 0; padding-top: 0; }
+
+    p { margin: 8px 0; }
+    p.lead { color: var(--fg-dim); }
+    ul, ol { padding-left: 22px; margin: 8px 0; }
+    li { margin: 3px 0; }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin: 12px 0;
+      box-shadow: var(--shadow);
+    }
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+    .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 900px) {
+      .grid.cols-2, .grid.cols-3 { grid-template-columns: 1fr; }
+    }
+
+    details {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0;
+      margin: 10px 0;
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+    details > summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 12px 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      user-select: none;
+    }
+    details > summary::-webkit-details-marker { display: none; }
+    details > summary::before {
+      content: "▸";
+      color: var(--fg-dimmer);
+      transition: transform 0.15s;
+      display: inline-block;
+    }
+    details[open] > summary::before { transform: rotate(90deg); }
+    details > .body { padding: 0 18px 14px; }
+    details + details { margin-top: -1px; border-top: 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      margin: 10px 0;
+    }
+    table th, table td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    table th {
+      color: var(--fg-dim);
+      font-weight: 600;
+      background: var(--bg-elev);
+    }
+    table tr:hover td { background: var(--accent-soft); }
+
+    .code-block {
+      position: relative;
+      margin: 10px 0;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin: 0;
+    }
+    pre code {
+      color: var(--fg);
+      background: transparent;
+      padding: 0;
+      white-space: pre;
+    }
+    p code, li code, td code, th code {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 4px 10px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--fg-dim);
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+    }
+    .copy-btn:hover { color: var(--fg); border-color: var(--accent); }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+    .badge {
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      margin-right: 6px;
+    }
+    .badge.req { background: color-mix(in oklab, var(--red) 18%, transparent); color: var(--red); }
+    .badge.opt { background: color-mix(in oklab, var(--accent) 18%, transparent); color: var(--accent); }
+    .badge.sec { background: color-mix(in oklab, var(--yellow) 18%, transparent); color: var(--yellow); }
+    .badge.danger { background: var(--red); color: white; }
+    .badge.warn { background: var(--yellow); color: #1c1c1c; }
+    .badge.ok { background: var(--green); color: #0c1810; }
+
+    .check {
+      list-style: none;
+      padding-left: 0;
+    }
+    .check li {
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .check li:last-child { border-bottom: 0; }
+    .check input[type=checkbox] {
+      margin-top: 4px;
+      accent-color: var(--accent);
+      transform: scale(1.15);
+    }
+    .check li.done { text-decoration: line-through; color: var(--fg-dim); }
+
+    .kbd {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.85em;
+    }
+
+    .callout {
+      padding: 12px 16px;
+      border-radius: 8px;
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      margin: 12px 0;
+    }
+    .callout.warn { border-color: var(--yellow); background: color-mix(in oklab, var(--yellow) 10%, transparent); }
+    .callout.danger { border-color: var(--red); background: color-mix(in oklab, var(--red) 10%, transparent); }
+    .callout strong { color: inherit; }
+
+    .port-map {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 14px 0;
+    }
+    @media (max-width: 700px) { .port-map { grid-template-columns: 1fr; } }
+    .port-col { padding: 16px; }
+    .port-col + .port-col { border-left: 1px solid var(--border); }
+    @media (max-width: 700px) { .port-col + .port-col { border-left: 0; border-top: 1px solid var(--border); } }
+    .port-col h4 {
+      margin: 0 0 10px;
+      color: var(--fg-dim);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .port-col .item {
+      margin: 8px 0;
+      padding: 8px 10px;
+      background: var(--bg-elev);
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .port-col .item code { background: transparent; border: 0; padding: 0; }
+
+    .hidden { display: none !important; }
+    .highlight { background: color-mix(in oklab, var(--yellow) 25%, transparent) !important; }
+    footer {
+      margin-top: 48px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      color: var(--fg-dim);
+      font-size: 13px;
+      text-align: center;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div>
+      <h1>aemr-bot — handover</h1>
+      <div class="sub">Документ для админа и безопасника. Self-host, MAX-мессенджер, Postgres 16.</div>
+    </div>
+    <div class="pills">
+      <span class="pill ok">CI: зелёный</span>
+      <span class="pill">676 tests / 58 skipped</span>
+      <span class="pill">Python 3.12</span>
+      <span class="pill">Postgres 16</span>
+      <span class="pill">11 migrations</span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <input type="search" id="search" placeholder="Поиск по странице (например: webhook, gpg, retention)" autocomplete="off" />
+    <button class="copy-btn" onclick="document.querySelectorAll('details').forEach(d=>d.open=true)">Раскрыть всё</button>
+    <button class="copy-btn" onclick="document.querySelectorAll('details').forEach(d=>d.open=false)">Свернуть всё</button>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="overview" class="active">Обзор</button>
+    <button data-tab="sysadmin">Sysadmin</button>
+    <button data-tab="security">ИБ</button>
+    <button data-tab="cheatsheet">Шпаргалка</button>
+    <button data-tab="checklist">Чек-лист деплоя</button>
+  </nav>
+
+  <!-- ===== OVERVIEW ===== -->
+  <section class="tab active" id="overview">
+    <h2>В двух предложениях</h2>
+    <p class="lead">Бот «Обратная связь Администрации Елизовского муниципального округа» в MAX-мессенджере. Один процесс на одной VPS, никаких облаков, Postgres рядом в Docker Compose.</p>
+
+    <div class="grid cols-3">
+      <div class="card">
+        <h3>Что внутри</h3>
+        <ul>
+          <li>Python 3.12-slim (digest pinned)</li>
+          <li>Postgres 16-alpine (digest pinned)</li>
+          <li>FastAPI + uvicorn для webhook</li>
+          <li>SQLAlchemy 2.0 async, asyncpg</li>
+          <li>APScheduler — все cron внутри процесса</li>
+          <li>maxapi — MAX Bot API клиент</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Что снаружи</h3>
+        <ul>
+          <li><span class="badge req">опц.</span>nginx + certbot (только webhook)</li>
+          <li><span class="badge req">опц.</span>rclone для S3-бэкапов</li>
+          <li>GPG для шифрования pg_dump</li>
+          <li><span class="badge opt">опц.</span>Healthchecks.io / Uptime Kuma</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Чего нет и не нужно</h3>
+        <ul>
+          <li>Никаких VK, Yandex Cloud, AWS</li>
+          <li>Никаких сторонних SaaS</li>
+          <li>Никаких Redis/Kafka — всё в Postgres</li>
+          <li>Никакого Telegram</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Карта портов</h2>
+    <p>В режиме polling никаких публичных входящих портов. В режиме webhook добавляется nginx 80/443.</p>
+    <div class="port-map">
+      <div class="port-col">
+        <h4>На хосте</h4>
+        <div class="item"><code>127.0.0.1:8080</code> → bot — только localhost</div>
+        <div class="item"><span class="badge opt">webhook</span><code>0.0.0.0:80</code>, <code>0.0.0.0:443</code> → nginx</div>
+      </div>
+      <div class="port-col">
+        <h4>Docker network</h4>
+        <div class="item"><code>bot:8080</code> — health, /max/webhook</div>
+        <div class="item"><code>db:5432</code> — Postgres, доступен только bot'у</div>
+      </div>
+      <div class="port-col">
+        <h4>Исходящие наружу</h4>
+        <div class="item"><code>botapi.max.ru:443</code>, <code>platform-api.max.ru:443</code></div>
+        <div class="item"><span class="badge opt">опц.</span>S3 endpoint для бэкапов</div>
+        <div class="item"><span class="badge opt">опц.</span><code>HEALTHCHECK_URL</code></div>
+      </div>
+    </div>
+
+    <h2>Стек по слоям</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>Слой</th><th>Версия</th><th>Pin</th></tr></thead>
+        <tbody>
+          <tr><td>Docker Engine</td><td>24+</td><td>apt из docker.com</td></tr>
+          <tr><td>Docker Compose</td><td>v2 (plugin)</td><td><code>docker compose</code> (не <code>docker-compose</code>)</td></tr>
+          <tr><td>Python в образе</td><td>3.12-slim</td><td>digest <code>4386a385…3117</code></td></tr>
+          <tr><td>Postgres</td><td>16-alpine</td><td>digest <code>4e6e670b…0d50</code></td></tr>
+          <tr><td>nginx</td><td>1.27-alpine</td><td>profile webhook</td></tr>
+          <tr><td>certbot</td><td>latest</td><td>profile webhook</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Python зависимости</h2>
+    <details open>
+      <summary>Runtime (<code>bot/pyproject.toml</code>)</summary>
+      <div class="body">
+        <table>
+          <thead><tr><th>Пакет</th><th>Пин</th><th>Зачем</th></tr></thead>
+          <tbody>
+            <tr><td><code>maxapi</code></td><td>~=0.6</td><td>MAX Bot API</td></tr>
+            <tr><td><code>fastapi</code></td><td>~=0.115</td><td>webhook</td></tr>
+            <tr><td><code>uvicorn[standard]</code></td><td>~=0.32</td><td>ASGI</td></tr>
+            <tr><td><code>sqlalchemy</code></td><td>~=2.0</td><td>async ORM</td></tr>
+            <tr><td><code>asyncpg</code></td><td>~=0.30</td><td>драйвер PG</td></tr>
+            <tr><td><code>alembic</code></td><td>~=1.14</td><td>миграции</td></tr>
+            <tr><td><code>apscheduler</code></td><td>~=3.10</td><td>cron в процессе</td></tr>
+            <tr><td><code>pydantic</code></td><td>~=2.9</td><td>конфиг и валидация</td></tr>
+            <tr><td><code>pydantic-settings</code></td><td>~=2.6</td><td>env через pydantic</td></tr>
+            <tr><td><code>openpyxl</code></td><td>~=3.1</td><td>XLSX-выгрузка</td></tr>
+            <tr><td><code>python-dotenv</code></td><td>~=1.0</td><td>.env-парсер</td></tr>
+            <tr><td><code>python-dateutil</code></td><td>~=2.9</td><td>relativedelta для retention</td></tr>
+            <tr><td><code>aiohttp</code></td><td>~=3.10</td><td>HTTP-клиент, health-сервер</td></tr>
+            <tr><td><code>shapely</code></td><td>~=2.0</td><td>point-in-polygon по поселениям</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+    <details>
+      <summary>Dev/CI (<code>[project.optional-dependencies] dev</code>)</summary>
+      <div class="body">
+        <ul>
+          <li><code>pytest&gt;=9.0.3,&lt;10</code> — нижняя граница из-за CVE-2025-71176</li>
+          <li><code>pytest-asyncio&gt;=1.3,&lt;2</code> — поддержка pytest 9</li>
+          <li><code>pytest-cov ~=6.0</code>, <code>ruff ~=0.7</code>, <code>mypy ~=1.13</code></li>
+          <li><code>bandit ~=1.7</code> — статический security</li>
+          <li><code>pip-audit ~=2.7</code> — CVE-сканер, hard-fail в CI</li>
+          <li><code>aiosqlite ~=0.20</code> — для unit-тестов без PG</li>
+          <li><code>types-python-dateutil ~=2.9</code> — stubs для mypy</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===== SYSADMIN ===== -->
+  <section class="tab" id="sysadmin">
+    <h2>Установка с нуля</h2>
+    <div class="card">
+      <div class="code-block">
+        <pre><code># 1. Пользователь под бота
+sudo adduser --disabled-password --gecos "" aemr
+sudo usermod -aG docker aemr
+
+# 2. Клонирование
+sudo -u aemr -i
+git clone https://github.com/gaben1488/aemr-bot.git
+cd aemr-bot
+
+# 3. .env
+cp infra/.env.example infra/.env
+chmod 600 infra/.env
+# заполнить infra/.env (см. таб ИБ → секреты)
+
+# 4. Старт
+cd infra
+docker compose up -d --build
+
+# 5. Health-check
+curl -fsS http://127.0.0.1:8080/livez && echo
+curl -fsS http://127.0.0.1:8080/readyz && echo
+
+# 6. Auto-deploy под root (раз в 10 мин)
+exit
+sudo bash /home/aemr/aemr-bot/scripts/install-auto-deploy.sh
+
+# 7. Watchdog под root в cron
+sudo crontab -e
+# */5 * * * * /home/aemr/aemr-bot/scripts/healthwatch.sh</code></pre>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <strong>Один лишний шаг после первой установки</strong>: миграция 0010 создаёт <code>pg_stat_statements</code>, но сбор статистики стартует только после рестарта Postgres с включённым preload. <code>docker compose restart db</code> — один раз.
+    </div>
+
+    <h2>Минимальные ресурсы</h2>
+    <div class="grid cols-3">
+      <div class="card">
+        <h3>CPU / RAM</h3>
+        <p>1 vCPU, 2 GB RAM. Bot ограничен 512 MB в compose. Postgres ~300 MB. Запас на cron-jobs и пиковые бэкапы.</p>
+      </div>
+      <div class="card">
+        <h3>Disk</h3>
+        <p>20 GB SSD: ОС 5 GB, Docker 3 GB, БД ~1 GB на старте + 50 MB/год, бэкапы 400 MB, логи 30 MB.</p>
+      </div>
+      <div class="card">
+        <h3>Сеть</h3>
+        <p>Исходящий HTTPS обязателен. Входящих публичных портов в polling-режиме нет.</p>
+      </div>
+    </div>
+
+    <h2>Команды операторов</h2>
+    <p class="lead">11 slash-команд в служебной группе. Все требуют роль.</p>
+    <table>
+      <thead><tr><th>Команда</th><th>Роль</th><th>Что</th></tr></thead>
+      <tbody>
+        <tr><td><code>/op_help</code></td><td>любая</td><td>памятка + кнопочное меню</td></tr>
+        <tr><td><code>/open_tickets</code></td><td>любая</td><td>открытые обращения с кнопками</td></tr>
+        <tr><td><code>/stats today|week|month|quarter|half_year|year|all</code></td><td>любая</td><td>XLSX-выгрузка</td></tr>
+        <tr><td><code>/reply &lt;id&gt; &lt;текст&gt;</code></td><td>любая</td><td>ответ жителю</td></tr>
+        <tr><td><code>/reopen &lt;id&gt;</code></td><td>любая</td><td>вернуть в работу</td></tr>
+        <tr><td><code>/close &lt;id&gt;</code></td><td>любая</td><td>закрыть без ответа</td></tr>
+        <tr><td><code>/diag</code></td><td>любая</td><td>сводка состояния</td></tr>
+        <tr><td><code>/broadcast</code></td><td>coordinator или it</td><td>мастер рассылки</td></tr>
+        <tr><td><code>/erase max_user_id=N</code> или <code>/erase phone=+7…</code></td><td>it</td><td>удаление ПДн</td></tr>
+        <tr><td><code>/setting &lt;key&gt; &lt;val&gt;</code></td><td>it</td><td>настройки</td></tr>
+        <tr><td><code>/add_operators &lt;id&gt; &lt;role&gt; &lt;ФИО&gt;</code></td><td>it</td><td>регистрация оператора</td></tr>
+        <tr><td><code>/backup</code></td><td>it</td><td>внеплановый pg_dump</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Cron внутри процесса бота</h2>
+    <p class="lead">APScheduler, всё в Asia/Kamchatka. У всех jobs <code>misfire_grace_time=120</code> сек — пропуски при <code>docker compose up --build</code> догоняются.</p>
+    <table>
+      <thead><tr><th>Job</th><th>Расписание</th><th>Что делает</th></tr></thead>
+      <tbody>
+        <tr><td><code>startup-pulse</code></td><td>через 5 сек после старта</td><td>«🟢 Бот запущен/перезапущен. HH:MM»</td></tr>
+        <tr><td><code>pulse-workhours</code></td><td>пн–сб 09–17, минуты :00 и :30</td><td>«🟢 Бот работает»</td></tr>
+        <tr><td><code>pulse-offhours</code></td><td>пн–сб, часы 0–8 и 18–23, минута :05</td><td>то же</td></tr>
+        <tr><td><code>pulse-sunday</code></td><td>вс каждый час, минута :05</td><td>то же</td></tr>
+        <tr><td><code>health-selfcheck</code></td><td>каждые 5 мин</td><td>мониторит heartbeat</td></tr>
+        <tr><td><code>db-backup</code></td><td>вс 03:00</td><td>pg_dump → GPG → named volume</td></tr>
+        <tr><td><code>events-retention</code></td><td>ежедневно 04:00</td><td>чистит events старше 30 дней</td></tr>
+        <tr><td><code>pdn-retention</code></td><td>ежедневно 04:30</td><td>152-ФЗ обезличивание</td></tr>
+        <tr><td><code>appeals-5y-retention</code></td><td>ежедневно 04:45</td><td>чистка summary/attachments старше 5 лет</td></tr>
+        <tr><td><code>monthly-stats</code></td><td>1-го числа 09:00</td><td>месячный XLSX</td></tr>
+        <tr><td><code>funnel-watchdog</code></td><td>каждые 15 мин</td><td>сброс зависших воронок</td></tr>
+        <tr><td><code>open-reminder-workhours</code></td><td>пн–сб 09–17, минута :10</td><td>напоминание об открытых</td></tr>
+        <tr><td><code>overdue-reminder-workhours</code></td><td>пн–сб 09–17, минута :40</td><td>SLA-просрочка</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Деплой и rollback</h2>
+    <details open>
+      <summary>Auto-deploy (cron */10 под root)</summary>
+      <div class="body">
+        <p>Логика <code>scripts/auto-deploy.sh</code>:</p>
+        <ol>
+          <li><code>git fetch origin main</code>, если новых коммитов нет — выходит тихо</li>
+          <li>Запоминает текущий HEAD как <code>PREV_LOCAL</code></li>
+          <li><code>git reset --hard origin/main</code>, <code>docker compose up -d --build</code></li>
+          <li><strong>Health-gate</strong>: до 60 сек опрашивает <code>/livez</code> каждые 5 сек</li>
+          <li>Успех — лог «deploy ok»</li>
+          <li>Фейл — <strong>auto-rollback</strong> на <code>PREV_LOCAL</code>, пересборка, alert в journald</li>
+        </ol>
+      </div>
+    </details>
+    <details>
+      <summary>Ручной деплой</summary>
+      <div class="body">
+        <div class="code-block">
+          <pre><code>sudo -u aemr -i
+cd aemr-bot
+git fetch origin main && git checkout main && git pull --ff-only
+cd infra
+docker compose build bot
+docker compose up -d bot
+# затем VPS_SMOKE_CHECKLIST.md</code></pre>
+        </div>
+      </div>
+    </details>
+    <details>
+      <summary>Откат вручную</summary>
+      <div class="body">
+        <div class="code-block">
+          <pre><code>sudo -u aemr -i
+cd aemr-bot
+git log --oneline -10
+git checkout &lt;предыдущий рабочий коммит&gt;
+cd infra
+docker compose up -d --build bot</code></pre>
+        </div>
+        <p>Миграции откатываются через <code>alembic downgrade &lt;revision&gt;</code>. На проде — крайняя мера; обычно проще restore из бэкапа.</p>
+      </div>
+    </details>
+
+    <h2>Логи и аудит</h2>
+    <div class="card">
+      <p><strong>Docker-логи бота</strong>:</p>
+      <div class="code-block">
+        <pre><code>cd /home/aemr/aemr-bot/infra
+docker compose logs --tail 300 bot
+docker compose logs --since 24h bot | grep -Ei 'error|exception|traceback|misfire|pulse|startup'</code></pre>
+      </div>
+      <p><strong>Watchdog и auto-deploy</strong>:</p>
+      <div class="code-block">
+        <pre><code>journalctl -t aemr-bot-watchdog -n 100 --no-pager
+journalctl -t aemr-bot-deploy -n 100 --no-pager</code></pre>
+      </div>
+      <p><strong>Полный аудит VPS</strong> (секреты замаскированы):</p>
+      <div class="code-block">
+        <pre><code>sudo bash /home/aemr/aemr-bot/scripts/audit_vps.sh
+# → /tmp/aemr_audit_TIMESTAMP.tar.gz</code></pre>
+      </div>
+    </div>
+
+    <h2>Бэкап и восстановление</h2>
+    <p>Регламент тестирования: <code>docs/BACKUP_RESTORE_TEST.md</code>. Регламент удаления ПДн: <code>docs/RUNBOOK_PDN_ERASURE.md</code>.</p>
+    <div class="card">
+      <p><strong>Список бэкапов</strong>:</p>
+      <div class="code-block">
+        <pre><code>docker compose exec bot ls -lah /backups</code></pre>
+      </div>
+      <p><strong>Расшифровка</strong>:</p>
+      <div class="code-block">
+        <pre><code>cat /var/lib/docker/volumes/aemr-bot_backups/_data/aemr-YYYY-MM-DD.sql.gpg \
+  | gpg --batch --passphrase "$BACKUP_GPG_PASSPHRASE" --decrypt &gt; restore.sql
+
+psql -h ... -U ... -d aemr_restore -f restore.sql</code></pre>
+      </div>
+    </div>
+    <div class="callout warn">
+      <strong>Никогда не restore'ить в production.</strong> Только в отдельную чистую БД. После restore из старой копии — повторно прогнать pdn-retention, иначе данные удалённых жителей возвращаются.
+    </div>
+
+    <h2>Что часто ломается и где смотреть</h2>
+    <details>
+      <summary>Бот молчит, тишина в служебной группе</summary>
+      <div class="body">
+        <p>Сначала <code>curl -fsS http://127.0.0.1:8080/livez</code>. Если 200 — процесс жив, проблема в MAX-сессии или сети. Если 5xx или таймаут — <code>docker compose logs --tail 200 bot</code>.</p>
+      </div>
+    </details>
+    <details>
+      <summary>Pulse не приходит</summary>
+      <div class="body">
+        <p>С <code>misfire_grace_time=120</code> пропуски при рестартах догоняются. Если pulse молчит дольше — скорее всего <code>BOT_TOKEN</code> отозван или MAX rate-limit. <code>/diag</code> в служебной группе подскажет.</p>
+      </div>
+    </details>
+    <details>
+      <summary>DEPLOY FAILED в journald</summary>
+      <div class="body">
+        <p>Auto-rollback сработал. Сейчас работает предыдущий коммит. Проверить новый локально, понять причину, пушнуть фикс. Никаких ручных действий не требуется.</p>
+      </div>
+    </details>
+    <details>
+      <summary>Restart-loop</summary>
+      <div class="body">
+        <p><code>docker compose ps</code> покажет «Restarting». <code>docker compose logs --tail 500 bot</code> — почему. Если новый коммит — auto-rollback должен был сработать; если не сработал, ручной откат.</p>
+      </div>
+    </details>
+    <details>
+      <summary>БД растёт быстрее ожидаемого</summary>
+      <div class="body">
+        <div class="code-block">
+          <pre><code>docker compose exec db psql -U aemr aemr -c "\dt+"</code></pre>
+        </div>
+        <p>Обычно жирная — <code>events</code> (idempotency), retention 30 дней её сдерживает.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===== SECURITY ===== -->
+  <section class="tab" id="security">
+    <h2>Кратко о модели угроз</h2>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Активы</h3>
+        <ul>
+          <li>ПДн жителей в Postgres</li>
+          <li>Секреты в <code>infra/.env</code></li>
+          <li>Резервные копии (named volume)</li>
+          <li><code>audit_log</code> и логи Docker</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Угрозы</h3>
+        <ul>
+          <li>Компрометация VPS (украли SSH-ключ)</li>
+          <li>Компрометация MAX (BOT_TOKEN)</li>
+          <li>Внутренний злоумышленник-оператор</li>
+          <li>Внешний флуд / DoS</li>
+          <li>152-ФЗ запросы на удаление</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Container hardening</h2>
+    <details open>
+      <summary>bot — самый строгий</summary>
+      <div class="body">
+        <ul>
+          <li><code>read_only: true</code> — root-fs неизменяемый</li>
+          <li><code>tmpfs: /tmp:size=128m</code> — единственное writable место</li>
+          <li><code>mem_limit: 512m, memswap_limit: 512m</code></li>
+          <li><code>pids_limit: 200</code> — fork-bomb капается</li>
+          <li><code>cap_drop: ALL</code></li>
+          <li><code>no-new-privileges: true</code></li>
+          <li>UID/GID 1000 (<code>botuser</code>), не root</li>
+        </ul>
+      </div>
+    </details>
+    <details>
+      <summary>db — минимально необходимый</summary>
+      <div class="body">
+        <ul>
+          <li><code>cap_drop: ALL</code>, оставлены только CHOWN, DAC_READ_SEARCH, FOWNER, SETGID, SETUID</li>
+          <li><code>no-new-privileges: true</code></li>
+          <li>не <code>read_only</code> — нужен writable <code>${PGDATA}</code></li>
+        </ul>
+      </div>
+    </details>
+
+    <h2>Секреты</h2>
+    <table>
+      <thead><tr><th>Секрет</th><th>Где</th><th>Как передаётся</th><th>В логах</th></tr></thead>
+      <tbody>
+        <tr><td><code>BOT_TOKEN</code></td><td><code>infra/.env</code> chmod 600</td><td>env</td><td>нет</td></tr>
+        <tr><td><code>POSTGRES_PASSWORD</code></td><td>то же</td><td>env</td><td>нет</td></tr>
+        <tr><td><code>BACKUP_GPG_PASSPHRASE</code></td><td>то же</td><td>env → <code>os.pipe</code> → <code>gpg --passphrase-fd</code>, не argv</td><td>нет</td></tr>
+        <tr><td><code>WEBHOOK_SECRET</code></td><td>то же</td><td>env, <code>hmac.compare_digest</code> против X-Max-Secret</td><td>нет</td></tr>
+        <tr><td><code>BACKUP_S3_*_KEY</code></td><td>то же</td><td>env → rclone через env, не argv</td><td>нет</td></tr>
+        <tr><td>SSH deploy-key</td><td><code>/root/.ssh/aemr-bot-deploy</code></td><td>через <code>GIT_SSH_COMMAND</code></td><td>нет</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <strong>audit_vps.sh маскирует:</strong> <code>BOT_TOKEN</code>, <code>DATABASE_URL</code>, <code>POSTGRES_PASSWORD</code>, <code>BACKUP_GPG_PASSPHRASE</code>, <code>BACKUP_S3_*_KEY</code>, <code>WEBHOOK_SECRET</code>, заголовок <code>Authorization</code>, параметр <code>access_token</code>.
+    </div>
+
+    <h2>ПДн — где хранится, как удаляется</h2>
+    <table>
+      <thead><tr><th>Поле</th><th>Таблица</th><th>Удаление при /erase</th><th>Auto-retention</th></tr></thead>
+      <tbody>
+        <tr><td>first_name</td><td>users</td><td>физическое удаление строки</td><td>30 дней после revoke</td></tr>
+        <tr><td>phone, phone_normalized</td><td>users</td><td>то же</td><td>30 дней после revoke</td></tr>
+        <tr><td>address</td><td>appeals</td><td>NULL</td><td>5 лет после закрытия</td></tr>
+        <tr><td>summary</td><td>appeals</td><td>NULL</td><td>5 лет</td></tr>
+        <tr><td>attachments</td><td>appeals (JSONB)</td><td>[]</td><td>5 лет</td></tr>
+        <tr><td>text, attachments</td><td>messages</td><td>NULL / []</td><td>5 лет</td></tr>
+        <tr><td>payload (chat_id/user_id/mid)</td><td>events</td><td>не очищается напрямую</td><td>30 дней</td></tr>
+        <tr><td>operator_max_user_id</td><td>audit_log</td><td>не очищается</td><td>бессрочно</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Два пути удаления</strong>: житель в личке делает <code>/forget</code> (audit-action <code>self_erase</code>); ИТ в служебной группе — <code>/erase max_user_id=N</code> или <code>/erase phone=+7…</code> (audit-action <code>erase</code>). Подробно — <code>docs/RUNBOOK_PDN_ERASURE.md</code>.</p>
+
+    <h2>Защита кода и состояния</h2>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Защита от ввода</h3>
+        <ul>
+          <li><code>html.escape</code> на значениях жителя в HTML-разметке прогресс-бара</li>
+          <li><code>hmac.compare_digest</code> на <code>WEBHOOK_SECRET</code> (защита от timing-oracle)</li>
+          <li>Rate-limit обращений: 3 в час на жителя</li>
+          <li><code>asyncio.Semaphore(32)</code> на webhook-обработчиках</li>
+          <li>Idempotency через <code>events.idempotency_key</code> UNIQUE</li>
+          <li>Reply-dedup 10 секунд на <code>(operator_id, appeal_id, text)</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Защита состояния</h3>
+        <ul>
+          <li><code>pg_advisory_xact_lock(max_user_id)</code> в update_dialog_data</li>
+          <li><code>statement_timeout = 30s</code> на роль</li>
+          <li><code>idle_in_transaction_session_timeout = 60s</code></li>
+          <li><code>misfire_grace_time = 120</code> на все cron</li>
+          <li>Persistent wizard state (таблица <code>wizard_state</code>)</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>CI как security gate</h2>
+    <p>Hard fail на любом из:</p>
+    <ul>
+      <li><code>ruff check</code> — стиль и линт</li>
+      <li><code>mypy</code> — типы</li>
+      <li><code>bandit -ll</code> — статический security (medium+)</li>
+      <li><code>pip-audit --strict</code> — CVE-сканер на frozen deps</li>
+      <li><code>shellcheck</code> — все <code>*.sh</code></li>
+      <li><code>pytest --cov-fail-under=65</code> — coverage gate</li>
+      <li><code>alembic upgrade head</code></li>
+      <li><code>alembic check</code> — drift модель ↔ миграции</li>
+      <li><code>alembic round-trip</code> — upgrade → downgrade base → upgrade head</li>
+    </ul>
+
+    <h2>Известные компромиссы (честно)</h2>
+    <details>
+      <summary><span class="badge warn">HA</span>Single-replica</summary>
+      <div class="body">
+        <p>Одна VPS = single point of failure. Падение хоста означает простой до восстановления. Решение — second VPS + Patroni для Postgres + DNS-failover. Архитектурный вопрос, не код.</p>
+      </div>
+    </details>
+    <details>
+      <summary><span class="badge warn">TLS</span>Bot↔db без TLS внутри Docker network</summary>
+      <div class="body">
+        <p>Уровень доверия — «доверенная сеть Docker». Перехват возможен только при root на VPS. Для повышения — Postgres SSL + asyncpg <code>ssl=require</code>.</p>
+      </div>
+    </details>
+    <details>
+      <summary><span class="badge warn">Backup</span>Юридический разрыв backup ↔ erase</summary>
+      <div class="body">
+        <p>Backup от даты до <code>/erase</code> всё ещё содержит данные жителя. После restore из старой копии необходимо повторно применить erase. Формально это нарушение 152-ФЗ, если не сделать.</p>
+      </div>
+    </details>
+    <details>
+      <summary><span class="badge warn">MAX</span>Сообщения остаются у мессенджера</summary>
+      <div class="body">
+        <p>Бот не может удалить уже отправленные сообщения из MAX-чата жителя. Они на серверах мессенджера, подчиняются политике MAX. В политике приватности этот факт нужно явно указать.</p>
+      </div>
+    </details>
+    <details>
+      <summary><span class="badge opt">опц.</span>DAST/penetration test не проведён</summary>
+      <div class="body">
+        <p>Static-analysis (bandit, pip-audit) есть. Динамического тестирования (фаззинг webhook, brute callback-payload'ов) нет. Рекомендуется при бюджете.</p>
+      </div>
+    </details>
+
+    <h2>Чего хочется от ИБ-команды</h2>
+    <ul>
+      <li><strong>Iptables outbound whitelist</strong>: разрешить только три исходящих (botapi.max.ru, S3, healthcheck), всё остальное — drop</li>
+      <li><strong>Аудит .env на ротацию</strong>: BOT_TOKEN, POSTGRES_PASSWORD, GPG passphrase менялись когда-нибудь? Календарь ротации раз в полгода</li>
+      <li><strong>Pen-test webhook</strong> (если включён): фаззинг, попытки обхода hmac.compare_digest</li>
+      <li><strong>Compliance аудит</strong>: формальное соответствие 152-ФЗ и 59-ФЗ. Юрист, не разработчик</li>
+      <li><strong>DR plan</strong>: что делает админ, если VPS уничтожена полностью</li>
+    </ul>
+  </section>
+
+  <!-- ===== CHEATSHEET ===== -->
+  <section class="tab" id="cheatsheet">
+    <h2>Шпаргалка команд</h2>
+
+    <h3>Health и статус</h3>
+    <div class="code-block">
+      <pre><code>curl -fsS http://127.0.0.1:8080/livez && echo
+curl -fsS http://127.0.0.1:8080/readyz && echo
+curl -fsS http://127.0.0.1:8080/healthz && echo
+docker compose ps
+docker inspect aemr-bot-bot-1 --format '{{.State.Status}} {{.State.Health.Status}}'</code></pre>
+    </div>
+
+    <h3>Логи</h3>
+    <div class="code-block">
+      <pre><code>cd /home/aemr/aemr-bot/infra
+docker compose logs --tail 300 bot
+docker compose logs --since 24h bot | grep -Ei 'error|exception|traceback|pulse|startup'
+docker compose logs --tail 150 db
+journalctl -t aemr-bot-watchdog -n 80 --no-pager
+journalctl -t aemr-bot-deploy -n 80 --no-pager</code></pre>
+    </div>
+
+    <h3>Аудит и smoke</h3>
+    <div class="code-block">
+      <pre><code>sudo bash /home/aemr/aemr-bot/scripts/audit_vps.sh
+# полная проверка после деплоя:
+cat /home/aemr/aemr-bot/docs/VPS_SMOKE_CHECKLIST.md</code></pre>
+    </div>
+
+    <h3>Деплой и пересборка</h3>
+    <div class="code-block">
+      <pre><code>sudo -u aemr -i
+cd aemr-bot
+git fetch origin main && git pull --ff-only
+cd infra
+docker compose build bot
+docker compose up -d bot</code></pre>
+    </div>
+
+    <h3>База</h3>
+    <div class="code-block">
+      <pre><code># psql внутри db-контейнера
+docker compose exec db psql -U aemr aemr
+
+# размеры таблиц
+docker compose exec db psql -U aemr aemr -c "\dt+"
+
+# топ-10 медленных запросов
+docker compose exec db psql -U aemr aemr -c "
+SELECT calls, round(mean_exec_time::numeric, 2) as mean_ms, query
+FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10;"</code></pre>
+    </div>
+
+    <h3>Бэкап</h3>
+    <div class="code-block">
+      <pre><code>docker compose exec bot ls -lah /backups
+# ручной бэкап (от IT через бота):
+# в служебной группе MAX: /backup</code></pre>
+    </div>
+
+    <h3>Операторы в служебной группе MAX</h3>
+    <div class="code-block">
+      <pre><code>/op_help                                # меню оператора
+/diag                                   # сводка
+/open_tickets                           # открытые обращения
+/stats today                            # XLSX за сегодня
+/reply 42 Здравствуйте, по вашему обращению...
+/reopen 42                              # вернуть в работу
+/close 42                               # закрыть
+/erase max_user_id=123456               # IT: удалить ПДн
+/broadcast                              # coord/IT: мастер рассылки
+/add_operators 123456 aemr Иванов И.И.  # IT: новый оператор</code></pre>
+    </div>
+
+    <h3>Аварийные команды</h3>
+    <div class="code-block">
+      <pre><code># принудительный рестарт
+cd /home/aemr/aemr-bot/infra && docker compose restart bot
+
+# чистая пересборка
+docker compose down && docker compose up -d --build
+
+# восстановление из бэкапа (НЕ в production)
+# см. docs/BACKUP_RESTORE_TEST.md</code></pre>
+    </div>
+
+    <h2>Минимальный <code>.env</code></h2>
+    <div class="code-block">
+      <pre><code>BOT_TOKEN=ВЫДАЁТСЯ_НА_MAX_RU_BUSINESS
+BOT_MODE=polling
+POSTGRES_DB=aemr
+POSTGRES_USER=aemr
+POSTGRES_PASSWORD=ЗАМЕНИТЬ_НА_СЛУЧАЙНУЮ_СТРОКУ_24+_СИМВОЛОВ
+DATABASE_URL=postgresql+asyncpg://aemr:ТОТ_ЖЕ_ПАРОЛЬ@db:5432/aemr
+ADMIN_GROUP_ID=-74181728103785
+BOOTSTRAP_IT_MAX_USER_ID=ВАШ_MAX_USER_ID
+BOOTSTRAP_IT_FULL_NAME=ИТ-специалист
+TZ=Asia/Kamchatka
+BACKUP_GPG_PASSPHRASE=СЛУЧАЙНАЯ_СТРОКА_32+_СИМВОЛОВ
+# HEALTHCHECK_URL=https://hc-ping.com/...</code></pre>
+    </div>
+  </section>
+
+  <!-- ===== CHECKLIST ===== -->
+  <section class="tab" id="checklist">
+    <h2>Чек-лист первичного деплоя</h2>
+    <p class="lead">Отмечайте по мере выполнения. Состояние сохраняется в браузере.</p>
+
+    <h3>1. Подготовка VPS</h3>
+    <ul class="check" id="cl-1">
+      <li><label><input type="checkbox"> Ubuntu 22.04 или 24.04 LTS свежей установки</label></li>
+      <li><label><input type="checkbox"> NTP включён: <code>timedatectl</code> показывает «synchronized: yes»</label></li>
+      <li><label><input type="checkbox"> Docker Engine 24+ установлен из docker.com репо</label></li>
+      <li><label><input type="checkbox"> Docker Compose plugin (<code>docker compose version</code>)</label></li>
+      <li><label><input type="checkbox"> SSH с парольным входом отключён (<code>PasswordAuthentication no</code>)</label></li>
+      <li><label><input type="checkbox"> Firewall (ufw/iptables) разрешает только 22 наружу</label></li>
+    </ul>
+
+    <h3>2. Пользователь и клонирование</h3>
+    <ul class="check" id="cl-2">
+      <li><label><input type="checkbox"> Создан пользователь <code>aemr</code> в группе docker</label></li>
+      <li><label><input type="checkbox"> Клонирован репозиторий <code>gaben1488/aemr-bot</code> в <code>/home/aemr/aemr-bot</code></label></li>
+      <li><label><input type="checkbox"> <code>infra/.env</code> скопирован из <code>.env.example</code></label></li>
+      <li><label><input type="checkbox"> <code>chmod 600 infra/.env</code></label></li>
+    </ul>
+
+    <h3>3. Заполнение .env</h3>
+    <ul class="check" id="cl-3">
+      <li><label><input type="checkbox"> <code>BOT_TOKEN</code> получен на max.ru/business</label></li>
+      <li><label><input type="checkbox"> <code>POSTGRES_PASSWORD</code> — случайные 24+ символа</label></li>
+      <li><label><input type="checkbox"> <code>DATABASE_URL</code> синхронизирован с POSTGRES_PASSWORD</label></li>
+      <li><label><input type="checkbox"> <code>ADMIN_GROUP_ID</code> — получен через <code>/whoami</code> в служебной группе</label></li>
+      <li><label><input type="checkbox"> <code>BOOTSTRAP_IT_MAX_USER_ID</code> заполнен (узнать через /whoami в личке)</label></li>
+      <li><label><input type="checkbox"> <code>BACKUP_GPG_PASSPHRASE</code> — случайная строка 32+ символа</label></li>
+      <li><label><input type="checkbox"> <code>TZ=Asia/Kamchatka</code></label></li>
+    </ul>
+
+    <h3>4. Первый запуск</h3>
+    <ul class="check" id="cl-4">
+      <li><label><input type="checkbox"> <code>docker compose up -d --build</code> без ошибок</label></li>
+      <li><label><input type="checkbox"> <code>docker compose ps</code>: оба контейнера в Up</label></li>
+      <li><label><input type="checkbox"> Через 60 сек <code>curl http://127.0.0.1:8080/livez</code> отвечает 200</label></li>
+      <li><label><input type="checkbox"> <code>curl http://127.0.0.1:8080/readyz</code> отвечает 200</label></li>
+      <li><label><input type="checkbox"> В служебной группе пришёл «🟢 Бот запущен/перезапущен»</label></li>
+      <li><label><input type="checkbox"> <code>docker compose restart db</code> (один раз — для pg_stat_statements preload)</label></li>
+    </ul>
+
+    <h3>5. Проверка бота</h3>
+    <ul class="check" id="cl-5">
+      <li><label><input type="checkbox"> В личке боту: <code>/start</code> отвечает</label></li>
+      <li><label><input type="checkbox"> В личке: <code>/whoami</code> возвращает ваш max_user_id</label></li>
+      <li><label><input type="checkbox"> В служебной группе: <code>/op_help</code> показывает меню</label></li>
+      <li><label><input type="checkbox"> В служебной группе: <code>/diag</code> возвращает счётчики без traceback</label></li>
+      <li><label><input type="checkbox"> Подача тестового обращения (от вашего личного аккаунта)</label></li>
+      <li><label><input type="checkbox"> Карточка пришла в служебную группу</label></li>
+      <li><label><input type="checkbox"> <code>/reply &lt;id&gt; тест</code> доставлен жителю в личку</label></li>
+    </ul>
+
+    <h3>6. Автоматизация</h3>
+    <ul class="check" id="cl-6">
+      <li><label><input type="checkbox"> Auto-deploy установлен: <code>sudo bash scripts/install-auto-deploy.sh</code></label></li>
+      <li><label><input type="checkbox"> Public key добавлен в GitHub Settings → Deploy keys (read-only)</label></li>
+      <li><label><input type="checkbox"> Cron <code>*/10</code> для auto-deploy под root</label></li>
+      <li><label><input type="checkbox"> Watchdog: cron <code>*/5</code> для <code>healthwatch.sh</code> под root</label></li>
+      <li><label><input type="checkbox"> (опц.) <code>HEALTHCHECK_URL</code> в .env, проверен ping</label></li>
+    </ul>
+
+    <h3>7. Безопасность</h3>
+    <ul class="check" id="cl-7">
+      <li><label><input type="checkbox"> Все секреты в <code>.env</code> заменены с дефолтных</label></li>
+      <li><label><input type="checkbox"> <code>.env</code> не в git (<code>git status</code> чисто)</label></li>
+      <li><label><input type="checkbox"> SSH deploy-key <code>/root/.ssh/aemr-bot-deploy</code> существует и доступен только root</label></li>
+      <li><label><input type="checkbox"> Аудит: <code>sudo bash scripts/audit_vps.sh</code> прошёл, секреты замаскированы</label></li>
+      <li><label><input type="checkbox"> Backup-тест по <code>BACKUP_RESTORE_TEST.md</code> в отдельной БД</label></li>
+    </ul>
+
+    <h3>8. Документы для команды</h3>
+    <ul class="check" id="cl-8">
+      <li><label><input type="checkbox"> Операторам отправлен <code>docs/HOW_IT_WORKS.md</code></label></li>
+      <li><label><input type="checkbox"> ИТ ознакомлен с <code>docs/RUNBOOK_PDN_ERASURE.md</code></label></li>
+      <li><label><input type="checkbox"> Админ ознакомлен с <code>docs/VPS_SMOKE_CHECKLIST.md</code></label></li>
+      <li><label><input type="checkbox"> Создан тикет на квартальный backup-restore тест</label></li>
+      <li><label><input type="checkbox"> Создан тикет на полугодовую ротацию <code>BOT_TOKEN</code></label></li>
+    </ul>
+
+    <div class="callout">
+      Состояние чек-листа сохраняется в localStorage. Снять отметку — повторный клик. Для сброса прогресса откройте DevTools → Application → Local Storage и удалите ключ <code>aemr-handover</code>.
+    </div>
+  </section>
+
+  <footer>
+    aemr-bot · <a href="https://github.com/gaben1488/aemr-bot">gaben1488/aemr-bot</a> · single-file documentation, без внешних зависимостей
+  </footer>
+</div>
+
+<script>
+(function(){
+  // ---- Tabs ----
+  const tabs = document.querySelectorAll('nav.tabs button');
+  const sections = document.querySelectorAll('section.tab');
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      tabs.forEach(b => b.classList.toggle('active', b === btn));
+      sections.forEach(s => s.classList.toggle('active', s.id === target));
+      // tab в URL hash, чтобы можно было дать ссылку «handover.html#security»
+      history.replaceState(null, '', '#' + target);
+    });
+  });
+  // initial tab из hash
+  if (location.hash) {
+    const want = location.hash.slice(1);
+    const btn = document.querySelector(`nav.tabs button[data-tab="${want}"]`);
+    if (btn) btn.click();
+  }
+
+  // ---- Copy to clipboard ----
+  document.querySelectorAll('pre').forEach(pre => {
+    const wrap = pre.parentElement;
+    if (!wrap.classList.contains('code-block')) return;
+    if (wrap.querySelector('.copy-btn')) return;
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Копировать';
+    btn.addEventListener('click', () => {
+      const text = pre.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Скопировано ✓';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Копировать';
+          btn.classList.remove('copied');
+        }, 1500);
+      }).catch(() => {
+        btn.textContent = 'Ошибка';
+      });
+    });
+    wrap.appendChild(btn);
+  });
+
+  // ---- Search highlight ----
+  const search = document.getElementById('search');
+  let originals = new WeakMap();
+  function gatherTextNodes(root) {
+    const list = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(n) {
+        if (!n.parentElement) return NodeFilter.FILTER_REJECT;
+        const tag = n.parentElement.tagName;
+        if (['SCRIPT','STYLE'].includes(tag)) return NodeFilter.FILTER_REJECT;
+        if (n.parentElement.closest('.copy-btn, nav.tabs, header.hero .pills')) return NodeFilter.FILTER_REJECT;
+        if (!n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    let nd; while (nd = walker.nextNode()) list.push(nd);
+    return list;
+  }
+  function clearHighlights() {
+    document.querySelectorAll('mark.search-hit').forEach(m => {
+      const t = document.createTextNode(m.textContent);
+      m.parentNode.replaceChild(t, m);
+      m.parentNode.normalize && m.parentNode.normalize();
+    });
+  }
+  search.addEventListener('input', () => {
+    const q = search.value.trim();
+    clearHighlights();
+    if (q.length < 2) return;
+    const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    document.querySelectorAll('section.tab').forEach(sec => {
+      const nodes = gatherTextNodes(sec);
+      nodes.forEach(n => {
+        if (!re.test(n.nodeValue)) { re.lastIndex = 0; return; }
+        re.lastIndex = 0;
+        const frag = document.createDocumentFragment();
+        let last = 0, m;
+        while ((m = re.exec(n.nodeValue)) !== null) {
+          frag.appendChild(document.createTextNode(n.nodeValue.slice(last, m.index)));
+          const mark = document.createElement('mark');
+          mark.className = 'search-hit highlight';
+          mark.textContent = m[0];
+          frag.appendChild(mark);
+          last = m.index + m[0].length;
+        }
+        frag.appendChild(document.createTextNode(n.nodeValue.slice(last)));
+        n.parentNode.replaceChild(frag, n);
+      });
+    });
+  });
+
+  // ---- Checklist persistence ----
+  const STORAGE_KEY = 'aemr-handover';
+  const state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  document.querySelectorAll('ul.check').forEach(ul => {
+    const key = ul.id;
+    const items = ul.querySelectorAll('input[type=checkbox]');
+    items.forEach((cb, idx) => {
+      const cellKey = key + ':' + idx;
+      if (state[cellKey]) {
+        cb.checked = true;
+        cb.closest('li').classList.add('done');
+      }
+      cb.addEventListener('change', () => {
+        state[cellKey] = cb.checked;
+        cb.closest('li').classList.toggle('done', cb.checked);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
+```
+
 ### `docs/HOW_IT_WORKS.md`
 
 Size: `15203` bytes  
@@ -33315,6 +34541,348 @@ SHA-256: `62c3906e605db6cb5388855e30f8f8715e930845a66a7c42af859b496e5fca20`
 До такого решения в документации и ответах жителям нельзя писать, что `appeals.summary` и `messages.text` сохраняются как муниципальные документы.
 ```
 
+### `docs/SECURITY.md`
+
+Size: `28645` bytes  
+SHA-256: `d024eefdb04fb3a8cb6ee05cb302453ac41583f6b4341e943fd873ba622f7675`
+
+```markdown
+# SECURITY.md — модель угроз и контролов
+
+Документ для специалиста по информационной безопасности, который принимает aemr-bot на аудит и сопровождение. Описывает реальную, а не идеализированную картину: что защищено, чем, и где пока компромисс.
+
+Связанные документы: `docs/RUNBOOK_PDN_ERASURE.md` (152-ФЗ операции), `docs/SYSADMIN.md` (эксплуатация), `docs/PRIVACY_DRAFT.md` (политика).
+
+## 1. Контур и контекст
+
+aemr-bot — государственный сервис обратной связи, работает с ПДн жителей и подпадает под 152-ФЗ и 59-ФЗ. Self-host на одной VPS, под контролем оператора (Администрация Елизовского муниципального округа). Никаких сторонних SaaS, никаких облачных API кроме MAX-мессенджера.
+
+Главные активы:
+
+- персональные данные жителей в Postgres (имя, телефон, адрес, текст обращений, вложения, MAX user_id);
+- секреты в `infra/.env` (BOT_TOKEN, пароль БД, GPG passphrase);
+- резервные копии БД в named volume `aemr-bot_backups`;
+- история действий в `audit_log`;
+- логи Docker (могут содержать косвенные идентификаторы).
+
+Угрозы, против которых проектировался контур: компрометация VPS (украли ключи), компрометация MAX (украли BOT_TOKEN или подменили события), внутренний злоумышленник (один из операторов), внешний флуд/DoS, юридический инцидент (запрос на удаление по 152-ФЗ ст. 21).
+
+## 2. Сетевая модель
+
+В режиме polling **публичных входящих портов нет**. Бот сам опрашивает MAX исходящим HTTPS. В режиме webhook добавляется nginx с 80/443 и публичный домен.
+
+### 2.1 Карта портов
+
+| Сервис | Bind | Доступен | Содержимое |
+|---|---|---|---|
+| `bot` 8080 | `127.0.0.1:8080` на хосте | только localhost VPS | `/livez`, `/readyz`, `/healthz`, при webhook — `/max/webhook` |
+| `db` 5432 | inside Docker network | только bot через DNS-имя `db` | Postgres |
+| `nginx` 80, 443 | `0.0.0.0` | публично, **только при profile `webhook`** | TLS-терминация, прокси на bot:8080 |
+
+Postgres-порт **на хост не пробрасывается** — `psql` извне VPS невозможен по дизайну. Внутри VPS — через `docker compose exec db psql ...`.
+
+### 2.2 Исходящие соединения
+
+Только три точки:
+
+- `botapi.max.ru`, `platform-api.max.ru` — MAX Bot API через HTTPS, аутентификация заголовком `Authorization`;
+- `BACKUP_S3_ENDPOINT` (опционально) — S3-совместимое хранилище через rclone;
+- `HEALTHCHECK_URL` (опционально) — внешний watchdog типа Healthchecks.io.
+
+Других внешних коннектов код не делает. Можно заворачивать в Iptables outbound whitelist.
+
+### 2.3 Webhook (если включён)
+
+`bot/aemr_bot/main.py` принимает `POST /max/webhook`. Защита:
+
+- nginx делает TLS-терминацию, certbot обновляет Let's Encrypt;
+- бот **обязательно** проверяет заголовок `X-Max-Secret` против `WEBHOOK_SECRET` через `hmac.compare_digest` (защита от timing-oracle);
+- если `BOT_MODE=webhook`, pydantic-validator в `config.py` отказывается стартовать без `WEBHOOK_SECRET` ≥16 символов;
+- секрет принимается **только в заголовке**, не в query — query утекает в логи nginx, Referer и историю браузера.
+
+## 3. Хостовая поверхность
+
+### 3.1 Контейнерное укрепление
+
+**bot**:
+
+- `read_only: true` — root-fs неизменяемый, всё пишущее идёт в tmpfs или named volume;
+- `tmpfs: /tmp:size=128m` — pip wheels, temp-файлы, gpg home;
+- `mem_limit: 512m`, `memswap_limit: 512m` — рассылка на миллион жителей не уроняет хост;
+- `pids_limit: 200` — fork-bomb из gpg/rclone/pg_dump капается;
+- `cap_drop: ALL` — никаких Linux capabilities, бот их не требует;
+- `security_opt: no-new-privileges:true` — setuid-эскалации заблокированы;
+- UID/GID 1000 (botuser), не root.
+
+**db**:
+
+- `cap_drop: ALL`, оставлены только `CHOWN`, `DAC_READ_SEARCH`, `FOWNER`, `SETGID`, `SETUID` — нужны Postgres для chown'а data-каталога при первой инициализации;
+- `no-new-privileges: true`;
+- `read_only: false` (нужно writable `${PGDATA}`).
+
+### 3.2 Логи
+
+Все три контейнера — json-file driver, ротация 10 МБ × 3 файла. Бесконечного disk-leak'а быть не может. Логи можно агрегировать в SIEM через journald или filebeat — но **до этого нужно проверить, не пишутся ли в них PII** (см. раздел 7.2).
+
+### 3.3 SSH и доступ к хосту
+
+`scripts/install-auto-deploy.sh` создаёт отдельный read-only deploy-key `/root/.ssh/aemr-bot-deploy` именно для репозитория `gaben1488/aemr-bot`. Это **не** общий root-ssh-key — компромет одного ключа не даёт доступ ко всему GitHub-аккаунту.
+
+Sudo-доступ на VPS — отдельная роль, выдаётся персонально.
+
+## 4. Аутентификация и роли
+
+### 4.1 Bot ↔ MAX
+
+Единственный `BOT_TOKEN` в заголовке `Authorization` каждого запроса. Токен:
+
+- хранится в `infra/.env`, файл должен быть `chmod 600`;
+- передаётся в контейнер через `env_file`, не в `docker run --env` (иначе виден в `ps`);
+- никогда не уходит в логи (логи фильтруются `audit_vps.sh`);
+- никогда не появляется в query или argv subprocess (`gpg`, `rclone`);
+- ротация — через бизнес-кабинет `max.ru/business`. Регламент смены: новый токен → правка `.env` → `docker compose up -d --force-recreate bot`. Старый токен инвалидируется автоматически после смены в кабинете.
+
+### 4.2 Webhook secret
+
+См. раздел 2.3. Хранится в `infra/.env`. Ротация — синхронно сменить в боте и на стороне MAX-кабинета настроек webhook.
+
+### 4.3 Bot ↔ Postgres
+
+`POSTGRES_PASSWORD` через env. URL передаётся как `DATABASE_URL` целиком — пароль внутри. Postgres недоступен снаружи Docker network, перехват возможен только при root-доступе на VPS.
+
+Внутри Docker network — без TLS. Это компромисс: для self-hosted single-VPS уровень «доверенной сети» считается достаточным. Для повышения — настроить Postgres SSL и `asyncpg ssl=require`.
+
+### 4.4 Bot ↔ Admin group в MAX
+
+Единственная идентификация служебной группы — `ADMIN_GROUP_ID` (отрицательный chat_id MAX). Любой callback с admin-payload'ом, пришедший вне этого chat_id, отбрасывается на этапе `handlers/callback_router.is_admin_callback`.
+
+Идентификация **оператора внутри группы** — по `max_user_id` (MAX user id отправителя), сверяется с таблицей `operators` через `services/operators.get`. Не оператор → команды не выполняются, callback ack'ается без действия.
+
+### 4.5 Роли операторов
+
+В `db/models.OperatorRole` четыре значения:
+
+| Роль | Может |
+|---|---|
+| `aemr` | отвечать на обращения, `/stats`, `/reopen`, `/close`, `/diag` |
+| `egp` | то же, формальное разделение для журнала |
+| `coordinator` | всё выше + `/broadcast` |
+| `it` | всё выше + `/erase`, `/setting`, `/add_operators`, `/backup` |
+
+Иерархия enforced в коде через `handlers/_auth.ensure_role(OperatorRole.IT, ...)`. Для всех опасных действий (удаление ПДн, регистрация оператора, изменение настроек, бэкап) проверяется именно `it`.
+
+### 4.6 Bootstrap первого `it`
+
+Без `BOOTSTRAP_IT_MAX_USER_ID` в `.env` пустая таблица `operators` не даст `/add_operators` (требует `it`). Поэтому первый `it` подсевается из env при холодном старте. На повторных запусках — no-op. После запуска переменную можно убрать из `.env`, чтобы не оставлять в файле.
+
+## 5. Хранение и обработка ПДн
+
+### 5.1 Где живут ПДн в БД
+
+| Поле | Таблица | Удаляется при `/erase` или `/forget` | Срок жизни без действий |
+|---|---|---|---|
+| `first_name` | `users` | да (физическое удаление строки) | бессрочно до отзыва |
+| `phone`, `phone_normalized` | `users` | да | то же |
+| `consent_pdn_at`, `consent_revoked_at` | `users` | строка удаляется | то же |
+| `max_user_id` | `users` | строка удаляется | 30 дней после revoke |
+| `address` | `appeals` | очищается до NULL | 5 лет после закрытия (потом nullified) |
+| `summary` | `appeals` | очищается до NULL | то же |
+| `attachments` | `appeals` (JSONB) | очищается до `[]` | то же |
+| `text` | `messages` | очищается до NULL | то же |
+| `attachments` | `messages` (JSONB) | очищается до `[]` | то же |
+| `payload` | `events` (JSONB c chat_id/user_id/mid) | не очищается напрямую | 30 дней (events-retention cron) |
+| `operator_max_user_id` | `audit_log` | не очищается | бессрочно (это не житель, а оператор) |
+
+### 5.2 Каналы удаления
+
+**Житель в личке** — команда `/forget`. Аудит-action: `self_erase`.
+
+**ИТ-оператор в служебной группе** — `/erase max_user_id=N` или `/erase phone=+7...`. Аудит-action: `erase`.
+
+Обе команды выполняют одну и ту же модель очистки:
+
+1. Открытые обращения жителя закрываются с флагом `closed_due_to_revoke=true`;
+2. Все обращения жителя (любого статуса) перепривязываются к технической записи `ANONYMOUS_MAX_USER_ID = -1` через `UPDATE appeals.user_id`;
+3. Свободные текстовые поля и вложения обнуляются в `appeals` и `messages`;
+4. Строка жителя в `users` **физически удаляется**;
+5. Запись в `audit_log` фиксирует операцию.
+
+Подробно — `docs/RUNBOOK_PDN_ERASURE.md`. Важная оговорка: команды очищают **рабочую базу бота**. Уже отправленные сообщения в MAX-чатах не удаляются (это серверы мессенджера), резервные копии до момента удаления продолжают содержать данные.
+
+### 5.3 Автоматическое 152-ФЗ retention
+
+Cron `pdn-retention` ежедневно в 04:30 Камчатки: жителей, у которых `consent_revoked_at` старше 30 дней, обезличивает через ту же `erase_pdn`. Открытые обращения этих жителей **пропускаются** — сначала оператор должен ответить (право на ответ по 59-ФЗ), обращение закрывается, и тогда retention сработает на следующий день.
+
+Cron `appeals-5y-retention` ежедневно в 04:45: обращения, закрытые более 5 лет назад, теряют `summary`, `attachments`, текст и вложения связанных `messages`. Метаданные (id, дата, статус, тема, поселение) остаются для статистики. Високосные считаются корректно через `relativedelta(years=5)`, а не `timedelta(days=365*5)`.
+
+### 5.4 PII в admin-выводах
+
+В выводах списков жителей в служебной группе телефоны маскируются через `_mask_phone(...)`:
+
+- `+79991234567` → `+7***4567`;
+- `89991234567` → `+7***4567`;
+- пустые/короткие — пропускаются как есть.
+
+Полный номер показывается оператору только при адресном `/erase phone=...` (он его и так уже знает, потому что вводит).
+
+### 5.5 PII в логах
+
+Бот пишет в логи `max_user_id`, `chat_id`, `mid` (message id) — это **косвенные идентификаторы**, не сам ПДн. Имя, телефон, текст обращения в логи не уходят. Аудит `scripts/audit_vps.sh` маскирует токены и пароли в выгрузке.
+
+Тем не менее, если SIEM подключают — стоит дополнительно фильтровать `audit_log.target` (там могут быть `user max_id=N`) и убедиться, что Docker JSON-логи попадают в среду с разграниченным доступом.
+
+## 6. Хранение секретов
+
+| Секрет | Где | Как читается | Утечка в логи |
+|---|---|---|---|
+| `BOT_TOKEN` | `infra/.env`, `chmod 600` | env-переменная в контейнере | нет, маскируется в audit |
+| `POSTGRES_PASSWORD` | то же | env | нет, маскируется |
+| `BACKUP_GPG_PASSPHRASE` | то же | env → `os.pipe` → `gpg --passphrase-fd N` (не argv) | нет, маскируется |
+| `WEBHOOK_SECRET` | то же | env, `hmac.compare_digest` | нет |
+| `BACKUP_S3_ACCESS_KEY` / `SECRET_KEY` | то же | env → rclone через env, не argv | нет |
+| SSH deploy-key | `/root/.ssh/aemr-bot-deploy` (0600), pub в GitHub Deploy keys | используется через `GIT_SSH_COMMAND` | нет |
+
+Никаких секретов:
+
+- в git (есть `.gitignore`);
+- в `docker history` (только `COPY` файлов в layers);
+- в `ps aux` (везде env, не argv);
+- в Docker labels;
+- в healthcheck-команде.
+
+GPG-passphrase через `os.pipe()`: бот пишет фразу в pipe через `asyncio.to_thread(os.write, ...)`, дочка-gpg читает через `--passphrase-fd N`. Никогда не argv, никогда не файл.
+
+S3-ключи через env-переменные rclone (`RCLONE_CONFIG_*`), не через `--access-key=...` (этот вариант светится в `ps`).
+
+## 7. Защита от ввода и злоупотреблений
+
+### 7.1 Rate limiting
+
+- **Новые обращения**: 3 в час на жителя. Защита от спам-волны и от случайного фарма обращений. При превышении бот предлагает дополнить открытое или подождать.
+- **Webhook concurrency**: `asyncio.Semaphore(32)` — одновременно обрабатывается до 32 событий. Защита от unbounded task spawn при флуде MAX → OOM при `mem_limit:512m`.
+- **Broadcast rate-limit**: `BROADCAST_RATE_LIMIT_PER_SEC=1.0` по умолчанию (ниже потолка MAX 2 RPS, чтобы рассылка не упиралась в лимит одновременно с обычной работой).
+
+### 7.2 Дедупликация и идемпотентность
+
+- Каждое входящее событие MAX сохраняется в `events.idempotency_key` (UNIQUE). Повтор того же `update_id` — no-op.
+- Reply-dedup: ответ оператора с тем же `(operator_id, appeal_id, text)` в окне 10 секунд игнорируется. Защита от двойного клика «Ответить» + параллельной команды `/reply`.
+
+### 7.3 HTML escape
+
+В прогресс-карте воронки `services/progress.py` все значения от жителя (`name`, `address`, `locality`, `topic`) пропускаются через `html.escape` перед вставкой в HTML-разметку. Имя `<script>alert(1)</script>` рендерится как видимый текст, а не активный тег.
+
+MAX использует `format=ParseMode.HTML` — без escape это была бы уязвимость к подмене разметки/контента.
+
+### 7.4 Защита состояния FSM
+
+`services/users.update_dialog_data` использует `pg_advisory_xact_lock(max_user_id)` перед read-modify-write на `dialog_data`. Два одновременных callback'а одного жителя сериализуются Postgres'ом — никакого lost update.
+
+### 7.5 Postgres-уровень
+
+Миграция 0010 устанавливает на уровне БД:
+
+- `statement_timeout = '30s'` — любой запрос дольше 30 секунд абортится автоматически;
+- `idle_in_transaction_session_timeout = '60s'` — забытая открытая транзакция (баг или crash на Python-стороне) убивается через минуту, освобождая локи;
+- `pg_stat_statements` extension — видимость в топ-N медленных запросов.
+
+### 7.6 Misfire grace для cron
+
+У всех scheduled jobs `misfire_grace_time = 120` секунд (см. `services/cron._MISFIRE_GRACE_SEC`). Дефолт APScheduler — 1 секунда; пропуски во время `docker compose up --build` (30–90 сек) молча терялись. С 120-секундным окном пропущенный тик догоняется при возвращении процесса.
+
+## 8. Аудит и наблюдаемость
+
+### 8.1 Audit log
+
+Таблица `audit_log` пишется на каждое чувствительное действие оператора: `block`, `unblock`, `erase`, `self_erase`, `reopen`, `close`, `broadcast_started`, `operator_upsert`, `setting_changed` и т. п.
+
+Поля:
+
+- `operator_max_user_id` — кто сделал;
+- `action` — что;
+- `target` — над кем/над чем (например `user max_id=123`, `appeal #45`);
+- `details` JSONB — параметры;
+- `created_at`.
+
+Audit-log не очищается автоматически. Это намеренно: операции с ПДн нужно знать постфактум даже после очистки самой ПДн.
+
+### 8.2 События входящих апдейтов
+
+Таблица `events` — все входящие апдейты MAX за последние 30 дней (cron `events-retention` чистит старше). Используется как idempotency-store и для дебага.
+
+### 8.3 Внешний мониторинг
+
+`HEALTHCHECK_URL` в `.env` — опциональный URL внешнего ping-сервиса (Healthchecks.io, Uptime Kuma и аналоги). Бот пингует его раз в `HEALTHCHECK_INTERVAL_MIN` минут. Отсутствие пинга в течение N интервалов = alert админу через канал внешнего сервиса (не через бот, который мёртв).
+
+`scripts/healthwatch.sh` — внешний watchdog в cron `*/5`, опрашивает `/livez`. 8 фейлов подряд = алёрт прямо в служебную группу через MAX API, в обход бота.
+
+## 9. Резервные копии
+
+Полная политика — `docs/RUNBOOK_PDN_ERASURE.md` §6, `docs/BACKUP_RESTORE_TEST.md`.
+
+Ключевое:
+
+- backups шифруются GPG `--symmetric AES256`. Если `BACKUP_GPG_PASSPHRASE` пустой, бэкапы plain SQL — это compliance-нарушение, не используйте в production без passphrase;
+- хранится 8 последних файлов (≈ 2 месяца истории);
+- опционально дополнительная копия в S3-совместимое хранилище;
+- restore-тестирование — в отдельной БД, не в production. Тест регулярно по графику (минимум раз в квартал).
+
+**Юридический риск**: backup от даты до `/erase` всё ещё содержит данные жителя. После восстановления из старого backup'а необходимо повторно применить все актуальные удаления (`erase_pdn`) для жителей с `consent_revoked_at`, иначе данные возвращаются в production. Это формальное нарушение 152-ФЗ.
+
+Минимальное правило: после restore из backup'а старше суток — сразу прогнать `pdn_retention_check` вручную через psql или дождаться cron в 04:30.
+
+## 10. CI как security gate
+
+`.github/workflows/ci.yml` запускается на каждый push в main и каждый PR. **Hard fail** на любом из:
+
+- `ruff check` — линт со стилем кода;
+- `mypy` — типы;
+- `bandit -ll` — статический security-анализатор Python (medium+);
+- `pip-audit --strict` — CVE-сканер зависимостей. Падает на любой known CVE в `pip freeze`;
+- `shellcheck` — все `*.sh`;
+- `pytest --cov-fail-under=65` — coverage gate;
+- `alembic upgrade head` — миграции применяются на чистую БД;
+- `alembic check` — соответствие модели Python и схемы БД;
+- `alembic round-trip` — upgrade head → downgrade base → upgrade head без ошибок (ловит сломанный `downgrade()`).
+
+Артефакт `pip-audit-report` сохраняется на каждый run для последующего ревью.
+
+Auto-deploy на сервере подтягивает **только** из `main`. PR-ветки не деплоятся. Это значит, что красный CI блокирует деплой на уровне ветки.
+
+## 11. Известные ограничения и компромиссы
+
+Перечисляю явно, чтобы при аудите не было сюрпризов:
+
+1. **Single-replica HA отсутствует**. Одна VPS, одна реплика бота, одна Postgres. Падение хоста = недоступность сервиса до восстановления. Восстановление: либо новый VPS + restore из backup, либо ручное вмешательство.
+
+2. **In-memory state частично переживает рестарт, частично нет**. Wizard-state операторов (регистрация нового сотрудника, мастер рассылки) сохраняется в таблицу `wizard_state` (миграция 0011) и восстанавливается на старте. Дедуп-окно (10 сек) и кэш-блокировки на жителя — только в RAM, при рестарте обнуляются.
+
+3. **TLS внутри Docker network не настроен**. Bot↔db общаются по нешифрованному TCP внутри `aemr-bot_default`. Уровень доверия — «доверенная сеть Docker». Для повышения — Postgres SSL.
+
+4. **Backup до `/erase`**. Юридический разрыв между моментом удаления ПДн в рабочей БД и наличием тех же данных в backup'е. Документировано в `RUNBOOK_PDN_ERASURE.md`.
+
+5. **MAX-чат бота с жителем**. Бот не может удалить уже отправленные сообщения из MAX, они остаются на серверах мессенджера и подчиняются политике MAX, а не нашему 152-ФЗ обязательству. Это нужно явно сказать жителю в политике приватности.
+
+6. **`mypy --strict` не включён**. Типы проверяются базово; full-strict потребует hint'ы в 50+ функциях, отложено.
+
+7. **DAST/penetration test не проведён**. Static-analysis (`bandit`, `pip-audit`) есть; динамического тестирования (фаззинг webhook, brute callback-payload'ов) нет. Рекомендую при бюджете.
+
+8. **Compliance аудит формальный документ**. Соответствие 152-ФЗ описано в коде и в `RUNBOOK_PDN_ERASURE.md`. Формального чек-листа Роскомнадзора, подписанного юристом, в репозитории нет. Это задача компетенции владельца.
+
+## 12. Что хотелось бы получить от ИБ-команды
+
+Если документ читает безопасник, у которого есть бюджет и желание помочь:
+
+- **Iptables outbound whitelist** на VPS: разрешить только три исходящих адреса (раздел 2.2), всё остальное — drop. Защита от exfiltration в случае компрометации.
+- **Аудит .env** на ротацию: BOT_TOKEN, POSTGRES_PASSWORD, GPG passphrase менялись ли когда-нибудь? Заведите календарь ротации (раз в полгода).
+- **Penetration test webhook** (если включён): фаззинг payload'ов, попытки обхода `hmac.compare_digest`, brute force `WEBHOOK_SECRET`.
+- **Compliance аудит**: формальное соответствие 152-ФЗ и 59-ФЗ. Юрист, не разработчик.
+- **DR plan**: что делает админ, если VPS уничтожена полностью. Сейчас плана нет, кроме «развернуть из репо и restore последний бэкап» — это правильно, но не проверено учением.
+
+## 13. Контакты
+
+Компрометация секретов или критический инцидент → владелец проекта (управление цифровизации Администрации ЕМО). Ответственный за ПДн — на стороне Администрации, контакт в политике приватности.
+```
+
 ### `docs/SETUP.md`
 
 Size: `36165` bytes  
@@ -33769,6 +35337,374 @@ docker compose up -d --build
 Если файла нет или он повреждён — fallback: бот считает рабочими все дни кроме воскресенья. Это безопасный режим (избыточные напоминания вместо тишины), но в праздники получите спам.
 
 Источник дат: [ТК РФ ст. 112](https://www.consultant.ru/document/cons_doc_LAW_34683/8c6c34a32e0a32ce86fc81fcf5c9b58fcaeebd66/) + ежегодные постановления Правительства РФ о переносе выходных. Календарь Минтруда: [rosmintrud.ru](https://mintrud.gov.ru/).
+```
+
+### `docs/SYSADMIN.md`
+
+Size: `22830` bytes  
+SHA-256: `a6e467e5881795d4723ec9e04a15984ecda7696449b3d5f13e07c9bc3b4f5bc6`
+
+```markdown
+# SYSADMIN.md — операционное руководство
+
+Этот документ — handover для системного администратора, который принимает aemr-bot на сопровождение. Цель: один раз установить, потом понимать что чинить и куда смотреть когда что-то идёт не так.
+
+Дополняет, не заменяет: `docs/SETUP.md` (первичная установка), `docs/RUNBOOK.md` (повседневные операции), `docs/VPS_SMOKE_CHECKLIST.md` (проверка после деплоя), `docs/RUNBOOK_PDN_ERASURE.md` (152-ФЗ операции).
+
+## 1. Что это вообще
+
+Бот «Обратная связь Администрации Елизовского муниципального округа» в MAX-мессенджере. Принимает обращения жителей, передаёт операторам в служебную группу, доставляет ответы. Self-hosted, никаких облаков (Aeza, VK, Yandex Cloud — мимо). Один процесс бота + один Postgres в Docker Compose на одной VPS.
+
+Канонический репозиторий: `https://github.com/gaben1488/aemr-bot`.
+
+## 2. Минимальный сервер
+
+- Ubuntu 22.04 LTS или 24.04 LTS (Debian 12 тоже годится). NTP синхронизирован — бот считает SLA в `Asia/Kamchatka`.
+- 1 vCPU, 2 GB RAM. Бот в compose ограничен 512 MB; Postgres съест ~200–400 MB; остальное на cron-jobs и пиковые бэкапы.
+- 20 GB SSD: ОС ~5 GB, Docker layers ~3 GB, БД ~1 GB на старте плюс ~50 MB в год, бэкапы (8 еженедельных под GPG ~50 MB каждый) ~400 MB, логи 30 MB с ротацией.
+- Сеть: исходящий HTTPS обязателен (MAX API — `botapi.max.ru`, `platform-api.max.ru`). **Входящие порты не открываем в полл-режиме.** Если webhook — нужны 80/443 и публичный домен.
+
+## 3. Технологический стек
+
+### 3.1 Docker-слой (закреплено digest'ами)
+
+| Образ | Тег | sha256 digest |
+|---|---|---|
+| python (для bot) | `3.12-slim` | `4386a385d81dba9f72ed72a6fe4237755d7f5440c84b417650f38336bbc43117` |
+| postgres | `16-alpine` | `4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50` |
+| nginx (webhook only) | `1.27-alpine` | без digest, под profile `webhook` |
+| certbot (webhook only) | `latest` | под profile `webhook` |
+
+Обновлять digest вручную через `docker pull <image>` → переписать digest в `infra/docker-compose.yml`. Автообновление выключено намеренно — компрометированный или сломанный минор не должен прийти в продакшен молча.
+
+В Dockerfile дополнительно ставится apt: `postgresql-client gnupg ca-certificates curl tzdata unzip rclone`. Rclone из debian-репо, а не `curl install.sh | bash` — иначе компромет домена выполнялся бы как root в образе.
+
+### 3.2 Python и runtime-зависимости (bot/pyproject.toml)
+
+Требуется Python 3.12 (внутри slim-образа уже).
+
+Пины через compatible-release `~=` — патчи свободно, минор-bump блокирован.
+
+```
+maxapi~=0.6        — клиент MAX Bot API
+fastapi~=0.115     — для webhook-режима
+uvicorn[standard]~=0.32
+sqlalchemy~=2.0    — async ORM
+asyncpg~=0.30      — драйвер Postgres
+alembic~=1.14      — миграции
+apscheduler~=3.10  — cron jobs в процессе
+pydantic~=2.9
+pydantic-settings~=2.6
+openpyxl~=3.1      — XLSX-выгрузка стат
+python-dotenv~=1.0
+python-dateutil~=2.9  — relativedelta для retention
+aiohttp~=3.10
+shapely~=2.0       — point-in-polygon по поселениям ЕМО (локально)
+```
+
+Dev/CI: `pytest>=9.0.3` (CVE-2025-71176 fix), `pytest-asyncio>=1.3`, `pytest-cov~=6.0`, `ruff~=0.7`, `mypy~=1.13`, `bandit~=1.7`, `pip-audit~=2.7`, `aiosqlite~=0.20`, `types-python-dateutil~=2.9`.
+
+## 4. Установка с нуля
+
+```bash
+# 1. Пользователь для бота, в docker group
+sudo adduser --disabled-password --gecos "" aemr
+sudo usermod -aG docker aemr
+
+# 2. Клонирование
+sudo -u aemr -i
+git clone https://github.com/gaben1488/aemr-bot.git
+cd aemr-bot
+
+# 3. Конфигурация — см. раздел 5
+cp infra/.env.example infra/.env
+chmod 600 infra/.env
+# заполнить infra/.env (см. ниже что обязательно)
+
+# 4. Запуск
+cd infra
+docker compose up -d --build
+
+# 5. Подождать ~60 секунд, проверить
+curl -fsS http://127.0.0.1:8080/livez && echo
+curl -fsS http://127.0.0.1:8080/readyz && echo
+
+# 6. Auto-deploy под root
+exit
+sudo bash /home/aemr/aemr-bot/scripts/install-auto-deploy.sh
+# выдаст pubkey, его в GitHub Settings → Deploy keys (read-only)
+
+# 7. Внешний watchdog в cron */5 под root
+sudo crontab -e
+# добавить:
+# */5 * * * * /home/aemr/aemr-bot/scripts/healthwatch.sh
+```
+
+После первого запуска нужен **один лишний рестарт `db`**, чтобы `pg_stat_statements` подхватился из `shared_preload_libraries`. Миграция 0010 создаёт extension, но статистика начнёт писаться только после рестарта Postgres.
+
+```bash
+cd /home/aemr/aemr-bot/infra
+docker compose restart db
+```
+
+## 5. Конфигурация `infra/.env`
+
+Полная документация полей — в `infra/.env.example`. Здесь — что обязательно и какие есть подводные камни.
+
+### 5.1 Обязательные
+
+```dotenv
+BOT_TOKEN=                # выдаёт max.ru/business. БЕЗ префикса "Bearer".
+POSTGRES_PASSWORD=        # минимум 24 символа случайно. Compose откажется стартовать с пустым.
+DATABASE_URL=postgresql+asyncpg://aemr:<тот же пароль>@db:5432/aemr
+POSTGRES_DB=aemr
+POSTGRES_USER=aemr
+ADMIN_GROUP_ID=           # -74181728103785, узнаётся /whoami в служебной группе
+BOOTSTRAP_IT_MAX_USER_ID= # MAX user_id первого IT-оператора
+BOOTSTRAP_IT_FULL_NAME=ИТ-специалист
+TZ=Asia/Kamchatka
+```
+
+`POSTGRES_PASSWORD` обязателен на уровне docker-compose через `${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in infra/.env}`. Без него `docker compose up` упадёт с явной ошибкой ещё до старта контейнеров. В `.env.example` стоит небезопасный дефолт `change-me-strong` — его обязательно нужно заменить.
+
+### 5.2 Сильно рекомендую
+
+```dotenv
+BACKUP_GPG_PASSPHRASE=    # 32+ случайных символов; иначе бэкапы plain SQL
+HEALTHCHECK_URL=          # Healthchecks.io / Uptime Kuma URL, опционально
+```
+
+### 5.3 Webhook (только если `BOT_MODE=webhook`)
+
+```dotenv
+BOT_MODE=webhook
+WEBHOOK_URL=https://feedback.elizovomr.ru/max/webhook
+WEBHOOK_SECRET=           # ≥16 символов, генерация: python -c 'import secrets; print(secrets.token_urlsafe(32))'
+```
+
+Без `WEBHOOK_SECRET` ≥16 символов и `WEBHOOK_URL` процесс бота не стартует в webhook-режиме (pydantic-validator в `config.py` ругается).
+
+### 5.4 S3-бэкапы (опционально)
+
+```dotenv
+BACKUP_S3_ENDPOINT=
+BACKUP_S3_BUCKET=
+BACKUP_S3_ACCESS_KEY=
+BACKUP_S3_SECRET_KEY=
+```
+
+Если все четыре пустые — только локальные бэкапы в named volume.
+
+## 6. Сервисы и порты
+
+### 6.1 Карта портов
+
+| Сервис | Bind | Виден | Назначение |
+|---|---|---|---|
+| `bot` 8080 | `127.0.0.1:8080` | localhost VPS | health endpoints (`/livez`, `/readyz`, `/healthz`), webhook-приёмник если включён |
+| `db` 5432 | внутри Docker network | только `bot` через DNS-имя `db` | Postgres |
+| `nginx` 80, 443 | `0.0.0.0` | публично | под profile `webhook`, TLS-терминация |
+
+Postgres на хост **не пробрасывается**. Если нужно `psql` — `docker compose exec db psql -U aemr aemr`.
+
+### 6.2 Health endpoints
+
+- `/livez` — жив ли event-loop. Не трогает БД. Используется Docker healthcheck в compose, watchdog `healthwatch.sh`, auto-deploy health-gate. Возвращает 200, если внутренний `heartbeat` обновлялся в течение `HEALTHCHECK_STALE_SECONDS` (по умолчанию 120s).
+- `/readyz` — готов ли бот к работе с данными. Делает `SELECT 1` к Postgres (кэш TTL 10s, чтобы серия проверок не порождала шквал коннектов). Падение `/readyz` при живом `/livez` означает «процесс жив, но БД лежит или зависла».
+- `/healthz` — backward-compatible alias `/readyz`. Старые runbook'и могут опираться на него.
+
+**Важно для админа**: Docker healthcheck и watchdog проверяют `/livez`, не `/readyz`. Краткая проблема Postgres не должна рестартовать живой polling-процесс — иначе теряем восстановимость диагностики.
+
+## 7. Cron / scheduler внутри процесса бота
+
+APScheduler в самом процессе. Все расписания в `Asia/Kamchatka`. У каждой задачи `misfire_grace_time=120` секунд — пропуски во время `docker compose up --build` догоняются.
+
+| Задача | Когда | Что |
+|---|---|---|
+| `startup-pulse` | через 5 сек после старта (DateTrigger) | сообщение в служебную группу «🟢 Бот запущен/перезапущен. HH:MM» |
+| `pulse-workhours` | пн–сб, 09:00–17:59, минуты :00 и :30 | «🟢 Бот работает» |
+| `pulse-offhours` | пн–сб, часы 0-8 и 18-23, минута :05 | то же |
+| `pulse-sunday` | вс, каждый час, минута :05 | то же |
+| `health-selfcheck` | каждые `HEALTHCHECK_INTERVAL_MIN` мин (5 по умолчанию) | мониторит heartbeat, шлёт алёрт при смене healthy↔unhealthy |
+| `db-backup` | каждое вс, `BACKUP_HOUR`:`BACKUP_MINUTE` (03:00 по умолчанию) | pg_dump → GPG → named volume, ротация |
+| `events-retention` | ежедневно 04:00 | удаление событий старше 30 дней |
+| `pdn-retention` | ежедневно 04:30 | 152-ФЗ: жителей, отозвавших согласие >30 дней назад, обезличить |
+| `appeals-5y-retention` | ежедневно 04:45 | очистка summary/attachments у обращений старше 5 лет |
+| `monthly-stats` | 1-го числа 09:00 | XLSX отчёт в служебную группу |
+| `funnel-watchdog` | каждые 15 минут | сброс зависших воронок (житель открыл «Подать обращение» и ушёл) |
+| `open-reminder-workhours` | пн–сб 09:00–17:59, минута :10 | напоминание об открытых обращениях |
+| `overdue-reminder-workhours` | пн–сб 09:00–17:59, минута :40 | алёрт о просрочке по SLA |
+| `healthcheck-ping` | каждые `HEALTHCHECK_INTERVAL_MIN` мин | ping на `HEALTHCHECK_URL` если задан |
+
+Все шлются `coalesce=True, max_instances=1` — повторный тик не запустит второй экземпляр.
+
+## 8. Команды операторов в служебной группе
+
+11 slash-команд, регистрируются в `handlers/admin_commands.register()`:
+
+| Команда | Кто может | Что делает |
+|---|---|---|
+| `/op_help` | любой оператор | памятка + кнопочное меню, закрепляется |
+| `/open_tickets` | любой | список открытых обращений с кнопками действий |
+| `/stats <period>` | любой | XLSX за today/week/month/quarter/half_year/year/all |
+| `/reply <id> <текст>` | любой | ответ жителю на обращение #id |
+| `/reopen <id>` | любой | вернуть в работу ANSWERED/CLOSED |
+| `/close <id>` | любой | закрыть без ответа |
+| `/diag` | любой | сводка состояния (жителей, обращений, рассылок) |
+| `/broadcast` | `it` или `coordinator` | мастер рассылки, 4 шага |
+| `/erase max_user_id=N` или `phone=+7...` | только `it` | удаление ПДн (см. RUNBOOK_PDN_ERASURE) |
+| `/setting <key> <value>` | только `it` | правка таблицы `app_settings` (тематики, поселения, контакты) |
+| `/add_operators <max_user_id> <role> <ФИО>` | только `it` | регистрация оператора |
+| `/backup` | только `it` | внеплановый pg_dump |
+
+Роли (`db/models.OperatorRole`): `coordinator`, `aemr`, `egp`, `it`. Иерархия — `it` имеет все права `coordinator`, `coordinator` имеет все права `aemr`/`egp`. Различие `aemr` vs `egp` формальное, нужно для журнала и возможной маршрутизации.
+
+## 9. Логи
+
+Все три контейнера — json-file driver, ротация 10 МБ × 3 файла = до 30 МБ на контейнер. Бесконечного disk-leak'а быть не может.
+
+```bash
+cd /home/aemr/aemr-bot/infra
+# последние 300 строк
+docker compose logs --tail 300 bot
+# за 24 часа, отфильтровано
+docker compose logs --since 24h bot | grep -Ei 'error|exception|traceback|misfire|pulse|startup'
+# логи Postgres
+docker compose logs --tail 200 db
+```
+
+Watchdog и auto-deploy пишут через `logger -t aemr-bot-watchdog` / `-t aemr-bot-deploy`, всё в journald:
+
+```bash
+journalctl -t aemr-bot-watchdog -n 100 --no-pager
+journalctl -t aemr-bot-deploy -n 100 --no-pager
+```
+
+## 10. Бэкап и восстановление
+
+### 10.1 Что бэкапится
+
+`pg_dump` всей БД каждое воскресенье в 03:00 Камчатки. Опционально шифруется GPG `--symmetric AES256` через `BACKUP_GPG_PASSPHRASE`. Хранится 8 файлов в named volume `aemr-bot_backups` (примерно 2 месяца истории). Опционально дополнительная копия в S3.
+
+### 10.2 Список и проверка
+
+```bash
+docker compose exec bot ls -lah /backups
+```
+
+### 10.3 Восстановление
+
+Полный регламент с тестом на чистой БД — `docs/BACKUP_RESTORE_TEST.md`. Краткая суть:
+
+```bash
+# В отдельном временном каталоге расшифровать
+cat /var/lib/docker/volumes/aemr-bot_backups/_data/aemr-YYYY-MM-DD.sql.gpg \
+  | gpg --batch --passphrase "$BACKUP_GPG_PASSPHRASE" --decrypt > restore.sql
+
+# Залить в новую БД
+psql -h ... -U ... -d aemr_restore -f restore.sql
+```
+
+Не тестировать restore в production — только в отдельный экземпляр БД.
+
+## 11. Деплой и rollback
+
+### 11.1 Auto-deploy
+
+`scripts/auto-deploy.sh` под root в cron `*/10`. Логика:
+
+1. `git fetch origin main`, если новых коммитов нет — тихо выходит.
+2. Запоминает текущий HEAD как `PREV_LOCAL`.
+3. `git reset --hard origin/main`, `docker compose up -d --build`.
+4. Health-gate: до 60 секунд опрашивает `/livez` каждые 5 секунд.
+5. Если успех — лог в journald «deploy ok».
+6. Если фейл — **auto-rollback**: `git reset --hard $PREV_LOCAL`, пересборка, alert в journald «DEPLOY FAILED: ROLLBACK на …».
+
+### 11.2 Ручной деплой
+
+```bash
+sudo -u aemr -i
+cd aemr-bot
+git fetch origin main && git checkout main && git pull --ff-only
+cd infra
+docker compose build bot
+docker compose up -d bot
+```
+
+После — пройти `docs/VPS_SMOKE_CHECKLIST.md`.
+
+### 11.3 Откат вручную
+
+```bash
+sudo -u aemr -i
+cd aemr-bot
+git log --oneline -10
+git checkout <предыдущий рабочий коммит>
+cd infra
+docker compose up -d --build bot
+```
+
+Миграции откатываются через `alembic downgrade <revision>`, но проверены только round-trip'ом в CI. На проде даунгрейд миграций — крайняя мера, обычно проще восстановить из бэкапа.
+
+## 12. Watchdog (внешний)
+
+`scripts/healthwatch.sh` под root в cron `*/5`. Опрашивает `/livez`:
+
+- успешный ответ → сбрасывает счётчик фейлов;
+- 3 фейла подряд (15 минут) → `docker compose restart bot`;
+- 8 фейлов подряд (40 минут) → alert в служебную группу через MAX API напрямую через curl (минуя бота — он же мёртв).
+
+Не путать с auto-deploy health-gate. Auto-deploy ловит сломанный новый коммит; healthwatch — повисший живой контейнер.
+
+## 13. Аудит сервера
+
+```bash
+sudo bash /home/aemr/aemr-bot/scripts/audit_vps.sh
+```
+
+Выгрузка в `/tmp/aemr_audit_<timestamp>.tar.gz`. Внутри: системные данные, git state, env с замаскированными секретами, docker compose ps, healthchecks, последние логи бота и БД. Скрипт **не** выводит реальные значения `BOT_TOKEN`, `POSTGRES_PASSWORD`, `BACKUP_GPG_PASSPHRASE`, `WEBHOOK_SECRET`, `BACKUP_S3_*_KEY`, заголовки `Authorization`, параметры `access_token` — все заменены на `***HIDDEN***`.
+
+Архив безопасно прислать в чат или приложить к тикету.
+
+## 14. Типичные проблемы и куда смотреть
+
+**Бот молчит, в служебной группе тишина**. Сначала `/livez`. Если 200 — процесс жив, проблема в MAX-сессии или сети. Если 5xx или таймаут — `docker compose logs --tail 200 bot`.
+
+**Pulse не приходит**. С моей фиксы misfire_grace_time=120 это означает либо `BOT_TOKEN` истёк/отозван, либо MAX rate-limit. `/diag` в служебной группе подскажет.
+
+**Pulse-startup пришёл и тишина**. Бот рестартанул, скорее всего auto-deploy. `journalctl -t aemr-bot-deploy -n 50`.
+
+**DEPLOY FAILED в journald**. Auto-rollback сработал. Сейчас работает предыдущий коммит. Проверить новый локально, понять причину, пушнуть фикс.
+
+**Backup не приходит в служебную группу**. Воскресенье 03:00, ждать до 03:05. Если в `_job_backup_with_alert` была ошибка — алёрт всё равно придёт.
+
+**База растёт быстрее ожидаемого**. `docker compose exec db psql -U aemr aemr -c "\dt+"` — посмотреть размеры таблиц. `events` обычно самая жирная (idempotency), retention 30 дней должна её сдерживать.
+
+**Restart-loop**. `docker compose ps` покажет `Restarting`. `docker compose logs --tail 500 bot` — почему. Если новый коммит — auto-rollback должен был сработать; если не сработал, ручной откат (раздел 11.3).
+
+## 15. CI и pull requests
+
+На каждом push в main и каждом PR прогоняется `.github/workflows/ci.yml`:
+
+- **lint job**: `ruff check --output-format=github`, `mypy`, `bandit -ll` (medium+), `pip-audit --strict` (hard fail на любой CVE), `shellcheck` на все `*.sh`.
+- **test job**: `pytest --cov-fail-under=65`, `alembic upgrade head`, `alembic check` (drift между моделями и миграциями), `alembic round-trip` (upgrade → downgrade base → upgrade head).
+- **docker-build job**: смок-сборка образа без push.
+
+Auto-deploy на сервере подтягивает только из `main`. PR-ветки не деплоятся.
+
+## 16. Что НЕ настроено и что админ должен решить
+
+**HA**. Single-VPS — single point of failure. Нет балансировщика, нет реплики Postgres. Решение — second VPS + Patroni/repmgr + Cloudflare для DNS-failover. Архитектура, не код.
+
+**TLS внутри Docker network между bot↔db**. Сейчас доверенная сеть Docker. Для повышения уровня — Postgres SSL-сертификаты + asyncpg `ssl=require`.
+
+**Внешний healthcheck**. `HEALTHCHECK_URL` в .env — опционально. Минимум: завести Healthchecks.io / Uptime Kuma, дать ботичу URL, добавить алёрт в почту/Telegram админа. Без этого пульс — единственный сигнал.
+
+**Ротация `BOT_TOKEN`**. Регламент смены при подозрении на компромет — продумать заранее, не во время инцидента.
+
+**Регламент компетенций**. Кто имеет SSH-доступ на VPS, кто root, кто owner GitHub-репо. Без формального RBAC любая ошибка человека == продакшен.
+
+Подробности и контактные точки — у владельца проекта (Канал управления цифровизации Администрации ЕМО).
 ```
 
 ### `docs/VPS_SMOKE_CHECKLIST.md`
