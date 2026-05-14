@@ -427,60 +427,96 @@ async def _run_broadcast_impl(
     async with session_scope() as session:
         targets = await broadcasts_service.list_subscriber_targets(session)
 
-    for user_db_id, user_max_user_id in targets:
-        # Перепроверяем флаг отмены в свежей сессии: его переключает клик из админ-чата.
-        async with session_scope() as flag_session:
-            status = await broadcasts_service.get_status(
-                flag_session, broadcast_id
-            )
-        if status == BroadcastStatus.CANCELLED.value:
-            cancelled = True
-            break
+    # Буфер результатов доставки. Раньше каждый получатель = отдельный
+    # session_scope на record_delivery + ещё один на get_status (флаг
+    # отмены): 2-4 транзакции × N получателей, на 10k подписчиков —
+    # ~20-30k коммитов за одну рассылку. Теперь результаты копятся в
+    # буфер и сбрасываются батчем в единой точке синхронизации с БД
+    # (по таймеру progress_step_sec либо при переполнении буфера) —
+    # там же читается флаг отмены и пишется прогресс. ~200 транзакций
+    # вместо ~25000.
+    _FLUSH_EVERY = 50
+    pending: list[tuple[int, str | None]] = []
 
-        error = await _send_one(bot, user_max_user_id, body)
-        async with session_scope() as delivery_session:
-            await broadcasts_service.record_delivery(
-                delivery_session,
-                broadcast_id=broadcast_id,
-                user_id=user_db_id,
-                error=error,
-            )
-        if error is None:
-            delivered += 1
-        else:
-            failed += 1
-
-        now = time.monotonic()
-        if (
-            admin_mid is not None
-            and now - last_progress_at >= progress_step_sec
-        ):
-            last_progress_at = now
-            async with session_scope() as upd_session:
-                await broadcasts_service.update_progress(
-                    upd_session,
-                    broadcast_id,
-                    delivered=delivered,
-                    failed=failed,
+    async def _flush_pending() -> None:
+        """Сбросить буфер доставок в БД. Best-effort: при сбое логируем,
+        но не валим рассылку — count_delivery_results в mark_finished
+        пересчитает счётчики по факту записанных строк."""
+        if not pending:
+            return
+        try:
+            async with session_scope() as flush_session:
+                await broadcasts_service.record_deliveries(
+                    flush_session,
+                    broadcast_id=broadcast_id,
+                    results=pending,
                 )
-            try:
-                await bot.edit_message(
-                    message_id=admin_mid,
-                    text=_format_progress(
-                        broadcast_id=broadcast_id,
-                        total=total,
+            pending.clear()
+        except Exception:
+            log.exception(
+                "broadcast #%s: failed to flush %d pending deliveries",
+                broadcast_id, len(pending),
+            )
+
+    try:
+        for user_db_id, user_max_user_id in targets:
+            error = await _send_one(bot, user_max_user_id, body)
+            pending.append((user_db_id, error))
+            if error is None:
+                delivered += 1
+            else:
+                failed += 1
+
+            now = time.monotonic()
+            # Единая точка синхронизации с БД: flush буфера + чтение
+            # флага отмены + запись прогресса + edit карточки. По
+            # таймеру либо при переполнении буфера.
+            if (
+                now - last_progress_at >= progress_step_sec
+                or len(pending) >= _FLUSH_EVERY
+            ):
+                last_progress_at = now
+                await _flush_pending()
+                async with session_scope() as sync_session:
+                    status = await broadcasts_service.get_status(
+                        sync_session, broadcast_id
+                    )
+                    await broadcasts_service.update_progress(
+                        sync_session,
+                        broadcast_id,
                         delivered=delivered,
                         failed=failed,
-                    ),
-                    attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
-                )
-            except Exception:
-                log.exception(
-                    "failed to edit progress message for broadcast #%s",
-                    broadcast_id,
-                )
+                    )
+                if status == BroadcastStatus.CANCELLED.value:
+                    cancelled = True
+                    break
+                if admin_mid is not None:
+                    try:
+                        await bot.edit_message(
+                            message_id=admin_mid,
+                            text=_format_progress(
+                                broadcast_id=broadcast_id,
+                                total=total,
+                                delivered=delivered,
+                                failed=failed,
+                            ),
+                            attachments=[
+                                keyboards.broadcast_stop_keyboard(broadcast_id)
+                            ],
+                        )
+                    except Exception:
+                        log.exception(
+                            "failed to edit progress message for broadcast #%s",
+                            broadcast_id,
+                        )
 
-        await asyncio.sleep(rate_delay)
+            await asyncio.sleep(rate_delay)
+    finally:
+        # Любой выход из цикла (конец списка, break по отмене,
+        # исключение) — досбрасываем остаток буфера, иначе уже
+        # отправленные сообщения не попадут в broadcast_deliveries
+        # и при повторной рассылке жители получат дубль.
+        await _flush_pending()
 
     final_status = (
         BroadcastStatus.CANCELLED if cancelled else BroadcastStatus.DONE

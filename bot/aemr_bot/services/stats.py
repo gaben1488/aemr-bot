@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
@@ -15,6 +16,14 @@ TZ = ZoneInfo(settings.timezone)
 
 
 VALID_PERIODS = ("today", "week", "month", "quarter", "half_year", "year", "all")
+
+# Потолок строк в одной XLSX-выгрузке. На `period="all"` без лимита
+# годовой архив (10k+ обращений × N сообщений каждое, с selectinload)
+# тянет всё в RAM разом — при mem_limit:512m это риск OOM. 10000 строк
+# — заведомо больше реальной операторской потребности, а сам XLSX с
+# таким числом строк уже неюзабелен для чтения. При превышении —
+# берём свежайшие и помечаем в заголовке.
+_XLSX_ROW_CAP = 10000
 
 
 def period_window(period: str) -> tuple[datetime | None, datetime, str]:
@@ -53,17 +62,37 @@ def period_window(period: str) -> tuple[datetime | None, datetime, str]:
 
 async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, int]:
     start, end, title = period_window(period)
+    # Берём свежайшие в пределах окна, с потолком _XLSX_ROW_CAP.
+    # `+1` — чтобы детектировать факт обрезки, не делая отдельный count.
     query = (
         select(Appeal)
         .options(selectinload(Appeal.user), selectinload(Appeal.messages))
         .where(Appeal.created_at <= end)
-        .order_by(Appeal.created_at)
+        .order_by(Appeal.created_at.desc())
+        .limit(_XLSX_ROW_CAP + 1)
     )
     if start is not None:
         query = query.where(Appeal.created_at >= start)
     res = await session.scalars(query)
     appeals = list(res)
+    truncated = len(appeals) > _XLSX_ROW_CAP
+    if truncated:
+        appeals = appeals[:_XLSX_ROW_CAP]
+        title = f"{title} (показаны последние {_XLSX_ROW_CAP})"
+    # Возвращаем хронологический порядок (запрос был DESC ради лимита).
+    appeals.reverse()
 
+    # Построение workbook — синхронный CPU/IO-bound код (openpyxl).
+    # На потолке в 10k строк это ощутимо; выносим в поток, чтобы не
+    # блокировать event-loop бота на время генерации отчёта.
+    content = await asyncio.to_thread(_render_workbook, appeals)
+    return content, title, len(appeals)
+
+
+def _render_workbook(appeals: list[Appeal]) -> bytes:
+    """Синхронная сборка XLSX. Работает только с уже загруженными
+    данными (selectinload отработал в build_xlsx) — сессию не трогает,
+    поэтому безопасно вызывать из asyncio.to_thread."""
     wb = Workbook()
     ws = wb.active
     ws.title = "Обращения"
@@ -142,7 +171,7 @@ async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, in
     buf = BytesIO()
     wb.save(buf)
     buf.seek(0)
-    return buf.getvalue(), title, len(appeals)
+    return buf.getvalue()
 
 
 def _status_label(status: str) -> str:

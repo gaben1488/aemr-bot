@@ -19,6 +19,22 @@ def _engine_kwargs() -> dict:
             # либо обрыва TCP. Без этого pool отдаёт мёртвые соединения,
             # pool_pre_ping ловит, но даёт лишний RTT на каждый запрос.
             pool_recycle=1800,
+            # Защита пула (5+10) от зависшего запроса. Миграция 0010
+            # ставит statement_timeout через ALTER DATABASE — но это
+            # покрывает только новые коннекты к БД с применённой
+            # миграцией. Дублируем на уровне engine как defense-in-depth:
+            #   - statement_timeout=30s — Postgres сам abort'ит SQL,
+            #     висящий дольше 30 секунд (тяжёлый build_xlsx, lock
+            #     contention), освобождая соединение в пул;
+            #   - command_timeout=30 — asyncpg-уровень: страховка, если
+            #     server-side timeout не сработал (зависла сеть до БД).
+            # Без этого один медленный запрос держит соединение
+            # бесконечно; пул из 15 исчерпывается — single-process бот
+            # перестаёт отвечать.
+            connect_args={
+                "command_timeout": 30,
+                "server_settings": {"statement_timeout": "30000"},
+            },
         )
     return base
 

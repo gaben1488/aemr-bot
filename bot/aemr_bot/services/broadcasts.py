@@ -203,6 +203,37 @@ async def record_delivery(
     await session.flush()
 
 
+async def record_deliveries(
+    session: AsyncSession,
+    *,
+    broadcast_id: int,
+    results: list[tuple[int, str | None]],
+) -> None:
+    """Батчевая запись результатов доставки.
+
+    `results` — список `(user_id, error)`; `error=None` означает успех.
+    Раньше цикл рассылки писал каждую доставку отдельной транзакцией
+    (`record_delivery` + свой `session_scope`): на 10k подписчиков —
+    10k+ коммитов, каждый со своим BEGIN/COMMIT и checkout из пула.
+    Здесь один `add_all` + один flush на пачку (типично 50 строк) —
+    в ~50 раз меньше round-trip'ов к БД. Вызывающий код накапливает
+    буфер и сбрасывает его этой функцией по таймеру/переполнению.
+    """
+    if not results:
+        return
+    now = datetime.now(timezone.utc)
+    session.add_all(
+        BroadcastDelivery(
+            broadcast_id=broadcast_id,
+            user_id=user_id,
+            delivered_at=now if error is None else None,
+            error=error,
+        )
+        for user_id, error in results
+    )
+    await session.flush()
+
+
 async def count_delivery_results(
     session: AsyncSession,
     broadcast_id: int,
