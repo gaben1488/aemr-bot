@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-14 10:03:47 UTC`
+Generated at: `2026-05-14 12:18:27 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `163`
+Indexed files: `165`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -37,6 +37,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/db/session.py` (2764 bytes)
 - `bot/aemr_bot/handlers/__init__.py` (3303 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
+- `bot/aemr_bot/handlers/_common.py` (3081 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (12111 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (7569 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (10062 bytes)
@@ -45,15 +46,15 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_panel.py` (11183 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (3633 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
-- `bot/aemr_bot/handlers/appeal.py` (24254 bytes)
-- `bot/aemr_bot/handlers/appeal_funnel.py` (30407 bytes)
-- `bot/aemr_bot/handlers/appeal_geo.py` (7608 bytes)
-- `bot/aemr_bot/handlers/appeal_runtime.py` (12632 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (27344 bytes)
+- `bot/aemr_bot/handlers/appeal.py` (25313 bytes)
+- `bot/aemr_bot/handlers/appeal_funnel.py` (29804 bytes)
+- `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
+- `bot/aemr_bot/handlers/appeal_runtime.py` (12572 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (29978 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (7237 bytes)
-- `bot/aemr_bot/handlers/menu.py` (42388 bytes)
-- `bot/aemr_bot/handlers/operator_reply.py` (27513 bytes)
-- `bot/aemr_bot/handlers/start.py` (16686 bytes)
+- `bot/aemr_bot/handlers/menu.py` (43971 bytes)
+- `bot/aemr_bot/handlers/operator_reply.py` (30141 bytes)
+- `bot/aemr_bot/handlers/start.py` (16556 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (36159 bytes)
 - `bot/aemr_bot/main.py` (18178 bytes)
@@ -64,7 +65,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/broadcasts.py` (11753 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (5938 bytes)
-- `bot/aemr_bot/services/cron.py` (31012 bytes)
+- `bot/aemr_bot/services/cron.py` (30703 bytes)
 - `bot/aemr_bot/services/db_backup.py` (11038 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
 - `bot/aemr_bot/services/idempotency.py` (7885 bytes)
@@ -85,7 +86,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/alembic.ini` (619 bytes)
 - `bot/pyproject.toml` (2583 bytes)
 - `bot/tests/__init__.py` (0 bytes)
-- `bot/tests/_helpers.py` (4920 bytes)
+- `bot/tests/_helpers.py` (5713 bytes)
 - `bot/tests/conftest.py` (1882 bytes)
 - `bot/tests/test_admin_appeal_ops.py` (20004 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
@@ -97,7 +98,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_appeal_flow.py` (10960 bytes)
 - `bot/tests/test_appeals_service_pg.py` (14053 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
-- `bot/tests/test_broadcast_handlers.py` (24328 bytes)
+- `bot/tests/test_broadcast_handlers.py` (31789 bytes)
 - `bot/tests/test_broadcasts_service_pg.py` (3786 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
 - `bot/tests/test_callback_router.py` (8614 bytes)
@@ -113,10 +114,11 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_geo.py` (9324 bytes)
 - `bot/tests/test_handlers_appeal_funnel.py` (22615 bytes)
 - `bot/tests/test_handlers_auth_broadcast.py` (6976 bytes)
+- `bot/tests/test_handlers_common.py` (3572 bytes)
 - `bot/tests/test_handlers_funnel.py` (9458 bytes)
-- `bot/tests/test_handlers_menu.py` (28171 bytes)
-- `bot/tests/test_handlers_menu_extra.py` (19882 bytes)
-- `bot/tests/test_handlers_operator_reply.py` (23862 bytes)
+- `bot/tests/test_handlers_menu.py` (26300 bytes)
+- `bot/tests/test_handlers_menu_extra.py` (23371 bytes)
+- `bot/tests/test_handlers_operator_reply.py` (28002 bytes)
 - `bot/tests/test_handlers_start.py` (12367 bytes)
 - `bot/tests/test_health.py` (4062 bytes)
 - `bot/tests/test_idempotency.py` (3650 bytes)
@@ -139,7 +141,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/archive/IDEAS.md` (17088 bytes)
 - `docs/archive/TELEGRAM_ANALYTICS_INSIGHTS.md` (15860 bytes)
 - `docs/archive/WEBHOOK_PLAN.md` (10983 bytes)
-- `docs/BACKUP_RESTORE_TEST.md` (5705 bytes)
+- `docs/BACKUP_RESTORE_TEST.md` (7292 bytes)
 - `docs/COPY.md` (51220 bytes)
 - `docs/DEVELOPER.md` (126919 bytes)
 - `docs/handover.html` (56336 bytes)
@@ -151,9 +153,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/RULES.md` (8624 bytes)
 - `docs/RUNBOOK.md` (84267 bytes)
 - `docs/RUNBOOK_PDN_ERASURE.md` (7846 bytes)
-- `docs/SECURITY.md` (28645 bytes)
+- `docs/SECURITY.md` (33556 bytes)
 - `docs/SETUP.md` (36165 bytes)
-- `docs/SYSADMIN.md` (22830 bytes)
+- `docs/SYSADMIN.md` (31176 bytes)
 - `docs/VPS_SMOKE_CHECKLIST.md` (5736 bytes)
 - `docs/Политика.md` (6113 bytes)
 - `docs/Политика_v2.md` (28793 bytes)
@@ -2672,6 +2674,73 @@ async def ensure_role(event, *allowed: OperatorRole) -> bool:
     return True
 ```
 
+### `bot/aemr_bot/handlers/_common.py`
+
+Size: `3081` bytes  
+SHA-256: `e3882abe4973e88833500943c6935e0ee2ea1af60a05b54b76dc785198b178ed`
+
+```python
+"""Общие хелперы хендлеров.
+
+`current_user` — самый частый паттерн во всех handler-файлах: открыть
+транзакцию и получить (или создать) запись жителя по его MAX user_id.
+До этого хелпера ~30 мест повторяли две строки дословно::
+
+    async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=...)
+        ...
+
+Контекст-менеджер `current_user` сворачивает их в одну строку и даёт
+интенту имя. Важно: он отдаёт **и сессию, и пользователя** — потому что
+почти все вызовы продолжают работать с той же сессией (подписки, аудит,
+списки обращений) в той же транзакции. Возврат только `user` сломал бы
+границу транзакции и потребовал бы второго `session_scope`.
+
+`expire_on_commit=False` в SessionFactory гарантирует, что атрибуты
+`user` остаются доступны и после выхода из контекста — некоторые
+вызовы читают `user.is_blocked` / `user.consent_pdn_at` уже за пределами
+блока `async with`.
+"""
+from __future__ import annotations
+
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from aemr_bot.db.models import User
+from aemr_bot.db.session import session_scope
+from aemr_bot.services import users as users_service
+
+
+@asynccontextmanager
+async def current_user(
+    max_user_id: int, *, first_name: str | None = None
+) -> AsyncIterator[tuple[AsyncSession, User]]:
+    """Открыть транзакцию и получить запись жителя по `max_user_id`.
+
+    Отдаёт кортеж ``(session, user)``: сессия остаётся открытой внутри
+    блока ``async with`` для дальнейших запросов в той же транзакции,
+    `user` гарантированно существует (создаётся, если записи не было).
+
+    `first_name` прокидывается в `get_or_create` только при создании
+    новой записи — для уже существующего жителя имя не перезаписывается
+    (так же, как в исходном `users_service.get_or_create`).
+
+    Пример::
+
+        async with current_user(max_user_id) as (session, user):
+            if user.is_blocked:
+                return
+            await broadcasts_service.set_subscription(session, max_user_id, True)
+    """
+    async with session_scope() as session:
+        user = await users_service.get_or_create(
+            session, max_user_id=max_user_id, first_name=first_name
+        )
+        yield session, user
+```
+
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
 Size: `12111` bytes  
@@ -4612,8 +4681,8 @@ async def run_stats_menu(event) -> None:
 
 ### `bot/aemr_bot/handlers/appeal.py`
 
-Size: `24254` bytes  
-SHA-256: `d9fdeda4d9a54c9837325d0024281194ebeb55c84f5a5c901e8f1c73efef842f`
+Size: `25313` bytes  
+SHA-256: `cea090a399f63d654dc7ca0c077b98e25883bd3693de09b3f28ff0e93e11003b`
 
 ```python
 """Главный entry-point обработчика обращений.
@@ -4651,6 +4720,7 @@ from aemr_bot.handlers import (
     appeal_geo,
     callback_router,
 )
+from aemr_bot.handlers._common import current_user
 from aemr_bot.handlers.appeal_runtime import (
     drop_user_lock,
     recover_stuck_funnels,
@@ -4748,11 +4818,7 @@ async def _ensure_funnel_callback_state(
         return True
 
     try:
-        async with session_scope() as session:
-            user = await users_service.get_or_create(
-                session,
-                max_user_id=max_user_id,
-            )
+        async with current_user(max_user_id) as (_, user):
             current = _state_value(getattr(user, "dialog_state", None))
     except Exception:
         # Если БД недоступна, основной handler всё равно не сможет
@@ -4831,6 +4897,255 @@ async def _send_to_citizen(
     )
 
 
+# ============================================================================
+# Callback'и воронки жителя — именованные handler'ы
+# ============================================================================
+# Вынесены из on_callback (раньше — ~195-строчный if-elif). on_callback
+# стал тонким диспетчером (_dispatch_citizen_callback ниже). Каждый _cb_*
+# принимает (event, max_user_id, payload): префиксные (locality:/topic:)
+# разбирают payload, точные — игнорируют третий аргумент.
+#
+# _cb_* — функции этого же модуля, поэтому в таблицах _CITIZEN_EXACT /
+# _CITIZEN_PREFIX лежат прямые ссылки: тесты патчат не их, а то, что
+# внутри (appeal_funnel.*, users_service.*, ack_callback) — а это
+# резолвится в момент вызова.
+
+
+async def _cb_new_appeal(event, max_user_id: int, payload: str) -> None:
+    await ack_callback(event)
+    await appeal_funnel.start_appeal_flow(event, max_user_id)
+
+
+async def _cb_consent_yes(event, max_user_id: int, payload: str) -> None:
+    async with session_scope() as session:
+        await users_service.set_consent(session, max_user_id)
+    await ack_callback(event, texts.CONSENT_ACCEPTED)
+    await admin_events.notify_consent_given(event.bot, max_user_id=max_user_id)
+    await appeal_funnel.ask_contact_or_skip(event, max_user_id)
+
+
+async def _cb_consent_no(event, max_user_id: int, payload: str) -> None:
+    async with session_scope() as session:
+        await users_service.reset_state(session, max_user_id)
+    drop_user_lock(max_user_id)
+    await ack_callback(event)
+    await _send_to_citizen(
+        event,
+        max_user_id,
+        text=texts.CONSENT_DECLINED,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
+
+
+async def _cb_cancel(event, max_user_id: int, payload: str) -> None:
+    async with session_scope() as session:
+        await users_service.reset_state(session, max_user_id)
+    drop_user_lock(max_user_id)
+    await ack_callback(event)
+    await _send_to_citizen(
+        event,
+        max_user_id,
+        text=texts.CANCELLED,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
+
+
+async def _cb_addr_reuse(event, max_user_id: int, payload: str) -> None:
+    await ack_callback(event)
+    async with current_user(max_user_id) as (session, user):
+        last = await appeals_service.find_last_address_for_user(
+            session,
+            user.id,
+        )
+    if last is None:
+        # Между показом промпта и кликом обращение могло быть
+        # обезличено retention-кроном — fallback к обычному пути.
+        await appeal_funnel.ask_locality(event, max_user_id)
+        return
+    locality, address = last
+    async with session_scope() as session:
+        await users_service.set_state(
+            session,
+            max_user_id,
+            DialogState.AWAITING_TOPIC,
+            data={"locality": locality, "address": address},
+        )
+    await appeal_funnel.ask_topic(event, max_user_id)
+
+
+async def _cb_addr_new(event, max_user_id: int, payload: str) -> None:
+    await ack_callback(event)
+    await appeal_funnel.ask_locality(event, max_user_id)
+
+
+async def _cb_locality(event, max_user_id: int, payload: str) -> None:
+    idx = callback_router.parse_int_tail(payload, "locality:")
+    if idx is None:
+        await ack_callback(event)
+        return
+    async with session_scope() as session:
+        localities = await settings_store.get(session, "localities") or []
+        if 0 <= idx < len(localities):
+            chosen = localities[idx]
+            await users_service.update_dialog_data(
+                session,
+                max_user_id,
+                {"locality": chosen},
+            )
+        else:
+            await ack_callback(event)
+            log.warning(
+                "locality:%s out of range (have %d), user=%s",
+                idx,
+                len(localities),
+                max_user_id,
+            )
+            return
+    await ack_callback(event)
+    await appeal_funnel.ask_address(event, max_user_id)
+
+
+async def _cb_geo(event, max_user_id: int, payload: str) -> None:
+    # Подтверждение / редактирование определённого через геолокацию
+    # адреса. Все три callback'а guard'им состоянием и наличием
+    # detected_locality в dialog_data — иначе это стейл-кнопка из
+    # старого сообщения.
+    await ack_callback(event)
+    async with current_user(max_user_id) as (_, user):
+        state = user.dialog_state
+        data = dict(user.dialog_data or {})
+    if state != DialogState.AWAITING_GEO_CONFIRM.value or not data.get(
+        "detected_locality"
+    ):
+        log.info(
+            "geo callback %s ignored: state=%s, has_detected=%s, user=%s",
+            payload,
+            state,
+            bool(data.get("detected_locality")),
+            max_user_id,
+        )
+        return
+
+    if payload == "geo:confirm":
+        detected_street = (data.get("detected_street") or "").strip()
+        detected_house = (data.get("detected_house_number") or "").strip()
+        if detected_street and detected_house:
+            full_addr = f"{detected_street}, д. {detected_house}"
+        elif detected_street:
+            full_addr = detected_street
+        else:
+            full_addr = ""
+        async with current_user(max_user_id) as (session, user):
+            fresh = _clear_geo_detected(user.dialog_data or data)
+            if full_addr:
+                fresh["address"] = full_addr
+                user.dialog_state = DialogState.AWAITING_TOPIC.value
+            else:
+                user.dialog_state = DialogState.AWAITING_ADDRESS.value
+            user.dialog_data = fresh
+            await session.flush()
+        if full_addr:
+            await appeal_funnel.ask_topic(event, max_user_id)
+        else:
+            await appeal_funnel.ask_address(event, max_user_id)
+        return
+
+    if payload == "geo:edit_address":
+        async with current_user(max_user_id) as (session, user):
+            user.dialog_data = _clear_geo_detected(user.dialog_data or data)
+            user.dialog_state = DialogState.AWAITING_ADDRESS.value
+            await session.flush()
+        await appeal_funnel.ask_address(event, max_user_id)
+        return
+
+    if payload == "geo:other_locality":
+        async with current_user(max_user_id) as (session, user):
+            user.dialog_data = _clear_geo_detected(
+                user.dialog_data or data,
+                drop_locality=True,
+            )
+            user.dialog_state = DialogState.AWAITING_LOCALITY.value
+            await session.flush()
+        await appeal_funnel.ask_locality(event, max_user_id)
+        return
+
+
+async def _cb_topic(event, max_user_id: int, payload: str) -> None:
+    idx = callback_router.parse_int_tail(payload, "topic:")
+    if idx is None:
+        await ack_callback(event)
+        return
+    async with session_scope() as session:
+        topics = await settings_store.get(session, "topics") or []
+        if 0 <= idx < len(topics):
+            chosen = topics[idx]
+            await users_service.update_dialog_data(
+                session,
+                max_user_id,
+                {"topic": chosen},
+            )
+        else:
+            await ack_callback(event)
+            log.warning(
+                "topic:%s out of range (have %d), user=%s",
+                idx,
+                len(topics),
+                max_user_id,
+            )
+            return
+    await ack_callback(event)
+    await appeal_funnel.ask_summary(event, max_user_id)
+
+
+async def _cb_appeal_submit(event, max_user_id: int, payload: str) -> None:
+    # Кнопка «Отправить» осталась в старых сообщениях клиента, которые
+    # ещё могут крутиться у жителя в чате. Финализируем только если
+    # пользователь всё ещё на шаге описания сути.
+    await ack_callback(event)
+    await appeal_funnel.finalize_appeal(event, max_user_id)
+
+
+# Точные payload'ы воронки → handler. geo:* — три payload'а на один
+# _cb_geo (он сам различает их внутри по payload).
+_CITIZEN_EXACT = {
+    "menu:new_appeal": _cb_new_appeal,
+    "consent:yes": _cb_consent_yes,
+    "consent:no": _cb_consent_no,
+    "cancel": _cb_cancel,
+    "addr:reuse": _cb_addr_reuse,
+    "addr:new": _cb_addr_new,
+    "geo:confirm": _cb_geo,
+    "geo:edit_address": _cb_geo,
+    "geo:other_locality": _cb_geo,
+    "appeal:submit": _cb_appeal_submit,
+}
+
+# Префикс payload'а → handler. Числовой хвост парсит сам handler через
+# callback_router.parse_int_tail.
+_CITIZEN_PREFIX = (
+    ("locality:", _cb_locality),
+    ("topic:", _cb_topic),
+)
+
+
+async def _dispatch_citizen_callback(
+    event, max_user_id: int, payload: str
+) -> bool:
+    """Маршрутизатор callback'ов воронки жителя. Возвращает True, если
+    payload обработан; False — если это не воронка-callback, и вызывающий
+    продолжает разбор (admin-dispatch, затем menu.handle_callback)."""
+    handler = _CITIZEN_EXACT.get(payload)
+    if handler is None:
+        for prefix, prefix_handler in _CITIZEN_PREFIX:
+            if payload.startswith(prefix):
+                handler = prefix_handler
+                break
+    if handler is None:
+        return False
+    await handler(event, max_user_id, payload)
+    return True
+
+
 def register(dp: Dispatcher) -> None:
     @dp.message_callback()
     async def on_callback(event: MessageCallback):
@@ -4860,219 +5175,13 @@ def register(dp: Dispatcher) -> None:
         if not await _ensure_funnel_callback_state(event, max_user_id, payload):
             return
 
-        if payload == "menu:new_appeal":
-            await ack_callback(event)
-            await appeal_funnel.start_appeal_flow(event, max_user_id)
-            return
-
-        if payload == "consent:yes":
-            async with session_scope() as session:
-                await users_service.set_consent(session, max_user_id)
-            await ack_callback(event, texts.CONSENT_ACCEPTED)
-            await admin_events.notify_consent_given(event.bot, max_user_id=max_user_id)
-            await appeal_funnel.ask_contact_or_skip(event, max_user_id)
-            return
-
-        if payload == "consent:no":
-            async with session_scope() as session:
-                await users_service.reset_state(session, max_user_id)
-            drop_user_lock(max_user_id)
-            await ack_callback(event)
-
-            await _send_to_citizen(
-                event,
-                max_user_id,
-                text=texts.CONSENT_DECLINED,
-                attachments=[keyboards.back_to_menu_keyboard()],
-            )
-            return
-
-        if payload == "cancel":
-            async with session_scope() as session:
-                await users_service.reset_state(session, max_user_id)
-            drop_user_lock(max_user_id)
-            await ack_callback(event)
-
-            await _send_to_citizen(
-                event,
-                max_user_id,
-                text=texts.CANCELLED,
-                attachments=[keyboards.back_to_menu_keyboard()],
-            )
-            return
-
-        if payload == "addr:reuse":
-            await ack_callback(event)
-            async with session_scope() as session:
-                user = await users_service.get_or_create(
-                    session,
-                    max_user_id=max_user_id,
-                )
-                last = await appeals_service.find_last_address_for_user(
-                    session,
-                    user.id,
-                )
-            if last is None:
-                # Между показом промпта и кликом обращение могло быть
-                # обезличено retention-кроном — fallback к обычному пути.
-                await appeal_funnel.ask_locality(event, max_user_id)
-                return
-            locality, address = last
-            async with session_scope() as session:
-                await users_service.set_state(
-                    session,
-                    max_user_id,
-                    DialogState.AWAITING_TOPIC,
-                    data={"locality": locality, "address": address},
-                )
-            await appeal_funnel.ask_topic(event, max_user_id)
-            return
-
-        if payload == "addr:new":
-            await ack_callback(event)
-            await appeal_funnel.ask_locality(event, max_user_id)
-            return
-
-        if payload.startswith("locality:"):
-            idx = callback_router.parse_int_tail(payload, "locality:")
-            if idx is None:
-                await ack_callback(event)
-                return
-            async with session_scope() as session:
-                localities = await settings_store.get(session, "localities") or []
-                if 0 <= idx < len(localities):
-                    chosen = localities[idx]
-                    await users_service.update_dialog_data(
-                        session,
-                        max_user_id,
-                        {"locality": chosen},
-                    )
-                else:
-                    await ack_callback(event)
-                    log.warning(
-                        "locality:%s out of range (have %d), user=%s",
-                        idx,
-                        len(localities),
-                        max_user_id,
-                    )
-                    return
-            await ack_callback(event)
-            await appeal_funnel.ask_address(event, max_user_id)
-            return
-
-        # Подтверждение / редактирование определённого через геолокацию
-        # адреса. Все три callback'а guard'им состоянием и наличием
-        # detected_locality в dialog_data — иначе это стейл-кнопка из
-        # старого сообщения.
-        if payload in ("geo:confirm", "geo:edit_address", "geo:other_locality"):
-            await ack_callback(event)
-            async with session_scope() as session:
-                user = await users_service.get_or_create(
-                    session,
-                    max_user_id=max_user_id,
-                )
-                state = user.dialog_state
-                data = dict(user.dialog_data or {})
-            if state != DialogState.AWAITING_GEO_CONFIRM.value or not data.get(
-                "detected_locality"
-            ):
-                log.info(
-                    "geo callback %s ignored: state=%s, has_detected=%s, user=%s",
-                    payload,
-                    state,
-                    bool(data.get("detected_locality")),
-                    max_user_id,
-                )
-                return
-
-            if payload == "geo:confirm":
-                detected_street = (data.get("detected_street") or "").strip()
-                detected_house = (data.get("detected_house_number") or "").strip()
-                if detected_street and detected_house:
-                    full_addr = f"{detected_street}, д. {detected_house}"
-                elif detected_street:
-                    full_addr = detected_street
-                else:
-                    full_addr = ""
-                async with session_scope() as session:
-                    user = await users_service.get_or_create(
-                        session,
-                        max_user_id=max_user_id,
-                    )
-                    fresh = _clear_geo_detected(user.dialog_data or data)
-                    if full_addr:
-                        fresh["address"] = full_addr
-                        user.dialog_state = DialogState.AWAITING_TOPIC.value
-                    else:
-                        user.dialog_state = DialogState.AWAITING_ADDRESS.value
-                    user.dialog_data = fresh
-                    await session.flush()
-                if full_addr:
-                    await appeal_funnel.ask_topic(event, max_user_id)
-                else:
-                    await appeal_funnel.ask_address(event, max_user_id)
-                return
-
-            if payload == "geo:edit_address":
-                async with session_scope() as session:
-                    user = await users_service.get_or_create(
-                        session,
-                        max_user_id=max_user_id,
-                    )
-                    user.dialog_data = _clear_geo_detected(user.dialog_data or data)
-                    user.dialog_state = DialogState.AWAITING_ADDRESS.value
-                    await session.flush()
-                await appeal_funnel.ask_address(event, max_user_id)
-                return
-
-            if payload == "geo:other_locality":
-                async with session_scope() as session:
-                    user = await users_service.get_or_create(
-                        session,
-                        max_user_id=max_user_id,
-                    )
-                    user.dialog_data = _clear_geo_detected(
-                        user.dialog_data or data,
-                        drop_locality=True,
-                    )
-                    user.dialog_state = DialogState.AWAITING_LOCALITY.value
-                    await session.flush()
-                await appeal_funnel.ask_locality(event, max_user_id)
-                return
-
-        if payload.startswith("topic:"):
-            idx = callback_router.parse_int_tail(payload, "topic:")
-            if idx is None:
-                await ack_callback(event)
-                return
-            async with session_scope() as session:
-                topics = await settings_store.get(session, "topics") or []
-                if 0 <= idx < len(topics):
-                    chosen = topics[idx]
-                    await users_service.update_dialog_data(
-                        session,
-                        max_user_id,
-                        {"topic": chosen},
-                    )
-                else:
-                    await ack_callback(event)
-                    log.warning(
-                        "topic:%s out of range (have %d), user=%s",
-                        idx,
-                        len(topics),
-                        max_user_id,
-                    )
-                    return
-            await ack_callback(event)
-            await appeal_funnel.ask_summary(event, max_user_id)
-            return
-
-        if payload == "appeal:submit":
-            # Кнопка «Отправить» осталась в старых сообщениях клиента,
-            # которые ещё могут крутиться у жителя в чате. Финализируем
-            # только если пользователь всё ещё на шаге описания сути.
-            await ack_callback(event)
-            await appeal_funnel.finalize_appeal(event, max_user_id)
+        # Коллбэки воронки жителя (menu:new_appeal, consent:*, cancel,
+        # addr:*, locality:, geo:*, topic:, appeal:submit) — единая
+        # dispatch-таблица (_dispatch_citizen_callback + _cb_* выше).
+        # Раньше здесь был ~195-строчный if-elif. dispatch вернёт True,
+        # если обработал; False — если payload не воронка-callback,
+        # тогда продолжаем fallthrough в admin-dispatch и menu.
+        if await _dispatch_citizen_callback(event, max_user_id, payload):
             return
 
         # Коллбэки мастера рассылок (на стороне оператора).
@@ -5183,12 +5292,9 @@ def register(dp: Dispatcher) -> None:
         if max_user_id is None:
             return
 
-        async with session_scope() as session:
-            user = await users_service.get_or_create(
-                session,
-                max_user_id=max_user_id,
-                first_name=get_first_name(event),
-            )
+        async with current_user(
+            max_user_id, first_name=get_first_name(event)
+        ) as (_, user):
             state = DialogState(user.dialog_state)
 
         handler = _STATE_HANDLERS.get(state)
@@ -5198,8 +5304,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/appeal_funnel.py`
 
-Size: `30407` bytes  
-SHA-256: `c12bcd93dbd6cd2a3031736ec1787c86c5911c020c1dbf50ed36149524422677`
+Size: `29804` bytes  
+SHA-256: `4b9eca6ab64db6565f9c9d78ff14d389f3c087b2df5b62dad99d8fa0a7bf3337`
 
 ```python
 """FSM-воронка приёма обращения и явного дополнения.
@@ -5229,6 +5335,7 @@ from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import DialogState
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._common import current_user
 from aemr_bot.handlers.appeal_runtime import (
     _HAS_ALNUM,
     PERSIST_RATE_LIMITED,
@@ -5263,8 +5370,7 @@ async def start_appeal_flow(event, max_user_id: int):
     запрос согласия + клавиатуру; иначе — переход к следующему шагу
     (контакт/имя/адрес).
     """
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         if user.is_blocked:
             pass  # обработка ниже
         else:
@@ -5346,8 +5452,7 @@ async def start_appeal_flow(event, max_user_id: int):
 
 
 async def _has_consent_step_pending(max_user_id: int) -> bool:
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         return user.consent_pdn_at is None
 
 
@@ -5383,8 +5488,7 @@ async def ask_contact_or_skip(
     *,
     force_new_message: bool = False,
 ):
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         if not user.phone:
             target_state = DialogState.AWAITING_CONTACT
         elif not user.first_name or user.first_name == "Удалено":
@@ -5437,8 +5541,7 @@ async def ask_address_or_reuse(
     воронка ждёт callback addr:reuse / addr:new и не идёт в ask_locality.
     False означает «прошлого адреса нет, спрашивайте обычным путём».
     """
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         last = await appeals_service.find_last_address_for_user(session, user.id)
     if last is None:
         return False
@@ -5476,8 +5579,7 @@ async def _show_progress_step(
     """
     from aemr_bot.services.progress import render_progress, send_or_edit_progress
 
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         data = dict(user.dialog_data or {})
         if not force_new_message and not data.get("progress_message_id"):
             callback_mid = get_callback_message_id(event)
@@ -5599,8 +5701,7 @@ async def finalize_appeal(event, max_user_id: int):
     кнопки «Отправить». На пустой ввод отвечаем подсказкой."""
     persisted = await persist_and_dispatch_appeal(event.bot, max_user_id)
     if persisted == PERSIST_RATE_LIMITED:
-        async with session_scope() as session:
-            user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        async with current_user(max_user_id) as (session, user):
             active = await appeals_service.find_active_for_user(session, user.id)
         await _send_rate_limit_message(event, has_open_unanswered=active is not None)
     elif persisted is False:
@@ -5632,9 +5733,8 @@ async def on_awaiting_contact(event, body, text_body, max_user_id):
 
     contact_name = extract_contact_name(body)
 
-    async with session_scope() as session:
+    async with current_user(max_user_id) as (session, user):
         await users_service.set_phone(session, max_user_id, phone)
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
         if contact_name and (not user.first_name or user.first_name == "Удалено"):
             cleaned = contact_name.strip()[: cfg.name_max_chars]
             if cleaned and _HAS_ALNUM.search(cleaned):
@@ -5695,8 +5795,7 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
         )
         return
 
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         # dict() — shallow copy. Nested list (summary_chunks, attachments)
         # должен быть отдельной копией, иначе append мутирует list,
         # лежащий в SQLAlchemy-tracked user.dialog_data ДО flush.
@@ -5752,8 +5851,7 @@ async def on_awaiting_consent(event, body, text_body, max_user_id):
 async def on_idle(event, body, text_body, max_user_id):
     """IDLE — нет активной воронки. Раньше был «магический followup»;
     теперь дополнение работает только через явную кнопку «📎 Дополнить»."""
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         active = await appeals_service.find_active_for_user(session, user.id)
 
     if active is not None:
@@ -5785,8 +5883,7 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     from aemr_bot.services.admin_relay import relay_attachments_to_admin
     from aemr_bot.utils.event import extract_message_id
 
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         appeal_id = (user.dialog_data or {}).get("appeal_id")
         appeal = (
             await appeals_service.get_by_id(session, int(appeal_id))
@@ -5904,8 +6001,8 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
 
 ### `bot/aemr_bot/handlers/appeal_geo.py`
 
-Size: `7608` bytes  
-SHA-256: `b81679d9dcdda145fefee7e09d6a2b6cc643cafee0319163666f23a8f5c1ccd9`
+Size: `7566` bytes  
+SHA-256: `1bdad63171ac3e93a86020a2098c309f85f07f21786a6efda75d014853dc931b`
 
 ```python
 """Geo-flow для FSM-воронки обращения.
@@ -5938,6 +6035,7 @@ import logging
 from aemr_bot import keyboards, texts
 from aemr_bot.db.models import DialogState
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._common import current_user
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 
@@ -6061,10 +6159,7 @@ async def on_awaiting_geo_confirm(event, body, text_body, max_user_id):
     """Житель прислал что-то вместо нажатия кнопки на экране
     подтверждения. Просто повторно показываем подтверждающий экран —
     кнопки решают за житель что делать дальше."""
-    async with session_scope() as session:
-        user = await users_service.get_or_create(
-            session, max_user_id=max_user_id
-        )
+    async with current_user(max_user_id) as (_, user):
         data = dict(user.dialog_data or {})
     locality = data.get("detected_locality") or data.get("locality") or "?"
     street = data.get("detected_street") or ""
@@ -6084,8 +6179,8 @@ async def on_awaiting_geo_confirm(event, body, text_body, max_user_id):
 
 ### `bot/aemr_bot/handlers/appeal_runtime.py`
 
-Size: `12632` bytes  
-SHA-256: `13967de30f9110b6289caeb573214eac4c5707a7cbaee4ba1ded46dd72602836`
+Size: `12572` bytes  
+SHA-256: `ee10a61d40cf885b158aded4683e3393fe49a40dfcd444d3385a7a21f34d4f1b`
 
 ```python
 """Runtime-helpers и финализация обращения.
@@ -6110,6 +6205,7 @@ from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._common import current_user
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
 from aemr_bot.services import users as users_service
@@ -6275,10 +6371,7 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
     """
     try:
         async with get_user_lock(max_user_id):
-            async with session_scope() as session:
-                user = await users_service.get_or_create(
-                    session, max_user_id=max_user_id
-                )
+            async with current_user(max_user_id) as (session, user):
                 if user.dialog_state == DialogState.IDLE.value:
                     log.info(
                         "отправка пропущена для пользователя %s — состояние уже IDLE",
@@ -6367,8 +6460,8 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `27344` bytes  
-SHA-256: `17be78efe2a3be73513887deb49922d0f5f32219b189328df86b6dac8016b4cf`
+Size: `29978` bytes  
+SHA-256: `fb5856ba3fab11724d2de51bdd641a8378b167b4c9687992edc0015132546f98`
 
 ```python
 """Мастер рассылок и цикл их отправки.
@@ -6744,70 +6837,136 @@ async def _run_broadcast(
             )
 
 
-async def _run_broadcast_impl(
-    bot, broadcast_id: int, text: str, total: int, *, admin_mid: str | None = None
+def _compute_progress_step(total: int, rate_delay: float) -> float:
+    """Адаптивный шаг обновления прогресс-карточки (в секундах).
+
+    BROADCAST_PROGRESS_UPDATE_SEC (5 сек по умолчанию) рассчитан на
+    рассылку 50–200 получателей: оператор видит около 10 обновлений.
+    На совсем короткой рассылке (5 получателей × 1 сек) полоска
+    обновилась бы один раз в самом конце; на очень длинной (1000
+    получателей) MAX начнёт ограничивать частоту правок. Для коротких
+    отправок ужимаем шаг, чтобы прогресс двигался заметно.
+    """
+    estimated_total_sec = max(1.0, total * rate_delay)
+    return min(cfg.broadcast_progress_update_sec, estimated_total_sec / 10)
+
+
+def _build_final_text(
+    *, broadcast_id: int, total: int, delivered: int, failed: int, cancelled: bool
+) -> str:
+    """Итоговый текст рассылки для админ-карточки (отмена / готово)."""
+    if cancelled:
+        return texts.OP_BROADCAST_CANCELLED.format(
+            number=broadcast_id, delivered=delivered, total=total
+        )
+    failed_line = (
+        texts.OP_BROADCAST_FAILED_LINE.format(failed=failed) if failed else ""
+    )
+    return texts.OP_BROADCAST_DONE.format(
+        number=broadcast_id,
+        delivered=delivered,
+        total=total,
+        failed_line=failed_line,
+    )
+
+
+async def _resolve_admin_progress_message(
+    bot, broadcast_id: int, total: int, admin_mid: str | None
+) -> str | None:
+    """Гарантировать карточку прогресса в админ-группе.
+
+    Если confirm-кнопка была под preview-карточкой, preview уже
+    превращён в progress-карточку — `admin_mid` придёт заполненным.
+    Иначе шлём отдельное стартовое сообщение, чтобы оператор не остался
+    без статуса. Возврат None означает «карточки нет, edit_message по
+    ходу рассылки будет пропущен».
+    """
+    if admin_mid is not None:
+        return admin_mid
+    sent = None
+    try:
+        sent = await bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=total),
+            attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
+        )
+    except Exception:
+        log.exception("failed to post broadcast start in admin group")
+    return extract_message_id(sent)
+
+
+async def _send_final_summary(
+    bot,
+    *,
+    broadcast_id: int,
+    total: int,
+    delivered: int,
+    failed: int,
+    cancelled: bool,
+    admin_mid: str | None,
 ) -> None:
-    body = f"{texts.BROADCAST_HEADER}\n\n{text}"
+    """Опубликовать итог рассылки: правкой карточки прогресса либо, если
+    правка не удалась / карточки не было, отдельным сообщением."""
+    final_text = _build_final_text(
+        broadcast_id=broadcast_id,
+        total=total,
+        delivered=delivered,
+        failed=failed,
+        cancelled=cancelled,
+    )
+    if admin_mid is not None:
+        try:
+            await bot.edit_message(
+                message_id=admin_mid,
+                text=final_text,
+                attachments=[keyboards.op_back_to_menu_keyboard()],
+            )
+            return
+        except Exception:
+            log.exception(
+                "failed to edit final progress message for broadcast #%s",
+                broadcast_id,
+            )
+    # Запасной путь: edit_message не сработал, либо admin_mid не было.
+    # Публикуем итог отдельным сообщением, чтобы оператор всё равно
+    # увидел результат.
+    try:
+        await bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=final_text,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+    except Exception:
+        log.exception(
+            "failed to post fallback final summary for broadcast #%s",
+            broadcast_id,
+        )
+
+
+async def _run_send_loop(
+    bot,
+    *,
+    broadcast_id: int,
+    body: str,
+    total: int,
+    targets: list,
+    admin_mid: str | None,
+    rate_delay: float,
+    progress_step_sec: float,
+) -> tuple[int, int, bool]:
+    """Цикл отправки рассылки. Возвращает ``(delivered, failed, cancelled)``.
+
+    Результаты доставки копятся в буфер и сбрасываются батчем в единой
+    точке синхронизации с БД (по таймеру progress_step_sec либо при
+    переполнении буфера) — там же читается флаг отмены и пишется
+    прогресс. Раньше каждый получатель = 2-4 транзакции; на 10k
+    подписчиков было ~25000 коммитов за рассылку, теперь ~200.
+    """
     delivered = 0
     failed = 0
-
-    log.info(
-        "broadcast: starting send loop — broadcast_id=%s total=%d",
-        broadcast_id, total,
-    )
-
-    # Старт: если confirm-кнопка была под preview-карточкой, preview уже
-    # превращён в progress-карточку. Если mid получить не удалось — шлём
-    # отдельный прогресс, чтобы оператор не остался без статуса.
-    if admin_mid is None:
-        sent = None
-        try:
-            sent = await bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=total),
-                attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
-            )
-        except Exception:
-            log.exception("failed to post broadcast start in admin group")
-        admin_mid = extract_message_id(sent)
-    log.info(
-        "broadcast: admin start-message admin_mid=%s (None means edit_message will be skipped)",
-        admin_mid,
-    )
-
-    async with session_scope() as session:
-        await broadcasts_service.mark_started(session, broadcast_id, admin_mid)
-
-    rate_delay = (
-        1.0 / cfg.broadcast_rate_limit_per_sec
-        if cfg.broadcast_rate_limit_per_sec > 0
-        else 1.0
-    )
-    # Адаптивный шаг прогресса. Значение BROADCAST_PROGRESS_UPDATE_SEC по
-    # умолчанию (5 сек) подходит для рассылки на 50–200 получателей: оператор
-    # видит около 10 обновлений. На совсем короткой рассылке (5 получателей × 1 сек)
-    # полоска обновилась бы один раз в самом конце; на очень длинной (1000 получателей)
-    # MAX начнёт ограничивать частоту правок. Для коротких отправок ужимаем шаг,
-    # чтобы прогресс двигался заметно.
-    estimated_total_sec = max(1.0, total * rate_delay)
-    progress_step_sec = min(cfg.broadcast_progress_update_sec, estimated_total_sec / 10)
-    last_progress_at = time.monotonic()
     cancelled = False
+    last_progress_at = time.monotonic()
 
-    # Снимаем список получателей и закрываем сессию. Удержание одной транзакции
-    # на всю отправку (одна строка в секунду на N получателей) блокирует VACUUM
-    # и раздувает WAL при длинной рассылке. См. list_subscriber_targets.
-    async with session_scope() as session:
-        targets = await broadcasts_service.list_subscriber_targets(session)
-
-    # Буфер результатов доставки. Раньше каждый получатель = отдельный
-    # session_scope на record_delivery + ещё один на get_status (флаг
-    # отмены): 2-4 транзакции × N получателей, на 10k подписчиков —
-    # ~20-30k коммитов за одну рассылку. Теперь результаты копятся в
-    # буфер и сбрасываются батчем в единой точке синхронизации с БД
-    # (по таймеру progress_step_sec либо при переполнении буфера) —
-    # там же читается флаг отмены и пишется прогресс. ~200 транзакций
-    # вместо ~25000.
     _FLUSH_EVERY = 50
     pending: list[tuple[int, str | None]] = []
 
@@ -6891,6 +7050,61 @@ async def _run_broadcast_impl(
         # и при повторной рассылке жители получат дубль.
         await _flush_pending()
 
+    return delivered, failed, cancelled
+
+
+async def _run_broadcast_impl(
+    bot, broadcast_id: int, text: str, total: int, *, admin_mid: str | None = None
+) -> None:
+    """Оркестрация фоновой рассылки: подготовка карточки прогресса →
+    снимок получателей → цикл отправки → финальный статус и итог.
+
+    Тяжёлая логика вынесена в помощники: `_resolve_admin_progress_message`
+    (стартовая карточка), `_run_send_loop` (цикл с буферизацией доставок),
+    `_send_final_summary` (итог). Здесь — только последовательность шагов.
+    """
+    body = f"{texts.BROADCAST_HEADER}\n\n{text}"
+    log.info(
+        "broadcast: starting send loop — broadcast_id=%s total=%d",
+        broadcast_id, total,
+    )
+
+    admin_mid = await _resolve_admin_progress_message(
+        bot, broadcast_id, total, admin_mid
+    )
+    log.info(
+        "broadcast: admin start-message admin_mid=%s "
+        "(None means edit_message will be skipped)",
+        admin_mid,
+    )
+
+    async with session_scope() as session:
+        await broadcasts_service.mark_started(session, broadcast_id, admin_mid)
+
+    rate_delay = (
+        1.0 / cfg.broadcast_rate_limit_per_sec
+        if cfg.broadcast_rate_limit_per_sec > 0
+        else 1.0
+    )
+    progress_step_sec = _compute_progress_step(total, rate_delay)
+
+    # Снимаем список получателей и закрываем сессию. Удержание одной
+    # транзакции на всю отправку (одна строка в секунду на N получателей)
+    # блокирует VACUUM и раздувает WAL при длинной рассылке.
+    async with session_scope() as session:
+        targets = await broadcasts_service.list_subscriber_targets(session)
+
+    delivered, failed, cancelled = await _run_send_loop(
+        bot,
+        broadcast_id=broadcast_id,
+        body=body,
+        total=total,
+        targets=targets,
+        admin_mid=admin_mid,
+        rate_delay=rate_delay,
+        progress_step_sec=progress_step_sec,
+    )
+
     final_status = (
         BroadcastStatus.CANCELLED if cancelled else BroadcastStatus.DONE
     )
@@ -6907,48 +7121,15 @@ async def _run_broadcast_impl(
         broadcast_id, final_status.value, delivered, failed,
     )
 
-    if cancelled:
-        final_text = texts.OP_BROADCAST_CANCELLED.format(
-            number=broadcast_id, delivered=delivered, total=total
-        )
-    else:
-        failed_line = (
-            texts.OP_BROADCAST_FAILED_LINE.format(failed=failed) if failed else ""
-        )
-        final_text = texts.OP_BROADCAST_DONE.format(
-            number=broadcast_id,
-            delivered=delivered,
-            total=total,
-            failed_line=failed_line,
-        )
-
-    if admin_mid is not None:
-        try:
-            await bot.edit_message(
-                message_id=admin_mid,
-                text=final_text,
-                attachments=[keyboards.op_back_to_menu_keyboard()],
-            )
-            return
-        except Exception:
-            log.exception(
-                "failed to edit final progress message for broadcast #%s",
-                broadcast_id,
-            )
-
-    # Запасной путь: edit_message не сработал, либо admin_mid не было. Публикуем
-    # итог отдельным сообщением, чтобы оператор всё равно увидел результат.
-    try:
-        await bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=final_text,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
-    except Exception:
-        log.exception(
-            "failed to post fallback final summary for broadcast #%s",
-            broadcast_id,
-        )
+    await _send_final_summary(
+        bot,
+        broadcast_id=broadcast_id,
+        total=total,
+        delivered=delivered,
+        failed=failed,
+        cancelled=cancelled,
+        admin_mid=admin_mid,
+    )
 
 
 def _format_dt(dt: datetime | None) -> str:
@@ -7136,15 +7317,17 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 
 ### `bot/aemr_bot/handlers/menu.py`
 
-Size: `42388` bytes  
-SHA-256: `fb645c0cbc64d6cd1678a1b8ad39f77745be5e30e835ebe5a7598d6c610b859d`
+Size: `43971` bytes  
+SHA-256: `3404e0178343c156c89961f64386bd378b0fed1b80d3266375732bc4d7a3f723`
 
 ```python
 import logging
-from typing import Any
+from collections.abc import Callable
+from typing import Any, NamedTuple
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._common import current_user
 from aemr_bot.services import admin_events
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
@@ -7220,12 +7403,13 @@ async def open_main_menu(event):
     блокировочным сообщениям, проще их не показывать.
     """
     max_user_id = get_user_id(event)
-    async with session_scope() as session:
-        is_blocked = False
-        subscribed = False
-        recep_url = None
-        if max_user_id is not None:
-            user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    is_blocked = False
+    subscribed = False
+    recep_url = None
+    # Сессию открываем только когда есть кого искать: анонимному
+    # событию (max_user_id is None) меню рендерится по дефолтам.
+    if max_user_id is not None:
+        async with current_user(max_user_id) as (session, user):
             is_blocked = user.is_blocked
             if not is_blocked:
                 subscribed = await broadcasts_service.is_subscribed(session, max_user_id)
@@ -7258,8 +7442,7 @@ MY_APPEALS_PAGE_SIZE = 5
 
 async def open_my_appeals(event, max_user_id: int, page: int = 1):
     page = max(1, page)
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         total = await appeals_service.count_for_user(session, user.id)
         if total == 0:
             await _send_or_edit_menu(
@@ -7462,8 +7645,7 @@ async def do_subscribe(event, max_user_id: int) -> None:
     рядом с сообщением, чтобы не отправлять жителя кружным путём через
     «Настройки → Согласие на ПДн → Дать согласие».
     """
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         if user.is_blocked:
             await _send_or_edit_menu(
                 event,
@@ -7512,8 +7694,7 @@ async def do_subscribe_confirm(event, max_user_id: int) -> None:
 
     from aemr_bot.db.models import User
 
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         if user.is_blocked:
             await _send_or_edit_menu(
                 event,
@@ -7548,8 +7729,7 @@ async def do_subscribe_confirm(event, max_user_id: int) -> None:
 
 async def do_unsubscribe(event, max_user_id: int) -> None:
     """Идемпотентная отписка через кнопку «🔕 Отписаться»."""
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         # Заблокированному отписка тоже не нужна — он уже не получает
         # рассылку. Но на всякий случай отметим subscribed=false.
         if user.is_blocked:
@@ -7682,8 +7862,7 @@ async def ask_goodbye_erase_confirm(event):
     max_user_id = get_user_id(event)
     open_lines: list[str] = []
     if max_user_id is not None:
-        async with session_scope() as session:
-            user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        async with current_user(max_user_id) as (session, user):
             active = await appeals_service.list_unanswered(session)
             mine = [a for a in active if a.user_id == user.id]
             for ap in mine:
@@ -7713,8 +7892,7 @@ async def ask_forget_confirm(event):
     max_user_id = get_user_id(event)
     open_lines: list[str] = []
     if max_user_id is not None:
-        async with session_scope() as session:
-            user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        async with current_user(max_user_id) as (session, user):
             active = await appeals_service.list_unanswered(session)
             mine = [a for a in active if a.user_id == user.id]
         for ap in mine[:5]:
@@ -7802,8 +7980,7 @@ async def do_consent_revoke(event, max_user_id: int):
     from aemr_bot.services import appeals as appeals_service
     from aemr_bot.services import operators as ops_service
 
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         active = await appeals_service.list_unanswered(session)
         my_open = [a for a in active if a.user_id == user.id]
         await users_service.revoke_consent(session, max_user_id)
@@ -7847,8 +8024,7 @@ async def do_forget(event, max_user_id: int):
     from aemr_bot.services import operators as ops_service
 
     closed_ids: list[int] = []
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         active = await appeals_service.list_unanswered(session)
         closed_ids = [a.id for a in active if a.user_id == user.id]
         await users_service.erase_pdn(session, max_user_id)
@@ -7937,20 +8113,167 @@ async def open_dispatchers(event):
     )
 
 
+# ============================================================================
+# handle_callback — dispatch-таблица callback'ов меню жителя
+# ============================================================================
+# Раньше — ~196-строчная if-elif лестница `if payload == "...": ack;
+# handler; return True`. Теперь payload'ы описаны декларативно в _EXACT
+# (точное совпадение) и _PREFIX_APPEAL_ID (префикс + числовой id
+# обращения), а handle_callback — тонкий диспетчер.
+#
+# Lambda-обёртки вокруг handler'ов обязательны: они резолвят имя функции
+# в момент вызова, а не на этапе построения таблицы. Прямые ссылки
+# заморозили бы функцию на импорте и сломали бы patch в тестах и
+# возможный hot-reload (тот же урок, что в admin_callback_dispatch).
+
+
+async def _lazy_cmd_policy(event) -> None:
+    """settings:policy → start.cmd_policy. Импорт ленивый: start.py
+    лениво импортирует menu в обратную сторону, прямой импорт на уровне
+    модуля замкнул бы цикл."""
+    from aemr_bot.handlers.start import cmd_policy
+
+    await cmd_policy(event)
+
+
+async def _lazy_start_appeal_flow(event, max_user_id: int) -> None:
+    """settings:consent_give → appeal_funnel.start_appeal_flow. Воронка
+    сама на первом шаге попросит согласие (consent_pdn_at пуст после
+    отзыва). Импорт ленивый — appeal_funnel тянет тяжёлую цепочку."""
+    from aemr_bot.handlers.appeal_funnel import start_appeal_flow
+
+    await start_appeal_flow(event, max_user_id)
+
+
+class _MenuRoute(NamedTuple):
+    """Описание exact-маршрута меню жителя.
+
+    handler — всегда вызывается как ``handler(event, max_user_id)``;
+      для no-user маршрутов lambda просто игнорирует второй аргумент.
+    requires_user — маршрут осмыслен только при идентифицированном
+      жителе.
+    ack — вызвать ack_callback перед handler'ом (broadcast:unsubscribe
+      акает сам внутри handler'а — ему ack=False).
+    consume_on_no_user — поведение при requires_user и max_user_id None:
+      True → return True (тап «съеден»), False → return False
+      (управление проваливается дальше). Сохраняет историческое
+      расхождение: menu:my_appeals «съедал» тап, остальные user-маршруты
+      проваливались.
+    """
+
+    handler: Callable
+    requires_user: bool = False
+    ack: bool = True
+    consume_on_no_user: bool = False
+
+
+_EXACT: dict[str, _MenuRoute] = {
+    "menu:main": _MenuRoute(lambda e, u: open_main_menu(e)),
+    "menu:my_appeals": _MenuRoute(
+        lambda e, u: open_my_appeals(e, u),
+        requires_user=True,
+        consume_on_no_user=True,
+    ),
+    "menu:useful_info": _MenuRoute(lambda e, u: open_useful_info(e)),
+    "menu:appointment": _MenuRoute(lambda e, u: open_appointment(e)),
+    "menu:settings": _MenuRoute(lambda e, u: open_settings(e)),
+    "settings:help": _MenuRoute(lambda e, u: open_help(e)),
+    "settings:rules": _MenuRoute(lambda e, u: open_rules(e)),
+    "settings:policy": _MenuRoute(lambda e, u: _lazy_cmd_policy(e)),
+    "settings:forget_ask": _MenuRoute(lambda e, u: ask_forget_confirm(e)),
+    "settings:forget_yes": _MenuRoute(
+        lambda e, u: do_forget(e, u), requires_user=True
+    ),
+    "settings:consent_status": _MenuRoute(
+        lambda e, u: show_consent_status(e, u), requires_user=True
+    ),
+    "settings:consent_revoke_ask": _MenuRoute(
+        lambda e, u: ask_consent_revoke_confirm(e)
+    ),
+    "settings:consent_revoke_yes": _MenuRoute(
+        lambda e, u: do_consent_revoke(e, u), requires_user=True
+    ),
+    "settings:consent_give": _MenuRoute(
+        lambda e, u: _lazy_start_appeal_flow(e, u), requires_user=True
+    ),
+    # A4 «👋 Уйти из бота» — три жизненных опции в одном экране. Старые
+    # цепочки settings:consent_revoke_ask / settings:forget_ask остались
+    # для совместимости с уже отправленными сообщениями; новые точки
+    # входа — через goodbye:*.
+    "settings:goodbye": _MenuRoute(lambda e, u: open_goodbye(e)),
+    "goodbye:unsub": _MenuRoute(
+        lambda e, u: do_unsubscribe(e, u), requires_user=True
+    ),
+    "goodbye:revoke_ask": _MenuRoute(
+        lambda e, u: ask_goodbye_revoke_confirm(e)
+    ),
+    "goodbye:revoke_yes": _MenuRoute(
+        lambda e, u: do_consent_revoke(e, u), requires_user=True
+    ),
+    "goodbye:erase_ask": _MenuRoute(
+        lambda e, u: ask_goodbye_erase_confirm(e)
+    ),
+    "goodbye:erase_yes": _MenuRoute(
+        lambda e, u: do_forget(e, u), requires_user=True
+    ),
+    "info:emergency": _MenuRoute(lambda e, u: open_emergency(e)),
+    "info:dispatchers": _MenuRoute(lambda e, u: open_dispatchers(e)),
+    "info:subscribe_on": _MenuRoute(
+        lambda e, u: do_subscribe(e, u), requires_user=True
+    ),
+    "subscribe:confirm": _MenuRoute(
+        lambda e, u: do_subscribe_confirm(e, u), requires_user=True
+    ),
+    "info:subscribe_off": _MenuRoute(
+        lambda e, u: do_unsubscribe(e, u), requires_user=True
+    ),
+    # Совместимость со старыми меню: info:subscribe_toggle уйдёт сам при
+    # обновлении меню, но тап по старому сообщению маршрутизируем в
+    # идемпотентный subscribe_on — ни одно состояние не перевернётся.
+    "info:subscribe_toggle": _MenuRoute(
+        lambda e, u: do_subscribe(e, u), requires_user=True
+    ),
+    # broadcast:unsubscribe акает сам внутри handle_broadcast_unsubscribe.
+    "broadcast:unsubscribe": _MenuRoute(
+        lambda e, u: handle_broadcast_unsubscribe(e, u),
+        requires_user=True,
+        ack=False,
+    ),
+}
+
+# Префикс → handler(event, appeal_id, max_user_id). Хвост payload'а —
+# числовой id обращения (payload.split(":")[2]). Битый id → тап
+# «съедается» молча (return True без ack), как в исходном if-elif.
+_PREFIX_APPEAL_ID: tuple[tuple[str, Callable], ...] = (
+    ("appeal:show:", lambda e, aid, u: show_appeal(e, aid, u)),
+    ("appeal:followup:", lambda e, aid, u: start_appeal_followup(e, aid, u)),
+    ("appeal:repeat:", lambda e, aid, u: start_appeal_repeat(e, aid, u)),
+)
+
+
+async def _run_exact_route(
+    event, route: _MenuRoute, max_user_id: int | None
+) -> bool:
+    """Выполнить exact-маршрут меню. Контракт — см. docstring _MenuRoute."""
+    if route.requires_user and max_user_id is None:
+        return route.consume_on_no_user
+    if route.ack:
+        await ack_callback(event)
+    await route.handler(event, max_user_id)
+    return True
+
+
 async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
-    """Пробует обработать нажатие меню, контактов или показа обращения. Возвращает True, если обработано."""
-    if payload == "menu:main":
-        await ack_callback(event)
-        await open_main_menu(event)
-        return True
+    """Маршрутизатор callback'ов меню жителя. Возвращает True, если
+    payload обработан, False — если это не меню-callback и вызывающему
+    надо продолжить разбор.
+    """
+    route = _EXACT.get(payload)
+    if route is not None:
+        return await _run_exact_route(event, route, max_user_id)
 
-    if payload == "menu:my_appeals":
-        if max_user_id is None:
-            return True
-        await ack_callback(event)
-        await open_my_appeals(event, max_user_id)
-        return True
-
+    # appeals:page:<N|noop> — пагинация «Мои обращения». noop = текущая
+    # страница, тап только ак'ается. Битый хвост глотается без ак'а.
     if payload.startswith("appeals:page:") and max_user_id is not None:
         suffix = payload.split(":", 2)[2]
         if suffix == "noop":
@@ -7964,181 +8287,26 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
         await open_my_appeals(event, max_user_id, page=page)
         return True
 
-    if payload == "menu:useful_info":
-        await ack_callback(event)
-        await open_useful_info(event)
-        return True
-
-    if payload == "menu:appointment":
-        await ack_callback(event)
-        await open_appointment(event)
-        return True
-
-    if payload == "menu:settings":
-        await ack_callback(event)
-        await open_settings(event)
-        return True
-
-    if payload == "settings:help":
-        await ack_callback(event)
-        await open_help(event)
-        return True
-
-    if payload == "settings:rules":
-        await ack_callback(event)
-        await open_rules(event)
-        return True
-
-    if payload == "settings:policy":
-        await ack_callback(event)
-        from aemr_bot.handlers.start import cmd_policy
-
-        await cmd_policy(event)
-        return True
-
-    if payload == "settings:forget_ask":
-        await ack_callback(event)
-        await ask_forget_confirm(event)
-        return True
-
-    if payload == "settings:forget_yes" and max_user_id is not None:
-        await ack_callback(event)
-        await do_forget(event, max_user_id)
-        return True
-
-    if payload == "settings:consent_status" and max_user_id is not None:
-        await ack_callback(event)
-        await show_consent_status(event, max_user_id)
-        return True
-
-    if payload == "settings:consent_revoke_ask":
-        await ack_callback(event)
-        await ask_consent_revoke_confirm(event)
-        return True
-
-    if payload == "settings:consent_revoke_yes" and max_user_id is not None:
-        await ack_callback(event)
-        await do_consent_revoke(event, max_user_id)
-        return True
-
-    if payload == "settings:consent_give" and max_user_id is not None:
-        # Запускаем воронку обращения — она сама на первом шаге попросит
-        # согласие, потому что consent_pdn_at пуст после отзыва.
-        await ack_callback(event)
-        from aemr_bot.handlers.appeal_funnel import start_appeal_flow as _start_appeal_flow
-
-        await _start_appeal_flow(event, max_user_id)
-        return True
-
-    # A4 «👋 Уйти из бота» — три жизненных опции в одном экране.
-    # Старые callback-цепочки settings:consent_revoke_ask /
-    # settings:forget_ask остались выше для совместимости с уже
-    # отправленными сообщениями (если житель тапнет на старую карточку),
-    # но новые точки входа — только через goodbye:*.
-    if payload == "settings:goodbye":
-        await ack_callback(event)
-        await open_goodbye(event)
-        return True
-
-    if payload == "goodbye:unsub" and max_user_id is not None:
-        await ack_callback(event)
-        await do_unsubscribe(event, max_user_id)
-        return True
-
-    if payload == "goodbye:revoke_ask":
-        await ack_callback(event)
-        await ask_goodbye_revoke_confirm(event)
-        return True
-
-    if payload == "goodbye:revoke_yes" and max_user_id is not None:
-        await ack_callback(event)
-        await do_consent_revoke(event, max_user_id)
-        return True
-
-    if payload == "goodbye:erase_ask":
-        await ack_callback(event)
-        await ask_goodbye_erase_confirm(event)
-        return True
-
-    if payload == "goodbye:erase_yes" and max_user_id is not None:
-        await ack_callback(event)
-        await do_forget(event, max_user_id)
-        return True
-
-    if payload == "info:emergency":
-        await ack_callback(event)
-        await open_emergency(event)
-        return True
-
-    if payload == "info:dispatchers":
-        await ack_callback(event)
-        await open_dispatchers(event)
-        return True
-
-    if payload == "info:subscribe_on" and max_user_id is not None:
-        await ack_callback(event)
-        await do_subscribe(event, max_user_id)
-        return True
-
-    if payload == "subscribe:confirm" and max_user_id is not None:
-        await ack_callback(event)
-        await do_subscribe_confirm(event, max_user_id)
-        return True
-
-    if payload == "info:subscribe_off" and max_user_id is not None:
-        await ack_callback(event)
-        await do_unsubscribe(event, max_user_id)
-        return True
-
-    # Совместимость со старыми меню в чатах: кнопка с payload
-    # `info:subscribe_toggle` уйдёт сама собой при обновлении меню,
-    # но если житель прямо сейчас тапнет на старое сообщение — не
-    # бросаем тап молча. Маршрутизируем в идемпотентный subscribe_on:
-    # если уже подписан, увидит «уже подписаны», ни одно состояние
-    # не перевернётся.
-    if payload == "info:subscribe_toggle" and max_user_id is not None:
-        await ack_callback(event)
-        await do_subscribe(event, max_user_id)
-        return True
-
-    if payload == "broadcast:unsubscribe" and max_user_id is not None:
-        await handle_broadcast_unsubscribe(event, max_user_id)
-        return True
-
-    if payload.startswith("appeal:show:") and max_user_id is not None:
-        try:
-            appeal_id = int(payload.split(":")[2])
-        except (IndexError, ValueError):
-            return True
-        await ack_callback(event)
-        await show_appeal(event, appeal_id, max_user_id)
-        return True
-
-    if payload.startswith("appeal:followup:") and max_user_id is not None:
-        try:
-            appeal_id = int(payload.split(":")[2])
-        except (IndexError, ValueError):
-            return True
-        await ack_callback(event)
-        await start_appeal_followup(event, appeal_id, max_user_id)
-        return True
-
-    if payload.startswith("appeal:repeat:") and max_user_id is not None:
-        try:
-            appeal_id = int(payload.split(":")[2])
-        except (IndexError, ValueError):
-            return True
-        await ack_callback(event)
-        await start_appeal_repeat(event, appeal_id, max_user_id)
-        return True
+    # appeal:show: / appeal:followup: / appeal:repeat: — действие по
+    # конкретному обращению жителя.
+    if max_user_id is not None:
+        for prefix, handler in _PREFIX_APPEAL_ID:
+            if payload.startswith(prefix):
+                try:
+                    appeal_id = int(payload.split(":")[2])
+                except (IndexError, ValueError):
+                    return True
+                await ack_callback(event)
+                await handler(event, appeal_id, max_user_id)
+                return True
 
     return False
 ```
 
 ### `bot/aemr_bot/handlers/operator_reply.py`
 
-Size: `27513` bytes  
-SHA-256: `9699501afc4708aeb71ec5352649b120635c20c3385e0172bca22d3309f087f5`
+Size: `30141` bytes  
+SHA-256: `0b26b58bad415ee7b2b4dc10636a66861f555ee01f243fed44b837eb38a2fd1d`
 
 ```python
 """Логика ответов операторов и дополнительных сообщений от жителей, вызывается
@@ -8357,96 +8525,35 @@ def _extract_reply_target_mid(event) -> str | None:
     return _mid_from_link(link)
 
 
-async def _deliver_operator_reply(
-    event,
-    *,
-    appeal,
-    operator,
-    text: str,
-    audit_action: str,
-) -> bool:
-    """Общий путь для доставки ответа оператора жителю.
+def _reply_rejection_before_delivery(*, fresh_appeal, appeal_id: int) -> str | None:
+    """Проверки перед доставкой ответа. Возвращает текст отказа для
+    оператора, либо None если доставка разрешена.
 
-    Используется как в handle_operator_reply (механизм ответа свайпом, который
-    зависит от заполнения Message.link клиентом MAX), так и в cmd_reply
-    (явная команда /reply <appeal_id> <text>, работающая на любых клиентах
-    независимо от поддержки свайпов).
+    `fresh_appeal` — обращение, перечитанное свежей сессией прямо перед
+    отправкой. Защита от гонки: житель мог тапнуть «🗑 Стереть» или
+    обращение закрылось, пока оператор печатал ответ. erase_pdn
+    перевешивает appeals на anonymous-user и физически удаляет запись
+    жителя — объект в памяти оператора остался бы устаревшим.
 
-    Возвращает True, если оператору дан окончательный ответ (сообщение доставлено,
-    либо вежливо отклонено из-за длины / невозможности доставки). Возвращает
-    False только при дедупликации, когда target_mid равен None и оператор
-    на самом деле не собирался отвечать.
+    Логика согласия (152-ФЗ ст. 21 ч. 5): после отзыва оператор может
+    дать финальный ответ только по обращению, ПРИНЯТОМУ до отзыва.
+      - is_blocked / first_name == 'Удалено' — жёсткий отказ;
+      - нет согласия и обращение подано ПОСЛЕ revoked_at — отказ;
+      - согласия не было никогда — отказ;
+      - нет согласия, но обращение подано ДО revoked_at — доставка
+        разрешена как финальный ответ.
     """
-    if len(text) > cfg.answer_max_chars:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=texts.ADMIN_REPLY_TOO_LONG.format(
-                limit=cfg.answer_max_chars, actual=len(text)
-            ),
-        )
-        return True
-
-    if _has_recent_successful_reply(operator.id, appeal.id, text):
-        log.info(
-            "operator_reply: дубль за %.1fс отбит (recent-success) — operator=%s appeal=%s",
-            _REPLY_DEDUPE_WINDOW_SEC, operator.id, appeal.id,
-        )
-        return True
-
-    success_key = _reply_success_key(
-        event, operator_id=operator.id, appeal_id=appeal.id, text=text
-    )
-    if await _is_reply_success_recorded(success_key):
-        log.info(
-            "operator_reply: повтор уже успешно обработанного source-update отбит — operator=%s appeal=%s",
-            operator.id, appeal.id,
-        )
-        return True
-
-    # Защита от доставки. После отзыва согласия оператор может отправить
-    # финальный ответ через бот только по обращениям, которые были приняты
-    # до точки отзыва. Новые обращения после отзыва не обрабатываются.
-    #
-    # Жёсткие отказы:
-    # - is_blocked: IT-блокировка за злоупотребления;
-    # - first_name == 'Удалено': житель полностью удалён, max_user_id
-    #   был переподвешен на anonymous-user (либо это сам anonymous);
-    #   персональные данные физически отсутствуют.
-    #
-    # Условный отказ:
-    # - consent_pdn_at IS NULL И обращение подано ПОСЛЕ revoked_at →
-    #   отказ;
-    # - consent_pdn_at IS NULL И обращение подано ДО revoked_at →
-    #   доставка разрешена как финальный ответ по уже принятому обращению.
-    # Перечитываем User свежей сессией непосредственно перед отправкой.
-    # Защита от гонки: житель мог тапнуть «🗑 Стереть» в момент, когда
-    # оператор печатал ответ. erase_pdn перевешивает appeals на
-    # anonymous-user и физически удаляет запись жителя; объект `appeal.user`
-    # в памяти оператора остался устаревшим. Если не перечитать —
-    # отправим ответ постфактум удалённому жителю.
-    async with session_scope() as session:
-        fresh_appeal = await appeals_service.get_by_id(session, appeal.id)
     if fresh_appeal is None or fresh_appeal.user is None:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=(
-                f"⚠️ Не могу доставить ответ по обращению #{appeal.id}: "
-                f"обращение или его автор не найдены."
-            ),
+        return (
+            f"⚠️ Не могу доставить ответ по обращению #{appeal_id}: "
+            f"обращение или его автор не найдены."
         )
-        return True
-
     if fresh_appeal.status == AppealStatus.CLOSED.value:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=(
-                f"⚠️ Не могу доставить ответ по обращению #{appeal.id}: "
-                f"обращение уже закрыто. Если ответ всё же нужен, "
-                f"сначала возобновите обращение через /reopen {appeal.id}."
-            ),
+        return (
+            f"⚠️ Не могу доставить ответ по обращению #{appeal_id}: "
+            f"обращение уже закрыто. Если ответ всё же нужен, "
+            f"сначала возобновите обращение через /reopen {appeal_id}."
         )
-        return True
-
     user = fresh_appeal.user
     hard_forbidden = user.is_blocked or user.first_name == "Удалено"
     revoked_after_appeal = (
@@ -8455,68 +8562,124 @@ async def _deliver_operator_reply(
         and fresh_appeal.created_at is not None
         and fresh_appeal.created_at >= user.consent_revoked_at
     )
-    no_consent_ever = user.consent_pdn_at is None and user.consent_revoked_at is None
+    no_consent_ever = (
+        user.consent_pdn_at is None and user.consent_revoked_at is None
+    )
     if hard_forbidden or revoked_after_appeal or no_consent_ever:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=(
-                f"⚠️ Не могу доставить ответ по обращению #{appeal.id}: "
-                f"у жителя нет действующего согласия или данные уже удалены. "
-                f"Ответ через бот возможен только по обращению, принятому "
-                f"до отзыва согласия."
-            ),
+        return (
+            f"⚠️ Не могу доставить ответ по обращению #{appeal_id}: "
+            f"у жителя нет действующего согласия или данные уже удалены. "
+            f"Ответ через бот возможен только по обращению, принятому "
+            f"до отзыва согласия."
         )
-        return True
+    return None
 
-    target_user_id = user.max_user_id
+
+async def _check_reply_dedupe(
+    event, *, operator, appeal, text: str
+) -> tuple[bool, str | None]:
+    """Проверка дублей доставки ответа. Возвращает
+    ``(is_duplicate, success_key)``.
+
+    `success_key` возвращается даже когда дубль не найден — он нужен
+    вызывающему позже для `_mark_reply_success_recorded`. Порядок
+    проверок сохранён: сначала окно recent-success, затем persisted
+    source-update.
+    """
+    if _has_recent_successful_reply(operator.id, appeal.id, text):
+        log.info(
+            "operator_reply: дубль за %.1fс отбит (recent-success) — "
+            "operator=%s appeal=%s",
+            _REPLY_DEDUPE_WINDOW_SEC, operator.id, appeal.id,
+        )
+        return True, None
+    success_key = _reply_success_key(
+        event, operator_id=operator.id, appeal_id=appeal.id, text=text
+    )
+    if await _is_reply_success_recorded(success_key):
+        log.info(
+            "operator_reply: повтор уже успешно обработанного "
+            "source-update отбит — operator=%s appeal=%s",
+            operator.id, appeal.id,
+        )
+        return True, success_key
+    return False, success_key
+
+
+async def _send_reply_to_citizen(
+    event, *, fresh_appeal, appeal_id: int, text: str
+) -> tuple[bool, str | None]:
+    """Доставить отформатированный ответ жителю. Возвращает
+    ``(delivered_ok, delivered_mid)``.
+
+    delivered_ok=False означает, что доставка не удалась и оператору
+    уже отправлено предупреждение — вызывающему остаётся вернуть True.
+    """
+    target_user_id = fresh_appeal.user.max_user_id
     formatted_text = card_format.citizen_reply(fresh_appeal, text)
     try:
-        # ВАЖНО: доставляем сообщение жителю по user_id (а не chat_id) — мы не
-        # сохраняли chat_id их личного диалога, только их MAX user_id.
+        # ВАЖНО: доставляем по user_id (а не chat_id) — chat_id личного
+        # диалога жителя мы не храним, только MAX user_id.
         sent = await event.bot.send_message(
             user_id=target_user_id,
             text=formatted_text,
             attachments=[keyboards.back_to_menu_keyboard()],
         )
     except Exception as exc:  # noqa: BLE001
-        # Показываем в админ-чате только имя класса исключения — `repr(exc)`
-        # из maxapi часто содержит тело запроса (текст ответа оператора,
-        # целевой user_id), что может осесть в истории админ-группы. Полная
-        # ошибка со стеком пишется в логи бота для диагностики.
+        # В админ-чат — только имя класса исключения: `repr(exc)` из
+        # maxapi часто содержит тело запроса (текст ответа, user_id),
+        # которое осело бы в истории админ-группы. Полный стек — в логах.
         log.exception(
             "operator_reply: delivery failed for appeal=%s user_id=%s",
-            appeal.id, target_user_id,
+            appeal_id, target_user_id,
         )
         await _safe_admin_notice(
             event,
             (
-                f"⚠️ Не удалось доставить ответ жителю по обращению #{appeal.id} "
-                f"({type(exc).__name__}). Возможно, житель удалил диалог или "
-                f"заблокировал бота. Обращение остаётся в работе."
+                f"⚠️ Не удалось доставить ответ жителю по обращению "
+                f"#{appeal_id} ({type(exc).__name__}). Возможно, житель "
+                f"удалил диалог или заблокировал бота. Обращение остаётся "
+                f"в работе."
             ),
         )
-        return True
-    delivered_mid = extract_message_id(sent)
+        return False, None
+    return True, extract_message_id(sent)
 
-    admin_mid_to_refresh = None
-    admin_card_text = None
-    admin_card_keyboard = None
+
+async def _persist_reply_and_card(
+    event,
+    *,
+    appeal_id: int,
+    text: str,
+    operator,
+    audit_action: str,
+    delivered_mid: str | None,
+):
+    """Записать доставленный ответ в БД + audit_log, подготовить данные
+    для обновления админ-карточки.
+
+    Возвращает ``(admin_mid, card_text, card_keyboard)`` при успехе;
+    None — если запись не удалась (админу уже отправлено
+    предупреждение, вызывающему надо вернуть True). card_text/keyboard
+    равны None, если у обращения нет admin_message_id.
+    """
     try:
         async with session_scope() as session:
-            appeal_full = await appeals_service.get_by_id(session, appeal.id)
+            appeal_full = await appeals_service.get_by_id(session, appeal_id)
             if appeal_full is None:
                 log.warning(
-                    "appeal #%s vanished between delivery and DB write", appeal.id
+                    "appeal #%s vanished between delivery and DB write",
+                    appeal_id,
                 )
                 await _safe_admin_notice(
                     event,
                     (
-                        f"⚠️ Ответ по обращению #{appeal.id} доставлен жителю, "
-                        f"но обращение исчезло перед записью в БД. "
+                        f"⚠️ Ответ по обращению #{appeal_id} доставлен "
+                        f"жителю, но обращение исчезло перед записью в БД. "
                         f"Не повторяйте ответ вслепую; проверьте логи."
                     ),
                 )
-                return True
+                return None
             await appeals_service.add_operator_message(
                 session,
                 appeal=appeal_full,
@@ -8528,33 +8691,112 @@ async def _deliver_operator_reply(
                 session,
                 operator_max_user_id=operator.max_user_id,
                 action=audit_action,
-                target=f"appeal #{appeal.id}",
+                target=f"appeal #{appeal_id}",
                 details={"chars": len(text)},
             )
-            admin_mid_to_refresh = getattr(appeal_full, "admin_message_id", None)
+            admin_mid_to_refresh = getattr(
+                appeal_full, "admin_message_id", None
+            )
+            admin_card_text = None
+            admin_card_keyboard = None
             if admin_mid_to_refresh and appeal_full.user is not None:
-                admin_card_text = card_format.admin_card(appeal_full, appeal_full.user)
+                admin_card_text = card_format.admin_card(
+                    appeal_full, appeal_full.user
+                )
                 admin_card_keyboard = keyboards.appeal_admin_actions(
                     appeal_full.id,
                     appeal_full.status,
                     is_it=True,
                     user_blocked=bool(appeal_full.user.is_blocked),
-                    closed_due_to_revoke=bool(appeal_full.closed_due_to_revoke),
+                    closed_due_to_revoke=bool(
+                        appeal_full.closed_due_to_revoke
+                    ),
                 )
+            return admin_mid_to_refresh, admin_card_text, admin_card_keyboard
     except Exception:
         log.exception(
-            "operator_reply: delivered but local DB/audit write failed — appeal=%s delivered_mid=%s",
-            appeal.id, delivered_mid,
+            "operator_reply: delivered but local DB/audit write failed — "
+            "appeal=%s delivered_mid=%s",
+            appeal_id, delivered_mid,
         )
         await _safe_admin_notice(
             event,
             (
-                f"⚠️ Ответ по обращению #{appeal.id} доставлен жителю, "
+                f"⚠️ Ответ по обращению #{appeal_id} доставлен жителю, "
                 f"но запись в базе или audit_log не завершилась. "
                 f"Не повторяйте ответ вслепую; проверьте логи и состояние БД."
             ),
         )
+        return None
+
+
+async def _deliver_operator_reply(
+    event,
+    *,
+    appeal,
+    operator,
+    text: str,
+    audit_action: str,
+) -> bool:
+    """Общий путь доставки ответа оператора жителю.
+
+    Используется и в handle_operator_reply (ответ свайпом, зависит от
+    Message.link), и в cmd_reply (команда /reply <appeal_id> <text>,
+    работает на любых клиентах). Шаги: лимит длины → дедуп → перечитка
+    обращения и guard'ы → доставка жителю → запись в БД/audit → отметка
+    успеха, обновление админ-карточки, подтверждение оператору. Тяжёлые
+    шаги вынесены в `_reply_rejection_before_delivery` /
+    `_send_reply_to_citizen` / `_persist_reply_and_card`.
+
+    Возвращает True, если оператору дан окончательный ответ (доставлено
+    либо вежливо отклонено). False — только при дедупликации, когда
+    оператор фактически не собирался отвечать.
+    """
+    if len(text) > cfg.answer_max_chars:
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=texts.ADMIN_REPLY_TOO_LONG.format(
+                limit=cfg.answer_max_chars, actual=len(text)
+            ),
+        )
         return True
+
+    is_dupe, success_key = await _check_reply_dedupe(
+        event, operator=operator, appeal=appeal, text=text
+    )
+    if is_dupe:
+        return True
+
+    # Перечитываем обращение свежей сессией прямо перед отправкой —
+    # защита от гонки с erase_pdn / закрытием, пока оператор печатал.
+    async with session_scope() as session:
+        fresh_appeal = await appeals_service.get_by_id(session, appeal.id)
+    rejection = _reply_rejection_before_delivery(
+        fresh_appeal=fresh_appeal, appeal_id=appeal.id
+    )
+    if rejection is not None:
+        await event.bot.send_message(
+            chat_id=get_chat_id(event), text=rejection
+        )
+        return True
+
+    delivered_ok, delivered_mid = await _send_reply_to_citizen(
+        event, fresh_appeal=fresh_appeal, appeal_id=appeal.id, text=text
+    )
+    if not delivered_ok:
+        return True
+
+    persisted = await _persist_reply_and_card(
+        event,
+        appeal_id=appeal.id,
+        text=text,
+        operator=operator,
+        audit_action=audit_action,
+        delivered_mid=delivered_mid,
+    )
+    if persisted is None:
+        return True
+    admin_mid_to_refresh, admin_card_text, admin_card_keyboard = persisted
 
     await _mark_reply_success_recorded(success_key)
     _remember_successful_reply(operator.id, appeal.id, text)
@@ -8567,7 +8809,9 @@ async def _deliver_operator_reply(
                 attachments=[admin_card_keyboard],
             )
         except Exception:
-            log.exception("operator_reply: failed to refresh admin card #%s", appeal.id)
+            log.exception(
+                "operator_reply: failed to refresh admin card #%s", appeal.id
+            )
 
     await event.bot.send_message(
         chat_id=get_chat_id(event),
@@ -8723,8 +8967,8 @@ async def handle_command_reply(event, appeal_id: int, text: str) -> None:
 
 ### `bot/aemr_bot/handlers/start.py`
 
-Size: `16686` bytes  
-SHA-256: `392c56786169123bf5951de069c84b3db9115a315087f6503ec2f6b3111e592b`
+Size: `16556` bytes  
+SHA-256: `f3e6ecbf11cec405417d07d2e5fa70b7f710a641f73069c6f178153b335d0a32`
 
 ```python
 import logging
@@ -8734,6 +8978,7 @@ from maxapi.types import BotStarted, Command, MessageCreated
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._common import current_user
 from aemr_bot.services import admin_events
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
@@ -8764,8 +9009,8 @@ async def _ensure_user(event):
     first_name = get_first_name(event)
     if max_user_id is None:
         return None
-    async with session_scope() as session:
-        return await users_service.get_or_create(session, max_user_id=max_user_id, first_name=first_name)
+    async with current_user(max_user_id, first_name=first_name) as (_, user):
+        return user
 
 
 async def _build_main_menu(max_user_id: int | None = None):
@@ -8796,8 +9041,7 @@ async def _reset_funnel_if_stuck(max_user_id: int | None) -> None:
         return
     from aemr_bot.db.models import DialogState
 
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         if user.dialog_state and user.dialog_state != DialogState.IDLE.value:
             await users_service.reset_state(session, max_user_id)
 
@@ -8934,8 +9178,7 @@ async def cmd_export(event):
     max_user_id = get_user_id(event)
     if max_user_id is None:
         return
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         appeals = await appeals_service.list_for_user(session, user.id, limit=500)
         appeals_payload = []
         for ap in appeals:
@@ -11594,8 +11837,8 @@ def appeal_list_label(appeal: Appeal) -> str:
 
 ### `bot/aemr_bot/services/cron.py`
 
-Size: `31012` bytes  
-SHA-256: `eb79827d3246826085f16f5a86bc1defc818e9fd05c2ff78c411cd439bb570bc`
+Size: `30703` bytes  
+SHA-256: `544b2cb71753a3541f5f7062648111f0c6f296b21a767bee52aff8d98e36efa9`
 
 ```python
 from __future__ import annotations
@@ -12099,157 +12342,136 @@ async def _job_working_hours_overdue_reminder(bot) -> None:
 def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOScheduler:
     """Собрать APScheduler со всеми job'ами бота.
 
-    Все jobs вынесены на module-level (см. _job_* выше); здесь только
-    регистрация в scheduler через functools.partial. bot принимаем
+    Все jobs вынесены на module-level (см. _job_* выше); здесь —
+    декларативная таблица `(func, trigger, name)` и единый цикл
+    регистрации. Раньше было 14 копипастных `add_job(...)` с
+    идентичными `max_instances=1, coalesce=True, misfire_grace_time`
+    — теперь общие параметры заданы один раз в цикле. bot принимаем
     явным параметром, чтобы services не импортировал точку входа
     `main.bot` лазево.
     """
     scheduler = AsyncIOScheduler(timezone=TZ)
+    pulse = functools.partial(_job_pulse, send_admin_text)
 
-    # Еженедельный бэкап
-    scheduler.add_job(
-        functools.partial(_job_backup_with_alert, send_admin_text),
-        CronTrigger(
-            day_of_week=settings.backup_day_of_week,
-            hour=settings.backup_hour,
-            minute=settings.backup_minute,
-            timezone=TZ,
+    # (func, trigger, name). Общие max_instances=1 / coalesce=True /
+    # misfire_grace_time навешиваются циклом регистрации ниже —
+    # единообразно, без копипасты.
+    jobs: list[tuple] = [
+        # Еженедельный бэкап
+        (
+            functools.partial(_job_backup_with_alert, send_admin_text),
+            CronTrigger(
+                day_of_week=settings.backup_day_of_week,
+                hour=settings.backup_hour,
+                minute=settings.backup_minute,
+                timezone=TZ,
+            ),
+            "db-backup",
         ),
-        name="db-backup",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # Ежедневная очистка events (idempotency-ключи)
-    scheduler.add_job(
-        _job_events_retention,
-        CronTrigger(hour=4, minute=0, timezone=TZ),
-        name="events-retention",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # Selfcheck heartbeat
-    scheduler.add_job(
-        functools.partial(_job_selfcheck, send_admin_text),
-        CronTrigger(minute=f"*/{settings.healthcheck_interval_minutes}", timezone=TZ),
-        name="health-selfcheck",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # Месячный отчёт
-    scheduler.add_job(
-        functools.partial(_job_monthly_report, send_admin_document),
-        CronTrigger(day=1, hour=9, minute=0, timezone=TZ),
-        name="monthly-stats",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # Startup pulse — однократно через 5 секунд после старта.
-    # Закрывает gap «pulse 21:05 не пришёл» при docker compose up --build:
-    # APScheduler не догоняет cron-триггеры, пропущенные пока процесс
-    # был остановлен. См. docstring _job_startup_pulse.
-    scheduler.add_job(
-        functools.partial(_job_startup_pulse, send_admin_text),
-        DateTrigger(
-            run_date=datetime.now(TZ) + timedelta(seconds=5),
-            timezone=TZ,
+        # Ежедневная очистка events (idempotency-ключи)
+        (
+            _job_events_retention,
+            CronTrigger(hour=4, minute=0, timezone=TZ),
+            "events-retention",
         ),
-        name="startup-pulse",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # Pulse — три расписания. См. docstring _job_pulse.
-    pulse_partial = functools.partial(_job_pulse, send_admin_text)
-    scheduler.add_job(
-        pulse_partial,
+        # Selfcheck heartbeat
+        (
+            functools.partial(_job_selfcheck, send_admin_text),
+            CronTrigger(
+                minute=f"*/{settings.healthcheck_interval_minutes}", timezone=TZ
+            ),
+            "health-selfcheck",
+        ),
+        # Месячный отчёт
+        (
+            functools.partial(_job_monthly_report, send_admin_document),
+            CronTrigger(day=1, hour=9, minute=0, timezone=TZ),
+            "monthly-stats",
+        ),
+        # Startup pulse — однократно через 5 секунд после старта.
+        # Закрывает gap «pulse 21:05 не пришёл» при docker compose up
+        # --build: APScheduler не догоняет cron-триггеры, пропущенные
+        # пока процесс был остановлен. См. docstring _job_startup_pulse.
+        (
+            functools.partial(_job_startup_pulse, send_admin_text),
+            DateTrigger(
+                run_date=datetime.now(TZ) + timedelta(seconds=5), timezone=TZ
+            ),
+            "startup-pulse",
+        ),
+        # Pulse — три расписания. См. docstring _job_pulse.
         # Пн–сб вечером 18:00–21:59 раньше выпадали из расписания:
-        # workhours заканчивался в 17:59, а offhours начинался только в 22:00.
-        # Из-за этого пульсы могли пропадать на четыре часа без реального сбоя.
-        CronTrigger(day_of_week="mon-sat", hour="0-8,18-23", minute=5, timezone=TZ),
-        name="pulse-offhours",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-    scheduler.add_job(
-        pulse_partial,
-        CronTrigger(day_of_week="sun", hour="*", minute=5, timezone=TZ),
-        name="pulse-sunday",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-    scheduler.add_job(
-        pulse_partial,
-        CronTrigger(day_of_week="mon-sat", hour="9-17", minute="0,30", timezone=TZ),
-        name="pulse-workhours",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
+        # workhours кончался в 17:59, offhours начинался в 22:00 —
+        # пульсы могли пропадать на четыре часа без реального сбоя.
+        (
+            pulse,
+            CronTrigger(
+                day_of_week="mon-sat", hour="0-8,18-23", minute=5, timezone=TZ
+            ),
+            "pulse-offhours",
+        ),
+        (
+            pulse,
+            CronTrigger(day_of_week="sun", hour="*", minute=5, timezone=TZ),
+            "pulse-sunday",
+        ),
+        (
+            pulse,
+            CronTrigger(
+                day_of_week="mon-sat", hour="9-17", minute="0,30", timezone=TZ
+            ),
+            "pulse-workhours",
+        ),
+        # 5-летняя архивация обращений
+        (
+            functools.partial(_job_appeals_5y_retention, send_admin_text),
+            CronTrigger(hour=4, minute=45, timezone=TZ),
+            "appeals-5y-retention",
+        ),
+        # PDn-retention (152-ФЗ 30 дней после revoke)
+        (
+            functools.partial(_job_pdn_retention_check, send_admin_text),
+            CronTrigger(hour=4, minute=30, timezone=TZ),
+            "pdn-retention",
+        ),
+        # Funnel watchdog: сброс зависших воронок
+        (
+            functools.partial(_job_funnel_watchdog, bot),
+            CronTrigger(minute=15, timezone=TZ),
+            "funnel-watchdog",
+        ),
+        # Напоминалки в рабочее время Камчатки
+        (
+            functools.partial(_job_working_hours_open_reminder, bot),
+            CronTrigger(
+                day_of_week="mon-sat", hour="9-17", minute=10, timezone=TZ
+            ),
+            "open-reminder-workhours",
+        ),
+        (
+            functools.partial(_job_working_hours_overdue_reminder, bot),
+            CronTrigger(
+                day_of_week="mon-sat", hour="9-17", minute=40, timezone=TZ
+            ),
+            "overdue-reminder-workhours",
+        ),
+    ]
 
-    # 5-летняя архивация обращений
-    scheduler.add_job(
-        functools.partial(_job_appeals_5y_retention, send_admin_text),
-        CronTrigger(hour=4, minute=45, timezone=TZ),
-        name="appeals-5y-retention",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # PDn-retention (152-ФЗ 30 дней после revoke)
-    scheduler.add_job(
-        functools.partial(_job_pdn_retention_check, send_admin_text),
-        CronTrigger(hour=4, minute=30, timezone=TZ),
-        name="pdn-retention",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # Funnel watchdog: сброс зависших воронок
-    scheduler.add_job(
-        functools.partial(_job_funnel_watchdog, bot),
-        CronTrigger(minute=15, timezone=TZ),
-        name="funnel-watchdog",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # Напоминалки в рабочее время Камчатки
-    scheduler.add_job(
-        functools.partial(_job_working_hours_open_reminder, bot),
-        CronTrigger(day_of_week="mon-sat", hour="9-17", minute=10, timezone=TZ),
-        name="open-reminder-workhours",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-    scheduler.add_job(
-        functools.partial(_job_working_hours_overdue_reminder, bot),
-        CronTrigger(day_of_week="mon-sat", hour="9-17", minute=40, timezone=TZ),
-        name="overdue-reminder-workhours",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
+    # Внешний healthcheck-ping — только если URL задан в конфиге.
     if settings.healthcheck_url:
-        scheduler.add_job(
+        jobs.append((
             _ping_healthcheck,
-            CronTrigger(minute=f"*/{settings.healthcheck_interval_minutes}", timezone=TZ),
-            name="healthcheck-ping",
+            CronTrigger(
+                minute=f"*/{settings.healthcheck_interval_minutes}", timezone=TZ
+            ),
+            "healthcheck-ping",
+        ))
+
+    for func, trigger, name in jobs:
+        scheduler.add_job(
+            func,
+            trigger,
+            name=name,
             max_instances=1,
             coalesce=True,
             misfire_grace_time=_MISFIRE_GRACE_SEC,
@@ -16246,8 +16468,8 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ### `bot/tests/_helpers.py`
 
-Size: `4920` bytes  
-SHA-256: `f8c33b4d681f8e08debe4760157933f49cad2a7f4dbe80d90c2e14d304fc7491`
+Size: `5713` bytes  
+SHA-256: `760a206b502eed6113f46fcb09062c17fbb0d3c95b948f391f2235bf2d605c16`
 
 ```python
 """Общие фабрики тестовых событий и session-scope.
@@ -16361,6 +16583,25 @@ async def fake_session_scope():
     """Заглушка `session_scope()` — отдаёт MagicMock вместо реальной
     сессии. Для handler-тестов, где БД-вызовы и так замоканы."""
     yield MagicMock()
+
+
+def fake_current_user(user, *, session=None):
+    """Заглушка `handlers._common.current_user` для handler-тестов.
+
+    Возвращает CM-фабрику, которая yield'ит пару ``(session, user)`` —
+    ту же форму, что и боевой `current_user`. Заменяет связку из двух
+    патчей (`session_scope` + `users_service.get_or_create`) одним.
+
+    `session` по умолчанию — MagicMock; передайте AsyncMock, если тест
+    проверяет прямые вызовы `session.execute` / `session.add`.
+    """
+    sess = MagicMock() if session is None else session
+
+    @asynccontextmanager
+    async def _cm(max_user_id, *, first_name=None):
+        yield sess, user
+
+    return _cm
 ```
 
 ### `bot/tests/conftest.py`
@@ -19607,8 +19848,8 @@ class TestCountByType:
 
 ### `bot/tests/test_broadcast_handlers.py`
 
-Size: `24328` bytes  
-SHA-256: `a9f947f26812af9327120d4b0c3881a273a9bf537c58693a9e1353f444fa1ba9`
+Size: `31789` bytes  
+SHA-256: `79aa9b1cb5e8bb34967aaf61801f5f6d87b7902636277b51a895809d85c18630`
 
 ```python
 """Тесты для handlers/broadcast — wizard рассылок и helpers.
@@ -20141,6 +20382,184 @@ class TestRunBroadcastImpl:
         assert kwargs["attachments"]
         bot.send_message.assert_not_called()
         assert mark_finished.call_args.kwargs["status"] == BroadcastStatus.DONE
+
+
+class TestComputeProgressStep:
+    """_compute_progress_step — адаптивный шаг прогресс-карточки."""
+
+    def test_short_broadcast_shrinks_step_below_default(self) -> None:
+        from aemr_bot.config import settings as cfg
+        from aemr_bot.handlers.broadcast import _compute_progress_step
+
+        # 5 получателей × 1 сек → estimated 5 сек → step = 0.5 сек,
+        # это меньше дефолтного BROADCAST_PROGRESS_UPDATE_SEC.
+        step = _compute_progress_step(total=5, rate_delay=1.0)
+        assert step < cfg.broadcast_progress_update_sec
+        assert step == pytest.approx(0.5)
+
+    def test_long_broadcast_caps_step_at_default(self) -> None:
+        from aemr_bot.config import settings as cfg
+        from aemr_bot.handlers.broadcast import _compute_progress_step
+
+        # 10000 получателей → estimated/10 огромен → шаг упирается
+        # в дефолтный потолок.
+        step = _compute_progress_step(total=10_000, rate_delay=1.0)
+        assert step == cfg.broadcast_progress_update_sec
+
+    def test_zero_total_does_not_divide_by_zero(self) -> None:
+        from aemr_bot.handlers.broadcast import _compute_progress_step
+
+        step = _compute_progress_step(total=0, rate_delay=1.0)
+        assert step >= 0
+
+
+class TestBuildFinalText:
+    """_build_final_text — итоговый текст карточки рассылки."""
+
+    def test_cancelled_uses_cancelled_template(self) -> None:
+        from aemr_bot.handlers.broadcast import _build_final_text
+
+        text = _build_final_text(
+            broadcast_id=7, total=100, delivered=40, failed=0, cancelled=True
+        )
+        assert "7" in text
+        assert "40" in text
+
+    def test_done_without_failures_has_no_failed_line(self) -> None:
+        from aemr_bot import texts
+        from aemr_bot.handlers.broadcast import _build_final_text
+
+        text = _build_final_text(
+            broadcast_id=7, total=100, delivered=100, failed=0, cancelled=False
+        )
+        # failed_line пустой — подстрока про сбои не появляется.
+        failed_fragment = texts.OP_BROADCAST_FAILED_LINE.format(failed=1)[:10]
+        assert failed_fragment not in text
+
+    def test_done_with_failures_includes_failed_count(self) -> None:
+        from aemr_bot.handlers.broadcast import _build_final_text
+
+        text = _build_final_text(
+            broadcast_id=7, total=100, delivered=97, failed=3, cancelled=False
+        )
+        assert "3" in text
+
+
+class TestSendFinalSummary:
+    """_send_final_summary — публикация итога: edit карточки либо
+    fallback-сообщение."""
+
+    @pytest.mark.asyncio
+    async def test_edits_card_when_admin_mid_present(self) -> None:
+        from aemr_bot.handlers.broadcast import _send_final_summary
+
+        bot = MagicMock()
+        bot.edit_message = AsyncMock()
+        bot.send_message = AsyncMock()
+        await _send_final_summary(
+            bot, broadcast_id=7, total=10, delivered=10,
+            failed=0, cancelled=False, admin_mid="m-1",
+        )
+        bot.edit_message.assert_awaited_once()
+        bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_sends_new_message_when_no_admin_mid(self) -> None:
+        from aemr_bot.handlers.broadcast import _send_final_summary
+
+        bot = MagicMock()
+        bot.edit_message = AsyncMock()
+        bot.send_message = AsyncMock()
+        await _send_final_summary(
+            bot, broadcast_id=7, total=10, delivered=10,
+            failed=0, cancelled=False, admin_mid=None,
+        )
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_falls_back_to_send_when_edit_raises(self) -> None:
+        from aemr_bot.handlers.broadcast import _send_final_summary
+
+        bot = MagicMock()
+        bot.edit_message = AsyncMock(side_effect=RuntimeError("stale mid"))
+        bot.send_message = AsyncMock()
+        await _send_final_summary(
+            bot, broadcast_id=7, total=10, delivered=5,
+            failed=0, cancelled=True, admin_mid="m-1",
+        )
+        bot.edit_message.assert_awaited_once()
+        bot.send_message.assert_awaited_once()
+
+
+class TestRunSendLoop:
+    """_run_send_loop — цикл отправки, возвращает (delivered, failed,
+    cancelled)."""
+
+    @pytest.mark.asyncio
+    async def test_delivers_to_all_targets_and_counts(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        bot = MagicMock()
+        bot.edit_message = AsyncMock()
+        # (user_db_id, max_user_id) — _send_one вернёт None (успех).
+        targets = [(1, 101), (2, 102), (3, 103)]
+        with patch("aemr_bot.handlers.broadcast._send_one",
+                   AsyncMock(return_value=None)) as send_one, \
+             patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.get_status",
+                   AsyncMock(return_value="running")), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.update_progress",
+                   AsyncMock()):
+            delivered, failed, cancelled = await broadcast._run_send_loop(
+                bot,
+                broadcast_id=7,
+                body="текст",
+                total=3,
+                targets=targets,
+                admin_mid="m-1",
+                rate_delay=0,
+                progress_step_sec=0,
+            )
+        assert (delivered, failed, cancelled) == (3, 0, False)
+        assert send_one.await_count == 3
+
+    @pytest.mark.asyncio
+    async def test_cancelled_status_breaks_loop_early(self) -> None:
+        from aemr_bot.handlers import broadcast
+        from aemr_bot.db.models import BroadcastStatus
+
+        bot = MagicMock()
+        bot.edit_message = AsyncMock()
+        targets = [(1, 101), (2, 102), (3, 103)]
+        # get_status сразу отдаёт CANCELLED → цикл рвётся после 1-го.
+        with patch("aemr_bot.handlers.broadcast._send_one",
+                   AsyncMock(return_value=None)) as send_one, \
+             patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.get_status",
+                   AsyncMock(return_value=BroadcastStatus.CANCELLED.value)), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.update_progress",
+                   AsyncMock()):
+            delivered, failed, cancelled = await broadcast._run_send_loop(
+                bot,
+                broadcast_id=7,
+                body="текст",
+                total=3,
+                targets=targets,
+                admin_mid="m-1",
+                rate_delay=0,
+                progress_step_sec=0,
+            )
+        assert cancelled is True
+        # Прервались на первом получателе — остальные не тронуты.
+        assert send_one.await_count == 1
+        assert delivered == 1
 
 
 class TestFormatDt:
@@ -23183,6 +23602,94 @@ class TestAdminCommandsExports:
         assert callable(admin_commands.run_open_tickets)
 ```
 
+### `bot/tests/test_handlers_common.py`
+
+Size: `3572` bytes  
+SHA-256: `2e7847d083be8ac4d321e9286205910b3a9028b9f7960dfbebe5fd4bd003d516`
+
+```python
+"""Тесты `handlers/_common.py` — общих хелперов хендлеров.
+
+`current_user` — контекст-менеджер, свернувший ~30 повторов
+`session_scope() + users_service.get_or_create(...)`. Тесты фиксируют
+его контракт: отдаёт пару `(session, user)`, прокидывает `max_user_id`
+и `first_name` в `get_or_create`, наследует транзакционные границы
+`session_scope` (commit на выходе, rollback на исключении).
+"""
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
+pytest.importorskip("maxapi", reason="_common тянет handlers-цепочку")
+
+from aemr_bot.handlers import _common  # noqa: E402
+
+
+@asynccontextmanager
+async def _fake_scope(session):
+    """session_scope-подобный CM, отдающий заранее заданную сессию."""
+    yield session
+
+
+class TestCurrentUser:
+    @pytest.mark.asyncio
+    async def test_yields_session_and_user_pair(self) -> None:
+        session = MagicMock(name="session")
+        user = MagicMock(name="user")
+        get_or_create = AsyncMock(return_value=user)
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(_common, "session_scope", lambda: _fake_scope(session))
+            mp.setattr(_common.users_service, "get_or_create", get_or_create)
+            async with _common.current_user(42) as (got_session, got_user):
+                assert got_session is session
+                assert got_user is user
+
+    @pytest.mark.asyncio
+    async def test_passes_max_user_id_and_first_name(self) -> None:
+        session = MagicMock()
+        get_or_create = AsyncMock(return_value=MagicMock())
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(_common, "session_scope", lambda: _fake_scope(session))
+            mp.setattr(_common.users_service, "get_or_create", get_or_create)
+            async with _common.current_user(7, first_name="Аня"):
+                pass
+        get_or_create.assert_awaited_once_with(
+            session, max_user_id=7, first_name="Аня"
+        )
+
+    @pytest.mark.asyncio
+    async def test_first_name_defaults_to_none(self) -> None:
+        session = MagicMock()
+        get_or_create = AsyncMock(return_value=MagicMock())
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(_common, "session_scope", lambda: _fake_scope(session))
+            mp.setattr(_common.users_service, "get_or_create", get_or_create)
+            async with _common.current_user(7):
+                pass
+        get_or_create.assert_awaited_once_with(
+            session, max_user_id=7, first_name=None
+        )
+
+    @pytest.mark.asyncio
+    async def test_exception_inside_block_propagates(self) -> None:
+        # Тело `async with` бросило — исключение должно пройти насквозь,
+        # как и у голого session_scope (там оно триггерит rollback).
+        session = MagicMock()
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(_common, "session_scope", lambda: _fake_scope(session))
+            mp.setattr(
+                _common.users_service,
+                "get_or_create",
+                AsyncMock(return_value=MagicMock()),
+            )
+            with pytest.raises(RuntimeError, match="boom"):
+                async with _common.current_user(7):
+                    raise RuntimeError("boom")
+```
+
 ### `bot/tests/test_handlers_funnel.py`
 
 Size: `9458` bytes  
@@ -23409,8 +23916,8 @@ class TestOnAwaitingName:
 
 ### `bot/tests/test_handlers_menu.py`
 
-Size: `28171` bytes  
-SHA-256: `98e70adcdc9a262708de5d95c9650a3a50e2cbd75bbdfefec41d2352a1193e98`
+Size: `26300` bytes  
+SHA-256: `e3a2d7c75943c67daf534f180cea178976fbebaaefc905641fbd56924bd00eea`
 
 ```python
 """Тесты handlers/menu.py — навигация по меню жителя.
@@ -23431,12 +23938,12 @@ handlers/__init__.py делает `from maxapi import Dispatcher`, без maxapi
 """
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_current_user
 from tests._helpers import fake_session_scope as _fake_session_scope
 from tests._helpers import make_event
 
@@ -23468,9 +23975,7 @@ class TestOpenMainMenu:
 
         event = _make_event()
         user = SimpleNamespace(is_blocked=True)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.settings_store.get",
                    AsyncMock(return_value="https://reception")), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
@@ -23486,9 +23991,7 @@ class TestOpenMainMenu:
 
         event = _make_event()
         user = SimpleNamespace(is_blocked=False)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=True)):
             await menu.open_main_menu(event)
@@ -23502,9 +24005,7 @@ class TestOpenMyAppeals:
 
         event = _make_event()
         user = SimpleNamespace(id=1, is_blocked=False)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.appeals_service.count_for_user",
                    AsyncMock(return_value=0)):
             await menu.open_my_appeals(event, max_user_id=42)
@@ -23524,9 +24025,7 @@ class TestOpenMyAppeals:
             ap = MagicMock()
             ap.id = i
             appeals_mock.append(ap)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.appeals_service.count_for_user",
                    AsyncMock(return_value=12)), \
              patch("aemr_bot.handlers.menu.appeals_service.list_for_user",
@@ -23686,9 +24185,7 @@ class TestSubscribeFlow:
         user = SimpleNamespace(
             is_blocked=True, consent_broadcast_at=None
         )
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)):
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)):
             await menu.do_subscribe(event, max_user_id=42)
         text = event.bot.send_message.call_args.kwargs.get("text", "")
         assert "заблокирован" in text.lower()
@@ -23699,9 +24196,7 @@ class TestSubscribeFlow:
 
         event = _make_event()
         user = SimpleNamespace(is_blocked=False, consent_broadcast_at=None)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)):
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)):
             await menu.do_subscribe(event, max_user_id=42)
         from aemr_bot import texts
         text = event.bot.send_message.call_args.kwargs.get("text", "")
@@ -23717,9 +24212,7 @@ class TestSubscribeFlow:
         user = SimpleNamespace(
             is_blocked=False, consent_broadcast_at=datetime.now(timezone.utc)
         )
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=True)):
             await menu.do_subscribe(event, max_user_id=42)
@@ -23739,9 +24232,7 @@ class TestSubscribeFlow:
         )
         set_sub = AsyncMock()
         notify = AsyncMock()
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=False)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.set_subscription",
@@ -23761,13 +24252,8 @@ class TestSubscribeFlow:
         user = SimpleNamespace(is_blocked=False)
         notify = AsyncMock()
 
-        @asynccontextmanager
-        async def fake_scope():
-            yield session
-
-        with patch("aemr_bot.handlers.menu.session_scope", fake_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user",
+                   fake_current_user(user, session=session)), \
              patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
              patch("aemr_bot.handlers.menu.admin_events.notify_broadcast_subscribed",
                    notify):
@@ -23784,9 +24270,7 @@ class TestUnsubscribe:
 
         event = _make_event()
         user = SimpleNamespace(is_blocked=True)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.set_subscription",
                    AsyncMock()):
             await menu.do_unsubscribe(event, max_user_id=42)
@@ -23800,9 +24284,7 @@ class TestUnsubscribe:
 
         event = _make_event()
         user = SimpleNamespace(is_blocked=False)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=False)):
             await menu.do_unsubscribe(event, max_user_id=42)
@@ -23818,9 +24300,7 @@ class TestUnsubscribe:
         user = SimpleNamespace(is_blocked=False)
         set_sub = AsyncMock()
         notify = AsyncMock()
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.set_subscription",
@@ -23896,9 +24376,7 @@ class TestConsentAndEraseNotifications:
         event = _make_event()
         user = SimpleNamespace(id=1)
         notify = AsyncMock()
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.services.appeals.list_unanswered",
                    AsyncMock(return_value=[])), \
              patch("aemr_bot.handlers.menu.users_service.revoke_consent",
@@ -23933,9 +24411,7 @@ class TestConsentAndEraseNotifications:
         )
         notify = AsyncMock()
         repost = AsyncMock()
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.services.appeals.list_unanswered",
                    AsyncMock(return_value=[appeal])), \
              patch("aemr_bot.handlers.menu.users_service.revoke_consent",
@@ -23959,9 +24435,7 @@ class TestConsentAndEraseNotifications:
         user = SimpleNamespace(id=1)
         appeal = SimpleNamespace(id=9, user_id=1)
         notify = AsyncMock()
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.services.appeals.list_unanswered",
                    AsyncMock(return_value=[appeal])), \
              patch("aemr_bot.handlers.menu.users_service.erase_pdn", AsyncMock()), \
@@ -24069,8 +24543,8 @@ class TestSimpleScreens:
 
 ### `bot/tests/test_handlers_menu_extra.py`
 
-Size: `19882` bytes  
-SHA-256: `cb9710e8ea0165a51f4eccb22ee3d7d3d3af4461923b7b374e3e4d2fec29e060`
+Size: `23371` bytes  
+SHA-256: `82da90254e961641244c1455dccdaa87ea414032f491e39e67fd8c4407168f81`
 
 ```python
 """Расширенные тесты handlers/menu.py — экраны согласия, прощания,
@@ -24085,6 +24559,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_current_user
 from tests._helpers import fake_session_scope as _fake_session_scope
 from tests._helpers import make_event
 
@@ -24214,9 +24689,7 @@ class TestAskForgetConfirm:
         user = SimpleNamespace(id=1)
         with patch.object(keyboards, "forget_confirm_keyboard",
                           MagicMock(return_value=None)), \
-             patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.services.appeals.list_unanswered",
                    AsyncMock(return_value=[])):
             await menu.ask_forget_confirm(event)
@@ -24237,9 +24710,7 @@ class TestAskForgetConfirm:
         )
         with patch.object(keyboards, "forget_confirm_keyboard",
                           MagicMock(return_value=None)), \
-             patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.services.appeals.list_unanswered",
                    AsyncMock(return_value=[ap])):
             await menu.ask_forget_confirm(event)
@@ -24542,12 +25013,96 @@ class TestHandleCallback:
         event = _make_event()
         handled = await menu.handle_callback(event, "totally:unknown:payload", max_user_id=42)
         assert handled is False
+
+    # --- max_user_id=None: характеризационные тесты граничных веток ---
+    # Исторически handle_callback по-разному ведёт себя без жителя:
+    # no-user маршруты работают; menu:my_appeals «съедает» тап (True);
+    # остальные user-маршруты и prefix-маршруты проваливаются (False).
+    # Эти тесты фиксируют расхождение, чтобы рефактор его не стёр.
+
+    @pytest.mark.asyncio
+    async def test_no_user_route_works_without_max_user_id(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.menu.open_main_menu", AsyncMock()) as fn:
+            handled = await menu.handle_callback(event, "menu:main", max_user_id=None)
+        assert handled is True
+        fn.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_my_appeals_consumed_without_max_user_id(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.menu.open_my_appeals", AsyncMock()) as fn:
+            handled = await menu.handle_callback(
+                event, "menu:my_appeals", max_user_id=None
+            )
+        # «Съедает» тап (True), но обработчик не зовёт.
+        assert handled is True
+        fn.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_user_required_route_falls_through_without_max_user_id(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.menu.do_forget", AsyncMock()) as fn:
+            handled = await menu.handle_callback(
+                event, "settings:forget_yes", max_user_id=None
+            )
+        # User-маршрут без жителя — управление проваливается дальше.
+        assert handled is False
+        fn.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_prefix_route_falls_through_without_max_user_id(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.menu.show_appeal", AsyncMock()) as fn:
+            handled = await menu.handle_callback(
+                event, "appeal:show:5", max_user_id=None
+            )
+        assert handled is False
+        fn.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_broadcast_unsubscribe_routed_without_dispatcher_ack(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.menu.handle_broadcast_unsubscribe",
+                   AsyncMock()) as fn, \
+             patch("aemr_bot.handlers.menu.ack_callback", AsyncMock()) as ack:
+            handled = await menu.handle_callback(
+                event, "broadcast:unsubscribe", max_user_id=42
+            )
+        assert handled is True
+        fn.assert_called_once()
+        # ack делегирован внутрь handle_broadcast_unsubscribe — диспетчер
+        # сам не акает.
+        ack.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_appeal_show_prefix_parses_id(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.menu.show_appeal", AsyncMock()) as fn:
+            handled = await menu.handle_callback(
+                event, "appeal:show:77", max_user_id=42
+            )
+        assert handled is True
+        fn.assert_called_once()
+        assert fn.call_args.args[1] == 77
 ```
 
 ### `bot/tests/test_handlers_operator_reply.py`
 
-Size: `23862` bytes  
-SHA-256: `c96fdf2f1d5e02a80b9ca9660d4f6ca43343534ba9ce9de9e5dfc022fc9a7492`
+Size: `28002` bytes  
+SHA-256: `3b3cf8dbabefe3d1cf46afe51a1f8314a2dff8612bd18d37152c87e25ac8a214`
 
 ```python
 """Тесты handlers/operator_reply.py — ответы операторов и intent dedupe.
@@ -25054,6 +25609,117 @@ class TestDeliverOperatorReply:
         assert kwargs["message_id"] == "admin-mid-1"
         assert kwargs["text"] == "обновлённая карточка"
         assert kwargs["attachments"]
+
+
+class TestReplyRejectionBeforeDelivery:
+    """_reply_rejection_before_delivery — чистая функция guard'а перед
+    доставкой. Возвращает текст отказа либо None (доставка разрешена).
+    Фиксирует матрицу согласия по 152-ФЗ ст. 21 ч. 5."""
+
+    def test_healthy_appeal_allows_delivery(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=_fresh_appeal(), appeal_id=1
+        ) is None
+
+    def test_none_appeal_rejected(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        msg = _reply_rejection_before_delivery(fresh_appeal=None, appeal_id=1)
+        assert msg is not None and "не найдены" in msg
+
+    def test_appeal_without_user_rejected(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        appeal = _fresh_appeal()
+        appeal.user = None
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=appeal, appeal_id=1
+        ) is not None
+
+    def test_closed_appeal_rejected(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        appeal = _fresh_appeal()
+        appeal.status = "closed"
+        msg = _reply_rejection_before_delivery(fresh_appeal=appeal, appeal_id=1)
+        assert msg is not None and "закрыто" in msg
+
+    def test_blocked_user_rejected(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        appeal = _fresh_appeal()
+        appeal.user.is_blocked = True
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=appeal, appeal_id=1
+        ) is not None
+
+    def test_erased_user_rejected(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        appeal = _fresh_appeal()
+        appeal.user.first_name = "Удалено"
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=appeal, appeal_id=1
+        ) is not None
+
+    def test_no_consent_ever_rejected(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        appeal = _fresh_appeal()
+        appeal.user.consent_pdn_at = None
+        appeal.user.consent_revoked_at = None
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=appeal, appeal_id=1
+        ) is not None
+
+    def test_revoked_then_new_appeal_rejected(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        # Согласие отозвано 2026-04-01, обращение создано 2026-05-01 —
+        # ПОСЛЕ отзыва → доставка запрещена.
+        appeal = _fresh_appeal()
+        appeal.user.consent_pdn_at = None
+        appeal.user.consent_revoked_at = datetime(
+            2026, 4, 1, tzinfo=timezone.utc
+        )
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=appeal, appeal_id=1
+        ) is not None
+
+    def test_revoked_after_older_appeal_allows_final_reply(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        # Обращение создано 2026-05-01, согласие отозвано позже
+        # 2026-05-10 → финальный ответ по принятому ранее обращению
+        # разрешён.
+        appeal = _fresh_appeal()
+        appeal.user.consent_pdn_at = None
+        appeal.user.consent_revoked_at = datetime(
+            2026, 5, 10, tzinfo=timezone.utc
+        )
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=appeal, appeal_id=1
+        ) is None
 
 
 class TestHandleCommandReply:
@@ -29484,8 +30150,8 @@ Roll-back протестирован мысленно: polling-handler в код
 
 ### `docs/BACKUP_RESTORE_TEST.md`
 
-Size: `5705` bytes  
-SHA-256: `335bfb9e923224c2191816e4fafb70a4317b6f29211de8d1f9842750a28f5646`
+Size: `7292` bytes  
+SHA-256: `0b432256a8634b0907d1676e899cefbf8a2d03bdcbd0b6c2513f2fd822fcc626`
 
 ```markdown
 # Backup restore-test
@@ -29494,18 +30160,26 @@ SHA-256: `335bfb9e923224c2191816e4fafb70a4317b6f29211de8d1f9842750a28f5646`
 
 Документ описывает безопасную проверку в отдельной тестовой БД на VPS. Продовую БД не трогать.
 
+## 0. Когда проводить
+
+**Раз в квартал** — например, в первый рабочий день января, апреля, июля и октября. Дополнительно — после любого изменения схемы БД (новая alembic-миграция) или процедуры бэкапа. Проверка занимает ~15 минут.
+
+Отметку о проведении (кто, когда, результат — см. отчёт в разделе 8) заносить в журнал эксплуатации. Если квартальный restore-test пропущен — бэкапы официально считаются непроверенными, и об этом должен знать владелец проекта.
+
 ## 1. Найти свежий backup
 
-На VPS:
+Бэкапы лежат в Docker named volume `aemr-bot_backups`. Еженедельный бэкап делается каждое воскресенье в 03:00 по Камчатке. Посмотреть список:
 
 ```bash
 cd /home/aemr/aemr-bot/infra
 . ./.env
-ls -lah /home/aemr/backups 2>/dev/null || true
-find /home/aemr -maxdepth 4 -type f \( -name '*.sql' -o -name '*.sql.gz' -o -name '*.sql.age' -o -name '*.dump' \) -printf '%TY-%Tm-%Td %TH:%TM %p\n' | sort | tail -20
+# изнутри контейнера бота:
+docker compose exec bot ls -lah /backups
+# либо напрямую с хоста (нужен root):
+sudo ls -lah /var/lib/docker/volumes/aemr-bot_backups/_data/
 ```
 
-Ожидаемо: есть свежий backup-файл за ожидаемый период.
+Ожидаемо: есть свежий файл `aemr-YYYY-MM-DD.sql` (или `aemr-YYYY-MM-DD.sql.gpg`, если включено GPG-шифрование через `BACKUP_GPG_PASSPHRASE`) за ожидаемый период.
 
 ## 2. Создать отдельную тестовую БД
 
@@ -29523,23 +30197,25 @@ docker compose exec -T db psql -U "$POSTGRES_USER" -d postgres -c 'CREATE DATABA
 docker compose ps
 ```
 
-## 3. Восстановить plain SQL backup
+## 3. Восстановить backup
 
-Для `.sql`:
-
-```bash
-BACKUP=/path/to/latest.sql
-cat "$BACKUP" | docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test
-```
-
-Для `.sql.gz`:
+Если бэкап незашифрован (`.sql`):
 
 ```bash
-BACKUP=/path/to/latest.sql.gz
-gzip -dc "$BACKUP" | docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test
+BACKUP=/var/lib/docker/volumes/aemr-bot_backups/_data/aemr-YYYY-MM-DD.sql
+sudo cat "$BACKUP" | docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test
 ```
 
-Для encrypted `.age` используйте фактический ключ/команду из регламента сервера. Если ключа нет под рукой, restore-test нельзя считать пройденным.
+Если бэкап зашифрован GPG (`.sql.gpg` — так и настроено, когда в `.env` задан `BACKUP_GPG_PASSPHRASE`):
+
+```bash
+BACKUP=/var/lib/docker/volumes/aemr-bot_backups/_data/aemr-YYYY-MM-DD.sql.gpg
+sudo cat "$BACKUP" \
+  | gpg --batch --passphrase "$BACKUP_GPG_PASSPHRASE" --decrypt \
+  | docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test
+```
+
+Если GPG-passphrase утеряна — зашифрованный бэкап восстановить **невозможно**, restore-test провален. Это и есть главная причина хранить passphrase отдельно от сервера (см. SECURITY.md, раздел 6 «Ротация секретов»).
 
 ## 4. Минимальная проверка восстановленной БД
 
@@ -35278,8 +35954,8 @@ SHA-256: `62c3906e605db6cb5388855e30f8f8715e930845a66a7c42af859b496e5fca20`
 
 ### `docs/SECURITY.md`
 
-Size: `28645` bytes  
-SHA-256: `d024eefdb04fb3a8cb6ee05cb302453ac41583f6b4341e943fd873ba622f7675`
+Size: `33556` bytes  
+SHA-256: `b76be14f514fa64c7b8a5deaf20ac7e8a5194793068a82b20889f6f6928dfb7a`
 
 ```markdown
 # SECURITY.md — модель угроз и контролов
@@ -35488,6 +36164,37 @@ Cron `appeals-5y-retention` ежедневно в 04:45: обращения, з�
 GPG-passphrase через `os.pipe()`: бот пишет фразу в pipe через `asyncio.to_thread(os.write, ...)`, дочка-gpg читает через `--passphrase-fd N`. Никогда не argv, никогда не файл.
 
 S3-ключи через env-переменные rclone (`RCLONE_CONFIG_*`), не через `--access-key=...` (этот вариант светится в `ps`).
+
+### 6.1 Ротация секретов
+
+**Зачем.** Любой секрет со временем «протухает»: его мог увидеть бывший сотрудник, он мог осесть в истории терминала, в скриншоте, в переписке. Плановая ротация раз в полгода превращает «секрет утёк и мы не знаем» в «секрет жил максимум полгода». Это не реакция на инцидент — это гигиена.
+
+**Календарь.** Раз в полгода — например, в первую рабочую неделю января и июля. Ответственный — администратор VPS. Каждую ротацию отмечать в журнале эксплуатации (что, когда, кто). Внеплановая ротация — немедленно при любом подозрении на компрометацию (уволился человек с доступом, утёк ноутбук, секрет засветился в логе/чате).
+
+**Перед началом — снять свежий бэкап** (`/backup` в служебной группе) и убедиться, что есть SSH-доступ на VPS. Все процедуры ниже делаются на VPS под пользователем `aemr` в каталоге `aemr-bot/infra`.
+
+**1. `BOT_TOKEN`.**
+1. Зайти на max.ru/business, в настройках бота перевыпустить токен. Старый перестаёт работать сразу.
+2. Вписать новый в `infra/.env` (поле `BOT_TOKEN`, без префикса `Bearer`).
+3. `docker compose up -d bot` — бот перезапустится с новым токеном (downtime ~минута на пересборку контейнера).
+4. Проверить: в служебной группе должен прийти `🔄 Рестарт`-пульс, затем обычный `🟢 Пульс`. Если бот молчит — токен вписан неверно, смотреть `docker compose logs --tail 100 bot`.
+
+**2. `POSTGRES_PASSWORD`.** Пароль хранится в двух местах `.env` и внутри самой БД — менять надо синхронно.
+1. Сгенерировать новый: `python3 -c "import secrets; print(secrets.token_urlsafe(24))"`.
+2. Сменить пароль внутри Postgres:
+   `docker compose exec db psql -U aemr -d aemr -c "ALTER USER aemr PASSWORD 'НОВЫЙ_ПАРОЛЬ';"`
+3. В `infra/.env` обновить **оба** поля: `POSTGRES_PASSWORD` и пароль внутри `DATABASE_URL` (`postgresql+asyncpg://aemr:НОВЫЙ_ПАРОЛЬ@db:5432/aemr`).
+4. `docker compose up -d` — бот переподключится с новым паролем.
+5. Проверить `/livez` и пульс. Если бот в restart-loop — пароль в `.env` и в БД разошлись, сверить оба места.
+
+**3. `BACKUP_GPG_PASSPHRASE`.** Особый случай: старые бэкапы зашифрованы **старой** фразой и новой уже не расшифруются.
+1. Сгенерировать новую: `python3 -c "import secrets; print(secrets.token_urlsafe(32))"`.
+2. **Старую фразу не удалять**, а сохранить в надёжном месте (менеджер паролей, сейф) с пометкой даты — она нужна, пока живы бэкапы, сделанные до ротации (хранится 8 еженедельных ≈ 2 месяца).
+3. Вписать новую в `infra/.env` (`BACKUP_GPG_PASSPHRASE`), `docker compose up -d bot`.
+4. Дождаться ближайшего воскресного бэкапа и проверить, что он расшифровывается новой фразой (см. `docs/BACKUP_RESTORE_TEST.md`).
+5. Через 2 месяца, когда все «старые» бэкапы выпали из ротации, старую фразу можно уничтожить.
+
+**Прочие секреты.** `WEBHOOK_SECRET` (если используется webhook-режим), `BACKUP_S3_ACCESS_KEY`/`SECRET_KEY` (если включён S3), SSH deploy-key — ротируются по тому же полугодовому календарю. Webhook-secret и S3-ключи: сгенерировать новые, обновить `.env` (для S3 — ещё и в панели провайдера), перезапустить. SSH deploy-key: сгенерировать новую пару, заменить публичную часть в GitHub → Deploy keys, приватную — на VPS в `/root/.ssh/aemr-bot-deploy`.
 
 ## 7. Защита от ввода и злоупотреблений
 
@@ -36076,8 +36783,8 @@ docker compose up -d --build
 
 ### `docs/SYSADMIN.md`
 
-Size: `22830` bytes  
-SHA-256: `a6e467e5881795d4723ec9e04a15984ecda7696449b3d5f13e07c9bc3b4f5bc6`
+Size: `31176` bytes  
+SHA-256: `21140b1ba9d5dd74672fa84e0481c58e9b53ced63b7e48495e95d7e4eee6f10f`
 
 ```markdown
 # SYSADMIN.md — операционное руководство
@@ -36229,6 +36936,22 @@ BACKUP_S3_SECRET_KEY=
 ```
 
 Если все четыре пустые — только локальные бэкапы в named volume.
+
+### 5.5 Неиспользуемые переменные в прод-`.env`
+
+В прод-`.env` встречаются `COORDINATOR_MAX_USER_ID` и `BACKUP_TMP_DIR` — это **мёртвые переменные**, оставшиеся от ранних версий. Их можно и нужно удалить.
+
+Почему они ничего не делают:
+
+- конфиг бота (`config.py`) построен на pydantic-settings с `extra="ignore"` — любая переменная, которой нет в схеме `Settings`, просто молча игнорируется. Опечатка в имени переменной повела бы себя так же;
+- ни одно из имён не встречается ни в коде бота, ни в `infra/.env.example`, ни в остальной документации.
+
+Чем их заменили в своё время:
+
+- `COORDINATOR_MAX_USER_ID` — реликт эпохи, когда координатор был один и «зашит» в конфиг. Сейчас роли операторов живут в таблице `operators` и назначаются через `/add_operators` в служебной группе (см. раздел 8 и `docs/SECURITY.md` §4.5). Первый `it`-оператор поднимается через `BOOTSTRAP_IT_MAX_USER_ID`. Отдельная переменная для координатора не нужна.
+- `BACKUP_TMP_DIR` — реликт ранней схемы бэкапа. Сейчас бэкап пишется сразу в `BACKUP_LOCAL_DIR` (`/backups`, named volume), отдельный временный каталог нигде не читается.
+
+**Рекомендация: удалить обе строки из прод-`.env`.** Риск нулевой — бот их и так не видит. Единственное, что стоит проверить перед удалением: не подхватывает ли эти переменные какой-нибудь сторонний shell-скрипт на хосте (в репозитории — не подхватывает; `grep -rl 'COORDINATOR_MAX_USER_ID\|BACKUP_TMP_DIR' /home/aemr /root` покажет, если где-то ещё есть). Удаление просто убирает шум — тот, кто откроет `.env` через год, не будет гадать, что эти строки значат.
 
 ## 6. Сервисы и порты
 
@@ -36435,7 +37158,42 @@ Auto-deploy на сервере подтягивает только из `main`.
 
 **Внешний healthcheck**. `HEALTHCHECK_URL` в .env — опционально. Минимум: завести Healthchecks.io / Uptime Kuma, дать ботичу URL, добавить алёрт в почту/Telegram админа. Без этого пульс — единственный сигнал.
 
-**Ротация `BOT_TOKEN`**. Регламент смены при подозрении на компромет — продумать заранее, не во время инцидента.
+**Ротация секретов**. Регламент готов — см. `docs/SECURITY.md`, раздел 6 «Ротация секретов». Полугодовой календарь для `BOT_TOKEN`, `POSTGRES_PASSWORD`, `BACKUP_GPG_PASSPHRASE` и прочих. Задача админа — поставить напоминание в календарь (январь/июль) и вести журнал ротаций.
+
+**Backup restore-test**. Регламент готов — см. `docs/BACKUP_RESTORE_TEST.md`. Проводить раз в квартал. Задача админа — поставить напоминание и вести журнал.
+
+**Апгрейд ОС: Ubuntu 20.04 уже EOL**. Стандартная поддержка Ubuntu 20.04 LTS закончилась в апреле 2025 года — security-обновления для базовой системы больше не приходят (платный ESM до 2030 — отдельная история). Это нужно закрыть до сдачи в эксплуатацию.
+
+Хорошая новость: бот живёт в Docker-контейнерах, ОС хоста для него — это только Docker, cron и SSH. Поэтому апгрейд относительно безопасен. Два пути:
+
+1. **Апгрейд на месте** (меньше работы, есть downtime ~30–60 мин):
+   - снять снапшот VPS у провайдера + свежий `/backup` БД;
+   - `sudo do-release-upgrade` 20.04 → 22.04 LTS (поддержка до 2027). Перепрыгнуть сразу на 24.04 нельзя — только через 22.04, либо чистая установка;
+   - после перезагрузки проверить: `docker compose ps` (контейнеры поднялись), `crontab -l` под root (healthwatch и auto-deploy на месте), SSH-доступ, `/livez`, пульс в служебной группе;
+   - позже, по желанию, тем же путём 22.04 → 24.04 LTS (поддержка до 2029).
+2. **Чистый сервер** (больше работы, чище результат): поднять новый VPS на Ubuntu 24.04 LTS, развернуть бота с нуля по разделу 4, восстановить БД из бэкапа (`docs/BACKUP_RESTORE_TEST.md`), переключить — и погасить старый. Рекомендуется, если VPS давно живёт и накопил «исторический мусор».
+
+Любой путь — только после успешного restore-test, чтобы было откуда возвращаться.
+
+**Изоляция co-located проекта `dash`**. На том же хосте, что и бот с персональными данными граждан, живёт отдельный проект `dash` (caddy/server/web, контейнеры `aemr-server`/`aemr-caddy`/`aemr-web`). `aemr-caddy` слушает `0.0.0.0:80/443` — это единственная internet-facing поверхность хоста.
+
+Аудит фактической изоляции (выполнен 2026-05-15, `docker network inspect`) — картина **лучше**, чем «co-located = дыра»:
+
+- бот и `dash` — в **разных Docker-сетях** (`aemr-bot_default` и `aemr_aemr`), общих сетей нет; контейнеры `dash` не резолвят и не достают контейнеры бота по имени;
+- Postgres бота (`aemr-bot-db-1`) **не имеет host-привязки порта** — только внутренняя сеть `aemr-bot_default`, с хоста и из `dash` напрямую недоступен;
+- HTTP бота — `127.0.0.1:8080`, только loopback хоста, не из интернета и не из контейнеров `dash`.
+
+То есть на уровне Docker-сети изоляция **уже есть**: скомпрометированный `dash` не может просто «прочитать БД бота» — сетевого пути нет.
+
+**Остаточный риск — узкий и конкретный:** общий хост и общий Docker-демон. Сценарий — компрометация `aemr-caddy` → **побег из контейнера на хост** → доступ к файловой системе хоста, где лежат Docker-тома бота (данные Postgres, бэкапы). Это высокий барьер (container escape), но не нулевой.
+
+Что закрывает остаточный риск (по убыванию надёжности):
+
+1. **Вынести `dash` на отдельный VPS** — полностью убирает общий хост и общий Docker-демон. Рекомендуется. Архитектурное решение владельца — провижн отдельного VPS вне зоны бота.
+2. **Снизить вероятность escape на одном хосте**: контейнеры `dash` без `--privileged`, с `cap_drop: ALL` и `no-new-privileges`, актуальный Docker; у `dash` отдельный непривилегированный владелец, не в одной `docker`-group с `aemr` (членство в `docker`-group = фактически root на хосте). Это снижает вероятность побега, но общий kernel остаётся.
+3. **Явно принять риск** — как временная мера, с письменной отметкой владельца, что ИБ-риск осознан.
+
+Сетевой изоляции, которой обычно боятся в co-located схеме, добиваться не нужно — она уже выполнена. Решение про отдельный VPS — за владельцем.
 
 **Регламент компетенций**. Кто имеет SSH-доступ на VPS, кто root, кто owner GitHub-репо. Без формального RBAC любая ошибка человека == продакшен.
 
