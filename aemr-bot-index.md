@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-14 09:24:32 UTC`
+Generated at: `2026-05-14 09:34:32 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `158`
+Indexed files: `160`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -32,7 +32,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/db/alembic/versions/0009_partial_indexes_for_hot_paths.py` (3052 bytes)
 - `bot/aemr_bot/db/alembic/versions/0010_pg_ops_hardening.py` (4774 bytes)
 - `bot/aemr_bot/db/alembic/versions/0011_wizard_state_persistence.py` (3270 bytes)
-- `bot/aemr_bot/db/models.py` (14630 bytes)
+- `bot/aemr_bot/db/alembic/versions/0012_messages_appeal_created_index.py` (1934 bytes)
+- `bot/aemr_bot/db/models.py` (15353 bytes)
 - `bot/aemr_bot/db/session.py` (2764 bytes)
 - `bot/aemr_bot/handlers/__init__.py` (3303 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
@@ -47,14 +48,14 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_funnel.py` (30407 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7608 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (12632 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (27159 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (27344 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (7237 bytes)
 - `bot/aemr_bot/handlers/menu.py` (42388 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (27513 bytes)
 - `bot/aemr_bot/handlers/start.py` (16686 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (36159 bytes)
-- `bot/aemr_bot/main.py` (18627 bytes)
+- `bot/aemr_bot/main.py` (18178 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (6055 bytes)
@@ -78,6 +79,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/texts.py` (28395 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
+- `bot/aemr_bot/utils/background.py` (1682 bytes)
 - `bot/aemr_bot/utils/event.py` (10894 bytes)
 - `bot/alembic.ini` (619 bytes)
 - `bot/pyproject.toml` (2583 bytes)
@@ -93,7 +95,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_appeal_flow.py` (10960 bytes)
 - `bot/tests/test_appeals_service_pg.py` (14053 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
-- `bot/tests/test_broadcast_handlers.py` (24314 bytes)
+- `bot/tests/test_broadcast_handlers.py` (24328 bytes)
 - `bot/tests/test_broadcasts_service_pg.py` (3786 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
 - `bot/tests/test_callback_router.py` (8287 bytes)
@@ -116,7 +118,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_health.py` (4062 bytes)
 - `bot/tests/test_idempotency.py` (3650 bytes)
 - `bot/tests/test_keyboards.py` (5473 bytes)
-- `bot/tests/test_main_helpers.py` (7889 bytes)
+- `bot/tests/test_main_helpers.py` (8679 bytes)
 - `bot/tests/test_operator_reply_closed_guard.py` (3049 bytes)
 - `bot/tests/test_progress.py` (10480 bytes)
 - `bot/tests/test_pure_functions.py` (10564 bytes)
@@ -2071,10 +2073,62 @@ def downgrade() -> None:
     op.drop_table("wizard_state")
 ```
 
+### `bot/aemr_bot/db/alembic/versions/0012_messages_appeal_created_index.py`
+
+Size: `1934` bytes  
+SHA-256: `aae92e557947452b51de6240d23f1ba9c385d28df7dc0b6f1fe346bb0412febf`
+
+```python
+"""Композитный индекс messages(appeal_id, created_at).
+
+Revision ID: 0012
+Revises: 0011
+Create Date: 2026-05-14
+
+Закрытие из swarm code-review (performance-агент). Relationship
+`Appeal.messages` объявлен с `order_by="Message.created_at"`, и
+selectinload при загрузке карточки обращения делает
+`WHERE appeal_id IN (...) ORDER BY created_at`. Отдельный индекс на
+`appeal_id` (миграция 0001) покрывает фильтр, но не сортировку —
+на длинной переписке (followup жителя + ответы оператора) Postgres
+добавляет Sort-шаг поверх index scan.
+
+Композитный `(appeal_id, created_at)` закрывает и фильтр, и порядок
+одним index scan. На текущем объёме (десятки сообщений) выигрыш
+незаметен, но проект сдаётся в эксплуатацию — на горизонте года с
+тысячами обращений это уже ощутимо.
+
+Отдельный индекс `ix_messages_appeal_id` из 0001 НЕ удаляем: он
+по-прежнему оптимален для `ON DELETE CASCADE` и точечных выборок
+по appeal_id без сортировки, и его дроп — лишний риск ради
+экономии нескольких КБ.
+"""
+from typing import Sequence, Union
+
+from alembic import op
+
+revision: str = "0012"
+down_revision: Union[str, None] = "0011"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    op.create_index(
+        "ix_messages_appeal_created",
+        "messages",
+        ["appeal_id", "created_at"],
+    )
+
+
+def downgrade() -> None:
+    op.drop_index("ix_messages_appeal_created", table_name="messages")
+```
+
 ### `bot/aemr_bot/db/models.py`
 
-Size: `14630` bytes  
-SHA-256: `c3350952ff572c71d5296fd788f48661f34e94ba4ce9daf0365e62d86c691faa`
+Size: `15353` bytes  
+SHA-256: `6f9f5ac69d8a33a9a04ffd6abf9e3c1c97a960c021ae51159c1ae2df0aad5229`
 
 ```python
 from datetime import datetime
@@ -2249,6 +2303,16 @@ class Appeal(Base):
 
 class Message(Base):
     __tablename__ = "messages"
+    # Композитный индекс (appeal_id, created_at) под горячий паттерн
+    # relationship `Appeal.messages`: selectinload фильтрует по
+    # appeal_id и сортирует `order_by="Message.created_at"`. Отдельный
+    # индекс на appeal_id (index=True ниже) покрывает фильтр, но не
+    # сортировку — на длинной переписке Postgres делает Sort-шаг.
+    # Композитный закрывает и фильтр, и порядок одним index scan.
+    # Создан миграцией 0012.
+    __table_args__ = (
+        Index("ix_messages_appeal_created", "appeal_id", "created_at"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     appeal_id: Mapped[int] = mapped_column(ForeignKey("appeals.id", ondelete="CASCADE"), index=True)
@@ -6201,8 +6265,8 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `27159` bytes  
-SHA-256: `909708aea42249a8cfa71a62006003c18c64b3d6a4b73898e7eb91603b680157`
+Size: `27344` bytes  
+SHA-256: `17be78efe2a3be73513887deb49922d0f5f32219b189328df86b6dac8016b4cf`
 
 ```python
 """Мастер рассылок и цикл их отправки.
@@ -6242,6 +6306,7 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as operators_service
+from aemr_bot.utils.background import spawn_background_task
 from aemr_bot.utils.event import (
     ack_callback,
     extract_message_id,
@@ -6453,9 +6518,8 @@ async def _handle_confirm(event) -> None:
     # посреди списка получателей (Python 3.11+ держит только weakref на
     # таску из голого create_task). Конкретно для рассылки это значило
     # бы потерянные доставки и broadcast в статусе SENDING без
-    # завершения.
-    from aemr_bot.main import spawn_background_task
-
+    # завершения. Импорт top-level (см. модульный блок импортов) —
+    # spawn_background_task живёт в utils/, цикла handlers→main больше нет.
     spawn_background_task(
         _run_broadcast(event.bot, broadcast_id, state.text, count, admin_mid=admin_mid),
         name=f"broadcast_{broadcast_id}",
@@ -9828,8 +9892,8 @@ def op_help_keyboard(
 
 ### `bot/aemr_bot/main.py`
 
-Size: `18627` bytes  
-SHA-256: `e2380b77a95f10b90982f7c70d45bbb9175d817129770958e8d8bbef56532533`
+Size: `18178` bytes  
+SHA-256: `9ed80adcbfddcc298af55b2341ffecdcdb5521f1f23570067751c52a7a84f576`
 
 ```python
 from __future__ import annotations
@@ -9852,19 +9916,17 @@ from aemr_bot.services import cron as cron_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import policy as policy_service
 from aemr_bot.services import settings_store
+# Ре-экспорт: spawn_background_task переехал в utils/background.py
+# (батч 4), но исторические вызовы `from aemr_bot.main import
+# spawn_background_task` должны продолжать работать — импортированное
+# имя становится атрибутом модуля main.
+from aemr_bot.utils.background import spawn_background_task
 
 log = logging.getLogger("aemr_bot")
 
 bot = Bot(settings.bot_token)
 dp = Dispatcher()
 register_handlers(dp)
-
-# Strong references к фоновым asyncio-таскам. По документации Python 3.11+
-# event loop хранит лишь слабую ссылку на task'и из `asyncio.create_task`,
-# и сборщик мусора может прервать их посреди работы. Особенно опасно для
-# рассылок (`_run_broadcast`) и `_recover` на старте. Кладём task сюда,
-# в done_callback вычищаем, чтобы set не рос.
-_BACKGROUND_TASKS: set[asyncio.Task] = set()
 
 # Semaphore-окно для входящих webhook'ов. Без ограничения каждый POST
 # в /max/webhook порождает asyncio.create_task(...) — флуд (1000 RPS
@@ -9886,12 +9948,6 @@ def _get_webhook_semaphore() -> asyncio.Semaphore:
     return _WEBHOOK_SEMAPHORE
 
 
-def spawn_background_task(coro, *, name: str | None = None) -> asyncio.Task:
-    """Запустить корутину в фоне с защитой от GC."""
-    task = asyncio.create_task(coro, name=name)
-    _BACKGROUND_TASKS.add(task)
-    task.add_done_callback(_BACKGROUND_TASKS.discard)
-    return task
 
 
 def _install_polling_timeout(bot: Bot, timeout: int) -> None:
@@ -15606,6 +15662,46 @@ def deserialize_for_relay(stored: list[dict]) -> list:
     return out
 ```
 
+### `bot/aemr_bot/utils/background.py`
+
+Size: `1682` bytes  
+SHA-256: `0626b3bbeb4830448e85ff45ef12318356234180aeab3255cd425d9b8513d001`
+
+```python
+"""Запуск фоновых asyncio-задач с защитой от сборщика мусора.
+
+Вынесено из `aemr_bot.main` (батч 4 polish). Раньше `handlers/
+broadcast.py` делал `from aemr_bot.main import spawn_background_task`
+внутри функции — handler импортировал точку входа приложения, явная
+циклическая зависимость `handlers → main`, замаскированная lazy-
+импортом. `utils/` — нижний слой без зависимостей от handlers/main,
+поэтому импорт отсюда безопасен на module-level.
+"""
+from __future__ import annotations
+
+import asyncio
+from collections.abc import Coroutine
+from typing import Any
+
+# Strong references к фоновым asyncio-таскам. По документации Python
+# 3.11+ event loop хранит лишь слабую ссылку на task'и из
+# `asyncio.create_task`, и сборщик мусора может прервать их посреди
+# работы. Особенно опасно для рассылок (`_run_broadcast`) и `_recover`
+# на старте. Кладём task сюда, в done_callback вычищаем, чтобы set
+# не рос.
+_BACKGROUND_TASKS: set[asyncio.Task] = set()
+
+
+def spawn_background_task(
+    coro: Coroutine[Any, Any, Any], *, name: str | None = None
+) -> asyncio.Task:
+    """Запустить корутину в фоне с защитой от GC."""
+    task = asyncio.create_task(coro, name=name)
+    _BACKGROUND_TASKS.add(task)
+    task.add_done_callback(_BACKGROUND_TASKS.discard)
+    return task
+```
+
 ### `bot/aemr_bot/utils/event.py`
 
 Size: `10894` bytes  
@@ -19135,8 +19231,8 @@ class TestCountByType:
 
 ### `bot/tests/test_broadcast_handlers.py`
 
-Size: `24314` bytes  
-SHA-256: `6650356547c3a6294fcd34e3eb094281c4cafaa0df0d16e2313834f1b1736278`
+Size: `24328` bytes  
+SHA-256: `a9f947f26812af9327120d4b0c3881a273a9bf537c58693a9e1353f444fa1ba9`
 
 ```python
 """Тесты для handlers/broadcast — wizard рассылок и helpers.
@@ -19484,7 +19580,7 @@ class TestHandleConfirm:
                    AsyncMock(return_value=broadcast_obj)), \
              patch("aemr_bot.handlers.broadcast.operators_service.write_audit",
                    AsyncMock()), \
-             patch("aemr_bot.main.spawn_background_task", spawn):
+             patch("aemr_bot.handlers.broadcast.spawn_background_task", spawn):
             await broadcast._handle_confirm(event)
         spawn.assert_called_once()
         assert spawn.call_args.kwargs["name"] == "broadcast_99"
@@ -25251,8 +25347,8 @@ class TestUserAppealCardKeyboard:
 
 ### `bot/tests/test_main_helpers.py`
 
-Size: `7889` bytes  
-SHA-256: `808c22762e7c26b8d64bed22594ca62669c3ce827529041e0e8b89fb21b13e91`
+Size: `8679` bytes  
+SHA-256: `92af85d62507be1d95931bca2805845fb09b00d030b94a01f72732e24cbc722e`
 
 ```python
 """Тесты на pure-helpers из main.py.
@@ -25279,36 +25375,50 @@ pytest.importorskip("maxapi", reason="main.py требует установле�
 
 
 class TestSpawnBackgroundTask:
-    """spawn_background_task — strong ref + автоудаление done_callback."""
+    """spawn_background_task — strong ref + автоудаление done_callback.
+
+    Функция переехала в aemr_bot.utils.background (батч 4 polish);
+    aemr_bot.main ре-экспортирует её для обратной совместимости.
+    Тесты смотрят на канонический модуль utils.background.
+    """
 
     @pytest.mark.asyncio
     async def test_task_completes_and_self_unregisters(self) -> None:
-        from aemr_bot import main
+        from aemr_bot.utils import background
 
         async def quick_coro():
             return "done"
 
-        task = main.spawn_background_task(quick_coro(), name="t1")
+        task = background.spawn_background_task(quick_coro(), name="t1")
         await task
         # done_callback асинхронный, дадим event-loop'у дойти до него.
         await asyncio.sleep(0)
-        assert task not in main._BACKGROUND_TASKS
+        assert task not in background._BACKGROUND_TASKS
 
     @pytest.mark.asyncio
     async def test_pending_task_still_tracked(self) -> None:
-        from aemr_bot import main
+        from aemr_bot.utils import background
 
         ev = asyncio.Event()
 
         async def waiting():
             await ev.wait()
 
-        task = main.spawn_background_task(waiting(), name="t2")
+        task = background.spawn_background_task(waiting(), name="t2")
         # Ещё не завершилась.
-        assert task in main._BACKGROUND_TASKS
+        assert task in background._BACKGROUND_TASKS
         ev.set()
         await task
         await asyncio.sleep(0)
+
+    @pytest.mark.asyncio
+    async def test_main_reexports_same_callable(self) -> None:
+        """Регрессия: `from aemr_bot.main import spawn_background_task`
+        должен продолжать работать — это исторический путь импорта."""
+        from aemr_bot import main
+        from aemr_bot.utils import background
+
+        assert main.spawn_background_task is background.spawn_background_task
 
 
 class TestBuildAdminSenders:
