@@ -170,6 +170,16 @@ class Appeal(Base):
 
 class Message(Base):
     __tablename__ = "messages"
+    # Композитный индекс (appeal_id, created_at) под горячий паттерн
+    # relationship `Appeal.messages`: selectinload фильтрует по
+    # appeal_id и сортирует `order_by="Message.created_at"`. Отдельный
+    # индекс на appeal_id (index=True ниже) покрывает фильтр, но не
+    # сортировку — на длинной переписке Postgres делает Sort-шаг.
+    # Композитный закрывает и фильтр, и порядок одним index scan.
+    # Создан миграцией 0012.
+    __table_args__ = (
+        Index("ix_messages_appeal_created", "appeal_id", "created_at"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     appeal_id: Mapped[int] = mapped_column(ForeignKey("appeals.id", ondelete="CASCADE"), index=True)

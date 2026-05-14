@@ -18,19 +18,17 @@ from aemr_bot.services import cron as cron_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import policy as policy_service
 from aemr_bot.services import settings_store
+# Ре-экспорт: spawn_background_task переехал в utils/background.py
+# (батч 4), но исторические вызовы `from aemr_bot.main import
+# spawn_background_task` должны продолжать работать — импортированное
+# имя становится атрибутом модуля main.
+from aemr_bot.utils.background import spawn_background_task
 
 log = logging.getLogger("aemr_bot")
 
 bot = Bot(settings.bot_token)
 dp = Dispatcher()
 register_handlers(dp)
-
-# Strong references к фоновым asyncio-таскам. По документации Python 3.11+
-# event loop хранит лишь слабую ссылку на task'и из `asyncio.create_task`,
-# и сборщик мусора может прервать их посреди работы. Особенно опасно для
-# рассылок (`_run_broadcast`) и `_recover` на старте. Кладём task сюда,
-# в done_callback вычищаем, чтобы set не рос.
-_BACKGROUND_TASKS: set[asyncio.Task] = set()
 
 # Semaphore-окно для входящих webhook'ов. Без ограничения каждый POST
 # в /max/webhook порождает asyncio.create_task(...) — флуд (1000 RPS
@@ -52,12 +50,6 @@ def _get_webhook_semaphore() -> asyncio.Semaphore:
     return _WEBHOOK_SEMAPHORE
 
 
-def spawn_background_task(coro, *, name: str | None = None) -> asyncio.Task:
-    """Запустить корутину в фоне с защитой от GC."""
-    task = asyncio.create_task(coro, name=name)
-    _BACKGROUND_TASKS.add(task)
-    task.add_done_callback(_BACKGROUND_TASKS.discard)
-    return task
 
 
 def _install_polling_timeout(bot: Bot, timeout: int) -> None:

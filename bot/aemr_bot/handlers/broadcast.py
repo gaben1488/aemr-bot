@@ -35,6 +35,7 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as operators_service
+from aemr_bot.utils.background import spawn_background_task
 from aemr_bot.utils.event import (
     ack_callback,
     extract_message_id,
@@ -246,9 +247,8 @@ async def _handle_confirm(event) -> None:
     # посреди списка получателей (Python 3.11+ держит только weakref на
     # таску из голого create_task). Конкретно для рассылки это значило
     # бы потерянные доставки и broadcast в статусе SENDING без
-    # завершения.
-    from aemr_bot.main import spawn_background_task
-
+    # завершения. Импорт top-level (см. модульный блок импортов) —
+    # spawn_background_task живёт в utils/, цикла handlers→main больше нет.
     spawn_background_task(
         _run_broadcast(event.bot, broadcast_id, state.text, count, admin_mid=admin_mid),
         name=f"broadcast_{broadcast_id}",

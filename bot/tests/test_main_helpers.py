@@ -22,36 +22,50 @@ pytest.importorskip("maxapi", reason="main.py требует установле�
 
 
 class TestSpawnBackgroundTask:
-    """spawn_background_task — strong ref + автоудаление done_callback."""
+    """spawn_background_task — strong ref + автоудаление done_callback.
+
+    Функция переехала в aemr_bot.utils.background (батч 4 polish);
+    aemr_bot.main ре-экспортирует её для обратной совместимости.
+    Тесты смотрят на канонический модуль utils.background.
+    """
 
     @pytest.mark.asyncio
     async def test_task_completes_and_self_unregisters(self) -> None:
-        from aemr_bot import main
+        from aemr_bot.utils import background
 
         async def quick_coro():
             return "done"
 
-        task = main.spawn_background_task(quick_coro(), name="t1")
+        task = background.spawn_background_task(quick_coro(), name="t1")
         await task
         # done_callback асинхронный, дадим event-loop'у дойти до него.
         await asyncio.sleep(0)
-        assert task not in main._BACKGROUND_TASKS
+        assert task not in background._BACKGROUND_TASKS
 
     @pytest.mark.asyncio
     async def test_pending_task_still_tracked(self) -> None:
-        from aemr_bot import main
+        from aemr_bot.utils import background
 
         ev = asyncio.Event()
 
         async def waiting():
             await ev.wait()
 
-        task = main.spawn_background_task(waiting(), name="t2")
+        task = background.spawn_background_task(waiting(), name="t2")
         # Ещё не завершилась.
-        assert task in main._BACKGROUND_TASKS
+        assert task in background._BACKGROUND_TASKS
         ev.set()
         await task
         await asyncio.sleep(0)
+
+    @pytest.mark.asyncio
+    async def test_main_reexports_same_callable(self) -> None:
+        """Регрессия: `from aemr_bot.main import spawn_background_task`
+        должен продолжать работать — это исторический путь импорта."""
+        from aemr_bot import main
+        from aemr_bot.utils import background
+
+        assert main.spawn_background_task is background.spawn_background_task
 
 
 class TestBuildAdminSenders:
