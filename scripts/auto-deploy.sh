@@ -58,11 +58,16 @@ cp "$COMPOSE_DIR/.env" /tmp/aemr-bot.env.bak.$$
 git reset --hard "$REMOTE" --quiet
 chown -R aemr:aemr "$REPO_DIR"
 
-# Project name закрепляется в первой строке docker-compose.yml — после
-# git reset она восстанавливается из репо где её НЕТ. Подставляем заново.
-if ! head -1 "$COMPOSE_DIR/docker-compose.yml" | grep -q "^name: aemr-bot"; then
-    sed -i '1i name: aemr-bot\n' "$COMPOSE_DIR/docker-compose.yml"
-fi
+# Self-sync wrapper'ов в /usr/local/bin. Без этого блока копии,
+# установленные install-auto-deploy.sh ОДИН РАЗ, застывают на версии
+# момента установки: git подтягивает свежий scripts/*.sh в репо, но
+# cron продолжает запускать старый код из /usr/local/bin. Именно так
+# на сервере месяцами жил watchdog, который бил по /healthz и слал
+# алерты с устаревшим `access_token=` в query (MAX давно требует
+# Authorization header). Теперь каждый деплой переустанавливает оба
+# wrapper'а из репо — расхождение кода и прода невозможно.
+install -m 0755 "$REPO_DIR/scripts/auto-deploy.sh" /usr/local/bin/aemr-bot-autodeploy
+install -m 0755 "$REPO_DIR/scripts/healthwatch.sh" /usr/local/bin/aemr-bot-healthwatch
 
 # Пересборка от пользователя aemr (он в docker-group)
 su - aemr -c "cd $COMPOSE_DIR && docker compose up -d --build" 2>&1 | logger -t "$LOG_TAG"
@@ -93,9 +98,10 @@ fi
 logger -t "$LOG_TAG" "DEPLOY FAILED: /livez unreachable за ${HEALTH_TIMEOUT_SEC}s, ROLLBACK на $PREV_LOCAL"
 git reset --hard "$PREV_LOCAL" --quiet
 chown -R aemr:aemr "$REPO_DIR"
-if ! head -1 "$COMPOSE_DIR/docker-compose.yml" | grep -q "^name: aemr-bot"; then
-    sed -i '1i name: aemr-bot\n' "$COMPOSE_DIR/docker-compose.yml"
-fi
+# Wrapper'ы тоже откатываем к PREV_LOCAL — иначе на сервере останется
+# свежий код деплой-скрипта, а репо на старом коммите: рассинхрон.
+install -m 0755 "$REPO_DIR/scripts/auto-deploy.sh" /usr/local/bin/aemr-bot-autodeploy
+install -m 0755 "$REPO_DIR/scripts/healthwatch.sh" /usr/local/bin/aemr-bot-healthwatch
 su - aemr -c "cd $COMPOSE_DIR && docker compose up -d --build" 2>&1 | logger -t "$LOG_TAG"
 
 # Дать предыдущему коммиту 30 сек подняться. Мы этому не верим в смысле

@@ -1,3 +1,10 @@
+# Имя compose-проекта закреплено здесь, а не вставляется sed'ом в
+# auto-deploy.sh. Раньше скрипт делал `sed -i '1i name: aemr-bot'`
+# после каждого `git reset --hard`, из-за чего рабочее дерево вечно
+# числилось dirty (`git status` показывал M docker-compose.yml).
+# Теперь имя — часть версионируемого файла, дерево остаётся чистым.
+name: aemr-bot
+
 services:
   db:
     # Pinned by tag + digest so `docker compose pull` не утянет втихую новый
