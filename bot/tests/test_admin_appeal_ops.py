@@ -193,7 +193,8 @@ class TestRunReplyCancel:
                    return_value=None), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_appeal_ops.run_reply_cancel(event)
-        event.bot.send_message.assert_not_called()
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "уже закрыт" in text.lower()
 
 
 # --- run_reopen / run_close ---------------------------------------------------

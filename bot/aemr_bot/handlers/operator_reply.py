@@ -11,7 +11,7 @@ import time as _time
 
 from maxapi.types import MessageCreated
 
-from aemr_bot import texts
+from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import AppealStatus
 from aemr_bot.db.session import session_scope
@@ -330,7 +330,11 @@ async def _deliver_operator_reply(
     try:
         # ВАЖНО: доставляем сообщение жителю по user_id (а не chat_id) — мы не
         # сохраняли chat_id их личного диалога, только их MAX user_id.
-        sent = await event.bot.send_message(user_id=target_user_id, text=formatted_text)
+        sent = await event.bot.send_message(
+            user_id=target_user_id,
+            text=formatted_text,
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
     except Exception as exc:  # noqa: BLE001
         # Показываем в админ-чате только имя класса исключения — `repr(exc)`
         # из maxapi часто содержит тело запроса (текст ответа оператора,
@@ -351,6 +355,9 @@ async def _deliver_operator_reply(
         return True
     delivered_mid = extract_message_id(sent)
 
+    admin_mid_to_refresh = None
+    admin_card_text = None
+    admin_card_keyboard = None
     try:
         async with session_scope() as session:
             appeal_full = await appeals_service.get_by_id(session, appeal.id)
@@ -381,6 +388,16 @@ async def _deliver_operator_reply(
                 target=f"appeal #{appeal.id}",
                 details={"chars": len(text)},
             )
+            admin_mid_to_refresh = getattr(appeal_full, "admin_message_id", None)
+            if admin_mid_to_refresh and appeal_full.user is not None:
+                admin_card_text = card_format.admin_card(appeal_full, appeal_full.user)
+                admin_card_keyboard = keyboards.appeal_admin_actions(
+                    appeal_full.id,
+                    appeal_full.status,
+                    is_it=True,
+                    user_blocked=bool(appeal_full.user.is_blocked),
+                    closed_due_to_revoke=bool(appeal_full.closed_due_to_revoke),
+                )
     except Exception:
         log.exception(
             "operator_reply: delivered but local DB/audit write failed — appeal=%s delivered_mid=%s",
@@ -399,9 +416,20 @@ async def _deliver_operator_reply(
     await _mark_reply_success_recorded(success_key)
     _remember_successful_reply(operator.id, appeal.id, text)
 
+    if admin_mid_to_refresh and admin_card_text and admin_card_keyboard:
+        try:
+            await event.bot.edit_message(
+                message_id=admin_mid_to_refresh,
+                text=admin_card_text,
+                attachments=[admin_card_keyboard],
+            )
+        except Exception:
+            log.exception("operator_reply: failed to refresh admin card #%s", appeal.id)
+
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.ADMIN_REPLY_DELIVERED.format(number=appeal.id),
+        attachments=[keyboards.op_back_to_menu_keyboard()],
     )
     return True
 

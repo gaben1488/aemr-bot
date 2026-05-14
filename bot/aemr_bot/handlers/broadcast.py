@@ -38,9 +38,11 @@ from aemr_bot.services import operators as operators_service
 from aemr_bot.utils.event import (
     ack_callback,
     extract_message_id,
+    get_callback_message_id,
     get_message_text,
     get_user_id,
     is_admin_chat,
+    send_or_edit_screen,
 )
 
 log = logging.getLogger(__name__)
@@ -113,15 +115,12 @@ async def _start_wizard(event) -> None:
     _wizards[actor_id] = _WizardState(step="awaiting_text")
     log.info("broadcast: wizard started for operator max_user_id=%s", actor_id)
     prompt = texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars)
-    cancel_kb = keyboards.broadcast_cancel_keyboard()
-    if event.message is not None:
-        await event.message.answer(prompt, attachments=[cancel_kb])
-    else:
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=prompt,
-            attachments=[cancel_kb],
-        )
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=prompt,
+        attachments=[keyboards.broadcast_cancel_keyboard()],
+    )
 
 
 async def _handle_wizard_text(event, text_body: str) -> bool:
@@ -140,12 +139,18 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
 
     if state.expired():
         _wizards.pop(actor_id, None)
-        await event.message.answer(texts.OP_BROADCAST_WIZARD_EXPIRED)
+        await event.message.answer(
+            texts.OP_BROADCAST_WIZARD_EXPIRED,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
         return True
 
     if text_body.strip() == "/cancel":
         _wizards.pop(actor_id, None)
-        await event.message.answer(texts.OP_BROADCAST_CANCELLED_BY_USER)
+        await event.message.answer(
+            texts.OP_BROADCAST_CANCELLED_BY_USER,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
         return True
 
     text = text_body.strip()
@@ -153,13 +158,15 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         await event.message.answer(
             texts.OP_BROADCAST_TOO_LONG.format(
                 limit=cfg.broadcast_max_chars, actual=len(text)
-            )
+            ),
+            attachments=[keyboards.broadcast_cancel_keyboard()],
         )
         return True
     if not text:
         # Пусто. Просим ввести ещё раз, состояние не меняем.
         await event.message.answer(
-            texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars)
+            texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars),
+            attachments=[keyboards.broadcast_cancel_keyboard()],
         )
         return True
 
@@ -167,7 +174,10 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         count = await broadcasts_service.count_subscribers(session)
     if count == 0:
         _wizards.pop(actor_id, None)
-        await event.message.answer(texts.OP_BROADCAST_NO_SUBSCRIBERS)
+        await event.message.answer(
+            texts.OP_BROADCAST_NO_SUBSCRIBERS,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
         return True
 
     state.text = text
@@ -196,9 +206,11 @@ async def _handle_confirm(event) -> None:
     async with session_scope() as session:
         count = await broadcasts_service.count_subscribers(session)
         if count == 0:
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text=texts.OP_BROADCAST_NO_SUBSCRIBERS,
+                attachments=[keyboards.op_back_to_menu_keyboard()],
             )
             return
         broadcast = await broadcasts_service.create_broadcast(
@@ -223,6 +235,13 @@ async def _handle_confirm(event) -> None:
         "broadcast: confirmed by operator=%s — broadcast_id=%s subscribers=%d",
         actor_id, broadcast_id, count,
     )
+    sent = await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=count),
+        attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
+    )
+    admin_mid = extract_message_id(sent) or get_callback_message_id(event)
     # Strong ref: без spawn_background_task GC может прервать рассылку
     # посреди списка получателей (Python 3.11+ держит только weakref на
     # таску из голого create_task). Конкретно для рассылки это значило
@@ -231,7 +250,7 @@ async def _handle_confirm(event) -> None:
     from aemr_bot.main import spawn_background_task
 
     spawn_background_task(
-        _run_broadcast(event.bot, broadcast_id, state.text, count),
+        _run_broadcast(event.bot, broadcast_id, state.text, count, admin_mid=admin_mid),
         name=f"broadcast_{broadcast_id}",
     )
 
@@ -241,9 +260,11 @@ async def _handle_abort(event) -> None:
     if actor_id is not None:
         _wizards.pop(actor_id, None)
     await ack_callback(event, "Отменено.")
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=texts.OP_BROADCAST_CANCELLED_BY_USER,
+        attachments=[keyboards.op_back_to_menu_keyboard()],
     )
 
 
@@ -263,7 +284,8 @@ async def _handle_edit(event) -> None:
     state.text = ""
     state.renew()
     await ack_callback(event)
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars),
         attachments=[keyboards.broadcast_cancel_keyboard()],
@@ -316,7 +338,9 @@ async def _send_one(bot, max_user_id: int, body_text: str) -> str | None:
     return None
 
 
-async def _run_broadcast(bot, broadcast_id: int, text: str, total: int) -> None:
+async def _run_broadcast(
+    bot, broadcast_id: int, text: str, total: int, *, admin_mid: str | None = None
+) -> None:
     """Фоновая задача: отправляет подготовленную рассылку всем подходящим подписчикам,
     редактирует сообщение прогресса в админ-группе, реагирует на флаг отмены.
 
@@ -324,7 +348,7 @@ async def _run_broadcast(bot, broadcast_id: int, text: str, total: int) -> None:
     поэтому необработанное исключение иначе осталось бы незамеченным до сборки мусора.
     """
     try:
-        await _run_broadcast_impl(bot, broadcast_id, text, total)
+        await _run_broadcast_impl(bot, broadcast_id, text, total, admin_mid=admin_mid)
     except Exception:
         log.exception(
             "broadcast: _run_broadcast_impl crashed for broadcast_id=%s",
@@ -347,7 +371,9 @@ async def _run_broadcast(bot, broadcast_id: int, text: str, total: int) -> None:
             )
 
 
-async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> None:
+async def _run_broadcast_impl(
+    bot, broadcast_id: int, text: str, total: int, *, admin_mid: str | None = None
+) -> None:
     body = f"{texts.BROADCAST_HEADER}\n\n{text}"
     delivered = 0
     failed = 0
@@ -357,17 +383,20 @@ async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> 
         broadcast_id, total,
     )
 
-    # Старт: публикуем заголовок в админ-группе, запоминаем admin_message_id для правок.
-    sent = None
-    try:
-        sent = await bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=total),
-            attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
-        )
-    except Exception:
-        log.exception("failed to post broadcast start in admin group")
-    admin_mid = extract_message_id(sent)
+    # Старт: если confirm-кнопка была под preview-карточкой, preview уже
+    # превращён в progress-карточку. Если mid получить не удалось — шлём
+    # отдельный прогресс, чтобы оператор не остался без статуса.
+    if admin_mid is None:
+        sent = None
+        try:
+            sent = await bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=total),
+                attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
+            )
+        except Exception:
+            log.exception("failed to post broadcast start in admin group")
+        admin_mid = extract_message_id(sent)
     log.info(
         "broadcast: admin start-message admin_mid=%s (None means edit_message will be skipped)",
         admin_mid,
@@ -486,7 +515,11 @@ async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> 
 
     if admin_mid is not None:
         try:
-            await bot.edit_message(message_id=admin_mid, text=final_text)
+            await bot.edit_message(
+                message_id=admin_mid,
+                text=final_text,
+                attachments=[keyboards.op_back_to_menu_keyboard()],
+            )
             return
         except Exception:
             log.exception(
@@ -497,7 +530,11 @@ async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> 
     # Запасной путь: edit_message не сработал, либо admin_mid не было. Публикуем
     # итог отдельным сообщением, чтобы оператор всё равно увидел результат.
     try:
-        await bot.send_message(chat_id=cfg.admin_group_id, text=final_text)
+        await bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=final_text,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
     except Exception:
         log.exception(
             "failed to post fallback final summary for broadcast #%s",
@@ -517,7 +554,12 @@ async def _list_broadcasts(event) -> None:
     async with session_scope() as session:
         items = await broadcasts_service.list_recent(session, limit=10)
     if not items:
-        await event.message.answer(texts.OP_BROADCAST_LIST_EMPTY)
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_BROADCAST_LIST_EMPTY,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
         return
     lines = [texts.OP_BROADCAST_LIST_HEADER.rstrip()]
     for bc in items:
@@ -530,7 +572,12 @@ async def _list_broadcasts(event) -> None:
                 total=bc.subscriber_count_at_start,
             )
         )
-    await event.message.answer("\n".join(lines))
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text="\n".join(lines),
+        attachments=[keyboards.op_back_to_menu_keyboard()],
+    )
 
 
 def register(dp: Dispatcher) -> None:

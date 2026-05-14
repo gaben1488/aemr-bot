@@ -80,6 +80,7 @@ async def run_audience_action(event, payload: str) -> None:
                 text=texts.OP_USER_BLOCKED.format(max_user_id=target_id)
                 if ok
                 else "Не удалось.",
+                attachments=[kbds.op_back_to_audience_keyboard()],
             )
             return
         if action == "unblock":
@@ -100,6 +101,7 @@ async def run_audience_action(event, payload: str) -> None:
                 text=texts.OP_USER_UNBLOCKED.format(max_user_id=target_id)
                 if ok
                 else "Не удалось.",
+                attachments=[kbds.op_back_to_audience_keyboard()],
             )
             return
         if action == "erase":
@@ -118,6 +120,7 @@ async def run_audience_action(event, payload: str) -> None:
                 text=texts.OP_USER_ERASED.format(max_user_id=target_id)
                 if ok
                 else "Не удалось.",
+                attachments=[kbds.op_back_to_audience_keyboard()],
             )
             return
 
@@ -140,9 +143,15 @@ async def run_audience_action(event, payload: str) -> None:
             event,
             chat_id=cfg.admin_group_id,
             text=f"{header}\n\nСписок пуст.",
+            attachments=[kbds.op_back_to_audience_keyboard()],
         )
         return
-    await send_or_edit_screen(event, chat_id=cfg.admin_group_id, text=header)
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=header,
+        attachments=[kbds.op_back_to_audience_keyboard()],
+    )
     for u in users:
         name = u.first_name or "—"
         phone = _mask_phone(u.phone)

@@ -280,11 +280,11 @@ class TestCmdCancel:
         event = _make_event()
         reset = AsyncMock()
         with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.start.users_service.reset_state", reset), \
-             patch("aemr_bot.handlers.menu.open_main_menu", AsyncMock()) as open_menu:
+             patch("aemr_bot.handlers.start.users_service.reset_state", reset):
             await start.cmd_cancel(event)
         reset.assert_called_once()
-        open_menu.assert_called_once()
+        event.bot.send_message.assert_called_once()
+        assert event.bot.send_message.call_args.kwargs["attachments"]
 
     @pytest.mark.asyncio
     async def test_no_user_id_skips(self) -> None:

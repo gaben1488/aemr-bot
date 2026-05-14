@@ -18,6 +18,7 @@ from aemr_bot.utils.event import (
     get_user_id,
     is_admin_chat,
     reply,
+    send_or_edit_screen,
 )
 
 log = logging.getLogger(__name__)
@@ -114,12 +115,12 @@ async def cmd_policy(event):
 
     if token and bot is not None:
         try:
-            await bot.send_message(
-                chat_id=chat_id,
+            await send_or_edit_screen(
+                event,
                 text=texts.POLICY_DELIVERED,
                 attachments=[
                     policy_service.build_file_attachment(token),
-                    keyboards.back_to_menu_keyboard(),
+                    keyboards.back_to_settings_keyboard(),
                 ],
             )
             return
@@ -127,16 +128,16 @@ async def cmd_policy(event):
             log.exception("policy file delivery failed; falling back to URL")
 
     if policy_url:
-        await reply(
+        await send_or_edit_screen(
             event,
-            texts.POLICY_FALLBACK_URL.format(policy_url=policy_url),
-            attachments=[keyboards.back_to_menu_keyboard()],
+            text=texts.POLICY_FALLBACK_URL.format(policy_url=policy_url),
+            attachments=[keyboards.back_to_settings_keyboard()],
         )
     else:
-        await reply(
+        await send_or_edit_screen(
             event,
-            texts.POLICY_UNAVAILABLE,
-            attachments=[keyboards.back_to_menu_keyboard()],
+            text=texts.POLICY_UNAVAILABLE,
+            attachments=[keyboards.back_to_settings_keyboard()],
         )
 
 
@@ -251,19 +252,16 @@ async def cmd_export(event):
 
 
 async def cmd_cancel(event):
-    """Сбрасывает текущий шаг воронки и возвращает в меню. Без этого
+    """Сбрасывает текущий шаг воронки и даёт быстрый возврат в меню. Без этого
     житель набирающий /cancel мог получить тишину (если в каком-то
     шаге не было ясной кнопки «Отмена»).
     """
-    from aemr_bot.handlers.menu import open_main_menu
-
     max_user_id = get_user_id(event)
     if max_user_id is None:
         return
     async with session_scope() as session:
         await users_service.reset_state(session, max_user_id)
-    await reply(event, texts.CANCELLED)
-    await open_main_menu(event)
+    await reply(event, texts.CANCELLED, attachments=[keyboards.back_to_menu_keyboard()])
 
 
 def register(dp: Dispatcher) -> None:

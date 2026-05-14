@@ -23,7 +23,7 @@ from typing import Any
 from maxapi import Dispatcher
 from maxapi.types import MessageCallback, MessageCreated
 
-from aemr_bot import texts
+from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import DialogState
 from aemr_bot.db.session import session_scope
@@ -44,6 +44,7 @@ from aemr_bot.utils.event import (
     get_message_text,
     get_payload,
     get_user_id,
+    send_or_edit_screen,
 )
 
 log = logging.getLogger(__name__)
@@ -159,6 +160,7 @@ async def _ensure_funnel_callback_state(
                 event,
                 max_user_id,
                 text=_GEO_AWAITING_ADDRESS_NOTICE,
+                attachments=[keyboards.back_to_menu_keyboard()],
             )
         except Exception:
             log.debug(
@@ -196,12 +198,14 @@ async def _send_to_citizen(
     max_user_id: int,
     *,
     text: str,
+    attachments: list | None = None,
 ) -> None:
-    chat_id = get_chat_id(event)
-    if chat_id is not None:
-        await event.bot.send_message(chat_id=chat_id, text=text)
-    else:
-        await event.bot.send_message(user_id=max_user_id, text=text)
+    await send_or_edit_screen(
+        event,
+        user_id=max_user_id,
+        text=text,
+        attachments=attachments or [],
+    )
 
 
 def register(dp: Dispatcher) -> None:
@@ -251,14 +255,13 @@ def register(dp: Dispatcher) -> None:
                 await users_service.reset_state(session, max_user_id)
             drop_user_lock(max_user_id)
             await ack_callback(event)
-            from aemr_bot.handlers.menu import open_main_menu
 
             await _send_to_citizen(
                 event,
                 max_user_id,
                 text=texts.CONSENT_DECLINED,
+                attachments=[keyboards.back_to_menu_keyboard()],
             )
-            await open_main_menu(event)
             return
 
         if payload == "cancel":
@@ -266,10 +269,13 @@ def register(dp: Dispatcher) -> None:
                 await users_service.reset_state(session, max_user_id)
             drop_user_lock(max_user_id)
             await ack_callback(event)
-            from aemr_bot.handlers.menu import open_main_menu
 
-            await _send_to_citizen(event, max_user_id, text=texts.CANCELLED)
-            await open_main_menu(event)
+            await _send_to_citizen(
+                event,
+                max_user_id,
+                text=texts.CANCELLED,
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
             return
 
         if payload == "addr:reuse":
@@ -486,8 +492,8 @@ def register(dp: Dispatcher) -> None:
                 return
             if payload == "op:stats_today":
                 await ack_callback(event)
-                await admin_commands.run_stats_today(event)
-                await admin_commands.show_op_menu(event, pin=False)
+                if await admin_commands.run_stats_today(event):
+                    await admin_commands.show_op_menu(event, pin=False)
                 return
             if payload == "op:stats_week":
                 await ack_callback(event)
@@ -634,6 +640,7 @@ def register(dp: Dispatcher) -> None:
                 await event.bot.send_message(
                     chat_id=cfg.admin_group_id,
                     text="Текущие мастера и черновики ответа сброшены.",
+                    attachments=[keyboards.op_back_to_menu_keyboard()],
                 )
                 return
 

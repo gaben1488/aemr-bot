@@ -46,6 +46,7 @@ async def run_settings_action(event, payload: str) -> None:
     """`op:setkey:<key>` — показать текущее значение настройки и шаблон
     команды для редактирования. Полный wizard для каждого типа значения
     был бы перегружен; это компромисс между «кнопками» и «текстом»."""
+    from aemr_bot import keyboards as kbds
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_role(event, OperatorRole.IT):
@@ -76,4 +77,5 @@ async def run_settings_action(event, payload: str) -> None:
             f"Изменить: /setting {key} <новое значение>\n"
             f"Для списков и объектов передавайте JSON."
         ),
+        attachments=[kbds.op_back_to_settings_keyboard()],
     )

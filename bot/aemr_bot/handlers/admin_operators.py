@@ -88,6 +88,7 @@ async def run_operators_action(event, payload: str) -> None:
     """Подменю «Операторы»: добавить, список, отмена. payload вида
     `op:opadd:start` / `op:opadd:role:N` / `op:opadd:cancel` /
     `op:opadd:list`."""
+    from aemr_bot import keyboards as kbds
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_role(event, OperatorRole.IT):
@@ -115,6 +116,7 @@ async def run_operators_action(event, payload: str) -> None:
                 "Узнать его — попросите человека написать боту в личке /whoami "
                 "и прислать вам число из ответа."
             ),
+            attachments=[kbds.op_add_cancel_keyboard()],
         )
         return
     if suffix == "list":
@@ -125,6 +127,7 @@ async def run_operators_action(event, payload: str) -> None:
                 event,
                 chat_id=cfg.admin_group_id,
                 text="Список операторов пуст.",
+                attachments=[kbds.op_back_to_operators_keyboard()],
             )
             return
         lines = ["👥 Активные операторы:"]
@@ -134,6 +137,7 @@ async def run_operators_action(event, payload: str) -> None:
             event,
             chat_id=cfg.admin_group_id,
             text="\n".join(lines),
+            attachments=[kbds.op_back_to_operators_keyboard()],
         )
         return
     if suffix == "cancel":
@@ -142,6 +146,7 @@ async def run_operators_action(event, payload: str) -> None:
             event,
             chat_id=cfg.admin_group_id,
             text="Регистрация оператора отменена.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
         )
         return
     if suffix.startswith("role:"):
@@ -152,6 +157,7 @@ async def run_operators_action(event, payload: str) -> None:
                 event,
                 chat_id=cfg.admin_group_id,
                 text=f"Роль «{role}» неизвестна.",
+                attachments=[kbds.op_back_to_operators_keyboard()],
             )
             return
         state = _op_wizard_get(operator_id)
@@ -160,6 +166,7 @@ async def run_operators_action(event, payload: str) -> None:
                 event,
                 chat_id=cfg.admin_group_id,
                 text="Мастер закрыт. Откройте «👥 Операторы → Добавить» заново.",
+                attachments=[kbds.op_back_to_operators_keyboard()],
             )
             return
         _op_wizard_set(operator_id, role=role, step="awaiting_name")
@@ -170,12 +177,15 @@ async def run_operators_action(event, payload: str) -> None:
                 f"👥 Шаг 3 из 3 — роль {role} выбрана. Теперь введите ФИО "
                 f"оператора одним сообщением. Например: «Иванова Анна Петровна»."
             ),
+            attachments=[kbds.op_add_cancel_keyboard()],
         )
 
 
 async def handle_operators_wizard_text(event, text: str) -> bool:
     """Перехватчик текстовых сообщений в админ-группе на стороне wizard'а.
     Возвращает True, если сообщение поглощено."""
+    from aemr_bot import keyboards as kbds
+
     operator_id = get_user_id(event)
     if operator_id is None:
         return False
@@ -190,10 +200,10 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
             await event.bot.send_message(
                 chat_id=cfg.admin_group_id,
                 text="Это не число. Введите max_user_id (целое положительное).",
+                attachments=[kbds.op_add_cancel_keyboard()],
             )
             return True
         _op_wizard_set(operator_id, target_id=target_id, step="awaiting_role")
-        from aemr_bot import keyboards as kbds
 
         await event.bot.send_message(
             chat_id=cfg.admin_group_id,
@@ -207,6 +217,7 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
             await event.bot.send_message(
                 chat_id=cfg.admin_group_id,
                 text="ФИО слишком короткое. Введите полностью.",
+                attachments=[kbds.op_add_cancel_keyboard()],
             )
             return True
         target_id = int(state["target_id"])
@@ -217,6 +228,7 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
             await event.bot.send_message(
                 chat_id=cfg.admin_group_id,
                 text="Изменить свою роль через мастера нельзя.",
+                attachments=[kbds.op_back_to_operators_keyboard()],
             )
             return True
         async with session_scope() as session:
@@ -241,6 +253,7 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
                 f"✅ {'Обновлено' if existed else 'Добавлено'}: "
                 f"{full_name} · {role} · #{target_id}"
             ),
+            attachments=[kbds.op_back_to_operators_keyboard()],
         )
         return True
     return False

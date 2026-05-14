@@ -39,9 +39,11 @@ from aemr_bot.utils.attachments import (
     extract_phone,
 )
 from aemr_bot.utils.event import (
+    get_callback_message_id,
     get_chat_id,
     get_first_name,
     get_user_id,
+    send_or_edit_screen,
 )
 
 log = logging.getLogger(__name__)
@@ -73,8 +75,8 @@ async def start_appeal_flow(event, max_user_id: int):
                 )
                 return
         if user.is_blocked:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await send_or_edit_screen(
+                event,
                 text=(
                     "Сейчас вы не можете подать обращение: ваш аккаунт "
                     "помечен как заблокированный. Если это ошибка — "
@@ -107,8 +109,8 @@ async def start_appeal_flow(event, max_user_id: int):
             "для max_user_id=%s. Сидируйте settings_store.",
             max_user_id,
         )
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
+        await send_or_edit_screen(
+            event,
             text=(
                 "Сервис временно недоступен — не настроен текст политики "
                 "обработки данных. Сообщили координатору; попробуйте позже."
@@ -129,8 +131,8 @@ async def start_appeal_flow(event, max_user_id: int):
             )
         else:
             text = texts.CONSENT_REQUEST.format(policy_url=policy_url)
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
+        await send_or_edit_screen(
+            event,
             text=text,
             attachments=attachments,
         )
@@ -161,8 +163,8 @@ async def _send_rate_limit_message(event, *, has_open_unanswered: bool) -> None:
             "Сейчас у вас нет неотвеченного обращения, которое можно "
             "дополнить. Пожалуйста, дождитесь сброса лимита и попробуйте позже."
         )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await send_or_edit_screen(
+        event,
         text=text,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -171,7 +173,12 @@ async def _send_rate_limit_message(event, *, has_open_unanswered: bool) -> None:
 # ---- _ask_* — переходы на следующий шаг -----------------------------------
 
 
-async def ask_contact_or_skip(event, max_user_id: int):
+async def ask_contact_or_skip(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+):
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         if not user.phone:
@@ -187,9 +194,13 @@ async def ask_contact_or_skip(event, max_user_id: int):
         # предложить «использовать тот же адрес» — экономит два шага
         # для жителей, которые подают повторное обращение по тому же
         # объекту. Если прошлого адреса нет — обычный путь.
-        if await ask_address_or_reuse(event, max_user_id):
+        if await ask_address_or_reuse(
+            event,
+            max_user_id,
+            force_new_message=force_new_message,
+        ):
             return
-        await ask_locality(event, max_user_id)
+        await ask_locality(event, max_user_id, force_new_message=force_new_message)
         return
 
     prompt_for = {
@@ -203,14 +214,20 @@ async def ask_contact_or_skip(event, max_user_id: int):
         ),
     }
     text, keyboard = prompt_for[target_state]
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await send_or_edit_screen(
+        event,
         text=text,
         attachments=[keyboard],
+        force_new_message=force_new_message,
     )
 
 
-async def ask_address_or_reuse(event, max_user_id: int) -> bool:
+async def ask_address_or_reuse(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+) -> bool:
     """Предложить жителю «использовать тот же адрес» если он уже подавал
     обращение. Возвращает True, если показали reuse-prompt — тогда
     воронка ждёт callback addr:reuse / addr:new и не идёт в ask_locality.
@@ -222,14 +239,15 @@ async def ask_address_or_reuse(event, max_user_id: int) -> bool:
     if last is None:
         return False
     locality, address = last
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await send_or_edit_screen(
+        event,
         text=(
             f"В прошлый раз вы писали по этому адресу:\n"
             f"📍 {locality}, {address}\n\n"
             f"Использовать его снова или указать новый?"
         ),
         attachments=[keyboards.reuse_address_keyboard()],
+        force_new_message=force_new_message,
     )
     return True
 
@@ -248,15 +266,19 @@ async def _show_progress_step(
     (см. services/progress.send_or_edit_progress), сохраняет mid в
     dialog_data['progress_message_id'].
 
-    `force_new_message=True` используется там, где редактирование старой
-    карточки ломает порядок ленты: после геоподтверждения или ручного
-    ввода адреса следующая карточка должна появиться ниже действия жителя.
+    `force_new_message=True` используем после видимого ввода жителя:
+    текст, контакт, гео или файл должны остаться в ленте перед следующим
+    шагом бота, а кнопочные переходы спокойно редактируют текущую карточку.
     """
     from aemr_bot.services.progress import render_progress, send_or_edit_progress
 
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         data = dict(user.dialog_data or {})
+        if not force_new_message and not data.get("progress_message_id"):
+            callback_mid = get_callback_message_id(event)
+            if callback_mid:
+                data["progress_message_id"] = callback_mid
         await users_service.set_state(session, max_user_id, next_state)
 
     # Завершённые шаги собираем из dialog_data + user.first_name.
@@ -288,7 +310,12 @@ async def _show_progress_step(
             )
 
 
-async def ask_locality(event, max_user_id: int):
+async def ask_locality(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+):
     """Шаг «Населённый пункт». Прогресс-карта с галочкой имени."""
     async with session_scope() as session:
         localities = await settings_store.get(session, "localities") or [
@@ -300,10 +327,16 @@ async def ask_locality(event, max_user_id: int):
         stage="locality",
         next_state=DialogState.AWAITING_LOCALITY,
         keyboard=keyboards.localities_keyboard(localities),
+        force_new_message=force_new_message,
     )
 
 
-async def ask_address(event, max_user_id: int):
+async def ask_address(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+):
     """Шаг «Адрес». Прогресс-карта с галочкой локалити."""
     await _show_progress_step(
         event,
@@ -311,6 +344,7 @@ async def ask_address(event, max_user_id: int):
         stage="address",
         next_state=DialogState.AWAITING_ADDRESS,
         keyboard=keyboards.cancel_keyboard(),
+        force_new_message=force_new_message,
     )
 
 
@@ -333,7 +367,12 @@ async def ask_topic(
     )
 
 
-async def ask_summary(event, max_user_id: int):
+async def ask_summary(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+):
     """Шаг «Описание сути». Прогресс-карта с галочкой темы.
 
     На этом шаге показываем cancel-клавиатуру и ждём следующее
@@ -346,6 +385,7 @@ async def ask_summary(event, max_user_id: int):
         stage="summary",
         next_state=DialogState.AWAITING_SUMMARY,
         keyboard=keyboards.cancel_keyboard(),
+        force_new_message=force_new_message,
     )
 
 
@@ -406,7 +446,7 @@ async def on_awaiting_contact(event, body, text_body, max_user_id):
             texts.CONTACT_RECEIVED, attachments=[keyboards.cancel_keyboard()]
         )
     else:
-        await ask_contact_or_skip(event, max_user_id)
+        await ask_contact_or_skip(event, max_user_id, force_new_message=True)
 
 
 async def on_awaiting_name(event, body, text_body, max_user_id):
@@ -422,9 +462,9 @@ async def on_awaiting_name(event, body, text_body, max_user_id):
 
     async with session_scope() as session:
         await users_service.set_first_name(session, max_user_id, name)
-    if await ask_address_or_reuse(event, max_user_id):
+    if await ask_address_or_reuse(event, max_user_id, force_new_message=True):
         return
-    await ask_locality(event, max_user_id)
+    await ask_locality(event, max_user_id, force_new_message=True)
 
 
 async def on_awaiting_address(event, body, text_body, max_user_id):
@@ -508,8 +548,6 @@ async def on_awaiting_consent(event, body, text_body, max_user_id):
 async def on_idle(event, body, text_body, max_user_id):
     """IDLE — нет активной воронки. Раньше был «магический followup»;
     теперь дополнение работает только через явную кнопку «📎 Дополнить»."""
-    from aemr_bot.handlers.menu import open_main_menu
-
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         active = await appeals_service.find_active_for_user(session, user.id)
@@ -522,22 +560,23 @@ async def on_idle(event, body, text_body, max_user_id):
             attachments=[keyboards.back_to_menu_keyboard()],
         )
         return
-    await event.message.answer(texts.UNKNOWN_INPUT)
-    await open_main_menu(event)
+    await event.message.answer(
+        texts.UNKNOWN_INPUT,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
 
 
 async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     """Житель нажал «📎 Дополнить» в карточке обращения. Принимаем текст
-    и/или вложения — пришиваем к обращению из dialog_data, отправляем в
-    админ-чат как «📩 Дополнение к обращению #N», подтверждаем жителю
-    и возвращаем в меню.
+    и/или вложения — пришиваем к обращению из dialog_data, обновляем
+    карточку в админ-чате и подтверждаем жителю одной карточкой с
+    кнопкой главного меню.
 
     Отвеченные и закрытые обращения не переоткрываем. Повтор по ним
     оформляется новым связанным обращением через «🔁 Подать похожее».
     """
     from aemr_bot.config import settings as cfg
     from aemr_bot.db.models import AppealStatus
-    from aemr_bot.handlers.menu import open_main_menu
     from aemr_bot.services import card_format
     from aemr_bot.services.admin_relay import relay_attachments_to_admin
     from aemr_bot.utils.event import extract_message_id
@@ -654,6 +693,6 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
                 log.exception("relay followup attachments failed")
 
     await event.message.answer(
-        f"✅ Дополнение отправлено оператору по обращению #{appeal.id}."
+        f"✅ Дополнение отправлено оператору по обращению #{appeal.id}.",
+        attachments=[keyboards.back_to_menu_keyboard()],
     )
-    await open_main_menu(event)

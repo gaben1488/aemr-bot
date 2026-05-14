@@ -147,7 +147,8 @@ class TestStartWizard:
         # Наш wizard поднят на awaiting_text
         assert 7 in broadcast._wizards
         assert broadcast._wizards[7].step == "awaiting_text"
-        event.message.answer.assert_called_once()
+        event.bot.send_message.assert_called_once()
+        assert "Введите текст рассылки" in event.bot.send_message.call_args.kwargs["text"]
 
 
 # --- _handle_wizard_text ------------------------------------------------------
@@ -508,7 +509,9 @@ class TestListBroadcasts:
              patch("aemr_bot.handlers.broadcast.broadcasts_service.list_recent",
                    AsyncMock(return_value=[])):
             await broadcast._list_broadcasts(event)
-        event.message.answer.assert_called_once()
+        event.bot.send_message.assert_called_once()
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "рассылок" in text.lower()
 
     @pytest.mark.asyncio
     async def test_with_items(self) -> None:
@@ -533,6 +536,6 @@ class TestListBroadcasts:
              patch("aemr_bot.handlers.broadcast.broadcasts_service.list_recent",
                    AsyncMock(return_value=items)):
             await broadcast._list_broadcasts(event)
-        text = event.message.answer.call_args.args[0]
+        text = event.bot.send_message.call_args.kwargs["text"]
         assert "42" in text
         assert "100" in text

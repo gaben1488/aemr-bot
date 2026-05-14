@@ -426,7 +426,7 @@ class TestOnIdle:
              patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
                    AsyncMock(return_value=user)), \
              patch("aemr_bot.handlers.appeal_funnel.appeals_service.find_active_for_user",
-                   AsyncMock(return_value=None)), \
-             patch("aemr_bot.handlers.menu.open_main_menu", AsyncMock()) as open_menu:
+                   AsyncMock(return_value=None)):
             await appeal_funnel.on_idle(event, body=None, text_body="x", max_user_id=42)
-        open_menu.assert_called_once()
+        event.message.answer.assert_called_once()
+        assert event.message.answer.call_args.kwargs["attachments"]

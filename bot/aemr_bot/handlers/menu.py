@@ -449,8 +449,9 @@ async def handle_broadcast_unsubscribe(event, max_user_id: int) -> None:
     async with session_scope() as session:
         already = await broadcasts_service.is_subscribed(session, max_user_id)
         if not already:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await ack_callback(event, texts.UNSUBSCRIBE_ALREADY_OFF)
+            await _send_or_edit_menu(
+                event,
                 text=texts.UNSUBSCRIBE_ALREADY_OFF,
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
@@ -461,8 +462,9 @@ async def handle_broadcast_unsubscribe(event, max_user_id: int) -> None:
         max_user_id=max_user_id,
         source="кнопка под рассылкой",
     )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await ack_callback(event, texts.UNSUBSCRIBE_CONFIRMED)
+    await _send_or_edit_menu(
+        event,
         text=texts.UNSUBSCRIBE_CONFIRMED,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -482,7 +484,7 @@ async def open_help(event):
     await _send_or_edit_menu(
         event,
         text=texts.HELP_USER,
-        attachments=[keyboards.back_to_menu_keyboard()],
+        attachments=[keyboards.back_to_settings_keyboard()],
     )
 
 
@@ -490,7 +492,7 @@ async def open_rules(event):
     await _send_or_edit_menu(
         event,
         text=texts.RULES_TEXT,
-        attachments=[keyboards.back_to_menu_keyboard()],
+        attachments=[keyboards.back_to_settings_keyboard()],
     )
 
 
@@ -772,7 +774,7 @@ async def open_emergency(event):
     await _send_or_edit_menu(
         event,
         text=body,
-        attachments=[keyboards.back_to_menu_keyboard()],
+        attachments=[keyboards.back_to_useful_info_keyboard()],
     )
 
 
@@ -789,7 +791,7 @@ async def open_dispatchers(event):
     await _send_or_edit_menu(
         event,
         text=body,
-        attachments=[keyboards.back_to_menu_keyboard()],
+        attachments=[keyboards.back_to_useful_info_keyboard()],
     )
 
 
@@ -958,7 +960,6 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
         return True
 
     if payload == "broadcast:unsubscribe" and max_user_id is not None:
-        await ack_callback(event)
         await handle_broadcast_unsubscribe(event, max_user_id)
         return True
 

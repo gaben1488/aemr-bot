@@ -133,6 +133,7 @@ async def _do_open_tickets(event) -> None:
             event,
             chat_id=cfg.admin_group_id,
             text="🎉 Нет открытых или неотвеченных обращений.",
+            attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
 
@@ -140,6 +141,7 @@ async def _do_open_tickets(event) -> None:
         event,
         chat_id=cfg.admin_group_id,
         text=f"⏳ Найдено неотвеченных обращений: {len(open_appeals)}",
+        attachments=[kbds.op_back_to_menu_keyboard()],
     )
 
     for appeal in open_appeals:
@@ -176,6 +178,7 @@ async def _do_diag(event) -> None:
     """Сводка состояния бота. Общая реализация для /diag и кнопки."""
     from sqlalchemy import func, select
 
+    from aemr_bot import keyboards as kbds
     from aemr_bot.db.models import (
         Appeal,
         AppealStatus,
@@ -233,38 +236,49 @@ async def _do_diag(event) -> None:
             f"• Лимит ответа: {cfg.answer_max_chars}\n"
             f"• SLA: {cfg.sla_response_hours}ч"
         ),
+        attachments=[kbds.op_back_to_menu_keyboard()],
     )
 
 
 async def _do_backup(event) -> None:
     """Снять pg_dump прямо сейчас. Общая реализация для /backup и кнопки."""
+    from aemr_bot import keyboards as kbds
     from aemr_bot.services import db_backup
 
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text="🗄️ Запускаю pg_dump… Это может занять несколько секунд.",
+        attachments=[kbds.op_back_to_menu_keyboard()],
     )
     try:
         out = await db_backup.backup_db()
     except Exception as e:
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id, text=f"⚠️ Бэкап упал: {e}"
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=f"⚠️ Бэкап упал: {e}",
+            attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
     if out is None:
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text=(
                 "⚠️ Бэкап не выполнен. Проверьте логи бота "
                 "(`docker compose logs bot --tail 50`)."
             ),
+            attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
     size_kb = out.stat().st_size // 1024
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=(
             f"✅ Бэкап готов: `{out.name}` ({size_kb} КБ).\n"
             f"Лежит в named-volume `backups` контейнера."
         ),
+        attachments=[kbds.op_back_to_menu_keyboard()],
     )

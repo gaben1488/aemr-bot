@@ -152,17 +152,15 @@ class TestCallbackConsent:
         on_callback, _ = captured_handlers
         event = _make_callback_event(payload="consent:no")
         reset = AsyncMock()
-        open_menu = AsyncMock()
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.appeal.users_service.reset_state", reset), \
              patch("aemr_bot.handlers.appeal.drop_user_lock"), \
-             patch("aemr_bot.handlers.menu.open_main_menu", open_menu), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await on_callback(event)
         reset.assert_called_once()
-        open_menu.assert_called_once()
         event.bot.send_message.assert_called_once()
+        assert event.bot.send_message.call_args.kwargs["attachments"]
 
 
 class TestCallbackCancel:
@@ -173,16 +171,15 @@ class TestCallbackCancel:
         on_callback, _ = captured_handlers
         event = _make_callback_event(payload="cancel")
         reset = AsyncMock()
-        open_menu = AsyncMock()
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.appeal.users_service.reset_state", reset), \
              patch("aemr_bot.handlers.appeal.drop_user_lock"), \
-             patch("aemr_bot.handlers.menu.open_main_menu", open_menu), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await on_callback(event)
         reset.assert_called_once()
-        open_menu.assert_called_once()
+        event.bot.send_message.assert_called_once()
+        assert event.bot.send_message.call_args.kwargs["attachments"]
 
 
 class TestCallbackAddrReuse:

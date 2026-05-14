@@ -138,11 +138,10 @@ async def test_stale_geo_callback_while_awaiting_address_gets_visible_notice() -
 
     assert allowed is False
     ack.assert_called_once_with(event, appeal._GEO_AWAITING_ADDRESS_NOTICE)
-    send_to_citizen.assert_called_once_with(
-        event,
-        7,
-        text=appeal._GEO_AWAITING_ADDRESS_NOTICE,
-    )
+    send_to_citizen.assert_called_once()
+    assert send_to_citizen.call_args.args == (event, 7)
+    assert send_to_citizen.call_args.kwargs["text"] == appeal._GEO_AWAITING_ADDRESS_NOTICE
+    assert send_to_citizen.call_args.kwargs["attachments"]
 
 
 @pytest.mark.asyncio
