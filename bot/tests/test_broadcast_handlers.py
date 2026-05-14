@@ -42,6 +42,13 @@ def _make_event(*, user_id: int = 7) -> SimpleNamespace:
     )
 
 
+def _make_callback_event(*, user_id: int = 7) -> SimpleNamespace:
+    event = _make_event(user_id=user_id)
+    event.bot.edit_message = AsyncMock()
+    event.callback.payload = "broadcast:cancel"
+    return event
+
+
 @asynccontextmanager
 async def _fake_session_scope():
     yield MagicMock()
@@ -369,6 +376,20 @@ class TestHandleAbort:
         assert 7 not in broadcast._wizards
         event.bot.send_message.assert_called_once()
 
+    @pytest.mark.asyncio
+    async def test_callback_edits_preview_card_instead_of_sending_new(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        event = _make_callback_event(user_id=7)
+        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
+        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+            await broadcast._handle_abort(event)
+
+        assert 7 not in broadcast._wizards
+        event.bot.edit_message.assert_called_once()
+        assert event.bot.edit_message.call_args.kwargs["message_id"] == "m-1"
+        event.bot.send_message.assert_not_called()
+
 
 # --- _handle_edit -------------------------------------------------------------
 
@@ -399,6 +420,22 @@ class TestHandleEdit:
         assert broadcast._wizards[7].step == "awaiting_text"
         assert broadcast._wizards[7].text == ""
         event.bot.send_message.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_callback_edits_preview_back_to_text_prompt(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        event = _make_callback_event(user_id=7)
+        state = broadcast._WizardState(step="awaiting_confirm")
+        state.text = "старый текст"
+        broadcast._wizards[7] = state
+        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+            await broadcast._handle_edit(event)
+
+        assert broadcast._wizards[7].step == "awaiting_text"
+        event.bot.edit_message.assert_called_once()
+        assert event.bot.edit_message.call_args.kwargs["message_id"] == "m-1"
+        event.bot.send_message.assert_not_called()
 
 
 # --- _handle_stop -------------------------------------------------------------
@@ -467,6 +504,42 @@ class TestHandleStop:
             await broadcast._handle_stop(event, 99)
         msg_arg = ack.call_args.args[1]
         assert "Уже завершено" in msg_arg
+
+
+class TestRunBroadcastImpl:
+    @pytest.mark.asyncio
+    async def test_final_status_edits_progress_card_with_admin_back_button(self) -> None:
+        from aemr_bot.db.models import BroadcastStatus
+        from aemr_bot.handlers import broadcast
+
+        bot = MagicMock()
+        bot.edit_message = AsyncMock()
+        bot.send_message = AsyncMock()
+        mark_finished = AsyncMock()
+
+        with patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.mark_started",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.list_subscriber_targets",
+                   AsyncMock(return_value=[])), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.mark_finished",
+                   mark_finished):
+            await broadcast._run_broadcast_impl(
+                bot,
+                broadcast_id=77,
+                text="Текст рассылки",
+                total=0,
+                admin_mid="m-progress",
+            )
+
+        bot.edit_message.assert_called_once()
+        kwargs = bot.edit_message.call_args.kwargs
+        assert kwargs["message_id"] == "m-progress"
+        assert "77" in kwargs["text"]
+        assert kwargs["attachments"]
+        bot.send_message.assert_not_called()
+        assert mark_finished.call_args.kwargs["status"] == BroadcastStatus.DONE
 
 
 class TestFormatDt:

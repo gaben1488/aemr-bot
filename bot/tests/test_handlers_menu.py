@@ -467,6 +467,24 @@ class TestBroadcastUnsubscribe:
             source="кнопка под рассылкой",
         )
 
+    @pytest.mark.asyncio
+    async def test_unsubscribe_from_broadcast_button_edits_message(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_callback_event()
+        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.menu.broadcasts_service.set_subscription",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.menu.admin_events.notify_broadcast_unsubscribed",
+                   AsyncMock()):
+            await menu.handle_broadcast_unsubscribe(event, max_user_id=42)
+
+        event.bot.edit_message.assert_called_once()
+        assert event.bot.edit_message.call_args.kwargs["message_id"] == "m-1"
+        event.bot.send_message.assert_not_called()
+
 
 class TestConsentAndEraseNotifications:
     @pytest.mark.asyncio

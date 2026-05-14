@@ -25,6 +25,7 @@ pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi"
 def _make_event(*, chat_id: int = 100, user_id: int = 7) -> SimpleNamespace:
     bot = MagicMock()
     bot.send_message = AsyncMock()
+    bot.edit_message = AsyncMock()
     return SimpleNamespace(
         bot=bot,
         message=SimpleNamespace(
@@ -466,6 +467,48 @@ class TestDeliverOperatorReply:
         mark_success.assert_called_once()
         assert opr._is_duplicate_reply(operator.id, appeal.id, "ответ") is True
         assert event.bot.send_message.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_success_refreshes_original_admin_card(self) -> None:
+        from aemr_bot.handlers import operator_reply as opr
+
+        event = _make_event()
+        event.bot.send_message = AsyncMock(
+            side_effect=[SimpleNamespace(body=SimpleNamespace(mid="out-1")), None]
+        )
+        appeal = MagicMock(id=1)
+        operator = MagicMock(id=7, max_user_id=42)
+        fresh_appeal = _fresh_appeal()
+        fresh_appeal.admin_message_id = "admin-mid-1"
+        fresh_appeal.closed_due_to_revoke = False
+
+        opr._recent_replies.clear()
+        with patch.object(opr.cfg, "answer_max_chars", 1000), \
+             patch("aemr_bot.handlers.operator_reply.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
+                   AsyncMock(side_effect=[fresh_appeal, fresh_appeal])), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.operator_reply._mark_reply_success_recorded",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.operator_reply.card_format.admin_card",
+                   return_value="обновлённая карточка"):
+            handled = await opr._deliver_operator_reply(
+                event, appeal=appeal, operator=operator,
+                text="ответ", audit_action="reply",
+            )
+
+        assert handled is True
+        event.bot.edit_message.assert_called_once()
+        kwargs = event.bot.edit_message.call_args.kwargs
+        assert kwargs["message_id"] == "admin-mid-1"
+        assert kwargs["text"] == "обновлённая карточка"
+        assert kwargs["attachments"]
 
 
 class TestHandleCommandReply:

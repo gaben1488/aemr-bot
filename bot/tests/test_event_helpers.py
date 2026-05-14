@@ -5,15 +5,18 @@ MessageCallback, голый Message. Хелперы должны работат�
 from __future__ import annotations
 
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 
 from aemr_bot.utils.event import (
     extract_message_id,
+    get_callback_message_id,
     get_chat_id,
     get_message_text,
     get_payload,
     get_user_id,
+    send_or_edit_screen,
 )
 
 
@@ -99,6 +102,117 @@ class TestExtractMessageId:
 
     def test_empty_object(self) -> None:
         assert extract_message_id(SimpleNamespace()) is None
+
+
+class TestCallbackMessageId:
+    def test_callback_message_mid(self) -> None:
+        event = SimpleNamespace(
+            callback=SimpleNamespace(payload="menu:settings"),
+            message=SimpleNamespace(body=SimpleNamespace(mid="m-current")),
+        )
+        assert get_callback_message_id(event) == "m-current"
+
+    def test_plain_message_has_no_callback_mid(self) -> None:
+        event = SimpleNamespace(
+            message=SimpleNamespace(body=SimpleNamespace(mid="m-current")),
+        )
+        assert get_callback_message_id(event) is None
+
+
+class TestSendOrEditScreen:
+    @pytest.mark.asyncio
+    async def test_callback_edits_current_card(self) -> None:
+        bot = SimpleNamespace(edit_message=AsyncMock(), send_message=AsyncMock())
+        event = SimpleNamespace(
+            bot=bot,
+            callback=SimpleNamespace(payload="menu:settings"),
+            message=SimpleNamespace(
+                sender=SimpleNamespace(user_id=42),
+                recipient=SimpleNamespace(chat_id=100),
+                body=SimpleNamespace(mid="m-current"),
+            ),
+        )
+
+        await send_or_edit_screen(event, text="Экран", attachments=["kb"])
+
+        bot.edit_message.assert_called_once_with(
+            message_id="m-current",
+            text="Экран",
+            attachments=["kb"],
+        )
+        bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_force_new_message_sends_below_visible_user_input(self) -> None:
+        bot = SimpleNamespace(edit_message=AsyncMock(), send_message=AsyncMock())
+        event = SimpleNamespace(
+            bot=bot,
+            callback=SimpleNamespace(payload="topic:1"),
+            message=SimpleNamespace(
+                sender=SimpleNamespace(user_id=42),
+                recipient=SimpleNamespace(chat_id=100),
+                body=SimpleNamespace(mid="m-current"),
+            ),
+        )
+
+        await send_or_edit_screen(
+            event,
+            text="Следующий шаг",
+            attachments=["kb"],
+            force_new_message=True,
+        )
+
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_called_once_with(
+            chat_id=100,
+            user_id=None,
+            text="Следующий шаг",
+            attachments=["kb"],
+        )
+
+    @pytest.mark.asyncio
+    async def test_edit_failure_falls_back_to_send(self) -> None:
+        bot = SimpleNamespace(
+            edit_message=AsyncMock(side_effect=RuntimeError("MAX edit failed")),
+            send_message=AsyncMock(),
+        )
+        event = SimpleNamespace(
+            bot=bot,
+            callback=SimpleNamespace(payload="menu:settings"),
+            message=SimpleNamespace(
+                sender=SimpleNamespace(user_id=42),
+                recipient=SimpleNamespace(chat_id=100),
+                body=SimpleNamespace(mid="m-current"),
+            ),
+        )
+
+        await send_or_edit_screen(event, text="Экран", attachments=["kb"])
+
+        bot.edit_message.assert_called_once()
+        bot.send_message.assert_called_once_with(
+            chat_id=100,
+            user_id=None,
+            text="Экран",
+            attachments=["kb"],
+        )
+
+    @pytest.mark.asyncio
+    async def test_plain_direct_event_without_chat_sends_by_user_id(self) -> None:
+        bot = SimpleNamespace(edit_message=AsyncMock(), send_message=AsyncMock())
+        event = SimpleNamespace(
+            bot=bot,
+            user=SimpleNamespace(user_id=42),
+        )
+
+        await send_or_edit_screen(event, text="Личное сообщение")
+
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_called_once_with(
+            chat_id=None,
+            user_id=42,
+            text="Личное сообщение",
+            attachments=[],
+        )
 
 
 @pytest.mark.asyncio

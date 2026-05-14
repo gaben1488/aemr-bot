@@ -46,6 +46,19 @@ def _make_event(*, chat_id: int = 100, user_id: int = 42, text: str = "") -> Sim
     )
 
 
+def _make_callback_event(
+    *, chat_id: int = 100, user_id: int = 42, text: str = "", payload: str = "menu:settings"
+) -> SimpleNamespace:
+    event = _make_event(chat_id=chat_id, user_id=user_id, text=text)
+    event.callback = SimpleNamespace(
+        payload=payload,
+        callback_id="cb-1",
+        user=SimpleNamespace(user_id=user_id, first_name="Иван"),
+    )
+    event.ack = AsyncMock()
+    return event
+
+
 @asynccontextmanager
 async def _fake_session_scope():
     yield MagicMock()
@@ -84,6 +97,73 @@ class TestAskAddressOrReuse:
 
 
 class TestAskFunnelSteps:
+    @pytest.mark.asyncio
+    async def test_button_step_edits_current_progress_card(self) -> None:
+        """Кнопочный переход должен менять текущую карточку, а не плодить новую."""
+        from aemr_bot import keyboards
+        from aemr_bot.db.models import DialogState
+        from aemr_bot.handlers import appeal_funnel
+
+        event = _make_callback_event(payload="locality:0")
+        user = SimpleNamespace(
+            first_name="Иван",
+            dialog_data={"locality": "Елизовское ГП"},
+        )
+        with patch("aemr_bot.handlers.appeal_funnel.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.set_state",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data",
+                   AsyncMock()) as update_data:
+            await appeal_funnel._show_progress_step(
+                event,
+                max_user_id=42,
+                stage="address",
+                next_state=DialogState.AWAITING_ADDRESS,
+                keyboard=keyboards.cancel_keyboard(),
+            )
+
+        event.bot.edit_message.assert_called_once()
+        assert event.bot.edit_message.call_args.kwargs["message_id"] == "m-1"
+        event.bot.send_message.assert_not_called()
+        update_data.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_force_new_progress_card_after_visible_input(self) -> None:
+        """После текста/гео/файла следующий шаг должен появиться ниже сообщения жителя."""
+        from aemr_bot import keyboards
+        from aemr_bot.db.models import DialogState
+        from aemr_bot.handlers import appeal_funnel
+
+        event = _make_callback_event(payload="topic:0")
+        user = SimpleNamespace(
+            first_name="Иван",
+            dialog_data={"locality": "Елизовское ГП", "address": "Ленина, 5"},
+        )
+        with patch("aemr_bot.handlers.appeal_funnel.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.set_state",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data",
+                   AsyncMock()) as update_data:
+            await appeal_funnel._show_progress_step(
+                event,
+                max_user_id=42,
+                stage="topic",
+                next_state=DialogState.AWAITING_TOPIC,
+                keyboard=keyboards.cancel_keyboard(),
+                force_new_message=True,
+            )
+
+        event.bot.edit_message.assert_not_called()
+        event.bot.send_message.assert_called_once()
+        update_data.assert_called_once()
+        assert update_data.call_args.args[2] == {"progress_message_id": "m-progress"}
+
     @pytest.mark.asyncio
     async def test_ask_locality_sends_localities_keyboard(self) -> None:
         from aemr_bot.handlers import appeal_funnel
