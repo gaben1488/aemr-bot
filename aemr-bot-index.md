@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-14 06:32:53 UTC`
+Generated at: `2026-05-14 08:33:13 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `157`
 Max file size: `300 KB`
@@ -152,7 +152,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/Политика.md` (6113 bytes)
 - `docs/Политика_v2.md` (28793 bytes)
 - `infra/.env.example` (7517 bytes)
-- `infra/docker-compose.yml` (5346 bytes)
+- `infra/docker-compose.yml` (5867 bytes)
 - `infra/Dockerfile` (1655 bytes)
 - `infra/nginx/feedback.conf` (976 bytes)
 - `README.md` (18494 bytes)
@@ -36320,10 +36320,17 @@ SEED_DIR=/app/seed
 
 ### `infra/docker-compose.yml`
 
-Size: `5346` bytes  
-SHA-256: `563a4047b9b48980495d9213a1e1bcb6b0ba9be4cdebfff191b91983ccea4b95`
+Size: `5867` bytes  
+SHA-256: `25b4165beefc2c586a7ac4a103eee4819d16efdc98cfd86cfd72258c9b4eb4dc`
 
 ```yaml
+# Имя compose-проекта закреплено здесь, а не вставляется sed'ом в
+# auto-deploy.sh. Раньше скрипт делал `sed -i '1i name: aemr-bot'`
+# после каждого `git reset --hard`, из-за чего рабочее дерево вечно
+# числилось dirty (`git status` показывал M docker-compose.yml).
+# Теперь имя — часть версионируемого файла, дерево остаётся чистым.
+name: aemr-bot
+
 services:
   db:
     # Pinned by tag + digest so `docker compose pull` не утянет втихую новый
