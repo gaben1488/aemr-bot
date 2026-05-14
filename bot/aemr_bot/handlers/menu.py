@@ -3,6 +3,7 @@ from typing import Any
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._common import current_user
 from aemr_bot.services import admin_events
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
@@ -78,12 +79,13 @@ async def open_main_menu(event):
     блокировочным сообщениям, проще их не показывать.
     """
     max_user_id = get_user_id(event)
-    async with session_scope() as session:
-        is_blocked = False
-        subscribed = False
-        recep_url = None
-        if max_user_id is not None:
-            user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    is_blocked = False
+    subscribed = False
+    recep_url = None
+    # Сессию открываем только когда есть кого искать: анонимному
+    # событию (max_user_id is None) меню рендерится по дефолтам.
+    if max_user_id is not None:
+        async with current_user(max_user_id) as (session, user):
             is_blocked = user.is_blocked
             if not is_blocked:
                 subscribed = await broadcasts_service.is_subscribed(session, max_user_id)
@@ -116,8 +118,7 @@ MY_APPEALS_PAGE_SIZE = 5
 
 async def open_my_appeals(event, max_user_id: int, page: int = 1):
     page = max(1, page)
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         total = await appeals_service.count_for_user(session, user.id)
         if total == 0:
             await _send_or_edit_menu(
@@ -320,8 +321,7 @@ async def do_subscribe(event, max_user_id: int) -> None:
     рядом с сообщением, чтобы не отправлять жителя кружным путём через
     «Настройки → Согласие на ПДн → Дать согласие».
     """
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         if user.is_blocked:
             await _send_or_edit_menu(
                 event,
@@ -370,8 +370,7 @@ async def do_subscribe_confirm(event, max_user_id: int) -> None:
 
     from aemr_bot.db.models import User
 
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         if user.is_blocked:
             await _send_or_edit_menu(
                 event,
@@ -406,8 +405,7 @@ async def do_subscribe_confirm(event, max_user_id: int) -> None:
 
 async def do_unsubscribe(event, max_user_id: int) -> None:
     """Идемпотентная отписка через кнопку «🔕 Отписаться»."""
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         # Заблокированному отписка тоже не нужна — он уже не получает
         # рассылку. Но на всякий случай отметим subscribed=false.
         if user.is_blocked:
@@ -540,8 +538,7 @@ async def ask_goodbye_erase_confirm(event):
     max_user_id = get_user_id(event)
     open_lines: list[str] = []
     if max_user_id is not None:
-        async with session_scope() as session:
-            user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        async with current_user(max_user_id) as (session, user):
             active = await appeals_service.list_unanswered(session)
             mine = [a for a in active if a.user_id == user.id]
             for ap in mine:
@@ -571,8 +568,7 @@ async def ask_forget_confirm(event):
     max_user_id = get_user_id(event)
     open_lines: list[str] = []
     if max_user_id is not None:
-        async with session_scope() as session:
-            user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        async with current_user(max_user_id) as (session, user):
             active = await appeals_service.list_unanswered(session)
             mine = [a for a in active if a.user_id == user.id]
         for ap in mine[:5]:
@@ -660,8 +656,7 @@ async def do_consent_revoke(event, max_user_id: int):
     from aemr_bot.services import appeals as appeals_service
     from aemr_bot.services import operators as ops_service
 
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         active = await appeals_service.list_unanswered(session)
         my_open = [a for a in active if a.user_id == user.id]
         await users_service.revoke_consent(session, max_user_id)
@@ -705,8 +700,7 @@ async def do_forget(event, max_user_id: int):
     from aemr_bot.services import operators as ops_service
 
     closed_ids: list[int] = []
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         active = await appeals_service.list_unanswered(session)
         closed_ids = [a.id for a in active if a.user_id == user.id]
         await users_service.erase_pdn(session, max_user_id)

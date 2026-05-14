@@ -5,6 +5,7 @@ from maxapi.types import BotStarted, Command, MessageCreated
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._common import current_user
 from aemr_bot.services import admin_events
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
@@ -35,8 +36,8 @@ async def _ensure_user(event):
     first_name = get_first_name(event)
     if max_user_id is None:
         return None
-    async with session_scope() as session:
-        return await users_service.get_or_create(session, max_user_id=max_user_id, first_name=first_name)
+    async with current_user(max_user_id, first_name=first_name) as (_, user):
+        return user
 
 
 async def _build_main_menu(max_user_id: int | None = None):
@@ -67,8 +68,7 @@ async def _reset_funnel_if_stuck(max_user_id: int | None) -> None:
         return
     from aemr_bot.db.models import DialogState
 
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         if user.dialog_state and user.dialog_state != DialogState.IDLE.value:
             await users_service.reset_state(session, max_user_id)
 
@@ -205,8 +205,7 @@ async def cmd_export(event):
     max_user_id = get_user_id(event)
     if max_user_id is None:
         return
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         appeals = await appeals_service.list_for_user(session, user.id, limit=500)
         appeals_payload = []
         for ap in appeals:

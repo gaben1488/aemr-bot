@@ -28,6 +28,7 @@ import logging
 from aemr_bot import keyboards, texts
 from aemr_bot.db.models import DialogState
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._common import current_user
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 
@@ -151,10 +152,7 @@ async def on_awaiting_geo_confirm(event, body, text_body, max_user_id):
     """Житель прислал что-то вместо нажатия кнопки на экране
     подтверждения. Просто повторно показываем подтверждающий экран —
     кнопки решают за житель что делать дальше."""
-    async with session_scope() as session:
-        user = await users_service.get_or_create(
-            session, max_user_id=max_user_id
-        )
+    async with current_user(max_user_id) as (_, user):
         data = dict(user.dialog_data or {})
     locality = data.get("detected_locality") or data.get("locality") or "?"
     street = data.get("detected_street") or ""

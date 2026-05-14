@@ -16,12 +16,12 @@ handlers/__init__.py делает `from maxapi import Dispatcher`, без maxapi
 """
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_current_user
 from tests._helpers import fake_session_scope as _fake_session_scope
 from tests._helpers import make_event
 
@@ -53,9 +53,7 @@ class TestOpenMainMenu:
 
         event = _make_event()
         user = SimpleNamespace(is_blocked=True)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.settings_store.get",
                    AsyncMock(return_value="https://reception")), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
@@ -71,9 +69,7 @@ class TestOpenMainMenu:
 
         event = _make_event()
         user = SimpleNamespace(is_blocked=False)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=True)):
             await menu.open_main_menu(event)
@@ -87,9 +83,7 @@ class TestOpenMyAppeals:
 
         event = _make_event()
         user = SimpleNamespace(id=1, is_blocked=False)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.appeals_service.count_for_user",
                    AsyncMock(return_value=0)):
             await menu.open_my_appeals(event, max_user_id=42)
@@ -109,9 +103,7 @@ class TestOpenMyAppeals:
             ap = MagicMock()
             ap.id = i
             appeals_mock.append(ap)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.appeals_service.count_for_user",
                    AsyncMock(return_value=12)), \
              patch("aemr_bot.handlers.menu.appeals_service.list_for_user",
@@ -271,9 +263,7 @@ class TestSubscribeFlow:
         user = SimpleNamespace(
             is_blocked=True, consent_broadcast_at=None
         )
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)):
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)):
             await menu.do_subscribe(event, max_user_id=42)
         text = event.bot.send_message.call_args.kwargs.get("text", "")
         assert "заблокирован" in text.lower()
@@ -284,9 +274,7 @@ class TestSubscribeFlow:
 
         event = _make_event()
         user = SimpleNamespace(is_blocked=False, consent_broadcast_at=None)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)):
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)):
             await menu.do_subscribe(event, max_user_id=42)
         from aemr_bot import texts
         text = event.bot.send_message.call_args.kwargs.get("text", "")
@@ -302,9 +290,7 @@ class TestSubscribeFlow:
         user = SimpleNamespace(
             is_blocked=False, consent_broadcast_at=datetime.now(timezone.utc)
         )
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=True)):
             await menu.do_subscribe(event, max_user_id=42)
@@ -324,9 +310,7 @@ class TestSubscribeFlow:
         )
         set_sub = AsyncMock()
         notify = AsyncMock()
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=False)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.set_subscription",
@@ -346,13 +330,8 @@ class TestSubscribeFlow:
         user = SimpleNamespace(is_blocked=False)
         notify = AsyncMock()
 
-        @asynccontextmanager
-        async def fake_scope():
-            yield session
-
-        with patch("aemr_bot.handlers.menu.session_scope", fake_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user",
+                   fake_current_user(user, session=session)), \
              patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
              patch("aemr_bot.handlers.menu.admin_events.notify_broadcast_subscribed",
                    notify):
@@ -369,9 +348,7 @@ class TestUnsubscribe:
 
         event = _make_event()
         user = SimpleNamespace(is_blocked=True)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.set_subscription",
                    AsyncMock()):
             await menu.do_unsubscribe(event, max_user_id=42)
@@ -385,9 +362,7 @@ class TestUnsubscribe:
 
         event = _make_event()
         user = SimpleNamespace(is_blocked=False)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=False)):
             await menu.do_unsubscribe(event, max_user_id=42)
@@ -403,9 +378,7 @@ class TestUnsubscribe:
         user = SimpleNamespace(is_blocked=False)
         set_sub = AsyncMock()
         notify = AsyncMock()
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.set_subscription",
@@ -481,9 +454,7 @@ class TestConsentAndEraseNotifications:
         event = _make_event()
         user = SimpleNamespace(id=1)
         notify = AsyncMock()
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.services.appeals.list_unanswered",
                    AsyncMock(return_value=[])), \
              patch("aemr_bot.handlers.menu.users_service.revoke_consent",
@@ -518,9 +489,7 @@ class TestConsentAndEraseNotifications:
         )
         notify = AsyncMock()
         repost = AsyncMock()
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.services.appeals.list_unanswered",
                    AsyncMock(return_value=[appeal])), \
              patch("aemr_bot.handlers.menu.users_service.revoke_consent",
@@ -544,9 +513,7 @@ class TestConsentAndEraseNotifications:
         user = SimpleNamespace(id=1)
         appeal = SimpleNamespace(id=9, user_id=1)
         notify = AsyncMock()
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.services.appeals.list_unanswered",
                    AsyncMock(return_value=[appeal])), \
              patch("aemr_bot.handlers.menu.users_service.erase_pdn", AsyncMock()), \

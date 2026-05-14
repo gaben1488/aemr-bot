@@ -20,6 +20,7 @@ from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._common import current_user
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
 from aemr_bot.services import users as users_service
@@ -185,10 +186,7 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
     """
     try:
         async with get_user_lock(max_user_id):
-            async with session_scope() as session:
-                user = await users_service.get_or_create(
-                    session, max_user_id=max_user_id
-                )
+            async with current_user(max_user_id) as (session, user):
                 if user.dialog_state == DialogState.IDLE.value:
                     log.info(
                         "отправка пропущена для пользователя %s — состояние уже IDLE",

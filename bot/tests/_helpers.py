@@ -109,3 +109,22 @@ async def fake_session_scope():
     """Заглушка `session_scope()` — отдаёт MagicMock вместо реальной
     сессии. Для handler-тестов, где БД-вызовы и так замоканы."""
     yield MagicMock()
+
+
+def fake_current_user(user, *, session=None):
+    """Заглушка `handlers._common.current_user` для handler-тестов.
+
+    Возвращает CM-фабрику, которая yield'ит пару ``(session, user)`` —
+    ту же форму, что и боевой `current_user`. Заменяет связку из двух
+    патчей (`session_scope` + `users_service.get_or_create`) одним.
+
+    `session` по умолчанию — MagicMock; передайте AsyncMock, если тест
+    проверяет прямые вызовы `session.execute` / `session.add`.
+    """
+    sess = MagicMock() if session is None else session
+
+    @asynccontextmanager
+    async def _cm(max_user_id, *, first_name=None):
+        yield sess, user
+
+    return _cm

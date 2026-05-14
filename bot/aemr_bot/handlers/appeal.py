@@ -33,6 +33,7 @@ from aemr_bot.handlers import (
     appeal_geo,
     callback_router,
 )
+from aemr_bot.handlers._common import current_user
 from aemr_bot.handlers.appeal_runtime import (
     drop_user_lock,
     recover_stuck_funnels,
@@ -130,11 +131,7 @@ async def _ensure_funnel_callback_state(
         return True
 
     try:
-        async with session_scope() as session:
-            user = await users_service.get_or_create(
-                session,
-                max_user_id=max_user_id,
-            )
+        async with current_user(max_user_id) as (_, user):
             current = _state_value(getattr(user, "dialog_state", None))
     except Exception:
         # Если БД недоступна, основной handler всё равно не сможет
@@ -285,11 +282,7 @@ def register(dp: Dispatcher) -> None:
 
         if payload == "addr:reuse":
             await ack_callback(event)
-            async with session_scope() as session:
-                user = await users_service.get_or_create(
-                    session,
-                    max_user_id=max_user_id,
-                )
+            async with current_user(max_user_id) as (session, user):
                 last = await appeals_service.find_last_address_for_user(
                     session,
                     user.id,
@@ -348,11 +341,7 @@ def register(dp: Dispatcher) -> None:
         # старого сообщения.
         if payload in ("geo:confirm", "geo:edit_address", "geo:other_locality"):
             await ack_callback(event)
-            async with session_scope() as session:
-                user = await users_service.get_or_create(
-                    session,
-                    max_user_id=max_user_id,
-                )
+            async with current_user(max_user_id) as (_, user):
                 state = user.dialog_state
                 data = dict(user.dialog_data or {})
             if state != DialogState.AWAITING_GEO_CONFIRM.value or not data.get(
@@ -376,11 +365,7 @@ def register(dp: Dispatcher) -> None:
                     full_addr = detected_street
                 else:
                     full_addr = ""
-                async with session_scope() as session:
-                    user = await users_service.get_or_create(
-                        session,
-                        max_user_id=max_user_id,
-                    )
+                async with current_user(max_user_id) as (session, user):
                     fresh = _clear_geo_detected(user.dialog_data or data)
                     if full_addr:
                         fresh["address"] = full_addr
@@ -396,11 +381,7 @@ def register(dp: Dispatcher) -> None:
                 return
 
             if payload == "geo:edit_address":
-                async with session_scope() as session:
-                    user = await users_service.get_or_create(
-                        session,
-                        max_user_id=max_user_id,
-                    )
+                async with current_user(max_user_id) as (session, user):
                     user.dialog_data = _clear_geo_detected(user.dialog_data or data)
                     user.dialog_state = DialogState.AWAITING_ADDRESS.value
                     await session.flush()
@@ -408,11 +389,7 @@ def register(dp: Dispatcher) -> None:
                 return
 
             if payload == "geo:other_locality":
-                async with session_scope() as session:
-                    user = await users_service.get_or_create(
-                        session,
-                        max_user_id=max_user_id,
-                    )
+                async with current_user(max_user_id) as (session, user):
                     user.dialog_data = _clear_geo_detected(
                         user.dialog_data or data,
                         drop_locality=True,
@@ -565,12 +542,9 @@ def register(dp: Dispatcher) -> None:
         if max_user_id is None:
             return
 
-        async with session_scope() as session:
-            user = await users_service.get_or_create(
-                session,
-                max_user_id=max_user_id,
-                first_name=get_first_name(event),
-            )
+        async with current_user(
+            max_user_id, first_name=get_first_name(event)
+        ) as (_, user):
             state = DialogState(user.dialog_state)
 
         handler = _STATE_HANDLERS.get(state)

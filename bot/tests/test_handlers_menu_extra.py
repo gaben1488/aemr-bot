@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_current_user
 from tests._helpers import fake_session_scope as _fake_session_scope
 from tests._helpers import make_event
 
@@ -139,9 +140,7 @@ class TestAskForgetConfirm:
         user = SimpleNamespace(id=1)
         with patch.object(keyboards, "forget_confirm_keyboard",
                           MagicMock(return_value=None)), \
-             patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.services.appeals.list_unanswered",
                    AsyncMock(return_value=[])):
             await menu.ask_forget_confirm(event)
@@ -162,9 +161,7 @@ class TestAskForgetConfirm:
         )
         with patch.object(keyboards, "forget_confirm_keyboard",
                           MagicMock(return_value=None)), \
-             patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.services.appeals.list_unanswered",
                    AsyncMock(return_value=[ap])):
             await menu.ask_forget_confirm(event)

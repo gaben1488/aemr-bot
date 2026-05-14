@@ -25,6 +25,7 @@ from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import DialogState
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._common import current_user
 from aemr_bot.handlers.appeal_runtime import (
     _HAS_ALNUM,
     PERSIST_RATE_LIMITED,
@@ -59,8 +60,7 @@ async def start_appeal_flow(event, max_user_id: int):
     запрос согласия + клавиатуру; иначе — переход к следующему шагу
     (контакт/имя/адрес).
     """
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         if user.is_blocked:
             pass  # обработка ниже
         else:
@@ -142,8 +142,7 @@ async def start_appeal_flow(event, max_user_id: int):
 
 
 async def _has_consent_step_pending(max_user_id: int) -> bool:
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         return user.consent_pdn_at is None
 
 
@@ -179,8 +178,7 @@ async def ask_contact_or_skip(
     *,
     force_new_message: bool = False,
 ):
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         if not user.phone:
             target_state = DialogState.AWAITING_CONTACT
         elif not user.first_name or user.first_name == "Удалено":
@@ -233,8 +231,7 @@ async def ask_address_or_reuse(
     воронка ждёт callback addr:reuse / addr:new и не идёт в ask_locality.
     False означает «прошлого адреса нет, спрашивайте обычным путём».
     """
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         last = await appeals_service.find_last_address_for_user(session, user.id)
     if last is None:
         return False
@@ -272,8 +269,7 @@ async def _show_progress_step(
     """
     from aemr_bot.services.progress import render_progress, send_or_edit_progress
 
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         data = dict(user.dialog_data or {})
         if not force_new_message and not data.get("progress_message_id"):
             callback_mid = get_callback_message_id(event)
@@ -395,8 +391,7 @@ async def finalize_appeal(event, max_user_id: int):
     кнопки «Отправить». На пустой ввод отвечаем подсказкой."""
     persisted = await persist_and_dispatch_appeal(event.bot, max_user_id)
     if persisted == PERSIST_RATE_LIMITED:
-        async with session_scope() as session:
-            user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        async with current_user(max_user_id) as (session, user):
             active = await appeals_service.find_active_for_user(session, user.id)
         await _send_rate_limit_message(event, has_open_unanswered=active is not None)
     elif persisted is False:
@@ -428,9 +423,8 @@ async def on_awaiting_contact(event, body, text_body, max_user_id):
 
     contact_name = extract_contact_name(body)
 
-    async with session_scope() as session:
+    async with current_user(max_user_id) as (session, user):
         await users_service.set_phone(session, max_user_id, phone)
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
         if contact_name and (not user.first_name or user.first_name == "Удалено"):
             cleaned = contact_name.strip()[: cfg.name_max_chars]
             if cleaned and _HAS_ALNUM.search(cleaned):
@@ -491,8 +485,7 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
         )
         return
 
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         # dict() — shallow copy. Nested list (summary_chunks, attachments)
         # должен быть отдельной копией, иначе append мутирует list,
         # лежащий в SQLAlchemy-tracked user.dialog_data ДО flush.
@@ -548,8 +541,7 @@ async def on_awaiting_consent(event, body, text_body, max_user_id):
 async def on_idle(event, body, text_body, max_user_id):
     """IDLE — нет активной воронки. Раньше был «магический followup»;
     теперь дополнение работает только через явную кнопку «📎 Дополнить»."""
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         active = await appeals_service.find_active_for_user(session, user.id)
 
     if active is not None:
@@ -581,8 +573,7 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     from aemr_bot.services.admin_relay import relay_attachments_to_admin
     from aemr_bot.utils.event import extract_message_id
 
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+    async with current_user(max_user_id) as (session, user):
         appeal_id = (user.dialog_data or {}).get("appeal_id")
         appeal = (
             await appeals_service.get_by_id(session, int(appeal_id))
