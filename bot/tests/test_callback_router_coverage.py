@@ -28,8 +28,17 @@ pytest.importorskip("maxapi", reason="callback_router тянет handlers-цеп
 from aemr_bot.handlers import callback_router  # noqa: E402
 
 # Файлы, где реально обрабатываются callback-payload'ы.
+# admin_callback_dispatch.py — куда вынесены broadcast:*/op:* ветки
+# из appeal.py (батч 1 polish): payload-литералы реестра теперь
+# живут там, не в appeal.py.
 _HANDLER_DIR = Path(__file__).resolve().parents[1] / "aemr_bot" / "handlers"
-_HANDLER_FILES = ("appeal.py", "menu.py", "broadcast.py", "admin_commands.py")
+_HANDLER_FILES = (
+    "appeal.py",
+    "admin_callback_dispatch.py",
+    "menu.py",
+    "broadcast.py",
+    "admin_commands.py",
+)
 
 
 def _handler_source() -> str:

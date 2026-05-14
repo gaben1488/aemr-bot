@@ -197,8 +197,12 @@ class TestMalformedAdminPayloads:
         self, on_callback, payload, target_patch
     ) -> None:
         event = _callback_event(payload=payload, chat_id=123)
+        # admin-payload'ы (broadcast:*/op:*) теперь маршрутизируются
+        # через admin_callback_dispatch (батч 1 polish) — битый хвост
+        # там ack'ается и стопится. Патчим ack именно в диспетчере.
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 123), \
-             patch("aemr_bot.handlers.appeal.ack_callback", AsyncMock()) as ack, \
+             patch("aemr_bot.handlers.admin_callback_dispatch.ack_callback",
+                   AsyncMock()) as ack, \
              patch(target_patch, AsyncMock()) as target:
             await on_callback(event)
 

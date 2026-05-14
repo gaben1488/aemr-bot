@@ -27,7 +27,12 @@ from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import DialogState
 from aemr_bot.db.session import session_scope
-from aemr_bot.handlers import appeal_funnel, appeal_geo, callback_router
+from aemr_bot.handlers import (
+    admin_callback_dispatch,
+    appeal_funnel,
+    appeal_geo,
+    callback_router,
+)
 from aemr_bot.handlers.appeal_runtime import (
     drop_user_lock,
     recover_stuck_funnels,
@@ -453,159 +458,15 @@ def register(dp: Dispatcher) -> None:
             return
 
         # Коллбэки мастера рассылок (на стороне оператора).
-        if payload.startswith("broadcast:") and not payload.startswith(
-            "broadcast:unsubscribe"
-        ):
-            from aemr_bot.handlers import broadcast as broadcast_handler
-
-            if payload == "broadcast:confirm":
-                await broadcast_handler._handle_confirm(event)
-                return
-            if payload == "broadcast:abort":
-                await broadcast_handler._handle_abort(event)
-                return
-            if payload == "broadcast:edit":
-                await broadcast_handler._handle_edit(event)
-                return
-            if payload.startswith("broadcast:stop:"):
-                bid = callback_router.parse_int_tail(payload, "broadcast:stop:")
-                if bid is None:
-                    await ack_callback(event)
-                    return
-                await broadcast_handler._handle_stop(event, bid)
-                return
-
-        # Кнопки быстрых действий для /op_help.
-        if payload.startswith("op:"):
-            from aemr_bot.handlers import (
-                admin_commands,
-                broadcast as broadcast_handler,
-            )
-
-            if payload == "op:menu":
-                await ack_callback(event)
-                await admin_commands.show_op_menu(event, pin=False)
-                return
-            if payload == "op:stats_menu":
-                await ack_callback(event)
-                await admin_commands.run_stats_menu(event)
-                return
-            if payload == "op:stats_today":
-                await ack_callback(event)
-                if await admin_commands.run_stats_today(event):
-                    await admin_commands.show_op_menu(event, pin=False)
-                return
-            if payload == "op:stats_week":
-                await ack_callback(event)
-                await admin_commands.run_stats(event, "week")
-                return
-            if payload == "op:stats_month":
-                await ack_callback(event)
-                await admin_commands.run_stats(event, "month")
-                return
-            if payload == "op:stats_quarter":
-                await ack_callback(event)
-                await admin_commands.run_stats(event, "quarter")
-                return
-            if payload == "op:stats_half_year":
-                await ack_callback(event)
-                await admin_commands.run_stats(event, "half_year")
-                return
-            if payload == "op:stats_year":
-                await ack_callback(event)
-                await admin_commands.run_stats(event, "year")
-                return
-            if payload == "op:stats_all":
-                await ack_callback(event)
-                await admin_commands.run_stats(event, "all")
-                return
-            if payload == "op:open_tickets":
-                await ack_callback(event)
-                await admin_commands.run_open_tickets(event)
-                return
-            if payload == "op:diag":
-                await ack_callback(event)
-                await admin_commands.run_diag(event)
-                return
-            if payload == "op:backup":
-                await ack_callback(event)
-                await admin_commands.run_backup(event)
-                return
-            if payload == "op:broadcast":
-                await ack_callback(event)
-                await broadcast_handler._start_wizard(event)
-                return
-            if payload == "op:broadcast_list":
-                await ack_callback(event)
-                await broadcast_handler._list_broadcasts(event)
-                return
-            if payload == "op:operators":
-                await ack_callback(event)
-                await admin_commands.run_operators_menu(event)
-                return
-            if payload == "op:settings":
-                await ack_callback(event)
-                await admin_commands.run_settings_menu(event)
-                return
-            if payload == "op:audience":
-                await ack_callback(event)
-                await admin_commands.run_audience_menu(event)
-                return
-            if payload.startswith("op:aud:"):
-                await admin_commands.run_audience_action(event, payload)
-                return
-            if payload.startswith("op:reply:"):
-                aid = callback_router.parse_int_tail(payload, "op:reply:")
-                if aid is None:
-                    await ack_callback(event)
-                    return
-                await admin_commands.run_reply_intent(event, aid)
-                return
-            if payload == "op:reply_cancel":
-                await admin_commands.run_reply_cancel(event)
-                return
-            if payload.startswith("op:reopen:"):
-                aid = callback_router.parse_int_tail(payload, "op:reopen:")
-                if aid is None:
-                    await ack_callback(event)
-                    return
-                await admin_commands.run_reopen(event, aid)
-                return
-            if payload.startswith("op:close:"):
-                aid = callback_router.parse_int_tail(payload, "op:close:")
-                if aid is None:
-                    await ack_callback(event)
-                    return
-                await admin_commands.run_close(event, aid)
-                return
-            if payload.startswith("op:erase:"):
-                aid = callback_router.parse_int_tail(payload, "op:erase:")
-                if aid is None:
-                    await ack_callback(event)
-                    return
-                await admin_commands.run_erase_for_appeal(event, aid)
-                return
-            if payload.startswith("op:block:"):
-                aid = callback_router.parse_int_tail(payload, "op:block:")
-                if aid is None:
-                    await ack_callback(event)
-                    return
-                await admin_commands.run_block_for_appeal(event, aid, blocked=True)
-                return
-            if payload.startswith("op:unblock:"):
-                aid = callback_router.parse_int_tail(payload, "op:unblock:")
-                if aid is None:
-                    await ack_callback(event)
-                    return
-                await admin_commands.run_block_for_appeal(event, aid, blocked=False)
-                return
-            # Wizard'ы IT (роли проверяются внутри обработчиков):
-            if payload.startswith("op:opadd:"):
-                await admin_commands.run_operators_action(event, payload)
-                return
-            if payload.startswith("op:setkey:"):
-                await admin_commands.run_settings_action(event, payload)
-                return
+        # Admin/operator callback'и (broadcast:* / op:*) — единая
+        # dispatch-таблица в handlers/admin_callback_dispatch.py.
+        # Раньше здесь был ~155-строчный if-elif. dispatch вернёт True,
+        # если обработал; False — если payload не admin-callback (или
+        # `op:`/`broadcast:` с неизвестным хвостом), тогда продолжаем
+        # обычный fallthrough в menu.handle_callback — поведение
+        # сохранено в точности (см. docstring диспетчера).
+        if await admin_callback_dispatch.dispatch_admin_callback(event, payload):
+            return
 
         # Переход к обработчикам меню/контактов/просмотра обращений
         from aemr_bot.handlers import menu as menu_handlers
