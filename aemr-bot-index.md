@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-14 08:33:13 UTC`
+Generated at: `2026-05-14 09:07:34 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `157`
 Max file size: `300 KB`
@@ -33,7 +33,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/db/alembic/versions/0010_pg_ops_hardening.py` (4774 bytes)
 - `bot/aemr_bot/db/alembic/versions/0011_wizard_state_persistence.py` (3270 bytes)
 - `bot/aemr_bot/db/models.py` (14630 bytes)
-- `bot/aemr_bot/db/session.py` (1505 bytes)
+- `bot/aemr_bot/db/session.py` (2764 bytes)
 - `bot/aemr_bot/handlers/__init__.py` (3303 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (12111 bytes)
@@ -47,7 +47,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_funnel.py` (30407 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7608 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (12632 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (24688 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (27159 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (7237 bytes)
 - `bot/aemr_bot/handlers/menu.py` (42388 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (27513 bytes)
@@ -59,7 +59,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (6055 bytes)
 - `bot/aemr_bot/services/appeals.py` (18415 bytes)
-- `bot/aemr_bot/services/broadcasts.py` (10444 bytes)
+- `bot/aemr_bot/services/broadcasts.py` (11753 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (5938 bytes)
 - `bot/aemr_bot/services/cron.py` (31012 bytes)
@@ -70,7 +70,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/policy.py` (2979 bytes)
 - `bot/aemr_bot/services/progress.py` (9433 bytes)
 - `bot/aemr_bot/services/settings_store.py` (6689 bytes)
-- `bot/aemr_bot/services/stats.py` (5449 bytes)
+- `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (29316 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
@@ -2381,8 +2381,8 @@ class WizardState(Base):
 
 ### `bot/aemr_bot/db/session.py`
 
-Size: `1505` bytes  
-SHA-256: `4acd7507a3aa19b7181615d91c29c27b8d7c2a0cefb7f31bf345ce085e05e715`
+Size: `2764` bytes  
+SHA-256: `d574757555249d30375f339879014e5b77a783e72a2aef054c0cd4158c4524cd`
 
 ```python
 from collections.abc import AsyncIterator
@@ -2406,6 +2406,22 @@ def _engine_kwargs() -> dict:
             # либо обрыва TCP. Без этого pool отдаёт мёртвые соединения,
             # pool_pre_ping ловит, но даёт лишний RTT на каждый запрос.
             pool_recycle=1800,
+            # Защита пула (5+10) от зависшего запроса. Миграция 0010
+            # ставит statement_timeout через ALTER DATABASE — но это
+            # покрывает только новые коннекты к БД с применённой
+            # миграцией. Дублируем на уровне engine как defense-in-depth:
+            #   - statement_timeout=30s — Postgres сам abort'ит SQL,
+            #     висящий дольше 30 секунд (тяжёлый build_xlsx, lock
+            #     contention), освобождая соединение в пул;
+            #   - command_timeout=30 — asyncpg-уровень: страховка, если
+            #     server-side timeout не сработал (зависла сеть до БД).
+            # Без этого один медленный запрос держит соединение
+            # бесконечно; пул из 15 исчерпывается — single-process бот
+            # перестаёт отвечать.
+            connect_args={
+                "command_timeout": 30,
+                "server_settings": {"statement_timeout": "30000"},
+            },
         )
     return base
 
@@ -6184,8 +6200,8 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `24688` bytes  
-SHA-256: `65a3f54cb4f78957a43576db38db4f676a4bff249ddfae1c133657a700729ff1`
+Size: `27159` bytes  
+SHA-256: `909708aea42249a8cfa71a62006003c18c64b3d6a4b73898e7eb91603b680157`
 
 ```python
 """Мастер рассылок и цикл их отправки.
@@ -6617,60 +6633,96 @@ async def _run_broadcast_impl(
     async with session_scope() as session:
         targets = await broadcasts_service.list_subscriber_targets(session)
 
-    for user_db_id, user_max_user_id in targets:
-        # Перепроверяем флаг отмены в свежей сессии: его переключает клик из админ-чата.
-        async with session_scope() as flag_session:
-            status = await broadcasts_service.get_status(
-                flag_session, broadcast_id
-            )
-        if status == BroadcastStatus.CANCELLED.value:
-            cancelled = True
-            break
+    # Буфер результатов доставки. Раньше каждый получатель = отдельный
+    # session_scope на record_delivery + ещё один на get_status (флаг
+    # отмены): 2-4 транзакции × N получателей, на 10k подписчиков —
+    # ~20-30k коммитов за одну рассылку. Теперь результаты копятся в
+    # буфер и сбрасываются батчем в единой точке синхронизации с БД
+    # (по таймеру progress_step_sec либо при переполнении буфера) —
+    # там же читается флаг отмены и пишется прогресс. ~200 транзакций
+    # вместо ~25000.
+    _FLUSH_EVERY = 50
+    pending: list[tuple[int, str | None]] = []
 
-        error = await _send_one(bot, user_max_user_id, body)
-        async with session_scope() as delivery_session:
-            await broadcasts_service.record_delivery(
-                delivery_session,
-                broadcast_id=broadcast_id,
-                user_id=user_db_id,
-                error=error,
-            )
-        if error is None:
-            delivered += 1
-        else:
-            failed += 1
-
-        now = time.monotonic()
-        if (
-            admin_mid is not None
-            and now - last_progress_at >= progress_step_sec
-        ):
-            last_progress_at = now
-            async with session_scope() as upd_session:
-                await broadcasts_service.update_progress(
-                    upd_session,
-                    broadcast_id,
-                    delivered=delivered,
-                    failed=failed,
+    async def _flush_pending() -> None:
+        """Сбросить буфер доставок в БД. Best-effort: при сбое логируем,
+        но не валим рассылку — count_delivery_results в mark_finished
+        пересчитает счётчики по факту записанных строк."""
+        if not pending:
+            return
+        try:
+            async with session_scope() as flush_session:
+                await broadcasts_service.record_deliveries(
+                    flush_session,
+                    broadcast_id=broadcast_id,
+                    results=pending,
                 )
-            try:
-                await bot.edit_message(
-                    message_id=admin_mid,
-                    text=_format_progress(
-                        broadcast_id=broadcast_id,
-                        total=total,
+            pending.clear()
+        except Exception:
+            log.exception(
+                "broadcast #%s: failed to flush %d pending deliveries",
+                broadcast_id, len(pending),
+            )
+
+    try:
+        for user_db_id, user_max_user_id in targets:
+            error = await _send_one(bot, user_max_user_id, body)
+            pending.append((user_db_id, error))
+            if error is None:
+                delivered += 1
+            else:
+                failed += 1
+
+            now = time.monotonic()
+            # Единая точка синхронизации с БД: flush буфера + чтение
+            # флага отмены + запись прогресса + edit карточки. По
+            # таймеру либо при переполнении буфера.
+            if (
+                now - last_progress_at >= progress_step_sec
+                or len(pending) >= _FLUSH_EVERY
+            ):
+                last_progress_at = now
+                await _flush_pending()
+                async with session_scope() as sync_session:
+                    status = await broadcasts_service.get_status(
+                        sync_session, broadcast_id
+                    )
+                    await broadcasts_service.update_progress(
+                        sync_session,
+                        broadcast_id,
                         delivered=delivered,
                         failed=failed,
-                    ),
-                    attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
-                )
-            except Exception:
-                log.exception(
-                    "failed to edit progress message for broadcast #%s",
-                    broadcast_id,
-                )
+                    )
+                if status == BroadcastStatus.CANCELLED.value:
+                    cancelled = True
+                    break
+                if admin_mid is not None:
+                    try:
+                        await bot.edit_message(
+                            message_id=admin_mid,
+                            text=_format_progress(
+                                broadcast_id=broadcast_id,
+                                total=total,
+                                delivered=delivered,
+                                failed=failed,
+                            ),
+                            attachments=[
+                                keyboards.broadcast_stop_keyboard(broadcast_id)
+                            ],
+                        )
+                    except Exception:
+                        log.exception(
+                            "failed to edit progress message for broadcast #%s",
+                            broadcast_id,
+                        )
 
-        await asyncio.sleep(rate_delay)
+            await asyncio.sleep(rate_delay)
+    finally:
+        # Любой выход из цикла (конец списка, break по отмене,
+        # исключение) — досбрасываем остаток буфера, иначе уже
+        # отправленные сообщения не попадут в broadcast_deliveries
+        # и при повторной рассылке жители получат дубль.
+        await _flush_pending()
 
     final_status = (
         BroadcastStatus.CANCELLED if cancelled else BroadcastStatus.DONE
@@ -10828,8 +10880,8 @@ async def find_active_for_user(session: AsyncSession, user_id: int) -> Appeal | 
 
 ### `bot/aemr_bot/services/broadcasts.py`
 
-Size: `10444` bytes  
-SHA-256: `7f7e1f445b0e7d86440eeb80045a0478408580677829f9619d56d7de21082a07`
+Size: `11753` bytes  
+SHA-256: `a19b06fb4233ccbf83fab06de7bdd7f4c6a51e4997cb596152a786650816f71e`
 
 ```python
 """Сервис подписки и муниципальных рассылок.
@@ -11033,6 +11085,37 @@ async def record_delivery(
             delivered_at=delivered_at,
             error=error,
         )
+    )
+    await session.flush()
+
+
+async def record_deliveries(
+    session: AsyncSession,
+    *,
+    broadcast_id: int,
+    results: list[tuple[int, str | None]],
+) -> None:
+    """Батчевая запись результатов доставки.
+
+    `results` — список `(user_id, error)`; `error=None` означает успех.
+    Раньше цикл рассылки писал каждую доставку отдельной транзакцией
+    (`record_delivery` + свой `session_scope`): на 10k подписчиков —
+    10k+ коммитов, каждый со своим BEGIN/COMMIT и checkout из пула.
+    Здесь один `add_all` + один flush на пачку (типично 50 строк) —
+    в ~50 раз меньше round-trip'ов к БД. Вызывающий код накапливает
+    буфер и сбрасывает его этой функцией по таймеру/переполнению.
+    """
+    if not results:
+        return
+    now = datetime.now(timezone.utc)
+    session.add_all(
+        BroadcastDelivery(
+            broadcast_id=broadcast_id,
+            user_id=user_id,
+            delivered_at=now if error is None else None,
+            error=error,
+        )
+        for user_id, error in results
     )
     await session.flush()
 
@@ -13317,10 +13400,11 @@ async def seed_if_empty(session: AsyncSession) -> None:
 
 ### `bot/aemr_bot/services/stats.py`
 
-Size: `5449` bytes  
-SHA-256: `9c4ffd81b1d55970be568109aaf379cb47fe9d87c1311204630afc382b3cc4a1`
+Size: `7451` bytes  
+SHA-256: `9c412521aaa9a808c16a4cabbe7a6f7d5c9e2c286512ae81eb155579d6113032`
 
 ```python
+import asyncio
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
@@ -13338,6 +13422,14 @@ TZ = ZoneInfo(settings.timezone)
 
 
 VALID_PERIODS = ("today", "week", "month", "quarter", "half_year", "year", "all")
+
+# Потолок строк в одной XLSX-выгрузке. На `period="all"` без лимита
+# годовой архив (10k+ обращений × N сообщений каждое, с selectinload)
+# тянет всё в RAM разом — при mem_limit:512m это риск OOM. 10000 строк
+# — заведомо больше реальной операторской потребности, а сам XLSX с
+# таким числом строк уже неюзабелен для чтения. При превышении —
+# берём свежайшие и помечаем в заголовке.
+_XLSX_ROW_CAP = 10000
 
 
 def period_window(period: str) -> tuple[datetime | None, datetime, str]:
@@ -13376,17 +13468,37 @@ def period_window(period: str) -> tuple[datetime | None, datetime, str]:
 
 async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, int]:
     start, end, title = period_window(period)
+    # Берём свежайшие в пределах окна, с потолком _XLSX_ROW_CAP.
+    # `+1` — чтобы детектировать факт обрезки, не делая отдельный count.
     query = (
         select(Appeal)
         .options(selectinload(Appeal.user), selectinload(Appeal.messages))
         .where(Appeal.created_at <= end)
-        .order_by(Appeal.created_at)
+        .order_by(Appeal.created_at.desc())
+        .limit(_XLSX_ROW_CAP + 1)
     )
     if start is not None:
         query = query.where(Appeal.created_at >= start)
     res = await session.scalars(query)
     appeals = list(res)
+    truncated = len(appeals) > _XLSX_ROW_CAP
+    if truncated:
+        appeals = appeals[:_XLSX_ROW_CAP]
+        title = f"{title} (показаны последние {_XLSX_ROW_CAP})"
+    # Возвращаем хронологический порядок (запрос был DESC ради лимита).
+    appeals.reverse()
 
+    # Построение workbook — синхронный CPU/IO-bound код (openpyxl).
+    # На потолке в 10k строк это ощутимо; выносим в поток, чтобы не
+    # блокировать event-loop бота на время генерации отчёта.
+    content = await asyncio.to_thread(_render_workbook, appeals)
+    return content, title, len(appeals)
+
+
+def _render_workbook(appeals: list[Appeal]) -> bytes:
+    """Синхронная сборка XLSX. Работает только с уже загруженными
+    данными (selectinload отработал в build_xlsx) — сессию не трогает,
+    поэтому безопасно вызывать из asyncio.to_thread."""
     wb = Workbook()
     ws = wb.active
     ws.title = "Обращения"
@@ -13465,7 +13577,7 @@ async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, in
     buf = BytesIO()
     wb.save(buf)
     buf.seek(0)
-    return buf.getvalue(), title, len(appeals)
+    return buf.getvalue()
 
 
 def _status_label(status: str) -> str:
