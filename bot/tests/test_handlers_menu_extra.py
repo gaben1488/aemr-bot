@@ -464,3 +464,87 @@ class TestHandleCallback:
         event = _make_event()
         handled = await menu.handle_callback(event, "totally:unknown:payload", max_user_id=42)
         assert handled is False
+
+    # --- max_user_id=None: характеризационные тесты граничных веток ---
+    # Исторически handle_callback по-разному ведёт себя без жителя:
+    # no-user маршруты работают; menu:my_appeals «съедает» тап (True);
+    # остальные user-маршруты и prefix-маршруты проваливаются (False).
+    # Эти тесты фиксируют расхождение, чтобы рефактор его не стёр.
+
+    @pytest.mark.asyncio
+    async def test_no_user_route_works_without_max_user_id(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.menu.open_main_menu", AsyncMock()) as fn:
+            handled = await menu.handle_callback(event, "menu:main", max_user_id=None)
+        assert handled is True
+        fn.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_my_appeals_consumed_without_max_user_id(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.menu.open_my_appeals", AsyncMock()) as fn:
+            handled = await menu.handle_callback(
+                event, "menu:my_appeals", max_user_id=None
+            )
+        # «Съедает» тап (True), но обработчик не зовёт.
+        assert handled is True
+        fn.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_user_required_route_falls_through_without_max_user_id(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.menu.do_forget", AsyncMock()) as fn:
+            handled = await menu.handle_callback(
+                event, "settings:forget_yes", max_user_id=None
+            )
+        # User-маршрут без жителя — управление проваливается дальше.
+        assert handled is False
+        fn.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_prefix_route_falls_through_without_max_user_id(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.menu.show_appeal", AsyncMock()) as fn:
+            handled = await menu.handle_callback(
+                event, "appeal:show:5", max_user_id=None
+            )
+        assert handled is False
+        fn.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_broadcast_unsubscribe_routed_without_dispatcher_ack(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.menu.handle_broadcast_unsubscribe",
+                   AsyncMock()) as fn, \
+             patch("aemr_bot.handlers.menu.ack_callback", AsyncMock()) as ack:
+            handled = await menu.handle_callback(
+                event, "broadcast:unsubscribe", max_user_id=42
+            )
+        assert handled is True
+        fn.assert_called_once()
+        # ack делегирован внутрь handle_broadcast_unsubscribe — диспетчер
+        # сам не акает.
+        ack.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_appeal_show_prefix_parses_id(self) -> None:
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.menu.show_appeal", AsyncMock()) as fn:
+            handled = await menu.handle_callback(
+                event, "appeal:show:77", max_user_id=42
+            )
+        assert handled is True
+        fn.assert_called_once()
+        assert fn.call_args.args[1] == 77

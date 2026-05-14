@@ -1,5 +1,6 @@
 import logging
-from typing import Any
+from collections.abc import Callable
+from typing import Any, NamedTuple
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
@@ -789,20 +790,167 @@ async def open_dispatchers(event):
     )
 
 
+# ============================================================================
+# handle_callback — dispatch-таблица callback'ов меню жителя
+# ============================================================================
+# Раньше — ~196-строчная if-elif лестница `if payload == "...": ack;
+# handler; return True`. Теперь payload'ы описаны декларативно в _EXACT
+# (точное совпадение) и _PREFIX_APPEAL_ID (префикс + числовой id
+# обращения), а handle_callback — тонкий диспетчер.
+#
+# Lambda-обёртки вокруг handler'ов обязательны: они резолвят имя функции
+# в момент вызова, а не на этапе построения таблицы. Прямые ссылки
+# заморозили бы функцию на импорте и сломали бы patch в тестах и
+# возможный hot-reload (тот же урок, что в admin_callback_dispatch).
+
+
+async def _lazy_cmd_policy(event) -> None:
+    """settings:policy → start.cmd_policy. Импорт ленивый: start.py
+    лениво импортирует menu в обратную сторону, прямой импорт на уровне
+    модуля замкнул бы цикл."""
+    from aemr_bot.handlers.start import cmd_policy
+
+    await cmd_policy(event)
+
+
+async def _lazy_start_appeal_flow(event, max_user_id: int) -> None:
+    """settings:consent_give → appeal_funnel.start_appeal_flow. Воронка
+    сама на первом шаге попросит согласие (consent_pdn_at пуст после
+    отзыва). Импорт ленивый — appeal_funnel тянет тяжёлую цепочку."""
+    from aemr_bot.handlers.appeal_funnel import start_appeal_flow
+
+    await start_appeal_flow(event, max_user_id)
+
+
+class _MenuRoute(NamedTuple):
+    """Описание exact-маршрута меню жителя.
+
+    handler — всегда вызывается как ``handler(event, max_user_id)``;
+      для no-user маршрутов lambda просто игнорирует второй аргумент.
+    requires_user — маршрут осмыслен только при идентифицированном
+      жителе.
+    ack — вызвать ack_callback перед handler'ом (broadcast:unsubscribe
+      акает сам внутри handler'а — ему ack=False).
+    consume_on_no_user — поведение при requires_user и max_user_id None:
+      True → return True (тап «съеден»), False → return False
+      (управление проваливается дальше). Сохраняет историческое
+      расхождение: menu:my_appeals «съедал» тап, остальные user-маршруты
+      проваливались.
+    """
+
+    handler: Callable
+    requires_user: bool = False
+    ack: bool = True
+    consume_on_no_user: bool = False
+
+
+_EXACT: dict[str, _MenuRoute] = {
+    "menu:main": _MenuRoute(lambda e, u: open_main_menu(e)),
+    "menu:my_appeals": _MenuRoute(
+        lambda e, u: open_my_appeals(e, u),
+        requires_user=True,
+        consume_on_no_user=True,
+    ),
+    "menu:useful_info": _MenuRoute(lambda e, u: open_useful_info(e)),
+    "menu:appointment": _MenuRoute(lambda e, u: open_appointment(e)),
+    "menu:settings": _MenuRoute(lambda e, u: open_settings(e)),
+    "settings:help": _MenuRoute(lambda e, u: open_help(e)),
+    "settings:rules": _MenuRoute(lambda e, u: open_rules(e)),
+    "settings:policy": _MenuRoute(lambda e, u: _lazy_cmd_policy(e)),
+    "settings:forget_ask": _MenuRoute(lambda e, u: ask_forget_confirm(e)),
+    "settings:forget_yes": _MenuRoute(
+        lambda e, u: do_forget(e, u), requires_user=True
+    ),
+    "settings:consent_status": _MenuRoute(
+        lambda e, u: show_consent_status(e, u), requires_user=True
+    ),
+    "settings:consent_revoke_ask": _MenuRoute(
+        lambda e, u: ask_consent_revoke_confirm(e)
+    ),
+    "settings:consent_revoke_yes": _MenuRoute(
+        lambda e, u: do_consent_revoke(e, u), requires_user=True
+    ),
+    "settings:consent_give": _MenuRoute(
+        lambda e, u: _lazy_start_appeal_flow(e, u), requires_user=True
+    ),
+    # A4 «👋 Уйти из бота» — три жизненных опции в одном экране. Старые
+    # цепочки settings:consent_revoke_ask / settings:forget_ask остались
+    # для совместимости с уже отправленными сообщениями; новые точки
+    # входа — через goodbye:*.
+    "settings:goodbye": _MenuRoute(lambda e, u: open_goodbye(e)),
+    "goodbye:unsub": _MenuRoute(
+        lambda e, u: do_unsubscribe(e, u), requires_user=True
+    ),
+    "goodbye:revoke_ask": _MenuRoute(
+        lambda e, u: ask_goodbye_revoke_confirm(e)
+    ),
+    "goodbye:revoke_yes": _MenuRoute(
+        lambda e, u: do_consent_revoke(e, u), requires_user=True
+    ),
+    "goodbye:erase_ask": _MenuRoute(
+        lambda e, u: ask_goodbye_erase_confirm(e)
+    ),
+    "goodbye:erase_yes": _MenuRoute(
+        lambda e, u: do_forget(e, u), requires_user=True
+    ),
+    "info:emergency": _MenuRoute(lambda e, u: open_emergency(e)),
+    "info:dispatchers": _MenuRoute(lambda e, u: open_dispatchers(e)),
+    "info:subscribe_on": _MenuRoute(
+        lambda e, u: do_subscribe(e, u), requires_user=True
+    ),
+    "subscribe:confirm": _MenuRoute(
+        lambda e, u: do_subscribe_confirm(e, u), requires_user=True
+    ),
+    "info:subscribe_off": _MenuRoute(
+        lambda e, u: do_unsubscribe(e, u), requires_user=True
+    ),
+    # Совместимость со старыми меню: info:subscribe_toggle уйдёт сам при
+    # обновлении меню, но тап по старому сообщению маршрутизируем в
+    # идемпотентный subscribe_on — ни одно состояние не перевернётся.
+    "info:subscribe_toggle": _MenuRoute(
+        lambda e, u: do_subscribe(e, u), requires_user=True
+    ),
+    # broadcast:unsubscribe акает сам внутри handle_broadcast_unsubscribe.
+    "broadcast:unsubscribe": _MenuRoute(
+        lambda e, u: handle_broadcast_unsubscribe(e, u),
+        requires_user=True,
+        ack=False,
+    ),
+}
+
+# Префикс → handler(event, appeal_id, max_user_id). Хвост payload'а —
+# числовой id обращения (payload.split(":")[2]). Битый id → тап
+# «съедается» молча (return True без ack), как в исходном if-elif.
+_PREFIX_APPEAL_ID: tuple[tuple[str, Callable], ...] = (
+    ("appeal:show:", lambda e, aid, u: show_appeal(e, aid, u)),
+    ("appeal:followup:", lambda e, aid, u: start_appeal_followup(e, aid, u)),
+    ("appeal:repeat:", lambda e, aid, u: start_appeal_repeat(e, aid, u)),
+)
+
+
+async def _run_exact_route(
+    event, route: _MenuRoute, max_user_id: int | None
+) -> bool:
+    """Выполнить exact-маршрут меню. Контракт — см. docstring _MenuRoute."""
+    if route.requires_user and max_user_id is None:
+        return route.consume_on_no_user
+    if route.ack:
+        await ack_callback(event)
+    await route.handler(event, max_user_id)
+    return True
+
+
 async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
-    """Пробует обработать нажатие меню, контактов или показа обращения. Возвращает True, если обработано."""
-    if payload == "menu:main":
-        await ack_callback(event)
-        await open_main_menu(event)
-        return True
+    """Маршрутизатор callback'ов меню жителя. Возвращает True, если
+    payload обработан, False — если это не меню-callback и вызывающему
+    надо продолжить разбор.
+    """
+    route = _EXACT.get(payload)
+    if route is not None:
+        return await _run_exact_route(event, route, max_user_id)
 
-    if payload == "menu:my_appeals":
-        if max_user_id is None:
-            return True
-        await ack_callback(event)
-        await open_my_appeals(event, max_user_id)
-        return True
-
+    # appeals:page:<N|noop> — пагинация «Мои обращения». noop = текущая
+    # страница, тап только ак'ается. Битый хвост глотается без ак'а.
     if payload.startswith("appeals:page:") and max_user_id is not None:
         suffix = payload.split(":", 2)[2]
         if suffix == "noop":
@@ -816,172 +964,17 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
         await open_my_appeals(event, max_user_id, page=page)
         return True
 
-    if payload == "menu:useful_info":
-        await ack_callback(event)
-        await open_useful_info(event)
-        return True
-
-    if payload == "menu:appointment":
-        await ack_callback(event)
-        await open_appointment(event)
-        return True
-
-    if payload == "menu:settings":
-        await ack_callback(event)
-        await open_settings(event)
-        return True
-
-    if payload == "settings:help":
-        await ack_callback(event)
-        await open_help(event)
-        return True
-
-    if payload == "settings:rules":
-        await ack_callback(event)
-        await open_rules(event)
-        return True
-
-    if payload == "settings:policy":
-        await ack_callback(event)
-        from aemr_bot.handlers.start import cmd_policy
-
-        await cmd_policy(event)
-        return True
-
-    if payload == "settings:forget_ask":
-        await ack_callback(event)
-        await ask_forget_confirm(event)
-        return True
-
-    if payload == "settings:forget_yes" and max_user_id is not None:
-        await ack_callback(event)
-        await do_forget(event, max_user_id)
-        return True
-
-    if payload == "settings:consent_status" and max_user_id is not None:
-        await ack_callback(event)
-        await show_consent_status(event, max_user_id)
-        return True
-
-    if payload == "settings:consent_revoke_ask":
-        await ack_callback(event)
-        await ask_consent_revoke_confirm(event)
-        return True
-
-    if payload == "settings:consent_revoke_yes" and max_user_id is not None:
-        await ack_callback(event)
-        await do_consent_revoke(event, max_user_id)
-        return True
-
-    if payload == "settings:consent_give" and max_user_id is not None:
-        # Запускаем воронку обращения — она сама на первом шаге попросит
-        # согласие, потому что consent_pdn_at пуст после отзыва.
-        await ack_callback(event)
-        from aemr_bot.handlers.appeal_funnel import start_appeal_flow as _start_appeal_flow
-
-        await _start_appeal_flow(event, max_user_id)
-        return True
-
-    # A4 «👋 Уйти из бота» — три жизненных опции в одном экране.
-    # Старые callback-цепочки settings:consent_revoke_ask /
-    # settings:forget_ask остались выше для совместимости с уже
-    # отправленными сообщениями (если житель тапнет на старую карточку),
-    # но новые точки входа — только через goodbye:*.
-    if payload == "settings:goodbye":
-        await ack_callback(event)
-        await open_goodbye(event)
-        return True
-
-    if payload == "goodbye:unsub" and max_user_id is not None:
-        await ack_callback(event)
-        await do_unsubscribe(event, max_user_id)
-        return True
-
-    if payload == "goodbye:revoke_ask":
-        await ack_callback(event)
-        await ask_goodbye_revoke_confirm(event)
-        return True
-
-    if payload == "goodbye:revoke_yes" and max_user_id is not None:
-        await ack_callback(event)
-        await do_consent_revoke(event, max_user_id)
-        return True
-
-    if payload == "goodbye:erase_ask":
-        await ack_callback(event)
-        await ask_goodbye_erase_confirm(event)
-        return True
-
-    if payload == "goodbye:erase_yes" and max_user_id is not None:
-        await ack_callback(event)
-        await do_forget(event, max_user_id)
-        return True
-
-    if payload == "info:emergency":
-        await ack_callback(event)
-        await open_emergency(event)
-        return True
-
-    if payload == "info:dispatchers":
-        await ack_callback(event)
-        await open_dispatchers(event)
-        return True
-
-    if payload == "info:subscribe_on" and max_user_id is not None:
-        await ack_callback(event)
-        await do_subscribe(event, max_user_id)
-        return True
-
-    if payload == "subscribe:confirm" and max_user_id is not None:
-        await ack_callback(event)
-        await do_subscribe_confirm(event, max_user_id)
-        return True
-
-    if payload == "info:subscribe_off" and max_user_id is not None:
-        await ack_callback(event)
-        await do_unsubscribe(event, max_user_id)
-        return True
-
-    # Совместимость со старыми меню в чатах: кнопка с payload
-    # `info:subscribe_toggle` уйдёт сама собой при обновлении меню,
-    # но если житель прямо сейчас тапнет на старое сообщение — не
-    # бросаем тап молча. Маршрутизируем в идемпотентный subscribe_on:
-    # если уже подписан, увидит «уже подписаны», ни одно состояние
-    # не перевернётся.
-    if payload == "info:subscribe_toggle" and max_user_id is not None:
-        await ack_callback(event)
-        await do_subscribe(event, max_user_id)
-        return True
-
-    if payload == "broadcast:unsubscribe" and max_user_id is not None:
-        await handle_broadcast_unsubscribe(event, max_user_id)
-        return True
-
-    if payload.startswith("appeal:show:") and max_user_id is not None:
-        try:
-            appeal_id = int(payload.split(":")[2])
-        except (IndexError, ValueError):
-            return True
-        await ack_callback(event)
-        await show_appeal(event, appeal_id, max_user_id)
-        return True
-
-    if payload.startswith("appeal:followup:") and max_user_id is not None:
-        try:
-            appeal_id = int(payload.split(":")[2])
-        except (IndexError, ValueError):
-            return True
-        await ack_callback(event)
-        await start_appeal_followup(event, appeal_id, max_user_id)
-        return True
-
-    if payload.startswith("appeal:repeat:") and max_user_id is not None:
-        try:
-            appeal_id = int(payload.split(":")[2])
-        except (IndexError, ValueError):
-            return True
-        await ack_callback(event)
-        await start_appeal_repeat(event, appeal_id, max_user_id)
-        return True
+    # appeal:show: / appeal:followup: / appeal:repeat: — действие по
+    # конкретному обращению жителя.
+    if max_user_id is not None:
+        for prefix, handler in _PREFIX_APPEAL_ID:
+            if payload.startswith(prefix):
+                try:
+                    appeal_id = int(payload.split(":")[2])
+                except (IndexError, ValueError):
+                    return True
+                await ack_callback(event)
+                await handler(event, appeal_id, max_user_id)
+                return True
 
     return False
