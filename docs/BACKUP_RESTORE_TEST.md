@@ -4,18 +4,26 @@
 
 Документ описывает безопасную проверку в отдельной тестовой БД на VPS. Продовую БД не трогать.
 
+## 0. Когда проводить
+
+**Раз в квартал** — например, в первый рабочий день января, апреля, июля и октября. Дополнительно — после любого изменения схемы БД (новая alembic-миграция) или процедуры бэкапа. Проверка занимает ~15 минут.
+
+Отметку о проведении (кто, когда, результат — см. отчёт в разделе 8) заносить в журнал эксплуатации. Если квартальный restore-test пропущен — бэкапы официально считаются непроверенными, и об этом должен знать владелец проекта.
+
 ## 1. Найти свежий backup
 
-На VPS:
+Бэкапы лежат в Docker named volume `aemr-bot_backups`. Еженедельный бэкап делается каждое воскресенье в 03:00 по Камчатке. Посмотреть список:
 
 ```bash
 cd /home/aemr/aemr-bot/infra
 . ./.env
-ls -lah /home/aemr/backups 2>/dev/null || true
-find /home/aemr -maxdepth 4 -type f \( -name '*.sql' -o -name '*.sql.gz' -o -name '*.sql.age' -o -name '*.dump' \) -printf '%TY-%Tm-%Td %TH:%TM %p\n' | sort | tail -20
+# изнутри контейнера бота:
+docker compose exec bot ls -lah /backups
+# либо напрямую с хоста (нужен root):
+sudo ls -lah /var/lib/docker/volumes/aemr-bot_backups/_data/
 ```
 
-Ожидаемо: есть свежий backup-файл за ожидаемый период.
+Ожидаемо: есть свежий файл `aemr-YYYY-MM-DD.sql` (или `aemr-YYYY-MM-DD.sql.gpg`, если включено GPG-шифрование через `BACKUP_GPG_PASSPHRASE`) за ожидаемый период.
 
 ## 2. Создать отдельную тестовую БД
 
@@ -33,23 +41,25 @@ docker compose exec -T db psql -U "$POSTGRES_USER" -d postgres -c 'CREATE DATABA
 docker compose ps
 ```
 
-## 3. Восстановить plain SQL backup
+## 3. Восстановить backup
 
-Для `.sql`:
-
-```bash
-BACKUP=/path/to/latest.sql
-cat "$BACKUP" | docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test
-```
-
-Для `.sql.gz`:
+Если бэкап незашифрован (`.sql`):
 
 ```bash
-BACKUP=/path/to/latest.sql.gz
-gzip -dc "$BACKUP" | docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test
+BACKUP=/var/lib/docker/volumes/aemr-bot_backups/_data/aemr-YYYY-MM-DD.sql
+sudo cat "$BACKUP" | docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test
 ```
 
-Для encrypted `.age` используйте фактический ключ/команду из регламента сервера. Если ключа нет под рукой, restore-test нельзя считать пройденным.
+Если бэкап зашифрован GPG (`.sql.gpg` — так и настроено, когда в `.env` задан `BACKUP_GPG_PASSPHRASE`):
+
+```bash
+BACKUP=/var/lib/docker/volumes/aemr-bot_backups/_data/aemr-YYYY-MM-DD.sql.gpg
+sudo cat "$BACKUP" \
+  | gpg --batch --passphrase "$BACKUP_GPG_PASSPHRASE" --decrypt \
+  | docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test
+```
+
+Если GPG-passphrase утеряна — зашифрованный бэкап восстановить **невозможно**, restore-test провален. Это и есть главная причина хранить passphrase отдельно от сервера (см. SECURITY.md, раздел 6 «Ротация секретов»).
 
 ## 4. Минимальная проверка восстановленной БД
 
