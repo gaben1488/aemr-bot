@@ -14,35 +14,27 @@
 """
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
+
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
-def _make_event(*, chat_id: int = 100, user_id: int = 42, text: str = "") -> SimpleNamespace:
-    bot = MagicMock()
-    # send_message возвращает SendedMessage-like — нужно для
-    # services/progress.send_or_edit_progress → extract_message_id.
-    bot.send_message = AsyncMock(
-        return_value=SimpleNamespace(
-            message=SimpleNamespace(body=SimpleNamespace(mid="m-progress"))
-        )
-    )
-    bot.edit_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id, first_name="Иван"),
-            recipient=SimpleNamespace(chat_id=chat_id),
-            body=SimpleNamespace(text=text, attachments=[], mid="m-1"),
-        ),
-        user=SimpleNamespace(user_id=user_id, first_name="Иван"),
+def _make_event(
+    *, chat_id: int = 100, user_id: int = 42, text: str = ""
+) -> SimpleNamespace:
+    # Обёртка над tests/_helpers.make_event. Воронка использует
+    # progress-карту: send_message должен вернуть SendedMessage-like
+    # (extract_message_id), нужны edit_message и event.user.
+    return make_event(
+        chat_id=chat_id, user_id=user_id, text=text, first_name="Иван",
+        with_user=True, with_edit_message=True, send_returns_mid=True,
     )
 
 
@@ -57,11 +49,6 @@ def _make_callback_event(
     )
     event.ack = AsyncMock()
     return event
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
 
 
 class TestAskAddressOrReuse:

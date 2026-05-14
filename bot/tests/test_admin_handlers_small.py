@@ -10,32 +10,20 @@
 """
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
+
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
 def _make_event(*, chat_id: int = 555, user_id: int = 7) -> SimpleNamespace:
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=chat_id),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-        ),
-    )
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
+    # Обёртка над tests/_helpers.make_event — структура события в helper.
+    return make_event(chat_id=chat_id, user_id=user_id)
 
 
 # --- _mask_phone (PII protection in admin lists) -----------------------------

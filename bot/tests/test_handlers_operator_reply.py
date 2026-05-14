@@ -12,34 +12,27 @@
 from __future__ import annotations
 
 import time
-from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
 def _make_event(*, chat_id: int = 100, user_id: int = 7) -> SimpleNamespace:
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    bot.edit_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=chat_id),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-            link=None,
-        ),
+    # Обёртка над tests/_helpers.make_event. operator_reply-handler'ы
+    # читают event.message.link и редактируют сообщения — доставляем
+    # link и bot.edit_message поверх базовой фабрики.
+    event = make_event(
+        chat_id=chat_id, user_id=user_id, with_edit_message=True
     )
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
+    event.message.link = None
+    return event
 
 
 def _fresh_appeal(*, user=None, appeal_id: int = 1) -> SimpleNamespace:

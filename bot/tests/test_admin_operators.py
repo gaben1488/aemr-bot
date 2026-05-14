@@ -9,27 +9,21 @@
 """
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
 def _make_event(*, user_id: int = 7) -> SimpleNamespace:
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=555),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-        ),
-    )
+    # Обёртка над tests/_helpers.make_event — chat_id жёстко 555
+    # (служебная группа в этих тестах).
+    return make_event(chat_id=555, user_id=user_id)
 
 
 def _make_callback_event(*, user_id: int = 7) -> SimpleNamespace:
@@ -41,11 +35,6 @@ def _make_callback_event(*, user_id: int = 7) -> SimpleNamespace:
         user=SimpleNamespace(user_id=user_id),
     )
     return event
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
 
 
 @pytest.fixture(autouse=True)

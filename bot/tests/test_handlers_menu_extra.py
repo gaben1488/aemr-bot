@@ -4,41 +4,33 @@ emergency/dispatchers/appointment, handle_callback router.
 Локально skip без maxapi; в CI работает."""
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
 def _make_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleNamespace:
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=chat_id),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-        ),
-        callback=None,
-    )
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
+    # Обёртка над tests/_helpers.make_event. menu-handler'ы проверяют
+    # event.callback (None для текстового сообщения, не callback'а) —
+    # явно проставляем None, базовая фабрика поле не добавляет.
+    event = make_event(chat_id=chat_id, user_id=user_id)
+    event.callback = None
+    return event
 
 
 class TestShowConsentStatus:
-    """show_consent_status зовёт keyboards.consent_status_keyboard, которой
-    в keyboards.py НЕТ — это реальный bug, see test_xfail_consent_keyboards
-    ниже. Здесь патчим keyboards.consent_status_keyboard, чтобы дотестить
-    логику ветвления text по consent_pdn_at / consent_revoked_at.
+    """show_consent_status зовёт keyboards.consent_status_keyboard
+    (keyboards.py:178, сигнатура `*, consent_active: bool`). Патчим её
+    на MagicMock, чтобы изолированно проверить логику ветвления text
+    по consent_pdn_at / consent_revoked_at — без create=True, чтобы
+    patch упал, если функцию переименуют.
     """
     @pytest.mark.asyncio
     async def test_active_consent_shows_active_text(self) -> None:
@@ -51,13 +43,17 @@ class TestShowConsentStatus:
             consent_revoked_at=None,
         )
         with patch.object(keyboards, "consent_status_keyboard",
-                          MagicMock(return_value=None), create=True), \
+                          MagicMock(return_value=None)), \
              patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.users_service.get_or_create",
                    AsyncMock(return_value=user)):
             await menu.show_consent_status(event, max_user_id=42)
         text = event.bot.send_message.call_args.kwargs.get("text", "")
-        assert text
+        from aemr_bot import texts
+        # Активная ветка: текст начинается с неформатируемой части
+        # CONSENT_STATUS_ACTIVE (до подстановки даты), не текст других веток.
+        assert text.startswith("Согласие на обработку персональных данных дано")
+        assert text != texts.CONSENT_STATUS_NEVER
 
     @pytest.mark.asyncio
     async def test_revoked_consent_shows_revoked_text(self) -> None:
@@ -70,13 +66,19 @@ class TestShowConsentStatus:
             consent_revoked_at=datetime.now(timezone.utc),
         )
         with patch.object(keyboards, "consent_status_keyboard",
-                          MagicMock(return_value=None), create=True), \
+                          MagicMock(return_value=None)), \
              patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.users_service.get_or_create",
                    AsyncMock(return_value=user)):
             await menu.show_consent_status(event, max_user_id=42)
         text = event.bot.send_message.call_args.kwargs.get("text", "")
-        assert text
+        from aemr_bot import texts
+        # Отозванная ветка: характерный фрагмент CONSENT_STATUS_REVOKED.
+        assert text.startswith(
+            "Согласие на обработку персональных данных отозвано"
+        )
+        assert "оператор даст по ним финальный ответ" in text
+        assert text != texts.CONSENT_STATUS_NEVER
 
     @pytest.mark.asyncio
     async def test_never_consented_shows_never_text(self) -> None:
@@ -86,7 +88,7 @@ class TestShowConsentStatus:
         event = _make_event()
         user = SimpleNamespace(consent_pdn_at=None, consent_revoked_at=None)
         with patch.object(keyboards, "consent_status_keyboard",
-                          MagicMock(return_value=None), create=True), \
+                          MagicMock(return_value=None)), \
              patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.users_service.get_or_create",
                    AsyncMock(return_value=user)):
@@ -124,8 +126,9 @@ class TestShowConsentStatus:
 
 
 class TestAskForgetConfirm:
-    """ask_forget_confirm обращается к keyboards.forget_confirm_keyboard,
-    которой нет — патчим её."""
+    """ask_forget_confirm обращается к keyboards.forget_confirm_keyboard
+    (keyboards.py:165). Патчим её на MagicMock для изоляции логики —
+    без create=True."""
 
     @pytest.mark.asyncio
     async def test_no_open_appeals_shows_basic_confirm(self) -> None:
@@ -135,7 +138,7 @@ class TestAskForgetConfirm:
         event = _make_event()
         user = SimpleNamespace(id=1)
         with patch.object(keyboards, "forget_confirm_keyboard",
-                          MagicMock(return_value=None), create=True), \
+                          MagicMock(return_value=None)), \
              patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.users_service.get_or_create",
                    AsyncMock(return_value=user)), \
@@ -158,7 +161,7 @@ class TestAskForgetConfirm:
             created_at=datetime.now(timezone.utc),
         )
         with patch.object(keyboards, "forget_confirm_keyboard",
-                          MagicMock(return_value=None), create=True), \
+                          MagicMock(return_value=None)), \
              patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.users_service.get_or_create",
                    AsyncMock(return_value=user)), \
@@ -214,7 +217,7 @@ class TestAskGoodbye:
 
         event = _make_event()
         with patch.object(keyboards, "consent_revoke_confirm_keyboard",
-                          MagicMock(return_value=None), create=True):
+                          MagicMock(return_value=None)):
             await menu.ask_consent_revoke_confirm(event)
         event.bot.send_message.assert_called_once()
 

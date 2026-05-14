@@ -16,25 +16,17 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
 
 def _make_event(*, user_id: int = 7) -> SimpleNamespace:
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    bot.pin_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=555),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-        ),
-    )
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
+    # Обёртка над tests/_helpers.make_event. admin_panel-handler'ы
+    # умеют закреплять сообщения — доставляем bot.pin_message,
+    # которого нет в базовой фабрике.
+    event = make_event(chat_id=555, user_id=user_id)
+    event.bot.pin_message = AsyncMock()
+    return event
 
 
 # --- pure helpers -------------------------------------------------------------
