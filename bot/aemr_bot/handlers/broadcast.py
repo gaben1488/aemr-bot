@@ -371,70 +371,136 @@ async def _run_broadcast(
             )
 
 
-async def _run_broadcast_impl(
-    bot, broadcast_id: int, text: str, total: int, *, admin_mid: str | None = None
+def _compute_progress_step(total: int, rate_delay: float) -> float:
+    """Адаптивный шаг обновления прогресс-карточки (в секундах).
+
+    BROADCAST_PROGRESS_UPDATE_SEC (5 сек по умолчанию) рассчитан на
+    рассылку 50–200 получателей: оператор видит около 10 обновлений.
+    На совсем короткой рассылке (5 получателей × 1 сек) полоска
+    обновилась бы один раз в самом конце; на очень длинной (1000
+    получателей) MAX начнёт ограничивать частоту правок. Для коротких
+    отправок ужимаем шаг, чтобы прогресс двигался заметно.
+    """
+    estimated_total_sec = max(1.0, total * rate_delay)
+    return min(cfg.broadcast_progress_update_sec, estimated_total_sec / 10)
+
+
+def _build_final_text(
+    *, broadcast_id: int, total: int, delivered: int, failed: int, cancelled: bool
+) -> str:
+    """Итоговый текст рассылки для админ-карточки (отмена / готово)."""
+    if cancelled:
+        return texts.OP_BROADCAST_CANCELLED.format(
+            number=broadcast_id, delivered=delivered, total=total
+        )
+    failed_line = (
+        texts.OP_BROADCAST_FAILED_LINE.format(failed=failed) if failed else ""
+    )
+    return texts.OP_BROADCAST_DONE.format(
+        number=broadcast_id,
+        delivered=delivered,
+        total=total,
+        failed_line=failed_line,
+    )
+
+
+async def _resolve_admin_progress_message(
+    bot, broadcast_id: int, total: int, admin_mid: str | None
+) -> str | None:
+    """Гарантировать карточку прогресса в админ-группе.
+
+    Если confirm-кнопка была под preview-карточкой, preview уже
+    превращён в progress-карточку — `admin_mid` придёт заполненным.
+    Иначе шлём отдельное стартовое сообщение, чтобы оператор не остался
+    без статуса. Возврат None означает «карточки нет, edit_message по
+    ходу рассылки будет пропущен».
+    """
+    if admin_mid is not None:
+        return admin_mid
+    sent = None
+    try:
+        sent = await bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=total),
+            attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
+        )
+    except Exception:
+        log.exception("failed to post broadcast start in admin group")
+    return extract_message_id(sent)
+
+
+async def _send_final_summary(
+    bot,
+    *,
+    broadcast_id: int,
+    total: int,
+    delivered: int,
+    failed: int,
+    cancelled: bool,
+    admin_mid: str | None,
 ) -> None:
-    body = f"{texts.BROADCAST_HEADER}\n\n{text}"
+    """Опубликовать итог рассылки: правкой карточки прогресса либо, если
+    правка не удалась / карточки не было, отдельным сообщением."""
+    final_text = _build_final_text(
+        broadcast_id=broadcast_id,
+        total=total,
+        delivered=delivered,
+        failed=failed,
+        cancelled=cancelled,
+    )
+    if admin_mid is not None:
+        try:
+            await bot.edit_message(
+                message_id=admin_mid,
+                text=final_text,
+                attachments=[keyboards.op_back_to_menu_keyboard()],
+            )
+            return
+        except Exception:
+            log.exception(
+                "failed to edit final progress message for broadcast #%s",
+                broadcast_id,
+            )
+    # Запасной путь: edit_message не сработал, либо admin_mid не было.
+    # Публикуем итог отдельным сообщением, чтобы оператор всё равно
+    # увидел результат.
+    try:
+        await bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=final_text,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+    except Exception:
+        log.exception(
+            "failed to post fallback final summary for broadcast #%s",
+            broadcast_id,
+        )
+
+
+async def _run_send_loop(
+    bot,
+    *,
+    broadcast_id: int,
+    body: str,
+    total: int,
+    targets: list,
+    admin_mid: str | None,
+    rate_delay: float,
+    progress_step_sec: float,
+) -> tuple[int, int, bool]:
+    """Цикл отправки рассылки. Возвращает ``(delivered, failed, cancelled)``.
+
+    Результаты доставки копятся в буфер и сбрасываются батчем в единой
+    точке синхронизации с БД (по таймеру progress_step_sec либо при
+    переполнении буфера) — там же читается флаг отмены и пишется
+    прогресс. Раньше каждый получатель = 2-4 транзакции; на 10k
+    подписчиков было ~25000 коммитов за рассылку, теперь ~200.
+    """
     delivered = 0
     failed = 0
-
-    log.info(
-        "broadcast: starting send loop — broadcast_id=%s total=%d",
-        broadcast_id, total,
-    )
-
-    # Старт: если confirm-кнопка была под preview-карточкой, preview уже
-    # превращён в progress-карточку. Если mid получить не удалось — шлём
-    # отдельный прогресс, чтобы оператор не остался без статуса.
-    if admin_mid is None:
-        sent = None
-        try:
-            sent = await bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=total),
-                attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
-            )
-        except Exception:
-            log.exception("failed to post broadcast start in admin group")
-        admin_mid = extract_message_id(sent)
-    log.info(
-        "broadcast: admin start-message admin_mid=%s (None means edit_message will be skipped)",
-        admin_mid,
-    )
-
-    async with session_scope() as session:
-        await broadcasts_service.mark_started(session, broadcast_id, admin_mid)
-
-    rate_delay = (
-        1.0 / cfg.broadcast_rate_limit_per_sec
-        if cfg.broadcast_rate_limit_per_sec > 0
-        else 1.0
-    )
-    # Адаптивный шаг прогресса. Значение BROADCAST_PROGRESS_UPDATE_SEC по
-    # умолчанию (5 сек) подходит для рассылки на 50–200 получателей: оператор
-    # видит около 10 обновлений. На совсем короткой рассылке (5 получателей × 1 сек)
-    # полоска обновилась бы один раз в самом конце; на очень длинной (1000 получателей)
-    # MAX начнёт ограничивать частоту правок. Для коротких отправок ужимаем шаг,
-    # чтобы прогресс двигался заметно.
-    estimated_total_sec = max(1.0, total * rate_delay)
-    progress_step_sec = min(cfg.broadcast_progress_update_sec, estimated_total_sec / 10)
-    last_progress_at = time.monotonic()
     cancelled = False
+    last_progress_at = time.monotonic()
 
-    # Снимаем список получателей и закрываем сессию. Удержание одной транзакции
-    # на всю отправку (одна строка в секунду на N получателей) блокирует VACUUM
-    # и раздувает WAL при длинной рассылке. См. list_subscriber_targets.
-    async with session_scope() as session:
-        targets = await broadcasts_service.list_subscriber_targets(session)
-
-    # Буфер результатов доставки. Раньше каждый получатель = отдельный
-    # session_scope на record_delivery + ещё один на get_status (флаг
-    # отмены): 2-4 транзакции × N получателей, на 10k подписчиков —
-    # ~20-30k коммитов за одну рассылку. Теперь результаты копятся в
-    # буфер и сбрасываются батчем в единой точке синхронизации с БД
-    # (по таймеру progress_step_sec либо при переполнении буфера) —
-    # там же читается флаг отмены и пишется прогресс. ~200 транзакций
-    # вместо ~25000.
     _FLUSH_EVERY = 50
     pending: list[tuple[int, str | None]] = []
 
@@ -518,6 +584,61 @@ async def _run_broadcast_impl(
         # и при повторной рассылке жители получат дубль.
         await _flush_pending()
 
+    return delivered, failed, cancelled
+
+
+async def _run_broadcast_impl(
+    bot, broadcast_id: int, text: str, total: int, *, admin_mid: str | None = None
+) -> None:
+    """Оркестрация фоновой рассылки: подготовка карточки прогресса →
+    снимок получателей → цикл отправки → финальный статус и итог.
+
+    Тяжёлая логика вынесена в помощники: `_resolve_admin_progress_message`
+    (стартовая карточка), `_run_send_loop` (цикл с буферизацией доставок),
+    `_send_final_summary` (итог). Здесь — только последовательность шагов.
+    """
+    body = f"{texts.BROADCAST_HEADER}\n\n{text}"
+    log.info(
+        "broadcast: starting send loop — broadcast_id=%s total=%d",
+        broadcast_id, total,
+    )
+
+    admin_mid = await _resolve_admin_progress_message(
+        bot, broadcast_id, total, admin_mid
+    )
+    log.info(
+        "broadcast: admin start-message admin_mid=%s "
+        "(None means edit_message will be skipped)",
+        admin_mid,
+    )
+
+    async with session_scope() as session:
+        await broadcasts_service.mark_started(session, broadcast_id, admin_mid)
+
+    rate_delay = (
+        1.0 / cfg.broadcast_rate_limit_per_sec
+        if cfg.broadcast_rate_limit_per_sec > 0
+        else 1.0
+    )
+    progress_step_sec = _compute_progress_step(total, rate_delay)
+
+    # Снимаем список получателей и закрываем сессию. Удержание одной
+    # транзакции на всю отправку (одна строка в секунду на N получателей)
+    # блокирует VACUUM и раздувает WAL при длинной рассылке.
+    async with session_scope() as session:
+        targets = await broadcasts_service.list_subscriber_targets(session)
+
+    delivered, failed, cancelled = await _run_send_loop(
+        bot,
+        broadcast_id=broadcast_id,
+        body=body,
+        total=total,
+        targets=targets,
+        admin_mid=admin_mid,
+        rate_delay=rate_delay,
+        progress_step_sec=progress_step_sec,
+    )
+
     final_status = (
         BroadcastStatus.CANCELLED if cancelled else BroadcastStatus.DONE
     )
@@ -534,48 +655,15 @@ async def _run_broadcast_impl(
         broadcast_id, final_status.value, delivered, failed,
     )
 
-    if cancelled:
-        final_text = texts.OP_BROADCAST_CANCELLED.format(
-            number=broadcast_id, delivered=delivered, total=total
-        )
-    else:
-        failed_line = (
-            texts.OP_BROADCAST_FAILED_LINE.format(failed=failed) if failed else ""
-        )
-        final_text = texts.OP_BROADCAST_DONE.format(
-            number=broadcast_id,
-            delivered=delivered,
-            total=total,
-            failed_line=failed_line,
-        )
-
-    if admin_mid is not None:
-        try:
-            await bot.edit_message(
-                message_id=admin_mid,
-                text=final_text,
-                attachments=[keyboards.op_back_to_menu_keyboard()],
-            )
-            return
-        except Exception:
-            log.exception(
-                "failed to edit final progress message for broadcast #%s",
-                broadcast_id,
-            )
-
-    # Запасной путь: edit_message не сработал, либо admin_mid не было. Публикуем
-    # итог отдельным сообщением, чтобы оператор всё равно увидел результат.
-    try:
-        await bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=final_text,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
-    except Exception:
-        log.exception(
-            "failed to post fallback final summary for broadcast #%s",
-            broadcast_id,
-        )
+    await _send_final_summary(
+        bot,
+        broadcast_id=broadcast_id,
+        total=total,
+        delivered=delivered,
+        failed=failed,
+        cancelled=cancelled,
+        admin_mid=admin_mid,
+    )
 
 
 def _format_dt(dt: datetime | None) -> str:

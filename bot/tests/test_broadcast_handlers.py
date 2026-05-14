@@ -530,6 +530,184 @@ class TestRunBroadcastImpl:
         assert mark_finished.call_args.kwargs["status"] == BroadcastStatus.DONE
 
 
+class TestComputeProgressStep:
+    """_compute_progress_step — адаптивный шаг прогресс-карточки."""
+
+    def test_short_broadcast_shrinks_step_below_default(self) -> None:
+        from aemr_bot.config import settings as cfg
+        from aemr_bot.handlers.broadcast import _compute_progress_step
+
+        # 5 получателей × 1 сек → estimated 5 сек → step = 0.5 сек,
+        # это меньше дефолтного BROADCAST_PROGRESS_UPDATE_SEC.
+        step = _compute_progress_step(total=5, rate_delay=1.0)
+        assert step < cfg.broadcast_progress_update_sec
+        assert step == pytest.approx(0.5)
+
+    def test_long_broadcast_caps_step_at_default(self) -> None:
+        from aemr_bot.config import settings as cfg
+        from aemr_bot.handlers.broadcast import _compute_progress_step
+
+        # 10000 получателей → estimated/10 огромен → шаг упирается
+        # в дефолтный потолок.
+        step = _compute_progress_step(total=10_000, rate_delay=1.0)
+        assert step == cfg.broadcast_progress_update_sec
+
+    def test_zero_total_does_not_divide_by_zero(self) -> None:
+        from aemr_bot.handlers.broadcast import _compute_progress_step
+
+        step = _compute_progress_step(total=0, rate_delay=1.0)
+        assert step >= 0
+
+
+class TestBuildFinalText:
+    """_build_final_text — итоговый текст карточки рассылки."""
+
+    def test_cancelled_uses_cancelled_template(self) -> None:
+        from aemr_bot.handlers.broadcast import _build_final_text
+
+        text = _build_final_text(
+            broadcast_id=7, total=100, delivered=40, failed=0, cancelled=True
+        )
+        assert "7" in text
+        assert "40" in text
+
+    def test_done_without_failures_has_no_failed_line(self) -> None:
+        from aemr_bot import texts
+        from aemr_bot.handlers.broadcast import _build_final_text
+
+        text = _build_final_text(
+            broadcast_id=7, total=100, delivered=100, failed=0, cancelled=False
+        )
+        # failed_line пустой — подстрока про сбои не появляется.
+        failed_fragment = texts.OP_BROADCAST_FAILED_LINE.format(failed=1)[:10]
+        assert failed_fragment not in text
+
+    def test_done_with_failures_includes_failed_count(self) -> None:
+        from aemr_bot.handlers.broadcast import _build_final_text
+
+        text = _build_final_text(
+            broadcast_id=7, total=100, delivered=97, failed=3, cancelled=False
+        )
+        assert "3" in text
+
+
+class TestSendFinalSummary:
+    """_send_final_summary — публикация итога: edit карточки либо
+    fallback-сообщение."""
+
+    @pytest.mark.asyncio
+    async def test_edits_card_when_admin_mid_present(self) -> None:
+        from aemr_bot.handlers.broadcast import _send_final_summary
+
+        bot = MagicMock()
+        bot.edit_message = AsyncMock()
+        bot.send_message = AsyncMock()
+        await _send_final_summary(
+            bot, broadcast_id=7, total=10, delivered=10,
+            failed=0, cancelled=False, admin_mid="m-1",
+        )
+        bot.edit_message.assert_awaited_once()
+        bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_sends_new_message_when_no_admin_mid(self) -> None:
+        from aemr_bot.handlers.broadcast import _send_final_summary
+
+        bot = MagicMock()
+        bot.edit_message = AsyncMock()
+        bot.send_message = AsyncMock()
+        await _send_final_summary(
+            bot, broadcast_id=7, total=10, delivered=10,
+            failed=0, cancelled=False, admin_mid=None,
+        )
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_falls_back_to_send_when_edit_raises(self) -> None:
+        from aemr_bot.handlers.broadcast import _send_final_summary
+
+        bot = MagicMock()
+        bot.edit_message = AsyncMock(side_effect=RuntimeError("stale mid"))
+        bot.send_message = AsyncMock()
+        await _send_final_summary(
+            bot, broadcast_id=7, total=10, delivered=5,
+            failed=0, cancelled=True, admin_mid="m-1",
+        )
+        bot.edit_message.assert_awaited_once()
+        bot.send_message.assert_awaited_once()
+
+
+class TestRunSendLoop:
+    """_run_send_loop — цикл отправки, возвращает (delivered, failed,
+    cancelled)."""
+
+    @pytest.mark.asyncio
+    async def test_delivers_to_all_targets_and_counts(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        bot = MagicMock()
+        bot.edit_message = AsyncMock()
+        # (user_db_id, max_user_id) — _send_one вернёт None (успех).
+        targets = [(1, 101), (2, 102), (3, 103)]
+        with patch("aemr_bot.handlers.broadcast._send_one",
+                   AsyncMock(return_value=None)) as send_one, \
+             patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.get_status",
+                   AsyncMock(return_value="running")), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.update_progress",
+                   AsyncMock()):
+            delivered, failed, cancelled = await broadcast._run_send_loop(
+                bot,
+                broadcast_id=7,
+                body="текст",
+                total=3,
+                targets=targets,
+                admin_mid="m-1",
+                rate_delay=0,
+                progress_step_sec=0,
+            )
+        assert (delivered, failed, cancelled) == (3, 0, False)
+        assert send_one.await_count == 3
+
+    @pytest.mark.asyncio
+    async def test_cancelled_status_breaks_loop_early(self) -> None:
+        from aemr_bot.handlers import broadcast
+        from aemr_bot.db.models import BroadcastStatus
+
+        bot = MagicMock()
+        bot.edit_message = AsyncMock()
+        targets = [(1, 101), (2, 102), (3, 103)]
+        # get_status сразу отдаёт CANCELLED → цикл рвётся после 1-го.
+        with patch("aemr_bot.handlers.broadcast._send_one",
+                   AsyncMock(return_value=None)) as send_one, \
+             patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.get_status",
+                   AsyncMock(return_value=BroadcastStatus.CANCELLED.value)), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.update_progress",
+                   AsyncMock()):
+            delivered, failed, cancelled = await broadcast._run_send_loop(
+                bot,
+                broadcast_id=7,
+                body="текст",
+                total=3,
+                targets=targets,
+                admin_mid="m-1",
+                rate_delay=0,
+                progress_step_sec=0,
+            )
+        assert cancelled is True
+        # Прервались на первом получателе — остальные не тронуты.
+        assert send_one.await_count == 1
+        assert delivered == 1
+
+
 class TestFormatDt:
     def test_none_returns_dash(self) -> None:
         from aemr_bot.handlers.broadcast import _format_dt
