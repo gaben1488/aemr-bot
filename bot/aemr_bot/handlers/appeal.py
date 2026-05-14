@@ -210,6 +210,255 @@ async def _send_to_citizen(
     )
 
 
+# ============================================================================
+# Callback'и воронки жителя — именованные handler'ы
+# ============================================================================
+# Вынесены из on_callback (раньше — ~195-строчный if-elif). on_callback
+# стал тонким диспетчером (_dispatch_citizen_callback ниже). Каждый _cb_*
+# принимает (event, max_user_id, payload): префиксные (locality:/topic:)
+# разбирают payload, точные — игнорируют третий аргумент.
+#
+# _cb_* — функции этого же модуля, поэтому в таблицах _CITIZEN_EXACT /
+# _CITIZEN_PREFIX лежат прямые ссылки: тесты патчат не их, а то, что
+# внутри (appeal_funnel.*, users_service.*, ack_callback) — а это
+# резолвится в момент вызова.
+
+
+async def _cb_new_appeal(event, max_user_id: int, payload: str) -> None:
+    await ack_callback(event)
+    await appeal_funnel.start_appeal_flow(event, max_user_id)
+
+
+async def _cb_consent_yes(event, max_user_id: int, payload: str) -> None:
+    async with session_scope() as session:
+        await users_service.set_consent(session, max_user_id)
+    await ack_callback(event, texts.CONSENT_ACCEPTED)
+    await admin_events.notify_consent_given(event.bot, max_user_id=max_user_id)
+    await appeal_funnel.ask_contact_or_skip(event, max_user_id)
+
+
+async def _cb_consent_no(event, max_user_id: int, payload: str) -> None:
+    async with session_scope() as session:
+        await users_service.reset_state(session, max_user_id)
+    drop_user_lock(max_user_id)
+    await ack_callback(event)
+    await _send_to_citizen(
+        event,
+        max_user_id,
+        text=texts.CONSENT_DECLINED,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
+
+
+async def _cb_cancel(event, max_user_id: int, payload: str) -> None:
+    async with session_scope() as session:
+        await users_service.reset_state(session, max_user_id)
+    drop_user_lock(max_user_id)
+    await ack_callback(event)
+    await _send_to_citizen(
+        event,
+        max_user_id,
+        text=texts.CANCELLED,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
+
+
+async def _cb_addr_reuse(event, max_user_id: int, payload: str) -> None:
+    await ack_callback(event)
+    async with current_user(max_user_id) as (session, user):
+        last = await appeals_service.find_last_address_for_user(
+            session,
+            user.id,
+        )
+    if last is None:
+        # Между показом промпта и кликом обращение могло быть
+        # обезличено retention-кроном — fallback к обычному пути.
+        await appeal_funnel.ask_locality(event, max_user_id)
+        return
+    locality, address = last
+    async with session_scope() as session:
+        await users_service.set_state(
+            session,
+            max_user_id,
+            DialogState.AWAITING_TOPIC,
+            data={"locality": locality, "address": address},
+        )
+    await appeal_funnel.ask_topic(event, max_user_id)
+
+
+async def _cb_addr_new(event, max_user_id: int, payload: str) -> None:
+    await ack_callback(event)
+    await appeal_funnel.ask_locality(event, max_user_id)
+
+
+async def _cb_locality(event, max_user_id: int, payload: str) -> None:
+    idx = callback_router.parse_int_tail(payload, "locality:")
+    if idx is None:
+        await ack_callback(event)
+        return
+    async with session_scope() as session:
+        localities = await settings_store.get(session, "localities") or []
+        if 0 <= idx < len(localities):
+            chosen = localities[idx]
+            await users_service.update_dialog_data(
+                session,
+                max_user_id,
+                {"locality": chosen},
+            )
+        else:
+            await ack_callback(event)
+            log.warning(
+                "locality:%s out of range (have %d), user=%s",
+                idx,
+                len(localities),
+                max_user_id,
+            )
+            return
+    await ack_callback(event)
+    await appeal_funnel.ask_address(event, max_user_id)
+
+
+async def _cb_geo(event, max_user_id: int, payload: str) -> None:
+    # Подтверждение / редактирование определённого через геолокацию
+    # адреса. Все три callback'а guard'им состоянием и наличием
+    # detected_locality в dialog_data — иначе это стейл-кнопка из
+    # старого сообщения.
+    await ack_callback(event)
+    async with current_user(max_user_id) as (_, user):
+        state = user.dialog_state
+        data = dict(user.dialog_data or {})
+    if state != DialogState.AWAITING_GEO_CONFIRM.value or not data.get(
+        "detected_locality"
+    ):
+        log.info(
+            "geo callback %s ignored: state=%s, has_detected=%s, user=%s",
+            payload,
+            state,
+            bool(data.get("detected_locality")),
+            max_user_id,
+        )
+        return
+
+    if payload == "geo:confirm":
+        detected_street = (data.get("detected_street") or "").strip()
+        detected_house = (data.get("detected_house_number") or "").strip()
+        if detected_street and detected_house:
+            full_addr = f"{detected_street}, д. {detected_house}"
+        elif detected_street:
+            full_addr = detected_street
+        else:
+            full_addr = ""
+        async with current_user(max_user_id) as (session, user):
+            fresh = _clear_geo_detected(user.dialog_data or data)
+            if full_addr:
+                fresh["address"] = full_addr
+                user.dialog_state = DialogState.AWAITING_TOPIC.value
+            else:
+                user.dialog_state = DialogState.AWAITING_ADDRESS.value
+            user.dialog_data = fresh
+            await session.flush()
+        if full_addr:
+            await appeal_funnel.ask_topic(event, max_user_id)
+        else:
+            await appeal_funnel.ask_address(event, max_user_id)
+        return
+
+    if payload == "geo:edit_address":
+        async with current_user(max_user_id) as (session, user):
+            user.dialog_data = _clear_geo_detected(user.dialog_data or data)
+            user.dialog_state = DialogState.AWAITING_ADDRESS.value
+            await session.flush()
+        await appeal_funnel.ask_address(event, max_user_id)
+        return
+
+    if payload == "geo:other_locality":
+        async with current_user(max_user_id) as (session, user):
+            user.dialog_data = _clear_geo_detected(
+                user.dialog_data or data,
+                drop_locality=True,
+            )
+            user.dialog_state = DialogState.AWAITING_LOCALITY.value
+            await session.flush()
+        await appeal_funnel.ask_locality(event, max_user_id)
+        return
+
+
+async def _cb_topic(event, max_user_id: int, payload: str) -> None:
+    idx = callback_router.parse_int_tail(payload, "topic:")
+    if idx is None:
+        await ack_callback(event)
+        return
+    async with session_scope() as session:
+        topics = await settings_store.get(session, "topics") or []
+        if 0 <= idx < len(topics):
+            chosen = topics[idx]
+            await users_service.update_dialog_data(
+                session,
+                max_user_id,
+                {"topic": chosen},
+            )
+        else:
+            await ack_callback(event)
+            log.warning(
+                "topic:%s out of range (have %d), user=%s",
+                idx,
+                len(topics),
+                max_user_id,
+            )
+            return
+    await ack_callback(event)
+    await appeal_funnel.ask_summary(event, max_user_id)
+
+
+async def _cb_appeal_submit(event, max_user_id: int, payload: str) -> None:
+    # Кнопка «Отправить» осталась в старых сообщениях клиента, которые
+    # ещё могут крутиться у жителя в чате. Финализируем только если
+    # пользователь всё ещё на шаге описания сути.
+    await ack_callback(event)
+    await appeal_funnel.finalize_appeal(event, max_user_id)
+
+
+# Точные payload'ы воронки → handler. geo:* — три payload'а на один
+# _cb_geo (он сам различает их внутри по payload).
+_CITIZEN_EXACT = {
+    "menu:new_appeal": _cb_new_appeal,
+    "consent:yes": _cb_consent_yes,
+    "consent:no": _cb_consent_no,
+    "cancel": _cb_cancel,
+    "addr:reuse": _cb_addr_reuse,
+    "addr:new": _cb_addr_new,
+    "geo:confirm": _cb_geo,
+    "geo:edit_address": _cb_geo,
+    "geo:other_locality": _cb_geo,
+    "appeal:submit": _cb_appeal_submit,
+}
+
+# Префикс payload'а → handler. Числовой хвост парсит сам handler через
+# callback_router.parse_int_tail.
+_CITIZEN_PREFIX = (
+    ("locality:", _cb_locality),
+    ("topic:", _cb_topic),
+)
+
+
+async def _dispatch_citizen_callback(
+    event, max_user_id: int, payload: str
+) -> bool:
+    """Маршрутизатор callback'ов воронки жителя. Возвращает True, если
+    payload обработан; False — если это не воронка-callback, и вызывающий
+    продолжает разбор (admin-dispatch, затем menu.handle_callback)."""
+    handler = _CITIZEN_EXACT.get(payload)
+    if handler is None:
+        for prefix, prefix_handler in _CITIZEN_PREFIX:
+            if payload.startswith(prefix):
+                handler = prefix_handler
+                break
+    if handler is None:
+        return False
+    await handler(event, max_user_id, payload)
+    return True
+
+
 def register(dp: Dispatcher) -> None:
     @dp.message_callback()
     async def on_callback(event: MessageCallback):
@@ -239,199 +488,13 @@ def register(dp: Dispatcher) -> None:
         if not await _ensure_funnel_callback_state(event, max_user_id, payload):
             return
 
-        if payload == "menu:new_appeal":
-            await ack_callback(event)
-            await appeal_funnel.start_appeal_flow(event, max_user_id)
-            return
-
-        if payload == "consent:yes":
-            async with session_scope() as session:
-                await users_service.set_consent(session, max_user_id)
-            await ack_callback(event, texts.CONSENT_ACCEPTED)
-            await admin_events.notify_consent_given(event.bot, max_user_id=max_user_id)
-            await appeal_funnel.ask_contact_or_skip(event, max_user_id)
-            return
-
-        if payload == "consent:no":
-            async with session_scope() as session:
-                await users_service.reset_state(session, max_user_id)
-            drop_user_lock(max_user_id)
-            await ack_callback(event)
-
-            await _send_to_citizen(
-                event,
-                max_user_id,
-                text=texts.CONSENT_DECLINED,
-                attachments=[keyboards.back_to_menu_keyboard()],
-            )
-            return
-
-        if payload == "cancel":
-            async with session_scope() as session:
-                await users_service.reset_state(session, max_user_id)
-            drop_user_lock(max_user_id)
-            await ack_callback(event)
-
-            await _send_to_citizen(
-                event,
-                max_user_id,
-                text=texts.CANCELLED,
-                attachments=[keyboards.back_to_menu_keyboard()],
-            )
-            return
-
-        if payload == "addr:reuse":
-            await ack_callback(event)
-            async with current_user(max_user_id) as (session, user):
-                last = await appeals_service.find_last_address_for_user(
-                    session,
-                    user.id,
-                )
-            if last is None:
-                # Между показом промпта и кликом обращение могло быть
-                # обезличено retention-кроном — fallback к обычному пути.
-                await appeal_funnel.ask_locality(event, max_user_id)
-                return
-            locality, address = last
-            async with session_scope() as session:
-                await users_service.set_state(
-                    session,
-                    max_user_id,
-                    DialogState.AWAITING_TOPIC,
-                    data={"locality": locality, "address": address},
-                )
-            await appeal_funnel.ask_topic(event, max_user_id)
-            return
-
-        if payload == "addr:new":
-            await ack_callback(event)
-            await appeal_funnel.ask_locality(event, max_user_id)
-            return
-
-        if payload.startswith("locality:"):
-            idx = callback_router.parse_int_tail(payload, "locality:")
-            if idx is None:
-                await ack_callback(event)
-                return
-            async with session_scope() as session:
-                localities = await settings_store.get(session, "localities") or []
-                if 0 <= idx < len(localities):
-                    chosen = localities[idx]
-                    await users_service.update_dialog_data(
-                        session,
-                        max_user_id,
-                        {"locality": chosen},
-                    )
-                else:
-                    await ack_callback(event)
-                    log.warning(
-                        "locality:%s out of range (have %d), user=%s",
-                        idx,
-                        len(localities),
-                        max_user_id,
-                    )
-                    return
-            await ack_callback(event)
-            await appeal_funnel.ask_address(event, max_user_id)
-            return
-
-        # Подтверждение / редактирование определённого через геолокацию
-        # адреса. Все три callback'а guard'им состоянием и наличием
-        # detected_locality в dialog_data — иначе это стейл-кнопка из
-        # старого сообщения.
-        if payload in ("geo:confirm", "geo:edit_address", "geo:other_locality"):
-            await ack_callback(event)
-            async with current_user(max_user_id) as (_, user):
-                state = user.dialog_state
-                data = dict(user.dialog_data or {})
-            if state != DialogState.AWAITING_GEO_CONFIRM.value or not data.get(
-                "detected_locality"
-            ):
-                log.info(
-                    "geo callback %s ignored: state=%s, has_detected=%s, user=%s",
-                    payload,
-                    state,
-                    bool(data.get("detected_locality")),
-                    max_user_id,
-                )
-                return
-
-            if payload == "geo:confirm":
-                detected_street = (data.get("detected_street") or "").strip()
-                detected_house = (data.get("detected_house_number") or "").strip()
-                if detected_street and detected_house:
-                    full_addr = f"{detected_street}, д. {detected_house}"
-                elif detected_street:
-                    full_addr = detected_street
-                else:
-                    full_addr = ""
-                async with current_user(max_user_id) as (session, user):
-                    fresh = _clear_geo_detected(user.dialog_data or data)
-                    if full_addr:
-                        fresh["address"] = full_addr
-                        user.dialog_state = DialogState.AWAITING_TOPIC.value
-                    else:
-                        user.dialog_state = DialogState.AWAITING_ADDRESS.value
-                    user.dialog_data = fresh
-                    await session.flush()
-                if full_addr:
-                    await appeal_funnel.ask_topic(event, max_user_id)
-                else:
-                    await appeal_funnel.ask_address(event, max_user_id)
-                return
-
-            if payload == "geo:edit_address":
-                async with current_user(max_user_id) as (session, user):
-                    user.dialog_data = _clear_geo_detected(user.dialog_data or data)
-                    user.dialog_state = DialogState.AWAITING_ADDRESS.value
-                    await session.flush()
-                await appeal_funnel.ask_address(event, max_user_id)
-                return
-
-            if payload == "geo:other_locality":
-                async with current_user(max_user_id) as (session, user):
-                    user.dialog_data = _clear_geo_detected(
-                        user.dialog_data or data,
-                        drop_locality=True,
-                    )
-                    user.dialog_state = DialogState.AWAITING_LOCALITY.value
-                    await session.flush()
-                await appeal_funnel.ask_locality(event, max_user_id)
-                return
-
-        if payload.startswith("topic:"):
-            idx = callback_router.parse_int_tail(payload, "topic:")
-            if idx is None:
-                await ack_callback(event)
-                return
-            async with session_scope() as session:
-                topics = await settings_store.get(session, "topics") or []
-                if 0 <= idx < len(topics):
-                    chosen = topics[idx]
-                    await users_service.update_dialog_data(
-                        session,
-                        max_user_id,
-                        {"topic": chosen},
-                    )
-                else:
-                    await ack_callback(event)
-                    log.warning(
-                        "topic:%s out of range (have %d), user=%s",
-                        idx,
-                        len(topics),
-                        max_user_id,
-                    )
-                    return
-            await ack_callback(event)
-            await appeal_funnel.ask_summary(event, max_user_id)
-            return
-
-        if payload == "appeal:submit":
-            # Кнопка «Отправить» осталась в старых сообщениях клиента,
-            # которые ещё могут крутиться у жителя в чате. Финализируем
-            # только если пользователь всё ещё на шаге описания сути.
-            await ack_callback(event)
-            await appeal_funnel.finalize_appeal(event, max_user_id)
+        # Коллбэки воронки жителя (menu:new_appeal, consent:*, cancel,
+        # addr:*, locality:, geo:*, topic:, appeal:submit) — единая
+        # dispatch-таблица (_dispatch_citizen_callback + _cb_* выше).
+        # Раньше здесь был ~195-строчный if-elif. dispatch вернёт True,
+        # если обработал; False — если payload не воронка-callback,
+        # тогда продолжаем fallthrough в admin-dispatch и menu.
+        if await _dispatch_citizen_callback(event, max_user_id, payload):
             return
 
         # Коллбэки мастера рассылок (на стороне оператора).
