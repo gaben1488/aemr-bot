@@ -214,96 +214,35 @@ def _extract_reply_target_mid(event) -> str | None:
     return _mid_from_link(link)
 
 
-async def _deliver_operator_reply(
-    event,
-    *,
-    appeal,
-    operator,
-    text: str,
-    audit_action: str,
-) -> bool:
-    """Общий путь для доставки ответа оператора жителю.
+def _reply_rejection_before_delivery(*, fresh_appeal, appeal_id: int) -> str | None:
+    """Проверки перед доставкой ответа. Возвращает текст отказа для
+    оператора, либо None если доставка разрешена.
 
-    Используется как в handle_operator_reply (механизм ответа свайпом, который
-    зависит от заполнения Message.link клиентом MAX), так и в cmd_reply
-    (явная команда /reply <appeal_id> <text>, работающая на любых клиентах
-    независимо от поддержки свайпов).
+    `fresh_appeal` — обращение, перечитанное свежей сессией прямо перед
+    отправкой. Защита от гонки: житель мог тапнуть «🗑 Стереть» или
+    обращение закрылось, пока оператор печатал ответ. erase_pdn
+    перевешивает appeals на anonymous-user и физически удаляет запись
+    жителя — объект в памяти оператора остался бы устаревшим.
 
-    Возвращает True, если оператору дан окончательный ответ (сообщение доставлено,
-    либо вежливо отклонено из-за длины / невозможности доставки). Возвращает
-    False только при дедупликации, когда target_mid равен None и оператор
-    на самом деле не собирался отвечать.
+    Логика согласия (152-ФЗ ст. 21 ч. 5): после отзыва оператор может
+    дать финальный ответ только по обращению, ПРИНЯТОМУ до отзыва.
+      - is_blocked / first_name == 'Удалено' — жёсткий отказ;
+      - нет согласия и обращение подано ПОСЛЕ revoked_at — отказ;
+      - согласия не было никогда — отказ;
+      - нет согласия, но обращение подано ДО revoked_at — доставка
+        разрешена как финальный ответ.
     """
-    if len(text) > cfg.answer_max_chars:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=texts.ADMIN_REPLY_TOO_LONG.format(
-                limit=cfg.answer_max_chars, actual=len(text)
-            ),
-        )
-        return True
-
-    if _has_recent_successful_reply(operator.id, appeal.id, text):
-        log.info(
-            "operator_reply: дубль за %.1fс отбит (recent-success) — operator=%s appeal=%s",
-            _REPLY_DEDUPE_WINDOW_SEC, operator.id, appeal.id,
-        )
-        return True
-
-    success_key = _reply_success_key(
-        event, operator_id=operator.id, appeal_id=appeal.id, text=text
-    )
-    if await _is_reply_success_recorded(success_key):
-        log.info(
-            "operator_reply: повтор уже успешно обработанного source-update отбит — operator=%s appeal=%s",
-            operator.id, appeal.id,
-        )
-        return True
-
-    # Защита от доставки. После отзыва согласия оператор может отправить
-    # финальный ответ через бот только по обращениям, которые были приняты
-    # до точки отзыва. Новые обращения после отзыва не обрабатываются.
-    #
-    # Жёсткие отказы:
-    # - is_blocked: IT-блокировка за злоупотребления;
-    # - first_name == 'Удалено': житель полностью удалён, max_user_id
-    #   был переподвешен на anonymous-user (либо это сам anonymous);
-    #   персональные данные физически отсутствуют.
-    #
-    # Условный отказ:
-    # - consent_pdn_at IS NULL И обращение подано ПОСЛЕ revoked_at →
-    #   отказ;
-    # - consent_pdn_at IS NULL И обращение подано ДО revoked_at →
-    #   доставка разрешена как финальный ответ по уже принятому обращению.
-    # Перечитываем User свежей сессией непосредственно перед отправкой.
-    # Защита от гонки: житель мог тапнуть «🗑 Стереть» в момент, когда
-    # оператор печатал ответ. erase_pdn перевешивает appeals на
-    # anonymous-user и физически удаляет запись жителя; объект `appeal.user`
-    # в памяти оператора остался устаревшим. Если не перечитать —
-    # отправим ответ постфактум удалённому жителю.
-    async with session_scope() as session:
-        fresh_appeal = await appeals_service.get_by_id(session, appeal.id)
     if fresh_appeal is None or fresh_appeal.user is None:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=(
-                f"⚠️ Не могу доставить ответ по обращению #{appeal.id}: "
-                f"обращение или его автор не найдены."
-            ),
+        return (
+            f"⚠️ Не могу доставить ответ по обращению #{appeal_id}: "
+            f"обращение или его автор не найдены."
         )
-        return True
-
     if fresh_appeal.status == AppealStatus.CLOSED.value:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=(
-                f"⚠️ Не могу доставить ответ по обращению #{appeal.id}: "
-                f"обращение уже закрыто. Если ответ всё же нужен, "
-                f"сначала возобновите обращение через /reopen {appeal.id}."
-            ),
+        return (
+            f"⚠️ Не могу доставить ответ по обращению #{appeal_id}: "
+            f"обращение уже закрыто. Если ответ всё же нужен, "
+            f"сначала возобновите обращение через /reopen {appeal_id}."
         )
-        return True
-
     user = fresh_appeal.user
     hard_forbidden = user.is_blocked or user.first_name == "Удалено"
     revoked_after_appeal = (
@@ -312,68 +251,124 @@ async def _deliver_operator_reply(
         and fresh_appeal.created_at is not None
         and fresh_appeal.created_at >= user.consent_revoked_at
     )
-    no_consent_ever = user.consent_pdn_at is None and user.consent_revoked_at is None
+    no_consent_ever = (
+        user.consent_pdn_at is None and user.consent_revoked_at is None
+    )
     if hard_forbidden or revoked_after_appeal or no_consent_ever:
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=(
-                f"⚠️ Не могу доставить ответ по обращению #{appeal.id}: "
-                f"у жителя нет действующего согласия или данные уже удалены. "
-                f"Ответ через бот возможен только по обращению, принятому "
-                f"до отзыва согласия."
-            ),
+        return (
+            f"⚠️ Не могу доставить ответ по обращению #{appeal_id}: "
+            f"у жителя нет действующего согласия или данные уже удалены. "
+            f"Ответ через бот возможен только по обращению, принятому "
+            f"до отзыва согласия."
         )
-        return True
+    return None
 
-    target_user_id = user.max_user_id
+
+async def _check_reply_dedupe(
+    event, *, operator, appeal, text: str
+) -> tuple[bool, str | None]:
+    """Проверка дублей доставки ответа. Возвращает
+    ``(is_duplicate, success_key)``.
+
+    `success_key` возвращается даже когда дубль не найден — он нужен
+    вызывающему позже для `_mark_reply_success_recorded`. Порядок
+    проверок сохранён: сначала окно recent-success, затем persisted
+    source-update.
+    """
+    if _has_recent_successful_reply(operator.id, appeal.id, text):
+        log.info(
+            "operator_reply: дубль за %.1fс отбит (recent-success) — "
+            "operator=%s appeal=%s",
+            _REPLY_DEDUPE_WINDOW_SEC, operator.id, appeal.id,
+        )
+        return True, None
+    success_key = _reply_success_key(
+        event, operator_id=operator.id, appeal_id=appeal.id, text=text
+    )
+    if await _is_reply_success_recorded(success_key):
+        log.info(
+            "operator_reply: повтор уже успешно обработанного "
+            "source-update отбит — operator=%s appeal=%s",
+            operator.id, appeal.id,
+        )
+        return True, success_key
+    return False, success_key
+
+
+async def _send_reply_to_citizen(
+    event, *, fresh_appeal, appeal_id: int, text: str
+) -> tuple[bool, str | None]:
+    """Доставить отформатированный ответ жителю. Возвращает
+    ``(delivered_ok, delivered_mid)``.
+
+    delivered_ok=False означает, что доставка не удалась и оператору
+    уже отправлено предупреждение — вызывающему остаётся вернуть True.
+    """
+    target_user_id = fresh_appeal.user.max_user_id
     formatted_text = card_format.citizen_reply(fresh_appeal, text)
     try:
-        # ВАЖНО: доставляем сообщение жителю по user_id (а не chat_id) — мы не
-        # сохраняли chat_id их личного диалога, только их MAX user_id.
+        # ВАЖНО: доставляем по user_id (а не chat_id) — chat_id личного
+        # диалога жителя мы не храним, только MAX user_id.
         sent = await event.bot.send_message(
             user_id=target_user_id,
             text=formatted_text,
             attachments=[keyboards.back_to_menu_keyboard()],
         )
     except Exception as exc:  # noqa: BLE001
-        # Показываем в админ-чате только имя класса исключения — `repr(exc)`
-        # из maxapi часто содержит тело запроса (текст ответа оператора,
-        # целевой user_id), что может осесть в истории админ-группы. Полная
-        # ошибка со стеком пишется в логи бота для диагностики.
+        # В админ-чат — только имя класса исключения: `repr(exc)` из
+        # maxapi часто содержит тело запроса (текст ответа, user_id),
+        # которое осело бы в истории админ-группы. Полный стек — в логах.
         log.exception(
             "operator_reply: delivery failed for appeal=%s user_id=%s",
-            appeal.id, target_user_id,
+            appeal_id, target_user_id,
         )
         await _safe_admin_notice(
             event,
             (
-                f"⚠️ Не удалось доставить ответ жителю по обращению #{appeal.id} "
-                f"({type(exc).__name__}). Возможно, житель удалил диалог или "
-                f"заблокировал бота. Обращение остаётся в работе."
+                f"⚠️ Не удалось доставить ответ жителю по обращению "
+                f"#{appeal_id} ({type(exc).__name__}). Возможно, житель "
+                f"удалил диалог или заблокировал бота. Обращение остаётся "
+                f"в работе."
             ),
         )
-        return True
-    delivered_mid = extract_message_id(sent)
+        return False, None
+    return True, extract_message_id(sent)
 
-    admin_mid_to_refresh = None
-    admin_card_text = None
-    admin_card_keyboard = None
+
+async def _persist_reply_and_card(
+    event,
+    *,
+    appeal_id: int,
+    text: str,
+    operator,
+    audit_action: str,
+    delivered_mid: str | None,
+):
+    """Записать доставленный ответ в БД + audit_log, подготовить данные
+    для обновления админ-карточки.
+
+    Возвращает ``(admin_mid, card_text, card_keyboard)`` при успехе;
+    None — если запись не удалась (админу уже отправлено
+    предупреждение, вызывающему надо вернуть True). card_text/keyboard
+    равны None, если у обращения нет admin_message_id.
+    """
     try:
         async with session_scope() as session:
-            appeal_full = await appeals_service.get_by_id(session, appeal.id)
+            appeal_full = await appeals_service.get_by_id(session, appeal_id)
             if appeal_full is None:
                 log.warning(
-                    "appeal #%s vanished between delivery and DB write", appeal.id
+                    "appeal #%s vanished between delivery and DB write",
+                    appeal_id,
                 )
                 await _safe_admin_notice(
                     event,
                     (
-                        f"⚠️ Ответ по обращению #{appeal.id} доставлен жителю, "
-                        f"но обращение исчезло перед записью в БД. "
+                        f"⚠️ Ответ по обращению #{appeal_id} доставлен "
+                        f"жителю, но обращение исчезло перед записью в БД. "
                         f"Не повторяйте ответ вслепую; проверьте логи."
                     ),
                 )
-                return True
+                return None
             await appeals_service.add_operator_message(
                 session,
                 appeal=appeal_full,
@@ -385,33 +380,112 @@ async def _deliver_operator_reply(
                 session,
                 operator_max_user_id=operator.max_user_id,
                 action=audit_action,
-                target=f"appeal #{appeal.id}",
+                target=f"appeal #{appeal_id}",
                 details={"chars": len(text)},
             )
-            admin_mid_to_refresh = getattr(appeal_full, "admin_message_id", None)
+            admin_mid_to_refresh = getattr(
+                appeal_full, "admin_message_id", None
+            )
+            admin_card_text = None
+            admin_card_keyboard = None
             if admin_mid_to_refresh and appeal_full.user is not None:
-                admin_card_text = card_format.admin_card(appeal_full, appeal_full.user)
+                admin_card_text = card_format.admin_card(
+                    appeal_full, appeal_full.user
+                )
                 admin_card_keyboard = keyboards.appeal_admin_actions(
                     appeal_full.id,
                     appeal_full.status,
                     is_it=True,
                     user_blocked=bool(appeal_full.user.is_blocked),
-                    closed_due_to_revoke=bool(appeal_full.closed_due_to_revoke),
+                    closed_due_to_revoke=bool(
+                        appeal_full.closed_due_to_revoke
+                    ),
                 )
+            return admin_mid_to_refresh, admin_card_text, admin_card_keyboard
     except Exception:
         log.exception(
-            "operator_reply: delivered but local DB/audit write failed — appeal=%s delivered_mid=%s",
-            appeal.id, delivered_mid,
+            "operator_reply: delivered but local DB/audit write failed — "
+            "appeal=%s delivered_mid=%s",
+            appeal_id, delivered_mid,
         )
         await _safe_admin_notice(
             event,
             (
-                f"⚠️ Ответ по обращению #{appeal.id} доставлен жителю, "
+                f"⚠️ Ответ по обращению #{appeal_id} доставлен жителю, "
                 f"но запись в базе или audit_log не завершилась. "
                 f"Не повторяйте ответ вслепую; проверьте логи и состояние БД."
             ),
         )
+        return None
+
+
+async def _deliver_operator_reply(
+    event,
+    *,
+    appeal,
+    operator,
+    text: str,
+    audit_action: str,
+) -> bool:
+    """Общий путь доставки ответа оператора жителю.
+
+    Используется и в handle_operator_reply (ответ свайпом, зависит от
+    Message.link), и в cmd_reply (команда /reply <appeal_id> <text>,
+    работает на любых клиентах). Шаги: лимит длины → дедуп → перечитка
+    обращения и guard'ы → доставка жителю → запись в БД/audit → отметка
+    успеха, обновление админ-карточки, подтверждение оператору. Тяжёлые
+    шаги вынесены в `_reply_rejection_before_delivery` /
+    `_send_reply_to_citizen` / `_persist_reply_and_card`.
+
+    Возвращает True, если оператору дан окончательный ответ (доставлено
+    либо вежливо отклонено). False — только при дедупликации, когда
+    оператор фактически не собирался отвечать.
+    """
+    if len(text) > cfg.answer_max_chars:
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=texts.ADMIN_REPLY_TOO_LONG.format(
+                limit=cfg.answer_max_chars, actual=len(text)
+            ),
+        )
         return True
+
+    is_dupe, success_key = await _check_reply_dedupe(
+        event, operator=operator, appeal=appeal, text=text
+    )
+    if is_dupe:
+        return True
+
+    # Перечитываем обращение свежей сессией прямо перед отправкой —
+    # защита от гонки с erase_pdn / закрытием, пока оператор печатал.
+    async with session_scope() as session:
+        fresh_appeal = await appeals_service.get_by_id(session, appeal.id)
+    rejection = _reply_rejection_before_delivery(
+        fresh_appeal=fresh_appeal, appeal_id=appeal.id
+    )
+    if rejection is not None:
+        await event.bot.send_message(
+            chat_id=get_chat_id(event), text=rejection
+        )
+        return True
+
+    delivered_ok, delivered_mid = await _send_reply_to_citizen(
+        event, fresh_appeal=fresh_appeal, appeal_id=appeal.id, text=text
+    )
+    if not delivered_ok:
+        return True
+
+    persisted = await _persist_reply_and_card(
+        event,
+        appeal_id=appeal.id,
+        text=text,
+        operator=operator,
+        audit_action=audit_action,
+        delivered_mid=delivered_mid,
+    )
+    if persisted is None:
+        return True
+    admin_mid_to_refresh, admin_card_text, admin_card_keyboard = persisted
 
     await _mark_reply_success_recorded(success_key)
     _remember_successful_reply(operator.id, appeal.id, text)
@@ -424,7 +498,9 @@ async def _deliver_operator_reply(
                 attachments=[admin_card_keyboard],
             )
         except Exception:
-            log.exception("operator_reply: failed to refresh admin card #%s", appeal.id)
+            log.exception(
+                "operator_reply: failed to refresh admin card #%s", appeal.id
+            )
 
     await event.bot.send_message(
         chat_id=get_chat_id(event),

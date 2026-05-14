@@ -504,6 +504,117 @@ class TestDeliverOperatorReply:
         assert kwargs["attachments"]
 
 
+class TestReplyRejectionBeforeDelivery:
+    """_reply_rejection_before_delivery — чистая функция guard'а перед
+    доставкой. Возвращает текст отказа либо None (доставка разрешена).
+    Фиксирует матрицу согласия по 152-ФЗ ст. 21 ч. 5."""
+
+    def test_healthy_appeal_allows_delivery(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=_fresh_appeal(), appeal_id=1
+        ) is None
+
+    def test_none_appeal_rejected(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        msg = _reply_rejection_before_delivery(fresh_appeal=None, appeal_id=1)
+        assert msg is not None and "не найдены" in msg
+
+    def test_appeal_without_user_rejected(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        appeal = _fresh_appeal()
+        appeal.user = None
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=appeal, appeal_id=1
+        ) is not None
+
+    def test_closed_appeal_rejected(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        appeal = _fresh_appeal()
+        appeal.status = "closed"
+        msg = _reply_rejection_before_delivery(fresh_appeal=appeal, appeal_id=1)
+        assert msg is not None and "закрыто" in msg
+
+    def test_blocked_user_rejected(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        appeal = _fresh_appeal()
+        appeal.user.is_blocked = True
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=appeal, appeal_id=1
+        ) is not None
+
+    def test_erased_user_rejected(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        appeal = _fresh_appeal()
+        appeal.user.first_name = "Удалено"
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=appeal, appeal_id=1
+        ) is not None
+
+    def test_no_consent_ever_rejected(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        appeal = _fresh_appeal()
+        appeal.user.consent_pdn_at = None
+        appeal.user.consent_revoked_at = None
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=appeal, appeal_id=1
+        ) is not None
+
+    def test_revoked_then_new_appeal_rejected(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        # Согласие отозвано 2026-04-01, обращение создано 2026-05-01 —
+        # ПОСЛЕ отзыва → доставка запрещена.
+        appeal = _fresh_appeal()
+        appeal.user.consent_pdn_at = None
+        appeal.user.consent_revoked_at = datetime(
+            2026, 4, 1, tzinfo=timezone.utc
+        )
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=appeal, appeal_id=1
+        ) is not None
+
+    def test_revoked_after_older_appeal_allows_final_reply(self) -> None:
+        from aemr_bot.handlers.operator_reply import (
+            _reply_rejection_before_delivery,
+        )
+
+        # Обращение создано 2026-05-01, согласие отозвано позже
+        # 2026-05-10 → финальный ответ по принятому ранее обращению
+        # разрешён.
+        appeal = _fresh_appeal()
+        appeal.user.consent_pdn_at = None
+        appeal.user.consent_revoked_at = datetime(
+            2026, 5, 10, tzinfo=timezone.utc
+        )
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=appeal, appeal_id=1
+        ) is None
+
+
 class TestHandleCommandReply:
     @pytest.mark.asyncio
     async def test_skips_outside_admin_chat(self) -> None:
