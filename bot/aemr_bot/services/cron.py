@@ -499,157 +499,136 @@ async def _job_working_hours_overdue_reminder(bot) -> None:
 def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOScheduler:
     """Собрать APScheduler со всеми job'ами бота.
 
-    Все jobs вынесены на module-level (см. _job_* выше); здесь только
-    регистрация в scheduler через functools.partial. bot принимаем
+    Все jobs вынесены на module-level (см. _job_* выше); здесь —
+    декларативная таблица `(func, trigger, name)` и единый цикл
+    регистрации. Раньше было 14 копипастных `add_job(...)` с
+    идентичными `max_instances=1, coalesce=True, misfire_grace_time`
+    — теперь общие параметры заданы один раз в цикле. bot принимаем
     явным параметром, чтобы services не импортировал точку входа
     `main.bot` лазево.
     """
     scheduler = AsyncIOScheduler(timezone=TZ)
+    pulse = functools.partial(_job_pulse, send_admin_text)
 
-    # Еженедельный бэкап
-    scheduler.add_job(
-        functools.partial(_job_backup_with_alert, send_admin_text),
-        CronTrigger(
-            day_of_week=settings.backup_day_of_week,
-            hour=settings.backup_hour,
-            minute=settings.backup_minute,
-            timezone=TZ,
+    # (func, trigger, name). Общие max_instances=1 / coalesce=True /
+    # misfire_grace_time навешиваются циклом регистрации ниже —
+    # единообразно, без копипасты.
+    jobs: list[tuple] = [
+        # Еженедельный бэкап
+        (
+            functools.partial(_job_backup_with_alert, send_admin_text),
+            CronTrigger(
+                day_of_week=settings.backup_day_of_week,
+                hour=settings.backup_hour,
+                minute=settings.backup_minute,
+                timezone=TZ,
+            ),
+            "db-backup",
         ),
-        name="db-backup",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # Ежедневная очистка events (idempotency-ключи)
-    scheduler.add_job(
-        _job_events_retention,
-        CronTrigger(hour=4, minute=0, timezone=TZ),
-        name="events-retention",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # Selfcheck heartbeat
-    scheduler.add_job(
-        functools.partial(_job_selfcheck, send_admin_text),
-        CronTrigger(minute=f"*/{settings.healthcheck_interval_minutes}", timezone=TZ),
-        name="health-selfcheck",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # Месячный отчёт
-    scheduler.add_job(
-        functools.partial(_job_monthly_report, send_admin_document),
-        CronTrigger(day=1, hour=9, minute=0, timezone=TZ),
-        name="monthly-stats",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # Startup pulse — однократно через 5 секунд после старта.
-    # Закрывает gap «pulse 21:05 не пришёл» при docker compose up --build:
-    # APScheduler не догоняет cron-триггеры, пропущенные пока процесс
-    # был остановлен. См. docstring _job_startup_pulse.
-    scheduler.add_job(
-        functools.partial(_job_startup_pulse, send_admin_text),
-        DateTrigger(
-            run_date=datetime.now(TZ) + timedelta(seconds=5),
-            timezone=TZ,
+        # Ежедневная очистка events (idempotency-ключи)
+        (
+            _job_events_retention,
+            CronTrigger(hour=4, minute=0, timezone=TZ),
+            "events-retention",
         ),
-        name="startup-pulse",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # Pulse — три расписания. См. docstring _job_pulse.
-    pulse_partial = functools.partial(_job_pulse, send_admin_text)
-    scheduler.add_job(
-        pulse_partial,
+        # Selfcheck heartbeat
+        (
+            functools.partial(_job_selfcheck, send_admin_text),
+            CronTrigger(
+                minute=f"*/{settings.healthcheck_interval_minutes}", timezone=TZ
+            ),
+            "health-selfcheck",
+        ),
+        # Месячный отчёт
+        (
+            functools.partial(_job_monthly_report, send_admin_document),
+            CronTrigger(day=1, hour=9, minute=0, timezone=TZ),
+            "monthly-stats",
+        ),
+        # Startup pulse — однократно через 5 секунд после старта.
+        # Закрывает gap «pulse 21:05 не пришёл» при docker compose up
+        # --build: APScheduler не догоняет cron-триггеры, пропущенные
+        # пока процесс был остановлен. См. docstring _job_startup_pulse.
+        (
+            functools.partial(_job_startup_pulse, send_admin_text),
+            DateTrigger(
+                run_date=datetime.now(TZ) + timedelta(seconds=5), timezone=TZ
+            ),
+            "startup-pulse",
+        ),
+        # Pulse — три расписания. См. docstring _job_pulse.
         # Пн–сб вечером 18:00–21:59 раньше выпадали из расписания:
-        # workhours заканчивался в 17:59, а offhours начинался только в 22:00.
-        # Из-за этого пульсы могли пропадать на четыре часа без реального сбоя.
-        CronTrigger(day_of_week="mon-sat", hour="0-8,18-23", minute=5, timezone=TZ),
-        name="pulse-offhours",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-    scheduler.add_job(
-        pulse_partial,
-        CronTrigger(day_of_week="sun", hour="*", minute=5, timezone=TZ),
-        name="pulse-sunday",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-    scheduler.add_job(
-        pulse_partial,
-        CronTrigger(day_of_week="mon-sat", hour="9-17", minute="0,30", timezone=TZ),
-        name="pulse-workhours",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
+        # workhours кончался в 17:59, offhours начинался в 22:00 —
+        # пульсы могли пропадать на четыре часа без реального сбоя.
+        (
+            pulse,
+            CronTrigger(
+                day_of_week="mon-sat", hour="0-8,18-23", minute=5, timezone=TZ
+            ),
+            "pulse-offhours",
+        ),
+        (
+            pulse,
+            CronTrigger(day_of_week="sun", hour="*", minute=5, timezone=TZ),
+            "pulse-sunday",
+        ),
+        (
+            pulse,
+            CronTrigger(
+                day_of_week="mon-sat", hour="9-17", minute="0,30", timezone=TZ
+            ),
+            "pulse-workhours",
+        ),
+        # 5-летняя архивация обращений
+        (
+            functools.partial(_job_appeals_5y_retention, send_admin_text),
+            CronTrigger(hour=4, minute=45, timezone=TZ),
+            "appeals-5y-retention",
+        ),
+        # PDn-retention (152-ФЗ 30 дней после revoke)
+        (
+            functools.partial(_job_pdn_retention_check, send_admin_text),
+            CronTrigger(hour=4, minute=30, timezone=TZ),
+            "pdn-retention",
+        ),
+        # Funnel watchdog: сброс зависших воронок
+        (
+            functools.partial(_job_funnel_watchdog, bot),
+            CronTrigger(minute=15, timezone=TZ),
+            "funnel-watchdog",
+        ),
+        # Напоминалки в рабочее время Камчатки
+        (
+            functools.partial(_job_working_hours_open_reminder, bot),
+            CronTrigger(
+                day_of_week="mon-sat", hour="9-17", minute=10, timezone=TZ
+            ),
+            "open-reminder-workhours",
+        ),
+        (
+            functools.partial(_job_working_hours_overdue_reminder, bot),
+            CronTrigger(
+                day_of_week="mon-sat", hour="9-17", minute=40, timezone=TZ
+            ),
+            "overdue-reminder-workhours",
+        ),
+    ]
 
-    # 5-летняя архивация обращений
-    scheduler.add_job(
-        functools.partial(_job_appeals_5y_retention, send_admin_text),
-        CronTrigger(hour=4, minute=45, timezone=TZ),
-        name="appeals-5y-retention",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # PDn-retention (152-ФЗ 30 дней после revoke)
-    scheduler.add_job(
-        functools.partial(_job_pdn_retention_check, send_admin_text),
-        CronTrigger(hour=4, minute=30, timezone=TZ),
-        name="pdn-retention",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # Funnel watchdog: сброс зависших воронок
-    scheduler.add_job(
-        functools.partial(_job_funnel_watchdog, bot),
-        CronTrigger(minute=15, timezone=TZ),
-        name="funnel-watchdog",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
-    # Напоминалки в рабочее время Камчатки
-    scheduler.add_job(
-        functools.partial(_job_working_hours_open_reminder, bot),
-        CronTrigger(day_of_week="mon-sat", hour="9-17", minute=10, timezone=TZ),
-        name="open-reminder-workhours",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-    scheduler.add_job(
-        functools.partial(_job_working_hours_overdue_reminder, bot),
-        CronTrigger(day_of_week="mon-sat", hour="9-17", minute=40, timezone=TZ),
-        name="overdue-reminder-workhours",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=_MISFIRE_GRACE_SEC,
-    )
-
+    # Внешний healthcheck-ping — только если URL задан в конфиге.
     if settings.healthcheck_url:
-        scheduler.add_job(
+        jobs.append((
             _ping_healthcheck,
-            CronTrigger(minute=f"*/{settings.healthcheck_interval_minutes}", timezone=TZ),
-            name="healthcheck-ping",
+            CronTrigger(
+                minute=f"*/{settings.healthcheck_interval_minutes}", timezone=TZ
+            ),
+            "healthcheck-ping",
+        ))
+
+    for func, trigger, name in jobs:
+        scheduler.add_job(
+            func,
+            trigger,
+            name=name,
             max_instances=1,
             coalesce=True,
             misfire_grace_time=_MISFIRE_GRACE_SEC,
