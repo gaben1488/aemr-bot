@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-13 22:36:36 UTC`
+Generated at: `2026-05-14 03:04:43 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `154`
 Max file size: `300 KB`
@@ -15,7 +15,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `.dockerignore` (539 bytes)
 - `.github/workflows/ci.yml` (7186 bytes)
 - `.github/workflows/repo-index.yml` (1117 bytes)
-- `.gitignore` (1061 bytes)
+- `.gitignore` (1073 bytes)
 - `_local-backup/PRODUCT_BRIEF_internal.md` (26651 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
 - `bot/aemr_bot/config.py` (7477 bytes)
@@ -36,24 +36,24 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/db/session.py` (1505 bytes)
 - `bot/aemr_bot/handlers/__init__.py` (3303 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
-- `bot/aemr_bot/handlers/admin_appeal_ops.py` (9743 bytes)
-- `bot/aemr_bot/handlers/admin_audience.py` (7215 bytes)
+- `bot/aemr_bot/handlers/admin_appeal_ops.py` (12111 bytes)
+- `bot/aemr_bot/handlers/admin_audience.py` (7569 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17442 bytes)
-- `bot/aemr_bot/handlers/admin_operators.py` (10193 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (10631 bytes)
-- `bot/aemr_bot/handlers/admin_settings.py` (3531 bytes)
-- `bot/aemr_bot/handlers/admin_stats.py` (3017 bytes)
-- `bot/aemr_bot/handlers/appeal.py` (30056 bytes)
-- `bot/aemr_bot/handlers/appeal_funnel.py` (29637 bytes)
+- `bot/aemr_bot/handlers/admin_operators.py` (10933 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (11183 bytes)
+- `bot/aemr_bot/handlers/admin_settings.py` (3633 bytes)
+- `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
+- `bot/aemr_bot/handlers/appeal.py` (30197 bytes)
+- `bot/aemr_bot/handlers/appeal_funnel.py` (30407 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7608 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (12632 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (23016 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (24688 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (7237 bytes)
-- `bot/aemr_bot/handlers/menu.py` (42322 bytes)
-- `bot/aemr_bot/handlers/operator_reply.py` (26275 bytes)
-- `bot/aemr_bot/handlers/start.py` (16638 bytes)
+- `bot/aemr_bot/handlers/menu.py` (42388 bytes)
+- `bot/aemr_bot/handlers/operator_reply.py` (27513 bytes)
+- `bot/aemr_bot/handlers/start.py` (16686 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (33666 bytes)
+- `bot/aemr_bot/keyboards.py` (36159 bytes)
 - `bot/aemr_bot/main.py` (18627 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
@@ -75,7 +75,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/users.py` (29316 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (11952 bytes)
-- `bot/aemr_bot/texts.py` (28379 bytes)
+- `bot/aemr_bot/texts.py` (28395 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/event.py` (10894 bytes)
@@ -83,16 +83,16 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/pyproject.toml` (2583 bytes)
 - `bot/tests/__init__.py` (0 bytes)
 - `bot/tests/conftest.py` (1882 bytes)
-- `bot/tests/test_admin_appeal_ops.py` (20049 bytes)
+- `bot/tests/test_admin_appeal_ops.py` (20114 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
 - `bot/tests/test_admin_handlers_small.py` (21991 bytes)
 - `bot/tests/test_admin_operators.py` (16108 bytes)
 - `bot/tests/test_admin_panel.py` (11325 bytes)
-- `bot/tests/test_appeal_dispatcher.py` (22940 bytes)
+- `bot/tests/test_appeal_dispatcher.py` (22842 bytes)
 - `bot/tests/test_appeal_flow.py` (10960 bytes)
 - `bot/tests/test_appeals_service_pg.py` (14053 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
-- `bot/tests/test_broadcast_handlers.py` (21233 bytes)
+- `bot/tests/test_broadcast_handlers.py` (21470 bytes)
 - `bot/tests/test_broadcasts_service_pg.py` (3786 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
 - `bot/tests/test_callback_router.py` (8287 bytes)
@@ -103,15 +103,15 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_event_helpers.py` (3791 bytes)
 - `bot/tests/test_extract_location.py` (5053 bytes)
 - `bot/tests/test_final_p1_regressions.py` (5856 bytes)
-- `bot/tests/test_funnel_state_hardening.py` (6301 bytes)
+- `bot/tests/test_funnel_state_hardening.py` (6421 bytes)
 - `bot/tests/test_geo.py` (9324 bytes)
-- `bot/tests/test_handlers_appeal_funnel.py` (19343 bytes)
+- `bot/tests/test_handlers_appeal_funnel.py` (19333 bytes)
 - `bot/tests/test_handlers_auth_broadcast.py` (7088 bytes)
 - `bot/tests/test_handlers_funnel.py` (9386 bytes)
 - `bot/tests/test_handlers_menu.py` (27632 bytes)
 - `bot/tests/test_handlers_menu_extra.py` (19006 bytes)
 - `bot/tests/test_handlers_operator_reply.py` (21755 bytes)
-- `bot/tests/test_handlers_start.py` (12560 bytes)
+- `bot/tests/test_handlers_start.py` (12554 bytes)
 - `bot/tests/test_health.py` (4062 bytes)
 - `bot/tests/test_idempotency.py` (3650 bytes)
 - `bot/tests/test_keyboards.py` (5473 bytes)
@@ -474,8 +474,8 @@ jobs:
 
 ### `.gitignore`
 
-Size: `1061` bytes  
-SHA-256: `5c105b9e50126d71e2d7cc068b611e326568807bd2a7eaf890bc11939b627ceb`
+Size: `1073` bytes  
+SHA-256: `7210b58392e5469f8b3346f52e0191becc1269654a09968945a5b44090702697`
 
 ```gitignore
 # Secrets and env
@@ -494,6 +494,7 @@ venv/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache
+bot/uv.lock
 
 # Node / mini-app
 node_modules/
@@ -2586,8 +2587,8 @@ async def ensure_role(event, *allowed: OperatorRole) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
-Size: `9743` bytes  
-SHA-256: `e70db5b6a0efba7968b170b721622a8998e6dfd3e6f62d9611eaac0a2d820cad`
+Size: `12111` bytes  
+SHA-256: `288dd210f59c83ee1fd80c53f900949e78f31b174affb664f557a55b95e7ec83`
 
 ```python
 """Действия оператора над конкретным обращением.
@@ -2610,11 +2611,48 @@ from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role
 from aemr_bot.services import appeals as appeals_service
+from aemr_bot.services import card_format
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import get_user_id, is_admin_chat
+from aemr_bot.utils.event import get_user_id, is_admin_chat, send_or_edit_screen
 
 log = logging.getLogger(__name__)
+
+
+async def _show_appeal_card_or_result(event, appeal_id: int, fallback_text: str) -> None:
+    from aemr_bot import keyboards as kbds
+
+    try:
+        async with session_scope() as session:
+            appeal = await appeals_service.get_by_id(session, appeal_id)
+    except Exception:
+        log.exception("appeal card refresh failed for appeal_id=%s", appeal_id)
+        appeal = None
+    if appeal is not None and appeal.user is not None:
+        try:
+            await send_or_edit_screen(
+                event,
+                chat_id=cfg.admin_group_id,
+                text=card_format.admin_card(appeal, appeal.user),
+                attachments=[
+                    kbds.appeal_admin_actions(
+                        appeal.id,
+                        appeal.status,
+                        is_it=True,
+                        user_blocked=bool(appeal.user.is_blocked),
+                        closed_due_to_revoke=bool(appeal.closed_due_to_revoke),
+                    )
+                ],
+            )
+            return
+        except Exception:
+            log.exception("appeal card render/edit failed for appeal_id=%s", appeal_id)
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=fallback_text,
+        attachments=[kbds.op_back_to_menu_keyboard()],
+    )
 
 
 async def run_reply_intent(event, appeal_id: int) -> None:
@@ -2651,30 +2689,36 @@ async def run_reply_intent(event, appeal_id: int) -> None:
         appeal = await appeals_service.get_by_id(session, appeal_id)
     if appeal is None:
         await ack_callback(event)
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
+            attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
     if appeal.status == AppealStatus.CLOSED.value:
         await ack_callback(event)
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text=(
                 f"Обращение #{appeal_id} закрыто. Сначала верните его в "
                 f"работу кнопкой «🔁 Возобновить» под карточкой."
             ),
+            attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
     if appeal.user is None or appeal.user.is_blocked:
         await ack_callback(event)
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text=(
                 f"Житель по обращению #{appeal_id} заблокирован — ответ не "
                 f"будет доставлен через бот. Если ответ всё-таки нужен, "
                 f"сначала снимите блокировку."
             ),
+            attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
 
@@ -2684,7 +2728,8 @@ async def run_reply_intent(event, appeal_id: int) -> None:
 
     op_reply.remember_reply_intent(operator_id, appeal_id)
     await ack_callback(event, f"Ответ на #{appeal_id}")
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=(
             f"✉️ Введите текст ответа на обращение #{appeal_id}.\n"
@@ -2699,6 +2744,7 @@ async def run_reply_cancel(event) -> None:
     """Кнопка «❌ Отменить ответ» под подсказкой ввода."""
     from aemr_bot.handlers import operator_reply as op_reply
     from aemr_bot.utils.event import ack_callback
+    from aemr_bot import keyboards as kbds
 
     operator_id = get_user_id(event)
     if operator_id is None:
@@ -2707,9 +2753,18 @@ async def run_reply_cancel(event) -> None:
     cancelled_appeal = op_reply.drop_reply_intent(operator_id)
     await ack_callback(event)
     if cancelled_appeal is not None:
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text=f"Ответ на обращение #{cancelled_appeal} отменён.",
+            attachments=[kbds.op_back_to_menu_keyboard()],
+        )
+    else:
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text="Мастер ответа уже закрыт.",
+            attachments=[kbds.op_back_to_menu_keyboard()],
         )
 
 
@@ -2729,9 +2784,10 @@ async def run_reopen(event, appeal_id: int) -> None:
                 target=f"appeal #{appeal_id}",
             )
     await ack_callback(event)
-    await event.bot.send_message(
-        chat_id=cfg.admin_group_id,
-        text=(
+    await _show_appeal_card_or_result(
+        event,
+        appeal_id,
+        (
             texts.OP_APPEAL_REOPENED.format(number=appeal_id)
             if ok
             else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
@@ -2755,9 +2811,10 @@ async def run_close(event, appeal_id: int) -> None:
                 target=f"appeal #{appeal_id}",
             )
     await ack_callback(event)
-    await event.bot.send_message(
-        chat_id=cfg.admin_group_id,
-        text=(
+    await _show_appeal_card_or_result(
+        event,
+        appeal_id,
+        (
             texts.OP_APPEAL_CLOSED.format(number=appeal_id)
             if ok
             else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
@@ -2769,6 +2826,7 @@ async def run_block_for_appeal(
     event, appeal_id: int, *, blocked: bool
 ) -> None:
     """Кнопки «🚫 Заблокировать жителя» / «✅ Разблокировать»."""
+    from aemr_bot import keyboards as kbds
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_role(event, OperatorRole.IT):
@@ -2777,9 +2835,11 @@ async def run_block_for_appeal(
         appeal = await appeals_service.get_by_id(session, appeal_id)
         if appeal is None or appeal.user is None:
             await ack_callback(event)
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
+                attachments=[kbds.op_back_to_menu_keyboard()],
             )
             return
         target_id = appeal.user.max_user_id
@@ -2798,11 +2858,12 @@ async def run_block_for_appeal(
         ).format(max_user_id=target_id)
     else:
         msg = "Не удалось обновить статус. См. логи."
-    await event.bot.send_message(chat_id=cfg.admin_group_id, text=msg)
+    await _show_appeal_card_or_result(event, appeal_id, msg)
 
 
 async def run_erase_for_appeal(event, appeal_id: int) -> None:
     """Кнопка «🗑 Удалить ПДн жителя» в карточке обращения (только для it)."""
+    from aemr_bot import keyboards as kbds
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_role(event, OperatorRole.IT):
@@ -2811,9 +2872,11 @@ async def run_erase_for_appeal(event, appeal_id: int) -> None:
         appeal = await appeals_service.get_by_id(session, appeal_id)
         if appeal is None or appeal.user is None:
             await ack_callback(event)
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
+                attachments=[kbds.op_back_to_menu_keyboard()],
             )
             return
         target_id = appeal.user.max_user_id
@@ -2827,21 +2890,25 @@ async def run_erase_for_appeal(event, appeal_id: int) -> None:
             )
     await ack_callback(event)
     if ok:
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text=texts.OP_USER_ERASED.format(max_user_id=target_id),
+            attachments=[kbds.op_back_to_menu_keyboard()],
         )
     else:
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text="Пользователь не найден.",
+            attachments=[kbds.op_back_to_menu_keyboard()],
         )
 ```
 
 ### `bot/aemr_bot/handlers/admin_audience.py`
 
-Size: `7215` bytes  
-SHA-256: `02e451f77e505c24b81bf20666158c917276a248d8d03c260a93285a64df17f4`
+Size: `7569` bytes  
+SHA-256: `71a77ce6e2d2b1a58e93d5df6b152e8a1ff3acaccbcfe1a5182d4b8bb546e052`
 
 ```python
 """Меню «📊 Аудитория и согласия» — IT-выборки + точечные действия
@@ -2926,6 +2993,7 @@ async def run_audience_action(event, payload: str) -> None:
                 text=texts.OP_USER_BLOCKED.format(max_user_id=target_id)
                 if ok
                 else "Не удалось.",
+                attachments=[kbds.op_back_to_audience_keyboard()],
             )
             return
         if action == "unblock":
@@ -2946,6 +3014,7 @@ async def run_audience_action(event, payload: str) -> None:
                 text=texts.OP_USER_UNBLOCKED.format(max_user_id=target_id)
                 if ok
                 else "Не удалось.",
+                attachments=[kbds.op_back_to_audience_keyboard()],
             )
             return
         if action == "erase":
@@ -2964,6 +3033,7 @@ async def run_audience_action(event, payload: str) -> None:
                 text=texts.OP_USER_ERASED.format(max_user_id=target_id)
                 if ok
                 else "Не удалось.",
+                attachments=[kbds.op_back_to_audience_keyboard()],
             )
             return
 
@@ -2986,9 +3056,15 @@ async def run_audience_action(event, payload: str) -> None:
             event,
             chat_id=cfg.admin_group_id,
             text=f"{header}\n\nСписок пуст.",
+            attachments=[kbds.op_back_to_audience_keyboard()],
         )
         return
-    await send_or_edit_screen(event, chat_id=cfg.admin_group_id, text=header)
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=header,
+        attachments=[kbds.op_back_to_audience_keyboard()],
+    )
     for u in users:
         name = u.first_name or "—"
         phone = _mask_phone(u.phone)
@@ -3470,8 +3546,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/admin_operators.py`
 
-Size: `10193` bytes  
-SHA-256: `0c2369aa2760596729248f9a96ecf450a373b61d86089b18c6fc71793699062e`
+Size: `10933` bytes  
+SHA-256: `644e72b0c7bcfe297fa8e82efcc16cb579cc1f92e71d857f003c3820e94533a7`
 
 ```python
 """Управление операторами через wizard «👥 Добавить».
@@ -3564,6 +3640,7 @@ async def run_operators_action(event, payload: str) -> None:
     """Подменю «Операторы»: добавить, список, отмена. payload вида
     `op:opadd:start` / `op:opadd:role:N` / `op:opadd:cancel` /
     `op:opadd:list`."""
+    from aemr_bot import keyboards as kbds
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_role(event, OperatorRole.IT):
@@ -3591,6 +3668,7 @@ async def run_operators_action(event, payload: str) -> None:
                 "Узнать его — попросите человека написать боту в личке /whoami "
                 "и прислать вам число из ответа."
             ),
+            attachments=[kbds.op_add_cancel_keyboard()],
         )
         return
     if suffix == "list":
@@ -3601,6 +3679,7 @@ async def run_operators_action(event, payload: str) -> None:
                 event,
                 chat_id=cfg.admin_group_id,
                 text="Список операторов пуст.",
+                attachments=[kbds.op_back_to_operators_keyboard()],
             )
             return
         lines = ["👥 Активные операторы:"]
@@ -3610,6 +3689,7 @@ async def run_operators_action(event, payload: str) -> None:
             event,
             chat_id=cfg.admin_group_id,
             text="\n".join(lines),
+            attachments=[kbds.op_back_to_operators_keyboard()],
         )
         return
     if suffix == "cancel":
@@ -3618,6 +3698,7 @@ async def run_operators_action(event, payload: str) -> None:
             event,
             chat_id=cfg.admin_group_id,
             text="Регистрация оператора отменена.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
         )
         return
     if suffix.startswith("role:"):
@@ -3628,6 +3709,7 @@ async def run_operators_action(event, payload: str) -> None:
                 event,
                 chat_id=cfg.admin_group_id,
                 text=f"Роль «{role}» неизвестна.",
+                attachments=[kbds.op_back_to_operators_keyboard()],
             )
             return
         state = _op_wizard_get(operator_id)
@@ -3636,6 +3718,7 @@ async def run_operators_action(event, payload: str) -> None:
                 event,
                 chat_id=cfg.admin_group_id,
                 text="Мастер закрыт. Откройте «👥 Операторы → Добавить» заново.",
+                attachments=[kbds.op_back_to_operators_keyboard()],
             )
             return
         _op_wizard_set(operator_id, role=role, step="awaiting_name")
@@ -3646,12 +3729,15 @@ async def run_operators_action(event, payload: str) -> None:
                 f"👥 Шаг 3 из 3 — роль {role} выбрана. Теперь введите ФИО "
                 f"оператора одним сообщением. Например: «Иванова Анна Петровна»."
             ),
+            attachments=[kbds.op_add_cancel_keyboard()],
         )
 
 
 async def handle_operators_wizard_text(event, text: str) -> bool:
     """Перехватчик текстовых сообщений в админ-группе на стороне wizard'а.
     Возвращает True, если сообщение поглощено."""
+    from aemr_bot import keyboards as kbds
+
     operator_id = get_user_id(event)
     if operator_id is None:
         return False
@@ -3666,10 +3752,10 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
             await event.bot.send_message(
                 chat_id=cfg.admin_group_id,
                 text="Это не число. Введите max_user_id (целое положительное).",
+                attachments=[kbds.op_add_cancel_keyboard()],
             )
             return True
         _op_wizard_set(operator_id, target_id=target_id, step="awaiting_role")
-        from aemr_bot import keyboards as kbds
 
         await event.bot.send_message(
             chat_id=cfg.admin_group_id,
@@ -3683,6 +3769,7 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
             await event.bot.send_message(
                 chat_id=cfg.admin_group_id,
                 text="ФИО слишком короткое. Введите полностью.",
+                attachments=[kbds.op_add_cancel_keyboard()],
             )
             return True
         target_id = int(state["target_id"])
@@ -3693,6 +3780,7 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
             await event.bot.send_message(
                 chat_id=cfg.admin_group_id,
                 text="Изменить свою роль через мастера нельзя.",
+                attachments=[kbds.op_back_to_operators_keyboard()],
             )
             return True
         async with session_scope() as session:
@@ -3717,6 +3805,7 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
                 f"✅ {'Обновлено' if existed else 'Добавлено'}: "
                 f"{full_name} · {role} · #{target_id}"
             ),
+            attachments=[kbds.op_back_to_operators_keyboard()],
         )
         return True
     return False
@@ -3724,8 +3813,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `10631` bytes  
-SHA-256: `7ccbbcce1f1c879bc53f47fc42d0ab8d22dae131e89cb5ba9c64dd7a5c333476`
+Size: `11183` bytes  
+SHA-256: `2c92400c95b13cebcf7c69aa72a9781786bf9654e3f620602dd46970df672402`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -3863,6 +3952,7 @@ async def _do_open_tickets(event) -> None:
             event,
             chat_id=cfg.admin_group_id,
             text="🎉 Нет открытых или неотвеченных обращений.",
+            attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
 
@@ -3870,6 +3960,7 @@ async def _do_open_tickets(event) -> None:
         event,
         chat_id=cfg.admin_group_id,
         text=f"⏳ Найдено неотвеченных обращений: {len(open_appeals)}",
+        attachments=[kbds.op_back_to_menu_keyboard()],
     )
 
     for appeal in open_appeals:
@@ -3906,6 +3997,7 @@ async def _do_diag(event) -> None:
     """Сводка состояния бота. Общая реализация для /diag и кнопки."""
     from sqlalchemy import func, select
 
+    from aemr_bot import keyboards as kbds
     from aemr_bot.db.models import (
         Appeal,
         AppealStatus,
@@ -3963,47 +4055,58 @@ async def _do_diag(event) -> None:
             f"• Лимит ответа: {cfg.answer_max_chars}\n"
             f"• SLA: {cfg.sla_response_hours}ч"
         ),
+        attachments=[kbds.op_back_to_menu_keyboard()],
     )
 
 
 async def _do_backup(event) -> None:
     """Снять pg_dump прямо сейчас. Общая реализация для /backup и кнопки."""
+    from aemr_bot import keyboards as kbds
     from aemr_bot.services import db_backup
 
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text="🗄️ Запускаю pg_dump… Это может занять несколько секунд.",
+        attachments=[kbds.op_back_to_menu_keyboard()],
     )
     try:
         out = await db_backup.backup_db()
     except Exception as e:
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id, text=f"⚠️ Бэкап упал: {e}"
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=f"⚠️ Бэкап упал: {e}",
+            attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
     if out is None:
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=cfg.admin_group_id,
             text=(
                 "⚠️ Бэкап не выполнен. Проверьте логи бота "
                 "(`docker compose logs bot --tail 50`)."
             ),
+            attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
     size_kb = out.stat().st_size // 1024
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=(
             f"✅ Бэкап готов: `{out.name}` ({size_kb} КБ).\n"
             f"Лежит в named-volume `backups` контейнера."
         ),
+        attachments=[kbds.op_back_to_menu_keyboard()],
     )
 ```
 
 ### `bot/aemr_bot/handlers/admin_settings.py`
 
-Size: `3531` bytes  
-SHA-256: `344df3f6899d7c67cd84b6c438b2c7efa096e7a6b5d19b1478bf3817acf5444e`
+Size: `3633` bytes  
+SHA-256: `7c36ba390cfde6cd83950a138faad33b24b598fdb6b63c983d3248b7681cab60`
 
 ```python
 """Управление настройками бота через /setting и кнопочный меню.
@@ -4054,6 +4157,7 @@ async def run_settings_action(event, payload: str) -> None:
     """`op:setkey:<key>` — показать текущее значение настройки и шаблон
     команды для редактирования. Полный wizard для каждого типа значения
     был бы перегружен; это компромисс между «кнопками» и «текстом»."""
+    from aemr_bot import keyboards as kbds
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_role(event, OperatorRole.IT):
@@ -4084,13 +4188,14 @@ async def run_settings_action(event, payload: str) -> None:
             f"Изменить: /setting {key} <новое значение>\n"
             f"Для списков и объектов передавайте JSON."
         ),
+        attachments=[kbds.op_back_to_settings_keyboard()],
     )
 ```
 
 ### `bot/aemr_bot/handlers/admin_stats.py`
 
-Size: `3017` bytes  
-SHA-256: `f0671b139043e764f82e2e2de7a698290aa8d50d971f16e674483f28cdfe99ff`
+Size: `3246` bytes  
+SHA-256: `138fb48ce8b91d57911ac49c0df95b722d211da508396a429d28dcaa55a5fd72`
 
 ```python
 """Статистика для оператора — XLSX за период.
@@ -4101,6 +4206,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from aemr_bot import keyboards as kbds
 from aemr_bot import texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
@@ -4111,7 +4217,7 @@ from aemr_bot.utils.event import get_chat_id, send_or_edit_screen
 
 async def _send_stats_xlsx(
     event, period: str, *, target_chat_id: int | None = None
-) -> None:
+) -> bool:
     """Сформировать XLSX за период и опубликовать в админ-группе."""
     from aemr_bot.services import uploads
 
@@ -4119,31 +4225,39 @@ async def _send_stats_xlsx(
     async with session_scope() as session:
         content, title, count = await stats_service.build_xlsx(session, period)
     if count == 0:
-        await event.bot.send_message(chat_id=chat_id, text=texts.OP_STATS_EMPTY)
-        return
+        await send_or_edit_screen(
+            event,
+            chat_id=chat_id,
+            text=texts.OP_STATS_EMPTY,
+            attachments=[kbds.op_back_to_menu_keyboard()],
+        )
+        return False
     filename = f"appeals_{period}_{datetime.now():%Y-%m-%d}.xlsx"
     token = await uploads.upload_bytes(event.bot, content, suffix=".xlsx")
     if token is None:
-        await event.bot.send_message(
+        await send_or_edit_screen(
+            event,
             chat_id=chat_id,
             text=(
                 f"Сформирован XLSX за {title} ({count} обращений), "
                 "но загрузить файл не удалось. См. логи бота."
             ),
+            attachments=[kbds.op_back_to_menu_keyboard()],
         )
-        return
+        return False
     await event.bot.send_message(
         chat_id=chat_id,
         text=f"📊 Статистика {title} ({count} обращений). Файл: {filename}",
         attachments=[uploads.file_attachment(token)],
     )
+    return True
 
 
-async def run_stats_today(event) -> None:
+async def run_stats_today(event) -> bool:
     """То же действие, что и /stats today, вызывается по кнопке."""
     if not await ensure_operator(event):
-        return
-    await _send_stats_xlsx(event, "today", target_chat_id=cfg.admin_group_id)
+        return False
+    return await _send_stats_xlsx(event, "today", target_chat_id=cfg.admin_group_id)
 
 
 async def run_stats(event, period: str) -> None:
@@ -4155,14 +4269,12 @@ async def run_stats(event, period: str) -> None:
         return
     if not await ensure_operator(event):
         return
-    await _send_stats_xlsx(event, period, target_chat_id=cfg.admin_group_id)
-    await show_op_menu(event, pin=False)
+    if await _send_stats_xlsx(event, period, target_chat_id=cfg.admin_group_id):
+        await show_op_menu(event, pin=False)
 
 
 async def run_stats_menu(event) -> None:
     """Открыть подменю «📊 Статистика» — выбор периода."""
-    from aemr_bot import keyboards as kbds
-
     if not await ensure_operator(event):
         return
     await send_or_edit_screen(
@@ -4175,8 +4287,8 @@ async def run_stats_menu(event) -> None:
 
 ### `bot/aemr_bot/handlers/appeal.py`
 
-Size: `30056` bytes  
-SHA-256: `d84c918c8249cb0940a0101507391e0cfcdb271bdf47ee593b66d9fdf0315bfc`
+Size: `30197` bytes  
+SHA-256: `ec41785fd7591c054049d4323b73cccb3456099235fb61f409962685f2b2c776`
 
 ```python
 """Главный entry-point обработчика обращений.
@@ -4204,7 +4316,7 @@ from typing import Any
 from maxapi import Dispatcher
 from maxapi.types import MessageCallback, MessageCreated
 
-from aemr_bot import texts
+from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import DialogState
 from aemr_bot.db.session import session_scope
@@ -4225,6 +4337,7 @@ from aemr_bot.utils.event import (
     get_message_text,
     get_payload,
     get_user_id,
+    send_or_edit_screen,
 )
 
 log = logging.getLogger(__name__)
@@ -4340,6 +4453,7 @@ async def _ensure_funnel_callback_state(
                 event,
                 max_user_id,
                 text=_GEO_AWAITING_ADDRESS_NOTICE,
+                attachments=[keyboards.back_to_menu_keyboard()],
             )
         except Exception:
             log.debug(
@@ -4377,12 +4491,14 @@ async def _send_to_citizen(
     max_user_id: int,
     *,
     text: str,
+    attachments: list | None = None,
 ) -> None:
-    chat_id = get_chat_id(event)
-    if chat_id is not None:
-        await event.bot.send_message(chat_id=chat_id, text=text)
-    else:
-        await event.bot.send_message(user_id=max_user_id, text=text)
+    await send_or_edit_screen(
+        event,
+        user_id=max_user_id,
+        text=text,
+        attachments=attachments or [],
+    )
 
 
 def register(dp: Dispatcher) -> None:
@@ -4432,14 +4548,13 @@ def register(dp: Dispatcher) -> None:
                 await users_service.reset_state(session, max_user_id)
             drop_user_lock(max_user_id)
             await ack_callback(event)
-            from aemr_bot.handlers.menu import open_main_menu
 
             await _send_to_citizen(
                 event,
                 max_user_id,
                 text=texts.CONSENT_DECLINED,
+                attachments=[keyboards.back_to_menu_keyboard()],
             )
-            await open_main_menu(event)
             return
 
         if payload == "cancel":
@@ -4447,10 +4562,13 @@ def register(dp: Dispatcher) -> None:
                 await users_service.reset_state(session, max_user_id)
             drop_user_lock(max_user_id)
             await ack_callback(event)
-            from aemr_bot.handlers.menu import open_main_menu
 
-            await _send_to_citizen(event, max_user_id, text=texts.CANCELLED)
-            await open_main_menu(event)
+            await _send_to_citizen(
+                event,
+                max_user_id,
+                text=texts.CANCELLED,
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
             return
 
         if payload == "addr:reuse":
@@ -4667,8 +4785,8 @@ def register(dp: Dispatcher) -> None:
                 return
             if payload == "op:stats_today":
                 await ack_callback(event)
-                await admin_commands.run_stats_today(event)
-                await admin_commands.show_op_menu(event, pin=False)
+                if await admin_commands.run_stats_today(event):
+                    await admin_commands.show_op_menu(event, pin=False)
                 return
             if payload == "op:stats_week":
                 await ack_callback(event)
@@ -4815,6 +4933,7 @@ def register(dp: Dispatcher) -> None:
                 await event.bot.send_message(
                     chat_id=cfg.admin_group_id,
                     text="Текущие мастера и черновики ответа сброшены.",
+                    attachments=[keyboards.op_back_to_menu_keyboard()],
                 )
                 return
 
@@ -4893,8 +5012,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/appeal_funnel.py`
 
-Size: `29637` bytes  
-SHA-256: `b4a1fb9c3a63221b0d2446008b3d9c4b05230a999fbdc074fc6569eb4cebcee2`
+Size: `30407` bytes  
+SHA-256: `c12bcd93dbd6cd2a3031736ec1787c86c5911c020c1dbf50ed36149524422677`
 
 ```python
 """FSM-воронка приёма обращения и явного дополнения.
@@ -4938,9 +5057,11 @@ from aemr_bot.utils.attachments import (
     extract_phone,
 )
 from aemr_bot.utils.event import (
+    get_callback_message_id,
     get_chat_id,
     get_first_name,
     get_user_id,
+    send_or_edit_screen,
 )
 
 log = logging.getLogger(__name__)
@@ -4972,8 +5093,8 @@ async def start_appeal_flow(event, max_user_id: int):
                 )
                 return
         if user.is_blocked:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await send_or_edit_screen(
+                event,
                 text=(
                     "Сейчас вы не можете подать обращение: ваш аккаунт "
                     "помечен как заблокированный. Если это ошибка — "
@@ -5006,8 +5127,8 @@ async def start_appeal_flow(event, max_user_id: int):
             "для max_user_id=%s. Сидируйте settings_store.",
             max_user_id,
         )
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
+        await send_or_edit_screen(
+            event,
             text=(
                 "Сервис временно недоступен — не настроен текст политики "
                 "обработки данных. Сообщили координатору; попробуйте позже."
@@ -5028,8 +5149,8 @@ async def start_appeal_flow(event, max_user_id: int):
             )
         else:
             text = texts.CONSENT_REQUEST.format(policy_url=policy_url)
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
+        await send_or_edit_screen(
+            event,
             text=text,
             attachments=attachments,
         )
@@ -5060,8 +5181,8 @@ async def _send_rate_limit_message(event, *, has_open_unanswered: bool) -> None:
             "Сейчас у вас нет неотвеченного обращения, которое можно "
             "дополнить. Пожалуйста, дождитесь сброса лимита и попробуйте позже."
         )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await send_or_edit_screen(
+        event,
         text=text,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -5070,7 +5191,12 @@ async def _send_rate_limit_message(event, *, has_open_unanswered: bool) -> None:
 # ---- _ask_* — переходы на следующий шаг -----------------------------------
 
 
-async def ask_contact_or_skip(event, max_user_id: int):
+async def ask_contact_or_skip(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+):
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         if not user.phone:
@@ -5086,9 +5212,13 @@ async def ask_contact_or_skip(event, max_user_id: int):
         # предложить «использовать тот же адрес» — экономит два шага
         # для жителей, которые подают повторное обращение по тому же
         # объекту. Если прошлого адреса нет — обычный путь.
-        if await ask_address_or_reuse(event, max_user_id):
+        if await ask_address_or_reuse(
+            event,
+            max_user_id,
+            force_new_message=force_new_message,
+        ):
             return
-        await ask_locality(event, max_user_id)
+        await ask_locality(event, max_user_id, force_new_message=force_new_message)
         return
 
     prompt_for = {
@@ -5102,14 +5232,20 @@ async def ask_contact_or_skip(event, max_user_id: int):
         ),
     }
     text, keyboard = prompt_for[target_state]
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await send_or_edit_screen(
+        event,
         text=text,
         attachments=[keyboard],
+        force_new_message=force_new_message,
     )
 
 
-async def ask_address_or_reuse(event, max_user_id: int) -> bool:
+async def ask_address_or_reuse(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+) -> bool:
     """Предложить жителю «использовать тот же адрес» если он уже подавал
     обращение. Возвращает True, если показали reuse-prompt — тогда
     воронка ждёт callback addr:reuse / addr:new и не идёт в ask_locality.
@@ -5121,14 +5257,15 @@ async def ask_address_or_reuse(event, max_user_id: int) -> bool:
     if last is None:
         return False
     locality, address = last
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await send_or_edit_screen(
+        event,
         text=(
             f"В прошлый раз вы писали по этому адресу:\n"
             f"📍 {locality}, {address}\n\n"
             f"Использовать его снова или указать новый?"
         ),
         attachments=[keyboards.reuse_address_keyboard()],
+        force_new_message=force_new_message,
     )
     return True
 
@@ -5147,15 +5284,19 @@ async def _show_progress_step(
     (см. services/progress.send_or_edit_progress), сохраняет mid в
     dialog_data['progress_message_id'].
 
-    `force_new_message=True` используется там, где редактирование старой
-    карточки ломает порядок ленты: после геоподтверждения или ручного
-    ввода адреса следующая карточка должна появиться ниже действия жителя.
+    `force_new_message=True` используем после видимого ввода жителя:
+    текст, контакт, гео или файл должны остаться в ленте перед следующим
+    шагом бота, а кнопочные переходы спокойно редактируют текущую карточку.
     """
     from aemr_bot.services.progress import render_progress, send_or_edit_progress
 
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         data = dict(user.dialog_data or {})
+        if not force_new_message and not data.get("progress_message_id"):
+            callback_mid = get_callback_message_id(event)
+            if callback_mid:
+                data["progress_message_id"] = callback_mid
         await users_service.set_state(session, max_user_id, next_state)
 
     # Завершённые шаги собираем из dialog_data + user.first_name.
@@ -5187,7 +5328,12 @@ async def _show_progress_step(
             )
 
 
-async def ask_locality(event, max_user_id: int):
+async def ask_locality(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+):
     """Шаг «Населённый пункт». Прогресс-карта с галочкой имени."""
     async with session_scope() as session:
         localities = await settings_store.get(session, "localities") or [
@@ -5199,10 +5345,16 @@ async def ask_locality(event, max_user_id: int):
         stage="locality",
         next_state=DialogState.AWAITING_LOCALITY,
         keyboard=keyboards.localities_keyboard(localities),
+        force_new_message=force_new_message,
     )
 
 
-async def ask_address(event, max_user_id: int):
+async def ask_address(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+):
     """Шаг «Адрес». Прогресс-карта с галочкой локалити."""
     await _show_progress_step(
         event,
@@ -5210,6 +5362,7 @@ async def ask_address(event, max_user_id: int):
         stage="address",
         next_state=DialogState.AWAITING_ADDRESS,
         keyboard=keyboards.cancel_keyboard(),
+        force_new_message=force_new_message,
     )
 
 
@@ -5232,7 +5385,12 @@ async def ask_topic(
     )
 
 
-async def ask_summary(event, max_user_id: int):
+async def ask_summary(
+    event,
+    max_user_id: int,
+    *,
+    force_new_message: bool = False,
+):
     """Шаг «Описание сути». Прогресс-карта с галочкой темы.
 
     На этом шаге показываем cancel-клавиатуру и ждём следующее
@@ -5245,6 +5403,7 @@ async def ask_summary(event, max_user_id: int):
         stage="summary",
         next_state=DialogState.AWAITING_SUMMARY,
         keyboard=keyboards.cancel_keyboard(),
+        force_new_message=force_new_message,
     )
 
 
@@ -5305,7 +5464,7 @@ async def on_awaiting_contact(event, body, text_body, max_user_id):
             texts.CONTACT_RECEIVED, attachments=[keyboards.cancel_keyboard()]
         )
     else:
-        await ask_contact_or_skip(event, max_user_id)
+        await ask_contact_or_skip(event, max_user_id, force_new_message=True)
 
 
 async def on_awaiting_name(event, body, text_body, max_user_id):
@@ -5321,9 +5480,9 @@ async def on_awaiting_name(event, body, text_body, max_user_id):
 
     async with session_scope() as session:
         await users_service.set_first_name(session, max_user_id, name)
-    if await ask_address_or_reuse(event, max_user_id):
+    if await ask_address_or_reuse(event, max_user_id, force_new_message=True):
         return
-    await ask_locality(event, max_user_id)
+    await ask_locality(event, max_user_id, force_new_message=True)
 
 
 async def on_awaiting_address(event, body, text_body, max_user_id):
@@ -5407,8 +5566,6 @@ async def on_awaiting_consent(event, body, text_body, max_user_id):
 async def on_idle(event, body, text_body, max_user_id):
     """IDLE — нет активной воронки. Раньше был «магический followup»;
     теперь дополнение работает только через явную кнопку «📎 Дополнить»."""
-    from aemr_bot.handlers.menu import open_main_menu
-
     async with session_scope() as session:
         user = await users_service.get_or_create(session, max_user_id=max_user_id)
         active = await appeals_service.find_active_for_user(session, user.id)
@@ -5421,22 +5578,23 @@ async def on_idle(event, body, text_body, max_user_id):
             attachments=[keyboards.back_to_menu_keyboard()],
         )
         return
-    await event.message.answer(texts.UNKNOWN_INPUT)
-    await open_main_menu(event)
+    await event.message.answer(
+        texts.UNKNOWN_INPUT,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
 
 
 async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     """Житель нажал «📎 Дополнить» в карточке обращения. Принимаем текст
-    и/или вложения — пришиваем к обращению из dialog_data, отправляем в
-    админ-чат как «📩 Дополнение к обращению #N», подтверждаем жителю
-    и возвращаем в меню.
+    и/или вложения — пришиваем к обращению из dialog_data, обновляем
+    карточку в админ-чате и подтверждаем жителю одной карточкой с
+    кнопкой главного меню.
 
     Отвеченные и закрытые обращения не переоткрываем. Повтор по ним
     оформляется новым связанным обращением через «🔁 Подать похожее».
     """
     from aemr_bot.config import settings as cfg
     from aemr_bot.db.models import AppealStatus
-    from aemr_bot.handlers.menu import open_main_menu
     from aemr_bot.services import card_format
     from aemr_bot.services.admin_relay import relay_attachments_to_admin
     from aemr_bot.utils.event import extract_message_id
@@ -5553,9 +5711,9 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
                 log.exception("relay followup attachments failed")
 
     await event.message.answer(
-        f"✅ Дополнение отправлено оператору по обращению #{appeal.id}."
+        f"✅ Дополнение отправлено оператору по обращению #{appeal.id}.",
+        attachments=[keyboards.back_to_menu_keyboard()],
     )
-    await open_main_menu(event)
 ```
 
 ### `bot/aemr_bot/handlers/appeal_geo.py`
@@ -6023,8 +6181,8 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `23016` bytes  
-SHA-256: `7e587ca3bd6a30aadd688819c95ede8e384ac6168432823ad63232f117aa657c`
+Size: `24688` bytes  
+SHA-256: `65a3f54cb4f78957a43576db38db4f676a4bff249ddfae1c133657a700729ff1`
 
 ```python
 """Мастер рассылок и цикл их отправки.
@@ -6067,9 +6225,11 @@ from aemr_bot.services import operators as operators_service
 from aemr_bot.utils.event import (
     ack_callback,
     extract_message_id,
+    get_callback_message_id,
     get_message_text,
     get_user_id,
     is_admin_chat,
+    send_or_edit_screen,
 )
 
 log = logging.getLogger(__name__)
@@ -6142,15 +6302,12 @@ async def _start_wizard(event) -> None:
     _wizards[actor_id] = _WizardState(step="awaiting_text")
     log.info("broadcast: wizard started for operator max_user_id=%s", actor_id)
     prompt = texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars)
-    cancel_kb = keyboards.broadcast_cancel_keyboard()
-    if event.message is not None:
-        await event.message.answer(prompt, attachments=[cancel_kb])
-    else:
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=prompt,
-            attachments=[cancel_kb],
-        )
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=prompt,
+        attachments=[keyboards.broadcast_cancel_keyboard()],
+    )
 
 
 async def _handle_wizard_text(event, text_body: str) -> bool:
@@ -6169,12 +6326,18 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
 
     if state.expired():
         _wizards.pop(actor_id, None)
-        await event.message.answer(texts.OP_BROADCAST_WIZARD_EXPIRED)
+        await event.message.answer(
+            texts.OP_BROADCAST_WIZARD_EXPIRED,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
         return True
 
     if text_body.strip() == "/cancel":
         _wizards.pop(actor_id, None)
-        await event.message.answer(texts.OP_BROADCAST_CANCELLED_BY_USER)
+        await event.message.answer(
+            texts.OP_BROADCAST_CANCELLED_BY_USER,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
         return True
 
     text = text_body.strip()
@@ -6182,13 +6345,15 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         await event.message.answer(
             texts.OP_BROADCAST_TOO_LONG.format(
                 limit=cfg.broadcast_max_chars, actual=len(text)
-            )
+            ),
+            attachments=[keyboards.broadcast_cancel_keyboard()],
         )
         return True
     if not text:
         # Пусто. Просим ввести ещё раз, состояние не меняем.
         await event.message.answer(
-            texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars)
+            texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars),
+            attachments=[keyboards.broadcast_cancel_keyboard()],
         )
         return True
 
@@ -6196,7 +6361,10 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         count = await broadcasts_service.count_subscribers(session)
     if count == 0:
         _wizards.pop(actor_id, None)
-        await event.message.answer(texts.OP_BROADCAST_NO_SUBSCRIBERS)
+        await event.message.answer(
+            texts.OP_BROADCAST_NO_SUBSCRIBERS,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
         return True
 
     state.text = text
@@ -6225,9 +6393,11 @@ async def _handle_confirm(event) -> None:
     async with session_scope() as session:
         count = await broadcasts_service.count_subscribers(session)
         if count == 0:
-            await event.bot.send_message(
+            await send_or_edit_screen(
+                event,
                 chat_id=cfg.admin_group_id,
                 text=texts.OP_BROADCAST_NO_SUBSCRIBERS,
+                attachments=[keyboards.op_back_to_menu_keyboard()],
             )
             return
         broadcast = await broadcasts_service.create_broadcast(
@@ -6252,6 +6422,13 @@ async def _handle_confirm(event) -> None:
         "broadcast: confirmed by operator=%s — broadcast_id=%s subscribers=%d",
         actor_id, broadcast_id, count,
     )
+    sent = await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=count),
+        attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
+    )
+    admin_mid = extract_message_id(sent) or get_callback_message_id(event)
     # Strong ref: без spawn_background_task GC может прервать рассылку
     # посреди списка получателей (Python 3.11+ держит только weakref на
     # таску из голого create_task). Конкретно для рассылки это значило
@@ -6260,7 +6437,7 @@ async def _handle_confirm(event) -> None:
     from aemr_bot.main import spawn_background_task
 
     spawn_background_task(
-        _run_broadcast(event.bot, broadcast_id, state.text, count),
+        _run_broadcast(event.bot, broadcast_id, state.text, count, admin_mid=admin_mid),
         name=f"broadcast_{broadcast_id}",
     )
 
@@ -6270,9 +6447,11 @@ async def _handle_abort(event) -> None:
     if actor_id is not None:
         _wizards.pop(actor_id, None)
     await ack_callback(event, "Отменено.")
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=texts.OP_BROADCAST_CANCELLED_BY_USER,
+        attachments=[keyboards.op_back_to_menu_keyboard()],
     )
 
 
@@ -6292,7 +6471,8 @@ async def _handle_edit(event) -> None:
     state.text = ""
     state.renew()
     await ack_callback(event)
-    await event.bot.send_message(
+    await send_or_edit_screen(
+        event,
         chat_id=cfg.admin_group_id,
         text=texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars),
         attachments=[keyboards.broadcast_cancel_keyboard()],
@@ -6345,7 +6525,9 @@ async def _send_one(bot, max_user_id: int, body_text: str) -> str | None:
     return None
 
 
-async def _run_broadcast(bot, broadcast_id: int, text: str, total: int) -> None:
+async def _run_broadcast(
+    bot, broadcast_id: int, text: str, total: int, *, admin_mid: str | None = None
+) -> None:
     """Фоновая задача: отправляет подготовленную рассылку всем подходящим подписчикам,
     редактирует сообщение прогресса в админ-группе, реагирует на флаг отмены.
 
@@ -6353,7 +6535,7 @@ async def _run_broadcast(bot, broadcast_id: int, text: str, total: int) -> None:
     поэтому необработанное исключение иначе осталось бы незамеченным до сборки мусора.
     """
     try:
-        await _run_broadcast_impl(bot, broadcast_id, text, total)
+        await _run_broadcast_impl(bot, broadcast_id, text, total, admin_mid=admin_mid)
     except Exception:
         log.exception(
             "broadcast: _run_broadcast_impl crashed for broadcast_id=%s",
@@ -6376,7 +6558,9 @@ async def _run_broadcast(bot, broadcast_id: int, text: str, total: int) -> None:
             )
 
 
-async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> None:
+async def _run_broadcast_impl(
+    bot, broadcast_id: int, text: str, total: int, *, admin_mid: str | None = None
+) -> None:
     body = f"{texts.BROADCAST_HEADER}\n\n{text}"
     delivered = 0
     failed = 0
@@ -6386,17 +6570,20 @@ async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> 
         broadcast_id, total,
     )
 
-    # Старт: публикуем заголовок в админ-группе, запоминаем admin_message_id для правок.
-    sent = None
-    try:
-        sent = await bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=total),
-            attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
-        )
-    except Exception:
-        log.exception("failed to post broadcast start in admin group")
-    admin_mid = extract_message_id(sent)
+    # Старт: если confirm-кнопка была под preview-карточкой, preview уже
+    # превращён в progress-карточку. Если mid получить не удалось — шлём
+    # отдельный прогресс, чтобы оператор не остался без статуса.
+    if admin_mid is None:
+        sent = None
+        try:
+            sent = await bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=total),
+                attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
+            )
+        except Exception:
+            log.exception("failed to post broadcast start in admin group")
+        admin_mid = extract_message_id(sent)
     log.info(
         "broadcast: admin start-message admin_mid=%s (None means edit_message will be skipped)",
         admin_mid,
@@ -6515,7 +6702,11 @@ async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> 
 
     if admin_mid is not None:
         try:
-            await bot.edit_message(message_id=admin_mid, text=final_text)
+            await bot.edit_message(
+                message_id=admin_mid,
+                text=final_text,
+                attachments=[keyboards.op_back_to_menu_keyboard()],
+            )
             return
         except Exception:
             log.exception(
@@ -6526,7 +6717,11 @@ async def _run_broadcast_impl(bot, broadcast_id: int, text: str, total: int) -> 
     # Запасной путь: edit_message не сработал, либо admin_mid не было. Публикуем
     # итог отдельным сообщением, чтобы оператор всё равно увидел результат.
     try:
-        await bot.send_message(chat_id=cfg.admin_group_id, text=final_text)
+        await bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=final_text,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
     except Exception:
         log.exception(
             "failed to post fallback final summary for broadcast #%s",
@@ -6546,7 +6741,12 @@ async def _list_broadcasts(event) -> None:
     async with session_scope() as session:
         items = await broadcasts_service.list_recent(session, limit=10)
     if not items:
-        await event.message.answer(texts.OP_BROADCAST_LIST_EMPTY)
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_BROADCAST_LIST_EMPTY,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
         return
     lines = [texts.OP_BROADCAST_LIST_HEADER.rstrip()]
     for bc in items:
@@ -6559,7 +6759,12 @@ async def _list_broadcasts(event) -> None:
                 total=bc.subscriber_count_at_start,
             )
         )
-    await event.message.answer("\n".join(lines))
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text="\n".join(lines),
+        attachments=[keyboards.op_back_to_menu_keyboard()],
+    )
 
 
 def register(dp: Dispatcher) -> None:
@@ -6709,8 +6914,8 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 
 ### `bot/aemr_bot/handlers/menu.py`
 
-Size: `42322` bytes  
-SHA-256: `aa928fcb9ffba69085f70087505ec6ca2aa7d301f53e6aec83a07feabc9f3cc6`
+Size: `42388` bytes  
+SHA-256: `fb645c0cbc64d6cd1678a1b8ad39f77745be5e30e835ebe5a7598d6c610b859d`
 
 ```python
 import logging
@@ -7164,8 +7369,9 @@ async def handle_broadcast_unsubscribe(event, max_user_id: int) -> None:
     async with session_scope() as session:
         already = await broadcasts_service.is_subscribed(session, max_user_id)
         if not already:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event),
+            await ack_callback(event, texts.UNSUBSCRIBE_ALREADY_OFF)
+            await _send_or_edit_menu(
+                event,
                 text=texts.UNSUBSCRIBE_ALREADY_OFF,
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
@@ -7176,8 +7382,9 @@ async def handle_broadcast_unsubscribe(event, max_user_id: int) -> None:
         max_user_id=max_user_id,
         source="кнопка под рассылкой",
     )
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
+    await ack_callback(event, texts.UNSUBSCRIBE_CONFIRMED)
+    await _send_or_edit_menu(
+        event,
         text=texts.UNSUBSCRIBE_CONFIRMED,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -7197,7 +7404,7 @@ async def open_help(event):
     await _send_or_edit_menu(
         event,
         text=texts.HELP_USER,
-        attachments=[keyboards.back_to_menu_keyboard()],
+        attachments=[keyboards.back_to_settings_keyboard()],
     )
 
 
@@ -7205,7 +7412,7 @@ async def open_rules(event):
     await _send_or_edit_menu(
         event,
         text=texts.RULES_TEXT,
-        attachments=[keyboards.back_to_menu_keyboard()],
+        attachments=[keyboards.back_to_settings_keyboard()],
     )
 
 
@@ -7487,7 +7694,7 @@ async def open_emergency(event):
     await _send_or_edit_menu(
         event,
         text=body,
-        attachments=[keyboards.back_to_menu_keyboard()],
+        attachments=[keyboards.back_to_useful_info_keyboard()],
     )
 
 
@@ -7504,7 +7711,7 @@ async def open_dispatchers(event):
     await _send_or_edit_menu(
         event,
         text=body,
-        attachments=[keyboards.back_to_menu_keyboard()],
+        attachments=[keyboards.back_to_useful_info_keyboard()],
     )
 
 
@@ -7673,7 +7880,6 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
         return True
 
     if payload == "broadcast:unsubscribe" and max_user_id is not None:
-        await ack_callback(event)
         await handle_broadcast_unsubscribe(event, max_user_id)
         return True
 
@@ -7709,8 +7915,8 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
 
 ### `bot/aemr_bot/handlers/operator_reply.py`
 
-Size: `26275` bytes  
-SHA-256: `e094c1b310d0256b3ad0eeec89a4032273ae429390bbea98f941836d011ffe36`
+Size: `27513` bytes  
+SHA-256: `9699501afc4708aeb71ec5352649b120635c20c3385e0172bca22d3309f087f5`
 
 ```python
 """Логика ответов операторов и дополнительных сообщений от жителей, вызывается
@@ -7726,7 +7932,7 @@ import time as _time
 
 from maxapi.types import MessageCreated
 
-from aemr_bot import texts
+from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import AppealStatus
 from aemr_bot.db.session import session_scope
@@ -8045,7 +8251,11 @@ async def _deliver_operator_reply(
     try:
         # ВАЖНО: доставляем сообщение жителю по user_id (а не chat_id) — мы не
         # сохраняли chat_id их личного диалога, только их MAX user_id.
-        sent = await event.bot.send_message(user_id=target_user_id, text=formatted_text)
+        sent = await event.bot.send_message(
+            user_id=target_user_id,
+            text=formatted_text,
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
     except Exception as exc:  # noqa: BLE001
         # Показываем в админ-чате только имя класса исключения — `repr(exc)`
         # из maxapi часто содержит тело запроса (текст ответа оператора,
@@ -8066,6 +8276,9 @@ async def _deliver_operator_reply(
         return True
     delivered_mid = extract_message_id(sent)
 
+    admin_mid_to_refresh = None
+    admin_card_text = None
+    admin_card_keyboard = None
     try:
         async with session_scope() as session:
             appeal_full = await appeals_service.get_by_id(session, appeal.id)
@@ -8096,6 +8309,16 @@ async def _deliver_operator_reply(
                 target=f"appeal #{appeal.id}",
                 details={"chars": len(text)},
             )
+            admin_mid_to_refresh = getattr(appeal_full, "admin_message_id", None)
+            if admin_mid_to_refresh and appeal_full.user is not None:
+                admin_card_text = card_format.admin_card(appeal_full, appeal_full.user)
+                admin_card_keyboard = keyboards.appeal_admin_actions(
+                    appeal_full.id,
+                    appeal_full.status,
+                    is_it=True,
+                    user_blocked=bool(appeal_full.user.is_blocked),
+                    closed_due_to_revoke=bool(appeal_full.closed_due_to_revoke),
+                )
     except Exception:
         log.exception(
             "operator_reply: delivered but local DB/audit write failed — appeal=%s delivered_mid=%s",
@@ -8114,9 +8337,20 @@ async def _deliver_operator_reply(
     await _mark_reply_success_recorded(success_key)
     _remember_successful_reply(operator.id, appeal.id, text)
 
+    if admin_mid_to_refresh and admin_card_text and admin_card_keyboard:
+        try:
+            await event.bot.edit_message(
+                message_id=admin_mid_to_refresh,
+                text=admin_card_text,
+                attachments=[admin_card_keyboard],
+            )
+        except Exception:
+            log.exception("operator_reply: failed to refresh admin card #%s", appeal.id)
+
     await event.bot.send_message(
         chat_id=get_chat_id(event),
         text=texts.ADMIN_REPLY_DELIVERED.format(number=appeal.id),
+        attachments=[keyboards.op_back_to_menu_keyboard()],
     )
     return True
 
@@ -8267,8 +8501,8 @@ async def handle_command_reply(event, appeal_id: int, text: str) -> None:
 
 ### `bot/aemr_bot/handlers/start.py`
 
-Size: `16638` bytes  
-SHA-256: `6683df06923c2bd9c8d67cba234c4534812d057309e18bb7fb306ad54a1ec092`
+Size: `16686` bytes  
+SHA-256: `392c56786169123bf5951de069c84b3db9115a315087f6503ec2f6b3111e592b`
 
 ```python
 import logging
@@ -8291,6 +8525,7 @@ from aemr_bot.utils.event import (
     get_user_id,
     is_admin_chat,
     reply,
+    send_or_edit_screen,
 )
 
 log = logging.getLogger(__name__)
@@ -8387,12 +8622,12 @@ async def cmd_policy(event):
 
     if token and bot is not None:
         try:
-            await bot.send_message(
-                chat_id=chat_id,
+            await send_or_edit_screen(
+                event,
                 text=texts.POLICY_DELIVERED,
                 attachments=[
                     policy_service.build_file_attachment(token),
-                    keyboards.back_to_menu_keyboard(),
+                    keyboards.back_to_settings_keyboard(),
                 ],
             )
             return
@@ -8400,16 +8635,16 @@ async def cmd_policy(event):
             log.exception("policy file delivery failed; falling back to URL")
 
     if policy_url:
-        await reply(
+        await send_or_edit_screen(
             event,
-            texts.POLICY_FALLBACK_URL.format(policy_url=policy_url),
-            attachments=[keyboards.back_to_menu_keyboard()],
+            text=texts.POLICY_FALLBACK_URL.format(policy_url=policy_url),
+            attachments=[keyboards.back_to_settings_keyboard()],
         )
     else:
-        await reply(
+        await send_or_edit_screen(
             event,
-            texts.POLICY_UNAVAILABLE,
-            attachments=[keyboards.back_to_menu_keyboard()],
+            text=texts.POLICY_UNAVAILABLE,
+            attachments=[keyboards.back_to_settings_keyboard()],
         )
 
 
@@ -8524,19 +8759,16 @@ async def cmd_export(event):
 
 
 async def cmd_cancel(event):
-    """Сбрасывает текущий шаг воронки и возвращает в меню. Без этого
+    """Сбрасывает текущий шаг воронки и даёт быстрый возврат в меню. Без этого
     житель набирающий /cancel мог получить тишину (если в каком-то
     шаге не было ясной кнопки «Отмена»).
     """
-    from aemr_bot.handlers.menu import open_main_menu
-
     max_user_id = get_user_id(event)
     if max_user_id is None:
         return
     async with session_scope() as session:
         await users_service.reset_state(session, max_user_id)
-    await reply(event, texts.CANCELLED)
-    await open_main_menu(event)
+    await reply(event, texts.CANCELLED, attachments=[keyboards.back_to_menu_keyboard()])
 
 
 def register(dp: Dispatcher) -> None:
@@ -8845,8 +9077,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `33666` bytes  
-SHA-256: `90dd02992aa266fbd54c2e8c8e4904f44005b48ef8f7351b9684248ebab6592b`
+Size: `36159` bytes  
+SHA-256: `3b99945767148cd6382bff5ed5b9efd357db0d13e565a5c3ba65695e091dba1d`
 
 ```python
 from maxapi.types import (
@@ -9148,6 +9380,7 @@ def user_appeal_card_keyboard(appeal_id: int, status: str):
                 text="🔁 Подать похожее", payload=f"appeal:repeat:{appeal_id}"
             )
         )
+    kb.row(CallbackButton(text="↩️ К моим обращениям", payload="menu:my_appeals"))
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()
 
@@ -9175,6 +9408,20 @@ def my_appeals_list_keyboard(
 
 def back_to_menu_keyboard():
     kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="🏠 Главное меню", payload="menu:main"))
+    return kb.as_markup()
+
+
+def back_to_settings_keyboard():
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="↩️ К настройкам", payload="menu:settings"))
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
+    return kb.as_markup()
+
+
+def back_to_useful_info_keyboard():
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="↩️ К полезной информации", payload="menu:useful_info"))
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()
 
@@ -9252,6 +9499,7 @@ def broadcast_unsubscribe_keyboard():
             payload="broadcast:unsubscribe",
         )
     )
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()
 
 
@@ -9288,6 +9536,41 @@ def broadcast_stop_keyboard(broadcast_id: int):
             payload=f"broadcast:stop:{broadcast_id}",
         )
     )
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_back_to_menu_keyboard():
+    """Одна кнопка возврата к главной операторской панели."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_back_to_operators_keyboard():
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="↩️ К операторам", payload="op:operators"))
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_back_to_settings_keyboard():
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="↩️ К настройкам", payload="op:settings"))
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_back_to_audience_keyboard():
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_add_cancel_keyboard():
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="❌ Отменить добавление", payload="op:opadd:cancel"))
     return kb.as_markup()
 
 
@@ -9304,7 +9587,7 @@ def op_stats_menu_keyboard():
     kb.row(CallbackButton(text="📊 За полгода", payload="op:stats_half_year"))
     kb.row(CallbackButton(text="📊 За год", payload="op:stats_year"))
     kb.row(CallbackButton(text="📊 За всё время", payload="op:stats_all"))
-    kb.row(CallbackButton(text="↩️ Отмена", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -9313,7 +9596,7 @@ def op_operators_menu_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="➕ Добавить", payload="op:opadd:start"))
     kb.row(CallbackButton(text="📋 Список", payload="op:opadd:list"))
-    kb.row(CallbackButton(text="❌ Отмена", payload="op:opadd:cancel"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -9330,7 +9613,7 @@ def op_role_picker_keyboard():
         CallbackButton(text="aemr", payload="op:opadd:role:aemr"),
         CallbackButton(text="egp", payload="op:opadd:role:egp"),
     )
-    kb.row(CallbackButton(text="❌ Отмена", payload="op:opadd:cancel"))
+    kb.row(CallbackButton(text="❌ Отменить добавление", payload="op:opadd:cancel"))
     return kb.as_markup()
 
 
@@ -9340,6 +9623,7 @@ def op_settings_keys_keyboard(keys: list[str]):
     kb = InlineKeyboardBuilder()
     for key in keys:
         kb.row(CallbackButton(text=key, payload=f"op:setkey:{key}"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -9351,6 +9635,7 @@ def op_audience_menu_keyboard():
     kb.row(CallbackButton(text="📩 Подписчики", payload="op:aud:subs"))
     kb.row(CallbackButton(text="🔐 Дали согласие", payload="op:aud:consent"))
     kb.row(CallbackButton(text="🚫 Заблокированные", payload="op:aud:blocked"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -9376,6 +9661,8 @@ def op_audience_user_actions(max_user_id: int, *, blocked: bool):
             text="🗑 Удалить ПДн", payload=f"op:aud:erase:{max_user_id}"
         ),
     )
+    kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -9432,6 +9719,7 @@ def appeal_admin_actions(
             CallbackButton(text=block_label, payload=block_payload),
             CallbackButton(text="🗑 Удалить ПДн", payload=f"op:erase:{appeal_id}"),
         )
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -14363,8 +14651,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `28379` bytes  
-SHA-256: `bbbe3ff94cf34c61294e5d754dd69be816fb40a4cd0613f1c6b2c6f14b5b551a`
+Size: `28395` bytes  
+SHA-256: `e6f88be57d81962aae8ec6ca2f012e017f5ae5301450b0aed7e6bdb37f1fe33a`
 
 ```python
 WELCOME = (
@@ -14602,7 +14890,7 @@ ERASE_REQUESTED = (
     "с вами всё с чистого листа."
 )
 
-CANCELLED = "Действие отменено. Открываю главное меню."
+CANCELLED = "Действие отменено. Можно вернуться в главное меню."
 
 UNKNOWN_INPUT = (
     "Не понял сообщение. Откройте меню кнопками под сообщениями. "
@@ -15695,8 +15983,8 @@ async def session() -> AsyncIterator:
 
 ### `bot/tests/test_admin_appeal_ops.py`
 
-Size: `20049` bytes  
-SHA-256: `bfbea3f7a00bd53127f77a022d051eade487adad4cdd881482b5f7cc552d6530`
+Size: `20114` bytes  
+SHA-256: `6fc1d8543d50d6f8e0463402f30bbbde3700b6dbb22bbe5e3fbcc7797dc019e1`
 
 ```python
 """Тесты для handlers/admin_appeal_ops — действия оператора над
@@ -15894,7 +16182,8 @@ class TestRunReplyCancel:
                    return_value=None), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_appeal_ops.run_reply_cancel(event)
-        event.bot.send_message.assert_not_called()
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "уже закрыт" in text.lower()
 
 
 # --- run_reopen / run_close ---------------------------------------------------
@@ -17443,8 +17732,8 @@ class TestDoOpenTickets:
 
 ### `bot/tests/test_appeal_dispatcher.py`
 
-Size: `22940` bytes  
-SHA-256: `62d3824276e094aafa086498b72816fbecd8c9647fe264cbe59f6ea66df1b4cb`
+Size: `22842` bytes  
+SHA-256: `9b5c522265940c142605ccaf22ba21fe2fd44768a25d6753b62f74002a7c70f6`
 
 ```python
 """Тесты на handlers/appeal.register() — главный callback/message dispatcher.
@@ -17601,17 +17890,15 @@ class TestCallbackConsent:
         on_callback, _ = captured_handlers
         event = _make_callback_event(payload="consent:no")
         reset = AsyncMock()
-        open_menu = AsyncMock()
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.appeal.users_service.reset_state", reset), \
              patch("aemr_bot.handlers.appeal.drop_user_lock"), \
-             patch("aemr_bot.handlers.menu.open_main_menu", open_menu), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await on_callback(event)
         reset.assert_called_once()
-        open_menu.assert_called_once()
         event.bot.send_message.assert_called_once()
+        assert event.bot.send_message.call_args.kwargs["attachments"]
 
 
 class TestCallbackCancel:
@@ -17622,16 +17909,15 @@ class TestCallbackCancel:
         on_callback, _ = captured_handlers
         event = _make_callback_event(payload="cancel")
         reset = AsyncMock()
-        open_menu = AsyncMock()
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.appeal.users_service.reset_state", reset), \
              patch("aemr_bot.handlers.appeal.drop_user_lock"), \
-             patch("aemr_bot.handlers.menu.open_main_menu", open_menu), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await on_callback(event)
         reset.assert_called_once()
-        open_menu.assert_called_once()
+        event.bot.send_message.assert_called_once()
+        assert event.bot.send_message.call_args.kwargs["attachments"]
 
 
 class TestCallbackAddrReuse:
@@ -18664,8 +18950,8 @@ class TestCountByType:
 
 ### `bot/tests/test_broadcast_handlers.py`
 
-Size: `21233` bytes  
-SHA-256: `e7c33449b3c6252a4793ad848da91fba13ebca21d2132c2871a9e0bf9f73c991`
+Size: `21470` bytes  
+SHA-256: `e2c38c3333977936a1eebac797c2e00e5df070dcec02068100a402542e9da409`
 
 ```python
 """Тесты для handlers/broadcast — wizard рассылок и helpers.
@@ -18817,7 +19103,8 @@ class TestStartWizard:
         # Наш wizard поднят на awaiting_text
         assert 7 in broadcast._wizards
         assert broadcast._wizards[7].step == "awaiting_text"
-        event.message.answer.assert_called_once()
+        event.bot.send_message.assert_called_once()
+        assert "Введите текст рассылки" in event.bot.send_message.call_args.kwargs["text"]
 
 
 # --- _handle_wizard_text ------------------------------------------------------
@@ -19178,7 +19465,9 @@ class TestListBroadcasts:
              patch("aemr_bot.handlers.broadcast.broadcasts_service.list_recent",
                    AsyncMock(return_value=[])):
             await broadcast._list_broadcasts(event)
-        event.message.answer.assert_called_once()
+        event.bot.send_message.assert_called_once()
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "рассылок" in text.lower()
 
     @pytest.mark.asyncio
     async def test_with_items(self) -> None:
@@ -19203,7 +19492,7 @@ class TestListBroadcasts:
              patch("aemr_bot.handlers.broadcast.broadcasts_service.list_recent",
                    AsyncMock(return_value=items)):
             await broadcast._list_broadcasts(event)
-        text = event.message.answer.call_args.args[0]
+        text = event.bot.send_message.call_args.kwargs["text"]
         assert "42" in text
         assert "100" in text
 ```
@@ -20840,8 +21129,8 @@ async def test_list_consented_excludes_blocked_and_deleted(session) -> None:
 
 ### `bot/tests/test_funnel_state_hardening.py`
 
-Size: `6301` bytes  
-SHA-256: `7a078afdf6ee7df79c1e56c19cd8e2017cc7bf528867f452c28221152b66b661`
+Size: `6421` bytes  
+SHA-256: `05979ae0e548ccc27f069490ce688f7efc5b16d5d2cc366e9eb3165747ef8141`
 
 ```python
 """Regression-тесты hardening-слоя пользовательской FSM-воронки."""
@@ -20984,11 +21273,10 @@ async def test_stale_geo_callback_while_awaiting_address_gets_visible_notice() -
 
     assert allowed is False
     ack.assert_called_once_with(event, appeal._GEO_AWAITING_ADDRESS_NOTICE)
-    send_to_citizen.assert_called_once_with(
-        event,
-        7,
-        text=appeal._GEO_AWAITING_ADDRESS_NOTICE,
-    )
+    send_to_citizen.assert_called_once()
+    assert send_to_citizen.call_args.args == (event, 7)
+    assert send_to_citizen.call_args.kwargs["text"] == appeal._GEO_AWAITING_ADDRESS_NOTICE
+    assert send_to_citizen.call_args.kwargs["attachments"]
 
 
 @pytest.mark.asyncio
@@ -21231,8 +21519,8 @@ class TestGeoConfirmCard:
 
 ### `bot/tests/test_handlers_appeal_funnel.py`
 
-Size: `19343` bytes  
-SHA-256: `b085d3ee6a33c1080324b88839eac9d7a5bbf7d766e9a79a5c21155559289289`
+Size: `19333` bytes  
+SHA-256: `0e24a8e4c369b129d6269a1635fffc3e85d457c1d58a0ab375ff5047ccb6fe75`
 
 ```python
 """Расширенные тесты handlers/appeal_funnel — состояния воронки и
@@ -21663,10 +21951,10 @@ class TestOnIdle:
              patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
                    AsyncMock(return_value=user)), \
              patch("aemr_bot.handlers.appeal_funnel.appeals_service.find_active_for_user",
-                   AsyncMock(return_value=None)), \
-             patch("aemr_bot.handlers.menu.open_main_menu", AsyncMock()) as open_menu:
+                   AsyncMock(return_value=None)):
             await appeal_funnel.on_idle(event, body=None, text_body="x", max_user_id=42)
-        open_menu.assert_called_once()
+        event.message.answer.assert_called_once()
+        assert event.message.answer.call_args.kwargs["attachments"]
 ```
 
 ### `bot/tests/test_handlers_auth_broadcast.py`
@@ -23767,8 +24055,8 @@ class TestHandleCommandReply:
 
 ### `bot/tests/test_handlers_start.py`
 
-Size: `12560` bytes  
-SHA-256: `63aa829301077e63b1c903a2dc83e2362c994fa8b2f5643aee15f8129f19f1c4`
+Size: `12554` bytes  
+SHA-256: `161418a118f8fc26ca3aa1bd752e254fc05020876fe91d0601130376d5ba0b14`
 
 ```python
 """Тесты handlers/start.py — команды жителя /start, /help, /menu, /rules,
@@ -24053,11 +24341,11 @@ class TestCmdCancel:
         event = _make_event()
         reset = AsyncMock()
         with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.start.users_service.reset_state", reset), \
-             patch("aemr_bot.handlers.menu.open_main_menu", AsyncMock()) as open_menu:
+             patch("aemr_bot.handlers.start.users_service.reset_state", reset):
             await start.cmd_cancel(event)
         reset.assert_called_once()
-        open_menu.assert_called_once()
+        event.bot.send_message.assert_called_once()
+        assert event.bot.send_message.call_args.kwargs["attachments"]
 
     @pytest.mark.asyncio
     async def test_no_user_id_skips(self) -> None:
