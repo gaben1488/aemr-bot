@@ -14,6 +14,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from tests._helpers import make_event
+
 # handlers/__init__.py делает `from maxapi import Dispatcher` — без
 # установленного maxapi пакета (локально без CI) импорт handler'ов
 # упадёт на module-level. Скипаем такие тесты локально.
@@ -21,16 +23,12 @@ pytest.importorskip("maxapi", reason="handlers тесты требуют уст�
 
 
 def _make_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleNamespace:
-    """Минимальный mock event с .bot.send_message + .message.answer."""
-    bot = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=chat_id),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-        ),
+    # Обёртка над tests/_helpers.make_event. appeal_funnel-handler'ы
+    # зовут bot.send_message И bot.edit_message (через send_or_edit_
+    # progress) — with_edit_message=True даёт оба как AsyncMock.
+    # Раньше файл держал свой bot=AsyncMock(); структурно эквивалентно.
+    return make_event(
+        chat_id=chat_id, user_id=user_id, with_edit_message=True
     )
 
 
