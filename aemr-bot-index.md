@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-14 09:07:34 UTC`
+Generated at: `2026-05-14 09:24:32 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `157`
+Indexed files: `158`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -82,17 +82,18 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/alembic.ini` (619 bytes)
 - `bot/pyproject.toml` (2583 bytes)
 - `bot/tests/__init__.py` (0 bytes)
+- `bot/tests/_helpers.py` (4184 bytes)
 - `bot/tests/conftest.py` (1882 bytes)
-- `bot/tests/test_admin_appeal_ops.py` (20114 bytes)
+- `bot/tests/test_admin_appeal_ops.py` (20004 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
-- `bot/tests/test_admin_handlers_small.py` (21991 bytes)
-- `bot/tests/test_admin_operators.py` (16108 bytes)
-- `bot/tests/test_admin_panel.py` (11325 bytes)
+- `bot/tests/test_admin_handlers_small.py` (21763 bytes)
+- `bot/tests/test_admin_operators.py` (15937 bytes)
+- `bot/tests/test_admin_panel.py` (11313 bytes)
 - `bot/tests/test_appeal_dispatcher.py` (22842 bytes)
 - `bot/tests/test_appeal_flow.py` (10960 bytes)
 - `bot/tests/test_appeals_service_pg.py` (14053 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
-- `bot/tests/test_broadcast_handlers.py` (24500 bytes)
+- `bot/tests/test_broadcast_handlers.py` (24314 bytes)
 - `bot/tests/test_broadcasts_service_pg.py` (3786 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
 - `bot/tests/test_callback_router.py` (8287 bytes)
@@ -105,13 +106,13 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_final_p1_regressions.py` (5856 bytes)
 - `bot/tests/test_funnel_state_hardening.py` (6421 bytes)
 - `bot/tests/test_geo.py` (9324 bytes)
-- `bot/tests/test_handlers_appeal_funnel.py` (22985 bytes)
-- `bot/tests/test_handlers_auth_broadcast.py` (7088 bytes)
+- `bot/tests/test_handlers_appeal_funnel.py` (22615 bytes)
+- `bot/tests/test_handlers_auth_broadcast.py` (6976 bytes)
 - `bot/tests/test_handlers_funnel.py` (9386 bytes)
-- `bot/tests/test_handlers_menu.py` (28530 bytes)
-- `bot/tests/test_handlers_menu_extra.py` (19006 bytes)
-- `bot/tests/test_handlers_operator_reply.py` (23858 bytes)
-- `bot/tests/test_handlers_start.py` (12554 bytes)
+- `bot/tests/test_handlers_menu.py` (28171 bytes)
+- `bot/tests/test_handlers_menu_extra.py` (19882 bytes)
+- `bot/tests/test_handlers_operator_reply.py` (23862 bytes)
+- `bot/tests/test_handlers_start.py` (12367 bytes)
 - `bot/tests/test_health.py` (4062 bytes)
 - `bot/tests/test_idempotency.py` (3650 bytes)
 - `bot/tests/test_keyboards.py` (5473 bytes)
@@ -16045,6 +16046,117 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ```
 
+### `bot/tests/_helpers.py`
+
+Size: `4184` bytes  
+SHA-256: `f7f9967c871013c992ccf3f5102759d6df40858915cd458b6fea6e72374ceed1`
+
+```python
+"""Общие фабрики тестовых событий и session-scope.
+
+До этого модуля `_make_event` / `_make_callback_event` /
+`_fake_session_scope` были скопированы в ~14 тест-файлов, каждый со
+слегка своей сигнатурой. Любое изменение формы MAX-события требовало
+правки в 14 местах — тесты тормозили рефакторинг вместо того, чтобы
+его защищать (отмечено swarm code-review).
+
+Здесь — один источник правды для СТРУКТУРЫ события. Файловые дефолты
+(`chat_id`, `user_id` отличаются между файлами и иногда важны для
+сверки с `cfg.admin_group_id`) сохраняются: тест-файлы оставляют свой
+тонкий `_make_event`-wrapper, который зовёт `make_event(...)` с
+нужными дефолтами. Так структура — здесь, дефолты — у файла, тело
+тест-функций не трогается.
+"""
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
+
+
+def make_event(
+    *,
+    chat_id: int = 555,
+    user_id: int = 7,
+    text: str = "",
+    first_name: str | None = None,
+    mid: str = "m-1",
+    with_callback: bool = False,
+    with_user: bool = False,
+    send_returns_mid: bool = False,
+    with_edit_message: bool = False,
+) -> SimpleNamespace:
+    """Фабрика MAX-события для handler-тестов. Суперсет всех вариаций.
+
+    - `with_callback` — добавить `event.callback` (SimpleNamespace с
+      callback_id) для callback-handler'ов.
+    - `with_user` — добавить `event.user` (некоторые handler'ы читают
+      его, а не `event.message.sender`).
+    - `send_returns_mid` — `bot.send_message` вернёт SendedMessage-like
+      с `message.body.mid`; нужно для `extract_message_id` в
+      progress/broadcast-флоу.
+    - `with_edit_message` — добавить `bot.edit_message` как AsyncMock.
+    - `first_name` — если задан, проставляется в `sender` (и в `user`,
+      если `with_user`).
+    """
+    bot = MagicMock()
+    if send_returns_mid:
+        bot.send_message = AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="m-progress"))
+            )
+        )
+    else:
+        bot.send_message = AsyncMock()
+    if with_edit_message:
+        bot.edit_message = AsyncMock()
+
+    sender_kwargs: dict = {"user_id": user_id}
+    if first_name is not None:
+        sender_kwargs["first_name"] = first_name
+
+    event_kwargs: dict = {
+        "bot": bot,
+        "message": SimpleNamespace(
+            answer=AsyncMock(),
+            sender=SimpleNamespace(**sender_kwargs),
+            recipient=SimpleNamespace(chat_id=chat_id),
+            body=SimpleNamespace(text=text, attachments=[], mid=mid),
+        ),
+    }
+    if with_callback:
+        event_kwargs["callback"] = SimpleNamespace(callback_id="cb-1")
+    if with_user:
+        event_kwargs["user"] = SimpleNamespace(**sender_kwargs)
+    return SimpleNamespace(**event_kwargs)
+
+
+def make_callback_event(
+    *,
+    chat_id: int = 555,
+    user_id: int = 7,
+    payload: str = "",
+    first_name: str | None = None,
+) -> SimpleNamespace:
+    """MAX callback-событие. `callback.payload` — нажатый payload,
+    `callback.callback_id` — id для ack."""
+    event = make_event(
+        chat_id=chat_id,
+        user_id=user_id,
+        first_name=first_name,
+        with_callback=True,
+    )
+    event.callback.payload = payload
+    return event
+
+
+@asynccontextmanager
+async def fake_session_scope():
+    """Заглушка `session_scope()` — отдаёт MagicMock вместо реальной
+    сессии. Для handler-тестов, где БД-вызовы и так замоканы."""
+    yield MagicMock()
+```
+
 ### `bot/tests/conftest.py`
 
 Size: `1882` bytes  
@@ -16098,8 +16210,8 @@ async def session() -> AsyncIterator:
 
 ### `bot/tests/test_admin_appeal_ops.py`
 
-Size: `20114` bytes  
-SHA-256: `6fc1d8543d50d6f8e0463402f30bbbde3700b6dbb22bbe5e3fbcc7797dc019e1`
+Size: `20004` bytes  
+SHA-256: `f8093c83e7642b3a466b30efb5dc5684e0d9b703e82487447b890ed29b6d7707`
 
 ```python
 """Тесты для handlers/admin_appeal_ops — действия оператора над
@@ -16120,33 +16232,22 @@ SHA-256: `6fc1d8543d50d6f8e0463402f30bbbde3700b6dbb22bbe5e3fbcc7797dc019e1`
 """
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
 def _make_event(*, chat_id: int = 555, user_id: int = 7) -> SimpleNamespace:
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=chat_id),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-        ),
-        callback=SimpleNamespace(callback_id="cb-1"),
-    )
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
+    # Тонкая обёртка над tests/_helpers.make_event — сохраняет файловые
+    # дефолты, структуру события держит helper. callback нужен для
+    # admin-action handler'ов.
+    return make_event(chat_id=chat_id, user_id=user_id, with_callback=True)
 
 
 # --- run_reply_intent ---------------------------------------------------------
@@ -16628,8 +16729,8 @@ async def test_notify_logs_and_does_not_raise_on_delivery_error() -> None:
 
 ### `bot/tests/test_admin_handlers_small.py`
 
-Size: `21991` bytes  
-SHA-256: `c4fd044d53726d71bcba3ccaf97978f2f20a841af4d81e4c3f5cb66049ff424e`
+Size: `21763` bytes  
+SHA-256: `f4166b205e3c8fa348454bbf174c2bb718192b3363d75127904153f6f1b6d205`
 
 ```python
 """Тесты для трёх небольших admin-handlers (выделены из admin_commands
@@ -16644,32 +16745,20 @@ SHA-256: `c4fd044d53726d71bcba3ccaf97978f2f20a841af4d81e4c3f5cb66049ff424e`
 """
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
+
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
 def _make_event(*, chat_id: int = 555, user_id: int = 7) -> SimpleNamespace:
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=chat_id),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-        ),
-    )
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
+    # Обёртка над tests/_helpers.make_event — структура события в helper.
+    return make_event(chat_id=chat_id, user_id=user_id)
 
 
 # --- _mask_phone (PII protection in admin lists) -----------------------------
@@ -17139,8 +17228,8 @@ class TestRunStatsToday:
 
 ### `bot/tests/test_admin_operators.py`
 
-Size: `16108` bytes  
-SHA-256: `f63ee7ca2535e16a8242c37beaab66a6e3bd2ab8782dc16fd56c4ff78f4a268c`
+Size: `15937` bytes  
+SHA-256: `34da1803ef856a49be522d40cd55c5a6ac960a57c699211fc9892eb7d6741882`
 
 ```python
 """Тесты для handlers/admin_operators — wizard добавления оператора
@@ -17154,27 +17243,21 @@ SHA-256: `f63ee7ca2535e16a8242c37beaab66a6e3bd2ab8782dc16fd56c4ff78f4a268c`
 """
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
 def _make_event(*, user_id: int = 7) -> SimpleNamespace:
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=555),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-        ),
-    )
+    # Обёртка над tests/_helpers.make_event — chat_id жёстко 555
+    # (служебная группа в этих тестах).
+    return make_event(chat_id=555, user_id=user_id)
 
 
 def _make_callback_event(*, user_id: int = 7) -> SimpleNamespace:
@@ -17186,11 +17269,6 @@ def _make_callback_event(*, user_id: int = 7) -> SimpleNamespace:
         user=SimpleNamespace(user_id=user_id),
     )
     return event
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
 
 
 @pytest.fixture(autouse=True)
@@ -17542,8 +17620,8 @@ class TestHandleWizardText:
 
 ### `bot/tests/test_admin_panel.py`
 
-Size: `11325` bytes  
-SHA-256: `d47f55a9c506f06d0e970b1b04a7cdb3379bc12c6d5fada4c4ffa712481420e2`
+Size: `11313` bytes  
+SHA-256: `a228b65242e1b46892ff9a0ec436b9ba8965a1d5a839ca7b46144f58809a14e0`
 
 ```python
 """Тесты для handlers/admin_panel — общие операции админ-панели
@@ -17564,25 +17642,17 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
 
 def _make_event(*, user_id: int = 7) -> SimpleNamespace:
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    bot.pin_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=555),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-        ),
-    )
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
+    # Обёртка над tests/_helpers.make_event. admin_panel-handler'ы
+    # умеют закреплять сообщения — доставляем bot.pin_message,
+    # которого нет в базовой фабрике.
+    event = make_event(chat_id=555, user_id=user_id)
+    event.bot.pin_message = AsyncMock()
+    return event
 
 
 # --- pure helpers -------------------------------------------------------------
@@ -19065,8 +19135,8 @@ class TestCountByType:
 
 ### `bot/tests/test_broadcast_handlers.py`
 
-Size: `24500` bytes  
-SHA-256: `abe2424062425bce64d50632e49f0f8435101a4710dbe0b835fd489daf81a92a`
+Size: `24314` bytes  
+SHA-256: `6650356547c3a6294fcd34e3eb094281c4cafaa0df0d16e2313834f1b1736278`
 
 ```python
 """Тесты для handlers/broadcast — wizard рассылок и helpers.
@@ -19089,28 +19159,21 @@ SHA-256: `abe2424062425bce64d50632e49f0f8435101a4710dbe0b835fd489daf81a92a`
 from __future__ import annotations
 
 import time
-from contextlib import asynccontextmanager
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
 def _make_event(*, user_id: int = 7) -> SimpleNamespace:
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=555),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-        ),
-        callback=SimpleNamespace(callback_id="cb-1"),
-    )
+    # Обёртка над tests/_helpers.make_event — chat_id жёстко 555
+    # (служебная группа), callback нужен broadcast-handler'ам.
+    return make_event(chat_id=555, user_id=user_id, with_callback=True)
 
 
 def _make_callback_event(*, user_id: int = 7) -> SimpleNamespace:
@@ -19118,11 +19181,6 @@ def _make_callback_event(*, user_id: int = 7) -> SimpleNamespace:
     event.bot.edit_message = AsyncMock()
     event.callback.payload = "broadcast:cancel"
     return event
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
 
 
 @pytest.fixture(autouse=True)
@@ -21821,8 +21879,8 @@ class TestGeoConfirmCard:
 
 ### `bot/tests/test_handlers_appeal_funnel.py`
 
-Size: `22985` bytes  
-SHA-256: `6d4b7551f38ea58cd7a54f70d56f5fd49c0b26ac340fe7e95bc1a249986d9555`
+Size: `22615` bytes  
+SHA-256: `ccf6031a920b9f6e89af6d20d38e48a7953185853a0f3e84b06af0f8d9dfeda9`
 
 ```python
 """Расширенные тесты handlers/appeal_funnel — состояния воронки и
@@ -21841,35 +21899,27 @@ SHA-256: `6d4b7551f38ea58cd7a54f70d56f5fd49c0b26ac340fe7e95bc1a249986d9555`
 """
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
+
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
-def _make_event(*, chat_id: int = 100, user_id: int = 42, text: str = "") -> SimpleNamespace:
-    bot = MagicMock()
-    # send_message возвращает SendedMessage-like — нужно для
-    # services/progress.send_or_edit_progress → extract_message_id.
-    bot.send_message = AsyncMock(
-        return_value=SimpleNamespace(
-            message=SimpleNamespace(body=SimpleNamespace(mid="m-progress"))
-        )
-    )
-    bot.edit_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id, first_name="Иван"),
-            recipient=SimpleNamespace(chat_id=chat_id),
-            body=SimpleNamespace(text=text, attachments=[], mid="m-1"),
-        ),
-        user=SimpleNamespace(user_id=user_id, first_name="Иван"),
+def _make_event(
+    *, chat_id: int = 100, user_id: int = 42, text: str = ""
+) -> SimpleNamespace:
+    # Обёртка над tests/_helpers.make_event. Воронка использует
+    # progress-карту: send_message должен вернуть SendedMessage-like
+    # (extract_message_id), нужны edit_message и event.user.
+    return make_event(
+        chat_id=chat_id, user_id=user_id, text=text, first_name="Иван",
+        with_user=True, with_edit_message=True, send_returns_mid=True,
     )
 
 
@@ -21884,11 +21934,6 @@ def _make_callback_event(
     )
     event.ack = AsyncMock()
     return event
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
 
 
 class TestAskAddressOrReuse:
@@ -22341,8 +22386,8 @@ class TestOnIdle:
 
 ### `bot/tests/test_handlers_auth_broadcast.py`
 
-Size: `7088` bytes  
-SHA-256: `d79acf9d495f2a48ef1f83e27abca7787b84b12d7b215e89aa0eca3b70e46b7d`
+Size: `6976` bytes  
+SHA-256: `58dfebd3b1da771a844ae817159f6de9e519b7cd75c656c829d60f30ece8eec8`
 
 ```python
 """Тесты handlers/_auth и handlers/broadcast (wizard state).
@@ -22359,32 +22404,21 @@ SHA-256: `d79acf9d495f2a48ef1f83e27abca7787b84b12d7b215e89aa0eca3b70e46b7d`
 from __future__ import annotations
 
 import time
-from contextlib import asynccontextmanager
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
+
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
 def _make_event(*, chat_id: int = 555, user_id: int = 7) -> SimpleNamespace:
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=chat_id),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-        ),
-    )
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
+    # Тонкая обёртка над общей фабрикой (tests/_helpers.py): сохраняет
+    # файловые дефолты chat_id/user_id, структуру события держит helper.
+    return make_event(chat_id=chat_id, user_id=user_id)
 
 
 class TestGetOperator:
@@ -22776,8 +22810,8 @@ class TestOnAwaitingName:
 
 ### `bot/tests/test_handlers_menu.py`
 
-Size: `28530` bytes  
-SHA-256: `1fc381787d32635424748c031856b9bd17778a529c691962f74191c29d8dfa67`
+Size: `28171` bytes  
+SHA-256: `98e70adcdc9a262708de5d95c9650a3a50e2cbd75bbdfefec41d2352a1193e98`
 
 ```python
 """Тесты handlers/menu.py — навигация по меню жителя.
@@ -22804,22 +22838,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
 def _make_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleNamespace:
-    """Минимальный mock event с .bot.send_message + .message.answer."""
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=chat_id),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-        ),
-    )
+    # Обёртка над tests/_helpers.make_event — структура события в helper.
+    return make_event(chat_id=chat_id, user_id=user_id)
 
 
 def _make_callback_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleNamespace:
@@ -22833,12 +22860,6 @@ def _make_callback_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleName
     )
     event.ack = AsyncMock()
     return event
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    """asynccontextmanager-mock для session_scope, отдаёт MagicMock как сессию."""
-    yield MagicMock()
 
 
 class TestOpenMainMenu:
@@ -23449,8 +23470,8 @@ class TestSimpleScreens:
 
 ### `bot/tests/test_handlers_menu_extra.py`
 
-Size: `19006` bytes  
-SHA-256: `df7ac64782df49e3f60c725f66f7436a451e2288667fbe8ce01af93862e0af9b`
+Size: `19882` bytes  
+SHA-256: `cb9710e8ea0165a51f4eccb22ee3d7d3d3af4461923b7b374e3e4d2fec29e060`
 
 ```python
 """Расширенные тесты handlers/menu.py — экраны согласия, прощания,
@@ -23459,41 +23480,33 @@ emergency/dispatchers/appointment, handle_callback router.
 Локально skip без maxapi; в CI работает."""
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
 def _make_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleNamespace:
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=chat_id),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-        ),
-        callback=None,
-    )
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
+    # Обёртка над tests/_helpers.make_event. menu-handler'ы проверяют
+    # event.callback (None для текстового сообщения, не callback'а) —
+    # явно проставляем None, базовая фабрика поле не добавляет.
+    event = make_event(chat_id=chat_id, user_id=user_id)
+    event.callback = None
+    return event
 
 
 class TestShowConsentStatus:
-    """show_consent_status зовёт keyboards.consent_status_keyboard, которой
-    в keyboards.py НЕТ — это реальный bug, see test_xfail_consent_keyboards
-    ниже. Здесь патчим keyboards.consent_status_keyboard, чтобы дотестить
-    логику ветвления text по consent_pdn_at / consent_revoked_at.
+    """show_consent_status зовёт keyboards.consent_status_keyboard
+    (keyboards.py:178, сигнатура `*, consent_active: bool`). Патчим её
+    на MagicMock, чтобы изолированно проверить логику ветвления text
+    по consent_pdn_at / consent_revoked_at — без create=True, чтобы
+    patch упал, если функцию переименуют.
     """
     @pytest.mark.asyncio
     async def test_active_consent_shows_active_text(self) -> None:
@@ -23506,13 +23519,17 @@ class TestShowConsentStatus:
             consent_revoked_at=None,
         )
         with patch.object(keyboards, "consent_status_keyboard",
-                          MagicMock(return_value=None), create=True), \
+                          MagicMock(return_value=None)), \
              patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.users_service.get_or_create",
                    AsyncMock(return_value=user)):
             await menu.show_consent_status(event, max_user_id=42)
         text = event.bot.send_message.call_args.kwargs.get("text", "")
-        assert text
+        from aemr_bot import texts
+        # Активная ветка: текст начинается с неформатируемой части
+        # CONSENT_STATUS_ACTIVE (до подстановки даты), не текст других веток.
+        assert text.startswith("Согласие на обработку персональных данных дано")
+        assert text != texts.CONSENT_STATUS_NEVER
 
     @pytest.mark.asyncio
     async def test_revoked_consent_shows_revoked_text(self) -> None:
@@ -23525,13 +23542,19 @@ class TestShowConsentStatus:
             consent_revoked_at=datetime.now(timezone.utc),
         )
         with patch.object(keyboards, "consent_status_keyboard",
-                          MagicMock(return_value=None), create=True), \
+                          MagicMock(return_value=None)), \
              patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.users_service.get_or_create",
                    AsyncMock(return_value=user)):
             await menu.show_consent_status(event, max_user_id=42)
         text = event.bot.send_message.call_args.kwargs.get("text", "")
-        assert text
+        from aemr_bot import texts
+        # Отозванная ветка: характерный фрагмент CONSENT_STATUS_REVOKED.
+        assert text.startswith(
+            "Согласие на обработку персональных данных отозвано"
+        )
+        assert "оператор даст по ним финальный ответ" in text
+        assert text != texts.CONSENT_STATUS_NEVER
 
     @pytest.mark.asyncio
     async def test_never_consented_shows_never_text(self) -> None:
@@ -23541,7 +23564,7 @@ class TestShowConsentStatus:
         event = _make_event()
         user = SimpleNamespace(consent_pdn_at=None, consent_revoked_at=None)
         with patch.object(keyboards, "consent_status_keyboard",
-                          MagicMock(return_value=None), create=True), \
+                          MagicMock(return_value=None)), \
              patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.users_service.get_or_create",
                    AsyncMock(return_value=user)):
@@ -23579,8 +23602,9 @@ class TestShowConsentStatus:
 
 
 class TestAskForgetConfirm:
-    """ask_forget_confirm обращается к keyboards.forget_confirm_keyboard,
-    которой нет — патчим её."""
+    """ask_forget_confirm обращается к keyboards.forget_confirm_keyboard
+    (keyboards.py:165). Патчим её на MagicMock для изоляции логики —
+    без create=True."""
 
     @pytest.mark.asyncio
     async def test_no_open_appeals_shows_basic_confirm(self) -> None:
@@ -23590,7 +23614,7 @@ class TestAskForgetConfirm:
         event = _make_event()
         user = SimpleNamespace(id=1)
         with patch.object(keyboards, "forget_confirm_keyboard",
-                          MagicMock(return_value=None), create=True), \
+                          MagicMock(return_value=None)), \
              patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.users_service.get_or_create",
                    AsyncMock(return_value=user)), \
@@ -23613,7 +23637,7 @@ class TestAskForgetConfirm:
             created_at=datetime.now(timezone.utc),
         )
         with patch.object(keyboards, "forget_confirm_keyboard",
-                          MagicMock(return_value=None), create=True), \
+                          MagicMock(return_value=None)), \
              patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.users_service.get_or_create",
                    AsyncMock(return_value=user)), \
@@ -23669,7 +23693,7 @@ class TestAskGoodbye:
 
         event = _make_event()
         with patch.object(keyboards, "consent_revoke_confirm_keyboard",
-                          MagicMock(return_value=None), create=True):
+                          MagicMock(return_value=None)):
             await menu.ask_consent_revoke_confirm(event)
         event.bot.send_message.assert_called_once()
 
@@ -23923,8 +23947,8 @@ class TestHandleCallback:
 
 ### `bot/tests/test_handlers_operator_reply.py`
 
-Size: `23858` bytes  
-SHA-256: `c3206660cfeef9b8233e7add648b9587556b66983ac65591b4f99844fa6203bc`
+Size: `23862` bytes  
+SHA-256: `c96fdf2f1d5e02a80b9ca9660d4f6ca43343534ba9ce9de9e5dfc022fc9a7492`
 
 ```python
 """Тесты handlers/operator_reply.py — ответы операторов и intent dedupe.
@@ -23941,34 +23965,27 @@ SHA-256: `c3206660cfeef9b8233e7add648b9587556b66983ac65591b4f99844fa6203bc`
 from __future__ import annotations
 
 import time
-from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
 def _make_event(*, chat_id: int = 100, user_id: int = 7) -> SimpleNamespace:
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    bot.edit_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            sender=SimpleNamespace(user_id=user_id),
-            recipient=SimpleNamespace(chat_id=chat_id),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-            link=None,
-        ),
+    # Обёртка над tests/_helpers.make_event. operator_reply-handler'ы
+    # читают event.message.link и редактируют сообщения — доставляем
+    # link и bot.edit_message поверх базовой фабрики.
+    event = make_event(
+        chat_id=chat_id, user_id=user_id, with_edit_message=True
     )
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
+    event.message.link = None
+    return event
 
 
 def _fresh_appeal(*, user=None, appeal_id: int = 1) -> SimpleNamespace:
@@ -24498,8 +24515,8 @@ class TestHandleCommandReply:
 
 ### `bot/tests/test_handlers_start.py`
 
-Size: `12554` bytes  
-SHA-256: `161418a118f8fc26ca3aa1bd752e254fc05020876fe91d0601130376d5ba0b14`
+Size: `12367` bytes  
+SHA-256: `f478976d82d7a111ab48452fba9eacbb232a86dea7ba1897bb4c5bfe2e2438ec`
 
 ```python
 """Тесты handlers/start.py — команды жителя /start, /help, /menu, /rules,
@@ -24508,33 +24525,26 @@ SHA-256: `161418a118f8fc26ca3aa1bd752e254fc05020876fe91d0601130376d5ba0b14`
 Локально skip без maxapi; в CI работает."""
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
 
-def _make_event(*, chat_id: int = 100, user_id: int = 42, first_name: str = "Иван") -> SimpleNamespace:
-    bot = MagicMock()
-    bot.send_message = AsyncMock()
-    return SimpleNamespace(
-        bot=bot,
-        message=SimpleNamespace(
-            answer=AsyncMock(),
-            sender=SimpleNamespace(user_id=user_id, first_name=first_name),
-            recipient=SimpleNamespace(chat_id=chat_id),
-            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
-        ),
-        user=SimpleNamespace(user_id=user_id, first_name=first_name),
+def _make_event(
+    *, chat_id: int = 100, user_id: int = 42, first_name: str = "Иван"
+) -> SimpleNamespace:
+    # Обёртка над tests/_helpers.make_event — с event.user (start-
+    # handler'ы читают first_name и из sender, и из event.user).
+    return make_event(
+        chat_id=chat_id, user_id=user_id, first_name=first_name,
+        with_user=True,
     )
-
-
-@asynccontextmanager
-async def _fake_session_scope():
-    yield MagicMock()
 
 
 class TestEnsureUser:
