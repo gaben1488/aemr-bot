@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-19 00:48:42 UTC`
+Generated at: `2026-05-19 23:41:35 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `166`
 Max file size: `300 KB`
@@ -13621,7 +13621,7 @@ async def send_or_edit_progress(
 ### `bot/aemr_bot/services/settings_store.py`
 
 Size: `6689` bytes  
-SHA-256: `bc447fcd58cf716e4ccb3b935b9ac953489d921e805856a6746c20dbfb741ddd`
+SHA-256: `624885ecca2a6d00d43b278fd21142007c1b62f3da40dce6f70a1de320343233`
 
 ```python
 import json
@@ -13651,7 +13651,7 @@ DEFAULTS: dict[str, Any] = {
     ),
     "appointment_text": (
         "Приём граждан временно исполняющим полномочия Главы Елизовского "
-        "муниципального округа А.С. Гончаровым осуществляется два раза в месяц "
+        "муниципального района А.С. Гончаровым осуществляется два раза в месяц "
         "(1 и 3 среда каждого месяца) по предварительной записи. "
         "Запись на приём ведётся по номеру телефона 8 (415-31) 7-25-29."
     ),
