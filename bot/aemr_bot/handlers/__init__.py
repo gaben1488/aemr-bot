@@ -8,6 +8,7 @@ from aemr_bot.handlers import (
     start,
 )
 from aemr_bot.services import idempotency
+from aemr_bot.utils import picture_flows
 
 
 class IdempotencyMiddleware(BaseMiddleware):
@@ -64,5 +65,6 @@ def register_handlers(dp: Dispatcher) -> None:
     start.register(dp)
     admin_commands.register(dp)
     broadcast.register(dp)
+    picture_flows.install()
     # Catch-all последним: см. докстринг выше.
     appeal.register(dp)
