@@ -148,7 +148,38 @@ BACKUP_S3_SECRET_KEY=
 
 Если все четыре пустые — только локальные бэкапы в named volume.
 
-### 5.5 Неиспользуемые переменные в прод-`.env`
+### 5.5 Repo-sync (опционально)
+
+Опциональная фича из меню «⚙️ Настройки бота» для роли `it` — синхронизация `seed/runtime_config.json` в репозиторий через автоматический Pull Request. Если не нужна — оставить переменные пустыми, кнопка «🔄 Синхронизировать с репо» покажет понятную ошибку «не настроено», бот при этом не падает.
+
+```dotenv
+GITHUB_PAT=                # fine-grained PAT с правами Contents:RW + PullRequests:RW на репозиторий
+GITHUB_REPO=Gaben1488/aemr-bot
+GITHUB_PR_BASE_BRANCH=main
+COMMIT_AUTHOR_NAME=
+COMMIT_AUTHOR_EMAIL=
+```
+
+Поведение:
+
+- PAT передаётся **только** в HTTP-заголовке `Authorization: Bearer ...` GitHub REST API v3. Не логируется, не появляется в текстах PR или audit_log.
+- Каждое нажатие «Синхронизировать» создаёт **отдельную ветку** `bot-config-sync-YYYYMMDD-HHMMSS` (UTC) и **отдельный PR**. В `main` напрямую не пишется. Никаких force-push, никаких модификаций других файлов кроме целевого `seed/runtime_config.json`.
+- Контент сериализуется с `sort_keys=True` и финальным `\n` — детерминированный diff, никаких «no newline at end of file».
+- При ошибке GitHub API (401/403/404/422 — например, PAT истёк или потерял права) бот возвращает понятный `SyncResult.reason` (`no_token` / `no_base_branch` / `branch_failed` / `write_failed` / `pr_failed`) и сообщает в UI; процесс не падает.
+- После мержа PR в `main` `scripts/auto-deploy.sh` (cron `*/10`) подтянет изменения на VPS в течение 10 минут через `docker compose up -d --build` с health-gate.
+
+Чтобы выпустить PAT: GitHub → Settings → Developer settings → Fine-grained tokens → Generate new token. Repository access: `Gaben1488/aemr-bot`. Permissions: Contents (Read and write) + Pull requests (Read and write). Срок жизни — 90 дней, поставить календарное напоминание на ротацию.
+
+### 5.6 Картинки в рассылках и ответах (без новых env)
+
+Поддержка картинок включена «из коробки» и **не требует** дополнительных переменных окружения:
+
+- В шаге ввода текста `/broadcast` оператор может приложить одну картинку — она сохранится в `Broadcast.attachments JSONB` (миграция 0014) и придёт каждому подписчику.
+- В ответе оператора жителю (свайп-reply или `/reply`) приложенная картинка пересылается через `image_attachments_from_event` → `bot.send_message(attachments=[image, kbd])`.
+
+Лимит — 1 картинка на сообщение (защита от тяжёлых multi-image рассылок). `RELAYABLE_TYPES` в `utils/attachments.py` уже включает `image`, никаких дополнительных permissions у бота не требуется.
+
+### 5.7 Неиспользуемые переменные в прод-`.env`
 
 В прод-`.env` встречаются `COORDINATOR_MAX_USER_ID` и `BACKUP_TMP_DIR` — это **мёртвые переменные**, оставшиеся от ранних версий. Их можно и нужно удалить.
 
