@@ -164,7 +164,7 @@ aemr-bot/
 
 Обработчики команд жителя: `/start`, `/menu`, `/help`, `/rules`, `/policy`, `/subscribe`, `/unsubscribe`, `/forget`, `/export`. Slash-меню MAX очищено; основной интерфейс — кнопки. Главное меню — шесть inline-кнопок: «📝 Написать обращение», «📂 Мои обращения», «🔔 Подписаться/🔕 Отписаться», «🏛 Приём граждан», «ℹ️ Полезная информация», «⚙️ Настройки и помощь». Электронная приёмная находится в «🏛 Приём граждан».
 
-Команды бота в административной группе: `/stats today|week|month` (выгрузка обращений за период в формате XLSX), `/reopen NNN`, `/close NNN`, `/op_help` (закрепляемая памятка с кнопками для операторов), `/reply N <текст>`, `/erase`, `/setting`, `/add_operators`, `/diag`, `/backup`, `/broadcast`.
+Команды бота в административной группе: `/stats [period]` (выгрузка обращений в XLSX за период; допустимые значения `today | week | month | quarter | half_year | year | all`; источник — `services/stats.py::VALID_PERIODS`), `/reopen NNN`, `/close NNN`, `/op_help` (закрепляемая памятка; число кнопок 3 / 5 / 9 — зависит от роли вызвавшего: aemr/egp → 3, coordinator → 5, it → 9), `/reply N <текст>`, `/erase`, `/setting`, `/add_operators`, `/diag`, `/backup`, `/broadcast`.
 
 **PostgreSQL.** Единое хранилище. Полный набор таблиц — в части IV. Индексы: `users.max_user_id` (уникальный), `users.phone_normalized` (после миграции 0003), `events.idempotency_key` (уникальный), `appeals.status`, `appeals.created_at`, `messages.appeal_id`, `messages.created_at`.
 
