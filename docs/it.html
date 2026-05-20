@@ -810,7 +810,7 @@ nano .env</code></pre>
     <li><code>DATABASE_URL</code> — тот же пароль подставить в строку подключения</li>
     <li><code>BOT_MODE=polling</code> — для self-hosted это значение по умолчанию</li>
     <li><code>ADMIN_GROUP_ID</code> — пока пусто; заполнится после шага F</li>
-    <li><code>BOOTSTRAP_IT_MAX_USER_ID</code> и <code>BOOTSTRAP_IT_FULL_NAME</code> — будущий ИТ-оператор; узнаётся через <code>/whoami</code> боту в личке</li>
+    <li><code>BOOTSTRAP_IT_MAX_USER_ID</code> и <code>BOOTSTRAP_IT_FULL_NAME</code> — будущий ИТ-оператор; <code>/whoami</code> работает <strong>только в служебной группе</strong> (в личке у жителя тихо игнорируется — это намеренно), поэтому добавьте бота в группу, попросите будущего ИТ-оператора написать <code>/whoami</code> там и скопируйте <code>max_user_id</code> из ответа</li>
     <li><code>BACKUP_GPG_PASSPHRASE</code> — для production обязательно</li>
   </ul>
 
