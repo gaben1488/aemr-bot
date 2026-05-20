@@ -157,7 +157,7 @@ class TestOperatorsAction:
         assert state is not None
         assert state["step"] == "awaiting_id"
         text = event.bot.send_message.call_args.kwargs["text"]
-        assert "Шаг 1 из 3" in text
+        assert "Шаг 1" in text and "ID оператора" in text
 
     @pytest.mark.asyncio
     async def test_list_empty(self) -> None:
@@ -168,7 +168,7 @@ class TestOperatorsAction:
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_operators.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.admin_operators.operators_service.list_active",
+             patch("aemr_bot.handlers.admin_operators.operators_service.list_all",
                    AsyncMock(return_value=[])), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_operators.run_operators_action(event, "op:opadd:list")
@@ -181,20 +181,22 @@ class TestOperatorsAction:
 
         event = _make_event()
         ops = [
-            SimpleNamespace(max_user_id=1, role="it", full_name="Иванов И.И."),
-            SimpleNamespace(max_user_id=2, role="coordinator", full_name="Петрова А."),
+            SimpleNamespace(max_user_id=1, role="it", full_name="Иванов И.И.", is_active=True),
+            SimpleNamespace(max_user_id=2, role="coordinator", full_name="Петрова А.", is_active=True),
         ]
         with patch("aemr_bot.handlers.admin_operators.ensure_role",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_operators.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.admin_operators.operators_service.list_active",
+             patch("aemr_bot.handlers.admin_operators.operators_service.list_all",
                    AsyncMock(return_value=ops)), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_operators.run_operators_action(event, "op:opadd:list")
+        # После рефакторинга список рендерится кнопками; в тексте теперь
+        # только сводка по числу активных. ФИО уезжают в attachments
+        # (op_operators_list_keyboard).
         text = event.bot.send_message.call_args.kwargs["text"]
-        assert "Иванов" in text
-        assert "Петрова" in text
+        assert "активных" in text or "Операторы" in text
 
     @pytest.mark.asyncio
     async def test_cancel_drops_wizard(self) -> None:
@@ -317,18 +319,29 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_name_self_modification_blocked(self) -> None:
-        """Свою роль через wizard менять нельзя — иначе `it` мог бы
-        случайно понизить себя до viewer и потерять доступ."""
+        """Свою роль через wizard менять нельзя — блокировка теперь
+        срабатывает на шаге подтверждения (op:opadd:confirm), потому
+        что после ввода ФИО показывается экран подтверждения. Тест
+        проверяет именно этот шаг."""
         from aemr_bot.handlers import admin_operators
 
         event = _make_event(user_id=7)
         admin_operators._op_wizard_set(
             7, step="awaiting_name", target_id=7, role="it"
         )
+        # Шаг 1: вводим ФИО — должен показаться экран подтверждения
         result = await admin_operators.handle_operators_wizard_text(
             event, "Сам себя"
         )
         assert result is True
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "Подтверждение" in text
+
+        # Шаг 2: тапаем «Сохранить» — должна сработать защита
+        with patch("aemr_bot.handlers.admin_operators.ensure_role",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await admin_operators.run_operators_action(event, "op:opadd:confirm")
         text = event.bot.send_message.call_args.kwargs["text"]
         assert "Изменить свою" in text
         # Wizard сброшен
@@ -336,6 +349,8 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_name_valid_creates_new_operator(self) -> None:
+        """Создание нового оператора теперь идёт двумя шагами: ввод ФИО
+        → экран подтверждения → тап «Сохранить» → upsert."""
         from aemr_bot.handlers import admin_operators
 
         event = _make_event(user_id=7)
@@ -343,18 +358,32 @@ class TestHandleWizardText:
             7, step="awaiting_name", target_id=42, role="it"
         )
         upsert = AsyncMock()
+        # Шаг 1: ввод ФИО — переход в ready_to_confirm
         with patch("aemr_bot.handlers.admin_operators.session_scope",
+                   _fake_session_scope):
+            result = await admin_operators.handle_operators_wizard_text(
+                event, "Иванова Анна Петровна"
+            )
+        assert result is True
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "Подтверждение" in text  # экран подтверждения
+        state = admin_operators._op_wizard_get(7)
+        assert state is not None
+        assert state["step"] == "ready_to_confirm"
+
+        # Шаг 2: тап «Сохранить» → upsert
+        with patch("aemr_bot.handlers.admin_operators.ensure_role",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_operators.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_operators.operators_service.get",
                    AsyncMock(return_value=None)), \
              patch("aemr_bot.handlers.admin_operators.operators_service.upsert",
                    upsert), \
              patch("aemr_bot.handlers.admin_operators.operators_service.write_audit",
-                   AsyncMock()):
-            result = await admin_operators.handle_operators_wizard_text(
-                event, "Иванова Анна Петровна"
-            )
-        assert result is True
+                   AsyncMock()), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await admin_operators.run_operators_action(event, "op:opadd:confirm")
         upsert.assert_called_once()
         text = event.bot.send_message.call_args.kwargs["text"]
         assert "Добавлено" in text  # новый оператор
@@ -362,6 +391,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_name_valid_updates_existing(self) -> None:
+        """Обновление существующего оператора — тот же двухшаговый flow."""
         from aemr_bot.handlers import admin_operators
 
         event = _make_event(user_id=7)
@@ -369,16 +399,26 @@ class TestHandleWizardText:
             7, step="awaiting_name", target_id=42, role="it"
         )
         existing = SimpleNamespace(id=10)
+
+        # Шаг 1: ввод ФИО
         with patch("aemr_bot.handlers.admin_operators.session_scope",
+                   _fake_session_scope):
+            await admin_operators.handle_operators_wizard_text(
+                event, "Иванова Анна"
+            )
+
+        # Шаг 2: подтверждение
+        with patch("aemr_bot.handlers.admin_operators.ensure_role",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_operators.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_operators.operators_service.get",
                    AsyncMock(return_value=existing)), \
              patch("aemr_bot.handlers.admin_operators.operators_service.upsert",
                    AsyncMock()), \
              patch("aemr_bot.handlers.admin_operators.operators_service.write_audit",
-                   AsyncMock()):
-            await admin_operators.handle_operators_wizard_text(
-                event, "Иванова Анна"
-            )
+                   AsyncMock()), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await admin_operators.run_operators_action(event, "op:opadd:confirm")
         text = event.bot.send_message.call_args.kwargs["text"]
         assert "Обновлено" in text

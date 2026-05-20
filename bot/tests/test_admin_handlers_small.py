@@ -277,6 +277,7 @@ class TestSettingsMenu:
 
     @pytest.mark.asyncio
     async def test_lists_keys(self) -> None:
+        """run_settings_menu теперь зовёт get_dirty_keys для счётчика."""
         from aemr_bot.handlers import admin_settings
 
         event = _make_event()
@@ -284,8 +285,8 @@ class TestSettingsMenu:
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_settings.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.admin_settings.settings_store.list_keys",
-                   AsyncMock(return_value=["topics", "localities"])):
+             patch("aemr_bot.handlers.admin_settings.settings_store.get_dirty_keys",
+                   AsyncMock(return_value=[])):
             await admin_settings.run_settings_menu(event)
         event.bot.send_message.assert_called_once()
 
