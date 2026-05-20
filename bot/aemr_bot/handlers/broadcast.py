@@ -35,6 +35,7 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as operators_service
+from aemr_bot.utils import image_attachments as _image_attachments
 from aemr_bot.utils.background import spawn_background_task
 from aemr_bot.utils.event import (
     ack_callback,
@@ -58,6 +59,10 @@ WizardStep = Literal["awaiting_text", "awaiting_confirm"]
 class _WizardState:
     step: WizardStep
     text: str = ""
+    # Картинки, приложенные оператором к шагу awaiting_text. Сериализованные
+    # dict'ы attachment'ов (тот же формат, что Appeal.attachments). Пустой
+    # список = text-only рассылка. На confirm уходит в Broadcast.attachments.
+    attachments: list = field(default_factory=list)
     expires_at: float = field(
         default_factory=lambda: time.monotonic() + cfg.broadcast_wizard_ttl_sec
     )
@@ -182,6 +187,11 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         return True
 
     state.text = text
+    # Захват картинки оператора, если в том же сообщении была. limit=1
+    # — рассылка с одной картинкой; multi-image отложен до явного UI.
+    state.attachments = _image_attachments.image_attachments_from_event(
+        event, limit=1
+    )
     state.step = "awaiting_confirm"
     state.renew()
     await event.message.answer(
@@ -219,6 +229,7 @@ async def _handle_confirm(event) -> None:
             text=state.text,
             operator_id=op.id,
             subscriber_count=count,
+            attachments=list(state.attachments),
         )
         await operators_service.write_audit(
             session,
@@ -324,13 +335,29 @@ def _format_progress(
     )
 
 
-async def _send_one(bot, max_user_id: int, body_text: str) -> str | None:
-    """Возвращает None при успехе и строку с ошибкой при сбое."""
+async def _send_one(
+    bot,
+    max_user_id: int,
+    body_text: str,
+    *,
+    outbound_images: list = (),
+) -> str | None:
+    """Возвращает None при успехе и строку с ошибкой при сбое.
+
+    `outbound_images` — уже десериализованные maxapi-объекты картинок
+    рассылки (раз-в-цикле через `image_attachments.build_outbound_image_attachments`,
+    не на каждого подписчика). Картинки идут впереди клавиатуры отписки,
+    чтобы UI MAX отрендерил их как content рассылки, а не как payload
+    клавиатуры.
+    """
     try:
         await bot.send_message(
             user_id=max_user_id,
             text=body_text,
-            attachments=[keyboards.broadcast_unsubscribe_keyboard()],
+            attachments=[
+                *outbound_images,
+                keyboards.broadcast_unsubscribe_keyboard(),
+            ],
         )
     except Exception as e:
         # Обрезаем, чтобы поле с ошибкой не разрасталось. Полный стек живёт в логах.
@@ -487,6 +514,7 @@ async def _run_send_loop(
     admin_mid: str | None,
     rate_delay: float,
     progress_step_sec: float,
+    outbound_images: list = (),
 ) -> tuple[int, int, bool]:
     """Цикл отправки рассылки. Возвращает ``(delivered, failed, cancelled)``.
 
@@ -526,7 +554,10 @@ async def _run_send_loop(
 
     try:
         for user_db_id, user_max_user_id in targets:
-            error = await _send_one(bot, user_max_user_id, body)
+            error = await _send_one(
+                bot, user_max_user_id, body,
+                outbound_images=outbound_images,
+            )
             pending.append((user_db_id, error))
             if error is None:
                 delivered += 1
@@ -628,6 +659,19 @@ async def _run_broadcast_impl(
     async with session_scope() as session:
         targets = await broadcasts_service.list_subscriber_targets(session)
 
+    # Картинки рассылки (если оператор прикрепил на confirm-шаге).
+    # Десериализуем ровно один раз: deserialize_for_relay вызывает
+    # pydantic-валидацию, не хотим тратить её на каждого подписчика.
+    # В send-loop уходят уже готовые maxapi-объекты.
+    async with session_scope() as session:
+        broadcast_row = await broadcasts_service.get_by_id(session, broadcast_id)
+    stored_attachments = (
+        broadcast_row.attachments if broadcast_row is not None else []
+    )
+    outbound_images = _image_attachments.build_outbound_image_attachments(
+        stored_attachments
+    )
+
     delivered, failed, cancelled = await _run_send_loop(
         bot,
         broadcast_id=broadcast_id,
@@ -637,6 +681,7 @@ async def _run_broadcast_impl(
         admin_mid=admin_mid,
         rate_delay=rate_delay,
         progress_step_sec=progress_step_sec,
+        outbound_images=outbound_images,
     )
 
     final_status = (
