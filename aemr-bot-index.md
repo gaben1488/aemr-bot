@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-19 23:41:35 UTC`
+Generated at: `2026-05-20 22:13:05 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `166`
+Indexed files: `169`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -33,30 +33,31 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/db/alembic/versions/0010_pg_ops_hardening.py` (4774 bytes)
 - `bot/aemr_bot/db/alembic/versions/0011_wizard_state_persistence.py` (3270 bytes)
 - `bot/aemr_bot/db/alembic/versions/0012_messages_appeal_created_index.py` (1934 bytes)
-- `bot/aemr_bot/db/models.py` (15353 bytes)
+- `bot/aemr_bot/db/alembic/versions/0013_settings_synced_at.py` (2141 bytes)
+- `bot/aemr_bot/db/models.py` (15887 bytes)
 - `bot/aemr_bot/db/session.py` (2764 bytes)
 - `bot/aemr_bot/handlers/__init__.py` (3303 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (12111 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (7569 bytes)
-- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (10062 bytes)
-- `bot/aemr_bot/handlers/admin_commands.py` (17442 bytes)
-- `bot/aemr_bot/handlers/admin_operators.py` (10933 bytes)
+- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (10961 bytes)
+- `bot/aemr_bot/handlers/admin_commands.py` (17506 bytes)
+- `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (11183 bytes)
-- `bot/aemr_bot/handlers/admin_settings.py` (3633 bytes)
+- `bot/aemr_bot/handlers/admin_settings.py` (41211 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
-- `bot/aemr_bot/handlers/appeal.py` (25313 bytes)
+- `bot/aemr_bot/handlers/appeal.py` (25498 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (29804 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (12572 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (29978 bytes)
-- `bot/aemr_bot/handlers/callback_router.py` (7237 bytes)
+- `bot/aemr_bot/handlers/callback_router.py` (8097 bytes)
 - `bot/aemr_bot/handlers/menu.py` (43971 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (30141 bytes)
 - `bot/aemr_bot/handlers/start.py` (16556 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (36159 bytes)
+- `bot/aemr_bot/keyboards.py` (52237 bytes)
 - `bot/aemr_bot/main.py` (18178 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
@@ -69,10 +70,11 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/db_backup.py` (11038 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
 - `bot/aemr_bot/services/idempotency.py` (7885 bytes)
-- `bot/aemr_bot/services/operators.py` (3354 bytes)
+- `bot/aemr_bot/services/operators.py` (6799 bytes)
 - `bot/aemr_bot/services/policy.py` (2979 bytes)
 - `bot/aemr_bot/services/progress.py` (9433 bytes)
-- `bot/aemr_bot/services/settings_store.py` (6689 bytes)
+- `bot/aemr_bot/services/repo_sync.py` (13876 bytes)
+- `bot/aemr_bot/services/settings_store.py` (9777 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (29316 bytes)
@@ -91,8 +93,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_appeal_ops.py` (20004 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
-- `bot/tests/test_admin_handlers_small.py` (21763 bytes)
-- `bot/tests/test_admin_operators.py` (15937 bytes)
+- `bot/tests/test_admin_handlers_small.py` (21842 bytes)
+- `bot/tests/test_admin_operators.py` (18689 bytes)
 - `bot/tests/test_admin_panel.py` (11313 bytes)
 - `bot/tests/test_appeal_dispatcher.py` (22842 bytes)
 - `bot/tests/test_appeal_flow.py` (10960 bytes)
@@ -127,6 +129,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_operator_reply_closed_guard.py` (3049 bytes)
 - `bot/tests/test_progress.py` (10480 bytes)
 - `bot/tests/test_pure_functions.py` (10564 bytes)
+- `bot/tests/test_repo_sync.py` (21989 bytes)
 - `bot/tests/test_services_no_db.py` (9640 bytes)
 - `bot/tests/test_settings_store_validation.py` (2609 bytes)
 - `bot/tests/test_uploads_policy_admin_relay.py` (11634 bytes)
@@ -160,7 +163,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/VPS_SMOKE_CHECKLIST.md` (5736 bytes)
 - `docs/Политика.md` (6113 bytes)
 - `docs/Политика_v2.md` (28793 bytes)
-- `infra/.env.example` (7517 bytes)
+- `infra/.env.example` (9486 bytes)
 - `infra/docker-compose.yml` (5867 bytes)
 - `infra/Dockerfile` (1655 bytes)
 - `infra/nginx/feedback.conf` (976 bytes)
@@ -2131,10 +2134,68 @@ def downgrade() -> None:
     op.drop_index("ix_messages_appeal_created", table_name="messages")
 ```
 
+### `bot/aemr_bot/db/alembic/versions/0013_settings_synced_at.py`
+
+Size: `2141` bytes  
+SHA-256: `b8a9f12c26b984dde99fa63b752b3f22b013cc52e0b3c2698b1dbfb130f54240`
+
+```python
+"""Repo sync metadata + commit author settings.
+
+Revision ID: 0013
+Revises: 0012
+Create Date: 2026-05-20
+
+Добавляет в таблицу `settings` колонку `synced_at` — отметку времени
+последней успешной выгрузки этого ключа в репозиторий через
+services/repo_sync. Это поле читает меню «⚙️ Настройки бота», чтобы
+показывать «есть N несинхронизированных изменений».
+
+Логика:
+- При set_value(key, value) поле обнуляется → ключ считается «грязным»
+  (изменён в БД, но в репо ещё не уехал).
+- После успешного создания PR через services/repo_sync синхронизация
+  ставит synced_at = now() для всех ключей, попавших в коммит.
+- В меню сравнение updated_at vs synced_at даёт счётчик «dirty» ключей.
+
+Параллельно гарантируем, что в DEFAULTS settings_store есть записи для
+commit_author_name и commit_author_email (создаются ленивно через
+set_value при первом обращении пользователя к меню автора, миграция
+ничего не вставляет — это конфиг, а не схема).
+
+Downgrade: дроп колонки. Безопасно — синхронизация всё равно
+переинициализирует synced_at при следующем PR.
+"""
+from typing import Sequence, Union
+
+import sqlalchemy as sa
+from alembic import op
+
+revision: str = "0013"
+down_revision: Union[str, None] = "0012"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    op.add_column(
+        "settings",
+        sa.Column(
+            "synced_at",
+            sa.DateTime(timezone=True),
+            nullable=True,
+        ),
+    )
+
+
+def downgrade() -> None:
+    op.drop_column("settings", "synced_at")
+```
+
 ### `bot/aemr_bot/db/models.py`
 
-Size: `15353` bytes  
-SHA-256: `6f9f5ac69d8a33a9a04ffd6abf9e3c1c97a960c021ae51159c1ae2df0aad5229`
+Size: `15887` bytes  
+SHA-256: `0772a097690abe63daf8cc33fd9828bbf99c69f0daf37a2bf6dc0ff043cf3ef7`
 
 ```python
 from datetime import datetime
@@ -2364,6 +2425,12 @@ class Setting(Base):
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[dict | list | str | int | float | bool | None] = mapped_column(JSONB)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    # Время последней успешной выгрузки этого ключа в репозиторий через
+    # services/repo_sync. NULL = «никогда не выгружался» или «изменён
+    # после последнего PR» — ключ считается «dirty» и попадёт в
+    # следующий PR. См. миграцию 0013_settings_synced_at и
+    # docs/RUNBOOK.md.
+    synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class BroadcastStatus(StrEnum):
@@ -3257,8 +3324,8 @@ def _mask_phone(phone: str | None) -> str:
 
 ### `bot/aemr_bot/handlers/admin_callback_dispatch.py`
 
-Size: `10062` bytes  
-SHA-256: `b07c70c26038490cb664d84b01c7389e4882ca09be893b185bc101f90d93f591`
+Size: `10961` bytes  
+SHA-256: `1edb4194508a2a10c35733d59d8e2b9c039fd3889d320e8a22d099597d28a91f`
 
 ```python
 """Dispatch admin/operator callback-payload'ов (`broadcast:*` / `op:*`).
@@ -3454,10 +3521,26 @@ async def _op_setkey(event, payload: str) -> None:
     await admin_commands.run_settings_action(event, payload)
 
 
+# Все callback'и иерархического меню «Настройки» и карточки оператора
+# идут через те же два диспетчера (run_settings_action / run_operators_action),
+# которые внутри сами разбирают конкретные суффиксы. Это минимизирует
+# изменения в admin_callback_dispatch и сохраняет один-в-один маппинг
+# «префикс → run-функция».
+
+
 _PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[None]]], ...] = (
     ("op:aud:", _op_aud),
+    # Операторы — единое семейство:
     ("op:opadd:", _op_opadd),
+    ("op:opcard:", _op_opadd),
+    ("op:oprole:", _op_opadd),
+    ("op:opchrole:", _op_opadd),
+    ("op:opdeact:", _op_opadd),
+    ("op:opdeact_ok:", _op_opadd),
+    ("op:opreact:", _op_opadd),
+    # Настройки — старый експертный и новый иерархический:
     ("op:setkey:", _op_setkey),
+    ("op:set:", _op_setkey),
 )
 
 
@@ -3495,8 +3578,8 @@ async def dispatch_admin_callback(event, payload: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_commands.py`
 
-Size: `17442` bytes  
-SHA-256: `ee12b167b6868e740e18e5f8f9e1c2c09c5c94e5064a6318e5eec0afd72ebf0c`
+Size: `17506` bytes  
+SHA-256: `3924de3818dd0c22414236012ccbfa3d867b608ea45dc2f5ccc4d1053f2921cb`
 
 ```python
 """Slash-команды оператора в админ-группе.
@@ -3564,6 +3647,7 @@ from aemr_bot.handlers.admin_panel import (
     show_op_menu,
 )
 from aemr_bot.handlers.admin_settings import (
+    handle_settings_edit_text,
     run_settings_action,
     run_settings_menu,
 )
@@ -3605,6 +3689,7 @@ __all__ = [
     "run_operators_action",
     "run_operators_menu",
     # Settings
+    "handle_settings_edit_text",
     "run_settings_action",
     "run_settings_menu",
     # Audience
@@ -3941,22 +4026,39 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/admin_operators.py`
 
-Size: `10933` bytes  
-SHA-256: `644e72b0c7bcfe297fa8e82efcc16cb579cc1f92e71d857f003c3820e94533a7`
+Size: `42465` bytes  
+SHA-256: `1ebf0992eb1ca21f3af1697367db3691415b1cc3a755384d725a9d57f501441b`
 
 ```python
-"""Управление операторами через wizard «👥 Добавить».
+"""Управление операторами через кнопочные wizard'ы.
 
-Выделено из handlers/admin_commands.py (рефакторинг 2026-05-10).
+Сценарии:
 
-Wizard в три шага:
-- awaiting_id   — оператор вводит max_user_id будущего сотрудника
-- awaiting_role — выбор роли через op_role_picker_keyboard
-- awaiting_name — ввод ФИО
+1. ДОБАВЛЕНИЕ ИЗ УЧАСТНИКОВ ГРУППЫ (основной путь).
+   IT-админ открывает «👥 Операторы → ➕ Добавить из участников». Бот
+   вызывает MAX API `get_chat_members(ADMIN_GROUP_ID)`, фильтрует уже
+   зарегистрированных, показывает кнопки. Тап → шаг выбора роли → шаг
+   выбора имени (из MAX-профиля либо ввод полного ФИО) → подтверждение.
 
-State хранится in-memory в _op_wizards с TTL 5 минут. Cross-handler
-доступ (cancel в appeal.py) идёт через .pop() — будет переведён на
-services/wizard_registry в следующих итерациях.
+2. ДОБАВЛЕНИЕ ПО ID ВРУЧНУЮ (fallback).
+   Прежний wizard для случая, когда человека ещё нет в группе (его
+   надо зарегистрировать заранее).
+
+3. КАРТОЧКА ОПЕРАТОРА.
+   Тап по любому оператору в списке → карточка с действиями: смена
+   роли, деактивация, реактивация (для деактивированных).
+
+4. УДАЛЕНИЕ.
+   Через кнопку «🚫 Деактивировать» в карточке — мягкое удаление
+   (is_active=false). Физического DELETE нет: история ответов жителю
+   должна сохраниться по требованиям журналирования 152-ФЗ.
+
+Защиты:
+- Самомодификация (попытка деактивировать или сменить роль себе)
+  блокируется в обработчике.
+- Деактивация единственного активного IT блокируется — иначе можно
+  отрезать организацию от управления.
+- Назначение IT-роли «себе» через wizard блокируется (как и раньше).
 """
 from __future__ import annotations
 
@@ -3968,14 +4070,16 @@ from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.services import operators as operators_service
-from aemr_bot.utils.event import get_user_id, send_or_edit_screen
+from aemr_bot.utils.event import ack_callback, get_user_id, send_or_edit_screen
 
 log = logging.getLogger(__name__)
 
-# Wizard state, in-memory.
-# Шаги: idle → awaiting_id → awaiting_role → awaiting_name. ID и ФИО —
-# текстом, роль — отдельной кнопкой. На каждом шаге доступна «Отмена»;
-# по таймауту 5 минут wizard сбрасывается.
+# Wizard state, in-memory + persist через services/wizard_persist.
+# Шаги:
+#   idle → awaiting_id → picked_id → awaiting_role → picked_role
+#       → awaiting_name (если выбрана ручная правка имени)
+#       → ready_to_confirm → done
+# Wizard допускает «откат» (Изменить роль) — возврат на picked_id.
 _op_wizards: dict[int, dict] = {}
 _OP_WIZARD_TTL_SEC = 300.0
 
@@ -3995,9 +4099,6 @@ def _op_wizard_set(operator_id: int, **kwargs) -> dict:
     state.update(kwargs)
     state["expires_at"] = _time_op.monotonic() + _OP_WIZARD_TTL_SEC
     _op_wizards[operator_id] = state
-    # Best-effort persist в БД, чтобы wizard переживал рестарт бота
-    # (миграция 0011 + services/wizard_persist). expires_at — monotonic
-    # offset, в БД не нужен (там свой DateTime ttl).
     snapshot = {k: v for k, v in state.items() if k != "expires_at"}
     from aemr_bot.services import wizard_registry as _wr
     _wr.schedule_persist_op(operator_id, snapshot)
@@ -4010,9 +4111,42 @@ def _op_wizard_drop(operator_id: int) -> None:
     _wr.schedule_persist_op(operator_id, None)
 
 
+# ──────────────────────────────────────────────────────────────────────
+# Хелперы
+# ──────────────────────────────────────────────────────────────────────
+
+
+async def _safe_get_chat_members(bot) -> list:
+    """Безопасная обёртка над get_chat_members: на любой ошибке
+    возвращает пустой список, чтобы UI откатился к ручному вводу ID
+    без падения сценария."""
+    try:
+        result = await bot.get_chat_members(chat_id=cfg.admin_group_id)
+        if hasattr(result, "members"):
+            return list(result.members or [])
+        return []
+    except Exception as exc:
+        log.warning("get_chat_members failed: %s", exc)
+        return []
+
+
+def _full_name_from_member(member) -> str:
+    """Сборка ФИО из first_name + last_name. Если в MAX-профиле есть
+    только first_name, возвращаем только его."""
+    first = (getattr(member, "first_name", None) or "").strip()
+    last = (getattr(member, "last_name", None) or "").strip()
+    if first and last:
+        return f"{first} {last}"
+    return first or last or f"User {getattr(member, 'user_id', '?')}"
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Точка входа в меню «👥 Операторы»
+# ──────────────────────────────────────────────────────────────────────
+
+
 async def run_operators_menu(event) -> None:
-    """Меню «👥 Операторы» в админ-панели для роли it. Точка входа в
-    кнопочный wizard добавления и просмотр списка."""
+    """Меню «👥 Операторы» в админ-панели для роли it. Точка входа."""
     from aemr_bot import keyboards as kbds
 
     if not await ensure_role(event, OperatorRole.IT):
@@ -4023,20 +4157,21 @@ async def run_operators_menu(event) -> None:
         text=(
             "👥 Управление операторами\n"
             "──────────\n"
-            "Здесь можно зарегистрировать нового сотрудника или посмотреть "
-            "текущий список. Снять оператора с роли пока можно только через "
-            "/add_operators с тем же max_user_id и нужной ролью."
+            "📋 Список — все операторы с возможностью смены роли\n"
+            "    и деактивации через карточку.\n\n"
+            "➕ Из участников группы — подобрать из тех, кто уже\n"
+            "    в служебном чате (одним тапом, без /whoami).\n\n"
+            "🔢 По ID вручную — если человека ещё нет в группе."
         ),
         attachments=[kbds.op_operators_menu_keyboard()],
     )
 
 
 async def run_operators_action(event, payload: str) -> None:
-    """Подменю «Операторы»: добавить, список, отмена. payload вида
-    `op:opadd:start` / `op:opadd:role:N` / `op:opadd:cancel` /
-    `op:opadd:list`."""
+    """Главный диспетчер callback'ов с префиксом `op:opadd:*`,
+    `op:opcard:*`, `op:oprole:*`, `op:opchrole:*`, `op:opdeact*`,
+    `op:opreact:*`."""
     from aemr_bot import keyboards as kbds
-    from aemr_bot.utils.event import ack_callback
 
     if not await ensure_role(event, OperatorRole.IT):
         return
@@ -4044,88 +4179,817 @@ async def run_operators_action(event, payload: str) -> None:
     if operator_id is None:
         await ack_callback(event)
         return
+
+    # Карточка оператора
+    if payload.startswith("op:opcard:"):
+        await _show_operator_card(event, payload, operator_id)
+        return
+
+    # Смена роли — открыть picker
+    if payload.startswith("op:oprole:"):
+        await _show_role_change(event, payload, operator_id)
+        return
+
+    # Применить смену роли
+    if payload.startswith("op:opchrole:"):
+        await _apply_role_change(event, payload, operator_id)
+        return
+
+    # Деактивация — подтверждение
+    if payload.startswith("op:opdeact_ok:"):
+        await _apply_deactivate(event, payload, operator_id)
+        return
+    if payload.startswith("op:opdeact:"):
+        await _show_deactivate_confirm(event, payload, operator_id)
+        return
+
+    # Реактивация
+    if payload.startswith("op:opreact:"):
+        await _apply_reactivate(event, payload, operator_id)
+        return
+
+    # Wizard добавления оператора — старая семья callback'ов «op:opadd:*»
     suffix = payload.removeprefix("op:opadd:")
     await ack_callback(event)
-    if suffix == "start":
-        # Сбрасываем чужие wizard'ы и reply-intent этого оператора.
-        from aemr_bot.handlers import broadcast as broadcast_handler
-        from aemr_bot.handlers import operator_reply as op_reply
 
-        broadcast_handler._wizards.pop(operator_id, None)
-        op_reply.drop_reply_intent(operator_id)
-
-        _op_wizard_set(operator_id, step="awaiting_id")
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=(
-                "👥 Шаг 1 из 3 — введите max_user_id будущего оператора.\n"
-                "Узнать его — попросите человека написать боту в личке /whoami "
-                "и прислать вам число из ответа."
-            ),
-            attachments=[kbds.op_add_cancel_keyboard()],
-        )
-        return
     if suffix == "list":
-        async with session_scope() as session:
-            ops = await operators_service.list_active(session)
-        if not ops:
+        await _show_operators_list(event)
+        return
+    if suffix == "from_group":
+        await _show_from_group(event, operator_id)
+        return
+    if suffix.startswith("pick:"):
+        try:
+            picked_user_id = int(suffix.removeprefix("pick:"))
+        except ValueError:
             await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text="Список операторов пуст.",
+                event, chat_id=cfg.admin_group_id,
+                text="Некорректный выбор.",
                 attachments=[kbds.op_back_to_operators_keyboard()],
             )
             return
-        lines = ["👥 Активные операторы:"]
-        for op in ops:
-            lines.append(f"• #{op.max_user_id} · {op.role} · {op.full_name}")
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text="\n".join(lines),
-            attachments=[kbds.op_back_to_operators_keyboard()],
-        )
+        await _start_add_with_picked(event, operator_id, picked_user_id)
+        return
+    if suffix == "start":
+        await _start_manual_add(event, operator_id)
         return
     if suffix == "cancel":
         _op_wizard_drop(operator_id)
         await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
+            event, chat_id=cfg.admin_group_id,
             text="Регистрация оператора отменена.",
             attachments=[kbds.op_back_to_operators_keyboard()],
         )
         return
     if suffix.startswith("role:"):
-        role = suffix.split(":", 1)[1]
-        valid = {r.value for r in OperatorRole}
-        if role not in valid:
-            await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text=f"Роль «{role}» неизвестна.",
-                attachments=[kbds.op_back_to_operators_keyboard()],
-            )
-            return
-        state = _op_wizard_get(operator_id)
-        if state is None or state.get("step") != "awaiting_role":
-            await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text="Мастер закрыт. Откройте «👥 Операторы → Добавить» заново.",
-                attachments=[kbds.op_back_to_operators_keyboard()],
-            )
-            return
-        _op_wizard_set(operator_id, role=role, step="awaiting_name")
+        await _apply_role_choice(event, suffix, operator_id)
+        return
+    if suffix == "name_keep":
+        await _apply_name_keep(event, operator_id)
+        return
+    if suffix == "name_edit":
+        await _start_name_edit(event, operator_id)
+        return
+    if suffix == "edit_role":
+        await _back_to_role_pick(event, operator_id)
+        return
+    if suffix == "confirm":
+        await _confirm_save(event, operator_id)
+        return
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Список и карточка оператора
+# ──────────────────────────────────────────────────────────────────────
+
+
+async def _show_operators_list(event) -> None:
+    from aemr_bot import keyboards as kbds
+
+    async with session_scope() as session:
+        ops = await operators_service.list_all(session)
+    if not ops:
         await send_or_edit_screen(
             event,
             chat_id=cfg.admin_group_id,
+            text="Список операторов пуст.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    active_count = sum(1 for op in ops if op.is_active)
+    inactive_count = len(ops) - active_count
+    header = f"👥 Операторы: активных {active_count}"
+    if inactive_count:
+        header += f", деактивированных {inactive_count}"
+    rows = [(op.max_user_id, op.full_name, op.role, op.is_active) for op in ops]
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=header + "\nТапните оператора, чтобы открыть карточку.",
+        attachments=[kbds.op_operators_list_keyboard(rows)],
+    )
+
+
+async def _show_operator_card(event, payload: str, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+
+    try:
+        target_id = int(payload.removeprefix("op:opcard:"))
+    except ValueError:
+        await ack_callback(event)
+        return
+    await ack_callback(event)
+    async with session_scope() as session:
+        op = await operators_service.get_any(session, target_id)
+        active_it_count = await operators_service.count_active_by_role(
+            session, OperatorRole.IT
+        )
+    if op is None:
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=f"Оператор с id={target_id} не найден.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    is_self = op.max_user_id == operator_id
+    # Защита: единственного IT нельзя деактивировать. Если оператор —
+    # IT и других активных IT нет, can_deactivate=False.
+    can_deactivate = True
+    if op.is_active and op.role == OperatorRole.IT.value and active_it_count <= 1:
+        can_deactivate = False
+
+    status_line = "✅ активен" if op.is_active else "💤 деактивирован"
+    extra: list[str] = []
+    if is_self:
+        extra.append("⚠️ Это вы. Себя через меню изменить нельзя.")
+    if op.is_active and op.role == OperatorRole.IT.value and active_it_count <= 1:
+        extra.append(
+            "⚠️ Это единственный активный IT-оператор — деактивация заблокирована."
+        )
+    lines = [
+        f"👤 {op.full_name}",
+        "──────────",
+        f"ID:       {op.max_user_id}",
+        f"Роль:     {op.role}",
+        f"Статус:   {status_line}",
+        f"Добавлен: {op.created_at.strftime('%d.%m.%Y')}" if op.created_at else "",
+    ]
+    if extra:
+        lines.append("")
+        lines.extend(extra)
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text="\n".join(line for line in lines if line),
+        attachments=[
+            kbds.op_operator_card_keyboard(
+                op.max_user_id,
+                is_active=op.is_active,
+                is_self=is_self,
+                can_deactivate=can_deactivate,
+            )
+        ],
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Смена роли
+# ──────────────────────────────────────────────────────────────────────
+
+
+async def _show_role_change(event, payload: str, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+
+    try:
+        target_id = int(payload.removeprefix("op:oprole:"))
+    except ValueError:
+        await ack_callback(event)
+        return
+    await ack_callback(event)
+    if target_id == operator_id:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Изменить свою роль через меню нельзя.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    async with session_scope() as session:
+        op = await operators_service.get_any(session, target_id)
+    if op is None or not op.is_active:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Оператор не найден или деактивирован.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=(
+            f"✏️ Смена роли: {op.full_name}\n"
+            f"Текущая роль: {op.role}\n\n"
+            f"Выберите новую:"
+        ),
+        attachments=[kbds.op_operator_role_change_keyboard(op.max_user_id, op.role)],
+    )
+
+
+async def _apply_role_change(event, payload: str, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+
+    rest = payload.removeprefix("op:opchrole:")
+    parts = rest.split(":", 1)
+    if len(parts) != 2:
+        await ack_callback(event)
+        return
+    try:
+        target_id = int(parts[0])
+    except ValueError:
+        await ack_callback(event)
+        return
+    new_role_value = parts[1]
+    await ack_callback(event)
+    valid_roles = {r.value for r in OperatorRole}
+    if new_role_value not in valid_roles:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=f"Роль «{new_role_value}» неизвестна.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    if target_id == operator_id:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Изменить свою роль нельзя.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    async with session_scope() as session:
+        op = await operators_service.get_any(session, target_id)
+        if op is None or not op.is_active:
+            await send_or_edit_screen(
+                event, chat_id=cfg.admin_group_id,
+                text="Оператор не найден или деактивирован.",
+                attachments=[kbds.op_back_to_operators_keyboard()],
+            )
+            return
+        # Если меняем IT на не-IT, нужно убедиться, что есть ещё хотя бы
+        # один активный IT — иначе организация останется без IT-управления.
+        if op.role == OperatorRole.IT.value and new_role_value != OperatorRole.IT.value:
+            active_it = await operators_service.count_active_by_role(
+                session, OperatorRole.IT
+            )
+            if active_it <= 1:
+                await send_or_edit_screen(
+                    event, chat_id=cfg.admin_group_id,
+                    text=(
+                        "❌ Нельзя забрать IT-роль у единственного активного "
+                        "IT-оператора. Сначала добавьте второго IT, потом "
+                        "повторите смену роли."
+                    ),
+                    attachments=[kbds.op_back_to_operators_keyboard()],
+                )
+                return
+        old_role = op.role
+        await operators_service.change_role(
+            session, target_id, OperatorRole(new_role_value)
+        )
+        await operators_service.write_audit(
+            session,
+            operator_max_user_id=operator_id,
+            action="operator_role_change",
+            target=f"user max_id={target_id}",
+            details={"old_role": old_role, "new_role": new_role_value},
+        )
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"✅ Роль изменена: {op.full_name}\n"
+            f"{old_role} → {new_role_value}"
+        ),
+        attachments=[kbds.op_back_to_operators_keyboard()],
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Деактивация / Реактивация
+# ──────────────────────────────────────────────────────────────────────
+
+
+async def _show_deactivate_confirm(event, payload: str, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+
+    try:
+        target_id = int(payload.removeprefix("op:opdeact:"))
+    except ValueError:
+        await ack_callback(event)
+        return
+    await ack_callback(event)
+    if target_id == operator_id:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Себя деактивировать нельзя.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    async with session_scope() as session:
+        op = await operators_service.get(session, target_id)
+        if op is None:
+            await send_or_edit_screen(
+                event, chat_id=cfg.admin_group_id,
+                text="Активный оператор не найден.",
+                attachments=[kbds.op_back_to_operators_keyboard()],
+            )
+            return
+        active_it = await operators_service.count_active_by_role(
+            session, OperatorRole.IT
+        )
+    if op.role == OperatorRole.IT.value and active_it <= 1:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
             text=(
-                f"👥 Шаг 3 из 3 — роль {role} выбрана. Теперь введите ФИО "
-                f"оператора одним сообщением. Например: «Иванова Анна Петровна»."
+                "❌ Нельзя деактивировать единственного активного IT.\n"
+                "Сначала добавьте второго IT-оператора."
+            ),
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"⚠️ Деактивировать оператора?\n"
+            f"──────────\n"
+            f"{op.full_name} ({op.role})\n\n"
+            f"Сотрудник потеряет доступ к командам бота.\n"
+            f"Данные сохранятся — при необходимости его\n"
+            f"можно будет восстановить через карточку."
+        ),
+        attachments=[kbds.op_operator_deactivate_confirm_keyboard(op.max_user_id)],
+    )
+
+
+async def _apply_deactivate(event, payload: str, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+
+    try:
+        target_id = int(payload.removeprefix("op:opdeact_ok:"))
+    except ValueError:
+        await ack_callback(event)
+        return
+    await ack_callback(event)
+    if target_id == operator_id:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Себя деактивировать нельзя.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    async with session_scope() as session:
+        op = await operators_service.get(session, target_id)
+        if op is None:
+            await send_or_edit_screen(
+                event, chat_id=cfg.admin_group_id,
+                text="Активный оператор не найден.",
+                attachments=[kbds.op_back_to_operators_keyboard()],
+            )
+            return
+        if op.role == OperatorRole.IT.value:
+            active_it = await operators_service.count_active_by_role(
+                session, OperatorRole.IT
+            )
+            if active_it <= 1:
+                await send_or_edit_screen(
+                    event, chat_id=cfg.admin_group_id,
+                    text="❌ Нельзя деактивировать единственного активного IT.",
+                    attachments=[kbds.op_back_to_operators_keyboard()],
+                )
+                return
+        saved_name = op.full_name
+        saved_role = op.role
+        await operators_service.deactivate(session, target_id)
+        await operators_service.write_audit(
+            session,
+            operator_max_user_id=operator_id,
+            action="operator_deactivate",
+            target=f"user max_id={target_id}",
+            details={"role": saved_role, "full_name": saved_name},
+        )
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=f"🚫 Деактивирован: {saved_name} ({saved_role})",
+        attachments=[kbds.op_back_to_operators_keyboard()],
+    )
+
+
+async def _apply_reactivate(event, payload: str, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+
+    try:
+        target_id = int(payload.removeprefix("op:opreact:"))
+    except ValueError:
+        await ack_callback(event)
+        return
+    await ack_callback(event)
+    async with session_scope() as session:
+        op = await operators_service.get_any(session, target_id)
+        if op is None:
+            await send_or_edit_screen(
+                event, chat_id=cfg.admin_group_id,
+                text="Оператор не найден.",
+                attachments=[kbds.op_back_to_operators_keyboard()],
+            )
+            return
+        if op.is_active:
+            await send_or_edit_screen(
+                event, chat_id=cfg.admin_group_id,
+                text="Оператор уже активен.",
+                attachments=[kbds.op_back_to_operators_keyboard()],
+            )
+            return
+        await operators_service.upsert(
+            session,
+            max_user_id=op.max_user_id,
+            full_name=op.full_name,
+            role=OperatorRole(op.role),
+        )
+        await operators_service.write_audit(
+            session,
+            operator_max_user_id=operator_id,
+            action="operator_reactivate",
+            target=f"user max_id={op.max_user_id}",
+            details={"role": op.role, "full_name": op.full_name},
+        )
+        saved_name = op.full_name
+        saved_role = op.role
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=f"🔄 Реактивирован: {saved_name} ({saved_role})",
+        attachments=[kbds.op_back_to_operators_keyboard()],
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Добавление из участников группы
+# ──────────────────────────────────────────────────────────────────────
+
+
+async def _show_from_group(event, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+
+    members = await _safe_get_chat_members(event.bot)
+    if not members:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=(
+                "Не удалось получить список участников группы.\n"
+                "Используйте «🔢 По ID вручную»."
+            ),
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+
+    # Мапа уже зарегистрированных
+    async with session_scope() as session:
+        existing = await operators_service.list_all(session)
+    by_max_id = {op.max_user_id: op for op in existing}
+
+    candidates: list[tuple[int, str, str | None]] = []
+    bot_self_id = getattr(getattr(event.bot, "me", None), "user_id", None)
+    for m in members:
+        user_id = getattr(m, "user_id", None)
+        if user_id is None:
+            continue
+        if getattr(m, "is_bot", False) or user_id == bot_self_id:
+            continue
+        full_name = _full_name_from_member(m)
+        existing_op = by_max_id.get(user_id)
+        if existing_op is not None and existing_op.is_active:
+            label = f"{full_name} · уже оператор ({existing_op.role})"
+            candidates.append((user_id, label, existing_op.role))
+        elif user_id == operator_id:
+            label = f"{full_name} (вы) — уже оператор"
+            candidates.append((user_id, label, "self"))
+        else:
+            candidates.append((user_id, full_name, None))
+
+    if not candidates:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="В группе нет участников, кроме бота.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+
+    addable = sum(1 for _, _, hint in candidates if hint is None)
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"👥 Кого зарегистрировать?\n"
+            f"──────────\n"
+            f"Участников группы: {len(candidates)}\n"
+            f"Доступно для добавления: {addable}\n\n"
+            f"Тапните по человеку для добавления, или\n"
+            f"по уже-оператору — чтобы открыть карточку."
+        ),
+        attachments=[kbds.op_from_group_keyboard(candidates)],
+    )
+
+
+async def _start_add_with_picked(
+    event, operator_id: int, picked_user_id: int
+) -> None:
+    """Пользователь выбрал участника из группы. Подтягиваем профиль
+    из MAX и переходим к выбору роли."""
+    from aemr_bot import keyboards as kbds
+
+    if picked_user_id == operator_id:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Себя через меню добавить/изменить нельзя.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+
+    # Тянем профиль из группы для имени
+    suggested_name: str | None = None
+    try:
+        member = await event.bot.get_chat_member(
+            chat_id=cfg.admin_group_id, user_id=picked_user_id
+        )
+        if member is not None:
+            suggested_name = _full_name_from_member(member)
+    except Exception as exc:
+        log.warning("get_chat_member failed for %s: %s", picked_user_id, exc)
+
+    _op_wizard_set(
+        operator_id,
+        step="awaiting_role",
+        target_id=picked_user_id,
+        suggested_name=suggested_name,
+        source="group",
+    )
+    extra = (
+        f"Имя из MAX: {suggested_name}\n"
+        if suggested_name else
+        "Имя из MAX недоступно — введёте вручную позже.\n"
+    )
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"👥 Шаг 2 — выбор роли\n"
+            f"──────────\n"
+            f"ID:  {picked_user_id}\n"
+            f"{extra}\n"
+            f"Выберите роль:"
+        ),
+        attachments=[kbds.op_role_picker_keyboard()],
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Добавление по ID вручную (старый wizard)
+# ──────────────────────────────────────────────────────────────────────
+
+
+async def _start_manual_add(event, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+
+    # Сбрасываем чужие wizard'ы и reply-intent этого оператора
+    from aemr_bot.handlers import broadcast as broadcast_handler
+    from aemr_bot.handlers import operator_reply as op_reply
+
+    broadcast_handler._wizards.pop(operator_id, None)
+    op_reply.drop_reply_intent(operator_id)
+
+    _op_wizard_set(operator_id, step="awaiting_id", source="manual")
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=(
+            "👥 Шаг 1 — ID оператора\n"
+            "──────────\n"
+            "Введите max_user_id будущего оператора.\n\n"
+            "Узнать ID можно несколькими способами:\n"
+            "• попросите человека добавиться в служебную\n"
+            "  группу и выберите «➕ Из участников»;\n"
+            "• попросите написать боту в личке /whoami\n"
+            "  и прислать вам число из ответа."
+        ),
+        attachments=[kbds.op_add_cancel_keyboard()],
+    )
+
+
+async def _apply_role_choice(event, suffix: str, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+
+    role_value = suffix.removeprefix("role:")
+    valid = {r.value for r in OperatorRole}
+    if role_value not in valid:
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=f"Роль «{role_value}» неизвестна.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    state = _op_wizard_get(operator_id)
+    if state is None or state.get("step") != "awaiting_role":
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Мастер закрыт. Откройте «👥 Операторы → ➕» заново.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    _op_wizard_set(operator_id, role=role_value, step="picked_role")
+    suggested = state.get("suggested_name")
+    if suggested:
+        # Есть имя из MAX — предложить «как есть» или ввести вручную
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=(
+                f"👥 Шаг 3 — ФИО для журнала\n"
+                f"──────────\n"
+                f"Роль: {role_value} ✅\n"
+                f"Имя из MAX: {suggested}\n\n"
+                f"Сохранить как есть или указать полное\n"
+                f"ФИО с отчеством?"
+            ),
+            attachments=[kbds.op_add_name_choice_keyboard()],
+        )
+    else:
+        # Имени нет — сразу запрашиваем текстом
+        _op_wizard_set(operator_id, step="awaiting_name")
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=(
+                f"👥 Шаг 3 — ФИО\n"
+                f"──────────\n"
+                f"Роль {role_value} выбрана.\n\n"
+                f"Введите ФИО оператора одним сообщением.\n"
+                f"Пример: «Иванова Анна Петровна»"
             ),
             attachments=[kbds.op_add_cancel_keyboard()],
         )
+
+
+async def _apply_name_keep(event, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+
+    state = _op_wizard_get(operator_id)
+    if state is None or state.get("step") != "picked_role":
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Мастер закрыт.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    suggested = state.get("suggested_name")
+    if not suggested:
+        await _start_name_edit(event, operator_id)
+        return
+    _op_wizard_set(operator_id, full_name=suggested, step="ready_to_confirm")
+    await _show_add_confirm(event, operator_id)
+
+
+async def _start_name_edit(event, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+
+    state = _op_wizard_get(operator_id)
+    if state is None:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Мастер закрыт.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    _op_wizard_set(operator_id, step="awaiting_name")
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            "👥 Шаг 3 — ФИО полностью\n"
+            "──────────\n"
+            "Введите ФИО оператора одним сообщением.\n"
+            "Пример: «Иванова Анна Петровна»"
+        ),
+        attachments=[kbds.op_add_cancel_keyboard()],
+    )
+
+
+async def _back_to_role_pick(event, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+
+    state = _op_wizard_get(operator_id)
+    if state is None:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Мастер закрыт.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    _op_wizard_set(operator_id, step="awaiting_role")
+    target_id = state.get("target_id")
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"👥 Шаг 2 — выбор роли\n"
+            f"──────────\n"
+            f"ID: {target_id}\n\n"
+            f"Выберите роль:"
+        ),
+        attachments=[kbds.op_role_picker_keyboard()],
+    )
+
+
+async def _show_add_confirm(event, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+
+    state = _op_wizard_get(operator_id)
+    if state is None:
+        return
+    target_id = state.get("target_id")
+    role = state.get("role")
+    full_name = state.get("full_name")
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"👥 Подтверждение\n"
+            f"──────────\n"
+            f"ID:   {target_id}\n"
+            f"Роль: {role}\n"
+            f"ФИО:  {full_name}\n\n"
+            f"Добавить оператора?"
+        ),
+        attachments=[kbds.op_add_confirm_keyboard()],
+    )
+
+
+async def _confirm_save(event, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+
+    state = _op_wizard_get(operator_id)
+    if state is None:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Мастер закрыт.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    try:
+        target_id = int(state["target_id"])
+    except (KeyError, ValueError, TypeError):
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="ID не задан, начните заново.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    role = state.get("role")
+    full_name = state.get("full_name")
+    if not role or not full_name:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Не хватает данных, начните заново.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    if target_id == operator_id:
+        _op_wizard_drop(operator_id)
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Изменить свою роль через мастера нельзя.",
+            attachments=[kbds.op_back_to_operators_keyboard()],
+        )
+        return
+    async with session_scope() as session:
+        existed = await operators_service.get(session, target_id) is not None
+        await operators_service.upsert(
+            session,
+            max_user_id=target_id,
+            full_name=full_name,
+            role=OperatorRole(role),
+        )
+        await operators_service.write_audit(
+            session,
+            operator_max_user_id=operator_id,
+            action="operator_upsert",
+            target=f"user max_id={target_id}",
+            details={"role": role, "full_name": full_name, "source": state.get("source", "?")},
+        )
+    _op_wizard_drop(operator_id)
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"✅ {'Обновлено' if existed else 'Добавлено'}:\n"
+            f"{full_name} · {role} · #{target_id}"
+        ),
+        attachments=[kbds.op_add_done_keyboard()],
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Перехватчик текстовых сообщений wizard'а
+# ──────────────────────────────────────────────────────────────────────
 
 
 async def handle_operators_wizard_text(event, text: str) -> bool:
@@ -4151,10 +5015,14 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
             )
             return True
         _op_wizard_set(operator_id, target_id=target_id, step="awaiting_role")
-
         await event.bot.send_message(
             chat_id=cfg.admin_group_id,
-            text=f"👥 Шаг 2 из 3 — id {target_id} принят. Выберите роль:",
+            text=(
+                f"👥 Шаг 2 — выбор роли\n"
+                f"──────────\n"
+                f"ID:  {target_id}\n\n"
+                f"Выберите роль:"
+            ),
             attachments=[kbds.op_role_picker_keyboard()],
         )
         return True
@@ -4167,41 +5035,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
                 attachments=[kbds.op_add_cancel_keyboard()],
             )
             return True
-        target_id = int(state["target_id"])
-        role = state["role"]
-        # Самомодификация через wizard заблокирована, как и в /add_operators.
-        if target_id == operator_id:
-            _op_wizard_drop(operator_id)
-            await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text="Изменить свою роль через мастера нельзя.",
-                attachments=[kbds.op_back_to_operators_keyboard()],
-            )
-            return True
-        async with session_scope() as session:
-            existed = await operators_service.get(session, target_id) is not None
-            await operators_service.upsert(
-                session,
-                max_user_id=target_id,
-                full_name=full_name,
-                role=OperatorRole(role),
-            )
-            await operators_service.write_audit(
-                session,
-                operator_max_user_id=operator_id,
-                action="operator_upsert",
-                target=f"user max_id={target_id}",
-                details={"role": role, "full_name": full_name},
-            )
-        _op_wizard_drop(operator_id)
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=(
-                f"✅ {'Обновлено' if existed else 'Добавлено'}: "
-                f"{full_name} · {role} · #{target_id}"
-            ),
-            attachments=[kbds.op_back_to_operators_keyboard()],
-        )
+        _op_wizard_set(operator_id, full_name=full_name, step="ready_to_confirm")
+        await _show_add_confirm(event, operator_id)
         return True
     return False
 ```
@@ -4500,63 +5335,831 @@ async def _do_backup(event) -> None:
 
 ### `bot/aemr_bot/handlers/admin_settings.py`
 
-Size: `3633` bytes  
-SHA-256: `7c36ba390cfde6cd83950a138faad33b24b598fdb6b63c983d3248b7681cab60`
+Size: `41211` bytes  
+SHA-256: `149eff286852d8ecc46f2531dd99dc0e9dc88c112cb5da9a80b153706e083899`
 
 ```python
-"""Управление настройками бота через /setting и кнопочный меню.
+"""Иерархическое меню «⚙️ Настройки бота».
 
-Выделено из handlers/admin_commands.py (рефакторинг 2026-05-10).
+Покрывает все ключи settings_store через структурированную навигацию:
+- Тексты для жителей (welcome_text, consent_text, appointment_text)
+- Внешние ссылки (4 URL)
+- Списки (topics, localities) — CRUD по строкам
+- Объекты (emergency_contacts, transport_dispatcher_contacts) — CRUD
+- Автор коммитов от бота
+- Создание PR с изменениями (через services/repo_sync)
+
+Команда /setting сохраняется как fallback для экспертных случаев
+(длинные JSON-структуры, ключи без UI), но через меню больше не
+требуется.
+
+Inline-редактирование текстов и URL идёт через TTL-кэш ожидаемого
+ввода (_edit_intents). Когда IT-админ присылает следующее текстовое
+сообщение в админ-группе — оно перехватывается и применяется как
+новое значение указанного ключа.
 """
 from __future__ import annotations
 
 import json
 import logging
+import os
+import time as _time
+from typing import Any
 
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.services import settings_store
-from aemr_bot.utils.event import send_or_edit_screen
+from aemr_bot.utils.event import ack_callback, get_user_id, send_or_edit_screen
 
 log = logging.getLogger(__name__)
 
+# Intent: «следующее текстовое сообщение этого оператора — новое
+# значение для ключа». TTL 5 минут (см. _EDIT_INTENT_TTL_SEC).
+# operator_max_user_id -> {"key": str, "kind": str, "expires_at": float, "extra": dict}
+_edit_intents: dict[int, dict] = {}
+_EDIT_INTENT_TTL_SEC = 300.0
+
+
+def _intent_set(operator_id: int, **kwargs) -> None:
+    state = dict(kwargs)
+    state["expires_at"] = _time.monotonic() + _EDIT_INTENT_TTL_SEC
+    _edit_intents[operator_id] = state
+
+
+def _intent_get(operator_id: int) -> dict | None:
+    state = _edit_intents.get(operator_id)
+    if state is None:
+        return None
+    if _time.monotonic() > state.get("expires_at", 0):
+        _edit_intents.pop(operator_id, None)
+        return None
+    return state
+
+
+def _intent_drop(operator_id: int) -> None:
+    _edit_intents.pop(operator_id, None)
+
+
+def _render_value(value: Any, *, limit: int = 1500) -> str:
+    if value is None:
+        return "—"
+    if isinstance(value, str):
+        return value if len(value) <= limit else value[:limit] + "\n…(обрезано)"
+    rendered = json.dumps(value, ensure_ascii=False, indent=2)
+    return rendered if len(rendered) <= limit else rendered[:limit] + "\n…(обрезано)"
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Точка входа
+# ──────────────────────────────────────────────────────────────────────
+
 
 async def run_settings_menu(event) -> None:
-    """Меню «⚙️ Настройки бота» в админ-панели для роли it. Список ключей
-    с возможностью посмотреть текущее значение и подсказать команду
-    для редактирования."""
+    """Главное меню «⚙️ Настройки бота» для роли it."""
     from aemr_bot import keyboards as kbds
 
     if not await ensure_role(event, OperatorRole.IT):
         return
     async with session_scope() as session:
-        keys = await settings_store.list_keys(session)
+        dirty = await settings_store.get_dirty_keys(session)
+    dirty_count = len(dirty)
+    extra = ""
+    if dirty_count > 0:
+        keys_preview = ", ".join(dirty[:5])
+        if len(dirty) > 5:
+            keys_preview += f" и ещё {len(dirty) - 5}"
+        extra = (
+            f"\n\n📌 Не выгружено в репо: {dirty_count}\n"
+            f"({keys_preview})"
+        )
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
         text=(
             "⚙️ Настройки бота\n"
             "──────────\n"
-            "Тапните ключ, чтобы увидеть текущее значение и шаблон команды "
-            "для изменения. Сложные ключи (списки, объекты) удобнее править "
-            "командой /setting <ключ> <JSON> — для них кнопка пока показывает "
-            "только текущее значение."
+            "Выберите категорию для редактирования.\n"
+            "Каждое изменение применяется к боту сразу.\n"
+            "Чтобы зафиксировать изменения в репозитории,\n"
+            "создайте PR в нижней части меню."
+            + extra
         ),
-        attachments=[kbds.op_settings_keys_keyboard(keys)],
+        attachments=[kbds.op_settings_menu_keyboard(dirty_count)],
     )
 
 
+# ──────────────────────────────────────────────────────────────────────
+# Главный диспетчер callback'ов
+# ──────────────────────────────────────────────────────────────────────
+
+
 async def run_settings_action(event, payload: str) -> None:
-    """`op:setkey:<key>` — показать текущее значение настройки и шаблон
-    команды для редактирования. Полный wizard для каждого типа значения
-    был бы перегружен; это компромисс между «кнопками» и «текстом»."""
-    from aemr_bot import keyboards as kbds
-    from aemr_bot.utils.event import ack_callback
 
     if not await ensure_role(event, OperatorRole.IT):
         return
+    operator_id = get_user_id(event)
+    if operator_id is None:
+        await ack_callback(event)
+        return
+
+    # Новые callback'и иерархического меню (префикс op:set:)
+    if payload.startswith("op:set:"):
+        await ack_callback(event)
+        rest = payload.removeprefix("op:set:")
+        await _route_set_action(event, operator_id, rest)
+        return
+
+    # Старый формат: op:setkey:<key> — экспертная карточка ключа
+    if payload.startswith("op:setkey:"):
+        await _show_expert_key(event, payload)
+        return
+
+
+async def _route_set_action(event, operator_id: int, rest: str) -> None:
+    from aemr_bot import keyboards as kbds
+
+    if rest == "expert":
+        async with session_scope() as session:
+            keys = await settings_store.list_keys(session)
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=(
+                "⌨️ Все ключи (экспертный режим)\n"
+                "──────────\n"
+                "Здесь видны все ключи /setting, включая\n"
+                "те, что обычно не редактируются через UI."
+            ),
+            attachments=[kbds.op_settings_expert_keyboard(keys)],
+        )
+        return
+
+    if rest.startswith("cat:"):
+        cat = rest.removeprefix("cat:")
+        if cat == "texts":
+            await send_or_edit_screen(
+                event, chat_id=cfg.admin_group_id,
+                text=(
+                    "📢 Тексты для жителей\n"
+                    "──────────\n"
+                    "Что отредактировать?"
+                ),
+                attachments=[kbds.op_settings_texts_keyboard()],
+            )
+            return
+        if cat == "urls":
+            await send_or_edit_screen(
+                event, chat_id=cfg.admin_group_id,
+                text=(
+                    "🔗 Внешние ссылки\n"
+                    "──────────\n"
+                    "Выберите ссылку для редактирования."
+                ),
+                attachments=[kbds.op_settings_urls_keyboard()],
+            )
+            return
+
+    if rest.startswith("text:"):
+        key = rest.removeprefix("text:")
+        await _show_text_card(event, key)
+        return
+    if rest.startswith("url:"):
+        key = rest.removeprefix("url:")
+        await _show_text_card(event, key)
+        return
+    if rest.startswith("edit:"):
+        key = rest.removeprefix("edit:")
+        await _start_edit_intent(event, operator_id, key)
+        return
+    if rest.startswith("cancel:"):
+        key = rest.removeprefix("cancel:")
+        _intent_drop(operator_id)
+        if key in {"commit_author_name", "commit_author_email"}:
+            await _show_author_card(event)
+            return
+        await _show_text_card(event, key)
+        return
+
+    if rest.startswith("list:"):
+        key = rest.removeprefix("list:")
+        await _show_list_card(event, key)
+        return
+    if rest.startswith("list_add:"):
+        key = rest.removeprefix("list_add:")
+        _intent_set(operator_id, key=key, kind="list_add")
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=(
+                f"➕ Добавление в «{key}»\n"
+                f"──────────\n"
+                f"Пришлите название одним сообщением."
+            ),
+            attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+        )
+        return
+    if rest.startswith("list_del:"):
+        rest2 = rest.removeprefix("list_del:")
+        await _list_delete(event, operator_id, rest2)
+        return
+
+    if rest.startswith("obj:"):
+        key = rest.removeprefix("obj:")
+        await _show_obj_card(event, key)
+        return
+    if rest.startswith("obj_view:"):
+        rest2 = rest.removeprefix("obj_view:")
+        await _show_obj_item(event, rest2)
+        return
+    if rest.startswith("obj_add:"):
+        key = rest.removeprefix("obj_add:")
+        await _start_obj_add(event, operator_id, key)
+        return
+    if rest.startswith("obj_del:"):
+        rest2 = rest.removeprefix("obj_del:")
+        await _obj_delete(event, operator_id, rest2)
+        return
+
+    if rest == "author":
+        await _show_author_card(event)
+        return
+
+    if rest == "pr:start":
+        await _show_pr_confirm(event)
+        return
+    if rest == "pr:confirm":
+        await _create_pr(event, operator_id)
+        return
+    if rest == "pr:diff":
+        await _show_pr_diff(event)
+        return
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Тексты и URL: одинаковый паттерн card + edit
+# ──────────────────────────────────────────────────────────────────────
+
+
+async def _show_text_card(event, key: str) -> None:
+    from aemr_bot import keyboards as kbds
+
+    async with session_scope() as session:
+        value = await settings_store.get(session, key)
+    rule = settings_store.SCHEMA.get(key, {})
+    expected = rule.get("type", str)
+    type_label = expected.__name__ if hasattr(expected, "__name__") else str(expected)
+    is_url = bool(rule.get("url"))
+    title_map = {
+        "welcome_text": "👋 Приветствие",
+        "consent_text": "🔐 Текст согласия на ПДн",
+        "appointment_text": "🏛 Расписание приёма граждан",
+        "electronic_reception_url": "🌐 Электронная приёмная",
+        "policy_url": "📄 Политика ПДн (ссылка)",
+        "udth_schedule_url": "🚌 Пригородные автобусы (УДТХ)",
+        "udth_schedule_intermunicipal_url": "🚍 Межмуниципальные маршруты",
+    }
+    title = title_map.get(key, key)
+    constraints = ""
+    if expected is str:
+        if "max_len" in rule:
+            constraints = f"\nЛимит: до {rule['max_len']} символов."
+        if is_url:
+            constraints += "\nДолжно начинаться с http:// или https://"
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"{title} ({type_label})\n"
+            f"──────────\n"
+            f"Текущее значение:\n{_render_value(value)}"
+            f"{constraints}"
+        ),
+        attachments=[kbds.op_settings_text_actions_keyboard(key)],
+    )
+
+
+async def _start_edit_intent(event, operator_id: int, key: str) -> None:
+    from aemr_bot import keyboards as kbds
+
+    if key not in settings_store.SCHEMA:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=f"Ключ «{key}» нельзя править из меню.",
+            attachments=[kbds.op_back_to_settings_keyboard()],
+        )
+        return
+    _intent_set(operator_id, key=key, kind="single")
+    rule = settings_store.SCHEMA[key]
+    hint = ""
+    if rule.get("url"):
+        hint = "\n\nПришлите новый URL (http:// или https://)."
+    elif rule.get("type") is str:
+        max_len = rule.get("max_len", "?")
+        hint = f"\n\nПришлите новый текст одним сообщением (до {max_len} симв)."
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"✏️ Редактирование «{key}»\n"
+            f"──────────"
+            f"{hint}"
+        ),
+        attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Списки строк (topics, localities)
+# ──────────────────────────────────────────────────────────────────────
+
+
+async def _show_list_card(event, key: str) -> None:
+    from aemr_bot import keyboards as kbds
+
+    async with session_scope() as session:
+        items = await settings_store.get(session, key) or []
+    if not isinstance(items, list):
+        items = []
+    title_map = {
+        "topics": "🏷 Тематики обращений",
+        "localities": "📍 Населённые пункты",
+    }
+    title = title_map.get(key, key)
+    if items:
+        body = "\n".join(f"{i+1}. {x}" for i, x in enumerate(items))
+    else:
+        body = "(список пуст)"
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"{title} ({len(items)})\n"
+            f"──────────\n"
+            f"{body}\n"
+            f"──────────\n"
+            f"Тап «🗑 N» — удалить запись.\n"
+            f"Тап «➕ Добавить» — добавить новую."
+        ),
+        attachments=[kbds.op_settings_list_keyboard(key, items)],
+    )
+
+
+async def _list_delete(event, operator_id: int, suffix: str) -> None:
+    from aemr_bot import keyboards as kbds
+
+    parts = suffix.split(":", 1)
+    if len(parts) != 2:
+        return
+    key, idx_str = parts[0], parts[1]
+    try:
+        idx = int(idx_str)
+    except ValueError:
+        return
+    async with session_scope() as session:
+        items = await settings_store.get(session, key) or []
+        if not isinstance(items, list) or idx < 0 or idx >= len(items):
+            await send_or_edit_screen(
+                event, chat_id=cfg.admin_group_id,
+                text="Элемент не найден.",
+                attachments=[kbds.op_back_to_settings_keyboard()],
+            )
+            return
+        removed = items.pop(idx)
+        ok, msg = settings_store.validate(key, items)
+        if not ok:
+            await send_or_edit_screen(
+                event, chat_id=cfg.admin_group_id,
+                text=f"Удаление отменено: {msg}",
+                attachments=[kbds.op_back_to_settings_keyboard()],
+            )
+            return
+        await settings_store.set_value(session, key, items)
+        from aemr_bot.services import operators as ops_svc
+        await ops_svc.write_audit(
+            session,
+            operator_max_user_id=operator_id,
+            action="setting_list_del",
+            target=key,
+            details={"removed": removed, "index": idx},
+        )
+    await _show_list_card(event, key)
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Списки объектов (emergency_contacts, transport_dispatcher_contacts)
+# ──────────────────────────────────────────────────────────────────────
+
+
+async def _show_obj_card(event, key: str) -> None:
+    from aemr_bot import keyboards as kbds
+
+    async with session_scope() as session:
+        items = await settings_store.get(session, key) or []
+    if not isinstance(items, list):
+        items = []
+    title_map = {
+        "emergency_contacts": "🆘 Экстренные службы",
+        "transport_dispatcher_contacts": "🚌 Диспетчерские транспорта",
+    }
+    title = title_map.get(key, key)
+    if items:
+        lines = []
+        for i, item in enumerate(items):
+            name = item.get("name") or item.get("routes") or "?"
+            phone = item.get("phone") or ""
+            lines.append(f"{i+1}. {name} — {phone}")
+        body = "\n".join(lines)
+    else:
+        body = "(список пуст)"
+    hint = ""
+    if key == "emergency_contacts":
+        hint = (
+            "\n\nФормат добавления: пришлите две строки —\n"
+            "название и телефон.\n"
+            "Пример:\n"
+            "Пожарная служба\n"
+            "01"
+        )
+    elif key == "transport_dispatcher_contacts":
+        hint = (
+            "\n\nФормат добавления: пришлите две строки —\n"
+            "маршруты и телефон.\n"
+            "Пример:\n"
+            "Автобусы 101, 102, 103\n"
+            "+7 (415-31) 7-25-29"
+        )
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"{title} ({len(items)})\n"
+            f"──────────\n"
+            f"{body}"
+            f"{hint}"
+        ),
+        attachments=[kbds.op_settings_obj_keyboard(key, items)],
+    )
+
+
+async def _show_obj_item(event, suffix: str) -> None:
+    from aemr_bot import keyboards as kbds
+
+    parts = suffix.split(":", 1)
+    if len(parts) != 2:
+        return
+    key, idx_str = parts[0], parts[1]
+    try:
+        idx = int(idx_str)
+    except ValueError:
+        return
+    async with session_scope() as session:
+        items = await settings_store.get(session, key) or []
+    if idx < 0 or idx >= len(items):
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Запись не найдена.",
+            attachments=[kbds.op_back_to_settings_keyboard()],
+        )
+        return
+    item = items[idx]
+    lines = [f"{k}: {v}" for k, v in item.items()]
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text="\n".join(lines),
+        attachments=[kbds.op_settings_obj_item_keyboard(key, idx)],
+    )
+
+
+async def _start_obj_add(event, operator_id: int, key: str) -> None:
+    from aemr_bot import keyboards as kbds
+
+    _intent_set(operator_id, key=key, kind="obj_add")
+    if key == "emergency_contacts":
+        hint = "Пришлите две строки: название и телефон."
+    elif key == "transport_dispatcher_contacts":
+        hint = "Пришлите две строки: маршруты и телефон."
+    else:
+        hint = "Пришлите данные двумя строками."
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"➕ Добавление в «{key}»\n"
+            f"──────────\n"
+            f"{hint}"
+        ),
+        attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+    )
+
+
+async def _obj_delete(event, operator_id: int, suffix: str) -> None:
+    from aemr_bot import keyboards as kbds
+
+    parts = suffix.split(":", 1)
+    if len(parts) != 2:
+        return
+    key, idx_str = parts[0], parts[1]
+    try:
+        idx = int(idx_str)
+    except ValueError:
+        return
+    async with session_scope() as session:
+        items = await settings_store.get(session, key) or []
+        if not isinstance(items, list) or idx < 0 or idx >= len(items):
+            await send_or_edit_screen(
+                event, chat_id=cfg.admin_group_id,
+                text="Запись не найдена.",
+                attachments=[kbds.op_back_to_settings_keyboard()],
+            )
+            return
+        removed = items.pop(idx)
+        ok, msg = settings_store.validate(key, items)
+        if not ok:
+            await send_or_edit_screen(
+                event, chat_id=cfg.admin_group_id,
+                text=f"Удаление отменено: {msg}",
+                attachments=[kbds.op_back_to_settings_keyboard()],
+            )
+            return
+        await settings_store.set_value(session, key, items)
+        from aemr_bot.services import operators as ops_svc
+        await ops_svc.write_audit(
+            session,
+            operator_max_user_id=operator_id,
+            action="setting_obj_del",
+            target=key,
+            details={"removed": removed, "index": idx},
+        )
+    await _show_obj_card(event, key)
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Автор коммитов
+# ──────────────────────────────────────────────────────────────────────
+
+
+async def _show_author_card(event) -> None:
+    from aemr_bot import keyboards as kbds
+
+    async with session_scope() as session:
+        name = await settings_store.get(session, "commit_author_name")
+        email = await settings_store.get(session, "commit_author_email")
+    name_line = name or "(не задано)"
+    email_line = email or "(не задано)"
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            "👤 Автор коммитов от бота\n"
+            "──────────\n"
+            f"ФИО:   {name_line}\n"
+            f"Email: {email_line}\n\n"
+            "Это значения подставляются в коммиты,\n"
+            "которые бот создаёт при синхронизации\n"
+            "настроек с репозиторием."
+        ),
+        attachments=[kbds.op_settings_author_keyboard()],
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Pull Request
+# ──────────────────────────────────────────────────────────────────────
+
+
+async def _show_pr_confirm(event) -> None:
+    from aemr_bot import keyboards as kbds
+
+    async with session_scope() as session:
+        dirty = await settings_store.get_dirty_keys(session)
+        name = await settings_store.get(session, "commit_author_name")
+        email = await settings_store.get(session, "commit_author_email")
+
+    pat_present = bool(os.environ.get("GITHUB_PAT", "").strip())
+    if not dirty:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=(
+                "📥 Нет несинхронизированных изменений.\n"
+                "──────────\n"
+                "Все настройки совпадают с последним PR в репо."
+            ),
+            attachments=[kbds.op_back_to_settings_keyboard()],
+        )
+        return
+    blockers: list[str] = []
+    if not pat_present:
+        blockers.append("• GITHUB_PAT не задан в .env (см. infra/.env.example)")
+    if not name:
+        blockers.append("• Не задан автор коммитов — раздел «👤 Автор»")
+    if not email:
+        blockers.append("• Не задан email автора — раздел «👤 Автор»")
+
+    keys_preview = "\n".join(f"• {k}" for k in dirty[:10])
+    if len(dirty) > 10:
+        keys_preview += f"\n…и ещё {len(dirty) - 10}"
+
+    if blockers:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=(
+                "💾 Создать PR с изменениями\n"
+                "──────────\n"
+                f"Будет включено {len(dirty)} ключей:\n{keys_preview}\n\n"
+                "❌ Нельзя создать PR:\n" + "\n".join(blockers) +
+                "\n\nИзменения уже применены в боте — это\n"
+                "только про их фиксацию в репозитории."
+            ),
+            attachments=[kbds.op_back_to_settings_keyboard()],
+        )
+        return
+
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            "💾 Создать PR с изменениями\n"
+            "──────────\n"
+            f"Будет включено {len(dirty)} ключей:\n{keys_preview}\n\n"
+            f"Автор: {name} <{email}>\n\n"
+            "После создания PR откройте его в браузере,\n"
+            "проверьте diff и нажмите Merge. Auto-deploy\n"
+            "подхватит изменения в течение 10 минут."
+        ),
+        attachments=[kbds.op_settings_pr_confirm_keyboard()],
+    )
+
+
+async def _create_pr(event, operator_id: int) -> None:
+    from aemr_bot import keyboards as kbds
+    from aemr_bot.services import repo_sync
+
+    async with session_scope() as session:
+        dirty = await settings_store.get_dirty_keys(session)
+        runtime_config = await settings_store.export_synced(session)
+        name = await settings_store.get(session, "commit_author_name")
+        email = await settings_store.get(session, "commit_author_email")
+        from aemr_bot.services import operators as ops_svc
+        op_record = await ops_svc.get(session, operator_id)
+    operator_name = op_record.full_name if op_record else f"id={operator_id}"
+
+    cfg_repo = repo_sync.load_config_from_env_and_settings(
+        author_name=name, author_email=email,
+    )
+    if cfg_repo is None:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=(
+                "❌ Не настроено GitHub-подключение.\n"
+                "──────────\n"
+                "Заполните GITHUB_PAT в .env и/или\n"
+                "автора коммитов в меню «👤 Автор»."
+            ),
+            attachments=[kbds.op_back_to_settings_keyboard()],
+        )
+        return
+    if not dirty:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Нет несинхронизированных изменений.",
+            attachments=[kbds.op_back_to_settings_keyboard()],
+        )
+        return
+
+    result = await repo_sync.create_settings_pr(
+        cfg_repo,
+        runtime_config=runtime_config,
+        dirty_keys=dirty,
+        operator_name=operator_name,
+        operator_id=operator_id,
+    )
+    if not result.ok:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=(
+                "❌ Не удалось создать PR.\n"
+                "──────────\n"
+                f"Причина: {result.reason}\n"
+                f"{result.message}"
+            ),
+            attachments=[kbds.op_back_to_settings_keyboard()],
+        )
+        return
+
+    async with session_scope() as session:
+        await settings_store.mark_synced(session, dirty)
+        from aemr_bot.services import operators as ops_svc
+        await ops_svc.write_audit(
+            session,
+            operator_max_user_id=operator_id,
+            action="settings_pr_created",
+            target=cfg_repo.repo,
+            details={
+                "pr_number": result.pr_number,
+                "pr_url": result.pr_url,
+                "branch": result.branch,
+                "keys": dirty,
+            },
+        )
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"✅ PR создан: #{result.pr_number}\n"
+            f"──────────\n"
+            f"Ветка: {result.branch}\n"
+            f"Изменено ключей: {len(dirty)}\n\n"
+            f"Откройте PR в браузере, проверьте diff\n"
+            f"и нажмите Merge.\n\n"
+            f"Auto-deploy подхватит изменения в течение\n"
+            f"10 минут после мержа."
+        ),
+        attachments=[kbds.op_settings_pr_done_keyboard(result.pr_url)],
+    )
+
+
+async def _show_pr_diff(event) -> None:
+    from aemr_bot import keyboards as kbds
+    from aemr_bot.services import repo_sync
+
+    async with session_scope() as session:
+        dirty = await settings_store.get_dirty_keys(session)
+        local = await settings_store.export_synced(session)
+        name = await settings_store.get(session, "commit_author_name")
+        email = await settings_store.get(session, "commit_author_email")
+
+    if not os.environ.get("GITHUB_PAT", "").strip():
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=(
+                "📥 Проверка расхождений с репо\n"
+                "──────────\n"
+                "GITHUB_PAT не задан в .env.\n\n"
+                f"Локально dirty-ключей: {len(dirty)}\n"
+                + ("\n".join(f"• {k}" for k in dirty[:10]) if dirty else "—")
+            ),
+            attachments=[kbds.op_back_to_settings_keyboard()],
+        )
+        return
+    cfg_repo = repo_sync.load_config_from_env_and_settings(
+        author_name=name or "bot", author_email=email or "bot@example.com",
+    )
+    if cfg_repo is None:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="❌ Не настроено GitHub-подключение.",
+            attachments=[kbds.op_back_to_settings_keyboard()],
+        )
+        return
+    remote, reason = await repo_sync.fetch_main_runtime_config(cfg_repo)
+    if remote is None and reason == "not_in_repo":
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=(
+                "📥 Проверка расхождений с репо\n"
+                "──────────\n"
+                "Файла seed/runtime_config.json в main\n"
+                "пока нет. Первый PR создаст его."
+            ),
+            attachments=[kbds.op_back_to_settings_keyboard()],
+        )
+        return
+    if remote is None:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=f"❌ Не удалось скачать из репо: {reason}",
+            attachments=[kbds.op_back_to_settings_keyboard()],
+        )
+        return
+
+    diffs: list[str] = []
+    for key in settings_store.SYNCED_KEYS:
+        local_val = local.get(key)
+        remote_val = remote.get(key)
+        if local_val != remote_val:
+            diffs.append(key)
+    if not diffs:
+        body = "✅ Локально и в репо всё одинаково."
+    else:
+        body = (
+            f"⚠️ Различаются {len(diffs)} ключей:\n"
+            + "\n".join(f"• {k}" for k in diffs)
+            + "\n\nЕсли локальные изменения новее — создайте PR.\n"
+            + "Если в репо есть изменения, которых нет\n"
+            + "локально (например, через ручной PR) —\n"
+            + "перезапустите бота, он перечитает seed."
+        )
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            "📥 Проверка расхождений с репо\n"
+            "──────────\n"
+            + body
+        ),
+        attachments=[kbds.op_back_to_settings_keyboard()],
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Старая экспертная карточка ключа (op:setkey:<key>)
+# ──────────────────────────────────────────────────────────────────────
+
+
+async def _show_expert_key(event, payload: str) -> None:
+    from aemr_bot import keyboards as kbds
+
     key = payload.removeprefix("op:setkey:")
     if not key:
         await ack_callback(event)
@@ -4585,6 +6188,167 @@ async def run_settings_action(event, payload: str) -> None:
         ),
         attachments=[kbds.op_back_to_settings_keyboard()],
     )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Перехватчик текстовых сообщений для редактирования
+# ──────────────────────────────────────────────────────────────────────
+
+
+async def handle_settings_edit_text(event, text: str) -> bool:
+    """Перехватчик текстовых сообщений в админ-группе для редактирования
+    настроек. Возвращает True, если сообщение поглощено."""
+
+    operator_id = get_user_id(event)
+    if operator_id is None:
+        return False
+    intent = _intent_get(operator_id)
+    if intent is None:
+        return False
+
+    if not await ensure_role(event, OperatorRole.IT):
+        _intent_drop(operator_id)
+        return False
+
+    key = intent["key"]
+    kind = intent["kind"]
+    new_text = text.strip()
+
+    if kind == "single":
+        await _apply_single_edit(event, operator_id, key, new_text)
+        _intent_drop(operator_id)
+        return True
+    if kind == "list_add":
+        await _apply_list_add(event, operator_id, key, new_text)
+        _intent_drop(operator_id)
+        return True
+    if kind == "obj_add":
+        await _apply_obj_add(event, operator_id, key, new_text)
+        _intent_drop(operator_id)
+        return True
+    return False
+
+
+async def _apply_single_edit(
+    event, operator_id: int, key: str, new_text: str
+) -> None:
+    from aemr_bot import keyboards as kbds
+
+    ok, msg = settings_store.validate(key, new_text)
+    if not ok:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=f"❌ {msg}",
+            attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+        )
+        return
+    async with session_scope() as session:
+        await settings_store.set_value(session, key, new_text)
+        from aemr_bot.services import operators as ops_svc
+        await ops_svc.write_audit(
+            session,
+            operator_max_user_id=operator_id,
+            action="setting_update",
+            target=key,
+            details={"len": len(new_text)},
+        )
+    if key in {"commit_author_name", "commit_author_email"}:
+        await _show_author_card(event)
+    else:
+        await _show_text_card(event, key)
+
+
+async def _apply_list_add(
+    event, operator_id: int, key: str, new_text: str
+) -> None:
+    from aemr_bot import keyboards as kbds
+
+    if len(new_text) < 1:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text="❌ Пустая строка.",
+            attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+        )
+        return
+    async with session_scope() as session:
+        items = await settings_store.get(session, key) or []
+        if not isinstance(items, list):
+            items = []
+        if new_text in items:
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text="❌ Такая запись уже есть.",
+                attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+            )
+            return
+        items.append(new_text)
+        ok, msg = settings_store.validate(key, items)
+        if not ok:
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=f"❌ {msg}",
+                attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+            )
+            return
+        await settings_store.set_value(session, key, items)
+        from aemr_bot.services import operators as ops_svc
+        await ops_svc.write_audit(
+            session,
+            operator_max_user_id=operator_id,
+            action="setting_list_add",
+            target=key,
+            details={"added": new_text},
+        )
+    await _show_list_card(event, key)
+
+
+async def _apply_obj_add(
+    event, operator_id: int, key: str, new_text: str
+) -> None:
+    from aemr_bot import keyboards as kbds
+
+    lines = [ln.strip() for ln in new_text.split("\n") if ln.strip()]
+    if len(lines) < 2:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text="❌ Нужно две строки (название/маршруты и телефон).",
+            attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+        )
+        return
+    if key == "emergency_contacts":
+        item = {"name": lines[0], "phone": lines[1]}
+    elif key == "transport_dispatcher_contacts":
+        item = {"routes": lines[0], "phone": lines[1]}
+    else:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=f"❌ Ключ «{key}» не поддерживает добавление через две строки.",
+            attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+        )
+        return
+    async with session_scope() as session:
+        items = await settings_store.get(session, key) or []
+        if not isinstance(items, list):
+            items = []
+        items.append(item)
+        ok, msg = settings_store.validate(key, items)
+        if not ok:
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=f"❌ {msg}",
+                attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+            )
+            return
+        await settings_store.set_value(session, key, items)
+        from aemr_bot.services import operators as ops_svc
+        await ops_svc.write_audit(
+            session,
+            operator_max_user_id=operator_id,
+            action="setting_obj_add",
+            target=key,
+            details={"added": item},
+        )
+    await _show_obj_card(event, key)
 ```
 
 ### `bot/aemr_bot/handlers/admin_stats.py`
@@ -4682,8 +6446,8 @@ async def run_stats_menu(event) -> None:
 
 ### `bot/aemr_bot/handlers/appeal.py`
 
-Size: `25313` bytes  
-SHA-256: `cea090a399f63d654dc7ca0c077b98e25883bd3693de09b3f28ff0e93e11003b`
+Size: `25498` bytes  
+SHA-256: `8a6d030b05e34fb58dde10a8886fc041cbc2006241ecf1be95bb7d453e2ed96a`
 
 ```python
 """Главный entry-point обработчика обращений.
@@ -5237,6 +7001,12 @@ def register(dp: Dispatcher) -> None:
             if consumed:
                 return
             consumed = await admin_cmd_module.handle_operators_wizard_text(
+                event,
+                text_body,
+            )
+            if consumed:
+                return
+            consumed = await admin_cmd_module.handle_settings_edit_text(
                 event,
                 text_body,
             )
@@ -7194,8 +8964,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/callback_router.py`
 
-Size: `7237` bytes  
-SHA-256: `7c79ae8850f2bb49ac9e45bb47b65e715804b85c30d4b7c591201123871b5dc9`
+Size: `8097` bytes  
+SHA-256: `6bde107c05c9788b6c5d130286e91424eacfeddf7e784388c95364b911330e33`
 
 ```python
 """Маршрутизация callback payload'ов.
@@ -7273,8 +9043,15 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("op:erase:", CallbackGroup.OPERATOR_ADMIN, True, "стереть ПДн по обращению"),
     CallbackRoute("op:block:", CallbackGroup.OPERATOR_ADMIN, True, "заблокировать жителя"),
     CallbackRoute("op:unblock:", CallbackGroup.OPERATOR_ADMIN, True, "разблокировать жителя"),
-    CallbackRoute("op:opadd:", CallbackGroup.OPERATOR_ADMIN, True, "мастер операторов"),
-    CallbackRoute("op:setkey:", CallbackGroup.OPERATOR_ADMIN, True, "мастер настроек"),
+    CallbackRoute("op:opadd:", CallbackGroup.OPERATOR_ADMIN, True, "мастер операторов: добавление"),
+    CallbackRoute("op:opcard:", CallbackGroup.OPERATOR_ADMIN, True, "карточка оператора"),
+    CallbackRoute("op:oprole:", CallbackGroup.OPERATOR_ADMIN, True, "смена роли — открыть picker"),
+    CallbackRoute("op:opchrole:", CallbackGroup.OPERATOR_ADMIN, True, "смена роли — применить"),
+    CallbackRoute("op:opdeact:", CallbackGroup.OPERATOR_ADMIN, True, "деактивация — подтверждение"),
+    CallbackRoute("op:opdeact_ok:", CallbackGroup.OPERATOR_ADMIN, True, "деактивация — применить"),
+    CallbackRoute("op:opreact:", CallbackGroup.OPERATOR_ADMIN, True, "реактивация оператора"),
+    CallbackRoute("op:setkey:", CallbackGroup.OPERATOR_ADMIN, True, "экспертный wizard ключа"),
+    CallbackRoute("op:set:", CallbackGroup.OPERATOR_ADMIN, True, "иерархическое меню настроек"),
 )
 
 
@@ -9543,8 +11320,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `36159` bytes  
-SHA-256: `3b99945767148cd6382bff5ed5b9efd357db0d13e565a5c3ba65695e091dba1d`
+Size: `52237` bytes  
+SHA-256: `a8b68d66eb6d1e48ac66ac8f4d0b2362c725ab39d1ff9723784a2153cf18218c`
 
 ```python
 from maxapi.types import (
@@ -10060,37 +11837,327 @@ def op_stats_menu_keyboard():
 def op_operators_menu_keyboard():
     """Меню «👥 Операторы» в админ-панели для роли it."""
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="➕ Добавить", payload="op:opadd:start"))
-    kb.row(CallbackButton(text="📋 Список", payload="op:opadd:list"))
+    kb.row(CallbackButton(text="📋 Список операторов", payload="op:opadd:list"))
+    kb.row(CallbackButton(text="➕ Добавить из участников группы", payload="op:opadd:from_group"))
+    kb.row(CallbackButton(text="🔢 Добавить по ID вручную", payload="op:opadd:start"))
     kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_operators_list_keyboard(rows: list[tuple[int, str, str, bool]]):
+    """Список операторов как кнопки. rows: (max_user_id, full_name, role,
+    is_active). Тап — открывает карточку конкретного оператора. После
+    списка — кнопка «Назад в меню операторов».
+    Длина подписи ограничена ~50 символами для узких экранов MAX."""
+    kb = InlineKeyboardBuilder()
+    for max_user_id, full_name, role, is_active in rows:
+        marker = "👤" if is_active else "💤"
+        suffix = f" · {role}" if is_active else f" · {role} · деактивирован"
+        # 40 символов на ФИО — компромисс между «видно полностью» и
+        # «помещается на узких экранах MAX»
+        name_short = full_name if len(full_name) <= 40 else full_name[:37] + "…"
+        kb.row(
+            CallbackButton(
+                text=f"{marker} {name_short}{suffix}",
+                payload=f"op:opcard:{max_user_id}",
+            )
+        )
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:operators"))
+    return kb.as_markup()
+
+
+def op_operator_card_keyboard(
+    max_user_id: int,
+    *,
+    is_active: bool,
+    is_self: bool,
+    can_deactivate: bool,
+):
+    """Карточка оператора — действия зависят от состояния:
+    - active + не self + can_deactivate → «Сменить роль», «Деактивировать»
+    - active + self → «Сменить роль» нельзя, «Деактивировать» нельзя
+    - active + единственный IT → «Сменить роль» можно (на любую другую только если есть другие IT — проверка в обработчике), «Деактивировать» нельзя
+    - inactive → «Реактивировать»
+    """
+    kb = InlineKeyboardBuilder()
+    if is_active:
+        if not is_self:
+            kb.row(CallbackButton(text="✏️ Сменить роль", payload=f"op:oprole:{max_user_id}"))
+        if can_deactivate and not is_self:
+            kb.row(
+                CallbackButton(
+                    text="🚫 Деактивировать", payload=f"op:opdeact:{max_user_id}"
+                )
+            )
+    else:
+        kb.row(
+            CallbackButton(
+                text="🔄 Реактивировать", payload=f"op:opreact:{max_user_id}"
+            )
+        )
+    kb.row(CallbackButton(text="↩️ К списку", payload="op:opadd:list"))
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_operator_role_change_keyboard(max_user_id: int, current_role: str):
+    """Смена роли существующему оператору. Текущую роль показываем
+    как заблокированную (без callback'а)."""
+    from aemr_bot.db.models import OperatorRole
+
+    kb = InlineKeyboardBuilder()
+    roles = [
+        (OperatorRole.IT.value, "🛠 it — ИТ, полный доступ"),
+        (OperatorRole.COORDINATOR.value, "👤 coordinator — ответы + рассылки"),
+        (OperatorRole.AEMR.value, "👤 aemr — рядовой специалист"),
+        (OperatorRole.EGP.value, "👤 egp — специалист ЕГП"),
+    ]
+    for role_value, label in roles:
+        if role_value == current_role:
+            # Текущая роль — пометка, без активного callback'а
+            kb.row(
+                CallbackButton(
+                    text=f"✓ {label} (текущая)",
+                    payload=f"op:opcard:{max_user_id}",
+                )
+            )
+        else:
+            kb.row(
+                CallbackButton(
+                    text=label,
+                    payload=f"op:opchrole:{max_user_id}:{role_value}",
+                )
+            )
+    kb.row(CallbackButton(text="❌ Отмена", payload=f"op:opcard:{max_user_id}"))
+    return kb.as_markup()
+
+
+def op_operator_deactivate_confirm_keyboard(max_user_id: int):
+    """Подтверждение деактивации — две кнопки в ряд."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(text="✅ Да, деактивировать", payload=f"op:opdeact_ok:{max_user_id}"),
+        CallbackButton(text="❌ Отмена", payload=f"op:opcard:{max_user_id}"),
+    )
+    return kb.as_markup()
+
+
+def op_from_group_keyboard(
+    candidates: list[tuple[int, str, str | None]],  # (user_id, label, role_hint)
+):
+    """Кнопки добавления оператора из участников группы. label —
+    готовая строка вида «Иванова А.П.» с пометкой [уже оператор: aemr]
+    если есть. role_hint=None для добавления, role_hint=<role> для
+    уже зарегистрированных (тап открывает их карточку)."""
+    kb = InlineKeyboardBuilder()
+    for user_id, label, role_hint in candidates:
+        # 50 символов на label — место для имени + пометки
+        text = label if len(label) <= 50 else label[:47] + "…"
+        if role_hint is None:
+            kb.row(CallbackButton(text=f"➕ {text}", payload=f"op:opadd:pick:{user_id}"))
+        else:
+            kb.row(CallbackButton(text=f"👤 {text}", payload=f"op:opcard:{user_id}"))
+    kb.row(CallbackButton(text="🔢 Ввести ID вручную", payload="op:opadd:start"))
+    kb.row(CallbackButton(text="❌ Отмена", payload="op:operators"))
     return kb.as_markup()
 
 
 def op_role_picker_keyboard():
-    """Шаг 2 wizard'а добавления оператора — выбор роли. Четыре кнопки
-    в одну строку: it, coordinator, aemr, egp. Самомодификация (попытка
-    выдать it самому себе) ловится в обработчике."""
+    """Шаг 2 wizard'а добавления оператора — выбор роли. По одной
+    кнопке в строку с пояснением что значит каждая роль. Самомодификация
+    (попытка выдать it самому себе) ловится в обработчике."""
     kb = InlineKeyboardBuilder()
-    kb.row(
-        CallbackButton(text="it", payload="op:opadd:role:it"),
-        CallbackButton(text="coordinator", payload="op:opadd:role:coordinator"),
-    )
-    kb.row(
-        CallbackButton(text="aemr", payload="op:opadd:role:aemr"),
-        CallbackButton(text="egp", payload="op:opadd:role:egp"),
-    )
+    kb.row(CallbackButton(text="🛠 it — ИТ, полный доступ", payload="op:opadd:role:it"))
+    kb.row(CallbackButton(text="👤 coordinator — ответы + рассылки", payload="op:opadd:role:coordinator"))
+    kb.row(CallbackButton(text="👤 aemr — рядовой специалист", payload="op:opadd:role:aemr"))
+    kb.row(CallbackButton(text="👤 egp — специалист ЕГП", payload="op:opadd:role:egp"))
     kb.row(CallbackButton(text="❌ Отменить добавление", payload="op:opadd:cancel"))
     return kb.as_markup()
 
 
-def op_settings_keys_keyboard(keys: list[str]):
-    """Список ключей /setting — по одной кнопке на строку (длинные имена).
-    Тап → текущее значение и шаблон команды редактирования."""
+def op_add_name_choice_keyboard():
+    """Шаг 4 wizard'а добавления — выбор: «сохранить имя из MAX» или
+    «указать ФИО полностью текстом»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="✅ Сохранить как есть", payload="op:opadd:name_keep"))
+    kb.row(CallbackButton(text="✏️ Указать ФИО полностью", payload="op:opadd:name_edit"))
+    kb.row(CallbackButton(text="❌ Отменить добавление", payload="op:opadd:cancel"))
+    return kb.as_markup()
+
+
+def op_add_confirm_keyboard():
+    """Финальное подтверждение перед сохранением — три кнопки."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="✅ Сохранить", payload="op:opadd:confirm"))
+    kb.row(CallbackButton(text="✏️ Изменить роль", payload="op:opadd:edit_role"))
+    kb.row(CallbackButton(text="❌ Отменить добавление", payload="op:opadd:cancel"))
+    return kb.as_markup()
+
+
+def op_add_done_keyboard():
+    """После успешного добавления — «Добавить ещё» / «К списку» / «В меню»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="➕ Добавить ещё", payload="op:operators"))
+    kb.row(CallbackButton(text="📋 К списку операторов", payload="op:opadd:list"))
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+# ──────────────────────────────────────────────────────────────────────
+# НАСТРОЙКИ БОТА — новое иерархическое меню
+# ──────────────────────────────────────────────────────────────────────
+
+
+def op_settings_menu_keyboard(dirty_count: int = 0):
+    """Главное меню «⚙️ Настройки бота» — иерархическая навигация по
+    категориям. dirty_count — число изменённых ключей, не выгруженных
+    в репо. Если > 0 — показываем счётчик возле кнопки PR."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="📢 Тексты для жителей", payload="op:set:cat:texts"))
+    kb.row(CallbackButton(text="🔗 Внешние ссылки", payload="op:set:cat:urls"))
+    kb.row(CallbackButton(text="🏷 Тематики обращений", payload="op:set:list:topics"))
+    kb.row(CallbackButton(text="📍 Населённые пункты", payload="op:set:list:localities"))
+    kb.row(CallbackButton(text="🆘 Экстренные службы", payload="op:set:obj:emergency_contacts"))
+    kb.row(CallbackButton(text="🚌 Диспетчерские транспорта", payload="op:set:obj:transport_dispatcher_contacts"))
+    kb.row(CallbackButton(text="👤 Автор коммитов от бота", payload="op:set:author"))
+    pr_label = "💾 Создать PR с изменениями"
+    if dirty_count > 0:
+        pr_label = f"💾 Создать PR ({dirty_count} изм.)"
+    kb.row(CallbackButton(text=pr_label, payload="op:set:pr:start"))
+    kb.row(CallbackButton(text="📥 Проверить расхождения с репо", payload="op:set:pr:diff"))
+    kb.row(CallbackButton(text="⌨️ Все ключи (для эксперта)", payload="op:set:expert"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_settings_texts_keyboard():
+    """Подменю «📢 Тексты для жителей»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="👋 Приветствие", payload="op:set:text:welcome_text"))
+    kb.row(CallbackButton(text="🔐 Текст согласия на ПДн", payload="op:set:text:consent_text"))
+    kb.row(CallbackButton(text="🏛 Расписание приёма граждан", payload="op:set:text:appointment_text"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:settings"))
+    return kb.as_markup()
+
+
+def op_settings_urls_keyboard():
+    """Подменю «🔗 Внешние ссылки»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="🌐 Электронная приёмная", payload="op:set:url:electronic_reception_url"))
+    kb.row(CallbackButton(text="📄 Политика ПДн (ссылка)", payload="op:set:url:policy_url"))
+    kb.row(CallbackButton(text="🚌 Пригородные автобусы (УДТХ)", payload="op:set:url:udth_schedule_url"))
+    kb.row(CallbackButton(text="🚍 Межмуниципальные маршруты", payload="op:set:url:udth_schedule_intermunicipal_url"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:settings"))
+    return kb.as_markup()
+
+
+def op_settings_text_actions_keyboard(key: str):
+    """Карточка текстового ключа — «Изменить» / «Назад»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="✏️ Изменить", payload=f"op:set:edit:{key}"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:settings"))
+    return kb.as_markup()
+
+
+def op_settings_text_cancel_keyboard(key: str):
+    """Кнопка отмены при ожидании текстового ввода для ключа."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="❌ Отмена", payload=f"op:set:cancel:{key}"))
+    return kb.as_markup()
+
+
+def op_settings_list_keyboard(key: str, items: list[str]):
+    """CRUD-меню для строкового списка (topics, localities). Сам список
+    показывается в тексте, кнопки — действия над ним."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="➕ Добавить", payload=f"op:set:list_add:{key}"))
+    if items:
+        # Показываем до 30 элементов по одной кнопке — больше MAX обрежет
+        for i, item in enumerate(items[:30]):
+            label = item if len(item) <= 45 else item[:42] + "…"
+            kb.row(
+                CallbackButton(
+                    text=f"🗑 {i+1}. {label}",
+                    payload=f"op:set:list_del:{key}:{i}",
+                )
+            )
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:settings"))
+    return kb.as_markup()
+
+
+def op_settings_obj_keyboard(key: str, items: list[dict]):
+    """CRUD-меню для списка объектов (emergency_contacts, transport_dispatcher_contacts).
+    Каждый объект — кнопка с краткой подписью; тап откроет действия."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="➕ Добавить", payload=f"op:set:obj_add:{key}"))
+    for i, item in enumerate(items[:20]):
+        # Подпись зависит от типа: для emergency — name+phone, для
+        # transport — routes+phone. Берём первое непустое поле для
+        # отображения.
+        name = item.get("name") or item.get("routes") or "?"
+        phone = item.get("phone") or ""
+        label = f"{name} — {phone}" if phone else str(name)
+        if len(label) > 45:
+            label = label[:42] + "…"
+        kb.row(
+            CallbackButton(
+                text=f"{i+1}. {label}",
+                payload=f"op:set:obj_view:{key}:{i}",
+            )
+        )
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:settings"))
+    return kb.as_markup()
+
+
+def op_settings_obj_item_keyboard(key: str, index: int):
+    """Карточка одного объекта — удалить / назад."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="🗑 Удалить запись", payload=f"op:set:obj_del:{key}:{index}"))
+    kb.row(CallbackButton(text="↩️ Назад", payload=f"op:set:obj:{key}"))
+    return kb.as_markup()
+
+
+def op_settings_author_keyboard():
+    """Меню «👤 Автор коммитов от бота»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="✏️ Изменить ФИО", payload="op:set:edit:commit_author_name"))
+    kb.row(CallbackButton(text="✏️ Изменить email", payload="op:set:edit:commit_author_email"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:settings"))
+    return kb.as_markup()
+
+
+def op_settings_pr_confirm_keyboard():
+    """Подтверждение «Создать PR с изменениями»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="✅ Создать PR", payload="op:set:pr:confirm"))
+    kb.row(CallbackButton(text="❌ Отмена", payload="op:settings"))
+    return kb.as_markup()
+
+
+def op_settings_pr_done_keyboard(pr_url: str | None):
+    """После создания PR — кнопка-ссылка на PR + возврат."""
+    kb = InlineKeyboardBuilder()
+    if pr_url:
+        kb.row(LinkButton(text="🔗 Открыть PR в браузере", url=pr_url))
+    kb.row(CallbackButton(text="📋 К настройкам", payload="op:settings"))
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_settings_expert_keyboard(keys: list[str]):
+    """Старый «экспертный» список ключей — оставляем как fallback для
+    редких случаев и для совместимости."""
     kb = InlineKeyboardBuilder()
     for key in keys:
         kb.row(CallbackButton(text=key, payload=f"op:setkey:{key}"))
-    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:settings"))
     return kb.as_markup()
+
+
+def op_settings_keys_keyboard(keys: list[str]):
+    """Совместимость: старая клавиатура «список ключей». Перенаправляем
+    на новую expert-карточку."""
+    return op_settings_expert_keyboard(keys)
 
 
 def op_audience_menu_keyboard():
@@ -13227,8 +15294,8 @@ async def try_mark_processed_raw(key: str, kind: str) -> bool:
 
 ### `bot/aemr_bot/services/operators.py`
 
-Size: `3354` bytes  
-SHA-256: `59b4080586521241e7a97b922bb1e4d8de5a72e14db0df4d36ab99b52097cdba`
+Size: `6799` bytes  
+SHA-256: `aa1b0fd80c2464ff6ae8374e0cf960a58eede7e73cd192b8db16c1dcaca0032e`
 
 ```python
 from sqlalchemy import select
@@ -13238,8 +15305,19 @@ from aemr_bot.db.models import AuditLog, Operator, OperatorRole
 
 
 async def get(session: AsyncSession, max_user_id: int) -> Operator | None:
+    """Активный оператор по max_user_id. Историю не возвращает —
+    деактивированных не видно."""
     return await session.scalar(
         select(Operator).where(Operator.max_user_id == max_user_id, Operator.is_active.is_(True))
+    )
+
+
+async def get_any(session: AsyncSession, max_user_id: int) -> Operator | None:
+    """Любая запись по max_user_id, включая деактивированную. Нужен для
+    /add из карточки — чтобы понять «человек уже был, надо реактивировать,
+    а не вставлять новую строку»."""
+    return await session.scalar(
+        select(Operator).where(Operator.max_user_id == max_user_id)
     )
 
 
@@ -13257,6 +15335,51 @@ async def upsert(
         op.full_name = full_name
         op.role = role.value
         op.is_active = True
+    await session.flush()
+    return op
+
+
+async def deactivate(session: AsyncSession, max_user_id: int) -> Operator | None:
+    """Мягкое удаление: is_active=false. Возвращает обновлённую запись
+    или None, если активного оператора с таким max_user_id не было.
+
+    Физическое DELETE не делается — у appeals.assigned_operator_id и
+    messages.operator_id есть FK на operators с ON DELETE SET NULL,
+    но потеря истории «кто отвечал жителю» нарушит требование
+    журналирования по 152-ФЗ. Поэтому только деактивация.
+
+    Запись остаётся в БД и может быть реактивирована через upsert()
+    с той же max_user_id — это и есть «добавить повторно».
+    """
+    op = await session.scalar(
+        select(Operator).where(
+            Operator.max_user_id == max_user_id,
+            Operator.is_active.is_(True),
+        )
+    )
+    if op is None:
+        return None
+    op.is_active = False
+    await session.flush()
+    return op
+
+
+async def change_role(
+    session: AsyncSession,
+    max_user_id: int,
+    role: OperatorRole,
+) -> Operator | None:
+    """Сменить роль активному оператору без перевода через wizard.
+    Возвращает обновлённую запись или None."""
+    op = await session.scalar(
+        select(Operator).where(
+            Operator.max_user_id == max_user_id,
+            Operator.is_active.is_(True),
+        )
+    )
+    if op is None:
+        return None
+    op.role = role.value
     await session.flush()
     return op
 
@@ -13285,6 +15408,33 @@ async def list_active(session: AsyncSession) -> list[Operator]:
         select(Operator).where(Operator.is_active.is_(True)).order_by(Operator.role, Operator.full_name)
     )
     return list(res)
+
+
+async def list_all(session: AsyncSession) -> list[Operator]:
+    """Все операторы, включая деактивированных. Нужен для расширенного
+    экрана управления, чтобы IT-админ видел кого можно реактивировать."""
+    res = await session.scalars(
+        select(Operator).order_by(
+            Operator.is_active.desc(), Operator.role, Operator.full_name
+        )
+    )
+    return list(res)
+
+
+async def count_active_by_role(
+    session: AsyncSession, role: OperatorRole
+) -> int:
+    """Сколько активных операторов в роли. Используется для защиты от
+    деактивации единственного IT-оператора."""
+    from sqlalchemy import func as _func
+
+    val = await session.scalar(
+        select(_func.count(Operator.id)).where(
+            Operator.role == role.value,
+            Operator.is_active.is_(True),
+        )
+    )
+    return int(val or 0)
 
 
 async def has_any_it(session: AsyncSession) -> bool:
@@ -13618,10 +15768,397 @@ async def send_or_edit_progress(
     return new_mid, False
 ```
 
+### `bot/aemr_bot/services/repo_sync.py`
+
+Size: `13876` bytes  
+SHA-256: `fd99e5487c47dca798cff5cab6af1f2e9b97bd975cf0b2886d15432dd2ba1b0f`
+
+```python
+"""Синхронизация настроек бота с GitHub-репозиторием.
+
+Создаёт Pull Request с актуальным `seed/runtime_config.json`, собранным
+из БД. PR — отдельная ветка, в main не идёт напрямую. После мержа
+вручную через GitHub UI scripts/auto-deploy.sh подтянет изменения на
+VPS.
+
+Feature-flag: модуль работает только если задан GITHUB_PAT в окружении
+(или в settings.commit_author_*). Если PAT отсутствует — функции
+возвращают `SyncResult(ok=False, reason='no_token')`, не падают. Это
+позволяет включать репо-синхронизацию одной правкой `.env` без
+редеплоя бота.
+
+Архитектурные решения:
+- Используем только REST API v3 — без зависимости от PyGithub. Меньше
+  библиотек = меньше CVE-поверхности и проще аудит.
+- Аутентификация: fine-grained Personal Access Token с правами
+  Contents:RW + PullRequests:RW на конкретный репо.
+- Ветвление: `bot-config-sync-YYYYMMDD-HHMMSS` от main. Время в UTC
+  для предсказуемости имён.
+- Один PR на изменение — не накапливаем правки в одной ветке, чтобы
+  каждое решение IT-админа было отдельным merge-юнитом для аудита.
+- Никаких force-push, никаких modification протобразов кроме целевого
+  файла seed/runtime_config.json.
+"""
+from __future__ import annotations
+
+import base64
+import json
+import logging
+import os
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any
+
+import aiohttp
+
+log = logging.getLogger(__name__)
+
+GITHUB_API = "https://api.github.com"
+DEFAULT_TIMEOUT = aiohttp.ClientTimeout(total=30)
+TARGET_PATH = "seed/runtime_config.json"
+
+
+@dataclass(frozen=True)
+class SyncConfig:
+    pat: str
+    repo: str            # вид "owner/repo", напр. "Gaben1488/aemr-bot"
+    base_branch: str     # обычно "main"
+    author_name: str
+    author_email: str
+
+
+@dataclass(frozen=True)
+class SyncResult:
+    ok: bool
+    pr_url: str | None = None
+    pr_number: int | None = None
+    branch: str | None = None
+    reason: str = ""     # для ok=False — машинный код причины
+    message: str = ""    # для UI — человекочитаемое описание
+
+
+def load_config_from_env_and_settings(
+    pat_env_var: str = "GITHUB_PAT",
+    repo_env_var: str = "GITHUB_REPO",
+    base_env_var: str = "GITHUB_PR_BASE_BRANCH",
+    *,
+    author_name: str | None = None,
+    author_email: str | None = None,
+) -> SyncConfig | None:
+    """Собирает SyncConfig из окружения + переданных автора/почты.
+    Возвращает None, если хоть один обязательный параметр пуст.
+
+    repo по умолчанию "Gaben1488/aemr-bot" — соответствует фактическому
+    адресу проекта. Перекрывается переменной GITHUB_REPO."""
+    pat = os.environ.get(pat_env_var, "").strip()
+    repo = os.environ.get(repo_env_var, "Gaben1488/aemr-bot").strip()
+    base = os.environ.get(base_env_var, "main").strip()
+    if not pat or not repo or not base:
+        return None
+    if not author_name or not author_email:
+        return None
+    return SyncConfig(
+        pat=pat,
+        repo=repo,
+        base_branch=base,
+        author_name=author_name.strip(),
+        author_email=author_email.strip(),
+    )
+
+
+def serialize_runtime_config(data: dict[str, Any]) -> str:
+    """JSON-сериализация с детерминированным порядком ключей и
+    переводом строки в конце — чтобы diff в git был минимальным."""
+    return json.dumps(
+        data,
+        ensure_ascii=False,
+        indent=2,
+        sort_keys=True,
+    ) + "\n"
+
+
+def _make_branch_name() -> str:
+    return "bot-config-sync-" + datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+
+
+def _build_commit_message(dirty_keys: list[str]) -> str:
+    """Формат: header (под 50 симв) + пустая строка + bullet list ключей."""
+    n = len(dirty_keys)
+    if n == 0:
+        header = "config: sync settings from bot menu"
+    elif n == 1:
+        header = f"config: update {dirty_keys[0]}"
+    else:
+        header = f"config: sync {n} settings from bot menu"
+    body_lines = [""] + [f"- {k}" for k in dirty_keys]
+    return header + "\n" + "\n".join(body_lines)
+
+
+def _build_pr_body(
+    dirty_keys: list[str], operator_name: str, operator_id: int
+) -> str:
+    lines = [
+        "Автоматический PR из меню «⚙️ Настройки бота».",
+        "",
+        f"**Инициатор:** {operator_name} (max_user_id={operator_id})",
+        f"**Изменено ключей:** {len(dirty_keys)}",
+        "",
+        "**Затронутые ключи:**",
+    ]
+    lines.extend(f"- `{k}`" for k in dirty_keys)
+    lines.extend(
+        [
+            "",
+            "После мержа scripts/auto-deploy.sh подхватит изменения на VPS в",
+            "течение 10 минут и пересоберёт контейнер бота.",
+            "",
+            "_Этот PR создан ботом aemr-bot. Авторизация через GITHUB_PAT._",
+        ]
+    )
+    return "\n".join(lines)
+
+
+class _GH:
+    """Тонкий клиент GitHub REST с подстановкой заголовков и базы."""
+
+    def __init__(self, cfg: SyncConfig) -> None:
+        self.cfg = cfg
+        self._headers = {
+            "Authorization": f"Bearer {cfg.pat}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "aemr-bot-repo-sync",
+        }
+
+    async def _request(
+        self,
+        session: aiohttp.ClientSession,
+        method: str,
+        path: str,
+        *,
+        json_body: dict | None = None,
+    ) -> tuple[int, dict | list | None]:
+        url = f"{GITHUB_API}{path}"
+        async with session.request(
+            method, url, headers=self._headers, json=json_body
+        ) as resp:
+            status = resp.status
+            try:
+                data = await resp.json()
+            except aiohttp.ContentTypeError:
+                data = None
+            return status, data
+
+    async def get_ref_sha(
+        self, session: aiohttp.ClientSession, branch: str
+    ) -> str | None:
+        status, data = await self._request(
+            session,
+            "GET",
+            f"/repos/{self.cfg.repo}/git/ref/heads/{branch}",
+        )
+        if status != 200 or not isinstance(data, dict):
+            return None
+        return data.get("object", {}).get("sha")
+
+    async def create_branch(
+        self, session: aiohttp.ClientSession, branch: str, from_sha: str
+    ) -> bool:
+        status, _ = await self._request(
+            session,
+            "POST",
+            f"/repos/{self.cfg.repo}/git/refs",
+            json_body={"ref": f"refs/heads/{branch}", "sha": from_sha},
+        )
+        return status == 201
+
+    async def get_file_sha(
+        self, session: aiohttp.ClientSession, path: str, branch: str
+    ) -> str | None:
+        status, data = await self._request(
+            session,
+            "GET",
+            f"/repos/{self.cfg.repo}/contents/{path}?ref={branch}",
+        )
+        if status != 200 or not isinstance(data, dict):
+            return None
+        return data.get("sha")
+
+    async def put_file(
+        self,
+        session: aiohttp.ClientSession,
+        *,
+        path: str,
+        branch: str,
+        content_str: str,
+        message: str,
+        sha: str | None,
+    ) -> bool:
+        body = {
+            "message": message,
+            "content": base64.b64encode(content_str.encode("utf-8")).decode("ascii"),
+            "branch": branch,
+            "committer": {
+                "name": self.cfg.author_name,
+                "email": self.cfg.author_email,
+            },
+            "author": {
+                "name": self.cfg.author_name,
+                "email": self.cfg.author_email,
+            },
+        }
+        if sha:
+            body["sha"] = sha
+        status, _ = await self._request(
+            session,
+            "PUT",
+            f"/repos/{self.cfg.repo}/contents/{path}",
+            json_body=body,
+        )
+        return status in (200, 201)
+
+    async def create_pr(
+        self,
+        session: aiohttp.ClientSession,
+        *,
+        title: str,
+        head: str,
+        base: str,
+        body: str,
+    ) -> tuple[int | None, str | None]:
+        status, data = await self._request(
+            session,
+            "POST",
+            f"/repos/{self.cfg.repo}/pulls",
+            json_body={
+                "title": title,
+                "head": head,
+                "base": base,
+                "body": body,
+                "maintainer_can_modify": True,
+            },
+        )
+        if status != 201 or not isinstance(data, dict):
+            return None, None
+        return data.get("number"), data.get("html_url")
+
+
+async def create_settings_pr(
+    cfg: SyncConfig,
+    *,
+    runtime_config: dict[str, Any],
+    dirty_keys: list[str],
+    operator_name: str,
+    operator_id: int,
+) -> SyncResult:
+    """Полный сценарий: ветка → файл → PR. Все шаги best-effort —
+    при любой ошибке возвращаем понятный reason для UI.
+
+    Контракт:
+    - В main НЕ пишем напрямую. Всегда отдельная ветка + PR.
+    - При исчерпании квоты или сетевой ошибке возвращаем reason
+      без падения, чтобы IT-админ увидел понятное сообщение в чате.
+    """
+    if not dirty_keys:
+        return SyncResult(
+            ok=False, reason="no_changes",
+            message="Нет несинхронизированных изменений.",
+        )
+
+    branch = _make_branch_name()
+    commit_message = _build_commit_message(dirty_keys)
+    pr_title = commit_message.split("\n", 1)[0]
+    pr_body = _build_pr_body(dirty_keys, operator_name, operator_id)
+    content_str = serialize_runtime_config(runtime_config)
+    gh = _GH(cfg)
+
+    async with aiohttp.ClientSession(timeout=DEFAULT_TIMEOUT) as session:
+        # 1. base ref
+        base_sha = await gh.get_ref_sha(session, cfg.base_branch)
+        if base_sha is None:
+            return SyncResult(
+                ok=False, reason="no_base_branch",
+                message=(
+                    f"Не нашёл ветку {cfg.base_branch} в {cfg.repo}. "
+                    f"Проверьте GITHUB_REPO и GITHUB_PR_BASE_BRANCH."
+                ),
+            )
+        # 2. новая ветка
+        created = await gh.create_branch(session, branch, base_sha)
+        if not created:
+            return SyncResult(
+                ok=False, reason="branch_failed",
+                message="Не удалось создать ветку. PAT без прав Contents:RW?",
+            )
+        # 3. файл — определяем, существовал ли уже
+        existing_sha = await gh.get_file_sha(session, TARGET_PATH, cfg.base_branch)
+        wrote = await gh.put_file(
+            session,
+            path=TARGET_PATH,
+            branch=branch,
+            content_str=content_str,
+            message=commit_message,
+            sha=existing_sha,
+        )
+        if not wrote:
+            return SyncResult(
+                ok=False, reason="write_failed",
+                message="Файл не записался. Проверьте права PAT.",
+            )
+        # 4. PR
+        pr_number, pr_url = await gh.create_pr(
+            session,
+            title=pr_title,
+            head=branch,
+            base=cfg.base_branch,
+            body=pr_body,
+        )
+        if pr_number is None or pr_url is None:
+            return SyncResult(
+                ok=False, reason="pr_failed",
+                message="PR не создался. PAT без прав Pull requests:RW?",
+            )
+        log.info(
+            "settings PR created: branch=%s url=%s keys=%d",
+            branch, pr_url, len(dirty_keys),
+        )
+        return SyncResult(
+            ok=True,
+            pr_url=pr_url,
+            pr_number=pr_number,
+            branch=branch,
+            message=f"PR #{pr_number} создан",
+        )
+
+
+async def fetch_main_runtime_config(
+    cfg: SyncConfig,
+) -> tuple[dict[str, Any] | None, str]:
+    """Скачать seed/runtime_config.json из base-ветки и распарсить.
+    Возвращает (data, reason). data=None если файла нет или ошибка."""
+    async with aiohttp.ClientSession(timeout=DEFAULT_TIMEOUT) as session:
+        gh = _GH(cfg)
+        status, data = await gh._request(
+            session,
+            "GET",
+            f"/repos/{cfg.repo}/contents/{TARGET_PATH}?ref={cfg.base_branch}",
+        )
+        if status == 404:
+            return None, "not_in_repo"
+        if status != 200 or not isinstance(data, dict):
+            return None, "fetch_failed"
+        encoded = data.get("content") or ""
+        try:
+            raw = base64.b64decode(encoded).decode("utf-8")
+            return json.loads(raw), "ok"
+        except Exception:
+            return None, "parse_failed"
+```
+
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `6689` bytes  
-SHA-256: `624885ecca2a6d00d43b278fd21142007c1b62f3da40dce6f70a1de320343233`
+Size: `9777` bytes  
+SHA-256: `ed50e188f58fe02c4eca92817e8ffef04f53bf46576f684dbc4a051ec8d7a7df`
 
 ```python
 import json
@@ -13637,6 +16174,11 @@ from aemr_bot.db.models import Setting
 DEFAULTS: dict[str, Any] = {
     "welcome_text": None,
     "consent_text": None,
+    # Автор коммитов от бота для services/repo_sync. Подставляется в
+    # GitHub API при создании PR. Меняется через меню «👤 Автор
+    # коммитов» в админ-панели — без редеплоя.
+    "commit_author_name": None,
+    "commit_author_email": None,
     "policy_url": (
         "https://elizovomr.ru/storage/attachments/2024/08/15/U9XfgiWRETCF0KKT.pdf"
     ),
@@ -13678,6 +16220,8 @@ DEFAULTS: dict[str, Any] = {
 SCHEMA: dict[str, dict] = {
     "welcome_text": {"type": str, "min_len": 1, "max_len": 4000},
     "consent_text": {"type": str, "min_len": 1, "max_len": 4000},
+    "commit_author_name": {"type": str, "min_len": 1, "max_len": 120},
+    "commit_author_email": {"type": str, "min_len": 3, "max_len": 200},
     "policy_url": {"type": str, "url": True},
     "electronic_reception_url": {"type": str, "url": True},
     "udth_schedule_url": {"type": str, "url": True},
@@ -13743,6 +16287,68 @@ async def list_keys(session: AsyncSession) -> list[str]:
     rows = await session.scalars(select(Setting.key))
     in_db = set(rows)
     return sorted(in_db.union(DEFAULTS.keys()))
+
+
+# Ключи, которые попадают в seed/runtime_config.json при синхронизации с
+# репозиторием. Намеренно НЕ включаем commit_author_* — это серверная
+# метаинформация, в репо не место. welcome_text/consent_text идут не
+# сюда, а в seed/welcome.md и seed/consent.md (формат markdown).
+SYNCED_KEYS: tuple[str, ...] = (
+    "policy_url",
+    "electronic_reception_url",
+    "udth_schedule_url",
+    "udth_schedule_intermunicipal_url",
+    "appointment_text",
+    "emergency_contacts",
+    "transport_dispatcher_contacts",
+    "topics",
+    "localities",
+)
+
+
+async def get_dirty_keys(session: AsyncSession) -> list[str]:
+    """Список ключей из SYNCED_KEYS, изменённых после последней
+    синхронизации с репо. Используется в меню для индикатора «N
+    несинхронизированных изменений»."""
+    rows = await session.execute(
+        select(Setting.key, Setting.updated_at, Setting.synced_at).where(
+            Setting.key.in_(SYNCED_KEYS)
+        )
+    )
+    dirty: list[str] = []
+    for key, updated_at, synced_at in rows.all():
+        if synced_at is None or (updated_at is not None and updated_at > synced_at):
+            dirty.append(key)
+    return sorted(dirty)
+
+
+async def export_synced(session: AsyncSession) -> dict[str, Any]:
+    """Собирает значения SYNCED_KEYS из БД с fallback на DEFAULTS.
+    Возвращает dict с детерминированным порядком ключей для чистых
+    diff'ов в git."""
+    out: dict[str, Any] = {}
+    for key in SYNCED_KEYS:
+        out[key] = await get(session, key)
+    return out
+
+
+async def mark_synced(
+    session: AsyncSession, keys: list[str] | None = None
+) -> int:
+    """Проставить synced_at = now() для ключей из списка (или для всех
+    SYNCED_KEYS, если keys=None). Вызывается после успешного создания
+    PR. Возвращает количество обновлённых строк."""
+    from datetime import datetime, timezone
+    from sqlalchemy import update as sa_update
+
+    target_keys = list(keys) if keys is not None else list(SYNCED_KEYS)
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        sa_update(Setting)
+        .where(Setting.key.in_(target_keys))
+        .values(synced_at=now)
+    )
+    return result.rowcount or 0
 
 
 def _read_seed_json(name: str) -> Any:
@@ -17443,8 +20049,8 @@ async def test_notify_logs_and_does_not_raise_on_delivery_error() -> None:
 
 ### `bot/tests/test_admin_handlers_small.py`
 
-Size: `21763` bytes  
-SHA-256: `f4166b205e3c8fa348454bbf174c2bb718192b3363d75127904153f6f1b6d205`
+Size: `21842` bytes  
+SHA-256: `cedcbd4d3a3132ee60c48aaeffc6ee10bfb58969d3839efb4abce72a5efe65d7`
 
 ```python
 """Тесты для трёх небольших admin-handlers (выделены из admin_commands
@@ -17726,6 +20332,7 @@ class TestSettingsMenu:
 
     @pytest.mark.asyncio
     async def test_lists_keys(self) -> None:
+        """run_settings_menu теперь зовёт get_dirty_keys для счётчика."""
         from aemr_bot.handlers import admin_settings
 
         event = _make_event()
@@ -17733,8 +20340,8 @@ class TestSettingsMenu:
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_settings.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.admin_settings.settings_store.list_keys",
-                   AsyncMock(return_value=["topics", "localities"])):
+             patch("aemr_bot.handlers.admin_settings.settings_store.get_dirty_keys",
+                   AsyncMock(return_value=[])):
             await admin_settings.run_settings_menu(event)
         event.bot.send_message.assert_called_once()
 
@@ -17942,8 +20549,8 @@ class TestRunStatsToday:
 
 ### `bot/tests/test_admin_operators.py`
 
-Size: `15937` bytes  
-SHA-256: `34da1803ef856a49be522d40cd55c5a6ac960a57c699211fc9892eb7d6741882`
+Size: `18689` bytes  
+SHA-256: `38dd25dc19102f68d453f8aaf3fa64076754db3d5aa55c4639fbd5749e3ae798`
 
 ```python
 """Тесты для handlers/admin_operators — wizard добавления оператора
@@ -18105,7 +20712,7 @@ class TestOperatorsAction:
         assert state is not None
         assert state["step"] == "awaiting_id"
         text = event.bot.send_message.call_args.kwargs["text"]
-        assert "Шаг 1 из 3" in text
+        assert "Шаг 1" in text and "ID оператора" in text
 
     @pytest.mark.asyncio
     async def test_list_empty(self) -> None:
@@ -18116,7 +20723,7 @@ class TestOperatorsAction:
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_operators.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.admin_operators.operators_service.list_active",
+             patch("aemr_bot.handlers.admin_operators.operators_service.list_all",
                    AsyncMock(return_value=[])), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_operators.run_operators_action(event, "op:opadd:list")
@@ -18129,20 +20736,22 @@ class TestOperatorsAction:
 
         event = _make_event()
         ops = [
-            SimpleNamespace(max_user_id=1, role="it", full_name="Иванов И.И."),
-            SimpleNamespace(max_user_id=2, role="coordinator", full_name="Петрова А."),
+            SimpleNamespace(max_user_id=1, role="it", full_name="Иванов И.И.", is_active=True),
+            SimpleNamespace(max_user_id=2, role="coordinator", full_name="Петрова А.", is_active=True),
         ]
         with patch("aemr_bot.handlers.admin_operators.ensure_role",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_operators.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.admin_operators.operators_service.list_active",
+             patch("aemr_bot.handlers.admin_operators.operators_service.list_all",
                    AsyncMock(return_value=ops)), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_operators.run_operators_action(event, "op:opadd:list")
+        # После рефакторинга список рендерится кнопками; в тексте теперь
+        # только сводка по числу активных. ФИО уезжают в attachments
+        # (op_operators_list_keyboard).
         text = event.bot.send_message.call_args.kwargs["text"]
-        assert "Иванов" in text
-        assert "Петрова" in text
+        assert "активных" in text or "Операторы" in text
 
     @pytest.mark.asyncio
     async def test_cancel_drops_wizard(self) -> None:
@@ -18265,18 +20874,29 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_name_self_modification_blocked(self) -> None:
-        """Свою роль через wizard менять нельзя — иначе `it` мог бы
-        случайно понизить себя до viewer и потерять доступ."""
+        """Свою роль через wizard менять нельзя — блокировка теперь
+        срабатывает на шаге подтверждения (op:opadd:confirm), потому
+        что после ввода ФИО показывается экран подтверждения. Тест
+        проверяет именно этот шаг."""
         from aemr_bot.handlers import admin_operators
 
         event = _make_event(user_id=7)
         admin_operators._op_wizard_set(
             7, step="awaiting_name", target_id=7, role="it"
         )
+        # Шаг 1: вводим ФИО — должен показаться экран подтверждения
         result = await admin_operators.handle_operators_wizard_text(
             event, "Сам себя"
         )
         assert result is True
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "Подтверждение" in text
+
+        # Шаг 2: тапаем «Сохранить» — должна сработать защита
+        with patch("aemr_bot.handlers.admin_operators.ensure_role",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await admin_operators.run_operators_action(event, "op:opadd:confirm")
         text = event.bot.send_message.call_args.kwargs["text"]
         assert "Изменить свою" in text
         # Wizard сброшен
@@ -18284,6 +20904,8 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_name_valid_creates_new_operator(self) -> None:
+        """Создание нового оператора теперь идёт двумя шагами: ввод ФИО
+        → экран подтверждения → тап «Сохранить» → upsert."""
         from aemr_bot.handlers import admin_operators
 
         event = _make_event(user_id=7)
@@ -18291,18 +20913,32 @@ class TestHandleWizardText:
             7, step="awaiting_name", target_id=42, role="it"
         )
         upsert = AsyncMock()
+        # Шаг 1: ввод ФИО — переход в ready_to_confirm
         with patch("aemr_bot.handlers.admin_operators.session_scope",
+                   _fake_session_scope):
+            result = await admin_operators.handle_operators_wizard_text(
+                event, "Иванова Анна Петровна"
+            )
+        assert result is True
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "Подтверждение" in text  # экран подтверждения
+        state = admin_operators._op_wizard_get(7)
+        assert state is not None
+        assert state["step"] == "ready_to_confirm"
+
+        # Шаг 2: тап «Сохранить» → upsert
+        with patch("aemr_bot.handlers.admin_operators.ensure_role",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_operators.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_operators.operators_service.get",
                    AsyncMock(return_value=None)), \
              patch("aemr_bot.handlers.admin_operators.operators_service.upsert",
                    upsert), \
              patch("aemr_bot.handlers.admin_operators.operators_service.write_audit",
-                   AsyncMock()):
-            result = await admin_operators.handle_operators_wizard_text(
-                event, "Иванова Анна Петровна"
-            )
-        assert result is True
+                   AsyncMock()), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await admin_operators.run_operators_action(event, "op:opadd:confirm")
         upsert.assert_called_once()
         text = event.bot.send_message.call_args.kwargs["text"]
         assert "Добавлено" in text  # новый оператор
@@ -18310,6 +20946,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_name_valid_updates_existing(self) -> None:
+        """Обновление существующего оператора — тот же двухшаговый flow."""
         from aemr_bot.handlers import admin_operators
 
         event = _make_event(user_id=7)
@@ -18317,17 +20954,27 @@ class TestHandleWizardText:
             7, step="awaiting_name", target_id=42, role="it"
         )
         existing = SimpleNamespace(id=10)
+
+        # Шаг 1: ввод ФИО
         with patch("aemr_bot.handlers.admin_operators.session_scope",
+                   _fake_session_scope):
+            await admin_operators.handle_operators_wizard_text(
+                event, "Иванова Анна"
+            )
+
+        # Шаг 2: подтверждение
+        with patch("aemr_bot.handlers.admin_operators.ensure_role",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_operators.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_operators.operators_service.get",
                    AsyncMock(return_value=existing)), \
              patch("aemr_bot.handlers.admin_operators.operators_service.upsert",
                    AsyncMock()), \
              patch("aemr_bot.handlers.admin_operators.operators_service.write_audit",
-                   AsyncMock()):
-            await admin_operators.handle_operators_wizard_text(
-                event, "Иванова Анна"
-            )
+                   AsyncMock()), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await admin_operators.run_operators_action(event, "op:opadd:confirm")
         text = event.bot.send_message.call_args.kwargs["text"]
         assert "Обновлено" in text
 ```
@@ -27436,6 +30083,546 @@ def test_is_workday_falls_back_when_holidays_missing(monkeypatch, tmp_path) -> N
 
     assert cal.is_workday(date(2026, 5, 9))   # суббота — рабочий
     assert not cal.is_workday(date(2026, 5, 10))  # воскресенье — нет
+```
+
+### `bot/tests/test_repo_sync.py`
+
+Size: `21989` bytes  
+SHA-256: `d939b24248ea46b0dc56e460a21988f0bfb0838dd6585142a9a1801a18641277`
+
+```python
+"""Тесты `services/repo_sync.py` — клиент GitHub REST для синхронизации настроек.
+
+Модуль ходит в GitHub API без PyGithub (меньше CVE-surface). Тесты
+покрывают:
+- Pure helpers (`serialize_runtime_config`, `_make_branch_name`,
+  `_build_commit_message`, `_build_pr_body`) — без сети.
+- `load_config_from_env_and_settings` — happy path + None при пустых.
+- `_GH._request` + методы (`get_ref_sha`, `create_branch`,
+  `get_file_sha`, `put_file`, `create_pr`) — моки aiohttp.
+- `create_settings_pr` — orchestrator: успех + каждая точка отказа
+  (no_changes, no_base_branch, branch_failed, write_failed, pr_failed).
+- `fetch_main_runtime_config` — 200/404/fetch_failed/parse_failed.
+
+Дизайн: aiohttp.ClientSession мокается на уровне модуля (`session_cm`),
+`_GH` — на уровне класса в orchestrator-тестах; для прямых тестов
+методов `_GH` патчим `_request` через `patch.object`. Это разделяет
+unit-тесты HTTP-обёртки и тесты бизнес-логики.
+"""
+from __future__ import annotations
+
+import base64
+import json
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+from aemr_bot.services import repo_sync
+
+
+# ---- pure helpers -----------------------------------------------------------
+
+
+class TestSerializeRuntimeConfig:
+    def test_deterministic_key_order(self) -> None:
+        d = {"z": 1, "a": 2, "m": 3}
+        out = repo_sync.serialize_runtime_config(d)
+        # ключи отсортированы — диф в git минимальный
+        assert out.find('"a"') < out.find('"m"') < out.find('"z"')
+
+    def test_ends_with_newline(self) -> None:
+        # Без trailing \n git показывает «no newline at end of file» —
+        # лишний шум в каждом PR. Контракт: всегда финальная пустая строка.
+        out = repo_sync.serialize_runtime_config({"k": "v"})
+        assert out.endswith("\n")
+
+    def test_unicode_preserved(self) -> None:
+        # ensure_ascii=False → кириллица не уродуется в \uXXXX
+        out = repo_sync.serialize_runtime_config({"welcome": "Привет"})
+        assert "Привет" in out
+
+    def test_indent_2(self) -> None:
+        out = repo_sync.serialize_runtime_config({"k": "v"})
+        assert '\n  "k"' in out
+
+
+class TestMakeBranchName:
+    def test_pattern_and_length(self) -> None:
+        n = repo_sync._make_branch_name()
+        assert n.startswith("bot-config-sync-")
+        # YYYYMMDD-HHMMSS = 15 символов после префикса
+        assert len(n) == len("bot-config-sync-") + 15
+
+    def test_uses_utc(self) -> None:
+        # Тест что utcnow используется, а не localtime: проверяем что
+        # имя — это UTC timestamp на момент вызова, не локальный.
+        from datetime import datetime, timezone
+        n = repo_sync._make_branch_name()
+        # Парсим обратно
+        ts_str = n.removeprefix("bot-config-sync-")
+        parsed = datetime.strptime(ts_str, "%Y%m%d-%H%M%S")
+        now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+        # В пределах 5 секунд от now-UTC
+        delta = abs((now_utc - parsed).total_seconds())
+        assert delta < 5
+
+
+class TestBuildCommitMessage:
+    def test_no_keys_generic_header(self) -> None:
+        msg = repo_sync._build_commit_message([])
+        assert "config: sync settings from bot menu" in msg
+
+    def test_single_key_named(self) -> None:
+        msg = repo_sync._build_commit_message(["welcome_text"])
+        assert "config: update welcome_text" in msg
+        assert "- welcome_text" in msg
+
+    def test_multi_key_count_and_bullets(self) -> None:
+        msg = repo_sync._build_commit_message(["a", "b", "c"])
+        assert "config: sync 3 settings" in msg
+        for k in ("a", "b", "c"):
+            assert f"- {k}" in msg
+
+
+class TestBuildPrBody:
+    def test_includes_operator_meta(self) -> None:
+        body = repo_sync._build_pr_body(["welcome_text"], "Иван", 42)
+        assert "Иван" in body
+        # operator_id фиксируется в body для audit
+        assert "max_user_id=42" in body
+        assert "welcome_text" in body
+
+    def test_mentions_auto_deploy(self) -> None:
+        body = repo_sync._build_pr_body(["k"], "X", 1)
+        assert "auto-deploy" in body
+
+
+# ---- load_config_from_env_and_settings -------------------------------------
+
+
+class TestLoadConfigFromEnv:
+    def test_happy(self, monkeypatch) -> None:
+        monkeypatch.setenv("GITHUB_PAT", "ghp_xxxx")
+        monkeypatch.setenv("GITHUB_REPO", "owner/repo")
+        monkeypatch.setenv("GITHUB_PR_BASE_BRANCH", "main")
+        cfg = repo_sync.load_config_from_env_and_settings(
+            author_name="Bot", author_email="bot@example.com"
+        )
+        assert cfg is not None
+        assert cfg.pat == "ghp_xxxx"
+        assert cfg.repo == "owner/repo"
+        assert cfg.base_branch == "main"
+        assert cfg.author_name == "Bot"
+        assert cfg.author_email == "bot@example.com"
+
+    def test_repo_default(self, monkeypatch) -> None:
+        # GITHUB_REPO не задан → дефолт Gaben1488/aemr-bot
+        monkeypatch.setenv("GITHUB_PAT", "ghp_xxxx")
+        monkeypatch.delenv("GITHUB_REPO", raising=False)
+        cfg = repo_sync.load_config_from_env_and_settings(
+            author_name="Bot", author_email="bot@example.com"
+        )
+        assert cfg is not None
+        assert cfg.repo == "Gaben1488/aemr-bot"
+
+    def test_no_pat_returns_none(self, monkeypatch) -> None:
+        # Feature-flag: без PAT модуль выключен, бот не падает.
+        monkeypatch.delenv("GITHUB_PAT", raising=False)
+        cfg = repo_sync.load_config_from_env_and_settings(
+            author_name="Bot", author_email="bot@example.com"
+        )
+        assert cfg is None
+
+    def test_no_author_returns_none(self, monkeypatch) -> None:
+        monkeypatch.setenv("GITHUB_PAT", "ghp_xxxx")
+        cfg = repo_sync.load_config_from_env_and_settings(
+            author_name=None, author_email="bot@example.com"
+        )
+        assert cfg is None
+
+    def test_strips_whitespace(self, monkeypatch) -> None:
+        # Хвостовой \n или пробел в .env не должен ломать конфиг.
+        monkeypatch.setenv("GITHUB_PAT", "  ghp_xxxx \n")
+        monkeypatch.setenv("GITHUB_REPO", "owner/repo")
+        cfg = repo_sync.load_config_from_env_and_settings(
+            author_name="  Bot  ", author_email="  bot@example.com  "
+        )
+        assert cfg is not None
+        assert cfg.pat == "ghp_xxxx"
+        assert cfg.author_name == "Bot"
+
+
+# ---- _GH wrapper (HTTP) ----------------------------------------------------
+
+
+def _cfg() -> repo_sync.SyncConfig:
+    return repo_sync.SyncConfig(
+        pat="ghp_test",
+        repo="owner/repo",
+        base_branch="main",
+        author_name="Bot",
+        author_email="bot@example.com",
+    )
+
+
+class _MockResponse:
+    """Async-context-manager имитирующий aiohttp response."""
+
+    def __init__(self, status: int, data=None, raise_on_json: bool = False) -> None:
+        self.status = status
+        self._data = data
+        self._raise = raise_on_json
+
+    async def json(self):
+        if self._raise:
+            import aiohttp
+            raise aiohttp.ContentTypeError(MagicMock(), MagicMock())
+        return self._data
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *a):
+        return None
+
+
+def _session_with(response: _MockResponse) -> MagicMock:
+    session = MagicMock()
+    session.request = MagicMock(return_value=response)
+    return session
+
+
+class TestGHRequest:
+    @pytest.mark.asyncio
+    async def test_request_ok(self) -> None:
+        gh = repo_sync._GH(_cfg())
+        session = _session_with(_MockResponse(200, {"key": "value"}))
+        status, data = await gh._request(session, "GET", "/path")
+        assert status == 200
+        assert data == {"key": "value"}
+
+    @pytest.mark.asyncio
+    async def test_authorization_header_uses_pat(self) -> None:
+        # PAT попадает в Bearer header, и только туда.
+        gh = repo_sync._GH(_cfg())
+        assert gh._headers["Authorization"] == "Bearer ghp_test"
+        # PAT не утекает в User-Agent
+        assert "ghp_test" not in gh._headers["User-Agent"]
+
+    @pytest.mark.asyncio
+    async def test_non_json_response_returns_none_data(self) -> None:
+        # Сервер вернул не-JSON (например, HTML 502) — не падаем,
+        # возвращаем (status, None).
+        gh = repo_sync._GH(_cfg())
+        session = _session_with(_MockResponse(502, raise_on_json=True))
+        status, data = await gh._request(session, "GET", "/path")
+        assert status == 502
+        assert data is None
+
+
+class TestGHMethods:
+    @pytest.mark.asyncio
+    async def test_get_ref_sha_ok(self) -> None:
+        gh = repo_sync._GH(_cfg())
+        with patch.object(
+            gh, "_request",
+            AsyncMock(return_value=(200, {"object": {"sha": "abc123"}})),
+        ):
+            sha = await gh.get_ref_sha(MagicMock(), "main")
+        assert sha == "abc123"
+
+    @pytest.mark.asyncio
+    async def test_get_ref_sha_404_returns_none(self) -> None:
+        gh = repo_sync._GH(_cfg())
+        with patch.object(
+            gh, "_request", AsyncMock(return_value=(404, None)),
+        ):
+            sha = await gh.get_ref_sha(MagicMock(), "nonexistent")
+        assert sha is None
+
+    @pytest.mark.asyncio
+    async def test_get_ref_sha_malformed_returns_none(self) -> None:
+        # 200, но в payload нет object.sha → не падаем, None
+        gh = repo_sync._GH(_cfg())
+        with patch.object(
+            gh, "_request", AsyncMock(return_value=(200, {"weird": True})),
+        ):
+            sha = await gh.get_ref_sha(MagicMock(), "main")
+        assert sha is None
+
+    @pytest.mark.asyncio
+    async def test_create_branch_ok(self) -> None:
+        gh = repo_sync._GH(_cfg())
+        with patch.object(gh, "_request", AsyncMock(return_value=(201, {}))):
+            ok = await gh.create_branch(MagicMock(), "br", "sha")
+        assert ok is True
+
+    @pytest.mark.asyncio
+    async def test_create_branch_already_exists(self) -> None:
+        # 422 — ветка уже существует (второй клик в ту же секунду).
+        # Контракт: возвращаем False, выше слой даст понятную ошибку.
+        gh = repo_sync._GH(_cfg())
+        with patch.object(gh, "_request", AsyncMock(return_value=(422, {}))):
+            ok = await gh.create_branch(MagicMock(), "br", "sha")
+        assert ok is False
+
+    @pytest.mark.asyncio
+    async def test_get_file_sha_ok(self) -> None:
+        gh = repo_sync._GH(_cfg())
+        with patch.object(
+            gh, "_request",
+            AsyncMock(return_value=(200, {"sha": "blob_sha"})),
+        ):
+            sha = await gh.get_file_sha(MagicMock(), "path", "main")
+        assert sha == "blob_sha"
+
+    @pytest.mark.asyncio
+    async def test_get_file_sha_404(self) -> None:
+        # Файла нет в репо (первый раз создаём) — None.
+        gh = repo_sync._GH(_cfg())
+        with patch.object(gh, "_request", AsyncMock(return_value=(404, None))):
+            sha = await gh.get_file_sha(MagicMock(), "path", "main")
+        assert sha is None
+
+    @pytest.mark.asyncio
+    async def test_put_file_creates_new(self) -> None:
+        # sha=None → 201 Created (новый файл)
+        gh = repo_sync._GH(_cfg())
+        with patch.object(gh, "_request", AsyncMock(return_value=(201, {}))):
+            ok = await gh.put_file(
+                MagicMock(), path="p", branch="b",
+                content_str="x", message="m", sha=None,
+            )
+        assert ok is True
+
+    @pytest.mark.asyncio
+    async def test_put_file_updates_existing_with_sha(self) -> None:
+        # sha задан → 200 OK (обновление), sha попадает в body
+        gh = repo_sync._GH(_cfg())
+        req = AsyncMock(return_value=(200, {}))
+        with patch.object(gh, "_request", req):
+            await gh.put_file(
+                MagicMock(), path="p", branch="b",
+                content_str="x", message="m", sha="old_sha",
+            )
+        body = req.await_args.kwargs["json_body"]
+        assert body["sha"] == "old_sha"
+        # content base64-encoded
+        assert body["content"] == base64.b64encode(b"x").decode("ascii")
+        # committer и author — оба из cfg
+        assert body["committer"]["name"] == "Bot"
+        assert body["author"]["email"] == "bot@example.com"
+
+    @pytest.mark.asyncio
+    async def test_put_file_fail(self) -> None:
+        gh = repo_sync._GH(_cfg())
+        with patch.object(gh, "_request", AsyncMock(return_value=(403, {}))):
+            ok = await gh.put_file(
+                MagicMock(), path="p", branch="b",
+                content_str="x", message="m", sha=None,
+            )
+        assert ok is False
+
+    @pytest.mark.asyncio
+    async def test_create_pr_ok(self) -> None:
+        gh = repo_sync._GH(_cfg())
+        with patch.object(
+            gh, "_request",
+            AsyncMock(return_value=(201, {
+                "number": 42, "html_url": "https://github.com/owner/repo/pull/42",
+            })),
+        ):
+            n, u = await gh.create_pr(
+                MagicMock(), title="t", head="br", base="main", body="b",
+            )
+        assert n == 42
+        assert u == "https://github.com/owner/repo/pull/42"
+
+    @pytest.mark.asyncio
+    async def test_create_pr_fail(self) -> None:
+        gh = repo_sync._GH(_cfg())
+        with patch.object(gh, "_request", AsyncMock(return_value=(422, {}))):
+            n, u = await gh.create_pr(
+                MagicMock(), title="t", head="br", base="main", body="b",
+            )
+        assert n is None
+        assert u is None
+
+
+# ---- create_settings_pr orchestration --------------------------------------
+
+
+def _aiohttp_session_patch():
+    """Контекст-менеджер `aiohttp.ClientSession(...) as session` —
+    наш orchestrator его открывает. Возвращаем фейк-сессию, через
+    которую methods _GH-инстанса не должны ходить (они уже мокаются)."""
+    cm = MagicMock()
+    cm.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
+    cm.return_value.__aexit__ = AsyncMock(return_value=None)
+    return cm
+
+
+class TestCreateSettingsPr:
+    @pytest.mark.asyncio
+    async def test_no_dirty_keys_returns_no_changes(self) -> None:
+        # Контракт: пустой список dirty_keys → не лезем в API,
+        # сразу возвращаем reason='no_changes'.
+        result = await repo_sync.create_settings_pr(
+            _cfg(),
+            runtime_config={"x": 1},
+            dirty_keys=[],
+            operator_name="X",
+            operator_id=1,
+        )
+        assert result.ok is False
+        assert result.reason == "no_changes"
+
+    @pytest.mark.asyncio
+    async def test_happy_path(self) -> None:
+        with patch.object(
+            repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch(),
+        ), patch.object(repo_sync, "_GH") as gh_cls:
+            gh = gh_cls.return_value
+            gh.get_ref_sha = AsyncMock(return_value="base_sha")
+            gh.create_branch = AsyncMock(return_value=True)
+            gh.get_file_sha = AsyncMock(return_value="file_sha")
+            gh.put_file = AsyncMock(return_value=True)
+            gh.create_pr = AsyncMock(
+                return_value=(42, "https://github.com/owner/repo/pull/42"),
+            )
+            result = await repo_sync.create_settings_pr(
+                _cfg(),
+                runtime_config={"k": "v"},
+                dirty_keys=["k"],
+                operator_name="Ivan",
+                operator_id=42,
+            )
+        assert result.ok is True
+        assert result.pr_number == 42
+        assert "pull/42" in (result.pr_url or "")
+        # branch_name содержит префикс
+        assert (result.branch or "").startswith("bot-config-sync-")
+
+    @pytest.mark.asyncio
+    async def test_no_base_branch(self) -> None:
+        with patch.object(
+            repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch(),
+        ), patch.object(repo_sync, "_GH") as gh_cls:
+            gh = gh_cls.return_value
+            gh.get_ref_sha = AsyncMock(return_value=None)
+            result = await repo_sync.create_settings_pr(
+                _cfg(), runtime_config={"k": "v"},
+                dirty_keys=["k"], operator_name="X", operator_id=1,
+            )
+        assert result.ok is False
+        assert result.reason == "no_base_branch"
+        assert "main" in result.message
+
+    @pytest.mark.asyncio
+    async def test_branch_failed(self) -> None:
+        with patch.object(
+            repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch(),
+        ), patch.object(repo_sync, "_GH") as gh_cls:
+            gh = gh_cls.return_value
+            gh.get_ref_sha = AsyncMock(return_value="base_sha")
+            gh.create_branch = AsyncMock(return_value=False)
+            result = await repo_sync.create_settings_pr(
+                _cfg(), runtime_config={"k": "v"},
+                dirty_keys=["k"], operator_name="X", operator_id=1,
+            )
+        assert result.ok is False
+        assert result.reason == "branch_failed"
+
+    @pytest.mark.asyncio
+    async def test_write_failed(self) -> None:
+        with patch.object(
+            repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch(),
+        ), patch.object(repo_sync, "_GH") as gh_cls:
+            gh = gh_cls.return_value
+            gh.get_ref_sha = AsyncMock(return_value="base_sha")
+            gh.create_branch = AsyncMock(return_value=True)
+            gh.get_file_sha = AsyncMock(return_value="file_sha")
+            gh.put_file = AsyncMock(return_value=False)
+            result = await repo_sync.create_settings_pr(
+                _cfg(), runtime_config={"k": "v"},
+                dirty_keys=["k"], operator_name="X", operator_id=1,
+            )
+        assert result.ok is False
+        assert result.reason == "write_failed"
+
+    @pytest.mark.asyncio
+    async def test_pr_failed(self) -> None:
+        with patch.object(
+            repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch(),
+        ), patch.object(repo_sync, "_GH") as gh_cls:
+            gh = gh_cls.return_value
+            gh.get_ref_sha = AsyncMock(return_value="base_sha")
+            gh.create_branch = AsyncMock(return_value=True)
+            gh.get_file_sha = AsyncMock(return_value="file_sha")
+            gh.put_file = AsyncMock(return_value=True)
+            gh.create_pr = AsyncMock(return_value=(None, None))
+            result = await repo_sync.create_settings_pr(
+                _cfg(), runtime_config={"k": "v"},
+                dirty_keys=["k"], operator_name="X", operator_id=1,
+            )
+        assert result.ok is False
+        assert result.reason == "pr_failed"
+
+
+# ---- fetch_main_runtime_config ---------------------------------------------
+
+
+class TestFetchMainRuntimeConfig:
+    @pytest.mark.asyncio
+    async def test_404_returns_not_in_repo(self) -> None:
+        # Файл не существует в репо → понятный reason для UI «впервые
+        # синхронизируем, файла ещё нет».
+        with patch.object(
+            repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch(),
+        ), patch.object(repo_sync, "_GH") as gh_cls:
+            gh = gh_cls.return_value
+            gh._request = AsyncMock(return_value=(404, None))
+            data, reason = await repo_sync.fetch_main_runtime_config(_cfg())
+        assert data is None
+        assert reason == "not_in_repo"
+
+    @pytest.mark.asyncio
+    async def test_happy(self) -> None:
+        content = base64.b64encode(
+            json.dumps({"k": "v", "u": "Привет"}).encode("utf-8"),
+        ).decode("ascii")
+        with patch.object(
+            repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch(),
+        ), patch.object(repo_sync, "_GH") as gh_cls:
+            gh = gh_cls.return_value
+            gh._request = AsyncMock(return_value=(200, {"content": content}))
+            data, reason = await repo_sync.fetch_main_runtime_config(_cfg())
+        assert data == {"k": "v", "u": "Привет"}
+        assert reason == "ok"
+
+    @pytest.mark.asyncio
+    async def test_500_returns_fetch_failed(self) -> None:
+        with patch.object(
+            repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch(),
+        ), patch.object(repo_sync, "_GH") as gh_cls:
+            gh = gh_cls.return_value
+            gh._request = AsyncMock(return_value=(500, None))
+            data, reason = await repo_sync.fetch_main_runtime_config(_cfg())
+        assert data is None
+        assert reason == "fetch_failed"
+
+    @pytest.mark.asyncio
+    async def test_invalid_json_returns_parse_failed(self) -> None:
+        # base64-декодируется, но это не валидный JSON.
+        bad_content = base64.b64encode(b"{not valid json").decode("ascii")
+        with patch.object(
+            repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch(),
+        ), patch.object(repo_sync, "_GH") as gh_cls:
+            gh = gh_cls.return_value
+            gh._request = AsyncMock(return_value=(200, {"content": bad_content}))
+            data, reason = await repo_sync.fetch_main_runtime_config(_cfg())
+        assert data is None
+        assert reason == "parse_failed"
 ```
 
 ### `bot/tests/test_services_no_db.py`
@@ -39164,8 +42351,8 @@ E-mail: [⚖️ заполнить юристу]
 
 ### `infra/.env.example`
 
-Size: `7517` bytes  
-SHA-256: `22d2e0df0827a3321152f50490af9e886267f0c226cbfe7cecdadfe6a1dec394`
+Size: `9486` bytes  
+SHA-256: `98c89a8b75eafb5c8f07541f986bdec74ac6f722c5c42ee91b4109abcfd35d61`
 
 ```text
 # Бот в MAX
@@ -39310,6 +42497,37 @@ HEALTHCHECK_URL=
 
 # Стартовые данные (welcome.md, contacts.json, тематики и т.п.)
 SEED_DIR=/app/seed
+
+# =====================================================================
+# GitHub: синхронизация настроек бота с репозиторием (опционально)
+# =====================================================================
+#
+# Если эти три переменные заполнены, в меню «⚙️ Настройки бота → 💾
+# Создать PR с изменениями» становится доступным создание Pull Request
+# с обновлённым seed/runtime_config.json. После мержа PR в main scripts/
+# auto-deploy.sh подхватит изменения и пересоберёт бота.
+#
+# Без этих переменных меню настроек работает в полном объёме —
+# изменения применяются в БД немедленно. Не работает только кнопка
+# «Создать PR», она вернёт понятную ошибку «GITHUB_PAT не задан».
+#
+# Как получить токен:
+#   github.com → Settings → Developer settings → Personal access tokens
+#                → Fine-grained tokens → Generate new token
+#   Repository access: только Gaben1488/aemr-bot
+#   Permissions:
+#     Contents: Read and write     (создание ветки и коммитов)
+#     Pull requests: Read and write (создание PR)
+#   Срок жизни: 1 год, потом ротация.
+#
+# Файл /infra/.env должен быть chmod 600 (стандартное правило).
+#
+# Имя и email автора коммитов задаются в БД через меню бота (раздел
+# «👤 Автор коммитов»), не здесь — чтобы при смене ответственного
+# сотрудника не требовался редеплой.
+GITHUB_PAT=
+GITHUB_REPO=Gaben1488/aemr-bot
+GITHUB_PR_BASE_BRANCH=main
 ```
 
 ### `infra/docker-compose.yml`
