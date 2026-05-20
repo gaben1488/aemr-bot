@@ -19,6 +19,7 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
 from aemr_bot.services import idempotency
 from aemr_bot.services import operators as operators_service
+from aemr_bot.utils import image_attachments as _image_attachments
 from aemr_bot.utils.event import (
     extract_message_id,
     get_chat_id,
@@ -306,13 +307,23 @@ async def _send_reply_to_citizen(
     """
     target_user_id = fresh_appeal.user.max_user_id
     formatted_text = card_format.citizen_reply(fresh_appeal, text)
+    # Картинка оператора, если приложил — пробрасываем жителю рядом
+    # с inline-клавиатурой. limit=1 защищает от тяжёлых multi-image
+    # ответов; deserialize_for_relay в build_outbound устойчив к
+    # отсутствию maxapi (вернёт []), бот не падает.
+    operator_images = _image_attachments.image_attachments_from_event(
+        event, limit=1
+    )
+    outbound_images = _image_attachments.build_outbound_image_attachments(
+        operator_images
+    )
     try:
         # ВАЖНО: доставляем по user_id (а не chat_id) — chat_id личного
         # диалога жителя мы не храним, только MAX user_id.
         sent = await event.bot.send_message(
             user_id=target_user_id,
             text=formatted_text,
-            attachments=[keyboards.back_to_menu_keyboard()],
+            attachments=[*outbound_images, keyboards.back_to_menu_keyboard()],
         )
     except Exception as exc:  # noqa: BLE001
         # В админ-чат — только имя класса исключения: `repr(exc)` из
