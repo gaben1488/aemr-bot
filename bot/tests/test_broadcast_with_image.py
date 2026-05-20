@@ -203,6 +203,157 @@ class TestWizardCapturesImage:
         assert list(state.attachments) == []
 
 
+# ---- multi-image захват в wizard ------------------------------------------
+
+
+class TestWizardCapturesMultipleImages:
+    @pytest.mark.asyncio
+    async def test_three_images_all_captured(self) -> None:
+        """Контракт: оператор приложил 3 картинки одним сообщением →
+        wizard сохраняет все 3 в state.attachments. До правки сохранялась
+        только первая (limit=1)."""
+        from aemr_bot.handlers import broadcast as bc
+
+        event = make_event(chat_id=100, user_id=7)
+        event.message.body.attachments = [
+            {"type": "image", "payload": {"url": "a.jpg"}},
+            {"type": "image", "payload": {"url": "b.jpg"}},
+            {"type": "image", "payload": {"url": "c.jpg"}},
+        ]
+        bc._wizards.clear()
+        bc._wizards[7] = bc._WizardState(step="awaiting_text")
+
+        with patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+                   AsyncMock(return_value=5)), \
+             patch.object(bc.cfg, "broadcast_max_images", 5):
+            handled = await bc._handle_wizard_text(event, "три картинки")
+
+        assert handled is True
+        state = bc._wizards.get(7)
+        assert state is not None
+        assert len(state.attachments) == 3, (
+            f"ожидалось 3 картинки, получено {len(state.attachments)}"
+        )
+        # все три — image-типа
+        for att in state.attachments:
+            assert att["type"] == "image"
+
+    @pytest.mark.asyncio
+    async def test_images_capped_at_broadcast_max_images(self) -> None:
+        """Контракт: при cfg.broadcast_max_images=2 и 5 картинках в
+        сообщении — wizard сохраняет ровно 2 (защита от тяжёлых
+        multi-image рассылок). Дополнительные молча отбрасываются."""
+        from aemr_bot.handlers import broadcast as bc
+
+        event = make_event(chat_id=100, user_id=7)
+        event.message.body.attachments = [
+            {"type": "image", "payload": {"url": f"{i}.jpg"}} for i in range(5)
+        ]
+        bc._wizards.clear()
+        bc._wizards[7] = bc._WizardState(step="awaiting_text")
+
+        with patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+                   AsyncMock(return_value=5)), \
+             patch.object(bc.cfg, "broadcast_max_images", 2):
+            await bc._handle_wizard_text(event, "слишком много")
+
+        state = bc._wizards.get(7)
+        assert state is not None
+        assert len(state.attachments) == 2, (
+            f"лимит broadcast_max_images=2 нарушен: получено "
+            f"{len(state.attachments)}"
+        )
+
+
+# ---- preview-карточка содержит картинки -----------------------------------
+
+
+class TestPreviewCardIncludesImages:
+    @pytest.mark.asyncio
+    async def test_preview_message_attachments_include_images(self) -> None:
+        """Контракт: confirm-preview карточка (event.message.answer)
+        включает картинки оператора в attachments (рядом с
+        broadcast_confirm_keyboard). До правки в карточке была только
+        клавиатура — оператор не видел, что приложил."""
+        from aemr_bot.handlers import broadcast as bc
+
+        event = make_event(chat_id=100, user_id=7)
+        event.message.body.attachments = [
+            {"type": "image", "payload": {"url": "preview.jpg"}},
+        ]
+        bc._wizards.clear()
+        bc._wizards[7] = bc._WizardState(step="awaiting_text")
+
+        # фейк pydantic-объекта от deserialize_for_relay
+        fake_preview_image = SimpleNamespace(
+            type="image", payload={"url": "preview.jpg"}
+        )
+
+        with patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+                   AsyncMock(return_value=5)), \
+             patch.object(bc.cfg, "broadcast_max_images", 5), \
+             patch("aemr_bot.utils.image_attachments.deserialize_for_relay",
+                   return_value=[fake_preview_image]):
+            await bc._handle_wizard_text(event, "превью с картинкой")
+
+        # event.message.answer был вызван для preview-карточки
+        answer_calls = event.message.answer.call_args_list
+        assert answer_calls, "event.message.answer не был вызван"
+        # ищем вызов с broadcast_confirm_keyboard в attachments
+        preview_call = None
+        for c in answer_calls:
+            atts = c.kwargs.get("attachments", [])
+            if any("confirm" in repr(a).lower() for a in atts):
+                preview_call = c
+                break
+        assert preview_call is not None, (
+            f"preview-вызов не найден среди: {answer_calls}"
+        )
+        preview_attachments = preview_call.kwargs["attachments"]
+        # картинка должна быть среди вложений preview-карточки
+        assert fake_preview_image in preview_attachments, (
+            f"preview не содержит картинку оператора; "
+            f"attachments={preview_attachments}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_text_only_preview_no_extra_attachments(self) -> None:
+        """Regression: text-only preview — ровно одна attachment
+        (confirm-клавиатура), без картинок."""
+        from aemr_bot.handlers import broadcast as bc
+
+        event = make_event(chat_id=100, user_id=7)
+        bc._wizards.clear()
+        bc._wizards[7] = bc._WizardState(step="awaiting_text")
+
+        with patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+                   AsyncMock(return_value=5)), \
+             patch.object(bc.cfg, "broadcast_max_images", 5):
+            await bc._handle_wizard_text(event, "text only")
+
+        # ищем preview-вызов
+        preview_call = None
+        for c in event.message.answer.call_args_list:
+            atts = c.kwargs.get("attachments", [])
+            if any("confirm" in repr(a).lower() for a in atts):
+                preview_call = c
+                break
+        assert preview_call is not None
+        atts = preview_call.kwargs["attachments"]
+        assert len(atts) == 1, (
+            f"text-only preview должна иметь ровно 1 attachment "
+            f"(клавиатура); получено {atts}"
+        )
+
+
 # ---- _handle_confirm передаёт attachments в create_broadcast ---------------
 
 

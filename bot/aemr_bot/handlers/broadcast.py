@@ -188,16 +188,26 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         return True
 
     state.text = text
-    # Захват картинки оператора, если в том же сообщении была. limit=1
-    # — рассылка с одной картинкой; multi-image отложен до явного UI.
+    # Захват картинок оператора (если в том же сообщении были). Лимит —
+    # `cfg.broadcast_max_images`, по умолчанию 5: афиша, схема, фото-
+    # комплект из 2-3 кадров укладываются, multi-image-спам отрезается.
     state.attachments = _image_attachments.image_attachments_from_event(
-        event, limit=1
+        event, limit=cfg.broadcast_max_images
     )
     state.step = "awaiting_confirm"
     state.renew()
+    # Превью включает все приложенные картинки рядом с confirm-клавой,
+    # чтобы оператор видел, что именно увидит подписчик. До этой правки
+    # preview был text-only, оператор «вслепую» подтверждал.
+    preview_outbound_images = _image_attachments.build_outbound_image_attachments(
+        state.attachments
+    )
     await event.message.answer(
         texts.OP_BROADCAST_PREVIEW.format(text=text, count=count),
-        attachments=[keyboards.broadcast_confirm_keyboard()],
+        attachments=[
+            *preview_outbound_images,
+            keyboards.broadcast_confirm_keyboard(),
+        ],
     )
     return True
 
