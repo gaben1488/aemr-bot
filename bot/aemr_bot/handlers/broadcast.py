@@ -20,9 +20,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from maxapi import Dispatcher
 from maxapi.types import Command, MessageCreated
@@ -340,7 +341,7 @@ async def _send_one(
     max_user_id: int,
     body_text: str,
     *,
-    outbound_images: list = (),
+    outbound_images: Sequence[Any] = (),
 ) -> str | None:
     """Возвращает None при успехе и строку с ошибкой при сбое.
 
@@ -514,7 +515,7 @@ async def _run_send_loop(
     admin_mid: str | None,
     rate_delay: float,
     progress_step_sec: float,
-    outbound_images: list = (),
+    outbound_images: Sequence[Any] = (),
 ) -> tuple[int, int, bool]:
     """Цикл отправки рассылки. Возвращает ``(delivered, failed, cancelled)``.
 
