@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-20 22:13:05 UTC`
+Generated at: `2026-05-20 23:00:02 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `169`
+Indexed files: `174`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -34,7 +34,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/db/alembic/versions/0011_wizard_state_persistence.py` (3270 bytes)
 - `bot/aemr_bot/db/alembic/versions/0012_messages_appeal_created_index.py` (1934 bytes)
 - `bot/aemr_bot/db/alembic/versions/0013_settings_synced_at.py` (2141 bytes)
-- `bot/aemr_bot/db/models.py` (15887 bytes)
+- `bot/aemr_bot/db/alembic/versions/0014_broadcasts_attachments.py` (2069 bytes)
+- `bot/aemr_bot/db/models.py` (16442 bytes)
 - `bot/aemr_bot/db/session.py` (2764 bytes)
 - `bot/aemr_bot/handlers/__init__.py` (3303 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
@@ -51,10 +52,10 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_funnel.py` (29804 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (12572 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (29978 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (32351 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8097 bytes)
 - `bot/aemr_bot/handlers/menu.py` (43971 bytes)
-- `bot/aemr_bot/handlers/operator_reply.py` (30141 bytes)
+- `bot/aemr_bot/handlers/operator_reply.py` (30811 bytes)
 - `bot/aemr_bot/handlers/start.py` (16556 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (52237 bytes)
@@ -63,7 +64,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (6055 bytes)
 - `bot/aemr_bot/services/appeals.py` (18415 bytes)
-- `bot/aemr_bot/services/broadcasts.py` (11753 bytes)
+- `bot/aemr_bot/services/broadcasts.py` (12238 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (5938 bytes)
 - `bot/aemr_bot/services/cron.py` (30703 bytes)
@@ -85,6 +86,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
 - `bot/aemr_bot/utils/event.py` (10894 bytes)
+- `bot/aemr_bot/utils/image_attachments.py` (1137 bytes)
 - `bot/alembic.ini` (619 bytes)
 - `bot/pyproject.toml` (2583 bytes)
 - `bot/tests/__init__.py` (0 bytes)
@@ -100,7 +102,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_appeal_flow.py` (10960 bytes)
 - `bot/tests/test_appeals_service_pg.py` (14053 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
-- `bot/tests/test_broadcast_handlers.py` (31789 bytes)
+- `bot/tests/test_broadcast_handlers.py` (32274 bytes)
+- `bot/tests/test_broadcast_with_image.py` (13815 bytes)
 - `bot/tests/test_broadcasts_service_pg.py` (3786 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
 - `bot/tests/test_callback_router.py` (8614 bytes)
@@ -124,9 +127,11 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_handlers_start.py` (12367 bytes)
 - `bot/tests/test_health.py` (4062 bytes)
 - `bot/tests/test_idempotency.py` (3650 bytes)
+- `bot/tests/test_image_attachments.py` (7487 bytes)
 - `bot/tests/test_keyboards.py` (5473 bytes)
 - `bot/tests/test_main_helpers.py` (8679 bytes)
 - `bot/tests/test_operator_reply_closed_guard.py` (3049 bytes)
+- `bot/tests/test_operator_reply_with_image.py` (7240 bytes)
 - `bot/tests/test_progress.py` (10480 bytes)
 - `bot/tests/test_pure_functions.py` (10564 bytes)
 - `bot/tests/test_repo_sync.py` (21989 bytes)
@@ -2192,10 +2197,68 @@ def downgrade() -> None:
     op.drop_column("settings", "synced_at")
 ```
 
+### `bot/aemr_bot/db/alembic/versions/0014_broadcasts_attachments.py`
+
+Size: `2069` bytes  
+SHA-256: `43c709ec52a7c537a52abca68ab0969ab4bbbd2d46f72dbed3e926b35bf7487f`
+
+```python
+"""Image attachments в рассылках.
+
+Revision ID: 0014
+Revises: 0013
+Create Date: 2026-05-21
+
+Добавляет в таблицу `broadcasts` колонку `attachments JSONB NOT NULL
+DEFAULT '[]'` — для хранения сериализованных image-attachment'ов
+рассылки между confirm'ом мастера и фоновой отправкой подписчикам.
+
+Формат значения — тот же list[dict], что в Appeal.attachments и
+Message.attachments: каждый элемент — словарь с ключами `type`,
+`payload` и т.п., полученный через
+utils/attachments.collect_attachments из сообщения оператора. На
+исход в send-loop восстанавливается в pydantic-объекты через
+utils/attachments.deserialize_for_relay.
+
+Текстовые рассылки (без картинок) хранят пустой список — обратная
+совместимость со старыми broadcast'ами. NOT NULL с server_default='[]'
+гарантирует, что старые row'ы после миграции имеют валидное значение.
+
+Downgrade: дроп колонки. Безопасно — поле не индексируется и не имеет
+внешних ссылок; восстанавливается из заново созданных рассылок.
+"""
+from typing import Sequence, Union
+
+import sqlalchemy as sa
+from alembic import op
+from sqlalchemy.dialects import postgresql
+
+revision: str = "0014"
+down_revision: Union[str, None] = "0013"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    op.add_column(
+        "broadcasts",
+        sa.Column(
+            "attachments",
+            postgresql.JSONB(),
+            nullable=False,
+            server_default=sa.text("'[]'::jsonb"),
+        ),
+    )
+
+
+def downgrade() -> None:
+    op.drop_column("broadcasts", "attachments")
+```
+
 ### `bot/aemr_bot/db/models.py`
 
-Size: `15887` bytes  
-SHA-256: `0772a097690abe63daf8cc33fd9828bbf99c69f0daf37a2bf6dc0ff043cf3ef7`
+Size: `16442` bytes  
+SHA-256: `a6428e6d72a198a1b5427f001e2af23741c08e488d10916012736f5ebf74c437`
 
 ```python
 from datetime import datetime
@@ -2458,6 +2521,14 @@ class Broadcast(Base):
     delivered_count: Mapped[int] = mapped_column(default=0, server_default="0")
     failed_count: Mapped[int] = mapped_column(default=0, server_default="0")
     admin_message_id: Mapped[str | None] = mapped_column(String(64))
+    # Картинки в рассылке. Сериализованные dict'ы attachment'ов
+    # (тот же формат, что Appeal.attachments / Message.attachments).
+    # На пересылку восстанавливаются через
+    # utils/attachments.deserialize_for_relay. Пустой список = text-only
+    # рассылка, обратная совместимость со старыми broadcast row'ами.
+    attachments: Mapped[list] = mapped_column(
+        JSONB, default=list, server_default="[]"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
     )
@@ -8231,8 +8302,8 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `29978` bytes  
-SHA-256: `fb5856ba3fab11724d2de51bdd641a8378b167b4c9687992edc0015132546f98`
+Size: `32351` bytes  
+SHA-256: `8799654fc3c8b4a88022047dc8e5b511c90e6705862a41d1a466f3ba7904c539`
 
 ```python
 """Мастер рассылок и цикл их отправки.
@@ -8257,9 +8328,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from maxapi import Dispatcher
 from maxapi.types import Command, MessageCreated
@@ -8272,6 +8344,7 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as operators_service
+from aemr_bot.utils import image_attachments as _image_attachments
 from aemr_bot.utils.background import spawn_background_task
 from aemr_bot.utils.event import (
     ack_callback,
@@ -8295,6 +8368,10 @@ WizardStep = Literal["awaiting_text", "awaiting_confirm"]
 class _WizardState:
     step: WizardStep
     text: str = ""
+    # Картинки, приложенные оператором к шагу awaiting_text. Сериализованные
+    # dict'ы attachment'ов (тот же формат, что Appeal.attachments). Пустой
+    # список = text-only рассылка. На confirm уходит в Broadcast.attachments.
+    attachments: list = field(default_factory=list)
     expires_at: float = field(
         default_factory=lambda: time.monotonic() + cfg.broadcast_wizard_ttl_sec
     )
@@ -8419,6 +8496,11 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         return True
 
     state.text = text
+    # Захват картинки оператора, если в том же сообщении была. limit=1
+    # — рассылка с одной картинкой; multi-image отложен до явного UI.
+    state.attachments = _image_attachments.image_attachments_from_event(
+        event, limit=1
+    )
     state.step = "awaiting_confirm"
     state.renew()
     await event.message.answer(
@@ -8456,6 +8538,7 @@ async def _handle_confirm(event) -> None:
             text=state.text,
             operator_id=op.id,
             subscriber_count=count,
+            attachments=list(state.attachments),
         )
         await operators_service.write_audit(
             session,
@@ -8561,13 +8644,29 @@ def _format_progress(
     )
 
 
-async def _send_one(bot, max_user_id: int, body_text: str) -> str | None:
-    """Возвращает None при успехе и строку с ошибкой при сбое."""
+async def _send_one(
+    bot,
+    max_user_id: int,
+    body_text: str,
+    *,
+    outbound_images: Sequence[Any] = (),
+) -> str | None:
+    """Возвращает None при успехе и строку с ошибкой при сбое.
+
+    `outbound_images` — уже десериализованные maxapi-объекты картинок
+    рассылки (раз-в-цикле через `image_attachments.build_outbound_image_attachments`,
+    не на каждого подписчика). Картинки идут впереди клавиатуры отписки,
+    чтобы UI MAX отрендерил их как content рассылки, а не как payload
+    клавиатуры.
+    """
     try:
         await bot.send_message(
             user_id=max_user_id,
             text=body_text,
-            attachments=[keyboards.broadcast_unsubscribe_keyboard()],
+            attachments=[
+                *outbound_images,
+                keyboards.broadcast_unsubscribe_keyboard(),
+            ],
         )
     except Exception as e:
         # Обрезаем, чтобы поле с ошибкой не разрасталось. Полный стек живёт в логах.
@@ -8724,6 +8823,7 @@ async def _run_send_loop(
     admin_mid: str | None,
     rate_delay: float,
     progress_step_sec: float,
+    outbound_images: Sequence[Any] = (),
 ) -> tuple[int, int, bool]:
     """Цикл отправки рассылки. Возвращает ``(delivered, failed, cancelled)``.
 
@@ -8763,7 +8863,10 @@ async def _run_send_loop(
 
     try:
         for user_db_id, user_max_user_id in targets:
-            error = await _send_one(bot, user_max_user_id, body)
+            error = await _send_one(
+                bot, user_max_user_id, body,
+                outbound_images=outbound_images,
+            )
             pending.append((user_db_id, error))
             if error is None:
                 delivered += 1
@@ -8865,6 +8968,19 @@ async def _run_broadcast_impl(
     async with session_scope() as session:
         targets = await broadcasts_service.list_subscriber_targets(session)
 
+    # Картинки рассылки (если оператор прикрепил на confirm-шаге).
+    # Десериализуем ровно один раз: deserialize_for_relay вызывает
+    # pydantic-валидацию, не хотим тратить её на каждого подписчика.
+    # В send-loop уходят уже готовые maxapi-объекты.
+    async with session_scope() as session:
+        broadcast_row = await broadcasts_service.get_by_id(session, broadcast_id)
+    stored_attachments = (
+        broadcast_row.attachments if broadcast_row is not None else []
+    )
+    outbound_images = _image_attachments.build_outbound_image_attachments(
+        stored_attachments
+    )
+
     delivered, failed, cancelled = await _run_send_loop(
         bot,
         broadcast_id=broadcast_id,
@@ -8874,6 +8990,7 @@ async def _run_broadcast_impl(
         admin_mid=admin_mid,
         rate_delay=rate_delay,
         progress_step_sec=progress_step_sec,
+        outbound_images=outbound_images,
     )
 
     final_status = (
@@ -10083,8 +10200,8 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
 
 ### `bot/aemr_bot/handlers/operator_reply.py`
 
-Size: `30141` bytes  
-SHA-256: `0b26b58bad415ee7b2b4dc10636a66861f555ee01f243fed44b837eb38a2fd1d`
+Size: `30811` bytes  
+SHA-256: `af8be0d9a22b747b9026e47f77b3fc64b2d62007bab88fa3e082ffccc09ecbe4`
 
 ```python
 """Логика ответов операторов и дополнительных сообщений от жителей, вызывается
@@ -10108,6 +10225,7 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
 from aemr_bot.services import idempotency
 from aemr_bot.services import operators as operators_service
+from aemr_bot.utils import image_attachments as _image_attachments
 from aemr_bot.utils.event import (
     extract_message_id,
     get_chat_id,
@@ -10395,13 +10513,23 @@ async def _send_reply_to_citizen(
     """
     target_user_id = fresh_appeal.user.max_user_id
     formatted_text = card_format.citizen_reply(fresh_appeal, text)
+    # Картинка оператора, если приложил — пробрасываем жителю рядом
+    # с inline-клавиатурой. limit=1 защищает от тяжёлых multi-image
+    # ответов; deserialize_for_relay в build_outbound устойчив к
+    # отсутствию maxapi (вернёт []), бот не падает.
+    operator_images = _image_attachments.image_attachments_from_event(
+        event, limit=1
+    )
+    outbound_images = _image_attachments.build_outbound_image_attachments(
+        operator_images
+    )
     try:
         # ВАЖНО: доставляем по user_id (а не chat_id) — chat_id личного
         # диалога жителя мы не храним, только MAX user_id.
         sent = await event.bot.send_message(
             user_id=target_user_id,
             text=formatted_text,
-            attachments=[keyboards.back_to_menu_keyboard()],
+            attachments=[*outbound_images, keyboards.back_to_menu_keyboard()],
         )
     except Exception as exc:  # noqa: BLE001
         # В админ-чат — только имя класса исключения: `repr(exc)` из
@@ -13350,8 +13478,8 @@ async def find_active_for_user(session: AsyncSession, user_id: int) -> Appeal | 
 
 ### `bot/aemr_bot/services/broadcasts.py`
 
-Size: `11753` bytes  
-SHA-256: `a19b06fb4233ccbf83fab06de7bdd7f4c6a51e4997cb596152a786650816f71e`
+Size: `12238` bytes  
+SHA-256: `935066ea4174f090f727c05dc1c09d7541d2b0a6692acbc64076caf11c28586b`
 
 ```python
 """Сервис подписки и муниципальных рассылок.
@@ -13442,12 +13570,18 @@ async def create_broadcast(
     text: str,
     operator_id: int | None,
     subscriber_count: int,
+    attachments: list | None = None,
 ) -> Broadcast:
+    """Создать draft-рассылку. `attachments` — сериализованные image-dict'ы
+    (тот же формат, что в Appeal.attachments); пустой список или None
+    означает text-only рассылку. На исход восстанавливается через
+    utils/attachments.deserialize_for_relay в фоновой отправке."""
     bc = Broadcast(
         created_by_operator_id=operator_id,
         text=text,
         subscriber_count_at_start=subscriber_count,
         status=BroadcastStatus.DRAFT.value,
+        attachments=list(attachments or []),
     )
     session.add(bc)
     await session.flush()
@@ -18926,6 +19060,48 @@ async def reply(event: Any, text: str, attachments: list | None = None):
     return await send(event, text, attachments)
 ```
 
+### `bot/aemr_bot/utils/image_attachments.py`
+
+Size: `1137` bytes  
+SHA-256: `2cb0fcbcd092d40331ff978eebaed1584f140bd7fcd6778598f97bf5e19d09e7`
+
+```python
+from __future__ import annotations
+
+from typing import Any
+
+from aemr_bot.utils.attachments import collect_attachments, deserialize_for_relay
+
+
+def _type_name(raw: Any) -> str:
+    value = raw.get("type") if isinstance(raw, dict) else getattr(raw, "type", raw)
+    return str(value or "").lower().rsplit(".", 1)[-1]
+
+
+def is_image_attachment(raw: Any) -> bool:
+    return _type_name(raw) == "image"
+
+
+
+def image_attachments_from_body(body: Any, *, limit: int = 1) -> list[dict]:
+    items = [att for att in collect_attachments(body) if is_image_attachment(att)]
+    return items[:limit] if limit > 0 else items
+
+
+def image_attachments_from_event(event: Any, *, limit: int = 1) -> list[dict]:
+    msg = getattr(event, "message", None)
+    body = getattr(msg, "body", None) if msg is not None else None
+    return image_attachments_from_body(body, limit=limit)
+
+
+def build_outbound_image_attachments(stored: list[dict] | None) -> list:
+    return deserialize_for_relay([att for att in (stored or []) if is_image_attachment(att)])
+
+
+def attachment_meta(stored: list[dict] | None) -> dict[str, int]:
+    return {"images": len(stored or [])}
+```
+
 ### `bot/alembic.ini`
 
 Size: `619` bytes  
@@ -22496,8 +22672,8 @@ class TestCountByType:
 
 ### `bot/tests/test_broadcast_handlers.py`
 
-Size: `31789` bytes  
-SHA-256: `79aa9b1cb5e8bb34967aaf61801f5f6d87b7902636277b51a895809d85c18630`
+Size: `32274` bytes  
+SHA-256: `e6eaaf29b6535e46f092418f430d58544bed97e81a6a8793cd89ac04953d7dff`
 
 ```python
 """Тесты для handlers/broadcast — wizard рассылок и helpers.
@@ -23007,12 +23183,19 @@ class TestRunBroadcastImpl:
         bot.send_message = AsyncMock()
         mark_finished = AsyncMock()
 
+        # broadcast.attachments читается _run_broadcast_impl'ом перед
+        # send-loop'ом для десериализации картинок: мокаем пустую запись.
+        from types import SimpleNamespace as _SN
+        empty_broadcast = _SN(id=77, attachments=[], text="Текст рассылки")
+
         with patch("aemr_bot.handlers.broadcast.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.mark_started",
                    AsyncMock()), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.list_subscriber_targets",
                    AsyncMock(return_value=[])), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.get_by_id",
+                   AsyncMock(return_value=empty_broadcast)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.mark_finished",
                    mark_finished):
             await broadcast._run_broadcast_impl(
@@ -23280,6 +23463,325 @@ class TestListBroadcasts:
         text = event.bot.send_message.call_args.kwargs["text"]
         assert "42" in text
         assert "100" in text
+```
+
+### `bot/tests/test_broadcast_with_image.py`
+
+Size: `13815` bytes  
+SHA-256: `9c0f209431fb15531671d199229c9313ffd62e74d219a84c544ed2bbe77db9df`
+
+```python
+"""TDD-тесты image-attachments в рассылках.
+
+Контракт:
+- `_send_one(bot, max_user_id, body_text, *, outbound_images=())` —
+  per-user отправка с картинками рассылки рядом с unsubscribe-keyboard.
+- `_run_broadcast_impl` должна разадеть `broadcast.attachments` ОДИН
+  РАЗ через `image_attachments.build_outbound_image_attachments`
+  (а не на каждого подписчика — деривалидация pydantic стоит ресурсов),
+  передать результат в send-loop.
+
+RED → GREEN: текущий `_send_one` принимает только три позиционных
+параметра без attachments; тесты должны падать до правки.
+
+Regression-guard: text-only рассылка (broadcast.attachments=[])
+продолжает работать ровно как раньше — никаких лишних объектов в
+attachments сверх клавиатуры.
+"""
+from __future__ import annotations
+
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+pytest.importorskip("maxapi", reason="broadcast тянет maxapi")
+
+
+# ---- _send_one с outbound_images -------------------------------------------
+
+
+class TestSendOneWithImages:
+    @pytest.mark.asyncio
+    async def test_image_attached_to_send_message(self) -> None:
+        """Контракт: картинка из outbound_images попадает в
+        attachments отправки рядом с unsubscribe-клавиатурой."""
+        from aemr_bot.handlers import broadcast as bc
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock()
+        fake_image = SimpleNamespace(type="image", payload={"url": "https://..."})
+
+        err = await bc._send_one(
+            bot, max_user_id=42, body_text="Объявление",
+            outbound_images=[fake_image],
+        )
+
+        assert err is None
+        call = bot.send_message.call_args
+        attachments = call.kwargs.get("attachments", [])
+        assert fake_image in attachments, (
+            f"картинка не прицепилась к рассылке; attachments={attachments}"
+        )
+        # клавиатура отписки тоже должна быть
+        assert len(attachments) == 2
+
+    @pytest.mark.asyncio
+    async def test_no_images_regression_text_only(self) -> None:
+        """Regression: text-only рассылка — ровно одна attachment
+        (клавиатура отписки)."""
+        from aemr_bot.handlers import broadcast as bc
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock()
+
+        err = await bc._send_one(
+            bot, max_user_id=42, body_text="Объявление",
+        )
+
+        assert err is None
+        call = bot.send_message.call_args
+        attachments = call.kwargs.get("attachments", [])
+        assert len(attachments) == 1, (
+            f"text-only рассылка не должна иметь лишних вложений; "
+            f"attachments={attachments}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_send_failure_reported(self) -> None:
+        """Regression: при ошибке send_message _send_one возвращает
+        строку с ошибкой (контракт не сломался)."""
+        from aemr_bot.handlers import broadcast as bc
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock(side_effect=RuntimeError("max down"))
+
+        err = await bc._send_one(
+            bot, max_user_id=42, body_text="Объявление",
+            outbound_images=[],
+        )
+
+        assert err is not None
+        assert "max down" in err
+
+
+# ---- _run_send_loop с outbound_images --------------------------------------
+
+
+from tests._helpers import fake_session_scope as _fake_session_scope  # noqa: E402
+from tests._helpers import make_event  # noqa: E402
+
+
+class TestRunSendLoopWithImages:
+    @pytest.mark.asyncio
+    async def test_images_propagated_to_send_one(self) -> None:
+        """Контракт: _run_send_loop передаёт outbound_images каждому
+        вызову _send_one. Тест ловит цепочку, не текстовые детали."""
+        from aemr_bot.handlers import broadcast as bc
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock()
+        bot.edit_message = AsyncMock()
+
+        fake_image = SimpleNamespace(type="image", payload={})
+        targets = [(1, 42), (2, 43)]  # (user_db_id, max_user_id)
+
+        # Ловим аргументы каждого _send_one
+        captured_kwargs: list[dict] = []
+
+        async def _stub_send_one(bot_arg, max_user_id, body_text, **kw):
+            captured_kwargs.append(kw)
+            return None
+
+        with patch.object(bc, "_send_one", side_effect=_stub_send_one), \
+             patch("aemr_bot.handlers.broadcast.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.get_status",
+                   AsyncMock(return_value="running")), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.update_progress",
+                   AsyncMock()):
+            delivered, failed, cancelled = await bc._run_send_loop(
+                bot,
+                broadcast_id=7,
+                body="text",
+                total=2,
+                targets=targets,
+                admin_mid=None,
+                rate_delay=0.0,
+                progress_step_sec=999.0,  # не флашим по таймеру
+                outbound_images=[fake_image],
+            )
+
+        assert delivered == 2
+        assert failed == 0
+        assert cancelled is False
+        # каждый из 2 вызовов получил картинку
+        assert len(captured_kwargs) == 2
+        for kw in captured_kwargs:
+            assert kw.get("outbound_images") == [fake_image]
+
+
+# ---- wizard: _handle_wizard_text захватывает картинку ----------------------
+
+
+class TestWizardCapturesImage:
+    @pytest.mark.asyncio
+    async def test_image_in_event_stored_on_wizard_state(self) -> None:
+        """Контракт: когда оператор шлёт текст рассылки с приложенной
+        картинкой в одном сообщении, мастер сохраняет картинку в
+        state.attachments для следующего шага (confirm → create)."""
+        from aemr_bot.handlers import broadcast as bc
+
+        event = make_event(chat_id=100, user_id=7)
+        event.message.body.attachments = [
+            {"type": "image", "payload": {"url": "https://cdn/img.jpg"}}
+        ]
+        bc._wizards.clear()
+        bc._wizards[7] = bc._WizardState(step="awaiting_text")
+
+        with patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+                   AsyncMock(return_value=5)):
+            handled = await bc._handle_wizard_text(event, "текст рассылки")
+
+        assert handled is True
+        state = bc._wizards.get(7)
+        assert state is not None
+        assert state.text == "текст рассылки"
+        # картинка сохранена для confirm-шага
+        assert state.attachments, "state.attachments пуст — картинка не захвачена"
+        assert state.attachments[0]["type"] == "image"
+
+    @pytest.mark.asyncio
+    async def test_text_only_keeps_attachments_empty(self) -> None:
+        """Regression: текст без картинки — state.attachments=[]."""
+        from aemr_bot.handlers import broadcast as bc
+
+        event = make_event(chat_id=100, user_id=7)
+        # никаких attachments в body
+        bc._wizards.clear()
+        bc._wizards[7] = bc._WizardState(step="awaiting_text")
+
+        with patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+                   AsyncMock(return_value=5)):
+            handled = await bc._handle_wizard_text(event, "только текст")
+
+        assert handled is True
+        state = bc._wizards.get(7)
+        assert state is not None
+        assert list(state.attachments) == []
+
+
+# ---- _handle_confirm передаёт attachments в create_broadcast ---------------
+
+
+class TestConfirmPassesAttachmentsToCreate:
+    @pytest.mark.asyncio
+    async def test_attachments_passed_to_create_broadcast(self) -> None:
+        """Контракт: при confirm мастера, картинки state.attachments
+        передаются в broadcasts_service.create_broadcast как kwarg
+        attachments. Без этого фоновая рассылка не найдёт картинку
+        в Broadcast row."""
+        from aemr_bot.handlers import broadcast as bc
+
+        event = make_event(
+            chat_id=100, user_id=7, with_callback=True, with_edit_message=True,
+        )
+        op = SimpleNamespace(id=10)
+        broadcast_obj = SimpleNamespace(id=99)
+
+        # State уже на confirm-шаге, с картинкой
+        bc._wizards.clear()
+        bc._wizards[7] = bc._WizardState(step="awaiting_confirm")
+        bc._wizards[7].text = "ВАЖНО"
+        bc._wizards[7].attachments = [
+            {"type": "image", "payload": {"url": "https://cdn/img.jpg"}}
+        ]
+
+        def _consume(coro, **kwargs):
+            coro.close()
+
+        create_mock = AsyncMock(return_value=broadcast_obj)
+        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast._get_operator",
+                   AsyncMock(return_value=op)), \
+             patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+                   AsyncMock(return_value=5)), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.create_broadcast",
+                   create_mock), \
+             patch("aemr_bot.handlers.broadcast.operators_service.write_audit",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast.send_or_edit_screen",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast.spawn_background_task",
+                   MagicMock(side_effect=_consume)):
+            await bc._handle_confirm(event)
+
+        create_mock.assert_awaited_once()
+        kwargs = create_mock.await_args.kwargs
+        assert kwargs.get("attachments") == [
+            {"type": "image", "payload": {"url": "https://cdn/img.jpg"}}
+        ], f"attachments не пробросились в create_broadcast: {kwargs}"
+
+
+# ---- _run_broadcast_impl: deserialize attachments and pass to send_loop ----
+
+
+class TestRunBroadcastImplPassesImages:
+    @pytest.mark.asyncio
+    async def test_broadcast_attachments_deserialized_and_passed_to_send_loop(self) -> None:
+        """Контракт: _run_broadcast_impl читает broadcast.attachments
+        из БД, десериализует через build_outbound_image_attachments
+        (один раз, не на каждого подписчика), и передаёт результат
+        в _run_send_loop как outbound_images."""
+        from aemr_bot.handlers import broadcast as bc
+
+        bot = MagicMock()
+        bot.edit_message = AsyncMock()
+        bot.send_message = AsyncMock()
+
+        stored_attachments = [{"type": "image", "payload": {"url": "x"}}]
+        broadcast_row = SimpleNamespace(
+            id=99, attachments=stored_attachments, text="t",
+        )
+        fake_image_obj = SimpleNamespace(type="image", payload={})
+
+        run_send_loop_mock = AsyncMock(return_value=(0, 0, False))
+        deserialize_mock = MagicMock(return_value=[fake_image_obj])
+
+        with patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.mark_started",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.list_subscriber_targets",
+                   AsyncMock(return_value=[(1, 42)])), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.get_by_id",
+                   AsyncMock(return_value=broadcast_row)), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.mark_finished",
+                   AsyncMock()), \
+             patch.object(bc, "_run_send_loop", run_send_loop_mock), \
+             patch.object(bc, "_send_final_summary", AsyncMock()), \
+             patch.object(bc._image_attachments, "build_outbound_image_attachments",
+                          deserialize_mock):
+            await bc._run_broadcast_impl(
+                bot, broadcast_id=99, text="t", total=1,
+                admin_mid="m-progress",
+            )
+
+        # десериализация вызвана ровно один раз с сохранёнными dict'ами
+        deserialize_mock.assert_called_once_with(stored_attachments)
+        # результат пробросился в _run_send_loop
+        run_send_loop_mock.assert_awaited_once()
+        kwargs = run_send_loop_mock.await_args.kwargs
+        assert kwargs.get("outbound_images") == [fake_image_obj], (
+            f"outbound_images не пробросились в _run_send_loop: {kwargs}"
+        )
 ```
 
 ### `bot/tests/test_broadcasts_service_pg.py`
@@ -28992,6 +29494,191 @@ class TestBuildIdempotencyKey:
         assert "ts=12345" in key
 ```
 
+### `bot/tests/test_image_attachments.py`
+
+Size: `7487` bytes  
+SHA-256: `50222545fc2351bb544327b0130896da94e9214215182db2d3a06ced717c6cc3`
+
+```python
+"""Тесты `utils/image_attachments.py` — тонкая надстройка над `utils/attachments.py`.
+
+Модуль выделяет картинки из общего потока вложений MAX-события: жителю
+надо отправить ровно изображение (не файл, не голосовое), а
+`utils/attachments.py:collect_attachments` отдаёт все типы из
+`ALLOWED_APPEAL_TYPES = {"image","video","file"}`. Здесь — фильтр.
+
+Контракт фиксируется тестами:
+- `is_image_attachment` распознаёт image из dict и из объекта-имитации
+  pydantic-attachment (поле `.type`).
+- `image_attachments_from_body` / `..._from_event` отдаёт только
+  картинки, по умолчанию ≤ 1 (защита от спама в рассылке).
+- `build_outbound_image_attachments` пропускает только image-типы перед
+  передачей в `deserialize_for_relay` (которая на maxapi-зависимости).
+- `attachment_meta` отдаёт счётчик для логов/UI.
+
+Тесты на стороне unit — реальная maxapi не нужна.
+"""
+from __future__ import annotations
+
+from types import SimpleNamespace
+from unittest.mock import patch
+
+import pytest
+
+from aemr_bot.utils import image_attachments as ia
+
+
+# ---- is_image_attachment ---------------------------------------------------
+
+
+class TestIsImageAttachment:
+    def test_dict_with_type_image(self) -> None:
+        assert ia.is_image_attachment({"type": "image"}) is True
+
+    def test_dict_with_qualified_type(self) -> None:
+        # MAX иногда отдаёт `AttachmentType.IMAGE` или `image.IMAGE` —
+        # _type_name берёт хвост после последней точки.
+        assert ia.is_image_attachment({"type": "AttachmentType.image"}) is True
+
+    def test_dict_with_video_type(self) -> None:
+        assert ia.is_image_attachment({"type": "video"}) is False
+
+    def test_object_with_type_attr(self) -> None:
+        # имитация pydantic-attachment c .type
+        att = SimpleNamespace(type="image")
+        assert ia.is_image_attachment(att) is True
+
+    def test_none(self) -> None:
+        # Защита от мусора: None / без type → False, не падаем.
+        assert ia.is_image_attachment(None) is False
+
+    def test_object_without_type(self) -> None:
+        # Если у объекта нет .type — _type_name берёт сам объект,
+        # str() → класс, в нижнем регистре, без "image" в конце.
+        assert ia.is_image_attachment(SimpleNamespace()) is False
+
+
+# ---- image_attachments_from_body / _from_event -----------------------------
+
+
+def _body_with(attachments: list) -> SimpleNamespace:
+    return SimpleNamespace(attachments=attachments)
+
+
+def _event_with(attachments: list) -> SimpleNamespace:
+    return SimpleNamespace(message=SimpleNamespace(body=_body_with(attachments)))
+
+
+class TestImageAttachmentsFromBody:
+    def test_picks_only_images(self) -> None:
+        body = _body_with([
+            {"type": "image", "payload": {"url": "a.jpg"}},
+            {"type": "video", "payload": {}},
+            {"type": "file", "payload": {}},
+        ])
+        out = ia.image_attachments_from_body(body, limit=10)
+        assert len(out) == 1
+        assert out[0]["type"] == "image"
+
+    def test_default_limit_is_one(self) -> None:
+        # Защита: в рассылку и в ответ оператора кладём не больше
+        # одной картинки по дефолту, чтобы поток MAX не плодил
+        # тяжёлые multi-image сообщения.
+        body = _body_with([
+            {"type": "image", "payload": {"url": "a.jpg"}},
+            {"type": "image", "payload": {"url": "b.jpg"}},
+            {"type": "image", "payload": {"url": "c.jpg"}},
+        ])
+        out = ia.image_attachments_from_body(body)
+        assert len(out) == 1
+
+    def test_limit_zero_means_unlimited(self) -> None:
+        # Когда явно надо все картинки (например для admin-карточки).
+        body = _body_with([{"type": "image"}] * 5)
+        out = ia.image_attachments_from_body(body, limit=0)
+        assert len(out) == 5
+
+    def test_empty_body(self) -> None:
+        out = ia.image_attachments_from_body(_body_with([]))
+        assert out == []
+
+    def test_none_body(self) -> None:
+        # collect_attachments устойчив к None — здесь сквозной тест.
+        out = ia.image_attachments_from_body(None)
+        assert out == []
+
+
+class TestImageAttachmentsFromEvent:
+    def test_event_with_message_body(self) -> None:
+        event = _event_with([{"type": "image"}, {"type": "video"}])
+        out = ia.image_attachments_from_event(event)
+        assert len(out) == 1
+        assert out[0]["type"] == "image"
+
+    def test_event_without_message(self) -> None:
+        # Защита: callback-события без message → пустой список.
+        event = SimpleNamespace(callback=SimpleNamespace())
+        out = ia.image_attachments_from_event(event)
+        assert out == []
+
+    def test_event_with_none_message(self) -> None:
+        event = SimpleNamespace(message=None)
+        out = ia.image_attachments_from_event(event)
+        assert out == []
+
+
+# ---- build_outbound_image_attachments --------------------------------------
+
+
+class TestBuildOutboundImageAttachments:
+    def test_filters_to_images_before_relay(self) -> None:
+        # Контракт: даже если в storage-dict оказались video/file
+        # (другая воронка их пометила), на исход уходят только image.
+        stored = [
+            {"type": "image", "payload": {}},
+            {"type": "video", "payload": {}},
+            {"type": "file", "payload": {}},
+        ]
+        with patch.object(ia, "deserialize_for_relay") as m:
+            m.return_value = ["IMG_OBJ"]
+            out = ia.build_outbound_image_attachments(stored)
+        # deserialize_for_relay вызван с отфильтрованным списком
+        m.assert_called_once()
+        passed = m.call_args.args[0]
+        assert len(passed) == 1
+        assert passed[0]["type"] == "image"
+        # возвращает то, что вернула maxapi-надстройка
+        assert out == ["IMG_OBJ"]
+
+    def test_none_input(self) -> None:
+        with patch.object(ia, "deserialize_for_relay") as m:
+            m.return_value = []
+            out = ia.build_outbound_image_attachments(None)
+        m.assert_called_once_with([])
+        assert out == []
+
+    def test_empty_input(self) -> None:
+        with patch.object(ia, "deserialize_for_relay") as m:
+            m.return_value = []
+            out = ia.build_outbound_image_attachments([])
+        m.assert_called_once_with([])
+        assert out == []
+
+
+# ---- attachment_meta -------------------------------------------------------
+
+
+class TestAttachmentMeta:
+    def test_count(self) -> None:
+        assert ia.attachment_meta([{"type": "image"}, {"type": "image"}]) == {"images": 2}
+
+    def test_none(self) -> None:
+        assert ia.attachment_meta(None) == {"images": 0}
+
+    def test_empty(self) -> None:
+        assert ia.attachment_meta([]) == {"images": 0}
+```
+
 ### `bot/tests/test_keyboards.py`
 
 Size: `5473` bytes  
@@ -29475,6 +30162,185 @@ async def test_deliver_operator_reply_blocks_closed_appeal() -> None:
     assert kwargs["chat_id"] == 123
     assert "обращение уже закрыто" in kwargs["text"]
     assert "user_id" not in kwargs
+```
+
+### `bot/tests/test_operator_reply_with_image.py`
+
+Size: `7240` bytes  
+SHA-256: `0d177f65e783b65e2c9ca4db27debd84ee1170ff0bc9e83373900fe881e52999`
+
+```python
+"""TDD-тесты image-relay в `_deliver_operator_reply`.
+
+Контракт: когда оператор отвечает на карточку обращения сообщением,
+содержащим картинку (`event.message.body.attachments` содержит
+type=image), `bot.send_message` к жителю должен включать эту картинку
+в outbound `attachments` (рядом с inline-клавиатурой
+`keyboards.back_to_menu_keyboard`).
+
+Без image-relay этот тест должен падать на текущем коде: в
+`_send_reply_to_citizen:312` сейчас передаётся только клавиатура,
+картинки оператора игнорируются.
+
+Также regression-guard: текстовый ответ без картинки продолжает
+работать как раньше — никакого extra-вложения не добавляется.
+"""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
+pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
+
+
+def _event_with_image(*, chat_id: int = 100, user_id: int = 7) -> SimpleNamespace:
+    event = make_event(chat_id=chat_id, user_id=user_id, with_edit_message=True)
+    event.message.link = None
+    event.message.body.attachments = [
+        {"type": "image", "payload": {"url": "https://cdn.max/img.jpg"}},
+    ]
+    return event
+
+
+def _event_without_image(*, chat_id: int = 100, user_id: int = 7) -> SimpleNamespace:
+    event = make_event(chat_id=chat_id, user_id=user_id, with_edit_message=True)
+    event.message.link = None
+    return event
+
+
+def _fresh_appeal() -> SimpleNamespace:
+    user = SimpleNamespace(
+        is_blocked=False,
+        first_name="Иван",
+        consent_pdn_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        consent_revoked_at=None,
+        max_user_id=42,
+    )
+    return SimpleNamespace(
+        id=1, user=user,
+        created_at=datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc),
+        topic="Дороги", locality="Елизово",
+        address="ул. Ленина, д. 1", status="new", summary="яма",
+        messages=[], answered_at=None,
+    )
+
+
+def _patches_for_delivery():
+    """Стандартный набор патчей для прохождения guard'ов в
+    `_deliver_operator_reply` до точки доставки и записи."""
+    return [
+        patch.object(__import__("aemr_bot.handlers.operator_reply",
+                                fromlist=["cfg"]).cfg,
+                     "answer_max_chars", 1000),
+        patch("aemr_bot.handlers.operator_reply.session_scope",
+              _fake_session_scope),
+        patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
+              AsyncMock(return_value=_fresh_appeal())),
+        patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
+              AsyncMock(return_value=MagicMock(id=99))),
+        patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
+              AsyncMock()),
+        patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
+              AsyncMock(return_value=False)),
+        patch("aemr_bot.handlers.operator_reply._mark_reply_success_recorded",
+              AsyncMock()),
+    ]
+
+
+class TestImageRelay:
+    @pytest.mark.asyncio
+    async def test_operator_image_attached_to_citizen_message(self) -> None:
+        """Контракт: картинка оператора пробрасывается жителю в
+        outbound `attachments`. Без relay тест падает (текущий код
+        передаёт только клавиатуру)."""
+        from aemr_bot.handlers import operator_reply as opr
+
+        event = _event_with_image()
+        event.bot.send_message = AsyncMock(
+            side_effect=[
+                # 1-й вызов: житель
+                SimpleNamespace(body=SimpleNamespace(mid="out-1")),
+                # 2-й вызов: подтверждение оператору
+                None,
+            ]
+        )
+        # фейк pydantic-объекта от deserialize_for_relay — чтобы не
+        # зависеть от maxapi
+        fake_image_obj = SimpleNamespace(
+            type="image", payload={"url": "https://cdn.max/img.jpg"}
+        )
+        appeal = MagicMock(id=1)
+        operator = MagicMock(id=7, max_user_id=42)
+
+        opr._recent_replies.clear()
+        with patch("aemr_bot.utils.image_attachments.deserialize_for_relay",
+                   return_value=[fake_image_obj]):
+            stack = _patches_for_delivery()
+            for p in stack:
+                p.start()
+            try:
+                handled = await opr._deliver_operator_reply(
+                    event, appeal=appeal, operator=operator,
+                    text="ответ с картинкой", audit_action="reply",
+                )
+            finally:
+                for p in stack:
+                    p.stop()
+
+        assert handled is True
+        # 1-й вызов send_message — к жителю
+        first = event.bot.send_message.call_args_list[0]
+        assert first.kwargs.get("user_id") == 42
+        attachments = first.kwargs.get("attachments", [])
+        # картинка должна быть в attachments
+        assert fake_image_obj in attachments, (
+            f"картинка оператора не пробросилась к жителю; "
+            f"attachments={attachments}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_text_only_reply_regression(self) -> None:
+        """Regression-guard: текстовый ответ без картинки — никаких
+        лишних вложений сверх клавиатуры."""
+        from aemr_bot.handlers import operator_reply as opr
+
+        event = _event_without_image()
+        event.bot.send_message = AsyncMock(
+            side_effect=[
+                SimpleNamespace(body=SimpleNamespace(mid="out-1")),
+                None,
+            ]
+        )
+        appeal = MagicMock(id=1)
+        operator = MagicMock(id=7, max_user_id=42)
+
+        opr._recent_replies.clear()
+        stack = _patches_for_delivery()
+        for p in stack:
+            p.start()
+        try:
+            handled = await opr._deliver_operator_reply(
+                event, appeal=appeal, operator=operator,
+                text="только текст", audit_action="reply",
+            )
+        finally:
+            for p in stack:
+                p.stop()
+
+        assert handled is True
+        first = event.bot.send_message.call_args_list[0]
+        attachments = first.kwargs.get("attachments", [])
+        # ровно одна клавиатура, без image-объектов
+        assert len(attachments) == 1, (
+            f"text-only ответ не должен иметь лишних вложений; "
+            f"attachments={attachments}"
+        )
 ```
 
 ### `bot/tests/test_progress.py`
