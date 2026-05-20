@@ -789,14 +789,35 @@ https://kamgov.ru/mintrans/current_activities/raspisania-dvizenia-passazirskogo-
 
 ### Кнопки внутри карточки обращения
 
+Источник истины — `keyboards.py::appeal_admin_actions`.
+
+Для статусов `new` и `in_progress` (всем ролям):
+
 ```
-✉️ Ответить           🔄 В работу           ⛔ Закрыть
+✉️ Ответить
 ⛔ Закрыть без ответа
+```
+
+Для статусов `answered` и `closed` (если не `closed_due_to_revoke`):
+
+```
 🔁 Возобновить
-🚫 Заблокировать / ✅ Разблокировать                ← it
-🗑 Удалить ПДн                                      ← it
+```
+
+Дополнительно для роли `it`:
+
+```
+🚫 Заблокировать / ✅ Разблокировать
+🗑 Удалить ПДн
+```
+
+Всегда внизу:
+
+```
 🏠 В админ-меню
 ```
+
+Кнопки «🔄 В работу» в коде нет — статус `in_progress` присваивается логикой бота, не явным действием оператора.
 
 ### Воронка рассылки
 
@@ -828,8 +849,11 @@ https://kamgov.ru/mintrans/current_activities/raspisania-dvizenia-passazirskogo-
 /subscribe   — подписаться на новости
 /unsubscribe — отписаться от новостей
 /forget      — удалить мои данные
-/whoami      — мой max_user_id (диагностика)
+/export      — выгрузка моих ПДн (скрытая, ст. 14 152-ФЗ)
+/cancel      — отменить текущий шаг анкеты
 ```
+
+Команда `/whoami` **в личке у жителя не отвечает** — она работает только в служебной группе. Это сделано намеренно, чтобы команду не показывали обычные жители.
 
 ### Для оператора (служебная группа) — без регистрации в /-меню
 
@@ -839,7 +863,7 @@ https://kamgov.ru/mintrans/current_activities/raspisania-dvizenia-passazirskogo-
 /help        — открыть меню оператора
 /op_help     — открыть и закрепить меню оператора
 /reply N <текст>          — ответить по обращению
-/stats today|week|month   — XLSX-выгрузка
+/stats [period]           — XLSX-выгрузка; period = today|week|month|quarter|half_year|year|all
 /reopen N                 — вернуть в работу
 /close N                  — закрыть без ответа
 /open_tickets             — список открытых обращений
