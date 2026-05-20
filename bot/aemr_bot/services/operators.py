@@ -5,8 +5,19 @@ from aemr_bot.db.models import AuditLog, Operator, OperatorRole
 
 
 async def get(session: AsyncSession, max_user_id: int) -> Operator | None:
+    """Активный оператор по max_user_id. Историю не возвращает —
+    деактивированных не видно."""
     return await session.scalar(
         select(Operator).where(Operator.max_user_id == max_user_id, Operator.is_active.is_(True))
+    )
+
+
+async def get_any(session: AsyncSession, max_user_id: int) -> Operator | None:
+    """Любая запись по max_user_id, включая деактивированную. Нужен для
+    /add из карточки — чтобы понять «человек уже был, надо реактивировать,
+    а не вставлять новую строку»."""
+    return await session.scalar(
+        select(Operator).where(Operator.max_user_id == max_user_id)
     )
 
 
@@ -24,6 +35,51 @@ async def upsert(
         op.full_name = full_name
         op.role = role.value
         op.is_active = True
+    await session.flush()
+    return op
+
+
+async def deactivate(session: AsyncSession, max_user_id: int) -> Operator | None:
+    """Мягкое удаление: is_active=false. Возвращает обновлённую запись
+    или None, если активного оператора с таким max_user_id не было.
+
+    Физическое DELETE не делается — у appeals.assigned_operator_id и
+    messages.operator_id есть FK на operators с ON DELETE SET NULL,
+    но потеря истории «кто отвечал жителю» нарушит требование
+    журналирования по 152-ФЗ. Поэтому только деактивация.
+
+    Запись остаётся в БД и может быть реактивирована через upsert()
+    с той же max_user_id — это и есть «добавить повторно».
+    """
+    op = await session.scalar(
+        select(Operator).where(
+            Operator.max_user_id == max_user_id,
+            Operator.is_active.is_(True),
+        )
+    )
+    if op is None:
+        return None
+    op.is_active = False
+    await session.flush()
+    return op
+
+
+async def change_role(
+    session: AsyncSession,
+    max_user_id: int,
+    role: OperatorRole,
+) -> Operator | None:
+    """Сменить роль активному оператору без перевода через wizard.
+    Возвращает обновлённую запись или None."""
+    op = await session.scalar(
+        select(Operator).where(
+            Operator.max_user_id == max_user_id,
+            Operator.is_active.is_(True),
+        )
+    )
+    if op is None:
+        return None
+    op.role = role.value
     await session.flush()
     return op
 
@@ -52,6 +108,33 @@ async def list_active(session: AsyncSession) -> list[Operator]:
         select(Operator).where(Operator.is_active.is_(True)).order_by(Operator.role, Operator.full_name)
     )
     return list(res)
+
+
+async def list_all(session: AsyncSession) -> list[Operator]:
+    """Все операторы, включая деактивированных. Нужен для расширенного
+    экрана управления, чтобы IT-админ видел кого можно реактивировать."""
+    res = await session.scalars(
+        select(Operator).order_by(
+            Operator.is_active.desc(), Operator.role, Operator.full_name
+        )
+    )
+    return list(res)
+
+
+async def count_active_by_role(
+    session: AsyncSession, role: OperatorRole
+) -> int:
+    """Сколько активных операторов в роли. Используется для защиты от
+    деактивации единственного IT-оператора."""
+    from sqlalchemy import func as _func
+
+    val = await session.scalar(
+        select(_func.count(Operator.id)).where(
+            Operator.role == role.value,
+            Operator.is_active.is_(True),
+        )
+    )
+    return int(val or 0)
 
 
 async def has_any_it(session: AsyncSession) -> bool:

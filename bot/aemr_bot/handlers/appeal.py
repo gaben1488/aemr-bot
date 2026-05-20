@@ -554,6 +554,12 @@ def register(dp: Dispatcher) -> None:
             )
             if consumed:
                 return
+            consumed = await admin_cmd_module.handle_settings_edit_text(
+                event,
+                text_body,
+            )
+            if consumed:
+                return
             if text_body.startswith("/"):
                 return
             await op_reply.handle_operator_reply(event, body, text_body)

@@ -191,10 +191,26 @@ async def _op_setkey(event, payload: str) -> None:
     await admin_commands.run_settings_action(event, payload)
 
 
+# Все callback'и иерархического меню «Настройки» и карточки оператора
+# идут через те же два диспетчера (run_settings_action / run_operators_action),
+# которые внутри сами разбирают конкретные суффиксы. Это минимизирует
+# изменения в admin_callback_dispatch и сохраняет один-в-один маппинг
+# «префикс → run-функция».
+
+
 _PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[None]]], ...] = (
     ("op:aud:", _op_aud),
+    # Операторы — единое семейство:
     ("op:opadd:", _op_opadd),
+    ("op:opcard:", _op_opadd),
+    ("op:oprole:", _op_opadd),
+    ("op:opchrole:", _op_opadd),
+    ("op:opdeact:", _op_opadd),
+    ("op:opdeact_ok:", _op_opadd),
+    ("op:opreact:", _op_opadd),
+    # Настройки — старый експертный и новый иерархический:
     ("op:setkey:", _op_setkey),
+    ("op:set:", _op_setkey),
 )
 
 

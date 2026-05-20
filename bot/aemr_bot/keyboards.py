@@ -511,37 +511,327 @@ def op_stats_menu_keyboard():
 def op_operators_menu_keyboard():
     """Меню «👥 Операторы» в админ-панели для роли it."""
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="➕ Добавить", payload="op:opadd:start"))
-    kb.row(CallbackButton(text="📋 Список", payload="op:opadd:list"))
+    kb.row(CallbackButton(text="📋 Список операторов", payload="op:opadd:list"))
+    kb.row(CallbackButton(text="➕ Добавить из участников группы", payload="op:opadd:from_group"))
+    kb.row(CallbackButton(text="🔢 Добавить по ID вручную", payload="op:opadd:start"))
     kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_operators_list_keyboard(rows: list[tuple[int, str, str, bool]]):
+    """Список операторов как кнопки. rows: (max_user_id, full_name, role,
+    is_active). Тап — открывает карточку конкретного оператора. После
+    списка — кнопка «Назад в меню операторов».
+    Длина подписи ограничена ~50 символами для узких экранов MAX."""
+    kb = InlineKeyboardBuilder()
+    for max_user_id, full_name, role, is_active in rows:
+        marker = "👤" if is_active else "💤"
+        suffix = f" · {role}" if is_active else f" · {role} · деактивирован"
+        # 40 символов на ФИО — компромисс между «видно полностью» и
+        # «помещается на узких экранах MAX»
+        name_short = full_name if len(full_name) <= 40 else full_name[:37] + "…"
+        kb.row(
+            CallbackButton(
+                text=f"{marker} {name_short}{suffix}",
+                payload=f"op:opcard:{max_user_id}",
+            )
+        )
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:operators"))
+    return kb.as_markup()
+
+
+def op_operator_card_keyboard(
+    max_user_id: int,
+    *,
+    is_active: bool,
+    is_self: bool,
+    can_deactivate: bool,
+):
+    """Карточка оператора — действия зависят от состояния:
+    - active + не self + can_deactivate → «Сменить роль», «Деактивировать»
+    - active + self → «Сменить роль» нельзя, «Деактивировать» нельзя
+    - active + единственный IT → «Сменить роль» можно (на любую другую только если есть другие IT — проверка в обработчике), «Деактивировать» нельзя
+    - inactive → «Реактивировать»
+    """
+    kb = InlineKeyboardBuilder()
+    if is_active:
+        if not is_self:
+            kb.row(CallbackButton(text="✏️ Сменить роль", payload=f"op:oprole:{max_user_id}"))
+        if can_deactivate and not is_self:
+            kb.row(
+                CallbackButton(
+                    text="🚫 Деактивировать", payload=f"op:opdeact:{max_user_id}"
+                )
+            )
+    else:
+        kb.row(
+            CallbackButton(
+                text="🔄 Реактивировать", payload=f"op:opreact:{max_user_id}"
+            )
+        )
+    kb.row(CallbackButton(text="↩️ К списку", payload="op:opadd:list"))
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_operator_role_change_keyboard(max_user_id: int, current_role: str):
+    """Смена роли существующему оператору. Текущую роль показываем
+    как заблокированную (без callback'а)."""
+    from aemr_bot.db.models import OperatorRole
+
+    kb = InlineKeyboardBuilder()
+    roles = [
+        (OperatorRole.IT.value, "🛠 it — ИТ, полный доступ"),
+        (OperatorRole.COORDINATOR.value, "👤 coordinator — ответы + рассылки"),
+        (OperatorRole.AEMR.value, "👤 aemr — рядовой специалист"),
+        (OperatorRole.EGP.value, "👤 egp — специалист ЕГП"),
+    ]
+    for role_value, label in roles:
+        if role_value == current_role:
+            # Текущая роль — пометка, без активного callback'а
+            kb.row(
+                CallbackButton(
+                    text=f"✓ {label} (текущая)",
+                    payload=f"op:opcard:{max_user_id}",
+                )
+            )
+        else:
+            kb.row(
+                CallbackButton(
+                    text=label,
+                    payload=f"op:opchrole:{max_user_id}:{role_value}",
+                )
+            )
+    kb.row(CallbackButton(text="❌ Отмена", payload=f"op:opcard:{max_user_id}"))
+    return kb.as_markup()
+
+
+def op_operator_deactivate_confirm_keyboard(max_user_id: int):
+    """Подтверждение деактивации — две кнопки в ряд."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(text="✅ Да, деактивировать", payload=f"op:opdeact_ok:{max_user_id}"),
+        CallbackButton(text="❌ Отмена", payload=f"op:opcard:{max_user_id}"),
+    )
+    return kb.as_markup()
+
+
+def op_from_group_keyboard(
+    candidates: list[tuple[int, str, str | None]],  # (user_id, label, role_hint)
+):
+    """Кнопки добавления оператора из участников группы. label —
+    готовая строка вида «Иванова А.П.» с пометкой [уже оператор: aemr]
+    если есть. role_hint=None для добавления, role_hint=<role> для
+    уже зарегистрированных (тап открывает их карточку)."""
+    kb = InlineKeyboardBuilder()
+    for user_id, label, role_hint in candidates:
+        # 50 символов на label — место для имени + пометки
+        text = label if len(label) <= 50 else label[:47] + "…"
+        if role_hint is None:
+            kb.row(CallbackButton(text=f"➕ {text}", payload=f"op:opadd:pick:{user_id}"))
+        else:
+            kb.row(CallbackButton(text=f"👤 {text}", payload=f"op:opcard:{user_id}"))
+    kb.row(CallbackButton(text="🔢 Ввести ID вручную", payload="op:opadd:start"))
+    kb.row(CallbackButton(text="❌ Отмена", payload="op:operators"))
     return kb.as_markup()
 
 
 def op_role_picker_keyboard():
-    """Шаг 2 wizard'а добавления оператора — выбор роли. Четыре кнопки
-    в одну строку: it, coordinator, aemr, egp. Самомодификация (попытка
-    выдать it самому себе) ловится в обработчике."""
+    """Шаг 2 wizard'а добавления оператора — выбор роли. По одной
+    кнопке в строку с пояснением что значит каждая роль. Самомодификация
+    (попытка выдать it самому себе) ловится в обработчике."""
     kb = InlineKeyboardBuilder()
-    kb.row(
-        CallbackButton(text="it", payload="op:opadd:role:it"),
-        CallbackButton(text="coordinator", payload="op:opadd:role:coordinator"),
-    )
-    kb.row(
-        CallbackButton(text="aemr", payload="op:opadd:role:aemr"),
-        CallbackButton(text="egp", payload="op:opadd:role:egp"),
-    )
+    kb.row(CallbackButton(text="🛠 it — ИТ, полный доступ", payload="op:opadd:role:it"))
+    kb.row(CallbackButton(text="👤 coordinator — ответы + рассылки", payload="op:opadd:role:coordinator"))
+    kb.row(CallbackButton(text="👤 aemr — рядовой специалист", payload="op:opadd:role:aemr"))
+    kb.row(CallbackButton(text="👤 egp — специалист ЕГП", payload="op:opadd:role:egp"))
     kb.row(CallbackButton(text="❌ Отменить добавление", payload="op:opadd:cancel"))
     return kb.as_markup()
 
 
-def op_settings_keys_keyboard(keys: list[str]):
-    """Список ключей /setting — по одной кнопке на строку (длинные имена).
-    Тап → текущее значение и шаблон команды редактирования."""
+def op_add_name_choice_keyboard():
+    """Шаг 4 wizard'а добавления — выбор: «сохранить имя из MAX» или
+    «указать ФИО полностью текстом»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="✅ Сохранить как есть", payload="op:opadd:name_keep"))
+    kb.row(CallbackButton(text="✏️ Указать ФИО полностью", payload="op:opadd:name_edit"))
+    kb.row(CallbackButton(text="❌ Отменить добавление", payload="op:opadd:cancel"))
+    return kb.as_markup()
+
+
+def op_add_confirm_keyboard():
+    """Финальное подтверждение перед сохранением — три кнопки."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="✅ Сохранить", payload="op:opadd:confirm"))
+    kb.row(CallbackButton(text="✏️ Изменить роль", payload="op:opadd:edit_role"))
+    kb.row(CallbackButton(text="❌ Отменить добавление", payload="op:opadd:cancel"))
+    return kb.as_markup()
+
+
+def op_add_done_keyboard():
+    """После успешного добавления — «Добавить ещё» / «К списку» / «В меню»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="➕ Добавить ещё", payload="op:operators"))
+    kb.row(CallbackButton(text="📋 К списку операторов", payload="op:opadd:list"))
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+# ──────────────────────────────────────────────────────────────────────
+# НАСТРОЙКИ БОТА — новое иерархическое меню
+# ──────────────────────────────────────────────────────────────────────
+
+
+def op_settings_menu_keyboard(dirty_count: int = 0):
+    """Главное меню «⚙️ Настройки бота» — иерархическая навигация по
+    категориям. dirty_count — число изменённых ключей, не выгруженных
+    в репо. Если > 0 — показываем счётчик возле кнопки PR."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="📢 Тексты для жителей", payload="op:set:cat:texts"))
+    kb.row(CallbackButton(text="🔗 Внешние ссылки", payload="op:set:cat:urls"))
+    kb.row(CallbackButton(text="🏷 Тематики обращений", payload="op:set:list:topics"))
+    kb.row(CallbackButton(text="📍 Населённые пункты", payload="op:set:list:localities"))
+    kb.row(CallbackButton(text="🆘 Экстренные службы", payload="op:set:obj:emergency_contacts"))
+    kb.row(CallbackButton(text="🚌 Диспетчерские транспорта", payload="op:set:obj:transport_dispatcher_contacts"))
+    kb.row(CallbackButton(text="👤 Автор коммитов от бота", payload="op:set:author"))
+    pr_label = "💾 Создать PR с изменениями"
+    if dirty_count > 0:
+        pr_label = f"💾 Создать PR ({dirty_count} изм.)"
+    kb.row(CallbackButton(text=pr_label, payload="op:set:pr:start"))
+    kb.row(CallbackButton(text="📥 Проверить расхождения с репо", payload="op:set:pr:diff"))
+    kb.row(CallbackButton(text="⌨️ Все ключи (для эксперта)", payload="op:set:expert"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_settings_texts_keyboard():
+    """Подменю «📢 Тексты для жителей»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="👋 Приветствие", payload="op:set:text:welcome_text"))
+    kb.row(CallbackButton(text="🔐 Текст согласия на ПДн", payload="op:set:text:consent_text"))
+    kb.row(CallbackButton(text="🏛 Расписание приёма граждан", payload="op:set:text:appointment_text"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:settings"))
+    return kb.as_markup()
+
+
+def op_settings_urls_keyboard():
+    """Подменю «🔗 Внешние ссылки»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="🌐 Электронная приёмная", payload="op:set:url:electronic_reception_url"))
+    kb.row(CallbackButton(text="📄 Политика ПДн (ссылка)", payload="op:set:url:policy_url"))
+    kb.row(CallbackButton(text="🚌 Пригородные автобусы (УДТХ)", payload="op:set:url:udth_schedule_url"))
+    kb.row(CallbackButton(text="🚍 Межмуниципальные маршруты", payload="op:set:url:udth_schedule_intermunicipal_url"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:settings"))
+    return kb.as_markup()
+
+
+def op_settings_text_actions_keyboard(key: str):
+    """Карточка текстового ключа — «Изменить» / «Назад»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="✏️ Изменить", payload=f"op:set:edit:{key}"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:settings"))
+    return kb.as_markup()
+
+
+def op_settings_text_cancel_keyboard(key: str):
+    """Кнопка отмены при ожидании текстового ввода для ключа."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="❌ Отмена", payload=f"op:set:cancel:{key}"))
+    return kb.as_markup()
+
+
+def op_settings_list_keyboard(key: str, items: list[str]):
+    """CRUD-меню для строкового списка (topics, localities). Сам список
+    показывается в тексте, кнопки — действия над ним."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="➕ Добавить", payload=f"op:set:list_add:{key}"))
+    if items:
+        # Показываем до 30 элементов по одной кнопке — больше MAX обрежет
+        for i, item in enumerate(items[:30]):
+            label = item if len(item) <= 45 else item[:42] + "…"
+            kb.row(
+                CallbackButton(
+                    text=f"🗑 {i+1}. {label}",
+                    payload=f"op:set:list_del:{key}:{i}",
+                )
+            )
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:settings"))
+    return kb.as_markup()
+
+
+def op_settings_obj_keyboard(key: str, items: list[dict]):
+    """CRUD-меню для списка объектов (emergency_contacts, transport_dispatcher_contacts).
+    Каждый объект — кнопка с краткой подписью; тап откроет действия."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="➕ Добавить", payload=f"op:set:obj_add:{key}"))
+    for i, item in enumerate(items[:20]):
+        # Подпись зависит от типа: для emergency — name+phone, для
+        # transport — routes+phone. Берём первое непустое поле для
+        # отображения.
+        name = item.get("name") or item.get("routes") or "?"
+        phone = item.get("phone") or ""
+        label = f"{name} — {phone}" if phone else str(name)
+        if len(label) > 45:
+            label = label[:42] + "…"
+        kb.row(
+            CallbackButton(
+                text=f"{i+1}. {label}",
+                payload=f"op:set:obj_view:{key}:{i}",
+            )
+        )
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:settings"))
+    return kb.as_markup()
+
+
+def op_settings_obj_item_keyboard(key: str, index: int):
+    """Карточка одного объекта — удалить / назад."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="🗑 Удалить запись", payload=f"op:set:obj_del:{key}:{index}"))
+    kb.row(CallbackButton(text="↩️ Назад", payload=f"op:set:obj:{key}"))
+    return kb.as_markup()
+
+
+def op_settings_author_keyboard():
+    """Меню «👤 Автор коммитов от бота»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="✏️ Изменить ФИО", payload="op:set:edit:commit_author_name"))
+    kb.row(CallbackButton(text="✏️ Изменить email", payload="op:set:edit:commit_author_email"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:settings"))
+    return kb.as_markup()
+
+
+def op_settings_pr_confirm_keyboard():
+    """Подтверждение «Создать PR с изменениями»."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="✅ Создать PR", payload="op:set:pr:confirm"))
+    kb.row(CallbackButton(text="❌ Отмена", payload="op:settings"))
+    return kb.as_markup()
+
+
+def op_settings_pr_done_keyboard(pr_url: str | None):
+    """После создания PR — кнопка-ссылка на PR + возврат."""
+    kb = InlineKeyboardBuilder()
+    if pr_url:
+        kb.row(LinkButton(text="🔗 Открыть PR в браузере", url=pr_url))
+    kb.row(CallbackButton(text="📋 К настройкам", payload="op:settings"))
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_settings_expert_keyboard(keys: list[str]):
+    """Старый «экспертный» список ключей — оставляем как fallback для
+    редких случаев и для совместимости."""
     kb = InlineKeyboardBuilder()
     for key in keys:
         kb.row(CallbackButton(text=key, payload=f"op:setkey:{key}"))
-    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:settings"))
     return kb.as_markup()
+
+
+def op_settings_keys_keyboard(keys: list[str]):
+    """Совместимость: старая клавиатура «список ключей». Перенаправляем
+    на новую expert-карточку."""
+    return op_settings_expert_keyboard(keys)
 
 
 def op_audience_menu_keyboard():

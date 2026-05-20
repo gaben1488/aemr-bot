@@ -11,6 +11,11 @@ from aemr_bot.db.models import Setting
 DEFAULTS: dict[str, Any] = {
     "welcome_text": None,
     "consent_text": None,
+    # Автор коммитов от бота для services/repo_sync. Подставляется в
+    # GitHub API при создании PR. Меняется через меню «👤 Автор
+    # коммитов» в админ-панели — без редеплоя.
+    "commit_author_name": None,
+    "commit_author_email": None,
     "policy_url": (
         "https://elizovomr.ru/storage/attachments/2024/08/15/U9XfgiWRETCF0KKT.pdf"
     ),
@@ -52,6 +57,8 @@ DEFAULTS: dict[str, Any] = {
 SCHEMA: dict[str, dict] = {
     "welcome_text": {"type": str, "min_len": 1, "max_len": 4000},
     "consent_text": {"type": str, "min_len": 1, "max_len": 4000},
+    "commit_author_name": {"type": str, "min_len": 1, "max_len": 120},
+    "commit_author_email": {"type": str, "min_len": 3, "max_len": 200},
     "policy_url": {"type": str, "url": True},
     "electronic_reception_url": {"type": str, "url": True},
     "udth_schedule_url": {"type": str, "url": True},
@@ -117,6 +124,68 @@ async def list_keys(session: AsyncSession) -> list[str]:
     rows = await session.scalars(select(Setting.key))
     in_db = set(rows)
     return sorted(in_db.union(DEFAULTS.keys()))
+
+
+# Ключи, которые попадают в seed/runtime_config.json при синхронизации с
+# репозиторием. Намеренно НЕ включаем commit_author_* — это серверная
+# метаинформация, в репо не место. welcome_text/consent_text идут не
+# сюда, а в seed/welcome.md и seed/consent.md (формат markdown).
+SYNCED_KEYS: tuple[str, ...] = (
+    "policy_url",
+    "electronic_reception_url",
+    "udth_schedule_url",
+    "udth_schedule_intermunicipal_url",
+    "appointment_text",
+    "emergency_contacts",
+    "transport_dispatcher_contacts",
+    "topics",
+    "localities",
+)
+
+
+async def get_dirty_keys(session: AsyncSession) -> list[str]:
+    """Список ключей из SYNCED_KEYS, изменённых после последней
+    синхронизации с репо. Используется в меню для индикатора «N
+    несинхронизированных изменений»."""
+    rows = await session.execute(
+        select(Setting.key, Setting.updated_at, Setting.synced_at).where(
+            Setting.key.in_(SYNCED_KEYS)
+        )
+    )
+    dirty: list[str] = []
+    for key, updated_at, synced_at in rows.all():
+        if synced_at is None or (updated_at is not None and updated_at > synced_at):
+            dirty.append(key)
+    return sorted(dirty)
+
+
+async def export_synced(session: AsyncSession) -> dict[str, Any]:
+    """Собирает значения SYNCED_KEYS из БД с fallback на DEFAULTS.
+    Возвращает dict с детерминированным порядком ключей для чистых
+    diff'ов в git."""
+    out: dict[str, Any] = {}
+    for key in SYNCED_KEYS:
+        out[key] = await get(session, key)
+    return out
+
+
+async def mark_synced(
+    session: AsyncSession, keys: list[str] | None = None
+) -> int:
+    """Проставить synced_at = now() для ключей из списка (или для всех
+    SYNCED_KEYS, если keys=None). Вызывается после успешного создания
+    PR. Возвращает количество обновлённых строк."""
+    from datetime import datetime, timezone
+    from sqlalchemy import update as sa_update
+
+    target_keys = list(keys) if keys is not None else list(SYNCED_KEYS)
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        sa_update(Setting)
+        .where(Setting.key.in_(target_keys))
+        .values(synced_at=now)
+    )
+    return result.rowcount or 0
 
 
 def _read_seed_json(name: str) -> Any:
