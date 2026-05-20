@@ -73,8 +73,15 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("op:erase:", CallbackGroup.OPERATOR_ADMIN, True, "стереть ПДн по обращению"),
     CallbackRoute("op:block:", CallbackGroup.OPERATOR_ADMIN, True, "заблокировать жителя"),
     CallbackRoute("op:unblock:", CallbackGroup.OPERATOR_ADMIN, True, "разблокировать жителя"),
-    CallbackRoute("op:opadd:", CallbackGroup.OPERATOR_ADMIN, True, "мастер операторов"),
-    CallbackRoute("op:setkey:", CallbackGroup.OPERATOR_ADMIN, True, "мастер настроек"),
+    CallbackRoute("op:opadd:", CallbackGroup.OPERATOR_ADMIN, True, "мастер операторов: добавление"),
+    CallbackRoute("op:opcard:", CallbackGroup.OPERATOR_ADMIN, True, "карточка оператора"),
+    CallbackRoute("op:oprole:", CallbackGroup.OPERATOR_ADMIN, True, "смена роли — открыть picker"),
+    CallbackRoute("op:opchrole:", CallbackGroup.OPERATOR_ADMIN, True, "смена роли — применить"),
+    CallbackRoute("op:opdeact:", CallbackGroup.OPERATOR_ADMIN, True, "деактивация — подтверждение"),
+    CallbackRoute("op:opdeact_ok:", CallbackGroup.OPERATOR_ADMIN, True, "деактивация — применить"),
+    CallbackRoute("op:opreact:", CallbackGroup.OPERATOR_ADMIN, True, "реактивация оператора"),
+    CallbackRoute("op:setkey:", CallbackGroup.OPERATOR_ADMIN, True, "экспертный wizard ключа"),
+    CallbackRoute("op:set:", CallbackGroup.OPERATOR_ADMIN, True, "иерархическое меню настроек"),
 )
 
 

@@ -63,6 +63,7 @@ from aemr_bot.handlers.admin_panel import (
     show_op_menu,
 )
 from aemr_bot.handlers.admin_settings import (
+    handle_settings_edit_text,
     run_settings_action,
     run_settings_menu,
 )
@@ -104,6 +105,7 @@ __all__ = [
     "run_operators_action",
     "run_operators_menu",
     # Settings
+    "handle_settings_edit_text",
     "run_settings_action",
     "run_settings_menu",
     # Audience
