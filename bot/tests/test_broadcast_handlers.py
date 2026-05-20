@@ -505,12 +505,19 @@ class TestRunBroadcastImpl:
         bot.send_message = AsyncMock()
         mark_finished = AsyncMock()
 
+        # broadcast.attachments читается _run_broadcast_impl'ом перед
+        # send-loop'ом для десериализации картинок: мокаем пустую запись.
+        from types import SimpleNamespace as _SN
+        empty_broadcast = _SN(id=77, attachments=[], text="Текст рассылки")
+
         with patch("aemr_bot.handlers.broadcast.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.mark_started",
                    AsyncMock()), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.list_subscriber_targets",
                    AsyncMock(return_value=[])), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.get_by_id",
+                   AsyncMock(return_value=empty_broadcast)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.mark_finished",
                    mark_finished):
             await broadcast._run_broadcast_impl(

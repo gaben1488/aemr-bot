@@ -258,6 +258,14 @@ class Broadcast(Base):
     delivered_count: Mapped[int] = mapped_column(default=0, server_default="0")
     failed_count: Mapped[int] = mapped_column(default=0, server_default="0")
     admin_message_id: Mapped[str | None] = mapped_column(String(64))
+    # Картинки в рассылке. Сериализованные dict'ы attachment'ов
+    # (тот же формат, что Appeal.attachments / Message.attachments).
+    # На пересылку восстанавливаются через
+    # utils/attachments.deserialize_for_relay. Пустой список = text-only
+    # рассылка, обратная совместимость со старыми broadcast row'ами.
+    attachments: Mapped[list] = mapped_column(
+        JSONB, default=list, server_default="[]"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
     )

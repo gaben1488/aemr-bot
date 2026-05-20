@@ -86,12 +86,18 @@ async def create_broadcast(
     text: str,
     operator_id: int | None,
     subscriber_count: int,
+    attachments: list | None = None,
 ) -> Broadcast:
+    """Создать draft-рассылку. `attachments` — сериализованные image-dict'ы
+    (тот же формат, что в Appeal.attachments); пустой список или None
+    означает text-only рассылку. На исход восстанавливается через
+    utils/attachments.deserialize_for_relay в фоновой отправке."""
     bc = Broadcast(
         created_by_operator_id=operator_id,
         text=text,
         subscriber_count_at_start=subscriber_count,
         status=BroadcastStatus.DRAFT.value,
+        attachments=list(attachments or []),
     )
     session.add(bc)
     await session.flush()
