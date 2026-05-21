@@ -643,41 +643,62 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             appeal_for_card, user_for_card, text or "(без текста)"
         )
 
+    # Политика edit-vs-new (запрос владельца): дополнение жителя НЕ
+    # редактирует старую admin-карточку. Шлём НОВУЮ карточку — оператор
+    # уже мог уйти далеко вниз, edit вверху не виден. Новая карточка с
+    # тем же №, обновлённым статусом и блоком «Дополнение к обращению»
+    # внутри ведёт оператора к свежему артефакту.
+    #
+    # Дополнительно отправляем короткое followup-уведомление с reply-link
+    # на исходную admin_message_id, если она есть — это сохраняет связь
+    # «вижу дополнение → вижу контекст исходного обращения» в чатах с
+    # большим количеством параллельных обращений.
     admin_mid = getattr(appeal_for_card, "admin_message_id", None)
     followup_mid = None
-    admin_card_updated = False
-    if cfg.admin_group_id and admin_mid:
+    if cfg.admin_group_id:
+        # Короткое followup-уведомление-индикатор для контекста.
         try:
-            await event.bot.edit_message(
-                message_id=admin_mid,
+            sent_follow = await event.bot.send_message(
+                chat_id=cfg.admin_group_id, text=followup
+            )
+            followup_mid = extract_message_id(sent_follow)
+        except Exception:
+            log.exception("send followup notification failed")
+        # Полная карточка с актуальным содержимым.
+        try:
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
                 text=card_format.admin_card(appeal_for_card, user_for_card),
                 attachments=[
                     keyboards.appeal_admin_actions(
                         appeal_for_card.id,
                         appeal_for_card.status,
                         is_it=True,
-                        user_blocked=bool(getattr(user_for_card, "is_blocked", False)),
+                        user_blocked=bool(
+                            getattr(user_for_card, "is_blocked", False)
+                        ),
                         closed_due_to_revoke=bool(
-                            getattr(appeal_for_card, "closed_due_to_revoke", False)
+                            getattr(
+                                appeal_for_card, "closed_due_to_revoke", False
+                            )
                         ),
                     )
                 ],
             )
-            admin_card_updated = True
         except Exception:
-            log.exception("edit admin appeal card after followup failed")
-
-    if cfg.admin_group_id and not admin_card_updated:
-        sent = await event.bot.send_message(chat_id=cfg.admin_group_id, text=followup)
-        followup_mid = extract_message_id(sent)
+            log.exception("send fresh admin appeal card after followup failed")
 
     if cfg.admin_group_id:
         if attachments:
             try:
+                # relay привязываем к followup-уведомлению, если оно
+                # ушло (followup_mid), иначе к admin_message_id
+                # исходной карточки (если есть). Третий fallback — без
+                # reply-link.
                 await relay_attachments_to_admin(
                     event.bot,
                     appeal_id=appeal.id,
-                    admin_mid=admin_mid if admin_card_updated else followup_mid,
+                    admin_mid=followup_mid or admin_mid,
                     stored_attachments=attachments,
                 )
             except Exception:

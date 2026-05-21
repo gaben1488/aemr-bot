@@ -383,7 +383,11 @@ class TestOnAwaitingFollowupText:
         assert "закрыто" in text.lower() or "Подать похожее" in text
 
     @pytest.mark.asyncio
-    async def test_success_updates_original_admin_card(self) -> None:
+    async def test_success_sends_new_admin_card_for_followup(self) -> None:
+        """Политика edit-vs-new: дополнение жителя НЕ редактирует старую
+        admin-карточку. Шлёт новую — оператор мог уйти далеко вниз
+        чата, edit вверху не виден; новая карточка приходит вниз и
+        повышает конверсию ответа."""
         from aemr_bot.handlers import appeal_funnel
 
         event = _make_event()
@@ -395,6 +399,8 @@ class TestOnAwaitingFollowupText:
             is_blocked=False,
             dialog_data={"appeal_id": 5},
             consent_pdn_at=datetime.now(timezone.utc),
+            subscribed_broadcast=False,
+            consent_revoked_at=None,
         )
         appeal = SimpleNamespace(
             id=5,
@@ -408,6 +414,7 @@ class TestOnAwaitingFollowupText:
             attachments=[],
             messages=[],
             admin_message_id="admin-mid-5",
+            closed_due_to_revoke=False,
         )
         updated_appeal = SimpleNamespace(
             **{
@@ -455,11 +462,31 @@ class TestOnAwaitingFollowupText:
             )
 
         reset.assert_called_once()
-        event.bot.edit_message.assert_called_once()
-        assert event.bot.edit_message.call_args.kwargs["message_id"] == "admin-mid-5"
-        edited_text = event.bot.edit_message.call_args.kwargs["text"]
-        assert "Дополнение к обращению:" in edited_text
-        assert "второго подъезда" in edited_text
+        # Главное правило новой политики: edit_message НЕ вызывается
+        # на admin-карточке. Шлём новую карточку через send_message.
+        event.bot.edit_message.assert_not_called()
+        event.bot.send_message.assert_called()
+        # Среди отправленных в админ-группу должна быть карточка с
+        # обновлённой сутью (дополнение от жителя).
+        admin_calls = [
+            c for c in event.bot.send_message.call_args_list
+            if c.kwargs.get("chat_id") == 555
+        ]
+        assert admin_calls, "no admin-card send to admin_group_id"
+        # Карточка содержит «#5» — номер обращения.
+        any_card = any(
+            "#5" in (c.kwargs.get("text") or "")
+            for c in admin_calls
+        )
+        assert any_card, f"no admin card with #5 in: {admin_calls}"
+        # «второго подъезда» — содержимое followup-уведомления.
+        any_followup_with_quote = any(
+            "второго подъезда" in (c.kwargs.get("text") or "")
+            for c in admin_calls
+        )
+        assert any_followup_with_quote, (
+            f"followup text not in admin sends: {admin_calls}"
+        )
 
 
 class TestOnIdle:

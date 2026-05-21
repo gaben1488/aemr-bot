@@ -26,7 +26,28 @@ from aemr_bot.utils.event import get_user_id, is_admin_chat, send_or_edit_screen
 log = logging.getLogger(__name__)
 
 
-async def _show_appeal_card_or_result(event, appeal_id: int, fallback_text: str) -> None:
+async def _show_appeal_card_or_result(
+    event,
+    appeal_id: int,
+    fallback_text: str,
+    *,
+    edit_in_place: bool = False,
+) -> None:
+    """Перерисовать карточку обращения после действия оператора.
+
+    Политика edit-vs-new (запрошена владельцем):
+    - **Whitelisted** действия (reply / reopen / close без ответа) →
+      `edit_in_place=True` → используем freshness-tracker (edit
+      допустим, если карточка свежая).
+    - **Прочие** действия (block / unblock / erase, поведенческие
+      изменения вне статуса) → `edit_in_place=False` (дефолт) →
+      `force_new_message=True` → ВСЕГДА новая карточка внизу чата.
+      Оператор уже мог уйти далеко вниз; edit на старой карточке
+      вверху не виден, новая карточка приходит к нему.
+
+    Это улучшает конверсию: оператор реагирует, потому что видит
+    свежий артефакт, а не «где-то выше что-то изменилось».
+    """
     from aemr_bot import keyboards as kbds
 
     try:
@@ -50,6 +71,7 @@ async def _show_appeal_card_or_result(event, appeal_id: int, fallback_text: str)
                         closed_due_to_revoke=bool(appeal.closed_due_to_revoke),
                     )
                 ],
+                force_new_message=not edit_in_place,
             )
             return
         except Exception:
@@ -59,6 +81,7 @@ async def _show_appeal_card_or_result(event, appeal_id: int, fallback_text: str)
         chat_id=cfg.admin_group_id,
         text=fallback_text,
         attachments=[kbds.op_back_to_menu_keyboard()],
+        force_new_message=not edit_in_place,
     )
 
 
@@ -191,6 +214,8 @@ async def run_reopen(event, appeal_id: int) -> None:
                 target=f"appeal #{appeal_id}",
             )
     await ack_callback(event)
+    # reopen — whitelisted: edit на месте (статус карточки меняется,
+    # оператору важно видеть это в той же карточке).
     await _show_appeal_card_or_result(
         event,
         appeal_id,
@@ -199,6 +224,7 @@ async def run_reopen(event, appeal_id: int) -> None:
             if ok
             else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
         ),
+        edit_in_place=True,
     )
 
 
@@ -218,6 +244,7 @@ async def run_close(event, appeal_id: int) -> None:
                 target=f"appeal #{appeal_id}",
             )
     await ack_callback(event)
+    # close (без ответа) — whitelisted: edit на месте.
     await _show_appeal_card_or_result(
         event,
         appeal_id,
@@ -226,6 +253,7 @@ async def run_close(event, appeal_id: int) -> None:
             if ok
             else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
         ),
+        edit_in_place=True,
     )
 
 
