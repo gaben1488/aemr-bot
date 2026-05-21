@@ -481,6 +481,36 @@ OP_BROADCAST_CANCELLED = (
 OP_BROADCAST_LIST_EMPTY = "Рассылок ещё не было."
 OP_BROADCAST_LIST_HEADER = "📜 Недавние рассылки:\n"
 OP_BROADCAST_LIST_ITEM = "#{number} · {created_at} · {status} · {delivered}/{total}"
+
+# Карточка рассылки в истории (PR G)
+OP_BROADCAST_CARD = (
+    "📜 Рассылка #{number}\n"
+    "Статус: {status}\n"
+    "Создана: {created_at}\n"
+    "Доставлено: {delivered}/{total}{failed_line}\n"
+    "Картинок: {image_count}\n"
+    "──────────\n"
+    "{text}"
+)
+OP_BROADCAST_CARD_FAILED_LINE = "\nНе доставлено: {failed}"
+
+OP_BROADCAST_NOT_FOUND = "Рассылка не найдена."
+
+OP_BROADCAST_FAILED_LIST_EMPTY = (
+    "📥 У рассылки #{number} нет неуспешных доставок."
+)
+OP_BROADCAST_FAILED_LIST_HEADER = (
+    "👥 Не доставлено по рассылке #{number} (всего {count}):\n"
+)
+OP_BROADCAST_FAILED_LIST_ITEM = "• {name} — {error}"
+OP_BROADCAST_FAILED_LIST_TRUNCATED = (
+    "\n…и ещё {more} — показаны первые {limit}."
+)
+
+OP_BROADCAST_CLONE_NO_SUBSCRIBERS = (
+    "Рассылка взята за основу, но подписчиков сейчас нет — отправлять "
+    "некому. Дождитесь, пока кто-то подпишется."
+)
 OP_BROADCAST_WIZARD_EXPIRED = (
     "Ввод текста занял слишком долго, мастер закрыт. Откройте "
     "«Сделать рассылку» заново."

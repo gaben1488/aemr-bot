@@ -106,3 +106,65 @@ async def test_mark_finished_done_keeps_explicit_counters(session) -> None:
     assert refreshed.status == BroadcastStatus.DONE.value
     assert refreshed.delivered_count == 3
     assert refreshed.failed_count == 0
+
+
+# ---- list_failed_deliveries (PR G) ---------------------------------
+
+
+@pytest.mark.asyncio
+async def test_list_failed_deliveries_empty(session) -> None:
+    """Рассылка без failed-доставок возвращает пустой список."""
+    bc = await broadcasts_service.create_broadcast(
+        session, text="t", operator_id=None, subscriber_count=0
+    )
+    result = await broadcasts_service.list_failed_deliveries(session, bc.id)
+    assert result == []
+
+
+@pytest.mark.asyncio
+async def test_list_failed_deliveries_only_failures(session) -> None:
+    """Успешные доставки игнорируются — в выборку идут только error IS NOT NULL."""
+    user1 = await users_service.get_or_create(session, max_user_id=101, first_name="Анна")
+    user2 = await users_service.get_or_create(session, max_user_id=102, first_name="Борис")
+    user3 = await users_service.get_or_create(session, max_user_id=103, first_name="Вера")
+    bc = await broadcasts_service.create_broadcast(
+        session, text="t", operator_id=None, subscriber_count=3
+    )
+    await broadcasts_service.record_delivery(
+        session, broadcast_id=bc.id, user_id=user1.id, error=None
+    )
+    await broadcasts_service.record_delivery(
+        session, broadcast_id=bc.id, user_id=user2.id, error="blocked"
+    )
+    await broadcasts_service.record_delivery(
+        session, broadcast_id=bc.id, user_id=user3.id, error="api_error"
+    )
+
+    result = await broadcasts_service.list_failed_deliveries(session, bc.id)
+    names = [r[1] for r in result]
+    errors = [r[2] for r in result]
+
+    assert "Анна" not in names  # успешная не попала
+    assert set(names) == {"Борис", "Вера"}
+    assert "blocked" in errors
+    assert "api_error" in errors
+
+
+@pytest.mark.asyncio
+async def test_list_failed_deliveries_respects_limit(session) -> None:
+    """Запрос с маленьким limit возвращает ровно limit строк."""
+    bc = await broadcasts_service.create_broadcast(
+        session, text="t", operator_id=None, subscriber_count=5
+    )
+    for i in range(5):
+        u = await users_service.get_or_create(
+            session, max_user_id=200 + i, first_name=f"U{i}"
+        )
+        await broadcasts_service.record_delivery(
+            session, broadcast_id=bc.id, user_id=u.id, error="x"
+        )
+
+    result = await broadcasts_service.list_failed_deliveries(
+        session, bc.id, limit=3
+    )
+    assert len(result) == 3

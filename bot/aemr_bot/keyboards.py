@@ -464,6 +464,68 @@ def op_back_to_menu_keyboard():
     return kb.as_markup()
 
 
+def broadcast_history_list_keyboard(items):
+    """Список последних рассылок (PR G) — каждая строка кликабельна.
+
+    Нажатие открывает карточку рассылки (`op:bc:open:<id>`) с
+    текстом, картинками и действиями «📝 Создать на основе» /
+    «👥 Не доставлено».
+    """
+    kb = InlineKeyboardBuilder()
+    for bc in items:
+        # status emoji подсказывает «есть проблемы / завершено».
+        status = (bc.status or "").lower()
+        if status == "done":
+            mark = "✅"
+        elif status in {"failed", "cancelled"}:
+            mark = "⚠️"
+        elif status == "sending":
+            mark = "▶️"
+        else:
+            mark = "•"
+        kb.row(
+            CallbackButton(
+                text=f"{mark} #{bc.id} · {bc.delivered_count}/{bc.subscriber_count_at_start}",
+                payload=f"op:bc:open:{bc.id}",
+            )
+        )
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    return kb.as_markup()
+
+
+def broadcast_history_card_keyboard(broadcast_id: int, *, has_failures: bool):
+    """Карточка рассылки: «создать на основе», «не доставлено», назад."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="📝 Создать на основе",
+            payload=f"op:bc:clone:{broadcast_id}",
+        )
+    )
+    if has_failures:
+        kb.row(
+            CallbackButton(
+                text="👥 Не доставлено",
+                payload=f"op:bc:failed:{broadcast_id}",
+            )
+        )
+    kb.row(CallbackButton(text="↩️ К списку", payload="op:broadcast_list"))
+    return kb.as_markup()
+
+
+def broadcast_failed_list_keyboard(broadcast_id: int):
+    """Кнопки под списком failed-доставок: назад к карточке."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="↩️ К рассылке",
+            payload=f"op:bc:open:{broadcast_id}",
+        )
+    )
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
 def broadcast_templates_list_keyboard(
     templates: list,
     *,

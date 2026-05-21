@@ -299,3 +299,34 @@ async def list_recent(session: AsyncSession, limit: int = 10) -> list[Broadcast]
 
 async def get_by_id(session: AsyncSession, broadcast_id: int) -> Broadcast | None:
     return await session.scalar(select(Broadcast).where(Broadcast.id == broadcast_id))
+
+
+async def list_failed_deliveries(
+    session: AsyncSession,
+    broadcast_id: int,
+    *,
+    limit: int = 50,
+) -> list[tuple[int, str, str | None]]:
+    """Список доставок-неудач для рассылки (PR G).
+
+    Возвращает [(user_db_id, first_name, error)], упорядоченные по
+    error → потом по user_id. Используется в UI «👥 Не доставлено»:
+    оператор видит, кому конкретно не дошло и с какой ошибкой
+    (заблокировал бота, юзер удалён, MAX-API сбой).
+
+    Лимит дефолтом 50 — для типичной рассылки в 1-2k подписчиков и
+    failure rate <5% это вмещает все ошибки; для редких больших фейлов
+    UI покажет «и ещё N» (caller использует длину = limit как
+    индикатор «есть отсечка»).
+    """
+    result = await session.execute(
+        select(BroadcastDelivery.user_id, User.first_name, BroadcastDelivery.error)
+        .join(User, User.id == BroadcastDelivery.user_id)
+        .where(
+            BroadcastDelivery.broadcast_id == broadcast_id,
+            BroadcastDelivery.error.isnot(None),
+        )
+        .order_by(BroadcastDelivery.error, BroadcastDelivery.user_id)
+        .limit(limit)
+    )
+    return [(row[0], row[1] or "—", row[2]) for row in result.all()]
