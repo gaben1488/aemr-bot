@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-21 01:22:19 UTC`
+Generated at: `2026-05-21 01:31:26 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `179`
 Max file size: `300 KB`
@@ -66,7 +66,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/appeals.py` (18415 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (12238 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
-- `bot/aemr_bot/services/card_format.py` (5938 bytes)
+- `bot/aemr_bot/services/card_format.py` (8809 bytes)
 - `bot/aemr_bot/services/cron.py` (35469 bytes)
 - `bot/aemr_bot/services/db_backup.py` (15350 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
@@ -81,7 +81,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/users.py` (29316 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (11952 bytes)
-- `bot/aemr_bot/texts.py` (30010 bytes)
+- `bot/aemr_bot/texts.py` (30032 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -109,7 +109,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
 - `bot/tests/test_callback_router.py` (8614 bytes)
 - `bot/tests/test_callback_router_coverage.py` (5487 bytes)
-- `bot/tests/test_card_format.py` (4677 bytes)
+- `bot/tests/test_card_format.py` (10537 bytes)
 - `bot/tests/test_cron_jobs.py` (17295 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (14354 bytes)
@@ -14005,8 +14005,8 @@ def is_workday(d: date) -> bool:
 
 ### `bot/aemr_bot/services/card_format.py`
 
-Size: `5938` bytes  
-SHA-256: `dbd84c9b95bd3a9a3abd71ee4848a4510df7efca78f20c7334debb45b413b526`
+Size: `8809` bytes  
+SHA-256: `ec2fdb62bab1414ec9687718f672862fd898b957515606eb7fc4c9956ded9d7b`
 
 ```python
 from datetime import datetime
@@ -14099,6 +14099,32 @@ def admin_followups_block(appeal: Appeal) -> str:
     return "\n".join(lines)
 
 
+def _citizen_status_line(user: User) -> str:
+    """Компактная строка статуса жителя для admin-карточки — оператор
+    видит «нормальный житель» vs «отозвал согласие, обращение в работе
+    для финального ответа» vs «заблокирован» одним взглядом.
+
+    Формат: `Статус: <маркер подписки> · <маркер согласия>[ · 🚫 заблокирован]`.
+
+    Маркеры:
+    - 🔔 / 🔕 — подписан / не подписан на рассылку.
+    - ✅ / 🔁 — согласие активно / отозвано (revoked имеет приоритет).
+    - 🚫 — заблокирован (добавляется только если applicable).
+    """
+    parts: list[str] = []
+    if getattr(user, "subscribed_broadcast", False):
+        parts.append("🔔 подписан")
+    else:
+        parts.append("🔕 без подписки")
+    if getattr(user, "consent_revoked_at", None) is not None:
+        parts.append("🔁 согласие отозвано")
+    elif getattr(user, "consent_pdn_at", None) is not None:
+        parts.append("✅ согласие активно")
+    if getattr(user, "is_blocked", False):
+        parts.append("🚫 заблокирован")
+    return "Статус: " + " · ".join(parts)
+
+
 def admin_card(appeal: Appeal, user: User) -> str:
     """Карточка обращения в служебной группе — единый стиль независимо от
     того, есть вложения или нет.
@@ -14106,11 +14132,17 @@ def admin_card(appeal: Appeal, user: User) -> str:
     Раньше было «то 2, то 3 разделителя в зависимости от наличия фото».
     Теперь блок «Вложения» всегда добавляется внутри тела через ту же
     линию, что и остальные секции, без второй декоративной полосы.
+
+    Под именем/телефоном — строка маркеров состояния жителя (PR F):
+    подписка / согласие / блокировка. Оператор видит контекст «обычный»
+    vs «отозвал согласие — финальный ответ» vs «заблокирован» сразу,
+    без прыжков в админ-меню.
     """
     body = ADMIN_CARD_TEMPLATE.format(
         number=appeal.id,
         name=user.first_name or "—",
         phone=user.phone or "—",
+        status_line=_citizen_status_line(user),
         locality=appeal.locality or "—",
         address=appeal.address or "—",
         topic=appeal.topic or "—",
@@ -14165,9 +14197,23 @@ def user_card(appeal: Appeal) -> str:
 
 
 def appeal_list_label(appeal: Appeal) -> str:
+    """Метка обращения для списка «📂 Мои обращения» жителя.
+
+    Для new/in_progress показываем дату создания (когда подал). Для
+    answered — дату ответа (когда ответили). Для closed — дату закрытия.
+    Так житель сразу видит «вот когда мне ответили», а не «вот когда
+    я писал» (создание уже не информативно после ответа).
+    """
     emoji, label = STATUS_LABELS.get(appeal.status, ("•", appeal.status))
     summary_preview = (appeal.summary or "").replace("\n", " ")[:32]
-    return f"{emoji} #{appeal.id} · {label} · {_local(appeal.created_at)} · {summary_preview}"
+    # Выбор отображаемой даты — по фазе жизненного цикла обращения.
+    if appeal.status == "answered":
+        relevant_date = getattr(appeal, "answered_at", None) or appeal.created_at
+    elif appeal.status == "closed":
+        relevant_date = getattr(appeal, "closed_at", None) or appeal.created_at
+    else:
+        relevant_date = appeal.created_at
+    return f"{emoji} #{appeal.id} · {label} · {_local(relevant_date)} · {summary_preview}"
 ```
 
 ### `bot/aemr_bot/services/cron.py`
@@ -18191,8 +18237,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `30010` bytes  
-SHA-256: `ec63d7d1340736ca36af3a858b4507561fbf51f3d6e85679b3f0072922d42f0c`
+Size: `30032` bytes  
+SHA-256: `0882535d5c46cf2326a2171e1f8ffe4de135d6d99d74fcc2e72b5c049f11c94a`
 
 ```python
 WELCOME = (
@@ -18300,7 +18346,8 @@ APPEAL_CARD_TEMPLATE = (
 ADMIN_CARD_TEMPLATE = (
     "Обращение #{number}\n\n"
     "Житель: {name}\n"
-    "Телефон: {phone}\n\n"
+    "Телефон: {phone}\n"
+    "{status_line}\n\n"
     "────────────────\n"
     "Населённый пункт: {locality}\n"
     "Адрес: {address}\n"
@@ -25021,8 +25068,8 @@ class TestAdminCallbackClassification:
 
 ### `bot/tests/test_card_format.py`
 
-Size: `4677` bytes  
-SHA-256: `4ccbd459dc799afae866633f42a8a6f2dadd6f17cf6ac242d67776f13afb1441`
+Size: `10537` bytes  
+SHA-256: `204a18aeeb3ad43cc166a4551079ad2b685177bc1cf9dfeeec561bfef1835b6e`
 
 ```python
 """Тесты на services/card_format — рендер карточек обращений.
@@ -25149,6 +25196,138 @@ class TestAppealListLabel:
         """Если статус неизвестен — fallback на эмодзи •."""
         label = appeal_list_label(self._make_appeal(status="unknown_status"))
         assert "•" in label or "#42" in label
+
+    # ---- даты ответа/закрытия (PR E) ----
+
+    def test_answered_shows_response_date(self) -> None:
+        """Контракт: для answered — показывается ДАТА ОТВЕТА (не только
+        создания), чтобы житель видел «когда мне ответили»."""
+        appeal = SimpleNamespace(
+            id=42,
+            status="answered",
+            created_at=datetime(2026, 5, 10, 14, 30, tzinfo=timezone.utc),
+            answered_at=datetime(2026, 5, 11, 9, 15, tzinfo=timezone.utc),
+            closed_at=None,
+            summary="Тест",
+        )
+        label = appeal_list_label(appeal)
+        # 11.05 — день ответа в локальном времени Камчатки (UTC+12)
+        assert "11.05" in label, (
+            f"дата ответа не отображена в метке: {label}"
+        )
+
+    def test_closed_shows_closure_date(self) -> None:
+        """Контракт: для closed — показывается ДАТА ЗАКРЫТИЯ."""
+        appeal = SimpleNamespace(
+            id=42,
+            status="closed",
+            created_at=datetime(2026, 5, 10, 14, 30, tzinfo=timezone.utc),
+            answered_at=None,
+            closed_at=datetime(2026, 5, 12, 16, 0, tzinfo=timezone.utc),
+            summary="Тест",
+        )
+        label = appeal_list_label(appeal)
+        # 13.05 в Камчатке (UTC+12 даст +12ч от UTC 16:00 → 13.05 04:00 след. дня)
+        assert "13.05" in label, (
+            f"дата закрытия не отображена в метке: {label}"
+        )
+
+    def test_new_still_shows_created_date(self) -> None:
+        """Regression: для new/in_progress дата создания остаётся."""
+        appeal = SimpleNamespace(
+            id=42,
+            status="new",
+            created_at=datetime(2026, 5, 10, 14, 30, tzinfo=timezone.utc),
+            answered_at=None,
+            closed_at=None,
+            summary="Тест",
+        )
+        label = appeal_list_label(appeal)
+        # 11.05 в Камчатке (UTC+12 от 14:30 → 02:30 след. дня)
+        assert "11.05" in label
+
+
+class TestAdminCardCitizenStateMarkers:
+    """PR F: admin appeal card показывает маркеры состояния жителя —
+    подписка, согласие, блокировка. Оператор видит контекст «нормальный
+    житель» vs «отозвавший согласие, в работе» vs «заблокированный»."""
+
+    def _make_appeal(self) -> SimpleNamespace:
+        return SimpleNamespace(
+            id=18,
+            locality="Елизовское ГП",
+            address="ул. Ленина, 5",
+            topic="Дороги",
+            summary="Яма во дворе.",
+            attachments=[],
+            messages=[],
+        )
+
+    def test_normal_user_subscribed_consent_active(self) -> None:
+        """Обычный житель: подписан, согласие активно — показывается
+        компактная строка статуса с маркерами."""
+        appeal = self._make_appeal()
+        user = SimpleNamespace(
+            first_name="Сергей",
+            phone="+79991234567",
+            consent_pdn_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
+            consent_revoked_at=None,
+            subscribed_broadcast=True,
+            is_blocked=False,
+        )
+
+        result = admin_card(appeal, user)
+
+        # Подписан — маркер 🔔
+        assert "🔔" in result, f"маркер подписки не найден:\n{result}"
+        # Согласие активно — маркер ✅
+        assert "✅" in result, f"маркер согласия не найден:\n{result}"
+
+    def test_blocked_user_visible(self) -> None:
+        """Заблокированный житель — явный маркер 🚫."""
+        appeal = self._make_appeal()
+        user = SimpleNamespace(
+            first_name="Иван",
+            phone="+79990000000",
+            consent_pdn_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
+            consent_revoked_at=None,
+            subscribed_broadcast=False,
+            is_blocked=True,
+        )
+
+        result = admin_card(appeal, user)
+        assert "🚫" in result, f"маркер блокировки не найден:\n{result}"
+
+    def test_revoked_consent_visible(self) -> None:
+        """Отозвавший согласие житель (обращение всё ещё в работе для
+        финального ответа) — маркер 🔁."""
+        appeal = self._make_appeal()
+        user = SimpleNamespace(
+            first_name="Анна",
+            phone="+79991111111",
+            consent_pdn_at=None,
+            consent_revoked_at=datetime(2026, 5, 11, tzinfo=timezone.utc),
+            subscribed_broadcast=False,
+            is_blocked=False,
+        )
+
+        result = admin_card(appeal, user)
+        assert "🔁" in result, f"маркер отозванного согласия не найден:\n{result}"
+
+    def test_not_subscribed_marker(self) -> None:
+        """Житель не подписан на рассылку — маркер 🔕."""
+        appeal = self._make_appeal()
+        user = SimpleNamespace(
+            first_name="Пётр",
+            phone="+79992222222",
+            consent_pdn_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
+            consent_revoked_at=None,
+            subscribed_broadcast=False,
+            is_blocked=False,
+        )
+
+        result = admin_card(appeal, user)
+        assert "🔕" in result, f"маркер «не подписан» не найден:\n{result}"
 ```
 
 ### `bot/tests/test_cron_jobs.py`
