@@ -323,3 +323,49 @@ class WizardState(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+
+
+class BroadcastTemplate(Base):
+    """Шаблон типовой рассылки (PR H).
+
+    Оператор сохраняет частые тексты («плановое отключение воды»,
+    «расписание автобусов на праздники») с человекочитаемым именем и
+    при следующей рассылке выбирает шаблон из списка вместо набора
+    текста с нуля. Хранит то же, что Broadcast.text/attachments: text
+    + сериализованные image-attachments dict'ы.
+
+    Soft-delete через archived_at — после удаления шаблона уже
+    отправленные на его основе Broadcast'ы остаются с собственным
+    text/attachments (Broadcast не ссылается на template, копирование
+    делается на момент создания draft'а).
+    """
+
+    __tablename__ = "broadcast_templates"
+    __table_args__ = (
+        UniqueConstraint("name", name="uq_broadcast_template_name"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(64))
+    text: Mapped[str] = mapped_column(Text)
+    # Image-attachments в формате Appeal.attachments / Broadcast.attachments.
+    # Восстанавливаются через utils/attachments.deserialize_for_relay.
+    attachments: Mapped[list] = mapped_column(
+        JSONB, default=list, server_default="[]"
+    )
+    created_by_operator_id: Mapped[int | None] = mapped_column(
+        ForeignKey("operators.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+    # Soft-delete: после archive шаблон не показывается в списке, но
+    # запись остаётся для аудита.
+    archived_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), index=True
+    )

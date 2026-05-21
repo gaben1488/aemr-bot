@@ -82,6 +82,7 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("op:opreact:", CallbackGroup.OPERATOR_ADMIN, True, "реактивация оператора"),
     CallbackRoute("op:setkey:", CallbackGroup.OPERATOR_ADMIN, True, "экспертный wizard ключа"),
     CallbackRoute("op:set:", CallbackGroup.OPERATOR_ADMIN, True, "иерархическое меню настроек"),
+    CallbackRoute("op:tmpl:", CallbackGroup.BROADCAST_ADMIN, True, "шаблоны рассылок"),
 )
 
 

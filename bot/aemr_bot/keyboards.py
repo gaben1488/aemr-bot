@@ -464,6 +464,91 @@ def op_back_to_menu_keyboard():
     return kb.as_markup()
 
 
+def broadcast_templates_list_keyboard(
+    templates: list,
+    *,
+    can_create: bool = True,
+):
+    """Список шаблонов рассылок (PR H).
+
+    Каждая строка — кнопка-открытие карточки шаблона: payload
+    `op:tmpl:open:<id>`. Сверху — «➕ Создать шаблон» (`op:tmpl:new`).
+    Внизу — возврат в админ-меню.
+    """
+    kb = InlineKeyboardBuilder()
+    if can_create:
+        kb.row(CallbackButton(text="➕ Создать шаблон", payload="op:tmpl:new"))
+    for tmpl in templates:
+        # Префикс «📋» компактно намекает, что это шаблон, а не история
+        # рассылок (там «📜»). Имя и так короткое (≤64 симв).
+        kb.row(
+            CallbackButton(
+                text=f"📋 {tmpl.name}",
+                payload=f"op:tmpl:open:{tmpl.id}",
+            )
+        )
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    return kb.as_markup()
+
+
+def broadcast_template_card_keyboard(template_id: int):
+    """Карточка шаблона: применить / переименовать / изменить текст /
+    удалить / назад к списку.
+
+    Кнопка «📨 Отправить как рассылку» — главная цель пула, поэтому
+    отдельной строкой сверху. Удаление и редактирование — отдельным
+    рядом, чтобы случайно не нажать.
+    """
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="📨 Отправить как рассылку",
+            payload=f"op:tmpl:apply:{template_id}",
+        )
+    )
+    kb.row(
+        CallbackButton(
+            text="✏️ Переименовать",
+            payload=f"op:tmpl:rename:{template_id}",
+        ),
+        CallbackButton(
+            text="📝 Изменить текст",
+            payload=f"op:tmpl:edit:{template_id}",
+        ),
+    )
+    kb.row(
+        CallbackButton(
+            text="🗑 Удалить шаблон",
+            payload=f"op:tmpl:delete:{template_id}",
+        )
+    )
+    kb.row(CallbackButton(text="↩️ К списку шаблонов", payload="op:tmpl:list"))
+    return kb.as_markup()
+
+
+def broadcast_template_delete_confirm_keyboard(template_id: int):
+    """Подтверждение удаления шаблона."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="🗑 Да, удалить",
+            payload=f"op:tmpl:delete_ok:{template_id}",
+        ),
+        CallbackButton(
+            text="↩️ Назад",
+            payload=f"op:tmpl:open:{template_id}",
+        ),
+    )
+    return kb.as_markup()
+
+
+def broadcast_template_cancel_keyboard():
+    """Отмена ввода в wizard'е шаблона (имя/текст/переименование)."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="❌ Отменить", payload="op:tmpl:cancel"))
+    return kb.as_markup()
+
+
 def op_back_to_operators_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="↩️ К операторам", payload="op:operators"))
@@ -968,6 +1053,7 @@ def op_help_keyboard(
     if can_broadcast:
         kb.row(CallbackButton(text="📢 Сделать рассылку", payload="op:broadcast"))
         kb.row(CallbackButton(text="📜 История рассылок", payload="op:broadcast_list"))
+        kb.row(CallbackButton(text="📋 Шаблоны рассылок", payload="op:tmpl:list"))
     kb.row(CallbackButton(text="🛠 Диагностика", payload="op:diag"))
     if is_it:
         kb.row(CallbackButton(text="💾 Снять бэкап", payload="op:backup"))
