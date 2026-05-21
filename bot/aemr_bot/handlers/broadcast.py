@@ -842,11 +842,181 @@ async def _list_broadcasts(event) -> None:
                 total=bc.subscriber_count_at_start,
             )
         )
+    # PR G: кнопки-строки списка → клик открывает карточку рассылки.
+    # Текст списка остаётся (быстрый обзор), кнопки выше дублируют
+    # цифры и кликабельны.
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
         text="\n".join(lines),
-        attachments=[keyboards.op_back_to_menu_keyboard()],
+        attachments=[keyboards.broadcast_history_list_keyboard(items)],
+    )
+
+
+async def _open_broadcast(event, broadcast_id: int) -> None:
+    """`op:bc:open:<id>` — карточка одной рассылки (PR G).
+
+    Показывает текст, картинки, счётчики доставки и две кнопки:
+    «📝 Создать на основе» (prefill /broadcast wizard) и «👥 Не
+    доставлено» (если failed_count > 0).
+    """
+    if not await _ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        return
+    async with session_scope() as session:
+        bc = await broadcasts_service.get_by_id(session, broadcast_id)
+    if bc is None:
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_BROADCAST_NOT_FOUND,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return
+    failed_line = (
+        texts.OP_BROADCAST_CARD_FAILED_LINE.format(failed=bc.failed_count)
+        if bc.failed_count
+        else ""
+    )
+    body = texts.OP_BROADCAST_CARD.format(
+        number=bc.id,
+        status=bc.status,
+        created_at=_format_dt(bc.created_at),
+        delivered=bc.delivered_count,
+        total=bc.subscriber_count_at_start,
+        failed_line=failed_line,
+        image_count=len(bc.attachments or []),
+        text=bc.text,
+    )
+    preview_images = _image_attachments.build_outbound_image_attachments(
+        bc.attachments or []
+    )
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=body,
+        attachments=[
+            *preview_images,
+            keyboards.broadcast_history_card_keyboard(
+                bc.id, has_failures=bool(bc.failed_count)
+            ),
+        ],
+    )
+
+
+async def _clone_broadcast(event, broadcast_id: int) -> None:
+    """`op:bc:clone:<id>` — взять рассылку за основу новой (PR G).
+
+    Заряжает /broadcast wizard данными существующей рассылки (text +
+    attachments) в шаг awaiting_confirm — оператор видит обычный
+    confirm-preview и либо «Разослать», либо «Изменить текст».
+    """
+    if not await _ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        return
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        return
+    async with session_scope() as session:
+        bc = await broadcasts_service.get_by_id(session, broadcast_id)
+        if bc is None:
+            await send_or_edit_screen(
+                event,
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_BROADCAST_NOT_FOUND,
+                attachments=[keyboards.op_back_to_menu_keyboard()],
+            )
+            return
+        subscribers = await broadcasts_service.count_subscribers(session)
+    if subscribers == 0:
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_BROADCAST_CLONE_NO_SUBSCRIBERS,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return
+    prefill_wizard_from_template(
+        actor_id,
+        text=bc.text,
+        attachments=list(bc.attachments or []),
+    )
+    preview_images = _image_attachments.build_outbound_image_attachments(
+        bc.attachments or []
+    )
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_BROADCAST_PREVIEW.format(
+            text=bc.text,
+            count=subscribers,
+            image_count=len(bc.attachments or []),
+            image_warning="",
+        ),
+        attachments=[
+            *preview_images,
+            keyboards.broadcast_confirm_keyboard(),
+        ],
+    )
+    log.info(
+        "broadcast: clone from #%s by operator=%s — wizard pre-filled "
+        "(subscribers=%d)",
+        bc.id, actor_id, subscribers,
+    )
+
+
+async def _list_failed_deliveries(event, broadcast_id: int) -> None:
+    """`op:bc:failed:<id>` — кому не дошло (PR G)."""
+    if not await _ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        return
+    LIMIT = 50
+    async with session_scope() as session:
+        bc = await broadcasts_service.get_by_id(session, broadcast_id)
+        if bc is None:
+            await send_or_edit_screen(
+                event,
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_BROADCAST_NOT_FOUND,
+                attachments=[keyboards.op_back_to_menu_keyboard()],
+            )
+            return
+        rows = await broadcasts_service.list_failed_deliveries(
+            session, broadcast_id, limit=LIMIT
+        )
+    if not rows:
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_BROADCAST_FAILED_LIST_EMPTY.format(number=bc.id),
+            attachments=[
+                keyboards.broadcast_failed_list_keyboard(broadcast_id)
+            ],
+        )
+        return
+    lines = [
+        texts.OP_BROADCAST_FAILED_LIST_HEADER.format(
+            number=bc.id, count=bc.failed_count
+        ).rstrip()
+    ]
+    for _user_id, name, err in rows:
+        # Обрезаем ошибку, чтобы не разорвать сообщение MAX-лимитом
+        # длины: типичный repr-RuntimeError помещается, но иногда
+        # бывает огромный traceback от bot.send_message.
+        err_short = (err or "").strip()[:100]
+        lines.append(
+            texts.OP_BROADCAST_FAILED_LIST_ITEM.format(
+                name=name, error=err_short or "—"
+            )
+        )
+    if bc.failed_count > len(rows):
+        lines.append(
+            texts.OP_BROADCAST_FAILED_LIST_TRUNCATED.format(
+                more=bc.failed_count - len(rows), limit=len(rows)
+            )
+        )
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text="\n".join(lines),
+        attachments=[keyboards.broadcast_failed_list_keyboard(broadcast_id)],
     )
 
 

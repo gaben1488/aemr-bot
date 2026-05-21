@@ -122,6 +122,19 @@ async def _op_unblock(event, appeal_id: int) -> None:
     await admin_commands.run_block_for_appeal(event, appeal_id, blocked=False)
 
 
+# PR G: история рассылок — карточка / клон / failed-deliveries.
+async def _op_bc_open(event, broadcast_id: int) -> None:
+    await broadcast_handler._open_broadcast(event, broadcast_id)
+
+
+async def _op_bc_clone(event, broadcast_id: int) -> None:
+    await broadcast_handler._clone_broadcast(event, broadcast_id)
+
+
+async def _op_bc_failed(event, broadcast_id: int) -> None:
+    await broadcast_handler._list_failed_deliveries(event, broadcast_id)
+
+
 # ---- Таблицы маршрутов ------------------------------------------------------
 #
 # _EXACT — точное совпадение payload. _PREFIX_ID — `op:<verb>:<id>`,
@@ -175,6 +188,10 @@ _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
     ("op:erase:", _op_erase),
     ("op:block:", _op_block),
     ("op:unblock:", _op_unblock),
+    # PR G: история рассылок.
+    ("op:bc:open:", _op_bc_open),
+    ("op:bc:clone:", _op_bc_clone),
+    ("op:bc:failed:", _op_bc_failed),
 )
 
 # _PREFIX_RAW: handler получает весь payload и сам делает ack.
