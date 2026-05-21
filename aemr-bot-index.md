@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-21 03:39:54 UTC`
+Generated at: `2026-05-21 03:59:20 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `187`
+Indexed files: `188`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -42,7 +42,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/__init__.py` (3303 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
-- `bot/aemr_bot/handlers/admin_appeal_ops.py` (12111 bytes)
+- `bot/aemr_bot/handlers/admin_appeal_ops.py` (13718 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9220 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12068 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17506 bytes)
@@ -51,7 +51,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_settings.py` (41211 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (26042 bytes)
-- `bot/aemr_bot/handlers/appeal_funnel.py` (29804 bytes)
+- `bot/aemr_bot/handlers/appeal_funnel.py` (31437 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (12572 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
@@ -103,6 +103,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_handlers_small.py` (21842 bytes)
 - `bot/tests/test_admin_operators.py` (19228 bytes)
 - `bot/tests/test_admin_panel.py` (12680 bytes)
+- `bot/tests/test_appeal_card_edit_policy.py` (8979 bytes)
 - `bot/tests/test_appeal_dispatcher.py` (22842 bytes)
 - `bot/tests/test_appeal_flow.py` (10960 bytes)
 - `bot/tests/test_appeals_service_pg.py` (14053 bytes)
@@ -126,7 +127,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_final_p1_regressions.py` (5856 bytes)
 - `bot/tests/test_funnel_state_hardening.py` (6421 bytes)
 - `bot/tests/test_geo.py` (9324 bytes)
-- `bot/tests/test_handlers_appeal_funnel.py` (22615 bytes)
+- `bot/tests/test_handlers_appeal_funnel.py` (24153 bytes)
 - `bot/tests/test_handlers_auth_broadcast.py` (6976 bytes)
 - `bot/tests/test_handlers_common.py` (3572 bytes)
 - `bot/tests/test_handlers_funnel.py` (9458 bytes)
@@ -3093,8 +3094,8 @@ async def current_user(
 
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
-Size: `12111` bytes  
-SHA-256: `288dd210f59c83ee1fd80c53f900949e78f31b174affb664f557a55b95e7ec83`
+Size: `13718` bytes  
+SHA-256: `090b732b49a2cb363fbf9cf4ccb17b5c1fa862dc7af1eb76b694a4ce75d9d729`
 
 ```python
 """Действия оператора над конкретным обращением.
@@ -3125,7 +3126,28 @@ from aemr_bot.utils.event import get_user_id, is_admin_chat, send_or_edit_screen
 log = logging.getLogger(__name__)
 
 
-async def _show_appeal_card_or_result(event, appeal_id: int, fallback_text: str) -> None:
+async def _show_appeal_card_or_result(
+    event,
+    appeal_id: int,
+    fallback_text: str,
+    *,
+    edit_in_place: bool = False,
+) -> None:
+    """Перерисовать карточку обращения после действия оператора.
+
+    Политика edit-vs-new (запрошена владельцем):
+    - **Whitelisted** действия (reply / reopen / close без ответа) →
+      `edit_in_place=True` → используем freshness-tracker (edit
+      допустим, если карточка свежая).
+    - **Прочие** действия (block / unblock / erase, поведенческие
+      изменения вне статуса) → `edit_in_place=False` (дефолт) →
+      `force_new_message=True` → ВСЕГДА новая карточка внизу чата.
+      Оператор уже мог уйти далеко вниз; edit на старой карточке
+      вверху не виден, новая карточка приходит к нему.
+
+    Это улучшает конверсию: оператор реагирует, потому что видит
+    свежий артефакт, а не «где-то выше что-то изменилось».
+    """
     from aemr_bot import keyboards as kbds
 
     try:
@@ -3149,6 +3171,7 @@ async def _show_appeal_card_or_result(event, appeal_id: int, fallback_text: str)
                         closed_due_to_revoke=bool(appeal.closed_due_to_revoke),
                     )
                 ],
+                force_new_message=not edit_in_place,
             )
             return
         except Exception:
@@ -3158,6 +3181,7 @@ async def _show_appeal_card_or_result(event, appeal_id: int, fallback_text: str)
         chat_id=cfg.admin_group_id,
         text=fallback_text,
         attachments=[kbds.op_back_to_menu_keyboard()],
+        force_new_message=not edit_in_place,
     )
 
 
@@ -3290,6 +3314,8 @@ async def run_reopen(event, appeal_id: int) -> None:
                 target=f"appeal #{appeal_id}",
             )
     await ack_callback(event)
+    # reopen — whitelisted: edit на месте (статус карточки меняется,
+    # оператору важно видеть это в той же карточке).
     await _show_appeal_card_or_result(
         event,
         appeal_id,
@@ -3298,6 +3324,7 @@ async def run_reopen(event, appeal_id: int) -> None:
             if ok
             else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
         ),
+        edit_in_place=True,
     )
 
 
@@ -3317,6 +3344,7 @@ async def run_close(event, appeal_id: int) -> None:
                 target=f"appeal #{appeal_id}",
             )
     await ack_callback(event)
+    # close (без ответа) — whitelisted: edit на месте.
     await _show_appeal_card_or_result(
         event,
         appeal_id,
@@ -3325,6 +3353,7 @@ async def run_close(event, appeal_id: int) -> None:
             if ok
             else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
         ),
+        edit_in_place=True,
     )
 
 
@@ -7600,8 +7629,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/appeal_funnel.py`
 
-Size: `29804` bytes  
-SHA-256: `4b9eca6ab64db6565f9c9d78ff14d389f3c087b2df5b62dad99d8fa0a7bf3337`
+Size: `31437` bytes  
+SHA-256: `b454974e008c919a660cee6a8b7934af0303bc87571b44c51ed2c200b89a8072`
 
 ```python
 """FSM-воронка приёма обращения и явного дополнения.
@@ -8249,41 +8278,62 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             appeal_for_card, user_for_card, text or "(без текста)"
         )
 
+    # Политика edit-vs-new (запрос владельца): дополнение жителя НЕ
+    # редактирует старую admin-карточку. Шлём НОВУЮ карточку — оператор
+    # уже мог уйти далеко вниз, edit вверху не виден. Новая карточка с
+    # тем же №, обновлённым статусом и блоком «Дополнение к обращению»
+    # внутри ведёт оператора к свежему артефакту.
+    #
+    # Дополнительно отправляем короткое followup-уведомление с reply-link
+    # на исходную admin_message_id, если она есть — это сохраняет связь
+    # «вижу дополнение → вижу контекст исходного обращения» в чатах с
+    # большим количеством параллельных обращений.
     admin_mid = getattr(appeal_for_card, "admin_message_id", None)
     followup_mid = None
-    admin_card_updated = False
-    if cfg.admin_group_id and admin_mid:
+    if cfg.admin_group_id:
+        # Короткое followup-уведомление-индикатор для контекста.
         try:
-            await event.bot.edit_message(
-                message_id=admin_mid,
+            sent_follow = await event.bot.send_message(
+                chat_id=cfg.admin_group_id, text=followup
+            )
+            followup_mid = extract_message_id(sent_follow)
+        except Exception:
+            log.exception("send followup notification failed")
+        # Полная карточка с актуальным содержимым.
+        try:
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
                 text=card_format.admin_card(appeal_for_card, user_for_card),
                 attachments=[
                     keyboards.appeal_admin_actions(
                         appeal_for_card.id,
                         appeal_for_card.status,
                         is_it=True,
-                        user_blocked=bool(getattr(user_for_card, "is_blocked", False)),
+                        user_blocked=bool(
+                            getattr(user_for_card, "is_blocked", False)
+                        ),
                         closed_due_to_revoke=bool(
-                            getattr(appeal_for_card, "closed_due_to_revoke", False)
+                            getattr(
+                                appeal_for_card, "closed_due_to_revoke", False
+                            )
                         ),
                     )
                 ],
             )
-            admin_card_updated = True
         except Exception:
-            log.exception("edit admin appeal card after followup failed")
-
-    if cfg.admin_group_id and not admin_card_updated:
-        sent = await event.bot.send_message(chat_id=cfg.admin_group_id, text=followup)
-        followup_mid = extract_message_id(sent)
+            log.exception("send fresh admin appeal card after followup failed")
 
     if cfg.admin_group_id:
         if attachments:
             try:
+                # relay привязываем к followup-уведомлению, если оно
+                # ушло (followup_mid), иначе к admin_message_id
+                # исходной карточки (если есть). Третий fallback — без
+                # reply-link.
                 await relay_attachments_to_admin(
                     event.bot,
                     appeal_id=appeal.id,
-                    admin_mid=admin_mid if admin_card_updated else followup_mid,
+                    admin_mid=followup_mid or admin_mid,
                     stored_attachments=attachments,
                 )
             except Exception:
@@ -24596,6 +24646,259 @@ class TestDoOpenTickets:
         assert "🎉" in text
 ```
 
+### `bot/tests/test_appeal_card_edit_policy.py`
+
+Size: `8979` bytes  
+SHA-256: `1d33413af2751b4b65628f0e48e5e700f7856bd14e1976b9d79aa948f7cacd13`
+
+```python
+"""Политика «edit vs new» для карточки обращения в админ-чате.
+
+Запрос владельца: карточка обращения должна **редактироваться** только при
+трёх действиях:
+  1. Ответ оператора (reply)
+  2. Возобновление (reopen)
+  3. Закрытие без ответа (close)
+
+Во всех остальных случаях (block/unblock жителя, дополнение от жителя)
+шлём **новую карточку** — оператор уже прокрутил чат далеко вниз,
+edit на старой карточке вверху не виден.
+
+Эти тесты RED'ят до фикса: они фиксируют ОЖИДАЕМОЕ поведение после
+правки `_show_appeal_card_or_result` и followup-флоу.
+"""
+from __future__ import annotations
+
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
+
+pytest.importorskip("maxapi", reason="handlers tests require maxapi")
+
+
+def _make_event(*, user_id: int = 7) -> SimpleNamespace:
+    return make_event(
+        chat_id=555,
+        user_id=user_id,
+        with_callback=True,
+        with_edit_message=True,
+    )
+
+
+def _patch_card_render():
+    """Подменяем `card_format.admin_card` и приклеиваем appeal с user,
+    чтобы _show_appeal_card_or_result дошёл до send_or_edit_screen."""
+    fake_user = SimpleNamespace(
+        is_blocked=False,
+        max_user_id=42,
+        first_name="Тест",
+        phone="+79991234567",
+        subscribed_broadcast=False,
+        consent_pdn_at=None,
+        consent_revoked_at=None,
+    )
+    fake_appeal = SimpleNamespace(
+        id=5,
+        status="new",
+        user=fake_user,
+        closed_due_to_revoke=False,
+        locality="—",
+        address="—",
+        topic="—",
+        summary="—",
+        attachments=[],
+        messages=[],
+        created_at=None,
+        answered_at=None,
+        closed_at=None,
+    )
+    return fake_appeal
+
+
+# ---- WHITELIST: edit разрешён --------------------------------------
+
+
+class TestReopenEditsInPlace:
+    @pytest.mark.asyncio
+    async def test_reopen_uses_edit_in_place(self) -> None:
+        """run_reopen передаёт edit_in_place=True в helper —
+        send_or_edit_screen НЕ форсит новую карточку."""
+        from aemr_bot.handlers import admin_appeal_ops
+
+        event = _make_event()
+        sent_screen = AsyncMock()
+        appeal = _patch_card_render()
+        with (
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.ensure_operator",
+                AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.session_scope",
+                _fake_session_scope,
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.appeals_service.reopen",
+                AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.appeals_service.get_by_id",
+                AsyncMock(return_value=appeal),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
+                AsyncMock(),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.send_or_edit_screen",
+                sent_screen,
+            ),
+            patch("aemr_bot.utils.event.ack_callback", AsyncMock()),
+        ):
+            await admin_appeal_ops.run_reopen(event, 5)
+        assert sent_screen.await_count >= 1
+        # Любой вызов из run_reopen НЕ должен ставить force_new_message=True
+        for call in sent_screen.await_args_list:
+            assert call.kwargs.get("force_new_message") is not True
+
+
+class TestCloseEditsInPlace:
+    @pytest.mark.asyncio
+    async def test_close_uses_edit_in_place(self) -> None:
+        from aemr_bot.handlers import admin_appeal_ops
+
+        event = _make_event()
+        sent_screen = AsyncMock()
+        appeal = _patch_card_render()
+        with (
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.ensure_operator",
+                AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.session_scope",
+                _fake_session_scope,
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.appeals_service.close",
+                AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.appeals_service.get_by_id",
+                AsyncMock(return_value=appeal),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
+                AsyncMock(),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.send_or_edit_screen",
+                sent_screen,
+            ),
+            patch("aemr_bot.utils.event.ack_callback", AsyncMock()),
+        ):
+            await admin_appeal_ops.run_close(event, 5)
+        assert sent_screen.await_count >= 1
+        for call in sent_screen.await_args_list:
+            assert call.kwargs.get("force_new_message") is not True
+
+
+# ---- NOT-WHITELIST: всегда новая карточка ----------------------------
+
+
+class TestBlockSendsNewCard:
+    @pytest.mark.asyncio
+    async def test_block_forces_new_card(self) -> None:
+        """run_block_for_appeal должен после блока ШЛАТЬ новую карточку,
+        не edit'ить старую."""
+        from aemr_bot.handlers import admin_appeal_ops
+
+        event = _make_event()
+        sent_screen = AsyncMock()
+        appeal = _patch_card_render()
+        with (
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.ensure_role",
+                AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.session_scope",
+                _fake_session_scope,
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.appeals_service.get_by_id",
+                AsyncMock(return_value=appeal),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.users_service.set_blocked",
+                AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
+                AsyncMock(),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.send_or_edit_screen",
+                sent_screen,
+            ),
+            patch("aemr_bot.utils.event.ack_callback", AsyncMock()),
+        ):
+            await admin_appeal_ops.run_block_for_appeal(
+                event, appeal_id=5, blocked=True
+            )
+        # Финальный вызов showing-карточки должен иметь force_new_message=True.
+        # Берём последний вызов — он рисует карточку после действия.
+        last_call = sent_screen.await_args_list[-1]
+        assert last_call.kwargs.get("force_new_message") is True
+
+
+class TestUnblockSendsNewCard:
+    @pytest.mark.asyncio
+    async def test_unblock_forces_new_card(self) -> None:
+        from aemr_bot.handlers import admin_appeal_ops
+
+        event = _make_event()
+        sent_screen = AsyncMock()
+        appeal = _patch_card_render()
+        with (
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.ensure_role",
+                AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.session_scope",
+                _fake_session_scope,
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.appeals_service.get_by_id",
+                AsyncMock(return_value=appeal),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.users_service.set_blocked",
+                AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
+                AsyncMock(),
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.send_or_edit_screen",
+                sent_screen,
+            ),
+            patch("aemr_bot.utils.event.ack_callback", AsyncMock()),
+        ):
+            await admin_appeal_ops.run_block_for_appeal(
+                event, appeal_id=5, blocked=False
+            )
+        last_call = sent_screen.await_args_list[-1]
+        assert last_call.kwargs.get("force_new_message") is True
+```
+
 ### `bot/tests/test_appeal_dispatcher.py`
 
 Size: `22842` bytes  
@@ -31064,8 +31367,8 @@ class TestGeoConfirmCard:
 
 ### `bot/tests/test_handlers_appeal_funnel.py`
 
-Size: `22615` bytes  
-SHA-256: `ccf6031a920b9f6e89af6d20d38e48a7953185853a0f3e84b06af0f8d9dfeda9`
+Size: `24153` bytes  
+SHA-256: `301358eb6b8f0b2d91e30dd5e985371f3b64847d6beb818dd4227f11bfeaf079`
 
 ```python
 """Расширенные тесты handlers/appeal_funnel — состояния воронки и
@@ -31453,7 +31756,11 @@ class TestOnAwaitingFollowupText:
         assert "закрыто" in text.lower() or "Подать похожее" in text
 
     @pytest.mark.asyncio
-    async def test_success_updates_original_admin_card(self) -> None:
+    async def test_success_sends_new_admin_card_for_followup(self) -> None:
+        """Политика edit-vs-new: дополнение жителя НЕ редактирует старую
+        admin-карточку. Шлёт новую — оператор мог уйти далеко вниз
+        чата, edit вверху не виден; новая карточка приходит вниз и
+        повышает конверсию ответа."""
         from aemr_bot.handlers import appeal_funnel
 
         event = _make_event()
@@ -31465,6 +31772,8 @@ class TestOnAwaitingFollowupText:
             is_blocked=False,
             dialog_data={"appeal_id": 5},
             consent_pdn_at=datetime.now(timezone.utc),
+            subscribed_broadcast=False,
+            consent_revoked_at=None,
         )
         appeal = SimpleNamespace(
             id=5,
@@ -31478,6 +31787,7 @@ class TestOnAwaitingFollowupText:
             attachments=[],
             messages=[],
             admin_message_id="admin-mid-5",
+            closed_due_to_revoke=False,
         )
         updated_appeal = SimpleNamespace(
             **{
@@ -31525,11 +31835,31 @@ class TestOnAwaitingFollowupText:
             )
 
         reset.assert_called_once()
-        event.bot.edit_message.assert_called_once()
-        assert event.bot.edit_message.call_args.kwargs["message_id"] == "admin-mid-5"
-        edited_text = event.bot.edit_message.call_args.kwargs["text"]
-        assert "Дополнение к обращению:" in edited_text
-        assert "второго подъезда" in edited_text
+        # Главное правило новой политики: edit_message НЕ вызывается
+        # на admin-карточке. Шлём новую карточку через send_message.
+        event.bot.edit_message.assert_not_called()
+        event.bot.send_message.assert_called()
+        # Среди отправленных в админ-группу должна быть карточка с
+        # обновлённой сутью (дополнение от жителя).
+        admin_calls = [
+            c for c in event.bot.send_message.call_args_list
+            if c.kwargs.get("chat_id") == 555
+        ]
+        assert admin_calls, "no admin-card send to admin_group_id"
+        # Карточка содержит «#5» — номер обращения.
+        any_card = any(
+            "#5" in (c.kwargs.get("text") or "")
+            for c in admin_calls
+        )
+        assert any_card, f"no admin card with #5 in: {admin_calls}"
+        # «второго подъезда» — содержимое followup-уведомления.
+        any_followup_with_quote = any(
+            "второго подъезда" in (c.kwargs.get("text") or "")
+            for c in admin_calls
+        )
+        assert any_followup_with_quote, (
+            f"followup text not in admin sends: {admin_calls}"
+        )
 
 
 class TestOnIdle:
