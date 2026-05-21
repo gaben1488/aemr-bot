@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-21 00:57:25 UTC`
+Generated at: `2026-05-21 01:08:02 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `176`
+Indexed files: `178`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -85,8 +85,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
-- `bot/aemr_bot/utils/event.py` (10894 bytes)
+- `bot/aemr_bot/utils/event.py` (13349 bytes)
 - `bot/aemr_bot/utils/image_attachments.py` (1137 bytes)
+- `bot/aemr_bot/utils/menu_tracker.py` (2996 bytes)
 - `bot/alembic.ini` (619 bytes)
 - `bot/pyproject.toml` (2583 bytes)
 - `bot/tests/__init__.py` (0 bytes)
@@ -96,13 +97,13 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
 - `bot/tests/test_admin_handlers_small.py` (21842 bytes)
-- `bot/tests/test_admin_operators.py` (18689 bytes)
+- `bot/tests/test_admin_operators.py` (19228 bytes)
 - `bot/tests/test_admin_panel.py` (12680 bytes)
 - `bot/tests/test_appeal_dispatcher.py` (22842 bytes)
 - `bot/tests/test_appeal_flow.py` (10960 bytes)
 - `bot/tests/test_appeals_service_pg.py` (14053 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
-- `bot/tests/test_broadcast_handlers.py` (32274 bytes)
+- `bot/tests/test_broadcast_handlers.py` (33239 bytes)
 - `bot/tests/test_broadcast_with_image.py` (23848 bytes)
 - `bot/tests/test_broadcasts_service_pg.py` (3786 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
@@ -112,7 +113,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_cron_jobs.py` (17295 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (14354 bytes)
-- `bot/tests/test_event_helpers.py` (7723 bytes)
+- `bot/tests/test_event_helpers.py` (9073 bytes)
 - `bot/tests/test_extract_location.py` (5053 bytes)
 - `bot/tests/test_final_p1_regressions.py` (5856 bytes)
 - `bot/tests/test_funnel_state_hardening.py` (6421 bytes)
@@ -130,6 +131,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_image_attachments.py` (7487 bytes)
 - `bot/tests/test_keyboards.py` (5473 bytes)
 - `bot/tests/test_main_helpers.py` (8679 bytes)
+- `bot/tests/test_menu_tracker_edit_policy.py` (12482 bytes)
 - `bot/tests/test_operator_reply_closed_guard.py` (3049 bytes)
 - `bot/tests/test_operator_reply_with_image.py` (7240 bytes)
 - `bot/tests/test_progress.py` (10480 bytes)
@@ -19087,8 +19089,8 @@ def spawn_background_task(
 
 ### `bot/aemr_bot/utils/event.py`
 
-Size: `10894` bytes  
-SHA-256: `8bfb9af43562610ccc1a720055c8dc969d31de671f7d5edc6c80b66d8a5586b9`
+Size: `13349` bytes  
+SHA-256: `a3bc5c7b273e2c6affc3ecb859e0e3e87c7e6c1e228370756f5c4b4e934a8608`
 
 ```python
 """Адаптер поверх объектов событий maxapi.
@@ -19292,39 +19294,87 @@ async def send_or_edit_screen(
 ):
     """Показать экран бота без лишнего шума в чате.
 
-    Правило UX: нажатие кнопки меняет текущую карточку, а видимое
-    сообщение человека (текст, гео, файл, фото) приводит к новому ответу
-    бота ниже этого сообщения. Поэтому callback сначала пробуем
-    редактировать, а команды/текстовые шаги отправляем новым сообщением.
+    **Правило UX (с учётом freshness-tracker'а):**
+
+    - Callback от **последней** карточки-меню в чате (mid совпадает с
+      `menu_tracker.get_last_menu_mid(chat_id)`) → редактируем эту
+      карточку через `edit_message`. Это «нормальный» путь listing →
+      detail в свежей карточке.
+    - Callback от **старой** карточки выше по чату (mid ≠ tracker)
+      → отправляем новое сообщение. Иначе оператор/житель не видит
+      изменение, потому что находится глубоко внизу чата.
+    - Не-callback (команда, текст, гео) → всегда новое сообщение.
+    - `force_new_message=True` → принудительно новое (когда wizard
+      явно завершён и хочет создать «новую страницу»).
+
+    Sacred-карточки (admin appeal card, citizen reply, broadcast
+    progress, audit-уведомления, pulse, reminders) шлются напрямую
+    через `bot.send_message`, не через эту функцию — они НЕ участвуют
+    в tracker'е и всегда new.
+
+    Tracker обновляется после успешного send/edit с актуальным mid.
     """
+    # Lazy-import чтобы избежать циклической зависимости через models.
+    from aemr_bot.utils import menu_tracker  # noqa: PLC0415
+
     bot = getattr(event, "bot", None)
     if bot is None:
         return None
     attachments = attachments or []
-    mid = None if force_new_message else get_callback_message_id(event)
-    if mid and hasattr(bot, "edit_message"):
-        try:
-            return await bot.edit_message(
-                message_id=mid,
-                text=text,
-                attachments=attachments,
-            )
-        except Exception:
-            log.info(
-                "edit_message %s failed, fallback to send_message",
-                mid,
-                exc_info=False,
-            )
 
     event_chat_id, event_user_id = get_ids(event)
     target_chat_id = chat_id if chat_id is not None else event_chat_id
     target_user_id = user_id if user_id is not None else event_user_id
-    return await bot.send_message(
+
+    callback_mid = (
+        None if force_new_message else get_callback_message_id(event)
+    )
+    last_known_mid = (
+        menu_tracker.get_last_menu_mid(target_chat_id)
+        if target_chat_id is not None
+        else None
+    )
+    # Edit разрешён только когда callback пришёл от АКТУАЛЬНОЙ карточки.
+    can_edit = (
+        callback_mid is not None
+        and last_known_mid is not None
+        and callback_mid == last_known_mid
+        and hasattr(bot, "edit_message")
+    )
+
+    if can_edit:
+        try:
+            result = await bot.edit_message(
+                message_id=callback_mid,
+                text=text,
+                attachments=attachments,
+            )
+            # edit сохраняет mid — tracker не меняем.
+            return result
+        except Exception:
+            log.info(
+                "edit_message %s failed, fallback to send_message",
+                callback_mid,
+                exc_info=False,
+            )
+            # Tracker очищаем, чтобы следующий callback тоже привёл к
+            # send new (не пытался опять редактировать «битый» mid).
+            if target_chat_id is not None:
+                menu_tracker.clear(target_chat_id)
+
+    sent = await bot.send_message(
         chat_id=target_chat_id,
         user_id=None if target_chat_id is not None else target_user_id,
         text=text,
         attachments=attachments,
     )
+    # Обновляем tracker свежим mid отправленного сообщения. На случай
+    # если send_message вернул структуру без `.body.mid` (старые тесты-
+    # моки) — extract_message_id вернёт None, tracker не двинется.
+    new_mid = extract_message_id(sent)
+    if new_mid and target_chat_id is not None:
+        menu_tracker.set_last_menu_mid(target_chat_id, new_mid)
+    return sent
 
 
 async def send(event: Any, text: str, attachments: list | None = None):
@@ -19418,6 +19468,66 @@ def build_outbound_image_attachments(stored: list[dict] | None) -> list:
 
 def attachment_meta(stored: list[dict] | None) -> dict[str, int]:
     return {"images": len(stored or [])}
+```
+
+### `bot/aemr_bot/utils/menu_tracker.py`
+
+Size: `2996` bytes  
+SHA-256: `757a7202b4361497e5d5fb1fe0d04cdf7aa170fc4b6bc3d2d76470c23e4f1460`
+
+```python
+"""Per-chat tracker «какая карточка-меню сейчас актуальна».
+
+**Зачем:** `send_or_edit_screen` решал «edit vs send new» только по типу
+события (callback → edit). Это ломалось когда оператор скроллил вверх
+к давно отредактированной карточке-меню и кликал кнопку на ней — бот
+редактировал далеко вверх по чату, а оператор не видел изменение
+(находится внизу).
+
+**Правило:** edit разрешён **только** если callback пришёл от того
+же `mid`, что в tracker[chat_id]. Иначе шлём новое сообщение, и
+tracker обновляется на новый mid.
+
+**Не покрывается:**
+- «Sacred» карточки (admin appeal card, citizen reply, broadcast
+  progress, audit-уведомления, pulse, reminders) отправляются напрямую
+  через `bot.send_message`, не через `send_or_edit_screen` — они НЕ
+  трогают tracker. Edit на них через send_or_edit_screen не доходит
+  (callback_mid не совпадёт с tracker'ом → send new).
+
+**Хранение:** in-memory `dict[int, str]`. Однопроцессный бот. После
+рестарта tracker пуст — первое нажатие callback пошлёт new (graceful,
+без падений). Для multi-процессного бота понадобится Redis/DB; пока
+single-process — in-memory достаточно.
+"""
+from __future__ import annotations
+
+# chat_id → last mid of a menu-card sent/edited via send_or_edit_screen.
+# Не используем `_LAST_MENU_MID` (с подчёркиванием) намеренно: модуль
+# уже private по namespace'у `utils.menu_tracker`, а tests мокают
+# через `menu_tracker.set_last_menu_mid` без обращения к внутреннему dict.
+_chat_to_mid: dict[int, str] = {}
+
+
+def get_last_menu_mid(chat_id: int) -> str | None:
+    """Вернуть mid последней карточки-меню для чата, или None если
+    бот ещё не отправлял меню в этот чат (например, после рестарта)."""
+    return _chat_to_mid.get(chat_id)
+
+
+def set_last_menu_mid(chat_id: int, mid: str) -> None:
+    """Запомнить mid отправленной/отредактированной карточки-меню."""
+    _chat_to_mid[chat_id] = mid
+
+
+def clear(chat_id: int) -> None:
+    """Забыть mid для чата. Используется редко — в основном для тестов."""
+    _chat_to_mid.pop(chat_id, None)
+
+
+def clear_all() -> None:
+    """Очистить весь tracker. Используется в тестах для изоляции."""
+    _chat_to_mid.clear()
 ```
 
 ### `bot/alembic.ini`
@@ -21043,8 +21153,8 @@ class TestRunStatsToday:
 
 ### `bot/tests/test_admin_operators.py`
 
-Size: `18689` bytes  
-SHA-256: `38dd25dc19102f68d453f8aaf3fa64076754db3d5aa55c4639fbd5749e3ae798`
+Size: `19228` bytes  
+SHA-256: `67959dd6b45180f4a2f3c404163270d45114a1544eeda3c57eb75eac236b09e7`
 
 ```python
 """Тесты для handlers/admin_operators — wizard добавления оператора
@@ -21169,9 +21279,16 @@ class TestOperatorsMenu:
 
     @pytest.mark.asyncio
     async def test_callback_edits_current_menu_card(self) -> None:
+        """Callback от АКТУАЛЬНОЙ карточки-меню (mid в tracker'е для
+        admin-чата) → edit. Это freshness-policy: меню оператора
+        редактируется в месте, если callback пришёл от свежей карточки."""
         from aemr_bot.handlers import admin_operators
+        from aemr_bot.utils import menu_tracker
 
         event = _make_callback_event()
+        # «m-1» — текущая карточка-меню в admin-чате (ADMIN_GROUP_ID=123)
+        menu_tracker.clear_all()
+        menu_tracker.set_last_menu_mid(123, "m-1")
         with patch("aemr_bot.handlers.admin_operators.ensure_role",
                    AsyncMock(return_value=True)):
             await admin_operators.run_operators_menu(event)
@@ -23018,8 +23135,8 @@ class TestCountByType:
 
 ### `bot/tests/test_broadcast_handlers.py`
 
-Size: `32274` bytes  
-SHA-256: `e6eaaf29b6535e46f092418f430d58544bed97e81a6a8793cd89ac04953d7dff`
+Size: `33239` bytes  
+SHA-256: `e9ea4d92924f473e6550a19ba09f4eb8a1ea97336df3424abc09c239e1d7d108`
 
 ```python
 """Тесты для handlers/broadcast — wizard рассылок и helpers.
@@ -23069,10 +23186,13 @@ def _make_callback_event(*, user_id: int = 7) -> SimpleNamespace:
 @pytest.fixture(autouse=True)
 def _clean_wizards():
     from aemr_bot.handlers import broadcast
+    from aemr_bot.utils import menu_tracker
 
     broadcast._wizards.clear()
+    menu_tracker.clear_all()
     yield
     broadcast._wizards.clear()
+    menu_tracker.clear_all()
 
 
 # --- _format_progress ---------------------------------------------------------
@@ -23390,10 +23510,17 @@ class TestHandleAbort:
 
     @pytest.mark.asyncio
     async def test_callback_edits_preview_card_instead_of_sending_new(self) -> None:
+        """Callback от АКТУАЛЬНОЙ preview-карточки (mid в tracker'е
+        для admin-чата) → edit. Это контракт freshness-policy:
+        cancel-клик на свежую preview-карточку редактирует её на
+        «отменено» сообщение, без нового сообщения."""
         from aemr_bot.handlers import broadcast
+        from aemr_bot.utils import menu_tracker
 
         event = _make_callback_event(user_id=7)
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
+        # «m-1» — текущая preview-карточка в админ-чате (ADMIN_GROUP_ID=123 из conftest)
+        menu_tracker.set_last_menu_mid(123, "m-1")
         with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
             await broadcast._handle_abort(event)
 
@@ -23435,12 +23562,16 @@ class TestHandleEdit:
 
     @pytest.mark.asyncio
     async def test_callback_edits_preview_back_to_text_prompt(self) -> None:
+        """Callback от АКТУАЛЬНОЙ preview-карточки → edit обратно в
+        prompt-форму для нового текста (freshness-policy)."""
         from aemr_bot.handlers import broadcast
+        from aemr_bot.utils import menu_tracker
 
         event = _make_callback_event(user_id=7)
         state = broadcast._WizardState(step="awaiting_confirm")
         state.text = "старый текст"
         broadcast._wizards[7] = state
+        menu_tracker.set_last_menu_mid(123, "m-1")
         with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
             await broadcast._handle_edit(event)
 
@@ -25842,8 +25973,8 @@ class TestBackupDb:
 
 ### `bot/tests/test_event_helpers.py`
 
-Size: `7723` bytes  
-SHA-256: `78893198cc0e9bd44bf55e52bffcc319785d3e532629bf54a55264a2fb6a5f46`
+Size: `9073` bytes  
+SHA-256: `e601016351ec89f93b87c310ea664895dbc5554fbf8fe6fbcdf318fffa36d409`
 
 ```python
 """Тесты на utils/event — извлечение полей из MAX events.
@@ -25968,8 +26099,17 @@ class TestCallbackMessageId:
 
 
 class TestSendOrEditScreen:
+    def setup_method(self) -> None:
+        # Изоляция menu_tracker между тестами: in-memory dict
+        # переживает несколько тестов в одном процессе.
+        from aemr_bot.utils import menu_tracker
+        menu_tracker.clear_all()
+
     @pytest.mark.asyncio
     async def test_callback_edits_current_card(self) -> None:
+        """Callback от АКТУАЛЬНОЙ карточки-меню (mid в tracker'е) → edit.
+        Сценарий: оператор кликает кнопку на свежем меню, бот редактирует."""
+        from aemr_bot.utils import menu_tracker
         bot = SimpleNamespace(edit_message=AsyncMock(), send_message=AsyncMock())
         event = SimpleNamespace(
             bot=bot,
@@ -25980,6 +26120,8 @@ class TestSendOrEditScreen:
                 body=SimpleNamespace(mid="m-current"),
             ),
         )
+        # «m-current» — последняя отправленная карточка-меню в этом чате
+        menu_tracker.set_last_menu_mid(100, "m-current")
 
         await send_or_edit_screen(event, text="Экран", attachments=["kb"])
 
@@ -26020,6 +26162,12 @@ class TestSendOrEditScreen:
 
     @pytest.mark.asyncio
     async def test_edit_failure_falls_back_to_send(self) -> None:
+        """Существующее поведение: если edit_message бросил исключение
+        (например, MAX отверг по слишком старому mid), send_or_edit_screen
+        всё равно шлёт новое — оператор увидит ответ. Тут tracker
+        предзаполнен «правильным» mid, edit пытается выполниться, падает,
+        fallback срабатывает."""
+        from aemr_bot.utils import menu_tracker
         bot = SimpleNamespace(
             edit_message=AsyncMock(side_effect=RuntimeError("MAX edit failed")),
             send_message=AsyncMock(),
@@ -26033,6 +26181,7 @@ class TestSendOrEditScreen:
                 body=SimpleNamespace(mid="m-current"),
             ),
         )
+        menu_tracker.set_last_menu_mid(100, "m-current")
 
         await send_or_edit_screen(event, text="Экран", attachments=["kb"])
 
@@ -30795,6 +30944,277 @@ class TestPreflightCheckToken:
         )
         # Без exception. Логируется info.
         await main._preflight_check_token(bot)
+```
+
+### `bot/tests/test_menu_tracker_edit_policy.py`
+
+Size: `12482` bytes  
+SHA-256: `85766c0132be55c8e13d5db6b877880fd4974d2fe0d40a1eca126a744bfb9c96`
+
+```python
+"""TDD-тесты edit-policy и menu_tracker'а — кардинальное UX-улучшение.
+
+**Контекст проблемы (PM/UX research):**
+
+Раньше `send_or_edit_screen` решал «edit vs send new» **только** по типу
+события: callback → edit, иначе → send. Это создавало сценарий-поломку:
+
+```
+1. /op_help → бот шлёт меню (mid=100)
+2. Жмёт «📋 Открытые» → edit_message mid=100 → меню стало списком
+3. Свайп-reply на admin appeal card (mid=120, отправлено отдельно) →
+   подтверждение mid=130 (новое сообщение).
+4. Скроллит ВВЕРХ к mid=100, видит там «карточку #42», жмёт
+   «🏠 В админ-меню».
+5. Бот edit'ит mid=100 → меню. Но оператор глубоко внизу чата,
+   изменения далеко вверху не видит. Кажется, бот не отреагировал.
+```
+
+**Решение:** in-memory tracker `chat_id → last_menu_mid`. Edit разрешён
+**только** если callback-mid совпадает с tracker'ом. Иначе — send new.
+
+**Контракт:**
+- Sacred карточки (admin appeal card, citizen reply, broadcast progress,
+  audit, pulse, reminders) НЕ ходят через `send_or_edit_screen` — они
+  отправляются напрямую `bot.send_message`. Tracker их не учитывает,
+  они всегда new. Это уже так в коде по дизайну.
+- Menu карточки (главное меню, /op_help, settings, operators wizard,
+  preview-карточка broadcast и т.п.) → `send_or_edit_screen` обновляет
+  tracker при каждом send/edit; edit срабатывает только когда mid
+  совпадает с tracker'ом.
+"""
+from __future__ import annotations
+
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
+pytest.importorskip("maxapi", reason="send_or_edit_screen тянет maxapi")
+
+
+def _make_event(*, chat_id: int, callback_mid: str | None) -> SimpleNamespace:
+    """Минимальное событие для send_or_edit_screen.
+
+    callback_mid=None → не-callback (команда / текстовый шаг).
+    callback_mid='X' → callback с mid='X' (нажатие кнопки на карточке с тем mid).
+    """
+    bot = MagicMock()
+    bot.send_message = AsyncMock(
+        return_value=SimpleNamespace(
+            body=SimpleNamespace(mid="new-server-assigned-mid")
+        )
+    )
+    bot.edit_message = AsyncMock()
+    msg = SimpleNamespace(
+        body=SimpleNamespace(mid=callback_mid),
+        recipient=SimpleNamespace(chat_id=chat_id),
+        sender=SimpleNamespace(user_id=7),
+    )
+    event_kwargs: dict = {
+        "bot": bot,
+        "message": msg,
+    }
+    if callback_mid is not None:
+        # callback-нажатие
+        event_kwargs["callback"] = SimpleNamespace(callback_id="cb-1")
+    return SimpleNamespace(**event_kwargs)
+
+
+# ---- menu_tracker module (новый) ------------------------------------------
+
+
+class TestMenuTracker:
+    def setup_method(self) -> None:
+        from aemr_bot.utils import menu_tracker
+        menu_tracker.clear_all()
+
+    def test_get_unknown_chat_returns_none(self) -> None:
+        from aemr_bot.utils import menu_tracker
+        assert menu_tracker.get_last_menu_mid(123) is None
+
+    def test_set_and_get(self) -> None:
+        from aemr_bot.utils import menu_tracker
+        menu_tracker.set_last_menu_mid(123, "mid-A")
+        assert menu_tracker.get_last_menu_mid(123) == "mid-A"
+
+    def test_per_chat_isolation(self) -> None:
+        from aemr_bot.utils import menu_tracker
+        menu_tracker.set_last_menu_mid(123, "mid-A")
+        menu_tracker.set_last_menu_mid(456, "mid-B")
+        assert menu_tracker.get_last_menu_mid(123) == "mid-A"
+        assert menu_tracker.get_last_menu_mid(456) == "mid-B"
+
+    def test_overwrites(self) -> None:
+        from aemr_bot.utils import menu_tracker
+        menu_tracker.set_last_menu_mid(123, "mid-A")
+        menu_tracker.set_last_menu_mid(123, "mid-B")
+        assert menu_tracker.get_last_menu_mid(123) == "mid-B"
+
+    def test_clear_single_chat(self) -> None:
+        from aemr_bot.utils import menu_tracker
+        menu_tracker.set_last_menu_mid(123, "mid-A")
+        menu_tracker.set_last_menu_mid(456, "mid-B")
+        menu_tracker.clear(123)
+        assert menu_tracker.get_last_menu_mid(123) is None
+        assert menu_tracker.get_last_menu_mid(456) == "mid-B"
+
+    def test_clear_all(self) -> None:
+        from aemr_bot.utils import menu_tracker
+        menu_tracker.set_last_menu_mid(123, "mid-A")
+        menu_tracker.set_last_menu_mid(456, "mid-B")
+        menu_tracker.clear_all()
+        assert menu_tracker.get_last_menu_mid(123) is None
+        assert menu_tracker.get_last_menu_mid(456) is None
+
+
+# ---- send_or_edit_screen — поведение edit vs send new ----------------------
+
+
+class TestSendOrEditScreenWithTracker:
+    def setup_method(self) -> None:
+        from aemr_bot.utils import menu_tracker
+        menu_tracker.clear_all()
+
+    @pytest.mark.asyncio
+    async def test_no_callback_sends_new(self) -> None:
+        """Не-callback (команда `/op_help`) → шлёт новое сообщение,
+        даже если в tracker'е что-то есть. Tracker обновляется."""
+        from aemr_bot.utils import event as event_mod
+        from aemr_bot.utils import menu_tracker
+
+        menu_tracker.set_last_menu_mid(555, "stale-mid")
+        e = _make_event(chat_id=555, callback_mid=None)
+
+        await event_mod.send_or_edit_screen(e, text="hi", attachments=[])
+
+        e.bot.send_message.assert_awaited_once()
+        e.bot.edit_message.assert_not_called()
+        # tracker обновился на новый mid
+        assert menu_tracker.get_last_menu_mid(555) == "new-server-assigned-mid"
+
+    @pytest.mark.asyncio
+    async def test_callback_with_fresh_mid_edits(self) -> None:
+        """Callback пришёл от ПОСЛЕДНЕЙ карточки (mid в tracker'е)
+        → edit (не send new). Это «нормальный» путь listing → detail."""
+        from aemr_bot.utils import event as event_mod
+        from aemr_bot.utils import menu_tracker
+
+        menu_tracker.set_last_menu_mid(555, "current-menu-mid")
+        e = _make_event(chat_id=555, callback_mid="current-menu-mid")
+
+        await event_mod.send_or_edit_screen(e, text="hi", attachments=[])
+
+        e.bot.edit_message.assert_awaited_once()
+        e.bot.send_message.assert_not_called()
+        # Tracker остаётся (edit сохраняет mid).
+        assert menu_tracker.get_last_menu_mid(555) == "current-menu-mid"
+
+    @pytest.mark.asyncio
+    async def test_callback_with_stale_mid_sends_new(self) -> None:
+        """Callback пришёл от СТАРОЙ карточки (mid ≠ tracker) → send new,
+        не edit. Это и есть тот UX-фикс — старая карточка выше по чату
+        не редактируется, появляется свежее меню внизу."""
+        from aemr_bot.utils import event as event_mod
+        from aemr_bot.utils import menu_tracker
+
+        menu_tracker.set_last_menu_mid(555, "current-menu-mid")
+        # Оператор кликнул на старую карточку выше
+        e = _make_event(chat_id=555, callback_mid="OLD-card-mid")
+
+        await event_mod.send_or_edit_screen(e, text="hi", attachments=[])
+
+        # send_message, не edit — это и есть policy
+        e.bot.send_message.assert_awaited_once()
+        e.bot.edit_message.assert_not_called()
+        # tracker обновился на новую (свежую) карточку
+        assert menu_tracker.get_last_menu_mid(555) == "new-server-assigned-mid"
+
+    @pytest.mark.asyncio
+    async def test_force_new_message_bypasses_tracker(self) -> None:
+        """`force_new_message=True` всегда шлёт новое — для случаев,
+        когда вызывающий явно хочет создать новую карточку (например,
+        wizard-completed → confirm-message новое)."""
+        from aemr_bot.utils import event as event_mod
+        from aemr_bot.utils import menu_tracker
+
+        menu_tracker.set_last_menu_mid(555, "current-menu-mid")
+        e = _make_event(chat_id=555, callback_mid="current-menu-mid")
+
+        await event_mod.send_or_edit_screen(
+            e, text="hi", attachments=[], force_new_message=True
+        )
+
+        e.bot.send_message.assert_awaited_once()
+        e.bot.edit_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_no_callback_empty_tracker_initial_send(self) -> None:
+        """Чистый старт: tracker пуст, не-callback → send new + tracker
+        инициализируется новым mid. Это первый /op_help после рестарта."""
+        from aemr_bot.utils import event as event_mod
+        from aemr_bot.utils import menu_tracker
+
+        # tracker уже очищен setup_method
+        e = _make_event(chat_id=555, callback_mid=None)
+
+        await event_mod.send_or_edit_screen(e, text="hi", attachments=[])
+
+        e.bot.send_message.assert_awaited_once()
+        assert menu_tracker.get_last_menu_mid(555) == "new-server-assigned-mid"
+
+    @pytest.mark.asyncio
+    async def test_callback_after_restart_with_empty_tracker_sends_new(self) -> None:
+        """После рестарта процесса tracker пуст. Если оператор кликает
+        на существующую карточку → tracker пуст ≠ callback_mid → send
+        new. Это graceful behavior, без падений."""
+        from aemr_bot.utils import event as event_mod
+
+        e = _make_event(chat_id=555, callback_mid="pre-restart-mid")
+
+        await event_mod.send_or_edit_screen(e, text="hi", attachments=[])
+
+        e.bot.send_message.assert_awaited_once()
+        e.bot.edit_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_edit_failure_falls_back_to_send(self) -> None:
+        """Существующее поведение fallback'а сохранено: если edit_message
+        бросил исключение (например, карточка слишком старая для MAX),
+        send_or_edit_screen всё равно шлёт новое сообщение и обновляет
+        tracker. Это не новый контракт — он был раньше; тест-страховка."""
+        from aemr_bot.utils import event as event_mod
+        from aemr_bot.utils import menu_tracker
+
+        menu_tracker.set_last_menu_mid(555, "current-menu-mid")
+        e = _make_event(chat_id=555, callback_mid="current-menu-mid")
+        e.bot.edit_message = AsyncMock(side_effect=RuntimeError("edit denied"))
+
+        await event_mod.send_or_edit_screen(e, text="hi", attachments=[])
+
+        e.bot.send_message.assert_awaited_once()
+        # tracker обновился на новый mid после fallback'а
+        assert menu_tracker.get_last_menu_mid(555) == "new-server-assigned-mid"
+
+    @pytest.mark.asyncio
+    async def test_explicit_chat_id_kwarg_uses_correct_tracker_entry(self) -> None:
+        """chat_id явно передан в kwargs (а не из event) — tracker
+        обновляется по нему. Это случай служебной группы: callback
+        пришёл от оператора (его chat_id = личный), но экран рисуем
+        в админ-группе (явный chat_id=cfg.admin_group_id)."""
+        from aemr_bot.utils import event as event_mod
+        from aemr_bot.utils import menu_tracker
+
+        e = _make_event(chat_id=999, callback_mid=None)
+        admin_chat = -1234567
+
+        await event_mod.send_or_edit_screen(
+            e, text="hi", attachments=[], chat_id=admin_chat
+        )
+
+        # tracker НЕ обновлён для event-chat_id, а обновлён для явного admin_chat
+        assert menu_tracker.get_last_menu_mid(999) is None
+        assert menu_tracker.get_last_menu_mid(admin_chat) == "new-server-assigned-mid"
 ```
 
 ### `bot/tests/test_operator_reply_closed_guard.py`
