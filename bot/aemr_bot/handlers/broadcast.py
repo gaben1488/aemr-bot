@@ -36,6 +36,7 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as operators_service
+from aemr_bot.services import settings_store
 from aemr_bot.utils import image_attachments as _image_attachments
 from aemr_bot.utils.background import spawn_background_task
 from aemr_bot.utils.event import (
@@ -80,6 +81,34 @@ class _WizardState:
 _wizards: dict[int, _WizardState] = {}
 
 
+async def _resolve_broadcast_max_images(session) -> int:
+    """Текущий лимит картинок в рассылке из настроек БД.
+
+    Возвращает `settings_store.broadcast_max_images` (диапазон 1–20).
+    DEFAULTS гарантирует число — функция никогда не вернёт None или 0.
+    IT-оператор меняет лимит через UI «⚙️ Настройки бота» без редеплоя;
+    значение применяется со следующего нажатия `/broadcast`.
+
+    Устойчив к DB-проблемам: если query упал (нет таблицы, потеря
+    соединения), молча падаем на DEFAULTS — рассылка не должна
+    блокироваться технической проблемой админ-таблицы.
+    """
+    try:
+        value = await settings_store.get(session, "broadcast_max_images")
+    except Exception:
+        log.warning(
+            "settings_store.broadcast_max_images недоступен, "
+            "используем DEFAULTS",
+            exc_info=True,
+        )
+        value = None
+    # Защитная нормализация: если кто-то вручную записал в БД не int
+    # (например, через psql), скатываемся к DEFAULTS.
+    if isinstance(value, int) and not isinstance(value, bool) and value > 0:
+        return value
+    return int(settings_store.DEFAULTS["broadcast_max_images"])
+
+
 # Локальные псевдонимы общих хелперов авторизации. Подчёркивание в начале имени
 # подчёркивает, что это служебные средства для админ-стороны, не для жителя.
 _is_admin_chat = is_admin_chat
@@ -121,9 +150,11 @@ async def _start_wizard(event) -> None:
 
     _wizards[actor_id] = _WizardState(step="awaiting_text")
     log.info("broadcast: wizard started for operator max_user_id=%s", actor_id)
+    async with session_scope() as session:
+        max_images = await _resolve_broadcast_max_images(session)
     prompt = texts.OP_BROADCAST_PROMPT.format(
         limit=cfg.broadcast_max_chars,
-        max_images=cfg.broadcast_max_images,
+        max_images=max_images,
     )
     await send_or_edit_screen(
         event,
@@ -173,18 +204,29 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         )
         return True
     if not text:
-        # Пусто. Просим ввести ещё раз, состояние не меняем.
+        # Пусто. Просим ввести ещё раз, состояние не меняем. Для re-
+        # prompt'a показываем DEFAULTS-значение max_images: открывать
+        # session ради этого редкого пути с пустой строкой избыточно
+        # (это early-return). Реальный flow ниже читает актуальное
+        # значение из БД.
         await event.message.answer(
             texts.OP_BROADCAST_PROMPT.format(
-        limit=cfg.broadcast_max_chars,
-        max_images=cfg.broadcast_max_images,
-    ),
+                limit=cfg.broadcast_max_chars,
+                max_images=int(
+                    settings_store.DEFAULTS["broadcast_max_images"]
+                ),
+            ),
             attachments=[keyboards.broadcast_cancel_keyboard()],
         )
         return True
 
+    # Текущий лимит картинок — из настроек БД (settings_store), а не
+    # из env. IT-оператор может поменять оперативно через UI
+    # «⚙️ Настройки бота» → «broadcast_max_images» без редеплоя.
     async with session_scope() as session:
+        max_images = await _resolve_broadcast_max_images(session)
         count = await broadcasts_service.count_subscribers(session)
+
     if count == 0:
         _wizards.pop(actor_id, None)
         await event.message.answer(
@@ -195,15 +237,15 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
 
     state.text = text
     # Захват картинок оператора (если в том же сообщении были). Лимит —
-    # `cfg.broadcast_max_images`, по умолчанию 5: афиша, схема, фото-
-    # комплект из 2-3 кадров укладываются, multi-image-спам отрезается.
+    # из settings_store, по умолчанию 5: афиша, схема, фото-комплект
+    # из 2-3 кадров укладываются, multi-image-спам отрезается.
     # ВАЖНО: считаем сколько ВСЕГО было — для warning'а оператору, если
     # обрезалось. Тихая обрезка (приложили 7, разошлось 5) ломает UX.
     all_images_in_event = _image_attachments.image_attachments_from_event(
         event, limit=0  # 0 = unlimited, чтобы подсчитать «приложено»
     )
     provided = len(all_images_in_event)
-    state.attachments = all_images_in_event[: cfg.broadcast_max_images]
+    state.attachments = all_images_in_event[:max_images]
     state.step = "awaiting_confirm"
     state.renew()
     # Превью включает все приложенные картинки рядом с confirm-клавой,
@@ -213,9 +255,9 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         state.attachments
     )
     image_warning = ""
-    if provided > cfg.broadcast_max_images:
+    if provided > max_images:
         image_warning = texts.OP_BROADCAST_PREVIEW_TRIM_WARN.format(
-            provided=provided, limit=cfg.broadcast_max_images
+            provided=provided, limit=max_images
         )
     await event.message.answer(
         texts.OP_BROADCAST_PREVIEW.format(
