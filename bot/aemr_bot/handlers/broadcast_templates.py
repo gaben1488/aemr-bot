@@ -147,6 +147,7 @@ async def _open(event, template_id: int) -> None:
         name=tmpl.name,
         created_at=_format_dt(tmpl.created_at),
         image_count=len(tmpl.attachments),
+        char_count=len(tmpl.text),
         text=tmpl.text,
     )
     # Карточка показывает сохранённые картинки рядом с кнопками — оператор
@@ -376,6 +377,36 @@ async def _cancel(event) -> None:
     )
 
 
+async def _back_to_name(event) -> None:
+    """Шаг 2 → шаг 1: вернуть wizard к вводу имени. Pending text
+    сбрасываем — оператор может перезайти и набрать новый. Имя
+    оставляем в pending_name, чтобы оператор увидел его в качестве
+    подсказки (но это не реализовано тут — prompt стандартный)."""
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        return
+    state = _wizards.get(actor_id)
+    if state is None or state.step != "new_awaiting_text":
+        # Защита от устаревшей кнопки — wizard уже закрыт/в другом шаге.
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_TMPL_CANCELLED,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return
+    state.step = "new_awaiting_name"
+    state.renew()
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_TMPL_NEW_NAME_PROMPT.format(
+            limit=templates_service.MAX_NAME_LEN
+        ),
+        attachments=[keyboards.broadcast_template_cancel_keyboard()],
+    )
+
+
 # ---- callback dispatch (то, что вызывает admin_callback_dispatch) ----
 
 async def handle_callback(event, payload: str) -> bool:
@@ -403,6 +434,13 @@ async def handle_callback(event, payload: str) -> bool:
     if rest == "cancel":
         await ack_callback(event)
         await _cancel(event)
+        return True
+    if rest == "back_to_name":
+        # Вернуть wizard на шаг 1 (имя). pending_name не сбрасываем —
+        # покажем как старое в подсказке-примере, оператор может его
+        # подправить или ввести заново.
+        await ack_callback(event)
+        await _back_to_name(event)
         return True
 
     # verb:id
@@ -503,7 +541,7 @@ async def _step_new_name(
         texts.OP_TMPL_NEW_TEXT_PROMPT.format(
             name=text, limit=cfg.broadcast_max_chars
         ),
-        attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        attachments=[keyboards.broadcast_template_step2_keyboard()],
     )
     return True
 
@@ -521,7 +559,7 @@ async def _step_new_text(
             texts.OP_TMPL_NEW_TEXT_PROMPT.format(
                 name=state.pending_name, limit=cfg.broadcast_max_chars
             ),
-            attachments=[keyboards.broadcast_template_cancel_keyboard()],
+            attachments=[keyboards.broadcast_template_step2_keyboard()],
         )
         return True
     if len(text) > cfg.broadcast_max_chars:
@@ -529,7 +567,7 @@ async def _step_new_text(
             texts.OP_TMPL_TEXT_TOO_LONG.format(
                 actual=len(text), limit=cfg.broadcast_max_chars
             ),
-            attachments=[keyboards.broadcast_template_cancel_keyboard()],
+            attachments=[keyboards.broadcast_template_step2_keyboard()],
         )
         return True
     # Картинки — те же helper'ы, что у /broadcast. Лимит наследуем от

@@ -144,6 +144,16 @@ async def _do_open_tickets(event) -> None:
         attachments=[kbds.op_back_to_menu_keyboard()],
     )
 
+    # Sticky-tracker: tracker встаёт на mid header'а (через
+    # send_or_edit_screen выше), а карточки обращений печатаются ниже
+    # через `event.bot.send_message`. Без сдвига tracker оператор внизу
+    # чата тапает кнопку header'а — `callback_mid == tracker` → edit
+    # вверху → внизу ничего не меняется. Сдвигаем tracker на последнюю
+    # отправленную карточку, чтобы любой тап выше → send_new.
+    from aemr_bot.utils import menu_tracker
+    from aemr_bot.utils.event import extract_message_id
+
+    last_mid: str | None = None
     for appeal in open_appeals:
         user_name = appeal.user.first_name if appeal.user else "—"
         user_id_text = appeal.user.max_user_id if appeal.user else "—"
@@ -159,7 +169,7 @@ async def _do_open_tickets(event) -> None:
             f"📝 Текст обращения:\n{appeal.summary or '—'}\n\n"
             f"🆔 №{appeal.id}"
         )
-        await event.bot.send_message(
+        sent = await event.bot.send_message(
             chat_id=cfg.admin_group_id,
             text=text,
             attachments=[
@@ -172,6 +182,11 @@ async def _do_open_tickets(event) -> None:
                 )
             ],
         )
+        mid = extract_message_id(sent)
+        if mid:
+            last_mid = mid
+    if last_mid is not None:
+        menu_tracker.set_last_menu_mid(cfg.admin_group_id, last_mid)
 
 
 async def _do_diag(event) -> None:

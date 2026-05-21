@@ -611,6 +611,21 @@ def broadcast_template_cancel_keyboard():
     return kb.as_markup()
 
 
+def broadcast_template_step2_keyboard():
+    """Клавиатура на шаге 2 (ввод текста+картинок). Кроме «❌ Отменить»
+    показывает «↩️ Изменить название» — чтобы оператор мог вернуться
+    на шаг 1, если опечатался."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="↩️ Изменить название",
+            payload="op:tmpl:back_to_name",
+        )
+    )
+    kb.row(CallbackButton(text="❌ Отменить", payload="op:tmpl:cancel"))
+    return kb.as_markup()
+
+
 def op_back_to_operators_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="↩️ К операторам", payload="op:operators"))
