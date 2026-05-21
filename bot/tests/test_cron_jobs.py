@@ -390,3 +390,36 @@ class TestBuildScheduler:
         job = next(j for j in sched.get_jobs() if j.name == "pulse-offhours")
         trigger_text = str(job.trigger)
         assert "18-23" in trigger_text
+
+    def test_open_reminder_mon_fri_with_lunch_break(self) -> None:
+        """Регрессия: open-reminder работает пн-пт с обедом 12-13 (skip).
+
+        Регламент v5 §39 «пн-пт 09:00-18:00» + уточнение v6 «обед
+        12:00-13:00». Раньше код был пн-сб 9-17 (соответствовал
+        Таблице 3 §70 v5, противоречил §39); user подтвердил
+        фактическую практику = пн-пт + обед, Регламент v6 синхронизирует
+        §39 и Таблицу 3.
+        """
+        bot = MagicMock()
+        sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
+        job = next(
+            j for j in sched.get_jobs() if j.name == "open-reminder-workhours"
+        )
+        text = str(job.trigger)
+        assert "mon-fri" in text, f"day_of_week не mon-fri: {text}"
+        # hour="9-11,13-17" — обеденный перерыв 12 пропускается
+        assert "9-11" in text and "13-17" in text, (
+            f"обеденный перерыв 12-13 не пропущен: {text}"
+        )
+
+    def test_overdue_reminder_mon_fri_with_lunch_break(self) -> None:
+        """Регрессия: overdue-reminder — то же расписание, что open-reminder
+        (minute=40 вместо 10)."""
+        bot = MagicMock()
+        sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
+        job = next(
+            j for j in sched.get_jobs() if j.name == "overdue-reminder-workhours"
+        )
+        text = str(job.trigger)
+        assert "mon-fri" in text
+        assert "9-11" in text and "13-17" in text

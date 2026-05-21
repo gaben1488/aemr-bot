@@ -664,18 +664,27 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             CronTrigger(minute=15, timezone=TZ),
             "funnel-watchdog",
         ),
-        # Напоминалки в рабочее время Камчатки
+        # Напоминалки операторам по неотвеченным/просроченным обращениям.
+        # Расписание соответствует фактическому рабочему времени АЕМО:
+        # пн-пт 09:00-18:00 с обеденным перерывом 12:00-13:00 (Регламент
+        # v5 §39 + уточнение v6: пн-пт + обед). В Сб бот не дёргает
+        # оператора — он не на смене. В обед — не дёргает тоже: hour=12
+        # выпадает из расписания (`hour="9-11,13-17"`).
+        #
+        # Pulse-задачи (см. выше) намеренно остаются пн-сб + 24/7 — это
+        # технический heartbeat «бот живой», а не уведомление оператора.
+        # Heartbeat в обед и в субботу полезен (мониторинг непрерывный).
         (
             functools.partial(_job_working_hours_open_reminder, bot),
             CronTrigger(
-                day_of_week="mon-sat", hour="9-17", minute=10, timezone=TZ
+                day_of_week="mon-fri", hour="9-11,13-17", minute=10, timezone=TZ
             ),
             "open-reminder-workhours",
         ),
         (
             functools.partial(_job_working_hours_overdue_reminder, bot),
             CronTrigger(
-                day_of_week="mon-sat", hour="9-17", minute=40, timezone=TZ
+                day_of_week="mon-fri", hour="9-11,13-17", minute=40, timezone=TZ
             ),
             "overdue-reminder-workhours",
         ),
