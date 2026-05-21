@@ -326,8 +326,10 @@ class TestWizardText:
         assert 7 not in bt._wizards
 
     @pytest.mark.asyncio
-    async def test_step_new_text_creates_template_and_clears_state(self) -> None:
-        """Шаг ввода текста на успехе создаёт template и вычищает state."""
+    async def test_step_new_text_moves_to_preview(self) -> None:
+        """PR template-editor-upgrade: после ввода текста wizard
+        переходит в new_preview (не сохраняет сразу), оператор сначала
+        видит «как увидит подписчик»."""
         from aemr_bot.handlers import broadcast_templates as bt
 
         state = bt._TmplWizardState(
@@ -335,7 +337,6 @@ class TestWizardText:
         )
         bt._wizards[7] = state
         event = _make_event(user_id=7)
-        fake_tmpl = SimpleNamespace(id=1, name="X")
         with (
             patch(
                 "aemr_bot.handlers.broadcast_templates.is_admin_chat",
@@ -358,6 +359,43 @@ class TestWizardText:
                 return_value=[],
             ),
             patch(
+                "aemr_bot.handlers.broadcast_templates._image_attachments.build_outbound_image_attachments",
+                return_value=[],
+            ),
+        ):
+            consumed = await bt.handle_wizard_text(event, "Уважаемые жители!")
+        assert consumed is True
+        # Wizard остался — теперь в шаге preview
+        assert 7 in bt._wizards
+        assert bt._wizards[7].step == "new_preview"
+        assert bt._wizards[7].pending_text == "Уважаемые жители!"
+        # answer вызван дважды — header превью + сам текст
+        assert event.message.answer.await_count >= 1
+
+    @pytest.mark.asyncio
+    async def test_save_new_creates_template(self) -> None:
+        """После превью callback op:tmpl:save_new сохраняет шаблон и
+        очищает state."""
+        from aemr_bot.handlers import broadcast_templates as bt
+
+        bt._wizards[7] = bt._TmplWizardState(
+            step="new_preview",
+            pending_name="Foo",
+            pending_text="Body",
+            pending_attachments=[],
+        )
+        event = _make_event(user_id=7)
+        fake_tmpl = SimpleNamespace(id=1, name="Foo")
+        with (
+            patch(
+                "aemr_bot.handlers.broadcast_templates.get_operator",
+                new=AsyncMock(return_value=SimpleNamespace(id=99)),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast_templates.session_scope",
+                _fake_session_scope,
+            ),
+            patch(
                 "aemr_bot.handlers.broadcast_templates.templates_service.create_template",
                 new=AsyncMock(return_value=fake_tmpl),
             ),
@@ -365,8 +403,10 @@ class TestWizardText:
                 "aemr_bot.handlers.broadcast_templates.operators_service.write_audit",
                 new=AsyncMock(),
             ),
+            patch(
+                "aemr_bot.handlers.broadcast_templates.send_or_edit_screen",
+                new=AsyncMock(),
+            ),
         ):
-            consumed = await bt.handle_wizard_text(event, "Уважаемые жители!")
-        assert consumed is True
+            await bt._save_new(event)
         assert 7 not in bt._wizards
-        event.message.answer.assert_awaited()

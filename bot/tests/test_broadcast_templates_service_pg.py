@@ -199,6 +199,105 @@ async def test_archive_unknown_raises(session) -> None:
         await templates.archive(session, 99999)
 
 
+# ---- record_usage / search (PR template-editor-upgrade) -----------
+
+
+@pytest.mark.asyncio
+async def test_record_usage_increments_and_sets_last_used(session) -> None:
+    """Каждый apply повышает счётчик и обновляет last_used_at."""
+    t1 = await templates.create_template(session, name="A", text="a")
+    assert t1.use_count == 0
+    assert t1.last_used_at is None
+
+    await templates.record_usage(session, t1.id)
+    refetched = await templates.get_by_id(session, t1.id)
+    assert refetched is not None
+    assert refetched.use_count == 1
+    assert refetched.last_used_at is not None
+
+    await templates.record_usage(session, t1.id)
+    refetched2 = await templates.get_by_id(session, t1.id)
+    assert refetched2 is not None
+    assert refetched2.use_count == 2
+
+
+@pytest.mark.asyncio
+async def test_record_usage_unknown_returns_none(session) -> None:
+    """Если шаблона нет (или он архивирован уже после open'а карточки) —
+    record_usage возвращает None без исключения."""
+    res = await templates.record_usage(session, 99999)
+    assert res is None
+
+
+@pytest.mark.asyncio
+async def test_record_usage_works_on_archived_template(session) -> None:
+    """Архивированный шаблон тоже инкрементируется — оператор
+    применил его до архивации, факт фиксируем в аудите."""
+    t1 = await templates.create_template(session, name="A", text="a")
+    await templates.archive(session, t1.id)
+    res = await templates.record_usage(session, t1.id)
+    assert res is not None
+    assert res.use_count == 1
+
+
+@pytest.mark.asyncio
+async def test_search_finds_by_name(session) -> None:
+    await templates.create_template(session, name="Отключение воды", text="…")
+    await templates.create_template(session, name="Расписание", text="…")
+    results = await templates.search(session, "вода")
+    assert len(results) == 1
+    assert results[0].name == "Отключение воды"
+
+
+@pytest.mark.asyncio
+async def test_search_finds_by_text(session) -> None:
+    await templates.create_template(
+        session, name="Объявление", text="Уважаемые жители, ремонт дорог"
+    )
+    results = await templates.search(session, "ремонт")
+    assert len(results) == 1
+
+
+@pytest.mark.asyncio
+async def test_search_name_match_ranked_above_text_match(session) -> None:
+    """Если запрос есть в имени одного шаблона и в тексте другого,
+    тот, у которого совпало имя, выше."""
+    await templates.create_template(
+        session, name="План", text="что-то по плану"
+    )
+    await templates.create_template(
+        session, name="Расписание", text="общий план работ"
+    )
+    results = await templates.search(session, "план")
+    assert results[0].name == "План"
+
+
+@pytest.mark.asyncio
+async def test_search_case_insensitive(session) -> None:
+    await templates.create_template(session, name="ОТКЛЮЧЕНИЕ ВОДЫ", text="t")
+    # ILIKE регистронезависимый: «воды» (нижний регистр) ищется в
+    # «ВОДЫ» (верхний регистр). Не ищем «вода» — отдельная словоформа.
+    results = await templates.search(session, "воды")
+    assert len(results) >= 1
+
+
+@pytest.mark.asyncio
+async def test_search_excludes_archived(session) -> None:
+    t1 = await templates.create_template(
+        session, name="Старый", text="отключение воды"
+    )
+    await templates.archive(session, t1.id)
+    results = await templates.search(session, "отключение")
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_search_empty_query_returns_empty(session) -> None:
+    await templates.create_template(session, name="X", text="x")
+    assert await templates.search(session, "") == []
+    assert await templates.search(session, "   ") == []
+
+
 @pytest.mark.asyncio
 async def test_archived_name_can_be_reused(session) -> None:
     """После архивации имя освобождается — оператор может создать

@@ -16,7 +16,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Sequence
 
-from sqlalchemy import desc, func, select
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -168,3 +168,60 @@ async def archive(session: AsyncSession, template_id: int) -> BroadcastTemplate:
     tmpl.archived_at = datetime.now(timezone.utc)
     await session.flush()
     return tmpl
+
+
+async def record_usage(
+    session: AsyncSession, template_id: int
+) -> BroadcastTemplate | None:
+    """Зафиксировать факт применения шаблона как рассылки.
+
+    Инкрементирует `use_count` на 1 и обновляет `last_used_at`. Не
+    бросает на отсутствующий шаблон (мог быть архивирован между
+    open'ом карточки и нажатием Apply) — просто возвращает None,
+    apply-flow это и так проверит до отправки.
+    """
+    tmpl = await get_by_id(session, template_id, include_archived=True)
+    if tmpl is None:
+        return None
+    tmpl.use_count = (tmpl.use_count or 0) + 1
+    tmpl.last_used_at = datetime.now(timezone.utc)
+    await session.flush()
+    return tmpl
+
+
+async def search(
+    session: AsyncSession,
+    query: str,
+    *,
+    limit: int = 50,
+) -> list[BroadcastTemplate]:
+    """ILIKE-поиск по имени и тексту активных шаблонов.
+
+    Регистронезависимо. Совпадение в имени (короткое поле, точечный
+    запрос — «вода») приоритетнее совпадения в тексте (поэтому
+    сортируем по совпадению имени сначала, потом по updated_at).
+    Возвращаем пустой список при пустом запросе — caller покажет
+    обычный list_active.
+    """
+    q = (query or "").strip()
+    if not q:
+        return []
+    pattern = f"%{q}%"
+    result = await session.execute(
+        select(BroadcastTemplate)
+        .where(
+            BroadcastTemplate.archived_at.is_(None),
+            or_(
+                BroadcastTemplate.name.ilike(pattern),
+                BroadcastTemplate.text.ilike(pattern),
+            ),
+        )
+        # Сортируем так, чтобы совпадение в имени стояло сверху.
+        # name LIKE pattern → 0; иначе → 1.
+        .order_by(
+            BroadcastTemplate.name.ilike(pattern).desc(),
+            desc(BroadcastTemplate.updated_at),
+        )
+        .limit(limit)
+    )
+    return list(result.scalars().all())
