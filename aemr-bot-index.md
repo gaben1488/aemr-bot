@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-21 03:24:47 UTC`
+Generated at: `2026-05-21 03:39:54 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `186`
+Indexed files: `187`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -36,7 +36,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/db/alembic/versions/0013_settings_synced_at.py` (2141 bytes)
 - `bot/aemr_bot/db/alembic/versions/0014_broadcasts_attachments.py` (2069 bytes)
 - `bot/aemr_bot/db/alembic/versions/0015_broadcast_templates.py` (2589 bytes)
-- `bot/aemr_bot/db/models.py` (18665 bytes)
+- `bot/aemr_bot/db/alembic/versions/0016_broadcast_template_usage.py` (1714 bytes)
+- `bot/aemr_bot/db/models.py` (19293 bytes)
 - `bot/aemr_bot/db/session.py` (2764 bytes)
 - `bot/aemr_bot/handlers/__init__.py` (3303 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
@@ -54,19 +55,19 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (12572 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
-- `bot/aemr_bot/handlers/broadcast_templates.py` (28306 bytes)
+- `bot/aemr_bot/handlers/broadcast_templates.py` (42959 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8339 bytes)
 - `bot/aemr_bot/handlers/menu.py` (45699 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (32495 bytes)
 - `bot/aemr_bot/handlers/start.py` (16556 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (58484 bytes)
+- `bot/aemr_bot/keyboards.py` (61415 bytes)
 - `bot/aemr_bot/main.py` (18178 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9914 bytes)
 - `bot/aemr_bot/services/appeals.py` (18415 bytes)
-- `bot/aemr_bot/services/broadcast_templates.py` (5607 bytes)
+- `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (8809 bytes)
@@ -84,7 +85,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/users.py` (29316 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (11952 bytes)
-- `bot/aemr_bot/texts.py` (38640 bytes)
+- `bot/aemr_bot/texts.py` (41532 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -108,8 +109,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
 - `bot/tests/test_broadcast_handlers.py` (33239 bytes)
 - `bot/tests/test_broadcast_history_card.py` (10153 bytes)
-- `bot/tests/test_broadcast_templates_handlers.py` (13876 bytes)
-- `bot/tests/test_broadcast_templates_service_pg.py` (9397 bytes)
+- `bot/tests/test_broadcast_templates_handlers.py` (15540 bytes)
+- `bot/tests/test_broadcast_templates_service_pg.py` (13550 bytes)
 - `bot/tests/test_broadcast_with_image.py` (23848 bytes)
 - `bot/tests/test_broadcasts_service_pg.py` (6324 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
@@ -2350,10 +2351,69 @@ def downgrade() -> None:
     op.drop_table("broadcast_templates")
 ```
 
+### `bot/aemr_bot/db/alembic/versions/0016_broadcast_template_usage.py`
+
+Size: `1714` bytes  
+SHA-256: `f9964ae71d389e6de9215becd74f79c70b6b69d82ce3c2b2f01e5dcaf3d91824`
+
+```python
+"""broadcast_templates: счётчик применений + дата последнего применения.
+
+Revision ID: 0016
+Revises: 0015
+Create Date: 2026-05-21
+
+PR template-editor-upgrade: для гигиены списка шаблонов добавляем поля
+- `use_count INTEGER NOT NULL DEFAULT 0` — сколько раз шаблон
+  применили как рассылку (incrementится в `_apply`);
+- `last_used_at TIMESTAMPTZ NULL` — момент последнего применения.
+
+Используются в карточке шаблона («Применён 12 раз, последний раз
+2 мая») и при потенциальной будущей сортировке по «горячим».
+
+Downgrade: дроп колонок. Не задевает существующие записи (default 0 /
+NULL покрывают backfill).
+"""
+from typing import Sequence, Union
+
+import sqlalchemy as sa
+from alembic import op
+
+revision: str = "0016"
+down_revision: Union[str, None] = "0015"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    op.add_column(
+        "broadcast_templates",
+        sa.Column(
+            "use_count",
+            sa.Integer(),
+            nullable=False,
+            server_default=sa.text("0"),
+        ),
+    )
+    op.add_column(
+        "broadcast_templates",
+        sa.Column(
+            "last_used_at",
+            sa.DateTime(timezone=True),
+            nullable=True,
+        ),
+    )
+
+
+def downgrade() -> None:
+    op.drop_column("broadcast_templates", "last_used_at")
+    op.drop_column("broadcast_templates", "use_count")
+```
+
 ### `bot/aemr_bot/db/models.py`
 
-Size: `18665` bytes  
-SHA-256: `ea248811d5494cec680fd4f40e92931a019504e7049856bfd6203728d23a0c27`
+Size: `19293` bytes  
+SHA-256: `d6bcf0714241405a114c7482d632048a8d0d20d3112e63733dcf2a1d174839f8`
 
 ```python
 from datetime import datetime
@@ -2726,6 +2786,16 @@ class BroadcastTemplate(Base):
     # запись остаётся для аудита.
     archived_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), index=True
+    )
+    # Гигиена списка (PR template-editor-upgrade): счётчик применений
+    # шаблона как рассылки и дата последнего применения. Помогают раз
+    # в год прибраться в списке — «не применялся ни разу за полгода →
+    # в архив». Инкрементируется в handlers/broadcast_templates._apply.
+    use_count: Mapped[int] = mapped_column(
+        default=0, server_default="0"
+    )
+    last_used_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
     )
 ```
 
@@ -9735,8 +9805,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/broadcast_templates.py`
 
-Size: `28306` bytes  
-SHA-256: `7d6c70dadebec1511118c972de70edb35e90b761cff7880e8271f93931a4c2a7`
+Size: `42959` bytes  
+SHA-256: `5178d848701332ed64079aec92d9b97bded8c42c3a966e140b7ae7836cd2859b`
 
 ```python
 """UI шаблонов рассылок (PR H).
@@ -9799,18 +9869,28 @@ _WIZARD_TTL_SEC = 600  # 10 минут — те же лимиты, что у bro
 WizardStep = Literal[
     "new_awaiting_name",
     "new_awaiting_text",
+    "new_preview",
     "rename_awaiting_name",
     "edit_awaiting_text",
+    "edit_preview",
+    "clone_awaiting_name",
+    "search_awaiting_query",
 ]
 
 
 @dataclass
 class _TmplWizardState:
     step: WizardStep
-    # Только в new_awaiting_text — переход на шаг 2 хранит имя.
+    # Имя нового шаблона (new flow) или нового имени клона (clone flow).
     pending_name: str = ""
-    # Только для rename/edit — id целевого шаблона.
+    # Текст и вложения, накопленные на шаге 2 — используются для
+    # превью и итогового сохранения.
+    pending_text: str = ""
+    pending_attachments: list = field(default_factory=list)
+    # Для rename/edit/clone — id источника / редактируемого шаблона.
     target_id: int | None = None
+    # Имя шаблона-источника при клонировании (для prompt'а).
+    source_name: str = ""
     expires_at: float = field(
         default_factory=lambda: time.monotonic() + _WIZARD_TTL_SEC
     )
@@ -9883,12 +9963,22 @@ async def _open(event, template_id: int) -> None:
             attachments=[keyboards.op_back_to_menu_keyboard()],
         )
         return
+    if tmpl.use_count and tmpl.last_used_at:
+        last_used_line = texts.OP_TMPL_CARD_LAST_USED.format(
+            when=_format_dt(tmpl.last_used_at)
+        )
+    elif not tmpl.use_count:
+        last_used_line = texts.OP_TMPL_CARD_NEVER_USED
+    else:
+        last_used_line = ""
     body = texts.OP_TMPL_CARD.format(
         number=tmpl.id,
         name=tmpl.name,
         created_at=_format_dt(tmpl.created_at),
         image_count=len(tmpl.attachments),
         char_count=len(tmpl.text),
+        use_count=tmpl.use_count or 0,
+        last_used_line=last_used_line,
         text=tmpl.text,
     )
     # Карточка показывает сохранённые картинки рядом с кнопками — оператор
@@ -9925,6 +10015,13 @@ async def _apply(event, template_id: int) -> None:
             )
             return
         subscribers = await broadcasts_service.count_subscribers(session)
+        # PR template-editor-upgrade: фиксируем «применил для подготовки
+        # рассылки». Инкрементируется на момент open в /broadcast wizard,
+        # даже если оператор потом нажмёт ❌. Это адекватнее, чем
+        # инкрементить «на отправке» — счётчик отражает «частоту
+        # обращений к шаблону», а не отправок (для оценки гигиены
+        # списка важна именно частота обращений).
+        await templates_service.record_usage(session, template_id)
     if subscribers == 0:
         await send_or_edit_screen(
             event,
@@ -10042,6 +10139,71 @@ async def _start_edit(event, template_id: int) -> None:
         text=texts.OP_TMPL_EDIT_PROMPT.format(
             name=tmpl.name, limit=cfg.broadcast_max_chars
         ),
+        attachments=[keyboards.broadcast_template_cancel_keyboard()],
+    )
+
+
+# ---- clone (PR template-editor-upgrade) ------------------------------
+
+
+async def _start_clone(event, template_id: int) -> None:
+    """`op:tmpl:clone:<id>` — клонировать шаблон.
+
+    Берём текст и картинки источника, открываем wizard на шаге ввода
+    нового имени. После имени сразу сохраняем — text/attachments не
+    спрашиваем, они уже есть в pending_*.
+    """
+    if not await ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        return
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        return
+    async with session_scope() as session:
+        tmpl = await templates_service.get_by_id(session, template_id)
+    if tmpl is None:
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_TMPL_NOT_FOUND,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return
+    _drop_expired()
+    _wizards[actor_id] = _TmplWizardState(
+        step="clone_awaiting_name",
+        pending_text=tmpl.text,
+        pending_attachments=list(tmpl.attachments),
+        target_id=tmpl.id,  # источник, для аудит-лога
+        source_name=tmpl.name,
+    )
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_TMPL_CLONE_NAME_PROMPT.format(
+            source_name=tmpl.name,
+            image_count=len(tmpl.attachments),
+            limit=templates_service.MAX_NAME_LEN,
+        ),
+        attachments=[keyboards.broadcast_template_cancel_keyboard()],
+    )
+
+
+# ---- search (PR template-editor-upgrade) -----------------------------
+
+
+async def _start_search(event) -> None:
+    """`op:tmpl:search` — ввод поискового запроса."""
+    if not await ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        return
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        return
+    _drop_expired()
+    _wizards[actor_id] = _TmplWizardState(step="search_awaiting_query")
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_TMPL_SEARCH_PROMPT,
         attachments=[keyboards.broadcast_template_cancel_keyboard()],
     )
 
@@ -10183,6 +10345,19 @@ async def handle_callback(event, payload: str) -> bool:
         await ack_callback(event)
         await _back_to_name(event)
         return True
+    # PR template-editor-upgrade: новые exact-варианты
+    if rest == "search":
+        await ack_callback(event)
+        await _start_search(event)
+        return True
+    if rest == "save_new":
+        await ack_callback(event)
+        await _save_new(event)
+        return True
+    if rest == "back_to_text_new":
+        await ack_callback(event)
+        await _back_to_text_new(event)
+        return True
 
     # verb:id
     if ":" in rest:
@@ -10214,6 +10389,19 @@ async def handle_callback(event, payload: str) -> bool:
         if verb == "delete_ok":
             await ack_callback(event)
             await _do_delete(event, tid)
+            return True
+        # PR template-editor-upgrade: новые verb:id
+        if verb == "clone":
+            await ack_callback(event)
+            await _start_clone(event, tid)
+            return True
+        if verb == "save_edit":
+            await ack_callback(event)
+            await _save_edit(event, tid)
+            return True
+        if verb == "back_to_text_edit":
+            await ack_callback(event)
+            await _back_to_text_edit(event, tid)
             return True
     return False
 
@@ -10255,6 +10443,10 @@ async def handle_wizard_text(event, text_body: str) -> bool:
         return await _step_rename(event, actor_id, state, text, op_id=op_id)
     if state.step == "edit_awaiting_text":
         return await _step_edit(event, actor_id, state, text, op_id=op_id)
+    if state.step == "clone_awaiting_name":
+        return await _step_clone_name(event, actor_id, state, text, op_id=op_id)
+    if state.step == "search_awaiting_query":
+        return await _step_search(event, actor_id, state, text)
     return False
 
 
@@ -10295,6 +10487,12 @@ async def _step_new_text(
     *,
     op_id: int | None,
 ) -> bool:
+    """Шаг 2: принимаем текст+картинки, показываем превью, ждём подтверждения.
+
+    PR template-editor-upgrade: сохранение перенесено из этого шага в
+    callback `op:tmpl:save_new` — оператор сначала видит, как ровно
+    это будет выглядеть у подписчика, и только потом подтверждает.
+    """
     if not text:
         await event.message.answer(
             texts.OP_TMPL_NEW_TEXT_PROMPT.format(
@@ -10320,16 +10518,62 @@ async def _step_new_text(
     attachments = _image_attachments.image_attachments_from_event(
         event, limit=max_images
     )
+    # Накопили; переходим в preview-шаг.
+    state.step = "new_preview"
+    state.pending_text = text
+    state.pending_attachments = list(attachments)
+    state.renew()
+    await _render_preview_new(event, state)
+    return True
+
+
+async def _render_preview_new(event, state: _TmplWizardState) -> None:
+    """Превью «как увидит подписчик» для нового шаблона."""
+    images = _image_attachments.build_outbound_image_attachments(
+        state.pending_attachments
+    )
+    # Заголовок-объяснение + сам текст шаблона ровно как уйдёт подписчику.
+    await event.message.answer(
+        texts.OP_TMPL_PREVIEW_HEADER_NEW.format(
+            name=state.pending_name,
+            image_count=len(state.pending_attachments),
+        ),
+    )
+    await event.message.answer(
+        state.pending_text,
+        attachments=[
+            *images,
+            keyboards.broadcast_template_preview_keyboard(None),
+        ],
+    )
+
+
+async def _save_new(event) -> None:
+    """`op:tmpl:save_new` — окончательное сохранение нового шаблона."""
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        return
+    state = _wizards.get(actor_id)
+    if state is None or state.step != "new_preview":
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_TMPL_CANCELLED,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return
+    op = await get_operator(event)
+    op_id = op.id if op is not None else None
     try:
         async with session_scope() as session:
             tmpl = await templates_service.create_template(
                 session,
                 name=state.pending_name,
-                text=text,
-                attachments=attachments,
+                text=state.pending_text,
+                attachments=state.pending_attachments,
                 created_by_operator_id=op_id,
             )
-            if op_id is not None and actor_id is not None:
+            if op_id is not None:
                 await operators_service.write_audit(
                     session,
                     operator_max_user_id=actor_id,
@@ -10337,38 +10581,60 @@ async def _step_new_text(
                     target=f"template #{tmpl.id}",
                     details={
                         "name": tmpl.name,
-                        "chars": len(text),
-                        "image_count": len(attachments),
+                        "chars": len(state.pending_text),
+                        "image_count": len(state.pending_attachments),
                     },
                 )
             new_id = tmpl.id
             new_name = tmpl.name
     except templates_service.TemplateNameAlreadyExists:
-        await event.message.answer(
-            texts.OP_TMPL_NAME_TAKEN.format(name=state.pending_name),
+        # Имя могло «занять» параллельным оператором между шагом 1 и save.
+        state.step = "new_awaiting_name"
+        state.renew()
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_TMPL_NAME_TAKEN.format(name=state.pending_name),
             attachments=[keyboards.broadcast_template_cancel_keyboard()],
         )
-        # Возвращаемся к шагу ввода имени.
-        state.step = "new_awaiting_name"
-        state.pending_name = ""
-        state.renew()
-        return True
+        return
     except ValueError as exc:
-        # Это сюрприз — длину уже проверили. Логируем и сбрасываем wizard.
         log.warning("broadcast_templates: create failed: %s", exc)
         _wizards.pop(actor_id, None)
-        await event.message.answer(
-            f"Ошибка создания: {exc}",
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=f"Ошибка создания: {exc}",
             attachments=[keyboards.op_back_to_menu_keyboard()],
         )
-        return True
-
+        return
     _wizards.pop(actor_id, None)
-    await event.message.answer(
-        texts.OP_TMPL_CREATED.format(name=new_name, number=new_id),
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_TMPL_CREATED.format(name=new_name, number=new_id),
         attachments=[keyboards.broadcast_template_card_keyboard(new_id)],
     )
-    return True
+
+
+async def _back_to_text_new(event) -> None:
+    """`op:tmpl:back_to_text_new` — превью → шаг ввода текста (правка)."""
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        return
+    state = _wizards.get(actor_id)
+    if state is None or state.step != "new_preview":
+        return
+    state.step = "new_awaiting_text"
+    state.renew()
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_TMPL_NEW_TEXT_PROMPT.format(
+            name=state.pending_name, limit=cfg.broadcast_max_chars
+        ),
+        attachments=[keyboards.broadcast_template_step2_keyboard()],
+    )
 
 
 async def _step_rename(
@@ -10444,6 +10710,12 @@ async def _step_edit(
     *,
     op_id: int | None,
 ) -> bool:
+    """Шаг edit: принимаем текст+картинки, показываем превью.
+
+    Сохранение перенесено в callback `op:tmpl:save_edit:<id>` после
+    подтверждения превью — оператор видит «как увидит подписчик» до
+    apply.
+    """
     if not text:
         # пустой ввод — повторим prompt
         async with session_scope() as session:
@@ -10472,55 +10744,241 @@ async def _step_edit(
         max_images = await broadcast_handler._resolve_broadcast_max_images(
             session
         )
-    # «приложили картинки → они полностью заменяют сохранённые»;
-    # «не приложили → старые остаются» (attachments=None в update_text).
+        tmpl_before = await templates_service.get_by_id(session, state.target_id)
+    if tmpl_before is None:
+        _wizards.pop(actor_id, None)
+        await event.message.answer(
+            texts.OP_TMPL_NOT_FOUND,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return True
     new_attachments = _image_attachments.image_attachments_from_event(
         event, limit=max_images
     )
-    pass_atts: list | None = new_attachments if new_attachments else None
+    # «приложили картинки → они полностью заменяют сохранённые»;
+    # «не приложили → старые остаются». В превью показываем итоговое
+    # содержимое — что реально уйдёт жителю.
+    effective_atts = (
+        list(new_attachments) if new_attachments
+        else list(tmpl_before.attachments or [])
+    )
+    state.step = "edit_preview"
+    state.pending_text = text
+    state.pending_attachments = effective_atts
+    state.pending_name = tmpl_before.name
+    # Помним, заменены ли картинки — нужно для audit-details.
+    state._edit_image_replaced = bool(new_attachments)  # type: ignore[attr-defined]
+    state.renew()
+    await _render_preview_edit(event, state)
+    return True
 
+
+async def _render_preview_edit(event, state: _TmplWizardState) -> None:
+    images = _image_attachments.build_outbound_image_attachments(
+        state.pending_attachments
+    )
+    await event.message.answer(
+        texts.OP_TMPL_PREVIEW_HEADER_EDIT.format(
+            name=state.pending_name,
+            image_count=len(state.pending_attachments),
+        ),
+    )
+    await event.message.answer(
+        state.pending_text,
+        attachments=[
+            *images,
+            keyboards.broadcast_template_preview_keyboard(state.target_id),
+        ],
+    )
+
+
+async def _save_edit(event, template_id: int) -> None:
+    """`op:tmpl:save_edit:<id>` — сохранить изменения после превью."""
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        return
+    state = _wizards.get(actor_id)
+    if (
+        state is None
+        or state.step != "edit_preview"
+        or state.target_id != template_id
+    ):
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_TMPL_CANCELLED,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return
+    op = await get_operator(event)
+    op_id = op.id if op is not None else None
+    replaced = getattr(state, "_edit_image_replaced", False)
+    pass_atts: list | None = (
+        state.pending_attachments if replaced else None
+    )
     async with session_scope() as session:
-        tmpl_before = await templates_service.get_by_id(session, state.target_id)
-        if tmpl_before is None:
+        try:
+            await templates_service.update_text(
+                session,
+                template_id,
+                state.pending_text,
+                attachments=pass_atts,
+            )
+        except templates_service.TemplateNotFound:
             _wizards.pop(actor_id, None)
-            await event.message.answer(
-                texts.OP_TMPL_NOT_FOUND,
+            await send_or_edit_screen(
+                event,
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_TMPL_NOT_FOUND,
                 attachments=[keyboards.op_back_to_menu_keyboard()],
             )
-            return True
-        await templates_service.update_text(
-            session,
-            state.target_id,
-            text,
-            attachments=pass_atts,
-        )
-        if op_id is not None and actor_id is not None:
+            return
+        if op_id is not None:
             await operators_service.write_audit(
                 session,
                 operator_max_user_id=actor_id,
                 action="broadcast_template_update",
-                target=f"template #{state.target_id}",
+                target=f"template #{template_id}",
                 details={
-                    "chars": len(text),
-                    "image_replaced": pass_atts is not None,
-                    "image_count": len(pass_atts) if pass_atts else len(
-                        tmpl_before.attachments
-                    ),
+                    "chars": len(state.pending_text),
+                    "image_replaced": replaced,
+                    "image_count": len(state.pending_attachments),
                 },
             )
-        name = tmpl_before.name
-
-    target_id = state.target_id
+    name = state.pending_name
+    image_count = len(state.pending_attachments)
     _wizards.pop(actor_id, None)
-    if pass_atts is None:
-        msg = texts.OP_TMPL_EDITED_TEXT_ONLY.format(name=name)
-    else:
+    if replaced:
         msg = texts.OP_TMPL_EDITED_WITH_IMAGES.format(
-            name=name, image_count=len(pass_atts)
+            name=name, image_count=image_count
         )
+    else:
+        msg = texts.OP_TMPL_EDITED_TEXT_ONLY.format(name=name)
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=msg,
+        attachments=[keyboards.broadcast_template_card_keyboard(template_id)],
+    )
+
+
+async def _back_to_text_edit(event, template_id: int) -> None:
+    """`op:tmpl:back_to_text_edit:<id>` — превью → шаг ввода текста."""
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        return
+    state = _wizards.get(actor_id)
+    if state is None or state.step != "edit_preview":
+        return
+    state.step = "edit_awaiting_text"
+    state.renew()
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_TMPL_EDIT_PROMPT.format(
+            name=state.pending_name, limit=cfg.broadcast_max_chars
+        ),
+        attachments=[keyboards.broadcast_template_cancel_keyboard()],
+    )
+
+
+async def _step_clone_name(
+    event,
+    actor_id: int,
+    state: _TmplWizardState,
+    text: str,
+    *,
+    op_id: int | None,
+) -> bool:
+    """Принять имя для клона; создать шаблон сразу (text+attachments
+    уже в pending_*, превью не нужен — это копия)."""
+    if not text:
+        await event.message.answer(
+            texts.OP_TMPL_NAME_EMPTY,
+            attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        )
+        return True
+    if len(text) > templates_service.MAX_NAME_LEN:
+        await event.message.answer(
+            texts.OP_TMPL_NAME_TOO_LONG.format(
+                actual=len(text), limit=templates_service.MAX_NAME_LEN
+            ),
+            attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        )
+        return True
+    try:
+        async with session_scope() as session:
+            tmpl = await templates_service.create_template(
+                session,
+                name=text,
+                text=state.pending_text,
+                attachments=state.pending_attachments,
+                created_by_operator_id=op_id,
+            )
+            if op_id is not None:
+                await operators_service.write_audit(
+                    session,
+                    operator_max_user_id=actor_id,
+                    action="broadcast_template_clone",
+                    target=f"template #{tmpl.id}",
+                    details={
+                        "source_id": state.target_id,
+                        "source_name": state.source_name,
+                        "new_name": text,
+                    },
+                )
+            new_id = tmpl.id
+            new_name = tmpl.name
+            source_name = state.source_name
+    except templates_service.TemplateNameAlreadyExists:
+        await event.message.answer(
+            texts.OP_TMPL_NAME_TAKEN.format(name=text),
+            attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        )
+        return True
+    _wizards.pop(actor_id, None)
     await event.message.answer(
-        msg,
-        attachments=[keyboards.broadcast_template_card_keyboard(target_id)],
+        texts.OP_TMPL_CLONED.format(
+            name=new_name, source_name=source_name, number=new_id
+        ),
+        attachments=[keyboards.broadcast_template_card_keyboard(new_id)],
+    )
+    return True
+
+
+async def _step_search(
+    event,
+    actor_id: int,
+    state: _TmplWizardState,
+    text: str,
+) -> bool:
+    """Принять поисковый запрос, показать результаты."""
+    if not text:
+        await event.message.answer(
+            texts.OP_TMPL_SEARCH_PROMPT,
+            attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        )
+        return True
+    async with session_scope() as session:
+        results = await templates_service.search(session, text)
+    _wizards.pop(actor_id, None)
+    if not results:
+        await event.message.answer(
+            texts.OP_TMPL_SEARCH_NOTHING_FOUND.format(query=text),
+            attachments=[
+                keyboards.broadcast_templates_search_results_keyboard([], text)
+            ],
+        )
+        return True
+    await event.message.answer(
+        texts.OP_TMPL_SEARCH_RESULTS_HEADER.format(
+            query=text, count=len(results)
+        ),
+        attachments=[
+            keyboards.broadcast_templates_search_results_keyboard(
+                results, text
+            )
+        ],
     )
     return True
 ```
@@ -12945,8 +13403,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `58484` bytes  
-SHA-256: `923bba6ba4402cdb564b3060d52ddafe6f72d764ada5b500a5a91bc19f36992f`
+Size: `61415` bytes  
+SHA-256: `dd33d5a06b0d5d05f7988965ef51d2dace44dc8a23cc2578029f3caaf8610e8c`
 
 ```python
 from maxapi.types import (
@@ -13481,22 +13939,36 @@ def broadcast_templates_list_keyboard(
     templates: list,
     *,
     can_create: bool = True,
+    show_search: bool = True,
 ):
-    """Список шаблонов рассылок (PR H).
+    """Список шаблонов рассылок (PR H + PR template-editor-upgrade).
 
     Каждая строка — кнопка-открытие карточки шаблона: payload
-    `op:tmpl:open:<id>`. Сверху — «➕ Создать шаблон» (`op:tmpl:new`).
-    Внизу — возврат в админ-меню.
+    `op:tmpl:open:<id>`. Сверху — «🔍 Найти» (если show_search) и
+    «➕ Создать шаблон». Внизу — возврат в админ-меню.
     """
     kb = InlineKeyboardBuilder()
+    top_row: list = []
+    if show_search:
+        top_row.append(CallbackButton(text="🔍 Найти", payload="op:tmpl:search"))
     if can_create:
-        kb.row(CallbackButton(text="➕ Создать шаблон", payload="op:tmpl:new"))
+        top_row.append(
+            CallbackButton(text="➕ Создать шаблон", payload="op:tmpl:new")
+        )
+    if top_row:
+        kb.row(*top_row)
     for tmpl in templates:
         # Префикс «📋» компактно намекает, что это шаблон, а не история
-        # рассылок (там «📜»). Имя и так короткое (≤64 симв).
+        # рассылок (там «📜»). Имя короткое (≤64 симв); прибавляем
+        # компактный индикатор use_count, если шаблон использовали ≥1
+        # раз — оператор видит «горячие» сразу.
+        use_count = getattr(tmpl, "use_count", 0) or 0
+        label = f"📋 {tmpl.name}"
+        if use_count > 0:
+            label = f"📋 {tmpl.name} · ×{use_count}"
         kb.row(
             CallbackButton(
-                text=f"📋 {tmpl.name}",
+                text=label,
                 payload=f"op:tmpl:open:{tmpl.id}",
             )
         )
@@ -13504,19 +13976,70 @@ def broadcast_templates_list_keyboard(
     return kb.as_markup()
 
 
+def broadcast_templates_search_results_keyboard(items, query: str):
+    """Результаты поиска: те же кнопки-открытия, плюс «🔍 Уточнить» и
+    «↩️ К списку»."""
+    kb = InlineKeyboardBuilder()
+    for tmpl in items:
+        use_count = getattr(tmpl, "use_count", 0) or 0
+        label = f"📋 {tmpl.name}"
+        if use_count > 0:
+            label = f"📋 {tmpl.name} · ×{use_count}"
+        kb.row(
+            CallbackButton(
+                text=label,
+                payload=f"op:tmpl:open:{tmpl.id}",
+            )
+        )
+    kb.row(
+        CallbackButton(text="🔍 Уточнить запрос", payload="op:tmpl:search"),
+        CallbackButton(text="↩️ К списку", payload="op:tmpl:list"),
+    )
+    return kb.as_markup()
+
+
+def broadcast_template_preview_keyboard(template_id: int | None):
+    """Превью шаблона перед сохранением — «✅ Сохранить» / «↩️ Назад».
+
+    template_id=None — превью при создании (шаг 2½ between text и
+    save). template_id=<id> — превью при редактировании существующего.
+    «↩️ Назад» возвращает на шаг ввода текста."""
+    kb = InlineKeyboardBuilder()
+    if template_id is None:
+        save_payload = "op:tmpl:save_new"
+        back_payload = "op:tmpl:back_to_text_new"
+    else:
+        save_payload = f"op:tmpl:save_edit:{template_id}"
+        back_payload = f"op:tmpl:back_to_text_edit:{template_id}"
+    kb.row(
+        CallbackButton(text="✅ Сохранить", payload=save_payload),
+        CallbackButton(text="↩️ Назад исправить", payload=back_payload),
+    )
+    kb.row(CallbackButton(text="❌ Отменить", payload="op:tmpl:cancel"))
+    return kb.as_markup()
+
+
 def broadcast_template_card_keyboard(template_id: int):
-    """Карточка шаблона: применить / переименовать / изменить текст /
-    удалить / назад к списку.
+    """Карточка шаблона: применить / клонировать / переименовать /
+    изменить текст / удалить / назад к списку.
 
     Кнопка «📨 Отправить как рассылку» — главная цель пула, поэтому
-    отдельной строкой сверху. Удаление и редактирование — отдельным
-    рядом, чтобы случайно не нажать.
+    отдельной строкой сверху. «📑 Клонировать» рядом — частый паттерн
+    «у меня есть Отключение воды, нужен ещё один такой же для другого
+    района». Удаление и редактирование — отдельным рядом, чтобы
+    случайно не нажать.
     """
     kb = InlineKeyboardBuilder()
     kb.row(
         CallbackButton(
             text="📨 Отправить как рассылку",
             payload=f"op:tmpl:apply:{template_id}",
+        )
+    )
+    kb.row(
+        CallbackButton(
+            text="📑 Клонировать",
+            payload=f"op:tmpl:clone:{template_id}",
         )
     )
     kb.row(
@@ -15227,8 +15750,8 @@ async def find_active_for_user(session: AsyncSession, user_id: int) -> Appeal | 
 
 ### `bot/aemr_bot/services/broadcast_templates.py`
 
-Size: `5607` bytes  
-SHA-256: `5eaedf648a2ad3a9b327dd23c361b7937d1ab816a5588f204564cf2d49f20b42`
+Size: `7910` bytes  
+SHA-256: `c40c9ced17d959736d632adf93e099a0410683dbf247d0e5bba470a19d2c4b8e`
 
 ```python
 """Пул шаблонов рассылок (PR H).
@@ -15249,7 +15772,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Sequence
 
-from sqlalchemy import desc, func, select
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15401,6 +15924,63 @@ async def archive(session: AsyncSession, template_id: int) -> BroadcastTemplate:
     tmpl.archived_at = datetime.now(timezone.utc)
     await session.flush()
     return tmpl
+
+
+async def record_usage(
+    session: AsyncSession, template_id: int
+) -> BroadcastTemplate | None:
+    """Зафиксировать факт применения шаблона как рассылки.
+
+    Инкрементирует `use_count` на 1 и обновляет `last_used_at`. Не
+    бросает на отсутствующий шаблон (мог быть архивирован между
+    open'ом карточки и нажатием Apply) — просто возвращает None,
+    apply-flow это и так проверит до отправки.
+    """
+    tmpl = await get_by_id(session, template_id, include_archived=True)
+    if tmpl is None:
+        return None
+    tmpl.use_count = (tmpl.use_count or 0) + 1
+    tmpl.last_used_at = datetime.now(timezone.utc)
+    await session.flush()
+    return tmpl
+
+
+async def search(
+    session: AsyncSession,
+    query: str,
+    *,
+    limit: int = 50,
+) -> list[BroadcastTemplate]:
+    """ILIKE-поиск по имени и тексту активных шаблонов.
+
+    Регистронезависимо. Совпадение в имени (короткое поле, точечный
+    запрос — «вода») приоритетнее совпадения в тексте (поэтому
+    сортируем по совпадению имени сначала, потом по updated_at).
+    Возвращаем пустой список при пустом запросе — caller покажет
+    обычный list_active.
+    """
+    q = (query or "").strip()
+    if not q:
+        return []
+    pattern = f"%{q}%"
+    result = await session.execute(
+        select(BroadcastTemplate)
+        .where(
+            BroadcastTemplate.archived_at.is_(None),
+            or_(
+                BroadcastTemplate.name.ilike(pattern),
+                BroadcastTemplate.text.ilike(pattern),
+            ),
+        )
+        # Сортируем так, чтобы совпадение в имени стояло сверху.
+        # name LIKE pattern → 0; иначе → 1.
+        .order_by(
+            BroadcastTemplate.name.ilike(pattern).desc(),
+            desc(BroadcastTemplate.updated_at),
+        )
+        .limit(limit)
+    )
+    return list(result.scalars().all())
 ```
 
 ### `bot/aemr_bot/services/broadcasts.py`
@@ -20071,8 +20651,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `38640` bytes  
-SHA-256: `66dbc474ae28daac84c717ecfce2cb2ba03a4c1a30ba2c4f4e03803a7f8e6b78`
+Size: `41532` bytes  
+SHA-256: `2fb4e83e4df05f54794f2569a9fab3f92f5b570639e6061c2dc2cc9b0db31469`
 
 ```python
 WELCOME = (
@@ -20624,9 +21204,12 @@ OP_TMPL_CARD = (
     "📅 Создан: {created_at}\n"
     "🖼 Картинок: {image_count}\n"
     "📏 Длина текста: {char_count} симв.\n"
+    "📊 Применений: {use_count}{last_used_line}\n"
     "━━━━━━━━━━━━━━━━━━\n"
     "{text}"
 )
+OP_TMPL_CARD_LAST_USED = " · последний раз {when}"
+OP_TMPL_CARD_NEVER_USED = " (ни разу не отправлен)"
 
 # Wizard «создать новый шаблон»: шаг 1 — имя
 OP_TMPL_NEW_NAME_PROMPT = (
@@ -20716,6 +21299,54 @@ OP_TMPL_EDITED_WITH_IMAGES = (
     "✅ Шаблон «{name}» обновлён:\n"
     "• новый текст\n"
     "• {image_count} картинок (заменены)"
+)
+
+# Превью перед сохранением (новая фича)
+OP_TMPL_PREVIEW_HEADER_NEW = (
+    "👀 Так это увидит подписчик\n"
+    "━━━━━━━━━━━━━━━━━━\n"
+    "Шаблон «{name}», ниже — сообщение и {image_count} картинок "
+    "ровно в том виде, в котором они уйдут жителю при рассылке.\n\n"
+    "Если всё ок — нажмите «✅ Сохранить».\n"
+    "Хотите поправить — «↩️ Назад исправить».\n"
+    "━━━━━━━━━━━━━━━━━━"
+)
+OP_TMPL_PREVIEW_HEADER_EDIT = (
+    "👀 Так это увидит подписчик\n"
+    "━━━━━━━━━━━━━━━━━━\n"
+    "Обновлённый шаблон «{name}», {image_count} картинок. Если "
+    "всё ок — «✅ Сохранить», иначе — «↩️ Назад исправить».\n"
+    "━━━━━━━━━━━━━━━━━━"
+)
+
+# Поиск (новая фича)
+OP_TMPL_SEARCH_PROMPT = (
+    "🔍 Поиск шаблонов\n"
+    "━━━━━━━━━━━━━━━━━━\n"
+    "Введите слово или фрагмент. Бот найдёт шаблоны, в имени или "
+    "тексте которых это слово встречается.\n\n"
+    "Примеры запросов: «вода», «расписание», «ЧС»."
+)
+OP_TMPL_SEARCH_RESULTS_HEADER = (
+    "🔍 Найдено по запросу «{query}»: {count}"
+)
+OP_TMPL_SEARCH_NOTHING_FOUND = (
+    "🔍 Ничего не найдено по запросу «{query}».\n\n"
+    "Попробуйте более короткий или другой фрагмент."
+)
+
+# Клонирование (новая фича)
+OP_TMPL_CLONE_NAME_PROMPT = (
+    "📑 Клонирование шаблона\n"
+    "━━━━━━━━━━━━━━━━━━\n"
+    "Текст и {image_count} картинок берутся из шаблона «{source_name}» "
+    "за основу. Введите название НОВОГО шаблона (до {limit} симв.).\n\n"
+    "💡 Чтобы отличать от исходника, добавьте уточнение в имя: «"
+    "{source_name} — Заречный», «{source_name} — Микро», «{source_name} (Y)»."
+)
+OP_TMPL_CLONED = (
+    "✅ Шаблон «{name}» создан как копия «{source_name}» (#{number}).\n"
+    "Теперь его можно отправить или отредактировать."
 )
 
 OP_TMPL_DELETE_CONFIRM = (
@@ -26284,8 +26915,8 @@ class TestListFailed:
 
 ### `bot/tests/test_broadcast_templates_handlers.py`
 
-Size: `13876` bytes  
-SHA-256: `9f668455ff80cb8605c0bd64cb5ee105d64a68ecf5d981f7c0b3c31fc6d56c66`
+Size: `15540` bytes  
+SHA-256: `fdb1dde17ba30caa9948ae329a556f95f7b7bbe9e7d78a25488e9edee9ba2f7b`
 
 ```python
 """Тесты handlers/broadcast_templates (PR H).
@@ -26616,8 +27247,10 @@ class TestWizardText:
         assert 7 not in bt._wizards
 
     @pytest.mark.asyncio
-    async def test_step_new_text_creates_template_and_clears_state(self) -> None:
-        """Шаг ввода текста на успехе создаёт template и вычищает state."""
+    async def test_step_new_text_moves_to_preview(self) -> None:
+        """PR template-editor-upgrade: после ввода текста wizard
+        переходит в new_preview (не сохраняет сразу), оператор сначала
+        видит «как увидит подписчик»."""
         from aemr_bot.handlers import broadcast_templates as bt
 
         state = bt._TmplWizardState(
@@ -26625,7 +27258,6 @@ class TestWizardText:
         )
         bt._wizards[7] = state
         event = _make_event(user_id=7)
-        fake_tmpl = SimpleNamespace(id=1, name="X")
         with (
             patch(
                 "aemr_bot.handlers.broadcast_templates.is_admin_chat",
@@ -26648,6 +27280,43 @@ class TestWizardText:
                 return_value=[],
             ),
             patch(
+                "aemr_bot.handlers.broadcast_templates._image_attachments.build_outbound_image_attachments",
+                return_value=[],
+            ),
+        ):
+            consumed = await bt.handle_wizard_text(event, "Уважаемые жители!")
+        assert consumed is True
+        # Wizard остался — теперь в шаге preview
+        assert 7 in bt._wizards
+        assert bt._wizards[7].step == "new_preview"
+        assert bt._wizards[7].pending_text == "Уважаемые жители!"
+        # answer вызван дважды — header превью + сам текст
+        assert event.message.answer.await_count >= 1
+
+    @pytest.mark.asyncio
+    async def test_save_new_creates_template(self) -> None:
+        """После превью callback op:tmpl:save_new сохраняет шаблон и
+        очищает state."""
+        from aemr_bot.handlers import broadcast_templates as bt
+
+        bt._wizards[7] = bt._TmplWizardState(
+            step="new_preview",
+            pending_name="Foo",
+            pending_text="Body",
+            pending_attachments=[],
+        )
+        event = _make_event(user_id=7)
+        fake_tmpl = SimpleNamespace(id=1, name="Foo")
+        with (
+            patch(
+                "aemr_bot.handlers.broadcast_templates.get_operator",
+                new=AsyncMock(return_value=SimpleNamespace(id=99)),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast_templates.session_scope",
+                _fake_session_scope,
+            ),
+            patch(
                 "aemr_bot.handlers.broadcast_templates.templates_service.create_template",
                 new=AsyncMock(return_value=fake_tmpl),
             ),
@@ -26655,17 +27324,19 @@ class TestWizardText:
                 "aemr_bot.handlers.broadcast_templates.operators_service.write_audit",
                 new=AsyncMock(),
             ),
+            patch(
+                "aemr_bot.handlers.broadcast_templates.send_or_edit_screen",
+                new=AsyncMock(),
+            ),
         ):
-            consumed = await bt.handle_wizard_text(event, "Уважаемые жители!")
-        assert consumed is True
+            await bt._save_new(event)
         assert 7 not in bt._wizards
-        event.message.answer.assert_awaited()
 ```
 
 ### `bot/tests/test_broadcast_templates_service_pg.py`
 
-Size: `9397` bytes  
-SHA-256: `ea45072f8f94d3535d592feca0ac639a9e3945f0c46284b2e6fdfd7d475f1446`
+Size: `13550` bytes  
+SHA-256: `29507654c5ebd154eafcb91fe369d93fbfe553230e9a35412741e7430fd76edd`
 
 ```python
 """PG-тесты services/broadcast_templates (PR H).
@@ -26867,6 +27538,105 @@ async def test_archive_sets_archived_at(session) -> None:
 async def test_archive_unknown_raises(session) -> None:
     with pytest.raises(templates.TemplateNotFound):
         await templates.archive(session, 99999)
+
+
+# ---- record_usage / search (PR template-editor-upgrade) -----------
+
+
+@pytest.mark.asyncio
+async def test_record_usage_increments_and_sets_last_used(session) -> None:
+    """Каждый apply повышает счётчик и обновляет last_used_at."""
+    t1 = await templates.create_template(session, name="A", text="a")
+    assert t1.use_count == 0
+    assert t1.last_used_at is None
+
+    await templates.record_usage(session, t1.id)
+    refetched = await templates.get_by_id(session, t1.id)
+    assert refetched is not None
+    assert refetched.use_count == 1
+    assert refetched.last_used_at is not None
+
+    await templates.record_usage(session, t1.id)
+    refetched2 = await templates.get_by_id(session, t1.id)
+    assert refetched2 is not None
+    assert refetched2.use_count == 2
+
+
+@pytest.mark.asyncio
+async def test_record_usage_unknown_returns_none(session) -> None:
+    """Если шаблона нет (или он архивирован уже после open'а карточки) —
+    record_usage возвращает None без исключения."""
+    res = await templates.record_usage(session, 99999)
+    assert res is None
+
+
+@pytest.mark.asyncio
+async def test_record_usage_works_on_archived_template(session) -> None:
+    """Архивированный шаблон тоже инкрементируется — оператор
+    применил его до архивации, факт фиксируем в аудите."""
+    t1 = await templates.create_template(session, name="A", text="a")
+    await templates.archive(session, t1.id)
+    res = await templates.record_usage(session, t1.id)
+    assert res is not None
+    assert res.use_count == 1
+
+
+@pytest.mark.asyncio
+async def test_search_finds_by_name(session) -> None:
+    await templates.create_template(session, name="Отключение воды", text="…")
+    await templates.create_template(session, name="Расписание", text="…")
+    results = await templates.search(session, "вода")
+    assert len(results) == 1
+    assert results[0].name == "Отключение воды"
+
+
+@pytest.mark.asyncio
+async def test_search_finds_by_text(session) -> None:
+    await templates.create_template(
+        session, name="Объявление", text="Уважаемые жители, ремонт дорог"
+    )
+    results = await templates.search(session, "ремонт")
+    assert len(results) == 1
+
+
+@pytest.mark.asyncio
+async def test_search_name_match_ranked_above_text_match(session) -> None:
+    """Если запрос есть в имени одного шаблона и в тексте другого,
+    тот, у которого совпало имя, выше."""
+    await templates.create_template(
+        session, name="План", text="что-то по плану"
+    )
+    await templates.create_template(
+        session, name="Расписание", text="общий план работ"
+    )
+    results = await templates.search(session, "план")
+    assert results[0].name == "План"
+
+
+@pytest.mark.asyncio
+async def test_search_case_insensitive(session) -> None:
+    await templates.create_template(session, name="ОТКЛЮЧЕНИЕ ВОДЫ", text="t")
+    # ILIKE регистронезависимый: «воды» (нижний регистр) ищется в
+    # «ВОДЫ» (верхний регистр). Не ищем «вода» — отдельная словоформа.
+    results = await templates.search(session, "воды")
+    assert len(results) >= 1
+
+
+@pytest.mark.asyncio
+async def test_search_excludes_archived(session) -> None:
+    t1 = await templates.create_template(
+        session, name="Старый", text="отключение воды"
+    )
+    await templates.archive(session, t1.id)
+    results = await templates.search(session, "отключение")
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_search_empty_query_returns_empty(session) -> None:
+    await templates.create_template(session, name="X", text="x")
+    assert await templates.search(session, "") == []
+    assert await templates.search(session, "   ") == []
 
 
 @pytest.mark.asyncio
