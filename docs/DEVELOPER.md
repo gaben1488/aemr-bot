@@ -299,6 +299,27 @@ aemr-bot/
 
 **Хранилище состояний анкеты — Postgres JSONB, не Redis.** Активных воронок одновременно — десятки в часы пик, единицы ночью. Пиковая нагрузка 1–2 операции UPDATE в секунду. Postgres проглатывает не замечая. Триггер пересмотра — устойчивые показатели свыше 500 одновременных воронок по `/diag`.
 
+### Новые подсистемы (после Регламента v5)
+
+Модули и решения, добавленные в код после согласования v5. Соответствующая дельта Регламента подготовлена в `docs/Регламент_v6_draft.md` (ожидает утверждения распоряжением).
+
+**Управление операторами через мастер.** `handlers/admin_operators.py` — иерархический wizard «👥 Операторы» в `/op_help` для роли `it`. Заменяет старый путь «получить `max_user_id` через `/whoami` в служебной группе → `/add_operators` многострочно». Возможности: список активных, добавление из участников группы, карточка оператора со сменой роли (`it`/`coordinator`/`aemr`/`egp`), мягкая деактивация (`is_active=false` без удаления row'а — audit-trail сохраняется), реактивация. Защита: единственного активного `it` деактивировать нельзя (`active_it_count <= 1` + UI-предупреждение). Audit-actions: `operator_upsert`, `operator_deactivate`, `operator_reactivate`. Команда `/add_operators` оставлена для bulk-сценариев.
+
+**Иерархическое меню «⚙️ Настройки бота».** `handlers/admin_settings.py` — навигация по `settings_store.SCHEMA` (14 ключей) для роли `it`. Inline-редактирование с типизированной валидацией (URL → URL, int → диапазон, list → CSV). UI показывает счётчик «📌 Не выгружено в репо: N» с превью первых 5 dirty-ключей. Перед созданием PR — confirm-card со списком ключей и кнопкой «🔍 Показать diff». Команда `/setting` оставлена как экспертный shortcut.
+
+**Repo-sync через автоматический Pull Request.** `services/repo_sync.py` — клиент GitHub REST API v3 (без PyGithub: меньше CVE-surface, проще аудит). Из меню «⚙️ Настройки бота» оператор `it` нажимает «🔄 Синхронизировать с репо»: сервис создаёт ветку `bot-config-sync-YYYYMMDD-HHMMSS` (UTC), пушит обновлённый `seed/runtime_config.json` (сериализация `sort_keys=True`, минимальный diff), открывает PR. Feature-flag по `GITHUB_PAT` — без токена `SyncResult(ok=False, reason='no_token')`, бот не падает. Никаких force-push, никаких прямых записей в `main`. `BackupResult`-подобный `SyncResult` категоризирует ошибки (`no_token`, `no_base_branch`, `branch_failed`, `write_failed`, `pr_failed`) для понятного UI-сообщения.
+
+**Картинки в рассылках и ответах оператора.** `utils/image_attachments.py` — тонкие helper'ы поверх `utils/attachments.collect_attachments` + `deserialize_for_relay`. `image_attachments_from_event(event, limit=N)` извлекает картинки из `event.message.body.attachments`. Используются в двух местах:
+
+- `handlers/operator_reply._send_reply_to_citizen` — `limit=1` (Приложение 2 Регламента ожидает один кадр). Если оператор приложил больше — admin-уведомление «приложено N, ушла первая».
+- `handlers/broadcast._handle_wizard_text` — `limit=cfg.broadcast_max_images` (настройка в БД, диапазон 1–20, по умолчанию 5). Сохраняются в `Broadcast.attachments JSONB` (миграция 0014). В фоновой отправке `build_outbound_image_attachments(stored)` десериализует **один раз** через `deserialize_for_relay` и передаёт в каждый `bot.send_message`. Тяжёлая pydantic-валидация не повторяется per-user. Превью-карточка confirm-шага включает все картинки + счётчик «📷 Картинок: N» + warning при превышении лимита.
+
+**Категоризированные ошибки бэкапа.** `services/db_backup.BackupResult` (dataclass с `.ok`/`.path`/`.fail_kind`/`.fail_detail`) + два специфических исключения `BackupPgDumpError` / `BackupGpgError`. `_run_pg_dump_encrypted` сначала проверяет `dump_rc` — если pg_dump упал, gpg-проблема вторична. **152-ФЗ хардеринг**: при gpg-fail незашифрованный plain-text дамп **удаляется** — ПДн нельзя оставлять на диске без шифрования. Cron `_job_backup_with_alert` шлёт 4 разных алёрта вместо одного «не выполнен», каждый подсказывает, КУДА смотреть.
+
+**Edit-vs-send freshness-tracker.** `utils/menu_tracker.py` — in-memory `dict[int, str]` (chat_id → mid последней карточки-меню). `send_or_edit_screen` редактирует **только** если callback пришёл от той же mid; иначе шлёт новое сообщение. Это закрывает UX-баг «оператор кликнул на старую карточку выше по чату — бот отредактировал её далеко вверху, изменения не видны». Sacred-карточки (admin appeal card, citizen reply, broadcast progress, audit, pulse, reminders) отправляются напрямую через `bot.send_message` и в tracker не учитываются — они всегда new. Tracker per-process in-memory; после рестарта пуст, первое нажатие callback graceful → send new.
+
+**Funnel-watchdog admin-alert при массовом зашпиле.** `services/cron._job_funnel_watchdog` теперь принимает `send_admin_text` и при сбросе ≥ `_FUNNEL_WATCHDOG_ADMIN_ALERT_THRESHOLD=5` зависших анкет за час шлёт служебной группе сводку. 1-4 в час — норма «житель отвлёкся», тишина. ≥5 в час — может быть UX-регрессия в воронке или DDoS — admin узнаёт.
+
 ## Часть IV — База данных
 
 Полный канонический срез лежит в `db-schema.md`. Здесь — то, что нужно знать разработчику в момент работы.
