@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-21 02:53:27 UTC`
+Generated at: `2026-05-21 03:04:11 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `186`
 Max file size: `300 KB`
@@ -42,11 +42,11 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (12111 bytes)
-- `bot/aemr_bot/handlers/admin_audience.py` (7569 bytes)
+- `bot/aemr_bot/handlers/admin_audience.py` (9220 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12068 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17506 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (18366 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (19275 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (41211 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (26042 bytes)
@@ -54,13 +54,13 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (12572 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
-- `bot/aemr_bot/handlers/broadcast_templates.py` (26572 bytes)
+- `bot/aemr_bot/handlers/broadcast_templates.py` (28306 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8339 bytes)
 - `bot/aemr_bot/handlers/menu.py` (43971 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (32495 bytes)
 - `bot/aemr_bot/handlers/start.py` (16556 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (57840 bytes)
+- `bot/aemr_bot/keyboards.py` (58484 bytes)
 - `bot/aemr_bot/main.py` (18178 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
@@ -84,7 +84,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/users.py` (29316 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (11952 bytes)
-- `bot/aemr_bot/texts.py` (35467 bytes)
+- `bot/aemr_bot/texts.py` (38640 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -3343,8 +3343,8 @@ async def run_erase_for_appeal(event, appeal_id: int) -> None:
 
 ### `bot/aemr_bot/handlers/admin_audience.py`
 
-Size: `7569` bytes  
-SHA-256: `71a77ce6e2d2b1a58e93d5df6b152e8a1ff3acaccbcfe1a5182d4b8bb546e052`
+Size: `9220` bytes  
+SHA-256: `b1edc902aa54434d3daa7b6ec1418503b2efb7ecfd3b274249493d49f89e01bb`
 
 ```python
 """Меню «📊 Аудитория и согласия» — IT-выборки + точечные действия
@@ -3363,7 +3363,13 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import get_user_id, send_or_edit_screen
+from aemr_bot.services.card_format import _citizen_status_line
+from aemr_bot.utils import menu_tracker
+from aemr_bot.utils.event import (
+    extract_message_id,
+    get_user_id,
+    send_or_edit_screen,
+)
 
 log = logging.getLogger(__name__)
 
@@ -3501,17 +3507,37 @@ async def run_audience_action(event, payload: str) -> None:
         text=header,
         attachments=[kbds.op_back_to_audience_keyboard()],
     )
+    # Карточки жителей — каждая со status-маркерами (подписка, согласие,
+    # блок), чтобы оператор видел контекст без перехода в отдельную
+    # вкладку. Это аналог _citizen_status_line из admin appeal card.
+    #
+    # Sticky-tracker: после каждой карточки обновляем mid в tracker'е.
+    # Иначе tracker остаётся на mid header'а (отрисован выше через
+    # send_or_edit_screen), а карточки жителей ниже. Оператор скроллит
+    # вниз, тапает кнопку header'а — callback_mid (header) совпал бы с
+    # tracker → edit на месте header'а ВВЕРХУ чата → оператор внизу
+    # ничего не видит. Сдвигая tracker на последнюю отправленную
+    # карточку, гарантируем: любой тап на header или промежуточную
+    # карточку — это «mid выше tracker'а», поэтому send_new в самый
+    # низ. Эта же логика нужна и в _do_open_tickets.
+    last_mid: str | None = None
     for u in users:
         name = u.first_name or "—"
         phone = _mask_phone(u.phone)
-        line = f"#{u.max_user_id} · {name} · {phone}"
-        await event.bot.send_message(
+        status = _citizen_status_line(u)
+        line = f"#{u.max_user_id} · {name} · {phone}\n{status}"
+        sent = await event.bot.send_message(
             chat_id=cfg.admin_group_id,
             text=line,
             attachments=[
                 kbds.op_audience_user_actions(u.max_user_id, blocked=u.is_blocked)
             ],
         )
+        mid = extract_message_id(sent)
+        if mid:
+            last_mid = mid
+    if last_mid is not None:
+        menu_tracker.set_last_menu_mid(cfg.admin_group_id, last_mid)
 
 
 def _mask_phone(phone: str | None) -> str:
@@ -5281,8 +5307,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `18366` bytes  
-SHA-256: `f498e8ab682bac1b265f016e56b401b273063e8762d57f0f00f92c53e70c1f43`
+Size: `19275` bytes  
+SHA-256: `ca0538105d80be9444e0b0c9235a6a8b4879e5b36ed399b3d80493b2a64ee6c0`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -5431,6 +5457,16 @@ async def _do_open_tickets(event) -> None:
         attachments=[kbds.op_back_to_menu_keyboard()],
     )
 
+    # Sticky-tracker: tracker встаёт на mid header'а (через
+    # send_or_edit_screen выше), а карточки обращений печатаются ниже
+    # через `event.bot.send_message`. Без сдвига tracker оператор внизу
+    # чата тапает кнопку header'а — `callback_mid == tracker` → edit
+    # вверху → внизу ничего не меняется. Сдвигаем tracker на последнюю
+    # отправленную карточку, чтобы любой тап выше → send_new.
+    from aemr_bot.utils import menu_tracker
+    from aemr_bot.utils.event import extract_message_id
+
+    last_mid: str | None = None
     for appeal in open_appeals:
         user_name = appeal.user.first_name if appeal.user else "—"
         user_id_text = appeal.user.max_user_id if appeal.user else "—"
@@ -5446,7 +5482,7 @@ async def _do_open_tickets(event) -> None:
             f"📝 Текст обращения:\n{appeal.summary or '—'}\n\n"
             f"🆔 №{appeal.id}"
         )
-        await event.bot.send_message(
+        sent = await event.bot.send_message(
             chat_id=cfg.admin_group_id,
             text=text,
             attachments=[
@@ -5459,6 +5495,11 @@ async def _do_open_tickets(event) -> None:
                 )
             ],
         )
+        mid = extract_message_id(sent)
+        if mid:
+            last_mid = mid
+    if last_mid is not None:
+        menu_tracker.set_last_menu_mid(cfg.admin_group_id, last_mid)
 
 
 async def _do_diag(event) -> None:
@@ -9673,8 +9714,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/broadcast_templates.py`
 
-Size: `26572` bytes  
-SHA-256: `090cf422b09502d9f5c847796ca4e68055c63b76bb728cdce7afb5c0b7226a69`
+Size: `28306` bytes  
+SHA-256: `7d6c70dadebec1511118c972de70edb35e90b761cff7880e8271f93931a4c2a7`
 
 ```python
 """UI шаблонов рассылок (PR H).
@@ -9826,6 +9867,7 @@ async def _open(event, template_id: int) -> None:
         name=tmpl.name,
         created_at=_format_dt(tmpl.created_at),
         image_count=len(tmpl.attachments),
+        char_count=len(tmpl.text),
         text=tmpl.text,
     )
     # Карточка показывает сохранённые картинки рядом с кнопками — оператор
@@ -10055,6 +10097,36 @@ async def _cancel(event) -> None:
     )
 
 
+async def _back_to_name(event) -> None:
+    """Шаг 2 → шаг 1: вернуть wizard к вводу имени. Pending text
+    сбрасываем — оператор может перезайти и набрать новый. Имя
+    оставляем в pending_name, чтобы оператор увидел его в качестве
+    подсказки (но это не реализовано тут — prompt стандартный)."""
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        return
+    state = _wizards.get(actor_id)
+    if state is None or state.step != "new_awaiting_text":
+        # Защита от устаревшей кнопки — wizard уже закрыт/в другом шаге.
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_TMPL_CANCELLED,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return
+    state.step = "new_awaiting_name"
+    state.renew()
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_TMPL_NEW_NAME_PROMPT.format(
+            limit=templates_service.MAX_NAME_LEN
+        ),
+        attachments=[keyboards.broadcast_template_cancel_keyboard()],
+    )
+
+
 # ---- callback dispatch (то, что вызывает admin_callback_dispatch) ----
 
 async def handle_callback(event, payload: str) -> bool:
@@ -10082,6 +10154,13 @@ async def handle_callback(event, payload: str) -> bool:
     if rest == "cancel":
         await ack_callback(event)
         await _cancel(event)
+        return True
+    if rest == "back_to_name":
+        # Вернуть wizard на шаг 1 (имя). pending_name не сбрасываем —
+        # покажем как старое в подсказке-примере, оператор может его
+        # подправить или ввести заново.
+        await ack_callback(event)
+        await _back_to_name(event)
         return True
 
     # verb:id
@@ -10182,7 +10261,7 @@ async def _step_new_name(
         texts.OP_TMPL_NEW_TEXT_PROMPT.format(
             name=text, limit=cfg.broadcast_max_chars
         ),
-        attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        attachments=[keyboards.broadcast_template_step2_keyboard()],
     )
     return True
 
@@ -10200,7 +10279,7 @@ async def _step_new_text(
             texts.OP_TMPL_NEW_TEXT_PROMPT.format(
                 name=state.pending_name, limit=cfg.broadcast_max_chars
             ),
-            attachments=[keyboards.broadcast_template_cancel_keyboard()],
+            attachments=[keyboards.broadcast_template_step2_keyboard()],
         )
         return True
     if len(text) > cfg.broadcast_max_chars:
@@ -10208,7 +10287,7 @@ async def _step_new_text(
             texts.OP_TMPL_TEXT_TOO_LONG.format(
                 actual=len(text), limit=cfg.broadcast_max_chars
             ),
-            attachments=[keyboards.broadcast_template_cancel_keyboard()],
+            attachments=[keyboards.broadcast_template_step2_keyboard()],
         )
         return True
     # Картинки — те же helper'ы, что у /broadcast. Лимит наследуем от
@@ -12817,8 +12896,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `57840` bytes  
-SHA-256: `3b35236e4611078deea74eda093f8a3b7b8521543d6d001ddcebc5be1c88432d`
+Size: `58484` bytes  
+SHA-256: `923bba6ba4402cdb564b3060d52ddafe6f72d764ada5b500a5a91bc19f36992f`
 
 ```python
 from maxapi.types import (
@@ -13430,6 +13509,21 @@ def broadcast_template_delete_confirm_keyboard(template_id: int):
 def broadcast_template_cancel_keyboard():
     """Отмена ввода в wizard'е шаблона (имя/текст/переименование)."""
     kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="❌ Отменить", payload="op:tmpl:cancel"))
+    return kb.as_markup()
+
+
+def broadcast_template_step2_keyboard():
+    """Клавиатура на шаге 2 (ввод текста+картинок). Кроме «❌ Отменить»
+    показывает «↩️ Изменить название» — чтобы оператор мог вернуться
+    на шаг 1, если опечатался."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="↩️ Изменить название",
+            payload="op:tmpl:back_to_name",
+        )
+    )
     kb.row(CallbackButton(text="❌ Отменить", payload="op:tmpl:cancel"))
     return kb.as_markup()
 
@@ -19839,8 +19933,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `35467` bytes  
-SHA-256: `a2273757b0c41517b0d10bce5375b67f7fcb221fbd8f052a7c8d6517eef58816`
+Size: `38640` bytes  
+SHA-256: `66dbc474ae28daac84c717ecfce2cb2ba03a4c1a30ba2c4f4e03803a7f8e6b78`
 
 ```python
 WELCOME = (
@@ -20367,69 +20461,123 @@ OP_BROADCAST_WIZARD_EXPIRED = (
 # ---------------------------------------------------------------------
 
 OP_TMPL_LIST_EMPTY = (
-    "📋 Шаблонов рассылок ещё нет.\n\n"
-    "Сохраняйте сюда тексты, которые отправляете часто — отключения "
-    "воды, расписания, объявления. В следующий раз — пара тапов вместо "
-    "набора текста с нуля."
+    "📋 Шаблоны рассылок\n"
+    "━━━━━━━━━━━━━━━━━━\n"
+    "У вас пока нет ни одного шаблона.\n\n"
+    "💡 Что это даёт:\n"
+    "• Сохраните частые тексты — «Отключение воды», «Расписание "
+    "автобусов», «Объявление ЧС» — один раз.\n"
+    "• В следующий раз — пара тапов: открыть шаблон → «📨 Отправить "
+    "как рассылку» → подтвердить.\n"
+    "• К шаблону можно приложить картинки (афиша, схема). Они "
+    "сохранятся и пойдут вместе с текстом.\n\n"
+    "Нажмите «➕ Создать шаблон», чтобы начать."
 )
 OP_TMPL_LIST_HEADER = (
-    "📋 Шаблоны рассылок ({count}):\n"
-    "Нажмите шаблон, чтобы открыть карточку, или «➕ Создать» для нового."
+    "📋 Шаблоны рассылок ({count})\n"
+    "━━━━━━━━━━━━━━━━━━\n"
+    "Нажмите шаблон, чтобы открыть карточку с действиями. "
+    "«➕ Создать» — добавить новый."
 )
 
 OP_TMPL_CARD = (
-    "📋 Шаблон #{number} — {name}\n"
-    "Создан: {created_at}\n"
-    "Картинок: {image_count}\n"
-    "──────────\n"
+    "📋 Шаблон «{name}» (#{number})\n"
+    "━━━━━━━━━━━━━━━━━━\n"
+    "📅 Создан: {created_at}\n"
+    "🖼 Картинок: {image_count}\n"
+    "📏 Длина текста: {char_count} симв.\n"
+    "━━━━━━━━━━━━━━━━━━\n"
     "{text}"
 )
 
 # Wizard «создать новый шаблон»: шаг 1 — имя
 OP_TMPL_NEW_NAME_PROMPT = (
-    "📋 Создание шаблона рассылки\n\n"
-    "Введите короткое название (до {limit} символов).\n"
-    "Например: «Отключение воды», «Расписание праздников»."
+    "📋 Новый шаблон рассылки\n"
+    "━━━━━━━━━━━━━━━━━━\n"
+    "🔵 Шаг 1 из 2 — название\n"
+    "⚪ Шаг 2 — текст и картинки\n"
+    "━━━━━━━━━━━━━━━━━━\n"
+    "Придумайте короткое название (до {limit} символов). Оно нужно, "
+    "чтобы потом быстро найти шаблон в списке.\n\n"
+    "💡 Хорошие примеры:\n"
+    "• «Отключение воды»\n"
+    "• «Расписание на праздники»\n"
+    "• «Запись на приём — переезд»\n"
+    "• «Объявление ЧС: ветер»\n\n"
+    "Введите название одним сообщением."
 )
 OP_TMPL_NAME_TOO_LONG = (
-    "Имя слишком длинное: {actual} симв. (лимит {limit}). Повторите ввод."
+    "⚠️ Слишком длинно: {actual} симв. (лимит {limit}). "
+    "Попробуйте короче — это будет название кнопки в списке."
 )
-OP_TMPL_NAME_EMPTY = "Имя не может быть пустым. Введите название шаблона."
+OP_TMPL_NAME_EMPTY = (
+    "⚠️ Пустое название. Введите хотя бы одно слово."
+)
 OP_TMPL_NAME_TAKEN = (
-    "Шаблон с именем «{name}» уже существует. Выберите другое имя или "
-    "откройте существующий шаблон, чтобы изменить его."
+    "⚠️ Шаблон «{name}» уже существует.\n\n"
+    "Варианты:\n"
+    "• Введите другое название.\n"
+    "• Откройте существующий шаблон в списке и нажмите "
+    "«📝 Изменить текст», чтобы обновить его."
 )
 
 # Wizard «создать новый шаблон»: шаг 2 — текст (+картинки)
 OP_TMPL_NEW_TEXT_PROMPT = (
-    "📋 Шаблон «{name}»\n\n"
-    "Введите текст рассылки (до {limit} символов). К сообщению можно "
-    "приложить картинки — они сохранятся в шаблоне и будут отправляться "
-    "вместе с текстом при каждом применении."
+    "📋 Новый шаблон «{name}»\n"
+    "━━━━━━━━━━━━━━━━━━\n"
+    "✅ Шаг 1 — название\n"
+    "🔵 Шаг 2 из 2 — текст и картинки\n"
+    "━━━━━━━━━━━━━━━━━━\n"
+    "Введите текст рассылки (до {limit} символов).\n\n"
+    "🖼 К этому же сообщению можно приложить картинки — афиша, схема, "
+    "фото. Они сохранятся в шаблоне и будут уходить подписчикам "
+    "вместе с текстом при каждом применении.\n\n"
+    "💡 Советы:\n"
+    "• Пишите так, будто отправляете рассылку прямо сейчас — без "
+    "плейсхолдеров «{{дата}}». Если меняется только цифра, проще "
+    "после применения нажать «✏️ Изменить текст» и подправить.\n"
+    "• Сообщение должно быть автономным — у получателя нет контекста "
+    "переписки.\n"
+    "• Для отмены — нажмите «❌ Отменить»."
 )
 OP_TMPL_TEXT_TOO_LONG = (
-    "Текст слишком длинный: {actual} симв. (лимит {limit}). Повторите ввод."
+    "⚠️ Слишком длинно: {actual} симв. (лимит {limit}). "
+    "Сократите или разбейте на несколько рассылок."
 )
 OP_TMPL_CREATED = (
-    "✅ Шаблон «{name}» сохранён (#{number})."
+    "✅ Шаблон «{name}» сохранён (#{number}).\n"
+    "Теперь его можно отправить как рассылку или отредактировать "
+    "из карточки ниже."
 )
 
 OP_TMPL_RENAME_PROMPT = (
-    "📋 Шаблон «{old_name}» — новое имя\n\n"
-    "Введите новое название (до {limit} символов) или ❌ Отменить."
+    "✏️ Переименование шаблона\n"
+    "━━━━━━━━━━━━━━━━━━\n"
+    "Текущее название: «{old_name}»\n\n"
+    "Введите новое название (до {limit} символов).\n"
+    "💡 Короткое и узнаваемое — это надпись на кнопке в списке.\n\n"
+    "❌ Отменить — оставить как есть."
 )
-OP_TMPL_RENAMED = "✅ Шаблон переименован: «{old_name}» → «{new_name}»."
+OP_TMPL_RENAMED = (
+    "✅ Переименовано:\n«{old_name}» → «{new_name}»"
+)
 
 OP_TMPL_EDIT_PROMPT = (
-    "📋 Шаблон «{name}» — новый текст\n\n"
-    "Введите текст рассылки (до {limit} символов). К сообщению можно "
-    "приложить картинки — они полностью заменят сохранённые ранее "
-    "(если хотите оставить старые картинки, не прикладывайте новых).\n\n"
-    "❌ Отменить — оставить шаблон как есть."
+    "📝 Редактирование шаблона «{name}»\n"
+    "━━━━━━━━━━━━━━━━━━\n"
+    "Введите новый текст рассылки (до {limit} символов).\n\n"
+    "🖼 Про картинки:\n"
+    "• Если приложите новые картинки — они ПОЛНОСТЬЮ заменят сохранённые.\n"
+    "• Если ничего не прикладывать — старые картинки останутся.\n\n"
+    "❌ Отменить — шаблон останется без изменений."
 )
-OP_TMPL_EDITED_TEXT_ONLY = "✅ Текст шаблона «{name}» обновлён."
+OP_TMPL_EDITED_TEXT_ONLY = (
+    "✅ Текст шаблона «{name}» обновлён. Картинки оставлены без изменений."
+)
 OP_TMPL_EDITED_WITH_IMAGES = (
-    "✅ Шаблон «{name}» обновлён: текст + {image_count} картинок."
+    "✅ Шаблон «{name}» обновлён:\n"
+    "• новый текст\n"
+    "• {image_count} картинок (заменены)"
 )
 
 OP_TMPL_DELETE_CONFIRM = (
