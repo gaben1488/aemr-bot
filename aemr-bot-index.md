@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-21 01:31:26 UTC`
+Generated at: `2026-05-21 02:14:54 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `179`
 Max file size: `300 KB`
@@ -67,7 +67,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/broadcasts.py` (12238 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (8809 bytes)
-- `bot/aemr_bot/services/cron.py` (35469 bytes)
+- `bot/aemr_bot/services/cron.py` (36406 bytes)
 - `bot/aemr_bot/services/db_backup.py` (15350 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
 - `bot/aemr_bot/services/idempotency.py` (7885 bytes)
@@ -110,7 +110,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_callback_router.py` (8614 bytes)
 - `bot/tests/test_callback_router_coverage.py` (5487 bytes)
 - `bot/tests/test_card_format.py` (10537 bytes)
-- `bot/tests/test_cron_jobs.py` (17295 bytes)
+- `bot/tests/test_cron_jobs.py` (19002 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (14354 bytes)
 - `bot/tests/test_event_helpers.py` (9073 bytes)
@@ -153,7 +153,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/archive/TELEGRAM_ANALYTICS_INSIGHTS.md` (15860 bytes)
 - `docs/archive/WEBHOOK_PLAN.md` (10983 bytes)
 - `docs/BACKUP_RESTORE_TEST.md` (7292 bytes)
-- `docs/COMPLIANCE_WITH_REGLAMENT_v5.md` (45815 bytes)
+- `docs/COMPLIANCE_WITH_REGLAMENT_v5.md` (46089 bytes)
 - `docs/COPY.md` (52055 bytes)
 - `docs/DEVELOPER.md` (133941 bytes)
 - `docs/handover.html` (56417 bytes)
@@ -172,7 +172,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/VPS_SMOKE_CHECKLIST.md` (5736 bytes)
 - `docs/Политика.md` (6113 bytes)
 - `docs/Политика_v2.md` (28793 bytes)
-- `docs/Регламент_v6_draft.md` (17450 bytes)
+- `docs/Регламент_v6_draft.md` (21119 bytes)
 - `infra/.env.example` (10160 bytes)
 - `infra/docker-compose.yml` (5867 bytes)
 - `infra/Dockerfile` (1655 bytes)
@@ -14218,8 +14218,8 @@ def appeal_list_label(appeal: Appeal) -> str:
 
 ### `bot/aemr_bot/services/cron.py`
 
-Size: `35469` bytes  
-SHA-256: `6f103123ba1281ef1cc53d115f1e965bfe922f07f782aed7cd5636459f77762d`
+Size: `36406` bytes  
+SHA-256: `77e5d59f57fd7874004a3cedaea0f91740e02fad1071d434b0b1501cea7c0107`
 
 ```python
 from __future__ import annotations
@@ -14888,18 +14888,27 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             CronTrigger(minute=15, timezone=TZ),
             "funnel-watchdog",
         ),
-        # Напоминалки в рабочее время Камчатки
+        # Напоминалки операторам по неотвеченным/просроченным обращениям.
+        # Расписание соответствует фактическому рабочему времени АЕМО:
+        # пн-пт 09:00-18:00 с обеденным перерывом 12:00-13:00 (Регламент
+        # v5 §39 + уточнение v6: пн-пт + обед). В Сб бот не дёргает
+        # оператора — он не на смене. В обед — не дёргает тоже: hour=12
+        # выпадает из расписания (`hour="9-11,13-17"`).
+        #
+        # Pulse-задачи (см. выше) намеренно остаются пн-сб + 24/7 — это
+        # технический heartbeat «бот живой», а не уведомление оператора.
+        # Heartbeat в обед и в субботу полезен (мониторинг непрерывный).
         (
             functools.partial(_job_working_hours_open_reminder, bot),
             CronTrigger(
-                day_of_week="mon-sat", hour="9-17", minute=10, timezone=TZ
+                day_of_week="mon-fri", hour="9-11,13-17", minute=10, timezone=TZ
             ),
             "open-reminder-workhours",
         ),
         (
             functools.partial(_job_working_hours_overdue_reminder, bot),
             CronTrigger(
-                day_of_week="mon-sat", hour="9-17", minute=40, timezone=TZ
+                day_of_week="mon-fri", hour="9-11,13-17", minute=40, timezone=TZ
             ),
             "overdue-reminder-workhours",
         ),
@@ -25332,8 +25341,8 @@ class TestAdminCardCitizenStateMarkers:
 
 ### `bot/tests/test_cron_jobs.py`
 
-Size: `17295` bytes  
-SHA-256: `e83ee3482ebae0f3b41f4cfb6bcfe16eefc1fcd801c36af23cfb035d5e276a1a`
+Size: `19002` bytes  
+SHA-256: `c6ccb9d2a7b45c416e1f03e51d4b485055672197efb9c1a1368d51a1b6942261`
 
 ```python
 """Unit-тесты на cron jobs.
@@ -25728,6 +25737,39 @@ class TestBuildScheduler:
         job = next(j for j in sched.get_jobs() if j.name == "pulse-offhours")
         trigger_text = str(job.trigger)
         assert "18-23" in trigger_text
+
+    def test_open_reminder_mon_fri_with_lunch_break(self) -> None:
+        """Регрессия: open-reminder работает пн-пт с обедом 12-13 (skip).
+
+        Регламент v5 §39 «пн-пт 09:00-18:00» + уточнение v6 «обед
+        12:00-13:00». Раньше код был пн-сб 9-17 (соответствовал
+        Таблице 3 §70 v5, противоречил §39); user подтвердил
+        фактическую практику = пн-пт + обед, Регламент v6 синхронизирует
+        §39 и Таблицу 3.
+        """
+        bot = MagicMock()
+        sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
+        job = next(
+            j for j in sched.get_jobs() if j.name == "open-reminder-workhours"
+        )
+        text = str(job.trigger)
+        assert "mon-fri" in text, f"day_of_week не mon-fri: {text}"
+        # hour="9-11,13-17" — обеденный перерыв 12 пропускается
+        assert "9-11" in text and "13-17" in text, (
+            f"обеденный перерыв 12-13 не пропущен: {text}"
+        )
+
+    def test_overdue_reminder_mon_fri_with_lunch_break(self) -> None:
+        """Регрессия: overdue-reminder — то же расписание, что open-reminder
+        (minute=40 вместо 10)."""
+        bot = MagicMock()
+        sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
+        job = next(
+            j for j in sched.get_jobs() if j.name == "overdue-reminder-workhours"
+        )
+        text = str(job.trigger)
+        assert "mon-fri" in text
+        assert "9-11" in text and "13-17" in text
 ```
 
 ### `bot/tests/test_db_backup.py`
@@ -35902,8 +35944,8 @@ Restore-test не пройден, если:
 
 ### `docs/COMPLIANCE_WITH_REGLAMENT_v5.md`
 
-Size: `45815` bytes  
-SHA-256: `3d99b130713a7b4b28ce95541dea0961e05c6cde12569e0a9dead294f5e34a14`
+Size: `46089` bytes  
+SHA-256: `0cbf7549aa64653fd61a91679915ee4dcf4048bca6f1cdc36fa97b5fca6c4edb`
 
 ```markdown
 # COMPLIANCE: соответствие Регламента v5 фактическому коду
@@ -36038,7 +36080,7 @@ SHA-256: `3d99b130713a7b4b28ce95541dea0961e05c6cde12569e0a9dead294f5e34a14`
 | 36 | Ответ — формальное письмо по шаблону Приложения 2 | `services/card_format.citizen_reply` использует `texts.CITIZEN_REPLY_TEMPLATE` | OK |
 | 37 | После доставки → статус answered, подтверждение в группу | `_deliver_operator_reply` + `_persist_reply_and_card` ставит `AppealStatus.ANSWERED`; `texts.ADMIN_REPLY_DELIVERED` в группу | OK |
 | 38 | Целевые сроки в Таблице 2 (см. ниже) | Контроль — через cron-напоминания (§ 40, Таблица 3 №№ 6-7); SLA параметр `sla_response_hours=4` (config.py) | OK |
-| 39 | Рабочее время пн-пт 09:00-18:00 Камчатка; праздники — по ЦУР | Cron-напоминания запланированы пн-сб 09:00-17:59; `services/calendar_ru.py:is_workday` исключает праздники РФ | OK |
+| 39 | Рабочее время пн-пт 09:00-18:00 Камчатка; праздники — по ЦУР | open/overdue-reminder исправлены на пн-пт 9-11,13-17 (обед 12-13 skip) — синхронно с §39 и v6 уточнением. Pulse-задачи (heartbeat) намеренно остаются пн-сб 9-17 + 24/7 покрытие — это технический сигнал, не уведомление оператору; `services/calendar_ru.py:is_workday` исключает праздники РФ | OK |
 | 40 | Контроль сроков — автонапоминания в служебную группу (Таблица 3) | См. ниже § 70 | OK |
 | 41 | Текст ответа — по Стандарту качества | См. § 42-43 (детальные требования) | OK |
 | 42 (1-3) | Приветствие с именем, по существу, позитивный тон, действительный залог | Шаблон `texts.CITIZEN_REPLY_TEMPLATE` начинается с шапки + имя; памятка в `docs/RUNBOOK.md` секция «Памятка по тону» | OK |
@@ -44892,8 +44934,8 @@ E-mail: [⚖️ заполнить юристу]
 
 ### `docs/Регламент_v6_draft.md`
 
-Size: `17450` bytes  
-SHA-256: `c7fbebde8888c9e08d28c78207d487798faad03b9de4c18ab0fdf013ed923cee`
+Size: `21119` bytes  
+SHA-256: `387d8e83ad12029c8aad5a42774efaab5564ebbc589d3e4eba4a41607c8795c3`
 
 ```markdown
 # Регламент v6 — DRAFT для подписания распоряжением
@@ -44965,13 +45007,34 @@ SHA-256: `c7fbebde8888c9e08d28c78207d487798faad03b9de4c18ab0fdf013ed923cee`
 
 При возникновении ошибки еженедельного резервного копирования Чат-бот направляет в служебную группу категоризированное уведомление с указанием стадии сбоя (создание дампа pg_dump / шифрование gpg / конфигурация). Незашифрованный дамп, оставшийся после сбоя на стадии шифрования, удаляется автоматически — Чат-бот не оставляет незашифрованных копий персональных данных на диске.
 
-### Глава 11 «Резервное копирование и фоновые задачи» — Таблица 3 дополнить
+### Глава 11 «Резервное копирование и фоновые задачи» — Таблица 3 уточнить
 
-Добавить в Таблицу 3 строку:
+#### Строки 6 и 7 — синхронизировать с §39 + явное упоминание обеда
+
+Действующий текст Таблицы 3 строк 6 «Напоминания об открытых обращениях» и 7 «Напоминания о просроченных обращениях» содержит расписание «Пн — сб, 09:00 — 17:59», что противоречит §39 («Рабочее время операторов: понедельник — пятница с 09 часов 00 минут до 18 часов 00 минут»). Фактическая практика АЕМО соответствует §39: операторы работают пн-пт с обеденным перерывом 12:00-13:00, а суббота — нерабочий день.
+
+В v6 Таблицу 3 синхронизируем с §39 и уточняем обеденный перерыв:
+
+| 6 | Напоминания об открытых обращениях | Пн — пт, 09:00 — 11:59 и 13:00 — 17:59 (без обеденного перерыва 12:00 — 13:00), минута 10 | Перечень неотвеченных обращений |
+| 7 | Напоминания о просроченных обращениях | Пн — пт, 09:00 — 11:59 и 13:00 — 17:59 (без обеденного перерыва 12:00 — 13:00), минута 40 | Сообщения, превысившие срок ответа |
+
+(Действующие строки 9 «Сигнал жизни в рабочее время», 10 «Сигнал жизни в нерабочее время» и 11 «Сигнал жизни в воскресенье» в v6 **сохраняются как есть** — Пн-сб / Пн-сб / Вс соответственно. Сигнал жизни Чат-бота — это технический heartbeat «процесс работает», а не уведомление оператору; круглосуточное непрерывное мониторирование полезно даже в нерабочее время, чтобы дежурный ИТ заметил пропуск пульсов в течение нескольких циклов.)
+
+#### Строка 14 — новая, алёрт о массовом зашпиле
+
+Добавить в Таблицу 3:
 
 | 14 | Алёрт о массовом зашпиле анкет | Ежечасно, минута 15 | При сбросе ≥ 5 (пяти) зависших анкет за час направляется уведомление в служебную группу для проверки логов воронки |
 
 (Существующая строка 5 «Контроль зависших анкет» сохраняется — это та же задача, новая строка фиксирует условие admin-уведомления.)
+
+### Глава 6 «Порядок работы оператора» — пункт 39 уточнить
+
+Действующий текст: «Рабочее время операторов: понедельник — пятница с 09 часов 00 минут до 18 часов 00 минут по времени Камчатского края».
+
+В v6 добавить уточнение про обеденный перерыв:
+
+**39.** Рабочее время операторов: понедельник — пятница с 09 часов 00 минут до 18 часов 00 минут по времени Камчатского края, обеденный перерыв с 12 часов 00 минут до 13 часов 00 минут. Деятельность операторов в нерабочие праздничные дни, определенные Центром управления регионом в Камчатском крае, обеспечивается в соответствии с подпунктом 1.7 Порядка работы с сообщениями из открытых источников, утвержденного постановлением Администрации Елизовского муниципального округа от 19.12.2025 № 2129.
 
 ### Глава 12 «Изменение настроек и регистрация операторов» — пункт 73 уточнить
 
