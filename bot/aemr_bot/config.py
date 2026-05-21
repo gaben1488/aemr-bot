@@ -60,6 +60,25 @@ class Settings(BaseSettings):
     # сервера 90 секунд.
     polling_timeout_seconds: int = Field(30, alias="POLLING_TIMEOUT_SECONDS", ge=0, le=90)
 
+    # Таймаут на один HTTP-запрос к MAX API (send_message / edit_message
+    # / answers и т.п.). По умолчанию в maxapi — 150 секунд × 3 retry с
+    # backoff = до 10 минут на запрос. Это приводит к видимым
+    # подвисаниям («тап на кнопку → ничего не происходит») при любой
+    # медлительности MAX, потому что polling dispatch sequential без
+    # use_create_task. Уменьшаем до 30 секунд: ack-callback должен
+    # отвечать за секунды, send_message — тоже; всё что дольше — баг
+    # MAX, нет смысла блокировать оператора. См. также use_create_task
+    # ниже — concurrent dispatch обработчиков.
+    max_api_timeout_seconds: float = Field(
+        30.0, alias="MAX_API_TIMEOUT_SECONDS", gt=0.0, le=180.0
+    )
+    # Retry на 502/503/504 от MAX. Меньше — быстрее провал, не ждём
+    # 10 минут на cascaded backoff. 1 retry = до 2 секунд лишних плюс
+    # сам запрос. Этого достаточно для transient blips MAX-сервера.
+    max_api_retries: int = Field(
+        1, alias="MAX_API_RETRIES", ge=0, le=5
+    )
+
     # Broadcast / subscription. Rate-limit стоит ниже MAX-лимита 2 RPS, чтобы
     # обычная активность бота (ответы оператора, новые карточки) не упиралась
     # в потолок одновременно с рассылкой.
