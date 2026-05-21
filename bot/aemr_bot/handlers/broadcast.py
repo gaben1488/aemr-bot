@@ -352,6 +352,25 @@ async def _handle_abort(event) -> None:
     )
 
 
+def prefill_wizard_from_template(
+    actor_id: int, *, text: str, attachments: list
+) -> None:
+    """Зарядить state мастера рассылок данными из шаблона (PR H).
+
+    Используется handlers/broadcast_templates.py при «📨 Отправить как
+    рассылку»: создаёт state со step=awaiting_confirm, чтобы оператор
+    увидел preview и нажал «Разослать» либо «Изменить текст» — точно
+    тот же UX, что после набора текста с нуля. Прежний state (если был
+    в любом шаге) затирается полностью.
+    """
+    state = _WizardState(
+        step="awaiting_confirm",
+        text=text,
+        attachments=list(attachments),
+    )
+    _wizards[actor_id] = state
+
+
 async def _handle_edit(event) -> None:
     """Кнопка «✏️ Изменить текст» в превью. Возвращает мастер в шаг
     ожидания текста, обнуляя предыдущий текст И ранее приложенные

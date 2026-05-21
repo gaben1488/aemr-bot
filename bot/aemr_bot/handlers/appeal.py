@@ -548,6 +548,13 @@ def register(dp: Dispatcher) -> None:
             consumed = await broadcast_handler._handle_wizard_text(event, text_body)
             if consumed:
                 return
+            # Wizard шаблонов рассылок (PR H) — обрабатываем ДО операторов
+            # и настроек: оператор только что нажал «📋 Шаблоны рассылок»
+            # → ввёл имя/текст. У этого wizard'а свой набор шагов.
+            from aemr_bot.handlers import broadcast_templates as bcast_tmpl
+            consumed = await bcast_tmpl.handle_wizard_text(event, text_body)
+            if consumed:
+                return
             consumed = await admin_cmd_module.handle_operators_wizard_text(
                 event,
                 text_body,

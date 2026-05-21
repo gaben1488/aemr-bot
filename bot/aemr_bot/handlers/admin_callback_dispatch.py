@@ -25,6 +25,7 @@ from collections.abc import Awaitable, Callable
 
 from aemr_bot.handlers import admin_commands
 from aemr_bot.handlers import broadcast as broadcast_handler
+from aemr_bot.handlers import broadcast_templates as broadcast_templates_handler
 from aemr_bot.handlers import callback_router
 from aemr_bot.utils.event import ack_callback
 
@@ -198,6 +199,11 @@ async def _op_setkey(event, payload: str) -> None:
 # «префикс → run-функция».
 
 
+async def _op_tmpl(event, payload: str) -> None:
+    """Шаблоны рассылок (PR H). Внутри handle_callback сам делает ack."""
+    await broadcast_templates_handler.handle_callback(event, payload)
+
+
 _PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[None]]], ...] = (
     ("op:aud:", _op_aud),
     # Операторы — единое семейство:
@@ -211,6 +217,9 @@ _PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[None]]], ...] = 
     # Настройки — старый експертный и новый иерархический:
     ("op:setkey:", _op_setkey),
     ("op:set:", _op_setkey),
+    # Шаблоны рассылок (PR H) — list/new/open:<id>/apply:<id>/rename:<id>/
+    # edit:<id>/delete:<id>/delete_ok:<id>/cancel.
+    ("op:tmpl:", _op_tmpl),
 )
 
 
