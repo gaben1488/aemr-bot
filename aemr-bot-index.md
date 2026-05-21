@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-21 01:13:32 UTC`
+Generated at: `2026-05-21 01:22:19 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `179`
 Max file size: `300 KB`
@@ -155,7 +155,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/BACKUP_RESTORE_TEST.md` (7292 bytes)
 - `docs/COMPLIANCE_WITH_REGLAMENT_v5.md` (45815 bytes)
 - `docs/COPY.md` (52055 bytes)
-- `docs/DEVELOPER.md` (127136 bytes)
+- `docs/DEVELOPER.md` (133941 bytes)
 - `docs/handover.html` (56417 bytes)
 - `docs/HOW_IT_WORKS.md` (23367 bytes)
 - `docs/it.html` (109792 bytes)
@@ -167,7 +167,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/RUNBOOK.md` (54519 bytes)
 - `docs/RUNBOOK_PDN_ERASURE.md` (8398 bytes)
 - `docs/SECURITY.md` (34972 bytes)
-- `docs/SETUP.md` (37821 bytes)
+- `docs/SETUP.md` (39659 bytes)
 - `docs/SYSADMIN.md` (34736 bytes)
 - `docs/VPS_SMOKE_CHECKLIST.md` (5736 bytes)
 - `docs/Политика.md` (6113 bytes)
@@ -37029,8 +37029,8 @@ https://kamgov.ru/mintrans/current_activities/raspisania-dvizenia-passazirskogo-
 
 ### `docs/DEVELOPER.md`
 
-Size: `127136` bytes  
-SHA-256: `62ca58244b00c5e5cb506cfe532b092de8578522141c11edc56340e2d3733159`
+Size: `133941` bytes  
+SHA-256: `23f3057c69d4e28381d857449ea5d2b66182c102eb548a1eea9abf8c02099917`
 
 ```markdown
 # Гайд для разработчика
@@ -37333,6 +37333,27 @@ aemr-bot/
 Официальный форк — снимок исходного репозитория девятимесячной давности, переход означал бы откат с потерей исправлений после июля 2025 (включая то, что мы используем для `process_update_webhook`, `TypeAdapter[Attachments]`, `MessageLinkType`). `green-api` создаёт зависимость от внешнего платного сервиса. Решение о собственном форке — только при трёх и более месяцах без коммитов и открытых критических задачах либо при незакрытой уязвимости в течение 14 дней. Ежеквартальная проверка активности — задача координатора.
 
 **Хранилище состояний анкеты — Postgres JSONB, не Redis.** Активных воронок одновременно — десятки в часы пик, единицы ночью. Пиковая нагрузка 1–2 операции UPDATE в секунду. Postgres проглатывает не замечая. Триггер пересмотра — устойчивые показатели свыше 500 одновременных воронок по `/diag`.
+
+### Новые подсистемы (после Регламента v5)
+
+Модули и решения, добавленные в код после согласования v5. Соответствующая дельта Регламента подготовлена в `docs/Регламент_v6_draft.md` (ожидает утверждения распоряжением).
+
+**Управление операторами через мастер.** `handlers/admin_operators.py` — иерархический wizard «👥 Операторы» в `/op_help` для роли `it`. Заменяет старый путь «получить `max_user_id` через `/whoami` в служебной группе → `/add_operators` многострочно». Возможности: список активных, добавление из участников группы, карточка оператора со сменой роли (`it`/`coordinator`/`aemr`/`egp`), мягкая деактивация (`is_active=false` без удаления row'а — audit-trail сохраняется), реактивация. Защита: единственного активного `it` деактивировать нельзя (`active_it_count <= 1` + UI-предупреждение). Audit-actions: `operator_upsert`, `operator_deactivate`, `operator_reactivate`. Команда `/add_operators` оставлена для bulk-сценариев.
+
+**Иерархическое меню «⚙️ Настройки бота».** `handlers/admin_settings.py` — навигация по `settings_store.SCHEMA` (14 ключей) для роли `it`. Inline-редактирование с типизированной валидацией (URL → URL, int → диапазон, list → CSV). UI показывает счётчик «📌 Не выгружено в репо: N» с превью первых 5 dirty-ключей. Перед созданием PR — confirm-card со списком ключей и кнопкой «🔍 Показать diff». Команда `/setting` оставлена как экспертный shortcut.
+
+**Repo-sync через автоматический Pull Request.** `services/repo_sync.py` — клиент GitHub REST API v3 (без PyGithub: меньше CVE-surface, проще аудит). Из меню «⚙️ Настройки бота» оператор `it` нажимает «🔄 Синхронизировать с репо»: сервис создаёт ветку `bot-config-sync-YYYYMMDD-HHMMSS` (UTC), пушит обновлённый `seed/runtime_config.json` (сериализация `sort_keys=True`, минимальный diff), открывает PR. Feature-flag по `GITHUB_PAT` — без токена `SyncResult(ok=False, reason='no_token')`, бот не падает. Никаких force-push, никаких прямых записей в `main`. `BackupResult`-подобный `SyncResult` категоризирует ошибки (`no_token`, `no_base_branch`, `branch_failed`, `write_failed`, `pr_failed`) для понятного UI-сообщения.
+
+**Картинки в рассылках и ответах оператора.** `utils/image_attachments.py` — тонкие helper'ы поверх `utils/attachments.collect_attachments` + `deserialize_for_relay`. `image_attachments_from_event(event, limit=N)` извлекает картинки из `event.message.body.attachments`. Используются в двух местах:
+
+- `handlers/operator_reply._send_reply_to_citizen` — `limit=1` (Приложение 2 Регламента ожидает один кадр). Если оператор приложил больше — admin-уведомление «приложено N, ушла первая».
+- `handlers/broadcast._handle_wizard_text` — `limit=cfg.broadcast_max_images` (настройка в БД, диапазон 1–20, по умолчанию 5). Сохраняются в `Broadcast.attachments JSONB` (миграция 0014). В фоновой отправке `build_outbound_image_attachments(stored)` десериализует **один раз** через `deserialize_for_relay` и передаёт в каждый `bot.send_message`. Тяжёлая pydantic-валидация не повторяется per-user. Превью-карточка confirm-шага включает все картинки + счётчик «📷 Картинок: N» + warning при превышении лимита.
+
+**Категоризированные ошибки бэкапа.** `services/db_backup.BackupResult` (dataclass с `.ok`/`.path`/`.fail_kind`/`.fail_detail`) + два специфических исключения `BackupPgDumpError` / `BackupGpgError`. `_run_pg_dump_encrypted` сначала проверяет `dump_rc` — если pg_dump упал, gpg-проблема вторична. **152-ФЗ хардеринг**: при gpg-fail незашифрованный plain-text дамп **удаляется** — ПДн нельзя оставлять на диске без шифрования. Cron `_job_backup_with_alert` шлёт 4 разных алёрта вместо одного «не выполнен», каждый подсказывает, КУДА смотреть.
+
+**Edit-vs-send freshness-tracker.** `utils/menu_tracker.py` — in-memory `dict[int, str]` (chat_id → mid последней карточки-меню). `send_or_edit_screen` редактирует **только** если callback пришёл от той же mid; иначе шлёт новое сообщение. Это закрывает UX-баг «оператор кликнул на старую карточку выше по чату — бот отредактировал её далеко вверху, изменения не видны». Sacred-карточки (admin appeal card, citizen reply, broadcast progress, audit, pulse, reminders) отправляются напрямую через `bot.send_message` и в tracker не учитываются — они всегда new. Tracker per-process in-memory; после рестарта пуст, первое нажатие callback graceful → send new.
+
+**Funnel-watchdog admin-alert при массовом зашпиле.** `services/cron._job_funnel_watchdog` теперь принимает `send_admin_text` и при сбросе ≥ `_FUNNEL_WATCHDOG_ADMIN_ALERT_THRESHOLD=5` зависших анкет за час шлёт служебной группе сводку. 1-4 в час — норма «житель отвлёкся», тишина. ≥5 в час — может быть UX-регрессия в воронке или DDoS — admin узнаёт.
 
 ## Часть IV — База данных
 
@@ -43309,8 +43330,8 @@ Auto-deploy на сервере подтягивает **только** из `ma
 
 ### `docs/SETUP.md`
 
-Size: `37821` bytes  
-SHA-256: `26e0be306ab8fc91dd984833acb9d49019abcde164821f3dc85fcf2eddd7393e`
+Size: `39659` bytes  
+SHA-256: `9643735fd9b2acab298365a2cb860bb7f1e604ae0ac65685e2c7426a27248205`
 
 ```markdown
 # Настройка бота и служебной группы — от А до Я
@@ -43548,12 +43569,28 @@ docker compose exec db psql -U aemr -d aemr -c \
 
 | Параметр | Где лежит | Чем меняется |
 |---|---|---|
-| `BOT_TOKEN`, `DATABASE_URL`, `ADMIN_GROUP_ID`, `WEBHOOK_*` | `.env` | вручную, требует перезапуска контейнера |
-| Тематики обращений, тексты приветствия, контакты экстренных служб, ссылка на электронную приёмную, расписание УДТХ, диспетчеры автотранспорта | таблица `settings` | команда `/setting <key> <value>` от ИТ в группе |
-| Список операторов | таблица `operators` | команда `/add_operators` от ИТ в группе |
+| `BOT_TOKEN`, `DATABASE_URL`, `ADMIN_GROUP_ID`, `WEBHOOK_*`, `BACKUP_*`, опц. `GITHUB_PAT` | `.env` | вручную, требует перезапуска контейнера |
+| Тематики обращений, тексты приветствия, контакты экстренных служб, ссылка на электронную приёмную, расписание УДТХ, диспетчеры автотранспорта, `broadcast_max_images` и др. (14 ключей `settings_store.SCHEMA`) | таблица `settings` | **рекомендуется** — иерархическое меню «⚙️ Настройки бота» в `/op_help` (для роли `it`); **shortcut** — команда `/setting <key> <value>` |
+| Список операторов | таблица `operators` | **рекомендуется** — мастер «👥 Операторы» в `/op_help` (для роли `it`); **shortcut** — `/add_operators` для bulk |
 | PRIVACY.pdf, тексты и контакты при первом запуске | `seed/*.json`, `seed/welcome.md`, `seed/PRIVACY.pdf` | редактируете файлы в репозитории, перезапускаете контейнер. `seed_if_empty` обновит БД только при отсутствующих ключах. |
 
-Полный список редактируемых ключей — `/setting list` в служебной группе.
+Полный список редактируемых ключей — открыть меню «⚙️ Настройки бота» в `/op_help` (показывает 14 ключей с типами и текущим значением) либо `/setting list` в служебной группе.
+
+### Опционально — repo-sync (синхронизация настроек в репозиторий)
+
+После v5 в код добавлена фича: ИТ может из меню «⚙️ Настройки бота» одной кнопкой создать Pull Request в репозитории с обновлённым `seed/runtime_config.json` (всё, что меняется в БД через UI, попадает в репо как commit, проходит ревью и мерж — после мержа `auto-deploy.sh` подхватывает на VPS).
+
+Чтобы включить, добавьте в `infra/.env`:
+
+```dotenv
+GITHUB_PAT=<fine-grained PAT с правами Contents:RW + PullRequests:RW>
+GITHUB_REPO=Gaben1488/aemr-bot
+GITHUB_PR_BASE_BRANCH=main
+COMMIT_AUTHOR_NAME=<имя автора коммитов>
+COMMIT_AUTHOR_EMAIL=<email>
+```
+
+Как выпустить PAT и какие права — `docs/SYSADMIN.md §5.5`. Без `GITHUB_PAT` функция выключена с понятным сообщением в UI «не настроено»; бот работает как обычно. Никаких force-push, никаких прямых записей в `main` — каждое изменение проходит через PR-ревью.
 
 ## Развёртывание на собственном сервере (Ubuntu 20.04)
 
