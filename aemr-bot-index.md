@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-21 03:04:11 UTC`
+Generated at: `2026-05-21 03:24:47 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `186`
 Max file size: `300 KB`
@@ -46,7 +46,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12068 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17506 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (19275 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (20520 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (41211 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (26042 bytes)
@@ -56,7 +56,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (28306 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8339 bytes)
-- `bot/aemr_bot/handlers/menu.py` (43971 bytes)
+- `bot/aemr_bot/handlers/menu.py` (45699 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (32495 bytes)
 - `bot/aemr_bot/handlers/start.py` (16556 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
@@ -64,7 +64,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/main.py` (18178 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
-- `bot/aemr_bot/services/admin_relay.py` (6055 bytes)
+- `bot/aemr_bot/services/admin_relay.py` (9914 bytes)
 - `bot/aemr_bot/services/appeals.py` (18415 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (5607 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
@@ -129,7 +129,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_handlers_auth_broadcast.py` (6976 bytes)
 - `bot/tests/test_handlers_common.py` (3572 bytes)
 - `bot/tests/test_handlers_funnel.py` (9458 bytes)
-- `bot/tests/test_handlers_menu.py` (26300 bytes)
+- `bot/tests/test_handlers_menu.py` (26314 bytes)
 - `bot/tests/test_handlers_menu_extra.py` (23371 bytes)
 - `bot/tests/test_handlers_operator_reply.py` (28002 bytes)
 - `bot/tests/test_handlers_start.py` (12367 bytes)
@@ -5307,8 +5307,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `19275` bytes  
-SHA-256: `ca0538105d80be9444e0b0c9235a6a8b4879e5b36ed399b3d80493b2a64ee6c0`
+Size: `20520` bytes  
+SHA-256: `f53f829b9ede233ad2f9ea84067219ad7e26e19896a1dad4632d7d4a724e5ec2`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -5436,7 +5436,13 @@ async def _do_open_tickets(event) -> None:
                     [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
                 )
             )
-            .options(selectinload(Appeal.user))
+            # selectinload(Appeal.messages) нужен для repeat-relay
+            # вложений ниже — без него `appeal.messages` лениво ходит в
+            # БД из-под закрытой сессии и валится `MissingGreenlet`.
+            .options(
+                selectinload(Appeal.user),
+                selectinload(Appeal.messages),
+            )
             .order_by(Appeal.created_at)
         )
         open_appeals = (await session.scalars(query)).all()
@@ -5498,6 +5504,21 @@ async def _do_open_tickets(event) -> None:
         mid = extract_message_id(sent)
         if mid:
             last_mid = mid
+        # Прикрепления (фото/видео/файл) исходного обращения + всех
+        # дополнений жителя — переотправляем, чтобы при повторном
+        # обзоре «📋 Открытые обращения» оператор не разговаривал с
+        # обращением вслепую. Контекст «яма во дворе» без фотографии
+        # ямы — половина информации.
+        from aemr_bot.services.admin_relay import render_appeal_attachments
+
+        await render_appeal_attachments(
+            event.bot,
+            chat_id=cfg.admin_group_id,
+            user_id=None,
+            appeal=appeal,
+            header_template="📎 Вложения к обращению #{appeal_id}",
+            reply_to_mid=mid,
+        )
     if last_mid is not None:
         menu_tracker.set_last_menu_mid(cfg.admin_group_id, last_mid)
 
@@ -10639,8 +10660,8 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 
 ### `bot/aemr_bot/handlers/menu.py`
 
-Size: `43971` bytes  
-SHA-256: `3404e0178343c156c89961f64386bd378b0fed1b80d3266375732bc4d7a3f723`
+Size: `45699` bytes  
+SHA-256: `dd7c51c43386d6f2f20736e106ed0f8fef7190535b9e2882e2686e5b1469a1a2`
 
 ```python
 import logging
@@ -10917,9 +10938,20 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
     - NEW / IN_PROGRESS — «📎 Дополнить» для уточнения открытого обращения.
     - ANSWERED / CLOSED — «🔁 Подать похожее» для нового связанного обращения.
     - Везде «↩ В меню».
+
+    После карточки переотправляем все вложения, отправленные жителем
+    по этому обращению (исходные + дополнения). Без них контекст
+    исходного обращения «яма во дворе» искажается — половина смысла
+    в фотографии. Аналогично оператору в `/op_help → 📋 Открытые
+    обращения` (см. admin_panel._do_open_tickets).
     """
     async with session_scope() as session:
-        appeal = await appeals_service.get_by_id(session, appeal_id)
+        # get_by_id_with_messages: для relay вложений из доп. сообщений
+        # нужны Message-row'ы (Appeal.messages). Без selectinload они
+        # лениво идут в БД из закрытой сессии → MissingGreenlet.
+        appeal = await appeals_service.get_by_id_with_messages(
+            session, appeal_id
+        )
         if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
             await _send_or_edit_menu(
                 event,
@@ -10929,11 +10961,28 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
             return
         text = card_format.user_card(appeal)
         status = appeal.status
+        # Снапшот для relay ВНУТРИ сессии: после выхода из session_scope
+        # ленивые атрибуты падают. messages здесь уже loaded selectinload'ом.
+        appeal_for_relay = appeal
     await _send_or_edit_menu(
         event,
         text=text,
         attachments=[keyboards.user_appeal_card_keyboard(appeal_id, status)],
     )
+    # Relay вложений в личку жителю — show_appeal вызывается из
+    # menu_callback, у которого bot+user_id доступны через event.
+    from aemr_bot.services.admin_relay import render_appeal_attachments
+    from aemr_bot.utils.event import get_user_id as _get_uid
+
+    user_id = _get_uid(event)
+    if user_id is not None:
+        await render_appeal_attachments(
+            event.bot,
+            chat_id=None,
+            user_id=user_id,
+            appeal=appeal_for_relay,
+            header_template="📎 Вложения к обращению #{appeal_id}",
+        )
 
 
 async def open_useful_info(event):
@@ -14516,8 +14565,8 @@ async def notify_data_erased(
 
 ### `bot/aemr_bot/services/admin_relay.py`
 
-Size: `6055` bytes  
-SHA-256: `2eef99b5fad027aa2035dba5c503e6c60c977deff30359d70d7aa9579fbea26c`
+Size: `9914` bytes  
+SHA-256: `4ff60a390ea477781457089aa1d0db5bb8d018b699fc947531a40c3e4269e7f5`
 
 ```python
 """Пересылка вложений жителя в служебную группу (relay).
@@ -14585,6 +14634,95 @@ async def _send_with_retry(send_coro_factory, *, batch_idx: int,
         last_exc,
     )
     return False
+
+
+def _collect_all_user_attachments(appeal) -> list[dict]:
+    """Собрать все вложения, отправленные жителем по обращению —
+    исходные (`appeal.attachments`) + дополнения (`Message.attachments`
+    для `direction == 'from_user'`). Сохраняет хронологический порядок.
+
+    Используется при повторном показе обращения: «📋 Открытые
+    обращения» у оператора, «📂 Мои обращения → карточка» у жителя.
+    Без этого helper'а первичный relay (см. relay_attachments_to_admin
+    при finalize) виден только в момент подачи; при возврате к карточке
+    позже вложения «теряются» визуально, контекст обращения искажается.
+    """
+    out: list[dict] = []
+    out.extend(appeal.attachments or [])
+    messages = getattr(appeal, "messages", None) or []
+    for msg in messages:
+        if getattr(msg, "direction", None) != "from_user":
+            continue
+        atts = getattr(msg, "attachments", None) or []
+        out.extend(atts)
+    return out
+
+
+async def render_appeal_attachments(
+    bot,
+    *,
+    chat_id: int | None,
+    user_id: int | None,
+    appeal,
+    header_template: str = "Вложения обращения #{appeal_id}",
+    reply_to_mid: str | None = None,
+) -> None:
+    """Переотправить все вложения обращения (исходник + дополнения) в
+    указанный чат/диалог.
+
+    Универсальная функция для повторного показа обращения с
+    вложениями:
+    - админ-чат при «📋 Открытые обращения» (chat_id = admin_group_id);
+    - личка жителя при «📂 Мои обращения» (user_id = житель).
+
+    Бьёт на батчи по `cfg.attachments_per_relay_message`, чтобы не
+    переборщить со server-side лимитом MAX. Retry-loop не используется
+    — это не критичный путь (исходный relay уже произошёл при
+    создании обращения), а отдельный «удобный» показ.
+    """
+    if not bot:
+        return
+    all_atts = _collect_all_user_attachments(appeal)
+    if not all_atts:
+        return
+    relayable = deserialize_for_relay(all_atts)
+    if not relayable:
+        return
+
+    link = None
+    if reply_to_mid and chat_id is not None:
+        try:
+            from maxapi.enums.message_link_type import MessageLinkType
+            from maxapi.types.message import NewMessageLink
+
+            link = NewMessageLink(type=MessageLinkType.REPLY, mid=reply_to_mid)
+        except Exception:
+            log.exception("NewMessageLink build failed; relay без reply-link")
+            link = None
+
+    chunk_size = max(1, cfg.attachments_per_relay_message)
+    batches = [
+        relayable[i:i + chunk_size]
+        for i in range(0, len(relayable), chunk_size)
+    ]
+    total = len(batches)
+    for idx, batch in enumerate(batches, start=1):
+        header = header_template.format(appeal_id=appeal.id)
+        if total > 1:
+            header = f"{header} ({idx}/{total})"
+        try:
+            await bot.send_message(
+                chat_id=chat_id,
+                user_id=None if chat_id is not None else user_id,
+                text=header,
+                attachments=batch,
+                link=link,
+            )
+        except Exception:
+            log.exception(
+                "render_appeal_attachments: batch %d/%d for #%s failed",
+                idx, total, appeal.id,
+            )
 
 
 async def relay_attachments_to_admin(
@@ -31173,8 +31311,8 @@ class TestOnAwaitingName:
 
 ### `bot/tests/test_handlers_menu.py`
 
-Size: `26300` bytes  
-SHA-256: `e3a2d7c75943c67daf534f180cea178976fbebaaefc905641fbd56924bd00eea`
+Size: `26314` bytes  
+SHA-256: `d8a786fe65a5f243b7a4b4dded1942eb4b4be0710c2a8f41b5c0778bad4bdf06`
 
 ```python
 """Тесты handlers/menu.py — навигация по меню жителя.
@@ -31426,7 +31564,7 @@ class TestShowAppeal:
 
         event = _make_event()
         with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.appeals_service.get_by_id",
+             patch("aemr_bot.handlers.menu.appeals_service.get_by_id_with_messages",
                    AsyncMock(return_value=None)):
             await menu.show_appeal(event, appeal_id=1, max_user_id=42)
         text = event.bot.send_message.call_args.kwargs.get("text", "")
