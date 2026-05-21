@@ -182,6 +182,51 @@ class TestWizardCapturesImage:
         assert state.attachments[0]["type"] == "image"
 
     @pytest.mark.asyncio
+    async def test_resolve_broadcast_max_images_uses_db_value(self) -> None:
+        """Контракт: _resolve_broadcast_max_images читает из БД через
+        settings_store.get. Если значение валидно (int, 1+) — возвращает.
+        Это путь IT-оператора, изменившего лимит через UI «Настройки бота»."""
+        from aemr_bot.handlers import broadcast as bc
+
+        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+                   AsyncMock(return_value=8)):
+            result = await bc._resolve_broadcast_max_images(MagicMock())
+        assert result == 8
+
+    @pytest.mark.asyncio
+    async def test_resolve_broadcast_max_images_falls_back_on_db_error(self) -> None:
+        """Контракт: DB-ошибка не валит рассылку. Молчаливый fallback
+        на DEFAULTS гарантирует, что техническая проблема админ-таблицы
+        не блокирует работу с гражданами."""
+        from aemr_bot.handlers import broadcast as bc
+
+        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+                   AsyncMock(side_effect=RuntimeError("settings table missing"))):
+            result = await bc._resolve_broadcast_max_images(MagicMock())
+        # DEFAULTS.broadcast_max_images = 5
+        assert result == 5
+
+    @pytest.mark.asyncio
+    async def test_resolve_broadcast_max_images_rejects_corrupted_db_value(self) -> None:
+        """Контракт: если кто-то записал в БД не-int (или 0, или bool),
+        не доверяем — скатываемся к DEFAULTS. Защита от porting-багов
+        и ручных правок psql."""
+        from aemr_bot.handlers import broadcast as bc
+
+        # bool — подкласс int в Python; явно отсекаем
+        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+                   AsyncMock(return_value=True)):
+            assert await bc._resolve_broadcast_max_images(MagicMock()) == 5
+        # 0 / отрицательное — невалидно
+        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+                   AsyncMock(return_value=0)):
+            assert await bc._resolve_broadcast_max_images(MagicMock()) == 5
+        # строка — невалидно
+        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+                   AsyncMock(return_value="5")):
+            assert await bc._resolve_broadcast_max_images(MagicMock()) == 5
+
+    @pytest.mark.asyncio
     async def test_text_only_keeps_attachments_empty(self) -> None:
         """Regression: текст без картинки — state.attachments=[]."""
         from aemr_bot.handlers import broadcast as bc
@@ -227,7 +272,8 @@ class TestWizardCapturesMultipleImages:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch.object(bc.cfg, "broadcast_max_images", 5):
+             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+                   AsyncMock(return_value=5)):
             handled = await bc._handle_wizard_text(event, "три картинки")
 
         assert handled is True
@@ -242,9 +288,9 @@ class TestWizardCapturesMultipleImages:
 
     @pytest.mark.asyncio
     async def test_images_capped_at_broadcast_max_images(self) -> None:
-        """Контракт: при cfg.broadcast_max_images=2 и 5 картинках в
-        сообщении — wizard сохраняет ровно 2 (защита от тяжёлых
-        multi-image рассылок). Дополнительные молча отбрасываются."""
+        """Контракт: при broadcast_max_images=2 (БД-настройка) и 5
+        картинках в сообщении — wizard сохраняет ровно 2 (защита от
+        тяжёлых multi-image рассылок). Дополнительные молча отбрасываются."""
         from aemr_bot.handlers import broadcast as bc
 
         event = make_event(chat_id=100, user_id=7)
@@ -258,7 +304,8 @@ class TestWizardCapturesMultipleImages:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch.object(bc.cfg, "broadcast_max_images", 2):
+             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+                   AsyncMock(return_value=2)):
             await bc._handle_wizard_text(event, "слишком много")
 
         state = bc._wizards.get(7)
@@ -297,7 +344,8 @@ class TestPreviewCardIncludesImages:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch.object(bc.cfg, "broadcast_max_images", 5), \
+             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+                   AsyncMock(return_value=5)), \
              patch("aemr_bot.utils.image_attachments.deserialize_for_relay",
                    return_value=[fake_preview_image]):
             await bc._handle_wizard_text(event, "превью с картинкой")
@@ -336,7 +384,8 @@ class TestPreviewCardIncludesImages:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch.object(bc.cfg, "broadcast_max_images", 5):
+             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+                   AsyncMock(return_value=5)):
             await bc._handle_wizard_text(event, "text only")
 
         # ищем preview-вызов

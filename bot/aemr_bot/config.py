@@ -64,11 +64,6 @@ class Settings(BaseSettings):
     # обычная активность бота (ответы оператора, новые карточки) не упиралась
     # в потолок одновременно с рассылкой.
     broadcast_max_chars: int = Field(1000, alias="BROADCAST_MAX_CHARS")
-    # Максимум картинок в одной рассылке. Каждая картинка пересылается
-    # каждому подписчику — для тысячи подписчиков ×N картинок MAX
-    # начинает ограничивать частоту. По умолчанию 5 — достаточно для
-    # афиши / схемы / фото-комплекта, и не «перегружает» поток.
-    broadcast_max_images: int = Field(5, alias="BROADCAST_MAX_IMAGES")
     broadcast_rate_limit_per_sec: float = Field(
         1.0, alias="BROADCAST_RATE_LIMIT_PER_SEC"
     )

@@ -37,6 +37,13 @@ DEFAULTS: dict[str, Any] = {
     "emergency_contacts": [],
     "transport_dispatcher_contacts": [],
     "topics": [],
+    # Глобальный лимит «сколько картинок оператор может приложить к
+    # одной рассылке». Раньше был в env BROADCAST_MAX_IMAGES; перенесли
+    # сюда для оперативной правки IT-оператором через меню «⚙️ Настройки
+    # бота» без редеплоя. 5 — баланс «афиша + 3-4 фото» vs нагрузка на
+    # канал MAX (каждая картинка ×N подписчиков). Допустимый диапазон
+    # 1–20 (см. SCHEMA).
+    "broadcast_max_images": 5,
     "localities": [
         "Елизовское ГП",
         "Вулканное ГП",
@@ -71,6 +78,10 @@ SCHEMA: dict[str, dict] = {
         "item_keys": {"routes", "phone"},
     },
     "topics": {"type": list, "min_items": 1, "max_items": 30, "item_type": str},
+    # Глобальный лимит картинок в рассылке. Диапазон 1–20: 1 — минимум
+    # для «текст + одна афиша», 20 — практический потолок (выше MAX
+    # ограничивает частоту, см. _send_one).
+    "broadcast_max_images": {"type": int, "min": 1, "max": 20},
     "localities": {"type": list, "min_items": 1, "max_items": 30, "item_type": str},
 }
 
@@ -101,6 +112,16 @@ def validate(key: str, value: Any) -> tuple[bool, str]:
             for it in value:
                 if not isinstance(it, dict) or not rule["item_keys"].issubset(it):
                     return False, f"Each item must be an object with keys: {rule['item_keys']}"
+    if expected is int:
+        # bool — подкласс int в Python, явно фильтруем: True/False не
+        # должны проходить как int (validate("broadcast_max_images", True)
+        # = no-go).
+        if isinstance(value, bool):
+            return False, "Expected int, got bool"
+        if "min" in rule and value < rule["min"]:
+            return False, f"Integer too small, min={rule['min']}"
+        if "max" in rule and value > rule["max"]:
+            return False, f"Integer too large, max={rule['max']}"
     return True, "ok"
 
 
