@@ -103,7 +103,8 @@ APPEAL_CARD_TEMPLATE = (
 ADMIN_CARD_TEMPLATE = (
     "Обращение #{number}\n\n"
     "Житель: {name}\n"
-    "Телефон: {phone}\n\n"
+    "Телефон: {phone}\n"
+    "{status_line}\n\n"
     "────────────────\n"
     "Населённый пункт: {locality}\n"
     "Адрес: {address}\n"

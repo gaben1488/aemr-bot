@@ -88,6 +88,32 @@ def admin_followups_block(appeal: Appeal) -> str:
     return "\n".join(lines)
 
 
+def _citizen_status_line(user: User) -> str:
+    """Компактная строка статуса жителя для admin-карточки — оператор
+    видит «нормальный житель» vs «отозвал согласие, обращение в работе
+    для финального ответа» vs «заблокирован» одним взглядом.
+
+    Формат: `Статус: <маркер подписки> · <маркер согласия>[ · 🚫 заблокирован]`.
+
+    Маркеры:
+    - 🔔 / 🔕 — подписан / не подписан на рассылку.
+    - ✅ / 🔁 — согласие активно / отозвано (revoked имеет приоритет).
+    - 🚫 — заблокирован (добавляется только если applicable).
+    """
+    parts: list[str] = []
+    if getattr(user, "subscribed_broadcast", False):
+        parts.append("🔔 подписан")
+    else:
+        parts.append("🔕 без подписки")
+    if getattr(user, "consent_revoked_at", None) is not None:
+        parts.append("🔁 согласие отозвано")
+    elif getattr(user, "consent_pdn_at", None) is not None:
+        parts.append("✅ согласие активно")
+    if getattr(user, "is_blocked", False):
+        parts.append("🚫 заблокирован")
+    return "Статус: " + " · ".join(parts)
+
+
 def admin_card(appeal: Appeal, user: User) -> str:
     """Карточка обращения в служебной группе — единый стиль независимо от
     того, есть вложения или нет.
@@ -95,11 +121,17 @@ def admin_card(appeal: Appeal, user: User) -> str:
     Раньше было «то 2, то 3 разделителя в зависимости от наличия фото».
     Теперь блок «Вложения» всегда добавляется внутри тела через ту же
     линию, что и остальные секции, без второй декоративной полосы.
+
+    Под именем/телефоном — строка маркеров состояния жителя (PR F):
+    подписка / согласие / блокировка. Оператор видит контекст «обычный»
+    vs «отозвал согласие — финальный ответ» vs «заблокирован» сразу,
+    без прыжков в админ-меню.
     """
     body = ADMIN_CARD_TEMPLATE.format(
         number=appeal.id,
         name=user.first_name or "—",
         phone=user.phone or "—",
+        status_line=_citizen_status_line(user),
         locality=appeal.locality or "—",
         address=appeal.address or "—",
         topic=appeal.topic or "—",
@@ -154,6 +186,20 @@ def user_card(appeal: Appeal) -> str:
 
 
 def appeal_list_label(appeal: Appeal) -> str:
+    """Метка обращения для списка «📂 Мои обращения» жителя.
+
+    Для new/in_progress показываем дату создания (когда подал). Для
+    answered — дату ответа (когда ответили). Для closed — дату закрытия.
+    Так житель сразу видит «вот когда мне ответили», а не «вот когда
+    я писал» (создание уже не информативно после ответа).
+    """
     emoji, label = STATUS_LABELS.get(appeal.status, ("•", appeal.status))
     summary_preview = (appeal.summary or "").replace("\n", " ")[:32]
-    return f"{emoji} #{appeal.id} · {label} · {_local(appeal.created_at)} · {summary_preview}"
+    # Выбор отображаемой даты — по фазе жизненного цикла обращения.
+    if appeal.status == "answered":
+        relevant_date = getattr(appeal, "answered_at", None) or appeal.created_at
+    elif appeal.status == "closed":
+        relevant_date = getattr(appeal, "closed_at", None) or appeal.created_at
+    else:
+        relevant_date = appeal.created_at
+    return f"{emoji} #{appeal.id} · {label} · {_local(relevant_date)} · {summary_preview}"
