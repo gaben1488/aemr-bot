@@ -25,13 +25,9 @@ from aemr_bot.utils.attachments import deserialize_for_relay
 
 log = logging.getLogger(__name__)
 
-# 2 попытки достаточно для transient blips MAX-сервера. 3 попытки с
-# backoff 0.5s+1.0s = до 1.5 сек простоя на один failed batch; добавлять
-# третью (+2.0s) — диминишинг returns (если MAX упал, ещё одна попытка
-# не поможет, лучше быстрее провалиться и не блокировать operator UX).
-_RELAY_MAX_ATTEMPTS = 2
-# Бэкоф: 0.5s между попытками — короткая пауза, чтобы не поджарить
-# MAX rate-limit (2 RPS).
+_RELAY_MAX_ATTEMPTS = 3
+# Экспоненциальный бэкоф: 0.5s, 1.0s, 2.0s. Между попытками —
+# короткая пауза, чтобы не поджарить MAX rate-limit (2 RPS).
 _RELAY_BASE_DELAY_SEC = 0.5
 
 
