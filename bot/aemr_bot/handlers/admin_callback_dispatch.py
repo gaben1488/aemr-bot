@@ -122,6 +122,10 @@ async def _op_unblock(event, appeal_id: int) -> None:
     await admin_commands.run_block_for_appeal(event, appeal_id, blocked=False)
 
 
+async def _op_atts(event, appeal_id: int) -> None:
+    await admin_commands.run_show_attachments(event, appeal_id)
+
+
 # PR G: история рассылок — карточка / клон / failed-deliveries.
 async def _op_bc_open(event, broadcast_id: int) -> None:
     await broadcast_handler._open_broadcast(event, broadcast_id)
@@ -188,6 +192,7 @@ _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
     ("op:erase:", _op_erase),
     ("op:block:", _op_block),
     ("op:unblock:", _op_unblock),
+    ("op:atts:", _op_atts),
     # PR G: история рассылок.
     ("op:bc:open:", _op_bc_open),
     ("op:bc:clone:", _op_bc_clone),

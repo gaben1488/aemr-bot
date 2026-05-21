@@ -269,7 +269,12 @@ def geo_confirm_keyboard():
     return kb.as_markup()
 
 
-def user_appeal_card_keyboard(appeal_id: int, status: str):
+def user_appeal_card_keyboard(
+    appeal_id: int,
+    status: str,
+    *,
+    attachment_count: int = 0,
+):
     """Кнопки под карточкой обращения у жителя.
 
     NEW/IN_PROGRESS — «📎 Дополнить»: явный путь уточнить открытое
@@ -278,6 +283,10 @@ def user_appeal_card_keyboard(appeal_id: int, status: str):
     ANSWERED/CLOSED — «🔁 Подать похожее»: новая воронка с тем же
     адресом и тематикой. Новое обращение помечается как связанное с
     отвеченным или закрытым вопросом.
+
+    attachment_count>0 — кнопка «📎 Показать вложения (N)»: явный
+    показ переотправки. Раньше происходила автоматически при каждом
+    открытии карточки и создавала задержку в личке (PR-fix-hang).
     """
     from aemr_bot.db.models import AppealStatus
 
@@ -295,6 +304,13 @@ def user_appeal_card_keyboard(appeal_id: int, status: str):
         kb.row(
             CallbackButton(
                 text="🔁 Подать похожее", payload=f"appeal:repeat:{appeal_id}"
+            )
+        )
+    if attachment_count > 0:
+        kb.row(
+            CallbackButton(
+                text=f"📎 Показать вложения ({attachment_count})",
+                payload=f"appeal:atts:{appeal_id}",
             )
         )
     kb.row(CallbackButton(text="↩️ К моим обращениям", payload="menu:my_appeals"))
@@ -1107,6 +1123,7 @@ def appeal_admin_actions(
     is_it: bool = False,
     user_blocked: bool = False,
     closed_due_to_revoke: bool = False,
+    attachment_count: int = 0,
 ):
     """Кнопки действий под карточкой обращения в админ-группе.
 
@@ -1121,6 +1138,12 @@ def appeal_admin_actions(
     доставки в `_deliver_operator_reply` всё равно откажет (consent
     отозван). Поэтому кнопку «🔁 Возобновить» не показываем — экономим
     оператору время на тыкание в неработающую кнопку.
+
+    attachment_count>0 — у обращения есть вложения, добавляем кнопку
+    «📎 Вложения (N)». Тап → callback `op:atts:<id>` → переотправка
+    всех вложений рядом с карточкой. ДО PR #47 это происходило
+    автоматически при listing'е и приводило к hang'у — теперь только
+    по явному тапу.
     """
     from aemr_bot.db.models import AppealStatus
 
@@ -1140,6 +1163,13 @@ def appeal_admin_actions(
         kb.row(
             CallbackButton(
                 text="🔁 Возобновить", payload=f"op:reopen:{appeal_id}"
+            ),
+        )
+    if attachment_count > 0:
+        kb.row(
+            CallbackButton(
+                text=f"📎 Вложения ({attachment_count})",
+                payload=f"op:atts:{appeal_id}",
             ),
         )
     if is_it:

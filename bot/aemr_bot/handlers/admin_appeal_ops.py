@@ -296,6 +296,47 @@ async def run_block_for_appeal(
     await _show_appeal_card_or_result(event, appeal_id, msg)
 
 
+async def run_show_attachments(event, appeal_id: int) -> None:
+    """Кнопка «📎 Вложения (N)» в карточке обращения (PR-fix-hang).
+
+    Раньше вложения переотправлялись автоматически в `_do_open_tickets`
+    под каждое обращение в цикле, что давало 50-80 sequential
+    `bot.send_message` и hang handler'а на десятки секунд. Теперь —
+    только по явному тапу оператора, и только для одного обращения за
+    раз. Bot.send_message внутри `render_appeal_attachments` бьёт на
+    батчи по `cfg.attachments_per_relay_message`.
+    """
+    from aemr_bot.services.admin_relay import render_appeal_attachments
+    from aemr_bot.utils.event import ack_callback
+
+    if not await ensure_operator(event):
+        await ack_callback(event)
+        return
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id_with_messages(
+            session, appeal_id
+        )
+    await ack_callback(event)
+    if appeal is None:
+        from aemr_bot import keyboards as kbds
+
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
+            attachments=[kbds.op_back_to_menu_keyboard()],
+        )
+        return
+    await render_appeal_attachments(
+        event.bot,
+        chat_id=cfg.admin_group_id,
+        user_id=None,
+        appeal=appeal,
+        header_template="📎 Вложения к обращению #{appeal_id}",
+        reply_to_mid=getattr(appeal, "admin_message_id", None),
+    )
+
+
 async def run_erase_for_appeal(event, appeal_id: int) -> None:
     """Кнопка «🗑 Удалить ПДн жителя» в карточке обращения (только для it)."""
     from aemr_bot import keyboards as kbds
