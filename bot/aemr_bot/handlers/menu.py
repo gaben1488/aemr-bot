@@ -272,9 +272,20 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
     - NEW / IN_PROGRESS — «📎 Дополнить» для уточнения открытого обращения.
     - ANSWERED / CLOSED — «🔁 Подать похожее» для нового связанного обращения.
     - Везде «↩ В меню».
+
+    После карточки переотправляем все вложения, отправленные жителем
+    по этому обращению (исходные + дополнения). Без них контекст
+    исходного обращения «яма во дворе» искажается — половина смысла
+    в фотографии. Аналогично оператору в `/op_help → 📋 Открытые
+    обращения` (см. admin_panel._do_open_tickets).
     """
     async with session_scope() as session:
-        appeal = await appeals_service.get_by_id(session, appeal_id)
+        # get_by_id_with_messages: для relay вложений из доп. сообщений
+        # нужны Message-row'ы (Appeal.messages). Без selectinload они
+        # лениво идут в БД из закрытой сессии → MissingGreenlet.
+        appeal = await appeals_service.get_by_id_with_messages(
+            session, appeal_id
+        )
         if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
             await _send_or_edit_menu(
                 event,
@@ -284,11 +295,28 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
             return
         text = card_format.user_card(appeal)
         status = appeal.status
+        # Снапшот для relay ВНУТРИ сессии: после выхода из session_scope
+        # ленивые атрибуты падают. messages здесь уже loaded selectinload'ом.
+        appeal_for_relay = appeal
     await _send_or_edit_menu(
         event,
         text=text,
         attachments=[keyboards.user_appeal_card_keyboard(appeal_id, status)],
     )
+    # Relay вложений в личку жителю — show_appeal вызывается из
+    # menu_callback, у которого bot+user_id доступны через event.
+    from aemr_bot.services.admin_relay import render_appeal_attachments
+    from aemr_bot.utils.event import get_user_id as _get_uid
+
+    user_id = _get_uid(event)
+    if user_id is not None:
+        await render_appeal_attachments(
+            event.bot,
+            chat_id=None,
+            user_id=user_id,
+            appeal=appeal_for_relay,
+            header_template="📎 Вложения к обращению #{appeal_id}",
+        )
 
 
 async def open_useful_info(event):

@@ -65,6 +65,95 @@ async def _send_with_retry(send_coro_factory, *, batch_idx: int,
     return False
 
 
+def _collect_all_user_attachments(appeal) -> list[dict]:
+    """Собрать все вложения, отправленные жителем по обращению —
+    исходные (`appeal.attachments`) + дополнения (`Message.attachments`
+    для `direction == 'from_user'`). Сохраняет хронологический порядок.
+
+    Используется при повторном показе обращения: «📋 Открытые
+    обращения» у оператора, «📂 Мои обращения → карточка» у жителя.
+    Без этого helper'а первичный relay (см. relay_attachments_to_admin
+    при finalize) виден только в момент подачи; при возврате к карточке
+    позже вложения «теряются» визуально, контекст обращения искажается.
+    """
+    out: list[dict] = []
+    out.extend(appeal.attachments or [])
+    messages = getattr(appeal, "messages", None) or []
+    for msg in messages:
+        if getattr(msg, "direction", None) != "from_user":
+            continue
+        atts = getattr(msg, "attachments", None) or []
+        out.extend(atts)
+    return out
+
+
+async def render_appeal_attachments(
+    bot,
+    *,
+    chat_id: int | None,
+    user_id: int | None,
+    appeal,
+    header_template: str = "Вложения обращения #{appeal_id}",
+    reply_to_mid: str | None = None,
+) -> None:
+    """Переотправить все вложения обращения (исходник + дополнения) в
+    указанный чат/диалог.
+
+    Универсальная функция для повторного показа обращения с
+    вложениями:
+    - админ-чат при «📋 Открытые обращения» (chat_id = admin_group_id);
+    - личка жителя при «📂 Мои обращения» (user_id = житель).
+
+    Бьёт на батчи по `cfg.attachments_per_relay_message`, чтобы не
+    переборщить со server-side лимитом MAX. Retry-loop не используется
+    — это не критичный путь (исходный relay уже произошёл при
+    создании обращения), а отдельный «удобный» показ.
+    """
+    if not bot:
+        return
+    all_atts = _collect_all_user_attachments(appeal)
+    if not all_atts:
+        return
+    relayable = deserialize_for_relay(all_atts)
+    if not relayable:
+        return
+
+    link = None
+    if reply_to_mid and chat_id is not None:
+        try:
+            from maxapi.enums.message_link_type import MessageLinkType
+            from maxapi.types.message import NewMessageLink
+
+            link = NewMessageLink(type=MessageLinkType.REPLY, mid=reply_to_mid)
+        except Exception:
+            log.exception("NewMessageLink build failed; relay без reply-link")
+            link = None
+
+    chunk_size = max(1, cfg.attachments_per_relay_message)
+    batches = [
+        relayable[i:i + chunk_size]
+        for i in range(0, len(relayable), chunk_size)
+    ]
+    total = len(batches)
+    for idx, batch in enumerate(batches, start=1):
+        header = header_template.format(appeal_id=appeal.id)
+        if total > 1:
+            header = f"{header} ({idx}/{total})"
+        try:
+            await bot.send_message(
+                chat_id=chat_id,
+                user_id=None if chat_id is not None else user_id,
+                text=header,
+                attachments=batch,
+                link=link,
+            )
+        except Exception:
+            log.exception(
+                "render_appeal_attachments: batch %d/%d for #%s failed",
+                idx, total, appeal.id,
+            )
+
+
 async def relay_attachments_to_admin(
     bot,
     *,

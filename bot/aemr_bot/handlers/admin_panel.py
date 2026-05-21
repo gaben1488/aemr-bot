@@ -123,7 +123,13 @@ async def _do_open_tickets(event) -> None:
                     [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
                 )
             )
-            .options(selectinload(Appeal.user))
+            # selectinload(Appeal.messages) нужен для repeat-relay
+            # вложений ниже — без него `appeal.messages` лениво ходит в
+            # БД из-под закрытой сессии и валится `MissingGreenlet`.
+            .options(
+                selectinload(Appeal.user),
+                selectinload(Appeal.messages),
+            )
             .order_by(Appeal.created_at)
         )
         open_appeals = (await session.scalars(query)).all()
@@ -185,6 +191,21 @@ async def _do_open_tickets(event) -> None:
         mid = extract_message_id(sent)
         if mid:
             last_mid = mid
+        # Прикрепления (фото/видео/файл) исходного обращения + всех
+        # дополнений жителя — переотправляем, чтобы при повторном
+        # обзоре «📋 Открытые обращения» оператор не разговаривал с
+        # обращением вслепую. Контекст «яма во дворе» без фотографии
+        # ямы — половина информации.
+        from aemr_bot.services.admin_relay import render_appeal_attachments
+
+        await render_appeal_attachments(
+            event.bot,
+            chat_id=cfg.admin_group_id,
+            user_id=None,
+            appeal=appeal,
+            header_template="📎 Вложения к обращению #{appeal_id}",
+            reply_to_mid=mid,
+        )
     if last_mid is not None:
         menu_tracker.set_last_menu_mid(cfg.admin_group_id, last_mid)
 
