@@ -252,7 +252,7 @@ async def _do_backup(event) -> None:
         attachments=[kbds.op_back_to_menu_keyboard()],
     )
     try:
-        out = await db_backup.backup_db()
+        result = await db_backup.backup_db()
     except Exception as e:
         await send_or_edit_screen(
             event,
@@ -261,17 +261,43 @@ async def _do_backup(event) -> None:
             attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
-    if out is None:
+    if not result.ok:
+        # Категоризированное сообщение по типу провала: то же различение,
+        # что в cron-алёртах (см. cron._job_backup_with_alert).
+        if result.fail_kind == "pg_dump":
+            err_text = (
+                f"⚠️ pg_dump упал: {result.fail_detail}\n"
+                "Проверьте Postgres и место на диске."
+            )
+        elif result.fail_kind == "gpg":
+            err_text = (
+                f"🔐 pg_dump прошёл, но gpg-шифрование упало: "
+                f"{result.fail_detail}\n"
+                "Незашифрованный дамп удалён (ПДн нельзя оставлять). "
+                "Проверьте BACKUP_GPG_PASSPHRASE."
+            )
+        elif result.fail_kind == "config":
+            err_text = (
+                "⚙️ Бэкап не выполнен: BACKUP_LOCAL_DIR пуст. "
+                "Проверьте `.env` (`docs/SYSADMIN.md §5.4`)."
+            )
+        else:
+            err_text = (
+                f"⚠️ Бэкап не выполнен ({result.fail_kind}): "
+                f"{result.fail_detail}\n"
+                "Проверьте логи: `docker compose logs bot --tail 50`."
+            )
         await send_or_edit_screen(
             event,
             chat_id=cfg.admin_group_id,
-            text=(
-                "⚠️ Бэкап не выполнен. Проверьте логи бота "
-                "(`docker compose logs bot --tail 50`)."
-            ),
+            text=err_text,
             attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
+    # result.ok гарантирует result.path не None (см. BackupResult.ok),
+    # но mypy этого не выводит — assert закрывает union-narrowing.
+    out = result.path
+    assert out is not None
     size_kb = out.stat().st_size // 1024
     await send_or_edit_screen(
         event,

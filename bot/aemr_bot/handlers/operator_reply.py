@@ -308,12 +308,19 @@ async def _send_reply_to_citizen(
     target_user_id = fresh_appeal.user.max_user_id
     formatted_text = card_format.citizen_reply(fresh_appeal, text)
     # Картинка оператора, если приложил — пробрасываем жителю рядом
-    # с inline-клавиатурой. limit=1 защищает от тяжёлых multi-image
-    # ответов; deserialize_for_relay в build_outbound устойчив к
-    # отсутствию maxapi (вернёт []), бот не падает.
-    operator_images = _image_attachments.image_attachments_from_event(
-        event, limit=1
+    # с inline-клавиатурой. limit=1 — формальный ответ оператора это
+    # «письмо» (Приложение 2 Регламента), к нему уместен один кадр-
+    # пояснение, не галерея. deserialize_for_relay в build_outbound
+    # устойчив к отсутствию maxapi (вернёт []), бот не падает.
+    #
+    # Сначала считаем ВСЕ приложенные картинки — если оператор приложил
+    # больше одной, шлём ему явное уведомление, чтобы он знал, что
+    # ушла только первая. Молчаливая обрезка ломала UX: оператор не
+    # понимал, почему житель видит «не то, что я приложил».
+    all_operator_images = _image_attachments.image_attachments_from_event(
+        event, limit=0
     )
+    operator_images = all_operator_images[:1]
     outbound_images = _image_attachments.build_outbound_image_attachments(
         operator_images
     )
@@ -343,6 +350,20 @@ async def _send_reply_to_citizen(
             ),
         )
         return False, None
+    # Уведомление оператору о множественных картинках. Шлём ПОСЛЕ
+    # успешной доставки, чтобы не блокировать сам ответ при сбое
+    # admin-канала; _safe_admin_notice проглатывает свои исключения.
+    if len(all_operator_images) > 1:
+        await _safe_admin_notice(
+            event,
+            (
+                f"ℹ️ К ответу по обращению #{appeal_id} были приложены "
+                f"{len(all_operator_images)} картинок — жителю ушла только "
+                f"первая. Шаблон ответа Приложения 2 Регламента ожидает "
+                f"один кадр. Если нужно отправить остальные — пришлите их "
+                f"отдельным ответом на карточку обращения."
+            ),
+        )
     return True, extract_message_id(sent)
 
 

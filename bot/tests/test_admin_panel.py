@@ -220,6 +220,7 @@ class TestDoBackup:
     async def test_success_path(self, tmp_path) -> None:
         pytest.importorskip("maxapi")
         from aemr_bot.handlers import admin_panel
+        from aemr_bot.services.db_backup import BackupResult
 
         event = _make_event()
         # Мокаем pg_dump → реальный путь к файлу для st_size
@@ -227,7 +228,7 @@ class TestDoBackup:
         backup_file.write_bytes(b"x" * 2048)  # 2 КБ
 
         with patch("aemr_bot.services.db_backup.backup_db",
-                   AsyncMock(return_value=backup_file)):
+                   AsyncMock(return_value=BackupResult(path=backup_file))):
             await admin_panel._do_backup(event)
         # Два сообщения: «запускаю…» и «✅ готов».
         assert event.bot.send_message.call_count == 2
@@ -236,16 +237,43 @@ class TestDoBackup:
         assert "backup.sql" in last_text
 
     @pytest.mark.asyncio
-    async def test_returns_none_path(self) -> None:
+    async def test_pg_dump_fail_categorized_message(self) -> None:
+        """Категоризированный fail_kind='pg_dump' → сообщение про pg_dump."""
         pytest.importorskip("maxapi")
         from aemr_bot.handlers import admin_panel
+        from aemr_bot.services.db_backup import BackupResult
 
         event = _make_event()
+        fail = BackupResult(
+            path=None, fail_kind="pg_dump",
+            fail_detail="pg_dump failed with code 1",
+        )
         with patch("aemr_bot.services.db_backup.backup_db",
-                   AsyncMock(return_value=None)):
+                   AsyncMock(return_value=fail)):
             await admin_panel._do_backup(event)
         last_text = event.bot.send_message.call_args_list[-1].kwargs["text"]
-        assert "не выполнен" in last_text.lower()
+        assert "pg_dump" in last_text
+        assert "code 1" in last_text
+
+    @pytest.mark.asyncio
+    async def test_gpg_fail_categorized_message(self) -> None:
+        """Категоризированный fail_kind='gpg' → сообщение упоминает gpg
+        и удаление незашифрованного дампа."""
+        pytest.importorskip("maxapi")
+        from aemr_bot.handlers import admin_panel
+        from aemr_bot.services.db_backup import BackupResult
+
+        event = _make_event()
+        fail = BackupResult(
+            path=None, fail_kind="gpg",
+            fail_detail="gpg failed with code 2",
+        )
+        with patch("aemr_bot.services.db_backup.backup_db",
+                   AsyncMock(return_value=fail)):
+            await admin_panel._do_backup(event)
+        last_text = event.bot.send_message.call_args_list[-1].kwargs["text"]
+        assert "gpg" in last_text.lower()
+        assert "незашифрован" in last_text.lower() or "ПДн" in last_text
 
     @pytest.mark.asyncio
     async def test_exception_path(self) -> None:

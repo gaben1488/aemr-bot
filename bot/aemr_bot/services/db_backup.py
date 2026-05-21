@@ -2,7 +2,8 @@
 локальный том → опционально S3.
 
 Выделено из services/cron.py этапом 4 рефакторинга. cron.py импортирует
-из этого модуля только `backup_db()` для job _job_backup_with_alert.
+из этого модуля `backup_db()` (возвращает BackupResult с фактом успеха
+и категорией ошибки) для job _job_backup_with_alert.
 
 Архитектура:
 - _build_pg_env() — переменные окружения PG* для pg_dump
@@ -10,13 +11,18 @@
 - _run_pg_dump() — простой pg_dump → файл (без шифрования)
 - _run_pg_dump_encrypted() — pg_dump | gpg --symmetric → файл
 - _upload_to_s3() — опциональная загрузка в S3 через rclone
-- backup_db() — главная функция; возвращает Path или None
+- backup_db() — главная функция; возвращает BackupResult
+
+Категоризированные исключения (BackupPgDumpError / BackupGpgError) дают
+вызывающему коду понять, **что именно** упало, чтобы admin-алёрт мог
+быть точным («pg_dump упал» vs «дамп сделан, но gpg не зашифровал»).
 """
 from __future__ import annotations
 
 import asyncio
 import logging
 import os
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
@@ -26,6 +32,48 @@ from aemr_bot.config import settings
 
 log = logging.getLogger(__name__)
 TZ = ZoneInfo(settings.timezone)
+
+
+class BackupError(Exception):
+    """Базовое исключение бэкапа. Не используется напрямую — только
+    как родитель для категорированных под-классов."""
+
+
+class BackupPgDumpError(BackupError):
+    """pg_dump упал. Возможные причины: Postgres недоступен, нет места
+    на диске, не та схема доступа, нет прав на чтение БД."""
+
+
+class BackupGpgError(BackupError):
+    """gpg-шифрование упало (дамп либо сделан, либо нет — это
+    ответственность обработчика, проверять `out_path.exists()`).
+    Возможные причины: неверный passphrase, нет места под /tmp,
+    отсутствие gpg в контейнере."""
+
+
+@dataclass(frozen=True)
+class BackupResult:
+    """Итог одной попытки бэкапа.
+
+    `path is not None` ⇔ успех (файл записан, права 0600). Иначе
+    `fail_kind` категоризирует причину для точного admin-алёрта.
+
+    Возможные `fail_kind`:
+    - "config" — `BACKUP_LOCAL_DIR` пустой (нет, куда писать).
+    - "pg_dump" — `pg_dump` упал.
+    - "gpg" — `pg_dump` отработал, но `gpg --symmetric` упал.
+    - "unknown" — любая другая (включая FS-ошибки записи).
+
+    Поле `fail_detail` — одна строка для логов и admin-алёрта
+    (короткое описание, без stack-trace).
+    """
+    path: Path | None
+    fail_kind: str = ""
+    fail_detail: str = ""
+
+    @property
+    def ok(self) -> bool:
+        return self.path is not None
 
 
 def _build_pg_env() -> dict[str, str]:
@@ -76,7 +124,7 @@ async def _run_pg_dump(out_path: Path, env: dict[str, str]) -> None:
     finally:
         await asyncio.to_thread(f.close)
     if rc != 0:
-        raise RuntimeError(f"pg_dump failed with code {rc}")
+        raise BackupPgDumpError(f"pg_dump failed with code {rc}")
 
 
 async def _run_pg_dump_encrypted(
@@ -144,10 +192,13 @@ async def _run_pg_dump_encrypted(
         os.close(data_r)
 
     gpg_rc, dump_rc = await asyncio.gather(gpg.wait(), dump.wait())
-    if gpg_rc != 0:
-        raise RuntimeError(f"gpg failed with code {gpg_rc}")
+    # Сначала проверяем pg_dump: если дамп не сделан, gpg-проблема
+    # вторична («не было что шифровать»). Это даёт точную категорию
+    # для admin-алёрта.
     if dump_rc != 0:
-        raise RuntimeError(f"pg_dump failed with code {dump_rc}")
+        raise BackupPgDumpError(f"pg_dump failed with code {dump_rc}")
+    if gpg_rc != 0:
+        raise BackupGpgError(f"gpg failed with code {gpg_rc}")
 
 
 async def _upload_to_s3(out_path: Path) -> None:
@@ -184,21 +235,31 @@ async def _upload_to_s3(out_path: Path) -> None:
     log.info("backup uploaded to s3: %s", out_path.name)
 
 
-async def backup_db() -> Path | None:
+async def backup_db() -> BackupResult:
     """Еженедельный pg_dump → опционально gpg → локальный том → опционально S3.
 
     Сделано под self-hosted: по умолчанию сохраняет только в локальный
     том (`/backups`) с ротацией. S3 и gpg включаются через переменные
-    окружения. Возвращает путь к успешно записанному бэкапу либо None
-    при сбое. Никогда не выбрасывает исключений — вызывающий код в
-    `cron._job_backup_with_alert` проглатывает None и шлёт алёрт.
+    окружения. Возвращает `BackupResult`: при успехе `.ok=True`,
+    `.path` указывает на файл; при сбое — `.fail_kind` категоризирует
+    причину (`config` / `pg_dump` / `gpg` / `unknown`), `.fail_detail` —
+    короткая строка для admin-алёрта.
+
+    Никогда не выбрасывает исключений — вызывающий код в
+    `cron._job_backup_with_alert` читает `.fail_kind` и шлёт точный
+    алёрт. S3-загрузка считается необязательной: её сбой не валит
+    весь результат (локальный файл по-прежнему есть).
     """
     local_dir = (
         Path(settings.backup_local_dir) if settings.backup_local_dir else None
     )
     if local_dir is None:
         log.info("backup skipped: BACKUP_LOCAL_DIR is empty")
-        return None
+        return BackupResult(
+            path=None,
+            fail_kind="config",
+            fail_detail="BACKUP_LOCAL_DIR пуст — нет, куда писать бэкап.",
+        )
 
     target_dir = local_dir
     target_dir.mkdir(parents=True, exist_ok=True)
@@ -235,13 +296,34 @@ async def backup_db() -> Path | None:
         except OSError:
             log.warning("could not chmod backup %s to 0600", out.name)
         log.info("backup written: %s (%d bytes)", out.name, out.stat().st_size)
-    except Exception:
-        log.exception("backup failed during pg_dump")
+    except BackupPgDumpError as e:
+        log.exception("backup failed: pg_dump")
         try:
             out.unlink(missing_ok=True)
         except Exception:
-            log.warning("не удалось удалить неполный файл бэкапа %s", out.name, exc_info=True)
-        return None
+            log.warning("не удалось удалить неполный файл %s", out.name, exc_info=True)
+        return BackupResult(path=None, fail_kind="pg_dump", fail_detail=str(e))
+    except BackupGpgError as e:
+        log.exception("backup failed: gpg")
+        # Незашифрованный дамп удаляем тоже — он мог осесть на диске
+        # из частичного gpg-выхода; держать plain-text dump на диске
+        # без явной зачистки = риск (152-ФЗ — он содержит ПДн).
+        try:
+            out.unlink(missing_ok=True)
+        except Exception:
+            log.warning("не удалось удалить неполный файл %s", out.name, exc_info=True)
+        return BackupResult(path=None, fail_kind="gpg", fail_detail=str(e))
+    except Exception as e:
+        log.exception("backup failed: unknown")
+        try:
+            out.unlink(missing_ok=True)
+        except Exception:
+            log.warning("не удалось удалить неполный файл %s", out.name, exc_info=True)
+        return BackupResult(
+            path=None,
+            fail_kind="unknown",
+            fail_detail=f"{type(e).__name__}: {str(e)[:150]}",
+        )
 
     _rotate_backups(target_dir, settings.backup_keep_count, suffix)
 
@@ -250,4 +332,4 @@ async def backup_db() -> Path | None:
     except Exception:
         log.exception("backup s3 upload failed (local copy still intact)")
 
-    return out
+    return BackupResult(path=out)
