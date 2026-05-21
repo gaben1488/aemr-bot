@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-21 02:40:53 UTC`
+Generated at: `2026-05-21 02:47:22 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `184`
+Indexed files: `185`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -43,7 +43,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (12111 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (7569 bytes)
-- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (11438 bytes)
+- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12068 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17506 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (12572 bytes)
@@ -53,21 +53,21 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_funnel.py` (29804 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (12572 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (37838 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (26572 bytes)
-- `bot/aemr_bot/handlers/callback_router.py` (8200 bytes)
+- `bot/aemr_bot/handlers/callback_router.py` (8339 bytes)
 - `bot/aemr_bot/handlers/menu.py` (43971 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (32495 bytes)
 - `bot/aemr_bot/handlers/start.py` (16556 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (55524 bytes)
+- `bot/aemr_bot/keyboards.py` (57840 bytes)
 - `bot/aemr_bot/main.py` (18178 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (6055 bytes)
 - `bot/aemr_bot/services/appeals.py` (18415 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (5607 bytes)
-- `bot/aemr_bot/services/broadcasts.py` (12238 bytes)
+- `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (8809 bytes)
 - `bot/aemr_bot/services/cron.py` (36406 bytes)
@@ -84,7 +84,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/users.py` (29316 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (11952 bytes)
-- `bot/aemr_bot/texts.py` (34304 bytes)
+- `bot/aemr_bot/texts.py` (35467 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -107,10 +107,11 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_appeals_service_pg.py` (14053 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
 - `bot/tests/test_broadcast_handlers.py` (33239 bytes)
+- `bot/tests/test_broadcast_history_card.py` (10153 bytes)
 - `bot/tests/test_broadcast_templates_handlers.py` (13876 bytes)
 - `bot/tests/test_broadcast_templates_service_pg.py` (9397 bytes)
 - `bot/tests/test_broadcast_with_image.py` (23848 bytes)
-- `bot/tests/test_broadcasts_service_pg.py` (3786 bytes)
+- `bot/tests/test_broadcasts_service_pg.py` (6324 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
 - `bot/tests/test_callback_router.py` (8614 bytes)
 - `bot/tests/test_callback_router_coverage.py` (5487 bytes)
@@ -3534,8 +3535,8 @@ def _mask_phone(phone: str | None) -> str:
 
 ### `bot/aemr_bot/handlers/admin_callback_dispatch.py`
 
-Size: `11438` bytes  
-SHA-256: `f8d001f3ee853c39202a02af1d10afa672c5b7f0d5227e94e39f3574710d9e6f`
+Size: `12068` bytes  
+SHA-256: `73adb290118afbc70464ea931bb4aae73bae50e726faa2da91a939ecbdbdec5a`
 
 ```python
 """Dispatch admin/operator callback-payload'ов (`broadcast:*` / `op:*`).
@@ -3662,6 +3663,19 @@ async def _op_unblock(event, appeal_id: int) -> None:
     await admin_commands.run_block_for_appeal(event, appeal_id, blocked=False)
 
 
+# PR G: история рассылок — карточка / клон / failed-deliveries.
+async def _op_bc_open(event, broadcast_id: int) -> None:
+    await broadcast_handler._open_broadcast(event, broadcast_id)
+
+
+async def _op_bc_clone(event, broadcast_id: int) -> None:
+    await broadcast_handler._clone_broadcast(event, broadcast_id)
+
+
+async def _op_bc_failed(event, broadcast_id: int) -> None:
+    await broadcast_handler._list_failed_deliveries(event, broadcast_id)
+
+
 # ---- Таблицы маршрутов ------------------------------------------------------
 #
 # _EXACT — точное совпадение payload. _PREFIX_ID — `op:<verb>:<id>`,
@@ -3715,6 +3729,10 @@ _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
     ("op:erase:", _op_erase),
     ("op:block:", _op_block),
     ("op:unblock:", _op_unblock),
+    # PR G: история рассылок.
+    ("op:bc:open:", _op_bc_open),
+    ("op:bc:clone:", _op_bc_clone),
+    ("op:bc:failed:", _op_bc_failed),
 )
 
 # _PREFIX_RAW: handler получает весь payload и сам делает ack.
@@ -8483,8 +8501,8 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `37838` bytes  
-SHA-256: `8697768c99ba16a83a55e89cbd4b1376c59cdd42aa22f668a5fe82bd1574a7a8`
+Size: `44196` bytes  
+SHA-256: `deb902f80302175023b5cf6d7c57813bb75cc1ae7b96583d1efaca7562e105b6`
 
 ```python
 """Мастер рассылок и цикл их отправки.
@@ -9331,11 +9349,181 @@ async def _list_broadcasts(event) -> None:
                 total=bc.subscriber_count_at_start,
             )
         )
+    # PR G: кнопки-строки списка → клик открывает карточку рассылки.
+    # Текст списка остаётся (быстрый обзор), кнопки выше дублируют
+    # цифры и кликабельны.
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
         text="\n".join(lines),
-        attachments=[keyboards.op_back_to_menu_keyboard()],
+        attachments=[keyboards.broadcast_history_list_keyboard(items)],
+    )
+
+
+async def _open_broadcast(event, broadcast_id: int) -> None:
+    """`op:bc:open:<id>` — карточка одной рассылки (PR G).
+
+    Показывает текст, картинки, счётчики доставки и две кнопки:
+    «📝 Создать на основе» (prefill /broadcast wizard) и «👥 Не
+    доставлено» (если failed_count > 0).
+    """
+    if not await _ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        return
+    async with session_scope() as session:
+        bc = await broadcasts_service.get_by_id(session, broadcast_id)
+    if bc is None:
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_BROADCAST_NOT_FOUND,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return
+    failed_line = (
+        texts.OP_BROADCAST_CARD_FAILED_LINE.format(failed=bc.failed_count)
+        if bc.failed_count
+        else ""
+    )
+    body = texts.OP_BROADCAST_CARD.format(
+        number=bc.id,
+        status=bc.status,
+        created_at=_format_dt(bc.created_at),
+        delivered=bc.delivered_count,
+        total=bc.subscriber_count_at_start,
+        failed_line=failed_line,
+        image_count=len(bc.attachments or []),
+        text=bc.text,
+    )
+    preview_images = _image_attachments.build_outbound_image_attachments(
+        bc.attachments or []
+    )
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=body,
+        attachments=[
+            *preview_images,
+            keyboards.broadcast_history_card_keyboard(
+                bc.id, has_failures=bool(bc.failed_count)
+            ),
+        ],
+    )
+
+
+async def _clone_broadcast(event, broadcast_id: int) -> None:
+    """`op:bc:clone:<id>` — взять рассылку за основу новой (PR G).
+
+    Заряжает /broadcast wizard данными существующей рассылки (text +
+    attachments) в шаг awaiting_confirm — оператор видит обычный
+    confirm-preview и либо «Разослать», либо «Изменить текст».
+    """
+    if not await _ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        return
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        return
+    async with session_scope() as session:
+        bc = await broadcasts_service.get_by_id(session, broadcast_id)
+        if bc is None:
+            await send_or_edit_screen(
+                event,
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_BROADCAST_NOT_FOUND,
+                attachments=[keyboards.op_back_to_menu_keyboard()],
+            )
+            return
+        subscribers = await broadcasts_service.count_subscribers(session)
+    if subscribers == 0:
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_BROADCAST_CLONE_NO_SUBSCRIBERS,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return
+    prefill_wizard_from_template(
+        actor_id,
+        text=bc.text,
+        attachments=list(bc.attachments or []),
+    )
+    preview_images = _image_attachments.build_outbound_image_attachments(
+        bc.attachments or []
+    )
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_BROADCAST_PREVIEW.format(
+            text=bc.text,
+            count=subscribers,
+            image_count=len(bc.attachments or []),
+            image_warning="",
+        ),
+        attachments=[
+            *preview_images,
+            keyboards.broadcast_confirm_keyboard(),
+        ],
+    )
+    log.info(
+        "broadcast: clone from #%s by operator=%s — wizard pre-filled "
+        "(subscribers=%d)",
+        bc.id, actor_id, subscribers,
+    )
+
+
+async def _list_failed_deliveries(event, broadcast_id: int) -> None:
+    """`op:bc:failed:<id>` — кому не дошло (PR G)."""
+    if not await _ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        return
+    LIMIT = 50
+    async with session_scope() as session:
+        bc = await broadcasts_service.get_by_id(session, broadcast_id)
+        if bc is None:
+            await send_or_edit_screen(
+                event,
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_BROADCAST_NOT_FOUND,
+                attachments=[keyboards.op_back_to_menu_keyboard()],
+            )
+            return
+        rows = await broadcasts_service.list_failed_deliveries(
+            session, broadcast_id, limit=LIMIT
+        )
+    if not rows:
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_BROADCAST_FAILED_LIST_EMPTY.format(number=bc.id),
+            attachments=[
+                keyboards.broadcast_failed_list_keyboard(broadcast_id)
+            ],
+        )
+        return
+    lines = [
+        texts.OP_BROADCAST_FAILED_LIST_HEADER.format(
+            number=bc.id, count=bc.failed_count
+        ).rstrip()
+    ]
+    for _user_id, name, err in rows:
+        # Обрезаем ошибку, чтобы не разорвать сообщение MAX-лимитом
+        # длины: типичный repr-RuntimeError помещается, но иногда
+        # бывает огромный traceback от bot.send_message.
+        err_short = (err or "").strip()[:100]
+        lines.append(
+            texts.OP_BROADCAST_FAILED_LIST_ITEM.format(
+                name=name, error=err_short or "—"
+            )
+        )
+    if bc.failed_count > len(rows):
+        lines.append(
+            texts.OP_BROADCAST_FAILED_LIST_TRUNCATED.format(
+                more=bc.failed_count - len(rows), limit=len(rows)
+            )
+        )
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text="\n".join(lines),
+        attachments=[keyboards.broadcast_failed_list_keyboard(broadcast_id)],
     )
 
 
@@ -10116,8 +10304,8 @@ async def _step_edit(
 
 ### `bot/aemr_bot/handlers/callback_router.py`
 
-Size: `8200` bytes  
-SHA-256: `f9e1dddb198be5156fbf41d0e84654dece89c5a247b976af3ba2e64f2da740a0`
+Size: `8339` bytes  
+SHA-256: `8cc9ca4bd6b36ce15ee5d54b0c281b9f78822d55f53ab6f011ac1bd4fbe8531f`
 
 ```python
 """Маршрутизация callback payload'ов.
@@ -10205,6 +10393,7 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("op:setkey:", CallbackGroup.OPERATOR_ADMIN, True, "экспертный wizard ключа"),
     CallbackRoute("op:set:", CallbackGroup.OPERATOR_ADMIN, True, "иерархическое меню настроек"),
     CallbackRoute("op:tmpl:", CallbackGroup.BROADCAST_ADMIN, True, "шаблоны рассылок"),
+    CallbackRoute("op:bc:", CallbackGroup.BROADCAST_ADMIN, True, "история рассылок: карточка / клон / failed"),
 )
 
 
@@ -12505,8 +12694,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `55524` bytes  
-SHA-256: `f63bf8af8dd8369f2744e4820be50e730c7e3d7257a27ead73b7125868d27bb0`
+Size: `57840` bytes  
+SHA-256: `3b35236e4611078deea74eda093f8a3b7b8521543d6d001ddcebc5be1c88432d`
 
 ```python
 from maxapi.types import (
@@ -12972,6 +13161,68 @@ def op_back_to_menu_keyboard():
     """Одна кнопка возврата к главной операторской панели."""
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    return kb.as_markup()
+
+
+def broadcast_history_list_keyboard(items):
+    """Список последних рассылок (PR G) — каждая строка кликабельна.
+
+    Нажатие открывает карточку рассылки (`op:bc:open:<id>`) с
+    текстом, картинками и действиями «📝 Создать на основе» /
+    «👥 Не доставлено».
+    """
+    kb = InlineKeyboardBuilder()
+    for bc in items:
+        # status emoji подсказывает «есть проблемы / завершено».
+        status = (bc.status or "").lower()
+        if status == "done":
+            mark = "✅"
+        elif status in {"failed", "cancelled"}:
+            mark = "⚠️"
+        elif status == "sending":
+            mark = "▶️"
+        else:
+            mark = "•"
+        kb.row(
+            CallbackButton(
+                text=f"{mark} #{bc.id} · {bc.delivered_count}/{bc.subscriber_count_at_start}",
+                payload=f"op:bc:open:{bc.id}",
+            )
+        )
+    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    return kb.as_markup()
+
+
+def broadcast_history_card_keyboard(broadcast_id: int, *, has_failures: bool):
+    """Карточка рассылки: «создать на основе», «не доставлено», назад."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="📝 Создать на основе",
+            payload=f"op:bc:clone:{broadcast_id}",
+        )
+    )
+    if has_failures:
+        kb.row(
+            CallbackButton(
+                text="👥 Не доставлено",
+                payload=f"op:bc:failed:{broadcast_id}",
+            )
+        )
+    kb.row(CallbackButton(text="↩️ К списку", payload="op:broadcast_list"))
+    return kb.as_markup()
+
+
+def broadcast_failed_list_keyboard(broadcast_id: int):
+    """Кнопки под списком failed-доставок: назад к карточке."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="↩️ К рассылке",
+            payload=f"op:bc:open:{broadcast_id}",
+        )
+    )
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -14799,8 +15050,8 @@ async def archive(session: AsyncSession, template_id: int) -> BroadcastTemplate:
 
 ### `bot/aemr_bot/services/broadcasts.py`
 
-Size: `12238` bytes  
-SHA-256: `935066ea4174f090f727c05dc1c09d7541d2b0a6692acbc64076caf11c28586b`
+Size: `13727` bytes  
+SHA-256: `ffe65eabea9bb4c3b70f5fe763d3703b22f855204cd732ec14e58939a95ecaec`
 
 ```python
 """Сервис подписки и муниципальных рассылок.
@@ -15104,6 +15355,37 @@ async def list_recent(session: AsyncSession, limit: int = 10) -> list[Broadcast]
 
 async def get_by_id(session: AsyncSession, broadcast_id: int) -> Broadcast | None:
     return await session.scalar(select(Broadcast).where(Broadcast.id == broadcast_id))
+
+
+async def list_failed_deliveries(
+    session: AsyncSession,
+    broadcast_id: int,
+    *,
+    limit: int = 50,
+) -> list[tuple[int, str, str | None]]:
+    """Список доставок-неудач для рассылки (PR G).
+
+    Возвращает [(user_db_id, first_name, error)], упорядоченные по
+    error → потом по user_id. Используется в UI «👥 Не доставлено»:
+    оператор видит, кому конкретно не дошло и с какой ошибкой
+    (заблокировал бота, юзер удалён, MAX-API сбой).
+
+    Лимит дефолтом 50 — для типичной рассылки в 1-2k подписчиков и
+    failure rate <5% это вмещает все ошибки; для редких больших фейлов
+    UI покажет «и ещё N» (caller использует длину = limit как
+    индикатор «есть отсечка»).
+    """
+    result = await session.execute(
+        select(BroadcastDelivery.user_id, User.first_name, BroadcastDelivery.error)
+        .join(User, User.id == BroadcastDelivery.user_id)
+        .where(
+            BroadcastDelivery.broadcast_id == broadcast_id,
+            BroadcastDelivery.error.isnot(None),
+        )
+        .order_by(BroadcastDelivery.error, BroadcastDelivery.user_id)
+        .limit(limit)
+    )
+    return [(row[0], row[1] or "—", row[2]) for row in result.all()]
 ```
 
 ### `bot/aemr_bot/services/calendar_ru.py`
@@ -19434,8 +19716,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `34304` bytes  
-SHA-256: `0bfa33659dd0d75f55db1e8f73efd08ea564f15b94cd559e8df99c61562de8aa`
+Size: `35467` bytes  
+SHA-256: `a2273757b0c41517b0d10bce5375b67f7fcb221fbd8f052a7c8d6517eef58816`
 
 ```python
 WELCOME = (
@@ -19921,6 +20203,36 @@ OP_BROADCAST_CANCELLED = (
 OP_BROADCAST_LIST_EMPTY = "Рассылок ещё не было."
 OP_BROADCAST_LIST_HEADER = "📜 Недавние рассылки:\n"
 OP_BROADCAST_LIST_ITEM = "#{number} · {created_at} · {status} · {delivered}/{total}"
+
+# Карточка рассылки в истории (PR G)
+OP_BROADCAST_CARD = (
+    "📜 Рассылка #{number}\n"
+    "Статус: {status}\n"
+    "Создана: {created_at}\n"
+    "Доставлено: {delivered}/{total}{failed_line}\n"
+    "Картинок: {image_count}\n"
+    "──────────\n"
+    "{text}"
+)
+OP_BROADCAST_CARD_FAILED_LINE = "\nНе доставлено: {failed}"
+
+OP_BROADCAST_NOT_FOUND = "Рассылка не найдена."
+
+OP_BROADCAST_FAILED_LIST_EMPTY = (
+    "📥 У рассылки #{number} нет неуспешных доставок."
+)
+OP_BROADCAST_FAILED_LIST_HEADER = (
+    "👥 Не доставлено по рассылке #{number} (всего {count}):\n"
+)
+OP_BROADCAST_FAILED_LIST_ITEM = "• {name} — {error}"
+OP_BROADCAST_FAILED_LIST_TRUNCATED = (
+    "\n…и ещё {more} — показаны первые {limit}."
+)
+
+OP_BROADCAST_CLONE_NO_SUBSCRIBERS = (
+    "Рассылка взята за основу, но подписчиков сейчас нет — отправлять "
+    "некому. Дождитесь, пока кто-то подпишется."
+)
 OP_BROADCAST_WIZARD_EXPIRED = (
     "Ввод текста занял слишком долго, мастер закрыт. Откройте "
     "«Сделать рассылку» заново."
@@ -25271,6 +25583,296 @@ class TestListBroadcasts:
         assert "100" in text
 ```
 
+### `bot/tests/test_broadcast_history_card.py`
+
+Size: `10153` bytes  
+SHA-256: `59c54d06b299da1ed25294830a5c748ab0e732d563cddcd7ccf87f56a6ef30c0`
+
+```python
+"""Тесты для PR G — карточка рассылки в истории.
+
+- _open_broadcast: показывает текст/картинки/счётчики, кнопки.
+- _clone_broadcast: prefill /broadcast wizard в awaiting_confirm.
+- _list_failed_deliveries: показывает имена и обрезанные ошибки.
+"""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
+
+pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
+
+
+def _make_event(*, user_id: int = 7) -> SimpleNamespace:
+    return make_event(chat_id=555, user_id=user_id, with_callback=True)
+
+
+@pytest.fixture(autouse=True)
+def _clean_wizards():
+    from aemr_bot.handlers import broadcast
+    from aemr_bot.utils import menu_tracker
+
+    broadcast._wizards.clear()
+    menu_tracker.clear_all()
+    yield
+    broadcast._wizards.clear()
+    menu_tracker.clear_all()
+
+
+def _fake_broadcast(
+    *, bc_id: int = 42, failed: int = 0, attachments=None
+) -> SimpleNamespace:
+    return SimpleNamespace(
+        id=bc_id,
+        status="done",
+        created_at=datetime(2026, 5, 21, 12, 0, tzinfo=timezone.utc),
+        delivered_count=10,
+        failed_count=failed,
+        subscriber_count_at_start=10 + failed,
+        attachments=list(attachments or []),
+        text="Уважаемые жители!",
+    )
+
+
+class TestOpenBroadcast:
+    @pytest.mark.asyncio
+    async def test_unknown_id_shows_not_found(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        event = _make_event()
+        with (
+            patch(
+                "aemr_bot.handlers.broadcast._ensure_role",
+                new=AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.session_scope",
+                _fake_session_scope,
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.broadcasts_service.get_by_id",
+                new=AsyncMock(return_value=None),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.send_or_edit_screen",
+                new=AsyncMock(),
+            ) as mock_send,
+        ):
+            await broadcast._open_broadcast(event, 999)
+        sent_text = mock_send.await_args.kwargs.get("text")
+        assert "не найдена" in (sent_text or "").lower()
+
+    @pytest.mark.asyncio
+    async def test_renders_text_and_no_failures_hides_button(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        event = _make_event()
+        bc = _fake_broadcast(failed=0)
+        with (
+            patch(
+                "aemr_bot.handlers.broadcast._ensure_role",
+                new=AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.session_scope",
+                _fake_session_scope,
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.broadcasts_service.get_by_id",
+                new=AsyncMock(return_value=bc),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.send_or_edit_screen",
+                new=AsyncMock(),
+            ) as mock_send,
+        ):
+            await broadcast._open_broadcast(event, bc.id)
+
+        sent_text = mock_send.await_args.kwargs.get("text") or ""
+        assert "Уважаемые жители!" in sent_text
+        assert f"#{bc.id}" in sent_text
+        # «Не доставлено» строка в card отсутствует, когда failed=0
+        assert "Не доставлено" not in sent_text
+
+    @pytest.mark.asyncio
+    async def test_failures_show_in_card(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        event = _make_event()
+        bc = _fake_broadcast(failed=3)
+        with (
+            patch(
+                "aemr_bot.handlers.broadcast._ensure_role",
+                new=AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.session_scope",
+                _fake_session_scope,
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.broadcasts_service.get_by_id",
+                new=AsyncMock(return_value=bc),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.send_or_edit_screen",
+                new=AsyncMock(),
+            ) as mock_send,
+        ):
+            await broadcast._open_broadcast(event, bc.id)
+        sent_text = mock_send.await_args.kwargs.get("text") or ""
+        assert "Не доставлено: 3" in sent_text
+
+
+class TestCloneBroadcast:
+    @pytest.mark.asyncio
+    async def test_clone_prefills_wizard_and_shows_preview(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        event = _make_event(user_id=7)
+        bc = _fake_broadcast()
+        with (
+            patch(
+                "aemr_bot.handlers.broadcast._ensure_role",
+                new=AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.session_scope",
+                _fake_session_scope,
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.broadcasts_service.get_by_id",
+                new=AsyncMock(return_value=bc),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+                new=AsyncMock(return_value=42),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.send_or_edit_screen",
+                new=AsyncMock(),
+            ),
+        ):
+            await broadcast._clone_broadcast(event, bc.id)
+        # wizard в шаге awaiting_confirm, текст и attachments из bc.
+        state = broadcast._wizards.get(7)
+        assert state is not None
+        assert state.step == "awaiting_confirm"
+        assert state.text == bc.text
+
+    @pytest.mark.asyncio
+    async def test_clone_without_subscribers_skips_prefill(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        event = _make_event(user_id=7)
+        bc = _fake_broadcast()
+        with (
+            patch(
+                "aemr_bot.handlers.broadcast._ensure_role",
+                new=AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.session_scope",
+                _fake_session_scope,
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.broadcasts_service.get_by_id",
+                new=AsyncMock(return_value=bc),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+                new=AsyncMock(return_value=0),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.send_or_edit_screen",
+                new=AsyncMock(),
+            ) as mock_send,
+        ):
+            await broadcast._clone_broadcast(event, bc.id)
+        # wizard не задан — нет подписчиков
+        assert 7 not in broadcast._wizards
+        sent_text = mock_send.await_args.kwargs.get("text") or ""
+        assert "некому" in sent_text.lower() or "подписчик" in sent_text.lower()
+
+
+class TestListFailed:
+    @pytest.mark.asyncio
+    async def test_no_failures_shows_empty_message(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        event = _make_event()
+        bc = _fake_broadcast(failed=0)
+        with (
+            patch(
+                "aemr_bot.handlers.broadcast._ensure_role",
+                new=AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.session_scope",
+                _fake_session_scope,
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.broadcasts_service.get_by_id",
+                new=AsyncMock(return_value=bc),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.broadcasts_service.list_failed_deliveries",
+                new=AsyncMock(return_value=[]),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.send_or_edit_screen",
+                new=AsyncMock(),
+            ) as mock_send,
+        ):
+            await broadcast._list_failed_deliveries(event, bc.id)
+        sent_text = mock_send.await_args.kwargs.get("text") or ""
+        assert "нет неуспешных" in sent_text.lower() or "пуст" in sent_text.lower()
+
+    @pytest.mark.asyncio
+    async def test_renders_names_and_truncates_long_error(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        event = _make_event()
+        bc = _fake_broadcast(failed=2)
+        rows = [
+            (101, "Анна", "RuntimeError('blocked by user')"),
+            (102, "Борис", "X" * 500),  # длинная ошибка — должна обрезаться
+        ]
+        with (
+            patch(
+                "aemr_bot.handlers.broadcast._ensure_role",
+                new=AsyncMock(return_value=True),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.session_scope",
+                _fake_session_scope,
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.broadcasts_service.get_by_id",
+                new=AsyncMock(return_value=bc),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.broadcasts_service.list_failed_deliveries",
+                new=AsyncMock(return_value=rows),
+            ),
+            patch(
+                "aemr_bot.handlers.broadcast.send_or_edit_screen",
+                new=AsyncMock(),
+            ) as mock_send,
+        ):
+            await broadcast._list_failed_deliveries(event, bc.id)
+        sent_text = mock_send.await_args.kwargs.get("text") or ""
+        assert "Анна" in sent_text
+        assert "Борис" in sent_text
+        # 500 X-ов не уходит — обрезано до 100
+        assert "X" * 500 not in sent_text
+```
+
 ### `bot/tests/test_broadcast_templates_handlers.py`
 
 Size: `13876` bytes  
@@ -26399,8 +27001,8 @@ class TestRunBroadcastImplPassesImages:
 
 ### `bot/tests/test_broadcasts_service_pg.py`
 
-Size: `3786` bytes  
-SHA-256: `e701ba4d81e7312b30abb6994a9ca6f628ca9a1b71003da8f9e2964da6fe069c`
+Size: `6324` bytes  
+SHA-256: `14874fa4f49a31f3df01bc39a7eb26a29ccc64994f15d4fc03b4c41cdc1f1713`
 
 ```python
 """PG-тесты services/broadcasts.
@@ -26511,6 +27113,68 @@ async def test_mark_finished_done_keeps_explicit_counters(session) -> None:
     assert refreshed.status == BroadcastStatus.DONE.value
     assert refreshed.delivered_count == 3
     assert refreshed.failed_count == 0
+
+
+# ---- list_failed_deliveries (PR G) ---------------------------------
+
+
+@pytest.mark.asyncio
+async def test_list_failed_deliveries_empty(session) -> None:
+    """Рассылка без failed-доставок возвращает пустой список."""
+    bc = await broadcasts_service.create_broadcast(
+        session, text="t", operator_id=None, subscriber_count=0
+    )
+    result = await broadcasts_service.list_failed_deliveries(session, bc.id)
+    assert result == []
+
+
+@pytest.mark.asyncio
+async def test_list_failed_deliveries_only_failures(session) -> None:
+    """Успешные доставки игнорируются — в выборку идут только error IS NOT NULL."""
+    user1 = await users_service.get_or_create(session, max_user_id=101, first_name="Анна")
+    user2 = await users_service.get_or_create(session, max_user_id=102, first_name="Борис")
+    user3 = await users_service.get_or_create(session, max_user_id=103, first_name="Вера")
+    bc = await broadcasts_service.create_broadcast(
+        session, text="t", operator_id=None, subscriber_count=3
+    )
+    await broadcasts_service.record_delivery(
+        session, broadcast_id=bc.id, user_id=user1.id, error=None
+    )
+    await broadcasts_service.record_delivery(
+        session, broadcast_id=bc.id, user_id=user2.id, error="blocked"
+    )
+    await broadcasts_service.record_delivery(
+        session, broadcast_id=bc.id, user_id=user3.id, error="api_error"
+    )
+
+    result = await broadcasts_service.list_failed_deliveries(session, bc.id)
+    names = [r[1] for r in result]
+    errors = [r[2] for r in result]
+
+    assert "Анна" not in names  # успешная не попала
+    assert set(names) == {"Борис", "Вера"}
+    assert "blocked" in errors
+    assert "api_error" in errors
+
+
+@pytest.mark.asyncio
+async def test_list_failed_deliveries_respects_limit(session) -> None:
+    """Запрос с маленьким limit возвращает ровно limit строк."""
+    bc = await broadcasts_service.create_broadcast(
+        session, text="t", operator_id=None, subscriber_count=5
+    )
+    for i in range(5):
+        u = await users_service.get_or_create(
+            session, max_user_id=200 + i, first_name=f"U{i}"
+        )
+        await broadcasts_service.record_delivery(
+            session, broadcast_id=bc.id, user_id=u.id, error="x"
+        )
+
+    result = await broadcasts_service.list_failed_deliveries(
+        session, bc.id, limit=3
+    )
+    assert len(result) == 3
 ```
 
 ### `bot/tests/test_calendar_ru_full.py`
