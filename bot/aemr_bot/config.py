@@ -60,6 +60,15 @@ class Settings(BaseSettings):
     # сервера 90 секунд.
     polling_timeout_seconds: int = Field(30, alias="POLLING_TIMEOUT_SECONDS", ge=0, le=90)
 
+    # Таймаут на один HTTP-запрос к MAX API (send_message / edit_message
+    # / answers). maxapi default = 150 секунд; при sequential polling
+    # один тормозящий запрос блокирует все следующие тапы — видимое
+    # «бот завис». 30 секунд — ack/send должны отвечать за секунды,
+    # дольше = баг MAX, нет смысла блокировать оператора.
+    max_api_timeout_seconds: float = Field(
+        30.0, alias="MAX_API_TIMEOUT_SECONDS", gt=0.0, le=180.0
+    )
+
     # Broadcast / subscription. Rate-limit стоит ниже MAX-лимита 2 RPS, чтобы
     # обычная активность бота (ответы оператора, новые карточки) не упиралась
     # в потолок одновременно с рассылкой.

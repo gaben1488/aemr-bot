@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from maxapi import Bot, Dispatcher
+from maxapi.client.default import DefaultConnectionProperties
 from maxapi.exceptions.max import InvalidToken
 
 from aemr_bot import health
@@ -26,8 +27,22 @@ from aemr_bot.utils.background import spawn_background_task
 
 log = logging.getLogger("aemr_bot")
 
-bot = Bot(settings.bot_token)
-dp = Dispatcher()
+# maxapi default timeout = 150 секунд на один HTTP-запрос к MAX API.
+# При sequential polling один тормозящий запрос блокирует обработку
+# ВСЕХ следующих событий — видимое «тап → бот завис». Override через
+# наш конфиг (см. settings.max_api_timeout_seconds). max_retries в
+# maxapi 0.9.18 не настраивается через DefaultConnectionProperties
+# (только через timeout/sock_connect), оставляем как есть.
+bot = Bot(
+    settings.bot_token,
+    default_connection=DefaultConnectionProperties(
+        timeout=settings.max_api_timeout_seconds,
+    ),
+)
+# use_create_task=True: handlers — отдельные asyncio.Task, polling loop
+# не блокируется одним долгим callback'ом. Per-user state защищён
+# asyncio.Lock в appeal_runtime, concurrent dispatch безопасен.
+dp = Dispatcher(use_create_task=True)
 register_handlers(dp)
 
 # Semaphore-окно для входящих webhook'ов. Без ограничения каждый POST
