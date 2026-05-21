@@ -120,9 +120,16 @@ class TestOperatorsMenu:
 
     @pytest.mark.asyncio
     async def test_callback_edits_current_menu_card(self) -> None:
+        """Callback от АКТУАЛЬНОЙ карточки-меню (mid в tracker'е для
+        admin-чата) → edit. Это freshness-policy: меню оператора
+        редактируется в месте, если callback пришёл от свежей карточки."""
         from aemr_bot.handlers import admin_operators
+        from aemr_bot.utils import menu_tracker
 
         event = _make_callback_event()
+        # «m-1» — текущая карточка-меню в admin-чате (ADMIN_GROUP_ID=123)
+        menu_tracker.clear_all()
+        menu_tracker.set_last_menu_mid(123, "m-1")
         with patch("aemr_bot.handlers.admin_operators.ensure_role",
                    AsyncMock(return_value=True)):
             await admin_operators.run_operators_menu(event)

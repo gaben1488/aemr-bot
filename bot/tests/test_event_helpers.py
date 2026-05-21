@@ -120,8 +120,17 @@ class TestCallbackMessageId:
 
 
 class TestSendOrEditScreen:
+    def setup_method(self) -> None:
+        # Изоляция menu_tracker между тестами: in-memory dict
+        # переживает несколько тестов в одном процессе.
+        from aemr_bot.utils import menu_tracker
+        menu_tracker.clear_all()
+
     @pytest.mark.asyncio
     async def test_callback_edits_current_card(self) -> None:
+        """Callback от АКТУАЛЬНОЙ карточки-меню (mid в tracker'е) → edit.
+        Сценарий: оператор кликает кнопку на свежем меню, бот редактирует."""
+        from aemr_bot.utils import menu_tracker
         bot = SimpleNamespace(edit_message=AsyncMock(), send_message=AsyncMock())
         event = SimpleNamespace(
             bot=bot,
@@ -132,6 +141,8 @@ class TestSendOrEditScreen:
                 body=SimpleNamespace(mid="m-current"),
             ),
         )
+        # «m-current» — последняя отправленная карточка-меню в этом чате
+        menu_tracker.set_last_menu_mid(100, "m-current")
 
         await send_or_edit_screen(event, text="Экран", attachments=["kb"])
 
@@ -172,6 +183,12 @@ class TestSendOrEditScreen:
 
     @pytest.mark.asyncio
     async def test_edit_failure_falls_back_to_send(self) -> None:
+        """Существующее поведение: если edit_message бросил исключение
+        (например, MAX отверг по слишком старому mid), send_or_edit_screen
+        всё равно шлёт новое — оператор увидит ответ. Тут tracker
+        предзаполнен «правильным» mid, edit пытается выполниться, падает,
+        fallback срабатывает."""
+        from aemr_bot.utils import menu_tracker
         bot = SimpleNamespace(
             edit_message=AsyncMock(side_effect=RuntimeError("MAX edit failed")),
             send_message=AsyncMock(),
@@ -185,6 +202,7 @@ class TestSendOrEditScreen:
                 body=SimpleNamespace(mid="m-current"),
             ),
         )
+        menu_tracker.set_last_menu_mid(100, "m-current")
 
         await send_or_edit_screen(event, text="Экран", attachments=["kb"])
 

@@ -45,10 +45,13 @@ def _make_callback_event(*, user_id: int = 7) -> SimpleNamespace:
 @pytest.fixture(autouse=True)
 def _clean_wizards():
     from aemr_bot.handlers import broadcast
+    from aemr_bot.utils import menu_tracker
 
     broadcast._wizards.clear()
+    menu_tracker.clear_all()
     yield
     broadcast._wizards.clear()
+    menu_tracker.clear_all()
 
 
 # --- _format_progress ---------------------------------------------------------
@@ -366,10 +369,17 @@ class TestHandleAbort:
 
     @pytest.mark.asyncio
     async def test_callback_edits_preview_card_instead_of_sending_new(self) -> None:
+        """Callback от АКТУАЛЬНОЙ preview-карточки (mid в tracker'е
+        для admin-чата) → edit. Это контракт freshness-policy:
+        cancel-клик на свежую preview-карточку редактирует её на
+        «отменено» сообщение, без нового сообщения."""
         from aemr_bot.handlers import broadcast
+        from aemr_bot.utils import menu_tracker
 
         event = _make_callback_event(user_id=7)
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
+        # «m-1» — текущая preview-карточка в админ-чате (ADMIN_GROUP_ID=123 из conftest)
+        menu_tracker.set_last_menu_mid(123, "m-1")
         with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
             await broadcast._handle_abort(event)
 
@@ -411,12 +421,16 @@ class TestHandleEdit:
 
     @pytest.mark.asyncio
     async def test_callback_edits_preview_back_to_text_prompt(self) -> None:
+        """Callback от АКТУАЛЬНОЙ preview-карточки → edit обратно в
+        prompt-форму для нового текста (freshness-policy)."""
         from aemr_bot.handlers import broadcast
+        from aemr_bot.utils import menu_tracker
 
         event = _make_callback_event(user_id=7)
         state = broadcast._WizardState(step="awaiting_confirm")
         state.text = "старый текст"
         broadcast._wizards[7] = state
+        menu_tracker.set_last_menu_mid(123, "m-1")
         with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
             await broadcast._handle_edit(event)
 
