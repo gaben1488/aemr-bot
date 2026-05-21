@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-21 02:14:54 UTC`
+Generated at: `2026-05-21 02:20:57 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `179`
 Max file size: `300 KB`
@@ -200,6 +200,7 @@ The following files were skipped intentionally:
 - `aemr-bot-index.md` — output file
 - `bot/aemr_bot/db/alembic/script.py.mako` — non-text extension
 - `docs/PRIVACY.pdf` — excluded glob
+- `docs/Регламент_v6_draft.docx` — non-text extension
 - `infra/init-letsencrypt.sh` — non-text extension
 - `scripts/audit_vps.sh` — non-text extension
 - `scripts/auto-deploy.sh` — non-text extension
