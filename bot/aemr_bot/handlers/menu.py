@@ -280,9 +280,11 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
     обращения` (см. admin_panel._do_open_tickets).
     """
     async with session_scope() as session:
-        # get_by_id_with_messages: для relay вложений из доп. сообщений
-        # нужны Message-row'ы (Appeal.messages). Без selectinload они
-        # лениво идут в БД из закрытой сессии → MissingGreenlet.
+        # get_by_id_with_messages нужен, чтобы посчитать
+        # attachment_count для кнопки «📎 Показать вложения» внизу
+        # карточки. Сами вложения НЕ переотправляются автоматически —
+        # это вызывало hang при каждом тапе на карточку (см. PR-fix-hang).
+        # Сейчас житель тапает кнопку явно, когда хочет посмотреть.
         appeal = await appeals_service.get_by_id_with_messages(
             session, appeal_id
         )
@@ -293,30 +295,20 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
+        from aemr_bot.services.admin_relay import _collect_all_user_attachments  # noqa: PLC0415
+
+        attachment_count = len(_collect_all_user_attachments(appeal))
         text = card_format.user_card(appeal)
         status = appeal.status
-        # Снапшот для relay ВНУТРИ сессии: после выхода из session_scope
-        # ленивые атрибуты падают. messages здесь уже loaded selectinload'ом.
-        appeal_for_relay = appeal
     await _send_or_edit_menu(
         event,
         text=text,
-        attachments=[keyboards.user_appeal_card_keyboard(appeal_id, status)],
+        attachments=[
+            keyboards.user_appeal_card_keyboard(
+                appeal_id, status, attachment_count=attachment_count
+            )
+        ],
     )
-    # Relay вложений в личку жителю — show_appeal вызывается из
-    # menu_callback, у которого bot+user_id доступны через event.
-    from aemr_bot.services.admin_relay import render_appeal_attachments
-    from aemr_bot.utils.event import get_user_id as _get_uid
-
-    user_id = _get_uid(event)
-    if user_id is not None:
-        await render_appeal_attachments(
-            event.bot,
-            chat_id=None,
-            user_id=user_id,
-            appeal=appeal_for_relay,
-            header_template="📎 Вложения к обращению #{appeal_id}",
-        )
 
 
 async def open_useful_info(event):
@@ -946,6 +938,34 @@ _EXACT: dict[str, _MenuRoute] = {
     ),
 }
 
+async def show_appeal_attachments(event, appeal_id: int, max_user_id: int):
+    """Кнопка «📎 Показать вложения (N)» под карточкой обращения у
+    жителя (PR-fix-hang). До этого вложения переотправлялись каждый
+    раз при открытии карточки и могли подвешивать handler. Теперь —
+    только по явному тапу."""
+    from aemr_bot.services.admin_relay import render_appeal_attachments
+
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+    if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
+        await _send_or_edit_menu(
+            event,
+            text="Обращение не найдено.",
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+        return
+    user_id = get_user_id(event)
+    if user_id is None:
+        return
+    await render_appeal_attachments(
+        event.bot,
+        chat_id=None,
+        user_id=user_id,
+        appeal=appeal,
+        header_template="📎 Вложения к обращению #{appeal_id}",
+    )
+
+
 # Префикс → handler(event, appeal_id, max_user_id). Хвост payload'а —
 # числовой id обращения (payload.split(":")[2]). Битый id → тап
 # «съедается» молча (return True без ack), как в исходном if-elif.
@@ -953,6 +973,7 @@ _PREFIX_APPEAL_ID: tuple[tuple[str, Callable], ...] = (
     ("appeal:show:", lambda e, aid, u: show_appeal(e, aid, u)),
     ("appeal:followup:", lambda e, aid, u: start_appeal_followup(e, aid, u)),
     ("appeal:repeat:", lambda e, aid, u: start_appeal_repeat(e, aid, u)),
+    ("appeal:atts:", lambda e, aid, u: show_appeal_attachments(e, aid, u)),
 )
 
 

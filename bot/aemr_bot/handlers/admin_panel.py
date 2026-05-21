@@ -163,6 +163,16 @@ async def _do_open_tickets(event) -> None:
     for appeal in open_appeals:
         user_name = appeal.user.first_name if appeal.user else "—"
         user_id_text = appeal.user.max_user_id if appeal.user else "—"
+        # PR-fix-hang: НЕ переотправляем вложения автоматически. До этого
+        # в цикле под каждое обращение шёл render_appeal_attachments
+        # (1-N доп. send_message). На 20+ обращениях с фото набегало
+        # 50-80 sequential bot.send_message подряд — handler «висел»
+        # 30-60 секунд под одной операторской командой, livez-пинги
+        # health-watch таймаутили. Теперь вложения вызываются явно
+        # кнопкой «📎 Вложения (N)» в карточке.
+        from aemr_bot.services.admin_relay import _collect_all_user_attachments  # noqa: PLC0415
+
+        attachment_count = len(_collect_all_user_attachments(appeal))
         # Служебный маркер `🆔 №N` в конце — стабильный токен, по которому
         # handlers/operator_reply.py находит обращение при свайп-ответе.
         text = (
@@ -185,27 +195,13 @@ async def _do_open_tickets(event) -> None:
                     is_it=True,
                     user_blocked=bool(appeal.user and appeal.user.is_blocked),
                     closed_due_to_revoke=bool(appeal.closed_due_to_revoke),
+                    attachment_count=attachment_count,
                 )
             ],
         )
         mid = extract_message_id(sent)
         if mid:
             last_mid = mid
-        # Прикрепления (фото/видео/файл) исходного обращения + всех
-        # дополнений жителя — переотправляем, чтобы при повторном
-        # обзоре «📋 Открытые обращения» оператор не разговаривал с
-        # обращением вслепую. Контекст «яма во дворе» без фотографии
-        # ямы — половина информации.
-        from aemr_bot.services.admin_relay import render_appeal_attachments
-
-        await render_appeal_attachments(
-            event.bot,
-            chat_id=cfg.admin_group_id,
-            user_id=None,
-            appeal=appeal,
-            header_template="📎 Вложения к обращению #{appeal_id}",
-            reply_to_mid=mid,
-        )
     if last_mid is not None:
         menu_tracker.set_last_menu_mid(cfg.admin_group_id, last_mid)
 

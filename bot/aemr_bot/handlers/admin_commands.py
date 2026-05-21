@@ -37,6 +37,7 @@ from aemr_bot.handlers.admin_appeal_ops import (
     run_reopen,
     run_reply_cancel,
     run_reply_intent,
+    run_show_attachments,
 )
 from aemr_bot.handlers.admin_audience import (
     run_audience_action,
@@ -118,6 +119,7 @@ __all__ = [
     "run_reopen",
     "run_reply_cancel",
     "run_reply_intent",
+    "run_show_attachments",
     # Common
     "_do_backup",
     "_do_diag",
