@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-21 03:59:20 UTC`
+Generated at: `2026-05-21 04:29:05 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `188`
 Max file size: `300 KB`
@@ -42,12 +42,12 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/__init__.py` (3303 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
-- `bot/aemr_bot/handlers/admin_appeal_ops.py` (13718 bytes)
+- `bot/aemr_bot/handlers/admin_appeal_ops.py` (15465 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9220 bytes)
-- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12068 bytes)
-- `bot/aemr_bot/handlers/admin_commands.py` (17506 bytes)
+- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12213 bytes)
+- `bot/aemr_bot/handlers/admin_commands.py` (17560 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (20520 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (20537 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (41211 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (26042 bytes)
@@ -56,12 +56,12 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_runtime.py` (12572 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (42959 bytes)
-- `bot/aemr_bot/handlers/callback_router.py` (8339 bytes)
-- `bot/aemr_bot/handlers/menu.py` (45699 bytes)
+- `bot/aemr_bot/handlers/callback_router.py` (8462 bytes)
+- `bot/aemr_bot/handlers/menu.py` (46632 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (32495 bytes)
 - `bot/aemr_bot/handlers/start.py` (16556 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (61415 bytes)
+- `bot/aemr_bot/keyboards.py` (62731 bytes)
 - `bot/aemr_bot/main.py` (18178 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
@@ -3094,8 +3094,8 @@ async def current_user(
 
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
-Size: `13718` bytes  
-SHA-256: `090b732b49a2cb363fbf9cf4ccb17b5c1fa862dc7af1eb76b694a4ce75d9d729`
+Size: `15465` bytes  
+SHA-256: `57821f882764e7b81bb2100113d5c102479c0b49225004bc41ee24c698f08a1b`
 
 ```python
 """Действия оператора над конкретным обращением.
@@ -3396,6 +3396,47 @@ async def run_block_for_appeal(
     await _show_appeal_card_or_result(event, appeal_id, msg)
 
 
+async def run_show_attachments(event, appeal_id: int) -> None:
+    """Кнопка «📎 Вложения (N)» в карточке обращения (PR-fix-hang).
+
+    Раньше вложения переотправлялись автоматически в `_do_open_tickets`
+    под каждое обращение в цикле, что давало 50-80 sequential
+    `bot.send_message` и hang handler'а на десятки секунд. Теперь —
+    только по явному тапу оператора, и только для одного обращения за
+    раз. Bot.send_message внутри `render_appeal_attachments` бьёт на
+    батчи по `cfg.attachments_per_relay_message`.
+    """
+    from aemr_bot.services.admin_relay import render_appeal_attachments
+    from aemr_bot.utils.event import ack_callback
+
+    if not await ensure_operator(event):
+        await ack_callback(event)
+        return
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id_with_messages(
+            session, appeal_id
+        )
+    await ack_callback(event)
+    if appeal is None:
+        from aemr_bot import keyboards as kbds
+
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
+            attachments=[kbds.op_back_to_menu_keyboard()],
+        )
+        return
+    await render_appeal_attachments(
+        event.bot,
+        chat_id=cfg.admin_group_id,
+        user_id=None,
+        appeal=appeal,
+        header_template="📎 Вложения к обращению #{appeal_id}",
+        reply_to_mid=getattr(appeal, "admin_message_id", None),
+    )
+
+
 async def run_erase_for_appeal(event, appeal_id: int) -> None:
     """Кнопка «🗑 Удалить ПДн жителя» в карточке обращения (только для it)."""
     from aemr_bot import keyboards as kbds
@@ -3661,8 +3702,8 @@ def _mask_phone(phone: str | None) -> str:
 
 ### `bot/aemr_bot/handlers/admin_callback_dispatch.py`
 
-Size: `12068` bytes  
-SHA-256: `73adb290118afbc70464ea931bb4aae73bae50e726faa2da91a939ecbdbdec5a`
+Size: `12213` bytes  
+SHA-256: `1bc11cd9695d1e7392e7f3e3ccf5e8463b4615f6eec176d83b046bac8619e3c2`
 
 ```python
 """Dispatch admin/operator callback-payload'ов (`broadcast:*` / `op:*`).
@@ -3789,6 +3830,10 @@ async def _op_unblock(event, appeal_id: int) -> None:
     await admin_commands.run_block_for_appeal(event, appeal_id, blocked=False)
 
 
+async def _op_atts(event, appeal_id: int) -> None:
+    await admin_commands.run_show_attachments(event, appeal_id)
+
+
 # PR G: история рассылок — карточка / клон / failed-deliveries.
 async def _op_bc_open(event, broadcast_id: int) -> None:
     await broadcast_handler._open_broadcast(event, broadcast_id)
@@ -3855,6 +3900,7 @@ _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
     ("op:erase:", _op_erase),
     ("op:block:", _op_block),
     ("op:unblock:", _op_unblock),
+    ("op:atts:", _op_atts),
     # PR G: история рассылок.
     ("op:bc:open:", _op_bc_open),
     ("op:bc:clone:", _op_bc_clone),
@@ -3941,8 +3987,8 @@ async def dispatch_admin_callback(event, payload: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_commands.py`
 
-Size: `17506` bytes  
-SHA-256: `3924de3818dd0c22414236012ccbfa3d867b608ea45dc2f5ccc4d1053f2921cb`
+Size: `17560` bytes  
+SHA-256: `386159e68c85fad983b71f1e11bf5fbfc7515e759dc987c8f25a12d72002c6c9`
 
 ```python
 """Slash-команды оператора в админ-группе.
@@ -3984,6 +4030,7 @@ from aemr_bot.handlers.admin_appeal_ops import (
     run_reopen,
     run_reply_cancel,
     run_reply_intent,
+    run_show_attachments,
 )
 from aemr_bot.handlers.admin_audience import (
     run_audience_action,
@@ -4065,6 +4112,7 @@ __all__ = [
     "run_reopen",
     "run_reply_cancel",
     "run_reply_intent",
+    "run_show_attachments",
     # Common
     "_do_backup",
     "_do_diag",
@@ -5406,8 +5454,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `20520` bytes  
-SHA-256: `f53f829b9ede233ad2f9ea84067219ad7e26e19896a1dad4632d7d4a724e5ec2`
+Size: `20537` bytes  
+SHA-256: `c927338aa09308024601acdac6493ce9cb91f3b42a84682ddf8e152cfd90a500`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -5575,6 +5623,16 @@ async def _do_open_tickets(event) -> None:
     for appeal in open_appeals:
         user_name = appeal.user.first_name if appeal.user else "—"
         user_id_text = appeal.user.max_user_id if appeal.user else "—"
+        # PR-fix-hang: НЕ переотправляем вложения автоматически. До этого
+        # в цикле под каждое обращение шёл render_appeal_attachments
+        # (1-N доп. send_message). На 20+ обращениях с фото набегало
+        # 50-80 sequential bot.send_message подряд — handler «висел»
+        # 30-60 секунд под одной операторской командой, livez-пинги
+        # health-watch таймаутили. Теперь вложения вызываются явно
+        # кнопкой «📎 Вложения (N)» в карточке.
+        from aemr_bot.services.admin_relay import _collect_all_user_attachments  # noqa: PLC0415
+
+        attachment_count = len(_collect_all_user_attachments(appeal))
         # Служебный маркер `🆔 №N` в конце — стабильный токен, по которому
         # handlers/operator_reply.py находит обращение при свайп-ответе.
         text = (
@@ -5597,27 +5655,13 @@ async def _do_open_tickets(event) -> None:
                     is_it=True,
                     user_blocked=bool(appeal.user and appeal.user.is_blocked),
                     closed_due_to_revoke=bool(appeal.closed_due_to_revoke),
+                    attachment_count=attachment_count,
                 )
             ],
         )
         mid = extract_message_id(sent)
         if mid:
             last_mid = mid
-        # Прикрепления (фото/видео/файл) исходного обращения + всех
-        # дополнений жителя — переотправляем, чтобы при повторном
-        # обзоре «📋 Открытые обращения» оператор не разговаривал с
-        # обращением вслепую. Контекст «яма во дворе» без фотографии
-        # ямы — половина информации.
-        from aemr_bot.services.admin_relay import render_appeal_attachments
-
-        await render_appeal_attachments(
-            event.bot,
-            chat_id=cfg.admin_group_id,
-            user_id=None,
-            appeal=appeal,
-            header_template="📎 Вложения к обращению #{appeal_id}",
-            reply_to_mid=mid,
-        )
     if last_mid is not None:
         menu_tracker.set_last_menu_mid(cfg.admin_group_id, last_mid)
 
@@ -11035,8 +11079,8 @@ async def _step_search(
 
 ### `bot/aemr_bot/handlers/callback_router.py`
 
-Size: `8339` bytes  
-SHA-256: `8cc9ca4bd6b36ce15ee5d54b0c281b9f78822d55f53ab6f011ac1bd4fbe8531f`
+Size: `8462` bytes  
+SHA-256: `caf8224841e64fa4e7561a9ad75601184b53d30536303b6a6561d84fc5299150`
 
 ```python
 """Маршрутизация callback payload'ов.
@@ -11114,6 +11158,7 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("op:erase:", CallbackGroup.OPERATOR_ADMIN, True, "стереть ПДн по обращению"),
     CallbackRoute("op:block:", CallbackGroup.OPERATOR_ADMIN, True, "заблокировать жителя"),
     CallbackRoute("op:unblock:", CallbackGroup.OPERATOR_ADMIN, True, "разблокировать жителя"),
+    CallbackRoute("op:atts:", CallbackGroup.OPERATOR_ADMIN, True, "показать вложения обращения"),
     CallbackRoute("op:opadd:", CallbackGroup.OPERATOR_ADMIN, True, "мастер операторов: добавление"),
     CallbackRoute("op:opcard:", CallbackGroup.OPERATOR_ADMIN, True, "карточка оператора"),
     CallbackRoute("op:oprole:", CallbackGroup.OPERATOR_ADMIN, True, "смена роли — открыть picker"),
@@ -11168,8 +11213,8 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 
 ### `bot/aemr_bot/handlers/menu.py`
 
-Size: `45699` bytes  
-SHA-256: `dd7c51c43386d6f2f20736e106ed0f8fef7190535b9e2882e2686e5b1469a1a2`
+Size: `46632` bytes  
+SHA-256: `dfca2ef8d9ec1dc58719ed6057f55c92970ea0217aa47d2cb077ea47a7041851`
 
 ```python
 import logging
@@ -11454,9 +11499,11 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
     обращения` (см. admin_panel._do_open_tickets).
     """
     async with session_scope() as session:
-        # get_by_id_with_messages: для relay вложений из доп. сообщений
-        # нужны Message-row'ы (Appeal.messages). Без selectinload они
-        # лениво идут в БД из закрытой сессии → MissingGreenlet.
+        # get_by_id_with_messages нужен, чтобы посчитать
+        # attachment_count для кнопки «📎 Показать вложения» внизу
+        # карточки. Сами вложения НЕ переотправляются автоматически —
+        # это вызывало hang при каждом тапе на карточку (см. PR-fix-hang).
+        # Сейчас житель тапает кнопку явно, когда хочет посмотреть.
         appeal = await appeals_service.get_by_id_with_messages(
             session, appeal_id
         )
@@ -11467,30 +11514,20 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
+        from aemr_bot.services.admin_relay import _collect_all_user_attachments  # noqa: PLC0415
+
+        attachment_count = len(_collect_all_user_attachments(appeal))
         text = card_format.user_card(appeal)
         status = appeal.status
-        # Снапшот для relay ВНУТРИ сессии: после выхода из session_scope
-        # ленивые атрибуты падают. messages здесь уже loaded selectinload'ом.
-        appeal_for_relay = appeal
     await _send_or_edit_menu(
         event,
         text=text,
-        attachments=[keyboards.user_appeal_card_keyboard(appeal_id, status)],
+        attachments=[
+            keyboards.user_appeal_card_keyboard(
+                appeal_id, status, attachment_count=attachment_count
+            )
+        ],
     )
-    # Relay вложений в личку жителю — show_appeal вызывается из
-    # menu_callback, у которого bot+user_id доступны через event.
-    from aemr_bot.services.admin_relay import render_appeal_attachments
-    from aemr_bot.utils.event import get_user_id as _get_uid
-
-    user_id = _get_uid(event)
-    if user_id is not None:
-        await render_appeal_attachments(
-            event.bot,
-            chat_id=None,
-            user_id=user_id,
-            appeal=appeal_for_relay,
-            header_template="📎 Вложения к обращению #{appeal_id}",
-        )
 
 
 async def open_useful_info(event):
@@ -12120,6 +12157,34 @@ _EXACT: dict[str, _MenuRoute] = {
     ),
 }
 
+async def show_appeal_attachments(event, appeal_id: int, max_user_id: int):
+    """Кнопка «📎 Показать вложения (N)» под карточкой обращения у
+    жителя (PR-fix-hang). До этого вложения переотправлялись каждый
+    раз при открытии карточки и могли подвешивать handler. Теперь —
+    только по явному тапу."""
+    from aemr_bot.services.admin_relay import render_appeal_attachments
+
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+    if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
+        await _send_or_edit_menu(
+            event,
+            text="Обращение не найдено.",
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+        return
+    user_id = get_user_id(event)
+    if user_id is None:
+        return
+    await render_appeal_attachments(
+        event.bot,
+        chat_id=None,
+        user_id=user_id,
+        appeal=appeal,
+        header_template="📎 Вложения к обращению #{appeal_id}",
+    )
+
+
 # Префикс → handler(event, appeal_id, max_user_id). Хвост payload'а —
 # числовой id обращения (payload.split(":")[2]). Битый id → тап
 # «съедается» молча (return True без ack), как в исходном if-elif.
@@ -12127,6 +12192,7 @@ _PREFIX_APPEAL_ID: tuple[tuple[str, Callable], ...] = (
     ("appeal:show:", lambda e, aid, u: show_appeal(e, aid, u)),
     ("appeal:followup:", lambda e, aid, u: start_appeal_followup(e, aid, u)),
     ("appeal:repeat:", lambda e, aid, u: start_appeal_repeat(e, aid, u)),
+    ("appeal:atts:", lambda e, aid, u: show_appeal_attachments(e, aid, u)),
 )
 
 
@@ -13453,8 +13519,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `61415` bytes  
-SHA-256: `dd33d5a06b0d5d05f7988965ef51d2dace44dc8a23cc2578029f3caaf8610e8c`
+Size: `62731` bytes  
+SHA-256: `10435697ff7afe9df5bcf221ea942feec527ebc9a8dfd7b5cfd50a909d14a148`
 
 ```python
 from maxapi.types import (
@@ -13728,7 +13794,12 @@ def geo_confirm_keyboard():
     return kb.as_markup()
 
 
-def user_appeal_card_keyboard(appeal_id: int, status: str):
+def user_appeal_card_keyboard(
+    appeal_id: int,
+    status: str,
+    *,
+    attachment_count: int = 0,
+):
     """Кнопки под карточкой обращения у жителя.
 
     NEW/IN_PROGRESS — «📎 Дополнить»: явный путь уточнить открытое
@@ -13737,6 +13808,10 @@ def user_appeal_card_keyboard(appeal_id: int, status: str):
     ANSWERED/CLOSED — «🔁 Подать похожее»: новая воронка с тем же
     адресом и тематикой. Новое обращение помечается как связанное с
     отвеченным или закрытым вопросом.
+
+    attachment_count>0 — кнопка «📎 Показать вложения (N)»: явный
+    показ переотправки. Раньше происходила автоматически при каждом
+    открытии карточки и создавала задержку в личке (PR-fix-hang).
     """
     from aemr_bot.db.models import AppealStatus
 
@@ -13754,6 +13829,13 @@ def user_appeal_card_keyboard(appeal_id: int, status: str):
         kb.row(
             CallbackButton(
                 text="🔁 Подать похожее", payload=f"appeal:repeat:{appeal_id}"
+            )
+        )
+    if attachment_count > 0:
+        kb.row(
+            CallbackButton(
+                text=f"📎 Показать вложения ({attachment_count})",
+                payload=f"appeal:atts:{appeal_id}",
             )
         )
     kb.row(CallbackButton(text="↩️ К моим обращениям", payload="menu:my_appeals"))
@@ -14566,6 +14648,7 @@ def appeal_admin_actions(
     is_it: bool = False,
     user_blocked: bool = False,
     closed_due_to_revoke: bool = False,
+    attachment_count: int = 0,
 ):
     """Кнопки действий под карточкой обращения в админ-группе.
 
@@ -14580,6 +14663,12 @@ def appeal_admin_actions(
     доставки в `_deliver_operator_reply` всё равно откажет (consent
     отозван). Поэтому кнопку «🔁 Возобновить» не показываем — экономим
     оператору время на тыкание в неработающую кнопку.
+
+    attachment_count>0 — у обращения есть вложения, добавляем кнопку
+    «📎 Вложения (N)». Тап → callback `op:atts:<id>` → переотправка
+    всех вложений рядом с карточкой. ДО PR #47 это происходило
+    автоматически при listing'е и приводило к hang'у — теперь только
+    по явному тапу.
     """
     from aemr_bot.db.models import AppealStatus
 
@@ -14599,6 +14688,13 @@ def appeal_admin_actions(
         kb.row(
             CallbackButton(
                 text="🔁 Возобновить", payload=f"op:reopen:{appeal_id}"
+            ),
+        )
+    if attachment_count > 0:
+        kb.row(
+            CallbackButton(
+                text=f"📎 Вложения ({attachment_count})",
+                payload=f"op:atts:{appeal_id}",
             ),
         )
     if is_it:
