@@ -369,3 +369,13 @@ class BroadcastTemplate(Base):
     archived_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), index=True
     )
+    # Гигиена списка (PR template-editor-upgrade): счётчик применений
+    # шаблона как рассылки и дата последнего применения. Помогают раз
+    # в год прибраться в списке — «не применялся ни разу за полгода →
+    # в архив». Инкрементируется в handlers/broadcast_templates._apply.
+    use_count: Mapped[int] = mapped_column(
+        default=0, server_default="0"
+    )
+    last_used_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
