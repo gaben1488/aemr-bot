@@ -247,7 +247,7 @@ class TestShowAppeal:
 
         event = _make_event()
         with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.appeals_service.get_by_id",
+             patch("aemr_bot.handlers.menu.appeals_service.get_by_id_with_messages",
                    AsyncMock(return_value=None)):
             await menu.show_appeal(event, appeal_id=1, max_user_id=42)
         text = event.bot.send_message.call_args.kwargs.get("text", "")
