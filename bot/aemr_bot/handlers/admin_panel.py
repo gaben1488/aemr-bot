@@ -175,7 +175,22 @@ async def _do_open_tickets(event) -> None:
 
 
 async def _do_diag(event) -> None:
-    """Сводка состояния бота. Общая реализация для /diag и кнопки."""
+    """Сводка состояния бота с actionable indicators (PR I).
+
+    Расширено по сравнению с v1:
+    - 24-часовая активность (новые жители / новые обращения / ответы /
+      рассылки) — показывает «живёт ли система»;
+    - Pulse-индикатор (минут с последнего события + ✅/⚠️) — отвечает на
+      вопрос «бот в порядке прямо сейчас?»;
+    - Зависшие SENDING-рассылки (>10 мин без обновления прогресса) —
+      явный warning, чтобы оператор знал, что нужно остановить + clean-up;
+    - Срез по failed-доставкам за 24ч — индикатор проблем с MAX-API;
+    - 24-часовой список warnings ниже отдельным блоком (пусто = «всё ок»).
+
+    Конфиг (режим, лимит ответа, SLA) сохраняем в конце — статика.
+    """
+    from datetime import datetime, timedelta, timezone
+
     from sqlalchemy import func, select
 
     from aemr_bot import keyboards as kbds
@@ -183,10 +198,16 @@ async def _do_diag(event) -> None:
         Appeal,
         AppealStatus,
         Broadcast,
+        BroadcastDelivery,
         BroadcastStatus,
         Event,
+        Message,
         User,
     )
+
+    now = datetime.now(timezone.utc)
+    since_24h = now - timedelta(hours=24)
+    stuck_threshold = now - timedelta(minutes=10)
 
     async with session_scope() as session:
         users_total = await session.scalar(select(func.count()).select_from(User))
@@ -199,6 +220,11 @@ async def _do_diag(event) -> None:
                 User.is_blocked.is_(False),
             )
         )
+        users_new_24h = await session.scalar(
+            select(func.count()).select_from(User).where(
+                User.created_at >= since_24h
+            )
+        )
         appeals_total = await session.scalar(select(func.count()).select_from(Appeal))
         appeals_in_progress = await session.scalar(
             select(func.count()).select_from(Appeal).where(
@@ -206,6 +232,17 @@ async def _do_diag(event) -> None:
                     AppealStatus.NEW.value,
                     AppealStatus.IN_PROGRESS.value,
                 ])
+            )
+        )
+        appeals_new_24h = await session.scalar(
+            select(func.count()).select_from(Appeal).where(
+                Appeal.created_at >= since_24h
+            )
+        )
+        replies_24h = await session.scalar(
+            select(func.count()).select_from(Message).where(
+                Message.direction == "to_user",
+                Message.created_at >= since_24h,
             )
         )
         broadcasts_done = await session.scalar(
@@ -218,24 +255,109 @@ async def _do_diag(event) -> None:
                 Broadcast.status == BroadcastStatus.FAILED.value
             )
         )
+        broadcasts_24h = await session.scalar(
+            select(func.count()).select_from(Broadcast).where(
+                Broadcast.created_at >= since_24h
+            )
+        )
+        broadcasts_stuck = await session.scalar(
+            select(func.count()).select_from(Broadcast).where(
+                Broadcast.status == BroadcastStatus.SENDING.value,
+                Broadcast.created_at < stuck_threshold,
+            )
+        )
+        delivery_failed_24h = await session.scalar(
+            select(func.count()).select_from(BroadcastDelivery).where(
+                BroadcastDelivery.error.isnot(None),
+                BroadcastDelivery.delivered_at.is_(None),
+                # broadcast_deliveries не имеет created_at; используем
+                # связку через broadcast.created_at >= since_24h.
+            )
+            .join(Broadcast, Broadcast.id == BroadcastDelivery.broadcast_id)
+            .where(Broadcast.created_at >= since_24h)
+        )
         events_total = await session.scalar(select(func.count()).select_from(Event))
         last_event = await session.scalar(select(func.max(Event.received_at)))
+
+    # Pulse-индикатор: сколько минут назад был последний event. Бот
+    # шлёт heartbeat по cron, поэтому «давно не было событий» — явный
+    # signal проблемы. Граница 15 мин выбрана с запасом: pulse-cron
+    # стреляет :00, :30 или подобными интервалами, окно 15 мин ловит
+    # «один пропущенный pulse-цикл», но не дёргает на нормальный idle.
+    pulse_line = "—"
+    pulse_warn = False
+    if last_event is not None:
+        # last_event может быть naive если БД вернула без tz — нормализуем
+        if last_event.tzinfo is None:
+            last_event = last_event.replace(tzinfo=timezone.utc)
+        minutes_ago = int((now - last_event).total_seconds() // 60)
+        if minutes_ago < 1:
+            pulse_line = "< 1 мин назад"
+        elif minutes_ago < 60:
+            pulse_line = f"{minutes_ago} мин назад"
+        else:
+            hours = minutes_ago // 60
+            pulse_line = f"{hours} ч {minutes_ago % 60} мин назад"
+        if minutes_ago > 15:
+            pulse_warn = True
+            pulse_line = f"⚠️ {pulse_line}"
+        else:
+            pulse_line = f"✅ {pulse_line}"
+
+    warnings_lines: list[str] = []
+    if pulse_warn:
+        warnings_lines.append(
+            f"⚠️ Pulse молчит {pulse_line.replace('⚠️ ', '')} — проверить, "
+            f"что cron здоров."
+        )
+    if (broadcasts_stuck or 0) > 0:
+        warnings_lines.append(
+            f"⚠️ Зависших рассылок в SENDING (старше 10 мин): "
+            f"{broadcasts_stuck}. Остановите кнопкой ⛔ или проверьте бот."
+        )
+    if (delivery_failed_24h or 0) >= 20:
+        warnings_lines.append(
+            f"⚠️ За 24ч {delivery_failed_24h} неуспешных доставок рассылок — "
+            f"проверьте «👥 Не доставлено» у недавних рассылок."
+        )
+
+    body = (
+        "🛠️ Диагностика\n"
+        "\n"
+        "Pulse:\n"
+        f"• Последнее событие: {pulse_line}\n"
+        f"• Всего событий: {events_total or 0}\n"
+        "\n"
+        "Жители:\n"
+        f"• Всего: {users_total or 0} "
+        f"(подписаны: {users_subscribed or 0}, заблокированы: {users_blocked or 0})\n"
+        f"• Новых за 24ч: {users_new_24h or 0}\n"
+        "\n"
+        "Обращения:\n"
+        f"• Всего: {appeals_total or 0} (в работе: {appeals_in_progress or 0})\n"
+        f"• Новых за 24ч: {appeals_new_24h or 0}\n"
+        f"• Ответов оператора за 24ч: {replies_24h or 0}\n"
+        "\n"
+        "Рассылки:\n"
+        f"• ✅ DONE: {broadcasts_done or 0}  ⚠️ FAILED: {broadcasts_failed or 0}\n"
+        f"• За 24ч запущено: {broadcasts_24h or 0}\n"
+        f"• Зависших SENDING >10мин: {broadcasts_stuck or 0}\n"
+        f"• Неуспешных доставок за 24ч: {delivery_failed_24h or 0}\n"
+        "\n"
+        "Конфигурация:\n"
+        f"• Режим: {cfg.bot_mode}\n"
+        f"• Лимит ответа: {cfg.answer_max_chars} симв.\n"
+        f"• SLA: {cfg.sla_response_hours} ч"
+    )
+    if warnings_lines:
+        body += "\n\nВнимание:\n" + "\n".join(warnings_lines)
+    else:
+        body += "\n\n✅ Аномалий не обнаружено."
 
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
-        text=(
-            "🛠️ Диагностика:\n"
-            f"• Жителей: {users_total or 0} "
-            f"(подписаны: {users_subscribed or 0}, заблокированы: {users_blocked or 0})\n"
-            f"• Обращений: {appeals_total or 0} "
-            f"(в работе: {appeals_in_progress or 0})\n"
-            f"• Рассылок: ✅ {broadcasts_done or 0} / ⚠️ {broadcasts_failed or 0}\n"
-            f"• События: всего {events_total or 0}, последнее {last_event or '—'}\n"
-            f"• Режим: {cfg.bot_mode}\n"
-            f"• Лимит ответа: {cfg.answer_max_chars}\n"
-            f"• SLA: {cfg.sla_response_hours}ч"
-        ),
+        text=body,
         attachments=[kbds.op_back_to_menu_keyboard()],
     )
 
