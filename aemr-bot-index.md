@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-21 00:38:46 UTC`
+Generated at: `2026-05-21 00:57:25 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `176`
 Max file size: `300 KB`
@@ -18,7 +18,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `.gitignore` (1073 bytes)
 - `_local-backup/PRODUCT_BRIEF_internal.md` (26651 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
-- `bot/aemr_bot/config.py` (8019 bytes)
+- `bot/aemr_bot/config.py` (7477 bytes)
 - `bot/aemr_bot/db/__init__.py` (0 bytes)
 - `bot/aemr_bot/db/alembic/env.py` (1446 bytes)
 - `bot/aemr_bot/db/alembic/versions/0001_initial.py` (5898 bytes)
@@ -52,7 +52,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_funnel.py` (29804 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (12572 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (34494 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (36968 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8097 bytes)
 - `bot/aemr_bot/handlers/menu.py` (43971 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (32495 bytes)
@@ -75,7 +75,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/policy.py` (2979 bytes)
 - `bot/aemr_bot/services/progress.py` (9433 bytes)
 - `bot/aemr_bot/services/repo_sync.py` (13876 bytes)
-- `bot/aemr_bot/services/settings_store.py` (9777 bytes)
+- `bot/aemr_bot/services/settings_store.py` (11344 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (29316 bytes)
@@ -103,7 +103,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_appeals_service_pg.py` (14053 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
 - `bot/tests/test_broadcast_handlers.py` (32274 bytes)
-- `bot/tests/test_broadcast_with_image.py` (20900 bytes)
+- `bot/tests/test_broadcast_with_image.py` (23848 bytes)
 - `bot/tests/test_broadcasts_service_pg.py` (3786 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
 - `bot/tests/test_callback_router.py` (8614 bytes)
@@ -151,18 +151,18 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/archive/TELEGRAM_ANALYTICS_INSIGHTS.md` (15860 bytes)
 - `docs/archive/WEBHOOK_PLAN.md` (10983 bytes)
 - `docs/BACKUP_RESTORE_TEST.md` (7292 bytes)
-- `docs/COMPLIANCE_WITH_REGLAMENT_v5.md` (44859 bytes)
+- `docs/COMPLIANCE_WITH_REGLAMENT_v5.md` (44989 bytes)
 - `docs/COPY.md` (52055 bytes)
 - `docs/DEVELOPER.md` (127136 bytes)
 - `docs/handover.html` (56417 bytes)
 - `docs/HOW_IT_WORKS.md` (23367 bytes)
 - `docs/it.html` (109792 bytes)
-- `docs/PRD.md` (63425 bytes)
+- `docs/PRD.md` (63801 bytes)
 - `docs/PRIVACY_DRAFT.md` (24293 bytes)
 - `docs/README.md` (3465 bytes)
 - `docs/ROLLBACK.md` (7410 bytes)
 - `docs/RULES.md` (9993 bytes)
-- `docs/RUNBOOK.md` (54228 bytes)
+- `docs/RUNBOOK.md` (54519 bytes)
 - `docs/RUNBOOK_PDN_ERASURE.md` (8398 bytes)
 - `docs/SECURITY.md` (34972 bytes)
 - `docs/SETUP.md` (37821 bytes)
@@ -170,7 +170,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/VPS_SMOKE_CHECKLIST.md` (5736 bytes)
 - `docs/Политика.md` (6113 bytes)
 - `docs/Политика_v2.md` (28793 bytes)
-- `infra/.env.example` (9949 bytes)
+- `infra/.env.example` (10160 bytes)
 - `infra/docker-compose.yml` (5867 bytes)
 - `infra/Dockerfile` (1655 bytes)
 - `infra/nginx/feedback.conf` (976 bytes)
@@ -934,8 +934,8 @@ __version__ = "0.1.0"
 
 ### `bot/aemr_bot/config.py`
 
-Size: `8019` bytes  
-SHA-256: `2f1816711303d0fae635112ee3f5ad9a109c4604dc242228886e5ab8d7d692c4`
+Size: `7477` bytes  
+SHA-256: `49c98bdc72c601951cca8ccfc3746b0b6fca2c07900e63937f2c091a4598e852`
 
 ```python
 from pathlib import Path
@@ -1004,11 +1004,6 @@ class Settings(BaseSettings):
     # обычная активность бота (ответы оператора, новые карточки) не упиралась
     # в потолок одновременно с рассылкой.
     broadcast_max_chars: int = Field(1000, alias="BROADCAST_MAX_CHARS")
-    # Максимум картинок в одной рассылке. Каждая картинка пересылается
-    # каждому подписчику — для тысячи подписчиков ×N картинок MAX
-    # начинает ограничивать частоту. По умолчанию 5 — достаточно для
-    # афиши / схемы / фото-комплекта, и не «перегружает» поток.
-    broadcast_max_images: int = Field(5, alias="BROADCAST_MAX_IMAGES")
     broadcast_rate_limit_per_sec: float = Field(
         1.0, alias="BROADCAST_RATE_LIMIT_PER_SEC"
     )
@@ -8335,8 +8330,8 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `34494` bytes  
-SHA-256: `84833ff0a18c8fc2fe8f3335044d336d9092cff8d916382c22ac0f5f5e1da4d1`
+Size: `36968` bytes  
+SHA-256: `9f95a886eea79e00fe7a234cda29d459ccf5923254570c41c0dbf3fc84552b25`
 
 ```python
 """Мастер рассылок и цикл их отправки.
@@ -8377,6 +8372,7 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as operators_service
+from aemr_bot.services import settings_store
 from aemr_bot.utils import image_attachments as _image_attachments
 from aemr_bot.utils.background import spawn_background_task
 from aemr_bot.utils.event import (
@@ -8421,6 +8417,34 @@ class _WizardState:
 _wizards: dict[int, _WizardState] = {}
 
 
+async def _resolve_broadcast_max_images(session) -> int:
+    """Текущий лимит картинок в рассылке из настроек БД.
+
+    Возвращает `settings_store.broadcast_max_images` (диапазон 1–20).
+    DEFAULTS гарантирует число — функция никогда не вернёт None или 0.
+    IT-оператор меняет лимит через UI «⚙️ Настройки бота» без редеплоя;
+    значение применяется со следующего нажатия `/broadcast`.
+
+    Устойчив к DB-проблемам: если query упал (нет таблицы, потеря
+    соединения), молча падаем на DEFAULTS — рассылка не должна
+    блокироваться технической проблемой админ-таблицы.
+    """
+    try:
+        value = await settings_store.get(session, "broadcast_max_images")
+    except Exception:
+        log.warning(
+            "settings_store.broadcast_max_images недоступен, "
+            "используем DEFAULTS",
+            exc_info=True,
+        )
+        value = None
+    # Защитная нормализация: если кто-то вручную записал в БД не int
+    # (например, через psql), скатываемся к DEFAULTS.
+    if isinstance(value, int) and not isinstance(value, bool) and value > 0:
+        return value
+    return int(settings_store.DEFAULTS["broadcast_max_images"])
+
+
 # Локальные псевдонимы общих хелперов авторизации. Подчёркивание в начале имени
 # подчёркивает, что это служебные средства для админ-стороны, не для жителя.
 _is_admin_chat = is_admin_chat
@@ -8462,9 +8486,11 @@ async def _start_wizard(event) -> None:
 
     _wizards[actor_id] = _WizardState(step="awaiting_text")
     log.info("broadcast: wizard started for operator max_user_id=%s", actor_id)
+    async with session_scope() as session:
+        max_images = await _resolve_broadcast_max_images(session)
     prompt = texts.OP_BROADCAST_PROMPT.format(
         limit=cfg.broadcast_max_chars,
-        max_images=cfg.broadcast_max_images,
+        max_images=max_images,
     )
     await send_or_edit_screen(
         event,
@@ -8514,18 +8540,29 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         )
         return True
     if not text:
-        # Пусто. Просим ввести ещё раз, состояние не меняем.
+        # Пусто. Просим ввести ещё раз, состояние не меняем. Для re-
+        # prompt'a показываем DEFAULTS-значение max_images: открывать
+        # session ради этого редкого пути с пустой строкой избыточно
+        # (это early-return). Реальный flow ниже читает актуальное
+        # значение из БД.
         await event.message.answer(
             texts.OP_BROADCAST_PROMPT.format(
-        limit=cfg.broadcast_max_chars,
-        max_images=cfg.broadcast_max_images,
-    ),
+                limit=cfg.broadcast_max_chars,
+                max_images=int(
+                    settings_store.DEFAULTS["broadcast_max_images"]
+                ),
+            ),
             attachments=[keyboards.broadcast_cancel_keyboard()],
         )
         return True
 
+    # Текущий лимит картинок — из настроек БД (settings_store), а не
+    # из env. IT-оператор может поменять оперативно через UI
+    # «⚙️ Настройки бота» → «broadcast_max_images» без редеплоя.
     async with session_scope() as session:
+        max_images = await _resolve_broadcast_max_images(session)
         count = await broadcasts_service.count_subscribers(session)
+
     if count == 0:
         _wizards.pop(actor_id, None)
         await event.message.answer(
@@ -8536,15 +8573,15 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
 
     state.text = text
     # Захват картинок оператора (если в том же сообщении были). Лимит —
-    # `cfg.broadcast_max_images`, по умолчанию 5: афиша, схема, фото-
-    # комплект из 2-3 кадров укладываются, multi-image-спам отрезается.
+    # из settings_store, по умолчанию 5: афиша, схема, фото-комплект
+    # из 2-3 кадров укладываются, multi-image-спам отрезается.
     # ВАЖНО: считаем сколько ВСЕГО было — для warning'а оператору, если
     # обрезалось. Тихая обрезка (приложили 7, разошлось 5) ломает UX.
     all_images_in_event = _image_attachments.image_attachments_from_event(
         event, limit=0  # 0 = unlimited, чтобы подсчитать «приложено»
     )
     provided = len(all_images_in_event)
-    state.attachments = all_images_in_event[: cfg.broadcast_max_images]
+    state.attachments = all_images_in_event[:max_images]
     state.step = "awaiting_confirm"
     state.renew()
     # Превью включает все приложенные картинки рядом с confirm-клавой,
@@ -8554,9 +8591,9 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         state.attachments
     )
     image_warning = ""
-    if provided > cfg.broadcast_max_images:
+    if provided > max_images:
         image_warning = texts.OP_BROADCAST_PREVIEW_TRIM_WARN.format(
-            provided=provided, limit=cfg.broadcast_max_images
+            provided=provided, limit=max_images
         )
     await event.message.answer(
         texts.OP_BROADCAST_PREVIEW.format(
@@ -16533,8 +16570,8 @@ async def fetch_main_runtime_config(
 
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `9777` bytes  
-SHA-256: `ed50e188f58fe02c4eca92817e8ffef04f53bf46576f684dbc4a051ec8d7a7df`
+Size: `11344` bytes  
+SHA-256: `e5c68d6c37998eb566e2ac43898c711e2d1810ac7532c49bdc5ee8e393e5eb89`
 
 ```python
 import json
@@ -16576,6 +16613,13 @@ DEFAULTS: dict[str, Any] = {
     "emergency_contacts": [],
     "transport_dispatcher_contacts": [],
     "topics": [],
+    # Глобальный лимит «сколько картинок оператор может приложить к
+    # одной рассылке». Раньше был в env BROADCAST_MAX_IMAGES; перенесли
+    # сюда для оперативной правки IT-оператором через меню «⚙️ Настройки
+    # бота» без редеплоя. 5 — баланс «афиша + 3-4 фото» vs нагрузка на
+    # канал MAX (каждая картинка ×N подписчиков). Допустимый диапазон
+    # 1–20 (см. SCHEMA).
+    "broadcast_max_images": 5,
     "localities": [
         "Елизовское ГП",
         "Вулканное ГП",
@@ -16610,6 +16654,10 @@ SCHEMA: dict[str, dict] = {
         "item_keys": {"routes", "phone"},
     },
     "topics": {"type": list, "min_items": 1, "max_items": 30, "item_type": str},
+    # Глобальный лимит картинок в рассылке. Диапазон 1–20: 1 — минимум
+    # для «текст + одна афиша», 20 — практический потолок (выше MAX
+    # ограничивает частоту, см. _send_one).
+    "broadcast_max_images": {"type": int, "min": 1, "max": 20},
     "localities": {"type": list, "min_items": 1, "max_items": 30, "item_type": str},
 }
 
@@ -16640,6 +16688,16 @@ def validate(key: str, value: Any) -> tuple[bool, str]:
             for it in value:
                 if not isinstance(it, dict) or not rule["item_keys"].issubset(it):
                     return False, f"Each item must be an object with keys: {rule['item_keys']}"
+    if expected is int:
+        # bool — подкласс int в Python, явно фильтруем: True/False не
+        # должны проходить как int (validate("broadcast_max_images", True)
+        # = no-go).
+        if isinstance(value, bool):
+            return False, "Expected int, got bool"
+        if "min" in rule and value < rule["min"]:
+            return False, f"Integer too small, min={rule['min']}"
+        if "max" in rule and value > rule["max"]:
+            return False, f"Integer too large, max={rule['max']}"
     return True, "ok"
 
 
@@ -23755,8 +23813,8 @@ class TestListBroadcasts:
 
 ### `bot/tests/test_broadcast_with_image.py`
 
-Size: `20900` bytes  
-SHA-256: `986acb9231577d2383633c876cc84418e97e2a583569dd92282bec6dd1bdfb81`
+Size: `23848` bytes  
+SHA-256: `d4fbe9a5762cb8d7f60850eb389bf9743cb97c6dd3a20e49344187655beb1358`
 
 ```python
 """TDD-тесты image-attachments в рассылках.
@@ -23943,6 +24001,51 @@ class TestWizardCapturesImage:
         assert state.attachments[0]["type"] == "image"
 
     @pytest.mark.asyncio
+    async def test_resolve_broadcast_max_images_uses_db_value(self) -> None:
+        """Контракт: _resolve_broadcast_max_images читает из БД через
+        settings_store.get. Если значение валидно (int, 1+) — возвращает.
+        Это путь IT-оператора, изменившего лимит через UI «Настройки бота»."""
+        from aemr_bot.handlers import broadcast as bc
+
+        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+                   AsyncMock(return_value=8)):
+            result = await bc._resolve_broadcast_max_images(MagicMock())
+        assert result == 8
+
+    @pytest.mark.asyncio
+    async def test_resolve_broadcast_max_images_falls_back_on_db_error(self) -> None:
+        """Контракт: DB-ошибка не валит рассылку. Молчаливый fallback
+        на DEFAULTS гарантирует, что техническая проблема админ-таблицы
+        не блокирует работу с гражданами."""
+        from aemr_bot.handlers import broadcast as bc
+
+        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+                   AsyncMock(side_effect=RuntimeError("settings table missing"))):
+            result = await bc._resolve_broadcast_max_images(MagicMock())
+        # DEFAULTS.broadcast_max_images = 5
+        assert result == 5
+
+    @pytest.mark.asyncio
+    async def test_resolve_broadcast_max_images_rejects_corrupted_db_value(self) -> None:
+        """Контракт: если кто-то записал в БД не-int (или 0, или bool),
+        не доверяем — скатываемся к DEFAULTS. Защита от porting-багов
+        и ручных правок psql."""
+        from aemr_bot.handlers import broadcast as bc
+
+        # bool — подкласс int в Python; явно отсекаем
+        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+                   AsyncMock(return_value=True)):
+            assert await bc._resolve_broadcast_max_images(MagicMock()) == 5
+        # 0 / отрицательное — невалидно
+        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+                   AsyncMock(return_value=0)):
+            assert await bc._resolve_broadcast_max_images(MagicMock()) == 5
+        # строка — невалидно
+        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+                   AsyncMock(return_value="5")):
+            assert await bc._resolve_broadcast_max_images(MagicMock()) == 5
+
+    @pytest.mark.asyncio
     async def test_text_only_keeps_attachments_empty(self) -> None:
         """Regression: текст без картинки — state.attachments=[]."""
         from aemr_bot.handlers import broadcast as bc
@@ -23988,7 +24091,8 @@ class TestWizardCapturesMultipleImages:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch.object(bc.cfg, "broadcast_max_images", 5):
+             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+                   AsyncMock(return_value=5)):
             handled = await bc._handle_wizard_text(event, "три картинки")
 
         assert handled is True
@@ -24003,9 +24107,9 @@ class TestWizardCapturesMultipleImages:
 
     @pytest.mark.asyncio
     async def test_images_capped_at_broadcast_max_images(self) -> None:
-        """Контракт: при cfg.broadcast_max_images=2 и 5 картинках в
-        сообщении — wizard сохраняет ровно 2 (защита от тяжёлых
-        multi-image рассылок). Дополнительные молча отбрасываются."""
+        """Контракт: при broadcast_max_images=2 (БД-настройка) и 5
+        картинках в сообщении — wizard сохраняет ровно 2 (защита от
+        тяжёлых multi-image рассылок). Дополнительные молча отбрасываются."""
         from aemr_bot.handlers import broadcast as bc
 
         event = make_event(chat_id=100, user_id=7)
@@ -24019,7 +24123,8 @@ class TestWizardCapturesMultipleImages:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch.object(bc.cfg, "broadcast_max_images", 2):
+             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+                   AsyncMock(return_value=2)):
             await bc._handle_wizard_text(event, "слишком много")
 
         state = bc._wizards.get(7)
@@ -24058,7 +24163,8 @@ class TestPreviewCardIncludesImages:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch.object(bc.cfg, "broadcast_max_images", 5), \
+             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+                   AsyncMock(return_value=5)), \
              patch("aemr_bot.utils.image_attachments.deserialize_for_relay",
                    return_value=[fake_preview_image]):
             await bc._handle_wizard_text(event, "превью с картинкой")
@@ -24097,7 +24203,8 @@ class TestPreviewCardIncludesImages:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch.object(bc.cfg, "broadcast_max_images", 5):
+             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+                   AsyncMock(return_value=5)):
             await bc._handle_wizard_text(event, "text only")
 
         # ищем preview-вызов
@@ -35195,8 +35302,8 @@ Restore-test не пройден, если:
 
 ### `docs/COMPLIANCE_WITH_REGLAMENT_v5.md`
 
-Size: `44859` bytes  
-SHA-256: `2294a55071fa54946352c3b4cd6258306763888276304e55f532472491c7d599`
+Size: `44989` bytes  
+SHA-256: `b3ece893857b48365722f1135d792187ce2e96b50b4202dad39c8010e395b0b2`
 
 ```markdown
 # COMPLIANCE: соответствие Регламента v5 фактическому коду
@@ -35351,7 +35458,7 @@ SHA-256: `2294a55071fa54946352c3b4cd6258306763888276304e55f532472491c7d599`
 | 44 | Возможность направления подписанным жителям инфо-сообщений | `handlers/broadcast.py` — полный wizard от текста до отправки | OK |
 | 45 | Подписка добровольная; согласие на ПДн в целях рассылки (consent_broadcast_at) | Кнопка «🔔 Подписаться» в главном меню → `services/broadcasts.set_subscription`; `User.consent_broadcast_at` фиксируется | OK |
 | 46 | Отписка тремя способами: кнопка под рассылкой, переключатель меню, `/unsubscribe` | Все три реализованы: `keyboards.broadcast_unsubscribe_keyboard` + `keyboards.main_menu` + `handlers/start.cmd_unsubscribe` | OK |
-| 47 | Мастер `/broadcast`: текст ≤ 1000 симв, предпросмотр с числом получателей, подтверждение, отправка 1 msg/sec | `cfg.broadcast_max_chars=1000`, `_handle_wizard_text` валидирует, `_handle_confirm` показывает предпросмотр (включая до `cfg.broadcast_max_images=5` приложенных картинок), `_send_one` 1/sec по `broadcast_rate_limit_per_sec`. Регламент v5 не требует поддержки картинок в рассылке, но и не запрещает — расширение совместимо с буквой §47. | OK |
+| 47 | Мастер `/broadcast`: текст ≤ 1000 симв, предпросмотр с числом получателей, подтверждение, отправка 1 msg/sec | `cfg.broadcast_max_chars=1000`, `_handle_wizard_text` валидирует, `_handle_confirm` показывает предпросмотр (включая до `broadcast_max_images` приложенных картинок — настройка в БД через UI «⚙️ Настройки бота», диапазон 1–20, по умолчанию 5), `_send_one` 1/sec по `broadcast_rate_limit_per_sec`. Регламент v5 не требует поддержки картинок в рассылке, но и не запрещает — расширение совместимо с буквой §47. | OK |
 | 48 | Кнопка «Экстренно остановить» доступна оператору с любой ролью | `keyboards.broadcast_stop_keyboard` + `handlers/broadcast._handle_stop` через `ensure_operator` (любая роль) | OK |
 | 49 | Только подписавшимся с consent_broadcast_at, не заблокированным | `broadcasts._eligible_filter`: `subscribed_broadcast=true AND consent_broadcast_at NOT NULL AND is_blocked=false` | OK |
 | 50 | Сведения о рассылках в журнале действий с счётчиками | `audit_log action="broadcast_send"`; `broadcasts.delivered_count`/`failed_count` в БД | OK |
@@ -40825,8 +40932,8 @@ docker compose up -d --build</code></pre>
 
 ### `docs/PRD.md`
 
-Size: `63425` bytes  
-SHA-256: `6f48136af938aac8f716f9f53bf5bdca7194755ec15f407fdb710a1b2e22fcaa`
+Size: `63801` bytes  
+SHA-256: `884f2dbea5831f69d78482534726b6361fc6521d7109d468961dd741e084f6ae`
 
 ```markdown
 # Спецификация продукта: «Администрация ЕМО. Обратная связь»
@@ -41048,7 +41155,7 @@ TTL мастера рассылки — 5 минут (`BROADCAST_WIZARD_TTL_SEC`
 
 **Ф-24. Синхронизация настроек в репозиторий через PR.** Из меню «⚙️ Настройки бота» доступно действие «Синхронизировать с репо» — `services/repo_sync.py` собирает текущее состояние `seed/runtime_config.json` из БД (поле `settings.synced_at`, миграция 0013, помечает «грязные» ключи), создаёт ветку `bot-config-sync-YYYYMMDD-HHMMSS` (UTC) в репозитории через GitHub REST API v3 (без PyGithub — меньше CVE-поверхность), пушит обновлённый файл с минимальным diff (`sort_keys=True`, `ensure_ascii=False`) и открывает PR. После мержа `scripts/auto-deploy.sh` подхватит изменения на VPS в течение 10 минут. Feature-flag: требует `GITHUB_PAT` (fine-grained, Contents:RW + PullRequests:RW), `GITHUB_REPO`, `GITHUB_PR_BASE_BRANCH`, `COMMIT_AUTHOR_NAME`/`COMMIT_AUTHOR_EMAIL` в env. Без PAT функция выключается с понятным сообщением, бот не падает (`SyncResult(ok=False, reason='no_token')`). Никаких force-push, прямых записей в `main` или модификаций других файлов.
 
-**Ф-25. Картинки в рассылках.** В шаге `awaiting_text` мастера `/broadcast` оператор может приложить **до `BROADCAST_MAX_IMAGES`** картинок (по умолчанию 5) к сообщению с текстом — все одним сообщением. Картинки извлекаются через `image_attachments_from_event(event, limit=cfg.broadcast_max_images)`, сохраняются в `Broadcast.attachments JSONB NOT NULL DEFAULT '[]'` (миграция 0014), затем в фоновой отправке десериализуются ровно один раз через `build_outbound_image_attachments` и идут каждому подписчику вместе с текстом и кнопкой «❌ Отписаться». Лимит 5 — баланс между «афиша + 3-4 фото» и защитой от перегрузки MAX (каждая картинка пересылается каждому подписчику). **Превью-карточка confirm-шага** включает все приложенные картинки — оператор видит, что именно увидит подписчик, до подтверждения отправки.
+**Ф-25. Картинки в рассылках.** В шаге `awaiting_text` мастера `/broadcast` оператор может приложить **до `broadcast_max_images`** картинок (по умолчанию 5, **настройка в БД через UI «⚙️ Настройки бота»**, диапазон 1–20, меняется без редеплоя — `services/settings_store.SCHEMA`). Картинки извлекаются через `image_attachments_from_event(event, limit=max_images)`, сохраняются в `Broadcast.attachments JSONB NOT NULL DEFAULT '[]'` (миграция 0014), затем в фоновой отправке десериализуются ровно один раз через `build_outbound_image_attachments` и идут каждому подписчику вместе с текстом и кнопкой «❌ Отписаться». Лимит 5 — баланс между «афиша + 3-4 фото» и защитой от перегрузки MAX (каждая картинка пересылается каждому подписчику). При превышении лимита оператору в превью показывается явный warning «приложили N, разойдутся первые M» (молчаливая обрезка ломает UX). **Превью-карточка confirm-шага** включает все приложенные картинки и счётчик «📷 Картинок: N» — оператор видит, что именно увидит подписчик, до подтверждения отправки.
 
 **Ф-26. Картинки в ответах оператора.** В `_send_reply_to_citizen` (operator_reply.py) перед `bot.send_message` к жителю выгребается картинка оператора (если приложена в том же сообщении), десериализуется через `image_attachments.build_outbound_image_attachments` и идёт в `attachments=[*outbound_images, back_to_menu_kbd]`. Текст-only ответ без картинки продолжает работать как раньше — никакого extra-вложения.
 
@@ -41618,8 +41725,8 @@ SHA-256: `4c2f6ed76eff5a3c3f67b3ffb7a2c63f093b76b91826b6de47a30f23045b85ca`
 
 ### `docs/RUNBOOK.md`
 
-Size: `54228` bytes  
-SHA-256: `81d2f9f2e2bb3890c1dd01d0e95284a585e82f43b53a55137f7d27138f9ca782`
+Size: `54519` bytes  
+SHA-256: `d9152f7308d93d3cdfd497af897c3b12a6bda4129d5f83c93759558905a456ea`
 
 ```markdown
 # Регламент работы координатора и ИТ-специалиста
@@ -41917,7 +42024,7 @@ SHA-256: `81d2f9f2e2bb3890c1dd01d0e95284a585e82f43b53a55137f7d27138f9ca782`
 3в. ❌ Отмена → мастер сброшен, рассылка не запущена.
 ```
 
-**Картинки в рассылке.** На шаге ввода текста оператор может приложить **до `BROADCAST_MAX_IMAGES` картинок** (по умолчанию 5, env-настраивается) в том же сообщении с текстом. Картинки сохраняются в `Broadcast.attachments JSONB` (миграция 0014) и приходят каждому подписчику в составе исходной рассылки (через `image_attachments.build_outbound_image_attachments`). Лимит 5 — баланс между «афиша + 3-4 фото» и нагрузкой на канал (каждая картинка ×N подписчиков). Если приложено больше — лишние молча отбрасываются.
+**Картинки в рассылке.** На шаге ввода текста оператор может приложить **до `broadcast_max_images` картинок** (по умолчанию 5, **настройка в БД через UI «⚙️ Настройки бота»**, диапазон 1–20 — меняется ИТ-оператором без редеплоя) в том же сообщении с текстом. Картинки сохраняются в `Broadcast.attachments JSONB` (миграция 0014) и приходят каждому подписчику в составе исходной рассылки (через `image_attachments.build_outbound_image_attachments`). Лимит 5 — баланс между «афиша + 3-4 фото» и нагрузкой на канал (каждая картинка ×N подписчиков). Если приложено больше — оператору в превью показывается явный warning «приложили N, разойдутся первые M», лишние молча отбрасываются.
 
 **Превью с картинками.** Карточка предпросмотра в шаге confirm включает все приложенные картинки рядом с кнопками «✅ Разослать / ✏️ Изменить / ❌ Отмена» — оператор видит, что именно увидит подписчик, до подтверждения отправки. Раньше превью был text-only, оператор подтверждал «вслепую».
 
@@ -44146,8 +44253,8 @@ E-mail: [⚖️ заполнить юристу]
 
 ### `infra/.env.example`
 
-Size: `9949` bytes  
-SHA-256: `731b88bcf1fd4615eb35af703614e83803de0ae6344e280230f9a62d61601394`
+Size: `10160` bytes  
+SHA-256: `ba4fdb7835974d401357875b1ecb129d8349234fbb34c92d32d8b242b300625c`
 
 ```text
 # Бот в MAX
@@ -44243,11 +44350,12 @@ POLLING_TIMEOUT_SECONDS=30
 
 # Рассылка
 BROADCAST_MAX_CHARS=1000
-# Сколько картинок оператор может приложить к одной рассылке. Каждая
-# картинка пересылается каждому подписчику — на 1000 подписчиков ×N
-# картинок MAX начинает ограничивать частоту. 5 — баланс между «афиша
-# + 3-4 фото-кадра» и нагрузкой на канал.
-BROADCAST_MAX_IMAGES=5
+# Сколько картинок оператор может приложить к одной рассылке — настройка
+# `broadcast_max_images` в БД (`settings_store.SCHEMA`, диапазон 1–20,
+# по умолчанию 5). Меняется через UI «⚙️ Настройки бота» без редеплоя.
+# В .env не дублируется намеренно: для оперативного управления настройка
+# должна быть в одном месте (БД), env — только для bootstrap-параметров,
+# которые в БД невозможно (BOT_TOKEN, DATABASE_URL и т.п.).
 BROADCAST_RATE_LIMIT_PER_SEC=1.0
 BROADCAST_PROGRESS_UPDATE_SEC=5
 BROADCAST_WIZARD_TTL_SEC=300
