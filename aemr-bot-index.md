@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-21 02:47:22 UTC`
+Generated at: `2026-05-21 02:53:27 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `185`
+Indexed files: `186`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -46,7 +46,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12068 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17506 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (12572 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (18366 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (41211 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (26042 bytes)
@@ -119,6 +119,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_cron_jobs.py` (19002 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (14354 bytes)
+- `bot/tests/test_diag_extended.py` (6504 bytes)
 - `bot/tests/test_event_helpers.py` (9073 bytes)
 - `bot/tests/test_extract_location.py` (5053 bytes)
 - `bot/tests/test_final_p1_regressions.py` (5856 bytes)
@@ -170,7 +171,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/README.md` (3465 bytes)
 - `docs/ROLLBACK.md` (7410 bytes)
 - `docs/RULES.md` (9993 bytes)
-- `docs/RUNBOOK.md` (54775 bytes)
+- `docs/RUNBOOK.md` (55898 bytes)
 - `docs/RUNBOOK_PDN_ERASURE.md` (8398 bytes)
 - `docs/SECURITY.md` (34972 bytes)
 - `docs/SETUP.md` (39702 bytes)
@@ -5280,8 +5281,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `12572` bytes  
-SHA-256: `c46c9b4454b0366381b092b4731c0dd7b4c71c00d593d32c5852644d5a1c02d7`
+Size: `18366` bytes  
+SHA-256: `f498e8ab682bac1b265f016e56b401b273063e8762d57f0f00f92c53e70c1f43`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -5461,7 +5462,22 @@ async def _do_open_tickets(event) -> None:
 
 
 async def _do_diag(event) -> None:
-    """Сводка состояния бота. Общая реализация для /diag и кнопки."""
+    """Сводка состояния бота с actionable indicators (PR I).
+
+    Расширено по сравнению с v1:
+    - 24-часовая активность (новые жители / новые обращения / ответы /
+      рассылки) — показывает «живёт ли система»;
+    - Pulse-индикатор (минут с последнего события + ✅/⚠️) — отвечает на
+      вопрос «бот в порядке прямо сейчас?»;
+    - Зависшие SENDING-рассылки (>10 мин без обновления прогресса) —
+      явный warning, чтобы оператор знал, что нужно остановить + clean-up;
+    - Срез по failed-доставкам за 24ч — индикатор проблем с MAX-API;
+    - 24-часовой список warnings ниже отдельным блоком (пусто = «всё ок»).
+
+    Конфиг (режим, лимит ответа, SLA) сохраняем в конце — статика.
+    """
+    from datetime import datetime, timedelta, timezone
+
     from sqlalchemy import func, select
 
     from aemr_bot import keyboards as kbds
@@ -5469,10 +5485,16 @@ async def _do_diag(event) -> None:
         Appeal,
         AppealStatus,
         Broadcast,
+        BroadcastDelivery,
         BroadcastStatus,
         Event,
+        Message,
         User,
     )
+
+    now = datetime.now(timezone.utc)
+    since_24h = now - timedelta(hours=24)
+    stuck_threshold = now - timedelta(minutes=10)
 
     async with session_scope() as session:
         users_total = await session.scalar(select(func.count()).select_from(User))
@@ -5485,6 +5507,11 @@ async def _do_diag(event) -> None:
                 User.is_blocked.is_(False),
             )
         )
+        users_new_24h = await session.scalar(
+            select(func.count()).select_from(User).where(
+                User.created_at >= since_24h
+            )
+        )
         appeals_total = await session.scalar(select(func.count()).select_from(Appeal))
         appeals_in_progress = await session.scalar(
             select(func.count()).select_from(Appeal).where(
@@ -5492,6 +5519,17 @@ async def _do_diag(event) -> None:
                     AppealStatus.NEW.value,
                     AppealStatus.IN_PROGRESS.value,
                 ])
+            )
+        )
+        appeals_new_24h = await session.scalar(
+            select(func.count()).select_from(Appeal).where(
+                Appeal.created_at >= since_24h
+            )
+        )
+        replies_24h = await session.scalar(
+            select(func.count()).select_from(Message).where(
+                Message.direction == "to_user",
+                Message.created_at >= since_24h,
             )
         )
         broadcasts_done = await session.scalar(
@@ -5504,24 +5542,109 @@ async def _do_diag(event) -> None:
                 Broadcast.status == BroadcastStatus.FAILED.value
             )
         )
+        broadcasts_24h = await session.scalar(
+            select(func.count()).select_from(Broadcast).where(
+                Broadcast.created_at >= since_24h
+            )
+        )
+        broadcasts_stuck = await session.scalar(
+            select(func.count()).select_from(Broadcast).where(
+                Broadcast.status == BroadcastStatus.SENDING.value,
+                Broadcast.created_at < stuck_threshold,
+            )
+        )
+        delivery_failed_24h = await session.scalar(
+            select(func.count()).select_from(BroadcastDelivery).where(
+                BroadcastDelivery.error.isnot(None),
+                BroadcastDelivery.delivered_at.is_(None),
+                # broadcast_deliveries не имеет created_at; используем
+                # связку через broadcast.created_at >= since_24h.
+            )
+            .join(Broadcast, Broadcast.id == BroadcastDelivery.broadcast_id)
+            .where(Broadcast.created_at >= since_24h)
+        )
         events_total = await session.scalar(select(func.count()).select_from(Event))
         last_event = await session.scalar(select(func.max(Event.received_at)))
+
+    # Pulse-индикатор: сколько минут назад был последний event. Бот
+    # шлёт heartbeat по cron, поэтому «давно не было событий» — явный
+    # signal проблемы. Граница 15 мин выбрана с запасом: pulse-cron
+    # стреляет :00, :30 или подобными интервалами, окно 15 мин ловит
+    # «один пропущенный pulse-цикл», но не дёргает на нормальный idle.
+    pulse_line = "—"
+    pulse_warn = False
+    if last_event is not None:
+        # last_event может быть naive если БД вернула без tz — нормализуем
+        if last_event.tzinfo is None:
+            last_event = last_event.replace(tzinfo=timezone.utc)
+        minutes_ago = int((now - last_event).total_seconds() // 60)
+        if minutes_ago < 1:
+            pulse_line = "< 1 мин назад"
+        elif minutes_ago < 60:
+            pulse_line = f"{minutes_ago} мин назад"
+        else:
+            hours = minutes_ago // 60
+            pulse_line = f"{hours} ч {minutes_ago % 60} мин назад"
+        if minutes_ago > 15:
+            pulse_warn = True
+            pulse_line = f"⚠️ {pulse_line}"
+        else:
+            pulse_line = f"✅ {pulse_line}"
+
+    warnings_lines: list[str] = []
+    if pulse_warn:
+        warnings_lines.append(
+            f"⚠️ Pulse молчит {pulse_line.replace('⚠️ ', '')} — проверить, "
+            f"что cron здоров."
+        )
+    if (broadcasts_stuck or 0) > 0:
+        warnings_lines.append(
+            f"⚠️ Зависших рассылок в SENDING (старше 10 мин): "
+            f"{broadcasts_stuck}. Остановите кнопкой ⛔ или проверьте бот."
+        )
+    if (delivery_failed_24h or 0) >= 20:
+        warnings_lines.append(
+            f"⚠️ За 24ч {delivery_failed_24h} неуспешных доставок рассылок — "
+            f"проверьте «👥 Не доставлено» у недавних рассылок."
+        )
+
+    body = (
+        "🛠️ Диагностика\n"
+        "\n"
+        "Pulse:\n"
+        f"• Последнее событие: {pulse_line}\n"
+        f"• Всего событий: {events_total or 0}\n"
+        "\n"
+        "Жители:\n"
+        f"• Всего: {users_total or 0} "
+        f"(подписаны: {users_subscribed or 0}, заблокированы: {users_blocked or 0})\n"
+        f"• Новых за 24ч: {users_new_24h or 0}\n"
+        "\n"
+        "Обращения:\n"
+        f"• Всего: {appeals_total or 0} (в работе: {appeals_in_progress or 0})\n"
+        f"• Новых за 24ч: {appeals_new_24h or 0}\n"
+        f"• Ответов оператора за 24ч: {replies_24h or 0}\n"
+        "\n"
+        "Рассылки:\n"
+        f"• ✅ DONE: {broadcasts_done or 0}  ⚠️ FAILED: {broadcasts_failed or 0}\n"
+        f"• За 24ч запущено: {broadcasts_24h or 0}\n"
+        f"• Зависших SENDING >10мин: {broadcasts_stuck or 0}\n"
+        f"• Неуспешных доставок за 24ч: {delivery_failed_24h or 0}\n"
+        "\n"
+        "Конфигурация:\n"
+        f"• Режим: {cfg.bot_mode}\n"
+        f"• Лимит ответа: {cfg.answer_max_chars} симв.\n"
+        f"• SLA: {cfg.sla_response_hours} ч"
+    )
+    if warnings_lines:
+        body += "\n\nВнимание:\n" + "\n".join(warnings_lines)
+    else:
+        body += "\n\n✅ Аномалий не обнаружено."
 
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
-        text=(
-            "🛠️ Диагностика:\n"
-            f"• Жителей: {users_total or 0} "
-            f"(подписаны: {users_subscribed or 0}, заблокированы: {users_blocked or 0})\n"
-            f"• Обращений: {appeals_total or 0} "
-            f"(в работе: {appeals_in_progress or 0})\n"
-            f"• Рассылок: ✅ {broadcasts_done or 0} / ⚠️ {broadcasts_failed or 0}\n"
-            f"• События: всего {events_total or 0}, последнее {last_event or '—'}\n"
-            f"• Режим: {cfg.bot_mode}\n"
-            f"• Лимит ответа: {cfg.answer_max_chars}\n"
-            f"• SLA: {cfg.sla_response_hours}ч"
-        ),
+        text=body,
         attachments=[kbds.op_back_to_menu_keyboard()],
     )
 
@@ -28736,6 +28859,207 @@ class TestBackupDb:
         assert result.path.exists()
 ```
 
+### `bot/tests/test_diag_extended.py`
+
+Size: `6504` bytes  
+SHA-256: `0c931e5a56513cf7586425cbbae7d52e6a324da4c8d374f5269486d02770c0a9`
+
+```python
+"""PG-тесты расширенного /diag (PR I).
+
+Проверяем, что новые секции (24h activity, pulse, stuck broadcasts,
+warnings) корректно собираются из реальной БД.
+
+Без maxapi — диагностика не требует UI, мы напрямую дёргаем _do_diag
+через mock event.
+"""
+from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+
+pytest.importorskip("maxapi", reason="diag — handler-level test, нужен maxapi")
+
+
+def _make_event() -> SimpleNamespace:
+    """MAX-событие в админ-группе с минимально достаточной формой."""
+    bot = MagicMock()
+    bot.send_message = AsyncMock()
+    return SimpleNamespace(
+        bot=bot,
+        message=SimpleNamespace(
+            answer=AsyncMock(),
+            sender=SimpleNamespace(user_id=7),
+            recipient=SimpleNamespace(chat_id=555),  # cfg.admin_group_id в conftest
+            body=SimpleNamespace(text="", attachments=[], mid="m-1"),
+        ),
+        callback=SimpleNamespace(callback_id="cb-1"),
+    )
+
+
+@pytest.mark.asyncio
+async def test_diag_pulse_warning_when_events_silent(session) -> None:
+    """Если последнее событие старше 15 мин — pulse-индикатор показывает
+    предупреждение в секции «Внимание»."""
+    from aemr_bot.db.models import Event
+    from aemr_bot.handlers import admin_panel
+
+    # Записываем «древнее» событие
+    old_event = Event(
+        kind="ping",
+        received_at=datetime.now(timezone.utc) - timedelta(hours=2),
+    )
+    session.add(old_event)
+    await session.flush()
+
+    sent: dict = {}
+
+    async def fake_send_or_edit(event, *, chat_id, text, attachments=None,
+                                **kwargs):
+        sent["text"] = text
+
+    # Подменяем session_scope() — он отдаёт нашу же сессию (через CM).
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def _scope():
+        yield session
+
+    with (
+        patch("aemr_bot.handlers.admin_panel.session_scope", _scope),
+        patch("aemr_bot.handlers.admin_panel.send_or_edit_screen",
+              new=fake_send_or_edit),
+    ):
+        await admin_panel._do_diag(_make_event())
+
+    assert "Pulse" in sent["text"]
+    assert "Внимание" in sent["text"], sent["text"]
+    assert "молчит" in sent["text"].lower()
+
+
+@pytest.mark.asyncio
+async def test_diag_no_warnings_when_pulse_fresh(session) -> None:
+    """Свежий pulse (1 мин назад) → секция «Внимание» отсутствует,
+    показывается «Аномалий не обнаружено»."""
+    from aemr_bot.db.models import Event
+    from aemr_bot.handlers import admin_panel
+
+    fresh = Event(
+        kind="ping",
+        received_at=datetime.now(timezone.utc) - timedelta(minutes=1),
+    )
+    session.add(fresh)
+    await session.flush()
+
+    sent: dict = {}
+
+    async def fake_send_or_edit(event, *, chat_id, text, attachments=None,
+                                **kwargs):
+        sent["text"] = text
+
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def _scope():
+        yield session
+
+    with (
+        patch("aemr_bot.handlers.admin_panel.session_scope", _scope),
+        patch("aemr_bot.handlers.admin_panel.send_or_edit_screen",
+              new=fake_send_or_edit),
+    ):
+        await admin_panel._do_diag(_make_event())
+
+    assert "Аномалий не обнаружено" in sent["text"]
+
+
+@pytest.mark.asyncio
+async def test_diag_stuck_broadcast_in_warnings(session) -> None:
+    """Рассылка в статусе SENDING старше 10 мин → warning «Зависших»."""
+    from aemr_bot.db.models import Broadcast, BroadcastStatus, Event
+    from aemr_bot.handlers import admin_panel
+
+    # Свежий pulse (чтобы не сбивал основной сигнал)
+    session.add(
+        Event(kind="ping", received_at=datetime.now(timezone.utc))
+    )
+    # Зависшая рассылка
+    stuck = Broadcast(
+        text="x",
+        subscriber_count_at_start=10,
+        status=BroadcastStatus.SENDING.value,
+        delivered_count=3,
+        failed_count=0,
+    )
+    session.add(stuck)
+    await session.flush()
+    # Принудительно «состарим» её через UPDATE, иначе SQLAlchemy ставит NOW().
+    from sqlalchemy import update
+
+    await session.execute(
+        update(Broadcast)
+        .where(Broadcast.id == stuck.id)
+        .values(created_at=datetime.now(timezone.utc) - timedelta(minutes=30))
+    )
+
+    sent: dict = {}
+
+    async def fake_send_or_edit(event, *, chat_id, text, attachments=None,
+                                **kwargs):
+        sent["text"] = text
+
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def _scope():
+        yield session
+
+    with (
+        patch("aemr_bot.handlers.admin_panel.session_scope", _scope),
+        patch("aemr_bot.handlers.admin_panel.send_or_edit_screen",
+              new=fake_send_or_edit),
+    ):
+        await admin_panel._do_diag(_make_event())
+
+    assert "Зависших" in sent["text"]
+    assert "Внимание" in sent["text"]
+
+
+@pytest.mark.asyncio
+async def test_diag_24h_counters_present(session) -> None:
+    """Диагностика содержит секции «Жители / Обращения / Рассылки»
+    с признаком «за 24ч»."""
+    from aemr_bot.handlers import admin_panel
+
+    sent: dict = {}
+
+    async def fake_send_or_edit(event, *, chat_id, text, attachments=None,
+                                **kwargs):
+        sent["text"] = text
+
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def _scope():
+        yield session
+
+    with (
+        patch("aemr_bot.handlers.admin_panel.session_scope", _scope),
+        patch("aemr_bot.handlers.admin_panel.send_or_edit_screen",
+              new=fake_send_or_edit),
+    ):
+        await admin_panel._do_diag(_make_event())
+
+    assert "Жители" in sent["text"]
+    assert "Обращения" in sent["text"]
+    assert "Рассылки" in sent["text"]
+    assert "за 24ч" in sent["text"].lower()
+```
+
 ### `bot/tests/test_event_helpers.py`
 
 Size: `9073` bytes  
@@ -44931,8 +45255,8 @@ SHA-256: `4c2f6ed76eff5a3c3f67b3ffb7a2c63f093b76b91826b6de47a30f23045b85ca`
 
 ### `docs/RUNBOOK.md`
 
-Size: `54775` bytes  
-SHA-256: `e4bcba2843304c92cf3759564b4a59b0f1f5d478961835112a5256a3811ba49d`
+Size: `55898` bytes  
+SHA-256: `bf34eb6e3e32244e6477180fa9827cd77e8e3ef8a15d2730caa348f13dcf0314`
 
 ```markdown
 # Регламент работы координатора и ИТ-специалиста
@@ -45322,18 +45646,42 @@ Feature-flag: требует переменные окружения `GITHUB_PAT
 /diag
 ```
 
-Возвращает текстовую сводку:
+Возвращает текстовую сводку, сгруппированную по секциям:
 
 ```
-🛠️ Диагностика:
-• Жителей: <N> (подписаны: <M>, заблокированы: <K>)
-• Обращений: <N> (в работе: <M>)
-• Рассылок: ✅ <done> / ⚠️ <failed>
-• События: всего <N>, последнее <timestamp>
+🛠️ Диагностика
+
+Pulse:
+• Последнее событие: ✅ <N> мин назад  (или ⚠️ <N> мин назад, если >15)
+• Всего событий: <N>
+
+Жители:
+• Всего: <N> (подписаны: <M>, заблокированы: <K>)
+• Новых за 24ч: <N>
+
+Обращения:
+• Всего: <N> (в работе: <M>)
+• Новых за 24ч: <N>
+• Ответов оператора за 24ч: <N>
+
+Рассылки:
+• ✅ DONE: <N>  ⚠️ FAILED: <N>
+• За 24ч запущено: <N>
+• Зависших SENDING >10мин: <N>
+• Неуспешных доставок за 24ч: <N>
+
+Конфигурация:
 • Режим: <bot_mode>
-• Лимит ответа: <ANSWER_MAX_CHARS>
-• SLA: <sla_response_hours>ч
+• Лимит ответа: <ANSWER_MAX_CHARS> симв.
+• SLA: <sla_response_hours> ч
+
+Внимание:    ← блок есть только если есть warnings
+⚠️ Pulse молчит <N> мин назад — проверить, что cron здоров.
+⚠️ Зависших рассылок в SENDING (старше 10 мин): <N>. Остановите кнопкой ⛔ или проверьте бот.
+⚠️ За 24ч <N> неуспешных доставок рассылок — проверьте «👥 Не доставлено» у недавних рассылок.
 ```
+
+Если аномалий нет — вместо «Внимание» показывается «✅ Аномалий не обнаружено».
 
 ## Снять бэкап вне расписания (`/backup`)
 
