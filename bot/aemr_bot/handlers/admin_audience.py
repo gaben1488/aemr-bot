@@ -14,7 +14,13 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import get_user_id, send_or_edit_screen
+from aemr_bot.services.card_format import _citizen_status_line
+from aemr_bot.utils import menu_tracker
+from aemr_bot.utils.event import (
+    extract_message_id,
+    get_user_id,
+    send_or_edit_screen,
+)
 
 log = logging.getLogger(__name__)
 
@@ -152,17 +158,37 @@ async def run_audience_action(event, payload: str) -> None:
         text=header,
         attachments=[kbds.op_back_to_audience_keyboard()],
     )
+    # Карточки жителей — каждая со status-маркерами (подписка, согласие,
+    # блок), чтобы оператор видел контекст без перехода в отдельную
+    # вкладку. Это аналог _citizen_status_line из admin appeal card.
+    #
+    # Sticky-tracker: после каждой карточки обновляем mid в tracker'е.
+    # Иначе tracker остаётся на mid header'а (отрисован выше через
+    # send_or_edit_screen), а карточки жителей ниже. Оператор скроллит
+    # вниз, тапает кнопку header'а — callback_mid (header) совпал бы с
+    # tracker → edit на месте header'а ВВЕРХУ чата → оператор внизу
+    # ничего не видит. Сдвигая tracker на последнюю отправленную
+    # карточку, гарантируем: любой тап на header или промежуточную
+    # карточку — это «mid выше tracker'а», поэтому send_new в самый
+    # низ. Эта же логика нужна и в _do_open_tickets.
+    last_mid: str | None = None
     for u in users:
         name = u.first_name or "—"
         phone = _mask_phone(u.phone)
-        line = f"#{u.max_user_id} · {name} · {phone}"
-        await event.bot.send_message(
+        status = _citizen_status_line(u)
+        line = f"#{u.max_user_id} · {name} · {phone}\n{status}"
+        sent = await event.bot.send_message(
             chat_id=cfg.admin_group_id,
             text=line,
             attachments=[
                 kbds.op_audience_user_actions(u.max_user_id, blocked=u.is_blocked)
             ],
         )
+        mid = extract_message_id(sent)
+        if mid:
+            last_mid = mid
+    if last_mid is not None:
+        menu_tracker.set_last_menu_mid(cfg.admin_group_id, last_mid)
 
 
 def _mask_phone(phone: str | None) -> str:
