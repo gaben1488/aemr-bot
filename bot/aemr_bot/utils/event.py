@@ -199,39 +199,87 @@ async def send_or_edit_screen(
 ):
     """Показать экран бота без лишнего шума в чате.
 
-    Правило UX: нажатие кнопки меняет текущую карточку, а видимое
-    сообщение человека (текст, гео, файл, фото) приводит к новому ответу
-    бота ниже этого сообщения. Поэтому callback сначала пробуем
-    редактировать, а команды/текстовые шаги отправляем новым сообщением.
+    **Правило UX (с учётом freshness-tracker'а):**
+
+    - Callback от **последней** карточки-меню в чате (mid совпадает с
+      `menu_tracker.get_last_menu_mid(chat_id)`) → редактируем эту
+      карточку через `edit_message`. Это «нормальный» путь listing →
+      detail в свежей карточке.
+    - Callback от **старой** карточки выше по чату (mid ≠ tracker)
+      → отправляем новое сообщение. Иначе оператор/житель не видит
+      изменение, потому что находится глубоко внизу чата.
+    - Не-callback (команда, текст, гео) → всегда новое сообщение.
+    - `force_new_message=True` → принудительно новое (когда wizard
+      явно завершён и хочет создать «новую страницу»).
+
+    Sacred-карточки (admin appeal card, citizen reply, broadcast
+    progress, audit-уведомления, pulse, reminders) шлются напрямую
+    через `bot.send_message`, не через эту функцию — они НЕ участвуют
+    в tracker'е и всегда new.
+
+    Tracker обновляется после успешного send/edit с актуальным mid.
     """
+    # Lazy-import чтобы избежать циклической зависимости через models.
+    from aemr_bot.utils import menu_tracker  # noqa: PLC0415
+
     bot = getattr(event, "bot", None)
     if bot is None:
         return None
     attachments = attachments or []
-    mid = None if force_new_message else get_callback_message_id(event)
-    if mid and hasattr(bot, "edit_message"):
-        try:
-            return await bot.edit_message(
-                message_id=mid,
-                text=text,
-                attachments=attachments,
-            )
-        except Exception:
-            log.info(
-                "edit_message %s failed, fallback to send_message",
-                mid,
-                exc_info=False,
-            )
 
     event_chat_id, event_user_id = get_ids(event)
     target_chat_id = chat_id if chat_id is not None else event_chat_id
     target_user_id = user_id if user_id is not None else event_user_id
-    return await bot.send_message(
+
+    callback_mid = (
+        None if force_new_message else get_callback_message_id(event)
+    )
+    last_known_mid = (
+        menu_tracker.get_last_menu_mid(target_chat_id)
+        if target_chat_id is not None
+        else None
+    )
+    # Edit разрешён только когда callback пришёл от АКТУАЛЬНОЙ карточки.
+    can_edit = (
+        callback_mid is not None
+        and last_known_mid is not None
+        and callback_mid == last_known_mid
+        and hasattr(bot, "edit_message")
+    )
+
+    if can_edit:
+        try:
+            result = await bot.edit_message(
+                message_id=callback_mid,
+                text=text,
+                attachments=attachments,
+            )
+            # edit сохраняет mid — tracker не меняем.
+            return result
+        except Exception:
+            log.info(
+                "edit_message %s failed, fallback to send_message",
+                callback_mid,
+                exc_info=False,
+            )
+            # Tracker очищаем, чтобы следующий callback тоже привёл к
+            # send new (не пытался опять редактировать «битый» mid).
+            if target_chat_id is not None:
+                menu_tracker.clear(target_chat_id)
+
+    sent = await bot.send_message(
         chat_id=target_chat_id,
         user_id=None if target_chat_id is not None else target_user_id,
         text=text,
         attachments=attachments,
     )
+    # Обновляем tracker свежим mid отправленного сообщения. На случай
+    # если send_message вернул структуру без `.body.mid` (старые тесты-
+    # моки) — extract_message_id вернёт None, tracker не двинется.
+    new_mid = extract_message_id(sent)
+    if new_mid and target_chat_id is not None:
+        menu_tracker.set_last_menu_mid(target_chat_id, new_mid)
+    return sent
 
 
 async def send(event: Any, text: str, attachments: list | None = None):
