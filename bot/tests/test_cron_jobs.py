@@ -126,20 +126,78 @@ class TestBackupWithAlert:
     """_job_backup_with_alert — обёртка над _backup_db с алёртами."""
 
     @pytest.mark.asyncio
-    async def test_alerts_on_none_result(self) -> None:
-        """Если _backup_db вернул None — шлём предупреждение."""
+    async def test_alerts_on_pg_dump_fail(self) -> None:
+        """pg_dump упал → специфический алёрт со словом «pg_dump»."""
+        from aemr_bot.services.db_backup import BackupResult
         send = AsyncMock()
-        with patch("aemr_bot.services.cron._backup_db", AsyncMock(return_value=None)):
+        fail = BackupResult(
+            path=None, fail_kind="pg_dump",
+            fail_detail="pg_dump failed with code 1",
+        )
+        with patch("aemr_bot.services.cron._backup_db",
+                   AsyncMock(return_value=fail)):
             await cron._job_backup_with_alert(send)
-        send.assert_called_once()
-        assert "не выполнен" in send.call_args.args[0]
+        send.assert_awaited_once()
+        msg = send.await_args.args[0]
+        assert "pg_dump" in msg
+        assert "code 1" in msg or "fail_detail" in msg or "pg_dump failed" in msg
+
+    @pytest.mark.asyncio
+    async def test_alerts_on_gpg_fail_mentions_pdn_cleanup(self) -> None:
+        """gpg упал → алёрт говорит про gpg И про удаление plain-text дампа."""
+        from aemr_bot.services.db_backup import BackupResult
+        send = AsyncMock()
+        fail = BackupResult(
+            path=None, fail_kind="gpg",
+            fail_detail="gpg failed with code 2",
+        )
+        with patch("aemr_bot.services.cron._backup_db",
+                   AsyncMock(return_value=fail)):
+            await cron._job_backup_with_alert(send)
+        msg = send.await_args.args[0]
+        assert "gpg" in msg.lower()
+        # Про ПДн / незашифрованный дамп — обязательно
+        assert "незашифрован" in msg.lower() or "ПДн" in msg or "plain" in msg.lower()
+
+    @pytest.mark.asyncio
+    async def test_alerts_on_config_fail(self) -> None:
+        """BACKUP_LOCAL_DIR пуст → алёрт про конфигурацию."""
+        from aemr_bot.services.db_backup import BackupResult
+        send = AsyncMock()
+        fail = BackupResult(
+            path=None, fail_kind="config",
+            fail_detail="BACKUP_LOCAL_DIR пуст",
+        )
+        with patch("aemr_bot.services.cron._backup_db",
+                   AsyncMock(return_value=fail)):
+            await cron._job_backup_with_alert(send)
+        msg = send.await_args.args[0]
+        assert "BACKUP_LOCAL_DIR" in msg or "конфигурац" in msg.lower()
+
+    @pytest.mark.asyncio
+    async def test_alerts_on_unknown_fail(self) -> None:
+        """Неклассифицированная ошибка → fallback-алёрт со словом «логи»."""
+        from aemr_bot.services.db_backup import BackupResult
+        send = AsyncMock()
+        fail = BackupResult(
+            path=None, fail_kind="unknown",
+            fail_detail="OSError: disk full",
+        )
+        with patch("aemr_bot.services.cron._backup_db",
+                   AsyncMock(return_value=fail)):
+            await cron._job_backup_with_alert(send)
+        msg = send.await_args.args[0]
+        assert "лог" in msg.lower() or "неклассифицир" in msg.lower()
 
     @pytest.mark.asyncio
     async def test_silent_on_success(self) -> None:
-        """Успешный бэкап — без алёрта."""
+        """Успешный бэкап — без алёрта (result.ok=True)."""
         from pathlib import Path
+        from aemr_bot.services.db_backup import BackupResult
         send = AsyncMock()
-        with patch("aemr_bot.services.cron._backup_db", AsyncMock(return_value=Path("/tmp/backup.sql"))):
+        ok = BackupResult(path=Path("/tmp/backup.sql"))
+        with patch("aemr_bot.services.cron._backup_db",
+                   AsyncMock(return_value=ok)):
             await cron._job_backup_with_alert(send)
         send.assert_not_called()
 
@@ -201,9 +259,69 @@ class TestFunnelWatchdog:
     async def test_swallows_exception_no_db(self) -> None:
         bot = MagicMock()
         bot.send_message = AsyncMock()
-        await cron._job_funnel_watchdog(bot)
+        send_admin_text = AsyncMock()
+        await cron._job_funnel_watchdog(bot, send_admin_text)
         # Не должно crash; bot.send_message может быть не вызван
         # (если БД упала — попадаем в except верхнего уровня)
+
+    @pytest.mark.asyncio
+    async def test_below_threshold_no_admin_alert(self) -> None:
+        """Под порогом (4 застрявших) — никакого admin-уведомления.
+        Регресс-страховка от шумных alert'ов на нормальной нагрузке."""
+        from aemr_bot.services import cron as cron_mod
+        from contextlib import asynccontextmanager
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock()
+        send_admin_text = AsyncMock()
+        stuck = [(100 + i, "awaiting_name") for i in range(4)]
+
+        @asynccontextmanager
+        async def fake_scope():
+            yield MagicMock()
+
+        with patch.object(cron_mod, "session_scope", fake_scope), \
+             patch("aemr_bot.services.users.find_stuck_in_funnel",
+                   AsyncMock(return_value=stuck)), \
+             patch("aemr_bot.services.users.reset_state", AsyncMock()):
+            await cron_mod._job_funnel_watchdog(bot, send_admin_text)
+
+        # bot.send_message — по 1 на каждого жителя.
+        assert bot.send_message.await_count == 4
+        # admin-канал — ТИШИНА
+        send_admin_text.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_at_threshold_sends_admin_summary(self) -> None:
+        """При ≥5 застрявших — bot отправляет в админ-чат сводку.
+        Аномальный массовый зашпил — сигнал об UX-регрессии или DDoS."""
+        from aemr_bot.services import cron as cron_mod
+        from contextlib import asynccontextmanager
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock()
+        send_admin_text = AsyncMock()
+        stuck = [(100 + i, "awaiting_name") for i in range(7)]
+
+        @asynccontextmanager
+        async def fake_scope():
+            yield MagicMock()
+
+        with patch.object(cron_mod, "session_scope", fake_scope), \
+             patch("aemr_bot.services.users.find_stuck_in_funnel",
+                   AsyncMock(return_value=stuck)), \
+             patch("aemr_bot.services.users.reset_state", AsyncMock()):
+            await cron_mod._job_funnel_watchdog(bot, send_admin_text)
+
+        # Жителям — по сбросу.
+        assert bot.send_message.await_count == 7
+        # Админ-канал — одна сводка.
+        send_admin_text.assert_awaited_once()
+        msg = send_admin_text.await_args.args[0]
+        assert "7" in msg, f"число застрявших не упомянуто: {msg}"
+        assert "🧹" in msg
+        # Подсказка про проверку логов/IT
+        assert "проблем" in msg.lower() or "Funnel watchdog" in msg
 
 
 class TestFormatAppealLines:

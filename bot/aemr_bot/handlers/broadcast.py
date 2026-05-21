@@ -121,7 +121,10 @@ async def _start_wizard(event) -> None:
 
     _wizards[actor_id] = _WizardState(step="awaiting_text")
     log.info("broadcast: wizard started for operator max_user_id=%s", actor_id)
-    prompt = texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars)
+    prompt = texts.OP_BROADCAST_PROMPT.format(
+        limit=cfg.broadcast_max_chars,
+        max_images=cfg.broadcast_max_images,
+    )
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
@@ -172,7 +175,10 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
     if not text:
         # Пусто. Просим ввести ещё раз, состояние не меняем.
         await event.message.answer(
-            texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars),
+            texts.OP_BROADCAST_PROMPT.format(
+        limit=cfg.broadcast_max_chars,
+        max_images=cfg.broadcast_max_images,
+    ),
             attachments=[keyboards.broadcast_cancel_keyboard()],
         )
         return True
@@ -191,9 +197,13 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
     # Захват картинок оператора (если в том же сообщении были). Лимит —
     # `cfg.broadcast_max_images`, по умолчанию 5: афиша, схема, фото-
     # комплект из 2-3 кадров укладываются, multi-image-спам отрезается.
-    state.attachments = _image_attachments.image_attachments_from_event(
-        event, limit=cfg.broadcast_max_images
+    # ВАЖНО: считаем сколько ВСЕГО было — для warning'а оператору, если
+    # обрезалось. Тихая обрезка (приложили 7, разошлось 5) ломает UX.
+    all_images_in_event = _image_attachments.image_attachments_from_event(
+        event, limit=0  # 0 = unlimited, чтобы подсчитать «приложено»
     )
+    provided = len(all_images_in_event)
+    state.attachments = all_images_in_event[: cfg.broadcast_max_images]
     state.step = "awaiting_confirm"
     state.renew()
     # Превью включает все приложенные картинки рядом с confirm-клавой,
@@ -202,8 +212,18 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
     preview_outbound_images = _image_attachments.build_outbound_image_attachments(
         state.attachments
     )
+    image_warning = ""
+    if provided > cfg.broadcast_max_images:
+        image_warning = texts.OP_BROADCAST_PREVIEW_TRIM_WARN.format(
+            provided=provided, limit=cfg.broadcast_max_images
+        )
     await event.message.answer(
-        texts.OP_BROADCAST_PREVIEW.format(text=text, count=count),
+        texts.OP_BROADCAST_PREVIEW.format(
+            text=text,
+            count=count,
+            image_count=len(state.attachments),
+            image_warning=image_warning,
+        ),
         attachments=[
             *preview_outbound_images,
             keyboards.broadcast_confirm_keyboard(),
@@ -292,8 +312,13 @@ async def _handle_abort(event) -> None:
 
 async def _handle_edit(event) -> None:
     """Кнопка «✏️ Изменить текст» в превью. Возвращает мастер в шаг
-    ожидания текста, сохраняя текущее состояние авторства, но обнуляя
-    предыдущий текст. Оператор просто введёт новый — превью пересоберётся."""
+    ожидания текста, обнуляя предыдущий текст И ранее приложенные
+    картинки: следующее сообщение оператора полностью пересоберёт
+    черновик. Без явного обнуления `state.attachments` старые картинки
+    тихо сохранялись бы между попытками — UX-ловушка («исправил текст,
+    а тут ещё и старые картинки всплывают»). Текст подсказки
+    OP_BROADCAST_EDIT_HINT явно предупреждает оператора, чтобы он
+    приложил картинки заново."""
     actor_id = get_user_id(event)
     if actor_id is None:
         await ack_callback(event)
@@ -304,12 +329,16 @@ async def _handle_edit(event) -> None:
         return
     state.step = "awaiting_text"
     state.text = ""
+    # Чистим картинки тоже: «Изменить текст» = новый черновик целиком.
+    state.attachments = []
     state.renew()
     await ack_callback(event)
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
-        text=texts.OP_BROADCAST_PROMPT.format(limit=cfg.broadcast_max_chars),
+        text=texts.OP_BROADCAST_EDIT_HINT.format(
+            limit=cfg.broadcast_max_chars,
+        ),
         attachments=[keyboards.broadcast_cancel_keyboard()],
     )
 

@@ -150,19 +150,56 @@ async def _job_backup_with_alert(send_admin_text) -> None:
     gpg-ключ, поменялись права Postgres) видна только в логах бота, а их
     никто не читает в воскресенье в 03:00. Админ-группа должна узнать
     утром, до следующего еженедельного запуска.
+
+    Алёрт **категоризирован** по `result.fail_kind` — каждый сценарий
+    подсказывает оператору, КУДА смотреть и ЧТО проверять. Раньше было
+    одно общее сообщение «бэкап не выполнен», по нему было неясно,
+    проблема в pg_dump (БД), в gpg (шифрование) или в .env (конфиг).
     """
     try:
-        out = await _backup_db()
-        if out is None:
+        result = await _backup_db()
+        if result.ok:
+            return
+        if result.fail_kind == "pg_dump":
             await send_admin_text(
-                "⚠️ Еженедельный бэкап БД не выполнен. См. логи бота: "
-                "обычно это либо BACKUP_LOCAL_DIR не задан, либо упал "
-                "pg_dump. Сделайте /backup вручную, как только разберётесь."
+                "⚠️ Еженедельный бэкап БД упал на pg_dump.\n"
+                f"Детали: {result.fail_detail}\n"
+                "Возможные причины: Postgres недоступен, нет места на "
+                "диске, сменились права. Снимите бэкап вручную через "
+                "/backup, как только разберётесь — мы пропустили "
+                "еженедельную точку восстановления."
+            )
+        elif result.fail_kind == "gpg":
+            await send_admin_text(
+                "🔐 Еженедельный бэкап БД: pg_dump прошёл, но gpg-"
+                "шифрование упало.\n"
+                f"Детали: {result.fail_detail}\n"
+                "Файл .sql.gpg НЕ создан, незашифрованный дамп удалён "
+                "(он содержал ПДн — оставлять на диске нельзя). "
+                "Проверьте BACKUP_GPG_PASSPHRASE и логи. Снимите бэкап "
+                "вручную через /backup, либо временно работайте без "
+                "gpg (пустой BACKUP_GPG_PASSPHRASE → plain SQL — "
+                "только при защищённом /backups том)."
+            )
+        elif result.fail_kind == "config":
+            await send_admin_text(
+                "⚙️ Еженедельный бэкап БД не выполнен: "
+                "BACKUP_LOCAL_DIR пуст в .env — некуда писать. "
+                "Проверьте конфигурацию (`docs/SYSADMIN.md §5.4`)."
+            )
+        else:  # "unknown" — fallback
+            await send_admin_text(
+                "⚠️ Еженедельный бэкап БД упал с неклассифицированной "
+                "ошибкой.\n"
+                f"Детали: {result.fail_detail}\n"
+                "См. логи бота: `docker compose logs --tail 200 bot`. "
+                "Снимите бэкап вручную через /backup."
             )
     except Exception:
         log.exception("backup_with_alert wrapper failed")
         await send_admin_text(
-            "⚠️ Еженедельный бэкап БД упал с исключением. "
+            "⚠️ Еженедельный бэкап БД упал с исключением вне самого "
+            "backup_db (вероятно, сбой admin-канала или OOM). "
             "Срочно проверьте логи и снимите бэкап вручную через /backup."
         )
 
@@ -376,12 +413,23 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
         log.exception("pdn_retention_check crashed")
 
 
-async def _job_funnel_watchdog(bot) -> None:
+# Порог для admin-уведомления о массовых зависаниях. 1-4 застрявших за
+# час — нормальная статистика «житель открыл, отвлёкся». 5+ — может
+# сигналить о UX-баге в воронке или о DDoS-попытке. Уведомление шлётся
+# для аудита, без него массовая аномалия остаётся только в логах бота.
+_FUNNEL_WATCHDOG_ADMIN_ALERT_THRESHOLD = 5
+
+
+async def _job_funnel_watchdog(bot, send_admin_text) -> None:
     """Раз в час смотрим, кто завис в воронке (AWAITING_*) дольше 24
     часов. Сбрасываем состояние в IDLE и шлём короткое напоминание с
     кнопкой «открыть меню». Без этого житель, начавший воронку и
     забывший про неё на неделю, при следующем «привет» попадал в
     обработчик зависшего шага: «привет» записывалось как имя или адрес.
+
+    Если зависших ≥ `_FUNNEL_WATCHDOG_ADMIN_ALERT_THRESHOLD`, дополнительно
+    шлём служебной группе summary — это сигнал, что в воронке может быть
+    проблема (стабильно ≥5/час обычно означает UX-регрессию или поломку).
 
     Лимит cfg.recover_batch_size защищает от лавины при первом запуске
     после простоя.
@@ -401,6 +449,7 @@ async def _job_funnel_watchdog(bot) -> None:
             "funnel_watchdog: %d жителей зависли в воронке, сбрасываем",
             len(stuck),
         )
+        reset_ok = 0
         for max_user_id, _state in stuck:
             try:
                 async with session_scope() as session:
@@ -414,11 +463,28 @@ async def _job_funnel_watchdog(bot) -> None:
                     ),
                     attachments=[kbds.back_to_menu_keyboard()],
                 )
+                reset_ok += 1
             except Exception:
                 log.exception(
                     "funnel_watchdog: не удалось сбросить max_user_id=%s",
                     max_user_id,
                 )
+        # Аномальный массовый зашпил — сообщаем в служебную группу.
+        # Под порогом — тишина, чтобы не флудить (1-4 застрявших в час
+        # — норма «житель отвлёкся, не дошёл до конца»).
+        if len(stuck) >= _FUNNEL_WATCHDOG_ADMIN_ALERT_THRESHOLD:
+            await _send_admin_text_with_retry(
+                send_admin_text,
+                (
+                    f"🧹 Funnel watchdog: за час сброшено "
+                    f"{reset_ok}/{len(stuck)} зависших анкет (>24ч). "
+                    f"Обычная норма 1-4 — массовое число (≥"
+                    f"{_FUNNEL_WATCHDOG_ADMIN_ALERT_THRESHOLD}) может "
+                    f"указывать на проблему в воронке. Проверьте логи "
+                    f"бота, шаги анкеты и оповестите ИТ при повторении."
+                ),
+                context="funnel-watchdog-anomaly",
+            )
     except Exception:
         log.exception("funnel_watchdog crashed")
 
@@ -591,9 +657,10 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             CronTrigger(hour=4, minute=30, timezone=TZ),
             "pdn-retention",
         ),
-        # Funnel watchdog: сброс зависших воронок
+        # Funnel watchdog: сброс зависших воронок + admin-alert при
+        # массовом зашпиле (≥5/час) — нужен send_admin_text в партиале.
         (
-            functools.partial(_job_funnel_watchdog, bot),
+            functools.partial(_job_funnel_watchdog, bot, send_admin_text),
             CronTrigger(minute=15, timezone=TZ),
             "funnel-watchdog",
         ),
