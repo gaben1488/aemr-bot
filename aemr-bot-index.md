@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-21 05:04:16 UTC`
+Generated at: `2026-05-24 21:13:38 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `188`
+Indexed files: `189`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -18,7 +18,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `.gitignore` (1073 bytes)
 - `_local-backup/PRODUCT_BRIEF_internal.md` (26651 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
-- `bot/aemr_bot/config.py` (7477 bytes)
+- `bot/aemr_bot/config.py` (8091 bytes)
 - `bot/aemr_bot/db/__init__.py` (0 bytes)
 - `bot/aemr_bot/db/alembic/env.py` (1446 bytes)
 - `bot/aemr_bot/db/alembic/versions/0001_initial.py` (5898 bytes)
@@ -62,7 +62,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/start.py` (16556 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (62731 bytes)
-- `bot/aemr_bot/main.py` (18178 bytes)
+- `bot/aemr_bot/main.py` (19199 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9914 bytes)
@@ -108,6 +108,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_appeal_flow.py` (10960 bytes)
 - `bot/tests/test_appeals_service_pg.py` (14053 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
+- `bot/tests/test_bot_init_concurrency.py` (2821 bytes)
 - `bot/tests/test_broadcast_handlers.py` (33239 bytes)
 - `bot/tests/test_broadcast_history_card.py` (10153 bytes)
 - `bot/tests/test_broadcast_templates_handlers.py` (15540 bytes)
@@ -947,8 +948,8 @@ __version__ = "0.1.0"
 
 ### `bot/aemr_bot/config.py`
 
-Size: `7477` bytes  
-SHA-256: `49c98bdc72c601951cca8ccfc3746b0b6fca2c07900e63937f2c091a4598e852`
+Size: `8091` bytes  
+SHA-256: `3c19625543446b4725674a60fe847f72a4c39d4e599589fc6fd1608391285e57`
 
 ```python
 from pathlib import Path
@@ -1012,6 +1013,15 @@ class Settings(BaseSettings):
     # 2 RPS). Меньше — быстрее реагирует окно старта-остановки. Потолок
     # сервера 90 секунд.
     polling_timeout_seconds: int = Field(30, alias="POLLING_TIMEOUT_SECONDS", ge=0, le=90)
+
+    # Таймаут на один HTTP-запрос к MAX API (send_message / edit_message
+    # / answers). maxapi default = 150 секунд; при sequential polling
+    # один тормозящий запрос блокирует все следующие тапы — видимое
+    # «бот завис». 30 секунд — ack/send должны отвечать за секунды,
+    # дольше = баг MAX, нет смысла блокировать оператора.
+    max_api_timeout_seconds: float = Field(
+        30.0, alias="MAX_API_TIMEOUT_SECONDS", gt=0.0, le=180.0
+    )
 
     # Broadcast / subscription. Rate-limit стоит ниже MAX-лимита 2 RPS, чтобы
     # обычная активность бота (ответы оператора, новые карточки) не упиралась
@@ -14762,8 +14772,8 @@ def op_help_keyboard(
 
 ### `bot/aemr_bot/main.py`
 
-Size: `18178` bytes  
-SHA-256: `9ed80adcbfddcc298af55b2341ffecdcdb5521f1f23570067751c52a7a84f576`
+Size: `19199` bytes  
+SHA-256: `413d33989f251b30c9eff64db54d994acb87212e8d72bc5f123d1259b525ba2b`
 
 ```python
 from __future__ import annotations
@@ -14774,6 +14784,7 @@ import sys
 from pathlib import Path
 
 from maxapi import Bot, Dispatcher
+from maxapi.client.default import DefaultConnectionProperties
 from maxapi.exceptions.max import InvalidToken
 
 from aemr_bot import health
@@ -14794,8 +14805,22 @@ from aemr_bot.utils.background import spawn_background_task
 
 log = logging.getLogger("aemr_bot")
 
-bot = Bot(settings.bot_token)
-dp = Dispatcher()
+# maxapi default timeout = 150 секунд на один HTTP-запрос к MAX API.
+# При sequential polling один тормозящий запрос блокирует обработку
+# ВСЕХ следующих событий — видимое «тап → бот завис». Override через
+# наш конфиг (см. settings.max_api_timeout_seconds). max_retries в
+# maxapi 0.9.18 не настраивается через DefaultConnectionProperties
+# (только через timeout/sock_connect), оставляем как есть.
+bot = Bot(
+    settings.bot_token,
+    default_connection=DefaultConnectionProperties(
+        timeout=settings.max_api_timeout_seconds,
+    ),
+)
+# use_create_task=True: handlers — отдельные asyncio.Task, polling loop
+# не блокируется одним долгим callback'ом. Per-user state защищён
+# asyncio.Lock в appeal_runtime, concurrent dispatch безопасен.
+dp = Dispatcher(use_create_task=True)
 register_handlers(dp)
 
 # Semaphore-окно для входящих webhook'ов. Без ограничения каждый POST
@@ -26211,6 +26236,71 @@ class TestCountByType:
         # image учтён, audio либо в other либо skipped — главное чтоб
         # image была верно
         assert result.get("image") == 1
+```
+
+### `bot/tests/test_bot_init_concurrency.py`
+
+Size: `2821` bytes  
+SHA-256: `0152b86b6bcd516c568c734b5bceb233a357935b49233ec5d2f3e0e116b570d8`
+
+```python
+"""Регрессионные тесты на корневой фикс hang'а при тапах.
+
+Корень: maxapi по умолчанию делает sequential dispatch в polling
+(`await self.handle(event)` без `use_create_task`) и держит HTTP-таймаут
+150 секунд. Один тормозящий запрос к MAX блокировал обработку всех
+следующих тапов.
+
+Эти тесты фиксируют:
+- `dp.use_create_task is True` — concurrent dispatch обработчиков;
+- `bot.default_connection.timeout.total == settings.max_api_timeout_seconds`
+  — таймаут наш, не 150 сек дефолт.
+
+NB про max_retries: в maxapi 0.9.18 (закреплённая в Docker-образе)
+`DefaultConnectionProperties(timeout, sock_connect, **kwargs)` —
+`max_retries` НЕ принимается как именованный, попадает в **kwargs
+и оттуда в `ClientSession(...)`, что валит старт `TypeError`.
+В 1.0.0 API другой. Сейчас фиксим только то, что есть в 0.9.18.
+
+Если кто-то снимет use_create_task или вернёт maxapi-дефолтный таймаут —
+этот тест RED'нет, hang вернётся.
+"""
+from __future__ import annotations
+
+import pytest
+
+
+pytest.importorskip("maxapi", reason="maxapi нужен для тестов config bot/dispatcher")
+
+
+def test_dispatcher_uses_create_task_for_concurrent_dispatch() -> None:
+    """Без use_create_task один долгий callback блокирует polling loop."""
+    from aemr_bot.main import dp
+
+    assert dp.use_create_task is True, (
+        "Dispatcher должен запускаться с use_create_task=True, иначе "
+        "при тапе на кнопку весь polling блокируется на время "
+        "обработки одного события — это корень hang'а."
+    )
+
+
+def test_bot_http_timeout_is_below_maxapi_default() -> None:
+    """maxapi-дефолт 150 сек слишком долгий — должен быть наш конфиг."""
+    from aemr_bot.config import settings as cfg
+    from aemr_bot.main import bot
+
+    expected = cfg.max_api_timeout_seconds
+    actual = bot.default_connection.timeout.total
+
+    assert actual == pytest.approx(expected), (
+        f"bot.default_connection.timeout.total={actual}, ожидаемое "
+        f"settings.max_api_timeout_seconds={expected}. "
+        f"maxapi-дефолт 150 сек ловить нельзя — будут зависания."
+    )
+    assert expected < 150, (
+        f"max_api_timeout_seconds={expected} ≥ 150 — это maxapi-дефолт, "
+        f"hang при медленном MAX вернётся."
+    )
 ```
 
 ### `bot/tests/test_broadcast_handlers.py`
