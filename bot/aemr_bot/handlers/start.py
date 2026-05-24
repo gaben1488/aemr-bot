@@ -183,11 +183,17 @@ async def cmd_forget(event):
             action="self_erase",
             target=f"user max_id={max_user_id}",
         )
-        await users_service.erase_pdn(session, max_user_id)
+        # erase_pdn_detailed возвращает список id закрытых обращений
+        # (NEW/IN_PROGRESS до erase). Передаём в уведомление оператору
+        # «закрыто без ответа: #N, #M» — раньше всегда был [] и
+        # оператор не видел какие тикеты осиротели.
+        closed_ids = await users_service.erase_pdn_detailed(
+            session, max_user_id
+        )
     await admin_events.notify_data_erased(
         event.bot,
         max_user_id=max_user_id,
-        closed_appeal_ids=[],
+        closed_appeal_ids=closed_ids or [],
     )
     await reply(event, texts.ERASE_REQUESTED)
 
