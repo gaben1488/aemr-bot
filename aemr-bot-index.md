@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-24 21:13:38 UTC`
+Generated at: `2026-05-24 21:34:44 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `189`
+Indexed files: `191`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -122,6 +122,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_cron_jobs.py` (19002 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (14354 bytes)
+- `bot/tests/test_deps_environment.py` (3686 bytes)
 - `bot/tests/test_diag_extended.py` (6504 bytes)
 - `bot/tests/test_event_helpers.py` (9073 bytes)
 - `bot/tests/test_extract_location.py` (5053 bytes)
@@ -165,7 +166,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/BACKUP_RESTORE_TEST.md` (7292 bytes)
 - `docs/COMPLIANCE_WITH_REGLAMENT_v5.md` (46089 bytes)
 - `docs/COPY.md` (52055 bytes)
-- `docs/DEVELOPER.md` (133941 bytes)
+- `docs/DEPS.md` (5840 bytes)
+- `docs/DEVELOPER.md` (134377 bytes)
 - `docs/handover.html` (56417 bytes)
 - `docs/HOW_IT_WORKS.md` (23367 bytes)
 - `docs/it.html` (109792 bytes)
@@ -30404,6 +30406,87 @@ class TestBackupDb:
         assert result.path.exists()
 ```
 
+### `bot/tests/test_deps_environment.py`
+
+Size: `3686` bytes  
+SHA-256: `763a2cc1ec521b63894cb5963bdce0416eea0fe530bed94f8c7d609d1db0aee8`
+
+```python
+"""Guard на drift между локальной/CI/Docker средой и uv.lock.
+
+Контекст (PR #48-#50): я тестировал локально на maxapi 1.0.0, а в Docker
+0.9.18 — деплой положил бота `TypeError: ClientSession got max_retries`.
+Корень — локальный pip-install мимо uv → системный maxapi 1.0.0; CI
+использовал тот же системный python.
+
+Этот тест RED'нет, если установленная версия maxapi (и его сигнатура
+ключевого API) расходится с тем, что закреплено в `uv.lock` для prod.
+Запускать обязан только через `uv run pytest` — тогда .venv совпадает
+с lock'ом, тест зелёный. Через системный python с другой версией —
+тест красный, явно показывает корень.
+"""
+from __future__ import annotations
+
+import inspect
+
+import pytest
+
+
+pytest.importorskip("maxapi", reason="maxapi нужен для проверки версии и API")
+
+
+# Закреплённая prod-версия из uv.lock. При апгрейде maxapi:
+# 1. Бамп `maxapi~=X` в pyproject.toml
+# 2. `uv lock --upgrade-package maxapi`
+# 3. Поднять `EXPECTED_MAXAPI_VERSION` ниже
+# 4. Тесты + ручной smoke + Dockerfile rebuild перед merge
+EXPECTED_MAXAPI_VERSION = "0.9.18"
+
+
+def _installed_maxapi_version() -> str:
+    """Достать установленную версию через importlib.metadata."""
+    from importlib.metadata import version
+
+    return version("maxapi")
+
+
+def test_maxapi_version_matches_lock() -> None:
+    """Установленная maxapi == prod (из uv.lock).
+
+    Drift = риск «у меня работает / на проде падает». Чинить либо
+    `uv sync` (downgrade локально), либо осознанным апгрейдом через
+    процедуру в docs/DEPS.md.
+    """
+    actual = _installed_maxapi_version()
+    assert actual == EXPECTED_MAXAPI_VERSION, (
+        f"maxapi {actual} установлена локально, но prod = "
+        f"{EXPECTED_MAXAPI_VERSION} (из uv.lock).\n"
+        f"Запускайте тесты через `uv run pytest`, либо "
+        f"`cd bot && uv sync --extra dev` чтобы синхронизировать .venv.\n"
+        f"Если намеренный апгрейд — следуйте docs/DEPS.md."
+    )
+
+
+def test_default_connection_signature_matches_prod_api() -> None:
+    """Guard на ключевую API surface: DefaultConnectionProperties.__init__.
+
+    В 0.9.18 сигнатура (timeout, sock_connect, **kwargs) — `max_retries`
+    НЕ принимается как именованный. Если внезапно появится maxapi 1.x
+    с другой сигнатурой и автомат поставит её, этот тест RED'нет
+    раньше, чем код в `main.py` упадёт `TypeError` в проде.
+    """
+    from maxapi.client.default import DefaultConnectionProperties
+
+    sig = inspect.signature(DefaultConnectionProperties.__init__)
+    params = list(sig.parameters.keys())
+    assert params == ["self", "timeout", "sock_connect", "kwargs"], (
+        f"Сигнатура DefaultConnectionProperties.__init__ изменилась: "
+        f"{params}. Это breaking change в maxapi. Проверьте usage в "
+        f"`aemr_bot/main.py` перед деплоем, обновите EXPECTED версию и "
+        f"эту проверку."
+    )
+```
+
 ### `bot/tests/test_diag_extended.py`
 
 Size: `6504` bytes  
@@ -41685,10 +41768,135 @@ https://kamgov.ru/mintrans/current_activities/raspisania-dvizenia-passazirskogo-
 | «В случае возникновения вопросов рекомендуем обратиться к оператору посредством соответствующей кнопки» | «Если что-то непонятно — оператор ответит через бот, нажмите «✉️ Ответить» под карточкой.» |
 ```
 
+### `docs/DEPS.md`
+
+Size: `5840` bytes  
+SHA-256: `1c05d2691e860ea7559f21fe6a0c909537717f58a60d96c47607c6c4379e2a90`
+
+```markdown
+# Dependency management
+
+Один источник истины — `bot/uv.lock`. Локальная среда, CI и Docker-образ работают с **одной** версией каждого пакета. Если они расходятся («у меня работает / на проде падает») — см. раздел «Диагностика drift'а».
+
+## Что у нас стоит
+
+- **`bot/pyproject.toml`** — верхняя граница пакетов через `~=` (например `maxapi~=0.6`). Это **диапазон**, не точная версия.
+- **`bot/uv.lock`** — resolved транзитивные версии для всех пакетов. Это **точный pin** который ставит `uv sync` и читает Docker (`pip install -e /app` в `infra/Dockerfile`).
+- **`bot/tests/test_deps_environment.py`** — guard-тесты: проверяют, что установленный `maxapi` и его API-сигнатура совпадают с ожиданием.
+
+## Workflow разработчика
+
+```bash
+cd bot
+uv sync --extra dev      # синхронизировать .venv с uv.lock
+uv run pytest tests/ -q  # запускать тесты ТОЛЬКО через uv run
+uv run ruff check aemr_bot/
+```
+
+**Никогда** не делать `pip install <package>` глобально / в системный python — это создаёт другую версию пакета мимо `uv.lock`, тест на ноуте проходит, в Docker валится.
+
+## Workflow обновления пакета (например, maxapi с 0.9.x на 1.x)
+
+Делать **отдельным PR**, не вперемешку с фичами.
+
+### 1. Сначала обновить lock
+
+```bash
+cd bot
+uv lock --upgrade-package maxapi
+git diff uv.lock         # сверить какая теперь версия
+```
+
+Если хочется выйти из текущего диапазона `~=0.6`:
+
+```bash
+# Поднять диапазон в pyproject.toml
+sed -i 's/"maxapi~=0.6"/"maxapi~=1.0"/' pyproject.toml
+uv lock --upgrade-package maxapi
+```
+
+### 2. Синхронизировать локальную среду
+
+```bash
+uv sync --extra dev
+uv run python -c "import maxapi; print(maxapi.__version__)"
+```
+
+### 3. Обновить guard
+
+В `bot/tests/test_deps_environment.py` поднять `EXPECTED_MAXAPI_VERSION`. Если изменилась сигнатура `DefaultConnectionProperties.__init__` — обновить `test_default_connection_signature_matches_prod_api`.
+
+### 4. Проверить breaking changes
+
+```bash
+uv run pytest tests/ -q
+uv run ruff check aemr_bot/
+```
+
+Если красное — фиксить вызывающий код **в том же PR**, не отдельно. Особое внимание:
+
+- `bot/aemr_bot/main.py` — `Bot(..., default_connection=...)`, `Dispatcher(...)`.
+- `bot/aemr_bot/utils/event.py` — `ack_callback`, `send_or_edit_screen`.
+- `bot/aemr_bot/handlers/*` — все вызовы `bot.send_message`, `bot.edit_message`.
+- `bot/aemr_bot/handlers/operator_reply.py` — relay attachments.
+
+### 5. Локальный smoke
+
+Перед merge — запустить бот локально хотя бы 2 минуты, отправить себе тестовое сообщение, тапнуть кнопку.
+
+```bash
+# В отдельном окне поднять docker-compose как на проде
+cd infra
+docker compose build bot
+docker compose up bot      # проверить что стартует без TypeError, livez 200
+```
+
+### 6. Merge → auto-deploy → verify
+
+Auto-deploy на VPS подхватит образ через cron `*/10`. После деплоя:
+
+```bash
+ssh aemr@193.233.244.217 'cd ~/aemr-bot/infra && docker compose ps'
+# Ожидание: bot Up (healthy), НЕ Restarting
+
+ssh aemr@193.233.244.217 'cd ~/aemr-bot/infra && docker compose logs --tail 30 bot'
+# Ожидание: нет TypeError, нет ImportError
+```
+
+В админ-чате — серия тапов на кнопки, отклик мгновенный.
+
+Если бот в Restarting — `git revert` сразу, разбираться отдельно.
+
+## Диагностика drift'а
+
+Симптом: тесты у меня зелёные, в Docker `TypeError` / `ImportError` на старте.
+
+1. Запустить тесты через `uv run pytest tests/test_deps_environment.py` — если **они** зелёные, среда синхронна с lock.
+2. Если красные — `uv sync --extra dev` пересоздаст .venv по lock'у.
+3. Если кто-то поменял глобальный pip-пакет — `pip uninstall <pkg> -y`, потом `uv sync`.
+4. Если расхождение версия в lock vs Docker — пересобрать образ: `docker compose build --no-cache bot`.
+
+## Аудит уязвимостей
+
+```bash
+uv run pip-audit
+```
+
+Включён в `pyproject.toml` как `[project.optional-dependencies] dev`. Запускать раз в квартал или при сообщении CVE для зависимости.
+
+## Принципы (kaizen)
+
+- **Один lock-файл** для всех сред (local / CI / Docker).
+- **Никаких `pip install` мимо uv** в среде разработчика.
+- **Guard-тесты** на ключевые API-сигнатуры внешних пакетов — RED ловит drift раньше прода.
+- **Обновление = отдельный PR** с проверкой каждого слоя (local sync → tests → docker build → prod smoke).
+- **Rollback стратегия** — если деплой положил бот, revert немедленно, разбираться потом.
+```
+
 ### `docs/DEVELOPER.md`
 
-Size: `133941` bytes  
-SHA-256: `23f3057c69d4e28381d857449ea5d2b66182c102eb548a1eea9abf8c02099917`
+Size: `134377` bytes  
+SHA-256: `3d170413f81798388f149df3a1c3ef08c019eda3aeca4d8a1f94a63b5853700e`
 
 ```markdown
 # Гайд для разработчика
@@ -42811,10 +43019,13 @@ docker compose exec bot alembic upgrade head
 ### Тесты
 
 ```bash
-# Локально на хосте (нужен pip install -e ".[dev]" внутри bot/)
+# Локально через uv (правильная среда, совпадает с Docker)
 cd bot
-pytest tests/ -v
+uv sync --extra dev      # один раз после клонирования или обновления pyproject
+uv run pytest tests/ -v
 ```
+
+**Не используйте системный `pip install` / `pytest`** — это создаст другие версии пакетов мимо `uv.lock`, локальные тесты пройдут, а в Docker валится `TypeError`/`ImportError`. Подробнее: [DEPS.md](DEPS.md).
 
 Сейчас в `tests/` лежат тесты на сервисный слой. Они **не работают на in-memory SQLite** из-за PostgreSQL-specific JSONB. Если нужно гонять, поднимайте локальный Postgres и подменяйте `DATABASE_URL`. Альтернатива — подключить `testcontainers`. Это известное направление развития, см. часть XI.
 
