@@ -22,11 +22,18 @@ class IdempotencyMiddleware(BaseMiddleware):
 def _attach_outer_middleware(dp: Dispatcher, middleware: BaseMiddleware) -> None:
     """Подключить промежуточный слой как внешний в разных версиях maxapi.
 
-    Форма меняется от выпуска к выпуску: 0.9.18+ предоставляет вызываемый
-    метод `outer_middleware(mw)`; в HEAD есть список `outer_middlewares`;
-    в более ранних 0.9.0–0.9.17 был только `middlewares`, где «внешний»
-    означает вставку в начало списка.
+    Форма меняется от выпуска к выпуску:
+    - 1.1+ предоставляет `register_outer_middleware(mw)` (PR #134);
+    - 0.9.18+ имел вызываемый метод `outer_middleware(mw)` (deprecated в 1.1);
+    - В более ранних 0.9.0–0.9.17 был только `middlewares` со вставкой в начало.
+
+    Используем `register_outer_middleware` первым — это публичный API 1.1+,
+    fallback на старые формы остаётся для backward-compat.
     """
+    register = getattr(dp, "register_outer_middleware", None)
+    if callable(register):
+        register(middleware)
+        return
     add = getattr(dp, "outer_middleware", None)
     if callable(add):
         add(middleware)
