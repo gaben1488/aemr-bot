@@ -26,7 +26,7 @@ pytest.importorskip("maxapi", reason="maxapi нужен для проверки 
 # 2. `uv lock --upgrade-package maxapi`
 # 3. Поднять `EXPECTED_MAXAPI_VERSION` ниже
 # 4. Тесты + ручной smoke + Dockerfile rebuild перед merge
-EXPECTED_MAXAPI_VERSION = "0.9.18"
+EXPECTED_MAXAPI_VERSION = "1.1.0"
 
 
 def _installed_maxapi_version() -> str:
@@ -56,16 +56,25 @@ def test_maxapi_version_matches_lock() -> None:
 def test_default_connection_signature_matches_prod_api() -> None:
     """Guard на ключевую API surface: DefaultConnectionProperties.__init__.
 
-    В 0.9.18 сигнатура (timeout, sock_connect, **kwargs) — `max_retries`
-    НЕ принимается как именованный. Если внезапно появится maxapi 1.x
-    с другой сигнатурой и автомат поставит её, этот тест RED'нет
-    раньше, чем код в `main.py` упадёт `TypeError` в проде.
+    В 1.1.0 сигнатура (timeout, sock_connect, *, max_retries=3,
+    retry_on_statuses, retry_backoff_factor, **kwargs). Передаём
+    `max_retries` и `timeout` именованными в main.py. Если сигнатура
+    снова изменится — этот тест RED'нет раньше, чем код в `main.py`
+    упадёт `TypeError` в проде.
     """
     from maxapi.client.default import DefaultConnectionProperties
 
     sig = inspect.signature(DefaultConnectionProperties.__init__)
     params = list(sig.parameters.keys())
-    assert params == ["self", "timeout", "sock_connect", "kwargs"], (
+    assert params == [
+        "self",
+        "timeout",
+        "sock_connect",
+        "max_retries",
+        "retry_on_statuses",
+        "retry_backoff_factor",
+        "kwargs",
+    ], (
         f"Сигнатура DefaultConnectionProperties.__init__ изменилась: "
         f"{params}. Это breaking change в maxapi. Проверьте usage в "
         f"`aemr_bot/main.py` перед деплоем, обновите EXPECTED версию и "

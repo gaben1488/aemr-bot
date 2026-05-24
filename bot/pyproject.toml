@@ -6,7 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     # Совместимые версии (~=) разрешают патчи, но не пропускают внезапные
     # breaking changes. Пересматривать раз в квартал.
-    "maxapi~=0.6",
+    "maxapi~=1.1",
     "fastapi~=0.115",
     "uvicorn[standard]~=0.32",
     "sqlalchemy~=2.0",

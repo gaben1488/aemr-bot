@@ -14,7 +14,8 @@ venv/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache
-bot/uv.lock
+# NB: bot/uv.lock КОММИТИТСЯ намеренно — он гарантирует одинаковые
+# версии пакетов локально, в CI и в Docker (см. docs/DEPS.md).
 
 # Node / mini-app
 node_modules/

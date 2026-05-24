@@ -27,16 +27,15 @@ from aemr_bot.utils.background import spawn_background_task
 
 log = logging.getLogger("aemr_bot")
 
-# maxapi default timeout = 150 секунд на один HTTP-запрос к MAX API.
+# maxapi default = timeout 150s × max_retries 3 (до 10 мин на запрос).
 # При sequential polling один тормозящий запрос блокирует обработку
 # ВСЕХ следующих событий — видимое «тап → бот завис». Override через
-# наш конфиг (см. settings.max_api_timeout_seconds). max_retries в
-# maxapi 0.9.18 не настраивается через DefaultConnectionProperties
-# (только через timeout/sock_connect), оставляем как есть.
+# наш конфиг: timeout 30s + 1 retry → worst case ~60s, не 10 минут.
 bot = Bot(
     settings.bot_token,
     default_connection=DefaultConnectionProperties(
         timeout=settings.max_api_timeout_seconds,
+        max_retries=settings.max_api_retries,
     ),
 )
 # use_create_task=True: handlers — отдельные asyncio.Task, polling loop
