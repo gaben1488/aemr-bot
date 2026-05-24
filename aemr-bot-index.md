@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-24 21:34:44 UTC`
+Generated at: `2026-05-24 22:00:29 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `191`
 Max file size: `300 KB`
@@ -15,10 +15,10 @@ The committed template `.env.example` is allowed because it should not contain l
 - `.dockerignore` (539 bytes)
 - `.github/workflows/ci.yml` (7186 bytes)
 - `.github/workflows/repo-index.yml` (1117 bytes)
-- `.gitignore` (1073 bytes)
+- `.gitignore` (1261 bytes)
 - `_local-backup/PRODUCT_BRIEF_internal.md` (26651 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
-- `bot/aemr_bot/config.py` (8091 bytes)
+- `bot/aemr_bot/config.py` (8489 bytes)
 - `bot/aemr_bot/db/__init__.py` (0 bytes)
 - `bot/aemr_bot/db/alembic/env.py` (1446 bytes)
 - `bot/aemr_bot/db/alembic/versions/0001_initial.py` (5898 bytes)
@@ -39,7 +39,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/db/alembic/versions/0016_broadcast_template_usage.py` (1714 bytes)
 - `bot/aemr_bot/db/models.py` (19293 bytes)
 - `bot/aemr_bot/db/session.py` (2764 bytes)
-- `bot/aemr_bot/handlers/__init__.py` (3303 bytes)
+- `bot/aemr_bot/handlers/__init__.py` (3608 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (15465 bytes)
@@ -62,7 +62,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/start.py` (16556 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (62731 bytes)
-- `bot/aemr_bot/main.py` (19199 bytes)
+- `bot/aemr_bot/main.py` (19076 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9914 bytes)
@@ -122,7 +122,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_cron_jobs.py` (19002 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (14354 bytes)
-- `bot/tests/test_deps_environment.py` (3686 bytes)
+- `bot/tests/test_deps_environment.py` (3805 bytes)
 - `bot/tests/test_diag_extended.py` (6504 bytes)
 - `bot/tests/test_event_helpers.py` (9073 bytes)
 - `bot/tests/test_extract_location.py` (5053 bytes)
@@ -166,7 +166,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/BACKUP_RESTORE_TEST.md` (7292 bytes)
 - `docs/COMPLIANCE_WITH_REGLAMENT_v5.md` (46089 bytes)
 - `docs/COPY.md` (52055 bytes)
-- `docs/DEPS.md` (5840 bytes)
+- `docs/DEPS.md` (5953 bytes)
 - `docs/DEVELOPER.md` (134377 bytes)
 - `docs/handover.html` (56417 bytes)
 - `docs/HOW_IT_WORKS.md` (23367 bytes)
@@ -211,6 +211,7 @@ The following files were skipped intentionally:
 
 - `aemr-bot-index.md` — output file
 - `bot/aemr_bot/db/alembic/script.py.mako` — non-text extension
+- `bot/uv.lock` — non-text extension
 - `docs/PRIVACY.pdf` — excluded glob
 - `docs/Регламент_v6_draft.docx` — non-text extension
 - `infra/init-letsencrypt.sh` — non-text extension
@@ -512,8 +513,8 @@ jobs:
 
 ### `.gitignore`
 
-Size: `1073` bytes  
-SHA-256: `7210b58392e5469f8b3346f52e0191becc1269654a09968945a5b44090702697`
+Size: `1261` bytes  
+SHA-256: `59afc9e207767553fb95f08a50a625301512fe8742279603c109267259a4c4aa`
 
 ```gitignore
 # Secrets and env
@@ -532,7 +533,8 @@ venv/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache
-bot/uv.lock
+# NB: bot/uv.lock КОММИТИТСЯ намеренно — он гарантирует одинаковые
+# версии пакетов локально, в CI и в Docker (см. docs/DEPS.md).
 
 # Node / mini-app
 node_modules/
@@ -950,8 +952,8 @@ __version__ = "0.1.0"
 
 ### `bot/aemr_bot/config.py`
 
-Size: `8091` bytes  
-SHA-256: `3c19625543446b4725674a60fe847f72a4c39d4e599589fc6fd1608391285e57`
+Size: `8489` bytes  
+SHA-256: `b6c8a0555b91600920a1b0c607a42fe0fa4e6820dc894617201155b01de98cf5`
 
 ```python
 from pathlib import Path
@@ -1023,6 +1025,13 @@ class Settings(BaseSettings):
     # дольше = баг MAX, нет смысла блокировать оператора.
     max_api_timeout_seconds: float = Field(
         30.0, alias="MAX_API_TIMEOUT_SECONDS", gt=0.0, le=180.0
+    )
+    # Retry на 502/503/504 от MAX. Default maxapi = 3 с
+    # экспоненциальным backoff (1s + 2s + 4s = 7s сверх timeout).
+    # 1 retry достаточно для transient blips, быстрее провал лучше
+    # для интерактивного UX оператора.
+    max_api_retries: int = Field(
+        1, alias="MAX_API_RETRIES", ge=0, le=5
     )
 
     # Broadcast / subscription. Rate-limit стоит ниже MAX-лимита 2 RPS, чтобы
@@ -2877,8 +2886,8 @@ async def session_scope() -> AsyncIterator[AsyncSession]:
 
 ### `bot/aemr_bot/handlers/__init__.py`
 
-Size: `3303` bytes  
-SHA-256: `080c344ccb9dde958034ea01c8c2d0122e4fefa455e9f5b4e07450dfd1aa7b24`
+Size: `3608` bytes  
+SHA-256: `d95eb5723f746785fa27e4fd46bf0de024b80b09a52f8d053c259b1ca521d247`
 
 ```python
 from maxapi import Dispatcher
@@ -2905,11 +2914,18 @@ class IdempotencyMiddleware(BaseMiddleware):
 def _attach_outer_middleware(dp: Dispatcher, middleware: BaseMiddleware) -> None:
     """Подключить промежуточный слой как внешний в разных версиях maxapi.
 
-    Форма меняется от выпуска к выпуску: 0.9.18+ предоставляет вызываемый
-    метод `outer_middleware(mw)`; в HEAD есть список `outer_middlewares`;
-    в более ранних 0.9.0–0.9.17 был только `middlewares`, где «внешний»
-    означает вставку в начало списка.
+    Форма меняется от выпуска к выпуску:
+    - 1.1+ предоставляет `register_outer_middleware(mw)` (PR #134);
+    - 0.9.18+ имел вызываемый метод `outer_middleware(mw)` (deprecated в 1.1);
+    - В более ранних 0.9.0–0.9.17 был только `middlewares` со вставкой в начало.
+
+    Используем `register_outer_middleware` первым — это публичный API 1.1+,
+    fallback на старые формы остаётся для backward-compat.
     """
+    register = getattr(dp, "register_outer_middleware", None)
+    if callable(register):
+        register(middleware)
+        return
     add = getattr(dp, "outer_middleware", None)
     if callable(add):
         add(middleware)
@@ -14774,8 +14790,8 @@ def op_help_keyboard(
 
 ### `bot/aemr_bot/main.py`
 
-Size: `19199` bytes  
-SHA-256: `413d33989f251b30c9eff64db54d994acb87212e8d72bc5f123d1259b525ba2b`
+Size: `19076` bytes  
+SHA-256: `48412ae76d42d61bdd03fa02cf989b11de2712c9479b0e8f0e7c13ef5df62b85`
 
 ```python
 from __future__ import annotations
@@ -14807,16 +14823,15 @@ from aemr_bot.utils.background import spawn_background_task
 
 log = logging.getLogger("aemr_bot")
 
-# maxapi default timeout = 150 секунд на один HTTP-запрос к MAX API.
+# maxapi default = timeout 150s × max_retries 3 (до 10 мин на запрос).
 # При sequential polling один тормозящий запрос блокирует обработку
 # ВСЕХ следующих событий — видимое «тап → бот завис». Override через
-# наш конфиг (см. settings.max_api_timeout_seconds). max_retries в
-# maxapi 0.9.18 не настраивается через DefaultConnectionProperties
-# (только через timeout/sock_connect), оставляем как есть.
+# наш конфиг: timeout 30s + 1 retry → worst case ~60s, не 10 минут.
 bot = Bot(
     settings.bot_token,
     default_connection=DefaultConnectionProperties(
         timeout=settings.max_api_timeout_seconds,
+        max_retries=settings.max_api_retries,
     ),
 )
 # use_create_task=True: handlers — отдельные asyncio.Task, polling loop
@@ -22434,7 +22449,7 @@ datefmt = %H:%M:%S
 ### `bot/pyproject.toml`
 
 Size: `2583` bytes  
-SHA-256: `1e770fb8cb912acce130da5e048172de76dd50c72706f3e4fc3451a4c7e275e7`
+SHA-256: `85737319a3b3ae5933a7b2ca9398d2a96f60b0d97820a5dd0a2c70fad6c3d8f5`
 
 ```toml
 [project]
@@ -22445,7 +22460,7 @@ requires-python = ">=3.12"
 dependencies = [
     # Совместимые версии (~=) разрешают патчи, но не пропускают внезапные
     # breaking changes. Пересматривать раз в квартал.
-    "maxapi~=0.6",
+    "maxapi~=1.1",
     "fastapi~=0.115",
     "uvicorn[standard]~=0.32",
     "sqlalchemy~=2.0",
@@ -30408,8 +30423,8 @@ class TestBackupDb:
 
 ### `bot/tests/test_deps_environment.py`
 
-Size: `3686` bytes  
-SHA-256: `763a2cc1ec521b63894cb5963bdce0416eea0fe530bed94f8c7d609d1db0aee8`
+Size: `3805` bytes  
+SHA-256: `2b6f9f59b6fa049b3222872c48623103578ff43f8b260288fe12e402e437265b`
 
 ```python
 """Guard на drift между локальной/CI/Docker средой и uv.lock.
@@ -30440,7 +30455,7 @@ pytest.importorskip("maxapi", reason="maxapi нужен для проверки 
 # 2. `uv lock --upgrade-package maxapi`
 # 3. Поднять `EXPECTED_MAXAPI_VERSION` ниже
 # 4. Тесты + ручной smoke + Dockerfile rebuild перед merge
-EXPECTED_MAXAPI_VERSION = "0.9.18"
+EXPECTED_MAXAPI_VERSION = "1.1.0"
 
 
 def _installed_maxapi_version() -> str:
@@ -30470,16 +30485,25 @@ def test_maxapi_version_matches_lock() -> None:
 def test_default_connection_signature_matches_prod_api() -> None:
     """Guard на ключевую API surface: DefaultConnectionProperties.__init__.
 
-    В 0.9.18 сигнатура (timeout, sock_connect, **kwargs) — `max_retries`
-    НЕ принимается как именованный. Если внезапно появится maxapi 1.x
-    с другой сигнатурой и автомат поставит её, этот тест RED'нет
-    раньше, чем код в `main.py` упадёт `TypeError` в проде.
+    В 1.1.0 сигнатура (timeout, sock_connect, *, max_retries=3,
+    retry_on_statuses, retry_backoff_factor, **kwargs). Передаём
+    `max_retries` и `timeout` именованными в main.py. Если сигнатура
+    снова изменится — этот тест RED'нет раньше, чем код в `main.py`
+    упадёт `TypeError` в проде.
     """
     from maxapi.client.default import DefaultConnectionProperties
 
     sig = inspect.signature(DefaultConnectionProperties.__init__)
     params = list(sig.parameters.keys())
-    assert params == ["self", "timeout", "sock_connect", "kwargs"], (
+    assert params == [
+        "self",
+        "timeout",
+        "sock_connect",
+        "max_retries",
+        "retry_on_statuses",
+        "retry_backoff_factor",
+        "kwargs",
+    ], (
         f"Сигнатура DefaultConnectionProperties.__init__ изменилась: "
         f"{params}. Это breaking change в maxapi. Проверьте usage в "
         f"`aemr_bot/main.py` перед деплоем, обновите EXPECTED версию и "
@@ -41770,8 +41794,8 @@ https://kamgov.ru/mintrans/current_activities/raspisania-dvizenia-passazirskogo-
 
 ### `docs/DEPS.md`
 
-Size: `5840` bytes  
-SHA-256: `1c05d2691e860ea7559f21fe6a0c909537717f58a60d96c47607c6c4379e2a90`
+Size: `5953` bytes  
+SHA-256: `3d5105d97fb7694797e3d0089470f8aec53cae0f183bd4518fe5b95c51dbcc7d`
 
 ```markdown
 # Dependency management
@@ -41780,8 +41804,8 @@ SHA-256: `1c05d2691e860ea7559f21fe6a0c909537717f58a60d96c47607c6c4379e2a90`
 
 ## Что у нас стоит
 
-- **`bot/pyproject.toml`** — верхняя граница пакетов через `~=` (например `maxapi~=0.6`). Это **диапазон**, не точная версия.
-- **`bot/uv.lock`** — resolved транзитивные версии для всех пакетов. Это **точный pin** который ставит `uv sync` и читает Docker (`pip install -e /app` в `infra/Dockerfile`).
+- **`bot/pyproject.toml`** — верхняя граница пакетов через `~=` (например `maxapi~=1.1`). Это **диапазон**, не точная версия.
+- **`bot/uv.lock`** — resolved транзитивные версии для всех пакетов. **Закоммичен в репозиторий** — без этого Docker и каждый разработчик резолвят независимо, версии расходятся. `uv sync` ставит ровно то, что в lock.
 - **`bot/tests/test_deps_environment.py`** — guard-тесты: проверяют, что установленный `maxapi` и его API-сигнатура совпадают с ожиданием.
 
 ## Workflow разработчика
