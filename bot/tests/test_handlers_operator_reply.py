@@ -481,6 +481,8 @@ class TestDeliverOperatorReply:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
                    AsyncMock(side_effect=[fresh_appeal, fresh_appeal])), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id_with_messages",
+                   AsyncMock(return_value=fresh_appeal)), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
                    AsyncMock()), \
              patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
@@ -490,17 +492,21 @@ class TestDeliverOperatorReply:
              patch("aemr_bot.handlers.operator_reply._mark_reply_success_recorded",
                    AsyncMock()), \
              patch("aemr_bot.handlers.operator_reply.card_format.admin_card",
-                   return_value="обновлённая карточка"):
+                   return_value="обновлённая карточка"), \
+             patch("aemr_bot.config.settings.admin_group_id", 555):
             handled = await opr._deliver_operator_reply(
                 event, appeal=appeal, operator=operator,
                 text="ответ", audit_action="reply",
             )
 
         assert handled is True
+        # После миграции на admin_card.render — edit_message вызывается
+        # ИЗНУТРИ helper'а (а не из _deliver_operator_reply напрямую).
+        # helper читает fresh_appeal.admin_message_id="admin-mid-1" и
+        # отправляет edit туда.
         event.bot.edit_message.assert_called_once()
         kwargs = event.bot.edit_message.call_args.kwargs
         assert kwargs["message_id"] == "admin-mid-1"
-        assert kwargs["text"] == "обновлённая карточка"
         assert kwargs["attachments"]
 
 

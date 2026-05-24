@@ -22,7 +22,6 @@ from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import appeals as appeals_service
-from aemr_bot.services import card_format
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import extract_message_id
 
@@ -225,19 +224,20 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
                 )
                 await users_service.reset_state(session, max_user_id)
 
-        admin_mid = await send_to_admin_card(
-            bot,
-            card_format.admin_card(appeal, user),
-            appeal_id=appeal.id,
-            status=appeal.status,
-            user_blocked=user.is_blocked,
-        )
-        if admin_mid:
-            async with session_scope() as session:
-                await appeals_service.set_admin_message_id(
-                    session, appeal.id, admin_mid
-                )
-        else:
+        # Single source of truth для admin appeal card — services/admin_card.render.
+        # Helper: send новую карточку (admin_message_id ещё пуст) и
+        # обновит Appeal.admin_message_id в БД. Все последующие
+        # изменения статуса (reply/reopen/followup/...) тоже через
+        # этот helper — поддерживает инвариант «admin_message_id
+        # указывает на актуальную карточку».
+        from aemr_bot.services import admin_card as admin_card_service
+
+        # appeal был загружен внутри session_scope без selectinload(messages);
+        # admin_card_service.render читает appeal.user (он есть), appeal.messages
+        # для подсчёта attachment_count. На finalize messages пустой, OK.
+        appeal.user = user  # обеспечить .user даже если SA сбросил
+        admin_mid = await admin_card_service.render(bot, appeal, force_new=True)
+        if not admin_mid:
             log.warning(
                 "обращение #%s создано, но карточка администратора не была "
                 "опубликована (admin_mid=None)",
