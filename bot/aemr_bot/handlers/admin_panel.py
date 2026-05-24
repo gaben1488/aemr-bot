@@ -241,17 +241,32 @@ async def _do_diag(event) -> None:
     since_24h = now - timedelta(hours=24)
     stuck_threshold = now - timedelta(minutes=10)
 
+    # broadcasts_service._eligible_filter — то же что фильтр фактической
+    # рассылки. Используем здесь, чтобы /diag показывал именно тех, кому
+    # реально уйдёт следующий broadcast (а не просто
+    # subscribed_broadcast=True). Раньше /diag показывал больше, чем
+    # рассылка доставляла — оператор удивлялся «подписан 100, ушло 80».
+    from aemr_bot.services import broadcasts as broadcasts_service
+
     async with session_scope() as session:
         users_total = await session.scalar(select(func.count()).select_from(User))
+        # «Активные» — без обезличенных (first_name='Удалено' после
+        # /forget или PDN-retention). Это «живые жители», которые
+        # могут писать боту. users_total включает их для прозрачности
+        # «сколько записей в БД всего».
+        users_active = await session.scalar(
+            select(func.count()).select_from(User).where(
+                User.first_name != "Удалено",
+            )
+        )
         users_blocked = await session.scalar(
             select(func.count()).select_from(User).where(User.is_blocked.is_(True))
         )
-        users_subscribed = await session.scalar(
-            select(func.count()).select_from(User).where(
-                User.subscribed_broadcast.is_(True),
-                User.is_blocked.is_(False),
-            )
-        )
+        # Eligible subscribers: ровно те, кому уйдёт рассылка.
+        # Старый счётчик (только subscribed_broadcast=True) расходился
+        # с фактической доставкой, потому что не учитывал
+        # consent_broadcast_at IS NOT NULL и first_name != 'Удалено'.
+        users_subscribed = await broadcasts_service.count_subscribers(session)
         users_new_24h = await session.scalar(
             select(func.count()).select_from(User).where(
                 User.created_at >= since_24h
@@ -367,8 +382,10 @@ async def _do_diag(event) -> None:
         f"• Всего событий: {events_total or 0}\n"
         "\n"
         "Жители:\n"
-        f"• Всего: {users_total or 0} "
-        f"(подписаны: {users_subscribed or 0}, заблокированы: {users_blocked or 0})\n"
+        f"• Записей всего: {users_total or 0} "
+        f"(активных: {users_active or 0}, заблокированы: {users_blocked or 0})\n"
+        f"• Получателей рассылки: {users_subscribed or 0} "
+        f"(подписаны + согласие + не заблокированы + не обезличены)\n"
         f"• Новых за 24ч: {users_new_24h or 0}\n"
         "\n"
         "Обращения:\n"
