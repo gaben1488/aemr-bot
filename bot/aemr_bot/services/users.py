@@ -46,6 +46,15 @@ async def get_or_create(session: AsyncSession, max_user_id: int, first_name: str
     return user
 
 
+async def find_by_max_id(session: AsyncSession, max_user_id: int) -> User | None:
+    """Read-only поиск без создания. Используется для уведомлений
+    оператору, где запись жителя точно должна существовать; если её
+    нет — пишем «—» вместо создания фантомной."""
+    return await session.scalar(
+        select(User).where(User.max_user_id == max_user_id)
+    )
+
+
 async def has_consent(session: AsyncSession, max_user_id: int) -> bool:
     user = await session.scalar(select(User).where(User.max_user_id == max_user_id))
     return bool(user and user.consent_pdn_at)
