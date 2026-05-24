@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-24 22:45:36 UTC`
+Generated at: `2026-05-24 23:02:08 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `194`
 Max file size: `300 KB`
@@ -42,9 +42,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/__init__.py` (3608 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
-- `bot/aemr_bot/handlers/admin_appeal_ops.py` (14906 bytes)
+- `bot/aemr_bot/handlers/admin_appeal_ops.py` (16496 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9220 bytes)
-- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12213 bytes)
+- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12498 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17560 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (21033 bytes)
@@ -56,18 +56,18 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_runtime.py` (13168 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (42959 bytes)
-- `bot/aemr_bot/handlers/callback_router.py` (8462 bytes)
+- `bot/aemr_bot/handlers/callback_router.py` (8595 bytes)
 - `bot/aemr_bot/handlers/menu.py` (46632 bytes)
-- `bot/aemr_bot/handlers/operator_reply.py` (33056 bytes)
+- `bot/aemr_bot/handlers/operator_reply.py` (34018 bytes)
 - `bot/aemr_bot/handlers/start.py` (16556 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (62731 bytes)
+- `bot/aemr_bot/keyboards.py` (63230 bytes)
 - `bot/aemr_bot/main.py` (19076 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_card.py` (7092 bytes)
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9914 bytes)
-- `bot/aemr_bot/services/appeals.py` (18415 bytes)
+- `bot/aemr_bot/services/appeals.py` (20535 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
@@ -85,7 +85,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (29316 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
-- `bot/aemr_bot/services/wizard_registry.py` (11952 bytes)
+- `bot/aemr_bot/services/wizard_registry.py` (12444 bytes)
 - `bot/aemr_bot/texts.py` (41532 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
@@ -98,7 +98,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/__init__.py` (0 bytes)
 - `bot/tests/_helpers.py` (5713 bytes)
 - `bot/tests/conftest.py` (1882 bytes)
-- `bot/tests/test_admin_appeal_ops.py` (20004 bytes)
+- `bot/tests/test_admin_appeal_ops.py` (21972 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
 - `bot/tests/test_admin_card_render.py` (9495 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
@@ -138,7 +138,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_handlers_funnel.py` (9458 bytes)
 - `bot/tests/test_handlers_menu.py` (26314 bytes)
 - `bot/tests/test_handlers_menu_extra.py` (23371 bytes)
-- `bot/tests/test_handlers_operator_reply.py` (28466 bytes)
+- `bot/tests/test_handlers_operator_reply.py` (29048 bytes)
 - `bot/tests/test_handlers_start.py` (12367 bytes)
 - `bot/tests/test_health.py` (4062 bytes)
 - `bot/tests/test_idempotency.py` (3650 bytes)
@@ -155,7 +155,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_settings_store_validation.py` (2609 bytes)
 - `bot/tests/test_uploads_policy_admin_relay.py` (11634 bytes)
 - `bot/tests/test_users_service_pg.py` (16852 bytes)
-- `bot/tests/test_wizard_registry.py` (4876 bytes)
+- `bot/tests/test_wizard_registry.py` (5268 bytes)
 - `docs/_meta/AUDIT_REPORT.md` (16895 bytes)
 - `docs/archive/CHAT_AUDIT.md` (20468 bytes)
 - `docs/archive/COMPETITIVE_BRIEF.md` (19867 bytes)
@@ -3125,8 +3125,8 @@ async def current_user(
 
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
-Size: `14906` bytes  
-SHA-256: `76b9bdfacabbb371277c460edee7f8ed211239ae55c2992ab920e6d09699c6d1`
+Size: `16496` bytes  
+SHA-256: `1be151d893aaeca8108aceb3da3777082dc0407de2bdd0e4d4dc845037c53924`
 
 ```python
 """Действия оператора над конкретным обращением.
@@ -3205,11 +3205,19 @@ async def _show_appeal_card_or_result(
     )
 
 
-async def run_reply_intent(event, appeal_id: int) -> None:
+async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> None:
     """Кнопка «✉️ Ответить» под карточкой обращения. Запоминает намерение
     оператора в in-memory словаре. Следующее текстовое сообщение
-    оператора в админ-группе доставляется как /reply <appeal_id>
-    <текст>.
+    оператора в админ-группе доставляется как /reply <appeal_id> <текст>.
+
+    is_final=True (default, «✉️ Ответить и закрыть») — финальный
+    ответ, обращение → ANSWERED после доставки.
+    is_final=False («💬 Промежуточный ответ») — диалог/уточнение,
+    обращение остаётся IN_PROGRESS, можно отправить ещё ответы.
+
+    Боковой эффект: NEW → IN_PROGRESS при нажатии (житель видит
+    «в работе» сразу). Если оператор отменил ввод — статус остаётся
+    IN_PROGRESS, не откатывается («оператор уже взял в работу»).
 
     Защиты:
     - запрещаем reply-intent на CLOSED-обращение
@@ -3237,52 +3245,65 @@ async def run_reply_intent(event, appeal_id: int) -> None:
 
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id(session, appeal_id)
-    if appeal is None:
-        await ack_callback(event)
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
-            attachments=[kbds.op_back_to_menu_keyboard()],
-        )
-        return
-    if appeal.status == AppealStatus.CLOSED.value:
-        await ack_callback(event)
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=(
-                f"Обращение #{appeal_id} закрыто. Сначала верните его в "
-                f"работу кнопкой «🔁 Возобновить» под карточкой."
-            ),
-            attachments=[kbds.op_back_to_menu_keyboard()],
-        )
-        return
-    if appeal.user is None or appeal.user.is_blocked:
-        await ack_callback(event)
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=(
-                f"Житель по обращению #{appeal_id} заблокирован — ответ не "
-                f"будет доставлен через бот. Если ответ всё-таки нужен, "
-                f"сначала снимите блокировку."
-            ),
-            attachments=[kbds.op_back_to_menu_keyboard()],
-        )
-        return
+        if appeal is None:
+            await ack_callback(event)
+            await send_or_edit_screen(
+                event,
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
+                attachments=[kbds.op_back_to_menu_keyboard()],
+            )
+            return
+        if appeal.status == AppealStatus.CLOSED.value:
+            await ack_callback(event)
+            await send_or_edit_screen(
+                event,
+                chat_id=cfg.admin_group_id,
+                text=(
+                    f"Обращение #{appeal_id} закрыто. Сначала верните его в "
+                    f"работу кнопкой «🔁 Возобновить» под карточкой."
+                ),
+                attachments=[kbds.op_back_to_menu_keyboard()],
+            )
+            return
+        if appeal.user is None or appeal.user.is_blocked:
+            await ack_callback(event)
+            await send_or_edit_screen(
+                event,
+                chat_id=cfg.admin_group_id,
+                text=(
+                    f"Житель по обращению #{appeal_id} заблокирован — ответ не "
+                    f"будет доставлен через бот. Если ответ всё-таки нужен, "
+                    f"сначала снимите блокировку."
+                ),
+                attachments=[kbds.op_back_to_menu_keyboard()],
+            )
+            return
+        # NEW → IN_PROGRESS: оператор взял в работу. Видно жителю.
+        await appeals_service.mark_in_progress(session, appeal_id)
 
     # Сбрасываем чужие wizard'ы того же оператора.
     broadcast_handler._wizards.pop(operator_id, None)
     admin_operators._op_wizards.pop(operator_id, None)
 
-    op_reply.remember_reply_intent(operator_id, appeal_id)
-    await ack_callback(event, f"Ответ на #{appeal_id}")
+    op_reply.remember_reply_intent(operator_id, appeal_id, is_final=is_final)
+    label = "Ответ" if is_final else "Промежуточный ответ"
+    await ack_callback(event, f"{label} на #{appeal_id}")
+    prompt_hint = (
+        f"✉️ Введите текст ОТВЕТА на обращение #{appeal_id} "
+        f"(после отправки обращение закроется в «отвечено»).\n"
+        if is_final
+        else (
+            f"💬 Введите ПРОМЕЖУТОЧНЫЙ ответ на обращение #{appeal_id} "
+            f"(обращение останется в работе, можно отправить ещё "
+            f"уточнения).\n"
+        )
+    )
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
         text=(
-            f"✉️ Введите текст ответа на обращение #{appeal_id}.\n"
+            f"{prompt_hint}"
             f"Лимит {cfg.answer_max_chars} символов. Просто отправьте "
             f"следующее сообщение в этот чат, либо «Отменить» ниже."
         ),
@@ -3722,8 +3743,8 @@ def _mask_phone(phone: str | None) -> str:
 
 ### `bot/aemr_bot/handlers/admin_callback_dispatch.py`
 
-Size: `12213` bytes  
-SHA-256: `1bc11cd9695d1e7392e7f3e3ccf5e8463b4615f6eec176d83b046bac8619e3c2`
+Size: `12498` bytes  
+SHA-256: `a99bf39ff832bfceec0d56c3d6c0a56735b4501f15ea597fe39387223e241720`
 
 ```python
 """Dispatch admin/operator callback-payload'ов (`broadcast:*` / `op:*`).
@@ -3830,6 +3851,11 @@ async def _op_reply(event, appeal_id: int) -> None:
     await admin_commands.run_reply_intent(event, appeal_id)
 
 
+async def _op_reply_intermediate(event, appeal_id: int) -> None:
+    """Промежуточный ответ — не закрывает обращение."""
+    await admin_commands.run_reply_intent(event, appeal_id, is_final=False)
+
+
 async def _op_reopen(event, appeal_id: int) -> None:
     await admin_commands.run_reopen(event, appeal_id)
 
@@ -3915,6 +3941,7 @@ _EXACT: dict[str, ExactHandler] = {
 _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
     ("broadcast:stop:", _broadcast_stop),
     ("op:reply:", _op_reply),
+    ("op:replyint:", _op_reply_intermediate),
     ("op:reopen:", _op_reopen),
     ("op:close:", _op_close),
     ("op:erase:", _op_erase),
@@ -11094,8 +11121,8 @@ async def _step_search(
 
 ### `bot/aemr_bot/handlers/callback_router.py`
 
-Size: `8462` bytes  
-SHA-256: `caf8224841e64fa4e7561a9ad75601184b53d30536303b6a6561d84fc5299150`
+Size: `8595` bytes  
+SHA-256: `ed04e86283073ceabaff30d8acf71b29e70f94fa3b1702855c4badf269110f26`
 
 ```python
 """Маршрутизация callback payload'ов.
@@ -11167,7 +11194,8 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("topic:", CallbackGroup.CITIZEN_FLOW, False, "выбор темы"),
     CallbackRoute("broadcast:stop:", CallbackGroup.BROADCAST_ADMIN, True, "остановить рассылку"),
     CallbackRoute("op:aud:", CallbackGroup.OPERATOR_ADMIN, True, "действие с аудиторией"),
-    CallbackRoute("op:reply:", CallbackGroup.OPERATOR_ADMIN, True, "ответ по обращению"),
+    CallbackRoute("op:reply:", CallbackGroup.OPERATOR_ADMIN, True, "ответ по обращению (финальный)"),
+    CallbackRoute("op:replyint:", CallbackGroup.OPERATOR_ADMIN, True, "промежуточный ответ"),
     CallbackRoute("op:reopen:", CallbackGroup.OPERATOR_ADMIN, True, "вернуть в работу"),
     CallbackRoute("op:close:", CallbackGroup.OPERATOR_ADMIN, True, "закрыть обращение"),
     CallbackRoute("op:erase:", CallbackGroup.OPERATOR_ADMIN, True, "стереть ПДн по обращению"),
@@ -12265,8 +12293,8 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
 
 ### `bot/aemr_bot/handlers/operator_reply.py`
 
-Size: `33056` bytes  
-SHA-256: `44716d68ab7d5a9266364a2668c11fad4485cbbe5a3156b0a5a54ad640f04727`
+Size: `34018` bytes  
+SHA-256: `ebf82792621990c0de9a8e907c6cba7cefff47ce88e02c20525f536053eb8aeb`
 
 ```python
 """Логика ответов операторов и дополнительных сообщений от жителей, вызывается
@@ -12333,31 +12361,42 @@ async def _safe_admin_notice(event, text: str) -> None:
         log.exception("operator_reply: failed to send admin notice")
 
 
-def remember_reply_intent(operator_id: int, appeal_id: int) -> None:
-    """Запомнить, что оператор сейчас собирается отвечать на обращение."""
+def remember_reply_intent(
+    operator_id: int, appeal_id: int, *, is_final: bool = True
+) -> None:
+    """Запомнить, что оператор собирается отвечать на обращение.
+
+    is_final=True — финальный ответ, обращение перейдёт в ANSWERED.
+    is_final=False — промежуточный ответ (диалог/уточнение), статус
+    остаётся IN_PROGRESS.
+    """
     from aemr_bot.services import wizard_registry as _wr
 
     _wr.set_reply_intent(
-        operator_id, appeal_id, _time.monotonic() + _REPLY_INTENT_TTL_SEC
+        operator_id,
+        appeal_id,
+        _time.monotonic() + _REPLY_INTENT_TTL_SEC,
+        is_final=is_final,
     )
 
 
-def consume_reply_intent(operator_id: int) -> int | None:
+def consume_reply_intent(operator_id: int) -> tuple[int, bool] | None:
     """Достать и сбросить намерение, если оно ещё не протухло.
 
-    Возвращает appeal_id, если оператор недавно нажимал «✉️ Ответить» и
-    окно не истекло. Сбрасывает запись — intent одноразовое.
+    Возвращает (appeal_id, is_final), если оператор недавно нажимал
+    «✉️ Ответить» / «💬 Промежуточный» и окно не истекло. Сбрасывает
+    запись — intent одноразовое.
     """
     from aemr_bot.services import wizard_registry as _wr
 
     item = _wr.get_reply_intent(operator_id)
     if item is None:
         return None
-    appeal_id, expires_at = item
+    appeal_id, is_final, expires_at = item
     _wr.drop_reply_intent(operator_id)
     if _time.monotonic() > expires_at:
         return None
-    return appeal_id
+    return appeal_id, is_final
 
 
 def drop_reply_intent(operator_id: int) -> int | None:
@@ -12646,6 +12685,7 @@ async def _persist_reply_and_card(
     operator,
     audit_action: str,
     delivered_mid: str | None,
+    is_final: bool = True,
 ):
     """Записать доставленный ответ в БД + audit_log, подготовить данные
     для обновления админ-карточки.
@@ -12678,6 +12718,7 @@ async def _persist_reply_and_card(
                 text=text,
                 operator_id=operator.id,
                 max_message_id=delivered_mid,
+                is_final=is_final,
             )
             await operators_service.write_audit(
                 session,
@@ -12729,6 +12770,7 @@ async def _deliver_operator_reply(
     operator,
     text: str,
     audit_action: str,
+    is_final: bool = True,
 ) -> bool:
     """Общий путь доставки ответа оператора жителю.
 
@@ -12785,6 +12827,7 @@ async def _deliver_operator_reply(
         operator=operator,
         audit_action=audit_action,
         delivered_mid=delivered_mid,
+        is_final=is_final,
     )
     if persisted is None:
         return True
@@ -12833,13 +12876,17 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
     """
     author_id = get_user_id(event)
     if author_id is not None:
-        intent_appeal_id = consume_reply_intent(author_id)
-        if intent_appeal_id is not None:
+        intent = consume_reply_intent(author_id)
+        if intent is not None:
+            intent_appeal_id, is_final = intent
             log.info(
-                "operator_reply: kbd-intent — operator=%s appeal=%s text_len=%d",
-                author_id, intent_appeal_id, len(text),
+                "operator_reply: kbd-intent — operator=%s appeal=%s "
+                "text_len=%d is_final=%s",
+                author_id, intent_appeal_id, len(text), is_final,
             )
-            await handle_command_reply(event, intent_appeal_id, text)
+            await handle_command_reply(
+                event, intent_appeal_id, text, is_final=is_final
+            )
             return True
 
     target_mid = _extract_reply_target_mid(event)
@@ -12922,12 +12969,17 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
     )
 
 
-async def handle_command_reply(event, appeal_id: int, text: str) -> None:
+async def handle_command_reply(
+    event, appeal_id: int, text: str, *, is_final: bool = True
+) -> None:
     """Команда `/reply N <текст>` из админ-группы — альтернатива ответу свайпом.
 
     Полезна, когда клиент MAX не прикрепляет ссылку-ответ к сообщению при свайпе
     (зависит от клиента/версии), или если оператор предпочитает использовать
     явные команды. Тот же путь доставки, тот же аудит, те же лимиты на ответ.
+
+    is_final=True (default) — финальный ответ, обращение → ANSWERED.
+    is_final=False — промежуточный (для диалога), остаётся IN_PROGRESS.
     """
     if not cfg.admin_group_id or get_chat_id(event) != cfg.admin_group_id:
         return
@@ -12960,7 +13012,10 @@ async def handle_command_reply(event, appeal_id: int, text: str) -> None:
         appeal=appeal,
         operator=operator,
         text=text,
-        audit_action="reply_via_command",
+        audit_action="reply_via_command"
+        if is_final
+        else "reply_intermediate_via_command",
+        is_final=is_final,
     )
 ```
 
@@ -13541,8 +13596,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `62731` bytes  
-SHA-256: `10435697ff7afe9df5bcf221ea942feec527ebc9a8dfd7b5cfd50a909d14a148`
+Size: `63230` bytes  
+SHA-256: `c59cd9a4d55c0c3fbf8f375c8dd7bca96918d87d18b61812ecb4f5aa69338ee0`
 
 ```python
 from maxapi.types import (
@@ -14698,8 +14753,15 @@ def appeal_admin_actions(
     open_states = {AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value}
     closed_states = {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}
     if status in open_states:
+        # «✉️ Ответить» = финальный (закрывает в ANSWERED).
+        # «💬 Промежуточный» = ответ для диалога, обращение остаётся в работе.
+        # Две кнопки в одной строке — чаще нужен финальный, он первый.
         kb.row(
             CallbackButton(text="✉️ Ответить", payload=f"op:reply:{appeal_id}"),
+            CallbackButton(
+                text="💬 Промежуточный",
+                payload=f"op:replyint:{appeal_id}",
+            ),
         )
         kb.row(
             CallbackButton(
@@ -15663,8 +15725,8 @@ async def relay_attachments_to_admin(
 
 ### `bot/aemr_bot/services/appeals.py`
 
-Size: `18415` bytes  
-SHA-256: `f1b8116bee9c3af8ad8e5b0ce5610c649d573e76313d59f0b699c050fe672bfa`
+Size: `20535` bytes  
+SHA-256: `1789efad412796f8bdc86a15a95d1d7ecd91bdca8d9014043ff5231550b767f1`
 
 ```python
 from datetime import datetime, timedelta, timezone
@@ -15725,15 +15787,26 @@ async def add_operator_message(
     text: str,
     operator_id: int | None,
     max_message_id: str | None,
+    *,
+    is_final: bool = True,
 ) -> Message:
-    """Сохранить ответ оператора и перевести обращение в ANSWERED.
+    """Сохранить ответ оператора. Поведение статуса зависит от is_final.
+
+    is_final=True (по умолчанию) — финальный ответ: обращение
+    переводится в ANSWERED, answered_at = now. Это закрывает обращение
+    в «отвечено», житель в «Мои обращения» видит его в архиве.
+
+    is_final=False — промежуточный ответ (по запросу владельца): для
+    диалога/уточнений оператор отправляет ответ, но обращение
+    остаётся IN_PROGRESS («в работе»). Житель получает текст, но
+    обращение в его «открытых». Поднимает Appeal.status: NEW →
+    IN_PROGRESS (NEW → ANSWERED был бы потерей маркера «оператор
+    взял в работу»).
 
     Если обращение уже CLOSED — не «оживляем» его молчком: статус
     не трогаем, чтобы было видно «оператор ответил по закрытому
     обращению» (исторически фиксируется через message-запись плюс
-    audit_log от вызывающего кода). Без этой защиты повторный клик
-    «✉️ Ответить» под старой карточкой закрытого обращения переписал
-    бы статус CLOSED→ANSWERED де-факто переоткрытие без аудита.
+    audit_log от вызывающего кода).
     """
     msg = Message(
         appeal_id=appeal.id,
@@ -15744,12 +15817,40 @@ async def add_operator_message(
     )
     session.add(msg)
     if appeal.status != AppealStatus.CLOSED.value:
-        appeal.status = AppealStatus.ANSWERED.value
-        appeal.answered_at = datetime.now(timezone.utc)
+        if is_final:
+            appeal.status = AppealStatus.ANSWERED.value
+            appeal.answered_at = datetime.now(timezone.utc)
+        else:
+            # Промежуточный: NEW → IN_PROGRESS, остальные оставляем
+            # как есть (IN_PROGRESS остаётся IN_PROGRESS; ANSWERED не
+            # «откатываем», в этом случае оператор должен сначала
+            # reopen, потом отвечать).
+            if appeal.status == AppealStatus.NEW.value:
+                appeal.status = AppealStatus.IN_PROGRESS.value
     if operator_id:
         appeal.assigned_operator_id = operator_id
     await session.flush()
     return msg
+
+
+async def mark_in_progress(session: AsyncSession, appeal_id: int) -> bool:
+    """Перевести обращение из NEW в IN_PROGRESS. Возвращает True если
+    реально перевёл (был NEW), False если уже не NEW.
+
+    Используется при нажатии «✉️ Ответить» — оператор взял в работу,
+    житель видит обновлённый статус в «Мои обращения» до того, как
+    придёт ответ. Если оператор отменил ввод — статус остаётся
+    IN_PROGRESS («начали работать»), не откатывается в NEW.
+    """
+    result = await session.execute(
+        update(Appeal)
+        .where(
+            Appeal.id == appeal_id,
+            Appeal.status == AppealStatus.NEW.value,
+        )
+        .values(status=AppealStatus.IN_PROGRESS.value)
+    )
+    return result.rowcount > 0
 
 
 async def get_by_id(session: AsyncSession, appeal_id: int) -> Appeal | None:
@@ -20825,8 +20926,8 @@ async def hydrate_into_registry(session: AsyncSession) -> tuple[int, int]:
 
 ### `bot/aemr_bot/services/wizard_registry.py`
 
-Size: `11952` bytes  
-SHA-256: `c947f78cabebd34160c4c6d3a56b6c58bda5f80e3e218c5ae44c99b549bcceb0`
+Size: `12444` bytes  
+SHA-256: `af46dc5ede0dcfa5f6847a4bbeb1c4a6d58d895df5a84d834f3b1b31b5fb6e7d`
 
 ```python
 """Единое хранилище мутабельного состояния визардов и intent'ов
@@ -20887,8 +20988,12 @@ _broadcast_wizards: dict[int, dict[str, Any]] = {}
 # Активный intent оператора «отвечаю на обращение N» — короткоживущий,
 # с TTL ~5 минут. Без TTL любой следующий текст оператора уходил бы
 # жителю прошлого обращения. См. handlers/operator_reply.py.
-# Ключ: max_user_id оператора. Значение: (appeal_id, set_at_ts).
-_reply_intent: dict[int, tuple[int, float]] = {}
+# Ключ: max_user_id оператора.
+# Значение: (appeal_id, is_final, set_at_ts):
+#   - is_final=True — финальный ответ, обращение → ANSWERED.
+#   - is_final=False — промежуточный ответ, обращение остаётся
+#     IN_PROGRESS. Для диалогов/уточнений (см. PR intermediate-reply).
+_reply_intent: dict[int, tuple[int, bool, float]] = {}
 
 # Дедуп недавно отправленных ответов оператора. Ключ: hash от
 # (appeal_id, normalized_text). Значение: timestamp. Защита от
@@ -20935,12 +21040,20 @@ def clear_broadcast_wizard(operator_id: int) -> None:
 # ---- Public API: reply intent --------------------------------------------
 
 
-def get_reply_intent(operator_id: int) -> tuple[int, float] | None:
+def get_reply_intent(operator_id: int) -> tuple[int, bool, float] | None:
+    """Вернуть (appeal_id, is_final, expires_at) или None если intent
+    отсутствует/протух."""
     return _reply_intent.get(operator_id)
 
 
-def set_reply_intent(operator_id: int, appeal_id: int, ts: float) -> None:
-    _reply_intent[operator_id] = (appeal_id, ts)
+def set_reply_intent(
+    operator_id: int,
+    appeal_id: int,
+    ts: float,
+    *,
+    is_final: bool = True,
+) -> None:
+    _reply_intent[operator_id] = (appeal_id, is_final, ts)
 
 
 def drop_reply_intent(operator_id: int) -> None:
@@ -23022,8 +23135,8 @@ async def session() -> AsyncIterator:
 
 ### `bot/tests/test_admin_appeal_ops.py`
 
-Size: `20004` bytes  
-SHA-256: `f8093c83e7642b3a466b30efb5dc5684e0d9b703e82487447b890ed29b6d7707`
+Size: `21972` bytes  
+SHA-256: `6041539f456a03e2781dc2de82ae1dba3a09ad01d680ae237db4eb019d3f02de`
 
 ```python
 """Тесты для handlers/admin_appeal_ops — действия оператора над
@@ -23176,13 +23289,50 @@ class TestRunReplyIntent:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.get_by_id",
                    AsyncMock(return_value=appeal)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.mark_in_progress",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.operator_reply.remember_reply_intent",
                    remember), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_appeal_ops.run_reply_intent(event, 5)
         remember.assert_called_once()
+        # default is_final=True пробрасывается в remember_reply_intent
+        assert remember.call_args.kwargs.get("is_final") is True
         text = event.bot.send_message.call_args.kwargs["text"]
-        assert "ответа" in text.lower()
+        assert "ответ" in text.lower()
+
+    @pytest.mark.asyncio
+    async def test_intermediate_intent_sets_is_final_false(self) -> None:
+        """run_reply_intent(is_final=False) — промежуточный ответ
+        (не закрывает обращение)."""
+        from aemr_bot.db.models import AppealStatus
+        from aemr_bot.handlers import admin_appeal_ops
+
+        event = _make_event()
+        appeal = SimpleNamespace(
+            id=7,
+            status=AppealStatus.NEW.value,
+            user=SimpleNamespace(is_blocked=False),
+        )
+        remember = MagicMock()
+        with patch("aemr_bot.handlers.admin_appeal_ops.is_admin_chat",
+                   return_value=True), \
+             patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.get_by_id",
+                   AsyncMock(return_value=appeal)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.mark_in_progress",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.operator_reply.remember_reply_intent",
+                   remember), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await admin_appeal_ops.run_reply_intent(event, 7, is_final=False)
+        remember.assert_called_once()
+        assert remember.call_args.kwargs.get("is_final") is False
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "промежуточ" in text.lower()
 
 
 # --- run_reply_cancel ---------------------------------------------------------
@@ -34608,8 +34758,8 @@ class TestHandleCallback:
 
 ### `bot/tests/test_handlers_operator_reply.py`
 
-Size: `28466` bytes  
-SHA-256: `6325684d937f51a6dd18469f8d0e6d28aae81173ea7e8d92198fd6f83ad146c7`
+Size: `29048` bytes  
+SHA-256: `a89f801718d05ef4ecc89006b4b8af0d18a7ea0932951dd2895768429e24cda1`
 
 ```python
 """Тесты handlers/operator_reply.py — ответы операторов и intent dedupe.
@@ -34679,9 +34829,18 @@ class TestReplyIntent:
         from aemr_bot.services import wizard_registry as _wr
         _wr._reply_intent.clear()
         opr.remember_reply_intent(operator_id=7, appeal_id=42)
-        assert opr.consume_reply_intent(7) == 42
+        # consume теперь возвращает (appeal_id, is_final). Default is_final=True.
+        assert opr.consume_reply_intent(7) == (42, True)
         # Второй вызов — пусто.
         assert opr.consume_reply_intent(7) is None
+
+    def test_remember_and_consume_intermediate(self) -> None:
+        """is_final=False (промежуточный ответ) сохраняется и возвращается."""
+        from aemr_bot.handlers import operator_reply as opr
+        from aemr_bot.services import wizard_registry as _wr
+        _wr._reply_intent.clear()
+        opr.remember_reply_intent(operator_id=7, appeal_id=42, is_final=False)
+        assert opr.consume_reply_intent(7) == (42, False)
 
     def test_drop_returns_appeal_id(self) -> None:
         from aemr_bot.handlers import operator_reply as opr
@@ -39171,8 +39330,8 @@ class TestFindStuckInFunnel:
 
 ### `bot/tests/test_wizard_registry.py`
 
-Size: `4876` bytes  
-SHA-256: `85deff58e05d9f2849d9fb98133c492b0ba7a081066fad9c33ae85886c3a0d78`
+Size: `5268` bytes  
+SHA-256: `000db1d435f8450c4d1541476c9f2e71914bb7a6502bce440d25f01973236203`
 
 ```python
 """Тесты на services/wizard_registry — единое хранилище состояния
@@ -39240,9 +39399,16 @@ class TestReplyIntent:
     def test_set_get_drop(self) -> None:
         assert wr.get_reply_intent(42) is None
         wr.set_reply_intent(42, appeal_id=100, ts=1000.0)
-        assert wr.get_reply_intent(42) == (100, 1000.0)
+        # default is_final=True; формат теперь (appeal_id, is_final, ts)
+        assert wr.get_reply_intent(42) == (100, True, 1000.0)
         wr.drop_reply_intent(42)
         assert wr.get_reply_intent(42) is None
+
+    def test_set_get_intermediate(self) -> None:
+        """is_final=False сохраняется и возвращается."""
+        wr.set_reply_intent(50, appeal_id=200, ts=2000.0, is_final=False)
+        assert wr.get_reply_intent(50) == (200, False, 2000.0)
+        wr.drop_reply_intent(50)
 
 
 class TestRecentReplies:
