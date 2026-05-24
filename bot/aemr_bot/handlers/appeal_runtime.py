@@ -224,18 +224,22 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
                 )
                 await users_service.reset_state(session, max_user_id)
 
-        # Single source of truth для admin appeal card — services/admin_card.render.
-        # Helper: send новую карточку (admin_message_id ещё пуст) и
-        # обновит Appeal.admin_message_id в БД. Все последующие
-        # изменения статуса (reply/reopen/followup/...) тоже через
-        # этот helper — поддерживает инвариант «admin_message_id
-        # указывает на актуальную карточку».
+        # Single source of truth для admin appeal card —
+        # services/admin_card.render. Helper send новую карточку
+        # (admin_message_id ещё пуст) и обновит Appeal.admin_message_id
+        # в БД. Все последующие изменения статуса тоже через этот helper.
         from aemr_bot.services import admin_card as admin_card_service
 
-        # appeal был загружен внутри session_scope без selectinload(messages);
-        # admin_card_service.render читает appeal.user (он есть), appeal.messages
-        # для подсчёта attachment_count. На finalize messages пустой, OK.
-        appeal.user = user  # обеспечить .user даже если SA сбросил
+        # appeal был загружен внутри уже закрытой session_scope —
+        # любое обращение к relationships (user, messages, attachments)
+        # вне сессии вызывает MissingGreenlet. Делаем snapshot:
+        # - appeal.user = user — копируем уже-загруженный объект
+        # - appeal.__dict__["messages"] = [] — на finalize история пуста;
+        #   без этого _loaded_messages в card_format и
+        #   _collect_all_user_attachments в admin_relay попытаются
+        #   lazy-load → exception → обращение не доходит до админа.
+        appeal.user = user
+        appeal.__dict__["messages"] = []
         admin_mid = await admin_card_service.render(bot, appeal, force_new=True)
         if not admin_mid:
             log.warning(

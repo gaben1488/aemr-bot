@@ -77,14 +77,34 @@ async def render(
         )
         return None
 
-    text = card_format.admin_card(appeal, user)
+    # text и attachment_count считаем устойчиво: detached appeal с
+    # lazy relationships (messages) может бросить MissingGreenlet.
+    # Главное — карточка дойдёт. Без attachment_count = просто без
+    # кнопки «Вложения (N)»; без timeline — без блока истории.
+    try:
+        text = card_format.admin_card(appeal, user)
+    except Exception:
+        log.exception(
+            "admin_card.render: card_format.admin_card failed for #%s, "
+            "fallback на минимальный текст",
+            appeal.id,
+        )
+        text = f"Обращение #{appeal.id}\nЖитель: {user.first_name or '—'}"
+    try:
+        attachment_count = _count_attachments(appeal)
+    except Exception:
+        log.debug(
+            "admin_card.render: attachment_count failed for #%s",
+            appeal.id, exc_info=False,
+        )
+        attachment_count = 0
     kb = keyboards.appeal_admin_actions(
         appeal.id,
         appeal.status,
         is_it=True,
         user_blocked=bool(user.is_blocked),
         closed_due_to_revoke=bool(getattr(appeal, "closed_due_to_revoke", False)),
-        attachment_count=_count_attachments(appeal),
+        attachment_count=attachment_count,
     )
     attachments = [kb]
 
@@ -145,7 +165,24 @@ async def render(
 
 
 def _count_attachments(appeal: "Appeal") -> int:
-    """Сколько вложений у обращения (исходные + дополнения жителя)."""
-    from aemr_bot.services.admin_relay import _collect_all_user_attachments
+    """Сколько вложений у обращения (исходные + дополнения жителя).
 
-    return len(_collect_all_user_attachments(appeal))
+    Устойчиво к detached-state: если appeal без активной сессии,
+    `appeal.messages` может бросить MissingGreenlet. В этом случае
+    считаем только исходные attachments (scalar JSONB поле, доступно
+    без сессии). Это safer, чем падать — caller (например finalize)
+    мог передать appeal без selectinload(messages).
+    """
+    try:
+        from aemr_bot.services.admin_relay import _collect_all_user_attachments
+
+        return len(_collect_all_user_attachments(appeal))
+    except Exception:
+        log.debug(
+            "admin_card._count_attachments: lazy-load fail for appeal #%s, "
+            "fallback to attachments-only",
+            appeal.id,
+            exc_info=False,
+        )
+        # Только исходные. Дополнения посчитать не можем без сессии.
+        return len(getattr(appeal, "attachments", None) or [])
