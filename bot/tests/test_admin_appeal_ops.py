@@ -148,13 +148,50 @@ class TestRunReplyIntent:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.get_by_id",
                    AsyncMock(return_value=appeal)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.mark_in_progress",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.operator_reply.remember_reply_intent",
                    remember), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_appeal_ops.run_reply_intent(event, 5)
         remember.assert_called_once()
+        # default is_final=True пробрасывается в remember_reply_intent
+        assert remember.call_args.kwargs.get("is_final") is True
         text = event.bot.send_message.call_args.kwargs["text"]
-        assert "ответа" in text.lower()
+        assert "ответ" in text.lower()
+
+    @pytest.mark.asyncio
+    async def test_intermediate_intent_sets_is_final_false(self) -> None:
+        """run_reply_intent(is_final=False) — промежуточный ответ
+        (не закрывает обращение)."""
+        from aemr_bot.db.models import AppealStatus
+        from aemr_bot.handlers import admin_appeal_ops
+
+        event = _make_event()
+        appeal = SimpleNamespace(
+            id=7,
+            status=AppealStatus.NEW.value,
+            user=SimpleNamespace(is_blocked=False),
+        )
+        remember = MagicMock()
+        with patch("aemr_bot.handlers.admin_appeal_ops.is_admin_chat",
+                   return_value=True), \
+             patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.get_by_id",
+                   AsyncMock(return_value=appeal)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.mark_in_progress",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.operator_reply.remember_reply_intent",
+                   remember), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await admin_appeal_ops.run_reply_intent(event, 7, is_final=False)
+        remember.assert_called_once()
+        assert remember.call_args.kwargs.get("is_final") is False
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "промежуточ" in text.lower()
 
 
 # --- run_reply_cancel ---------------------------------------------------------

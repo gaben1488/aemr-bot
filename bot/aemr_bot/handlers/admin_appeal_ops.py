@@ -74,11 +74,19 @@ async def _show_appeal_card_or_result(
     )
 
 
-async def run_reply_intent(event, appeal_id: int) -> None:
+async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> None:
     """Кнопка «✉️ Ответить» под карточкой обращения. Запоминает намерение
     оператора в in-memory словаре. Следующее текстовое сообщение
-    оператора в админ-группе доставляется как /reply <appeal_id>
-    <текст>.
+    оператора в админ-группе доставляется как /reply <appeal_id> <текст>.
+
+    is_final=True (default, «✉️ Ответить и закрыть») — финальный
+    ответ, обращение → ANSWERED после доставки.
+    is_final=False («💬 Промежуточный ответ») — диалог/уточнение,
+    обращение остаётся IN_PROGRESS, можно отправить ещё ответы.
+
+    Боковой эффект: NEW → IN_PROGRESS при нажатии (житель видит
+    «в работе» сразу). Если оператор отменил ввод — статус остаётся
+    IN_PROGRESS, не откатывается («оператор уже взял в работу»).
 
     Защиты:
     - запрещаем reply-intent на CLOSED-обращение
@@ -106,52 +114,65 @@ async def run_reply_intent(event, appeal_id: int) -> None:
 
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id(session, appeal_id)
-    if appeal is None:
-        await ack_callback(event)
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
-            attachments=[kbds.op_back_to_menu_keyboard()],
-        )
-        return
-    if appeal.status == AppealStatus.CLOSED.value:
-        await ack_callback(event)
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=(
-                f"Обращение #{appeal_id} закрыто. Сначала верните его в "
-                f"работу кнопкой «🔁 Возобновить» под карточкой."
-            ),
-            attachments=[kbds.op_back_to_menu_keyboard()],
-        )
-        return
-    if appeal.user is None or appeal.user.is_blocked:
-        await ack_callback(event)
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=(
-                f"Житель по обращению #{appeal_id} заблокирован — ответ не "
-                f"будет доставлен через бот. Если ответ всё-таки нужен, "
-                f"сначала снимите блокировку."
-            ),
-            attachments=[kbds.op_back_to_menu_keyboard()],
-        )
-        return
+        if appeal is None:
+            await ack_callback(event)
+            await send_or_edit_screen(
+                event,
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
+                attachments=[kbds.op_back_to_menu_keyboard()],
+            )
+            return
+        if appeal.status == AppealStatus.CLOSED.value:
+            await ack_callback(event)
+            await send_or_edit_screen(
+                event,
+                chat_id=cfg.admin_group_id,
+                text=(
+                    f"Обращение #{appeal_id} закрыто. Сначала верните его в "
+                    f"работу кнопкой «🔁 Возобновить» под карточкой."
+                ),
+                attachments=[kbds.op_back_to_menu_keyboard()],
+            )
+            return
+        if appeal.user is None or appeal.user.is_blocked:
+            await ack_callback(event)
+            await send_or_edit_screen(
+                event,
+                chat_id=cfg.admin_group_id,
+                text=(
+                    f"Житель по обращению #{appeal_id} заблокирован — ответ не "
+                    f"будет доставлен через бот. Если ответ всё-таки нужен, "
+                    f"сначала снимите блокировку."
+                ),
+                attachments=[kbds.op_back_to_menu_keyboard()],
+            )
+            return
+        # NEW → IN_PROGRESS: оператор взял в работу. Видно жителю.
+        await appeals_service.mark_in_progress(session, appeal_id)
 
     # Сбрасываем чужие wizard'ы того же оператора.
     broadcast_handler._wizards.pop(operator_id, None)
     admin_operators._op_wizards.pop(operator_id, None)
 
-    op_reply.remember_reply_intent(operator_id, appeal_id)
-    await ack_callback(event, f"Ответ на #{appeal_id}")
+    op_reply.remember_reply_intent(operator_id, appeal_id, is_final=is_final)
+    label = "Ответ" if is_final else "Промежуточный ответ"
+    await ack_callback(event, f"{label} на #{appeal_id}")
+    prompt_hint = (
+        f"✉️ Введите текст ОТВЕТА на обращение #{appeal_id} "
+        f"(после отправки обращение закроется в «отвечено»).\n"
+        if is_final
+        else (
+            f"💬 Введите ПРОМЕЖУТОЧНЫЙ ответ на обращение #{appeal_id} "
+            f"(обращение останется в работе, можно отправить ещё "
+            f"уточнения).\n"
+        )
+    )
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
         text=(
-            f"✉️ Введите текст ответа на обращение #{appeal_id}.\n"
+            f"{prompt_hint}"
             f"Лимит {cfg.answer_max_chars} символов. Просто отправьте "
             f"следующее сообщение в этот чат, либо «Отменить» ниже."
         ),

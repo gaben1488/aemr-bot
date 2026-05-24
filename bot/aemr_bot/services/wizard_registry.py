@@ -56,8 +56,12 @@ _broadcast_wizards: dict[int, dict[str, Any]] = {}
 # Активный intent оператора «отвечаю на обращение N» — короткоживущий,
 # с TTL ~5 минут. Без TTL любой следующий текст оператора уходил бы
 # жителю прошлого обращения. См. handlers/operator_reply.py.
-# Ключ: max_user_id оператора. Значение: (appeal_id, set_at_ts).
-_reply_intent: dict[int, tuple[int, float]] = {}
+# Ключ: max_user_id оператора.
+# Значение: (appeal_id, is_final, set_at_ts):
+#   - is_final=True — финальный ответ, обращение → ANSWERED.
+#   - is_final=False — промежуточный ответ, обращение остаётся
+#     IN_PROGRESS. Для диалогов/уточнений (см. PR intermediate-reply).
+_reply_intent: dict[int, tuple[int, bool, float]] = {}
 
 # Дедуп недавно отправленных ответов оператора. Ключ: hash от
 # (appeal_id, normalized_text). Значение: timestamp. Защита от
@@ -104,12 +108,20 @@ def clear_broadcast_wizard(operator_id: int) -> None:
 # ---- Public API: reply intent --------------------------------------------
 
 
-def get_reply_intent(operator_id: int) -> tuple[int, float] | None:
+def get_reply_intent(operator_id: int) -> tuple[int, bool, float] | None:
+    """Вернуть (appeal_id, is_final, expires_at) или None если intent
+    отсутствует/протух."""
     return _reply_intent.get(operator_id)
 
 
-def set_reply_intent(operator_id: int, appeal_id: int, ts: float) -> None:
-    _reply_intent[operator_id] = (appeal_id, ts)
+def set_reply_intent(
+    operator_id: int,
+    appeal_id: int,
+    ts: float,
+    *,
+    is_final: bool = True,
+) -> None:
+    _reply_intent[operator_id] = (appeal_id, is_final, ts)
 
 
 def drop_reply_intent(operator_id: int) -> None:

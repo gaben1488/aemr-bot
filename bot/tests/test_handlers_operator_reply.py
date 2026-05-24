@@ -65,9 +65,18 @@ class TestReplyIntent:
         from aemr_bot.services import wizard_registry as _wr
         _wr._reply_intent.clear()
         opr.remember_reply_intent(operator_id=7, appeal_id=42)
-        assert opr.consume_reply_intent(7) == 42
+        # consume теперь возвращает (appeal_id, is_final). Default is_final=True.
+        assert opr.consume_reply_intent(7) == (42, True)
         # Второй вызов — пусто.
         assert opr.consume_reply_intent(7) is None
+
+    def test_remember_and_consume_intermediate(self) -> None:
+        """is_final=False (промежуточный ответ) сохраняется и возвращается."""
+        from aemr_bot.handlers import operator_reply as opr
+        from aemr_bot.services import wizard_registry as _wr
+        _wr._reply_intent.clear()
+        opr.remember_reply_intent(operator_id=7, appeal_id=42, is_final=False)
+        assert opr.consume_reply_intent(7) == (42, False)
 
     def test_drop_returns_appeal_id(self) -> None:
         from aemr_bot.handlers import operator_reply as opr

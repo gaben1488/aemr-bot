@@ -62,31 +62,42 @@ async def _safe_admin_notice(event, text: str) -> None:
         log.exception("operator_reply: failed to send admin notice")
 
 
-def remember_reply_intent(operator_id: int, appeal_id: int) -> None:
-    """Запомнить, что оператор сейчас собирается отвечать на обращение."""
+def remember_reply_intent(
+    operator_id: int, appeal_id: int, *, is_final: bool = True
+) -> None:
+    """Запомнить, что оператор собирается отвечать на обращение.
+
+    is_final=True — финальный ответ, обращение перейдёт в ANSWERED.
+    is_final=False — промежуточный ответ (диалог/уточнение), статус
+    остаётся IN_PROGRESS.
+    """
     from aemr_bot.services import wizard_registry as _wr
 
     _wr.set_reply_intent(
-        operator_id, appeal_id, _time.monotonic() + _REPLY_INTENT_TTL_SEC
+        operator_id,
+        appeal_id,
+        _time.monotonic() + _REPLY_INTENT_TTL_SEC,
+        is_final=is_final,
     )
 
 
-def consume_reply_intent(operator_id: int) -> int | None:
+def consume_reply_intent(operator_id: int) -> tuple[int, bool] | None:
     """Достать и сбросить намерение, если оно ещё не протухло.
 
-    Возвращает appeal_id, если оператор недавно нажимал «✉️ Ответить» и
-    окно не истекло. Сбрасывает запись — intent одноразовое.
+    Возвращает (appeal_id, is_final), если оператор недавно нажимал
+    «✉️ Ответить» / «💬 Промежуточный» и окно не истекло. Сбрасывает
+    запись — intent одноразовое.
     """
     from aemr_bot.services import wizard_registry as _wr
 
     item = _wr.get_reply_intent(operator_id)
     if item is None:
         return None
-    appeal_id, expires_at = item
+    appeal_id, is_final, expires_at = item
     _wr.drop_reply_intent(operator_id)
     if _time.monotonic() > expires_at:
         return None
-    return appeal_id
+    return appeal_id, is_final
 
 
 def drop_reply_intent(operator_id: int) -> int | None:
@@ -375,6 +386,7 @@ async def _persist_reply_and_card(
     operator,
     audit_action: str,
     delivered_mid: str | None,
+    is_final: bool = True,
 ):
     """Записать доставленный ответ в БД + audit_log, подготовить данные
     для обновления админ-карточки.
@@ -407,6 +419,7 @@ async def _persist_reply_and_card(
                 text=text,
                 operator_id=operator.id,
                 max_message_id=delivered_mid,
+                is_final=is_final,
             )
             await operators_service.write_audit(
                 session,
@@ -458,6 +471,7 @@ async def _deliver_operator_reply(
     operator,
     text: str,
     audit_action: str,
+    is_final: bool = True,
 ) -> bool:
     """Общий путь доставки ответа оператора жителю.
 
@@ -514,6 +528,7 @@ async def _deliver_operator_reply(
         operator=operator,
         audit_action=audit_action,
         delivered_mid=delivered_mid,
+        is_final=is_final,
     )
     if persisted is None:
         return True
@@ -562,13 +577,17 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
     """
     author_id = get_user_id(event)
     if author_id is not None:
-        intent_appeal_id = consume_reply_intent(author_id)
-        if intent_appeal_id is not None:
+        intent = consume_reply_intent(author_id)
+        if intent is not None:
+            intent_appeal_id, is_final = intent
             log.info(
-                "operator_reply: kbd-intent — operator=%s appeal=%s text_len=%d",
-                author_id, intent_appeal_id, len(text),
+                "operator_reply: kbd-intent — operator=%s appeal=%s "
+                "text_len=%d is_final=%s",
+                author_id, intent_appeal_id, len(text), is_final,
             )
-            await handle_command_reply(event, intent_appeal_id, text)
+            await handle_command_reply(
+                event, intent_appeal_id, text, is_final=is_final
+            )
             return True
 
     target_mid = _extract_reply_target_mid(event)
@@ -651,12 +670,17 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
     )
 
 
-async def handle_command_reply(event, appeal_id: int, text: str) -> None:
+async def handle_command_reply(
+    event, appeal_id: int, text: str, *, is_final: bool = True
+) -> None:
     """Команда `/reply N <текст>` из админ-группы — альтернатива ответу свайпом.
 
     Полезна, когда клиент MAX не прикрепляет ссылку-ответ к сообщению при свайпе
     (зависит от клиента/версии), или если оператор предпочитает использовать
     явные команды. Тот же путь доставки, тот же аудит, те же лимиты на ответ.
+
+    is_final=True (default) — финальный ответ, обращение → ANSWERED.
+    is_final=False — промежуточный (для диалога), остаётся IN_PROGRESS.
     """
     if not cfg.admin_group_id or get_chat_id(event) != cfg.admin_group_id:
         return
@@ -689,5 +713,8 @@ async def handle_command_reply(event, appeal_id: int, text: str) -> None:
         appeal=appeal,
         operator=operator,
         text=text,
-        audit_action="reply_via_command",
+        audit_action="reply_via_command"
+        if is_final
+        else "reply_intermediate_via_command",
+        is_final=is_final,
     )
