@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-24 22:32:48 UTC`
+Generated at: `2026-05-24 22:45:36 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `193`
+Indexed files: `194`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -47,7 +47,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12213 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17560 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (20537 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (21033 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (41211 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (26042 bytes)
@@ -71,7 +71,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
-- `bot/aemr_bot/services/card_format.py` (8809 bytes)
+- `bot/aemr_bot/services/card_format.py` (15641 bytes)
 - `bot/aemr_bot/services/cron.py` (36406 bytes)
 - `bot/aemr_bot/services/db_backup.py` (15350 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
@@ -106,6 +106,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_operators.py` (19228 bytes)
 - `bot/tests/test_admin_panel.py` (12680 bytes)
 - `bot/tests/test_appeal_card_edit_policy.py` (8979 bytes)
+- `bot/tests/test_appeal_card_timeline.py` (8946 bytes)
 - `bot/tests/test_appeal_dispatcher.py` (22842 bytes)
 - `bot/tests/test_appeal_flow.py` (10960 bytes)
 - `bot/tests/test_appeals_service_pg.py` (14053 bytes)
@@ -5473,8 +5474,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `20537` bytes  
-SHA-256: `c927338aa09308024601acdac6493ce9cb91f3b42a84682ddf8e152cfd90a500`
+Size: `21033` bytes  
+SHA-256: `cea121224b1fd8c7ca34e878931575a6cd9211009fa1353bfd1a490d0eba57d9`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -5750,9 +5751,15 @@ async def _do_diag(event) -> None:
                 Appeal.created_at >= since_24h
             )
         )
+        # Direction в БД — MessageDirection enum (from_user / from_operator /
+        # system). До этого фикса было "to_user" — невалидное значение,
+        # счётчик ВСЕГДА показывал 0. Это причина того, что /diag
+        # «Ответов оператора за 24ч» всегда был 0 несмотря на ответы.
+        from aemr_bot.db.models import MessageDirection
+
         replies_24h = await session.scalar(
             select(func.count()).select_from(Message).where(
-                Message.direction == "to_user",
+                Message.direction == MessageDirection.FROM_OPERATOR.value,
                 Message.created_at >= since_24h,
             )
         )
@@ -16744,8 +16751,8 @@ def is_workday(d: date) -> bool:
 
 ### `bot/aemr_bot/services/card_format.py`
 
-Size: `8809` bytes  
-SHA-256: `ec2fdb62bab1414ec9687718f672862fd898b957515606eb7fc4c9956ded9d7b`
+Size: `15641` bytes  
+SHA-256: `0a2b90e2f06392fd4994e9b34bdddb5873d575f514a6d67299cd79b7e050f65a`
 
 ```python
 from datetime import datetime
@@ -16838,6 +16845,78 @@ def admin_followups_block(appeal: Appeal) -> str:
     return "\n".join(lines)
 
 
+def appeal_timeline_block(appeal: Appeal) -> str:
+    """Хронологическая лента переписки по обращению.
+
+    Формат блока:
+        ────────────────
+        История переписки:
+        📩 Дополнение жителя (12.05 14:30): ...
+        📨 Ответ оператора (12.05 15:00): ...
+        📩 Дополнение жителя (13.05 09:15): ...
+        ...
+
+    Берём ВСЕ загруженные messages, сортируем по created_at, рендерим
+    единой timeline. Это «полная история» по запросу владельца — заменяет
+    отдельный followups_block, когда есть хоть один ответ оператора.
+
+    Если ответов оператора нет — возвращаем admin_followups_block
+    (старый формат «Дополнения к обращению»), чтобы не ломать
+    visual layout для обращений в состоянии NEW/IN_PROGRESS без
+    переписки.
+    """
+    msgs = _loaded_messages(appeal)
+    if not msgs:
+        return ""
+
+    operator_msgs = [
+        m for m in msgs
+        if getattr(m, "direction", None) == MessageDirection.FROM_OPERATOR.value
+    ]
+    # Без ответов оператора — старый блок «Дополнения» (knows only
+    # from_user). Меньше шума в карточке новых обращений.
+    if not operator_msgs:
+        return admin_followups_block(appeal)
+
+    # Все сообщения по времени (от старых к новым)
+    ordered = sorted(
+        msgs,
+        key=lambda m: getattr(m, "created_at", None) or datetime.min.replace(tzinfo=TZ),
+    )
+    # Ограничиваем длину истории — 10 последних, чтобы карточка не
+    # разрасталась. Старые тоже выводим хедером «Ранее: N сообщений».
+    hidden_count = max(0, len(ordered) - 10)
+    visible = ordered[-10:]
+    lines = ["────────────────", "История переписки:"]
+    if hidden_count:
+        lines.append(f"Ранее ещё {hidden_count} сообщений (скрыты).")
+    for msg in visible:
+        direction = getattr(msg, "direction", "")
+        text = (getattr(msg, "text", None) or "").strip()
+        attachments = getattr(msg, "attachments", None) or []
+        created_at = getattr(msg, "created_at", None)
+        time_str = _local_short(created_at) if created_at else ""
+        if direction == MessageDirection.FROM_OPERATOR.value:
+            marker = "📨 Ответ оператора"
+        elif direction == MessageDirection.FROM_USER.value:
+            marker = "📩 Дополнение жителя"
+        else:
+            marker = "•"
+        header = f"{marker} ({time_str})" if time_str else marker
+        body = _clip(text, limit=400) if text else "Без текста."
+        attach_line = attachments_summary_line(attachments)
+        if attach_line:
+            body = f"{body}\n{attach_line}"
+        lines.append(f"{header}:")
+        lines.append(body)
+    return "\n".join(lines)
+
+
+def _local_short(dt: datetime) -> str:
+    """Короткая локальная дата для timeline — без года, экономия места."""
+    return dt.astimezone(TZ).strftime("%d.%m %H:%M")
+
+
 def _citizen_status_line(user: User) -> str:
     """Компактная строка статуса жителя для admin-карточки — оператор
     видит «нормальный житель» vs «отозвал согласие, обращение в работе
@@ -16891,9 +16970,14 @@ def admin_card(appeal: Appeal, user: User) -> str:
     summary_line = attachments_summary_line(appeal.attachments or [])
     if summary_line:
         body = f"{body}\n{summary_line}"
-    followups = admin_followups_block(appeal)
-    if followups:
-        body = f"{body}\n\n{followups}"
+    # Timeline: полная история переписки (followup'ы жителя + ответы
+    # оператора в хронологии). Когда ответов нет — fallback на старый
+    # «Дополнения к обращению» (см. appeal_timeline_block). Это
+    # выполняет запрос владельца про «явную прозрачную полностью
+    # информативную историю и конверсию ответов на обращения».
+    timeline = appeal_timeline_block(appeal)
+    if timeline:
+        body = f"{body}\n\n{timeline}"
     return body
 
 
@@ -16923,7 +17007,7 @@ def citizen_reply(appeal: Appeal, reply_text: str) -> str:
 
 def user_card(appeal: Appeal) -> str:
     emoji, label = STATUS_LABELS.get(appeal.status, ("•", appeal.status))
-    return APPEAL_CARD_TEMPLATE.format(
+    body = APPEAL_CARD_TEMPLATE.format(
         number=appeal.id,
         created_at=_local(appeal.created_at),
         status_emoji=emoji,
@@ -16933,6 +17017,61 @@ def user_card(appeal: Appeal) -> str:
         topic=appeal.topic or "—",
         summary=appeal.summary or "—",
     )
+    # Лента для жителя: те же блоки что у admin_card, но житель видит
+    # «Ваше дополнение» и «Ответ Администрации» вместо служебных
+    # маркеров (через user_appeal_timeline_block).
+    timeline = user_appeal_timeline_block(appeal)
+    if timeline:
+        body = f"{body}\n\n{timeline}"
+    return body
+
+
+def user_appeal_timeline_block(appeal: Appeal) -> str:
+    """Хронологическая лента переписки для карточки жителя.
+
+    Отличия от admin-варианта:
+    - «Ваше дополнение» вместо «Дополнение жителя» (от 2-го лица).
+    - «📨 Ответ Администрации» вместо «📨 Ответ оператора» (для
+      формального восприятия).
+    - Не сокращаем тексты так сильно как в admin (житель хочет видеть
+      полный ответ).
+
+    Если переписки нет — пустая строка, базовый user_card без блока.
+    """
+    msgs = _loaded_messages(appeal)
+    if not msgs:
+        return ""
+
+    ordered = sorted(
+        msgs,
+        key=lambda m: getattr(m, "created_at", None) or datetime.min.replace(tzinfo=TZ),
+    )
+    hidden_count = max(0, len(ordered) - 10)
+    visible = ordered[-10:]
+    lines = ["────────────────", "История переписки:"]
+    if hidden_count:
+        lines.append(f"Ранее ещё {hidden_count} сообщений (скрыты).")
+    for msg in visible:
+        direction = getattr(msg, "direction", "")
+        text = (getattr(msg, "text", None) or "").strip()
+        attachments = getattr(msg, "attachments", None) or []
+        created_at = getattr(msg, "created_at", None)
+        time_str = _local_short(created_at) if created_at else ""
+        if direction == MessageDirection.FROM_OPERATOR.value:
+            marker = "📨 Ответ Администрации"
+        elif direction == MessageDirection.FROM_USER.value:
+            marker = "📩 Ваше дополнение"
+        else:
+            marker = "•"
+        header = f"{marker} ({time_str})" if time_str else marker
+        # Лимит длиннее, чем у admin: житель хочет видеть полный ответ.
+        body = _clip(text, limit=700) if text else "Без текста."
+        attach_line = attachments_summary_line(attachments)
+        if attach_line:
+            body = f"{body}\n{attach_line}"
+        lines.append(f"{header}:")
+        lines.append(body)
+    return "\n".join(lines)
 
 
 def appeal_list_label(appeal: Appeal) -> str:
@@ -25417,6 +25556,204 @@ class TestUnblockSendsNewCard:
             )
         last_call = sent_screen.await_args_list[-1]
         assert last_call.kwargs.get("force_new_message") is True
+```
+
+### `bot/tests/test_appeal_card_timeline.py`
+
+Size: `8946` bytes  
+SHA-256: `95b01c1bb785e816934659e278c91911b3868e754e39185146a0e4639938415e`
+
+```python
+"""Тесты на timeline-блок (полная переписка) в карточках обращения.
+
+Запрос владельца: «карточки должны содержать ПОЛНУЮ информацию —
+содержание обращения - ответ - в случае если ответов и дополнений
+несколько - чтобы они также содержались в карточке».
+
+Реализовано в `services/card_format.appeal_timeline_block` (для
+admin) и `user_appeal_timeline_block` (для жителя). Здесь — контракт
+на формат и порядок.
+"""
+from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
+
+import pytest
+
+pytest.importorskip("maxapi", reason="нужен для config/texts")
+
+
+def _make_msg(direction: str, text: str, *, minutes_offset: int = 0,
+              attachments=None) -> SimpleNamespace:
+    return SimpleNamespace(
+        direction=direction,
+        text=text,
+        attachments=attachments or [],
+        created_at=datetime(2026, 5, 21, 14, 0, tzinfo=timezone.utc)
+        + timedelta(minutes=minutes_offset),
+    )
+
+
+def _make_appeal_with_messages(messages: list) -> SimpleNamespace:
+    """Appeal с предзагруженными messages (как после selectinload)."""
+    appeal = SimpleNamespace(
+        id=42,
+        status="answered",
+        locality="Елизовское ГП",
+        address="ул. Ленина, 5",
+        topic="Дороги",
+        summary="Яма во дворе.",
+        attachments=[],
+        created_at=datetime(2026, 5, 21, 13, 0, tzinfo=timezone.utc),
+    )
+    # _loaded_messages читает из __dict__, поэтому ставим напрямую.
+    appeal.__dict__["messages"] = messages
+    return appeal
+
+
+class TestAdminTimeline:
+    def test_no_messages_no_block(self) -> None:
+        from aemr_bot.services.card_format import appeal_timeline_block
+
+        appeal = _make_appeal_with_messages([])
+        assert appeal_timeline_block(appeal) == ""
+
+    def test_only_followups_falls_back_to_old_block(self) -> None:
+        """Если только дополнения жителя (нет ответов оператора) —
+        старый формат «Дополнения к обращению» без timeline-маркеров."""
+        from aemr_bot.services.card_format import appeal_timeline_block
+
+        appeal = _make_appeal_with_messages([
+            _make_msg("from_user", "Уточнение по фото"),
+        ])
+        result = appeal_timeline_block(appeal)
+        # Старый формат: «Дополнение к обращению:» без «История переписки»
+        assert "Дополнение к обращению:" in result
+        assert "История переписки:" not in result
+
+    def test_reply_present_uses_timeline_format(self) -> None:
+        """Как только появился ответ оператора — переключаемся на
+        timeline («История переписки»)."""
+        from aemr_bot.services.card_format import appeal_timeline_block
+
+        appeal = _make_appeal_with_messages([
+            _make_msg("from_user", "Уточнение", minutes_offset=0),
+            _make_msg("from_operator", "Принято в работу", minutes_offset=5),
+        ])
+        result = appeal_timeline_block(appeal)
+        assert "История переписки:" in result
+        assert "📩 Дополнение жителя" in result
+        assert "📨 Ответ оператора" in result
+        # Хронология: дополнение раньше ответа
+        assert result.index("Уточнение") < result.index("Принято в работу")
+
+    def test_timeline_orders_chronologically(self) -> None:
+        from aemr_bot.services.card_format import appeal_timeline_block
+
+        appeal = _make_appeal_with_messages([
+            _make_msg("from_operator", "Второй ответ", minutes_offset=30),
+            _make_msg("from_user", "Первое дополнение", minutes_offset=0),
+            _make_msg("from_operator", "Первый ответ", minutes_offset=10),
+            _make_msg("from_user", "Второе дополнение", minutes_offset=20),
+        ])
+        result = appeal_timeline_block(appeal)
+        # Порядок: 0 → 10 → 20 → 30
+        idx1 = result.index("Первое дополнение")
+        idx2 = result.index("Первый ответ")
+        idx3 = result.index("Второе дополнение")
+        idx4 = result.index("Второй ответ")
+        assert idx1 < idx2 < idx3 < idx4
+
+    def test_caps_at_10_with_hidden_note(self) -> None:
+        """Не больше 10 сообщений; остальные — «Ранее N сообщений»."""
+        from aemr_bot.services.card_format import appeal_timeline_block
+
+        msgs = [
+            _make_msg(
+                "from_user" if i % 2 == 0 else "from_operator",
+                f"Сообщение {i}", minutes_offset=i,
+            )
+            for i in range(15)
+        ]
+        appeal = _make_appeal_with_messages(msgs)
+        result = appeal_timeline_block(appeal)
+        assert "Ранее ещё 5 сообщений" in result
+        # Старые (0-4) скрыты, новые (5-14) видны
+        assert "Сообщение 0" not in result
+        assert "Сообщение 14" in result
+
+
+class TestUserTimeline:
+    def test_uses_user_friendly_markers(self) -> None:
+        """Житель видит «Ваше дополнение» и «Ответ Администрации»
+        вместо служебных маркеров."""
+        from aemr_bot.services.card_format import user_appeal_timeline_block
+
+        appeal = _make_appeal_with_messages([
+            _make_msg("from_user", "Моё уточнение", minutes_offset=0),
+            _make_msg("from_operator", "Спасибо, разберёмся", minutes_offset=5),
+        ])
+        result = user_appeal_timeline_block(appeal)
+        assert "📩 Ваше дополнение" in result
+        assert "📨 Ответ Администрации" in result
+        # Служебные маркеры не должны попадать
+        assert "Дополнение жителя" not in result
+        assert "Ответ оператора" not in result
+
+    def test_user_timeline_when_only_followups(self) -> None:
+        """Житель видит timeline даже если ответов ещё нет — он же
+        отправил дополнения, должен их видеть в карточке."""
+        from aemr_bot.services.card_format import user_appeal_timeline_block
+
+        appeal = _make_appeal_with_messages([
+            _make_msg("from_user", "Моё дополнение"),
+        ])
+        result = user_appeal_timeline_block(appeal)
+        assert "История переписки:" in result
+        assert "Ваше дополнение" in result
+
+    def test_user_timeline_empty_messages_returns_empty(self) -> None:
+        from aemr_bot.services.card_format import user_appeal_timeline_block
+
+        appeal = _make_appeal_with_messages([])
+        assert user_appeal_timeline_block(appeal) == ""
+
+
+class TestCardIntegration:
+    """Проверка что admin_card и user_card подключают timeline."""
+
+    def test_admin_card_includes_timeline_when_reply_exists(self) -> None:
+        from aemr_bot.services.card_format import admin_card
+
+        user = SimpleNamespace(
+            first_name="Сергей",
+            phone="+79991234567",
+            is_blocked=False,
+            consent_pdn_at=None,
+            consent_revoked_at=None,
+            subscribed_broadcast=False,
+        )
+        appeal = _make_appeal_with_messages([
+            _make_msg("from_user", "Уточнение", minutes_offset=0),
+            _make_msg("from_operator", "Принято", minutes_offset=10),
+        ])
+        appeal.user = user
+        result = admin_card(appeal, user)
+        assert "История переписки:" in result
+        assert "📨 Ответ оператора" in result
+        assert "Принято" in result
+
+    def test_user_card_includes_timeline_when_reply_exists(self) -> None:
+        from aemr_bot.services.card_format import user_card
+
+        appeal = _make_appeal_with_messages([
+            _make_msg("from_user", "Мой followup", minutes_offset=0),
+            _make_msg("from_operator", "Ответ", minutes_offset=5),
+        ])
+        result = user_card(appeal)
+        assert "История переписки:" in result
+        assert "📨 Ответ Администрации" in result
 ```
 
 ### `bot/tests/test_appeal_dispatcher.py`
