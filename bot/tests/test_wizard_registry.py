@@ -63,9 +63,16 @@ class TestReplyIntent:
     def test_set_get_drop(self) -> None:
         assert wr.get_reply_intent(42) is None
         wr.set_reply_intent(42, appeal_id=100, ts=1000.0)
-        assert wr.get_reply_intent(42) == (100, 1000.0)
+        # default is_final=True; формат теперь (appeal_id, is_final, ts)
+        assert wr.get_reply_intent(42) == (100, True, 1000.0)
         wr.drop_reply_intent(42)
         assert wr.get_reply_intent(42) is None
+
+    def test_set_get_intermediate(self) -> None:
+        """is_final=False сохраняется и возвращается."""
+        wr.set_reply_intent(50, appeal_id=200, ts=2000.0, is_final=False)
+        assert wr.get_reply_intent(50) == (200, False, 2000.0)
+        wr.drop_reply_intent(50)
 
 
 class TestRecentReplies:

@@ -56,15 +56,26 @@ async def add_operator_message(
     text: str,
     operator_id: int | None,
     max_message_id: str | None,
+    *,
+    is_final: bool = True,
 ) -> Message:
-    """Сохранить ответ оператора и перевести обращение в ANSWERED.
+    """Сохранить ответ оператора. Поведение статуса зависит от is_final.
+
+    is_final=True (по умолчанию) — финальный ответ: обращение
+    переводится в ANSWERED, answered_at = now. Это закрывает обращение
+    в «отвечено», житель в «Мои обращения» видит его в архиве.
+
+    is_final=False — промежуточный ответ (по запросу владельца): для
+    диалога/уточнений оператор отправляет ответ, но обращение
+    остаётся IN_PROGRESS («в работе»). Житель получает текст, но
+    обращение в его «открытых». Поднимает Appeal.status: NEW →
+    IN_PROGRESS (NEW → ANSWERED был бы потерей маркера «оператор
+    взял в работу»).
 
     Если обращение уже CLOSED — не «оживляем» его молчком: статус
     не трогаем, чтобы было видно «оператор ответил по закрытому
     обращению» (исторически фиксируется через message-запись плюс
-    audit_log от вызывающего кода). Без этой защиты повторный клик
-    «✉️ Ответить» под старой карточкой закрытого обращения переписал
-    бы статус CLOSED→ANSWERED де-факто переоткрытие без аудита.
+    audit_log от вызывающего кода).
     """
     msg = Message(
         appeal_id=appeal.id,
@@ -75,12 +86,40 @@ async def add_operator_message(
     )
     session.add(msg)
     if appeal.status != AppealStatus.CLOSED.value:
-        appeal.status = AppealStatus.ANSWERED.value
-        appeal.answered_at = datetime.now(timezone.utc)
+        if is_final:
+            appeal.status = AppealStatus.ANSWERED.value
+            appeal.answered_at = datetime.now(timezone.utc)
+        else:
+            # Промежуточный: NEW → IN_PROGRESS, остальные оставляем
+            # как есть (IN_PROGRESS остаётся IN_PROGRESS; ANSWERED не
+            # «откатываем», в этом случае оператор должен сначала
+            # reopen, потом отвечать).
+            if appeal.status == AppealStatus.NEW.value:
+                appeal.status = AppealStatus.IN_PROGRESS.value
     if operator_id:
         appeal.assigned_operator_id = operator_id
     await session.flush()
     return msg
+
+
+async def mark_in_progress(session: AsyncSession, appeal_id: int) -> bool:
+    """Перевести обращение из NEW в IN_PROGRESS. Возвращает True если
+    реально перевёл (был NEW), False если уже не NEW.
+
+    Используется при нажатии «✉️ Ответить» — оператор взял в работу,
+    житель видит обновлённый статус в «Мои обращения» до того, как
+    придёт ответ. Если оператор отменил ввод — статус остаётся
+    IN_PROGRESS («начали работать»), не откатывается в NEW.
+    """
+    result = await session.execute(
+        update(Appeal)
+        .where(
+            Appeal.id == appeal_id,
+            Appeal.status == AppealStatus.NEW.value,
+        )
+        .values(status=AppealStatus.IN_PROGRESS.value)
+    )
+    return result.rowcount > 0
 
 
 async def get_by_id(session: AsyncSession, appeal_id: int) -> Appeal | None:

@@ -102,6 +102,11 @@ async def _op_reply(event, appeal_id: int) -> None:
     await admin_commands.run_reply_intent(event, appeal_id)
 
 
+async def _op_reply_intermediate(event, appeal_id: int) -> None:
+    """Промежуточный ответ — не закрывает обращение."""
+    await admin_commands.run_reply_intent(event, appeal_id, is_final=False)
+
+
 async def _op_reopen(event, appeal_id: int) -> None:
     await admin_commands.run_reopen(event, appeal_id)
 
@@ -187,6 +192,7 @@ _EXACT: dict[str, ExactHandler] = {
 _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
     ("broadcast:stop:", _broadcast_stop),
     ("op:reply:", _op_reply),
+    ("op:replyint:", _op_reply_intermediate),
     ("op:reopen:", _op_reopen),
     ("op:close:", _op_close),
     ("op:erase:", _op_erase),
