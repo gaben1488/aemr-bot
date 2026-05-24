@@ -1,17 +1,18 @@
 """Тесты единого render_admin_card (services/admin_card.render).
 
 Контракт:
-- `Appeal.admin_message_id` всегда указывает на актуальную (последнюю)
-  карточку обращения после render().
-- force_new=False: пытается edit; на fail или отсутствие
-  admin_message_id — fallback на send + update.
-- force_new=True: всегда send + update admin_message_id.
+- `Appeal.admin_message_id` указывает на ОРИГИНАЛЬНУЮ карточку
+  обращения (sacred artifact с finalize). Меняется только при
+  изменении статуса (edit fail → переезд на новый mid; первая
+  публикация).
+- `force_new=False`: пытается edit оригинала; на fail — fallback
+  send-new + update admin_message_id (старый mid недействителен).
+- `force_new=True`: ВСЕГДА send-new, НО admin_message_id НЕ
+  обновляется (это «следовая» карточка от followup, оригинал
+  остаётся в БД).
 
-Заменяет три несинхронных механизма edit (operator_reply прямой,
-admin_appeal_ops через freshness-tracker, appeal_funnel ручной send).
-Конкретная проблема, которую закрывает: после followup от жителя
-admin_message_id не обновлялся → reply редактировал старую карточку
-вверху чата.
+Разделение: оригинал = «вот обращение, отвечайте здесь». Followup-
+карточки = «вот ещё информация». Reply/reopen/close через оригинал.
 """
 from __future__ import annotations
 
@@ -131,13 +132,16 @@ class TestSendNewPath:
         assert mid == "first-mid-1"
 
     @pytest.mark.asyncio
-    async def test_force_new_true_sends_even_with_existing_mid(self) -> None:
-        """force_new=True игнорирует существующий admin_message_id и шлёт
-        новую карточку (followup от жителя — нужна явная отметка внизу)."""
+    async def test_force_new_true_sends_but_keeps_original_admin_mid(
+        self,
+    ) -> None:
+        """Главный инвариант: force_new=True (followup) шлёт следовую
+        карточку, НО admin_message_id оригинала остаётся неизменным.
+        Оригинал sacred — там живут reply/reopen/close."""
         from aemr_bot.services import admin_card
 
-        appeal = _make_appeal(admin_mid="old-mid-3")
-        bot = _make_bot_with_returned_mid(new_mid="newer-mid-4")
+        appeal = _make_appeal(admin_mid="original-mid-3")
+        bot = _make_bot_with_returned_mid(new_mid="followup-mid-4")
         update_mid = AsyncMock()
         with (
             patch("aemr_bot.config.settings.admin_group_id", 555),
@@ -151,25 +155,24 @@ class TestSendNewPath:
 
         bot.edit_message.assert_not_called()
         bot.send_message.assert_awaited_once()
-        # admin_message_id обновлён на новый
-        update_mid.assert_awaited_once()
-        assert update_mid.await_args.args[2] == "newer-mid-4"
-        assert mid == "newer-mid-4"
+        # admin_message_id НЕ обновлён — оригинал sacred при force_new=True
+        update_mid.assert_not_called()
+        assert mid == "followup-mid-4"
 
 
-class TestInvariantAdminMidPointsToLatest:
-    """Главный инвариант: после render(force_new=True) admin_message_id
-    указывает на новую карточку — следующий render(force_new=False)
-    edit'ит её, а не старую."""
+class TestInvariantOriginalCardStable:
+    """Главный инвариант: оригинальная карточка обращения (admin_message_id
+    из БД на finalize) остаётся sacred. Followup жителя публикует
+    следовую карточку, НО reply/reopen/close всё равно идут в оригинал."""
 
     @pytest.mark.asyncio
-    async def test_followup_then_reply_edits_fresh_card_not_original(
+    async def test_followup_then_reply_edits_original_not_followup_card(
         self,
     ) -> None:
         from aemr_bot.services import admin_card
 
         appeal = _make_appeal(admin_mid="original-mid-1")
-        bot = _make_bot_with_returned_mid(new_mid="fresh-after-followup-2")
+        bot = _make_bot_with_returned_mid(new_mid="followup-mid-2")
         update_mid = AsyncMock()
         with (
             patch("aemr_bot.config.settings.admin_group_id", 555),
@@ -179,18 +182,20 @@ class TestInvariantAdminMidPointsToLatest:
                 update_mid,
             ),
         ):
-            # Шаг 1: followup жителя → force_new=True
+            # Шаг 1: followup жителя → force_new=True (новая карточка,
+            # но admin_message_id оригинала НЕ меняется в БД)
             await admin_card.render(bot, appeal, force_new=True)
-            # Симулируем что БД обновилась — appeal.admin_message_id теперь новый
-            appeal.admin_message_id = "fresh-after-followup-2"
-            # Шаг 2: оператор отвечает → force_new=False (edit)
+            # admin_message_id в appeal остаётся прежним (БД-state)
+            assert appeal.admin_message_id == "original-mid-1"
+            # Шаг 2: оператор отвечает → force_new=False (edit оригинала)
             mid = await admin_card.render(bot, appeal, force_new=False)
 
-        # Главная проверка: edit улетел в СВЕЖИЙ mid, не в original
+        # Главная проверка: edit улетел в ОРИГИНАЛ, не в followup-карточку
         assert bot.edit_message.await_args.kwargs["message_id"] == (
-            "fresh-after-followup-2"
+            "original-mid-1"
         )
-        assert mid == "fresh-after-followup-2"
+        assert mid == "original-mid-1"
+        update_mid.assert_not_called()  # admin_message_id неизменен
 
 
 class TestNoUserGuard:
