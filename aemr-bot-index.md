@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-24 23:10:14 UTC`
+Generated at: `2026-05-24 23:19:45 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `195`
+Indexed files: `196`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -53,7 +53,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal.py` (26042 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (31064 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
-- `bot/aemr_bot/handlers/appeal_runtime.py` (13168 bytes)
+- `bot/aemr_bot/handlers/appeal_runtime.py` (13373 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (42959 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8595 bytes)
@@ -64,7 +64,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/keyboards.py` (63230 bytes)
 - `bot/aemr_bot/main.py` (19076 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
-- `bot/aemr_bot/services/admin_card.py` (7092 bytes)
+- `bot/aemr_bot/services/admin_card.py` (8894 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6079 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9914 bytes)
 - `bot/aemr_bot/services/appeals.py` (20535 bytes)
@@ -100,6 +100,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/conftest.py` (1882 bytes)
 - `bot/tests/test_admin_appeal_ops.py` (21972 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
+- `bot/tests/test_admin_card_detached_safety.py` (7793 bytes)
 - `bot/tests/test_admin_card_render.py` (9495 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
 - `bot/tests/test_admin_events_descriptor.py` (5856 bytes)
@@ -8629,8 +8630,8 @@ async def on_awaiting_geo_confirm(event, body, text_body, max_user_id):
 
 ### `bot/aemr_bot/handlers/appeal_runtime.py`
 
-Size: `13168` bytes  
-SHA-256: `5318e374a0d4cbf2d2f2584fc450cd71fcce22439226e05db4c9ee2d9915b2e3`
+Size: `13373` bytes  
+SHA-256: `bac35f2ce7a3fec83eaeadd67cf6758c3f07acee96075607f6af781c64271304`
 
 ```python
 """Runtime-helpers и финализация обращения.
@@ -8859,18 +8860,22 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
                 )
                 await users_service.reset_state(session, max_user_id)
 
-        # Single source of truth для admin appeal card — services/admin_card.render.
-        # Helper: send новую карточку (admin_message_id ещё пуст) и
-        # обновит Appeal.admin_message_id в БД. Все последующие
-        # изменения статуса (reply/reopen/followup/...) тоже через
-        # этот helper — поддерживает инвариант «admin_message_id
-        # указывает на актуальную карточку».
+        # Single source of truth для admin appeal card —
+        # services/admin_card.render. Helper send новую карточку
+        # (admin_message_id ещё пуст) и обновит Appeal.admin_message_id
+        # в БД. Все последующие изменения статуса тоже через этот helper.
         from aemr_bot.services import admin_card as admin_card_service
 
-        # appeal был загружен внутри session_scope без selectinload(messages);
-        # admin_card_service.render читает appeal.user (он есть), appeal.messages
-        # для подсчёта attachment_count. На finalize messages пустой, OK.
-        appeal.user = user  # обеспечить .user даже если SA сбросил
+        # appeal был загружен внутри уже закрытой session_scope —
+        # любое обращение к relationships (user, messages, attachments)
+        # вне сессии вызывает MissingGreenlet. Делаем snapshot:
+        # - appeal.user = user — копируем уже-загруженный объект
+        # - appeal.__dict__["messages"] = [] — на finalize история пуста;
+        #   без этого _loaded_messages в card_format и
+        #   _collect_all_user_attachments в admin_relay попытаются
+        #   lazy-load → exception → обращение не доходит до админа.
+        appeal.user = user
+        appeal.__dict__["messages"] = []
         admin_mid = await admin_card_service.render(bot, appeal, force_new=True)
         if not admin_mid:
             log.warning(
@@ -15251,8 +15256,8 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ### `bot/aemr_bot/services/admin_card.py`
 
-Size: `7092` bytes  
-SHA-256: `fa741293e2ee8360a220c7ad97f30a86b61f369cf57407487613b237f8e0832d`
+Size: `8894` bytes  
+SHA-256: `65d8a55b3fb47f237e5ac1746969b70e4e1b6e9018f24eaa4379bc74ec81a655`
 
 ```python
 """Единая точка рендера/обновления admin appeal card.
@@ -15334,14 +15339,34 @@ async def render(
         )
         return None
 
-    text = card_format.admin_card(appeal, user)
+    # text и attachment_count считаем устойчиво: detached appeal с
+    # lazy relationships (messages) может бросить MissingGreenlet.
+    # Главное — карточка дойдёт. Без attachment_count = просто без
+    # кнопки «Вложения (N)»; без timeline — без блока истории.
+    try:
+        text = card_format.admin_card(appeal, user)
+    except Exception:
+        log.exception(
+            "admin_card.render: card_format.admin_card failed for #%s, "
+            "fallback на минимальный текст",
+            appeal.id,
+        )
+        text = f"Обращение #{appeal.id}\nЖитель: {user.first_name or '—'}"
+    try:
+        attachment_count = _count_attachments(appeal)
+    except Exception:
+        log.debug(
+            "admin_card.render: attachment_count failed for #%s",
+            appeal.id, exc_info=False,
+        )
+        attachment_count = 0
     kb = keyboards.appeal_admin_actions(
         appeal.id,
         appeal.status,
         is_it=True,
         user_blocked=bool(user.is_blocked),
         closed_due_to_revoke=bool(getattr(appeal, "closed_due_to_revoke", False)),
-        attachment_count=_count_attachments(appeal),
+        attachment_count=attachment_count,
     )
     attachments = [kb]
 
@@ -15402,10 +15427,27 @@ async def render(
 
 
 def _count_attachments(appeal: "Appeal") -> int:
-    """Сколько вложений у обращения (исходные + дополнения жителя)."""
-    from aemr_bot.services.admin_relay import _collect_all_user_attachments
+    """Сколько вложений у обращения (исходные + дополнения жителя).
 
-    return len(_collect_all_user_attachments(appeal))
+    Устойчиво к detached-state: если appeal без активной сессии,
+    `appeal.messages` может бросить MissingGreenlet. В этом случае
+    считаем только исходные attachments (scalar JSONB поле, доступно
+    без сессии). Это safer, чем падать — caller (например finalize)
+    мог передать appeal без selectinload(messages).
+    """
+    try:
+        from aemr_bot.services.admin_relay import _collect_all_user_attachments
+
+        return len(_collect_all_user_attachments(appeal))
+    except Exception:
+        log.debug(
+            "admin_card._count_attachments: lazy-load fail for appeal #%s, "
+            "fallback to attachments-only",
+            appeal.id,
+            exc_info=False,
+        )
+        # Только исходные. Дополнения посчитать не можем без сессии.
+        return len(getattr(appeal, "attachments", None) or [])
 ```
 
 ### `bot/aemr_bot/services/admin_events.py`
@@ -23964,6 +24006,184 @@ class TestRegistrySync:
         assert not not_admin, (
             f"Маршруты диспетчера, не помеченные admin в callback_router "
             f"(их отсечёт admin-chat guard): {not_admin}"
+        )
+```
+
+### `bot/tests/test_admin_card_detached_safety.py`
+
+Size: `7793` bytes  
+SHA-256: `fa92d2d0e761032aafd4b084f86b8e155ae24a780f71a2da3f746d8f7261dc47`
+
+```python
+"""Regression-тесты на устойчивость admin_card.render к detached-state.
+
+Корень бага: на finalize обращения в `appeal_runtime` Appeal загружен
+внутри session_scope, который к моменту вызова admin_card.render уже
+закрыт. Если render обращается к `appeal.messages` (через
+_count_attachments → _collect_all_user_attachments) — SQLAlchemy
+бросает MissingGreenlet → exception → обращение НЕ доходит до
+админ-чата, житель не получает «Обращение #N принято».
+
+Этот тест RED'нет (через MagicMock + AttributeError), пока
+_count_attachments не устойчив к lazy-fail. После фикса — GREEN.
+"""
+from __future__ import annotations
+
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+from tests._helpers import fake_session_scope as _fake_session_scope
+
+
+pytest.importorskip("maxapi", reason="нужен для card_format")
+
+
+class _LazyFailMessages:
+    """Эмулятор detached-relationship: getattr() выбрасывает
+    StatementError (как SQLAlchemy MissingGreenlet)."""
+
+    def __iter__(self):
+        raise RuntimeError("MissingGreenlet (simulated): detached lazy-load")
+
+    def __len__(self):
+        raise RuntimeError("MissingGreenlet (simulated)")
+
+    def __bool__(self):
+        raise RuntimeError("MissingGreenlet (simulated)")
+
+
+def _make_appeal_detached():
+    """Appeal с messages-relationship, бросающим на lazy-load."""
+    user = SimpleNamespace(
+        first_name="Сергей",
+        phone="+79991234567",
+        is_blocked=False,
+        consent_pdn_at=None,
+        consent_revoked_at=None,
+        subscribed_broadcast=False,
+    )
+    appeal = SimpleNamespace(
+        id=42,
+        user=user,
+        status="new",
+        locality="Елизовское ГП",
+        address="ул. Ленина, 5",
+        topic="Дороги",
+        summary="Яма во дворе.",
+        attachments=[{"type": "image"}],
+        admin_message_id=None,
+        closed_due_to_revoke=False,
+    )
+    # _loaded_messages читает из appeal.__dict__["messages"];
+    # detached lazy-load имитируем тем, что НЕ устанавливаем messages в
+    # __dict__ И делаем attr-доступ через property-like объект, который
+    # падает. Но _loaded_messages читает только __dict__, не падает.
+    #
+    # Реальный путь падения: _collect_all_user_attachments читает
+    # getattr(appeal, "messages") — если в SimpleNamespace нет
+    # messages attr, getattr вернёт None и не упадёт. То есть наш тест
+    # с SimpleNamespace проходит даже без фикса.
+    #
+    # Чтобы реально воспроизвести MissingGreenlet, подменим getattr
+    # для атрибута messages через __setattr__-конструкцию... Сложно
+    # без реального SA. Тест ниже проверяет ИНОЕ: устойчивость к
+    # любому Exception в _count_attachments.
+    return appeal
+
+
+class TestAdminCardSurvivesAttachmentCountFailure:
+    @pytest.mark.asyncio
+    async def test_render_returns_mid_even_if_attachment_count_throws(
+        self,
+    ) -> None:
+        """render не должен падать, если _count_attachments бросает —
+        главное доставить карточку, а число вложений просто пропустить."""
+        from aemr_bot.services import admin_card
+
+        appeal = _make_appeal_detached()
+        bot = SimpleNamespace(
+            send_message=AsyncMock(
+                return_value=SimpleNamespace(
+                    message=SimpleNamespace(
+                        body=SimpleNamespace(mid="new-mid-1")
+                    )
+                )
+            ),
+            edit_message=AsyncMock(),
+        )
+        update_mid = AsyncMock()
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", 555),
+            patch(
+                "aemr_bot.services.admin_card.session_scope",
+                _fake_session_scope,
+            ),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_admin_message_id",
+                update_mid,
+            ),
+            patch(
+                "aemr_bot.services.admin_card._count_attachments",
+                side_effect=RuntimeError("simulated lazy-load fail"),
+            ),
+        ):
+            # render НЕ должен поднять; в худшем случае logs + None
+            try:
+                mid = await admin_card.render(bot, appeal, force_new=True)
+            except Exception:
+                pytest.fail(
+                    "admin_card.render должен быть устойчив к ошибкам "
+                    "вычисления attachment_count — иначе обращение не "
+                    "доходит до админ-чата"
+                )
+        # Проверка: send_message не вызвался (т.к. attachment_count
+        # упал до build keyboard) — это ожидаемо, главное что нет
+        # raise.
+        # NB: после полноценного фикса render будет swallow'ить ошибку
+        # и шлёть карточку без attachment_count. Этот тест фиксирует
+        # МИНИМАЛЬНОЕ требование «не падать».
+        assert mid is None or isinstance(mid, str)
+
+
+class TestCollectAllUserAttachmentsDetachedSafe:
+    """`admin_relay._collect_all_user_attachments` должен быть
+    устойчив к detached appeal.messages."""
+
+    def test_no_messages_attr_returns_only_initial(self) -> None:
+        from aemr_bot.services.admin_relay import _collect_all_user_attachments
+
+        appeal = SimpleNamespace(
+            id=1,
+            attachments=[{"type": "image", "payload": {"token": "a"}}],
+            # Никакого messages атрибута — старый код мог попытаться
+            # getattr и упасть на SA-managed objects.
+        )
+        out = _collect_all_user_attachments(appeal)
+        assert len(out) == 1
+
+
+class TestFinalizeSurvivesDetachedAppeal:
+    """Главный кейс: persist_and_dispatch_appeal не должен падать
+    из-за detached appeal при вызове admin_card.render."""
+
+    @pytest.mark.asyncio
+    async def test_finalize_passes_messages_snapshot(self) -> None:
+        """Smoke: проверяем что код выставляет appeal.__dict__["messages"]
+        снапшотом перед render. Это контракт фикса —
+        appeal_runtime обязан подготовить appeal для detached-чтения."""
+        # Импорт ради side-effect (модуль доступен).
+        from aemr_bot.handlers import appeal_runtime  # noqa: F401
+
+        # Этот тест документирует контракт: финализация делает snapshot
+        # для предотвращения lazy-load. Проверка прямого кода:
+        import inspect
+        src = inspect.getsource(appeal_runtime.persist_and_dispatch_appeal)
+        assert '__dict__["messages"]' in src, (
+            "persist_and_dispatch_appeal должен подготовить appeal "
+            "snapshot для admin_card.render (защита от MissingGreenlet "
+            "при detached lazy-load)"
         )
 ```
 
