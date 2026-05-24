@@ -271,9 +271,15 @@ async def _do_diag(event) -> None:
                 Appeal.created_at >= since_24h
             )
         )
+        # Direction в БД — MessageDirection enum (from_user / from_operator /
+        # system). До этого фикса было "to_user" — невалидное значение,
+        # счётчик ВСЕГДА показывал 0. Это причина того, что /diag
+        # «Ответов оператора за 24ч» всегда был 0 несмотря на ответы.
+        from aemr_bot.db.models import MessageDirection
+
         replies_24h = await session.scalar(
             select(func.count()).select_from(Message).where(
-                Message.direction == "to_user",
+                Message.direction == MessageDirection.FROM_OPERATOR.value,
                 Message.created_at >= since_24h,
             )
         )
