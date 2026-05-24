@@ -248,21 +248,43 @@ class TestCmdSubscribeUnsubscribe:
 
 class TestCmdForget:
     @pytest.mark.asyncio
-    async def test_writes_audit_and_erases(self) -> None:
+    async def test_writes_audit_and_erases_with_closed_ids(self) -> None:
+        """erase_pdn_detailed возвращает list[int] закрытых обращений —
+        notify передаёт его в `closed_appeal_ids` (был bug: всегда [])."""
         from aemr_bot.handlers import start
 
         event = _make_event()
         write_audit = AsyncMock()
-        erase = AsyncMock()
+        erase = AsyncMock(return_value=[7, 12])  # 2 закрытых обращения
         notify = AsyncMock()
         with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.start.ops_service.write_audit", write_audit), \
-             patch("aemr_bot.handlers.start.users_service.erase_pdn", erase), \
+             patch("aemr_bot.handlers.start.users_service.erase_pdn_detailed", erase), \
              patch("aemr_bot.handlers.start.admin_events.notify_data_erased", notify):
             await start.cmd_forget(event)
         write_audit.assert_called_once()
         erase.assert_called_once()
-        notify.assert_called_once_with(event.bot, max_user_id=42, closed_appeal_ids=[])
+        notify.assert_called_once_with(
+            event.bot, max_user_id=42, closed_appeal_ids=[7, 12]
+        )
+
+    @pytest.mark.asyncio
+    async def test_user_not_found_no_crash(self) -> None:
+        """Если жителя нет в БД (повторный /forget) — erase_pdn_detailed
+        возвращает None, notify получает пустой список."""
+        from aemr_bot.handlers import start
+
+        event = _make_event()
+        erase = AsyncMock(return_value=None)
+        notify = AsyncMock()
+        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.start.ops_service.write_audit", AsyncMock()), \
+             patch("aemr_bot.handlers.start.users_service.erase_pdn_detailed", erase), \
+             patch("aemr_bot.handlers.start.admin_events.notify_data_erased", notify):
+            await start.cmd_forget(event)
+        notify.assert_called_once_with(
+            event.bot, max_user_id=42, closed_appeal_ids=[]
+        )
 
 
 class TestCmdCancel:

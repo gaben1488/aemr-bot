@@ -337,10 +337,15 @@ async def _do_diag(event) -> None:
     # signal проблемы. Граница 15 мин выбрана с запасом: pulse-cron
     # стреляет :00, :30 или подобными интервалами, окно 15 мин ловит
     # «один пропущенный pulse-цикл», но не дёргает на нормальный idle.
-    pulse_line = "—"
-    pulse_warn = False
-    if last_event is not None:
-        # last_event может быть naive если БД вернула без tz — нормализуем
+    # last_event=None трактуем как WARN: либо свежий старт без событий,
+    # либо events таблица только что purge'нута retention-cron. В обоих
+    # случаях оператору полезно знать «pulse событий нет вовсе» —
+    # раньше /diag показывал «—» без warn, на свежем кластере
+    # выглядело как «всё ок».
+    pulse_warn = last_event is None
+    if last_event is None:
+        pulse_line = "⚠️ событий нет вовсе (свежий старт?)"
+    else:
         if last_event.tzinfo is None:
             last_event = last_event.replace(tzinfo=timezone.utc)
         minutes_ago = int((now - last_event).total_seconds() // 60)
