@@ -643,20 +643,20 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             appeal_for_card, user_for_card, text or "(без текста)"
         )
 
-    # Политика edit-vs-new (запрос владельца): дополнение жителя НЕ
-    # редактирует старую admin-карточку. Шлём НОВУЮ карточку — оператор
-    # уже мог уйти далеко вниз, edit вверху не виден. Новая карточка с
-    # тем же №, обновлённым статусом и блоком «Дополнение к обращению»
-    # внутри ведёт оператора к свежему артефакту.
-    #
-    # Дополнительно отправляем короткое followup-уведомление с reply-link
-    # на исходную admin_message_id, если она есть — это сохраняет связь
-    # «вижу дополнение → вижу контекст исходного обращения» в чатах с
-    # большим количеством параллельных обращений.
-    admin_mid = getattr(appeal_for_card, "admin_message_id", None)
+    # Политика edit-vs-new: дополнение жителя — событие, требующее
+    # явной отметки внизу чата. Через services/admin_card.render с
+    # force_new=True: helper отправит новую карточку с полной
+    # историей (включая это дополнение) и обновит
+    # Appeal.admin_message_id, чтобы последующие edit'ы (reply,
+    # reopen) попадали в АКТУАЛЬНУЮ карточку, а не в оригинальную
+    # вверху чата. Это закрывает баг «оператор ответил на свежую,
+    # но edit ушёл в старую» — все три точки edit (reply / status /
+    # followup) теперь делят один admin_message_id.
     followup_mid = None
     if cfg.admin_group_id:
-        # Короткое followup-уведомление-индикатор для контекста.
+        # Короткое followup-уведомление с цитатой текста дополнения —
+        # видно даже если оператор в данный момент не смотрит карточки
+        # и сразу даёт reply-link для relay attachments.
         try:
             sent_follow = await event.bot.send_message(
                 chat_id=cfg.admin_group_id, text=followup
@@ -664,41 +664,30 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             followup_mid = extract_message_id(sent_follow)
         except Exception:
             log.exception("send followup notification failed")
-        # Полная карточка с актуальным содержимым.
+        # Полная карточка через единый helper — обновит admin_message_id.
         try:
-            await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text=card_format.admin_card(appeal_for_card, user_for_card),
-                attachments=[
-                    keyboards.appeal_admin_actions(
-                        appeal_for_card.id,
-                        appeal_for_card.status,
-                        is_it=True,
-                        user_blocked=bool(
-                            getattr(user_for_card, "is_blocked", False)
-                        ),
-                        closed_due_to_revoke=bool(
-                            getattr(
-                                appeal_for_card, "closed_due_to_revoke", False
-                            )
-                        ),
-                    )
-                ],
+            from aemr_bot.services import admin_card as admin_card_service
+
+            # appeal_for_card должен иметь user; гарантируем.
+            if getattr(appeal_for_card, "user", None) is None:
+                appeal_for_card.user = user_for_card
+            await admin_card_service.render(
+                event.bot, appeal_for_card, force_new=True
             )
         except Exception:
-            log.exception("send fresh admin appeal card after followup failed")
+            log.exception("admin_card.render after followup failed")
 
     if cfg.admin_group_id:
         if attachments:
             try:
-                # relay привязываем к followup-уведомлению, если оно
-                # ушло (followup_mid), иначе к admin_message_id
-                # исходной карточки (если есть). Третий fallback — без
-                # reply-link.
+                # relay привязываем к followup-уведомлению (followup_mid),
+                # либо без reply-link (admin_card.render уже отправил
+                # новую карточку и обновил admin_message_id внутри — мы
+                # тут не знаем новый mid, не критично).
                 await relay_attachments_to_admin(
                     event.bot,
                     appeal_id=appeal.id,
-                    admin_mid=followup_mid or admin_mid,
+                    admin_mid=followup_mid,
                     stored_attachments=attachments,
                 )
             except Exception:

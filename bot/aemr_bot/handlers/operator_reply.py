@@ -517,22 +517,29 @@ async def _deliver_operator_reply(
     )
     if persisted is None:
         return True
-    admin_mid_to_refresh, admin_card_text, admin_card_keyboard = persisted
+    _admin_mid_to_refresh, _admin_card_text, _admin_card_keyboard = persisted
 
     await _mark_reply_success_recorded(success_key)
     _remember_successful_reply(operator.id, appeal.id, text)
 
-    if admin_mid_to_refresh and admin_card_text and admin_card_keyboard:
-        try:
-            await event.bot.edit_message(
-                message_id=admin_mid_to_refresh,
-                text=admin_card_text,
-                attachments=[admin_card_keyboard],
+    # Edit admin-карточки через единый helper services/admin_card.render:
+    # читает СВЕЖИЙ appeal.admin_message_id из БД (он мог обновиться
+    # followup'ом жителя), пытается edit; на fail fallback на send_new
+    # с update admin_message_id. Это закрывает «edit ушёл в старую
+    # карточку вверху чата» — после followup мы редактируем актуальную.
+    try:
+        from aemr_bot.services import admin_card as admin_card_service
+
+        async with session_scope() as session:
+            fresh_appeal = await appeals_service.get_by_id_with_messages(
+                session, appeal.id
             )
-        except Exception:
-            log.exception(
-                "operator_reply: failed to refresh admin card #%s", appeal.id
-            )
+        if fresh_appeal is not None:
+            await admin_card_service.render(event.bot, fresh_appeal)
+    except Exception:
+        log.exception(
+            "operator_reply: admin_card.render failed for #%s", appeal.id
+        )
 
     await event.bot.send_message(
         chat_id=get_chat_id(event),

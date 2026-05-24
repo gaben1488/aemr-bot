@@ -18,7 +18,6 @@ from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role
 from aemr_bot.services import appeals as appeals_service
-from aemr_bot.services import card_format
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import get_user_id, is_admin_chat, send_or_edit_screen
@@ -35,47 +34,37 @@ async def _show_appeal_card_or_result(
 ) -> None:
     """Перерисовать карточку обращения после действия оператора.
 
-    Политика edit-vs-new (запрошена владельцем):
-    - **Whitelisted** действия (reply / reopen / close без ответа) →
-      `edit_in_place=True` → используем freshness-tracker (edit
-      допустим, если карточка свежая).
-    - **Прочие** действия (block / unblock / erase, поведенческие
-      изменения вне статуса) → `edit_in_place=False` (дефолт) →
-      `force_new_message=True` → ВСЕГДА новая карточка внизу чата.
-      Оператор уже мог уйти далеко вниз; edit на старой карточке
-      вверху не виден, новая карточка приходит к нему.
+    Все обновления (reopen / close / block / unblock / erase) идут
+    через единый helper `services/admin_card.render` — он сам edit'ит
+    actual карточку (admin_message_id из БД) либо send-new + update
+    mid. Параметр `edit_in_place` оставлен для backward-compat
+    интерфейса; по факту больше не влияет — helper всегда нацелен
+    на актуальную карточку, не на «где callback пришёл».
 
-    Это улучшает конверсию: оператор реагирует, потому что видит
-    свежий артефакт, а не «где-то выше что-то изменилось».
+    На случай если обращение не найдено или user пуст — fallback
+    через старый send_or_edit_screen с force_new_message=True
+    (нет актуальной карточки чтобы edit'ить).
     """
     from aemr_bot import keyboards as kbds
+    from aemr_bot.services import admin_card as admin_card_service
 
     try:
         async with session_scope() as session:
-            appeal = await appeals_service.get_by_id(session, appeal_id)
+            appeal = await appeals_service.get_by_id_with_messages(
+                session, appeal_id
+            )
     except Exception:
         log.exception("appeal card refresh failed for appeal_id=%s", appeal_id)
         appeal = None
     if appeal is not None and appeal.user is not None:
         try:
-            await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text=card_format.admin_card(appeal, appeal.user),
-                attachments=[
-                    kbds.appeal_admin_actions(
-                        appeal.id,
-                        appeal.status,
-                        is_it=True,
-                        user_blocked=bool(appeal.user.is_blocked),
-                        closed_due_to_revoke=bool(appeal.closed_due_to_revoke),
-                    )
-                ],
-                force_new_message=not edit_in_place,
-            )
+            await admin_card_service.render(event.bot, appeal)
             return
         except Exception:
-            log.exception("appeal card render/edit failed for appeal_id=%s", appeal_id)
+            log.exception(
+                "admin_card.render failed for appeal_id=%s", appeal_id
+            )
+    # Fallback — не нашли appeal/user, просто пишем сообщение оператору.
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
