@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-24 22:00:29 UTC`
+Generated at: `2026-05-24 22:27:09 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `191`
+Indexed files: `193`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -42,7 +42,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/__init__.py` (3608 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
-- `bot/aemr_bot/handlers/admin_appeal_ops.py` (15465 bytes)
+- `bot/aemr_bot/handlers/admin_appeal_ops.py` (14906 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9220 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12213 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17560 bytes)
@@ -51,19 +51,20 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_settings.py` (41211 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (26042 bytes)
-- `bot/aemr_bot/handlers/appeal_funnel.py` (31437 bytes)
+- `bot/aemr_bot/handlers/appeal_funnel.py` (31064 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
-- `bot/aemr_bot/handlers/appeal_runtime.py` (12572 bytes)
+- `bot/aemr_bot/handlers/appeal_runtime.py` (13168 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (42959 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8462 bytes)
 - `bot/aemr_bot/handlers/menu.py` (46632 bytes)
-- `bot/aemr_bot/handlers/operator_reply.py` (32495 bytes)
+- `bot/aemr_bot/handlers/operator_reply.py` (33056 bytes)
 - `bot/aemr_bot/handlers/start.py` (16556 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (62731 bytes)
 - `bot/aemr_bot/main.py` (19076 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
+- `bot/aemr_bot/services/admin_card.py` (5517 bytes)
 - `bot/aemr_bot/services/admin_events.py` (3161 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9914 bytes)
 - `bot/aemr_bot/services/appeals.py` (18415 bytes)
@@ -99,6 +100,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/conftest.py` (1882 bytes)
 - `bot/tests/test_admin_appeal_ops.py` (20004 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
+- `bot/tests/test_admin_card_render.py` (9055 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
 - `bot/tests/test_admin_handlers_small.py` (21842 bytes)
 - `bot/tests/test_admin_operators.py` (19228 bytes)
@@ -135,7 +137,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_handlers_funnel.py` (9458 bytes)
 - `bot/tests/test_handlers_menu.py` (26314 bytes)
 - `bot/tests/test_handlers_menu_extra.py` (23371 bytes)
-- `bot/tests/test_handlers_operator_reply.py` (28002 bytes)
+- `bot/tests/test_handlers_operator_reply.py` (28466 bytes)
 - `bot/tests/test_handlers_start.py` (12367 bytes)
 - `bot/tests/test_health.py` (4062 bytes)
 - `bot/tests/test_idempotency.py` (3650 bytes)
@@ -3122,8 +3124,8 @@ async def current_user(
 
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
-Size: `15465` bytes  
-SHA-256: `57821f882764e7b81bb2100113d5c102479c0b49225004bc41ee24c698f08a1b`
+Size: `14906` bytes  
+SHA-256: `76b9bdfacabbb371277c460edee7f8ed211239ae55c2992ab920e6d09699c6d1`
 
 ```python
 """Действия оператора над конкретным обращением.
@@ -3146,7 +3148,6 @@ from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role
 from aemr_bot.services import appeals as appeals_service
-from aemr_bot.services import card_format
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import get_user_id, is_admin_chat, send_or_edit_screen
@@ -3163,47 +3164,37 @@ async def _show_appeal_card_or_result(
 ) -> None:
     """Перерисовать карточку обращения после действия оператора.
 
-    Политика edit-vs-new (запрошена владельцем):
-    - **Whitelisted** действия (reply / reopen / close без ответа) →
-      `edit_in_place=True` → используем freshness-tracker (edit
-      допустим, если карточка свежая).
-    - **Прочие** действия (block / unblock / erase, поведенческие
-      изменения вне статуса) → `edit_in_place=False` (дефолт) →
-      `force_new_message=True` → ВСЕГДА новая карточка внизу чата.
-      Оператор уже мог уйти далеко вниз; edit на старой карточке
-      вверху не виден, новая карточка приходит к нему.
+    Все обновления (reopen / close / block / unblock / erase) идут
+    через единый helper `services/admin_card.render` — он сам edit'ит
+    actual карточку (admin_message_id из БД) либо send-new + update
+    mid. Параметр `edit_in_place` оставлен для backward-compat
+    интерфейса; по факту больше не влияет — helper всегда нацелен
+    на актуальную карточку, не на «где callback пришёл».
 
-    Это улучшает конверсию: оператор реагирует, потому что видит
-    свежий артефакт, а не «где-то выше что-то изменилось».
+    На случай если обращение не найдено или user пуст — fallback
+    через старый send_or_edit_screen с force_new_message=True
+    (нет актуальной карточки чтобы edit'ить).
     """
     from aemr_bot import keyboards as kbds
+    from aemr_bot.services import admin_card as admin_card_service
 
     try:
         async with session_scope() as session:
-            appeal = await appeals_service.get_by_id(session, appeal_id)
+            appeal = await appeals_service.get_by_id_with_messages(
+                session, appeal_id
+            )
     except Exception:
         log.exception("appeal card refresh failed for appeal_id=%s", appeal_id)
         appeal = None
     if appeal is not None and appeal.user is not None:
         try:
-            await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text=card_format.admin_card(appeal, appeal.user),
-                attachments=[
-                    kbds.appeal_admin_actions(
-                        appeal.id,
-                        appeal.status,
-                        is_it=True,
-                        user_blocked=bool(appeal.user.is_blocked),
-                        closed_due_to_revoke=bool(appeal.closed_due_to_revoke),
-                    )
-                ],
-                force_new_message=not edit_in_place,
-            )
+            await admin_card_service.render(event.bot, appeal)
             return
         except Exception:
-            log.exception("appeal card render/edit failed for appeal_id=%s", appeal_id)
+            log.exception(
+                "admin_card.render failed for appeal_id=%s", appeal_id
+            )
+    # Fallback — не нашли appeal/user, просто пишем сообщение оператору.
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
@@ -7701,8 +7692,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/appeal_funnel.py`
 
-Size: `31437` bytes  
-SHA-256: `b454974e008c919a660cee6a8b7934af0303bc87571b44c51ed2c200b89a8072`
+Size: `31064` bytes  
+SHA-256: `0cbe41bfc08769ab6db7dc1511e056d5d88a4489ec517318937644b92b70b8db`
 
 ```python
 """FSM-воронка приёма обращения и явного дополнения.
@@ -8350,20 +8341,20 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             appeal_for_card, user_for_card, text or "(без текста)"
         )
 
-    # Политика edit-vs-new (запрос владельца): дополнение жителя НЕ
-    # редактирует старую admin-карточку. Шлём НОВУЮ карточку — оператор
-    # уже мог уйти далеко вниз, edit вверху не виден. Новая карточка с
-    # тем же №, обновлённым статусом и блоком «Дополнение к обращению»
-    # внутри ведёт оператора к свежему артефакту.
-    #
-    # Дополнительно отправляем короткое followup-уведомление с reply-link
-    # на исходную admin_message_id, если она есть — это сохраняет связь
-    # «вижу дополнение → вижу контекст исходного обращения» в чатах с
-    # большим количеством параллельных обращений.
-    admin_mid = getattr(appeal_for_card, "admin_message_id", None)
+    # Политика edit-vs-new: дополнение жителя — событие, требующее
+    # явной отметки внизу чата. Через services/admin_card.render с
+    # force_new=True: helper отправит новую карточку с полной
+    # историей (включая это дополнение) и обновит
+    # Appeal.admin_message_id, чтобы последующие edit'ы (reply,
+    # reopen) попадали в АКТУАЛЬНУЮ карточку, а не в оригинальную
+    # вверху чата. Это закрывает баг «оператор ответил на свежую,
+    # но edit ушёл в старую» — все три точки edit (reply / status /
+    # followup) теперь делят один admin_message_id.
     followup_mid = None
     if cfg.admin_group_id:
-        # Короткое followup-уведомление-индикатор для контекста.
+        # Короткое followup-уведомление с цитатой текста дополнения —
+        # видно даже если оператор в данный момент не смотрит карточки
+        # и сразу даёт reply-link для relay attachments.
         try:
             sent_follow = await event.bot.send_message(
                 chat_id=cfg.admin_group_id, text=followup
@@ -8371,41 +8362,30 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             followup_mid = extract_message_id(sent_follow)
         except Exception:
             log.exception("send followup notification failed")
-        # Полная карточка с актуальным содержимым.
+        # Полная карточка через единый helper — обновит admin_message_id.
         try:
-            await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text=card_format.admin_card(appeal_for_card, user_for_card),
-                attachments=[
-                    keyboards.appeal_admin_actions(
-                        appeal_for_card.id,
-                        appeal_for_card.status,
-                        is_it=True,
-                        user_blocked=bool(
-                            getattr(user_for_card, "is_blocked", False)
-                        ),
-                        closed_due_to_revoke=bool(
-                            getattr(
-                                appeal_for_card, "closed_due_to_revoke", False
-                            )
-                        ),
-                    )
-                ],
+            from aemr_bot.services import admin_card as admin_card_service
+
+            # appeal_for_card должен иметь user; гарантируем.
+            if getattr(appeal_for_card, "user", None) is None:
+                appeal_for_card.user = user_for_card
+            await admin_card_service.render(
+                event.bot, appeal_for_card, force_new=True
             )
         except Exception:
-            log.exception("send fresh admin appeal card after followup failed")
+            log.exception("admin_card.render after followup failed")
 
     if cfg.admin_group_id:
         if attachments:
             try:
-                # relay привязываем к followup-уведомлению, если оно
-                # ушло (followup_mid), иначе к admin_message_id
-                # исходной карточки (если есть). Третий fallback — без
-                # reply-link.
+                # relay привязываем к followup-уведомлению (followup_mid),
+                # либо без reply-link (admin_card.render уже отправил
+                # новую карточку и обновил admin_message_id внутри — мы
+                # тут не знаем новый mid, не критично).
                 await relay_attachments_to_admin(
                     event.bot,
                     appeal_id=appeal.id,
-                    admin_mid=followup_mid or admin_mid,
+                    admin_mid=followup_mid,
                     stored_attachments=attachments,
                 )
             except Exception:
@@ -8597,8 +8577,8 @@ async def on_awaiting_geo_confirm(event, body, text_body, max_user_id):
 
 ### `bot/aemr_bot/handlers/appeal_runtime.py`
 
-Size: `12572` bytes  
-SHA-256: `ee10a61d40cf885b158aded4683e3393fe49a40dfcd444d3385a7a21f34d4f1b`
+Size: `13168` bytes  
+SHA-256: `5318e374a0d4cbf2d2f2584fc450cd71fcce22439226e05db4c9ee2d9915b2e3`
 
 ```python
 """Runtime-helpers и финализация обращения.
@@ -8625,7 +8605,6 @@ from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import appeals as appeals_service
-from aemr_bot.services import card_format
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import extract_message_id
 
@@ -8828,19 +8807,20 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
                 )
                 await users_service.reset_state(session, max_user_id)
 
-        admin_mid = await send_to_admin_card(
-            bot,
-            card_format.admin_card(appeal, user),
-            appeal_id=appeal.id,
-            status=appeal.status,
-            user_blocked=user.is_blocked,
-        )
-        if admin_mid:
-            async with session_scope() as session:
-                await appeals_service.set_admin_message_id(
-                    session, appeal.id, admin_mid
-                )
-        else:
+        # Single source of truth для admin appeal card — services/admin_card.render.
+        # Helper: send новую карточку (admin_message_id ещё пуст) и
+        # обновит Appeal.admin_message_id в БД. Все последующие
+        # изменения статуса (reply/reopen/followup/...) тоже через
+        # этот helper — поддерживает инвариант «admin_message_id
+        # указывает на актуальную карточку».
+        from aemr_bot.services import admin_card as admin_card_service
+
+        # appeal был загружен внутри session_scope без selectinload(messages);
+        # admin_card_service.render читает appeal.user (он есть), appeal.messages
+        # для подсчёта attachment_count. На finalize messages пустой, OK.
+        appeal.user = user  # обеспечить .user даже если SA сбросил
+        admin_mid = await admin_card_service.render(bot, appeal, force_new=True)
+        if not admin_mid:
             log.warning(
                 "обращение #%s создано, но карточка администратора не была "
                 "опубликована (admin_mid=None)",
@@ -12278,8 +12258,8 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
 
 ### `bot/aemr_bot/handlers/operator_reply.py`
 
-Size: `32495` bytes  
-SHA-256: `3c0d6e67912dd2646c7a63154c8d6c1cc29a9ec5abb74006fc9dbcb1427ceb60`
+Size: `33056` bytes  
+SHA-256: `44716d68ab7d5a9266364a2668c11fad4485cbbe5a3156b0a5a54ad640f04727`
 
 ```python
 """Логика ответов операторов и дополнительных сообщений от жителей, вызывается
@@ -12801,22 +12781,29 @@ async def _deliver_operator_reply(
     )
     if persisted is None:
         return True
-    admin_mid_to_refresh, admin_card_text, admin_card_keyboard = persisted
+    _admin_mid_to_refresh, _admin_card_text, _admin_card_keyboard = persisted
 
     await _mark_reply_success_recorded(success_key)
     _remember_successful_reply(operator.id, appeal.id, text)
 
-    if admin_mid_to_refresh and admin_card_text and admin_card_keyboard:
-        try:
-            await event.bot.edit_message(
-                message_id=admin_mid_to_refresh,
-                text=admin_card_text,
-                attachments=[admin_card_keyboard],
+    # Edit admin-карточки через единый helper services/admin_card.render:
+    # читает СВЕЖИЙ appeal.admin_message_id из БД (он мог обновиться
+    # followup'ом жителя), пытается edit; на fail fallback на send_new
+    # с update admin_message_id. Это закрывает «edit ушёл в старую
+    # карточку вверху чата» — после followup мы редактируем актуальную.
+    try:
+        from aemr_bot.services import admin_card as admin_card_service
+
+        async with session_scope() as session:
+            fresh_appeal = await appeals_service.get_by_id_with_messages(
+                session, appeal.id
             )
-        except Exception:
-            log.exception(
-                "operator_reply: failed to refresh admin card #%s", appeal.id
-            )
+        if fresh_appeal is not None:
+            await admin_card_service.render(event.bot, fresh_appeal)
+    except Exception:
+        log.exception(
+            "operator_reply: admin_card.render failed for #%s", appeal.id
+        )
 
     await event.bot.send_message(
         chat_id=get_chat_id(event),
@@ -15173,6 +15160,143 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ```python
 
+```
+
+### `bot/aemr_bot/services/admin_card.py`
+
+Size: `5517` bytes  
+SHA-256: `91b00b7c44ecf0850797087780a70793b6f1cc4e57c4996556bba7129e701273`
+
+```python
+"""Единая точка рендера/обновления admin appeal card.
+
+**Контракт**: `Appeal.admin_message_id` всегда указывает на актуальную
+карточку — последнюю отправленную копию для этого обращения. Все
+изменения статуса (reply / reopen / close / block / unblock / erase /
+followup от жителя) проходят через `render()` и сохраняют этот
+инвариант.
+
+До этого helper'а карточка редактировалась тремя несинхронными способами:
+- operator_reply.py: `bot.edit_message(admin_message_id)` напрямую
+- admin_appeal_ops._show_appeal_card_or_result: через freshness-tracker
+- appeal_funnel followup: ручной `bot.send_message` (новая карточка)
+
+Конкретное нарушение, которое это исправляет: оператор скроллит вниз
+чата, видит свежую карточку (после followup жителя), тапает «✉️
+Ответить» → reply edit'ит ОРИГИНАЛЬНУЮ карточку вверху по старому
+admin_message_id из БД, который не обновлялся при followup. Свежая
+карточка остаётся без отметки «отвечено», оригинал не виден. Здесь
+после render(force_new=True) admin_message_id обновляется — все
+последующие edit'ы попадают в актуальную карточку внизу.
+"""
+from __future__ import annotations
+
+import logging
+from typing import TYPE_CHECKING
+
+from aemr_bot import keyboards
+from aemr_bot.config import settings as cfg
+from aemr_bot.db.session import session_scope
+from aemr_bot.services import appeals as appeals_service
+from aemr_bot.services import card_format
+from aemr_bot.utils.event import extract_message_id
+
+if TYPE_CHECKING:
+    from aemr_bot.db.models import Appeal
+
+log = logging.getLogger(__name__)
+
+
+async def render(
+    bot,
+    appeal: "Appeal",
+    *,
+    force_new: bool = False,
+) -> str | None:
+    """Отрисовать актуальное состояние карточки обращения в админ-чате.
+
+    Args:
+        bot: maxapi Bot instance.
+        appeal: Appeal с подгруженными user и messages (для лента и
+            подсчёта attachments). Передавайте загруженный через
+            `appeals_service.get_by_id_with_messages`.
+        force_new: если True — всегда send новую карточку и update
+            admin_message_id. Используется для followup жителя (новая
+            информация требует явной отметки внизу чата). По умолчанию
+            False — пытаемся edit существующую (если есть
+            admin_message_id и edit удался). На fail edit'а — fallback
+            на send_new + update admin_message_id.
+
+    Returns:
+        mid отправленной/отредактированной карточки, или None при сбое.
+    """
+    if not cfg.admin_group_id:
+        log.warning("admin_card.render: ADMIN_GROUP_ID не установлен")
+        return None
+
+    user = getattr(appeal, "user", None)
+    if user is None:
+        log.warning(
+            "admin_card.render: appeal #%s без user, не могу отрендерить",
+            appeal.id,
+        )
+        return None
+
+    text = card_format.admin_card(appeal, user)
+    kb = keyboards.appeal_admin_actions(
+        appeal.id,
+        appeal.status,
+        is_it=True,
+        user_blocked=bool(user.is_blocked),
+        closed_due_to_revoke=bool(getattr(appeal, "closed_due_to_revoke", False)),
+        attachment_count=_count_attachments(appeal),
+    )
+    attachments = [kb]
+
+    existing_mid = getattr(appeal, "admin_message_id", None)
+
+    if not force_new and existing_mid:
+        try:
+            await bot.edit_message(
+                message_id=existing_mid,
+                text=text,
+                attachments=attachments,
+            )
+            return existing_mid
+        except Exception:
+            log.info(
+                "admin_card.render: edit_message #%s failed for appeal #%s, "
+                "fallback to send_new",
+                existing_mid, appeal.id, exc_info=False,
+            )
+
+    # Send new card (force_new=True, или edit упал, или admin_message_id пуст).
+    try:
+        sent = await bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=text,
+            attachments=attachments,
+        )
+    except Exception:
+        log.exception(
+            "admin_card.render: send_message failed for appeal #%s", appeal.id
+        )
+        return None
+
+    new_mid = extract_message_id(sent)
+    if new_mid:
+        async with session_scope() as session:
+            await appeals_service.set_admin_message_id(
+                session, appeal.id, new_mid
+            )
+    return new_mid
+
+
+def _count_attachments(appeal: "Appeal") -> int:
+    """Сколько вложений у обращения (исходные + дополнения жителя)."""
+    from aemr_bot.services.admin_relay import _collect_all_user_attachments
+
+    return len(_collect_all_user_attachments(appeal))
 ```
 
 ### `bot/aemr_bot/services/admin_events.py`
@@ -23442,6 +23566,237 @@ class TestRegistrySync:
             f"Маршруты диспетчера, не помеченные admin в callback_router "
             f"(их отсечёт admin-chat guard): {not_admin}"
         )
+```
+
+### `bot/tests/test_admin_card_render.py`
+
+Size: `9055` bytes  
+SHA-256: `4d96db16fe120a3c47de714a387e941aaeb4e81bd2e97ec517a5273a15158bac`
+
+```python
+"""Тесты единого render_admin_card (services/admin_card.render).
+
+Контракт:
+- `Appeal.admin_message_id` всегда указывает на актуальную (последнюю)
+  карточку обращения после render().
+- force_new=False: пытается edit; на fail или отсутствие
+  admin_message_id — fallback на send + update.
+- force_new=True: всегда send + update admin_message_id.
+
+Заменяет три несинхронных механизма edit (operator_reply прямой,
+admin_appeal_ops через freshness-tracker, appeal_funnel ручной send).
+Конкретная проблема, которую закрывает: после followup от жителя
+admin_message_id не обновлялся → reply редактировал старую карточку
+вверху чата.
+"""
+from __future__ import annotations
+
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+from tests._helpers import fake_session_scope as _fake_session_scope
+
+
+pytest.importorskip("maxapi", reason="нужен maxapi для card_format")
+
+
+def _make_appeal(*, appeal_id: int = 5, admin_mid: str | None = None) -> SimpleNamespace:
+    user = SimpleNamespace(
+        first_name="Сергей",
+        phone="+79991234567",
+        is_blocked=False,
+        consent_pdn_at=None,
+        consent_revoked_at=None,
+        subscribed_broadcast=False,
+        max_user_id=42,
+    )
+    appeal = SimpleNamespace(
+        id=appeal_id,
+        user=user,
+        status="new",
+        locality="Елизовское ГП",
+        address="ул. Ленина, 5",
+        topic="Дороги",
+        summary="Яма во дворе.",
+        attachments=[],
+        messages=[],
+        admin_message_id=admin_mid,
+        closed_due_to_revoke=False,
+    )
+    return appeal
+
+
+def _make_bot_with_returned_mid(new_mid: str = "new-mid-1") -> SimpleNamespace:
+    """Мок bot с send_message возвращающим object с mid."""
+    bot = SimpleNamespace()
+    bot.send_message = AsyncMock(
+        return_value=SimpleNamespace(
+            message=SimpleNamespace(body=SimpleNamespace(mid=new_mid))
+        )
+    )
+    bot.edit_message = AsyncMock()
+    return bot
+
+
+class TestEditPath:
+    @pytest.mark.asyncio
+    async def test_existing_mid_force_false_edits_in_place(self) -> None:
+        """force_new=False + есть admin_message_id → edit, не send."""
+        from aemr_bot.services import admin_card
+
+        appeal = _make_appeal(admin_mid="existing-mid-7")
+        bot = _make_bot_with_returned_mid()
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            mid = await admin_card.render(bot, appeal, force_new=False)
+
+        bot.edit_message.assert_awaited_once()
+        assert bot.edit_message.await_args.kwargs["message_id"] == "existing-mid-7"
+        bot.send_message.assert_not_called()
+        assert mid == "existing-mid-7"
+
+    @pytest.mark.asyncio
+    async def test_edit_failure_falls_back_to_send_and_updates_mid(self) -> None:
+        """Если edit_message бросает — шлём новую + обновляем admin_message_id."""
+        from aemr_bot.services import admin_card
+
+        appeal = _make_appeal(admin_mid="stale-mid")
+        bot = _make_bot_with_returned_mid(new_mid="fresh-mid-9")
+        bot.edit_message = AsyncMock(side_effect=Exception("MAX 404"))
+        update_mid = AsyncMock()
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", 555),
+            patch("aemr_bot.services.admin_card.session_scope", _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_admin_message_id",
+                update_mid,
+            ),
+        ):
+            mid = await admin_card.render(bot, appeal, force_new=False)
+
+        bot.send_message.assert_awaited_once()
+        update_mid.assert_awaited_once()
+        assert update_mid.await_args.args[1] == appeal.id
+        assert update_mid.await_args.args[2] == "fresh-mid-9"
+        assert mid == "fresh-mid-9"
+
+
+class TestSendNewPath:
+    @pytest.mark.asyncio
+    async def test_no_existing_mid_sends_new_and_saves(self) -> None:
+        """Нет admin_message_id (первая публикация) → send + сохранение."""
+        from aemr_bot.services import admin_card
+
+        appeal = _make_appeal(admin_mid=None)
+        bot = _make_bot_with_returned_mid(new_mid="first-mid-1")
+        update_mid = AsyncMock()
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", 555),
+            patch("aemr_bot.services.admin_card.session_scope", _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_admin_message_id",
+                update_mid,
+            ),
+        ):
+            mid = await admin_card.render(bot, appeal, force_new=False)
+
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited_once()
+        update_mid.assert_awaited_once()
+        assert mid == "first-mid-1"
+
+    @pytest.mark.asyncio
+    async def test_force_new_true_sends_even_with_existing_mid(self) -> None:
+        """force_new=True игнорирует существующий admin_message_id и шлёт
+        новую карточку (followup от жителя — нужна явная отметка внизу)."""
+        from aemr_bot.services import admin_card
+
+        appeal = _make_appeal(admin_mid="old-mid-3")
+        bot = _make_bot_with_returned_mid(new_mid="newer-mid-4")
+        update_mid = AsyncMock()
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", 555),
+            patch("aemr_bot.services.admin_card.session_scope", _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_admin_message_id",
+                update_mid,
+            ),
+        ):
+            mid = await admin_card.render(bot, appeal, force_new=True)
+
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited_once()
+        # admin_message_id обновлён на новый
+        update_mid.assert_awaited_once()
+        assert update_mid.await_args.args[2] == "newer-mid-4"
+        assert mid == "newer-mid-4"
+
+
+class TestInvariantAdminMidPointsToLatest:
+    """Главный инвариант: после render(force_new=True) admin_message_id
+    указывает на новую карточку — следующий render(force_new=False)
+    edit'ит её, а не старую."""
+
+    @pytest.mark.asyncio
+    async def test_followup_then_reply_edits_fresh_card_not_original(
+        self,
+    ) -> None:
+        from aemr_bot.services import admin_card
+
+        appeal = _make_appeal(admin_mid="original-mid-1")
+        bot = _make_bot_with_returned_mid(new_mid="fresh-after-followup-2")
+        update_mid = AsyncMock()
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", 555),
+            patch("aemr_bot.services.admin_card.session_scope", _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_admin_message_id",
+                update_mid,
+            ),
+        ):
+            # Шаг 1: followup жителя → force_new=True
+            await admin_card.render(bot, appeal, force_new=True)
+            # Симулируем что БД обновилась — appeal.admin_message_id теперь новый
+            appeal.admin_message_id = "fresh-after-followup-2"
+            # Шаг 2: оператор отвечает → force_new=False (edit)
+            mid = await admin_card.render(bot, appeal, force_new=False)
+
+        # Главная проверка: edit улетел в СВЕЖИЙ mid, не в original
+        assert bot.edit_message.await_args.kwargs["message_id"] == (
+            "fresh-after-followup-2"
+        )
+        assert mid == "fresh-after-followup-2"
+
+
+class TestNoUserGuard:
+    @pytest.mark.asyncio
+    async def test_appeal_without_user_returns_none_no_crash(self) -> None:
+        from aemr_bot.services import admin_card
+
+        appeal = SimpleNamespace(
+            id=99, user=None, admin_message_id=None, attachments=[], messages=[]
+        )
+        bot = _make_bot_with_returned_mid()
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            mid = await admin_card.render(bot, appeal)
+
+        assert mid is None
+        bot.send_message.assert_not_called()
+        bot.edit_message.assert_not_called()
+
+
+class TestNoAdminGroupGuard:
+    @pytest.mark.asyncio
+    async def test_no_admin_group_returns_none(self) -> None:
+        from aemr_bot.services import admin_card
+
+        appeal = _make_appeal()
+        bot = _make_bot_with_returned_mid()
+        with patch("aemr_bot.config.settings.admin_group_id", 0):
+            mid = await admin_card.render(bot, appeal)
+        assert mid is None
+        bot.send_message.assert_not_called()
 ```
 
 ### `bot/tests/test_admin_events.py`
@@ -33889,8 +34244,8 @@ class TestHandleCallback:
 
 ### `bot/tests/test_handlers_operator_reply.py`
 
-Size: `28002` bytes  
-SHA-256: `3b3cf8dbabefe3d1cf46afe51a1f8314a2dff8612bd18d37152c87e25ac8a214`
+Size: `28466` bytes  
+SHA-256: `6325684d937f51a6dd18469f8d0e6d28aae81173ea7e8d92198fd6f83ad146c7`
 
 ```python
 """Тесты handlers/operator_reply.py — ответы операторов и intent dedupe.
@@ -34376,6 +34731,8 @@ class TestDeliverOperatorReply:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
                    AsyncMock(side_effect=[fresh_appeal, fresh_appeal])), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id_with_messages",
+                   AsyncMock(return_value=fresh_appeal)), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
                    AsyncMock()), \
              patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
@@ -34385,17 +34742,21 @@ class TestDeliverOperatorReply:
              patch("aemr_bot.handlers.operator_reply._mark_reply_success_recorded",
                    AsyncMock()), \
              patch("aemr_bot.handlers.operator_reply.card_format.admin_card",
-                   return_value="обновлённая карточка"):
+                   return_value="обновлённая карточка"), \
+             patch("aemr_bot.config.settings.admin_group_id", 555):
             handled = await opr._deliver_operator_reply(
                 event, appeal=appeal, operator=operator,
                 text="ответ", audit_action="reply",
             )
 
         assert handled is True
+        # После миграции на admin_card.render — edit_message вызывается
+        # ИЗНУТРИ helper'а (а не из _deliver_operator_reply напрямую).
+        # helper читает fresh_appeal.admin_message_id="admin-mid-1" и
+        # отправляет edit туда.
         event.bot.edit_message.assert_called_once()
         kwargs = event.bot.edit_message.call_args.kwargs
         assert kwargs["message_id"] == "admin-mid-1"
-        assert kwargs["text"] == "обновлённая карточка"
         assert kwargs["attachments"]
 
 
