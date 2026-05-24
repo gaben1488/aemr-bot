@@ -1118,10 +1118,13 @@ docker compose exec bot alembic upgrade head
 ### Тесты
 
 ```bash
-# Локально на хосте (нужен pip install -e ".[dev]" внутри bot/)
+# Локально через uv (правильная среда, совпадает с Docker)
 cd bot
-pytest tests/ -v
+uv sync --extra dev      # один раз после клонирования или обновления pyproject
+uv run pytest tests/ -v
 ```
+
+**Не используйте системный `pip install` / `pytest`** — это создаст другие версии пакетов мимо `uv.lock`, локальные тесты пройдут, а в Docker валится `TypeError`/`ImportError`. Подробнее: [DEPS.md](DEPS.md).
 
 Сейчас в `tests/` лежат тесты на сервисный слой. Они **не работают на in-memory SQLite** из-за PostgreSQL-specific JSONB. Если нужно гонять, поднимайте локальный Postgres и подменяйте `DATABASE_URL`. Альтернатива — подключить `testcontainers`. Это известное направление развития, см. часть XI.
 
