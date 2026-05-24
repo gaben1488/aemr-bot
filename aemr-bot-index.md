@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-24 23:02:08 UTC`
+Generated at: `2026-05-24 23:10:14 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `194`
+Indexed files: `195`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -47,7 +47,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12498 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17560 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (21033 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (22594 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (41211 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (26042 bytes)
@@ -65,7 +65,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/main.py` (19076 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_card.py` (7092 bytes)
-- `bot/aemr_bot/services/admin_events.py` (3161 bytes)
+- `bot/aemr_bot/services/admin_events.py` (6079 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9914 bytes)
 - `bot/aemr_bot/services/appeals.py` (20535 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
@@ -83,7 +83,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/settings_store.py` (11344 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
-- `bot/aemr_bot/services/users.py` (29316 bytes)
+- `bot/aemr_bot/services/users.py` (29815 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (12444 bytes)
 - `bot/aemr_bot/texts.py` (41532 bytes)
@@ -102,6 +102,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
 - `bot/tests/test_admin_card_render.py` (9495 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
+- `bot/tests/test_admin_events_descriptor.py` (5856 bytes)
 - `bot/tests/test_admin_handlers_small.py` (21842 bytes)
 - `bot/tests/test_admin_operators.py` (19228 bytes)
 - `bot/tests/test_admin_panel.py` (12680 bytes)
@@ -5501,8 +5502,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `21033` bytes  
-SHA-256: `cea121224b1fd8c7ca34e878931575a6cd9211009fa1353bfd1a490d0eba57d9`
+Size: `22594` bytes  
+SHA-256: `ff2862f95d2a1c9e52aa76cd0f2d695fff08f8dbcd9963edcbc3ea8c8fc3c432`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -5748,17 +5749,32 @@ async def _do_diag(event) -> None:
     since_24h = now - timedelta(hours=24)
     stuck_threshold = now - timedelta(minutes=10)
 
+    # broadcasts_service._eligible_filter — то же что фильтр фактической
+    # рассылки. Используем здесь, чтобы /diag показывал именно тех, кому
+    # реально уйдёт следующий broadcast (а не просто
+    # subscribed_broadcast=True). Раньше /diag показывал больше, чем
+    # рассылка доставляла — оператор удивлялся «подписан 100, ушло 80».
+    from aemr_bot.services import broadcasts as broadcasts_service
+
     async with session_scope() as session:
         users_total = await session.scalar(select(func.count()).select_from(User))
+        # «Активные» — без обезличенных (first_name='Удалено' после
+        # /forget или PDN-retention). Это «живые жители», которые
+        # могут писать боту. users_total включает их для прозрачности
+        # «сколько записей в БД всего».
+        users_active = await session.scalar(
+            select(func.count()).select_from(User).where(
+                User.first_name != "Удалено",
+            )
+        )
         users_blocked = await session.scalar(
             select(func.count()).select_from(User).where(User.is_blocked.is_(True))
         )
-        users_subscribed = await session.scalar(
-            select(func.count()).select_from(User).where(
-                User.subscribed_broadcast.is_(True),
-                User.is_blocked.is_(False),
-            )
-        )
+        # Eligible subscribers: ровно те, кому уйдёт рассылка.
+        # Старый счётчик (только subscribed_broadcast=True) расходился
+        # с фактической доставкой, потому что не учитывал
+        # consent_broadcast_at IS NOT NULL и first_name != 'Удалено'.
+        users_subscribed = await broadcasts_service.count_subscribers(session)
         users_new_24h = await session.scalar(
             select(func.count()).select_from(User).where(
                 User.created_at >= since_24h
@@ -5874,8 +5890,10 @@ async def _do_diag(event) -> None:
         f"• Всего событий: {events_total or 0}\n"
         "\n"
         "Жители:\n"
-        f"• Всего: {users_total or 0} "
-        f"(подписаны: {users_subscribed or 0}, заблокированы: {users_blocked or 0})\n"
+        f"• Записей всего: {users_total or 0} "
+        f"(активных: {users_active or 0}, заблокированы: {users_blocked or 0})\n"
+        f"• Получателей рассылки: {users_subscribed or 0} "
+        f"(подписаны + согласие + не заблокированы + не обезличены)\n"
         f"• Новых за 24ч: {users_new_24h or 0}\n"
         "\n"
         "Обращения:\n"
@@ -15392,8 +15410,8 @@ def _count_attachments(appeal: "Appeal") -> int:
 
 ### `bot/aemr_bot/services/admin_events.py`
 
-Size: `3161` bytes  
-SHA-256: `a5eba9e004539da41f323dc7348000f3dd363912bb5651ea3dd0eaa71c2c6466`
+Size: `6079` bytes  
+SHA-256: `117b9e3bf8f7b37d6b52cb48c110b09927289623c82c7ab7fb7f590396b76c82`
 
 ```python
 """Короткие уведомления в служебную группу о действиях жителя."""
@@ -15404,6 +15422,8 @@ from collections.abc import Sequence
 from typing import Any
 
 from aemr_bot.config import settings as cfg
+from aemr_bot.db.session import session_scope
+from aemr_bot.services import users as users_service
 
 log = logging.getLogger(__name__)
 
@@ -15418,10 +15438,66 @@ async def _send(bot: Any, text: str) -> None:
         log.debug("не удалось отправить служебное уведомление", exc_info=True)
 
 
+def _mask_phone(phone: str | None) -> str:
+    """Маскированный телефон для admin-чата: «+7***1234». 152-ФЗ:
+    операторы видят 4 последние цифры для идентификации, но не полный
+    номер (он попадает в backup MAX и в скриншоты)."""
+    if not phone:
+        return "—"
+    digits = "".join(ch for ch in phone if ch.isdigit())
+    if len(digits) < 4:
+        return phone
+    tail = digits[-4:]
+    prefix = "+7" if digits[0] in {"7", "8"} and len(digits) >= 11 else "+"
+    return f"{prefix}***{tail}"
+
+
+async def _describe_user(max_user_id: int) -> str:
+    """Многострочное описание жителя для admin-уведомлений.
+
+    Возвращает блок:
+        Житель: Сергей · +7***4567 · MAX id 12345
+        Подписки: 🔔 на рассылку (если подписан)
+        Согласие: ✅ активно / 🔁 отозвано / —
+
+    Если пользователь не найден в БД — вернёт только MAX id (например,
+    при первом старте до создания записи).
+    """
+    try:
+        async with session_scope() as session:
+            user = await users_service.find_by_max_id(session, max_user_id)
+    except Exception:
+        log.debug(
+            "describe_user: не удалось получить user из БД", exc_info=True
+        )
+        user = None
+    if user is None:
+        return f"Житель: — · — · MAX id {max_user_id}"
+
+    name = (user.first_name or "—").strip() or "—"
+    phone = _mask_phone(user.phone)
+    parts_status = []
+    if getattr(user, "subscribed_broadcast", False):
+        parts_status.append("🔔 подписан на рассылку")
+    else:
+        parts_status.append("🔕 без подписки")
+    if getattr(user, "consent_revoked_at", None) is not None:
+        parts_status.append("🔁 согласие отозвано")
+    elif getattr(user, "consent_pdn_at", None) is not None:
+        parts_status.append("✅ согласие активно")
+    if getattr(user, "is_blocked", False):
+        parts_status.append("🚫 заблокирован")
+    return (
+        f"Житель: {name} · {phone} · MAX id {max_user_id}\n"
+        f"Статус: {' · '.join(parts_status)}"
+    )
+
+
 async def notify_consent_given(bot: Any, *, max_user_id: int) -> None:
+    desc = await _describe_user(max_user_id)
     await _send(
         bot,
-        f"✅ Житель дал согласие на обработку ПДн.\nMAX user id: {max_user_id}",
+        f"✅ Житель дал согласие на обработку ПДн.\n{desc}",
     )
 
 
@@ -15431,28 +15507,28 @@ async def notify_consent_revoked(
     max_user_id: int,
     open_appeal_ids: Sequence[int],
 ) -> None:
+    desc = await _describe_user(max_user_id)
     if open_appeal_ids:
         ids = ", ".join(f"#{appeal_id}" for appeal_id in open_appeal_ids)
         detail = (
             f"Открытые обращения ждут финального ответа через бот: {ids}.\n"
             f"Ответьте по обычной карточке или командой /reply. После ответа "
-            f"обращение закроется, новые обращения без нового согласия не принимаются."
+            f"обращение закроется, новые обращения без нового согласия не "
+            f"принимаются."
         )
     else:
         detail = "Открытых обращений у этого жителя сейчас нет."
     await _send(
         bot,
-        f"⚠️ Житель отозвал согласие на ПДн.\n"
-        f"MAX user id: {max_user_id}\n"
-        f"{detail}",
+        f"⚠️ Житель отозвал согласие на ПДн.\n{desc}\n\n{detail}",
     )
 
 
 async def notify_broadcast_subscribed(bot: Any, *, max_user_id: int) -> None:
+    desc = await _describe_user(max_user_id)
     await _send(
         bot,
-        f"🔔 Житель подписался на муниципальные уведомления.\n"
-        f"MAX user id: {max_user_id}",
+        f"🔔 Житель подписался на муниципальные уведомления.\n{desc}",
     )
 
 
@@ -15462,11 +15538,11 @@ async def notify_broadcast_unsubscribed(
     max_user_id: int,
     source: str,
 ) -> None:
+    desc = await _describe_user(max_user_id)
     await _send(
         bot,
-        f"🔕 Житель отписался от муниципальных уведомлений.\n"
-        f"MAX user id: {max_user_id}\n"
-        f"Источник: {source}",
+        f"🔕 Житель отписался от муниципальных уведомлений.\n{desc}\n"
+        f"Источник отписки: {source}",
     )
 
 
@@ -15476,6 +15552,9 @@ async def notify_data_erased(
     max_user_id: int,
     closed_appeal_ids: Sequence[int],
 ) -> None:
+    # Здесь _describe_user намеренно НЕ зовём: данные жителя уже
+    # erase'нуты к этому моменту (first_name='Удалено', phone обнулён).
+    # Описание не информативно. Пишем только id и факт.
     if closed_appeal_ids:
         ids = ", ".join(f"#{appeal_id}" for appeal_id in closed_appeal_ids)
         detail = f"Закрыто без ответа: {ids}. Карточки в чате устарели."
@@ -20160,8 +20239,8 @@ def file_attachment(token: str):
 
 ### `bot/aemr_bot/services/users.py`
 
-Size: `29316` bytes  
-SHA-256: `3bba9a94d90a4f903d0cb00655ca71fa4fc7a8b8383f0d4581ef108e4a9c407a`
+Size: `29815` bytes  
+SHA-256: `1edeaf76d3542ea1cb020f4030e0c8bd3cb2ca6845f1831471dbf4828db3106b`
 
 ```python
 import logging
@@ -20210,6 +20289,15 @@ async def get_or_create(session: AsyncSession, max_user_id: int, first_name: str
         session.add(user)
         await session.flush()
     return user
+
+
+async def find_by_max_id(session: AsyncSession, max_user_id: int) -> User | None:
+    """Read-only поиск без создания. Используется для уведомлений
+    оператору, где запись жителя точно должна существовать; если её
+    нет — пишем «—» вместо создания фантомной."""
+    return await session.scalar(
+        select(User).where(User.max_user_id == max_user_id)
+    )
 
 
 async def has_consent(session: AsyncSession, max_user_id: int) -> bool:
@@ -24189,6 +24277,170 @@ async def test_notify_logs_and_does_not_raise_on_delivery_error() -> None:
         )
 
     bot.send_message.assert_called_once()
+```
+
+### `bot/tests/test_admin_events_descriptor.py`
+
+Size: `5856` bytes  
+SHA-256: `03f2d14711fb2237f890b2a23c6d54df2088b2f2231b7049ed017da426c15079`
+
+```python
+"""Тесты на info-богатые уведомления оператору.
+
+Запрос: «в информирующих сообщениях о подписках-отписках присутствует
+только max_id - я бы хотел чтобы было подробней».
+
+Реализовано в `services/admin_events._describe_user(max_user_id)` —
+возвращает блок «Житель: имя · phone · MAX id N \\n Статус: 🔔 ... ·
+✅ согласие ...».
+
+Здесь тесты на формат и edge cases.
+"""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+from tests._helpers import fake_session_scope as _fake_session_scope
+
+
+pytest.importorskip("maxapi", reason="нужен для config")
+
+
+def _make_user(**overrides) -> SimpleNamespace:
+    defaults = {
+        "first_name": "Сергей",
+        "phone": "+79991234567",
+        "subscribed_broadcast": False,
+        "consent_pdn_at": None,
+        "consent_revoked_at": None,
+        "is_blocked": False,
+    }
+    defaults.update(overrides)
+    return SimpleNamespace(**defaults)
+
+
+class TestDescribeUser:
+    @pytest.mark.asyncio
+    async def test_user_not_found_returns_only_max_id(self) -> None:
+        from aemr_bot.services import admin_events
+
+        with (
+            patch("aemr_bot.services.admin_events.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_events.users_service.find_by_max_id",
+                AsyncMock(return_value=None),
+            ),
+        ):
+            desc = await admin_events._describe_user(42)
+        assert "MAX id 42" in desc
+        assert "—" in desc
+
+    @pytest.mark.asyncio
+    async def test_subscribed_with_consent_shows_full(self) -> None:
+        from aemr_bot.services import admin_events
+
+        user = _make_user(
+            subscribed_broadcast=True,
+            consent_pdn_at=datetime.now(timezone.utc),
+        )
+        with (
+            patch("aemr_bot.services.admin_events.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_events.users_service.find_by_max_id",
+                AsyncMock(return_value=user),
+            ),
+        ):
+            desc = await admin_events._describe_user(42)
+        assert "Сергей" in desc
+        # masked phone — последние 4 цифры
+        assert "4567" in desc
+        # полный телефон НЕ светим
+        assert "9991234567" not in desc
+        assert "MAX id 42" in desc
+        assert "🔔 подписан на рассылку" in desc
+        assert "✅ согласие активно" in desc
+
+    @pytest.mark.asyncio
+    async def test_revoked_consent_marked(self) -> None:
+        from aemr_bot.services import admin_events
+
+        user = _make_user(consent_revoked_at=datetime.now(timezone.utc))
+        with (
+            patch("aemr_bot.services.admin_events.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_events.users_service.find_by_max_id",
+                AsyncMock(return_value=user),
+            ),
+        ):
+            desc = await admin_events._describe_user(42)
+        assert "🔁 согласие отозвано" in desc
+        # При отзыве consent_pdn_at в логике не приоритетен —
+        # «активно» НЕ должно появиться
+        assert "✅ согласие активно" not in desc
+
+    @pytest.mark.asyncio
+    async def test_blocked_marked(self) -> None:
+        from aemr_bot.services import admin_events
+
+        user = _make_user(is_blocked=True)
+        with (
+            patch("aemr_bot.services.admin_events.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_events.users_service.find_by_max_id",
+                AsyncMock(return_value=user),
+            ),
+        ):
+            desc = await admin_events._describe_user(42)
+        assert "🚫 заблокирован" in desc
+
+
+class TestNotifyHelpers:
+    """Что финальные сообщения включают descriptor (не только max_id)."""
+
+    @pytest.mark.asyncio
+    async def test_notify_broadcast_subscribed_includes_name_phone(self) -> None:
+        from aemr_bot.services import admin_events
+
+        bot = SimpleNamespace(send_message=AsyncMock())
+        user = _make_user(
+            subscribed_broadcast=True,
+            consent_pdn_at=datetime.now(timezone.utc),
+        )
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", 555),
+            patch("aemr_bot.services.admin_events.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_events.users_service.find_by_max_id",
+                AsyncMock(return_value=user),
+            ),
+        ):
+            await admin_events.notify_broadcast_subscribed(bot, max_user_id=42)
+        sent_text = bot.send_message.await_args.kwargs["text"]
+        assert "Сергей" in sent_text
+        assert "4567" in sent_text
+        assert "MAX id 42" in sent_text
+        assert "подписался" in sent_text
+
+
+class TestMaskPhone:
+    def test_simple_mask(self) -> None:
+        from aemr_bot.services.admin_events import _mask_phone
+
+        assert _mask_phone("+79991234567") == "+7***4567"
+        assert _mask_phone("89991234567") == "+7***4567"
+        assert _mask_phone(None) == "—"
+        assert _mask_phone("") == "—"
+        # короткий номер не маскируем (нечего скрывать)
+        assert _mask_phone("12") == "12"
 ```
 
 ### `bot/tests/test_admin_handlers_small.py`
