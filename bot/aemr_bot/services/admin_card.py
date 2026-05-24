@@ -1,23 +1,28 @@
 """Единая точка рендера/обновления admin appeal card.
 
-**Контракт**: `Appeal.admin_message_id` всегда указывает на актуальную
-карточку — последнюю отправленную копию для этого обращения. Все
-изменения статуса (reply / reopen / close / block / unblock / erase /
-followup от жителя) проходят через `render()` и сохраняют этот
-инвариант.
+**Контракт:**
 
-До этого helper'а карточка редактировалась тремя несинхронными способами:
-- operator_reply.py: `bot.edit_message(admin_message_id)` напрямую
-- admin_appeal_ops._show_appeal_card_or_result: через freshness-tracker
-- appeal_funnel followup: ручной `bot.send_message` (новая карточка)
+- `Appeal.admin_message_id` указывает на ОРИГИНАЛЬНУЮ карточку
+  обращения (первую опубликованную при finalize). Это sacred artifact —
+  меняется только при изменении статуса самого обращения
+  (reply / reopen / close / block / unblock / erase).
+- `force_new=False` → edit по admin_message_id. На fail (карточка
+  удалена в MAX или другая ошибка) → fallback send-new + обновить
+  admin_message_id (старый mid недействителен, надо переезжать).
+- `force_new=True` → ВСЕГДА send-new, но admin_message_id НЕ
+  обновляется. Это для **следов** активности: followup жителя
+  публикует «вторая карточка с дополнением», но оригинал остаётся
+  каноническим (где живут reply/reopen/close).
 
-Конкретное нарушение, которое это исправляет: оператор скроллит вниз
-чата, видит свежую карточку (после followup жителя), тапает «✉️
-Ответить» → reply edit'ит ОРИГИНАЛЬНУЮ карточку вверху по старому
-admin_message_id из БД, который не обновлялся при followup. Свежая
-карточка остаётся без отметки «отвечено», оригинал не виден. Здесь
-после render(force_new=True) admin_message_id обновляется — все
-последующие edit'ы попадают в актуальную карточку внизу.
+Разделение ответственности: каждая карточка в чате — отдельный
+артефакт. Оригинальная = «вот обращение, отвечайте здесь». Follow-up
+карточки внизу = «вот ещё информация по тому же обращению».
+Оператор работает с оригиналом для финального ответа.
+
+До этого helper'а карточка редактировалась тремя несинхронными
+способами (operator_reply прямой edit_message, admin_appeal_ops через
+freshness-tracker, appeal_funnel ручной send_message). Helper
+унифицирует, сохраняя стабильность оригинала.
 """
 from __future__ import annotations
 
@@ -85,6 +90,7 @@ async def render(
 
     existing_mid = getattr(appeal, "admin_message_id", None)
 
+    edit_succeeded = False
     if not force_new and existing_mid:
         try:
             await bot.edit_message(
@@ -92,15 +98,23 @@ async def render(
                 text=text,
                 attachments=attachments,
             )
+            edit_succeeded = True
             return existing_mid
         except Exception:
             log.info(
                 "admin_card.render: edit_message #%s failed for appeal #%s, "
-                "fallback to send_new",
+                "fallback to send_new (admin_message_id будет обновлён "
+                "на новый — старый недействителен)",
                 existing_mid, appeal.id, exc_info=False,
             )
 
-    # Send new card (force_new=True, или edit упал, или admin_message_id пуст).
+    # Send new card. Три причины почему попали сюда:
+    #   1) force_new=True — следовая карточка (followup от жителя).
+    #      admin_message_id НЕ обновляем — оригинал остаётся sacred.
+    #   2) admin_message_id пуст — первая публикация (finalize).
+    #      Обновляем admin_message_id новым mid.
+    #   3) Edit упал — старая карточка в MAX недействительна.
+    #      Обновляем admin_message_id (переезжаем на новый).
     try:
         sent = await bot.send_message(
             chat_id=cfg.admin_group_id,
@@ -114,11 +128,19 @@ async def render(
         return None
 
     new_mid = extract_message_id(sent)
-    if new_mid:
+    # Обновляем admin_message_id ТОЛЬКО если:
+    #   - existing_mid пуст (это первая публикация), либо
+    #   - existing_mid был, но edit упал (нужен переезд).
+    # При force_new=True с живым existing_mid — НЕ обновляем
+    # (оригинал sacred, force_new=True шлёт всего лишь следовую карточку).
+    should_update_mid = new_mid and not (force_new and existing_mid)
+    if should_update_mid:
         async with session_scope() as session:
             await appeals_service.set_admin_message_id(
                 session, appeal.id, new_mid
             )
+    # Подавить unused-var предупреждение про edit_succeeded.
+    _ = edit_succeeded
     return new_mid
 
 
