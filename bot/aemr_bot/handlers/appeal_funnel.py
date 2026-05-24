@@ -654,17 +654,24 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     # followup) теперь делят один admin_message_id.
     followup_mid = None
     if cfg.admin_group_id:
-        # Короткое followup-уведомление с цитатой текста дополнения —
-        # видно даже если оператор в данный момент не смотрит карточки
-        # и сразу даёт reply-link для relay attachments.
+        # 1. Видимый маркер «🔄 Новое дополнение по обращению #N» с
+        # цитатой текста — чтобы оператор в шумном чате сразу понял
+        # «по этому обращению есть новая инфа». Содержит сам текст
+        # дополнения для quick-read без открытия карточки.
         try:
             sent_follow = await event.bot.send_message(
-                chat_id=cfg.admin_group_id, text=followup
+                chat_id=cfg.admin_group_id,
+                text=f"🔄 {followup}",
             )
             followup_mid = extract_message_id(sent_follow)
         except Exception:
             log.exception("send followup notification failed")
-        # Полная карточка через единый helper — обновит admin_message_id.
+        # 2. Полноценная новая карточка с актуальной timeline-историей.
+        # admin_card.render(force_new=True): шлёт новую карточку,
+        # admin_message_id оригинала НЕ двигаем (sacred-правило, PR #54).
+        # На оригинальной карточке вверху чата оператор отвечает по
+        # admin_message_id; новая карточка внизу — для контекста и
+        # повторных reply-кнопок.
         try:
             from aemr_bot.services import admin_card as admin_card_service
 

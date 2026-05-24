@@ -1151,13 +1151,19 @@ def appeal_admin_actions(
     open_states = {AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value}
     closed_states = {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}
     if status in open_states:
-        # «✉️ Ответить» = финальный (закрывает в ANSWERED).
-        # «💬 Промежуточный» = ответ для диалога, обращение остаётся в работе.
-        # Две кнопки в одной строке — чаще нужен финальный, он первый.
+        # Две кнопки reply в РАЗНЫХ строках — узкий экран MAX обрезает
+        # длинные надписи в одной строке, оператор не видел кнопку
+        # «Промежуточный». Финальный лейбл явно говорит «и закрыть»,
+        # промежуточный — «без закрытия».
         kb.row(
-            CallbackButton(text="✉️ Ответить", payload=f"op:reply:{appeal_id}"),
             CallbackButton(
-                text="💬 Промежуточный",
+                text="✉️ Ответить и закрыть",
+                payload=f"op:reply:{appeal_id}",
+            ),
+        )
+        kb.row(
+            CallbackButton(
+                text="💬 Ответить промежуточно (не закрывая)",
                 payload=f"op:replyint:{appeal_id}",
             ),
         )
