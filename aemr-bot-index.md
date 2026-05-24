@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-24 23:24:33 UTC`
+Generated at: `2026-05-24 23:45:53 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `196`
 Max file size: `300 KB`
@@ -47,7 +47,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12498 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17560 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (22594 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (23039 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (41211 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (26042 bytes)
@@ -59,7 +59,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/callback_router.py` (8595 bytes)
 - `bot/aemr_bot/handlers/menu.py` (46632 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (34018 bytes)
-- `bot/aemr_bot/handlers/start.py` (16556 bytes)
+- `bot/aemr_bot/handlers/start.py` (17005 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (63429 bytes)
 - `bot/aemr_bot/main.py` (19076 bytes)
@@ -83,7 +83,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/settings_store.py` (11344 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
-- `bot/aemr_bot/services/users.py` (29815 bytes)
+- `bot/aemr_bot/services/users.py` (30589 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (12444 bytes)
 - `bot/aemr_bot/texts.py` (41532 bytes)
@@ -141,7 +141,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_handlers_menu.py` (26314 bytes)
 - `bot/tests/test_handlers_menu_extra.py` (23371 bytes)
 - `bot/tests/test_handlers_operator_reply.py` (29048 bytes)
-- `bot/tests/test_handlers_start.py` (12367 bytes)
+- `bot/tests/test_handlers_start.py` (13597 bytes)
 - `bot/tests/test_health.py` (4062 bytes)
 - `bot/tests/test_idempotency.py` (3650 bytes)
 - `bot/tests/test_image_attachments.py` (7472 bytes)
@@ -5503,8 +5503,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `22594` bytes  
-SHA-256: `ff2862f95d2a1c9e52aa76cd0f2d695fff08f8dbcd9963edcbc3ea8c8fc3c432`
+Size: `23039` bytes  
+SHA-256: `f6bccc7a7d244b79a8f87b7aa30cbd6cc2e0dc852326f54d0693d741fd00ee72`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -5846,10 +5846,15 @@ async def _do_diag(event) -> None:
     # signal проблемы. Граница 15 мин выбрана с запасом: pulse-cron
     # стреляет :00, :30 или подобными интервалами, окно 15 мин ловит
     # «один пропущенный pulse-цикл», но не дёргает на нормальный idle.
-    pulse_line = "—"
-    pulse_warn = False
-    if last_event is not None:
-        # last_event может быть naive если БД вернула без tz — нормализуем
+    # last_event=None трактуем как WARN: либо свежий старт без событий,
+    # либо events таблица только что purge'нута retention-cron. В обоих
+    # случаях оператору полезно знать «pulse событий нет вовсе» —
+    # раньше /diag показывал «—» без warn, на свежем кластере
+    # выглядело как «всё ок».
+    pulse_warn = last_event is None
+    if last_event is None:
+        pulse_line = "⚠️ событий нет вовсе (свежий старт?)"
+    else:
         if last_event.tzinfo is None:
             last_event = last_event.replace(tzinfo=timezone.utc)
         minutes_ago = int((now - last_event).total_seconds() // 60)
@@ -13051,8 +13056,8 @@ async def handle_command_reply(
 
 ### `bot/aemr_bot/handlers/start.py`
 
-Size: `16556` bytes  
-SHA-256: `f3e6ecbf11cec405417d07d2e5fa70b7f710a641f73069c6f178153b335d0a32`
+Size: `17005` bytes  
+SHA-256: `2f1cc804afe338f4e9f7bb337edbacfda59b5101c0dd57fb5a2264c8aae4fa21`
 
 ```python
 import logging
@@ -13240,11 +13245,17 @@ async def cmd_forget(event):
             action="self_erase",
             target=f"user max_id={max_user_id}",
         )
-        await users_service.erase_pdn(session, max_user_id)
+        # erase_pdn_detailed возвращает список id закрытых обращений
+        # (NEW/IN_PROGRESS до erase). Передаём в уведомление оператору
+        # «закрыто без ответа: #N, #M» — раньше всегда был [] и
+        # оператор не видел какие тикеты осиротели.
+        closed_ids = await users_service.erase_pdn_detailed(
+            session, max_user_id
+        )
     await admin_events.notify_data_erased(
         event.bot,
         max_user_id=max_user_id,
-        closed_appeal_ids=[],
+        closed_appeal_ids=closed_ids or [],
     )
     await reply(event, texts.ERASE_REQUESTED)
 
@@ -20294,8 +20305,8 @@ def file_attachment(token: str):
 
 ### `bot/aemr_bot/services/users.py`
 
-Size: `29815` bytes  
-SHA-256: `1edeaf76d3542ea1cb020f4030e0c8bd3cb2ca6845f1831471dbf4828db3106b`
+Size: `30589` bytes  
+SHA-256: `cc29c2462d5d908294f17510ede35a5f1a38d8c6e0cfd9b97253ba65e2e482e9`
 
 ```python
 import logging
@@ -20591,33 +20602,54 @@ async def _redact_appeal_payloads_for_user(session: AsyncSession, user_id: int) 
 async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
     """Полное удаление ПДн жителя из рабочей БД.
 
-    1. Все NEW/IN_PROGRESS обращения этого жителя закрываются
+    Wrapper для backwards-compat (возвращает bool). Новый код
+    использует `erase_pdn_detailed` чтобы получить список закрытых
+    обращений (для уведомления оператору).
+    """
+    closed_ids = await erase_pdn_detailed(session, max_user_id)
+    return closed_ids is not None
+
+
+async def erase_pdn_detailed(
+    session: AsyncSession, max_user_id: int
+) -> list[int] | None:
+    """Полное удаление ПДн с возвратом списка закрытых обращений.
+
+    Возвращает:
+    - None — пользователь не найден (ничего не сделано);
+    - list[int] — id обращений NEW/IN_PROGRESS, закрытых из-за erase
+      (может быть пустой, если у жителя не было открытых).
+
+    1. Селектим id NEW/IN_PROGRESS обращений ДО update — нужны для
+       уведомления оператора «закрыто без ответа: #123, #456».
+    2. Все NEW/IN_PROGRESS обращения этого жителя закрываются
        (`closed_due_to_revoke=true`, чтобы оператор не пытался их
        возобновить — гард доставки всё равно откажет).
-    2. Свободный текст и вложения по обращениям стираются: address,
+    3. Свободный текст и вложения по обращениям стираются: address,
        summary, messages.text, attachments. Именно там чаще всего
        повторяются имя, телефон, адрес квартиры, фото и другие ПДн.
-    3. Все обращения жителя (любого статуса) переподвешиваются на
+    4. Все обращения жителя (любого статуса) переподвешиваются на
        техническую запись «anonymous user» через UPDATE appeals.user_id.
        Так статистика количества обращений сохраняется, а связь с
        конкретным MAX-пользователем физически уходит.
-    4. Запись жителя в users физически удаляется. При следующем заходе
-       того же max_user_id создаётся свежая запись — бот не узнаёт
-       жителя.
-
-    Ограничение: уже отправленные сообщения в MAX-чатах этим кодом не
-    удаляются, потому что это внешнее хранилище мессенджера. Поэтому
-    операторский регламент не должен обещать удаление исторических
-    сообщений из клиента MAX.
+    5. Запись жителя в users физически удаляется.
     """
-
-
     user_row = await session.scalar(
         select(User.id).where(User.max_user_id == max_user_id)
     )
     if user_row is None:
-        return False
-    # 1. Закрыть открытые обращения с флагом closed_due_to_revoke,
+        return None
+    # 1. Список открытых обращений ДО UPDATE — нужен для уведомления.
+    open_appeals_result = await session.execute(
+        select(Appeal.id).where(
+            Appeal.user_id == user_row,
+            Appeal.status.in_(
+                [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+            ),
+        )
+    )
+    closed_ids: list[int] = [row[0] for row in open_appeals_result.all()]
+    # 2. Закрыть открытые обращения с флагом closed_due_to_revoke,
     #    чтобы кнопка «🔁 Возобновить» под ними не показывалась
     #    оператору (всё равно гард доставки откажет).
     await session.execute(
@@ -20634,11 +20666,11 @@ async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
             closed_due_to_revoke=True,
         )
     )
-    # 2. Стереть фактическое содержимое обращений/сообщений до
+    # 3. Стереть фактическое содержимое обращений/сообщений до
     #    переподвешивания на anonymous-user. Метаданные оставляем для
     #    статистики и аудита количества обращений.
     await _redact_appeal_payloads_for_user(session, user_row)
-    # 3. Переподвесить ВСЕ обращения этого жителя (любого статуса) на
+    # 4. Переподвесить ВСЕ обращения этого жителя (любого статуса) на
     #    anonymous-запись. Статистика количества обращений за период
     #    остаётся, имя/телефон жителя физически уходят.
     anonymous_id = await get_anonymous_user_id(session)
@@ -20647,11 +20679,9 @@ async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
         .where(Appeal.user_id == user_row)
         .values(user_id=anonymous_id, closed_due_to_revoke=True)
     )
-    # 4. Физически удалить запись жителя. cascade='all, delete-orphan'
-    #    в модели User.appeals сюда не сработает — обращения уже
-    #    отвязаны через UPDATE выше.
+    # 5. Физически удалить запись жителя.
     await session.execute(delete(User).where(User.id == user_row))
-    return True
+    return closed_ids
 
 
 async def revoke_consent(session: AsyncSession, max_user_id: int) -> bool:
@@ -35937,8 +35967,8 @@ class TestHandleCommandReply:
 
 ### `bot/tests/test_handlers_start.py`
 
-Size: `12367` bytes  
-SHA-256: `f478976d82d7a111ab48452fba9eacbb232a86dea7ba1897bb4c5bfe2e2438ec`
+Size: `13597` bytes  
+SHA-256: `2de50793d311ece79f909385cb79e2173627188b961d79c1dfdadbf137c57194`
 
 ```python
 """Тесты handlers/start.py — команды жителя /start, /help, /menu, /rules,
@@ -36191,21 +36221,43 @@ class TestCmdSubscribeUnsubscribe:
 
 class TestCmdForget:
     @pytest.mark.asyncio
-    async def test_writes_audit_and_erases(self) -> None:
+    async def test_writes_audit_and_erases_with_closed_ids(self) -> None:
+        """erase_pdn_detailed возвращает list[int] закрытых обращений —
+        notify передаёт его в `closed_appeal_ids` (был bug: всегда [])."""
         from aemr_bot.handlers import start
 
         event = _make_event()
         write_audit = AsyncMock()
-        erase = AsyncMock()
+        erase = AsyncMock(return_value=[7, 12])  # 2 закрытых обращения
         notify = AsyncMock()
         with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.start.ops_service.write_audit", write_audit), \
-             patch("aemr_bot.handlers.start.users_service.erase_pdn", erase), \
+             patch("aemr_bot.handlers.start.users_service.erase_pdn_detailed", erase), \
              patch("aemr_bot.handlers.start.admin_events.notify_data_erased", notify):
             await start.cmd_forget(event)
         write_audit.assert_called_once()
         erase.assert_called_once()
-        notify.assert_called_once_with(event.bot, max_user_id=42, closed_appeal_ids=[])
+        notify.assert_called_once_with(
+            event.bot, max_user_id=42, closed_appeal_ids=[7, 12]
+        )
+
+    @pytest.mark.asyncio
+    async def test_user_not_found_no_crash(self) -> None:
+        """Если жителя нет в БД (повторный /forget) — erase_pdn_detailed
+        возвращает None, notify получает пустой список."""
+        from aemr_bot.handlers import start
+
+        event = _make_event()
+        erase = AsyncMock(return_value=None)
+        notify = AsyncMock()
+        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.start.ops_service.write_audit", AsyncMock()), \
+             patch("aemr_bot.handlers.start.users_service.erase_pdn_detailed", erase), \
+             patch("aemr_bot.handlers.start.admin_events.notify_data_erased", notify):
+            await start.cmd_forget(event)
+        notify.assert_called_once_with(
+            event.bot, max_user_id=42, closed_appeal_ids=[]
+        )
 
 
 class TestCmdCancel:
