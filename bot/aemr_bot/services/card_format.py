@@ -88,6 +88,78 @@ def admin_followups_block(appeal: Appeal) -> str:
     return "\n".join(lines)
 
 
+def appeal_timeline_block(appeal: Appeal) -> str:
+    """Хронологическая лента переписки по обращению.
+
+    Формат блока:
+        ────────────────
+        История переписки:
+        📩 Дополнение жителя (12.05 14:30): ...
+        📨 Ответ оператора (12.05 15:00): ...
+        📩 Дополнение жителя (13.05 09:15): ...
+        ...
+
+    Берём ВСЕ загруженные messages, сортируем по created_at, рендерим
+    единой timeline. Это «полная история» по запросу владельца — заменяет
+    отдельный followups_block, когда есть хоть один ответ оператора.
+
+    Если ответов оператора нет — возвращаем admin_followups_block
+    (старый формат «Дополнения к обращению»), чтобы не ломать
+    visual layout для обращений в состоянии NEW/IN_PROGRESS без
+    переписки.
+    """
+    msgs = _loaded_messages(appeal)
+    if not msgs:
+        return ""
+
+    operator_msgs = [
+        m for m in msgs
+        if getattr(m, "direction", None) == MessageDirection.FROM_OPERATOR.value
+    ]
+    # Без ответов оператора — старый блок «Дополнения» (knows only
+    # from_user). Меньше шума в карточке новых обращений.
+    if not operator_msgs:
+        return admin_followups_block(appeal)
+
+    # Все сообщения по времени (от старых к новым)
+    ordered = sorted(
+        msgs,
+        key=lambda m: getattr(m, "created_at", None) or datetime.min.replace(tzinfo=TZ),
+    )
+    # Ограничиваем длину истории — 10 последних, чтобы карточка не
+    # разрасталась. Старые тоже выводим хедером «Ранее: N сообщений».
+    hidden_count = max(0, len(ordered) - 10)
+    visible = ordered[-10:]
+    lines = ["────────────────", "История переписки:"]
+    if hidden_count:
+        lines.append(f"Ранее ещё {hidden_count} сообщений (скрыты).")
+    for msg in visible:
+        direction = getattr(msg, "direction", "")
+        text = (getattr(msg, "text", None) or "").strip()
+        attachments = getattr(msg, "attachments", None) or []
+        created_at = getattr(msg, "created_at", None)
+        time_str = _local_short(created_at) if created_at else ""
+        if direction == MessageDirection.FROM_OPERATOR.value:
+            marker = "📨 Ответ оператора"
+        elif direction == MessageDirection.FROM_USER.value:
+            marker = "📩 Дополнение жителя"
+        else:
+            marker = "•"
+        header = f"{marker} ({time_str})" if time_str else marker
+        body = _clip(text, limit=400) if text else "Без текста."
+        attach_line = attachments_summary_line(attachments)
+        if attach_line:
+            body = f"{body}\n{attach_line}"
+        lines.append(f"{header}:")
+        lines.append(body)
+    return "\n".join(lines)
+
+
+def _local_short(dt: datetime) -> str:
+    """Короткая локальная дата для timeline — без года, экономия места."""
+    return dt.astimezone(TZ).strftime("%d.%m %H:%M")
+
+
 def _citizen_status_line(user: User) -> str:
     """Компактная строка статуса жителя для admin-карточки — оператор
     видит «нормальный житель» vs «отозвал согласие, обращение в работе
@@ -141,9 +213,14 @@ def admin_card(appeal: Appeal, user: User) -> str:
     summary_line = attachments_summary_line(appeal.attachments or [])
     if summary_line:
         body = f"{body}\n{summary_line}"
-    followups = admin_followups_block(appeal)
-    if followups:
-        body = f"{body}\n\n{followups}"
+    # Timeline: полная история переписки (followup'ы жителя + ответы
+    # оператора в хронологии). Когда ответов нет — fallback на старый
+    # «Дополнения к обращению» (см. appeal_timeline_block). Это
+    # выполняет запрос владельца про «явную прозрачную полностью
+    # информативную историю и конверсию ответов на обращения».
+    timeline = appeal_timeline_block(appeal)
+    if timeline:
+        body = f"{body}\n\n{timeline}"
     return body
 
 
@@ -173,7 +250,7 @@ def citizen_reply(appeal: Appeal, reply_text: str) -> str:
 
 def user_card(appeal: Appeal) -> str:
     emoji, label = STATUS_LABELS.get(appeal.status, ("•", appeal.status))
-    return APPEAL_CARD_TEMPLATE.format(
+    body = APPEAL_CARD_TEMPLATE.format(
         number=appeal.id,
         created_at=_local(appeal.created_at),
         status_emoji=emoji,
@@ -183,6 +260,61 @@ def user_card(appeal: Appeal) -> str:
         topic=appeal.topic or "—",
         summary=appeal.summary or "—",
     )
+    # Лента для жителя: те же блоки что у admin_card, но житель видит
+    # «Ваше дополнение» и «Ответ Администрации» вместо служебных
+    # маркеров (через user_appeal_timeline_block).
+    timeline = user_appeal_timeline_block(appeal)
+    if timeline:
+        body = f"{body}\n\n{timeline}"
+    return body
+
+
+def user_appeal_timeline_block(appeal: Appeal) -> str:
+    """Хронологическая лента переписки для карточки жителя.
+
+    Отличия от admin-варианта:
+    - «Ваше дополнение» вместо «Дополнение жителя» (от 2-го лица).
+    - «📨 Ответ Администрации» вместо «📨 Ответ оператора» (для
+      формального восприятия).
+    - Не сокращаем тексты так сильно как в admin (житель хочет видеть
+      полный ответ).
+
+    Если переписки нет — пустая строка, базовый user_card без блока.
+    """
+    msgs = _loaded_messages(appeal)
+    if not msgs:
+        return ""
+
+    ordered = sorted(
+        msgs,
+        key=lambda m: getattr(m, "created_at", None) or datetime.min.replace(tzinfo=TZ),
+    )
+    hidden_count = max(0, len(ordered) - 10)
+    visible = ordered[-10:]
+    lines = ["────────────────", "История переписки:"]
+    if hidden_count:
+        lines.append(f"Ранее ещё {hidden_count} сообщений (скрыты).")
+    for msg in visible:
+        direction = getattr(msg, "direction", "")
+        text = (getattr(msg, "text", None) or "").strip()
+        attachments = getattr(msg, "attachments", None) or []
+        created_at = getattr(msg, "created_at", None)
+        time_str = _local_short(created_at) if created_at else ""
+        if direction == MessageDirection.FROM_OPERATOR.value:
+            marker = "📨 Ответ Администрации"
+        elif direction == MessageDirection.FROM_USER.value:
+            marker = "📩 Ваше дополнение"
+        else:
+            marker = "•"
+        header = f"{marker} ({time_str})" if time_str else marker
+        # Лимит длиннее, чем у admin: житель хочет видеть полный ответ.
+        body = _clip(text, limit=700) if text else "Без текста."
+        attach_line = attachments_summary_line(attachments)
+        if attach_line:
+            body = f"{body}\n{attach_line}"
+        lines.append(f"{header}:")
+        lines.append(body)
+    return "\n".join(lines)
 
 
 def appeal_list_label(appeal: Appeal) -> str:
