@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-24 23:19:45 UTC`
+Generated at: `2026-05-24 23:24:33 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `196`
 Max file size: `300 KB`
@@ -51,7 +51,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_settings.py` (41211 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (26042 bytes)
-- `bot/aemr_bot/handlers/appeal_funnel.py` (31064 bytes)
+- `bot/aemr_bot/handlers/appeal_funnel.py` (31674 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (13373 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
@@ -61,7 +61,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/operator_reply.py` (34018 bytes)
 - `bot/aemr_bot/handlers/start.py` (16556 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (63230 bytes)
+- `bot/aemr_bot/keyboards.py` (63429 bytes)
 - `bot/aemr_bot/main.py` (19076 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_card.py` (8894 bytes)
@@ -7745,8 +7745,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/appeal_funnel.py`
 
-Size: `31064` bytes  
-SHA-256: `0cbe41bfc08769ab6db7dc1511e056d5d88a4489ec517318937644b92b70b8db`
+Size: `31674` bytes  
+SHA-256: `4fdcf7785aa8ea56f965ea3d0775f338490ab8d7060f09ea45ca5294f25c7044`
 
 ```python
 """FSM-воронка приёма обращения и явного дополнения.
@@ -8405,17 +8405,24 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     # followup) теперь делят один admin_message_id.
     followup_mid = None
     if cfg.admin_group_id:
-        # Короткое followup-уведомление с цитатой текста дополнения —
-        # видно даже если оператор в данный момент не смотрит карточки
-        # и сразу даёт reply-link для relay attachments.
+        # 1. Видимый маркер «🔄 Новое дополнение по обращению #N» с
+        # цитатой текста — чтобы оператор в шумном чате сразу понял
+        # «по этому обращению есть новая инфа». Содержит сам текст
+        # дополнения для quick-read без открытия карточки.
         try:
             sent_follow = await event.bot.send_message(
-                chat_id=cfg.admin_group_id, text=followup
+                chat_id=cfg.admin_group_id,
+                text=f"🔄 {followup}",
             )
             followup_mid = extract_message_id(sent_follow)
         except Exception:
             log.exception("send followup notification failed")
-        # Полная карточка через единый helper — обновит admin_message_id.
+        # 2. Полноценная новая карточка с актуальной timeline-историей.
+        # admin_card.render(force_new=True): шлёт новую карточку,
+        # admin_message_id оригинала НЕ двигаем (sacred-правило, PR #54).
+        # На оригинальной карточке вверху чата оператор отвечает по
+        # admin_message_id; новая карточка внизу — для контекста и
+        # повторных reply-кнопок.
         try:
             from aemr_bot.services import admin_card as admin_card_service
 
@@ -13619,8 +13626,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `63230` bytes  
-SHA-256: `c59cd9a4d55c0c3fbf8f375c8dd7bca96918d87d18b61812ecb4f5aa69338ee0`
+Size: `63429` bytes  
+SHA-256: `0ddff1e681dcc376885be2a6f0dfa979d250d0f9d5d73f1f4701720af9bde240`
 
 ```python
 from maxapi.types import (
@@ -14776,13 +14783,19 @@ def appeal_admin_actions(
     open_states = {AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value}
     closed_states = {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}
     if status in open_states:
-        # «✉️ Ответить» = финальный (закрывает в ANSWERED).
-        # «💬 Промежуточный» = ответ для диалога, обращение остаётся в работе.
-        # Две кнопки в одной строке — чаще нужен финальный, он первый.
+        # Две кнопки reply в РАЗНЫХ строках — узкий экран MAX обрезает
+        # длинные надписи в одной строке, оператор не видел кнопку
+        # «Промежуточный». Финальный лейбл явно говорит «и закрыть»,
+        # промежуточный — «без закрытия».
         kb.row(
-            CallbackButton(text="✉️ Ответить", payload=f"op:reply:{appeal_id}"),
             CallbackButton(
-                text="💬 Промежуточный",
+                text="✉️ Ответить и закрыть",
+                payload=f"op:reply:{appeal_id}",
+            ),
+        )
+        kb.row(
+            CallbackButton(
+                text="💬 Ответить промежуточно (не закрывая)",
                 payload=f"op:replyint:{appeal_id}",
             ),
         )
