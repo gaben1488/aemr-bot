@@ -538,11 +538,12 @@ def register(dp: Dispatcher) -> None:
                     broadcast_handler._wizards.pop(operator_id, None)
                     admin_cmd_module._op_wizards.pop(operator_id, None)
                     op_reply.drop_reply_intent(operator_id)
-                await event.bot.send_message(
-                    chat_id=cfg.admin_group_id,
-                    text="Текущие мастера и черновики ответа сброшены.",
-                    attachments=[keyboards.op_back_to_menu_keyboard()],
-                )
+                if event.bot is not None:
+                    await event.bot.send_message(
+                        chat_id=cfg.admin_group_id,
+                        text="Текущие мастера и черновики ответа сброшены.",
+                        attachments=[keyboards.op_back_to_menu_keyboard()],
+                    )
                 return
 
             consumed = await broadcast_handler._handle_wizard_text(event, text_body)

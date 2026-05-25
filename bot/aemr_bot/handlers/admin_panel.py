@@ -202,7 +202,7 @@ async def _do_open_tickets(event) -> None:
         mid = extract_message_id(sent)
         if mid:
             last_mid = mid
-    if last_mid is not None:
+    if last_mid is not None and cfg.admin_group_id:
         menu_tracker.set_last_menu_mid(cfg.admin_group_id, last_mid)
 
 

@@ -907,8 +907,10 @@ async def _step_edit(
     """
     if not text:
         # пустой ввод — повторим prompt
-        async with session_scope() as session:
-            tmpl = await templates_service.get_by_id(session, state.target_id)
+        tmpl = None
+        if state.target_id is not None:
+            async with session_scope() as session:
+                tmpl = await templates_service.get_by_id(session, state.target_id)
         name = tmpl.name if tmpl else "?"
         await event.message.answer(
             texts.OP_TMPL_EDIT_PROMPT.format(
