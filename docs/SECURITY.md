@@ -387,6 +387,35 @@ Auto-deploy на сервере подтягивает **только** из `ma
 
 Все 15 фиксов покрыты регрессионными тестами в `bot/tests/test_reliability_pass.py`, `test_appeal_card_edit_policy.py`, `test_admin_card_render.py`, `test_idempotency.py`, `test_db_backup.py`, `test_funnel_state_hardening.py`, `test_admin_events.py`, `test_operator_reply_with_image.py`.
 
+### Серия SECURITY_REVIEW 2026-05-26 (полный пасс с 4 параллельными агентами)
+
+Сводный отчёт: [`docs/_meta/SECURITY_REVIEW_2026-05-26.md`](_meta/SECURITY_REVIEW_2026-05-26.md). Детальные находки по доменам: `SEC_INVENTORY`, `SEC_MAX_THREATS`, `SEC_SCAM_VECTORS`, `SEC_EXPLOITS`.
+
+| # | Категория | Что | Как защищено |
+|---|---|---|---|
+| H1 | 🟠 PR injection | `operator_name` в GitHub PR body — markdown stuffing `## Maintainer note` | `_sanitize_for_pr_body` (newline→space, backtick→ˋ, trunk 120) |
+| H2 | 🟠 root-cron shell injection | `healthwatch.sh` тянет BOT_TOKEN / ADMIN_GROUP_ID из `.env` без quote | regex validate перед curl (exit 2 если формат сломан) |
+| M1 | 🟡 PII в логах | geo-callback payload (координаты жителя) на info-уровне docker | `appeal.py:490,492` → debug-only, без значения payload |
+| M2 | 🟡 stale operators | оператор покинул admin-группу — остаётся `is_active=true` | новый cron `stale-operators-cleanup` 04:20, IT-роль защищена от self-lock-out |
+| M3 | 🟡 outgoing URL фишинг | оператор может вписать жителю любую URL в ответе | `find_non_whitelisted_urls` в `operator_reply` — блокировка доставки + admin notice |
+| M4 | 🟡 phone format | `emergency_contacts.phone` принимал любой текст (premium-номер) | regex `^[\d\s\+\-\(\)\.]{2,40}$` в validate |
+| M5 | 🟡 followup URL warning | житель/оператор кликает на ссылку в admin-карточке | warning «не открывайте напрямую» если URL в summary/followup |
+| M7 | 🟡 letsencrypt shell | `init-letsencrypt.sh` DOMAIN/EMAIL в `--entrypoint "..."` | regex validate до docker compose run |
+| C1 | 🔴 welcome dormant | IT редактирует welcome/consent через UI, житель видит hardcoded | `get_text_with_fallback` + `sanitize_settings_text` (HTML/JS вырезаются, не-whitelisted URL → label only) |
+| C2 | 🔴 broadcast spoofing/ошибка | один confirm = моментальная рассылка всем подписчикам | URL-whitelist на текст + cooldown 5 мин (30 сек для `[ЧС]`-маркера) с возможностью отмены |
+| C4-6 | 🔴 социалка | scam/impersonation/MAX attachment leak | `WELCOME` блок «Что бот НИКОГДА не запрашиваем» + Политика §6.7 |
+
+### Accept / known limitations 2026-05-26
+
+| # | Что | Почему accept |
+|---|---|---|
+| C3 | Operator 2FA / PIN отсутствует | Принят владельцем 2026-05-26 как избыточное усложнение для гос-канала, где компрометация оператора маловероятна. Mitigation: audit_log + быстрая деактивация другим IT через wizard. Возврат к решению — при изменении threat model. |
+| M1b/c | max_user_id в логах + docker json-file logs переживают `/erase` | max_user_id — псевдоидентификатор по 152-ФЗ, нужен для дебага. Docker logs — настроена log rotation 10MB×3 (см. SYSADMIN §12b), ручной truncate при `/erase` в RUNBOOK. |
+| M6 | TLS pinning к `*.max.ru` отсутствует | Системный CA + ICA достаточны для self-host'а. Pinning добавляет операционный риск при ротации сертификата. |
+| M8 | GitHub API response без full schema | `.get()` с дефолтами безопасен; full schema = overengineering для одного использования. |
+| M9 | `/export` без size-limit | LIMIT 500 уже есть в коде; реальный риск OOM минимален. Streaming-export — отдельный track. |
+| M10 | `/setting json.loads` extras | Известное проектное решение (forward-compat: новые поля в seed не должны ломать validate). |
+
 ## 11. Известные ограничения и компромиссы
 
 Перечисляю явно, чтобы при аудите не было сюрпризов:

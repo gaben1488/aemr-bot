@@ -159,6 +159,27 @@ async def request_cancel(session: AsyncSession, broadcast_id: int) -> bool:
     return result.rowcount > 0
 
 
+async def mark_cancelled(
+    session: AsyncSession, broadcast_id: int
+) -> bool:
+    """Отменить рассылку из DRAFT (SECURITY_REVIEW C2 — cancel во время cooldown'а).
+
+    Отличается от `request_cancel` тем, что работает с DRAFT (рассылка
+    создана, но цикл отправки ещё не запущен — `mark_started` не
+    вызывался). Идемпотентно: если статус уже терминальный (DONE,
+    CANCELLED, FAILED) — ничего не делает, возвращает False.
+    """
+    result = await session.execute(
+        update(Broadcast)
+        .where(
+            Broadcast.id == broadcast_id,
+            Broadcast.status == BroadcastStatus.DRAFT.value,
+        )
+        .values(status=BroadcastStatus.CANCELLED.value)
+    )
+    return result.rowcount > 0
+
+
 async def reap_orphaned_sending(session: AsyncSession) -> int:
     """При старте перевести каждую запись Broadcast.SENDING в FAILED.
 

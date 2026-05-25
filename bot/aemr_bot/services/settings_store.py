@@ -107,6 +107,79 @@ def find_non_whitelisted_urls(text: str) -> list[str]:
     """
     return [u for u in extract_urls(text) if not _is_whitelisted_url(u)]
 
+
+# SECURITY_REVIEW C1: санитизация welcome_text / consent_text перед
+# тем, как они уйдут жителю в личку. IT-роль имеет права редактировать
+# эти тексты через UI «⚙️ Настройки бота» — и это удобно для оператив-
+# ных правок без редеплоя. Но если IT-аккаунт компрометирован (или
+# просто кто-то ошибся) — текст не должен дать инжектить активный
+# HTML, кликабельный `javascript:`-ссылки, или фишинг-URL на сторонний
+# домен. Здесь — мягкая «текстовая» санитизация: всё, что выглядит как
+# опасный markup или ссылка вне whitelist'а, либо вырезаем, либо
+# заменяем на безопасный текст. Не криптографическая защита, а
+# первая линия обороны от случайного / умышленного вреда.
+_DANGEROUS_HTML_PATTERNS = (
+    # Скрипты, iframe'ы, обработчики событий — никогда не должны попасть
+    # к жителю даже если MAX случайно решит парсить их как HTML.
+    re.compile(r"<\s*script[^>]*>.*?</\s*script\s*>", re.IGNORECASE | re.DOTALL),
+    re.compile(r"<\s*iframe[^>]*>.*?</\s*iframe\s*>", re.IGNORECASE | re.DOTALL),
+    re.compile(r"<\s*(script|iframe|object|embed|applet)[^>]*/?>", re.IGNORECASE),
+    re.compile(r"\s+on[a-z]+\s*=\s*['\"][^'\"]*['\"]", re.IGNORECASE),  # onclick=... onload=...
+)
+
+# Markdown-ссылки `[label](url)`. Если url не в whitelist — заменяем
+# всю конструкцию на label с пометкой «(ссылка скрыта)», чтобы
+# фишинг-URL не оказался кликабельным.
+_MD_LINK_PATTERN = re.compile(r"\[([^\]]+)\]\((https?://[^\s)]+)\)")
+
+
+def sanitize_settings_text(value: str) -> str:
+    """Очистить текст настройки (welcome_text / consent_text) для
+    безопасной отправки жителю.
+
+    Делает три вещи:
+    1. Вырезает теги `<script>`, `<iframe>`, `<object>`, `<embed>`,
+       `<applet>` (с содержимым) и любые `on*=`-обработчики.
+    2. В markdown-ссылках `[label](url)` пропускает только URL на
+       гос-домены (whitelist). Остальные заменяет на `label (ссылка
+       скрыта)`.
+    3. Заменяет `javascript:` / `data:` / `vbscript:` -схемы внутри
+       обычных URL на `[заблокировано]`.
+
+    Что НЕ делает:
+    - не экранирует обычные символы (`<`, `>`, `&`) — текст идёт в
+      MAX как plain-text, эти символы безопасны;
+    - не нормализует unicode-омоглифы — IT-оператор не должен играть
+      в такие игры, а MAX render'ит юникод 1-в-1.
+    """
+    if not value:
+        return value
+
+    out = value
+    for pat in _DANGEROUS_HTML_PATTERNS:
+        out = pat.sub("", out)
+
+    def _replace_md_link(match: re.Match) -> str:
+        label = match.group(1)
+        url = match.group(2)
+        if _is_whitelisted_url(url):
+            return f"[{label}]({url})"
+        return f"{label} (ссылка скрыта)"
+
+    out = _MD_LINK_PATTERN.sub(_replace_md_link, out)
+
+    # Опасные URI-схемы внутри обычного http-URL уже отрезаются
+    # extract_urls (regex `https?://`), но если они появятся отдельно
+    # как `javascript:alert(1)` — заменим тут.
+    out = re.sub(
+        r"\b(javascript|data|vbscript|file):[^\s]*",
+        "[заблокировано]",
+        out,
+        flags=re.IGNORECASE,
+    )
+
+    return out
+
 DEFAULTS: dict[str, Any] = {
     "welcome_text": None,
     "consent_text": None,
@@ -162,7 +235,17 @@ DEFAULTS: dict[str, Any] = {
 # этой карте.
 SCHEMA: dict[str, dict] = {
     "welcome_text": {"type": str, "min_len": 1, "max_len": 4000},
-    "consent_text": {"type": str, "min_len": 1, "max_len": 4000},
+    # C1: consent_text используется как шаблон с placeholder
+    # `{policy_url}`. Если IT перепишет без placeholder — житель увидит
+    # consent без ссылки на политику (формальное нарушение 152-ФЗ).
+    # required_substr — мягкое требование: текст обязан содержать
+    # {policy_url} как подстроку, иначе validate отклонит.
+    "consent_text": {
+        "type": str,
+        "min_len": 1,
+        "max_len": 4000,
+        "required_substr": "{policy_url}",
+    },
     "commit_author_name": {"type": str, "min_len": 1, "max_len": 120},
     "commit_author_email": {"type": str, "min_len": 3, "max_len": 200},
     "policy_url": {"type": str, "url": True},
@@ -198,6 +281,14 @@ def validate(key: str, value: Any) -> tuple[bool, str]:
             return False, f"String too short, min_len={rule['min_len']}"
         if "max_len" in rule and len(value) > rule["max_len"]:
             return False, f"String too long, max_len={rule['max_len']}"
+        # C1: required_substr — обязательная подстрока в тексте.
+        # Используется для consent_text (`{policy_url}` обязателен).
+        if "required_substr" in rule and rule["required_substr"] not in value:
+            return False, (
+                f"Текст обязан содержать подстроку "
+                f"«{rule['required_substr']}» (это placeholder, который "
+                f"бот подставляет при отправке)."
+            )
         if rule.get("url"):
             if not (value.startswith("https://") or value.startswith("http://")):
                 return False, "URL must start with http:// or https://"
@@ -293,6 +384,55 @@ async def get(session: AsyncSession, key: str) -> Any:
     if row is not None:
         return row.value
     return DEFAULTS.get(key)
+
+
+async def get_consent_request_text(
+    session: AsyncSession, *, policy_url: str, fallback: str
+) -> str:
+    """Готовый consent-request с подставленным policy_url, безопасно.
+
+    Особый случай get_text_with_fallback: consent_text это шаблон с
+    обязательным placeholder'ом `{policy_url}` (см. SCHEMA). После
+    sanitize прогоняем через .format() — но защищённо: если IT всё-же
+    как-то умудрился сохранить текст без placeholder'а (например,
+    через прямой psql), мы не падаем KeyError'ом, а отдаём fallback.
+    """
+    raw = await get(session, "consent_text")
+    if isinstance(raw, str) and raw.strip() and "{policy_url}" in raw:
+        try:
+            return sanitize_settings_text(raw).format(policy_url=policy_url)
+        except (KeyError, IndexError, ValueError):
+            # На случай если в тексте есть {другие_фигурные_скобки}
+            # которые format() не сможет разобрать. Не падаем — fallback.
+            pass
+    return fallback.format(policy_url=policy_url)
+
+
+async def get_text_with_fallback(
+    session: AsyncSession, key: str, fallback: str
+) -> str:
+    """Получить текстовую настройку из БД с санитизацией и fallback'ом.
+
+    SECURITY_REVIEW C1: welcome_text / consent_text раньше были
+    «dormant capability» — БД хранит, UI редактирует, житель видит
+    hardcoded `texts.WELCOME` (false security). Теперь подключено:
+
+    1. Если в БД для ключа лежит непустая строка → пропускаем через
+       `sanitize_settings_text` (вырезает HTML/JS, режет markdown-
+       ссылки на не-whitelist домены) и возвращаем результат.
+    2. Иначе → возвращаем переданный fallback (hardcoded текст из
+       texts.py). Это страховка: даже если БД упала или ключ удалили
+       вручную через psql, житель всё равно увидит осмысленный
+       приветственный текст, а не «(None)».
+
+    Санитизация — мягкая (не криптографическая). Защита от ошибки
+    IT-оператора и от компрометации IT-аккаунта на уровне «не
+    превратить welcome в кликабельную фишинг-страницу».
+    """
+    raw = await get(session, key)
+    if isinstance(raw, str) and raw.strip():
+        return sanitize_settings_text(raw)
+    return fallback
 
 
 async def set_value(session: AsyncSession, key: str, value: Any) -> None:

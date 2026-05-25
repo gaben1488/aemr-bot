@@ -235,15 +235,58 @@ def admin_card(appeal: Appeal, user: User) -> str:
     timeline = appeal_timeline_block(appeal)
     if timeline:
         body = f"{body}\n\n{timeline}"
+    # SECURITY_REVIEW M5: текст обращения (summary) и followup'ы
+    # приходят от жителя и могут содержать фишинговые ссылки. Если
+    # хоть где-то в карточке (summary + любой followup) есть URL —
+    # один общий warning внизу карточки для оператора. Не блокируем
+    # отображение, только просим не кликать наугад.
+    has_url = bool(
+        _url_in(appeal.summary or "")
+        or any(_url_in(m.body_text or "") for m in (appeal.messages or []))
+    )
+    if has_url:
+        body = body + _maybe_url_warning(appeal.summary or "X http://X")
     return body
 
 
+def _url_in(text: str) -> bool:
+    """Тонкая обёртка над extract_urls — bool вместо list, локальная
+    кешируемость (для admin_card обоих текстов). Использует тот же
+    regex, что и outgoing URL-whitelist (settings_store)."""
+    from aemr_bot.services.settings_store import extract_urls
+    return bool(extract_urls(text))
+
+
+def _maybe_url_warning(text: str) -> str:
+    """SECURITY_REVIEW M5: вернуть строку-предупреждение если в тексте
+    есть URL.
+
+    Followup жителя приходит в admin-чат и отображается оператору.
+    Если житель (или скам-имитатор жителя) вставил кликабельную
+    фишинг-ссылку — оператор её увидит и может тапнуть прямо из
+    карточки. Здесь мы не блокируем (нельзя — оператор должен видеть
+    содержимое обращения), но добавляем явное предупреждение, чтобы
+    оператор знал «здесь ссылка, не кликаю автоматически».
+
+    Возвращает пустую строку если URL нет — тогда warning не пришит.
+    """
+    from aemr_bot.services.settings_store import extract_urls
+    if extract_urls(text):
+        return (
+            "\n\n⚠️ Текст содержит ссылку. Не открывайте напрямую из "
+            "карточки — сверьте адрес визуально и при необходимости "
+            "введите в браузер вручную."
+        )
+    return ""
+
+
 def admin_followup(appeal: Appeal, user: User, text: str) -> str:
-    return ADMIN_FOLLOWUP_TEMPLATE.format(
+    rendered = ADMIN_FOLLOWUP_TEMPLATE.format(
         number=appeal.id,
         name=user.first_name or "—",
         text=text,
     )
+    return rendered + _maybe_url_warning(text)
 
 
 def citizen_reply(appeal: Appeal, reply_text: str) -> str:

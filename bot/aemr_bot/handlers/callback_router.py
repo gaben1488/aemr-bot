@@ -66,6 +66,7 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("locality:", CallbackGroup.CITIZEN_FLOW, False, "выбор населённого пункта"),
     CallbackRoute("topic:", CallbackGroup.CITIZEN_FLOW, False, "выбор темы"),
     CallbackRoute("broadcast:stop:", CallbackGroup.BROADCAST_ADMIN, True, "остановить рассылку"),
+    CallbackRoute("broadcast:cancel-cooldown:", CallbackGroup.BROADCAST_ADMIN, True, "отменить рассылку до отправки"),
     CallbackRoute("op:aud:", CallbackGroup.OPERATOR_ADMIN, True, "действие с аудиторией"),
     CallbackRoute("op:reply:", CallbackGroup.OPERATOR_ADMIN, True, "ответ по обращению (финальный)"),
     CallbackRoute("op:replyint:", CallbackGroup.OPERATOR_ADMIN, True, "промежуточный ответ"),

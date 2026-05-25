@@ -57,6 +57,11 @@ async def _broadcast_stop(event, broadcast_id: int) -> None:
     await broadcast_handler._handle_stop(event, broadcast_id)
 
 
+async def _broadcast_cancel_cooldown(event, broadcast_id: int) -> None:
+    """C2: оператор отменил рассылку, пока она ждёт в cooldown'е."""
+    await broadcast_handler._handle_cancel_cooldown(event, broadcast_id)
+
+
 # ---- op:* exact -------------------------------------------------------------
 #
 # Большинство op-кнопок: ack_callback + один вызов admin_commands.run_*.
@@ -191,6 +196,7 @@ _EXACT: dict[str, ExactHandler] = {
 # _PREFIX_ID: `op:<verb>:<int>` — диспетчер парсит int-хвост.
 _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
     ("broadcast:stop:", _broadcast_stop),
+    ("broadcast:cancel-cooldown:", _broadcast_cancel_cooldown),
     ("op:reply:", _op_reply),
     ("op:replyint:", _op_reply_intermediate),
     ("op:reopen:", _op_reopen),

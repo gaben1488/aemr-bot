@@ -473,6 +473,24 @@ def broadcast_stop_keyboard(broadcast_id: int):
     return kb.as_markup()
 
 
+def broadcast_cooldown_keyboard(broadcast_id: int):
+    """Кнопка отмены рассылки во время cooldown'а (SECURITY_REVIEW C2).
+
+    Между confirm и реальной отправкой — окно ~5 минут, во время
+    которого оператор может передумать (увидел опечатку, понял что
+    текст не тот). Эта кнопка останавливает отложенный таск и
+    помечает broadcast как cancelled."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="❌ Отменить отправку",
+            payload=f"broadcast:cancel-cooldown:{broadcast_id}",
+        )
+    )
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
 def op_back_to_menu_keyboard():
     """Одна кнопка возврата к главной операторской панели."""
     kb = InlineKeyboardBuilder()

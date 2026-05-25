@@ -401,6 +401,54 @@ sudo rm /etc/systemd/system/aemr-bot.service
 sudo systemctl daemon-reload
 ```
 
+## 12b. Ротация docker-логов (SECURITY_REVIEW M1c, 152-ФЗ)
+
+Docker по умолчанию складывает stdout / stderr контейнера в файлы
+`/var/lib/docker/containers/<id>/<id>-json.log`. Размер каждого файла
+не ограничен, ротация не настроена. Для нашего бота это означает
+накопление логов с псевдоидентификаторами жителей (`max_user_id`) и,
+до фикса M1, координат геолокации — а удаление по запросу субъекта
+(`/erase`) не чистит файлы docker, чистит только базу. Формально это
+зазор в исполнении 152-ФЗ.
+
+Чтобы закрыть зазор, в `infra/docker-compose.yml` для сервиса `bot`
+прописан `logging.options.max-size` и `max-file` — Docker сам режет
+лог по достижении лимита и держит не более N файлов. Пример (если
+ещё не настроено в вашей версии compose):
+
+```yaml
+services:
+  bot:
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+```
+
+После правки `docker compose up -d --force-recreate bot` подхватит
+конфигурацию. Старые большие логи нужно вычистить вручную:
+
+```bash
+# Узнать размер
+du -sh /var/lib/docker/containers/*/*-json.log
+
+# Truncate'нуть НЕ удаляя файл (docker держит handle открытым)
+sudo truncate -s 0 /var/lib/docker/containers/<id>/*-json.log
+```
+
+**Retention policy.** Логи на 10 MB × 3 файла = до 30 MB на контейнер,
+это покрывает ~7–14 дней работы при типичной нагрузке. Дольше держать
+бессмысленно: для расследования инцидента нужен audit_log (хранится
+365 дней в БД, регулируется `AUDIT_LOG_RETENTION_DAYS`), а не docker-
+stdout.
+
+**После запроса жителя на удаление.** Помимо запуска `/erase` в боте,
+sysadmin вручную truncate'ит docker-логи бота за последние 7 дней
+(или применяет команду выше). Это компромисс, чтобы не выдумывать
+ATL-пайплайн для одного запроса в месяц. В RUNBOOK добавлен пункт
+«72-часовой dispatch на запрос /erase» — см. соответствующий раздел.
+
 ## 13. Аудит сервера
 
 ```bash

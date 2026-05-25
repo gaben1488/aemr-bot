@@ -73,10 +73,24 @@ async def _reset_funnel_if_stuck(max_user_id: int | None) -> None:
             await users_service.reset_state(session, max_user_id)
 
 
+async def _welcome_text() -> str:
+    """Актуальный welcome с поддержкой UI-редактирования (C1).
+
+    Если IT обновил welcome_text через меню «⚙️ Настройки бота» — отдаём
+    свежий текст из БД с санитизацией. Иначе fallback на texts.WELCOME.
+    Открываем отдельную сессию (не зависим от вызывающего контекста).
+    """
+    async with session_scope() as session:
+        return await settings_store.get_text_with_fallback(
+            session, "welcome_text", texts.WELCOME
+        )
+
+
 async def cmd_start(event):
     await _ensure_user(event)
     await _reset_funnel_if_stuck(get_user_id(event))
-    await reply(event, texts.WELCOME, attachments=[await _build_main_menu(get_user_id(event))])
+    welcome = await _welcome_text()
+    await reply(event, welcome, attachments=[await _build_main_menu(get_user_id(event))])
 
 
 async def cmd_help(event):
@@ -89,7 +103,8 @@ async def cmd_rules(event):
 
 async def cmd_menu(event):
     await _reset_funnel_if_stuck(get_user_id(event))
-    await reply(event, texts.WELCOME, attachments=[await _build_main_menu(get_user_id(event))])
+    welcome = await _welcome_text()
+    await reply(event, welcome, attachments=[await _build_main_menu(get_user_id(event))])
 
 
 async def cmd_policy(event):
