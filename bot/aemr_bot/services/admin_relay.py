@@ -184,8 +184,8 @@ async def relay_attachments_to_admin(
         log.exception(
             "типы ссылок maxapi недоступны; пересылка без reply-link"
         )
-        MessageLinkType = None  # type: ignore[assignment]
-        NewMessageLink = None  # type: ignore[assignment]
+        MessageLinkType = None  # type: ignore[misc,assignment]
+        NewMessageLink = None  # type: ignore[misc,assignment]
 
     link = None
     if admin_mid and MessageLinkType is not None and NewMessageLink is not None:

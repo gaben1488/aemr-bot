@@ -657,9 +657,10 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
             appeal = await appeals_service.get_by_id(session, appeal_id_from_text)
 
         if appeal is None:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event), text=texts.ADMIN_REPLY_NO_APPEAL
-            )
+            if event.bot is not None:
+                await event.bot.send_message(
+                    chat_id=get_chat_id(event), text=texts.ADMIN_REPLY_NO_APPEAL
+                )
             return True
 
         log.info(
