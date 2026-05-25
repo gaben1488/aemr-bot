@@ -225,6 +225,38 @@ class TestHandleCallback:
 # --- handle_wizard_text -----------------------------------------------
 
 
+class TestApplyDedupe:
+    """P3 #25 — double-tap dedupe + citation footer для _apply."""
+
+    def test_dedupe_window_first_call_not_recent(self) -> None:
+        from aemr_bot.handlers import broadcast_templates as bt
+
+        bt._apply_dedupe.clear()
+        assert bt._is_recent_apply(7, 100) is False
+
+    def test_dedupe_window_second_call_within_window(self) -> None:
+        from aemr_bot.handlers import broadcast_templates as bt
+
+        bt._apply_dedupe.clear()
+        bt._mark_apply(7, 100)
+        # Сразу после mark — повтор в окне.
+        assert bt._is_recent_apply(7, 100) is True
+
+    def test_dedupe_window_different_template_not_recent(self) -> None:
+        from aemr_bot.handlers import broadcast_templates as bt
+
+        bt._apply_dedupe.clear()
+        bt._mark_apply(7, 100)
+        assert bt._is_recent_apply(7, 101) is False
+
+    def test_dedupe_window_different_operator_not_recent(self) -> None:
+        from aemr_bot.handlers import broadcast_templates as bt
+
+        bt._apply_dedupe.clear()
+        bt._mark_apply(7, 100)
+        assert bt._is_recent_apply(8, 100) is False
+
+
 class TestWizardText:
     """Шаги создания шаблона: имя → текст."""
 

@@ -127,6 +127,10 @@ class TestCloseClosesBothCardsBug:
                 _fake_session_scope,
             ),
             patch(
+                "aemr_bot.handlers.admin_appeal_ops.appeals_service.has_operator_message",
+                AsyncMock(return_value=False),
+            ),
+            patch(
                 "aemr_bot.handlers.admin_appeal_ops.appeals_service.close",
                 AsyncMock(return_value=True),
             ),

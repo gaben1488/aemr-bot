@@ -159,6 +159,35 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
     broadcast_handler._wizards.pop(operator_id, None)
     admin_operators._op_wizards.pop(operator_id, None)
 
+    # P2 #22 — race rapid double-tap: если оператор уже готовил ответ
+    # на ДРУГОЕ обращение, intent перезаписался бы молча, и следующее
+    # сообщение оператора ушло бы не туда, куда он думает. Ловим это
+    # явно: предупреждаем «отменён ответ на #X, теперь на #Y», чтобы
+    # оператор сам решил, продолжить или прервать.
+    from aemr_bot.services import wizard_registry as _wr
+
+    existing = _wr.get_reply_intent(operator_id)
+    if existing is not None:
+        prev_appeal_id, _prev_is_final, _prev_ts = existing
+        if prev_appeal_id != appeal_id:
+            try:
+                await event.bot.send_message(
+                    chat_id=cfg.admin_group_id,
+                    text=(
+                        f"⚠️ Подготовка ответа на обращение #{prev_appeal_id} "
+                        f"отменена — вы только что переключились на ответ "
+                        f"по обращению #{appeal_id}. Если хотели остаться на "
+                        f"#{prev_appeal_id}, нажмите «✉️ Ответить» под его "
+                        f"карточкой ещё раз."
+                    ),
+                )
+            except Exception:
+                log.exception(
+                    "run_reply_intent: failed to warn about intent "
+                    "overwrite operator=%s prev=%s new=%s",
+                    operator_id, prev_appeal_id, appeal_id,
+                )
+
     op_reply.remember_reply_intent(operator_id, appeal_id, is_final=is_final)
     label = "Ответ" if is_final else "Промежуточный ответ"
     await ack_callback(event, f"{label} на #{appeal_id}")
@@ -252,12 +281,23 @@ async def run_reopen(event, appeal_id: int) -> None:
 
 
 async def run_close(event, appeal_id: int) -> None:
-    """Кнопочный аналог /close N — закрыть обращение без ответа."""
+    """Кнопочный аналог /close N — закрыть обращение без ответа.
+
+    P2 #23: если в обращении уже есть промежуточный ответ оператора,
+    «Закрыть без ответа» — спорное действие (формально ответ ушёл, но
+    обращение закрыто как «не отвечено»). Не блокируем, но добавляем
+    в сопровождающий текст подсказку про «✉️ Ответить и закрыть» —
+    финальный ответ корректнее закрывает воронку для жителя.
+    """
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_operator(event):
         return
+    had_intermediate_reply = False
     async with session_scope() as session:
+        had_intermediate_reply = await appeals_service.has_operator_message(
+            session, appeal_id
+        )
         ok = await appeals_service.close(session, appeal_id)
         if ok:
             await operators_service.write_audit(
@@ -265,18 +305,24 @@ async def run_close(event, appeal_id: int) -> None:
                 operator_max_user_id=get_user_id(event),
                 action="close",
                 target=f"appeal #{appeal_id}",
+                details=(
+                    {"after_intermediate_reply": True}
+                    if had_intermediate_reply else None
+                ),
             )
     await ack_callback(event)
+    if ok:
+        fallback = texts.OP_APPEAL_CLOSED.format(number=appeal_id)
+        if had_intermediate_reply:
+            fallback += (
+                "\n\n⚠️ У обращения уже есть промежуточный ответ оператора. "
+                "В следующий раз для финального ответа удобнее использовать "
+                "«✉️ Ответить и закрыть» — житель получит полное письмо."
+            )
+    else:
+        fallback = texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
     # freshness-rule: edit если карточка ещё последняя в чате, иначе new.
-    await _show_appeal_card_or_result(
-        event,
-        appeal_id,
-        (
-            texts.OP_APPEAL_CLOSED.format(number=appeal_id)
-            if ok
-            else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
-        ),
-    )
+    await _show_appeal_card_or_result(event, appeal_id, fallback)
 
 
 async def run_block_for_appeal(
