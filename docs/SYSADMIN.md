@@ -362,6 +362,45 @@ docker compose up -d --build bot
 
 Не путать с auto-deploy health-gate. Auto-deploy ловит сломанный новый коммит; healthwatch — повисший живой контейнер.
 
+## 12a. Автозапуск после reboot (`aemr-bot.service`)
+
+Контейнеры с политикой `restart: unless-stopped` поднимаются вместе
+с docker.service при штатной перезагрузке. Но если до reboot'а
+контейнеры были в состоянии `down` (после ручного `docker compose down`
+или после неуспешного апгрейда), Docker сам их не вернёт.
+
+В качестве страховки в `infra/aemr-bot.service` лежит systemd-юнит,
+который при старте системы выполняет `docker compose up -d` в
+`/home/aemr/aemr-bot/infra`. Операция идемпотентная: если контейнеры
+уже подняты — ничего не меняется, если упали — поднимаются.
+
+**Установка (один раз на VPS):**
+
+```bash
+sudo bash /home/aemr/aemr-bot/scripts/install-systemd-autostart.sh
+```
+
+Скрипт копирует юнит в `/etc/systemd/system/`, делает `daemon-reload`,
+`enable` и `start`. Проверка:
+
+```bash
+sudo systemctl status aemr-bot.service
+sudo systemctl is-enabled aemr-bot.service        # должно быть enabled
+sudo journalctl -u aemr-bot.service -n 50         # последние записи
+```
+
+**Проверка после reboot:** `sudo reboot`, ssh, `docker compose ps` —
+все контейнеры в `Up`.
+
+**Откат:**
+
+```bash
+sudo systemctl disable aemr-bot.service
+sudo systemctl stop aemr-bot.service
+sudo rm /etc/systemd/system/aemr-bot.service
+sudo systemctl daemon-reload
+```
+
 ## 13. Аудит сервера
 
 ```bash
