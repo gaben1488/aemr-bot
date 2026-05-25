@@ -212,15 +212,33 @@ async def run_reply_cancel(event) -> None:
         )
 
 
+_REOPEN_FALLBACK_TEXT = {
+    "reopened": texts.OP_APPEAL_REOPENED,
+    "already_open": texts.OP_APPEAL_ALREADY_OPEN,
+    "blocked_by_revoke": texts.OP_APPEAL_BLOCKED_BY_REVOKE,
+    "not_found": texts.OP_APPEAL_NOT_FOUND,
+}
+
+
 async def run_reopen(event, appeal_id: int) -> None:
-    """Кнопочный аналог /reopen N — возобновить обращение."""
+    """Кнопочный аналог /reopen N — возобновить обращение.
+
+    Различает в UX четыре исхода (см. appeals_service.reopen):
+    - reopened → перерисовываем карточку с обновлённым статусом;
+    - already_open → no-op, говорим «уже в работе»;
+    - blocked_by_revoke → информативное сообщение про ПДн-гард,
+      карточку не трогаем (всё равно бот не доставит ответ);
+    - not_found → стандартное «Обращение не найдено».
+
+    Audit пишем только при реальной смене статуса (reopened).
+    """
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_operator(event):
         return
     async with session_scope() as session:
-        ok = await appeals_service.reopen(session, appeal_id)
-        if ok:
+        result = await appeals_service.reopen(session, appeal_id)
+        if result == "reopened":
             await operators_service.write_audit(
                 session,
                 operator_max_user_id=get_user_id(event),
@@ -228,16 +246,9 @@ async def run_reopen(event, appeal_id: int) -> None:
                 target=f"appeal #{appeal_id}",
             )
     await ack_callback(event)
+    fallback = _REOPEN_FALLBACK_TEXT[result].format(number=appeal_id)
     # freshness-rule: edit если карточка ещё последняя в чате, иначе new.
-    await _show_appeal_card_or_result(
-        event,
-        appeal_id,
-        (
-            texts.OP_APPEAL_REOPENED.format(number=appeal_id)
-            if ok
-            else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
-        ),
-    )
+    await _show_appeal_card_or_result(event, appeal_id, fallback)
 
 
 async def run_close(event, appeal_id: int) -> None:

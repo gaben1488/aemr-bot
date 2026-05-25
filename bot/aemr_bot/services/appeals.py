@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from typing import Literal
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import desc, func, or_, select, update
@@ -242,30 +243,57 @@ async def set_last_admin_card_mid(
     )
 
 
-async def reopen(session: AsyncSession, appeal_id: int) -> bool:
+ReopenResult = Literal[
+    "reopened", "already_open", "blocked_by_revoke", "not_found"
+]
+
+
+async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
     """Возобновить обращение: ANSWERED/CLOSED → IN_PROGRESS.
 
-    Если обращение уже NEW/IN_PROGRESS, ничего не меняем и возвращаем
-    False — повторный клик кнопки «🔁 Возобновить» не должен переписывать
-    timestamps и плодить ложные записи в audit_log.
+    Возвращает один из:
+    - `"reopened"` — статус сменился (ANSWERED/CLOSED → IN_PROGRESS).
+    - `"already_open"` — обращение уже NEW/IN_PROGRESS, no-op (повторный
+      клик кнопки «🔁 Возобновить» не должен переписывать timestamps).
+    - `"blocked_by_revoke"` — обращение закрыто из-за отзыва согласия
+      или удаления ПДн (`closed_due_to_revoke=true`). Возобновлять
+      нельзя: доставка ответа всё равно запрещена guard'ами ПДн.
+      Оператор видит понятное сообщение вместо «Не найдено».
+    - `"not_found"` — обращения с таким id нет в БД.
 
-    Обращения, закрытые из-за отзыва согласия, удаления ПДн или ручной
-    блокировки (`closed_due_to_revoke=true`), не переоткрываются. Иначе
-    операторская кнопка могла бы вернуть в работу обращение, по которому
-    доставка ответа всё равно запрещена guard'ами ПДн.
+    Раньше возвращал bool — все три negative-case схлопывались в False,
+    оператор для closed_due_to_revoke видел «Обращение не найдено», что
+    дезориентировало. См. P1 #21.
     """
-    result = await session.execute(
-        update(Appeal)
-        .where(
-            Appeal.id == appeal_id,
-            Appeal.closed_due_to_revoke.is_(False),
-            Appeal.status.in_(
-                [AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value]
-            ),
+    # Сначала читаем актуальный статус и флаг revoke — двух SELECT'ов
+    # нет, один row. Race с конкурентной правкой того же обращения
+    # маловероятен (операторский UI, не машинный поток), но если он
+    # есть — UPDATE ниже всё равно не сработает (where-clause не
+    # совпадёт) и мы вернёмся к разводящей логике на следующем клике.
+    row = (
+        await session.execute(
+            select(Appeal.status, Appeal.closed_due_to_revoke).where(
+                Appeal.id == appeal_id
+            )
         )
-        .values(status=AppealStatus.IN_PROGRESS.value, answered_at=None, closed_at=None)
+    ).one_or_none()
+    if row is None:
+        return "not_found"
+    status, blocked = row
+    if blocked:
+        return "blocked_by_revoke"
+    if status not in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
+        return "already_open"
+    await session.execute(
+        update(Appeal)
+        .where(Appeal.id == appeal_id)
+        .values(
+            status=AppealStatus.IN_PROGRESS.value,
+            answered_at=None,
+            closed_at=None,
+        )
     )
-    return result.rowcount > 0
+    return "reopened"
 
 
 async def close(session: AsyncSession, appeal_id: int) -> bool:

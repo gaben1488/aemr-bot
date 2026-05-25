@@ -99,7 +99,7 @@ async def test_reopen_and_close(session):
         session, appeal=full, text="Ответ", operator_id=None, max_message_id=None
     )
 
-    assert await appeals_service.reopen(session, appeal.id) is True
+    assert await appeals_service.reopen(session, appeal.id) == "reopened"
     refreshed = await appeals_service.get_by_id(session, appeal.id)
     assert refreshed.status == AppealStatus.IN_PROGRESS.value
     assert refreshed.answered_at is None
