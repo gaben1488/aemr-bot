@@ -37,7 +37,11 @@ async def test_reopen_refuses_closed_due_to_revoke(session) -> None:
     )
     await session.flush()
 
-    assert await appeals_service.reopen(session, appeal.id) is False
+    # blocked_by_revoke — оператор получит понятное сообщение про ПДн-гард,
+    # а не дезориентирующее «не найдено».
+    assert (
+        await appeals_service.reopen(session, appeal.id) == "blocked_by_revoke"
+    )
     refreshed = await appeals_service.get_by_id(session, appeal.id)
     assert refreshed is not None
     assert refreshed.status == AppealStatus.CLOSED.value

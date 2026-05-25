@@ -160,14 +160,39 @@ async def test_list_unanswered(session) -> None:
 
 @pytest.mark.asyncio
 async def test_reopen_idempotent_on_in_progress(session) -> None:
-    """reopen на NEW/IN_PROGRESS — no-op, возвращает False, чтобы
-    повторный клик «🔁 Возобновить» не переписывал timestamps."""
+    """reopen на NEW/IN_PROGRESS — no-op, возвращает "already_open",
+    чтобы повторный клик «🔁 Возобновить» не переписывал timestamps."""
     user = await users_service.get_or_create(session, max_user_id=1, first_name="A")
     appeal = await appeals_service.create_appeal(
         session, user=user, address="A", topic="T", summary="x", attachments=[]
     )
-    # NEW — reopen ничего не меняет.
-    assert await appeals_service.reopen(session, appeal.id) is False
+    # NEW — reopen ничего не меняет (already_open).
+    assert await appeals_service.reopen(session, appeal.id) == "already_open"
+
+
+@pytest.mark.asyncio
+async def test_reopen_not_found_returns_not_found(session) -> None:
+    """reopen несуществующего обращения → "not_found"."""
+    assert await appeals_service.reopen(session, 99999) == "not_found"
+
+
+@pytest.mark.asyncio
+async def test_reopen_returns_reopened_on_real_change(session) -> None:
+    """ANSWERED → IN_PROGRESS даёт "reopened" + сбрасывает answered_at."""
+    from aemr_bot.db.models import AppealStatus
+
+    user = await users_service.get_or_create(session, max_user_id=2, first_name="B")
+    appeal = await appeals_service.create_appeal(
+        session, user=user, address="A", topic="T", summary="x", attachments=[]
+    )
+    full = await appeals_service.get_by_id(session, appeal.id)
+    await appeals_service.add_operator_message(
+        session, appeal=full, text="ok", operator_id=None, max_message_id=None
+    )
+    assert await appeals_service.reopen(session, appeal.id) == "reopened"
+    refreshed = await appeals_service.get_by_id(session, appeal.id)
+    assert refreshed.status == AppealStatus.IN_PROGRESS.value
+    assert refreshed.answered_at is None
 
 
 @pytest.mark.asyncio

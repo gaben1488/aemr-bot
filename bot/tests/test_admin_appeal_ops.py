@@ -248,7 +248,7 @@ class TestRunReopen:
              patch("aemr_bot.handlers.admin_appeal_ops.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.reopen",
-                   AsyncMock(return_value=True)), \
+                   AsyncMock(return_value="reopened")), \
              patch("aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
                    write_audit), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
@@ -267,11 +267,55 @@ class TestRunReopen:
              patch("aemr_bot.handlers.admin_appeal_ops.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.reopen",
-                   AsyncMock(return_value=False)), \
+                   AsyncMock(return_value="not_found")), \
              patch("aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
                    write_audit), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_appeal_ops.run_reopen(event, 999)
+        write_audit.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_blocked_by_revoke_no_audit_informative_text(self) -> None:
+        """blocked_by_revoke → audit не пишем, оператор видит понятное
+        сообщение про ПДн-гард (не дезориентирующее «не найдено»)."""
+        from aemr_bot.handlers import admin_appeal_ops
+        from aemr_bot import texts
+
+        event = _make_event()
+        write_audit = AsyncMock()
+        with patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.reopen",
+                   AsyncMock(return_value="blocked_by_revoke")), \
+             patch("aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
+                   write_audit), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await admin_appeal_ops.run_reopen(event, 7)
+        write_audit.assert_not_called()
+        # хотя бы одно send_message с текстом про блокировку
+        sent_text = event.bot.send_message.call_args.kwargs.get("text", "")
+        expected = texts.OP_APPEAL_BLOCKED_BY_REVOKE.format(number=7)
+        assert expected in sent_text or sent_text == expected
+
+    @pytest.mark.asyncio
+    async def test_already_open_no_audit(self) -> None:
+        """already_open → no-op, audit не пишем."""
+        from aemr_bot.handlers import admin_appeal_ops
+
+        event = _make_event()
+        write_audit = AsyncMock()
+        with patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.reopen",
+                   AsyncMock(return_value="already_open")), \
+             patch("aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
+                   write_audit), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await admin_appeal_ops.run_reopen(event, 7)
         write_audit.assert_not_called()
 
 

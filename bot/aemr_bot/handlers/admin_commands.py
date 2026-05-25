@@ -199,18 +199,21 @@ def register(dp: Dispatcher) -> None:
             await event.message.answer("Используйте: /reopen <номер>")
             return
         async with session_scope() as session:
-            ok = await appeals_service.reopen(session, appeal_id)
-            if ok:
+            result = await appeals_service.reopen(session, appeal_id)
+            if result == "reopened":
                 await operators_service.write_audit(
                     session,
                     operator_max_user_id=get_user_id(event),
                     action="reopen",
                     target=f"appeal #{appeal_id}",
                 )
-        await event.message.answer(
-            texts.OP_APPEAL_REOPENED.format(number=appeal_id) if ok
-            else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
-        )
+        reply_text = {
+            "reopened": texts.OP_APPEAL_REOPENED,
+            "already_open": texts.OP_APPEAL_ALREADY_OPEN,
+            "blocked_by_revoke": texts.OP_APPEAL_BLOCKED_BY_REVOKE,
+            "not_found": texts.OP_APPEAL_NOT_FOUND,
+        }[result].format(number=appeal_id)
+        await event.message.answer(reply_text)
 
     @dp.message_created(Command("close"))
     async def cmd_close(event: MessageCreated):

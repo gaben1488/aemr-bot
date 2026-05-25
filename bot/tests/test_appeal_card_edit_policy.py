@@ -76,7 +76,7 @@ class TestReopenPublishesEventCard:
             ),
             patch(
                 "aemr_bot.handlers.admin_appeal_ops.appeals_service.reopen",
-                AsyncMock(return_value=True),
+                AsyncMock(return_value="reopened"),
             ),
             patch(
                 "aemr_bot.handlers.admin_appeal_ops.appeals_service.get_by_id_with_messages",
