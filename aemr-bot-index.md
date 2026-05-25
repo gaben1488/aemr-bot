@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 03:01:21 UTC`
+Generated at: `2026-05-25 03:03:59 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `198`
 Max file size: `300 KB`
@@ -18,7 +18,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `.gitignore` (1261 bytes)
 - `_local-backup/PRODUCT_BRIEF_internal.md` (26651 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
-- `bot/aemr_bot/config.py` (9252 bytes)
+- `bot/aemr_bot/config.py` (10460 bytes)
 - `bot/aemr_bot/db/__init__.py` (0 bytes)
 - `bot/aemr_bot/db/alembic/env.py` (1446 bytes)
 - `bot/aemr_bot/db/alembic/versions/0001_initial.py` (5898 bytes)
@@ -46,20 +46,20 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (20429 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9243 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12498 bytes)
-- `bot/aemr_bot/handlers/admin_commands.py` (17741 bytes)
+- `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (23062 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (23590 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (43026 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
-- `bot/aemr_bot/handlers/appeal.py` (26104 bytes)
-- `bot/aemr_bot/handlers/appeal_funnel.py` (30419 bytes)
+- `bot/aemr_bot/handlers/appeal.py` (27102 bytes)
+- `bot/aemr_bot/handlers/appeal_funnel.py` (32735 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (11640 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8595 bytes)
 - `bot/aemr_bot/handlers/menu.py` (47097 bytes)
-- `bot/aemr_bot/handlers/operator_reply.py` (36252 bytes)
+- `bot/aemr_bot/handlers/operator_reply.py` (39283 bytes)
 - `bot/aemr_bot/handlers/start.py` (17005 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (63429 bytes)
@@ -68,23 +68,23 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/admin_card.py` (9348 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6079 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
-- `bot/aemr_bot/services/appeals.py` (23423 bytes)
+- `bot/aemr_bot/services/appeals.py` (24893 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (14123 bytes)
 - `bot/aemr_bot/services/cron.py` (38141 bytes)
-- `bot/aemr_bot/services/db_backup.py` (15350 bytes)
+- `bot/aemr_bot/services/db_backup.py` (16664 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
-- `bot/aemr_bot/services/idempotency.py` (7885 bytes)
+- `bot/aemr_bot/services/idempotency.py` (8575 bytes)
 - `bot/aemr_bot/services/operators.py` (6799 bytes)
 - `bot/aemr_bot/services/policy.py` (2979 bytes)
 - `bot/aemr_bot/services/progress.py` (9433 bytes)
 - `bot/aemr_bot/services/repo_sync.py` (13876 bytes)
-- `bot/aemr_bot/services/settings_store.py` (11344 bytes)
+- `bot/aemr_bot/services/settings_store.py` (13101 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
-- `bot/aemr_bot/services/users.py` (30589 bytes)
+- `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (12444 bytes)
 - `bot/aemr_bot/texts.py` (42926 bytes)
@@ -107,11 +107,11 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_events_descriptor.py` (5856 bytes)
 - `bot/tests/test_admin_handlers_small.py` (21842 bytes)
 - `bot/tests/test_admin_operators.py` (19228 bytes)
-- `bot/tests/test_admin_panel.py` (12680 bytes)
+- `bot/tests/test_admin_panel.py` (12999 bytes)
 - `bot/tests/test_admin_settings_audit.py` (1917 bytes)
 - `bot/tests/test_appeal_card_edit_policy.py` (5805 bytes)
 - `bot/tests/test_appeal_card_timeline.py` (8946 bytes)
-- `bot/tests/test_appeal_dispatcher.py` (22842 bytes)
+- `bot/tests/test_appeal_dispatcher.py` (25415 bytes)
 - `bot/tests/test_appeal_flow.py` (10966 bytes)
 - `bot/tests/test_appeals_service_pg.py` (15229 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
@@ -128,7 +128,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_card_format.py` (10537 bytes)
 - `bot/tests/test_cron_jobs.py` (20157 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
-- `bot/tests/test_db_backup_extra.py` (14354 bytes)
+- `bot/tests/test_db_backup_extra.py` (15690 bytes)
 - `bot/tests/test_deps_environment.py` (3805 bytes)
 - `bot/tests/test_diag_extended.py` (6756 bytes)
 - `bot/tests/test_event_helpers.py` (9073 bytes)
@@ -136,13 +136,13 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_final_p1_regressions.py` (6078 bytes)
 - `bot/tests/test_funnel_state_hardening.py` (6421 bytes)
 - `bot/tests/test_geo.py` (9324 bytes)
-- `bot/tests/test_handlers_appeal_funnel.py` (24495 bytes)
+- `bot/tests/test_handlers_appeal_funnel.py` (24866 bytes)
 - `bot/tests/test_handlers_auth_broadcast.py` (6976 bytes)
 - `bot/tests/test_handlers_common.py` (3572 bytes)
 - `bot/tests/test_handlers_funnel.py` (9458 bytes)
 - `bot/tests/test_handlers_menu.py` (26382 bytes)
 - `bot/tests/test_handlers_menu_extra.py` (23371 bytes)
-- `bot/tests/test_handlers_operator_reply.py` (33271 bytes)
+- `bot/tests/test_handlers_operator_reply.py` (34166 bytes)
 - `bot/tests/test_handlers_start.py` (13597 bytes)
 - `bot/tests/test_health.py` (4062 bytes)
 - `bot/tests/test_idempotency.py` (3650 bytes)
@@ -150,13 +150,13 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_keyboards.py` (5473 bytes)
 - `bot/tests/test_main_helpers.py` (8679 bytes)
 - `bot/tests/test_menu_tracker_edit_policy.py` (12482 bytes)
-- `bot/tests/test_operator_reply_closed_guard.py` (3049 bytes)
-- `bot/tests/test_operator_reply_with_image.py` (7240 bytes)
+- `bot/tests/test_operator_reply_closed_guard.py` (3266 bytes)
+- `bot/tests/test_operator_reply_with_image.py` (7517 bytes)
 - `bot/tests/test_progress.py` (10480 bytes)
-- `bot/tests/test_pure_functions.py` (10564 bytes)
+- `bot/tests/test_pure_functions.py` (11522 bytes)
 - `bot/tests/test_repo_sync.py` (21989 bytes)
 - `bot/tests/test_services_no_db.py` (9640 bytes)
-- `bot/tests/test_settings_store_validation.py` (2609 bytes)
+- `bot/tests/test_settings_store_validation.py` (3036 bytes)
 - `bot/tests/test_uploads_policy_admin_relay.py` (11634 bytes)
 - `bot/tests/test_users_service_pg.py` (16852 bytes)
 - `bot/tests/test_wizard_registry.py` (5268 bytes)
@@ -960,8 +960,8 @@ __version__ = "0.1.0"
 
 ### `bot/aemr_bot/config.py`
 
-Size: `9252` bytes  
-SHA-256: `4bdaee416b4be7e166b468192d9857552b47a36d66cfc16e3655f661aa67477c`
+Size: `10460` bytes  
+SHA-256: `996bef9869b7e8053f9b6215cb9b650483f34c5b7ef9884a4dc434f29b14e035`
 
 ```python
 from pathlib import Path
@@ -1066,8 +1066,15 @@ class Settings(BaseSettings):
     # Сколько последних файлов хранить. 8 еженедельных ≈ 2 месяца истории.
     backup_keep_count: int = Field(8, alias="BACKUP_KEEP_COUNT")
 
-    # gpg-шифрование опционально: если passphrase пустой — храним plain SQL.
+    # gpg-шифрование опционально: если passphrase пустой — БЭКАП НЕ
+    # СОЗДАЁТСЯ (SEC #2): plain SQL содержит phones, names, appeal texts —
+    # это PII по 152-ФЗ. Хранить такой дамп на диске (тем более в S3)
+    # без шифрования = breach. Чтобы запустить без gpg, явно установите
+    # BACKUP_ALLOW_UNENCRYPTED=1 (dev/local-only).
     backup_gpg_passphrase: str | None = Field(None, alias="BACKUP_GPG_PASSPHRASE")
+    backup_allow_unencrypted: bool = Field(
+        False, alias="BACKUP_ALLOW_UNENCRYPTED"
+    )
 
     # S3 опционально: если задан endpoint+bucket+keys, доп. заливаем в облако.
     # Пусто — храним только локально. Для self-hosted без облачного хранилища
@@ -1087,6 +1094,18 @@ class Settings(BaseSettings):
     # IT-аудита. После — следы стираются вместе с любым PII в details.
     audit_log_retention_days: int = Field(
         365, alias="AUDIT_LOG_RETENTION_DAYS", ge=30, le=3650
+    )
+
+    # SEC #5 — followup flood защита. Житель может закидать админ-чат
+    # дополнениями (каждое = полная admin card + relay вложений).
+    # Лимит per-appeal: max N follow-up'ов в час + min M секунд между
+    # двумя followup'ами. Дефолты подобраны под нормальное общение
+    # (несколько уточнений в сутки), но блокируют machine-spam.
+    followup_max_per_hour_per_appeal: int = Field(
+        5, alias="FOLLOWUP_MAX_PER_HOUR_PER_APPEAL", ge=1, le=100
+    )
+    followup_min_interval_seconds: int = Field(
+        30, alias="FOLLOWUP_MIN_INTERVAL_SECONDS", ge=0, le=3600
     )
 
     seed_dir: Path = Field(Path("/app/seed"), alias="SEED_DIR")
@@ -4155,8 +4174,8 @@ async def dispatch_admin_callback(event, payload: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_commands.py`
 
-Size: `17741` bytes  
-SHA-256: `96a593b16701207f0784f8364d9aaed20b22911f4f768fd0c9ffea2f745eb5cf`
+Size: `18364` bytes  
+SHA-256: `f6dbb854acfae2dadaa0862b9df7d9155fd190f29254acde205c6a3a63182bad`
 
 ```python
 """Slash-команды оператора в админ-группе.
@@ -4323,6 +4342,14 @@ def register(dp: Dispatcher) -> None:
     @dp.message_created(Command("reply"))
     async def cmd_reply(event: MessageCreated):
         if not _is_admin_chat(event):
+            return
+        # SEC #9: defense-in-depth. Раньше /reply полагался на
+        # operator-check deeper в handle_command_reply. Если кто-то
+        # добавлен в admin group как обычный member (например,
+        # visiting auditor), его /reply должен отбрасываться сразу,
+        # не давая углубиться в парсер. Двухслойная проверка ловит
+        # регрессии при будущих рефакторингах handle_command_reply.
+        if not await _ensure_operator(event):
             return
         text = _get_text(event)
         # /reply <id_обращения> <текст...>
@@ -5625,8 +5652,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `23062` bytes  
-SHA-256: `d9745aa7b8cdba008144fcb87715352f0d9a491095578c8a92239d546e49925b`
+Size: `23590` bytes  
+SHA-256: `318fb3f958fcbdc61cad84d06484849be1c2fdb157a129d1e58f5259c60dbdf4`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -6067,10 +6094,18 @@ async def _do_backup(event) -> None:
     try:
         result = await db_backup.backup_db()
     except Exception as e:
+        # SEC #8: НЕ светим repr(exc) в admin chat — exception text
+        # может содержать DATABASE_URL компоненты, paths /backups,
+        # GPG-passphrase fragments. Полный stack — только в логи.
+        log.exception("admin_panel: backup_db crashed")
         await send_or_edit_screen(
             event,
             chat_id=cfg.admin_group_id,
-            text=f"⚠️ Бэкап упал: {e}",
+            text=(
+                f"⚠️ Бэкап упал: {type(e).__name__}. Полный трейс — в "
+                f"журнале бота. Проверьте Postgres, GPG-passphrase, место "
+                f"на диске."
+            ),
             attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
@@ -7270,8 +7305,8 @@ async def run_stats_menu(event) -> None:
 
 ### `bot/aemr_bot/handlers/appeal.py`
 
-Size: `26104` bytes  
-SHA-256: `2af7336963e52de47509e63995de35d2f06a892184a829ff0de552c1874d9707`
+Size: `27102` bytes  
+SHA-256: `1d11671c9fe9fb138c5cb01a58aa6ed7aff99488b268604c2872c2eace0311f5`
 
 ```python
 """Главный entry-point обработчика обращений.
@@ -7506,7 +7541,24 @@ async def _cb_new_appeal(event, max_user_id: int, payload: str) -> None:
 
 
 async def _cb_consent_yes(event, max_user_id: int, payload: str) -> None:
+    # SEC #1: blocked житель не может «дать согласие» — это означало бы
+    # обход IT-блокировки (старая кнопка из истории чата). Шлём
+    # короткое сообщение, не запускаем воронку.
     async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        if user.is_blocked:
+            await ack_callback(event)
+            await _send_to_citizen(
+                event,
+                max_user_id,
+                text=(
+                    "Ваш аккаунт заблокирован — приём обращений и согласие "
+                    "недоступны. Если блокировка ошибочна, обратитесь к "
+                    "координатору Администрации."
+                ),
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
         await users_service.set_consent(session, max_user_id)
     await ack_callback(event, texts.CONSENT_ACCEPTED)
     await admin_events.notify_consent_given(event.bot, max_user_id=max_user_id)
@@ -7907,8 +7959,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/appeal_funnel.py`
 
-Size: `30419` bytes  
-SHA-256: `86ed62554dccff051758b3523474071b33ba5218229fed545325c6ca60da017b`
+Size: `32735` bytes  
+SHA-256: `de444b06bb1cbb250a9e50dc8b4f3a1e3ba1ac0f1f36665083dfd931bd844214`
 
 ```python
 """FSM-воронка приёма обращения и явного дополнения.
@@ -8535,6 +8587,47 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             "приложите фото, видео или файл.",
             attachments=[keyboards.cancel_keyboard()],
         )
+        return
+
+    # SEC #5: followup flood rate-limit.
+    # 1. min-interval — не чаще раз в N секунд (защита от двойного тапа /
+    #    скрипт-флуда).
+    # 2. max-per-hour — не больше M на одно обращение в час (защита от
+    #    долгого медленного флуда).
+    # Если лимит нарушен — НЕ принимаем followup, не сбрасываем state,
+    # житель может попробовать ещё раз позже.
+    from datetime import datetime as _dt
+    from datetime import timezone as _tz
+
+    async with session_scope() as _rl_session:
+        last_at = await appeals_service.last_followup_at_for_appeal(
+            _rl_session, appeal.id
+        )
+        recent_count = await appeals_service.count_recent_followups_for_appeal(
+            _rl_session, appeal.id, hours=1
+        )
+    if last_at is not None:
+        elapsed = (_dt.now(_tz.utc) - last_at).total_seconds()
+        if elapsed < cfg.followup_min_interval_seconds:
+            wait = int(cfg.followup_min_interval_seconds - elapsed)
+            await event.message.answer(
+                f"Слишком часто. Подождите {wait}с перед следующим "
+                f"дополнением — это защита от случайного двойного "
+                f"сообщения.",
+                attachments=[keyboards.cancel_keyboard()],
+            )
+            return
+    if recent_count >= cfg.followup_max_per_hour_per_appeal:
+        await event.message.answer(
+            f"По этому обращению уже {recent_count} дополнений за час — "
+            f"лимит {cfg.followup_max_per_hour_per_appeal}. Подождите час "
+            f"или дождитесь ответа оператора — он видит всю историю и "
+            f"свяжется по сути вопроса.",
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+        # Сбрасываем state — иначе житель «застрянет» в AWAITING_FOLLOWUP
+        async with session_scope() as session:
+            await users_service.reset_state(session, max_user_id)
         return
 
     async with session_scope() as session:
@@ -12487,8 +12580,8 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
 
 ### `bot/aemr_bot/handlers/operator_reply.py`
 
-Size: `36252` bytes  
-SHA-256: `c8b033f036183e24dd13f85f2b01912e53dd60f0f90cd290c235423776273a2a`
+Size: `39283` bytes  
+SHA-256: `250d7f84cb5d50217e3c827d3627a0df19bacfcf0d9877a0c7e8d9a1002c9cc0`
 
 ```python
 """Логика ответов операторов и дополнительных сообщений от жителей, вызывается
@@ -12989,6 +13082,33 @@ async def _deliver_operator_reply(
         )
         return True
 
+    # SEC #6: ре-проверка активности оператора. Между intent (или
+    # swipe-reply) и доставкой IT мог деактивировать оператора через
+    # admin_operators. operator-объект из intent уже устарел —
+    # перечитываем актуальное состояние из БД. Деактивированный
+    # оператор не должен отправлять ни одного ответа.
+    async with session_scope() as session:
+        live_operator = await operators_service.get(
+            session, operator.max_user_id
+        )
+    if live_operator is None or not getattr(live_operator, "is_active", True):
+        log.warning(
+            "operator_reply: deactivated operator id=%s tried to reply on "
+            "appeal #%s — blocked.",
+            operator.id, appeal.id,
+        )
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=(
+                f"⚠️ Ваша роль оператора деактивирована. Ответ по "
+                f"обращению #{appeal.id} НЕ отправлен жителю. Обратитесь "
+                f"к IT для реактивации, если это ошибка."
+            ),
+        )
+        return True
+    # Используем свежую запись оператора во всех дальнейших шагах.
+    operator = live_operator
+
     is_dupe, success_key = await _check_reply_dedupe(
         event, operator=operator, appeal=appeal, text=text
     )
@@ -13130,17 +13250,36 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
     link = get_message_link(event)
     if link:
         replied_text = ""
+        replied_sender_is_bot = False
         inner = getattr(link, "message", None)
         if inner:
             replied_text = getattr(inner, "text", "")
+            # SEC #3: marker fallback должен срабатывать ТОЛЬКО на
+            # bot-authored сообщениях. Иначе оператор-злоумышленник
+            # (или вставленный текст «🆔 №N» из обращения жителя)
+            # перенаправит ответ на чужого жителя.
+            inner_sender = getattr(inner, "sender", None) or getattr(
+                inner, "from_", None
+            )
+            replied_sender_is_bot = bool(
+                getattr(inner_sender, "is_bot", False)
+            )
         elif isinstance(link, dict):
             inner_dict = link.get("message", {})
             if isinstance(inner_dict, dict):
                 replied_text = inner_dict.get("text", "")
+                sender_dict = (
+                    inner_dict.get("sender") or inner_dict.get("from") or {}
+                )
+                if isinstance(sender_dict, dict):
+                    replied_sender_is_bot = bool(sender_dict.get("is_bot"))
             else:
                 replied_text = link.get("text", "")
 
-        if replied_text:
+        # SEC #3: маркер только в bot-authored. Если link не даёт нам
+        # sender — считаем небезопасным. Лучше попросить /reply N, чем
+        # доставить чужому жителю.
+        if replied_text and replied_sender_is_bot:
             # ТОЛЬКО служебный маркер «🆔 №N» — его генерирует сам бот в
             # карточках /open_tickets и followup. Комбинация эмодзи и №
             # уникальна, в обычном тексте обращения не встречается.
@@ -13149,6 +13288,12 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
             match = re.search(r"🆔 №(\d+)", replied_text)
             if match:
                 appeal_id_from_text = int(match.group(1))
+        elif replied_text and re.search(r"🆔 №(\d+)", replied_text):
+            log.warning(
+                "operator_reply: маркер 🆔 №N в НЕ-bot сообщении — "
+                "игнорируем (защита от spoofing). operator=%s",
+                get_user_id(event),
+            )
 
     if target_mid is None and appeal_id_from_text is None:
         log.info(
@@ -16086,8 +16231,8 @@ async def relay_attachments_to_admin(
 
 ### `bot/aemr_bot/services/appeals.py`
 
-Size: `23423` bytes  
-SHA-256: `dd4d47a9c1bc2fb24f8ab9fb30dfc77667bab8e3d63b4bedf67b98f410ad5e4d`
+Size: `24893` bytes  
+SHA-256: `7d905ea1a7715cd891b2296625aa0141f822b01442b6a2e8ca303abbd8ea177c`
 
 ```python
 from datetime import datetime, timedelta, timezone
@@ -16276,6 +16421,45 @@ async def list_for_user(
         .offset(offset)
     )
     return list(res)
+
+
+async def count_recent_followups_for_appeal(
+    session: AsyncSession, appeal_id: int, *, hours: int = 1
+) -> int:
+    """SEC #5: сколько followup'ов житель прислал по обращению за
+    `hours` часов. Используется в rate-limit followup-флуда.
+
+    Считаем только direction=FROM_USER — operator-ответы не должны
+    блокировать жителя слать дополнения.
+    """
+    threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
+    return (
+        await session.scalar(
+            select(func.count())
+            .select_from(Message)
+            .where(
+                Message.appeal_id == appeal_id,
+                Message.direction == MessageDirection.FROM_USER.value,
+                Message.created_at >= threshold,
+            )
+        )
+    ) or 0
+
+
+async def last_followup_at_for_appeal(
+    session: AsyncSession, appeal_id: int
+) -> datetime | None:
+    """SEC #5: timestamp последнего followup жителя по обращению.
+
+    Нужен для min-interval rate-limit (между двумя followup'ами не
+    меньше N секунд). None — followup'ов ещё не было.
+    """
+    return await session.scalar(
+        select(func.max(Message.created_at)).where(
+            Message.appeal_id == appeal_id,
+            Message.direction == MessageDirection.FROM_USER.value,
+        )
+    )
 
 
 async def count_recent_for_user(
@@ -18381,8 +18565,8 @@ async def _ping_healthcheck() -> None:
 
 ### `bot/aemr_bot/services/db_backup.py`
 
-Size: `15350` bytes  
-SHA-256: `396a4395763941101dbfcd4dc2916286510c44bd8296d4881b4c8d0a8a49a93c`
+Size: `16664` bytes  
+SHA-256: `6ab100c6627ba6d85f7945d4c9fa5a3acd76d34406bb556b14b59216c47fd916`
 
 ```python
 """Резервное копирование Postgres БД: pg_dump → опционально gpg →
@@ -18666,6 +18850,27 @@ async def backup_db() -> BackupResult:
         )
         passphrase = ""  # nosec B105 - это сброс небезопасной фразы, не секрет.
     encrypt = bool(passphrase)
+    # SEC #2: блокируем создание plain-text дампа без явного opt-in.
+    # Дамп содержит phones / names / texts / operator audit-log — это
+    # PII по 152-ФЗ. Хранить на диске или заливать в S3 без шифрования
+    # = breach. Для dev/local-only можно поставить
+    # BACKUP_ALLOW_UNENCRYPTED=1, но в prod должен быть GPG passphrase.
+    if not encrypt and not settings.backup_allow_unencrypted:
+        log.error(
+            "backup отказан: BACKUP_GPG_PASSPHRASE пуст (или < 12 симв) и "
+            "BACKUP_ALLOW_UNENCRYPTED не выставлен. Установите passphrase "
+            "≥12 симв ИЛИ явно разрешите plain-text дамп через "
+            "BACKUP_ALLOW_UNENCRYPTED=1 (только dev/local!)."
+        )
+        return BackupResult(
+            path=None,
+            fail_kind="config",
+            fail_detail=(
+                "BACKUP_GPG_PASSPHRASE пуст — без шифрования дамп с PII "
+                "записывать запрещено (152-ФЗ). Поставьте passphrase ≥12 "
+                "симв или BACKUP_ALLOW_UNENCRYPTED=1 для dev."
+            ),
+        )
     suffix = ".sql.gpg" if encrypt else ".sql"
     ts = datetime.now(TZ).strftime("%Y%m%d_%H%M%S")
     out = target_dir / f"aemr-{ts}{suffix}"
@@ -19000,8 +19205,8 @@ def find_address(lat: float, lon: float, search_radius_m: int = _STREET_RADIUS_M
 
 ### `bot/aemr_bot/services/idempotency.py`
 
-Size: `7885` bytes  
-SHA-256: `cbdcf7fabd15919594217b212d063529793ab63a70e3a0480ee3475dadc58657`
+Size: `8575` bytes  
+SHA-256: `f293c248e82831ec05026119236273723472a724fae2c409c85a7a83b20a6910`
 
 ```python
 """Хранить отпечаток каждого входящего обновления MAX для защиты от
@@ -19135,8 +19340,17 @@ async def claim(event: Any) -> bool:
     except IntegrityError:
         return False
     except Exception:
-        log.exception("idempotency claim failed; defaulting to process")
-        return True
+        # SEC #7: fail-CLOSED, не fail-OPEN. Раньше тут было «defaulting
+        # to process» — attacker может induce DB stall (connection drop,
+        # transient timeout) и заставить handler обработать дубль.
+        # Для мутирующих callback'ов (op:close, op:erase, broadcast
+        # confirm, op:opchrole) это критично. Безопаснее пропустить
+        # событие — MAX повторит ack, при восстановлении БД handler
+        # обработает заново через свой полноценный путь.
+        log.exception(
+            "idempotency claim failed; SEC #7 fail-closed (event пропущен)"
+        )
+        return False
 
 
 async def has_processed_raw(key: str) -> bool:
@@ -20053,12 +20267,13 @@ async def fetch_main_runtime_config(
 
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `11344` bytes  
-SHA-256: `e5c68d6c37998eb566e2ac43898c711e2d1810ac7532c49bdc5ee8e393e5eb89`
+Size: `13101` bytes  
+SHA-256: `3420041ad609c246a3a52e8a12b106f30e9b467fce157c1d7ffc4a99c47b5aad`
 
 ```python
 import json
 from typing import Any
+from urllib.parse import urlparse
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -20066,6 +20281,39 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import Setting
+
+# SEC #4: whitelist хостов для URL-настроек. Operator-facing botов
+# (citizens click trusted govbot link) — должны вести только на
+# официальные ресурсы. Rogue/compromised IT не сможет поставить
+# phishing URL.
+#
+# Подвиды доменов добавляются ниже — точное совпадение или suffix
+# `.elizovomr.ru` / `.kamgov.ru` / `.gosuslugi.ru`. Если нужно
+# временно разрешить новый домен — добавить сюда и редеплоить
+# (не правится через UI, чтобы не выстрелить себе в ногу).
+_URL_HOST_WHITELIST_SUFFIXES = (
+    "elizovomr.ru",
+    "kamgov.ru",
+    "gosuslugi.ru",
+    "kamchatka.gov.ru",
+)
+
+
+def _is_whitelisted_url(value: str) -> bool:
+    """True если URL ведёт на разрешённый host (Elizovo / Kamchatka gov)."""
+    try:
+        parsed = urlparse(value)
+    except Exception:
+        return False
+    if parsed.scheme not in {"http", "https"}:
+        return False
+    host = (parsed.hostname or "").lower()
+    if not host:
+        return False
+    return any(
+        host == suffix or host.endswith("." + suffix)
+        for suffix in _URL_HOST_WHITELIST_SUFFIXES
+    )
 
 DEFAULTS: dict[str, Any] = {
     "welcome_text": None,
@@ -20158,8 +20406,15 @@ def validate(key: str, value: Any) -> tuple[bool, str]:
             return False, f"String too short, min_len={rule['min_len']}"
         if "max_len" in rule and len(value) > rule["max_len"]:
             return False, f"String too long, max_len={rule['max_len']}"
-        if rule.get("url") and not (value.startswith("https://") or value.startswith("http://")):
-            return False, "URL must start with http:// or https://"
+        if rule.get("url"):
+            if not (value.startswith("https://") or value.startswith("http://")):
+                return False, "URL must start with http:// or https://"
+            if not _is_whitelisted_url(value):
+                return False, (
+                    f"URL host не в whitelist. Разрешены только официальные "
+                    f"ресурсы: {', '.join(_URL_HOST_WHITELIST_SUFFIXES)}. "
+                    f"Для нового домена обратитесь к разработчику."
+                )
     if expected is list:
         if "min_items" in rule and len(value) < rule["min_items"]:
             return False, f"List too short, min_items={rule['min_items']}"
@@ -20606,8 +20861,8 @@ def file_attachment(token: str):
 
 ### `bot/aemr_bot/services/users.py`
 
-Size: `30589` bytes  
-SHA-256: `cc29c2462d5d908294f17510ede35a5f1a38d8c6e0cfd9b97253ba65e2e482e9`
+Size: `31152` bytes  
+SHA-256: `c782e45e54a799ff02dd4d05657da5c985168ea59f4b9c7422fb488fceb22373`
 
 ```python
 import logging
@@ -20689,7 +20944,12 @@ async def set_consent(session: AsyncSession, max_user_id: int) -> None:
         .values(
             consent_pdn_at=datetime.now(timezone.utc),
             consent_revoked_at=None,
-            is_blocked=False,
+            # SEC #1: НЕ сбрасываем is_blocked здесь — иначе blocked житель,
+            # тапнув старую кнопку «✅ Согласен» из истории чата (после того
+            # как IT заблокировал его), снимет блок себе сам. Разблокировку
+            # делает только IT через admin_audience / admin_appeal_ops с
+            # ensure_role(IT). is_blocked сбрасывается явно через
+            # users_service.set_blocked(blocked=False).
         )
     )
 
@@ -26249,8 +26509,8 @@ class TestHandleWizardText:
 
 ### `bot/tests/test_admin_panel.py`
 
-Size: `12680` bytes  
-SHA-256: `b8a0b5e7c5bfcd7bd34a0aa5a6ae8f4ddde2d0eca70dd6bd329c1a9679df390e`
+Size: `12999` bytes  
+SHA-256: `7e40fefbd0a401f26f7e095ab8f4cef01475ba6c0628414b184f0cddc8fe8093`
 
 ```python
 """Тесты для handlers/admin_panel — общие операции админ-панели
@@ -26541,7 +26801,12 @@ class TestDoBackup:
             await admin_panel._do_backup(event)
         last_text = event.bot.send_message.call_args_list[-1].kwargs["text"]
         assert "упал" in last_text.lower()
-        assert "disk full" in last_text
+        # SEC #8: НЕ должны светить repr(exc) в admin chat (может
+        # содержать DATABASE_URL / GPG-passphrase fragments).
+        # Должен быть только type(e).__name__.
+        assert "RuntimeError" in last_text
+        assert "disk full" not in last_text
+        assert "журнал" in last_text.lower()
 
 
 # --- _do_open_tickets ---------------------------------------------------------
@@ -26997,8 +27262,8 @@ class TestCardIntegration:
 
 ### `bot/tests/test_appeal_dispatcher.py`
 
-Size: `22842` bytes  
-SHA-256: `9b5c522265940c142605ccaf22ba21fe2fd44768a25d6753b62f74002a7c70f6`
+Size: `25415` bytes  
+SHA-256: `1b53505aa7c95fb9d89ec923c16c6fcc0e5858466edbcff7569d643a25061208`
 
 ```python
 """Тесты на handlers/appeal.register() — главный callback/message dispatcher.
@@ -27134,8 +27399,14 @@ class TestCallbackConsent:
         set_consent = AsyncMock()
         ask_contact = AsyncMock()
         notify = AsyncMock()
+        # SEC #1: _cb_consent_yes теперь читает user перед set_consent,
+        # чтобы blocked житель не мог снять блок через старую кнопку.
+        # Мокаем get_or_create → активный (не-blocked) пользователь.
+        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7)
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal.users_service.get_or_create",
+                   AsyncMock(return_value=unblocked_user)), \
              patch("aemr_bot.handlers.appeal.users_service.set_consent",
                    set_consent), \
              patch("aemr_bot.handlers.appeal.admin_events.notify_consent_given",
@@ -27147,6 +27418,41 @@ class TestCallbackConsent:
         set_consent.assert_called_once()
         notify.assert_called_once_with(event.bot, max_user_id=7)
         ask_contact.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_consent_yes_REFUSED_for_blocked_user(
+        self, captured_handlers
+    ) -> None:
+        """SEC #1: blocked житель, тапающий старую кнопку «✅ Согласен» из
+        истории чата (например, кнопка осталась с прошлого визита, до
+        IT-блокировки) — НЕ должен иметь возможность снять блок с себя
+        через эту кнопку. Воронка не запускается, set_consent не вызван.
+        """
+        on_callback, _ = captured_handlers
+        event = _make_callback_event(payload="consent:yes")
+        blocked_user = SimpleNamespace(is_blocked=True, max_user_id=7)
+        set_consent = AsyncMock()
+        ask_contact = AsyncMock()
+        notify = AsyncMock()
+        with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
+             patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal.users_service.get_or_create",
+                   AsyncMock(return_value=blocked_user)), \
+             patch("aemr_bot.handlers.appeal.users_service.set_consent",
+                   set_consent), \
+             patch("aemr_bot.handlers.appeal.admin_events.notify_consent_given",
+                   notify), \
+             patch("aemr_bot.handlers.appeal.appeal_funnel.ask_contact_or_skip",
+                   ask_contact), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await on_callback(event)
+        # Главное: set_consent НЕ вызван (блокировка осталась).
+        set_consent.assert_not_called()
+        ask_contact.assert_not_called()
+        notify.assert_not_called()
+        # Жителю отправлено пояснение про блокировку.
+        sent_text = event.bot.send_message.call_args.kwargs.get("text", "")
+        assert "заблокирован" in sent_text.lower()
 
     @pytest.mark.asyncio
     async def test_consent_no_resets_and_returns_to_menu(
@@ -32195,8 +32501,8 @@ def test_passphrase_length_decides_encryption(
 
 ### `bot/tests/test_db_backup_extra.py`
 
-Size: `14354` bytes  
-SHA-256: `4428962e1d787125594fb1530740fcafc09f8738b7d43e6ff1f7ca7061d3f15e`
+Size: `15690` bytes  
+SHA-256: `2510c407c5c41e54935aa3a8b8dc9e37ec8d27cc483e80a70e14c6e91b04fe71`
 
 ```python
 """Расширенные тесты services/db_backup — backup_db, _run_pg_dump,
@@ -32335,6 +32641,7 @@ class TestBackupDb:
 
         with patch.object(db_backup.settings, "backup_local_dir", str(tmp_path)), \
              patch.object(db_backup.settings, "backup_gpg_passphrase", ""), \
+             patch.object(db_backup.settings, "backup_allow_unencrypted", True), \
              patch.object(db_backup.settings, "backup_keep_count", 5), \
              patch.object(db_backup.settings, "backup_s3_bucket", ""), \
              patch.object(db_backup.settings, "backup_s3_endpoint", ""), \
@@ -32386,6 +32693,7 @@ class TestBackupDb:
 
         with patch.object(db_backup.settings, "backup_local_dir", str(tmp_path)), \
              patch.object(db_backup.settings, "backup_gpg_passphrase", "short"), \
+             patch.object(db_backup.settings, "backup_allow_unencrypted", True), \
              patch.object(db_backup.settings, "backup_keep_count", 5), \
              patch.object(db_backup.settings, "backup_s3_bucket", ""), \
              patch.object(db_backup.settings, "backup_s3_endpoint", ""), \
@@ -32402,6 +32710,23 @@ class TestBackupDb:
         assert result.path.suffix == ".sql"
 
     @pytest.mark.asyncio
+    async def test_sec2_refuses_plain_without_opt_in(
+        self, tmp_path: Path
+    ) -> None:
+        """SEC #2: пустой passphrase + НЕТ BACKUP_ALLOW_UNENCRYPTED → отказ.
+        152-ФЗ: plain-text дамп с PII нельзя писать на диск без явного
+        opt-in в dev/local."""
+        with patch.object(db_backup.settings, "backup_local_dir", str(tmp_path)), \
+             patch.object(db_backup.settings, "backup_gpg_passphrase", ""), \
+             patch.object(db_backup.settings, "backup_allow_unencrypted", False):
+            with patch.object(db_backup, "_run_pg_dump") as dump:
+                result = await db_backup.backup_db()
+            dump.assert_not_called()
+        assert result.ok is False
+        assert result.fail_kind == "config"
+        assert "152" in result.fail_detail or "passphrase" in result.fail_detail.lower()
+
+    @pytest.mark.asyncio
     async def test_pg_dump_fail_categorized(
         self, tmp_path: Path
     ) -> None:
@@ -32412,6 +32737,7 @@ class TestBackupDb:
 
         with patch.object(db_backup.settings, "backup_local_dir", str(tmp_path)), \
              patch.object(db_backup.settings, "backup_gpg_passphrase", ""), \
+             patch.object(db_backup.settings, "backup_allow_unencrypted", True), \
              patch.object(db_backup.settings, "backup_keep_count", 5):
             with patch.object(db_backup, "_run_pg_dump", side_effect=fake_dump_fail), \
                  patch.object(db_backup, "_build_pg_env", return_value={}):
@@ -32456,6 +32782,7 @@ class TestBackupDb:
 
         with patch.object(db_backup.settings, "backup_local_dir", str(tmp_path)), \
              patch.object(db_backup.settings, "backup_gpg_passphrase", ""), \
+             patch.object(db_backup.settings, "backup_allow_unencrypted", True), \
              patch.object(db_backup.settings, "backup_keep_count", 5):
             with patch.object(db_backup, "_run_pg_dump", side_effect=fake_dump_fail), \
                  patch.object(db_backup, "_build_pg_env", return_value={}):
@@ -32478,6 +32805,7 @@ class TestBackupDb:
 
         with patch.object(db_backup.settings, "backup_local_dir", str(tmp_path)), \
              patch.object(db_backup.settings, "backup_gpg_passphrase", ""), \
+             patch.object(db_backup.settings, "backup_allow_unencrypted", True), \
              patch.object(db_backup.settings, "backup_keep_count", 5), \
              patch.object(db_backup.settings, "backup_s3_bucket", ""), \
              patch.object(db_backup.settings, "backup_s3_endpoint", ""), \
@@ -33744,8 +34072,8 @@ class TestGeoConfirmCard:
 
 ### `bot/tests/test_handlers_appeal_funnel.py`
 
-Size: `24495` bytes  
-SHA-256: `33bf95de35c46047d6161e40c9cc58004f4be122675b1df6d69986c6a4c5f561`
+Size: `24866` bytes  
+SHA-256: `977bfc6f2c4bb4109acd49183d39fb71d97eac28fa7355731f3f2a781a0aec3c`
 
 ```python
 """Расширенные тесты handlers/appeal_funnel — состояния воронки и
@@ -34202,6 +34530,13 @@ class TestOnAwaitingFollowupText:
         ), patch(
             "aemr_bot.handlers.appeal_funnel.appeals_service.add_user_message",
             AsyncMock(),
+        ), patch(
+            # SEC #5: rate-limit-check; happy path = followup ok.
+            "aemr_bot.handlers.appeal_funnel.appeals_service.last_followup_at_for_appeal",
+            AsyncMock(return_value=None),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.appeals_service.count_recent_followups_for_appeal",
+            AsyncMock(return_value=0),
         ), patch(
             "aemr_bot.config.settings.admin_group_id",
             555,
@@ -35979,8 +36314,8 @@ class TestHandleCallback:
 
 ### `bot/tests/test_handlers_operator_reply.py`
 
-Size: `33271` bytes  
-SHA-256: `d9950c902ac00a9f42150b5cfb4e21389dc435c12cc8ca4ae1c00183c1e6e793`
+Size: `34166` bytes  
+SHA-256: `2dcbff9b8932126395853b9a8fbd6e706455403bbcb34febcc685ef1d277f26f`
 
 ```python
 """Тесты handlers/operator_reply.py — ответы операторов и intent dedupe.
@@ -36181,6 +36516,24 @@ class TestExtractReplyTargetMid:
             type="reply", message=SimpleNamespace(mid="MID-1")
         )
         assert opr._extract_reply_target_mid(event) == "MID-1"
+
+
+@pytest.fixture(autouse=True)
+def _autopatch_operators_get(request):
+    """SEC #6: _deliver_operator_reply ре-проверяет operators_service.get
+    перед доставкой (защита от deactivated operator). Юнит-тесты в этом
+    модуле гоняют через fake session — patch'им get на возврат активного
+    оператора, чтобы security-чек не падал на MagicMock-сессии."""
+    # Применяется только в этом модуле; не трогает другие тесты.
+    if "test_handlers_operator_reply" not in request.node.nodeid:
+        yield
+        return
+    live_op = SimpleNamespace(id=7, max_user_id=42, is_active=True)
+    with patch(
+        "aemr_bot.handlers.operator_reply.operators_service.get",
+        AsyncMock(return_value=live_op),
+    ):
+        yield
 
 
 class TestDeliverOperatorReply:
@@ -38196,8 +38549,8 @@ class TestSendOrEditScreenWithTracker:
 
 ### `bot/tests/test_operator_reply_closed_guard.py`
 
-Size: `3049` bytes  
-SHA-256: `2c4357eaf51057de13e66a17d2d4278fe66d6f5ef4e61d1e563512e38c69423a`
+Size: `3266` bytes  
+SHA-256: `b029dec5d8f74e846098afc0f931b7c21f289940b1e94e145a6d5429b0d86be5`
 
 ```python
 from __future__ import annotations
@@ -38236,7 +38589,12 @@ async def test_deliver_operator_reply_blocks_closed_appeal() -> None:
     async def fake_session_scope():
         yield SimpleNamespace()
 
+    live_op = SimpleNamespace(id=7, max_user_id=7001, is_active=True)
     with patch("aemr_bot.handlers.operator_reply.session_scope", fake_session_scope), \
+         patch(
+             "aemr_bot.handlers.operator_reply.operators_service.get",
+             AsyncMock(return_value=live_op),
+         ), \
          patch(
              "aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
              AsyncMock(return_value=fresh_appeal),
@@ -38284,8 +38642,8 @@ async def test_deliver_operator_reply_blocks_closed_appeal() -> None:
 
 ### `bot/tests/test_operator_reply_with_image.py`
 
-Size: `7240` bytes  
-SHA-256: `0d177f65e783b65e2c9ca4db27debd84ee1170ff0bc9e83373900fe881e52999`
+Size: `7517` bytes  
+SHA-256: `e0fdd563bcadb8d369a14d051af4e5b05ed21fd239b378096cb29350eb0765e6`
 
 ```python
 """TDD-тесты image-relay в `_deliver_operator_reply`.
@@ -38352,12 +38710,16 @@ def _fresh_appeal() -> SimpleNamespace:
 def _patches_for_delivery():
     """Стандартный набор патчей для прохождения guard'ов в
     `_deliver_operator_reply` до точки доставки и записи."""
+    live_op = SimpleNamespace(id=7, max_user_id=42, is_active=True)
     return [
         patch.object(__import__("aemr_bot.handlers.operator_reply",
                                 fromlist=["cfg"]).cfg,
                      "answer_max_chars", 1000),
         patch("aemr_bot.handlers.operator_reply.session_scope",
               _fake_session_scope),
+        # SEC #6: re-check operator activity. Tests должны вернуть live_op.
+        patch("aemr_bot.handlers.operator_reply.operators_service.get",
+              AsyncMock(return_value=live_op)),
         patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
               AsyncMock(return_value=_fresh_appeal())),
         patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
@@ -38740,8 +39102,8 @@ class TestStagesIntegrity:
 
 ### `bot/tests/test_pure_functions.py`
 
-Size: `10564` bytes  
-SHA-256: `b433183fa9c25820c793d18130d4b4c254fc2deeb1a50652c0fe30789ad1c3f9`
+Size: `11522` bytes  
+SHA-256: `f34b5eeba1c3e9c20c07b213790e04a0463f6b2792053a93a27a0b6dcce53d69`
 
 ```python
 """Юнит-тесты для чистых функций без БД.
@@ -38857,15 +39219,43 @@ def test_validate_unknown_key_rejected() -> None:
     assert ok is False
 
 
-def test_validate_url_must_start_with_scheme() -> None:
+def test_validate_url_must_start_with_scheme_and_be_whitelisted() -> None:
+    """SEC #4: URL должен быть http(s) И host из whitelist (gov-домены).
+
+    Чужие хосты (даже https://) → reject. Защита от phishing-URL,
+    подставленного через rogue/compromised IT-операта.
+    """
     from aemr_bot.services import settings_store
 
-    ok_https, _ = settings_store.validate("policy_url", "https://example.com")
-    ok_http, _ = settings_store.validate("policy_url", "http://example.com")
-    ok_javascript, _ = settings_store.validate("policy_url", "javascript:alert(1)")
+    # WHITELISTED hosts (Elizovo / Kamchatka gov) → pass
+    ok_elizovomr, _ = settings_store.validate(
+        "policy_url", "https://elizovomr.ru/policy.pdf"
+    )
+    ok_kamgov, _ = settings_store.validate(
+        "policy_url", "https://kamgov.ru/page"
+    )
+    ok_subdomain, _ = settings_store.validate(
+        "policy_url", "https://udth.elizovomr.ru/schedule"
+    )
+    assert ok_elizovomr is True
+    assert ok_kamgov is True
+    assert ok_subdomain is True
+
+    # NON-whitelisted → reject даже если https
+    ok_https_alien, _ = settings_store.validate(
+        "policy_url", "https://example.com"
+    )
+    ok_https_phishing, _ = settings_store.validate(
+        "policy_url", "https://kamgov.evil.com"  # subdomain spoof
+    )
+    assert ok_https_alien is False
+    assert ok_https_phishing is False
+
+    # Не-http схемы → reject
+    ok_javascript, _ = settings_store.validate(
+        "policy_url", "javascript:alert(1)"
+    )
     ok_relative, _ = settings_store.validate("policy_url", "/policy")
-    assert ok_https is True
-    assert ok_http is True
     assert ok_javascript is False
     assert ok_relative is False
 
@@ -39883,8 +40273,8 @@ class TestBroadcastsEligibleFilter:
 
 ### `bot/tests/test_settings_store_validation.py`
 
-Size: `2609` bytes  
-SHA-256: `98a1b00d2d5960df5f0acbd0d16c60bb70afa92ac0e91a656b8390aa489e75d4`
+Size: `3036` bytes  
+SHA-256: `ca5c8aaa3e2b3bbf41f9f65cd6b8f3a9d0ac56cb79f38f84dd6c76e51cedb0e2`
 
 ```python
 """Тесты на services/settings_store — валидация ключей и значений.
@@ -39920,8 +40310,17 @@ class TestValidate:
         assert "не разрешён" in reason or "unknown" in reason.lower()
 
     def test_string_key_accepts_string(self) -> None:
-        ok, reason = validate("policy_url", "https://example.com/policy.pdf")
-        assert ok is True
+        # SEC #4: URL должен быть в host whitelist (gov-домены).
+        ok, reason = validate("policy_url", "https://elizovomr.ru/policy.pdf")
+        assert ok is True, reason
+
+    def test_url_rejects_non_whitelisted_host(self) -> None:
+        """SEC #4: даже https://, но чужой host → reject."""
+        ok, reason = validate(
+            "policy_url", "https://example.com/policy.pdf"
+        )
+        assert ok is False
+        assert "whitelist" in reason.lower() or "host" in reason.lower()
 
     def test_list_key_rejects_string(self) -> None:
         ok, reason = validate("topics", "not-a-list")
