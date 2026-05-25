@@ -447,23 +447,18 @@ async def _show_obj_card(event, key: str) -> None:
         "transport_dispatcher_contacts": "🚌 Диспетчерские транспорта",
     }
     title = title_map.get(key, key)
-    if items:
-        lines = []
-        for i, item in enumerate(items):
-            name = item.get("name") or item.get("routes") or "?"
-            phone = item.get("phone") or ""
-            lines.append(f"{i+1}. {name} — {phone}")
-        body = "\n".join(lines)
-    else:
-        body = "(список пуст)"
+    # Pure-функция в services/settings_store — там же и юнит-тесты
+    # без зависимости от maxapi.
+    body = settings_store.format_obj_list(items)
     hint = ""
     if key == "emergency_contacts":
         hint = (
-            "\n\nФормат добавления: пришлите две строки —\n"
-            "название и телефон.\n"
-            "Пример:\n"
+            "\n\nФормат добавления: пришлите две или три строки —\n"
+            "название, телефон и (опционально) раздел.\n"
+            "Пример с разделом:\n"
             "Пожарная служба\n"
-            "01"
+            "01\n"
+            "Экстренные службы"
         )
     elif key == "transport_dispatcher_contacts":
         hint = (
@@ -517,7 +512,12 @@ async def _start_obj_add(event, operator_id: int, key: str) -> None:
 
     _intent_set(operator_id, key=key, kind="obj_add")
     if key == "emergency_contacts":
-        hint = "Пришлите две строки: название и телефон."
+        hint = (
+            "Пришлите две или три строки:\n"
+            "1) название\n"
+            "2) телефон\n"
+            "3) раздел (необязательно — Экстренные службы / Электроэнергия / ...)"
+        )
     elif key == "transport_dispatcher_contacts":
         hint = "Пришлите две строки: маршруты и телефон."
     else:
@@ -997,7 +997,13 @@ async def _apply_obj_add(
         )
         return
     if key == "emergency_contacts":
-        item = {"name": lines[0], "phone": lines[1]}
+        # Третья строка — необязательный раздел (Экстренные службы,
+        # Электроэнергия, Отопление и т.п.). Если оператор её прислал,
+        # сохраняем — UI потом сгруппирует контакты по разделам. Если
+        # не прислал — item уходит в визуальную секцию «Прочее».
+        item: dict[str, str] = {"name": lines[0], "phone": lines[1]}
+        if len(lines) >= 3 and lines[2]:
+            item["section"] = lines[2]
     elif key == "transport_dispatcher_contacts":
         item = {"routes": lines[0], "phone": lines[1]}
     else:
