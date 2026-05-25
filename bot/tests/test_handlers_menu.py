@@ -601,10 +601,16 @@ class TestSimpleScreens:
 
     @pytest.mark.asyncio
     async def test_callback_screen_falls_back_to_new_message_when_edit_fails(self) -> None:
+        from maxapi.exceptions.max import MaxApiError
+
         from aemr_bot.handlers import menu
 
         event = _make_callback_event()
-        event.bot.edit_message.side_effect = RuntimeError("MAX edit failed")
+        # Reliability-pass: тест проверяет fallback на send_message при
+        # MaxApiError (типичная причина — старое сообщение нельзя
+        # редактировать). Раньше тут был RuntimeError + broad `except
+        # Exception`; сузили до конкретных исключений MAX-API/network.
+        event.bot.edit_message.side_effect = MaxApiError(400, "edit failed")
 
         await menu.open_settings(event)
 

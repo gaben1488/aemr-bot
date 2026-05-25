@@ -7,6 +7,7 @@
 для оператора."""
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from aemr_bot import keyboards as kbds
@@ -233,6 +234,7 @@ async def _do_diag(event) -> None:
         BroadcastStatus,
         Event,
         Message,
+        MessageDirection,
         User,
     )
 
@@ -247,89 +249,120 @@ async def _do_diag(event) -> None:
     # рассылка доставляла — оператор удивлялся «подписан 100, ушло 80».
     from aemr_bot.services import broadcasts as broadcasts_service
 
-    async with session_scope() as session:
-        users_total = await session.scalar(select(func.count()).select_from(User))
-        # «Активные» — без обезличенных (first_name='Удалено' после
-        # /forget или PDN-retention). Это «живые жители», которые
-        # могут писать боту. users_total включает их для прозрачности
-        # «сколько записей в БД всего».
-        users_active = await session.scalar(
-            select(func.count()).select_from(User).where(
-                User.first_name != "Удалено",
-            )
-        )
-        users_blocked = await session.scalar(
-            select(func.count()).select_from(User).where(User.is_blocked.is_(True))
-        )
-        # Eligible subscribers: ровно те, кому уйдёт рассылка.
-        # Старый счётчик (только subscribed_broadcast=True) расходился
-        # с фактической доставкой, потому что не учитывал
-        # consent_broadcast_at IS NOT NULL и first_name != 'Удалено'.
-        users_subscribed = await broadcasts_service.count_subscribers(session)
-        users_new_24h = await session.scalar(
-            select(func.count()).select_from(User).where(
-                User.created_at >= since_24h
-            )
-        )
-        appeals_total = await session.scalar(select(func.count()).select_from(Appeal))
-        appeals_in_progress = await session.scalar(
-            select(func.count()).select_from(Appeal).where(
+    # Reliability-pass: было 13 отдельных `await session.scalar(...)` —
+    # последовательные round-trip'ы к Postgres (~13 × RTT в худшем
+    # случае ~ 100ms+ на загруженной БД). Сводим однотипные счётчики
+    # в один запрос на таблицу через `count(*) FILTER (WHERE ...)`
+    # (агрегатный фильтр SQL:2003, поддерживается Postgres 9.4+).
+    # Внутри одного PG-запроса фильтры выполняются за один проход по
+    # данным с агрегацией. Сам набор подзапросов на разные таблицы
+    # пускаем параллельно через asyncio.gather с отдельными
+    # session_scope (asyncpg connection-per-task).
+    def _users_query():
+        return select(
+            func.count().label("total"),
+            func.count().filter(User.first_name != "Удалено").label("active"),
+            func.count().filter(User.is_blocked.is_(True)).label("blocked"),
+            func.count().filter(User.created_at >= since_24h).label("new_24h"),
+        ).select_from(User)
+
+    def _appeals_query():
+        return select(
+            func.count().label("total"),
+            func.count().filter(
                 Appeal.status.in_([
                     AppealStatus.NEW.value,
                     AppealStatus.IN_PROGRESS.value,
                 ])
-            )
-        )
-        appeals_new_24h = await session.scalar(
-            select(func.count()).select_from(Appeal).where(
-                Appeal.created_at >= since_24h
-            )
-        )
-        # Direction в БД — MessageDirection enum (from_user / from_operator /
-        # system). До этого фикса было "to_user" — невалидное значение,
-        # счётчик ВСЕГДА показывал 0. Это причина того, что /diag
-        # «Ответов оператора за 24ч» всегда был 0 несмотря на ответы.
-        from aemr_bot.db.models import MessageDirection
+            ).label("in_progress"),
+            func.count().filter(Appeal.created_at >= since_24h).label("new_24h"),
+        ).select_from(Appeal)
 
-        replies_24h = await session.scalar(
-            select(func.count()).select_from(Message).where(
-                Message.direction == MessageDirection.FROM_OPERATOR.value,
-                Message.created_at >= since_24h,
-            )
-        )
-        broadcasts_done = await session.scalar(
-            select(func.count()).select_from(Broadcast).where(
+    def _broadcasts_query():
+        return select(
+            func.count().filter(
                 Broadcast.status == BroadcastStatus.DONE.value
-            )
-        )
-        broadcasts_failed = await session.scalar(
-            select(func.count()).select_from(Broadcast).where(
+            ).label("done"),
+            func.count().filter(
                 Broadcast.status == BroadcastStatus.FAILED.value
-            )
+            ).label("failed"),
+            func.count().filter(Broadcast.created_at >= since_24h).label("count_24h"),
+            func.count().filter(
+                (Broadcast.status == BroadcastStatus.SENDING.value)
+                & (Broadcast.created_at < stuck_threshold)
+            ).label("stuck"),
+        ).select_from(Broadcast)
+
+    def _events_query():
+        return select(
+            func.count().label("total"),
+            func.max(Event.received_at).label("last_at"),
+        ).select_from(Event)
+
+    def _replies_query():
+        # Direction в БД — MessageDirection enum (from_user / from_operator /
+        # system). До фикса было "to_user" — невалидное значение,
+        # счётчик ВСЕГДА показывал 0.
+        return select(func.count()).select_from(Message).where(
+            Message.direction == MessageDirection.FROM_OPERATOR.value,
+            Message.created_at >= since_24h,
         )
-        broadcasts_24h = await session.scalar(
-            select(func.count()).select_from(Broadcast).where(
-                Broadcast.created_at >= since_24h
-            )
-        )
-        broadcasts_stuck = await session.scalar(
-            select(func.count()).select_from(Broadcast).where(
-                Broadcast.status == BroadcastStatus.SENDING.value,
-                Broadcast.created_at < stuck_threshold,
-            )
-        )
-        delivery_failed_24h = await session.scalar(
-            select(func.count()).select_from(BroadcastDelivery).where(
+
+    def _delivery_failed_query():
+        return (
+            select(func.count())
+            .select_from(BroadcastDelivery)
+            .join(Broadcast, Broadcast.id == BroadcastDelivery.broadcast_id)
+            .where(
                 BroadcastDelivery.error.isnot(None),
                 BroadcastDelivery.delivered_at.is_(None),
-                # broadcast_deliveries не имеет created_at; используем
-                # связку через broadcast.created_at >= since_24h.
+                Broadcast.created_at >= since_24h,
             )
-            .join(Broadcast, Broadcast.id == BroadcastDelivery.broadcast_id)
-            .where(Broadcast.created_at >= since_24h)
         )
-        events_total = await session.scalar(select(func.count()).select_from(Event))
-        last_event = await session.scalar(select(func.max(Event.received_at)))
+
+    async def _fetch_row(query):
+        async with session_scope() as session:
+            return (await session.execute(query)).one()
+
+    async def _fetch_scalar(query):
+        async with session_scope() as session:
+            return await session.scalar(query)
+
+    async def _fetch_subscribers():
+        async with session_scope() as session:
+            return await broadcasts_service.count_subscribers(session)
+
+    (
+        users_row,
+        appeals_row,
+        broadcasts_row,
+        events_row,
+        replies_24h,
+        delivery_failed_24h,
+        users_subscribed,
+    ) = await asyncio.gather(
+        _fetch_row(_users_query()),
+        _fetch_row(_appeals_query()),
+        _fetch_row(_broadcasts_query()),
+        _fetch_row(_events_query()),
+        _fetch_scalar(_replies_query()),
+        _fetch_scalar(_delivery_failed_query()),
+        _fetch_subscribers(),
+    )
+
+    users_total = users_row.total
+    users_active = users_row.active
+    users_blocked = users_row.blocked
+    users_new_24h = users_row.new_24h
+    appeals_total = appeals_row.total
+    appeals_in_progress = appeals_row.in_progress
+    appeals_new_24h = appeals_row.new_24h
+    broadcasts_done = broadcasts_row.done
+    broadcasts_failed = broadcasts_row.failed
+    broadcasts_24h = broadcasts_row.count_24h
+    broadcasts_stuck = broadcasts_row.stuck
+    events_total = events_row.total
+    last_event = events_row.last_at
 
     # Pulse-индикатор: сколько минут назад был последний event. Бот
     # шлёт heartbeat по cron, поэтому «давно не было событий» — явный

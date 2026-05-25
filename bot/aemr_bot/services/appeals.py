@@ -395,7 +395,7 @@ async def list_unanswered(
 
 
 async def find_overdue_unanswered(
-    session: AsyncSession, sla_hours: int
+    session: AsyncSession, sla_hours: int, *, limit: int = 500
 ) -> list[Appeal]:
     """Обращения, которые в работе/новые дольше SLA и пока без ответа.
 
@@ -406,6 +406,13 @@ async def find_overdue_unanswered(
 
     Возвращает результат с догруженным `user`, чтобы вызывающий код
     мог показать имя жителя без N+1.
+
+    LIMIT 500 — защита от лавины (то же, что `list_unanswered`): если
+    оператор был в отпуске, и месяцами копится сотни просрочек, без
+    лимита cron-алерт тянет всё разом + selectinload по `user` создаёт
+    второй IN-query на тысячи id. Дальше всё равно обрезается в
+    форматтере, но БД-запрос уже отдал всё. 500 заведомо больше
+    реальной очереди.
     """
     threshold = datetime.now(timezone.utc) - timedelta(hours=sla_hours)
     res = await session.scalars(
@@ -418,6 +425,7 @@ async def find_overdue_unanswered(
             Appeal.created_at <= threshold,
         )
         .order_by(Appeal.created_at)
+        .limit(limit)
     )
     return list(res)
 

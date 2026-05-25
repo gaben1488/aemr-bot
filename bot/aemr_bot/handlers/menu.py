@@ -2,6 +2,9 @@ import logging
 from collections.abc import Callable
 from typing import Any, NamedTuple
 
+import aiohttp
+from maxapi.exceptions.max import MaxApiError, MaxConnection
+
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
@@ -52,7 +55,14 @@ async def _send_or_edit_menu(
                 attachments=attachments,
             )
             return
-        except Exception:
+        except (MaxApiError, MaxConnection, aiohttp.ClientError, TimeoutError):
+            # Reliability-pass: сузили `except Exception`. Реальные
+            # причины edit-failure — MAX API кинула 400 (старое сообщение
+            # уже не редактируется), 5xx (временный сбой), TCP rst/
+            # timeout до api.tamtam.chat. На любой другой exception
+            # (например AttributeError от подмены bot mock) — пусть
+            # всплывает, чтобы баг был видим, а не маскировался
+            # тихим fallback'ом на send_message.
             log.info(
                 "menu: edit_message %s failed, fallback to send",
                 mid,

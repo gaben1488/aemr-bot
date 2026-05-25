@@ -16,6 +16,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from sqlalchemy.orm.exc import DetachedInstanceError
 
 from tests._helpers import fake_session_scope as _fake_session_scope
 
@@ -112,7 +113,14 @@ class TestAdminCardSurvivesAttachmentCountFailure:
             ),
             patch(
                 "aemr_bot.services.admin_card._count_attachments",
-                side_effect=RuntimeError("simulated lazy-load fail"),
+                # Reliability-pass: сузили `except Exception` до
+                # AttributeError/TypeError/DetachedInstanceError —
+                # реальных причин fail'а на detached lazy-load. Тест
+                # обновлён под новый контракт: симулируем именно
+                # DetachedInstanceError, как было бы у живой БД.
+                side_effect=DetachedInstanceError(
+                    "Parent instance is not bound to a Session"
+                ),
             ),
         ):
             # render НЕ должен поднять; в худшем случае logs + None

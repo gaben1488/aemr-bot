@@ -195,13 +195,22 @@ def reset_all() -> None:
 
 def _spawn_persist(coro_factory) -> None:
     """Запустить async-coro в фоне, если есть running loop. Без него —
-    no-op (юнит-тесты импортируют модуль вне asyncio context'а)."""
+    no-op (юнит-тесты импортируют модуль вне asyncio context'а).
+
+    Использует `utils.background.spawn_background_task` для защиты от
+    GC: голый `loop.create_task` хранится в event loop только через
+    weakref, и сборщик мусора может прервать задачу до завершения
+    (особенно опасно для коротких persist'ов в БД)."""
     try:
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
     except RuntimeError:
         return
     try:
-        loop.create_task(coro_factory())
+        from aemr_bot.utils.background import spawn_background_task
+
+        spawn_background_task(
+            coro_factory(), name="wizard_registry.persist"
+        )
     except Exception:
         log.warning("wizard_registry: persist task spawn failed", exc_info=False)
 
