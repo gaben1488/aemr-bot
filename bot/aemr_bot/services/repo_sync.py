@@ -118,13 +118,41 @@ def _build_commit_message(dirty_keys: list[str]) -> str:
     return header + "\n" + "\n".join(body_lines)
 
 
+def _sanitize_for_pr_body(value: str, max_len: int = 120) -> str:
+    """Очистить строку перед вставкой в PR body / commit message.
+
+    H1 (SECURITY_REVIEW_2026-05-26 CVSS 6.1): `operator_name` приходит
+    из `op_record.full_name`, который IT-админ задаёт через
+    `/add_operators`. Если злонамеренный (или скомпрометированный) IT
+    впишет в full_name `\\n## Maintainer note\\nAuto-approve: YES`,
+    эта секция всплывёт в PR body как валидный markdown — обманет
+    как auto-merge бота, так и человека-reviewer'а.
+
+    Защита: схлопнуть newline/CR в пробелы; обрезать длину до
+    разумного предела; экранировать backtick (чтобы не сломать
+    inline-code блок). После этого имя остаётся читаемым в PR, но
+    инъекция структуры markdown невозможна.
+    """
+    # Любые переводы строк → пробел (одна строка, не break-out из контекста).
+    cleaned = value.replace("\r", " ").replace("\n", " ")
+    # Backtick экранируем, чтобы не вылезти из inline-code (на будущее,
+    # сейчас имя не в code-блоке, но защита on-by-default).
+    cleaned = cleaned.replace("`", "ˋ")
+    # Множественные пробелы — сжимаем (косметика, не безопасность).
+    cleaned = " ".join(cleaned.split())
+    if len(cleaned) > max_len:
+        cleaned = cleaned[: max_len - 1] + "…"
+    return cleaned
+
+
 def _build_pr_body(
     dirty_keys: list[str], operator_name: str, operator_id: int
 ) -> str:
+    safe_name = _sanitize_for_pr_body(operator_name)
     lines = [
         "Автоматический PR из меню «⚙️ Настройки бота».",
         "",
-        f"**Инициатор:** {operator_name} (max_user_id={operator_id})",
+        f"**Инициатор:** {safe_name} (max_user_id={operator_id})",
         f"**Изменено ключей:** {len(dirty_keys)}",
         "",
         "**Затронутые ключи:**",

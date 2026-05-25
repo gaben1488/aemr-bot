@@ -146,6 +146,69 @@ async def has_any_it(session: AsyncSession) -> bool:
     return op is not None
 
 
+async def cleanup_stale_operators(
+    session: AsyncSession,
+    *,
+    current_member_ids: set[int],
+    protected_role: OperatorRole = OperatorRole.IT,
+) -> list[Operator]:
+    """Деактивировать операторов, которых больше нет в админ-группе MAX.
+
+    SECURITY_REVIEW M2 (max-threats CVE-9): когда оператор покидает
+    служебную группу MAX (увольнение / смена должности / просто вышел
+    «случайно»), запись в `operators` остаётся `is_active=true`. Auth
+    защищён `is_admin_chat`-проверкой (на каждый callback re-проверка),
+    но stale-данные в БД — повод для путаницы при ревизии и риск, если
+    в будущем какая-то логика начнёт пускать по `is_active` без chat-
+    binding.
+
+    Источник истины — `current_member_ids`: множество `max_user_id` всех
+    членов админ-группы, полученное через `bot.get_chat_members`. Если
+    активный оператор НЕ в этом множестве — деактивируем (мягко, через
+    `deactivate()`).
+
+    **Защита от ошибки** (важно): если `current_member_ids` пуст (MAX
+    API дал ошибку и `_safe_get_chat_members` вернул пустоту) — НЕ
+    деактивируем никого, иначе одна сетевая флуктуация деактивирует
+    всех операторов разом. Возвращаем пустой список.
+
+    **Защита от self-lock-out**: операторов с ролью `protected_role`
+    (по умолчанию IT) НЕ деактивируем автоматически — иначе если IT
+    случайно вышел, никто потом не сможет его реактивировать. IT
+    остаётся в operators, чтобы при возвращении он по-прежнему мог
+    использовать админ-чат.
+
+    Возвращает список деактивированных операторов (для audit и
+    admin-alert).
+    """
+    if not current_member_ids:
+        return []
+
+    actives = await list_active(session)
+    deactivated: list[Operator] = []
+    for op in actives:
+        if op.role == protected_role.value:
+            continue
+        if op.max_user_id in current_member_ids:
+            continue
+        # Оператор активен в БД, но не в группе MAX → деактивировать.
+        result = await deactivate(session, op.max_user_id)
+        if result is not None:
+            deactivated.append(result)
+            await write_audit(
+                session,
+                operator_max_user_id=None,  # системное действие
+                action="operator_auto_deactivated_stale",
+                target=str(op.max_user_id),
+                details={
+                    "reason": "left_admin_chat",
+                    "role": op.role,
+                    "full_name": op.full_name,
+                },
+            )
+    return deactivated
+
+
 async def bootstrap_it_from_env(
     session: AsyncSession,
     *,

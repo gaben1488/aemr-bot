@@ -261,6 +261,69 @@ async def _job_audit_log_retention() -> None:
         log.exception("audit_log retention failed")
 
 
+async def _job_stale_operators_cleanup(bot, send_admin_text) -> None:
+    """Деактивировать операторов, ушедших из админ-группы MAX.
+
+    SECURITY_REVIEW M2 (max-threats CVE-9): запись в `operators` остаётся
+    `is_active=true` даже когда оператор покинул служебную группу MAX
+    (уволился, поменял отдел). Сам по себе доступ блокируется
+    `is_admin_chat`-проверкой, но stale-данные — повод для путаницы.
+    Здесь раз в сутки сверяем активных операторов с реальным списком
+    членов группы и мягко деактивируем тех, кого там нет.
+
+    Не трогает IT-операторов — иначе одна сетевая флуктуация может
+    лишить организацию админа без возможности восстановления (некого
+    реактивировать). См. cleanup_stale_operators().
+
+    Запускается в 04:20 — между audit-log-retention (04:15) и
+    pdn-retention (04:30), не пересекается по нагрузке.
+    """
+    try:
+        # Используем тот же безопасный helper из admin_operators,
+        # чтобы любая ошибка MAX API → пустой список → no-op (см.
+        # защиту в cleanup_stale_operators при пустом current_member_ids).
+        from aemr_bot.handlers.admin_operators import _safe_get_chat_members
+        from aemr_bot.services import operators as ops_svc
+
+        members = await _safe_get_chat_members(bot)
+        if not members:
+            log.info(
+                "stale-operators-cleanup: get_chat_members вернул пусто "
+                "— шаг пропущен (safety, чтобы не деактивировать всех "
+                "при сетевой ошибке)"
+            )
+            return
+        current_ids = {
+            int(getattr(m, "user_id", 0)) for m in members
+            if getattr(m, "user_id", None) is not None
+        }
+        async with session_scope() as session:
+            deactivated = await ops_svc.cleanup_stale_operators(
+                session, current_member_ids=current_ids
+            )
+        if deactivated:
+            names = ", ".join(
+                f"{op.full_name} ({op.role})" for op in deactivated[:5]
+            )
+            more = "" if len(deactivated) <= 5 else f" и ещё {len(deactivated) - 5}"
+            msg = (
+                f"ℹ️ Авто-деактивация stale-операторов: "
+                f"{len(deactivated)} человек больше не в служебной группе "
+                f"MAX → переведены в is_active=false. ИТ-операторы не "
+                f"трогаются (защита от self-lock-out).\n\n"
+                f"Деактивированы: {names}{more}\n\n"
+                f"Если кто-то ушёл по ошибке — восстановите через меню "
+                f"«👥 Операторы» → «➕ Добавить»."
+            )
+            await _send_admin_text_with_retry(
+                send_admin_text, msg, context="stale-operators-cleanup"
+            )
+        else:
+            log.info("stale-operators-cleanup: no changes")
+    except Exception:
+        log.exception("stale-operators-cleanup failed")
+
+
 async def _job_selfcheck(send_admin_text) -> None:
     """Алёрт при смене статуса бота: heartbeat fresh ↔ stale."""
     from aemr_bot.health import heartbeat
@@ -634,6 +697,16 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             _job_audit_log_retention,
             CronTrigger(hour=4, minute=15, timezone=TZ),
             "audit-log-retention",
+        ),
+        # Auto-deactivate stale operators (CVE-9 from SECURITY_REVIEW_2026-05-26).
+        # Сверяет активных операторов с реальными членами админ-группы MAX
+        # и мягко деактивирует тех, кого больше нет. IT-операторы не
+        # трогаются (защита от self-lock-out). 04:20 — между audit-log
+        # retention и pdn-retention.
+        (
+            functools.partial(_job_stale_operators_cleanup, bot, send_admin_text),
+            CronTrigger(hour=4, minute=20, timezone=TZ),
+            "stale-operators-cleanup",
         ),
         # Selfcheck heartbeat
         (

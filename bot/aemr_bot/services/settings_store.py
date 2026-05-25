@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Any
 from urllib.parse import urlparse
 
@@ -26,6 +27,30 @@ _URL_HOST_WHITELIST_SUFFIXES = (
 )
 
 
+# SECURITY_REVIEW M4: phone-формат в emergency_contacts. Раньше любой
+# текст принимался — IT мог по ошибке (или умыслом) вписать вместо
+# номера telegram-ник, email, платный premium-номер «+7-900-911-XXXX»
+# с тарификацией 50 руб/мин. Жители увидели бы это как «официальный
+# номер службы».
+#
+# Допускаем: цифры, пробелы, плюс, скобки, дефис, точка. Минимум 2
+# символа — это стандартные коды экстренных служб в России («01»,
+# «02», «03», «112»). Максимум 40 (длинные международные с
+# расширениями типа «+7 (415-31) 7-25-29»).
+_PHONE_PATTERN = re.compile(r"^[\d\s\+\-\(\)\.]{2,40}$")
+
+
+def _is_valid_phone(value: str) -> bool:
+    """True если строка похожа на телефон по формату.
+
+    Не валидируем что номер существует — это не наша задача. Только
+    structural-проверка: набор символов и длина.
+    """
+    if not isinstance(value, str):
+        return False
+    return bool(_PHONE_PATTERN.match(value.strip()))
+
+
 def _is_whitelisted_url(value: str) -> bool:
     """True если URL ведёт на разрешённый host (Elizovo / Kamchatka gov)."""
     try:
@@ -41,6 +66,46 @@ def _is_whitelisted_url(value: str) -> bool:
         host == suffix or host.endswith("." + suffix)
         for suffix in _URL_HOST_WHITELIST_SUFFIXES
     )
+
+
+# Публичная обёртка — переиспользуется в operator_reply, broadcast и
+# других местах где надо отфильтровать исходящий URL по гос-whitelist.
+# Внутренняя `_is_whitelisted_url` оставлена приватной для legacy-
+# совместимости и validate() ниже.
+def is_whitelisted_url(value: str) -> bool:
+    return _is_whitelisted_url(value)
+
+
+# SECURITY_REVIEW M3: исходящие URL в ответе оператора жителю должны
+# идти только на гос-домены. Если оператор (или скомпрометированный
+# оператор) вставил ссылку на сторонний сайт — мы блокируем доставку
+# и пишем warning в admin-чат. Список гос-доменов = тот же что и для
+# settings (SEC #4 whitelist).
+#
+# Regex покрывает классические http(s)://, без `\b` чтобы не упустить
+# URL в конце строки. Domain-only (без scheme) НЕ ловим — это даёт
+# оператору безопасный fallback (написать «kamgov.ru» текстом).
+_URL_IN_TEXT_PATTERN = re.compile(
+    r"https?://[^\s<>\"'`]+",
+    re.IGNORECASE,
+)
+
+
+def extract_urls(text: str) -> list[str]:
+    """Все http(s)-URL из текста. Пустой list если URL'ов нет."""
+    if not text:
+        return []
+    return _URL_IN_TEXT_PATTERN.findall(text)
+
+
+def find_non_whitelisted_urls(text: str) -> list[str]:
+    """Список URL из текста, которые НЕ в гос-whitelist.
+
+    Используется в operator_reply / broadcast для блокировки исходящей
+    фишинг-ссылки. Если возвращает пустой список — текст безопасен
+    с точки зрения URL.
+    """
+    return [u for u in extract_urls(text) if not _is_whitelisted_url(u)]
 
 DEFAULTS: dict[str, Any] = {
     "welcome_text": None,
@@ -153,6 +218,20 @@ def validate(key: str, value: Any) -> tuple[bool, str]:
             for it in value:
                 if not isinstance(it, dict) or not rule["item_keys"].issubset(it):
                     return False, f"Each item must be an object with keys: {rule['item_keys']}"
+        # SECURITY_REVIEW M4: для контактов с обязательным полем phone —
+        # дополнительно валидируем структурный формат, чтобы IT не вписал
+        # туда премиум-номер с тарификацией или произвольный текст.
+        # Применяется к emergency_contacts и transport_dispatcher_contacts
+        # (оба имеют phone в item_keys).
+        if rule.get("item_keys") and "phone" in rule["item_keys"]:
+            for it in value:
+                phone = it.get("phone", "")
+                if not _is_valid_phone(phone):
+                    return False, (
+                        f"Поле «phone» в одном из item'ов не похоже на телефон: "
+                        f"«{phone[:30]}…». Допустимо: цифры, пробелы, +, (), -, ., "
+                        f"длина 3–40."
+                    )
     if expected is int:
         # bool — подкласс int в Python, явно фильтруем: True/False не
         # должны проходить как int (validate("broadcast_max_images", True)
