@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 02:55:16 UTC`
+Generated at: `2026-05-25 02:55:58 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `198`
 Max file size: `300 KB`
@@ -52,20 +52,20 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_settings.py` (43026 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (26104 bytes)
-- `bot/aemr_bot/handlers/appeal_funnel.py` (31980 bytes)
+- `bot/aemr_bot/handlers/appeal_funnel.py` (30419 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (11640 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (43027 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8595 bytes)
 - `bot/aemr_bot/handlers/menu.py` (47097 bytes)
-- `bot/aemr_bot/handlers/operator_reply.py` (34298 bytes)
+- `bot/aemr_bot/handlers/operator_reply.py` (36252 bytes)
 - `bot/aemr_bot/handlers/start.py` (17005 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (63429 bytes)
 - `bot/aemr_bot/main.py` (19076 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
-- `bot/aemr_bot/services/admin_card.py` (8036 bytes)
+- `bot/aemr_bot/services/admin_card.py` (9348 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6079 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
 - `bot/aemr_bot/services/appeals.py` (22583 bytes)
@@ -87,7 +87,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/users.py` (30589 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (12444 bytes)
-- `bot/aemr_bot/texts.py` (42090 bytes)
+- `bot/aemr_bot/texts.py` (42926 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -102,7 +102,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_appeal_ops.py` (24368 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
 - `bot/tests/test_admin_card_detached_safety.py` (7896 bytes)
-- `bot/tests/test_admin_card_render.py` (11030 bytes)
+- `bot/tests/test_admin_card_render.py` (13858 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
 - `bot/tests/test_admin_events_descriptor.py` (5856 bytes)
 - `bot/tests/test_admin_handlers_small.py` (21842 bytes)
@@ -136,13 +136,13 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_final_p1_regressions.py` (6078 bytes)
 - `bot/tests/test_funnel_state_hardening.py` (6421 bytes)
 - `bot/tests/test_geo.py` (9324 bytes)
-- `bot/tests/test_handlers_appeal_funnel.py` (24153 bytes)
+- `bot/tests/test_handlers_appeal_funnel.py` (24495 bytes)
 - `bot/tests/test_handlers_auth_broadcast.py` (6976 bytes)
 - `bot/tests/test_handlers_common.py` (3572 bytes)
 - `bot/tests/test_handlers_funnel.py` (9458 bytes)
 - `bot/tests/test_handlers_menu.py` (26382 bytes)
 - `bot/tests/test_handlers_menu_extra.py` (23371 bytes)
-- `bot/tests/test_handlers_operator_reply.py` (29246 bytes)
+- `bot/tests/test_handlers_operator_reply.py` (33271 bytes)
 - `bot/tests/test_handlers_start.py` (13597 bytes)
 - `bot/tests/test_health.py` (4062 bytes)
 - `bot/tests/test_idempotency.py` (3650 bytes)
@@ -7861,8 +7861,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/appeal_funnel.py`
 
-Size: `31980` bytes  
-SHA-256: `5c49b78eacec0f2eaa2aae95f8b3877cf1dc492ba89ad314c4c3e400cf2d27b6`
+Size: `30419` bytes  
+SHA-256: `86ed62554dccff051758b3523474071b33ba5218229fed545325c6ca60da017b`
 
 ```python
 """FSM-воронка приёма обращения и явного дополнения.
@@ -8436,9 +8436,7 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     """
     from aemr_bot.config import settings as cfg
     from aemr_bot.db.models import AppealStatus
-    from aemr_bot.services import card_format
     from aemr_bot.services.admin_relay import relay_attachments_to_admin
-    from aemr_bot.utils.event import extract_message_id
 
     async with current_user(max_user_id) as (session, user):
         appeal_id = (user.dialog_data or {}).get("appeal_id")
@@ -8506,65 +8504,46 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         await users_service.reset_state(session, max_user_id)
         appeal_for_card = updated_appeal or appeal
         user_for_card = getattr(appeal_for_card, "user", None) or user
-        followup = card_format.admin_followup(
-            appeal_for_card, user_for_card, text or "(без текста)"
-        )
 
-    # Политика edit-vs-new: дополнение жителя — событие, требующее
-    # явной отметки внизу чата. Через services/admin_card.render с
-    # force_new=True: helper отправит новую карточку с полной
-    # историей (включая это дополнение) и обновит
-    # Appeal.admin_message_id, чтобы последующие edit'ы (reply,
-    # reopen) попадали в АКТУАЛЬНУЮ карточку, а не в оригинальную
-    # вверху чата. Это закрывает баг «оператор ответил на свежую,
-    # но edit ушёл в старую» — все три точки edit (reply / status /
-    # followup) теперь делят один admin_message_id.
-    followup_mid = None
+    # Единое уведомление: ПОЛНАЯ admin appeal card с timeline (где видно
+    # свежее дополнение жителя как последнее сообщение) + маркер-шапка
+    # `📩 Новое дополнение по обращению #N от жителя`. Один объект в
+    # чате вместо двух — оператор не сканирует две сущности «короткое
+    # уведомление + карточка», а видит сразу контекст + содержание +
+    # все кнопки действий.
+    #
+    # force_new=True: дополнение = «новая инфа», нужна запись внизу
+    # чата даже если предыдущая карточка ещё была last_in_chat.
+    # admin_message_id оригинала НЕ двигаем (sacred-правило, PR #54),
+    # но last_admin_card_mid в БД обновится новым mid'ом.
+    new_card_mid: str | None = None
     if cfg.admin_group_id:
-        # 1. Видимый маркер «🔄 Новое дополнение по обращению #N» с
-        # цитатой текста — чтобы оператор в шумном чате сразу понял
-        # «по этому обращению есть новая инфа». Содержит сам текст
-        # дополнения для quick-read без открытия карточки.
-        try:
-            sent_follow = await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text=f"🔄 {followup}",
-            )
-            followup_mid = extract_message_id(sent_follow)
-        except Exception:
-            log.exception("send followup notification failed")
-        # 2. Полноценная новая карточка с актуальной timeline-историей.
-        # admin_card.render(force_new=True): шлёт новую карточку,
-        # admin_message_id оригинала НЕ двигаем (sacred-правило, PR #54).
-        # На оригинальной карточке вверху чата оператор отвечает по
-        # admin_message_id; новая карточка внизу — для контекста и
-        # повторных reply-кнопок.
         try:
             from aemr_bot.services import admin_card as admin_card_service
 
-            # appeal_for_card должен иметь user; гарантируем.
             if getattr(appeal_for_card, "user", None) is None:
                 appeal_for_card.user = user_for_card
-            # followup от жителя = «появилась новая инфа», нужна
-            # явная отметка карточкой внизу даже если предыдущая
-            # карточка ещё последняя. force_new обходит freshness-edit.
-            await admin_card_service.render(
-                event.bot, appeal_for_card, force_new=True
+            new_card_mid = await admin_card_service.render(
+                event.bot,
+                appeal_for_card,
+                force_new=True,
+                event_header=(
+                    f"📩 Новое дополнение по обращению #{appeal.id} от "
+                    f"жителя — см. ниже в истории переписки."
+                ),
             )
         except Exception:
             log.exception("admin_card.render after followup failed")
 
-    if cfg.admin_group_id:
         if attachments:
             try:
-                # relay привязываем к followup-уведомлению (followup_mid),
-                # либо без reply-link (admin_card.render уже отправил
-                # новую карточку и обновил admin_message_id внутри — мы
-                # тут не знаем новый mid, не критично).
+                # Relay вложений жителя — reply-link на свежую карточку
+                # (new_card_mid). Без link — relay уйдёт отдельным
+                # сообщением, оператор всё равно увидит вложения.
                 await relay_attachments_to_admin(
                     event.bot,
                     appeal_id=appeal.id,
-                    admin_mid=followup_mid,
+                    admin_mid=new_card_mid,
                     stored_attachments=attachments,
                 )
             except Exception:
@@ -12406,8 +12385,8 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
 
 ### `bot/aemr_bot/handlers/operator_reply.py`
 
-Size: `34298` bytes  
-SHA-256: `cf37a71487798fd5902094237046f47f80060c094390048eefb4c824039a5bf1`
+Size: `36252` bytes  
+SHA-256: `c8b033f036183e24dd13f85f2b01912e53dd60f0f90cd290c235423776273a2a`
 
 ```python
 """Логика ответов операторов и дополнительных сообщений от жителей, вызывается
@@ -12955,6 +12934,12 @@ async def _deliver_operator_reply(
     # - иначе → новая карточка снизу с актуальным timeline.
     # callback_mid берём из event (mid карточки на которой нажали
     # «Ответить»; для swipe-reply берём mid цитируемого).
+    #
+    # event_header применяется только если render выйдет в send_new
+    # ветку (старая карточка не последняя, нужна свежая внизу). Тогда
+    # оператор сразу видит: «эта новая карточка — потому что только
+    # что отправлен ответ». На edit-in-place маркер игнорируется (см.
+    # admin_card.render docstring) — оператор и так в контексте.
     try:
         from aemr_bot.services import admin_card as admin_card_service
         from aemr_bot.utils.event import get_callback_message_id
@@ -12964,19 +12949,41 @@ async def _deliver_operator_reply(
                 session, appeal.id
             )
         if fresh_appeal is not None:
+            reply_event_header = (
+                f"✉️ Финальный ответ отправлен по обращению #{appeal.id} — "
+                f"статус «Завершено»."
+                if is_final
+                else (
+                    f"💬 Промежуточный ответ отправлен по обращению #{appeal.id} "
+                    f"— обращение остаётся в работе."
+                )
+            )
             await admin_card_service.render(
                 event.bot,
                 fresh_appeal,
                 callback_mid=get_callback_message_id(event),
+                event_header=reply_event_header,
             )
     except Exception:
         log.exception(
             "operator_reply: admin_card.render failed for #%s", appeal.id
         )
 
+    # Развязка финального и промежуточного ответа: текст подтверждения
+    # должен отражать реальное состояние обращения. До этого фикса
+    # промежуточный ответ показывал «обращение #N закрыто» — регрессия,
+    # путала оператора (житель остаётся в работе, но карточка говорит
+    # обратное). Теперь:
+    # - is_final=True  → ANSWERED+CLOSED, «финальный ответ отправлен»;
+    # - is_final=False → IN_PROGRESS, «промежуточный, остаётся в работе».
+    confirm_text = (
+        texts.ADMIN_REPLY_DELIVERED_FINAL
+        if is_final
+        else texts.ADMIN_REPLY_DELIVERED_INTERMEDIATE
+    ).format(number=appeal.id)
     await event.bot.send_message(
         chat_id=get_chat_id(event),
-        text=texts.ADMIN_REPLY_DELIVERED.format(number=appeal.id),
+        text=confirm_text,
         attachments=[keyboards.op_back_to_menu_keyboard()],
     )
     return True
@@ -15365,8 +15372,8 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ### `bot/aemr_bot/services/admin_card.py`
 
-Size: `8036` bytes  
-SHA-256: `0038fcc0d5f1dc75ef3931a4cc6895d9deafd162a0bc8dcd149927f77d093f4b`
+Size: `9348` bytes  
+SHA-256: `8c13d173815b9e4260e472b6b1f162b35cb81df177df3cefb1a577805f0700bc`
 
 ```python
 """Admin appeal card с freshness-rule (унифицированное правило для
@@ -15427,6 +15434,7 @@ async def render(
     callback_mid: str | None = None,
     is_first_publication: bool = False,
     force_new: bool = False,
+    event_header: str | None = None,
 ) -> str | None:
     """Опубликовать/обновить admin appeal card с freshness-rule.
 
@@ -15441,6 +15449,13 @@ async def render(
         force_new: True для событий «появилось новое» (followup
             жителя): даже если карточка ещё последняя в чате,
             нужна новая запись внизу для маркера событий.
+        event_header: опциональный маркер-заголовок над карточкой —
+            например «📩 Новое дополнение по обращению #N от жителя».
+            Нужен, когда карточка приходит как РЕАКЦИЯ на событие, а
+            не просто как переотрисовка статуса: оператор сразу видит,
+            что именно случилось, без поиска в timeline. Шапка отделена
+            от карточки разделителем. Только для send_new веток; на
+            edit-in-place не применяется (карточка остаётся «обычной»).
 
     Returns:
         mid опубликованной/отредактированной карточки, None при сбое.
@@ -15500,6 +15515,15 @@ async def render(
         and callback_mid == last_in_chat
     )
 
+    # На edit event_header НЕ применяется: карточку правят in-place,
+    # маркер «новое событие» теряет смысл — оператор сам только что
+    # тапнул кнопку, контекст у него уже в голове.
+    text_for_send = (
+        f"{event_header}\n────────────────\n{text}"
+        if event_header and not can_edit
+        else text
+    )
+
     if can_edit:
         try:
             await bot.edit_message(
@@ -15524,7 +15548,7 @@ async def render(
     try:
         sent = await bot.send_message(
             chat_id=cfg.admin_group_id,
-            text=text,
+            text=text_for_send,
             attachments=attachments,
         )
     except Exception:
@@ -21564,8 +21588,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `42090` bytes  
-SHA-256: `8336c36c5e65d9ed9c19a4ef760b7871c2707879f4180fec205589035600800b`
+Size: `42926` bytes  
+SHA-256: `e72568e963f00da446b55fef8d5b7731f01356fa929f6091e80815048d03efff`
 
 ```python
 WELCOME = (
@@ -21693,9 +21717,19 @@ ADMIN_FOLLOWUP_TEMPLATE = (
     "🆔 №{number}"
 )
 
-ADMIN_REPLY_DELIVERED = (
-    "Ответ ушёл жителю. Обращение #{number} закрыто."
+ADMIN_REPLY_DELIVERED_FINAL = (
+    "✉️ Финальный ответ отправлен жителю. Обращение #{number} переведено "
+    "в «Отвечено» и закрыто. Если житель присылает дополнение — придёт "
+    "новая карточка с пометкой «Новое дополнение»."
 )
+ADMIN_REPLY_DELIVERED_INTERMEDIATE = (
+    "💬 Промежуточный ответ отправлен жителю. Обращение #{number} "
+    "остаётся в работе — можно дослать уточнения через «✉️ Ответить» "
+    "под карточкой ниже."
+)
+# Backwards-compat alias — на случай если что-то ещё ссылается на
+# старое имя ключа. Удалить после grep'а кода и confirmation.
+ADMIN_REPLY_DELIVERED = ADMIN_REPLY_DELIVERED_FINAL
 
 CITIZEN_REPLY_TEMPLATE = (
     "Ответ Администрации Елизовского муниципального округа\n\n"
@@ -24442,8 +24476,8 @@ class TestFinalizeSurvivesDetachedAppeal:
 
 ### `bot/tests/test_admin_card_render.py`
 
-Size: `11030` bytes  
-SHA-256: `3e08ef4723c286b6e7235a6a15c155f7ac9a877734750103f385451f074cd8be`
+Size: `13858` bytes  
+SHA-256: `933a25b40b64be66f29c68f16f879261234d83605fe9dbef4182a484afb85e76`
 
 ```python
 """Тесты freshness-rule семантики `services/admin_card.render`.
@@ -24714,6 +24748,70 @@ class TestEditFallback:
 
         bot.send_message.assert_awaited_once()
         assert mid == "recovery-9"
+
+
+class TestEventHeader:
+    """event_header — маркер-шапка над send_new карточкой (для followup).
+
+    На edit-in-place маркер НЕ добавляется (карточку правят inplace,
+    оператор уже в контексте действия). На send_new — добавляется
+    с разделителем.
+    """
+
+    @pytest.mark.asyncio
+    async def test_event_header_prepends_on_send_new(self) -> None:
+        from aemr_bot.services import admin_card
+
+        appeal = _make_appeal()
+        bot = _make_bot(new_mid="follow-9")
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", 555),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_admin_message_id",
+                AsyncMock(),
+            ),
+        ):
+            await admin_card.render(
+                bot,
+                appeal,
+                event_header="📩 Новое дополнение по обращению #5",
+            )
+        bot.send_message.assert_awaited_once()
+        sent_text = bot.send_message.call_args.kwargs.get("text", "")
+        assert "📩 Новое дополнение по обращению #5" in sent_text
+        assert "────────────────" in sent_text
+        # Карточка идёт под маркером — содержимое тоже на месте.
+        assert "Обращение #5" in sent_text or "#5" in sent_text
+
+    @pytest.mark.asyncio
+    async def test_event_header_skipped_on_edit(self) -> None:
+        """edit: маркер НЕ применяется (карточка остаётся «обычной»)."""
+        from aemr_bot.services import admin_card
+        from aemr_bot.utils import menu_tracker
+
+        appeal = _make_appeal(last_card_mid="card-7")
+        bot = _make_bot()
+        menu_tracker.set_last_menu_mid(555, "card-7")
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", 555),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+        ):
+            await admin_card.render(
+                bot,
+                appeal,
+                callback_mid="card-7",
+                event_header="📩 этого не должно быть на edit",
+            )
+        bot.edit_message.assert_awaited_once()
+        edited_text = bot.edit_message.call_args.kwargs.get("text", "")
+        assert "📩 этого не должно быть на edit" not in edited_text
 
 
 class TestGuards:
@@ -33382,8 +33480,8 @@ class TestGeoConfirmCard:
 
 ### `bot/tests/test_handlers_appeal_funnel.py`
 
-Size: `24153` bytes  
-SHA-256: `301358eb6b8f0b2d91e30dd5e985371f3b64847d6beb818dd4227f11bfeaf079`
+Size: `24495` bytes  
+SHA-256: `33bf95de35c46047d6161e40c9cc58004f4be122675b1df6d69986c6a4c5f561`
 
 ```python
 """Расширенные тесты handlers/appeal_funnel — состояния воронки и
@@ -33772,10 +33870,15 @@ class TestOnAwaitingFollowupText:
 
     @pytest.mark.asyncio
     async def test_success_sends_new_admin_card_for_followup(self) -> None:
-        """Политика edit-vs-new: дополнение жителя НЕ редактирует старую
-        admin-карточку. Шлёт новую — оператор мог уйти далеко вниз
-        чата, edit вверху не виден; новая карточка приходит вниз и
-        повышает конверсию ответа."""
+        """Followup-карточка = ПОЛНАЯ admin appeal card с event_header
+        («📩 Новое дополнение по обращению #N»), а не двойной комбо
+        «короткое уведомление + карточка». Один объект в чате —
+        оператор сразу видит контекст + содержание + все кнопки
+        действий, не сканирует две сущности (см. user feedback 2026-05-25).
+
+        Старая карточка вверху НЕ редактируется — followup = «появилась
+        новая инфа», явно показываем внизу чата.
+        """
         from aemr_bot.handlers import appeal_funnel
 
         event = _make_event()
@@ -35612,8 +35715,8 @@ class TestHandleCallback:
 
 ### `bot/tests/test_handlers_operator_reply.py`
 
-Size: `29246` bytes  
-SHA-256: `68d705b26ab5af692628ed9dcc4ce47e125f3743caa2fbe750a0462315434c0c`
+Size: `33271` bytes  
+SHA-256: `d9950c902ac00a9f42150b5cfb4e21389dc435c12cc8ca4ae1c00183c1e6e793`
 
 ```python
 """Тесты handlers/operator_reply.py — ответы операторов и intent dedupe.
@@ -36138,6 +36241,87 @@ class TestDeliverOperatorReply:
         # Новая event-log семантика: render публикует НОВУЮ карточку.
         render_mock.assert_awaited_once()
         # edit_message НЕ вызывается напрямую (старая семантика).
+
+
+class TestIntermediateReplyConfirmText:
+    """Развязка confirm-сообщения оператора: финальный vs промежуточный.
+
+    Регрессия — раньше шёл ADMIN_REPLY_DELIVERED = «Обращение #N закрыто»
+    даже для is_final=False. Это путало оператора (он понимал, что
+    житель остаётся в работе, но карточка говорила обратное).
+    """
+
+    async def _run_deliver(self, *, is_final: bool) -> SimpleNamespace:
+        from aemr_bot.handlers import operator_reply as opr
+
+        event = _make_event()
+        event.bot.send_message = AsyncMock(
+            side_effect=[SimpleNamespace(body=SimpleNamespace(mid="out-1")), None]
+        )
+        appeal = MagicMock(id=42)
+        operator = MagicMock(id=7, max_user_id=42)
+        fresh_appeal = _fresh_appeal(appeal_id=42)
+        fresh_appeal.admin_message_id = "admin-mid-1"
+        fresh_appeal.last_admin_card_mid = "admin-mid-1"
+        fresh_appeal.closed_due_to_revoke = False
+
+        opr._recent_replies.clear()
+        with patch.object(opr.cfg, "answer_max_chars", 1000), \
+             patch("aemr_bot.handlers.operator_reply.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
+                   AsyncMock(side_effect=[fresh_appeal, fresh_appeal])), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id_with_messages",
+                   AsyncMock(return_value=fresh_appeal)), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.operator_reply._mark_reply_success_recorded",
+                   AsyncMock()), \
+             patch("aemr_bot.services.admin_card.render",
+                   AsyncMock(return_value="new-event-mid")), \
+             patch("aemr_bot.config.settings.admin_group_id", 555):
+            await opr._deliver_operator_reply(
+                event, appeal=appeal, operator=operator,
+                text="ответ", audit_action="reply",
+                is_final=is_final,
+            )
+        return event
+
+    @pytest.mark.asyncio
+    async def test_final_reply_says_closed(self) -> None:
+        event = await self._run_deliver(is_final=True)
+        # send_message вызвано 2 раза: житель + confirm оператору.
+        # Текст confirm — последний вызов с chat_id (не user_id).
+        confirm_calls = [
+            c for c in event.bot.send_message.await_args_list
+            if "chat_id" in c.kwargs and c.kwargs.get("text")
+        ]
+        assert confirm_calls, "не было confirm-сообщения оператору"
+        text = confirm_calls[-1].kwargs.get("text", "")
+        assert "закрыт" in text.lower() or "Отвечено" in text
+        assert "#42" in text
+
+    @pytest.mark.asyncio
+    async def test_intermediate_reply_says_in_progress(self) -> None:
+        event = await self._run_deliver(is_final=False)
+        confirm_calls = [
+            c for c in event.bot.send_message.await_args_list
+            if "chat_id" in c.kwargs and c.kwargs.get("text")
+        ]
+        assert confirm_calls
+        text = confirm_calls[-1].kwargs.get("text", "")
+        # Главное: НЕТ слова «закрыт».
+        assert "закрыт" not in text.lower(), text
+        # И есть маркер промежуточности.
+        assert (
+            "промежуточный" in text.lower()
+            or "в работе" in text.lower()
+        ), text
+        assert "#42" in text
 
 
 class TestReplyRejectionBeforeDelivery:
