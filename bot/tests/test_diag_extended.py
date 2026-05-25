@@ -43,7 +43,9 @@ async def test_diag_pulse_warning_when_events_silent(session) -> None:
 
     # Записываем «древнее» событие
     old_event = Event(
-        kind="ping",
+        idempotency_key="diag-old-ping",
+        update_type="ping",
+        payload={},
         received_at=datetime.now(timezone.utc) - timedelta(hours=2),
     )
     session.add(old_event)
@@ -82,7 +84,9 @@ async def test_diag_no_warnings_when_pulse_fresh(session) -> None:
     from aemr_bot.handlers import admin_panel
 
     fresh = Event(
-        kind="ping",
+        idempotency_key="diag-fresh-ping",
+        update_type="ping",
+        payload={},
         received_at=datetime.now(timezone.utc) - timedelta(minutes=1),
     )
     session.add(fresh)
@@ -118,7 +122,12 @@ async def test_diag_stuck_broadcast_in_warnings(session) -> None:
 
     # Свежий pulse (чтобы не сбивал основной сигнал)
     session.add(
-        Event(kind="ping", received_at=datetime.now(timezone.utc))
+        Event(
+            idempotency_key="diag-stuck-pulse",
+            update_type="ping",
+            payload={},
+            received_at=datetime.now(timezone.utc),
+        )
     )
     # Зависшая рассылка
     stuck = Broadcast(

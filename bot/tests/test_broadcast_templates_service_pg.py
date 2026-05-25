@@ -81,9 +81,32 @@ async def test_duplicate_name_raises(session) -> None:
 
 @pytest.mark.asyncio
 async def test_list_active_orders_by_updated_at_desc(session) -> None:
-    """Список упорядочен по updated_at desc — свежие сверху."""
+    """Список упорядочен по updated_at desc — свежие сверху.
+
+    Два create_template подряд могут получить одинаковый updated_at
+    (микросекунды совпали — Postgres tickless clock иногда возвращает
+    идентичные now()). Явно разносим timestamp'ы UPDATE'ом, чтобы тест
+    проверял именно политику сортировки, а не клочковые гонки времени.
+    """
+    from datetime import datetime, timedelta, timezone
+    from sqlalchemy import update
+
+    from aemr_bot.db.models import BroadcastTemplate
+
     t1 = await templates.create_template(session, name="A", text="a")
     t2 = await templates.create_template(session, name="B", text="b")
+    base = datetime.now(timezone.utc)
+    await session.execute(
+        update(BroadcastTemplate)
+        .where(BroadcastTemplate.id == t1.id)
+        .values(updated_at=base - timedelta(seconds=10))
+    )
+    await session.execute(
+        update(BroadcastTemplate)
+        .where(BroadcastTemplate.id == t2.id)
+        .values(updated_at=base)
+    )
+    await session.flush()
     items = await templates.list_active(session)
     ids = [t.id for t in items]
     assert ids[0] == t2.id and ids[1] == t1.id
@@ -244,7 +267,10 @@ async def test_record_usage_works_on_archived_template(session) -> None:
 async def test_search_finds_by_name(session) -> None:
     await templates.create_template(session, name="Отключение воды", text="…")
     await templates.create_template(session, name="Расписание", text="…")
-    results = await templates.search(session, "вода")
+    # ILIKE по подстроке "вод" — стем покрывает «вода / воды / воде» и
+    # не зависит от падежа. Раньше искали "вода" и тест ломался,
+    # т.к. в имени "воды" (родительный падеж).
+    results = await templates.search(session, "вод")
     assert len(results) == 1
     assert results[0].name == "Отключение воды"
 
