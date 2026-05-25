@@ -96,7 +96,6 @@ class TestAdminCardSurvivesAttachmentCountFailure:
             ),
             edit_message=AsyncMock(),
         )
-        update_mid = AsyncMock()
         with (
             patch("aemr_bot.config.settings.admin_group_id", 555),
             patch(
@@ -104,8 +103,12 @@ class TestAdminCardSurvivesAttachmentCountFailure:
                 _fake_session_scope,
             ),
             patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
+            patch(
                 "aemr_bot.services.admin_card.appeals_service.set_admin_message_id",
-                update_mid,
+                AsyncMock(),
             ),
             patch(
                 "aemr_bot.services.admin_card._count_attachments",
@@ -114,7 +117,7 @@ class TestAdminCardSurvivesAttachmentCountFailure:
         ):
             # render НЕ должен поднять; в худшем случае logs + None
             try:
-                mid = await admin_card.render(bot, appeal, force_new=True)
+                mid = await admin_card.render(bot, appeal)
             except Exception:
                 pytest.fail(
                     "admin_card.render должен быть устойчив к ошибкам "

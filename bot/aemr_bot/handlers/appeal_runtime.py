@@ -240,7 +240,9 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
         #   lazy-load → exception → обращение не доходит до админа.
         appeal.user = user
         appeal.__dict__["messages"] = []
-        admin_mid = await admin_card_service.render(bot, appeal, force_new=True)
+        admin_mid = await admin_card_service.render(
+            bot, appeal, is_first_publication=True
+        )
         if not admin_mid:
             log.warning(
                 "обращение #%s создано, но карточка администратора не была "
