@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 02:52:39 UTC`
+Generated at: `2026-05-25 02:53:13 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `197`
+Indexed files: `198`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -18,7 +18,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `.gitignore` (1261 bytes)
 - `_local-backup/PRODUCT_BRIEF_internal.md` (26651 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
-- `bot/aemr_bot/config.py` (8489 bytes)
+- `bot/aemr_bot/config.py` (9252 bytes)
 - `bot/aemr_bot/db/__init__.py` (0 bytes)
 - `bot/aemr_bot/db/alembic/env.py` (1446 bytes)
 - `bot/aemr_bot/db/alembic/versions/0001_initial.py` (5898 bytes)
@@ -49,7 +49,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_commands.py` (17560 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (23062 bytes)
-- `bot/aemr_bot/handlers/admin_settings.py` (41211 bytes)
+- `bot/aemr_bot/handlers/admin_settings.py` (43026 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (26104 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (31980 bytes)
@@ -73,7 +73,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (14123 bytes)
-- `bot/aemr_bot/services/cron.py` (36406 bytes)
+- `bot/aemr_bot/services/cron.py` (38141 bytes)
 - `bot/aemr_bot/services/db_backup.py` (15350 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
 - `bot/aemr_bot/services/idempotency.py` (7885 bytes)
@@ -108,6 +108,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_handlers_small.py` (21842 bytes)
 - `bot/tests/test_admin_operators.py` (19228 bytes)
 - `bot/tests/test_admin_panel.py` (12680 bytes)
+- `bot/tests/test_admin_settings_audit.py` (1917 bytes)
 - `bot/tests/test_appeal_card_edit_policy.py` (5627 bytes)
 - `bot/tests/test_appeal_card_timeline.py` (8946 bytes)
 - `bot/tests/test_appeal_dispatcher.py` (22842 bytes)
@@ -125,7 +126,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_callback_router.py` (8614 bytes)
 - `bot/tests/test_callback_router_coverage.py` (5487 bytes)
 - `bot/tests/test_card_format.py` (10537 bytes)
-- `bot/tests/test_cron_jobs.py` (19002 bytes)
+- `bot/tests/test_cron_jobs.py` (20157 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (14354 bytes)
 - `bot/tests/test_deps_environment.py` (3805 bytes)
@@ -959,8 +960,8 @@ __version__ = "0.1.0"
 
 ### `bot/aemr_bot/config.py`
 
-Size: `8489` bytes  
-SHA-256: `b6c8a0555b91600920a1b0c607a42fe0fa4e6820dc894617201155b01de98cf5`
+Size: `9252` bytes  
+SHA-256: `4bdaee416b4be7e166b468192d9857552b47a36d66cfc16e3655f661aa67477c`
 
 ```python
 from pathlib import Path
@@ -1077,6 +1078,16 @@ class Settings(BaseSettings):
     backup_s3_secret_key: str | None = Field(None, alias="BACKUP_S3_SECRET_KEY")
 
     healthcheck_url: str | None = Field(None, alias="HEALTHCHECK_URL")
+
+    # AuditLog retention (152-ФЗ / внутренний регламент): операторские
+    # действия (block/unblock/reopen/close/erase/setting_update и пр.)
+    # хранятся до N дней, потом ежедневная cron-job удаляет старые.
+    # 365 дней — год аудита, типовая глубина расследования инцидента.
+    # Внутри окна — полная история действий по жителю / настройке для
+    # IT-аудита. После — следы стираются вместе с любым PII в details.
+    audit_log_retention_days: int = Field(
+        365, alias="AUDIT_LOG_RETENTION_DAYS", ge=30, le=3650
+    )
 
     seed_dir: Path = Field(Path("/app/seed"), alias="SEED_DIR")
     log_level: str = Field("INFO", alias="LOG_LEVEL")
@@ -6054,8 +6065,8 @@ async def _do_backup(event) -> None:
 
 ### `bot/aemr_bot/handlers/admin_settings.py`
 
-Size: `41211` bytes  
-SHA-256: `149eff286852d8ecc46f2531dd99dc0e9dc88c112cb5da9a80b153706e083899`
+Size: `43026` bytes  
+SHA-256: `e223de8a792e6a9e0e9bd6b736fa4de8c75d7e121df1af687587c8850eff416d`
 
 ```python
 """Иерархическое меню «⚙️ Настройки бота».
@@ -6099,6 +6110,31 @@ log = logging.getLogger(__name__)
 # operator_max_user_id -> {"key": str, "kind": str, "expires_at": float, "extra": dict}
 _edit_intents: dict[int, dict] = {}
 _EDIT_INTENT_TTL_SEC = 300.0
+
+# Audit-trail: длинные значения настроек (welcome_text, goodbye_message,
+# consent_text) могут быть до нескольких тысяч символов. Полный
+# `before`/`after` в каждой записи audit_log раздул бы таблицу. Лимит
+# 200 симв — достаточно, чтобы видеть «что поменялось» при расследовании
+# инцидента, не теряя сути правки.
+_AUDIT_VALUE_CLIP_LEN = 200
+
+
+def _clip_audit_value(value: object) -> str:
+    """Подготовить значение настройки к записи в audit_log.details.
+
+    Списки/dict сериализуем через repr (компактнее json для коротких
+    структур и не требует encoding-кода). Усечение через многоточие,
+    чтобы было видно, что значение было длиннее.
+    """
+    if value is None:
+        text = "—"
+    elif isinstance(value, str):
+        text = value
+    else:
+        text = repr(value)
+    if len(text) > _AUDIT_VALUE_CLIP_LEN:
+        return text[: _AUDIT_VALUE_CLIP_LEN - 1] + "…"
+    return text
 
 
 def _intent_set(operator_id: int, **kwargs) -> None:
@@ -6962,14 +6998,23 @@ async def _apply_single_edit(
         )
         return
     async with session_scope() as session:
+        old_value = await settings_store.get(session, key)
         await settings_store.set_value(session, key, new_text)
         from aemr_bot.services import operators as ops_svc
+        # Полный audit-trail: храним «было → стало» (clip до 200 симв,
+        # чтобы не раздувать audit_log на длинных текстах вроде
+        # `goodbye_message`). PII под защитой retention (по умолчанию
+        # 365 дней, потом `_job_audit_log_retention` чистит).
         await ops_svc.write_audit(
             session,
             operator_max_user_id=operator_id,
             action="setting_update",
             target=key,
-            details={"len": len(new_text)},
+            details={
+                "len": len(new_text),
+                "before": _clip_audit_value(old_value),
+                "after": _clip_audit_value(new_text),
+            },
         )
     if key in {"commit_author_name", "commit_author_email"}:
         await _show_author_card(event)
@@ -17371,8 +17416,8 @@ def appeal_list_label(appeal: Appeal) -> str:
 
 ### `bot/aemr_bot/services/cron.py`
 
-Size: `36406` bytes  
-SHA-256: `77e5d59f57fd7874004a3cedaea0f91740e02fad1071d434b0b1501cea7c0107`
+Size: `38141` bytes  
+SHA-256: `f9a9f35d55b98df35abc2ad20c5121385debbba6324c841a442fcaa3d150570d`
 
 ```python
 from __future__ import annotations
@@ -17390,7 +17435,7 @@ from sqlalchemy import delete
 from zoneinfo import ZoneInfo
 
 from aemr_bot.config import settings
-from aemr_bot.db.models import Event
+from aemr_bot.db.models import AuditLog, Event
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import stats as stats_service
 from aemr_bot.services.calendar_ru import is_workday
@@ -17604,6 +17649,38 @@ async def _job_events_retention() -> None:
             )
     except Exception:
         log.exception("events retention failed")
+
+
+async def _job_audit_log_retention() -> None:
+    """Удалить записи audit_log старше `settings.audit_log_retention_days`.
+
+    AuditLog хранит операторские действия (block/unblock/reopen/close/
+    erase/setting_update/setting_list_add и пр.) с `target` и `details`.
+    Внутри окна — глубина расследования инцидента (по умолчанию 365
+    дней). Дальше следы стираются вместе с любым PII в details
+    (например, `details={"value": "..."}` для setting_update).
+
+    Запускается раз в сутки в 04:15 — после events-retention (04:00),
+    чтобы не пересекаться по long-running purge, до appeals-5y-retention
+    (04:45).
+    """
+    try:
+        cutoff = datetime.now(TZ) - timedelta(
+            days=settings.audit_log_retention_days
+        )
+        async with session_scope() as session:
+            result = await session.execute(
+                delete(AuditLog).where(AuditLog.created_at < cutoff)
+            )
+            purged = result.rowcount or 0
+        if purged:
+            log.info(
+                "audit_log retention: purged %d rows older than %s "
+                "(retention=%d days)",
+                purged, cutoff.date(), settings.audit_log_retention_days,
+            )
+    except Exception:
+        log.exception("audit_log retention failed")
 
 
 async def _job_selfcheck(send_admin_text) -> None:
@@ -17973,6 +18050,12 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             _job_events_retention,
             CronTrigger(hour=4, minute=0, timezone=TZ),
             "events-retention",
+        ),
+        # Ежедневная очистка audit_log (retention по конфигу, default 365)
+        (
+            _job_audit_log_retention,
+            CronTrigger(hour=4, minute=15, timezone=TZ),
+            "audit-log-retention",
         ),
         # Selfcheck heartbeat
         (
@@ -26068,6 +26151,71 @@ class TestDoOpenTickets:
         assert "🎉" in text
 ```
 
+### `bot/tests/test_admin_settings_audit.py`
+
+Size: `1917` bytes  
+SHA-256: `d990252bd07d4a651b48c40bfb1715e3b59e858ee32e1cc8aeebad1320d601ca`
+
+```python
+"""Тесты audit-логирования при правке настроек через UI (`⚙️ Настройки бота`).
+
+Проверяем helper `_clip_audit_value`: коротко резюмирует значение
+до 200 симв с многоточием, нормализует None/list/dict через repr.
+Полный audit-trail (before → after) у `setting_update` нужен для
+расследований инцидентов в окне `audit_log_retention_days`.
+"""
+from __future__ import annotations
+
+import pytest
+
+
+pytest.importorskip("maxapi", reason="нужен maxapi для admin_settings импорта")
+
+
+def test_clip_audit_value_none_to_dash() -> None:
+    from aemr_bot.handlers.admin_settings import _clip_audit_value
+
+    assert _clip_audit_value(None) == "—"
+
+
+def test_clip_audit_value_short_str_passthrough() -> None:
+    from aemr_bot.handlers.admin_settings import _clip_audit_value
+
+    assert _clip_audit_value("hello") == "hello"
+
+
+def test_clip_audit_value_long_str_truncated_with_ellipsis() -> None:
+    from aemr_bot.handlers.admin_settings import _clip_audit_value
+
+    long = "x" * 500
+    out = _clip_audit_value(long)
+    assert len(out) == 200
+    assert out.endswith("…")
+
+
+def test_clip_audit_value_list_via_repr() -> None:
+    from aemr_bot.handlers.admin_settings import _clip_audit_value
+
+    out = _clip_audit_value(["a", "b", "c"])
+    assert "['a', 'b', 'c']" in out
+
+
+def test_clip_audit_value_dict_via_repr() -> None:
+    from aemr_bot.handlers.admin_settings import _clip_audit_value
+
+    out = _clip_audit_value({"k": "v"})
+    assert "'k': 'v'" in out
+
+
+def test_clip_audit_value_long_list_truncated() -> None:
+    from aemr_bot.handlers.admin_settings import _clip_audit_value
+
+    huge_list = [f"item-{i}" for i in range(200)]
+    out = _clip_audit_value(huge_list)
+    assert len(out) == 200
+    assert out.endswith("…")
+```
+
 ### `bot/tests/test_appeal_card_edit_policy.py`
 
 Size: `5627` bytes  
@@ -30980,8 +31128,8 @@ class TestAdminCardCitizenStateMarkers:
 
 ### `bot/tests/test_cron_jobs.py`
 
-Size: `19002` bytes  
-SHA-256: `c6ccb9d2a7b45c416e1f03e51d4b485055672197efb9c1a1368d51a1b6942261`
+Size: `20157` bytes  
+SHA-256: `b0b8657f6f1ebc3a9609d1b6fe03424a8b3756b6b510c926ec388b8e4736ec1a`
 
 ```python
 """Unit-тесты на cron jobs.
@@ -31206,6 +31354,36 @@ class TestEventsRetention:
         # Нет реальной БД в unit-тестах → session_scope упадёт →
         # должно проглотиться try/except внутри.
         await cron._job_events_retention()
+
+
+class TestAuditLogRetention:
+    """_job_audit_log_retention — удаление старых audit_log записей."""
+
+    @pytest.mark.asyncio
+    async def test_swallows_exception(self) -> None:
+        """БД недоступна → exception проглотиться, scheduler жив."""
+        await cron._job_audit_log_retention()
+
+    @pytest.mark.asyncio
+    async def test_uses_retention_days_from_config(self) -> None:
+        """Cutoff считается от настройки `audit_log_retention_days`.
+        Дефолт 365 — проверяем, что delete вызван с условием
+        `created_at < now - 365 дней`.
+        """
+        from contextlib import asynccontextmanager
+
+        session = AsyncMock()
+        delete_result = MagicMock()
+        delete_result.rowcount = 3
+        session.execute = AsyncMock(return_value=delete_result)
+
+        @asynccontextmanager
+        async def fake_scope():
+            yield session
+
+        with patch("aemr_bot.services.cron.session_scope", fake_scope):
+            await cron._job_audit_log_retention()
+        session.execute.assert_awaited_once()
 
 
 class TestPdnRetention:
