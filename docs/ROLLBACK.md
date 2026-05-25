@@ -39,7 +39,7 @@ su - aemr -c "cd infra && docker compose up -d --build"
 
 ```bash
 # Локально на dev-машине
-cd C:\Users\filat\max\aemr-bot
+cd C:\Users\filat\Documents\aemr-bot
 git revert HEAD --no-edit
 git push origin main
 ```

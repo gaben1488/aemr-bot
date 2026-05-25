@@ -23,7 +23,7 @@ docker compose exec bot ls -lah /backups
 sudo ls -lah /var/lib/docker/volumes/aemr-bot_backups/_data/
 ```
 
-Ожидаемо: есть свежий файл `aemr-YYYY-MM-DD.sql` (или `aemr-YYYY-MM-DD.sql.gpg`, если включено GPG-шифрование через `BACKUP_GPG_PASSPHRASE`) за ожидаемый период.
+Ожидаемо: есть свежий файл `aemr-YYYY-MM-DD.sql.gpg` (production-режим, обязательно с `BACKUP_GPG_PASSPHRASE` ≥12 символов). Формат `aemr-YYYY-MM-DD.sql` без `.gpg` появляется ТОЛЬКО при явном `BACKUP_ALLOW_UNENCRYPTED=1` (dev/local-режим). Если в production видите `.sql` без шифрования — это нарушение 152-ФЗ, дамп содержит phones и тексты обращений. Установите passphrase и удалите plain-дамп.
 
 ## 2. Создать отдельную тестовую БД
 

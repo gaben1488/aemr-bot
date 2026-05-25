@@ -123,9 +123,15 @@ TZ=Asia/Kamchatka
 ### 5.2 Сильно рекомендую
 
 ```dotenv
-BACKUP_GPG_PASSPHRASE=    # 32+ случайных символов; иначе бэкапы plain SQL
+BACKUP_GPG_PASSPHRASE=    # ≥12 (рекомендую 32+) случайных символов. Без него бэкап ОТКАЗАН (см. ниже).
+BACKUP_ALLOW_UNENCRYPTED= # `1` разрешает plain `.sql` без passphrase. ТОЛЬКО dev/local.
 HEALTHCHECK_URL=          # Healthchecks.io / Uptime Kuma URL, опционально
+AUDIT_LOG_RETENTION_DAYS= # default 365, диапазон 30–3650. Чистка ежедневно 04:15.
+FOLLOWUP_MAX_PER_HOUR_PER_APPEAL= # default 5 — лимит дополнений жителя по обращению в час.
+FOLLOWUP_MIN_INTERVAL_SECONDS=    # default 30 — минимум между двумя дополнениями жителя.
 ```
+
+⚠️ В production `BACKUP_GPG_PASSPHRASE` **обязателен**. Без него и без явного `BACKUP_ALLOW_UNENCRYPTED=1` cron-job `db-backup` каждое воскресенье будет писать в лог отказ и алерт в админ-чат — никакой бэкап не создаётся. Это политика 152-ФЗ: дамп содержит phones, имена и тексты обращений, plain `.sql` на диске или в S3 = breach.
 
 ### 5.3 Webhook (только если `BOT_MODE=webhook`)
 
@@ -284,7 +290,7 @@ journalctl -t aemr-bot-deploy -n 100 --no-pager
 
 ### 10.1 Что бэкапится
 
-`pg_dump` всей БД каждое воскресенье в 03:00 Камчатки. Опционально шифруется GPG `--symmetric AES256` через `BACKUP_GPG_PASSPHRASE`. Хранится 8 файлов в named volume `aemr-bot_backups` (примерно 2 месяца истории). Опционально дополнительная копия в S3.
+`pg_dump` всей БД каждое воскресенье в 03:00 Камчатки. Шифруется GPG `--symmetric AES256` через `BACKUP_GPG_PASSPHRASE` (≥12 символов). Без passphrase **бэкап отказан** (152-ФЗ); открыть plain-режим можно через `BACKUP_ALLOW_UNENCRYPTED=1` (только dev). Хранится 8 файлов в named volume `aemr-bot_backups` (примерно 2 месяца истории). Опционально дополнительная копия в S3.
 
 ### 10.2 Список и проверка
 
