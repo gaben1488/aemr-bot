@@ -455,7 +455,7 @@ class TestConsentAndEraseNotifications:
         user = SimpleNamespace(id=1)
         notify = AsyncMock()
         with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
-             patch("aemr_bot.services.appeals.list_unanswered",
+             patch("aemr_bot.services.appeals.list_unanswered_with_messages",
                    AsyncMock(return_value=[])), \
              patch("aemr_bot.handlers.menu.users_service.revoke_consent",
                    AsyncMock()), \
@@ -490,7 +490,7 @@ class TestConsentAndEraseNotifications:
         notify = AsyncMock()
         repost = AsyncMock()
         with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
-             patch("aemr_bot.services.appeals.list_unanswered",
+             patch("aemr_bot.services.appeals.list_unanswered_with_messages",
                    AsyncMock(return_value=[appeal])), \
              patch("aemr_bot.handlers.menu.users_service.revoke_consent",
                    AsyncMock()), \

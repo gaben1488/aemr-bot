@@ -379,10 +379,44 @@ async def list_unanswered(
     иначе вытащит всё разом и в `_format_appeal_lines` обрежется
     до 10, но БД-запрос уже отдал всё. Для обычной работы 500
     заведомо больше реальной очереди.
+
+    Если планируете дальше рендерить `admin_card.render(appeal)` —
+    используйте `list_unanswered_with_messages` (с догруженной
+    перепиской). Иначе timeline в карточке окажется пустым.
     """
     res = await session.scalars(
         select(Appeal)
         .options(selectinload(Appeal.user))
+        .where(
+            Appeal.status.in_(
+                [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+            )
+        )
+        .order_by(Appeal.created_at)
+        .limit(limit)
+    )
+    return list(res)
+
+
+async def list_unanswered_with_messages(
+    session: AsyncSession, *, limit: int = 500
+) -> list[Appeal]:
+    """То же, что `list_unanswered`, но дополнительно догружает
+    `Appeal.messages` (selectinload).
+
+    SACRED #5: если карточка обращения публикуется в admin chat через
+    `admin_card.render`, нужны загруженные `messages` — без них блок
+    «История переписки» пуст (см. `card_format._loaded_messages` —
+    он намеренно не делает lazy-load, чтобы не падать в async-сессии
+    после её закрытия). Если использовать `list_unanswered` (без
+    messages), карточка #N окажется без переписки.
+
+    Цена: один лишний JOIN на каждый Appeal. На N≤500 (LIMIT) это
+    одно SELECT с messages в одном round-trip через selectinload.
+    """
+    res = await session.scalars(
+        select(Appeal)
+        .options(selectinload(Appeal.user), selectinload(Appeal.messages))
         .where(
             Appeal.status.in_(
                 [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]

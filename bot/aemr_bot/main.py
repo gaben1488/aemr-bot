@@ -98,9 +98,15 @@ def _build_admin_senders(bot: Bot):
     from aemr_bot.services import uploads
 
     async def send_admin_text(text: str):
+        # Идёт через admin_bus, чтобы tracker сдвигался автоматически
+        # после каждого pulse / cron-уведомления / алерта. Иначе
+        # freshness-rule в admin_card.render / send_or_edit_screen
+        # отставала бы от реального состояния чата.
+        from aemr_bot.services import admin_bus
+
         if not settings.admin_group_id:
             return
-        await bot.send_message(chat_id=settings.admin_group_id, text=text)
+        await admin_bus.send(bot, text=text)
 
     async def send_admin_document(filename: str, content: bytes, caption: str = ""):
         if not settings.admin_group_id:
