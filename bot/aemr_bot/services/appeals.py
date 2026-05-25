@@ -243,6 +243,27 @@ async def set_last_admin_card_mid(
     )
 
 
+async def has_operator_message(
+    session: AsyncSession, appeal_id: int
+) -> bool:
+    """True если хотя бы один ответ оператора уже доставлен по обращению.
+
+    Используется в `run_close` (P2 #23): если оператор отправлял
+    промежуточный ответ, потом закрывает «без ответа» — показываем
+    подсказку про «✉️ Ответить и закрыть» как более корректный путь.
+    """
+    return bool(
+        await session.scalar(
+            select(Message.id)
+            .where(
+                Message.appeal_id == appeal_id,
+                Message.direction == MessageDirection.FROM_OPERATOR.value,
+            )
+            .limit(1)
+        )
+    )
+
+
 ReopenResult = Literal[
     "reopened", "already_open", "blocked_by_revoke", "not_found"
 ]

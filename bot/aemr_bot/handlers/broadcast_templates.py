@@ -186,13 +186,65 @@ async def _open(event, template_id: int) -> None:
     )
 
 
+# P3 #25 — double-tap dedupe для apply. MAX иногда задваивает callback
+# (пользовательский tap и retry клиента). Без guard'а `record_usage`
+# инкрементируется дважды, статистика «частоты обращений к шаблону»
+# распухает. In-memory dict (actor_id, template_id) → monotonic-ts.
+# Окно 3 сек: достаточно для защиты от двойного тапа, мало для блока
+# легитимного «применил → отменил → применил снова».
+_apply_dedupe: dict[tuple[int, int], float] = {}
+_APPLY_DEDUPE_WINDOW_SEC = 3.0
+
+
+def _is_recent_apply(actor_id: int, template_id: int) -> bool:
+    import time as _time
+
+    key = (actor_id, template_id)
+    prev = _apply_dedupe.get(key)
+    if prev is None:
+        return False
+    return _time.monotonic() - prev < _APPLY_DEDUPE_WINDOW_SEC
+
+
+def _mark_apply(actor_id: int, template_id: int) -> None:
+    import time as _time
+
+    _apply_dedupe[(actor_id, template_id)] = _time.monotonic()
+    # GC: чистим записи старше 5 окон, чтобы dict не разрастался.
+    if len(_apply_dedupe) > 256:
+        cutoff = _time.monotonic() - _APPLY_DEDUPE_WINDOW_SEC * 5
+        for k in list(_apply_dedupe.keys()):
+            if _apply_dedupe[k] < cutoff:
+                _apply_dedupe.pop(k, None)
+
+
 async def _apply(event, template_id: int) -> None:
-    """`op:tmpl:apply:<id>` — пред-зарядить /broadcast wizard данными шаблона."""
+    """`op:tmpl:apply:<id>` — пред-зарядить /broadcast wizard данными шаблона.
+
+    P3 #25:
+    - **double-tap dedupe**: повторный тап в 3-сек окне → ack без побочных
+      эффектов (без record_usage, без перерисовки preview).
+    - **citation clip footer**: в preview явно указываем имя шаблона —
+      «Источник: шаблон «N»», чтобы оператор не отправил тот же текст
+      из памяти, думая что это правка.
+    """
     if not await ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
         return
     actor_id = get_user_id(event)
     if actor_id is None:
         return
+    if _is_recent_apply(actor_id, template_id):
+        log.info(
+            "broadcast_templates: dedup apply #%s by operator=%s "
+            "(rapid double-tap window)", template_id, actor_id,
+        )
+        # Тихий ack, без побочных эффектов — оператор всё равно видит
+        # ранее отправленный preview, дублировать нет смысла.
+        from aemr_bot.utils.event import ack_callback as _ack
+
+        await _ack(event)
+        return
+    _mark_apply(actor_id, template_id)
     async with session_scope() as session:
         tmpl = await templates_service.get_by_id(session, template_id)
         if tmpl is None:
@@ -230,7 +282,11 @@ async def _apply(event, template_id: int) -> None:
     preview_images = _image_attachments.build_outbound_image_attachments(
         tmpl.attachments
     )
-    body = texts.OP_BROADCAST_PREVIEW.format(
+    citation_footer = (
+        f"📋 Источник: шаблон «{tmpl.name}»\n"
+        f"────────────────\n"
+    )
+    body = citation_footer + texts.OP_BROADCAST_PREVIEW.format(
         text=tmpl.text,
         count=subscribers,
         image_count=len(tmpl.attachments),
