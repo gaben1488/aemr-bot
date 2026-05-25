@@ -260,13 +260,13 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
         )
 
         try:
-            from aemr_bot.services import broadcasts as bcast_svc
-            async with session_scope() as session:
-                subscribed = await bcast_svc.is_subscribed(session, max_user_id)
+            # «Обращение N принято» — это EVENT-сообщение (запись о
+            # факте принятия), не навигация. Без клавиатуры. Главное
+            # меню жителю всегда доступно через /menu — не нужно
+            # дублировать кнопками в каждом event-ack.
             await bot.send_message(
                 user_id=max_user_id,
                 text=texts.APPEAL_ACCEPTED.format(number=appeal.id),
-                attachments=[keyboards.main_menu(subscribed=subscribed)],
             )
         except Exception:
             log.exception(

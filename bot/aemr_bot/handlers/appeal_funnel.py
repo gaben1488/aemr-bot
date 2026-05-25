@@ -678,7 +678,12 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             # appeal_for_card должен иметь user; гарантируем.
             if getattr(appeal_for_card, "user", None) is None:
                 appeal_for_card.user = user_for_card
-            await admin_card_service.render(event.bot, appeal_for_card)
+            # followup от жителя = «появилась новая инфа», нужна
+            # явная отметка карточкой внизу даже если предыдущая
+            # карточка ещё последняя. force_new обходит freshness-edit.
+            await admin_card_service.render(
+                event.bot, appeal_for_card, force_new=True
+            )
         except Exception:
             log.exception("admin_card.render after followup failed")
 

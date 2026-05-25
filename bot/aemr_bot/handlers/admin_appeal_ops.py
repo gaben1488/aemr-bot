@@ -56,7 +56,16 @@ async def _show_appeal_card_or_result(
         appeal = None
     if appeal is not None and appeal.user is not None:
         try:
-            await admin_card_service.render(event.bot, appeal)
+            # Freshness-rule: пробрасываем callback_mid — render edit'нет
+            # карточку только если callback пришёл на последнюю карточку
+            # в чате (по menu_tracker). Иначе → send new внизу.
+            from aemr_bot.utils.event import get_callback_message_id
+
+            await admin_card_service.render(
+                event.bot,
+                appeal,
+                callback_mid=get_callback_message_id(event),
+            )
             return
         except Exception:
             log.exception(

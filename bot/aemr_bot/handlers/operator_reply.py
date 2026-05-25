@@ -537,20 +537,26 @@ async def _deliver_operator_reply(
     await _mark_reply_success_recorded(success_key)
     _remember_successful_reply(operator.id, appeal.id, text)
 
-    # Edit admin-карточки через единый helper services/admin_card.render:
-    # читает СВЕЖИЙ appeal.admin_message_id из БД (он мог обновиться
-    # followup'ом жителя), пытается edit; на fail fallback на send_new
-    # с update admin_message_id. Это закрывает «edit ушёл в старую
-    # карточку вверху чата» — после followup мы редактируем актуальную.
+    # Обновить admin-карточку через freshness-rule helper:
+    # - если оператор отвечал свайпом/intent на ПОСЛЕДНЕЙ карточке в
+    #   чате → edit её (статус из NEW/IN_PROGRESS в ANSWERED).
+    # - иначе → новая карточка снизу с актуальным timeline.
+    # callback_mid берём из event (mid карточки на которой нажали
+    # «Ответить»; для swipe-reply берём mid цитируемого).
     try:
         from aemr_bot.services import admin_card as admin_card_service
+        from aemr_bot.utils.event import get_callback_message_id
 
         async with session_scope() as session:
             fresh_appeal = await appeals_service.get_by_id_with_messages(
                 session, appeal.id
             )
         if fresh_appeal is not None:
-            await admin_card_service.render(event.bot, fresh_appeal)
+            await admin_card_service.render(
+                event.bot,
+                fresh_appeal,
+                callback_mid=get_callback_message_id(event),
+            )
     except Exception:
         log.exception(
             "operator_reply: admin_card.render failed for #%s", appeal.id
