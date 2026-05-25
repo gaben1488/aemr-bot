@@ -545,16 +545,16 @@ async def _resolve_admin_progress_message(
     """
     if admin_mid is not None:
         return admin_mid
-    sent = None
-    try:
-        sent = await bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=total),
-            attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
-        )
-    except Exception:
-        log.exception("failed to post broadcast start in admin group")
-    return extract_message_id(sent)
+    # SACRED #1: через admin_bus — двигает tracker на mid стартовой
+    # карточки прогресса, чтобы прогресс-edit'ы потом могли проверить
+    # freshness (admin_mid == tracker).
+    from aemr_bot.services import admin_bus
+
+    return await admin_bus.send(
+        bot,
+        text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=total),
+        attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
+    )
 
 
 async def _send_final_summary(
@@ -567,8 +567,21 @@ async def _send_final_summary(
     cancelled: bool,
     admin_mid: str | None,
 ) -> None:
-    """Опубликовать итог рассылки: правкой карточки прогресса либо, если
-    правка не удалась / карточки не было, отдельным сообщением."""
+    """Опубликовать итог рассылки СВЕЖИМ сообщением через admin_bus.
+
+    SACRED #2: финальная сводка — это event-карточка, иммутабельная по
+    смыслу (запись о факте «рассылка завершена с такими-то цифрами»).
+    Раньше код пытался edit'нуть progress-карточку (admin_mid) — но за
+    время рассылки выше неё в чате могли появиться pulse, ответы
+    оператора, другие события. edit на сдвинутой вверх карточке
+    оператор не увидит. И сам факт edit нарушает event-log семантику.
+
+    Решение: всегда send_new через admin_bus.send (двигает tracker).
+    Параметр `admin_mid` оставлен в сигнатуре ради совместимости
+    с вызывающими; теперь используется только в логе.
+    """
+    from aemr_bot.services import admin_bus
+
     final_text = _build_final_text(
         broadcast_id=broadcast_id,
         total=total,
@@ -576,32 +589,16 @@ async def _send_final_summary(
         failed=failed,
         cancelled=cancelled,
     )
-    if admin_mid is not None:
-        try:
-            await bot.edit_message(
-                message_id=admin_mid,
-                text=final_text,
-                attachments=[keyboards.op_back_to_menu_keyboard()],
-            )
-            return
-        except Exception:
-            log.exception(
-                "failed to edit final progress message for broadcast #%s",
-                broadcast_id,
-            )
-    # Запасной путь: edit_message не сработал, либо admin_mid не было.
-    # Публикуем итог отдельным сообщением, чтобы оператор всё равно
-    # увидел результат.
-    try:
-        await bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=final_text,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
-    except Exception:
-        log.exception(
-            "failed to post fallback final summary for broadcast #%s",
-            broadcast_id,
+    new_mid = await admin_bus.send(
+        bot,
+        text=final_text,
+        attachments=[keyboards.op_back_to_menu_keyboard()],
+    )
+    if new_mid is None:
+        log.warning(
+            "broadcast #%s: final summary НЕ опубликован (admin_bus вернул None). "
+            "Прежний progress-mid=%s, оператор увидит результат в /broadcast list.",
+            broadcast_id, admin_mid,
         )
 
 
@@ -688,25 +685,38 @@ async def _run_send_loop(
                 if status == BroadcastStatus.CANCELLED.value:
                     cancelled = True
                     break
+                # SACRED #2: progress edit ТОЛЬКО если карточка прогресса
+                # всё ещё последнее сообщение бота в admin chat. Иначе
+                # её сдвинуло pulse / ответ оператора / другое событие
+                # выше — оператор внизу edit'а не увидит. На таком тике
+                # progress скипаем, finalize всё равно опубликует
+                # правильный итог свежим сообщением.
                 if admin_mid is not None:
-                    try:
-                        await bot.edit_message(
-                            message_id=admin_mid,
-                            text=_format_progress(
-                                broadcast_id=broadcast_id,
-                                total=total,
-                                delivered=delivered,
-                                failed=failed,
-                            ),
-                            attachments=[
-                                keyboards.broadcast_stop_keyboard(broadcast_id)
-                            ],
-                        )
-                    except Exception:
-                        log.exception(
-                            "failed to edit progress message for broadcast #%s",
-                            broadcast_id,
-                        )
+                    from aemr_bot.utils import menu_tracker
+
+                    if (
+                        cfg.admin_group_id
+                        and menu_tracker.get_last_menu_mid(cfg.admin_group_id)
+                        == admin_mid
+                    ):
+                        try:
+                            await bot.edit_message(
+                                message_id=admin_mid,
+                                text=_format_progress(
+                                    broadcast_id=broadcast_id,
+                                    total=total,
+                                    delivered=delivered,
+                                    failed=failed,
+                                ),
+                                attachments=[
+                                    keyboards.broadcast_stop_keyboard(broadcast_id)
+                                ],
+                            )
+                        except Exception:
+                            log.exception(
+                                "failed to edit progress message for broadcast #%s",
+                                broadcast_id,
+                            )
 
             await asyncio.sleep(rate_delay)
     finally:

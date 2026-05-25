@@ -98,9 +98,15 @@ def _build_admin_senders(bot: Bot):
     from aemr_bot.services import uploads
 
     async def send_admin_text(text: str):
+        # Идёт через admin_bus, чтобы tracker сдвигался автоматически
+        # после каждого pulse / cron-уведомления / алерта. Иначе
+        # freshness-rule в admin_card.render / send_or_edit_screen
+        # отставала бы от реального состояния чата.
+        from aemr_bot.services import admin_bus
+
         if not settings.admin_group_id:
             return
-        await bot.send_message(chat_id=settings.admin_group_id, text=text)
+        await admin_bus.send(bot, text=text)
 
     async def send_admin_document(filename: str, content: bytes, caption: str = ""):
         if not settings.admin_group_id:
@@ -120,7 +126,9 @@ def _build_admin_senders(bot: Bot):
     return send_admin_text, send_admin_document
 
 
-# Обработчик webhook'а регистрируется при загрузке модуля, чтобы dp.init_serve() его подхватил.
+# Обработчик webhook'а регистрируется при загрузке модуля. В polling-режиме
+# (default по проекту) этот блок не активируется. webhook-режим оставлен
+# как dead-but-not-removed для возможного будущего возврата к FastAPI-стеку.
 # По Макс.docx раздел 12 (Quick Start Python webhook):
 #   from maxapi.methods.types.getted_updates import process_update_webhook
 #   @dp.webhook_post('/...') → возвращает 2xx, затем dp.handle(event) обрабатывает событие.
@@ -356,7 +364,20 @@ async def main() -> None:
     try:
         if settings.bot_mode == "webhook":
             log.info("Starting in webhook mode at %s", settings.webhook_url)
-            await dp.init_serve(bot, log_level=settings.log_level.lower())
+            # maxapi 1.1 пометил init_serve как deprecated и оставил
+            # тонкую обёртку над handle_webhook (см. dispatcher.py:1476).
+            # Зовём целевой метод напрямую — без DeprecationWarning в
+            # логах и в готовности к будущему удалению init_serve.
+            # `log_level` уходил в AppRunner kwargs и тихо игнорировался,
+            # поэтому не пробрасываем — логгер настраивается через
+            # logging.basicConfig выше.
+            await dp.handle_webhook(
+                bot,
+                host=settings.webhook_host,
+                port=settings.webhook_port,
+                path="/max/webhook",
+                secret=settings.webhook_secret or None,
+            )
         else:
             log.info("Starting in long polling mode")
             await dp.start_polling(bot)

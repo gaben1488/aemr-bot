@@ -688,7 +688,12 @@ async def do_consent_revoke(event, max_user_id: int):
     from aemr_bot.services import operators as ops_service
 
     async with current_user(max_user_id) as (session, user):
-        active = await appeals_service.list_unanswered(session)
+        # SACRED #5: list_unanswered_with_messages (не list_unanswered),
+        # потому что ниже мы публикуем `admin_card.render(appeal)` для
+        # каждого открытого. Без selectinload(messages) timeline в
+        # карточке окажется пустым — это была причина бага «#44 без
+        # истории переписки».
+        active = await appeals_service.list_unanswered_with_messages(session)
         my_open = [a for a in active if a.user_id == user.id]
         await users_service.revoke_consent(session, max_user_id)
         await ops_service.write_audit(
@@ -710,14 +715,15 @@ async def do_consent_revoke(event, max_user_id: int):
     if my_open:
         # Перепубликовать карточки открытых обращений через единый
         # admin_card.render. force_new=True — это явное событие (отзыв
-        # согласия), нужна новая запись внизу чата как маркер. Снапшот
-        # detached-полей: appeal.user уже подгружен, messages пустой
-        # placeholder чтобы избежать lazy-load после закрытия сессии.
+        # согласия), нужна новая запись внизу чата как маркер.
+        #
+        # appeal.user уже подгружен через list_unanswered_with_messages,
+        # messages тоже загружены (selectinload) — НЕ ставим
+        # __dict__.setdefault("messages", []), иначе перезаписали бы
+        # реальные сообщения пустым списком и timeline снова исчез.
         from aemr_bot.services import admin_card as admin_card_service
 
         for appeal in my_open:
-            appeal.user = user
-            appeal.__dict__.setdefault("messages", [])
             await admin_card_service.render(
                 event.bot, appeal, force_new=True
             )

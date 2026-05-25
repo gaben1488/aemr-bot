@@ -200,6 +200,12 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
             f"уточнения).\n"
         )
     )
+    # SACRED #4: prompt-ввод НЕ должен edit'нуть карточку обращения.
+    # send_or_edit_screen без force_new_message edit'нул бы admin appeal
+    # card (tracker всё ещё на ней после прошлого render). Карточка с
+    # timeline'ом превратилась бы в input-prompt — содержимое потеряно.
+    # force_new_message=True гарантирует, что prompt всегда уходит
+    # отдельным новым сообщением, а карточка остаётся видимой выше.
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
@@ -209,6 +215,7 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
             f"следующее сообщение в этот чат, либо «Отменить» ниже."
         ),
         attachments=[kbds.cancel_reply_intent_keyboard()],
+        force_new_message=True,
     )
 
 
@@ -223,12 +230,14 @@ async def run_reply_cancel(event) -> None:
         return
     cancelled_appeal = op_reply.drop_reply_intent(operator_id)
     await ack_callback(event)
+    # SACRED #4: cancel-сообщение тоже отдельным new (не trample prompt).
     if cancelled_appeal is not None:
         await send_or_edit_screen(
             event,
             chat_id=cfg.admin_group_id,
             text=f"Ответ на обращение #{cancelled_appeal} отменён.",
             attachments=[kbds.op_back_to_menu_keyboard()],
+            force_new_message=True,
         )
     else:
         await send_or_edit_screen(
@@ -236,6 +245,7 @@ async def run_reply_cancel(event) -> None:
             chat_id=cfg.admin_group_id,
             text="Мастер ответа уже закрыт.",
             attachments=[kbds.op_back_to_menu_keyboard()],
+            force_new_message=True,
         )
 
 

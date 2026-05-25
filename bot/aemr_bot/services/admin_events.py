@@ -13,11 +13,20 @@ log = logging.getLogger(__name__)
 
 
 async def _send(bot: Any, text: str) -> None:
-    """Отправить служебное уведомление и не ломать действие жителя при сбое MAX."""
+    """Отправить служебное уведомление и не ломать действие жителя при сбое MAX.
+
+    Идёт через admin_bus, чтобы каждое уведомление двигало
+    `menu_tracker[admin_group_id]`. Без этого freshness-check в
+    admin_card.render и send_or_edit_screen после notify_* мог
+    ошибочно edit'нуть карточку, выше которой уже физически лежит
+    уведомление.
+    """
+    from aemr_bot.services import admin_bus
+
     if not cfg.admin_group_id:
         return
     try:
-        await bot.send_message(chat_id=cfg.admin_group_id, text=text)
+        await admin_bus.send(bot, text=text)
     except Exception:
         log.debug("не удалось отправить служебное уведомление", exc_info=True)
 

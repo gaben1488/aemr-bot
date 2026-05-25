@@ -102,6 +102,42 @@ async def render(
         )
         return None
 
+    # SACRED #6: auto-warm messages для timeline.
+    # `card_format._loaded_messages` намеренно НЕ делает lazy-load (иначе
+    # MissingGreenlet в async-сессии после закрытия). Раньше каждый
+    # вызывающий должен был сам сделать `get_by_id_with_messages` или
+    # выставить `appeal.__dict__["messages"] = []`. Контракт легко
+    # нарушался — например, в `menu.do_consent_revoke` через
+    # `list_unanswered` (без selectinload) timeline терялся, баг #44.
+    #
+    # Теперь render сам подгружает messages, если: (а) это не первая
+    # публикация (на finalize переписки реально нет), (б) `messages`
+    # отсутствует в __dict__ ИЛИ пустой список. На finalize пропускаем —
+    # appeal только что создан, messages=[] корректно.
+    if (
+        not is_first_publication
+        and "messages" not in appeal.__dict__
+        or (
+            not is_first_publication
+            and appeal.__dict__.get("messages") == []
+        )
+    ):
+        try:
+            async with session_scope() as session:
+                fresh = await appeals_service.get_by_id_with_messages(
+                    session, appeal.id
+                )
+            if fresh is not None and fresh.__dict__.get("messages"):
+                # Скопируем messages в исходный appeal-объект
+                # (он остаётся вызывающему, без detach-проблем).
+                appeal.__dict__["messages"] = list(fresh.__dict__["messages"])
+        except Exception:
+            log.debug(
+                "admin_card.render: auto-warm messages для #%s не удалось",
+                appeal.id, exc_info=False,
+            )
+            # Не критично — timeline просто будет пустой, как и было.
+
     # text и attachment_count устойчиво к detached lazy-load.
     # Reliability-pass: сузили `except Exception` до конкретного набора
     # причин. card_format читает .messages / .events / .user.*; на

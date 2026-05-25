@@ -510,17 +510,25 @@ class TestHandleStop:
 
 class TestRunBroadcastImpl:
     @pytest.mark.asyncio
-    async def test_final_status_edits_progress_card_with_admin_back_button(self) -> None:
+    async def test_final_status_publishes_new_summary_event_card(self) -> None:
+        """SACRED #2: финал рассылки = новая event-карточка (не edit).
+
+        До SACRED-фикса код edit'ал progress-mid финальным текстом —
+        нарушение event-log семантики, плюс невидимый edit если в
+        чате выше уже появились pulse/ответы.
+        """
         from aemr_bot.db.models import BroadcastStatus
         from aemr_bot.handlers import broadcast
 
         bot = MagicMock()
         bot.edit_message = AsyncMock()
-        bot.send_message = AsyncMock()
+        bot.send_message = AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="final-77"))
+            )
+        )
         mark_finished = AsyncMock()
 
-        # broadcast.attachments читается _run_broadcast_impl'ом перед
-        # send-loop'ом для десериализации картинок: мокаем пустую запись.
         from types import SimpleNamespace as _SN
         empty_broadcast = _SN(id=77, attachments=[], text="Текст рассылки")
 
@@ -533,7 +541,8 @@ class TestRunBroadcastImpl:
              patch("aemr_bot.handlers.broadcast.broadcasts_service.get_by_id",
                    AsyncMock(return_value=empty_broadcast)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.mark_finished",
-                   mark_finished):
+                   mark_finished), \
+             patch("aemr_bot.config.settings.admin_group_id", 555):
             await broadcast._run_broadcast_impl(
                 bot,
                 broadcast_id=77,
@@ -542,12 +551,13 @@ class TestRunBroadcastImpl:
                 admin_mid="m-progress",
             )
 
-        bot.edit_message.assert_called_once()
-        kwargs = bot.edit_message.call_args.kwargs
-        assert kwargs["message_id"] == "m-progress"
-        assert "77" in kwargs["text"]
-        assert kwargs["attachments"]
-        bot.send_message.assert_not_called()
+        # event-card финала — новый send, edit progress'а не делается
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited()
+        # admin_bus.send → chat_id=admin_group_id
+        send_kwargs = bot.send_message.await_args.kwargs
+        assert send_kwargs.get("chat_id") == 555
+        assert "77" in send_kwargs.get("text", "")
         assert mark_finished.call_args.kwargs["status"] == BroadcastStatus.DONE
 
 
@@ -613,50 +623,73 @@ class TestBuildFinalText:
 
 
 class TestSendFinalSummary:
-    """_send_final_summary — публикация итога: edit карточки либо
-    fallback-сообщение."""
+    """_send_final_summary — SACRED #2: всегда send_new через admin_bus.
+
+    Раньше пыталось edit'нуть admin_mid (progress-карточку), но это
+    нарушало event-log семантику: за время рассылки выше progress в
+    чате могли появиться pulse/ответы операторов — edit невидим.
+    Теперь финал всегда новой записью; admin_bus.send двигает tracker.
+    """
 
     @pytest.mark.asyncio
-    async def test_edits_card_when_admin_mid_present(self) -> None:
+    async def test_always_sends_new_via_admin_bus(self) -> None:
         from aemr_bot.handlers.broadcast import _send_final_summary
 
         bot = MagicMock()
         bot.edit_message = AsyncMock()
-        bot.send_message = AsyncMock()
-        await _send_final_summary(
-            bot, broadcast_id=7, total=10, delivered=10,
-            failed=0, cancelled=False, admin_mid="m-1",
+        bot.send_message = AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="final-1"))
+            )
         )
-        bot.edit_message.assert_awaited_once()
-        bot.send_message.assert_not_called()
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            await _send_final_summary(
+                bot, broadcast_id=7, total=10, delivered=10,
+                failed=0, cancelled=False, admin_mid="m-1",
+            )
+        # admin_bus.send → bot.send_message с chat_id, НЕ edit_message
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited_once()
+        kwargs = bot.send_message.await_args.kwargs
+        assert kwargs.get("chat_id") == 555
+        assert "10" in kwargs.get("text", "")  # delivered count
 
     @pytest.mark.asyncio
-    async def test_sends_new_message_when_no_admin_mid(self) -> None:
+    async def test_no_admin_mid_still_sends(self) -> None:
+        """Параметр admin_mid теперь не влияет на путь — всё равно send."""
         from aemr_bot.handlers.broadcast import _send_final_summary
 
         bot = MagicMock()
         bot.edit_message = AsyncMock()
-        bot.send_message = AsyncMock()
-        await _send_final_summary(
-            bot, broadcast_id=7, total=10, delivered=10,
-            failed=0, cancelled=False, admin_mid=None,
+        bot.send_message = AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="final-2"))
+            )
         )
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            await _send_final_summary(
+                bot, broadcast_id=7, total=10, delivered=10,
+                failed=0, cancelled=False, admin_mid=None,
+            )
         bot.edit_message.assert_not_called()
         bot.send_message.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_falls_back_to_send_when_edit_raises(self) -> None:
+    async def test_logs_warning_when_admin_bus_returns_none(self) -> None:
+        """Если admin_bus.send упал (например, ADMIN_GROUP_ID не задан) —
+        не падаем, просто warning в лог."""
         from aemr_bot.handlers.broadcast import _send_final_summary
 
         bot = MagicMock()
-        bot.edit_message = AsyncMock(side_effect=RuntimeError("stale mid"))
-        bot.send_message = AsyncMock()
-        await _send_final_summary(
-            bot, broadcast_id=7, total=10, delivered=5,
-            failed=0, cancelled=True, admin_mid="m-1",
-        )
-        bot.edit_message.assert_awaited_once()
-        bot.send_message.assert_awaited_once()
+        bot.edit_message = AsyncMock()
+        bot.send_message = AsyncMock(side_effect=RuntimeError("MAX down"))
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            # Не должно бросить exception, даже если send упал.
+            await _send_final_summary(
+                bot, broadcast_id=7, total=10, delivered=5,
+                failed=0, cancelled=True, admin_mid="m-1",
+            )
+        bot.edit_message.assert_not_called()
 
 
 class TestRunSendLoop:
