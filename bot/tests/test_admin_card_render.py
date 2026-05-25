@@ -268,6 +268,83 @@ class TestEditFallback:
         assert mid == "recovery-9"
 
 
+class TestAutoWarmMessages:
+    """SACRED #6: render авто-подгружает messages если их нет.
+
+    Раньше каждый caller обязан был сам сделать `get_by_id_with_messages`
+    или выставить `appeal.__dict__["messages"] = []`. Контракт нарушался
+    в menu.do_consent_revoke (через list_unanswered без selectinload) —
+    timeline терялся. Теперь render guard: если messages отсутствуют /
+    пустые и это не finalize — render сам подгрузит через session_scope.
+    """
+
+    @pytest.mark.asyncio
+    async def test_auto_warm_when_messages_missing(self) -> None:
+        from aemr_bot.services import admin_card
+
+        appeal = _make_appeal()
+        # `messages` НЕ выставлен (имитация appeal из list_unanswered)
+        appeal.__dict__.pop("messages", None)
+
+        fresh = _make_appeal()
+        fake_msg = SimpleNamespace(
+            direction="from_user", text="Уточнение жителя",
+            attachments=[], created_at=None,
+        )
+        fresh.__dict__["messages"] = [fake_msg]
+
+        bot = _make_bot()
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", 555),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.get_by_id_with_messages",
+                AsyncMock(return_value=fresh),
+            ),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
+        ):
+            await admin_card.render(bot, appeal, force_new=True)
+
+        # После render — appeal.__dict__["messages"] заполнен
+        assert appeal.__dict__.get("messages") == [fake_msg]
+
+    @pytest.mark.asyncio
+    async def test_auto_warm_skipped_on_first_publication(self) -> None:
+        """На finalize (is_first_publication=True) НЕ подгружаем — переписки
+        реально нет, messages=[] корректно."""
+        from aemr_bot.services import admin_card
+
+        appeal = _make_appeal()
+        appeal.__dict__["messages"] = []  # explicit empty (finalize)
+
+        get_with_msgs = AsyncMock()
+        bot = _make_bot()
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", 555),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.get_by_id_with_messages",
+                get_with_msgs,
+            ),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_admin_message_id",
+                AsyncMock(),
+            ),
+        ):
+            await admin_card.render(bot, appeal, is_first_publication=True)
+        # get_by_id_with_messages НЕ должен вызываться на finalize
+        get_with_msgs.assert_not_called()
+
+
 class TestEventHeader:
     """event_header — маркер-шапка над send_new карточкой (для followup).
 
