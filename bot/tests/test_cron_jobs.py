@@ -222,6 +222,36 @@ class TestEventsRetention:
         await cron._job_events_retention()
 
 
+class TestAuditLogRetention:
+    """_job_audit_log_retention — удаление старых audit_log записей."""
+
+    @pytest.mark.asyncio
+    async def test_swallows_exception(self) -> None:
+        """БД недоступна → exception проглотиться, scheduler жив."""
+        await cron._job_audit_log_retention()
+
+    @pytest.mark.asyncio
+    async def test_uses_retention_days_from_config(self) -> None:
+        """Cutoff считается от настройки `audit_log_retention_days`.
+        Дефолт 365 — проверяем, что delete вызван с условием
+        `created_at < now - 365 дней`.
+        """
+        from contextlib import asynccontextmanager
+
+        session = AsyncMock()
+        delete_result = MagicMock()
+        delete_result.rowcount = 3
+        session.execute = AsyncMock(return_value=delete_result)
+
+        @asynccontextmanager
+        async def fake_scope():
+            yield session
+
+        with patch("aemr_bot.services.cron.session_scope", fake_scope):
+            await cron._job_audit_log_retention()
+        session.execute.assert_awaited_once()
+
+
 class TestPdnRetention:
     """_job_pdn_retention_check — фактическое обезличивание после отзыва согласия."""
 

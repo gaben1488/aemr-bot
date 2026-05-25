@@ -113,6 +113,16 @@ class Settings(BaseSettings):
 
     healthcheck_url: str | None = Field(None, alias="HEALTHCHECK_URL")
 
+    # AuditLog retention (152-ФЗ / внутренний регламент): операторские
+    # действия (block/unblock/reopen/close/erase/setting_update и пр.)
+    # хранятся до N дней, потом ежедневная cron-job удаляет старые.
+    # 365 дней — год аудита, типовая глубина расследования инцидента.
+    # Внутри окна — полная история действий по жителю / настройке для
+    # IT-аудита. После — следы стираются вместе с любым PII в details.
+    audit_log_retention_days: int = Field(
+        365, alias="AUDIT_LOG_RETENTION_DAYS", ge=30, le=3650
+    )
+
     seed_dir: Path = Field(Path("/app/seed"), alias="SEED_DIR")
     log_level: str = Field("INFO", alias="LOG_LEVEL")
 

@@ -13,7 +13,7 @@ from sqlalchemy import delete
 from zoneinfo import ZoneInfo
 
 from aemr_bot.config import settings
-from aemr_bot.db.models import Event
+from aemr_bot.db.models import AuditLog, Event
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import stats as stats_service
 from aemr_bot.services.calendar_ru import is_workday
@@ -227,6 +227,38 @@ async def _job_events_retention() -> None:
             )
     except Exception:
         log.exception("events retention failed")
+
+
+async def _job_audit_log_retention() -> None:
+    """Удалить записи audit_log старше `settings.audit_log_retention_days`.
+
+    AuditLog хранит операторские действия (block/unblock/reopen/close/
+    erase/setting_update/setting_list_add и пр.) с `target` и `details`.
+    Внутри окна — глубина расследования инцидента (по умолчанию 365
+    дней). Дальше следы стираются вместе с любым PII в details
+    (например, `details={"value": "..."}` для setting_update).
+
+    Запускается раз в сутки в 04:15 — после events-retention (04:00),
+    чтобы не пересекаться по long-running purge, до appeals-5y-retention
+    (04:45).
+    """
+    try:
+        cutoff = datetime.now(TZ) - timedelta(
+            days=settings.audit_log_retention_days
+        )
+        async with session_scope() as session:
+            result = await session.execute(
+                delete(AuditLog).where(AuditLog.created_at < cutoff)
+            )
+            purged = result.rowcount or 0
+        if purged:
+            log.info(
+                "audit_log retention: purged %d rows older than %s "
+                "(retention=%d days)",
+                purged, cutoff.date(), settings.audit_log_retention_days,
+            )
+    except Exception:
+        log.exception("audit_log retention failed")
 
 
 async def _job_selfcheck(send_admin_text) -> None:
@@ -596,6 +628,12 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             _job_events_retention,
             CronTrigger(hour=4, minute=0, timezone=TZ),
             "events-retention",
+        ),
+        # Ежедневная очистка audit_log (retention по конфигу, default 365)
+        (
+            _job_audit_log_retention,
+            CronTrigger(hour=4, minute=15, timezone=TZ),
+            "audit-log-retention",
         ),
         # Selfcheck heartbeat
         (

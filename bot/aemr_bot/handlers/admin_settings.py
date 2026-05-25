@@ -40,6 +40,31 @@ log = logging.getLogger(__name__)
 _edit_intents: dict[int, dict] = {}
 _EDIT_INTENT_TTL_SEC = 300.0
 
+# Audit-trail: длинные значения настроек (welcome_text, goodbye_message,
+# consent_text) могут быть до нескольких тысяч символов. Полный
+# `before`/`after` в каждой записи audit_log раздул бы таблицу. Лимит
+# 200 симв — достаточно, чтобы видеть «что поменялось» при расследовании
+# инцидента, не теряя сути правки.
+_AUDIT_VALUE_CLIP_LEN = 200
+
+
+def _clip_audit_value(value: object) -> str:
+    """Подготовить значение настройки к записи в audit_log.details.
+
+    Списки/dict сериализуем через repr (компактнее json для коротких
+    структур и не требует encoding-кода). Усечение через многоточие,
+    чтобы было видно, что значение было длиннее.
+    """
+    if value is None:
+        text = "—"
+    elif isinstance(value, str):
+        text = value
+    else:
+        text = repr(value)
+    if len(text) > _AUDIT_VALUE_CLIP_LEN:
+        return text[: _AUDIT_VALUE_CLIP_LEN - 1] + "…"
+    return text
+
 
 def _intent_set(operator_id: int, **kwargs) -> None:
     state = dict(kwargs)
@@ -902,14 +927,23 @@ async def _apply_single_edit(
         )
         return
     async with session_scope() as session:
+        old_value = await settings_store.get(session, key)
         await settings_store.set_value(session, key, new_text)
         from aemr_bot.services import operators as ops_svc
+        # Полный audit-trail: храним «было → стало» (clip до 200 симв,
+        # чтобы не раздувать audit_log на длинных текстах вроде
+        # `goodbye_message`). PII под защитой retention (по умолчанию
+        # 365 дней, потом `_job_audit_log_retention` чистит).
         await ops_svc.write_audit(
             session,
             operator_max_user_id=operator_id,
             action="setting_update",
             target=key,
-            details={"len": len(new_text)},
+            details={
+                "len": len(new_text),
+                "before": _clip_audit_value(old_value),
+                "after": _clip_audit_value(new_text),
+            },
         )
     if key in {"commit_author_name", "commit_author_email"}:
         await _show_author_card(event)
