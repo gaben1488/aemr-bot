@@ -75,3 +75,69 @@ class TestValidate:
     ) -> None:
         ok, _ = validate(key, value)
         assert ok is expected_ok
+
+    def test_emergency_contacts_section_allowed(self) -> None:
+        """`section` — опциональное поле, которое UI использует для
+        группировки (см. seed/contacts.json). Валидация должна его
+        пропускать, иначе baseline-данные из seed не пройдут set_value.
+        """
+        ok, _ = validate(
+            "emergency_contacts",
+            [
+                {"section": "Электроэнергия", "name": "Камчатскэнерго", "phone": "8-800"},
+                {"name": "01", "phone": "01"},  # без section тоже ok
+            ],
+        )
+        assert ok is True
+
+
+class TestObjListGrouping:
+    """Чистая функция format_obj_list — рендер тела карточки списка
+    объектов (emergency_contacts, transport_dispatcher_contacts).
+    """
+
+    def test_empty(self) -> None:
+        from aemr_bot.services.settings_store import format_obj_list
+        assert format_obj_list([]) == "(список пуст)"
+
+    def test_flat_list_no_section(self) -> None:
+        """Если у всех item'ов нет section — секционные заголовки не
+        добавляем, остаётся плоский нумерованный список."""
+        from aemr_bot.services.settings_store import format_obj_list
+        body = format_obj_list([
+            {"name": "Пожарная", "phone": "01"},
+            {"name": "Скорая", "phone": "03"},
+        ])
+        assert "▸" not in body
+        assert body.startswith("1. Пожарная — 01")
+        assert "2. Скорая — 03" in body
+
+    def test_grouped_by_section(self) -> None:
+        """Если секций несколько — добавляются заголовки `▸ Секция`,
+        порядок секций — по первому появлению (стабильность UI)."""
+        from aemr_bot.services.settings_store import format_obj_list
+        body = format_obj_list([
+            {"section": "Экстренные службы", "name": "Пожарная", "phone": "01"},
+            {"section": "Электроэнергия", "name": "Камчатскэнерго", "phone": "8-800"},
+            {"section": "Экстренные службы", "name": "Скорая", "phone": "03"},
+        ])
+        # Заголовок секции первого появления — раньше других:
+        first_section_idx = body.index("▸ Экстренные службы")
+        second_section_idx = body.index("▸ Электроэнергия")
+        assert first_section_idx < second_section_idx
+        # Глобальная нумерация сохранена (idx 1..N совпадает с порядком
+        # в исходном списке — это критично, иначе click-by-index сломает
+        # навигацию obj_item).
+        assert "1. Пожарная" in body
+        assert "2. Камчатскэнерго" in body
+        assert "3. Скорая" in body
+
+    def test_mixed_with_other(self) -> None:
+        """Item без section падает в визуальную секцию «Прочее»."""
+        from aemr_bot.services.settings_store import format_obj_list
+        body = format_obj_list([
+            {"section": "Электроэнергия", "name": "Камчатскэнерго", "phone": "8-800"},
+            {"name": "01", "phone": "01"},  # без section
+        ])
+        assert "▸ Электроэнергия" in body
+        assert "▸ Прочее" in body

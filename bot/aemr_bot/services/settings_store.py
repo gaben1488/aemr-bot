@@ -166,6 +166,49 @@ def validate(key: str, value: Any) -> tuple[bool, str]:
     return True, "ok"
 
 
+def format_obj_list(items: list[dict]) -> str:
+    """Чистая функция рендера тела карточки списка объектов
+    (emergency_contacts, transport_dispatcher_contacts).
+
+    Если у item'ов есть «section» (актуально для emergency_contacts —
+    Экстренные службы / Электроэнергия / Отопление / Холодная вода) —
+    группируем визуально. Item'ы без section падают в «Прочее».
+    Порядок секций — по первому появлению, чтобы совпадал с порядком
+    в seed/contacts.json и не прыгал между рендерами. Глобальная
+    нумерация (1..N) сохраняется — она совпадает с idx в obj_item
+    card, чтобы клик на «5» открывал ровно пятый контакт.
+
+    Если секция всего одна (особенно «Прочее») — заголовок не
+    добавляем, остаётся плоский список как раньше (для transport-
+    диспетчеров, у которых section не используется).
+
+    Лежит в services/, а не в handlers/, чтобы юнит-тест мог импортить
+    функцию без подтягивания maxapi через handlers/__init__.py.
+    """
+    if not items:
+        return "(список пуст)"
+
+    groups: dict[str, list[tuple[int, dict]]] = {}
+    order: list[str] = []
+    for i, item in enumerate(items):
+        section = (item.get("section") or "").strip() or "Прочее"
+        if section not in groups:
+            groups[section] = []
+            order.append(section)
+        groups[section].append((i, item))
+
+    lines: list[str] = []
+    show_headers = len(order) > 1
+    for section in order:
+        if show_headers:
+            lines.append(f"\n▸ {section}")
+        for i, item in groups[section]:
+            name = item.get("name") or item.get("routes") or "?"
+            phone = item.get("phone") or ""
+            lines.append(f"{i+1}. {name} — {phone}")
+    return "\n".join(lines).lstrip("\n")
+
+
 async def get(session: AsyncSession, key: str) -> Any:
     row = await session.scalar(select(Setting).where(Setting.key == key))
     if row is not None:
@@ -265,7 +308,17 @@ def _read_seed_text(name: str) -> str | None:
 
 
 async def seed_if_empty(session: AsyncSession) -> None:
-    """Заполнить настройки из /seed только для отсутствующих ключей."""
+    """Заполнить настройки из /seed только для отсутствующих ключей.
+
+    После вставки сразу помечает свежие SYNCED_KEYS как уже
+    синхронизированные с репо (synced_at = now()). Логика: seed-файлы
+    (`seed/contacts.json`, `seed/topics.json`, `seed/transport_dispatchers.json`)
+    физически лежат в репозитории и уже являются baseline'ом, поэтому
+    сразу после первого старта бота этим ключам не место в списке
+    «несинхронизированных изменений». Иначе индикатор «3 грязных ключа»
+    горит вечно у каждого свежеустановленного бота — это раздражает
+    оператора и сбивает с толку: настоящих изменений нет, а UI кричит.
+    """
     existing = set(await session.scalars(select(Setting.key)))
 
     seed_pairs: dict[str, Any] = {}
@@ -280,6 +333,16 @@ async def seed_if_empty(session: AsyncSession) -> None:
     if (consent := _read_seed_text("consent.md")) is not None:
         seed_pairs["consent_text"] = consent
 
+    newly_seeded: list[str] = []
     for k, v in seed_pairs.items():
         if k not in existing:
             await set_value(session, k, v)
+            newly_seeded.append(k)
+
+    # Только те свежие ключи, которые входят в SYNCED_KEYS (репо-синк).
+    # welcome_text / consent_text идут не сюда — их baseline хранится в
+    # seed/welcome.md и seed/consent.md в формате markdown, репо-синк
+    # их не трогает.
+    baseline_synced = [k for k in newly_seeded if k in SYNCED_KEYS]
+    if baseline_synced:
+        await mark_synced(session, baseline_synced)
