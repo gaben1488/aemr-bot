@@ -211,7 +211,7 @@ async def render(
             # чтобы следующий callback тоже пошёл в send_new.
             menu_tracker.clear(cfg.admin_group_id)
 
-    # Send new card.
+    # Отправляем новую карточку (edit не сработал или не применим).
     try:
         sent = await bot.send_message(
             chat_id=cfg.admin_group_id,

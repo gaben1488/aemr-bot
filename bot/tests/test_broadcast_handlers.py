@@ -349,7 +349,9 @@ class TestHandleConfirm:
              patch("aemr_bot.handlers.broadcast.spawn_background_task", spawn):
             await broadcast._handle_confirm(event)
         spawn.assert_called_once()
-        assert spawn.call_args.kwargs["name"] == "broadcast_99"
+        # C2: имя task теперь «broadcast_cooldown_<id>» — рассылка идёт
+        # через cooldown-обёртку, а не напрямую в _run_broadcast.
+        assert spawn.call_args.kwargs["name"] == "broadcast_cooldown_99"
 
 
 # --- _handle_abort ------------------------------------------------------------

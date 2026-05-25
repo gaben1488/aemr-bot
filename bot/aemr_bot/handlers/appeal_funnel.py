@@ -48,7 +48,9 @@ from aemr_bot.utils.event import (
     send_or_edit_screen,
 )
 
-# Hot path regex (on_awaiting_contact, каждый contact-step жителя).
+# Регекс на горячем пути: вызывается на каждом контактном шаге жителя
+# (on_awaiting_contact). Компиляция модуля — однократно, чтобы не
+# тратить CPU на пересборку регекса при каждом сообщении.
 # Module-level compile вместо `re.search(...)` внутри функции.
 _PHONE_DIGITS_RE = re.compile(r"\+?\d[\d\s\-()]{9,}\d")
 
@@ -135,7 +137,14 @@ async def start_appeal_flow(event, max_user_id: int):
                 "в прикреплённом PDF.\n\nНажмите «Согласен», чтобы продолжить."
             )
         else:
-            text = texts.CONSENT_REQUEST.format(policy_url=policy_url)
+            # C1: подгружаем consent_text из БД (если IT отредактировал)
+            # с автоматической санитизацией и fallback'ом на texts.CONSENT_REQUEST.
+            async with session_scope() as text_session:
+                text = await settings_store.get_consent_request_text(
+                    text_session,
+                    policy_url=policy_url,
+                    fallback=texts.CONSENT_REQUEST,
+                )
         await send_or_edit_screen(
             event,
             text=text,
@@ -532,14 +541,20 @@ async def on_awaiting_consent(event, body, text_body, max_user_id):
     """Житель пишет текст вместо тапа кнопок «Согласен/Отказаться»."""
     async with session_scope() as session:
         policy_url = await settings_store.get(session, "policy_url")
-    if policy_url:
-        text = texts.CONSENT_REQUEST.format(policy_url=policy_url)
-    else:
-        text = (
-            "Чтобы принять обращение, нам нужно ваше согласие на "
-            "обработку персональных данных. Нажмите «Согласен», "
-            "чтобы продолжить."
-        )
+        if policy_url:
+            # C1: подгружаем consent_text из БД с санитизацией и
+            # fallback'ом на hardcoded texts.CONSENT_REQUEST.
+            text = await settings_store.get_consent_request_text(
+                session,
+                policy_url=policy_url,
+                fallback=texts.CONSENT_REQUEST,
+            )
+        else:
+            text = (
+                "Чтобы принять обращение, нам нужно ваше согласие на "
+                "обработку персональных данных. Нажмите «Согласен», "
+                "чтобы продолжить."
+            )
     await event.message.answer(text, attachments=[keyboards.consent_keyboard()])
 
 

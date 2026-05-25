@@ -181,10 +181,11 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
                 )
                 await users_service.reset_state(session, max_user_id)
 
-        # Single source of truth для admin appeal card —
-        # services/admin_card.render. Helper send новую карточку
-        # (admin_message_id ещё пуст) и обновит Appeal.admin_message_id
-        # в БД. Все последующие изменения статуса тоже через этот helper.
+        # Единая точка рендера админской карточки обращения —
+        # services/admin_card.render. Helper отправляет новую карточку
+        # (admin_message_id ещё пуст) и сохранит admin_message_id в БД.
+        # Все последующие смены статуса проходят через этот же helper,
+        # чтобы edit-vs-new политика была централизована.
         from aemr_bot.services import admin_card as admin_card_service
 
         # appeal был загружен внутри уже закрытой session_scope —

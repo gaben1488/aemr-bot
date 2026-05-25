@@ -117,9 +117,16 @@ async def open_main_menu(event):
         )
         return
 
+    # C1: подгружаем актуальный welcome из БД (если IT отредактировал
+    # через UI) с fallback на hardcoded texts.WELCOME. Санитизация
+    # автоматическая внутри get_text_with_fallback.
+    async with session_scope() as text_session:
+        welcome = await settings_store.get_text_with_fallback(
+            text_session, "welcome_text", texts.WELCOME
+        )
     await _send_or_edit_menu(
         event,
-        text=texts.WELCOME,
+        text=welcome,
         attachments=[keyboards.main_menu(subscribed=subscribed)],
     )
 

@@ -212,7 +212,13 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
         text=(
             f"{prompt_hint}"
             f"Лимит {cfg.answer_max_chars} символов. Просто отправьте "
-            f"следующее сообщение в этот чат, либо «Отменить» ниже."
+            f"следующее сообщение в этот чат, либо «Отменить» ниже.\n"
+            f"\n"
+            f"🛡️ Памятка: ссылки только на гос-домены (elizovomr.ru, "
+            f"kamgov.ru, gosuslugi.ru, kamchatka.gov.ru). Любая другая "
+            f"ссылка будет заблокирована автоматически — ответ не уйдёт "
+            f"жителю, чтобы случайный фишинг не прошёл от имени "
+            f"Администрации. Подробности — docs/OPERATOR_SECURITY.md §3.2."
         ),
         attachments=[kbds.cancel_reply_intent_keyboard()],
         force_new_message=True,

@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import logging
 import time
 from collections.abc import Sequence
@@ -79,6 +80,33 @@ class _WizardState:
 # Состояние мастера для каждого оператора. Только для одного экземпляра приложения.
 # При горизонтальном масштабировании потребуется хранение в Redis или через pg_advisory_lock.
 _wizards: dict[int, _WizardState] = {}
+
+
+# SECURITY_REVIEW C2: pending-таски на cooldown между confirm и реальной
+# отправкой. Ключ — broadcast_id, значение — asyncio.Task. Если оператор
+# жмёт «❌ Отменить отправку» во время cooldown'а — task.cancel() и
+# рассылка не уходит. Если бот перезагрузился во время cooldown'а —
+# task теряется (safe-by-default: оператор увидит что рассылка не дошла
+# и переотправит). Cooldown не хранится в БД сознательно: для гос-канала
+# лучше «случайно не отправили» чем «отправили автоматически после
+# рестарта без подтверждения оператора».
+_pending_broadcasts: dict[int, "asyncio.Task"] = {}
+
+# Маркер «срочная рассылка» — текст с [ЧС] в начале или после пробела
+# (case-insensitive). Для таких сокращаем cooldown до 30 секунд, чтобы
+# оповещение о ЧС не задерживалось на 5 минут.
+_EMERGENCY_MARKER = re.compile(r"(?:^|\s)\[ЧС\]", re.IGNORECASE)
+_COOLDOWN_NORMAL_SEC = 300   # 5 минут — обычная рассылка
+_COOLDOWN_EMERGENCY_SEC = 30  # 30 секунд — [ЧС] рассылка
+
+
+def _broadcast_cooldown_seconds(text: str) -> int:
+    """Сколько ждать перед фактической отправкой рассылки.
+
+    [ЧС] в тексте → 30 сек (оператор всё ещё может отменить, но не
+    задерживаем оповещение о реальной ЧС). Иначе — 5 минут.
+    """
+    return _COOLDOWN_EMERGENCY_SEC if _EMERGENCY_MARKER.search(text) else _COOLDOWN_NORMAL_SEC
 
 
 async def _resolve_broadcast_max_images(session) -> int:
@@ -203,6 +231,29 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
             attachments=[keyboards.broadcast_cancel_keyboard()],
         )
         return True
+    # SECURITY_REVIEW C2: URL-whitelist на текст рассылки. Симметрично
+    # M3 для operator reply. Защищает от ошибки оператора (вставил
+    # анонс с ссылкой на сторонний сайт по копи-пейсту) и от
+    # компрометации аккаунта (фишинг-рассылка всем подписчикам). Если
+    # есть хоть один URL не из гос-whitelist — отказываем, перечисляем
+    # плохие ссылки оператору в чате.
+    bad_urls = settings_store.find_non_whitelisted_urls(text)
+    if bad_urls:
+        await event.message.answer(
+            "❌ В тексте рассылки найдены ссылки на сторонние сайты: "
+            f"{', '.join(bad_urls[:3])}"
+            f"{'…' if len(bad_urls) > 3 else ''}.\n\n"
+            "Разрешены только официальные ресурсы: elizovomr.ru, "
+            "kamgov.ru, gosuslugi.ru, kamchatka.gov.ru.\n\n"
+            "Уберите ссылку или замените на гос-домен и пришлите текст "
+            "заново.",
+            attachments=[keyboards.broadcast_cancel_keyboard()],
+        )
+        log.warning(
+            "broadcast: blocked non-whitelisted URLs in wizard text — "
+            "operator=%s count=%d", actor_id, len(bad_urls),
+        )
+        return True
     if not text:
         # Пусто. Просим ввести ещё раз, состояние не меняем. Для re-
         # prompt'a показываем DEFAULTS-значение max_images: открывать
@@ -320,22 +371,123 @@ async def _handle_confirm(event) -> None:
         "broadcast: confirmed by operator=%s — broadcast_id=%s subscribers=%d",
         actor_id, broadcast_id, count,
     )
+
+    # SECURITY_REVIEW C2: cooldown между confirm и реальной отправкой.
+    # Стандарт — 5 минут. Для рассылок с маркером [ЧС] (ситуация
+    # требует немедленного оповещения) — 30 секунд: оператор всё ещё
+    # может отменить, но мы не задерживаем ЧС-сигнал.
+    cooldown_sec = _broadcast_cooldown_seconds(state.text)
+    minutes = cooldown_sec // 60
+    seconds = cooldown_sec % 60
+    eta_text = (
+        f"{minutes} мин {seconds} сек" if minutes else f"{seconds} сек"
+    )
+    is_emergency = cooldown_sec == _COOLDOWN_EMERGENCY_SEC
+    cooldown_label = "🚨 ЧС-рассылка" if is_emergency else "📤 Рассылка"
     sent = await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
-        text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=count),
-        attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
+        text=(
+            f"{cooldown_label} #{broadcast_id} уйдёт жителям через "
+            f"{eta_text} ({count} получателей).\n\n"
+            f"Если заметили ошибку или передумали — нажмите «❌ Отменить "
+            f"отправку». После окна cooldown'а рассылка стартует "
+            f"автоматически и появится клавиша экстренной остановки."
+        ),
+        attachments=[keyboards.broadcast_cooldown_keyboard(broadcast_id)],
     )
     admin_mid = extract_message_id(sent) or get_callback_message_id(event)
+
     # Strong ref: без spawn_background_task GC может прервать рассылку
     # посреди списка получателей (Python 3.11+ держит только weakref на
     # таску из голого create_task). Конкретно для рассылки это значило
     # бы потерянные доставки и broadcast в статусе SENDING без
-    # завершения. Импорт top-level (см. модульный блок импортов) —
-    # spawn_background_task живёт в utils/, цикла handlers→main больше нет.
-    spawn_background_task(
-        _run_broadcast(event.bot, broadcast_id, state.text, count, admin_mid=admin_mid),
-        name=f"broadcast_{broadcast_id}",
+    # завершения.
+    cooldown_task = spawn_background_task(
+        _run_with_cooldown(
+            event.bot,
+            broadcast_id,
+            state.text,
+            count,
+            admin_mid=admin_mid,
+            cooldown_sec=cooldown_sec,
+        ),
+        name=f"broadcast_cooldown_{broadcast_id}",
+    )
+    _pending_broadcasts[broadcast_id] = cooldown_task
+
+
+async def _run_with_cooldown(
+    bot, broadcast_id: int, text: str, count: int,
+    *, admin_mid: str | None, cooldown_sec: int,
+) -> None:
+    """Подождать cooldown_sec, затем запустить _run_broadcast.
+
+    Если task отменён (оператор нажал «❌ Отменить отправку»),
+    `CancelledError` всплывает наружу — рассылка не уходит, статус
+    в БД помечается как cancelled через `_handle_cancel_cooldown`.
+    После успешного запуска / отмены — убираем себя из
+    `_pending_broadcasts`.
+    """
+    try:
+        await asyncio.sleep(cooldown_sec)
+    except asyncio.CancelledError:
+        log.info("broadcast: cooldown cancelled — broadcast_id=%s", broadcast_id)
+        raise
+    # Cooldown прошёл. Убираем pending-метку — теперь рассылка идёт,
+    # отменить нельзя (только экстренная остановка через _handle_stop).
+    _pending_broadcasts.pop(broadcast_id, None)
+    await _run_broadcast(bot, broadcast_id, text, count, admin_mid=admin_mid)
+
+
+async def _handle_cancel_cooldown(event, broadcast_id: int) -> None:
+    """SECURITY_REVIEW C2: отмена рассылки во время cooldown'а.
+
+    Сценарий: оператор нажал «отправить», увидел сообщение «уйдёт через
+    5 минут», осознал ошибку (опечатка / не тот текст / передумал) и
+    жмёт «❌ Отменить отправку». Мы отменяем pending-task (рассылка
+    не уходит) и переводим broadcast в статус CANCELLED.
+    """
+    await ack_callback(event, "Отменяю…")
+    task = _pending_broadcasts.pop(broadcast_id, None)
+    if task is None:
+        # Cooldown уже истёк — рассылка пошла, отмена не возможна
+        # (только экстренная остановка по «⛔ Экстренно остановить»).
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=(
+                f"⚠️ Рассылка #{broadcast_id} уже стартовала или была "
+                f"отменена ранее. Для остановки уже идущей рассылки — "
+                f"кнопка «⛔ Экстренно остановить»."
+            ),
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return
+    task.cancel()
+    async with session_scope() as session:
+        await broadcasts_service.mark_cancelled(session, broadcast_id)
+        actor_id = get_user_id(event) or 0
+        await operators_service.write_audit(
+            session,
+            operator_max_user_id=actor_id,
+            action="broadcast_cancel_cooldown",
+            target=f"broadcast #{broadcast_id}",
+            details={"reason": "operator_cancelled_during_cooldown"},
+        )
+    log.info(
+        "broadcast: cancelled during cooldown — operator=%s broadcast_id=%s",
+        get_user_id(event), broadcast_id,
+    )
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=(
+            f"❌ Рассылка #{broadcast_id} отменена. Жителям ничего не "
+            f"отправлено. Если нужно переотправить — начните мастер "
+            f"заново через «📣 Рассылка»."
+        ),
+        attachments=[keyboards.op_back_to_menu_keyboard()],
     )
 
 
