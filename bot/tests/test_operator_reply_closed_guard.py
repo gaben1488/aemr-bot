@@ -34,7 +34,12 @@ async def test_deliver_operator_reply_blocks_closed_appeal() -> None:
     async def fake_session_scope():
         yield SimpleNamespace()
 
+    live_op = SimpleNamespace(id=7, max_user_id=7001, is_active=True)
     with patch("aemr_bot.handlers.operator_reply.session_scope", fake_session_scope), \
+         patch(
+             "aemr_bot.handlers.operator_reply.operators_service.get",
+             AsyncMock(return_value=live_op),
+         ), \
          patch(
              "aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
              AsyncMock(return_value=fresh_appeal),

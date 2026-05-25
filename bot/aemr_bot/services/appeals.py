@@ -186,6 +186,45 @@ async def list_for_user(
     return list(res)
 
 
+async def count_recent_followups_for_appeal(
+    session: AsyncSession, appeal_id: int, *, hours: int = 1
+) -> int:
+    """SEC #5: сколько followup'ов житель прислал по обращению за
+    `hours` часов. Используется в rate-limit followup-флуда.
+
+    Считаем только direction=FROM_USER — operator-ответы не должны
+    блокировать жителя слать дополнения.
+    """
+    threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
+    return (
+        await session.scalar(
+            select(func.count())
+            .select_from(Message)
+            .where(
+                Message.appeal_id == appeal_id,
+                Message.direction == MessageDirection.FROM_USER.value,
+                Message.created_at >= threshold,
+            )
+        )
+    ) or 0
+
+
+async def last_followup_at_for_appeal(
+    session: AsyncSession, appeal_id: int
+) -> datetime | None:
+    """SEC #5: timestamp последнего followup жителя по обращению.
+
+    Нужен для min-interval rate-limit (между двумя followup'ами не
+    меньше N секунд). None — followup'ов ещё не было.
+    """
+    return await session.scalar(
+        select(func.max(Message.created_at)).where(
+            Message.appeal_id == appeal_id,
+            Message.direction == MessageDirection.FROM_USER.value,
+        )
+    )
+
+
 async def count_recent_for_user(
     session: AsyncSession, user_id: int, *, hours: int = 1
 ) -> int:

@@ -134,6 +134,7 @@ class TestBackupDb:
 
         with patch.object(db_backup.settings, "backup_local_dir", str(tmp_path)), \
              patch.object(db_backup.settings, "backup_gpg_passphrase", ""), \
+             patch.object(db_backup.settings, "backup_allow_unencrypted", True), \
              patch.object(db_backup.settings, "backup_keep_count", 5), \
              patch.object(db_backup.settings, "backup_s3_bucket", ""), \
              patch.object(db_backup.settings, "backup_s3_endpoint", ""), \
@@ -185,6 +186,7 @@ class TestBackupDb:
 
         with patch.object(db_backup.settings, "backup_local_dir", str(tmp_path)), \
              patch.object(db_backup.settings, "backup_gpg_passphrase", "short"), \
+             patch.object(db_backup.settings, "backup_allow_unencrypted", True), \
              patch.object(db_backup.settings, "backup_keep_count", 5), \
              patch.object(db_backup.settings, "backup_s3_bucket", ""), \
              patch.object(db_backup.settings, "backup_s3_endpoint", ""), \
@@ -201,6 +203,23 @@ class TestBackupDb:
         assert result.path.suffix == ".sql"
 
     @pytest.mark.asyncio
+    async def test_sec2_refuses_plain_without_opt_in(
+        self, tmp_path: Path
+    ) -> None:
+        """SEC #2: пустой passphrase + НЕТ BACKUP_ALLOW_UNENCRYPTED → отказ.
+        152-ФЗ: plain-text дамп с PII нельзя писать на диск без явного
+        opt-in в dev/local."""
+        with patch.object(db_backup.settings, "backup_local_dir", str(tmp_path)), \
+             patch.object(db_backup.settings, "backup_gpg_passphrase", ""), \
+             patch.object(db_backup.settings, "backup_allow_unencrypted", False):
+            with patch.object(db_backup, "_run_pg_dump") as dump:
+                result = await db_backup.backup_db()
+            dump.assert_not_called()
+        assert result.ok is False
+        assert result.fail_kind == "config"
+        assert "152" in result.fail_detail or "passphrase" in result.fail_detail.lower()
+
+    @pytest.mark.asyncio
     async def test_pg_dump_fail_categorized(
         self, tmp_path: Path
     ) -> None:
@@ -211,6 +230,7 @@ class TestBackupDb:
 
         with patch.object(db_backup.settings, "backup_local_dir", str(tmp_path)), \
              patch.object(db_backup.settings, "backup_gpg_passphrase", ""), \
+             patch.object(db_backup.settings, "backup_allow_unencrypted", True), \
              patch.object(db_backup.settings, "backup_keep_count", 5):
             with patch.object(db_backup, "_run_pg_dump", side_effect=fake_dump_fail), \
                  patch.object(db_backup, "_build_pg_env", return_value={}):
@@ -255,6 +275,7 @@ class TestBackupDb:
 
         with patch.object(db_backup.settings, "backup_local_dir", str(tmp_path)), \
              patch.object(db_backup.settings, "backup_gpg_passphrase", ""), \
+             patch.object(db_backup.settings, "backup_allow_unencrypted", True), \
              patch.object(db_backup.settings, "backup_keep_count", 5):
             with patch.object(db_backup, "_run_pg_dump", side_effect=fake_dump_fail), \
                  patch.object(db_backup, "_build_pg_env", return_value={}):
@@ -277,6 +298,7 @@ class TestBackupDb:
 
         with patch.object(db_backup.settings, "backup_local_dir", str(tmp_path)), \
              patch.object(db_backup.settings, "backup_gpg_passphrase", ""), \
+             patch.object(db_backup.settings, "backup_allow_unencrypted", True), \
              patch.object(db_backup.settings, "backup_keep_count", 5), \
              patch.object(db_backup.settings, "backup_s3_bucket", ""), \
              patch.object(db_backup.settings, "backup_s3_endpoint", ""), \

@@ -163,6 +163,14 @@ def register(dp: Dispatcher) -> None:
     async def cmd_reply(event: MessageCreated):
         if not _is_admin_chat(event):
             return
+        # SEC #9: defense-in-depth. Раньше /reply полагался на
+        # operator-check deeper в handle_command_reply. Если кто-то
+        # добавлен в admin group как обычный member (например,
+        # visiting auditor), его /reply должен отбрасываться сразу,
+        # не давая углубиться в парсер. Двухслойная проверка ловит
+        # регрессии при будущих рефакторингах handle_command_reply.
+        if not await _ensure_operator(event):
+            return
         text = _get_text(event)
         # /reply <id_обращения> <текст...>
         parts = text.split(maxsplit=2)

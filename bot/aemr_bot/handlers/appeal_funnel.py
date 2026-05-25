@@ -624,6 +624,47 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         )
         return
 
+    # SEC #5: followup flood rate-limit.
+    # 1. min-interval — не чаще раз в N секунд (защита от двойного тапа /
+    #    скрипт-флуда).
+    # 2. max-per-hour — не больше M на одно обращение в час (защита от
+    #    долгого медленного флуда).
+    # Если лимит нарушен — НЕ принимаем followup, не сбрасываем state,
+    # житель может попробовать ещё раз позже.
+    from datetime import datetime as _dt
+    from datetime import timezone as _tz
+
+    async with session_scope() as _rl_session:
+        last_at = await appeals_service.last_followup_at_for_appeal(
+            _rl_session, appeal.id
+        )
+        recent_count = await appeals_service.count_recent_followups_for_appeal(
+            _rl_session, appeal.id, hours=1
+        )
+    if last_at is not None:
+        elapsed = (_dt.now(_tz.utc) - last_at).total_seconds()
+        if elapsed < cfg.followup_min_interval_seconds:
+            wait = int(cfg.followup_min_interval_seconds - elapsed)
+            await event.message.answer(
+                f"Слишком часто. Подождите {wait}с перед следующим "
+                f"дополнением — это защита от случайного двойного "
+                f"сообщения.",
+                attachments=[keyboards.cancel_keyboard()],
+            )
+            return
+    if recent_count >= cfg.followup_max_per_hour_per_appeal:
+        await event.message.answer(
+            f"По этому обращению уже {recent_count} дополнений за час — "
+            f"лимит {cfg.followup_max_per_hour_per_appeal}. Подождите час "
+            f"или дождитесь ответа оператора — он видит всю историю и "
+            f"свяжется по сути вопроса.",
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+        # Сбрасываем state — иначе житель «застрянет» в AWAITING_FOLLOWUP
+        async with session_scope() as session:
+            await users_service.reset_state(session, max_user_id)
+        return
+
     async with session_scope() as session:
         await appeals_service.add_user_message(
             session,

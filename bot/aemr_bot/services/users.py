@@ -77,7 +77,12 @@ async def set_consent(session: AsyncSession, max_user_id: int) -> None:
         .values(
             consent_pdn_at=datetime.now(timezone.utc),
             consent_revoked_at=None,
-            is_blocked=False,
+            # SEC #1: НЕ сбрасываем is_blocked здесь — иначе blocked житель,
+            # тапнув старую кнопку «✅ Согласен» из истории чата (после того
+            # как IT заблокировал его), снимет блок себе сам. Разблокировку
+            # делает только IT через admin_audience / admin_appeal_ops с
+            # ensure_role(IT). is_blocked сбрасывается явно через
+            # users_service.set_blocked(blocked=False).
         )
     )
 

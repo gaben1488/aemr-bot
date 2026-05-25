@@ -230,7 +230,24 @@ async def _cb_new_appeal(event, max_user_id: int, payload: str) -> None:
 
 
 async def _cb_consent_yes(event, max_user_id: int, payload: str) -> None:
+    # SEC #1: blocked житель не может «дать согласие» — это означало бы
+    # обход IT-блокировки (старая кнопка из истории чата). Шлём
+    # короткое сообщение, не запускаем воронку.
     async with session_scope() as session:
+        user = await users_service.get_or_create(session, max_user_id=max_user_id)
+        if user.is_blocked:
+            await ack_callback(event)
+            await _send_to_citizen(
+                event,
+                max_user_id,
+                text=(
+                    "Ваш аккаунт заблокирован — приём обращений и согласие "
+                    "недоступны. Если блокировка ошибочна, обратитесь к "
+                    "координатору Администрации."
+                ),
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
         await users_service.set_consent(session, max_user_id)
     await ack_callback(event, texts.CONSENT_ACCEPTED)
     await admin_events.notify_consent_given(event.bot, max_user_id=max_user_id)

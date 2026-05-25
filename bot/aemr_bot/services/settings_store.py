@@ -1,5 +1,6 @@
 import json
 from typing import Any
+from urllib.parse import urlparse
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -7,6 +8,39 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import Setting
+
+# SEC #4: whitelist хостов для URL-настроек. Operator-facing botов
+# (citizens click trusted govbot link) — должны вести только на
+# официальные ресурсы. Rogue/compromised IT не сможет поставить
+# phishing URL.
+#
+# Подвиды доменов добавляются ниже — точное совпадение или suffix
+# `.elizovomr.ru` / `.kamgov.ru` / `.gosuslugi.ru`. Если нужно
+# временно разрешить новый домен — добавить сюда и редеплоить
+# (не правится через UI, чтобы не выстрелить себе в ногу).
+_URL_HOST_WHITELIST_SUFFIXES = (
+    "elizovomr.ru",
+    "kamgov.ru",
+    "gosuslugi.ru",
+    "kamchatka.gov.ru",
+)
+
+
+def _is_whitelisted_url(value: str) -> bool:
+    """True если URL ведёт на разрешённый host (Elizovo / Kamchatka gov)."""
+    try:
+        parsed = urlparse(value)
+    except Exception:
+        return False
+    if parsed.scheme not in {"http", "https"}:
+        return False
+    host = (parsed.hostname or "").lower()
+    if not host:
+        return False
+    return any(
+        host == suffix or host.endswith("." + suffix)
+        for suffix in _URL_HOST_WHITELIST_SUFFIXES
+    )
 
 DEFAULTS: dict[str, Any] = {
     "welcome_text": None,
@@ -99,8 +133,15 @@ def validate(key: str, value: Any) -> tuple[bool, str]:
             return False, f"String too short, min_len={rule['min_len']}"
         if "max_len" in rule and len(value) > rule["max_len"]:
             return False, f"String too long, max_len={rule['max_len']}"
-        if rule.get("url") and not (value.startswith("https://") or value.startswith("http://")):
-            return False, "URL must start with http:// or https://"
+        if rule.get("url"):
+            if not (value.startswith("https://") or value.startswith("http://")):
+                return False, "URL must start with http:// or https://"
+            if not _is_whitelisted_url(value):
+                return False, (
+                    f"URL host не в whitelist. Разрешены только официальные "
+                    f"ресурсы: {', '.join(_URL_HOST_WHITELIST_SUFFIXES)}. "
+                    f"Для нового домена обратитесь к разработчику."
+                )
     if expected is list:
         if "min_items" in rule and len(value) < rule["min_items"]:
             return False, f"List too short, min_items={rule['min_items']}"

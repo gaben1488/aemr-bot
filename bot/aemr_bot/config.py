@@ -100,8 +100,15 @@ class Settings(BaseSettings):
     # Сколько последних файлов хранить. 8 еженедельных ≈ 2 месяца истории.
     backup_keep_count: int = Field(8, alias="BACKUP_KEEP_COUNT")
 
-    # gpg-шифрование опционально: если passphrase пустой — храним plain SQL.
+    # gpg-шифрование опционально: если passphrase пустой — БЭКАП НЕ
+    # СОЗДАЁТСЯ (SEC #2): plain SQL содержит phones, names, appeal texts —
+    # это PII по 152-ФЗ. Хранить такой дамп на диске (тем более в S3)
+    # без шифрования = breach. Чтобы запустить без gpg, явно установите
+    # BACKUP_ALLOW_UNENCRYPTED=1 (dev/local-only).
     backup_gpg_passphrase: str | None = Field(None, alias="BACKUP_GPG_PASSPHRASE")
+    backup_allow_unencrypted: bool = Field(
+        False, alias="BACKUP_ALLOW_UNENCRYPTED"
+    )
 
     # S3 опционально: если задан endpoint+bucket+keys, доп. заливаем в облако.
     # Пусто — храним только локально. Для self-hosted без облачного хранилища
@@ -121,6 +128,18 @@ class Settings(BaseSettings):
     # IT-аудита. После — следы стираются вместе с любым PII в details.
     audit_log_retention_days: int = Field(
         365, alias="AUDIT_LOG_RETENTION_DAYS", ge=30, le=3650
+    )
+
+    # SEC #5 — followup flood защита. Житель может закидать админ-чат
+    # дополнениями (каждое = полная admin card + relay вложений).
+    # Лимит per-appeal: max N follow-up'ов в час + min M секунд между
+    # двумя followup'ами. Дефолты подобраны под нормальное общение
+    # (несколько уточнений в сутки), но блокируют machine-spam.
+    followup_max_per_hour_per_appeal: int = Field(
+        5, alias="FOLLOWUP_MAX_PER_HOUR_PER_APPEAL", ge=1, le=100
+    )
+    followup_min_interval_seconds: int = Field(
+        30, alias="FOLLOWUP_MIN_INTERVAL_SECONDS", ge=0, le=3600
     )
 
     seed_dir: Path = Field(Path("/app/seed"), alias="SEED_DIR")

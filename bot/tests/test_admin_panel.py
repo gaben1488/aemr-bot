@@ -286,7 +286,12 @@ class TestDoBackup:
             await admin_panel._do_backup(event)
         last_text = event.bot.send_message.call_args_list[-1].kwargs["text"]
         assert "упал" in last_text.lower()
-        assert "disk full" in last_text
+        # SEC #8: НЕ должны светить repr(exc) в admin chat (может
+        # содержать DATABASE_URL / GPG-passphrase fragments).
+        # Должен быть только type(e).__name__.
+        assert "RuntimeError" in last_text
+        assert "disk full" not in last_text
+        assert "журнал" in last_text.lower()
 
 
 # --- _do_open_tickets ---------------------------------------------------------

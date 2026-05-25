@@ -31,8 +31,17 @@ class TestValidate:
         assert "не разрешён" in reason or "unknown" in reason.lower()
 
     def test_string_key_accepts_string(self) -> None:
-        ok, reason = validate("policy_url", "https://example.com/policy.pdf")
-        assert ok is True
+        # SEC #4: URL должен быть в host whitelist (gov-домены).
+        ok, reason = validate("policy_url", "https://elizovomr.ru/policy.pdf")
+        assert ok is True, reason
+
+    def test_url_rejects_non_whitelisted_host(self) -> None:
+        """SEC #4: даже https://, но чужой host → reject."""
+        ok, reason = validate(
+            "policy_url", "https://example.com/policy.pdf"
+        )
+        assert ok is False
+        assert "whitelist" in reason.lower() or "host" in reason.lower()
 
     def test_list_key_rejects_string(self) -> None:
         ok, reason = validate("topics", "not-a-list")
