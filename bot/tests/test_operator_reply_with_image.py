@@ -62,12 +62,16 @@ def _fresh_appeal() -> SimpleNamespace:
 def _patches_for_delivery():
     """Стандартный набор патчей для прохождения guard'ов в
     `_deliver_operator_reply` до точки доставки и записи."""
+    live_op = SimpleNamespace(id=7, max_user_id=42, is_active=True)
     return [
         patch.object(__import__("aemr_bot.handlers.operator_reply",
                                 fromlist=["cfg"]).cfg,
                      "answer_max_chars", 1000),
         patch("aemr_bot.handlers.operator_reply.session_scope",
               _fake_session_scope),
+        # SEC #6: re-check operator activity. Tests должны вернуть live_op.
+        patch("aemr_bot.handlers.operator_reply.operators_service.get",
+              AsyncMock(return_value=live_op)),
         patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
               AsyncMock(return_value=_fresh_appeal())),
         patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",

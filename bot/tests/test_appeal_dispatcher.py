@@ -131,8 +131,14 @@ class TestCallbackConsent:
         set_consent = AsyncMock()
         ask_contact = AsyncMock()
         notify = AsyncMock()
+        # SEC #1: _cb_consent_yes теперь читает user перед set_consent,
+        # чтобы blocked житель не мог снять блок через старую кнопку.
+        # Мокаем get_or_create → активный (не-blocked) пользователь.
+        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7)
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal.users_service.get_or_create",
+                   AsyncMock(return_value=unblocked_user)), \
              patch("aemr_bot.handlers.appeal.users_service.set_consent",
                    set_consent), \
              patch("aemr_bot.handlers.appeal.admin_events.notify_consent_given",
@@ -144,6 +150,41 @@ class TestCallbackConsent:
         set_consent.assert_called_once()
         notify.assert_called_once_with(event.bot, max_user_id=7)
         ask_contact.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_consent_yes_REFUSED_for_blocked_user(
+        self, captured_handlers
+    ) -> None:
+        """SEC #1: blocked житель, тапающий старую кнопку «✅ Согласен» из
+        истории чата (например, кнопка осталась с прошлого визита, до
+        IT-блокировки) — НЕ должен иметь возможность снять блок с себя
+        через эту кнопку. Воронка не запускается, set_consent не вызван.
+        """
+        on_callback, _ = captured_handlers
+        event = _make_callback_event(payload="consent:yes")
+        blocked_user = SimpleNamespace(is_blocked=True, max_user_id=7)
+        set_consent = AsyncMock()
+        ask_contact = AsyncMock()
+        notify = AsyncMock()
+        with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
+             patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal.users_service.get_or_create",
+                   AsyncMock(return_value=blocked_user)), \
+             patch("aemr_bot.handlers.appeal.users_service.set_consent",
+                   set_consent), \
+             patch("aemr_bot.handlers.appeal.admin_events.notify_consent_given",
+                   notify), \
+             patch("aemr_bot.handlers.appeal.appeal_funnel.ask_contact_or_skip",
+                   ask_contact), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await on_callback(event)
+        # Главное: set_consent НЕ вызван (блокировка осталась).
+        set_consent.assert_not_called()
+        ask_contact.assert_not_called()
+        notify.assert_not_called()
+        # Жителю отправлено пояснение про блокировку.
+        sent_text = event.bot.send_message.call_args.kwargs.get("text", "")
+        assert "заблокирован" in sent_text.lower()
 
     @pytest.mark.asyncio
     async def test_consent_no_resets_and_returns_to_menu(

@@ -129,8 +129,17 @@ async def claim(event: Any) -> bool:
     except IntegrityError:
         return False
     except Exception:
-        log.exception("idempotency claim failed; defaulting to process")
-        return True
+        # SEC #7: fail-CLOSED, не fail-OPEN. Раньше тут было «defaulting
+        # to process» — attacker может induce DB stall (connection drop,
+        # transient timeout) и заставить handler обработать дубль.
+        # Для мутирующих callback'ов (op:close, op:erase, broadcast
+        # confirm, op:opchrole) это критично. Безопаснее пропустить
+        # событие — MAX повторит ack, при восстановлении БД handler
+        # обработает заново через свой полноценный путь.
+        log.exception(
+            "idempotency claim failed; SEC #7 fail-closed (event пропущен)"
+        )
+        return False
 
 
 async def has_processed_raw(key: str) -> bool:

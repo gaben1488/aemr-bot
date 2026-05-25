@@ -198,6 +198,24 @@ class TestExtractReplyTargetMid:
         assert opr._extract_reply_target_mid(event) == "MID-1"
 
 
+@pytest.fixture(autouse=True)
+def _autopatch_operators_get(request):
+    """SEC #6: _deliver_operator_reply ре-проверяет operators_service.get
+    перед доставкой (защита от deactivated operator). Юнит-тесты в этом
+    модуле гоняют через fake session — patch'им get на возврат активного
+    оператора, чтобы security-чек не падал на MagicMock-сессии."""
+    # Применяется только в этом модуле; не трогает другие тесты.
+    if "test_handlers_operator_reply" not in request.node.nodeid:
+        yield
+        return
+    live_op = SimpleNamespace(id=7, max_user_id=42, is_active=True)
+    with patch(
+        "aemr_bot.handlers.operator_reply.operators_service.get",
+        AsyncMock(return_value=live_op),
+    ):
+        yield
+
+
 class TestDeliverOperatorReply:
     @pytest.mark.asyncio
     async def test_too_long_text_rejected(self) -> None:

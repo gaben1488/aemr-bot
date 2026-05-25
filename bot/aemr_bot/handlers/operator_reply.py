@@ -496,6 +496,33 @@ async def _deliver_operator_reply(
         )
         return True
 
+    # SEC #6: ре-проверка активности оператора. Между intent (или
+    # swipe-reply) и доставкой IT мог деактивировать оператора через
+    # admin_operators. operator-объект из intent уже устарел —
+    # перечитываем актуальное состояние из БД. Деактивированный
+    # оператор не должен отправлять ни одного ответа.
+    async with session_scope() as session:
+        live_operator = await operators_service.get(
+            session, operator.max_user_id
+        )
+    if live_operator is None or not getattr(live_operator, "is_active", True):
+        log.warning(
+            "operator_reply: deactivated operator id=%s tried to reply on "
+            "appeal #%s — blocked.",
+            operator.id, appeal.id,
+        )
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=(
+                f"⚠️ Ваша роль оператора деактивирована. Ответ по "
+                f"обращению #{appeal.id} НЕ отправлен жителю. Обратитесь "
+                f"к IT для реактивации, если это ошибка."
+            ),
+        )
+        return True
+    # Используем свежую запись оператора во всех дальнейших шагах.
+    operator = live_operator
+
     is_dupe, success_key = await _check_reply_dedupe(
         event, operator=operator, appeal=appeal, text=text
     )
@@ -637,17 +664,36 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
     link = get_message_link(event)
     if link:
         replied_text = ""
+        replied_sender_is_bot = False
         inner = getattr(link, "message", None)
         if inner:
             replied_text = getattr(inner, "text", "")
+            # SEC #3: marker fallback должен срабатывать ТОЛЬКО на
+            # bot-authored сообщениях. Иначе оператор-злоумышленник
+            # (или вставленный текст «🆔 №N» из обращения жителя)
+            # перенаправит ответ на чужого жителя.
+            inner_sender = getattr(inner, "sender", None) or getattr(
+                inner, "from_", None
+            )
+            replied_sender_is_bot = bool(
+                getattr(inner_sender, "is_bot", False)
+            )
         elif isinstance(link, dict):
             inner_dict = link.get("message", {})
             if isinstance(inner_dict, dict):
                 replied_text = inner_dict.get("text", "")
+                sender_dict = (
+                    inner_dict.get("sender") or inner_dict.get("from") or {}
+                )
+                if isinstance(sender_dict, dict):
+                    replied_sender_is_bot = bool(sender_dict.get("is_bot"))
             else:
                 replied_text = link.get("text", "")
 
-        if replied_text:
+        # SEC #3: маркер только в bot-authored. Если link не даёт нам
+        # sender — считаем небезопасным. Лучше попросить /reply N, чем
+        # доставить чужому жителю.
+        if replied_text and replied_sender_is_bot:
             # ТОЛЬКО служебный маркер «🆔 №N» — его генерирует сам бот в
             # карточках /open_tickets и followup. Комбинация эмодзи и №
             # уникальна, в обычном тексте обращения не встречается.
@@ -656,6 +702,12 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
             match = re.search(r"🆔 №(\d+)", replied_text)
             if match:
                 appeal_id_from_text = int(match.group(1))
+        elif replied_text and re.search(r"🆔 №(\d+)", replied_text):
+            log.warning(
+                "operator_reply: маркер 🆔 №N в НЕ-bot сообщении — "
+                "игнорируем (защита от spoofing). operator=%s",
+                get_user_id(event),
+            )
 
     if target_mid is None and appeal_id_from_text is None:
         log.info(

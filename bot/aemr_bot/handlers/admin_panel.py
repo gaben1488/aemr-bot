@@ -436,10 +436,18 @@ async def _do_backup(event) -> None:
     try:
         result = await db_backup.backup_db()
     except Exception as e:
+        # SEC #8: НЕ светим repr(exc) в admin chat — exception text
+        # может содержать DATABASE_URL компоненты, paths /backups,
+        # GPG-passphrase fragments. Полный stack — только в логи.
+        log.exception("admin_panel: backup_db crashed")
         await send_or_edit_screen(
             event,
             chat_id=cfg.admin_group_id,
-            text=f"⚠️ Бэкап упал: {e}",
+            text=(
+                f"⚠️ Бэкап упал: {type(e).__name__}. Полный трейс — в "
+                f"журнале бота. Проверьте Postgres, GPG-passphrase, место "
+                f"на диске."
+            ),
             attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return

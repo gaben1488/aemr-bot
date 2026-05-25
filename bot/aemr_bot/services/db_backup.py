@@ -279,6 +279,27 @@ async def backup_db() -> BackupResult:
         )
         passphrase = ""  # nosec B105 - это сброс небезопасной фразы, не секрет.
     encrypt = bool(passphrase)
+    # SEC #2: блокируем создание plain-text дампа без явного opt-in.
+    # Дамп содержит phones / names / texts / operator audit-log — это
+    # PII по 152-ФЗ. Хранить на диске или заливать в S3 без шифрования
+    # = breach. Для dev/local-only можно поставить
+    # BACKUP_ALLOW_UNENCRYPTED=1, но в prod должен быть GPG passphrase.
+    if not encrypt and not settings.backup_allow_unencrypted:
+        log.error(
+            "backup отказан: BACKUP_GPG_PASSPHRASE пуст (или < 12 симв) и "
+            "BACKUP_ALLOW_UNENCRYPTED не выставлен. Установите passphrase "
+            "≥12 симв ИЛИ явно разрешите plain-text дамп через "
+            "BACKUP_ALLOW_UNENCRYPTED=1 (только dev/local!)."
+        )
+        return BackupResult(
+            path=None,
+            fail_kind="config",
+            fail_detail=(
+                "BACKUP_GPG_PASSPHRASE пуст — без шифрования дамп с PII "
+                "записывать запрещено (152-ФЗ). Поставьте passphrase ≥12 "
+                "симв или BACKUP_ALLOW_UNENCRYPTED=1 для dev."
+            ),
+        )
     suffix = ".sql.gpg" if encrypt else ".sql"
     ts = datetime.now(TZ).strftime("%Y%m%d_%H%M%S")
     out = target_dir / f"aemr-{ts}{suffix}"

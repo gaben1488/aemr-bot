@@ -111,15 +111,43 @@ def test_validate_unknown_key_rejected() -> None:
     assert ok is False
 
 
-def test_validate_url_must_start_with_scheme() -> None:
+def test_validate_url_must_start_with_scheme_and_be_whitelisted() -> None:
+    """SEC #4: URL должен быть http(s) И host из whitelist (gov-домены).
+
+    Чужие хосты (даже https://) → reject. Защита от phishing-URL,
+    подставленного через rogue/compromised IT-операта.
+    """
     from aemr_bot.services import settings_store
 
-    ok_https, _ = settings_store.validate("policy_url", "https://example.com")
-    ok_http, _ = settings_store.validate("policy_url", "http://example.com")
-    ok_javascript, _ = settings_store.validate("policy_url", "javascript:alert(1)")
+    # WHITELISTED hosts (Elizovo / Kamchatka gov) → pass
+    ok_elizovomr, _ = settings_store.validate(
+        "policy_url", "https://elizovomr.ru/policy.pdf"
+    )
+    ok_kamgov, _ = settings_store.validate(
+        "policy_url", "https://kamgov.ru/page"
+    )
+    ok_subdomain, _ = settings_store.validate(
+        "policy_url", "https://udth.elizovomr.ru/schedule"
+    )
+    assert ok_elizovomr is True
+    assert ok_kamgov is True
+    assert ok_subdomain is True
+
+    # NON-whitelisted → reject даже если https
+    ok_https_alien, _ = settings_store.validate(
+        "policy_url", "https://example.com"
+    )
+    ok_https_phishing, _ = settings_store.validate(
+        "policy_url", "https://kamgov.evil.com"  # subdomain spoof
+    )
+    assert ok_https_alien is False
+    assert ok_https_phishing is False
+
+    # Не-http схемы → reject
+    ok_javascript, _ = settings_store.validate(
+        "policy_url", "javascript:alert(1)"
+    )
     ok_relative, _ = settings_store.validate("policy_url", "/policy")
-    assert ok_https is True
-    assert ok_http is True
     assert ok_javascript is False
     assert ok_relative is False
 
