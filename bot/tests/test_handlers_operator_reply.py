@@ -522,6 +522,87 @@ class TestDeliverOperatorReply:
         # edit_message НЕ вызывается напрямую (старая семантика).
 
 
+class TestIntermediateReplyConfirmText:
+    """Развязка confirm-сообщения оператора: финальный vs промежуточный.
+
+    Регрессия — раньше шёл ADMIN_REPLY_DELIVERED = «Обращение #N закрыто»
+    даже для is_final=False. Это путало оператора (он понимал, что
+    житель остаётся в работе, но карточка говорила обратное).
+    """
+
+    async def _run_deliver(self, *, is_final: bool) -> SimpleNamespace:
+        from aemr_bot.handlers import operator_reply as opr
+
+        event = _make_event()
+        event.bot.send_message = AsyncMock(
+            side_effect=[SimpleNamespace(body=SimpleNamespace(mid="out-1")), None]
+        )
+        appeal = MagicMock(id=42)
+        operator = MagicMock(id=7, max_user_id=42)
+        fresh_appeal = _fresh_appeal(appeal_id=42)
+        fresh_appeal.admin_message_id = "admin-mid-1"
+        fresh_appeal.last_admin_card_mid = "admin-mid-1"
+        fresh_appeal.closed_due_to_revoke = False
+
+        opr._recent_replies.clear()
+        with patch.object(opr.cfg, "answer_max_chars", 1000), \
+             patch("aemr_bot.handlers.operator_reply.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
+                   AsyncMock(side_effect=[fresh_appeal, fresh_appeal])), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id_with_messages",
+                   AsyncMock(return_value=fresh_appeal)), \
+             patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.operator_reply._mark_reply_success_recorded",
+                   AsyncMock()), \
+             patch("aemr_bot.services.admin_card.render",
+                   AsyncMock(return_value="new-event-mid")), \
+             patch("aemr_bot.config.settings.admin_group_id", 555):
+            await opr._deliver_operator_reply(
+                event, appeal=appeal, operator=operator,
+                text="ответ", audit_action="reply",
+                is_final=is_final,
+            )
+        return event
+
+    @pytest.mark.asyncio
+    async def test_final_reply_says_closed(self) -> None:
+        event = await self._run_deliver(is_final=True)
+        # send_message вызвано 2 раза: житель + confirm оператору.
+        # Текст confirm — последний вызов с chat_id (не user_id).
+        confirm_calls = [
+            c for c in event.bot.send_message.await_args_list
+            if "chat_id" in c.kwargs and c.kwargs.get("text")
+        ]
+        assert confirm_calls, "не было confirm-сообщения оператору"
+        text = confirm_calls[-1].kwargs.get("text", "")
+        assert "закрыт" in text.lower() or "Отвечено" in text
+        assert "#42" in text
+
+    @pytest.mark.asyncio
+    async def test_intermediate_reply_says_in_progress(self) -> None:
+        event = await self._run_deliver(is_final=False)
+        confirm_calls = [
+            c for c in event.bot.send_message.await_args_list
+            if "chat_id" in c.kwargs and c.kwargs.get("text")
+        ]
+        assert confirm_calls
+        text = confirm_calls[-1].kwargs.get("text", "")
+        # Главное: НЕТ слова «закрыт».
+        assert "закрыт" not in text.lower(), text
+        # И есть маркер промежуточности.
+        assert (
+            "промежуточный" in text.lower()
+            or "в работе" in text.lower()
+        ), text
+        assert "#42" in text
+
+
 class TestReplyRejectionBeforeDelivery:
     """_reply_rejection_before_delivery — чистая функция guard'а перед
     доставкой. Возвращает текст отказа либо None (доставка разрешена).
