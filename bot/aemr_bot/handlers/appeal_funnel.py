@@ -569,9 +569,7 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     """
     from aemr_bot.config import settings as cfg
     from aemr_bot.db.models import AppealStatus
-    from aemr_bot.services import card_format
     from aemr_bot.services.admin_relay import relay_attachments_to_admin
-    from aemr_bot.utils.event import extract_message_id
 
     async with current_user(max_user_id) as (session, user):
         appeal_id = (user.dialog_data or {}).get("appeal_id")
@@ -639,65 +637,46 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         await users_service.reset_state(session, max_user_id)
         appeal_for_card = updated_appeal or appeal
         user_for_card = getattr(appeal_for_card, "user", None) or user
-        followup = card_format.admin_followup(
-            appeal_for_card, user_for_card, text or "(без текста)"
-        )
 
-    # Политика edit-vs-new: дополнение жителя — событие, требующее
-    # явной отметки внизу чата. Через services/admin_card.render с
-    # force_new=True: helper отправит новую карточку с полной
-    # историей (включая это дополнение) и обновит
-    # Appeal.admin_message_id, чтобы последующие edit'ы (reply,
-    # reopen) попадали в АКТУАЛЬНУЮ карточку, а не в оригинальную
-    # вверху чата. Это закрывает баг «оператор ответил на свежую,
-    # но edit ушёл в старую» — все три точки edit (reply / status /
-    # followup) теперь делят один admin_message_id.
-    followup_mid = None
+    # Единое уведомление: ПОЛНАЯ admin appeal card с timeline (где видно
+    # свежее дополнение жителя как последнее сообщение) + маркер-шапка
+    # `📩 Новое дополнение по обращению #N от жителя`. Один объект в
+    # чате вместо двух — оператор не сканирует две сущности «короткое
+    # уведомление + карточка», а видит сразу контекст + содержание +
+    # все кнопки действий.
+    #
+    # force_new=True: дополнение = «новая инфа», нужна запись внизу
+    # чата даже если предыдущая карточка ещё была last_in_chat.
+    # admin_message_id оригинала НЕ двигаем (sacred-правило, PR #54),
+    # но last_admin_card_mid в БД обновится новым mid'ом.
+    new_card_mid: str | None = None
     if cfg.admin_group_id:
-        # 1. Видимый маркер «🔄 Новое дополнение по обращению #N» с
-        # цитатой текста — чтобы оператор в шумном чате сразу понял
-        # «по этому обращению есть новая инфа». Содержит сам текст
-        # дополнения для quick-read без открытия карточки.
-        try:
-            sent_follow = await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text=f"🔄 {followup}",
-            )
-            followup_mid = extract_message_id(sent_follow)
-        except Exception:
-            log.exception("send followup notification failed")
-        # 2. Полноценная новая карточка с актуальной timeline-историей.
-        # admin_card.render(force_new=True): шлёт новую карточку,
-        # admin_message_id оригинала НЕ двигаем (sacred-правило, PR #54).
-        # На оригинальной карточке вверху чата оператор отвечает по
-        # admin_message_id; новая карточка внизу — для контекста и
-        # повторных reply-кнопок.
         try:
             from aemr_bot.services import admin_card as admin_card_service
 
-            # appeal_for_card должен иметь user; гарантируем.
             if getattr(appeal_for_card, "user", None) is None:
                 appeal_for_card.user = user_for_card
-            # followup от жителя = «появилась новая инфа», нужна
-            # явная отметка карточкой внизу даже если предыдущая
-            # карточка ещё последняя. force_new обходит freshness-edit.
-            await admin_card_service.render(
-                event.bot, appeal_for_card, force_new=True
+            new_card_mid = await admin_card_service.render(
+                event.bot,
+                appeal_for_card,
+                force_new=True,
+                event_header=(
+                    f"📩 Новое дополнение по обращению #{appeal.id} от "
+                    f"жителя — см. ниже в истории переписки."
+                ),
             )
         except Exception:
             log.exception("admin_card.render after followup failed")
 
-    if cfg.admin_group_id:
         if attachments:
             try:
-                # relay привязываем к followup-уведомлению (followup_mid),
-                # либо без reply-link (admin_card.render уже отправил
-                # новую карточку и обновил admin_message_id внутри — мы
-                # тут не знаем новый mid, не критично).
+                # Relay вложений жителя — reply-link на свежую карточку
+                # (new_card_mid). Без link — relay уйдёт отдельным
+                # сообщением, оператор всё равно увидит вложения.
                 await relay_attachments_to_admin(
                     event.bot,
                     appeal_id=appeal.id,
-                    admin_mid=followup_mid,
+                    admin_mid=new_card_mid,
                     stored_attachments=attachments,
                 )
             except Exception:

@@ -123,9 +123,19 @@ ADMIN_FOLLOWUP_TEMPLATE = (
     "🆔 №{number}"
 )
 
-ADMIN_REPLY_DELIVERED = (
-    "Ответ ушёл жителю. Обращение #{number} закрыто."
+ADMIN_REPLY_DELIVERED_FINAL = (
+    "✉️ Финальный ответ отправлен жителю. Обращение #{number} переведено "
+    "в «Отвечено» и закрыто. Если житель присылает дополнение — придёт "
+    "новая карточка с пометкой «Новое дополнение»."
 )
+ADMIN_REPLY_DELIVERED_INTERMEDIATE = (
+    "💬 Промежуточный ответ отправлен жителю. Обращение #{number} "
+    "остаётся в работе — можно дослать уточнения через «✉️ Ответить» "
+    "под карточкой ниже."
+)
+# Backwards-compat alias — на случай если что-то ещё ссылается на
+# старое имя ключа. Удалить после grep'а кода и confirmation.
+ADMIN_REPLY_DELIVERED = ADMIN_REPLY_DELIVERED_FINAL
 
 CITIZEN_REPLY_TEMPLATE = (
     "Ответ Администрации Елизовского муниципального округа\n\n"

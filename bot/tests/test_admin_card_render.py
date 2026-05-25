@@ -268,6 +268,70 @@ class TestEditFallback:
         assert mid == "recovery-9"
 
 
+class TestEventHeader:
+    """event_header — маркер-шапка над send_new карточкой (для followup).
+
+    На edit-in-place маркер НЕ добавляется (карточку правят inplace,
+    оператор уже в контексте действия). На send_new — добавляется
+    с разделителем.
+    """
+
+    @pytest.mark.asyncio
+    async def test_event_header_prepends_on_send_new(self) -> None:
+        from aemr_bot.services import admin_card
+
+        appeal = _make_appeal()
+        bot = _make_bot(new_mid="follow-9")
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", 555),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_admin_message_id",
+                AsyncMock(),
+            ),
+        ):
+            await admin_card.render(
+                bot,
+                appeal,
+                event_header="📩 Новое дополнение по обращению #5",
+            )
+        bot.send_message.assert_awaited_once()
+        sent_text = bot.send_message.call_args.kwargs.get("text", "")
+        assert "📩 Новое дополнение по обращению #5" in sent_text
+        assert "────────────────" in sent_text
+        # Карточка идёт под маркером — содержимое тоже на месте.
+        assert "Обращение #5" in sent_text or "#5" in sent_text
+
+    @pytest.mark.asyncio
+    async def test_event_header_skipped_on_edit(self) -> None:
+        """edit: маркер НЕ применяется (карточка остаётся «обычной»)."""
+        from aemr_bot.services import admin_card
+        from aemr_bot.utils import menu_tracker
+
+        appeal = _make_appeal(last_card_mid="card-7")
+        bot = _make_bot()
+        menu_tracker.set_last_menu_mid(555, "card-7")
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", 555),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+        ):
+            await admin_card.render(
+                bot,
+                appeal,
+                callback_mid="card-7",
+                event_header="📩 этого не должно быть на edit",
+            )
+        bot.edit_message.assert_awaited_once()
+        edited_text = bot.edit_message.call_args.kwargs.get("text", "")
+        assert "📩 этого не должно быть на edit" not in edited_text
+
+
 class TestGuards:
     @pytest.mark.asyncio
     async def test_no_user_returns_none(self) -> None:

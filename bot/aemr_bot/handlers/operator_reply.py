@@ -562,9 +562,21 @@ async def _deliver_operator_reply(
             "operator_reply: admin_card.render failed for #%s", appeal.id
         )
 
+    # Развязка финального и промежуточного ответа: текст подтверждения
+    # должен отражать реальное состояние обращения. До этого фикса
+    # промежуточный ответ показывал «обращение #N закрыто» — регрессия,
+    # путала оператора (житель остаётся в работе, но карточка говорит
+    # обратное). Теперь:
+    # - is_final=True  → ANSWERED+CLOSED, «финальный ответ отправлен»;
+    # - is_final=False → IN_PROGRESS, «промежуточный, остаётся в работе».
+    confirm_text = (
+        texts.ADMIN_REPLY_DELIVERED_FINAL
+        if is_final
+        else texts.ADMIN_REPLY_DELIVERED_INTERMEDIATE
+    ).format(number=appeal.id)
     await event.bot.send_message(
         chat_id=get_chat_id(event),
-        text=texts.ADMIN_REPLY_DELIVERED.format(number=appeal.id),
+        text=confirm_text,
         attachments=[keyboards.op_back_to_menu_keyboard()],
     )
     return True

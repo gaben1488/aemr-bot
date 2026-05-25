@@ -56,6 +56,7 @@ async def render(
     callback_mid: str | None = None,
     is_first_publication: bool = False,
     force_new: bool = False,
+    event_header: str | None = None,
 ) -> str | None:
     """Опубликовать/обновить admin appeal card с freshness-rule.
 
@@ -70,6 +71,13 @@ async def render(
         force_new: True для событий «появилось новое» (followup
             жителя): даже если карточка ещё последняя в чате,
             нужна новая запись внизу для маркера событий.
+        event_header: опциональный маркер-заголовок над карточкой —
+            например «📩 Новое дополнение по обращению #N от жителя».
+            Нужен, когда карточка приходит как РЕАКЦИЯ на событие, а
+            не просто как переотрисовка статуса: оператор сразу видит,
+            что именно случилось, без поиска в timeline. Шапка отделена
+            от карточки разделителем. Только для send_new веток; на
+            edit-in-place не применяется (карточка остаётся «обычной»).
 
     Returns:
         mid опубликованной/отредактированной карточки, None при сбое.
@@ -129,6 +137,15 @@ async def render(
         and callback_mid == last_in_chat
     )
 
+    # На edit event_header НЕ применяется: карточку правят in-place,
+    # маркер «новое событие» теряет смысл — оператор сам только что
+    # тапнул кнопку, контекст у него уже в голове.
+    text_for_send = (
+        f"{event_header}\n────────────────\n{text}"
+        if event_header and not can_edit
+        else text
+    )
+
     if can_edit:
         try:
             await bot.edit_message(
@@ -153,7 +170,7 @@ async def render(
     try:
         sent = await bot.send_message(
             chat_id=cfg.admin_group_id,
-            text=text,
+            text=text_for_send,
             attachments=attachments,
         )
     except Exception:

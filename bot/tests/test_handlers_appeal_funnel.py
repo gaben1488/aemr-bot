@@ -384,10 +384,15 @@ class TestOnAwaitingFollowupText:
 
     @pytest.mark.asyncio
     async def test_success_sends_new_admin_card_for_followup(self) -> None:
-        """Политика edit-vs-new: дополнение жителя НЕ редактирует старую
-        admin-карточку. Шлёт новую — оператор мог уйти далеко вниз
-        чата, edit вверху не виден; новая карточка приходит вниз и
-        повышает конверсию ответа."""
+        """Followup-карточка = ПОЛНАЯ admin appeal card с event_header
+        («📩 Новое дополнение по обращению #N»), а не двойной комбо
+        «короткое уведомление + карточка». Один объект в чате —
+        оператор сразу видит контекст + содержание + все кнопки
+        действий, не сканирует две сущности (см. user feedback 2026-05-25).
+
+        Старая карточка вверху НЕ редактируется — followup = «появилась
+        новая инфа», явно показываем внизу чата.
+        """
         from aemr_bot.handlers import appeal_funnel
 
         event = _make_event()
