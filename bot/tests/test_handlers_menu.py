@@ -497,13 +497,14 @@ class TestConsentAndEraseNotifications:
              patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
              patch("aemr_bot.handlers.menu.admin_events.notify_consent_revoked",
                    notify), \
-             patch("aemr_bot.handlers.appeal_runtime.send_to_admin_card",
-                   repost):
+             patch("aemr_bot.services.admin_card.render", repost):
             await menu.do_consent_revoke(event, max_user_id=42)
 
         notify.assert_called_once_with(event.bot, max_user_id=42, open_appeal_ids=[9])
         repost.assert_called_once()
-        assert repost.call_args.kwargs["appeal_id"] == 9
+        # render(bot, appeal, force_new=True)
+        assert repost.call_args.args[1] is appeal
+        assert repost.call_args.kwargs.get("force_new") is True
 
     @pytest.mark.asyncio
     async def test_forget_notifies_admin_about_deleted_data(self) -> None:

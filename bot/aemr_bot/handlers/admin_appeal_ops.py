@@ -29,16 +29,13 @@ async def _show_appeal_card_or_result(
     event,
     appeal_id: int,
     fallback_text: str,
-    *,
-    edit_in_place: bool = False,  # deprecated, не используется
 ) -> None:
-    """Опубликовать НОВУЮ event-карточку обращения после действия оператора.
+    """Опубликовать/обновить admin appeal card после действия оператора.
 
-    DDD event-log: карточки иммутабельны. Каждое действие (reopen /
-    close / block / unblock / erase) → новая запись внизу чата с
-    актуальным timeline'ом. Старые карточки выше остаются как
-    audit-trail; кнопки на них становятся stale (см. stale-detection
-    в callback handlers).
+    Freshness-rule (PR #62, унифицировано с меню): admin_card.render
+    проверит callback_mid против menu_tracker[admin_group_id]:
+    - callback_mid == последняя карточка в чате → edit на месте;
+    - иначе (ниже появились другие сообщения/карточки) → send new.
 
     На случай если обращение не найдено или user пуст — fallback
     короткое сообщение оператору, без card-render.
@@ -231,8 +228,7 @@ async def run_reopen(event, appeal_id: int) -> None:
                 target=f"appeal #{appeal_id}",
             )
     await ack_callback(event)
-    # reopen — whitelisted: edit на месте (статус карточки меняется,
-    # оператору важно видеть это в той же карточке).
+    # freshness-rule: edit если карточка ещё последняя в чате, иначе new.
     await _show_appeal_card_or_result(
         event,
         appeal_id,
@@ -241,7 +237,6 @@ async def run_reopen(event, appeal_id: int) -> None:
             if ok
             else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
         ),
-        edit_in_place=True,
     )
 
 
@@ -261,7 +256,7 @@ async def run_close(event, appeal_id: int) -> None:
                 target=f"appeal #{appeal_id}",
             )
     await ack_callback(event)
-    # close (без ответа) — whitelisted: edit на месте.
+    # freshness-rule: edit если карточка ещё последняя в чате, иначе new.
     await _show_appeal_card_or_result(
         event,
         appeal_id,
@@ -270,7 +265,6 @@ async def run_close(event, appeal_id: int) -> None:
             if ok
             else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
         ),
-        edit_in_place=True,
     )
 
 
