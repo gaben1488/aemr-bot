@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 04:31:03 UTC`
+Generated at: `2026-05-25 05:14:58 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `198`
+Indexed files: `199`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -48,8 +48,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12498 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (41687 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (23500 bytes)
-- `bot/aemr_bot/handlers/admin_settings.py` (41929 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (24006 bytes)
+- `bot/aemr_bot/handlers/admin_settings.py` (42690 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (27102 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (32714 bytes)
@@ -58,22 +58,22 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8595 bytes)
-- `bot/aemr_bot/handlers/menu.py` (47097 bytes)
+- `bot/aemr_bot/handlers/menu.py` (47850 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (39614 bytes)
 - `bot/aemr_bot/handlers/start.py` (17005 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (63429 bytes)
 - `bot/aemr_bot/main.py` (19076 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
-- `bot/aemr_bot/services/admin_card.py` (9348 bytes)
+- `bot/aemr_bot/services/admin_card.py` (10110 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6079 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
-- `bot/aemr_bot/services/appeals.py` (24823 bytes)
+- `bot/aemr_bot/services/appeals.py` (25437 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (14123 bytes)
-- `bot/aemr_bot/services/cron.py` (38141 bytes)
+- `bot/aemr_bot/services/cron.py` (39851 bytes)
 - `bot/aemr_bot/services/db_backup.py` (16664 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
 - `bot/aemr_bot/services/idempotency.py` (8575 bytes)
@@ -86,7 +86,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
-- `bot/aemr_bot/services/wizard_registry.py` (12444 bytes)
+- `bot/aemr_bot/services/wizard_registry.py` (12943 bytes)
 - `bot/aemr_bot/texts.py` (43171 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
@@ -101,7 +101,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/conftest.py` (1882 bytes)
 - `bot/tests/test_admin_appeal_ops.py` (29769 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
-- `bot/tests/test_admin_card_detached_safety.py` (7896 bytes)
+- `bot/tests/test_admin_card_detached_safety.py` (8432 bytes)
 - `bot/tests/test_admin_card_render.py` (13858 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
 - `bot/tests/test_admin_events_descriptor.py` (5856 bytes)
@@ -140,7 +140,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_handlers_auth_broadcast.py` (6976 bytes)
 - `bot/tests/test_handlers_common.py` (3572 bytes)
 - `bot/tests/test_handlers_funnel.py` (9458 bytes)
-- `bot/tests/test_handlers_menu.py` (26382 bytes)
+- `bot/tests/test_handlers_menu.py` (26825 bytes)
 - `bot/tests/test_handlers_menu_extra.py` (23371 bytes)
 - `bot/tests/test_handlers_operator_reply.py` (34166 bytes)
 - `bot/tests/test_handlers_start.py` (13597 bytes)
@@ -154,6 +154,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_operator_reply_with_image.py` (7517 bytes)
 - `bot/tests/test_progress.py` (10480 bytes)
 - `bot/tests/test_pure_functions.py` (11522 bytes)
+- `bot/tests/test_reliability_pass.py` (9745 bytes)
 - `bot/tests/test_repo_sync.py` (21989 bytes)
 - `bot/tests/test_services_no_db.py` (9640 bytes)
 - `bot/tests/test_settings_store_validation.py` (3036 bytes)
@@ -5629,8 +5630,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `23500` bytes  
-SHA-256: `f016da8104ffe90e05f830cdf4f19eb564799f357ce03a286a83f009a715493c`
+Size: `24006` bytes  
+SHA-256: `9f34cae71a6cd6a5e1c1a8281f5f1433a2d70b861231d315eec45ad5ad46c5f6`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -5642,6 +5643,7 @@ SHA-256: `f016da8104ffe90e05f830cdf4f19eb564799f357ce03a286a83f009a715493c`
 для оператора."""
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from aemr_bot import keyboards as kbds
@@ -5868,6 +5870,7 @@ async def _do_diag(event) -> None:
         BroadcastStatus,
         Event,
         Message,
+        MessageDirection,
         User,
     )
 
@@ -5882,89 +5885,120 @@ async def _do_diag(event) -> None:
     # рассылка доставляла — оператор удивлялся «подписан 100, ушло 80».
     from aemr_bot.services import broadcasts as broadcasts_service
 
-    async with session_scope() as session:
-        users_total = await session.scalar(select(func.count()).select_from(User))
-        # «Активные» — без обезличенных (first_name='Удалено' после
-        # /forget или PDN-retention). Это «живые жители», которые
-        # могут писать боту. users_total включает их для прозрачности
-        # «сколько записей в БД всего».
-        users_active = await session.scalar(
-            select(func.count()).select_from(User).where(
-                User.first_name != "Удалено",
-            )
-        )
-        users_blocked = await session.scalar(
-            select(func.count()).select_from(User).where(User.is_blocked.is_(True))
-        )
-        # Eligible subscribers: ровно те, кому уйдёт рассылка.
-        # Старый счётчик (только subscribed_broadcast=True) расходился
-        # с фактической доставкой, потому что не учитывал
-        # consent_broadcast_at IS NOT NULL и first_name != 'Удалено'.
-        users_subscribed = await broadcasts_service.count_subscribers(session)
-        users_new_24h = await session.scalar(
-            select(func.count()).select_from(User).where(
-                User.created_at >= since_24h
-            )
-        )
-        appeals_total = await session.scalar(select(func.count()).select_from(Appeal))
-        appeals_in_progress = await session.scalar(
-            select(func.count()).select_from(Appeal).where(
+    # Reliability-pass: было 13 отдельных `await session.scalar(...)` —
+    # последовательные round-trip'ы к Postgres (~13 × RTT в худшем
+    # случае ~ 100ms+ на загруженной БД). Сводим однотипные счётчики
+    # в один запрос на таблицу через `count(*) FILTER (WHERE ...)`
+    # (агрегатный фильтр SQL:2003, поддерживается Postgres 9.4+).
+    # Внутри одного PG-запроса фильтры выполняются за один проход по
+    # данным с агрегацией. Сам набор подзапросов на разные таблицы
+    # пускаем параллельно через asyncio.gather с отдельными
+    # session_scope (asyncpg connection-per-task).
+    def _users_query():
+        return select(
+            func.count().label("total"),
+            func.count().filter(User.first_name != "Удалено").label("active"),
+            func.count().filter(User.is_blocked.is_(True)).label("blocked"),
+            func.count().filter(User.created_at >= since_24h).label("new_24h"),
+        ).select_from(User)
+
+    def _appeals_query():
+        return select(
+            func.count().label("total"),
+            func.count().filter(
                 Appeal.status.in_([
                     AppealStatus.NEW.value,
                     AppealStatus.IN_PROGRESS.value,
                 ])
-            )
-        )
-        appeals_new_24h = await session.scalar(
-            select(func.count()).select_from(Appeal).where(
-                Appeal.created_at >= since_24h
-            )
-        )
-        # Direction в БД — MessageDirection enum (from_user / from_operator /
-        # system). До этого фикса было "to_user" — невалидное значение,
-        # счётчик ВСЕГДА показывал 0. Это причина того, что /diag
-        # «Ответов оператора за 24ч» всегда был 0 несмотря на ответы.
-        from aemr_bot.db.models import MessageDirection
+            ).label("in_progress"),
+            func.count().filter(Appeal.created_at >= since_24h).label("new_24h"),
+        ).select_from(Appeal)
 
-        replies_24h = await session.scalar(
-            select(func.count()).select_from(Message).where(
-                Message.direction == MessageDirection.FROM_OPERATOR.value,
-                Message.created_at >= since_24h,
-            )
-        )
-        broadcasts_done = await session.scalar(
-            select(func.count()).select_from(Broadcast).where(
+    def _broadcasts_query():
+        return select(
+            func.count().filter(
                 Broadcast.status == BroadcastStatus.DONE.value
-            )
-        )
-        broadcasts_failed = await session.scalar(
-            select(func.count()).select_from(Broadcast).where(
+            ).label("done"),
+            func.count().filter(
                 Broadcast.status == BroadcastStatus.FAILED.value
-            )
+            ).label("failed"),
+            func.count().filter(Broadcast.created_at >= since_24h).label("count_24h"),
+            func.count().filter(
+                (Broadcast.status == BroadcastStatus.SENDING.value)
+                & (Broadcast.created_at < stuck_threshold)
+            ).label("stuck"),
+        ).select_from(Broadcast)
+
+    def _events_query():
+        return select(
+            func.count().label("total"),
+            func.max(Event.received_at).label("last_at"),
+        ).select_from(Event)
+
+    def _replies_query():
+        # Direction в БД — MessageDirection enum (from_user / from_operator /
+        # system). До фикса было "to_user" — невалидное значение,
+        # счётчик ВСЕГДА показывал 0.
+        return select(func.count()).select_from(Message).where(
+            Message.direction == MessageDirection.FROM_OPERATOR.value,
+            Message.created_at >= since_24h,
         )
-        broadcasts_24h = await session.scalar(
-            select(func.count()).select_from(Broadcast).where(
-                Broadcast.created_at >= since_24h
-            )
-        )
-        broadcasts_stuck = await session.scalar(
-            select(func.count()).select_from(Broadcast).where(
-                Broadcast.status == BroadcastStatus.SENDING.value,
-                Broadcast.created_at < stuck_threshold,
-            )
-        )
-        delivery_failed_24h = await session.scalar(
-            select(func.count()).select_from(BroadcastDelivery).where(
+
+    def _delivery_failed_query():
+        return (
+            select(func.count())
+            .select_from(BroadcastDelivery)
+            .join(Broadcast, Broadcast.id == BroadcastDelivery.broadcast_id)
+            .where(
                 BroadcastDelivery.error.isnot(None),
                 BroadcastDelivery.delivered_at.is_(None),
-                # broadcast_deliveries не имеет created_at; используем
-                # связку через broadcast.created_at >= since_24h.
+                Broadcast.created_at >= since_24h,
             )
-            .join(Broadcast, Broadcast.id == BroadcastDelivery.broadcast_id)
-            .where(Broadcast.created_at >= since_24h)
         )
-        events_total = await session.scalar(select(func.count()).select_from(Event))
-        last_event = await session.scalar(select(func.max(Event.received_at)))
+
+    async def _fetch_row(query):
+        async with session_scope() as session:
+            return (await session.execute(query)).one()
+
+    async def _fetch_scalar(query):
+        async with session_scope() as session:
+            return await session.scalar(query)
+
+    async def _fetch_subscribers():
+        async with session_scope() as session:
+            return await broadcasts_service.count_subscribers(session)
+
+    (
+        users_row,
+        appeals_row,
+        broadcasts_row,
+        events_row,
+        replies_24h,
+        delivery_failed_24h,
+        users_subscribed,
+    ) = await asyncio.gather(
+        _fetch_row(_users_query()),
+        _fetch_row(_appeals_query()),
+        _fetch_row(_broadcasts_query()),
+        _fetch_row(_events_query()),
+        _fetch_scalar(_replies_query()),
+        _fetch_scalar(_delivery_failed_query()),
+        _fetch_subscribers(),
+    )
+
+    users_total = users_row.total
+    users_active = users_row.active
+    users_blocked = users_row.blocked
+    users_new_24h = users_row.new_24h
+    appeals_total = appeals_row.total
+    appeals_in_progress = appeals_row.in_progress
+    appeals_new_24h = appeals_row.new_24h
+    broadcasts_done = broadcasts_row.done
+    broadcasts_failed = broadcasts_row.failed
+    broadcasts_24h = broadcasts_row.count_24h
+    broadcasts_stuck = broadcasts_row.stuck
+    events_total = events_row.total
+    last_event = events_row.last_at
 
     # Pulse-индикатор: сколько минут назад был последний event. Бот
     # шлёт heartbeat по cron, поэтому «давно не было событий» — явный
@@ -6135,8 +6169,8 @@ async def _do_backup(event) -> None:
 
 ### `bot/aemr_bot/handlers/admin_settings.py`
 
-Size: `41929` bytes  
-SHA-256: `ab3e30601efa43cad6e18739be999dc1cd6fedb1079346f121e91c4b981e94c4`
+Size: `42690` bytes  
+SHA-256: `62efd387ad7b153039e8b57774fc7038af4a305abec971b1e4e80a5aad1e0aa6`
 
 ```python
 """Иерархическое меню «⚙️ Настройки бота».
@@ -6213,6 +6247,16 @@ def _intent_set(operator_id: int, **kwargs) -> None:
     state = dict(kwargs)
     state["expires_at"] = _time.monotonic() + _EDIT_INTENT_TTL_SEC
     _edit_intents[operator_id] = state
+    # Reliability-pass: opportunistic GC. _intent_get чистит только
+    # тот ключ, который пришёл в get. Если оператор настроил intent
+    # и не дёрнул его (закрыл клиент), запись висит вечно (то же на
+    # каждом ребуте session-mid'ов). Раз в set'е (~10/день per
+    # admin) — лёгкий проход с удалением истёкших. O(N) по числу
+    # операторов — единицы записей; не hot path.
+    if len(_edit_intents) > 16:
+        now = _time.monotonic()
+        for k in [k for k, v in _edit_intents.items() if v.get("expires_at", 0) < now]:
+            _edit_intents.pop(k, None)
 
 
 def _intent_get(operator_id: int) -> dict | None:
@@ -11489,13 +11533,16 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 
 ### `bot/aemr_bot/handlers/menu.py`
 
-Size: `47097` bytes  
-SHA-256: `778001ddab63cf9d57c4f3b3fa5b16eddf0f73d319673efc641f39d0cf08b133`
+Size: `47850` bytes  
+SHA-256: `54a8bae8ff12380e0ce80e250f7da4ec7bddef184bea5c05e838233737779944`
 
 ```python
 import logging
 from collections.abc import Callable
 from typing import Any, NamedTuple
+
+import aiohttp
+from maxapi.exceptions.max import MaxApiError, MaxConnection
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
@@ -11547,7 +11594,14 @@ async def _send_or_edit_menu(
                 attachments=attachments,
             )
             return
-        except Exception:
+        except (MaxApiError, MaxConnection, aiohttp.ClientError, TimeoutError):
+            # Reliability-pass: сузили `except Exception`. Реальные
+            # причины edit-failure — MAX API кинула 400 (старое сообщение
+            # уже не редактируется), 5xx (временный сбой), TCP rst/
+            # timeout до api.tamtam.chat. На любой другой exception
+            # (например AttributeError от подмены bot mock) — пусть
+            # всплывает, чтобы баг был видим, а не маскировался
+            # тихим fallback'ом на send_message.
             log.info(
                 "menu: edit_message %s failed, fallback to send",
                 mid,
@@ -15574,8 +15628,8 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ### `bot/aemr_bot/services/admin_card.py`
 
-Size: `9348` bytes  
-SHA-256: `8c13d173815b9e4260e472b6b1f162b35cb81df177df3cefb1a577805f0700bc`
+Size: `10110` bytes  
+SHA-256: `5d65e1f20f6ac86c9a22f60f25c0b6d37dc6dc4fb3ea879ec006ed336b3d59c5`
 
 ```python
 """Admin appeal card с freshness-rule (унифицированное правило для
@@ -15614,6 +15668,8 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
+
+from sqlalchemy.orm.exc import DetachedInstanceError
 
 from aemr_bot import keyboards
 from aemr_bot.config import settings as cfg
@@ -15681,9 +15737,16 @@ async def render(
         return None
 
     # text и attachment_count устойчиво к detached lazy-load.
+    # Reliability-pass: сузили `except Exception` до конкретного набора
+    # причин. card_format читает .messages / .events / .user.*; на
+    # detached instance это AttributeError либо DetachedInstanceError
+    # из sqlalchemy.orm. TypeError ловит случай None в форматтере
+    # (например appeal.created_at=None после миграции). Любые другие
+    # exception'ы (asyncpg DataError, OperationalError) — баг, пусть
+    # всплывает в логе вызывающего, чтобы был виден стек.
     try:
         text = card_format.admin_card(appeal, user)
-    except Exception:
+    except (AttributeError, TypeError, DetachedInstanceError):
         log.exception(
             "admin_card.render: card_format.admin_card failed for #%s",
             appeal.id,
@@ -15691,7 +15754,7 @@ async def render(
         text = f"Обращение #{appeal.id}\nЖитель: {user.first_name or '—'}"
     try:
         attachment_count = _count_attachments(appeal)
-    except Exception:
+    except (AttributeError, TypeError, DetachedInstanceError):
         log.debug(
             "admin_card.render: attachment_count failed for #%s",
             appeal.id, exc_info=False,
@@ -16186,8 +16249,8 @@ async def relay_attachments_to_admin(
 
 ### `bot/aemr_bot/services/appeals.py`
 
-Size: `24823` bytes  
-SHA-256: `b6201e27110b7309a1e5103b267eafd76ab81188670e2d3dd762448af22cc3cd`
+Size: `25437` bytes  
+SHA-256: `9c1483205225fc0e981ae2256033e4aad49577537931fce5b05c29afbb55d53d`
 
 ```python
 from datetime import datetime, timedelta, timezone
@@ -16587,7 +16650,7 @@ async def list_unanswered(
 
 
 async def find_overdue_unanswered(
-    session: AsyncSession, sla_hours: int
+    session: AsyncSession, sla_hours: int, *, limit: int = 500
 ) -> list[Appeal]:
     """Обращения, которые в работе/новые дольше SLA и пока без ответа.
 
@@ -16598,6 +16661,13 @@ async def find_overdue_unanswered(
 
     Возвращает результат с догруженным `user`, чтобы вызывающий код
     мог показать имя жителя без N+1.
+
+    LIMIT 500 — защита от лавины (то же, что `list_unanswered`): если
+    оператор был в отпуске, и месяцами копится сотни просрочек, без
+    лимита cron-алерт тянет всё разом + selectinload по `user` создаёт
+    второй IN-query на тысячи id. Дальше всё равно обрезается в
+    форматтере, но БД-запрос уже отдал всё. 500 заведомо больше
+    реальной очереди.
     """
     threshold = datetime.now(timezone.utc) - timedelta(hours=sla_hours)
     res = await session.scalars(
@@ -16610,6 +16680,7 @@ async def find_overdue_unanswered(
             Appeal.created_at <= threshold,
         )
         .order_by(Appeal.created_at)
+        .limit(limit)
     )
     return list(res)
 
@@ -17735,8 +17806,8 @@ def appeal_list_label(appeal: Appeal) -> str:
 
 ### `bot/aemr_bot/services/cron.py`
 
-Size: `38141` bytes  
-SHA-256: `f9a9f35d55b98df35abc2ad20c5121385debbba6324c841a442fcaa3d150570d`
+Size: `39851` bytes  
+SHA-256: `bd464ca0db68d9fb04468ca4e8b4496bf2a28d726ff910901e1bd9c8e88370d2`
 
 ```python
 from __future__ import annotations
@@ -18498,13 +18569,42 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
 # ============================================================================
 
 
+# Reliability-pass: lazy-singleton aiohttp.ClientSession для healthcheck.
+# Раньше `async with aiohttp.ClientSession(...)` создавался на каждый тик
+# (раз в `healthcheck_interval_minutes`). На каждый коннект — TLS handshake,
+# DNS resolve, fresh connector pool, потом всё закрывается. Для cron-job
+# с интервалом 1-5 мин и URL'ом на тот же эндпоинт это сотни-тысячи
+# никому не нужных сокетов в день. Singleton переиспользует keep-alive
+# соединение пока процесс жив — один handshake на старте, дальше HTTP/1.1
+# pipelining либо новый коннект только если сервер закрыл предыдущий.
+#
+# Закрытия не делаем — session живёт до конца процесса. APScheduler при
+# shutdown отменяет джобы, висящий `await s.get(...)` свернётся через
+# timeout=10. Утечки не будет (один session на процесс).
+_HEALTHCHECK_SESSION: aiohttp.ClientSession | None = None
+
+
+def _get_healthcheck_session() -> aiohttp.ClientSession:
+    """Lazy-init shared aiohttp.ClientSession для healthcheck-ping.
+
+    Создавать на module-level нельзя: ClientSession в __init__ читает
+    `asyncio.get_event_loop()`, а на import-time loop'а ещё нет.
+    """
+    global _HEALTHCHECK_SESSION
+    if _HEALTHCHECK_SESSION is None or _HEALTHCHECK_SESSION.closed:
+        _HEALTHCHECK_SESSION = aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=10),
+        )
+    return _HEALTHCHECK_SESSION
+
+
 async def _ping_healthcheck() -> None:
     """Внешний healthcheck (Healthchecks.io / Uptime Kuma и т.п.)."""
     if not settings.healthcheck_url:
         return
     try:
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as s:
-            await s.get(settings.healthcheck_url)
+        session = _get_healthcheck_session()
+        await session.get(settings.healthcheck_url)
     except Exception:
         log.warning("healthcheck ping failed", exc_info=True)
 ```
@@ -21606,8 +21706,8 @@ async def hydrate_into_registry(session: AsyncSession) -> tuple[int, int]:
 
 ### `bot/aemr_bot/services/wizard_registry.py`
 
-Size: `12444` bytes  
-SHA-256: `af46dc5ede0dcfa5f6847a4bbeb1c4a6d58d895df5a84d834f3b1b31b5fb6e7d`
+Size: `12943` bytes  
+SHA-256: `ae44aa9eb7f7227719ef6ad76a710b5c4ba94e3954ba9212822447b995b8365d`
 
 ```python
 """Единое хранилище мутабельного состояния визардов и intent'ов
@@ -21807,13 +21907,22 @@ def reset_all() -> None:
 
 def _spawn_persist(coro_factory) -> None:
     """Запустить async-coro в фоне, если есть running loop. Без него —
-    no-op (юнит-тесты импортируют модуль вне asyncio context'а)."""
+    no-op (юнит-тесты импортируют модуль вне asyncio context'а).
+
+    Использует `utils.background.spawn_background_task` для защиты от
+    GC: голый `loop.create_task` хранится в event loop только через
+    weakref, и сборщик мусора может прервать задачу до завершения
+    (особенно опасно для коротких persist'ов в БД)."""
     try:
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
     except RuntimeError:
         return
     try:
-        loop.create_task(coro_factory())
+        from aemr_bot.utils.background import spawn_background_task
+
+        spawn_background_task(
+            coro_factory(), name="wizard_registry.persist"
+        )
     except Exception:
         log.warning("wizard_registry: persist task spawn failed", exc_info=False)
 
@@ -24730,8 +24839,8 @@ class TestRegistrySync:
 
 ### `bot/tests/test_admin_card_detached_safety.py`
 
-Size: `7896` bytes  
-SHA-256: `89e52d76d91d422daa94ec19f30c32e4cd25a50355a9d8d4709e086bca05e46c`
+Size: `8432` bytes  
+SHA-256: `94c1ae1dbc74549c53066154b96bd0f71ddb4cb3876232a9b783ce0db783cec9`
 
 ```python
 """Regression-тесты на устойчивость admin_card.render к detached-state.
@@ -24752,6 +24861,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from sqlalchemy.orm.exc import DetachedInstanceError
 
 from tests._helpers import fake_session_scope as _fake_session_scope
 
@@ -24848,7 +24958,14 @@ class TestAdminCardSurvivesAttachmentCountFailure:
             ),
             patch(
                 "aemr_bot.services.admin_card._count_attachments",
-                side_effect=RuntimeError("simulated lazy-load fail"),
+                # Reliability-pass: сузили `except Exception` до
+                # AttributeError/TypeError/DetachedInstanceError —
+                # реальных причин fail'а на detached lazy-load. Тест
+                # обновлён под новый контракт: симулируем именно
+                # DetachedInstanceError, как было бы у живой БД.
+                side_effect=DetachedInstanceError(
+                    "Parent instance is not bound to a Session"
+                ),
             ),
         ):
             # render НЕ должен поднять; в худшем случае logs + None
@@ -35072,8 +35189,8 @@ class TestOnAwaitingName:
 
 ### `bot/tests/test_handlers_menu.py`
 
-Size: `26382` bytes  
-SHA-256: `b12ad2e9aaea12d7778dc31e9c255c293c08ea4340dd2fa5e49b0ab67dc77057`
+Size: `26825` bytes  
+SHA-256: `36abfd89a50dec66a9c4bf74490d7b6233e106fa29d1d9e00801222f28e4b9e5`
 
 ```python
 """Тесты handlers/menu.py — навигация по меню жителя.
@@ -35679,10 +35796,16 @@ class TestSimpleScreens:
 
     @pytest.mark.asyncio
     async def test_callback_screen_falls_back_to_new_message_when_edit_fails(self) -> None:
+        from maxapi.exceptions.max import MaxApiError
+
         from aemr_bot.handlers import menu
 
         event = _make_callback_event()
-        event.bot.edit_message.side_effect = RuntimeError("MAX edit failed")
+        # Reliability-pass: тест проверяет fallback на send_message при
+        # MaxApiError (типичная причина — старое сообщение нельзя
+        # редактировать). Раньше тут был RuntimeError + broad `except
+        # Exception`; сузили до конкретных исключений MAX-API/network.
+        event.bot.edit_message.side_effect = MaxApiError(400, "edit failed")
 
         await menu.open_settings(event)
 
@@ -39401,6 +39524,250 @@ def test_is_workday_falls_back_when_holidays_missing(monkeypatch, tmp_path) -> N
 
     assert cal.is_workday(date(2026, 5, 9))   # суббота — рабочий
     assert not cal.is_workday(date(2026, 5, 10))  # воскресенье — нет
+```
+
+### `bot/tests/test_reliability_pass.py`
+
+Size: `9745` bytes  
+SHA-256: `bef3c464fe7ccb65b4e0949f637599b16543a1f9f6b277f4e4e9e9f1069c1df5`
+
+```python
+"""Regression-тесты пакета reliability-pass.
+
+Покрывает:
+- `wizard_registry._spawn_persist` использует `spawn_background_task`
+  (strong ref защищает task от GC) — раньше был голый `loop.create_task`.
+- `find_overdue_unanswered` принимает и применяет `limit`.
+- `cron._get_healthcheck_session` возвращает один и тот же
+  ClientSession при повторных вызовах (singleton).
+- `admin_card.render` сузил `except Exception` до конкретных классов:
+  на RuntimeError из card_format больше НЕ swallow'ит (баг всплывает).
+- `menu._send_or_edit_menu` тоже не маскирует произвольные exception'ы:
+  RuntimeError из bot.edit_message пробрасывается, MaxApiError —
+  fallback на send_message.
+
+Тесты модульные, без Postgres — `find_overdue_unanswered` LIMIT
+проверяем по объекту запроса (LIMIT попадает в скомпилированный SQL).
+"""
+from __future__ import annotations
+
+import asyncio
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+
+# ---------------------------------------------------------------------------
+# wizard_registry: persist через spawn_background_task
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_wizard_registry_spawn_persist_uses_strong_ref() -> None:
+    """`_spawn_persist` должен класть task в `_BACKGROUND_TASKS`, чтобы
+    GC не убил persist посреди записи в БД."""
+    from aemr_bot.services import wizard_registry
+    from aemr_bot.utils import background
+
+    started = asyncio.Event()
+    finished = asyncio.Event()
+
+    async def coro():
+        started.set()
+        await asyncio.sleep(0)  # дать loop'у тик
+        finished.set()
+
+    wizard_registry._spawn_persist(coro)
+    # Дать запущенной task'е попасть в strong-ref set.
+    await asyncio.sleep(0)
+    assert started.is_set(), "task должна стартовать в текущем loop'е"
+    # Strong-ref зарегистрирован?
+    assert any(
+        not t.done() or t.get_name() == "wizard_registry.persist"
+        for t in list(background._BACKGROUND_TASKS) + list(asyncio.all_tasks())
+    )
+    # Дождаться завершения, чтобы set вычистил себя через done_callback.
+    await finished.wait()
+    await asyncio.sleep(0)  # дать done_callback отработать
+
+
+def test_wizard_registry_spawn_persist_no_loop_noop() -> None:
+    """Без running loop — silent no-op, не RuntimeError."""
+    from aemr_bot.services import wizard_registry
+
+    # coro_factory НЕ должен вызваться, т.к. _spawn_persist возвращает раньше.
+    calls = []
+
+    def coro_factory():
+        calls.append(1)
+
+    wizard_registry._spawn_persist(coro_factory)
+    assert calls == [], (
+        "без active event loop _spawn_persist обязан быть no-op "
+        "(юнит-тесты импортируют модуль вне asyncio context'а)"
+    )
+
+
+# ---------------------------------------------------------------------------
+# appeals.find_overdue_unanswered: LIMIT
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_find_overdue_unanswered_passes_limit_to_query() -> None:
+    """LIMIT 500 (default) должен попасть в скомпилированный SQL —
+    защищает cron-алёрт от вытягивания всей очереди при отпуске
+    оператора."""
+    from aemr_bot.services import appeals as appeals_service
+
+    captured = {}
+
+    class _FakeScalars:
+        def __init__(self):
+            self._items: list = []
+
+        def __iter__(self):
+            return iter(self._items)
+
+    class _FakeSession:
+        async def scalars(self, stmt):
+            captured["stmt"] = stmt
+            return _FakeScalars()
+
+    session = _FakeSession()
+    await appeals_service.find_overdue_unanswered(session, sla_hours=24)
+    # SQL-визуализация: LIMIT должен присутствовать.
+    compiled_sql = str(
+        captured["stmt"].compile(compile_kwargs={"literal_binds": True})
+    )
+    assert "LIMIT 500" in compiled_sql.upper().replace("\n", " "), (
+        f"LIMIT 500 (default) обязан попасть в SQL, скомпилировано:\n{compiled_sql}"
+    )
+
+    # И при custom limit тоже.
+    captured.clear()
+    await appeals_service.find_overdue_unanswered(
+        session, sla_hours=24, limit=10
+    )
+    compiled_sql_2 = str(
+        captured["stmt"].compile(compile_kwargs={"literal_binds": True})
+    )
+    assert "LIMIT 10" in compiled_sql_2.upper().replace("\n", " ")
+
+
+# ---------------------------------------------------------------------------
+# cron: shared aiohttp.ClientSession for healthcheck
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_healthcheck_session_is_singleton_across_pings() -> None:
+    """`_get_healthcheck_session()` обязан возвращать один и тот же
+    объект на повторных вызовах — иначе каждый тик cron'а делает
+    свежий TLS handshake + DNS lookup."""
+    from aemr_bot.services import cron as cron_module
+
+    # Сбросить state (другие тесты могли инициализировать).
+    if cron_module._HEALTHCHECK_SESSION is not None:
+        try:
+            await cron_module._HEALTHCHECK_SESSION.close()
+        except Exception:
+            pass
+        cron_module._HEALTHCHECK_SESSION = None
+
+    s1 = cron_module._get_healthcheck_session()
+    s2 = cron_module._get_healthcheck_session()
+    try:
+        assert s1 is s2, "ClientSession должен переиспользоваться"
+    finally:
+        await s1.close()
+        cron_module._HEALTHCHECK_SESSION = None
+
+
+@pytest.mark.asyncio
+async def test_healthcheck_session_replaced_when_closed() -> None:
+    """Если предыдущий session закрыт (например APScheduler shutdown),
+    следующий get создаёт новый — иначе будем дёргать мёртвый объект."""
+    from aemr_bot.services import cron as cron_module
+
+    if cron_module._HEALTHCHECK_SESSION is not None:
+        try:
+            await cron_module._HEALTHCHECK_SESSION.close()
+        except Exception:
+            pass
+        cron_module._HEALTHCHECK_SESSION = None
+
+    s1 = cron_module._get_healthcheck_session()
+    await s1.close()
+    s2 = cron_module._get_healthcheck_session()
+    try:
+        assert s2 is not s1
+        assert not s2.closed
+    finally:
+        await s2.close()
+        cron_module._HEALTHCHECK_SESSION = None
+
+
+# ---------------------------------------------------------------------------
+# admin_card.render: narrow except — RuntimeError всплывает, не глотается
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_admin_card_render_does_not_swallow_arbitrary_runtimeerror() -> None:
+    """RuntimeError из card_format (например баг кода, а не detached
+    lazy-load) не должен молча подменяться fallback-строкой —
+    иначе настоящий баг прячется. Реальные «безопасные» exception'ы —
+    AttributeError / TypeError / DetachedInstanceError, они ловятся."""
+    from aemr_bot.services import admin_card
+
+    user = SimpleNamespace(
+        id=1, first_name="Иван", last_name="П", phone="+7900", is_blocked=False
+    )
+    appeal = SimpleNamespace(
+        id=42, user=user, status="new", admin_message_id=None,
+        last_admin_card_mid=None, closed_due_to_revoke=False,
+        messages=[], events=[],
+    )
+    bot = SimpleNamespace(
+        send_message=AsyncMock(),
+        edit_message=AsyncMock(),
+    )
+
+    with patch(
+        "aemr_bot.services.admin_card.card_format.admin_card",
+        side_effect=RuntimeError("bug in card_format — must surface"),
+    ), patch("aemr_bot.config.settings.admin_group_id", 555):
+        with pytest.raises(RuntimeError, match="bug in card_format"):
+            await admin_card.render(bot, appeal)
+
+
+# ---------------------------------------------------------------------------
+# menu._send_or_edit_menu: narrow except — RuntimeError всплывает
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_menu_edit_fallback_does_not_mask_unexpected_runtimeerror() -> None:
+    """RuntimeError из bot.edit_message — это баг (например замокан
+    неправильно), не штатное состояние MAX-API. Должен пробрасываться.
+    Раньше `except Exception` глотал и тихо делал send_message."""
+    from aemr_bot.handlers import menu
+
+    bot = SimpleNamespace(
+        edit_message=AsyncMock(side_effect=RuntimeError("unexpected")),
+        send_message=AsyncMock(),
+    )
+    event = SimpleNamespace(
+        bot=bot,
+        callback=SimpleNamespace(),
+        message=SimpleNamespace(body=SimpleNamespace(mid="m-1")),
+    )
+
+    with pytest.raises(RuntimeError, match="unexpected"):
+        await menu._send_or_edit_menu(event, text="hi", attachments=[])
+    bot.send_message.assert_not_called()
 ```
 
 ### `bot/tests/test_repo_sync.py`
