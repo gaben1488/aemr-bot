@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 02:55:58 UTC`
+Generated at: `2026-05-25 03:01:21 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `198`
 Max file size: `300 KB`
@@ -43,7 +43,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/__init__.py` (2960 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
-- `bot/aemr_bot/handlers/admin_appeal_ops.py` (17361 bytes)
+- `bot/aemr_bot/handlers/admin_appeal_ops.py` (20429 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9243 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12498 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17741 bytes)
@@ -56,7 +56,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (11640 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
-- `bot/aemr_bot/handlers/broadcast_templates.py` (43027 bytes)
+- `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8595 bytes)
 - `bot/aemr_bot/handlers/menu.py` (47097 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (36252 bytes)
@@ -68,7 +68,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/admin_card.py` (9348 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6079 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
-- `bot/aemr_bot/services/appeals.py` (22583 bytes)
+- `bot/aemr_bot/services/appeals.py` (23423 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
@@ -99,7 +99,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/__init__.py` (0 bytes)
 - `bot/tests/_helpers.py` (5713 bytes)
 - `bot/tests/conftest.py` (1882 bytes)
-- `bot/tests/test_admin_appeal_ops.py` (24368 bytes)
+- `bot/tests/test_admin_appeal_ops.py` (29769 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
 - `bot/tests/test_admin_card_detached_safety.py` (7896 bytes)
 - `bot/tests/test_admin_card_render.py` (13858 bytes)
@@ -109,7 +109,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_operators.py` (19228 bytes)
 - `bot/tests/test_admin_panel.py` (12680 bytes)
 - `bot/tests/test_admin_settings_audit.py` (1917 bytes)
-- `bot/tests/test_appeal_card_edit_policy.py` (5633 bytes)
+- `bot/tests/test_appeal_card_edit_policy.py` (5805 bytes)
 - `bot/tests/test_appeal_card_timeline.py` (8946 bytes)
 - `bot/tests/test_appeal_dispatcher.py` (22842 bytes)
 - `bot/tests/test_appeal_flow.py` (10966 bytes)
@@ -118,7 +118,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_bot_init_concurrency.py` (2821 bytes)
 - `bot/tests/test_broadcast_handlers.py` (33239 bytes)
 - `bot/tests/test_broadcast_history_card.py` (10153 bytes)
-- `bot/tests/test_broadcast_templates_handlers.py` (15540 bytes)
+- `bot/tests/test_broadcast_templates_handlers.py` (16676 bytes)
 - `bot/tests/test_broadcast_templates_service_pg.py` (14817 bytes)
 - `bot/tests/test_broadcast_with_image.py` (23848 bytes)
 - `bot/tests/test_broadcasts_service_pg.py` (6324 bytes)
@@ -3188,8 +3188,8 @@ async def current_user(
 
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
-Size: `17361` bytes  
-SHA-256: `f647e8faf34bd9f79c969b8da7899ca5d216e5db42c204ddf88e09b6cbe7e840`
+Size: `20429` bytes  
+SHA-256: `8685c61a8bb4aaeb788cc262f2e553a656f24c397a6a6b1ee15d1ca3159a517b`
 
 ```python
 """Действия оператора над конкретным обращением.
@@ -3353,6 +3353,35 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
     broadcast_handler._wizards.pop(operator_id, None)
     admin_operators._op_wizards.pop(operator_id, None)
 
+    # P2 #22 — race rapid double-tap: если оператор уже готовил ответ
+    # на ДРУГОЕ обращение, intent перезаписался бы молча, и следующее
+    # сообщение оператора ушло бы не туда, куда он думает. Ловим это
+    # явно: предупреждаем «отменён ответ на #X, теперь на #Y», чтобы
+    # оператор сам решил, продолжить или прервать.
+    from aemr_bot.services import wizard_registry as _wr
+
+    existing = _wr.get_reply_intent(operator_id)
+    if existing is not None:
+        prev_appeal_id, _prev_is_final, _prev_ts = existing
+        if prev_appeal_id != appeal_id:
+            try:
+                await event.bot.send_message(
+                    chat_id=cfg.admin_group_id,
+                    text=(
+                        f"⚠️ Подготовка ответа на обращение #{prev_appeal_id} "
+                        f"отменена — вы только что переключились на ответ "
+                        f"по обращению #{appeal_id}. Если хотели остаться на "
+                        f"#{prev_appeal_id}, нажмите «✉️ Ответить» под его "
+                        f"карточкой ещё раз."
+                    ),
+                )
+            except Exception:
+                log.exception(
+                    "run_reply_intent: failed to warn about intent "
+                    "overwrite operator=%s prev=%s new=%s",
+                    operator_id, prev_appeal_id, appeal_id,
+                )
+
     op_reply.remember_reply_intent(operator_id, appeal_id, is_final=is_final)
     label = "Ответ" if is_final else "Промежуточный ответ"
     await ack_callback(event, f"{label} на #{appeal_id}")
@@ -3446,12 +3475,23 @@ async def run_reopen(event, appeal_id: int) -> None:
 
 
 async def run_close(event, appeal_id: int) -> None:
-    """Кнопочный аналог /close N — закрыть обращение без ответа."""
+    """Кнопочный аналог /close N — закрыть обращение без ответа.
+
+    P2 #23: если в обращении уже есть промежуточный ответ оператора,
+    «Закрыть без ответа» — спорное действие (формально ответ ушёл, но
+    обращение закрыто как «не отвечено»). Не блокируем, но добавляем
+    в сопровождающий текст подсказку про «✉️ Ответить и закрыть» —
+    финальный ответ корректнее закрывает воронку для жителя.
+    """
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_operator(event):
         return
+    had_intermediate_reply = False
     async with session_scope() as session:
+        had_intermediate_reply = await appeals_service.has_operator_message(
+            session, appeal_id
+        )
         ok = await appeals_service.close(session, appeal_id)
         if ok:
             await operators_service.write_audit(
@@ -3459,18 +3499,24 @@ async def run_close(event, appeal_id: int) -> None:
                 operator_max_user_id=get_user_id(event),
                 action="close",
                 target=f"appeal #{appeal_id}",
+                details=(
+                    {"after_intermediate_reply": True}
+                    if had_intermediate_reply else None
+                ),
             )
     await ack_callback(event)
+    if ok:
+        fallback = texts.OP_APPEAL_CLOSED.format(number=appeal_id)
+        if had_intermediate_reply:
+            fallback += (
+                "\n\n⚠️ У обращения уже есть промежуточный ответ оператора. "
+                "В следующий раз для финального ответа удобнее использовать "
+                "«✉️ Ответить и закрыть» — житель получит полное письмо."
+            )
+    else:
+        fallback = texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
     # freshness-rule: edit если карточка ещё последняя в чате, иначе new.
-    await _show_appeal_card_or_result(
-        event,
-        appeal_id,
-        (
-            texts.OP_APPEAL_CLOSED.format(number=appeal_id)
-            if ok
-            else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
-        ),
-    )
+    await _show_appeal_card_or_result(event, appeal_id, fallback)
 
 
 async def run_block_for_appeal(
@@ -10028,8 +10074,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/broadcast_templates.py`
 
-Size: `43027` bytes  
-SHA-256: `0e8d55e6cb1d2da5ed3fd744c4611f882de4a87d534cd7a8b4351d06ed872804`
+Size: `45704` bytes  
+SHA-256: `39038e6ac8c10f76de36c901f0f994b9078cbe6691a98185d512831496c7d2a2`
 
 ```python
 """UI шаблонов рассылок (PR H).
@@ -10220,13 +10266,65 @@ async def _open(event, template_id: int) -> None:
     )
 
 
+# P3 #25 — double-tap dedupe для apply. MAX иногда задваивает callback
+# (пользовательский tap и retry клиента). Без guard'а `record_usage`
+# инкрементируется дважды, статистика «частоты обращений к шаблону»
+# распухает. In-memory dict (actor_id, template_id) → monotonic-ts.
+# Окно 3 сек: достаточно для защиты от двойного тапа, мало для блока
+# легитимного «применил → отменил → применил снова».
+_apply_dedupe: dict[tuple[int, int], float] = {}
+_APPLY_DEDUPE_WINDOW_SEC = 3.0
+
+
+def _is_recent_apply(actor_id: int, template_id: int) -> bool:
+    import time as _time
+
+    key = (actor_id, template_id)
+    prev = _apply_dedupe.get(key)
+    if prev is None:
+        return False
+    return _time.monotonic() - prev < _APPLY_DEDUPE_WINDOW_SEC
+
+
+def _mark_apply(actor_id: int, template_id: int) -> None:
+    import time as _time
+
+    _apply_dedupe[(actor_id, template_id)] = _time.monotonic()
+    # GC: чистим записи старше 5 окон, чтобы dict не разрастался.
+    if len(_apply_dedupe) > 256:
+        cutoff = _time.monotonic() - _APPLY_DEDUPE_WINDOW_SEC * 5
+        for k in list(_apply_dedupe.keys()):
+            if _apply_dedupe[k] < cutoff:
+                _apply_dedupe.pop(k, None)
+
+
 async def _apply(event, template_id: int) -> None:
-    """`op:tmpl:apply:<id>` — пред-зарядить /broadcast wizard данными шаблона."""
+    """`op:tmpl:apply:<id>` — пред-зарядить /broadcast wizard данными шаблона.
+
+    P3 #25:
+    - **double-tap dedupe**: повторный тап в 3-сек окне → ack без побочных
+      эффектов (без record_usage, без перерисовки preview).
+    - **citation clip footer**: в preview явно указываем имя шаблона —
+      «Источник: шаблон «N»», чтобы оператор не отправил тот же текст
+      из памяти, думая что это правка.
+    """
     if not await ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
         return
     actor_id = get_user_id(event)
     if actor_id is None:
         return
+    if _is_recent_apply(actor_id, template_id):
+        log.info(
+            "broadcast_templates: dedup apply #%s by operator=%s "
+            "(rapid double-tap window)", template_id, actor_id,
+        )
+        # Тихий ack, без побочных эффектов — оператор всё равно видит
+        # ранее отправленный preview, дублировать нет смысла.
+        from aemr_bot.utils.event import ack_callback as _ack
+
+        await _ack(event)
+        return
+    _mark_apply(actor_id, template_id)
     async with session_scope() as session:
         tmpl = await templates_service.get_by_id(session, template_id)
         if tmpl is None:
@@ -10264,7 +10362,11 @@ async def _apply(event, template_id: int) -> None:
     preview_images = _image_attachments.build_outbound_image_attachments(
         tmpl.attachments
     )
-    body = texts.OP_BROADCAST_PREVIEW.format(
+    citation_footer = (
+        f"📋 Источник: шаблон «{tmpl.name}»\n"
+        f"────────────────\n"
+    )
+    body = citation_footer + texts.OP_BROADCAST_PREVIEW.format(
         text=tmpl.text,
         count=subscribers,
         image_count=len(tmpl.attachments),
@@ -15984,8 +16086,8 @@ async def relay_attachments_to_admin(
 
 ### `bot/aemr_bot/services/appeals.py`
 
-Size: `22583` bytes  
-SHA-256: `956c0c761d9b698dd6608cec8f7b719db98eb790354a32aac71cfd8238e94a4c`
+Size: `23423` bytes  
+SHA-256: `dd4d47a9c1bc2fb24f8ab9fb30dfc77667bab8e3d63b4bedf67b98f410ad5e4d`
 
 ```python
 from datetime import datetime, timedelta, timezone
@@ -16230,6 +16332,27 @@ async def set_last_admin_card_mid(
     """
     await session.execute(
         update(Appeal).where(Appeal.id == appeal_id).values(last_admin_card_mid=mid)
+    )
+
+
+async def has_operator_message(
+    session: AsyncSession, appeal_id: int
+) -> bool:
+    """True если хотя бы один ответ оператора уже доставлен по обращению.
+
+    Используется в `run_close` (P2 #23): если оператор отправлял
+    промежуточный ответ, потом закрывает «без ответа» — показываем
+    подсказку про «✉️ Ответить и закрыть» как более корректный путь.
+    """
+    return bool(
+        await session.scalar(
+            select(Message.id)
+            .where(
+                Message.appeal_id == appeal_id,
+                Message.direction == MessageDirection.FROM_OPERATOR.value,
+            )
+            .limit(1)
+        )
     )
 
 
@@ -23505,8 +23628,8 @@ async def session() -> AsyncIterator:
 
 ### `bot/tests/test_admin_appeal_ops.py`
 
-Size: `24368` bytes  
-SHA-256: `04b9e8f6b082fac1909865c23c4d6c4ac78c779c043db4bbaa5b1d68e943751b`
+Size: `29769` bytes  
+SHA-256: `bbcdee7602d17af24f85aa962e65340c03046a7cdc1e56bc6033f33283ee7ca0`
 
 ```python
 """Тесты для handlers/admin_appeal_ops — действия оператора над
@@ -23705,6 +23828,77 @@ class TestRunReplyIntent:
         assert "промежуточ" in text.lower()
 
 
+class TestRunReplyIntentRaceWarning:
+    """P2 #22 — race rapid double-tap: предупреждение при перезаписи
+    активного intent на другое обращение.
+    """
+
+    async def _run(self, *, existing_intent: tuple[int, bool, float] | None):
+        from aemr_bot.db.models import AppealStatus
+        from aemr_bot.handlers import admin_appeal_ops
+
+        event = _make_event()
+        appeal = SimpleNamespace(
+            id=20,
+            status=AppealStatus.NEW.value,
+            user=SimpleNamespace(is_blocked=False),
+        )
+        with patch("aemr_bot.handlers.admin_appeal_ops.is_admin_chat",
+                   return_value=True), \
+             patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.get_by_id",
+                   AsyncMock(return_value=appeal)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.mark_in_progress",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.get_user_id",
+                   return_value=7), \
+             patch("aemr_bot.handlers.operator_reply.remember_reply_intent",
+                   MagicMock()), \
+             patch("aemr_bot.services.wizard_registry.get_reply_intent",
+                   return_value=existing_intent), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await admin_appeal_ops.run_reply_intent(event, 20)
+        return event
+
+    @pytest.mark.asyncio
+    async def test_no_existing_intent_no_warning(self) -> None:
+        event = await self._run(existing_intent=None)
+        texts_sent = [
+            c.kwargs.get("text", "")
+            for c in event.bot.send_message.call_args_list
+        ]
+        assert not any("отменена" in t.lower() for t in texts_sent)
+
+    @pytest.mark.asyncio
+    async def test_same_appeal_intent_no_warning(self) -> None:
+        """Тот же appeal_id (повторный тап «Ответить» на той же карточке)
+        — это нормальный case (TTL refresh), не предупреждаем."""
+        # existing_intent on same appeal_id=20
+        event = await self._run(existing_intent=(20, True, 1.0))
+        texts_sent = [
+            c.kwargs.get("text", "")
+            for c in event.bot.send_message.call_args_list
+        ]
+        assert not any("отменена" in t.lower() for t in texts_sent)
+
+    @pytest.mark.asyncio
+    async def test_different_appeal_intent_warns_operator(self) -> None:
+        """existing_intent на другое обращение → предупреждение,
+        что предыдущий ответ перезаписан."""
+        event = await self._run(existing_intent=(11, True, 1.0))
+        texts_sent = [
+            c.kwargs.get("text", "")
+            for c in event.bot.send_message.call_args_list
+        ]
+        assert any(
+            "отменена" in t.lower() and "#11" in t and "#20" in t
+            for t in texts_sent
+        ), texts_sent
+
+
 # --- run_reply_cancel ---------------------------------------------------------
 
 
@@ -23850,6 +24044,8 @@ class TestRunClose:
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_appeal_ops.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.has_operator_message",
+                   AsyncMock(return_value=False)), \
              patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.close",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
@@ -23857,6 +24053,38 @@ class TestRunClose:
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_appeal_ops.run_close(event, 5)
         event.bot.send_message.assert_called_once()
+        # Sanity: без intermediate-reply подсказка про «Ответить и
+        # закрыть» НЕ добавляется.
+        sent_text = event.bot.send_message.call_args.kwargs.get("text", "")
+        assert "промежуточный ответ" not in sent_text.lower()
+
+    @pytest.mark.asyncio
+    async def test_close_after_intermediate_reply_shows_hint(self) -> None:
+        """P2 #23: close после intermediate reply → warning в тексте."""
+        from aemr_bot.handlers import admin_appeal_ops
+
+        event = _make_event()
+        write_audit = AsyncMock()
+        with patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.has_operator_message",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.close",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
+                   write_audit), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await admin_appeal_ops.run_close(event, 5)
+        # Текст содержит подсказку про корректный путь.
+        sent_text = event.bot.send_message.call_args.kwargs.get("text", "")
+        assert "промежуточный ответ" in sent_text.lower()
+        assert "ответить и закрыть" in sent_text.lower()
+        # Audit пишет факт «закрыто после промежуточного».
+        write_audit.assert_awaited_once()
+        details = write_audit.call_args.kwargs.get("details")
+        assert details == {"after_intermediate_reply": True}
 
 
 # --- run_block_for_appeal -----------------------------------------------------
@@ -26411,8 +26639,8 @@ def test_clip_audit_value_long_list_truncated() -> None:
 
 ### `bot/tests/test_appeal_card_edit_policy.py`
 
-Size: `5633` bytes  
-SHA-256: `a68eb8776bd10e7a8c440820ea44aaf9d8f9df12ecb2595315b3a779b89f4a89`
+Size: `5805` bytes  
+SHA-256: `102005e5504f552c7e6e4f3d6252b7c77756a380306ae8c4f0e8101e42208fd5`
 
 ```python
 """Event-log семантика admin appeal card (DDD pivot 2026-05-25).
@@ -26542,6 +26770,10 @@ class TestCloseClosesBothCardsBug:
             patch(
                 "aemr_bot.handlers.admin_appeal_ops.session_scope",
                 _fake_session_scope,
+            ),
+            patch(
+                "aemr_bot.handlers.admin_appeal_ops.appeals_service.has_operator_message",
+                AsyncMock(return_value=False),
             ),
             patch(
                 "aemr_bot.handlers.admin_appeal_ops.appeals_service.close",
@@ -29172,8 +29404,8 @@ class TestListFailed:
 
 ### `bot/tests/test_broadcast_templates_handlers.py`
 
-Size: `15540` bytes  
-SHA-256: `fdb1dde17ba30caa9948ae329a556f95f7b7bbe9e7d78a25488e9edee9ba2f7b`
+Size: `16676` bytes  
+SHA-256: `45a1ccff013eef785c97ec6d3df23bbeb3a27d7e026f050764eb978a2cf26033`
 
 ```python
 """Тесты handlers/broadcast_templates (PR H).
@@ -29401,6 +29633,38 @@ class TestHandleCallback:
 
 
 # --- handle_wizard_text -----------------------------------------------
+
+
+class TestApplyDedupe:
+    """P3 #25 — double-tap dedupe + citation footer для _apply."""
+
+    def test_dedupe_window_first_call_not_recent(self) -> None:
+        from aemr_bot.handlers import broadcast_templates as bt
+
+        bt._apply_dedupe.clear()
+        assert bt._is_recent_apply(7, 100) is False
+
+    def test_dedupe_window_second_call_within_window(self) -> None:
+        from aemr_bot.handlers import broadcast_templates as bt
+
+        bt._apply_dedupe.clear()
+        bt._mark_apply(7, 100)
+        # Сразу после mark — повтор в окне.
+        assert bt._is_recent_apply(7, 100) is True
+
+    def test_dedupe_window_different_template_not_recent(self) -> None:
+        from aemr_bot.handlers import broadcast_templates as bt
+
+        bt._apply_dedupe.clear()
+        bt._mark_apply(7, 100)
+        assert bt._is_recent_apply(7, 101) is False
+
+    def test_dedupe_window_different_operator_not_recent(self) -> None:
+        from aemr_bot.handlers import broadcast_templates as bt
+
+        bt._apply_dedupe.clear()
+        bt._mark_apply(7, 100)
+        assert bt._is_recent_apply(8, 100) is False
 
 
 class TestWizardText:
