@@ -543,6 +543,12 @@ async def _deliver_operator_reply(
     # - иначе → новая карточка снизу с актуальным timeline.
     # callback_mid берём из event (mid карточки на которой нажали
     # «Ответить»; для swipe-reply берём mid цитируемого).
+    #
+    # event_header применяется только если render выйдет в send_new
+    # ветку (старая карточка не последняя, нужна свежая внизу). Тогда
+    # оператор сразу видит: «эта новая карточка — потому что только
+    # что отправлен ответ». На edit-in-place маркер игнорируется (см.
+    # admin_card.render docstring) — оператор и так в контексте.
     try:
         from aemr_bot.services import admin_card as admin_card_service
         from aemr_bot.utils.event import get_callback_message_id
@@ -552,10 +558,20 @@ async def _deliver_operator_reply(
                 session, appeal.id
             )
         if fresh_appeal is not None:
+            reply_event_header = (
+                f"✉️ Финальный ответ отправлен по обращению #{appeal.id} — "
+                f"статус «Завершено»."
+                if is_final
+                else (
+                    f"💬 Промежуточный ответ отправлен по обращению #{appeal.id} "
+                    f"— обращение остаётся в работе."
+                )
+            )
             await admin_card_service.render(
                 event.bot,
                 fresh_appeal,
                 callback_mid=get_callback_message_id(event),
+                event_header=reply_event_header,
             )
     except Exception:
         log.exception(
