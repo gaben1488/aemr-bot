@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 02:53:13 UTC`
+Generated at: `2026-05-25 02:55:16 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `198`
 Max file size: `300 KB`
@@ -43,10 +43,10 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/__init__.py` (2960 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
-- `bot/aemr_bot/handlers/admin_appeal_ops.py` (16564 bytes)
+- `bot/aemr_bot/handlers/admin_appeal_ops.py` (17361 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9243 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12498 bytes)
-- `bot/aemr_bot/handlers/admin_commands.py` (17560 bytes)
+- `bot/aemr_bot/handlers/admin_commands.py` (17741 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (23062 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (43026 bytes)
@@ -68,7 +68,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/admin_card.py` (8036 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6079 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
-- `bot/aemr_bot/services/appeals.py` (21302 bytes)
+- `bot/aemr_bot/services/appeals.py` (22583 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
@@ -87,7 +87,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/users.py` (30589 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (12444 bytes)
-- `bot/aemr_bot/texts.py` (41532 bytes)
+- `bot/aemr_bot/texts.py` (42090 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -99,7 +99,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/__init__.py` (0 bytes)
 - `bot/tests/_helpers.py` (5713 bytes)
 - `bot/tests/conftest.py` (1882 bytes)
-- `bot/tests/test_admin_appeal_ops.py` (21972 bytes)
+- `bot/tests/test_admin_appeal_ops.py` (24368 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
 - `bot/tests/test_admin_card_detached_safety.py` (7896 bytes)
 - `bot/tests/test_admin_card_render.py` (11030 bytes)
@@ -109,11 +109,11 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_operators.py` (19228 bytes)
 - `bot/tests/test_admin_panel.py` (12680 bytes)
 - `bot/tests/test_admin_settings_audit.py` (1917 bytes)
-- `bot/tests/test_appeal_card_edit_policy.py` (5627 bytes)
+- `bot/tests/test_appeal_card_edit_policy.py` (5633 bytes)
 - `bot/tests/test_appeal_card_timeline.py` (8946 bytes)
 - `bot/tests/test_appeal_dispatcher.py` (22842 bytes)
-- `bot/tests/test_appeal_flow.py` (10960 bytes)
-- `bot/tests/test_appeals_service_pg.py` (14053 bytes)
+- `bot/tests/test_appeal_flow.py` (10966 bytes)
+- `bot/tests/test_appeals_service_pg.py` (15229 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
 - `bot/tests/test_bot_init_concurrency.py` (2821 bytes)
 - `bot/tests/test_broadcast_handlers.py` (33239 bytes)
@@ -133,7 +133,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_diag_extended.py` (6756 bytes)
 - `bot/tests/test_event_helpers.py` (9073 bytes)
 - `bot/tests/test_extract_location.py` (5053 bytes)
-- `bot/tests/test_final_p1_regressions.py` (5856 bytes)
+- `bot/tests/test_final_p1_regressions.py` (6078 bytes)
 - `bot/tests/test_funnel_state_hardening.py` (6421 bytes)
 - `bot/tests/test_geo.py` (9324 bytes)
 - `bot/tests/test_handlers_appeal_funnel.py` (24153 bytes)
@@ -3188,8 +3188,8 @@ async def current_user(
 
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
-Size: `16564` bytes  
-SHA-256: `dd1fa9d1211ebe7ae0f9bdfbaf11a3f5229b4c0815daf534a988ecc150ecee46`
+Size: `17361` bytes  
+SHA-256: `f647e8faf34bd9f79c969b8da7899ca5d216e5db42c204ddf88e09b6cbe7e840`
 
 ```python
 """Действия оператора над конкретным обращением.
@@ -3406,15 +3406,33 @@ async def run_reply_cancel(event) -> None:
         )
 
 
+_REOPEN_FALLBACK_TEXT = {
+    "reopened": texts.OP_APPEAL_REOPENED,
+    "already_open": texts.OP_APPEAL_ALREADY_OPEN,
+    "blocked_by_revoke": texts.OP_APPEAL_BLOCKED_BY_REVOKE,
+    "not_found": texts.OP_APPEAL_NOT_FOUND,
+}
+
+
 async def run_reopen(event, appeal_id: int) -> None:
-    """Кнопочный аналог /reopen N — возобновить обращение."""
+    """Кнопочный аналог /reopen N — возобновить обращение.
+
+    Различает в UX четыре исхода (см. appeals_service.reopen):
+    - reopened → перерисовываем карточку с обновлённым статусом;
+    - already_open → no-op, говорим «уже в работе»;
+    - blocked_by_revoke → информативное сообщение про ПДн-гард,
+      карточку не трогаем (всё равно бот не доставит ответ);
+    - not_found → стандартное «Обращение не найдено».
+
+    Audit пишем только при реальной смене статуса (reopened).
+    """
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_operator(event):
         return
     async with session_scope() as session:
-        ok = await appeals_service.reopen(session, appeal_id)
-        if ok:
+        result = await appeals_service.reopen(session, appeal_id)
+        if result == "reopened":
             await operators_service.write_audit(
                 session,
                 operator_max_user_id=get_user_id(event),
@@ -3422,16 +3440,9 @@ async def run_reopen(event, appeal_id: int) -> None:
                 target=f"appeal #{appeal_id}",
             )
     await ack_callback(event)
+    fallback = _REOPEN_FALLBACK_TEXT[result].format(number=appeal_id)
     # freshness-rule: edit если карточка ещё последняя в чате, иначе new.
-    await _show_appeal_card_or_result(
-        event,
-        appeal_id,
-        (
-            texts.OP_APPEAL_REOPENED.format(number=appeal_id)
-            if ok
-            else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
-        ),
-    )
+    await _show_appeal_card_or_result(event, appeal_id, fallback)
 
 
 async def run_close(event, appeal_id: int) -> None:
@@ -4098,8 +4109,8 @@ async def dispatch_admin_callback(event, payload: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_commands.py`
 
-Size: `17560` bytes  
-SHA-256: `386159e68c85fad983b71f1e11bf5fbfc7515e759dc987c8f25a12d72002c6c9`
+Size: `17741` bytes  
+SHA-256: `96a593b16701207f0784f8364d9aaed20b22911f4f768fd0c9ffea2f745eb5cf`
 
 ```python
 """Slash-команды оператора в админ-группе.
@@ -4303,18 +4314,21 @@ def register(dp: Dispatcher) -> None:
             await event.message.answer("Используйте: /reopen <номер>")
             return
         async with session_scope() as session:
-            ok = await appeals_service.reopen(session, appeal_id)
-            if ok:
+            result = await appeals_service.reopen(session, appeal_id)
+            if result == "reopened":
                 await operators_service.write_audit(
                     session,
                     operator_max_user_id=get_user_id(event),
                     action="reopen",
                     target=f"appeal #{appeal_id}",
                 )
-        await event.message.answer(
-            texts.OP_APPEAL_REOPENED.format(number=appeal_id) if ok
-            else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
-        )
+        reply_text = {
+            "reopened": texts.OP_APPEAL_REOPENED,
+            "already_open": texts.OP_APPEAL_ALREADY_OPEN,
+            "blocked_by_revoke": texts.OP_APPEAL_BLOCKED_BY_REVOKE,
+            "not_found": texts.OP_APPEAL_NOT_FOUND,
+        }[result].format(number=appeal_id)
+        await event.message.answer(reply_text)
 
     @dp.message_created(Command("close"))
     async def cmd_close(event: MessageCreated):
@@ -15946,11 +15960,12 @@ async def relay_attachments_to_admin(
 
 ### `bot/aemr_bot/services/appeals.py`
 
-Size: `21302` bytes  
-SHA-256: `1684220a9901f11ccbe5af0654d05a95c88911772db0054368aefab50269cd16`
+Size: `22583` bytes  
+SHA-256: `956c0c761d9b698dd6608cec8f7b719db98eb790354a32aac71cfd8238e94a4c`
 
 ```python
 from datetime import datetime, timedelta, timezone
+from typing import Literal
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import desc, func, or_, select, update
@@ -16194,30 +16209,57 @@ async def set_last_admin_card_mid(
     )
 
 
-async def reopen(session: AsyncSession, appeal_id: int) -> bool:
+ReopenResult = Literal[
+    "reopened", "already_open", "blocked_by_revoke", "not_found"
+]
+
+
+async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
     """Возобновить обращение: ANSWERED/CLOSED → IN_PROGRESS.
 
-    Если обращение уже NEW/IN_PROGRESS, ничего не меняем и возвращаем
-    False — повторный клик кнопки «🔁 Возобновить» не должен переписывать
-    timestamps и плодить ложные записи в audit_log.
+    Возвращает один из:
+    - `"reopened"` — статус сменился (ANSWERED/CLOSED → IN_PROGRESS).
+    - `"already_open"` — обращение уже NEW/IN_PROGRESS, no-op (повторный
+      клик кнопки «🔁 Возобновить» не должен переписывать timestamps).
+    - `"blocked_by_revoke"` — обращение закрыто из-за отзыва согласия
+      или удаления ПДн (`closed_due_to_revoke=true`). Возобновлять
+      нельзя: доставка ответа всё равно запрещена guard'ами ПДн.
+      Оператор видит понятное сообщение вместо «Не найдено».
+    - `"not_found"` — обращения с таким id нет в БД.
 
-    Обращения, закрытые из-за отзыва согласия, удаления ПДн или ручной
-    блокировки (`closed_due_to_revoke=true`), не переоткрываются. Иначе
-    операторская кнопка могла бы вернуть в работу обращение, по которому
-    доставка ответа всё равно запрещена guard'ами ПДн.
+    Раньше возвращал bool — все три negative-case схлопывались в False,
+    оператор для closed_due_to_revoke видел «Обращение не найдено», что
+    дезориентировало. См. P1 #21.
     """
-    result = await session.execute(
-        update(Appeal)
-        .where(
-            Appeal.id == appeal_id,
-            Appeal.closed_due_to_revoke.is_(False),
-            Appeal.status.in_(
-                [AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value]
-            ),
+    # Сначала читаем актуальный статус и флаг revoke — двух SELECT'ов
+    # нет, один row. Race с конкурентной правкой того же обращения
+    # маловероятен (операторский UI, не машинный поток), но если он
+    # есть — UPDATE ниже всё равно не сработает (where-clause не
+    # совпадёт) и мы вернёмся к разводящей логике на следующем клике.
+    row = (
+        await session.execute(
+            select(Appeal.status, Appeal.closed_due_to_revoke).where(
+                Appeal.id == appeal_id
+            )
         )
-        .values(status=AppealStatus.IN_PROGRESS.value, answered_at=None, closed_at=None)
+    ).one_or_none()
+    if row is None:
+        return "not_found"
+    status, blocked = row
+    if blocked:
+        return "blocked_by_revoke"
+    if status not in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
+        return "already_open"
+    await session.execute(
+        update(Appeal)
+        .where(Appeal.id == appeal_id)
+        .values(
+            status=AppealStatus.IN_PROGRESS.value,
+            answered_at=None,
+            closed_at=None,
+        )
     )
-    return result.rowcount > 0
+    return "reopened"
 
 
 async def close(session: AsyncSession, appeal_id: int) -> bool:
@@ -21522,8 +21564,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `41532` bytes  
-SHA-256: `2fb4e83e4df05f54794f2569a9fab3f92f5b570639e6061c2dc2cc9b0db31469`
+Size: `42090` bytes  
+SHA-256: `8336c36c5e65d9ed9c19a4ef760b7871c2707879f4180fec205589035600800b`
 
 ```python
 WELCOME = (
@@ -21945,6 +21987,15 @@ OP_NOT_AUTHORIZED = (
 )
 OP_APPEAL_NOT_FOUND = "Обращение #{number} не найдено."
 OP_APPEAL_REOPENED = "Обращение #{number} возвращено в работу."
+OP_APPEAL_ALREADY_OPEN = (
+    "Обращение #{number} уже в работе — статус не меняется."
+)
+OP_APPEAL_BLOCKED_BY_REVOKE = (
+    "Обращение #{number} не возобновить: житель отозвал согласие или "
+    "запросил удаление данных. Доставка ответа через бот заблокирована "
+    "ПДн-гардом. Если нужна обратная связь — используйте электронную "
+    "приёмную."
+)
 OP_APPEAL_CLOSED = "Обращение #{number} закрыто без ответа."
 OP_USER_ERASED = "Данные жителя {max_user_id} удалены."
 OP_USER_BLOCKED = "Житель {max_user_id} заблокирован — больше не сможет отправлять обращения."
@@ -23420,8 +23471,8 @@ async def session() -> AsyncIterator:
 
 ### `bot/tests/test_admin_appeal_ops.py`
 
-Size: `21972` bytes  
-SHA-256: `6041539f456a03e2781dc2de82ae1dba3a09ad01d680ae237db4eb019d3f02de`
+Size: `24368` bytes  
+SHA-256: `04b9e8f6b082fac1909865c23c4d6c4ac78c779c043db4bbaa5b1d68e943751b`
 
 ```python
 """Тесты для handlers/admin_appeal_ops — действия оператора над
@@ -23674,7 +23725,7 @@ class TestRunReopen:
              patch("aemr_bot.handlers.admin_appeal_ops.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.reopen",
-                   AsyncMock(return_value=True)), \
+                   AsyncMock(return_value="reopened")), \
              patch("aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
                    write_audit), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
@@ -23693,11 +23744,55 @@ class TestRunReopen:
              patch("aemr_bot.handlers.admin_appeal_ops.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.reopen",
-                   AsyncMock(return_value=False)), \
+                   AsyncMock(return_value="not_found")), \
              patch("aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
                    write_audit), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_appeal_ops.run_reopen(event, 999)
+        write_audit.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_blocked_by_revoke_no_audit_informative_text(self) -> None:
+        """blocked_by_revoke → audit не пишем, оператор видит понятное
+        сообщение про ПДн-гард (не дезориентирующее «не найдено»)."""
+        from aemr_bot.handlers import admin_appeal_ops
+        from aemr_bot import texts
+
+        event = _make_event()
+        write_audit = AsyncMock()
+        with patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.reopen",
+                   AsyncMock(return_value="blocked_by_revoke")), \
+             patch("aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
+                   write_audit), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await admin_appeal_ops.run_reopen(event, 7)
+        write_audit.assert_not_called()
+        # хотя бы одно send_message с текстом про блокировку
+        sent_text = event.bot.send_message.call_args.kwargs.get("text", "")
+        expected = texts.OP_APPEAL_BLOCKED_BY_REVOKE.format(number=7)
+        assert expected in sent_text or sent_text == expected
+
+    @pytest.mark.asyncio
+    async def test_already_open_no_audit(self) -> None:
+        """already_open → no-op, audit не пишем."""
+        from aemr_bot.handlers import admin_appeal_ops
+
+        event = _make_event()
+        write_audit = AsyncMock()
+        with patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.reopen",
+                   AsyncMock(return_value="already_open")), \
+             patch("aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
+                   write_audit), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await admin_appeal_ops.run_reopen(event, 7)
         write_audit.assert_not_called()
 
 
@@ -26218,8 +26313,8 @@ def test_clip_audit_value_long_list_truncated() -> None:
 
 ### `bot/tests/test_appeal_card_edit_policy.py`
 
-Size: `5627` bytes  
-SHA-256: `c985e72c20d4bfd898e0aaee499d3fb720f7da7d67377fba807a505a2785628e`
+Size: `5633` bytes  
+SHA-256: `a68eb8776bd10e7a8c440820ea44aaf9d8f9df12ecb2595315b3a779b89f4a89`
 
 ```python
 """Event-log семантика admin appeal card (DDD pivot 2026-05-25).
@@ -26300,7 +26395,7 @@ class TestReopenPublishesEventCard:
             ),
             patch(
                 "aemr_bot.handlers.admin_appeal_ops.appeals_service.reopen",
-                AsyncMock(return_value=True),
+                AsyncMock(return_value="reopened"),
             ),
             patch(
                 "aemr_bot.handlers.admin_appeal_ops.appeals_service.get_by_id_with_messages",
@@ -27104,8 +27199,8 @@ class TestMessageCitizenUnknownCommand:
 
 ### `bot/tests/test_appeal_flow.py`
 
-Size: `10960` bytes  
-SHA-256: `a1e33a187635dcc2ad18f36947e39cd26174275317ef160e0ff59106e0525b8e`
+Size: `10966` bytes  
+SHA-256: `a3ebe37b91321d264fc5bc9934d35a7d67511aa036ad9c96572ca763fbc612f2`
 
 ```python
 import pytest
@@ -27209,7 +27304,7 @@ async def test_reopen_and_close(session):
         session, appeal=full, text="Ответ", operator_id=None, max_message_id=None
     )
 
-    assert await appeals_service.reopen(session, appeal.id) is True
+    assert await appeals_service.reopen(session, appeal.id) == "reopened"
     refreshed = await appeals_service.get_by_id(session, appeal.id)
     assert refreshed.status == AppealStatus.IN_PROGRESS.value
     assert refreshed.answered_at is None
@@ -27354,8 +27449,8 @@ async def test_purge_old_appeals_5y_retention(session):
 
 ### `bot/tests/test_appeals_service_pg.py`
 
-Size: `14053` bytes  
-SHA-256: `5796f3f698ed107ab979e1d1b62b0c8091cba1cbda5f311bb57730f8e9aca6af`
+Size: `15229` bytes  
+SHA-256: `16b9749f877bde309d6fd2406ef10210d986b64483cd98c978eb415986215bb3`
 
 ```python
 """PG-fixture-тесты services/appeals — недостающие ветви.
@@ -27520,14 +27615,39 @@ async def test_list_unanswered(session) -> None:
 
 @pytest.mark.asyncio
 async def test_reopen_idempotent_on_in_progress(session) -> None:
-    """reopen на NEW/IN_PROGRESS — no-op, возвращает False, чтобы
-    повторный клик «🔁 Возобновить» не переписывал timestamps."""
+    """reopen на NEW/IN_PROGRESS — no-op, возвращает "already_open",
+    чтобы повторный клик «🔁 Возобновить» не переписывал timestamps."""
     user = await users_service.get_or_create(session, max_user_id=1, first_name="A")
     appeal = await appeals_service.create_appeal(
         session, user=user, address="A", topic="T", summary="x", attachments=[]
     )
-    # NEW — reopen ничего не меняет.
-    assert await appeals_service.reopen(session, appeal.id) is False
+    # NEW — reopen ничего не меняет (already_open).
+    assert await appeals_service.reopen(session, appeal.id) == "already_open"
+
+
+@pytest.mark.asyncio
+async def test_reopen_not_found_returns_not_found(session) -> None:
+    """reopen несуществующего обращения → "not_found"."""
+    assert await appeals_service.reopen(session, 99999) == "not_found"
+
+
+@pytest.mark.asyncio
+async def test_reopen_returns_reopened_on_real_change(session) -> None:
+    """ANSWERED → IN_PROGRESS даёт "reopened" + сбрасывает answered_at."""
+    from aemr_bot.db.models import AppealStatus
+
+    user = await users_service.get_or_create(session, max_user_id=2, first_name="B")
+    appeal = await appeals_service.create_appeal(
+        session, user=user, address="A", topic="T", summary="x", attachments=[]
+    )
+    full = await appeals_service.get_by_id(session, appeal.id)
+    await appeals_service.add_operator_message(
+        session, appeal=full, text="ok", operator_id=None, max_message_id=None
+    )
+    assert await appeals_service.reopen(session, appeal.id) == "reopened"
+    refreshed = await appeals_service.get_by_id(session, appeal.id)
+    assert refreshed.status == AppealStatus.IN_PROGRESS.value
+    assert refreshed.answered_at is None
 
 
 @pytest.mark.asyncio
@@ -32706,8 +32826,8 @@ class TestPydanticAttributeAccess:
 
 ### `bot/tests/test_final_p1_regressions.py`
 
-Size: `5856` bytes  
-SHA-256: `917850e6d9bfdc02a334fa4758f2d4edcc783fcc234659af06d64f268871a3b0`
+Size: `6078` bytes  
+SHA-256: `fa9f5f3ba94e5d14972c8b722c7495b5d0f8634916974d77044f312e67d10801`
 
 ```python
 """Финальные P1-регрессии по audit-cycle.
@@ -32749,7 +32869,11 @@ async def test_reopen_refuses_closed_due_to_revoke(session) -> None:
     )
     await session.flush()
 
-    assert await appeals_service.reopen(session, appeal.id) is False
+    # blocked_by_revoke — оператор получит понятное сообщение про ПДн-гард,
+    # а не дезориентирующее «не найдено».
+    assert (
+        await appeals_service.reopen(session, appeal.id) == "blocked_by_revoke"
+    )
     refreshed = await appeals_service.get_by_id(session, appeal.id)
     assert refreshed is not None
     assert refreshed.status == AppealStatus.CLOSED.value
