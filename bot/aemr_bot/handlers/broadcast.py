@@ -419,7 +419,7 @@ async def _handle_confirm(event) -> None:
 
 async def _run_with_cooldown(
     bot, broadcast_id: int, text: str, count: int,
-    *, admin_mid: int | None, cooldown_sec: int,
+    *, admin_mid: str | None, cooldown_sec: int,
 ) -> None:
     """Подождать cooldown_sec, затем запустить _run_broadcast.
 

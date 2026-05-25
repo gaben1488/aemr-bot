@@ -387,6 +387,10 @@ Auto-deploy на сервере подтягивает **только** из `ma
 
 Все 15 фиксов покрыты регрессионными тестами в `bot/tests/test_reliability_pass.py`, `test_appeal_card_edit_policy.py`, `test_admin_card_render.py`, `test_idempotency.py`, `test_db_backup.py`, `test_funnel_state_hardening.py`, `test_admin_events.py`, `test_operator_reply_with_image.py`.
 
+### Operator-facing документация
+
+Практическая инструкция оператору по ИБ, антифишингу, ответственности по 152-ФЗ и комплаенсу с Регламентом v7 — отдельный документ: [`docs/OPERATOR_SECURITY.md`](OPERATOR_SECURITY.md). Обязателен к прочтению до первой смены. UI бота в hot-path (broadcast wizard, reply intent) содержит ссылки на конкретные параграфы этого документа.
+
 ### Серия SECURITY_REVIEW 2026-05-26 (полный пасс с 4 параллельными агентами)
 
 Сводный отчёт: [`docs/_meta/SECURITY_REVIEW_2026-05-26.md`](_meta/SECURITY_REVIEW_2026-05-26.md). Детальные находки по доменам: `SEC_INVENTORY`, `SEC_MAX_THREATS`, `SEC_SCAM_VECTORS`, `SEC_EXPLOITS`.
