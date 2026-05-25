@@ -240,11 +240,18 @@ def admin_card(appeal: Appeal, user: User) -> str:
     # хоть где-то в карточке (summary + любой followup) есть URL —
     # один общий warning внизу карточки для оператора. Не блокируем
     # отображение, только просим не кликать наугад.
+    # try/except защищает от MissingGreenlet (ORM ленивая загрузка
+    # `appeal.messages` после закрытия сессии). Если detached — просто
+    # не показываем URL warning по timeline, ограничиваемся summary.
+    try:
+        loaded_messages = list(appeal.messages or [])
+    except Exception:
+        loaded_messages = []
     has_url = bool(
         _url_in(appeal.summary or "")
         or any(
             _url_in(getattr(m, "text", "") or "")
-            for m in (appeal.messages or [])
+            for m in loaded_messages
         )
     )
     if has_url:
