@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 09:24:47 UTC`
+Generated at: `2026-05-25 21:16:45 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `209`
+Indexed files: `210`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -48,7 +48,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (41687 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (24006 bytes)
-- `bot/aemr_bot/handlers/admin_settings.py` (42690 bytes)
+- `bot/aemr_bot/handlers/admin_settings.py` (43448 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (27102 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (32714 bytes)
@@ -81,7 +81,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/policy.py` (2979 bytes)
 - `bot/aemr_bot/services/progress.py` (9433 bytes)
 - `bot/aemr_bot/services/repo_sync.py` (13876 bytes)
-- `bot/aemr_bot/services/settings_store.py` (13101 bytes)
+- `bot/aemr_bot/services/settings_store.py` (16799 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (31152 bytes)
@@ -158,7 +158,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_reliability_pass.py` (9745 bytes)
 - `bot/tests/test_repo_sync.py` (21989 bytes)
 - `bot/tests/test_services_no_db.py` (9640 bytes)
-- `bot/tests/test_settings_store_validation.py` (3036 bytes)
+- `bot/tests/test_settings_seed_baseline.py` (3683 bytes)
+- `bot/tests/test_settings_store_validation.py` (6731 bytes)
 - `bot/tests/test_uploads_policy_admin_relay.py` (11634 bytes)
 - `bot/tests/test_users_service_pg.py` (16852 bytes)
 - `bot/tests/test_wizard_registry.py` (5268 bytes)
@@ -5883,8 +5884,8 @@ async def _do_backup(event) -> None:
 
 ### `bot/aemr_bot/handlers/admin_settings.py`
 
-Size: `42690` bytes  
-SHA-256: `62efd387ad7b153039e8b57774fc7038af4a305abec971b1e4e80a5aad1e0aa6`
+Size: `43448` bytes  
+SHA-256: `7775306082957a9692d7e24f780215a00499c18f10b72b16f30f877a9911bd0e`
 
 ```python
 """Иерархическое меню «⚙️ Настройки бота».
@@ -6336,23 +6337,18 @@ async def _show_obj_card(event, key: str) -> None:
         "transport_dispatcher_contacts": "🚌 Диспетчерские транспорта",
     }
     title = title_map.get(key, key)
-    if items:
-        lines = []
-        for i, item in enumerate(items):
-            name = item.get("name") or item.get("routes") or "?"
-            phone = item.get("phone") or ""
-            lines.append(f"{i+1}. {name} — {phone}")
-        body = "\n".join(lines)
-    else:
-        body = "(список пуст)"
+    # Pure-функция в services/settings_store — там же и юнит-тесты
+    # без зависимости от maxapi.
+    body = settings_store.format_obj_list(items)
     hint = ""
     if key == "emergency_contacts":
         hint = (
-            "\n\nФормат добавления: пришлите две строки —\n"
-            "название и телефон.\n"
-            "Пример:\n"
+            "\n\nФормат добавления: пришлите две или три строки —\n"
+            "название, телефон и (опционально) раздел.\n"
+            "Пример с разделом:\n"
             "Пожарная служба\n"
-            "01"
+            "01\n"
+            "Экстренные службы"
         )
     elif key == "transport_dispatcher_contacts":
         hint = (
@@ -6406,7 +6402,12 @@ async def _start_obj_add(event, operator_id: int, key: str) -> None:
 
     _intent_set(operator_id, key=key, kind="obj_add")
     if key == "emergency_contacts":
-        hint = "Пришлите две строки: название и телефон."
+        hint = (
+            "Пришлите две или три строки:\n"
+            "1) название\n"
+            "2) телефон\n"
+            "3) раздел (необязательно — Экстренные службы / Электроэнергия / ...)"
+        )
     elif key == "transport_dispatcher_contacts":
         hint = "Пришлите две строки: маршруты и телефон."
     else:
@@ -6886,7 +6887,13 @@ async def _apply_obj_add(
         )
         return
     if key == "emergency_contacts":
-        item = {"name": lines[0], "phone": lines[1]}
+        # Третья строка — необязательный раздел (Экстренные службы,
+        # Электроэнергия, Отопление и т.п.). Если оператор её прислал,
+        # сохраняем — UI потом сгруппирует контакты по разделам. Если
+        # не прислал — item уходит в визуальную секцию «Прочее».
+        item: dict[str, str] = {"name": lines[0], "phone": lines[1]}
+        if len(lines) >= 3 and lines[2]:
+            item["section"] = lines[2]
     elif key == "transport_dispatcher_contacts":
         item = {"routes": lines[0], "phone": lines[1]}
     else:
@@ -20280,8 +20287,8 @@ async def fetch_main_runtime_config(
 
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `13101` bytes  
-SHA-256: `3420041ad609c246a3a52e8a12b106f30e9b467fce157c1d7ffc4a99c47b5aad`
+Size: `16799` bytes  
+SHA-256: `595d9a36d3214580e4f166d62772aa825f7c61e0f9a7d31cc6cf5b5358ba118c`
 
 ```python
 import json
@@ -20452,6 +20459,49 @@ def validate(key: str, value: Any) -> tuple[bool, str]:
     return True, "ok"
 
 
+def format_obj_list(items: list[dict]) -> str:
+    """Чистая функция рендера тела карточки списка объектов
+    (emergency_contacts, transport_dispatcher_contacts).
+
+    Если у item'ов есть «section» (актуально для emergency_contacts —
+    Экстренные службы / Электроэнергия / Отопление / Холодная вода) —
+    группируем визуально. Item'ы без section падают в «Прочее».
+    Порядок секций — по первому появлению, чтобы совпадал с порядком
+    в seed/contacts.json и не прыгал между рендерами. Глобальная
+    нумерация (1..N) сохраняется — она совпадает с idx в obj_item
+    card, чтобы клик на «5» открывал ровно пятый контакт.
+
+    Если секция всего одна (особенно «Прочее») — заголовок не
+    добавляем, остаётся плоский список как раньше (для transport-
+    диспетчеров, у которых section не используется).
+
+    Лежит в services/, а не в handlers/, чтобы юнит-тест мог импортить
+    функцию без подтягивания maxapi через handlers/__init__.py.
+    """
+    if not items:
+        return "(список пуст)"
+
+    groups: dict[str, list[tuple[int, dict]]] = {}
+    order: list[str] = []
+    for i, item in enumerate(items):
+        section = (item.get("section") or "").strip() or "Прочее"
+        if section not in groups:
+            groups[section] = []
+            order.append(section)
+        groups[section].append((i, item))
+
+    lines: list[str] = []
+    show_headers = len(order) > 1
+    for section in order:
+        if show_headers:
+            lines.append(f"\n▸ {section}")
+        for i, item in groups[section]:
+            name = item.get("name") or item.get("routes") or "?"
+            phone = item.get("phone") or ""
+            lines.append(f"{i+1}. {name} — {phone}")
+    return "\n".join(lines).lstrip("\n")
+
+
 async def get(session: AsyncSession, key: str) -> Any:
     row = await session.scalar(select(Setting).where(Setting.key == key))
     if row is not None:
@@ -20551,7 +20601,17 @@ def _read_seed_text(name: str) -> str | None:
 
 
 async def seed_if_empty(session: AsyncSession) -> None:
-    """Заполнить настройки из /seed только для отсутствующих ключей."""
+    """Заполнить настройки из /seed только для отсутствующих ключей.
+
+    После вставки сразу помечает свежие SYNCED_KEYS как уже
+    синхронизированные с репо (synced_at = now()). Логика: seed-файлы
+    (`seed/contacts.json`, `seed/topics.json`, `seed/transport_dispatchers.json`)
+    физически лежат в репозитории и уже являются baseline'ом, поэтому
+    сразу после первого старта бота этим ключам не место в списке
+    «несинхронизированных изменений». Иначе индикатор «3 грязных ключа»
+    горит вечно у каждого свежеустановленного бота — это раздражает
+    оператора и сбивает с толку: настоящих изменений нет, а UI кричит.
+    """
     existing = set(await session.scalars(select(Setting.key)))
 
     seed_pairs: dict[str, Any] = {}
@@ -20566,9 +20626,19 @@ async def seed_if_empty(session: AsyncSession) -> None:
     if (consent := _read_seed_text("consent.md")) is not None:
         seed_pairs["consent_text"] = consent
 
+    newly_seeded: list[str] = []
     for k, v in seed_pairs.items():
         if k not in existing:
             await set_value(session, k, v)
+            newly_seeded.append(k)
+
+    # Только те свежие ключи, которые входят в SYNCED_KEYS (репо-синк).
+    # welcome_text / consent_text идут не сюда — их baseline хранится в
+    # seed/welcome.md и seed/consent.md в формате markdown, репо-синк
+    # их не трогает.
+    baseline_synced = [k for k in newly_seeded if k in SYNCED_KEYS]
+    if baseline_synced:
+        await mark_synced(session, baseline_synced)
 ```
 
 ### `bot/aemr_bot/services/stats.py`
@@ -40894,10 +40964,93 @@ class TestBroadcastsEligibleFilter:
         assert "first_name" in compiled
 ```
 
+### `bot/tests/test_settings_seed_baseline.py`
+
+Size: `3683` bytes  
+SHA-256: `1b07c58c52cb044dad352f87eec0b0bb3a83360ace5c00d4723621787ff2c21e`
+
+```python
+"""Тесты на seed_if_empty: после seed свежие SYNCED_KEYS должны быть
+сразу помечены как synced (baseline = seed-файл в репо).
+
+Регрессия от user-bug «3 грязных ключа после первого старта бота»:
+emergency_contacts / topics / transport_dispatcher_contacts горели в
+индикаторе «несинхронизированные изменения» сразу после seed, хотя
+никаких реальных изменений ещё не было.
+
+Требует PostgreSQL (модели используют JSONB, sqlite не подходит).
+В чисто-unit окружении тест пропускается через fixture в conftest.
+"""
+from __future__ import annotations
+
+import pytest
+
+from aemr_bot.services import settings_store
+
+
+@pytest.mark.asyncio
+class TestSeedBaseline:
+    async def test_fresh_seed_marks_synced_keys_as_clean(self, session) -> None:
+        """После первого seed_if_empty — get_dirty_keys() = []."""
+        await settings_store.seed_if_empty(session)
+        await session.flush()
+
+        dirty = await settings_store.get_dirty_keys(session)
+        assert dirty == [], (
+            f"Свежезасеянная БД не должна иметь dirty ключей. "
+            f"Реально dirty: {dirty}"
+        )
+
+    async def test_seed_idempotent(self, session) -> None:
+        """Повторный seed не вставляет дубли и не сбрасывает synced_at.
+
+        Сценарий: бот стартует второй раз (контейнер пересоздан) — seed
+        вызывается, но БД уже непустая. Ничего не должно поменяться.
+        """
+        await settings_store.seed_if_empty(session)
+        await session.flush()
+
+        # Симулируем: оператор поменял настройку → она стала dirty
+        await settings_store.set_value(session, "topics", ["Только это"])
+        await session.flush()
+
+        dirty_after_change = await settings_store.get_dirty_keys(session)
+        assert "topics" in dirty_after_change, (
+            "topics после set_value без mark_synced должен быть dirty"
+        )
+
+        # Второй seed (рестарт бота)
+        await settings_store.seed_if_empty(session)
+        await session.flush()
+
+        dirty_after_reseed = await settings_store.get_dirty_keys(session)
+        assert dirty_after_reseed == dirty_after_change, (
+            f"Повторный seed не должен трогать уже изменённые ключи. "
+            f"До reseed: {dirty_after_change}, после: {dirty_after_reseed}"
+        )
+
+    async def test_changed_setting_becomes_dirty(self, session) -> None:
+        """После seed → set_value → ключ становится dirty.
+
+        Это позитивный контроль: если бы mark_synced заходил при каждом
+        set_value, дальнейшие изменения никогда не отображались бы в
+        dirty-списке. Должен срабатывать только для seed-baseline.
+        """
+        await settings_store.seed_if_empty(session)
+        await session.flush()
+
+        # Оператор меняет topics через UI:
+        await settings_store.set_value(session, "topics", ["Новая тема"])
+        await session.flush()
+
+        dirty = await settings_store.get_dirty_keys(session)
+        assert "topics" in dirty
+```
+
 ### `bot/tests/test_settings_store_validation.py`
 
-Size: `3036` bytes  
-SHA-256: `ca5c8aaa3e2b3bbf41f9f65cd6b8f3a9d0ac56cb79f38f84dd6c76e51cedb0e2`
+Size: `6731` bytes  
+SHA-256: `f460f69a5fab3cbf7701ebd00574a14568858951fcf412fe4561b414b97453c8`
 
 ```python
 """Тесты на services/settings_store — валидация ключей и значений.
@@ -40977,6 +41130,72 @@ class TestValidate:
     ) -> None:
         ok, _ = validate(key, value)
         assert ok is expected_ok
+
+    def test_emergency_contacts_section_allowed(self) -> None:
+        """`section` — опциональное поле, которое UI использует для
+        группировки (см. seed/contacts.json). Валидация должна его
+        пропускать, иначе baseline-данные из seed не пройдут set_value.
+        """
+        ok, _ = validate(
+            "emergency_contacts",
+            [
+                {"section": "Электроэнергия", "name": "Камчатскэнерго", "phone": "8-800"},
+                {"name": "01", "phone": "01"},  # без section тоже ok
+            ],
+        )
+        assert ok is True
+
+
+class TestObjListGrouping:
+    """Чистая функция format_obj_list — рендер тела карточки списка
+    объектов (emergency_contacts, transport_dispatcher_contacts).
+    """
+
+    def test_empty(self) -> None:
+        from aemr_bot.services.settings_store import format_obj_list
+        assert format_obj_list([]) == "(список пуст)"
+
+    def test_flat_list_no_section(self) -> None:
+        """Если у всех item'ов нет section — секционные заголовки не
+        добавляем, остаётся плоский нумерованный список."""
+        from aemr_bot.services.settings_store import format_obj_list
+        body = format_obj_list([
+            {"name": "Пожарная", "phone": "01"},
+            {"name": "Скорая", "phone": "03"},
+        ])
+        assert "▸" not in body
+        assert body.startswith("1. Пожарная — 01")
+        assert "2. Скорая — 03" in body
+
+    def test_grouped_by_section(self) -> None:
+        """Если секций несколько — добавляются заголовки `▸ Секция`,
+        порядок секций — по первому появлению (стабильность UI)."""
+        from aemr_bot.services.settings_store import format_obj_list
+        body = format_obj_list([
+            {"section": "Экстренные службы", "name": "Пожарная", "phone": "01"},
+            {"section": "Электроэнергия", "name": "Камчатскэнерго", "phone": "8-800"},
+            {"section": "Экстренные службы", "name": "Скорая", "phone": "03"},
+        ])
+        # Заголовок секции первого появления — раньше других:
+        first_section_idx = body.index("▸ Экстренные службы")
+        second_section_idx = body.index("▸ Электроэнергия")
+        assert first_section_idx < second_section_idx
+        # Глобальная нумерация сохранена (idx 1..N совпадает с порядком
+        # в исходном списке — это критично, иначе click-by-index сломает
+        # навигацию obj_item).
+        assert "1. Пожарная" in body
+        assert "2. Камчатскэнерго" in body
+        assert "3. Скорая" in body
+
+    def test_mixed_with_other(self) -> None:
+        """Item без section падает в визуальную секцию «Прочее»."""
+        from aemr_bot.services.settings_store import format_obj_list
+        body = format_obj_list([
+            {"section": "Электроэнергия", "name": "Камчатскэнерго", "phone": "8-800"},
+            {"name": "01", "phone": "01"},  # без section
+        ])
+        assert "▸ Электроэнергия" in body
+        assert "▸ Прочее" in body
 ```
 
 ### `bot/tests/test_uploads_policy_admin_relay.py`
