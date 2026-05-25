@@ -40,11 +40,13 @@ def _fresh_appeal(*, user=None, appeal_id: int = 1) -> SimpleNamespace:
         user = SimpleNamespace(
             is_blocked=False,
             first_name="Иван",
+            phone="+79991234567",
+            subscribed_broadcast=False,
             consent_pdn_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
             consent_revoked_at=None,
             max_user_id=42,
         )
-    return SimpleNamespace(
+    appeal = SimpleNamespace(
         id=appeal_id,
         user=user,
         created_at=datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc),
@@ -55,6 +57,8 @@ def _fresh_appeal(*, user=None, appeal_id: int = 1) -> SimpleNamespace:
         summary="яма",
         attachments=[],
     )
+    appeal.__dict__["messages"] = []
+    return appeal
 
 
 class TestReplyIntent:
@@ -471,7 +475,10 @@ class TestDeliverOperatorReply:
         assert event.bot.send_message.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_success_refreshes_original_admin_card(self) -> None:
+    async def test_success_publishes_event_card_via_render(self) -> None:
+        """DDD event-log: после доставки ответа жителю шлём НОВУЮ
+        event-карточку (через admin_card.render). Edit оригинала
+        больше не делается — каждое событие = новая запись."""
         from aemr_bot.handlers import operator_reply as opr
 
         event = _make_event()
@@ -482,8 +489,10 @@ class TestDeliverOperatorReply:
         operator = MagicMock(id=7, max_user_id=42)
         fresh_appeal = _fresh_appeal()
         fresh_appeal.admin_message_id = "admin-mid-1"
+        fresh_appeal.last_admin_card_mid = "admin-mid-1"
         fresh_appeal.closed_due_to_revoke = False
 
+        render_mock = AsyncMock(return_value="new-event-mid")
         opr._recent_replies.clear()
         with patch.object(opr.cfg, "answer_max_chars", 1000), \
              patch("aemr_bot.handlers.operator_reply.session_scope",
@@ -500,8 +509,7 @@ class TestDeliverOperatorReply:
                    AsyncMock(return_value=False)), \
              patch("aemr_bot.handlers.operator_reply._mark_reply_success_recorded",
                    AsyncMock()), \
-             patch("aemr_bot.handlers.operator_reply.card_format.admin_card",
-                   return_value="обновлённая карточка"), \
+             patch("aemr_bot.services.admin_card.render", render_mock), \
              patch("aemr_bot.config.settings.admin_group_id", 555):
             handled = await opr._deliver_operator_reply(
                 event, appeal=appeal, operator=operator,
@@ -509,14 +517,9 @@ class TestDeliverOperatorReply:
             )
 
         assert handled is True
-        # После миграции на admin_card.render — edit_message вызывается
-        # ИЗНУТРИ helper'а (а не из _deliver_operator_reply напрямую).
-        # helper читает fresh_appeal.admin_message_id="admin-mid-1" и
-        # отправляет edit туда.
-        event.bot.edit_message.assert_called_once()
-        kwargs = event.bot.edit_message.call_args.kwargs
-        assert kwargs["message_id"] == "admin-mid-1"
-        assert kwargs["attachments"]
+        # Новая event-log семантика: render публикует НОВУЮ карточку.
+        render_mock.assert_awaited_once()
+        # edit_message НЕ вызывается напрямую (старая семантика).
 
 
 class TestReplyRejectionBeforeDelivery:

@@ -150,7 +150,16 @@ class Appeal(Base):
     topic: Mapped[str | None] = mapped_column(String(120))
     summary: Mapped[str | None] = mapped_column(Text)
     attachments: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
+    # admin_message_id = mid ПЕРВОЙ публикации карточки (finalize).
+    # Используется только как reply-link для relay вложений.
+    # НЕ редактируется после finalize.
     admin_message_id: Mapped[str | None] = mapped_column(String(64))
+    # last_admin_card_mid = mid ПОСЛЕДНЕЙ event-карточки. Обновляется
+    # при каждом render (любое изменение статуса → новая карточка
+    # внизу, mid пишется сюда). Используется для stale-detection
+    # callback'ов: если оператор тапнул на карточке вверху и её mid
+    # != last_admin_card_mid — это устаревшая, надо send-new.
+    last_admin_card_mid: Mapped[str | None] = mapped_column(String(64))
     assigned_operator_id: Mapped[int | None] = mapped_column(
         ForeignKey("operators.id", ondelete="SET NULL"), index=True
     )

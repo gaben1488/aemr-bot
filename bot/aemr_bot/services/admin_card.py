@@ -1,28 +1,31 @@
-"""Единая точка рендера/обновления admin appeal card.
+"""Event-log публикация admin appeal card.
+
+**Mental model (DDD-pivot 2026-05-25):**
+
+Карточка обращения в админ-чате — это **запись о событии**, не
+живое окно. Каждое изменение состояния (finalize / followup жителя
+/ reply оператора / reopen / close / block / unblock / erase) =
+**новая** карточка снизу чата с актуальным timeline'ом. Старые
+карточки выше остаются как audit-trail — никогда не редактируются.
 
 **Контракт:**
 
-- `Appeal.admin_message_id` указывает на ОРИГИНАЛЬНУЮ карточку
-  обращения (первую опубликованную при finalize). Это sacred artifact —
-  меняется только при изменении статуса самого обращения
-  (reply / reopen / close / block / unblock / erase).
-- `force_new=False` → edit по admin_message_id. На fail (карточка
-  удалена в MAX или другая ошибка) → fallback send-new + обновить
-  admin_message_id (старый mid недействителен, надо переезжать).
-- `force_new=True` → ВСЕГДА send-new, но admin_message_id НЕ
-  обновляется. Это для **следов** активности: followup жителя
-  публикует «вторая карточка с дополнением», но оригинал остаётся
-  каноническим (где живут reply/reopen/close).
+`Appeal.admin_message_id` = mid ПЕРВОЙ карточки (finalize). Не
+редактируется, не двигается. Используется только как reply-link при
+relay вложений.
 
-Разделение ответственности: каждая карточка в чате — отдельный
-артефакт. Оригинальная = «вот обращение, отвечайте здесь». Follow-up
-карточки внизу = «вот ещё информация по тому же обращению».
-Оператор работает с оригиналом для финального ответа.
+`Appeal.last_admin_card_mid` = mid ПОСЛЕДНЕЙ event-карточки.
+Обновляется каждый render. Используется для:
 
-До этого helper'а карточка редактировалась тремя несинхронными
-способами (operator_reply прямой edit_message, admin_appeal_ops через
-freshness-tracker, appeal_funnel ручной send_message). Helper
-унифицирует, сохраняя стабильность оригинала.
+- **stale-detection**: callback.message.mid != last_admin_card_mid →
+  карточка устарела (оператор тапнул на старой вверху чата), ack
+  «устарела» + render новой внизу.
+- **точка свайп-reply**: оператор отвечает свайпом на актуальную.
+
+**Mental model для оператора**: каждая карточка показывает «вот что
+произошло на момент времени T». Кнопки на старых карточках устарели
+— система не даст случайно сделать действие на старом контексте, и
+актуальная карточка всегда внизу.
 """
 from __future__ import annotations
 
@@ -46,24 +49,24 @@ async def render(
     bot,
     appeal: "Appeal",
     *,
-    force_new: bool = False,
+    is_first_publication: bool = False,
 ) -> str | None:
-    """Отрисовать актуальное состояние карточки обращения в админ-чате.
+    """Опубликовать event-карточку обращения в админ-чат.
 
     Args:
-        bot: maxapi Bot instance.
-        appeal: Appeal с подгруженными user и messages (для лента и
-            подсчёта attachments). Передавайте загруженный через
+        bot: maxapi Bot.
+        appeal: Appeal с подгруженными user и messages (для timeline
+            и attachment_count). Передавайте через
             `appeals_service.get_by_id_with_messages`.
-        force_new: если True — всегда send новую карточку и update
-            admin_message_id. Используется для followup жителя (новая
-            информация требует явной отметки внизу чата). По умолчанию
-            False — пытаемся edit существующую (если есть
-            admin_message_id и edit удался). На fail edit'а — fallback
-            на send_new + update admin_message_id.
+        is_first_publication: True только при finalize обращения —
+            тогда обновляем admin_message_id (нужно для reply-link
+            при relay вложений). На всех остальных event'ах
+            admin_message_id НЕ двигается.
 
     Returns:
-        mid отправленной/отредактированной карточки, или None при сбое.
+        mid отправленной карточки, или None при сбое.
+
+    Эту функцию НЕЛЬЗЯ использовать для edit. Карточки иммутабельны.
     """
     if not cfg.admin_group_id:
         log.warning("admin_card.render: ADMIN_GROUP_ID не установлен")
@@ -77,10 +80,8 @@ async def render(
         )
         return None
 
-    # text и attachment_count считаем устойчиво: detached appeal с
-    # lazy relationships (messages) может бросить MissingGreenlet.
-    # Главное — карточка дойдёт. Без attachment_count = просто без
-    # кнопки «Вложения (N)»; без timeline — без блока истории.
+    # text и attachment_count считаем устойчиво (detached lazy-load
+    # может бросить MissingGreenlet). Главное — карточка дойдёт.
     try:
         text = card_format.admin_card(appeal, user)
     except Exception:
@@ -98,6 +99,7 @@ async def render(
             appeal.id, exc_info=False,
         )
         attachment_count = 0
+
     kb = keyboards.appeal_admin_actions(
         appeal.id,
         appeal.status,
@@ -106,40 +108,13 @@ async def render(
         closed_due_to_revoke=bool(getattr(appeal, "closed_due_to_revoke", False)),
         attachment_count=attachment_count,
     )
-    attachments = [kb]
 
-    existing_mid = getattr(appeal, "admin_message_id", None)
-
-    edit_succeeded = False
-    if not force_new and existing_mid:
-        try:
-            await bot.edit_message(
-                message_id=existing_mid,
-                text=text,
-                attachments=attachments,
-            )
-            edit_succeeded = True
-            return existing_mid
-        except Exception:
-            log.info(
-                "admin_card.render: edit_message #%s failed for appeal #%s, "
-                "fallback to send_new (admin_message_id будет обновлён "
-                "на новый — старый недействителен)",
-                existing_mid, appeal.id, exc_info=False,
-            )
-
-    # Send new card. Три причины почему попали сюда:
-    #   1) force_new=True — следовая карточка (followup от жителя).
-    #      admin_message_id НЕ обновляем — оригинал остаётся sacred.
-    #   2) admin_message_id пуст — первая публикация (finalize).
-    #      Обновляем admin_message_id новым mid.
-    #   3) Edit упал — старая карточка в MAX недействительна.
-    #      Обновляем admin_message_id (переезжаем на новый).
+    # Всегда send_new. Старая карточка остаётся в чате как audit-trail.
     try:
         sent = await bot.send_message(
             chat_id=cfg.admin_group_id,
             text=text,
-            attachments=attachments,
+            attachments=[kb],
         )
     except Exception:
         log.exception(
@@ -148,30 +123,27 @@ async def render(
         return None
 
     new_mid = extract_message_id(sent)
-    # Обновляем admin_message_id ТОЛЬКО если:
-    #   - existing_mid пуст (это первая публикация), либо
-    #   - existing_mid был, но edit упал (нужен переезд).
-    # При force_new=True с живым existing_mid — НЕ обновляем
-    # (оригинал sacred, force_new=True шлёт всего лишь следовую карточку).
-    should_update_mid = new_mid and not (force_new and existing_mid)
-    if should_update_mid:
+    if new_mid:
+        # Обновляем last_admin_card_mid — точка stale-detection и
+        # точка свайп-reply. Для первой публикации (finalize) — также
+        # admin_message_id (используется для reply-link при relay).
         async with session_scope() as session:
-            await appeals_service.set_admin_message_id(
+            await appeals_service.set_last_admin_card_mid(
                 session, appeal.id, new_mid
             )
-    # Подавить unused-var предупреждение про edit_succeeded.
-    _ = edit_succeeded
+            if is_first_publication:
+                await appeals_service.set_admin_message_id(
+                    session, appeal.id, new_mid
+                )
     return new_mid
 
 
 def _count_attachments(appeal: "Appeal") -> int:
     """Сколько вложений у обращения (исходные + дополнения жителя).
 
-    Устойчиво к detached-state: если appeal без активной сессии,
-    `appeal.messages` может бросить MissingGreenlet. В этом случае
-    считаем только исходные attachments (scalar JSONB поле, доступно
-    без сессии). Это safer, чем падать — caller (например finalize)
-    мог передать appeal без selectinload(messages).
+    Устойчиво к detached-state: appeal.messages может бросить
+    MissingGreenlet вне сессии. На failure считаем только scalar
+    appeal.attachments — лучше unter-count, чем не доставить карточку.
     """
     try:
         from aemr_bot.services.admin_relay import _collect_all_user_attachments
@@ -184,5 +156,4 @@ def _count_attachments(appeal: "Appeal") -> int:
             appeal.id,
             exc_info=False,
         )
-        # Только исходные. Дополнения посчитать не можем без сессии.
         return len(getattr(appeal, "attachments", None) or [])

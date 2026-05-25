@@ -30,20 +30,18 @@ async def _show_appeal_card_or_result(
     appeal_id: int,
     fallback_text: str,
     *,
-    edit_in_place: bool = False,
+    edit_in_place: bool = False,  # deprecated, не используется
 ) -> None:
-    """Перерисовать карточку обращения после действия оператора.
+    """Опубликовать НОВУЮ event-карточку обращения после действия оператора.
 
-    Все обновления (reopen / close / block / unblock / erase) идут
-    через единый helper `services/admin_card.render` — он сам edit'ит
-    actual карточку (admin_message_id из БД) либо send-new + update
-    mid. Параметр `edit_in_place` оставлен для backward-compat
-    интерфейса; по факту больше не влияет — helper всегда нацелен
-    на актуальную карточку, не на «где callback пришёл».
+    DDD event-log: карточки иммутабельны. Каждое действие (reopen /
+    close / block / unblock / erase) → новая запись внизу чата с
+    актуальным timeline'ом. Старые карточки выше остаются как
+    audit-trail; кнопки на них становятся stale (см. stale-detection
+    в callback handlers).
 
     На случай если обращение не найдено или user пуст — fallback
-    через старый send_or_edit_screen с force_new_message=True
-    (нет актуальной карточки чтобы edit'ить).
+    короткое сообщение оператору, без card-render.
     """
     from aemr_bot import keyboards as kbds
     from aemr_bot.services import admin_card as admin_card_service
@@ -70,7 +68,7 @@ async def _show_appeal_card_or_result(
         chat_id=cfg.admin_group_id,
         text=fallback_text,
         attachments=[kbds.op_back_to_menu_keyboard()],
-        force_new_message=not edit_in_place,
+        force_new_message=True,
     )
 
 

@@ -220,8 +220,25 @@ async def count_for_user(session: AsyncSession, user_id: int) -> int:
 
 
 async def set_admin_message_id(session: AsyncSession, appeal_id: int, mid: str) -> None:
+    """Установить admin_message_id = mid ПЕРВОЙ карточки (finalize).
+    После finalize не вызывается."""
     await session.execute(
         update(Appeal).where(Appeal.id == appeal_id).values(admin_message_id=mid)
+    )
+
+
+async def set_last_admin_card_mid(
+    session: AsyncSession, appeal_id: int, mid: str
+) -> None:
+    """Обновить mid последней event-карточки в админ-чате.
+
+    Вызывается при каждом render новой карточки (finalize, followup,
+    reply, status-change). Используется для stale-detection: callback
+    на старой карточке (mid != last_admin_card_mid) → ack «устарела»
+    + send new.
+    """
+    await session.execute(
+        update(Appeal).where(Appeal.id == appeal_id).values(last_admin_card_mid=mid)
     )
 
 
