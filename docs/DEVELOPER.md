@@ -164,7 +164,7 @@ aemr-bot/
 
 Обработчики команд жителя: `/start`, `/menu`, `/help`, `/rules`, `/policy`, `/subscribe`, `/unsubscribe`, `/forget`, `/export`. Slash-меню MAX очищено; основной интерфейс — кнопки. Главное меню — шесть inline-кнопок: «📝 Написать обращение», «📂 Мои обращения», «🔔 Подписаться/🔕 Отписаться», «🏛 Приём граждан», «ℹ️ Полезная информация», «⚙️ Настройки и помощь». Электронная приёмная находится в «🏛 Приём граждан».
 
-Команды бота в административной группе: `/stats [period]` (выгрузка обращений в XLSX за период; допустимые значения `today | week | month | quarter | half_year | year | all`; источник — `services/stats.py::VALID_PERIODS`), `/reopen NNN`, `/close NNN`, `/op_help` (закрепляемая памятка; число кнопок 3 / 5 / 9 — зависит от роли вызвавшего: aemr/egp → 3, coordinator → 5, it → 9), `/reply N <текст>`, `/erase`, `/setting`, `/add_operators`, `/diag`, `/backup`, `/broadcast`.
+Команды бота в административной группе: `/stats [period]` (выгрузка обращений в XLSX за период; допустимые значения `today | week | month | quarter | half_year | year | all`; источник — `services/stats.py::VALID_PERIODS`), `/reopen NNN`, `/close NNN`, `/op_help` (закрепляемая памятка; число кнопок 3 / 6 / 10 — зависит от роли вызвавшего: aemr/egp → 3, coordinator → 6, it → 10. Канонический источник — `keyboards.op_help_keyboard`), `/reply N <текст>`, `/erase`, `/setting`, `/add_operators`, `/diag`, `/backup`, `/broadcast`.
 
 **PostgreSQL.** Единое хранилище. Полный набор таблиц — в части IV. Индексы: `users.max_user_id` (уникальный), `users.phone_normalized` (после миграции 0003), `events.idempotency_key` (уникальный), `appeals.status`, `appeals.created_at`, `messages.appeal_id`, `messages.created_at`.
 
@@ -655,7 +655,7 @@ docker compose exec db psql -U aemr -c "ALTER USER aemr WITH PASSWORD '<новы
 Полностью описано в [COMMANDS.md §5–§6](COMMANDS.md) и в [RUNBOOK.md §7](RUNBOOK.md). Тут — короткий ориентир:
 
 - Бэкапы лежат в named-volume `infra_backups`, путь внутри контейнера — `/backups/`.
-- Имя файла: `aemr-YYYYMMDD_HHMMSS.sql.gpg` если задан `BACKUP_GPG_PASSPHRASE`, иначе `.sql`.
+- Имя файла: `aemr-YYYYMMDD_HHMMSS.sql.gpg` если задан `BACKUP_GPG_PASSPHRASE` (≥12 символов). Без passphrase и без явного `BACKUP_ALLOW_UNENCRYPTED=1` бэкап отказан (152-ФЗ). С `BACKUP_ALLOW_UNENCRYPTED=1` — `.sql` (только dev/local).
 - Снять бэкап вручную: `/backup` в админ-группе MAX (доступно роли `it`).
 - Восстановить — `gpg --decrypt ... | psql -U aemr -d aemr`.
 
@@ -858,7 +858,7 @@ sequenceDiagram
                 MAX-->>Bot: SendedMessage
                 Bot->>Bot: extract_message_id<br/>(.message.body.mid)
                 Bot->>DB: BEGIN<br/>messages from_operator<br/>appeals.status = answered<br/>audit_log action=reply<br/>COMMIT
-                Bot->>Op: ✉️ Ответ ушёл жителю
+                Bot->>Op: ✉️ Финальный ответ отправлен (или 💬 Промежуточный)
             end
         end
     end
