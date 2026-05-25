@@ -402,8 +402,8 @@ class TestBuildScheduler:
             "monthly-stats",
             "startup-pulse",
             "pulse-offhours",
-            "pulse-sunday",
             "pulse-workhours",
+            # pulse-sunday упразднён: mon-sun теперь покрывает все дни
             "appeals-5y-retention",
             "pdn-retention",
             "funnel-watchdog",
@@ -414,20 +414,41 @@ class TestBuildScheduler:
         assert expected.issubset(names), f"missing: {expected - names}"
 
     def test_offhours_pulse_covers_evening_gap(self) -> None:
-        """Регрессия: пн–сб 18:00–21:59 не должны выпадать из пульсов."""
+        """Регрессия: вечер 18:00–21:59 не должен выпадать из пульсов."""
         bot = MagicMock()
         sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
         job = next(j for j in sched.get_jobs() if j.name == "pulse-offhours")
         trigger_text = str(job.trigger)
         assert "18-23" in trigger_text
 
+    def test_pulse_runs_every_day_including_sunday(self) -> None:
+        """Регрессия: pulse идёт ежедневно (mon-sun), не только пн-сб.
+
+        Раньше было два юнита: pulse-offhours (mon-sat) + отдельный
+        pulse-sunday (sun, ежечасно). Теперь pulse-offhours и
+        pulse-workhours оба mon-sun, отдельный воскресный юнит
+        упразднён — выходные и праздники мониторятся так же как
+        будни (heartbeat «бот живой» нужен 24/7).
+        """
+        bot = MagicMock()
+        sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
+        for job_name in ("pulse-offhours", "pulse-workhours"):
+            job = next(j for j in sched.get_jobs() if j.name == job_name)
+            text = str(job.trigger)
+            assert "mon-sun" in text, (
+                f"{job_name}: ожидался day_of_week=mon-sun, получено: {text}"
+            )
+        # Отдельной pulse-sunday больше не существует
+        names = {j.name for j in sched.get_jobs()}
+        assert "pulse-sunday" not in names
+
     def test_open_reminder_mon_fri_with_lunch_break(self) -> None:
         """Регрессия: open-reminder работает пн-пт с обедом 12-13 (skip).
 
-        Регламент v5 §39 «пн-пт 09:00-18:00» + уточнение v6 «обед
+        Регламент v7 §39 «пн-пт 09:00-18:00» + уточнение в v8-draft «обед
         12:00-13:00». Раньше код был пн-сб 9-17 (соответствовал
-        Таблице 3 §70 v5, противоречил §39); user подтвердил
-        фактическую практику = пн-пт + обед, Регламент v6 синхронизирует
+        Таблице 3 §70 v7, противоречил §39); user подтвердил
+        фактическую практику = пн-пт + обед, проект v8 синхронизирует
         §39 и Таблицу 3.
         """
         bot = MagicMock()

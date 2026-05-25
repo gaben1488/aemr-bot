@@ -2,7 +2,7 @@
 
 Документ для специалиста по информационной безопасности, который принимает aemr-bot на аудит и сопровождение. Описывает реальную, а не идеализированную картину: что защищено, чем, и где пока компромисс.
 
-Связанные документы: `docs/RUNBOOK_PDN_ERASURE.md` (152-ФЗ операции), `docs/SYSADMIN.md` (эксплуатация), `docs/PRIVACY_DRAFT.md` (политика).
+Связанные документы: `docs/RUNBOOK_PDN_ERASURE.md` (152-ФЗ операции), `docs/SYSADMIN.md` (эксплуатация), `docs/Политика.md` (актуальная политика ПДн — источник для `PRIVACY.pdf`), `docs/Политика_v2.md` (расширенная редакция для юридической экспертизы), `docs/COMPLIANCE_WITH_REGLAMENT_v7.md` (соответствие действующему Регламенту).
 
 ## 1. Контур и контекст
 
@@ -355,6 +355,37 @@ Audit-log автоматически очищается cron-job'ом `audit-log
 Артефакт `pip-audit-report` сохраняется на каждый run для последующего ревью.
 
 Auto-deploy на сервере подтягивает **только** из `main`. PR-ветки не деплоятся. Это значит, что красный CI блокирует деплой на уровне ветки.
+
+## 10a. Закрытые уязвимости и инварианты (history)
+
+Перечисляются явно, чтобы при следующем аудите видно было, какие угрозы уже закрыты в коде и регрессионно покрыты тестами.
+
+### Серия SEC (security audit, май 2026)
+
+| # | Класс | Что было | Что закрыто |
+|---|---|---|---|
+| 1 | 🔴 escalation | Заблокированный житель мог нажать на старую кнопку «✅ Согласен» в кэше клиента MAX и сбросить себе `is_blocked` через consent-flow | `services/users.set_consent` отказывается выставлять согласие, если `is_blocked=true`; кнопка консента в свежей карточке скрывается |
+| 2 | 🔴 152-ФЗ | `pg_dump` записывался в named volume **plain `.sql`** — содержит телефоны и тексты обращений; нарушение 152-ФЗ при snapshot'е VPS | `services/db_backup.backup_db` требует `BACKUP_GPG_PASSPHRASE` (≥12 симв) и пишет только `.sql.gpg`; явный bypass `BACKUP_ALLOW_UNENCRYPTED=1` доступен только для dev-машины |
+| 3 | 🔴 spoofing | Оператор мог пристроить произвольный «🆔 №N» в текст ответа жителю свайпом — citation-marker не валидировался | `services/card_format` строит маркер из `Appeal.id` строго на сервере; рекомендации `ANSWER_MAX_CHARS` обрезаются перед публикацией |
+| 4 | 🟡 SSRF | `policy_url`, `electronic_reception_url`, `udth_schedule_url` принимали любой URL без валидации — IT-оператор мог сослать жителя на phish-домен | `services/settings_store.validate_url` использует whitelist (https-only, doc-allowlist хостов АЕМО/elizovomr/max.ru); ошибка валидации показывается в UI без редеплоя |
+| 5 | 🟡 DoS | Дополнение (followup) к закрытому обращению можно было присылать без rate-limit — флуд оборачивался флудом карточек в служебной группе | `handlers/operator_reply._enforce_followup_rate_limit` ограничивает житель → 5 followup/час; над лимитом — сообщение «лимит исчерпан, дождитесь» без новой карточки |
+| 6 | 🟡 race | При параллельной деактивации оператора `services/operators.deactivate_operator` мог пропустить проверку «единственный активный `it`» | Транзакция переведена в `SELECT FOR UPDATE` по таблице `operators`, проверка `active_it_count` идёт строго под локом; UI показывает явный отказ |
+| 7 | 🟡 fail-open | `services/idempotency.claim` при ошибке БД пропускал событие как «новое» — двойная обработка update | Сбой БД конвертируется в `IdempotencyUnavailable`; вышестоящий middleware ack'ает callback и **не запускает handler** — fail-closed |
+| 8 | 🟡 PII | Exception при backup'е форматировался с полным traceback (потенциально путь к `pg_dump` с DSN) и отправлялся в служебную группу | `services/db_backup` категоризирует ошибки (`pg_dump`/`gpg`/`config`/`s3`) и передаёт админу только enum + safe message; полный traceback — только в локальные docker-логи |
+| 9 | 🟡 authz | `/reply` имела две точки проверки прав (callback + текст) с расходящейся логикой — coordinator мог получить отказ на свайпе, но ответить через команду | `handlers/admin_appeal_ops.cmd_reply` и `operator_reply.handle_operator_reply` теперь проходят единый `_auth.ensure_operator`; разница ролей только при `/broadcast` |
+
+### Серия SACRED (admin-bus invariants, май 2026)
+
+| # | Класс | Что было | Что закрыто |
+|---|---|---|---|
+| 1 | 🔴 invariant | admin-карточки и админ-уведомления рендерились разными путями (`menu.send_to_admin_card`, `admin_card.render`, `admin_events.send_*`) — freshness-tracker терял часть сообщений | Единая шина `services/admin_card.render` + `services/admin_events.send_event`; menu-tracker автоматически записывает каждое исходящее сообщение в admin-группу |
+| 2 | 🔴 broadcast | Progress-бар рассылки пытался редактировать «вечный» admin-mid — после нескольких рассылок MAX начинал возвращать ошибки edit; freshness нарушался | `handlers/broadcast` отправляет progress отдельным sacred-сообщением с новым `mid`; финальная сводка edit'ит **только** этот mid |
+| 3 | 🔴 sync | Входящие сообщения операторов в группе не попадали в menu-tracker — следующий `render_admin_card` мог попытаться edit'нуть старый mid вместо отправки нового | `utils/menu_tracker.note_incoming_admin_message` вызывается из `handlers/appeal.on_message` и `operator_reply.handle_operator_reply` |
+| 4 | 🔴 UX | Нажатие «Ответить» edit'ило ту же карточку с prompt'ом — оператор терял контекст | `handlers/admin_appeal_ops.reply_intent` отправляет prompt **отдельным новым сообщением** (force_new_message=True); freshness переключается на него |
+| 5 | 🔴 empty | `list_unanswered_with_messages` отсекал обращения с пустой связкой `messages` — карточка приходила без timeline | Запрос переведён на `LEFT JOIN` + `selectinload(Appeal.messages)`, фильтр по последнему оператору в timeline |
+| 6 | 🔴 freshness | Freshness-rule учитывал только сообщения в админ-группе — сообщения жителя в личке после reply не сбрасывали freshness, edit карточки уходил в «протухший» MID | `utils/menu_tracker.note_incoming` теперь принимает все источники: житель в личке, оператор в группе, callback в группе |
+
+Все 15 фиксов покрыты регрессионными тестами в `bot/tests/test_reliability_pass.py`, `test_appeal_card_edit_policy.py`, `test_admin_card_render.py`, `test_idempotency.py`, `test_db_backup.py`, `test_funnel_state_hardening.py`, `test_admin_events.py`, `test_operator_reply_with_image.py`.
 
 ## 11. Известные ограничения и компромиссы
 

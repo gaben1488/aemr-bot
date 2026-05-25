@@ -1,6 +1,6 @@
 # FILE_INVENTORY — полный реестр файлов репо `aemr-bot`
 
-Срез на 2026-05-25. Сверено: `git ls-files`, чтение исходников, `grep` зависимостей.
+Срез на 2026-05-25 (после зачистки stale-файлов и переименования компонентов под Регламент v7). Сверено: `git ls-files`, чтение исходников, `grep` зависимостей.
 
 Условные обозначения статуса:
 - ✅ актуален и нужен
@@ -19,7 +19,6 @@
 | `aemr-bot-index.md` | Авто-генерируемый flat-индекс ~55K строк всех текстовых файлов для LLM-инструментов | 🟡 | `scripts/make_repo_index.py`, `.github/workflows/repo-index.yml`; раздувает diff'ы в main, но это сознательное решение |
 | `.dockerignore` | Что НЕ копировать в образ (docs, *.md, .env*, бэкапы, «— копия.py») | ✅ | `infra/Dockerfile` |
 | `.gitignore` | Стандарт + кастомные шаблоны для Windows бэкапов, `_local-backup/` | ✅ | git |
-| `_local-backup/PRODUCT_BRIEF_internal.md` | Продуктовый бриф 2026-05-07 (имя бота, логотип, оценка стоимости). В `.gitignore`, но сам файл закоммичен раньше правила | 🔴 | никто не ссылается; противоречие .gitignore vs reality |
 
 ---
 
@@ -196,9 +195,10 @@
 | `Dockerfile` | python:3.12-slim + non-root botuser + alembic upgrade head + run main | ✅ | docker-compose.yml |
 | `docker-compose.yml` | services: db (postgres:16-alpine + pg_stat_statements), bot (read_only+cap_drop+mem_limit), профиль webhook (nginx+certbot) | ✅ | auto-deploy.sh, ROLLBACK.md |
 | `init-letsencrypt.sh` | первичная выписка SSL через certbot (webhook режим) | ✅ | docs/SETUP.md (для webhook) |
-| `.env.example` | шаблон всех env-переменных с описаниями | ✅ | docs/SETUP.md |
-| `.env` | реальный .env (через .gitignore исключён, но был закоммичен раньше?) | 🟡 | в `git ls-files` НЕ виден — OK; локальный файл существует |
+| `.env.example` | шаблон всех env-переменных с описаниями + supercomment-блок по каждой переменной (расшифровка, дефолты, что произойдёт без значения) | ✅ | docs/SETUP.md |
+| `.env` | реальный .env (через .gitignore исключён) | 🟡 | в `git ls-files` НЕ виден — OK; локальный файл существует |
 | `nginx/feedback.conf` | reverse-proxy MAX webhook на bot:8080 + Let's Encrypt | ✅ | docker-compose webhook профиль |
+| `aemr-bot.service` | systemd-юнит для автозапуска бота после reboot VPS (`docker compose up -d` после старта системы) | ✅ | docs/SYSADMIN.md §12a, scripts/install-systemd-autostart.sh |
 
 ---
 
@@ -210,9 +210,11 @@
 | `install-auto-deploy.sh` | однократная установка deploy-key + crontab | ✅ | docs/SETUP.md |
 | `healthwatch.sh` | внешний watchdog: N подряд /livez fail → restart → пост в служебную группу | ✅ | install-healthwatch.sh, docs/SETUP.md |
 | `install-healthwatch.sh` | однократная установка healthwatch в crontab | ✅ | docs/SETUP.md |
+| `install-systemd-autostart.sh` | однократная установка systemd-юнита `aemr-bot.service` для автозапуска бота после reboot | ✅ | docs/SYSADMIN.md §12a, infra/aemr-bot.service |
 | `audit_vps.sh` | технический отчёт по VPS без вывода секретов | ✅ | docs/SYSADMIN.md |
 | `make_repo_index.py` | генератор `aemr-bot-index.md` | ✅ | repo-index.yml, REPO_INDEX.md |
 | `generate_privacy_pdf.py` | docs/Политика.md → docs/PRIVACY.pdf через reportlab | ✅ | services/policy.py имя файла |
+| `extract_reglament.py` | извлечение текста Регламента из `.docx` в machine-readable markdown `docs/_extracted/REGLAMENT_v7_FULL.md` | ✅ | docs/_extracted/, docs/README |
 | `build_geo_database.py` | OSM overpass → seed/geo/*.geojson (10 поселений ЕМО) | ✅ | seed/geo, services/geo.py |
 | `verify_geo.py` | проверка геоданных против Wikidata + point-in-polygon | ✅ | build_geo_database.py |
 | `cross_verify_geo.py` | расширенная cross-verification (5 свойств) | ✅ | verify_geo.py |
@@ -255,16 +257,13 @@
 | `SYSADMIN.md` | операционное руководство сисадмина | ✅ | docs/README |
 | `VPS_SMOKE_CHECKLIST.md` | smoke-checklist после деплоя | ✅ | docs/README |
 | `ROLLBACK.md` | откат бота при сбое (≤10 мин) | ✅ | docs/README |
-| `COMPLIANCE_WITH_REGLAMENT_v5.md` | построчная матрица соответствия кода Регламенту v5 | ✅ | Регламент_v6_draft ссылается |
-| `Регламент_v6_draft.md` | дельта v5 → v6, ждёт согласования с юристом | ✅ | автор продукта, юрист АЕМО |
-| `Регламент_v6_draft.docx` | то же содержание для отдачи юристу в `.docx` | ✅ | внешние согласующие (юрист) |
-| `Регламент.docx` | утверждённый Регламент v5 как `.docx` (источник истины compliance-матрицы) | ⚪ | ни одна `.md`-ссылка не упоминает (но это правовой документ) |
+| `COMPLIANCE_WITH_REGLAMENT_v7.md` | верхнеуровневая матрица соответствия кода утверждённому Регламенту v7 (с дельтой и комментариями) | ✅ | docs/README, Регламент_v8_draft, _meta/REGLAMENT_v7_COMPLIANCE |
+| `Регламент_v8_draft.md` | проект Регламента v8 — дельта v7 → v8 с подписями процедур ИТ-обращений, SEC/SACRED инвариантов, доп. cron'ов, шаблонов рассылок | ✅ | автор продукта, юрист АЕМО, docs/README |
+| `Регламент.docx` | утверждённый Регламент v7 как `.docx` (источник истины compliance-матрицы) | ⚪ | docs/README, COMPLIANCE_WITH_REGLAMENT_v7 — правовой документ |
 | `PRIVACY.pdf` | PDF политики, который бот раздаёт жителям | ✅ | infra/Dockerfile COPY, services/policy.py |
 | `Политика.md` | актуальный исходник политики ПДн (источник для generate_privacy_pdf.py) | ✅ | scripts/generate_privacy_pdf.py, docs/README |
-| `Политика_v2.md` | v2 для юр.экспертизы, technical facts на HEAD `082bc9b` | 🟡 | docs/README, COMPLIANCE; статус «ждёт юриста» |
-| `PRIVACY_DRAFT.md` | первый черновик политики ПДн от 2026-05-09 | 🔴 | docs/README, _meta/AUDIT_REPORT упоминают как историю; v2 — преемник |
-| `handover.html` | HTML-handover (предположительно standalone презентация) | 🔴 | НИКТО не ссылается из markdown |
-| `it.html` | HTML для ИТ-аудитории | 🔴 | НИКТО не ссылается из markdown |
+| `Политика_v2.md` | расширенная редакция для юр.экспертизы; технические факты сверены повторно на 2026-05-25 | 🟡 | docs/README, SECURITY; статус «ждёт юриста» |
+| `MAXAPI_UPGRADE_PROCEDURE.md` | пошаговая процедура обновления `maxapi` | ✅ | docs/README, DEPS |
 
 ---
 
@@ -274,6 +273,13 @@
 |---|---|---|---|
 | `AUDIT_REPORT.md` | разовый аудит документов против кода (сводка расхождений → правок) | ⚪ | автор-разработчик; разовый отчёт |
 | `FILE_INVENTORY.md` | этот документ — реестр всех файлов | ✅ | автор-разработчик |
+| `REGLAMENT_v7_COMPLIANCE.md` | детальная build-time матрица соответствия кода Регламенту v7 (98 пунктов с file:line ссылками) | ✅ | docs/README, COMPLIANCE_WITH_REGLAMENT_v7 |
+| `REGLAMENT_v7_GAPS.md` | двусторонний разрыв «есть в Регламенте, нет в коде» / «есть в коде, нет в Регламенте» — источник правок для v8 | ✅ | Регламент_v8_draft, COMPLIANCE_WITH_REGLAMENT_v7 |
+| `ADMIN_MENU_EXPANSION_PROPOSAL.md` | проект расширения админ-меню (UX-предложение) | ⚪ | автор-разработчик |
+| `COVERAGE_GAPS.md` | пробелы в тестовом покрытии с приоритетами P0/P1/P2 | ✅ | docs/README, разработчик |
+| `MAXAPI_INVENTORY.md` | реестр публичных API `maxapi`, фактически используемых в коде | ✅ | docs/README, разработчик |
+| `MAXAPI_INSIGHTS.md` | разовые выводы по `maxapi` (best practices, gotchas) | ⚪ | разработчик |
+| `MAXAPI_UNUSED_FEATURES.md` | возможности `maxapi`, не задействованные в коде (бэклог) | ⚪ | docs/README, разработчик |
 
 ---
 
@@ -295,21 +301,18 @@
 
 ---
 
-## Кандидаты на УДАЛЕНИЕ
+## Выполнено в зачистке 2026-05-25
 
-### 🔴 Безусловно удаляемые
+### 🔴 Удалены через `git rm`
 
-1. **`_local-backup/PRODUCT_BRIEF_internal.md`** — закоммичен ДО появления правила в `.gitignore`. Файл противоречит собственному ignore-pattern. Никто не ссылается. Сам бриф — продуктовый think-piece от 2026-05-07 (имя бота, логотип, оценка стоимости) — можно держать локально, в репо ему не место. **Действие:** `git rm`, в чистом виде уехать в `_local-backup/` локально (уже игнорится).
+1. **`_local-backup/PRODUCT_BRIEF_internal.md`** — закоммичен ДО появления правила в `.gitignore`. Противоречил собственному ignore-pattern, никто не ссылался. Сам бриф (имя бота, логотип, оценка стоимости от 2026-05-07) остался локально в `_local-backup/`, который игнорится.
+2. **`docs/handover.html`** — 57 632 байта HTML, дублировал `SYSADMIN.md` / `RUNBOOK.md` / `SETUP.md`. Никаких живых ссылок.
+3. **`docs/it.html`** — 111 283 байта HTML, дубликат `RUNBOOK.md` для ИТ. Никаких живых ссылок.
+4. **`docs/PRIVACY_DRAFT.md`** — первая редакция от 2026-05-09. Преемник — `docs/Политика_v2.md`. Ссылки в `docs/README.md`, `docs/SECURITY.md`, `docs/Политика_v2.md` обновлены на актуальные документы. Упоминания в `docs/archive/CHAT_AUDIT.md` и `docs/archive/DOC_AUDIT.md` сохранены как часть исторического архива.
 
-2. **`docs/handover.html`** — 57632 байта HTML-handover. Никаких ссылок из `docs/README.md`, `docs/*.md`, `README.md`. По имени дублирует роль `SYSADMIN.md` / `RUNBOOK.md` / `SETUP.md`. Похоже на разовый артефакт. **Действие:** `git rm`, если нужен — пересобирать из markdown.
+### 🟢 Закреплены как оставленные намеренно
 
-3. **`docs/it.html`** — 111283 байта HTML, дубликат роли `RUNBOOK.md` для ИТ. Не упоминается ни в одном markdown. **Действие:** `git rm`.
-
-4. **`docs/PRIVACY_DRAFT.md`** — первая редакция от 2026-05-09. Преемник — `docs/Политика_v2.md` (явно заявлен как «предыдущая версия — `docs/PRIVACY_DRAFT.md`»). Преемник перешагнул draft. **Действие:** `git rm`, в `docs/README.md` оставить ссылку только на v2 и `Политика.md`.
-
-### 🟡 Удалять с оговорками
-
-5. **`docs/Регламент.docx`** — НЕ ссылается ни из одного md. Но это **правовой документ** (утверждённый Регламент v5), формально нужен для compliance-аудита. Не удалять — переместить в `docs/_meta/` или добавить ссылку из `COMPLIANCE_WITH_REGLAMENT_v5.md`.
+- **`docs/Регламент.docx`** — утверждённый Регламент v7 (правовой документ). Машиночитаемое извлечение поддерживается в `docs/_extracted/REGLAMENT_v7_FULL.md`, ссылки из `docs/README.md` и `docs/COMPLIANCE_WITH_REGLAMENT_v7.md` добавлены.
 
 ### ⚪ Кандидаты на удаление, которые НЕЛЬЗЯ удалять
 
@@ -322,19 +325,19 @@
 
 ### P0 — критично
 
-1. **`docs/Политика_v2.md`** — статус «версия 2 для юр.экспертизы, на HEAD `082bc9b`». С тех пор сильно изменился код (PR #50, swarm reviews, DDD pivot 0017). Технические факты в v2 могут разойтись с текущим поведением. **Действие:** актуализировать «technical facts соответствуют коду на HEAD» под новый коммит **или** явно подтвердить «факты валидны», иначе юрист получит просроченный документ.
+1. **`docs/Политика_v2.md`** — заголовок и статус обновлены 2026-05-25 (технические факты повторно сверены после PR SACRED/SEC #1-9, PR #74-77, новых отклонений нет). Содержательно остаётся «ждёт юриста». Если в коде появятся новые поля ПДн или поменяется retention — обновить разделы 2 и 7 ещё раз.
 
-2. **`docs/PRD.md`** — заявлен как «синхронизирован с фактическим поведением модулей `keyboards.py`, `handlers/*.py`...» — после РР пиков, refactor'а handlers/admin_*, DDD pivot нужно перепроверить Ф-5/ИК-1/приёмочные критерии. AUDIT_REPORT уже фиксировал расхождения; теперь добавились новые.
+2. **`docs/PRD.md`** — нужна сверка Ф-5/ИК-1/приёмочных критериев после DDD pivot (event-log карточки) и серий SACRED/SEC фиксов. Сделано частично в этой итерации; остатки — пройти все Ф-N по списку и сверить с фактом.
 
 ### P1 — высокий приоритет
 
-3. **`docs/HOW_IT_WORKS.md`** — описывает «10 состояний DialogState». После 0017 (last_admin_card_mid) могла появиться новая семантика event-log карточек, в HOW_IT_WORKS нужно обновить раздел про admin card.
+3. **`docs/HOW_IT_WORKS.md`** — раздел про admin card должен описывать новый event-log поток (миграция 0017 `last_admin_card_mid` + DDD pivot, freshness-rule учитывает сообщения жителя в личке и оператора в группе).
 
-4. **`docs/RUNBOOK.md`** — самый ходовой документ. Команды `/op_help`, лимиты, cron-jobs — нужно сверить после PR последних 2 недель (broadcast_templates, SEC-фиксы).
+4. **`docs/RUNBOOK.md`** — сверить команды `/op_help`, лимиты, cron-jobs (broadcast_templates, SEC-фиксы 1-9, SACRED 1-6, новая систd-юнит для автозапуска).
 
-5. **`docs/COPY.md`** — последняя проверка 2026-05-14. С тех пор тексты в `texts.py` и `card_format.py` могли сдвинуться (intermediate-reply, followup → admin-card).
+5. **`docs/COPY.md`** — последняя проверка 2026-05-14. С тех пор тексты в `texts.py` и `card_format.py` сдвинулись (intermediate-reply, followup → admin-card, новые admin-events уведомления).
 
-6. **`docs/COMPLIANCE_WITH_REGLAMENT_v5.md`** — пора превратить в `_v6.md` (после согласования v6).
+6. **`docs/COMPLIANCE_WITH_REGLAMENT_v7.md`** — переименован 2026-05-25. После утверждения v8 повторить процедуру (`_v8.md`).
 
 ### P2 — фоновое
 
@@ -342,9 +345,9 @@
 
 8. **`aemr-bot-index.md`** — авто-генерируется. Обновится сам после следующего push в main. Раздувает diff'ы (55K строк), но это сознательно.
 
-9. **`docs/SECURITY.md`** — добавить упоминания всех SEC-фиксов (SEC #1..#9), которые закрыли в последние недели — сейчас документ их не перечисляет.
+9. **`docs/SECURITY.md`** — добавить упоминания всех SEC-фиксов (SEC #1..#9) и SACRED #1..#6, которые закрыли в последние недели — сейчас документ их не перечисляет.
 
-10. **`docs/RUNBOOK_PDN_ERASURE.md`** — синхронизировать с `auto_erase_pdn_retention` cron-action (название в audit_log) и erase auto-close открытых обращений (P1 #21).
+10. **`docs/RUNBOOK_PDN_ERASURE.md`** — обновлён 2026-05-25: добавлена секция «Команды и автоматизированный канал» с тремя `audit_log.action` (`erase` / `self_erase` / `auto_erase_pdn_retention`) и блок «Автозакрытие открытых обращений при ручном `/erase`» (P1 #21).
 
 ---
 
@@ -355,3 +358,5 @@
 - Все 9 seed-файлов используются (читаются `services/settings_store.py` или `services/calendar_ru.py` / `services/geo.py`).
 - `infra/.env` в `.gitignore`, не в `git ls-files` — корректно. На репо влияет только `.env.example`.
 - `aemr-bot.egg-info/` (в `bot/`) — артефакт `pip install -e`, в `.gitignore`. Не трогать.
+- `infra/aemr-bot.service` + `scripts/install-systemd-autostart.sh` — новая страховка для автозапуска бота после reboot VPS (см. SYSADMIN.md §12a).
+- `docs/_meta/REGLAMENT_v7_GAPS.md` + `docs/Регламент_v8_draft.md` — пара документов для подготовки следующей версии Регламента: gap-список → нормативные правки.

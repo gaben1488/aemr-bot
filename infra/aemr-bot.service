@@ -1,0 +1,81 @@
+[Unit]
+# Systemd-юнит для автозапуска бота AEMR после перезагрузки VPS.
+#
+# Зачем нужен. Docker-демон сам по себе на Linux перезагружается через
+# свой собственный systemd-юнит (docker.service). Контейнеры с
+# политикой `restart: unless-stopped` действительно поднимаются вместе
+# с docker.service. Однако если по какой-то причине контейнеры были
+# в состоянии `down` (например, после ручного `docker compose down`
+# или после неуспешного апгрейда), сами они уже не поднимутся: docker
+# восстанавливает только те контейнеры, которые были запущены
+# на момент остановки демона.
+#
+# Этот юнит добавляет вторую страховку. Он явно запускает
+# `docker compose up -d` для проекта aemr-bot после старта системы.
+# Это идемпотентная операция: если контейнеры уже подняты — ничего
+# не меняется; если упали — поднимутся.
+#
+# Установка (один раз на VPS):
+#   sudo cp /home/aemr/aemr-bot/infra/aemr-bot.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable aemr-bot.service
+#   sudo systemctl start aemr-bot.service
+#
+# Проверка:
+#   sudo systemctl status aemr-bot.service
+#   sudo systemctl is-enabled aemr-bot.service     # enabled
+#   sudo journalctl -u aemr-bot.service -n 50      # последние записи
+#
+# После reboot:
+#   sudo reboot
+#   ssh aemr@193.233.244.217
+#   docker compose ps                              # должны быть Up
+#
+# Откат:
+#   sudo systemctl disable aemr-bot.service
+#   sudo systemctl stop aemr-bot.service
+#   sudo rm /etc/systemd/system/aemr-bot.service
+#   sudo systemctl daemon-reload
+#
+Description=AEMR Bot — обратная связь Администрации Елизовского МО в MAX
+Documentation=https://github.com/gaben1488/aemr-bot
+
+# Ждём пока поднимется docker-демон и сеть.
+Requires=docker.service network-online.target
+After=docker.service network-online.target
+
+[Service]
+# Тип oneshot + RemainAfterExit=true — юнит «отработал и запомнил, что
+# выполнен». Дальше docker сам держит контейнеры через
+# restart: unless-stopped из docker-compose.yml.
+Type=oneshot
+RemainAfterExit=true
+
+# Рабочая папка с docker-compose.yml.
+WorkingDirectory=/home/aemr/aemr-bot/infra
+
+# Пользователь, под которым запускать docker-compose. На VPS aemr —
+# это технический аккаунт без sudo, добавлен в группу `docker`.
+# Если у вас другой путь / пользователь — поменяйте.
+User=aemr
+Group=docker
+
+# Поднять контейнеры.
+ExecStart=/usr/bin/docker compose up -d
+
+# Остановить контейнеры при `systemctl stop aemr-bot`.
+ExecStop=/usr/bin/docker compose down
+
+# Если контейнеры не поднялись с первого раза (например, сетевой пик
+# при старте VPS) — попробуй ещё 2 раза с паузой 30 секунд.
+Restart=on-failure
+RestartSec=30s
+
+# Логи юнита уходят в journalctl. Отдельный файл не нужен.
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+# Стартовать после достижения целевого состояния «многопользовательский
+# режим» — это стандартный target для долгоживущих сервисов на Linux.
+WantedBy=multi-user.target
