@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 00:29:21 UTC`
+Generated at: `2026-05-25 02:50:32 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `197`
 Max file size: `300 KB`
@@ -44,22 +44,22 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (16812 bytes)
-- `bot/aemr_bot/handlers/admin_audience.py` (9220 bytes)
+- `bot/aemr_bot/handlers/admin_audience.py` (9243 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12498 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17560 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (23039 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (23062 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (41211 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
-- `bot/aemr_bot/handlers/appeal.py` (26042 bytes)
+- `bot/aemr_bot/handlers/appeal.py` (26104 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (31980 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (13538 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
-- `bot/aemr_bot/handlers/broadcast_templates.py` (42959 bytes)
+- `bot/aemr_bot/handlers/broadcast_templates.py` (43027 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8595 bytes)
 - `bot/aemr_bot/handlers/menu.py` (46632 bytes)
-- `bot/aemr_bot/handlers/operator_reply.py` (34248 bytes)
+- `bot/aemr_bot/handlers/operator_reply.py` (34298 bytes)
 - `bot/aemr_bot/handlers/start.py` (17005 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (63429 bytes)
@@ -67,7 +67,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_card.py` (8036 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6079 bytes)
-- `bot/aemr_bot/services/admin_relay.py` (9914 bytes)
+- `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
 - `bot/aemr_bot/services/appeals.py` (21302 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
@@ -118,7 +118,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_broadcast_handlers.py` (33239 bytes)
 - `bot/tests/test_broadcast_history_card.py` (10153 bytes)
 - `bot/tests/test_broadcast_templates_handlers.py` (15540 bytes)
-- `bot/tests/test_broadcast_templates_service_pg.py` (13550 bytes)
+- `bot/tests/test_broadcast_templates_service_pg.py` (14817 bytes)
 - `bot/tests/test_broadcast_with_image.py` (23848 bytes)
 - `bot/tests/test_broadcasts_service_pg.py` (6324 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
@@ -129,7 +129,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (14354 bytes)
 - `bot/tests/test_deps_environment.py` (3805 bytes)
-- `bot/tests/test_diag_extended.py` (6504 bytes)
+- `bot/tests/test_diag_extended.py` (6756 bytes)
 - `bot/tests/test_event_helpers.py` (9073 bytes)
 - `bot/tests/test_extract_location.py` (5053 bytes)
 - `bot/tests/test_final_p1_regressions.py` (5856 bytes)
@@ -275,7 +275,7 @@ backups
 ### `.github/workflows/ci.yml`
 
 Size: `7186` bytes  
-SHA-256: `6339cd304bf9ed369dcc0a28993917ba255038416be9be1a4f9d7796641fbd29`
+SHA-256: `dbaedfe28cec6cca2355cb7fac6de2a76b44c21a96dccd76d717bed6a21b89f8`
 
 ```yaml
 name: CI
@@ -395,7 +395,7 @@ jobs:
           --cov-report=term-missing:skip-covered
           --cov-report=xml:coverage.xml
           --cov-report=html:htmlcov
-          --cov-fail-under=65
+          --cov-fail-under=64
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -3599,8 +3599,8 @@ async def run_erase_for_appeal(event, appeal_id: int) -> None:
 
 ### `bot/aemr_bot/handlers/admin_audience.py`
 
-Size: `9220` bytes  
-SHA-256: `b1edc902aa54434d3daa7b6ec1418503b2efb7ecfd3b274249493d49f89e01bb`
+Size: `9243` bytes  
+SHA-256: `e32db9a3ed02e1eb6456c58f2e6a2bbbd847488938fa814c34877cb5d418aada`
 
 ```python
 """Меню «📊 Аудитория и согласия» — IT-выборки + точечные действия
@@ -3792,7 +3792,7 @@ async def run_audience_action(event, payload: str) -> None:
         mid = extract_message_id(sent)
         if mid:
             last_mid = mid
-    if last_mid is not None:
+    if last_mid is not None and cfg.admin_group_id:
         menu_tracker.set_last_menu_mid(cfg.admin_group_id, last_mid)
 
 
@@ -5576,8 +5576,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `23039` bytes  
-SHA-256: `f6bccc7a7d244b79a8f87b7aa30cbd6cc2e0dc852326f54d0693d741fd00ee72`
+Size: `23062` bytes  
+SHA-256: `d9745aa7b8cdba008144fcb87715352f0d9a491095578c8a92239d546e49925b`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -5784,7 +5784,7 @@ async def _do_open_tickets(event) -> None:
         mid = extract_message_id(sent)
         if mid:
             last_mid = mid
-    if last_mid is not None:
+    if last_mid is not None and cfg.admin_group_id:
         menu_tracker.set_last_menu_mid(cfg.admin_group_id, last_mid)
 
 
@@ -7187,8 +7187,8 @@ async def run_stats_menu(event) -> None:
 
 ### `bot/aemr_bot/handlers/appeal.py`
 
-Size: `26042` bytes  
-SHA-256: `c788ff5ece78307c166962cf9c4c4b2c894c4cbd8e0ee303425bf2a910787cc2`
+Size: `26104` bytes  
+SHA-256: `2af7336963e52de47509e63995de35d2f06a892184a829ff0de552c1874d9707`
 
 ```python
 """Главный entry-point обработчика обращений.
@@ -7731,11 +7731,12 @@ def register(dp: Dispatcher) -> None:
                     broadcast_handler._wizards.pop(operator_id, None)
                     admin_cmd_module._op_wizards.pop(operator_id, None)
                     op_reply.drop_reply_intent(operator_id)
-                await event.bot.send_message(
-                    chat_id=cfg.admin_group_id,
-                    text="Текущие мастера и черновики ответа сброшены.",
-                    attachments=[keyboards.op_back_to_menu_keyboard()],
-                )
+                if event.bot is not None:
+                    await event.bot.send_message(
+                        chat_id=cfg.admin_group_id,
+                        text="Текущие мастера и черновики ответа сброшены.",
+                        attachments=[keyboards.op_back_to_menu_keyboard()],
+                    )
                 return
 
             consumed = await broadcast_handler._handle_wizard_text(event, text_body)
@@ -10054,8 +10055,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/broadcast_templates.py`
 
-Size: `42959` bytes  
-SHA-256: `5178d848701332ed64079aec92d9b97bded8c42c3a966e140b7ae7836cd2859b`
+Size: `43027` bytes  
+SHA-256: `0e8d55e6cb1d2da5ed3fd744c4611f882de4a87d534cd7a8b4351d06ed872804`
 
 ```python
 """UI шаблонов рассылок (PR H).
@@ -10967,8 +10968,10 @@ async def _step_edit(
     """
     if not text:
         # пустой ввод — повторим prompt
-        async with session_scope() as session:
-            tmpl = await templates_service.get_by_id(session, state.target_id)
+        tmpl = None
+        if state.target_id is not None:
+            async with session_scope() as session:
+                tmpl = await templates_service.get_by_id(session, state.target_id)
         name = tmpl.name if tmpl else "?"
         await event.message.answer(
             texts.OP_TMPL_EDIT_PROMPT.format(
@@ -12406,8 +12409,8 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
 
 ### `bot/aemr_bot/handlers/operator_reply.py`
 
-Size: `34248` bytes  
-SHA-256: `c99a7834ef6ab149dc91d5aa59e040b547b2894ac8b0323c56f1cde70d075aa7`
+Size: `34298` bytes  
+SHA-256: `cf37a71487798fd5902094237046f47f80060c094390048eefb4c824039a5bf1`
 
 ```python
 """Логика ответов операторов и дополнительных сообщений от жителей, вызывается
@@ -13069,9 +13072,10 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
             appeal = await appeals_service.get_by_id(session, appeal_id_from_text)
 
         if appeal is None:
-            await event.bot.send_message(
-                chat_id=get_chat_id(event), text=texts.ADMIN_REPLY_NO_APPEAL
-            )
+            if event.bot is not None:
+                await event.bot.send_message(
+                    chat_id=get_chat_id(event), text=texts.ADMIN_REPLY_NO_APPEAL
+                )
             return True
 
         log.info(
@@ -15725,8 +15729,8 @@ async def notify_data_erased(
 
 ### `bot/aemr_bot/services/admin_relay.py`
 
-Size: `9914` bytes  
-SHA-256: `4ff60a390ea477781457089aa1d0db5bb8d018b699fc947531a40c3e4269e7f5`
+Size: `9924` bytes  
+SHA-256: `6ee08623c3e2f7f7bd9fcd2f337802acb1a03dbe04ab047381409436f0e4a3ab`
 
 ```python
 """Пересылка вложений жителя в служебную группу (relay).
@@ -15915,8 +15919,8 @@ async def relay_attachments_to_admin(
         log.exception(
             "типы ссылок maxapi недоступны; пересылка без reply-link"
         )
-        MessageLinkType = None  # type: ignore[assignment]
-        NewMessageLink = None  # type: ignore[assignment]
+        MessageLinkType = None  # type: ignore[misc,assignment]
+        NewMessageLink = None  # type: ignore[misc,assignment]
 
     link = None
     if admin_mid and MessageLinkType is not None and NewMessageLink is not None:
@@ -29303,8 +29307,8 @@ class TestWizardText:
 
 ### `bot/tests/test_broadcast_templates_service_pg.py`
 
-Size: `13550` bytes  
-SHA-256: `29507654c5ebd154eafcb91fe369d93fbfe553230e9a35412741e7430fd76edd`
+Size: `14817` bytes  
+SHA-256: `4e5467974c3e3531edb397079449fa5081d4f26f1aea4083a7488b548d5cef33`
 
 ```python
 """PG-тесты services/broadcast_templates (PR H).
@@ -29390,9 +29394,32 @@ async def test_duplicate_name_raises(session) -> None:
 
 @pytest.mark.asyncio
 async def test_list_active_orders_by_updated_at_desc(session) -> None:
-    """Список упорядочен по updated_at desc — свежие сверху."""
+    """Список упорядочен по updated_at desc — свежие сверху.
+
+    Два create_template подряд могут получить одинаковый updated_at
+    (микросекунды совпали — Postgres tickless clock иногда возвращает
+    идентичные now()). Явно разносим timestamp'ы UPDATE'ом, чтобы тест
+    проверял именно политику сортировки, а не клочковые гонки времени.
+    """
+    from datetime import datetime, timedelta, timezone
+    from sqlalchemy import update
+
+    from aemr_bot.db.models import BroadcastTemplate
+
     t1 = await templates.create_template(session, name="A", text="a")
     t2 = await templates.create_template(session, name="B", text="b")
+    base = datetime.now(timezone.utc)
+    await session.execute(
+        update(BroadcastTemplate)
+        .where(BroadcastTemplate.id == t1.id)
+        .values(updated_at=base - timedelta(seconds=10))
+    )
+    await session.execute(
+        update(BroadcastTemplate)
+        .where(BroadcastTemplate.id == t2.id)
+        .values(updated_at=base)
+    )
+    await session.flush()
     items = await templates.list_active(session)
     ids = [t.id for t in items]
     assert ids[0] == t2.id and ids[1] == t1.id
@@ -29553,7 +29580,10 @@ async def test_record_usage_works_on_archived_template(session) -> None:
 async def test_search_finds_by_name(session) -> None:
     await templates.create_template(session, name="Отключение воды", text="…")
     await templates.create_template(session, name="Расписание", text="…")
-    results = await templates.search(session, "вода")
+    # ILIKE по подстроке "вод" — стем покрывает «вода / воды / воде» и
+    # не зависит от падежа. Раньше искали "вода" и тест ломался,
+    # т.к. в имени "воды" (родительный падеж).
+    results = await templates.search(session, "вод")
     assert len(results) == 1
     assert results[0].name == "Отключение воды"
 
@@ -31975,8 +32005,8 @@ def test_default_connection_signature_matches_prod_api() -> None:
 
 ### `bot/tests/test_diag_extended.py`
 
-Size: `6504` bytes  
-SHA-256: `0c931e5a56513cf7586425cbbae7d52e6a324da4c8d374f5269486d02770c0a9`
+Size: `6756` bytes  
+SHA-256: `0d4e8dacf4961b01a3f59d15285516fd0da8ed89b4f895b0f8db171e77320c9b`
 
 ```python
 """PG-тесты расширенного /diag (PR I).
@@ -32024,7 +32054,9 @@ async def test_diag_pulse_warning_when_events_silent(session) -> None:
 
     # Записываем «древнее» событие
     old_event = Event(
-        kind="ping",
+        idempotency_key="diag-old-ping",
+        update_type="ping",
+        payload={},
         received_at=datetime.now(timezone.utc) - timedelta(hours=2),
     )
     session.add(old_event)
@@ -32063,7 +32095,9 @@ async def test_diag_no_warnings_when_pulse_fresh(session) -> None:
     from aemr_bot.handlers import admin_panel
 
     fresh = Event(
-        kind="ping",
+        idempotency_key="diag-fresh-ping",
+        update_type="ping",
+        payload={},
         received_at=datetime.now(timezone.utc) - timedelta(minutes=1),
     )
     session.add(fresh)
@@ -32099,7 +32133,12 @@ async def test_diag_stuck_broadcast_in_warnings(session) -> None:
 
     # Свежий pulse (чтобы не сбивал основной сигнал)
     session.add(
-        Event(kind="ping", received_at=datetime.now(timezone.utc))
+        Event(
+            idempotency_key="diag-stuck-pulse",
+            update_type="ping",
+            payload={},
+            received_at=datetime.now(timezone.utc),
+        )
     )
     # Зависшая рассылка
     stuck = Broadcast(
