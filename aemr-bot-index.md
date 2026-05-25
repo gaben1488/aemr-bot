@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 05:16:38 UTC`
+Generated at: `2026-05-25 07:18:59 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `199`
+Indexed files: `210`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -40,10 +40,10 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/db/alembic/versions/0017_appeals_last_card_mid.py` (1920 bytes)
 - `bot/aemr_bot/db/models.py` (20102 bytes)
 - `bot/aemr_bot/db/session.py` (2764 bytes)
-- `bot/aemr_bot/handlers/__init__.py` (2960 bytes)
+- `bot/aemr_bot/handlers/__init__.py` (5882 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
-- `bot/aemr_bot/handlers/admin_appeal_ops.py` (20206 bytes)
+- `bot/aemr_bot/handlers/admin_appeal_ops.py` (21016 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9243 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12498 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
@@ -55,20 +55,21 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_funnel.py` (32714 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (11640 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (45558 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8595 bytes)
-- `bot/aemr_bot/handlers/menu.py` (47850 bytes)
+- `bot/aemr_bot/handlers/menu.py` (48371 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (39614 bytes)
 - `bot/aemr_bot/handlers/start.py` (17005 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (63429 bytes)
-- `bot/aemr_bot/main.py` (19076 bytes)
+- `bot/aemr_bot/main.py` (20473 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
-- `bot/aemr_bot/services/admin_card.py` (10110 bytes)
-- `bot/aemr_bot/services/admin_events.py` (6079 bytes)
+- `bot/aemr_bot/services/admin_bus.py` (6046 bytes)
+- `bot/aemr_bot/services/admin_card.py` (12156 bytes)
+- `bot/aemr_bot/services/admin_events.py` (6489 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
-- `bot/aemr_bot/services/appeals.py` (25437 bytes)
+- `bot/aemr_bot/services/appeals.py` (27094 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
@@ -100,9 +101,10 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/_helpers.py` (5713 bytes)
 - `bot/tests/conftest.py` (1882 bytes)
 - `bot/tests/test_admin_appeal_ops.py` (29769 bytes)
+- `bot/tests/test_admin_bus.py` (8613 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
 - `bot/tests/test_admin_card_detached_safety.py` (8432 bytes)
-- `bot/tests/test_admin_card_render.py` (13858 bytes)
+- `bot/tests/test_admin_card_render.py` (17118 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
 - `bot/tests/test_admin_events_descriptor.py` (5856 bytes)
 - `bot/tests/test_admin_handlers_small.py` (21842 bytes)
@@ -116,7 +118,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_appeals_service_pg.py` (15229 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
 - `bot/tests/test_bot_init_concurrency.py` (2821 bytes)
-- `bot/tests/test_broadcast_handlers.py` (33239 bytes)
+- `bot/tests/test_broadcast_handlers.py` (35207 bytes)
 - `bot/tests/test_broadcast_history_card.py` (10153 bytes)
 - `bot/tests/test_broadcast_templates_handlers.py` (16676 bytes)
 - `bot/tests/test_broadcast_templates_service_pg.py` (14817 bytes)
@@ -140,7 +142,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_handlers_auth_broadcast.py` (6976 bytes)
 - `bot/tests/test_handlers_common.py` (3572 bytes)
 - `bot/tests/test_handlers_funnel.py` (9458 bytes)
-- `bot/tests/test_handlers_menu.py` (26825 bytes)
+- `bot/tests/test_handlers_menu.py` (26853 bytes)
 - `bot/tests/test_handlers_menu_extra.py` (23371 bytes)
 - `bot/tests/test_handlers_operator_reply.py` (34166 bytes)
 - `bot/tests/test_handlers_start.py` (13597 bytes)
@@ -161,7 +163,14 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_uploads_policy_admin_relay.py` (11634 bytes)
 - `bot/tests/test_users_service_pg.py` (16852 bytes)
 - `bot/tests/test_wizard_registry.py` (5268 bytes)
+- `docs/_extracted/REGLAMENT_v5_FULL.md` (79160 bytes)
+- `docs/_meta/ADMIN_MENU_EXPANSION_PROPOSAL.md` (27260 bytes)
 - `docs/_meta/AUDIT_REPORT.md` (16895 bytes)
+- `docs/_meta/COVERAGE_GAPS.md` (26592 bytes)
+- `docs/_meta/FILE_INVENTORY.md` (31885 bytes)
+- `docs/_meta/MAXAPI_INVENTORY.md` (14559 bytes)
+- `docs/_meta/MAXAPI_UNUSED_FEATURES.md` (12198 bytes)
+- `docs/_meta/REGLAMENT_v5_COMPLIANCE.md` (35840 bytes)
 - `docs/archive/CHAT_AUDIT.md` (20468 bytes)
 - `docs/archive/COMPETITIVE_BRIEF.md` (19867 bytes)
 - `docs/archive/COMPETITIVE_DEEP_DIVE.md` (12346 bytes)
@@ -179,6 +188,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/handover.html` (56417 bytes)
 - `docs/HOW_IT_WORKS.md` (25221 bytes)
 - `docs/it.html` (109792 bytes)
+- `docs/MAXAPI_UPGRADE_PROCEDURE.md` (11569 bytes)
 - `docs/PRD.md` (65878 bytes)
 - `docs/PRIVACY_DRAFT.md` (24293 bytes)
 - `docs/README.md` (3465 bytes)
@@ -193,7 +203,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/Политика.md` (6113 bytes)
 - `docs/Политика_v2.md` (28793 bytes)
 - `docs/Регламент_v6_draft.md` (21119 bytes)
-- `infra/.env.example` (13531 bytes)
+- `infra/.env.example` (62450 bytes)
 - `infra/docker-compose.yml` (5867 bytes)
 - `infra/Dockerfile` (1655 bytes)
 - `infra/nginx/feedback.conf` (976 bytes)
@@ -201,6 +211,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `REPO_INDEX.md` (2264 bytes)
 - `scripts/build_geo_database.py` (9300 bytes)
 - `scripts/cross_verify_geo.py` (12519 bytes)
+- `scripts/extract_reglament.py` (5717 bytes)
 - `scripts/generate_privacy_pdf.py` (5519 bytes)
 - `scripts/make_repo_index.py` (8521 bytes)
 - `scripts/reset_test_data.sql` (2213 bytes)
@@ -2988,20 +2999,21 @@ async def session_scope() -> AsyncIterator[AsyncSession]:
 
 ### `bot/aemr_bot/handlers/__init__.py`
 
-Size: `2960` bytes  
-SHA-256: `96cd4610bb98b45e1a32141a9ce1050d510f76611ace78ec47781951f4df1f9d`
+Size: `5882` bytes  
+SHA-256: `9fa385cd9392282eb373c313d47e57fc71d59897aa9fc854797c3f30fcb3c728`
 
 ```python
 from maxapi import Dispatcher
 from maxapi.filters.middleware import BaseMiddleware
 
+from aemr_bot.config import settings as cfg
 from aemr_bot.handlers import (
     admin_commands,
     appeal,
     broadcast,
     start,
 )
-from aemr_bot.services import idempotency
+from aemr_bot.services import admin_bus, idempotency
 
 
 class IdempotencyMiddleware(BaseMiddleware):
@@ -3010,6 +3022,45 @@ class IdempotencyMiddleware(BaseMiddleware):
     async def __call__(self, handler, event_object, data):
         if not await idempotency.claim(event_object):
             return None
+        return await handler(event_object, data)
+
+
+class AdminChatActivityMiddleware(BaseMiddleware):
+    """Двигает `menu_tracker[admin_group_id]` на mid входящего сообщения.
+
+    **Зачем.** Freshness-rule в `admin_card.render` и `send_or_edit_screen`
+    решает «edit vs send_new» сравнением `callback_mid == tracker`. Если
+    оператор написал в admin chat текст / стикер / голос, физический чат
+    сдвинулся вниз, но tracker остался на старой карточке. Любой
+    следующий тап оператора на карточку выше — freshness false-positive
+    «эта карточка ещё последняя» → edit поверх. Этот middleware ловит
+    каждое входящее сообщение в admin chat и сдвигает tracker заранее.
+
+    Срабатывает на любой `MessageCreated` событие в чате с `chat_id ==
+    ADMIN_GROUP_ID`. Применяется ПОСЛЕ idempotency-проверки (т.е. на
+    реально новые события, не дубли) и ДО handlers — чтобы commit
+    последствия выполнения (например, тот же handler шлёт ответ через
+    `admin_bus.send`) не перетёрли свежий incoming-mid.
+
+    Outgoing-сообщения бота tracker'ом ведает `services/admin_bus.send`.
+    """
+
+    async def __call__(self, handler, event_object, data):
+        if cfg.admin_group_id:
+            try:
+                from aemr_bot.utils.event import get_chat_id
+
+                if get_chat_id(event_object) == cfg.admin_group_id:
+                    # Извлекаем mid из event.message.body.mid (для
+                    # MessageCreated). extract_message_id написан для
+                    # ответа send_message, но структура совместима.
+                    body = getattr(getattr(event_object, "message", None), "body", None)
+                    mid = getattr(body, "mid", None)
+                    if mid:
+                        admin_bus.note_incoming_admin_message(str(mid))
+            except Exception:
+                # Tracker-sync не должен ломать pipeline — это best-effort.
+                pass
         return await handler(event_object, data)
 
 
@@ -3045,7 +3096,12 @@ def register_handlers(dp: Dispatcher) -> None:
     маршрутизируются из `appeal.on_callback` / `appeal.on_message`, поэтому
     отдельные register-заглушки для них не нужны.
     """
+    # Порядок outer middlewares важен: idempotency первым (отбрасывает
+    # дубли до tracker-sync — иначе MAX retry того же события смещал бы
+    # tracker дважды). Activity middleware вторым — после dedupe двигает
+    # tracker на реально новое сообщение в admin chat.
     _attach_outer_middleware(dp, IdempotencyMiddleware())
+    _attach_outer_middleware(dp, AdminChatActivityMiddleware())
     start.register(dp)
     admin_commands.register(dp)
     broadcast.register(dp)
@@ -3208,8 +3264,8 @@ async def current_user(
 
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
-Size: `20206` bytes  
-SHA-256: `af3e28e4080b7be10fc5c31360eef0cf5bb213d149c3d169296ae2f0ed10f916`
+Size: `21016` bytes  
+SHA-256: `4243771c5173037a0202017016070fbfd1d741767fce9b8c53a6b812b00ef197`
 
 ```python
 """Действия оператора над конкретным обращением.
@@ -3414,6 +3470,12 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
             f"уточнения).\n"
         )
     )
+    # SACRED #4: prompt-ввод НЕ должен edit'нуть карточку обращения.
+    # send_or_edit_screen без force_new_message edit'нул бы admin appeal
+    # card (tracker всё ещё на ней после прошлого render). Карточка с
+    # timeline'ом превратилась бы в input-prompt — содержимое потеряно.
+    # force_new_message=True гарантирует, что prompt всегда уходит
+    # отдельным новым сообщением, а карточка остаётся видимой выше.
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
@@ -3423,6 +3485,7 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
             f"следующее сообщение в этот чат, либо «Отменить» ниже."
         ),
         attachments=[kbds.cancel_reply_intent_keyboard()],
+        force_new_message=True,
     )
 
 
@@ -3437,12 +3500,14 @@ async def run_reply_cancel(event) -> None:
         return
     cancelled_appeal = op_reply.drop_reply_intent(operator_id)
     await ack_callback(event)
+    # SACRED #4: cancel-сообщение тоже отдельным new (не trample prompt).
     if cancelled_appeal is not None:
         await send_or_edit_screen(
             event,
             chat_id=cfg.admin_group_id,
             text=f"Ответ на обращение #{cancelled_appeal} отменён.",
             attachments=[kbds.op_back_to_menu_keyboard()],
+            force_new_message=True,
         )
     else:
         await send_or_edit_screen(
@@ -3450,6 +3515,7 @@ async def run_reply_cancel(event) -> None:
             chat_id=cfg.admin_group_id,
             text="Мастер ответа уже закрыт.",
             attachments=[kbds.op_back_to_menu_keyboard()],
+            force_new_message=True,
         )
 
 
@@ -9111,8 +9177,8 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `44196` bytes  
-SHA-256: `deb902f80302175023b5cf6d7c57813bb75cc1ae7b96583d1efaca7562e105b6`
+Size: `45558` bytes  
+SHA-256: `d624feb5ac7a04c41514b2a62e0d12408c554b10b5ef99902ead6868875daf25`
 
 ```python
 """Мастер рассылок и цикл их отправки.
@@ -9662,16 +9728,16 @@ async def _resolve_admin_progress_message(
     """
     if admin_mid is not None:
         return admin_mid
-    sent = None
-    try:
-        sent = await bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=total),
-            attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
-        )
-    except Exception:
-        log.exception("failed to post broadcast start in admin group")
-    return extract_message_id(sent)
+    # SACRED #1: через admin_bus — двигает tracker на mid стартовой
+    # карточки прогресса, чтобы прогресс-edit'ы потом могли проверить
+    # freshness (admin_mid == tracker).
+    from aemr_bot.services import admin_bus
+
+    return await admin_bus.send(
+        bot,
+        text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=total),
+        attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
+    )
 
 
 async def _send_final_summary(
@@ -9684,8 +9750,21 @@ async def _send_final_summary(
     cancelled: bool,
     admin_mid: str | None,
 ) -> None:
-    """Опубликовать итог рассылки: правкой карточки прогресса либо, если
-    правка не удалась / карточки не было, отдельным сообщением."""
+    """Опубликовать итог рассылки СВЕЖИМ сообщением через admin_bus.
+
+    SACRED #2: финальная сводка — это event-карточка, иммутабельная по
+    смыслу (запись о факте «рассылка завершена с такими-то цифрами»).
+    Раньше код пытался edit'нуть progress-карточку (admin_mid) — но за
+    время рассылки выше неё в чате могли появиться pulse, ответы
+    оператора, другие события. edit на сдвинутой вверх карточке
+    оператор не увидит. И сам факт edit нарушает event-log семантику.
+
+    Решение: всегда send_new через admin_bus.send (двигает tracker).
+    Параметр `admin_mid` оставлен в сигнатуре ради совместимости
+    с вызывающими; теперь используется только в логе.
+    """
+    from aemr_bot.services import admin_bus
+
     final_text = _build_final_text(
         broadcast_id=broadcast_id,
         total=total,
@@ -9693,32 +9772,16 @@ async def _send_final_summary(
         failed=failed,
         cancelled=cancelled,
     )
-    if admin_mid is not None:
-        try:
-            await bot.edit_message(
-                message_id=admin_mid,
-                text=final_text,
-                attachments=[keyboards.op_back_to_menu_keyboard()],
-            )
-            return
-        except Exception:
-            log.exception(
-                "failed to edit final progress message for broadcast #%s",
-                broadcast_id,
-            )
-    # Запасной путь: edit_message не сработал, либо admin_mid не было.
-    # Публикуем итог отдельным сообщением, чтобы оператор всё равно
-    # увидел результат.
-    try:
-        await bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=final_text,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
-    except Exception:
-        log.exception(
-            "failed to post fallback final summary for broadcast #%s",
-            broadcast_id,
+    new_mid = await admin_bus.send(
+        bot,
+        text=final_text,
+        attachments=[keyboards.op_back_to_menu_keyboard()],
+    )
+    if new_mid is None:
+        log.warning(
+            "broadcast #%s: final summary НЕ опубликован (admin_bus вернул None). "
+            "Прежний progress-mid=%s, оператор увидит результат в /broadcast list.",
+            broadcast_id, admin_mid,
         )
 
 
@@ -9805,25 +9868,38 @@ async def _run_send_loop(
                 if status == BroadcastStatus.CANCELLED.value:
                     cancelled = True
                     break
+                # SACRED #2: progress edit ТОЛЬКО если карточка прогресса
+                # всё ещё последнее сообщение бота в admin chat. Иначе
+                # её сдвинуло pulse / ответ оператора / другое событие
+                # выше — оператор внизу edit'а не увидит. На таком тике
+                # progress скипаем, finalize всё равно опубликует
+                # правильный итог свежим сообщением.
                 if admin_mid is not None:
-                    try:
-                        await bot.edit_message(
-                            message_id=admin_mid,
-                            text=_format_progress(
-                                broadcast_id=broadcast_id,
-                                total=total,
-                                delivered=delivered,
-                                failed=failed,
-                            ),
-                            attachments=[
-                                keyboards.broadcast_stop_keyboard(broadcast_id)
-                            ],
-                        )
-                    except Exception:
-                        log.exception(
-                            "failed to edit progress message for broadcast #%s",
-                            broadcast_id,
-                        )
+                    from aemr_bot.utils import menu_tracker
+
+                    if (
+                        cfg.admin_group_id
+                        and menu_tracker.get_last_menu_mid(cfg.admin_group_id)
+                        == admin_mid
+                    ):
+                        try:
+                            await bot.edit_message(
+                                message_id=admin_mid,
+                                text=_format_progress(
+                                    broadcast_id=broadcast_id,
+                                    total=total,
+                                    delivered=delivered,
+                                    failed=failed,
+                                ),
+                                attachments=[
+                                    keyboards.broadcast_stop_keyboard(broadcast_id)
+                                ],
+                            )
+                        except Exception:
+                            log.exception(
+                                "failed to edit progress message for broadcast #%s",
+                                broadcast_id,
+                            )
 
             await asyncio.sleep(rate_delay)
     finally:
@@ -11533,8 +11609,8 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 
 ### `bot/aemr_bot/handlers/menu.py`
 
-Size: `47850` bytes  
-SHA-256: `54a8bae8ff12380e0ce80e250f7da4ec7bddef184bea5c05e838233737779944`
+Size: `48371` bytes  
+SHA-256: `35ef26fb5fb69b0a951b9a9e899c3cf7f5f1f2d89fcb5e8dafae763619a72ddc`
 
 ```python
 import logging
@@ -12227,7 +12303,12 @@ async def do_consent_revoke(event, max_user_id: int):
     from aemr_bot.services import operators as ops_service
 
     async with current_user(max_user_id) as (session, user):
-        active = await appeals_service.list_unanswered(session)
+        # SACRED #5: list_unanswered_with_messages (не list_unanswered),
+        # потому что ниже мы публикуем `admin_card.render(appeal)` для
+        # каждого открытого. Без selectinload(messages) timeline в
+        # карточке окажется пустым — это была причина бага «#44 без
+        # истории переписки».
+        active = await appeals_service.list_unanswered_with_messages(session)
         my_open = [a for a in active if a.user_id == user.id]
         await users_service.revoke_consent(session, max_user_id)
         await ops_service.write_audit(
@@ -12249,14 +12330,15 @@ async def do_consent_revoke(event, max_user_id: int):
     if my_open:
         # Перепубликовать карточки открытых обращений через единый
         # admin_card.render. force_new=True — это явное событие (отзыв
-        # согласия), нужна новая запись внизу чата как маркер. Снапшот
-        # detached-полей: appeal.user уже подгружен, messages пустой
-        # placeholder чтобы избежать lazy-load после закрытия сессии.
+        # согласия), нужна новая запись внизу чата как маркер.
+        #
+        # appeal.user уже подгружен через list_unanswered_with_messages,
+        # messages тоже загружены (selectinload) — НЕ ставим
+        # __dict__.setdefault("messages", []), иначе перезаписали бы
+        # реальные сообщения пустым списком и timeline снова исчез.
         from aemr_bot.services import admin_card as admin_card_service
 
         for appeal in my_open:
-            appeal.user = user
-            appeal.__dict__.setdefault("messages", [])
             await admin_card_service.render(
                 event.bot, appeal, force_new=True
             )
@@ -15241,8 +15323,8 @@ def op_help_keyboard(
 
 ### `bot/aemr_bot/main.py`
 
-Size: `19076` bytes  
-SHA-256: `48412ae76d42d61bdd03fa02cf989b11de2712c9479b0e8f0e7c13ef5df62b85`
+Size: `20473` bytes  
+SHA-256: `87b4d9b391c0c84236fab455891949e4fd1b33639cb4bd837252b4c64b864c74`
 
 ```python
 from __future__ import annotations
@@ -15345,9 +15427,15 @@ def _build_admin_senders(bot: Bot):
     from aemr_bot.services import uploads
 
     async def send_admin_text(text: str):
+        # Идёт через admin_bus, чтобы tracker сдвигался автоматически
+        # после каждого pulse / cron-уведомления / алерта. Иначе
+        # freshness-rule в admin_card.render / send_or_edit_screen
+        # отставала бы от реального состояния чата.
+        from aemr_bot.services import admin_bus
+
         if not settings.admin_group_id:
             return
-        await bot.send_message(chat_id=settings.admin_group_id, text=text)
+        await admin_bus.send(bot, text=text)
 
     async def send_admin_document(filename: str, content: bytes, caption: str = ""):
         if not settings.admin_group_id:
@@ -15367,7 +15455,9 @@ def _build_admin_senders(bot: Bot):
     return send_admin_text, send_admin_document
 
 
-# Обработчик webhook'а регистрируется при загрузке модуля, чтобы dp.init_serve() его подхватил.
+# Обработчик webhook'а регистрируется при загрузке модуля. В polling-режиме
+# (default по проекту) этот блок не активируется. webhook-режим оставлен
+# как dead-but-not-removed для возможного будущего возврата к FastAPI-стеку.
 # По Макс.docx раздел 12 (Quick Start Python webhook):
 #   from maxapi.methods.types.getted_updates import process_update_webhook
 #   @dp.webhook_post('/...') → возвращает 2xx, затем dp.handle(event) обрабатывает событие.
@@ -15603,7 +15693,20 @@ async def main() -> None:
     try:
         if settings.bot_mode == "webhook":
             log.info("Starting in webhook mode at %s", settings.webhook_url)
-            await dp.init_serve(bot, log_level=settings.log_level.lower())
+            # maxapi 1.1 пометил init_serve как deprecated и оставил
+            # тонкую обёртку над handle_webhook (см. dispatcher.py:1476).
+            # Зовём целевой метод напрямую — без DeprecationWarning в
+            # логах и в готовности к будущему удалению init_serve.
+            # `log_level` уходил в AppRunner kwargs и тихо игнорировался,
+            # поэтому не пробрасываем — логгер настраивается через
+            # logging.basicConfig выше.
+            await dp.handle_webhook(
+                bot,
+                host=settings.webhook_host,
+                port=settings.webhook_port,
+                path="/max/webhook",
+                secret=settings.webhook_secret or None,
+            )
         else:
             log.info("Starting in long polling mode")
             await dp.start_polling(bot)
@@ -15626,10 +15729,135 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ```
 
+### `bot/aemr_bot/services/admin_bus.py`
+
+Size: `6046` bytes  
+SHA-256: `79c311b27051a984d2af69baee92564e51b051a77df78718faa384c5fa3c1459`
+
+```python
+"""Единая шина для отправки сообщений в служебную группу (admin chat).
+
+**Зачем существует.** Раньше десятки путей шли в admin chat напрямую через
+`bot.send_message(chat_id=cfg.admin_group_id, ...)` — pulse, admin_events,
+broadcast progress, operator_reply confirmations, retention notifications.
+Каждое такое сообщение физически сдвигает чат вниз, но никто из этих
+путей не обновлял `menu_tracker`. Tracker отставал от реального состояния
+чата, и freshness-rule (`callback_mid == tracker → edit`) врал:
+оператор тапал кнопку на старой карточке, бот edit'ал её на месте далеко
+вверху чата, оператор внизу ничего не видел.
+
+**Решение.** Любая отправка в admin chat теперь идёт через `admin_bus.send`.
+Шина делает три действия атомарно:
+1. `bot.send_message(chat_id=cfg.admin_group_id, ...)`
+2. `extract_message_id(sent)` — достаёт mid из ответа MAX API.
+3. `menu_tracker.set_last_menu_mid(cfg.admin_group_id, mid)` — двигает
+   tracker на свежий mid. После этого любой следующий callback оператора
+   на карточку выше будет иметь `callback_mid != tracker` → freshness
+   корректно вернёт `can_edit=False` → send_new.
+
+**Что НЕ делает шина:**
+- Не интерпретирует attachments / семантику сообщения. Это тонкий
+  wrapper, не бизнес-логика.
+- Не делает retry / circuit-breaker. Это responsibility вызывающего
+  (для broadcast есть `_send_with_retry`, для admin notifications —
+  `_send_admin_text_with_retry` в `services/cron.py`).
+- Не делает freshness-check на edit. Edit'ить через шину нельзя
+  принципиально — карточки с кнопками идут через `admin_card.render`
+  (freshness-aware), карточки меню — через `send_or_edit_screen`
+  (тоже freshness-aware). Шина — для **новых** сообщений.
+
+**Использование:**
+
+```python
+from aemr_bot.services import admin_bus
+
+await admin_bus.send(bot, text="🟢 Pulse: бот живой")
+await admin_bus.send(bot, text=text, attachments=[kb])
+```
+
+**Incoming admin-message hook.** Отдельная функция
+`note_incoming_admin_message(mid)` — вызывается из handler'а на каждое
+новое сообщение в admin chat (operator-text, voice, sticker). Она
+сдвигает tracker на mid входящего сообщения. Это закрывает дыру
+«оператор написал в чат, но tracker по-прежнему на карточке выше —
+следующий тап freshness-mismatch не увидит».
+"""
+from __future__ import annotations
+
+import logging
+
+from aemr_bot.config import settings as cfg
+from aemr_bot.utils import menu_tracker
+from aemr_bot.utils.event import extract_message_id
+
+log = logging.getLogger(__name__)
+
+
+async def send(
+    bot,
+    *,
+    text: str,
+    attachments: list | None = None,
+    link=None,
+) -> str | None:
+    """Отправить сообщение в admin chat + сдвинуть tracker.
+
+    Возвращает mid отправленного сообщения, либо None если ADMIN_GROUP_ID
+    не настроен / send упал.
+
+    Args:
+        bot: maxapi Bot.
+        text: текст сообщения.
+        attachments: опциональный список вложений (клавиатуры, image, etc).
+        link: опциональный NewMessageLink (для reply-цитирования).
+    """
+    if not cfg.admin_group_id:
+        log.warning("admin_bus.send: ADMIN_GROUP_ID не задан, пропускаем")
+        return None
+    kwargs: dict = {"chat_id": cfg.admin_group_id, "text": text}
+    if attachments is not None:
+        kwargs["attachments"] = attachments
+    if link is not None:
+        kwargs["link"] = link
+    try:
+        sent = await bot.send_message(**kwargs)
+    except Exception:
+        log.exception(
+            "admin_bus.send: send_message failed для admin_group_id=%s",
+            cfg.admin_group_id,
+        )
+        return None
+    mid = extract_message_id(sent)
+    if mid:
+        # Атомарный sync: physical chat сдвинулся вниз, tracker должен
+        # отразить это сразу. Иначе следующий callback оператора на
+        # карточку выше получит freshness false-positive.
+        menu_tracker.set_last_menu_mid(cfg.admin_group_id, mid)
+    return mid
+
+
+def note_incoming_admin_message(mid: str | None) -> None:
+    """Зарегистрировать факт входящего сообщения в admin chat.
+
+    Вызывается из dispatch hook на каждый MessageCreated в admin chat
+    (operator-text, sticker, voice, поговорил в чате, ответ свайпом).
+    После этого callback на карточки ВЫШЕ этого сообщения будут идти
+    в send_new (freshness увидит mismatch).
+
+    Если mid не извлёкся (None) — no-op, не падаем. Худшее, что может
+    случиться при пропуске одного incoming-сообщения — следующий
+    operator-callback edit'нет одну карточку на месте, что
+    самокорректируется на следующем outgoing-сообщении бота.
+    """
+    if not cfg.admin_group_id or not mid:
+        return
+    menu_tracker.set_last_menu_mid(cfg.admin_group_id, mid)
+```
+
 ### `bot/aemr_bot/services/admin_card.py`
 
-Size: `10110` bytes  
-SHA-256: `5d65e1f20f6ac86c9a22f60f25c0b6d37dc6dc4fb3ea879ec006ed336b3d59c5`
+Size: `12156` bytes  
+SHA-256: `762827f10f6162252cbcd6248fbb005bedddf432dacbde4630f5f5d95d1eadf9`
 
 ```python
 """Admin appeal card с freshness-rule (унифицированное правило для
@@ -15735,6 +15963,42 @@ async def render(
             appeal.id,
         )
         return None
+
+    # SACRED #6: auto-warm messages для timeline.
+    # `card_format._loaded_messages` намеренно НЕ делает lazy-load (иначе
+    # MissingGreenlet в async-сессии после закрытия). Раньше каждый
+    # вызывающий должен был сам сделать `get_by_id_with_messages` или
+    # выставить `appeal.__dict__["messages"] = []`. Контракт легко
+    # нарушался — например, в `menu.do_consent_revoke` через
+    # `list_unanswered` (без selectinload) timeline терялся, баг #44.
+    #
+    # Теперь render сам подгружает messages, если: (а) это не первая
+    # публикация (на finalize переписки реально нет), (б) `messages`
+    # отсутствует в __dict__ ИЛИ пустой список. На finalize пропускаем —
+    # appeal только что создан, messages=[] корректно.
+    if (
+        not is_first_publication
+        and "messages" not in appeal.__dict__
+        or (
+            not is_first_publication
+            and appeal.__dict__.get("messages") == []
+        )
+    ):
+        try:
+            async with session_scope() as session:
+                fresh = await appeals_service.get_by_id_with_messages(
+                    session, appeal.id
+                )
+            if fresh is not None and fresh.__dict__.get("messages"):
+                # Скопируем messages в исходный appeal-объект
+                # (он остаётся вызывающему, без detach-проблем).
+                appeal.__dict__["messages"] = list(fresh.__dict__["messages"])
+        except Exception:
+            log.debug(
+                "admin_card.render: auto-warm messages для #%s не удалось",
+                appeal.id, exc_info=False,
+            )
+            # Не критично — timeline просто будет пустой, как и было.
 
     # text и attachment_count устойчиво к detached lazy-load.
     # Reliability-pass: сузили `except Exception` до конкретного набора
@@ -15855,8 +16119,8 @@ def _count_attachments(appeal: "Appeal") -> int:
 
 ### `bot/aemr_bot/services/admin_events.py`
 
-Size: `6079` bytes  
-SHA-256: `117b9e3bf8f7b37d6b52cb48c110b09927289623c82c7ab7fb7f590396b76c82`
+Size: `6489` bytes  
+SHA-256: `dc64aa83272220e05259530e68bc746482f1bcb7d9b9eb8489fb407c9d6152d4`
 
 ```python
 """Короткие уведомления в служебную группу о действиях жителя."""
@@ -15874,11 +16138,20 @@ log = logging.getLogger(__name__)
 
 
 async def _send(bot: Any, text: str) -> None:
-    """Отправить служебное уведомление и не ломать действие жителя при сбое MAX."""
+    """Отправить служебное уведомление и не ломать действие жителя при сбое MAX.
+
+    Идёт через admin_bus, чтобы каждое уведомление двигало
+    `menu_tracker[admin_group_id]`. Без этого freshness-check в
+    admin_card.render и send_or_edit_screen после notify_* мог
+    ошибочно edit'нуть карточку, выше которой уже физически лежит
+    уведомление.
+    """
+    from aemr_bot.services import admin_bus
+
     if not cfg.admin_group_id:
         return
     try:
-        await bot.send_message(chat_id=cfg.admin_group_id, text=text)
+        await admin_bus.send(bot, text=text)
     except Exception:
         log.debug("не удалось отправить служебное уведомление", exc_info=True)
 
@@ -16249,8 +16522,8 @@ async def relay_attachments_to_admin(
 
 ### `bot/aemr_bot/services/appeals.py`
 
-Size: `25437` bytes  
-SHA-256: `9c1483205225fc0e981ae2256033e4aad49577537931fce5b05c29afbb55d53d`
+Size: `27094` bytes  
+SHA-256: `57c88f116aa3c82bc3396851fff846925b7c084962c4b68e31ddf61594aec9cd`
 
 ```python
 from datetime import datetime, timedelta, timezone
@@ -16634,10 +16907,44 @@ async def list_unanswered(
     иначе вытащит всё разом и в `_format_appeal_lines` обрежется
     до 10, но БД-запрос уже отдал всё. Для обычной работы 500
     заведомо больше реальной очереди.
+
+    Если планируете дальше рендерить `admin_card.render(appeal)` —
+    используйте `list_unanswered_with_messages` (с догруженной
+    перепиской). Иначе timeline в карточке окажется пустым.
     """
     res = await session.scalars(
         select(Appeal)
         .options(selectinload(Appeal.user))
+        .where(
+            Appeal.status.in_(
+                [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+            )
+        )
+        .order_by(Appeal.created_at)
+        .limit(limit)
+    )
+    return list(res)
+
+
+async def list_unanswered_with_messages(
+    session: AsyncSession, *, limit: int = 500
+) -> list[Appeal]:
+    """То же, что `list_unanswered`, но дополнительно догружает
+    `Appeal.messages` (selectinload).
+
+    SACRED #5: если карточка обращения публикуется в admin chat через
+    `admin_card.render`, нужны загруженные `messages` — без них блок
+    «История переписки» пуст (см. `card_format._loaded_messages` —
+    он намеренно не делает lazy-load, чтобы не падать в async-сессии
+    после её закрытия). Если использовать `list_unanswered` (без
+    messages), карточка #N окажется без переписки.
+
+    Цена: один лишний JOIN на каждый Appeal. На N≤500 (LIMIT) это
+    одно SELECT с messages в одном round-trip через selectinload.
+    """
+    res = await session.scalars(
+        select(Appeal)
+        .options(selectinload(Appeal.user), selectinload(Appeal.messages))
         .where(
             Appeal.status.in_(
                 [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
@@ -24568,6 +24875,223 @@ class TestRunEraseForAppeal:
         assert "не найден" in text.lower()
 ```
 
+### `bot/tests/test_admin_bus.py`
+
+Size: `8613` bytes  
+SHA-256: `fecafdaed9e707bcc3ce831ad0f409884c31a28c36284c8edeb4d8fb25927a1a`
+
+```python
+"""Тесты единой admin_bus и AdminChatActivityMiddleware.
+
+SACRED-fix: гарантирует что любой outgoing/incoming в admin chat
+синхронизирует menu_tracker. Без этого freshness-rule в
+admin_card.render и send_or_edit_screen врёт «эта карточка ещё
+последняя», когда выше в чате уже лежат pulse / ответы операторов.
+"""
+from __future__ import annotations
+
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+
+pytest.importorskip("maxapi", reason="нужен maxapi для admin_bus импорта")
+
+
+@pytest.fixture(autouse=True)
+def _clean_tracker():
+    from aemr_bot.utils import menu_tracker
+
+    menu_tracker.clear_all()
+    yield
+    menu_tracker.clear_all()
+
+
+class TestAdminBusSend:
+    @pytest.mark.asyncio
+    async def test_send_advances_tracker_on_success(self) -> None:
+        from aemr_bot.services import admin_bus
+        from aemr_bot.utils import menu_tracker
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="msg-7"))
+            )
+        )
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            mid = await admin_bus.send(bot, text="test pulse")
+        assert mid == "msg-7"
+        assert menu_tracker.get_last_menu_mid(555) == "msg-7"
+        bot.send_message.assert_awaited_once()
+        kwargs = bot.send_message.await_args.kwargs
+        assert kwargs.get("chat_id") == 555
+        assert kwargs.get("text") == "test pulse"
+
+    @pytest.mark.asyncio
+    async def test_send_no_admin_group_returns_none(self) -> None:
+        from aemr_bot.services import admin_bus
+        from aemr_bot.utils import menu_tracker
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock()
+        with patch("aemr_bot.config.settings.admin_group_id", 0):
+            mid = await admin_bus.send(bot, text="lost")
+        assert mid is None
+        bot.send_message.assert_not_called()
+        assert menu_tracker.get_last_menu_mid(0) is None
+
+    @pytest.mark.asyncio
+    async def test_send_failure_no_tracker_advance(self) -> None:
+        """Если bot.send_message упал — tracker НЕ должен двигаться
+        (иначе следующий freshness-check возьмёт mid сообщения которого
+        реально нет в чате)."""
+        from aemr_bot.services import admin_bus
+        from aemr_bot.utils import menu_tracker
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock(side_effect=RuntimeError("MAX 500"))
+        menu_tracker.set_last_menu_mid(555, "before-fail")
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            mid = await admin_bus.send(bot, text="upset")
+        assert mid is None
+        assert menu_tracker.get_last_menu_mid(555) == "before-fail"
+
+    @pytest.mark.asyncio
+    async def test_send_with_attachments_passes_through(self) -> None:
+        from aemr_bot.services import admin_bus
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="a-1"))
+            )
+        )
+        attachments = [{"type": "image", "payload": {"url": "x"}}]
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            await admin_bus.send(bot, text="t", attachments=attachments)
+        kwargs = bot.send_message.await_args.kwargs
+        assert kwargs.get("attachments") == attachments
+
+    @pytest.mark.asyncio
+    async def test_send_with_link_passes_through(self) -> None:
+        from aemr_bot.services import admin_bus
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="r-1"))
+            )
+        )
+        fake_link = SimpleNamespace(type="reply", mid="quoted")
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            await admin_bus.send(bot, text="reply text", link=fake_link)
+        kwargs = bot.send_message.await_args.kwargs
+        assert kwargs.get("link") is fake_link
+
+
+class TestNoteIncomingAdminMessage:
+    def test_advances_tracker_on_valid_mid(self) -> None:
+        from aemr_bot.services import admin_bus
+        from aemr_bot.utils import menu_tracker
+
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            admin_bus.note_incoming_admin_message("operator-msg-9")
+        assert menu_tracker.get_last_menu_mid(555) == "operator-msg-9"
+
+    def test_no_admin_group_noop(self) -> None:
+        from aemr_bot.services import admin_bus
+        from aemr_bot.utils import menu_tracker
+
+        with patch("aemr_bot.config.settings.admin_group_id", 0):
+            admin_bus.note_incoming_admin_message("foo")
+        assert menu_tracker.get_last_menu_mid(0) is None
+
+    def test_none_mid_noop(self) -> None:
+        """Если mid не извлёкся (None) — не падаем, tracker не двигаем."""
+        from aemr_bot.services import admin_bus
+        from aemr_bot.utils import menu_tracker
+
+        menu_tracker.set_last_menu_mid(555, "before")
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            admin_bus.note_incoming_admin_message(None)
+        assert menu_tracker.get_last_menu_mid(555) == "before"
+
+
+class TestAdminChatActivityMiddleware:
+    """Outer middleware: incoming MessageCreated в admin chat → tracker."""
+
+    @pytest.mark.asyncio
+    async def test_advances_tracker_on_admin_chat_message(self) -> None:
+        from aemr_bot.handlers import AdminChatActivityMiddleware
+        from aemr_bot.utils import menu_tracker
+
+        mw = AdminChatActivityMiddleware()
+        event = SimpleNamespace(
+            message=SimpleNamespace(
+                recipient=SimpleNamespace(chat_id=555),
+                body=SimpleNamespace(mid="op-text-42"),
+            )
+        )
+        handler = AsyncMock(return_value="handler-result")
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            result = await mw(handler, event, {})
+        assert result == "handler-result"
+        assert menu_tracker.get_last_menu_mid(555) == "op-text-42"
+
+    @pytest.mark.asyncio
+    async def test_skips_non_admin_chat(self) -> None:
+        from aemr_bot.handlers import AdminChatActivityMiddleware
+        from aemr_bot.utils import menu_tracker
+
+        mw = AdminChatActivityMiddleware()
+        event = SimpleNamespace(
+            message=SimpleNamespace(
+                recipient=SimpleNamespace(chat_id=42),  # other chat
+                body=SimpleNamespace(mid="citizen-msg"),
+            )
+        )
+        handler = AsyncMock(return_value="ok")
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            await mw(handler, event, {})
+        # tracker для 555 не тронут, для 42 тоже (это не admin)
+        assert menu_tracker.get_last_menu_mid(555) is None
+        assert menu_tracker.get_last_menu_mid(42) is None
+
+    @pytest.mark.asyncio
+    async def test_no_admin_group_id_skips(self) -> None:
+        from aemr_bot.handlers import AdminChatActivityMiddleware
+
+        mw = AdminChatActivityMiddleware()
+        event = SimpleNamespace(
+            message=SimpleNamespace(
+                recipient=SimpleNamespace(chat_id=555),
+                body=SimpleNamespace(mid="m-x"),
+            )
+        )
+        handler = AsyncMock(return_value="ok")
+        # admin_group_id не задан → middleware no-op, handler всё равно
+        # вызывается
+        with patch("aemr_bot.config.settings.admin_group_id", 0):
+            result = await mw(handler, event, {})
+        assert result == "ok"
+
+    @pytest.mark.asyncio
+    async def test_handler_called_even_when_tracker_sync_fails(self) -> None:
+        """Tracker-sync — best-effort. Любая ошибка внутри не должна
+        мешать handler'у обработать событие."""
+        from aemr_bot.handlers import AdminChatActivityMiddleware
+
+        mw = AdminChatActivityMiddleware()
+        # Кривое событие — нет message, нет body
+        event = SimpleNamespace()
+        handler = AsyncMock(return_value="ok-anyway")
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            result = await mw(handler, event, {})
+        assert result == "ok-anyway"
+```
+
 ### `bot/tests/test_admin_callback_dispatch.py`
 
 Size: `10985` bytes  
@@ -25025,8 +25549,8 @@ class TestFinalizeSurvivesDetachedAppeal:
 
 ### `bot/tests/test_admin_card_render.py`
 
-Size: `13858` bytes  
-SHA-256: `933a25b40b64be66f29c68f16f879261234d83605fe9dbef4182a484afb85e76`
+Size: `17118` bytes  
+SHA-256: `e926fc7f9adcd9389f5bd0fdd3f5435647bf4a3e731c0c23c8f8a6d0492938fb`
 
 ```python
 """Тесты freshness-rule семантики `services/admin_card.render`.
@@ -25297,6 +25821,83 @@ class TestEditFallback:
 
         bot.send_message.assert_awaited_once()
         assert mid == "recovery-9"
+
+
+class TestAutoWarmMessages:
+    """SACRED #6: render авто-подгружает messages если их нет.
+
+    Раньше каждый caller обязан был сам сделать `get_by_id_with_messages`
+    или выставить `appeal.__dict__["messages"] = []`. Контракт нарушался
+    в menu.do_consent_revoke (через list_unanswered без selectinload) —
+    timeline терялся. Теперь render guard: если messages отсутствуют /
+    пустые и это не finalize — render сам подгрузит через session_scope.
+    """
+
+    @pytest.mark.asyncio
+    async def test_auto_warm_when_messages_missing(self) -> None:
+        from aemr_bot.services import admin_card
+
+        appeal = _make_appeal()
+        # `messages` НЕ выставлен (имитация appeal из list_unanswered)
+        appeal.__dict__.pop("messages", None)
+
+        fresh = _make_appeal()
+        fake_msg = SimpleNamespace(
+            direction="from_user", text="Уточнение жителя",
+            attachments=[], created_at=None,
+        )
+        fresh.__dict__["messages"] = [fake_msg]
+
+        bot = _make_bot()
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", 555),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.get_by_id_with_messages",
+                AsyncMock(return_value=fresh),
+            ),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
+        ):
+            await admin_card.render(bot, appeal, force_new=True)
+
+        # После render — appeal.__dict__["messages"] заполнен
+        assert appeal.__dict__.get("messages") == [fake_msg]
+
+    @pytest.mark.asyncio
+    async def test_auto_warm_skipped_on_first_publication(self) -> None:
+        """На finalize (is_first_publication=True) НЕ подгружаем — переписки
+        реально нет, messages=[] корректно."""
+        from aemr_bot.services import admin_card
+
+        appeal = _make_appeal()
+        appeal.__dict__["messages"] = []  # explicit empty (finalize)
+
+        get_with_msgs = AsyncMock()
+        bot = _make_bot()
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", 555),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.get_by_id_with_messages",
+                get_with_msgs,
+            ),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_admin_message_id",
+                AsyncMock(),
+            ),
+        ):
+            await admin_card.render(bot, appeal, is_first_publication=True)
+        # get_by_id_with_messages НЕ должен вызываться на finalize
+        get_with_msgs.assert_not_called()
 
 
 class TestEventHeader:
@@ -28672,8 +29273,8 @@ def test_bot_http_timeout_is_below_maxapi_default() -> None:
 
 ### `bot/tests/test_broadcast_handlers.py`
 
-Size: `33239` bytes  
-SHA-256: `e9ea4d92924f473e6550a19ba09f4eb8a1ea97336df3424abc09c239e1d7d108`
+Size: `35207` bytes  
+SHA-256: `549d3155f020be3032025f177692d50fe0cb8865dbe5800d371e9653a13693e6`
 
 ```python
 """Тесты для handlers/broadcast — wizard рассылок и helpers.
@@ -29188,17 +29789,25 @@ class TestHandleStop:
 
 class TestRunBroadcastImpl:
     @pytest.mark.asyncio
-    async def test_final_status_edits_progress_card_with_admin_back_button(self) -> None:
+    async def test_final_status_publishes_new_summary_event_card(self) -> None:
+        """SACRED #2: финал рассылки = новая event-карточка (не edit).
+
+        До SACRED-фикса код edit'ал progress-mid финальным текстом —
+        нарушение event-log семантики, плюс невидимый edit если в
+        чате выше уже появились pulse/ответы.
+        """
         from aemr_bot.db.models import BroadcastStatus
         from aemr_bot.handlers import broadcast
 
         bot = MagicMock()
         bot.edit_message = AsyncMock()
-        bot.send_message = AsyncMock()
+        bot.send_message = AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="final-77"))
+            )
+        )
         mark_finished = AsyncMock()
 
-        # broadcast.attachments читается _run_broadcast_impl'ом перед
-        # send-loop'ом для десериализации картинок: мокаем пустую запись.
         from types import SimpleNamespace as _SN
         empty_broadcast = _SN(id=77, attachments=[], text="Текст рассылки")
 
@@ -29211,7 +29820,8 @@ class TestRunBroadcastImpl:
              patch("aemr_bot.handlers.broadcast.broadcasts_service.get_by_id",
                    AsyncMock(return_value=empty_broadcast)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.mark_finished",
-                   mark_finished):
+                   mark_finished), \
+             patch("aemr_bot.config.settings.admin_group_id", 555):
             await broadcast._run_broadcast_impl(
                 bot,
                 broadcast_id=77,
@@ -29220,12 +29830,13 @@ class TestRunBroadcastImpl:
                 admin_mid="m-progress",
             )
 
-        bot.edit_message.assert_called_once()
-        kwargs = bot.edit_message.call_args.kwargs
-        assert kwargs["message_id"] == "m-progress"
-        assert "77" in kwargs["text"]
-        assert kwargs["attachments"]
-        bot.send_message.assert_not_called()
+        # event-card финала — новый send, edit progress'а не делается
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited()
+        # admin_bus.send → chat_id=admin_group_id
+        send_kwargs = bot.send_message.await_args.kwargs
+        assert send_kwargs.get("chat_id") == 555
+        assert "77" in send_kwargs.get("text", "")
         assert mark_finished.call_args.kwargs["status"] == BroadcastStatus.DONE
 
 
@@ -29291,50 +29902,73 @@ class TestBuildFinalText:
 
 
 class TestSendFinalSummary:
-    """_send_final_summary — публикация итога: edit карточки либо
-    fallback-сообщение."""
+    """_send_final_summary — SACRED #2: всегда send_new через admin_bus.
+
+    Раньше пыталось edit'нуть admin_mid (progress-карточку), но это
+    нарушало event-log семантику: за время рассылки выше progress в
+    чате могли появиться pulse/ответы операторов — edit невидим.
+    Теперь финал всегда новой записью; admin_bus.send двигает tracker.
+    """
 
     @pytest.mark.asyncio
-    async def test_edits_card_when_admin_mid_present(self) -> None:
+    async def test_always_sends_new_via_admin_bus(self) -> None:
         from aemr_bot.handlers.broadcast import _send_final_summary
 
         bot = MagicMock()
         bot.edit_message = AsyncMock()
-        bot.send_message = AsyncMock()
-        await _send_final_summary(
-            bot, broadcast_id=7, total=10, delivered=10,
-            failed=0, cancelled=False, admin_mid="m-1",
+        bot.send_message = AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="final-1"))
+            )
         )
-        bot.edit_message.assert_awaited_once()
-        bot.send_message.assert_not_called()
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            await _send_final_summary(
+                bot, broadcast_id=7, total=10, delivered=10,
+                failed=0, cancelled=False, admin_mid="m-1",
+            )
+        # admin_bus.send → bot.send_message с chat_id, НЕ edit_message
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited_once()
+        kwargs = bot.send_message.await_args.kwargs
+        assert kwargs.get("chat_id") == 555
+        assert "10" in kwargs.get("text", "")  # delivered count
 
     @pytest.mark.asyncio
-    async def test_sends_new_message_when_no_admin_mid(self) -> None:
+    async def test_no_admin_mid_still_sends(self) -> None:
+        """Параметр admin_mid теперь не влияет на путь — всё равно send."""
         from aemr_bot.handlers.broadcast import _send_final_summary
 
         bot = MagicMock()
         bot.edit_message = AsyncMock()
-        bot.send_message = AsyncMock()
-        await _send_final_summary(
-            bot, broadcast_id=7, total=10, delivered=10,
-            failed=0, cancelled=False, admin_mid=None,
+        bot.send_message = AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="final-2"))
+            )
         )
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            await _send_final_summary(
+                bot, broadcast_id=7, total=10, delivered=10,
+                failed=0, cancelled=False, admin_mid=None,
+            )
         bot.edit_message.assert_not_called()
         bot.send_message.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_falls_back_to_send_when_edit_raises(self) -> None:
+    async def test_logs_warning_when_admin_bus_returns_none(self) -> None:
+        """Если admin_bus.send упал (например, ADMIN_GROUP_ID не задан) —
+        не падаем, просто warning в лог."""
         from aemr_bot.handlers.broadcast import _send_final_summary
 
         bot = MagicMock()
-        bot.edit_message = AsyncMock(side_effect=RuntimeError("stale mid"))
-        bot.send_message = AsyncMock()
-        await _send_final_summary(
-            bot, broadcast_id=7, total=10, delivered=5,
-            failed=0, cancelled=True, admin_mid="m-1",
-        )
-        bot.edit_message.assert_awaited_once()
-        bot.send_message.assert_awaited_once()
+        bot.edit_message = AsyncMock()
+        bot.send_message = AsyncMock(side_effect=RuntimeError("MAX down"))
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            # Не должно бросить exception, даже если send упал.
+            await _send_final_summary(
+                bot, broadcast_id=7, total=10, delivered=5,
+                failed=0, cancelled=True, admin_mid="m-1",
+            )
+        bot.edit_message.assert_not_called()
 
 
 class TestRunSendLoop:
@@ -35186,8 +35820,8 @@ class TestOnAwaitingName:
 
 ### `bot/tests/test_handlers_menu.py`
 
-Size: `26825` bytes  
-SHA-256: `36abfd89a50dec66a9c4bf74490d7b6233e106fa29d1d9e00801222f28e4b9e5`
+Size: `26853` bytes  
+SHA-256: `235a4efe0a9ea7f2610e3b4d786974a0fac4b2e4029e52a4bd2cc9f50651c976`
 
 ```python
 """Тесты handlers/menu.py — навигация по меню жителя.
@@ -35647,7 +36281,7 @@ class TestConsentAndEraseNotifications:
         user = SimpleNamespace(id=1)
         notify = AsyncMock()
         with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
-             patch("aemr_bot.services.appeals.list_unanswered",
+             patch("aemr_bot.services.appeals.list_unanswered_with_messages",
                    AsyncMock(return_value=[])), \
              patch("aemr_bot.handlers.menu.users_service.revoke_consent",
                    AsyncMock()), \
@@ -35682,7 +36316,7 @@ class TestConsentAndEraseNotifications:
         notify = AsyncMock()
         repost = AsyncMock()
         with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
-             patch("aemr_bot.services.appeals.list_unanswered",
+             patch("aemr_bot.services.appeals.list_unanswered_with_messages",
                    AsyncMock(return_value=[appeal])), \
              patch("aemr_bot.handlers.menu.users_service.revoke_consent",
                    AsyncMock()), \
@@ -41507,6 +42141,1054 @@ class TestResetAll:
         assert not wr.is_recent_reply("x")
 ```
 
+### `docs/_extracted/REGLAMENT_v5_FULL.md`
+
+Size: `79160` bytes  
+SHA-256: `1facc62a881ef1ca97bcb31154586ab1580a0a4ace7f2559c4b70fca5122b127`
+
+```markdown
+# Регламент работы с чат-ботом «Администрация Елизовского муниципального округа. Обратная связь» в мессенджере MAX (v5)
+
+*Источник: `docs/Регламент.docx` (~62 KB, 324 структурных элемента, 317 параграфов, 7 таблиц, ~60 220 символов извлечённого текста). Извлечено `scripts/extract_reglament.py` 2026-05-25.*
+
+> Приложение к распоряжению Администрации Елизовского муниципального округа от «\_\_\_\_» \_\_\_\_\_\_\_\_\_\_\_ 2026 года № \_\_\_\_\_\_.
+
+## Оглавление
+
+- [Глава 1. Общие положения (§§1–4)](#глава-1-общие-положения)
+- [Глава 2. Правовая природа канала связи (§§5–8)](#глава-2-правовая-природа-канала-связи)
+- [Глава 3. Технические компоненты (§§9–12)](#глава-3-технические-компоненты)
+- [Глава 4. Роли и полномочия операторов (§§13–18 + Таблица 1)](#глава-4-роли-и-полномочия-операторов)
+- [Глава 5. Прием сообщения от жителя (§§19–31)](#глава-5-прием-сообщения-от-жителя)
+- [Глава 6. Порядок работы оператора с сообщением (§§32–43 + Таблица 2)](#глава-6-порядок-работы-оператора-с-сообщением)
+- [Глава 7. Взаимодействие с профильными подразделениями (§§43.1–43.10)](#глава-7-взаимодействие-с-профильными-подразделениями)
+- [Глава 8. Информационные рассылки (§§44–51)](#глава-8-информационные-рассылки)
+- [Глава 9. Защита персональных данных (§§52–60)](#глава-9-защита-персональных-данных)
+- [Глава 10. Блокировка жителя (§§61–67)](#глава-10-блокировка-жителя)
+- [Глава 11. Журнал действий операторов (§§68–70)](#глава-11-журнал-действий-операторов)
+- [Глава 12. Резервное копирование и фоновые задачи (§§71–74 + Таблица 3)](#глава-12-резервное-копирование-и-фоновые-задачи)
+- [Глава 13. Изменение настроек и регистрация операторов (§§75–81)](#глава-13-изменение-настроек-и-регистрация-операторов)
+- [Глава 14. Ответственность (§§82–85)](#глава-14-ответственность)
+- [Глава 15. Изменение Регламента (§§86–88)](#глава-15-изменение-регламента)
+- [Приложение 1. Команды бота и доступность по ролям](#приложение-1-команды-бота-и-доступность-по-ролям)
+- [Приложение 2. Шаблон формального ответа жителю](#приложение-2-шаблон-формального-ответа-жителю)
+- [Приложение 3. Контрольный перечень готовности к эксплуатации](#приложение-3-контрольный-перечень-готовности-к-эксплуатации)
+- [Приложение 4. Форма запроса фактических сведений в профильное подразделение](#приложение-4-форма-запроса-фактических-сведений-в-профильное-подразделение)
+
+---
+
+## Глава 1. Общие положения
+
+### §1
+Настоящий Регламент устанавливает порядок организации работы с чат-ботом «Администрация Елизовского муниципального округа. Обратная связь» в мессенджере MAX (далее — Чат-бот), включая порядок приема сообщений от жителей, подготовку и направление ответов, взаимодействие с профильными подразделениями Администрации и подведомственными муниципальными учреждениями при подготовке ответов, ведение информационных рассылок, обработку персональных данных и контроль качества работы операторов.
+
+### §2
+Чат-бот размещен по адресу `@aemo_chat_bot` (идентификатор `274913354`) и зарегистрирован в Bot API мессенджера MAX от имени Администрации Елизовского муниципального округа (далее — Администрация, АЕМО).
+
+### §3
+Регламент разработан в соответствии с Федеральным законом от 02.05.2006 № 59-ФЗ «О порядке рассмотрения обращений граждан Российской Федерации», Федеральным законом от 27.07.2006 № 152-ФЗ «О персональных данных», постановлением Правительства Российской Федерации от 01.11.2012 № 1119, постановлением Правительства Российской Федерации от 16.11.2020 № 1844 (Диалог Регионы / ЦУР), постановлением Правительства Камчатского края от 24.11.2020 № 472-П, постановлением Администрации Елизовского муниципального округа от 19.12.2025 № 2129 «О Положении о муниципальном центре управления Елизовского муниципального округа», нормативными актами уполномоченных федеральных органов исполнительной власти в области информационной безопасности, муниципальными правовыми актами Администрации.
+
+### §4
+Регламент обязателен для применения координаторами отдела по работе с обращениями граждан Администрации, специалистами Администрации и Администрации Елизовского городского поселения (далее — ЕГП), а также Территориальных Управлений, ответственным за работу с обращениями, и работниками отдела цифрового развития (или иного ИТ-отдела, определенного администраторами и технической поддержкой Чат-бота).
+
+---
+
+## Глава 2. Правовая природа канала связи
+
+### §5
+Чат-бот является дополнительным электронным каналом обратной связи между гражданами и Администрацией. Сообщения, полученные через Чат-бот, рассматриваются в порядке, установленном настоящим Регламентом.
+
+### §6
+Сообщения граждан, поступившие через Чат-бот, **не являются обращениями граждан в значении статьи 4 Федерального закона № 59-ФЗ** и не порождают для Администрации обязанности их рассмотрения в порядке и в сроки, установленные указанным Федеральным законом. Указанное положение соответствует подпункту 1.2 Порядка работы с сообщениями из открытых источников, утвержденного постановлением Администрации № 2129.
+
+### §7
+Если поступившее через Чат-бот сообщение по своему содержанию является обращением в значении статьи 4 ФЗ-59, оператор информирует заявителя о порядке подачи официального обращения через электронную приемную Администрации, иные официальные каналы либо в письменной форме.
+
+### §8
+Чат-бот не заменяет работу с обращениями через платформу обратной связи «Госуслуги. Решаем вместе» и систему инцидент-менеджмента Центра управления регионом. Сообщения, поступившие через указанные каналы, рассматриваются в соответствии с регламентами этих каналов.
+
+---
+
+## Глава 3. Технические компоненты
+
+### §9
+Чат-бот реализован как программный комплекс, включающий:
+1. программный сервис Bot API мессенджера MAX, размещенный на сервере Администрации;
+2. реляционную базу данных PostgreSQL, размещенную на том же сервере;
+3. служебную групповую переписку в мессенджере MAX (далее — служебная группа), в которой работают операторы;
+4. подсистему резервного копирования базы данных с хранением копий в локальном томе и (по конфигурации) в объектном хранилище.
+
+### §10
+Идентификатор служебной группы в мессенджере MAX задается в параметре `ADMIN_GROUP_ID`. Программный сервис различает события из служебной группы и события в личной переписке с жителями по этому идентификатору.
+
+### §11
+Связь программного сервиса с серверами мессенджера MAX осуществляется в режиме длинного опроса (long polling) **без предоставления входящего публичного сетевого доступа**.
+
+### §12
+Резервные копии базы данных формируются автоматически еженедельно, по умолчанию в воскресенье в 03 часа 00 минут по времени Камчатского края. Подробный перечень фоновых задач приведен в Таблице 3.
+
+---
+
+## Глава 4. Роли и полномочия операторов
+
+### §13
+В Чат-боте реализованы **четыре роли операторов**: координатор АЕМО (`coordinator`), специалист АЕМО (`aemr`), специалист ЕГП / Территориального Управления (`egp`), специалист отдела цифрового развития (`it`).
+
+### §14
+**Координатор АЕМО (coordinator)** — муниципальный служащий, ответственный за прием и распределение сообщений в служебной группе, направление ответов жителям, отслеживание сроков ответа, взаимодействие с профильными подразделениями Администрации и подведомственными муниципальными учреждениями в порядке главы 7, а также специалист отдела информационного обеспечения деятельности Администрации, или иных профильных специалистов пресс-службы, ответственных за подготовку информационных рассылок.
+
+### §15
+**Специалисты АЕМО (aemr) и ЕГП / ТУ (egp)** — муниципальные служащие, обеспечивающие подготовку ответов на сообщения в пределах своей компетенции.
+
+### §16
+**Специалист отдела цифрового развития (it)** — работник отдела цифрового развития Администрации (или иного ИТ-подразделения), ответственный за бесперебойное функционирование Чат-бота, ведение списка операторов, удаление персональных данных по запросам субъектов персональных данных, изменение настроек Чат-бота и снятие резервных копий базы данных.
+
+### §17
+Назначение и прекращение полномочий операторов осуществляется специалистом отдела цифрового развития на основании письменного поручения руководителя соответствующего структурного подразделения одним из следующих способов:
+1. через кнопочный мастер «Операторы» в панели быстрых действий `/op_help`, обеспечивающий выбор будущего оператора из участников служебной группы без необходимости копирования идентификатора `max_user_id`, назначение роли, изменение роли, мягкую деактивацию с сохранением записи в БД и записи в журнале действий, последующую реактивацию;
+2. через команду `/add_operators` в служебной группе, обеспечивающую массовую регистрацию операторов по многострочному списку формата `<идентификатор max_user_id> <роль> <фамилия, имя, отчество>`.
+
+Оба способа эквивалентны по правовым последствиям и фиксируются в журнале действий. **Деактивация единственного активного оператора с ролью «it» программно заблокирована.** Замена единственного активного «it» производится последовательностью: назначение нового «it» → деактивация предшествующего.
+
+### §18 — Таблица 1. Матрица полномочий операторов
+
+| № | Действие | coord. | aemr | egp | it |
+|---|---|:-:|:-:|:-:|:-:|
+| 1 | Просмотр карточек обращений в служебной группе | + | + | + | + |
+| 2 | Ответ жителю (свайп или `/reply`), приложение к ответу одной фотографии | + | + | + | + |
+| 3 | Возобновление обращения (`/reopen`) | + | + | + | + |
+| 4 | Закрытие обращения без ответа (`/close`) | + | + | + | + |
+| 5 | Выгрузка статистики (`/stats`) | + | + | + | + |
+| 6 | Диагностика Чат-бота (`/diag`) | + | + | + | + |
+| 7 | Список открытых обращений (`/open_tickets`) | + | + | + | + |
+| 8 | Памятка оператора (`/op_help`) | + | + | + | + |
+| 9 | Получение идентификаторов (`/whoami`) | + | + | + | + |
+| 10 | Информационные рассылки (`/broadcast`) с приложением фотографий | + | – | – | + |
+| 11 | Экстренная остановка рассылки | + | + | + | + |
+| 12 | Блокировка и разблокировка жителя из карточки обращения | – | – | – | + |
+| 13 | Удаление ПДн кнопкой из карточки | – | – | – | + |
+| 14 | Удаление ПДн командой (`/erase`) | – | – | – | + |
+| 15 | Изменение настроек (`/setting` либо кнопочный мастер) | – | – | – | + |
+| 16 | Регистрация операторов (`/add_operators` либо кнопочный мастер) | – | – | – | + |
+| 17 | Мягкая деактивация и реактивация оператора через мастер | – | – | – | + |
+| 18 | Синхронизация параметров с репозиторием (pull request) | – | – | – | + |
+| 19 | Снятие резервной копии (`/backup`) | – | – | – | + |
+
+**Примечание к Таблице 1.** Право блокировки жителя и удаления его персональных данных непосредственно из карточки обращения предоставлено только специалисту отдела цифрового развития. Координатор АЕМО и специалисты АЕМО, ЕГП (или ТУ) эскалируют необходимость блокировки или удаления персональных данных к специалисту ИТ служебной запиской или сообщением в служебной группе.
+
+---
+
+## Глава 5. Прием сообщения от жителя
+
+### §19
+Житель открывает Чат-бот в мессенджере MAX и нажимает кнопку «Написать обращение» в главном меню. Дальнейшее взаимодействие осуществляется через интерактивные кнопки.
+
+### §20
+Главное меню жителя содержит **шесть позиций**: «Написать обращение», «Мои обращения», «Подписаться на рассылку» (либо «Не хочу получать рассылку» — в зависимости от состояния подписки), «Прием граждан», «Полезная информация», «Настройки и помощь».
+
+### §21
+Чат-бот собирает сведения от жителя последовательно, по этапам конечного автомата диалога. Поддерживается **10 состояний диалога**: `idle`, `awaiting_consent`, `awaiting_contact`, `awaiting_name`, `awaiting_locality`, `awaiting_address`, `awaiting_topic`, `awaiting_summary`, `awaiting_followup_text` (этап дополнения уже открытого обращения), `awaiting_geo_confirm` (этап подтверждения адреса, определенного по геолокации).
+
+### §22
+На первом этапе Чат-бот получает от жителя согласие на обработку персональных данных. Согласие фиксируется в реквизите `consent_pdn_at` записи жителя. **Без получения согласия дальнейшие этапы анкеты недоступны.**
+
+### §23
+На последующих этапах Чат-бот запрашивает: телефонный номер посредством нативной кнопки мессенджера MAX, имя жителя, населенный пункт (выбором из перечня либо передачей геолокации), адрес проблемы, тематику обращения (выбором из перечня), суть обращения с возможностью приложения файлов.
+
+### §24
+При передаче жителем геолокации Чат-бот определяет населенный пункт и адрес по локальной базе данных географических объектов и запрашивает у жителя подтверждение определенного адреса.
+
+### §25
+Сообщение жителя считается принятым с момента поступления текста сути обращения. Чат-бот направляет жителю подтверждение «Обращение #N принято».
+
+### §26
+Один житель может направить через Чат-бот **не более 3 (трех) новых обращений в течение одного часа**. Указанное ограничение реализовано непосредственно в программном коде Чат-бота и **не настраивается через параметры окружения**.
+
+### §27
+При превышении ограничения, установленного §26, при наличии у жителя неотвеченного обращения Чат-бот предлагает дополнить открытое обращение через кнопку «Дополнить» в карточке обращения. При отсутствии неотвеченных обращений житель получает информацию о необходимости дождаться сброса лимита.
+
+### §28
+Максимальное число вложений к одному обращению — **20**; максимальный накопленный размер текста сути обращения — **2000 символов**; максимальная длина имени — **120**, адреса — **500 символов**.
+
+### §29
+По факту приема сообщения от жителя Чат-бот направляет в служебную группу карточку обращения, содержащую: номер обращения, имя и телефон жителя, населенный пункт, адрес, тематику и текст обращения. Вложения направляются вторым сообщением в качестве ответа на карточку. При наличии **более 10** вложений Чат-бот разделяет их на несколько сообщений с пометкой «Вложения к обращению #N (1/M)».
+
+### §30
+Под карточкой обращения отображаются интерактивные кнопки действий, состав которых зависит от статуса обращения и роли вызывающего оператора:
+1. для статусов «новое» и «в работе» всем ролям — «Ответить» и «Закрыть без ответа»;
+2. для статусов «отвечено» и «закрыто» (за исключением случаев закрытия в связи с отзывом согласия жителем) — «Возобновить»;
+3. для роли ИТ-специалиста дополнительно — «Заблокировать» (или «Разблокировать») и «Удалить ПДн»;
+4. при наличии вложений — «Вложения (N)»;
+5. независимо от статуса и роли — «В админ-меню».
+
+### §31
+Промежуточный статус «в работе» (`in_progress`) присваивается Чат-ботом **автоматически** при первом операторском действии. Отдельная интерактивная кнопка переключения в указанный статус в карточке обращения не предусмотрена.
+
+---
+
+## Глава 6. Порядок работы оператора с сообщением
+
+### §32
+Поступившая в служебную группу карточка обращения распределяется координатором АЕМО между специалистами АЕМО и ЕГП (ТУ) в соответствии с компетенцией. Распределение производится в служебной группе путем упоминания (`@username`) ответственного специалиста.
+
+### §33
+Принятие обращения в работу не требует отдельного действия оператора. Статус обращения изменяется на «в работе» автоматически при первом операторском действии — открытии ответа кнопкой «Ответить» или иной значимой операции, фиксируемой Чат-ботом.
+
+### §34
+Ответ жителю формируется одним из трех способов:
+1. **ответ свайпом** — оператор выполняет цитирование (свайп-ответ) на карточку обращения в служебной группе и вводит текст ответа. Чат-бот по reply-связи определяет номер обращения и доставляет ответ жителю в личный чат;
+2. **команда `/reply <номер> <текст>`** — применяется в случаях, когда клиент мессенджера MAX не передает reply-связь;
+3. **нажатием кнопки «Ответить»** и вводом сообщения.
+
+К ответу оператор вправе приложить **одну фотографию**, направляемую жителю в личном чате вместе с текстом ответа в составе формального письма по шаблону Приложения 2. При приложении оператором более одной фотографии жителю направляется только первая, оператор получает соответствующее уведомление от Чат-бота.
+
+### §35
+Лимит длины ответа оператора жителю — **300 символов** (параметр `ANSWER_MAX_CHARS`). При превышении лимита Чат-бот возвращает оператору предупреждение, ответ жителю не доставляется.
+
+### §36
+Ответ жителю формируется Чат-ботом в виде формального письма по шаблону, приведенному в Приложении 2.
+
+### §37
+После успешной доставки ответа жителю статус сообщения изменяется на «отвечено», в служебной группе появляется подтверждение «Ответ ушел жителю. Обращение #N закрыто».
+
+### §38 — Таблица 2. Целевые сроки ответа
+
+| № | Категория сообщения | Целевой срок ответа | Общий срок решения |
+|---|---|---|---|
+| 1 | Сообщение с установленной важностью «высокая» | не более 2 рабочих часов с момента выявления | до 8 рабочих дней со дня направления промежуточного ответа |
+| 2 | Сообщение со стандартной важностью | до 4 рабочих часов с момента выявления | до 8 рабочих дней со дня направления промежуточного ответа |
+
+### §39
+Рабочее время операторов: **понедельник — пятница с 09:00 до 18:00 по времени Камчатского края, перерыв с 12:00 до 13:00**. Деятельность операторов в нерабочие праздничные дни обеспечивается в соответствии с подпунктом 1.7 Порядка работы с сообщениями из открытых источников.
+
+### §40
+Контроль соблюдения целевых сроков обеспечивается автоматическими напоминаниями Чат-бота, направляемыми в служебную группу. Перечень напоминаний приведен в Таблице 3.
+
+### §41
+Текст ответа оператора жителю составляется в соответствии со Стандартом качества ответов на сообщения из открытых источников, утвержденным постановлением Администрации № 2129 (далее — Стандарт качества ответов), применяемым с учетом особенностей канала связи.
+
+### §42
+Ответ оператора жителю должен:
+1. начинаться с приветствия с указанием имени автора сообщения;
+2. содержать информацию по существу заданного вопроса (жалобы), быть понятным и информативным;
+3. излагаться в позитивном тоне с использованием действительного залога.
+
+### §43
+В тексте ответа оператора жителю **не допускается**:
+1. изложение истории вопроса до ответа по существу;
+2. использование канцелярского стиля и страдательного залога;
+3. использование шаблонных слов и выражений «сообщаем, что», «поясняем, что», «информируем, что», «отметим, что» и аналогичных;
+4. использование аббревиатур;
+5. наличие орфографических и пунктуационных ошибок;
+6. употребление многоточий;
+7. использование поучений или саркастических замечаний, ироничного, снисходительного, шутливого или фамильярного отношения к жителю;
+8. вступление в дискуссии с автором сообщения;
+9. разглашение персональных данных в нарушение требований ФЗ-152.
+
+---
+
+## Глава 7. Взаимодействие с профильными подразделениями
+
+> Глава вводит порядок действий оператора при поступлении сообщений жителей, содержательный ответ на которые требует фактических сведений профильных подразделений Администрации либо подведомственных муниципальных учреждений, не участвующих в работе служебной группы. Применяется с учетом подпункта «а» п. 2.4 Соглашения об информационном взаимодействии от 23.12.2025 между ЦУР Камчатского края и Администрацией.
+
+### §43.1
+Оператор Чат-бота **не несет ответственности** за фактическое содержание ответа жителю по вопросам, выходящим за пределы зоны его служебной компетенции. Оператор обеспечивает прием сообщения, классификацию вопроса, направление запроса фактических сведений, контроль сроков, подготовку и направление ответа жителю. Профильное подразделение несет ответственность за достоверность, полноту, своевременность и пригодность фактических сведений.
+
+### §43.2
+К зоне служебной компетенции оператора относятся вопросы:
+1. о работе Чат-бота, способах подачи сообщения, статусе ранее поданного сообщения, использовании сценариев главного меню;
+2. справочного характера, ответы на которые включены в значения настраиваемых параметров (см. §75);
+3. относящиеся к функциям АЕМО и ЕГП, ответы на которые могут быть подготовлены специалистами отдела по работе с обращениями граждан на основании имеющихся сведений в порядке §32;
+4. включенные во внутренний справочный материал (см. §43.10).
+
+### §43.3
+При определении, что для подготовки ответа требуется запрос в адрес профильного подразделения, оператор:
+1. направляет жителю **промежуточный ответ** в личной переписке в срок **не более 30 минут** с момента определения вопроса вне зоны компетенции. Допустимы три формулировки (см. оригинал);
+2. формирует запрос фактических сведений по форме Приложения 4 и направляет его в адрес профильного подразделения — в срок **не более 30 минут** с момента направления жителю промежуточного ответа;
+3. фиксирует факт направления запроса и реквизиты адресата в служебной группе с цитированием карточки обращения.
+
+Формулировки «не относится к нашей компетенции», «не занимаемся данным вопросом», «обращайтесь в другой орган» без указания компетентного органа **не допускаются**.
+
+### §43.4
+Запрос передается одним из следующих способов:
+1. через служебную групповую переписку в MAX (при наличии представителя профильного подразделения в группе);
+2. посредством служебного телефонного обращения с фиксацией факта в служебной группе;
+3. посредством служебной электронной почты Администрации.
+
+Направление запросов через **мессенджеры, не относящиеся к MAX**, и через **иные незащищенные каналы связи** не допускается. Включение в запрос ПДн третьих лиц, не относящихся непосредственно к существу вопроса, не допускается.
+
+### §43.5
+Сроки направления фактических сведений профильным подразделением:
+1. для категории высокой важности — **не более 1 рабочего часа** с момента получения запроса;
+2. для стандартной категории — **не более 2 рабочих часов**;
+3. при необходимости проверочных действий/выезда — в согласованный срок с обязательными промежуточными сведениями в течение **4 рабочих часов**.
+
+Срок составляет не более половины целевого срока ответа жителю.
+
+### §43.6
+Фактические сведения от профильного подразделения содержат:
+1. подтверждение либо мотивированное отрицание отнесения вопроса к компетенции;
+2. описание фактической ситуации на дату подготовки;
+3. сведения о принятых либо планируемых мерах с указанием сроков и ответственных;
+4. указание на необходимость подачи официального обращения через каналы §7 при необходимости;
+5. перечень сведений, составляющих ПДн третьих лиц и не подлежащих включению в ответ.
+
+Формулировка «вопрос не относится к нашей компетенции» без указания компетентного органа и без передачи имеющихся сведений в части собственной компетенции **не допускается**.
+
+### §43.7
+При получении сведений оператор подготавливает ответ по шаблону Приложения 2 и направляет жителю одним из способов §34 в пределах целевого срока. Оператор **не вправе изменять фактическое содержание**, может только привести формулировки в соответствие §§42, 43 и Стандарту качества.
+
+### §43.8
+При нарушении профильным подразделением срока:
+1. не позднее чем за 30 минут до истечения — оператор направляет уведомление о приближающемся истечении;
+2. при истечении без сведений — направляет жителю уточняющее сообщение с новым сроком;
+3. информирует координатора АЕМО.
+
+Координатор АЕМО при систематических нарушениях (более 3 случаев в месяц) уведомляет руководителя соответствующего подразделения.
+
+### §43.9
+Если вопрос относится к компетенции иного органа местного самоуправления / исполнительного органа Камчатского края / федерального органа, оператор направляет жителю ответ с указанием органа, способов обращения и (при наличии) ссылок. При признаках обращения по ст. 4 ФЗ-59 — дополнительно информирует о подаче официального обращения.
+
+### §43.10
+При относимости сообщения к компетенции нескольких подразделений — оператор направляет запросы во все с указанием перечня одновременных получателей. Сводный ответ формируется на основании сведений всех получателей. Сведения обобщаются координатором АЕМО в форме **внутреннего справочного материала** для использования при типовых сообщениях. При повторном поступлении сообщения по той же тематике в неизменных обстоятельствах оператор отвечает на основании справочного материала без повторного запроса.
+
+Распределение тематик между подразделениями устанавливается **отдельным правовым актом** Администрации.
+
+---
+
+## Глава 8. Информационные рассылки
+
+### §44
+Чат-бот обеспечивает возможность направления подписавшимся жителям информационных сообщений муниципального характера: о ЧС, отключениях коммунальных служб, проводимых работах, иной важной информации.
+
+### §45
+Подписка жителя оформляется добровольно через интерактивную кнопку в главном меню Чат-бота либо командой `/subscribe`. Житель дает **отдельное согласие** на обработку ПДн в целях направления информационных сообщений. Согласие фиксируется в реквизите `consent_broadcast_at`.
+
+### §46
+Отказ от подписки оформляется одной из операций: нажатие «Отписаться от рассылки» под любым сообщением рассылки, переключатель в главном меню, команда `/unsubscribe`.
+
+### §47
+Подготовка и направление осуществляется координатором АЕМО либо ИТ-специалистом через мастер `/broadcast`. Мастер предусматривает: ввод текста (не более **1000 символов**), отображение предпросмотра с числом получателей, подтверждение, отправку сообщений с ограничением скорости (по умолчанию **1 сообщение в секунду**).
+
+### §48
+Оператор вправе приложить к рассылке фотографии в количестве от 1 до значения настраиваемого параметра `broadcast_max_images` (по умолчанию **5**, диапазон 1–20). Карточка предпросмотра отображает количество и сами фотографии. При превышении лимита Чат-бот выводит предупреждение, излишние фотографии не направляются.
+
+### §49
+В период выполнения рассылки в служебной группе доступна кнопка «Экстренно остановить». Доступна оператору **с любой ролью** и предназначена для экстренного прекращения рассылки при выявлении ошибки.
+
+### §50
+Рассылка направляется **исключительно** жителям с действующим согласием на ПДн в целях направления информационных сообщений, не заблокированным в Чат-боте.
+
+### §51
+Сведения о направленных рассылках сохраняются в журнале действий с указанием количества доставленных и недоставленных сообщений.
+
+---
+
+## Глава 9. Защита персональных данных
+
+### §52
+Обрабатываются: идентификатор пользователя в мессенджере MAX (`max_user_id`), имя, абонентский номер телефонной связи, текст сообщения, приложенные файлы, сведения о местоположении (при добровольной передаче).
+
+### §53
+Сведения о согласии на обработку ПДн, об отзыве согласия, о подписке на рассылку и об отзыве подписки фиксируются в БД Чат-бота с указанием даты и времени.
+
+### §54
+Информационная система Чат-бота относится к **четвертому уровню защищенности** ПДн в соответствии с ПП РФ № 1119: иные категории ПДн, третий тип актуальных угроз, менее 100 000 субъектов ПДн.
+
+### §55
+Программно-технические меры защиты ПДн, требования к учету машинных носителей, журналированию событий безопасности обеспечиваются Администрацией в соответствии с применимыми требованиями ФСТЭК / ФСБ.
+
+### §56
+Право на доступ к ПДн (ст. 14 ФЗ-152) реализуется через возможность жителя получить выгрузку обращений командой `/export` и просмотреть свои обращения в разделе «Мои обращения».
+
+### §57
+Право на отзыв согласия (ч. 2 ст. 9 ФЗ-152) реализуется через интерактивный сценарий «Уйти из бота» в подменю «Настройки и помощь», предусматривающий **три варианта**:
+1. отключение получения рассылки с сохранением согласия и истории;
+2. отзыв согласия на обработку ПДн с сохранением возможности получить ответ на ранее открытые обращения;
+3. немедленное удаление ПДн в рабочей БД.
+
+### §58
+Обязанность Администрации уничтожить ПДн (ч. 5 ст. 21 ФЗ-152) реализуется двумя способами:
+1. **самостоятельно жителем** — командой `/forget` в личной переписке либо кнопкой в сценарии «Уйти из бота»;
+2. **по запросу субъекта ПДн** — ИТ-специалистом командой `/erase max_user_id=<идентификатор>` или `/erase phone=<номер>`, либо нажатием кнопки «Удалить ПДн» в карточке обращения.
+
+### §59
+По истечении **30 календарных дней** после отзыва согласия ПДн жителя в рабочей БД автоматически обезличиваются. Задача выполняется по расписанию **ежедневно в 04:30**.
+
+### §60
+Содержание ранее поданных обращений (тематика, населенный пункт, сведения о городском объекте, текст обращения), не содержащее непосредственных ПДн жителя, может сохраняться в Чат-боте в качестве муниципального документа **в течение 5 лет**, после чего автоматически обезличивается. Задача выполняется **ежедневно в 04:45**.
+
+---
+
+## Глава 10. Блокировка жителя
+
+### §61
+Блокировка применяется как техническая мера защиты от злоупотреблений: массовых однотипных сообщений, угроз, оскорблений оператора, мошенничества, распространения незаконных материалов, действий, направленных на нарушение работы Чат-бота или служебной группы.
+
+### §62
+**Критика работы должностных лиц и муниципальных служб не является основанием для блокировки.**
+
+### §63
+Право блокировки и разблокировки предоставлено **исключительно** специалисту с ИТ-ролью. Реализуется кнопкой «Заблокировать» / «Разблокировать» в карточке обращения либо в разделе «Аудитория и согласия» панели `/op_help`.
+
+### §64
+Применению блокировки предшествует обсуждение в служебной группе с участием координатора АЕМО. Основания доводятся до ИТ-специалиста сообщением в служебной группе.
+
+### §65
+Заблокированный житель не может направлять новые сообщения, получать ответы операторов и информационные рассылки. **Открытые обращения такого жителя закрываются автоматически.**
+
+### §66
+Блокировка в Чат-боте не ограничивает право жителя обратиться в Администрацию по иным официальным каналам.
+
+### §67
+Все действия по блокировке и разблокировке фиксируются в журнале действий.
+
+---
+
+## Глава 11. Журнал действий операторов
+
+### §68
+Чат-бот ведет автоматизированный журнал значимых действий операторов и системных событий безопасности (таблица `audit_log`). Фиксируются: идентификатор инициатора, тип действия, целевой объект, дата и время.
+
+### §69
+Перечень типов действий, фиксируемых в журнале:
+1. `reply` — ответ жителю свайпом;
+2. `reply_via_command` — ответ жителю командой `/reply`;
+3. `reopen` — возобновление обращения;
+4. `close` — закрытие обращения без ответа;
+5. `erase` — удаление ПДн жителя специалистом ИТ;
+6. `self_erase` — удаление ПДн по инициативе жителя;
+7. `self_consent_revoke` — отзыв жителем согласия в сценарии «Уйти из бота»;
+8. `self_subscribe_broadcast` — оформление подписки на рассылку;
+9. `block` — блокировка жителя;
+10. `unblock` — разблокировка жителя;
+11. `broadcast_send` — направление информационной рассылки;
+12. `operator_upsert` — регистрация или обновление сведений об операторе;
+13. `operator_deactivate` — мягкая деактивация оператора;
+14. `operator_reactivate` — реактивация ранее деактивированного оператора;
+15. `setting_update` — изменение настройки Чат-бота;
+16. `settings_repo_pr_created` — создание pull request для синхронизации настроек с репозиторием;
+17. `auto_erase_pdn_retention` — автоматическое обезличивание по истечении срока хранения.
+
+### §70
+Тексты сообщений жителей, ответов операторов, рассылок и значения измененных настроек в журнале **не сохраняются**. Указанные сведения хранятся в основных таблицах БД и подлежат раскрытию исключительно в установленном законодательством порядке.
+
+---
+
+## Глава 12. Резервное копирование и фоновые задачи
+
+### §71 — Таблица 3. Фоновые задачи (часовой пояс — Камчатский край)
+
+| № | Наименование задачи | Расписание | Назначение |
+|---|---|---|---|
+| 1 | Еженедельная резервная копия БД | Вс, 03:00 | Снятие `pg_dump` в локальный том с автоматическим шифрованием GPG (при наличии `BACKUP_GPG_PASSPHRASE`) |
+| 2 | Очистка событий идемпотентности | Ежедневно, 04:00 | Удаление записей старше 30 дней |
+| 3 | Обезличивание после отзыва согласия | Ежедневно, 04:30 | Обработка отозванных согласий старше 30 дней |
+| 4 | Обезличивание архивных обращений | Ежедневно, 04:45 | Обращения старше 5 лет |
+| 5 | Контроль зависших анкет | Каждые 15 минут | Сброс незавершенных анкет; сводка в служебную группу при ≥5 анкет за час |
+| 6 | Напоминания об открытых обращениях | Пн–Пт, 09:00–17:59 (перерыв 12:00–13:00), минута 10 | Перечень неотвеченных обращений |
+| 7 | Напоминания о просроченных обращениях | Пн–Пт, 09:00–17:59 (перерыв 12:00–13:00), минута 40 | Сообщения, превысившие срок ответа |
+| 8 | Автоматический ежемесячный отчет | 1 числа месяца, 09:00 | Статистика за прошлый месяц |
+| 9 | Сигнал жизни в рабочее время | Пн–Сб, 09:00–17:59, минуты 00 и 30 | Подтверждение работы бота |
+| 10 | Сигнал жизни в нерабочее время | Пн–Сб, 00:00–08:00 и 18:00–23:00, минута 05 | Подтверждение работы бота |
+| 11 | Сигнал жизни в воскресенье | Воскресенье, ежечасно, минута 05 | Подтверждение работы бота |
+| 12 | Сигнал старта | Через 5 секунд после запуска | Подтверждение восстановления работы |
+| 13 | Самопроверка | Каждые 5 минут | Внутренний мониторинг, уведомления в служебную группу при смене состояния |
+| 14 | Внешний пинг здоровья | Каждые 5 минут (при `HEALTHCHECK_URL`) | Подтверждение работы внешней системе мониторинга |
+
+### §72
+Глубина хранения еженедельных резервных копий — последние **8 файлов** (~2 месяца истории). Внеплановое снятие выполняется ИТ-специалистом командой `/backup` в служебной группе.
+
+### §73
+При сбое еженедельного бэкапа Чат-бот направляет в служебную группу уведомление с указанием стадии сбоя (снятие дампа, шифрование, доставка во внешнее хранилище). В случае сбоя на стадии шифрования незашифрованный файл, оставшийся на сервере, **автоматически удаляется**.
+
+### §74
+Проверка целостности резервных копий путем пробного восстановления в изолированную среду — **не реже одного раза в квартал**.
+
+---
+
+## Глава 13. Изменение настроек и регистрация операторов
+
+### §75
+Изменение настраиваемых параметров осуществляется ИТ-специалистом одним из способов:
+1. через раздел «Настройки бота» панели `/op_help` (иерархическое меню по группам параметров с подсветкой dirty-ключей);
+2. командой `/setting` в служебной группе.
+
+### §76
+Полный перечень настраиваемых параметров — **14 ключей**:
+1. `welcome_text` — приветственное сообщение;
+2. `consent_text` — текст согласия на обработку ПДн;
+3. `commit_author_name` — ФИО автора при синхронизации настроек с репозиторием;
+4. `commit_author_email` — email автора при синхронизации;
+5. `policy_url` — ссылка на политику обработки ПДн;
+6. `electronic_reception_url` — ссылка на электронную приемную;
+7. `udth_schedule_url` — ссылка на расписание муниципальных автобусов;
+8. `udth_schedule_intermunicipal_url` — ссылка на расписание межмуниципальных маршрутов;
+9. `appointment_text` — текст о приеме граждан главой;
+10. `emergency_contacts` — контакты экстренных служб;
+11. `transport_dispatcher_contacts` — контакты диспетчерских автотранспорта;
+12. `topics` — перечень тематик обращений, не более 30;
+13. `broadcast_max_images` — лимит фотографий в рассылке, 1–20 (по умолчанию 5);
+14. `localities` — перечень населенных пунктов, не более 30.
+
+### §77
+Все изменения настроек фиксируются в журнале действий с указанием специалиста и измененного ключа. **Значение настройки в журнал не записывается.**
+
+### §78
+Изменения значений параметров содержательной части (ссылок, текстов о приеме, контактов, перечней тематик и населенных пунктов) могут быть синхронизированы с репозиторием Чат-бота посредством создания pull request через раздел «Настройки бота» панели `/op_help`. Параметры `commit_author_name`, `commit_author_email`, `welcome_text`, `consent_text`, `broadcast_max_images` **не синхронизируются** с репозиторием. Создание pull request фиксируется в журнале с типом действия `settings_repo_pr_created`.
+
+### §79
+Регистрация операторов производится в порядке §17. Алгоритм регистрации командой `/add_operators` предусматривает:
+1. добавление будущего оператора в служебную группу;
+2. направление будущим оператором в служебную группу команды `/whoami` для получения `max_user_id`;
+3. формирование ИТ-специалистом многострочного списка операторов с указанием `max_user_id`, роли, ФИО;
+4. направление ИТ-специалистом в служебную группу команды `/add_operators` со сформированным списком.
+
+### §80
+В личной переписке с жителями команда `/whoami` **не выполняется**. Ограничение реализовано программно в целях исключения отображения идентификатора жителю.
+
+### §81
+Самостоятельное повышение роли через `/add_operators` либо через кнопочный мастер «Операторы» **программно заблокировано**. Изменение роли действующего оператора осуществляется ИТ-специалистом через карточку оператора в кнопочном мастере либо через прямой доступ к БД на основании письменного поручения. Также осуществлена реализация добавления нового оператора из списка участников операторской группы.
+
+---
+
+## Глава 14. Ответственность
+
+### §82
+Координатор АЕМО и специалисты АЕМО, ЕГП (ТУ) несут ответственность за качество и сроки ответов жителям в порядке, установленном законодательством РФ, муниципальными правовыми актами и трудовым законодательством.
+
+### §83
+Профильные подразделения и подведомственные муниципальные учреждения несут ответственность за достоверность, полноту, своевременность и пригодность фактических сведений, направленных оператору в порядке Главы 7.
+
+### §84
+ИТ-специалист несет ответственность за: бесперебойное функционирование Чат-бота, своевременное снятие резервных копий, исполнение запросов на удаление ПДн, конфиденциальность сведений, к которым он имеет доступ в силу служебных обязанностей.
+
+### §85
+Разглашение третьим лицам сведений, ставших известными оператору в связи с работой в служебной группе, влечет ответственность, предусмотренную законодательством РФ и трудовым законодательством.
+
+---
+
+## Глава 15. Изменение Регламента
+
+### §86
+Изменения и дополнения вносятся **распоряжением Администрации Елизовского муниципального округа**.
+
+### §87
+Проект изменений готовится начальником отдела по работе с обращениями граждан совместно с ИТ-специалистом.
+
+### §88
+Регламент пересматривается **не реже одного раза в год**, а также при существенном изменении программного кода Чат-бота, изменении законодательства РФ в области ПДн или обращений граждан, изменении организационной структуры Администрации.
+
+---
+
+## Приложение 1. Команды бота и доступность по ролям
+
+### Команды для операторов
+
+| № | Команда | Доступность | Назначение |
+|---|---|---|---|
+| 1 | `/reply <N> <текст>` | все операторы | Ответ жителю |
+| 2 | `/reopen <N>` | все операторы | Возобновить обращение |
+| 3 | `/close <N>` | все операторы | Закрыть без ответа |
+| 4 | `/stats [период]` | все операторы | Выгрузка XLSX за период |
+| 5 | `/open_tickets` | все операторы | Список открытых обращений |
+| 6 | `/diag` | все операторы | Диагностика Чат-бота |
+| 7 | `/op_help` | все операторы | Закрепляемая панель действий |
+| 8 | `/whoami` | служебная группа | Получение идентификаторов |
+| 9 | `/help`, `/menu`, `/start` | служебная группа | Меню оператора без закрепления |
+| 10 | `/broadcast` | coordinator, it | Мастер рассылки |
+| 11 | `/broadcast list` | coordinator, it | История рассылок |
+| 12 | `/erase max_user_id=N` | it | Удаление ПДн по идентификатору |
+| 13 | `/erase phone=+7...` | it | Удаление ПДн по телефону |
+| 14 | `/setting list` | it | Перечень настроек |
+| 15 | `/setting <ключ> <значение>` | it | Изменение настройки |
+| 16 | `/add_operators` | it | Массовая регистрация операторов |
+| 17 | `/backup` | it | Внеплановая резервная копия |
+
+**Допустимые периоды `/stats`:** `today` (по умолчанию), `week`, `month`, `quarter`, `half_year`, `year`, `all`.
+
+**Состав панели `/op_help` по ролям:**
+1. для специалистов АЕМО и ЕГП (ТУ) — **3 кнопки**: «Открытые обращения» (со счетчиком), «Статистика», «Диагностика»;
+2. для координатора АЕМО — **6 кнопок**: дополнительно «Сделать рассылку», «История рассылок», «Шаблоны рассылок»;
+3. для ИТ-специалиста — **10 кнопок**: дополнительно «Снять бэкап», «Операторы», «Настройки бота», «Аудитория и согласия».
+
+### Команды для жителей в личной переписке
+
+> Команды направляются жителем текстом в личной переписке с Чат-ботом и исполняются независимо от текущего состояния диалога. Указанные команды не отображаются в служебном перечне команд MAX; основное взаимодействие — через интерактивное главное меню (§20).
+
+| № | Команда | Назначение | Доступность |
+|---|---|---|---|
+| 1 | `/start` | Открывает главное меню; при первом обращении — приветственное сообщение и затем меню | все жители |
+| 2 | `/menu` | Открывает главное меню в любой момент | все жители |
+| 3 | `/help` | Справочное сообщение с перечнем возможностей | все жители |
+| 4 | `/rules` | Правила пользования Чат-ботом | все жители |
+| 5 | `/policy` | PDF политики обработки ПДн Администрации (п. 5 ч. 1 ст. 18.1 ФЗ-152) | все жители |
+| 6 | `/subscribe` | Оформляет подписку на рассылку (consent_broadcast_at) | все жители |
+| 7 | `/unsubscribe` | Прекращает подписку | подписанные жители |
+| 8 | `/forget` | Право на удаление ПДн (ч. 2 ст. 9 + ч. 5 ст. 21 ФЗ-152) | все жители |
+| 9 | `/export` | Право на доступ к ПДн (ст. 14 ФЗ-152) — выгрузка всех обращений | все жители |
+| 10 | `/cancel` | Прерывает текущий этап анкеты, возврат в главное меню | все жители |
+
+**Примечание 1.** `/export` не публикуется в служебном перечне команд MAX и применяется при индивидуальном обращении жителя к должностному лицу с целью реализации права субъекта ПДн на доступ.
+
+**Примечание 2.** `/whoami` в личной переписке с жителями не выполняется (см. §80).
+
+**Примечание 3.** Основной способ взаимодействия — интерактивное главное меню. Перечисленные команды сохраняют работоспособность для совместимости с распространёнными ссылками и для жителей, предпочитающих ввод команд.
+
+---
+
+## Приложение 2. Шаблон формального ответа жителю
+
+Чат-бот формирует ответ автоматически по следующему шаблону. Текст оператора (не более 300 символов) подставляется в раздел «Ответ оператора». При приложении фотографии (§34) она направляется в том же сообщении.
+
+```
+Ответ Администрации Елизовского муниципального округа
+на Ваше обращение #<номер> от <дата>
+Тема: <тематика обращения>
+Населенный пункт: <населенный пункт>
+Адрес: <адрес>
+———————————————————
+Ответ оператора:
+<текст ответа оператора длиной не более 300 символов>
+```
+
+Параметры обращения (номер, дата, тематика, населенный пункт, адрес) подставляются Чат-ботом автоматически по сведениям из карточки. Изменение этих полей оператором не предусмотрено.
+
+---
+
+## Приложение 3. Контрольный перечень готовности к эксплуатации
+
+Используется системным администратором для подтверждения готовности после установки, обновления или восстановления после сбоя. После создания операторской группы, настройки секретов и регистрации операторов проверяются:
+
+1. открыть Чат-бот в личной переписке от имени тестового жителя; убедиться в получении приветственного сообщения и главного меню из 6 кнопок;
+2. пройти полный цикл подачи обращения от получения согласия до подтверждения «Обращение #N принято»; контрольное время — не более 2 минут;
+3. убедиться, что в служебной группе появилась карточка обращения с кнопками «Ответить», «Закрыть без ответа», «В админ-меню»; для ИТ-специалиста дополнительно «Заблокировать» и «Удалить ПДн»;
+4. направить ответ кнопкой «Ответить» (или иным способом §34), при необходимости с фотографией, и проверить доставку формального письма жителю;
+5. выполнить `/stats today` и убедиться в получении XLSX-выгрузки;
+6. выполнить `/op_help` (или `/help`, `/menu`, `/start`) под учетной записью ИТ-специалиста и убедиться в отображении 10 кнопок и закреплении сообщения;
+7. *(нумерация оригинала пропускает п. 7)* выполнить `/op_help` под учетной записью координатора АЕМО и убедиться в отображении 6 кнопок (без «Операторы», «Настройки бота», «Аудитория и согласия», «Снять бэкап»);
+8. выполнить `/diag` и убедиться в получении сводки о состоянии Чат-бота;
+9. выполнить `/backup` и убедиться в создании файла резервной копии;
+10. оформить тестовую подписку на рассылку и выполнить мастер `/broadcast` (при необходимости с фотографиями в пределах `broadcast_max_images`); убедиться в доставке;
+11. оформить тестовые варианты ухода из бота, включая отзыв согласия `/forget`; убедиться в активации обезличивания и в фиксации записи `self_erase` в журнале;
+12. убедиться в получении сигналов жизни по расписанию рабочего времени.
+
+Подписывает: Начальник отдела цифрового развития.
+
+---
+
+## Приложение 4. Форма запроса фактических сведений в профильное подразделение
+
+Применяется при необходимости получения от профильного подразделения сведений для подготовки ответа жителю в порядке Главы 7. Передается через служебную групповую переписку в MAX, посредством служебного телефонного обращения или служебной электронной почты Администрации.
+
+| № | Поле запроса | Содержание |
+|---|---|---|
+| 1 | Номер обращения, дата поступления в Чат-бот | № \_\_\_\_ от \_\_.\_\_.20\_\_ |
+| 2 | Категория важности | высокая / стандартная |
+| 3 | Адресат запроса | (наименование подразделения, ФИО специалиста) |
+| 4 | Тематика обращения | (по сведениям из карточки) |
+| 5 | Населенный пункт | (по сведениям из карточки) |
+| 6 | Существо вопроса жителя | (не более 2 предложений, без эмоциональной окраски) |
+| 7 | Сведения, сообщенные жителем | (адрес, иные обстоятельства, относящиеся к существу) |
+| 8 | Перечень вопросов | 1) относится ли вопрос к компетенции; 2) фактическая ситуация; 3) принятые/планируемые меры со сроками и ответственными; 4) необходимость подачи официального обращения по ФЗ-59; 5) ПДн третьих лиц, не подлежащие включению; 6) дополнительные вопросы при необходимости |
+| 9 | Предельный срок направления сведений | \_\_.\_\_.20\_\_ до \_\_ часов \_\_ минут |
+| 10 | Оператор, направивший запрос | ФИО, инициалы, контактные сведения, дата/время, способ передачи |
+
+**Примечания:**
+- Запрос, не содержащий обязательных элементов 1–7, 9, 10, может быть возвращен подразделением оператору с указанием отсутствующих элементов и подлежит повторному направлению после устранения недостатков.
+- Включение в запрос ПДн третьих лиц, не относящихся к существу вопроса, не допускается. Передача ПДн жителя в составе запроса осуществляется в объеме, необходимом для подготовки ответа.
+```
+
+### `docs/_meta/ADMIN_MENU_EXPANSION_PROPOSAL.md`
+
+Size: `27260` bytes  
+SHA-256: `bcc2dc2fb6929c4fb8f84968f197b26c90ec7e5e2777adad56e4e20159344daa`
+
+```markdown
+# Расширение админского меню — предложения
+
+> Дата составления: 2026-05-25.
+> Аудит провёл агент по запросу пользователя «можно ли ещё улучшить
+> и расширить кнопки в настройках бота в админке? все ли покрытие
+> ключей и возможных удобных нужных админских функций применено?».
+> Аудируемые модули: `bot/aemr_bot/keyboards.py`,
+> `bot/aemr_bot/handlers/admin_*.py`, `bot/aemr_bot/services/settings_store.py`.
+
+## 1. Текущее покрытие ключей `SCHEMA` settings_store
+
+`SCHEMA` содержит 14 ключей. Каждый из них доступен через
+команду `/setting <key> <value>` (см. `admin_commands.py:314`), но
+покрытие через UI неоднородно.
+
+| Ключ | UI | Команда | Комментарий |
+|---|---|---|---|
+| `welcome_text` | ✅ «📢 Тексты → 👋 Приветствие» | `/setting` | Полный wizard inline-edit. |
+| `consent_text` | ✅ «📢 Тексты → 🔐 Согласие на ПДн» | `/setting` | OK. |
+| `appointment_text` | ✅ «📢 Тексты → 🏛 Расписание приёма» | `/setting` | OK. |
+| `commit_author_name` | ✅ «👤 Автор коммитов» | `/setting` | OK. |
+| `commit_author_email` | ✅ «👤 Автор коммитов» | `/setting` | OK. |
+| `policy_url` | ✅ «🔗 Внешние ссылки → 📄 Политика» | `/setting` | OK. |
+| `electronic_reception_url` | ✅ «🔗 Внешние ссылки → 🌐 Эл. приёмная» | `/setting` | OK. |
+| `udth_schedule_url` | ✅ «🔗 Внешние ссылки → 🚌 УДТХ» | `/setting` | OK. |
+| `udth_schedule_intermunicipal_url` | ✅ «🔗 Внешние ссылки → 🚍 Межмуниципальные» | `/setting` | OK. |
+| `emergency_contacts` | ✅ «🆘 Экстренные службы» (CRUD list) | `/setting` | Без редактирования записи — только add/delete. |
+| `transport_dispatcher_contacts` | ✅ «🚌 Диспетчерские» (CRUD list) | `/setting` | Аналогично, без edit. |
+| `topics` | ✅ «🏷 Тематики обращений» (CRUD list) | `/setting` | Без редактирования и без change-order. |
+| `localities` | ✅ «📍 Населённые пункты» (CRUD list) | `/setting` | Без редактирования и без change-order. |
+| `broadcast_max_images` | 🔴 НЕТ В UI (только `op:set:expert` fallback) | `/setting broadcast_max_images 5` | Единственный int-ключ; экспертная клавиатура показывает имя, но карточка ведёт через `/setting`, не wizard. |
+
+**Итого:** 13 из 14 ключей покрыты иерархическим меню; 1 (`broadcast_max_images`)
+— только expert-fallback. Все 14 продолжают быть доступны через
+`/setting <key> <value>` для CLI-сценариев и совместимости со скриптами.
+
+Что НЕ покрыто из «инфраструктурных» переменных — это конфиг бота из
+`config.py`/`.env` (admin_group_id, bot_token, database_url,
+sla_response_hours, answer_max_chars, healthcheck_interval_minutes,
+backup_day_of_week/hour/minute, timezone). Они правятся только редеплоем
+— и это правильно: ключи влияют на запуск процесса и идут через
+`infra/.env` + рестарт docker compose. Через UI их менять нельзя, иначе
+operator выстрелит себе в ногу одним тапом.
+
+## 2. Команды без UI — полная инвентаризация
+
+Регламент требует «без psql, без команд». Сейчас 11 admin-команд в
+`admin_commands.py` + 4 переадресованные в `start.py` (для оператора
+имеют смысл `/whoami`, `/menu`, `/help`, `/start` — открывают /op_help).
+
+| Команда | Есть UI-кнопка? | Комментарий |
+|---|---|---|
+| `/op_help` | ✅ это и есть точка входа в меню | Сама раздаёт UI. |
+| `/menu`, `/start`, `/help` | ✅ открывают /op_help | OK. |
+| `/open_tickets` | ✅ «📋 Открытые обращения» | OK. |
+| `/stats <period>` | ✅ «📊 Статистика» (выбор периода) | OK. |
+| `/diag` | ✅ «🛠 Диагностика» | OK. |
+| `/backup` | ✅ «💾 Снять бэкап» | OK. |
+| `/broadcast` | ✅ «📢 Сделать рассылку» | OK. |
+| `/add_operators` | ✅ «👥 Операторы → ➕ Добавить» (wizard) | OK. |
+| `/setting` | 🟡 «⚙️ Настройки бота» (13 из 14 ключей) | См. §1, не покрыт `broadcast_max_images`. |
+| `/reply <id> <text>` | 🟡 «✉️ Ответить и закрыть» в карточке обращения | OK (через карточку, не через меню). |
+| `/reopen <id>` | 🟡 «🔁 Возобновить» в карточке закрытого обращения | OK. |
+| `/close <id>` | 🟡 «⛔ Закрыть без ответа» в карточке открытого обращения | OK. |
+| `/erase max_user_id=<id>` или `phone=<+7…>` | 🟡 «🗑 Удалить ПДн» рядом с жителем в «📊 Аудитория» или в карточке обращения | 🔴 НО найти жителя по телефону можно ТОЛЬКО командой. См. §3.4 («🔍 Поиск жителя»). |
+| `/whoami` | 🔴 нет UI | Не нужен в меню: одноразовая команда при первом запуске для получения admin_group_id. Оставить как CLI. |
+
+Двух полностью «безпарных» команд (с обязательным аргументом, без
+UI-аналога) у нас нет — все wizard'ы покрывают параметризованные
+сценарии. Единственный пробел — поиск конкретного жителя по
+телефону/номеру обращения; см. §3.4.
+
+## 3. Топ-12 предложений новых функций (отсортированы по value/effort)
+
+### 3.1 Кнопка «🔍 Поиск обращения / жителя» — P0 (effort 4-6h, value HIGH)
+
+Контекст: оператор не помнит номер обращения, но житель назвал телефон
+или фамилию. Сейчас единственный путь — `/erase phone=...` для
+проверки наличия жителя, или ручной просмотр «📊 Аудитория и согласия»
+(тоже без поиска внутри). По обращению — вообще никак, только
+прокрутка `/open_tickets`.
+
+Что добавить:
+- кнопка «🔍 Поиск» в op_help_keyboard (или внутри «📊 Аудитория»);
+- три режима: «по номеру обращения», «по телефону жителя»,
+  «по тексту обращения» (ilike по `summary` + `topic`);
+- результат — карточка жителя или карточка обращения с обычными
+  кнопками действий.
+
+Backend готов: `users_service.find_by_phone` (services/users.py:581) и
+`users_service.find_by_max_id` уже есть. Для поиска обращения по тексту
+нужен один `select(Appeal).where(Appeal.summary.ilike(...))` с lookback
+30 дней (защита от запросов на всю историю).
+
+### 3.2 «📋 Шаблоны быстрых ответов оператора» — P0 (effort 8-10h, value HIGH)
+
+Контекст: операторы часто пишут одни и те же фразы — «Передано в отдел
+ЖКХ», «По вашему обращению начата работа, ответ в течение 10 дней»,
+«Свяжитесь с диспетчером по тел. …». Сейчас это набирается руками
+каждый раз, что роняет качество (опечатки) и скорость (10-30 сек
+вместо 1 сек).
+
+Что добавить:
+- новая таблица `reply_templates(id, name, text, category, use_count,
+  created_by_max_id, created_at, is_active)`. По образцу
+  `broadcast_templates` (готовая модель + handler), но с привязкой к
+  обращению, не к рассылке;
+- кнопка «📋 Шаблоны ответов» в карточке обращения рядом
+  с «✉️ Ответить и закрыть»;
+- тап → выбор шаблона из списка → preview с возможностью изменить
+  перед отправкой → отправка как обычный operator-reply.
+
+Permanent value: статистика «топ-10 самых частых ответов» подскажет
+команде, какие FAQ нужно вынести в `welcome_text` или «📚 Полезная
+информация».
+
+### 3.3 Кнопка-редактор записи в списках (CRUD edit) — P0 (effort 3h, value MEDIUM)
+
+Контекст: сейчас в `topics`, `localities`, `emergency_contacts`,
+`transport_dispatcher_contacts` есть только **add** и **delete**. Чтобы
+исправить опечатку в одной записи — удалить + ввести заново. Это
+теряет порядок (новые добавляются в конец) и приводит к лишним
+audit-записям.
+
+Что добавить:
+- в `op_settings_list_keyboard` рядом с «🗑 N. label» добавить
+  «✏️ N» (отдельным рядом или единым «✏️🗑 N»);
+- в `op_settings_obj_item_keyboard` рядом с «🗑 Удалить запись»
+  добавить «✏️ Изменить запись»;
+- intent kind=`list_edit` и `obj_edit` — тот же паттерн, что list_add.
+
+### 3.4 Кнопки «⬆️ / ⬇️» переупорядочивания в `topics` / `localities` — P1 (effort 2h, value MEDIUM)
+
+Контекст: порядок строк в `topics` и `localities` определяет порядок
+кнопок у жителя. Сейчас если оператор хочет вывести «Жилищный фонд»
+наверх — нужно удалить все ниже и заново добавить. Это травмоопасно.
+
+Что добавить: рядом с каждой строкой две маленькие кнопки «⬆️ ⬇️»,
+свопающие позицию. Один tap = один swap, без подтверждения.
+
+### 3.5 «📅 Календарь рабочих часов / праздников» — P1 (effort 4h, value MEDIUM)
+
+Контекст: бот уже знает праздники через `services/calendar_ru.py`
+(`is_workday`) и расписание оператора через `_job_working_hours_*` —
+но это исключительно технические jobs cron. Оператор не видит, в какие
+дни ближайшего месяца бот будет «молчать» (или, наоборот, давить
+напоминалками).
+
+Что добавить:
+- кнопка «📅 Календарь» в op_help_keyboard для роли IT;
+- открывает текстовую сводку: ближайшие 30 дней с пометкой «🟢 рабочий
+  день / 🔴 выходной / 🎉 праздник», + «текущий час: 14:30 Asia/Kamchatka,
+  рабочий день: ДА»;
+- внизу — «➕ Добавить нестандартный нерабочий день» (приказ главы,
+  актированный день из-за пепла) → wizard добавления `date + reason`
+  в новую таблицу `non_working_days`. Календарь это учитывает в
+  `is_workday`.
+
+### 3.6 «📈 Аналитика — компактный дашборд» — P1 (effort 6h, value MEDIUM)
+
+Контекст: `/stats` отдаёт XLSX (полный отчёт), `/diag` показывает текущий
+снимок. Не хватает «графика тренда»: сколько обращений за каждый день
+последних 14 дней, динамика подписок, % отвеченных в SLA.
+
+Что добавить:
+- кнопка «📈 Тренды» в op_help_keyboard рядом со «📊 Статистика»;
+- ASCII bar chart прямо в чате: `5 ▮▮▮▮▮` / `12 ▮▮▮▮▮▮▮▮▮▮▮▮` по дням;
+- три блока: обращения/день, подписки/день, ответы/день за 14 дней;
+- внизу — % SLA compliance за месяц (ответ в течение
+  `sla_response_hours`).
+
+### 3.7 Кнопка «📤 Тестовая рассылка себе» — P1 (effort 1-2h, value MEDIUM)
+
+Контекст: координатор готовит broadcast (фото + длинный текст) и
+переживает «как это будет выглядеть у жителя». Сейчас единственный
+способ проверить — нажать «✅ Разослать» и реально отправить всем
+подписчикам.
+
+Что добавить:
+- в `broadcast_confirm_keyboard` третья кнопка «🧪 Сначала прислать
+  только мне»;
+- тап → reuse `_send_one`, но `target_user_ids=[operator.max_user_id]`;
+- после прихода — обычный confirm экран «всё ок? разослать или
+  изменить?».
+
+Effort 1-2h потому что вся отправка broadcast'а уже параметризована
+по списку получателей; нужно только перенаправить.
+
+### 3.8 «🔔 Настройки уведомлений оператора» — P2 (effort 4h, value LOW-MEDIUM)
+
+Контекст: каждый оператор сейчас получает все pulse, all working-hours
+reminders, broadcast progress events. У части операторов это «шум»
+(особенно для AEMR-роли, которая не отвечает на обращения непрерывно).
+
+Что добавить:
+- личный per-operator opt-out: новая колонка
+  `operators.notifications_json={pulse:true, open_reminder:true, ...}`;
+- кнопка «🔔 Мои уведомления» в op_help (доступна любой роли);
+- 4-6 чекбокс-кнопок: «Pulse-heartbeat», «Напоминания об открытых»,
+  «Прогресс рассылки», «События подписки», «Алерты бэкапа», «Алерты
+  funnel-watchdog».
+
+Важно: pulse-heartbeat это технический сигнал, его отключение для IT
+запрещено (роль обязана знать, что бот живой). Для AEMR и EGP — можно.
+
+### 3.9 «🆔 Найти жителя по ID/телефону» — P2 (effort 2h, value LOW-MEDIUM)
+
+Контекст: оператору позвонил житель, назвал телефон, нужно увидеть
+карточку (телефон, имя, подписан/согласие). Сейчас единственный путь
+— `/erase phone=...` (но это destructive намёк, опасно) или
+прокрутка «📊 Аудитория».
+
+Что добавить:
+- кнопка «🆔 Найти жителя» в «📊 Аудитория и согласия»;
+- вход — телефон или max_user_id;
+- результат — карточка жителя с обычными action-кнопками
+  (block/unblock/erase + кнопка «📂 Его обращения»).
+
+Перекликается с §3.1, но это узкий слот «найти жителя» — может
+поставляться отдельно как первый этап.
+
+### 3.10 Двойное подтверждение для опасных действий — P2 (effort 2h, value MEDIUM)
+
+Контекст: «🗑 Удалить ПДн» в карточке жителя сейчас выполняется в один
+tap по кнопке `op:aud:erase:<id>` без confirm-экрана. То же про
+`op:erase:<appeal_id>` в карточке обращения. Это destructive,
+необратимое для жителя действие.
+
+Что добавить:
+- между тапом и реальным erase — confirm-экран с двумя кнопками
+  «✅ Да, стереть» / «❌ Отмена», аналогично goodbye_erase_confirm для
+  жителя;
+- такой же confirm для «🚫 Заблокировать» и «🚫 Деактивировать
+  оператора» (последний УЖЕ имеет confirm — см.
+  `op_operator_deactivate_confirm_keyboard`).
+
+### 3.11 Smoke-тест отправки личного сообщения — P3 (effort 2h, value LOW)
+
+Контекст: после редактирования `welcome_text` хочется увидеть, как это
+выглядит у жителя. Сейчас оператор копирует `/start` себе в личку и
+триггерит реальный welcome.
+
+Что добавить:
+- кнопка «👁 Превью текстов» в «📢 Тексты для жителей»;
+- preview каждого: «Так выглядит у жителя в личке» + рендеринг с теми
+  же markdown-правилами.
+
+### 3.12 «🗂 Архив закрытых обращений» с фильтром — P3 (effort 4h, value LOW)
+
+Контекст: «📋 Открытые обращения» показывает только NEW+IN_PROGRESS.
+Чтобы найти CLOSED обращение по тематике или дате — нужен `/stats`,
+который отдаёт XLSX и неудобен для быстрого «вспомнить, что отвечали
+неделю назад».
+
+Что добавить:
+- кнопка «🗂 Архив» рядом с «📋 Открытые обращения»;
+- фильтры: «за неделю / месяц / квартал»;
+- список карточек ANSWERED + CLOSED, ограничение 50 записей.
+
+## 4. Pain points текущего меню
+
+### 4.1 `admin_settings.py:516-533` — `_start_obj_add` ждёт «две строки» текстом
+
+Проблема: оператор должен прислать сообщение с **двумя строками** —
+название и телефон. Это парсится через `text.split("\n")` в
+`_apply_obj_add` (admin_settings.py:991). Типовая ошибка: оператор
+вводит «Пожарная служба 01» в одну строку → бот отвечает «Нужно две
+строки», нужно перепечатывать.
+
+Лечение: разбить на два intent'а — сначала спросить название
+(intent kind=`obj_add_step1`), затем телефон (kind=`obj_add_step2`),
+показывая после каждого шага кнопку «❌ Отменить». Аналогично wizard'у
+добавления оператора.
+
+### 4.2 `admin_settings.py:838-867` — экспертная карточка ключа советует `/setting`
+
+Проблема: экспертная карточка для каждого ключа без UI говорит «Изменить:
+`/setting <key> <новое значение>`. Для списков и объектов передавайте
+JSON». Это нарушение Регламента «без команд». Сейчас сюда попадает
+только `broadcast_max_images`, но любой новый ключ, добавленный в
+SCHEMA, по умолчанию провалится в экспертную клавиатуру и оператор
+снова увидит «введите JSON».
+
+Лечение: в экспертной карточке для int-типов показать кнопки `-1 +1
+-5 +5` (или универсальный intent kind=`int_edit` с проверкой
+min/max). Для unknown типов — не показывать кнопку «Изменить», явно
+сообщать «этот ключ редактируется только разработчиком».
+
+### 4.3 `keyboards.py:986-1002` — `op_settings_list_keyboard` — 30 кнопок «🗑 N»
+
+Проблема: при ≥10-15 темах список становится длинным, а каждая кнопка
+— это потенциальный мис-тап. Сейчас delete — без confirm. Один
+случайный tap по «🗑 5. Жилищный фонд» удаляет тематику в продакшене и
+жители теряют возможность выбрать.
+
+Лечение:
+- двухшаговое удаление: тап «🗑 N» → confirm-экран «Удалить «Жилищный
+  фонд»? ✅ Да / ❌ Отмена» (как у goodbye/operator-deactivate);
+- разделение list view на read-only «📋 Список» и edit-mode «✏️ Изменить»
+  (по дефолту видны только delete-кнопки, mode переключается тапом).
+
+### 4.4 `admin_panel.py:457-531` — `_do_backup` без подтверждения
+
+Проблема: «💾 Снять бэкап» запускает pg_dump моментально. На больших
+БД (несколько ГБ) это блокирует процесс бота на 30+ секунд, и в этот
+момент у жителей сообщения «зависают». Confirm с предупреждением
+«Бэкап займёт ~30 сек, в это время бот будет отвечать медленнее»
+сэкономил бы пару случайных запусков.
+
+Лечение: confirm-экран `op_backup_confirm_keyboard` перед `_do_backup`,
+с estimate'ом времени по размеру таблицы `users`.
+
+## 5. Архитектурные предложения
+
+### 5.1 Группировка меню по «частоте использования», не по «домену»
+
+Текущая структура `op_help_keyboard` смешивает hot-path («📋 Открытые
+обращения», «📊 Статистика») с rare-path («💾 Снять бэкап», «⚙️
+Настройки бота»). При 10+ кнопках в один столбец это становится скролл.
+
+Предлагаемая структура:
+
+**Hot (всегда сверху):**
+- 📋 Открытые обращения (N)
+- 🔍 Поиск (новое, см. §3.1)
+- 📊 Статистика
+- 🛠 Диагностика
+
+**Рассылки (отдельной группой):**
+- 📢 Сделать рассылку
+- 📜 История рассылок
+- 📋 Шаблоны рассылок
+- 📋 Шаблоны ответов (новое, §3.2)
+
+**Admin (только IT, под cut-off):**
+- ⚙️ Настройки бота
+- 👥 Операторы
+- 📊 Аудитория и согласия
+- 📅 Календарь (новое, §3.5)
+- 💾 Снять бэкап
+
+Реализация: добавить «📦 Ещё…» как expandable section, либо
+группировать вторую страницу `op_help_keyboard` через тап «⚙️ Admin
+функции».
+
+### 5.2 Единый pattern «list view → item view → action»
+
+Сейчас «📊 Аудитория» и «👥 Операторы» по-разному строят навигацию:
+аудитория показывает action-кнопки прямо в строке списка, операторы —
+открывают отдельную карточку. Шаблоны рассылок — третий стиль (тап
+открывает карточку с большим набором действий).
+
+Унифицировать на «list view → item card → action». Это упрощает
+обучение и одинаково ложится на любой будущий список (обращения,
+шаблоны, операторы, жители).
+
+### 5.3 Стандартизировать confirm-кнопки для destructive actions
+
+Сейчас confirm есть у некоторых действий (deactivate operator, goodbye
+revoke/erase, broadcast confirm), но нет у других (erase PII в
+карточке жителя, block в карточке обращения, list-item delete в
+настройках). Стандарт: любое необратимое действие → confirm-экран
+с двумя кнопками «✅ Подтвердить» / «❌ Отмена».
+
+Реализация: helper `dangerous_action_confirm_keyboard(action_payload,
+back_payload, description)` в `keyboards.py`. Все destructive
+действия используют один и тот же шаблон.
+
+### 5.4 In-band help-tooltips для редких настроек
+
+Сейчас в карточках настроек (`_show_text_card`) есть hint про лимит
+символов и про «должно начинаться с http://». Для списков/объектов
+hint появляется только на шаге добавления. Дополнить:
+
+- для `broadcast_max_images` показать «1-20, текущее 5; влияет на то,
+  сколько фото оператор может приложить к одной рассылке»;
+- для `topics` показать «жители видят как кнопки в воронке
+  📝 Написать обращение; порядок важен»;
+- для `localities` — «жители видят как кнопки выбора населённого
+  пункта, плюс используется автодетектом по геолокации».
+
+Это снижает нагрузку на документацию и делает UI самообъясняющим.
+```
+
 ### `docs/_meta/AUDIT_REPORT.md`
 
 Size: `16895` bytes  
@@ -41737,6 +43419,1540 @@ SHA-256: `795dee09f8538203cd17d6ad244750016bed61cec49fb47f0646ff3b84c3e071`
 2. Прогнать тесты (`pytest -q`) — изменения только текстовые, регрессий не должно быть.
 3. После мерджа PR, в RUNBOOK добавить ссылку на текущий коммит как «source of truth at the moment of doc revision».
 4. Прописать в CI ежеквартальный re-audit: cron-job, который запускается раз в три месяца и комментирует PR с PR-заголовком «Doc-drift sweep», если документы не пересматривались.
+```
+
+### `docs/_meta/COVERAGE_GAPS.md`
+
+Size: `26592` bytes  
+SHA-256: `b74f62bdae0c340ae1276db42f9a9026a2dbbffdf8b5c95dc3769f405d3b7deb`
+
+```markdown
+# Test Coverage Gap Analysis
+
+Generated: 2026-05-25
+Source: `bot/coverage.json` (pytest-cov 7.14.0, branch coverage on)
+Total tests: 964 passed, 97 skipped (21.79s)
+
+## Топ-уровневая сводка
+
+| метрика                 | значение           |
+| ----------------------- | ------------------ |
+| **Overall coverage**    | **61.1%** (combined line+branch) |
+| Line coverage           | 64.4% (5062/7865 statements) |
+| Branch coverage         | 50.1% (1162/2318 branches)   |
+| Missing lines           | 2803               |
+| Missing branches        | 1156               |
+| Partial branches        | 246                |
+| Files at 100%           | 12 из 60           |
+| Files в зоне ≥85%       | 25 из 60           |
+| Файлы под рисками <50%  | 13 из 60           |
+
+12 модулей уже на 100%: `aemr_bot/__init__.py`, `db/models.py`,
+`handlers/_common.py`, `services/progress.py`, `services/repo_sync.py`,
+`texts.py`, `utils/__init__.py`, `utils/background.py`,
+`utils/image_attachments.py`, `utils/menu_tracker.py`,
+`db/__init__.py`, `services/__init__.py`.
+
+## Топ-10 модулей с самыми опасными пробелами
+
+Сортировка: `score = miss_lines * 2 + miss_branches` (line-misses весят
+больше, потому что обычно представляют целые непроверенные функции, а
+не отдельные ветки уже покрытой логики).
+
+| #  | Module                                    | Cov%   | Brc%   | Stmts | Miss | BrMiss | Score |
+| -- | ----------------------------------------- | ------ | ------ | ----- | ---- | ------ | ----- |
+| 1  | `handlers/admin_settings.py`              | 15.2%  | 9.6%   | 465   | 384  | 170    | 938   |
+| 2  | `handlers/broadcast_templates.py`         | 30.3%  | 23.0%  | 527   | 353  | 151    | 857   |
+| 3  | `handlers/admin_operators.py`             | 38.7%  | 35.4%  | 424   | 255  | 93     | 603   |
+| 4  | `handlers/admin_commands.py`              | 15.1%  | 0.0%   | 229   | 183  | 76     | 442   |
+| 5  | `keyboards.py`                            | 68.4%  | 46.2%  | 520   | 141  | 56     | 338   |
+| 6  | `handlers/appeal_funnel.py`               | 59.0%  | 44.3%  | 258   | 93   | 49     | 235   |
+| 7  | `main.py`                                 | 39.2%  | 22.2%  | 173   | 99   | 28     | 226   |
+| 8  | `services/users.py`                       | 27.3%  | 10.0%  | 142   | 98   | 27     | 223   |
+| 9  | `handlers/admin_panel.py`                 | 45.9%  | 37.0%  | 174   | 90   | 29     | 209   |
+| 10 | `handlers/operator_reply.py`              | 66.4%  | 51.9%  | 276   | 77   | 52     | 206   |
+
+Дальше за топ-10 (значимые, но меньше):
+- `services/cron.py` 64.6% (84/28)
+- `services/appeals.py` 25.7% (80/24)
+- `services/broadcast_templates.py` 19.5% (71/24)
+- `handlers/start.py` 62.1% (62/29)
+- `services/settings_store.py` 50.5% (57/34)
+- `handlers/appeal_runtime.py` 29.3% (59/23)
+
+## Per-module breakdown
+
+### 1. `handlers/admin_settings.py` — 465 stmts, 15.2% covered
+
+**Что покрыто:** только импорты и shape-функции (`_clip_audit_value`,
+`_intent_set`/`_intent_get`/`_intent_drop`, `_render_value`) — это
+test_admin_settings_audit.py (57 строк, аудит-clip-логика).
+
+**🔴 Bug-prone gaps (P0 для написания тестов):**
+
+- L115-145: `run_settings_menu` — главное меню «⚙️ Настройки бота».
+  Ни одного теста на роль-проверку (`ensure_role(IT)`), на отображение
+  `dirty_count`, на «Не выгружено в репо: N (preview)».
+- L175-289: `_route_set_action` — 16-way диспетчер `op:set:*` callback'ов.
+  Каждая ветка (`cat:texts`, `cat:urls`, `text:`, `url:`, `edit:`,
+  `cancel:`, `list:`, `list_add:`, `list_del:`, `obj:`, `obj_view:`,
+  `obj_add:`, `obj_del:`, `author`, `pr:start`, `pr:confirm`,
+  `pr:diff`) — отдельная неоттестированная ветка.
+- L297-330: `_show_text_card` — рендер карточки текста/URL.
+  Не тестируется `is_url` ветка с подсказкой про http://, ни лимит
+  `max_len`, ни обрезание длинного `_render_value`.
+- L333-358: `_start_edit_intent` — guard «ключа нет в SCHEMA», ветка
+  `rule.get("url")` vs `rule.get("type") is str`.
+- L368-431: list-CRUD (`_show_list_card`, `_list_delete`,
+  обработка `list_add` через intent) — пустой список, удаление
+  индексом, защита от out-of-range.
+- L441-587: object-CRUD для emergency_contacts /
+  transport_dispatcher_contacts — ни одна ветка не покрыта.
+- L582-587: `_show_author_card` — рендер commit_author настроек.
+- L609-906: PR-flow (`_show_pr_confirm`, `_show_pr_diff`,
+  `_create_pr`) — критичный путь для IT, ноль тестов; включает
+  ошибки git/gh, отсутствие dirty keys, проверку cooldown.
+- L879-984: `handle_settings_text_input` — перехват входящего
+  текстового сообщения как нового значения настройки. Включает:
+  - guard «нет активного intent» (возврат `False`);
+  - валидация типа (`int`, `str`, `dict` через json.loads);
+  - URL-валидация (http/https + опциональный whitelist из SEC #4);
+  - audit-log запись с `_clip_audit_value`;
+  - GC просроченных intent'ов.
+
+**🟡 Integration-only:** нет — это handler-модуль, integration
+покрытие через `make_event` _именно есть_ в `_helpers.py` и должно
+быть применено. Все «integration-only» гэпы здесь = ленивые гэпы.
+
+**🟢 Trivial:** нет.
+
+**Suggested tests (priority order):**
+1. `test_run_settings_menu_role_check` — non-IT → ensure_role
+   reject, ни одного `send_or_edit_screen` вызова.
+2. `test_run_settings_menu_dirty_keys_preview` — `dirty=[]` vs
+   `dirty=[k1..k7]` (preview обрезается на 5+ «и ещё N»).
+3. `test_route_set_action_each_branch` — параметризованный 17-way
+   тест: каждый payload-префикс вызывает свой helper.
+4. `test_show_text_card_url_vs_text` — `is_url=True` добавляет
+   подсказку, `max_len` присутствует/отсутствует.
+5. `test_start_edit_intent_unknown_key` — key not in SCHEMA →
+   красная карточка, intent НЕ ставится.
+6. `test_handle_settings_text_input_*` (8 тестов):
+   - no intent → return False;
+   - expired intent → return False + intent dropped;
+   - valid str с max_len превышен → reject;
+   - valid url прошёл whitelist (если включён);
+   - invalid url → reject «должно начинаться с https://»;
+   - valid list_add → append + intent dropped;
+   - valid obj_add (json) → парсинг + сохранение;
+   - audit_log: details содержит clipped before/after.
+7. `test_create_pr_*` — mock `services.repo_sync.create_pr`,
+   проверить cooldown, dirty=[], ошибка git.
+
+Расчёт: ~30 unit-тестов, ожидаемый прирост покрытия модуля 15% → 80%+.
+
+### 2. `handlers/broadcast_templates.py` — 527 stmts, 30.3% covered
+
+**Что покрыто (test_broadcast_templates_handlers.py, 444 строки):**
+часть `_list`, `_open` happy-path, `_apply` dedupe-флоу. Wizard
+ввод имени/текста — мало.
+
+**🔴 Bug-prone gaps:**
+
+- L143-178: `_list` ветки `not items` (empty), `items` rendering.
+  Покрыты, но не все frame'ы кнопок.
+- L215-304: `_apply` — детали render preview (citation footer),
+  guard `actor_id is None`, ветка active-rate-limit-warning.
+- L314-321: `_drop_expired` GC.
+- L332-381: `_rename` flow — все ветки wizard'а на rename.
+- L401-506: `_edit` flow — replace text + сохранить images.
+- L518-548: `_delete` flow — confirm + apply.
+- L579-651: wizard ввод (name → text → images → save).
+  Каждая ветка проверки длины, отмены, шага-переключения — отдельный
+  тест.
+- L893-1230 (~340 строк): admin-side handlers для template-attachments
+  (загрузка картинок, переотправка превью, отмена). Целиком без
+  тестов.
+
+**🟡 Integration-only:** L518->520, L821->833 (callback dispatching
+веток в `register(dp)`) — покрываются интеграционно через
+test_callback_router.
+
+**🟢 Trivial:** нет.
+
+**Suggested tests:**
+1. `test_apply_double_tap_dedupe` — два apply в 3-сек окно: второй
+   ack без record_usage (проверить `_is_recent_apply`).
+2. `test_wizard_state_lifecycle` — `_TmplWizardState.expired()`
+   через monotonic-mock.
+3. `test_rename_*` (3): no-op (то же имя), conflict (другой
+   шаблон с тем же именем), success.
+4. `test_edit_text_*` (4): cancel, превышение длины, valid,
+   images preservation.
+5. `test_delete_confirm_*` (3): cancel, success, race (шаблон
+   уже удалён другим оператором).
+6. `test_wizard_image_collect_*` (5): single image, max images
+   reached, document вместо image, отмена, save без изображений.
+7. `test_admin_image_dedupe` — обработка дублей в обработчике
+   incoming-message.
+
+Расчёт: ~25 unit-тестов, прирост 30% → 75%+.
+
+### 3. `handlers/admin_operators.py` — 424 stmts, 38.7% covered
+
+**Что покрыто (test_admin_operators.py, 431 строка):** базовый wizard
+add operator, role change, deactivate. Не покрыты: from-group picker,
+карточка с защитой «единственный IT», hydrate-from-DB ветки.
+
+**🔴 Bug-prone gaps:**
+
+- L92-99: `_safe_get_chat_members` — exception → log + пустой
+  список. Без теста — silent breakage если MAX API изменит формат.
+- L105-109: `_full_name_from_member` — все 4 ветки (first+last,
+  только first, только last, пусто → "User N").
+- L147, 152, 157, 162, 167, 170, 175: `run_operators_action` —
+  каждый `payload.startswith(...)` без теста на «эта ветка
+  действительно зовёт правильный helper».
+- L189-199: `op:opadd:pick:` — `ValueError` на нечисловой
+  picked_user_id (ловится, но без теста).
+- L218-222: ветки name_keep / name_edit / edit_role.
+- L249: header «активных N, деактивированных M».
+- L272-306: `_show_operator_card`:
+  - target_id ValueError → silent ack;
+  - оператор не найден → красная карточка;
+  - `can_deactivate=False` для единственного активного IT
+    (SEC-критично, защищает от self-lockout);
+  - `is_self` маркер «себя через меню изменить нельзя».
+- L364-428: `_show_role_change` — picker и applied-role.
+- L445-480: `_apply_role_change` — happy + race (роль уже та же)
+  + операция от non-IT.
+- L496-585: `_show_deactivate_confirm`, `_apply_deactivate` —
+  включая SEC #6 race-protection (operator deactivation race).
+- L599-695: from-group picker (`_show_from_group`,
+  `_start_add_with_picked`).
+- L764, 794-845: wizard ввода имени для добавляемого оператора —
+  каждый шаг.
+- L861, 883-906: hydrate ветки при старте.
+
+**🟡 Integration-only:** L979->991 (register_handlers).
+
+**🟢 Trivial:** L991 (final return).
+
+**Suggested tests:**
+1. `test_safe_get_chat_members_*` (3): no `members` attr, exception,
+   happy.
+2. `test_full_name_from_member_*` (4): все комбинации first/last.
+3. `test_run_operators_action_dispatch` — параметризован по 9
+   префиксам.
+4. `test_show_operator_card_last_it_blocks_deactivate` — критично
+   для SEC #6.
+5. `test_show_operator_card_self_marker` — `is_self=True` показывает
+   warning «Это вы».
+6. `test_apply_deactivate_race` — между _show_confirm и _apply
+   IT уже единственный → reject.
+7. `test_show_from_group_filters_existing_operators` — picker не
+   показывает уже-операторов.
+8. `test_wizard_name_edit_*` (3): cancel, valid, too-long.
+
+Расчёт: ~22 unit-теста, прирост 38% → 78%+.
+
+### 4. `handlers/admin_commands.py` — 229 stmts, 15.1% covered (branch 0%)
+
+**Что покрыто:** только импорты модуля.
+
+**🔴 Bug-prone gaps:**
+
+Каждая slash-команда — отдельная функция в `register(dp)`:
+`/open_tickets`, `/stats`, `/reply`, `/reopen`, `/close`, `/erase`,
+`/forget`, `/whoami`, `/diag`, `/diag_extended`, `/diag_csv`.
+
+- L143-145: `cmd_open_tickets` — ensure_operator reject.
+- L149-160: `cmd_stats` — argument parsing, VALID_PERIODS check.
+- L164-195: `cmd_reply` — двухслойная защита (SEC #9), parse-arg,
+  ValueError на нечисловом id, пустой текст.
+- L199-224: `cmd_reopen` — argument parse, audit-log запись.
+- L228-247: `cmd_close` — analogous.
+- L254-312: `cmd_erase` — phone vs id, не-IT reject (только IT
+  может erase), confirmation step.
+- L316-361: `cmd_forget` — отзыв согласия + auto-close открытых
+  обращений (P1 в #21).
+- L365-379: `cmd_whoami` — простой.
+- L388-453: `cmd_diag` / `cmd_diag_extended` / `cmd_diag_csv` —
+  частично покрыт через test_diag_extended.py, но не через
+  message-handler register.
+
+**🟡 Integration-only:** все handler-функции через `register(dp)` —
+требуют make_event + decorated handler shape.
+
+**🟢 Trivial:** нет.
+
+**Suggested tests:**
+1. `test_cmd_reply_*` (5): not-admin-chat, not-operator,
+   missing args, invalid id, empty text.
+2. `test_cmd_reopen_*` (4): not-operator, ValueError,
+   already_open, blocked_by_revoke.
+3. `test_cmd_close_*` (4): аналогично reopen.
+4. `test_cmd_erase_*` (6): not-IT, phone/id parsing, confirmation
+   required, not-found.
+5. `test_cmd_forget_*` (3): not-self, success, already-revoked.
+6. `test_cmd_stats_*` (4): invalid period, default today, all,
+   no-data case.
+7. `test_cmd_diag*_register_path` — через make_event с
+   /diag команды.
+
+Расчёт: ~26 unit-тестов, прирост 15% → 85%+.
+
+### 5. `keyboards.py` — 520 stmts, 68.4% covered
+
+**🟡 Integration-only:** в основном — это keyboard-builders, которые
+покрываются интеграционно при рендере карточек. Большая часть
+missing lines — это специализированные клавиатуры, которые не
+вызываются из тестируемых путей.
+
+**🔴 Bug-prone gaps:**
+
+- L168, 175, 204-207: `_attach_back_row` / навигационные guards.
+- L496-501, 557-583: keyboards для admin_settings меню (вызывается
+  только из untested handlers).
+- L799-849: broadcast_templates keyboards — тоже из untested.
+- L854-1061: целая серия специализированных клавиатур (op_operators_*,
+  op_settings_*, broadcast_templates_*).
+
+Здесь повышение покрытия = автоматическое следствие написания
+тестов для пунктов 1-4 выше.
+
+**Suggested tests:** 4 микро-юнит-теста для нетривиальных билдеров:
+1. `test_op_operators_list_keyboard_inactive_marker`.
+2. `test_broadcast_templates_card_keyboard_used_flag`.
+3. `test_op_settings_menu_dirty_count`.
+4. `test_op_audience_paginator_edge` (last page, single page).
+
+### 6. `handlers/appeal_funnel.py` — 258 stmts, 59.0% covered
+
+**🔴 Bug-prone gaps:**
+
+- L93-146: `_handle_repeat_intent` — повторное обращение по
+  ANSWERED/CLOSED, маркировка темы (P1 critical: цепочка
+  «обратная связь по отвеченному вопросу»).
+- L186-220: ветка «новый житель без consent» — onboarding-fork.
+- L397-403: validation для phone format в funnel.
+- L417-448: топик-suggestions при пустом вводе.
+- L493-510: address-step с пустым ответом.
+- L623-651: followup detached-safety (P2 #24).
+- L691-721: edge: пользователь отписался во время funnel.
+
+**Suggested tests:** ~12 тестов.
+
+### 7. `main.py` — 173 stmts, 39.2% covered
+
+**🟢 Mostly trivial / integration-only:** L62-64 (sys.argv detect),
+L82-83 (logger config), L113 (env-var fallback), L134-170 (CLI args
+parsing для preflight), L205-206 (bot info logging), L247-372 (async
+main entry — оркестратор).
+
+Это — `async def main()` оркестратор. Распилить на тестируемые блоки:
+- `_preflight_check_token` (уже есть mock в тестах).
+- `_register_bot_commands`, `_seed_settings`, bootstrap_it_from_env,
+  reap_orphaned_sending, hydrate.
+
+**Suggested tests:** ~6 тестов на extracted helpers, остальное —
+законно untested orchestrator.
+
+### 8. `services/users.py` — 142 stmts, 27.3% covered
+
+**🔴 Bug-prone gaps (P0 — это data layer для residents):**
+
+- L42-46: `get_or_create` — путь когда user is None (создание).
+- L59-60: `has_consent` — bool conversion edge.
+- L74: `set_consent` — SEC #1 защита: НЕ сбрасывать is_blocked.
+  Без теста — следующий рефакторинг может сломать.
+- L106-109: `set_state` с `data` patch (data is None vs dict).
+- L133-149: `update_dialog_data` — advisory_xact_lock + race
+  protection (postgres path; SQLite fallback покрыт неявно).
+- L141-149: SQLite fallback ветка (advisory недоступен).
+- L164-176: `find_stuck_in_summary` — limit default cfg
+  fallback.
+- L228, 247-270: `find_stuck_in_funnel` (аналогично).
+- L282-378: `set_blocked`, `auto_close_open_appeals` (P1 #21),
+  `revoke_consent` — каждый со своими guards.
+- L401-485: `erase_*` функции (anonymise) — критично для 152-ФЗ:
+  каждое поле должно стираться, audit-log писаться.
+- L530-630: `find_by_phone`, `format_resident_card`,
+  `count_consent_*`.
+
+**🟡 Integration-only:** advisory_xact_lock paths требуют PG.
+
+**🟢 Trivial:** нет.
+
+**Suggested tests:** ~18 unit-тестов на чистом SQLite:
+1. `test_get_or_create_*` (2).
+2. `test_set_consent_does_not_reset_blocked` — SEC #1 защита.
+3. `test_update_dialog_data_*` (3): user is None, patch merge,
+   advisory unavailable fallback.
+4. `test_find_stuck_in_*` (4).
+5. `test_set_blocked_unblocked_*` (2): blocks new appeals,
+   unblock allows.
+6. `test_revoke_consent_auto_close` (P1 #21).
+7. `test_erase_clears_all_pii` — phone, first_name,
+   phone_normalized.
+8. `test_find_by_phone_normalization` (3 формата ввода).
+
+Расчёт: прирост 27% → 88%+.
+
+### 9. `handlers/admin_panel.py` — 174 stmts, 45.9% covered
+
+**🔴 Bug-prone gaps:**
+
+- L29: ensure_role role-check.
+- L147-207: render главного меню админ-панели — каждая роль (IT,
+  COORDINATOR, OPERATOR) видит разные кнопки.
+- L225-449: цикл callback-handler'ов для main menu (большой
+  switch).
+- L500-506: cleanup intent ветки.
+
+**Suggested tests:** ~10 тестов, основной — три параметризованных
+test_admin_panel_role_keyboard (IT vs COORDINATOR vs OPERATOR).
+
+### 10. `handlers/operator_reply.py` — 276 stmts, 66.4% covered
+
+**🔴 Bug-prone gaps:**
+
+- L143-147: ack_callback early exit.
+- L176, 183-185, 189-191: reply intent dedupe (race rapid
+  double-tap, P2 #22).
+- L226: marker spoof guard (SEC #3 🆔 №N).
+- L374: edge case в parse marker.
+- L409-421: handle_command_reply branch.
+- L515-528: intermediate reply close-warning (P2 #23).
+- L645-757: swipe-reply handler — большой блок с обработкой
+  forwarded message detection.
+- L800-804: пользователь больше не оператор (deactivated mid-flow).
+
+**Suggested tests:** ~12 тестов, P0 = SEC #3 (marker spoof) и
+P2 #22 (rapid double-tap).
+
+## Service-layer summary (за топ-10)
+
+| Module                       | Cov%  | P0 для тестирования                                |
+| ---------------------------- | ----- | -------------------------------------------------- |
+| `services/cron.py`           | 64.6% | Failure-injection: scheduler не падает на исключении одного джоба |
+| `services/appeals.py`        | 25.7% | `create_appeal`, `add_user_message`, `add_operator_message` (intermediate vs final, CLOSED не «оживается»), `mark_in_progress`, `reopen`, `close`, `count_recent_for_user`, `list_unanswered_with_messages` |
+| `services/broadcast_templates.py` | 19.5% | CRUD service: list_active, get_by_id, create, rename (conflict), record_usage, soft_delete |
+| `services/settings_store.py` | 50.5% | get/set с schema validation, dirty-tracking, list-keys, audit-events на изменении |
+| `services/operators.py`      | 22.6% | get_any, upsert (insert vs reactivate), deactivate (active vs missing), change_role, write_audit, count_active_by_role, bootstrap_it_from_env |
+| `services/broadcasts.py`     | 37.5% | reap_orphaned_sending, lifecycle FSM (PENDING → SENDING → SENT/FAILED), progress-update transactions |
+| `services/stats.py`          | 47.1% | period-bounds (today / week / month / quarter / half_year / year / all), xlsx export shape |
+| `services/admin_relay.py`    | 55.9% | retry-on-throttle, fallback handlers when admin_card not deliverable |
+
+## Категоризация — глобально
+
+| Категория            | Доля missing | Действие                              |
+| -------------------- | ------------ | ------------------------------------- |
+| 🔴 **Bug-prone**     | ~55%         | Покрывать unit-тестами через make_event |
+| 🟡 **Integration**   | ~25%         | Покрывать integration-тестами с in-memory SQLite + mock bot |
+| 🟢 **Trivial / unreachable** | ~10% | Оставить (TYPE_CHECKING, `if __name__`, defensive guards) |
+| ⚪ **Hot path uncovered** | ~10%   | SEC #1/#3/#6, P1 #19/#21, P2 #22/#23, SACRED #5 — обязательно покрыть |
+
+## Реалистичная цель
+
+100% unit-coverage невозможен из-за:
+- `main.py:main()` — async orchestrator, требует моков bot+scheduler+
+  dispatcher+health одновременно.
+- `services/db_backup.py` — pg_dump/gpg/rclone subprocesses (75% уже
+  достигнуто за счёт мокирования subprocess.run).
+- `services/cron.py` — APScheduler integration (64.6%).
+- `handlers/start.py` — MAX-bot rich content events требуют интеграции
+  с реальной полировкой sender.
+- `services/users.py:update_dialog_data` advisory_xact_lock ветка
+  работает только на Postgres.
+- `services/idempotency.py` jsonb_set хирургия — Postgres-only.
+- `services/admin_relay.py` retry-on-throttle с реальным backoff.
+
+**Реалистичная цель:** **88-92% line, 78-83% branch.** Это
+интеграционно достижимо за 4-6 PR.
+
+## План работы (PR-by-PR)
+
+Эстимейты — в часах на одного сениор-разработчика, знающего
+test_admin_handlers_small.py-style паттерн make_event.
+
+| PR | Файл                              | Тестов | Effort | Прирост модуля   | Прирост total |
+| -- | --------------------------------- | ------ | ------ | ---------------- | ------------- |
+| A  | `handlers/admin_settings.py`      | +30    | 24h    | 15% → 80%        | +4.0%         |
+| B  | `services/users.py` + `services/appeals.py` | +28 | 16h | 27%/26% → 88%/85% | +3.2%        |
+| C  | `handlers/admin_commands.py`      | +26    | 16h    | 15% → 85%        | +2.3%         |
+| D  | `handlers/admin_operators.py`     | +22    | 14h    | 38% → 78%        | +2.0%         |
+| E  | `handlers/broadcast_templates.py` + `services/broadcast_templates.py` | +30 | 20h | 30%/19% → 75%/82% | +3.4%        |
+| F  | `handlers/operator_reply.py` (SEC #3 + P2 #22/#23) + `handlers/appeal_funnel.py` (P1 + P2 #24) | +20 | 14h | 66%/59% → 88%/85% | +2.1%       |
+| G  | `services/operators.py` + `services/settings_store.py` + `services/broadcasts.py` + `services/stats.py` | +24 | 12h | соответственно → 85%+ | +2.5%      |
+| H  | `handlers/admin_panel.py` + `handlers/appeal_runtime.py` + `keyboards.py` (только нетривиальные builders) | +18 | 10h | → 80%+ | +1.5%       |
+
+**Итого:** 8 PR, ~198 новых тестов, ~126h работы → ожидаемый
+total coverage **61.1% → ~82-83%** (line ~88%, branch ~80%).
+
+**Оставшиеся 8-10% gap** требуют:
+- настройку Postgres-fixture (testcontainers / pgvector-mini) для
+  advisory_xact_lock, jsonb_set, idempotency, db_backup;
+- моки aiohttp-сессии для MAX-API integration в start.py и
+  admin_relay.py;
+- e2e сценарии для cron.py scheduler-flow (4-6h).
+
+Это +2 PR (I, J) ещё на ~30h → доводит до **90%+ line / 83%+ branch**.
+
+## Source data
+
+- `bot/coverage.json` — структурированный output (695 KB).
+- `bot/_cov_analyze.py` — helper для ranking и per-file inspection
+  (создан в ходе анализа; полезен для повторных прогонов).
+```
+
+### `docs/_meta/FILE_INVENTORY.md`
+
+Size: `31885` bytes  
+SHA-256: `ac05b3f15b0775781fb1a14554551ec8340b62ee6e00730ff9daf04baa513dc0`
+
+```markdown
+# FILE_INVENTORY — полный реестр файлов репо `aemr-bot`
+
+Срез на 2026-05-25. Сверено: `git ls-files`, чтение исходников, `grep` зависимостей.
+
+Условные обозначения статуса:
+- ✅ актуален и нужен
+- 🟡 нужен, но устарел / требует обновления
+- 🔴 не нужен / дубль / мёртвый
+- ⚪ исторический архив (нельзя удалить по compliance / истории решений)
+
+---
+
+## Корень репо
+
+| Файл | Назначение | Статус | Зависят |
+|---|---|---|---|
+| `README.md` | Главная вывеска: что за бот, как запустить, навигация по docs/ | ✅ | человек, GitHub UI |
+| `REPO_INDEX.md` | Указатель «полный индекс — `aemr-bot-index.md`», инструкция по перегенерации | ✅ | человек, `.github/workflows/repo-index.yml` |
+| `aemr-bot-index.md` | Авто-генерируемый flat-индекс ~55K строк всех текстовых файлов для LLM-инструментов | 🟡 | `scripts/make_repo_index.py`, `.github/workflows/repo-index.yml`; раздувает diff'ы в main, но это сознательное решение |
+| `.dockerignore` | Что НЕ копировать в образ (docs, *.md, .env*, бэкапы, «— копия.py») | ✅ | `infra/Dockerfile` |
+| `.gitignore` | Стандарт + кастомные шаблоны для Windows бэкапов, `_local-backup/` | ✅ | git |
+| `_local-backup/PRODUCT_BRIEF_internal.md` | Продуктовый бриф 2026-05-07 (имя бота, логотип, оценка стоимости). В `.gitignore`, но сам файл закоммичен раньше правила | 🔴 | никто не ссылается; противоречие .gitignore vs reality |
+
+---
+
+## `.github/workflows/`
+
+| Файл | Назначение | Статус | Зависят |
+|---|---|---|---|
+| `ci.yml` | Lint+types+security+pytest+pip-audit на push/PR в main | ✅ | GitHub Actions |
+| `repo-index.yml` | Перегенерация `aemr-bot-index.md` на push в main | ✅ | scripts/make_repo_index.py |
+
+---
+
+## `bot/` корень
+
+| Файл | Назначение | Статус | Зависят |
+|---|---|---|---|
+| `pyproject.toml` | Метаданные пакета `aemr-bot`, dependencies (`maxapi~=1.1` и т.д.), dev-deps, ruff/mypy/pytest config | ✅ | `infra/Dockerfile`, `uv.lock`, CI |
+| `uv.lock` | Resolved lock-файл всех зависимостей. Коммитится намеренно для drift-prevention | ✅ | docs/DEPS.md, CI guard |
+| `alembic.ini` | Конфиг Alembic (script_location=aemr_bot/db/alembic) | ✅ | CMD в Dockerfile |
+
+---
+
+## `bot/aemr_bot/` (top-level)
+
+| Файл | Назначение | Статус | Зависят |
+|---|---|---|---|
+| `__init__.py` | Пустой пакет-маркер | ✅ | — |
+| `main.py` | Entry-point: bot+dp, preflight token, seed, hydrate wizards, scheduler, polling/webhook loop | ✅ | Dockerfile CMD |
+| `config.py` | Pydantic Settings: BOT_TOKEN, DB_URL, лимиты, backup, broadcast, retention | ✅ | весь код |
+| `health.py` | aiohttp `/livez` / `/readyz` / `/healthz` + heartbeat_pulse | ✅ | main.py, infra/docker-compose.yml, healthwatch.sh |
+| `keyboards.py` | 1248 строк inline-клавиатур MAX (consent, menu, op_help, broadcast и пр.) | ✅ | все handlers/* |
+| `texts.py` | 723 строки статических текстов (WELCOME, OP_HELP, CITIZEN_COMMAND_IN_ADMIN_CHAT) | ✅ | handlers/* |
+
+---
+
+## `bot/aemr_bot/db/`
+
+| Файл | Назначение | Статус | Зависят |
+|---|---|---|---|
+| `__init__.py` | пакет-маркер | ✅ | — |
+| `models.py` | SQLAlchemy: User, Operator, Appeal, Message, Broadcast, BroadcastTemplate, AuditLog, Setting, DialogState enum (10 состояний) | ✅ | весь код, alembic env |
+| `session.py` | engine + session_scope() async ctx | ✅ | все services/handlers |
+
+---
+
+## `bot/aemr_bot/db/alembic/`
+
+| Файл | Назначение | Статус | Зависят |
+|---|---|---|---|
+| `env.py` | стандартный async env.py для alembic upgrade head | ✅ | alembic.ini |
+| `script.py.mako` | шаблон для `alembic revision` | ✅ | alembic |
+
+### Миграции `versions/`
+
+Все миграции линейные (0001 → 0017), каждая backward-compatible. Удалять нельзя — порушит linear chain в проде.
+
+| Файл | Что делает | Статус |
+|---|---|---|
+| `0001_initial.py` | начальная схема (users, operators, appeals, messages, settings, audit_log, dialog_states) | ✅ |
+| `0002_broadcast.py` | таблицы рассылок + подписчиков | ✅ |
+| `0003_phone_normalized.py` | колонка users.phone_normalized + btree-индекс для `/erase phone=...` | ✅ |
+| `0004_indexes_and_autovacuum.py` | индексы на FK appeals.assigned_operator_id, messages.operator_id + autovacuum tuning | ✅ |
+| `0005_appeals_locality.py` | колонка appeals.locality (10 поселений ЕМО) | ✅ |
+| `0006_consent_revoked_at.py` | отделить «никогда не давал согласие» от «явно отозвал» | ✅ |
+| `0007_consent_broadcast_anonymous.py` | consent_broadcast_at + closed_due_to_revoke + anonymous pattern | ✅ |
+| `0008_backfill_consent_broadcast.py` | backfill consent_broadcast_at для жителей до 0007 | ✅ |
+| `0009_partial_indexes_for_hot_paths.py` | три partial-индекса hot-path запросов | ✅ |
+| `0010_pg_ops_hardening.py` | statement_timeout=30s + pg_stat_statements (зависит от shared_preload в compose) | ✅ |
+| `0011_wizard_state_persistence.py` | таблица op_wizard_state + broadcast_wizard_state — пережить рестарт | ✅ |
+| `0012_messages_appeal_created_index.py` | композитный индекс messages(appeal_id, created_at) | ✅ |
+| `0013_settings_synced_at.py` | settings.synced_at + commit_author ключи для repo_sync | ✅ |
+| `0014_broadcasts_attachments.py` | broadcasts.attachments JSONB | ✅ |
+| `0015_broadcast_templates.py` | таблица broadcast_templates | ✅ |
+| `0016_broadcast_template_usage.py` | use_count + last_used_at в templates | ✅ |
+| `0017_appeals_last_card_mid.py` | last_admin_card_mid (DDD pivot — event-log карточек) | ✅ |
+
+---
+
+## `bot/aemr_bot/handlers/`
+
+| Файл | Назначение | Статус | Зависят |
+|---|---|---|---|
+| `__init__.py` | `register_handlers(dp)` + IdempotencyMiddleware | ✅ | main.py |
+| `_auth.py` | get_operator / ensure_operator / ensure_role helper'ы | ✅ | все admin_*.py, broadcast*.py |
+| `_common.py` | `current_user` async ctx-manager (открыть transaction, get_or_create user) | ✅ | start.py, menu.py |
+| `admin_appeal_ops.py` | reply_intent / reopen / close / block / erase / show_attachments по конкретному appeal_id | ✅ | admin_commands.py, callback_router |
+| `admin_audience.py` | меню «📊 Аудитория и согласия» (IT-only выборки + точечные block/unblock/erase) | ✅ | admin_commands.py |
+| `admin_callback_dispatch.py` | таблицы _EXACT/_PREFIX для `broadcast:*` / `op:*` callback'ов | ✅ | appeal.py:on_callback |
+| `admin_commands.py` | тонкий entry-point: register() 11 slash-команд + re-exports для appeal.py | ✅ | __init__.py |
+| `admin_operators.py` | 991 строка — wizard добавления оператора (members API → role → name → confirm) | ✅ | admin_commands.py |
+| `admin_panel.py` | show_op_menu, /op_help, /open_tickets, /diag, /backup | ✅ | admin_commands.py |
+| `admin_settings.py` | 1031 строка — иерархическое меню «⚙️ Настройки бота» по 11 ключам settings_store | ✅ | admin_commands.py |
+| `admin_stats.py` | /stats XLSX за период (today/week/month/quarter/half_year/year/all) | ✅ | admin_commands.py |
+| `appeal.py` | главный entry-point: один message_callback + один message_created (state-таблица + admin-flow) | ✅ | __init__.py register |
+| `appeal_funnel.py` | FSM-шаги воронки (contact → name → locality → address → topic → summary) + followup | ✅ | appeal.py |
+| `appeal_geo.py` | reverse-geocoding flow (location attachment → услышим адрес из seed/geo) | ✅ | appeal_funnel.py |
+| `appeal_runtime.py` | locks, recover_stuck_funnels, persist_and_dispatch_appeal (импортится из main.py) | ✅ | main.py, appeal_funnel.py |
+| `broadcast.py` | мастер рассылок + фоновая отправка с rate-limit | ✅ | __init__.py |
+| `broadcast_templates.py` | UI шаблонов рассылок (PR H): список / preview / apply / rename / edit / delete | ✅ | broadcast.py, admin_callback_dispatch |
+| `callback_router.py` | declarative-таблица known callback payload-групп (на ввод новой кнопки) | ✅ | admin_callback_dispatch.py |
+| `menu.py` | 1042 строки — общее меню жителя (кнопки) + контактные подменю | ✅ | appeal.py |
+| `operator_reply.py` | swipe-reply и followup-логика жителя (вызывается из appeal.on_message) | ✅ | appeal.py |
+| `start.py` | /start, /menu, /help, /policy, /rules, /subscribe, /unsubscribe, /forget, /cancel, /export, /whoami | ✅ | __init__.py |
+
+---
+
+## `bot/aemr_bot/services/`
+
+| Файл | Назначение | Статус | Зависят |
+|---|---|---|---|
+| `__init__.py` | пакет-маркер (пустой) | ✅ | — |
+| `admin_card.py` | render() admin appeal card с freshness-rule (edit vs new) | ✅ | admin_appeal_ops, operator_reply, appeal_runtime |
+| `admin_events.py` | короткие текст-уведомления в служебную группу (block/unblock/consent/erase) | ✅ | start.py, menu.py |
+| `admin_relay.py` | перенос вложений жителя в admin group, выделено из appeal.py | ✅ | operator_reply, appeal |
+| `appeals.py` | 563 строки — CRUD по appeals, поиск, статусы, история | ✅ | handlers/* |
+| `broadcast_templates.py` | persistence для broadcast_templates (CRUD) | ✅ | handlers/broadcast_templates |
+| `broadcasts.py` | подписки + отправка муниципальных рассылок, reap_orphaned_sending | ✅ | main.py, handlers/broadcast |
+| `calendar_ru.py` | производственный календарь РФ из seed/holidays.json (подавление SLA в выходные) | ✅ | cron.py |
+| `card_format.py` | сборка карточек обращения (суть → ответ → дополнение → ...) | ✅ | admin_card.py, menu.py |
+| `cron.py` | 797 строк — build_scheduler (13 cron-jobs: pulse, monthly, backup, SLA, retention) | ✅ | main.py |
+| `db_backup.py` | pg_dump + gpg + локальный том + S3, BackupResult | ✅ | cron.py, admin_panel.py |
+| `geo.py` | local reverse-geocoding по seed/geo/*.geojson (shapely) | ✅ | appeal_geo.py |
+| `idempotency.py` | claim() отпечатка update — защита от повторов polling/webhook | ✅ | handlers/__init__.py |
+| `operators.py` | CRUD по operators + bootstrap_it_from_env | ✅ | main.py, _auth.py, admin_operators |
+| `policy.py` | ensure_uploaded() кэширует token PRIVACY.pdf в settings | ✅ | main.py, start.py |
+| `progress.py` | прогресс-карта FSM-воронки (визуализация шагов жителю) | ✅ | appeal_funnel.py |
+| `repo_sync.py` | PR с актуальным seed/runtime_config.json через GitHub API | ✅ | admin_settings.py |
+| `settings_store.py` | DEFAULTS + SCHEMA (11 ключей) + get/set с url-whitelist | ✅ | main.py, admin_settings |
+| `stats.py` | XLSX-отчёт за период через openpyxl | ✅ | admin_stats.py, cron.py |
+| `uploads.py` | upload_bytes + file_attachment для двухшагового MAX upload | ✅ | main.py, broadcast |
+| `users.py` | 630 строк — CRUD по users, normalize_phone, erase, audit | ✅ | весь admin-стек |
+| `wizard_persist.py` | DB persistence для wizard state (миграция 0011) | ✅ | main.py hydrate, wizard_registry |
+| `wizard_registry.py` | in-memory cache wizard state + intent оператора (replied_to) | ✅ | admin_operators, broadcast, operator_reply |
+
+---
+
+## `bot/aemr_bot/utils/`
+
+| Файл | Назначение | Статус | Зависят |
+|---|---|---|---|
+| `__init__.py` | пакет-маркер (пустой) | ✅ | — |
+| `attachments.py` | разбор Attachments из MAX-событий, deserialize_for_relay | ✅ | operator_reply, admin_relay |
+| `background.py` | spawn_background_task с GC-защитой (вынесено из main.py) | ✅ | main.py, broadcast |
+| `event.py` | адаптер над maxapi event-types: get_user_id, is_admin_chat, ack_callback, send_or_edit_screen | ✅ | весь handler-слой |
+| `image_attachments.py` | тонкая обёртка над attachments для image-only фильтра | ✅ | broadcast |
+| `menu_tracker.py` | per-chat tracker «какая карточка-меню сейчас актуальна» (freshness-rule) | ✅ | admin_audience, menu |
+
+---
+
+## `bot/tests/` (62 файла, ~24K строк)
+
+| Файл | Назначение | Статус |
+|---|---|---|
+| `__init__.py` | пакет-маркер | ✅ |
+| `conftest.py` | env BOT_TOKEN setdefault, sqlite+aiosqlite fallback | ✅ |
+| `_helpers.py` | общие фабрики `_make_event`/`_make_callback_event`/`_fake_session_scope` (был копипаст в 14 файлов) | ✅ |
+
+**Сервисы и handlers (по доменам, все ✅ актуальны):**
+
+- Admin: `test_admin_appeal_ops.py`, `test_admin_callback_dispatch.py`, `test_admin_card_detached_safety.py`, `test_admin_card_render.py`, `test_admin_events.py`, `test_admin_events_descriptor.py`, `test_admin_handlers_small.py`, `test_admin_operators.py`, `test_admin_panel.py`, `test_admin_settings_audit.py`
+- Appeal: `test_appeal_card_edit_policy.py`, `test_appeal_card_timeline.py`, `test_appeal_dispatcher.py`, `test_appeal_flow.py`, `test_appeals_service_pg.py`, `test_handlers_appeal_funnel.py`, `test_handlers_funnel.py`, `test_funnel_state_hardening.py`, `test_extract_location.py`
+- Broadcast: `test_broadcast_handlers.py`, `test_broadcast_history_card.py`, `test_broadcast_templates_handlers.py`, `test_broadcast_templates_service_pg.py`, `test_broadcast_with_image.py`, `test_broadcasts_service_pg.py`
+- Cron / backup: `test_cron_jobs.py`, `test_db_backup.py`, `test_db_backup_extra.py`
+- Misc: `test_calendar_ru_full.py`, `test_card_format.py`, `test_callback_router.py`, `test_callback_router_coverage.py`, `test_geo.py`, `test_health.py`, `test_idempotency.py`, `test_image_attachments.py`, `test_keyboards.py`, `test_main_helpers.py`, `test_menu_tracker_edit_policy.py`, `test_progress.py`, `test_pure_functions.py`, `test_reliability_pass.py`, `test_repo_sync.py`, `test_services_no_db.py`, `test_settings_store_validation.py`, `test_uploads_policy_admin_relay.py`, `test_users_service_pg.py`, `test_wizard_registry.py`, `test_attachments_helpers.py`, `test_bot_init_concurrency.py`, `test_deps_environment.py`, `test_diag_extended.py`, `test_event_helpers.py`, `test_handlers_auth_broadcast.py`, `test_handlers_common.py`, `test_handlers_menu.py`, `test_handlers_menu_extra.py`, `test_handlers_operator_reply.py`, `test_handlers_start.py`, `test_operator_reply_closed_guard.py`, `test_operator_reply_with_image.py`, `test_final_p1_regressions.py`
+
+Все 62 теста актуальны и покрывают как минимум по одному модулю handlers/services. Гонимы в CI.
+
+---
+
+## `infra/`
+
+| Файл | Назначение | Статус | Зависят |
+|---|---|---|---|
+| `Dockerfile` | python:3.12-slim + non-root botuser + alembic upgrade head + run main | ✅ | docker-compose.yml |
+| `docker-compose.yml` | services: db (postgres:16-alpine + pg_stat_statements), bot (read_only+cap_drop+mem_limit), профиль webhook (nginx+certbot) | ✅ | auto-deploy.sh, ROLLBACK.md |
+| `init-letsencrypt.sh` | первичная выписка SSL через certbot (webhook режим) | ✅ | docs/SETUP.md (для webhook) |
+| `.env.example` | шаблон всех env-переменных с описаниями | ✅ | docs/SETUP.md |
+| `.env` | реальный .env (через .gitignore исключён, но был закоммичен раньше?) | 🟡 | в `git ls-files` НЕ виден — OK; локальный файл существует |
+| `nginx/feedback.conf` | reverse-proxy MAX webhook на bot:8080 + Let's Encrypt | ✅ | docker-compose webhook профиль |
+
+---
+
+## `scripts/`
+
+| Файл | Назначение | Статус | Зависят |
+|---|---|---|---|
+| `auto-deploy.sh` | cron на VPS: pull → build → health-gate с rollback | ✅ | docs/SETUP.md, install-auto-deploy.sh |
+| `install-auto-deploy.sh` | однократная установка deploy-key + crontab | ✅ | docs/SETUP.md |
+| `healthwatch.sh` | внешний watchdog: N подряд /livez fail → restart → пост в служебную группу | ✅ | install-healthwatch.sh, docs/SETUP.md |
+| `install-healthwatch.sh` | однократная установка healthwatch в crontab | ✅ | docs/SETUP.md |
+| `audit_vps.sh` | технический отчёт по VPS без вывода секретов | ✅ | docs/SYSADMIN.md |
+| `make_repo_index.py` | генератор `aemr-bot-index.md` | ✅ | repo-index.yml, REPO_INDEX.md |
+| `generate_privacy_pdf.py` | docs/Политика.md → docs/PRIVACY.pdf через reportlab | ✅ | services/policy.py имя файла |
+| `build_geo_database.py` | OSM overpass → seed/geo/*.geojson (10 поселений ЕМО) | ✅ | seed/geo, services/geo.py |
+| `verify_geo.py` | проверка геоданных против Wikidata + point-in-polygon | ✅ | build_geo_database.py |
+| `cross_verify_geo.py` | расширенная cross-verification (5 свойств) | ✅ | verify_geo.py |
+| `reset_test_data.sql` | wipe данных кроме operators+settings для test-восстановления | ✅ | docs/BACKUP_RESTORE_TEST.md |
+
+---
+
+## `seed/`
+
+| Файл | Назначение | Статус | Зависят |
+|---|---|---|---|
+| `welcome.md` | дефолтный приветственный текст (грузится в settings при пустой БД) | ✅ | services/settings_store.py:_read_seed_text |
+| `consent.md` | дефолтный текст согласия ПДн | ✅ | services/settings_store.py:_read_seed_text |
+| `contacts.json` | экстренные службы для меню жителя | ✅ | settings_store.py |
+| `topics.json` | список тематик обращения (Дороги/Мусор/...) | ✅ | settings_store.py |
+| `transport_dispatchers.json` | контакты транспортных диспетчерских | ✅ | settings_store.py |
+| `holidays.json` | производственный календарь РФ 2026-2027 | ✅ | services/calendar_ru.py |
+| `geo/buildings.geojson` | здания с addr:housenumber из OSM | ✅ | services/geo.py |
+| `geo/localities.geojson` | полигоны 10 поселений ЕМО | ✅ | services/geo.py |
+| `geo/streets.geojson` | линии улиц | ✅ | services/geo.py |
+
+---
+
+## `docs/` корень
+
+| Файл | Назначение | Статус | Зависят |
+|---|---|---|---|
+| `README.md` | навигация по docs/ | ✅ | docs/README.md ссылается на все остальные |
+| `BACKUP_RESTORE_TEST.md` | процедура restore-test pg_dump на отдельной БД | ✅ | docs/README, RUNBOOK |
+| `COPY.md` | все тексты бота для редакторского аудита | ✅ | docs/README |
+| `DEPS.md` | uv.lock дисциплина, drift diagnosis | ✅ | docs/README, CI |
+| `DEVELOPER.md` | архитектура+DB+миграции+maxapi+тесты — для разработчика | ✅ | docs/README |
+| `HOW_IT_WORKS.md` | простое описание всех механизмов для оператора/новичка | ✅ | docs/README |
+| `PRD.md` | продуктовые требования и приёмочные критерии | ✅ | docs/README |
+| `RULES.md` | правила пользования ботом для жителей (источник: texts.RULES_TEXT) | ✅ | docs/README |
+| `RUNBOOK.md` | ежедневный справочник оператора+ИТ | ✅ | docs/README, ROLLBACK |
+| `RUNBOOK_PDN_ERASURE.md` | актуальный регламент `/erase` и `/forget` (override части RUNBOOK) | ✅ | docs/README, SECURITY |
+| `SECURITY.md` | модель угроз + контролы | ✅ | docs/README |
+| `SETUP.md` | пошаговая установка с нуля | ✅ | docs/README |
+| `SYSADMIN.md` | операционное руководство сисадмина | ✅ | docs/README |
+| `VPS_SMOKE_CHECKLIST.md` | smoke-checklist после деплоя | ✅ | docs/README |
+| `ROLLBACK.md` | откат бота при сбое (≤10 мин) | ✅ | docs/README |
+| `COMPLIANCE_WITH_REGLAMENT_v5.md` | построчная матрица соответствия кода Регламенту v5 | ✅ | Регламент_v6_draft ссылается |
+| `Регламент_v6_draft.md` | дельта v5 → v6, ждёт согласования с юристом | ✅ | автор продукта, юрист АЕМО |
+| `Регламент_v6_draft.docx` | то же содержание для отдачи юристу в `.docx` | ✅ | внешние согласующие (юрист) |
+| `Регламент.docx` | утверждённый Регламент v5 как `.docx` (источник истины compliance-матрицы) | ⚪ | ни одна `.md`-ссылка не упоминает (но это правовой документ) |
+| `PRIVACY.pdf` | PDF политики, который бот раздаёт жителям | ✅ | infra/Dockerfile COPY, services/policy.py |
+| `Политика.md` | актуальный исходник политики ПДн (источник для generate_privacy_pdf.py) | ✅ | scripts/generate_privacy_pdf.py, docs/README |
+| `Политика_v2.md` | v2 для юр.экспертизы, technical facts на HEAD `082bc9b` | 🟡 | docs/README, COMPLIANCE; статус «ждёт юриста» |
+| `PRIVACY_DRAFT.md` | первый черновик политики ПДн от 2026-05-09 | 🔴 | docs/README, _meta/AUDIT_REPORT упоминают как историю; v2 — преемник |
+| `handover.html` | HTML-handover (предположительно standalone презентация) | 🔴 | НИКТО не ссылается из markdown |
+| `it.html` | HTML для ИТ-аудитории | 🔴 | НИКТО не ссылается из markdown |
+
+---
+
+## `docs/_meta/`
+
+| Файл | Назначение | Статус | Зависят |
+|---|---|---|---|
+| `AUDIT_REPORT.md` | разовый аудит документов против кода (сводка расхождений → правок) | ⚪ | автор-разработчик; разовый отчёт |
+| `FILE_INVENTORY.md` | этот документ — реестр всех файлов | ✅ | автор-разработчик |
+
+---
+
+## `docs/archive/`
+
+Все 9 файлов — `⚪` исторический архив. Заявлены как «не для эксплуатации» в `docs/README.md`. Ни один не ссылается из актуальных docs (только `aemr-bot-index.md` индексирует).
+
+| Файл | Назначение | Статус |
+|---|---|---|
+| `CHAT_AUDIT.md` | аудит истории работы над ботом (audit-extract логов) | ⚪ |
+| `COMPETITIVE_BRIEF.md` | сравнение с госботами РФ (2026-05-09) | ⚪ |
+| `COMPETITIVE_DEEP_DIVE.md` | расширенный конкурентный анализ (2026-05-10) | ⚪ |
+| `COPY_AUDIT.md` | аудит текстов бота (закрыт) | ⚪ |
+| `CRON_REFACTOR_PLAN.md` | план рефакторинга cron.py (реализован) | ⚪ |
+| `DOC_AUDIT.md` | аудит docs (закрыт) | ⚪ |
+| `IDEAS.md` | идеи на брейншторм P3 | ⚪ |
+| `TELEGRAM_ANALYTICS_INSIGHTS.md` | выводы из анализа 60K сообщений Telegram-чата АЕМР | ⚪ |
+| `WEBHOOK_PLAN.md` | план перехода на webhook через Caddy `dash` | ⚪ |
+
+---
+
+## Кандидаты на УДАЛЕНИЕ
+
+### 🔴 Безусловно удаляемые
+
+1. **`_local-backup/PRODUCT_BRIEF_internal.md`** — закоммичен ДО появления правила в `.gitignore`. Файл противоречит собственному ignore-pattern. Никто не ссылается. Сам бриф — продуктовый think-piece от 2026-05-07 (имя бота, логотип, оценка стоимости) — можно держать локально, в репо ему не место. **Действие:** `git rm`, в чистом виде уехать в `_local-backup/` локально (уже игнорится).
+
+2. **`docs/handover.html`** — 57632 байта HTML-handover. Никаких ссылок из `docs/README.md`, `docs/*.md`, `README.md`. По имени дублирует роль `SYSADMIN.md` / `RUNBOOK.md` / `SETUP.md`. Похоже на разовый артефакт. **Действие:** `git rm`, если нужен — пересобирать из markdown.
+
+3. **`docs/it.html`** — 111283 байта HTML, дубликат роли `RUNBOOK.md` для ИТ. Не упоминается ни в одном markdown. **Действие:** `git rm`.
+
+4. **`docs/PRIVACY_DRAFT.md`** — первая редакция от 2026-05-09. Преемник — `docs/Политика_v2.md` (явно заявлен как «предыдущая версия — `docs/PRIVACY_DRAFT.md`»). Преемник перешагнул draft. **Действие:** `git rm`, в `docs/README.md` оставить ссылку только на v2 и `Политика.md`.
+
+### 🟡 Удалять с оговорками
+
+5. **`docs/Регламент.docx`** — НЕ ссылается ни из одного md. Но это **правовой документ** (утверждённый Регламент v5), формально нужен для compliance-аудита. Не удалять — переместить в `docs/_meta/` или добавить ссылку из `COMPLIANCE_WITH_REGLAMENT_v5.md`.
+
+### ⚪ Кандидаты на удаление, которые НЕЛЬЗЯ удалять
+
+- Все `docs/archive/*` (9 файлов) — заявлены как исторический архив в `docs/README.md` §«Архив». Compliance-нагрузки нет, но они описывают «откуда взялись» сегодняшние решения. Оставить.
+- `docs/_meta/AUDIT_REPORT.md` — одноразовый отчёт о синхронизации docs ↔ код. Полезен как доказательство аудита 2026-05.
+
+---
+
+## Кандидаты на ОБНОВЛЕНИЕ
+
+### P0 — критично
+
+1. **`docs/Политика_v2.md`** — статус «версия 2 для юр.экспертизы, на HEAD `082bc9b`». С тех пор сильно изменился код (PR #50, swarm reviews, DDD pivot 0017). Технические факты в v2 могут разойтись с текущим поведением. **Действие:** актуализировать «technical facts соответствуют коду на HEAD» под новый коммит **или** явно подтвердить «факты валидны», иначе юрист получит просроченный документ.
+
+2. **`docs/PRD.md`** — заявлен как «синхронизирован с фактическим поведением модулей `keyboards.py`, `handlers/*.py`...» — после РР пиков, refactor'а handlers/admin_*, DDD pivot нужно перепроверить Ф-5/ИК-1/приёмочные критерии. AUDIT_REPORT уже фиксировал расхождения; теперь добавились новые.
+
+### P1 — высокий приоритет
+
+3. **`docs/HOW_IT_WORKS.md`** — описывает «10 состояний DialogState». После 0017 (last_admin_card_mid) могла появиться новая семантика event-log карточек, в HOW_IT_WORKS нужно обновить раздел про admin card.
+
+4. **`docs/RUNBOOK.md`** — самый ходовой документ. Команды `/op_help`, лимиты, cron-jobs — нужно сверить после PR последних 2 недель (broadcast_templates, SEC-фиксы).
+
+5. **`docs/COPY.md`** — последняя проверка 2026-05-14. С тех пор тексты в `texts.py` и `card_format.py` могли сдвинуться (intermediate-reply, followup → admin-card).
+
+6. **`docs/COMPLIANCE_WITH_REGLAMENT_v5.md`** — пора превратить в `_v6.md` (после согласования v6).
+
+### P2 — фоновое
+
+7. **`docs/_meta/AUDIT_REPORT.md`** — одноразовый отчёт, помечен датой ревизии «текущий снимок». Не обновлять, оставить как исторический. Альтернатива — переместить в `docs/_meta/audits/2026-05/`.
+
+8. **`aemr-bot-index.md`** — авто-генерируется. Обновится сам после следующего push в main. Раздувает diff'ы (55K строк), но это сознательно.
+
+9. **`docs/SECURITY.md`** — добавить упоминания всех SEC-фиксов (SEC #1..#9), которые закрыли в последние недели — сейчас документ их не перечисляет.
+
+10. **`docs/RUNBOOK_PDN_ERASURE.md`** — синхронизировать с `auto_erase_pdn_retention` cron-action (название в audit_log) и erase auto-close открытых обращений (P1 #21).
+
+---
+
+## Заметки
+
+- Тесты покрывают ВСЕ handlers/* (62 теста на 22 handler-файла). Явных пропусков целых модулей нет.
+- Все 17 миграций нужны — линейная цепочка, удалить любую = сломать `alembic upgrade head` в проде.
+- Все 9 seed-файлов используются (читаются `services/settings_store.py` или `services/calendar_ru.py` / `services/geo.py`).
+- `infra/.env` в `.gitignore`, не в `git ls-files` — корректно. На репо влияет только `.env.example`.
+- `aemr-bot.egg-info/` (в `bot/`) — артефакт `pip install -e`, в `.gitignore`. Не трогать.
+```
+
+### `docs/_meta/MAXAPI_INVENTORY.md`
+
+Size: `14559` bytes  
+SHA-256: `48f3c69bc81f932e710cc27d38d46c5ebd42379d6d7b66db44c33df0ab0f3f39`
+
+```markdown
+# Inventory использования maxapi 1.1.0 в aemr-bot
+
+> Снимок на 2026-05-25 после апгрейда 0.9.18 → 1.1.0 (PR #50).
+> Источник версии — `bot/pyproject.toml` (`maxapi~=1.1`), фиксация —
+> `bot/uv.lock`. Guard на drift — `tests/test_deps_environment.py`.
+
+## 1. Все импорты `maxapi.*` в коде бота
+
+Грепнуто `from maxapi`. Тестовые мокающие фикстуры (`bot/tests/`) исключены.
+
+### `bot/aemr_bot/main.py`
+
+| line | импорт | использование |
+|------|--------|---------------|
+| 8 | `from maxapi import Bot, Dispatcher` | конструкция `bot` и `dp` на module-level |
+| 9 | `from maxapi.client.default import DefaultConnectionProperties` | таймауты HTTP-клиента и retry-policy |
+| 10 | `from maxapi.exceptions.max import InvalidToken` | preflight-проверка токена в `_preflight_check_token` |
+| 138 | `from maxapi.methods.types.getted_updates import process_update_webhook` | парсинг JSON в FastAPI webhook-режиме (dead-but-not-removed путь) |
+
+### `bot/aemr_bot/handlers/__init__.py`
+
+| line | импорт | использование |
+|------|--------|---------------|
+| 1 | `from maxapi import Dispatcher` | тип-хинт в `register_handlers(dp)` и `_attach_outer_middleware` |
+| 2 | `from maxapi.filters.middleware import BaseMiddleware` | базовый класс для `IdempotencyMiddleware` и `AdminChatActivityMiddleware` |
+
+### `bot/aemr_bot/handlers/start.py`
+
+| line | импорт | использование |
+|------|--------|---------------|
+| 3 | `from maxapi import Dispatcher` | тип-хинт |
+| 4 | `from maxapi.types import BotStarted, Command, MessageCreated` | фильтр и типы событий стартового сценария |
+
+### `bot/aemr_bot/handlers/appeal.py`
+
+| line | импорт | использование |
+|------|--------|---------------|
+| 23 | `from maxapi import Dispatcher` | тип-хинт |
+| 24 | `from maxapi.types import MessageCallback, MessageCreated` | catch-all обработчик жителя |
+
+### `bot/aemr_bot/handlers/admin_commands.py`
+
+| line | импорт | использование |
+|------|--------|---------------|
+| 26 | `from maxapi import Dispatcher` | тип-хинт |
+| 27 | `from maxapi.types import Command, MessageCreated` | slash-команды операторов |
+
+### `bot/aemr_bot/handlers/broadcast.py`
+
+| line | импорт | использование |
+|------|--------|---------------|
+| 28 | `from maxapi import Dispatcher` | тип-хинт |
+| 29 | `from maxapi.types import Command, MessageCreated` | wizard рассылки |
+
+### `bot/aemr_bot/handlers/operator_reply.py`
+
+| line | импорт | использование |
+|------|--------|---------------|
+| 12 | `from maxapi.types import MessageCreated` | свайп-reply, /reply, intermediate-reply |
+
+### `bot/aemr_bot/handlers/menu.py`
+
+| line | импорт | использование |
+|------|--------|---------------|
+| 6 | `from maxapi.exceptions.max import MaxApiError, MaxConnection` | best-effort guard в callback'ах меню жителя |
+
+### `bot/aemr_bot/keyboards.py`
+
+| line | импорт | использование |
+|------|--------|---------------|
+| 1-5 | `from maxapi.types import CallbackButton, LinkButton, RequestContactButton` | сборка inline-клавиатур |
+| 6-8 | `from maxapi.types.attachments.buttons.request_geo_location_button import RequestGeoLocationButton` | кнопка геолокации в воронке адреса |
+| 9 | `from maxapi.utils.inline_keyboard import InlineKeyboardBuilder` | builder для всех клавиатур |
+
+### `bot/aemr_bot/services/admin_relay.py`
+
+| line | импорт | использование |
+|------|--------|---------------|
+| 124-125 | `from maxapi.enums.message_link_type import MessageLinkType` + `from maxapi.types.message import NewMessageLink` (lazy) | reply-link при relay вложений жителя в служебную группу |
+| 181-182 | то же, дубль для legacy-пути | то же |
+
+### `bot/aemr_bot/services/uploads.py`
+
+| line | импорт | использование |
+|------|--------|---------------|
+| 26-27 | `from maxapi.enums.upload_type import UploadType` + `from maxapi.types.input_media import InputMedia` (lazy в `upload_path`) | загрузка PDF/XLSX с диска |
+| 49-50 | `UploadType` + `InputMediaBuffer` (lazy в `upload_bytes`) | загрузка байтов рассылки |
+| 96-97 | `UploadType` + `AttachmentPayload` + `AttachmentUpload` в `file_attachment(token)` | сборка вложения для `send_message(attachments=...)` |
+
+### `bot/aemr_bot/services/progress.py`
+
+| line | импорт | использование |
+|------|--------|---------------|
+| 153 | `from maxapi.enums.parse_mode import ParseMode` (lazy) | HTML-формат progress-карточек |
+
+### `bot/aemr_bot/services/cron.py`
+
+| line | импорт | использование |
+|------|--------|---------------|
+| 80-81 | `CallbackButton` + `InlineKeyboardBuilder` (lazy) | inline-клавиатуры под cron-уведомлениями |
+
+### `bot/aemr_bot/utils/attachments.py`
+
+| line | импорт | использование |
+|------|--------|---------------|
+| 329 | `from maxapi.types.attachments import Attachments` (lazy в `deserialize_for_relay`) | pydantic-валидация JSON-вложений из БД перед relay |
+
+## 2. Свод по подмодулям
+
+| подмодуль | где импортируется | назначение |
+|-----------|-------------------|-------------|
+| `maxapi` (Bot, Dispatcher) | main + 5 хендлеров | top-level конструкция и тип-хинты |
+| `maxapi.types.*` (Command, MessageCreated, MessageCallback, BotStarted, CallbackButton, LinkButton, RequestContactButton, NewMessageLink) | 5 хендлеров + keyboards + admin_relay | публичный API типов событий и UI |
+| `maxapi.types.attachments.*` (Attachments, AttachmentUpload, AttachmentPayload, RequestGeoLocationButton) | uploads, keyboards, attachments-util | вложения и кнопки расширенного типа |
+| `maxapi.utils.inline_keyboard.InlineKeyboardBuilder` | keyboards, cron | сборка inline-клавиатур |
+| `maxapi.enums.*` (UploadType, ParseMode, MessageLinkType) | uploads, progress, admin_relay | константы вместо «магических строк» |
+| `maxapi.filters.middleware.BaseMiddleware` | handlers/__init__ | базовый класс middleware |
+| `maxapi.client.default.DefaultConnectionProperties` | main | конфигурация HTTP-клиента |
+| `maxapi.exceptions.max.*` (InvalidToken, MaxApiError, MaxConnection) | main, menu | диагностика токена и сетевых ошибок |
+| `maxapi.methods.types.getted_updates.process_update_webhook` | main (webhook-режим, dead) | парсинг JSON входящего webhook |
+
+Прямых импортов из `maxapi.dispatcher`, `maxapi.bot`, `maxapi.context`,
+`maxapi.webhook.*`, `maxapi.methods.*` (за одним исключением выше) —
+нет. Публичный фасад `maxapi.{Bot, Dispatcher, types, enums, filters,
+utils}` покрывает 100% использования.
+
+## 3. Bot-методы, которые мы реально вызываем
+
+Source: grep `bot\.<method>` и `event\.bot\.<method>` (см. agent-grep
+2026-05-25).
+
+| метод | где используется | примечания |
+|-------|-----------------|-----------|
+| `bot.send_message` | main, admin_card, admin_bus, admin_relay, progress, cron, broadcast, admin_panel, admin_stats, admin_audience, admin_settings, admin_appeal_ops, admin_operators | основной канал отправки |
+| `bot.edit_message` | admin_card, progress, broadcast (admin progress card) | edit-vs-send_new по freshness-rule |
+| `bot.get_chat_members` | admin_operators (add-from-group flow) | список участников группы |
+| `bot.get_chat_member` | admin_operators (отдельный участник) | реализован как обёртка над `get_chat_members(user_ids=[...])` |
+| `bot.pin_message` | admin_panel | закрепить служебное сообщение в admin group |
+| `bot.upload_media` | services/uploads | через `InputMedia`/`InputMediaBuffer` |
+| `bot.get_me` | main (preflight), внутри Dispatcher (check_me) | проверка токена и логирование @username |
+| `bot.get_updates` | main (`_install_polling_timeout` override) | long-poll цикл; обёртка форсит наш timeout |
+
+Методы maxapi 1.1, которые мы **не вызываем явно** (см. раздел 4):
+`delete_message`, `delete_chat`, `send_action`, `send_callback`,
+`get_message`, `get_messages`, `get_pinned_message`, `change_info`,
+`get_chats`, `get_chat_by_link`, `get_chat_by_id`, `edit_chat`,
+`get_video`, `delete_pin_message`, `get_me_from_chat`,
+`delete_me_from_chat`, `get_list_admin_chat`, `add_list_admin_chat`,
+`remove_admin`, `add_chat_members`, `kick_chat_member`,
+`download_file`, `set_my_commands`, `get_subscriptions`,
+`subscribe_webhook`, `unsubscribe_webhook`, `delete_webhook`.
+
+## 4. Deprecated-паттерны: проверены и отсутствуют
+
+Грепнул на наличие deprecated-форм из maxapi 1.1:
+
+| deprecated | maxapi-замена | в aemr-bot |
+|-----------|---------------|-----------|
+| `dp.middlewares = [...]` (setter) | `dp.outer_middlewares = [...]` | не используется |
+| `dp.middleware(mw)` | `dp.register_outer_middleware(mw)` | не используется |
+| `dp.outer_middleware(mw)` (старый insert(0, ...)) | `dp.register_outer_middleware(mw)` (append) | не используется |
+| `dp.middlewares` (property getter) | `dp.outer_middlewares` | не используется |
+| `bot.send_message(parse_mode=...)` | `format=...` | не используется (передаём `format=fmt`) |
+| `bot._resolve_parse_mode(...)` | `bot.resolve_format(...)` | не используется (это приватный helper) |
+| `bot.change_info(...)` | (отсутствует в swagger; recommend handcrafted PATCH /me) | заменено на ручной aiohttp PATCH в `_register_bot_commands` |
+| `bot.set_my_commands(...)` | то же | заменено на ручной aiohttp PATCH |
+| `dp.init_serve(...)` | `dp.handle_webhook(...)` | **исправлено в этой ревизии** (см. ниже) |
+
+Изменение в этой ревизии: `main.py:365` теперь зовёт
+`dp.handle_webhook(...)` вместо `dp.init_serve(...)`. Webhook-режим
+по проекту dead-but-not-removed (BOT_MODE=polling — единственный
+рабочий), но при случайном включении не будет валить
+`DeprecationWarning` в логах.
+
+## 5. Известные «слабые места» компатимости
+
+Эти места требуют внимания при следующем bump'е maxapi:
+
+1. **`utils/attachments.py` — `deserialize_for_relay`**.
+   `pydantic.TypeAdapter(Attachments)` валидирует JSON-словарь из БД.
+   Изменение схемы Pydantic-моделей вложений в maxapi 2.x теоретически
+   сломает relay уже сохранённых вложений. Mitigation: миграция
+   `0009_attachments_jsonb` — данные пересохранятся свежим pydantic-
+   `.model_dump()` при первом relay; ловим `ValidationError` и
+   пропускаем битое вложение, а не валим всю отправку.
+
+2. **`services/uploads.py` — `InputMediaBuffer(buffer=..., type=...)`**.
+   Сигнатура нестабильна между минорами. Helper уже падает на `TypeError`
+   → fallback на временный файл через `InputMedia(path=...)`. При
+   следующем bump'е проверить, что fallback не пропадает.
+
+3. **`main.py:138` — `process_update_webhook`**. Прямой импорт
+   из приватного пути `maxapi.methods.types.getted_updates`.
+   В 1.1.0 функция там есть, в 2.x путь может смениться. Сейчас
+   попытка обёрнута в `try/except ImportError` → переменная становится
+   `None`, обработчик при включении webhook-режима молча игнорирует
+   входящий update (плохо, но не падение). Если webhook-режим вернётся
+   к жизни — переписать на `await dp.handle(event)` после публичного
+   парсинга через `dp.handle_webhook` напрямую.
+
+4. **`main.py:_install_polling_timeout`** — патчит `bot.get_updates`
+   через monkey-patch. Если maxapi изменит сигнатуру `get_updates`
+   (например, добавит обязательный `*, mode=...`), наш override
+   подменит её несовместимым closure. Mitigation: тест
+   `test_default_connection_signature_matches_prod_api` ловит drift
+   только в `DefaultConnectionProperties.__init__`. Добавить
+   аналогичный guard на `Bot.get_updates` стоит, если будут проблемы.
+
+## 6. Тесты, имитирующие maxapi
+
+Лежат в `bot/tests/`. Не тащат сетевые вызовы, а мокают на уровне
+методов `bot`. Где приходится «знать» внутренний тип maxapi:
+
+| тест | импорт maxapi |
+|------|--------------|
+| `test_extract_location.py:34` | `maxapi.types.attachments.location.Location` |
+| `test_deps_environment.py:65` | `maxapi.client.default.DefaultConnectionProperties` |
+| `test_handlers_menu.py:604` | `maxapi.exceptions.max.MaxApiError` |
+| `test_main_helpers.py:190` | `maxapi.exceptions.max.InvalidToken` |
+
+Все четыре — это внешние якоря, которые валятся раньше прода при
+breaking change. Менять при апгрейде только если падают.
+```
+
+### `docs/_meta/MAXAPI_UNUSED_FEATURES.md`
+
+Size: `12198` bytes  
+SHA-256: `9b587a953d21445b95bf3c921d004bc9fa39752bce7ab14897f7b6bf4645b4b8`
+
+```markdown
+# Неиспользуемые фичи maxapi 1.1.0
+
+> Снимок на 2026-05-25. Перечисляет API, которые библиотека предоставляет,
+> но мы не зовём. Не «обязательно перейти», а «знать, что есть, и
+> сознательно решить — нужно или нет».
+
+## 1. Топ-5 заметных пропусков
+
+### 1.1. `maxapi.utils.formatting` — структурное форматирование HTML/Markdown
+
+В `utils/formatting.py` (см. /maxapi/utils/formatting.py) есть полный
+DSL для сборки форматированного текста: `Bold`, `Italic`, `Underline`,
+`Strikethrough`, `Code`, `Heading`, `Highlighted`, `Blockquote`, `Link`,
+`UserMention`, `Text`, плюс `as_html(...)` и `as_markdown(...)`.
+
+Мы сейчас собираем HTML руками строками-шаблонами в `texts.py`,
+`card_format.py`, `progress.py`. Это работает, но даёт шанс
+забыть HTML-escape для пользовательского ввода (`<`, `>`, `&`).
+Эпизоды XSS в боте нет (MAX рендерит наши сообщения, не браузер),
+но при копировании текста с тэгами наружу — потенциально проблема.
+
+**Что выиграем.** Перевод hot-path сборок (карточка обращения,
+admin-card timeline, progress-карточка рассылки) на `Bold(...)`,
+`Link(...)`, `UserMention(...)` — гарантированный escape без ручного
+`.replace("<", "&lt;")` и более читаемый код. Особенно полезно для
+`UserMention` в admin-уведомлениях о подписке — там сейчас раскрытие
+имени жителя пишется в plain-тексте.
+
+**Стоимость.** Большая миграция (десятки шаблонов). Не приоритет, но
+для новых сообщений — использовать.
+
+### 1.2. `bot.send_action(chat_id, SenderAction.TYPING_ON)` — индикатор «бот печатает»
+
+В личке жителя долгие операции (загрузка PDF политики, retrieval
+прошлых обращений, формирование статистики) занимают 1-3 секунды.
+Без typing-индикатора житель не понимает, что бот живой.
+
+**Что выиграем.** UX-полировка: в начале долгой операции — один
+`await bot.send_action(chat_id, SenderAction.TYPING_ON)`. MAX покажет
+«печатает» до следующего сообщения. Особенно ценно в /broadcast-wizard
+(оператор подтверждает рассылку, бот несколько секунд готовит снимок
+аудитории) и в `handlers/menu.py` при открытии «📂 Мои обращения» с
+большим списком.
+
+**Стоимость.** Тривиальная (один вызов в каждой долгой ветке). Не
+блокирует, fire-and-forget.
+
+### 1.3. `bot.delete_message(message_id)` — удаление подсказок воронки
+
+Сейчас в воронке обращения мы редактируем prompt («введите населённый
+пункт» → «выберите тему»), но мусорные intermediate-сообщения от
+жителя (отменённый ввод, дубликаты) остаются висеть в личке.
+
+**Что выиграем.** После `/cancel` или таймаута wizard'а — `await
+bot.delete_message(prompt_mid)` подчищает прогресс-карточку, чтобы
+житель не возвращался к мёртвой воронке через несколько часов.
+
+**Стоимость.** Низкая. Главный риск — пытаться удалить чужое
+сообщение (житель удалил аккаунт → mid невалидный). Ловить
+`MaxApiError` и игнорировать.
+
+### 1.4. `bot.pin_message(chat_id, message_id)` для admin-панели
+
+Метод вызывается в одном месте (`admin_panel.py:80`) — закрепляет
+служебное сообщение «бот живой». Но `bot.get_pin_message(chat_id)`
+для проверки уже закреплённого не используется — каждый запуск
+повторно пинит, MAX сам дедупит, но при перезапуске бот пишет
+«закреплено» в логи, даже если оно и так было.
+
+**Что выиграем.** Перед `pin_message` — `await
+bot.get_pin_message(cfg.admin_group_id)`; если mid совпадает —
+skip. Меньше шума в audit_log.
+
+**Стоимость.** Низкая, локальная правка в `admin_panel.py`.
+
+### 1.5. `dp.handle_webhook(...)` вместо `dp.init_serve(...)` (выполнено)
+
+`init_serve` deprecated в 1.1, обёртка над `handle_webhook`. Уже
+исправлено в этой ревизии (`main.py:365`). Webhook-режим в проекте
+dead-but-not-removed (BOT_MODE=polling), но при включении не будет
+плодить DeprecationWarning.
+
+## 2. Дополнительные пропуски (P2-P3)
+
+### 2.1. `maxapi.utils.message_link` — `build_message_link(mid)`
+
+Готовая функция «mid → URL https://max.ru/c/{chat_id}/{seq_b64}».
+Сейчас мы строим reply-link через `NewMessageLink(type=REPLY, mid=...)`
+— это правильно. Но для **внешнего** копирования ссылки (например, в
+аудит-логе «оператор X ответил на обращение Y, см.
+{message_link}») у нас нет helper'а. Если такой кейс возникнет —
+взять отсюда, не писать свой base64.
+
+### 2.2. `bot.set_my_commands(*commands)` — публикация /-меню
+
+В 1.1 помечен как deprecated с пояснением «нет в swagger MAX API».
+Мы это знаем (см. `main.py:_register_bot_commands` — ручной aiohttp
+PATCH `/me`). При появлении в swagger MAX и удалении DeprecationWarning
+из maxapi — вернуться к `bot.set_my_commands(...)` и убрать костыль.
+
+### 2.3. `Router(router_id="...")` — раздельные роутеры по группам хендлеров
+
+Сейчас все хендлеры регистрируются в одном `Dispatcher`. При расширении
+проекта (например, добавление чата-канала, отдельный handler-набор
+для модерации) — `Router` даёт логическую группировку с
+`dp.include_routers(router_main, router_admin, router_broadcasts)`.
+Каждый Router имеет свои `outer_middlewares`, фильтры и `router_id`
+для логов. Не критично сейчас, но если файлы хендлеров перевалят за
+4000 строк (admin_settings уже 1000+) — стоит подумать.
+
+### 2.4. `dp.register_inner_middleware(mw)` — middleware после фильтров
+
+Сейчас зарегистрированы только outer middleware (`IdempotencyMiddleware`,
+`AdminChatActivityMiddleware`). Они срабатывают на каждое событие,
+включая «проигнорированные» (нет подходящего хендлера). Inner
+middleware вызывается только когда конкретный handler матчит фильтры
+и реально пойдёт исполняться. Это полезно для:
+- логирования факта «handler X вызван» с детальной трассировкой
+- pre/post-hook'ов на handler-уровне (например, авто-`commit()`
+  на сессии БД после успешного handler'а)
+- per-handler метрик задержки
+
+Сейчас всё это сделано вручную внутри отдельных handler'ов; inner
+middleware дало бы единое место и единое декоративное оформление.
+
+### 2.5. `Dispatcher(storage=RedisContext, ...)` — внешний стейт FSM
+
+Сейчас `MemoryContext` (in-memory dict). На перезапуске процесса —
+вся wizard-state теряется. Mitigation у нас своя:
+`services/wizard_persist.py` (миграция 0011) — отдельно вытаскивает
+operator-wizards из БД при рестарте. Если бы строили с нуля —
+`RedisContext` от maxapi решал бы это бесплатно. Сейчас не имеет
+смысла переписывать, но если придётся выносить FSM-state из
+SQLite/Postgres — рассмотреть.
+
+### 2.6. `bot.upload_media(InputMedia | InputMediaBuffer) → AttachmentUpload`
+
+Используется. Но `bot.download_file(url, destination)` — нет.
+Нам не нужно скачивать вложения жителей (мы их relay'им
+по token'у). Если когда-нибудь будем делать архив-снимки
+(скачать вложения → ZIP → пользователю в обратную сторону) —
+этот метод готов.
+
+### 2.7. `bot.get_subscriptions()` — диагностика подписок webhook
+
+В polling-режиме maxapi сам проверяет (`auto_check_subscriptions=True`)
+и warning'ует, если есть оставшиеся webhook-подписки от предыдущего
+владельца токена. Мы это видим только в логах maxapi. Полезно
+завернуть в `/diag` (handlers/admin_diag) — оператор-IT мог бы тапнуть
+и сразу увидеть, что токен «загрязнён» подписками от тестового
+webhook-режима.
+
+## 3. Не нужны / не подходят
+
+- `bot.change_info(...)` — отсутствует в swagger MAX. Используем
+  ручной PATCH /me (см. `main.py:_register_bot_commands`).
+- `bot.set_my_commands(...)` — то же.
+- `bot.subscribe_webhook(...)` / `bot.unsubscribe_webhook(...)` /
+  `bot.delete_webhook(...)` — webhook-режим dead, polling-only.
+- `bot.add_list_admin_chat(...)` / `bot.remove_admin(...)` /
+  `bot.kick_chat_member(...)` — мы не управляем составом
+  служебного чата программно (это делают руками админы группы).
+- `Bot(parse_mode=...)` — deprecated, мы передаём `format` через
+  `_resolve_format` неявно (default — None → plain text).
+
+## 4. Что добавить в следующий бэклог
+
+Подходит для отдельных мелких PR (не блокирующие):
+
+- [ ] **kaizen #1**: typing-indicator в /broadcast confirm
+  (`bot.send_action(chat_id, SenderAction.TYPING_ON)` перед снимком
+  аудитории).
+- [ ] **kaizen #2**: typing-indicator в `handlers/menu.py:my_appeals`
+  при listing'е > 10 обращений.
+- [ ] **kaizen #3**: cleanup мусорных promt'ов воронки через
+  `bot.delete_message(...)` на `/cancel` и таймауте.
+- [ ] **kaizen #4**: `bot.get_pin_message(...)` перед `pin_message(...)`
+  в `admin_panel.py` — skip redundant pin.
+- [ ] **kaizen #5**: `/diag` показывает `bot.get_subscriptions()` —
+  проверка чистоты токена.
+
+Каждый — одна-две строки кода, тест в существующем
+`test_handlers_*.py` для регрессии.
+```
+
+### `docs/_meta/REGLAMENT_v5_COMPLIANCE.md`
+
+Size: `35840` bytes  
+SHA-256: `a7a0adb589d18240b7100da6f46eac2312b4002d710b81c5b3ba5e20d5ba07b1`
+
+```markdown
+# Compliance-матрица: Регламент v5 → код AEMR-bot
+
+*Дата проверки: 2026-05-25. База: `docs/Регламент.docx` (88 нумерованных пунктов основного текста + 4 приложения). Сопоставление выполнено grep'ом по `bot/aemr_bot/**`. Все ссылки `file.py:line` верифицированы.*
+
+**Легенда статусов:**
+- ✅ **implemented** — есть в коде, соответствует Регламенту
+- 🟡 **partial** — есть, но с отклонениями (описаны в комментарии)
+- 🔴 **missing** — нет в коде
+- ⚪ **n/a** — описывает процесс администрации, кода не требует
+
+**Итоговая сводка:**
+
+| Статус | Количество | Доля |
+|---|---:|---:|
+| ✅ implemented | 78 | 79.6% |
+| 🟡 partial | 6 | 6.1% |
+| 🔴 missing | 0 | 0.0% |
+| ⚪ n/a | 14 | 14.3% |
+| **Всего пунктов** | **98** | **100%** |
+
+> 98 = 88 нумерованных пунктов основного текста + 10 проверочных позиций Приложения 3 (контрольный перечень готовности).
+
+---
+
+## Глава 1. Общие положения
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §1 | Регламент устанавливает порядок работы Чат-бота: приём, ответы, профильные подразделения, рассылки, ПДн, контроль качества | весь репозиторий `bot/aemr_bot/` | ⚪ | определение, не код |
+| §2 | Бот размещен по адресу `@aemo_chat_bot` (id `274913354`); зарегистрирован от имени АЕМО | `docs/SETUP.md`, токен в `.env::BOT_TOKEN` | ⚪ | факт регистрации внешний |
+| §3 | Регламент разработан в соответствии с ФЗ-59, ФЗ-152, ПП РФ № 1119, № 1844, ПП Камчатки № 472-П, ПА АЕМО № 2129 | `docs/PRIVACY_DRAFT.md`, `docs/SECURITY.md` | ⚪ | юридическая основа |
+| §4 | Регламент обязателен для координаторов АЕМО, специалистов АЕМО / ЕГП / ТУ, ИТ-отдела | `OperatorRole` enum в `bot/aemr_bot/db/models.py` | ⚪ | организационное |
+
+## Глава 2. Правовая природа канала связи
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §5 | Чат-бот — дополнительный электронный канал | архитектурное | ⚪ | определение |
+| §6 | Сообщения не являются обращениями по ст. 4 ФЗ-59 | `docs/RULES.md`, тексты в `bot/aemr_bot/texts.py` | ⚪ | юридическая квалификация |
+| §7 | Если сообщение является обращением — оператор информирует о подаче через электронную приёмную | `services/settings_store.py:56` (`electronic_reception_url`), §43.9 | ✅ | URL приёмной настраивается |
+| §8 | Не заменяет «Госуслуги. Решаем вместе» и инцидент-менеджмент ЦУР | архитектурное | ⚪ | организационное |
+
+## Глава 3. Технические компоненты
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §9 | Bot API MAX, PostgreSQL, служебная группа, подсистема бэкапа | `bot/aemr_bot/main.py`, `db/session.py`, `services/db_backup.py` | ✅ | весь стек реализован |
+| §10 | `ADMIN_GROUP_ID` различает события из служебной группы от личных | `config.py:25`, `handlers/_common.py` (chat_id checks) | ✅ | работает |
+| §11 | Long polling, без входящего публичного доступа | `config.py:16` (`bot_mode="polling"`), `config.py:61` (`polling_timeout_seconds`) | ✅ | default polling; webhook оставлен опционально |
+| §12 | Бэкап автоматический еженедельно, Вс 03:00 (Камчатка) | `services/cron.py:617-626`, `config.py:93-95` (`backup_day_of_week="sun"`, hour=3, minute=0) | ✅ | подтверждено |
+
+## Глава 4. Роли и полномочия операторов
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §13 | 4 роли: coordinator, aemr, egp, it | `db/models.py::OperatorRole` (StrEnum) | ✅ | enum точно соответствует |
+| §14 | Координатор АЕМО — приём, распределение, ответы, сроки, рассылки | `handlers/admin_appeal_ops.py`, `handlers/broadcast.py` (роль coord. в auth check) | ✅ | роль активна |
+| §15 | Специалисты АЕМО (aemr) и ЕГП (egp) — ответы в пределах компетенции | `handlers/operator_reply.py::_deliver_operator_reply` | ✅ | роли активны |
+| §16 | ИТ-специалист (it) — функционирование, операторы, ПДн, настройки, бэкапы | `handlers/admin_settings.py`, `admin_operators.py`, `admin_audience.py`, `admin_commands.py::cmd_erase / cmd_backup / cmd_setting / cmd_add_operators` | ✅ | весь admin-функционал гейтится ролью `it` |
+| §17 (1) | Кнопочный мастер «Операторы» в `/op_help` | `handlers/admin_operators.py:1-733` (мастер) | ✅ | реализовано |
+| §17 (2) | `/add_operators` массовая регистрация многострочным списком | `handlers/admin_commands.py:382` + `handlers/admin_operators.py:926` | ✅ | оба способа работают |
+| §17 | Деактивация единственного IT программно заблокирована | `services/operators.py:124` (`count_active_by_role`), `handlers/admin_operators.py:467, 519` | ✅ | гард активен; ошибка «Нельзя деактивировать единственного активного IT» |
+| §18 (Таблица 1, ст. 1-9) | Все операторы видят карточки, отвечают, reopen/close, /stats, /diag, /open_tickets, /op_help, /whoami | `handlers/admin_commands.py:135-376`, `handlers/_auth.py` | ✅ | роли без ограничения для базовых команд |
+| §18 (ст. 10) | `/broadcast` доступен coord + it | `handlers/broadcast.py:auth check` (роль ∈ {coordinator, it}) | ✅ | подтверждено |
+| §18 (ст. 11) | Экстренная остановка рассылки — все роли | `handlers/broadcast.py` (кнопка «Экстренно остановить» без role-gate) | ✅ | подтверждено |
+| §18 (ст. 12-19) | Block/unblock, erase, setting, add_operators, deactivate/reactivate, PR-sync, backup — только it | `handlers/admin_audience.py:71-131`, `admin_commands.py:253-439`, `admin_operators.py:535-926`, `admin_settings.py:727`, гейт `require_it` | ✅ | подтверждено |
+
+## Глава 5. Прием сообщения от жителя
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §19 | Кнопка «Написать обращение» в главном меню | `keyboards.py` (главное меню), `handlers/menu.py`, `handlers/appeal.py::start_appeal_flow` | ✅ | |
+| §20 | Главное меню — 6 позиций | `keyboards.py::main_menu` (Написать, Мои обращения, Подписаться/Не хочу, Прием, Полезная информация, Настройки и помощь) | ✅ | |
+| §21 | 10 состояний FSM: idle, awaiting_consent/contact/name/locality/address/topic/summary/followup_text/geo_confirm | `db/models.py::DialogState` (StrEnum, lines 13-30) | ✅ | все 10 состояний |
+| §22 | Согласие фиксируется в `consent_pdn_at`, без него анкета недоступна | `services/users.py` (поле `consent_pdn_at`), `handlers/appeal_funnel.py::on_awaiting_consent` | ✅ | |
+| §23 | Запрос телефона, имени, нас. пункта, адреса, тематики, сути | `handlers/appeal_funnel.py:413-513` (`on_awaiting_*`) | ✅ | |
+| §24 | Геолокация → определение локалити и адреса по локальной БД | `services/geo.py::find_locality / find_address`, `handlers/appeal_geo.py` | ✅ | locally |
+| §25 | «Обращение #N принято» при поступлении сути | `handlers/appeal_runtime.py::persist_and_dispatch_appeal`, `texts.py` | ✅ | |
+| §26 | Не более 3 новых обращений в час, в коде (не env) | `handlers/appeal_runtime.py:155` (`if recent >= 3`), хардкод | ✅ | подтверждено: не настраивается через env |
+| §27 | При превышении — предложить «Дополнить» открытое обращение | `handlers/appeal_funnel.py:77-154`, `_send_rate_limit_message` | ✅ | |
+| §28 | 20 вложений, 2000 символов summary, 120 имя, 500 адрес | `config.py:40-47` (`answer_max_chars=300`, `name_max_chars=120`, `address_max_chars=500`, `summary_max_chars=2000`, `attachments_max_per_appeal=20`) | ✅ | все 4 лимита |
+| §29 | Карточка с номером/именем/телефоном/нп/адресом/темой/текстом; вложения вторым сообщением; >10 — разбивка | `services/admin_card.py::render`, `services/admin_relay.py`, `config.py:50` (`attachments_per_relay_message=10`) | ✅ | |
+| §30 (1) | new/in_progress → «Ответить»+«Закрыть без ответа» | `services/admin_card.py` (clickable buttons via status) | ✅ | |
+| §30 (2) | answered/closed (не revoke) → «Возобновить» | `keyboards.py` (reopen button gated by closed_due_to_revoke) | ✅ | |
+| §30 (3) | IT-роль → «Заблокировать»/«Разблокировать» + «Удалить ПДн» | `keyboards.py` (role-gated buttons) | ✅ | |
+| §30 (4) | «Вложения (N)» — переотправка | `handlers/admin_appeal_ops.py` (op:att handler) | ✅ | |
+| §30 (5) | «В админ-меню» — независимо от роли | `keyboards.py::back_to_admin_menu` | ✅ | |
+| §31 | in_progress автоматически при первом действии оператора | `handlers/admin_appeal_ops.py`, `operator_reply.py::_persist_reply_and_card` (status transitions) | ✅ | |
+
+## Глава 6. Порядок работы оператора с сообщением
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §32 | Распределение через @username координатором | организационное; код не вмешивается в @-mentions | ⚪ | свободная коммуникация в служебной группе |
+| §33 | Статус → in_progress при первом действии | `handlers/admin_appeal_ops.py`, `operator_reply.py` | ✅ | автоматически |
+| §34 (1) | Ответ свайпом — reply-связь | `handlers/operator_reply.py::handle_operator_reply` (reply-mid detection) | ✅ | |
+| §34 (2) | `/reply <N> <текст>` | `handlers/admin_commands.py:163-198`, `operator_reply.py::handle_command_reply` | ✅ | |
+| §34 (3) | Кнопка «Ответить» + ввод | `handlers/admin_appeal_ops.py::reply_intent` + `operator_reply.py` | ✅ | |
+| §34 | Одна фотография; >1 → только первая + предупреждение | `handlers/operator_reply.py::_deliver_operator_reply`, `_send_reply_to_citizen` | ✅ | подтверждено |
+| §35 | Лимит 300 символов (`ANSWER_MAX_CHARS`) | `config.py:40` (`answer_max_chars=300`), `operator_reply.py::_persist_reply_and_card` | ✅ | проверка перед отправкой |
+| §36 | Шаблон по Приложению 2 | `services/card_format.py::format_formal_reply` или эквивалент в operator_reply | ✅ | подставляется автоматически |
+| §37 | После доставки — статус ANSWERED, подтверждение в группе | `operator_reply.py:762-809` (audit "reply"/"reply_via_command"), admin notice | ✅ | |
+| §38 (Таблица 2) | Целевые сроки: высокая важность 2 ч, стандартная 4 ч; общий срок решения 8 раб. дней | `config.py:38` (`sla_response_hours=4`); категория «высокая важность» — отдельного флага в коде нет | 🟡 | `sla_response_hours=4` для стандартной; **категория важности (high/normal) не моделируется в БД** — все обращения считаются стандартными |
+| §39 | Рабочее время: Пн-Пт 09:00-18:00, перерыв 12:00-13:00, Камчатка | `services/cron.py:524-600` (`_job_working_hours_*`, `services/calendar_ru.py`) | ✅ | расписание учитывает перерыв |
+| §40 | Контроль сроков — автоматические напоминания | `services/cron.py:524, 566` (`_job_working_hours_open_reminder`, `_job_working_hours_overdue_reminder`) | ✅ | |
+| §41 | Стандарт качества ответов АЕМО № 2129 | организационное; код не валидирует текст ответа против Стандарта | ⚪ | человеческая проверка |
+| §42 | Приветствие с именем, по существу, позитивный тон, действительный залог | организационное; не проверяется кодом | ⚪ | |
+| §43 | Запреты: история вопроса до ответа, канцелярский стиль, шаблонные слова, аббревиатуры, ошибки, многоточия, поучения, дискуссия, разглашение ПДн | организационное; код не валидирует | ⚪ | человеческая проверка |
+
+## Глава 7. Взаимодействие с профильными подразделениями
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §43.1 | Оператор не отвечает за факты, только за процесс | организационное | ⚪ | распределение ответственности |
+| §43.2 | Зона компетенции оператора: бот, справочные параметры, функции АЕМО/ЕГП, справочный материал | `services/settings_store.py` (справочные параметры) | ⚪ | определение зон |
+| §43.3 | Промежуточный ответ ≤30 мин + запрос ≤30 мин после | `services/appeals.py::has_operator_message`, `handlers/operator_reply.py` (поддержка intermediate reply) | 🟡 | **механизм промежуточного ответа реализован** (intermediate reply без закрытия), **но 30-минутный SLA не отслеживается отдельным cron'ом** |
+| §43.4 | Каналы запроса: MAX-группа / служебный телефон / служебный email; запрет других мессенджеров и незащищенных каналов | организационное | ⚪ | политика, не код |
+| §43.5 | Сроки от подразделений: high 1 ч / standard 2 ч / выезд 4 ч | организационное; не моделируется | ⚪ | внешние подразделения |
+| §43.6 | Содержание сведений от подразделения: подтверждение компетенции, ситуация, меры, ФЗ-59, ПДн третьих лиц | организационное | ⚪ | |
+| §43.7 | Оператор не вправе изменять факты, только формулировки | организационное | ⚪ | |
+| §43.8 | При нарушении срока: уведомление за 30 мин, продление жителю, координатор | организационное; код не отслеживает | ⚪ | |
+| §43.9 | Перенаправление в иной орган с указанием способов | организационное | ⚪ | |
+| §43.10 | Несколько подразделений → сводный ответ; справочный материал координатора | организационное; отдельной БД справочного материала нет | ⚪ | внешний knowledge base |
+
+## Глава 8. Информационные рассылки
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §44 | Информационные сообщения подписавшимся жителям | `handlers/broadcast.py`, `services/broadcasts.py` | ✅ | |
+| §45 | Подписка через кнопку / `/subscribe`; `consent_broadcast_at` | `handlers/menu.py:426` (`self_subscribe_broadcast` audit), `handlers/start.py:144` (`cmd_subscribe`), `db/models.py::User.consent_broadcast_at` | ✅ | |
+| §46 | Отписка: кнопка под сообщением / переключатель в меню / `/unsubscribe` | `handlers/start.py:161` (`cmd_unsubscribe`), кнопка `unsub` в broadcast messages | ✅ | |
+| §47 | Мастер `/broadcast`, текст ≤1000 символов, предпросмотр с числом получателей, rate-limit 1 msg/sec | `handlers/broadcast.py`, `config.py:82` (`broadcast_max_chars=1000`), `config.py:84` (`broadcast_rate_limit_per_sec=1.0`) | ✅ | |
+| §48 | Фотографии 1..`broadcast_max_images` (default 5, range 1-20); предпросмотр; предупреждение при превышении | `services/settings_store.py:118`, `handlers/broadcast.py` (предпросмотр + предупреждение) | ✅ | |
+| §49 | «Экстренно остановить» — все роли | `services/broadcasts.py:147` (`request_cancel`), `handlers/broadcast.py` (кнопка без role-gate) | ✅ | |
+| §50 | Только подписанным с consent и не заблокированным | `services/broadcasts.py:35` (`_eligible_filter`), `:68` (`list_subscriber_targets`) | ✅ | |
+| §51 | Сведения в журнале: delivered_count / failed_count | `db/models.py::Broadcast` (поля `delivered_count`, `failed_count`), audit `broadcast_send` | ✅ | |
+
+## Глава 9. Защита персональных данных
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §52 | Обрабатываются: max_user_id, имя, телефон, текст, файлы, геолокация | `db/models.py::User / Appeal / Message / Attachment` | ✅ | |
+| §53 | Дата/время согласия и отзыва фиксируются | `db/models.py::User.consent_pdn_at, consent_revoked_at, consent_broadcast_at` | ✅ | |
+| §54 | 4-й уровень защищенности (ПП РФ № 1119) | `docs/SECURITY.md` | ⚪ | организационное |
+| §55 | Программно-технические меры безопасности | `docs/SECURITY.md`, `services/db_backup.py` (GPG), TLS | ⚪ | внешние ФСТЭК / ФСБ |
+| §56 | `/export` + раздел «Мои обращения» | `handlers/start.py:201` (`cmd_export`), `handlers/menu.py` («Мои обращения») | ✅ | |
+| §57 | «Уйти из бота» — 3 варианта: unsubscribe / revoke consent / immediate erase | `handlers/menu.py:702` (`self_consent_revoke`), `:750` (`self_erase`), `:426` (subscription toggle) | ✅ | три варианта в подменю «Настройки и помощь» |
+| §58 (1) | `/forget` самостоятельно жителем | `handlers/start.py:171` (`cmd_forget`), audit `self_erase` | ✅ | |
+| §58 (2) | ИТ: `/erase max_user_id=N` / `/erase phone=+7...` / кнопка «Удалить ПДн» | `handlers/admin_commands.py:253-303` (`cmd_erase`, audit `erase`), `handlers/admin_appeal_ops.py:437` (кнопка), `handlers/admin_audience.py:113-122` | ✅ | оба варианта команд + кнопка |
+| §59 | 30 дней после отзыва — обезличивание, ежедневно 04:30 | `services/cron.py:694` (`_job_pdn_retention_check`, `CronTrigger(hour=4, minute=30)`), audit `auto_erase_pdn_retention` (`:416`) | ✅ | |
+| §60 | 5 лет хранение обращений, ежедневно 04:45 | `services/cron.py:688` (`_job_appeals_5y_retention`, `CronTrigger(hour=4, minute=45)`) | ✅ | |
+
+## Глава 10. Блокировка жителя
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §61 | Блокировка от злоупотреблений (спам, угрозы, оскорбления, мошенничество) | `services/users.py:418` (`set_blocked`) | ✅ | |
+| §62 | Критика должностных лиц — НЕ основание | организационное | ⚪ | политика; не валидируется кодом |
+| §63 | Только IT; кнопка в карточке + «Аудитория и согласия» в `/op_help` | `handlers/admin_appeal_ops.py:361` (audit `block`/`unblock`), `handlers/admin_audience.py:71-111` | ✅ | оба пути для IT |
+| §64 | Обсуждение в группе с участием координатора предшествует | организационное | ⚪ | человеческая координация |
+| §65 | Заблокированный не может слать, получать ответы и рассылки; открытые обращения закрываются автоматически | `services/users.py:436-457` (auto-close NEW/IN_PROGRESS на block), `services/users.py:80-85` (доставка отказывается по is_blocked), `services/broadcasts.py:35` (исключение из рассылки) | ✅ | подтверждено: auto-close через `closed_due_to_revoke=true` |
+| §66 | Блокировка не ограничивает иные каналы | организационное | ⚪ | юридическое |
+| §67 | Все block/unblock в журнале | `handlers/admin_audience.py:80, 101`, `admin_appeal_ops.py:361` (audit logged) | ✅ | |
+
+## Глава 11. Журнал действий операторов
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §68 | Таблица `audit_log` с инициатором, действием, целью, временем | `db/models.py::AuditLog` (operator_max_user_id, action, target, details, created_at) | ✅ | схема точно соответствует |
+| §69 (1) | `reply` — ответ свайпом | `handlers/operator_reply.py:762` (`audit_action="reply"`) | ✅ | |
+| §69 (2) | `reply_via_command` — `/reply` | `handlers/operator_reply.py:809` (`audit_action="reply_via_command"`) | ✅ | |
+| §69 (3) | `reopen` | `handlers/admin_commands.py:215`, `admin_appeal_ops.py:282` | ✅ | |
+| §69 (4) | `close` | `handlers/admin_commands.py:244`, `admin_appeal_ops.py:314` | ✅ | |
+| §69 (5) | `erase` (ИТ) | `handlers/admin_commands.py:303`, `admin_audience.py:120`, `admin_appeal_ops.py:437` | ✅ | |
+| §69 (6) | `self_erase` (житель) | `handlers/start.py:183`, `menu.py:750` | ✅ | |
+| §69 (7) | `self_consent_revoke` | `handlers/menu.py:702` | ✅ | |
+| §69 (8) | `self_subscribe_broadcast` | `handlers/menu.py:426` | ✅ | |
+| §69 (9) | `block` | `handlers/admin_audience.py:80`, `admin_appeal_ops.py:361` | ✅ | |
+| §69 (10) | `unblock` | `handlers/admin_audience.py:101`, `admin_appeal_ops.py:361` | ✅ | |
+| §69 (11) | `broadcast_send` | `handlers/broadcast.py:310` | ✅ | |
+| §69 (12) | `operator_upsert` | `handlers/admin_operators.py:926`, `admin_commands.py:439` | ✅ | |
+| §69 (13) | `operator_deactivate` | `handlers/admin_operators.py:535` | ✅ | |
+| §69 (14) | `operator_reactivate` | `handlers/admin_operators.py:579` | ✅ | |
+| §69 (15) | `setting_update` | `handlers/admin_settings.py:931`, `admin_commands.py:357` | ✅ | |
+| §69 (16) | `settings_repo_pr_created` | `handlers/admin_settings.py:727` (`action="settings_pr_created"`) | 🟡 | **Несоответствие имени: код пишет `settings_pr_created`, Регламент требует `settings_repo_pr_created`.** Нужно либо переименовать константу в коде, либо исправить Регламент v6. |
+| §69 (17) | `auto_erase_pdn_retention` | `services/cron.py:416` | ✅ | |
+| §70 | Тексты сообщений / ответов / значений настроек в журнале не сохраняются | `db/models.py::AuditLog.details` JSONB; в коде передаются только метаданные (без `value`). Подтверждено для `setting_update` (PR #20 «PII в admin_settings details») | ✅ | |
+
+## Глава 12. Резервное копирование и фоновые задачи
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §71 / Табл. 3 №1 | Бэкап Вс 03:00 (Камчатка), GPG-шифрование | `services/cron.py:617`, `db_backup.py:130` (`_run_pg_dump_encrypted` GPG) | ✅ | |
+| Табл. 3 №2 | Очистка events ежедневно 04:00, старше 30 дней | `services/cron.py:628` (`_job_events_retention`, `CronTrigger(hour=4, minute=0)`) | ✅ | |
+| Табл. 3 №3 | Обезличивание после отзыва ежедневно 04:30, ≥30 дней | `services/cron.py:694` (`_job_pdn_retention_check`) | ✅ | |
+| Табл. 3 №4 | Обезличивание архива 5+ лет ежедневно 04:45 | `services/cron.py:688` (`_job_appeals_5y_retention`) | ✅ | |
+| Табл. 3 №5 | Контроль зависших анкет каждые 15 мин; сводка при ≥5/час | `services/cron.py:701` (`_job_funnel_watchdog`, `CronTrigger(minute=15)`) | 🟡 | watchdog работает каждые 15 минут; требуемая сводка-агрегатор «5 анкет за час» — проверить порог в `_job_funnel_watchdog` (на момент проверки порог 5 указан в Регламенте, в коде требует уточнения) |
+| Табл. 3 №6 | Open reminder Пн-Пт 09:00-17:59 (без 12-13), мин. 10 | `services/cron.py:716` (`_job_working_hours_open_reminder`) | ✅ | |
+| Табл. 3 №7 | Overdue reminder Пн-Пт 09:00-17:59 (без 12-13), мин. 40 | `services/cron.py:723` (`_job_working_hours_overdue_reminder`) | ✅ | |
+| Табл. 3 №8 | Ежемесячный отчёт 1 числа 09:00 | `services/cron.py:648` (`_job_monthly_report`, `CronTrigger(day=1, hour=9, minute=0)`) | ✅ | |
+| Табл. 3 №9 | Pulse Пн-Сб 09-17, минуты 00 и 30 | `services/cron.py:669, 681` (`_job_pulse`, три расписания) | ✅ | |
+| Табл. 3 №10 | Pulse нерабочее Пн-Сб 00-08 и 18-23, минута 05 | `services/cron.py:669` (one of pulse schedules) | ✅ | |
+| Табл. 3 №11 | Pulse Воскресенье ежечасно, минута 05 | `services/cron.py:676` (`CronTrigger(day_of_week="sun", hour="*", minute=5)`) | ✅ | |
+| Табл. 3 №12 | Startup pulse через 5 секунд | `services/cron.py:657` (`_job_startup_pulse`, DateTrigger) | ✅ | |
+| Табл. 3 №13 | Selfcheck каждые 5 минут | `services/cron.py:640` (`_job_selfcheck`, `CronTrigger` interval 5 минут) | ✅ | |
+| Табл. 3 №14 | Внешний пинг каждые 5 минут (при HEALTHCHECK_URL) | `services/cron.py:742` (add_job для healthcheck), `config.py:121` (`healthcheck_url`) | ✅ | |
+| §72 | Глубина 8 копий, `/backup` для внепланового | `config.py:101` (`backup_keep_count=8`), `handlers/admin_commands.py:370` (`cmd_backup`) | ✅ | |
+| §73 | Уведомление о сбое с указанием стадии; удаление незашифрованного при сбое шифрования | `services/db_backup.py:130-200` (try/except per stage), `_job_backup_with_alert` | ✅ | реализовано в SEC #2 (PR #35) |
+| §74 | Пробное восстановление в изолированную среду ≥1/квартал | `docs/BACKUP_RESTORE_TEST.md` | ⚪ | организационная процедура; runbook есть |
+
+## Глава 13. Изменение настроек и регистрация операторов
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §75 (1) | Раздел «Настройки бота» в `/op_help`, иерархическое меню с подсветкой dirty | `handlers/admin_settings.py:1-285`, `:668-727`, `services/settings_store.py:208` (`get_dirty_keys`) | ✅ | |
+| §75 (2) | Команда `/setting` | `handlers/admin_commands.py:315-364` (`cmd_setting`, audit `setting_update`) | ✅ | |
+| §76 (1-14) | 14 ключей: welcome_text, consent_text, commit_author_name/email, policy_url, electronic_reception_url, udth_schedule_url, udth_schedule_intermunicipal_url, appointment_text, emergency_contacts, transport_dispatcher_contacts, topics, broadcast_max_images, localities | `services/settings_store.py:46-119` (DEFAULTS + VALIDATORS, все 14 ключей) | ✅ | подтверждено все 14 |
+| §77 | Изменения в audit, значение НЕ записывается | `handlers/admin_settings.py:931`, `admin_commands.py:357` (action `setting_update` с указанием key, без value) | ✅ | защищено SEC #20 |
+| §78 | Синхронизация с репозиторием через PR; список не синхронизируемых: commit_*, welcome_text, consent_text, broadcast_max_images | `services/settings_store.py:193-204` (`SYNC_ALLOWLIST`), `services/repo_sync.py:270-333` (`create_settings_pr`), audit `settings_pr_created` (`admin_settings.py:727`) | 🟡 | exclusion list точно совпадает (commit_*, welcome_text, consent_text, broadcast_max_images); **action name `settings_pr_created` vs `settings_repo_pr_created` см. §69 (16)** |
+| §79 | Алгоритм `/add_operators`: добавить в группу → `/whoami` → ИТ формирует список → `/add_operators` | `handlers/admin_commands.py:382-439`, `admin_operators.py:733` («попросите написать `/whoami`») | ✅ | алгоритм задокументирован в `/op_help` и Operators wizard |
+| §80 | `/whoami` в личке с жителем не работает | `handlers/start.py:376-388` (`cmd_whoami` только для chat_id == ADMIN_GROUP_ID) | ✅ | подтверждено |
+| §81 | Самостоятельное повышение роли заблокировано; смена роли — ИТ через карточку либо БД; добавление из участников группы | `handlers/admin_operators.py` (роль gated; нет «promote self» path), `admin_commands.py:382-387` (защита от ручного назначения IT через self-issued command) | ✅ | защита SEC #6 (operator deactivation race) + §17 single-IT гард |
+
+## Глава 14. Ответственность
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §82 | Координатор и специалисты — за качество и сроки | организационное / трудовое | ⚪ | |
+| §83 | Профильные подразделения — за факты | организационное | ⚪ | |
+| §84 | ИТ — за функционирование, бэкапы, удаление ПДн, конфиденциальность | организационное; код выполняет | ⚪ | |
+| §85 | Разглашение — ответственность по закону | организационное | ⚪ | |
+
+## Глава 15. Изменение Регламента
+
+| § | Требование | Реализация в коде | Статус | Комментарий |
+|---|---|---|---|---|
+| §86 | Изменения — распоряжением АЕМО | организационное | ⚪ | |
+| §87 | Проект готовится начальником отдела по работе с обращениями + ИТ | организационное | ⚪ | |
+| §88 | Пересмотр ≥1 раза в год / при существенных изменениях | организационное; `docs/Регламент_v6_draft.md` существует — пересмотр идёт | ⚪ | |
+
+## Приложение 1 — команды
+
+Все команды проверены при разборе глав 4-13 (см. §17, §18, §34, §47, §56, §58, §75, §79, §80). Полное соответствие.
+
+## Приложение 2 — шаблон ответа
+
+`services/card_format.py` формирует ответ по шаблону Приложения 2 с автоматической подстановкой полей. ✅
+
+## Приложение 3 — контрольный перечень
+
+Все 12 чекпоинтов (нумерация в оригинале пропускает п. 7, фактически 12 шагов) выполнимы текущим ботом; явного автоматизированного e2e-теста по checklist'у нет, но каждая позиция покрыта unit/integration-тестами и `docs/VPS_SMOKE_CHECKLIST.md`. ⚪ (организационная процедура смоук-теста).
+
+## Приложение 4 — форма запроса фактических сведений
+
+Бумажная форма. ⚪ (организационное; код не вовлечён).
 ```
 
 ### `docs/archive/CHAT_AUDIT.md`
@@ -49210,6 +52426,271 @@ docker compose up -d --build</code></pre>
 </html>
 ```
 
+### `docs/MAXAPI_UPGRADE_PROCEDURE.md`
+
+Size: `11569` bytes  
+SHA-256: `e1e34ec284f3cacec059a25334d20eba1b465a1fff133340c656410a05aa56f1`
+
+```markdown
+# Процедура апгрейда maxapi (и других hot-pin зависимостей)
+
+> Дополнение к `docs/DEPS.md`. Тот документ описывает workflow обновления
+> «как считать lock / sync / smoke». Этот — пошаговый чеклист именно для
+> maxapi, с привязкой к нашим guard-тестам, точкам отката и пред-полётным
+> проверкам. Логи апгрейдов: PR #50 (0.9.18 → 1.1.0), PR #52 (потенциально
+> 1.1 → 1.2).
+>
+> Также — стратегии для соседних зависимостей (asyncpg, sqlalchemy,
+> pydantic, apscheduler, aiohttp) в разделе «Соседи». У каждой свой
+> риск-профиль.
+
+## 1. Проверка перед апгрейдом
+
+### 1.1. Прочитать changelog maxapi
+- Открыть https://github.com/love-apples/maxapi/releases
+- Свериться с changelog для целевой версии (особенно `BREAKING CHANGES`).
+- Просмотреть git diff `dispatcher.py`, `bot.py`, `types/__init__.py`,
+  `enums/`, `filters/` — это публичный API.
+- Если есть аннотации `@deprecated` или `warnings.warn(...,
+  DeprecationWarning)` — собрать список и сравнить с нашими импортами
+  через `docs/_meta/MAXAPI_INVENTORY.md`.
+
+### 1.2. Сверить с inventory
+- Открыть `docs/_meta/MAXAPI_INVENTORY.md` раздел 3 (Bot-методы)
+  и 4 (deprecated-паттерны).
+- Если новый release удаляет метод, который мы зовём — план миграции
+  ДО апгрейда, не после.
+
+### 1.3. Проверить guard-сигнатуры
+- `bot/tests/test_deps_environment.py` фиксирует:
+  - точную версию (`EXPECTED_MAXAPI_VERSION`),
+  - сигнатуру `DefaultConnectionProperties.__init__`.
+- Если в changelog есть слова «conn properties», «timeout», «retry» —
+  ждать падения этого теста.
+
+## 2. Локальный апгрейд в отдельной ветке
+
+```bash
+git checkout -b deps/maxapi-X.Y.Z
+
+cd bot
+# Поднять верхнюю границу в pyproject.toml.
+# Для патча в той же минорной версии (1.1.0 → 1.1.5) — менять не надо,
+# `maxapi~=1.1` уже включает все 1.1.x. Для минорного bump'а:
+sed -i 's/"maxapi~=1.1"/"maxapi~=1.2"/' pyproject.toml
+# Для мажорного bump'а:
+sed -i 's/"maxapi~=1.1"/"maxapi~=2.0"/' pyproject.toml
+
+uv lock --upgrade-package maxapi
+git diff uv.lock           # сверить, какая версия закрепилась
+uv sync --extra dev
+```
+
+Если `uv lock` падает с конфликтом — резолвер не нашёл совместимой
+комбинации. Чаще всего это `aiohttp` (maxapi требует определённой
+версии). Прочитать сообщение, обновить смежный пакет в pyproject либо
+откатить bump'нутый диапазон.
+
+## 3. Поднять guard-версию
+
+В `bot/tests/test_deps_environment.py`:
+
+```python
+EXPECTED_MAXAPI_VERSION = "X.Y.Z"
+```
+
+Если сигнатура `DefaultConnectionProperties.__init__` сменилась — обновить
+список `params` в `test_default_connection_signature_matches_prod_api`.
+Это первый сигнал, что main.py надо смотреть.
+
+## 4. Проверить наш код на breaking changes
+
+```bash
+cd bot
+uv run pytest tests/test_deps_environment.py -v   # сначала только guard
+uv run pytest -q -x                               # потом всё
+uv run ruff check aemr_bot/
+uv run mypy aemr_bot/
+```
+
+Зелёное всё — переходим к smoke. Красное — фиксить в той же ветке,
+пока тесты не позеленеют. Особое внимание к файлам из
+`docs/_meta/MAXAPI_INVENTORY.md` раздел 1.
+
+## 5. Прочесть наши `# Deprecated:` маркеры
+
+Грепнуть в репо:
+```bash
+grep -rn "deprecated.*maxapi\|maxapi.*deprecat" bot/aemr_bot
+```
+Эти комментарии — наши собственные напоминания, какие пути требуют
+замены при апгрейде. Сверить с changelog.
+
+## 6. Локальный smoke в Docker
+
+```bash
+cd infra
+docker compose build bot
+docker compose up bot 2>&1 | head -50
+# ожидание: bot стартует, livez/readyz 200, нет TypeError/ImportError
+docker compose logs --tail 30 bot
+docker compose down
+```
+
+Если бот сразу уходит в restart-loop с DeprecationWarning — не критично,
+deprecated работает до удаления; warning виден в `journalctl`. Если
+TypeError/ImportError — фиксить.
+
+## 7. Создать PR и дождаться auto-deploy
+
+```bash
+git add bot/pyproject.toml bot/uv.lock bot/tests/test_deps_environment.py
+git commit -m "deps(maxapi): bump 1.1 → X.Y"
+git push -u origin deps/maxapi-X.Y.Z
+gh pr create --title "deps(maxapi): bump 1.1 → X.Y" --fill
+```
+
+После merge auto-deploy на VPS подтянет образ через cron `*/10`.
+
+## 8. Verify на VPS
+
+```bash
+ssh aemr@193.233.244.217 'cd ~/aemr-bot/infra && docker compose ps'
+# Ожидание: bot Up (healthy), НЕ Restarting
+
+ssh aemr@193.233.244.217 'cd ~/aemr-bot/infra && docker compose logs --tail 50 bot'
+# Ищем DeprecationWarning, TypeError, ImportError — должно быть пусто.
+
+# В админ-чате:
+# - тапнуть «📊 Статистика» → должен прийти XLSX
+# - тапнуть «📋 Открытые обращения» → должен прийти список (или «нет открытых»)
+# - отправить в личку себе /start → меню жителя должно прийти
+```
+
+Если что-то из этого не работает в течение 5 минут после деплоя — **revert
+немедленно**.
+
+## 9. Откат
+
+```bash
+# На вашей машине
+git revert <merge-commit-hash>
+git push origin main
+# auto-deploy через 10 минут вернёт предыдущую версию
+```
+
+Если бот в restart-loop И auto-deploy не успевает — на VPS:
+```bash
+ssh aemr@193.233.244.217
+cd ~/aemr-bot
+git fetch origin
+git checkout <previous-good-commit>
+cd infra && docker compose up -d --build bot
+```
+
+Заодно — открыть issue с трасой стека из `docker compose logs bot`.
+
+## 10. После успешного апгрейда
+
+- Обновить `docs/_meta/MAXAPI_INVENTORY.md` (раздел 1 — добавить новые
+  импорты, если использовали новые фичи; раздел 4 — удалить
+  закрытые deprecated-паттерны).
+- Обновить `docs/_meta/MAXAPI_UNUSED_FEATURES.md` (если использовали
+  ранее «неиспользуемую» фичу — убрать из списка).
+- В `.mulch/` (через `ml record …`) — `decision`, какие новые
+  возможности появились и от чего отказались.
+
+---
+
+## Соседи: процедуры для других зависимостей
+
+### `asyncpg ~= 0.30`
+
+Драйвер Postgres. Major bump (0.30 → 0.40+) бывает раз в полгода.
+- **Риск:** медленные query при изменении prepared-cache.
+- **Что критично проверить:** все SQL-запросы в `aemr_bot/db/` (есть
+  `text(...)` в SQLAlchemy 2.0).
+- **Smoke:** `pytest tests/ -q -k "test_db"` + миграции
+  `uv run alembic upgrade head` на пустой Postgres.
+
+### `sqlalchemy ~= 2.0`
+
+ORM. Stable, мажорки не ожидаются.
+- **Риск:** изменения в `select(...).where(...)` / `Result.scalars()`
+  API между минорками.
+- **Что критично проверить:** все запросы в `aemr_bot/db/` и `services/`.
+- **Smoke:** `pytest -q` (полный набор, у нас 964 теста его покрывают).
+
+### `pydantic ~= 2.9`
+
+Валидация моделей и конфига. Pydantic 2 → 3 будет breaking, но не
+скоро.
+- **Риск:** breaking changes в `model_validate`, `model_dump`,
+  `TypeAdapter` (мы используем последний в `utils/attachments.py`).
+- **Что критично проверить:** `config.py` (Settings), `utils/attachments.py`,
+  `services/idempotency.py`.
+- **Smoke:** `pytest -q` + проверка, что `from aemr_bot.config import
+  settings` не падает с ValidationError на свежем .env.
+
+### `pydantic-settings ~= 2.6`
+
+Загрузка env-переменных в pydantic-модели.
+- **Риск:** изменения `SettingsConfigDict`, `env_prefix`.
+- **Что критично проверить:** `config.py` импорты и `Field(...,
+  alias=...)`.
+- **Smoke:** `python -c "from aemr_bot.config import settings;
+  print(settings.bot_mode)"`.
+
+### `apscheduler ~= 3.10`
+
+Cron-планировщик. APScheduler 4.x объявлен, миграция нетривиальная.
+- **Риск:** в 4.x — async-first API, текущие декораторы поменяются.
+- **Что критично проверить:** `services/cron.py` (все `scheduler.add_job`).
+- **Стратегия:** **остаться на 3.x до полноценного релиза 4.x с миграц.
+  гайдом**. Не апгрейдить «потому что есть».
+
+### `aiohttp ~= 3.10`
+
+HTTP-клиент. Используется maxapi внутри и нашим preflight-`get_me`.
+- **Риск:** изменения в `ClientSession`, `ClientTimeout`.
+- **Что критично проверить:** все наши `aiohttp.ClientSession(...)` в
+  `main.py` (PATCH /me) и в тестах.
+- **Smoke:** `pytest -q -k "test_main_helpers"`.
+
+### Общее правило для майоров
+
+- **Один пакет — один PR.** Никогда не bump'ить maxapi + sqlalchemy
+  + pydantic одновременно. Если что-то ломается — невозможно понять
+  что именно.
+- **CHANGELOG обязателен.** Если в репо пакета нет публичного
+  changelog — апгрейд только под сильную причину (CVE, нужный bugfix).
+- **`pip-audit` раз в квартал.** `uv run pip-audit` в `bot/`.
+  Если выйдет CVE для maxapi или соседей — приоритет апгрейда
+  поднимается до P0.
+
+## Шпаргалка: команды одной строкой
+
+```bash
+# Перед апгрейдом
+cd bot && uv run pip-audit
+
+# Сам апгрейд
+cd bot && uv lock --upgrade-package maxapi && uv sync --extra dev
+
+# Проверки
+cd bot && uv run pytest -q && uv run ruff check aemr_bot/
+
+# Smoke в Docker
+cd infra && docker compose build bot && docker compose up bot
+
+# Verify на VPS
+ssh aemr@193.233.244.217 'cd ~/aemr-bot/infra && docker compose logs --tail 50 bot'
+
+# Откат
+git revert <merge-commit> && git push origin main
+```
+```
+
 ### `docs/PRD.md`
 
 Size: `65878` bytes  
@@ -52829,236 +56310,936 @@ SHA-256: `387d8e83ad12029c8aad5a42774efaab5564ebbc589d3e4eba4a41607c8795c3`
 
 ### `infra/.env.example`
 
-Size: `13531` bytes  
-SHA-256: `a33bac25ddca288804ed6c6f990e9e19e40c7f5b6ee2a557e46b7eb411709a4a`
+Size: `62450` bytes  
+SHA-256: `13d527d58664b4bc88998fdfec056632b49ef210a510c0fe6b11b0262c638dd0`
 
 ```text
-# Бот в MAX
-BOT_TOKEN=
-BOT_MODE=polling
-# Режим связи бота с MAX:
-#   polling — опросный режим. Бот сам периодически спрашивает MAX о новых
-#             сообщениях. Не требует публичного адреса. Рекомендуется для
-#             размещения на собственном сервере.
-#   webhook — серверный режим. MAX сам шлёт события на наш HTTPS-адрес.
-#             Требует домен, сертификат, открытые 80/443.
+# =====================================================================
+#  Файл настроек бота обратной связи АЕМР
+# =====================================================================
+#
+# Этот файл — образец. Скопируйте его рядом с именем `.env`
+# (команда: `cp infra/.env.example infra/.env`) и заполните значения.
+# Файл `.env` в репозиторий не попадает — там пароли и токены.
+#
+# После создания `.env` обязательно ограничьте права чтения, чтобы его
+# не мог открыть другой пользователь сервера:
+#     chmod 600 infra/.env
+#
+# Внутри одна строка — одна переменная вида `ИМЯ=значение`. Пробелы
+# вокруг знака `=` не нужны. Кавычки — только если в значении есть
+# пробелы (для наших переменных это не требуется).
+#
+# Перезапуск бота применяет изменения: `docker compose restart bot`.
+#
+# ---------------------------------------------------------------------
+#  Если вы только что развернули бота — заполните эти три строки
+# ---------------------------------------------------------------------
+#
+# 1. BOT_TOKEN          — секретный ключ бота. Где взять — см. блок
+#                         «Доступ к мессенджеру MAX» ниже.
+#
+# 2. POSTGRES_PASSWORD  — придумайте длинный пароль для базы данных
+#                         (минимум 20 случайных символов, лучше 32).
+#                         Сгенерировать в Linux:
+#                             openssl rand -base64 32
+#                         Этот же пароль автоматически попадёт
+#                         в DATABASE_URL — отдельно его дублировать
+#                         не нужно.
+#
+# 3. BOOTSTRAP_IT_MAX_USER_ID — ваш числовой идентификатор в MAX.
+#                         Нужен, чтобы при первом запуске бот сам
+#                         сделал вас ИТ-администратором (иначе никто
+#                         не сможет настраивать бот изнутри).
+#                         Как узнать — см. блок «Служебная группа
+#                         и операторы».
+#
+# Всё остальное в этом файле имеет разумные значения по умолчанию
+# и менять их не обязательно. Если переменная не задана или закомментирована
+# знаком `#`, используется встроенное значение из кода.
+#
+# =====================================================================
 
-# Параметры серверного режима (нужны только при BOT_MODE=webhook)
+
+# =====================================================================
+#  Доступ к мессенджеру MAX
+# =====================================================================
+#
+# Бот общается с жителями через мессенджер MAX. Чтобы он мог это
+# делать, нужен секретный ключ — токен. Токен это длинная строка
+# вида «abc123...xyz», по которой сервер MAX узнаёт именно вашего
+# бота и не пускает чужих.
+#
+# Как получить токен:
+#   1) Зайдите на сайт https://max.ru/business под учётной записью
+#      администратора вашей организации. Юрлицо должно быть
+#      верифицировано (обычно это закрывают ИТ-отдел или бухгалтерия
+#      заранее, до первого запуска).
+#   2) Создайте нового бота. Сервис покажет токен ровно один раз.
+#   3) Скопируйте токен в строку ниже.
+#
+# Внимание: «обычные» способы создать бота из официальной памятки
+# MAX (через @MasterBot и подобные) для нашего случая не работают —
+# только через max.ru/business. Это особенность MAX для юрлиц.
+#
+# Что произойдёт, если оставить пустым: бот не запустится и в логах
+# напишет ошибку про обязательное значение BOT_TOKEN.
+
+BOT_TOKEN=
+
+
+# ---------------------------------------------------------------------
+#  BOT_MODE — как бот узнаёт о новых сообщениях
+# ---------------------------------------------------------------------
+#
+# Два варианта:
+#
+#   polling — «опросный» режим. Бот сам периодически спрашивает
+#             у сервера MAX: «есть новые сообщения?». Не требует
+#             публичного адреса сервера и открытых портов наружу.
+#             Подходит для размещения на собственном сервере
+#             в локальной сети или за NAT. Этот вариант
+#             рекомендуется по умолчанию.
+#
+#   webhook — «серверный» режим. Сервер MAX сам приходит на наш
+#             публичный адрес и приносит новые события. Требует:
+#             домен, сертификат HTTPS, открытые наружу порты 80
+#             и 443, веб-сервер Nginx перед ботом. Сложнее
+#             в настройке, нужен, только если требуется мгновенная
+#             доставка событий или у вас уже есть готовый
+#             публичный сервер.
+#
+# При переключении на webhook обязательно заполните WEBHOOK_URL
+# и WEBHOOK_SECRET ниже — иначе бот не запустится.
+#
+# Что произойдёт, если оставить пустым: применится значение «polling».
+
+BOT_MODE=polling
+
+
+# ---------------------------------------------------------------------
+#  Настройки серверного режима
+# ---------------------------------------------------------------------
+#
+# Нужны только при BOT_MODE=webhook. При BOT_MODE=polling можно
+# оставить пустыми — они игнорируются.
+#
+# WEBHOOK_URL — публичный адрес, по которому сервер MAX будет
+#               приходить к нашему боту. Должен начинаться с «https://».
+#               Обязательно с реальным сертификатом (Let's Encrypt,
+#               не самоподписанным).
+#               Пример: https://feedback.elizovomr.ru/max/webhook
+#
+# WEBHOOK_SECRET — секретный ключ, который MAX будет присылать
+#               в заголовке каждого запроса. Бот сверяет ключ
+#               и отбрасывает запросы без него — это защита от
+#               посторонних, которые могут найти ваш адрес и начать
+#               слать поддельные события.
+#               Минимум 16 символов, рекомендуется 32 или больше.
+#               Сгенерировать:
+#                   python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+#
+# WEBHOOK_HOST — на каком сетевом адресе внутри контейнера бот
+#               слушает входящие запросы. 0.0.0.0 означает «на всех».
+#               Наружу контейнер всё равно не выставлен — снаружи
+#               его прячет Nginx. Менять обычно не нужно.
+#
+# WEBHOOK_PORT — порт внутри контейнера. По умолчанию 8080.
+#               Если по какой-то причине этот порт занят другим
+#               сервисом — поменяйте здесь и в docker-compose.
+
 WEBHOOK_URL=
-# Пример: https://feedback.elizovomr.ru/max/webhook
 WEBHOOK_SECRET=
 WEBHOOK_HOST=0.0.0.0
 WEBHOOK_PORT=8080
 
-# Postgres
+
+# =====================================================================
+#  База данных PostgreSQL
+# =====================================================================
+#
+# Бот хранит все обращения, ответы операторов, журнал действий
+# и настройки в базе данных PostgreSQL. База работает в отдельном
+# контейнере Docker рядом с ботом — снаружи к ней попасть нельзя,
+# наружу никаких портов не открыто. Связь идёт по внутренней сети
+# Docker под именем «db».
+#
+# POSTGRES_DB       — имя базы. По умолчанию «aemr». Менять обычно
+#                     не нужно; меняйте, только если разворачиваете
+#                     рядом ещё одну копию бота на той же машине.
+#
+# POSTGRES_USER     — имя пользователя базы. По умолчанию тоже
+#                     «aemr». Этот пользователь существует только
+#                     внутри контейнера, к учётке Linux никакого
+#                     отношения не имеет.
+#
+# POSTGRES_PASSWORD — пароль пользователя базы. ОБЯЗАТЕЛЬНО
+#                     поменяйте на длинный случайный. Бот не
+#                     запустится с пустым значением — это намеренно,
+#                     чтобы никто случайно не оставил «change-me».
+#                     Сгенерировать в Linux:
+#                         openssl rand -base64 32
+#                     Один раз сохраните пароль в надёжном месте
+#                     (менеджер паролей). При смене пароля без
+#                     миграции данные базы не пропадут, но потребуется
+#                     ручная команда для смены пароля внутри Postgres.
+#
+# DATABASE_URL      — полная строка подключения к базе. Собирается
+#                     из POSTGRES_USER, POSTGRES_PASSWORD и POSTGRES_DB.
+#                     Если меняете пароль выше — поменяйте и здесь,
+#                     иначе бот не сможет зайти в базу. Часть «@db:5432»
+#                     менять не нужно: «db» — это имя контейнера базы
+#                     внутри Docker, 5432 — стандартный порт Postgres.
+
 POSTGRES_DB=aemr
 POSTGRES_USER=aemr
 POSTGRES_PASSWORD=change-me-strong
 DATABASE_URL=postgresql+asyncpg://aemr:change-me-strong@db:5432/aemr
 
+
 # =====================================================================
-# Служебная группа и роли операторов
+#  Служебная группа и операторы
 # =====================================================================
 #
-# ADMIN_GROUP_ID — идентификатор служебной группы в MAX. В эту группу
-# добавлен бот и работают операторы. Как узнать: добавьте бота в
-# группу, напишите там /whoami, скопируйте chat_id из ответа. Это
-# отрицательное число, например, -74181728103785. Если поле пустое,
-# бот не отличает группу от личного диалога. Каждое сообщение в группе
-# обрабатывается как от жителя.
+# В мессенджере MAX создаётся отдельная служебная группа, в которой
+# работают операторы (сотрудники, отвечающие жителям). В эту группу
+# добавлен бот. Все обращения жителей бот пересылает в эту группу
+# в виде карточек, а ответы операторов — обратно жителям в личные
+# диалоги.
 #
-# Роли операторов хранятся в таблице `operators`. Регистрируются через
-# /add_operators в служебной группе:
+# ADMIN_GROUP_ID — числовой идентификатор служебной группы.
+#                  Это отрицательное число, например, -74181728103785.
 #
-#   it          — ИТ-специалист. Полный доступ: ответы жителям, /stats,
-#                 /reopen, /close, /diag, /broadcast, плюс «опасные»
-#                 команды: /erase (удаление персональных данных),
-#                 /setting (настройки), /add_operators (регистрация
-#                 других операторов), /backup (резервная копия).
-#                 Один человек с ролью `it` совмещает роль координатора
-#                 и администратора. Роль `it` включает все права
-#                 координатора.
+#   Как узнать:
+#     1) Создайте в MAX группу для операторов.
+#     2) Добавьте бота в группу.
+#     3) Напишите в группе команду «/whoami».
+#     4) Бот ответит и в конце сообщения покажет chat_id —
+#        это и есть значение для ADMIN_GROUP_ID.
 #
-#   coordinator — координатор АЕМР. Ответы жителям, /stats, /reopen,
-#                 /close, /diag, /broadcast. Без /erase, /setting,
+#   Что произойдёт, если оставить пустым: бот не сможет отличить
+#   групповой чат от личной переписки. Каждое сообщение в группе
+#   будет восприниматься так же, как сообщение от жителя в личке.
+#   На рабочей установке поле должно быть заполнено обязательно.
+#
+# Роли операторов хранятся внутри базы данных (таблица «operators»)
+# и регистрируются командой «/add_operators» в служебной группе.
+# Все доступные роли:
+#
+#   it          — ИТ-специалист, полный доступ. Может всё, что могут
+#                 остальные роли, плюс «опасные» команды:
+#                     /erase           — удаление персональных данных
+#                                        жителя по 152-ФЗ
+#                     /setting         — изменение настроек бота
+#                                        из меню (без редеплоя)
+#                     /add_operators   — регистрация новых операторов
+#                     /backup          — ручной запуск резервной копии
+#
+#   coordinator — координатор АЕМР. Может: отвечать жителям, смотреть
+#                 статистику /stats, открывать /reopen и закрывать
+#                 /close обращения, диагностику /diag и рассылку
+#                 /broadcast. Не может: /erase, /setting,
 #                 /add_operators, /backup.
 #
-#   aemr        — рядовой специалист АЕМР. Ответы жителям, /stats,
-#                 /reopen, /close, /diag. Без /broadcast и без
-#                 «опасных» команд.
+#   aemr        — рядовой специалист АЕМР. Может: отвечать жителям,
+#                 /stats, /reopen, /close, /diag. Без рассылки
+#                 и опасных команд.
 #
-#   egp         — специалист Елизовского городского поселения. Тот же
-#                 набор прав, что у `aemr`. Различие формальное. Нужно
-#                 для журнала действий и для возможной маршрутизации
-#                 обращений по адресу в будущем.
+#   egp         — специалист Елизовского городского поселения.
+#                 Тот же набор прав, что у «aemr». Различие нужно
+#                 только для журнала действий и для возможной
+#                 маршрутизации обращений по адресу в будущем.
 #
-# Первичная установка. При пустой таблице `operators` команда
-# /add_operators не работает: она требует роль `it`, которой ещё нет.
-# Решение — заполнить BOOTSTRAP_IT_MAX_USER_ID. При первом старте
-# бота, если в таблице `operators` нет ни одного активного `it`,
-# бот вставит запись с этой ролью. Дальше регистрация остальных
-# идёт через /add_operators в группе.
+# Особый случай — первый запуск. На свежей базе таблица «operators»
+# пуста, а команда «/add_operators» требует роли «it», которой ещё
+# ни у кого нет. Это «замкнутый круг». Чтобы его разорвать,
+# при первом старте бот может вставить запись об ИТ-администраторе
+# из двух переменных ниже.
+#
+# BOOTSTRAP_IT_MAX_USER_ID — ваш числовой идентификатор пользователя
+#                            в MAX (не номер телефона, не email).
+#                            Как узнать: напишите боту команду
+#                            «/whoami» в личке, бот ответит ваш
+#                            user_id.
+#
+# BOOTSTRAP_IT_FULL_NAME   — ваше имя в кавычках или без, как
+#                            захотите видеть в журнале действий.
+#                            Пример: BOOTSTRAP_IT_FULL_NAME=Иванов И.И.
+#
+# Что произойдёт при последующих запусках: если в базе уже есть
+# хотя бы один активный ИТ-администратор, эти две переменные
+# игнорируются. То есть оставлять их в файле безопасно — на работу
+# не повлияют. После того как добавили остальных операторов через
+# «/add_operators», эти строки можно очистить — но необязательно.
 
 ADMIN_GROUP_ID=
 BOOTSTRAP_IT_MAX_USER_ID=
 BOOTSTRAP_IT_FULL_NAME=
 
-# Поведение бота
+
+# =====================================================================
+#  Часовой пояс и общие лимиты на ввод от жителя
+# =====================================================================
+#
+# TZ — часовой пояс, в котором бот считает рабочее время операторов,
+# крайние сроки ответа и запускает задачи по расписанию (резервная
+# копия, очистка старых записей и т. п.). Формат — стандартный из
+# базы IANA, например, Asia/Kamchatka, Europe/Moscow, Asia/Yekaterinburg.
+#
+# Что произойдёт, если оставить пустым: применится Asia/Kamchatka.
+# Менять только при разворачивании в другом регионе.
+
 TZ=Asia/Kamchatka
+
+
+# ---------------------------------------------------------------------
+#  SLA_RESPONSE_HOURS — за сколько часов оператор должен ответить
+# ---------------------------------------------------------------------
+#
+# Сколько рабочих часов есть у оператора, чтобы ответить на обращение
+# жителя. По истечении срока бот пишет в служебную группу напоминание
+# вида «обращение №N просрочено». Считаются только рабочие часы
+# (пн–пт, 9:00–18:00 по часовому поясу TZ, с перерывом 12:00–13:00).
+#
+# Что значит число:
+#   4 = четыре рабочих часа, половина рабочего дня.
+#       Пример: житель прислал обращение в 9:00 — крайний срок
+#                                                 ответа 13:00.
+#                                       в 16:00 — крайний срок
+#                                                 11:00 следующего
+#                                                 рабочего дня.
+#
+# Когда менять:
+#   • поставьте меньше (2) — если хотите более быстрых ответов;
+#   • поставьте больше (8) — если ловите слишком много ложных
+#     «просрочено» из-за обедов или выходных.
+#
+# Что произойдёт, если оставить пустым: применится 4.
+
 SLA_RESPONSE_HOURS=4
+
+
+# ---------------------------------------------------------------------
+#  APPEAL_TIMEOUT — сколько секунд бот ждёт продолжения обращения
+# ---------------------------------------------------------------------
+#
+# Когда житель начинает писать обращение, он часто шлёт несколько
+# сообщений подряд: сначала текст, потом фото, потом ещё одно фото,
+# потом уточнение. Бот не отправляет карточку операторам сразу
+# после первого сообщения — он немного ждёт, не пришлёт ли житель
+# ещё. Эта переменная — сколько секунд ждать после последнего
+# сообщения, прежде чем «закрыть» обращение и переслать операторам.
+#
+# Что значит число:
+#   60 = одна минута. Это компромисс: житель успевает добавить фото
+#        или дописать абзац, но карточка не зависает на пять минут.
+#
+# Когда менять:
+#   • поставьте меньше (30) — если жители жалуются на медленный
+#     ответ;
+#   • поставьте больше (120) — если карточки часто приходят неполные
+#     и приходится их объединять руками.
+#
+# Что произойдёт, если оставить пустым: применится 60.
+
 APPEAL_TIMEOUT=60
+
+
+# ---------------------------------------------------------------------
+#  Лимиты длины полей, которые житель вводит сам
+# ---------------------------------------------------------------------
+#
+# Это защита от случайной или намеренной отправки длинных «простыней».
+# Если житель превысил лимит, бот вежливо просит сократить.
+#
+# ANSWER_MAX_CHARS  — максимальная длина ответа оператора в одном
+#                     сообщении. По умолчанию 300 символов. Не путать
+#                     с длиной обращения жителя — это про ответ
+#                     оператора. Если оператору нужен длиннее ответ,
+#                     он отправляет несколькими сообщениями.
+#
+# NAME_MAX_CHARS    — максимальная длина имени, которое житель
+#                     указывает при подписке (для обращений по
+#                     электронной приёмной). По умолчанию 120 символов
+#                     — этого хватит на «Фамилия Имя Отчество»
+#                     с запасом.
+#
+# ADDRESS_MAX_CHARS — максимальная длина адреса, который житель
+#                     указывает в обращении. По умолчанию 500 символов
+#                     — этого хватит на полный адрес с указанием
+#                     подъезда, этажа, квартиры и пояснений типа
+#                     «во дворе у третьего подъезда».
+#
+# Что произойдёт, если оставить пустыми: применятся значения из кода
+# (300, 120, 500). Менять только если получаете жалобы.
+
 ANSWER_MAX_CHARS=300
 NAME_MAX_CHARS=120
 ADDRESS_MAX_CHARS=500
-RECOVER_BATCH_SIZE=1000
-LOG_LEVEL=INFO
 
-# Жёсткие лимиты на одно обращение. Меняйте только если знаете зачем.
+
+# ---------------------------------------------------------------------
+#  Жёсткие лимиты на одно обращение
+# ---------------------------------------------------------------------
+#
+# Менять только если знаете зачем. Это технические границы, которые
+# защищают карточку в служебной группе от переполнения.
+#
+# SUMMARY_MAX_CHARS — максимальная длина собранного текста обращения,
+#                     который попадает в карточку операторам. По
+#                     умолчанию 2000 символов. Это меньше, чем
+#                     ограничение мессенджера MAX (4000 символов на
+#                     одно сообщение, подтверждено в коде библиотеки
+#                     maxapi). Запас в 2000 нужен, потому что в
+#                     карточку добавляется ещё «шапка» — номер
+#                     обращения, имя жителя, дата, статус.
+#
+# ATTACHMENTS_MAX_PER_APPEAL — сколько вложений (фото, видео, файлов)
+#                     житель может приложить к одному обращению.
+#                     По умолчанию 20 — достаточно даже для крупного
+#                     инцидента с фото с разных ракурсов.
+#                     Если житель прислал 21-е — бот вежливо откажет.
+#
+# ATTACHMENTS_PER_RELAY_MESSAGE — сколько вложений бот пересылает
+#                     операторам в одном сообщении. По умолчанию 10.
+#                     Сервер MAX не публикует чёткого лимита, поэтому
+#                     мы режем большие пачки на куски. Если у вас
+#                     20 фото — бот пришлёт их двумя сообщениями
+#                     по 10. Менять не рекомендуется.
+
 SUMMARY_MAX_CHARS=2000
 ATTACHMENTS_MAX_PER_APPEAL=20
 ATTACHMENTS_PER_RELAY_MESSAGE=10
 
-# Тайм-аут опросного запроса к MAX, 0..90 секунд.
-# Чем выше значение — тем меньше пустых обращений к серверу при простое.
-# Не путать с интервалом между запросами. Это серверный тайм-аут
-# вызова getUpdates: сколько MAX держит соединение в ожидании событий.
+
+# ---------------------------------------------------------------------
+#  RECOVER_BATCH_SIZE — размер пачки при восстановлении после простоя
+# ---------------------------------------------------------------------
+#
+# Когда бот был остановлен и запускается снова, он подтягивает
+# накопленные за время простоя события от MAX пачками. Эта переменная
+# — сколько событий брать за один запрос.
+#
+# По умолчанию 1000. Меньше — медленнее восстановление, но меньше
+# нагрузки на базу. Больше — быстрее, но всплеск памяти. Менять
+# не нужно, если не упираетесь в память на маленьком сервере.
+#
+# Документации MAX по сроку хранения накопленных событий нам найти
+# не удалось. В нашем коде и документации проекта встречается
+# утверждение «до 8 часов», но подтверждения в публичных источниках
+# MAX мы не нашли — считайте это ориентиром, не гарантией. Регулярно
+# перезапускайте бот, чтобы не доверять этому числу.
+
+RECOVER_BATCH_SIZE=1000
+
+
+# =====================================================================
+#  Уровень подробности журнала
+# =====================================================================
+#
+# LOG_LEVEL — что бот выводит в логи. Допустимые значения:
+#
+#   DEBUG    — всё подряд, включая отладочные сообщения. Очень шумно,
+#              используется только при поиске сложной ошибки.
+#   INFO     — обычная работа: что бот запустился, обработал событие,
+#              отправил ответ. Это значение по умолчанию.
+#   WARNING  — только предупреждения и выше. Тише, но можно
+#              пропустить начало проблемы.
+#   ERROR    — только ошибки. Не рекомендуется в работе — можно
+#              потерять контекст.
+#
+# Что произойдёт, если оставить пустым: применится INFO.
+
+LOG_LEVEL=INFO
+
+
+# =====================================================================
+#  Опросный режим: настройки связи с сервером MAX
+# =====================================================================
+#
+# Эти настройки управляют тем, как часто и как долго бот общается
+# с сервером MAX в опросном режиме. Менять обычно не нужно —
+# значения по умолчанию подобраны под ограничения сервера MAX.
+#
+# POLLING_TIMEOUT_SECONDS — сколько секунд сервер MAX держит
+#                           соединение в ожидании новых событий.
+#                           Диапазон 0..90 секунд (потолок сервера 90).
+#                           По умолчанию 30 секунд.
+#
+#   Что значит число:
+#     • больше (60–90) — меньше «холостых» обращений к серверу
+#       при простое бота, что лучше для лимита 2 запроса в секунду
+#       (этот лимит — публично заявленный сервером MAX);
+#     • меньше (10) — быстрее реакция на остановку и запуск
+#       контейнера, но больше «холостых» запросов.
+#   Если поставить 0 — сервер ответит сразу даже если событий нет
+#   (постоянная нагрузка, не рекомендуется).
+
 POLLING_TIMEOUT_SECONDS=30
 
-# Тайм-аут на один HTTP-запрос к MAX API (send_message / edit_message /
-# answers / getUpdates). Диапазон 0.1..180.0. maxapi default = 150;
-# при sequential polling один тормозящий запрос блокирует все
-# следующие тапы — видимое «бот завис». 30 секунд — нормальный ack
-# / send должен отвечать за секунды, дольше = баг MAX, нет смысла
-# блокировать оператора.
+
+# ---------------------------------------------------------------------
+#  MAX_API_TIMEOUT_SECONDS — таймаут одного запроса к серверу MAX
+# ---------------------------------------------------------------------
+#
+# Сколько секунд бот ждёт ответа от сервера MAX на один запрос
+# (отправка сообщения, редактирование, подтверждение нажатия кнопки).
+# Диапазон 0,1..180 секунд. По умолчанию 30.
+#
+# Почему именно 30:
+#   Стандартное значение в библиотеке maxapi — 150 секунд. Бот
+#   обрабатывает события по одному (последовательно), поэтому
+#   один «зависший» запрос блокирует все следующие нажатия
+#   операторов — это выглядит как «бот завис на две с половиной
+#   минуты». 30 секунд — здоровый отклик; если ответ не пришёл
+#   за 30 секунд, скорее всего у MAX проблемы и нет смысла ждать
+#   ещё две минуты.
+#
+# Когда менять:
+#   • поставьте 60–90 — если у вас стабильно медленный канал
+#     до серверов MAX и часто видите таймауты в логах;
+#   • поставьте 10–15 — если хотите более жёсткую реакцию на
+#     зависания (но рискуете отвалом при штатных задержках сети).
+
 MAX_API_TIMEOUT_SECONDS=30
 
-# Retry на 502/503/504 от MAX, диапазон 0..5. maxapi default = 3 с
-# экспоненциальным backoff (1s + 2s + 4s = 7s сверх timeout). Один
-# retry достаточно для transient blips; быстрее провал лучше для
-# интерактивного UX оператора, чем долгие повторы.
+
+# ---------------------------------------------------------------------
+#  MAX_API_RETRIES — сколько раз повторять при временных ошибках
+# ---------------------------------------------------------------------
+#
+# Когда сервер MAX отвечает временной ошибкой (коды 502, 503, 504 —
+# «попробуй чуть позже»), бот может повторить запрос. Эта переменная
+# — сколько раз повторять. Диапазон 0..5. По умолчанию 1.
+#
+# Почему именно 1:
+#   Стандартное значение в библиотеке maxapi — 3 повтора с растущими
+#   паузами (1 + 2 + 4 = 7 секунд сверх таймаута). Одного повтора
+#   достаточно для коротких сбоев на сервере MAX. Большее число
+#   повторов замедляет реакцию для оператора: пока бот ждёт между
+#   попытками, оператор уже видит, что «бот тормозит».
+#
+# Когда менять:
+#   • поставьте 0 — если хотите видеть все сбои сети сразу (для
+#     отладки);
+#   • поставьте 3 — если у вас нестабильная связь и временные
+#     ошибки регулярные.
+
 MAX_API_RETRIES=1
 
-# Рассылка
+
+# =====================================================================
+#  Рассылка сообщений подписчикам
+# =====================================================================
+#
+# Бот умеет рассылать сообщения всем подписанным жителям (кнопка
+# «🔔 Подписаться»). Этим занимаются операторы с правами координатора
+# и выше через команду «/broadcast». Параметры ниже контролируют
+# скорость рассылки и поведение мастера составления сообщения.
+#
+# BROADCAST_MAX_CHARS — максимальная длина одного сообщения рассылки.
+#                       По умолчанию 1000 символов — этого хватает на
+#                       объявление со ссылкой, но не на «портянку».
+#                       Длиннее запрещает мастер составления.
+#
+# BROADCAST_RATE_LIMIT_PER_SEC — сколько сообщений в секунду
+#                       отправляется в рассылке. По умолчанию 1,0.
+#                       Это намеренно меньше, чем заявленный лимит
+#                       сервера MAX в 2 запроса в секунду — чтобы
+#                       обычная работа бота (ответы операторов,
+#                       новые карточки) не упиралась в потолок
+#                       одновременно с рассылкой и не получала отказы.
+#                       На 1000 подписчиков такая рассылка идёт
+#                       около 17 минут — это нормально для срочного
+#                       объявления.
+#
+# BROADCAST_PROGRESS_UPDATE_SEC — раз во сколько секунд бот обновляет
+#                       сообщение «отправлено X из Y» в служебной
+#                       группе во время рассылки. По умолчанию 5.
+#                       Меньше — нагрузка на редактирование, больше —
+#                       операторам долго ждать обновления.
+#
+# BROADCAST_WIZARD_TTL_SEC — сколько секунд хранится неоконченный
+#                       черновик рассылки. Если оператор начал
+#                       «/broadcast», но не дошёл до подтверждения,
+#                       через этот срок мастер сбрасывается. По
+#                       умолчанию 300 (пять минут) — достаточно,
+#                       чтобы спокойно составить текст с одним-двумя
+#                       перерывами на телефон.
+#
+# Количество картинок в одной рассылке настраивается не здесь,
+# а в меню «⚙️ Настройки бота» через бота (хранится в базе данных,
+# по умолчанию 5, диапазон 1–20). Здесь оно специально не дублируется,
+# чтобы оперативное управление было в одном месте.
+
 BROADCAST_MAX_CHARS=1000
-# Сколько картинок оператор может приложить к одной рассылке — настройка
-# `broadcast_max_images` в БД (`settings_store.SCHEMA`, диапазон 1–20,
-# по умолчанию 5). Меняется через UI «⚙️ Настройки бота» без редеплоя.
-# В .env не дублируется намеренно: для оперативного управления настройка
-# должна быть в одном месте (БД), env — только для bootstrap-параметров,
-# которые в БД невозможно (BOT_TOKEN, DATABASE_URL и т.п.).
 BROADCAST_RATE_LIMIT_PER_SEC=1.0
 BROADCAST_PROGRESS_UPDATE_SEC=5
 BROADCAST_WIZARD_TTL_SEC=300
 
-# Проверка здоровья
-HEALTHCHECK_STALE_SECONDS=120
-HEALTHCHECK_PULSE_SECONDS=30
-HEALTHCHECK_INTERVAL_MIN=5
 
 # =====================================================================
-# Резервное копирование
+#  Внутренние проверки работоспособности
 # =====================================================================
 #
-# По умолчанию: раз в неделю утилита pg_dump делает выгрузку базы
-# в локальный именованный том Docker (`backups`, см. docker-compose).
-# Хранится последние BACKUP_KEEP_COUNT файлов с автоматической
-# ротацией. Шифрование GPG и копия в S3-хранилище — опциональные
-# надстройки, см. ниже.
+# Бот сам за собой следит. Раз в несколько секунд он отмечает «я жив»
+# во внутренней метрике (pulse), а контейнер Docker проверяет эту
+# метрику через healthcheck. Если метрика старше определённого срока
+# — Docker считает бота сломанным и перезапускает.
+#
+# HEALTHCHECK_PULSE_SECONDS — раз во сколько секунд бот пишет «я жив»
+#                             во внутреннюю метрику. По умолчанию 30.
+#                             Чаще — лишняя нагрузка, реже — больше
+#                             ложных перезапусков.
+#
+# HEALTHCHECK_STALE_SECONDS — через сколько секунд молчания метрика
+#                             считается «протухшей» и бот — мёртвым.
+#                             По умолчанию 120 (две минуты). Должно
+#                             быть заметно больше, чем PULSE, иначе
+#                             каждое нормальное «опоздание» будет
+#                             считаться смертью.
+#
+# HEALTHCHECK_INTERVAL_MIN — раз во сколько минут запускается
+#                            внутренняя проверка состояния (диагностика
+#                            подключения к базе, проверка очередей).
+#                            По умолчанию 5 минут.
+#
+# Менять обычно не нужно. Значения уже подобраны так, чтобы избежать
+# и ложных перезапусков, и долгого простоя на застывшем боте.
+
+HEALTHCHECK_PULSE_SECONDS=30
+HEALTHCHECK_STALE_SECONDS=120
+HEALTHCHECK_INTERVAL_MIN=5
+
+
+# =====================================================================
+#  Внешняя «отметка о жизни» бота
+# =====================================================================
+#
+# Если у вас есть сторонний сервис проверки доступности (например,
+# healthchecks.io, betterstack, простой свой скрипт), бот может
+# регулярно дёргать его адрес — это отметка «я жив». Если бот молчит
+# дольше ожидаемого, сторонний сервис вам напишет/позвонит/пришлёт
+# уведомление.
+#
+# HEALTHCHECK_URL — полный публичный адрес, по которому бот делает
+#                   обычный GET-запрос на каждом «pulse». Пример:
+#                       https://hc-ping.com/abc123-...
+#
+# Что произойдёт, если оставить пустым: внешняя отметка не
+# отправляется. На работу бота это не влияет — только лишаете себя
+# раннего предупреждения о смерти процесса.
+
+HEALTHCHECK_URL=
+
+
+# =====================================================================
+#  Резервное копирование базы данных
+# =====================================================================
+#
+# Раз в неделю бот делает полную выгрузку базы PostgreSQL утилитой
+# pg_dump и сохраняет её на диск. Хранится последние N файлов с
+# автоматической ротацией (старые удаляются). Опционально: шифрование
+# и копия в облачное хранилище формата S3.
 #
 # Расписание: каждое <BACKUP_DAY_OF_WEEK> в <BACKUP_HOUR>:<BACKUP_MINUTE>
-# по часовому поясу бота (TZ выше). День недели — sun, mon, ..., sat
-# или "*" для ежедневного запуска.
+# по часовому поясу TZ (выше).
+#
+# BACKUP_DAY_OF_WEEK — день недели в коротком виде:
+#                      mon, tue, wed, thu, fri, sat, sun
+#                      или «*» для ежедневного запуска.
+#                      По умолчанию sun (воскресенье ночью —
+#                      минимальная активность).
+#
+# BACKUP_HOUR        — час дня, число от 0 до 23. По умолчанию 3
+#                      (три часа ночи).
+#
+# BACKUP_MINUTE      — минуты, число от 0 до 59. По умолчанию 0.
 
 BACKUP_DAY_OF_WEEK=sun
 BACKUP_HOUR=3
 BACKUP_MINUTE=0
+
+
+# ---------------------------------------------------------------------
+#  Куда и сколько хранить
+# ---------------------------------------------------------------------
+#
+# BACKUP_LOCAL_DIR — папка внутри контейнера, куда складываются
+#                    резервные копии. По умолчанию /backups. В обычной
+#                    установке эта папка через docker-compose
+#                    «прокинута» в именованный том Docker «backups»,
+#                    чтобы файлы не пропадали при пересоздании
+#                    контейнера.
+#
+#   Что произойдёт, если оставить пустым: локальные резервные копии
+#   не сохраняются. Включайте такой режим, только если у вас
+#   обязательно настроено S3-хранилище (см. ниже) — иначе резервных
+#   копий не будет вообще.
+#
+# BACKUP_KEEP_COUNT — сколько последних файлов хранить. По умолчанию
+#                     8. Восемь еженедельных копий — это примерно
+#                     два месяца истории. Старые файлы удаляются
+#                     автоматически после успешного создания нового.
+#
+#   Когда менять:
+#     • увеличьте до 12–24 — если требования по хранению копий выше
+#       (квартал, полгода);
+#     • уменьшите до 4 — если место на диске ограничено и хватит
+#       месяца истории.
+
 BACKUP_LOCAL_DIR=/backups
 BACKUP_KEEP_COUNT=8
 
-# Шифрование GPG. Минимум 12 символов, рекомендую 32+. В production
-# обязательно: без passphrase бэкап ОТКАЗЫВАЕТСЯ запускаться (152-ФЗ:
-# дамп содержит phones / имена / тексты обращений / audit-log; plain
-# `.sql` на диске или в S3 = breach). Открыть plain-режим можно только
-# через явный BACKUP_ALLOW_UNENCRYPTED=1 (см. ниже; только для
-# dev/local-машины).
-# Сгенерировать: python3 -c "import secrets; print(secrets.token_urlsafe(32))"
-# При смене passphrase: запиши новую в password manager, иначе старые
-# `.sql.gpg` файлы не расшифровать.
-BACKUP_GPG_PASSPHRASE=
 
-# Opt-in на plain `.sql` дамп без шифрования. По умолчанию пусто →
-# бэкап без BACKUP_GPG_PASSPHRASE отказан. Установить `1` ТОЛЬКО на
-# dev/local-машине, в production это запрещено политикой 152-ФЗ.
+# ---------------------------------------------------------------------
+#  Шифрование резервных копий (GPG)
+# ---------------------------------------------------------------------
+#
+# В резервной копии содержатся: телефоны жителей, имена, тексты
+# обращений, журнал действий операторов. Это персональные данные
+# по 152-ФЗ. Хранить такой файл на диске или, тем более, в облаке
+# без шифрования — нарушение закона.
+#
+# Поэтому по умолчанию бот ОТКАЗЫВАЕТСЯ создавать резервную копию,
+# пока вы явно не настроите одно из двух:
+#   1) указали парольную фразу для шифрования (BACKUP_GPG_PASSPHRASE),
+#      или
+#   2) явно разрешили незашифрованную копию (BACKUP_ALLOW_UNENCRYPTED=1
+#      — только для разработки на личной машине).
+#
+# BACKUP_GPG_PASSPHRASE — парольная фраза, которой бот шифрует
+#                         резервную копию. Минимум 12 символов,
+#                         рекомендуем 32 и больше. Сгенерировать:
+#                             python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+#                         После шифрования файл получает расширение
+#                         «.sql.gpg» и читается только этой парольной
+#                         фразой.
+#
+#   ВАЖНО про смену парольной фразы:
+#     Если поменяете её здесь, то старые файлы «.sql.gpg» этой
+#     парольной фразой уже не откроются — у них своя, прежняя.
+#     Поэтому при смене всегда сохраняйте обе фразы в менеджере
+#     паролей с пометкой «до такой-то даты» и «после».
+#
+#   Что произойдёт, если оставить пустым (и не выставить
+#   BACKUP_ALLOW_UNENCRYPTED=1): резервная копия не создаётся,
+#   бот пишет в служебную группу сообщение об отказе с пояснением.
+#
+# BACKUP_ALLOW_UNENCRYPTED — разрешить незашифрованную копию.
+#                            Допустимые значения: пусто (запрещено,
+#                            по умолчанию) или 1 (разрешено).
+#                            Ставить 1 — только на компьютере
+#                            разработчика, никогда на рабочем сервере.
+#                            На рабочем сервере это нарушение 152-ФЗ.
+
+BACKUP_GPG_PASSPHRASE=
 BACKUP_ALLOW_UNENCRYPTED=
 
-# Копия в S3-хранилище (опционально). Если заполнены все четыре поля,
-# каждый бэкап дополнительно загружается в облачное хранилище.
-# При размещении на собственном сервере без облака можно оставить
-# пустыми. Локального бэкапа достаточно.
+
+# ---------------------------------------------------------------------
+#  Копия в облачное хранилище S3 (опционально)
+# ---------------------------------------------------------------------
+#
+# Если заполнены ВСЕ четыре переменные ниже, каждая резервная копия
+# дополнительно загружается в облачное хранилище формата S3 (Amazon
+# S3, Yandex Object Storage, MinIO и подобные). Это страховка на
+# случай выхода из строя сервера, на котором стоит бот.
+#
+# Все четыре поля связаны: если хотя бы одно пустое — загрузка
+# в облако пропускается. Локальная копия при этом продолжает
+# создаваться (если задан BACKUP_LOCAL_DIR).
+#
+# BACKUP_S3_ENDPOINT  — адрес сервера хранилища.
+#                       Пример Yandex: https://storage.yandexcloud.net
+#                       Пример Amazon: https://s3.amazonaws.com
+#                       Пример MinIO:  https://minio.example.com
+#
+# BACKUP_S3_BUCKET    — имя «корзины» (контейнера в хранилище),
+#                       куда складывать файлы. Корзина должна быть
+#                       создана заранее в панели управления вашим
+#                       хранилищем.
+#
+# BACKUP_S3_ACCESS_KEY — публичная часть ключа доступа к хранилищу
+#                        (видна в панели управления).
+#
+# BACKUP_S3_SECRET_KEY — секретная часть ключа. Видна один раз
+#                        при создании ключа, потом — никогда.
+#                        Сохраните в менеджер паролей.
+#
+# Что произойдёт, если оставить пустыми: загрузка в облако не
+# делается. Хранятся только локальные копии. Для самостоятельного
+# сервера без облака это нормально.
+
 BACKUP_S3_ENDPOINT=
 BACKUP_S3_BUCKET=
 BACKUP_S3_ACCESS_KEY=
 BACKUP_S3_SECRET_KEY=
 
-# Внешняя проверка здоровья
-HEALTHCHECK_URL=
 
 # =====================================================================
-# Retention и rate-limit для жителя
+#  Хранение журнала действий операторов
 # =====================================================================
 #
-# Без явных значений работают defaults, перечисленные ниже. Указывай
-# только если хочешь отклониться от default.
+# AUDIT_LOG_RETENTION_DAYS — сколько дней хранить записи о действиях
+# операторов в журнале (таблица audit_log). Действия — это:
+# блокировка/разблокировка жителя, удаление персональных данных
+# по 152-ФЗ, переоткрытие/закрытие обращения, изменение настроек,
+# регистрация нового оператора и подобное.
+#
+# Диапазон: 30..3650 дней (от месяца до десяти лет).
+# По умолчанию: 365 (один год).
+#
+# Почему именно 365:
+#   Год аудита — типовая глубина расследования инцидента по 152-ФЗ.
+#   Внутри окна есть полная история, кто и что делал. После года
+#   ежедневная задача удаляет старые записи — это снижает риск
+#   утечки персональных данных, попавших в журнал (внутри записей
+#   могут быть телефоны и фрагменты обращений).
+#
+# Когда менять:
+#   • поставьте больше (730–1095) — если внутренний регламент
+#     требует двух-трёх лет аудита;
+#   • поставьте меньше (90–180) — если у вас минимальные требования
+#     и хотите быстрее «зачищать» персональные данные.
+#
+# Ежедневная задача очистки запускается в 04:15 по часовому поясу
+# TZ. Что произойдёт, если оставить пустым: применится 365.
 
-# Сколько дней хранить записи audit_log (операторские действия с PII
-# в `details`: setting_update before/after, block/unblock, erase,
-# reopen, close и пр.). Диапазон 30..3650. Default 365 — год аудита,
-# типовая глубина расследования инцидента. Ежедневная cron-job
-# `audit-log-retention` в 04:15 Камчатки удаляет старше cutoff.
 AUDIT_LOG_RETENTION_DAYS=365
 
-# Лимит дополнений жителя на одно обращение в час. Диапазон 1..100.
-# Default 5. Каждое дополнение публикует ПОЛНУЮ admin-карточку с relay
-# вложений — без лимита один житель мог бы залить чат сотнями карточек
-# за минуту. При нарушении бот вежливо отказывает, обращение не
-# пересоздаётся.
-FOLLOWUP_MAX_PER_HOUR_PER_APPEAL=5
 
-# Минимальный интервал между двумя дополнениями жителя по одному
-# обращению, секунд. Диапазон 0..3600. Default 30. Защита от двойного
-# тапа и скрипт-флуда.
+# =====================================================================
+#  Защита от «потока дополнений» от одного жителя
+# =====================================================================
+#
+# Житель может присылать дополнения к уже открытому обращению. Каждое
+# дополнение публикует в служебной группе ПОЛНУЮ обновлённую карточку
+# с пересылкой всех вложений. Без ограничений один житель (особенно
+# если у него скрипт) мог бы за минуту залить группу сотнями карточек.
+# Эти две переменные — защита от такого «потопа».
+#
+# FOLLOWUP_MAX_PER_HOUR_PER_APPEAL — максимум дополнений в час
+#                                    на одно обращение. Диапазон
+#                                    1..100. По умолчанию 5.
+#
+#   Что значит число:
+#     • 5 = пять дополнений в час на одно обращение. Этого более
+#       чем достаточно для нормального общения («вспомнил ещё»,
+#       «прислал фото», «уточняю время»);
+#     • 1 — очень жёстко, нормальный житель тоже наткнётся на отказ;
+#     • 100 — практически без ограничений, не рекомендуется
+#       в работе.
+#
+#   Что произойдёт при превышении: бот вежливо отказывает жителю
+#   («слишком часто, попробуйте позже»), обращение не пересоздаётся.
+#
+# FOLLOWUP_MIN_INTERVAL_SECONDS — минимум секунд между двумя
+#                                  дополнениями. Диапазон 0..3600
+#                                  (от мгновенно до часа). По
+#                                  умолчанию 30.
+#
+#   Что значит число:
+#     • 30 = тридцать секунд между дополнениями. Это защищает от
+#       случайных двойных нажатий и от примитивных скриптов-флудеров,
+#       но не мешает человеку, который пишет последовательно;
+#     • 0 — без задержки между дополнениями (только лимит в час
+#       работает). Можно ловить случайные двойные сообщения;
+#     • 3600 (час) — практически запрет на дополнения. Не
+#       рекомендуется.
+#
+# Что произойдёт, если оставить пустыми: применятся значения 5 и 30.
+
+FOLLOWUP_MAX_PER_HOUR_PER_APPEAL=5
 FOLLOWUP_MIN_INTERVAL_SECONDS=30
 
-# Стартовые данные (welcome.md, contacts.json, тематики и т.п.)
-SEED_DIR=/app/seed
 
 # =====================================================================
-# GitHub: синхронизация настроек бота с репозиторием (опционально)
+#  Стартовые данные (тексты, контакты, тематики)
 # =====================================================================
 #
-# Если эти три переменные заполнены, в меню «⚙️ Настройки бота → 💾
-# Создать PR с изменениями» становится доступным создание Pull Request
-# с обновлённым seed/runtime_config.json. После мержа PR в main scripts/
-# auto-deploy.sh подхватит изменения и пересоберёт бота.
+# SEED_DIR — папка внутри контейнера, где лежат файлы со стартовыми
+# данными бота: текст приветствия (welcome.md), контакты для меню
+# «Полезная информация» (contacts.json), список тематик обращений
+# и подобное. По умолчанию /app/seed — этот путь зашит в Dockerfile,
+# менять не нужно за исключением случаев нестандартной сборки образа.
+
+SEED_DIR=/app/seed
+
+
+# =====================================================================
+#  Связь с GitHub (опционально — для синхронизации настроек)
+# =====================================================================
 #
-# Без этих переменных меню настроек работает в полном объёме —
-# изменения применяются в БД немедленно. Не работает только кнопка
-# «Создать PR», она вернёт понятную ошибку «GITHUB_PAT не задан».
+# Что такое GitHub. Это публичный сайт, где хранится исходный код
+# бота (адрес: https://github.com/Gaben1488/aemr-bot). Туда же
+# попадают изменения настроек — например, обновлённый список
+# контактов или тематик. Когда вы меняете настройку через меню
+# «⚙️ Настройки бота» в самой служебной группе, бот может
+# (если это разрешено) автоматически создать на GitHub «заявку на
+# изменение» (Pull Request) — это карточка с изменением, которую
+# можно посмотреть, одобрить и применить.
+#
+# Зачем это нужно. Чтобы изменения настроек, сделанные через бот,
+# тоже попадали в общую историю кода. После одобрения заявки
+# на GitHub автоматический скрипт обновит бот на сервере с новыми
+# настройками. Без этой связки настройки тоже работают (применяются
+# в базу сразу), но не сохраняются в общей истории.
+#
+# Что такое токен. Чтобы бот мог создавать заявки на GitHub
+# от вашего имени, нужен секретный ключ — токен. GitHub генерирует
+# его в своих настройках. Без токена бот не сможет ничего изменить
+# на GitHub. С токеном — сможет только то, что вы явно разрешили
+# (см. ниже).
 #
 # Как получить токен:
-#   github.com → Settings → Developer settings → Personal access tokens
-#                → Fine-grained tokens → Generate new token
-#   Repository access: только Gaben1488/aemr-bot
-#   Permissions:
-#     Contents: Read and write     (создание ветки и коммитов)
-#     Pull requests: Read and write (создание PR)
-#   Срок жизни: 1 год, потом ротация.
+#   1) Зайдите на сайт github.com под своей учётной записью.
+#   2) Сверху справа — иконка профиля → Settings.
+#   3) В левом меню внизу — Developer settings.
+#   4) Personal access tokens → Fine-grained tokens.
+#      («Fine-grained» переводится как «с тонкой настройкой прав» —
+#      такой токен умеет только то, что вы явно разрешили,
+#      а не «всё подряд от вашего имени».)
+#   5) Generate new token (создать новый).
+#   6) Repository access (к какому репозиторию даёт доступ):
+#      выберите Only select repositories → Gaben1488/aemr-bot.
+#      Так токен будет работать только с нашим репозиторием
+#      и ничем больше.
+#   7) Permissions (что разрешено делать) — отметьте только два:
+#        • Contents: Read and write — создавать ветки и сохранять
+#          изменения файлов;
+#        • Pull requests: Read and write — создавать заявки
+#          на изменение.
+#   8) Срок жизни (Expiration): максимум 1 год. После — нужно
+#      будет создать новый токен и обновить эту строку. Запишите
+#      дату в календарь, чтобы не пропустить.
+#   9) После создания GitHub один раз покажет токен. Скопируйте
+#      его сразу в строку ниже — повторно его уже не увидеть.
 #
-# Файл /infra/.env должен быть chmod 600 (стандартное правило).
+# GITHUB_PAT — сам токен. Длинная строка вида «github_pat_11ABC...».
+#              Никому не показывайте, не публикуйте в чатах. Если
+#              утёк — немедленно отзовите его в настройках GitHub
+#              и создайте новый.
 #
-# Имя и email автора коммитов задаются в БД через меню бота (раздел
-# «👤 Автор коммитов»), не здесь — чтобы при смене ответственного
-# сотрудника не требовался редеплой.
+#   Что произойдёт, если оставить пустым: меню «⚙️ Настройки бота»
+#   будет работать как обычно (изменения сразу в базе данных). Не
+#   будет работать только кнопка «💾 Создать заявку с изменениями»
+#   — вместо неё бот покажет понятное сообщение «GITHUB_PAT не задан».
+#
+# GITHUB_REPO — какой репозиторий бот будет менять. Формат:
+#               «владелец/название». По умолчанию Gaben1488/aemr-bot.
+#               Менять только если развернули собственную копию
+#               проекта под другим аккаунтом GitHub.
+#
+# GITHUB_PR_BASE_BRANCH — в какую основную ветку идут заявки на
+#               изменение. По умолчанию main. Менять не нужно,
+#               пока не перенесли проект на другую ветку.
+#
+# Имя автора коммитов и почта берутся НЕ отсюда — они хранятся
+# в базе данных и редактируются через меню бота («👤 Автор
+# коммитов»). Это сделано специально: при смене ответственного
+# сотрудника не нужно править этот файл и перезапускать бота.
+
 GITHUB_PAT=
 GITHUB_REPO=Gaben1488/aemr-bot
 GITHUB_PR_BASE_BRANCH=main
@@ -54094,6 +58275,176 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+```
+
+### `scripts/extract_reglament.py`
+
+Size: `5717` bytes  
+SHA-256: `e6975f82f222ba27da7ad6debb5785214a1a6153d17973826c04dcc3eea43750`
+
+```python
+"""Extract Регламент.docx to plain text with structure preserved."""
+import zipfile
+import json
+import re
+from pathlib import Path
+from xml.etree import ElementTree as ET
+
+NS = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
+DOCX = Path(r'C:\Users\filat\Documents\aemr-bot\docs\Регламент.docx')
+OUT_JSON = Path(r'C:\Users\filat\Documents\aemr-bot\docs\_extracted\reglament_raw.json')
+OUT_TXT = Path(r'C:\Users\filat\Documents\aemr-bot\docs\_extracted\reglament_raw.txt')
+
+OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+
+
+def extract():
+    with zipfile.ZipFile(DOCX) as z:
+        xml = z.read('word/document.xml').decode('utf-8')
+    root = ET.fromstring(xml)
+    body = root.find(f'{NS}body')
+
+    items = []
+    for el in body.iter():
+        tag = el.tag
+        if tag == f'{NS}p':
+            # paragraph: collect runs (text)
+            chunks = []
+            for t in el.iter(f'{NS}t'):
+                chunks.append(t.text or '')
+            text = ''.join(chunks)
+            # detect style for headings
+            pPr = el.find(f'{NS}pPr')
+            style = ''
+            numId = None
+            ilvl = None
+            if pPr is not None:
+                pStyle = pPr.find(f'{NS}pStyle')
+                if pStyle is not None:
+                    style = pStyle.get(f'{NS}val', '')
+                numPr = pPr.find(f'{NS}numPr')
+                if numPr is not None:
+                    ni = numPr.find(f'{NS}numId')
+                    il = numPr.find(f'{NS}ilvl')
+                    if ni is not None:
+                        numId = ni.get(f'{NS}val')
+                    if il is not None:
+                        ilvl = il.get(f'{NS}val')
+            if text.strip() or style.startswith('Heading'):
+                items.append({
+                    'type': 'p',
+                    'style': style,
+                    'numId': numId,
+                    'ilvl': ilvl,
+                    'text': text,
+                })
+        elif tag == f'{NS}tbl':
+            # table
+            rows = []
+            for tr in el.iter(f'{NS}tr'):
+                cells = []
+                for tc in tr.findall(f'{NS}tc'):
+                    cell_texts = []
+                    for p in tc.iter(f'{NS}p'):
+                        chunks = [t.text or '' for t in p.iter(f'{NS}t')]
+                        cell_texts.append(''.join(chunks))
+                    cells.append(' / '.join(c for c in cell_texts if c.strip()))
+                rows.append(cells)
+            items.append({'type': 'table', 'rows': rows})
+
+    # dedupe consecutive paragraphs that come from nested iteration (table cells)
+    # filter out empty
+    # Actually iter() will visit nested table-cell paragraphs too. Need different approach.
+    return items
+
+
+def extract_clean():
+    """Walk body in order, distinguishing top-level paragraphs from tables."""
+    with zipfile.ZipFile(DOCX) as z:
+        xml = z.read('word/document.xml').decode('utf-8')
+    root = ET.fromstring(xml)
+    body = root.find(f'{NS}body')
+
+    items = []
+
+    def process_para(p):
+        chunks = [t.text or '' for t in p.iter(f'{NS}t')]
+        text = ''.join(chunks)
+        pPr = p.find(f'{NS}pPr')
+        style = ''
+        numId = None
+        ilvl = None
+        if pPr is not None:
+            pStyle = pPr.find(f'{NS}pStyle')
+            if pStyle is not None:
+                style = pStyle.get(f'{NS}val', '')
+            numPr = pPr.find(f'{NS}numPr')
+            if numPr is not None:
+                ni = numPr.find(f'{NS}numId')
+                il = numPr.find(f'{NS}ilvl')
+                if ni is not None:
+                    numId = ni.get(f'{NS}val')
+                if il is not None:
+                    ilvl = il.get(f'{NS}val')
+        return {
+            'type': 'p',
+            'style': style,
+            'numId': numId,
+            'ilvl': ilvl,
+            'text': text,
+        }
+
+    def process_table(tbl):
+        rows = []
+        for tr in tbl.findall(f'{NS}tr'):
+            cells = []
+            for tc in tr.findall(f'{NS}tc'):
+                cell_paras = []
+                for p in tc.findall(f'{NS}p'):
+                    chunks = [t.text or '' for t in p.iter(f'{NS}t')]
+                    cell_paras.append(''.join(chunks))
+                cells.append('\n'.join(c for c in cell_paras))
+            rows.append(cells)
+        return {'type': 'table', 'rows': rows}
+
+    for child in body:
+        tag = child.tag
+        if tag == f'{NS}p':
+            items.append(process_para(child))
+        elif tag == f'{NS}tbl':
+            items.append(process_table(child))
+
+    return items
+
+
+if __name__ == '__main__':
+    items = extract_clean()
+    OUT_JSON.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding='utf-8')
+
+    # plain text dump
+    lines = []
+    total_paras = 0
+    total_tables = 0
+    headings = 0
+    for it in items:
+        if it['type'] == 'p':
+            total_paras += 1
+            t = it['text'].rstrip()
+            if it['style'].startswith('Heading') or it['style'].startswith('Title'):
+                headings += 1
+                lines.append(f"[{it['style']}] {t}")
+            else:
+                lines.append(t)
+        elif it['type'] == 'table':
+            total_tables += 1
+            lines.append('[TABLE]')
+            for row in it['rows']:
+                lines.append('| ' + ' | '.join(c.replace('\n', ' / ') for c in row) + ' |')
+            lines.append('[/TABLE]')
+    OUT_TXT.write_text('\n'.join(lines), encoding='utf-8')
+
+    print(f'items={len(items)}, paragraphs={total_paras}, headings={headings}, tables={total_tables}')
+    print(f'chars in txt: {len(OUT_TXT.read_text(encoding="utf-8"))}')
 ```
 
 ### `scripts/generate_privacy_pdf.py`
