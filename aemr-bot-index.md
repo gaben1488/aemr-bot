@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 02:52:10 UTC`
+Generated at: `2026-05-25 02:52:39 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `197`
 Max file size: `300 KB`
@@ -40,10 +40,10 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/db/alembic/versions/0017_appeals_last_card_mid.py` (1920 bytes)
 - `bot/aemr_bot/db/models.py` (20102 bytes)
 - `bot/aemr_bot/db/session.py` (2764 bytes)
-- `bot/aemr_bot/handlers/__init__.py` (3608 bytes)
+- `bot/aemr_bot/handlers/__init__.py` (2960 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
-- `bot/aemr_bot/handlers/admin_appeal_ops.py` (16812 bytes)
+- `bot/aemr_bot/handlers/admin_appeal_ops.py` (16564 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9243 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12498 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (17560 bytes)
@@ -54,11 +54,11 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal.py` (26104 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (31980 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
-- `bot/aemr_bot/handlers/appeal_runtime.py` (13538 bytes)
+- `bot/aemr_bot/handlers/appeal_runtime.py` (11640 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (43027 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8595 bytes)
-- `bot/aemr_bot/handlers/menu.py` (46632 bytes)
+- `bot/aemr_bot/handlers/menu.py` (47097 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (34298 bytes)
 - `bot/aemr_bot/handlers/start.py` (17005 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
@@ -139,7 +139,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_handlers_auth_broadcast.py` (6976 bytes)
 - `bot/tests/test_handlers_common.py` (3572 bytes)
 - `bot/tests/test_handlers_funnel.py` (9458 bytes)
-- `bot/tests/test_handlers_menu.py` (26314 bytes)
+- `bot/tests/test_handlers_menu.py` (26382 bytes)
 - `bot/tests/test_handlers_menu_extra.py` (23371 bytes)
 - `bot/tests/test_handlers_operator_reply.py` (29246 bytes)
 - `bot/tests/test_handlers_start.py` (13597 bytes)
@@ -2957,8 +2957,8 @@ async def session_scope() -> AsyncIterator[AsyncSession]:
 
 ### `bot/aemr_bot/handlers/__init__.py`
 
-Size: `3608` bytes  
-SHA-256: `d95eb5723f746785fa27e4fd46bf0de024b80b09a52f8d053c259b1ca521d247`
+Size: `2960` bytes  
+SHA-256: `96cd4610bb98b45e1a32141a9ce1050d510f76611ace78ec47781951f4df1f9d`
 
 ```python
 from maxapi import Dispatcher
@@ -2983,35 +2983,19 @@ class IdempotencyMiddleware(BaseMiddleware):
 
 
 def _attach_outer_middleware(dp: Dispatcher, middleware: BaseMiddleware) -> None:
-    """Подключить промежуточный слой как внешний в разных версиях maxapi.
+    """Подключить outer middleware. Полагается на публичный API maxapi 1.1+.
 
-    Форма меняется от выпуска к выпуску:
-    - 1.1+ предоставляет `register_outer_middleware(mw)` (PR #134);
-    - 0.9.18+ имел вызываемый метод `outer_middleware(mw)` (deprecated в 1.1);
-    - В более ранних 0.9.0–0.9.17 был только `middlewares` со вставкой в начало.
-
-    Используем `register_outer_middleware` первым — это публичный API 1.1+,
-    fallback на старые формы остаётся для backward-compat.
+    Pyproject pin = `maxapi~=1.1`, поэтому 1.1.x гарантированно даёт
+    `register_outer_middleware`. Если апгрейд сломал API — отказываем
+    ясной ошибкой, без silent-fallback на устаревшие формы.
     """
     register = getattr(dp, "register_outer_middleware", None)
-    if callable(register):
-        register(middleware)
-        return
-    add = getattr(dp, "outer_middleware", None)
-    if callable(add):
-        add(middleware)
-        return
-    bucket = getattr(dp, "outer_middlewares", None)
-    if isinstance(bucket, list):
-        bucket.append(middleware)
-        return
-    bucket = getattr(dp, "middlewares", None)
-    if isinstance(bucket, list):
-        bucket.insert(0, middleware)
-        return
-    raise RuntimeError(
-        "у maxapi.Dispatcher нет точки подключения middleware — проверьте установленную версию"
-    )
+    if not callable(register):
+        raise RuntimeError(
+            "maxapi.Dispatcher.register_outer_middleware отсутствует — "
+            "ожидается maxapi>=1.1; проверь pyproject.toml и uv sync"
+        )
+    register(middleware)
 
 
 def register_handlers(dp: Dispatcher) -> None:
@@ -3193,8 +3177,8 @@ async def current_user(
 
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
-Size: `16812` bytes  
-SHA-256: `38b5af5464d88ff36ca087f020265e74d7719c908e39d01b649e875ac8921377`
+Size: `16564` bytes  
+SHA-256: `dd1fa9d1211ebe7ae0f9bdfbaf11a3f5229b4c0815daf534a988ecc150ecee46`
 
 ```python
 """Действия оператора над конкретным обращением.
@@ -3228,16 +3212,13 @@ async def _show_appeal_card_or_result(
     event,
     appeal_id: int,
     fallback_text: str,
-    *,
-    edit_in_place: bool = False,  # deprecated, не используется
 ) -> None:
-    """Опубликовать НОВУЮ event-карточку обращения после действия оператора.
+    """Опубликовать/обновить admin appeal card после действия оператора.
 
-    DDD event-log: карточки иммутабельны. Каждое действие (reopen /
-    close / block / unblock / erase) → новая запись внизу чата с
-    актуальным timeline'ом. Старые карточки выше остаются как
-    audit-trail; кнопки на них становятся stale (см. stale-detection
-    в callback handlers).
+    Freshness-rule (PR #62, унифицировано с меню): admin_card.render
+    проверит callback_mid против menu_tracker[admin_group_id]:
+    - callback_mid == последняя карточка в чате → edit на месте;
+    - иначе (ниже появились другие сообщения/карточки) → send new.
 
     На случай если обращение не найдено или user пуст — fallback
     короткое сообщение оператору, без card-render.
@@ -3430,8 +3411,7 @@ async def run_reopen(event, appeal_id: int) -> None:
                 target=f"appeal #{appeal_id}",
             )
     await ack_callback(event)
-    # reopen — whitelisted: edit на месте (статус карточки меняется,
-    # оператору важно видеть это в той же карточке).
+    # freshness-rule: edit если карточка ещё последняя в чате, иначе new.
     await _show_appeal_card_or_result(
         event,
         appeal_id,
@@ -3440,7 +3420,6 @@ async def run_reopen(event, appeal_id: int) -> None:
             if ok
             else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
         ),
-        edit_in_place=True,
     )
 
 
@@ -3460,7 +3439,7 @@ async def run_close(event, appeal_id: int) -> None:
                 target=f"appeal #{appeal_id}",
             )
     await ack_callback(event)
-    # close (без ответа) — whitelisted: edit на месте.
+    # freshness-rule: edit если карточка ещё последняя в чате, иначе new.
     await _show_appeal_card_or_result(
         event,
         appeal_id,
@@ -3469,7 +3448,6 @@ async def run_close(event, appeal_id: int) -> None:
             if ok
             else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
         ),
-        edit_in_place=True,
     )
 
 
@@ -8719,8 +8697,8 @@ async def on_awaiting_geo_confirm(event, body, text_body, max_user_id):
 
 ### `bot/aemr_bot/handlers/appeal_runtime.py`
 
-Size: `13538` bytes  
-SHA-256: `ca80419523122e677c24d382db373ffe405ffc180d300bdcb55c6904ff112b2e`
+Size: `11640` bytes  
+SHA-256: `a2234a7a822271c21bed5530865576943e616898eec6ac477dafb19bdc9a5f53`
 
 ```python
 """Runtime-helpers и финализация обращения.
@@ -8741,14 +8719,13 @@ import logging
 import re
 from typing import Any
 
-from aemr_bot import keyboards, texts
+from aemr_bot import texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import extract_message_id
 
 log = logging.getLogger(__name__)
 
@@ -8821,48 +8798,6 @@ async def recover_stuck_funnels(bot) -> int:
     if finalized:
         log.info("восстановлено %d застрявших воронок", finalized)
     return finalized
-
-
-async def send_to_admin_card(
-    bot,
-    text: str,
-    *,
-    appeal_id: int | None = None,
-    status: str | None = None,
-    user_blocked: bool = False,
-) -> str | None:
-    """Отправляет отформатированную карточку в админ-группу. Возвращает
-    message_id администратора или None при ошибке.
-
-    Если переданы appeal_id и status — снизу прицепляется клавиатура
-    действий («✉️ Ответить», «⛔ Закрыть», «🔁 Возобновить»). Без них
-    (например, при followup-сообщении) клавиатуру не добавляем.
-
-    user_blocked — текущее состояние блокировки жителя; влияет на
-    label IT-кнопки (Заблокировать ↔ Разблокировать).
-    """
-    if not cfg.admin_group_id:
-        log.warning("ADMIN_GROUP_ID не установлен — карточка для администратора не доставлена")
-        return None
-    attachments = None
-    if appeal_id is not None and status is not None:
-        attachments = [
-            keyboards.appeal_admin_actions(
-                appeal_id, status, is_it=True, user_blocked=user_blocked
-            )
-        ]
-    try:
-        kwargs: dict = {"chat_id": cfg.admin_group_id, "text": text}
-        if attachments is not None:
-            kwargs["attachments"] = attachments
-        sent = await bot.send_message(**kwargs)
-    except Exception:
-        log.exception(
-            "не удалось доставить карточку администратора в chat_id=%s",
-            cfg.admin_group_id,
-        )
-        return None
-    return extract_message_id(sent)
 
 
 def _apply_repeat_context(
@@ -11372,8 +11307,8 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 
 ### `bot/aemr_bot/handlers/menu.py`
 
-Size: `46632` bytes  
-SHA-256: `dfca2ef8d9ec1dc58719ed6057f55c92970ea0217aa47d2cb077ea47a7041851`
+Size: `47097` bytes  
+SHA-256: `778001ddab63cf9d57c4f3b3fa5b16eddf0f73d319673efc641f39d0cf08b133`
 
 ```python
 import logging
@@ -12076,15 +12011,18 @@ async def do_consent_revoke(event, max_user_id: int):
         open_appeal_ids=[a.id for a in my_open],
     )
     if my_open:
-        from aemr_bot.handlers.appeal_runtime import send_to_admin_card
+        # Перепубликовать карточки открытых обращений через единый
+        # admin_card.render. force_new=True — это явное событие (отзыв
+        # согласия), нужна новая запись внизу чата как маркер. Снапшот
+        # detached-полей: appeal.user уже подгружен, messages пустой
+        # placeholder чтобы избежать lazy-load после закрытия сессии.
+        from aemr_bot.services import admin_card as admin_card_service
 
         for appeal in my_open:
-            await send_to_admin_card(
-                event.bot,
-                card_format.admin_card(appeal, user),
-                appeal_id=appeal.id,
-                status=appeal.status,
-                user_blocked=user.is_blocked,
+            appeal.user = user
+            appeal.__dict__.setdefault("messages", [])
+            await admin_card_service.render(
+                event.bot, appeal, force_new=True
             )
 
 
@@ -34186,8 +34124,8 @@ class TestOnAwaitingName:
 
 ### `bot/tests/test_handlers_menu.py`
 
-Size: `26314` bytes  
-SHA-256: `d8a786fe65a5f243b7a4b4dded1942eb4b4be0710c2a8f41b5c0778bad4bdf06`
+Size: `26382` bytes  
+SHA-256: `b12ad2e9aaea12d7778dc31e9c255c293c08ea4340dd2fa5e49b0ab67dc77057`
 
 ```python
 """Тесты handlers/menu.py — навигация по меню жителя.
@@ -34689,13 +34627,14 @@ class TestConsentAndEraseNotifications:
              patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
              patch("aemr_bot.handlers.menu.admin_events.notify_consent_revoked",
                    notify), \
-             patch("aemr_bot.handlers.appeal_runtime.send_to_admin_card",
-                   repost):
+             patch("aemr_bot.services.admin_card.render", repost):
             await menu.do_consent_revoke(event, max_user_id=42)
 
         notify.assert_called_once_with(event.bot, max_user_id=42, open_appeal_ids=[9])
         repost.assert_called_once()
-        assert repost.call_args.kwargs["appeal_id"] == 9
+        # render(bot, appeal, force_new=True)
+        assert repost.call_args.args[1] is appeal
+        assert repost.call_args.kwargs.get("force_new") is True
 
     @pytest.mark.asyncio
     async def test_forget_notifies_admin_about_deleted_data(self) -> None:
