@@ -186,43 +186,34 @@ async def list_for_user(
     return list(res)
 
 
-async def count_recent_followups_for_appeal(
+async def followup_rate_limit_stats(
     session: AsyncSession, appeal_id: int, *, hours: int = 1
-) -> int:
-    """SEC #5: сколько followup'ов житель прислал по обращению за
-    `hours` часов. Используется в rate-limit followup-флуда.
+) -> tuple[int, datetime | None]:
+    """SEC #5: rate-limit статистика по followup'ам жителя за `hours` часов.
 
-    Считаем только direction=FROM_USER — operator-ответы не должны
-    блокировать жителя слать дополнения.
+    Возвращает `(recent_count, last_at)` одним SQL-запросом вместо двух
+    раздельных (`count_recent_followups_for_appeal` + `last_followup_at_for_appeal`).
+    Меньше round-trip'ов под нагрузкой; обе метрики нужны вместе при
+    каждом followup-тапе.
+
+    Считаем только `direction=FROM_USER` — operator-ответы не должны
+    блокировать жителя слать дополнения. `last_at` — глобальный max
+    (не ограничен окном hours), нужен для min-interval-проверки.
     """
     threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
-    return (
-        await session.scalar(
-            select(func.count())
-            .select_from(Message)
-            .where(
+    row = (
+        await session.execute(
+            select(
+                func.count().filter(Message.created_at >= threshold),
+                func.max(Message.created_at),
+            ).where(
                 Message.appeal_id == appeal_id,
                 Message.direction == MessageDirection.FROM_USER.value,
-                Message.created_at >= threshold,
             )
         )
-    ) or 0
-
-
-async def last_followup_at_for_appeal(
-    session: AsyncSession, appeal_id: int
-) -> datetime | None:
-    """SEC #5: timestamp последнего followup жителя по обращению.
-
-    Нужен для min-interval rate-limit (между двумя followup'ами не
-    меньше N секунд). None — followup'ов ещё не было.
-    """
-    return await session.scalar(
-        select(func.max(Message.created_at)).where(
-            Message.appeal_id == appeal_id,
-            Message.direction == MessageDirection.FROM_USER.value,
-        )
-    )
+    ).one()
+    recent_count, last_at = row
+    return (recent_count or 0), last_at
 
 
 async def count_recent_for_user(

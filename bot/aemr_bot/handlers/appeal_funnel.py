@@ -20,10 +20,11 @@ from __future__ import annotations
 
 import logging
 import re
+from datetime import datetime, timezone
 
 from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
-from aemr_bot.db.models import DialogState
+from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.handlers.appeal_runtime import (
@@ -46,6 +47,10 @@ from aemr_bot.utils.event import (
     get_user_id,
     send_or_edit_screen,
 )
+
+# Hot path regex (on_awaiting_contact, каждый contact-step жителя).
+# Module-level compile вместо `re.search(...)` внутри функции.
+_PHONE_DIGITS_RE = re.compile(r"\+?\d[\d\s\-()]{9,}\d")
 
 log = logging.getLogger(__name__)
 
@@ -411,7 +416,7 @@ async def on_awaiting_contact(event, body, text_body, max_user_id):
     # берём цифры из текстового тела как запасной путь.
     phone = extract_phone(body)
     if phone is None and text_body:
-        digits_match = re.search(r"\+?\d[\d\s\-()]{9,}\d", text_body)
+        digits_match = _PHONE_DIGITS_RE.search(text_body)
         if digits_match:
             phone = digits_match.group(0)
     if phone is None:
@@ -567,8 +572,6 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     Отвеченные и закрытые обращения не переоткрываем. Повтор по ним
     оформляется новым связанным обращением через «🔁 Подать похожее».
     """
-    from aemr_bot.config import settings as cfg
-    from aemr_bot.db.models import AppealStatus
     from aemr_bot.services.admin_relay import relay_attachments_to_admin
 
     async with current_user(max_user_id) as (session, user):
@@ -631,18 +634,12 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     #    долгого медленного флуда).
     # Если лимит нарушен — НЕ принимаем followup, не сбрасываем state,
     # житель может попробовать ещё раз позже.
-    from datetime import datetime as _dt
-    from datetime import timezone as _tz
-
     async with session_scope() as _rl_session:
-        last_at = await appeals_service.last_followup_at_for_appeal(
-            _rl_session, appeal.id
-        )
-        recent_count = await appeals_service.count_recent_followups_for_appeal(
+        recent_count, last_at = await appeals_service.followup_rate_limit_stats(
             _rl_session, appeal.id, hours=1
         )
     if last_at is not None:
-        elapsed = (_dt.now(_tz.utc) - last_at).total_seconds()
+        elapsed = (datetime.now(timezone.utc) - last_at).total_seconds()
         if elapsed < cfg.followup_min_interval_seconds:
             wait = int(cfg.followup_min_interval_seconds - elapsed)
             await event.message.answer(

@@ -453,12 +453,9 @@ class TestOnAwaitingFollowupText:
             "aemr_bot.handlers.appeal_funnel.appeals_service.add_user_message",
             AsyncMock(),
         ), patch(
-            # SEC #5: rate-limit-check; happy path = followup ok.
-            "aemr_bot.handlers.appeal_funnel.appeals_service.last_followup_at_for_appeal",
-            AsyncMock(return_value=None),
-        ), patch(
-            "aemr_bot.handlers.appeal_funnel.appeals_service.count_recent_followups_for_appeal",
-            AsyncMock(return_value=0),
+            # SEC #5: rate-limit-check (combined SQL); happy path = followup ok.
+            "aemr_bot.handlers.appeal_funnel.appeals_service.followup_rate_limit_stats",
+            AsyncMock(return_value=(0, None)),
         ), patch(
             "aemr_bot.config.settings.admin_group_id",
             555,

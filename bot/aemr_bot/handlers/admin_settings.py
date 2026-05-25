@@ -25,10 +25,12 @@ import os
 import time as _time
 from typing import Any
 
+from aemr_bot import keyboards as kbds
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
+from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
 from aemr_bot.utils.event import ack_callback, get_user_id, send_or_edit_screen
 
@@ -102,7 +104,6 @@ def _render_value(value: Any, *, limit: int = 1500) -> str:
 
 async def run_settings_menu(event) -> None:
     """Главное меню «⚙️ Настройки бота» для роли it."""
-    from aemr_bot import keyboards as kbds
 
     if not await ensure_role(event, OperatorRole.IT):
         return
@@ -162,7 +163,6 @@ async def run_settings_action(event, payload: str) -> None:
 
 
 async def _route_set_action(event, operator_id: int, rest: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     if rest == "expert":
         async with session_scope() as session:
@@ -285,7 +285,6 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
 
 
 async def _show_text_card(event, key: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     async with session_scope() as session:
         value = await settings_store.get(session, key)
@@ -322,7 +321,6 @@ async def _show_text_card(event, key: str) -> None:
 
 
 async def _start_edit_intent(event, operator_id: int, key: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     if key not in settings_store.SCHEMA:
         await send_or_edit_screen(
@@ -356,7 +354,6 @@ async def _start_edit_intent(event, operator_id: int, key: str) -> None:
 
 
 async def _show_list_card(event, key: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     async with session_scope() as session:
         items = await settings_store.get(session, key) or []
@@ -386,7 +383,6 @@ async def _show_list_card(event, key: str) -> None:
 
 
 async def _list_delete(event, operator_id: int, suffix: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     parts = suffix.split(":", 1)
     if len(parts) != 2:
@@ -415,7 +411,6 @@ async def _list_delete(event, operator_id: int, suffix: str) -> None:
             )
             return
         await settings_store.set_value(session, key, items)
-        from aemr_bot.services import operators as ops_svc
         await ops_svc.write_audit(
             session,
             operator_max_user_id=operator_id,
@@ -432,7 +427,6 @@ async def _list_delete(event, operator_id: int, suffix: str) -> None:
 
 
 async def _show_obj_card(event, key: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     async with session_scope() as session:
         items = await settings_store.get(session, key) or []
@@ -482,7 +476,6 @@ async def _show_obj_card(event, key: str) -> None:
 
 
 async def _show_obj_item(event, suffix: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     parts = suffix.split(":", 1)
     if len(parts) != 2:
@@ -511,7 +504,6 @@ async def _show_obj_item(event, suffix: str) -> None:
 
 
 async def _start_obj_add(event, operator_id: int, key: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     _intent_set(operator_id, key=key, kind="obj_add")
     if key == "emergency_contacts":
@@ -532,7 +524,6 @@ async def _start_obj_add(event, operator_id: int, key: str) -> None:
 
 
 async def _obj_delete(event, operator_id: int, suffix: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     parts = suffix.split(":", 1)
     if len(parts) != 2:
@@ -561,7 +552,6 @@ async def _obj_delete(event, operator_id: int, suffix: str) -> None:
             )
             return
         await settings_store.set_value(session, key, items)
-        from aemr_bot.services import operators as ops_svc
         await ops_svc.write_audit(
             session,
             operator_max_user_id=operator_id,
@@ -578,7 +568,6 @@ async def _obj_delete(event, operator_id: int, suffix: str) -> None:
 
 
 async def _show_author_card(event) -> None:
-    from aemr_bot import keyboards as kbds
 
     async with session_scope() as session:
         name = await settings_store.get(session, "commit_author_name")
@@ -606,7 +595,6 @@ async def _show_author_card(event) -> None:
 
 
 async def _show_pr_confirm(event) -> None:
-    from aemr_bot import keyboards as kbds
 
     async with session_scope() as session:
         dirty = await settings_store.get_dirty_keys(session)
@@ -668,7 +656,6 @@ async def _show_pr_confirm(event) -> None:
 
 
 async def _create_pr(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
     from aemr_bot.services import repo_sync
 
     async with session_scope() as session:
@@ -676,7 +663,6 @@ async def _create_pr(event, operator_id: int) -> None:
         runtime_config = await settings_store.export_synced(session)
         name = await settings_store.get(session, "commit_author_name")
         email = await settings_store.get(session, "commit_author_email")
-        from aemr_bot.services import operators as ops_svc
         op_record = await ops_svc.get(session, operator_id)
     operator_name = op_record.full_name if op_record else f"id={operator_id}"
 
@@ -725,7 +711,6 @@ async def _create_pr(event, operator_id: int) -> None:
 
     async with session_scope() as session:
         await settings_store.mark_synced(session, dirty)
-        from aemr_bot.services import operators as ops_svc
         await ops_svc.write_audit(
             session,
             operator_max_user_id=operator_id,
@@ -755,7 +740,6 @@ async def _create_pr(event, operator_id: int) -> None:
 
 
 async def _show_pr_diff(event) -> None:
-    from aemr_bot import keyboards as kbds
     from aemr_bot.services import repo_sync
 
     async with session_scope() as session:
@@ -842,7 +826,6 @@ async def _show_pr_diff(event) -> None:
 
 
 async def _show_expert_key(event, payload: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     key = payload.removeprefix("op:setkey:")
     if not key:
@@ -916,7 +899,6 @@ async def handle_settings_edit_text(event, text: str) -> bool:
 async def _apply_single_edit(
     event, operator_id: int, key: str, new_text: str
 ) -> None:
-    from aemr_bot import keyboards as kbds
 
     ok, msg = settings_store.validate(key, new_text)
     if not ok:
@@ -929,7 +911,6 @@ async def _apply_single_edit(
     async with session_scope() as session:
         old_value = await settings_store.get(session, key)
         await settings_store.set_value(session, key, new_text)
-        from aemr_bot.services import operators as ops_svc
         # Полный audit-trail: храним «было → стало» (clip до 200 симв,
         # чтобы не раздувать audit_log на длинных текстах вроде
         # `goodbye_message`). PII под защитой retention (по умолчанию
@@ -954,7 +935,6 @@ async def _apply_single_edit(
 async def _apply_list_add(
     event, operator_id: int, key: str, new_text: str
 ) -> None:
-    from aemr_bot import keyboards as kbds
 
     if len(new_text) < 1:
         await event.bot.send_message(
@@ -984,7 +964,6 @@ async def _apply_list_add(
             )
             return
         await settings_store.set_value(session, key, items)
-        from aemr_bot.services import operators as ops_svc
         await ops_svc.write_audit(
             session,
             operator_max_user_id=operator_id,
@@ -998,7 +977,6 @@ async def _apply_list_add(
 async def _apply_obj_add(
     event, operator_id: int, key: str, new_text: str
 ) -> None:
-    from aemr_bot import keyboards as kbds
 
     lines = [ln.strip() for ln in new_text.split("\n") if ln.strip()]
     if len(lines) < 2:
@@ -1033,7 +1011,6 @@ async def _apply_obj_add(
             )
             return
         await settings_store.set_value(session, key, items)
-        from aemr_bot.services import operators as ops_svc
         await ops_svc.write_audit(
             session,
             operator_max_user_id=operator_id,
