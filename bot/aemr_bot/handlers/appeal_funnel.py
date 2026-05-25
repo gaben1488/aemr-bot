@@ -48,7 +48,9 @@ from aemr_bot.utils.event import (
     send_or_edit_screen,
 )
 
-# Hot path regex (on_awaiting_contact, каждый contact-step жителя).
+# Регекс на горячем пути: вызывается на каждом контактном шаге жителя
+# (on_awaiting_contact). Компиляция модуля — однократно, чтобы не
+# тратить CPU на пересборку регекса при каждом сообщении.
 # Module-level compile вместо `re.search(...)` внутри функции.
 _PHONE_DIGITS_RE = re.compile(r"\+?\d[\d\s\-()]{9,}\d")
 

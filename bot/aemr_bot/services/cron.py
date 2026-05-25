@@ -29,7 +29,7 @@ TZ = ZoneInfo(settings.timezone)
 # тик cron'а.
 _SELFCHECK_HEALTHY = {"healthy": True}
 
-# Misfire grace window для всех cron jobs.
+# Окно прощения опоздавшего срабатывания (misfire grace) для всех cron-задач.
 #
 # APScheduler по умолчанию даёт job 1 секунду на отработку триггера —
 # дальше тик помечается misfire и выбрасывается. При типичном

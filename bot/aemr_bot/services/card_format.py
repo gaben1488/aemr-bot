@@ -242,7 +242,10 @@ def admin_card(appeal: Appeal, user: User) -> str:
     # отображение, только просим не кликать наугад.
     has_url = bool(
         _url_in(appeal.summary or "")
-        or any(_url_in(m.body_text or "") for m in (appeal.messages or []))
+        or any(
+            _url_in(getattr(m, "text", "") or "")
+            for m in (appeal.messages or [])
+        )
     )
     if has_url:
         body = body + _maybe_url_warning(appeal.summary or "X http://X")

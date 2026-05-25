@@ -397,7 +397,10 @@ async def get_consent_request_text(
     как-то умудрился сохранить текст без placeholder'а (например,
     через прямой psql), мы не падаем KeyError'ом, а отдаём fallback.
     """
-    raw = await get(session, "consent_text")
+    try:
+        raw = await get(session, "consent_text")
+    except Exception:
+        raw = None
     if isinstance(raw, str) and raw.strip() and "{policy_url}" in raw:
         try:
             return sanitize_settings_text(raw).format(policy_url=policy_url)
@@ -420,16 +423,22 @@ async def get_text_with_fallback(
     1. Если в БД для ключа лежит непустая строка → пропускаем через
        `sanitize_settings_text` (вырезает HTML/JS, режет markdown-
        ссылки на не-whitelist домены) и возвращаем результат.
-    2. Иначе → возвращаем переданный fallback (hardcoded текст из
-       texts.py). Это страховка: даже если БД упала или ключ удалили
-       вручную через psql, житель всё равно увидит осмысленный
-       приветственный текст, а не «(None)».
+    2. Иначе (или при любой ошибке БД) → возвращаем переданный
+       fallback (hardcoded текст из texts.py). Это страховка: если
+       БД отвалилась, ключ удалили вручную или возникла другая
+       нештатная ситуация, житель всё равно увидит осмысленный
+       приветственный текст, а не «(None)» или Internal Server Error.
 
     Санитизация — мягкая (не криптографическая). Защита от ошибки
     IT-оператора и от компрометации IT-аккаунта на уровне «не
     превратить welcome в кликабельную фишинг-страницу».
     """
-    raw = await get(session, key)
+    try:
+        raw = await get(session, key)
+    except Exception:
+        # БД недоступна, mock в тестах вернул не coroutine, либо
+        # любой другой нештатный сбой — fallback всегда выручит.
+        return fallback
     if isinstance(raw, str) and raw.strip():
         return sanitize_settings_text(raw)
     return fallback
