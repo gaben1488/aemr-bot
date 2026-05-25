@@ -323,6 +323,34 @@ async def _send_reply_to_citizen(
     уже отправлено предупреждение — вызывающему остаётся вернуть True.
     """
     target_user_id = fresh_appeal.user.max_user_id
+
+    # SECURITY_REVIEW M3: блокируем исходящие фишинг-ссылки в ответе
+    # оператора. Допустимы только гос-домены (SEC #4 whitelist).
+    # Если оператор (или скомпрометированный аккаунт) вписал ссылку
+    # на сторонний сайт — отказываем в доставке и пишем причину в
+    # админ-чат. Это симметричная защита к SEC #4 (тот защищал
+    # settings, этот — outgoing reply).
+    from aemr_bot.services.settings_store import find_non_whitelisted_urls
+    bad_urls = find_non_whitelisted_urls(text)
+    if bad_urls:
+        await _safe_admin_notice(
+            event,
+            (
+                f"⚠️ Ответ по обращению #{appeal_id} НЕ доставлен жителю: "
+                f"в тексте найдены ссылки на сторонние сайты "
+                f"({', '.join(bad_urls[:3])}{'…' if len(bad_urls) > 3 else ''}). "
+                f"Разрешены только официальные ресурсы: elizovomr.ru, "
+                f"kamgov.ru, gosuslugi.ru, kamchatka.gov.ru. "
+                f"Удалите ссылку или замените на гос-домен и повторите."
+            ),
+        )
+        log.warning(
+            "operator_reply: blocked outgoing non-whitelisted URLs in "
+            "appeal=%s (count=%d)",
+            appeal_id, len(bad_urls),
+        )
+        return False, None
+
     formatted_text = card_format.citizen_reply(fresh_appeal, text)
     # Картинка оператора, если приложил — пробрасываем жителю рядом
     # с inline-клавиатурой. limit=1 — формальный ответ оператора это

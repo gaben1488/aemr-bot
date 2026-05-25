@@ -69,6 +69,25 @@ if [ "$fails" -ge "$MAX_FAILS_BEFORE_ALERT" ]; then
         logger -t "$LOG_TAG" "BOT_TOKEN or ADMIN_GROUP_ID empty in .env — alert skipped"
         exit 1
     fi
+
+    # SECURITY_REVIEW H2 (CVSS 6.5): защита от CRLF/word-split injection
+    # через .env. Скрипт работает под root-cron, любая инъекция в URL
+    # или Authorization header даёт RCE/HTTP-smuggling. Валидируем оба
+    # значения СТРОГИМ regex'ом до того как они уходят в curl.
+    #
+    # ADMIN_GROUP_ID — целое число (положительное или отрицательное).
+    # BOT_TOKEN — base64-like (буквы/цифры/+/= / точки/дефисы/подчёркивания)
+    # без пробелов и newline. Это формат MAX bot-token; более строгий
+    # шаблон ломал бы при изменении формата платформой.
+    if ! [[ "$ADMIN_GROUP_ID" =~ ^-?[0-9]+$ ]]; then
+        logger -t "$LOG_TAG" "ADMIN_GROUP_ID has invalid format — alert aborted (security guard)"
+        exit 2
+    fi
+    if ! [[ "$MAX_AUTH" =~ ^[A-Za-z0-9+/=._-]+$ ]]; then
+        logger -t "$LOG_TAG" "BOT_TOKEN has invalid format — alert aborted (security guard)"
+        exit 2
+    fi
+
     minutes=$((fails * 5))
     text="⛑️ Бот не отвечает на /livez уже ${minutes} минут. Авторестарт не помог. Проверьте на сервере: docker compose ps; docker compose logs --tail 200 bot. Для БД отдельно: curl -fsS http://127.0.0.1:8080/readyz."
     payload=$(jq -nc --arg t "$text" '{text: $t}')

@@ -398,6 +398,8 @@ class TestBuildScheduler:
         expected = {
             "db-backup",
             "events-retention",
+            "audit-log-retention",
+            "stale-operators-cleanup",  # CVE-9 cleanup, SECURITY_REVIEW M2
             "health-selfcheck",
             "monthly-stats",
             "startup-pulse",

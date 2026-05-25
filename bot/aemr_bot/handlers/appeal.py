@@ -484,14 +484,14 @@ def register(dp: Dispatcher) -> None:
         if max_user_id is None:
             log.warning("коллбэк без user_id, payload=%r — пропущен", payload)
             return
-        # Только префикс payload в info — полный payload может содержать
-        # appeal_id жителя или другие идентификаторы. Полный — debug.
+        # SECURITY_REVIEW M1 (152-ФЗ): payload geo-callback'а содержит
+        # координаты жителя (lat/lon → адрес). На info — только префикс
+        # без значений, чтобы json-file логи docker (которые переживают
+        # `/erase`) не накапливали ПДн. Полный payload — только debug
+        # (выключен в prod).
         prefix = payload.split(":", 1)[0] if payload else ""
         log.debug("on_callback: user=%s payload=%r", max_user_id, payload)
-        if prefix == "geo":
-            log.info("on_callback: user=%s payload=%s", max_user_id, payload)
-        else:
-            log.info("on_callback: user=%s payload_prefix=%s", max_user_id, prefix)
+        log.info("on_callback: user=%s payload_prefix=%s", max_user_id, prefix)
 
         # Коллбэки пользовательского флоу не должны срабатывать в
         # админ-группе. В админ-чате пропускаем только admin-flow, который
