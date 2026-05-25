@@ -757,12 +757,41 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
 # ============================================================================
 
 
+# Reliability-pass: lazy-singleton aiohttp.ClientSession для healthcheck.
+# Раньше `async with aiohttp.ClientSession(...)` создавался на каждый тик
+# (раз в `healthcheck_interval_minutes`). На каждый коннект — TLS handshake,
+# DNS resolve, fresh connector pool, потом всё закрывается. Для cron-job
+# с интервалом 1-5 мин и URL'ом на тот же эндпоинт это сотни-тысячи
+# никому не нужных сокетов в день. Singleton переиспользует keep-alive
+# соединение пока процесс жив — один handshake на старте, дальше HTTP/1.1
+# pipelining либо новый коннект только если сервер закрыл предыдущий.
+#
+# Закрытия не делаем — session живёт до конца процесса. APScheduler при
+# shutdown отменяет джобы, висящий `await s.get(...)` свернётся через
+# timeout=10. Утечки не будет (один session на процесс).
+_HEALTHCHECK_SESSION: aiohttp.ClientSession | None = None
+
+
+def _get_healthcheck_session() -> aiohttp.ClientSession:
+    """Lazy-init shared aiohttp.ClientSession для healthcheck-ping.
+
+    Создавать на module-level нельзя: ClientSession в __init__ читает
+    `asyncio.get_event_loop()`, а на import-time loop'а ещё нет.
+    """
+    global _HEALTHCHECK_SESSION
+    if _HEALTHCHECK_SESSION is None or _HEALTHCHECK_SESSION.closed:
+        _HEALTHCHECK_SESSION = aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=10),
+        )
+    return _HEALTHCHECK_SESSION
+
+
 async def _ping_healthcheck() -> None:
     """Внешний healthcheck (Healthchecks.io / Uptime Kuma и т.п.)."""
     if not settings.healthcheck_url:
         return
     try:
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as s:
-            await s.get(settings.healthcheck_url)
+        session = _get_healthcheck_session()
+        await session.get(settings.healthcheck_url)
     except Exception:
         log.warning("healthcheck ping failed", exc_info=True)

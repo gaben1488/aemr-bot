@@ -72,6 +72,16 @@ def _intent_set(operator_id: int, **kwargs) -> None:
     state = dict(kwargs)
     state["expires_at"] = _time.monotonic() + _EDIT_INTENT_TTL_SEC
     _edit_intents[operator_id] = state
+    # Reliability-pass: opportunistic GC. _intent_get чистит только
+    # тот ключ, который пришёл в get. Если оператор настроил intent
+    # и не дёрнул его (закрыл клиент), запись висит вечно (то же на
+    # каждом ребуте session-mid'ов). Раз в set'е (~10/день per
+    # admin) — лёгкий проход с удалением истёкших. O(N) по числу
+    # операторов — единицы записей; не hot path.
+    if len(_edit_intents) > 16:
+        now = _time.monotonic()
+        for k in [k for k, v in _edit_intents.items() if v.get("expires_at", 0) < now]:
+            _edit_intents.pop(k, None)
 
 
 def _intent_get(operator_id: int) -> dict | None:

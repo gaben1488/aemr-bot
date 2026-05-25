@@ -35,6 +35,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from sqlalchemy.orm.exc import DetachedInstanceError
+
 from aemr_bot import keyboards
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
@@ -101,9 +103,16 @@ async def render(
         return None
 
     # text и attachment_count устойчиво к detached lazy-load.
+    # Reliability-pass: сузили `except Exception` до конкретного набора
+    # причин. card_format читает .messages / .events / .user.*; на
+    # detached instance это AttributeError либо DetachedInstanceError
+    # из sqlalchemy.orm. TypeError ловит случай None в форматтере
+    # (например appeal.created_at=None после миграции). Любые другие
+    # exception'ы (asyncpg DataError, OperationalError) — баг, пусть
+    # всплывает в логе вызывающего, чтобы был виден стек.
     try:
         text = card_format.admin_card(appeal, user)
-    except Exception:
+    except (AttributeError, TypeError, DetachedInstanceError):
         log.exception(
             "admin_card.render: card_format.admin_card failed for #%s",
             appeal.id,
@@ -111,7 +120,7 @@ async def render(
         text = f"Обращение #{appeal.id}\nЖитель: {user.first_name or '—'}"
     try:
         attachment_count = _count_attachments(appeal)
-    except Exception:
+    except (AttributeError, TypeError, DetachedInstanceError):
         log.debug(
             "admin_card.render: attachment_count failed for #%s",
             appeal.id, exc_info=False,
