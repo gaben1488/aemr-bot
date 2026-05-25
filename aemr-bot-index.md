@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 22:00:21 UTC`
+Generated at: `2026-05-25 23:13:19 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `217`
+Indexed files: `219`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -42,38 +42,38 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/__init__.py` (5882 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
-- `bot/aemr_bot/handlers/admin_appeal_ops.py` (21016 bytes)
+- `bot/aemr_bot/handlers/admin_appeal_ops.py` (21561 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9243 bytes)
-- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12498 bytes)
+- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12814 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (41687 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (24006 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (43448 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (27203 bytes)
-- `bot/aemr_bot/handlers/appeal_funnel.py` (32714 bytes)
+- `bot/aemr_bot/handlers/appeal_funnel.py` (33699 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
-- `bot/aemr_bot/handlers/appeal_runtime.py` (11640 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (45558 bytes)
+- `bot/aemr_bot/handlers/appeal_runtime.py` (11791 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (53979 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
-- `bot/aemr_bot/handlers/callback_router.py` (8595 bytes)
-- `bot/aemr_bot/handlers/menu.py` (48371 bytes)
+- `bot/aemr_bot/handlers/callback_router.py` (8740 bytes)
+- `bot/aemr_bot/handlers/menu.py` (48812 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (41223 bytes)
-- `bot/aemr_bot/handlers/start.py` (17005 bytes)
+- `bot/aemr_bot/handlers/start.py` (17724 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (63429 bytes)
+- `bot/aemr_bot/keyboards.py` (64287 bytes)
 - `bot/aemr_bot/main.py` (20473 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_bus.py` (6046 bytes)
-- `bot/aemr_bot/services/admin_card.py` (12156 bytes)
+- `bot/aemr_bot/services/admin_card.py` (12249 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6489 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
 - `bot/aemr_bot/services/appeals.py` (27094 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
-- `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
+- `bot/aemr_bot/services/broadcasts.py` (14624 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
-- `bot/aemr_bot/services/card_format.py` (14123 bytes)
-- `bot/aemr_bot/services/cron.py` (44936 bytes)
+- `bot/aemr_bot/services/card_format.py` (17157 bytes)
+- `bot/aemr_bot/services/cron.py` (45011 bytes)
 - `bot/aemr_bot/services/db_backup.py` (16664 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
 - `bot/aemr_bot/services/idempotency.py` (8575 bytes)
@@ -81,13 +81,13 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/policy.py` (2979 bytes)
 - `bot/aemr_bot/services/progress.py` (9433 bytes)
 - `bot/aemr_bot/services/repo_sync.py` (15676 bytes)
-- `bot/aemr_bot/services/settings_store.py` (21205 bytes)
+- `bot/aemr_bot/services/settings_store.py` (29729 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (12943 bytes)
-- `bot/aemr_bot/texts.py` (43811 bytes)
+- `bot/aemr_bot/texts.py` (45701 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -117,7 +117,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_appeals_service_pg.py` (15229 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
 - `bot/tests/test_bot_init_concurrency.py` (2821 bytes)
-- `bot/tests/test_broadcast_handlers.py` (35207 bytes)
+- `bot/tests/test_broadcast_handlers.py` (35403 bytes)
 - `bot/tests/test_broadcast_history_card.py` (10153 bytes)
 - `bot/tests/test_broadcast_templates_handlers.py` (16676 bytes)
 - `bot/tests/test_broadcast_templates_service_pg.py` (14817 bytes)
@@ -158,6 +158,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_reliability_pass.py` (9745 bytes)
 - `bot/tests/test_repo_sync.py` (21989 bytes)
 - `bot/tests/test_security_batch_b.py` (7285 bytes)
+- `bot/tests/test_security_batch_c.py` (6597 bytes)
 - `bot/tests/test_services_no_db.py` (9640 bytes)
 - `bot/tests/test_settings_seed_baseline.py` (3683 bytes)
 - `bot/tests/test_settings_store_validation.py` (6731 bytes)
@@ -197,15 +198,16 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/DEVELOPER.md` (135315 bytes)
 - `docs/HOW_IT_WORKS.md` (25436 bytes)
 - `docs/MAXAPI_UPGRADE_PROCEDURE.md` (11569 bytes)
+- `docs/OPERATOR_SECURITY.md` (23937 bytes)
 - `docs/PRD.md` (65878 bytes)
 - `docs/README.md` (8656 bytes)
 - `docs/ROLLBACK.md` (7416 bytes)
 - `docs/RULES.md` (9993 bytes)
 - `docs/RUNBOOK.md` (60100 bytes)
 - `docs/RUNBOOK_PDN_ERASURE.md` (11320 bytes)
-- `docs/SECURITY.md` (48333 bytes)
+- `docs/SECURITY.md` (53202 bytes)
 - `docs/SETUP.md` (40625 bytes)
-- `docs/SYSADMIN.md` (37487 bytes)
+- `docs/SYSADMIN.md` (40198 bytes)
 - `docs/VPS_SMOKE_CHECKLIST.md` (5736 bytes)
 - `docs/Политика.md` (6113 bytes)
 - `docs/Политика_v2.md` (30510 bytes)
@@ -2920,8 +2922,8 @@ async def current_user(
 
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
-Size: `21016` bytes  
-SHA-256: `4243771c5173037a0202017016070fbfd1d741767fce9b8c53a6b812b00ef197`
+Size: `21561` bytes  
+SHA-256: `08cfbd10a6ff1de57610ced8a477b7b4b165280dd6664ce8ef36a4769ef70727`
 
 ```python
 """Действия оператора над конкретным обращением.
@@ -3138,7 +3140,13 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
         text=(
             f"{prompt_hint}"
             f"Лимит {cfg.answer_max_chars} символов. Просто отправьте "
-            f"следующее сообщение в этот чат, либо «Отменить» ниже."
+            f"следующее сообщение в этот чат, либо «Отменить» ниже.\n"
+            f"\n"
+            f"🛡️ Памятка: ссылки только на гос-домены (elizovomr.ru, "
+            f"kamgov.ru, gosuslugi.ru, kamchatka.gov.ru). Любая другая "
+            f"ссылка будет заблокирована автоматически — ответ не уйдёт "
+            f"жителю, чтобы случайный фишинг не прошёл от имени "
+            f"Администрации. Подробности — docs/OPERATOR_SECURITY.md §3.2."
         ),
         attachments=[kbds.cancel_reply_intent_keyboard()],
         force_new_message=True,
@@ -3601,8 +3609,8 @@ def _mask_phone(phone: str | None) -> str:
 
 ### `bot/aemr_bot/handlers/admin_callback_dispatch.py`
 
-Size: `12498` bytes  
-SHA-256: `a99bf39ff832bfceec0d56c3d6c0a56735b4501f15ea597fe39387223e241720`
+Size: `12814` bytes  
+SHA-256: `7cc59be8b252ee076af7a38dca4f50bc9e1e43141b50520e0c3296465cbc6a5a`
 
 ```python
 """Dispatch admin/operator callback-payload'ов (`broadcast:*` / `op:*`).
@@ -3662,6 +3670,11 @@ async def _broadcast_edit(event) -> None:
 
 async def _broadcast_stop(event, broadcast_id: int) -> None:
     await broadcast_handler._handle_stop(event, broadcast_id)
+
+
+async def _broadcast_cancel_cooldown(event, broadcast_id: int) -> None:
+    """C2: оператор отменил рассылку, пока она ждёт в cooldown'е."""
+    await broadcast_handler._handle_cancel_cooldown(event, broadcast_id)
 
 
 # ---- op:* exact -------------------------------------------------------------
@@ -3798,6 +3811,7 @@ _EXACT: dict[str, ExactHandler] = {
 # _PREFIX_ID: `op:<verb>:<int>` — диспетчер парсит int-хвост.
 _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
     ("broadcast:stop:", _broadcast_stop),
+    ("broadcast:cancel-cooldown:", _broadcast_cancel_cooldown),
     ("op:reply:", _op_reply),
     ("op:replyint:", _op_reply_intermediate),
     ("op:reopen:", _op_reopen),
@@ -7683,8 +7697,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/appeal_funnel.py`
 
-Size: `32714` bytes  
-SHA-256: `43658a0d1527da29a3830b62d2048cf1fe40c39e5df8ab908fbf40c74c4263be`
+Size: `33699` bytes  
+SHA-256: `f118ba2e164cc6870d0a0f6ba159d312d85495c6b645ce420e15d83ddba9198c`
 
 ```python
 """FSM-воронка приёма обращения и явного дополнения.
@@ -7737,7 +7751,9 @@ from aemr_bot.utils.event import (
     send_or_edit_screen,
 )
 
-# Hot path regex (on_awaiting_contact, каждый contact-step жителя).
+# Регекс на горячем пути: вызывается на каждом контактном шаге жителя
+# (on_awaiting_contact). Компиляция модуля — однократно, чтобы не
+# тратить CPU на пересборку регекса при каждом сообщении.
 # Module-level compile вместо `re.search(...)` внутри функции.
 _PHONE_DIGITS_RE = re.compile(r"\+?\d[\d\s\-()]{9,}\d")
 
@@ -7824,7 +7840,14 @@ async def start_appeal_flow(event, max_user_id: int):
                 "в прикреплённом PDF.\n\nНажмите «Согласен», чтобы продолжить."
             )
         else:
-            text = texts.CONSENT_REQUEST.format(policy_url=policy_url)
+            # C1: подгружаем consent_text из БД (если IT отредактировал)
+            # с автоматической санитизацией и fallback'ом на texts.CONSENT_REQUEST.
+            async with session_scope() as text_session:
+                text = await settings_store.get_consent_request_text(
+                    text_session,
+                    policy_url=policy_url,
+                    fallback=texts.CONSENT_REQUEST,
+                )
         await send_or_edit_screen(
             event,
             text=text,
@@ -8221,14 +8244,20 @@ async def on_awaiting_consent(event, body, text_body, max_user_id):
     """Житель пишет текст вместо тапа кнопок «Согласен/Отказаться»."""
     async with session_scope() as session:
         policy_url = await settings_store.get(session, "policy_url")
-    if policy_url:
-        text = texts.CONSENT_REQUEST.format(policy_url=policy_url)
-    else:
-        text = (
-            "Чтобы принять обращение, нам нужно ваше согласие на "
-            "обработку персональных данных. Нажмите «Согласен», "
-            "чтобы продолжить."
-        )
+        if policy_url:
+            # C1: подгружаем consent_text из БД с санитизацией и
+            # fallback'ом на hardcoded texts.CONSENT_REQUEST.
+            text = await settings_store.get_consent_request_text(
+                session,
+                policy_url=policy_url,
+                fallback=texts.CONSENT_REQUEST,
+            )
+        else:
+            text = (
+                "Чтобы принять обращение, нам нужно ваше согласие на "
+                "обработку персональных данных. Нажмите «Согласен», "
+                "чтобы продолжить."
+            )
     await event.message.answer(text, attachments=[keyboards.consent_keyboard()])
 
 
@@ -8595,8 +8624,8 @@ async def on_awaiting_geo_confirm(event, body, text_body, max_user_id):
 
 ### `bot/aemr_bot/handlers/appeal_runtime.py`
 
-Size: `11640` bytes  
-SHA-256: `a2234a7a822271c21bed5530865576943e616898eec6ac477dafb19bdc9a5f53`
+Size: `11791` bytes  
+SHA-256: `5d2aabfa8d34c58a0cb7042a9d57a7a67a590e1c8f3655e1812a863d110a0057`
 
 ```python
 """Runtime-helpers и финализация обращения.
@@ -8782,10 +8811,11 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
                 )
                 await users_service.reset_state(session, max_user_id)
 
-        # Single source of truth для admin appeal card —
-        # services/admin_card.render. Helper send новую карточку
-        # (admin_message_id ещё пуст) и обновит Appeal.admin_message_id
-        # в БД. Все последующие изменения статуса тоже через этот helper.
+        # Единая точка рендера админской карточки обращения —
+        # services/admin_card.render. Helper отправляет новую карточку
+        # (admin_message_id ещё пуст) и сохранит admin_message_id в БД.
+        # Все последующие смены статуса проходят через этот же helper,
+        # чтобы edit-vs-new политика была централизована.
         from aemr_bot.services import admin_card as admin_card_service
 
         # appeal был загружен внутри уже закрытой session_scope —
@@ -8839,8 +8869,8 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `45558` bytes  
-SHA-256: `d624feb5ac7a04c41514b2a62e0d12408c554b10b5ef99902ead6868875daf25`
+Size: `53979` bytes  
+SHA-256: `366b53aa931c11ec76fd4c0fb6fe9c5f30494d2f735ab437b457060984242d8e`
 
 ```python
 """Мастер рассылок и цикл их отправки.
@@ -8863,6 +8893,7 @@ SHA-256: `d624feb5ac7a04c41514b2a62e0d12408c554b10b5ef99902ead6868875daf25`
 from __future__ import annotations
 
 import asyncio
+import re
 import logging
 import time
 from collections.abc import Sequence
@@ -8924,6 +8955,33 @@ class _WizardState:
 # Состояние мастера для каждого оператора. Только для одного экземпляра приложения.
 # При горизонтальном масштабировании потребуется хранение в Redis или через pg_advisory_lock.
 _wizards: dict[int, _WizardState] = {}
+
+
+# SECURITY_REVIEW C2: pending-таски на cooldown между confirm и реальной
+# отправкой. Ключ — broadcast_id, значение — asyncio.Task. Если оператор
+# жмёт «❌ Отменить отправку» во время cooldown'а — task.cancel() и
+# рассылка не уходит. Если бот перезагрузился во время cooldown'а —
+# task теряется (safe-by-default: оператор увидит что рассылка не дошла
+# и переотправит). Cooldown не хранится в БД сознательно: для гос-канала
+# лучше «случайно не отправили» чем «отправили автоматически после
+# рестарта без подтверждения оператора».
+_pending_broadcasts: dict[int, "asyncio.Task"] = {}
+
+# Маркер «срочная рассылка» — текст с [ЧС] в начале или после пробела
+# (case-insensitive). Для таких сокращаем cooldown до 30 секунд, чтобы
+# оповещение о ЧС не задерживалось на 5 минут.
+_EMERGENCY_MARKER = re.compile(r"(?:^|\s)\[ЧС\]", re.IGNORECASE)
+_COOLDOWN_NORMAL_SEC = 300   # 5 минут — обычная рассылка
+_COOLDOWN_EMERGENCY_SEC = 30  # 30 секунд — [ЧС] рассылка
+
+
+def _broadcast_cooldown_seconds(text: str) -> int:
+    """Сколько ждать перед фактической отправкой рассылки.
+
+    [ЧС] в тексте → 30 сек (оператор всё ещё может отменить, но не
+    задерживаем оповещение о реальной ЧС). Иначе — 5 минут.
+    """
+    return _COOLDOWN_EMERGENCY_SEC if _EMERGENCY_MARKER.search(text) else _COOLDOWN_NORMAL_SEC
 
 
 async def _resolve_broadcast_max_images(session) -> int:
@@ -9048,6 +9106,29 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
             attachments=[keyboards.broadcast_cancel_keyboard()],
         )
         return True
+    # SECURITY_REVIEW C2: URL-whitelist на текст рассылки. Симметрично
+    # M3 для operator reply. Защищает от ошибки оператора (вставил
+    # анонс с ссылкой на сторонний сайт по копи-пейсту) и от
+    # компрометации аккаунта (фишинг-рассылка всем подписчикам). Если
+    # есть хоть один URL не из гос-whitelist — отказываем, перечисляем
+    # плохие ссылки оператору в чате.
+    bad_urls = settings_store.find_non_whitelisted_urls(text)
+    if bad_urls:
+        await event.message.answer(
+            "❌ В тексте рассылки найдены ссылки на сторонние сайты: "
+            f"{', '.join(bad_urls[:3])}"
+            f"{'…' if len(bad_urls) > 3 else ''}.\n\n"
+            "Разрешены только официальные ресурсы: elizovomr.ru, "
+            "kamgov.ru, gosuslugi.ru, kamchatka.gov.ru.\n\n"
+            "Уберите ссылку или замените на гос-домен и пришлите текст "
+            "заново.",
+            attachments=[keyboards.broadcast_cancel_keyboard()],
+        )
+        log.warning(
+            "broadcast: blocked non-whitelisted URLs in wizard text — "
+            "operator=%s count=%d", actor_id, len(bad_urls),
+        )
+        return True
     if not text:
         # Пусто. Просим ввести ещё раз, состояние не меняем. Для re-
         # prompt'a показываем DEFAULTS-значение max_images: открывать
@@ -9165,22 +9246,123 @@ async def _handle_confirm(event) -> None:
         "broadcast: confirmed by operator=%s — broadcast_id=%s subscribers=%d",
         actor_id, broadcast_id, count,
     )
+
+    # SECURITY_REVIEW C2: cooldown между confirm и реальной отправкой.
+    # Стандарт — 5 минут. Для рассылок с маркером [ЧС] (ситуация
+    # требует немедленного оповещения) — 30 секунд: оператор всё ещё
+    # может отменить, но мы не задерживаем ЧС-сигнал.
+    cooldown_sec = _broadcast_cooldown_seconds(state.text)
+    minutes = cooldown_sec // 60
+    seconds = cooldown_sec % 60
+    eta_text = (
+        f"{minutes} мин {seconds} сек" if minutes else f"{seconds} сек"
+    )
+    is_emergency = cooldown_sec == _COOLDOWN_EMERGENCY_SEC
+    cooldown_label = "🚨 ЧС-рассылка" if is_emergency else "📤 Рассылка"
     sent = await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
-        text=texts.OP_BROADCAST_STARTED.format(number=broadcast_id, total=count),
-        attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
+        text=(
+            f"{cooldown_label} #{broadcast_id} уйдёт жителям через "
+            f"{eta_text} ({count} получателей).\n\n"
+            f"Если заметили ошибку или передумали — нажмите «❌ Отменить "
+            f"отправку». После окна cooldown'а рассылка стартует "
+            f"автоматически и появится клавиша экстренной остановки."
+        ),
+        attachments=[keyboards.broadcast_cooldown_keyboard(broadcast_id)],
     )
     admin_mid = extract_message_id(sent) or get_callback_message_id(event)
+
     # Strong ref: без spawn_background_task GC может прервать рассылку
     # посреди списка получателей (Python 3.11+ держит только weakref на
     # таску из голого create_task). Конкретно для рассылки это значило
     # бы потерянные доставки и broadcast в статусе SENDING без
-    # завершения. Импорт top-level (см. модульный блок импортов) —
-    # spawn_background_task живёт в utils/, цикла handlers→main больше нет.
-    spawn_background_task(
-        _run_broadcast(event.bot, broadcast_id, state.text, count, admin_mid=admin_mid),
-        name=f"broadcast_{broadcast_id}",
+    # завершения.
+    cooldown_task = spawn_background_task(
+        _run_with_cooldown(
+            event.bot,
+            broadcast_id,
+            state.text,
+            count,
+            admin_mid=admin_mid,
+            cooldown_sec=cooldown_sec,
+        ),
+        name=f"broadcast_cooldown_{broadcast_id}",
+    )
+    _pending_broadcasts[broadcast_id] = cooldown_task
+
+
+async def _run_with_cooldown(
+    bot, broadcast_id: int, text: str, count: int,
+    *, admin_mid: str | None, cooldown_sec: int,
+) -> None:
+    """Подождать cooldown_sec, затем запустить _run_broadcast.
+
+    Если task отменён (оператор нажал «❌ Отменить отправку»),
+    `CancelledError` всплывает наружу — рассылка не уходит, статус
+    в БД помечается как cancelled через `_handle_cancel_cooldown`.
+    После успешного запуска / отмены — убираем себя из
+    `_pending_broadcasts`.
+    """
+    try:
+        await asyncio.sleep(cooldown_sec)
+    except asyncio.CancelledError:
+        log.info("broadcast: cooldown cancelled — broadcast_id=%s", broadcast_id)
+        raise
+    # Cooldown прошёл. Убираем pending-метку — теперь рассылка идёт,
+    # отменить нельзя (только экстренная остановка через _handle_stop).
+    _pending_broadcasts.pop(broadcast_id, None)
+    await _run_broadcast(bot, broadcast_id, text, count, admin_mid=admin_mid)
+
+
+async def _handle_cancel_cooldown(event, broadcast_id: int) -> None:
+    """SECURITY_REVIEW C2: отмена рассылки во время cooldown'а.
+
+    Сценарий: оператор нажал «отправить», увидел сообщение «уйдёт через
+    5 минут», осознал ошибку (опечатка / не тот текст / передумал) и
+    жмёт «❌ Отменить отправку». Мы отменяем pending-task (рассылка
+    не уходит) и переводим broadcast в статус CANCELLED.
+    """
+    await ack_callback(event, "Отменяю…")
+    task = _pending_broadcasts.pop(broadcast_id, None)
+    if task is None:
+        # Cooldown уже истёк — рассылка пошла, отмена не возможна
+        # (только экстренная остановка по «⛔ Экстренно остановить»).
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=(
+                f"⚠️ Рассылка #{broadcast_id} уже стартовала или была "
+                f"отменена ранее. Для остановки уже идущей рассылки — "
+                f"кнопка «⛔ Экстренно остановить»."
+            ),
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return
+    task.cancel()
+    async with session_scope() as session:
+        await broadcasts_service.mark_cancelled(session, broadcast_id)
+        actor_id = get_user_id(event) or 0
+        await operators_service.write_audit(
+            session,
+            operator_max_user_id=actor_id,
+            action="broadcast_cancel_cooldown",
+            target=f"broadcast #{broadcast_id}",
+            details={"reason": "operator_cancelled_during_cooldown"},
+        )
+    log.info(
+        "broadcast: cancelled during cooldown — operator=%s broadcast_id=%s",
+        get_user_id(event), broadcast_id,
+    )
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=(
+            f"❌ Рассылка #{broadcast_id} отменена. Жителям ничего не "
+            f"отправлено. Если нужно переотправить — начните мастер "
+            f"заново через «📣 Рассылка»."
+        ),
+        attachments=[keyboards.op_back_to_menu_keyboard()],
     )
 
 
@@ -11136,8 +11318,8 @@ async def _step_search(
 
 ### `bot/aemr_bot/handlers/callback_router.py`
 
-Size: `8595` bytes  
-SHA-256: `ed04e86283073ceabaff30d8acf71b29e70f94fa3b1702855c4badf269110f26`
+Size: `8740` bytes  
+SHA-256: `7a3c14f64033c7385434f2459141e9363b237d2fd6b1b0b9149002e7d1275bd0`
 
 ```python
 """Маршрутизация callback payload'ов.
@@ -11208,6 +11390,7 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("locality:", CallbackGroup.CITIZEN_FLOW, False, "выбор населённого пункта"),
     CallbackRoute("topic:", CallbackGroup.CITIZEN_FLOW, False, "выбор темы"),
     CallbackRoute("broadcast:stop:", CallbackGroup.BROADCAST_ADMIN, True, "остановить рассылку"),
+    CallbackRoute("broadcast:cancel-cooldown:", CallbackGroup.BROADCAST_ADMIN, True, "отменить рассылку до отправки"),
     CallbackRoute("op:aud:", CallbackGroup.OPERATOR_ADMIN, True, "действие с аудиторией"),
     CallbackRoute("op:reply:", CallbackGroup.OPERATOR_ADMIN, True, "ответ по обращению (финальный)"),
     CallbackRoute("op:replyint:", CallbackGroup.OPERATOR_ADMIN, True, "промежуточный ответ"),
@@ -11271,8 +11454,8 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 
 ### `bot/aemr_bot/handlers/menu.py`
 
-Size: `48371` bytes  
-SHA-256: `35ef26fb5fb69b0a951b9a9e899c3cf7f5f1f2d89fcb5e8dafae763619a72ddc`
+Size: `48812` bytes  
+SHA-256: `197a11bb62059b6ea8c338638b2258e0e838077b0fd3bf96d259137729863ee1`
 
 ```python
 import logging
@@ -11394,9 +11577,16 @@ async def open_main_menu(event):
         )
         return
 
+    # C1: подгружаем актуальный welcome из БД (если IT отредактировал
+    # через UI) с fallback на hardcoded texts.WELCOME. Санитизация
+    # автоматическая внутри get_text_with_fallback.
+    async with session_scope() as text_session:
+        welcome = await settings_store.get_text_with_fallback(
+            text_session, "welcome_text", texts.WELCOME
+        )
     await _send_or_edit_menu(
         event,
-        text=texts.WELCOME,
+        text=welcome,
         attachments=[keyboards.main_menu(subscribed=subscribed)],
     )
 
@@ -13176,8 +13366,8 @@ async def handle_command_reply(
 
 ### `bot/aemr_bot/handlers/start.py`
 
-Size: `17005` bytes  
-SHA-256: `2f1cc804afe338f4e9f7bb337edbacfda59b5101c0dd57fb5a2264c8aae4fa21`
+Size: `17724` bytes  
+SHA-256: `bada01f78f93a90cbef3a1a3855df7deaae2b86fcb75f3802a8157aafc5cdfa9`
 
 ```python
 import logging
@@ -13255,10 +13445,24 @@ async def _reset_funnel_if_stuck(max_user_id: int | None) -> None:
             await users_service.reset_state(session, max_user_id)
 
 
+async def _welcome_text() -> str:
+    """Актуальный welcome с поддержкой UI-редактирования (C1).
+
+    Если IT обновил welcome_text через меню «⚙️ Настройки бота» — отдаём
+    свежий текст из БД с санитизацией. Иначе fallback на texts.WELCOME.
+    Открываем отдельную сессию (не зависим от вызывающего контекста).
+    """
+    async with session_scope() as session:
+        return await settings_store.get_text_with_fallback(
+            session, "welcome_text", texts.WELCOME
+        )
+
+
 async def cmd_start(event):
     await _ensure_user(event)
     await _reset_funnel_if_stuck(get_user_id(event))
-    await reply(event, texts.WELCOME, attachments=[await _build_main_menu(get_user_id(event))])
+    welcome = await _welcome_text()
+    await reply(event, welcome, attachments=[await _build_main_menu(get_user_id(event))])
 
 
 async def cmd_help(event):
@@ -13271,7 +13475,8 @@ async def cmd_rules(event):
 
 async def cmd_menu(event):
     await _reset_funnel_if_stuck(get_user_id(event))
-    await reply(event, texts.WELCOME, attachments=[await _build_main_menu(get_user_id(event))])
+    welcome = await _welcome_text()
+    await reply(event, welcome, attachments=[await _build_main_menu(get_user_id(event))])
 
 
 async def cmd_policy(event):
@@ -13757,8 +13962,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `63429` bytes  
-SHA-256: `0ddff1e681dcc376885be2a6f0dfa979d250d0f9d5d73f1f4701720af9bde240`
+Size: `64287` bytes  
+SHA-256: `c7a02301076a64ab954cbe6b3dd5a66487e4554a36211025dd5f4bec797dd2f1`
 
 ```python
 from maxapi.types import (
@@ -14230,6 +14435,24 @@ def broadcast_stop_keyboard(broadcast_id: int):
         CallbackButton(
             text="⛔ Экстренно остановить",
             payload=f"broadcast:stop:{broadcast_id}",
+        )
+    )
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def broadcast_cooldown_keyboard(broadcast_id: int):
+    """Кнопка отмены рассылки во время cooldown'а (SECURITY_REVIEW C2).
+
+    Между confirm и реальной отправкой — окно ~5 минут, во время
+    которого оператор может передумать (увидел опечатку, понял что
+    текст не тот). Эта кнопка останавливает отложенный таск и
+    помечает broadcast как cancelled."""
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="❌ Отменить отправку",
+            payload=f"broadcast:cancel-cooldown:{broadcast_id}",
         )
     )
     kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
@@ -15546,8 +15769,8 @@ def note_incoming_admin_message(mid: str | None) -> None:
 
 ### `bot/aemr_bot/services/admin_card.py`
 
-Size: `12156` bytes  
-SHA-256: `762827f10f6162252cbcd6248fbb005bedddf432dacbde4630f5f5d95d1eadf9`
+Size: `12249` bytes  
+SHA-256: `d07769bdf96668ad196103290e7e829bd4fc19fbbd2f6be8c5456322b9c3c584`
 
 ```python
 """Admin appeal card с freshness-rule (унифицированное правило для
@@ -15763,7 +15986,7 @@ async def render(
             # чтобы следующий callback тоже пошёл в send_new.
             menu_tracker.clear(cfg.admin_group_id)
 
-    # Send new card.
+    # Отправляем новую карточку (edit не сработал или не применим).
     try:
         sent = await bot.send_message(
             chat_id=cfg.admin_group_id,
@@ -17052,8 +17275,8 @@ async def search(
 
 ### `bot/aemr_bot/services/broadcasts.py`
 
-Size: `13727` bytes  
-SHA-256: `ffe65eabea9bb4c3b70f5fe763d3703b22f855204cd732ec14e58939a95ecaec`
+Size: `14624` bytes  
+SHA-256: `231b359a077c57f36df5b1e77799e693f9487c719af1c962f46e9f90c3b2a06a`
 
 ```python
 """Сервис подписки и муниципальных рассылок.
@@ -17211,6 +17434,27 @@ async def request_cancel(session: AsyncSession, broadcast_id: int) -> bool:
         .where(
             Broadcast.id == broadcast_id,
             Broadcast.status == BroadcastStatus.SENDING.value,
+        )
+        .values(status=BroadcastStatus.CANCELLED.value)
+    )
+    return result.rowcount > 0
+
+
+async def mark_cancelled(
+    session: AsyncSession, broadcast_id: int
+) -> bool:
+    """Отменить рассылку из DRAFT (SECURITY_REVIEW C2 — cancel во время cooldown'а).
+
+    Отличается от `request_cancel` тем, что работает с DRAFT (рассылка
+    создана, но цикл отправки ещё не запущен — `mark_started` не
+    вызывался). Идемпотентно: если статус уже терминальный (DONE,
+    CANCELLED, FAILED) — ничего не делает, возвращает False.
+    """
+    result = await session.execute(
+        update(Broadcast)
+        .where(
+            Broadcast.id == broadcast_id,
+            Broadcast.status == BroadcastStatus.DRAFT.value,
         )
         .values(status=BroadcastStatus.CANCELLED.value)
     )
@@ -17477,8 +17721,8 @@ def is_workday(d: date) -> bool:
 
 ### `bot/aemr_bot/services/card_format.py`
 
-Size: `14123` bytes  
-SHA-256: `89b84144b4accbd8557e24037bf8fa958f5a4b9059ec4a97b730894a7ec39228`
+Size: `17157` bytes  
+SHA-256: `4f5ca8030bad5426ce9c12eebc8ffc8a17e7c73fcf702f1112c972795715c7eb`
 
 ```python
 from datetime import datetime
@@ -17718,15 +17962,68 @@ def admin_card(appeal: Appeal, user: User) -> str:
     timeline = appeal_timeline_block(appeal)
     if timeline:
         body = f"{body}\n\n{timeline}"
+    # SECURITY_REVIEW M5: текст обращения (summary) и followup'ы
+    # приходят от жителя и могут содержать фишинговые ссылки. Если
+    # хоть где-то в карточке (summary + любой followup) есть URL —
+    # один общий warning внизу карточки для оператора. Не блокируем
+    # отображение, только просим не кликать наугад.
+    # try/except защищает от MissingGreenlet (ORM ленивая загрузка
+    # `appeal.messages` после закрытия сессии). Если detached — просто
+    # не показываем URL warning по timeline, ограничиваемся summary.
+    try:
+        loaded_messages = list(appeal.messages or [])
+    except Exception:
+        loaded_messages = []
+    has_url = bool(
+        _url_in(appeal.summary or "")
+        or any(
+            _url_in(getattr(m, "text", "") or "")
+            for m in loaded_messages
+        )
+    )
+    if has_url:
+        body = body + _maybe_url_warning(appeal.summary or "X http://X")
     return body
 
 
+def _url_in(text: str) -> bool:
+    """Тонкая обёртка над extract_urls — bool вместо list, локальная
+    кешируемость (для admin_card обоих текстов). Использует тот же
+    regex, что и outgoing URL-whitelist (settings_store)."""
+    from aemr_bot.services.settings_store import extract_urls
+    return bool(extract_urls(text))
+
+
+def _maybe_url_warning(text: str) -> str:
+    """SECURITY_REVIEW M5: вернуть строку-предупреждение если в тексте
+    есть URL.
+
+    Followup жителя приходит в admin-чат и отображается оператору.
+    Если житель (или скам-имитатор жителя) вставил кликабельную
+    фишинг-ссылку — оператор её увидит и может тапнуть прямо из
+    карточки. Здесь мы не блокируем (нельзя — оператор должен видеть
+    содержимое обращения), но добавляем явное предупреждение, чтобы
+    оператор знал «здесь ссылка, не кликаю автоматически».
+
+    Возвращает пустую строку если URL нет — тогда warning не пришит.
+    """
+    from aemr_bot.services.settings_store import extract_urls
+    if extract_urls(text):
+        return (
+            "\n\n⚠️ Текст содержит ссылку. Не открывайте напрямую из "
+            "карточки — сверьте адрес визуально и при необходимости "
+            "введите в браузер вручную."
+        )
+    return ""
+
+
 def admin_followup(appeal: Appeal, user: User, text: str) -> str:
-    return ADMIN_FOLLOWUP_TEMPLATE.format(
+    rendered = ADMIN_FOLLOWUP_TEMPLATE.format(
         number=appeal.id,
         name=user.first_name or "—",
         text=text,
     )
+    return rendered + _maybe_url_warning(text)
 
 
 def citizen_reply(appeal: Appeal, reply_text: str) -> str:
@@ -17803,8 +18100,8 @@ def appeal_list_label(appeal: Appeal) -> str:
 
 ### `bot/aemr_bot/services/cron.py`
 
-Size: `44936` bytes  
-SHA-256: `1d699780cc2b89d8c60f6c4e0fce3241943f5aa2bfad756fda37d7a33514653b`
+Size: `45011` bytes  
+SHA-256: `300fbeae78ce10a48c4c5df0efbf191361c9713dee53af27ded55bcbc1da0a36`
 
 ```python
 from __future__ import annotations
@@ -17838,7 +18135,7 @@ TZ = ZoneInfo(settings.timezone)
 # тик cron'а.
 _SELFCHECK_HEALTHY = {"healthy": True}
 
-# Misfire grace window для всех cron jobs.
+# Окно прощения опоздавшего срабатывания (misfire grace) для всех cron-задач.
 #
 # APScheduler по умолчанию даёт job 1 секунду на отработку триггера —
 # дальше тик помечается misfire и выбрасывается. При типичном
@@ -20486,8 +20783,8 @@ async def fetch_main_runtime_config(
 
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `21205` bytes  
-SHA-256: `2544010d3cec86ed0b509078e2bd02e499d6c21fe3b8930c61871f091c220e7c`
+Size: `29729` bytes  
+SHA-256: `ee944b85720eab15d7881faf81856d5637cc3983594a2d321afc241c2c011de0`
 
 ```python
 import json
@@ -20599,6 +20896,79 @@ def find_non_whitelisted_urls(text: str) -> list[str]:
     """
     return [u for u in extract_urls(text) if not _is_whitelisted_url(u)]
 
+
+# SECURITY_REVIEW C1: санитизация welcome_text / consent_text перед
+# тем, как они уйдут жителю в личку. IT-роль имеет права редактировать
+# эти тексты через UI «⚙️ Настройки бота» — и это удобно для оператив-
+# ных правок без редеплоя. Но если IT-аккаунт компрометирован (или
+# просто кто-то ошибся) — текст не должен дать инжектить активный
+# HTML, кликабельный `javascript:`-ссылки, или фишинг-URL на сторонний
+# домен. Здесь — мягкая «текстовая» санитизация: всё, что выглядит как
+# опасный markup или ссылка вне whitelist'а, либо вырезаем, либо
+# заменяем на безопасный текст. Не криптографическая защита, а
+# первая линия обороны от случайного / умышленного вреда.
+_DANGEROUS_HTML_PATTERNS = (
+    # Скрипты, iframe'ы, обработчики событий — никогда не должны попасть
+    # к жителю даже если MAX случайно решит парсить их как HTML.
+    re.compile(r"<\s*script[^>]*>.*?</\s*script\s*>", re.IGNORECASE | re.DOTALL),
+    re.compile(r"<\s*iframe[^>]*>.*?</\s*iframe\s*>", re.IGNORECASE | re.DOTALL),
+    re.compile(r"<\s*(script|iframe|object|embed|applet)[^>]*/?>", re.IGNORECASE),
+    re.compile(r"\s+on[a-z]+\s*=\s*['\"][^'\"]*['\"]", re.IGNORECASE),  # onclick=... onload=...
+)
+
+# Markdown-ссылки `[label](url)`. Если url не в whitelist — заменяем
+# всю конструкцию на label с пометкой «(ссылка скрыта)», чтобы
+# фишинг-URL не оказался кликабельным.
+_MD_LINK_PATTERN = re.compile(r"\[([^\]]+)\]\((https?://[^\s)]+)\)")
+
+
+def sanitize_settings_text(value: str) -> str:
+    """Очистить текст настройки (welcome_text / consent_text) для
+    безопасной отправки жителю.
+
+    Делает три вещи:
+    1. Вырезает теги `<script>`, `<iframe>`, `<object>`, `<embed>`,
+       `<applet>` (с содержимым) и любые `on*=`-обработчики.
+    2. В markdown-ссылках `[label](url)` пропускает только URL на
+       гос-домены (whitelist). Остальные заменяет на `label (ссылка
+       скрыта)`.
+    3. Заменяет `javascript:` / `data:` / `vbscript:` -схемы внутри
+       обычных URL на `[заблокировано]`.
+
+    Что НЕ делает:
+    - не экранирует обычные символы (`<`, `>`, `&`) — текст идёт в
+      MAX как plain-text, эти символы безопасны;
+    - не нормализует unicode-омоглифы — IT-оператор не должен играть
+      в такие игры, а MAX render'ит юникод 1-в-1.
+    """
+    if not value:
+        return value
+
+    out = value
+    for pat in _DANGEROUS_HTML_PATTERNS:
+        out = pat.sub("", out)
+
+    def _replace_md_link(match: re.Match) -> str:
+        label = match.group(1)
+        url = match.group(2)
+        if _is_whitelisted_url(url):
+            return f"[{label}]({url})"
+        return f"{label} (ссылка скрыта)"
+
+    out = _MD_LINK_PATTERN.sub(_replace_md_link, out)
+
+    # Опасные URI-схемы внутри обычного http-URL уже отрезаются
+    # extract_urls (regex `https?://`), но если они появятся отдельно
+    # как `javascript:alert(1)` — заменим тут.
+    out = re.sub(
+        r"\b(javascript|data|vbscript|file):[^\s]*",
+        "[заблокировано]",
+        out,
+        flags=re.IGNORECASE,
+    )
+
+    return out
+
 DEFAULTS: dict[str, Any] = {
     "welcome_text": None,
     "consent_text": None,
@@ -20654,7 +21024,17 @@ DEFAULTS: dict[str, Any] = {
 # этой карте.
 SCHEMA: dict[str, dict] = {
     "welcome_text": {"type": str, "min_len": 1, "max_len": 4000},
-    "consent_text": {"type": str, "min_len": 1, "max_len": 4000},
+    # C1: consent_text используется как шаблон с placeholder
+    # `{policy_url}`. Если IT перепишет без placeholder — житель увидит
+    # consent без ссылки на политику (формальное нарушение 152-ФЗ).
+    # required_substr — мягкое требование: текст обязан содержать
+    # {policy_url} как подстроку, иначе validate отклонит.
+    "consent_text": {
+        "type": str,
+        "min_len": 1,
+        "max_len": 4000,
+        "required_substr": "{policy_url}",
+    },
     "commit_author_name": {"type": str, "min_len": 1, "max_len": 120},
     "commit_author_email": {"type": str, "min_len": 3, "max_len": 200},
     "policy_url": {"type": str, "url": True},
@@ -20690,6 +21070,14 @@ def validate(key: str, value: Any) -> tuple[bool, str]:
             return False, f"String too short, min_len={rule['min_len']}"
         if "max_len" in rule and len(value) > rule["max_len"]:
             return False, f"String too long, max_len={rule['max_len']}"
+        # C1: required_substr — обязательная подстрока в тексте.
+        # Используется для consent_text (`{policy_url}` обязателен).
+        if "required_substr" in rule and rule["required_substr"] not in value:
+            return False, (
+                f"Текст обязан содержать подстроку "
+                f"«{rule['required_substr']}» (это placeholder, который "
+                f"бот подставляет при отправке)."
+            )
         if rule.get("url"):
             if not (value.startswith("https://") or value.startswith("http://")):
                 return False, "URL must start with http:// or https://"
@@ -20785,6 +21173,64 @@ async def get(session: AsyncSession, key: str) -> Any:
     if row is not None:
         return row.value
     return DEFAULTS.get(key)
+
+
+async def get_consent_request_text(
+    session: AsyncSession, *, policy_url: str, fallback: str
+) -> str:
+    """Готовый consent-request с подставленным policy_url, безопасно.
+
+    Особый случай get_text_with_fallback: consent_text это шаблон с
+    обязательным placeholder'ом `{policy_url}` (см. SCHEMA). После
+    sanitize прогоняем через .format() — но защищённо: если IT всё-же
+    как-то умудрился сохранить текст без placeholder'а (например,
+    через прямой psql), мы не падаем KeyError'ом, а отдаём fallback.
+    """
+    try:
+        raw = await get(session, "consent_text")
+    except Exception:
+        raw = None
+    if isinstance(raw, str) and raw.strip() and "{policy_url}" in raw:
+        try:
+            return sanitize_settings_text(raw).format(policy_url=policy_url)
+        except (KeyError, IndexError, ValueError):
+            # На случай если в тексте есть {другие_фигурные_скобки}
+            # которые format() не сможет разобрать. Не падаем — fallback.
+            pass
+    return fallback.format(policy_url=policy_url)
+
+
+async def get_text_with_fallback(
+    session: AsyncSession, key: str, fallback: str
+) -> str:
+    """Получить текстовую настройку из БД с санитизацией и fallback'ом.
+
+    SECURITY_REVIEW C1: welcome_text / consent_text раньше были
+    «dormant capability» — БД хранит, UI редактирует, житель видит
+    hardcoded `texts.WELCOME` (false security). Теперь подключено:
+
+    1. Если в БД для ключа лежит непустая строка → пропускаем через
+       `sanitize_settings_text` (вырезает HTML/JS, режет markdown-
+       ссылки на не-whitelist домены) и возвращаем результат.
+    2. Иначе (или при любой ошибке БД) → возвращаем переданный
+       fallback (hardcoded текст из texts.py). Это страховка: если
+       БД отвалилась, ключ удалили вручную или возникла другая
+       нештатная ситуация, житель всё равно увидит осмысленный
+       приветственный текст, а не «(None)» или Internal Server Error.
+
+    Санитизация — мягкая (не криптографическая). Защита от ошибки
+    IT-оператора и от компрометации IT-аккаунта на уровне «не
+    превратить welcome в кликабельную фишинг-страницу».
+    """
+    try:
+        raw = await get(session, key)
+    except Exception:
+        # БД недоступна, mock в тестах вернул не coroutine, либо
+        # любой другой нештатный сбой — fallback всегда выручит.
+        return fallback
+    if isinstance(raw, str) and raw.strip():
+        return sanitize_settings_text(raw)
+    return fallback
 
 
 async def set_value(session: AsyncSession, key: str, value: Any) -> None:
@@ -22341,8 +22787,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `43811` bytes  
-SHA-256: `f1fff118369b9a1b011d15e7e4146bcf8487a45473f5a88466cbd42eaa3d40a3`
+Size: `45701` bytes  
+SHA-256: `2fc53fc9fe1ce261408ef5ee30e7a3891bc2004be853b99658d3e5eab1d92582`
 
 ```python
 WELCOME = (
@@ -22732,9 +23178,13 @@ STATUS_LABELS = {
 
 OP_HELP = (
     "Памятка оператора\n\n"
+    "🛡️ Перед началом работы — прочтите docs/OPERATOR_SECURITY.md "
+    "(антифишинг, ответственность по 152-ФЗ, действия при инциденте).\n\n"
     "Как ответить жителю\n"
     "Кнопка «✉️ Ответить» под карточкой обращения, потяните карточку "
-    "влево или команда /reply <номер> <текст>. Лимит {answer_limit} символов.\n\n"
+    "влево или команда /reply <номер> <текст>. Лимит {answer_limit} символов. "
+    "Ссылки — только на гос-домены (elizovomr.ru, kamgov.ru, gosuslugi.ru, "
+    "kamchatka.gov.ru); другие блокируются автоматически.\n\n"
     "Базовые команды\n"
     "/reply N <текст> — ответить по обращению N\n"
     "/reopen N — вернуть в работу\n"
@@ -22744,14 +23194,23 @@ OP_HELP = (
     "/diag — диагностика бота\n\n"
     "Рассылки (coordinator, it)\n"
     "/broadcast — новая рассылка\n"
-    "/broadcast list — последние рассылки\n\n"
+    "/broadcast list — последние рассылки\n"
+    "Маркер «[ЧС]» в начале текста сокращает cooldown с 5 минут до 30 секунд.\n\n"
     "Администрирование (it)\n"
-    "/erase max_user_id=N — удалить ПДн жителя\n"
+    "/erase max_user_id=N — удалить ПДн жителя (необратимо в БД, см. "
+    "RUNBOOK_PDN_ERASURE.md)\n"
     "/erase phone=+7… — удалить ПДн по телефону\n"
     "/setting list — список настроек\n"
     "/setting <key> <value> — изменить настройку\n"
     "/add_operators — массовая регистрация операторов\n"
     "/backup — снять pg_dump прямо сейчас\n\n"
+    "Безопасность и ответственность\n"
+    "• docs/OPERATOR_SECURITY.md — антифишинг, реакция на скам, личная "
+    "гигиена аккаунта;\n"
+    "• docs/SECURITY.md — технические защиты бота и known limitations;\n"
+    "• docs/_extracted/REGLAMENT_v7_FULL.md — юридическая основа;\n"
+    "• все ваши действия пишутся в audit_log на 365 дней — для проверки "
+    "Роскомнадзора и расследования инцидентов.\n\n"
     "Большинство действий доступно кнопками в меню — открывается по /menu."
 )
 
@@ -22803,6 +23262,16 @@ OP_BROADCAST_PROMPT = (
     "Введите текст рассылки одним сообщением. Лимит {limit} символов.\n"
     "К тексту можно приложить до {max_images} картинок в том же "
     "сообщении — они придут каждому подписчику.\n"
+    "\n"
+    "🛡️ Памятка по антифишингу:\n"
+    "• ссылки только на гос-домены (elizovomr.ru, kamgov.ru, "
+    "gosuslugi.ru, kamchatka.gov.ru) — иначе бот откажет;\n"
+    "• для срочной ЧС-рассылки начните текст с маркера «[ЧС]» — "
+    "cooldown сократится с 5 минут до 30 секунд;\n"
+    "• после «Подтверждаю отправку» у вас будет окно отмены, "
+    "перечитайте текст в превью.\n"
+    "\n"
+    "Подробнее — docs/OPERATOR_SECURITY.md §3.1.\n"
     "Если передумали — кнопка «❌ Отменить рассылку» ниже."
 )
 OP_BROADCAST_TOO_LONG = (
@@ -29290,8 +29759,8 @@ def test_bot_http_timeout_is_below_maxapi_default() -> None:
 
 ### `bot/tests/test_broadcast_handlers.py`
 
-Size: `35207` bytes  
-SHA-256: `549d3155f020be3032025f177692d50fe0cb8865dbe5800d371e9653a13693e6`
+Size: `35403` bytes  
+SHA-256: `21cd6a664cb15dd9d7bec8c10ac9cbe8d7472972824560074c1493d5eb2e103d`
 
 ```python
 """Тесты для handlers/broadcast — wizard рассылок и helpers.
@@ -29645,7 +30114,9 @@ class TestHandleConfirm:
              patch("aemr_bot.handlers.broadcast.spawn_background_task", spawn):
             await broadcast._handle_confirm(event)
         spawn.assert_called_once()
-        assert spawn.call_args.kwargs["name"] == "broadcast_99"
+        # C2: имя task теперь «broadcast_cooldown_<id>» — рассылка идёт
+        # через cooldown-обёртку, а не напрямую в _run_broadcast.
+        assert spawn.call_args.kwargs["name"] == "broadcast_cooldown_99"
 
 
 # --- _handle_abort ------------------------------------------------------------
@@ -41168,6 +41639,172 @@ class TestPhoneValidation:
         assert ok2 is False
 ```
 
+### `bot/tests/test_security_batch_c.py`
+
+Size: `6597` bytes  
+SHA-256: `ebde2d007c070faabbc86b35e291398e53b5fed6d9af2299a3eb9f4869372e75`
+
+```python
+"""Тесты на Batch C security-fixes.
+
+- C1: sanitize_settings_text + get_text_with_fallback + get_consent_request_text
+       + required_substr валидация consent_text.
+- C2: URL-whitelist на broadcast wizard (через find_non_whitelisted_urls,
+      покрыто batch B) + cooldown classifier (_broadcast_cooldown_seconds).
+- M5: warning при URL в admin_followup / admin_card.
+
+PG-зависимые тесты — отдельный файл (test_settings_dynamic_texts_pg.py).
+"""
+from __future__ import annotations
+
+import pytest
+
+from aemr_bot.services.settings_store import (
+    sanitize_settings_text,
+    validate,
+)
+
+
+class TestSanitizeSettingsText:
+    """C1: защита welcome/consent текстов от опасных тегов и URL."""
+
+    def test_plain_text_unchanged(self) -> None:
+        text = "Здравствуйте. Это бот Администрации."
+        assert sanitize_settings_text(text) == text
+
+    def test_script_tag_removed(self) -> None:
+        text = "Привет <script>alert(1)</script> мир"
+        cleaned = sanitize_settings_text(text)
+        assert "<script>" not in cleaned
+        assert "alert(1)" not in cleaned
+
+    def test_iframe_tag_removed(self) -> None:
+        text = "до <iframe src='evil.com'></iframe> после"
+        cleaned = sanitize_settings_text(text)
+        assert "iframe" not in cleaned.lower()
+
+    def test_onclick_handler_stripped(self) -> None:
+        text = '<div onclick="evil()">click</div>'
+        cleaned = sanitize_settings_text(text)
+        assert "onclick" not in cleaned
+
+    def test_markdown_link_whitelisted_kept(self) -> None:
+        text = "См. [политику](https://elizovomr.ru/policy.pdf)"
+        cleaned = sanitize_settings_text(text)
+        assert "https://elizovomr.ru/policy.pdf" in cleaned
+        assert "ссылка скрыта" not in cleaned
+
+    def test_markdown_link_phishing_replaced(self) -> None:
+        text = "перейдите [сюда](https://phish.example.com/login)"
+        cleaned = sanitize_settings_text(text)
+        assert "phish.example.com" not in cleaned
+        assert "ссылка скрыта" in cleaned
+        # Label сохраняется, чтобы текст оставался читаемым
+        assert "сюда" in cleaned
+
+    def test_javascript_scheme_blocked(self) -> None:
+        text = "перейдите javascript:alert(1)"
+        cleaned = sanitize_settings_text(text)
+        assert "javascript:" not in cleaned
+        assert "[заблокировано]" in cleaned
+
+    def test_empty_input(self) -> None:
+        assert sanitize_settings_text("") == ""
+        assert sanitize_settings_text(None) is None
+
+
+class TestConsentTextRequiredSubstr:
+    """C1: consent_text валидируется как шаблон с обязательным
+    placeholder'ом {policy_url}."""
+
+    def test_consent_with_placeholder_passes(self) -> None:
+        ok, _ = validate(
+            "consent_text",
+            "Согласие на ПДн. Политика: {policy_url}. Нажмите Согласен.",
+        )
+        assert ok is True
+
+    def test_consent_without_placeholder_rejected(self) -> None:
+        ok, reason = validate(
+            "consent_text",
+            "Согласие. Политика: https://elizovomr.ru/policy.pdf",
+        )
+        assert ok is False
+        assert "{policy_url}" in reason
+
+
+class TestBroadcastCooldownClassifier:
+    """C2: classifier _broadcast_cooldown_seconds.
+
+    Все тесты требуют импорта `aemr_bot.handlers.broadcast`, который
+    тянет `maxapi` — поэтому пропускаются в чисто-unit окружении.
+    """
+
+    def setup_method(self) -> None:
+        pytest.importorskip("maxapi")
+
+    def test_normal_text_5min(self) -> None:
+        from aemr_bot.handlers.broadcast import (
+            _broadcast_cooldown_seconds,
+            _COOLDOWN_NORMAL_SEC,
+        )
+        assert _broadcast_cooldown_seconds(
+            "Внимание, плановое отключение электричества завтра"
+        ) == _COOLDOWN_NORMAL_SEC
+        assert _COOLDOWN_NORMAL_SEC == 300  # 5 минут
+
+    def test_emergency_marker_30sec(self) -> None:
+        from aemr_bot.handlers.broadcast import (
+            _broadcast_cooldown_seconds,
+            _COOLDOWN_EMERGENCY_SEC,
+        )
+        assert _broadcast_cooldown_seconds(
+            "[ЧС] Отключение горячей воды в Елизово до утра"
+        ) == _COOLDOWN_EMERGENCY_SEC
+        assert _COOLDOWN_EMERGENCY_SEC == 30
+
+    def test_emergency_marker_case_insensitive(self) -> None:
+        from aemr_bot.handlers.broadcast import (
+            _broadcast_cooldown_seconds,
+            _COOLDOWN_EMERGENCY_SEC,
+        )
+        assert _broadcast_cooldown_seconds("[чс] срочно") == _COOLDOWN_EMERGENCY_SEC
+
+    def test_emergency_marker_in_middle(self) -> None:
+        from aemr_bot.handlers.broadcast import (
+            _broadcast_cooldown_seconds,
+            _COOLDOWN_EMERGENCY_SEC,
+            _COOLDOWN_NORMAL_SEC,
+        )
+        # Marker должен быть в начале строки или после пробела —
+        # «вСтречено[ЧС]внутри слова» не считается ЧС'ом.
+        assert _broadcast_cooldown_seconds(
+            "Сегодня в 14:00 [ЧС] ожидается ветер"
+        ) == _COOLDOWN_EMERGENCY_SEC
+        # А вот эта подстрока — нет:
+        assert _broadcast_cooldown_seconds(
+            "Обычная новость без маркера"
+        ) == _COOLDOWN_NORMAL_SEC
+
+
+class TestUrlWarningInAdminCard:
+    """M5: при URL в followup/summary — warning к карточке."""
+
+    def test_url_warning_helper_with_url(self) -> None:
+        from aemr_bot.services.card_format import _maybe_url_warning
+        warning = _maybe_url_warning("Ссылка: http://example.com")
+        assert "⚠️" in warning
+        assert "не открывайте" in warning.lower() or "не открыв" in warning.lower()
+
+    def test_url_warning_helper_without_url(self) -> None:
+        from aemr_bot.services.card_format import _maybe_url_warning
+        assert _maybe_url_warning("Просто текст без ссылок") == ""
+
+    def test_url_warning_helper_empty(self) -> None:
+        from aemr_bot.services.card_format import _maybe_url_warning
+        assert _maybe_url_warning("") == ""
+```
+
 ### `bot/tests/test_services_no_db.py`
 
 Size: `9640` bytes  
@@ -52121,6 +52758,181 @@ git revert <merge-commit> && git push origin main
 ```
 ```
 
+### `docs/OPERATOR_SECURITY.md`
+
+Size: `23937` bytes  
+SHA-256: `8d1ca8878808bf94635e27d834436d742ff0a40ec29f3da1d7f08634f8575fdb`
+
+```markdown
+# Инструкция оператору по информационной безопасности
+
+> Адресат: координатор, оператор Администрации (роль AEMR), оператор Управления городского хозяйства (роль EGP), IT-оператор (роль IT). Документ обязателен к прочтению **до** первой смены за пультом. Версия 2026-05-26.
+>
+> Этот файл объясняет: как распознать атаку на гос-канал; как реагировать на запросы жителя, похожие на фишинг; что бот делает за вас автоматически и где вы остаётесь последней линией обороны; за что вы несёте персональную ответственность согласно 152-ФЗ и Регламенту v7.
+>
+> Если что-то в этом документе непонятно — **не действуйте на авось**. Свяжитесь с IT-оператором (см. контакты в `docs/SYSADMIN.md` или `op:audit` в админ-меню).
+
+---
+
+## 1. Антифишинг — как распознать и не клюнуть
+
+### 1.1. Что бот защищает автоматически
+
+Вам не нужно делать ничего из этого вручную, бот закрывает сам:
+
+- **Гос-домены whitelist'ятся.** Если вы случайно вставите в ответ жителю или в текст рассылки ссылку на сторонний сайт (`vk.com`, `t.me`, `bit.ly`, любой `.com`/`.ru` вне списка) — бот **откажется отправлять** и напишет вам в админ-чат конкретную причину. Разрешены только: `*.elizovomr.ru`, `kamgov.ru`, `gosuslugi.ru`, `kamchatka.gov.ru`.
+- **Markdown-инъекции в `welcome_text` и `consent_text`** обрезаются. Если IT-оператор (или кто-то с его аккаунтом) попытается вставить `<script>`, `<iframe>`, `onclick=...` или ссылку `[click](javascript:...)` — бот вычистит активный HTML и заменит фишинг-URL на `(ссылка скрыта)`.
+- **Cooldown 5 минут до отправки рассылки** даёт время передумать. Если опечатались или нажали по ошибке — кнопка «❌ Отменить отправку» снимает всё. Для срочных ЧС-рассылок маркер `[ЧС]` в начале текста сокращает cooldown до 30 секунд (см. §3).
+- **PR'ы с изменением настроек** в GitHub санитизируются: ваше имя проходит через очистку от newline и markdown, так что никто не сможет вписать в `full_name` фейковую «секцию maintainer'а».
+- **Карточка обращения с входящей ссылкой** помечается предупреждением «⚠️ Текст содержит ссылку. Не открывайте напрямую из карточки». Это значит, что житель прислал URL и вам решать, проверять его или нет.
+
+### 1.2. Что бот НЕ может проверить за вас
+
+- **Содержимое ссылки.** Whitelist пропустит `https://elizovomr.ru/anything`. Но «anything» может оказаться компрометированной страницей, если сам сайт `elizovomr.ru` был взломан. Если что-то выглядит подозрительно — спросите IT.
+- **Социальная инженерия в тексте.** Текст «срочно, переведите 5000 рублей на этот счёт» — формально без URL, бот пропустит. Это ваша ответственность не отправлять такое жителю, даже если кто-то в админ-чате попросил.
+- **Аккаунт изнутри.** Если ваш MAX-аккаунт скомпрометирован (вы потеряли телефон, кто-то знает пароль) — бот не различит вас и злоумышленника. Защита здесь — ваша личная гигиена: пароль, биометрия, не делиться телефоном.
+
+### 1.3. Сценарии атаки, которые встречаются в 2025–2026
+
+Эти сценарии реально работают в Камчатском крае. Будьте начеку.
+
+**«Уточнение паспорта для приёма обращения».** Житель пишет в личку (не вам, а мошеннику-имитатору): «Я из Администрации, проверяю ваше обращение. Для подтверждения личности назовите серию и номер паспорта, СНИЛС, дату рождения». Бот **никогда** так не делает. Если житель спрашивает «вы серьёзно?» — отвечайте честно: бот запрашивает только имя и телефон для перезвона; всё остальное мы НЕ запрашиваем никогда. В welcome-сообщении эта фраза уже есть, но житель может его не помнить.
+
+**«Оплатите госпошлину за рассмотрение обращения».** Обращение в Администрацию через гос-бот бесплатное. Любой запрос денег от имени Администрации — мошенничество. Если житель напишет «мне звонили, сказали что мне надо доплатить 200 рублей, чтобы вы рассмотрели обращение» — отвечайте: «Это мошенники, не платите. Обращение рассматривается бесплатно».
+
+**«Установите приложение для отслеживания обращения».** Бот не предлагает ставить никаких приложений. Если житель спрашивает про «приложение от Администрации» — это фишинговый APK либо стилер. Откажите.
+
+**«Перейдите по ссылке для проверки в Госуслугах».** Бот не делает auth через Госуслуги. Любая ссылка «войдите в Госуслуги для подтверждения» — фишинг. Объясните жителю.
+
+**Клон-бот с похожим username.** В MAX могут зарегистрировать `@aemr_bot_official`, `@aemr_help` и тому подобное. Реальный бот — тот, по ссылке с которого житель пришёл изначально (через QR-код или ссылку с сайта `elizovomr.ru`). Если житель спрашивает «как мне убедиться, что это вы» — отправьте его на сайт Администрации, оттуда снова в бота.
+
+### 1.4. Что делать, если житель попался на скам
+
+Спокойно. Без обвинений. Алгоритм:
+
+1. Подтвердите, что это не вы и не Администрация: «От нашего имени могут писать только через этого бота. Звонок / другая личка / другой бот — это не мы».
+2. Скажите, что **деньги вернуть нельзя**, если перевод уже сделан. Это горькая правда.
+3. Скажите, куда обратиться: 8 (800) 250-30-72 — горячая линия по мошенничеству в МВД РФ; либо лично в МВД по Елизовскому МО.
+4. Запишите факт в обращение жителя как followup, чтобы остался след в системе.
+5. Сообщите IT-оператору через служебную группу: возможно нужно усилить welcome-текст или рассылку.
+
+---
+
+## 2. Ваша ответственность по 152-ФЗ
+
+Вы лично несёте ответственность за корректную обработку персональных данных жителей. Бот ведёт `audit_log` всех ваших действий (что, кто, когда, по какому обращению) — записи хранятся 365 дней, доступны при проверке Роскомнадзора. Это не «отслеживание» — это требование закона.
+
+### 2.1. Что считается персональными данными
+
+Имя, фамилия, телефон, адрес, дата рождения, паспортные данные, фотография лица, геолокация дома, СНИЛС, ИНН, любой документ с этими полями. Текст обращения тоже ПДн, если в нём упомянуто конкретное лицо.
+
+### 2.2. Что вы делаете правильно автоматически (через бота)
+
+- Не пересылаете обращение в посторонние чаты (бот не предоставляет такого действия — это закрыто архитектурно).
+- Не делаете screenshot карточки обращения и не отправляете в личные мессенджеры (это уже ваша гигиена; бот не запрещает технически, но запрещает Регламент).
+- Не вытаскиваете данные жителя через `psql` / прямой доступ к базе (доступ есть только у IT-оператора с записью в `audit_log`).
+
+### 2.3. Что вы должны делать **сознательно**
+
+- **Прежде чем переслать данные коллеге в чате**, спросите себя: коллега имеет право видеть эти ПДн? Если он не оператор и не назначен ответственным — нет, нельзя.
+- **При запросе жителя на удаление данных** (раздел `/erase` в его меню) — не обсуждайте с ним, действуйте: жителю по 152-ФЗ положено удаление в течение 30 дней без объяснений.
+- **При подозрении на утечку** (странные сообщения от имени бота в стороннем месте, жалобы жителя «мне звонят и называют моё обращение») — НЕМЕДЛЕННО сообщите IT-оператору. Не пытайтесь «расследовать сами», не удаляйте логи.
+- **При прохождении смены** не оставляйте телефон с открытым MAX'ом без присмотра. Если потеряли телефон — сразу IT-оператору, он деактивирует ваш аккаунт оператора через wizard (запись действия сохранится в audit_log).
+
+### 2.4. Что вам нельзя
+
+- **Использовать ПДн для целей, не связанных с обращением.** Нашли в обращении телефон знакомого — не звоните «по делу», это нецелевое использование.
+- **Хранить копии данных вне бота.** Не делайте Excel-таблиц с обращениями на личном компьютере. Бот сам ведёт реестр, экспорт через `/export` создаёт временный файл, который удаляется.
+- **Передавать `BOT_TOKEN`, `GITHUB_PAT`, пароль БД** третьим лицам без письменного указания владельца. Эти секреты дают полный контроль над ботом.
+
+### 2.5. Если вас или вашего коллегу заподозрили в нарушении
+
+Защищайтесь правдой. `audit_log` хранит ВСЕ ваши действия: какую кнопку нажали, какому жителю ответили, что отредактировали в настройках. Если вы не нарушали — журнал это покажет. Если нарушали (даже случайно) — журнал тоже покажет, и лучше признаться сразу, чем пытаться скрыть. По 13.11 КоАП РФ нарушение обработки ПДн = штраф до 100 тыс. руб. для должностного лица.
+
+---
+
+## 3. Hot-path процедуры — пошагово
+
+### 3.1. Рассылка жителям (`/broadcast` или меню «📣 Рассылка»)
+
+1. **Подумайте дважды**, нужна ли рассылка. Каждая рассылка приходит всем подписчикам сразу. Если хватит одного обращения через таблицу подписчиков с фильтром — лучше так.
+2. **Сформулируйте текст** в редакторе (Word, Notepad), вычитайте, проверьте имена и даты.
+3. **Откройте мастер рассылки**, вставьте текст. Если в тексте есть ссылка — она должна быть на гос-домен из whitelist. Иначе бот откажет автоматически.
+4. **Маркер `[ЧС]` в начале** означает «срочно». Cooldown сокращается с 5 минут до 30 секунд. Используйте только для реальных ЧС (отключение горячей воды, авария, эвакуация). Не злоупотребляйте — иначе жители привыкнут пропускать.
+5. **Подтвердите отправку**. Появится сообщение «Рассылка уйдёт через 5 минут. Кнопка «❌ Отменить отправку»». **Перечитайте текст ещё раз** в превью. Если что-то не то — нажмите отмену.
+6. **После cooldown** рассылка стартует автоматически. На экстренную остановку (если уже идёт) есть кнопка «⛔ Экстренно остановить» — она прерывает доставку с того места, где сейчас.
+
+### 3.2. Ответ жителю по обращению (кнопка «✉️ Ответить и закрыть»)
+
+1. Прочитайте обращение **целиком**, включая followup'ы (дополнения жителя).
+2. Если в карточке предупреждение «⚠️ Текст содержит ссылку» — **не кликайте на ссылку напрямую**. Если нужно проверить, копируйте в браузер и сначала визуально смотрите URL.
+3. Пишите ответ как формальное письмо: уважительно, по существу, без жаргона. Шаблон ответа есть в Приложении 2 Регламента v7.
+4. Не вставляйте ссылки на сторонние сайты. Если нужно сослаться — `kamgov.ru`, `gosuslugi.ru`, `elizovomr.ru`, `kamchatka.gov.ru`.
+5. Не вставляйте обещаний, которые не уверены, что выполните. Пишите «постараемся» вместо «обещаем» если сомневаетесь.
+6. После отправки житель получит формальную карточку «Ответ от Администрации» в личке. Если житель ответит дополнением — придёт новая карточка в админ-чат, не редактируется старая.
+
+### 3.3. Добавление нового оператора (только роль IT, кнопка «👥 Операторы → ➕ Добавить»)
+
+1. Убедитесь, что добавляемый человек **физически в служебной MAX-группе**. Иначе wizard не найдёт его в списке участников.
+2. Назначьте **корректную роль**: координатор / AEMR / EGP / IT. Каждая роль имеет своё меню и набор прав, см. таблицу 1 §18 Регламента v7.
+3. После добавления **новый оператор автоматически появится** в активных. Уведомления о его действиях идут в общий audit_log.
+4. **Не делайте все аккаунты IT'ами**. Роль IT имеет максимум прав (блокировка жителей, удаление ПДн, изменение настроек). Лишний IT = лишняя поверхность атаки.
+
+### 3.4. Удаление ПДн жителя (только роль IT, `/erase <appeal_id>` или кнопка «🗑 Удалить ПДн»)
+
+1. Удаление **необратимо** в базе. Из обращения вычищаются имя, телефон, текст обращения, файлы. Остаются только метаданные (дата, статус, тема) для статистики.
+2. Бот пишет жителю «По вашему запросу данные удалены».
+3. Запись в `audit_log` сохраняется (кто удалил, когда, по какому обращению) — это требование 152-ФЗ.
+4. **Backup'ы базы** могут содержать ПДн жителя в течение периода удержания резервных копий. Это известный legal-зазор; полное соблюдение требует пересоздания backup'ов, что не автоматизировано. См. `RUNBOOK_PDN_ERASURE.md` §«72-часовой dispatch».
+
+### 3.5. Если что-то пошло не так
+
+| Симптом | Что делать |
+|---|---|
+| Бот не отвечает на /livez | Сообщите IT в служебной группе. `healthwatch.sh` через 15 минут сам перезапустит. Через 40 минут пришлёт alert. |
+| Жалоба жителя на странное сообщение от «нашего» бота | Спросите username и время. Если bot username не наш — это клон-фишер. Запишите факт, сообщите IT для возможного предупреждения в рассылке. |
+| Не можете отправить рассылку (URL отклонена) | Уберите ссылку, замените на гос-домен или удалите целиком. |
+| Случайно нажали «Подтвердить» на неверной рассылке | В течение 5 минут (или 30 секунд для [ЧС]) — кнопка «❌ Отменить отправку» работает. После — кнопка «⛔ Экстренно остановить» прерывает идущую рассылку. |
+| Получили в личку сообщение от «коллеги» с просьбой переслать данные обращения | Проверьте, что это реально коллега (позвоните, увидьтесь лично). Не пересылайте ПДн по личке без подтверждения. |
+| Подозрение на компрометацию своего MAX-аккаунта | Немедленно IT: `op:opdeact` для вашего max_user_id. Поменяйте пароль MAX, проверьте устройства. |
+
+---
+
+## 4. Комплаенс: связь с Регламентом v7
+
+Этот документ — практическое дополнение к Регламенту v7 (раздел в репо: `docs/_extracted/REGLAMENT_v7_FULL.md`). Регламент описывает «что должно быть», эта инструкция — «как это сделать в боте».
+
+Соответствие пунктов:
+- §10 Регламента (Состав информации в обращении) → §2.1 этого документа (что считается ПДн).
+- §16 Регламента (Роль и обязанности IT) → §3.3 и §3.4 (добавление оператора, удаление ПДн).
+- §18 Регламента таблица 1 (Матрица полномочий) → §3.2 и §3.3 (кто что может).
+- §39 Регламента (Рабочее время операторов) → §3.1 (cooldown подбирался под этот контекст).
+- Приложение 2 Регламента (Шаблон ответа) → §3.2 пункт 3.
+
+Все «drift» между Регламентом и фактическим поведением бота задокументированы в `docs/_meta/REGLAMENT_v7_COMPLIANCE.md`. Если вы видите расхождение в новой версии бота — обновите этот документ либо сообщите IT.
+
+---
+
+## 5. Куда смотреть дальше
+
+- **Регламент v7** — `docs/_extracted/REGLAMENT_v7_FULL.md`. Юридическая основа.
+- **Регламент v8 draft** — `docs/Регламент_v8_draft.md`. Что предлагается изменить.
+- **SECURITY.md** — `docs/SECURITY.md`. Технические защиты бота.
+- **SECURITY_REVIEW_2026-05-26.md** — `docs/_meta/SECURITY_REVIEW_2026-05-26.md`. Сводный результат пасса.
+- **RUNBOOK_PDN_ERASURE.md** — `docs/RUNBOOK_PDN_ERASURE.md`. Процедура /erase.
+- **Политика_v2.md** — `docs/Политика_v2.md`. Политика обработки ПДн для публикации.
+
+---
+
+## 6. Изменения этого документа
+
+| Дата | Что изменилось | Кто |
+|---|---|---|
+| 2026-05-26 | Первая редакция, по итогам security-пасса 2026-05-26 | claude-code, согласовано с владельцем |
+
+При изменении бота — обновляйте этот документ. Расхождение «инструкция говорит одно, бот делает другое» хуже отсутствия инструкции вообще.
+```
+
 ### `docs/PRD.md`
 
 Size: `65878` bytes  
@@ -53673,8 +54485,8 @@ SHA-256: `89169dc32a7f55b1e97d9390e95887c3ba76294ab891ef87ed463b3823deeb6d`
 
 ### `docs/SECURITY.md`
 
-Size: `48333` bytes  
-SHA-256: `94b87393f910d70384e3bdf2245873b34ebfd4aa7b5b9ce98acb117823d8879d`
+Size: `53202` bytes  
+SHA-256: `0d7a29bacb77b2d64447767f84d62d0584cdba3fc2d28294379e4edf08de6432`
 
 ```markdown
 # SECURITY.md — модель угроз и контролов
@@ -54065,6 +54877,39 @@ Auto-deploy на сервере подтягивает **только** из `ma
 | 6 | 🔴 freshness | Freshness-rule учитывал только сообщения в админ-группе — сообщения жителя в личке после reply не сбрасывали freshness, edit карточки уходил в «протухший» MID | `utils/menu_tracker.note_incoming` теперь принимает все источники: житель в личке, оператор в группе, callback в группе |
 
 Все 15 фиксов покрыты регрессионными тестами в `bot/tests/test_reliability_pass.py`, `test_appeal_card_edit_policy.py`, `test_admin_card_render.py`, `test_idempotency.py`, `test_db_backup.py`, `test_funnel_state_hardening.py`, `test_admin_events.py`, `test_operator_reply_with_image.py`.
+
+### Operator-facing документация
+
+Практическая инструкция оператору по ИБ, антифишингу, ответственности по 152-ФЗ и комплаенсу с Регламентом v7 — отдельный документ: [`docs/OPERATOR_SECURITY.md`](OPERATOR_SECURITY.md). Обязателен к прочтению до первой смены. UI бота в hot-path (broadcast wizard, reply intent) содержит ссылки на конкретные параграфы этого документа.
+
+### Серия SECURITY_REVIEW 2026-05-26 (полный пасс с 4 параллельными агентами)
+
+Сводный отчёт: [`docs/_meta/SECURITY_REVIEW_2026-05-26.md`](_meta/SECURITY_REVIEW_2026-05-26.md). Детальные находки по доменам: `SEC_INVENTORY`, `SEC_MAX_THREATS`, `SEC_SCAM_VECTORS`, `SEC_EXPLOITS`.
+
+| # | Категория | Что | Как защищено |
+|---|---|---|---|
+| H1 | 🟠 PR injection | `operator_name` в GitHub PR body — markdown stuffing `## Maintainer note` | `_sanitize_for_pr_body` (newline→space, backtick→ˋ, trunk 120) |
+| H2 | 🟠 root-cron shell injection | `healthwatch.sh` тянет BOT_TOKEN / ADMIN_GROUP_ID из `.env` без quote | regex validate перед curl (exit 2 если формат сломан) |
+| M1 | 🟡 PII в логах | geo-callback payload (координаты жителя) на info-уровне docker | `appeal.py:490,492` → debug-only, без значения payload |
+| M2 | 🟡 stale operators | оператор покинул admin-группу — остаётся `is_active=true` | новый cron `stale-operators-cleanup` 04:20, IT-роль защищена от self-lock-out |
+| M3 | 🟡 outgoing URL фишинг | оператор может вписать жителю любую URL в ответе | `find_non_whitelisted_urls` в `operator_reply` — блокировка доставки + admin notice |
+| M4 | 🟡 phone format | `emergency_contacts.phone` принимал любой текст (premium-номер) | regex `^[\d\s\+\-\(\)\.]{2,40}$` в validate |
+| M5 | 🟡 followup URL warning | житель/оператор кликает на ссылку в admin-карточке | warning «не открывайте напрямую» если URL в summary/followup |
+| M7 | 🟡 letsencrypt shell | `init-letsencrypt.sh` DOMAIN/EMAIL в `--entrypoint "..."` | regex validate до docker compose run |
+| C1 | 🔴 welcome dormant | IT редактирует welcome/consent через UI, житель видит hardcoded | `get_text_with_fallback` + `sanitize_settings_text` (HTML/JS вырезаются, не-whitelisted URL → label only) |
+| C2 | 🔴 broadcast spoofing/ошибка | один confirm = моментальная рассылка всем подписчикам | URL-whitelist на текст + cooldown 5 мин (30 сек для `[ЧС]`-маркера) с возможностью отмены |
+| C4-6 | 🔴 социалка | scam/impersonation/MAX attachment leak | `WELCOME` блок «Что бот НИКОГДА не запрашиваем» + Политика §6.7 |
+
+### Accept / known limitations 2026-05-26
+
+| # | Что | Почему accept |
+|---|---|---|
+| C3 | Operator 2FA / PIN отсутствует | Принят владельцем 2026-05-26 как избыточное усложнение для гос-канала, где компрометация оператора маловероятна. Mitigation: audit_log + быстрая деактивация другим IT через wizard. Возврат к решению — при изменении threat model. |
+| M1b/c | max_user_id в логах + docker json-file logs переживают `/erase` | max_user_id — псевдоидентификатор по 152-ФЗ, нужен для дебага. Docker logs — настроена log rotation 10MB×3 (см. SYSADMIN §12b), ручной truncate при `/erase` в RUNBOOK. |
+| M6 | TLS pinning к `*.max.ru` отсутствует | Системный CA + ICA достаточны для self-host'а. Pinning добавляет операционный риск при ротации сертификата. |
+| M8 | GitHub API response без full schema | `.get()` с дефолтами безопасен; full schema = overengineering для одного использования. |
+| M9 | `/export` без size-limit | LIMIT 500 уже есть в коде; реальный риск OOM минимален. Streaming-export — отдельный track. |
+| M10 | `/setting json.loads` extras | Известное проектное решение (forward-compat: новые поля в seed не должны ломать validate). |
 
 ## 11. Известные ограничения и компромиссы
 
@@ -54576,8 +55421,8 @@ docker compose up -d --build
 
 ### `docs/SYSADMIN.md`
 
-Size: `37487` bytes  
-SHA-256: `1ab88bf1e01e41b30d1c02c076cd6377aa755408d3833b7926fd7ad748948212`
+Size: `40198` bytes  
+SHA-256: `1deb87709a67bee5522f64af4b839420415a7d1488c85a0b6a1406ea1b035d79`
 
 ```markdown
 # SYSADMIN.md — операционное руководство
@@ -54982,6 +55827,54 @@ sudo systemctl stop aemr-bot.service
 sudo rm /etc/systemd/system/aemr-bot.service
 sudo systemctl daemon-reload
 ```
+
+## 12b. Ротация docker-логов (SECURITY_REVIEW M1c, 152-ФЗ)
+
+Docker по умолчанию складывает stdout / stderr контейнера в файлы
+`/var/lib/docker/containers/<id>/<id>-json.log`. Размер каждого файла
+не ограничен, ротация не настроена. Для нашего бота это означает
+накопление логов с псевдоидентификаторами жителей (`max_user_id`) и,
+до фикса M1, координат геолокации — а удаление по запросу субъекта
+(`/erase`) не чистит файлы docker, чистит только базу. Формально это
+зазор в исполнении 152-ФЗ.
+
+Чтобы закрыть зазор, в `infra/docker-compose.yml` для сервиса `bot`
+прописан `logging.options.max-size` и `max-file` — Docker сам режет
+лог по достижении лимита и держит не более N файлов. Пример (если
+ещё не настроено в вашей версии compose):
+
+```yaml
+services:
+  bot:
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+```
+
+После правки `docker compose up -d --force-recreate bot` подхватит
+конфигурацию. Старые большие логи нужно вычистить вручную:
+
+```bash
+# Узнать размер
+du -sh /var/lib/docker/containers/*/*-json.log
+
+# Truncate'нуть НЕ удаляя файл (docker держит handle открытым)
+sudo truncate -s 0 /var/lib/docker/containers/<id>/*-json.log
+```
+
+**Retention policy.** Логи на 10 MB × 3 файла = до 30 MB на контейнер,
+это покрывает ~7–14 дней работы при типичной нагрузке. Дольше держать
+бессмысленно: для расследования инцидента нужен audit_log (хранится
+365 дней в БД, регулируется `AUDIT_LOG_RETENTION_DAYS`), а не docker-
+stdout.
+
+**После запроса жителя на удаление.** Помимо запуска `/erase` в боте,
+sysadmin вручную truncate'ит docker-логи бота за последние 7 дней
+(или применяет команду выше). Это компромисс, чтобы не выдумывать
+ATL-пайплайн для одного запроса в месяц. В RUNBOOK добавлен пункт
+«72-часовой dispatch на запрос /erase» — см. соответствующий раздел.
 
 ## 13. Аудит сервера
 
