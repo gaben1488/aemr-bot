@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 
+from aemr_bot import keyboards as kbds
 from aemr_bot import texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
@@ -40,7 +41,6 @@ async def _show_appeal_card_or_result(
     На случай если обращение не найдено или user пуст — fallback
     короткое сообщение оператору, без card-render.
     """
-    from aemr_bot import keyboards as kbds
     from aemr_bot.services import admin_card as admin_card_service
 
     try:
@@ -98,7 +98,6 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
     - сбрасываем активные wizard'ы (broadcast, add-operator) этого
       оператора, чтобы следующий текст не утёк туда
     """
-    from aemr_bot import keyboards as kbds
     from aemr_bot.db.models import AppealStatus
     from aemr_bot.handlers import admin_operators
     from aemr_bot.handlers import broadcast as broadcast_handler
@@ -217,7 +216,6 @@ async def run_reply_cancel(event) -> None:
     """Кнопка «❌ Отменить ответ» под подсказкой ввода."""
     from aemr_bot.handlers import operator_reply as op_reply
     from aemr_bot.utils.event import ack_callback
-    from aemr_bot import keyboards as kbds
 
     operator_id = get_user_id(event)
     if operator_id is None:
@@ -329,7 +327,6 @@ async def run_block_for_appeal(
     event, appeal_id: int, *, blocked: bool
 ) -> None:
     """Кнопки «🚫 Заблокировать жителя» / «✅ Разблокировать»."""
-    from aemr_bot import keyboards as kbds
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_role(event, OperatorRole.IT):
@@ -386,7 +383,6 @@ async def run_show_attachments(event, appeal_id: int) -> None:
         )
     await ack_callback(event)
     if appeal is None:
-        from aemr_bot import keyboards as kbds
 
         await send_or_edit_screen(
             event,
@@ -407,7 +403,6 @@ async def run_show_attachments(event, appeal_id: int) -> None:
 
 async def run_erase_for_appeal(event, appeal_id: int) -> None:
     """Кнопка «🗑 Удалить ПДн жителя» в карточке обращения (только для it)."""
-    from aemr_bot import keyboards as kbds
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_role(event, OperatorRole.IT):

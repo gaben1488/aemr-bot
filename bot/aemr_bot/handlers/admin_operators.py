@@ -33,6 +33,7 @@ from __future__ import annotations
 import logging
 import time as _time_op
 
+from aemr_bot import keyboards as kbds
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
@@ -115,7 +116,6 @@ def _full_name_from_member(member) -> str:
 
 async def run_operators_menu(event) -> None:
     """Меню «👥 Операторы» в админ-панели для роли it. Точка входа."""
-    from aemr_bot import keyboards as kbds
 
     if not await ensure_role(event, OperatorRole.IT):
         return
@@ -139,7 +139,6 @@ async def run_operators_action(event, payload: str) -> None:
     """Главный диспетчер callback'ов с префиксом `op:opadd:*`,
     `op:opcard:*`, `op:oprole:*`, `op:opchrole:*`, `op:opdeact*`,
     `op:opreact:*`."""
-    from aemr_bot import keyboards as kbds
 
     if not await ensure_role(event, OperatorRole.IT):
         return
@@ -232,7 +231,6 @@ async def run_operators_action(event, payload: str) -> None:
 
 
 async def _show_operators_list(event) -> None:
-    from aemr_bot import keyboards as kbds
 
     async with session_scope() as session:
         ops = await operators_service.list_all(session)
@@ -259,7 +257,6 @@ async def _show_operators_list(event) -> None:
 
 
 async def _show_operator_card(event, payload: str, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     try:
         target_id = int(payload.removeprefix("op:opcard:"))
@@ -327,7 +324,6 @@ async def _show_operator_card(event, payload: str, operator_id: int) -> None:
 
 
 async def _show_role_change(event, payload: str, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     try:
         target_id = int(payload.removeprefix("op:oprole:"))
@@ -364,7 +360,6 @@ async def _show_role_change(event, payload: str, operator_id: int) -> None:
 
 
 async def _apply_role_change(event, payload: str, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     rest = payload.removeprefix("op:opchrole:")
     parts = rest.split(":", 1)
@@ -446,7 +441,6 @@ async def _apply_role_change(event, payload: str, operator_id: int) -> None:
 
 
 async def _show_deactivate_confirm(event, payload: str, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     try:
         target_id = int(payload.removeprefix("op:opdeact:"))
@@ -498,7 +492,6 @@ async def _show_deactivate_confirm(event, payload: str, operator_id: int) -> Non
 
 
 async def _apply_deactivate(event, payload: str, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     try:
         target_id = int(payload.removeprefix("op:opdeact_ok:"))
@@ -551,7 +544,6 @@ async def _apply_deactivate(event, payload: str, operator_id: int) -> None:
 
 
 async def _apply_reactivate(event, payload: str, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     try:
         target_id = int(payload.removeprefix("op:opreact:"))
@@ -603,7 +595,6 @@ async def _apply_reactivate(event, payload: str, operator_id: int) -> None:
 
 
 async def _show_from_group(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     members = await _safe_get_chat_members(event.bot)
     if not members:
@@ -669,7 +660,6 @@ async def _start_add_with_picked(
 ) -> None:
     """Пользователь выбрал участника из группы. Подтягиваем профиль
     из MAX и переходим к выбору роли."""
-    from aemr_bot import keyboards as kbds
 
     if picked_user_id == operator_id:
         await send_or_edit_screen(
@@ -721,7 +711,6 @@ async def _start_add_with_picked(
 
 
 async def _start_manual_add(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     # Сбрасываем чужие wizard'ы и reply-intent этого оператора
     from aemr_bot.handlers import broadcast as broadcast_handler
@@ -749,7 +738,6 @@ async def _start_manual_add(event, operator_id: int) -> None:
 
 
 async def _apply_role_choice(event, suffix: str, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     role_value = suffix.removeprefix("role:")
     valid = {r.value for r in OperatorRole}
@@ -802,7 +790,6 @@ async def _apply_role_choice(event, suffix: str, operator_id: int) -> None:
 
 
 async def _apply_name_keep(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     state = _op_wizard_get(operator_id)
     if state is None or state.get("step") != "picked_role":
@@ -821,7 +808,6 @@ async def _apply_name_keep(event, operator_id: int) -> None:
 
 
 async def _start_name_edit(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     state = _op_wizard_get(operator_id)
     if state is None:
@@ -845,7 +831,6 @@ async def _start_name_edit(event, operator_id: int) -> None:
 
 
 async def _back_to_role_pick(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     state = _op_wizard_get(operator_id)
     if state is None:
@@ -870,7 +855,6 @@ async def _back_to_role_pick(event, operator_id: int) -> None:
 
 
 async def _show_add_confirm(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     state = _op_wizard_get(operator_id)
     if state is None:
@@ -893,7 +877,6 @@ async def _show_add_confirm(event, operator_id: int) -> None:
 
 
 async def _confirm_save(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     state = _op_wizard_get(operator_id)
     if state is None:
@@ -963,7 +946,6 @@ async def _confirm_save(event, operator_id: int) -> None:
 async def handle_operators_wizard_text(event, text: str) -> bool:
     """Перехватчик текстовых сообщений в админ-группе на стороне wizard'а.
     Возвращает True, если сообщение поглощено."""
-    from aemr_bot import keyboards as kbds
 
     operator_id = get_user_id(event)
     if operator_id is None:

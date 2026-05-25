@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 
+from aemr_bot import keyboards as kbds
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, get_operator
@@ -112,7 +113,6 @@ async def _do_open_tickets(event) -> None:
     from sqlalchemy import select
     from sqlalchemy.orm import selectinload
 
-    from aemr_bot import keyboards as kbds
     from aemr_bot.db.models import Appeal, AppealStatus
 
     async with session_scope() as session:
@@ -225,7 +225,6 @@ async def _do_diag(event) -> None:
 
     from sqlalchemy import func, select
 
-    from aemr_bot import keyboards as kbds
     from aemr_bot.db.models import (
         Appeal,
         AppealStatus,
@@ -424,7 +423,6 @@ async def _do_diag(event) -> None:
 
 async def _do_backup(event) -> None:
     """Снять pg_dump прямо сейчас. Общая реализация для /backup и кнопки."""
-    from aemr_bot import keyboards as kbds
     from aemr_bot.services import db_backup
 
     await send_or_edit_screen(

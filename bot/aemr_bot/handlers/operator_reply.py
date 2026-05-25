@@ -30,6 +30,12 @@ from aemr_bot.utils.event import (
 log = logging.getLogger(__name__)
 
 
+# Маркер «🆔 №N» бот шлёт в карточках /open_tickets и followup. Hot path
+# (каждый swipe-reply оператора), поэтому компилируем один раз на module-
+# level вместо `re.search(...)` внутри функции.
+_APPEAL_MARKER_RE = re.compile(r"🆔 №(\d+)")
+
+
 # Защита от двойного ответа: оператор за пару секунд может нажать
 # свайп-reply и параллельно набрать /reply N. Оба пути доходят до
 # `_deliver_operator_reply` независимо. Без дедупликации житель
@@ -699,10 +705,10 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
             # уникальна, в обычном тексте обращения не встречается.
             # Прежний «[appeal:N]» был стабилен по regex, но выглядел как
             # код; новый формат читаем оператором глазами.
-            match = re.search(r"🆔 №(\d+)", replied_text)
+            match = _APPEAL_MARKER_RE.search(replied_text)
             if match:
                 appeal_id_from_text = int(match.group(1))
-        elif replied_text and re.search(r"🆔 №(\d+)", replied_text):
+        elif replied_text and _APPEAL_MARKER_RE.search(replied_text):
             log.warning(
                 "operator_reply: маркер 🆔 №N в НЕ-bot сообщении — "
                 "игнорируем (защита от spoofing). operator=%s",
