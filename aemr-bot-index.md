@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 03:44:22 UTC`
+Generated at: `2026-05-25 04:31:03 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `198`
 Max file size: `300 KB`
@@ -192,7 +192,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/Политика.md` (6113 bytes)
 - `docs/Политика_v2.md` (28793 bytes)
 - `docs/Регламент_v6_draft.md` (21119 bytes)
-- `infra/.env.example` (10160 bytes)
+- `infra/.env.example` (13531 bytes)
 - `infra/docker-compose.yml` (5867 bytes)
 - `infra/Dockerfile` (1655 bytes)
 - `infra/nginx/feedback.conf` (976 bytes)
@@ -52466,8 +52466,8 @@ SHA-256: `387d8e83ad12029c8aad5a42774efaab5564ebbc589d3e4eba4a41607c8795c3`
 
 ### `infra/.env.example`
 
-Size: `10160` bytes  
-SHA-256: `ba4fdb7835974d401357875b1ecb129d8349234fbb34c92d32d8b242b300625c`
+Size: `13531` bytes  
+SHA-256: `a33bac25ddca288804ed6c6f990e9e19e40c7f5b6ee2a557e46b7eb411709a4a`
 
 ```text
 # Бот в MAX
@@ -52561,6 +52561,20 @@ ATTACHMENTS_PER_RELAY_MESSAGE=10
 # вызова getUpdates: сколько MAX держит соединение в ожидании событий.
 POLLING_TIMEOUT_SECONDS=30
 
+# Тайм-аут на один HTTP-запрос к MAX API (send_message / edit_message /
+# answers / getUpdates). Диапазон 0.1..180.0. maxapi default = 150;
+# при sequential polling один тормозящий запрос блокирует все
+# следующие тапы — видимое «бот завис». 30 секунд — нормальный ack
+# / send должен отвечать за секунды, дольше = баг MAX, нет смысла
+# блокировать оператора.
+MAX_API_TIMEOUT_SECONDS=30
+
+# Retry на 502/503/504 от MAX, диапазон 0..5. maxapi default = 3 с
+# экспоненциальным backoff (1s + 2s + 4s = 7s сверх timeout). Один
+# retry достаточно для transient blips; быстрее провал лучше для
+# интерактивного UX оператора, чем долгие повторы.
+MAX_API_RETRIES=1
+
 # Рассылка
 BROADCAST_MAX_CHARS=1000
 # Сколько картинок оператор может приложить к одной рассылке — настройка
@@ -52598,11 +52612,21 @@ BACKUP_MINUTE=0
 BACKUP_LOCAL_DIR=/backups
 BACKUP_KEEP_COUNT=8
 
-# Шифрование GPG (опционально). Пустое значение означает, что
-# выгрузка базы хранится как обычный текст SQL. В production
-# обязательно задать кодовую фразу из 32+ случайных символов.
-# Сгенерировать: python -c "import secrets; print(secrets.token_urlsafe(32))"
+# Шифрование GPG. Минимум 12 символов, рекомендую 32+. В production
+# обязательно: без passphrase бэкап ОТКАЗЫВАЕТСЯ запускаться (152-ФЗ:
+# дамп содержит phones / имена / тексты обращений / audit-log; plain
+# `.sql` на диске или в S3 = breach). Открыть plain-режим можно только
+# через явный BACKUP_ALLOW_UNENCRYPTED=1 (см. ниже; только для
+# dev/local-машины).
+# Сгенерировать: python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+# При смене passphrase: запиши новую в password manager, иначе старые
+# `.sql.gpg` файлы не расшифровать.
 BACKUP_GPG_PASSPHRASE=
+
+# Opt-in на plain `.sql` дамп без шифрования. По умолчанию пусто →
+# бэкап без BACKUP_GPG_PASSPHRASE отказан. Установить `1` ТОЛЬКО на
+# dev/local-машине, в production это запрещено политикой 152-ФЗ.
+BACKUP_ALLOW_UNENCRYPTED=
 
 # Копия в S3-хранилище (опционально). Если заполнены все четыре поля,
 # каждый бэкап дополнительно загружается в облачное хранилище.
@@ -52615,6 +52639,32 @@ BACKUP_S3_SECRET_KEY=
 
 # Внешняя проверка здоровья
 HEALTHCHECK_URL=
+
+# =====================================================================
+# Retention и rate-limit для жителя
+# =====================================================================
+#
+# Без явных значений работают defaults, перечисленные ниже. Указывай
+# только если хочешь отклониться от default.
+
+# Сколько дней хранить записи audit_log (операторские действия с PII
+# в `details`: setting_update before/after, block/unblock, erase,
+# reopen, close и пр.). Диапазон 30..3650. Default 365 — год аудита,
+# типовая глубина расследования инцидента. Ежедневная cron-job
+# `audit-log-retention` в 04:15 Камчатки удаляет старше cutoff.
+AUDIT_LOG_RETENTION_DAYS=365
+
+# Лимит дополнений жителя на одно обращение в час. Диапазон 1..100.
+# Default 5. Каждое дополнение публикует ПОЛНУЮ admin-карточку с relay
+# вложений — без лимита один житель мог бы залить чат сотнями карточек
+# за минуту. При нарушении бот вежливо отказывает, обращение не
+# пересоздаётся.
+FOLLOWUP_MAX_PER_HOUR_PER_APPEAL=5
+
+# Минимальный интервал между двумя дополнениями жителя по одному
+# обращению, секунд. Диапазон 0..3600. Default 30. Защита от двойного
+# тапа и скрипт-флуда.
+FOLLOWUP_MIN_INTERVAL_SECONDS=30
 
 # Стартовые данные (welcome.md, contacts.json, тематики и т.п.)
 SEED_DIR=/app/seed
