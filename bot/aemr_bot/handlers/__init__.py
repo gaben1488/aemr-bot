@@ -20,35 +20,19 @@ class IdempotencyMiddleware(BaseMiddleware):
 
 
 def _attach_outer_middleware(dp: Dispatcher, middleware: BaseMiddleware) -> None:
-    """Подключить промежуточный слой как внешний в разных версиях maxapi.
+    """Подключить outer middleware. Полагается на публичный API maxapi 1.1+.
 
-    Форма меняется от выпуска к выпуску:
-    - 1.1+ предоставляет `register_outer_middleware(mw)` (PR #134);
-    - 0.9.18+ имел вызываемый метод `outer_middleware(mw)` (deprecated в 1.1);
-    - В более ранних 0.9.0–0.9.17 был только `middlewares` со вставкой в начало.
-
-    Используем `register_outer_middleware` первым — это публичный API 1.1+,
-    fallback на старые формы остаётся для backward-compat.
+    Pyproject pin = `maxapi~=1.1`, поэтому 1.1.x гарантированно даёт
+    `register_outer_middleware`. Если апгрейд сломал API — отказываем
+    ясной ошибкой, без silent-fallback на устаревшие формы.
     """
     register = getattr(dp, "register_outer_middleware", None)
-    if callable(register):
-        register(middleware)
-        return
-    add = getattr(dp, "outer_middleware", None)
-    if callable(add):
-        add(middleware)
-        return
-    bucket = getattr(dp, "outer_middlewares", None)
-    if isinstance(bucket, list):
-        bucket.append(middleware)
-        return
-    bucket = getattr(dp, "middlewares", None)
-    if isinstance(bucket, list):
-        bucket.insert(0, middleware)
-        return
-    raise RuntimeError(
-        "у maxapi.Dispatcher нет точки подключения middleware — проверьте установленную версию"
-    )
+    if not callable(register):
+        raise RuntimeError(
+            "maxapi.Dispatcher.register_outer_middleware отсутствует — "
+            "ожидается maxapi>=1.1; проверь pyproject.toml и uv sync"
+        )
+    register(middleware)
 
 
 def register_handlers(dp: Dispatcher) -> None:

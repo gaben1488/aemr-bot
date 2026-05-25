@@ -16,14 +16,13 @@ import logging
 import re
 from typing import Any
 
-from aemr_bot import keyboards, texts
+from aemr_bot import texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import extract_message_id
 
 log = logging.getLogger(__name__)
 
@@ -96,48 +95,6 @@ async def recover_stuck_funnels(bot) -> int:
     if finalized:
         log.info("восстановлено %d застрявших воронок", finalized)
     return finalized
-
-
-async def send_to_admin_card(
-    bot,
-    text: str,
-    *,
-    appeal_id: int | None = None,
-    status: str | None = None,
-    user_blocked: bool = False,
-) -> str | None:
-    """Отправляет отформатированную карточку в админ-группу. Возвращает
-    message_id администратора или None при ошибке.
-
-    Если переданы appeal_id и status — снизу прицепляется клавиатура
-    действий («✉️ Ответить», «⛔ Закрыть», «🔁 Возобновить»). Без них
-    (например, при followup-сообщении) клавиатуру не добавляем.
-
-    user_blocked — текущее состояние блокировки жителя; влияет на
-    label IT-кнопки (Заблокировать ↔ Разблокировать).
-    """
-    if not cfg.admin_group_id:
-        log.warning("ADMIN_GROUP_ID не установлен — карточка для администратора не доставлена")
-        return None
-    attachments = None
-    if appeal_id is not None and status is not None:
-        attachments = [
-            keyboards.appeal_admin_actions(
-                appeal_id, status, is_it=True, user_blocked=user_blocked
-            )
-        ]
-    try:
-        kwargs: dict = {"chat_id": cfg.admin_group_id, "text": text}
-        if attachments is not None:
-            kwargs["attachments"] = attachments
-        sent = await bot.send_message(**kwargs)
-    except Exception:
-        log.exception(
-            "не удалось доставить карточку администратора в chat_id=%s",
-            cfg.admin_group_id,
-        )
-        return None
-    return extract_message_id(sent)
 
 
 def _apply_repeat_context(

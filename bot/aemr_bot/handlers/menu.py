@@ -698,15 +698,18 @@ async def do_consent_revoke(event, max_user_id: int):
         open_appeal_ids=[a.id for a in my_open],
     )
     if my_open:
-        from aemr_bot.handlers.appeal_runtime import send_to_admin_card
+        # Перепубликовать карточки открытых обращений через единый
+        # admin_card.render. force_new=True — это явное событие (отзыв
+        # согласия), нужна новая запись внизу чата как маркер. Снапшот
+        # detached-полей: appeal.user уже подгружен, messages пустой
+        # placeholder чтобы избежать lazy-load после закрытия сессии.
+        from aemr_bot.services import admin_card as admin_card_service
 
         for appeal in my_open:
-            await send_to_admin_card(
-                event.bot,
-                card_format.admin_card(appeal, user),
-                appeal_id=appeal.id,
-                status=appeal.status,
-                user_blocked=user.is_blocked,
+            appeal.user = user
+            appeal.__dict__.setdefault("messages", [])
+            await admin_card_service.render(
+                event.bot, appeal, force_new=True
             )
 
 
