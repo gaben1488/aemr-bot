@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 03:42:49 UTC`
+Generated at: `2026-05-25 03:44:22 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `198`
 Max file size: `300 KB`
@@ -43,23 +43,23 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/__init__.py` (2960 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
-- `bot/aemr_bot/handlers/admin_appeal_ops.py` (20429 bytes)
+- `bot/aemr_bot/handlers/admin_appeal_ops.py` (20206 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9243 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12498 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
-- `bot/aemr_bot/handlers/admin_operators.py` (42465 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (23590 bytes)
-- `bot/aemr_bot/handlers/admin_settings.py` (43026 bytes)
+- `bot/aemr_bot/handlers/admin_operators.py` (41687 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (23500 bytes)
+- `bot/aemr_bot/handlers/admin_settings.py` (41929 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (27102 bytes)
-- `bot/aemr_bot/handlers/appeal_funnel.py` (32735 bytes)
+- `bot/aemr_bot/handlers/appeal_funnel.py` (32714 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (11640 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44196 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8595 bytes)
 - `bot/aemr_bot/handlers/menu.py` (47097 bytes)
-- `bot/aemr_bot/handlers/operator_reply.py` (39283 bytes)
+- `bot/aemr_bot/handlers/operator_reply.py` (39614 bytes)
 - `bot/aemr_bot/handlers/start.py` (17005 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (63429 bytes)
@@ -68,7 +68,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/admin_card.py` (9348 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6079 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
-- `bot/aemr_bot/services/appeals.py` (24893 bytes)
+- `bot/aemr_bot/services/appeals.py` (24823 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
@@ -136,7 +136,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_final_p1_regressions.py` (6078 bytes)
 - `bot/tests/test_funnel_state_hardening.py` (6421 bytes)
 - `bot/tests/test_geo.py` (9324 bytes)
-- `bot/tests/test_handlers_appeal_funnel.py` (24866 bytes)
+- `bot/tests/test_handlers_appeal_funnel.py` (24730 bytes)
 - `bot/tests/test_handlers_auth_broadcast.py` (6976 bytes)
 - `bot/tests/test_handlers_common.py` (3572 bytes)
 - `bot/tests/test_handlers_funnel.py` (9458 bytes)
@@ -3207,8 +3207,8 @@ async def current_user(
 
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
-Size: `20429` bytes  
-SHA-256: `8685c61a8bb4aaeb788cc262f2e553a656f24c397a6a6b1ee15d1ca3159a517b`
+Size: `20206` bytes  
+SHA-256: `af3e28e4080b7be10fc5c31360eef0cf5bb213d149c3d169296ae2f0ed10f916`
 
 ```python
 """Действия оператора над конкретным обращением.
@@ -3225,6 +3225,7 @@ from __future__ import annotations
 
 import logging
 
+from aemr_bot import keyboards as kbds
 from aemr_bot import texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
@@ -3253,7 +3254,6 @@ async def _show_appeal_card_or_result(
     На случай если обращение не найдено или user пуст — fallback
     короткое сообщение оператору, без card-render.
     """
-    from aemr_bot import keyboards as kbds
     from aemr_bot.services import admin_card as admin_card_service
 
     try:
@@ -3311,7 +3311,6 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
     - сбрасываем активные wizard'ы (broadcast, add-operator) этого
       оператора, чтобы следующий текст не утёк туда
     """
-    from aemr_bot import keyboards as kbds
     from aemr_bot.db.models import AppealStatus
     from aemr_bot.handlers import admin_operators
     from aemr_bot.handlers import broadcast as broadcast_handler
@@ -3430,7 +3429,6 @@ async def run_reply_cancel(event) -> None:
     """Кнопка «❌ Отменить ответ» под подсказкой ввода."""
     from aemr_bot.handlers import operator_reply as op_reply
     from aemr_bot.utils.event import ack_callback
-    from aemr_bot import keyboards as kbds
 
     operator_id = get_user_id(event)
     if operator_id is None:
@@ -3542,7 +3540,6 @@ async def run_block_for_appeal(
     event, appeal_id: int, *, blocked: bool
 ) -> None:
     """Кнопки «🚫 Заблокировать жителя» / «✅ Разблокировать»."""
-    from aemr_bot import keyboards as kbds
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_role(event, OperatorRole.IT):
@@ -3599,7 +3596,6 @@ async def run_show_attachments(event, appeal_id: int) -> None:
         )
     await ack_callback(event)
     if appeal is None:
-        from aemr_bot import keyboards as kbds
 
         await send_or_edit_screen(
             event,
@@ -3620,7 +3616,6 @@ async def run_show_attachments(event, appeal_id: int) -> None:
 
 async def run_erase_for_appeal(event, appeal_id: int) -> None:
     """Кнопка «🗑 Удалить ПДн жителя» в карточке обращения (только для it)."""
-    from aemr_bot import keyboards as kbds
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_role(event, OperatorRole.IT):
@@ -4635,8 +4630,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/admin_operators.py`
 
-Size: `42465` bytes  
-SHA-256: `1ebf0992eb1ca21f3af1697367db3691415b1cc3a755384d725a9d57f501441b`
+Size: `41687` bytes  
+SHA-256: `d84527b281f8a3498474a1497ae1a8d6a00fc9f62d65c55fb84b0f27aaed9c8a`
 
 ```python
 """Управление операторами через кнопочные wizard'ы.
@@ -4674,6 +4669,7 @@ from __future__ import annotations
 import logging
 import time as _time_op
 
+from aemr_bot import keyboards as kbds
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
@@ -4756,7 +4752,6 @@ def _full_name_from_member(member) -> str:
 
 async def run_operators_menu(event) -> None:
     """Меню «👥 Операторы» в админ-панели для роли it. Точка входа."""
-    from aemr_bot import keyboards as kbds
 
     if not await ensure_role(event, OperatorRole.IT):
         return
@@ -4780,7 +4775,6 @@ async def run_operators_action(event, payload: str) -> None:
     """Главный диспетчер callback'ов с префиксом `op:opadd:*`,
     `op:opcard:*`, `op:oprole:*`, `op:opchrole:*`, `op:opdeact*`,
     `op:opreact:*`."""
-    from aemr_bot import keyboards as kbds
 
     if not await ensure_role(event, OperatorRole.IT):
         return
@@ -4873,7 +4867,6 @@ async def run_operators_action(event, payload: str) -> None:
 
 
 async def _show_operators_list(event) -> None:
-    from aemr_bot import keyboards as kbds
 
     async with session_scope() as session:
         ops = await operators_service.list_all(session)
@@ -4900,7 +4893,6 @@ async def _show_operators_list(event) -> None:
 
 
 async def _show_operator_card(event, payload: str, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     try:
         target_id = int(payload.removeprefix("op:opcard:"))
@@ -4968,7 +4960,6 @@ async def _show_operator_card(event, payload: str, operator_id: int) -> None:
 
 
 async def _show_role_change(event, payload: str, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     try:
         target_id = int(payload.removeprefix("op:oprole:"))
@@ -5005,7 +4996,6 @@ async def _show_role_change(event, payload: str, operator_id: int) -> None:
 
 
 async def _apply_role_change(event, payload: str, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     rest = payload.removeprefix("op:opchrole:")
     parts = rest.split(":", 1)
@@ -5087,7 +5077,6 @@ async def _apply_role_change(event, payload: str, operator_id: int) -> None:
 
 
 async def _show_deactivate_confirm(event, payload: str, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     try:
         target_id = int(payload.removeprefix("op:opdeact:"))
@@ -5139,7 +5128,6 @@ async def _show_deactivate_confirm(event, payload: str, operator_id: int) -> Non
 
 
 async def _apply_deactivate(event, payload: str, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     try:
         target_id = int(payload.removeprefix("op:opdeact_ok:"))
@@ -5192,7 +5180,6 @@ async def _apply_deactivate(event, payload: str, operator_id: int) -> None:
 
 
 async def _apply_reactivate(event, payload: str, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     try:
         target_id = int(payload.removeprefix("op:opreact:"))
@@ -5244,7 +5231,6 @@ async def _apply_reactivate(event, payload: str, operator_id: int) -> None:
 
 
 async def _show_from_group(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     members = await _safe_get_chat_members(event.bot)
     if not members:
@@ -5310,7 +5296,6 @@ async def _start_add_with_picked(
 ) -> None:
     """Пользователь выбрал участника из группы. Подтягиваем профиль
     из MAX и переходим к выбору роли."""
-    from aemr_bot import keyboards as kbds
 
     if picked_user_id == operator_id:
         await send_or_edit_screen(
@@ -5362,7 +5347,6 @@ async def _start_add_with_picked(
 
 
 async def _start_manual_add(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     # Сбрасываем чужие wizard'ы и reply-intent этого оператора
     from aemr_bot.handlers import broadcast as broadcast_handler
@@ -5390,7 +5374,6 @@ async def _start_manual_add(event, operator_id: int) -> None:
 
 
 async def _apply_role_choice(event, suffix: str, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     role_value = suffix.removeprefix("role:")
     valid = {r.value for r in OperatorRole}
@@ -5443,7 +5426,6 @@ async def _apply_role_choice(event, suffix: str, operator_id: int) -> None:
 
 
 async def _apply_name_keep(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     state = _op_wizard_get(operator_id)
     if state is None or state.get("step") != "picked_role":
@@ -5462,7 +5444,6 @@ async def _apply_name_keep(event, operator_id: int) -> None:
 
 
 async def _start_name_edit(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     state = _op_wizard_get(operator_id)
     if state is None:
@@ -5486,7 +5467,6 @@ async def _start_name_edit(event, operator_id: int) -> None:
 
 
 async def _back_to_role_pick(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     state = _op_wizard_get(operator_id)
     if state is None:
@@ -5511,7 +5491,6 @@ async def _back_to_role_pick(event, operator_id: int) -> None:
 
 
 async def _show_add_confirm(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     state = _op_wizard_get(operator_id)
     if state is None:
@@ -5534,7 +5513,6 @@ async def _show_add_confirm(event, operator_id: int) -> None:
 
 
 async def _confirm_save(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
 
     state = _op_wizard_get(operator_id)
     if state is None:
@@ -5604,7 +5582,6 @@ async def _confirm_save(event, operator_id: int) -> None:
 async def handle_operators_wizard_text(event, text: str) -> bool:
     """Перехватчик текстовых сообщений в админ-группе на стороне wizard'а.
     Возвращает True, если сообщение поглощено."""
-    from aemr_bot import keyboards as kbds
 
     operator_id = get_user_id(event)
     if operator_id is None:
@@ -5652,8 +5629,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `23590` bytes  
-SHA-256: `318fb3f958fcbdc61cad84d06484849be1c2fdb157a129d1e58f5259c60dbdf4`
+Size: `23500` bytes  
+SHA-256: `f016da8104ffe90e05f830cdf4f19eb564799f357ce03a286a83f009a715493c`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -5667,6 +5644,7 @@ from __future__ import annotations
 
 import logging
 
+from aemr_bot import keyboards as kbds
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, get_operator
@@ -5770,7 +5748,6 @@ async def _do_open_tickets(event) -> None:
     from sqlalchemy import select
     from sqlalchemy.orm import selectinload
 
-    from aemr_bot import keyboards as kbds
     from aemr_bot.db.models import Appeal, AppealStatus
 
     async with session_scope() as session:
@@ -5883,7 +5860,6 @@ async def _do_diag(event) -> None:
 
     from sqlalchemy import func, select
 
-    from aemr_bot import keyboards as kbds
     from aemr_bot.db.models import (
         Appeal,
         AppealStatus,
@@ -6082,7 +6058,6 @@ async def _do_diag(event) -> None:
 
 async def _do_backup(event) -> None:
     """Снять pg_dump прямо сейчас. Общая реализация для /backup и кнопки."""
-    from aemr_bot import keyboards as kbds
     from aemr_bot.services import db_backup
 
     await send_or_edit_screen(
@@ -6160,8 +6135,8 @@ async def _do_backup(event) -> None:
 
 ### `bot/aemr_bot/handlers/admin_settings.py`
 
-Size: `43026` bytes  
-SHA-256: `e223de8a792e6a9e0e9bd6b736fa4de8c75d7e121df1af687587c8850eff416d`
+Size: `41929` bytes  
+SHA-256: `ab3e30601efa43cad6e18739be999dc1cd6fedb1079346f121e91c4b981e94c4`
 
 ```python
 """Иерархическое меню «⚙️ Настройки бота».
@@ -6191,10 +6166,12 @@ import os
 import time as _time
 from typing import Any
 
+from aemr_bot import keyboards as kbds
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
+from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
 from aemr_bot.utils.event import ack_callback, get_user_id, send_or_edit_screen
 
@@ -6268,7 +6245,6 @@ def _render_value(value: Any, *, limit: int = 1500) -> str:
 
 async def run_settings_menu(event) -> None:
     """Главное меню «⚙️ Настройки бота» для роли it."""
-    from aemr_bot import keyboards as kbds
 
     if not await ensure_role(event, OperatorRole.IT):
         return
@@ -6328,7 +6304,6 @@ async def run_settings_action(event, payload: str) -> None:
 
 
 async def _route_set_action(event, operator_id: int, rest: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     if rest == "expert":
         async with session_scope() as session:
@@ -6451,7 +6426,6 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
 
 
 async def _show_text_card(event, key: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     async with session_scope() as session:
         value = await settings_store.get(session, key)
@@ -6488,7 +6462,6 @@ async def _show_text_card(event, key: str) -> None:
 
 
 async def _start_edit_intent(event, operator_id: int, key: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     if key not in settings_store.SCHEMA:
         await send_or_edit_screen(
@@ -6522,7 +6495,6 @@ async def _start_edit_intent(event, operator_id: int, key: str) -> None:
 
 
 async def _show_list_card(event, key: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     async with session_scope() as session:
         items = await settings_store.get(session, key) or []
@@ -6552,7 +6524,6 @@ async def _show_list_card(event, key: str) -> None:
 
 
 async def _list_delete(event, operator_id: int, suffix: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     parts = suffix.split(":", 1)
     if len(parts) != 2:
@@ -6581,7 +6552,6 @@ async def _list_delete(event, operator_id: int, suffix: str) -> None:
             )
             return
         await settings_store.set_value(session, key, items)
-        from aemr_bot.services import operators as ops_svc
         await ops_svc.write_audit(
             session,
             operator_max_user_id=operator_id,
@@ -6598,7 +6568,6 @@ async def _list_delete(event, operator_id: int, suffix: str) -> None:
 
 
 async def _show_obj_card(event, key: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     async with session_scope() as session:
         items = await settings_store.get(session, key) or []
@@ -6648,7 +6617,6 @@ async def _show_obj_card(event, key: str) -> None:
 
 
 async def _show_obj_item(event, suffix: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     parts = suffix.split(":", 1)
     if len(parts) != 2:
@@ -6677,7 +6645,6 @@ async def _show_obj_item(event, suffix: str) -> None:
 
 
 async def _start_obj_add(event, operator_id: int, key: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     _intent_set(operator_id, key=key, kind="obj_add")
     if key == "emergency_contacts":
@@ -6698,7 +6665,6 @@ async def _start_obj_add(event, operator_id: int, key: str) -> None:
 
 
 async def _obj_delete(event, operator_id: int, suffix: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     parts = suffix.split(":", 1)
     if len(parts) != 2:
@@ -6727,7 +6693,6 @@ async def _obj_delete(event, operator_id: int, suffix: str) -> None:
             )
             return
         await settings_store.set_value(session, key, items)
-        from aemr_bot.services import operators as ops_svc
         await ops_svc.write_audit(
             session,
             operator_max_user_id=operator_id,
@@ -6744,7 +6709,6 @@ async def _obj_delete(event, operator_id: int, suffix: str) -> None:
 
 
 async def _show_author_card(event) -> None:
-    from aemr_bot import keyboards as kbds
 
     async with session_scope() as session:
         name = await settings_store.get(session, "commit_author_name")
@@ -6772,7 +6736,6 @@ async def _show_author_card(event) -> None:
 
 
 async def _show_pr_confirm(event) -> None:
-    from aemr_bot import keyboards as kbds
 
     async with session_scope() as session:
         dirty = await settings_store.get_dirty_keys(session)
@@ -6834,7 +6797,6 @@ async def _show_pr_confirm(event) -> None:
 
 
 async def _create_pr(event, operator_id: int) -> None:
-    from aemr_bot import keyboards as kbds
     from aemr_bot.services import repo_sync
 
     async with session_scope() as session:
@@ -6842,7 +6804,6 @@ async def _create_pr(event, operator_id: int) -> None:
         runtime_config = await settings_store.export_synced(session)
         name = await settings_store.get(session, "commit_author_name")
         email = await settings_store.get(session, "commit_author_email")
-        from aemr_bot.services import operators as ops_svc
         op_record = await ops_svc.get(session, operator_id)
     operator_name = op_record.full_name if op_record else f"id={operator_id}"
 
@@ -6891,7 +6852,6 @@ async def _create_pr(event, operator_id: int) -> None:
 
     async with session_scope() as session:
         await settings_store.mark_synced(session, dirty)
-        from aemr_bot.services import operators as ops_svc
         await ops_svc.write_audit(
             session,
             operator_max_user_id=operator_id,
@@ -6921,7 +6881,6 @@ async def _create_pr(event, operator_id: int) -> None:
 
 
 async def _show_pr_diff(event) -> None:
-    from aemr_bot import keyboards as kbds
     from aemr_bot.services import repo_sync
 
     async with session_scope() as session:
@@ -7008,7 +6967,6 @@ async def _show_pr_diff(event) -> None:
 
 
 async def _show_expert_key(event, payload: str) -> None:
-    from aemr_bot import keyboards as kbds
 
     key = payload.removeprefix("op:setkey:")
     if not key:
@@ -7082,7 +7040,6 @@ async def handle_settings_edit_text(event, text: str) -> bool:
 async def _apply_single_edit(
     event, operator_id: int, key: str, new_text: str
 ) -> None:
-    from aemr_bot import keyboards as kbds
 
     ok, msg = settings_store.validate(key, new_text)
     if not ok:
@@ -7095,7 +7052,6 @@ async def _apply_single_edit(
     async with session_scope() as session:
         old_value = await settings_store.get(session, key)
         await settings_store.set_value(session, key, new_text)
-        from aemr_bot.services import operators as ops_svc
         # Полный audit-trail: храним «было → стало» (clip до 200 симв,
         # чтобы не раздувать audit_log на длинных текстах вроде
         # `goodbye_message`). PII под защитой retention (по умолчанию
@@ -7120,7 +7076,6 @@ async def _apply_single_edit(
 async def _apply_list_add(
     event, operator_id: int, key: str, new_text: str
 ) -> None:
-    from aemr_bot import keyboards as kbds
 
     if len(new_text) < 1:
         await event.bot.send_message(
@@ -7150,7 +7105,6 @@ async def _apply_list_add(
             )
             return
         await settings_store.set_value(session, key, items)
-        from aemr_bot.services import operators as ops_svc
         await ops_svc.write_audit(
             session,
             operator_max_user_id=operator_id,
@@ -7164,7 +7118,6 @@ async def _apply_list_add(
 async def _apply_obj_add(
     event, operator_id: int, key: str, new_text: str
 ) -> None:
-    from aemr_bot import keyboards as kbds
 
     lines = [ln.strip() for ln in new_text.split("\n") if ln.strip()]
     if len(lines) < 2:
@@ -7199,7 +7152,6 @@ async def _apply_obj_add(
             )
             return
         await settings_store.set_value(session, key, items)
-        from aemr_bot.services import operators as ops_svc
         await ops_svc.write_audit(
             session,
             operator_max_user_id=operator_id,
@@ -7959,8 +7911,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/appeal_funnel.py`
 
-Size: `32735` bytes  
-SHA-256: `de444b06bb1cbb250a9e50dc8b4f3a1e3ba1ac0f1f36665083dfd931bd844214`
+Size: `32714` bytes  
+SHA-256: `43658a0d1527da29a3830b62d2048cf1fe40c39e5df8ab908fbf40c74c4263be`
 
 ```python
 """FSM-воронка приёма обращения и явного дополнения.
@@ -7985,10 +7937,11 @@ from __future__ import annotations
 
 import logging
 import re
+from datetime import datetime, timezone
 
 from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
-from aemr_bot.db.models import DialogState
+from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.handlers.appeal_runtime import (
@@ -8011,6 +7964,10 @@ from aemr_bot.utils.event import (
     get_user_id,
     send_or_edit_screen,
 )
+
+# Hot path regex (on_awaiting_contact, каждый contact-step жителя).
+# Module-level compile вместо `re.search(...)` внутри функции.
+_PHONE_DIGITS_RE = re.compile(r"\+?\d[\d\s\-()]{9,}\d")
 
 log = logging.getLogger(__name__)
 
@@ -8376,7 +8333,7 @@ async def on_awaiting_contact(event, body, text_body, max_user_id):
     # берём цифры из текстового тела как запасной путь.
     phone = extract_phone(body)
     if phone is None and text_body:
-        digits_match = re.search(r"\+?\d[\d\s\-()]{9,}\d", text_body)
+        digits_match = _PHONE_DIGITS_RE.search(text_body)
         if digits_match:
             phone = digits_match.group(0)
     if phone is None:
@@ -8532,8 +8489,6 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     Отвеченные и закрытые обращения не переоткрываем. Повтор по ним
     оформляется новым связанным обращением через «🔁 Подать похожее».
     """
-    from aemr_bot.config import settings as cfg
-    from aemr_bot.db.models import AppealStatus
     from aemr_bot.services.admin_relay import relay_attachments_to_admin
 
     async with current_user(max_user_id) as (session, user):
@@ -8596,18 +8551,12 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     #    долгого медленного флуда).
     # Если лимит нарушен — НЕ принимаем followup, не сбрасываем state,
     # житель может попробовать ещё раз позже.
-    from datetime import datetime as _dt
-    from datetime import timezone as _tz
-
     async with session_scope() as _rl_session:
-        last_at = await appeals_service.last_followup_at_for_appeal(
-            _rl_session, appeal.id
-        )
-        recent_count = await appeals_service.count_recent_followups_for_appeal(
+        recent_count, last_at = await appeals_service.followup_rate_limit_stats(
             _rl_session, appeal.id, hours=1
         )
     if last_at is not None:
-        elapsed = (_dt.now(_tz.utc) - last_at).total_seconds()
+        elapsed = (datetime.now(timezone.utc) - last_at).total_seconds()
         if elapsed < cfg.followup_min_interval_seconds:
             wait = int(cfg.followup_min_interval_seconds - elapsed)
             await event.message.answer(
@@ -12580,8 +12529,8 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
 
 ### `bot/aemr_bot/handlers/operator_reply.py`
 
-Size: `39283` bytes  
-SHA-256: `250d7f84cb5d50217e3c827d3627a0df19bacfcf0d9877a0c7e8d9a1002c9cc0`
+Size: `39614` bytes  
+SHA-256: `a57f5dbd428fbfad5710636b1a4de0a167e49d07ba74ad6cb841683d8a02af0a`
 
 ```python
 """Логика ответов операторов и дополнительных сообщений от жителей, вызывается
@@ -12614,6 +12563,12 @@ from aemr_bot.utils.event import (
 )
 
 log = logging.getLogger(__name__)
+
+
+# Маркер «🆔 №N» бот шлёт в карточках /open_tickets и followup. Hot path
+# (каждый swipe-reply оператора), поэтому компилируем один раз на module-
+# level вместо `re.search(...)` внутри функции.
+_APPEAL_MARKER_RE = re.compile(r"🆔 №(\d+)")
 
 
 # Защита от двойного ответа: оператор за пару секунд может нажать
@@ -13285,10 +13240,10 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
             # уникальна, в обычном тексте обращения не встречается.
             # Прежний «[appeal:N]» был стабилен по regex, но выглядел как
             # код; новый формат читаем оператором глазами.
-            match = re.search(r"🆔 №(\d+)", replied_text)
+            match = _APPEAL_MARKER_RE.search(replied_text)
             if match:
                 appeal_id_from_text = int(match.group(1))
-        elif replied_text and re.search(r"🆔 №(\d+)", replied_text):
+        elif replied_text and _APPEAL_MARKER_RE.search(replied_text):
             log.warning(
                 "operator_reply: маркер 🆔 №N в НЕ-bot сообщении — "
                 "игнорируем (защита от spoofing). operator=%s",
@@ -16231,8 +16186,8 @@ async def relay_attachments_to_admin(
 
 ### `bot/aemr_bot/services/appeals.py`
 
-Size: `24893` bytes  
-SHA-256: `7d905ea1a7715cd891b2296625aa0141f822b01442b6a2e8ca303abbd8ea177c`
+Size: `24823` bytes  
+SHA-256: `b6201e27110b7309a1e5103b267eafd76ab81188670e2d3dd762448af22cc3cd`
 
 ```python
 from datetime import datetime, timedelta, timezone
@@ -16423,43 +16378,34 @@ async def list_for_user(
     return list(res)
 
 
-async def count_recent_followups_for_appeal(
+async def followup_rate_limit_stats(
     session: AsyncSession, appeal_id: int, *, hours: int = 1
-) -> int:
-    """SEC #5: сколько followup'ов житель прислал по обращению за
-    `hours` часов. Используется в rate-limit followup-флуда.
+) -> tuple[int, datetime | None]:
+    """SEC #5: rate-limit статистика по followup'ам жителя за `hours` часов.
 
-    Считаем только direction=FROM_USER — operator-ответы не должны
-    блокировать жителя слать дополнения.
+    Возвращает `(recent_count, last_at)` одним SQL-запросом вместо двух
+    раздельных (`count_recent_followups_for_appeal` + `last_followup_at_for_appeal`).
+    Меньше round-trip'ов под нагрузкой; обе метрики нужны вместе при
+    каждом followup-тапе.
+
+    Считаем только `direction=FROM_USER` — operator-ответы не должны
+    блокировать жителя слать дополнения. `last_at` — глобальный max
+    (не ограничен окном hours), нужен для min-interval-проверки.
     """
     threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
-    return (
-        await session.scalar(
-            select(func.count())
-            .select_from(Message)
-            .where(
+    row = (
+        await session.execute(
+            select(
+                func.count().filter(Message.created_at >= threshold),
+                func.max(Message.created_at),
+            ).where(
                 Message.appeal_id == appeal_id,
                 Message.direction == MessageDirection.FROM_USER.value,
-                Message.created_at >= threshold,
             )
         )
-    ) or 0
-
-
-async def last_followup_at_for_appeal(
-    session: AsyncSession, appeal_id: int
-) -> datetime | None:
-    """SEC #5: timestamp последнего followup жителя по обращению.
-
-    Нужен для min-interval rate-limit (между двумя followup'ами не
-    меньше N секунд). None — followup'ов ещё не было.
-    """
-    return await session.scalar(
-        select(func.max(Message.created_at)).where(
-            Message.appeal_id == appeal_id,
-            Message.direction == MessageDirection.FROM_USER.value,
-        )
-    )
+    ).one()
+    recent_count, last_at = row
+    return (recent_count or 0), last_at
 
 
 async def count_recent_for_user(
@@ -34073,8 +34019,8 @@ class TestGeoConfirmCard:
 
 ### `bot/tests/test_handlers_appeal_funnel.py`
 
-Size: `24866` bytes  
-SHA-256: `977bfc6f2c4bb4109acd49183d39fb71d97eac28fa7355731f3f2a781a0aec3c`
+Size: `24730` bytes  
+SHA-256: `b36b9c03e32a83ccbf7508f691665b3aac4d3182ea23d8bcd9913591b20413f1`
 
 ```python
 """Расширенные тесты handlers/appeal_funnel — состояния воронки и
@@ -34532,12 +34478,9 @@ class TestOnAwaitingFollowupText:
             "aemr_bot.handlers.appeal_funnel.appeals_service.add_user_message",
             AsyncMock(),
         ), patch(
-            # SEC #5: rate-limit-check; happy path = followup ok.
-            "aemr_bot.handlers.appeal_funnel.appeals_service.last_followup_at_for_appeal",
-            AsyncMock(return_value=None),
-        ), patch(
-            "aemr_bot.handlers.appeal_funnel.appeals_service.count_recent_followups_for_appeal",
-            AsyncMock(return_value=0),
+            # SEC #5: rate-limit-check (combined SQL); happy path = followup ok.
+            "aemr_bot.handlers.appeal_funnel.appeals_service.followup_rate_limit_stats",
+            AsyncMock(return_value=(0, None)),
         ), patch(
             "aemr_bot.config.settings.admin_group_id",
             555,
