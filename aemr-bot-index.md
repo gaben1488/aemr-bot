@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 02:50:32 UTC`
+Generated at: `2026-05-25 02:52:10 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `197`
 Max file size: `300 KB`
@@ -72,7 +72,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (13727 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
-- `bot/aemr_bot/services/card_format.py` (15641 bytes)
+- `bot/aemr_bot/services/card_format.py` (14123 bytes)
 - `bot/aemr_bot/services/cron.py` (36406 bytes)
 - `bot/aemr_bot/services/db_backup.py` (15350 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
@@ -17107,8 +17107,8 @@ def is_workday(d: date) -> bool:
 
 ### `bot/aemr_bot/services/card_format.py`
 
-Size: `15641` bytes  
-SHA-256: `0a2b90e2f06392fd4994e9b34bdddb5873d575f514a6d67299cd79b7e050f65a`
+Size: `14123` bytes  
+SHA-256: `89b84144b4accbd8557e24037bf8fa958f5a4b9059ec4a97b730894a7ec39228`
 
 ```python
 from datetime import datetime
@@ -17201,66 +17201,60 @@ def admin_followups_block(appeal: Appeal) -> str:
     return "\n".join(lines)
 
 
-def appeal_timeline_block(appeal: Appeal) -> str:
-    """Хронологическая лента переписки по обращению.
+def _local_short(dt: datetime) -> str:
+    """Короткая локальная дата для timeline — без года, экономия места."""
+    return dt.astimezone(TZ).strftime("%d.%m %H:%M")
 
-    Формат блока:
-        ────────────────
-        История переписки:
-        📩 Дополнение жителя (12.05 14:30): ...
-        📨 Ответ оператора (12.05 15:00): ...
-        📩 Дополнение жителя (13.05 09:15): ...
-        ...
 
-    Берём ВСЕ загруженные messages, сортируем по created_at, рендерим
-    единой timeline. Это «полная история» по запросу владельца — заменяет
-    отдельный followups_block, когда есть хоть один ответ оператора.
+# Лимит сообщений в timeline — карточка не должна разрастаться.
+_TIMELINE_MAX_MESSAGES = 10
 
-    Если ответов оператора нет — возвращаем admin_followups_block
-    (старый формат «Дополнения к обращению»), чтобы не ломать
-    visual layout для обращений в состоянии NEW/IN_PROGRESS без
-    переписки.
+
+def _render_timeline(
+    msgs: list,
+    *,
+    operator_marker: str,
+    user_marker: str,
+    text_limit: int,
+) -> str:
+    """Единый рендер хронологической ленты переписки.
+
+    Используется и admin (📨 Ответ оператора / 📩 Дополнение жителя), и
+    user (📨 Ответ Администрации / 📩 Ваше дополнение) вариантами —
+    маркеры передаются параметрами, а структура блока (заголовок,
+    hidden-count, дата · текст · вложения) единая.
+
+    text_limit — пер-сообщение, для admin меньше (компактная сводка
+    оператору), для user больше (житель хочет видеть полный ответ).
     """
-    msgs = _loaded_messages(appeal)
     if not msgs:
         return ""
-
-    operator_msgs = [
-        m for m in msgs
-        if getattr(m, "direction", None) == MessageDirection.FROM_OPERATOR.value
-    ]
-    # Без ответов оператора — старый блок «Дополнения» (knows only
-    # from_user). Меньше шума в карточке новых обращений.
-    if not operator_msgs:
-        return admin_followups_block(appeal)
-
-    # Все сообщения по времени (от старых к новым)
     ordered = sorted(
         msgs,
-        key=lambda m: getattr(m, "created_at", None) or datetime.min.replace(tzinfo=TZ),
+        key=lambda m: getattr(m, "created_at", None)
+        or datetime.min.replace(tzinfo=TZ),
     )
-    # Ограничиваем длину истории — 10 последних, чтобы карточка не
-    # разрасталась. Старые тоже выводим хедером «Ранее: N сообщений».
-    hidden_count = max(0, len(ordered) - 10)
-    visible = ordered[-10:]
+    hidden_count = max(0, len(ordered) - _TIMELINE_MAX_MESSAGES)
+    visible = ordered[-_TIMELINE_MAX_MESSAGES:]
     lines = ["────────────────", "История переписки:"]
     if hidden_count:
         lines.append(f"Ранее ещё {hidden_count} сообщений (скрыты).")
     for msg in visible:
         direction = getattr(msg, "direction", "")
-        text = (getattr(msg, "text", None) or "").strip()
-        attachments = getattr(msg, "attachments", None) or []
-        created_at = getattr(msg, "created_at", None)
-        time_str = _local_short(created_at) if created_at else ""
         if direction == MessageDirection.FROM_OPERATOR.value:
-            marker = "📨 Ответ оператора"
+            marker = operator_marker
         elif direction == MessageDirection.FROM_USER.value:
-            marker = "📩 Дополнение жителя"
+            marker = user_marker
         else:
             marker = "•"
+        created_at = getattr(msg, "created_at", None)
+        time_str = _local_short(created_at) if created_at else ""
         header = f"{marker} ({time_str})" if time_str else marker
-        body = _clip(text, limit=400) if text else "Без текста."
-        attach_line = attachments_summary_line(attachments)
+        text = (getattr(msg, "text", None) or "").strip()
+        body = _clip(text, limit=text_limit) if text else "Без текста."
+        attach_line = attachments_summary_line(
+            getattr(msg, "attachments", None) or []
+        )
         if attach_line:
             body = f"{body}\n{attach_line}"
         lines.append(f"{header}:")
@@ -17268,9 +17262,29 @@ def appeal_timeline_block(appeal: Appeal) -> str:
     return "\n".join(lines)
 
 
-def _local_short(dt: datetime) -> str:
-    """Короткая локальная дата для timeline — без года, экономия места."""
-    return dt.astimezone(TZ).strftime("%d.%m %H:%M")
+def appeal_timeline_block(appeal: Appeal) -> str:
+    """Хронологическая лента переписки для admin-карточки.
+
+    Если ответов оператора ещё не было — fallback на старый
+    `admin_followups_block` (компактные «Дополнения к обращению»),
+    чтобы не вводить лишний заголовок «История переписки» для
+    обращений в состоянии NEW/IN_PROGRESS без диалога.
+    """
+    msgs = _loaded_messages(appeal)
+    if not msgs:
+        return ""
+    has_operator_msg = any(
+        getattr(m, "direction", None) == MessageDirection.FROM_OPERATOR.value
+        for m in msgs
+    )
+    if not has_operator_msg:
+        return admin_followups_block(appeal)
+    return _render_timeline(
+        msgs,
+        operator_marker="📨 Ответ оператора",
+        user_marker="📩 Дополнение жителя",
+        text_limit=400,
+    )
 
 
 def _citizen_status_line(user: User) -> str:
@@ -17385,49 +17399,16 @@ def user_card(appeal: Appeal) -> str:
 def user_appeal_timeline_block(appeal: Appeal) -> str:
     """Хронологическая лента переписки для карточки жителя.
 
-    Отличия от admin-варианта:
-    - «Ваше дополнение» вместо «Дополнение жителя» (от 2-го лица).
-    - «📨 Ответ Администрации» вместо «📨 Ответ оператора» (для
-      формального восприятия).
-    - Не сокращаем тексты так сильно как в admin (житель хочет видеть
-      полный ответ).
-
-    Если переписки нет — пустая строка, базовый user_card без блока.
+    От admin-варианта отличается только маркерами (от 2-го лица,
+    «Администрации» формальнее «оператора») и лимитом текста
+    (700 vs 400 — житель хочет видеть полный ответ).
     """
-    msgs = _loaded_messages(appeal)
-    if not msgs:
-        return ""
-
-    ordered = sorted(
-        msgs,
-        key=lambda m: getattr(m, "created_at", None) or datetime.min.replace(tzinfo=TZ),
+    return _render_timeline(
+        _loaded_messages(appeal),
+        operator_marker="📨 Ответ Администрации",
+        user_marker="📩 Ваше дополнение",
+        text_limit=700,
     )
-    hidden_count = max(0, len(ordered) - 10)
-    visible = ordered[-10:]
-    lines = ["────────────────", "История переписки:"]
-    if hidden_count:
-        lines.append(f"Ранее ещё {hidden_count} сообщений (скрыты).")
-    for msg in visible:
-        direction = getattr(msg, "direction", "")
-        text = (getattr(msg, "text", None) or "").strip()
-        attachments = getattr(msg, "attachments", None) or []
-        created_at = getattr(msg, "created_at", None)
-        time_str = _local_short(created_at) if created_at else ""
-        if direction == MessageDirection.FROM_OPERATOR.value:
-            marker = "📨 Ответ Администрации"
-        elif direction == MessageDirection.FROM_USER.value:
-            marker = "📩 Ваше дополнение"
-        else:
-            marker = "•"
-        header = f"{marker} ({time_str})" if time_str else marker
-        # Лимит длиннее, чем у admin: житель хочет видеть полный ответ.
-        body = _clip(text, limit=700) if text else "Без текста."
-        attach_line = attachments_summary_line(attachments)
-        if attach_line:
-            body = f"{body}\n{attach_line}"
-        lines.append(f"{header}:")
-        lines.append(body)
-    return "\n".join(lines)
 
 
 def appeal_list_label(appeal: Appeal) -> str:
