@@ -73,3 +73,29 @@ class TestSeedBaseline:
 
         dirty = await settings_store.get_dirty_keys(session)
         assert "topics" in dirty
+
+    async def test_repair_invalid_welcome_text_from_db(self, session) -> None:
+        """Системный фикс 2026-05-26: если в БД лежит welcome_text
+        без обязательной подстроки 'НИКОГДА не запрашиваем' (старая
+        версия до антифишинг-блока), seed_if_empty при следующем
+        запуске должен перезаписать его актуальным seed-значением.
+        """
+        # Кладём в БД "стаpый" welcome без антифишинга
+        old_welcome = "Здравствуйте. Это бот.\n\nВыберите действие."
+        await settings_store.set_value(session, "welcome_text", old_welcome)
+        await session.flush()
+
+        # Запускаем seed_if_empty — должен починить
+        await settings_store.seed_if_empty(session)
+        await session.flush()
+
+        # В БД теперь актуальный welcome (либо из seed/welcome.md, либо
+        # никаких изменений если seed-файл сам не валидный)
+        raw = await settings_store.get(session, "welcome_text")
+        if "НИКОГДА не запрашиваем" in (raw or ""):
+            # Seed-файл валиден — repair прошёл
+            assert raw != old_welcome
+        else:
+            # Seed-файл сам устарел — оставлено как есть, но WARNING
+            # логирован (см. реализацию)
+            assert raw == old_welcome

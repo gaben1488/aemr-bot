@@ -566,7 +566,30 @@ async def get_text_with_fallback(
         )
         return fallback
     if isinstance(raw, str) and raw.strip():
-        return sanitize_settings_text(raw)
+        # **Системный fix 2026-05-26 (найдено владельцем).**
+        # Раньше БД-значение возвращалось как есть, даже если оно
+        # больше не соответствует актуальной SCHEMA. Сценарий-катастрофа:
+        # IT обновил seed/welcome.md (добавил антифишинговый блок) →
+        # SCHEMA в коде получила required_substr "НИКОГДА не запрашиваем"
+        # → но в БД лежит **старая** версия welcome_text без этой
+        # подстроки (seed_if_empty работает только при пустой БД).
+        # Жителю шёл устаревший welcome без защиты.
+        #
+        # Теперь применяем validate(): SCHEMA — единый источник истины.
+        # Если БД-текст не проходит — пишем WARNING (чтобы IT увидел)
+        # и возвращаем безопасный fallback. Жителю всегда уходит
+        # текст, соответствующий актуальным правилам.
+        is_valid, reason = validate(key, raw)
+        if is_valid:
+            return sanitize_settings_text(raw)
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "get_text_with_fallback: БД-значение для %r не проходит "
+            "SCHEMA-validate (%s) — отдаём hardcoded fallback. "
+            "IT-оператору рекомендуется обновить настройку через UI.",
+            key, reason,
+        )
+        return fallback
     return fallback
 
 
@@ -662,18 +685,33 @@ def _read_seed_text(name: str) -> str | None:
 
 
 async def seed_if_empty(session: AsyncSession) -> None:
-    """Заполнить настройки из /seed только для отсутствующих ключей.
+    """Заполнить настройки из /seed для отсутствующих ИЛИ невалидных ключей.
 
-    После вставки сразу помечает свежие SYNCED_KEYS как уже
+    Два режима в одной функции:
+
+    1. **Bootstrap (раньше — основной):** если ключа нет в БД, кладём
+       значение из seed-файла. Это первый запуск на свежей БД.
+
+    2. **Repair (системный фикс 2026-05-26, найдено владельцем):**
+       если ключ есть в БД, но его значение **не проходит SCHEMA-validate**
+       (например, в БД лежит старая версия welcome_text без обязательной
+       подстроки «НИКОГДА не запрашиваем», добавленной позже в SCHEMA),
+       перезаписываем seed-значением. Это закрывает дрейф «код обновился,
+       БД отстала».
+
+    После вставки/перезаписи помечает свежие SYNCED_KEYS как уже
     синхронизированные с репо (synced_at = now()). Логика: seed-файлы
     (`seed/contacts.json`, `seed/topics.json`, `seed/transport_dispatchers.json`)
     физически лежат в репозитории и уже являются baseline'ом, поэтому
     сразу после первого старта бота этим ключам не место в списке
-    «несинхронизированных изменений». Иначе индикатор «3 грязных ключа»
-    горит вечно у каждого свежеустановленного бота — это раздражает
-    оператора и сбивает с толку: настоящих изменений нет, а UI кричит.
+    «несинхронизированных изменений».
+
+    Repair-режим тоже зовёт mark_synced для перезаписанных ключей —
+    автоматическая правка не должна показывать «оператор изменил
+    настройку» в UI (это сделал бот по seed-файлу, не человек).
     """
-    existing = set(await session.scalars(select(Setting.key)))
+    existing_rows = await session.execute(select(Setting.key, Setting.value))
+    existing: dict[str, Any] = {k: v for k, v in existing_rows.all()}
 
     seed_pairs: dict[str, Any] = {}
     if (topics := _read_seed_json("topics.json")) is not None:
@@ -688,15 +726,48 @@ async def seed_if_empty(session: AsyncSession) -> None:
         seed_pairs["consent_text"] = consent
 
     newly_seeded: list[str] = []
+    repaired: list[str] = []
+    import logging as _logging
+    _log = _logging.getLogger(__name__)
     for k, v in seed_pairs.items():
         if k not in existing:
             await set_value(session, k, v)
             newly_seeded.append(k)
+            continue
+        # Repair-режим: проверяем актуальное значение через SCHEMA.
+        # Если в SCHEMA нет правил для ключа (например welcome_text
+        # SCHEMA отсутствует — но у нас есть) — validate вернёт «unknown
+        # key», пропускаем.
+        if k not in SCHEMA:
+            continue
+        is_valid, reason = validate(k, existing[k])
+        if is_valid:
+            continue
+        # Перед перезаписью убеждаемся что seed-значение **само**
+        # проходит validate — иначе можем сломать рабочий бот
+        # неполным seed-файлом.
+        seed_is_valid, seed_reason = validate(k, v)
+        if not seed_is_valid:
+            _log.error(
+                "seed_if_empty: ключ %r невалиден в БД (%s) И в seed-файле "
+                "тоже (%s) — не трогаем. Требуется ручная правка через UI.",
+                k, reason, seed_reason,
+            )
+            continue
+        _log.warning(
+            "seed_if_empty: repair ключа %r — БД-значение не проходит "
+            "validate (%s), перезаписываем актуальным seed-значением.",
+            k, reason,
+        )
+        await set_value(session, k, v)
+        repaired.append(k)
 
-    # Только те свежие ключи, которые входят в SYNCED_KEYS (репо-синк).
+    # Только те свежие/починенные ключи, которые входят в SYNCED_KEYS.
     # welcome_text / consent_text идут не сюда — их baseline хранится в
     # seed/welcome.md и seed/consent.md в формате markdown, репо-синк
     # их не трогает.
-    baseline_synced = [k for k in newly_seeded if k in SYNCED_KEYS]
-    if baseline_synced:
-        await mark_synced(session, baseline_synced)
+    auto_synced = [
+        k for k in newly_seeded + repaired if k in SYNCED_KEYS
+    ]
+    if auto_synced:
+        await mark_synced(session, auto_synced)

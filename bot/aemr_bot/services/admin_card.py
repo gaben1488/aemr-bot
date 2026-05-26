@@ -226,9 +226,19 @@ async def render(
 
     new_mid = extract_message_id(sent)
     if new_mid:
-        # Обновляем общий tracker — теперь это последнее бот-сообщение
-        # в чате (до следующего render любой системы).
-        menu_tracker.set_last_menu_mid(cfg.admin_group_id, new_mid)
+        # SACRED rule (исправлено 2026-05-26 после жалобы владельца):
+        # admin appeal card НЕ является menu-карточкой и НЕ должна
+        # участвовать в `menu_tracker`. Раньше set_last_menu_mid
+        # тут писал mid карточки обращения как «последнее меню»,
+        # из-за чего любой callback `op:menu` / `op:diag` /
+        # `op:stats:*` с кнопок этой же карточки EDIT'ил sacred-
+        # карточку (превращая переписку обращения в админ-меню).
+        #
+        # Теперь — `menu_tracker.clear()`. Следующий клик меню
+        # увидит «текущего меню нет» и пошлёт НОВОЕ сообщение
+        # (через `send_or_edit_screen` ветка без edit). Sacred
+        # admin appeal card остаётся неизменной.
+        menu_tracker.clear(cfg.admin_group_id)
         async with session_scope() as session:
             await appeals_service.set_last_admin_card_mid(
                 session, appeal.id, new_mid
