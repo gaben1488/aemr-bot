@@ -86,6 +86,7 @@ EXACT_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("op:operators", CallbackGroup.OPERATOR_ADMIN, True, "операторы"),
     CallbackRoute("op:settings", CallbackGroup.OPERATOR_ADMIN, True, "настройки"),
     CallbackRoute("op:help_full", CallbackGroup.OPERATOR_ADMIN, True, "полная памятка оператора"),
+    CallbackRoute("op:help_security", CallbackGroup.OPERATOR_ADMIN, True, "памятка: безопасность и антифишинг"),
     CallbackRoute("op:audience", CallbackGroup.OPERATOR_ADMIN, True, "аудитория"),
     CallbackRoute("op:reply_cancel", CallbackGroup.OPERATOR_ADMIN, True, "отмена ответа"),
 )

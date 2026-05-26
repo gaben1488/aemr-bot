@@ -503,6 +503,40 @@ def op_back_to_menu_keyboard():
     return kb.as_markup()
 
 
+def op_help_main_keyboard():
+    """Клавиатура главного экрана памятки оператора (📋).
+
+    Содержит переход на второй экран `🛡️ Безопасность и антифишинг`
+    + возврат в админ-меню. Разбивка на 2 экрана нужна, потому что
+    OP_HELP_FULL_LEGACY (~8230 char) превышал MAX-API limit 4000 char.
+    """
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="🛡️ Безопасность и антифишинг",
+            payload="op:help_security",
+        )
+    )
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_help_security_keyboard():
+    """Клавиатура второго экрана памятки оператора (🛡️ Безопасность).
+
+    Содержит возврат на главный экран памятки + escape в админ-меню.
+    """
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="📋 Назад к памятке",
+            payload="op:help_full",
+        )
+    )
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
 def open_tickets_listing_keyboard(items):
     """Listing открытых обращений в одном сообщении.
 

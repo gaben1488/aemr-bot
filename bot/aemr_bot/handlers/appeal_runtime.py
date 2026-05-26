@@ -16,12 +16,13 @@ import logging
 import re
 from typing import Any
 
-from aemr_bot import texts
+from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import appeals as appeals_service
+from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import users as users_service
 
 log = logging.getLogger(__name__)
@@ -218,13 +219,29 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
         )
 
         try:
-            # «Обращение N принято» — это EVENT-сообщение (запись о
-            # факте принятия), не навигация. Без клавиатуры. Главное
-            # меню жителю всегда доступно через /menu — не нужно
-            # дублировать кнопками в каждом event-ack.
+            # «Обращение N принято» — event-уведомление, но с **полным
+            # главным меню** для конверсии. Восстановлено 2026-05-27
+            # после жалобы владельца: ранее в cfcf372 (PR #62) я ошибочно
+            # убрал кнопки под предлогом «event без CTA». Это заставляло
+            # пожилых жителей вводить /menu вручную — они так не делают
+            # и просто закрывали диалог. Жалоба: «на принято было 6 кнопок,
+            # почему убрал? — идиотское решение, ломаешь хорошее».
+            #
+            # Sacred-rule всё равно соблюдается: APPEAL_ACCEPTED — это
+            # event, прямой `bot.send_message(user_id=...)` НЕ обновляет
+            # menu_tracker. Когда житель тапает «↩️ В меню» на ack,
+            # freshness rule в `_send_or_edit_menu` (Шаг 1 sweep
+            # 2026-05-27) видит callback_mid != tracker (tracker на mid
+            # предыдущего экрана воронки) → send_new menu, ack остаётся
+            # в чате как иммутабельный slice истории.
+            async with session_scope() as _sub_session:
+                subscribed = await broadcasts_service.is_subscribed(
+                    _sub_session, max_user_id
+                )
             await bot.send_message(
                 user_id=max_user_id,
                 text=texts.APPEAL_ACCEPTED.format(number=appeal.id),
+                attachments=[keyboards.main_menu(subscribed=subscribed)],
             )
         except Exception:
             log.exception(
