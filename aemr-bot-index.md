@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-26 02:41:26 UTC`
+Generated at: `2026-05-26 02:55:21 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `225`
+Indexed files: `226`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -54,12 +54,12 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_funnel.py` (33699 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (11791 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (55488 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (58888 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8740 bytes)
 - `bot/aemr_bot/handlers/menu.py` (48812 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (41223 bytes)
-- `bot/aemr_bot/handlers/start.py` (17724 bytes)
+- `bot/aemr_bot/handlers/start.py` (20093 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (64287 bytes)
 - `bot/aemr_bot/main.py` (20473 bytes)
@@ -118,6 +118,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_appeals_service_pg.py` (15229 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
 - `bot/tests/test_bot_init_concurrency.py` (2821 bytes)
+- `bot/tests/test_broadcast_429_backoff.py` (4525 bytes)
 - `bot/tests/test_broadcast_handlers.py` (35403 bytes)
 - `bot/tests/test_broadcast_history_card.py` (10153 bytes)
 - `bot/tests/test_broadcast_templates_handlers.py` (16676 bytes)
@@ -8875,8 +8876,8 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `55488` bytes  
-SHA-256: `6ea380dac74824c626228d04c98a2f93b09cac86208896151077e1b72d787744`
+Size: `58888` bytes  
+SHA-256: `5a03bc9f1ff2eebfd513e46ef88115684de67e04bd8f0fd1bb24001deb6b0afb`
 
 ```python
 """Мастер рассылок и цикл их отправки.
@@ -9506,19 +9507,81 @@ async def _send_one(
     не на каждого подписчика). Картинки идут впереди клавиатуры отписки,
     чтобы UI MAX отрендерил их как content рассылки, а не как payload
     клавиатуры.
+
+    MAXAPI_DEEP_DIVE §14 fix (P1): maxapi 1.1.0 НЕ ретраит HTTP 429
+    и не парсит Retry-After header. Для broadcast на 1000+ жителей
+    это критично — без backoff каждый 429 = потерянный получатель и
+    риск временного бана токена. Ловим MaxApiError с code=429 явно,
+    ждём (Retry-After если есть в raw, иначе exponential 1→2→4 сек),
+    повторяем до 3 раз. После 3 неудачных — фиксируем как failed,
+    идём дальше (не блокируем всю рассылку из-за одного жителя).
     """
-    try:
-        await bot.send_message(
-            user_id=max_user_id,
-            text=body_text,
-            attachments=[
-                *outbound_images,
-                keyboards.broadcast_unsubscribe_keyboard(),
-            ],
-        )
-    except Exception as e:
-        # Обрезаем, чтобы поле с ошибкой не разрасталось. Полный стек живёт в логах.
-        return repr(e)[:500]
+    delay_sec = 1.0
+    for attempt in range(3):
+        try:
+            await bot.send_message(
+                user_id=max_user_id,
+                text=body_text,
+                attachments=[
+                    *outbound_images,
+                    keyboards.broadcast_unsubscribe_keyboard(),
+                ],
+            )
+            return None
+        except Exception as e:
+            err_repr = repr(e)
+            # Детектируем 429 (Too Many Requests) по тексту ошибки.
+            # maxapi.MaxApiError содержит code в repr — проверяем
+            # через подстроку, чтобы не тащить imports конкретного
+            # exception класса (в разных версиях SDK имя отличается).
+            is_rate_limit = (
+                "429" in err_repr
+                or "rate" in err_repr.lower()
+                or "too many" in err_repr.lower()
+            )
+            if not is_rate_limit:
+                # Не rate-limit — обычная ошибка (заблокирован, нет
+                # такого user_id, network), не ретраим.
+                return err_repr[:500]
+            if attempt == 2:
+                # Третья попытка тоже 429 — сдаёмся, идём к следующему
+                # получателю. Глобальная задержка между сообщениями уже
+                # есть в _run_broadcast_impl (rate_delay), 429 на ней —
+                # знак что нагрузка реально упёрлась.
+                log.warning(
+                    "broadcast: 429 после 3 попыток для user_id=%s — пропускаем",
+                    max_user_id,
+                )
+                return err_repr[:500]
+            # Попробовать достать Retry-After из exception, иначе
+            # exponential.
+            wait = _extract_retry_after(e) or delay_sec
+            log.info(
+                "broadcast: 429 для user_id=%s, попытка %d, жду %.1f сек",
+                max_user_id, attempt + 1, wait,
+            )
+            await asyncio.sleep(wait)
+            delay_sec *= 2
+    return "exhausted"
+
+
+def _extract_retry_after(exc: Exception) -> float | None:
+    """Достать Retry-After (в секундах) из MaxApiError если есть.
+
+    maxapi 1.1.0 не парсит этот header явно, но может прокидывать в
+    `exc.raw` или `exc.args`. Best-effort: пробуем атрибуты, ловим
+    AttributeError, возвращаем None если не нашли — тогда вызывающий
+    использует exponential backoff.
+    """
+    raw = getattr(exc, "raw", None)
+    if isinstance(raw, dict):
+        for key in ("retry_after", "Retry-After", "retryAfter"):
+            value = raw.get(key)
+            if value is not None:
+                try:
+                    return float(value)
+                except (TypeError, ValueError):
+                    pass
     return None
 
 
@@ -13395,14 +13458,14 @@ async def handle_command_reply(
 
 ### `bot/aemr_bot/handlers/start.py`
 
-Size: `17724` bytes  
-SHA-256: `bada01f78f93a90cbef3a1a3855df7deaae2b86fcb75f3802a8157aafc5cdfa9`
+Size: `20093` bytes  
+SHA-256: `c5c642f0e8d9a683a549ff0cf0032f079a0a74ef87ca226509840702b69bed0e`
 
 ```python
 import logging
 
 from maxapi import Dispatcher
-from maxapi.types import BotStarted, Command, MessageCreated
+from maxapi.types import BotStarted, BotStopped, Command, MessageCreated
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
@@ -13704,6 +13767,47 @@ def register(dp: Dispatcher) -> None:
         if _is_admin_chat(event):
             return
         await cmd_start(event)
+
+    @dp.bot_stopped()
+    async def _(event: BotStopped):
+        """MAXAPI_DEEP_DIVE §17 fix (P1): житель остановил бота
+        (нажал «остановить» в MAX-клиенте, что эквивалентно блокировке
+        бота). До этого фикса мы продолжали слать broadcast, каждое
+        сообщение возвращалось ошибкой, БД заполнялась failed-записями,
+        и реальная аудитория broadcast'а была меньше декларируемой.
+
+        Здесь мы снимаем подписку на рассылку — broadcast-фильтр в
+        `services/broadcasts.list_subscriber_targets` использует
+        `subscribed_broadcast=True`, теперь житель туда не попадёт. Это
+        мягкая мера: житель может в любой момент написать /start снова
+        и снова подписаться через UI. Audit-log пишется, чтобы остался
+        след для расследования (например, если массовый bot_stopped —
+        знак что в рассылке было что-то отталкивающее).
+        """
+        # Admin-чат не должен генерировать BotStopped (бот всегда в нём),
+        # но проверка дешёвая.
+        if _is_admin_chat(event):
+            return
+        try:
+            user_id = event.user.user_id
+        except AttributeError:
+            return
+        try:
+            async with session_scope() as session:
+                user = await users_service.get_or_create(session, user_id)
+                if user.subscribed_broadcast:
+                    await broadcasts_service.set_subscription(
+                        session, user_id, subscribed=False
+                    )
+                    log.info(
+                        "bot_stopped: житель max_user_id=%s остановил бота — "
+                        "сняли с рассылки", user_id,
+                    )
+        except Exception:
+            log.exception(
+                "bot_stopped: failed to unsubscribe max_user_id=%s",
+                user_id,
+            )
 
     @dp.message_created(Command("start"))
     async def _(event: MessageCreated):
@@ -30135,6 +30239,133 @@ def test_bot_http_timeout_is_below_maxapi_default() -> None:
         f"max_api_timeout_seconds={expected} ≥ 150 — это maxapi-дефолт, "
         f"hang при медленном MAX вернётся."
     )
+```
+
+### `bot/tests/test_broadcast_429_backoff.py`
+
+Size: `4525` bytes  
+SHA-256: `704b63f993feb85ed16b9d7ab339d66066f8f41a8d5621e73e39f73833b7138d`
+
+```python
+"""Тесты на 429-handling в `_send_one` (MAXAPI_DEEP_DIVE §14 P1)
+и на `_extract_retry_after` helper.
+
+Полный broadcast loop (`_run_broadcast_impl`) уже покрыт в
+test_broadcast_handlers.py; здесь — только узкий контракт нового
+поведения вокруг rate-limit'а.
+"""
+from __future__ import annotations
+
+from types import SimpleNamespace
+
+import pytest
+
+
+pytest.importorskip("maxapi")
+
+
+class TestExtractRetryAfter:
+    def test_returns_none_when_no_raw(self) -> None:
+        from aemr_bot.handlers.broadcast import _extract_retry_after
+        exc = RuntimeError("plain")
+        assert _extract_retry_after(exc) is None
+
+    def test_extracts_from_raw_dict(self) -> None:
+        from aemr_bot.handlers.broadcast import _extract_retry_after
+        exc = SimpleNamespace(raw={"retry_after": "5.5"})
+        assert _extract_retry_after(exc) == 5.5
+
+    def test_handles_int_value(self) -> None:
+        from aemr_bot.handlers.broadcast import _extract_retry_after
+        exc = SimpleNamespace(raw={"Retry-After": 10})
+        assert _extract_retry_after(exc) == 10.0
+
+    def test_camelcase_variant(self) -> None:
+        from aemr_bot.handlers.broadcast import _extract_retry_after
+        exc = SimpleNamespace(raw={"retryAfter": 3})
+        assert _extract_retry_after(exc) == 3.0
+
+    def test_invalid_value_returns_none(self) -> None:
+        from aemr_bot.handlers.broadcast import _extract_retry_after
+        exc = SimpleNamespace(raw={"retry_after": "не-число"})
+        assert _extract_retry_after(exc) is None
+
+    def test_raw_not_dict_returns_none(self) -> None:
+        from aemr_bot.handlers.broadcast import _extract_retry_after
+        exc = SimpleNamespace(raw="some string body")
+        assert _extract_retry_after(exc) is None
+
+
+class TestSendOne429Backoff:
+    """Полная асинхронная цепочка с моком bot — проверяем что 429
+    приводит к retry, а обычная ошибка — к immediate return.
+    """
+
+    @pytest.mark.asyncio
+    async def test_429_retries_then_succeeds(self, monkeypatch) -> None:
+        from aemr_bot.handlers import broadcast
+
+        # Считаем вызовы и поведение: первые 2 раза 429, 3-й успех.
+        calls = {"count": 0}
+
+        async def fake_send_message(**kwargs):
+            calls["count"] += 1
+            if calls["count"] <= 2:
+                raise RuntimeError("HTTP 429 Too Many Requests")
+            return SimpleNamespace(body=SimpleNamespace(mid="ok"))
+
+        # Patch asyncio.sleep чтобы тест не реально ждал секунды
+        async def fake_sleep(s):
+            pass
+
+        monkeypatch.setattr(broadcast.asyncio, "sleep", fake_sleep)
+
+        bot = SimpleNamespace(send_message=fake_send_message)
+        result = await broadcast._send_one(
+            bot, max_user_id=42, body_text="hi"
+        )
+        assert result is None  # успех
+        assert calls["count"] == 3  # три попытки
+
+    @pytest.mark.asyncio
+    async def test_429_three_times_returns_error(self, monkeypatch) -> None:
+        from aemr_bot.handlers import broadcast
+
+        async def fake_send_message(**kwargs):
+            raise RuntimeError("HTTP 429 rate limit")
+
+        async def fake_sleep(s):
+            pass
+
+        monkeypatch.setattr(broadcast.asyncio, "sleep", fake_sleep)
+
+        bot = SimpleNamespace(send_message=fake_send_message)
+        result = await broadcast._send_one(
+            bot, max_user_id=42, body_text="hi"
+        )
+        # После 3 попыток — error string возвращён, не None
+        assert result is not None
+        assert "429" in result
+
+    @pytest.mark.asyncio
+    async def test_non_rate_limit_error_no_retry(self) -> None:
+        """Не-429 ошибка возвращается сразу, без retry."""
+        from aemr_bot.handlers import broadcast
+
+        calls = {"count": 0}
+
+        async def fake_send_message(**kwargs):
+            calls["count"] += 1
+            raise RuntimeError("user not found")
+
+        bot = SimpleNamespace(send_message=fake_send_message)
+        result = await broadcast._send_one(
+            bot, max_user_id=42, body_text="hi"
+        )
+        assert result is not None
+        assert "user not found" in result
+        # Только одна попытка — не ретраим обычные ошибки
+        assert calls["count"] == 1
 ```
 
 ### `bot/tests/test_broadcast_handlers.py`
