@@ -62,7 +62,9 @@ class TestAdminCard:
 
         result = admin_card(appeal, user)
 
-        assert "Суть:" in result
+        # Cards UX 2026-05-26: «Суть:» → «📝 Суть обращения:» (более
+        # явный лейбл, эмодзи в начале строки для screen reader).
+        assert "Суть обращения:" in result
         assert "Яма во дворе." in result
         assert "Дополнение к обращению:" in result
         assert "яма у второго подъезда" in result
