@@ -18,12 +18,37 @@ from aemr_bot.utils.event import get_chat_id, send_or_edit_screen
 async def _send_stats_xlsx(
     event, period: str, *, target_chat_id: int | None = None
 ) -> bool:
-    """Сформировать XLSX за период и опубликовать в админ-группе."""
+    """Сформировать XLSX за период и опубликовать в админ-группе.
+
+    MAXAPI_DEEP_DIVE §17 P0.2: build_xlsx + upload занимают 5–30
+    секунд на больших периодах (year / all). Без typing-индикатора
+    оператор не уверен, что бот «работает», может нажать ещё раз и
+    породить дубль. Через `event.message.typing()` MAX показывает
+    «бот печатает…» — оператор видит активность, не дублирует
+    действие. Loop сам шлёт TYPING_ON каждые 4 секунды (см.
+    `ChatActionLoop` в maxapi shortcuts.py).
+
+    Если у event нет `.message` (например, callback без оригинала) —
+    typing пропускаем, основной flow продолжается.
+    """
     from aemr_bot.services import uploads
 
     chat_id = target_chat_id if target_chat_id is not None else get_chat_id(event)
-    async with session_scope() as session:
-        content, title, count = await stats_service.build_xlsx(session, period)
+    typing_cm = None
+    try:
+        typing_cm = event.message.typing()
+    except (AttributeError, TypeError):
+        typing_cm = None
+
+    if typing_cm is not None:
+        async with typing_cm:
+            async with session_scope() as session:
+                content, title, count = await stats_service.build_xlsx(
+                    session, period
+                )
+    else:
+        async with session_scope() as session:
+            content, title, count = await stats_service.build_xlsx(session, period)
     if count == 0:
         await send_or_edit_screen(
             event,

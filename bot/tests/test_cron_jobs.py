@@ -400,6 +400,7 @@ class TestBuildScheduler:
             "events-retention",
             "audit-log-retention",
             "broadcast-draft-reaper",  # F5: orphan DRAFT cleanup
+            "threat-intel-refresh",  # URL threat intel feeds
             "stale-operators-cleanup",  # CVE-9 cleanup, SECURITY_REVIEW M2
             "health-selfcheck",
             "monthly-stats",

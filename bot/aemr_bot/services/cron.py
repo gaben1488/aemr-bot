@@ -261,6 +261,30 @@ async def _job_audit_log_retention() -> None:
         log.exception("audit_log retention failed")
 
 
+async def _job_threat_intel_refresh() -> None:
+    """Обновить локальный set threat-intel host'ов из feed'ов.
+
+    Раз в час подтягиваем URLhaus + ThreatFox (+ PhishTank если задан
+    PHISHTANK_APP_KEY). Локальный set растёт/уменьшается по факту;
+    если все feed'ы отвалились — оставляем старый set, staleness
+    счётчик растёт. См. services/threat_intel.py.
+
+    Запуск на :17 — между нашими утренними job'ами и watchdog'ом,
+    чтобы не пересекаться по нагрузке.
+    """
+    try:
+        from aemr_bot.services import threat_intel
+        counts = await threat_intel.refresh_all()
+        if counts:
+            log.info("threat-intel-refresh ok: %s", counts)
+        else:
+            log.warning(
+                "threat-intel-refresh: ни один feed не отдался"
+            )
+    except Exception:
+        log.exception("threat-intel-refresh crashed")
+
+
 async def _job_reap_orphaned_drafts() -> None:
     """Перевести зависшие DRAFT-рассылки в FAILED.
 
@@ -751,6 +775,16 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             _job_reap_orphaned_drafts,
             CronTrigger(minute=37, timezone=TZ),
             "broadcast-draft-reaper",
+        ),
+        # Threat-intel refresh: подтянуть URLhaus + ThreatFox (+ опц.
+        # PhishTank) host'ы для предупреждения оператора о фишинг-
+        # ссылках в обращениях жителей. Раз в час на :17 — позже
+        # внутренних утренних job'ов, не пересекается по нагрузке.
+        # См. services/threat_intel.py и URL_THREAT_INTEL_2026-05-26.md.
+        (
+            _job_threat_intel_refresh,
+            CronTrigger(minute=17, timezone=TZ),
+            "threat-intel-refresh",
         ),
         # Auto-deactivate stale operators (CVE-9 from SECURITY_REVIEW_2026-05-26).
         # Сверяет активных операторов с реальными членами админ-группы MAX
