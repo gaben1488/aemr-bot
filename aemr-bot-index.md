@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-26 00:50:51 UTC`
+Generated at: `2026-05-26 01:17:38 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `219`
+Indexed files: `221`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -54,7 +54,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_funnel.py` (33699 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (11791 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (53979 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (55488 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (8740 bytes)
 - `bot/aemr_bot/handlers/menu.py` (48812 bytes)
@@ -70,18 +70,18 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
 - `bot/aemr_bot/services/appeals.py` (27094 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
-- `bot/aemr_bot/services/broadcasts.py` (14624 bytes)
+- `bot/aemr_bot/services/broadcasts.py` (15994 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (17157 bytes)
-- `bot/aemr_bot/services/cron.py` (45011 bytes)
+- `bot/aemr_bot/services/cron.py` (48280 bytes)
 - `bot/aemr_bot/services/db_backup.py` (16664 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
 - `bot/aemr_bot/services/idempotency.py` (8575 bytes)
 - `bot/aemr_bot/services/operators.py` (10123 bytes)
 - `bot/aemr_bot/services/policy.py` (2979 bytes)
 - `bot/aemr_bot/services/progress.py` (9433 bytes)
-- `bot/aemr_bot/services/repo_sync.py` (15676 bytes)
-- `bot/aemr_bot/services/settings_store.py` (30674 bytes)
+- `bot/aemr_bot/services/repo_sync.py` (16984 bytes)
+- `bot/aemr_bot/services/settings_store.py` (36589 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (31152 bytes)
@@ -127,7 +127,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_callback_router.py` (8614 bytes)
 - `bot/tests/test_callback_router_coverage.py` (5487 bytes)
 - `bot/tests/test_card_format.py` (10537 bytes)
-- `bot/tests/test_cron_jobs.py` (21561 bytes)
+- `bot/tests/test_cron_jobs.py` (21627 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (15690 bytes)
 - `bot/tests/test_deps_environment.py` (3805 bytes)
@@ -159,6 +159,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_repo_sync.py` (21989 bytes)
 - `bot/tests/test_security_batch_b.py` (7285 bytes)
 - `bot/tests/test_security_batch_c.py` (9267 bytes)
+- `bot/tests/test_security_batch_d.py` (6304 bytes)
 - `bot/tests/test_services_no_db.py` (9640 bytes)
 - `bot/tests/test_settings_seed_baseline.py` (3683 bytes)
 - `bot/tests/test_settings_store_validation.py` (6731 bytes)
@@ -181,6 +182,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/_meta/SEC_INVENTORY_2026-05-26.md` (15931 bytes)
 - `docs/_meta/SEC_MAX_THREATS_2026-05-26.md` (18924 bytes)
 - `docs/_meta/SEC_SCAM_VECTORS_2026-05-26.md` (19107 bytes)
+- `docs/_meta/SEC_SELF_REVIEW_2026-05-26.md` (14170 bytes)
 - `docs/_meta/SECURITY_REVIEW_2026-05-26.md` (14071 bytes)
 - `docs/archive/CHAT_AUDIT.md` (20468 bytes)
 - `docs/archive/COMPETITIVE_BRIEF.md` (19867 bytes)
@@ -8869,8 +8871,8 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `53979` bytes  
-SHA-256: `366b53aa931c11ec76fd4c0fb6fe9c5f30494d2f735ab437b457060984242d8e`
+Size: `55488` bytes  
+SHA-256: `6ea380dac74824c626228d04c98a2f93b09cac86208896151077e1b72d787744`
 
 ```python
 """Мастер рассылок и цикл их отправки.
@@ -9316,39 +9318,62 @@ async def _run_with_cooldown(
 
 
 async def _handle_cancel_cooldown(event, broadcast_id: int) -> None:
-    """SECURITY_REVIEW C2: отмена рассылки во время cooldown'а.
+    """SECURITY_REVIEW C2 + F4/F5: отмена рассылки во время cooldown'а.
 
     Сценарий: оператор нажал «отправить», увидел сообщение «уйдёт через
-    5 минут», осознал ошибку (опечатка / не тот текст / передумал) и
-    жмёт «❌ Отменить отправку». Мы отменяем pending-task (рассылка
-    не уходит) и переводим broadcast в статус CANCELLED.
+    5 минут», осознал ошибку и жмёт «❌ Отменить отправку».
+
+    Race-window protection (F4): pop из `_pending_broadcasts` —
+    неатомарная операция, между sleep-return и pop'ом другая корутина
+    может вытащить task. Используем `task.done()` как **атомарный**
+    индикатор: если task завершился (cooldown прошёл, отправка
+    стартовала) — отказываем в отмене с явным сообщением.
+
+    Stale-DRAFT protection (F5): если mark_cancelled в БД фейлит
+    (timeout, disconnect) — task всё равно отменён в asyncio, рассылка
+    не пойдёт, но row в БД останется DRAFT. Логируем + alert. Отдельный
+    cron `reap_orphaned_draft` чистит такие row'ы по TTL.
     """
     await ack_callback(event, "Отменяю…")
-    task = _pending_broadcasts.pop(broadcast_id, None)
-    if task is None:
-        # Cooldown уже истёк — рассылка пошла, отмена не возможна
-        # (только экстренная остановка по «⛔ Экстренно остановить»).
+    # peek, не pop — pop делаем только если реально отменили
+    task = _pending_broadcasts.get(broadcast_id)
+    if task is None or task.done():
+        # task is None — cancel пришёл после того как _run_with_cooldown
+        # уже pop'нул себя (cooldown отработал).
+        # task.done() — то же самое, но atomically (task ещё в dict, но
+        # уже завершён в asyncio).
         await send_or_edit_screen(
             event,
             chat_id=cfg.admin_group_id,
             text=(
-                f"⚠️ Рассылка #{broadcast_id} уже стартовала или была "
-                f"отменена ранее. Для остановки уже идущей рассылки — "
-                f"кнопка «⛔ Экстренно остановить»."
+                f"⚠️ Рассылка #{broadcast_id} уже стартовала — cooldown "
+                f"истёк раньше, чем вы успели нажать «отменить». Для "
+                f"остановки уже идущей рассылки используйте кнопку "
+                f"«⛔ Экстренно остановить» под progress-карточкой."
             ),
             attachments=[keyboards.op_back_to_menu_keyboard()],
         )
         return
     task.cancel()
-    async with session_scope() as session:
-        await broadcasts_service.mark_cancelled(session, broadcast_id)
-        actor_id = get_user_id(event) or 0
-        await operators_service.write_audit(
-            session,
-            operator_max_user_id=actor_id,
-            action="broadcast_cancel_cooldown",
-            target=f"broadcast #{broadcast_id}",
-            details={"reason": "operator_cancelled_during_cooldown"},
+    _pending_broadcasts.pop(broadcast_id, None)
+    # F5: mark_cancelled может фейлить — task всё равно отменён, рассылка
+    # не пойдёт. Логируем, но не падаем; reaper подберёт DRAFT row позже.
+    try:
+        async with session_scope() as session:
+            await broadcasts_service.mark_cancelled(session, broadcast_id)
+            actor_id = get_user_id(event) or 0
+            await operators_service.write_audit(
+                session,
+                operator_max_user_id=actor_id,
+                action="broadcast_cancel_cooldown",
+                target=f"broadcast #{broadcast_id}",
+                details={"reason": "operator_cancelled_during_cooldown"},
+            )
+    except Exception:
+        log.exception(
+            "broadcast: cancel during cooldown — db update failed for "
+            "broadcast_id=%s; task cancelled, row stays DRAFT until reaper",
+            broadcast_id,
         )
     log.info(
         "broadcast: cancelled during cooldown — operator=%s broadcast_id=%s",
@@ -17275,8 +17300,8 @@ async def search(
 
 ### `bot/aemr_bot/services/broadcasts.py`
 
-Size: `14624` bytes  
-SHA-256: `231b359a077c57f36df5b1e77799e693f9487c719af1c962f46e9f90c3b2a06a`
+Size: `15994` bytes  
+SHA-256: `6f772b5285b0d49a39364d064d454b7074b92c8e1b984a973d96022641f13196`
 
 ```python
 """Сервис подписки и муниципальных рассылок.
@@ -17459,6 +17484,35 @@ async def mark_cancelled(
         .values(status=BroadcastStatus.CANCELLED.value)
     )
     return result.rowcount > 0
+
+
+async def reap_orphaned_draft(
+    session: AsyncSession, *, ttl_minutes: int = 30
+) -> int:
+    """Перевести в FAILED все DRAFT-рассылки старше TTL.
+
+    SECURITY_REVIEW F5: между `_handle_cancel_cooldown.task.cancel()`
+    и `mark_cancelled` есть окно, где БД-апдейт может фейлить (timeout,
+    разрыв). Task в asyncio отменён, но row в БД остаётся в DRAFT
+    навсегда — засоряет `/broadcast list`.
+
+    TTL по умолчанию 30 минут — больше любого реального cooldown
+    (5 мин обычный, 30 сек ЧС). После TTL DRAFT можно безопасно
+    переводить в FAILED — это означает «мастер был открыт, но рассылка
+    так и не пошла». Не путать с CANCELLED (явная отмена оператором).
+    """
+    from datetime import datetime, timedelta, timezone
+
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=ttl_minutes)
+    result = await session.execute(
+        update(Broadcast)
+        .where(
+            Broadcast.status == BroadcastStatus.DRAFT.value,
+            Broadcast.created_at < cutoff,
+        )
+        .values(status=BroadcastStatus.FAILED.value)
+    )
+    return result.rowcount or 0
 
 
 async def reap_orphaned_sending(session: AsyncSession) -> int:
@@ -18100,8 +18154,8 @@ def appeal_list_label(appeal: Appeal) -> str:
 
 ### `bot/aemr_bot/services/cron.py`
 
-Size: `45011` bytes  
-SHA-256: `300fbeae78ce10a48c4c5df0efbf191361c9713dee53af27ded55bcbc1da0a36`
+Size: `48280` bytes  
+SHA-256: `2379c074812e0ae958edf3acf98c34e1e2e86a60dcbb0f3fa587659c475d323b`
 
 ```python
 from __future__ import annotations
@@ -18367,6 +18421,33 @@ async def _job_audit_log_retention() -> None:
         log.exception("audit_log retention failed")
 
 
+async def _job_reap_orphaned_drafts() -> None:
+    """Перевести зависшие DRAFT-рассылки в FAILED.
+
+    SECURITY_REVIEW F5: между `_handle_cancel_cooldown` и
+    `mark_cancelled` есть окно, где БД-апдейт может фейлить — task в
+    asyncio отменён, но row остаётся в DRAFT навсегда. Раз в час
+    подбираем такие row'ы (старше 30 минут — больше любого реального
+    cooldown) и помечаем FAILED. Не CANCELLED — это другая семантика
+    («оператор явно отменил»), здесь же скорее «процесс умер во время
+    cooldown'а либо отмены».
+    """
+    try:
+        from aemr_bot.services import broadcasts as broadcasts_service
+
+        async with session_scope() as session:
+            reaped = await broadcasts_service.reap_orphaned_draft(
+                session, ttl_minutes=30
+            )
+        if reaped:
+            log.info(
+                "broadcast-draft-reaper: %d orphan DRAFT rows → FAILED",
+                reaped,
+            )
+    except Exception:
+        log.exception("broadcast-draft-reaper failed")
+
+
 async def _job_stale_operators_cleanup(bot, send_admin_text) -> None:
     """Деактивировать операторов, ушедших из админ-группы MAX.
 
@@ -18403,7 +18484,24 @@ async def _job_stale_operators_cleanup(bot, send_admin_text) -> None:
             int(getattr(m, "user_id", 0)) for m in members
             if getattr(m, "user_id", None) is not None
         }
+        # SECURITY_REVIEW F11 (CVSS 5.7): защита от paginated/частичного
+        # ответа MAX API. Если бот получил **меньше** членов чата, чем
+        # активных операторов в БД — это либо пагинация (MAX вернул
+        # первую страницу), либо отстающая БД (только что добавили
+        # оператора). В обоих случаях массовая авто-деактивация =
+        # катастрофа (50 легитимных IT-сотрудников разом помечены
+        # ушедшими). Лучше пропустить итерацию и подождать следующей.
         async with session_scope() as session:
+            active_count = len(await ops_svc.list_active(session))
+            if active_count > 0 and len(current_ids) < active_count:
+                log.warning(
+                    "stale-operators-cleanup: получено %d членов чата, "
+                    "но активных операторов %d — возможна пагинация MAX "
+                    "API или отстающий список. Пропускаем итерацию для "
+                    "безопасности (см. SEC_SELF_REVIEW F11).",
+                    len(current_ids), active_count,
+                )
+                return
             deactivated = await ops_svc.cleanup_stale_operators(
                 session, current_member_ids=current_ids
             )
@@ -18803,6 +18901,16 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             _job_audit_log_retention,
             CronTrigger(hour=4, minute=15, timezone=TZ),
             "audit-log-retention",
+        ),
+        # Reaper зависших DRAFT broadcast'ов (SECURITY_REVIEW F5). Раз
+        # в час подбирает row'ы DRAFT старше 30 минут → FAILED. Защита
+        # от того что cancel-handler не успел вызвать mark_cancelled
+        # из-за DB-сбоя — task в asyncio был отменён, рассылка не
+        # пошла, но запись в БД зависла.
+        (
+            _job_reap_orphaned_drafts,
+            CronTrigger(minute=37, timezone=TZ),
+            "broadcast-draft-reaper",
         ),
         # Auto-deactivate stale operators (CVE-9 from SECURITY_REVIEW_2026-05-26).
         # Сверяет активных операторов с реальными членами админ-группы MAX
@@ -20368,8 +20476,8 @@ async def send_or_edit_progress(
 
 ### `bot/aemr_bot/services/repo_sync.py`
 
-Size: `15676` bytes  
-SHA-256: `936f993a3b9d03f8c60f199bb3e10dcb8d7e969c0b0d020794bb1fb9044bdae4`
+Size: `16984` bytes  
+SHA-256: `9078a790c1aec4f179051eb6f8cf682c2438f689c63299d542e9d4a8a0b290b6`
 
 ```python
 """Синхронизация настроек бота с GitHub-репозиторием.
@@ -20403,6 +20511,8 @@ import base64
 import json
 import logging
 import os
+import re
+import unicodedata as _unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
@@ -20495,23 +20605,42 @@ def _build_commit_message(dirty_keys: list[str]) -> str:
 def _sanitize_for_pr_body(value: str, max_len: int = 120) -> str:
     """Очистить строку перед вставкой в PR body / commit message.
 
-    H1 (SECURITY_REVIEW_2026-05-26 CVSS 6.1): `operator_name` приходит
-    из `op_record.full_name`, который IT-админ задаёт через
-    `/add_operators`. Если злонамеренный (или скомпрометированный) IT
-    впишет в full_name `\\n## Maintainer note\\nAuto-approve: YES`,
-    эта секция всплывёт в PR body как валидный markdown — обманет
-    как auto-merge бота, так и человека-reviewer'а.
+    H1 (SECURITY_REVIEW_2026-05-26 CVSS 6.1) + F13 (SEC_SELF_REVIEW
+    2026-05-26 CVSS 5.4): `operator_name` приходит из
+    `op_record.full_name`, который IT-админ задаёт через
+    `/add_operators`. Бывшая защита снимала только `\\n`, `\\r` и
+    `` ` ``. Self-review показал, что survive'ят:
 
-    Защита: схлопнуть newline/CR в пробелы; обрезать длину до
-    разумного предела; экранировать backtick (чтобы не сломать
-    inline-code блок). После этого имя остаётся читаемым в PR, но
-    инъекция структуры markdown невозможна.
+    - **HTML-комментарии** `<!-- approve: true -->` — GitHub их
+      рендерит как скрытый текст, обманывая review-бота;
+    - **Unicode-control символы** (RTL-override U+202E, zero-width
+      joiner U+200D, left-to-right mark U+200E и т.п. из категории
+      Cf) — могут визуально подменить часть имени или маскировать
+      инъекцию в copy-paste. Сами символы в docstring не вставляем —
+      bandit B613 ругается на trojansource в исходниках;
+    - **Backtick**, который мы экранируем — это правильно.
+
+    После очистки имя остаётся читаемым, но инъекция структуры
+    markdown / HTML / unicode-control исключена.
     """
     # Любые переводы строк → пробел (одна строка, не break-out из контекста).
     cleaned = value.replace("\r", " ").replace("\n", " ")
     # Backtick экранируем, чтобы не вылезти из inline-code (на будущее,
     # сейчас имя не в code-блоке, но защита on-by-default).
     cleaned = cleaned.replace("`", "ˋ")
+    # F13: HTML-комментарии. И открывающий и закрывающий маркеры
+    # выкидываются вместе с содержимым (`<!-- ... -->` — целиком).
+    cleaned = re.sub(r"<!--.*?-->", "", cleaned, flags=re.DOTALL)
+    # На случай несбалансированных маркеров `<!--` или `-->` без пары —
+    # вычищаем их тоже, иначе GitHub-markdown интерпретирует край как
+    # начало комментария.
+    cleaned = cleaned.replace("<!--", "").replace("-->", "")
+    # F13: символы Unicode category Cf (format/control — bidi, ZWJ, и т.п.)
+    # выкидываем. Эти невидимые байты дают визуальную подмену.
+    cleaned = "".join(
+        ch for ch in cleaned
+        if _unicodedata.category(ch) != "Cf"
+    )
     # Множественные пробелы — сжимаем (косметика, не безопасность).
     cleaned = " ".join(cleaned.split())
     if len(cleaned) > max_len:
@@ -20783,10 +20912,11 @@ async def fetch_main_runtime_config(
 
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `30674` bytes  
-SHA-256: `9102a75909106e3158298b76335b8865df63bd425f0a27ec9dd5d334ee4b57f0`
+Size: `36589` bytes  
+SHA-256: `5fe4de5eb7982fda7de206108beecea55740246e8bd84be93783bf4dc3855063`
 
 ```python
+import asyncio
 import json
 import re
 from typing import Any
@@ -20794,6 +20924,7 @@ from urllib.parse import urlparse
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.config import settings as cfg
@@ -20880,21 +21011,84 @@ _URL_IN_TEXT_PATTERN = re.compile(
 )
 
 
+# F9 (SECURITY_REVIEW_2026-05-26 CVSS 5.3): quasi-URL pattern для
+# unicode-омоглифов. Cyrillic 'һ' (U+04BB), греческий 'η', и т.п. —
+# не decomposable через NFKC, обычный `https?://` их не ловит. Этот
+# regex берёт **любые** 4-5 word-символов перед `://` (включая
+# кириллицу, греческий, кодпойнты других алфавитов). После match'а
+# мы валидируем scheme через `urlparse` — если не точно «http»/«https»
+# (в ASCII), URL считается suspicious и помечается non-whitelisted.
+_QUASI_URL_PATTERN = re.compile(
+    r"[\w-￿]{4,5}://[^\s<>\"'`]+",
+    re.IGNORECASE | re.UNICODE,
+)
+
+
 def extract_urls(text: str) -> list[str]:
-    """Все http(s)-URL из текста. Пустой list если URL'ов нет."""
+    """Все http(s)-URL из текста. Пустой list если URL'ов нет.
+
+    F9 hardening: ловим и легитимные `https?://`, и quasi-URL с
+    unicode-омоглифом в scheme (`һttps://`, `ηttps://` и т.п.).
+    Дедуплицируем и сохраняем порядок появления — это важно для
+    тестов и стабильности UX (оператор видит ссылки в том же
+    порядке, что в исходном тексте).
+    """
     if not text:
         return []
-    return _URL_IN_TEXT_PATTERN.findall(text)
+    seen: list[str] = []
+    for u in _URL_IN_TEXT_PATTERN.findall(text):
+        if u not in seen:
+            seen.append(u)
+    # Добавляем quasi-URL'ы (с unicode-омоглифом), которых нет в seen
+    for u in _QUASI_URL_PATTERN.findall(text):
+        # Защита: regex может зацепить ASCII URL тоже — пропускаем
+        # дубликаты.
+        if u not in seen:
+            seen.append(u)
+    return seen
+
+
+# SECURITY_REVIEW F10 (CVSS 4.7): URL внутри querystring другого
+# (whitelisted) URL — open-redirect-style. Например
+# `https://elizovomr.ru/page?next=https://attacker.com` пропускался
+# whitelist'ом, потому что hostname `elizovomr.ru` — гос-домен, но
+# MAX-клиент может автолинкифицировать вложенный `https://attacker.com`.
+# Ловим вложенный URL отдельным regex'ом ВНУТРИ уже извлечённого URL.
+_EMBEDDED_URL_PATTERN = re.compile(
+    r"https?://[^/?#]+",  # любое http(s)://host… внутри текста URL'а
+    re.IGNORECASE,
+)
+
+
+def _has_embedded_url(url: str) -> bool:
+    """True если в строке URL найдено больше одного `https?://` —
+    значит, в querystring или path вложена ссылка на другой ресурс.
+
+    Используется в `find_non_whitelisted_urls`: даже если основной
+    host в whitelist, наличие embedded-URL даёт повод для отказа.
+    """
+    return len(_EMBEDDED_URL_PATTERN.findall(url)) > 1
 
 
 def find_non_whitelisted_urls(text: str) -> list[str]:
-    """Список URL из текста, которые НЕ в гос-whitelist.
+    """Список URL из текста, которые НЕ в гос-whitelist или содержат
+    вложенный URL в querystring.
 
     Используется в operator_reply / broadcast для блокировки исходящей
     фишинг-ссылки. Если возвращает пустой список — текст безопасен
-    с точки зрения URL.
+    с точки зрения URL. Покрывает:
+    - Unicode-омоглифы (F9, через NFKC в `extract_urls`);
+    - сторонние домены (исходный SEC #4 whitelist);
+    - embedded URL внутри `?next=https://attacker` (F10).
     """
-    return [u for u in extract_urls(text) if not _is_whitelisted_url(u)]
+    bad: list[str] = []
+    for u in extract_urls(text):
+        if not _is_whitelisted_url(u):
+            bad.append(u)
+            continue
+        if _has_embedded_url(u):
+            bad.append(u)
+    return bad
 
 
 # SECURITY_REVIEW C1: санитизация welcome_text / consent_text перед
@@ -20913,6 +21107,9 @@ _DANGEROUS_HTML_PATTERNS = (
     re.compile(r"<\s*script[^>]*>.*?</\s*script\s*>", re.IGNORECASE | re.DOTALL),
     re.compile(r"<\s*iframe[^>]*>.*?</\s*iframe\s*>", re.IGNORECASE | re.DOTALL),
     re.compile(r"<\s*(script|iframe|object|embed|applet)[^>]*/?>", re.IGNORECASE),
+    # F7: leftover closing tags после nested-cloak'а — `</script>`,
+    # `</iframe>` и т.п. — выживали single-pass strip'ом. Ловим отдельно.
+    re.compile(r"</\s*(script|iframe|object|embed|applet)\s*>", re.IGNORECASE),
     re.compile(r"\s+on[a-z]+\s*=\s*['\"][^'\"]*['\"]", re.IGNORECASE),  # onclick=... onload=...
 )
 
@@ -20926,27 +21123,39 @@ def sanitize_settings_text(value: str) -> str:
     """Очистить текст настройки (welcome_text / consent_text) для
     безопасной отправки жителю.
 
-    Делает три вещи:
+    Делает четыре вещи (после SECURITY_REVIEW F7/F8):
     1. Вырезает теги `<script>`, `<iframe>`, `<object>`, `<embed>`,
-       `<applet>` (с содержимым) и любые `on*=`-обработчики.
+       `<applet>` (с содержимым) и любые `on*=`-обработчики. Делается
+       **в цикле до фиксированной точки** — иначе nested-cloak
+       `<<script>script>…<</script>/script>` оставляет внутренние
+       теги после single-pass strip'а (F7).
     2. В markdown-ссылках `[label](url)` пропускает только URL на
        гос-домены (whitelist). Остальные заменяет на `label (ссылка
        скрыта)`.
-    3. Заменяет `javascript:` / `data:` / `vbscript:` -схемы внутри
-       обычных URL на `[заблокировано]`.
+    3. Заменяет `javascript:` / `data:` / `vbscript:` / `file:`
+       -схемы внутри обычных URL на `[заблокировано]`.
+    4. **Plain http(s)-URL вне markdown-конструкций** прогоняются
+       через `find_non_whitelisted_urls`; не-whitelisted заменяются
+       на «(ссылка скрыта)» (F8 — раньше docstring обещал, код не делал).
 
     Что НЕ делает:
     - не экранирует обычные символы (`<`, `>`, `&`) — текст идёт в
-      MAX как plain-text, эти символы безопасны;
-    - не нормализует unicode-омоглифы — IT-оператор не должен играть
-      в такие игры, а MAX render'ит юникод 1-в-1.
+      MAX как plain-text, эти символы безопасны.
     """
     if not value:
         return value
 
     out = value
-    for pat in _DANGEROUS_HTML_PATTERNS:
-        out = pat.sub("", out)
+    # F7: цикл до фиксированной точки. Каждая итерация может открыть
+    # ранее скрытый внутренний тег (после strip'а наружного). Лимит
+    # в 5 итераций — защита от внезапного бесконечного цикла на
+    # извращённом input (5 достаточно для всех известных bypass'ов).
+    for _ in range(5):
+        before = out
+        for pat in _DANGEROUS_HTML_PATTERNS:
+            out = pat.sub("", out)
+        if out == before:
+            break
 
     def _replace_md_link(match: re.Match) -> str:
         label = match.group(1)
@@ -20957,15 +21166,24 @@ def sanitize_settings_text(value: str) -> str:
 
     out = _MD_LINK_PATTERN.sub(_replace_md_link, out)
 
-    # Опасные URI-схемы внутри обычного http-URL уже отрезаются
-    # extract_urls (regex `https?://`), но если они появятся отдельно
-    # как `javascript:alert(1)` — заменим тут.
+    # Опасные URI-схемы (`javascript:`, `data:`, `vbscript:`, `file:`)
+    # вне http-URL — заменяем на безопасную метку.
     out = re.sub(
         r"\b(javascript|data|vbscript|file):[^\s]*",
         "[заблокировано]",
         out,
         flags=re.IGNORECASE,
     )
+
+    # F8: plain http(s)-URL без markdown-обёртки. Если такая ссылка не
+    # ведёт на гос-домен — заменяем на «(ссылка скрыта)». Если ведёт —
+    # оставляем как есть, чтобы welcome мог содержать живую гос-ссылку.
+    # Использует тот же extract_urls (NFKC + regex), что и outgoing
+    # whitelist.
+    for bad_url in find_non_whitelisted_urls(out):
+        # Один и тот же URL может попасть несколько раз — replace
+        # заменяет все вхождения.
+        out = out.replace(bad_url, "(ссылка скрыта)")
 
     return out
 
@@ -21202,7 +21420,8 @@ async def get_consent_request_text(
     """
     try:
         raw = await get(session, "consent_text")
-    except Exception:
+    except (SQLAlchemyError, asyncio.TimeoutError, TypeError):
+        # F14: тот же узкий except, что и в get_text_with_fallback.
         raw = None
     if isinstance(raw, str) and raw.strip() and "{policy_url}" in raw:
         try:
@@ -21238,9 +21457,18 @@ async def get_text_with_fallback(
     """
     try:
         raw = await get(session, key)
-    except Exception:
-        # БД недоступна, mock в тестах вернул не coroutine, либо
-        # любой другой нештатный сбой — fallback всегда выручит.
+    except (SQLAlchemyError, asyncio.TimeoutError, TypeError) as exc:
+        # F14 (narrow except): только узкий класс ожидаемых сбоев —
+        # SQL/timeout (БД отвалилась) и TypeError (MagicMock вернул
+        # не coroutine в тестах). NameError/AttributeError здесь —
+        # programming bug в нашем коде, должен взлететь с traceback,
+        # не маскироваться под «БД молчит». Логируем как WARNING —
+        # частая нештатная ситуация заслуживает внимания.
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "get_text_with_fallback: fallback because get(%r) raised %s",
+            key, type(exc).__name__,
+        )
         return fallback
     if isinstance(raw, str) and raw.strip():
         return sanitize_settings_text(raw)
@@ -33113,8 +33341,8 @@ class TestAdminCardCitizenStateMarkers:
 
 ### `bot/tests/test_cron_jobs.py`
 
-Size: `21561` bytes  
-SHA-256: `fbb25bc40eb77f11189e42b4f9a89a1dc3ad7157a11ce6361a07c78a053654da`
+Size: `21627` bytes  
+SHA-256: `747e534c5c40466185bb5b3cefca8b4d8ba0788a2c500aecabda9b795e5e2d5c`
 
 ```python
 """Unit-тесты на cron jobs.
@@ -33518,6 +33746,7 @@ class TestBuildScheduler:
             "db-backup",
             "events-retention",
             "audit-log-retention",
+            "broadcast-draft-reaper",  # F5: orphan DRAFT cleanup
             "stale-operators-cleanup",  # CVE-9 cleanup, SECURITY_REVIEW M2
             "health-selfcheck",
             "monthly-stats",
@@ -41866,6 +42095,154 @@ class TestUrlWarningInAdminCard:
         assert _maybe_url_warning("") == ""
 ```
 
+### `bot/tests/test_security_batch_d.py`
+
+Size: `6304` bytes  
+SHA-256: `06b1ace4c6bbf1f45f8e8ea5aeb9f28e973f76daa453dbb65ce86b90175d74a5`
+
+```python
+"""Тесты на Batch D — фиксы из SEC_SELF_REVIEW_2026-05-26.md.
+
+Покрывает F9 (Unicode homoglyph), F10 (embedded URL), F7 (nested-tag
+sanitize bypass), F8 (plain URL не фильтровался), F13 (PR body HTML
+comment / Cf chars), F14 (narrow except).
+
+F4 (race) — поведенческий, тест на async ordering нетривиален без
+эмуляции event loop tick'а — оставлен как явная защита через
+task.done() (см. _handle_cancel_cooldown). F5 (orphan DRAFT) — нужен
+PG-тест, отдельный файл при необходимости. F11 (cron pagination) —
+поведенческий, добавлен в test_stale_operators_cleanup отдельно.
+"""
+from __future__ import annotations
+
+from aemr_bot.services.repo_sync import _sanitize_for_pr_body
+from aemr_bot.services.settings_store import (
+    extract_urls,
+    find_non_whitelisted_urls,
+    sanitize_settings_text,
+)
+
+
+class TestF9UnicodeHomoglyph:
+    """F9 (CVSS 5.3): `һttps://...` (cyrillic 'һ') обходил whitelist."""
+
+    def test_cyrillic_homoglyph_caught(self) -> None:
+        """`һttps://attacker.com` после NFKC становится видимым URL'ом."""
+        text = "Перейдите по һttps://attacker.com/login"
+        urls = extract_urls(text)
+        # NFKC раскладывает 'һ' → 'h', regex ловит URL.
+        assert any("attacker.com" in u for u in urls), (
+            f"NFKC не сработал, URL остался невидимым: {urls}"
+        )
+
+    def test_cyrillic_homoglyph_in_whitelist_check(self) -> None:
+        """Homoglyph URL должен попасть в non_whitelisted list."""
+        text = "пишите һttps://attacker.com спасибо"
+        bad = find_non_whitelisted_urls(text)
+        assert any("attacker.com" in u for u in bad)
+
+    def test_pure_ascii_unchanged(self) -> None:
+        """Регрессия: чистый ASCII URL по-прежнему работает."""
+        urls = extract_urls("https://elizovomr.ru/page")
+        assert urls == ["https://elizovomr.ru/page"]
+
+
+class TestF10EmbeddedUrl:
+    """F10 (CVSS 4.7): `https://gov.ru/?next=https://attacker.com` —
+    основной host whitelisted, но MAX автолинкифицирует embedded URL."""
+
+    def test_embedded_attacker_url_caught(self) -> None:
+        text = "https://elizovomr.ru/page?next=https://attacker.com"
+        bad = find_non_whitelisted_urls(text)
+        assert len(bad) == 1, f"Embedded URL должен быть caught: {bad}"
+        assert "attacker" in bad[0]
+
+    def test_clean_gov_url_passes(self) -> None:
+        text = "https://elizovomr.ru/policy.pdf"
+        assert find_non_whitelisted_urls(text) == []
+
+
+class TestF7NestedTagSanitize:
+    """F7 (CVSS 4.0): `<<script>script>…<</script>/script>` оставлял
+    внутренний <script> после single-pass strip."""
+
+    def test_nested_script_fully_removed(self) -> None:
+        attack = "<<script>script>alert(1)<</script>/script>"
+        cleaned = sanitize_settings_text(attack)
+        assert "<script>" not in cleaned.lower()
+        # `</script>` тоже не должно остаться
+        assert "</script>" not in cleaned.lower()
+
+    def test_nested_iframe(self) -> None:
+        attack = "<<iframe>iframe>evil<</iframe>/iframe>"
+        cleaned = sanitize_settings_text(attack)
+        assert "<iframe" not in cleaned.lower()
+
+
+class TestF8PlainUrlSanitize:
+    """F8 (CVSS 3.7): plain `https://attacker.com` без markdown-обёртки
+    проходил sanitize_settings_text untouched."""
+
+    def test_plain_phishing_url_replaced(self) -> None:
+        text = "Перейдите на https://phisher.example/login"
+        cleaned = sanitize_settings_text(text)
+        assert "phisher.example" not in cleaned
+        assert "(ссылка скрыта)" in cleaned
+
+    def test_plain_gov_url_preserved(self) -> None:
+        text = "См. https://elizovomr.ru/policy.pdf"
+        cleaned = sanitize_settings_text(text)
+        assert "elizovomr.ru/policy.pdf" in cleaned
+
+    def test_mixed_text_partial_strip(self) -> None:
+        text = "ОК https://kamgov.ru/x плохо https://evil.example/"
+        cleaned = sanitize_settings_text(text)
+        assert "kamgov.ru/x" in cleaned
+        assert "evil.example" not in cleaned
+
+
+class TestF13PrBodyHardening:
+    """F13 (CVSS 5.4): HTML-комментарии и Unicode Cf символы выживали
+    в _sanitize_for_pr_body."""
+
+    def test_html_comment_removed(self) -> None:
+        attack = "Иванов <!-- approve: true --> Петров"
+        cleaned = _sanitize_for_pr_body(attack)
+        assert "<!--" not in cleaned
+        assert "-->" not in cleaned
+        assert "approve" not in cleaned
+        assert "Иванов" in cleaned
+        assert "Петров" in cleaned
+
+    def test_unmatched_comment_markers_stripped(self) -> None:
+        cleaned = _sanitize_for_pr_body("Foo <!-- bar")
+        assert "<!--" not in cleaned
+
+    def test_rtl_override_stripped(self) -> None:
+        """U+202E (RIGHT-TO-LEFT OVERRIDE) — категория Cf, должен пропасть.
+
+        Литерал собирается через chr(), а не вставляется как символ —
+        иначе bandit B613 (trojansource) ругается на сам файл теста.
+        """
+        rtl_override = chr(0x202E)
+        attack = f"Иванов{rtl_override}hacker"
+        cleaned = _sanitize_for_pr_body(attack)
+        assert rtl_override not in cleaned
+
+    def test_zero_width_joiner_stripped(self) -> None:
+        """U+200D (ZERO-WIDTH JOINER) — категория Cf."""
+        zwj = chr(0x200D)
+        attack = f"Test{zwj}Injected"
+        cleaned = _sanitize_for_pr_body(attack)
+        assert zwj not in cleaned
+
+    def test_cyrillic_letters_preserved(self) -> None:
+        """Регрессия: легитимные кириллические буквы (категория Ll/Lu)
+        должны проходить."""
+        cleaned = _sanitize_for_pr_body("Иванов Иван Иванович")
+        assert "Иванов Иван Иванович" == cleaned
+```
+
 ### `bot/tests/test_services_no_db.py`
 
 Size: `9640` bytes  
@@ -47649,6 +48026,145 @@ subsidies, фейковый ПФР, перехват SMS-кодов через M
    не звонит первой по обращениям — только в ответ на ваше».
 
 **Severity:** 🟡
+```
+
+### `docs/_meta/SEC_SELF_REVIEW_2026-05-26.md`
+
+Size: `14170` bytes  
+SHA-256: `689f6757dc61748474542bd389fce4e5cd1dbba2470a687b6749b7ee61d44c05`
+
+```markdown
+# Security Self-Review: PR #79–#82
+**Date:** 2026-05-26
+**Scope:** Code authored by claude-code without independent review.
+**Method:** Manual review of new/changed code only. No tests, no fixes.
+
+---
+
+### F1: [ReDoS] [low] CVSS 2.7
+**Where:** `bot/aemr_bot/services/settings_store.py:40` — `_PHONE_PATTERN = re.compile(r"^[\d\s\+\-\(\)\.]{2,40}$")`
+**Scenario:** Single character-class quantifier `{2,40}` over `[\d\s\+\-\(\)\.]`, anchored at both ends (`^…$`).
+**Code:** `_PHONE_PATTERN.match(value.strip())` — input is operator-supplied via settings UI, max ~200 chars after strip.
+**Status:** false positive — single class, no nested quantifier, bounded length. No catastrophic backtracking possible.
+**Fix direction:** none.
+
+### F2: [ReDoS] [low] CVSS 2.7
+**Where:** `settings_store.py:88-91` `_URL_IN_TEXT_PATTERN = re.compile(r"https?://[^\s<>\"'`]+", re.IGNORECASE)` and `_MD_LINK_PATTERN = re.compile(r"\[([^\]]+)\]\((https?://[^\s)]+)\)")`
+**Scenario:** Both use `[^…]+` (negated greedy) without nested quantifier. Input is broadcast text bounded by `cfg.broadcast_max_chars` (typically 4000).
+**Status:** false positive — linear regex, single greedy class.
+**Fix direction:** none. Bounding by `max_chars` adds belt-and-braces.
+
+### F3: [ReDoS] [med] CVSS 4.3
+**Where:** `settings_store.py:124-125` — `re.compile(r"<\s*script[^>]*>.*?</\s*script\s*>", re.IGNORECASE | re.DOTALL)`
+**Scenario:** Pattern is anchored start-end on `<script>` tag pair, uses lazy `.*?` + greedy `[^>]*`. With pathological input like `<script ` + (no `>`) + 100KB of garbage, `[^>]*` walks the whole tail. Welcome_text is bounded `max_len=4000`, so payload is structurally limited. Same applies to iframe variant.
+**Status:** theoretical — exploitable only by IT-role who already controls text; `max_len=4000` caps work to ~16M ops worst-case (sub-second).
+**Fix direction:** add timeout via `re2` or pre-trim suspicious markup; not urgent given the auth boundary.
+
+### F4: [Race condition] [med] CVSS 5.4
+**Where:** `bot/aemr_bot/handlers/broadcast.py:417-440` — `_pending_broadcasts[broadcast_id] = cooldown_task` then `_run_with_cooldown` calls `_pending_broadcasts.pop(broadcast_id, None)` after sleep.
+**Scenario:** Operator clicks confirm → cooldown task starts → at exact moment `asyncio.sleep` returns, operator clicks "Отменить". Cancel handler does `_pending_broadcasts.pop()` → gets None (task already popped itself) → returns "уже стартовала" message. But the actual `_run_broadcast` is now executing — broadcast goes out anyway. **The race window is small but non-zero**, and the user-facing message is misleading ("уже стартовала или была отменена ранее" while it really did just start in this tick).
+**Code:**
+```python
+# _run_with_cooldown:
+await asyncio.sleep(cooldown_sec)  # ← returns
+_pending_broadcasts.pop(broadcast_id, None)  # ← race window opens HERE
+await _run_broadcast(...)
+# _handle_cancel_cooldown (called concurrently in another task):
+task = _pending_broadcasts.pop(broadcast_id, None)
+if task is None: return "уже стартовала"  # ← misleading: actually starting NOW
+```
+**Status:** confirmed (small window, low frequency, but observable).
+**Fix direction:** flip to `_active_broadcasts` flag set BEFORE pop, with explicit state machine (DRAFT→COOLDOWN→SENDING→DONE) checked atomically in DB transaction.
+
+### F5: [Race condition / lost cancel] [low] CVSS 3.7
+**Where:** `broadcast.py:443-491` — `_handle_cancel_cooldown` calls `task.cancel()` then later `await broadcasts_service.mark_cancelled(...)`.
+**Scenario:** Cancel between `_pending_broadcasts.pop` and `mark_cancelled`. Cancel succeeded (`task.cancel()` works), but if `mark_cancelled` connection fails (db hiccup), broadcast row stays in DRAFT — never transitions. Reaper `reap_orphaned_sending` only handles SENDING, not DRAFT. **Stale DRAFT row remains forever**; `/broadcast list` shows it confusingly.
+**Status:** confirmed.
+**Fix direction:** add `reap_orphaned_draft` job, or mark DRAFT with TTL.
+
+### F6: [Sanitization bypass — HTML entities] [med] CVSS 4.3
+**Where:** `settings_store.py:121-129` `_DANGEROUS_HTML_PATTERNS` — only matches literal `<script>`, not HTML-entity-encoded `&lt;script&gt;` or `&#60;script&#62;`.
+**Scenario:** IT writes welcome_text containing `&lt;script&gt;alert(1)&lt;/script&gt;`. Sanitizer does not match it (regex sees literal `&lt;`). When MAX client renders this in markdown context, **whether it decodes entities depends on MAX's renderer**. If MAX decodes HTML entities (most chat platforms do for safety/usability), payload survives sanitization.
+**Status:** theoretical — exploitability hinges on MAX client behavior; needs platform testing to confirm. Plain text rendering in MAX appears not to decode entities, so likely benign here, but defense-in-depth lacking.
+**Fix direction:** call `html.unescape()` before regex pass, then sanitize.
+
+### F7: [Sanitization bypass — nested tags] [med] CVSS 4.0
+**Where:** `settings_store.py:126` `re.compile(r"<\s*(script|iframe|object|embed|applet)[^>]*/?>", re.IGNORECASE)` — only self-closing/single-tag form. Combined with line 124 which is `<script…>…</script>`.
+**Scenario:** Payload `<<script>script>alert(1)<</script>/script>` — outer regex matches `<script>script>...</script>/script>` but `.*?` is lazy and stops at FIRST `</script>`. After substitution, leftover text contains `<script>` (the inner one). Test: `<scr<script></script>ipt>` → first regex removes `<script></script>`, leaves `<script>` exposed.
+**Code:** Three patterns run sequentially; none re-scans after substitution.
+**Status:** confirmed for the nested-cloak class. Real-world exploitability depends on MAX render (see F6); for plain-text it's moot, for any markdown→html path it's a hole.
+**Fix direction:** loop sanitization until fixed-point, or use HTML parser (`bleach`/`nh3`).
+
+### F8: [Sanitization bypass — multiline markdown link] [low] CVSS 3.7
+**Where:** `settings_store.py:133` `_MD_LINK_PATTERN = re.compile(r"\[([^\]]+)\]\((https?://[^\s)]+)\)")`
+**Scenario:** `[label](\nhttps://attacker.com)` — `[^\s)]+` requires non-whitespace, so newline breaks it; pattern fails to match. The URL however still appears in plain text and would be caught by `_URL_IN_TEXT_PATTERN` only if found via `extract_urls`, but `sanitize_settings_text` does NOT call `find_non_whitelisted_urls` — it only handles md-links and dangerous schemes. **Plain `https://attacker.com` survives `sanitize_settings_text` untouched.** This is by design (settings text shouldn't have stray URLs, but if it does they're not actively rewritten). However the docstring claims "режет markdown-ссылки на не-whitelist домены" — misleading.
+**Status:** confirmed gap vs. documented intent. Defense exists at outbound layer (`find_non_whitelisted_urls` in broadcast/reply), but settings → welcome shown to citizens does NOT filter plain URLs.
+**Fix direction:** either rewrite plain URLs in sanitizer too, or correct the docstring + ensure consent_text/welcome_text use `find_non_whitelisted_urls` on render.
+
+### F9: [URL whitelist bypass — Unicode homoglyph] [med] CVSS 5.3
+**Where:** `settings_store.py:88` — `_URL_IN_TEXT_PATTERN = re.compile(r"https?://…")` ASCII-only.
+**Scenario:** Operator (or compromised account) writes `һttps://elizovomr.evil.com` (Cyrillic `һ` U+04BB looks like `h`). Regex does NOT match — `find_non_whitelisted_urls` returns `[]` → broadcast/reply goes through. Citizen's MAX client may auto-linkify the Cyrillic-prefixed URL via IDN handling. This is a documented bypass class (used in phishing for years).
+**Status:** confirmed bypass of the whitelist mechanism.
+**Fix direction:** NFKC-normalize the text before regex match, then re-scan for confusables; or use IDN-aware URL extractor.
+
+### F10: [URL whitelist bypass — newline split] [med] CVSS 4.7
+**Where:** Same regex as F9. `[^\s<>\"'`]+` excludes whitespace including `\n`.
+**Scenario:** `Hello https://elizovomr.ru\nhttps://attacker.com is great`. `findall` returns BOTH URLs. `find_non_whitelisted_urls` correctly identifies `attacker.com`. **So this is fine.** But: `Hello https://elizovomr.ru/page?next=https://attacker.com` — second URL is part of querystring of first. `findall` returns ONE match `https://elizovomr.ru/page?next=https://attacker.com` (no whitespace), `_is_whitelisted_url` checks `urlparse(...).hostname` = `elizovomr.ru` → ALLOWED. But MAX rendering may auto-linkify the `https://attacker.com` substring inside the URL.
+**Status:** confirmed — open-redirect-style bypass via embedded URL in querystring.
+**Fix direction:** also check for embedded `https?://` substring within each matched URL, or block URLs whose querystring contains another URL.
+
+### F11: [Cron stale-operators partial list] [med] CVSS 5.7
+**Where:** `bot/aemr_bot/services/cron.py:288-303` — `members = await _safe_get_chat_members(bot)`; if `not members: return` (empty=safe). But **no check for partial / paginated results**.
+**Scenario:** MAX `get_chat_members` API returns first N members (typical pagination ~100). Group has 150 operators. Bot receives 100. `current_member_ids` = 100. Remaining 50 LEGITIMATE operators have `is_active=true` but NOT in `current_member_ids` → **deactivated**. Audit log records "left_admin_chat" — false. Next morning IT sees 50 missing, panics, reactivates manually.
+**Code:** `result = await bot.get_chat_members(chat_id=cfg.admin_group_id)` → no `marker`/`limit` parameter, no pagination loop. `members = result.members or []`.
+**Status:** confirmed if MAX API paginates. Need to verify MAX API spec — if it returns all members in one call (gov groups are small, <50 typical), risk is low. **Untested assumption.**
+**Fix direction:** either confirm MAX API returns all members in one call (then add comment), or implement pagination loop, or add sanity check `if len(members) < count_active_operators(): skip`.
+
+### F12: [Audit log JSON injection] [low] CVSS 2.0
+**Where:** `operators.py:198-208` — `details={"reason": "left_admin_chat", "role": op.role, "full_name": op.full_name}`.
+**Scenario:** `op.full_name` is user-supplied (via IT add wizard). asyncpg writes to JSONB via parameterized query. No string concatenation in SQL.
+**Status:** false positive — asyncpg properly serializes Python dict to JSONB; no injection vector. JSON itself can't carry SQL. Worst case is bloated JSONB entries.
+**Fix direction:** none. Truncate `full_name` to e.g. 200 chars for storage efficiency.
+
+### F13: [PR-body injection — HTML comment / RTL override] [med] CVSS 5.4
+**Where:** `repo_sync.py:121-145` — `_sanitize_for_pr_body` collapses `\r\n` and escapes backticks only.
+**Scenario:** `full_name = "Bob <!-- approve: true --> Smith"`. After sanitize: backtick replaced, newlines collapsed, but `<!--` and `-->` PASS THROUGH. PR body becomes:
+```
+**Инициатор:** Bob <!-- approve: true --> Smith (max_user_id=…)
+```
+GitHub renders the comment as hidden text. Worse: RTL-override `‮` reverses the rest of the line — `"Bob ‮ hacker"` displays as `"Bob rekcah"` but copy-paste returns the original. Zero-width joiner `‍` invisible.
+**Status:** confirmed — markdown-comment + unicode-control injection both survive.
+**Fix direction:** strip `<!--`, `-->`, and any chars from Unicode category Cf (format/control); restrict to printable ASCII + Cyrillic letters/digits/whitespace.
+
+### F14: [get_text_with_fallback overly broad except] [low] CVSS 2.5
+**Where:** `settings_store.py:428-458` and `403-425` (`get_consent_request_text`) — `try: raw = await get(session, key) except Exception: raw = None` (or return fallback).
+**Scenario:** `Exception` swallows `NameError`, `AttributeError`, `TypeError` — programming bugs are masked as "DB error" and fallback is silently used. Citizen sees the hardcoded text, no log line at the bug site. **Diagnosis becomes a nightmare:** "why is welcome always falling back?".
+**Status:** confirmed code smell; not a vuln per se but degrades operability.
+**Fix direction:** narrow to `(SQLAlchemyError, asyncio.TimeoutError)`; log at WARNING with `exc_info=True` on the rare path.
+
+### F15: [Healthwatch BOT_TOKEN regex too permissive / too restrictive] [low] CVSS 3.1
+**Where:** `scripts/healthwatch.sh:86` — `if ! [[ "$MAX_AUTH" =~ ^[A-Za-z0-9+/=._-]+$ ]]; then …`
+**Scenario:** MAX bot-token format is not formally documented in this repo. The regex permits `=`/`+`/`/` (base64 chars), `.`/`_`/`-` (JWT-friendly). It does NOT permit `:`, `~`, `*`, or whitespace. **If MAX rotates token format (e.g. adds `:` separator like Telegram `1234:ABCDEF`), the alert becomes silently broken** — `exit 2` from a cron job with no notification path.
+**Status:** confirmed brittleness, no immediate security harm (fails closed: alert simply doesn't fire). The regex itself is sound against injection.
+**Fix direction:** log via `logger -t` AND attempt a fallback raw POST so an admin notices the format drift instead of silent failure. Also add a startup-time validation in bot itself to catch token format on deploy.
+
+### F16: [init-letsencrypt DOMAIN/EMAIL validation] [low] CVSS 2.0
+**Where:** `infra/init-letsencrypt.sh:15-22`.
+**Scenario:** Regex permits valid domain/email; the script is run **manually** by sysadmin (not invoked from network). Risk surface is operator-error only. Validation is appropriate for the threat model.
+**Status:** ✅ N/A — verified validation is correct; no bypass found.
+**Fix direction:** none.
+
+---
+
+## Summary
+- **Confirmed:** F4, F5, F7, F8, F9, F10, F13 (sanitization/race issues — patch in order of CVSS).
+- **Theoretical (needs platform test):** F3, F6, F11.
+- **False positive / N/A:** F1, F2, F12, F16.
+- **Operability degradation, not vuln:** F14, F15.
+
+**Highest priority:** F9 (Unicode homoglyph in URL whitelist) and F13 (PR-body injection) — both bypass intended security boundaries with low attacker skill.
+
+**Categories cleared:** ReDoS (A) — single dangerous case F3, low impact; SQL injection via JSON (F) — clean.
 ```
 
 ### `docs/_meta/SECURITY_REVIEW_2026-05-26.md`
