@@ -580,6 +580,99 @@ class TestG_TwoActionsBothPublishNewCards:
 # ============================================================================
 
 
+class TestN_MiddlewareTreatsMessageCallbackCorrectly:
+    """ROOT CAUSE жалобы 2026-05-27: middleware
+    AdminChatActivityMiddleware ловил ВСЕ события с
+    `event.message.body.mid`, включая MessageCallback (где `event.message`
+    — это старая карточка, на которой нажали кнопку). Tracker съезжал
+    на mid старой карточки → send_or_edit_screen видел callback_mid ==
+    tracker → edit-in-place вместо send_new. Sacred event log нарушался.
+
+    После fix (isinstance check на MessageCreated):
+    - MessageCallback не двигает tracker.
+    - MessageCreated в admin_chat по-прежнему двигает (регрессия защита).
+    - Тап на старой карточке → callback_mid != tracker → send_new.
+    """
+
+    @pytest.mark.asyncio
+    async def test_message_callback_does_not_move_tracker(self) -> None:
+        from aemr_bot.handlers import AdminChatActivityMiddleware
+        from aemr_bot.utils import menu_tracker
+        from unittest.mock import patch as _patch
+
+        # Pre-state: tracker = some_existing_mid.
+        menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "menu-existing-7")
+
+        # Сэмулируем MessageCallback (НЕ MessageCreated). Чтобы isinstance
+        # вернул False, используем простой SimpleNamespace — он не
+        # MessageCreated. event.message.body.mid = mid старой карточки.
+        fake_callback_event = SimpleNamespace(
+            message=SimpleNamespace(
+                body=SimpleNamespace(mid="old-card-mid-3"),
+                recipient=SimpleNamespace(chat_id=ADMIN_CHAT_ID),
+            ),
+            callback=SimpleNamespace(callback_id="cb-1"),
+        )
+
+        async def _next_handler(evt, data):
+            return None
+
+        middleware = AdminChatActivityMiddleware()
+        with _patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID):
+            await middleware(_next_handler, fake_callback_event, {})
+
+        # Tracker НЕ сдвинулся на mid старой карточки.
+        assert (
+            menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "menu-existing-7"
+        ), (
+            "Middleware съел MessageCallback и двинул tracker на mid "
+            "старой карточки — это и есть исходный bug. После fix tracker "
+            "должен остаться неизменным."
+        )
+
+    @pytest.mark.asyncio
+    async def test_callback_on_old_card_yields_send_new_after_fix(self) -> None:
+        """Integration: имитация полного цикла после fix.
+
+        1. Tracker = mid_menu_new (свежее меню).
+        2. Приходит MessageCallback с callback_mid = mid_old_card (старая).
+        3. Middleware вызван — tracker НЕ двигается (isinstance fix).
+        4. send_or_edit_screen видит callback_mid != tracker → send_new.
+        """
+        from aemr_bot.handlers import AdminChatActivityMiddleware
+        from aemr_bot.utils.event import send_or_edit_screen
+        from aemr_bot.utils import menu_tracker
+        from unittest.mock import patch as _patch
+
+        menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "menu-new-9")
+        bot = _make_bot(send_mids=["fresh-menu-10"])
+
+        callback_event = SimpleNamespace(
+            bot=bot,
+            message=SimpleNamespace(
+                body=SimpleNamespace(mid="old-card-mid-3"),
+                recipient=SimpleNamespace(chat_id=ADMIN_CHAT_ID),
+            ),
+            callback=SimpleNamespace(callback_id="cb-1"),
+        )
+        callback_event.get_ids = lambda: (ADMIN_CHAT_ID, 7)
+
+        async def _next_handler(evt, data):
+            # Симулируем handler, который зовёт send_or_edit_screen.
+            await send_or_edit_screen(
+                evt, chat_id=ADMIN_CHAT_ID, text="меню обновлено",
+            )
+
+        middleware = AdminChatActivityMiddleware()
+        with _patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID):
+            await middleware(_next_handler, callback_event, {})
+
+        # send_or_edit_screen увидел callback_mid (old-card-mid-3) !=
+        # tracker (menu-new-9) → send_new. edit_message не вызывался.
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited_once()
+
+
 class TestH_EditFailureFallback:
     """Если MAX вернул ошибку на edit (например, message removed) —
     fallback на send_new. Tracker должен быть очищен, чтобы следующий

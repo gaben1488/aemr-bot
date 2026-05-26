@@ -1,5 +1,6 @@
 from maxapi import Dispatcher
 from maxapi.filters.middleware import BaseMiddleware
+from maxapi.types import MessageCreated
 
 from aemr_bot.config import settings as cfg
 from aemr_bot.handlers import (
@@ -41,6 +42,18 @@ class AdminChatActivityMiddleware(BaseMiddleware):
     """
 
     async def __call__(self, handler, event_object, data):
+        # КРИТИЧНО: проверка `isinstance(MessageCreated)` обязательна.
+        # Без неё middleware ловит ВСЕ события с `event.message.body.mid` —
+        # в том числе MessageCallback, у которого `event.message` это
+        # **СТАРАЯ карточка, на которой нажали кнопку**, а не новое
+        # входящее сообщение. Tracker съезжал бы на mid старой карточки,
+        # и следующий `send_or_edit_screen` видел бы `callback_mid ==
+        # tracker` → edit-in-place вместо send_new — нарушение sacred
+        # event log.
+        # Жалоба владельца 2026-05-27: «меню в админ-чате редактируется
+        # при тапе на не-последнем сообщении» → root cause именно здесь.
+        if not isinstance(event_object, MessageCreated):
+            return await handler(event_object, data)
         if cfg.admin_group_id:
             try:
                 from aemr_bot.utils.event import get_chat_id

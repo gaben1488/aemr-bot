@@ -137,7 +137,26 @@ class TestNoteIncomingAdminMessage:
 
 
 class TestAdminChatActivityMiddleware:
-    """Outer middleware: incoming MessageCreated в admin chat → tracker."""
+    """Outer middleware: incoming MessageCreated в admin chat → tracker.
+
+    После 2026-05-27 (fix root-cause): middleware строго проверяет
+    `isinstance(event_object, MessageCreated)`. MessageCallback
+    игнорируется — иначе tracker съезжал бы на mid старой карточки,
+    на которой нажали кнопку, и следующий freshness-check ошибочно
+    edit'ил бы эту карточку поверх sacred-инварианта.
+    """
+
+    def _make_message_created(self, *, chat_id: int, mid: str):
+        """Создать Mock с spec=MessageCreated — isinstance вернёт True."""
+        from maxapi.types import MessageCreated
+        from unittest.mock import MagicMock
+
+        event = MagicMock(spec=MessageCreated)
+        event.message = SimpleNamespace(
+            recipient=SimpleNamespace(chat_id=chat_id),
+            body=SimpleNamespace(mid=mid),
+        )
+        return event
 
     @pytest.mark.asyncio
     async def test_advances_tracker_on_admin_chat_message(self) -> None:
@@ -145,12 +164,7 @@ class TestAdminChatActivityMiddleware:
         from aemr_bot.utils import menu_tracker
 
         mw = AdminChatActivityMiddleware()
-        event = SimpleNamespace(
-            message=SimpleNamespace(
-                recipient=SimpleNamespace(chat_id=555),
-                body=SimpleNamespace(mid="op-text-42"),
-            )
-        )
+        event = self._make_message_created(chat_id=555, mid="op-text-42")
         handler = AsyncMock(return_value="handler-result")
         with patch("aemr_bot.config.settings.admin_group_id", 555):
             result = await mw(handler, event, {})
@@ -163,12 +177,7 @@ class TestAdminChatActivityMiddleware:
         from aemr_bot.utils import menu_tracker
 
         mw = AdminChatActivityMiddleware()
-        event = SimpleNamespace(
-            message=SimpleNamespace(
-                recipient=SimpleNamespace(chat_id=42),  # other chat
-                body=SimpleNamespace(mid="citizen-msg"),
-            )
-        )
+        event = self._make_message_created(chat_id=42, mid="citizen-msg")
         handler = AsyncMock(return_value="ok")
         with patch("aemr_bot.config.settings.admin_group_id", 555):
             await mw(handler, event, {})
@@ -181,12 +190,7 @@ class TestAdminChatActivityMiddleware:
         from aemr_bot.handlers import AdminChatActivityMiddleware
 
         mw = AdminChatActivityMiddleware()
-        event = SimpleNamespace(
-            message=SimpleNamespace(
-                recipient=SimpleNamespace(chat_id=555),
-                body=SimpleNamespace(mid="m-x"),
-            )
-        )
+        event = self._make_message_created(chat_id=555, mid="m-x")
         handler = AsyncMock(return_value="ok")
         # admin_group_id не задан → middleware no-op, handler всё равно
         # вызывается
@@ -197,13 +201,41 @@ class TestAdminChatActivityMiddleware:
     @pytest.mark.asyncio
     async def test_handler_called_even_when_tracker_sync_fails(self) -> None:
         """Tracker-sync — best-effort. Любая ошибка внутри не должна
-        мешать handler'у обработать событие."""
+        мешать handler'у обработать событие. Здесь используем broken
+        MessageCreated без body — внутренний try/except должен поглотить."""
         from aemr_bot.handlers import AdminChatActivityMiddleware
+        from maxapi.types import MessageCreated
+        from unittest.mock import MagicMock
 
         mw = AdminChatActivityMiddleware()
-        # Кривое событие — нет message, нет body
-        event = SimpleNamespace()
+        event = MagicMock(spec=MessageCreated)
+        event.message = None  # broken
         handler = AsyncMock(return_value="ok-anyway")
         with patch("aemr_bot.config.settings.admin_group_id", 555):
             result = await mw(handler, event, {})
         assert result == "ok-anyway"
+
+    @pytest.mark.asyncio
+    async def test_callback_event_does_not_move_tracker(self) -> None:
+        """ROOT CAUSE fix-test: MessageCallback (не MessageCreated)
+        ДОЛЖЕН быть проигнорирован middleware'ом. До fix тут tracker
+        съезжал бы на mid старой карточки."""
+        from aemr_bot.handlers import AdminChatActivityMiddleware
+        from aemr_bot.utils import menu_tracker
+
+        menu_tracker.set_last_menu_mid(555, "menu-existing-1")
+
+        mw = AdminChatActivityMiddleware()
+        # Plain SimpleNamespace — НЕ MessageCreated. Имитация MessageCallback.
+        event = SimpleNamespace(
+            message=SimpleNamespace(
+                recipient=SimpleNamespace(chat_id=555),
+                body=SimpleNamespace(mid="old-card-mid"),
+            ),
+            callback=SimpleNamespace(callback_id="cb"),
+        )
+        handler = AsyncMock(return_value="ok")
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            await mw(handler, event, {})
+        # Tracker не сдвинулся — это и есть смысл fix'а.
+        assert menu_tracker.get_last_menu_mid(555) == "menu-existing-1"
