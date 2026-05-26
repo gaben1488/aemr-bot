@@ -115,3 +115,112 @@ def note_incoming_admin_message(mid: str | None) -> None:
     if not cfg.admin_group_id or not mid:
         return
     menu_tracker.set_last_menu_mid(cfg.admin_group_id, mid)
+
+
+# Маркер: к одному и тому же bot.send_message hook ставим только один
+# раз. Без этого повторный install (например, в тестах) обернул бы send
+# рекурсивно — каждое сообщение прошло бы tracker.set N раз. Маркер
+# хранится на самом bot-объекте как атрибут.
+_HOOK_INSTALLED_ATTR = "_aemr_admin_outgoing_tracker_installed"
+
+
+def install_outgoing_tracker_hook(bot) -> None:
+    """Обернуть `bot.send_message` декоратором, который синхронизирует
+    `menu_tracker[admin_group_id]` после любой успешной отправки в admin chat.
+
+    **Зачем.** Жалоба владельца 2026-05-27: «меню в админ-чате
+    редактируется при тапе кнопки на не-последнем сообщении». Корень —
+    62 прямых `bot.send_message(chat_id=admin_group_id, ...)` в коде
+    (handlers + services), большинство из них не вызывают
+    `menu_tracker.set_last_menu_mid` после send. Tracker отстаёт от
+    физического состояния чата. Любой следующий тап на «карточку выше»
+    callback_mid (старой карточки) == tracker → freshness ошибочно
+    edit'ит вверху, ниже всё остаётся.
+
+    Раньше единственное место с правильным sync — `admin_bus.send` —
+    мигрировать все 62 sites через шину было бы 200+ строк правок в
+    14 файлах, с риском регрессий. Этот hook решает проблему один раз
+    на старте бота: оборачивает оригинальный `bot.send_message`, после
+    каждого успешного `send_message(chat_id=admin_group_id, ...)`
+    извлекает mid и двигает tracker.
+
+    **Что делает hook:**
+    1. Если `chat_id != admin_group_id` — пробрасывает вызов без
+       изменений (citizen-chat tracker имеет свой sync через
+       `_send_or_edit_menu`).
+    2. Если `chat_id == admin_group_id` — выполняет оригинальный send,
+       извлекает mid, обновляет tracker. Возвращает результат как был.
+    3. Ошибки send_message не глотает — пробрасывает caller'у. Tracker
+       обновляет только при успешном send.
+
+    **Идемпотентность.** Повторный вызов на тот же bot — no-op (маркер
+    на bot-объекте). Иначе hook оборачивал бы себя рекурсивно и каждое
+    сообщение проходило бы N tracker.set.
+
+    **Где НЕ применять:**
+    - `admin_card.render` сам делает `menu_tracker.clear()` после
+      send_new (sacred event log, карточка обращения не должна
+      участвовать в tracker как меню). Hook сначала set'нет tracker
+      на mid карточки — потом сразу clear перезатрёт. Финальное
+      состояние = None, корректно.
+    - `admin_bus.send` сам делает set_last_menu_mid после send. Hook
+      повторит то же действие — это идемпотентно (tracker сидит на
+      том же mid). Не дублируем явный set, оставляем для читаемости
+      `admin_bus.send`.
+
+    Args:
+        bot: maxapi Bot, на котором будет установлен hook.
+    """
+    if not cfg.admin_group_id:
+        log.info(
+            "install_outgoing_tracker_hook: ADMIN_GROUP_ID не задан, "
+            "hook не устанавливаем (для citizen-only-окружения OK)."
+        )
+        return
+    if getattr(bot, _HOOK_INSTALLED_ATTR, False):
+        log.debug(
+            "install_outgoing_tracker_hook: hook уже установлен на этом "
+            "bot, повторный вызов проигнорирован."
+        )
+        return
+
+    original_send = bot.send_message
+
+    async def _wrapped_send(*args, **kwargs):
+        # Hook должен быть совместим с любой формой вызова — позиционной,
+        # keyword, mixed. Реальные использования в коде — keyword only
+        # (chat_id=..., text=..., attachments=...), но защита от
+        # внезапных позиционных аргументов нужна, чтобы hook не отвалился
+        # на нестандартном usage и не сломал send.
+        result = await original_send(*args, **kwargs)
+        try:
+            target_chat_id = kwargs.get("chat_id")
+            if (
+                target_chat_id == cfg.admin_group_id
+                and target_chat_id is not None
+            ):
+                mid = extract_message_id(result)
+                if mid:
+                    menu_tracker.set_last_menu_mid(
+                        cfg.admin_group_id, mid
+                    )
+                    log.debug(
+                        "outgoing-tracker-hook: admin chat send → "
+                        "tracker = %s", mid,
+                    )
+        except Exception:
+            # tracker-sync best-effort, никогда не ломает caller.
+            log.debug(
+                "install_outgoing_tracker_hook: post-send sync failed",
+                exc_info=False,
+            )
+        return result
+
+    bot.send_message = _wrapped_send  # type: ignore[assignment]
+    setattr(bot, _HOOK_INSTALLED_ATTR, True)
+    log.info(
+        "install_outgoing_tracker_hook: установлен hook на bot.send_message "
+        "для admin_group_id=%s — каждый исходящий в admin chat будет "
+        "автоматически двигать menu_tracker.",
+        cfg.admin_group_id,
+    )

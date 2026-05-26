@@ -38,6 +38,15 @@ bot = Bot(
         max_retries=settings.max_api_retries,
     ),
 )
+# Sacred event log hook: оборачивает bot.send_message декоратором,
+# который синхронизирует menu_tracker[admin_group_id] после каждого
+# успешного send в admin chat. Закрывает архитектурный gap «62
+# прямых send'a в admin chat без tracker.sync» одной строкой —
+# подробное обоснование в `services/admin_bus.install_outgoing_tracker_hook`.
+from aemr_bot.services import admin_bus  # noqa: E402
+
+admin_bus.install_outgoing_tracker_hook(bot)
+
 # use_create_task=True: handlers — отдельные asyncio.Task, polling loop
 # не блокируется одним долгим callback'ом. Per-user state защищён
 # asyncio.Lock в appeal_runtime, concurrent dispatch безопасен.
