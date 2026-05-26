@@ -63,6 +63,11 @@ def main_menu(
     # формы обращения в администрацию в одном экране.
     kb.row(CallbackButton(text="🏛 Приём граждан", payload="menu:appointment"))
     kb.row(CallbackButton(text="ℹ️ Полезная информация", payload="menu:useful_info"))
+    # Кнопка «Защита от мошенников» — отдельным пунктом главного меню
+    # вместо footer'а в каждом ответе оператора. Так житель находит
+    # перечень «бот никогда не запрашивает» в один тап в любой момент
+    # переписки, а официальный ответ оператора не перегружен меморандумом.
+    kb.row(CallbackButton(text="🛡️ Защита от мошенников", payload="menu:security"))
     kb.row(CallbackButton(text="⚙️ Настройки и помощь", payload="menu:settings"))
     return kb.as_markup()
 
