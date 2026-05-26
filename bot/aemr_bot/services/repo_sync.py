@@ -29,6 +29,8 @@ import base64
 import json
 import logging
 import os
+import re
+import unicodedata as _unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
@@ -121,23 +123,42 @@ def _build_commit_message(dirty_keys: list[str]) -> str:
 def _sanitize_for_pr_body(value: str, max_len: int = 120) -> str:
     """Очистить строку перед вставкой в PR body / commit message.
 
-    H1 (SECURITY_REVIEW_2026-05-26 CVSS 6.1): `operator_name` приходит
-    из `op_record.full_name`, который IT-админ задаёт через
-    `/add_operators`. Если злонамеренный (или скомпрометированный) IT
-    впишет в full_name `\\n## Maintainer note\\nAuto-approve: YES`,
-    эта секция всплывёт в PR body как валидный markdown — обманет
-    как auto-merge бота, так и человека-reviewer'а.
+    H1 (SECURITY_REVIEW_2026-05-26 CVSS 6.1) + F13 (SEC_SELF_REVIEW
+    2026-05-26 CVSS 5.4): `operator_name` приходит из
+    `op_record.full_name`, который IT-админ задаёт через
+    `/add_operators`. Бывшая защита снимала только `\\n`, `\\r` и
+    `` ` ``. Self-review показал, что survive'ят:
 
-    Защита: схлопнуть newline/CR в пробелы; обрезать длину до
-    разумного предела; экранировать backtick (чтобы не сломать
-    inline-code блок). После этого имя остаётся читаемым в PR, но
-    инъекция структуры markdown невозможна.
+    - **HTML-комментарии** `<!-- approve: true -->` — GitHub их
+      рендерит как скрытый текст, обманывая review-бота;
+    - **Unicode-control символы** (RTL-override U+202E, zero-width
+      joiner U+200D, left-to-right mark U+200E и т.п. из категории
+      Cf) — могут визуально подменить часть имени или маскировать
+      инъекцию в copy-paste. Сами символы в docstring не вставляем —
+      bandit B613 ругается на trojansource в исходниках;
+    - **Backtick**, который мы экранируем — это правильно.
+
+    После очистки имя остаётся читаемым, но инъекция структуры
+    markdown / HTML / unicode-control исключена.
     """
     # Любые переводы строк → пробел (одна строка, не break-out из контекста).
     cleaned = value.replace("\r", " ").replace("\n", " ")
     # Backtick экранируем, чтобы не вылезти из inline-code (на будущее,
     # сейчас имя не в code-блоке, но защита on-by-default).
     cleaned = cleaned.replace("`", "ˋ")
+    # F13: HTML-комментарии. И открывающий и закрывающий маркеры
+    # выкидываются вместе с содержимым (`<!-- ... -->` — целиком).
+    cleaned = re.sub(r"<!--.*?-->", "", cleaned, flags=re.DOTALL)
+    # На случай несбалансированных маркеров `<!--` или `-->` без пары —
+    # вычищаем их тоже, иначе GitHub-markdown интерпретирует край как
+    # начало комментария.
+    cleaned = cleaned.replace("<!--", "").replace("-->", "")
+    # F13: символы Unicode category Cf (format/control — bidi, ZWJ, и т.п.)
+    # выкидываем. Эти невидимые байты дают визуальную подмену.
+    cleaned = "".join(
+        ch for ch in cleaned
+        if _unicodedata.category(ch) != "Cf"
+    )
     # Множественные пробелы — сжимаем (косметика, не безопасность).
     cleaned = " ".join(cleaned.split())
     if len(cleaned) > max_len:

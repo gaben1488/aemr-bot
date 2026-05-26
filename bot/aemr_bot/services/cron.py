@@ -261,6 +261,33 @@ async def _job_audit_log_retention() -> None:
         log.exception("audit_log retention failed")
 
 
+async def _job_reap_orphaned_drafts() -> None:
+    """Перевести зависшие DRAFT-рассылки в FAILED.
+
+    SECURITY_REVIEW F5: между `_handle_cancel_cooldown` и
+    `mark_cancelled` есть окно, где БД-апдейт может фейлить — task в
+    asyncio отменён, но row остаётся в DRAFT навсегда. Раз в час
+    подбираем такие row'ы (старше 30 минут — больше любого реального
+    cooldown) и помечаем FAILED. Не CANCELLED — это другая семантика
+    («оператор явно отменил»), здесь же скорее «процесс умер во время
+    cooldown'а либо отмены».
+    """
+    try:
+        from aemr_bot.services import broadcasts as broadcasts_service
+
+        async with session_scope() as session:
+            reaped = await broadcasts_service.reap_orphaned_draft(
+                session, ttl_minutes=30
+            )
+        if reaped:
+            log.info(
+                "broadcast-draft-reaper: %d orphan DRAFT rows → FAILED",
+                reaped,
+            )
+    except Exception:
+        log.exception("broadcast-draft-reaper failed")
+
+
 async def _job_stale_operators_cleanup(bot, send_admin_text) -> None:
     """Деактивировать операторов, ушедших из админ-группы MAX.
 
@@ -297,7 +324,24 @@ async def _job_stale_operators_cleanup(bot, send_admin_text) -> None:
             int(getattr(m, "user_id", 0)) for m in members
             if getattr(m, "user_id", None) is not None
         }
+        # SECURITY_REVIEW F11 (CVSS 5.7): защита от paginated/частичного
+        # ответа MAX API. Если бот получил **меньше** членов чата, чем
+        # активных операторов в БД — это либо пагинация (MAX вернул
+        # первую страницу), либо отстающая БД (только что добавили
+        # оператора). В обоих случаях массовая авто-деактивация =
+        # катастрофа (50 легитимных IT-сотрудников разом помечены
+        # ушедшими). Лучше пропустить итерацию и подождать следующей.
         async with session_scope() as session:
+            active_count = len(await ops_svc.list_active(session))
+            if active_count > 0 and len(current_ids) < active_count:
+                log.warning(
+                    "stale-operators-cleanup: получено %d членов чата, "
+                    "но активных операторов %d — возможна пагинация MAX "
+                    "API или отстающий список. Пропускаем итерацию для "
+                    "безопасности (см. SEC_SELF_REVIEW F11).",
+                    len(current_ids), active_count,
+                )
+                return
             deactivated = await ops_svc.cleanup_stale_operators(
                 session, current_member_ids=current_ids
             )
@@ -697,6 +741,16 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             _job_audit_log_retention,
             CronTrigger(hour=4, minute=15, timezone=TZ),
             "audit-log-retention",
+        ),
+        # Reaper зависших DRAFT broadcast'ов (SECURITY_REVIEW F5). Раз
+        # в час подбирает row'ы DRAFT старше 30 минут → FAILED. Защита
+        # от того что cancel-handler не успел вызвать mark_cancelled
+        # из-за DB-сбоя — task в asyncio был отменён, рассылка не
+        # пошла, но запись в БД зависла.
+        (
+            _job_reap_orphaned_drafts,
+            CronTrigger(minute=37, timezone=TZ),
+            "broadcast-draft-reaper",
         ),
         # Auto-deactivate stale operators (CVE-9 from SECURITY_REVIEW_2026-05-26).
         # Сверяет активных операторов с реальными членами админ-группы MAX

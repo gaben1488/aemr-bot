@@ -1,3 +1,4 @@
+import asyncio
 import json
 import re
 from typing import Any
@@ -5,6 +6,7 @@ from urllib.parse import urlparse
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.config import settings as cfg
@@ -91,21 +93,84 @@ _URL_IN_TEXT_PATTERN = re.compile(
 )
 
 
+# F9 (SECURITY_REVIEW_2026-05-26 CVSS 5.3): quasi-URL pattern для
+# unicode-омоглифов. Cyrillic 'һ' (U+04BB), греческий 'η', и т.п. —
+# не decomposable через NFKC, обычный `https?://` их не ловит. Этот
+# regex берёт **любые** 4-5 word-символов перед `://` (включая
+# кириллицу, греческий, кодпойнты других алфавитов). После match'а
+# мы валидируем scheme через `urlparse` — если не точно «http»/«https»
+# (в ASCII), URL считается suspicious и помечается non-whitelisted.
+_QUASI_URL_PATTERN = re.compile(
+    r"[\w-￿]{4,5}://[^\s<>\"'`]+",
+    re.IGNORECASE | re.UNICODE,
+)
+
+
 def extract_urls(text: str) -> list[str]:
-    """Все http(s)-URL из текста. Пустой list если URL'ов нет."""
+    """Все http(s)-URL из текста. Пустой list если URL'ов нет.
+
+    F9 hardening: ловим и легитимные `https?://`, и quasi-URL с
+    unicode-омоглифом в scheme (`һttps://`, `ηttps://` и т.п.).
+    Дедуплицируем и сохраняем порядок появления — это важно для
+    тестов и стабильности UX (оператор видит ссылки в том же
+    порядке, что в исходном тексте).
+    """
     if not text:
         return []
-    return _URL_IN_TEXT_PATTERN.findall(text)
+    seen: list[str] = []
+    for u in _URL_IN_TEXT_PATTERN.findall(text):
+        if u not in seen:
+            seen.append(u)
+    # Добавляем quasi-URL'ы (с unicode-омоглифом), которых нет в seen
+    for u in _QUASI_URL_PATTERN.findall(text):
+        # Защита: regex может зацепить ASCII URL тоже — пропускаем
+        # дубликаты.
+        if u not in seen:
+            seen.append(u)
+    return seen
+
+
+# SECURITY_REVIEW F10 (CVSS 4.7): URL внутри querystring другого
+# (whitelisted) URL — open-redirect-style. Например
+# `https://elizovomr.ru/page?next=https://attacker.com` пропускался
+# whitelist'ом, потому что hostname `elizovomr.ru` — гос-домен, но
+# MAX-клиент может автолинкифицировать вложенный `https://attacker.com`.
+# Ловим вложенный URL отдельным regex'ом ВНУТРИ уже извлечённого URL.
+_EMBEDDED_URL_PATTERN = re.compile(
+    r"https?://[^/?#]+",  # любое http(s)://host… внутри текста URL'а
+    re.IGNORECASE,
+)
+
+
+def _has_embedded_url(url: str) -> bool:
+    """True если в строке URL найдено больше одного `https?://` —
+    значит, в querystring или path вложена ссылка на другой ресурс.
+
+    Используется в `find_non_whitelisted_urls`: даже если основной
+    host в whitelist, наличие embedded-URL даёт повод для отказа.
+    """
+    return len(_EMBEDDED_URL_PATTERN.findall(url)) > 1
 
 
 def find_non_whitelisted_urls(text: str) -> list[str]:
-    """Список URL из текста, которые НЕ в гос-whitelist.
+    """Список URL из текста, которые НЕ в гос-whitelist или содержат
+    вложенный URL в querystring.
 
     Используется в operator_reply / broadcast для блокировки исходящей
     фишинг-ссылки. Если возвращает пустой список — текст безопасен
-    с точки зрения URL.
+    с точки зрения URL. Покрывает:
+    - Unicode-омоглифы (F9, через NFKC в `extract_urls`);
+    - сторонние домены (исходный SEC #4 whitelist);
+    - embedded URL внутри `?next=https://attacker` (F10).
     """
-    return [u for u in extract_urls(text) if not _is_whitelisted_url(u)]
+    bad: list[str] = []
+    for u in extract_urls(text):
+        if not _is_whitelisted_url(u):
+            bad.append(u)
+            continue
+        if _has_embedded_url(u):
+            bad.append(u)
+    return bad
 
 
 # SECURITY_REVIEW C1: санитизация welcome_text / consent_text перед
@@ -124,6 +189,9 @@ _DANGEROUS_HTML_PATTERNS = (
     re.compile(r"<\s*script[^>]*>.*?</\s*script\s*>", re.IGNORECASE | re.DOTALL),
     re.compile(r"<\s*iframe[^>]*>.*?</\s*iframe\s*>", re.IGNORECASE | re.DOTALL),
     re.compile(r"<\s*(script|iframe|object|embed|applet)[^>]*/?>", re.IGNORECASE),
+    # F7: leftover closing tags после nested-cloak'а — `</script>`,
+    # `</iframe>` и т.п. — выживали single-pass strip'ом. Ловим отдельно.
+    re.compile(r"</\s*(script|iframe|object|embed|applet)\s*>", re.IGNORECASE),
     re.compile(r"\s+on[a-z]+\s*=\s*['\"][^'\"]*['\"]", re.IGNORECASE),  # onclick=... onload=...
 )
 
@@ -137,27 +205,39 @@ def sanitize_settings_text(value: str) -> str:
     """Очистить текст настройки (welcome_text / consent_text) для
     безопасной отправки жителю.
 
-    Делает три вещи:
+    Делает четыре вещи (после SECURITY_REVIEW F7/F8):
     1. Вырезает теги `<script>`, `<iframe>`, `<object>`, `<embed>`,
-       `<applet>` (с содержимым) и любые `on*=`-обработчики.
+       `<applet>` (с содержимым) и любые `on*=`-обработчики. Делается
+       **в цикле до фиксированной точки** — иначе nested-cloak
+       `<<script>script>…<</script>/script>` оставляет внутренние
+       теги после single-pass strip'а (F7).
     2. В markdown-ссылках `[label](url)` пропускает только URL на
        гос-домены (whitelist). Остальные заменяет на `label (ссылка
        скрыта)`.
-    3. Заменяет `javascript:` / `data:` / `vbscript:` -схемы внутри
-       обычных URL на `[заблокировано]`.
+    3. Заменяет `javascript:` / `data:` / `vbscript:` / `file:`
+       -схемы внутри обычных URL на `[заблокировано]`.
+    4. **Plain http(s)-URL вне markdown-конструкций** прогоняются
+       через `find_non_whitelisted_urls`; не-whitelisted заменяются
+       на «(ссылка скрыта)» (F8 — раньше docstring обещал, код не делал).
 
     Что НЕ делает:
     - не экранирует обычные символы (`<`, `>`, `&`) — текст идёт в
-      MAX как plain-text, эти символы безопасны;
-    - не нормализует unicode-омоглифы — IT-оператор не должен играть
-      в такие игры, а MAX render'ит юникод 1-в-1.
+      MAX как plain-text, эти символы безопасны.
     """
     if not value:
         return value
 
     out = value
-    for pat in _DANGEROUS_HTML_PATTERNS:
-        out = pat.sub("", out)
+    # F7: цикл до фиксированной точки. Каждая итерация может открыть
+    # ранее скрытый внутренний тег (после strip'а наружного). Лимит
+    # в 5 итераций — защита от внезапного бесконечного цикла на
+    # извращённом input (5 достаточно для всех известных bypass'ов).
+    for _ in range(5):
+        before = out
+        for pat in _DANGEROUS_HTML_PATTERNS:
+            out = pat.sub("", out)
+        if out == before:
+            break
 
     def _replace_md_link(match: re.Match) -> str:
         label = match.group(1)
@@ -168,15 +248,24 @@ def sanitize_settings_text(value: str) -> str:
 
     out = _MD_LINK_PATTERN.sub(_replace_md_link, out)
 
-    # Опасные URI-схемы внутри обычного http-URL уже отрезаются
-    # extract_urls (regex `https?://`), но если они появятся отдельно
-    # как `javascript:alert(1)` — заменим тут.
+    # Опасные URI-схемы (`javascript:`, `data:`, `vbscript:`, `file:`)
+    # вне http-URL — заменяем на безопасную метку.
     out = re.sub(
         r"\b(javascript|data|vbscript|file):[^\s]*",
         "[заблокировано]",
         out,
         flags=re.IGNORECASE,
     )
+
+    # F8: plain http(s)-URL без markdown-обёртки. Если такая ссылка не
+    # ведёт на гос-домен — заменяем на «(ссылка скрыта)». Если ведёт —
+    # оставляем как есть, чтобы welcome мог содержать живую гос-ссылку.
+    # Использует тот же extract_urls (NFKC + regex), что и outgoing
+    # whitelist.
+    for bad_url in find_non_whitelisted_urls(out):
+        # Один и тот же URL может попасть несколько раз — replace
+        # заменяет все вхождения.
+        out = out.replace(bad_url, "(ссылка скрыта)")
 
     return out
 
@@ -413,7 +502,8 @@ async def get_consent_request_text(
     """
     try:
         raw = await get(session, "consent_text")
-    except Exception:
+    except (SQLAlchemyError, asyncio.TimeoutError, TypeError):
+        # F14: тот же узкий except, что и в get_text_with_fallback.
         raw = None
     if isinstance(raw, str) and raw.strip() and "{policy_url}" in raw:
         try:
@@ -449,9 +539,18 @@ async def get_text_with_fallback(
     """
     try:
         raw = await get(session, key)
-    except Exception:
-        # БД недоступна, mock в тестах вернул не coroutine, либо
-        # любой другой нештатный сбой — fallback всегда выручит.
+    except (SQLAlchemyError, asyncio.TimeoutError, TypeError) as exc:
+        # F14 (narrow except): только узкий класс ожидаемых сбоев —
+        # SQL/timeout (БД отвалилась) и TypeError (MagicMock вернул
+        # не coroutine в тестах). NameError/AttributeError здесь —
+        # programming bug в нашем коде, должен взлететь с traceback,
+        # не маскироваться под «БД молчит». Логируем как WARNING —
+        # частая нештатная ситуация заслуживает внимания.
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "get_text_with_fallback: fallback because get(%r) raised %s",
+            key, type(exc).__name__,
+        )
         return fallback
     if isinstance(raw, str) and raw.strip():
         return sanitize_settings_text(raw)
