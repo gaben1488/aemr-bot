@@ -7,7 +7,12 @@ dependencies = [
     # Совместимые версии (~=) разрешают патчи, но не пропускают внезапные
     # breaking changes. Пересматривать раз в квартал.
     "maxapi~=1.1",
-    "fastapi~=0.115",
+    # fastapi: `~=0.115` по PEP 440 это `>=0.115,<1.0` (single-dot
+    # compatible-release), что разрешает 0.136.3 — а 0.136.3 содержит
+    # MAL-2026-4750 (dependency-confusion typosquat «fastar» в
+    # [standard] extras). Жёстко фиксируем minor — `>=0.115,<0.117`
+    # покрывает только зрелые 0.115 и 0.116 без malicious 0.136.x.
+    "fastapi>=0.115,<0.117",
     "uvicorn[standard]~=0.32",
     "sqlalchemy~=2.0",
     "asyncpg~=0.30",
