@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-26 21:08:23 UTC`
+Generated at: `2026-05-26 21:10:49 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `232`
+Indexed files: `236`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -13,7 +13,7 @@ The committed template `.env.example` is allowed because it should not contain l
 ## File tree
 
 - `.dockerignore` (539 bytes)
-- `.github/workflows/ci.yml` (7186 bytes)
+- `.github/workflows/ci.yml` (8730 bytes)
 - `.github/workflows/repo-index.yml` (1117 bytes)
 - `.gitignore` (1261 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
@@ -42,23 +42,23 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/__init__.py` (5882 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
-- `bot/aemr_bot/handlers/admin_appeal_ops.py` (21561 bytes)
+- `bot/aemr_bot/handlers/admin_appeal_ops.py` (23077 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9243 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (15888 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42735 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (22771 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (23101 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (43448 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (4466 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (27203 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (33699 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (11791 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (58888 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (59569 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
-- `bot/aemr_bot/handlers/callback_router.py` (9001 bytes)
-- `bot/aemr_bot/handlers/menu.py` (49839 bytes)
-- `bot/aemr_bot/handlers/operator_reply.py` (41223 bytes)
+- `bot/aemr_bot/handlers/callback_router.py` (12792 bytes)
+- `bot/aemr_bot/handlers/menu.py` (50185 bytes)
+- `bot/aemr_bot/handlers/operator_reply.py` (41155 bytes)
 - `bot/aemr_bot/handlers/start.py` (20093 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (66914 bytes)
@@ -95,9 +95,10 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/utils/event.py` (13349 bytes)
 - `bot/aemr_bot/utils/image_attachments.py` (1137 bytes)
 - `bot/aemr_bot/utils/menu_tracker.py` (2996 bytes)
+- `bot/aemr_bot/utils/typing_indicator.py` (3976 bytes)
 - `bot/aemr_bot/utils/url_defang.py` (5100 bytes)
 - `bot/alembic.ini` (619 bytes)
-- `bot/pyproject.toml` (2583 bytes)
+- `bot/pyproject.toml` (3047 bytes)
 - `bot/tests/__init__.py` (0 bytes)
 - `bot/tests/_helpers.py` (5713 bytes)
 - `bot/tests/conftest.py` (1882 bytes)
@@ -127,7 +128,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_broadcast_with_image.py` (23848 bytes)
 - `bot/tests/test_broadcasts_service_pg.py` (6324 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
-- `bot/tests/test_callback_router.py` (8614 bytes)
+- `bot/tests/test_callback_coverage_contract.py` (13488 bytes)
+- `bot/tests/test_callback_router.py` (9462 bytes)
 - `bot/tests/test_callback_router_coverage.py` (5487 bytes)
 - `bot/tests/test_card_format.py` (10753 bytes)
 - `bot/tests/test_cron_jobs.py` (22687 bytes)
@@ -138,6 +140,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_event_helpers.py` (9073 bytes)
 - `bot/tests/test_extract_location.py` (5053 bytes)
 - `bot/tests/test_final_p1_regressions.py` (6078 bytes)
+- `bot/tests/test_freshness_full_coverage.py` (29458 bytes)
 - `bot/tests/test_funnel_state_hardening.py` (6421 bytes)
 - `bot/tests/test_geo.py` (9324 bytes)
 - `bot/tests/test_handlers_appeal_funnel.py` (24730 bytes)
@@ -168,6 +171,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_settings_store_validation.py` (6731 bytes)
 - `bot/tests/test_stale_operators_cleanup.py` (5188 bytes)
 - `bot/tests/test_threat_intel.py` (3737 bytes)
+- `bot/tests/test_typing_indicator.py` (2923 bytes)
 - `bot/tests/test_uploads_policy_admin_relay.py` (11634 bytes)
 - `bot/tests/test_url_defang.py` (2828 bytes)
 - `bot/tests/test_users_service_pg.py` (16852 bytes)
@@ -310,8 +314,8 @@ backups
 
 ### `.github/workflows/ci.yml`
 
-Size: `7186` bytes  
-SHA-256: `dbaedfe28cec6cca2355cb7fac6de2a76b44c21a96dccd76d717bed6a21b89f8`
+Size: `8730` bytes  
+SHA-256: `0a58d3e6364ba2554438a9a8367f153467fdcae2fb15667ac2b4794d6035008f`
 
 ```yaml
 name: CI
@@ -356,15 +360,36 @@ jobs:
           # зависимости остаются в списке и валят CI при CVE.
           python -m pip freeze --exclude-editable > audit-requirements.txt
           grep -vE '^(aemr-bot|aemr_bot)(==| @ )' audit-requirements.txt > audit-requirements.thirdparty.txt
+          # Игноры CVE с обоснованием неприменимости (привязать к коду —
+          # любой будущий разработчик может grep'нуть эти проверки и
+          # убедиться, что игнор всё ещё валиден):
+          #
+          # PYSEC-2026-161 / GHSA-86qp-5c8j-p5mr — starlette URL
+          # reconstruction from Host header → potential auth bypass.
+          # Бот НЕ reconstructs URL из Host (нет route'ов, auth
+          # которых зависит от host). Health endpoints /livez, /readyz
+          # возвращают plain status, не используют request.url.
+          # Проверка: grep -r 'request\.url\|HTTP_HOST' aemr_bot/ → 0.
+          #
+          # CVE-2025-62727 / GHSA-7f5h-v6xp-fcq8 — Range header ReDoS
+          # в FileResponse / StaticFiles. Бот НЕ использует ни
+          # FileResponse, ни StaticFiles — отдаёт только JSON через
+          # /livez и /readyz.
+          # Проверка: grep -r 'FileResponse\|StaticFiles' aemr_bot/ → 0.
+          #
+          # Оба CVE инапрозрачно прокидываются через fastapi → starlette
+          # (fastapi <0.137 пинит starlette<0.49 где fix). Reassess
+          # на следующем планируемом fastapi-bump.
+          IGNORE_FLAGS="--ignore-vuln PYSEC-2026-161 --ignore-vuln CVE-2025-62727"
           set +e
-          python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off --format=json --output=pip-audit.json
+          python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off --format=json --output=pip-audit.json $IGNORE_FLAGS
           audit_status=$?
           if [ -s pip-audit.json ]; then
             echo "pip-audit JSON report:"
             cat pip-audit.json
           fi
           echo "pip-audit human report:"
-          python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off || true
+          python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off $IGNORE_FLAGS || true
           exit "$audit_status"
       - name: Upload security report
         uses: actions/upload-artifact@v4
@@ -2935,8 +2960,8 @@ async def current_user(
 
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
-Size: `21561` bytes  
-SHA-256: `08cfbd10a6ff1de57610ced8a477b7b4b165280dd6664ce8ef36a4769ef70727`
+Size: `23077` bytes  
+SHA-256: `3d45a021a9e16f4b8353adc812a93e73e99a2a57be83778ced129d29df2ba6d8`
 
 ```python
 """Действия оператора над конкретным обращением.
@@ -2972,12 +2997,32 @@ async def _show_appeal_card_or_result(
     appeal_id: int,
     fallback_text: str,
 ) -> None:
-    """Опубликовать/обновить admin appeal card после действия оператора.
+    """Опубликовать admin appeal card после действия оператора (sacred
+    event log: каждое действие = новая запись внизу чата).
 
-    Freshness-rule (PR #62, унифицировано с меню): admin_card.render
-    проверит callback_mid против menu_tracker[admin_group_id]:
-    - callback_mid == последняя карточка в чате → edit на месте;
-    - иначе (ниже появились другие сообщения/карточки) → send new.
+    **DDD-решение 2026-05-26** (после жалобы владельца «закрыл 2
+    обращения подряд — одна карточка обновила статус, другая нет»):
+
+    Раньше передавали `callback_mid` → render по freshness-rule выбирал
+    edit-in-place vs send_new. Это давало непредсказуемый UX:
+    - Первый close: карточка свежая (callback_mid == tracker) → edit
+      на месте → оператор видит обновление inplace.
+    - Второй close: карточка #2 уже не последняя (после edit'а первой
+      tracker = card_1_mid) → send_new → копия #2 появляется внизу.
+    - Оператор видит «одну обновила, другую нет» — на самом деле обе
+      обработаны, но визуально по-разному.
+
+    **Sacred-инвариант** (carter cards = event log): каждое
+    оп-действие — это **event** в timeline'е чата. event никогда не
+    edit'ит прошлое — он добавляется новой записью. Это даёт:
+    - Полную, иммутабельную историю действий по обращению.
+    - Однозначный UX: после любого тапа оператор видит новую карточку
+      с актуальным статусом ВНИЗУ чата.
+    - Никакой путаницы при batch-действиях (закрыли 5 обращений — 5
+      карточек CLOSED внизу).
+
+    Поэтому **force_new=True всегда**. Карточка не edit'ится по
+    op-action никогда — только публикуется новой.
 
     На случай если обращение не найдено или user пуст — fallback
     короткое сообщение оператору, без card-render.
@@ -2994,15 +3039,13 @@ async def _show_appeal_card_or_result(
         appeal = None
     if appeal is not None and appeal.user is not None:
         try:
-            # Freshness-rule: пробрасываем callback_mid — render edit'нет
-            # карточку только если callback пришёл на последнюю карточку
-            # в чате (по menu_tracker). Иначе → send new внизу.
-            from aemr_bot.utils.event import get_callback_message_id
-
+            # DDD sacred event log: force_new=True всегда. Карточка
+            # появляется новой записью внизу с актуальным статусом.
+            # Старая остаётся выше как иммутабельный историчный slice.
             await admin_card_service.render(
                 event.bot,
                 appeal,
-                callback_mid=get_callback_message_id(event),
+                force_new=True,
             )
             return
         except Exception:
@@ -5456,8 +5499,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `22771` bytes  
-SHA-256: `de46404bb142eda2ac63e9da5caa0b5eccb675a1520d29c32eb710bdc949cc67`
+Size: `23101` bytes  
+SHA-256: `e7e381b060b817ccd7c7476d6079d6bf9cf10115bef73b348a4649b6b291bbc2`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -5596,6 +5639,11 @@ async def _do_open_tickets(event) -> None:
     from sqlalchemy import select
 
     from aemr_bot.db.models import Appeal, AppealStatus
+    from aemr_bot.utils.typing_indicator import mark_typing
+
+    # Typing-indicator: query+transform могут занять 1-2 сек на загруженной
+    # базе. Без него оператор видит «зависание» после тапа кнопки.
+    await mark_typing(event, cfg.admin_group_id)
 
     async with session_scope() as session:
         query = (
@@ -8957,8 +9005,8 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `58888` bytes  
-SHA-256: `5a03bc9f1ff2eebfd513e46ef88115684de67e04bd8f0fd1bb24001deb6b0afb`
+Size: `59569` bytes  
+SHA-256: `2cec429f290c1f8f654f191456d197fb9f6969ea99ac82d19b4000a0932f9c0e`
 
 ```python
 """Мастер рассылок и цикл их отправки.
@@ -9296,7 +9344,16 @@ async def _handle_confirm(event) -> None:
     if state is None or state.step != "awaiting_confirm" or state.expired():
         await ack_callback(event, "Мастер закрыт.")
         return
-    await ack_callback(event)
+    # ack с фидбеком: оператор сразу видит «принято», broadcast wizard
+    # переходит в подготовку. Без notification ack — тихий, оператор
+    # тапает «Отправить» и думает, ушла ли команда.
+    await ack_callback(event, "Готовлю рассылку…")
+    # Typing-indicator: count subscribers + create broadcast +
+    # start scheduler могут занять секунды на большой базе. Без
+    # индикатора кажется, что бот завис.
+    from aemr_bot.utils.typing_indicator import mark_typing
+    await mark_typing(event, cfg.admin_group_id)
+
     op = await _get_operator(event)
     if op is None:
         return
@@ -11491,8 +11548,8 @@ async def _step_search(
 
 ### `bot/aemr_bot/handlers/callback_router.py`
 
-Size: `9001` bytes  
-SHA-256: `9c478c131b0c5c1caebb3a902c2fdae387079dbeb5cc5a66f8d9aa0e992f86ed`
+Size: `12792` bytes  
+SHA-256: `8032e55b71f4bf3ecacdc2ecf9c9595f3eac0f06b1df4a0481750f905fc0b39a`
 
 ```python
 """Маршрутизация callback payload'ов.
@@ -11526,7 +11583,15 @@ class CallbackRoute:
 # Единственный реестр callback-групп. Точные payload'ы перечислены отдельно
 # от префиксных маршрутов, чтобы тесты ловили случайное пересечение.
 EXACT_ROUTES: tuple[CallbackRoute, ...] = (
+    # ── Citizen menu navigation (handlers/menu.py:handle_callback) ──
+    CallbackRoute("menu:main", CallbackGroup.CITIZEN_FLOW, False, "главное меню жителя"),
     CallbackRoute("menu:new_appeal", CallbackGroup.CITIZEN_FLOW, False, "новое обращение"),
+    CallbackRoute("menu:my_appeals", CallbackGroup.CITIZEN_FLOW, False, "мои обращения"),
+    CallbackRoute("menu:useful_info", CallbackGroup.CITIZEN_FLOW, False, "полезная информация"),
+    CallbackRoute("menu:appointment", CallbackGroup.CITIZEN_FLOW, False, "запись на приём"),
+    CallbackRoute("menu:settings", CallbackGroup.CITIZEN_FLOW, False, "настройки жителя"),
+    CallbackRoute("menu:security", CallbackGroup.CITIZEN_FLOW, False, "защита от мошенников"),
+    # ── Citizen воронка обращения ──
     CallbackRoute("consent:yes", CallbackGroup.CITIZEN_FLOW, False, "согласие на ПДн"),
     CallbackRoute("consent:no", CallbackGroup.CITIZEN_FLOW, False, "отказ от ПДн"),
     CallbackRoute("cancel", CallbackGroup.CITIZEN_FLOW, False, "отмена воронки"),
@@ -11536,6 +11601,25 @@ EXACT_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("geo:edit_address", CallbackGroup.GEO_FLOW, False, "исправить адрес"),
     CallbackRoute("geo:other_locality", CallbackGroup.GEO_FLOW, False, "выбрать другой пункт"),
     CallbackRoute("appeal:submit", CallbackGroup.CITIZEN_FLOW, False, "устаревшая кнопка отправки"),
+    # ── Citizen «Полезная информация» подменю ──
+    CallbackRoute("info:emergency", CallbackGroup.CITIZEN_FLOW, False, "экстренные контакты"),
+    CallbackRoute("info:dispatchers", CallbackGroup.CITIZEN_FLOW, False, "диспетчеры транспорта"),
+    CallbackRoute("info:subscribe_on", CallbackGroup.CITIZEN_FLOW, False, "подписаться на рассылку"),
+    CallbackRoute("info:subscribe_off", CallbackGroup.CITIZEN_FLOW, False, "отписаться от рассылки"),
+    CallbackRoute("subscribe:confirm", CallbackGroup.CITIZEN_FLOW, False, "мини-консент подписки"),
+    # ── Citizen «Настройки» — справка/правила/политика/прощание ──
+    CallbackRoute("settings:help", CallbackGroup.CITIZEN_FLOW, False, "справка по боту"),
+    CallbackRoute("settings:rules", CallbackGroup.CITIZEN_FLOW, False, "правила приёма обращений"),
+    CallbackRoute("settings:policy", CallbackGroup.CITIZEN_FLOW, False, "политика ПДн"),
+    CallbackRoute("settings:goodbye", CallbackGroup.CITIZEN_FLOW, False, "прощание (отзыв/удаление)"),
+    CallbackRoute("goodbye:unsub", CallbackGroup.CITIZEN_FLOW, False, "отписаться от рассылки"),
+    CallbackRoute("goodbye:revoke_ask", CallbackGroup.CITIZEN_FLOW, False, "запрос подтверждения отзыва согласия"),
+    CallbackRoute("goodbye:revoke_yes", CallbackGroup.CITIZEN_FLOW, False, "подтверждение отзыва согласия"),
+    CallbackRoute("goodbye:erase_ask", CallbackGroup.CITIZEN_FLOW, False, "запрос подтверждения удаления ПДн"),
+    CallbackRoute("goodbye:erase_yes", CallbackGroup.CITIZEN_FLOW, False, "подтверждение удаления ПДн"),
+    # ── Citizen рассылки ──
+    CallbackRoute("broadcast:unsubscribe", CallbackGroup.CITIZEN_FLOW, False, "отписаться через broadcast-сообщение"),
+    # ── Admin: broadcast wizard ──
     CallbackRoute("broadcast:confirm", CallbackGroup.BROADCAST_ADMIN, True, "подтвердить рассылку"),
     CallbackRoute("broadcast:abort", CallbackGroup.BROADCAST_ADMIN, True, "отменить мастер рассылки"),
     CallbackRoute("broadcast:edit", CallbackGroup.BROADCAST_ADMIN, True, "изменить текст рассылки"),
@@ -11561,8 +11645,16 @@ EXACT_ROUTES: tuple[CallbackRoute, ...] = (
 )
 
 PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
+    # ── Citizen воронка ──
     CallbackRoute("locality:", CallbackGroup.CITIZEN_FLOW, False, "выбор населённого пункта"),
     CallbackRoute("topic:", CallbackGroup.CITIZEN_FLOW, False, "выбор темы"),
+    # ── Citizen «Мои обращения» — карточка обращения с действиями ──
+    CallbackRoute("appeal:show:", CallbackGroup.CITIZEN_FLOW, False, "показать карточку обращения жителя"),
+    CallbackRoute("appeal:followup:", CallbackGroup.CITIZEN_FLOW, False, "дополнить обращение"),
+    CallbackRoute("appeal:repeat:", CallbackGroup.CITIZEN_FLOW, False, "подать похожее обращение"),
+    CallbackRoute("appeal:atts:", CallbackGroup.CITIZEN_FLOW, False, "посмотреть свои вложения"),
+    CallbackRoute("appeals:page:", CallbackGroup.CITIZEN_FLOW, False, "пагинация списка обращений"),
+    # ── Admin: broadcast история / wizard ──
     CallbackRoute("broadcast:stop:", CallbackGroup.BROADCAST_ADMIN, True, "остановить рассылку"),
     CallbackRoute("broadcast:cancel-cooldown:", CallbackGroup.BROADCAST_ADMIN, True, "отменить рассылку до отправки"),
     CallbackRoute("op:aud:", CallbackGroup.OPERATOR_ADMIN, True, "действие с аудиторией"),
@@ -11629,8 +11721,8 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 
 ### `bot/aemr_bot/handlers/menu.py`
 
-Size: `49839` bytes  
-SHA-256: `ead536203dc00d349a1b168bb5480c20bb4ac6b203ff0ab7abc65058bee13dd7`
+Size: `50185` bytes  
+SHA-256: `2f75dd259bcef738b8d0201f87c6ac8b2dacb23adec04ab0f94ad7b755e4dc70`
 
 ```python
 import logging
@@ -11770,6 +11862,12 @@ MY_APPEALS_PAGE_SIZE = 5
 
 
 async def open_my_appeals(event, max_user_id: int, page: int = 1):
+    # Typing-indicator: count + list по обращениям — у активных
+    # жителей может занять >500 мс. Без него тап «📁 Мои обращения»
+    # ощущается как «бот завис».
+    from aemr_bot.utils.typing_indicator import mark_typing
+    await mark_typing(event)
+
     page = max(1, page)
     async with current_user(max_user_id) as (session, user):
         total = await appeals_service.count_for_user(session, user.id)
@@ -12710,8 +12808,8 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
 
 ### `bot/aemr_bot/handlers/operator_reply.py`
 
-Size: `41223` bytes  
-SHA-256: `47387b679faf6a56f687fb20563aefd9c556e6429ce9fb32912007b1aa44ac9c`
+Size: `41155` bytes  
+SHA-256: `de14eb5c041d34bff645cdd48c32541ceabf511b8b506090fb2c87dccde65d40`
 
 ```python
 """Логика ответов операторов и дополнительных сообщений от жителей, вызывается
@@ -13314,21 +13412,20 @@ async def _deliver_operator_reply(
     await _mark_reply_success_recorded(success_key)
     _remember_successful_reply(operator.id, appeal.id, text)
 
-    # Обновить admin-карточку через freshness-rule helper:
-    # - если оператор отвечал свайпом/intent на ПОСЛЕДНЕЙ карточке в
-    #   чате → edit её (статус из NEW/IN_PROGRESS в ANSWERED).
-    # - иначе → новая карточка снизу с актуальным timeline.
-    # callback_mid берём из event (mid карточки на которой нажали
-    # «Ответить»; для swipe-reply берём mid цитируемого).
+    # DDD sacred event log (2026-05-26): ответ оператора — это **event**
+    # в timeline'е обращения. Должна быть НОВАЯ карточка внизу чата с
+    # event_header'ом, всегда. Раньше callback_mid передавался без
+    # force_new — render по freshness иногда edit'ил старую карточку
+    # на месте, и тогда `event_header` терялся (он применяется только
+    # на send_new ветке, см. admin_card.render docstring). Оператор не
+    # видел явный маркер «ответ отправлен» — UX inconsistency.
     #
-    # event_header применяется только если render выйдет в send_new
-    # ветку (старая карточка не последняя, нужна свежая внизу). Тогда
-    # оператор сразу видит: «эта новая карточка — потому что только
-    # что отправлен ответ». На edit-in-place маркер игнорируется (см.
-    # admin_card.render docstring) — оператор и так в контексте.
+    # Теперь `force_new=True` всегда: каждый ответ публикует свежую
+    # карточку с актуальным статусом + явный header «✉️ Финальный/
+    # 💬 Промежуточный ответ отправлен». Sacred: старая карточка
+    # остаётся выше как историчная запись «до ответа».
     try:
         from aemr_bot.services import admin_card as admin_card_service
-        from aemr_bot.utils.event import get_callback_message_id
 
         async with session_scope() as session:
             fresh_appeal = await appeals_service.get_by_id_with_messages(
@@ -13347,7 +13444,7 @@ async def _deliver_operator_reply(
             await admin_card_service.render(
                 event.bot,
                 fresh_appeal,
-                callback_mid=get_callback_message_id(event),
+                force_new=True,
                 event_header=reply_event_header,
             )
     except Exception:
@@ -25618,6 +25715,98 @@ def clear_all() -> None:
     _chat_to_mid.clear()
 ```
 
+### `bot/aemr_bot/utils/typing_indicator.py`
+
+Size: `3976` bytes  
+SHA-256: `e239738f0e6d1e4752831d234f95301e84f07de90887f333cb3876fb3ab44f83`
+
+```python
+"""Тонкий helper для typing-indicator в долгих операциях.
+
+**Зачем.** maxapi 1.1.0 поддерживает `bot.send_action(chat_id,
+SenderAction.TYPING_ON)` — мигающие точки «бот печатает», как в
+Telegram. Жителю/оператору сразу понятно: «нажатие услышали, идёт
+работа», особенно когда дальше будет несколько сообщений
+(listing открытых обращений, broadcast confirm с превью).
+
+Без индикатора оператор тапает «📂 Открытые обращения» и ждёт 1-2
+секунды без обратной связи — кажется, что бот завис. С индикатором
+точки появляются мгновенно, listing подъезжает следом.
+
+**Контракт `mark_typing(event_or_bot, chat_id)`:**
+
+- На вход: либо event (берём `event.bot` и `chat_id` через `get_ids`),
+  либо явный `(bot, chat_id)`.
+- Best-effort: любой Exception от MAX API НЕ должен ломать handler.
+  `send_action` — UX-улучшение, не критичная часть flow. Логируем на
+  DEBUG и продолжаем.
+- TYPING_ON автоматически гасится MAX'ом через ~5 секунд или при
+  следующем сообщении бота — explicit OFF не нужен.
+
+**Где применять (выявлено CARDS_UX_SWEEP 2026-05-26):**
+
+1. `admin_panel._do_open_tickets` — listing открытых обращений требует
+   query + transform → 1-2 сек.
+2. `menu.do_my_appeals` — listing обращений жителя.
+3. `broadcast._handle_confirm` — перед запуском send-loop рассылки.
+4. Любые другие точки, где handler делает >500 мс работы перед
+   первым send_message.
+
+**Где НЕ применять:**
+- Простые callbacks с одним send_message <100 мс — typing на 5 секунд
+  выглядит дольше реакции, UX хуже.
+- Cron / pulse — там нет «оператор ждёт реакцию».
+- На карточке обращения (force_new) — она сама и есть фидбек.
+"""
+from __future__ import annotations
+
+import logging
+
+log = logging.getLogger(__name__)
+
+
+async def mark_typing(event_or_bot, chat_id: int | None = None) -> None:
+    """Best-effort typing-indicator.
+
+    Args:
+        event_or_bot: либо MAX event (берём `.bot`), либо Bot instance.
+        chat_id: если передан event — можно опустить (возьмём из
+            `event.get_ids()`). Если передан bot — обязателен.
+    """
+    # Lazy-import — SenderAction нужен только тут, не платим за импорт
+    # на старте бота.
+    try:
+        from maxapi.enums.sender_action import SenderAction
+    except Exception:
+        log.debug("mark_typing: maxapi.enums.sender_action unavailable")
+        return
+
+    bot = getattr(event_or_bot, "bot", event_or_bot)
+    if bot is None:
+        return
+
+    if chat_id is None:
+        # Попробуем достать из event.
+        try:
+            from aemr_bot.utils.event import get_chat_id
+            chat_id = get_chat_id(event_or_bot)
+        except Exception:
+            log.debug("mark_typing: не смог извлечь chat_id из event")
+            return
+
+    if not chat_id:
+        return
+
+    try:
+        await bot.send_action(chat_id=chat_id, action=SenderAction.TYPING_ON)
+    except Exception:
+        # UX-улучшение, не критично — глушим ошибку MAX'а.
+        log.debug(
+            "mark_typing: send_action failed for chat_id=%s", chat_id,
+            exc_info=False,
+        )
+```
+
 ### `bot/aemr_bot/utils/url_defang.py`
 
 Size: `5100` bytes  
@@ -25762,8 +25951,8 @@ datefmt = %H:%M:%S
 
 ### `bot/pyproject.toml`
 
-Size: `2583` bytes  
-SHA-256: `85737319a3b3ae5933a7b2ca9398d2a96f60b0d97820a5dd0a2c70fad6c3d8f5`
+Size: `3047` bytes  
+SHA-256: `25980f01feeb9eadec23cc503baaae57422c2580254b3ac4a45bd13468527178`
 
 ```toml
 [project]
@@ -25775,7 +25964,13 @@ dependencies = [
     # Совместимые версии (~=) разрешают патчи, но не пропускают внезапные
     # breaking changes. Пересматривать раз в квартал.
     "maxapi~=1.1",
-    "fastapi~=0.115",
+    # fastapi нижняя граница 0.118 нужна для совместимости с starlette
+    # 0.49.1+ (PYSEC-2026-161 host-header bypass + CVE-2025-62727
+    # Range-header ReDoS в FileResponse). До 0.118 fastapi пинит
+    # starlette<0.49.0 — fix невозможен.
+    # Верхняя граница `<0.136` исключает 0.136.3 (MAL-2026-4750:
+    # dependency-confusion typosquat «fastar» в [standard] extras).
+    "fastapi>=0.118,<0.136",
     "uvicorn[standard]~=0.32",
     "sqlalchemy~=2.0",
     "asyncpg~=0.30",
@@ -33919,10 +34114,301 @@ class TestEmptyHolidays:
         assert calendar_ru.is_workday(date(2026, 5, 16))
 ```
 
+### `bot/tests/test_callback_coverage_contract.py`
+
+Size: `13488` bytes  
+SHA-256: `78875bf013d0d718a790153e53480b549e41f202d709c419b4e0f6788f6e3a10`
+
+```python
+"""Контракт-тест: каждый callback в `keyboards.py` зарегистрирован в
+`callback_router.py`, и наоборот — каждый registered route реально
+используется хотя бы одной клавиатурой.
+
+**Зачем.** Жалоба владельца 2026-05-26: «требуется проверять все
+концепты и соответствие всех концептам всего». Сейчас разработчик
+может добавить новую кнопку в keyboards.py с любым payload — и забыть
+зарегистрировать её в callback_router (тогда payload попадёт в
+MENU_FALLBACK → silent broken UX). Или наоборот: убрать кнопку,
+оставив route мертвым.
+
+Этот тест парсит `keyboards.py` regex'ом, извлекает все упомянутые
+payload-литералы (`payload="X"` и `payload=f"X:..."`), и проверяет:
+
+1. **Coverage**: каждый payload из UI имеет матч в EXACT_ROUTES (для
+   точных) или в PREFIX_ROUTES (для f-string'овых вида `op:open_card:`).
+2. **Orphan-проверка**: каждый route в EXACT/PREFIX действительно
+   соответствует хотя бы одному payload в UI (нет dead routes).
+
+**Что НЕ проверяет** (намеренно):
+- Что каждый callback имеет handler. Это уже неявно покрыто:
+  `dispatch_admin_callback` валит `_EXACT`/`_PREFIX_*` через словарь;
+  отсутствие handler → MENU_FALLBACK или silent fail. Можно добавить
+  третий тест: «каждый OPERATOR_ADMIN route → handler в
+  admin_callback_dispatch._EXACT/_PREFIX_*». TODO в отдельный тест.
+- Семантику payload (что `op:close:5` ведёт к закрытию обращения #5).
+  Это покрывается handler-тестами.
+
+**Допуски (whitelist):**
+- `appeals:page:noop` — это явный «отключённый» payload для disabled
+  pagination (визуально кнопка есть, но не делает ничего). Не нужен
+  route.
+- Эти исключения собраны в `_IGNORED_PAYLOADS` ниже.
+"""
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+import pytest
+
+
+# Источник истины (импорт лениво в каждом тесте, чтобы тест-файл сам
+# падал с понятным импорт-ошибкой, а не на module-load).
+KEYBOARDS_PATH = (
+    Path(__file__).parent.parent / "aemr_bot" / "keyboards.py"
+)
+
+
+# Payload'ы, которые не должны иметь route в callback_router:
+# - `appeals:page:noop` — заглушка для disabled-pagination кнопки.
+# - Empty payloads (если внезапно появятся) — invalid.
+_IGNORED_PAYLOADS = {
+    "appeals:page:noop",
+}
+
+
+def _extract_payload_literals(source: str) -> set[str]:
+    """Вытащить все `payload="..."` и `payload=f"..."` литералы,
+    включая f-string'и, присвоенные через переменную (conditional payload).
+
+    Возвращает:
+    - точные payload'ы (без `{` интерполяции) — как есть;
+    - f-string'и с `{var}` — как префикс до первого `{` (например,
+      `op:open_card:{appeal_id}` → `op:open_card:`);
+    - conditional payload pattern `var = f"X:..." if ... else f"Y:..."` —
+      обе ветки распарсиваются (пример: `block_payload` в
+      `appeal_admin_actions`, где payload зависит от is_blocked).
+    """
+    # Direct literals: `payload="X"` and `payload=f"X:..."`.
+    direct_pattern = re.compile(r'payload=f?"([^"]+)"')
+    # Conditional assignment: `varname_payload = f"X:..." if ... else f"Y:..."`.
+    # Limit to vars with "payload" in name — иначе ловим text-переменные.
+    # Захватывает обе ветки через два f-string'а на одной строке.
+    cond_pattern = re.compile(
+        r'\w*payload\w*\s*=\s*\(?\s*f?"([^"]+)"\s+if\s+[^"]+\s+else\s+f?"([^"]+)"'
+    )
+
+    out: set[str] = set()
+
+    def _add_literal(literal: str) -> None:
+        if not literal:
+            return
+        if "{" in literal:
+            prefix = literal.split("{", 1)[0]
+            if prefix:
+                out.add(prefix)
+        else:
+            out.add(literal)
+
+    for match in direct_pattern.finditer(source):
+        _add_literal(match.group(1))
+    for match in cond_pattern.finditer(source):
+        _add_literal(match.group(1))
+        _add_literal(match.group(2))
+    return out
+
+
+def _is_covered_by_routes(
+    payload: str,
+    exact_routes: set[str],
+    prefix_routes: set[str],
+) -> bool:
+    """Покрыт ли payload точным или префиксным маршрутом."""
+    if payload in exact_routes:
+        return True
+    for prefix in prefix_routes:
+        if payload.startswith(prefix):
+            return True
+    return False
+
+
+class TestKeyboardsCoverContractRouter:
+    """Каждый payload из keyboards.py должен иметь route в callback_router."""
+
+    def test_all_keyboard_payloads_have_routes(self) -> None:
+        from aemr_bot.handlers import callback_router
+
+        source = KEYBOARDS_PATH.read_text(encoding="utf-8")
+        keyboard_payloads = _extract_payload_literals(source)
+
+        exact_routes = {r.pattern for r in callback_router.EXACT_ROUTES}
+        prefix_routes = {r.pattern for r in callback_router.PREFIX_ROUTES}
+
+        uncovered: list[str] = []
+        for payload in sorted(keyboard_payloads):
+            if payload in _IGNORED_PAYLOADS:
+                continue
+            if not _is_covered_by_routes(payload, exact_routes, prefix_routes):
+                uncovered.append(payload)
+
+        assert not uncovered, (
+            "Найдены callback payload'ы в keyboards.py без route в "
+            "callback_router.py — silent fallthrough в MENU_FALLBACK:\n"
+            + "\n".join(f"  - {p}" for p in uncovered)
+        )
+
+
+class TestRouterRoutesAreUsedByKeyboards:
+    """Каждый route в callback_router должен использоваться UI'ом.
+
+    Защита от dead routes: если кнопка удалена, route остаётся «по
+    инерции» и сбивает с толку. Если route намеренно сохранён для
+    backward compatibility — добавить в `_LEGACY_ROUTES` ниже.
+    """
+
+    # Routes, которые остаются по legacy/backward-compat (не имеют
+    # текущей кнопки, но handler принимает на всякий случай — старые
+    # уведомления / редиректы / тесты).
+    _LEGACY_ROUTES: set[str] = {
+        "appeal:submit",  # «устаревшая кнопка отправки» из callback_router
+        # Префиксы которые матчатся через f-string'и, но keyboards.py
+        # использует более короткий префикс — например, `op:set:` route
+        # покрывает `op:set:cat:`, `op:set:list:`, `op:set:obj:`, ...
+        "op:set:",  # purpose: общий префикс для всего иерархического
+                    # меню настроек — keyboards.py использует более
+                    # узкие подпрефиксы, но route_for использует общий.
+        "op:setkey:",  # экспертный wizard
+        "op:bc:",  # broadcast история — keyboards.py использует
+                   # `op:bc:open:`, `op:bc:clone:`, `op:bc:failed:`;
+                   # route — общий `op:bc:`.
+        "op:tmpl:",  # шаблоны — keyboards.py использует
+                     # `op:tmpl:open:`, `op:tmpl:apply:`, и т.п.
+        "op:aud:",  # аудитория — `op:aud:subs/consent/blocked/block:/
+                    # unblock:/erase:`
+        "op:opadd:",  # operators wizard
+        "op:opcard:",
+        "op:oprole:",
+        "op:opchrole:",
+        "op:opdeact:",
+        "op:opdeact_ok:",
+        "op:opreact:",
+    }
+
+    def test_no_dead_routes(self) -> None:
+        from aemr_bot.handlers import callback_router
+
+        source = KEYBOARDS_PATH.read_text(encoding="utf-8")
+        keyboard_payloads = _extract_payload_literals(source)
+
+        # Для exact-routes: должен быть точный матч в keyboards.
+        unused_exact: list[str] = []
+        for route in callback_router.EXACT_ROUTES:
+            if route.pattern in self._LEGACY_ROUTES:
+                continue
+            if route.pattern not in keyboard_payloads:
+                unused_exact.append(route.pattern)
+
+        # Для prefix-routes: должен быть payload, начинающийся с route.
+        unused_prefix: list[str] = []
+        for route in callback_router.PREFIX_ROUTES:
+            if route.pattern in self._LEGACY_ROUTES:
+                continue
+            if not any(p.startswith(route.pattern) for p in keyboard_payloads):
+                unused_prefix.append(route.pattern)
+
+        unused = unused_exact + unused_prefix
+        assert not unused, (
+            "Dead routes в callback_router.py — не используются ни одной "
+            "клавиатурой. Удалить или добавить в _LEGACY_ROUTES:\n"
+            + "\n".join(f"  - {r}" for r in unused)
+        )
+
+
+class TestOperatorRoutesHaveHandlers:
+    """Каждый OPERATOR_ADMIN/BROADCAST_ADMIN route в callback_router имеет
+    handler в admin_callback_dispatch._EXACT / _PREFIX_ID / _PREFIX_RAW.
+
+    Защита от «phantom route»: route задекларирован, но handler не
+    зарегистрирован — payload приходит, ack делается, действие не
+    выполняется → silent broken UX. Этот тест ловит drift сразу.
+
+    Citizen routes (CITIZEN_FLOW / GEO_FLOW) НЕ проверяются —
+    обрабатываются через `handlers/menu.py:handle_callback`
+    fallthrough, который не имеет жёсткой declarative-таблицы.
+    Можно расширить в будущем (TODO: similar contract test для
+    menu._MENU_ROUTES / _PREFIX_HANDLERS).
+    """
+
+    def test_admin_routes_have_handlers_in_dispatch(self) -> None:
+        from aemr_bot.handlers import admin_callback_dispatch as dispatch
+        from aemr_bot.handlers import callback_router
+        from aemr_bot.handlers.callback_router import CallbackGroup
+
+        admin_groups = {
+            CallbackGroup.OPERATOR_ADMIN,
+            CallbackGroup.BROADCAST_ADMIN,
+        }
+
+        # Собрать handler-таблицы.
+        exact_handlers = set(dispatch._EXACT.keys())
+        prefix_id_handlers = {p for p, _ in dispatch._PREFIX_ID}
+        prefix_raw_handlers = {p for p, _ in dispatch._PREFIX_RAW}
+        prefix_handlers = prefix_id_handlers | prefix_raw_handlers
+
+        missing: list[str] = []
+        for route in callback_router.EXACT_ROUTES:
+            if route.group not in admin_groups:
+                continue
+            if route.pattern not in exact_handlers:
+                missing.append(f"EXACT {route.pattern} ({route.description})")
+
+        for route in callback_router.PREFIX_ROUTES:
+            if route.group not in admin_groups:
+                continue
+            # Route может быть «общий» префикс (например, `op:bc:`), а
+            # handler'ы — гранулярные подпрефиксы (`op:bc:open:`,
+            # `op:bc:clone:`, `op:bc:failed:`). Проверяем что есть хотя
+            # бы один handler на самом route'е ИЛИ на его расширении.
+            has_handler = (
+                route.pattern in prefix_handlers
+                or any(h.startswith(route.pattern) for h in prefix_handlers)
+            )
+            if not has_handler:
+                missing.append(f"PREFIX {route.pattern} ({route.description})")
+
+        assert not missing, (
+            "OPERATOR_ADMIN/BROADCAST_ADMIN routes без handler'а в "
+            "admin_callback_dispatch._EXACT/_PREFIX_*:\n"
+            + "\n".join(f"  - {m}" for m in missing)
+        )
+
+
+class TestExtractPayloadLiteralsSelfCheck:
+    """Sanity-check самой утилиты `_extract_payload_literals` — чтобы
+    rewriting её не сломал контракт-тесты молча.
+    """
+
+    @pytest.mark.parametrize(
+        "source,expected",
+        [
+            ('payload="menu:main"', {"menu:main"}),
+            ('payload=f"op:open_card:{x}"', {"op:open_card:"}),
+            (
+                'payload="a"\npayload=f"b:{c}"\npayload="d"',
+                {"a", "b:", "d"},
+            ),
+            ('payload=""', set()),  # пустой payload игнорируем
+            ('payload="x"  # с комментарием', {"x"}),
+        ],
+    )
+    def test_extract(self, source: str, expected: set[str]) -> None:
+        assert _extract_payload_literals(source) == expected
+```
+
 ### `bot/tests/test_callback_router.py`
 
-Size: `8614` bytes  
-SHA-256: `7310f52c7f6ef0073e379e8480a3ee61735f4bf8ff966dafa85b08c7b4d2412e`
+Size: `9462` bytes  
+SHA-256: `60da44dc54d978bfed23bbbefbd1e0f8b56ba548031879816b6c793609ac7cfc`
 
 ```python
 """Тесты callback-router.
@@ -34021,7 +34507,19 @@ class TestRouteRegistry:
             ("op:unblock:1", "operator_admin", True),
             ("op:opadd:role", "operator_admin", True),
             ("op:setkey:topics", "operator_admin", True),
-            ("menu:settings", "menu_fallback", False),
+            # menu:settings раньше уходил в MENU_FALLBACK; после
+            # декларации всех citizen-routes в EXACT_ROUTES (2026-05-26)
+            # — citizen_flow. То же для других menu:* / settings:* /
+            # info:* / goodbye:*. MENU_FALLBACK теперь только для
+            # реально неизвестных payload'ов (typo, stale кнопка).
+            ("menu:settings", "citizen_flow", False),
+            ("settings:goodbye", "citizen_flow", False),
+            ("info:emergency", "citizen_flow", False),
+            ("goodbye:revoke_yes", "citizen_flow", False),
+            ("appeal:show:42", "citizen_flow", False),
+            ("appeals:page:2", "citizen_flow", False),
+            # Реально неизвестный payload → MENU_FALLBACK.
+            ("totally:unknown:42", "menu_fallback", False),
         ],
     )
     def test_payload_group_matrix(self, payload, group, admin_allowed) -> None:
@@ -36349,6 +36847,618 @@ async def test_list_consented_excludes_blocked_and_deleted(session) -> None:
     assert 301 in ids
     assert 302 not in ids
     assert 303 not in ids
+```
+
+### `bot/tests/test_freshness_full_coverage.py`
+
+Size: `29458` bytes  
+SHA-256: `33837d4a9c5c4aea38a78d96aa92101fd64ec8191cdd1680683276c3f8ad1142`
+
+```python
+"""Характеризация полного контракта freshness-rule для admin-чата.
+
+Цель: один файл = одна страница «как ведёт себя бот при всех возможных
+комбинациях карточек × callback'ов». До этого freshness покрывался
+точечно в `test_admin_card_render.py` (unit на render) и в
+`test_send_or_edit_screen.py` (unit на меню). Но **взаимодействие**
+двух freshness-aware сервисов между собой — критично для UX и не было
+покрыто. Жалоба владельца 2026-05-26: «карточка обращения снова
+редактируется при переходе в админ меню после открытия через listing» —
+именно такой межсервисный сценарий.
+
+Канонические правила (источник истины: docstring admin_card.py +
+docstring send_or_edit_screen):
+
+1. **admin_card.render(force_new=False, callback_mid=mid)** → edit
+   карточки, ЕСЛИ `mid == menu_tracker[admin_group_id]`. Иначе send_new.
+2. **admin_card.render(force_new=True, ...)** → всегда send_new, +
+   `menu_tracker.clear(admin_group_id)` после успешного send.
+3. **send_or_edit_screen(force_new_message=False, callback_mid=mid)** →
+   edit меню, ЕСЛИ `mid == menu_tracker[chat_id]`. Иначе send_new,
+   tracker обновляется на новый mid.
+4. **admin_card.render ВСЕГДА clear()'ит tracker после send_new** — это
+   SACRED: следующий тап на любой кнопке менюшки НЕ должен edit'нуть
+   sacred-карточку, даже если её mid случайно совпадает с callback_mid.
+5. **admin_bus.send + note_incoming_admin_message** двигают tracker на
+   свой mid — это закрывает дыру «оператор написал, но tracker остался
+   выше».
+
+Test ID-структура: `TestX_<scenario>::test_<expected_behavior>`. Каждый
+тест имитирует ровно одну точку решения «edit vs send_new» и проверяет
+выбранную ветку через моки `bot.send_message` / `bot.edit_message`.
+"""
+from __future__ import annotations
+
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+from tests._helpers import fake_session_scope as _fake_session_scope
+
+
+pytest.importorskip("maxapi", reason="нужен maxapi для admin_card / event")
+
+
+ADMIN_CHAT_ID = 555
+
+
+def _make_appeal(*, appeal_id: int = 5, admin_mid=None, last_card_mid=None):
+    """Минимальный appeal для admin_card.render — повторяет helper из
+    test_admin_card_render.py, чтобы тесты были self-contained."""
+    user = SimpleNamespace(
+        first_name="Иван",
+        phone="+79991234567",
+        is_blocked=False,
+        consent_pdn_at=None,
+        consent_revoked_at=None,
+        subscribed_broadcast=False,
+        max_user_id=42,
+    )
+    appeal = SimpleNamespace(
+        id=appeal_id,
+        user=user,
+        status="new",
+        locality="Елизовское ГП",
+        address="ул. Ленина, 5",
+        topic="Дороги",
+        summary="Яма во дворе.",
+        attachments=[],
+        admin_message_id=admin_mid,
+        last_admin_card_mid=last_card_mid,
+        closed_due_to_revoke=False,
+    )
+    appeal.__dict__["messages"] = []
+    return appeal
+
+
+def _make_bot(send_mids: list[str] | None = None):
+    """Bot с настраиваемым стримом mid'ов для последовательных send'ов.
+
+    Цель: тесты на цепочки (listing → open_card → menu) должны
+    различать mid'ы каждого send'а, чтобы tracker мог между ними
+    переключаться корректно.
+    """
+    sequence = list(send_mids or ["m-1"])
+
+    def _next_send(*args, **kwargs):
+        mid = sequence.pop(0) if sequence else f"m-extra-{len(sequence)}"
+        return SimpleNamespace(
+            message=SimpleNamespace(body=SimpleNamespace(mid=mid))
+        )
+
+    return SimpleNamespace(
+        send_message=AsyncMock(side_effect=_next_send),
+        edit_message=AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="m-edited"))
+            )
+        ),
+    )
+
+
+def _make_event(*, bot, callback_mid: str | None):
+    """Event-like объект для send_or_edit_screen. Если callback_mid задан
+    — это callback (event.callback присутствует, event.message.body.mid
+    задан). Если None — это команда / текст (нет callback).
+    """
+    msg = SimpleNamespace(
+        body=SimpleNamespace(mid=callback_mid) if callback_mid else None,
+        recipient=SimpleNamespace(chat_id=ADMIN_CHAT_ID),
+    )
+    event = SimpleNamespace(
+        bot=bot,
+        message=msg,
+        callback=SimpleNamespace(callback_id="cb-1") if callback_mid else None,
+    )
+
+    def _get_ids():
+        return (ADMIN_CHAT_ID, 7)
+
+    event.get_ids = _get_ids
+    return event
+
+
+@pytest.fixture(autouse=True)
+def _clean_tracker():
+    """Каждый тест стартует с чистым tracker'ом — иначе утечки между
+    тестами маскируют bug'и (сценарий A выставил tracker, сценарий B
+    унаследовал)."""
+    from aemr_bot.utils import menu_tracker
+
+    menu_tracker.clear_all()
+    yield
+    menu_tracker.clear_all()
+
+
+# ============================================================================
+# GROUP A: admin_card.render + freshness rule (unit-level)
+# ============================================================================
+
+
+class TestA_AdminCardRender:
+    """Базовый контракт admin_card.render. Дублирует ключевые случаи из
+    test_admin_card_render.py для self-containedness — но более явно
+    разделяет «что мы проверяем» (один тест = одно правило)."""
+
+    @pytest.mark.asyncio
+    async def test_force_new_clears_tracker_after_send(self) -> None:
+        """force_new=True → send_new → tracker должен стать None.
+
+        Это SACRED-фикс 2026-05-26: без clear'а следующий callback
+        тапа меню edit'нет карточку обращения."""
+        from aemr_bot.services import admin_card
+        from aemr_bot.utils import menu_tracker
+
+        appeal = _make_appeal()
+        bot = _make_bot(send_mids=["card-new-1"])
+        menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "stale-listing-7")
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_admin_message_id",
+                AsyncMock(),
+            ),
+        ):
+            await admin_card.render(bot, appeal, force_new=True)
+
+        bot.send_message.assert_awaited_once()
+        bot.edit_message.assert_not_called()
+        # SACRED: tracker очищен, sacred card НЕ участвует в freshness
+        # для следующих callback'ов меню.
+        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+
+
+# ============================================================================
+# GROUP B: send_or_edit_screen ПОСЛЕ admin_card.render — критичный
+# интерактивный сценарий (жалоба владельца).
+# ============================================================================
+
+
+class TestB_MenuAfterAdminCard:
+    """После admin_card.render(force_new=True) карточка опубликована и
+    tracker очищен. Следующий тап op:menu на КАРТОЧКЕ (callback_mid =
+    card_mid) НЕ должен edit'нуть карточку — должен послать новое меню.
+
+    Это центральный сценарий жалобы владельца 2026-05-26 — раньше
+    sacred-карточка превращалась в меню при тапе любой кнопки op:menu."""
+
+    @pytest.mark.asyncio
+    async def test_menu_callback_on_card_sends_new_menu(self) -> None:
+        """force_new render → clear → menu callback с card_mid → send_new
+        menu (НЕ edit карточки).
+        """
+        from aemr_bot.services import admin_card
+        from aemr_bot.utils.event import send_or_edit_screen
+        from aemr_bot.utils import menu_tracker
+
+        appeal = _make_appeal()
+        bot = _make_bot(send_mids=["card-mid-1", "menu-mid-2"])
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
+        ):
+            # 1. open_card (через клик на listing): render с force_new=True.
+            card_mid = await admin_card.render(bot, appeal, force_new=True)
+            assert card_mid == "card-mid-1"
+            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+
+            # 2. op:menu — callback на КАРТОЧКЕ (callback_mid = card_mid).
+            event = _make_event(bot=bot, callback_mid=card_mid)
+            await send_or_edit_screen(
+                event,
+                chat_id=ADMIN_CHAT_ID,
+                text="📋 Памятка оператора (меню)",
+            )
+
+        # CRITICAL: bot.edit_message НЕ должен быть вызван (иначе
+        # карточка обращения превратится в меню).
+        bot.edit_message.assert_not_called()
+        # menu отправлен новой записью.
+        assert bot.send_message.await_count == 2
+        # И tracker теперь = menu_mid (от send_or_edit_screen),
+        # не card_mid.
+        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "menu-mid-2"
+
+    @pytest.mark.asyncio
+    async def test_menu_callback_with_no_tracker_sends_new(self) -> None:
+        """Если tracker = None (после admin_card.render clear), любой
+        callback на меню → send_new, независимо от callback_mid.
+        """
+        from aemr_bot.utils.event import send_or_edit_screen
+        from aemr_bot.utils import menu_tracker
+
+        bot = _make_bot(send_mids=["menu-fresh-1"])
+        # Tracker уже пуст (после _clean_tracker fixture).
+        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+
+        event = _make_event(bot=bot, callback_mid="any-old-mid-99")
+        await send_or_edit_screen(
+            event,
+            chat_id=ADMIN_CHAT_ID,
+            text="Меню",
+        )
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited_once()
+
+
+# ============================================================================
+# GROUP C: Полная цепочка listing → open_card → menu (жалоба владельца
+# конкретно про этот flow).
+# ============================================================================
+
+
+class TestC_ListingOpenCardMenu:
+    """Имитация реального операторского flow:
+
+    1. Op в админ меню (tracker = menu_mid_1).
+    2. Op тапает «📂 Открытые обращения» → send_or_edit_screen edit'ит
+       menu_mid_1 → tracker остаётся = menu_mid_1.
+    3. Op тапает «📂 Открыть #N» → admin_card.render(force_new=True) →
+       new card_mid → tracker.clear() → None.
+    4. Op тапает «🏠 В админ-меню» (op:menu) — НО эта кнопка на listing
+       (выше карточки), не на карточке. callback_mid = listing_mid.
+       send_or_edit_screen: tracker=None → send_new menu.
+
+    Если правило freshness работает — карточка обращения НЕ
+    редактируется ни в одной точке flow. Тест проверяет именно это.
+    """
+
+    @pytest.mark.asyncio
+    async def test_full_listing_open_card_flow_no_card_edit(self) -> None:
+        from aemr_bot.services import admin_card
+        from aemr_bot.utils.event import send_or_edit_screen
+        from aemr_bot.utils import menu_tracker
+
+        appeal = _make_appeal()
+        # Sequence для send_message — только SEND'ы (edit не consume'ит).
+        # Шаг 1: send_new menu → "menu-1". Шаг 2: edit-in-place (без
+        # send). Шаг 3: send_new card → "card-2". Шаг 4: send_new menu
+        # → "menu-4".
+        bot = _make_bot(send_mids=["menu-1", "card-2", "menu-4"])
+
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
+        ):
+            # Шаг 1: show_op_menu — tracker = menu-1.
+            event_1 = _make_event(bot=bot, callback_mid=None)  # /menu cmd
+            await send_or_edit_screen(
+                event_1, chat_id=ADMIN_CHAT_ID, text="меню 1"
+            )
+            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "menu-1"
+
+            # Шаг 2: тап «📂 Открытые обращения» (op:open_tickets) на
+            # меню → callback_mid = menu-1 = tracker → edit-in-place.
+            # Listing не двигает tracker (edit сохраняет mid).
+            event_2 = _make_event(bot=bot, callback_mid="menu-1")
+            await send_or_edit_screen(
+                event_2, chat_id=ADMIN_CHAT_ID, text="listing"
+            )
+            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "menu-1"
+
+            # Шаг 3: open_card → admin_card.render(force_new=True).
+            card_mid = await admin_card.render(bot, appeal, force_new=True)
+            assert card_mid == "card-2"
+            # SACRED clear — tracker должен быть None.
+            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+
+            # Шаг 4: тап op:menu на listing (или callback на любом
+            # сообщении) → send_new menu.
+            event_4 = _make_event(bot=bot, callback_mid="menu-1")
+            await send_or_edit_screen(
+                event_4, chat_id=ADMIN_CHAT_ID, text="меню 4"
+            )
+
+        # CRITICAL: bot.edit_message вызван РОВНО ОДИН РАЗ — только в
+        # шаге 2 (listing edit'ит меню). НЕ должен быть вызван в шаге 4
+        # (это было бы sacred-violation: меню edit'ит карточку).
+        assert bot.edit_message.await_count == 1
+        # И вызван с callback_mid = menu-1 (mid menu, не card).
+        edit_call_kwargs = bot.edit_message.call_args.kwargs
+        assert edit_call_kwargs["message_id"] == "menu-1"
+        # Tracker в конце = menu-4 (последнее menu).
+        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "menu-4"
+
+
+# ============================================================================
+# GROUP D: Op action на карточке (op:reply / op:close / op:reopen) после
+# open_card — render передаёт callback_mid, tracker=None, send_new.
+# ============================================================================
+
+
+class TestD_OpActionAfterOpenCard:
+    """После open_card tracker=None. Op тапает op:reply / op:close / etc
+    на карточке. _show_appeal_card_or_result вызывает render с
+    callback_mid=card_mid → freshness: callback_mid != None, tracker=None
+    → can_edit=False → send_new card."""
+
+    @pytest.mark.asyncio
+    async def test_reply_action_after_open_card_sends_new_card(self) -> None:
+        from aemr_bot.services import admin_card
+        from aemr_bot.utils import menu_tracker
+
+        appeal = _make_appeal()
+        bot = _make_bot(send_mids=["card-open-1", "card-after-reply-2"])
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
+        ):
+            card_mid = await admin_card.render(bot, appeal, force_new=True)
+            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+
+            # Op тапает «✏️ Ответить» — handler передаёт callback_mid.
+            appeal.status = "in_progress"  # после reply intent
+            await admin_card.render(bot, appeal, callback_mid=card_mid)
+
+        # CRITICAL: edit НЕ вызывался — карточка появляется новой
+        # записью с обновлённым статусом, оригинал остаётся в истории
+        # выше как иммутабельная sacred-запись.
+        bot.edit_message.assert_not_called()
+        assert bot.send_message.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_render_when_tracker_matches_edits_inplace(self) -> None:
+        """Контр-кейс: tracker = card_mid (например, после первой
+        публикации карточки без force_new и без других сообщений
+        между), render(callback_mid=card_mid) → edit-in-place.
+
+        Это правильное поведение, когда карточка ЕЩЁ последняя в чате —
+        оператор тапает кнопку, бот обновляет её на месте, чтобы
+        оператор видел изменение."""
+        from aemr_bot.services import admin_card
+        from aemr_bot.utils import menu_tracker
+
+        appeal = _make_appeal(last_card_mid="card-1")
+        bot = _make_bot()
+        # Имитация: tracker выставлен на карточку (например, после
+        # finalize первой публикации с особой логикой outer кода).
+        menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "card-1")
+
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+        ):
+            await admin_card.render(bot, appeal, callback_mid="card-1")
+
+        bot.edit_message.assert_awaited_once()
+        bot.send_message.assert_not_called()
+
+
+# ============================================================================
+# GROUP E: admin_bus.send + incoming-middleware двигают tracker —
+# любой следующий callback на «карточку выше» → send_new.
+# ============================================================================
+
+
+class TestE_TrackerInvalidationByExternalMessages:
+    """Pulse / admin_event / incoming op message смещают tracker. Это
+    закрывает дыру «карточка выше tracker'а — callback freshness
+    говорит "это последняя" → edit вверху чата → оператор внизу не
+    видит изменение»."""
+
+    @pytest.mark.asyncio
+    async def test_pulse_via_admin_bus_invalidates_card_callback(self) -> None:
+        from aemr_bot.services import admin_bus
+        from aemr_bot.utils import menu_tracker
+        from aemr_bot.utils.event import send_or_edit_screen
+
+        bot = _make_bot(send_mids=["pulse-mid-1", "fresh-menu-2"])
+
+        with patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID):
+            # Op опубликовал карточку давно — tracker до того был
+            # = old_card_mid.
+            menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "old-card-99")
+
+            # Pulse приходит — admin_bus.send → tracker = pulse_mid.
+            await admin_bus.send(bot, text="🟢 Pulse")
+            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "pulse-mid-1"
+
+            # Op тапает кнопку на старой карточке (на «old-card-99»).
+            event = _make_event(bot=bot, callback_mid="old-card-99")
+            await send_or_edit_screen(event, chat_id=ADMIN_CHAT_ID, text="меню")
+
+        # Send_or_edit_screen видит callback_mid (old-card-99) != tracker
+        # (pulse-mid-1) → send_new, НЕ edit старой карточки выше.
+        bot.edit_message.assert_not_called()
+        # 2 send'а: pulse и меню.
+        assert bot.send_message.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_incoming_op_message_invalidates_card_callback(self) -> None:
+        """Op написал в чат → middleware (note_incoming_admin_message)
+        двигает tracker → следующий тап на старой карточке → send_new."""
+        from aemr_bot.services import admin_bus
+        from aemr_bot.utils import menu_tracker
+        from aemr_bot.utils.event import send_or_edit_screen
+
+        bot = _make_bot(send_mids=["fresh-menu-1"])
+
+        with patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID):
+            menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "old-card-99")
+            # Op написал в чат — middleware зарегистрировал mid.
+            admin_bus.note_incoming_admin_message("op-msg-77")
+            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "op-msg-77"
+
+            event = _make_event(bot=bot, callback_mid="old-card-99")
+            await send_or_edit_screen(event, chat_id=ADMIN_CHAT_ID, text="меню")
+
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited_once()
+
+
+# ============================================================================
+# GROUP F: Двойной open_card — открыли #1, затем #2. Tracker = None
+# после каждого, обе карточки — новые записи внизу.
+# ============================================================================
+
+
+class TestF_MultipleOpenCard:
+    """Op открыл одно обращение, потом второе. Каждый open_card =
+    отдельная sacred-запись в чате."""
+
+    @pytest.mark.asyncio
+    async def test_two_open_cards_both_send_new(self) -> None:
+        from aemr_bot.services import admin_card
+        from aemr_bot.utils import menu_tracker
+
+        appeal_1 = _make_appeal(appeal_id=11)
+        appeal_2 = _make_appeal(appeal_id=22)
+        bot = _make_bot(send_mids=["card-11", "card-22"])
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
+        ):
+            mid_1 = await admin_card.render(bot, appeal_1, force_new=True)
+            assert mid_1 == "card-11"
+            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+
+            mid_2 = await admin_card.render(bot, appeal_2, force_new=True)
+            assert mid_2 == "card-22"
+            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+
+        # Обе карточки send_new — ни одна не edit'илась.
+        bot.edit_message.assert_not_called()
+        assert bot.send_message.await_count == 2
+
+
+# ============================================================================
+# GROUP G_close: «закрыл 2 — обе должны обновить» (жалоба владельца).
+# DDD-fix 2026-05-26: _show_appeal_card_or_result теперь force_new=True
+# всегда, поэтому каждое op-действие — новая карточка внизу с актуальным
+# статусом. Раньше первая edit'илась на месте, вторая send'илась → user
+# видел «одну обновила, другую нет».
+# ============================================================================
+
+
+class TestG_TwoActionsBothPublishNewCards:
+    """После двух последовательных op-действий (close, reopen, reply,
+    block) на разных обращениях — обе карточки должны появиться новыми
+    записями внизу. Никакого edit-in-place: sacred event log.
+
+    Это regression-тест на жалобу: «закрыл 2 обращения подряд — одна
+    обновила статус, другая нет». Корень: freshness rule edit'ил первую
+    карточку (она была свежая), вторая sent'илась новой → визуальная
+    inconsistency.
+    """
+
+    @pytest.mark.asyncio
+    async def test_two_closes_both_publish_new_cards(self) -> None:
+        from aemr_bot.services import admin_card
+        from aemr_bot.utils import menu_tracker
+
+        # Имитация: 2 разных appeal'а закрываются подряд через
+        # _show_appeal_card_or_result (force_new=True всегда).
+        appeal_1 = _make_appeal(appeal_id=11, last_card_mid="card-1")
+        appeal_1.status = "closed"  # после close
+        appeal_2 = _make_appeal(appeal_id=22, last_card_mid="card-2")
+        appeal_2.status = "closed"
+
+        bot = _make_bot(send_mids=["closed-1-new", "closed-2-new"])
+        # Имитация: tracker = card-1 (как было бы перед первым close).
+        menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "card-1")
+
+        with (
+            patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID),
+            patch("aemr_bot.services.admin_card.session_scope",
+                  _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
+        ):
+            # close #1 → force_new=True → send_new "closed-1-new",
+            # tracker.clear() → None.
+            mid_1 = await admin_card.render(bot, appeal_1, force_new=True)
+            assert mid_1 == "closed-1-new"
+            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+
+            # close #2 → force_new=True → send_new "closed-2-new".
+            mid_2 = await admin_card.render(bot, appeal_2, force_new=True)
+            assert mid_2 == "closed-2-new"
+            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+
+        # CRITICAL: обе карточки send_new (НЕ edit). Каждая — новая
+        # запись внизу с актуальным статусом CLOSED. Оператор видит обе
+        # как «обновлённые», нет визуальной inconsistency.
+        bot.edit_message.assert_not_called()
+        assert bot.send_message.await_count == 2
+
+
+# ============================================================================
+# GROUP H: edit_message fail → fallback на send + clear tracker
+# ============================================================================
+
+
+class TestH_EditFailureFallback:
+    """Если MAX вернул ошибку на edit (например, message removed) —
+    fallback на send_new. Tracker должен быть очищен, чтобы следующий
+    callback не попытался edit'нуть тот же битый mid."""
+
+    @pytest.mark.asyncio
+    async def test_send_or_edit_screen_edit_fail_clears_tracker(self) -> None:
+        from aemr_bot.utils.event import send_or_edit_screen
+        from aemr_bot.utils import menu_tracker
+
+        bot = _make_bot(send_mids=["recovery-mid-9"])
+        bot.edit_message = AsyncMock(side_effect=Exception("MAX 404"))
+        menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "stale-7")
+
+        event = _make_event(bot=bot, callback_mid="stale-7")
+        await send_or_edit_screen(
+            event, chat_id=ADMIN_CHAT_ID, text="меню",
+        )
+
+        bot.send_message.assert_awaited_once()
+        # После fallback tracker = новый mid (от send), НЕ старый.
+        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "recovery-mid-9"
 ```
 
 ### `bot/tests/test_funnel_state_hardening.py`
@@ -44260,6 +45370,94 @@ class TestThreatIntelStore:
         # 7 часов назад
         store.last_refresh_at = time.monotonic() - 7 * 3600
         assert store.is_stale() is True
+```
+
+### `bot/tests/test_typing_indicator.py`
+
+Size: `2923` bytes  
+SHA-256: `582ffb39303750d5e8422b30d830bec1c1b28a54a37455532d259bbc432692d3`
+
+```python
+"""Тесты для `utils/typing_indicator.mark_typing` — UX-помощник, который
+должен быть полностью fail-safe.
+
+Контракт:
+- Любой Exception от MAX API НЕ ломает caller.
+- Без chat_id (и без event'а, из которого его можно извлечь) — no-op.
+- Без bot — no-op.
+- Successful path — вызывает `bot.send_action(chat_id, TYPING_ON)`.
+"""
+from __future__ import annotations
+
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
+
+pytest.importorskip("maxapi", reason="нужен maxapi.enums.sender_action")
+
+
+@pytest.mark.asyncio
+async def test_mark_typing_calls_send_action_on_success() -> None:
+    from aemr_bot.utils.typing_indicator import mark_typing
+
+    bot = SimpleNamespace(send_action=AsyncMock())
+    await mark_typing(bot, chat_id=555)
+
+    bot.send_action.assert_awaited_once()
+    call_kwargs = bot.send_action.call_args.kwargs
+    assert call_kwargs.get("chat_id") == 555
+    # action — это enum SenderAction.TYPING_ON.
+    from maxapi.enums.sender_action import SenderAction
+    assert call_kwargs.get("action") == SenderAction.TYPING_ON
+
+
+@pytest.mark.asyncio
+async def test_mark_typing_swallows_send_action_failure() -> None:
+    """API упал (network / 5xx / unknown chat) — caller не должен упасть."""
+    from aemr_bot.utils.typing_indicator import mark_typing
+
+    bot = SimpleNamespace(send_action=AsyncMock(side_effect=Exception("MAX 500")))
+    # Не должно бросить.
+    await mark_typing(bot, chat_id=555)
+    bot.send_action.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_mark_typing_without_chat_id_extracts_from_event() -> None:
+    """Без chat_id helper берёт из event.get_ids()."""
+    from aemr_bot.utils.typing_indicator import mark_typing
+
+    bot = SimpleNamespace(send_action=AsyncMock())
+    event = SimpleNamespace(
+        bot=bot,
+        get_ids=lambda: (777, 42),
+    )
+    await mark_typing(event)
+
+    bot.send_action.assert_awaited_once()
+    assert bot.send_action.call_args.kwargs.get("chat_id") == 777
+
+
+@pytest.mark.asyncio
+async def test_mark_typing_without_chat_id_and_no_event_is_noop() -> None:
+    """Без chat_id и без get_ids на event — тихий no-op, не падаем."""
+    from aemr_bot.utils.typing_indicator import mark_typing
+
+    bot = SimpleNamespace(send_action=AsyncMock())
+    # Не должно бросить, send_action не вызван.
+    await mark_typing(bot)
+    bot.send_action.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_mark_typing_with_none_bot_is_noop() -> None:
+    """Edge: bot=None / event без .bot → no-op."""
+    from aemr_bot.utils.typing_indicator import mark_typing
+
+    event = SimpleNamespace(bot=None, get_ids=lambda: (555, 7))
+    # Не должно бросить.
+    await mark_typing(event)
 ```
 
 ### `bot/tests/test_uploads_policy_admin_relay.py`
