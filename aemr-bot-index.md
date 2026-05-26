@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-26 22:49:47 UTC`
+Generated at: `2026-05-26 22:55:13 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `236`
 Max file size: `300 KB`
@@ -88,7 +88,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (12943 bytes)
-- `bot/aemr_bot/texts.py` (71115 bytes)
+- `bot/aemr_bot/texts.py` (71361 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -24035,8 +24035,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `71115` bytes  
-SHA-256: `e0ad13ddb0db9ffb834cd82a2936d7711afacab005402da0e5898a86fec8b54c`
+Size: `71361` bytes  
+SHA-256: `9a7cd06b02706e3263651e78f85da1e528ed58d092343cfc998bb686e4b6c8ef`
 
 ```python
 WELCOME = (
@@ -24239,7 +24239,9 @@ SECURITY_INFO_TEXT = (
     "\n"
     "Также бот никогда:\n"
     "• не звонит вам голосом;\n"
-    "• не пишет первым в личку — диалог всегда начинаете вы;\n"
+    "• не пишет первым в личку — диалог всегда начинаете вы "
+    "(исключение: муниципальные оповещения, если вы подписаны "
+    "на рассылку в этом боте — отписаться можно в любой момент через меню);\n"
     "• не присылает ссылок на сторонние сайты для «авторизации»;\n"
     "• не имеет «представителей» и «помощников» в личных сообщениях — "
     "все ответы Администрации приходят от этого же чата.\n"
