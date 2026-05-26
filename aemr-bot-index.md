@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-26 03:28:12 UTC`
+Generated at: `2026-05-26 03:39:02 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `228`
 Max file size: `300 KB`
@@ -88,7 +88,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (12943 bytes)
-- `bot/aemr_bot/texts.py` (45701 bytes)
+- `bot/aemr_bot/texts.py` (46961 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -129,7 +129,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
 - `bot/tests/test_callback_router.py` (8614 bytes)
 - `bot/tests/test_callback_router_coverage.py` (5487 bytes)
-- `bot/tests/test_card_format.py` (10537 bytes)
+- `bot/tests/test_card_format.py` (10753 bytes)
 - `bot/tests/test_cron_jobs.py` (22687 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (15690 bytes)
@@ -207,7 +207,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/DEVELOPER.md` (135315 bytes)
 - `docs/HOW_IT_WORKS.md` (25436 bytes)
 - `docs/MAXAPI_UPGRADE_PROCEDURE.md` (11569 bytes)
-- `docs/OPERATOR_SECURITY.md` (29923 bytes)
+- `docs/OPERATOR_SECURITY.md` (31850 bytes)
 - `docs/PRD.md` (65878 bytes)
 - `docs/README.md` (8656 bytes)
 - `docs/ROLLBACK.md` (7416 bytes)
@@ -23571,8 +23571,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `45701` bytes  
-SHA-256: `2fc53fc9fe1ce261408ef5ee30e7a3891bc2004be853b99658d3e5eab1d92582`
+Size: `46961` bytes  
+SHA-256: `7860461b68b65b87d227557411b64de0e5b53a10f9c75298791ba8a1eff0efb5`
 
 ```python
 WELCOME = (
@@ -23676,36 +23676,61 @@ CONTACT_RETRY = (
     "Нажмите «Поделиться контактом» ниже."
 )
 
+# CARDS UX 2026-05-26: единая визуальная грамматика всех карточек.
+# Принципы:
+#  - явный шапочный заголовок («━━━ ОБРАЩЕНИЕ #N ━━━»);
+#  - статус как первая строка-tag сразу под шапкой;
+#  - блок «Кто и где» отделён от «Что» одной пустой строкой и
+#    тонкой разделителем «· · ·» (читается скринридером как пауза,
+#    в отличие от ─── который иногда озвучивается как «черта»);
+#  - блок «Что делать» (call-to-action) явный, в конце карточки,
+#    отделён жирной чертой «━━━━━━━━━━»;
+#  - emoji только в начале строки-tag'а и в call-to-action,
+#    никогда внутри инфо-строк — иначе screen reader сбивается;
+#  - все labels-двоеточия для последовательного чтения.
+
 APPEAL_CARD_TEMPLATE = (
-    "Обращение #{number}\n"
-    "Дата: {created_at}\n"
-    "Статус: {status_emoji} {status_label}\n\n"
-    "Населённый пункт: {locality}\n"
-    "Адрес: {address}\n"
-    "Тема: {topic}\n\n"
-    "Суть:\n{summary}"
+    "━━━ ОБРАЩЕНИЕ #{number} ━━━\n"
+    "{status_emoji} {status_label}\n"
+    "🗓 {created_at}\n"
+    "\n"
+    "📍 Населённый пункт: {locality}\n"
+    "🏠 Адрес: {address}\n"
+    "🏷 Тема: {topic}\n"
+    "\n"
+    "📝 Суть обращения:\n"
+    "{summary}"
 )
 
 ADMIN_CARD_TEMPLATE = (
-    "Обращение #{number}\n\n"
-    "Житель: {name}\n"
-    "Телефон: {phone}\n"
-    "{status_line}\n\n"
-    "────────────────\n"
-    "Населённый пункт: {locality}\n"
-    "Адрес: {address}\n"
-    "Тема: {topic}\n\n"
-    "Суть:\n{summary}\n\n"
-    "────────────────\n"
-    "Ответ — кнопкой «✉️ Ответить» под карточкой или потяните карточку влево. "
+    "━━━ ОБРАЩЕНИЕ #{number} ━━━\n"
+    "{status_line}\n"
+    "\n"
+    "👤 Житель: {name}\n"
+    "📞 Телефон: {phone}\n"
+    "\n"
+    "· · ·\n"
+    "\n"
+    "📍 Населённый пункт: {locality}\n"
+    "🏠 Адрес: {address}\n"
+    "🏷 Тема: {topic}\n"
+    "\n"
+    "📝 Суть обращения:\n"
+    "{summary}\n"
+    "\n"
+    "━━━━━━━━━━━━━━━━\n"
+    "✉️ Ответ — кнопкой ниже либо потяните карточку влево.\n"
     "Лимит {answer_limit} символов."
 )
 
 ADMIN_FOLLOWUP_TEMPLATE = (
-    "Дополнение к обращению #{number}\n"
-    "От: {name}\n\n"
-    "────────────────\n"
-    "{text}\n\n"
+    "━━━ ДОПОЛНЕНИЕ К #{number} ━━━\n"
+    "📩 От жителя: {name}\n"
+    "\n"
+    "· · ·\n"
+    "\n"
+    "{text}\n"
+    "\n"
     "🆔 №{number}"
 )
 
@@ -23721,11 +23746,14 @@ ADMIN_REPLY_DELIVERED_INTERMEDIATE = (
 )
 
 CITIZEN_REPLY_TEMPLATE = (
-    "Ответ Администрации Елизовского муниципального округа\n\n"
-    "Обращение #{number} от {created_at}\n"
-    "Тема: {topic}\n"
-    "Адрес: {locality}, {address}\n\n"
-    "────────────────\n"
+    "✉️ ОТВЕТ АДМИНИСТРАЦИИ ЕЛИЗОВСКОГО МУНИЦИПАЛЬНОГО ОКРУГА\n"
+    "\n"
+    "📌 Обращение #{number} от {created_at}\n"
+    "🏷 Тема: {topic}\n"
+    "📍 Адрес: {locality}, {address}\n"
+    "\n"
+    "━━━━━━━━━━━━━━━━\n"
+    "\n"
     "{reply_text}"
 )
 # CITIZEN_REPLY_TEMPLATE намеренно длинный заголовок: это формальное
@@ -33841,8 +33869,8 @@ class TestAdminCallbackClassification:
 
 ### `bot/tests/test_card_format.py`
 
-Size: `10537` bytes  
-SHA-256: `204a18aeeb3ad43cc166a4551079ad2b685177bc1cf9dfeeec561bfef1835b6e`
+Size: `10753` bytes  
+SHA-256: `65c4a813370610e1745bc3544ded5175ce811acffe439704f9d8fbc3f03d4a34`
 
 ```python
 """Тесты на services/card_format — рендер карточек обращений.
@@ -33909,7 +33937,9 @@ class TestAdminCard:
 
         result = admin_card(appeal, user)
 
-        assert "Суть:" in result
+        # Cards UX 2026-05-26: «Суть:» → «📝 Суть обращения:» (более
+        # явный лейбл, эмодзи в начале строки для screen reader).
+        assert "Суть обращения:" in result
         assert "Яма во дворе." in result
         assert "Дополнение к обращению:" in result
         assert "яма у второго подъезда" in result
@@ -54832,8 +54862,8 @@ git revert <merge-commit> && git push origin main
 
 ### `docs/OPERATOR_SECURITY.md`
 
-Size: `29923` bytes  
-SHA-256: `b571c8e9b45727d4ff179b5dcfaecfa790da5622248cdcd35a8e4ef6e93d7736`
+Size: `31850` bytes  
+SHA-256: `71cff421238bc1b9d1558906731f61b8464735f056c74bdb8c9c0546f7f0f3ef`
 
 ```markdown
 # Инструкция оператору по информационной безопасности
@@ -54885,6 +54915,19 @@ SHA-256: `b571c8e9b45727d4ff179b5dcfaecfa790da5622248cdcd35a8e4ef6e93d7736`
 **«Через бот можно получить дополнительные выплаты/субсидии».** Бот не оформляет соцвыплат и субсидий. Только обращение в Администрацию. Любые «инструкции по оформлению выплат через бот» — мошенничество. Жителя направьте на портал Госуслуг или в МФЦ.
 
 **«Скачайте обновление приложения MAX от Администрации».** MAX обновляется только через официальные сторы (Google Play / App Store / RuStore). Никакие «обновления от Администрации» через бот не рассылаются. Это APK-стилер.
+
+### 1.5a. Визуальная структура карточки (с версии 2026-05-26)
+
+Каждая admin-карточка обращения построена по единой схеме, чтобы вы за две секунды считывали приоритеты:
+
+1. **Шапка** — `━━━ ОБРАЩЕНИЕ #N ━━━` крупно сверху. Если глаз ищет «то самое #44» — он бежит по шапкам.
+2. **Статус-tag** сразу под шапкой (`🆕 новое` / `🔄 в работе` / `✅ отвечено` / `⛔ закрыто`). Цвет-emoji и текст вместе — щадит и зрячих, и тех, кто работает со скринридером.
+3. **Кто и где** — Житель / Телефон / маркеры состояния (подписка / согласие / блокировка). Отделено лёгким разделителем `· · ·` от блока «Что».
+4. **Что** — Населённый пункт / Адрес / Тема / Суть обращения. Если есть ссылки от жителя — здесь же визуальный warning (см. §1.5 ниже).
+5. **Дополнительно** — followup'ы и timeline (если есть).
+6. **Call-to-action** — `━━━━━━━━━━━━━━━━` жирная черта, под ней инструкция «Ответ — кнопкой ниже либо потяните карточку влево».
+
+Emoji только в начале строк, никогда внутри слов — это правило accessibility для русскоязычных скринридеров (NVDA, JAWS-RU, ChromeVox), которые озвучивают эмодзи как отдельную «иконку» и сбиваются при смешивании с буквами.
 
 ### 1.5. Бдительность при работе с самой админ-карточкой
 
