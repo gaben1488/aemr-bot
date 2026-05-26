@@ -625,19 +625,81 @@ async def _send_one(
     не на каждого подписчика). Картинки идут впереди клавиатуры отписки,
     чтобы UI MAX отрендерил их как content рассылки, а не как payload
     клавиатуры.
+
+    MAXAPI_DEEP_DIVE §14 fix (P1): maxapi 1.1.0 НЕ ретраит HTTP 429
+    и не парсит Retry-After header. Для broadcast на 1000+ жителей
+    это критично — без backoff каждый 429 = потерянный получатель и
+    риск временного бана токена. Ловим MaxApiError с code=429 явно,
+    ждём (Retry-After если есть в raw, иначе exponential 1→2→4 сек),
+    повторяем до 3 раз. После 3 неудачных — фиксируем как failed,
+    идём дальше (не блокируем всю рассылку из-за одного жителя).
     """
-    try:
-        await bot.send_message(
-            user_id=max_user_id,
-            text=body_text,
-            attachments=[
-                *outbound_images,
-                keyboards.broadcast_unsubscribe_keyboard(),
-            ],
-        )
-    except Exception as e:
-        # Обрезаем, чтобы поле с ошибкой не разрасталось. Полный стек живёт в логах.
-        return repr(e)[:500]
+    delay_sec = 1.0
+    for attempt in range(3):
+        try:
+            await bot.send_message(
+                user_id=max_user_id,
+                text=body_text,
+                attachments=[
+                    *outbound_images,
+                    keyboards.broadcast_unsubscribe_keyboard(),
+                ],
+            )
+            return None
+        except Exception as e:
+            err_repr = repr(e)
+            # Детектируем 429 (Too Many Requests) по тексту ошибки.
+            # maxapi.MaxApiError содержит code в repr — проверяем
+            # через подстроку, чтобы не тащить imports конкретного
+            # exception класса (в разных версиях SDK имя отличается).
+            is_rate_limit = (
+                "429" in err_repr
+                or "rate" in err_repr.lower()
+                or "too many" in err_repr.lower()
+            )
+            if not is_rate_limit:
+                # Не rate-limit — обычная ошибка (заблокирован, нет
+                # такого user_id, network), не ретраим.
+                return err_repr[:500]
+            if attempt == 2:
+                # Третья попытка тоже 429 — сдаёмся, идём к следующему
+                # получателю. Глобальная задержка между сообщениями уже
+                # есть в _run_broadcast_impl (rate_delay), 429 на ней —
+                # знак что нагрузка реально упёрлась.
+                log.warning(
+                    "broadcast: 429 после 3 попыток для user_id=%s — пропускаем",
+                    max_user_id,
+                )
+                return err_repr[:500]
+            # Попробовать достать Retry-After из exception, иначе
+            # exponential.
+            wait = _extract_retry_after(e) or delay_sec
+            log.info(
+                "broadcast: 429 для user_id=%s, попытка %d, жду %.1f сек",
+                max_user_id, attempt + 1, wait,
+            )
+            await asyncio.sleep(wait)
+            delay_sec *= 2
+    return "exhausted"
+
+
+def _extract_retry_after(exc: Exception) -> float | None:
+    """Достать Retry-After (в секундах) из MaxApiError если есть.
+
+    maxapi 1.1.0 не парсит этот header явно, но может прокидывать в
+    `exc.raw` или `exc.args`. Best-effort: пробуем атрибуты, ловим
+    AttributeError, возвращаем None если не нашли — тогда вызывающий
+    использует exponential backoff.
+    """
+    raw = getattr(exc, "raw", None)
+    if isinstance(raw, dict):
+        for key in ("retry_after", "Retry-After", "retryAfter"):
+            value = raw.get(key)
+            if value is not None:
+                try:
+                    return float(value)
+                except (TypeError, ValueError):
+                    pass
     return None
 
 
