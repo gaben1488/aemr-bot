@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-25 23:13:19 UTC`
+Generated at: `2026-05-26 00:50:51 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `219`
 Max file size: `300 KB`
@@ -81,7 +81,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/policy.py` (2979 bytes)
 - `bot/aemr_bot/services/progress.py` (9433 bytes)
 - `bot/aemr_bot/services/repo_sync.py` (15676 bytes)
-- `bot/aemr_bot/services/settings_store.py` (29729 bytes)
+- `bot/aemr_bot/services/settings_store.py` (30674 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (31152 bytes)
@@ -158,7 +158,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_reliability_pass.py` (9745 bytes)
 - `bot/tests/test_repo_sync.py` (21989 bytes)
 - `bot/tests/test_security_batch_b.py` (7285 bytes)
-- `bot/tests/test_security_batch_c.py` (6597 bytes)
+- `bot/tests/test_security_batch_c.py` (9267 bytes)
 - `bot/tests/test_services_no_db.py` (9640 bytes)
 - `bot/tests/test_settings_seed_baseline.py` (3683 bytes)
 - `bot/tests/test_settings_store_validation.py` (6731 bytes)
@@ -20783,8 +20783,8 @@ async def fetch_main_runtime_config(
 
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `29729` bytes  
-SHA-256: `ee944b85720eab15d7881faf81856d5637cc3983594a2d321afc241c2c011de0`
+Size: `30674` bytes  
+SHA-256: `9102a75909106e3158298b76335b8865df63bd425f0a27ec9dd5d334ee4b57f0`
 
 ```python
 import json
@@ -21023,7 +21023,21 @@ DEFAULTS: dict[str, Any] = {
 # дополнительными правилами. /setting <key> <value> отклоняет всё, чего нет в
 # этой карте.
 SCHEMA: dict[str, dict] = {
-    "welcome_text": {"type": str, "min_len": 1, "max_len": 4000},
+    # C1-hardening: welcome_text обязан содержать антифишинговый блок
+    # «НИКОГДА не запрашиваем» — это последняя строка защиты жителя от
+    # PII-фишинга через support-impersonation (см. SECURITY_REVIEW
+    # 2026-05-26 C4). IT может переписать формулировку под текущий
+    # контекст (новые скам-схемы, сезонные), но **минимальная
+    # подстрока должна остаться**. Если жёсткая фраза устарела —
+    # обновите её здесь И в seed/welcome.md И в texts.WELCOME
+    # одновременно, чтобы required_substr не блокировал актуальную
+    # версию.
+    "welcome_text": {
+        "type": str,
+        "min_len": 1,
+        "max_len": 4000,
+        "required_substr": "НИКОГДА не запрашиваем",
+    },
     # C1: consent_text используется как шаблон с placeholder
     # `{policy_url}`. Если IT перепишет без placeholder — житель увидит
     # consent без ссылки на политику (формальное нарушение 152-ФЗ).
@@ -41641,8 +41655,8 @@ class TestPhoneValidation:
 
 ### `bot/tests/test_security_batch_c.py`
 
-Size: `6597` bytes  
-SHA-256: `ebde2d007c070faabbc86b35e291398e53b5fed6d9af2299a3eb9f4869372e75`
+Size: `9267` bytes  
+SHA-256: `d8ad915decfe129b38e39b1aa65ba71685176a20790b748d20405647aade2478`
 
 ```python
 """Тесты на Batch C security-fixes.
@@ -41731,6 +41745,53 @@ class TestConsentTextRequiredSubstr:
         )
         assert ok is False
         assert "{policy_url}" in reason
+
+
+class TestWelcomeTextRequiredSubstr:
+    """C1-hardening: welcome_text обязан содержать антифишинговый блок
+    «НИКОГДА не запрашиваем» — это последняя линия защиты жителя от
+    PII-фишинга через support-impersonation."""
+
+    def test_welcome_with_antiphishing_passes(self) -> None:
+        ok, _ = validate(
+            "welcome_text",
+            "Здравствуйте. Это бот.\n\n"
+            "🛡️ Что мы НИКОГДА не запрашиваем: паспорт, СНИЛС...\n\n"
+            "Выберите действие.",
+        )
+        assert ok is True
+
+    def test_welcome_without_antiphishing_rejected(self) -> None:
+        """IT не может убрать антифишинговый блок через UI — validate
+        отклонит. Это защита от: (a) случайной правки, при которой
+        блок выпал; (b) компрометации IT-аккаунта со снятием защиты
+        жителя."""
+        ok, reason = validate(
+            "welcome_text",
+            "Здравствуйте. Это бот.\n\nВыберите действие.",
+        )
+        assert ok is False
+        assert "НИКОГДА не запрашиваем" in reason
+
+    def test_seed_welcome_passes_validate(self) -> None:
+        """Регрессия: фактический seed/welcome.md должен проходить
+        собственный validate. Иначе bootstrap бота на чистой БД
+        свалится при загрузке seed."""
+        from pathlib import Path
+        seed_path = Path(__file__).parent.parent.parent / "seed" / "welcome.md"
+        if not seed_path.exists():
+            pytest.skip(f"seed/welcome.md не найден по пути {seed_path}")
+        text = seed_path.read_text(encoding="utf-8")
+        ok, reason = validate("welcome_text", text)
+        assert ok is True, f"seed/welcome.md не прошёл validate: {reason}"
+
+    def test_hardcoded_welcome_passes_validate(self) -> None:
+        """Регрессия: hardcoded texts.WELCOME (fallback в C1) обязан
+        тоже проходить validate. Иначе при пустой БД житель увидит
+        текст, который IT не сможет переименовать обратно через UI."""
+        from aemr_bot.texts import WELCOME
+        ok, reason = validate("welcome_text", WELCOME)
+        assert ok is True, f"texts.WELCOME не прошёл validate: {reason}"
 
 
 class TestBroadcastCooldownClassifier:
