@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-26 01:17:38 UTC`
+Generated at: `2026-05-26 02:41:26 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `221`
+Indexed files: `225`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -72,7 +72,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (15994 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
-- `bot/aemr_bot/services/card_format.py` (17157 bytes)
+- `bot/aemr_bot/services/card_format.py` (19100 bytes)
 - `bot/aemr_bot/services/cron.py` (48280 bytes)
 - `bot/aemr_bot/services/db_backup.py` (16664 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
@@ -81,7 +81,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/policy.py` (2979 bytes)
 - `bot/aemr_bot/services/progress.py` (9433 bytes)
 - `bot/aemr_bot/services/repo_sync.py` (16984 bytes)
-- `bot/aemr_bot/services/settings_store.py` (36589 bytes)
+- `bot/aemr_bot/services/settings_store.py` (37659 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (31152 bytes)
@@ -94,6 +94,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/utils/event.py` (13349 bytes)
 - `bot/aemr_bot/utils/image_attachments.py` (1137 bytes)
 - `bot/aemr_bot/utils/menu_tracker.py` (2996 bytes)
+- `bot/aemr_bot/utils/url_defang.py` (5100 bytes)
 - `bot/alembic.ini` (619 bytes)
 - `bot/pyproject.toml` (2583 bytes)
 - `bot/tests/__init__.py` (0 bytes)
@@ -159,12 +160,13 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_repo_sync.py` (21989 bytes)
 - `bot/tests/test_security_batch_b.py` (7285 bytes)
 - `bot/tests/test_security_batch_c.py` (9267 bytes)
-- `bot/tests/test_security_batch_d.py` (6304 bytes)
+- `bot/tests/test_security_batch_d.py` (6992 bytes)
 - `bot/tests/test_services_no_db.py` (9640 bytes)
 - `bot/tests/test_settings_seed_baseline.py` (3683 bytes)
 - `bot/tests/test_settings_store_validation.py` (6731 bytes)
 - `bot/tests/test_stale_operators_cleanup.py` (5188 bytes)
 - `bot/tests/test_uploads_policy_admin_relay.py` (11634 bytes)
+- `bot/tests/test_url_defang.py` (2828 bytes)
 - `bot/tests/test_users_service_pg.py` (16852 bytes)
 - `bot/tests/test_wizard_registry.py` (5268 bytes)
 - `docs/_extracted/README.md` (2565 bytes)
@@ -173,6 +175,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/_meta/AUDIT_REPORT.md` (17027 bytes)
 - `docs/_meta/COVERAGE_GAPS.md` (26592 bytes)
 - `docs/_meta/FILE_INVENTORY.md` (33577 bytes)
+- `docs/_meta/MAXAPI_DEEP_DIVE_2026-05-26.md` (14167 bytes)
 - `docs/_meta/MAXAPI_INSIGHTS.md` (22979 bytes)
 - `docs/_meta/MAXAPI_INVENTORY.md` (14559 bytes)
 - `docs/_meta/MAXAPI_UNUSED_FEATURES.md` (12198 bytes)
@@ -184,6 +187,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/_meta/SEC_SCAM_VECTORS_2026-05-26.md` (19107 bytes)
 - `docs/_meta/SEC_SELF_REVIEW_2026-05-26.md` (14170 bytes)
 - `docs/_meta/SECURITY_REVIEW_2026-05-26.md` (14071 bytes)
+- `docs/_meta/URL_THREAT_INTEL_2026-05-26.md` (16739 bytes)
 - `docs/archive/CHAT_AUDIT.md` (20468 bytes)
 - `docs/archive/COMPETITIVE_BRIEF.md` (19867 bytes)
 - `docs/archive/COMPETITIVE_DEEP_DIVE.md` (12346 bytes)
@@ -200,7 +204,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/DEVELOPER.md` (135315 bytes)
 - `docs/HOW_IT_WORKS.md` (25436 bytes)
 - `docs/MAXAPI_UPGRADE_PROCEDURE.md` (11569 bytes)
-- `docs/OPERATOR_SECURITY.md` (23937 bytes)
+- `docs/OPERATOR_SECURITY.md` (29923 bytes)
 - `docs/PRD.md` (65878 bytes)
 - `docs/README.md` (8656 bytes)
 - `docs/ROLLBACK.md` (7416 bytes)
@@ -213,7 +217,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/VPS_SMOKE_CHECKLIST.md` (5736 bytes)
 - `docs/Политика.md` (6113 bytes)
 - `docs/Политика_v2.md` (30510 bytes)
-- `docs/Регламент_v8_draft.md` (39909 bytes)
+- `docs/Регламент_v8_draft.md` (50284 bytes)
 - `infra/.env.example` (62450 bytes)
 - `infra/docker-compose.yml` (5867 bytes)
 - `infra/Dockerfile` (1655 bytes)
@@ -17775,8 +17779,8 @@ def is_workday(d: date) -> bool:
 
 ### `bot/aemr_bot/services/card_format.py`
 
-Size: `17157` bytes  
-SHA-256: `4f5ca8030bad5426ce9c12eebc8ffc8a17e7c73fcf702f1112c972795715c7eb`
+Size: `19100` bytes  
+SHA-256: `4de6528cba2fcc8333e6f04355daf0a903f5795f56ac9706544e9c2344c34241`
 
 ```python
 from datetime import datetime
@@ -17919,6 +17923,14 @@ def _render_timeline(
         time_str = _local_short(created_at) if created_at else ""
         header = f"{marker} ({time_str})" if time_str else marker
         text = (getattr(msg, "text", None) or "").strip()
+        # SECURITY (URL defang): сообщения жителей в timeline могут
+        # содержать кликабельные URL — оператор должен видеть текст,
+        # но не должен мочь случайно тапнуть. Defang только для
+        # «от жителя» — ответы оператора уже прошли whitelist на
+        # outgoing, тем им defang не нужен.
+        if direction == MessageDirection.FROM_USER.value and text:
+            from aemr_bot.utils.url_defang import defang_url_in_text
+            text = defang_url_in_text(text)
         body = _clip(text, limit=text_limit) if text else "Без текста."
         attach_line = attachments_summary_line(
             getattr(msg, "attachments", None) or []
@@ -17994,15 +18006,22 @@ def admin_card(appeal: Appeal, user: User) -> str:
     vs «отозвал согласие — финальный ответ» vs «заблокирован» сразу,
     без прыжков в админ-меню.
     """
+    # SECURITY: текст обращения (summary) и адрес — единственные
+    # поля карточки, куда житель может вписать произвольный URL.
+    # Defang делает любые http(s)-ссылки некликабельными в admin-MAX
+    # без визуального изменения. Имя/телефон/локация не показывают
+    # URL по дизайну (валидация на входе), defang не нужен.
+    from aemr_bot.utils.url_defang import defang_for_admin
+
     body = ADMIN_CARD_TEMPLATE.format(
         number=appeal.id,
         name=user.first_name or "—",
         phone=user.phone or "—",
         status_line=_citizen_status_line(user),
         locality=appeal.locality or "—",
-        address=appeal.address or "—",
+        address=defang_for_admin(appeal.address) or "—",
         topic=appeal.topic or "—",
-        summary=appeal.summary or "—",
+        summary=defang_for_admin(appeal.summary) or "—",
         answer_limit=settings.answer_max_chars,
     )
     summary_line = attachments_summary_line(appeal.attachments or [])
@@ -18072,11 +18091,22 @@ def _maybe_url_warning(text: str) -> str:
 
 
 def admin_followup(appeal: Appeal, user: User, text: str) -> str:
+    """Карточка дополнения от жителя для admin-чата.
+
+    URL'ы в тексте жителя проходят defang — оператор видит ссылку,
+    но не может тапнуть случайно (защита от accidental phishing-click).
+    Подробности: utils/url_defang.py.
+    """
+    from aemr_bot.utils.url_defang import defang_for_admin
+
     rendered = ADMIN_FOLLOWUP_TEMPLATE.format(
         number=appeal.id,
         name=user.first_name or "—",
-        text=text,
+        text=defang_for_admin(text),
     )
+    # warning остаётся — оператор должен явно знать что в тексте была
+    # ссылка, даже если она defang'нута; защита 2-в-1 (visual cue +
+    # technical un-click).
     return rendered + _maybe_url_warning(text)
 
 
@@ -20912,11 +20942,12 @@ async def fetch_main_runtime_config(
 
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `36589` bytes  
-SHA-256: `5fe4de5eb7982fda7de206108beecea55740246e8bd84be93783bf4dc3855063`
+Size: `37659` bytes  
+SHA-256: `9f6e6a11718355ab8060eb812fdf10c6c05f8fc003f42177da37d3937744ce4d`
 
 ```python
 import asyncio
+import html
 import json
 import re
 from typing import Any
@@ -21101,16 +21132,22 @@ def find_non_whitelisted_urls(text: str) -> list[str]:
 # опасный markup или ссылка вне whitelist'а, либо вырезаем, либо
 # заменяем на безопасный текст. Не криптографическая защита, а
 # первая линия обороны от случайного / умышленного вреда.
+# F3 (ReDoS защита): везде вместо `.*?` используется bounded
+# `[^<>]{0,4000}` — гарантированно линейная сложность. welcome_text
+# и consent_text имеют SCHEMA max_len=4000, поэтому реальные
+# legitimate теги (если будут) короче. Для нашего use case (plain
+# текст приветствия) допустимая длина содержимого тега — нулевая,
+# тег целиком вычищается; bound нужен только для regex-safety.
 _DANGEROUS_HTML_PATTERNS = (
     # Скрипты, iframe'ы, обработчики событий — никогда не должны попасть
     # к жителю даже если MAX случайно решит парсить их как HTML.
-    re.compile(r"<\s*script[^>]*>.*?</\s*script\s*>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"<\s*iframe[^>]*>.*?</\s*iframe\s*>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"<\s*(script|iframe|object|embed|applet)[^>]*/?>", re.IGNORECASE),
+    re.compile(r"<\s*script[^>]{0,200}>[^<>]{0,4000}</\s*script\s*>", re.IGNORECASE),
+    re.compile(r"<\s*iframe[^>]{0,200}>[^<>]{0,4000}</\s*iframe\s*>", re.IGNORECASE),
+    re.compile(r"<\s*(script|iframe|object|embed|applet)[^>]{0,200}/?>", re.IGNORECASE),
     # F7: leftover closing tags после nested-cloak'а — `</script>`,
     # `</iframe>` и т.п. — выживали single-pass strip'ом. Ловим отдельно.
     re.compile(r"</\s*(script|iframe|object|embed|applet)\s*>", re.IGNORECASE),
-    re.compile(r"\s+on[a-z]+\s*=\s*['\"][^'\"]*['\"]", re.IGNORECASE),  # onclick=... onload=...
+    re.compile(r"\s+on[a-z]+\s*=\s*['\"][^'\"]{0,500}['\"]", re.IGNORECASE),  # onclick=...
 )
 
 # Markdown-ссылки `[label](url)`. Если url не в whitelist — заменяем
@@ -21145,7 +21182,13 @@ def sanitize_settings_text(value: str) -> str:
     if not value:
         return value
 
-    out = value
+    # F6 (HTML entities): сначала декодируем `&lt;script&gt;` →
+    # `<script>`, потом санитизируем. Без этого regex'ы не видят
+    # entity-encoded payload (классический bypass). После
+    # санитизации НЕ кодируем обратно — текст идёт в MAX как
+    # plain-text, угловые скобки безопасны как символы.
+    out = html.unescape(value)
+
     # F7: цикл до фиксированной точки. Каждая итерация может открыть
     # ранее скрытый внутренний тег (после strip'а наружного). Лимит
     # в 5 итераций — защита от внезапного бесконечного цикла на
@@ -24636,6 +24679,101 @@ def clear(chat_id: int) -> None:
 def clear_all() -> None:
     """Очистить весь tracker. Используется в тестах для изоляции."""
     _chat_to_mid.clear()
+```
+
+### `bot/aemr_bot/utils/url_defang.py`
+
+Size: `5100` bytes  
+SHA-256: `a77e708e87c0e4168e5352551f714dc00668e9662b66becdc1aaddb3b5c0589b`
+
+```python
+"""Экранирование URL'ов («defang») для безопасного показа в admin-чате.
+
+SECURITY: житель в обращении или followup может прислать кликабельную
+фишинговую ссылку. Оператор открывает карточку в MAX-клиенте и **видит
+кликабельный URL** — один тап = вход на phishing-страницу с
+правами оператора (cookies браузера, авто-вход в Госуслуги и т.п.).
+
+Решение: перед отображением жителю входящего текста в admin-чате —
+вставляем **невидимый разделитель** между схемой и `://`. Visually
+текст не меняется (оператор по-прежнему видит `https://elizovomr.ru`),
+но MAX-парсер уже не распознаёт это как URL и не делает auto-link.
+Если оператор реально хочет открыть ссылку — он копирует её, видит
+невидимый символ при вставке в браузер и убирает.
+
+Используется в admin-карточке (summary + timeline), в followup-карточке,
+в /export файлах. НЕ используется в operator reply к жителю (там URL
+жителю нужен кликабельный — но whitelist гарантирует, что URL только
+на гос-домены).
+
+Зачем не «замена https → hxxps» (классический IOC-defang):
+- visually шумно для оператора, который привык к URL'ам;
+- наша задача — не сделать URL читаемым как «опасный», а сделать
+  его **некликабельным**. ZWSP решает это без изменения внешнего вида.
+"""
+from __future__ import annotations
+
+# Zero-width space (U+200B) — невидимый символ, разрывает auto-linkify
+# в большинстве чат-клиентов (Telegram, MAX, Slack, Discord, WhatsApp).
+# Не используем U+200D (ZWJ) — он, наоборот, склеивает символы в
+# некоторых рендерах. ZWSP — самый предсказуемый no-op для рендера.
+_ZWSP = "​"
+
+
+def defang_url_in_text(text: str) -> str:
+    """Вставить ZWSP между схемой и `://` для всех URL в тексте.
+
+    `https://attacker.com` → `https<ZWSP>://attacker.com`. Visually
+    идентично, но MAX-парсер не auto-linkify'ит — оператор не может
+    тапнуть и случайно открыть phishing.
+
+    Работает идемпотентно: повторный вызов на уже defang'нутом тексте
+    не добавляет второй ZWSP (т.к. между `https` и `://` уже стоит
+    разделитель, regex `https?://` не матчит).
+
+    Покрывает только ASCII-схемы `http://` и `https://`. Quasi-URL'ы
+    с unicode-омоглифом (`һttps://`) бот в принципе не должен показывать
+    оператору — они блокируются на входе через find_non_whitelisted_urls
+    (см. settings_store.F9-fix); но если каким-то путём прошёл —
+    выглядит как plain text, не auto-linkify'ится без явной схемы.
+    """
+    if not text:
+        return text
+    # Простая замена строки: `://` → `<ZWSP>://` где этому
+    # предшествует http/https. Используем re для context-aware
+    # подстановки.
+    import re
+    return re.sub(
+        r"\b(https?)://",
+        r"\1" + _ZWSP + "://",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+
+def defang_for_admin(text: str | None) -> str:
+    """Удобный wrapper: None-safe defang для показа в admin-чате.
+
+    Возвращает пустую строку для None — это нормально для
+    необязательных полей карточки (summary may be None в edge case).
+    """
+    if not text:
+        return ""
+    return defang_url_in_text(text)
+
+
+def has_defangable_url(text: str | None) -> bool:
+    """True если в тексте есть URL, который имеет смысл defang'ить.
+
+    Используется в admin_card._maybe_url_warning — чтобы добавлять
+    warning «⚠️ содержит ссылку» только когда есть что показывать.
+    Не дублирует extract_urls из settings_store (та для исходящего
+    whitelist'а), здесь — узкая проверка на http/https.
+    """
+    if not text:
+        return False
+    import re
+    return bool(re.search(r"\bhttps?://", text, flags=re.IGNORECASE))
 ```
 
 ### `bot/alembic.ini`
@@ -42097,8 +42235,8 @@ class TestUrlWarningInAdminCard:
 
 ### `bot/tests/test_security_batch_d.py`
 
-Size: `6304` bytes  
-SHA-256: `06b1ace4c6bbf1f45f8e8ea5aeb9f28e973f76daa453dbb65ce86b90175d74a5`
+Size: `6992` bytes  
+SHA-256: `0c5e47522805b7d98f4406070a24f6c579e993305a437ad1e0c7a69851663a74`
 
 ```python
 """Тесты на Batch D — фиксы из SEC_SELF_REVIEW_2026-05-26.md.
@@ -42160,6 +42298,22 @@ class TestF10EmbeddedUrl:
     def test_clean_gov_url_passes(self) -> None:
         text = "https://elizovomr.ru/policy.pdf"
         assert find_non_whitelisted_urls(text) == []
+
+
+class TestF6HtmlEntities:
+    """F6 (CVSS 4.3): `&lt;script&gt;` обходил regex до Batch D-extra."""
+
+    def test_html_entity_script_caught(self) -> None:
+        attack = "Привет &lt;script&gt;alert(1)&lt;/script&gt; мир"
+        cleaned = sanitize_settings_text(attack)
+        # После html.unescape regex видит реальный <script> и вычищает
+        assert "<script>" not in cleaned.lower()
+        assert "alert(1)" not in cleaned
+
+    def test_html_entity_iframe(self) -> None:
+        attack = "&lt;iframe src='evil.com'&gt;&lt;/iframe&gt;"
+        cleaned = sanitize_settings_text(attack)
+        assert "iframe" not in cleaned.lower()
 
 
 class TestF7NestedTagSanitize:
@@ -43179,6 +43333,89 @@ class TestAdminRelay:
                 bot, appeal_id=1, admin_mid=None,
                 stored_attachments=[{"type": "image"}],
             )
+```
+
+### `bot/tests/test_url_defang.py`
+
+Size: `2828` bytes  
+SHA-256: `9870539d6bd82f2198241878e0424adaad00c79c1fd33dd919baf46251099345`
+
+```python
+"""Тесты на utils/url_defang.py — защита оператора от случайного
+клика на phishing-URL в admin-карточке."""
+from __future__ import annotations
+
+from aemr_bot.utils.url_defang import (
+    defang_for_admin,
+    defang_url_in_text,
+    has_defangable_url,
+)
+
+# Z-W-S = Zero-Width Space (U+200B). Используем chr() — bandit B613.
+ZWSP = chr(0x200B)
+
+
+class TestDefangUrlInText:
+    def test_https_breaks_autolink(self) -> None:
+        defanged = defang_url_in_text("Перейдите на https://attacker.com")
+        # Между https и :// должен появиться ZWSP — MAX-парсер уже
+        # не распознаёт это как URL.
+        assert f"https{ZWSP}://attacker.com" in defanged
+
+    def test_http_also_defanged(self) -> None:
+        defanged = defang_url_in_text("http://evil.example")
+        assert f"http{ZWSP}://evil.example" in defanged
+
+    def test_case_insensitive(self) -> None:
+        defanged = defang_url_in_text("HTTPS://EVIL.EXAMPLE")
+        # Сохраняем регистр схемы (через backreference \1)
+        assert f"HTTPS{ZWSP}://" in defanged
+
+    def test_no_url_unchanged(self) -> None:
+        text = "Просто текст без ссылок"
+        assert defang_url_in_text(text) == text
+
+    def test_already_defanged_idempotent(self) -> None:
+        """Повторный defang не добавляет второй ZWSP."""
+        once = defang_url_in_text("https://x.com")
+        twice = defang_url_in_text(once)
+        assert once == twice
+
+    def test_multiple_urls(self) -> None:
+        text = "См. https://elizovomr.ru и http://evil.com"
+        defanged = defang_url_in_text(text)
+        assert f"https{ZWSP}://elizovomr.ru" in defanged
+        assert f"http{ZWSP}://evil.com" in defanged
+
+    def test_empty_input(self) -> None:
+        assert defang_url_in_text("") == ""
+        assert defang_url_in_text(None) is None
+
+
+class TestDefangForAdmin:
+    def test_none_returns_empty(self) -> None:
+        assert defang_for_admin(None) == ""
+
+    def test_empty_returns_empty(self) -> None:
+        assert defang_for_admin("") == ""
+
+    def test_passes_through(self) -> None:
+        out = defang_for_admin("Адрес: ул. Ленина, 5, https://map.evil")
+        assert "ул. Ленина, 5" in out
+        assert "map.evil" in out
+        assert f"https{ZWSP}://" in out
+
+
+class TestHasDefangableUrl:
+    def test_with_url(self) -> None:
+        assert has_defangable_url("есть https://x.com") is True
+
+    def test_without_url(self) -> None:
+        assert has_defangable_url("без ссылок") is False
+
+    def test_empty(self) -> None:
+        assert has_defangable_url("") is False
+        assert has_defangable_url(None) is False
 ```
 
 ### `bot/tests/test_users_service_pg.py`
@@ -45912,6 +46149,272 @@ SHA-256: `dd4c6742bc3293df6c326f8263fd149b880f6ff618f62135cbe92bdc38e7b959`
 - `docs/_meta/REGLAMENT_v7_GAPS.md` + `docs/Регламент_v8_draft.md` — пара документов для подготовки следующей версии Регламента: gap-список → нормативные правки.
 ```
 
+### `docs/_meta/MAXAPI_DEEP_DIVE_2026-05-26.md`
+
+Size: `14167` bytes  
+SHA-256: `f7f291b089abf5b28e8087046474faef32e385e0264ec8566b15eddd9ffaedc8`
+
+```markdown
+# maxapi 1.1.0 — глубокая разведка для AEMR-bot
+
+> 2026-05-26. Источник: `bot/.venv/Lib/site-packages/maxapi/`.
+> Дополняет `MAXAPI_INSIGHTS.md` + `MAXAPI_UNUSED_FEATURES.md` — без
+> повторов. Ответы на 18 пунктов чеклиста владельца.
+
+## 1. Attachment lifecycle
+
+**`bot.upload_media(media) -> AttachmentUpload`** (`bot.py:1075-1095`)
+— hi-level wrapper над `get_upload_url + upload_file_buffer`. Возвращает
+`AttachmentUpload(payload.token)`. **Token переиспользуем** —
+`send_message` отдельно сериализует уже залитый payload без повторного
+upload'а (`send_message.py:150-153`). TTL token'а в swagger не указан,
+надо тестировать. **Применимо.** PDF-шаблон политики, который не
+меняется — залить один раз, кэшировать token в БД. Экономия ~5с на
+запрос × тысячи запросов. **P1, ~4 ч.**
+
+**Retry на `attachment.not.ready` уже встроен** (`send_message.py:184-209`,
+`edit_message.py:162-184`): 5 попыток, задержка 2с, опциональный
+`after_upload_give_up_timeout`. Параметры конструктора `Bot(after_upload_attempts,
+after_upload_retry_delay, after_upload_give_up_timeout)`. **Наш wrapper-loop
+в `services/uploads.py:upload_path` дублирует библиотечный — удалить. P2, 1 ч.**
+
+**Presigned-URL / batch upload — нет.** Ограничение swagger.
+
+## 2. Bot management
+
+`bot.change_info(...)` и `bot.set_my_commands(*commands)` помечены
+`DeprecationWarning` в библиотеке («отсутствует в swagger MAX»), но
+**фактически работают** — мы это знаем (`main.py:_register_bot_commands`
+делает ручной aiohttp PATCH `/me`). При появлении в swagger вернуться
+на нативные методы и убрать костыль. **P3 (мониторить changelog).**
+
+Аватар бота — через `change_info(photo=PhotoAttachmentRequestPayload(...))`.
+При multi-МО инсталляции пригодится для брендинга. **P3.**
+
+## 3. Chat moderation
+
+`bot.kick_chat_member(chat_id, user_id, block=False)` — `block=True`
+бывает как ban (`bot.py:1012-1038`). Полный CRUD админов через
+`ChatAdminsManager` (`chats.py:158-204`): add, remove, list.
+
+`ChatPermission` (`enums/chat_permission.py`) гранулярнее нашего:
+`READ_ALL_MESSAGES, ADD_REMOVE_MEMBERS, ADD_ADMINS, CHANGE_CHAT_INFO,
+PIN_MESSAGE, WRITE, CAN_CALL, EDIT_LINK, POST_EDIT_DELETE_MESSAGE,
+EDIT_MESSAGE, DELETE_MESSAGE, EDIT, DELETE, VIEW_STATS`.
+
+**Mute / restrict_member — нет** в swagger. Только kick (+block).
+
+**`ChatMembersManager.iter_all(count=100)` / `list_all()`** —
+async-итераторы поверх marker-пагинации, **с защитой от цикла marker**
+(`_walk_member_pages` raises RuntimeError если marker повторился).
+**Заменить ручной цикл `marker=...` в `services/broadcast.py`. P2, 2 ч.**
+
+## 4. Polling
+
+`get_updates(limit ≤ 1000, timeout ≤ 90, marker, types)` — **фильтр
+по типам уже есть в библиотеке** (`bot.py:1040-1058`). Но
+`start_polling` (`dispatcher.py:1380-1402`) **не прокидывает `types`**
+— зашит `bot.get_updates(marker=...)` без них. Чтобы получить
+выигрыш — форк start_polling или PR в upstream. **P2.**
+
+`start_polling(skip_updates=True)` — пропустить все события старше
+момента старта (`dispatcher.py:1394, 1354-1360`). **Мы не используем
+— все updates за downtime обрабатываются.** При долгом простое
+лавина устаревших обращений. **Добавить env `SKIP_STALE_UPDATES=true`
+для прода. P1, 1 ч.**
+
+`auto_check_subscriptions=True` (дефолт) уже выводит warning при
+загрязнении токена webhook-подписками (`dispatcher.py:486-499`).
+
+## 5. Webhook setup
+
+`subscribe_webhook(url, update_types, secret)` (`subscribe_webhook.py`):
+- HTTPS обязателен (HTTP даёт warning),
+- `secret: 5..256 [A-Za-z0-9-]` → MAX шлёт в заголовке
+  `X-Max-Bot-Api-Secret`. `FastAPIMaxWebhook` проверяет автоматически
+  через `secrets.compare_digest` (`webhook/fastapi.py:17-39`).
+- `update_types: list[UpdateType]` — фильтр (TG `allowed_updates`).
+
+**НЕТ:** `max_connections`, `drop_pending_updates`, `ip_address`.
+
+## 6. Inline mode
+
+**Нет** в MAX swagger. Не реализовать.
+
+## 7. Media groups / Forward / Copy
+
+**Media-group** — `send_message(attachments=[...])` принимает список.
+Отдельного метода нет. У нас use case'а нет.
+
+**`message.forward(chat_id|user_id)`** (`types/message.py:478-533`) —
+helper уже есть, строит `NewMessageLink(type=FORWARD, mid=...)`.
+**Применимо: forward сообщения жителя в operator-чат с сохранением
+вложений и markup**, вместо нашего relay-копирования через
+`_relay_to_operator` в `appeal_funnel.py`. **P0-P1, ~2 ч.**
+
+**`copy_message` (TG-стиль бесшумная копия) — нет.** Только forward
+с пометкой «переслано от».
+
+## 8. Pin / Unpin
+
+`message.pin()` / `message.unpin()` (`types/message.py:613-650`),
+`chat.pin(msg)` / `chat.unpin()` (`chats.py:385-402`),
+`bot.delete_pin_message(chat_id)`.
+
+`bot.edit_chat(chat_id, pin=mid)` (`bot.py:691-722`) — атомарная
+ротация pinned-сообщения через PATCH чата (удобнее `unpin + pin`).
+**P3.**
+
+`get_pin_message` перед `pin_message` для дедупа — уже в бэклоге
+(MAXAPI_UNUSED_FEATURES kaizen #4).
+
+## 9. User profile / Chat members
+
+`get_chat_member(chat_id, user_id)` возвращает `ChatMember` с
+`is_owner, is_admin, permissions[], join_time, last_access_time, alias`.
+
+**Применимо:** sanity-check «оператор всё ещё в чате?» в
+`services/operators.py:is_operator` — устранит расхождение БД ↔ MAX
+если оператор вышел вручную. **P2, ~3 ч + кеш 60с.**
+
+`get_me_from_chat(chat_id)` (`bot.py:812-831`) — статус бота в чате
+(`is_admin`, `permissions[]`). Полезно для `/diag`: «бот в
+operator_chat: is_admin=True, есть права WRITE+PIN_MESSAGE». Покажет,
+если права обрезали вручную. **P2 kaizen.**
+
+## 10. Reactions / Stickers / Polls / Live location
+
+| Feature | В MAX | В maxapi |
+|---|---|---|
+| Reactions API | нет | нет |
+| Stickers receive | да | `Sticker` attachment |
+| Stickers upload | нет | `UploadType` без STICKER |
+| Polls | нет | нет |
+| Live location | нет | только static `Location` |
+
+Всё — **P3-документировать «не пытаться».**
+
+## 11. Scheduled messages
+
+**Нет native schedule.** Наш cooldown + APScheduler остаются.
+
+## 12. Edit history
+
+API не отдаёт старые версии. `MESSAGE_EDITED` приходит **только с
+новым текстом** — старый текст хранить самим в БД при первом
+`MESSAGE_CREATED`. **P1 если требование комплаенса, иначе P3.**
+
+## 13. MessageBody — что ещё есть
+
+- `MessageBody.seq: int` — порядковый номер. Server-side ordering
+  взамен `timestamp` (тот одинаковый при пачке forward'ов).
+- `MessageStat.views: int` — счётчик просмотров. **Применимо: эффективная
+  аудитория broadcast'а.** P2, 2 ч.
+- `LinkedMessage.sender: User | None` — может быть None при forward от
+  канала (`message.py:294`).
+- `Message.url` / `build_message_link(mid)` — уже отмечены в INSIGHTS §2.3.
+
+## 14. Rate-limit headers / Retry-After
+
+**Не парсятся библиотекой.** `connection/base.py:148-188` ретраит
+**только HTTP 502/503/504** (`DEFAULT_RETRY_STATUSES`,
+кастомизируется `default_connection.retry_on_statuses`). **HTTP 429
+и `Retry-After` игнорируются** — будет `MaxApiError`, ловить вручную.
+
+При broadcast 1000+ жителей рискуем поймать 429 без бэкоффа.
+**Subclass `BaseConnection` с 429 + Retry-After, или PR в upstream.
+P1 для production broadcast, ~1 день.**
+
+## 15. Idempotency-key
+
+**Не поддерживается ни maxapi, ни swagger** — headers фиксированы
+(`connection/base.py:142-204`). Наш `IdempotencyMiddleware`
+(дедуп `MESSAGE_CALLBACK`) — единственный слой защиты.
+
+## 16. API errors классификация
+
+`exceptions/max.py`:
+- `MaxApiError(code, raw)` — generic. `code` — HTTP, `raw` — JSON body.
+- `MaxConnection` — сеть (DNS, refused).
+- `InvalidToken` — 401, останавливает polling (`dispatcher.py:1317-1320`).
+- `MaxUploadFileFailed` — upload.
+
+Внутри `raw.get("code")` есть **string-коды** MAX'а: подтверждено
+`"attachment.not.ready"` (`send_message.py:185-188`). Других library
+не парсит. **Собрать distinct'ы кодов в Sentry tag → классификация
+retryable/permanent/auth на нашей стороне. P2, ~2 ч.**
+
+## 17. Update types — что не обрабатываем
+
+Из `enums/update.py` — НЕ используем активно:
+
+- **`MESSAGE_REMOVED`** — житель удалил сообщение обращения. Сейчас
+  не реагируем — текст остаётся в БД. Audit-trail
+  «житель отозвал». **P2, 2 ч.**
+- **`BOT_STOPPED`** — житель остановил бот (TG /stop-аналог). Сейчас
+  продолжаем слать. **Убрать из broadcast-аудитории. P1, ~2 ч.**
+- **`DIALOG_MUTED` / `DIALOG_UNMUTED`** — флаг beep-в-ночи. При muted
+  → `notify=False` в исходящих. **P2, 1 ч.**
+- **`DIALOG_CLEARED` / `DIALOG_REMOVED`** — житель очистил историю /
+  удалил диалог. Метрика оттока. **P3 analytics.**
+- **`RAW_API_RESPONSE`** — псевдо-событие, шлётся **на каждый ответ
+  API** (`connection/base.py:182-197`). Уникальный hook для
+  observability: latency, error-rate, парсинг `raw["code"]` в Sentry.
+  **P1 для observability, ~4 ч.**
+
+## 18. Buttons
+
+Все типы (`enums/button_type.py`):
+`CALLBACK, LINK, REQUEST_CONTACT, REQUEST_GEO_LOCATION, CLIPBOARD,
+MESSAGE, OPEN_APP, CHAT (deprecated)`.
+
+Используем: `CALLBACK, LINK`. **Не используем:**
+
+- **`RequestGeoLocationButton(quick=True)`** — запрос геолокации без
+  диалога подтверждения. **Идеально для «дыра в дороге» — кнопка
+  «📍 Указать место», координаты приходят как `Location` attachment.
+  Сейчас житель пишет адрес текстом, оператор гадает. P0-P1,
+  ~1 день.** Материальное улучшение качества обращений.
+- **`RequestContactButton`** — запрос телефона. Emergency-обращения
+  «свяжитесь срочно». **P2.**
+- **`ClipboardButton(payload=...)`** — копирует payload в буфер.
+  «Скопировать №обращения» для вставки в CRM оператора. **P3.**
+- **`OpenAppButton(web_app=URL)`** — открыть mini-app. Для будущего
+  ЕМР-портала как mini-app. **P3.**
+
+## 19. Приоритетная таблица (новое поверх существующих INSIGHTS+UNUSED)
+
+| Приоритет | Что | Effort | Раздел |
+|---|---|---|---|
+| **P0** | RequestGeoLocationButton в обращениях | 1 день | §18 |
+| **P0** | `message.forward(...)` вместо relay-копии | 2 ч | §7 |
+| **P1** | Attachment-кэш по token (PDF-шаблон) | 4 ч | §1 |
+| **P1** | `SKIP_STALE_UPDATES=true` для прод | 1 ч | §4 |
+| **P1** | `BOT_STOPPED` handler + флаг users | 2 ч | §17 |
+| **P1** | `RAW_API_RESPONSE` hook → observability | 4 ч | §17 |
+| **P1** | 429 + Retry-After для broadcast | 1 день | §14 |
+| **P2** | Удалить наш upload-retry wrapper | 1 ч | §1 |
+| **P2** | `iter_all()` в broadcast-снимке | 2 ч | §3 |
+| **P2** | `get_updates(types=...)` форк или PR | 2 ч | §4 |
+| **P2** | `get_chat_member` sanity-check | 3 ч | §9 |
+| **P2** | `get_me_from_chat` в `/diag` | 1 ч | §9 |
+| **P2** | Парсить `raw["code"]` в Sentry | 2 ч | §16 |
+| **P2** | `MESSAGE_REMOVED` audit-handler | 2 ч | §17 |
+| **P2** | `DIALOG_MUTED` → `notify=False` | 1 ч | §17 |
+| **P2** | `stat.views` в broadcast-аналитике | 2 ч | §13 |
+| **P3** | `set_my_commands` когда swagger обновят | мониторить | §2 |
+| **P3** | `OpenAppButton` под mini-app | future | §18 |
+| **P3** | Edit-history persistence в БД | 1 ч | §12 |
+
+## 20. Окончательно отсутствует в MAX
+
+Inline mode, reactions, polls, live location, copy_message, batch
+upload, presigned URLs, `max_connections`, `drop_pending_updates`,
+`ip_address`, idempotency-key header, edit-history API,
+mute_member, restrict_member, scheduled messages — нет ни в swagger,
+ни в библиотеке. Делаем сами либо не делаем.
+```
+
 ### `docs/_meta/MAXAPI_INSIGHTS.md`
 
 Size: `22979` bytes  
@@ -48319,6 +48822,241 @@ SHA-256: `8480717e31204335c7d89838dddb83ccd71df79fb8f9a456c4ea9073749c1918`
 4. **Зарегистрировать** Batch D как «known limitations» в `docs/SECURITY.md §10b`.
 
 > Это первый сводный проход. Следующий — после внедрения Batch B/A + решений Batch C.
+```
+
+### `docs/_meta/URL_THREAT_INTEL_2026-05-26.md`
+
+Size: `16739` bytes  
+SHA-256: `5ffd8125cec833b546fd8965950e12e9de40665d2cdffe51925266155d48a78e`
+
+```markdown
+# URL threat-intelligence для aemr-bot: research + рекомендация
+
+Дата: 2026-05-26. Цель — выбрать источник IOC-списков (Indicators of
+Compromise — URL/домены/IP известного malware и phishing) для
+**входящих** сообщений жителей, чтобы оператор получал
+предупреждение, если житель прислал в обращении ссылку из чёрного
+списка. Whitelist гос-доменов на исходящих ответах не отменяется,
+threat-intel — дополнительный слой на входе.
+
+Контекст исполнения: self-hosted на 1 VPS (4 ГБ RAM), 50–100 обращений
+в день, не критичный throughput. Главное требование — **graceful
+degradation**: если feed недоступен, бот продолжает работать, просто
+без warning'а.
+
+## 1. Kaspersky Threat Intelligence Portal (OpenTIP) + Threat Data Feeds
+
+Свободный уровень — портал OpenTIP (opentip.kaspersky.com): REST API
+для lookup'а URL/домена/IP/хеша. Без API-ключа квота 200 запросов в
+сутки, с зарегистрированным ключом для community-аккаунта — 2 000
+запросов в сутки. Возвращает JSON с zone (Green/Yellow/Red), категорией
+угрозы и related-IOC. Формат — single-request lookup, не bulk-выгрузка
+feed'а.
+
+Коммерческие Kaspersky Threat Data Feeds (Phishing URL Data Feed,
+Malicious URL Data Feed) — bulk JSON по HTTPS, обновление каждые 20
+минут, цена через корпоративные каналы (трёхлетние подписки порядка
+сотен тысяч рублей по российскому прайсу; точная цена только под NDA).
+Для гос-органов РФ Kaspersky **категорически доступен**: компания
+российская, санкции против неё не действуют внутри РФ, есть отдельные
+гос-договорные каналы через 152-ФЗ-комплаентного интегратора.
+
+Pro: native-русская поддержка, отличное покрытие RU-фишинга, без
+санкционных рисков. Con: free-tier — это lookup-API (200–2 000/сут), не
+bulk-feed; коммерческие feed'ы дороги и требуют закупки через
+полугодовую процедуру 44-ФЗ. Лицензия OpenTIP запрещает коммерческую
+перепродажу и автоматическую массовую инжекцию в продакшен без
+согласования. Latency lookup — порядка 300–600 мс.
+
+## 2. PhishTank (phishtank.org)
+
+Open-feed классика OpenDNS/Cisco. Формат — XML / CSV / JSON / Serialized
+PHP, gzip и bz2 архивы. Обновление **каждый час ровно**, объём
+`online-valid.json.bz2` — порядка 5–15 МБ распакованного (десятки тысяч
+verified URL за последние недели). Без app-key — несколько download'ов
+в сутки на IP, с ключом — unlimited HEAD-проверки через ETag.
+
+Состояние в 2026: проект пережил кризис 2023 («registration closed,
+rethinking from the ground up»), но developer-портал снова раздаёт
+ключи, dumps обновляются ежечасно. Цена 0, лицензия — открытая для
+некоммерческих и внутрикорпоративных проверок (для гос-бота это
+допустимый use-case, перепродажу feed'а мы не делаем).
+
+Pro: бесплатно, человеко-валидированные URL (низкий false-positive),
+hourly cadence достаточен для 50 обращений в сутки. Con: после кризиса
+2023 reliability ниже исторической, app-key регистрация иногда «closed»,
+покрытие RU-фишинга слабое (PhishTank сильнее по EN/брендовому
+фишингу — PayPal, Microsoft, банки US/EU).
+
+## 3. OpenPhish community feed
+
+Текстовый список URL, free-tier обновляется **раз в 12 часов** на
+GitHub (`openphish/public_feed`). Объём — несколько тысяч URL.
+Premium-тариф — каждые 5 минут с metadata (target brand, ASN,
+geolocation), цена под запрос (порядка 1–5 k$/мес по индустрии).
+Premium бесплатно отдаётся law-enforcement, national CERT'ам,
+академии — гос-орган МО формально подходит, но процедура одобрения
+непрозрачна и небыстра.
+
+Pro: text-format тривиален в парсинге, GitHub-доставка надёжна. Con:
+12-часовая частота — пропустим свежий фишинг первых полусуток, что для
+phishing критично (медианная жизнь URL — 24–48 часов).
+
+## 4. abuse.ch URLhaus
+
+Swiss non-profit (под Spamhaus с 2023), фокус — **malware
+distribution** URL (payload-делiver, не phishing). Форматы: CSV
+(`csv_online`, `csv_recent`), JSON, plain-text, Snort/Suricata-rules,
+ClamAV-signatures, DNS RPZ. Update каждые 5 минут. Объём «online URLs»
+порядка 5–20 МБ CSV, full dump за 90 дней — десятки МБ. Бесплатно,
+требуется Auth-Key через abuse.ch Authentication Portal (мгновенная
+регистрация). Fair-use лицензия, коммерческая перепродажа feed'а под
+запрет.
+
+Pro: высокое качество, real-time cadence, минимальный false-positive,
+санкционно-нейтральная Швейцария. Con: **только malware-URL, не
+phishing** — не покрывает основной угрозы для жителя (фишинговое письмо
+«ваш пенсионный фонд»).
+
+## 5. abuse.ch ThreatFox
+
+Тот же оператор, что URLhaus, но шире: IOC (URL, домены, IP, хеши)
+любых семейств malware, C2-серверы, sinkhole'ы. JSON-API + bulk-export
+(MISP, CSV, JSON, host-file, Suricata). Update real-time, expiry IOC —
+6 месяцев (с 2025-05-01). Auth-Key обязателен, бесплатно, fair-use.
+
+Pro: один источник для URL + домен + IP, удобен для unified IOC-set.
+Con: bias к malware-инфраструктуре (C2, payload), не targeted-phishing;
+размер base — порядка 50–200 МБ JSON (но `domain-only` host-file —
+единицы МБ).
+
+## 6. Google Safe Browsing API v4
+
+Free-tier — 10 000 запросов в сутки на Lookup API, либо локальный
+Update API с bloom-filter-подобной hash-prefix-базой (полная база порядка
+сотен МБ, обновления дельтой каждые 30 мин). Покрытие огромное (Google
+видит весь web).
+
+**Legal-блокер для aemr-bot**: API формально доступен (геоблока нет на
+endpoint), но (а) ToS запрещает «non-personal» использование без Web
+Risk коммерческой лицензии, (б) РФ-регуляторика 2025–2026 движется к
+тотальному ограничению Google-сервисов, законопроект Госдумы декабря
+2025 о localizaiton data может сделать использование Google API в
+гос-системе формально проблемным с точки зрения 152-ФЗ и
+импортозамещения. Для гос-бота МО Камчатки — **не рекомендую**.
+
+Pro: лучший recall в мире. Con: legal-серая зона для российского
+гос-органа, риск внезапной недоступности по политическим мотивам, ToS
+запрещает гос-применение без enterprise-договора.
+
+## 7. Роскомнадзор / НКЦКИ реестры
+
+«Единый реестр запрещённых сайтов» (vigruzki.rkn.gov.ru) — это
+**цензурный** реестр (экстремизм, наркотики, суициды, азартные игры),
+не threat-intel против malware/phishing. Доступ — только для лиц со
+статусом «оператор связи» и квалифицированной ЭЦП от
+Минцифры-аккредитованного УЦ; обновление каждый час. Для бота МО это
+**нерелевантный инструмент**: жителю-фишеру не нужно слать ссылку на
+заблокированный наркосайт.
+
+НКЦКИ ФинЦЕРТ (Банк России) отдаёт банковский фишинг-фид, но доступ —
+только для лицензированных финорганизаций. ГосСОПКА-фид —
+ограниченного распространения, для субъектов КИИ (объектов критической
+информационной инфраструктуры); aemr-bot формально под определение не
+попадает.
+
+Не подходит ни один из РКН-реестров по mandate'у.
+
+## 8. Российские коммерческие: BI.ZONE, Positive Technologies, Group-IB
+
+Все три отдают threat-intel feed только корпоративным клиентам по
+платной подписке, через прямой договор. BI.ZONE-CERT публикует
+research-отчёты, но не bulk-feed для self-host'а. Group-IB как
+юрлицо ушёл из РФ в 2023, российская часть — F.A.C.C.T., тоже
+коммерчески. Positive Technologies под санкциями США/ЕС, но это не
+блокирует use внутри РФ.
+
+Для гос-органа возможен бесплатный канал через CERT-GOV-RU (НКЦКИ при
+ФСБ), но процедура регистрации непрозрачна и недокументирована
+публично. Для бота МО уровня — overkill.
+
+## Сводная таблица
+
+| Feed | Цена | Формат | Cadence | Размер | Latency | Покрытие RU |
+|---|---|---|---|---|---|---|
+| Kaspersky OpenTIP API | free 200/сут | JSON lookup | live | n/a | 300–600 мс | отличное |
+| Kaspersky Phishing Feed | ~100k+ ₽/год | JSON bulk | 20 мин | ~10–50 МБ | offline | отличное |
+| PhishTank | free | JSON/CSV bz2 | 1 час | 5–15 МБ | offline | слабое |
+| OpenPhish community | free | text | 12 часов | ~1 МБ | offline | слабое |
+| URLhaus | free | CSV/JSON | 5 мин | 5–20 МБ | offline | среднее (malware-only) |
+| ThreatFox | free | JSON/host-file | live | 5–200 МБ | offline | среднее |
+| Safe Browsing API | free 10k/сут | hash-prefix | 30 мин | сотни МБ | offline | отличное |
+| РКН vigruzki | gov-only | XML+ЭЦП | 1 час | — | offline | нерелевантно |
+
+## Архитектурная рекомендация для aemr-bot
+
+**Базовая комбинация (free, self-host, защита от падения):**
+
+Локальный set из трёх ежечасно-обновляемых выгрузок:
+
+- **URLhaus** `csv_online` — malware-payload URL'ы (5 мин cadence,
+  ставим cron на 1 час чтобы не bить API);
+- **PhishTank** `online-valid.json.bz2` — verified phishing URL
+  (hourly), несмотря на слабое RU-покрытие даёт high-precision base;
+- **ThreatFox** `host-file` (domain-only) — C2/malware-домены, мелкий
+  объём.
+
+Хранить как in-memory Python `set[str]` нормализованных хостов (точный
+match по hostname + lookup по полному URL для path-specific entries из
+URLhaus/PhishTank). Cron-update раз в час через `apscheduler` (он уже в
+проекте — см. broadcast scheduler), staleness budget — 6 часов: если
+свежее обновление не пришло за 6 часов, оператору в admin chat падает
+тихий warning, но бот продолжает работу со стейл-set'ом. **Никаких
+live-API-вызовов на hot-path** — это ключевое требование reliability.
+
+Поверх локального set'а — опциональная **Kaspersky OpenTIP** проверка
+для URL'ов, **не найденных** в локальном set'е, с rate-limit 100/сут
+(половина free-квоты, чтобы оставался запас) и hard timeout 1.5 с.
+Kaspersky закрывает дыру в RU-покрытии и даёт zone-score, который у
+abuse-feed'ов отсутствует. Любая ошибка/таймаут API — `try/except` →
+без warning'а, не блокирует обработку обращения.
+
+Reglament: warning оператору отдаётся **советательно**, не блокирует
+сообщение жителя — у нас appeal от гражданина, который мог переслать
+полученный фишинг с просьбой разобраться, удалять такое сообщение
+нельзя. В admin card'е секция «⚠️ Подозрительные ссылки» со списком и
+источником (URLhaus/PhishTank/Kaspersky-Red).
+
+**Чего не делать:** не подключать Safe Browsing API (legal-серая
+зона + потенциальная недоступность), не пытаться получить vigruzki.rkn
+(нет статуса оператора связи, нерелевантный mandate), не закупать
+Kaspersky Threat Data Feeds коммерческие (overkill для 50–100
+обращений/сутки), не делать live-lookup на каждый URL (точка отказа).
+
+**Оценка трудозатрат:** ~200 строк Python (downloader + normalizer +
+set-lookup + admin-card-секция + cron-задача + healthcheck-метрика),
+~5–30 МБ диска под кэш выгрузок, ~10–50 МБ RAM под loaded set,
+~3 HTTP-запроса в час суммарно — pull-only, никаких входящих
+соединений, идеально для self-host VPS.
+
+## Sources
+
+- [Kaspersky Threat Intelligence Portal](https://opentip.kaspersky.com/Help/Doc_data/WorkingWithAPI.htm)
+- [Kaspersky Threat Data Feeds](https://www.kaspersky.com/enterprise-security/threat-data-feeds)
+- [Kaspersky Phishing URL Data Feed (OEM)](https://usa.kaspersky.com/phishing-url-data-feed)
+- [PhishTank Developer Info](https://www.phishtank.com/developer_info.php)
+- [PhishTank API](https://phishtank.com/api_info.php)
+- [OpenPhish Phishing Feeds](https://openphish.com/phishing_feeds.html)
+- [OpenPhish community public_feed (GitHub)](https://github.com/openphish/public_feed)
+- [URLhaus Community API](https://urlhaus.abuse.ch/api/)
+- [URLhaus Feeds](https://urlhaus.abuse.ch/feeds/)
+- [ThreatFox Community API](https://threatfox.abuse.ch/api/)
+- [Google Safe Browsing v4 Overview](https://developers.google.com/safe-browsing/v4)
+- [Google Safe Browsing v4 Usage Restrictions](https://developers.google.com/safe-browsing/v4/usage-limits)
+- [Roskomnadzor vigruzki (operator portal)](https://vigruzki.rkn.gov.ru/)
+- [EAIS Roskomnadzor (public lookup)](https://eais.rkn.gov.ru/)
+- [BI.ZONE Digital Risk Protection](https://bi.zone/eng/catalog/products/digital-risk-protection/)
+- [Russia tightens internet rules, may block Google services (Dec 2025)](https://www.androidheadlines.com/2025/12/russia-moves-closer-to-a-full-block-of-google-services-in-tightening-internet-rules.html)
 ```
 
 ### `docs/archive/CHAT_AUDIT.md`
@@ -53337,8 +54075,8 @@ git revert <merge-commit> && git push origin main
 
 ### `docs/OPERATOR_SECURITY.md`
 
-Size: `23937` bytes  
-SHA-256: `8d1ca8878808bf94635e27d834436d742ff0a40ec29f3da1d7f08634f8575fdb`
+Size: `29923` bytes  
+SHA-256: `b571c8e9b45727d4ff179b5dcfaecfa790da5622248cdcd35a8e4ef6e93d7736`
 
 ```markdown
 # Инструкция оператору по информационной безопасности
@@ -53382,6 +54120,28 @@ SHA-256: `8d1ca8878808bf94635e27d834436d742ff0a40ec29f3da1d7f08634f8575fdb`
 **«Перейдите по ссылке для проверки в Госуслугах».** Бот не делает auth через Госуслуги. Любая ссылка «войдите в Госуслуги для подтверждения» — фишинг. Объясните жителю.
 
 **Клон-бот с похожим username.** В MAX могут зарегистрировать `@aemr_bot_official`, `@aemr_help` и тому подобное. Реальный бот — тот, по ссылке с которого житель пришёл изначально (через QR-код или ссылку с сайта `elizovomr.ru`). Если житель спрашивает «как мне убедиться, что это вы» — отправьте его на сайт Администрации, оттуда снова в бота.
+
+**Голосовой звонок «от Администрации» с просьбой назвать код из SMS.** Распространённая схема 2025-2026: мошенник звонит, представляется сотрудником Администрации, просит «продиктовать код для подтверждения вашего обращения». Это код для входа в Госуслуги, банк, или MAX-аккаунт жертвы. Администрация **никогда** не звонит с просьбой назвать SMS-коды. Если житель сообщает о таком звонке — это попытка захвата аккаунта, направьте в МВД.
+
+**«Ваш бот в МАХ заблокирован, восстановите доступ».** Жертве приходит email/SMS с ссылкой «восстановление доступа к боту Администрации». Реально мы не блокируем аккаунт жителя в MAX (только сам бот может пометить жителя `is_blocked` внутри своей БД, и это не блокировка MAX-аккаунта). Если житель пишет «у меня заблокировали бота, что делать» — спросите детали: если он получил сообщение НЕ от этого бота, а от стороннего отправителя — это фишинг.
+
+**«Через бот можно получить дополнительные выплаты/субсидии».** Бот не оформляет соцвыплат и субсидий. Только обращение в Администрацию. Любые «инструкции по оформлению выплат через бот» — мошенничество. Жителя направьте на портал Госуслуг или в МФЦ.
+
+**«Скачайте обновление приложения MAX от Администрации».** MAX обновляется только через официальные сторы (Google Play / App Store / RuStore). Никакие «обновления от Администрации» через бот не рассылаются. Это APK-стилер.
+
+### 1.5. Бдительность при работе с самой админ-карточкой
+
+С версии 2026-05-26 бот защищает оператора **технически** на стороне отображения, но эти защиты не отменяют вашу личную осторожность.
+
+**URL в тексте жителя не кликабельны.** Все http(s)-ссылки в `summary` обращения, в адресе, в followup'е и в timeline-сообщениях жителя проходят процедуру «defang» — между схемой и `://` вставляется невидимый разделитель (Zero-Width Space). MAX-клиент **не определяет** это как URL и не делает auto-link — тапнуть случайно нельзя. Текст visually идентичен, оператор видит «https://example.com», но клик ничего не делает. Если вам нужно реально открыть ссылку — копируйте её, вставьте в браузер, перед нажатием Enter **визуально проверьте URL** (невидимый символ можно убрать через Backspace).
+
+**Карточка с URL имеет ⚠️-предупреждение.** Если в карточке обращения или в followup'е есть хоть один URL, внизу появляется блок «⚠️ Текст содержит ссылку. Не открывайте напрямую…». Это явный визуальный cue даже для опытного оператора.
+
+**HTML/markdown injection в welcome/consent текстах** блокируется на уровне `validate` через регулярные выражения + декодирование HTML-entities. Если IT (или скомпрометированный IT-аккаунт) попробует вставить в welcome `<script>`, `<iframe>` или `javascript:`-схему — текст не сохранится в БД. Кроме того, есть `required_substr`-проверка: фраза «НИКОГДА не запрашиваем» обязана присутствовать в welcome_text, иначе сохранение отклоняется. Это защита от случайного удаления антифишингового блока.
+
+**Outgoing URL whitelist двусторонний.** В ответе оператора жителю и в тексте рассылки разрешены только домены из gov-whitelist: `*.elizovomr.ru`, `kamgov.ru`, `gosuslugi.ru`, `kamchatka.gov.ru`. Любая другая ссылка → отказ в доставке + предупреждение в админ-чат. Это покрывает и **embedded URL** в querystring (`?next=...`), и **Unicode-омоглифы** (`һttps://` с кириллической «һ»). Не пытайтесь обмануть систему — это сделано для защиты жителя, не для затруднения вашей работы.
+
+**Cooldown 5 минут на рассылку** даёт окно отмены. Для срочной ЧС-рассылки маркер `[ЧС]` в начале текста сокращает cooldown до 30 секунд. Не злоупотребляйте маркером — иначе жители привыкнут пропускать «ЧС».
 
 ### 1.4. Что делать, если житель попался на скам
 
@@ -57006,8 +57766,8 @@ E-mail: [⚖️ заполнить юристу]
 
 ### `docs/Регламент_v8_draft.md`
 
-Size: `39909` bytes  
-SHA-256: `7f4e825c2562add090c4be3741b940f764dfe904d2976f22d22aa2b1bd935cb4`
+Size: `50284` bytes  
+SHA-256: `20ed3abe32c3377e4d8f1e15d7c7dc28b9d1be1676b603bb158380664cdcb90b`
 
 ```markdown
 # Регламент v8 — DRAFT для подписания распоряжением
@@ -57171,6 +57931,37 @@ SHA-256: `7f4e825c2562add090c4be3741b940f764dfe904d2976f22d22aa2b1bd935cb4`
 **73.1. Применение изменений программного кода.** Изменения программного кода Чат-бота, прошедшие code review и слитые в основную ветку (`main`) канонического репозитория, автоматически применяются на серверном оборудовании Чат-бота в течение **10 (десяти) минут** после слияния. Применение выполняется автоматизированной процедурой `scripts/auto-deploy.sh` с предварительной фиксацией текущей версии, пересборкой контейнеров и проверкой здоровья (эндпоинт `/livez`). При сбое проверки здоровья происходит автоматический откат на предыдущую версию с уведомлением в системный журнал. ИТ-специалист контролирует факт успешного применения изменений (системный пульс в служебной группе) и при необходимости выполняет ручное откатывание в порядке `docs/ROLLBACK.md`.
 
 **73.2. Обновление внешних программных зависимостей.** Обновление внешних программных зависимостей Чат-бота (в первую очередь — клиента Bot API мессенджера MAX, прочих библиотек Python) выполняется ИТ-специалистом в плановом порядке (**не реже одного раза в квартал** — проверка наличия новых версий и Security Advisory) и во внеплановом порядке при выпуске критического обновления безопасности. Процедура описана в `docs/MAXAPI_UPGRADE_PROCEDURE.md` и `docs/DEPS.md` и включает: сверку версии в локальной среде с версией в продакшен-контейнере; чтение полного списка изменений (changelog) обновляемой библиотеки; подготовку Pull Request с минимальной дельтой; прохождение всех проверок CI; ручную проверку критических сценариев; мониторинг работы Чат-бота в течение **24–48 часов** после применения обновления. При обнаружении регрессии — откат в порядке §73.1.
+
+**74. Антифишинговая бдительность оператора и защита жителя от мошенничества.**
+
+**74.1. Принцип «нулевого доверия» к ссылкам.** Оператор (вне зависимости от роли — координатор, AEMR, EGP, ИТ) обязан исходить из того, что **любая** ссылка, поступившая от жителя в обращении или в дополнении к обращению, является потенциально опасной до тех пор, пока обратное не подтверждено визуальной проверкой адреса в адресной строке браузера. Чат-бот технически препятствует случайному переходу по ссылкам в карточках обращений (см. процедуру «defang» — между протоколом и доменом вставляется невидимый разделитель, в результате чего мессенджер MAX не определяет такой текст как переходящую ссылку), но эта защита не отменяет обязанности оператора лично сверять адрес перед открытием.
+
+**74.2. Перечень запрещённых к отправке жителю ссылок.** Чат-бот блокирует исходящие ответы оператора и тексты массовых рассылок, содержащие ссылки на домены, не входящие в перечень официальных ресурсов: `*.elizovomr.ru`, `kamgov.ru`, `gosuslugi.ru`, `kamchatka.gov.ru`. При попытке отправить ответ или рассылку с иной ссылкой бот выдаёт операторскому сегменту служебной группы сообщение об отказе с указанием причины. Данная защита применяется как к открытым ссылкам, так и к ссылкам, вложенным в параметры запроса другой (разрешённой) ссылки (например, конструкция вида `https://kamgov.ru/redirect?next=https://привет.example`), а также к ссылкам с использованием визуально неотличимых символов из других алфавитов (например, кириллической буквы «һ» вместо латинской «h»).
+
+**74.3. Перечень действий, которые Чат-бот никогда не совершает.** Оператор обязан довести до сведения жителя — в ответе на обращение либо при получении подозрительного followup-сообщения — следующий перечень действий, которые Администрация Елизовского муниципального округа через Чат-бот **никогда не запрашивает** у жителя:
+
+а) запрос данных паспорта, СНИЛС, номеров банковских карт, кодов из SMS;
+б) запрос оплаты государственных пошлин, штрафов, «срочной обработки» обращений;
+в) предложение установить стороннее мобильное приложение для «отслеживания обращения» или «получения дополнительных услуг»;
+г) предложение перейти по ссылке для «авторизации через портал Государственных услуг» в целях «подтверждения личности»;
+д) звонок «от Администрации» с просьбой продиктовать SMS-код для подтверждения какого-либо действия;
+е) уведомление о «блокировке аккаунта жителя в мессенджере MAX» с предложением «восстановить доступ» через ссылку.
+
+Данный перечень также воспроизводится в приветственном сообщении Чат-бота (`welcome_text`), хранится в базе данных Чат-бота с обязательной проверкой подстроки «НИКОГДА не запрашиваем» при сохранении любой обновлённой версии текста; попытка сохранить приветственное сообщение без данного перечня технически отклоняется Чат-ботом.
+
+**74.4. Реакция оператора на обращение жителя, подвергшегося мошенничеству.** При получении в обращении или дополнении к обращению сведений о том, что житель стал жертвой мошенничества от лица Администрации Елизовского муниципального округа, оператор:
+
+а) подтверждает жителю, что обращение от лица Администрации возможно исключительно через данный Чат-бот; звонки, сообщения в других мессенджерах и через сторонние интернет-страницы — не от Администрации;
+б) уведомляет жителя, что денежные средства, переведённые мошенникам добровольно, как правило, не возвращаются;
+в) направляет жителя для подачи заявления в Министерство внутренних дел Российской Федерации (горячая линия 8-800-250-30-72 либо личный приём в отделе Министерства внутренних дел по Елизовскому муниципальному округу);
+г) фиксирует факт мошенничества в обращении жителя в качестве дополнения;
+д) уведомляет ИТ-специалиста через служебную группу — для оценки необходимости предупреждения остальных жителей через массовую рассылку либо уточнения текста приветственного сообщения.
+
+**74.5. Защита оператора от компрометации собственного аккаунта.** Оператор несёт ответственность за защиту собственной учётной записи в мессенджере MAX: использование сложного пароля, биометрии, отсутствие передачи устройства третьим лицам. При подозрении на компрометацию (потеря телефона, неизвестные сессии, странные сообщения от собственного имени) — оператор обязан незамедлительно сообщить ИТ-специалисту через альтернативный канал связи (телефон, личный визит). ИТ-специалист производит мягкую деактивацию учётной записи оператора в Чат-боте через мастер «👥 Операторы» с записью действия в журнале действий. Регулярное автоматическое сличение списка активных операторов в Чат-боте с реальным составом служебной группы в мессенджере MAX выполняется заданием планировщика (`stale-operators-cleanup`); защитой от потери учётной записи ИТ-роли при ложноположительном срабатывании является исключение учётных записей ИТ-специалистов из автоматической деактивации.
+
+**74.6. Контроль массовых рассылок.** Между моментом подтверждения отправки рассылки оператором и моментом начала фактической отправки жителям Чат-бот выдерживает паузу (по умолчанию пять минут) для возможности отмены при обнаружении ошибки. Для рассылок неотложного характера, помеченных в тексте маркером `[ЧС]`, пауза сокращается до тридцати секунд. Использование маркера `[ЧС]` без действительной чрезвычайной ситуации не допускается — это снижает доверие жителей к маркеру и в перспективе приводит к игнорированию рассылок о реальных чрезвычайных ситуациях.
+
+**74.7. Документация для оператора.** Расширенная инструкция оператору по информационной безопасности, антифишингу, реакции на инциденты и соблюдению Федерального закона от 27.07.2006 № 152-ФЗ — `docs/OPERATOR_SECURITY.md`. Документ обязателен к прочтению до первой смены за пультом Чат-бота и при каждом существенном обновлении. Технические детали защиты — `docs/SECURITY.md`.
 
 ---
 
