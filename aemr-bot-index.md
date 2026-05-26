@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-26 04:03:27 UTC`
+Generated at: `2026-05-26 05:04:35 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `231`
 Max file size: `300 KB`
@@ -44,10 +44,10 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (21561 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9243 bytes)
-- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12814 bytes)
+- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (14710 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42735 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (24833 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (22771 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (43448 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (4466 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (27203 bytes)
@@ -56,12 +56,12 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_runtime.py` (11791 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (58888 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
-- `bot/aemr_bot/handlers/callback_router.py` (8740 bytes)
-- `bot/aemr_bot/handlers/menu.py` (48812 bytes)
+- `bot/aemr_bot/handlers/callback_router.py` (8880 bytes)
+- `bot/aemr_bot/handlers/menu.py` (49839 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (41223 bytes)
 - `bot/aemr_bot/handlers/start.py` (20093 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (64287 bytes)
+- `bot/aemr_bot/keyboards.py` (66501 bytes)
 - `bot/aemr_bot/main.py` (20473 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_bus.py` (6046 bytes)
@@ -88,7 +88,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (12943 bytes)
-- `bot/aemr_bot/texts.py` (48006 bytes)
+- `bot/aemr_bot/texts.py` (49731 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -105,7 +105,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_bus.py` (8613 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
 - `bot/tests/test_admin_card_detached_safety.py` (8432 bytes)
-- `bot/tests/test_admin_card_render.py` (17118 bytes)
+- `bot/tests/test_admin_card_render.py` (17380 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
 - `bot/tests/test_admin_events_descriptor.py` (5856 bytes)
 - `bot/tests/test_admin_handlers_small.py` (21842 bytes)
@@ -3621,8 +3621,8 @@ def _mask_phone(phone: str | None) -> str:
 
 ### `bot/aemr_bot/handlers/admin_callback_dispatch.py`
 
-Size: `12814` bytes  
-SHA-256: `7cc59be8b252ee076af7a38dca4f50bc9e1e43141b50520e0c3296465cbc6a5a`
+Size: `14710` bytes  
+SHA-256: `700a16b2ea70b5565bce1263db3dd6c8412280fd32794ebd1986cc500808820c`
 
 ```python
 """Dispatch admin/operator callback-payload'ов (`broadcast:*` / `op:*`).
@@ -3763,6 +3763,43 @@ async def _op_atts(event, appeal_id: int) -> None:
     await admin_commands.run_show_attachments(event, appeal_id)
 
 
+async def _op_open_card(event, appeal_id: int) -> None:
+    """Открыть полную карточку обращения с timeline (история переписки).
+
+    Шаг 2-в от 2026-05-26: listing «Открытые обращения» компактный
+    (одна кнопка на обращение), история раскрывается явным кликом
+    через эту команду. Используем `admin_card.render(force_new=True)`
+    — карточка появится новой записью внизу чата, не редактирует
+    listing-сообщение (сохраняет sacred-инвариант).
+    """
+    from aemr_bot.handlers._auth import ensure_operator
+    from aemr_bot.services import admin_card as admin_card_service
+    from aemr_bot.services import appeals as appeals_service
+    from aemr_bot.db.session import session_scope
+
+    if not await ensure_operator(event):
+        return
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id_with_messages(
+            session, appeal_id
+        )
+    if appeal is None:
+        from aemr_bot.utils.event import send_or_edit_screen, ack_callback
+        from aemr_bot import keyboards as kbds
+        from aemr_bot.config import settings as cfg
+        await ack_callback(event, "Не найдено")
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=f"⚠️ Обращение #{appeal_id} не найдено (возможно, удалено).",
+            attachments=[kbds.op_back_to_menu_keyboard()],
+        )
+        return
+    from aemr_bot.utils.event import ack_callback
+    await ack_callback(event, "Открываю…")
+    await admin_card_service.render(event.bot, appeal, force_new=True)
+
+
 # PR G: история рассылок — карточка / клон / failed-deliveries.
 async def _op_bc_open(event, broadcast_id: int) -> None:
     await broadcast_handler._open_broadcast(event, broadcast_id)
@@ -3832,6 +3869,7 @@ _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
     ("op:block:", _op_block),
     ("op:unblock:", _op_unblock),
     ("op:atts:", _op_atts),
+    ("op:open_card:", _op_open_card),
     # PR G: история рассылок.
     ("op:bc:open:", _op_bc_open),
     ("op:bc:clone:", _op_bc_clone),
@@ -5392,8 +5430,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `24833` bytes  
-SHA-256: `bf48dd0bd6f01cbb336e0a6724373f8d15a54b7a9456e0e37a47212f65d6c8a9`
+Size: `22771` bytes  
+SHA-256: `de46404bb142eda2ac63e9da5caa0b5eccb675a1520d29c32eb710bdc949cc67`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -5459,15 +5497,16 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
         except Exception:
             log.exception("count_open failed; кнопку без счётчика покажем")
 
-    # SACRED-нарушение, найдено владельцем 2026-05-26:
-    # `show_op_menu` через send_or_edit_screen без force_new_message
-    # делал EDIT на последнем сообщении бота. Если последним было
-    # admin appeal card (sacred — нельзя edit), оно молча превращалось
-    # в меню оператора, и переписка обращения «съедалась». Теперь
-    # ВСЕГДА force_new_message=True — каждое открытие меню это
-    # отдельное сообщение в чате. Лёгкий «флуд» в admin-чате
-    # допустим (это рабочий чат), сохранность карточек обращений —
-    # обязательна.
+    # SACRED-защита (исправлено 2026-05-26): нам НЕ нужен здесь
+    # force_new_message=True — это создавало лишний шум (каждый клик
+    # «🏠 В админ-меню» порождал новое сообщение даже когда меню уже
+    # есть в чате). Защита от edit'а sacred admin-карточки делается
+    # **на источнике**: `admin_card.render` после своего send'а вызывает
+    # `menu_tracker.clear()`, после чего `send_or_edit_screen` НЕ
+    # сможет edit'нуть карточку обращения (last_known_mid=None →
+    # can_edit=False → send_new).
+    # Если оператор переходит из меню в меню — edit нормальный
+    # (две карточки меню не накапливаются в чате).
     sent = await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
@@ -5477,7 +5516,7 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
                 open_count=open_count, is_it=is_it, can_broadcast=can_broadcast
             )
         ],
-        force_new_message=True,
+        force_new_message=pin,
     )
     if not pin:
         return
@@ -5516,10 +5555,19 @@ async def run_backup(event) -> None:
 
 
 async def _do_open_tickets(event) -> None:
-    """Список открытых обращений в админ-группу. Общая реализация для
-    команды /open_tickets и кнопки «📋 Открытые обращения»."""
+    """Компактный listing открытых обращений (шаг 2-в от 2026-05-26).
+
+    Одно сообщение в чате: заголовок «📋 Открытые обращения (N)» +
+    кнопка-строка на каждое обращение `#N · 🆕 · тема (фрагмент)`.
+    Клик на кнопку → `op:open_card:N` → полная карточка с timeline
+    через `admin_card.render(force_new=True)`.
+
+    Раньше listing рендерил полную карточку на каждое обращение
+    (20-50 KB чата на 10 обращений, операторы прокручивали). Теперь
+    одно компактное сообщение, история разворачивается явно по
+    клику.
+    """
     from sqlalchemy import select
-    from sqlalchemy.orm import selectinload
 
     from aemr_bot.db.models import Appeal, AppealStatus
 
@@ -5530,13 +5578,6 @@ async def _do_open_tickets(event) -> None:
                 Appeal.status.in_(
                     [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
                 )
-            )
-            # selectinload(Appeal.messages) нужен для repeat-relay
-            # вложений ниже — без него `appeal.messages` лениво ходит в
-            # БД из-под закрытой сессии и валится `MissingGreenlet`.
-            .options(
-                selectinload(Appeal.user),
-                selectinload(Appeal.messages),
             )
             .order_by(Appeal.created_at)
         )
@@ -5551,67 +5592,28 @@ async def _do_open_tickets(event) -> None:
         )
         return
 
+    # Для каждого обращения формируем компактный label кнопки:
+    # фрагмент темы или сути, обрезанный до 40 символов. Один и тот
+    # же limit — чтобы кнопки выровнялись визуально в MAX-клиенте.
+    items: list[tuple[int, str, str]] = []
+    for appeal in open_appeals:
+        topic_preview = (appeal.topic or appeal.summary or "—").strip()
+        topic_preview = topic_preview.replace("\n", " ")
+        if len(topic_preview) > 40:
+            topic_preview = topic_preview[:39] + "…"
+        items.append((appeal.id, appeal.status, topic_preview))
+
+    text = (
+        f"📋 Открытые обращения ({len(open_appeals)})\n\n"
+        f"Нажмите на обращение, чтобы открыть его полную карточку "
+        f"с историей переписки."
+    )
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
-        text=f"⏳ Найдено неотвеченных обращений: {len(open_appeals)}",
-        attachments=[kbds.op_back_to_menu_keyboard()],
+        text=text,
+        attachments=[kbds.open_tickets_listing_keyboard(items)],
     )
-
-    # Sticky-tracker: tracker встаёт на mid header'а (через
-    # send_or_edit_screen выше), а карточки обращений печатаются ниже
-    # через `event.bot.send_message`. Без сдвига tracker оператор внизу
-    # чата тапает кнопку header'а — `callback_mid == tracker` → edit
-    # вверху → внизу ничего не меняется. Сдвигаем tracker на последнюю
-    # отправленную карточку, чтобы любой тап выше → send_new.
-    from aemr_bot.utils import menu_tracker
-    from aemr_bot.utils.event import extract_message_id
-
-    last_mid: str | None = None
-    for appeal in open_appeals:
-        user_name = appeal.user.first_name if appeal.user else "—"
-        user_id_text = appeal.user.max_user_id if appeal.user else "—"
-        # PR-fix-hang: НЕ переотправляем вложения автоматически. До этого
-        # в цикле под каждое обращение шёл render_appeal_attachments
-        # (1-N доп. send_message). На 20+ обращениях с фото набегало
-        # 50-80 sequential bot.send_message подряд — handler «висел»
-        # 30-60 секунд под одной операторской командой, livez-пинги
-        # health-watch таймаутили. Теперь вложения вызываются явно
-        # кнопкой «📎 Вложения (N)» в карточке.
-        from aemr_bot.services.admin_relay import _collect_all_user_attachments  # noqa: PLC0415
-
-        attachment_count = len(_collect_all_user_attachments(appeal))
-        # Служебный маркер `🆔 №N` в конце — стабильный токен, по которому
-        # handlers/operator_reply.py находит обращение при свайп-ответе.
-        text = (
-            f"❗️ Обращение #{appeal.id}\n"
-            f"👤 От: {user_name}\n"
-            f"📞 ID жителя: {user_id_text}\n"
-            f"📍 Населённый пункт: {appeal.locality or '—'}\n"
-            f"🏠 Адрес: {appeal.address or '—'}\n"
-            f"🏷️ Тематика: {appeal.topic or '—'}\n\n"
-            f"📝 Текст обращения:\n{appeal.summary or '—'}\n\n"
-            f"🆔 №{appeal.id}"
-        )
-        sent = await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=text,
-            attachments=[
-                kbds.appeal_admin_actions(
-                    appeal.id,
-                    appeal.status,
-                    is_it=True,
-                    user_blocked=bool(appeal.user and appeal.user.is_blocked),
-                    closed_due_to_revoke=bool(appeal.closed_due_to_revoke),
-                    attachment_count=attachment_count,
-                )
-            ],
-        )
-        mid = extract_message_id(sent)
-        if mid:
-            last_mid = mid
-    if last_mid is not None and cfg.admin_group_id:
-        menu_tracker.set_last_menu_mid(cfg.admin_group_id, last_mid)
 
 
 async def _do_diag(event) -> None:
@@ -11463,8 +11465,8 @@ async def _step_search(
 
 ### `bot/aemr_bot/handlers/callback_router.py`
 
-Size: `8740` bytes  
-SHA-256: `7a3c14f64033c7385434f2459141e9363b237d2fd6b1b0b9149002e7d1275bd0`
+Size: `8880` bytes  
+SHA-256: `c825c16a41d2f9513eb92686834a410a43f8ab8c13628b3ef48ccfa8977b4f4d`
 
 ```python
 """Маршрутизация callback payload'ов.
@@ -11545,6 +11547,7 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("op:block:", CallbackGroup.OPERATOR_ADMIN, True, "заблокировать жителя"),
     CallbackRoute("op:unblock:", CallbackGroup.OPERATOR_ADMIN, True, "разблокировать жителя"),
     CallbackRoute("op:atts:", CallbackGroup.OPERATOR_ADMIN, True, "показать вложения обращения"),
+    CallbackRoute("op:open_card:", CallbackGroup.OPERATOR_ADMIN, True, "открыть полную карточку с историей"),
     CallbackRoute("op:opadd:", CallbackGroup.OPERATOR_ADMIN, True, "мастер операторов: добавление"),
     CallbackRoute("op:opcard:", CallbackGroup.OPERATOR_ADMIN, True, "карточка оператора"),
     CallbackRoute("op:oprole:", CallbackGroup.OPERATOR_ADMIN, True, "смена роли — открыть picker"),
@@ -11599,8 +11602,8 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 
 ### `bot/aemr_bot/handlers/menu.py`
 
-Size: `48812` bytes  
-SHA-256: `197a11bb62059b6ea8c338638b2258e0e838077b0fd3bf96d259137729863ee1`
+Size: `49839` bytes  
+SHA-256: `ead536203dc00d349a1b168bb5480c20bb4ac6b203ff0ab7abc65058bee13dd7`
 
 ```python
 import logging
@@ -11930,6 +11933,23 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
                 appeal_id, status, attachment_count=attachment_count
             )
         ],
+    )
+
+
+async def open_security_info(event):
+    """Кнопка «🛡️ Защита от мошенников» в главном меню жителя.
+
+    Показывает texts.SECURITY_INFO_TEXT — перечень того, что бот и
+    Администрация НИКОГДА не запрашивают, что делать если столкнулся
+    с мошенниками, как убедиться что бот настоящий. Раньше эта
+    информация жила footer'ом в каждом ответе оператора — но это
+    перегружало официальный ответ. Теперь — отдельная навигационная
+    точка, доступная в один тап в любой момент.
+    """
+    await _send_or_edit_menu(
+        event,
+        text=texts.SECURITY_INFO_TEXT,
+        attachments=[keyboards.back_to_menu_keyboard()],
     )
 
 
@@ -12504,6 +12524,7 @@ _EXACT: dict[str, _MenuRoute] = {
     ),
     "menu:useful_info": _MenuRoute(lambda e, u: open_useful_info(e)),
     "menu:appointment": _MenuRoute(lambda e, u: open_appointment(e)),
+    "menu:security": _MenuRoute(lambda e, u: open_security_info(e)),
     "menu:settings": _MenuRoute(lambda e, u: open_settings(e)),
     "settings:help": _MenuRoute(lambda e, u: open_help(e)),
     "settings:rules": _MenuRoute(lambda e, u: open_rules(e)),
@@ -14148,8 +14169,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `64287` bytes  
-SHA-256: `c7a02301076a64ab954cbe6b3dd5a66487e4554a36211025dd5f4bec797dd2f1`
+Size: `66501` bytes  
+SHA-256: `5b4dce1778907d6960310a3775d13e320b8c6e1247357bf024888e046dbc8ee2`
 
 ```python
 from maxapi.types import (
@@ -14217,6 +14238,11 @@ def main_menu(
     # формы обращения в администрацию в одном экране.
     kb.row(CallbackButton(text="🏛 Приём граждан", payload="menu:appointment"))
     kb.row(CallbackButton(text="ℹ️ Полезная информация", payload="menu:useful_info"))
+    # Кнопка «Защита от мошенников» — отдельным пунктом главного меню
+    # вместо footer'а в каждом ответе оператора. Так житель находит
+    # перечень «бот никогда не запрашивает» в один тап в любой момент
+    # переписки, а официальный ответ оператора не перегружен меморандумом.
+    kb.row(CallbackButton(text="🛡️ Защита от мошенников", payload="menu:security"))
     kb.row(CallbackButton(text="⚙️ Настройки и помощь", payload="menu:settings"))
     return kb.as_markup()
 
@@ -14649,6 +14675,41 @@ def op_back_to_menu_keyboard():
     """Одна кнопка возврата к главной операторской панели."""
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    return kb.as_markup()
+
+
+def open_tickets_listing_keyboard(items):
+    """Listing открытых обращений в одном сообщении.
+
+    Каждое обращение — одна кнопка-строка: «#N · 🆕 · тема (фрагмент)»
+    или «#N · 🔄 · ...». Тап → callback `op:open_card:N` → полная
+    карточка с timeline через `admin_card.render` (по выбору владельца
+    шаг 2-в от 2026-05-26: listing компактный, история открывается
+    в новой карточке внизу чата).
+
+    `items` — последовательность `(appeal_id, status, topic_preview)`,
+    где `topic_preview` уже обрезан до разумной длины вызывающим.
+    Если items пуст — клавиатура только с кнопкой «↩️ В меню».
+    """
+    from aemr_bot.db.models import AppealStatus
+
+    kb = InlineKeyboardBuilder()
+    status_emoji = {
+        AppealStatus.NEW.value: "🆕",
+        AppealStatus.IN_PROGRESS.value: "🔄",
+        AppealStatus.ANSWERED.value: "✅",
+        AppealStatus.CLOSED.value: "⛔",
+    }
+    for appeal_id, status, topic_preview in items:
+        emoji = status_emoji.get(status, "•")
+        text = f"#{appeal_id} · {emoji} · {topic_preview}"
+        kb.row(
+            CallbackButton(
+                text=text,
+                payload=f"op:open_card:{appeal_id}",
+            )
+        )
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -23664,8 +23725,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `48006` bytes  
-SHA-256: `266f952a590c21a58ad6e6b0e4ae657002f440bc3af0f7f57b4f42af3292db30`
+Size: `49731` bytes  
+SHA-256: `81937ebe2b8415b649c3ab2ffde8a27f7a27c2f7baf2cba59446c43287e60381`
 
 ```python
 WELCOME = (
@@ -23847,19 +23908,48 @@ CITIZEN_REPLY_TEMPLATE = (
     "\n"
     "━━━━━━━━━━━━━━━━\n"
     "\n"
-    "{reply_text}\n"
+    "{reply_text}"
+)
+# Антифишинг-блок жителю доступен через отдельную кнопку
+# «🛡️ Защита от мошенников» в главном меню (см. SECURITY_INFO_TEXT
+# ниже и handlers/menu.py). Footer'ом в каждый ответ оператора
+# раньше не пихаем — это перегружало текст официального ответа.
+
+SECURITY_INFO_TEXT = (
+    "🛡️ ЗАЩИТА ОТ МОШЕННИКОВ\n"
+    "\n"
+    "Бот Администрации Елизовского муниципального округа и сотрудники "
+    "Администрации НИКОГДА не запрашивают у жителей:\n"
+    "\n"
+    "• данные паспорта, СНИЛС, ИНН;\n"
+    "• номер банковской карты, CVV-код, срок действия;\n"
+    "• коды из SMS-сообщений;\n"
+    "• пароли от Госуслуг, банка, мессенджера MAX;\n"
+    "• оплату госпошлин, штрафов, «ускоренного рассмотрения» обращения.\n"
+    "\n"
+    "Также бот никогда:\n"
+    "• не звонит вам голосом;\n"
+    "• не предлагает установить «приложение для отслеживания обращения»;\n"
+    "• не присылает ссылок на сторонние сайты для «авторизации».\n"
     "\n"
     "━━━━━━━━━━━━━━━━\n"
-    "🛡️ Напоминание о безопасности. Бот Администрации НИКОГДА не "
-    "запрашивает паспорт, СНИЛС, банковские реквизиты, коды из SMS и "
-    "не просит оплаты. Если получили подобное «от Администрации» — это "
-    "мошенничество, обращайтесь в МВД (8-800-250-30-72)."
+    "🚨 Если столкнулись с мошенниками\n"
+    "\n"
+    "1. Не сообщайте данные, не переводите деньги.\n"
+    "2. Если перевод сделан — заявление в МВД: горячая линия "
+    "8-800-250-30-72 или личный приём в отделе МВД по Елизовскому "
+    "муниципальному округу.\n"
+    "3. Сообщите Администрации через «📝 Написать обращение» с темой "
+    "«Другое» — мы предупредим других жителей.\n"
+    "\n"
+    "━━━━━━━━━━━━━━━━\n"
+    "💡 Как убедиться, что бот настоящий\n"
+    "\n"
+    "Открывайте бот только по ссылке с официального сайта "
+    "elizovomr.ru или по QR-коду из объявлений Администрации. Бот не "
+    "имеет «представителей» в личных сообщениях — все ответы приходят "
+    "от этого же чата."
 )
-# Footer-напоминание о безопасности — в каждом формальном ответе
-# оператора жителю. Раньше антифишинг-блок жил только в WELCOME при
-# /start; житель, который уже в активной переписке, мог месяцами не
-# нажимать /start и забыть про защиту. Footer на каждом ответе
-# держит правило в поле зрения постоянно.
 # CITIZEN_REPLY_TEMPLATE намеренно длинный заголовок: это формальное
 # письмо-ответ от администрации. Житель должен видеть, кто ответил и
 # по какому обращению, а не просто текст в личке. Не сокращать.
@@ -27046,8 +27136,8 @@ class TestFinalizeSurvivesDetachedAppeal:
 
 ### `bot/tests/test_admin_card_render.py`
 
-Size: `17118` bytes  
-SHA-256: `e926fc7f9adcd9389f5bd0fdd3f5435647bf4a3e731c0c23c8f8a6d0492938fb`
+Size: `17380` bytes  
+SHA-256: `695cf758a24771020500e5f7ed4bb8506e2707078cac533233accf0bff57161a`
 
 ```python
 """Тесты freshness-rule семантики `services/admin_card.render`.
@@ -27172,8 +27262,11 @@ class TestFreshnessRule:
         bot.edit_message.assert_not_called()
         bot.send_message.assert_awaited_once()
         assert mid == "fresh-9"
-        # tracker обновился на новый mid
-        assert menu_tracker.get_last_menu_mid(555) == "fresh-9"
+        # SACRED-fix 2026-05-26: admin_card.render теперь делает
+        # menu_tracker.clear() после send, потому что карточка обращения
+        # НЕ является меню и не должна edit'иться через op:* callback'и
+        # с её же кнопок.
+        assert menu_tracker.get_last_menu_mid(555) is None
 
     @pytest.mark.asyncio
     async def test_no_callback_sends_new(self) -> None:
