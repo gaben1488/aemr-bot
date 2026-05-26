@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-26 21:10:49 UTC`
+Generated at: `2026-05-26 22:21:11 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `236`
 Max file size: `300 KB`
@@ -42,9 +42,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/__init__.py` (5882 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
-- `bot/aemr_bot/handlers/admin_appeal_ops.py` (23077 bytes)
+- `bot/aemr_bot/handlers/admin_appeal_ops.py` (23186 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9243 bytes)
-- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (15888 bytes)
+- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (16873 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42735 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (23101 bytes)
@@ -53,15 +53,15 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal.py` (27203 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (33699 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
-- `bot/aemr_bot/handlers/appeal_runtime.py` (11791 bytes)
+- `bot/aemr_bot/handlers/appeal_runtime.py` (13147 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (59569 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
-- `bot/aemr_bot/handlers/callback_router.py` (12792 bytes)
-- `bot/aemr_bot/handlers/menu.py` (50185 bytes)
+- `bot/aemr_bot/handlers/callback_router.py` (12935 bytes)
+- `bot/aemr_bot/handlers/menu.py` (53035 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (41155 bytes)
 - `bot/aemr_bot/handlers/start.py` (20093 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (66914 bytes)
+- `bot/aemr_bot/keyboards.py` (68253 bytes)
 - `bot/aemr_bot/main.py` (20473 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_bus.py` (6046 bytes)
@@ -81,14 +81,14 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/policy.py` (2979 bytes)
 - `bot/aemr_bot/services/progress.py` (9433 bytes)
 - `bot/aemr_bot/services/repo_sync.py` (16984 bytes)
-- `bot/aemr_bot/services/settings_store.py` (41989 bytes)
+- `bot/aemr_bot/services/settings_store.py` (41712 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/threat_intel.py` (11404 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (12943 bytes)
-- `bot/aemr_bot/texts.py` (63189 bytes)
+- `bot/aemr_bot/texts.py` (69684 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -147,7 +147,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_handlers_auth_broadcast.py` (6976 bytes)
 - `bot/tests/test_handlers_common.py` (3572 bytes)
 - `bot/tests/test_handlers_funnel.py` (9458 bytes)
-- `bot/tests/test_handlers_menu.py` (26853 bytes)
+- `bot/tests/test_handlers_menu.py` (27825 bytes)
 - `bot/tests/test_handlers_menu_extra.py` (23371 bytes)
 - `bot/tests/test_handlers_operator_reply.py` (34166 bytes)
 - `bot/tests/test_handlers_start.py` (13597 bytes)
@@ -161,10 +161,10 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_operator_reply_with_image.py` (7517 bytes)
 - `bot/tests/test_progress.py` (10480 bytes)
 - `bot/tests/test_pure_functions.py` (11522 bytes)
-- `bot/tests/test_reliability_pass.py` (9745 bytes)
+- `bot/tests/test_reliability_pass.py` (10544 bytes)
 - `bot/tests/test_repo_sync.py` (21989 bytes)
 - `bot/tests/test_security_batch_b.py` (7285 bytes)
-- `bot/tests/test_security_batch_c.py` (9267 bytes)
+- `bot/tests/test_security_batch_c.py` (8999 bytes)
 - `bot/tests/test_security_batch_d.py` (6992 bytes)
 - `bot/tests/test_services_no_db.py` (9640 bytes)
 - `bot/tests/test_settings_seed_baseline.py` (5309 bytes)
@@ -2960,8 +2960,8 @@ async def current_user(
 
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
-Size: `23077` bytes  
-SHA-256: `3d45a021a9e16f4b8353adc812a93e73e99a2a57be83778ced129d29df2ba6d8`
+Size: `23186` bytes  
+SHA-256: `63923105d3b8f5b9f99e681308952b972129f26714c8ad5361c20bfcd081dbaa`
 
 ```python
 """Действия оператора над конкретным обращением.
@@ -3196,17 +3196,17 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
         text=(
             f"{prompt_hint}"
             f"Лимит {cfg.answer_max_chars} символов. Просто отправьте "
-            f"следующее сообщение в этот чат, либо «Отменить» ниже.\n"
-            f"\n"
-            f"🛡️ Памятка: ссылки только на гос-домены (elizovomr.ru, "
-            f"kamgov.ru, gosuslugi.ru, kamchatka.gov.ru). Любая другая "
-            f"ссылка будет заблокирована автоматически — ответ не уйдёт "
-            f"жителю, чтобы случайный фишинг не прошёл от имени "
-            f"Администрации. Подробности — docs/OPERATOR_SECURITY.md §3.2."
+            f"следующее сообщение в этот чат, либо «Отменить» ниже."
         ),
         attachments=[kbds.cancel_reply_intent_keyboard()],
         force_new_message=True,
     )
+    # Памятка про whitelist гос-доменов раньше дублировалась здесь
+    # (2026-05-27 убрана по решению владельца). Полная памятка живёт
+    # в `📋 Памятка оператора` (op:help_full), а конкретный whitelist
+    # — в broadcast preview (там критично перед массовой отправкой).
+    # Reply prompt оставлен лаконичным — оператор отвечает по обращению
+    # десятки раз в день, не нужно каждый раз листать памятку.
 
 
 async def run_reply_cancel(event) -> None:
@@ -3665,8 +3665,8 @@ def _mask_phone(phone: str | None) -> str:
 
 ### `bot/aemr_bot/handlers/admin_callback_dispatch.py`
 
-Size: `15888` bytes  
-SHA-256: `46aae9fd496c0f22b074dc6d0be338f82eb13e131a6524f2e3aca12997a1b822`
+Size: `16873` bytes  
+SHA-256: `f6eacdf293e7ccba6f9e3a8e4880998e901ed915b31b1d98d60a5c29283dbfdb`
 
 ```python
 """Dispatch admin/operator callback-payload'ов (`broadcast:*` / `op:*`).
@@ -3898,17 +3898,20 @@ _EXACT: dict[str, ExactHandler] = {
     "op:settings": _ack_then(lambda e: admin_commands.run_settings_menu(e)),
     "op:audience": _ack_then(lambda e: admin_commands.run_audience_menu(e)),
     "op:help_full": _ack_then(lambda e: _show_op_help_full(e)),
+    "op:help_security": _ack_then(lambda e: _show_op_help_security(e)),
     "op:reply_cancel": _op_reply_cancel,
 }
 
 
 async def _show_op_help_full(event) -> None:
-    """Подменю «📋 Памятка оператора» — полный гайд по командам,
-    безопасности, ссылкам на документы.
+    """Подменю «📋 Памятка оператора» (главный экран).
 
-    Раньше OP_HELP печатался простыней при каждом вызове админ-меню,
-    перегружая чат при каждом тапе `/menu`. Теперь админ-меню короткое
-    («выберите действие»), а полная памятка — отдельный экран по клику.
+    Команды, рассылки, ответы по обращениям. Кнопка → переход на
+    второй экран `🛡️ Безопасность и антифишинг`.
+
+    Раньше один экран OP_HELP_FULL_LEGACY содержал всё — ~8230 char,
+    превышал MAX-API limit 4000, при тапе кнопки падал с
+    `ValueError: text должен быть меньше 4000 символов`. Разбит на 2.
     """
     from aemr_bot import keyboards as kbds
     from aemr_bot import texts
@@ -3921,8 +3924,30 @@ async def _show_op_help_full(event) -> None:
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
-        text=texts.OP_HELP_FULL.format(answer_limit=cfg.answer_max_chars),
-        attachments=[kbds.op_back_to_menu_keyboard()],
+        text=texts.OP_HELP_MAIN.format(answer_limit=cfg.answer_max_chars),
+        attachments=[kbds.op_help_main_keyboard()],
+    )
+
+
+async def _show_op_help_security(event) -> None:
+    """Подменю «🛡️ Безопасность и антифишинг» — второй экран памятки.
+
+    Антифишинг, реакция на скам, компрометация аккаунта, ключевые
+    документы. Кнопка → возврат к главному экрану памятки.
+    """
+    from aemr_bot import keyboards as kbds
+    from aemr_bot import texts
+    from aemr_bot.config import settings as cfg
+    from aemr_bot.handlers._auth import ensure_operator
+    from aemr_bot.utils.event import send_or_edit_screen
+
+    if not await ensure_operator(event):
+        return
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_HELP_SECURITY,
+        attachments=[kbds.op_help_security_keyboard()],
     )
 
 # prefix → (handler, нужен ли payload в handler).
@@ -8760,8 +8785,8 @@ async def on_awaiting_geo_confirm(event, body, text_body, max_user_id):
 
 ### `bot/aemr_bot/handlers/appeal_runtime.py`
 
-Size: `11791` bytes  
-SHA-256: `5d2aabfa8d34c58a0cb7042a9d57a7a67a590e1c8f3655e1812a863d110a0057`
+Size: `13147` bytes  
+SHA-256: `98be54772b9ffb69e8e528fb47c86e3913939e1fe127eb9b244514bd59b5214b`
 
 ```python
 """Runtime-helpers и финализация обращения.
@@ -8782,12 +8807,13 @@ import logging
 import re
 from typing import Any
 
-from aemr_bot import texts
+from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import appeals as appeals_service
+from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import users as users_service
 
 log = logging.getLogger(__name__)
@@ -8984,13 +9010,29 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
         )
 
         try:
-            # «Обращение N принято» — это EVENT-сообщение (запись о
-            # факте принятия), не навигация. Без клавиатуры. Главное
-            # меню жителю всегда доступно через /menu — не нужно
-            # дублировать кнопками в каждом event-ack.
+            # «Обращение N принято» — event-уведомление, но с **полным
+            # главным меню** для конверсии. Восстановлено 2026-05-27
+            # после жалобы владельца: ранее в cfcf372 (PR #62) я ошибочно
+            # убрал кнопки под предлогом «event без CTA». Это заставляло
+            # пожилых жителей вводить /menu вручную — они так не делают
+            # и просто закрывали диалог. Жалоба: «на принято было 6 кнопок,
+            # почему убрал? — идиотское решение, ломаешь хорошее».
+            #
+            # Sacred-rule всё равно соблюдается: APPEAL_ACCEPTED — это
+            # event, прямой `bot.send_message(user_id=...)` НЕ обновляет
+            # menu_tracker. Когда житель тапает «↩️ В меню» на ack,
+            # freshness rule в `_send_or_edit_menu` (Шаг 1 sweep
+            # 2026-05-27) видит callback_mid != tracker (tracker на mid
+            # предыдущего экрана воронки) → send_new menu, ack остаётся
+            # в чате как иммутабельный slice истории.
+            async with session_scope() as _sub_session:
+                subscribed = await broadcasts_service.is_subscribed(
+                    _sub_session, max_user_id
+                )
             await bot.send_message(
                 user_id=max_user_id,
                 text=texts.APPEAL_ACCEPTED.format(number=appeal.id),
+                attachments=[keyboards.main_menu(subscribed=subscribed)],
             )
         except Exception:
             log.exception(
@@ -11548,8 +11590,8 @@ async def _step_search(
 
 ### `bot/aemr_bot/handlers/callback_router.py`
 
-Size: `12792` bytes  
-SHA-256: `8032e55b71f4bf3ecacdc2ecf9c9595f3eac0f06b1df4a0481750f905fc0b39a`
+Size: `12935` bytes  
+SHA-256: `0417a04d7f4874e7bb775edbb89a11e0b475294c748368f46c1c689a1b26a36e`
 
 ```python
 """Маршрутизация callback payload'ов.
@@ -11640,6 +11682,7 @@ EXACT_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("op:operators", CallbackGroup.OPERATOR_ADMIN, True, "операторы"),
     CallbackRoute("op:settings", CallbackGroup.OPERATOR_ADMIN, True, "настройки"),
     CallbackRoute("op:help_full", CallbackGroup.OPERATOR_ADMIN, True, "полная памятка оператора"),
+    CallbackRoute("op:help_security", CallbackGroup.OPERATOR_ADMIN, True, "памятка: безопасность и антифишинг"),
     CallbackRoute("op:audience", CallbackGroup.OPERATOR_ADMIN, True, "аудитория"),
     CallbackRoute("op:reply_cancel", CallbackGroup.OPERATOR_ADMIN, True, "отмена ответа"),
 )
@@ -11721,8 +11764,8 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 
 ### `bot/aemr_bot/handlers/menu.py`
 
-Size: `50185` bytes  
-SHA-256: `2f75dd259bcef738b8d0201f87c6ac8b2dacb23adec04ab0f94ad7b755e4dc70`
+Size: `53035` bytes  
+SHA-256: `8edf02974ad6cd3fb8e286262f3d94ed2b21152fd907238d1e4ee8f07a655706`
 
 ```python
 import logging
@@ -11766,44 +11809,96 @@ async def _send_or_edit_menu(
     attachments: list | None = None,
     force_new_message: bool = False,
 ) -> None:
-    """Показать экран меню.
+    """Показать экран меню жителю с freshness-rule.
 
-    Если экран открыт нажатием кнопки, редактируем текущую карточку — как
-    в воронке подачи обращения. Если это команда или редактирование не
-    удалось, отправляем новое сообщение.
+    **Единое правило для всех карточек/сообщений бота** (см.
+    `services/admin_bus.py` для admin-стороны, sacred-канон):
+
+    > Карточка редактируется при тапе кнопки ↔ её mid совпадает с
+    > `menu_tracker[chat_id]`. В любом другом случае (ниже неё что-то
+    > появилось, или это event-сообщение, не двигавшее tracker, или
+    > tracker пуст) — отправляется новое сообщение, старое остаётся в
+    > истории.
+
+    **Почему это критично для citizen-side** (фикс жалобы владельца
+    2026-05-27): event-уведомления жителю (CITIZEN_REPLY, subscribe ack,
+    erase ack, APPEAL_ACCEPTED, followup notification) шлются прямым
+    `bot.send_message(user_id=...)` — НЕ обновляют tracker. Tracker
+    остаётся на mid последнего меню. Когда житель тапает «↩️ В меню»
+    на event-уведомлении — `callback_mid` = mid_event, `tracker` =
+    mid_меню. Они разные → send_new. Event-уведомление цело,
+    конверсия сохранена.
+
+    Раньше эта функция edit'ила безусловно (любой callback в личке
+    → edit того сообщения, на котором нажата кнопка). Это превращало
+    event-уведомление в меню — пожилые жители «теряли» уведомление об
+    ответе и не возвращались в обращения. Жалоба владельца:
+    «человек нажмет кнопку и потеряет оповещение о полученном ответе —
+    бред».
     """
+    from aemr_bot.utils import menu_tracker  # noqa: PLC0415
+
     attachments = attachments or []
-    mid = None if force_new_message else _callback_mid(event)
-    if mid and hasattr(event.bot, "edit_message"):
+    callback_mid = None if force_new_message else _callback_mid(event)
+    chat_id = get_chat_id(event)
+    user_id = None if chat_id is not None else get_user_id(event)
+
+    # Freshness check: edit разрешён только если callback пришёл от
+    # АКТУАЛЬНОЙ карточки-меню (last в этом чате). Per-chat tracker
+    # поддерживает любой chat_id, не только admin (см.
+    # `utils/menu_tracker.py`).
+    last_known_mid = (
+        menu_tracker.get_last_menu_mid(chat_id)
+        if chat_id is not None
+        else None
+    )
+    can_edit = (
+        callback_mid is not None
+        and last_known_mid is not None
+        and callback_mid == last_known_mid
+        and hasattr(event.bot, "edit_message")
+    )
+
+    log.debug(
+        "menu freshness: chat=%s callback_mid=%s tracker=%s decision=%s",
+        chat_id, callback_mid, last_known_mid,
+        "edit" if can_edit else "send_new",
+    )
+
+    if can_edit:
         try:
             await event.bot.edit_message(
-                message_id=mid,
+                message_id=callback_mid,
                 text=text,
                 attachments=attachments,
             )
+            # edit сохраняет mid — tracker не меняем.
             return
         except (MaxApiError, MaxConnection, aiohttp.ClientError, TimeoutError):
-            # Reliability-pass: сузили `except Exception`. Реальные
-            # причины edit-failure — MAX API кинула 400 (старое сообщение
-            # уже не редактируется), 5xx (временный сбой), TCP rst/
-            # timeout до api.tamtam.chat. На любой другой exception
-            # (например AttributeError от подмены bot mock) — пусть
-            # всплывает, чтобы баг был видим, а не маскировался
-            # тихим fallback'ом на send_message.
             log.info(
                 "menu: edit_message %s failed, fallback to send",
-                mid,
-                exc_info=False,
+                callback_mid, exc_info=False,
             )
+            # На fail edit'а tracker может быть невалиден — очистим,
+            # чтобы следующий callback тоже пошёл в send_new.
+            if chat_id is not None:
+                menu_tracker.clear(chat_id)
 
-    chat_id = get_chat_id(event)
-    user_id = None if chat_id is not None else get_user_id(event)
-    await event.bot.send_message(
+    sent = await event.bot.send_message(
         chat_id=chat_id,
         user_id=user_id,
         text=text,
         attachments=attachments,
     )
+    # Обновляем tracker свежим mid отправленного сообщения. Без этого
+    # next-callback не сможет edit'нуть свежее меню — приведёт к
+    # лишним copies меню при wizard'ных переходах. extract_message_id
+    # tolerant к старым mock-структурам (вернёт None, tracker не двинется).
+    if chat_id is not None:
+        from aemr_bot.utils.event import extract_message_id  # noqa: PLC0415
+        new_mid = extract_message_id(sent)
+        if new_mid:
+            menu_tracker.set_last_menu_mid(chat_id, new_mid)
 
 
 async def open_main_menu(event):
@@ -14293,8 +14388,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `66914` bytes  
-SHA-256: `357926a40a6e3258f9dac518966a612ee016f6053bc1ca737bb24b24622d9b24`
+Size: `68253` bytes  
+SHA-256: `2c8e1329a3f566f4b049941dcd71b2094b2a1cd21c6c4de5d172694d8963f3cf`
 
 ```python
 from maxapi.types import (
@@ -14799,6 +14894,40 @@ def op_back_to_menu_keyboard():
     """Одна кнопка возврата к главной операторской панели."""
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_help_main_keyboard():
+    """Клавиатура главного экрана памятки оператора (📋).
+
+    Содержит переход на второй экран `🛡️ Безопасность и антифишинг`
+    + возврат в админ-меню. Разбивка на 2 экрана нужна, потому что
+    OP_HELP_FULL_LEGACY (~8230 char) превышал MAX-API limit 4000 char.
+    """
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="🛡️ Безопасность и антифишинг",
+            payload="op:help_security",
+        )
+    )
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_help_security_keyboard():
+    """Клавиатура второго экрана памятки оператора (🛡️ Безопасность).
+
+    Содержит возврат на главный экран памятки + escape в админ-меню.
+    """
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        CallbackButton(
+            text="📋 Назад к памятке",
+            payload="op:help_full",
+        )
+    )
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -21366,8 +21495,8 @@ async def fetch_main_runtime_config(
 
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `41989` bytes  
-SHA-256: `c9cbe1e726909339e5f6d2ef7badfc29889df9e71e81b4b414558c928d5ffcd5`
+Size: `41712` bytes  
+SHA-256: `713be015a3e1ce685837419a639999587881c7d7a61e9fff5ae0cf7103dc7d7e`
 
 ```python
 import asyncio
@@ -21708,20 +21837,16 @@ DEFAULTS: dict[str, Any] = {
 # дополнительными правилами. /setting <key> <value> отклоняет всё, чего нет в
 # этой карте.
 SCHEMA: dict[str, dict] = {
-    # C1-hardening: welcome_text обязан содержать антифишинговый блок
-    # «НИКОГДА не запрашиваем» — это последняя строка защиты жителя от
-    # PII-фишинга через support-impersonation (см. SECURITY_REVIEW
-    # 2026-05-26 C4). IT может переписать формулировку под текущий
-    # контекст (новые скам-схемы, сезонные), но **минимальная
-    # подстрока должна остаться**. Если жёсткая фраза устарела —
-    # обновите её здесь И в seed/welcome.md И в texts.WELCOME
-    # одновременно, чтобы required_substr не блокировал актуальную
-    # версию.
+    # C1-hardening снят 2026-05-27 по решению владельца. Раньше welcome
+    # обязан был содержать антифишинговый блок «НИКОГДА не запрашиваем»
+    # — это дублировало содержимое отдельной кнопки «🛡️ Защита от
+    # мошенников» в главном меню (`SECURITY_INFO_TEXT`, handler
+    # `menu:security`). Двойное упоминание перегружало welcome без
+    # пользы; антифишинг живёт только в отдельной кнопке.
     "welcome_text": {
         "type": str,
         "min_len": 1,
         "max_len": 4000,
-        "required_substr": "НИКОГДА не запрашиваем",
     },
     # C1: consent_text используется как шаблон с placeholder
     # `{policy_url}`. Если IT перепишет без placeholder — житель увидит
@@ -23853,8 +23978,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `63189` bytes  
-SHA-256: `4c684ca873c6d9856bb851281572295eb943ad0de06d2c85e8ac4c0446a62ead`
+Size: `69684` bytes  
+SHA-256: `400d1b737e5b92fc23124dff8f255fa3b3b3136d18f3e118ab340cc0cacdaaa0`
 
 ```python
 WELCOME = (
@@ -23863,17 +23988,13 @@ WELCOME = (
     "округа. Здесь можно сообщить о проблеме, задать вопрос, найти "
     "полезные контакты и подписаться на рассылку — оповещения о ЧС, "
     "отключениях и важных работах коммунальных служб.\n\n"
-    "———\n"
-    "🛡️ Что мы НИКОГДА не запрашиваем:\n"
-    "• данные паспорта, СНИЛС, банковские реквизиты, коды из SMS;\n"
-    "• оплату чего-либо (госпошлин, штрафов, «срочной обработки»);\n"
-    "• установку сторонних приложений или вход в Госуслуги по ссылке.\n\n"
-    "Если кто-то от имени бота или Администрации просит подобное — "
-    "это мошенничество. Не платите, не вводите данные. "
-    "Сообщите нам через действие «Сообщить о проблеме» с темой «Другое».\n\n"
-    "———\n"
     "Выберите действие в меню ниже."
 )
+# Антифишинг-блок раньше жил в WELCOME (C1-hardening через
+# required_substr validate). По решению владельца 2026-05-27 — вынесен
+# полностью в отдельную кнопку «🛡️ Защита от мошенников» главного
+# меню (`SECURITY_INFO_TEXT`, handler menu:security). C1 SCHEMA-
+# valdate снят (см. settings_store.SCHEMA[welcome_text]).
 
 CONSENT_REQUEST = (
     "Чтобы принять обращение, нам нужно ваше согласие на обработку "
@@ -24321,7 +24442,7 @@ OP_HELP = (
 # кнопке — её можно открыть один раз перед сменой и при любом
 # вопросе, не перечитывать при каждом тапе /menu.
 
-OP_HELP_FULL = (
+OP_HELP_FULL_LEGACY = (
     "📋 ПАМЯТКА ОПЕРАТОРА\n"
     "\n"
     "Дата актуализации: 2026-05-26. Бот aemr-bot — обратная связь "
@@ -24532,6 +24653,121 @@ OP_HELP_FULL = (
     "Кнопка «📋 Памятка оператора» в админ-меню (это меню откроется "
     "по `/menu` или `/op_help`)."
 )
+# OP_HELP_FULL_LEGACY (~8230 char) превышал MAX-API hard limit 4000 char,
+# при тапе кнопки `📋 Памятка оператора` бот падал с
+# `ValueError: text должен быть меньше 4000 символов` (VPS-лог
+# 2026-05-27 09:25:04). Разбит на 2 экрана с навигацией между собой,
+# каждый ≤ 3000 char.
+
+
+OP_HELP_MAIN = (
+    "📋 ПАМЯТКА ОПЕРАТОРА\n"
+    "\n"
+    "Дата актуализации: 2026-05-27. Бот aemr-bot — обратная связь "
+    "Администрации Елизовского муниципального округа в MAX.\n"
+    "\n"
+    "━━━━━━━━━━━━━━━━\n"
+    "✉️ ОТВЕТ ЖИТЕЛЮ ПО ОБРАЩЕНИЮ\n"
+    "\n"
+    "• Кнопка «✉️ Ответить и закрыть» под карточкой обращения (или "
+    "потяните карточку влево, или `/reply N <текст>`).\n"
+    "• Промежуточный ответ без закрытия — «💬 Ответить промежуточно».\n"
+    "• Лимит ответа: {answer_limit} символов.\n"
+    "• Ссылки в ответе — ТОЛЬКО гос-домены (см. экран «🛡️ Безопасность»).\n"
+    "\n"
+    "━━━━━━━━━━━━━━━━\n"
+    "📣 РАССЫЛКА (координатор, ИТ)\n"
+    "\n"
+    "• Кнопка «📢 Сделать рассылку» (или `/broadcast`).\n"
+    "• Между подтверждением и отправкой — пауза **5 минут**. Маркер "
+    "`[ЧС]` в начале сокращает паузу до **30 секунд** — ТОЛЬКО для "
+    "реальных ЧС.\n"
+    "• История рассылок — «📜 История рассылок». Шаблоны — "
+    "«📋 Шаблоны рассылок».\n"
+    "\n"
+    "━━━━━━━━━━━━━━━━\n"
+    "🔠 КОМАНДЫ — БЫСТРАЯ СПРАВКА\n"
+    "\n"
+    "**Обращения (любая роль):**\n"
+    "`/reply N <текст>` · `/reopen N` · `/close N` · `/open_tickets` · "
+    "`/diag` · `/stats <период>`\n"
+    "\n"
+    "**Рассылки (координатор, ИТ):**\n"
+    "`/broadcast` · `/broadcast list` · `[ЧС]` маркер в тексте\n"
+    "\n"
+    "**Администрирование (только ИТ):**\n"
+    "`/erase max_user_id=N` · `/erase phone=+7XXXXXXXXXX` · "
+    "`/setting list` · `/add_operators` · `/backup`\n"
+    "\n"
+    "**Стандартные:**\n"
+    "`/start` · `/menu` · `/help` · `/op_help`\n"
+    "\n"
+    "Большинство команд продублировано кнопками. Команды нужны опытным "
+    "операторам и для скрытых действий (массовая регистрация, /erase "
+    "по телефону)."
+)
+
+
+OP_HELP_SECURITY = (
+    "🛡️ БЕЗОПАСНОСТЬ И АНТИФИШИНГ\n"
+    "\n"
+    "Полная инструкция: `docs/OPERATOR_SECURITY.md`. Здесь — выжимка "
+    "для быстрого освежения памяти.\n"
+    "\n"
+    "━━━━━━━━━━━━━━━━\n"
+    "🛡️ ЧТО БОТ ЗАЩИЩАЕТ АВТОМАТИЧЕСКИ\n"
+    "\n"
+    "• Исходящие ссылки оператора/рассылки — только гос-домены "
+    "(elizovomr.ru, kamgov.ru, gosuslugi.ru, kamchatka.gov.ru). Другие "
+    "блокируются.\n"
+    "• URL в обращениях жителя экранируются (defang) — оператор не "
+    "может случайно тапнуть фишинг.\n"
+    "• Threat-intel URL-feed (URLhaus + ThreatFox) — карточка с "
+    "известной malware-ссылкой получает усиленный warning.\n"
+    "\n"
+    "━━━━━━━━━━━━━━━━\n"
+    "🛡️ ЧТО ВЫ ДОЛЖНЫ ДЕЛАТЬ СОЗНАТЕЛЬНО\n"
+    "\n"
+    "• Не вставлять в ответ жителю ссылки на сторонние сайты — "
+    "блокировка отклонит, потеряете время.\n"
+    "• Не пересылать ПДн жителя в личные мессенджеры/email — 152-ФЗ.\n"
+    "• Перед массовой рассылкой — пауза cooldown 5 мин для финальной "
+    "вычитки.\n"
+    "\n"
+    "━━━━━━━━━━━━━━━━\n"
+    "🛡️ ЕСЛИ ЖИТЕЛЬ СТОЛКНУЛСЯ С МОШЕННИКАМИ\n"
+    "\n"
+    "1. Подтвердите: «Администрация общается ТОЛЬКО через этот бот, "
+    "не звонит и не пишет в другие мессенджеры».\n"
+    "2. Направьте в МВД: 8-800-250-30-72 или личный приём в отделе "
+    "МВД по Елизовскому МО.\n"
+    "3. Зафиксируйте факт followup'ом в обращении.\n"
+    "4. Уведомите ИТ-оператора через служебную группу.\n"
+    "\n"
+    "━━━━━━━━━━━━━━━━\n"
+    "🛡️ ЕСЛИ ВАШ АККАУНТ СКОМПРОМЕТИРОВАН\n"
+    "\n"
+    "Потеря телефона, странные сообщения от вашего имени → "
+    "**немедленно ИТ-оператору через альтернативный канал** (звонок, "
+    "личный визит). ИТ деактивирует учётную запись через wizard.\n"
+    "\n"
+    "━━━━━━━━━━━━━━━━\n"
+    "📚 КЛЮЧЕВЫЕ ДОКУМЕНТЫ\n"
+    "\n"
+    "• `docs/OPERATOR_SECURITY.md` — главное руководство по ИБ и 152-ФЗ.\n"
+    "• `docs/SECURITY.md` — технические защиты бота.\n"
+    "• `docs/Регламент_v8_draft.md` §74 — антифишинговая бдительность.\n"
+    "• `docs/RUNBOOK_PDN_ERASURE.md` — процедура удаления ПДн жителя.\n"
+    "\n"
+    "Все ваши действия пишутся в audit_log на 365 дней (152-ФЗ + "
+    "Роскомнадзор)."
+)
+
+
+# Совместимость: OP_HELP_FULL остаётся как алиас на главный экран.
+# Внешний код, который ещё ссылается на OP_HELP_FULL, будет видеть
+# короткий первый экран. До deprecation cycle алиас не убираем.
+OP_HELP_FULL = OP_HELP_MAIN
 
 OP_ADD_OPERATORS_USAGE = (
     "Используйте:\n"
@@ -38906,8 +39142,8 @@ class TestOnAwaitingName:
 
 ### `bot/tests/test_handlers_menu.py`
 
-Size: `26853` bytes  
-SHA-256: `235a4efe0a9ea7f2610e3b4d786974a0fac4b2e4029e52a4bd2cc9f50651c976`
+Size: `27825` bytes  
+SHA-256: `9309e3f1d9a86da7f34971d00e67e03062d3a2e728a080d4e3b1eb263505a469`
 
 ```python
 """Тесты handlers/menu.py — навигация по меню жителя.
@@ -38946,7 +39182,16 @@ def _make_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleNamespace:
 
 
 def _make_callback_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleNamespace:
-    """Callback-event: есть исходный mid, поэтому меню должно редактироваться."""
+    """Callback-event: есть исходный mid, поэтому меню должно редактироваться.
+
+    Также синхронизирует `menu_tracker[chat_id]` с mid события — без
+    этого после 2026-05-27 freshness rule в `_send_or_edit_menu`
+    откажется от edit (callback_mid != tracker → send_new). В реальном
+    сценарии: меню было отправлено ранее через эту же функцию, tracker
+    был выставлен. Тестовая фабрика симулирует тот же initial state.
+    """
+    from aemr_bot.utils import menu_tracker
+
     event = _make_event(chat_id=chat_id, user_id=user_id)
     event.bot.edit_message = AsyncMock()
     event.callback = SimpleNamespace(
@@ -38955,6 +39200,11 @@ def _make_callback_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleName
         user=SimpleNamespace(user_id=user_id),
     )
     event.ack = AsyncMock()
+    # Sync tracker: callback приходит с mid="m-1" (из `_make_event`
+    # default), значит до этого callback'а в чате было меню с тем же
+    # mid, и tracker был выставлен. Без этого freshness check откажет
+    # в edit, и все «edits current card» тесты упадут на send_message.
+    menu_tracker.set_last_menu_mid(chat_id, "m-1")
     return event
 
 
@@ -43245,8 +43495,8 @@ def test_is_workday_falls_back_when_holidays_missing(monkeypatch, tmp_path) -> N
 
 ### `bot/tests/test_reliability_pass.py`
 
-Size: `9745` bytes  
-SHA-256: `bef3c464fe7ccb65b4e0949f637599b16543a1f9f6b277f4e4e9e9f1069c1df5`
+Size: `10544` bytes  
+SHA-256: `8ab3b124658e927916d4b7449d6b4627fad6bf57e377e21e5180c207883980ed`
 
 ```python
 """Regression-тесты пакета reliability-pass.
@@ -43469,8 +43719,15 @@ async def test_admin_card_render_does_not_swallow_arbitrary_runtimeerror() -> No
 async def test_menu_edit_fallback_does_not_mask_unexpected_runtimeerror() -> None:
     """RuntimeError из bot.edit_message — это баг (например замокан
     неправильно), не штатное состояние MAX-API. Должен пробрасываться.
-    Раньше `except Exception` глотал и тихо делал send_message."""
+    Раньше `except Exception` глотал и тихо делал send_message.
+
+    После 2026-05-27 (freshness в `_send_or_edit_menu`): для edit-пути
+    tracker должен иметь mid == callback.mid. Иначе freshness откажет
+    в edit и send_message пойдёт без вызова edit_message — тогда
+    RuntimeError не возникает.
+    """
     from aemr_bot.handlers import menu
+    from aemr_bot.utils import menu_tracker
 
     bot = SimpleNamespace(
         edit_message=AsyncMock(side_effect=RuntimeError("unexpected")),
@@ -43479,12 +43736,25 @@ async def test_menu_edit_fallback_does_not_mask_unexpected_runtimeerror() -> Non
     event = SimpleNamespace(
         bot=bot,
         callback=SimpleNamespace(),
-        message=SimpleNamespace(body=SimpleNamespace(mid="m-1")),
+        message=SimpleNamespace(
+            body=SimpleNamespace(mid="m-1"),
+            recipient=SimpleNamespace(chat_id=555),
+        ),
     )
 
-    with pytest.raises(RuntimeError, match="unexpected"):
-        await menu._send_or_edit_menu(event, text="hi", attachments=[])
-    bot.send_message.assert_not_called()
+    def _get_ids():
+        return (555, 42)
+    event.get_ids = _get_ids
+
+    # Sync tracker так, чтобы freshness разрешил edit (callback_mid ==
+    # tracker → can_edit=True → bot.edit_message вызовется → RuntimeError).
+    menu_tracker.set_last_menu_mid(555, "m-1")
+    try:
+        with pytest.raises(RuntimeError, match="unexpected"):
+            await menu._send_or_edit_menu(event, text="hi", attachments=[])
+        bot.send_message.assert_not_called()
+    finally:
+        menu_tracker.clear(555)
 ```
 
 ### `bot/tests/test_repo_sync.py`
@@ -44216,8 +44486,8 @@ class TestPhoneValidation:
 
 ### `bot/tests/test_security_batch_c.py`
 
-Size: `9267` bytes  
-SHA-256: `d8ad915decfe129b38e39b1aa65ba71685176a20790b748d20405647aade2478`
+Size: `8999` bytes  
+SHA-256: `e2c39a65a7998188dd6b60227ce45ac4912ce070a1883c44f582c56f3d8970dc`
 
 ```python
 """Тесты на Batch C security-fixes.
@@ -44308,48 +44578,48 @@ class TestConsentTextRequiredSubstr:
         assert "{policy_url}" in reason
 
 
-class TestWelcomeTextRequiredSubstr:
-    """C1-hardening: welcome_text обязан содержать антифишинговый блок
-    «НИКОГДА не запрашиваем» — это последняя линия защиты жителя от
-    PII-фишинга через support-impersonation."""
+class TestWelcomeTextValidation:
+    """C1-hardening снят 2026-05-27 по решению владельца. Антифишинг-
+    блок вынесен полностью в отдельную кнопку «🛡️ Защита от мошенников»
+    в главном меню (`SECURITY_INFO_TEXT`, handler `menu:security`).
+    SCHEMA.welcome_text больше не требует подстроки «НИКОГДА не
+    запрашиваем» — IT может править welcome через UI любым текстом.
 
-    def test_welcome_with_antiphishing_passes(self) -> None:
+    Тесты ниже фиксируют новый контракт: welcome_text валидируется
+    только по типу/длине, без required_substr.
+    """
+
+    def test_welcome_short_text_passes(self) -> None:
+        """Без required_substr достаточно непустого текста."""
         ok, _ = validate(
             "welcome_text",
-            "Здравствуйте. Это бот.\n\n"
-            "🛡️ Что мы НИКОГДА не запрашиваем: паспорт, СНИЛС...\n\n"
-            "Выберите действие.",
+            "Здравствуйте. Выберите действие.",
         )
         assert ok is True
 
-    def test_welcome_without_antiphishing_rejected(self) -> None:
-        """IT не может убрать антифишинговый блок через UI — validate
-        отклонит. Это защита от: (a) случайной правки, при которой
-        блок выпал; (b) компрометации IT-аккаунта со снятием защиты
-        жителя."""
-        ok, reason = validate(
+    def test_welcome_with_antiphishing_still_passes(self) -> None:
+        """Текст с антифишингом (старый формат) — продолжает валидироваться,
+        снятие C1 не запрещает блок, просто не требует его."""
+        ok, _ = validate(
             "welcome_text",
-            "Здравствуйте. Это бот.\n\nВыберите действие.",
+            "Здравствуйте. 🛡️ Мы НИКОГДА не запрашиваем паспорт.",
         )
-        assert ok is False
-        assert "НИКОГДА не запрашиваем" in reason
+        assert ok is True
 
-    def test_seed_welcome_passes_validate(self) -> None:
-        """Регрессия: фактический seed/welcome.md должен проходить
-        собственный validate. Иначе bootstrap бота на чистой БД
-        свалится при загрузке seed."""
-        from pathlib import Path
-        seed_path = Path(__file__).parent.parent.parent / "seed" / "welcome.md"
-        if not seed_path.exists():
-            pytest.skip(f"seed/welcome.md не найден по пути {seed_path}")
-        text = seed_path.read_text(encoding="utf-8")
-        ok, reason = validate("welcome_text", text)
-        assert ok is True, f"seed/welcome.md не прошёл validate: {reason}"
+    def test_welcome_too_long_rejected(self) -> None:
+        """Длина >4000 — отказ (MAX-API hard limit)."""
+        ok, reason = validate("welcome_text", "x" * 5000)
+        assert ok is False
+        assert "max_len" in reason or "длин" in reason.lower()
+
+    def test_welcome_empty_rejected(self) -> None:
+        """Пустой текст — отказ."""
+        ok, _ = validate("welcome_text", "")
+        assert ok is False
 
     def test_hardcoded_welcome_passes_validate(self) -> None:
-        """Регрессия: hardcoded texts.WELCOME (fallback в C1) обязан
-        тоже проходить validate. Иначе при пустой БД житель увидит
-        текст, который IT не сможет переименовать обратно через UI."""
+        """Регрессия: hardcoded texts.WELCOME (fallback при пустой БД)
+        обязан проходить validate."""
         from aemr_bot.texts import WELCOME
         ok, reason = validate("welcome_text", WELCOME)
         assert ok is True, f"texts.WELCOME не прошёл validate: {reason}"
