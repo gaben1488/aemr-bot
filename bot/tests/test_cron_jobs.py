@@ -399,6 +399,7 @@ class TestBuildScheduler:
             "db-backup",
             "events-retention",
             "audit-log-retention",
+            "broadcast-draft-reaper",  # F5: orphan DRAFT cleanup
             "stale-operators-cleanup",  # CVE-9 cleanup, SECURITY_REVIEW M2
             "health-selfcheck",
             "monthly-stats",

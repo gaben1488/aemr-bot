@@ -180,6 +180,35 @@ async def mark_cancelled(
     return result.rowcount > 0
 
 
+async def reap_orphaned_draft(
+    session: AsyncSession, *, ttl_minutes: int = 30
+) -> int:
+    """Перевести в FAILED все DRAFT-рассылки старше TTL.
+
+    SECURITY_REVIEW F5: между `_handle_cancel_cooldown.task.cancel()`
+    и `mark_cancelled` есть окно, где БД-апдейт может фейлить (timeout,
+    разрыв). Task в asyncio отменён, но row в БД остаётся в DRAFT
+    навсегда — засоряет `/broadcast list`.
+
+    TTL по умолчанию 30 минут — больше любого реального cooldown
+    (5 мин обычный, 30 сек ЧС). После TTL DRAFT можно безопасно
+    переводить в FAILED — это означает «мастер был открыт, но рассылка
+    так и не пошла». Не путать с CANCELLED (явная отмена оператором).
+    """
+    from datetime import datetime, timedelta, timezone
+
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=ttl_minutes)
+    result = await session.execute(
+        update(Broadcast)
+        .where(
+            Broadcast.status == BroadcastStatus.DRAFT.value,
+            Broadcast.created_at < cutoff,
+        )
+        .values(status=BroadcastStatus.FAILED.value)
+    )
+    return result.rowcount or 0
+
+
 async def reap_orphaned_sending(session: AsyncSession) -> int:
     """При старте перевести каждую запись Broadcast.SENDING в FAILED.
 

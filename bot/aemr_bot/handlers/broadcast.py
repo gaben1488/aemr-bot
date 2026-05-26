@@ -441,39 +441,62 @@ async def _run_with_cooldown(
 
 
 async def _handle_cancel_cooldown(event, broadcast_id: int) -> None:
-    """SECURITY_REVIEW C2: отмена рассылки во время cooldown'а.
+    """SECURITY_REVIEW C2 + F4/F5: отмена рассылки во время cooldown'а.
 
     Сценарий: оператор нажал «отправить», увидел сообщение «уйдёт через
-    5 минут», осознал ошибку (опечатка / не тот текст / передумал) и
-    жмёт «❌ Отменить отправку». Мы отменяем pending-task (рассылка
-    не уходит) и переводим broadcast в статус CANCELLED.
+    5 минут», осознал ошибку и жмёт «❌ Отменить отправку».
+
+    Race-window protection (F4): pop из `_pending_broadcasts` —
+    неатомарная операция, между sleep-return и pop'ом другая корутина
+    может вытащить task. Используем `task.done()` как **атомарный**
+    индикатор: если task завершился (cooldown прошёл, отправка
+    стартовала) — отказываем в отмене с явным сообщением.
+
+    Stale-DRAFT protection (F5): если mark_cancelled в БД фейлит
+    (timeout, disconnect) — task всё равно отменён в asyncio, рассылка
+    не пойдёт, но row в БД останется DRAFT. Логируем + alert. Отдельный
+    cron `reap_orphaned_draft` чистит такие row'ы по TTL.
     """
     await ack_callback(event, "Отменяю…")
-    task = _pending_broadcasts.pop(broadcast_id, None)
-    if task is None:
-        # Cooldown уже истёк — рассылка пошла, отмена не возможна
-        # (только экстренная остановка по «⛔ Экстренно остановить»).
+    # peek, не pop — pop делаем только если реально отменили
+    task = _pending_broadcasts.get(broadcast_id)
+    if task is None or task.done():
+        # task is None — cancel пришёл после того как _run_with_cooldown
+        # уже pop'нул себя (cooldown отработал).
+        # task.done() — то же самое, но atomically (task ещё в dict, но
+        # уже завершён в asyncio).
         await send_or_edit_screen(
             event,
             chat_id=cfg.admin_group_id,
             text=(
-                f"⚠️ Рассылка #{broadcast_id} уже стартовала или была "
-                f"отменена ранее. Для остановки уже идущей рассылки — "
-                f"кнопка «⛔ Экстренно остановить»."
+                f"⚠️ Рассылка #{broadcast_id} уже стартовала — cooldown "
+                f"истёк раньше, чем вы успели нажать «отменить». Для "
+                f"остановки уже идущей рассылки используйте кнопку "
+                f"«⛔ Экстренно остановить» под progress-карточкой."
             ),
             attachments=[keyboards.op_back_to_menu_keyboard()],
         )
         return
     task.cancel()
-    async with session_scope() as session:
-        await broadcasts_service.mark_cancelled(session, broadcast_id)
-        actor_id = get_user_id(event) or 0
-        await operators_service.write_audit(
-            session,
-            operator_max_user_id=actor_id,
-            action="broadcast_cancel_cooldown",
-            target=f"broadcast #{broadcast_id}",
-            details={"reason": "operator_cancelled_during_cooldown"},
+    _pending_broadcasts.pop(broadcast_id, None)
+    # F5: mark_cancelled может фейлить — task всё равно отменён, рассылка
+    # не пойдёт. Логируем, но не падаем; reaper подберёт DRAFT row позже.
+    try:
+        async with session_scope() as session:
+            await broadcasts_service.mark_cancelled(session, broadcast_id)
+            actor_id = get_user_id(event) or 0
+            await operators_service.write_audit(
+                session,
+                operator_max_user_id=actor_id,
+                action="broadcast_cancel_cooldown",
+                target=f"broadcast #{broadcast_id}",
+                details={"reason": "operator_cancelled_during_cooldown"},
+            )
+    except Exception:
+        log.exception(
+            "broadcast: cancel during cooldown — db update failed for "
+            "broadcast_id=%s; task cancelled, row stays DRAFT until reaper",
+            broadcast_id,
         )
     log.info(
         "broadcast: cancelled during cooldown — operator=%s broadcast_id=%s",
