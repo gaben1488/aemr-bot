@@ -86,6 +86,53 @@ class TestConsentTextRequiredSubstr:
         assert "{policy_url}" in reason
 
 
+class TestWelcomeTextRequiredSubstr:
+    """C1-hardening: welcome_text обязан содержать антифишинговый блок
+    «НИКОГДА не запрашиваем» — это последняя линия защиты жителя от
+    PII-фишинга через support-impersonation."""
+
+    def test_welcome_with_antiphishing_passes(self) -> None:
+        ok, _ = validate(
+            "welcome_text",
+            "Здравствуйте. Это бот.\n\n"
+            "🛡️ Что мы НИКОГДА не запрашиваем: паспорт, СНИЛС...\n\n"
+            "Выберите действие.",
+        )
+        assert ok is True
+
+    def test_welcome_without_antiphishing_rejected(self) -> None:
+        """IT не может убрать антифишинговый блок через UI — validate
+        отклонит. Это защита от: (a) случайной правки, при которой
+        блок выпал; (b) компрометации IT-аккаунта со снятием защиты
+        жителя."""
+        ok, reason = validate(
+            "welcome_text",
+            "Здравствуйте. Это бот.\n\nВыберите действие.",
+        )
+        assert ok is False
+        assert "НИКОГДА не запрашиваем" in reason
+
+    def test_seed_welcome_passes_validate(self) -> None:
+        """Регрессия: фактический seed/welcome.md должен проходить
+        собственный validate. Иначе bootstrap бота на чистой БД
+        свалится при загрузке seed."""
+        from pathlib import Path
+        seed_path = Path(__file__).parent.parent.parent / "seed" / "welcome.md"
+        if not seed_path.exists():
+            pytest.skip(f"seed/welcome.md не найден по пути {seed_path}")
+        text = seed_path.read_text(encoding="utf-8")
+        ok, reason = validate("welcome_text", text)
+        assert ok is True, f"seed/welcome.md не прошёл validate: {reason}"
+
+    def test_hardcoded_welcome_passes_validate(self) -> None:
+        """Регрессия: hardcoded texts.WELCOME (fallback в C1) обязан
+        тоже проходить validate. Иначе при пустой БД житель увидит
+        текст, который IT не сможет переименовать обратно через UI."""
+        from aemr_bot.texts import WELCOME
+        ok, reason = validate("welcome_text", WELCOME)
+        assert ok is True, f"texts.WELCOME не прошёл validate: {reason}"
+
+
 class TestBroadcastCooldownClassifier:
     """C2: classifier _broadcast_cooldown_seconds.
 

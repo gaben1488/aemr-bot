@@ -234,7 +234,21 @@ DEFAULTS: dict[str, Any] = {
 # дополнительными правилами. /setting <key> <value> отклоняет всё, чего нет в
 # этой карте.
 SCHEMA: dict[str, dict] = {
-    "welcome_text": {"type": str, "min_len": 1, "max_len": 4000},
+    # C1-hardening: welcome_text обязан содержать антифишинговый блок
+    # «НИКОГДА не запрашиваем» — это последняя строка защиты жителя от
+    # PII-фишинга через support-impersonation (см. SECURITY_REVIEW
+    # 2026-05-26 C4). IT может переписать формулировку под текущий
+    # контекст (новые скам-схемы, сезонные), но **минимальная
+    # подстрока должна остаться**. Если жёсткая фраза устарела —
+    # обновите её здесь И в seed/welcome.md И в texts.WELCOME
+    # одновременно, чтобы required_substr не блокировал актуальную
+    # версию.
+    "welcome_text": {
+        "type": str,
+        "min_len": 1,
+        "max_len": 4000,
+        "required_substr": "НИКОГДА не запрашиваем",
+    },
     # C1: consent_text используется как шаблон с placeholder
     # `{policy_url}`. Если IT перепишет без placeholder — житель увидит
     # consent без ссылки на политику (формальное нарушение 152-ФЗ).
