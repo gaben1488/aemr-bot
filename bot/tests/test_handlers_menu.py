@@ -34,7 +34,16 @@ def _make_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleNamespace:
 
 
 def _make_callback_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleNamespace:
-    """Callback-event: есть исходный mid, поэтому меню должно редактироваться."""
+    """Callback-event: есть исходный mid, поэтому меню должно редактироваться.
+
+    Также синхронизирует `menu_tracker[chat_id]` с mid события — без
+    этого после 2026-05-27 freshness rule в `_send_or_edit_menu`
+    откажется от edit (callback_mid != tracker → send_new). В реальном
+    сценарии: меню было отправлено ранее через эту же функцию, tracker
+    был выставлен. Тестовая фабрика симулирует тот же initial state.
+    """
+    from aemr_bot.utils import menu_tracker
+
     event = _make_event(chat_id=chat_id, user_id=user_id)
     event.bot.edit_message = AsyncMock()
     event.callback = SimpleNamespace(
@@ -43,6 +52,11 @@ def _make_callback_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleName
         user=SimpleNamespace(user_id=user_id),
     )
     event.ack = AsyncMock()
+    # Sync tracker: callback приходит с mid="m-1" (из `_make_event`
+    # default), значит до этого callback'а в чате было меню с тем же
+    # mid, и tracker был выставлен. Без этого freshness check откажет
+    # в edit, и все «edits current card» тесты упадут на send_message.
+    menu_tracker.set_last_menu_mid(chat_id, "m-1")
     return event
 
 

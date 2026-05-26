@@ -218,8 +218,15 @@ async def test_admin_card_render_does_not_swallow_arbitrary_runtimeerror() -> No
 async def test_menu_edit_fallback_does_not_mask_unexpected_runtimeerror() -> None:
     """RuntimeError из bot.edit_message — это баг (например замокан
     неправильно), не штатное состояние MAX-API. Должен пробрасываться.
-    Раньше `except Exception` глотал и тихо делал send_message."""
+    Раньше `except Exception` глотал и тихо делал send_message.
+
+    После 2026-05-27 (freshness в `_send_or_edit_menu`): для edit-пути
+    tracker должен иметь mid == callback.mid. Иначе freshness откажет
+    в edit и send_message пойдёт без вызова edit_message — тогда
+    RuntimeError не возникает.
+    """
     from aemr_bot.handlers import menu
+    from aemr_bot.utils import menu_tracker
 
     bot = SimpleNamespace(
         edit_message=AsyncMock(side_effect=RuntimeError("unexpected")),
@@ -228,9 +235,22 @@ async def test_menu_edit_fallback_does_not_mask_unexpected_runtimeerror() -> Non
     event = SimpleNamespace(
         bot=bot,
         callback=SimpleNamespace(),
-        message=SimpleNamespace(body=SimpleNamespace(mid="m-1")),
+        message=SimpleNamespace(
+            body=SimpleNamespace(mid="m-1"),
+            recipient=SimpleNamespace(chat_id=555),
+        ),
     )
 
-    with pytest.raises(RuntimeError, match="unexpected"):
-        await menu._send_or_edit_menu(event, text="hi", attachments=[])
-    bot.send_message.assert_not_called()
+    def _get_ids():
+        return (555, 42)
+    event.get_ids = _get_ids
+
+    # Sync tracker так, чтобы freshness разрешил edit (callback_mid ==
+    # tracker → can_edit=True → bot.edit_message вызовется → RuntimeError).
+    menu_tracker.set_last_menu_mid(555, "m-1")
+    try:
+        with pytest.raises(RuntimeError, match="unexpected"):
+            await menu._send_or_edit_menu(event, text="hi", attachments=[])
+        bot.send_message.assert_not_called()
+    finally:
+        menu_tracker.clear(555)
