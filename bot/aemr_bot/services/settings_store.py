@@ -725,6 +725,37 @@ async def seed_if_empty(session: AsyncSession) -> None:
     repaired: list[str] = []
     import logging as _logging
     _log = _logging.getLogger(__name__)
+
+    # Legacy auto-strip (2026-05-27): C1-hardening снят, антифишинг
+    # переехал в кнопку «🛡️ Защита от мошенников». Но IT мог сохранить
+    # welcome через UI в эпоху C1 — БД содержит **legacy блок** «НИКОГДА
+    # не запрашиваем», который теперь дублирует кнопку. Validate его не
+    # отвергает (required_substr убран), repair-режим не сработает.
+    #
+    # Эвристика: если welcome_text в БД содержит legacy маркер
+    # «НИКОГДА не запрашиваем», И обновлённое seed-значение его НЕ
+    # содержит — это legacy from C1, перезаписываем seed-значением.
+    # Идемпотентно: на следующем restart'е welcome уже без маркера,
+    # условие не сработает.
+    legacy_marker = "НИКОГДА не запрашиваем"
+    if (
+        "welcome_text" in existing
+        and isinstance(existing["welcome_text"], str)
+        and legacy_marker in existing["welcome_text"]
+        and "welcome_text" in seed_pairs
+        and isinstance(seed_pairs["welcome_text"], str)
+        and legacy_marker not in seed_pairs["welcome_text"]
+    ):
+        _log.warning(
+            "seed_if_empty: legacy welcome_text с C1-блоком обнаружен в БД — "
+            "перезаписываем актуальным seed/welcome.md (C1 снят 2026-05-27, "
+            "антифишинг живёт в кнопке «🛡️ Защита от мошенников»)."
+        )
+        await set_value(session, "welcome_text", seed_pairs["welcome_text"])
+        # Помечаем как «не было в существующих» для bootstrap-loop'a —
+        # иначе он попытается ещё раз сравнить через SCHEMA-validate.
+        existing.pop("welcome_text", None)
+
     for k, v in seed_pairs.items():
         if k not in existing:
             await set_value(session, k, v)

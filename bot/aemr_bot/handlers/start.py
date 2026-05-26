@@ -87,14 +87,33 @@ async def _welcome_text() -> str:
 
 
 async def cmd_start(event):
+    # Welcome шлём через `_send_or_edit_menu` — он обновит menu_tracker
+    # на mid отправленного сообщения. Это критично для freshness rule:
+    # без tracker.set следующий тап «🛡️ Защита от мошенников» в этом
+    # же welcome даст callback_mid != tracker → send_new вместо edit.
+    # Жалоба владельца 2026-05-27: «почему нажатие 🛡️ Защита не
+    # редактирует карточку меню — кажется, ты всё ещё не понимаешь
+    # правил».
+    from aemr_bot.handlers.menu import _send_or_edit_menu
+
     await _ensure_user(event)
     await _reset_funnel_if_stuck(get_user_id(event))
     welcome = await _welcome_text()
-    await reply(event, welcome, attachments=[await _build_main_menu(get_user_id(event))])
+    await _send_or_edit_menu(
+        event,
+        text=welcome,
+        attachments=[await _build_main_menu(get_user_id(event))],
+    )
 
 
 async def cmd_help(event):
-    await reply(event, texts.HELP_USER, attachments=[await _build_main_menu(get_user_id(event))])
+    from aemr_bot.handlers.menu import _send_or_edit_menu
+
+    await _send_or_edit_menu(
+        event,
+        text=texts.HELP_USER,
+        attachments=[await _build_main_menu(get_user_id(event))],
+    )
 
 
 async def cmd_rules(event):
@@ -102,9 +121,15 @@ async def cmd_rules(event):
 
 
 async def cmd_menu(event):
+    from aemr_bot.handlers.menu import _send_or_edit_menu
+
     await _reset_funnel_if_stuck(get_user_id(event))
     welcome = await _welcome_text()
-    await reply(event, welcome, attachments=[await _build_main_menu(get_user_id(event))])
+    await _send_or_edit_menu(
+        event,
+        text=welcome,
+        attachments=[await _build_main_menu(get_user_id(event))],
+    )
 
 
 async def cmd_policy(event):
