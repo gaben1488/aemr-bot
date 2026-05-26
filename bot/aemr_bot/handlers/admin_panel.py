@@ -61,15 +61,16 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
         except Exception:
             log.exception("count_open failed; кнопку без счётчика покажем")
 
-    # SACRED-нарушение, найдено владельцем 2026-05-26:
-    # `show_op_menu` через send_or_edit_screen без force_new_message
-    # делал EDIT на последнем сообщении бота. Если последним было
-    # admin appeal card (sacred — нельзя edit), оно молча превращалось
-    # в меню оператора, и переписка обращения «съедалась». Теперь
-    # ВСЕГДА force_new_message=True — каждое открытие меню это
-    # отдельное сообщение в чате. Лёгкий «флуд» в admin-чате
-    # допустим (это рабочий чат), сохранность карточек обращений —
-    # обязательна.
+    # SACRED-защита (исправлено 2026-05-26): нам НЕ нужен здесь
+    # force_new_message=True — это создавало лишний шум (каждый клик
+    # «🏠 В админ-меню» порождал новое сообщение даже когда меню уже
+    # есть в чате). Защита от edit'а sacred admin-карточки делается
+    # **на источнике**: `admin_card.render` после своего send'а вызывает
+    # `menu_tracker.clear()`, после чего `send_or_edit_screen` НЕ
+    # сможет edit'нуть карточку обращения (last_known_mid=None →
+    # can_edit=False → send_new).
+    # Если оператор переходит из меню в меню — edit нормальный
+    # (две карточки меню не накапливаются в чате).
     sent = await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
@@ -79,7 +80,7 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
                 open_count=open_count, is_it=is_it, can_broadcast=can_broadcast
             )
         ],
-        force_new_message=True,
+        force_new_message=pin,
     )
     if not pin:
         return
@@ -118,10 +119,19 @@ async def run_backup(event) -> None:
 
 
 async def _do_open_tickets(event) -> None:
-    """Список открытых обращений в админ-группу. Общая реализация для
-    команды /open_tickets и кнопки «📋 Открытые обращения»."""
+    """Компактный listing открытых обращений (шаг 2-в от 2026-05-26).
+
+    Одно сообщение в чате: заголовок «📋 Открытые обращения (N)» +
+    кнопка-строка на каждое обращение `#N · 🆕 · тема (фрагмент)`.
+    Клик на кнопку → `op:open_card:N` → полная карточка с timeline
+    через `admin_card.render(force_new=True)`.
+
+    Раньше listing рендерил полную карточку на каждое обращение
+    (20-50 KB чата на 10 обращений, операторы прокручивали). Теперь
+    одно компактное сообщение, история разворачивается явно по
+    клику.
+    """
     from sqlalchemy import select
-    from sqlalchemy.orm import selectinload
 
     from aemr_bot.db.models import Appeal, AppealStatus
 
@@ -132,13 +142,6 @@ async def _do_open_tickets(event) -> None:
                 Appeal.status.in_(
                     [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
                 )
-            )
-            # selectinload(Appeal.messages) нужен для repeat-relay
-            # вложений ниже — без него `appeal.messages` лениво ходит в
-            # БД из-под закрытой сессии и валится `MissingGreenlet`.
-            .options(
-                selectinload(Appeal.user),
-                selectinload(Appeal.messages),
             )
             .order_by(Appeal.created_at)
         )
@@ -153,67 +156,28 @@ async def _do_open_tickets(event) -> None:
         )
         return
 
+    # Для каждого обращения формируем компактный label кнопки:
+    # фрагмент темы или сути, обрезанный до 40 символов. Один и тот
+    # же limit — чтобы кнопки выровнялись визуально в MAX-клиенте.
+    items: list[tuple[int, str, str]] = []
+    for appeal in open_appeals:
+        topic_preview = (appeal.topic or appeal.summary or "—").strip()
+        topic_preview = topic_preview.replace("\n", " ")
+        if len(topic_preview) > 40:
+            topic_preview = topic_preview[:39] + "…"
+        items.append((appeal.id, appeal.status, topic_preview))
+
+    text = (
+        f"📋 Открытые обращения ({len(open_appeals)})\n\n"
+        f"Нажмите на обращение, чтобы открыть его полную карточку "
+        f"с историей переписки."
+    )
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
-        text=f"⏳ Найдено неотвеченных обращений: {len(open_appeals)}",
-        attachments=[kbds.op_back_to_menu_keyboard()],
+        text=text,
+        attachments=[kbds.open_tickets_listing_keyboard(items)],
     )
-
-    # Sticky-tracker: tracker встаёт на mid header'а (через
-    # send_or_edit_screen выше), а карточки обращений печатаются ниже
-    # через `event.bot.send_message`. Без сдвига tracker оператор внизу
-    # чата тапает кнопку header'а — `callback_mid == tracker` → edit
-    # вверху → внизу ничего не меняется. Сдвигаем tracker на последнюю
-    # отправленную карточку, чтобы любой тап выше → send_new.
-    from aemr_bot.utils import menu_tracker
-    from aemr_bot.utils.event import extract_message_id
-
-    last_mid: str | None = None
-    for appeal in open_appeals:
-        user_name = appeal.user.first_name if appeal.user else "—"
-        user_id_text = appeal.user.max_user_id if appeal.user else "—"
-        # PR-fix-hang: НЕ переотправляем вложения автоматически. До этого
-        # в цикле под каждое обращение шёл render_appeal_attachments
-        # (1-N доп. send_message). На 20+ обращениях с фото набегало
-        # 50-80 sequential bot.send_message подряд — handler «висел»
-        # 30-60 секунд под одной операторской командой, livez-пинги
-        # health-watch таймаутили. Теперь вложения вызываются явно
-        # кнопкой «📎 Вложения (N)» в карточке.
-        from aemr_bot.services.admin_relay import _collect_all_user_attachments  # noqa: PLC0415
-
-        attachment_count = len(_collect_all_user_attachments(appeal))
-        # Служебный маркер `🆔 №N` в конце — стабильный токен, по которому
-        # handlers/operator_reply.py находит обращение при свайп-ответе.
-        text = (
-            f"❗️ Обращение #{appeal.id}\n"
-            f"👤 От: {user_name}\n"
-            f"📞 ID жителя: {user_id_text}\n"
-            f"📍 Населённый пункт: {appeal.locality or '—'}\n"
-            f"🏠 Адрес: {appeal.address or '—'}\n"
-            f"🏷️ Тематика: {appeal.topic or '—'}\n\n"
-            f"📝 Текст обращения:\n{appeal.summary or '—'}\n\n"
-            f"🆔 №{appeal.id}"
-        )
-        sent = await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=text,
-            attachments=[
-                kbds.appeal_admin_actions(
-                    appeal.id,
-                    appeal.status,
-                    is_it=True,
-                    user_blocked=bool(appeal.user and appeal.user.is_blocked),
-                    closed_due_to_revoke=bool(appeal.closed_due_to_revoke),
-                    attachment_count=attachment_count,
-                )
-            ],
-        )
-        mid = extract_message_id(sent)
-        if mid:
-            last_mid = mid
-    if last_mid is not None and cfg.admin_group_id:
-        menu_tracker.set_last_menu_mid(cfg.admin_group_id, last_mid)
 
 
 async def _do_diag(event) -> None:

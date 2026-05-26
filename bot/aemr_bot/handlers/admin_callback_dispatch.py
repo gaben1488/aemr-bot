@@ -136,6 +136,43 @@ async def _op_atts(event, appeal_id: int) -> None:
     await admin_commands.run_show_attachments(event, appeal_id)
 
 
+async def _op_open_card(event, appeal_id: int) -> None:
+    """Открыть полную карточку обращения с timeline (история переписки).
+
+    Шаг 2-в от 2026-05-26: listing «Открытые обращения» компактный
+    (одна кнопка на обращение), история раскрывается явным кликом
+    через эту команду. Используем `admin_card.render(force_new=True)`
+    — карточка появится новой записью внизу чата, не редактирует
+    listing-сообщение (сохраняет sacred-инвариант).
+    """
+    from aemr_bot.handlers._auth import ensure_operator
+    from aemr_bot.services import admin_card as admin_card_service
+    from aemr_bot.services import appeals as appeals_service
+    from aemr_bot.db.session import session_scope
+
+    if not await ensure_operator(event):
+        return
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id_with_messages(
+            session, appeal_id
+        )
+    if appeal is None:
+        from aemr_bot.utils.event import send_or_edit_screen, ack_callback
+        from aemr_bot import keyboards as kbds
+        from aemr_bot.config import settings as cfg
+        await ack_callback(event, "Не найдено")
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=f"⚠️ Обращение #{appeal_id} не найдено (возможно, удалено).",
+            attachments=[kbds.op_back_to_menu_keyboard()],
+        )
+        return
+    from aemr_bot.utils.event import ack_callback
+    await ack_callback(event, "Открываю…")
+    await admin_card_service.render(event.bot, appeal, force_new=True)
+
+
 # PR G: история рассылок — карточка / клон / failed-deliveries.
 async def _op_bc_open(event, broadcast_id: int) -> None:
     await broadcast_handler._open_broadcast(event, broadcast_id)
@@ -205,6 +242,7 @@ _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
     ("op:block:", _op_block),
     ("op:unblock:", _op_unblock),
     ("op:atts:", _op_atts),
+    ("op:open_card:", _op_open_card),
     # PR G: история рассылок.
     ("op:bc:open:", _op_bc_open),
     ("op:bc:clone:", _op_bc_clone),
