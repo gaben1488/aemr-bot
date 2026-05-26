@@ -131,10 +131,11 @@ def _sanitize_for_pr_body(value: str, max_len: int = 120) -> str:
 
     - **HTML-комментарии** `<!-- approve: true -->` — GitHub их
       рендерит как скрытый текст, обманывая review-бота;
-    - **Unicode-control символы** (RTL-override `‮`, zero-width
-      joiner `‍`, left-to-right mark и т.п. из категории Cf) —
-      могут визуально подменить часть имени или маскировать
-      инъекцию в copy-paste;
+    - **Unicode-control символы** (RTL-override U+202E, zero-width
+      joiner U+200D, left-to-right mark U+200E и т.п. из категории
+      Cf) — могут визуально подменить часть имени или маскировать
+      инъекцию в copy-paste. Сами символы в docstring не вставляем —
+      bandit B613 ругается на trojansource в исходниках;
     - **Backtick**, который мы экранируем — это правильно.
 
     После очистки имя остаётся читаемым, но инъекция структуры
