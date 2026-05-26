@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-26 02:55:21 UTC`
+Generated at: `2026-05-26 03:15:15 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `226`
+Indexed files: `228`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -46,10 +46,10 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_audience.py` (9243 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12814 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
-- `bot/aemr_bot/handlers/admin_operators.py` (41687 bytes)
+- `bot/aemr_bot/handlers/admin_operators.py` (42735 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (24006 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (43448 bytes)
-- `bot/aemr_bot/handlers/admin_stats.py` (3246 bytes)
+- `bot/aemr_bot/handlers/admin_stats.py` (4466 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (27203 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (33699 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
@@ -72,8 +72,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (15994 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
-- `bot/aemr_bot/services/card_format.py` (19100 bytes)
-- `bot/aemr_bot/services/cron.py` (48280 bytes)
+- `bot/aemr_bot/services/card_format.py` (20382 bytes)
+- `bot/aemr_bot/services/cron.py` (49975 bytes)
 - `bot/aemr_bot/services/db_backup.py` (16664 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
 - `bot/aemr_bot/services/idempotency.py` (8575 bytes)
@@ -83,6 +83,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/repo_sync.py` (16984 bytes)
 - `bot/aemr_bot/services/settings_store.py` (37659 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
+- `bot/aemr_bot/services/threat_intel.py` (11404 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
@@ -129,7 +130,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_callback_router.py` (8614 bytes)
 - `bot/tests/test_callback_router_coverage.py` (5487 bytes)
 - `bot/tests/test_card_format.py` (10537 bytes)
-- `bot/tests/test_cron_jobs.py` (21627 bytes)
+- `bot/tests/test_cron_jobs.py` (21689 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (15690 bytes)
 - `bot/tests/test_deps_environment.py` (3805 bytes)
@@ -166,6 +167,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_settings_seed_baseline.py` (3683 bytes)
 - `bot/tests/test_settings_store_validation.py` (6731 bytes)
 - `bot/tests/test_stale_operators_cleanup.py` (5188 bytes)
+- `bot/tests/test_threat_intel.py` (3737 bytes)
 - `bot/tests/test_uploads_policy_admin_relay.py` (11634 bytes)
 - `bot/tests/test_url_defang.py` (2828 bytes)
 - `bot/tests/test_users_service_pg.py` (16852 bytes)
@@ -4374,8 +4376,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/admin_operators.py`
 
-Size: `41687` bytes  
-SHA-256: `d84527b281f8a3498474a1497ae1a8d6a00fc9f62d65c55fb84b0f27aaed9c8a`
+Size: `42735` bytes  
+SHA-256: `994aaa7e94605c4d8c2f35c1d783036036f21bf70255ceda67129812d230872f`
 
 ```python
 """Управление операторами через кнопочные wizard'ы.
@@ -4466,14 +4468,28 @@ def _op_wizard_drop(operator_id: int) -> None:
 
 
 async def _safe_get_chat_members(bot) -> list:
-    """Безопасная обёртка над get_chat_members: на любой ошибке
-    возвращает пустой список, чтобы UI откатился к ручному вводу ID
-    без падения сценария."""
-    try:
-        result = await bot.get_chat_members(chat_id=cfg.admin_group_id)
-        if hasattr(result, "members"):
-            return list(result.members or [])
+    """Безопасная обёртка над get_chat_members: возвращает **полный**
+    список через пагинацию, на любой ошибке — пустой.
+
+    MAXAPI_DEEP_DIVE §3 fix (P2): раньше делал один вызов
+    `bot.get_chat_members(chat_id=…)` без пагинации — для группы >100
+    членов MAX возвращал только первую страницу, остальные молча
+    терялись. Теперь используем `ChatMembersManager.iter_all()` из
+    maxapi 1.1.0 — async-итератор с защитой от циклов marker.
+
+    Это правильно решает F11 (раньше там был эвристик «если получили
+    меньше членов, чем активных операторов — пропускаем» — теперь
+    эвристик не нужен, но оставляем как defence-in-depth, см.
+    `_job_stale_operators_cleanup` в cron.py).
+    """
+    if cfg.admin_group_id is None:
+        # Без admin_group_id (например в dev-окружении без MAX-чата)
+        # делать нечего — вернём пусто, downstream увидит no-op.
         return []
+    try:
+        from maxapi.types.chats import ChatMembersManager
+        manager = ChatMembersManager(bot=bot, chat_id=int(cfg.admin_group_id))
+        return await manager.list_all()
     except Exception as exc:
         log.warning("get_chat_members failed: %s", exc)
         return []
@@ -6957,8 +6973,8 @@ async def _apply_obj_add(
 
 ### `bot/aemr_bot/handlers/admin_stats.py`
 
-Size: `3246` bytes  
-SHA-256: `138fb48ce8b91d57911ac49c0df95b722d211da508396a429d28dcaa55a5fd72`
+Size: `4466` bytes  
+SHA-256: `399261a3daefbd4ee0913d3da43542dbb3b35a9975f32d278515098c2b2587dd`
 
 ```python
 """Статистика для оператора — XLSX за период.
@@ -6981,12 +6997,37 @@ from aemr_bot.utils.event import get_chat_id, send_or_edit_screen
 async def _send_stats_xlsx(
     event, period: str, *, target_chat_id: int | None = None
 ) -> bool:
-    """Сформировать XLSX за период и опубликовать в админ-группе."""
+    """Сформировать XLSX за период и опубликовать в админ-группе.
+
+    MAXAPI_DEEP_DIVE §17 P0.2: build_xlsx + upload занимают 5–30
+    секунд на больших периодах (year / all). Без typing-индикатора
+    оператор не уверен, что бот «работает», может нажать ещё раз и
+    породить дубль. Через `event.message.typing()` MAX показывает
+    «бот печатает…» — оператор видит активность, не дублирует
+    действие. Loop сам шлёт TYPING_ON каждые 4 секунды (см.
+    `ChatActionLoop` в maxapi shortcuts.py).
+
+    Если у event нет `.message` (например, callback без оригинала) —
+    typing пропускаем, основной flow продолжается.
+    """
     from aemr_bot.services import uploads
 
     chat_id = target_chat_id if target_chat_id is not None else get_chat_id(event)
-    async with session_scope() as session:
-        content, title, count = await stats_service.build_xlsx(session, period)
+    typing_cm = None
+    try:
+        typing_cm = event.message.typing()
+    except (AttributeError, TypeError):
+        typing_cm = None
+
+    if typing_cm is not None:
+        async with typing_cm:
+            async with session_scope() as session:
+                content, title, count = await stats_service.build_xlsx(
+                    session, period
+                )
+    else:
+        async with session_scope() as session:
+            content, title, count = await stats_service.build_xlsx(session, period)
     if count == 0:
         await send_or_edit_screen(
             event,
@@ -17883,8 +17924,8 @@ def is_workday(d: date) -> bool:
 
 ### `bot/aemr_bot/services/card_format.py`
 
-Size: `19100` bytes  
-SHA-256: `4de6528cba2fcc8333e6f04355daf0a903f5795f56ac9706544e9c2344c34241`
+Size: `20382` bytes  
+SHA-256: `a2caec2b085976d73b5bd03382e58c85ea9fc7002fa8c653dd74c6bd15748f9f`
 
 ```python
 from datetime import datetime
@@ -18172,26 +18213,56 @@ def _url_in(text: str) -> bool:
 
 
 def _maybe_url_warning(text: str) -> str:
-    """SECURITY_REVIEW M5: вернуть строку-предупреждение если в тексте
-    есть URL.
+    """SECURITY_REVIEW M5 + threat-intel: предупреждение оператору
+    если в тексте жителя есть URL.
 
-    Followup жителя приходит в admin-чат и отображается оператору.
-    Если житель (или скам-имитатор жителя) вставил кликабельную
-    фишинг-ссылку — оператор её увидит и может тапнуть прямо из
-    карточки. Здесь мы не блокируем (нельзя — оператор должен видеть
-    содержимое обращения), но добавляем явное предупреждение, чтобы
-    оператор знал «здесь ссылка, не кликаю автоматически».
+    Два уровня:
+    1. Любой http(s) URL → стандартный warning «не открывайте напрямую».
+    2. URL в threat-intel базе (URLhaus / ThreatFox / PhishTank) →
+       усиленный warning «⛔ это известный фишинг/malware», с
+       перечислением скомпрометированных host'ов.
 
-    Возвращает пустую строку если URL нет — тогда warning не пришит.
+    Threat-intel — best-effort: если бот только что стартовал и cron
+    не успел подтянуть feed'ы (set пуст) — обычный warning без
+    усиления. Stale-set'ом (старше 6ч) пользуемся, не отказываемся.
+
+    Не блокируем сообщение жителя — у него может быть legitimate
+    кейс «мне это прислали мошенники, разберитесь».
     """
     from aemr_bot.services.settings_store import extract_urls
-    if extract_urls(text):
+    urls = extract_urls(text)
+    if not urls:
+        return ""
+
+    # Threat-intel check для каждого URL. Не падаем если модуль
+    # сломан — fall back на обычный warning.
+    malicious: list[str] = []
+    try:
+        from aemr_bot.services.threat_intel import get_store
+        store = get_store()
+        for url in urls:
+            is_bad, _source = store.is_malicious(url)
+            if is_bad:
+                malicious.append(url)
+    except Exception:
+        pass
+
+    if malicious:
+        # Показать до 3 ссылок, остальные за многоточием
+        sample = ", ".join(malicious[:3])
+        more = "" if len(malicious) <= 3 else f" и ещё {len(malicious) - 3}"
         return (
-            "\n\n⚠️ Текст содержит ссылку. Не открывайте напрямую из "
-            "карточки — сверьте адрес визуально и при необходимости "
-            "введите в браузер вручную."
+            "\n\n⛔ Подозрительные ссылки (известные фишинг/malware "
+            f"по threat-intel базе): {sample}{more}. "
+            "Категорически не открывайте, не пересылайте. Если житель "
+            "просит разобраться — отметьте в audit, направьте жителя "
+            "в МВД (8-800-250-30-72)."
         )
-    return ""
+    return (
+        "\n\n⚠️ Текст содержит ссылку. Не открывайте напрямую из "
+        "карточки — сверьте адрес визуально и при необходимости "
+        "введите в браузер вручную."
+    )
 
 
 def admin_followup(appeal: Appeal, user: User, text: str) -> str:
@@ -18288,8 +18359,8 @@ def appeal_list_label(appeal: Appeal) -> str:
 
 ### `bot/aemr_bot/services/cron.py`
 
-Size: `48280` bytes  
-SHA-256: `2379c074812e0ae958edf3acf98c34e1e2e86a60dcbb0f3fa587659c475d323b`
+Size: `49975` bytes  
+SHA-256: `a37fee62b8d3432535b642522983eaf3397f02e12d915e427175a27ed0171e49`
 
 ```python
 from __future__ import annotations
@@ -18553,6 +18624,30 @@ async def _job_audit_log_retention() -> None:
             )
     except Exception:
         log.exception("audit_log retention failed")
+
+
+async def _job_threat_intel_refresh() -> None:
+    """Обновить локальный set threat-intel host'ов из feed'ов.
+
+    Раз в час подтягиваем URLhaus + ThreatFox (+ PhishTank если задан
+    PHISHTANK_APP_KEY). Локальный set растёт/уменьшается по факту;
+    если все feed'ы отвалились — оставляем старый set, staleness
+    счётчик растёт. См. services/threat_intel.py.
+
+    Запуск на :17 — между нашими утренними job'ами и watchdog'ом,
+    чтобы не пересекаться по нагрузке.
+    """
+    try:
+        from aemr_bot.services import threat_intel
+        counts = await threat_intel.refresh_all()
+        if counts:
+            log.info("threat-intel-refresh ok: %s", counts)
+        else:
+            log.warning(
+                "threat-intel-refresh: ни один feed не отдался"
+            )
+    except Exception:
+        log.exception("threat-intel-refresh crashed")
 
 
 async def _job_reap_orphaned_drafts() -> None:
@@ -19045,6 +19140,16 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             _job_reap_orphaned_drafts,
             CronTrigger(minute=37, timezone=TZ),
             "broadcast-draft-reaper",
+        ),
+        # Threat-intel refresh: подтянуть URLhaus + ThreatFox (+ опц.
+        # PhishTank) host'ы для предупреждения оператора о фишинг-
+        # ссылках в обращениях жителей. Раз в час на :17 — позже
+        # внутренних утренних job'ов, не пересекается по нагрузке.
+        # См. services/threat_intel.py и URL_THREAT_INTEL_2026-05-26.md.
+        (
+            _job_threat_intel_refresh,
+            CronTrigger(minute=17, timezone=TZ),
+            "threat-intel-refresh",
         ),
         # Auto-deactivate stale operators (CVE-9 from SECURITY_REVIEW_2026-05-26).
         # Сверяет активных операторов с реальными членами админ-группы MAX
@@ -21943,6 +22048,292 @@ def _status_label(status: str) -> str:
         AppealStatus.ANSWERED.value: "Завершено",
         AppealStatus.CLOSED.value: "Закрыто",
     }.get(status, status)
+```
+
+### `bot/aemr_bot/services/threat_intel.py`
+
+Size: `11404` bytes  
+SHA-256: `395319d03c1a85a37ccef24c42f08b474805d388832ff50b58fa19b59747a186`
+
+```python
+"""URL threat-intelligence для входящих сообщений жителей.
+
+См. `docs/_meta/URL_THREAT_INTEL_2026-05-26.md` для полной архитектуры.
+
+Цель: оператор в admin-карточке видит предупреждение «⛔ Подозрительные
+ссылки», если житель прислал в обращении URL из известных feed'ов
+malware/phishing. Не блокирует сообщение жителя — у него может быть
+легитимный кейс «мне это прислали мошенники, помогите» — но даёт
+оператору сигнал к осторожности.
+
+**Поведение**:
+- В памяти держим `set[str]` нормализованных host'ов (lowercase, без
+  www, без trailing slash). Lookup O(1).
+- Обновление раз в час из трёх free feed'ов: URLhaus, ThreatFox,
+  опционально PhishTank (если задан PHISHTANK_APP_KEY).
+- Staleness budget 6 часов: если за 6 часов ни одно обновление не
+  прошло — alert в admin chat, но бот продолжает работать со стейл-set'ом.
+- Fail-open: любая ошибка fetch (network, parse, format-change) → log
+  + использовать предыдущий set, не падать.
+
+**Что НЕ делает**:
+- Не выполняет live-lookup на API на hot-path (точка отказа).
+- Не блокирует сообщение жителя — только warning оператору.
+- Не персистит set на диск — restart бота = новая загрузка через cron.
+"""
+from __future__ import annotations
+
+import asyncio
+import logging
+import os
+import time
+from dataclasses import dataclass, field
+from urllib.parse import urlparse
+
+import aiohttp
+
+log = logging.getLogger(__name__)
+
+# Источники feed'ов. URL'ы фиксированы в коде — это не пользовательский
+# input, не нужно валидации; если abuse.ch поменяет endpoint, переписываем.
+_URLHAUS_URL = "https://urlhaus.abuse.ch/downloads/csv_online/"
+_THREATFOX_URL = "https://threatfox.abuse.ch/downloads/hostfile/"
+_PHISHTANK_URL_TEMPLATE = (
+    "https://data.phishtank.com/data/{app_key}/online-valid.json"
+)
+
+# Timeout запроса. Не критично долгий — cron job в фоне, не блокирует
+# пользователя, но 60 сек достаточно для медленного CDN.
+_FETCH_TIMEOUT_SEC = 60
+# Staleness budget: после стольких секунд без успешного refresh — alert.
+_STALENESS_BUDGET_SEC = 6 * 3600  # 6 часов
+
+
+@dataclass
+class ThreatIntelStore:
+    """In-memory хранилище host'ов из threat-intel feed'ов.
+
+    Singleton-инстанс получается через `get_store()` (lazy).
+    """
+
+    hosts: set[str] = field(default_factory=set)
+    """Множество lowercase-host'ов известных malware/phishing-сайтов."""
+
+    last_refresh_at: float | None = None
+    """Monotonic-timestamp последнего успешного refresh'а (любого feed'а)."""
+
+    sources: dict[str, int] = field(default_factory=dict)
+    """Сколько host'ов вкладывает каждый feed (для observability)."""
+
+    def is_malicious(self, url: str) -> tuple[bool, str | None]:
+        """Проверить URL по локальному set'у.
+
+        Возвращает (True, источник) если host URL в feed'е, иначе
+        (False, None). Источник — для отчёта оператору в admin card.
+
+        Sanity: пустой set (бот только что стартовал, cron ещё не
+        прошёл) → всегда False, не fail-positive.
+        """
+        if not self.hosts or not url:
+            return False, None
+        host = _normalize_host(url)
+        if not host:
+            return False, None
+        if host in self.hosts:
+            # Мы знаем что host в set'е, но не знаем точно из какого
+            # feed'а — set объединённый. Возвращаем generic-метку.
+            return True, "threat-intel"
+        return False, None
+
+    def staleness_age_seconds(self) -> float | None:
+        """Сколько секунд прошло с последнего успешного refresh'а.
+
+        None — если ни разу не обновлялись (бот только что стартовал
+        и cron ещё не прошёл).
+        """
+        if self.last_refresh_at is None:
+            return None
+        return time.monotonic() - self.last_refresh_at
+
+    def is_stale(self) -> bool:
+        """True если данные старше staleness budget'а."""
+        age = self.staleness_age_seconds()
+        return age is not None and age > _STALENESS_BUDGET_SEC
+
+
+# Singleton — простой module-level dict. Не Class-method, чтобы было
+# легко тестировать через monkeypatch.
+_STORE: ThreatIntelStore | None = None
+
+
+def get_store() -> ThreatIntelStore:
+    """Lazy-singleton доступ к глобальному store."""
+    global _STORE
+    if _STORE is None:
+        _STORE = ThreatIntelStore()
+    return _STORE
+
+
+def _normalize_host(url_or_host: str) -> str:
+    """Извлечь и нормализовать hostname из URL или host'а напрямую.
+
+    `https://www.Attacker.com/path` → `attacker.com`.
+    `evil.example` → `evil.example`.
+    `https://[fe80::1]/x` → `fe80::1` (IPv6 без скобок).
+
+    Безопасно к парсе-ошибкам: всё, что не парсится — пустая строка.
+    """
+    try:
+        # Если уже host без схемы — urlparse не вернёт hostname,
+        # дописываем схему искусственно.
+        if "://" not in url_or_host:
+            parsed = urlparse(f"http://{url_or_host}")
+        else:
+            parsed = urlparse(url_or_host)
+    except (ValueError, AttributeError):
+        return ""
+    host = (parsed.hostname or "").lower()
+    if host.startswith("www."):
+        host = host[4:]
+    return host
+
+
+async def _fetch_text(
+    session: aiohttp.ClientSession, url: str
+) -> str | None:
+    """Скачать URL как text. None при любой ошибке (log на WARNING)."""
+    try:
+        async with session.get(
+            url, timeout=aiohttp.ClientTimeout(total=_FETCH_TIMEOUT_SEC)
+        ) as resp:
+            if resp.status != 200:
+                log.warning(
+                    "threat_intel: %s returned HTTP %d", url, resp.status
+                )
+                return None
+            return await resp.text()
+    except Exception as exc:
+        log.warning("threat_intel: fetch %s failed: %s", url, exc)
+        return None
+
+
+def _parse_urlhaus_csv(body: str) -> set[str]:
+    """CSV URLhaus: первые 7 строк — комментарий, потом
+    `id,dateadded,url,...`. Берём `url` (поле 3, 0-indexed 2)."""
+    hosts: set[str] = set()
+    for line in body.splitlines():
+        if not line or line.startswith("#"):
+            continue
+        # Простой parse — split по `,` с учётом возможных кавычек.
+        # Полный CSV-parser избыточен для нашего use case (мы берём
+        # один столбец, без многострочных значений).
+        parts = line.split(",")
+        if len(parts) < 3:
+            continue
+        url = parts[2].strip().strip('"')
+        host = _normalize_host(url)
+        if host:
+            hosts.add(host)
+    return hosts
+
+
+def _parse_threatfox_hostfile(body: str) -> set[str]:
+    """ThreatFox host-file: формат `0.0.0.0 evil.example` per line."""
+    hosts: set[str] = set()
+    for line in body.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split()
+        if len(parts) < 2:
+            continue
+        host = _normalize_host(parts[1])
+        if host:
+            hosts.add(host)
+    return hosts
+
+
+def _parse_phishtank_json(body: str) -> set[str]:
+    """PhishTank online-valid.json: список объектов с полем `url`."""
+    import json
+    try:
+        items = json.loads(body)
+    except json.JSONDecodeError:
+        return set()
+    if not isinstance(items, list):
+        return set()
+    hosts: set[str] = set()
+    for it in items:
+        if not isinstance(it, dict):
+            continue
+        url = it.get("url", "")
+        host = _normalize_host(url) if isinstance(url, str) else ""
+        if host:
+            hosts.add(host)
+    return hosts
+
+
+async def refresh_all() -> dict[str, int]:
+    """Перетянуть все feed'ы и обновить singleton store.
+
+    Возвращает dict `{feed_name: count}` для логирования. Если ни один
+    feed не отдался — store не обновляется (сохраняется предыдущий
+    set), `last_refresh_at` тоже не двигается → staleness растёт.
+
+    Вызывается из cron `threat-intel-refresh` (раз в час).
+    """
+    store = get_store()
+    counts: dict[str, int] = {}
+    new_hosts: set[str] = set()
+    async with aiohttp.ClientSession() as session:
+        # Все три feed'а тянем параллельно — это IO-bound.
+        urlhaus_task = _fetch_text(session, _URLHAUS_URL)
+        threatfox_task = _fetch_text(session, _THREATFOX_URL)
+
+        phishtank_key = os.environ.get("PHISHTANK_APP_KEY", "").strip()
+        phishtank_task: asyncio.Task | None = None
+        if phishtank_key:
+            phishtank_task = asyncio.create_task(
+                _fetch_text(
+                    session,
+                    _PHISHTANK_URL_TEMPLATE.format(app_key=phishtank_key),
+                )
+            )
+
+        urlhaus_body, threatfox_body = await asyncio.gather(
+            urlhaus_task, threatfox_task
+        )
+        phishtank_body = await phishtank_task if phishtank_task else None
+
+    if urlhaus_body:
+        hosts = _parse_urlhaus_csv(urlhaus_body)
+        new_hosts.update(hosts)
+        counts["urlhaus"] = len(hosts)
+    if threatfox_body:
+        hosts = _parse_threatfox_hostfile(threatfox_body)
+        new_hosts.update(hosts)
+        counts["threatfox"] = len(hosts)
+    if phishtank_body:
+        hosts = _parse_phishtank_json(phishtank_body)
+        new_hosts.update(hosts)
+        counts["phishtank"] = len(hosts)
+
+    if not counts:
+        log.warning(
+            "threat_intel: ни один feed не отдался — set не обновлён, "
+            "продолжаем со старым (age=%.0f сек)",
+            store.staleness_age_seconds() or 0,
+        )
+        return {}
+
+    store.hosts = new_hosts
+    store.sources = counts
+    store.last_refresh_at = time.monotonic()
+    log.info(
+        "threat_intel: refresh ok — %d host'ов из %d feed'ов: %s",
+        len(new_hosts), len(counts), counts,
+    )
+    return counts
 ```
 
 ### `bot/aemr_bot/services/uploads.py`
@@ -33710,8 +34101,8 @@ class TestAdminCardCitizenStateMarkers:
 
 ### `bot/tests/test_cron_jobs.py`
 
-Size: `21627` bytes  
-SHA-256: `747e534c5c40466185bb5b3cefca8b4d8ba0788a2c500aecabda9b795e5e2d5c`
+Size: `21689` bytes  
+SHA-256: `b4ade41623c8897c0e3faebf432642f922f13323814bfe82e7bbd5b52d0da5f5`
 
 ```python
 """Unit-тесты на cron jobs.
@@ -34116,6 +34507,7 @@ class TestBuildScheduler:
             "events-retention",
             "audit-log-retention",
             "broadcast-draft-reaper",  # F5: orphan DRAFT cleanup
+            "threat-intel-refresh",  # URL threat intel feeds
             "stale-operators-cleanup",  # CVE-9 cleanup, SECURITY_REVIEW M2
             "health-selfcheck",
             "monthly-stats",
@@ -43265,6 +43657,122 @@ class TestCleanupStaleOperators:
             session, current_member_ids={9999}
         )
         assert deactivated == []
+```
+
+### `bot/tests/test_threat_intel.py`
+
+Size: `3737` bytes  
+SHA-256: `8bf2ac420c9c3b0d38459246ce2ed3fa5d63a9fefd8dad1c375e14bbb5ad96c1`
+
+```python
+"""Тесты на services/threat_intel.py — URL threat-intel set + parse."""
+from __future__ import annotations
+
+from aemr_bot.services.threat_intel import (
+    ThreatIntelStore,
+    _normalize_host,
+    _parse_phishtank_json,
+    _parse_threatfox_hostfile,
+    _parse_urlhaus_csv,
+)
+
+
+class TestNormalizeHost:
+    def test_full_url(self) -> None:
+        assert _normalize_host("https://www.Attacker.com/path") == "attacker.com"
+
+    def test_no_scheme(self) -> None:
+        assert _normalize_host("evil.example") == "evil.example"
+
+    def test_with_port(self) -> None:
+        assert _normalize_host("http://evil.example:8080/x") == "evil.example"
+
+    def test_uppercase_lowered(self) -> None:
+        assert _normalize_host("https://EVIL.COM/") == "evil.com"
+
+    def test_empty(self) -> None:
+        assert _normalize_host("") == ""
+
+    def test_garbage(self) -> None:
+        # Не должно падать на любом мусоре
+        assert _normalize_host("not-a-url") == "not-a-url"
+
+
+class TestParseUrlhausCSV:
+    def test_skip_comments(self) -> None:
+        body = (
+            "# Comment line\n"
+            "1,2024-01-01,https://malware.test/payload.exe,foo,bar\n"
+        )
+        hosts = _parse_urlhaus_csv(body)
+        assert "malware.test" in hosts
+
+    def test_multiple_lines(self) -> None:
+        body = (
+            "1,date,https://a.evil/,extra\n"
+            "2,date,http://b.evil/,extra\n"
+        )
+        hosts = _parse_urlhaus_csv(body)
+        assert hosts == {"a.evil", "b.evil"}
+
+    def test_empty_body(self) -> None:
+        assert _parse_urlhaus_csv("") == set()
+
+
+class TestParseThreatfoxHostfile:
+    def test_zero_zero_format(self) -> None:
+        body = "0.0.0.0 evil.example\n0.0.0.0 phish.test\n"
+        hosts = _parse_threatfox_hostfile(body)
+        assert hosts == {"evil.example", "phish.test"}
+
+    def test_skip_comments_and_empty(self) -> None:
+        body = "# comment\n\n0.0.0.0 real.bad\n"
+        hosts = _parse_threatfox_hostfile(body)
+        assert hosts == {"real.bad"}
+
+
+class TestParsePhishtankJson:
+    def test_parses_url_field(self) -> None:
+        body = '[{"url": "https://phisher.test/login"}, {"url": "http://b.evil/"}]'
+        hosts = _parse_phishtank_json(body)
+        assert hosts == {"phisher.test", "b.evil"}
+
+    def test_invalid_json_returns_empty(self) -> None:
+        assert _parse_phishtank_json("not json {") == set()
+
+    def test_non_list_returns_empty(self) -> None:
+        assert _parse_phishtank_json('{"object": true}') == set()
+
+
+class TestThreatIntelStore:
+    def test_empty_store_returns_false(self) -> None:
+        store = ThreatIntelStore()
+        is_bad, source = store.is_malicious("https://anywhere.com")
+        assert is_bad is False
+        assert source is None
+
+    def test_malicious_host_caught(self) -> None:
+        store = ThreatIntelStore(hosts={"evil.example"})
+        is_bad, source = store.is_malicious("https://www.Evil.example/path")
+        assert is_bad is True
+        assert source == "threat-intel"
+
+    def test_clean_host_passes(self) -> None:
+        store = ThreatIntelStore(hosts={"evil.example"})
+        is_bad, _ = store.is_malicious("https://elizovomr.ru/page")
+        assert is_bad is False
+
+    def test_staleness_age_none_before_refresh(self) -> None:
+        store = ThreatIntelStore()
+        assert store.staleness_age_seconds() is None
+        assert store.is_stale() is False  # None ≠ stale, скорее «не начали»
+
+    def test_is_stale_after_budget(self) -> None:
+        import time
+        store = ThreatIntelStore()
+        # 7 часов назад
+        store.last_refresh_at = time.monotonic() - 7 * 3600
+        assert store.is_stale() is True
 ```
 
 ### `bot/tests/test_uploads_policy_admin_relay.py`
