@@ -61,6 +61,15 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
         except Exception:
             log.exception("count_open failed; кнопку без счётчика покажем")
 
+    # SACRED-нарушение, найдено владельцем 2026-05-26:
+    # `show_op_menu` через send_or_edit_screen без force_new_message
+    # делал EDIT на последнем сообщении бота. Если последним было
+    # admin appeal card (sacred — нельзя edit), оно молча превращалось
+    # в меню оператора, и переписка обращения «съедалась». Теперь
+    # ВСЕГДА force_new_message=True — каждое открытие меню это
+    # отдельное сообщение в чате. Лёгкий «флуд» в admin-чате
+    # допустим (это рабочий чат), сохранность карточек обращений —
+    # обязательна.
     sent = await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
@@ -70,7 +79,7 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
                 open_count=open_count, is_it=is_it, can_broadcast=can_broadcast
             )
         ],
-        force_new_message=pin,
+        force_new_message=True,
     )
     if not pin:
         return
