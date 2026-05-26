@@ -283,26 +283,56 @@ def _url_in(text: str) -> bool:
 
 
 def _maybe_url_warning(text: str) -> str:
-    """SECURITY_REVIEW M5: вернуть строку-предупреждение если в тексте
-    есть URL.
+    """SECURITY_REVIEW M5 + threat-intel: предупреждение оператору
+    если в тексте жителя есть URL.
 
-    Followup жителя приходит в admin-чат и отображается оператору.
-    Если житель (или скам-имитатор жителя) вставил кликабельную
-    фишинг-ссылку — оператор её увидит и может тапнуть прямо из
-    карточки. Здесь мы не блокируем (нельзя — оператор должен видеть
-    содержимое обращения), но добавляем явное предупреждение, чтобы
-    оператор знал «здесь ссылка, не кликаю автоматически».
+    Два уровня:
+    1. Любой http(s) URL → стандартный warning «не открывайте напрямую».
+    2. URL в threat-intel базе (URLhaus / ThreatFox / PhishTank) →
+       усиленный warning «⛔ это известный фишинг/malware», с
+       перечислением скомпрометированных host'ов.
 
-    Возвращает пустую строку если URL нет — тогда warning не пришит.
+    Threat-intel — best-effort: если бот только что стартовал и cron
+    не успел подтянуть feed'ы (set пуст) — обычный warning без
+    усиления. Stale-set'ом (старше 6ч) пользуемся, не отказываемся.
+
+    Не блокируем сообщение жителя — у него может быть legitimate
+    кейс «мне это прислали мошенники, разберитесь».
     """
     from aemr_bot.services.settings_store import extract_urls
-    if extract_urls(text):
+    urls = extract_urls(text)
+    if not urls:
+        return ""
+
+    # Threat-intel check для каждого URL. Не падаем если модуль
+    # сломан — fall back на обычный warning.
+    malicious: list[str] = []
+    try:
+        from aemr_bot.services.threat_intel import get_store
+        store = get_store()
+        for url in urls:
+            is_bad, _source = store.is_malicious(url)
+            if is_bad:
+                malicious.append(url)
+    except Exception:
+        pass
+
+    if malicious:
+        # Показать до 3 ссылок, остальные за многоточием
+        sample = ", ".join(malicious[:3])
+        more = "" if len(malicious) <= 3 else f" и ещё {len(malicious) - 3}"
         return (
-            "\n\n⚠️ Текст содержит ссылку. Не открывайте напрямую из "
-            "карточки — сверьте адрес визуально и при необходимости "
-            "введите в браузер вручную."
+            "\n\n⛔ Подозрительные ссылки (известные фишинг/malware "
+            f"по threat-intel базе): {sample}{more}. "
+            "Категорически не открывайте, не пересылайте. Если житель "
+            "просит разобраться — отметьте в audit, направьте жителя "
+            "в МВД (8-800-250-30-72)."
         )
-    return ""
+    return (
+        "\n\n⚠️ Текст содержит ссылку. Не открывайте напрямую из "
+        "карточки — сверьте адрес визуально и при необходимости "
+        "введите в браузер вручную."
+    )
 
 
 def admin_followup(appeal: Appeal, user: User, text: str) -> str:

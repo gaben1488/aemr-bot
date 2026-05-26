@@ -100,9 +100,13 @@ async def _safe_get_chat_members(bot) -> list:
     эвристик не нужен, но оставляем как defence-in-depth, см.
     `_job_stale_operators_cleanup` в cron.py).
     """
+    if cfg.admin_group_id is None:
+        # Без admin_group_id (например в dev-окружении без MAX-чата)
+        # делать нечего — вернём пусто, downstream увидит no-op.
+        return []
     try:
         from maxapi.types.chats import ChatMembersManager
-        manager = ChatMembersManager(bot=bot, chat_id=cfg.admin_group_id)
+        manager = ChatMembersManager(bot=bot, chat_id=int(cfg.admin_group_id))
         return await manager.list_all()
     except Exception as exc:
         log.warning("get_chat_members failed: %s", exc)
