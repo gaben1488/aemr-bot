@@ -63,6 +63,11 @@ def main_menu(
     # формы обращения в администрацию в одном экране.
     kb.row(CallbackButton(text="🏛 Приём граждан", payload="menu:appointment"))
     kb.row(CallbackButton(text="ℹ️ Полезная информация", payload="menu:useful_info"))
+    # Кнопка «Защита от мошенников» — отдельным пунктом главного меню
+    # вместо footer'а в каждом ответе оператора. Так житель находит
+    # перечень «бот никогда не запрашивает» в один тап в любой момент
+    # переписки, а официальный ответ оператора не перегружен меморандумом.
+    kb.row(CallbackButton(text="🛡️ Защита от мошенников", payload="menu:security"))
     kb.row(CallbackButton(text="⚙️ Настройки и помощь", payload="menu:settings"))
     return kb.as_markup()
 
@@ -495,6 +500,41 @@ def op_back_to_menu_keyboard():
     """Одна кнопка возврата к главной операторской панели."""
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    return kb.as_markup()
+
+
+def open_tickets_listing_keyboard(items):
+    """Listing открытых обращений в одном сообщении.
+
+    Каждое обращение — одна кнопка-строка: «#N · 🆕 · тема (фрагмент)»
+    или «#N · 🔄 · ...». Тап → callback `op:open_card:N` → полная
+    карточка с timeline через `admin_card.render` (по выбору владельца
+    шаг 2-в от 2026-05-26: listing компактный, история открывается
+    в новой карточке внизу чата).
+
+    `items` — последовательность `(appeal_id, status, topic_preview)`,
+    где `topic_preview` уже обрезан до разумной длины вызывающим.
+    Если items пуст — клавиатура только с кнопкой «↩️ В меню».
+    """
+    from aemr_bot.db.models import AppealStatus
+
+    kb = InlineKeyboardBuilder()
+    status_emoji = {
+        AppealStatus.NEW.value: "🆕",
+        AppealStatus.IN_PROGRESS.value: "🔄",
+        AppealStatus.ANSWERED.value: "✅",
+        AppealStatus.CLOSED.value: "⛔",
+    }
+    for appeal_id, status, topic_preview in items:
+        emoji = status_emoji.get(status, "•")
+        text = f"#{appeal_id} · {emoji} · {topic_preview}"
+        kb.row(
+            CallbackButton(
+                text=text,
+                payload=f"op:open_card:{appeal_id}",
+            )
+        )
+    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 

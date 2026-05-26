@@ -328,6 +328,23 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
     )
 
 
+async def open_security_info(event):
+    """Кнопка «🛡️ Защита от мошенников» в главном меню жителя.
+
+    Показывает texts.SECURITY_INFO_TEXT — перечень того, что бот и
+    Администрация НИКОГДА не запрашивают, что делать если столкнулся
+    с мошенниками, как убедиться что бот настоящий. Раньше эта
+    информация жила footer'ом в каждом ответе оператора — но это
+    перегружало официальный ответ. Теперь — отдельная навигационная
+    точка, доступная в один тап в любой момент.
+    """
+    await _send_or_edit_menu(
+        event,
+        text=texts.SECURITY_INFO_TEXT,
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
+
+
 async def open_useful_info(event):
     max_user_id = get_user_id(event)
     async with session_scope() as session:
@@ -899,6 +916,7 @@ _EXACT: dict[str, _MenuRoute] = {
     ),
     "menu:useful_info": _MenuRoute(lambda e, u: open_useful_info(e)),
     "menu:appointment": _MenuRoute(lambda e, u: open_appointment(e)),
+    "menu:security": _MenuRoute(lambda e, u: open_security_info(e)),
     "menu:settings": _MenuRoute(lambda e, u: open_settings(e)),
     "settings:help": _MenuRoute(lambda e, u: open_help(e)),
     "settings:rules": _MenuRoute(lambda e, u: open_rules(e)),
