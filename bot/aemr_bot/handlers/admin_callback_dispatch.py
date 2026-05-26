@@ -226,8 +226,33 @@ _EXACT: dict[str, ExactHandler] = {
     "op:operators": _ack_then(lambda e: admin_commands.run_operators_menu(e)),
     "op:settings": _ack_then(lambda e: admin_commands.run_settings_menu(e)),
     "op:audience": _ack_then(lambda e: admin_commands.run_audience_menu(e)),
+    "op:help_full": _ack_then(lambda e: _show_op_help_full(e)),
     "op:reply_cancel": _op_reply_cancel,
 }
+
+
+async def _show_op_help_full(event) -> None:
+    """Подменю «📋 Памятка оператора» — полный гайд по командам,
+    безопасности, ссылкам на документы.
+
+    Раньше OP_HELP печатался простыней при каждом вызове админ-меню,
+    перегружая чат при каждом тапе `/menu`. Теперь админ-меню короткое
+    («выберите действие»), а полная памятка — отдельный экран по клику.
+    """
+    from aemr_bot import keyboards as kbds
+    from aemr_bot import texts
+    from aemr_bot.config import settings as cfg
+    from aemr_bot.handlers._auth import ensure_operator
+    from aemr_bot.utils.event import send_or_edit_screen
+
+    if not await ensure_operator(event):
+        return
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_HELP_FULL.format(answer_limit=cfg.answer_max_chars),
+        attachments=[kbds.op_back_to_menu_keyboard()],
+    )
 
 # prefix → (handler, нужен ли payload в handler).
 # _PREFIX_ID: `op:<verb>:<int>` — диспетчер парсит int-хвост.
