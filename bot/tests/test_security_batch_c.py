@@ -86,48 +86,48 @@ class TestConsentTextRequiredSubstr:
         assert "{policy_url}" in reason
 
 
-class TestWelcomeTextRequiredSubstr:
-    """C1-hardening: welcome_text обязан содержать антифишинговый блок
-    «НИКОГДА не запрашиваем» — это последняя линия защиты жителя от
-    PII-фишинга через support-impersonation."""
+class TestWelcomeTextValidation:
+    """C1-hardening снят 2026-05-27 по решению владельца. Антифишинг-
+    блок вынесен полностью в отдельную кнопку «🛡️ Защита от мошенников»
+    в главном меню (`SECURITY_INFO_TEXT`, handler `menu:security`).
+    SCHEMA.welcome_text больше не требует подстроки «НИКОГДА не
+    запрашиваем» — IT может править welcome через UI любым текстом.
 
-    def test_welcome_with_antiphishing_passes(self) -> None:
+    Тесты ниже фиксируют новый контракт: welcome_text валидируется
+    только по типу/длине, без required_substr.
+    """
+
+    def test_welcome_short_text_passes(self) -> None:
+        """Без required_substr достаточно непустого текста."""
         ok, _ = validate(
             "welcome_text",
-            "Здравствуйте. Это бот.\n\n"
-            "🛡️ Что мы НИКОГДА не запрашиваем: паспорт, СНИЛС...\n\n"
-            "Выберите действие.",
+            "Здравствуйте. Выберите действие.",
         )
         assert ok is True
 
-    def test_welcome_without_antiphishing_rejected(self) -> None:
-        """IT не может убрать антифишинговый блок через UI — validate
-        отклонит. Это защита от: (a) случайной правки, при которой
-        блок выпал; (b) компрометации IT-аккаунта со снятием защиты
-        жителя."""
-        ok, reason = validate(
+    def test_welcome_with_antiphishing_still_passes(self) -> None:
+        """Текст с антифишингом (старый формат) — продолжает валидироваться,
+        снятие C1 не запрещает блок, просто не требует его."""
+        ok, _ = validate(
             "welcome_text",
-            "Здравствуйте. Это бот.\n\nВыберите действие.",
+            "Здравствуйте. 🛡️ Мы НИКОГДА не запрашиваем паспорт.",
         )
-        assert ok is False
-        assert "НИКОГДА не запрашиваем" in reason
+        assert ok is True
 
-    def test_seed_welcome_passes_validate(self) -> None:
-        """Регрессия: фактический seed/welcome.md должен проходить
-        собственный validate. Иначе bootstrap бота на чистой БД
-        свалится при загрузке seed."""
-        from pathlib import Path
-        seed_path = Path(__file__).parent.parent.parent / "seed" / "welcome.md"
-        if not seed_path.exists():
-            pytest.skip(f"seed/welcome.md не найден по пути {seed_path}")
-        text = seed_path.read_text(encoding="utf-8")
-        ok, reason = validate("welcome_text", text)
-        assert ok is True, f"seed/welcome.md не прошёл validate: {reason}"
+    def test_welcome_too_long_rejected(self) -> None:
+        """Длина >4000 — отказ (MAX-API hard limit)."""
+        ok, reason = validate("welcome_text", "x" * 5000)
+        assert ok is False
+        assert "max_len" in reason or "длин" in reason.lower()
+
+    def test_welcome_empty_rejected(self) -> None:
+        """Пустой текст — отказ."""
+        ok, _ = validate("welcome_text", "")
+        assert ok is False
 
     def test_hardcoded_welcome_passes_validate(self) -> None:
-        """Регрессия: hardcoded texts.WELCOME (fallback в C1) обязан
-        тоже проходить validate. Иначе при пустой БД житель увидит
-        текст, который IT не сможет переименовать обратно через UI."""
+        """Регрессия: hardcoded texts.WELCOME (fallback при пустой БД)
+        обязан проходить validate."""
         from aemr_bot.texts import WELCOME
         ok, reason = validate("welcome_text", WELCOME)
         assert ok is True, f"texts.WELCOME не прошёл validate: {reason}"

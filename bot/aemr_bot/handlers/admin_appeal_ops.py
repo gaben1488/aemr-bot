@@ -230,17 +230,17 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
         text=(
             f"{prompt_hint}"
             f"Лимит {cfg.answer_max_chars} символов. Просто отправьте "
-            f"следующее сообщение в этот чат, либо «Отменить» ниже.\n"
-            f"\n"
-            f"🛡️ Памятка: ссылки только на гос-домены (elizovomr.ru, "
-            f"kamgov.ru, gosuslugi.ru, kamchatka.gov.ru). Любая другая "
-            f"ссылка будет заблокирована автоматически — ответ не уйдёт "
-            f"жителю, чтобы случайный фишинг не прошёл от имени "
-            f"Администрации. Подробности — docs/OPERATOR_SECURITY.md §3.2."
+            f"следующее сообщение в этот чат, либо «Отменить» ниже."
         ),
         attachments=[kbds.cancel_reply_intent_keyboard()],
         force_new_message=True,
     )
+    # Памятка про whitelist гос-доменов раньше дублировалась здесь
+    # (2026-05-27 убрана по решению владельца). Полная памятка живёт
+    # в `📋 Памятка оператора` (op:help_full), а конкретный whitelist
+    # — в broadcast preview (там критично перед массовой отправкой).
+    # Reply prompt оставлен лаконичным — оператор отвечает по обращению
+    # десятки раз в день, не нужно каждый раз листать памятку.
 
 
 async def run_reply_cancel(event) -> None:
