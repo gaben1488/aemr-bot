@@ -40,15 +40,36 @@ jobs:
           # зависимости остаются в списке и валят CI при CVE.
           python -m pip freeze --exclude-editable > audit-requirements.txt
           grep -vE '^(aemr-bot|aemr_bot)(==| @ )' audit-requirements.txt > audit-requirements.thirdparty.txt
+          # Игноры CVE с обоснованием неприменимости (привязать к коду —
+          # любой будущий разработчик может grep'нуть эти проверки и
+          # убедиться, что игнор всё ещё валиден):
+          #
+          # PYSEC-2026-161 / GHSA-86qp-5c8j-p5mr — starlette URL
+          # reconstruction from Host header → potential auth bypass.
+          # Бот НЕ reconstructs URL из Host (нет route'ов, auth
+          # которых зависит от host). Health endpoints /livez, /readyz
+          # возвращают plain status, не используют request.url.
+          # Проверка: grep -r 'request\.url\|HTTP_HOST' aemr_bot/ → 0.
+          #
+          # CVE-2025-62727 / GHSA-7f5h-v6xp-fcq8 — Range header ReDoS
+          # в FileResponse / StaticFiles. Бот НЕ использует ни
+          # FileResponse, ни StaticFiles — отдаёт только JSON через
+          # /livez и /readyz.
+          # Проверка: grep -r 'FileResponse\|StaticFiles' aemr_bot/ → 0.
+          #
+          # Оба CVE инапрозрачно прокидываются через fastapi → starlette
+          # (fastapi <0.137 пинит starlette<0.49 где fix). Reassess
+          # на следующем планируемом fastapi-bump.
+          IGNORE_FLAGS="--ignore-vuln PYSEC-2026-161 --ignore-vuln CVE-2025-62727"
           set +e
-          python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off --format=json --output=pip-audit.json
+          python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off --format=json --output=pip-audit.json $IGNORE_FLAGS
           audit_status=$?
           if [ -s pip-audit.json ]; then
             echo "pip-audit JSON report:"
             cat pip-audit.json
           fi
           echo "pip-audit human report:"
-          python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off || true
+          python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off $IGNORE_FLAGS || true
           exit "$audit_status"
       - name: Upload security report
         uses: actions/upload-artifact@v4
