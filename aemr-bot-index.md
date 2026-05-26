@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-26 03:15:15 UTC`
+Generated at: `2026-05-26 03:28:12 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `228`
 Max file size: `300 KB`
@@ -73,7 +73,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/broadcasts.py` (15994 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (20382 bytes)
-- `bot/aemr_bot/services/cron.py` (49975 bytes)
+- `bot/aemr_bot/services/cron.py` (50456 bytes)
 - `bot/aemr_bot/services/db_backup.py` (16664 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
 - `bot/aemr_bot/services/idempotency.py` (8575 bytes)
@@ -130,7 +130,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_callback_router.py` (8614 bytes)
 - `bot/tests/test_callback_router_coverage.py` (5487 bytes)
 - `bot/tests/test_card_format.py` (10537 bytes)
-- `bot/tests/test_cron_jobs.py` (21689 bytes)
+- `bot/tests/test_cron_jobs.py` (22687 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (15690 bytes)
 - `bot/tests/test_deps_environment.py` (3805 bytes)
@@ -18359,8 +18359,8 @@ def appeal_list_label(appeal: Appeal) -> str:
 
 ### `bot/aemr_bot/services/cron.py`
 
-Size: `49975` bytes  
-SHA-256: `a37fee62b8d3432535b642522983eaf3397f02e12d915e427175a27ed0171e49`
+Size: `50456` bytes  
+SHA-256: `d6a5205903c304a53a60db5386ca34ca1b20204dd0bd112e9f2a3283e05ddd39`
 
 ```python
 from __future__ import annotations
@@ -19186,40 +19186,44 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             ),
             "startup-pulse",
         ),
-        # Pulse — сигнал жизни «бот работает». Идёт КАЖДЫЙ день
-        # (пн-вс), без выходных. Это технический heartbeat для дежурного
-        # IT, не уведомление оператору. Если пульс пропал в течение
-        # нескольких циклов — что-то с процессом, надо смотреть logs.
+        # Pulse — сигнал жизни «бот работает». Технический heartbeat
+        # для дежурного IT, не уведомление оператору. Если пульс пропал
+        # в течение нескольких циклов — что-то с процессом, надо
+        # смотреть logs.
         #
-        # В рабочее время (9:00–17:00 Камчатки) — каждые 30 минут
-        # (минута :00 и :30) — высокая плотность, чтобы быстро поймать
-        # сбой в момент активной работы.
+        # **Базовый сигнал (`pulse-hourly`):** каждый час на :05,
+        # 24/7 — без исключения каких-либо часов или дней недели.
+        # Это постоянная плотность мониторинга: пн-пт в нерабочие часы
+        # (0:00-8:59 и 18:00-23:59) и вся суббота-воскресенье целиком
+        # дают ровно один пульс в час.
         #
-        # В остальные часы (0:00–8:00 и 18:00–23:00) — раз в час на
-        # :05 — реже, потому что нагрузки нет, нужна только индикация
-        # «процесс жив».
+        # **Доп-сигнал в рабочее время (`pulse-workhours-extra`):**
+        # дополнительно на :35 ТОЛЬКО в пн-пт с 9:00 до 17:59. Вместе
+        # с базовым (:05) даёт ДВА пульса в час → раз в 30 минут в
+        # рабочее время — высокая плотность, чтобы быстро поймать сбой
+        # в момент активной работы оператора.
         #
-        # Раньше pulse шёл только пн-сб; воскресенье и праздники
-        # выпадали из мониторинга. Теперь ежедневно — закрывает дыру.
+        # Госпраздники РФ в пульсе не учитываются — мониторинг бота не
+        # зависит от выходного у людей. Раньше pulse шёл только пн-сб
+        # и в воскресенье отдельным job'ом, что путало; теперь два
+        # ясных юнита без дублирования.
         (
             pulse,
             CronTrigger(
-                day_of_week="mon-sun",
-                hour="0-8,18-23",
                 minute=5,
                 timezone=TZ,
             ),
-            "pulse-offhours",
+            "pulse-hourly",
         ),
         (
             pulse,
             CronTrigger(
-                day_of_week="mon-sun",
+                day_of_week="mon-fri",
                 hour="9-17",
-                minute="0,30",
+                minute=35,
                 timezone=TZ,
             ),
-            "pulse-workhours",
+            "pulse-workhours-extra",
         ),
         # 5-летняя архивация обращений
         (
@@ -34101,8 +34105,8 @@ class TestAdminCardCitizenStateMarkers:
 
 ### `bot/tests/test_cron_jobs.py`
 
-Size: `21689` bytes  
-SHA-256: `b4ade41623c8897c0e3faebf432642f922f13323814bfe82e7bbd5b52d0da5f5`
+Size: `22687` bytes  
+SHA-256: `16220ab9c02d73b8cdc1446c6f503c89877fb379d4581284acb195bf1377c859`
 
 ```python
 """Unit-тесты на cron jobs.
@@ -34512,9 +34516,8 @@ class TestBuildScheduler:
             "health-selfcheck",
             "monthly-stats",
             "startup-pulse",
-            "pulse-offhours",
-            "pulse-workhours",
-            # pulse-sunday упразднён: mon-sun теперь покрывает все дни
+            "pulse-hourly",  # 24/7 каждый час на :05
+            "pulse-workhours-extra",  # пн-пт 9-17 доп. на :35
             "appeals-5y-retention",
             "pdn-retention",
             "funnel-watchdog",
@@ -34524,34 +34527,49 @@ class TestBuildScheduler:
         # healthcheck-ping появляется только если settings.healthcheck_url задан
         assert expected.issubset(names), f"missing: {expected - names}"
 
-    def test_offhours_pulse_covers_evening_gap(self) -> None:
-        """Регрессия: вечер 18:00–21:59 не должен выпадать из пульсов."""
-        bot = MagicMock()
-        sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
-        job = next(j for j in sched.get_jobs() if j.name == "pulse-offhours")
-        trigger_text = str(job.trigger)
-        assert "18-23" in trigger_text
+    def test_pulse_hourly_covers_all_hours_and_days(self) -> None:
+        """Регрессия: базовый `pulse-hourly` идёт каждый час 24/7.
 
-    def test_pulse_runs_every_day_including_sunday(self) -> None:
-        """Регрессия: pulse идёт ежедневно (mon-sun), не только пн-сб.
-
-        Раньше было два юнита: pulse-offhours (mon-sat) + отдельный
-        pulse-sunday (sun, ежечасно). Теперь pulse-offhours и
-        pulse-workhours оба mon-sun, отдельный воскресный юнит
-        упразднён — выходные и праздники мониторятся так же как
-        будни (heartbeat «бот живой» нужен 24/7).
+        Раньше было два пересекающихся юнита (`pulse-offhours` для
+        часов 0-8,18-23 и `pulse-workhours` для 9-17) — путаное
+        разделение, плюс в субботу-воскресенье 9-17 ошибочно срабатывал
+        workhours-юнит как будто рабочий день. Теперь один базовый
+        24/7 юнит даёт ровно один сигнал в час всегда, включая ночь,
+        выходные и праздники.
         """
         bot = MagicMock()
         sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
-        for job_name in ("pulse-offhours", "pulse-workhours"):
-            job = next(j for j in sched.get_jobs() if j.name == job_name)
-            text = str(job.trigger)
-            assert "mon-sun" in text, (
-                f"{job_name}: ожидался day_of_week=mon-sun, получено: {text}"
-            )
-        # Отдельной pulse-sunday больше не существует
+        job = next(j for j in sched.get_jobs() if j.name == "pulse-hourly")
+        trigger_text = str(job.trigger)
+        # Должно быть без ограничений по часам или дням недели —
+        # только минута :05.
+        assert "hour" not in trigger_text or "hour='*'" in trigger_text
+        assert "minute='5'" in trigger_text or "minute=5" in trigger_text.replace("'", "")
+
+    def test_pulse_workhours_extra_only_mon_fri_9_17(self) -> None:
+        """Регрессия: доп-сигнал в рабочее время ТОЛЬКО пн-пт 9-17.
+
+        В выходные (сб-вс) ничего дополнительного — только базовый
+        `pulse-hourly`. Юзер указал что выходные не должны получать
+        «рабочую» плотность мониторинга.
+        """
+        bot = MagicMock()
+        sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
+        job = next(j for j in sched.get_jobs() if j.name == "pulse-workhours-extra")
+        trigger_text = str(job.trigger)
+        assert "mon-fri" in trigger_text
+        assert "9-17" in trigger_text
+        assert "35" in trigger_text
+
+    def test_old_pulse_jobs_dont_exist(self) -> None:
+        """Старые имена `pulse-offhours` / `pulse-workhours` /
+        `pulse-sunday` упразднены — заменены на `pulse-hourly` +
+        `pulse-workhours-extra`."""
+        bot = MagicMock()
+        sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
         names = {j.name for j in sched.get_jobs()}
-        assert "pulse-sunday" not in names
+        for old in ("pulse-offhours", "pulse-workhours", "pulse-sunday"):
+            assert old not in names, f"старый job {old!r} должен быть упразднён"
 
     def test_open_reminder_mon_fri_with_lunch_break(self) -> None:
         """Регрессия: open-reminder работает пн-пт с обедом 12-13 (skip).
