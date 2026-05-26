@@ -116,16 +116,22 @@ class TestF13PrBodyHardening:
         assert "<!--" not in cleaned
 
     def test_rtl_override_stripped(self) -> None:
-        """U+202E (RIGHT-TO-LEFT OVERRIDE) — категория Cf, должен пропасть."""
-        attack = "Иванов‮hacker"  # noqa: RUF001 — спец-символ намеренно
+        """U+202E (RIGHT-TO-LEFT OVERRIDE) — категория Cf, должен пропасть.
+
+        Литерал собирается через chr(), а не вставляется как символ —
+        иначе bandit B613 (trojansource) ругается на сам файл теста.
+        """
+        rtl_override = chr(0x202E)
+        attack = f"Иванов{rtl_override}hacker"
         cleaned = _sanitize_for_pr_body(attack)
-        assert "‮" not in cleaned
+        assert rtl_override not in cleaned
 
     def test_zero_width_joiner_stripped(self) -> None:
         """U+200D (ZERO-WIDTH JOINER) — категория Cf."""
-        attack = "Test‍Injected"
+        zwj = chr(0x200D)
+        attack = f"Test{zwj}Injected"
         cleaned = _sanitize_for_pr_body(attack)
-        assert "‍" not in cleaned
+        assert zwj not in cleaned
 
     def test_cyrillic_letters_preserved(self) -> None:
         """Регрессия: легитимные кириллические буквы (категория Ll/Lu)
