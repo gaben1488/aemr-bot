@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-26 22:55:13 UTC`
+Generated at: `2026-05-26 23:04:31 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `236`
+Indexed files: `237`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -62,9 +62,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/start.py` (21062 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (68253 bytes)
-- `bot/aemr_bot/main.py` (20473 bytes)
+- `bot/aemr_bot/main.py` (21047 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
-- `bot/aemr_bot/services/admin_bus.py` (6046 bytes)
+- `bot/aemr_bot/services/admin_bus.py` (12331 bytes)
 - `bot/aemr_bot/services/admin_card.py` (13031 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6489 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
@@ -111,6 +111,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_events_descriptor.py` (5856 bytes)
 - `bot/tests/test_admin_handlers_small.py` (21842 bytes)
 - `bot/tests/test_admin_operators.py` (19228 bytes)
+- `bot/tests/test_admin_outgoing_hook.py` (7012 bytes)
 - `bot/tests/test_admin_panel.py` (12999 bytes)
 - `bot/tests/test_admin_settings_audit.py` (1917 bytes)
 - `bot/tests/test_appeal_card_edit_policy.py` (5805 bytes)
@@ -15765,8 +15766,8 @@ def op_help_keyboard(
 
 ### `bot/aemr_bot/main.py`
 
-Size: `20473` bytes  
-SHA-256: `87b4d9b391c0c84236fab455891949e4fd1b33639cb4bd837252b4c64b864c74`
+Size: `21047` bytes  
+SHA-256: `dea3cfdf6e5dc38a40f1190bcfaf9fe38fc0577559f2ce17703b027d084287fb`
 
 ```python
 from __future__ import annotations
@@ -15809,6 +15810,15 @@ bot = Bot(
         max_retries=settings.max_api_retries,
     ),
 )
+# Sacred event log hook: оборачивает bot.send_message декоратором,
+# который синхронизирует menu_tracker[admin_group_id] после каждого
+# успешного send в admin chat. Закрывает архитектурный gap «62
+# прямых send'a в admin chat без tracker.sync» одной строкой —
+# подробное обоснование в `services/admin_bus.install_outgoing_tracker_hook`.
+from aemr_bot.services import admin_bus  # noqa: E402
+
+admin_bus.install_outgoing_tracker_hook(bot)
+
 # use_create_task=True: handlers — отдельные asyncio.Task, polling loop
 # не блокируется одним долгим callback'ом. Per-user state защищён
 # asyncio.Lock в appeal_runtime, concurrent dispatch безопасен.
@@ -16173,8 +16183,8 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ### `bot/aemr_bot/services/admin_bus.py`
 
-Size: `6046` bytes  
-SHA-256: `79c311b27051a984d2af69baee92564e51b051a77df78718faa384c5fa3c1459`
+Size: `12331` bytes  
+SHA-256: `cc078bc04e7b61a37748f05f0b2e8fcd2a269625e8f475121596e5bf54703e5d`
 
 ```python
 """Единая шина для отправки сообщений в служебную группу (admin chat).
@@ -16294,6 +16304,115 @@ def note_incoming_admin_message(mid: str | None) -> None:
     if not cfg.admin_group_id or not mid:
         return
     menu_tracker.set_last_menu_mid(cfg.admin_group_id, mid)
+
+
+# Маркер: к одному и тому же bot.send_message hook ставим только один
+# раз. Без этого повторный install (например, в тестах) обернул бы send
+# рекурсивно — каждое сообщение прошло бы tracker.set N раз. Маркер
+# хранится на самом bot-объекте как атрибут.
+_HOOK_INSTALLED_ATTR = "_aemr_admin_outgoing_tracker_installed"
+
+
+def install_outgoing_tracker_hook(bot) -> None:
+    """Обернуть `bot.send_message` декоратором, который синхронизирует
+    `menu_tracker[admin_group_id]` после любой успешной отправки в admin chat.
+
+    **Зачем.** Жалоба владельца 2026-05-27: «меню в админ-чате
+    редактируется при тапе кнопки на не-последнем сообщении». Корень —
+    62 прямых `bot.send_message(chat_id=admin_group_id, ...)` в коде
+    (handlers + services), большинство из них не вызывают
+    `menu_tracker.set_last_menu_mid` после send. Tracker отстаёт от
+    физического состояния чата. Любой следующий тап на «карточку выше»
+    callback_mid (старой карточки) == tracker → freshness ошибочно
+    edit'ит вверху, ниже всё остаётся.
+
+    Раньше единственное место с правильным sync — `admin_bus.send` —
+    мигрировать все 62 sites через шину было бы 200+ строк правок в
+    14 файлах, с риском регрессий. Этот hook решает проблему один раз
+    на старте бота: оборачивает оригинальный `bot.send_message`, после
+    каждого успешного `send_message(chat_id=admin_group_id, ...)`
+    извлекает mid и двигает tracker.
+
+    **Что делает hook:**
+    1. Если `chat_id != admin_group_id` — пробрасывает вызов без
+       изменений (citizen-chat tracker имеет свой sync через
+       `_send_or_edit_menu`).
+    2. Если `chat_id == admin_group_id` — выполняет оригинальный send,
+       извлекает mid, обновляет tracker. Возвращает результат как был.
+    3. Ошибки send_message не глотает — пробрасывает caller'у. Tracker
+       обновляет только при успешном send.
+
+    **Идемпотентность.** Повторный вызов на тот же bot — no-op (маркер
+    на bot-объекте). Иначе hook оборачивал бы себя рекурсивно и каждое
+    сообщение проходило бы N tracker.set.
+
+    **Где НЕ применять:**
+    - `admin_card.render` сам делает `menu_tracker.clear()` после
+      send_new (sacred event log, карточка обращения не должна
+      участвовать в tracker как меню). Hook сначала set'нет tracker
+      на mid карточки — потом сразу clear перезатрёт. Финальное
+      состояние = None, корректно.
+    - `admin_bus.send` сам делает set_last_menu_mid после send. Hook
+      повторит то же действие — это идемпотентно (tracker сидит на
+      том же mid). Не дублируем явный set, оставляем для читаемости
+      `admin_bus.send`.
+
+    Args:
+        bot: maxapi Bot, на котором будет установлен hook.
+    """
+    if not cfg.admin_group_id:
+        log.info(
+            "install_outgoing_tracker_hook: ADMIN_GROUP_ID не задан, "
+            "hook не устанавливаем (для citizen-only-окружения OK)."
+        )
+        return
+    if getattr(bot, _HOOK_INSTALLED_ATTR, False):
+        log.debug(
+            "install_outgoing_tracker_hook: hook уже установлен на этом "
+            "bot, повторный вызов проигнорирован."
+        )
+        return
+
+    original_send = bot.send_message
+
+    async def _wrapped_send(*args, **kwargs):
+        # Hook должен быть совместим с любой формой вызова — позиционной,
+        # keyword, mixed. Реальные использования в коде — keyword only
+        # (chat_id=..., text=..., attachments=...), но защита от
+        # внезапных позиционных аргументов нужна, чтобы hook не отвалился
+        # на нестандартном usage и не сломал send.
+        result = await original_send(*args, **kwargs)
+        try:
+            target_chat_id = kwargs.get("chat_id")
+            if (
+                target_chat_id == cfg.admin_group_id
+                and target_chat_id is not None
+            ):
+                mid = extract_message_id(result)
+                if mid:
+                    menu_tracker.set_last_menu_mid(
+                        cfg.admin_group_id, mid
+                    )
+                    log.debug(
+                        "outgoing-tracker-hook: admin chat send → "
+                        "tracker = %s", mid,
+                    )
+        except Exception:
+            # tracker-sync best-effort, никогда не ломает caller.
+            log.debug(
+                "install_outgoing_tracker_hook: post-send sync failed",
+                exc_info=False,
+            )
+        return result
+
+    bot.send_message = _wrapped_send  # type: ignore[assignment]
+    setattr(bot, _HOOK_INSTALLED_ATTR, True)
+    log.info(
+        "install_outgoing_tracker_hook: установлен hook на bot.send_message "
+        "для admin_group_id=%s — каждый исходящий в admin chat будет "
+        "автоматически двигать menu_tracker.",
+        cfg.admin_group_id,
+    )
 ```
 
 ### `bot/aemr_bot/services/admin_card.py`
@@ -29478,6 +29597,166 @@ class TestHandleWizardText:
             await admin_operators.run_operators_action(event, "op:opadd:confirm")
         text = event.bot.send_message.call_args.kwargs["text"]
         assert "Обновлено" in text
+```
+
+### `bot/tests/test_admin_outgoing_hook.py`
+
+Size: `7012` bytes  
+SHA-256: `db928dd543e4dc5ab660debc44014cc824a7fa7e0e46280c83378120b8309bbf`
+
+```python
+"""Тесты для `admin_bus.install_outgoing_tracker_hook` — sacred-инвариант
+«каждый исходящий в admin chat двигает tracker».
+
+Закрывает архитектурную дыру из жалобы владельца 2026-05-27: «меню в
+админ-чате редактируется при тапе на не-последнем сообщении». Без
+hook'а 62 прямых `bot.send_message(chat_id=admin_group_id, ...)` в
+коде оставляли tracker устаревшим — freshness rule ошибочно edit'ил
+карточки вверху чата.
+
+С hook'ом — любой direct send в admin chat автоматически двигает
+tracker, независимо от того, идёт ли он через admin_bus.send,
+admin_card.render или один из 60 ad-hoc вызовов в handlers.
+"""
+from __future__ import annotations
+
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+
+ADMIN_CHAT_ID = 555
+
+
+def _make_bot(send_mids: list[str] | None = None):
+    """Bot со стримом mid'ов для последовательных send'ов."""
+    sequence = list(send_mids or ["m-1"])
+
+    def _next_send(*args, **kwargs):
+        mid = sequence.pop(0) if sequence else f"m-extra-{len(sequence)}"
+        return SimpleNamespace(
+            message=SimpleNamespace(body=SimpleNamespace(mid=mid))
+        )
+
+    return SimpleNamespace(
+        send_message=AsyncMock(side_effect=_next_send),
+    )
+
+
+@pytest.fixture(autouse=True)
+def _clean_tracker():
+    from aemr_bot.utils import menu_tracker
+    menu_tracker.clear_all()
+    yield
+    menu_tracker.clear_all()
+
+
+class TestInstallHookIdempotent:
+    """Двойной install на тот же bot — не должен оборачивать дважды.
+    Иначе каждое сообщение прошло бы tracker.set N раз и любая ошибка
+    в одной обёртке поломала бы все следующие."""
+
+    @pytest.mark.asyncio
+    async def test_double_install_no_double_wrap(self) -> None:
+        from aemr_bot.services import admin_bus
+
+        bot = _make_bot(send_mids=["m-1"])
+        with patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID):
+            admin_bus.install_outgoing_tracker_hook(bot)
+            wrapper_after_first = bot.send_message
+            admin_bus.install_outgoing_tracker_hook(bot)  # повторный
+            wrapper_after_second = bot.send_message
+
+        # Двойной install — no-op, send_message указывает на тот же
+        # wrapper. Иначе указатель бы менялся → tracker.set N раз и
+        # любая ошибка в одной обёртке поломала бы следующие.
+        assert wrapper_after_first is wrapper_after_second
+
+    @pytest.mark.asyncio
+    async def test_no_op_without_admin_group_id(self) -> None:
+        """Без ADMIN_GROUP_ID hook не устанавливается (citizen-only)."""
+        from aemr_bot.services import admin_bus
+
+        bot = _make_bot()
+        with patch("aemr_bot.config.settings.admin_group_id", 0):
+            admin_bus.install_outgoing_tracker_hook(bot)
+            # send_message не обёрнут — это AsyncMock from _make_bot.
+            assert not getattr(
+                bot, "_aemr_admin_outgoing_tracker_installed", False
+            )
+
+
+class TestHookSyncsAdminTracker:
+    """Главный sacred-контракт: send в admin chat обновляет tracker."""
+
+    @pytest.mark.asyncio
+    async def test_admin_send_updates_tracker(self) -> None:
+        from aemr_bot.services import admin_bus
+        from aemr_bot.utils import menu_tracker
+
+        bot = _make_bot(send_mids=["fresh-1"])
+        with patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID):
+            admin_bus.install_outgoing_tracker_hook(bot)
+            await bot.send_message(chat_id=ADMIN_CHAT_ID, text="hello admin")
+
+        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "fresh-1"
+
+    @pytest.mark.asyncio
+    async def test_non_admin_send_does_not_touch_admin_tracker(self) -> None:
+        """Send в чат жителя не должен трогать admin_tracker.
+        Citizen-chat имеет свой per-chat tracker через
+        `_send_or_edit_menu`, его hook не управляет."""
+        from aemr_bot.services import admin_bus
+        from aemr_bot.utils import menu_tracker
+
+        # Имитируем: admin tracker уже = "menu-old".
+        menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "menu-old")
+
+        bot = _make_bot(send_mids=["citizen-msg-1"])
+        with patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID):
+            admin_bus.install_outgoing_tracker_hook(bot)
+            await bot.send_message(user_id=42, text="hello citizen")
+
+        # admin tracker не двинулся — это send в личку жителя, не в admin.
+        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "menu-old"
+
+    @pytest.mark.asyncio
+    async def test_send_failure_does_not_pollute_tracker(self) -> None:
+        """Если bot.send_message бросает Exception — tracker не двигаем.
+        Caller получает исключение как обычно."""
+        from aemr_bot.services import admin_bus
+        from aemr_bot.utils import menu_tracker
+
+        # Pre-state: tracker = "old".
+        menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "old")
+
+        bot = SimpleNamespace(
+            send_message=AsyncMock(side_effect=RuntimeError("MAX 500")),
+        )
+        with patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID):
+            admin_bus.install_outgoing_tracker_hook(bot)
+            with pytest.raises(RuntimeError, match="MAX 500"):
+                await bot.send_message(chat_id=ADMIN_CHAT_ID, text="x")
+
+        # Tracker не двинулся — send упал до того как мы извлекли mid.
+        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "old"
+
+    @pytest.mark.asyncio
+    async def test_hook_works_via_admin_bus_send(self) -> None:
+        """`admin_bus.send` сам делает set_last_menu_mid — после hook'а
+        это становится двойным sync, что идемпотентно (один и тот же mid)."""
+        from aemr_bot.services import admin_bus
+        from aemr_bot.utils import menu_tracker
+
+        bot = _make_bot(send_mids=["bus-mid-1"])
+        with patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID):
+            admin_bus.install_outgoing_tracker_hook(bot)
+            mid = await admin_bus.send(bot, text="from bus")
+
+        assert mid == "bus-mid-1"
+        # Tracker = bus-mid-1, неважно через какой путь он был set.
+        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "bus-mid-1"
 ```
 
 ### `bot/tests/test_admin_panel.py`
