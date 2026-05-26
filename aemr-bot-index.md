@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-26 22:21:11 UTC`
+Generated at: `2026-05-26 22:40:32 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `236`
 Max file size: `300 KB`
@@ -59,7 +59,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/callback_router.py` (12935 bytes)
 - `bot/aemr_bot/handlers/menu.py` (53035 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (41155 bytes)
-- `bot/aemr_bot/handlers/start.py` (20093 bytes)
+- `bot/aemr_bot/handlers/start.py` (21062 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (68253 bytes)
 - `bot/aemr_bot/main.py` (20473 bytes)
@@ -81,7 +81,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/policy.py` (2979 bytes)
 - `bot/aemr_bot/services/progress.py` (9433 bytes)
 - `bot/aemr_bot/services/repo_sync.py` (16984 bytes)
-- `bot/aemr_bot/services/settings_store.py` (41712 bytes)
+- `bot/aemr_bot/services/settings_store.py` (43782 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/threat_intel.py` (11404 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
@@ -247,7 +247,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `seed/holidays.json` (1270 bytes)
 - `seed/topics.json` (242 bytes)
 - `seed/transport_dispatchers.json` (450 bytes)
-- `seed/welcome.md` (2195 bytes)
+- `seed/welcome.md` (587 bytes)
 
 
 ## Skipped files
@@ -13751,8 +13751,8 @@ async def handle_command_reply(
 
 ### `bot/aemr_bot/handlers/start.py`
 
-Size: `20093` bytes  
-SHA-256: `c5c642f0e8d9a683a549ff0cf0032f079a0a74ef87ca226509840702b69bed0e`
+Size: `21062` bytes  
+SHA-256: `0ced37c972b6f982ea2e6b15f17e575419c946249a6d2e0ed4ff5f28f481810b`
 
 ```python
 import logging
@@ -13844,14 +13844,33 @@ async def _welcome_text() -> str:
 
 
 async def cmd_start(event):
+    # Welcome шлём через `_send_or_edit_menu` — он обновит menu_tracker
+    # на mid отправленного сообщения. Это критично для freshness rule:
+    # без tracker.set следующий тап «🛡️ Защита от мошенников» в этом
+    # же welcome даст callback_mid != tracker → send_new вместо edit.
+    # Жалоба владельца 2026-05-27: «почему нажатие 🛡️ Защита не
+    # редактирует карточку меню — кажется, ты всё ещё не понимаешь
+    # правил».
+    from aemr_bot.handlers.menu import _send_or_edit_menu
+
     await _ensure_user(event)
     await _reset_funnel_if_stuck(get_user_id(event))
     welcome = await _welcome_text()
-    await reply(event, welcome, attachments=[await _build_main_menu(get_user_id(event))])
+    await _send_or_edit_menu(
+        event,
+        text=welcome,
+        attachments=[await _build_main_menu(get_user_id(event))],
+    )
 
 
 async def cmd_help(event):
-    await reply(event, texts.HELP_USER, attachments=[await _build_main_menu(get_user_id(event))])
+    from aemr_bot.handlers.menu import _send_or_edit_menu
+
+    await _send_or_edit_menu(
+        event,
+        text=texts.HELP_USER,
+        attachments=[await _build_main_menu(get_user_id(event))],
+    )
 
 
 async def cmd_rules(event):
@@ -13859,9 +13878,15 @@ async def cmd_rules(event):
 
 
 async def cmd_menu(event):
+    from aemr_bot.handlers.menu import _send_or_edit_menu
+
     await _reset_funnel_if_stuck(get_user_id(event))
     welcome = await _welcome_text()
-    await reply(event, welcome, attachments=[await _build_main_menu(get_user_id(event))])
+    await _send_or_edit_menu(
+        event,
+        text=welcome,
+        attachments=[await _build_main_menu(get_user_id(event))],
+    )
 
 
 async def cmd_policy(event):
@@ -21495,8 +21520,8 @@ async def fetch_main_runtime_config(
 
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `41712` bytes  
-SHA-256: `713be015a3e1ce685837419a639999587881c7d7a61e9fff5ae0cf7103dc7d7e`
+Size: `43782` bytes  
+SHA-256: `fb22c83d4dbe0217c439e442167991c5d87a4e1b36a3770b82a5f0f436b874e8`
 
 ```python
 import asyncio
@@ -22226,6 +22251,37 @@ async def seed_if_empty(session: AsyncSession) -> None:
     repaired: list[str] = []
     import logging as _logging
     _log = _logging.getLogger(__name__)
+
+    # Legacy auto-strip (2026-05-27): C1-hardening снят, антифишинг
+    # переехал в кнопку «🛡️ Защита от мошенников». Но IT мог сохранить
+    # welcome через UI в эпоху C1 — БД содержит **legacy блок** «НИКОГДА
+    # не запрашиваем», который теперь дублирует кнопку. Validate его не
+    # отвергает (required_substr убран), repair-режим не сработает.
+    #
+    # Эвристика: если welcome_text в БД содержит legacy маркер
+    # «НИКОГДА не запрашиваем», И обновлённое seed-значение его НЕ
+    # содержит — это legacy from C1, перезаписываем seed-значением.
+    # Идемпотентно: на следующем restart'е welcome уже без маркера,
+    # условие не сработает.
+    legacy_marker = "НИКОГДА не запрашиваем"
+    if (
+        "welcome_text" in existing
+        and isinstance(existing["welcome_text"], str)
+        and legacy_marker in existing["welcome_text"]
+        and "welcome_text" in seed_pairs
+        and isinstance(seed_pairs["welcome_text"], str)
+        and legacy_marker not in seed_pairs["welcome_text"]
+    ):
+        _log.warning(
+            "seed_if_empty: legacy welcome_text с C1-блоком обнаружен в БД — "
+            "перезаписываем актуальным seed/welcome.md (C1 снят 2026-05-27, "
+            "антифишинг живёт в кнопке «🛡️ Защита от мошенников»)."
+        )
+        await set_value(session, "welcome_text", seed_pairs["welcome_text"])
+        # Помечаем как «не было в существующих» для bootstrap-loop'a —
+        # иначе он попытается ещё раз сравнить через SCHEMA-validate.
+        existing.pop("welcome_text", None)
+
     for k, v in seed_pairs.items():
         if k not in existing:
             await set_value(session, k, v)
@@ -65267,8 +65323,8 @@ SHA-256: `62ba205dceb76a719baa1b07564ff7a110098b8ffcc9df42ad3c5400026a9fc4`
 
 ### `seed/welcome.md`
 
-Size: `2195` bytes  
-SHA-256: `475281b7a125453d18a2179c6c8dca85344229585e784a23f14426c17a0b03c0`
+Size: `587` bytes  
+SHA-256: `eb112d5764948da520a10ea406ca58c656afacb42f47f71005bde103eb6e6beb`
 
 ```markdown
 Здравствуйте.
@@ -65278,24 +65334,6 @@ SHA-256: `475281b7a125453d18a2179c6c8dca85344229585e784a23f14426c17a0b03c0`
 Здесь можно сообщить о проблеме, задать вопрос и найти полезную информацию.
 
 🔔 Подпишитесь на рассылку — оповещения о ЧС, отключениях и работах коммунальных служб. Кнопка «Подписаться на рассылку» в меню ниже.
-
-———
-🛡️ Что мы НИКОГДА не запрашиваем
-
-• данные паспорта, СНИЛС, номер банковской карты, CVV, коды из SMS,
-• оплату чего-либо (госпошлин, штрафов, «срочной обработки» обращения),
-• скачать сторонние приложения для «ускорения» или «проверки» аккаунта,
-• перейти по ссылке на сайт, где нужно «войти через Госуслуги» для «подтверждения личности».
-
-Если кто-то от имени бота / Администрации просит подобное — это мошенничество. Прекратите диалог, не переводите деньги. Сообщите нам через действие «Сообщить о проблеме» с темой «Другое».
-
-🛡️ Как убедиться, что это настоящий бот
-
-• Открывайте бота только по ссылке с официального сайта elizovomr.ru или по QR-коду из объявлений Администрации.
-• Бот никогда не пишет первым в личку без вашего предыдущего сообщения.
-• Бот не имеет «представителей» и «помощников» в личных сообщениях. Все ответы Администрации приходят от этого же бота.
-
-———
 
 Выберите действие.
 ```
