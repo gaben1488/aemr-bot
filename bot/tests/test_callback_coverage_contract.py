@@ -202,6 +202,65 @@ class TestRouterRoutesAreUsedByKeyboards:
         )
 
 
+class TestOperatorRoutesHaveHandlers:
+    """Каждый OPERATOR_ADMIN/BROADCAST_ADMIN route в callback_router имеет
+    handler в admin_callback_dispatch._EXACT / _PREFIX_ID / _PREFIX_RAW.
+
+    Защита от «phantom route»: route задекларирован, но handler не
+    зарегистрирован — payload приходит, ack делается, действие не
+    выполняется → silent broken UX. Этот тест ловит drift сразу.
+
+    Citizen routes (CITIZEN_FLOW / GEO_FLOW) НЕ проверяются —
+    обрабатываются через `handlers/menu.py:handle_callback`
+    fallthrough, который не имеет жёсткой declarative-таблицы.
+    Можно расширить в будущем (TODO: similar contract test для
+    menu._MENU_ROUTES / _PREFIX_HANDLERS).
+    """
+
+    def test_admin_routes_have_handlers_in_dispatch(self) -> None:
+        from aemr_bot.handlers import admin_callback_dispatch as dispatch
+        from aemr_bot.handlers import callback_router
+        from aemr_bot.handlers.callback_router import CallbackGroup
+
+        admin_groups = {
+            CallbackGroup.OPERATOR_ADMIN,
+            CallbackGroup.BROADCAST_ADMIN,
+        }
+
+        # Собрать handler-таблицы.
+        exact_handlers = set(dispatch._EXACT.keys())
+        prefix_id_handlers = {p for p, _ in dispatch._PREFIX_ID}
+        prefix_raw_handlers = {p for p, _ in dispatch._PREFIX_RAW}
+        prefix_handlers = prefix_id_handlers | prefix_raw_handlers
+
+        missing: list[str] = []
+        for route in callback_router.EXACT_ROUTES:
+            if route.group not in admin_groups:
+                continue
+            if route.pattern not in exact_handlers:
+                missing.append(f"EXACT {route.pattern} ({route.description})")
+
+        for route in callback_router.PREFIX_ROUTES:
+            if route.group not in admin_groups:
+                continue
+            # Route может быть «общий» префикс (например, `op:bc:`), а
+            # handler'ы — гранулярные подпрефиксы (`op:bc:open:`,
+            # `op:bc:clone:`, `op:bc:failed:`). Проверяем что есть хотя
+            # бы один handler на самом route'е ИЛИ на его расширении.
+            has_handler = (
+                route.pattern in prefix_handlers
+                or any(h.startswith(route.pattern) for h in prefix_handlers)
+            )
+            if not has_handler:
+                missing.append(f"PREFIX {route.pattern} ({route.description})")
+
+        assert not missing, (
+            "OPERATOR_ADMIN/BROADCAST_ADMIN routes без handler'а в "
+            "admin_callback_dispatch._EXACT/_PREFIX_*:\n"
+            + "\n".join(f"  - {m}" for m in missing)
+        )
+
+
 class TestExtractPayloadLiteralsSelfCheck:
     """Sanity-check самой утилиты `_extract_payload_literals` — чтобы
     rewriting её не сломал контракт-тесты молча.
