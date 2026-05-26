@@ -134,6 +134,11 @@ async def _do_open_tickets(event) -> None:
     from sqlalchemy import select
 
     from aemr_bot.db.models import Appeal, AppealStatus
+    from aemr_bot.utils.typing_indicator import mark_typing
+
+    # Typing-indicator: query+transform могут занять 1-2 сек на загруженной
+    # базе. Без него оператор видит «зависание» после тапа кнопки.
+    await mark_typing(event, cfg.admin_group_id)
 
     async with session_scope() as session:
         query = (

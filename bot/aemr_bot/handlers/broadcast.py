@@ -333,7 +333,16 @@ async def _handle_confirm(event) -> None:
     if state is None or state.step != "awaiting_confirm" or state.expired():
         await ack_callback(event, "Мастер закрыт.")
         return
-    await ack_callback(event)
+    # ack с фидбеком: оператор сразу видит «принято», broadcast wizard
+    # переходит в подготовку. Без notification ack — тихий, оператор
+    # тапает «Отправить» и думает, ушла ли команда.
+    await ack_callback(event, "Готовлю рассылку…")
+    # Typing-indicator: count subscribers + create broadcast +
+    # start scheduler могут занять секунды на большой базе. Без
+    # индикатора кажется, что бот завис.
+    from aemr_bot.utils.typing_indicator import mark_typing
+    await mark_typing(event, cfg.admin_group_id)
+
     op = await _get_operator(event)
     if op is None:
         return

@@ -94,7 +94,19 @@ class TestRouteRegistry:
             ("op:unblock:1", "operator_admin", True),
             ("op:opadd:role", "operator_admin", True),
             ("op:setkey:topics", "operator_admin", True),
-            ("menu:settings", "menu_fallback", False),
+            # menu:settings раньше уходил в MENU_FALLBACK; после
+            # декларации всех citizen-routes в EXACT_ROUTES (2026-05-26)
+            # — citizen_flow. То же для других menu:* / settings:* /
+            # info:* / goodbye:*. MENU_FALLBACK теперь только для
+            # реально неизвестных payload'ов (typo, stale кнопка).
+            ("menu:settings", "citizen_flow", False),
+            ("settings:goodbye", "citizen_flow", False),
+            ("info:emergency", "citizen_flow", False),
+            ("goodbye:revoke_yes", "citizen_flow", False),
+            ("appeal:show:42", "citizen_flow", False),
+            ("appeals:page:2", "citizen_flow", False),
+            # Реально неизвестный payload → MENU_FALLBACK.
+            ("totally:unknown:42", "menu_fallback", False),
         ],
     )
     def test_payload_group_matrix(self, payload, group, admin_allowed) -> None:

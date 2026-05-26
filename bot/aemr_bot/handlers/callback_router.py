@@ -29,7 +29,15 @@ class CallbackRoute:
 # Единственный реестр callback-групп. Точные payload'ы перечислены отдельно
 # от префиксных маршрутов, чтобы тесты ловили случайное пересечение.
 EXACT_ROUTES: tuple[CallbackRoute, ...] = (
+    # ── Citizen menu navigation (handlers/menu.py:handle_callback) ──
+    CallbackRoute("menu:main", CallbackGroup.CITIZEN_FLOW, False, "главное меню жителя"),
     CallbackRoute("menu:new_appeal", CallbackGroup.CITIZEN_FLOW, False, "новое обращение"),
+    CallbackRoute("menu:my_appeals", CallbackGroup.CITIZEN_FLOW, False, "мои обращения"),
+    CallbackRoute("menu:useful_info", CallbackGroup.CITIZEN_FLOW, False, "полезная информация"),
+    CallbackRoute("menu:appointment", CallbackGroup.CITIZEN_FLOW, False, "запись на приём"),
+    CallbackRoute("menu:settings", CallbackGroup.CITIZEN_FLOW, False, "настройки жителя"),
+    CallbackRoute("menu:security", CallbackGroup.CITIZEN_FLOW, False, "защита от мошенников"),
+    # ── Citizen воронка обращения ──
     CallbackRoute("consent:yes", CallbackGroup.CITIZEN_FLOW, False, "согласие на ПДн"),
     CallbackRoute("consent:no", CallbackGroup.CITIZEN_FLOW, False, "отказ от ПДн"),
     CallbackRoute("cancel", CallbackGroup.CITIZEN_FLOW, False, "отмена воронки"),
@@ -39,6 +47,25 @@ EXACT_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("geo:edit_address", CallbackGroup.GEO_FLOW, False, "исправить адрес"),
     CallbackRoute("geo:other_locality", CallbackGroup.GEO_FLOW, False, "выбрать другой пункт"),
     CallbackRoute("appeal:submit", CallbackGroup.CITIZEN_FLOW, False, "устаревшая кнопка отправки"),
+    # ── Citizen «Полезная информация» подменю ──
+    CallbackRoute("info:emergency", CallbackGroup.CITIZEN_FLOW, False, "экстренные контакты"),
+    CallbackRoute("info:dispatchers", CallbackGroup.CITIZEN_FLOW, False, "диспетчеры транспорта"),
+    CallbackRoute("info:subscribe_on", CallbackGroup.CITIZEN_FLOW, False, "подписаться на рассылку"),
+    CallbackRoute("info:subscribe_off", CallbackGroup.CITIZEN_FLOW, False, "отписаться от рассылки"),
+    CallbackRoute("subscribe:confirm", CallbackGroup.CITIZEN_FLOW, False, "мини-консент подписки"),
+    # ── Citizen «Настройки» — справка/правила/политика/прощание ──
+    CallbackRoute("settings:help", CallbackGroup.CITIZEN_FLOW, False, "справка по боту"),
+    CallbackRoute("settings:rules", CallbackGroup.CITIZEN_FLOW, False, "правила приёма обращений"),
+    CallbackRoute("settings:policy", CallbackGroup.CITIZEN_FLOW, False, "политика ПДн"),
+    CallbackRoute("settings:goodbye", CallbackGroup.CITIZEN_FLOW, False, "прощание (отзыв/удаление)"),
+    CallbackRoute("goodbye:unsub", CallbackGroup.CITIZEN_FLOW, False, "отписаться от рассылки"),
+    CallbackRoute("goodbye:revoke_ask", CallbackGroup.CITIZEN_FLOW, False, "запрос подтверждения отзыва согласия"),
+    CallbackRoute("goodbye:revoke_yes", CallbackGroup.CITIZEN_FLOW, False, "подтверждение отзыва согласия"),
+    CallbackRoute("goodbye:erase_ask", CallbackGroup.CITIZEN_FLOW, False, "запрос подтверждения удаления ПДн"),
+    CallbackRoute("goodbye:erase_yes", CallbackGroup.CITIZEN_FLOW, False, "подтверждение удаления ПДн"),
+    # ── Citizen рассылки ──
+    CallbackRoute("broadcast:unsubscribe", CallbackGroup.CITIZEN_FLOW, False, "отписаться через broadcast-сообщение"),
+    # ── Admin: broadcast wizard ──
     CallbackRoute("broadcast:confirm", CallbackGroup.BROADCAST_ADMIN, True, "подтвердить рассылку"),
     CallbackRoute("broadcast:abort", CallbackGroup.BROADCAST_ADMIN, True, "отменить мастер рассылки"),
     CallbackRoute("broadcast:edit", CallbackGroup.BROADCAST_ADMIN, True, "изменить текст рассылки"),
@@ -64,8 +91,16 @@ EXACT_ROUTES: tuple[CallbackRoute, ...] = (
 )
 
 PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
+    # ── Citizen воронка ──
     CallbackRoute("locality:", CallbackGroup.CITIZEN_FLOW, False, "выбор населённого пункта"),
     CallbackRoute("topic:", CallbackGroup.CITIZEN_FLOW, False, "выбор темы"),
+    # ── Citizen «Мои обращения» — карточка обращения с действиями ──
+    CallbackRoute("appeal:show:", CallbackGroup.CITIZEN_FLOW, False, "показать карточку обращения жителя"),
+    CallbackRoute("appeal:followup:", CallbackGroup.CITIZEN_FLOW, False, "дополнить обращение"),
+    CallbackRoute("appeal:repeat:", CallbackGroup.CITIZEN_FLOW, False, "подать похожее обращение"),
+    CallbackRoute("appeal:atts:", CallbackGroup.CITIZEN_FLOW, False, "посмотреть свои вложения"),
+    CallbackRoute("appeals:page:", CallbackGroup.CITIZEN_FLOW, False, "пагинация списка обращений"),
+    # ── Admin: broadcast история / wizard ──
     CallbackRoute("broadcast:stop:", CallbackGroup.BROADCAST_ADMIN, True, "остановить рассылку"),
     CallbackRoute("broadcast:cancel-cooldown:", CallbackGroup.BROADCAST_ADMIN, True, "отменить рассылку до отправки"),
     CallbackRoute("op:aud:", CallbackGroup.OPERATOR_ADMIN, True, "действие с аудиторией"),

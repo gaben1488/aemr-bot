@@ -31,12 +31,32 @@ async def _show_appeal_card_or_result(
     appeal_id: int,
     fallback_text: str,
 ) -> None:
-    """Опубликовать/обновить admin appeal card после действия оператора.
+    """Опубликовать admin appeal card после действия оператора (sacred
+    event log: каждое действие = новая запись внизу чата).
 
-    Freshness-rule (PR #62, унифицировано с меню): admin_card.render
-    проверит callback_mid против menu_tracker[admin_group_id]:
-    - callback_mid == последняя карточка в чате → edit на месте;
-    - иначе (ниже появились другие сообщения/карточки) → send new.
+    **DDD-решение 2026-05-26** (после жалобы владельца «закрыл 2
+    обращения подряд — одна карточка обновила статус, другая нет»):
+
+    Раньше передавали `callback_mid` → render по freshness-rule выбирал
+    edit-in-place vs send_new. Это давало непредсказуемый UX:
+    - Первый close: карточка свежая (callback_mid == tracker) → edit
+      на месте → оператор видит обновление inplace.
+    - Второй close: карточка #2 уже не последняя (после edit'а первой
+      tracker = card_1_mid) → send_new → копия #2 появляется внизу.
+    - Оператор видит «одну обновила, другую нет» — на самом деле обе
+      обработаны, но визуально по-разному.
+
+    **Sacred-инвариант** (carter cards = event log): каждое
+    оп-действие — это **event** в timeline'е чата. event никогда не
+    edit'ит прошлое — он добавляется новой записью. Это даёт:
+    - Полную, иммутабельную историю действий по обращению.
+    - Однозначный UX: после любого тапа оператор видит новую карточку
+      с актуальным статусом ВНИЗУ чата.
+    - Никакой путаницы при batch-действиях (закрыли 5 обращений — 5
+      карточек CLOSED внизу).
+
+    Поэтому **force_new=True всегда**. Карточка не edit'ится по
+    op-action никогда — только публикуется новой.
 
     На случай если обращение не найдено или user пуст — fallback
     короткое сообщение оператору, без card-render.
@@ -53,15 +73,13 @@ async def _show_appeal_card_or_result(
         appeal = None
     if appeal is not None and appeal.user is not None:
         try:
-            # Freshness-rule: пробрасываем callback_mid — render edit'нет
-            # карточку только если callback пришёл на последнюю карточку
-            # в чате (по menu_tracker). Иначе → send new внизу.
-            from aemr_bot.utils.event import get_callback_message_id
-
+            # DDD sacred event log: force_new=True всегда. Карточка
+            # появляется новой записью внизу с актуальным статусом.
+            # Старая остаётся выше как иммутабельный историчный slice.
             await admin_card_service.render(
                 event.bot,
                 appeal,
-                callback_mid=get_callback_message_id(event),
+                force_new=True,
             )
             return
         except Exception:
