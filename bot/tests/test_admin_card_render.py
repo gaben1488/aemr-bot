@@ -120,8 +120,11 @@ class TestFreshnessRule:
         bot.edit_message.assert_not_called()
         bot.send_message.assert_awaited_once()
         assert mid == "fresh-9"
-        # tracker обновился на новый mid
-        assert menu_tracker.get_last_menu_mid(555) == "fresh-9"
+        # SACRED-fix 2026-05-26: admin_card.render теперь делает
+        # menu_tracker.clear() после send, потому что карточка обращения
+        # НЕ является меню и не должна edit'иться через op:* callback'и
+        # с её же кнопок.
+        assert menu_tracker.get_last_menu_mid(555) is None
 
     @pytest.mark.asyncio
     async def test_no_callback_sends_new(self) -> None:
