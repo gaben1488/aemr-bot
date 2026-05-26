@@ -1,4 +1,5 @@
 import asyncio
+import html
 import json
 import re
 from typing import Any
@@ -183,16 +184,22 @@ def find_non_whitelisted_urls(text: str) -> list[str]:
 # опасный markup или ссылка вне whitelist'а, либо вырезаем, либо
 # заменяем на безопасный текст. Не криптографическая защита, а
 # первая линия обороны от случайного / умышленного вреда.
+# F3 (ReDoS защита): везде вместо `.*?` используется bounded
+# `[^<>]{0,4000}` — гарантированно линейная сложность. welcome_text
+# и consent_text имеют SCHEMA max_len=4000, поэтому реальные
+# legitimate теги (если будут) короче. Для нашего use case (plain
+# текст приветствия) допустимая длина содержимого тега — нулевая,
+# тег целиком вычищается; bound нужен только для regex-safety.
 _DANGEROUS_HTML_PATTERNS = (
     # Скрипты, iframe'ы, обработчики событий — никогда не должны попасть
     # к жителю даже если MAX случайно решит парсить их как HTML.
-    re.compile(r"<\s*script[^>]*>.*?</\s*script\s*>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"<\s*iframe[^>]*>.*?</\s*iframe\s*>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"<\s*(script|iframe|object|embed|applet)[^>]*/?>", re.IGNORECASE),
+    re.compile(r"<\s*script[^>]{0,200}>[^<>]{0,4000}</\s*script\s*>", re.IGNORECASE),
+    re.compile(r"<\s*iframe[^>]{0,200}>[^<>]{0,4000}</\s*iframe\s*>", re.IGNORECASE),
+    re.compile(r"<\s*(script|iframe|object|embed|applet)[^>]{0,200}/?>", re.IGNORECASE),
     # F7: leftover closing tags после nested-cloak'а — `</script>`,
     # `</iframe>` и т.п. — выживали single-pass strip'ом. Ловим отдельно.
     re.compile(r"</\s*(script|iframe|object|embed|applet)\s*>", re.IGNORECASE),
-    re.compile(r"\s+on[a-z]+\s*=\s*['\"][^'\"]*['\"]", re.IGNORECASE),  # onclick=... onload=...
+    re.compile(r"\s+on[a-z]+\s*=\s*['\"][^'\"]{0,500}['\"]", re.IGNORECASE),  # onclick=...
 )
 
 # Markdown-ссылки `[label](url)`. Если url не в whitelist — заменяем
@@ -227,7 +234,13 @@ def sanitize_settings_text(value: str) -> str:
     if not value:
         return value
 
-    out = value
+    # F6 (HTML entities): сначала декодируем `&lt;script&gt;` →
+    # `<script>`, потом санитизируем. Без этого regex'ы не видят
+    # entity-encoded payload (классический bypass). После
+    # санитизации НЕ кодируем обратно — текст идёт в MAX как
+    # plain-text, угловые скобки безопасны как символы.
+    out = html.unescape(value)
+
     # F7: цикл до фиксированной точки. Каждая итерация может открыть
     # ранее скрытый внутренний тег (после strip'а наружного). Лимит
     # в 5 итераций — защита от внезапного бесконечного цикла на

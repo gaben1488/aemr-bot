@@ -138,6 +138,14 @@ def _render_timeline(
         time_str = _local_short(created_at) if created_at else ""
         header = f"{marker} ({time_str})" if time_str else marker
         text = (getattr(msg, "text", None) or "").strip()
+        # SECURITY (URL defang): сообщения жителей в timeline могут
+        # содержать кликабельные URL — оператор должен видеть текст,
+        # но не должен мочь случайно тапнуть. Defang только для
+        # «от жителя» — ответы оператора уже прошли whitelist на
+        # outgoing, тем им defang не нужен.
+        if direction == MessageDirection.FROM_USER.value and text:
+            from aemr_bot.utils.url_defang import defang_url_in_text
+            text = defang_url_in_text(text)
         body = _clip(text, limit=text_limit) if text else "Без текста."
         attach_line = attachments_summary_line(
             getattr(msg, "attachments", None) or []
@@ -213,15 +221,22 @@ def admin_card(appeal: Appeal, user: User) -> str:
     vs «отозвал согласие — финальный ответ» vs «заблокирован» сразу,
     без прыжков в админ-меню.
     """
+    # SECURITY: текст обращения (summary) и адрес — единственные
+    # поля карточки, куда житель может вписать произвольный URL.
+    # Defang делает любые http(s)-ссылки некликабельными в admin-MAX
+    # без визуального изменения. Имя/телефон/локация не показывают
+    # URL по дизайну (валидация на входе), defang не нужен.
+    from aemr_bot.utils.url_defang import defang_for_admin
+
     body = ADMIN_CARD_TEMPLATE.format(
         number=appeal.id,
         name=user.first_name or "—",
         phone=user.phone or "—",
         status_line=_citizen_status_line(user),
         locality=appeal.locality or "—",
-        address=appeal.address or "—",
+        address=defang_for_admin(appeal.address) or "—",
         topic=appeal.topic or "—",
-        summary=appeal.summary or "—",
+        summary=defang_for_admin(appeal.summary) or "—",
         answer_limit=settings.answer_max_chars,
     )
     summary_line = attachments_summary_line(appeal.attachments or [])
@@ -291,11 +306,22 @@ def _maybe_url_warning(text: str) -> str:
 
 
 def admin_followup(appeal: Appeal, user: User, text: str) -> str:
+    """Карточка дополнения от жителя для admin-чата.
+
+    URL'ы в тексте жителя проходят defang — оператор видит ссылку,
+    но не может тапнуть случайно (защита от accidental phishing-click).
+    Подробности: utils/url_defang.py.
+    """
+    from aemr_bot.utils.url_defang import defang_for_admin
+
     rendered = ADMIN_FOLLOWUP_TEMPLATE.format(
         number=appeal.id,
         name=user.first_name or "—",
-        text=text,
+        text=defang_for_admin(text),
     )
+    # warning остаётся — оператор должен явно знать что в тексте была
+    # ссылка, даже если она defang'нута; защита 2-в-1 (visual cue +
+    # technical un-click).
     return rendered + _maybe_url_warning(text)
 
 
