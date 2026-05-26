@@ -598,21 +598,20 @@ async def _deliver_operator_reply(
     await _mark_reply_success_recorded(success_key)
     _remember_successful_reply(operator.id, appeal.id, text)
 
-    # Обновить admin-карточку через freshness-rule helper:
-    # - если оператор отвечал свайпом/intent на ПОСЛЕДНЕЙ карточке в
-    #   чате → edit её (статус из NEW/IN_PROGRESS в ANSWERED).
-    # - иначе → новая карточка снизу с актуальным timeline.
-    # callback_mid берём из event (mid карточки на которой нажали
-    # «Ответить»; для swipe-reply берём mid цитируемого).
+    # DDD sacred event log (2026-05-26): ответ оператора — это **event**
+    # в timeline'е обращения. Должна быть НОВАЯ карточка внизу чата с
+    # event_header'ом, всегда. Раньше callback_mid передавался без
+    # force_new — render по freshness иногда edit'ил старую карточку
+    # на месте, и тогда `event_header` терялся (он применяется только
+    # на send_new ветке, см. admin_card.render docstring). Оператор не
+    # видел явный маркер «ответ отправлен» — UX inconsistency.
     #
-    # event_header применяется только если render выйдет в send_new
-    # ветку (старая карточка не последняя, нужна свежая внизу). Тогда
-    # оператор сразу видит: «эта новая карточка — потому что только
-    # что отправлен ответ». На edit-in-place маркер игнорируется (см.
-    # admin_card.render docstring) — оператор и так в контексте.
+    # Теперь `force_new=True` всегда: каждый ответ публикует свежую
+    # карточку с актуальным статусом + явный header «✉️ Финальный/
+    # 💬 Промежуточный ответ отправлен». Sacred: старая карточка
+    # остаётся выше как историчная запись «до ответа».
     try:
         from aemr_bot.services import admin_card as admin_card_service
-        from aemr_bot.utils.event import get_callback_message_id
 
         async with session_scope() as session:
             fresh_appeal = await appeals_service.get_by_id_with_messages(
@@ -631,7 +630,7 @@ async def _deliver_operator_reply(
             await admin_card_service.render(
                 event.bot,
                 fresh_appeal,
-                callback_mid=get_callback_message_id(event),
+                force_new=True,
                 event_header=reply_event_header,
             )
     except Exception:
