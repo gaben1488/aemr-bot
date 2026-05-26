@@ -86,14 +86,24 @@ def _op_wizard_drop(operator_id: int) -> None:
 
 
 async def _safe_get_chat_members(bot) -> list:
-    """Безопасная обёртка над get_chat_members: на любой ошибке
-    возвращает пустой список, чтобы UI откатился к ручному вводу ID
-    без падения сценария."""
+    """Безопасная обёртка над get_chat_members: возвращает **полный**
+    список через пагинацию, на любой ошибке — пустой.
+
+    MAXAPI_DEEP_DIVE §3 fix (P2): раньше делал один вызов
+    `bot.get_chat_members(chat_id=…)` без пагинации — для группы >100
+    членов MAX возвращал только первую страницу, остальные молча
+    терялись. Теперь используем `ChatMembersManager.iter_all()` из
+    maxapi 1.1.0 — async-итератор с защитой от циклов marker.
+
+    Это правильно решает F11 (раньше там был эвристик «если получили
+    меньше членов, чем активных операторов — пропускаем» — теперь
+    эвристик не нужен, но оставляем как defence-in-depth, см.
+    `_job_stale_operators_cleanup` в cron.py).
+    """
     try:
-        result = await bot.get_chat_members(chat_id=cfg.admin_group_id)
-        if hasattr(result, "members"):
-            return list(result.members or [])
-        return []
+        from maxapi.types.chats import ChatMembersManager
+        manager = ChatMembersManager(bot=bot, chat_id=cfg.admin_group_id)
+        return await manager.list_all()
     except Exception as exc:
         log.warning("get_chat_members failed: %s", exc)
         return []
