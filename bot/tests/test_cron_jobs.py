@@ -405,9 +405,8 @@ class TestBuildScheduler:
             "health-selfcheck",
             "monthly-stats",
             "startup-pulse",
-            "pulse-offhours",
-            "pulse-workhours",
-            # pulse-sunday упразднён: mon-sun теперь покрывает все дни
+            "pulse-hourly",  # 24/7 каждый час на :05
+            "pulse-workhours-extra",  # пн-пт 9-17 доп. на :35
             "appeals-5y-retention",
             "pdn-retention",
             "funnel-watchdog",
@@ -417,34 +416,49 @@ class TestBuildScheduler:
         # healthcheck-ping появляется только если settings.healthcheck_url задан
         assert expected.issubset(names), f"missing: {expected - names}"
 
-    def test_offhours_pulse_covers_evening_gap(self) -> None:
-        """Регрессия: вечер 18:00–21:59 не должен выпадать из пульсов."""
-        bot = MagicMock()
-        sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
-        job = next(j for j in sched.get_jobs() if j.name == "pulse-offhours")
-        trigger_text = str(job.trigger)
-        assert "18-23" in trigger_text
+    def test_pulse_hourly_covers_all_hours_and_days(self) -> None:
+        """Регрессия: базовый `pulse-hourly` идёт каждый час 24/7.
 
-    def test_pulse_runs_every_day_including_sunday(self) -> None:
-        """Регрессия: pulse идёт ежедневно (mon-sun), не только пн-сб.
-
-        Раньше было два юнита: pulse-offhours (mon-sat) + отдельный
-        pulse-sunday (sun, ежечасно). Теперь pulse-offhours и
-        pulse-workhours оба mon-sun, отдельный воскресный юнит
-        упразднён — выходные и праздники мониторятся так же как
-        будни (heartbeat «бот живой» нужен 24/7).
+        Раньше было два пересекающихся юнита (`pulse-offhours` для
+        часов 0-8,18-23 и `pulse-workhours` для 9-17) — путаное
+        разделение, плюс в субботу-воскресенье 9-17 ошибочно срабатывал
+        workhours-юнит как будто рабочий день. Теперь один базовый
+        24/7 юнит даёт ровно один сигнал в час всегда, включая ночь,
+        выходные и праздники.
         """
         bot = MagicMock()
         sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
-        for job_name in ("pulse-offhours", "pulse-workhours"):
-            job = next(j for j in sched.get_jobs() if j.name == job_name)
-            text = str(job.trigger)
-            assert "mon-sun" in text, (
-                f"{job_name}: ожидался day_of_week=mon-sun, получено: {text}"
-            )
-        # Отдельной pulse-sunday больше не существует
+        job = next(j for j in sched.get_jobs() if j.name == "pulse-hourly")
+        trigger_text = str(job.trigger)
+        # Должно быть без ограничений по часам или дням недели —
+        # только минута :05.
+        assert "hour" not in trigger_text or "hour='*'" in trigger_text
+        assert "minute='5'" in trigger_text or "minute=5" in trigger_text.replace("'", "")
+
+    def test_pulse_workhours_extra_only_mon_fri_9_17(self) -> None:
+        """Регрессия: доп-сигнал в рабочее время ТОЛЬКО пн-пт 9-17.
+
+        В выходные (сб-вс) ничего дополнительного — только базовый
+        `pulse-hourly`. Юзер указал что выходные не должны получать
+        «рабочую» плотность мониторинга.
+        """
+        bot = MagicMock()
+        sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
+        job = next(j for j in sched.get_jobs() if j.name == "pulse-workhours-extra")
+        trigger_text = str(job.trigger)
+        assert "mon-fri" in trigger_text
+        assert "9-17" in trigger_text
+        assert "35" in trigger_text
+
+    def test_old_pulse_jobs_dont_exist(self) -> None:
+        """Старые имена `pulse-offhours` / `pulse-workhours` /
+        `pulse-sunday` упразднены — заменены на `pulse-hourly` +
+        `pulse-workhours-extra`."""
+        bot = MagicMock()
+        sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
         names = {j.name for j in sched.get_jobs()}
-        assert "pulse-sunday" not in names
+        for old in ("pulse-offhours", "pulse-workhours", "pulse-sunday"):
+            assert old not in names, f"старый job {old!r} должен быть упразднён"
 
     def test_open_reminder_mon_fri_with_lunch_break(self) -> None:
         """Регрессия: open-reminder работает пн-пт с обедом 12-13 (skip).
