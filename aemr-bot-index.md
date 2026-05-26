@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-26 03:39:02 UTC`
+Generated at: `2026-05-26 04:03:27 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `228`
+Indexed files: `231`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -47,7 +47,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (12814 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42735 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (24006 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (24833 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (43448 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (4466 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (27203 bytes)
@@ -65,7 +65,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/main.py` (20473 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_bus.py` (6046 bytes)
-- `bot/aemr_bot/services/admin_card.py` (12249 bytes)
+- `bot/aemr_bot/services/admin_card.py` (13031 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6489 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
 - `bot/aemr_bot/services/appeals.py` (27094 bytes)
@@ -81,14 +81,14 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/policy.py` (2979 bytes)
 - `bot/aemr_bot/services/progress.py` (9433 bytes)
 - `bot/aemr_bot/services/repo_sync.py` (16984 bytes)
-- `bot/aemr_bot/services/settings_store.py` (37659 bytes)
+- `bot/aemr_bot/services/settings_store.py` (41989 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/threat_intel.py` (11404 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (12943 bytes)
-- `bot/aemr_bot/texts.py` (46961 bytes)
+- `bot/aemr_bot/texts.py` (48006 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -164,7 +164,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_security_batch_c.py` (9267 bytes)
 - `bot/tests/test_security_batch_d.py` (6992 bytes)
 - `bot/tests/test_services_no_db.py` (9640 bytes)
-- `bot/tests/test_settings_seed_baseline.py` (3683 bytes)
+- `bot/tests/test_settings_seed_baseline.py` (5309 bytes)
 - `bot/tests/test_settings_store_validation.py` (6731 bytes)
 - `bot/tests/test_stale_operators_cleanup.py` (5188 bytes)
 - `bot/tests/test_threat_intel.py` (3737 bytes)
@@ -176,7 +176,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/_extracted/REGLAMENT_v7_FULL.md` (79745 bytes)
 - `docs/_meta/ADMIN_MENU_EXPANSION_PROPOSAL.md` (27260 bytes)
 - `docs/_meta/AUDIT_REPORT.md` (17027 bytes)
+- `docs/_meta/CARDS_UX_SWEEP_2026-05-26.md` (21489 bytes)
 - `docs/_meta/COVERAGE_GAPS.md` (26592 bytes)
+- `docs/_meta/DOCS_ACTUALIZATION_SWEEP_2026-05-26.md` (21641 bytes)
 - `docs/_meta/FILE_INVENTORY.md` (33577 bytes)
 - `docs/_meta/MAXAPI_DEEP_DIVE_2026-05-26.md` (14167 bytes)
 - `docs/_meta/MAXAPI_INSIGHTS.md` (22979 bytes)
@@ -184,6 +186,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/_meta/MAXAPI_UNUSED_FEATURES.md` (12198 bytes)
 - `docs/_meta/REGLAMENT_v7_COMPLIANCE.md` (36490 bytes)
 - `docs/_meta/REGLAMENT_v7_GAPS.md` (62011 bytes)
+- `docs/_meta/RUSSIAN_COMMENTS_SWEEP_2026-05-26.md` (15733 bytes)
 - `docs/_meta/SEC_EXPLOITS_2026-05-26.md` (10308 bytes)
 - `docs/_meta/SEC_INVENTORY_2026-05-26.md` (15931 bytes)
 - `docs/_meta/SEC_MAX_THREATS_2026-05-26.md` (18924 bytes)
@@ -5389,8 +5392,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `24006` bytes  
-SHA-256: `9f34cae71a6cd6a5e1c1a8281f5f1433a2d70b861231d315eec45ad5ad46c5f6`
+Size: `24833` bytes  
+SHA-256: `bf48dd0bd6f01cbb336e0a6724373f8d15a54b7a9456e0e37a47212f65d6c8a9`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -5456,6 +5459,15 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
         except Exception:
             log.exception("count_open failed; кнопку без счётчика покажем")
 
+    # SACRED-нарушение, найдено владельцем 2026-05-26:
+    # `show_op_menu` через send_or_edit_screen без force_new_message
+    # делал EDIT на последнем сообщении бота. Если последним было
+    # admin appeal card (sacred — нельзя edit), оно молча превращалось
+    # в меню оператора, и переписка обращения «съедалась». Теперь
+    # ВСЕГДА force_new_message=True — каждое открытие меню это
+    # отдельное сообщение в чате. Лёгкий «флуд» в admin-чате
+    # допустим (это рабочий чат), сохранность карточек обращений —
+    # обязательна.
     sent = await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
@@ -5465,7 +5477,7 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
                 open_count=open_count, is_it=is_it, can_broadcast=can_broadcast
             )
         ],
-        force_new_message=pin,
+        force_new_message=True,
     )
     if not pin:
         return
@@ -15943,8 +15955,8 @@ def note_incoming_admin_message(mid: str | None) -> None:
 
 ### `bot/aemr_bot/services/admin_card.py`
 
-Size: `12249` bytes  
-SHA-256: `d07769bdf96668ad196103290e7e829bd4fc19fbbd2f6be8c5456322b9c3c584`
+Size: `13031` bytes  
+SHA-256: `611e7d5819d14badf9e0fae3c585b40adaac0deccde0a352b718fa9a06b37cfd`
 
 ```python
 """Admin appeal card с freshness-rule (унифицированное правило для
@@ -16175,9 +16187,19 @@ async def render(
 
     new_mid = extract_message_id(sent)
     if new_mid:
-        # Обновляем общий tracker — теперь это последнее бот-сообщение
-        # в чате (до следующего render любой системы).
-        menu_tracker.set_last_menu_mid(cfg.admin_group_id, new_mid)
+        # SACRED rule (исправлено 2026-05-26 после жалобы владельца):
+        # admin appeal card НЕ является menu-карточкой и НЕ должна
+        # участвовать в `menu_tracker`. Раньше set_last_menu_mid
+        # тут писал mid карточки обращения как «последнее меню»,
+        # из-за чего любой callback `op:menu` / `op:diag` /
+        # `op:stats:*` с кнопок этой же карточки EDIT'ил sacred-
+        # карточку (превращая переписку обращения в админ-меню).
+        #
+        # Теперь — `menu_tracker.clear()`. Следующий клик меню
+        # увидит «текущего меню нет» и пошлёт НОВОЕ сообщение
+        # (через `send_or_edit_screen` ветка без edit). Sacred
+        # admin appeal card остаётся неизменной.
+        menu_tracker.clear(cfg.admin_group_id)
         async with session_scope() as session:
             await appeals_service.set_last_admin_card_mid(
                 session, appeal.id, new_mid
@@ -21155,8 +21177,8 @@ async def fetch_main_runtime_config(
 
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `37659` bytes  
-SHA-256: `9f6e6a11718355ab8060eb812fdf10c6c05f8fc003f42177da37d3937744ce4d`
+Size: `41989` bytes  
+SHA-256: `c9cbe1e726909339e5f6d2ef7badfc29889df9e71e81b4b414558c928d5ffcd5`
 
 ```python
 import asyncio
@@ -21727,7 +21749,30 @@ async def get_text_with_fallback(
         )
         return fallback
     if isinstance(raw, str) and raw.strip():
-        return sanitize_settings_text(raw)
+        # **Системный fix 2026-05-26 (найдено владельцем).**
+        # Раньше БД-значение возвращалось как есть, даже если оно
+        # больше не соответствует актуальной SCHEMA. Сценарий-катастрофа:
+        # IT обновил seed/welcome.md (добавил антифишинговый блок) →
+        # SCHEMA в коде получила required_substr "НИКОГДА не запрашиваем"
+        # → но в БД лежит **старая** версия welcome_text без этой
+        # подстроки (seed_if_empty работает только при пустой БД).
+        # Жителю шёл устаревший welcome без защиты.
+        #
+        # Теперь применяем validate(): SCHEMA — единый источник истины.
+        # Если БД-текст не проходит — пишем WARNING (чтобы IT увидел)
+        # и возвращаем безопасный fallback. Жителю всегда уходит
+        # текст, соответствующий актуальным правилам.
+        is_valid, reason = validate(key, raw)
+        if is_valid:
+            return sanitize_settings_text(raw)
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "get_text_with_fallback: БД-значение для %r не проходит "
+            "SCHEMA-validate (%s) — отдаём hardcoded fallback. "
+            "IT-оператору рекомендуется обновить настройку через UI.",
+            key, reason,
+        )
+        return fallback
     return fallback
 
 
@@ -21823,18 +21868,33 @@ def _read_seed_text(name: str) -> str | None:
 
 
 async def seed_if_empty(session: AsyncSession) -> None:
-    """Заполнить настройки из /seed только для отсутствующих ключей.
+    """Заполнить настройки из /seed для отсутствующих ИЛИ невалидных ключей.
 
-    После вставки сразу помечает свежие SYNCED_KEYS как уже
+    Два режима в одной функции:
+
+    1. **Bootstrap (раньше — основной):** если ключа нет в БД, кладём
+       значение из seed-файла. Это первый запуск на свежей БД.
+
+    2. **Repair (системный фикс 2026-05-26, найдено владельцем):**
+       если ключ есть в БД, но его значение **не проходит SCHEMA-validate**
+       (например, в БД лежит старая версия welcome_text без обязательной
+       подстроки «НИКОГДА не запрашиваем», добавленной позже в SCHEMA),
+       перезаписываем seed-значением. Это закрывает дрейф «код обновился,
+       БД отстала».
+
+    После вставки/перезаписи помечает свежие SYNCED_KEYS как уже
     синхронизированные с репо (synced_at = now()). Логика: seed-файлы
     (`seed/contacts.json`, `seed/topics.json`, `seed/transport_dispatchers.json`)
     физически лежат в репозитории и уже являются baseline'ом, поэтому
     сразу после первого старта бота этим ключам не место в списке
-    «несинхронизированных изменений». Иначе индикатор «3 грязных ключа»
-    горит вечно у каждого свежеустановленного бота — это раздражает
-    оператора и сбивает с толку: настоящих изменений нет, а UI кричит.
+    «несинхронизированных изменений».
+
+    Repair-режим тоже зовёт mark_synced для перезаписанных ключей —
+    автоматическая правка не должна показывать «оператор изменил
+    настройку» в UI (это сделал бот по seed-файлу, не человек).
     """
-    existing = set(await session.scalars(select(Setting.key)))
+    existing_rows = await session.execute(select(Setting.key, Setting.value))
+    existing: dict[str, Any] = {k: v for k, v in existing_rows.all()}
 
     seed_pairs: dict[str, Any] = {}
     if (topics := _read_seed_json("topics.json")) is not None:
@@ -21849,18 +21909,51 @@ async def seed_if_empty(session: AsyncSession) -> None:
         seed_pairs["consent_text"] = consent
 
     newly_seeded: list[str] = []
+    repaired: list[str] = []
+    import logging as _logging
+    _log = _logging.getLogger(__name__)
     for k, v in seed_pairs.items():
         if k not in existing:
             await set_value(session, k, v)
             newly_seeded.append(k)
+            continue
+        # Repair-режим: проверяем актуальное значение через SCHEMA.
+        # Если в SCHEMA нет правил для ключа (например welcome_text
+        # SCHEMA отсутствует — но у нас есть) — validate вернёт «unknown
+        # key», пропускаем.
+        if k not in SCHEMA:
+            continue
+        is_valid, reason = validate(k, existing[k])
+        if is_valid:
+            continue
+        # Перед перезаписью убеждаемся что seed-значение **само**
+        # проходит validate — иначе можем сломать рабочий бот
+        # неполным seed-файлом.
+        seed_is_valid, seed_reason = validate(k, v)
+        if not seed_is_valid:
+            _log.error(
+                "seed_if_empty: ключ %r невалиден в БД (%s) И в seed-файле "
+                "тоже (%s) — не трогаем. Требуется ручная правка через UI.",
+                k, reason, seed_reason,
+            )
+            continue
+        _log.warning(
+            "seed_if_empty: repair ключа %r — БД-значение не проходит "
+            "validate (%s), перезаписываем актуальным seed-значением.",
+            k, reason,
+        )
+        await set_value(session, k, v)
+        repaired.append(k)
 
-    # Только те свежие ключи, которые входят в SYNCED_KEYS (репо-синк).
+    # Только те свежие/починенные ключи, которые входят в SYNCED_KEYS.
     # welcome_text / consent_text идут не сюда — их baseline хранится в
     # seed/welcome.md и seed/consent.md в формате markdown, репо-синк
     # их не трогает.
-    baseline_synced = [k for k in newly_seeded if k in SYNCED_KEYS]
-    if baseline_synced:
-        await mark_synced(session, baseline_synced)
+    auto_synced = [
+        k for k in newly_seeded + repaired if k in SYNCED_KEYS
+    ]
+    if auto_synced:
+        await mark_synced(session, auto_synced)
 ```
 
 ### `bot/aemr_bot/services/stats.py`
@@ -23571,8 +23664,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `46961` bytes  
-SHA-256: `7860461b68b65b87d227557411b64de0e5b53a10f9c75298791ba8a1eff0efb5`
+Size: `48006` bytes  
+SHA-256: `266f952a590c21a58ad6e6b0e4ae657002f440bc3af0f7f57b4f42af3292db30`
 
 ```python
 WELCOME = (
@@ -23754,8 +23847,19 @@ CITIZEN_REPLY_TEMPLATE = (
     "\n"
     "━━━━━━━━━━━━━━━━\n"
     "\n"
-    "{reply_text}"
+    "{reply_text}\n"
+    "\n"
+    "━━━━━━━━━━━━━━━━\n"
+    "🛡️ Напоминание о безопасности. Бот Администрации НИКОГДА не "
+    "запрашивает паспорт, СНИЛС, банковские реквизиты, коды из SMS и "
+    "не просит оплаты. Если получили подобное «от Администрации» — это "
+    "мошенничество, обращайтесь в МВД (8-800-250-30-72)."
 )
+# Footer-напоминание о безопасности — в каждом формальном ответе
+# оператора жителю. Раньше антифишинг-блок жил только в WELCOME при
+# /start; житель, который уже в активной переписке, мог месяцами не
+# нажимать /start и забыть про защиту. Footer на каждом ответе
+# держит правило в поле зрения постоянно.
 # CITIZEN_REPLY_TEMPLATE намеренно длинный заголовок: это формальное
 # письмо-ответ от администрации. Житель должен видеть, кто ответил и
 # по какому обращению, а не просто текст в личке. Не сокращать.
@@ -43342,8 +43446,8 @@ class TestBroadcastsEligibleFilter:
 
 ### `bot/tests/test_settings_seed_baseline.py`
 
-Size: `3683` bytes  
-SHA-256: `1b07c58c52cb044dad352f87eec0b0bb3a83360ace5c00d4723621787ff2c21e`
+Size: `5309` bytes  
+SHA-256: `82640a5ef3faad41f582e4fe51c332aaaa134e0a5e2bcf629e3b330dfafb3c55`
 
 ```python
 """Тесты на seed_if_empty: после seed свежие SYNCED_KEYS должны быть
@@ -43421,6 +43525,32 @@ class TestSeedBaseline:
 
         dirty = await settings_store.get_dirty_keys(session)
         assert "topics" in dirty
+
+    async def test_repair_invalid_welcome_text_from_db(self, session) -> None:
+        """Системный фикс 2026-05-26: если в БД лежит welcome_text
+        без обязательной подстроки 'НИКОГДА не запрашиваем' (старая
+        версия до антифишинг-блока), seed_if_empty при следующем
+        запуске должен перезаписать его актуальным seed-значением.
+        """
+        # Кладём в БД "стаpый" welcome без антифишинга
+        old_welcome = "Здравствуйте. Это бот.\n\nВыберите действие."
+        await settings_store.set_value(session, "welcome_text", old_welcome)
+        await session.flush()
+
+        # Запускаем seed_if_empty — должен починить
+        await settings_store.seed_if_empty(session)
+        await session.flush()
+
+        # В БД теперь актуальный welcome (либо из seed/welcome.md, либо
+        # никаких изменений если seed-файл сам не валидный)
+        raw = await settings_store.get(session, "welcome_text")
+        if "НИКОГДА не запрашиваем" in (raw or ""):
+            # Seed-файл валиден — repair прошёл
+            assert raw != old_welcome
+        else:
+            # Seed-файл сам устарел — оставлено как есть, но WARNING
+            # логирован (см. реализацию)
+            assert raw == old_welcome
 ```
 
 ### `bot/tests/test_settings_store_validation.py`
@@ -46081,6 +46211,522 @@ SHA-256: `d96d6cf8abb401669af874255927d93d37b58746a5caffd9627835804106afbc`
 4. Прописать в CI ежеквартальный re-audit: cron-job, который запускается раз в три месяца и комментирует PR с PR-заголовком «Doc-drift sweep», если документы не пересматривались.
 ```
 
+### `docs/_meta/CARDS_UX_SWEEP_2026-05-26.md`
+
+Size: `21489` bytes  
+SHA-256: `261aede17d35e073aeaa8ae8b7a7568cae847cd739b3633d99f7d78c43f0fec5`
+
+```markdown
+# Cards UX Sweep — 2026-05-26
+
+Полный backlog для распространения единой визуальной грамматики
+(шапка `━━━ HEADER ━━━`, статус-tag сразу под шапкой, эмодзи только
+в начале строк, разделители `· · ·` тонкий / `━━━━━━━━━━━━━━━━`
+жирный, CTA в конце) на все карточки кроме 4 уже сделанных в PR #89.
+
+Грамматика — см. `texts.py:102-114` (комментарий-каноник). Принцип
+accessibility: `─` иногда озвучивается NVDA/JAWS-RU как «черта»,
+а `· · ·` — как пауза, потому везде, где смысловая граница, а не
+тяжёлый раздел, заменяем `──────` → `· · ·`. Жирный `━━━━` оставляем
+только перед CTA и в шапке.
+
+---
+
+## P0 — видят оба, каждый день
+
+### 1. `OP_BROADCAST_PREVIEW` (texts.py:520-527)
+
+Сейчас:
+```
+Предпросмотр рассылки
+────────────────
+{text}
+────────────────
+📷 Картинок: {image_count}{image_warning}
+Готово к отправке. Получателей: {count}.
+```
+
+Улучшить:
+```
+━━━ ПРЕДПРОСМОТР РАССЫЛКИ ━━━
+👥 Получателей: {count}
+🖼 Картинок: {image_count}{image_warning}
+
+· · ·
+
+{text}
+
+━━━━━━━━━━━━━━━━
+📤 Готово к отправке. Проверьте текст и картинки.
+```
+
+Шапка явная, мета (получателей/картинок) сразу под шапкой как status-tag,
+тело отделено `· · ·`, жирный разделитель перед CTA. Это та же грамматика
+что у admin_card / citizen_reply.
+
+Тесты: `test_broadcast_handlers.py` (substring assertions на «Готово к
+отправке» и «Получателей» — если есть; см. `_handle_wizard_text`).
+Проверить grep `"Предпросмотр рассылки"` в tests/.
+
+### 2. `OP_BROADCAST_CARD` (texts.py:563-571)
+
+Сейчас:
+```
+📜 Рассылка #{number}
+Статус: {status}
+Создана: {created_at}
+Доставлено: {delivered}/{total}{failed_line}
+Картинок: {image_count}
+──────────
+{text}
+```
+
+Улучшить:
+```
+━━━ РАССЫЛКА #{number} ━━━
+📊 Статус: {status}
+🗓 Создана: {created_at}
+✅ Доставлено: {delivered}/{total}{failed_line}
+🖼 Картинок: {image_count}
+
+· · ·
+
+{text}
+```
+
+Эмодзи в начале каждой метаданной (NVDA-friendly), шапка единая,
+тонкий разделитель перед телом. `failed_line` уже идёт с `\n` — оставить.
+
+Тесты: `test_broadcast_history_card.py` — проверить assertions на
+«📜 Рассылка #» и «──────────».
+
+### 3. `STATUS_LABELS` (texts.py:405-410) — уже хорошие, оставить
+
+```
+"new": ("🆕", "Новое"),
+"in_progress": ("🔄", "В работе"),
+"answered": ("✅", "Завершено"),
+"closed": ("⛔", "Закрыто без ответа"),
+```
+
+Маркер всегда первым в кортеже — это уже соответствует «эмодзи в начале».
+Оставить как есть.
+
+### 4. `APPEAL_LIST_EMPTY` (texts.py:83-86) — оставить
+
+Не карточка, а одностроковый prompt. Эмодзи в скобках естественные,
+«Написать обращение» — это название кнопки. Не трогать.
+
+---
+
+## P1 — оператор видит часто; либо житель часто
+
+### 5. `admin_followups_block` в card_format.py:63-88
+
+Сейчас:
+```python
+lines = ["────────────────", title]   # "Дополнение к обращению:"
+```
+
+Улучшить — заменить `────────────────` на `· · ·` (это вспомогательный
+блок внутри admin_card, не главный CTA-раздел):
+
+```python
+lines = ["", "· · ·", "", title]
+```
+
+Эмодзи `📩` префиксом к title (`📩 Дополнение к обращению:`) для
+скринридер-симметрии с timeline-маркерами.
+
+Тесты: `test_appeal_card_timeline.py` — там грепаются эти заголовки
+substring'ами.
+
+### 6. `_render_timeline` в card_format.py:126
+
+Сейчас:
+```python
+lines = ["────────────────", "История переписки:"]
+```
+
+Улучшить:
+```python
+lines = ["", "· · ·", "", "📜 История переписки:"]
+```
+
+Тот же приём — `· · ·` вместо `────`, эмодзи `📜` префиксом к
+section-title (NVDA озвучит как «свиток история переписки», ясный
+семантический сигнал).
+
+Тесты: те же `test_appeal_card_timeline.py`, `test_admin_card_render.py`.
+
+### 7. `OP_BROADCAST_LIST_HEADER` (texts.py:559) и `OP_BROADCAST_LIST_ITEM` (texts.py:560)
+
+Сейчас:
+```
+📜 Недавние рассылки:
+#{number} · {created_at} · {status} · {delivered}/{total}
+```
+
+Item уже единообразный (всё в одну строку через `·`). Оставить как есть,
+лишь поправить header — добавить grammar-line:
+
+```
+━━━ ИСТОРИЯ РАССЫЛОК ━━━
+📜 Последние 10 (тапните на строку — откроется карточка):
+```
+
+Тесты: `test_broadcast_handlers.py` или `test_broadcast_history_card.py`.
+
+### 8. `OP_TMPL_LIST_EMPTY` / `OP_TMPL_LIST_HEADER` / `OP_TMPL_CARD` (texts.py:601-632)
+
+Уже используют `━━━━━━━━━━━━━━━━━━` обильно и эмодзи в начале строк.
+Структура хорошая. **Оставить** все три — это уже более выразительная
+грамматика, чем сейчас у admin_card. Менять не нужно, только проверить
+один момент:
+
+В `OP_TMPL_CARD` (texts.py:621-630) сейчас после второго ━ идёт текст
+шаблона **без** `· · ·` отделителя:
+```
+📊 Применений: {use_count}{last_used_line}
+━━━━━━━━━━━━━━━━━━
+{text}
+```
+
+Это OK — `━━━━` уже жирный разделитель «мета / контент». Но для
+симметрии с admin_card (где тело отделено пустой строкой) — добавить
+пустую строку до и после:
+
+```
+📊 Применений: {use_count}{last_used_line}
+
+━━━━━━━━━━━━━━━━━━
+
+{text}
+```
+
+Тесты: `test_broadcast_templates_handlers.py`.
+
+### 9. `OP_TMPL_NEW_NAME_PROMPT` и `OP_TMPL_NEW_TEXT_PROMPT` (texts.py:635-683)
+
+Уже структурированы (шапка, шаги, советы). Хорошие. Оставить.
+
+### 10. Карточка оператора в `admin_operators.py:309-316`
+
+Сейчас собирается inline:
+```python
+lines = [
+    f"👤 {op.full_name}",
+    "──────────",
+    f"ID:       {op.max_user_id}",
+    f"Роль:     {op.role}",
+    f"Статус:   {status_line}",
+    f"Добавлен: {op.created_at.strftime('%d.%m.%Y')}" if op.created_at else "",
+]
+```
+
+Улучшить:
+```python
+lines = [
+    f"━━━ ОПЕРАТОР #{op.max_user_id} ━━━",
+    f"👤 {op.full_name}",
+    f"🏷 Роль: {op.role}",
+    f"📊 Статус: {status_line}",
+]
+if op.created_at:
+    lines.append(f"🗓 Добавлен: {op.created_at.strftime('%d.%m.%Y')}")
+if extra:
+    lines.append("")
+    lines.append("· · ·")
+    lines.append("")
+    lines.extend(extra)
+```
+
+`status_line` уже содержит эмодзи (✅/💤) — оставить.
+Wide-spacing (`ID:       ` с табом) — убрать, грамматика теперь
+«эмодзи · значение», не псевдо-таблица.
+
+Тесты: `test_admin_operators.py` — substring assertions на «ID:» /
+«Роль:». При смене формата починить.
+
+### 11. `OP_BROADCAST_STARTED` / `OP_BROADCAST_PROGRESS` / `OP_BROADCAST_DONE` / `OP_BROADCAST_CANCELLED` (texts.py:543-557)
+
+Сейчас:
+```
+Рассылка #{number} запущена.
+Доставлено: 0/{total}
+```
+
+Прогресс-карточка видна оператору каждые 5 секунд — должна быть
+быстро читаемой, не пышной. **Оставить минимальным**, но добавить
+эмодзи-маркер статуса:
+
+```
+📤 Рассылка #{number} запущена
+✅ Доставлено: 0/{total}
+```
+
+```
+📤 Рассылка #{number}
+✅ Доставлено: {delivered}/{total}{failed_suffix}
+```
+
+```
+━━━ РАССЫЛКА #{number} ЗАВЕРШЕНА ━━━
+✅ Доставлено: {delivered} из {total}.{failed_line}
+```
+
+Для finalize-сообщения (`DONE`) — полная шапка-граница (это event-log
+карточка, не throw-away progress). Для прогресс-tick'ов — компактно.
+
+Тесты: `test_broadcast_handlers.py` — substring assertions на
+«Рассылка #» / «Доставлено:».
+
+### 12. `CONSENT_REVOKE_CONFIRM` / `ERASE_CONFIRM` (texts.py:238-270)
+
+Сейчас bullet-список «Что произойдёт». Хорошая структура, дополнить
+шапкой и убрать «голый текст»-заголовок:
+
+`CONSENT_REVOKE_CONFIRM`:
+```
+━━━ ЗАВЕРШИТЬ ОБЩЕНИЕ С БОТОМ? ━━━
+⚠️ Что произойдёт:
+
+• Согласие на обработку ваших данных будет отозвано.
+• По открытым обращениям оператор даст финальный ответ через бот.
+• Подписка на рассылку отключится.
+• Данные будут стёрты или обезличены через 30 дней без активности.
+
+· · ·
+
+Это не лишает вас права обратиться в Администрацию через официальные
+каналы. Передумаете — откройте /start и снова дайте согласие до
+автоудаления.
+```
+
+`ERASE_CONFIRM` — аналогично, шапка `━━━ УДАЛИТЬ ВАС ИЗ БОТА? ━━━`.
+
+Тесты: `test_handlers_menu.py` / `test_handlers_menu_extra.py` —
+substring assertions на «Завершить общение» / «Удалить вас из бота»
+по началу `CANCELLED`/прощальной воронки.
+
+---
+
+## P2 — IT-only, редко смотрит
+
+### 13. `admin_settings.py` — все settings-карточки
+
+Используют `──────────` (10 chars) повсеместно. IT-only, low-traffic.
+**Перевести оптом на грамматику**, но low-priority:
+
+`run_settings_menu` (admin_settings.py:136-143):
+```
+━━━ НАСТРОЙКИ БОТА ━━━
+
+Выберите категорию для редактирования.
+Каждое изменение применяется к боту сразу.
+Чтобы зафиксировать изменения в репозитории,
+создайте PR в нижней части меню.{extra}
+```
+
+`_show_text_card` (admin_settings.py:323-329):
+```
+━━━ {title} ━━━
+🏷 Тип: {type_label}
+
+· · ·
+
+📝 Текущее значение:
+{rendered_value}{constraints}
+```
+
+`_show_list_card`, `_show_obj_card`, `_show_author_card`, PR-confirm/done
+— по тому же шаблону: шапка `━━━ TITLE ━━━`, мета через эмодзи,
+`· · ·` отделяет body. Жирный `━━━━━━━━━━━━━━━━` появляется только
+перед CTA / при finalize (`✅ PR создан`).
+
+Тесты: `test_admin_settings_audit.py` — substring assertions на
+«⚙️ Настройки бота» / «Все ключи». Менять синхронно.
+
+### 14. Operator wizard cards в `admin_operators.py:139-149` и далее
+
+run_operators_menu, _show_from_group, _start_add_with_picked,
+_apply_role_choice, _show_add_confirm, _confirm_save — все используют
+заголовок-эмодзи + `──────────`.
+
+Те же три замены: `──────────` → шапка `━━━ ... ━━━` + `· · ·` для
+вспомогательных разделителей. CTA-разделитель `━━━━━━━━━━━━━━━━` не
+нужен (там не CTA, а wizard-prompt'ы — конечной кнопочной CTA нет,
+есть keyboard).
+
+Тесты: `test_admin_operators.py`.
+
+### 15. Карточки в menu.py
+
+`open_main_menu` (menu.py:108-117) — для заблокированного жителя:
+сейчас inline текст «Ваш аккаунт заблокирован — подача обращений…».
+**Вынести в texts.py** константой `BLOCKED_MENU_TEXT` и применить
+грамматику:
+```
+━━━ АККАУНТ ЗАБЛОКИРОВАН ━━━
+🚫 Подача обращений и подписка недоступны.
+
+· · ·
+
+Доступные разделы — ниже. Если блокировка ошибочна, обратитесь
+к координатору Администрации.
+```
+
+`open_my_appeals` (menu.py:155-159) — header «Ваши обращения (стр. N/M,
+всего T):» можно оставить однострочным, либо обернуть:
+```
+━━━ ВАШИ ОБРАЩЕНИЯ ━━━
+📂 Всего: {total}{paging_line}
+```
+
+`start_appeal_followup` (menu.py:213-216) — inline текст «Опишите
+дополнение к обращению #N…». Вынести в `texts.py:APPEAL_FOLLOWUP_PROMPT`:
+```
+━━━ ДОПОЛНЕНИЕ К ОБРАЩЕНИЮ #{appeal_id} ━━━
+📝 Опишите дополнение одним сообщением.
+
+· · ·
+
+📎 Можно приложить фото, видео или файл.
+```
+
+Тесты: `test_handlers_menu.py` — substring assertions, ожидаемые
+изменения.
+
+### 16. `start_appeal_repeat` (menu.py:274-281)
+
+Сейчас:
+```
+Подаём новое обращение {context}:
+📍 {locality}, {address}
+🏷 {topic or '—'}
+
+Опишите суть одним сообщением. Можно приложить фото, видео или файл.
+```
+
+Уже близко к грамматике. Лёгкая правка — шапка:
+```
+━━━ НОВОЕ ОБРАЩЕНИЕ {context} ━━━
+📍 {locality}, {address}
+🏷 {topic or '—'}
+
+· · ·
+
+📝 Опишите суть одним сообщением.
+📎 Можно приложить фото, видео или файл.
+```
+
+### 17. `open_emergency` (menu.py:807-814) и `open_dispatchers` (menu.py:828-831)
+
+Уже содержат `☎️` / `📞` эмодзи в начале логических секций. Структура
+«секция — список с bullet'ами» работает. **Не менять** — это
+data-driven листы, а не статус-карточки.
+
+---
+
+## P3 — лучше не трогать (внутреннее или CTA-only)
+
+### 18. `CONTACT_REQUEST` / `LOCALITY_REQUEST` / `CONTACT_RECEIVED` / `NAME_EMPTY` / `ADDRESS_EMPTY` / `APPEAL_EMPTY_REJECTED` / `CONTACT_RETRY` (texts.py:37-100)
+
+Микро-prompt'ы в воронке, по 1-3 строки. Уже хорошие. Оставить.
+
+### 19. `GEO_DETECTED_FULL` / `GEO_DETECTED_LOCALITY_ONLY` / `GEO_OUTSIDE_EMO` (texts.py:55-74)
+
+Confirmation-карточки геолокации. Эмодзи `📍` и `✓` уже в начале строк
+и работают. **Оставить**.
+
+### 20. `WELCOME` (texts.py:1-17)
+
+Старт-карточка. Структура шапка-блоки-CTA уже есть («———» как разделитель).
+Менять только если хочется заменить «———» на `· · ·` — но текстура «———»
+работает как уверенный визуальный разрыв между «приветствие / антифишинг
+/ "выберите действие"», и пенсионеры различают его хорошо. **Оставить**.
+
+### 21. `HELP_USER` / `RULES_TEXT` / `RULES_SHORT` (texts.py:290-356)
+
+Длинные информационные тексты. Bullets и абзацы уже работают.
+**Оставить**.
+
+### 22. `OP_HELP` (texts.py:414-450) — оператор-памятка
+
+Длинный help-текст с разделами через двойную пустую строку. Уже
+структурирован, эмодзи `🛡️` префиксы там где нужно. **Оставить**.
+
+### 23. `SUBSCRIBE_*` / `UNSUBSCRIBE_*` (texts.py:358-374)
+
+Confirm-сообщения после действия. Однострочные. Оставить.
+
+### 24. `BROADCAST_HEADER` (texts.py:387-390)
+
+Используется внутри тела рассылки как «шапка письма». Менять `────────────────`
+на `━━━ ОБЪЯВЛЕНИЕ ━━━` для симметрии с CITIZEN_REPLY_TEMPLATE — да,
+**сделать**, но это уровень P1:
+
+```
+BROADCAST_HEADER = (
+    "━━━ ОБЪЯВЛЕНИЕ АДМИНИСТРАЦИИ ━━━\n"
+    "Елизовский муниципальный округ"
+)
+```
+
+Подписчик видит как письмо «от муниципалитета», та же грамматика что
+у `CITIZEN_REPLY_TEMPLATE` (texts.py:171-181).
+
+Тесты: тесты рассылок (`test_broadcasts_service_pg.py` /
+`test_broadcast_handlers.py`) — substring assertions на «Объявление
+Администрации».
+
+### 25. `ADMIN_REPLY_DELIVERED_FINAL` / `INTERMEDIATE` (texts.py:160-169)
+
+Подтверждение оператору после отправки ответа. Однострочные, эмодзи
+в начале. Оставить.
+
+---
+
+## Priority sort + дельта изменений
+
+| # | Приоритет | Объект | Файл:строки |
+|---|-----------|--------|-------------|
+| 1 | P0 | OP_BROADCAST_PREVIEW | texts.py:520-527 |
+| 2 | P0 | OP_BROADCAST_CARD | texts.py:563-571 |
+| 5 | P1 | admin_followups_block | card_format.py:74 |
+| 6 | P1 | _render_timeline (history header) | card_format.py:126 |
+| 7 | P1 | OP_BROADCAST_LIST_HEADER | texts.py:559 |
+| 10 | P1 | _show_operator_card | admin_operators.py:309-316 |
+| 11 | P1 | OP_BROADCAST_STARTED/PROGRESS/DONE | texts.py:543-557 |
+| 12 | P1 | CONSENT_REVOKE_CONFIRM / ERASE_CONFIRM | texts.py:238-270 |
+| 24 | P1 | BROADCAST_HEADER | texts.py:387-390 |
+| 13 | P2 | admin_settings.py (все экраны) | весь файл |
+| 14 | P2 | admin_operators.py wizard cards | весь файл |
+| 15 | P2 | menu.py inline-карточки → texts.py + грамматика | menu.py:108-117, 213-216, 274-281 |
+
+`OP_TMPL_*` и confirmation-карточки воронки (geo, contact) — **не трогать**,
+они уже соответствуют или сознательно отличаются.
+
+Глобальный шаблон правки: где `────` или `──────────` — заменить на
+`· · ·` если разделитель «мета / контент», и на пустую строку + `━━━━━━━━━━━━━━━━` если это CTA-разделитель. Шапки везде
+`━━━ ОПИСАНИЕ В CAPS ━━━`. Эмодзи строго в начале строки или вообще
+без них.
+
+## Тесты под удар
+
+`test_card_format.py` · `test_appeal_card_timeline.py` ·
+`test_admin_card_render.py` · `test_broadcast_handlers.py` ·
+`test_broadcast_history_card.py` · `test_broadcast_templates_handlers.py`
+(если P1/2 OP_TMPL'и трогаем) · `test_admin_operators.py` ·
+`test_admin_settings_audit.py` · `test_handlers_menu.py` ·
+`test_handlers_menu_extra.py`.
+
+В подавляющем большинстве — substring assertions («Доставлено:»,
+«Рассылка #», «📜», «Статус:»), которые ловят формат частично. Менять
+синхронно с правкой шаблона. Перед коммитом — `pytest -k "card or
+broadcast or menu or operators or settings"`.
+```
+
 ### `docs/_meta/COVERAGE_GAPS.md`
 
 Size: `26592` bytes  
@@ -46564,6 +47210,259 @@ total coverage **61.1% → ~82-83%** (line ~88%, branch ~80%).
 - `bot/coverage.json` — структурированный output (695 KB).
 - `bot/_cov_analyze.py` — helper для ranking и per-file inspection
   (создан в ходе анализа; полезен для повторных прогонов).
+```
+
+### `docs/_meta/DOCS_ACTUALIZATION_SWEEP_2026-05-26.md`
+
+Size: `21641` bytes  
+SHA-256: `5aa48f3705f0853cb5fd67455a248e5ca9657516637b2b35db661adcc53d5d56`
+
+```markdown
+# Docs actualization sweep — 2026-05-26
+
+Полный пасс по `README.md` корня + `docs/**`. Сверено с HEAD `main` (cron.py jobs, SECURITY §10a/§10b, OPERATOR_SECURITY новые подразделы, threat_intel.py, defang в карточках).
+
+Главные обнаружения:
+1. **Stale pulse-имена** (`pulse-workhours` / `pulse-offhours` / `pulse-sunday`) — устарели после рефакторинга в `cron.py` на `pulse-hourly` + `pulse-workhours-extra`. Засветились в 6 файлах.
+2. **Новые cron-job'ы** (`broadcast-draft-reaper`, `threat-intel-refresh`, `stale-operators-cleanup`, `audit-log-retention`) — НЕ упомянуты в `RUNBOOK.md` / `HOW_IT_WORKS.md` / `COMPLIANCE_WITH_REGLAMENT_v7.md` / `_meta/AUDIT_REPORT.md` (SYSADMIN.md тоже не полон).
+3. **OPERATOR_SECURITY.md** существует, но НЕ упомянут в `README.md` корня и в `docs/README.md`.
+4. **SECURITY_REVIEW_2026-05-26 / SEC_SELF_REVIEW** — упомянуты только в SECURITY.md и v8-draft; остальные документы их не видят.
+5. **OPERATOR_SECURITY.md §1.5 vs §1.5a**: §1.5a встроен между §1.3 и §1.5 (нумерация перепутана) — fix order.
+
+---
+
+## 📁 README.md (корень) — 🟡 минор — P0
+
+**Что устарело.**
+- §«Главное меню жителя» / «Состав репозитория» — не упоминает OPERATOR_SECURITY.md и SECURITY.md.
+- §«Что читать дальше» — нет ссылки на `docs/OPERATOR_SECURITY.md` для операторов.
+- Раздел «С чего начать на боевом сервере» — пункт 4 ссылается только на SETUP.md; нет про обязательное прочтение OPERATOR_SECURITY.md до первой смены.
+
+**Правки.**
+- Строка 56 (после RUNBOOK.md): добавить пункт `[OPERATOR_SECURITY.md](docs/OPERATOR_SECURITY.md) — инструкция оператору по ИБ, антифишингу, ответственности по 152-ФЗ (читать до первой смены).`
+- Строка 57 (после DEVELOPER.md): добавить `[SECURITY.md](docs/SECURITY.md) — модель угроз, защитные механизмы (SEC #1–9, SECURITY_REVIEW 2026-05-26), ротация секретов.`
+- Строка 61 (блок точечных регламентов): добавить ссылку на `SYSADMIN.md` (handover админа). Сейчас её нет.
+- §«Состав репозитория» (строки 67–98): дописать `OPERATOR_SECURITY.md`, `SECURITY.md`, `SYSADMIN.md`, `MAXAPI_UPGRADE_PROCEDURE.md`, `DEPS.md` — в текущем дереве их нет.
+- §«С чего начать на боевом сервере» (строка 151): пункт 4 финал — `Прочитать с операторами docs/OPERATOR_SECURITY.md (антифишинг, 152-ФЗ).`
+
+---
+
+## 📁 docs/README.md — 🟡 минор — P0
+
+**Что устарело.** Не упоминает OPERATOR_SECURITY.md и SECURITY_REVIEW_2026-05-26. Раздел «Внутренние meta-документы» не перечисляет 8 новых файлов под `_meta/` (`SEC_*`, `URL_THREAT_INTEL_*`, `MAXAPI_DEEP_DIVE_*`, `SEC_SELF_REVIEW_*`).
+
+**Правки.**
+- В блок «Специалист по ИБ / аудитор» (строки 19–21): после `SECURITY.md` добавить `затем OPERATOR_SECURITY.md (operator-facing антифишинг).`
+- В блок «Оператор и координатор» (строки 14–15): после `RUNBOOK.md` добавить `OPERATOR_SECURITY.md — обязательно к прочтению до первой смены, антифишинг и 152-ФЗ.`
+- В §«Внутренние meta-документы» (строки 86–103): добавить новые файлы:
+  - `_meta/SECURITY_REVIEW_2026-05-26.md` — сводный результат security-пасса.
+  - `_meta/SEC_INVENTORY/SEC_MAX_THREATS/SEC_SCAM_VECTORS/SEC_EXPLOITS/SEC_SELF_REVIEW_2026-05-26.md` — детальные SEC-отчёты.
+  - `_meta/URL_THREAT_INTEL_2026-05-26.md` — research под `services/threat_intel.py`.
+  - `_meta/MAXAPI_DEEP_DIVE_2026-05-26.md` — обновлённая инвентаризация maxapi 1.1.0.
+
+---
+
+## 📁 docs/RUNBOOK.md — 🔴 устарел / битые имена — P0
+
+**Критичные ошибки.** Раздел «Cron-задачи» (строки 642–657) содержит **stale pulse-имена** и пропущены 4 новых cron-job'а.
+
+**Правки.**
+- Строки 652–654: **удалить** три строки (`pulse-workhours` / `pulse-offhours` / `pulse-sunday`), **заменить на**:
+  ```
+  | `pulse-hourly` | каждый час 24/7 в :05 | технический heartbeat «бот жив» |
+  | `pulse-workhours-extra` | пн–пт 09:00–17:59 в :35 | дополнительный heartbeat в рабочее время |
+  ```
+- После строки 657 (после `healthcheck-ping`): **добавить 4 новых row'а**:
+  ```
+  | `audit-log-retention` | ежедневно 04:15 | очистка audit_log старше AUDIT_LOG_RETENTION_DAYS (default 365) |
+  | `stale-operators-cleanup` | ежедневно 04:20 | сверка активных операторов с членами админ-группы MAX, мягкая деактивация ушедших (IT защищены) |
+  | `threat-intel-refresh` | ежечасно в :17 | обновление feed'ов URLhaus/ThreatFox для warning'а оператору о фишинг-ссылках |
+  | `broadcast-draft-reaper` | ежечасно в :37 | подбор orphan DRAFT-рассылок старше 30 мин → FAILED |
+  ```
+- Раздел «Расписание бэкапа» (строка 661): упомянуть `cooldown` рассылки (5 мин / 30 сек для `[ЧС]`) — слово `cooldown` в RUNBOOK не встречается, но это hot-path для координатора. Добавить под раздел «Рассылка».
+
+---
+
+## 📁 docs/HOW_IT_WORKS.md — 🟡 минор — P0
+
+**Правки.**
+- Строки 297–298: заменить устаревшие `pulse-workhours` / `pulse-offhours` на `pulse-hourly` (24/7 в :05) и `pulse-workhours-extra` (пн–пт 09–17 в :35).
+- После строки 301: добавить 4 новых cron-job'а (`audit-log-retention`, `stale-operators-cleanup`, `threat-intel-refresh`, `broadcast-draft-reaper`) одной строкой каждая.
+- §16 (строка 306, «Сбои MAX и повторная доставка»): дописать `fail-closed idempotency (SEC #7) — при ошибке записи idempotency-ключа событие отбрасывается, не обрабатывается».
+
+---
+
+## 📁 docs/SYSADMIN.md — 🟡 минор — P0/P1
+
+**Что есть.** §12b log rotation добавлен корректно. §7 cron-таблица существует, но не полна.
+
+**Правки.**
+- Строки 231–233 (таблица cron): заменить `pulse-workhours` / `pulse-offhours` / `pulse-sunday` на `pulse-hourly` (каждый час 24/7 в :05) + `pulse-workhours-extra` (пн–пт 09–17 в :35). См. cron.py:851,861.
+- В ту же таблицу (после строки 243): добавить 4 row'а — `audit-log-retention` 04:15, `stale-operators-cleanup` 04:20 (cron.py:797), `threat-intel-refresh` ежечасно :17 (cron.py:787), `broadcast-draft-reaper` ежечасно :37 (cron.py:777).
+- §16 «Что НЕ настроено» (строка 488): дополнить «Threat-intel refresh» — требует исходящего HTTPS к `urlhaus.abuse.ch` и `threatfox.abuse.ch`, проверить outbound whitelist.
+
+---
+
+## 📁 docs/SECURITY.md — 🟢 актуален — P0
+
+Очень свежий, §10b accept'ы корректные, ссылки на `_meta/SECURITY_REVIEW_2026-05-26.md` и `_meta/SEC_*` стоят. Серия SACRED расширена до #6 (SECURITY.md:386), §10 CI gate подробный.
+
+**Минор-правки.**
+- §3.2 «Логи» (строка 76): дописать «Ротация настроена через docker compose logging-options 10MB×3 (см. SYSADMIN §12b).» — сейчас фраза «до этого нужно проверить» оставлена без ссылки на закрывающее изменение.
+- §7 после §7.6 (строка 297): добавить новый подраздел `### 7.7 Threat-intel для входящих сообщений (SEC C2/M3)` — упоминание `services/threat_intel.py`, refresh каждый час, источник URLhaus + ThreatFox, fallback при недоступности feed'а. Сейчас threat_intel живёт в коде, в SECURITY.md ссылок нет.
+- §7.3.4 (строка 282): добавить подзаголовок `### 7.3.5 URL defang в карточке оператора (SECURITY_REVIEW M1/M5)` — ZWSP-разделитель между `https` и `://`, warning-блок «⚠️ Текст содержит ссылку». Сейчас это есть в OPERATOR_SECURITY §1.5, но в SECURITY.md как защита не задокументировано.
+
+---
+
+## 📁 docs/OPERATOR_SECURITY.md — 🔴 минор-баг — P0
+
+**Структурный bug.** §1.5a (строка 51) идёт **раньше** §1.4 (строка 78) и §1.5 (строка 64). Нумерация перепутана: документ читается «§1.1 → §1.2 → §1.3 → §1.5a → §1.5 → §1.4». Нужно либо переупорядочить, либо переименовать.
+
+**Правки.**
+- **Опция A (рекомендую):** Переименовать `### 1.5a` → `### 1.4 Визуальная структура карточки`, текущий `### 1.4 Что делать, если житель попался на скам` → `### 1.6`. То есть порядок 1.1 → 1.2 → 1.3 → 1.4 (визуал) → 1.5 (бдительность) → 1.6 (что делать).
+- §3 «Hot-path процедуры» (строка 123): §3.1 broadcast — добавить упоминание `cooldown 5 минут / 30 секунд для [ЧС]` отсылкой к §1.5 и §1.1 (уже есть, но не явно про **технический параметр** `BROADCAST_COOLDOWN_SEC`). Сейчас оператор не знает, что cooldown настраивается.
+- §5 «Куда смотреть дальше» (строка 186): добавить ссылку на `docs/SYSADMIN.md §12b` (ротация логов) — связанная гигиена sysadmin'а.
+- §3.4 «Удаление ПДн жителя» (строка 156): уточнить, что docker logs тоже требуют ручного truncate (см. RUNBOOK_PDN_ERASURE «72-часовой dispatch»). Сейчас намёк есть, но без cross-link.
+
+---
+
+## 📁 docs/RUNBOOK_PDN_ERASURE.md — 🟡 минор — P0
+
+**Что есть.** Актуальная модель удаления (`appeals.summary` → NULL, `messages.text` → NULL, физическое удаление `users`). Корректное упоминание трёх каналов (manual / self / auto).
+
+**Что не хватает.**
+- В тексте упомянут «72-часовой dispatch на /erase + truncate docker logs» (по контексту из claudeMd parent task), но физически такого раздела в файле нет. Нужно либо добавить §«72-часовой dispatch», либо убрать упоминание из других документов (OPERATOR_SECURITY §3.4 ссылается).
+- **Правка:** после §«Резервные копии» (строка 88) добавить новый §«72-часовой dispatch для запросов жителя» с явным указанием: (1) запустить `/erase`, (2) залить руками `sudo truncate -s 0` для docker-логов бота за последние 7 дней (см. SYSADMIN §12b), (3) проверить, что свежий backup без ПДн через 7 дней (ротация 8 еженедельных).
+
+---
+
+## 📁 docs/Регламент_v8_draft.md — 🟢 актуален — P1
+
+Очень свежий, §74 антифишинг полный, §60.1 SEC #1–9, §74.6 cooldown 5 мин / 30 сек для `[ЧС]`. Согласован с кодом.
+
+**Минор-правки.**
+- §47.1 «Шаблоны рассылок» (строка 67): дописать «Применение шаблона дедуплицируется в 3-секундное окно (SEC P3 #25) — повторный тап не вызывает побочных эффектов.»
+- §74.5 «Защита оператора» (строка 188): дописать «Cron `stale-operators-cleanup` запускается ежедневно в 04:20 (Asia/Kamchatka), выполняется через `get_chat_members` MAX API.»
+- §74.7 (строка 192): дописать в перечне документов `docs/_meta/SECURITY_REVIEW_2026-05-26.md — сводный отчёт security-пасса 2026-05-26.`
+
+---
+
+## 📁 docs/COMPLIANCE_WITH_REGLAMENT_v7.md — 🔴 устарел — P1
+
+**Битые имена.** Таблица 3 (строки 214–216) содержит `pulse-workhours` / `pulse-offhours` / `pulse-sunday`. **Также таблица "13 задач" (строка 220) уже не верна** — после новых cron'ов их 17 (+ `healthcheck-ping`).
+
+**Правки.**
+- Строки 214–216: переписать на `pulse-hourly` (cron `minute=5`, каждый час 24/7) и `pulse-workhours-extra` (cron `day_of_week=mon-fri, hour=9-17, minute=35`). Удалить `pulse-sunday` (вс покрыт `pulse-hourly`).
+- После строки 219 добавить новые row'ы 14–17:
+  - 14: `audit-log-retention` ежедн. 04:15.
+  - 15: `stale-operators-cleanup` ежедн. 04:20.
+  - 16: `threat-intel-refresh` ежечасно :17.
+  - 17: `broadcast-draft-reaper` ежечасно :37.
+- Строка 220: «13 задач» → **«17 задач (плюс опциональный `healthcheck-ping`)»**.
+- Документ названия `v7` — он сверяется со старым регламентом; после утверждения v8 нужно сделать `COMPLIANCE_WITH_REGLAMENT_v8.md` (см. v8-draft §229).
+
+---
+
+## 📁 docs/_meta/AUDIT_REPORT.md — 🔴 устарел — P2
+
+**Битые имена.** Строки 158–160 (раздел 2.12 Pulse-расписание) содержат три stale pulse-имени. **Документ от 2026-05 без явной даты** (строка 3: «текущий снимок»).
+
+**Правки.**
+- Строки 158–160: переписать на новые имена pulse + проставить дату документа явно — `Дата ревизии: 2026-05-25 (актуализация cron — 2026-05-26)`.
+- Раздел 2.13 «Cron-задачи (полный список)» (строка 166): «13 cron-задач» → «17 cron-задач».
+- Помечать как **superseded by** новый sweep этого документа: добавить frontmatter `superseded_by: DOCS_ACTUALIZATION_SWEEP_2026-05-26.md` в части cron.
+
+---
+
+## 📁 docs/PRD.md — 🟡 минор — P1
+
+**Правки.**
+- Строка 243: stale pulse-имена в разделе «SLA-мониторинг и pulse». Заменить на `pulse-hourly` (24/7 в :05) и `pulse-workhours-extra` (пн–пт 09–17 в :35). Удалить упоминание `pulse-sunday`.
+
+---
+
+## 📁 docs/_meta/* (research) — оценка актуальности
+
+| Файл | Статус | Действие |
+|---|---|---|
+| `SECURITY_REVIEW_2026-05-26.md` | 🟢 актуален | оставить, P0 |
+| `SEC_INVENTORY/MAX_THREATS/SCAM_VECTORS/EXPLOITS_2026-05-26.md` | 🟢 актуален | оставить, P2 |
+| `SEC_SELF_REVIEW_2026-05-26.md` | 🟢 актуален | оставить, P2 |
+| `URL_THREAT_INTEL_2026-05-26.md` | 🟢 актуален | оставить, P2 — research под threat_intel.py |
+| `MAXAPI_DEEP_DIVE_2026-05-26.md` | 🟢 актуален | оставить, P2 |
+| `MAXAPI_INVENTORY.md` / `MAXAPI_INSIGHTS.md` / `MAXAPI_UNUSED_FEATURES.md` | 🟡 от 2026-05-25 | DEEP_DIVE их частично перекрыл; пометить `superseded_by: MAXAPI_DEEP_DIVE_2026-05-26.md` в frontmatter |
+| `AUDIT_REPORT.md` | 🔴 устарел (см. выше) | superseded |
+| `FILE_INVENTORY.md` | 🟡 от 2026-05-25 | проверить — не учитывает threat_intel.py, новые cron'ы. Пометить «частично устарел». |
+| `REGLAMENT_v7_GAPS.md` / `REGLAMENT_v7_COMPLIANCE.md` | 🟡 от 2026-05-25 | актуальны как основа v8-draft; пометить «valid для v7, после утверждения v8 — переименовать». |
+| `COVERAGE_GAPS.md` | 🟡 от 2026-05-25 | проверить — закрылось ли что-то после SEC-фиксов |
+| `ADMIN_MENU_EXPANSION_PROPOSAL.md` | 🟡 от 2026-05-25 | proposal — оставить как design-doc, P2 |
+
+---
+
+## 📁 docs/_extracted/REGLAMENT_v7_FULL.md — 🟢 не трогаем
+
+Нормативный документ, по требованию не правится.
+
+---
+
+## docs/*.html — отсутствуют
+
+`ls docs/*.html` — пусто. Удалены ранее, в `docs/README.md` упоминаний нет.
+
+---
+
+# Итоговый actionable diff (минимально для одного PR)
+
+**P0 (читает оператор / житель регулярно), 8 файлов:**
+
+1. **`README.md` корня:**
+   - В §«Что читать дальше» добавить ссылку на `OPERATOR_SECURITY.md` и `SECURITY.md`.
+   - В §«Состав репозитория» (дерево) дописать `OPERATOR_SECURITY.md`, `SECURITY.md`, `SYSADMIN.md`.
+   - В §«С чего начать на боевом сервере» пункт 4 — фразу про чтение `OPERATOR_SECURITY.md`.
+
+2. **`docs/README.md`:**
+   - В блок «Оператор и координатор» добавить `OPERATOR_SECURITY.md`.
+   - В блок «Специалист по ИБ» добавить `OPERATOR_SECURITY.md` после `SECURITY.md`.
+   - В §«Внутренние meta-документы» — 6 новых файлов (`SECURITY_REVIEW`, `SEC_*`, `URL_THREAT_INTEL`, `MAXAPI_DEEP_DIVE`).
+
+3. **`docs/RUNBOOK.md` строки 652–657:**
+   - Удалить `pulse-workhours` / `pulse-offhours` / `pulse-sunday`, добавить `pulse-hourly` + `pulse-workhours-extra` + 4 новых cron (`audit-log-retention`, `stale-operators-cleanup`, `threat-intel-refresh`, `broadcast-draft-reaper`).
+
+4. **`docs/HOW_IT_WORKS.md` строки 297–301:**
+   - Те же замены pulse + 4 новых cron.
+
+5. **`docs/SYSADMIN.md` строки 231–233 и после 243:**
+   - Те же замены pulse + 4 новых cron. §16 — упомянуть outbound для `urlhaus.abuse.ch` / `threatfox.abuse.ch`.
+
+6. **`docs/SECURITY.md`:**
+   - §3.2 закрыть фразу ссылкой на SYSADMIN §12b.
+   - §7 добавить `§7.7 Threat-intel` и `§7.3.5 URL defang`.
+
+7. **`docs/OPERATOR_SECURITY.md`:**
+   - **Перенумеровать §1.5a → §1.4, §1.4 → §1.6** (исправить порядок).
+   - §3.1 broadcast — упомянуть параметр `BROADCAST_COOLDOWN_SEC`.
+   - §5 ссылка на SYSADMIN §12b.
+
+8. **`docs/RUNBOOK_PDN_ERASURE.md`:**
+   - Добавить §«72-часовой dispatch» с truncate docker-логов.
+
+**P1 (читает IT / новички), 3 файла:**
+
+9. **`docs/Регламент_v8_draft.md`:** §47.1 дедуп шаблона, §74.5 stale-operators cron, §74.7 ссылка на SECURITY_REVIEW.
+
+10. **`docs/COMPLIANCE_WITH_REGLAMENT_v7.md` строки 214–220:** замены pulse + 4 новых row + `«17 задач»`.
+
+11. **`docs/PRD.md` строка 243:** замены pulse.
+
+**P2 (research / архив), пометки superseded:**
+
+12. **`docs/_meta/AUDIT_REPORT.md`:** строки 158–160 (pulse) + frontmatter `superseded_by: DOCS_ACTUALIZATION_SWEEP_2026-05-26.md`.
+
+13. **`docs/_meta/MAXAPI_INVENTORY|INSIGHTS|UNUSED_FEATURES.md`:** frontmatter `superseded_by: MAXAPI_DEEP_DIVE_2026-05-26.md`.
+
+---
+
+**Sanity-check после применения:** `grep -r "pulse-offhours\|pulse-workhours\|pulse-sunday" docs/ README.md` должен вернуть 0 (либо только в архивных _meta файлах с пометкой superseded). `grep -rc "broadcast-draft-reaper\|threat-intel-refresh\|stale-operators-cleanup" docs/` должен покрыть ≥6 рабочих документов (RUNBOOK, SYSADMIN, HOW_IT_WORKS, SECURITY, COMPLIANCE, AUDIT).
 ```
 
 ### `docs/_meta/FILE_INVENTORY.md`
@@ -48658,6 +49557,248 @@ SHA-256: `d409e48cca3001d8a9270fb3e48ae9bc0551954d8a714caa54ac29e54f87d91e`
 - **GAPS B (код → нет в Регламенте v7):** 30 пунктов, из них 17 — крупные категории (SEC-серия, SACRED-серия, IT-процедуры, эксплуатация: ротация секретов, восстановление БД, авто-деплой, апгрейды, watchdog), 13 — точечные уточнения (audit-log-retention cron, рейт-лимит followup, URL whitelist, periodicity `/stats`, и т. д.).
 
 Полный список GAPS B составляет основу для **дельты Регламента v8** в `docs/Регламент_v8_draft.md`.
+```
+
+### `docs/_meta/RUSSIAN_COMMENTS_SWEEP_2026-05-26.md`
+
+Size: `15733` bytes  
+SHA-256: `5fe65d57d8590203f64313ad77cda54c90f8a6a557fd1b50ebe9fd00b7c78651`
+
+```markdown
+# Проход «русские комментарии и docstring'и»
+
+Дата: 2026-05-26. Сканированы `bot/aemr_bot/handlers/*.py` и
+`bot/aemr_bot/services/*.py`. Проверены файлы воронки жителя,
+админ-панели, рассылок, фонового планировщика, бэкапа БД,
+threat-intel, repo-sync и регистра wizard'ов.
+
+Найдено относительно немного: hot-path действительно чистый, основная
+масса комментариев уже на литературном русском. Что осталось —
+англоязычные «section markers» в `__all__`, короткие хвосты-метки в
+середине файлов и группа служебных CRUD-функций без docstring'а в
+сервисах данных.
+
+Все правки — текстовые: имена функций, переменных, исключений, SQL,
+regex, log.* строки и сообщения exception **не трогаются** (это
+технические артефакты).
+
+---
+
+## Приоритет P0 — hot-path (handlers + ключевые services)
+
+### handlers/admin_commands.py
+
+`__all__` ведёт операторские команды и сейчас разделён англоязычными
+строками-метками. Это видно при code-review (диалект ломается посреди
+русского файла) и легко лечится переводом одной строкой на каждый
+раздел.
+
+| Line | Текущий | Предлагаемый | Тип |
+|---|---|---|---|
+| 95 | `# Stats` | `# Статистика` | comment |
+| 100 | `# Operators wizard` | `# Мастер «операторы»` | comment |
+| 108 | `# Settings` | `# Настройки` | comment |
+| 112 | `# Audience` | `# Аудитория` | comment |
+| 115 | `# Per-appeal ops` | `# Действия по конкретному обращению` | comment |
+| 123 | `# Common` | `# Общие действия` | comment |
+
+### handlers/admin_settings.py
+
+| Line | Текущий | Предлагаемый | Тип |
+|---|---|---|---|
+| 603 | `# Pull Request` | `# Создание Pull Request: подтверждение и отправка` | comment |
+
+Разделитель блока «PR-flow». Перевод заодно даёт читателю контекст,
+что внутри секции — не определение PR, а конкретный шаг UI.
+
+### handlers/broadcast_templates.py
+
+| Line | Текущий | Предлагаемый | Тип |
+|---|---|---|---|
+| 568 | `# Strip prefix` | `# Срезаем префикс «op:tmpl:» — дальше идёт чистый хвост` | comment |
+
+### services/admin_card.py
+
+| Line | Текущий | Предлагаемый | Тип |
+|---|---|---|---|
+| 176 | `# Freshness check.` | `# Проверка свежести: редактируем карточку, только если она физически последнее сообщение бота в чате (см. модульный docstring).` | comment |
+
+### services/cron.py
+
+| Line | Текущий | Предлагаемый | Тип |
+|---|---|---|---|
+| 131 | `# Module-level cron jobs` | `# Cron-задачи на уровне модуля` | comment (section header) |
+| 799 | `# Selfcheck heartbeat` | `# Самопроверка: heartbeat в admin-чат` | comment |
+| 932 | `# Helpers` | `# Вспомогательные функции` | comment (section header) |
+
+### services/db_backup.py
+
+| Line | Текущий | Предлагаемый | Тип |
+|---|---|---|---|
+| 150 | `# Pipe для данных pg_dump → gpg` | `# Канал для данных: pg_dump пишет в data_w, gpg читает из data_r` | comment |
+
+Уже наполовину по-русски — просто разворачиваем литературно.
+
+---
+
+## Приоритет P1 — services второго уровня
+
+Здесь нет английских комментариев в строгом смысле, но три типа правок
+заметно повышают читаемость.
+
+### services/broadcasts.py — короткие CRUD-функции без docstring
+
+Функции `set_subscription` (l. 25), `count_subscribers` (l. 60),
+`mark_started` (l. 107), `mark_finished` (l. 121), `get_status`
+(l. 237), `record_delivery` (l. 243) выполняют конкретные шаги цикла
+рассылки, но не объясняют «зачем». Это нарушает стиль остальных
+функций модуля (`mark_cancelled`, `reap_orphaned_draft`, `search` —
+там docstring'и развёрнутые).
+
+Предлагаемые тексты (по аналогии с соседями):
+
+- `set_subscription` → «Подписать или отписать жителя на рассылки.
+  Используется и в start-flow (явное согласие), и в bot_stopped-
+  обработчике (мягкая отписка при блокировке бота)».
+- `count_subscribers` → «Сколько жителей сейчас может получить
+  рассылку. Тот же фильтр, что у `list_subscriber_targets`, — нужен
+  для предпросмотра рассылки оператору до отправки».
+- `mark_started` → «Перевести рассылку из DRAFT в SENDING и
+  зафиксировать `started_at` плюс `admin_message_id` (mid карточки в
+  админ-чате, по которой потом нажмут «остановить»)».
+- `mark_finished` → «Финализировать рассылку: статус, `finished_at`,
+  счётчики доставленных и упавших. Защитный слой: если FAILED при
+  нулевых счётчиках — пересчитываем из реальных BroadcastDelivery,
+  чтобы оператор не запустил повторную рассылку вслепую».
+- `get_status` → «Текущий статус рассылки одной строкой. Используется
+  в отмене из cooldown'а (`_handle_cancel_cooldown`) для проверки,
+  что отмена ещё имеет смысл».
+- `record_delivery` → «Записать одиночный факт доставки. `error=None`
+  означает успех. Для батча используется `record_deliveries` — на
+  10k подписчиков по-одному писать дорого».
+
+### services/users.py — те же короткие CRUD-функции
+
+`get_or_create` (l. 40), `has_consent` (l. 58), `set_phone` (l. 90),
+`set_first_name` (l. 101), `set_state` (l. 105), `reset_state` (l. 112)
+без docstring'а. Описать в духе соседних `set_consent` и
+`update_dialog_data`.
+
+Особенно важно расширить `get_or_create`: это **самая часто
+вызываемая** функция бота (через `_common.current_user`), и читатель
+сейчас не видит, что она не падает при отсутствии записи и не
+перезаписывает имя у существующего жителя.
+
+### services/wizard_persist.py — публичные обёртки UPSERT
+
+`save_op_wizard`, `save_broadcast_wizard`, `delete_op_wizard`,
+`delete_broadcast_wizard` (lines 77–108) — четыре тонкие обёртки
+вокруг `_upsert`/`delete`, всё в одну строку. Хотя бы по одной строке
+про разную TTL (5 мин vs 30 мин) и про то, что данные дублируются с
+`wizard_registry`, чтобы читатель не пытался искать здесь
+дополнительную логику.
+
+### services/threat_intel.py — пара коротких docstring'ов
+
+| Line | Текущий | Предлагаемый | Тип |
+|---|---|---|---|
+| 101 | `"""True если данные старше staleness budget'а."""` | `"""True если последний успешный refresh любого feed'а старше staleness budget (по умолчанию 24 ч). Используется в cron-job: при stale данных пишем admin-alert, но проверки URL продолжают работать на старом снимке — fail-open."""` | docstring |
+| 112 | `"""Lazy-singleton доступ к глобальному store."""` | `"""Lazy-singleton доступ к глобальному ThreatIntelStore. Module-level dict — намеренное упрощение для тестируемости через monkeypatch (см. комментарий выше)."""` | docstring |
+| 183 | `"""ThreatFox host-file: формат `0.0.0.0 evil.example` per line."""` | `"""Парсер ThreatFox host-file: формат `0.0.0.0 evil.example` на строку. Берём правое поле как hostname; всё, что не парсится, тихо отбрасываем."""` | docstring |
+| 199 | `"""PhishTank online-valid.json: список объектов с полем `url`."""` | `"""Парсер PhishTank online-valid.json: список объектов, у каждого поле `url`. Извлекаем hostname через `_normalize_host`; объекты без url или с пустым host тихо отбрасываем."""` | docstring |
+
+### services/broadcast_templates.py
+
+| Line | Текущий | Предлагаемый | Тип |
+|---|---|---|---|
+| 164 | `"""Soft-delete: проставить archived_at = now."""` | `"""Soft-delete шаблона: проставить `archived_at = now()`. Шаблон исчезает из активного списка и поиска, но остаётся доступен по id (для `record_usage` старых рассылок). Идемпотентен на повторе — archived_at просто перезаписывается."""` | docstring |
+
+### handlers/operator_reply.py
+
+| Line | Текущий | Предлагаемый | Тип |
+|---|---|---|---|
+| 151 | `"""Backward-compatible alias для тестов/старых импортов. ...` | оставить, заменить только заголовок: `"""Обратная совместимость: alias для тестов и старых импортов. ..."` | docstring |
+
+Мелочь — «Backward-compatible» в одно слово «обратная совместимость»
+звучит литературнее в русском контексте.
+
+### handlers/admin_callback_dispatch.py
+
+| Line | Текущий | Предлагаемый | Тип |
+|---|---|---|---|
+| 87 | `"""op:stats_<period> → ack + run_stats(event, period)."""` | `"""Фабрика handler'а статистики за период: ack callback и `run_stats(event, period)`. Используется для развёртывания одной строки на каждый период (today/week/month/...) без копипасты тела handler'а."""` | docstring |
+
+### services/wizard_registry.py
+
+| Line | Текущий | Предлагаемый | Тип |
+|---|---|---|---|
+| 181 | `# Best-effort fire-and-forget сохранение wizard state в БД через` | оставить — это уже русско-английский смешанный, технические термины уместны | — |
+
+---
+
+## Приоритет P2 — utils / db / тесты
+
+### Английские слова в коротких docstring'ах сервисов
+
+Несколько docstring'ов начинаются с английского технического термина
+(`STRtree`, `ISO`, `ILIKE`, `CSV URLhaus`, `JSON-сериализация`,
+`HTML-escape`, `Read-only поиск`, `Read-modify-write апдейт`,
+`Lazy-init`, `Catch-up pulse`). Эти **оставить как есть** — это
+названия конкретных технологий и операций, перевод сделал бы их
+непоисковыми (поиск по `STRtree` или `ILIKE` в репозитории сломается).
+
+### Section comments в cron.py
+
+`# Selfcheck heartbeat` (l. 799) и `# Helpers` (l. 932) — это
+section-маркеры внутри длинных файлов. Их перевод — мелочь, влияния на
+рантайм нет, но визуально приятнее иметь весь модуль на одном языке.
+Переведено в блоке P0 выше.
+
+### TODO/FIXME/XXX
+
+Реальных проектных TODO/FIXME/XXX/HACK-комментариев в `handlers/` и
+`services/` **не найдено**. Единственное совпадение — `+7-900-911-XXXX`
+в комментарии-примере телефона в `settings_store.py` l. 35, это часть
+описания формата, не маркер.
+
+### Короткие docstring'и в db/utils
+
+В рамках текущего прохода не сканировались (бюджет 12 минут).
+Отметить как «TBD следующим проходом» — после сервисов и handler'ов
+имеет смысл пройтись по `bot/aemr_bot/db/` и `bot/aemr_bot/utils/`,
+там тоже встречаются однострочники без объяснения «зачем».
+
+---
+
+## Итог
+
+Всего найдено **27 правок**:
+
+- **8 комментариев** (английские section-маркеры и короткие хвосты в
+  P0): admin_commands.py × 6, admin_settings.py × 1,
+  broadcast_templates.py × 1.
+- **6 коротких комментариев** в services (admin_card.py × 1,
+  cron.py × 3, db_backup.py × 1, плюс мелочи) — P0/P1 граница.
+- **13 расширений docstring'ов**: broadcasts.py × 6, users.py × 6,
+  threat_intel.py × 4, wizard_persist.py × 4 группой, плюс
+  broadcast_templates.py × 1, admin_callback_dispatch.py × 1,
+  operator_reply.py × 1, admin_card.py module-docstring (если хочется
+  поправить «Admin appeal card с freshness-rule» на «Карточка
+  обращения для админ-чата с правилом freshness» — но это вкусовое,
+  «freshness-rule» — устоявшийся в коде термин).
+
+Хот-path (`handlers/menu.py`, `handlers/start.py`, `handlers/appeal*.py`,
+`services/cron.py`, `services/admin_card.py`, `services/appeals.py`,
+`services/card_format.py`) уже на хорошем литературном уровне.
+Основные точки роста — короткие CRUD-функции сервисов данных
+(broadcasts, users, wizard_persist), которые писались под темп
+миграций и недополучили docstring'и того уровня, что у соседей
+(`reap_orphaned_*`, `find_stuck_in_*`, `update_dialog_data`).
+
+После применения правок весь свежий код на горячем пути будет
+говорить одним языком — связной литературной русской прозой с
+английскими техническими терминами в правильных местах
+(модели, SQL-операторы, имена feed'ов).
 ```
 
 ### `docs/_meta/SEC_EXPLOITS_2026-05-26.md`
