@@ -1303,4 +1303,8 @@ def op_help_keyboard(
         kb.row(CallbackButton(text="👥 Операторы", payload="op:operators"))
         kb.row(CallbackButton(text="⚙️ Настройки бота", payload="op:settings"))
         kb.row(CallbackButton(text="📊 Аудитория и согласия", payload="op:audience"))
+    # «📋 Памятка оператора» — полная инструкция в отдельном подменю
+    # (раньше она печаталась простыней в каждом вызове админ-меню,
+    # перегружая чат). Доступна любой роли.
+    kb.row(CallbackButton(text="📋 Памятка оператора", payload="op:help_full"))
     return kb.as_markup()
