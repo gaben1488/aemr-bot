@@ -59,6 +59,22 @@ class TestF10EmbeddedUrl:
         assert find_non_whitelisted_urls(text) == []
 
 
+class TestF6HtmlEntities:
+    """F6 (CVSS 4.3): `&lt;script&gt;` обходил regex до Batch D-extra."""
+
+    def test_html_entity_script_caught(self) -> None:
+        attack = "Привет &lt;script&gt;alert(1)&lt;/script&gt; мир"
+        cleaned = sanitize_settings_text(attack)
+        # После html.unescape regex видит реальный <script> и вычищает
+        assert "<script>" not in cleaned.lower()
+        assert "alert(1)" not in cleaned
+
+    def test_html_entity_iframe(self) -> None:
+        attack = "&lt;iframe src='evil.com'&gt;&lt;/iframe&gt;"
+        cleaned = sanitize_settings_text(attack)
+        assert "iframe" not in cleaned.lower()
+
+
 class TestF7NestedTagSanitize:
     """F7 (CVSS 4.0): `<<script>script>…<</script>/script>` оставлял
     внутренний <script> после single-pass strip."""
