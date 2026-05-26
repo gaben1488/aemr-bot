@@ -227,17 +227,20 @@ _EXACT: dict[str, ExactHandler] = {
     "op:settings": _ack_then(lambda e: admin_commands.run_settings_menu(e)),
     "op:audience": _ack_then(lambda e: admin_commands.run_audience_menu(e)),
     "op:help_full": _ack_then(lambda e: _show_op_help_full(e)),
+    "op:help_security": _ack_then(lambda e: _show_op_help_security(e)),
     "op:reply_cancel": _op_reply_cancel,
 }
 
 
 async def _show_op_help_full(event) -> None:
-    """Подменю «📋 Памятка оператора» — полный гайд по командам,
-    безопасности, ссылкам на документы.
+    """Подменю «📋 Памятка оператора» (главный экран).
 
-    Раньше OP_HELP печатался простыней при каждом вызове админ-меню,
-    перегружая чат при каждом тапе `/menu`. Теперь админ-меню короткое
-    («выберите действие»), а полная памятка — отдельный экран по клику.
+    Команды, рассылки, ответы по обращениям. Кнопка → переход на
+    второй экран `🛡️ Безопасность и антифишинг`.
+
+    Раньше один экран OP_HELP_FULL_LEGACY содержал всё — ~8230 char,
+    превышал MAX-API limit 4000, при тапе кнопки падал с
+    `ValueError: text должен быть меньше 4000 символов`. Разбит на 2.
     """
     from aemr_bot import keyboards as kbds
     from aemr_bot import texts
@@ -250,8 +253,30 @@ async def _show_op_help_full(event) -> None:
     await send_or_edit_screen(
         event,
         chat_id=cfg.admin_group_id,
-        text=texts.OP_HELP_FULL.format(answer_limit=cfg.answer_max_chars),
-        attachments=[kbds.op_back_to_menu_keyboard()],
+        text=texts.OP_HELP_MAIN.format(answer_limit=cfg.answer_max_chars),
+        attachments=[kbds.op_help_main_keyboard()],
+    )
+
+
+async def _show_op_help_security(event) -> None:
+    """Подменю «🛡️ Безопасность и антифишинг» — второй экран памятки.
+
+    Антифишинг, реакция на скам, компрометация аккаунта, ключевые
+    документы. Кнопка → возврат к главному экрану памятки.
+    """
+    from aemr_bot import keyboards as kbds
+    from aemr_bot import texts
+    from aemr_bot.config import settings as cfg
+    from aemr_bot.handlers._auth import ensure_operator
+    from aemr_bot.utils.event import send_or_edit_screen
+
+    if not await ensure_operator(event):
+        return
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_HELP_SECURITY,
+        attachments=[kbds.op_help_security_keyboard()],
     )
 
 # prefix → (handler, нужен ли payload в handler).
