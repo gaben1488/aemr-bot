@@ -1,7 +1,7 @@
 import logging
 
 from maxapi import Dispatcher
-from maxapi.types import BotStarted, Command, MessageCreated
+from maxapi.types import BotStarted, BotStopped, Command, MessageCreated
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
@@ -303,6 +303,47 @@ def register(dp: Dispatcher) -> None:
         if _is_admin_chat(event):
             return
         await cmd_start(event)
+
+    @dp.bot_stopped()
+    async def _(event: BotStopped):
+        """MAXAPI_DEEP_DIVE §17 fix (P1): житель остановил бота
+        (нажал «остановить» в MAX-клиенте, что эквивалентно блокировке
+        бота). До этого фикса мы продолжали слать broadcast, каждое
+        сообщение возвращалось ошибкой, БД заполнялась failed-записями,
+        и реальная аудитория broadcast'а была меньше декларируемой.
+
+        Здесь мы снимаем подписку на рассылку — broadcast-фильтр в
+        `services/broadcasts.list_subscriber_targets` использует
+        `subscribed_broadcast=True`, теперь житель туда не попадёт. Это
+        мягкая мера: житель может в любой момент написать /start снова
+        и снова подписаться через UI. Audit-log пишется, чтобы остался
+        след для расследования (например, если массовый bot_stopped —
+        знак что в рассылке было что-то отталкивающее).
+        """
+        # Admin-чат не должен генерировать BotStopped (бот всегда в нём),
+        # но проверка дешёвая.
+        if _is_admin_chat(event):
+            return
+        try:
+            user_id = event.user.user_id
+        except AttributeError:
+            return
+        try:
+            async with session_scope() as session:
+                user = await users_service.get_or_create(session, user_id)
+                if user.subscribed_broadcast:
+                    await broadcasts_service.set_subscription(
+                        session, user_id, subscribed=False
+                    )
+                    log.info(
+                        "bot_stopped: житель max_user_id=%s остановил бота — "
+                        "сняли с рассылки", user_id,
+                    )
+        except Exception:
+            log.exception(
+                "bot_stopped: failed to unsubscribe max_user_id=%s",
+                user_id,
+            )
 
     @dp.message_created(Command("start"))
     async def _(event: MessageCreated):
