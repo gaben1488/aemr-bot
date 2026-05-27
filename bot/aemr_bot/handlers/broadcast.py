@@ -42,7 +42,7 @@ from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import BroadcastStatus, OperatorRole
 from aemr_bot.db.session import session_scope
-from aemr_bot.handlers._auth import ensure_operator, ensure_role
+from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.services import broadcasts as broadcasts_service
 # Cluster C (Codex PR 7): pure utility функции вынесены в
 # `services/broadcast_utils`. Re-export через `import` чтобы старые
@@ -110,7 +110,6 @@ _pending_broadcasts: dict[int, "asyncio.Task"] = {}
 # делают `patch("aemr_bot.handlers.broadcast._get_operator", ...)`
 # и читают `broadcast._get_operator`. Удалять алиас нельзя без
 # обновления ~10 test files — это держится здесь как noop-binding.
-from aemr_bot.handlers._auth import get_operator
 _is_admin_chat = is_admin_chat
 _ensure_role = ensure_role
 _ensure_operator = ensure_operator
