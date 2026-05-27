@@ -178,6 +178,138 @@ def op_audience_user_actions(max_user_id: int, *, blocked: bool):
     return kb.as_markup()
 
 
+def op_audience_paginated_list_keyboard(
+    category: str,
+    rows: list[tuple[int, str]],
+    *,
+    page: int = 1,
+    total_pages: int = 1,
+):
+    """Master-listing аудитории: один сообщение с кликабельными
+    строками + пагинация + bulk-dump + search.
+
+    `category` ∈ {`subs`, `consent`, `blocked`}.
+    `rows` — список (max_user_id, label) где label уже отформатирован
+    вызывающим (`#max_id · Имя · +7***1234 · 🔔✅`). Каждый row —
+    кликабельная кнопка, открывает карточку конкретного жителя через
+    callback `op:aud:show:<max_user_id>`.
+
+    Pagination кнопки появляются только если total_pages > 1.
+
+    Кнопка «📤 Выдать всех» — отдельный bulk-dump (10 individual
+    карточек). Кнопка «🔍 Поиск» — intent flow по имени/телефону/id.
+    """
+    kb = InlineKeyboardBuilder()
+    for max_user_id, label in rows:
+        kb.row(
+            CallbackButton(
+                text=label,
+                payload=f"op:aud:show:{max_user_id}",
+            )
+        )
+    # Pagination row — показываем только при >1 странице.
+    if total_pages > 1:
+        nav: list[CallbackButton] = []
+        if page > 1:
+            nav.append(
+                CallbackButton(
+                    text="⬅️",
+                    payload=f"op:aud:page:{category}:{page - 1}",
+                )
+            )
+        nav.append(
+            CallbackButton(
+                text=f"{page} / {total_pages}",
+                payload=f"op:aud:page:{category}:noop",
+            )
+        )
+        if page < total_pages:
+            nav.append(
+                CallbackButton(
+                    text="➡️",
+                    payload=f"op:aud:page:{category}:{page + 1}",
+                )
+            )
+        kb.row(*nav)
+    # Bulk + search: только при непустых rows. Поиск тоже доступен —
+    # удобно когда оператор открыл list и хочет сразу найти кого-то
+    # конкретного.
+    if rows:
+        kb.row(
+            CallbackButton(
+                text=f"📤 Выдать всех на странице ({len(rows)})",
+                payload=f"op:aud:dump:{category}:{page}",
+            )
+        )
+    kb.row(
+        CallbackButton(
+            text="🔍 Найти жителя",
+            payload=f"op:aud:search:{category}",
+        )
+    )
+    kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_audience_search_cancel_keyboard(category: str | None = None):
+    """Кнопка отмены под подсказкой ввода поиска. Возврат — в исходную
+    категорию если задана, иначе в корневое меню аудитории."""
+    kb = InlineKeyboardBuilder()
+    if category in {"subs", "consent", "blocked"}:
+        kb.row(
+            CallbackButton(
+                text="↩️ К списку",
+                payload=f"op:aud:{category}",
+            )
+        )
+    kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_audience_user_card_keyboard(max_user_id: int, *, blocked: bool, category: str | None = None):
+    """Карточка отдельного жителя из аудиторий — расширенная версия
+    `op_audience_user_actions` с возвратом в исходный paginated
+    listing вместо короткого «↩️ К аудитории».
+
+    `category` — категория откуда открыли карточку (`subs`/`consent`/
+    `blocked`); если задано, кнопка возврата вернёт на страницу
+    list'инга, а не в корневое меню аудитории.
+    """
+    kb = InlineKeyboardBuilder()
+    if blocked:
+        kb.row(
+            CallbackButton(
+                text="✅ Разблокировать",
+                payload=f"op:aud:unblock:{max_user_id}",
+            )
+        )
+    else:
+        kb.row(
+            CallbackButton(
+                text="🚫 Заблокировать",
+                payload=f"op:aud:block:{max_user_id}",
+            )
+        )
+    kb.row(
+        CallbackButton(
+            text="🗑 Удалить ПДн",
+            payload=f"op:aud:erase:{max_user_id}",
+        )
+    )
+    if category in {"subs", "consent", "blocked"}:
+        kb.row(
+            CallbackButton(
+                text="↩️ К списку",
+                payload=f"op:aud:{category}",
+            )
+        )
+    kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
 def appeal_admin_actions(
     appeal_id: int,
     status: str,
@@ -326,6 +458,9 @@ __all__ = [
     "op_stats_menu_keyboard",
     "op_audience_menu_keyboard",
     "op_audience_user_actions",
+    "op_audience_paginated_list_keyboard",
+    "op_audience_user_card_keyboard",
+    "op_audience_search_cancel_keyboard",
     "appeal_admin_actions",
     "op_help_keyboard",
 ]
