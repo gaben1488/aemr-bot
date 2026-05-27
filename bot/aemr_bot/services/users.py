@@ -463,29 +463,68 @@ async def set_blocked(
     return result.rowcount > 0
 
 
-async def list_subscribers(session: AsyncSession, *, limit: int = 20) -> list[User]:
+def _subscribers_where():
+    """Условие выборки подписчиков. Вынесено чтобы count и list
+    гарантированно использовали один и тот же фильтр (без рассинхрона
+    «count != len(list)»)."""
+    return (
+        User.subscribed_broadcast.is_(True),
+        User.consent_broadcast_at.isnot(None),
+        User.is_blocked.is_(False),
+        User.first_name != "Удалено",
+    )
+
+
+def _consented_where():
+    return (
+        User.consent_pdn_at.isnot(None),
+        User.is_blocked.is_(False),
+        User.first_name != "Удалено",
+    )
+
+
+def _blocked_where():
+    return (User.is_blocked.is_(True),)
+
+
+async def list_subscribers(
+    session: AsyncSession, *, limit: int = 20, offset: int = 0
+) -> list[User]:
     """Активные подписчики на рассылку для IT-меню «Аудитория».
 
     Синхронизировано с services.broadcasts._eligible_filter(): список
     показывает только тех, кому рассылка действительно может уйти.
     Старый вариант показывал legacy-подписчиков без consent_broadcast_at,
     хотя broadcast-send их уже исключал.
+
+    `offset` поддерживается для пагинации в админ-master (PR
+    audience-paginated-master).
     """
     res = await session.scalars(
         select(User)
-        .where(
-            User.subscribed_broadcast.is_(True),
-            User.consent_broadcast_at.isnot(None),
-            User.is_blocked.is_(False),
-            User.first_name != "Удалено",
-        )
+        .where(*_subscribers_where())
         .order_by(User.updated_at.desc())
         .limit(limit)
+        .offset(offset)
     )
     return list(res)
 
 
-async def list_consented(session: AsyncSession, *, limit: int = 20) -> list[User]:
+async def count_subscribers_audience(session: AsyncSession) -> int:
+    """Общее число активных подписчиков для total_pages в paginated
+    листинге. Отделено от `count_subscribers` в `broadcasts` чтобы
+    избежать circular import и потому что фильтр чуть отличается
+    (там нужно для send-loop, тут — для UI)."""
+    from sqlalchemy import func as sa_func
+
+    return await session.scalar(
+        select(sa_func.count(User.id)).where(*_subscribers_where())
+    ) or 0
+
+
+async def list_consented(
+    session: AsyncSession, *, limit: int = 20, offset: int = 0
+) -> list[User]:
     """Жители с активным согласием на ПДн.
 
     Обезличенные sentinel/удалённые записи исключаются из операторской
@@ -493,15 +532,21 @@ async def list_consented(session: AsyncSession, *, limit: int = 20) -> list[User
     """
     res = await session.scalars(
         select(User)
-        .where(
-            User.consent_pdn_at.isnot(None),
-            User.is_blocked.is_(False),
-            User.first_name != "Удалено",
-        )
+        .where(*_consented_where())
         .order_by(User.consent_pdn_at.desc())
         .limit(limit)
+        .offset(offset)
     )
     return list(res)
+
+
+async def count_consented(session: AsyncSession) -> int:
+    """Общее число жителей с активным consent_pdn_at."""
+    from sqlalchemy import func as sa_func
+
+    return await session.scalar(
+        select(sa_func.count(User.id)).where(*_consented_where())
+    ) or 0
 
 
 async def find_pending_pdn_retention(
@@ -567,15 +612,27 @@ async def has_open_appeals(session: AsyncSession, user_id: int) -> bool:
     return row is not None
 
 
-async def list_blocked(session: AsyncSession, *, limit: int = 20) -> list[User]:
+async def list_blocked(
+    session: AsyncSession, *, limit: int = 20, offset: int = 0
+) -> list[User]:
     """Заблокированные пользователи — после /forget или ручной блокировки IT."""
     res = await session.scalars(
         select(User)
-        .where(User.is_blocked.is_(True))
+        .where(*_blocked_where())
         .order_by(User.updated_at.desc())
         .limit(limit)
+        .offset(offset)
     )
     return list(res)
+
+
+async def count_blocked(session: AsyncSession) -> int:
+    """Общее число заблокированных жителей."""
+    from sqlalchemy import func as sa_func
+
+    return await session.scalar(
+        select(sa_func.count(User.id)).where(*_blocked_where())
+    ) or 0
 
 
 async def find_by_phone(session: AsyncSession, phone: str) -> User | None:
