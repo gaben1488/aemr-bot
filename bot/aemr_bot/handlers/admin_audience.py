@@ -449,12 +449,15 @@ async def run_audience_action(event, payload: str) -> None:
 
     # Search intent: `search` либо `search:<cat>`.
     if suffix == "search" or suffix.startswith("search:"):
-        cat = None
+        # Mypy: используем тип-аннотацию `str | None` явно — переменная
+        # выше уже `cat: str` из page/dump веток, иначе reassignment
+        # в `None` вызывает «Incompatible types in assignment».
+        search_cat: str | None = None
         if suffix.startswith("search:"):
             cat_candidate = suffix.removeprefix("search:")
             if cat_candidate in {"subs", "consent", "blocked"}:
-                cat = cat_candidate
-        await _start_search_intent(event, cat)
+                search_cat = cat_candidate
+        await _start_search_intent(event, search_cat)
         return
 
     # Карточка жителя: `show:<max_user_id>`.
