@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 02:51:49 UTC`
+Generated at: `2026-05-27 03:14:13 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `240`
 Max file size: `300 KB`
@@ -57,7 +57,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/broadcast.py` (59569 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (12935 bytes)
-- `bot/aemr_bot/handlers/menu.py` (52692 bytes)
+- `bot/aemr_bot/handlers/menu.py` (51993 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (41155 bytes)
 - `bot/aemr_bot/handlers/start.py` (21062 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
@@ -11815,8 +11815,8 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 
 ### `bot/aemr_bot/handlers/menu.py`
 
-Size: `52692` bytes  
-SHA-256: `18e2711354d4ca6480c04820fa7c8558e035905c61bf35107504da98d739c02b`
+Size: `51993` bytes  
+SHA-256: `d2f7231b1ef1a3474798b679a78c2fa9d4cd3e1158615a20e9f8c7713150e4bc`
 
 ```python
 import logging
@@ -11827,15 +11827,27 @@ import aiohttp
 from maxapi.exceptions.max import MaxApiError, MaxConnection
 
 from aemr_bot import keyboards, texts
+from aemr_bot.config import settings as cfg
+from aemr_bot.db.models import AppealStatus, DialogState, User
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
+from aemr_bot.services import admin_card as admin_card_service
 from aemr_bot.services import admin_events
+from aemr_bot.services import admin_relay
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import card_format
+from aemr_bot.services import operators as ops_service
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import ack_callback, get_chat_id, get_user_id
+from aemr_bot.utils import menu_tracker
+from aemr_bot.utils.event import (
+    ack_callback,
+    extract_message_id,
+    get_chat_id,
+    get_user_id,
+)
+from aemr_bot.utils.typing_indicator import mark_typing
 
 log = logging.getLogger(__name__)
 
@@ -11887,7 +11899,6 @@ async def _send_or_edit_menu(
     «человек нажмет кнопку и потеряет оповещение о полученном ответе —
     бред».
     """
-    from aemr_bot.utils import menu_tracker  # noqa: PLC0415
 
     attachments = attachments or []
     callback_mid = None if force_new_message else _callback_mid(event)
@@ -11937,7 +11948,6 @@ async def _send_or_edit_menu(
     # kind='menu', чтобы следующий тап кнопки на этом меню edit'ил
     # его на месте.
     if chat_id is not None:
-        from aemr_bot.utils.event import extract_message_id  # noqa: PLC0415
         new_mid = extract_message_id(sent)
         if new_mid:
             menu_tracker.note_editable_send(chat_id, new_mid, kind="menu")
@@ -12002,7 +12012,6 @@ async def open_my_appeals(event, max_user_id: int, page: int = 1):
     # Typing-indicator: count + list по обращениям — у активных
     # жителей может занять >500 мс. Без него тап «📁 Мои обращения»
     # ощущается как «бот завис».
-    from aemr_bot.utils.typing_indicator import mark_typing
     await mark_typing(event)
 
     page = max(1, page)
@@ -12045,7 +12054,6 @@ async def start_appeal_followup(event, appeal_id: int, max_user_id: int):
     закрытому вопросу создаём новое связанное обращение через
     «🔁 Подать похожее».
     """
-    from aemr_bot.db.models import AppealStatus, DialogState
 
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id(session, appeal_id)
@@ -12095,7 +12103,6 @@ async def start_appeal_repeat(event, appeal_id: int, max_user_id: int):
     проблемы. Если старое обращение было ANSWERED/CLOSED, новое
     обращение получит пометку связи с отвеченным или закрытым вопросом.
     """
-    from aemr_bot.db.models import AppealStatus, DialogState
 
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id(session, appeal_id)
@@ -12182,9 +12189,7 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
-        from aemr_bot.services.admin_relay import _collect_all_user_attachments  # noqa: PLC0415
-
-        attachment_count = len(_collect_all_user_attachments(appeal))
+        attachment_count = len(admin_relay._collect_all_user_attachments(appeal))
         text = card_format.user_card(appeal)
         status = appeal.status
     await _send_or_edit_menu(
@@ -12290,10 +12295,8 @@ async def do_subscribe_confirm(event, max_user_id: int) -> None:
     consent_broadcast_at и subscribed_broadcast=True."""
     from datetime import datetime, timezone
 
-    from aemr_bot.services import operators as ops_service
     from sqlalchemy import update as sql_update
 
-    from aemr_bot.db.models import User
 
     async with current_user(max_user_id) as (session, user):
         if user.is_blocked:
@@ -12458,7 +12461,6 @@ async def ask_goodbye_erase_confirm(event):
     отказ — в A4-экран, а не в Настройки: жильцу логичнее ещё раз
     рассмотреть две оставшиеся опции, чем уйти на уровень выше.
     """
-    from aemr_bot.services import appeals as appeals_service
 
     max_user_id = get_user_id(event)
     open_lines: list[str] = []
@@ -12488,7 +12490,6 @@ async def ask_forget_confirm(event):
     житель не понимает, что именно потеряет (вопрос «обращения будут
     закрыты» он легко прочитает как «решены», а не «выкинуты»).
     """
-    from aemr_bot.services import appeals as appeals_service
 
     max_user_id = get_user_id(event)
     open_lines: list[str] = []
@@ -12501,7 +12502,6 @@ async def ask_forget_confirm(event):
             from datetime import datetime
             from zoneinfo import ZoneInfo
 
-            from aemr_bot.config import settings as cfg
 
             created = ap.created_at.astimezone(ZoneInfo(cfg.timezone)) if ap.created_at else None
             created_str = created.strftime("%d.%m.%Y") if isinstance(created, datetime) else "—"
@@ -12528,7 +12528,6 @@ async def ask_forget_confirm(event):
 def _format_dt_local(dt) -> str:
     from zoneinfo import ZoneInfo
 
-    from aemr_bot.config import settings as cfg
 
     if dt is None:
         return "—"
@@ -12578,8 +12577,6 @@ async def do_consent_revoke(event, max_user_id: int):
     В служебную группу отправляем уведомление и повторяем карточки
     открытых обращений, чтобы сотрудник не искал их в истории чата.
     """
-    from aemr_bot.services import appeals as appeals_service
-    from aemr_bot.services import operators as ops_service
 
     async with current_user(max_user_id) as (session, user):
         # SACRED #5: list_unanswered_with_messages (не list_unanswered),
@@ -12615,7 +12612,6 @@ async def do_consent_revoke(event, max_user_id: int):
         # messages тоже загружены (selectinload) — НЕ ставим
         # __dict__.setdefault("messages", []), иначе перезаписали бы
         # реальные сообщения пустым списком и timeline снова исчез.
-        from aemr_bot.services import admin_card as admin_card_service
 
         for appeal in my_open:
             await admin_card_service.render(
@@ -12630,8 +12626,6 @@ async def do_forget(event, max_user_id: int):
     Перед обнулением считаем открытые обращения, чтобы потом сказать
     админ-группе, какие карточки можно убирать из работы.
     """
-    from aemr_bot.services import appeals as appeals_service
-    from aemr_bot.services import operators as ops_service
 
     closed_ids: list[int] = []
     async with current_user(max_user_id) as (session, user):
@@ -12857,8 +12851,6 @@ async def show_appeal_attachments(event, appeal_id: int, max_user_id: int):
     жителя (PR-fix-hang). До этого вложения переотправлялись каждый
     раз при открытии карточки и могли подвешивать handler. Теперь —
     только по явному тапу."""
-    from aemr_bot.services.admin_relay import render_appeal_attachments
-
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
     if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
@@ -12871,7 +12863,7 @@ async def show_appeal_attachments(event, appeal_id: int, max_user_id: int):
     user_id = get_user_id(event)
     if user_id is None:
         return
-    await render_appeal_attachments(
+    await admin_relay.render_appeal_attachments(
         event.bot,
         chat_id=None,
         user_id=user_id,
