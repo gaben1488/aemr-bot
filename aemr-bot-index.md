@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 13:06:22 UTC`
+Generated at: `2026-05-27 14:48:28 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `259`
 Max file size: `300 KB`
@@ -71,7 +71,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/main.py` (22650 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_bus.py` (10239 bytes)
-- `bot/aemr_bot/services/admin_card.py` (11674 bytes)
+- `bot/aemr_bot/services/admin_card.py` (11715 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6489 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
 - `bot/aemr_bot/services/appeals.py` (27094 bytes)
@@ -79,7 +79,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/broadcasts.py` (15994 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (19371 bytes)
-- `bot/aemr_bot/services/cron.py` (54156 bytes)
+- `bot/aemr_bot/services/cron.py` (54291 bytes)
 - `bot/aemr_bot/services/cron_registry.py` (6568 bytes)
 - `bot/aemr_bot/services/db_backup.py` (16664 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
@@ -95,7 +95,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
-- `bot/aemr_bot/services/wizard_registry.py` (11059 bytes)
+- `bot/aemr_bot/services/wizard_registry.py` (11104 bytes)
 - `bot/aemr_bot/texts.py` (1396 bytes)
 - `bot/aemr_bot/ui/__init__.py` (1477 bytes)
 - `bot/aemr_bot/ui/broadcast_keyboards.py` (13329 bytes)
@@ -16464,11 +16464,11 @@ def install_outgoing_tracker_hook(bot) -> None:
 
 ### `bot/aemr_bot/services/admin_card.py`
 
-Size: `11674` bytes  
-SHA-256: `3fa503b0df4c6f043d7a5856bb2334112f81b6d25fd573dfdfe1f7bd4c1fc987`
+Size: `11715` bytes  
+SHA-256: `6d622ddc03a7d7efba8223214e9feb11dd83b6d7b1f37ee35fa26e938cb2caa6`
 
 ```python
-"""Admin appeal card — sacred event log (PR #100, dual-tracker).
+"""Карточка обращения в админ-чате — sacred event log (PR #100, dual-tracker).
 
 Каждая публикация карточки — новая запись в журнале чата. Edit
 после dual-tracker не делается; reply/reopen/close/followup → новая
@@ -18822,8 +18822,8 @@ def appeal_list_label(appeal: Appeal) -> str:
 
 ### `bot/aemr_bot/services/cron.py`
 
-Size: `54156` bytes  
-SHA-256: `f9de463b0aec60aca76c0513d6b2a11338a964fcc5c6bc8f3f21ecda0dc65dcd`
+Size: `54291` bytes  
+SHA-256: `1629c17109b96f95a93a86fe2dc88242b22ad838999c43cde2c3b0b81f2417e6`
 
 ```python
 from __future__ import annotations
@@ -18976,11 +18976,11 @@ async def _send_admin_text_with_retry(
 
 
 # ============================================================================
-# Module-level cron jobs
+# Cron-задачи модульного уровня
 # ============================================================================
-# Все jobs принимают зависимости явными параметрами (раньше были
-# captured через замыкание в build_scheduler). build_scheduler
-# регистрирует их через functools.partial.
+# Все задачи принимают зависимости явными параметрами (раньше брали
+# через замыкание в build_scheduler). build_scheduler регистрирует
+# их через functools.partial.
 #
 # Преимущества:
 # - Тестируемость: можно мокать send_admin_text через AsyncMock.
@@ -19678,7 +19678,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             CronTrigger(minute=17, timezone=TZ),
             "threat-intel-refresh",
         ),
-        # Auto-deactivate stale operators (CVE-9 from SECURITY_REVIEW_2026-05-26).
+        # Авто-деактивация stale операторов (CVE-9 из SECURITY_REVIEW_2026-05-26).
         # Сверяет активных операторов с реальными членами админ-группы MAX
         # и мягко деактивирует тех, кого больше нет. IT-операторы не
         # трогаются (защита от self-lock-out). 04:20 — между audit-log
@@ -19688,7 +19688,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             CronTrigger(hour=4, minute=20, timezone=TZ),
             "stale-operators-cleanup",
         ),
-        # Selfcheck heartbeat
+        # Self-check heartbeat: следит за зависанием главного цикла бота
         (
             functools.partial(_job_selfcheck, send_admin_text),
             CronTrigger(
@@ -24202,8 +24202,8 @@ async def hydrate_into_registry(session: AsyncSession) -> tuple[int, int]:
 
 ### `bot/aemr_bot/services/wizard_registry.py`
 
-Size: `11059` bytes  
-SHA-256: `77783208f3498910940cc989d7e04664f35020f2fd5644ba2d1ee5a8474122a9`
+Size: `11104` bytes  
+SHA-256: `70ad92c59495beac23ec4e6954f0d72e7dce94e17a8a3b16f89dceff81b8c965`
 
 ```python
 """Единое хранилище мутабельного in-memory состояния визардов и
@@ -24228,7 +24228,7 @@ from aemr_bot.utils.background import spawn_background_task
 
 log = logging.getLogger(__name__)
 
-# ---- Internal storage (private to this module) ----------------------------
+# ---- Внутреннее хранилище (закрытое для других модулей) ---------------------
 
 # Wizard «Добавить оператора» в админ-панели IT.
 # Ключ: max_user_id оператора, который сейчас ведёт wizard.
