@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 14:48:28 UTC`
+Generated at: `2026-05-27 17:11:02 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `259`
+Indexed files: `260`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -60,7 +60,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_funnel.py` (33699 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (13147 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (59569 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (57273 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (12935 bytes)
 - `bot/aemr_bot/handlers/menu.py` (51993 bytes)
@@ -76,6 +76,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
 - `bot/aemr_bot/services/appeals.py` (27094 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
+- `bot/aemr_bot/services/broadcast_utils.py` (6005 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (15994 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (19371 bytes)
@@ -10435,8 +10436,8 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `59569` bytes  
-SHA-256: `2cec429f290c1f8f654f191456d197fb9f6969ea99ac82d19b4000a0932f9c0e`
+Size: `57273` bytes  
+SHA-256: `0e58372a7b850b0a68610690a887665ffdfc840eb8852eb281da6e6153ad048e`
 
 ```python
 """Мастер рассылок и цикл их отправки.
@@ -10459,7 +10460,6 @@ SHA-256: `2cec429f290c1f8f654f191456d197fb9f6969ea99ac82d19b4000a0932f9c0e`
 from __future__ import annotations
 
 import asyncio
-import re
 import logging
 import time
 from collections.abc import Sequence
@@ -10479,6 +10479,22 @@ from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import settings_store
+# Cluster C (Codex PR 7): pure utility функции вынесены в
+# `services/broadcast_utils`. Re-export через `import` чтобы старые
+# тестовые импорты `from aemr_bot.handlers.broadcast import _format_progress`
+# продолжали работать без правок (см. test_broadcast_handlers.py,
+# test_broadcast_429_backoff.py).
+from aemr_bot.services.broadcast_utils import (  # noqa: F401
+    _COOLDOWN_EMERGENCY_SEC,
+    _COOLDOWN_NORMAL_SEC,
+    _EMERGENCY_MARKER,
+    _broadcast_cooldown_seconds,
+    _build_final_text,
+    _compute_progress_step,
+    _extract_retry_after,
+    _format_dt as _format_dt_pure,
+    _format_progress,
+)
 from aemr_bot.utils import image_attachments as _image_attachments
 from aemr_bot.utils.background import spawn_background_task
 from aemr_bot.utils.event import (
@@ -10533,21 +10549,9 @@ _wizards: dict[int, _WizardState] = {}
 # рестарта без подтверждения оператора».
 _pending_broadcasts: dict[int, "asyncio.Task"] = {}
 
-# Маркер «срочная рассылка» — текст с [ЧС] в начале или после пробела
-# (case-insensitive). Для таких сокращаем cooldown до 30 секунд, чтобы
-# оповещение о ЧС не задерживалось на 5 минут.
-_EMERGENCY_MARKER = re.compile(r"(?:^|\s)\[ЧС\]", re.IGNORECASE)
-_COOLDOWN_NORMAL_SEC = 300   # 5 минут — обычная рассылка
-_COOLDOWN_EMERGENCY_SEC = 30  # 30 секунд — [ЧС] рассылка
-
-
-def _broadcast_cooldown_seconds(text: str) -> int:
-    """Сколько ждать перед фактической отправкой рассылки.
-
-    [ЧС] в тексте → 30 сек (оператор всё ещё может отменить, но не
-    задерживаем оповещение о реальной ЧС). Иначе — 5 минут.
-    """
-    return _COOLDOWN_EMERGENCY_SEC if _EMERGENCY_MARKER.search(text) else _COOLDOWN_NORMAL_SEC
+# Маркер «срочная рассылка», cooldown-константы и pure-функция
+# `_broadcast_cooldown_seconds` теперь живут в `services/broadcast_utils`
+# и импортированы выше — см. Cluster C (Codex PR 7) decomp.
 
 
 async def _resolve_broadcast_max_images(session) -> int:
@@ -11047,18 +11051,7 @@ async def _handle_stop(event, broadcast_id: int) -> None:
     )
 
 
-def _format_progress(
-    *, broadcast_id: int, total: int, delivered: int, failed: int
-) -> str:
-    failed_suffix = (
-        texts.OP_BROADCAST_FAILED_SUFFIX.format(failed=failed) if failed else ""
-    )
-    return texts.OP_BROADCAST_PROGRESS.format(
-        number=broadcast_id,
-        total=total,
-        delivered=delivered,
-        failed_suffix=failed_suffix,
-    )
+# `_format_progress` теперь в services/broadcast_utils (Cluster C, PR 7).
 
 
 async def _send_one(
@@ -11133,24 +11126,7 @@ async def _send_one(
     return "exhausted"
 
 
-def _extract_retry_after(exc: Exception) -> float | None:
-    """Достать Retry-After (в секундах) из MaxApiError если есть.
-
-    maxapi 1.1.0 не парсит этот header явно, но может прокидывать в
-    `exc.raw` или `exc.args`. Best-effort: пробуем атрибуты, ловим
-    AttributeError, возвращаем None если не нашли — тогда вызывающий
-    использует exponential backoff.
-    """
-    raw = getattr(exc, "raw", None)
-    if isinstance(raw, dict):
-        for key in ("retry_after", "Retry-After", "retryAfter"):
-            value = raw.get(key)
-            if value is not None:
-                try:
-                    return float(value)
-                except (TypeError, ValueError):
-                    pass
-    return None
+# `_extract_retry_after` теперь в services/broadcast_utils (Cluster C, PR 7).
 
 
 async def _run_broadcast(
@@ -11186,37 +11162,8 @@ async def _run_broadcast(
             )
 
 
-def _compute_progress_step(total: int, rate_delay: float) -> float:
-    """Адаптивный шаг обновления прогресс-карточки (в секундах).
-
-    BROADCAST_PROGRESS_UPDATE_SEC (5 сек по умолчанию) рассчитан на
-    рассылку 50–200 получателей: оператор видит около 10 обновлений.
-    На совсем короткой рассылке (5 получателей × 1 сек) полоска
-    обновилась бы один раз в самом конце; на очень длинной (1000
-    получателей) MAX начнёт ограничивать частоту правок. Для коротких
-    отправок ужимаем шаг, чтобы прогресс двигался заметно.
-    """
-    estimated_total_sec = max(1.0, total * rate_delay)
-    return min(cfg.broadcast_progress_update_sec, estimated_total_sec / 10)
-
-
-def _build_final_text(
-    *, broadcast_id: int, total: int, delivered: int, failed: int, cancelled: bool
-) -> str:
-    """Итоговый текст рассылки для админ-карточки (отмена / готово)."""
-    if cancelled:
-        return texts.OP_BROADCAST_CANCELLED.format(
-            number=broadcast_id, delivered=delivered, total=total
-        )
-    failed_line = (
-        texts.OP_BROADCAST_FAILED_LINE.format(failed=failed) if failed else ""
-    )
-    return texts.OP_BROADCAST_DONE.format(
-        number=broadcast_id,
-        delivered=delivered,
-        total=total,
-        failed_line=failed_line,
-    )
+# `_compute_progress_step` и `_build_final_text` теперь в
+# services/broadcast_utils (Cluster C, PR 7).
 
 
 async def _resolve_admin_progress_message(
@@ -11510,9 +11457,13 @@ async def _run_broadcast_impl(
 
 
 def _format_dt(dt: datetime | None) -> str:
-    if dt is None:
-        return "—"
-    return dt.astimezone(TZ).strftime("%d.%m.%Y %H:%M")
+    """Локализованная дата/время в формате `DD.MM.YYYY HH:MM`.
+
+    Тонкий wrapper над `_format_dt_pure` из services/broadcast_utils —
+    подставляет TZ модуля. Существующие call-сайты внутри broadcast.py
+    зовут без явного tz, поэтому wrapper остаётся ради удобства.
+    """
+    return _format_dt_pure(dt, TZ)
 
 
 async def _list_broadcasts(event) -> None:
@@ -17939,6 +17890,151 @@ async def search(
         .limit(limit)
     )
     return list(result.scalars().all())
+```
+
+### `bot/aemr_bot/services/broadcast_utils.py`
+
+Size: `6005` bytes  
+SHA-256: `8aea05e5ee63cf91b4af9b511d72b41d7c1f1f4b99d64ad1945b9908dc403c4f`
+
+```python
+"""Pure utility functions для broadcast pipeline.
+
+После Cluster C (Codex PR 7, 2026-05-28) — извлечены из
+`handlers/broadcast.py` (1297 строк, монолит). Здесь только pure-
+функции без зависимости от FSM-состояния wizard'а или БД-сессии:
+форматирование прогресса/итога, парсинг Retry-After из 429,
+расчёт адаптивного шага прогресс-карточки, классификация ЧС-
+рассылки.
+
+Тестируется отдельно от handler-цепочки (`test_broadcast_429_backoff.py`,
+часть `test_broadcast_handlers.py`). `handlers/broadcast.py` импортирует
+функции под исходными именами с подчёркиванием — старые тестовые
+импорты `from aemr_bot.handlers.broadcast import _extract_retry_after`
+продолжают работать через re-export.
+"""
+from __future__ import annotations
+
+import re
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from aemr_bot import texts
+from aemr_bot.config import settings as cfg
+
+
+# Маркер «срочная рассылка» — текст с [ЧС] в начале или после пробела
+# (case-insensitive). Для таких сокращаем cooldown до 30 секунд, чтобы
+# оповещение о ЧС не задерживалось на 5 минут.
+_EMERGENCY_MARKER = re.compile(r"(?:^|\s)\[ЧС\]", re.IGNORECASE)
+_COOLDOWN_NORMAL_SEC = 300   # 5 минут — обычная рассылка
+_COOLDOWN_EMERGENCY_SEC = 30  # 30 секунд — [ЧС] рассылка
+
+
+def _broadcast_cooldown_seconds(text: str) -> int:
+    """Сколько ждать перед фактической отправкой рассылки.
+
+    [ЧС] в тексте → 30 сек (оператор всё ещё может отменить, но не
+    задерживаем оповещение о реальной ЧС). Иначе — 5 минут.
+    """
+    return (
+        _COOLDOWN_EMERGENCY_SEC
+        if _EMERGENCY_MARKER.search(text)
+        else _COOLDOWN_NORMAL_SEC
+    )
+
+
+def _format_progress(
+    *, broadcast_id: int, total: int, delivered: int, failed: int
+) -> str:
+    """Текст карточки прогресса рассылки. Если есть failed —
+    добавляем суффикс «· не доставлено: N»."""
+    failed_suffix = (
+        texts.OP_BROADCAST_FAILED_SUFFIX.format(failed=failed) if failed else ""
+    )
+    return texts.OP_BROADCAST_PROGRESS.format(
+        number=broadcast_id,
+        total=total,
+        delivered=delivered,
+        failed_suffix=failed_suffix,
+    )
+
+
+def _extract_retry_after(exc: Exception) -> float | None:
+    """Достать Retry-After (в секундах) из MaxApiError если есть.
+
+    maxapi 1.1.0 не парсит этот header явно, но может прокидывать в
+    `exc.raw` или `exc.args`. Best-effort: пробуем атрибуты, ловим
+    AttributeError, возвращаем None если не нашли — тогда вызывающий
+    использует exponential backoff.
+    """
+    raw = getattr(exc, "raw", None)
+    if isinstance(raw, dict):
+        for key in ("retry_after", "Retry-After", "retryAfter"):
+            value = raw.get(key)
+            if value is not None:
+                try:
+                    return float(value)
+                except (TypeError, ValueError):
+                    pass
+    return None
+
+
+def _compute_progress_step(total: int, rate_delay: float) -> float:
+    """Адаптивный шаг обновления прогресс-карточки (в секундах).
+
+    BROADCAST_PROGRESS_UPDATE_SEC (5 сек по умолчанию) рассчитан на
+    рассылку 50–200 получателей: оператор видит около 10 обновлений.
+    На совсем короткой рассылке (5 получателей × 1 сек) полоска
+    обновилась бы один раз в самом конце; на очень длинной (1000
+    получателей) MAX начнёт ограничивать частоту правок. Для коротких
+    отправок ужимаем шаг, чтобы прогресс двигался заметно.
+    """
+    estimated_total_sec = max(1.0, total * rate_delay)
+    return min(cfg.broadcast_progress_update_sec, estimated_total_sec / 10)
+
+
+def _build_final_text(
+    *, broadcast_id: int, total: int, delivered: int, failed: int, cancelled: bool
+) -> str:
+    """Итоговый текст рассылки для админ-карточки (отмена / готово)."""
+    if cancelled:
+        return texts.OP_BROADCAST_CANCELLED.format(
+            number=broadcast_id, delivered=delivered, total=total
+        )
+    failed_line = (
+        texts.OP_BROADCAST_FAILED_LINE.format(failed=failed) if failed else ""
+    )
+    return texts.OP_BROADCAST_DONE.format(
+        number=broadcast_id,
+        delivered=delivered,
+        total=total,
+        failed_line=failed_line,
+    )
+
+
+def _format_dt(dt: datetime | None, tz: ZoneInfo) -> str:
+    """Локализованная дата/время в формате `DD.MM.YYYY HH:MM`.
+
+    Принимает явно `tz`, чтобы функция оставалась pure — без
+    глобального состояния. Вызывающий передаёт `ZoneInfo(cfg.timezone)`.
+    """
+    if dt is None:
+        return "—"
+    return dt.astimezone(tz).strftime("%d.%m.%Y %H:%M")
+
+
+__all__ = [
+    "_EMERGENCY_MARKER",
+    "_COOLDOWN_NORMAL_SEC",
+    "_COOLDOWN_EMERGENCY_SEC",
+    "_broadcast_cooldown_seconds",
+    "_format_progress",
+    "_extract_retry_after",
+    "_compute_progress_step",
+    "_build_final_text",
+    "_format_dt",
+]
 ```
 
 ### `bot/aemr_bot/services/broadcasts.py`
