@@ -63,12 +63,22 @@ async def _upsert(
         expires_at=expires_at,
     )
     # ON CONFLICT (kind, operator_max_user_id) DO UPDATE — переписываем
-    # state и expires_at; updated_at обновится через onupdate=func.now().
+    # state, expires_at И updated_at.
+    #
+    # Bug B (2026-05-28): раньше ставили только `state + expires_at` и
+    # надеялись что SQLAlchemy `onupdate=func.now()` обновит
+    # `updated_at`. Не обновляет — это server-level upsert, ORM-hook
+    # не срабатывает. Если на wizard_state есть наблюдатели или
+    # отчёты по «давность последней правки» — они врали. Тот же
+    # паттерн в `settings_store.set_value` (см. там Bug B fix).
+    from sqlalchemy import func as sa_func
+
     stmt = stmt.on_conflict_do_update(
         constraint="uq_wizard_state_kind_operator",
         set_={
             "state": stmt.excluded.state,
             "expires_at": stmt.excluded.expires_at,
+            "updated_at": sa_func.now(),
         },
     )
     await session.execute(stmt)

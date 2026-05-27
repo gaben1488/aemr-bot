@@ -653,10 +653,36 @@ async def get_text_with_fallback(
 
 
 async def set_value(session: AsyncSession, key: str, value: Any) -> None:
+    """Upsert значения настройки.
+
+    **Bug B fix (2026-05-28):** при `on_conflict_do_update` SQLAlchemy
+    ORM-hook `onupdate=func.now()` НЕ срабатывает — это server-level
+    upsert, не Python-side update. Раньше `updated_at` после правки
+    через UI оставался старым, `synced_at` — старым, ключ НЕ попадал
+    в `get_dirty_keys`. Правка тихо терялась для PR-flow.
+
+    Теперь в `set_={...}` явно:
+    - `updated_at = func.now()` — фиксирует время правки;
+    - `synced_at = None` — сбрасываем флаг «выгружено в репо», ключ
+      становится dirty (docstring миграции 0013 это и обещал).
+
+    На INSERT (новый ключ) `updated_at` ставится через `server_default`,
+    `synced_at` остаётся NULL (default) → ключ dirty с момента
+    появления.
+    """
+    from sqlalchemy import func as sa_func
+
     stmt = (
         pg_insert(Setting)
         .values(key=key, value=value)
-        .on_conflict_do_update(index_elements=[Setting.key], set_={"value": value})
+        .on_conflict_do_update(
+            index_elements=[Setting.key],
+            set_={
+                "value": value,
+                "updated_at": sa_func.now(),
+                "synced_at": None,
+            },
+        )
     )
     await session.execute(stmt)
 
@@ -861,3 +887,46 @@ async def seed_if_empty(session: AsyncSession) -> None:
     ]
     if auto_synced:
         await mark_synced(session, auto_synced)
+
+    # Bug A fix (2026-05-28): legacy backfill `synced_at` для
+    # SYNCED_KEYS, которые уже были в БД ДО миграции 0013
+    # (`0013_settings_synced_at`). Миграция добавила колонку как
+    # nullable без backfill — поэтому ключи типа `emergency_contacts`,
+    # `topics`, `transport_dispatcher_contacts`, существовавшие со
+    # старых релизов, навечно остались `synced_at=NULL` → постоянно
+    # показывались как dirty в админ-меню «⚙️ Настройки бота».
+    #
+    # Логика идемпотентного backfill: если ключ из SYNCED_KEYS уже
+    # в БД (был в `existing`), НЕ требовал repair, валиден И не был
+    # помечен как auto_synced выше — значит baseline в репо уже
+    # совпадает (seed-файл сюда же его и положил при старом
+    # bootstrap'е). Зовём `mark_synced` чтобы поставить `synced_at`
+    # = `now()` — выводим из вечного dirty-состояния.
+    #
+    # На следующих boot'ах sweep — no-op: ключи уже с `synced_at != NULL`.
+    backfill_candidates = [
+        k for k in SYNCED_KEYS
+        if k in existing
+        and k not in newly_seeded
+        and k not in repaired
+    ]
+    if backfill_candidates:
+        # Дополнительно сверяем `synced_at IS NULL` — если оператор УЖЕ
+        # делал ручную правку и mark_synced был отложен, сбрасывать его
+        # фиксацию не хотим.
+        from sqlalchemy import select as sa_select
+        rows = await session.execute(
+            sa_select(Setting.key).where(
+                Setting.key.in_(backfill_candidates),
+                Setting.synced_at.is_(None),
+            )
+        )
+        legacy_null = [row[0] for row in rows.all()]
+        if legacy_null:
+            _log.info(
+                "seed_if_empty: backfill synced_at для %d legacy ключей "
+                "(миграция 0013 добавила колонку nullable без backfill, "
+                "теперь помечаем как synced): %s",
+                len(legacy_null), legacy_null,
+            )
+            await mark_synced(session, legacy_null)
