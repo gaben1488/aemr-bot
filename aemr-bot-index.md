@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 02:47:29 UTC`
+Generated at: `2026-05-27 02:51:49 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `239`
+Indexed files: `240`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -64,8 +64,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/keyboards.py` (69914 bytes)
 - `bot/aemr_bot/main.py` (21047 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
-- `bot/aemr_bot/services/admin_bus.py` (13836 bytes)
-- `bot/aemr_bot/services/admin_card.py` (12815 bytes)
+- `bot/aemr_bot/services/admin_bus.py` (9058 bytes)
+- `bot/aemr_bot/services/admin_card.py` (11674 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6489 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
 - `bot/aemr_bot/services/appeals.py` (27094 bytes)
@@ -87,15 +87,15 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
-- `bot/aemr_bot/services/wizard_registry.py` (12943 bytes)
+- `bot/aemr_bot/services/wizard_registry.py` (11408 bytes)
 - `bot/aemr_bot/texts.py` (57987 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
 - `bot/aemr_bot/utils/event.py` (13650 bytes)
 - `bot/aemr_bot/utils/image_attachments.py` (1137 bytes)
-- `bot/aemr_bot/utils/menu_tracker.py` (11191 bytes)
-- `bot/aemr_bot/utils/typing_indicator.py` (3976 bytes)
+- `bot/aemr_bot/utils/menu_tracker.py` (7735 bytes)
+- `bot/aemr_bot/utils/typing_indicator.py` (2310 bytes)
 - `bot/aemr_bot/utils/url_defang.py` (5100 bytes)
 - `bot/alembic.ini` (619 bytes)
 - `bot/pyproject.toml` (3047 bytes)
@@ -180,6 +180,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_wizard_registry.py` (5268 bytes)
 - `docs/_extracted/README.md` (2565 bytes)
 - `docs/_extracted/REGLAMENT_v7_FULL.md` (79745 bytes)
+- `docs/_meta/_archive/CODE_DECISIONS_LOG.md` (16319 bytes)
 - `docs/_meta/ADMIN_MENU_EXPANSION_PROPOSAL.md` (27260 bytes)
 - `docs/_meta/AUDIT_REPORT.md` (17027 bytes)
 - `docs/_meta/CARDS_UX_SWEEP_2026-05-26.md` (21489 bytes)
@@ -16241,56 +16242,22 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ### `bot/aemr_bot/services/admin_bus.py`
 
-Size: `13836` bytes  
-SHA-256: `975e11aa6d0e03db5e50e72c406e04c8a60fdf595f08036acd71959374778572`
+Size: `9058` bytes  
+SHA-256: `b4eaed3ae8b1cf922e24a982383ffcc298242654b6c7bf23232e1b933e45dbf1`
 
 ```python
-"""Единая шина для отправки сообщений в служебную группу (admin chat).
+"""Единая шина для отправки сообщений в admin chat.
 
-**Зачем существует.** Раньше десятки путей шли в admin chat напрямую через
-`bot.send_message(chat_id=cfg.admin_group_id, ...)` — pulse, admin_events,
-broadcast progress, operator_reply confirmations, retention notifications.
-Каждое такое сообщение физически сдвигает чат вниз, но никто из этих
-путей не обновлял `menu_tracker`. Tracker отставал от реального состояния
-чата, и freshness-rule (`callback_mid == tracker → edit`) врал:
-оператор тапал кнопку на старой карточке, бот edit'ал её на месте далеко
-вверху чата, оператор внизу ничего не видел.
+`admin_bus.send` оборачивает `bot.send_message` + `note_event` атомарно,
+чтобы tracker не отставал от физического состояния чата. Шина — только
+для новых сообщений; edit идёт через freshness-aware пути
+(`admin_card.render`, `send_or_edit_screen`).
 
-**Решение.** Любая отправка в admin chat теперь идёт через `admin_bus.send`.
-Шина делает три действия атомарно:
-1. `bot.send_message(chat_id=cfg.admin_group_id, ...)`
-2. `extract_message_id(sent)` — достаёт mid из ответа MAX API.
-3. `menu_tracker.set_last_menu_mid(cfg.admin_group_id, mid)` — двигает
-   tracker на свежий mid. После этого любой следующий callback оператора
-   на карточку выше будет иметь `callback_mid != tracker` → freshness
-   корректно вернёт `can_edit=False` → send_new.
+Также: `note_incoming_admin_message(mid)` двигает tracker на mid
+входящего сообщения оператора (handler'ом, не самой шиной).
 
-**Что НЕ делает шина:**
-- Не интерпретирует attachments / семантику сообщения. Это тонкий
-  wrapper, не бизнес-логика.
-- Не делает retry / circuit-breaker. Это responsibility вызывающего
-  (для broadcast есть `_send_with_retry`, для admin notifications —
-  `_send_admin_text_with_retry` в `services/cron.py`).
-- Не делает freshness-check на edit. Edit'ить через шину нельзя
-  принципиально — карточки с кнопками идут через `admin_card.render`
-  (freshness-aware), карточки меню — через `send_or_edit_screen`
-  (тоже freshness-aware). Шина — для **новых** сообщений.
-
-**Использование:**
-
-```python
-from aemr_bot.services import admin_bus
-
-await admin_bus.send(bot, text="🟢 Pulse: бот живой")
-await admin_bus.send(bot, text=text, attachments=[kb])
-```
-
-**Incoming admin-message hook.** Отдельная функция
-`note_incoming_admin_message(mid)` — вызывается из handler'а на каждое
-новое сообщение в admin chat (operator-text, voice, sticker). Она
-сдвигает tracker на mid входящего сообщения. Это закрывает дыру
-«оператор написал в чат, но tracker по-прежнему на карточке выше —
-следующий тап freshness-mismatch не увидит».
+Полная мотивация и контракт «что шина делает и не делает»: см.
+`docs/_meta/_archive/CODE_DECISIONS_LOG.md §2`.
 """
 from __future__ import annotations
 
@@ -16383,48 +16350,17 @@ _HOOK_INSTALLED_ATTR = "_aemr_admin_outgoing_tracker_installed"
 
 
 def install_outgoing_tracker_hook(bot) -> None:
-    """Обернуть `bot.send_message` декоратором, который синхронизирует
-    `menu_tracker[admin_group_id]` после любой успешной отправки в admin chat.
+    """Monkey-patch `bot.send_message`: после успешной отправки в admin
+    chat двигает `menu_tracker.note_event(admin_group_id, mid)`.
 
-    **Зачем.** Жалоба владельца 2026-05-27: «меню в админ-чате
-    редактируется при тапе кнопки на не-последнем сообщении». Корень —
-    62 прямых `bot.send_message(chat_id=admin_group_id, ...)` в коде
-    (handlers + services), большинство из них не вызывают
-    `menu_tracker.set_last_menu_mid` после send. Tracker отстаёт от
-    физического состояния чата. Любой следующий тап на «карточку выше»
-    callback_mid (старой карточки) == tracker → freshness ошибочно
-    edit'ит вверху, ниже всё остаётся.
+    Закрывает 62 прямых `bot.send_message(...)` сайта одним hook'ом
+    вместо миграции всех через `admin_bus.send` (большая правка, риск
+    регрессий). Идемпотентно — повторный install на тот же bot no-op
+    (маркер `_aemr_admin_outgoing_tracker_installed`).
 
-    Раньше единственное место с правильным sync — `admin_bus.send` —
-    мигрировать все 62 sites через шину было бы 200+ строк правок в
-    14 файлах, с риском регрессий. Этот hook решает проблему один раз
-    на старте бота: оборачивает оригинальный `bot.send_message`, после
-    каждого успешного `send_message(chat_id=admin_group_id, ...)`
-    извлекает mid и двигает tracker.
-
-    **Что делает hook:**
-    1. Если `chat_id != admin_group_id` — пробрасывает вызов без
-       изменений (citizen-chat tracker имеет свой sync через
-       `_send_or_edit_menu`).
-    2. Если `chat_id == admin_group_id` — выполняет оригинальный send,
-       извлекает mid, обновляет tracker. Возвращает результат как был.
-    3. Ошибки send_message не глотает — пробрасывает caller'у. Tracker
-       обновляет только при успешном send.
-
-    **Идемпотентность.** Повторный вызов на тот же bot — no-op (маркер
-    на bot-объекте). Иначе hook оборачивал бы себя рекурсивно и каждое
-    сообщение проходило бы N tracker.set.
-
-    **Где НЕ применять:**
-    - `admin_card.render` сам делает `menu_tracker.clear()` после
-      send_new (sacred event log, карточка обращения не должна
-      участвовать в tracker как меню). Hook сначала set'нет tracker
-      на mid карточки — потом сразу clear перезатрёт. Финальное
-      состояние = None, корректно.
-    - `admin_bus.send` сам делает set_last_menu_mid после send. Hook
-      повторит то же действие — это идемпотентно (tracker сидит на
-      том же mid). Не дублируем явный set, оставляем для читаемости
-      `admin_bus.send`.
+    Полная мотивация (жалоба владельца, рассуждения «hook vs миграция»),
+    идемпотентность guard, отношения с `admin_card.render` и
+    `admin_bus.send`: см. `docs/_meta/_archive/CODE_DECISIONS_LOG.md §3`.
 
     Args:
         bot: maxapi Bot, на котором будет установлен hook.
@@ -16491,41 +16427,23 @@ def install_outgoing_tracker_hook(bot) -> None:
 
 ### `bot/aemr_bot/services/admin_card.py`
 
-Size: `12815` bytes  
-SHA-256: `05e92ad5bafdcf32df4ffb2a056e9c0d54d0ee1d69c241d0970fce94dc85acfe`
+Size: `11674` bytes  
+SHA-256: `3fa503b0df4c6f043d7a5856bb2334112f81b6d25fd573dfdfe1f7bd4c1fc987`
 
 ```python
-"""Admin appeal card с freshness-rule (унифицированное правило для
-карточек с кнопками — меню и admin appeal).
+"""Admin appeal card — sacred event log (PR #100, dual-tracker).
 
-**Унифицированное правило (Freshness)**:
+Каждая публикация карточки — новая запись в журнале чата. Edit
+после dual-tracker не делается; reply/reopen/close/followup → новая
+карточка с обновлённым timeline, старая остаётся как след.
 
-Любая карточка с кнопками редактируется ТОЛЬКО если она физически
-последнее сообщение бота в этом чате прямо сейчас. Если ниже неё
-что-то появилось (другая карточка, событие, другое обращение) —
-send new card.
+`Appeal.admin_message_id` — mid ПЕРВОЙ публикации (для reply-link
+при relay вложений), `last_admin_card_mid` — mid последней публикации
+(для всех остальных нужд).
 
-Реализуется через общий `menu_tracker[admin_group_id]` — все
-карточки (меню, wizard, admin appeal) пишут туда свой mid при
-send/edit. Перед edit'ом сверяем `callback_mid` с tracker:
-- callback_mid == tracker → это последнее сообщение → edit OK;
-- callback_mid != tracker → старая карточка → send new.
-
-Это **то же** правило, что у `send_or_edit_screen` для меню. Тут
-оно применено к admin appeal card.
-
-**Что НЕ карточка** (события — без кнопок, иммутабельные): ответ
-оператора жителю, followup-уведомления, подписки/отписки/erase ack.
-Идут через прямой `bot.send_message` без trackers.
-
-**Контракт `Appeal`-полей:**
-
-- `admin_message_id` — mid ПЕРВОЙ публикации карточки (finalize).
-  Используется как reply-link при relay вложений жителя. Не меняется
-  после finalize.
-- `last_admin_card_mid` — mid последней опубликованной карточки
-  этого обращения. Обновляется при send_new и при edit-с-new-mid
-  (edit fail fallback).
+Sacred-event-log контракт, перечень «что НЕ карточка», полная
+мотивация edit-removal: см.
+`docs/_meta/_archive/CODE_DECISIONS_LOG.md §6`.
 """
 from __future__ import annotations
 
@@ -23867,43 +23785,19 @@ async def hydrate_into_registry(session: AsyncSession) -> tuple[int, int]:
 
 ### `bot/aemr_bot/services/wizard_registry.py`
 
-Size: `12943` bytes  
-SHA-256: `ae44aa9eb7f7227719ef6ad76a710b5c4ba94e3954ba9212822447b995b8365d`
+Size: `11408` bytes  
+SHA-256: `bc1a406d87e3847adf7686db715ddaaf33eed50e5d6a38ce251bf56cf6bde8b9`
 
 ```python
-"""Единое хранилище мутабельного состояния визардов и intent'ов
-оператора.
+"""Единое хранилище мутабельного in-memory состояния визардов и
+intent'ов оператора (op_wizard, broadcast_wizard, reply_intent,
+recent_replies). Публичный API: `set_op_wizard`, `get_op_wizard`,
+`clear_all_for(operator_id)`, `reset_all()` (тесты).
 
-До этого модуля каждый handler хранил собственный module-level dict:
-- `handlers/admin_commands.py:_op_wizards` — wizard «Добавить оператора»
-- `handlers/broadcast.py:_wizards` — wizard рассылки
-- `handlers/operator_reply.py:_reply_intent` — короткоживущий «оператор
-  готовится ответить на обращение N»
-- `handlers/operator_reply.py:_recent_replies` — дедуп уже отправленных
-  ответов (кросс-процессная защита от двойного нажатия)
+Не вносит логику, только хранение — бизнес-логика остаётся в handlers.
 
-Минусы старой схемы:
-- кросс-handler доступ через приватные имена (ruff SLF001 — 12+ мест:
-  `broadcast_handler._wizards.pop(...)` в `appeal.py` etc)
-- нет единой точки сброса при `/cancel` оператора — приходилось
-  вручную дёргать каждое из 4 хранилищ
-- состояние раскидано — при тестах не понятно что нужно мокать
-
-Этот модуль — единая точка с публичным API. Сами мутабельные dict'ы
-остаются на module-level (in-memory, single-process), но доступ к
-ним идёт через явные функции:
-
-    from aemr_bot.services import wizard_registry as wr
-
-    wr.set_op_wizard(operator_id, {"step": "awaiting_id"})
-    state = wr.get_op_wizard(operator_id)
-    wr.clear_all_for(operator_id)  # сброс всех визардов оператора
-
-Для тестов есть `wr.reset_all()` — обнуляет все хранилища.
-
-Не вносит логику — только хранение. Бизнес-логика остаётся в handlers.
-Это снижает риск регрессии при выделении: данные не меняются, меняется
-только способ доступа.
+Мотивация (рефакторинг SLF001, единая точка сброса при /cancel,
+testability): см. `docs/_meta/_archive/CODE_DECISIONS_LOG.md §5`.
 """
 from __future__ import annotations
 
@@ -25929,68 +25823,23 @@ def attachment_meta(stored: list[dict] | None) -> dict[str, int]:
 
 ### `bot/aemr_bot/utils/menu_tracker.py`
 
-Size: `11191` bytes  
-SHA-256: `1b376e48759c172b3e14cfe4dd9911fe833e30b12c8aed15db5f6e9a73a36d21`
+Size: `7735` bytes  
+SHA-256: `99a5acd93ea71d0fd855f716c4aa6f3c3dea8688fbbad9e03514ec2d0aa4b5d2`
 
 ```python
-"""Per-chat tracker с двумя независимыми смыслами: физическое последнее
-сообщение и последняя редактируемая карточка.
+"""Per-chat tracker с dual-state: `last_physical_mid` (что физически
+последнее в чате) отдельно от `last_editable_mid` + `last_editable_kind`
+(какую карточку и какого вида разрешено редактировать).
 
-**Архитектурное обоснование** (2026-05-27, после семидневного выявления
-конфликта смыслов): раньше один `menu_tracker[chat_id]` совмещал две
-несовместимые роли:
+Edit разрешён только при совпадении всех трёх условий — physical, editable
+и kind. Иначе send_new и оба tracker'а сдвигаются на новый mid.
 
-1. «Какое сообщение физически последнее в чате» — нужно, чтобы
-   freshness-rule не редактировал карточку, выше которой уже что-то
-   появилось.
-2. «Какую карточку разрешено редактировать» — нужно, чтобы клик кнопки
-   менял экран меню, а не превращал historic event в меню.
+In-memory dict, после рестарта tracker пуст (graceful: первое нажатие
+после рестарта даёт send_new). Старый API `get/set_last_menu_mid`
+оставлен как обёртка над dual-tracker для совместимости.
 
-Когда же эти смыслы совпадали в одном поле, любое исходящее сообщение
-бота двигало tracker — в том числе historic-уведомление с кнопкой «🏠
-В админ-меню». Следующий клик на это уведомление видел совпадение
-mid → редактировал уведомление в меню. Sacred event log нарушался.
-
-**Целевая модель.** Три независимых поля на чат:
-
-- `last_physical_mid` — mid последнего физического сообщения в чате
-  (любого: меню, события, карточки обращения, pulse, ack-уведомления).
-  Двигается каждый раз, когда бот шлёт что-либо или приходит сообщение
-  оператора/жителя.
-- `last_editable_mid` — mid последней карточки, которую разрешено
-  редактировать (меню, wizard-экран, listing). Не двигается на
-  historic events (CITIZEN_REPLY, APPEAL_ACCEPTED, audit-уведомления,
-  pulse, broadcast progress).
-- `last_editable_kind` — категория последней редактируемой карточки
-  (`menu`, `wizard`, `progress`, `listing`). Защита от «callback на
-  menu редактирует wizard»: если kind не совпадает с тем, что caller
-  собирается показать, разрешение не выдаётся.
-
-**Контракт edit:** разрешён только когда все три условия выполнены
-одновременно:
-
-1. `callback_mid == last_physical_mid` — карточка физически последняя.
-2. `callback_mid == last_editable_mid` — это была редактируемая карточка.
-3. `kind == last_editable_kind` — caller показывает экран той же
-   категории.
-
-Иначе — send_new, и оба tracker'а сдвигаются на новый mid.
-
-**Хранение:** in-memory dict с `ChatState`. Single-process бот, после
-рестарта tracker пуст (graceful — первое нажатие даёт send_new).
-
-**Обратная совместимость:** старый API `get_last_menu_mid` /
-`set_last_menu_mid` оставлен как тонкая обёртка над новой структурой
-(чтобы не ломать сотни usage-сайтов одним PR'ом). По смыслу:
-- `get_last_menu_mid` теперь возвращает `last_editable_mid`.
-- `set_last_menu_mid` устанавливает оба — физический И editable.
-Это совместимо с предыдущим поведением, потому что старый код
-вызывал `set_last_menu_mid` только из freshness-aware send'ов
-(send_or_edit_screen / _send_or_edit_menu / admin_bus.send), где это
-эквивалентно «новое меню стало последним и физически, и как карточка».
-
-Миграция на явное API (`set_after_event`, `set_after_editable_send`)
-— следующим PR'ом. Здесь только базовая структура и совместимость.
+Полная мотивация, контракт и история conflicts: см.
+`docs/_meta/_archive/CODE_DECISIONS_LOG.md §1`.
 """
 from __future__ import annotations
 
@@ -26152,46 +26001,20 @@ def set_last_menu_mid(chat_id: int, mid: str) -> None:
 
 ### `bot/aemr_bot/utils/typing_indicator.py`
 
-Size: `3976` bytes  
-SHA-256: `e239738f0e6d1e4752831d234f95301e84f07de90887f333cb3876fb3ab44f83`
+Size: `2310` bytes  
+SHA-256: `40ec7231d5d77efbf255bd34afa2de45cdc841e5427b5b797b66ad12a2f5dd94`
 
 ```python
-"""Тонкий helper для typing-indicator в долгих операциях.
+"""Тонкий helper `mark_typing(event_or_bot, chat_id)` для индикатора
+«бот печатает» (`maxapi.SenderAction.TYPING_ON`) перед длинными
+операциями (>500 мс): listing обращений, broadcast confirm.
 
-**Зачем.** maxapi 1.1.0 поддерживает `bot.send_action(chat_id,
-SenderAction.TYPING_ON)` — мигающие точки «бот печатает», как в
-Telegram. Жителю/оператору сразу понятно: «нажатие услышали, идёт
-работа», особенно когда дальше будет несколько сообщений
-(listing открытых обращений, broadcast confirm с превью).
+Best-effort: любой Exception от MAX API НЕ ломает handler — typing
+лишь UX-улучшение, логируем DEBUG и продолжаем. MAX гасит TYPING_ON
+сам через ~5 сек или при следующем сообщении — explicit OFF не нужен.
 
-Без индикатора оператор тапает «📂 Открытые обращения» и ждёт 1-2
-секунды без обратной связи — кажется, что бот завис. С индикатором
-точки появляются мгновенно, listing подъезжает следом.
-
-**Контракт `mark_typing(event_or_bot, chat_id)`:**
-
-- На вход: либо event (берём `event.bot` и `chat_id` через `get_ids`),
-  либо явный `(bot, chat_id)`.
-- Best-effort: любой Exception от MAX API НЕ должен ломать handler.
-  `send_action` — UX-улучшение, не критичная часть flow. Логируем на
-  DEBUG и продолжаем.
-- TYPING_ON автоматически гасится MAX'ом через ~5 секунд или при
-  следующем сообщении бота — explicit OFF не нужен.
-
-**Где применять (выявлено CARDS_UX_SWEEP 2026-05-26):**
-
-1. `admin_panel._do_open_tickets` — listing открытых обращений требует
-   query + transform → 1-2 сек.
-2. `menu.do_my_appeals` — listing обращений жителя.
-3. `broadcast._handle_confirm` — перед запуском send-loop рассылки.
-4. Любые другие точки, где handler делает >500 мс работы перед
-   первым send_message.
-
-**Где НЕ применять:**
-- Простые callbacks с одним send_message <100 мс — typing на 5 секунд
-  выглядит дольше реакции, UX хуже.
-- Cron / pulse — там нет «оператор ждёт реакцию».
-- На карточке обращения (force_new) — она сама и есть фидбек.
+Контракт где применять / не применять и full мотивация: см.
+`docs/_meta/_archive/CODE_DECISIONS_LOG.md §4`.
 """
 from __future__ import annotations
 
@@ -48165,6 +47988,279 @@ SHA-256: `096f6127f3879f92d7bd5bcee33f8810467b18336df3e643a7beb42bc7a6ff81`
 **Примечания:**
 - Запрос, не содержащий обязательных элементов 1–7, 9, 10, может быть возвращен подразделением оператору с указанием отсутствующих элементов и подлежит повторному направлению после устранения недостатков.
 - Включение в запрос ПДн третьих лиц, не относящихся к существу вопроса, не допускается. Передача ПДн жителя в составе запроса осуществляется в объеме, необходимом для подготовки ответа.
+```
+
+### `docs/_meta/_archive/CODE_DECISIONS_LOG.md`
+
+Size: `16319` bytes  
+SHA-256: `b17885553a6d454c62ebc430627d99c9c7f9e75dbe0d631891c33e6d28f78326`
+
+```markdown
+# CODE_DECISIONS_LOG
+
+Архив архитектурных решений, исторически живших в module-docstring'ах
+кода. Перенесены сюда в рамках B6 (MLP финальная сборка, 2026-05-27),
+чтобы docstring'и в коде не превышали 5-7 строк («что и зачем»), а
+полная мотивация и контекст оставались доступны для будущих
+контрибутеров и аудиторов.
+
+Из кода ссылка короткая: `# См. CODE_DECISIONS_LOG.md §N`. Сами
+обсуждения остаются здесь — они нужны при следующем большом
+рефакторинге, при разборе странного поведения, при онбординге нового
+разработчика. В коде они шумят и затрудняют чтение.
+
+---
+
+## §1. `utils/menu_tracker` — dual-tracker (physical vs editable)
+
+**Дата решения:** 2026-05-27 (PR #100, после семидневного выявления конфликта смыслов).
+
+**Контекст.** Раньше один `menu_tracker[chat_id]` совмещал две
+несовместимые роли:
+
+1. «Какое сообщение физически последнее в чате» — нужно, чтобы
+   freshness-rule не редактировал карточку, выше которой уже что-то
+   появилось.
+2. «Какую карточку разрешено редактировать» — нужно, чтобы клик
+   кнопки менял экран меню, а не превращал historic event в меню.
+
+Когда эти смыслы совпадали в одном поле, любое исходящее сообщение
+бота двигало tracker — в том числе historic-уведомление с кнопкой
+«🏠 В админ-меню». Следующий клик на это уведомление видел совпадение
+mid → редактировал уведомление в меню. Sacred event log нарушался.
+
+**Целевая модель.** Три независимых поля на чат:
+
+- `last_physical_mid` — mid последнего физического сообщения в чате
+  (любого: меню, события, карточки обращения, pulse, ack-уведомления).
+  Двигается каждый раз, когда бот шлёт что-либо или приходит сообщение
+  оператора/жителя.
+- `last_editable_mid` — mid последней карточки, которую разрешено
+  редактировать (меню, wizard-экран, listing). Не двигается на
+  historic events (CITIZEN_REPLY, APPEAL_ACCEPTED, audit-уведомления,
+  pulse, broadcast progress).
+- `last_editable_kind` — категория последней редактируемой карточки
+  (`menu`, `wizard`, `progress`, `listing`). Защита от «callback на
+  menu редактирует wizard»: если kind не совпадает с тем, что caller
+  собирается показать, разрешение не выдаётся.
+
+**Контракт edit:** разрешён только когда все три условия выполнены
+одновременно:
+
+1. `callback_mid == last_physical_mid` — карточка физически последняя.
+2. `callback_mid == last_editable_mid` — это была редактируемая карточка.
+3. `kind == last_editable_kind` — caller показывает экран той же
+   категории.
+
+Иначе — send_new, и оба tracker'а сдвигаются на новый mid.
+
+**Хранение:** in-memory dict с `ChatState`. Single-process бот, после
+рестарта tracker пуст (graceful — первое нажатие даёт send_new).
+
+**Обратная совместимость:** старый API `get_last_menu_mid` /
+`set_last_menu_mid` оставлен как тонкая обёртка над новой структурой
+(чтобы не ломать сотни usage-сайтов одним PR'ом). По смыслу:
+- `get_last_menu_mid` теперь возвращает `last_editable_mid`.
+- `set_last_menu_mid` устанавливает оба — физический И editable.
+
+Совместимо с предыдущим поведением, потому что старый код вызывал
+`set_last_menu_mid` только из freshness-aware send'ов
+(`send_or_edit_screen` / `_send_or_edit_menu` / `admin_bus.send`), где
+это эквивалентно «новое меню стало последним и физически, и как
+карточка».
+
+---
+
+## §2. `services/admin_bus` — единая шина в admin chat
+
+**Дата решения:** 2026-05-22 (SACRED #1), уточнено 2026-05-27 (PR #98).
+
+**Контекст.** Раньше десятки путей шли в admin chat напрямую через
+`bot.send_message(chat_id=cfg.admin_group_id, ...)` — pulse,
+admin_events, broadcast progress, operator_reply confirmations,
+retention notifications. Каждое такое сообщение физически сдвигает
+чат вниз, но никто из этих путей не обновлял `menu_tracker`. Tracker
+отставал от реального состояния чата, и freshness-rule
+(`callback_mid == tracker → edit`) врал: оператор тапал кнопку на
+старой карточке, бот edit'ал её на месте далеко вверху чата.
+
+**Решение.** Любая отправка в admin chat теперь идёт через
+`admin_bus.send` — шина выполняет три действия атомарно:
+
+1. `bot.send_message(chat_id=cfg.admin_group_id, ...)`
+2. `extract_message_id(sent)` — достаёт mid из ответа MAX API.
+3. `menu_tracker.note_event(cfg.admin_group_id, mid)` — двигает
+   `last_physical_mid` на свежий mid.
+
+**Что НЕ делает шина:**
+
+- Не интерпретирует attachments / семантику сообщения. Это тонкий
+  wrapper, не бизнес-логика.
+- Не делает retry / circuit-breaker. Это responsibility вызывающего
+  (для broadcast есть `_send_with_retry`, для admin notifications —
+  `_send_admin_text_with_retry` в `services/cron.py`).
+- Не делает freshness-check на edit. Edit'ить через шину нельзя
+  принципиально — карточки с кнопками идут через `admin_card.render`
+  (freshness-aware), карточки меню — через `send_or_edit_screen`
+  (тоже freshness-aware). Шина — для **новых** сообщений.
+
+**Incoming admin-message hook.** Отдельная функция
+`note_incoming_admin_message(mid)` — вызывается из handler'а на каждое
+новое сообщение в admin chat (operator-text, voice, sticker). Она
+сдвигает tracker на mid входящего сообщения. Это закрывает дыру
+«оператор написал в чат, но tracker по-прежнему на карточке выше —
+следующий тап freshness-mismatch не увидит».
+
+---
+
+## §3. `install_outgoing_tracker_hook` — monkey-patch `bot.send_message`
+
+**Дата решения:** 2026-05-27 (PR #98).
+
+**Жалоба владельца.** «Меню в админ-чате редактируется при тапе
+кнопки на не-последнем сообщении». Корень — 62 прямых
+`bot.send_message(chat_id=admin_group_id, ...)` в коде (handlers +
+services), большинство из них не вызывают
+`menu_tracker.set_last_menu_mid` после send. Tracker отстаёт от
+физического состояния чата.
+
+**Решение.** Hook оборачивает оригинальный `bot.send_message`. После
+каждого успешного `send_message(chat_id=admin_group_id, ...)` извлекает
+mid и двигает tracker. Раньше единственное место с правильным sync —
+`admin_bus.send` — мигрировать все 62 sites через шину было бы 200+
+строк правок в 14 файлах, с риском регрессий. Hook решает проблему
+один раз на старте бота.
+
+**Что делает hook:**
+
+1. Если `chat_id != admin_group_id` — пробрасывает вызов без
+   изменений (citizen-chat tracker имеет свой sync через
+   `_send_or_edit_menu`).
+2. Если `chat_id == admin_group_id` — выполняет оригинальный send,
+   извлекает mid, обновляет tracker. Возвращает результат как был.
+3. Ошибки `send_message` не глотает — пробрасывает caller'у. Tracker
+   обновляет только при успешном send.
+
+**Идемпотентность.** Повторный вызов на тот же bot — no-op (маркер
+`_aemr_admin_outgoing_tracker_installed` на bot-объекте). Иначе hook
+оборачивал бы себя рекурсивно и каждое сообщение проходило бы N
+tracker.set.
+
+**Где НЕ дублируется логика:**
+
+- `admin_card.render` сам делает `note_event` после send_new (sacred
+  event log). Hook сначала set'нет tracker на mid карточки — потом
+  `render` повторит то же действие на тот же mid (идемпотентно).
+- `admin_bus.send` сам делает `note_event` после send. Hook повторит
+  то же действие — это идемпотентно (tracker сидит на том же mid). Не
+  убираем явный set, оставляем для читаемости `admin_bus.send`.
+
+---
+
+## §4. `utils/typing_indicator` — best-effort UX-улучшение
+
+**Дата решения:** 2026-05-23 (MAXAPI_INSIGHTS P0.2).
+
+**Зачем.** maxapi 1.1.0 поддерживает `bot.send_action(chat_id,
+SenderAction.TYPING_ON)` — мигающие точки «бот печатает». Жителю
+/оператору сразу понятно: «нажатие услышали, идёт работа», особенно
+когда дальше будет несколько сообщений (listing открытых обращений,
+broadcast confirm с превью).
+
+Без индикатора оператор тапает «📂 Открытые обращения» и ждёт 1-2
+секунды без обратной связи — кажется, что бот завис. С индикатором
+точки появляются мгновенно, listing подъезжает следом.
+
+**Контракт `mark_typing(event_or_bot, chat_id)`:**
+
+- На вход: либо event (берём `event.bot` и `chat_id` через `get_ids`),
+  либо явный `(bot, chat_id)`.
+- Best-effort: любой Exception от MAX API НЕ должен ломать handler.
+  `send_action` — UX-улучшение, не критичная часть flow. Логируем на
+  DEBUG и продолжаем.
+- TYPING_ON автоматически гасится MAX'ом через ~5 секунд или при
+  следующем сообщении бота — explicit OFF не нужен.
+
+**Где применять (выявлено CARDS_UX_SWEEP 2026-05-26):**
+
+1. `admin_panel._do_open_tickets` — listing открытых обращений требует
+   query + transform → 1-2 сек.
+2. `menu.do_my_appeals` — listing обращений жителя.
+3. `broadcast._handle_confirm` — перед запуском send-loop рассылки.
+4. Любые другие точки, где handler делает >500 мс работы перед
+   первым send_message.
+
+**Где НЕ применять:**
+
+- Простые callbacks с одним send_message <100 мс — typing на 5 секунд
+  выглядит дольше реакции, UX хуже.
+- Cron / pulse — там нет «оператор ждёт реакцию».
+- На карточке обращения (force_new) — она сама и есть фидбек.
+
+---
+
+## §5. `services/wizard_registry` — единое хранилище intent'ов оператора
+
+**Дата решения:** 2026-05-24 (рефакторинг SLF001).
+
+**Контекст.** До этого модуля каждый handler хранил собственный
+module-level dict:
+
+- `handlers/admin_commands.py:_op_wizards` — wizard «Добавить оператора»
+- `handlers/broadcast.py:_wizards` — wizard рассылки
+- `handlers/operator_reply.py:_reply_intent` — короткоживущий «оператор
+  готовится ответить на обращение N»
+- `handlers/operator_reply.py:_recent_replies` — дедуп уже отправленных
+  ответов (кросс-процессная защита от двойного нажатия)
+
+**Минусы старой схемы:**
+
+- кросс-handler доступ через приватные имена (ruff SLF001 — 12+ мест:
+  `broadcast_handler._wizards.pop(...)` в `appeal.py` etc).
+- нет единой точки сброса при `/cancel` оператора — приходилось
+  вручную дёргать каждое из 4 хранилищ.
+- состояние раскидано — при тестах не понятно, что нужно мокать.
+
+**Решение.** Единая точка с публичным API:
+
+```python
+from aemr_bot.services import wizard_registry as wr
+
+wr.set_op_wizard(operator_id, {"step": "awaiting_id"})
+state = wr.get_op_wizard(operator_id)
+wr.clear_all_for(operator_id)  # сброс всех визардов оператора
+```
+
+Для тестов есть `wr.reset_all()` — обнуляет все хранилища.
+
+Не вносит логику — только хранение. Бизнес-логика остаётся в handlers.
+Это снизило риск регрессии при выделении: данные не меняются, меняется
+только способ доступа.
+
+---
+
+## §6. `services/admin_card` — sacred event log + freshness-rule
+
+**Дата решения:** 2026-05-22 (DDD pivot), уточнено 2026-05-27 (PR #100).
+
+**Контракт.** Admin appeal card следует sacred-event-log правилу:
+карточка обращения — это событие в журнале чата, не меню. Едит её
+нельзя в принципе после dual-tracker (PR #100). Каждое изменение
+(reply от оператора, followup от жителя, статус-смена) → новая
+карточка с обновлённым содержимым, старая остаётся как след.
+
+**Что НЕ карточка** (события без кнопок, иммутабельные): ответ
+оператора жителю, followup-уведомления, подписки/отписки/erase ack.
+Идут через прямой `bot.send_message` без trackers.
+
+**Контракт `Appeal`-полей:**
+
+- `admin_message_id` — mid ПЕРВОЙ публикации карточки (finalize).
+  Используется как reply-link при relay вложений жителя. Не меняется
+  после finalize.
+- `last_admin_card_mid` — mid последней опубликованной карточки этого
+  обращения. Обновляется при send_new и при edit-с-new-mid (edit fail
+  fallback).
 ```
 
 ### `docs/_meta/ADMIN_MENU_EXPANSION_PROPOSAL.md`
