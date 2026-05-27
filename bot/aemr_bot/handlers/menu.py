@@ -347,7 +347,7 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
     """
     async with session_scope() as session:
         # get_by_id_with_messages нужен, чтобы посчитать
-        # attachment_count для кнопки «📎 Показать вложения» внизу
+        # attachment_count для кнопки «🗂 Показать вложения» внизу
         # карточки. Сами вложения НЕ переотправляются автоматически —
         # это вызывало hang при каждом тапе на карточку (см. PR-fix-hang).
         # Сейчас житель тапает кнопку явно, когда хочет посмотреть.
@@ -1032,7 +1032,7 @@ _EXACT: dict[str, _MenuRoute] = {
 }
 
 async def show_appeal_attachments(event, appeal_id: int, max_user_id: int):
-    """Кнопка «📎 Показать вложения (N)» под карточкой обращения у
+    """Кнопка «🗂 Показать вложения (N)» под карточкой обращения у
     жителя (PR-fix-hang). До этого вложения переотправлялись каждый
     раз при открытии карточки и могли подвешивать handler. Теперь —
     только по явному тапу."""
