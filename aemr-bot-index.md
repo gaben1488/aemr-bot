@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 04:40:40 UTC`
+Generated at: `2026-05-27 05:17:19 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `240`
+Indexed files: `242`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -64,7 +64,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/keyboards.py` (69914 bytes)
 - `bot/aemr_bot/main.py` (21047 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
-- `bot/aemr_bot/services/admin_bus.py` (9058 bytes)
+- `bot/aemr_bot/services/admin_bus.py` (10239 bytes)
 - `bot/aemr_bot/services/admin_card.py` (11674 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6489 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
@@ -73,21 +73,22 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/broadcasts.py` (15994 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (19371 bytes)
-- `bot/aemr_bot/services/cron.py` (50186 bytes)
+- `bot/aemr_bot/services/cron.py` (51363 bytes)
 - `bot/aemr_bot/services/db_backup.py` (16664 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
 - `bot/aemr_bot/services/idempotency.py` (8575 bytes)
 - `bot/aemr_bot/services/operators.py` (10123 bytes)
 - `bot/aemr_bot/services/policy.py` (2979 bytes)
 - `bot/aemr_bot/services/progress.py` (9940 bytes)
+- `bot/aemr_bot/services/quiet_hours.py` (6462 bytes)
 - `bot/aemr_bot/services/repo_sync.py` (16984 bytes)
-- `bot/aemr_bot/services/settings_store.py` (44633 bytes)
+- `bot/aemr_bot/services/settings_store.py` (45941 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/threat_intel.py` (11404 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
 - `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
-- `bot/aemr_bot/services/wizard_registry.py` (11408 bytes)
+- `bot/aemr_bot/services/wizard_registry.py` (11059 bytes)
 - `bot/aemr_bot/texts.py` (58122 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
@@ -148,7 +149,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_handlers_auth_broadcast.py` (6976 bytes)
 - `bot/tests/test_handlers_common.py` (3572 bytes)
 - `bot/tests/test_handlers_funnel.py` (9458 bytes)
-- `bot/tests/test_handlers_menu.py` (27825 bytes)
+- `bot/tests/test_handlers_menu.py` (28442 bytes)
 - `bot/tests/test_handlers_menu_extra.py` (23371 bytes)
 - `bot/tests/test_handlers_operator_reply.py` (34166 bytes)
 - `bot/tests/test_handlers_start.py` (13597 bytes)
@@ -162,6 +163,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_operator_reply_with_image.py` (7517 bytes)
 - `bot/tests/test_progress.py` (10683 bytes)
 - `bot/tests/test_pure_functions.py` (11522 bytes)
+- `bot/tests/test_quiet_hours.py` (5282 bytes)
 - `bot/tests/test_reliability_pass.py` (10544 bytes)
 - `bot/tests/test_repo_sync.py` (21989 bytes)
 - `bot/tests/test_security_batch_b.py` (7285 bytes)
@@ -16219,8 +16221,8 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ### `bot/aemr_bot/services/admin_bus.py`
 
-Size: `9058` bytes  
-SHA-256: `b4eaed3ae8b1cf922e24a982383ffcc298242654b6c7bf23232e1b933e45dbf1`
+Size: `10239` bytes  
+SHA-256: `f085fdca8036d564227f9b4040429fbf9435aca9cd967afb35a900d12564fe4d`
 
 ```python
 """Единая шина для отправки сообщений в admin chat.
@@ -16253,21 +16255,40 @@ async def send(
     text: str,
     attachments: list | None = None,
     link=None,
+    critical: bool = False,
 ) -> str | None:
     """Отправить сообщение в admin chat + сдвинуть tracker.
 
     Возвращает mid отправленного сообщения, либо None если ADMIN_GROUP_ID
-    не настроен / send упал.
+    не настроен / send упал / тихий режим подавил отправку.
 
     Args:
         bot: maxapi Bot.
         text: текст сообщения.
         attachments: опциональный список вложений (клавиатуры, image, etc).
         link: опциональный NewMessageLink (для reply-цитирования).
+        critical: если True — игнорировать quiet hours и отправлять всегда.
+            Используется для алёртов о реальных инцидентах: фейл бэкапа,
+            сбой ретеншена, ответы оператору в реальном времени. Default
+            False — рутинные уведомления подавляются ночью если включён
+            тихий режим (см. `services/quiet_hours.py`).
     """
     if not cfg.admin_group_id:
         log.warning("admin_bus.send: ADMIN_GROUP_ID не задан, пропускаем")
         return None
+    if not critical:
+        # quiet hours: sync-проверка in-memory cache, без открытия
+        # новой DB-сессии (cache обновляется cron'ом и при set_value
+        # в settings_store, см. `services/quiet_hours`).
+        from aemr_bot.services.quiet_hours import is_quiet_hours_now
+
+        if is_quiet_hours_now():
+            log.info(
+                "admin_bus.send: quiet hours active, suppressed "
+                "(text prefix=%r)",
+                text[:40],
+            )
+            return None
     kwargs: dict = {"chat_id": cfg.admin_group_id, "text": text}
     if attachments is not None:
         kwargs["attachments"] = attachments
@@ -18762,8 +18783,8 @@ def appeal_list_label(appeal: Appeal) -> str:
 
 ### `bot/aemr_bot/services/cron.py`
 
-Size: `50186` bytes  
-SHA-256: `85d12f02285d7534ea097f41306c1ff64456bb960df7702441c51971e6f70a56`
+Size: `51363` bytes  
+SHA-256: `b09c94e4fd067a5d1589fc3e0dfaec069db7b591a21d60c6472e1fae26567252`
 
 ```python
 from __future__ import annotations
@@ -19203,16 +19224,38 @@ async def _job_monthly_report(send_admin_document) -> None:
 async def _job_pulse(send_admin_text) -> None:
     """Шлёт в служебную группу короткое подтверждение «бот жив».
 
-    Расписание:
-    • В рабочее время (пн–сб, 09:00–17:59 по Камчатке) — каждые
-      полчаса, в минуты :00 и :30.
-    • В остальное время понедельника–субботы и весь день воскресенья —
-      раз в час, в минуту :05.
+    Текущее расписание (после унификации 2026-05-22):
+    • `pulse-hourly` — каждый час 24/7 в `:05` (базовый heartbeat).
+    • `pulse-workhours-extra` — пн–пт 09:00–17:59 в `:35`
+      (дополнительный пинг в рабочее время).
 
     Это второй контур мониторинга поверх selfcheck: selfcheck ловит
     зависший event-loop, а пульс показывает дежурному, что процесс
     жив и может отправлять сообщения в админ-группу.
+
+    Quiet hours: если в settings включён `admin_quiet_hours_enabled` и
+    текущий час попадает в окно — пульс **не отправляется**.
+    Дежурный явно попросил «не присылать pulse ночью» —
+    `health-selfcheck` и `healthcheck-ping` продолжают работать как
+    fallback, оператор всё равно узнает о реальном сбое.
     """
+    # quiet_hours: refresh cache из БД (этот cron — основное место
+    # регулярного обновления, кроме старта бота и `set_value`-hook'а),
+    # затем sync-check.
+    try:
+        from aemr_bot.db.session import session_scope
+        from aemr_bot.services.quiet_hours import (
+            is_quiet_hours_now,
+            refresh_cache_from_db,
+        )
+
+        async with session_scope() as session:
+            await refresh_cache_from_db(session)
+        if is_quiet_hours_now():
+            log.info("pulse: quiet hours active, suppressed")
+            return
+    except Exception:
+        log.debug("pulse: quiet_hours check failed, отправляем", exc_info=False)
     now = datetime.now(TZ).strftime("%H:%M")
     sent = await _send_admin_text_with_retry(
         send_admin_text,
@@ -21122,6 +21165,160 @@ async def send_or_edit_progress(
     return new_mid, False
 ```
 
+### `bot/aemr_bot/services/quiet_hours.py`
+
+Size: `6462` bytes  
+SHA-256: `30b01fe38891cf93e46be81fb4fd7d927bd22044170987decc90646e1ade722d`
+
+```python
+"""Тихий режим админ-чата (quiet hours).
+
+Когда `admin_quiet_hours_enabled=True` в settings_store, не-критические
+сообщения от бота в служебную группу подавляются в окне
+[`admin_quiet_hours_start`, `admin_quiet_hours_end`) по локальному
+времени `Asia/Kamchatka`. Окно может пересекать полночь — например,
+default 18:00–09:00 включает всю ночь.
+
+**Что подавляется:**
+- pulse-hourly / pulse-workhours-extra (heartbeat'ы).
+- Уведомления о новых обращениях, followup'ах, подписках/отписках,
+  /erase ack от жителя (admin_events).
+- Прогресс рассылок (broadcast progress lines).
+
+**Что НЕ подавляется (критические сообщения):**
+- Фейл бэкапа (admin не узнает иначе, пока ситуация не станет хуже).
+- Алёрты cron-jobs о реальных проблемах (`backup-failed`,
+  `stale-operators-cleanup error`, etc.).
+- Прямые ответы оператора жителю и обратно (это не cron, это оператор
+  работает прямо сейчас и ждёт реакции бота).
+
+**Архитектура caching (2026-05-27):**
+Чтобы `admin_bus.send` не открывал новую DB-сессию при каждом
+сообщении (это создавало pool-contention в pytest и общий
+перерасход коннектов в проде), флаг и часы кэшируются в-памяти.
+`refresh_cache_from_db(session)` обновляет кэш — вызывается из
+- старта бота (один раз при boot);
+- pulse-cron'а каждый час;
+- `settings_store.set_value` при правке `admin_quiet_hours_*`.
+
+`is_quiet_hours_now()` — sync, читает только cached values. По
+умолчанию False (cache не initialized → не подавляем, лучше шум,
+чем потеря критичного уведомления).
+
+См. `services/admin_bus.send(critical=...)` и `services/cron.py`
+pulse-job'ы.
+"""
+from __future__ import annotations
+
+import logging
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from aemr_bot.config import settings as cfg
+from aemr_bot.services import settings_store
+
+log = logging.getLogger(__name__)
+_TZ = ZoneInfo(cfg.timezone)
+
+
+# In-memory cache. Sync read через `is_quiet_hours_now()`. Async
+# refresh через `refresh_cache_from_db(session)` — вызывается из мест,
+# где session уже открыта (cron, set_value).
+_cache: dict = {
+    "enabled": False,  # default: не подавляем пока БД не прочитана
+    "start": 18,
+    "end": 9,
+}
+
+
+def _is_in_window(now_hour: int, start: int, end: int) -> bool:
+    """Внутри ли часа `now_hour` окно [start, end) с учётом перехода
+    через полночь.
+
+    Примеры:
+    - start=18, end=9, now=22 → True (вечер, попадает).
+    - start=18, end=9, now=2  → True (ночь, попадает).
+    - start=18, end=9, now=10 → False (утро, мимо).
+    - start=9, end=18, now=12 → True (день, прямое окно).
+    - start=start, now==start → True (включительно начало).
+    - start=end → пустое окно (никогда не True).
+
+    Не валидируем диапазон — это задача SCHEMA validate.
+    """
+    if start == end:
+        # Пустое окно — не подавляем ничего.
+        return False
+    if start < end:
+        # Окно в одних сутках.
+        return start <= now_hour < end
+    # Окно пересекает полночь: [start, 24) ∪ [0, end).
+    return now_hour >= start or now_hour < end
+
+
+def is_quiet_hours_now() -> bool:
+    """True если сейчас тихий режим И он включён в кэше.
+
+    Sync, без DB-доступа. Читает только cached values, обновляемые
+    через `refresh_cache_from_db`. До первого refresh возвращает
+    False (cache initialised as disabled). Это **намеренный** default —
+    лучше пропустить настройку чем тихо проглотить алёрты.
+    """
+    if not _cache.get("enabled"):
+        return False
+    start = _cache.get("start")
+    end = _cache.get("end")
+    if not isinstance(start, int) or not isinstance(end, int):
+        return False
+    now_hour = datetime.now(_TZ).hour
+    return _is_in_window(now_hour, start, end)
+
+
+async def refresh_cache_from_db(session) -> None:
+    """Обновить cache из settings_store. Best-effort: при любой ошибке
+    БД оставляем cache в текущем состоянии (предыдущие values, либо
+    initial defaults).
+
+    Вызывается из:
+    - старта бота (main.py после seed);
+    - pulse-cron'а (каждый час обновляет cache);
+    - `settings_store.set_value('admin_quiet_hours_*', ...)` — чтобы
+      тогда же отразить смену UI'ем.
+    """
+    try:
+        enabled = await settings_store.get(session, "admin_quiet_hours_enabled")
+        start = await settings_store.get(session, "admin_quiet_hours_start")
+        end = await settings_store.get(session, "admin_quiet_hours_end")
+    except Exception:
+        log.debug(
+            "quiet_hours.refresh_cache_from_db: settings read failed; "
+            "оставляем cache в текущем состоянии",
+            exc_info=False,
+        )
+        return
+
+    if enabled is None:
+        enabled = False
+    if not isinstance(start, int):
+        start = 18
+    if not isinstance(end, int):
+        end = 9
+
+    _cache["enabled"] = bool(enabled)
+    _cache["start"] = start
+    _cache["end"] = end
+    log.debug(
+        "quiet_hours.refresh_cache_from_db: enabled=%s window=[%d, %d)",
+        _cache["enabled"], _cache["start"], _cache["end"],
+    )
+
+
+def reset_cache_for_tests() -> None:
+    """Сбросить cache в initial state — для изоляции test'ов."""
+    _cache["enabled"] = False
+    _cache["start"] = 18
+    _cache["end"] = 9
+```
+
 ### `bot/aemr_bot/services/repo_sync.py`
 
 Size: `16984` bytes  
@@ -21560,8 +21757,8 @@ async def fetch_main_runtime_config(
 
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `44633` bytes  
-SHA-256: `f43f373860fefc624b1928fbb91e51fa975f1d1ff56cba3b06ed4e15df5b3c16`
+Size: `45941` bytes  
+SHA-256: `18bda15d852ee1b4ba42c2cbb67a99a06fd08035cc9c9a2e81d6da88a690376e`
 
 ```python
 import asyncio
@@ -21884,6 +22081,18 @@ DEFAULTS: dict[str, Any] = {
     # канал MAX (каждая картинка ×N подписчиков). Допустимый диапазон
     # 1–20 (см. SCHEMA).
     "broadcast_max_images": 5,
+    # 2026-05-27 (quiet hours): тихий режим админ-чата. Когда
+    # `admin_quiet_hours_enabled=True` И текущее локальное время в окне
+    # [start, end) (с учётом перехода через полночь) — не-критические
+    # сообщения от бота в админ-чат не отправляются (pulse, входящие
+    # обращения, уведомления о подписках/отписках/erase). Критические
+    # сообщения (фейл бэкапа, ошибки, прямые ответы оператора)
+    # игнорируют флаг — оператор должен узнать о реальном инциденте
+    # сразу. Окно по умолчанию: 18:00–09:00 (включая ночные часы).
+    # Часовой пояс — `Asia/Kamchatka`, как и для всего расписания.
+    "admin_quiet_hours_enabled": False,
+    "admin_quiet_hours_start": 18,
+    "admin_quiet_hours_end": 9,
     "localities": [
         "Елизовское ГП",
         "Вулканное ГП",
@@ -21952,6 +22161,10 @@ SCHEMA: dict[str, dict] = {
     # для «текст + одна афиша», 20 — практический потолок (выше MAX
     # ограничивает частоту, см. _send_one).
     "broadcast_max_images": {"type": int, "min": 1, "max": 20},
+    # quiet hours: bool + два часа 0–23.
+    "admin_quiet_hours_enabled": {"type": bool},
+    "admin_quiet_hours_start": {"type": int, "min": 0, "max": 23},
+    "admin_quiet_hours_end": {"type": int, "min": 0, "max": 23},
     "localities": {"type": list, "min_items": 1, "max_items": 30, "item_type": str},
 }
 
@@ -23764,8 +23977,8 @@ async def hydrate_into_registry(session: AsyncSession) -> tuple[int, int]:
 
 ### `bot/aemr_bot/services/wizard_registry.py`
 
-Size: `11408` bytes  
-SHA-256: `bc1a406d87e3847adf7686db715ddaaf33eed50e5d6a38ce251bf56cf6bde8b9`
+Size: `11059` bytes  
+SHA-256: `77783208f3498910940cc989d7e04664f35020f2fd5644ba2d1ee5a8474122a9`
 
 ```python
 """Единое хранилище мутабельного in-memory состояния визардов и
@@ -23783,6 +23996,10 @@ from __future__ import annotations
 import asyncio
 import logging
 from typing import Any
+
+from aemr_bot.db.session import session_scope
+from aemr_bot.services import wizard_persist
+from aemr_bot.utils.background import spawn_background_task
 
 log = logging.getLogger(__name__)
 
@@ -23952,8 +24169,6 @@ def _spawn_persist(coro_factory) -> None:
     except RuntimeError:
         return
     try:
-        from aemr_bot.utils.background import spawn_background_task
-
         spawn_background_task(
             coro_factory(), name="wizard_registry.persist"
         )
@@ -23963,9 +24178,6 @@ def _spawn_persist(coro_factory) -> None:
 
 async def _persist_save_op(operator_id: int, state: dict[str, Any]) -> None:
     try:
-        from aemr_bot.db.session import session_scope
-        from aemr_bot.services import wizard_persist
-
         async with session_scope() as session:
             await wizard_persist.save_op_wizard(session, operator_id, state)
     except Exception:
@@ -23977,9 +24189,6 @@ async def _persist_save_op(operator_id: int, state: dict[str, Any]) -> None:
 
 async def _persist_delete_op(operator_id: int) -> None:
     try:
-        from aemr_bot.db.session import session_scope
-        from aemr_bot.services import wizard_persist
-
         async with session_scope() as session:
             await wizard_persist.delete_op_wizard(session, operator_id)
     except Exception:
@@ -23993,9 +24202,6 @@ async def _persist_save_broadcast(
     operator_id: int, state: dict[str, Any]
 ) -> None:
     try:
-        from aemr_bot.db.session import session_scope
-        from aemr_bot.services import wizard_persist
-
         async with session_scope() as session:
             await wizard_persist.save_broadcast_wizard(
                 session, operator_id, state
@@ -24009,9 +24215,6 @@ async def _persist_save_broadcast(
 
 async def _persist_delete_broadcast(operator_id: int) -> None:
     try:
-        from aemr_bot.db.session import session_scope
-        from aemr_bot.services import wizard_persist
-
         async with session_scope() as session:
             await wizard_persist.delete_broadcast_wizard(
                 session, operator_id
@@ -39638,8 +39841,8 @@ class TestOnAwaitingName:
 
 ### `bot/tests/test_handlers_menu.py`
 
-Size: `27825` bytes  
-SHA-256: `9309e3f1d9a86da7f34971d00e67e03062d3a2e728a080d4e3b1eb263505a469`
+Size: `28442` bytes  
+SHA-256: `3d75f91ae3d13b1a37d41b19fb2a3a4799a72e9c9613c8673d4cb2a8dffedd30`
 
 ```python
 """Тесты handlers/menu.py — навигация по меню жителя.
@@ -39727,9 +39930,16 @@ class TestOpenMainMenu:
 
         event = _make_event()
         user = SimpleNamespace(is_blocked=False)
+        # 2026-05-27: patch'им и `settings_store.get_text_with_fallback`,
+        # чтобы тест не зависел от живого Postgres pool — `open_main_menu`
+        # для незаблокированного жителя читает `welcome_text` из БД, и
+        # под CI это иногда упирается в `Event loop is closed` при
+        # connection acquire (race с другими async-фикстурами).
         with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
-                   AsyncMock(return_value=True)):
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.menu.settings_store.get_text_with_fallback",
+                   AsyncMock(return_value="welcome from settings")):
             await menu.open_main_menu(event)
         event.bot.send_message.assert_called_once()
 
@@ -43989,6 +44199,161 @@ def test_is_workday_falls_back_when_holidays_missing(monkeypatch, tmp_path) -> N
 
     assert cal.is_workday(date(2026, 5, 9))   # суббота — рабочий
     assert not cal.is_workday(date(2026, 5, 10))  # воскресенье — нет
+```
+
+### `bot/tests/test_quiet_hours.py`
+
+Size: `5282` bytes  
+SHA-256: `1fd91e33f3892ac80e5dc315b8623bc80d87bc1aa90f2c2f7ad363b096c267d2`
+
+```python
+"""Тесты для `services/quiet_hours` — тихий режим админ-чата.
+
+Pure-функция `_is_in_window` — edge cases (полночь, пустое окно).
+Sync `is_quiet_hours_now()` — sync read из in-memory cache.
+Async `refresh_cache_from_db(session)` — обновление кэша из settings.
+"""
+from __future__ import annotations
+
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+from aemr_bot.services.quiet_hours import (
+    _cache,
+    _is_in_window,
+    is_quiet_hours_now,
+    refresh_cache_from_db,
+    reset_cache_for_tests,
+)
+
+
+@pytest.fixture(autouse=True)
+def _reset_cache_each_test():
+    """Изоляция: cache в default state до и после каждого теста."""
+    reset_cache_for_tests()
+    yield
+    reset_cache_for_tests()
+
+
+class TestIsInWindow:
+    """Pure helper — окно может пересекать полночь."""
+
+    def test_window_in_same_day_inside(self) -> None:
+        assert _is_in_window(12, 9, 18) is True
+
+    def test_window_in_same_day_outside(self) -> None:
+        assert _is_in_window(8, 9, 18) is False
+        assert _is_in_window(18, 9, 18) is False  # exclusive end
+
+    def test_window_in_same_day_inclusive_start(self) -> None:
+        assert _is_in_window(9, 9, 18) is True
+
+    def test_window_crosses_midnight_evening(self) -> None:
+        assert _is_in_window(22, 18, 9) is True
+
+    def test_window_crosses_midnight_night(self) -> None:
+        assert _is_in_window(2, 18, 9) is True
+
+    def test_window_crosses_midnight_morning_outside(self) -> None:
+        assert _is_in_window(10, 18, 9) is False
+
+    def test_empty_window_never_active(self) -> None:
+        for hour in range(24):
+            assert _is_in_window(hour, 12, 12) is False
+
+
+class TestIsQuietHoursNowSync:
+    """Sync — читает только cached values."""
+
+    def test_default_cache_returns_false(self) -> None:
+        """До любого refresh: cache disabled → False всегда."""
+        assert is_quiet_hours_now() is False
+
+    def test_cache_disabled_returns_false(self) -> None:
+        _cache["enabled"] = False
+        _cache["start"] = 0
+        _cache["end"] = 24
+        assert is_quiet_hours_now() is False
+
+    def test_invalid_int_returns_false(self) -> None:
+        """Если cache содержит non-int — не подавляем (best-effort)."""
+        _cache["enabled"] = True
+        _cache["start"] = "18"  # str вместо int
+        _cache["end"] = 9
+        assert is_quiet_hours_now() is False
+
+    def test_enabled_returns_bool(self) -> None:
+        """Включённое окно 0–23 → возвращает bool (зависит от текущего часа)."""
+        _cache["enabled"] = True
+        _cache["start"] = 0
+        _cache["end"] = 23
+        result = is_quiet_hours_now()
+        assert isinstance(result, bool)
+
+
+class TestRefreshCacheFromDb:
+    """Async refresh — best-effort при ошибках БД."""
+
+    @pytest.mark.asyncio
+    async def test_disabled_keeps_default(self) -> None:
+        with patch(
+            "aemr_bot.services.quiet_hours.settings_store.get",
+            AsyncMock(side_effect=lambda s, key: {
+                "admin_quiet_hours_enabled": False,
+                "admin_quiet_hours_start": 18,
+                "admin_quiet_hours_end": 9,
+            }[key]),
+        ):
+            await refresh_cache_from_db(SimpleNamespace())
+        assert _cache["enabled"] is False
+        assert _cache["start"] == 18
+        assert _cache["end"] == 9
+
+    @pytest.mark.asyncio
+    async def test_enabled_updates_cache(self) -> None:
+        with patch(
+            "aemr_bot.services.quiet_hours.settings_store.get",
+            AsyncMock(side_effect=lambda s, key: {
+                "admin_quiet_hours_enabled": True,
+                "admin_quiet_hours_start": 20,
+                "admin_quiet_hours_end": 8,
+            }[key]),
+        ):
+            await refresh_cache_from_db(SimpleNamespace())
+        assert _cache["enabled"] is True
+        assert _cache["start"] == 20
+        assert _cache["end"] == 8
+
+    @pytest.mark.asyncio
+    async def test_db_error_keeps_cache_unchanged(self) -> None:
+        # Pre-fill cache to verify previous values survive on error
+        _cache["enabled"] = True
+        _cache["start"] = 22
+        _cache["end"] = 7
+        with patch(
+            "aemr_bot.services.quiet_hours.settings_store.get",
+            AsyncMock(side_effect=RuntimeError("db down")),
+        ):
+            await refresh_cache_from_db(SimpleNamespace())
+        assert _cache["enabled"] is True
+        assert _cache["start"] == 22
+        assert _cache["end"] == 7
+
+    @pytest.mark.asyncio
+    async def test_invalid_int_falls_back_to_defaults(self) -> None:
+        with patch(
+            "aemr_bot.services.quiet_hours.settings_store.get",
+            AsyncMock(side_effect=lambda s, key: {
+                "admin_quiet_hours_enabled": True,
+                "admin_quiet_hours_start": "broken",
+                "admin_quiet_hours_end": None,
+            }[key]),
+        ):
+            await refresh_cache_from_db(SimpleNamespace())
+        assert _cache["start"] == 18
+        assert _cache["end"] == 9
 ```
 
 ### `bot/tests/test_reliability_pass.py`
