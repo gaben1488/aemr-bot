@@ -45,7 +45,13 @@ OP_HELP_FULL_LEGACY, но через UI настроек.
 
 ## Активные находки
 
-### 🟡 D1: Admin-editable `welcome_text` / `consent_text` могут переполнить MAX-API limit
+> **Status update 2026-05-27 (late):** D1 и D2 закрыты в PR #103
+> (`sec(D1+D2): SCHEMA overflow guard + 2026 AI-voice scam в SECURITY_INFO`).
+> D3 и D4 остаются принятыми (low-priority technical debt). Подробнее
+> в разделе «Закрытые в PR #103» ниже. Описания D1/D2 ниже оставлены
+> для исторической полноты.
+
+### 🟢 D1 (CLOSED in PR #103): Admin-editable `welcome_text` / `consent_text` могут переполнить MAX-API limit
 - **Где:** `bot/aemr_bot/services/settings_store.py:348,358` (SCHEMA
   `max_len=4000` для `welcome_text` и `consent_text`).
 - **Сценарий:** IT-оператор через UI настроек сохраняет 4000-символьный
@@ -63,7 +69,7 @@ OP_HELP_FULL_LEGACY, но через UI настроек.
   `get_text_with_fallback` / `get_consent_request_text` проверять
   итоговую длину после format и логировать WARNING + возвращать fallback.
 
-### 🟡 D2: 2026-актуальные скам-векторы (AI voice clone, fake-bot canonical) явно не покрыты в welcome
+### 🟢 D2 (CLOSED in PR #103): 2026-актуальные скам-векторы (AI voice clone, fake-bot canonical) явно не покрыты в welcome
 - **Где:** `bot/aemr_bot/texts.py:1-8` (WELCOME), `seed/welcome.md:1-9`,
   `bot/aemr_bot/texts.py:183-228` (SECURITY_INFO_TEXT).
 - **Сценарий:** `SECURITY_INFO_TEXT` строка 200 предупреждает «бот не
@@ -190,3 +196,49 @@ OP_HELP_FULL_LEGACY, но через UI настроек.
 либо копи. Главное действие — D1 в `settings_store.SCHEMA`, если/когда
 admin начнёт активно редактировать `welcome_text`/`consent_text` под
 4000 char.
+
+---
+
+## Закрытые в PR #103 (Update 2026-05-27 late)
+
+PR #103 (`sec(D1+D2): SCHEMA overflow guard + 2026 AI-voice scam в
+SECURITY_INFO`, merged 2026-05-27T01:12:11Z) закрыл оба активных 🟡
+findings:
+
+**D1 → CLOSED:**
+- `settings_store.SCHEMA["welcome_text"]["max_len"]` опущен с 4000 до
+  **3800** (`bot/aemr_bot/services/settings_store.py:357`).
+- `settings_store.SCHEMA["consent_text"]["max_len"]` опущен с 4000 до
+  **3800** (`bot/aemr_bot/services/settings_store.py:368`).
+- 200 char запаса покрывают будущие ack-маркеры/event_header, плюс
+  ~100 char под placeholder-подстановку (`{policy_url}` до 200 char
+  заменяет 12-char шаблон → +188 char/render).
+- 2 regression-теста в
+  `bot/tests/test_settings_store_validation.py::test_welcome_text_max_len_below_max_api_limit`
+  и `test_consent_text_max_len_below_max_api_limit` валят CI на
+  попытке откатить ≤ 3800.
+
+**D2 → CLOSED:**
+- `bot/aemr_bot/texts.py::SECURITY_INFO_TEXT` (lines 200-206) расширен:
+  - Строка «бот не звонит вам голосом» дополнена объяснением
+    AI-клонирования голоса по 10-секундной записи + совет «положите
+    трубку и перезвоните адресату сами».
+  - Новый пункт списка: «не существует в виде «второго» или
+    «дублирующего» бота. Открывайте только по ссылке с elizovomr.ru».
+- Финальная длина `SECURITY_INFO_TEXT` после правок: 2133 char (запас
+  до `MAX_LEN=3900` — 1767 char). Длина-guard PR #101 удовлетворён.
+
+**Что осталось активным:**
+- 🟢 D3 (memory grow tracker): accept как technical debt. При росте
+  >50K жителей — пересмотреть.
+- 🟢 D4 (idempotency 30-day replay): accept в SECURITY.md §10b как
+  known limitation. Атака требует compromised оператора + multi-month
+  storage cb_id.
+
+---
+
+> **Архивный статус:** этот документ — снимок security-review на момент
+> 2026-05-27 (начало дня). Описания D1/D2 в разделе «Активные находки»
+> сохранены **как историческое описание проблем до их закрытия**, не
+> как актуальные TODO. Для текущего security-статуса — см. этот раздел
+> «Закрытые в PR #103» + `docs/SECURITY.md` (canonical).

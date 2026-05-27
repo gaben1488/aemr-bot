@@ -1,3 +1,16 @@
+---
+status: applied
+applied_in_pr: 115
+applied_at: 2026-05-27
+superseded_by: docs/HOW_IT_WORKS.md, docs/RUNBOOK.md, docs/SYSADMIN.md, docs/PRD.md, docs/COMPLIANCE_WITH_REGLAMENT_v7.md
+note: |
+  Sweep-план применён в PR #115 (docs(C1): truth pass — pulse cron,
+  cron jobs, OPERATOR_SECURITY numbering). Этот файл оставлен как
+  research-snapshot — конкретные действия зафиксированы в commit-
+  history. Stale ссылки на `pulse-workhours/offhours/sunday` здесь
+  оставлены как **исторический контекст**, не как актуальный TODO.
+---
+
 # Docs actualization sweep — 2026-05-26
 
 Полный пасс по `README.md` корня + `docs/**`. Сверено с HEAD `main` (cron.py jobs, SECURITY §10a/§10b, OPERATOR_SECURITY новые подразделы, threat_intel.py, defang в карточках).
