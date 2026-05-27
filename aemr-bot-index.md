@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 23:34:16 UTC`
+Generated at: `2026-05-27 23:57:28 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `265`
+Indexed files: `267`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -13,9 +13,11 @@ The committed template `.env.example` is allowed because it should not contain l
 ## File tree
 
 - `.dockerignore` (539 bytes)
+- `.github/dependabot.yml` (2569 bytes)
 - `.github/workflows/ci.yml` (8730 bytes)
 - `.github/workflows/repo-index.yml` (1117 bytes)
 - `.gitignore` (1402 bytes)
+- `.pre-commit-config.yaml` (2537 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
 - `bot/aemr_bot/config.py` (10460 bytes)
 - `bot/aemr_bot/copy/__init__.py` (1142 bytes)
@@ -241,7 +243,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/COMPLIANCE_WITH_REGLAMENT_v7.md` (47616 bytes)
 - `docs/COPY.md` (54755 bytes)
 - `docs/DEPS.md` (5945 bytes)
-- `docs/DEVELOPER.md` (138614 bytes)
+- `docs/DEVELOPER.md` (139330 bytes)
 - `docs/HOW_IT_WORKS.md` (26685 bytes)
 - `docs/MAXAPI_UPGRADE_PROCEDURE.md` (11569 bytes)
 - `docs/OPERATOR_SECURITY.md` (34936 bytes)
@@ -339,6 +341,86 @@ backups
 **/*— копия*.*
 *.bak
 *.orig
+```
+
+### `.github/dependabot.yml`
+
+Size: `2569` bytes  
+SHA-256: `47556a7f504c9e9b43f790565ec6927e3c4a3da54d35dd1da9e0f25e07f1423e`
+
+```yaml
+# Dependabot для aemr-bot.
+#
+# Автоматические security/version updates для:
+# - Python зависимости (uv через pip-ecosystem)
+# - GitHub Actions
+# - Docker base images (python:3.12-slim)
+#
+# Стратегия: weekly schedule, max 5 open PR'ов на ecosystem чтобы не
+# завалить tracker. Maxapi 1.1.0 — критическая зависимость, любой
+# major update требует ручной верификации (см. docs/RUNBOOK.md
+# секцию «Процедура обновления зависимости»), поэтому maxapi
+# исключён из автообновлений — только manual review.
+
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/bot"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Kamchatka"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    ignore:
+      # Maxapi: критическая зависимость от MAX-API SDK, любые обновления
+      # требуют ручного аудита breaking changes (см. PR #50/#52 история
+      # 0.9.18 → 1.1.0). Manual review через docs/RUNBOOK.md.
+      - dependency-name: "maxapi"
+      # SQLAlchemy 2.0.x — стабильный major, минор обновления безопасны;
+      # 2.1+ требуют ручной проверки (async API мог поменяться).
+      - dependency-name: "sqlalchemy"
+        update-types: ["version-update:semver-major"]
+      # Pydantic 2.x: то же самое — major bump требует ручной проверки
+      # моделей (settings, ChatMembersManager).
+      - dependency-name: "pydantic"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Kamchatka"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+
+  - package-ecosystem: "docker"
+    directory: "/infra"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Kamchatka"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(docker)"
+      include: "scope"
 ```
 
 ### `.github/workflows/ci.yml`
@@ -688,6 +770,70 @@ htmlcov/
 
 # Optional local tree-only index
 aemr-bot-tree.md
+```
+
+### `.pre-commit-config.yaml`
+
+Size: `2537` bytes  
+SHA-256: `667d800f430a7041f9d4f134d8038094ef4cad9b8a46ea78f5fb50253f546375`
+
+```yaml
+# pre-commit hooks для aemr-bot.
+#
+# Установка: `pip install pre-commit && pre-commit install`.
+# Запуск вручную: `pre-commit run --all-files`.
+# Все hook'и зеркалят CI lint job — что упало здесь, упадёт и в CI.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: "^(aemr-bot-index\\.md|docs/.*\\.md)$"
+      - id: end-of-file-fixer
+        exclude: "^(aemr-bot-index\\.md|docs/_extracted/.*)$"
+      - id: check-yaml
+        args: ["--unsafe"]  # GitHub Actions использует !!python tags
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: ["--maxkb=2048"]  # 2 МБ — защита от случайных дампов БД,
+                                # backup'ов, screenshot-серий.
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.14
+    hooks:
+      - id: ruff
+        args: ["--fix", "--exit-non-zero-on-fix"]
+        files: ^bot/aemr_bot/|^bot/tests/
+      - id: ruff-format
+        files: ^bot/aemr_bot/|^bot/tests/
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.20.2
+    hooks:
+      - id: mypy
+        files: ^bot/aemr_bot/
+        # Mypy под pre-commit запускается без deps проекта — отключаем
+        # missing-imports чтобы не тянуть полный venv в hook.
+        args: ["--ignore-missing-imports", "--python-version=3.12"]
+        # additional_dependencies можно дополнить, если нужны конкретные
+        # type-stubs (`types-requests`, etc.). Сейчас минимальный набор —
+        # mypy сам валит только на наших файлах.
+
+  - repo: local
+    hooks:
+      - id: forbid-binary-secrets-in-env
+        # Защита от случайного commit'а .env с реальными секретами.
+        # bot/.env.example — единственный разрешённый .env-файл в репо.
+        name: forbid .env files with secrets
+        entry: bash -c 'if git diff --cached --name-only | grep -qE "(^|/)\\.env$|(^|/)\\.env\\.local$"; then echo "ERROR: .env / .env.local нельзя commit'ить. Только .env.example."; exit 1; fi'
+        language: system
+        pass_filenames: false
 ```
 
 ### `bot/aemr_bot/__init__.py`
@@ -63525,8 +63671,8 @@ uv run pip-audit
 
 ### `docs/DEVELOPER.md`
 
-Size: `138614` bytes  
-SHA-256: `dbfeeec43373b8611b2a2ca7368110f92b8d8d605d73a1efe09dba17289fabb7`
+Size: `139330` bytes  
+SHA-256: `4fa29086cff21008584e9396c779f3ae79c07e0f207bfedaa27cec0ee6c8ebe7`
 
 ```markdown
 # Гайд для разработчика
@@ -63570,6 +63716,16 @@ DATABASE_URL=postgresql+asyncpg://aemr:local-test-pass@db:5432/aemr
 `docker compose` теперь падает с понятной ошибкой `Set POSTGRES_PASSWORD in infra/.env`, если пароль не задан. Это защита от случайного запуска Postgres с пустым паролем; предупреждение `POSTGRES_PASSWORD variable is not set` больше не должно превращаться в рабочий контейнер.
 
 **Получить тестовый токен.** Откройте <https://max.ru/business>. Войдите как админ организации. Раздел «Боты» → «Создать бота» (или откройте существующего) → скопируйте Bot API token. Если у вас уже есть основной бот АЕМО, попросите у владельца сгенерировать отдельный тестовый.
+
+**Pre-commit (опционально, но рекомендовано).** Локальные hook'и зеркалят CI lint job — что упало здесь, упадёт и в CI. Установка занимает минуту:
+
+```bash
+pip install pre-commit
+pre-commit install                  # активирует hook'и на git commit
+pre-commit run --all-files          # одноразовая проверка всего репо
+```
+
+Конфигурация — `.pre-commit-config.yaml` в корне. Что проверяется: ruff (lint+format), mypy, trailing whitespace, large files >2MB, мерж-конфликт-маркеры, private keys, случайные `.env` файлы.
 
 ### Шаг 2 — собрать и запустить
 
