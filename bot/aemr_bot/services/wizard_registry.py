@@ -20,7 +20,7 @@ from aemr_bot.utils.background import spawn_background_task
 
 log = logging.getLogger(__name__)
 
-# ---- Internal storage (private to this module) ----------------------------
+# ---- Внутреннее хранилище (закрытое для других модулей) ---------------------
 
 # Wizard «Добавить оператора» в админ-панели IT.
 # Ключ: max_user_id оператора, который сейчас ведёт wizard.

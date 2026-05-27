@@ -1,4 +1,4 @@
-"""Admin appeal card — sacred event log (PR #100, dual-tracker).
+"""Карточка обращения в админ-чате — sacred event log (PR #100, dual-tracker).
 
 Каждая публикация карточки — новая запись в журнале чата. Edit
 после dual-tracker не делается; reply/reopen/close/followup → новая
