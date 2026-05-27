@@ -1,3 +1,13 @@
+---
+status: superseded
+superseded_by: docs/_meta/SECURITY_REVIEW_2026-05-27.md
+note: |
+  Этот snapshot — security-review на 2026-05-26. Все 🔴/🟡-finding'и
+  закрыты (SEC #1-#9, SACRED #1-#5, M1-M10). Свежий delta-аудит +
+  closure status — в `SECURITY_REVIEW_2026-05-27.md` (D1/D2 закрыты
+  PR #103, D3/D4 — accepted technical debt).
+---
+
 # Security Review 2026-05-26
 
 > Сводный итог security-пасса по aemr-bot (HEAD `a09c2a4` → main).
