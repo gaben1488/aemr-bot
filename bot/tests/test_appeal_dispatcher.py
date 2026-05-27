@@ -212,8 +212,15 @@ class TestCallbackCancel:
         on_callback, _ = captured_handlers
         event = _make_callback_event(payload="cancel")
         reset = AsyncMock()
+        # A2 (2026-05-27): handler сначала читает текущий state, чтобы
+        # отличать live-отмену от stale тапа на старой 5/5 после
+        # finalize. Mockуем active-state, чтобы handler пошёл по
+        # обычной reset-ветке.
+        active_user = SimpleNamespace(dialog_state="awaiting_summary")
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal.users_service.find_by_max_id",
+                   AsyncMock(return_value=active_user)), \
              patch("aemr_bot.handlers.appeal.users_service.reset_state", reset), \
              patch("aemr_bot.handlers.appeal.drop_user_lock"), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
@@ -221,6 +228,36 @@ class TestCallbackCancel:
         reset.assert_called_once()
         event.bot.send_message.assert_called_once()
         assert event.bot.send_message.call_args.kwargs["attachments"]
+        # Текст «Действие отменено», не stale-уведомление.
+        assert "Действие отменено" in event.bot.send_message.call_args.kwargs["text"]
+
+    @pytest.mark.asyncio
+    async def test_cancel_stale_after_finalize_no_reset(
+        self, captured_handlers
+    ) -> None:
+        """A2 (2026-05-27): тап на старой 5/5 после finalize_appeal —
+        state уже IDLE. Не вызываем reset_state (state и так чистый),
+        не вводим в заблуждение «Действие отменено». Отдаём явный
+        stale-feedback `CANCEL_ALREADY_DONE`."""
+        on_callback, _ = captured_handlers
+        event = _make_callback_event(payload="cancel")
+        reset = AsyncMock()
+        idle_user = SimpleNamespace(dialog_state="idle")
+        with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
+             patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal.users_service.find_by_max_id",
+                   AsyncMock(return_value=idle_user)), \
+             patch("aemr_bot.handlers.appeal.users_service.reset_state", reset), \
+             patch("aemr_bot.handlers.appeal.drop_user_lock"), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await on_callback(event)
+        # Stale-detection — reset_state не должен вызываться.
+        reset.assert_not_called()
+        event.bot.send_message.assert_called_once()
+        sent_text = event.bot.send_message.call_args.kwargs["text"]
+        # Явный stale-feedback вместо «Действие отменено».
+        assert "уже неактуальна" in sent_text or "уже отправлено" in sent_text
+        assert "Действие отменено" not in sent_text
 
 
 class TestCallbackAddrReuse:
