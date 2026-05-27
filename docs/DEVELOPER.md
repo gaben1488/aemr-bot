@@ -40,6 +40,16 @@ DATABASE_URL=postgresql+asyncpg://aemr:local-test-pass@db:5432/aemr
 
 **Получить тестовый токен.** Откройте <https://max.ru/business>. Войдите как админ организации. Раздел «Боты» → «Создать бота» (или откройте существующего) → скопируйте Bot API token. Если у вас уже есть основной бот АЕМО, попросите у владельца сгенерировать отдельный тестовый.
 
+**Pre-commit (опционально, но рекомендовано).** Локальные hook'и зеркалят CI lint job — что упало здесь, упадёт и в CI. Установка занимает минуту:
+
+```bash
+pip install pre-commit
+pre-commit install                  # активирует hook'и на git commit
+pre-commit run --all-files          # одноразовая проверка всего репо
+```
+
+Конфигурация — `.pre-commit-config.yaml` в корне. Что проверяется: ruff (lint+format), mypy, trailing whitespace, large files >2MB, мерж-конфликт-маркеры, private keys, случайные `.env` файлы.
+
 ### Шаг 2 — собрать и запустить
 
 ```bash
