@@ -1047,6 +1047,7 @@ def op_settings_menu_keyboard(dirty_count: int = 0):
     kb.row(CallbackButton(text="🆘 Экстренные службы", payload="op:set:obj:emergency_contacts"))
     kb.row(CallbackButton(text="🚌 Диспетчерские транспорта", payload="op:set:obj:transport_dispatcher_contacts"))
     kb.row(CallbackButton(text="👤 Автор коммитов от бота", payload="op:set:author"))
+    kb.row(CallbackButton(text="🌙 Тихий режим в админ-чате", payload="op:set:quiet"))
     pr_label = "💾 Создать PR с изменениями"
     if dirty_count > 0:
         pr_label = f"💾 Создать PR ({dirty_count} изм.)"
@@ -1141,6 +1142,24 @@ def op_settings_obj_item_keyboard(key: str, index: int):
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="🗑 Удалить запись", payload=f"op:set:obj_del:{key}:{index}"))
     kb.row(CallbackButton(text="↩️ Назад", payload=f"op:set:obj:{key}"))
+    return kb.as_markup()
+
+
+def op_settings_quiet_keyboard(*, enabled: bool):
+    """Карточка «🌙 Тихий режим» — toggle через кнопку. Границы окна
+    (часы start/end) меняются через текстовую команду `/setting`
+    (валидация int + 0–23 уже в SCHEMA). Слайдер start/end в
+    callback'е MAX-API не сделать одним кликом, а полноценный
+    wizard для двух чисел — overkill для редко-используемой настройки.
+    """
+    kb = InlineKeyboardBuilder()
+    toggle_label = (
+        "🔕 Выключить тихий режим" if enabled
+        else "🔔 Включить тихий режим"
+    )
+    kb.row(CallbackButton(text=toggle_label, payload="op:set:quiet:toggle"))
+    kb.row(CallbackButton(text="↩️ К настройкам", payload="op:settings"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
