@@ -53,18 +53,24 @@ class TestAdminTimeline:
         appeal = _make_appeal_with_messages([])
         assert appeal_timeline_block(appeal) == ""
 
-    def test_only_followups_falls_back_to_old_block(self) -> None:
-        """Если только дополнения жителя (нет ответов оператора) —
-        старый формат «Дополнения к обращению» без timeline-маркеров."""
+    def test_only_followups_uses_unified_timeline(self) -> None:
+        """A1 (2026-05-27): единый timeline даже когда ответа оператора
+        ещё не было. Раньше fallback'ил на «Дополнение к обращению» —
+        UX был непредсказуем (формат менялся при первом ответе)."""
         from aemr_bot.services.card_format import appeal_timeline_block
 
         appeal = _make_appeal_with_messages([
             _make_msg("from_user", "Уточнение по фото"),
         ])
         result = appeal_timeline_block(appeal)
-        # Старый формат: «Дополнение к обращению:» без «История переписки»
-        assert "Дополнение к обращению:" in result
-        assert "История переписки:" not in result
+        # Новый формат: всегда «История переписки:» + маркер дополнения.
+        assert "История переписки:" in result
+        assert "📩 Дополнение жителя" in result
+        assert "Уточнение по фото" in result
+        # Старого fallback'а больше нет — следов «Дополнение к обращению»
+        # быть не должно.
+        assert "Дополнение к обращению:" not in result
+        assert "Дополнения к обращению:" not in result
 
     def test_reply_present_uses_timeline_format(self) -> None:
         """Как только появился ответ оператора — переключаемся на
