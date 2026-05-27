@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 05:53:22 UTC`
+Generated at: `2026-05-27 05:57:59 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `244`
 Max file size: `300 KB`
@@ -15,7 +15,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `.dockerignore` (539 bytes)
 - `.github/workflows/ci.yml` (8730 bytes)
 - `.github/workflows/repo-index.yml` (1117 bytes)
-- `.gitignore` (1261 bytes)
+- `.gitignore` (1402 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
 - `bot/aemr_bot/config.py` (10460 bytes)
 - `bot/aemr_bot/db/__init__.py` (0 bytes)
@@ -589,8 +589,8 @@ jobs:
 
 ### `.gitignore`
 
-Size: `1261` bytes  
-SHA-256: `59afc9e207767553fb95f08a50a625301512fe8742279603c109267259a4c4aa`
+Size: `1402` bytes  
+SHA-256: `91832f5fd1e2edb2285a9166606494c1e14d7b9fa93e9792afe6c875c5594335`
 
 ```gitignore
 # Secrets and env
@@ -660,6 +660,10 @@ _local-backup/
 # pytest-cov runtime артефакт — не коммитить
 .coverage
 htmlcov/
+
+# MSYS/Cygwin bash crash dump — никогда не коммитить
+# (Codex PR 0 hygiene из плана MLP 2026-05-27).
+*.stackdump
 
 # Optional local tree-only index
 aemr-bot-tree.md
