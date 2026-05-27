@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 02:35:44 UTC`
+Generated at: `2026-05-27 02:47:29 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `239`
 Max file size: `300 KB`
@@ -61,7 +61,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/operator_reply.py` (41155 bytes)
 - `bot/aemr_bot/handlers/start.py` (21062 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (69661 bytes)
+- `bot/aemr_bot/keyboards.py` (69914 bytes)
 - `bot/aemr_bot/main.py` (21047 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_bus.py` (13836 bytes)
@@ -171,7 +171,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_settings_seed_baseline.py` (5309 bytes)
 - `bot/tests/test_settings_store_validation.py` (8317 bytes)
 - `bot/tests/test_stale_operators_cleanup.py` (5188 bytes)
-- `bot/tests/test_texts_length_guard.py` (8424 bytes)
+- `bot/tests/test_texts_length_guard.py` (8409 bytes)
 - `bot/tests/test_threat_intel.py` (3737 bytes)
 - `bot/tests/test_typing_indicator.py` (2923 bytes)
 - `bot/tests/test_uploads_policy_admin_relay.py` (11634 bytes)
@@ -11815,7 +11815,7 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 ### `bot/aemr_bot/handlers/menu.py`
 
 Size: `52692` bytes  
-SHA-256: `620a2e78b13c1ff8d501cf140d810f76b8ee0f22e3db67add21b1c6f3f254699`
+SHA-256: `18e2711354d4ca6480c04820fa7c8558e035905c61bf35107504da98d739c02b`
 
 ```python
 import logging
@@ -12167,7 +12167,7 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
     """
     async with session_scope() as session:
         # get_by_id_with_messages нужен, чтобы посчитать
-        # attachment_count для кнопки «📎 Показать вложения» внизу
+        # attachment_count для кнопки «🗂 Показать вложения» внизу
         # карточки. Сами вложения НЕ переотправляются автоматически —
         # это вызывало hang при каждом тапе на карточку (см. PR-fix-hang).
         # Сейчас житель тапает кнопку явно, когда хочет посмотреть.
@@ -12852,7 +12852,7 @@ _EXACT: dict[str, _MenuRoute] = {
 }
 
 async def show_appeal_attachments(event, appeal_id: int, max_user_id: int):
-    """Кнопка «📎 Показать вложения (N)» под карточкой обращения у
+    """Кнопка «🗂 Показать вложения (N)» под карточкой обращения у
     жителя (PR-fix-hang). До этого вложения переотправлялись каждый
     раз при открытии карточки и могли подвешивать handler. Теперь —
     только по явному тапу."""
@@ -14454,8 +14454,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `69661` bytes  
-SHA-256: `cd1010d503d55cdd5c2b87768ebaf517ffe957ad3f120b2c328fb3b158460964`
+Size: `69914` bytes  
+SHA-256: `76a7d38e8c3c2da888a4892d800acd109bcf50f1298ea172b218a93cfc59d3d7`
 
 ```python
 from maxapi.types import (
@@ -14756,9 +14756,12 @@ def user_appeal_card_keyboard(
     адресом и тематикой. Новое обращение помечается как связанное с
     отвеченным или закрытым вопросом.
 
-    attachment_count>0 — кнопка «📎 Показать вложения (N)»: явный
+    attachment_count>0 — кнопка «🗂 Показать вложения (N)»: явный
     показ переотправки. Раньше происходила автоматически при каждом
     открытии карточки и создавала задержку в личке (PR-fix-hang).
+    A4.2 (2026-05-27): иконка `🗂` вместо `📎`, чтобы не дублировать
+    «📎 Дополнить» в той же клавиатуре — оператор/житель могли
+    спутать действие.
     """
     from aemr_bot.db.models import AppealStatus
 
@@ -14781,7 +14784,7 @@ def user_appeal_card_keyboard(
     if attachment_count > 0:
         kb.row(
             CallbackButton(
-                text=f"📎 Показать вложения ({attachment_count})",
+                text=f"🗂 Показать вложения ({attachment_count})",
                 payload=f"appeal:atts:{appeal_id}",
             )
         )
@@ -46159,8 +46162,8 @@ class TestCleanupStaleOperators:
 
 ### `bot/tests/test_texts_length_guard.py`
 
-Size: `8424` bytes  
-SHA-256: `bd4754301e296a45f6edf1fef2fe61cd6b0121ae6486f6a07d3e8cd76b04bb27`
+Size: `8409` bytes  
+SHA-256: `819494a78d2769b6c25d54aaa0531aff057403ff79a1fe35523ceb44f26ac203`
 
 ```python
 """Превентивный гард: ни одна str-константа в `aemr_bot.texts` после
@@ -46187,8 +46190,6 @@ Assert `len(formatted) <= MAX_LEN` (4000, с запасом — MAX-API лими
 ровно 4000, наш guard 3900 даёт буфер на ack-маркеры и event_header).
 """
 from __future__ import annotations
-
-import pytest
 
 
 MAX_LEN = 3900  # с запасом перед hard limit MAX-API 4000.
