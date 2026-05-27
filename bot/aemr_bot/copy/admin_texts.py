@@ -175,6 +175,49 @@ OP_USER_UNBLOCKED = "Житель {max_user_id} разблокирован."
 OP_SETTING_UPDATED = "Настройка «{key}» обновлена."
 OP_STATS_EMPTY = "За выбранный период обращений не было."
 
+# Поиск жителя по телефону/MAX user id (Cluster G, Codex PR 9).
+OP_FIND_RESIDENT_USAGE = (
+    "🔍 Поиск жителя\n"
+    "──────────\n"
+    "Использование:\n"
+    "  /find_resident <max_user_id>\n"
+    "  /find_resident <телефон>\n\n"
+    "Примеры:\n"
+    "  /find_resident 123456789\n"
+    "  /find_resident +79991234567\n\n"
+    "Все запросы пишутся в audit_log (152-ФЗ)."
+)
+
+OP_FIND_RESIDENT_NOT_FOUND = (
+    "🔍 По запросу «{query_masked}» ничего не найдено.\n"
+    "──────────\n"
+    "Проверьте: телефон с кодом страны (+7) или max_user_id "
+    "(целое число из карточки обращения)."
+)
+
+OP_FIND_RESIDENT_AMBIGUOUS_PHONE = (
+    "🔍 По телефону найдено несколько жителей.\n"
+    "──────────\n"
+    "Один номер привязан к разным аккаунтам (бывает у супругов на "
+    "одной симке). Уточните max_user_id из карточки обращения и "
+    "повторите поиск."
+)
+
+OP_FIND_RESIDENT_CARD = (
+    "🔍 Найден житель\n"
+    "──────────\n"
+    "👤 Имя: {name}\n"
+    "📞 Телефон: {phone_masked}\n"
+    "🆔 MAX user id: {max_user_id}\n"
+    "\n"
+    "🔐 Согласие на ПДн: {consent_status}\n"
+    "🔔 Подписка на рассылку: {subscribe_status}\n"
+    "{blocked_line}"
+    "\n"
+    "📂 Последнее обращение: {last_appeal}\n"
+    "📊 Всего обращений: {appeals_count}"
+)
+
 
 __all__ = [
     "ADMIN_CARD_TEMPLATE",
@@ -199,4 +242,8 @@ __all__ = [
     "OP_USER_UNBLOCKED",
     "OP_SETTING_UPDATED",
     "OP_STATS_EMPTY",
+    "OP_FIND_RESIDENT_USAGE",
+    "OP_FIND_RESIDENT_NOT_FOUND",
+    "OP_FIND_RESIDENT_AMBIGUOUS_PHONE",
+    "OP_FIND_RESIDENT_CARD",
 ]

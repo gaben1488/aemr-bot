@@ -5,6 +5,7 @@ from maxapi.types import MessageCreated
 from aemr_bot.config import settings as cfg
 from aemr_bot.handlers import (
     admin_commands,
+    admin_resident_search,
     appeal,
     broadcast,
     start,
@@ -117,6 +118,7 @@ def register_handlers(dp: Dispatcher) -> None:
     _attach_outer_middleware(dp, AdminChatActivityMiddleware())
     start.register(dp)
     admin_commands.register(dp)
+    admin_resident_search.register(dp)
     broadcast.register(dp)
     # Catch-all последним: см. докстринг выше.
     appeal.register(dp)
