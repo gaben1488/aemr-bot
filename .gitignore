@@ -66,5 +66,9 @@ _local-backup/
 .coverage
 htmlcov/
 
+# MSYS/Cygwin bash crash dump — никогда не коммитить
+# (Codex PR 0 hygiene из плана MLP 2026-05-27).
+*.stackdump
+
 # Optional local tree-only index
 aemr-bot-tree.md
