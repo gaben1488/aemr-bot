@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 23:28:38 UTC`
+Generated at: `2026-05-27 23:34:16 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `265`
 Max file size: `300 KB`
@@ -241,7 +241,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/COMPLIANCE_WITH_REGLAMENT_v7.md` (47616 bytes)
 - `docs/COPY.md` (54755 bytes)
 - `docs/DEPS.md` (5945 bytes)
-- `docs/DEVELOPER.md` (138438 bytes)
+- `docs/DEVELOPER.md` (138614 bytes)
 - `docs/HOW_IT_WORKS.md` (26685 bytes)
 - `docs/MAXAPI_UPGRADE_PROCEDURE.md` (11569 bytes)
 - `docs/OPERATOR_SECURITY.md` (34936 bytes)
@@ -344,7 +344,7 @@ backups
 ### `.github/workflows/ci.yml`
 
 Size: `8730` bytes  
-SHA-256: `0a58d3e6364ba2554438a9a8367f153467fdcae2fb15667ac2b4794d6035008f`
+SHA-256: `0fb97750b0b43757758c40dcd46349626c6628c802e89d00f65bd60199471060`
 
 ```yaml
 name: CI
@@ -485,7 +485,7 @@ jobs:
           --cov-report=term-missing:skip-covered
           --cov-report=xml:coverage.xml
           --cov-report=html:htmlcov
-          --cov-fail-under=64
+          --cov-fail-under=66
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -63525,8 +63525,8 @@ uv run pip-audit
 
 ### `docs/DEVELOPER.md`
 
-Size: `138438` bytes  
-SHA-256: `8bd0f4e8d35a2bc6f6655a9b62ba0ba7f13cd8d9f3aa6e4e0c2916364d7da82a`
+Size: `138614` bytes  
+SHA-256: `dbfeeec43373b8611b2a2ca7368110f92b8d8d605d73a1efe09dba17289fabb7`
 
 ```markdown
 # Гайд для разработчика
@@ -64659,25 +64659,25 @@ uv run pytest tests/ -v
 
 #### Локально vs CI — две разные конфигурации
 
-Тестовая база `bot/tests/` рассчитана на два режима: лёгкий локальный (без Postgres, проверка чистой логики) и полный CI (с реальной БД, миграциями, coverage gate). Не пытайтесь запустить «CI-режим» локально без Postgres — упрётесь в `RuntimeError: Event loop is closed` или `pytest --cov-fail-under=64` ниже порога.
+Тестовая база `bot/tests/` рассчитана на два режима: лёгкий локальный (без Postgres, проверка чистой логики) и полный CI (с реальной БД, миграциями, coverage gate). Не пытайтесь запустить «CI-режим» локально без Postgres — упрётесь в `RuntimeError: Event loop is closed` или `pytest --cov-fail-under=66` ниже порога.
 
 | Сценарий | Команда | Что покрывается | Что не покрывается |
 |---|---|---|---|
-| **Локально, быстро** (pure-юниты) | `uv run pytest tests/ -q` | ≈1127 passed, ≈106 skipped: маркер `@pytest.fixture(session)` для тестов с реальной БД даёт skip; остальное прогоняется на mock'ах. | Coverage по веткам, integration-тесты на Postgres-specific (JSONB upserts, `pg_advisory_xact_lock`, миграции). Coverage по умолчанию ≈ **61.3%** — ниже CI-gate **64**, потому что не работают тесты на сервисном слое БД. |
+| **Локально, быстро** (pure-юниты) | `uv run pytest tests/ -q` | ≈1127 passed, ≈106 skipped: маркер `@pytest.fixture(session)` для тестов с реальной БД даёт skip; остальное прогоняется на mock'ах. | Coverage по веткам, integration-тесты на Postgres-specific (JSONB upserts, `pg_advisory_xact_lock`, миграции). Coverage по умолчанию ≈ **61.3%** — ниже CI-gate **66**, потому что не работают тесты на сервисном слое БД. |
 | **Локально, как CI** (нужен Postgres) | `docker compose up -d db` + `DATABASE_URL=postgresql+asyncpg://aemr:abrakadabra@localhost:5432/aemr uv run pytest tests/ -q` | Полный набор тестов, включая БД-фикстуру `session` (см. `tests/conftest.py`). Должно быть ≈1127 passed, ≈30–50 skipped (только тесты с `pytest.importorskip("maxapi")` если локально нет maxapi). | — |
-| **CI (`Pytest with Postgres 16`)** | `uv run pytest tests/ -q --cov=aemr_bot --cov-branch --cov-fail-under=64 --cov-report=xml:coverage.xml` | Тот же набор + coverage gate 64% (см. `bot/pyproject.toml`). + `alembic upgrade head && alembic check` отдельным шагом. | Smoke на VPS (docker build → run → /livez ping) — отдельный CI job `Docker build smoke test`. |
+| **CI (`Pytest with Postgres 16`)** | `uv run pytest tests/ -q --cov=aemr_bot --cov-branch --cov-fail-under=66 --cov-report=xml:coverage.xml` | Тот же набор + coverage gate 66% (актуально в `.github/workflows/ci.yml:139`). + `alembic upgrade head && alembic check` отдельным шагом. | Smoke на VPS (docker build → run → /livez ping) — отдельный CI job `Docker build smoke test`. |
 
 **Триггеры известных flake'ов:**
 
 - `tests/test_handlers_menu.py::TestOpenMainMenu::test_normal_user_gets_main_menu` (и подобные) могут падать `RuntimeError: Event loop is closed` на CI Pytest-runner'е если предыдущий тест в той же сессии закрыл async event loop. Mitigation: явный `patch("aemr_bot.handlers.menu.settings_store.get_text_with_fallback", AsyncMock(...))` в самом тесте, чтобы не открывать новое соединение к Postgres pool. Применено в PR #117.
-- `pytest --cov-fail-under=64` локально без Postgres падает на 61.3% — это **не баг**, это ожидаемая разница между local-pure и CI-with-DB режимами.
+- `pytest --cov-fail-under=66` локально без Postgres падает на 61.3% — это **не баг**, это ожидаемая разница между local-pure и CI-with-DB режимами.
 
 #### Сейчас (2026-05-27, post-PR #110-#121)
 
 - `bot/tests/` содержит ≈79 тест-файлов.
 - На CI: ≈1127 passed, ≈106 skipped.
 - На local pure (без Postgres): тот же набор collect'ится, но `session`-fixture делает skip → ≈455 passed, ≈158 skipped (зависит от наличия `maxapi` в local env — без него ещё ~150 файлов с `importorskip`).
-- Coverage gate на CI: `--cov-fail-under=64` (см. `bot/pyproject.toml`). Цель — поднимать постепенно до 80% (Phase E в плане MLP).
+- Coverage gate на CI: `--cov-fail-under=66` (см. `.github/workflows/ci.yml:139`). Цель — поднимать постепенно до 80% (Phase E в плане MLP). Текущий реальный coverage на CI — 66.77% после Cluster E tests; gate 66 даёт 0.77% margin до regression-fail.
 
 #### Что покрываем
 
@@ -67238,7 +67238,7 @@ SHA-256: `89169dc32a7f55b1e97d9390e95887c3ba76294ab891ef87ed463b3823deeb6d`
 ### `docs/SECURITY.md`
 
 Size: `53202` bytes  
-SHA-256: `0d7a29bacb77b2d64447767f84d62d0584cdba3fc2d28294379e4edf08de6432`
+SHA-256: `eaf50e315e6af0ed1c4cd8515a49604d84868bd19145c81a73ea8676fe3330ea`
 
 ```markdown
 # SECURITY.md — модель угроз и контролов
@@ -67590,7 +67590,7 @@ Audit-log автоматически очищается cron-job'ом `audit-log
 - `bandit -ll` — статический security-анализатор Python (medium+);
 - `pip-audit --strict` — CVE-сканер зависимостей. Падает на любой known CVE в `pip freeze`;
 - `shellcheck` — все `*.sh`;
-- `pytest --cov-fail-under=65` — coverage gate;
+- `pytest --cov-fail-under=66` — coverage gate;
 - `alembic upgrade head` — миграции применяются на чистую БД;
 - `alembic check` — соответствие модели Python и схемы БД;
 - `alembic round-trip` — upgrade head → downgrade base → upgrade head без ошибок (ловит сломанный `downgrade()`).
@@ -68174,7 +68174,7 @@ docker compose up -d --build
 ### `docs/SYSADMIN.md`
 
 Size: `40922` bytes  
-SHA-256: `0794afd396014f5ab09b6d90d338e7fb721b04336463a574ba52ba0905740371`
+SHA-256: `233f36eb6faf066dda2c636cb8684e50ef24e8954b228ff93307472daffd94e1`
 
 ```markdown
 # SYSADMIN.md — операционное руководство
@@ -68662,7 +68662,7 @@ sudo bash /home/aemr/aemr-bot/scripts/audit_vps.sh
 На каждом push в main и каждом PR прогоняется `.github/workflows/ci.yml`:
 
 - **lint job**: `ruff check --output-format=github`, `mypy`, `bandit -ll` (medium+), `pip-audit --strict` (hard fail на любой CVE), `shellcheck` на все `*.sh`.
-- **test job**: `pytest --cov-fail-under=65`, `alembic upgrade head`, `alembic check` (drift между моделями и миграциями), `alembic round-trip` (upgrade → downgrade base → upgrade head).
+- **test job**: `pytest --cov-fail-under=66`, `alembic upgrade head`, `alembic check` (drift между моделями и миграциями), `alembic round-trip` (upgrade → downgrade base → upgrade head).
 - **docker-build job**: смок-сборка образа без push.
 
 Auto-deploy на сервере подтягивает только из `main`. PR-ветки не деплоятся.
