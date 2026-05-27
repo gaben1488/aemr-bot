@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 22:05:54 UTC`
+Generated at: `2026-05-27 22:33:17 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `264`
 Max file size: `300 KB`
@@ -49,15 +49,15 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (22816 bytes)
-- `bot/aemr_bot/handlers/admin_audience.py` (9434 bytes)
+- `bot/aemr_bot/handlers/admin_audience.py` (22530 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (16294 bytes)
-- `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
+- `bot/aemr_bot/handlers/admin_commands.py` (18432 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42735 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (22825 bytes)
 - `bot/aemr_bot/handlers/admin_resident_search.py` (10715 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (49743 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (4466 bytes)
-- `bot/aemr_bot/handlers/appeal.py` (28901 bytes)
+- `bot/aemr_bot/handlers/appeal.py` (29375 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (33699 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (13147 bytes)
@@ -95,14 +95,14 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/threat_intel.py` (11404 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
-- `bot/aemr_bot/services/users.py` (31152 bytes)
+- `bot/aemr_bot/services/users.py` (36527 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5950 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (11104 bytes)
 - `bot/aemr_bot/texts.py` (1396 bytes)
 - `bot/aemr_bot/ui/__init__.py` (1477 bytes)
 - `bot/aemr_bot/ui/broadcast_keyboards.py` (13329 bytes)
 - `bot/aemr_bot/ui/citizen_keyboards.py` (25604 bytes)
-- `bot/aemr_bot/ui/operator_keyboards.py` (16798 bytes)
+- `bot/aemr_bot/ui/operator_keyboards.py` (22172 bytes)
 - `bot/aemr_bot/ui/settings_keyboards.py` (11549 bytes)
 - `bot/aemr_bot/ui/wizard_keyboards.py` (10129 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
@@ -125,7 +125,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_card_render.py` (18711 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
 - `bot/tests/test_admin_events_descriptor.py` (6048 bytes)
-- `bot/tests/test_admin_handlers_small.py` (21909 bytes)
+- `bot/tests/test_admin_handlers_small.py` (23113 bytes)
 - `bot/tests/test_admin_operators.py` (19228 bytes)
 - `bot/tests/test_admin_outgoing_hook.py` (7453 bytes)
 - `bot/tests/test_admin_panel.py` (13011 bytes)
@@ -4726,18 +4726,25 @@ async def run_erase_for_appeal(event, appeal_id: int) -> None:
 
 ### `bot/aemr_bot/handlers/admin_audience.py`
 
-Size: `9434` bytes  
-SHA-256: `38717f4bf5e1a3b81a9c1a4119829c9b3a7253a3aa2d56254ded40511fab3801`
+Size: `22530` bytes  
+SHA-256: `782a8beaaf38ffb5f14d69814bc96ce500bcd7e8746c13987d2cc0648c3324e4`
 
 ```python
 """Меню «📊 Аудитория и согласия» — IT-выборки + точечные действия
 над жителем (block / unblock / erase).
+
+После UX-редизайна 2026-05-28 (PR audience-paginated-master) listing
+стал master-pattern'ом: одно сообщение со списком 10 жителей на
+странице, clickable rows, pagination кнопки. Заменили flood из 20
+отдельных сообщений (жалоба owner).
 
 Выделено из handlers/admin_commands.py (рефакторинг 2026-05-10).
 """
 from __future__ import annotations
 
 import logging
+
+import time as _time
 
 from aemr_bot import texts
 from aemr_bot.config import settings as cfg
@@ -4747,14 +4754,40 @@ from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
 from aemr_bot.services.card_format import _citizen_status_line
-from aemr_bot.utils import menu_tracker
 from aemr_bot.utils.event import (
-    extract_message_id,
     get_user_id,
     send_or_edit_screen,
 )
 
 log = logging.getLogger(__name__)
+
+# Размер страницы master-listing'а. 10 — компромисс между «много в
+# одной карточке» и «не упёрлись в лимит длины кнопок MAX-API».
+# Каждая строка ~50 символов = 500 char на page. Плюс 3 row-навигации
+# (pagination + 2 back). MAX-keyboard поддерживает заметно больше.
+_PAGE_SIZE = 10
+
+# Intent для поиска: оператор тапнул «🔍 Поиск», бот ждёт следующего
+# текстового сообщения. TTL 5 минут (как для admin_settings intent).
+# Key: operator_max_user_id, value: {"category": str | None, "expires_at": float}.
+_search_intents: dict[int, dict] = {}
+_SEARCH_INTENT_TTL_SEC = 300.0
+
+
+def _search_intent_set(operator_id: int, category: str | None) -> None:
+    _search_intents[operator_id] = {
+        "category": category,
+        "expires_at": _time.monotonic() + _SEARCH_INTENT_TTL_SEC,
+    }
+
+
+def _search_intent_pop(operator_id: int) -> dict | None:
+    state = _search_intents.pop(operator_id, None)
+    if state is None:
+        return None
+    if _time.monotonic() > state.get("expires_at", 0):
+        return None
+    return state
 
 
 async def run_audience_menu(event) -> None:
@@ -4769,20 +4802,339 @@ async def run_audience_menu(event) -> None:
         text=(
             "📊 Аудитория и согласия\n"
             "────────────────\n"
-            "Выберите выборку. Показываем по 20 записей; для большего "
-            "объёма используйте /stats или прямой SQL."
+            "Выберите выборку. Master-listing с pagination —\n"
+            "по 10 жителей на страницу, тап по строке открывает\n"
+            "карточку с действиями (блок/erase)."
         ),
         attachments=[kbds.op_audience_menu_keyboard()],
     )
 
 
+def _format_audience_row(user) -> str:
+    """Краткая строка для master-listing: `#max_user_id · Имя · +7***1234 · 🔔✅`.
+
+    Иконки статуса собираются вручную (короче чем _citizen_status_line,
+    rendered как одна строка для кнопки): подписан → 🔔, согласие
+    активно → ✅, отозвано → 🔁, заблокирован → 🚫.
+    Длина ограничивается ~50 символами — MAX-кнопки укладываются.
+    """
+    name = (user.first_name or "—").strip() or "—"
+    if len(name) > 24:
+        name = name[:21] + "…"
+    phone = _mask_phone(user.phone)
+    badges = []
+    if getattr(user, "subscribed_broadcast", False):
+        badges.append("🔔")
+    if getattr(user, "consent_pdn_at", None):
+        badges.append("✅")
+    elif getattr(user, "consent_revoked_at", None):
+        badges.append("🔁")
+    if getattr(user, "is_blocked", False):
+        badges.append("🚫")
+    badge_str = "".join(badges) or "·"
+    return f"#{user.max_user_id} · {name} · {phone} · {badge_str}"
+
+
+async def _render_audience_page(
+    event, category: str, page: int,
+) -> None:
+    """Показать страницу `page` категории `subs|consent|blocked` через
+    master-listing keyboard."""
+    from aemr_bot import keyboards as kbds
+
+    page = max(1, page)
+    offset = (page - 1) * _PAGE_SIZE
+
+    async with session_scope() as session:
+        if category == "subs":
+            total = await users_service.count_subscribers_audience(session)
+            items = await users_service.list_subscribers(
+                session, limit=_PAGE_SIZE, offset=offset,
+            )
+            title = "📩 Подписчики на рассылку"
+        elif category == "consent":
+            total = await users_service.count_consented(session)
+            items = await users_service.list_consented(
+                session, limit=_PAGE_SIZE, offset=offset,
+            )
+            title = "🔐 Дали согласие на ПДн"
+        elif category == "blocked":
+            total = await users_service.count_blocked(session)
+            items = await users_service.list_blocked(
+                session, limit=_PAGE_SIZE, offset=offset,
+            )
+            title = "🚫 Заблокированные"
+        else:
+            return
+
+    total_pages = max(1, (total + _PAGE_SIZE - 1) // _PAGE_SIZE)
+    # Если page «улетел» за пределы (оператор сделал bookmark на старую
+    # страницу, а жителей с тех пор стало меньше) — clamp к total_pages.
+    if page > total_pages:
+        page = total_pages
+        offset = (page - 1) * _PAGE_SIZE
+        # Перечитываем последнюю реальную страницу.
+        async with session_scope() as session:
+            if category == "subs":
+                items = await users_service.list_subscribers(
+                    session, limit=_PAGE_SIZE, offset=offset,
+                )
+            elif category == "consent":
+                items = await users_service.list_consented(
+                    session, limit=_PAGE_SIZE, offset=offset,
+                )
+            else:
+                items = await users_service.list_blocked(
+                    session, limit=_PAGE_SIZE, offset=offset,
+                )
+
+    if total == 0:
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=(
+                f"{title}\n"
+                "────────────────\n"
+                "Список пуст."
+            ),
+            attachments=[kbds.op_back_to_audience_keyboard()],
+        )
+        return
+
+    rows = [
+        (u.max_user_id, _format_audience_row(u))
+        for u in items
+    ]
+    header = (
+        f"{title}\n"
+        f"────────────────\n"
+        f"Страница {page} из {total_pages} · всего: {total}\n"
+        f"\n"
+        f"Тапните строку — откроется карточка жителя\n"
+        f"с действиями (блок/удалить ПДн)."
+    )
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=header,
+        attachments=[
+            kbds.op_audience_paginated_list_keyboard(
+                category, rows, page=page, total_pages=total_pages,
+            )
+        ],
+    )
+
+
+async def _dump_audience_page(
+    event, category: str, page: int,
+) -> None:
+    """Bulk-dump: отправить N отдельных карточек жителей с страницы
+    в чат. Используется для распечатки/копирования или массовых
+    действий через action-кнопки под каждой карточкой.
+    """
+    from aemr_bot import keyboards as kbds
+
+    page = max(1, page)
+    offset = (page - 1) * _PAGE_SIZE
+    async with session_scope() as session:
+        if category == "subs":
+            items = await users_service.list_subscribers(
+                session, limit=_PAGE_SIZE, offset=offset,
+            )
+        elif category == "consent":
+            items = await users_service.list_consented(
+                session, limit=_PAGE_SIZE, offset=offset,
+            )
+        elif category == "blocked":
+            items = await users_service.list_blocked(
+                session, limit=_PAGE_SIZE, offset=offset,
+            )
+        else:
+            return
+
+    if not items:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text="Страница пуста.",
+            attachments=[kbds.op_back_to_audience_keyboard()],
+        )
+        return
+
+    # Отдельная карточка на жителя, каждая со status-линией +
+    # action-кнопками. Это «старый» поток, но теперь по явному
+    # запросу оператора, а не по умолчанию.
+    for u in items:
+        name = u.first_name or "—"
+        phone = _mask_phone(u.phone)
+        status = _citizen_status_line(u)
+        line = (
+            f"#{u.max_user_id} · {name} · {phone}\n"
+            f"{status}"
+        )
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=line,
+            attachments=[
+                kbds.op_audience_user_actions(
+                    u.max_user_id, blocked=u.is_blocked,
+                )
+            ],
+        )
+
+
+async def _start_search_intent(event, category: str | None) -> None:
+    """Начать поиск: ставим intent + показываем prompt."""
+    from aemr_bot import keyboards as kbds
+
+    operator_id = get_user_id(event)
+    if operator_id is None:
+        return
+    _search_intent_set(operator_id, category)
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=(
+            "🔍 Поиск жителя\n"
+            "────────────────\n"
+            "Пришлите одним сообщением:\n"
+            "• имя или часть имени (поиск частичный, без учёта регистра);\n"
+            "• телефон или его фрагмент (например, последние 4 цифры);\n"
+            "• MAX user id (4+ цифр).\n"
+            "\n"
+            "Найдём всё, что подходит под запрос — до 20 совпадений.\n"
+            "Поиск ходит во всех категориях, не только в текущей."
+        ),
+        attachments=[kbds.op_audience_search_cancel_keyboard(category)],
+    )
+
+
+async def handle_audience_search_text(event, text: str) -> bool:
+    """Перехватчик: если у оператора активен search intent — выполняем
+    поиск и рендерим результаты. Возвращает True если поглотил
+    сообщение.
+    """
+    from aemr_bot import keyboards as kbds
+
+    operator_id = get_user_id(event)
+    if operator_id is None:
+        return False
+    state = _search_intent_pop(operator_id)
+    if state is None:
+        return False
+    if not await ensure_role(event, OperatorRole.IT):
+        return False
+
+    query = (text or "").strip()
+    if not query:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text="Пустой запрос — поиск отменён.",
+            attachments=[kbds.op_back_to_audience_keyboard()],
+        )
+        return True
+
+    async with session_scope() as session:
+        users = await users_service.search_audience(
+            session, query, limit=20,
+        )
+
+    if not users:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=(
+                f"🔍 По запросу «{query[:60]}» ничего не найдено.\n"
+                f"────────────────\n"
+                f"Попробуйте короче или другой фрагмент."
+            ),
+            attachments=[kbds.op_back_to_audience_keyboard()],
+        )
+        return True
+
+    rows = [
+        (u.max_user_id, _format_audience_row(u))
+        for u in users
+    ]
+    header = (
+        f"🔍 Найдено: {len(users)} по запросу «{query[:60]}»\n"
+        f"────────────────\n"
+        f"Тапните строку — откроется карточка жителя."
+    )
+    # Используем тот же paginated-keyboard, но без pagination
+    # (всё на одной странице). category='subs' как fallback —
+    # back-кнопка вернёт в общий audience-меню.
+    cat_fallback = state.get("category") or "subs"
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=header,
+        attachments=[
+            kbds.op_audience_paginated_list_keyboard(
+                cat_fallback, rows, page=1, total_pages=1,
+            )
+        ],
+    )
+    return True
+
+
+async def _render_user_card(
+    event, max_user_id: int, category: str | None = None,
+) -> None:
+    """Карточка отдельного жителя из master-listing — расширенная
+    информация + кнопки действий (блок/erase) + кнопка возврата на
+    исходный список."""
+    from aemr_bot import keyboards as kbds
+
+    async with session_scope() as session:
+        user = await users_service.find_by_max_id(session, max_user_id)
+    if user is None:
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=f"Житель #{max_user_id} не найден.",
+            attachments=[kbds.op_back_to_audience_keyboard()],
+        )
+        return
+
+    name = (user.first_name or "—").strip() or "—"
+    phone = _mask_phone(user.phone)
+    status_line = _citizen_status_line(user)
+    body = (
+        f"👤 Карточка жителя\n"
+        f"────────────────\n"
+        f"Имя:     {name}\n"
+        f"Телефон: {phone}\n"
+        f"MAX id:  {user.max_user_id}\n"
+        f"\n"
+        f"{status_line}\n"
+        f"\n"
+        f"Действия — кнопками ниже."
+    )
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=body,
+        attachments=[
+            kbds.op_audience_user_card_keyboard(
+                user.max_user_id,
+                blocked=user.is_blocked,
+                category=category,
+            )
+        ],
+    )
+
+
 async def run_audience_action(event, payload: str) -> None:
-    """Обработчик `op:aud:*`. Подменю — три категории списков; точечные
-    действия рядом с записью — блок/разблок и удаление ПДн.
+    """Обработчик `op:aud:*`. Подменю — три категории, master-listing
+    с pagination + clickable rows; точечные действия — блок/разблок и
+    удаление ПДн через карточку жителя.
 
     Формат payload:
-    `op:aud:subs|consent|blocked` — открыть категорию
-    `op:aud:block|unblock|erase:<max_user_id>` — действие над пользователем
+
+    - `op:aud:subs|consent|blocked` — открыть категорию (page 1).
+    - `op:aud:page:<cat>:<N>` — открыть страницу N категории.
+    - `op:aud:page:<cat>:noop` — disabled-кнопка `page/total`, тап
+      просто ack без действия.
+    - `op:aud:show:<max_user_id>` — открыть карточку жителя.
+    - `op:aud:block|unblock|erase:<max_user_id>` — точечное действие.
     """
     from aemr_bot import keyboards as kbds
     from aemr_bot.utils.event import ack_callback
@@ -4793,7 +5145,63 @@ async def run_audience_action(event, payload: str) -> None:
     await ack_callback(event)
     actor_id = get_user_id(event)
 
-    # Сначала проверим точечные действия по max_user_id.
+    # Pagination ветка: `page:<cat>:<N>` или `page:<cat>:noop`.
+    if suffix.startswith("page:"):
+        rest = suffix.removeprefix("page:")
+        parts = rest.split(":", 1)
+        if len(parts) != 2:
+            return
+        cat, page_str = parts[0], parts[1]
+        if page_str == "noop":
+            return  # disabled-кнопка page/total — только ack
+        if cat not in {"subs", "consent", "blocked"}:
+            return
+        try:
+            page = int(page_str)
+        except ValueError:
+            return
+        await _render_audience_page(event, cat, page)
+        return
+
+    # Bulk dump: `dump:<cat>:<page>`.
+    if suffix.startswith("dump:"):
+        rest = suffix.removeprefix("dump:")
+        parts = rest.split(":", 1)
+        if len(parts) != 2:
+            return
+        cat, page_str = parts[0], parts[1]
+        if cat not in {"subs", "consent", "blocked"}:
+            return
+        try:
+            page = int(page_str)
+        except ValueError:
+            return
+        await _dump_audience_page(event, cat, page)
+        return
+
+    # Search intent: `search` либо `search:<cat>`.
+    if suffix == "search" or suffix.startswith("search:"):
+        # Mypy: используем тип-аннотацию `str | None` явно — переменная
+        # выше уже `cat: str` из page/dump веток, иначе reassignment
+        # в `None` вызывает «Incompatible types in assignment».
+        search_cat: str | None = None
+        if suffix.startswith("search:"):
+            cat_candidate = suffix.removeprefix("search:")
+            if cat_candidate in {"subs", "consent", "blocked"}:
+                search_cat = cat_candidate
+        await _start_search_intent(event, search_cat)
+        return
+
+    # Карточка жителя: `show:<max_user_id>`.
+    if suffix.startswith("show:"):
+        try:
+            target_id = int(suffix.removeprefix("show:"))
+        except ValueError:
+            return
+        await _render_user_card(event, target_id)
+        return
+
+    # Точечные действия с `<action>:<max_user_id>`.
     if ":" in suffix:
         action, target_str = suffix.split(":", 1)
         try:
@@ -4862,65 +5270,9 @@ async def run_audience_action(event, payload: str) -> None:
             )
             return
 
-    # Иначе — открыть выборку.
-    async with session_scope() as session:
-        if suffix == "subs":
-            users = await users_service.list_subscribers(session)
-            header = f"📩 Подписчики (показано {len(users)}):"
-        elif suffix == "consent":
-            users = await users_service.list_consented(session)
-            header = f"🔐 Дали согласие на ПДн (показано {len(users)}):"
-        elif suffix == "blocked":
-            users = await users_service.list_blocked(session)
-            header = f"🚫 Заблокированные (показано {len(users)}):"
-        else:
-            return
-
-    if not users:
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=f"{header}\n\nСписок пуст.",
-            attachments=[kbds.op_back_to_audience_keyboard()],
-        )
-        return
-    await send_or_edit_screen(
-        event,
-        chat_id=cfg.admin_group_id,
-        text=header,
-        attachments=[kbds.op_back_to_audience_keyboard()],
-    )
-    # Карточки жителей — каждая со status-маркерами (подписка, согласие,
-    # блок), чтобы оператор видел контекст без перехода в отдельную
-    # вкладку. Это аналог _citizen_status_line из admin appeal card.
-    #
-    # Sticky-tracker: после каждой карточки обновляем mid в tracker'е.
-    # Иначе tracker остаётся на mid header'а (отрисован выше через
-    # send_or_edit_screen), а карточки жителей ниже. Оператор скроллит
-    # вниз, тапает кнопку header'а — callback_mid (header) совпал бы с
-    # tracker → edit на месте header'а ВВЕРХУ чата → оператор внизу
-    # ничего не видит. Сдвигая tracker на последнюю отправленную
-    # карточку, гарантируем: любой тап на header или промежуточную
-    # карточку — это «mid выше tracker'а», поэтому send_new в самый
-    # низ. Эта же логика нужна и в _do_open_tickets.
-    last_mid: str | None = None
-    for u in users:
-        name = u.first_name or "—"
-        phone = _mask_phone(u.phone)
-        status = _citizen_status_line(u)
-        line = f"#{u.max_user_id} · {name} · {phone}\n{status}"
-        sent = await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=line,
-            attachments=[
-                kbds.op_audience_user_actions(u.max_user_id, blocked=u.is_blocked)
-            ],
-        )
-        mid = extract_message_id(sent)
-        if mid:
-            last_mid = mid
-    if last_mid is not None and cfg.admin_group_id:
-        menu_tracker.set_last_menu_mid(cfg.admin_group_id, last_mid)
+    # Иначе — открыть категорию (page 1).
+    if suffix in {"subs", "consent", "blocked"}:
+        await _render_audience_page(event, suffix, page=1)
 
 
 def _mask_phone(phone: str | None) -> str:
@@ -5322,8 +5674,8 @@ async def dispatch_admin_callback(event, payload: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_commands.py`
 
-Size: `18364` bytes  
-SHA-256: `f6dbb854acfae2dadaa0862b9df7d9155fd190f29254acde205c6a3a63182bad`
+Size: `18432` bytes  
+SHA-256: `085857e1d6eaf86cd1c518e6d794a59dd2a00428a5776b04d2ced12dc3db15eb`
 
 ```python
 """Slash-команды оператора в админ-группе.
@@ -5368,6 +5720,7 @@ from aemr_bot.handlers.admin_appeal_ops import (
     run_show_attachments,
 )
 from aemr_bot.handlers.admin_audience import (
+    handle_audience_search_text,
     run_audience_action,
     run_audience_menu,
 )
@@ -5438,6 +5791,7 @@ __all__ = [
     "run_settings_action",
     "run_settings_menu",
     # Audience
+    "handle_audience_search_text",
     "run_audience_action",
     "run_audience_menu",
     # Per-appeal ops
@@ -8868,8 +9222,8 @@ async def run_stats_menu(event) -> None:
 
 ### `bot/aemr_bot/handlers/appeal.py`
 
-Size: `28901` bytes  
-SHA-256: `1589f67481a670b3e7088e3fedfb648d8cd2e5e651ddb26d666e66382815bb40`
+Size: `29375` bytes  
+SHA-256: `1a2b5ee533b4b182ab199a44597861840b6c7e826d4155a904edecbf4d2a783f`
 
 ```python
 """Главный entry-point обработчика обращений.
@@ -9483,6 +9837,16 @@ def register(dp: Dispatcher) -> None:
             if consumed:
                 return
             consumed = await admin_cmd_module.handle_settings_edit_text(
+                event,
+                text_body,
+            )
+            if consumed:
+                return
+            # Search intent для audience-master (PR
+            # audience-paginated-master, 2026-05-28). Перехват ДО
+            # /-команд: search-query может быть случайно «/Иван» и
+            # такое ввести нужно дать.
+            consumed = await admin_cmd_module.handle_audience_search_text(
                 event,
                 text_body,
             )
@@ -23943,8 +24307,8 @@ def file_attachment(token: str):
 
 ### `bot/aemr_bot/services/users.py`
 
-Size: `31152` bytes  
-SHA-256: `c782e45e54a799ff02dd4d05657da5c985168ea59f4b9c7422fb488fceb22373`
+Size: `36527` bytes  
+SHA-256: `1002c718eb81cd0ad1c0b187f183366d7f979895013d3a64320668254ecfe607`
 
 ```python
 import logging
@@ -24412,29 +24776,68 @@ async def set_blocked(
     return result.rowcount > 0
 
 
-async def list_subscribers(session: AsyncSession, *, limit: int = 20) -> list[User]:
+def _subscribers_where():
+    """Условие выборки подписчиков. Вынесено чтобы count и list
+    гарантированно использовали один и тот же фильтр (без рассинхрона
+    «count != len(list)»)."""
+    return (
+        User.subscribed_broadcast.is_(True),
+        User.consent_broadcast_at.isnot(None),
+        User.is_blocked.is_(False),
+        User.first_name != "Удалено",
+    )
+
+
+def _consented_where():
+    return (
+        User.consent_pdn_at.isnot(None),
+        User.is_blocked.is_(False),
+        User.first_name != "Удалено",
+    )
+
+
+def _blocked_where():
+    return (User.is_blocked.is_(True),)
+
+
+async def list_subscribers(
+    session: AsyncSession, *, limit: int = 20, offset: int = 0
+) -> list[User]:
     """Активные подписчики на рассылку для IT-меню «Аудитория».
 
     Синхронизировано с services.broadcasts._eligible_filter(): список
     показывает только тех, кому рассылка действительно может уйти.
     Старый вариант показывал legacy-подписчиков без consent_broadcast_at,
     хотя broadcast-send их уже исключал.
+
+    `offset` поддерживается для пагинации в админ-master (PR
+    audience-paginated-master).
     """
     res = await session.scalars(
         select(User)
-        .where(
-            User.subscribed_broadcast.is_(True),
-            User.consent_broadcast_at.isnot(None),
-            User.is_blocked.is_(False),
-            User.first_name != "Удалено",
-        )
+        .where(*_subscribers_where())
         .order_by(User.updated_at.desc())
         .limit(limit)
+        .offset(offset)
     )
     return list(res)
 
 
-async def list_consented(session: AsyncSession, *, limit: int = 20) -> list[User]:
+async def count_subscribers_audience(session: AsyncSession) -> int:
+    """Общее число активных подписчиков для total_pages в paginated
+    листинге. Отделено от `count_subscribers` в `broadcasts` чтобы
+    избежать circular import и потому что фильтр чуть отличается
+    (там нужно для send-loop, тут — для UI)."""
+    from sqlalchemy import func as sa_func
+
+    return await session.scalar(
+        select(sa_func.count(User.id)).where(*_subscribers_where())
+    ) or 0
+
+
+async def list_consented(
+    session: AsyncSession, *, limit: int = 20, offset: int = 0
+) -> list[User]:
     """Жители с активным согласием на ПДн.
 
     Обезличенные sentinel/удалённые записи исключаются из операторской
@@ -24442,15 +24845,21 @@ async def list_consented(session: AsyncSession, *, limit: int = 20) -> list[User
     """
     res = await session.scalars(
         select(User)
-        .where(
-            User.consent_pdn_at.isnot(None),
-            User.is_blocked.is_(False),
-            User.first_name != "Удалено",
-        )
+        .where(*_consented_where())
         .order_by(User.consent_pdn_at.desc())
         .limit(limit)
+        .offset(offset)
     )
     return list(res)
+
+
+async def count_consented(session: AsyncSession) -> int:
+    """Общее число жителей с активным consent_pdn_at."""
+    from sqlalchemy import func as sa_func
+
+    return await session.scalar(
+        select(sa_func.count(User.id)).where(*_consented_where())
+    ) or 0
 
 
 async def find_pending_pdn_retention(
@@ -24516,15 +24925,117 @@ async def has_open_appeals(session: AsyncSession, user_id: int) -> bool:
     return row is not None
 
 
-async def list_blocked(session: AsyncSession, *, limit: int = 20) -> list[User]:
+async def list_blocked(
+    session: AsyncSession, *, limit: int = 20, offset: int = 0
+) -> list[User]:
     """Заблокированные пользователи — после /forget или ручной блокировки IT."""
     res = await session.scalars(
         select(User)
-        .where(User.is_blocked.is_(True))
+        .where(*_blocked_where())
         .order_by(User.updated_at.desc())
         .limit(limit)
+        .offset(offset)
     )
     return list(res)
+
+
+async def count_blocked(session: AsyncSession) -> int:
+    """Общее число заблокированных жителей."""
+    from sqlalchemy import func as sa_func
+
+    return await session.scalar(
+        select(sa_func.count(User.id)).where(*_blocked_where())
+    ) or 0
+
+
+async def search_audience(
+    session: AsyncSession, query: str, *, limit: int = 20
+) -> list[User]:
+    """Универсальный поиск жителя для audience-master (PR
+    audience-paginated-master).
+
+    Принимает любую из форм:
+    - точный `max_user_id` (целое число от 4 цифр).
+    - точный или частичный телефон (нормализуется по цифрам через
+      `phone_normalized ILIKE '%digits%'`).
+    - имя/часть имени (fuzzy через `first_name ILIKE '%query%'`,
+      без учёта регистра, частичное совпадение).
+
+    Возвращает до `limit` объектов User. Дубли (одна запись по
+    нескольким критериям) исключаются по `User.id`. Удалённые
+    жители (first_name='Удалено') не возвращаются — иначе оператор
+    случайно ткнёт на pseudo-row.
+    """
+
+    if not query or not query.strip():
+        return []
+    raw = query.strip()
+    matched_ids: set[int] = set()
+    results: list[User] = []
+
+    # 1. Точное max_user_id (4+ цифр).
+    if raw.isdigit() and 4 <= len(raw) <= 12:
+        try:
+            mid_int = int(raw)
+        except ValueError:
+            mid_int = 0
+        if mid_int:
+            user = await find_by_max_id(session, mid_int)
+            if user is not None and user.first_name != "Удалено":
+                matched_ids.add(user.id)
+                results.append(user)
+
+    # 2. Имя через ILIKE (fuzzy). Cyrillic-safe: ILIKE в Postgres
+    # case-insensitive через lower().
+    name_pattern = f"%{raw}%"
+    name_rows = (
+        await session.scalars(
+            select(User)
+            .where(
+                User.first_name.ilike(name_pattern),
+                User.first_name != "Удалено",
+            )
+            .order_by(User.updated_at.desc())
+            .limit(limit)
+        )
+    ).all()
+    for u in name_rows:
+        if u.id not in matched_ids:
+            matched_ids.add(u.id)
+            results.append(u)
+            if len(results) >= limit:
+                return results
+
+    # 3. Phone — нормализуем цифры из query, ищем по phone_normalized
+    # с substring match (поддерживает частичный телефон). Если query
+    # не содержит цифр — пропускаем.
+    digits = "".join(ch for ch in raw if ch.isdigit())
+    if digits and len(digits) >= 3:
+        # Нормализация совпадает с _normalize_phone — срезаем
+        # ведущий 7/8 для 11-значных.
+        normalized = digits
+        if len(normalized) == 11 and normalized[0] in {"7", "8"}:
+            normalized = normalized[1:]
+        phone_pattern = f"%{normalized}%"
+        phone_rows = (
+            await session.scalars(
+                select(User)
+                .where(
+                    User.phone_normalized.ilike(phone_pattern),
+                    User.first_name != "Удалено",
+                )
+                .order_by(User.updated_at.desc())
+                .limit(limit)
+            )
+        ).all()
+        for u in phone_rows:
+            if u.id not in matched_ids:
+                matched_ids.add(u.id)
+                results.append(u)
+                if len(results) >= limit:
+                    return results
+
+    return results
 
 
 async def find_by_phone(session: AsyncSession, phone: str) -> User | None:
@@ -25915,8 +26426,8 @@ __all__ = [
 
 ### `bot/aemr_bot/ui/operator_keyboards.py`
 
-Size: `16798` bytes  
-SHA-256: `601ae33a55123b2f734f7cf4d6c306eb3cc2cb178aaa1ff53502d504443a76d1`
+Size: `22172` bytes  
+SHA-256: `29aed6769e59efc2e24693d4522d016dd4cf945372c1dc5f27191caee8604ad6`
 
 ```python
 """Клавиатуры операторской панели (admin-chat).
@@ -26099,6 +26610,138 @@ def op_audience_user_actions(max_user_id: int, *, blocked: bool):
     return kb.as_markup()
 
 
+def op_audience_paginated_list_keyboard(
+    category: str,
+    rows: list[tuple[int, str]],
+    *,
+    page: int = 1,
+    total_pages: int = 1,
+):
+    """Master-listing аудитории: один сообщение с кликабельными
+    строками + пагинация + bulk-dump + search.
+
+    `category` ∈ {`subs`, `consent`, `blocked`}.
+    `rows` — список (max_user_id, label) где label уже отформатирован
+    вызывающим (`#max_id · Имя · +7***1234 · 🔔✅`). Каждый row —
+    кликабельная кнопка, открывает карточку конкретного жителя через
+    callback `op:aud:show:<max_user_id>`.
+
+    Pagination кнопки появляются только если total_pages > 1.
+
+    Кнопка «📤 Выдать всех» — отдельный bulk-dump (10 individual
+    карточек). Кнопка «🔍 Поиск» — intent flow по имени/телефону/id.
+    """
+    kb = InlineKeyboardBuilder()
+    for max_user_id, label in rows:
+        kb.row(
+            CallbackButton(
+                text=label,
+                payload=f"op:aud:show:{max_user_id}",
+            )
+        )
+    # Pagination row — показываем только при >1 странице.
+    if total_pages > 1:
+        nav: list[CallbackButton] = []
+        if page > 1:
+            nav.append(
+                CallbackButton(
+                    text="⬅️",
+                    payload=f"op:aud:page:{category}:{page - 1}",
+                )
+            )
+        nav.append(
+            CallbackButton(
+                text=f"{page} / {total_pages}",
+                payload=f"op:aud:page:{category}:noop",
+            )
+        )
+        if page < total_pages:
+            nav.append(
+                CallbackButton(
+                    text="➡️",
+                    payload=f"op:aud:page:{category}:{page + 1}",
+                )
+            )
+        kb.row(*nav)
+    # Bulk + search: только при непустых rows. Поиск тоже доступен —
+    # удобно когда оператор открыл list и хочет сразу найти кого-то
+    # конкретного.
+    if rows:
+        kb.row(
+            CallbackButton(
+                text=f"📤 Выдать всех на странице ({len(rows)})",
+                payload=f"op:aud:dump:{category}:{page}",
+            )
+        )
+    kb.row(
+        CallbackButton(
+            text="🔍 Найти жителя",
+            payload=f"op:aud:search:{category}",
+        )
+    )
+    kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_audience_search_cancel_keyboard(category: str | None = None):
+    """Кнопка отмены под подсказкой ввода поиска. Возврат — в исходную
+    категорию если задана, иначе в корневое меню аудитории."""
+    kb = InlineKeyboardBuilder()
+    if category in {"subs", "consent", "blocked"}:
+        kb.row(
+            CallbackButton(
+                text="↩️ К списку",
+                payload=f"op:aud:{category}",
+            )
+        )
+    kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_audience_user_card_keyboard(max_user_id: int, *, blocked: bool, category: str | None = None):
+    """Карточка отдельного жителя из аудиторий — расширенная версия
+    `op_audience_user_actions` с возвратом в исходный paginated
+    listing вместо короткого «↩️ К аудитории».
+
+    `category` — категория откуда открыли карточку (`subs`/`consent`/
+    `blocked`); если задано, кнопка возврата вернёт на страницу
+    list'инга, а не в корневое меню аудитории.
+    """
+    kb = InlineKeyboardBuilder()
+    if blocked:
+        kb.row(
+            CallbackButton(
+                text="✅ Разблокировать",
+                payload=f"op:aud:unblock:{max_user_id}",
+            )
+        )
+    else:
+        kb.row(
+            CallbackButton(
+                text="🚫 Заблокировать",
+                payload=f"op:aud:block:{max_user_id}",
+            )
+        )
+    kb.row(
+        CallbackButton(
+            text="🗑 Удалить ПДн",
+            payload=f"op:aud:erase:{max_user_id}",
+        )
+    )
+    if category in {"subs", "consent", "blocked"}:
+        kb.row(
+            CallbackButton(
+                text="↩️ К списку",
+                payload=f"op:aud:{category}",
+            )
+        )
+    kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
 def appeal_admin_actions(
     appeal_id: int,
     status: str,
@@ -26247,6 +26890,9 @@ __all__ = [
     "op_stats_menu_keyboard",
     "op_audience_menu_keyboard",
     "op_audience_user_actions",
+    "op_audience_paginated_list_keyboard",
+    "op_audience_user_card_keyboard",
+    "op_audience_search_cancel_keyboard",
     "appeal_admin_actions",
     "op_help_keyboard",
 ]
@@ -30403,8 +31049,8 @@ class TestMaskPhone:
 
 ### `bot/tests/test_admin_handlers_small.py`
 
-Size: `21909` bytes  
-SHA-256: `fef7224d59cee67514e6aa8ffe745d093b6ae6c3b45654f30b845b2a2a97b77c`
+Size: `23113` bytes  
+SHA-256: `3e560ffbc6c2e12c8af7bfe94135b9398a54528a3e103503ec73b5efa4c57fa9`
 
 ```python
 """Тесты для трёх небольших admin-handlers (выделены из admin_commands
@@ -30578,25 +31224,38 @@ class TestAudienceAction:
 
     @pytest.mark.asyncio
     async def test_subs_list_with_users(self) -> None:
+        """После 2026-05-28 UX redesign: один master-card с pagination
+        вместо 20 отдельных сообщений. count_* для total_pages."""
         from aemr_bot.handlers import admin_audience
 
         event = _make_event()
         users = [
-            SimpleNamespace(max_user_id=1, first_name="Иван", phone="+79001",
-                            is_blocked=False),
-            SimpleNamespace(max_user_id=2, first_name=None, phone=None,
-                            is_blocked=False),
+            SimpleNamespace(
+                max_user_id=1, first_name="Иван", phone="+79001234567",
+                is_blocked=False, subscribed_broadcast=True,
+                consent_pdn_at=None, consent_revoked_at=None,
+            ),
+            SimpleNamespace(
+                max_user_id=2, first_name=None, phone=None,
+                is_blocked=False, subscribed_broadcast=True,
+                consent_pdn_at=None, consent_revoked_at=None,
+            ),
         ]
         with patch("aemr_bot.handlers.admin_audience.ensure_role",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_audience.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_audience.users_service.count_subscribers_audience",
+                   AsyncMock(return_value=2)), \
              patch("aemr_bot.handlers.admin_audience.users_service.list_subscribers",
                    AsyncMock(return_value=users)), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_audience.run_audience_action(event, "op:aud:subs")
-        # 1 заголовок + 2 строки = 3 send_message
-        assert event.bot.send_message.call_count == 3
+        # Один master-card вместо flood'а.
+        event.bot.send_message.assert_called_once()
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "Подписчики" in text
+        assert "всего: 2" in text
 
     @pytest.mark.asyncio
     async def test_consent_list_empty(self) -> None:
@@ -30607,6 +31266,8 @@ class TestAudienceAction:
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_audience.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_audience.users_service.count_consented",
+                   AsyncMock(return_value=0)), \
              patch("aemr_bot.handlers.admin_audience.users_service.list_consented",
                    AsyncMock(return_value=[])), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
@@ -30614,25 +31275,34 @@ class TestAudienceAction:
         # Один send «список пуст»
         event.bot.send_message.assert_called_once()
         text = event.bot.send_message.call_args.kwargs["text"]
-        assert "пуст" in text
+        assert "пуст" in text.lower()
 
     @pytest.mark.asyncio
     async def test_blocked_list(self) -> None:
         from aemr_bot.handlers import admin_audience
 
         event = _make_event()
-        users = [SimpleNamespace(max_user_id=1, first_name="X", phone="—",
-                                 is_blocked=True)]
+        users = [
+            SimpleNamespace(
+                max_user_id=1, first_name="X", phone="+79991234567",
+                is_blocked=True, subscribed_broadcast=False,
+                consent_pdn_at=None, consent_revoked_at=None,
+            )
+        ]
         with patch("aemr_bot.handlers.admin_audience.ensure_role",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_audience.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_audience.users_service.count_blocked",
+                   AsyncMock(return_value=1)), \
              patch("aemr_bot.handlers.admin_audience.users_service.list_blocked",
                    AsyncMock(return_value=users)), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_audience.run_audience_action(event, "op:aud:blocked")
-        # header + 1 user-line
-        assert event.bot.send_message.call_count == 2
+        # Один master-card.
+        event.bot.send_message.assert_called_once()
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "Заблокированные" in text
 
     @pytest.mark.asyncio
     async def test_unknown_suffix_returns(self) -> None:
