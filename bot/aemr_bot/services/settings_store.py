@@ -653,10 +653,36 @@ async def get_text_with_fallback(
 
 
 async def set_value(session: AsyncSession, key: str, value: Any) -> None:
+    """Upsert значения настройки.
+
+    **Bug B fix (2026-05-28):** при `on_conflict_do_update` SQLAlchemy
+    ORM-hook `onupdate=func.now()` НЕ срабатывает — это server-level
+    upsert, не Python-side update. Раньше `updated_at` после правки
+    через UI оставался старым, `synced_at` — старым, ключ НЕ попадал
+    в `get_dirty_keys`. Правка тихо терялась для PR-flow.
+
+    Теперь в `set_={...}` явно:
+    - `updated_at = func.now()` — фиксирует время правки;
+    - `synced_at = None` — сбрасываем флаг «выгружено в репо», ключ
+      становится dirty (docstring миграции 0013 это и обещал).
+
+    На INSERT (новый ключ) `updated_at` ставится через `server_default`,
+    `synced_at` остаётся NULL (default) → ключ dirty с момента
+    появления.
+    """
+    from sqlalchemy import func as sa_func
+
     stmt = (
         pg_insert(Setting)
         .values(key=key, value=value)
-        .on_conflict_do_update(index_elements=[Setting.key], set_={"value": value})
+        .on_conflict_do_update(
+            index_elements=[Setting.key],
+            set_={
+                "value": value,
+                "updated_at": sa_func.now(),
+                "synced_at": None,
+            },
+        )
     )
     await session.execute(stmt)
 
@@ -861,3 +887,74 @@ async def seed_if_empty(session: AsyncSession) -> None:
     ]
     if auto_synced:
         await mark_synced(session, auto_synced)
+
+    # Bug A fix (2026-05-28): legacy backfill `synced_at` для
+    # SYNCED_KEYS с `synced_at=NULL` И значением, совпадающим с
+    # seed-baseline. Миграция 0013 добавила колонку как nullable без
+    # backfill — поэтому ключи типа `emergency_contacts`, `topics`,
+    # `transport_dispatcher_contacts`, существовавшие со старых
+    # релизов, навечно остались `synced_at=NULL` → постоянно
+    # показывались как dirty.
+    #
+    # **Защита от user-edited**: сравниваем value в БД с seed-default.
+    # Если совпадает — это legacy после миграции 0013, помечаем synced.
+    # Если отличается — оператор правил через UI после миграции, dirty
+    # status оставляем. Это закрывает edge-case когда оператор поменял
+    # настройку, рестартовал бота (`set_value` теперь правильно
+    # сбросил synced_at в NULL благодаря Bug B fix), и `seed_if_empty`
+    # не должен возвращать значение к baseline.
+    #
+    # На следующих boot'ах sweep — no-op для legacy: ключи уже с
+    # `synced_at != NULL`. Для user-edited — компромисс: ключ остаётся
+    # dirty до явного PR.
+    backfill_candidates = [
+        k for k in SYNCED_KEYS
+        if k in existing
+        and k not in newly_seeded
+        and k not in repaired
+        and k in seed_pairs
+    ]
+    if backfill_candidates:
+        from sqlalchemy import select as sa_select
+        rows = await session.execute(
+            sa_select(Setting.key).where(
+                Setting.key.in_(backfill_candidates),
+                Setting.synced_at.is_(None),
+            )
+        )
+        null_synced_keys = [row[0] for row in rows.all()]
+        # JSONB-level compare через Python (после await get).
+        legacy_at_baseline: list[str] = []
+        for key in null_synced_keys:
+            db_value = existing.get(key)
+            seed_value = seed_pairs.get(key)
+            if _values_equivalent(db_value, seed_value):
+                legacy_at_baseline.append(key)
+        if legacy_at_baseline:
+            _log.info(
+                "seed_if_empty: backfill synced_at для %d legacy ключей "
+                "(миграция 0013 + value совпадает с seed-baseline): %s",
+                len(legacy_at_baseline), legacy_at_baseline,
+            )
+            await mark_synced(session, legacy_at_baseline)
+
+
+def _values_equivalent(a: Any, b: Any) -> bool:
+    """JSON-эквивалентность двух значений: dict/list нормализуются
+    через `json.dumps(sort_keys=True)`, остальное — через `==`.
+
+    Используется в `seed_if_empty` для backfill — отличать
+    «значение в БД идентично seed-baseline» (legacy после миграции
+    0013) от «оператор поменял настройку через UI» (dirty status
+    нужно сохранить).
+    """
+    if a is None and b is None:
+        return True
+    if a is None or b is None:
+        return False
+    try:
+        return json.dumps(a, sort_keys=True, ensure_ascii=False) == json.dumps(
+            b, sort_keys=True, ensure_ascii=False
+        )
+    except (TypeError, ValueError):
+        return a == b
