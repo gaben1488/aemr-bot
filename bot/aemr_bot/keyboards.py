@@ -296,9 +296,12 @@ def user_appeal_card_keyboard(
     адресом и тематикой. Новое обращение помечается как связанное с
     отвеченным или закрытым вопросом.
 
-    attachment_count>0 — кнопка «📎 Показать вложения (N)»: явный
+    attachment_count>0 — кнопка «🗂 Показать вложения (N)»: явный
     показ переотправки. Раньше происходила автоматически при каждом
     открытии карточки и создавала задержку в личке (PR-fix-hang).
+    A4.2 (2026-05-27): иконка `🗂` вместо `📎`, чтобы не дублировать
+    «📎 Дополнить» в той же клавиатуре — оператор/житель могли
+    спутать действие.
     """
     from aemr_bot.db.models import AppealStatus
 
@@ -321,7 +324,7 @@ def user_appeal_card_keyboard(
     if attachment_count > 0:
         kb.row(
             CallbackButton(
-                text=f"📎 Показать вложения ({attachment_count})",
+                text=f"🗂 Показать вложения ({attachment_count})",
                 payload=f"appeal:atts:{appeal_id}",
             )
         )
