@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 02:08:01 UTC`
+Generated at: `2026-05-27 02:16:09 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `239`
 Max file size: `300 KB`
@@ -61,7 +61,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/operator_reply.py` (41155 bytes)
 - `bot/aemr_bot/handlers/start.py` (21062 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (68253 bytes)
+- `bot/aemr_bot/keyboards.py` (69635 bytes)
 - `bot/aemr_bot/main.py` (21047 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_bus.py` (13836 bytes)
@@ -14454,8 +14454,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `68253` bytes  
-SHA-256: `2c8e1329a3f566f4b049941dcd71b2094b2a1cd21c6c4de5d172694d8963f3cf`
+Size: `69635` bytes  
+SHA-256: `d2de9629e037052b5605d4ebfa4fafcfa106b1148dd11a09ce9a8ecca4d448b2`
 
 ```python
 from maxapi.types import (
@@ -14593,7 +14593,11 @@ def goodbye_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="🔕 Не хочу получать рассылку", payload="goodbye:unsub"))
     kb.row(CallbackButton(text="👋 Хочу попрощаться, но дождаться ответа на обращение", payload="goodbye:revoke_ask"))
-    kb.row(CallbackButton(text="❌ Стереть данные обо мне прямо сейчас", payload="goodbye:erase_ask"))
+    # A4.1 (2026-05-27): `🗑` вместо `❌` — UI_BRAND_CONCEPT B.7
+    # требует разводить отмену (❌) и необратимое разрушительное
+    # действие (🗑/🚫/⛔). Стирание данных — destructive,
+    # эмодзи мусорной корзины ясно сигнализирует это пенсионеру.
+    kb.row(CallbackButton(text="🗑 Стереть данные обо мне прямо сейчас", payload="goodbye:erase_ask"))
     kb.row(CallbackButton(text="↩️ Передумал, остаюсь", payload="menu:settings"))
     return kb.as_markup()
 
@@ -14729,7 +14733,10 @@ def geo_confirm_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="✅ Всё правильно", payload="geo:confirm"))
     kb.row(CallbackButton(text="✏️ Исправить адрес", payload="geo:edit_address"))
-    kb.row(CallbackButton(text="🔙 Другой населённый пункт", payload="geo:other_locality"))
+    # A4.1 (2026-05-27): `↩️` вместо `🔙` — UI_BRAND_CONCEPT B.7
+    # canonical эмодзи возврата. `🔙` редко используется в боте и
+    # ломает консистентность с pagination/useful_info/settings.
+    kb.row(CallbackButton(text="↩️ Другой населённый пункт", payload="geo:other_locality"))
     kb.row(CallbackButton(text="❌ Отмена", payload="cancel"))
     return kb.as_markup()
 
@@ -14805,8 +14812,12 @@ def my_appeals_list_keyboard(
 
 
 def back_to_menu_keyboard():
+    # A4.1 (2026-05-27): унифицировано с pagination / useful_info /
+    # settings — везде `↩️ В меню`. Раньше один-единственный
+    # `🏠 Главное меню` ломал консистентность UI_BRAND_CONCEPT B.7
+    # (canonical эмодзи возврата — `↩️`).
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="🏠 Главное меню", payload="menu:main"))
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()
 
 
@@ -14872,10 +14883,14 @@ def useful_info_keyboard(
             payload="info:dispatchers",
         )
     )
+    # A4.1 (2026-05-27): подпись «🔕 Не хочу получать рассылку»
+    # синхронизирована с main_menu. Раньше тут было «🔕 Отписаться
+    # от рассылки» — двойной copy, пенсионер не сопоставлял с тем,
+    # что видит на главном экране.
     if subscribed:
         kb.row(
             CallbackButton(
-                text="🔕 Отписаться от рассылки", payload="info:subscribe_off"
+                text="🔕 Не хочу получать рассылку", payload="info:subscribe_off"
             )
         )
     else:
