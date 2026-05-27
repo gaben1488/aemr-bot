@@ -133,7 +133,11 @@ def goodbye_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="🔕 Не хочу получать рассылку", payload="goodbye:unsub"))
     kb.row(CallbackButton(text="👋 Хочу попрощаться, но дождаться ответа на обращение", payload="goodbye:revoke_ask"))
-    kb.row(CallbackButton(text="❌ Стереть данные обо мне прямо сейчас", payload="goodbye:erase_ask"))
+    # A4.1 (2026-05-27): `🗑` вместо `❌` — UI_BRAND_CONCEPT B.7
+    # требует разводить отмену (❌) и необратимое разрушительное
+    # действие (🗑/🚫/⛔). Стирание данных — destructive,
+    # эмодзи мусорной корзины ясно сигнализирует это пенсионеру.
+    kb.row(CallbackButton(text="🗑 Стереть данные обо мне прямо сейчас", payload="goodbye:erase_ask"))
     kb.row(CallbackButton(text="↩️ Передумал, остаюсь", payload="menu:settings"))
     return kb.as_markup()
 
@@ -269,7 +273,10 @@ def geo_confirm_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="✅ Всё правильно", payload="geo:confirm"))
     kb.row(CallbackButton(text="✏️ Исправить адрес", payload="geo:edit_address"))
-    kb.row(CallbackButton(text="🔙 Другой населённый пункт", payload="geo:other_locality"))
+    # A4.1 (2026-05-27): `↩️` вместо `🔙` — UI_BRAND_CONCEPT B.7
+    # canonical эмодзи возврата. `🔙` редко используется в боте и
+    # ломает консистентность с pagination/useful_info/settings.
+    kb.row(CallbackButton(text="↩️ Другой населённый пункт", payload="geo:other_locality"))
     kb.row(CallbackButton(text="❌ Отмена", payload="cancel"))
     return kb.as_markup()
 
@@ -345,8 +352,12 @@ def my_appeals_list_keyboard(
 
 
 def back_to_menu_keyboard():
+    # A4.1 (2026-05-27): унифицировано с pagination / useful_info /
+    # settings — везде `↩️ В меню`. Раньше один-единственный
+    # `🏠 Главное меню` ломал консистентность UI_BRAND_CONCEPT B.7
+    # (canonical эмодзи возврата — `↩️`).
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="🏠 Главное меню", payload="menu:main"))
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()
 
 
@@ -412,10 +423,14 @@ def useful_info_keyboard(
             payload="info:dispatchers",
         )
     )
+    # A4.1 (2026-05-27): подпись «🔕 Не хочу получать рассылку»
+    # синхронизирована с main_menu. Раньше тут было «🔕 Отписаться
+    # от рассылки» — двойной copy, пенсионер не сопоставлял с тем,
+    # что видит на главном экране.
     if subscribed:
         kb.row(
             CallbackButton(
-                text="🔕 Отписаться от рассылки", payload="info:subscribe_off"
+                text="🔕 Не хочу получать рассылку", payload="info:subscribe_off"
             )
         )
     else:
