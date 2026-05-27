@@ -85,7 +85,7 @@ class TestSetConsentInvariants:
         обнулён, иначе retention-cron через 30 дней с того старого
         отзыва обезличит жителя несмотря на актуальное свежее согласие.
         """
-        from sqlalchemy import select, update
+        from sqlalchemy import select
 
         await users_service.get_or_create(session, max_user_id=2, first_name="Y")
         await users_service.revoke_consent(session, 2)

@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import pathlib
 
-import pytest
 
 from aemr_bot.services.cron_registry import JOB_REGISTRY, all_ids
 
