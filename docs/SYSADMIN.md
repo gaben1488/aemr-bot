@@ -228,19 +228,22 @@ APScheduler в самом процессе. Все расписания в `Asia
 | Задача | Когда | Что |
 |---|---|---|
 | `startup-pulse` | через 5 сек после старта (DateTrigger) | сообщение в служебную группу «🟢 Бот запущен/перезапущен. HH:MM» |
-| `pulse-workhours` | пн–сб, 09:00–17:59, минуты :00 и :30 | «🟢 Бот работает» |
-| `pulse-offhours` | пн–сб, часы 0-8 и 18-23, минута :05 | то же |
-| `pulse-sunday` | вс, каждый час, минута :05 | то же |
+| `pulse-hourly` | каждый час 24/7, минута :05 | «🟢 Бот работает» — базовый heartbeat |
+| `pulse-workhours-extra` | пн–пт, 09:00–17:59, минута :35 | дополнительный heartbeat в рабочее время |
+| `audit-log-retention` | ежедневно 04:15 | удаление `audit_log` старше `AUDIT_LOG_RETENTION_DAYS` (default 365) — 152-ФЗ |
+| `stale-operators-cleanup` | ежедневно 04:20 | помечает операторов, покинувших служебную группу, как неактивных |
+| `threat-intel-refresh` | ежечасно, минута :17 | обновление URLhaus/ThreatFox/PhishTank host-set для предупреждений в карточках |
+| `broadcast-draft-reaper` | ежечасно, минута :37 | DRAFT-рассылки старше 30 минут помечаются FAILED |
 | `health-selfcheck` | каждые `HEALTHCHECK_INTERVAL_MIN` мин (5 по умолчанию) | мониторит heartbeat, шлёт алёрт при смене healthy↔unhealthy |
 | `db-backup` | каждое вс, `BACKUP_HOUR`:`BACKUP_MINUTE` (03:00 по умолчанию) | pg_dump → GPG → named volume, ротация |
 | `events-retention` | ежедневно 04:00 | удаление событий старше 30 дней |
 | `pdn-retention` | ежедневно 04:30 | 152-ФЗ: жителей, отозвавших согласие >30 дней назад, обезличить |
 | `appeals-5y-retention` | ежедневно 04:45 | очистка summary/attachments у обращений старше 5 лет |
 | `monthly-stats` | 1-го числа 09:00 | XLSX отчёт в служебную группу |
-| `funnel-watchdog` | каждые 15 минут | сброс зависших воронок (житель открыл «Подать обращение» и ушёл) |
-| `open-reminder-workhours` | пн–сб 09:00–17:59, минута :10 | напоминание об открытых обращениях |
-| `overdue-reminder-workhours` | пн–сб 09:00–17:59, минута :40 | алёрт о просрочке по SLA |
-| `healthcheck-ping` | каждые `HEALTHCHECK_INTERVAL_MIN` мин | ping на `HEALTHCHECK_URL` если задан |
+| `funnel-watchdog` | ежечасно, минута :15 | сброс зависших воронок (житель открыл «Подать обращение» и ушёл) |
+| `open-reminder-workhours` | пн–пт 09:00–11:59 и 13:00–17:59, минута :10 | напоминание об открытых обращениях |
+| `overdue-reminder-workhours` | пн–пт 09:00–11:59 и 13:00–17:59, минута :40 | алёрт о просрочке по SLA |
+| `healthcheck-ping` | каждые `HEALTHCHECK_INTERVAL_MIN` мин | опциональный ping на `HEALTHCHECK_URL`, если задан |
 
 Все шлются `coalesce=True, max_instances=1` — повторный тик не запустит второй экземпляр.
 
