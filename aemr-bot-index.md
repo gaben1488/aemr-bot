@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 05:17:19 UTC`
+Generated at: `2026-05-27 05:26:28 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `242`
 Max file size: `300 KB`
@@ -187,7 +187,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/_meta/AUDIT_REPORT.md` (17394 bytes)
 - `docs/_meta/CARDS_UX_SWEEP_2026-05-26.md` (21489 bytes)
 - `docs/_meta/COVERAGE_GAPS.md` (26592 bytes)
-- `docs/_meta/DOCS_ACTUALIZATION_SWEEP_2026-05-26.md` (21641 bytes)
+- `docs/_meta/DOCS_ACTUALIZATION_SWEEP_2026-05-26.md` (22300 bytes)
 - `docs/_meta/FILE_INVENTORY.md` (33577 bytes)
 - `docs/_meta/MAXAPI_DEEP_DIVE_2026-05-26.md` (14167 bytes)
 - `docs/_meta/MAXAPI_INSIGHTS.md` (22979 bytes)
@@ -201,8 +201,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/_meta/SEC_MAX_THREATS_2026-05-26.md` (18924 bytes)
 - `docs/_meta/SEC_SCAM_VECTORS_2026-05-26.md` (19107 bytes)
 - `docs/_meta/SEC_SELF_REVIEW_2026-05-26.md` (14170 bytes)
-- `docs/_meta/SECURITY_REVIEW_2026-05-26.md` (14071 bytes)
-- `docs/_meta/SECURITY_REVIEW_2026-05-27.md` (13654 bytes)
+- `docs/_meta/SECURITY_REVIEW_2026-05-26.md` (14457 bytes)
+- `docs/_meta/SECURITY_REVIEW_2026-05-27.md` (16830 bytes)
 - `docs/_meta/UI_BRAND_CONCEPT_2026-05-26.md` (34110 bytes)
 - `docs/_meta/URL_THREAT_INTEL_2026-05-26.md` (16739 bytes)
 - `docs/archive/CHAT_AUDIT.md` (20468 bytes)
@@ -50380,10 +50380,23 @@ total coverage **61.1% → ~82-83%** (line ~88%, branch ~80%).
 
 ### `docs/_meta/DOCS_ACTUALIZATION_SWEEP_2026-05-26.md`
 
-Size: `21641` bytes  
-SHA-256: `5aa48f3705f0853cb5fd67455a248e5ca9657516637b2b35db661adcc53d5d56`
+Size: `22300` bytes  
+SHA-256: `817cc73ebe52cb57a235cc402bcf627d03688c107662165c826cdefc8060d0af`
 
 ```markdown
+---
+status: applied
+applied_in_pr: 115
+applied_at: 2026-05-27
+superseded_by: docs/HOW_IT_WORKS.md, docs/RUNBOOK.md, docs/SYSADMIN.md, docs/PRD.md, docs/COMPLIANCE_WITH_REGLAMENT_v7.md
+note: |
+  Sweep-план применён в PR #115 (docs(C1): truth pass — pulse cron,
+  cron jobs, OPERATOR_SECURITY numbering). Этот файл оставлен как
+  research-snapshot — конкретные действия зафиксированы в commit-
+  history. Stale ссылки на `pulse-workhours/offhours/sunday` здесь
+  оставлены как **исторический контекст**, не как актуальный TODO.
+---
+
 # Docs actualization sweep — 2026-05-26
 
 Полный пасс по `README.md` корня + `docs/**`. Сверено с HEAD `main` (cron.py jobs, SECURITY §10a/§10b, OPERATOR_SECURITY новые подразделы, threat_intel.py, defang в карточках).
@@ -53766,10 +53779,20 @@ GitHub renders the comment as hidden text. Worse: RTL-override `‮` reverses th
 
 ### `docs/_meta/SECURITY_REVIEW_2026-05-26.md`
 
-Size: `14071` bytes  
-SHA-256: `8480717e31204335c7d89838dddb83ccd71df79fb8f9a456c4ea9073749c1918`
+Size: `14457` bytes  
+SHA-256: `d653e8217ba8839c6946fd8669b948b2fd017ebb3512da191f8b6d9d738034f4`
 
 ```markdown
+---
+status: superseded
+superseded_by: docs/_meta/SECURITY_REVIEW_2026-05-27.md
+note: |
+  Этот snapshot — security-review на 2026-05-26. Все 🔴/🟡-finding'и
+  закрыты (SEC #1-#9, SACRED #1-#5, M1-M10). Свежий delta-аудит +
+  closure status — в `SECURITY_REVIEW_2026-05-27.md` (D1/D2 закрыты
+  PR #103, D3/D4 — accepted technical debt).
+---
+
 # Security Review 2026-05-26
 
 > Сводный итог security-пасса по aemr-bot (HEAD `a09c2a4` → main).
@@ -53920,8 +53943,8 @@ SHA-256: `8480717e31204335c7d89838dddb83ccd71df79fb8f9a456c4ea9073749c1918`
 
 ### `docs/_meta/SECURITY_REVIEW_2026-05-27.md`
 
-Size: `13654` bytes  
-SHA-256: `7aa1f78634ef26a68ddc7041af2ea3028a532c67fbf101967585079aadc826c2`
+Size: `16830` bytes  
+SHA-256: `c323f3d19bb158e46a76afaca15e161d3be2b346e9e6f434f41538d9040b82f1`
 
 ```markdown
 # Security Review Delta 2026-05-27
@@ -53971,7 +53994,13 @@ OP_HELP_FULL_LEGACY, но через UI настроек.
 
 ## Активные находки
 
-### 🟡 D1: Admin-editable `welcome_text` / `consent_text` могут переполнить MAX-API limit
+> **Status update 2026-05-27 (late):** D1 и D2 закрыты в PR #103
+> (`sec(D1+D2): SCHEMA overflow guard + 2026 AI-voice scam в SECURITY_INFO`).
+> D3 и D4 остаются принятыми (low-priority technical debt). Подробнее
+> в разделе «Закрытые в PR #103» ниже. Описания D1/D2 ниже оставлены
+> для исторической полноты.
+
+### 🟢 D1 (CLOSED in PR #103): Admin-editable `welcome_text` / `consent_text` могут переполнить MAX-API limit
 - **Где:** `bot/aemr_bot/services/settings_store.py:348,358` (SCHEMA
   `max_len=4000` для `welcome_text` и `consent_text`).
 - **Сценарий:** IT-оператор через UI настроек сохраняет 4000-символьный
@@ -53989,7 +54018,7 @@ OP_HELP_FULL_LEGACY, но через UI настроек.
   `get_text_with_fallback` / `get_consent_request_text` проверять
   итоговую длину после format и логировать WARNING + возвращать fallback.
 
-### 🟡 D2: 2026-актуальные скам-векторы (AI voice clone, fake-bot canonical) явно не покрыты в welcome
+### 🟢 D2 (CLOSED in PR #103): 2026-актуальные скам-векторы (AI voice clone, fake-bot canonical) явно не покрыты в welcome
 - **Где:** `bot/aemr_bot/texts.py:1-8` (WELCOME), `seed/welcome.md:1-9`,
   `bot/aemr_bot/texts.py:183-228` (SECURITY_INFO_TEXT).
 - **Сценарий:** `SECURITY_INFO_TEXT` строка 200 предупреждает «бот не
@@ -54116,6 +54145,52 @@ OP_HELP_FULL_LEGACY, но через UI настроек.
 либо копи. Главное действие — D1 в `settings_store.SCHEMA`, если/когда
 admin начнёт активно редактировать `welcome_text`/`consent_text` под
 4000 char.
+
+---
+
+## Закрытые в PR #103 (Update 2026-05-27 late)
+
+PR #103 (`sec(D1+D2): SCHEMA overflow guard + 2026 AI-voice scam в
+SECURITY_INFO`, merged 2026-05-27T01:12:11Z) закрыл оба активных 🟡
+findings:
+
+**D1 → CLOSED:**
+- `settings_store.SCHEMA["welcome_text"]["max_len"]` опущен с 4000 до
+  **3800** (`bot/aemr_bot/services/settings_store.py:357`).
+- `settings_store.SCHEMA["consent_text"]["max_len"]` опущен с 4000 до
+  **3800** (`bot/aemr_bot/services/settings_store.py:368`).
+- 200 char запаса покрывают будущие ack-маркеры/event_header, плюс
+  ~100 char под placeholder-подстановку (`{policy_url}` до 200 char
+  заменяет 12-char шаблон → +188 char/render).
+- 2 regression-теста в
+  `bot/tests/test_settings_store_validation.py::test_welcome_text_max_len_below_max_api_limit`
+  и `test_consent_text_max_len_below_max_api_limit` валят CI на
+  попытке откатить ≤ 3800.
+
+**D2 → CLOSED:**
+- `bot/aemr_bot/texts.py::SECURITY_INFO_TEXT` (lines 200-206) расширен:
+  - Строка «бот не звонит вам голосом» дополнена объяснением
+    AI-клонирования голоса по 10-секундной записи + совет «положите
+    трубку и перезвоните адресату сами».
+  - Новый пункт списка: «не существует в виде «второго» или
+    «дублирующего» бота. Открывайте только по ссылке с elizovomr.ru».
+- Финальная длина `SECURITY_INFO_TEXT` после правок: 2133 char (запас
+  до `MAX_LEN=3900` — 1767 char). Длина-guard PR #101 удовлетворён.
+
+**Что осталось активным:**
+- 🟢 D3 (memory grow tracker): accept как technical debt. При росте
+  >50K жителей — пересмотреть.
+- 🟢 D4 (idempotency 30-day replay): accept в SECURITY.md §10b как
+  known limitation. Атака требует compromised оператора + multi-month
+  storage cb_id.
+
+---
+
+> **Архивный статус:** этот документ — снимок security-review на момент
+> 2026-05-27 (начало дня). Описания D1/D2 в разделе «Активные находки»
+> сохранены **как историческое описание проблем до их закрытия**, не
+> как актуальные TODO. Для текущего security-статуса — см. этот раздел
+> «Закрытые в PR #103» + `docs/SECURITY.md` (canonical).
 ```
 
 ### `docs/_meta/UI_BRAND_CONCEPT_2026-05-26.md`
