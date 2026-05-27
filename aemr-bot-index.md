@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 05:47:26 UTC`
+Generated at: `2026-05-27 05:53:22 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `242`
+Indexed files: `244`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -74,6 +74,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (19371 bytes)
 - `bot/aemr_bot/services/cron.py` (51363 bytes)
+- `bot/aemr_bot/services/cron_registry.py` (6568 bytes)
 - `bot/aemr_bot/services/db_backup.py` (16664 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
 - `bot/aemr_bot/services/idempotency.py` (8575 bytes)
@@ -134,6 +135,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_callback_router.py` (9462 bytes)
 - `bot/tests/test_callback_router_coverage.py` (5487 bytes)
 - `bot/tests/test_card_format.py` (11020 bytes)
+- `bot/tests/test_cron_docs_sync.py` (4099 bytes)
 - `bot/tests/test_cron_jobs.py` (22687 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (15690 bytes)
@@ -19867,6 +19869,146 @@ async def _ping_healthcheck() -> None:
         log.warning("healthcheck ping failed", exc_info=True)
 ```
 
+### `bot/aemr_bot/services/cron_registry.py`
+
+Size: `6568` bytes  
+SHA-256: `fb8f1ad5ff5a6e94b73065cc61d501a22efd30485d2b913112538246bd6b4cb4`
+
+```python
+"""Декларативный реестр cron-задач для anti-drift тестирования docs.
+
+`JOB_REGISTRY` — единственный source-of-truth (читаемый машиной) для
+имён, расписаний и назначения всех cron-задач, регистрируемых
+`build_scheduler` в `cron.py`. Тест `tests/test_cron_docs_sync.py`
+проверяет, что каждый `id` из реестра упомянут в каноничных docs
+(`HOW_IT_WORKS.md`, `RUNBOOK.md`, `SYSADMIN.md`, `COMPLIANCE_WITH_REGLAMENT_v7.md`)
+— любое добавление новой задачи без записи в docs валит CI с явным
+сообщением «cron `X` отсутствует в `Y.md`».
+
+**Workflow добавления нового cron:**
+
+1. Добавить новую запись в `JOB_REGISTRY` (id, schedule_human, purpose).
+2. `build_scheduler` в `cron.py` — `scheduler.add_job(...)`.
+3. CI-тест `test_cron_docs_sync` упадёт → добавить строку в таблицу
+   cron-задач в docs (HOW_IT_WORKS.md/RUNBOOK.md/SYSADMIN.md/COMPLIANCE_v7).
+4. CI зелёный → можно мерджить.
+
+См. план MLP, Codex PR 8 «Cron registry + docs generation hook».
+"""
+from __future__ import annotations
+
+
+# Запись реестра. `id` — точное имя job_id из `scheduler.add_job(id=...)`.
+# `schedule_human` — человекочитаемое описание (не cron-expression).
+# `purpose` — короткое назначение для docs.
+JOB_REGISTRY: list[dict[str, str]] = [
+    # ── Pulse (heartbeat в админ-чат, проверка «бот жив») ────────────
+    {
+        "id": "pulse-hourly",
+        "schedule_human": "каждый час 24/7 в :05",
+        "purpose": "базовый heartbeat «бот работает»",
+    },
+    {
+        "id": "pulse-workhours-extra",
+        "schedule_human": "пн–пт 09:00–17:59 в :35",
+        "purpose": "дополнительный пинг в рабочее время",
+    },
+    {
+        "id": "startup-pulse",
+        "schedule_human": "+5 секунд после старта (DateTrigger, одноразово)",
+        "purpose": "подтверждение, что процесс поднялся",
+    },
+    # ── Health / monitoring ──────────────────────────────────────────
+    {
+        "id": "health-selfcheck",
+        "schedule_human": "каждые HEALTHCHECK_INTERVAL_MIN мин (5 по умолчанию)",
+        "purpose": "мониторит heartbeat, шлёт алёрт при healthy↔unhealthy",
+    },
+    {
+        "id": "healthcheck-ping",
+        "schedule_human": "каждые 5 мин",
+        "purpose": "внешний ping, только если задан HEALTHCHECK_URL",
+    },
+    # ── Operational reminders ────────────────────────────────────────
+    {
+        "id": "funnel-watchdog",
+        "schedule_human": "ежечасно в :15",
+        "purpose": "сброс зависших анкет воронки приёма обращения",
+    },
+    {
+        "id": "open-reminder-workhours",
+        "schedule_human": "пн–сб 09:00–17:59 в :10",
+        "purpose": "напоминание оператору об открытых обращениях",
+    },
+    {
+        "id": "overdue-reminder-workhours",
+        "schedule_human": "пн–сб 09:00–17:59 в :40",
+        "purpose": "напоминание о просроченных по SLA",
+    },
+    {
+        "id": "monthly-stats",
+        "schedule_human": "1 числа в 09:00",
+        "purpose": "автоматический отчёт за прошлый месяц",
+    },
+    # ── Retention / 152-ФЗ ──────────────────────────────────────────
+    {
+        "id": "events-retention",
+        "schedule_human": "ежедневно 04:00",
+        "purpose": "удаление событий старше 30 дней (idempotency cleanup)",
+    },
+    {
+        "id": "pdn-retention",
+        "schedule_human": "ежедневно 04:30",
+        "purpose": "обезличивание жителей через 30 дней после revoke (152-ФЗ)",
+    },
+    {
+        "id": "appeals-5y-retention",
+        "schedule_human": "ежедневно 04:45",
+        "purpose": "обезличивание содержимого обращений старше 5 лет",
+    },
+    {
+        "id": "audit-log-retention",
+        "schedule_human": "ежедневно 04:15",
+        "purpose": "удаление audit_log старше AUDIT_LOG_RETENTION_DAYS (default 365), 152-ФЗ",
+    },
+    # ── Operational housekeeping ─────────────────────────────────────
+    {
+        "id": "stale-operators-cleanup",
+        "schedule_human": "ежедневно 04:20",
+        "purpose": "пометить покинувших служебную группу операторов как неактивных",
+    },
+    {
+        "id": "threat-intel-refresh",
+        "schedule_human": "каждые 12 часов в :15",
+        "purpose": "обновление локального кэша URL-хостов (abuse.ch + Kaspersky OpenTIP)",
+    },
+    {
+        "id": "broadcast-draft-reaper",
+        "schedule_human": "ежедневно 03:30",
+        "purpose": "DRAFT-рассылки старше 24 ч → FAILED",
+    },
+    # ── Backup ──────────────────────────────────────────────────────
+    {
+        "id": "db-backup",
+        "schedule_human": "каждое вс в BACKUP_HOUR:BACKUP_MINUTE (03:00 по умолчанию)",
+        "purpose": "pg_dump → GPG → named volume, ротация",
+    },
+]
+
+
+def all_ids() -> set[str]:
+    """Множество всех зарегистрированных job_id."""
+    return {entry["id"] for entry in JOB_REGISTRY}
+
+
+def lookup(job_id: str) -> dict[str, str] | None:
+    """Найти запись по id, либо None."""
+    for entry in JOB_REGISTRY:
+        if entry["id"] == job_id:
+            return entry
+    return None
+```
+
 ### `bot/aemr_bot/services/db_backup.py`
 
 Size: `16664` bytes  
@@ -35943,6 +36085,104 @@ class TestAdminCardCitizenStateMarkers:
 
         result = admin_card(appeal, user)
         assert "🔕" in result, f"маркер «не подписан» не найден:\n{result}"
+```
+
+### `bot/tests/test_cron_docs_sync.py`
+
+Size: `4099` bytes  
+SHA-256: `7a9b7304cb44d37a46a8f9dfd275077135b5a0aa33b3973df1b71286b76cbaa5`
+
+```python
+"""Anti-drift тест: каждый cron-job из `cron_registry.JOB_REGISTRY`
+должен быть упомянут в каноничных docs.
+
+Решение проблемы, выявленной в Codex PR 1 — `pulse-workhours/offhours/
+sunday` оставались в 6 docs-файлах через 1+ день после рефакторинга
+cron'а. Этот тест валит CI на любом будущем рассинхроне: добавил cron
+в код, не дописал в docs → не пройдёт.
+
+Workflow:
+1. Добавить запись в `services/cron_registry.JOB_REGISTRY`.
+2. Зарегистрировать в `services/cron.py::build_scheduler`.
+3. Этот тест укажет, в каких docs отсутствует `id`.
+4. Дописать в docs → CI зелёный.
+
+Покрываемые docs (минимум — где есть таблицы cron):
+- `docs/HOW_IT_WORKS.md` — раздел «Регулярные задачи»
+- `docs/RUNBOOK.md` — таблица расписания
+- `docs/SYSADMIN.md` — таблица расписания
+"""
+from __future__ import annotations
+
+import pathlib
+
+import pytest
+
+from aemr_bot.services.cron_registry import JOB_REGISTRY, all_ids
+
+
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
+DOCS = REPO_ROOT / "docs"
+
+# Каноничные документы, в которых КАЖДЫЙ id из реестра должен встречаться.
+# Если cron upper-tier (например, специфический backup), и его смысла
+# нет в operator-facing docs — можно убрать оттуда явно.
+CANONICAL_DOCS: tuple[pathlib.Path, ...] = (
+    DOCS / "HOW_IT_WORKS.md",
+    DOCS / "RUNBOOK.md",
+    DOCS / "SYSADMIN.md",
+)
+
+
+def _read_doc_text(path: pathlib.Path) -> str:
+    return path.read_text(encoding="utf-8")
+
+
+def test_all_canonical_docs_exist() -> None:
+    """Sanity-check: все docs-файлы существуют."""
+    for path in CANONICAL_DOCS:
+        assert path.is_file(), f"Канонический doc отсутствует: {path}"
+
+
+def test_every_cron_id_appears_in_every_canonical_doc() -> None:
+    """Каждый job_id из JOB_REGISTRY упомянут в каждом docs-файле."""
+    missing: list[str] = []
+    for doc_path in CANONICAL_DOCS:
+        text = _read_doc_text(doc_path)
+        for entry in JOB_REGISTRY:
+            job_id = entry["id"]
+            if job_id not in text:
+                missing.append(f"`{job_id}` отсутствует в `{doc_path.name}`")
+    assert not missing, (
+        "Cron-jobs не задокументированы в active docs (drift):\n  - "
+        + "\n  - ".join(missing)
+        + "\n\nКак починить:\n"
+        + "1. Дополнить таблицу cron в указанном docs-файле строкой с этим job_id.\n"
+        + "2. Или, если cron внутренний и не должен фигурировать в operator-facing docs,\n"
+        + "   убрать его из CANONICAL_DOCS-списка в этом тесте с обоснованием в комменте."
+    )
+
+
+def test_registry_has_unique_ids() -> None:
+    """Защита от опечаток: id'ы в реестре уникальны."""
+    ids = [entry["id"] for entry in JOB_REGISTRY]
+    duplicates = {x for x in ids if ids.count(x) > 1}
+    assert not duplicates, f"Дублированные id в JOB_REGISTRY: {duplicates}"
+
+
+def test_registry_entries_have_required_fields() -> None:
+    """Schema: каждая запись имеет id, schedule_human, purpose."""
+    required = {"id", "schedule_human", "purpose"}
+    for entry in JOB_REGISTRY:
+        missing = required - entry.keys()
+        assert not missing, f"Запись {entry.get('id', '?')} missing fields: {missing}"
+
+
+def test_all_ids_returns_set() -> None:
+    """Helper `all_ids()` возвращает set всех id'ов."""
+    result = all_ids()
+    assert isinstance(result, set)
+    assert len(result) == len(JOB_REGISTRY)
 ```
 
 ### `bot/tests/test_cron_jobs.py`
