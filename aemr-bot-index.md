@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 01:56:22 UTC`
+Generated at: `2026-05-27 02:08:01 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `239`
 Max file size: `300 KB`
@@ -50,7 +50,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_panel.py` (23101 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (43448 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (4466 bytes)
-- `bot/aemr_bot/handlers/appeal.py` (27203 bytes)
+- `bot/aemr_bot/handlers/appeal.py` (28901 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (33699 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (13147 bytes)
@@ -88,7 +88,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (12943 bytes)
-- `bot/aemr_bot/texts.py` (56879 bytes)
+- `bot/aemr_bot/texts.py` (57987 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -116,7 +116,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_settings_audit.py` (1917 bytes)
 - `bot/tests/test_appeal_card_edit_policy.py` (5805 bytes)
 - `bot/tests/test_appeal_card_timeline.py` (9393 bytes)
-- `bot/tests/test_appeal_dispatcher.py` (25415 bytes)
+- `bot/tests/test_appeal_dispatcher.py` (27838 bytes)
 - `bot/tests/test_appeal_flow.py` (10966 bytes)
 - `bot/tests/test_appeals_service_pg.py` (15229 bytes)
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
@@ -7225,8 +7225,8 @@ async def run_stats_menu(event) -> None:
 
 ### `bot/aemr_bot/handlers/appeal.py`
 
-Size: `27203` bytes  
-SHA-256: `3762a0c3733a690ccb5f29694e275cd990ca4a68830913a231fa10b329e5357b`
+Size: `28901` bytes  
+SHA-256: `1589f67481a670b3e7088e3fedfb648d8cd2e5e651ddb26d666e66382815bb40`
 
 ```python
 """Главный entry-point обработчика обращений.
@@ -7499,10 +7499,39 @@ async def _cb_consent_no(event, max_user_id: int, payload: str) -> None:
 
 
 async def _cb_cancel(event, max_user_id: int, payload: str) -> None:
+    """Тап «❌ Отмена» в воронке подачи обращения.
+
+    A2 (2026-05-27): если воронка уже завершена (житель отправил
+    обращение и `dialog_state == IDLE`), тап на старой 5/5 карточке
+    — это stale-callback. Sacred event log запрещает редактировать
+    старые карточки. Раньше handler сбрасывал state (no-op, оно уже
+    IDLE) и слал «Действие отменено» — путаница, обращение уже
+    принято. Теперь: stale-detection → отдаём понятное уведомление,
+    не пересоздаём «Отменено».
+    """
     async with session_scope() as session:
-        await users_service.reset_state(session, max_user_id)
+        user = await users_service.find_by_max_id(session, max_user_id)
+        # Snap state до сброса — нужен для stale-detection.
+        is_stale = (
+            user is None
+            or user.dialog_state == DialogState.IDLE.value
+        )
+        if not is_stale:
+            await users_service.reset_state(session, max_user_id)
     drop_user_lock(max_user_id)
     await ack_callback(event)
+    if is_stale:
+        # Stale-cancel: житель тапнул кнопку на старой карточке шага
+        # воронки, после того как обращение уже было отправлено или
+        # отменено ранее. Новое сообщение даёт явный feedback вместо
+        # ввода в заблуждение «Действие отменено».
+        await _send_to_citizen(
+            event,
+            max_user_id,
+            text=texts.CANCEL_ALREADY_DONE,
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+        return
     await _send_to_citizen(
         event,
         max_user_id,
@@ -24140,8 +24169,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `56879` bytes  
-SHA-256: `2e9bca88989e37b05340fed0b22ffa69ced9ead92ef34fbce814adde59967d8a`
+Size: `57987` bytes  
+SHA-256: `faad463c0b7929b88013f97312d6e0f18249124a0b18fe37e9f1fcfad19b4a00`
 
 ```python
 WELCOME = (
@@ -24476,6 +24505,19 @@ ERASE_REQUESTED = (
 )
 
 CANCELLED = "Действие отменено. Можно вернуться в главное меню."
+
+# A2 (2026-05-27): stale тап «❌ Отмена» на старой 5/5 карточке после
+# того, как обращение уже было отправлено или отменено ранее. Sacred
+# event log запрещает редактировать старую карточку (она физически
+# выше сообщений жителя в чате), поэтому отправляется новое
+# сообщение с явным feedback — без введения в заблуждение «Действие
+# отменено» (отменять уже нечего, воронка завершена).
+CANCEL_ALREADY_DONE = (
+    "Эта кнопка уже неактуальна — воронка подачи обращения завершена. "
+    "Если нужно дополнить отправленное обращение — откройте «📂 Мои "
+    "обращения». Если нужно подать новое — нажмите «📝 Написать "
+    "обращение» в главном меню."
+)
 
 UNKNOWN_INPUT = (
     "Не понял сообщение. Откройте меню кнопками под сообщениями. "
@@ -30552,8 +30594,8 @@ class TestCardIntegration:
 
 ### `bot/tests/test_appeal_dispatcher.py`
 
-Size: `25415` bytes  
-SHA-256: `1b53505aa7c95fb9d89ec923c16c6fcc0e5858466edbcff7569d643a25061208`
+Size: `27838` bytes  
+SHA-256: `31d1540dcb85f2f42ca1a57d3514d89c07cfb210ad77cbc7af032a3177ee517d`
 
 ```python
 """Тесты на handlers/appeal.register() — главный callback/message dispatcher.
@@ -30770,8 +30812,15 @@ class TestCallbackCancel:
         on_callback, _ = captured_handlers
         event = _make_callback_event(payload="cancel")
         reset = AsyncMock()
+        # A2 (2026-05-27): handler сначала читает текущий state, чтобы
+        # отличать live-отмену от stale тапа на старой 5/5 после
+        # finalize. Mockуем active-state, чтобы handler пошёл по
+        # обычной reset-ветке.
+        active_user = SimpleNamespace(dialog_state="awaiting_summary")
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal.users_service.find_by_max_id",
+                   AsyncMock(return_value=active_user)), \
              patch("aemr_bot.handlers.appeal.users_service.reset_state", reset), \
              patch("aemr_bot.handlers.appeal.drop_user_lock"), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
@@ -30779,6 +30828,36 @@ class TestCallbackCancel:
         reset.assert_called_once()
         event.bot.send_message.assert_called_once()
         assert event.bot.send_message.call_args.kwargs["attachments"]
+        # Текст «Действие отменено», не stale-уведомление.
+        assert "Действие отменено" in event.bot.send_message.call_args.kwargs["text"]
+
+    @pytest.mark.asyncio
+    async def test_cancel_stale_after_finalize_no_reset(
+        self, captured_handlers
+    ) -> None:
+        """A2 (2026-05-27): тап на старой 5/5 после finalize_appeal —
+        state уже IDLE. Не вызываем reset_state (state и так чистый),
+        не вводим в заблуждение «Действие отменено». Отдаём явный
+        stale-feedback `CANCEL_ALREADY_DONE`."""
+        on_callback, _ = captured_handlers
+        event = _make_callback_event(payload="cancel")
+        reset = AsyncMock()
+        idle_user = SimpleNamespace(dialog_state="idle")
+        with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
+             patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal.users_service.find_by_max_id",
+                   AsyncMock(return_value=idle_user)), \
+             patch("aemr_bot.handlers.appeal.users_service.reset_state", reset), \
+             patch("aemr_bot.handlers.appeal.drop_user_lock"), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await on_callback(event)
+        # Stale-detection — reset_state не должен вызываться.
+        reset.assert_not_called()
+        event.bot.send_message.assert_called_once()
+        sent_text = event.bot.send_message.call_args.kwargs["text"]
+        # Явный stale-feedback вместо «Действие отменено».
+        assert "уже неактуальна" in sent_text or "уже отправлено" in sent_text
+        assert "Действие отменено" not in sent_text
 
 
 class TestCallbackAddrReuse:
