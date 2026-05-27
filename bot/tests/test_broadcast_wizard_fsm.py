@@ -90,7 +90,7 @@ class TestDropExpiredWizards:
 
     @pytest.fixture(autouse=True)
     def _clean(self):
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         mod._wizards.clear()
         yield
         mod._wizards.clear()
@@ -101,7 +101,7 @@ class TestDropExpiredWizards:
         _drop_expired_wizards()  # не падает на пустом dict
 
     def test_expired_removed(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import (
             _drop_expired_wizards,
             _WizardState,
@@ -114,7 +114,7 @@ class TestDropExpiredWizards:
         assert 42 not in mod._wizards
 
     def test_fresh_kept(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import (
             _drop_expired_wizards,
             _WizardState,
@@ -125,7 +125,7 @@ class TestDropExpiredWizards:
         assert 42 in mod._wizards
 
     def test_mixed_only_expired_removed(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import (
             _drop_expired_wizards,
             _WizardState,
@@ -152,14 +152,14 @@ class TestStartWizard:
 
     @pytest.fixture(autouse=True)
     def _clean(self):
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         mod._wizards.clear()
         yield
         mod._wizards.clear()
 
     @pytest.mark.asyncio
     async def test_non_role_no_op(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         with patch.object(mod, "_ensure_role",
@@ -169,7 +169,7 @@ class TestStartWizard:
 
     @pytest.mark.asyncio
     async def test_no_user_id_no_op(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         with patch.object(mod, "_ensure_role",
@@ -180,7 +180,7 @@ class TestStartWizard:
 
     @pytest.mark.asyncio
     async def test_role_passes_state_awaiting_text(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         with patch.object(mod, "_ensure_role",
@@ -201,7 +201,7 @@ class TestStartWizard:
         reply_intent — они должны сброситься, иначе текст рассылки
         случайно уйдёт жителю как ответ."""
         from aemr_bot.handlers import admin_commands
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers import operator_reply
 
         admin_commands._op_wizards[42] = {"step": "awaiting_id"}
@@ -230,14 +230,14 @@ class TestHandleWizardText:
 
     @pytest.fixture(autouse=True)
     def _clean(self):
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         mod._wizards.clear()
         yield
         mod._wizards.clear()
 
     @pytest.mark.asyncio
     async def test_no_actor_id_returns_false(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event()
         with patch.object(mod, "get_user_id", return_value=None):
@@ -246,7 +246,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_no_wizard_returns_false(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         result = await mod._handle_wizard_text(event, "text")
@@ -256,7 +256,7 @@ class TestHandleWizardText:
     async def test_wrong_step_returns_false(self) -> None:
         """Если wizard в awaiting_confirm — текст НЕ перехватываем
         (это срабатывает только в awaiting_text)."""
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -266,7 +266,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_expired_wiped_and_message(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -280,7 +280,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_cancel_command_drops_wizard(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -291,7 +291,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_too_long_text_rejected_state_intact(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
         from aemr_bot.config import settings as cfg
 
@@ -307,7 +307,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_non_whitelisted_url_rejected(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -328,7 +328,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_no_subscribers_closes_wizard(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -351,7 +351,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_happy_path_advances_to_awaiting_confirm(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -392,14 +392,14 @@ class TestHandleConfirmBase:
 
     @pytest.fixture(autouse=True)
     def _clean(self):
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         mod._wizards.clear()
         yield
         mod._wizards.clear()
 
     @pytest.mark.asyncio
     async def test_no_actor_id_no_op(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         with patch.object(mod, "get_user_id", return_value=None):
@@ -408,7 +408,7 @@ class TestHandleConfirmBase:
 
     @pytest.mark.asyncio
     async def test_no_wizard_acks_closed(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         with patch.object(mod, "ack_callback", AsyncMock()) as ack:
@@ -420,7 +420,7 @@ class TestHandleConfirmBase:
 
     @pytest.mark.asyncio
     async def test_wrong_step_acks_closed(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -434,7 +434,7 @@ class TestHandleConfirmBase:
 
     @pytest.mark.asyncio
     async def test_expired_state_acks_closed(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -450,14 +450,14 @@ class TestHandleConfirmBase:
 class TestHandleAbort:
     @pytest.fixture(autouse=True)
     def _clean(self):
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         mod._wizards.clear()
         yield
         mod._wizards.clear()
 
     @pytest.mark.asyncio
     async def test_pops_wizard_and_acks(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -471,7 +471,7 @@ class TestHandleAbort:
 
     @pytest.mark.asyncio
     async def test_no_actor_id_still_acks(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         with patch.object(mod, "get_user_id", return_value=None), \
@@ -488,14 +488,14 @@ class TestHandleEdit:
 
     @pytest.fixture(autouse=True)
     def _clean(self):
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         mod._wizards.clear()
         yield
         mod._wizards.clear()
 
     @pytest.mark.asyncio
     async def test_no_wizard_acks_closed(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         with patch.object(mod, "ack_callback", AsyncMock()) as ack:
@@ -504,7 +504,7 @@ class TestHandleEdit:
 
     @pytest.mark.asyncio
     async def test_resets_to_awaiting_text_clears_attachments(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -533,13 +533,13 @@ class TestPrefillWizardFromTemplate:
 
     @pytest.fixture(autouse=True)
     def _clean(self):
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         mod._wizards.clear()
         yield
         mod._wizards.clear()
 
     def test_creates_state_in_awaiting_confirm(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import prefill_wizard_from_template
 
         prefill_wizard_from_template(
@@ -554,7 +554,7 @@ class TestPrefillWizardFromTemplate:
     def test_overwrites_previous_state(self) -> None:
         """Если у оператора был активный wizard в awaiting_text —
         template-prefill полностью заменяет state, не сохраняет ввод."""
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import (
             _WizardState,
             prefill_wizard_from_template,
@@ -572,7 +572,7 @@ class TestPrefillWizardFromTemplate:
     def test_attachments_list_copy_not_reference(self) -> None:
         """Изменение исходной list attachments не должно мутировать
         state (`list(attachments)` создаёт копию)."""
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import prefill_wizard_from_template
 
         src = [{"image": "a"}]

@@ -167,9 +167,9 @@ class TestWizardCapturesImage:
         bc._wizards.clear()
         bc._wizards[7] = bc._WizardState(step="awaiting_text")
 
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)):
             handled = await bc._handle_wizard_text(event, "текст рассылки")
 
@@ -188,7 +188,7 @@ class TestWizardCapturesImage:
         Это путь IT-оператора, изменившего лимит через UI «Настройки бота»."""
         from aemr_bot.handlers import broadcast as bc
 
-        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+        with patch("aemr_bot.handlers.broadcast_wizard.settings_store.get",
                    AsyncMock(return_value=8)):
             result = await bc._resolve_broadcast_max_images(MagicMock())
         assert result == 8
@@ -200,7 +200,7 @@ class TestWizardCapturesImage:
         не блокирует работу с гражданами."""
         from aemr_bot.handlers import broadcast as bc
 
-        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+        with patch("aemr_bot.handlers.broadcast_wizard.settings_store.get",
                    AsyncMock(side_effect=RuntimeError("settings table missing"))):
             result = await bc._resolve_broadcast_max_images(MagicMock())
         # DEFAULTS.broadcast_max_images = 5
@@ -214,15 +214,15 @@ class TestWizardCapturesImage:
         from aemr_bot.handlers import broadcast as bc
 
         # bool — подкласс int в Python; явно отсекаем
-        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+        with patch("aemr_bot.handlers.broadcast_wizard.settings_store.get",
                    AsyncMock(return_value=True)):
             assert await bc._resolve_broadcast_max_images(MagicMock()) == 5
         # 0 / отрицательное — невалидно
-        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+        with patch("aemr_bot.handlers.broadcast_wizard.settings_store.get",
                    AsyncMock(return_value=0)):
             assert await bc._resolve_broadcast_max_images(MagicMock()) == 5
         # строка — невалидно
-        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+        with patch("aemr_bot.handlers.broadcast_wizard.settings_store.get",
                    AsyncMock(return_value="5")):
             assert await bc._resolve_broadcast_max_images(MagicMock()) == 5
 
@@ -236,9 +236,9 @@ class TestWizardCapturesImage:
         bc._wizards.clear()
         bc._wizards[7] = bc._WizardState(step="awaiting_text")
 
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)):
             handled = await bc._handle_wizard_text(event, "только текст")
 
@@ -268,11 +268,11 @@ class TestWizardCapturesMultipleImages:
         bc._wizards.clear()
         bc._wizards[7] = bc._WizardState(step="awaiting_text")
 
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+             patch("aemr_bot.handlers.broadcast_wizard._resolve_broadcast_max_images",
                    AsyncMock(return_value=5)):
             handled = await bc._handle_wizard_text(event, "три картинки")
 
@@ -300,11 +300,11 @@ class TestWizardCapturesMultipleImages:
         bc._wizards.clear()
         bc._wizards[7] = bc._WizardState(step="awaiting_text")
 
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+             patch("aemr_bot.handlers.broadcast_wizard._resolve_broadcast_max_images",
                    AsyncMock(return_value=2)):
             await bc._handle_wizard_text(event, "слишком много")
 
@@ -340,11 +340,11 @@ class TestPreviewCardIncludesImages:
             type="image", payload={"url": "preview.jpg"}
         )
 
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+             patch("aemr_bot.handlers.broadcast_wizard._resolve_broadcast_max_images",
                    AsyncMock(return_value=5)), \
              patch("aemr_bot.utils.image_attachments.deserialize_for_relay",
                    return_value=[fake_preview_image]):
@@ -380,11 +380,11 @@ class TestPreviewCardIncludesImages:
         bc._wizards.clear()
         bc._wizards[7] = bc._WizardState(step="awaiting_text")
 
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+             patch("aemr_bot.handlers.broadcast_wizard._resolve_broadcast_max_images",
                    AsyncMock(return_value=5)):
             await bc._handle_wizard_text(event, "text only")
 
@@ -433,20 +433,20 @@ class TestConfirmPassesAttachmentsToCreate:
             coro.close()
 
         create_mock = AsyncMock(return_value=broadcast_obj)
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast._get_operator",
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=op)), \
-             patch("aemr_bot.handlers.broadcast.session_scope",
+             patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.create_broadcast",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.create_broadcast",
                    create_mock), \
-             patch("aemr_bot.handlers.broadcast.operators_service.write_audit",
+             patch("aemr_bot.handlers.broadcast_wizard.operators_service.write_audit",
                    AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast.send_or_edit_screen",
+             patch("aemr_bot.handlers.broadcast_wizard.send_or_edit_screen",
                    AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast.spawn_background_task",
+             patch("aemr_bot.handlers.broadcast_wizard.spawn_background_task",
                    MagicMock(side_effect=_consume)):
             await bc._handle_confirm(event)
 

@@ -105,9 +105,16 @@ _pending_broadcasts: dict[int, "asyncio.Task"] = {}
 # Локальные псевдонимы общих хелперов авторизации. Используются
 # `_handle_stop` (оператор завершает идущую рассылку) и cmd_broadcast
 # (только админ-чат). Wizard'ы свои дублируют в `broadcast_wizard.py`.
+# `_get_operator` сохранён как compat-алиас: после Cluster C wave 2
+# wizard функции переехали в broadcast_wizard, но тесты по-прежнему
+# делают `patch("aemr_bot.handlers.broadcast._get_operator", ...)`
+# и читают `broadcast._get_operator`. Удалять алиас нельзя без
+# обновления ~10 test files — это держится здесь как noop-binding.
+from aemr_bot.handlers._auth import get_operator
 _is_admin_chat = is_admin_chat
 _ensure_role = ensure_role
 _ensure_operator = ensure_operator
+_get_operator = get_operator
 
 
 async def _run_with_cooldown(
