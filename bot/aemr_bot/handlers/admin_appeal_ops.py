@@ -15,13 +15,21 @@ import logging
 from aemr_bot import keyboards as kbds
 from aemr_bot import texts
 from aemr_bot.config import settings as cfg
-from aemr_bot.db.models import OperatorRole
+from aemr_bot.db.models import AppealStatus, OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role
+from aemr_bot.services import admin_card as admin_card_service
+from aemr_bot.services import admin_relay
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.event import get_user_id, is_admin_chat, send_or_edit_screen
+from aemr_bot.services import wizard_registry
+from aemr_bot.utils.event import (
+    ack_callback,
+    get_user_id,
+    is_admin_chat,
+    send_or_edit_screen,
+)
 
 log = logging.getLogger(__name__)
 
@@ -61,7 +69,6 @@ async def _show_appeal_card_or_result(
     На случай если обращение не найдено или user пуст — fallback
     короткое сообщение оператору, без card-render.
     """
-    from aemr_bot.services import admin_card as admin_card_service
 
     try:
         async with session_scope() as session:
@@ -116,11 +123,9 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
     - сбрасываем активные wizard'ы (broadcast, add-operator) этого
       оператора, чтобы следующий текст не утёк туда
     """
-    from aemr_bot.db.models import AppealStatus
     from aemr_bot.handlers import admin_operators
     from aemr_bot.handlers import broadcast as broadcast_handler
     from aemr_bot.handlers import operator_reply as op_reply
-    from aemr_bot.utils.event import ack_callback
 
     if not is_admin_chat(event):
         await ack_callback(event)
@@ -181,9 +186,8 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
     # сообщение оператора ушло бы не туда, куда он думает. Ловим это
     # явно: предупреждаем «отменён ответ на #X, теперь на #Y», чтобы
     # оператор сам решил, продолжить или прервать.
-    from aemr_bot.services import wizard_registry as _wr
 
-    existing = _wr.get_reply_intent(operator_id)
+    existing = wizard_registry.get_reply_intent(operator_id)
     if existing is not None:
         prev_appeal_id, _prev_is_final, _prev_ts = existing
         if prev_appeal_id != appeal_id:
@@ -246,7 +250,6 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
 async def run_reply_cancel(event) -> None:
     """Кнопка «❌ Отменить ответ» под подсказкой ввода."""
     from aemr_bot.handlers import operator_reply as op_reply
-    from aemr_bot.utils.event import ack_callback
 
     operator_id = get_user_id(event)
     if operator_id is None:
@@ -293,7 +296,6 @@ async def run_reopen(event, appeal_id: int) -> None:
 
     Audit пишем только при реальной смене статуса (reopened).
     """
-    from aemr_bot.utils.event import ack_callback
 
     if not await ensure_operator(event):
         return
@@ -321,7 +323,6 @@ async def run_close(event, appeal_id: int) -> None:
     в сопровождающий текст подсказку про «✉️ Ответить и закрыть» —
     финальный ответ корректнее закрывает воронку для жителя.
     """
-    from aemr_bot.utils.event import ack_callback
 
     if not await ensure_operator(event):
         return
@@ -361,7 +362,6 @@ async def run_block_for_appeal(
     event, appeal_id: int, *, blocked: bool
 ) -> None:
     """Кнопки «🚫 Заблокировать жителя» / «✅ Разблокировать»."""
-    from aemr_bot.utils.event import ack_callback
 
     if not await ensure_role(event, OperatorRole.IT):
         return
@@ -405,8 +405,6 @@ async def run_show_attachments(event, appeal_id: int) -> None:
     раз. Bot.send_message внутри `render_appeal_attachments` бьёт на
     батчи по `cfg.attachments_per_relay_message`.
     """
-    from aemr_bot.services.admin_relay import render_appeal_attachments
-    from aemr_bot.utils.event import ack_callback
 
     if not await ensure_operator(event):
         await ack_callback(event)
@@ -425,7 +423,7 @@ async def run_show_attachments(event, appeal_id: int) -> None:
             attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
-    await render_appeal_attachments(
+    await admin_relay.render_appeal_attachments(
         event.bot,
         chat_id=cfg.admin_group_id,
         user_id=None,
@@ -437,7 +435,6 @@ async def run_show_attachments(event, appeal_id: int) -> None:
 
 async def run_erase_for_appeal(event, appeal_id: int) -> None:
     """Кнопка «🗑 Удалить ПДн жителя» в карточке обращения (только для it)."""
-    from aemr_bot.utils.event import ack_callback
 
     if not await ensure_role(event, OperatorRole.IT):
         return
