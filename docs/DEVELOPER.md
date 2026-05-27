@@ -1126,11 +1126,35 @@ uv run pytest tests/ -v
 
 **Не используйте системный `pip install` / `pytest`** — это создаст другие версии пакетов мимо `uv.lock`, локальные тесты пройдут, а в Docker валится `TypeError`/`ImportError`. Подробнее: [DEPS.md](DEPS.md).
 
-Сейчас в `tests/` лежат тесты на сервисный слой. Они **не работают на in-memory SQLite** из-за PostgreSQL-specific JSONB. Если нужно гонять, поднимайте локальный Postgres и подменяйте `DATABASE_URL`. Альтернатива — подключить `testcontainers`. Это известное направление развития, см. часть XI.
+#### Локально vs CI — две разные конфигурации
+
+Тестовая база `bot/tests/` рассчитана на два режима: лёгкий локальный (без Postgres, проверка чистой логики) и полный CI (с реальной БД, миграциями, coverage gate). Не пытайтесь запустить «CI-режим» локально без Postgres — упрётесь в `RuntimeError: Event loop is closed` или `pytest --cov-fail-under=64` ниже порога.
+
+| Сценарий | Команда | Что покрывается | Что не покрывается |
+|---|---|---|---|
+| **Локально, быстро** (pure-юниты) | `uv run pytest tests/ -q` | ≈1127 passed, ≈106 skipped: маркер `@pytest.fixture(session)` для тестов с реальной БД даёт skip; остальное прогоняется на mock'ах. | Coverage по веткам, integration-тесты на Postgres-specific (JSONB upserts, `pg_advisory_xact_lock`, миграции). Coverage по умолчанию ≈ **61.3%** — ниже CI-gate **64**, потому что не работают тесты на сервисном слое БД. |
+| **Локально, как CI** (нужен Postgres) | `docker compose up -d db` + `DATABASE_URL=postgresql+asyncpg://aemr:abrakadabra@localhost:5432/aemr uv run pytest tests/ -q` | Полный набор тестов, включая БД-фикстуру `session` (см. `tests/conftest.py`). Должно быть ≈1127 passed, ≈30–50 skipped (только тесты с `pytest.importorskip("maxapi")` если локально нет maxapi). | — |
+| **CI (`Pytest with Postgres 16`)** | `uv run pytest tests/ -q --cov=aemr_bot --cov-branch --cov-fail-under=64 --cov-report=xml:coverage.xml` | Тот же набор + coverage gate 64% (см. `bot/pyproject.toml`). + `alembic upgrade head && alembic check` отдельным шагом. | Smoke на VPS (docker build → run → /livez ping) — отдельный CI job `Docker build smoke test`. |
+
+**Триггеры известных flake'ов:**
+
+- `tests/test_handlers_menu.py::TestOpenMainMenu::test_normal_user_gets_main_menu` (и подобные) могут падать `RuntimeError: Event loop is closed` на CI Pytest-runner'е если предыдущий тест в той же сессии закрыл async event loop. Mitigation: явный `patch("aemr_bot.handlers.menu.settings_store.get_text_with_fallback", AsyncMock(...))` в самом тесте, чтобы не открывать новое соединение к Postgres pool. Применено в PR #117.
+- `pytest --cov-fail-under=64` локально без Postgres падает на 61.3% — это **не баг**, это ожидаемая разница между local-pure и CI-with-DB режимами.
+
+#### Сейчас (2026-05-27, post-PR #110-#121)
+
+- `bot/tests/` содержит ≈79 тест-файлов.
+- На CI: ≈1127 passed, ≈106 skipped.
+- На local pure (без Postgres): тот же набор collect'ится, но `session`-fixture делает skip → ≈455 passed, ≈158 skipped (зависит от наличия `maxapi` в local env — без него ещё ~150 файлов с `importorskip`).
+- Coverage gate на CI: `--cov-fail-under=64` (см. `bot/pyproject.toml`). Цель — поднимать постепенно до 80% (Phase E в плане MLP).
+
+#### Что покрываем
+
+Покрывать: бизнес-сценарии, граничные случаи, пути с проверками безопасности (роли, валидаторы, лимиты).
 
 Тесты на старте — `pytest` для сервисного слоя бота с заглушкой `maxapi.Bot`. Проверяем сценарии: согласие → запрос контакта → меню; приём обращения с серией сообщений; ответ оператора цитированием; отказ при ответе длиннее 300 символов; статистика за период; удаление ПДн.
 
-При добавлении новой логики пишите тесты в той же папке. Покрывать: бизнес-сценарии, граничные случаи, пути с проверками безопасности (роли, валидаторы, лимиты).
+При добавлении новой логики пишите тесты в той же папке.
 
 ### Стиль кода
 
