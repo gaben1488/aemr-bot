@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 03:14:13 UTC`
+Generated at: `2026-05-27 03:24:48 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `240`
 Max file size: `300 KB`
@@ -44,7 +44,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (23186 bytes)
 - `bot/aemr_bot/handlers/admin_audience.py` (9243 bytes)
-- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (16873 bytes)
+- `bot/aemr_bot/handlers/admin_callback_dispatch.py` (16294 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42735 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (23101 bytes)
@@ -3687,8 +3687,8 @@ def _mask_phone(phone: str | None) -> str:
 
 ### `bot/aemr_bot/handlers/admin_callback_dispatch.py`
 
-Size: `16873` bytes  
-SHA-256: `f6eacdf293e7ccba6f9e3a8e4880998e901ed915b31b1d98d60a5c29283dbfdb`
+Size: `16294` bytes  
+SHA-256: `a0a172bae5297d6f21b8c940fecdbff8a30794703e0956efacd1b3fdd66742c5`
 
 ```python
 """Dispatch admin/operator callback-payload'ов (`broadcast:*` / `op:*`).
@@ -3716,11 +3716,18 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 
+from aemr_bot import keyboards as kbds
+from aemr_bot import texts
+from aemr_bot.config import settings as cfg
+from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import admin_commands
 from aemr_bot.handlers import broadcast as broadcast_handler
 from aemr_bot.handlers import broadcast_templates as broadcast_templates_handler
 from aemr_bot.handlers import callback_router
-from aemr_bot.utils.event import ack_callback
+from aemr_bot.handlers._auth import ensure_operator
+from aemr_bot.services import admin_card as admin_card_service
+from aemr_bot.services import appeals as appeals_service
+from aemr_bot.utils.event import ack_callback, send_or_edit_screen
 
 # Сигнатуры handler'ов:
 #   exact-handler:  async def (event) -> None
@@ -3838,10 +3845,6 @@ async def _op_open_card(event, appeal_id: int) -> None:
     — карточка появится новой записью внизу чата, не редактирует
     listing-сообщение (сохраняет sacred-инвариант).
     """
-    from aemr_bot.handlers._auth import ensure_operator
-    from aemr_bot.services import admin_card as admin_card_service
-    from aemr_bot.services import appeals as appeals_service
-    from aemr_bot.db.session import session_scope
 
     if not await ensure_operator(event):
         return
@@ -3850,9 +3853,6 @@ async def _op_open_card(event, appeal_id: int) -> None:
             session, appeal_id
         )
     if appeal is None:
-        from aemr_bot.utils.event import send_or_edit_screen, ack_callback
-        from aemr_bot import keyboards as kbds
-        from aemr_bot.config import settings as cfg
         await ack_callback(event, "Не найдено")
         await send_or_edit_screen(
             event,
@@ -3861,7 +3861,6 @@ async def _op_open_card(event, appeal_id: int) -> None:
             attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
-    from aemr_bot.utils.event import ack_callback
     await ack_callback(event, "Открываю…")
     await admin_card_service.render(event.bot, appeal, force_new=True)
 
@@ -3935,11 +3934,6 @@ async def _show_op_help_full(event) -> None:
     превышал MAX-API limit 4000, при тапе кнопки падал с
     `ValueError: text должен быть меньше 4000 символов`. Разбит на 2.
     """
-    from aemr_bot import keyboards as kbds
-    from aemr_bot import texts
-    from aemr_bot.config import settings as cfg
-    from aemr_bot.handlers._auth import ensure_operator
-    from aemr_bot.utils.event import send_or_edit_screen
 
     if not await ensure_operator(event):
         return
@@ -3957,11 +3951,6 @@ async def _show_op_help_security(event) -> None:
     Антифишинг, реакция на скам, компрометация аккаунта, ключевые
     документы. Кнопка → возврат к главному экрану памятки.
     """
-    from aemr_bot import keyboards as kbds
-    from aemr_bot import texts
-    from aemr_bot.config import settings as cfg
-    from aemr_bot.handlers._auth import ensure_operator
-    from aemr_bot.utils.event import send_or_edit_screen
 
     if not await ensure_operator(event):
         return
