@@ -228,13 +228,12 @@ def register(dp) -> None:
     """
     from maxapi.types import Command, MessageCreated
 
-    @dp.message(Command("find_resident"))
+    @dp.message_created(Command("find_resident"))
     async def _handler(event: MessageCreated) -> None:
-        text = ""
-        try:
-            text = event.message.body.text or ""
-        except AttributeError:
-            pass
+        # Достаём текст команды безопасно — `event.message.body` объявлен
+        # как `MessageBody | None` в maxapi-схеме (mypy strict).
+        body = getattr(event.message, "body", None)
+        text = (getattr(body, "text", None) or "") if body is not None else ""
         # Удаляем команду из начала: «/find_resident +79991234567» → «+79991234567».
         parts = text.split(maxsplit=1)
         query = parts[1] if len(parts) > 1 else ""

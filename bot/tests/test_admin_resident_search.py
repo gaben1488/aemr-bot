@@ -343,6 +343,7 @@ class TestRunFindResident:
                           AsyncMock(return_value=0)):
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
-            await mod.run_find_resident(event, "42")
+            # 5-значный max_user_id (≥ 4 цифр для классификатора).
+            await mod.run_find_resident(event, "12345")
         text = event.bot.send_message.await_args.kwargs["text"]
         assert "Заблокирован" in text
