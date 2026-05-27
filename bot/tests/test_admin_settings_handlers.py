@@ -97,15 +97,24 @@ class TestIntentLifecycle:
         assert intent["key"] == "consent_text"
 
     def test_gc_evicts_expired_when_pool_large(self) -> None:
-        """opportunistic GC: при set'е и >16 записях чистим истёкшие."""
+        """opportunistic GC: при set'е и >16 записях чистим истёкшие.
+
+        Заполняем dict напрямую (минуя `_intent_set`), чтобы не
+        триггерить GC на стадии setup'а — иначе раннее срабатывание
+        очистит ещё не достроенную лестницу истёкших записей и тест
+        потеряет смысл.
+        """
         from aemr_bot.handlers import admin_settings as mod
-        # 17 истёкших intent'ов.
+        # 17 истёкших intent'ов напрямую — GC не запускается.
         for op_id in range(100, 117):
-            mod._intent_set(op_id, key=f"k{op_id}", kind="single")
-            mod._edit_intents[op_id]["expires_at"] = _time.monotonic() - 1
-        # Новый set триггерит GC.
+            mod._edit_intents[op_id] = {
+                "key": f"k{op_id}",
+                "kind": "single",
+                "expires_at": _time.monotonic() - 1,
+            }
+        # 17 записей, все истёкшие. _intent_set(200) → len = 18 > 16 →
+        # GC.
         mod._intent_set(200, key="fresh", kind="single")
-        # Истёкшие должны быть удалены.
         for op_id in range(100, 117):
             assert op_id not in mod._edit_intents
         assert 200 in mod._edit_intents
@@ -471,12 +480,12 @@ class TestQuietHoursWizard:
 
         event = make_event()
 
-        def fake_get(_session, key):
-            return AsyncMock(return_value={
+        async def fake_get(_session, key):
+            return {
                 "admin_quiet_hours_enabled": True,
                 "admin_quiet_hours_start": 22,
                 "admin_quiet_hours_end": 8,
-            }.get(key))()
+            }.get(key)
 
         with patch.object(mod, "session_scope") as scope, \
              patch("aemr_bot.services.quiet_hours.refresh_cache_from_db",
@@ -499,12 +508,12 @@ class TestQuietHoursWizard:
 
         event = make_event()
 
-        def fake_get(_session, key):
-            return AsyncMock(return_value={
+        async def fake_get(_session, key):
+            return {
                 "admin_quiet_hours_enabled": False,
                 "admin_quiet_hours_start": 18,
                 "admin_quiet_hours_end": 9,
-            }.get(key))()
+            }.get(key)
 
         with patch.object(mod, "session_scope") as scope, \
              patch("aemr_bot.services.quiet_hours.refresh_cache_from_db",
