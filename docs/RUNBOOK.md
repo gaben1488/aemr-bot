@@ -10,7 +10,7 @@
 
 ## Роли и матрица полномочий
 
-**Координатор АЕМО (специалист по ответам).** Отвечает жителям, передаёт обращения смежным специалистам ЕГП, следит за SLA (4 рабочих часа). Команды: `/reply`, `/stats`, `/reopen`, `/close`, `/diag`, `/op_help`, `/open_tickets`, `/broadcast`, `/whoami`, `/help`.
+**Координатор АЕМО (специалист по ответам).** Отвечает жителям, передаёт обращения смежным специалистам ЕГП, следит за SLA (4 рабочих часа). Команды: `/reply`, `/stats`, `/reopen`, `/close`, `/diag`, `/op_help`, `/open_tickets`, `/broadcast`, `/find_resident`, `/whoami`, `/help`.
 
 **Специалист АЕМО (`aemr`) и ЕГП (`egp`).** Рядовые операторы по ответам. Тот же набор команд, что у координатора, кроме `/broadcast` (рассылку запускает только `coordinator` или `it`). Кнопок блокировки и удаления ПДн под карточкой не видят.
 
@@ -18,7 +18,7 @@
 
 | Действие / роль | coordinator | aemr | egp | it |
 |---|---|---|---|---|
-| `/reply`, `/reopen`, `/close`, `/stats`, `/diag`, `/op_help`, `/open_tickets`, `/help`, `/whoami` | ✅ | ✅ | ✅ | ✅ |
+| `/reply`, `/reopen`, `/close`, `/stats`, `/diag`, `/op_help`, `/open_tickets`, `/find_resident`, `/help`, `/whoami` | ✅ | ✅ | ✅ | ✅ |
 | `/broadcast`, `/broadcast list` | ✅ | ❌ | ❌ | ✅ |
 | Экстренная остановка рассылки | ✅ | ✅ | ✅ | ✅ |
 | Блокировка / разблокировка жителя из карточки | ❌ | ❌ | ❌ | ✅ |
@@ -501,6 +501,7 @@ docker compose up -d --build bot
 | `/close <N>` | все операторы | закрыть без ответа |
 | `/stats [period]` | все операторы | XLSX за период; period = today/week/month/quarter/half_year/year/all |
 | `/open_tickets` | все операторы | список открытых обращений |
+| `/find_resident <max_user_id\|+7XXXXXXXXXX>` | все операторы | карточка жителя без открытия обращения; запрос пишется в audit_log |
 | `/diag` | все операторы | диагностика |
 | `/op_help` | админ-чат | закрепляемая панель быстрых действий |
 | `/whoami` | админ-чат | мой max_user_id, first_name, chat_id |
