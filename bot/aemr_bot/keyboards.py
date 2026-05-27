@@ -1146,11 +1146,12 @@ def op_settings_obj_item_keyboard(key: str, index: int):
 
 
 def op_settings_quiet_keyboard(*, enabled: bool):
-    """Карточка «🌙 Тихий режим» — toggle через кнопку. Границы окна
-    (часы start/end) меняются через текстовую команду `/setting`
-    (валидация int + 0–23 уже в SCHEMA). Слайдер start/end в
-    callback'е MAX-API не сделать одним кликом, а полноценный
-    wizard для двух чисел — overkill для редко-используемой настройки.
+    """Карточка «🌙 Тихий режим» — toggle + wizard для часов start/end.
+
+    Edit start/end через стандартный intent flow (как для текстовых
+    ключей): оператор тапает «✏️ Изменить начало» → бот просит ввести
+    число 0–23 → следующее сообщение оператора сохраняется + cache
+    обновляется + карточка перерисовывается с новым значением.
     """
     kb = InlineKeyboardBuilder()
     toggle_label = (
@@ -1158,8 +1159,18 @@ def op_settings_quiet_keyboard(*, enabled: bool):
         else "🔔 Включить тихий режим"
     )
     kb.row(CallbackButton(text=toggle_label, payload="op:set:quiet:toggle"))
+    kb.row(CallbackButton(text="✏️ Изменить начало (час)", payload="op:set:quiet:edit:start"))
+    kb.row(CallbackButton(text="✏️ Изменить конец (час)", payload="op:set:quiet:edit:end"))
     kb.row(CallbackButton(text="↩️ К настройкам", payload="op:settings"))
     kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_settings_quiet_input_cancel_keyboard():
+    """Кнопка «❌ Отмена» под подсказкой ввода часа тихого режима —
+    возврат на карточку без сохранения."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="❌ Отмена", payload="op:set:quiet"))
     return kb.as_markup()
 
 
