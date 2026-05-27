@@ -318,6 +318,18 @@ DEFAULTS: dict[str, Any] = {
     # канал MAX (каждая картинка ×N подписчиков). Допустимый диапазон
     # 1–20 (см. SCHEMA).
     "broadcast_max_images": 5,
+    # 2026-05-27 (quiet hours): тихий режим админ-чата. Когда
+    # `admin_quiet_hours_enabled=True` И текущее локальное время в окне
+    # [start, end) (с учётом перехода через полночь) — не-критические
+    # сообщения от бота в админ-чат не отправляются (pulse, входящие
+    # обращения, уведомления о подписках/отписках/erase). Критические
+    # сообщения (фейл бэкапа, ошибки, прямые ответы оператора)
+    # игнорируют флаг — оператор должен узнать о реальном инциденте
+    # сразу. Окно по умолчанию: 18:00–09:00 (включая ночные часы).
+    # Часовой пояс — `Asia/Kamchatka`, как и для всего расписания.
+    "admin_quiet_hours_enabled": False,
+    "admin_quiet_hours_start": 18,
+    "admin_quiet_hours_end": 9,
     "localities": [
         "Елизовское ГП",
         "Вулканное ГП",
@@ -386,6 +398,10 @@ SCHEMA: dict[str, dict] = {
     # для «текст + одна афиша», 20 — практический потолок (выше MAX
     # ограничивает частоту, см. _send_one).
     "broadcast_max_images": {"type": int, "min": 1, "max": 20},
+    # quiet hours: bool + два часа 0–23.
+    "admin_quiet_hours_enabled": {"type": bool},
+    "admin_quiet_hours_start": {"type": int, "min": 0, "max": 23},
+    "admin_quiet_hours_end": {"type": int, "min": 0, "max": 23},
     "localities": {"type": list, "min_items": 1, "max_items": 30, "item_type": str},
 }
 

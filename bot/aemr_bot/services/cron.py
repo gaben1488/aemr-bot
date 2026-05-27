@@ -435,16 +435,31 @@ async def _job_monthly_report(send_admin_document) -> None:
 async def _job_pulse(send_admin_text) -> None:
     """Шлёт в служебную группу короткое подтверждение «бот жив».
 
-    Расписание:
-    • В рабочее время (пн–сб, 09:00–17:59 по Камчатке) — каждые
-      полчаса, в минуты :00 и :30.
-    • В остальное время понедельника–субботы и весь день воскресенья —
-      раз в час, в минуту :05.
+    Текущее расписание (после унификации 2026-05-22):
+    • `pulse-hourly` — каждый час 24/7 в `:05` (базовый heartbeat).
+    • `pulse-workhours-extra` — пн–пт 09:00–17:59 в `:35`
+      (дополнительный пинг в рабочее время).
 
     Это второй контур мониторинга поверх selfcheck: selfcheck ловит
     зависший event-loop, а пульс показывает дежурному, что процесс
     жив и может отправлять сообщения в админ-группу.
+
+    Quiet hours: если в settings включён `admin_quiet_hours_enabled` и
+    текущий час попадает в окно — пульс **не отправляется**.
+    Дежурный явно попросил «не присылать pulse ночью» —
+    `health-selfcheck` и `healthcheck-ping` продолжают работать как
+    fallback, оператор всё равно узнает о реальном сбое.
     """
+    try:
+        from aemr_bot.db.session import session_scope
+        from aemr_bot.services.quiet_hours import is_quiet_hours_now
+
+        async with session_scope() as session:
+            if await is_quiet_hours_now(session):
+                log.info("pulse: quiet hours active, suppressed")
+                return
+    except Exception:
+        log.debug("pulse: quiet_hours check failed, отправляем", exc_info=False)
     now = datetime.now(TZ).strftime("%H:%M")
     sent = await _send_admin_text_with_retry(
         send_admin_text,
