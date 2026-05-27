@@ -30,7 +30,7 @@ class TestRenderProgressCounter:
         )
         assert "<code>3 / 5</code>" in text
         assert "🟢🟢🟦⬜⬜" not in text
-        assert "▶ <b>Адрес</b>" in text
+        assert "▶ <b>Адрес проблемы</b>" in text
 
     def test_last_stage_counter_layout(self) -> None:
         text = render_progress(
@@ -55,14 +55,16 @@ class TestRenderProgressContent:
         # Завершённые шаги — ✓ + label + · + <b>value</b>
         assert "✓ Имя · <b>Иван</b>" in text
         assert "✓ Населённый пункт · <b>Елизово</b>" in text
-        assert "✓ Адрес · <b>ул. Ленина, 5</b>" in text
+        assert "✓ Адрес проблемы · <b>ул. Ленина, 5</b>" in text
 
     def test_current_step_blockquote_prompt(self) -> None:
         text = render_progress(stage="address", name="X", locality="Y")
         # Текущий шаг — ▶ <b>label</b> + <blockquote>prompt</blockquote>
-        assert "▶ <b>Адрес</b>" in text
+        assert "▶ <b>Адрес проблемы</b>" in text
         assert "<blockquote>" in text
-        assert "улица" in text  # подсказка внутри blockquote
+        # 2026-05-27: подсказка теперь упоминает «адрес проблемы»
+        # и «не ваш домашний адрес».
+        assert "не ваш домашний" in text
 
     def test_future_steps_are_not_rendered(self) -> None:
         text = render_progress(stage="locality", name="Иван")
@@ -72,7 +74,7 @@ class TestRenderProgressContent:
         assert "<code>2 / 5</code>" in text
         assert "✓ Имя · <b>Иван</b>" in text
         assert "▶ <b>Населённый пункт</b>" in text
-        assert "○ Адрес" not in text
+        assert "○ Адрес проблемы" not in text
         assert "○ Тема" not in text
         assert "○ Суть" not in text
 
