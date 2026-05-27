@@ -347,7 +347,7 @@ Audit-log автоматически очищается cron-job'ом `audit-log
 - `bandit -ll` — статический security-анализатор Python (medium+);
 - `pip-audit --strict` — CVE-сканер зависимостей. Падает на любой known CVE в `pip freeze`;
 - `shellcheck` — все `*.sh`;
-- `pytest --cov-fail-under=65` — coverage gate;
+- `pytest --cov-fail-under=67` — coverage gate;
 - `alembic upgrade head` — миграции применяются на чистую БД;
 - `alembic check` — соответствие модели Python и схемы БД;
 - `alembic round-trip` — upgrade head → downgrade base → upgrade head без ошибок (ловит сломанный `downgrade()`).
