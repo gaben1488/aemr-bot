@@ -83,9 +83,16 @@ class TestOpenMainMenu:
 
         event = _make_event()
         user = SimpleNamespace(is_blocked=False)
+        # 2026-05-27: patch'им и `settings_store.get_text_with_fallback`,
+        # чтобы тест не зависел от живого Postgres pool — `open_main_menu`
+        # для незаблокированного жителя читает `welcome_text` из БД, и
+        # под CI это иногда упирается в `Event loop is closed` при
+        # connection acquire (race с другими async-фикстурами).
         with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
-                   AsyncMock(return_value=True)):
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.menu.settings_store.get_text_with_fallback",
+                   AsyncMock(return_value="welcome from settings")):
             await menu.open_main_menu(event)
         event.bot.send_message.assert_called_once()
 
