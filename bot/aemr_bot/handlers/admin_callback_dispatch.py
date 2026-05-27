@@ -23,11 +23,18 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 
+from aemr_bot import keyboards as kbds
+from aemr_bot import texts
+from aemr_bot.config import settings as cfg
+from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import admin_commands
 from aemr_bot.handlers import broadcast as broadcast_handler
 from aemr_bot.handlers import broadcast_templates as broadcast_templates_handler
 from aemr_bot.handlers import callback_router
-from aemr_bot.utils.event import ack_callback
+from aemr_bot.handlers._auth import ensure_operator
+from aemr_bot.services import admin_card as admin_card_service
+from aemr_bot.services import appeals as appeals_service
+from aemr_bot.utils.event import ack_callback, send_or_edit_screen
 
 # Сигнатуры handler'ов:
 #   exact-handler:  async def (event) -> None
@@ -145,10 +152,6 @@ async def _op_open_card(event, appeal_id: int) -> None:
     — карточка появится новой записью внизу чата, не редактирует
     listing-сообщение (сохраняет sacred-инвариант).
     """
-    from aemr_bot.handlers._auth import ensure_operator
-    from aemr_bot.services import admin_card as admin_card_service
-    from aemr_bot.services import appeals as appeals_service
-    from aemr_bot.db.session import session_scope
 
     if not await ensure_operator(event):
         return
@@ -157,9 +160,6 @@ async def _op_open_card(event, appeal_id: int) -> None:
             session, appeal_id
         )
     if appeal is None:
-        from aemr_bot.utils.event import send_or_edit_screen, ack_callback
-        from aemr_bot import keyboards as kbds
-        from aemr_bot.config import settings as cfg
         await ack_callback(event, "Не найдено")
         await send_or_edit_screen(
             event,
@@ -168,7 +168,6 @@ async def _op_open_card(event, appeal_id: int) -> None:
             attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return
-    from aemr_bot.utils.event import ack_callback
     await ack_callback(event, "Открываю…")
     await admin_card_service.render(event.bot, appeal, force_new=True)
 
@@ -242,11 +241,6 @@ async def _show_op_help_full(event) -> None:
     превышал MAX-API limit 4000, при тапе кнопки падал с
     `ValueError: text должен быть меньше 4000 символов`. Разбит на 2.
     """
-    from aemr_bot import keyboards as kbds
-    from aemr_bot import texts
-    from aemr_bot.config import settings as cfg
-    from aemr_bot.handlers._auth import ensure_operator
-    from aemr_bot.utils.event import send_or_edit_screen
 
     if not await ensure_operator(event):
         return
@@ -264,11 +258,6 @@ async def _show_op_help_security(event) -> None:
     Антифишинг, реакция на скам, компрометация аккаунта, ключевые
     документы. Кнопка → возврат к главному экрану памятки.
     """
-    from aemr_bot import keyboards as kbds
-    from aemr_bot import texts
-    from aemr_bot.config import settings as cfg
-    from aemr_bot.handlers._auth import ensure_operator
-    from aemr_bot.utils.event import send_or_edit_screen
 
     if not await ensure_operator(event):
         return
