@@ -278,6 +278,13 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         await _show_author_card(event)
         return
 
+    if rest == "quiet":
+        await _show_quiet_card(event)
+        return
+    if rest == "quiet:toggle":
+        await _toggle_quiet(event)
+        return
+
     if rest == "pr:start":
         await _show_pr_confirm(event)
         return
@@ -575,6 +582,66 @@ async def _obj_delete(event, operator_id: int, suffix: str) -> None:
 # ──────────────────────────────────────────────────────────────────────
 # Автор коммитов
 # ──────────────────────────────────────────────────────────────────────
+
+
+async def _show_quiet_card(event) -> None:
+    """Карточка «🌙 Тихий режим в админ-чате».
+
+    Показывает текущее состояние (enabled + окно start–end) и две
+    кнопки: toggle + переход в expert-edit hours через `op:setkey:*`.
+    Edit hours делается стандартным intent flow (как для текстовых
+    ключей) — оператор шлёт число одним сообщением.
+    """
+    from aemr_bot.services import quiet_hours
+
+    async with session_scope() as session:
+        # refresh cache из БД на случай если оператор только что
+        # включил через `/setting` без рестарта.
+        await quiet_hours.refresh_cache_from_db(session)
+        enabled = await settings_store.get(session, "admin_quiet_hours_enabled")
+        start = await settings_store.get(session, "admin_quiet_hours_start")
+        end = await settings_store.get(session, "admin_quiet_hours_end")
+    enabled = bool(enabled)
+    if not isinstance(start, int):
+        start = 18
+    if not isinstance(end, int):
+        end = 9
+    status_line = "🔕 включён" if enabled else "🔔 выключен"
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            "🌙 Тихий режим в админ-чате\n"
+            "──────────\n"
+            f"Сейчас: {status_line}\n"
+            f"Окно: с {start:02d}:00 до {end:02d}:00 (Камчатка)\n\n"
+            "Когда включён и текущее время в окне — не приходят\n"
+            "пульс и рутинные уведомления (новые обращения,\n"
+            "followup'ы, подписки/отписки/erase).\n\n"
+            "Критичные алёрты (фейл бэкапа, ответы операторам,\n"
+            "сбои retention) идут всегда, тихий режим их\n"
+            "не затрагивает.\n\n"
+            "Чтобы изменить часы окна:\n"
+            "  `/setting admin_quiet_hours_start 18`\n"
+            "  `/setting admin_quiet_hours_end 9`\n"
+            "Значения 0–23 (целое число)."
+        ),
+        attachments=[kbds.op_settings_quiet_keyboard(enabled=enabled)],
+    )
+
+
+async def _toggle_quiet(event) -> None:
+    """Переключить `admin_quiet_hours_enabled` + обновить cache."""
+    from aemr_bot.services import quiet_hours
+
+    async with session_scope() as session:
+        current = await settings_store.get(session, "admin_quiet_hours_enabled")
+        new_value = not bool(current)
+        await settings_store.set_value(
+            session, "admin_quiet_hours_enabled", new_value,
+        )
+        await session.commit()
+        await quiet_hours.refresh_cache_from_db(session)
+    await _show_quiet_card(event)
 
 
 async def _show_author_card(event) -> None:
