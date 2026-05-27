@@ -186,8 +186,7 @@ def op_audience_paginated_list_keyboard(
     total_pages: int = 1,
 ):
     """Master-listing аудитории: один сообщение с кликабельными
-    строками + пагинация. Заменяет старый flood из 20 отдельных
-    сообщений (по жалобе owner 2026-05-28).
+    строками + пагинация + bulk-dump + search.
 
     `category` ∈ {`subs`, `consent`, `blocked`}.
     `rows` — список (max_user_id, label) где label уже отформатирован
@@ -196,6 +195,9 @@ def op_audience_paginated_list_keyboard(
     callback `op:aud:show:<max_user_id>`.
 
     Pagination кнопки появляются только если total_pages > 1.
+
+    Кнопка «📤 Выдать всех» — отдельный bulk-dump (10 individual
+    карточек). Кнопка «🔍 Поиск» — intent flow по имени/телефону/id.
     """
     kb = InlineKeyboardBuilder()
     for max_user_id, label in rows:
@@ -229,6 +231,38 @@ def op_audience_paginated_list_keyboard(
                 )
             )
         kb.row(*nav)
+    # Bulk + search: только при непустых rows. Поиск тоже доступен —
+    # удобно когда оператор открыл list и хочет сразу найти кого-то
+    # конкретного.
+    if rows:
+        kb.row(
+            CallbackButton(
+                text=f"📤 Выдать всех на странице ({len(rows)})",
+                payload=f"op:aud:dump:{category}:{page}",
+            )
+        )
+    kb.row(
+        CallbackButton(
+            text="🔍 Найти жителя",
+            payload=f"op:aud:search:{category}",
+        )
+    )
+    kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_audience_search_cancel_keyboard(category: str | None = None):
+    """Кнопка отмены под подсказкой ввода поиска. Возврат — в исходную
+    категорию если задана, иначе в корневое меню аудитории."""
+    kb = InlineKeyboardBuilder()
+    if category in {"subs", "consent", "blocked"}:
+        kb.row(
+            CallbackButton(
+                text="↩️ К списку",
+                payload=f"op:aud:{category}",
+            )
+        )
     kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
     kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
@@ -426,6 +460,7 @@ __all__ = [
     "op_audience_user_actions",
     "op_audience_paginated_list_keyboard",
     "op_audience_user_card_keyboard",
+    "op_audience_search_cancel_keyboard",
     "appeal_admin_actions",
     "op_help_keyboard",
 ]

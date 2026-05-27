@@ -635,6 +635,96 @@ async def count_blocked(session: AsyncSession) -> int:
     ) or 0
 
 
+async def search_audience(
+    session: AsyncSession, query: str, *, limit: int = 20
+) -> list[User]:
+    """Универсальный поиск жителя для audience-master (PR
+    audience-paginated-master).
+
+    Принимает любую из форм:
+    - точный `max_user_id` (целое число от 4 цифр).
+    - точный или частичный телефон (нормализуется по цифрам через
+      `phone_normalized ILIKE '%digits%'`).
+    - имя/часть имени (fuzzy через `first_name ILIKE '%query%'`,
+      без учёта регистра, частичное совпадение).
+
+    Возвращает до `limit` объектов User. Дубли (одна запись по
+    нескольким критериям) исключаются по `User.id`. Удалённые
+    жители (first_name='Удалено') не возвращаются — иначе оператор
+    случайно ткнёт на pseudo-row.
+    """
+
+    if not query or not query.strip():
+        return []
+    raw = query.strip()
+    matched_ids: set[int] = set()
+    results: list[User] = []
+
+    # 1. Точное max_user_id (4+ цифр).
+    if raw.isdigit() and 4 <= len(raw) <= 12:
+        try:
+            mid_int = int(raw)
+        except ValueError:
+            mid_int = 0
+        if mid_int:
+            user = await find_by_max_id(session, mid_int)
+            if user is not None and user.first_name != "Удалено":
+                matched_ids.add(user.id)
+                results.append(user)
+
+    # 2. Имя через ILIKE (fuzzy). Cyrillic-safe: ILIKE в Postgres
+    # case-insensitive через lower().
+    name_pattern = f"%{raw}%"
+    name_rows = (
+        await session.scalars(
+            select(User)
+            .where(
+                User.first_name.ilike(name_pattern),
+                User.first_name != "Удалено",
+            )
+            .order_by(User.updated_at.desc())
+            .limit(limit)
+        )
+    ).all()
+    for u in name_rows:
+        if u.id not in matched_ids:
+            matched_ids.add(u.id)
+            results.append(u)
+            if len(results) >= limit:
+                return results
+
+    # 3. Phone — нормализуем цифры из query, ищем по phone_normalized
+    # с substring match (поддерживает частичный телефон). Если query
+    # не содержит цифр — пропускаем.
+    digits = "".join(ch for ch in raw if ch.isdigit())
+    if digits and len(digits) >= 3:
+        # Нормализация совпадает с _normalize_phone — срезаем
+        # ведущий 7/8 для 11-значных.
+        normalized = digits
+        if len(normalized) == 11 and normalized[0] in {"7", "8"}:
+            normalized = normalized[1:]
+        phone_pattern = f"%{normalized}%"
+        phone_rows = (
+            await session.scalars(
+                select(User)
+                .where(
+                    User.phone_normalized.ilike(phone_pattern),
+                    User.first_name != "Удалено",
+                )
+                .order_by(User.updated_at.desc())
+                .limit(limit)
+            )
+        ).all()
+        for u in phone_rows:
+            if u.id not in matched_ids:
+                matched_ids.add(u.id)
+                results.append(u)
+                if len(results) >= limit:
+                    return results
+
+    return results
+
+
 async def find_by_phone(session: AsyncSession, phone: str) -> User | None:
     """Найти пользователя по телефону, не споткнувшись о различия в формате.
 

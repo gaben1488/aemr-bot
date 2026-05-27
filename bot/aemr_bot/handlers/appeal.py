@@ -614,6 +614,16 @@ def register(dp: Dispatcher) -> None:
             )
             if consumed:
                 return
+            # Search intent для audience-master (PR
+            # audience-paginated-master, 2026-05-28). Перехват ДО
+            # /-команд: search-query может быть случайно «/Иван» и
+            # такое ввести нужно дать.
+            consumed = await admin_cmd_module.handle_audience_search_text(
+                event,
+                text_body,
+            )
+            if consumed:
+                return
             if text_body.startswith("/"):
                 return
             await op_reply.handle_operator_reply(event, body, text_body)

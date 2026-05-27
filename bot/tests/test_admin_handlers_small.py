@@ -169,25 +169,38 @@ class TestAudienceAction:
 
     @pytest.mark.asyncio
     async def test_subs_list_with_users(self) -> None:
+        """После 2026-05-28 UX redesign: один master-card с pagination
+        вместо 20 отдельных сообщений. count_* для total_pages."""
         from aemr_bot.handlers import admin_audience
 
         event = _make_event()
         users = [
-            SimpleNamespace(max_user_id=1, first_name="Иван", phone="+79001",
-                            is_blocked=False),
-            SimpleNamespace(max_user_id=2, first_name=None, phone=None,
-                            is_blocked=False),
+            SimpleNamespace(
+                max_user_id=1, first_name="Иван", phone="+79001234567",
+                is_blocked=False, subscribed_broadcast=True,
+                consent_pdn_at=None, consent_revoked_at=None,
+            ),
+            SimpleNamespace(
+                max_user_id=2, first_name=None, phone=None,
+                is_blocked=False, subscribed_broadcast=True,
+                consent_pdn_at=None, consent_revoked_at=None,
+            ),
         ]
         with patch("aemr_bot.handlers.admin_audience.ensure_role",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_audience.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_audience.users_service.count_subscribers_audience",
+                   AsyncMock(return_value=2)), \
              patch("aemr_bot.handlers.admin_audience.users_service.list_subscribers",
                    AsyncMock(return_value=users)), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_audience.run_audience_action(event, "op:aud:subs")
-        # 1 заголовок + 2 строки = 3 send_message
-        assert event.bot.send_message.call_count == 3
+        # Один master-card вместо flood'а.
+        event.bot.send_message.assert_called_once()
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "Подписчики" in text
+        assert "всего: 2" in text
 
     @pytest.mark.asyncio
     async def test_consent_list_empty(self) -> None:
@@ -198,6 +211,8 @@ class TestAudienceAction:
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_audience.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_audience.users_service.count_consented",
+                   AsyncMock(return_value=0)), \
              patch("aemr_bot.handlers.admin_audience.users_service.list_consented",
                    AsyncMock(return_value=[])), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
@@ -205,25 +220,34 @@ class TestAudienceAction:
         # Один send «список пуст»
         event.bot.send_message.assert_called_once()
         text = event.bot.send_message.call_args.kwargs["text"]
-        assert "пуст" in text
+        assert "пуст" in text.lower()
 
     @pytest.mark.asyncio
     async def test_blocked_list(self) -> None:
         from aemr_bot.handlers import admin_audience
 
         event = _make_event()
-        users = [SimpleNamespace(max_user_id=1, first_name="X", phone="—",
-                                 is_blocked=True)]
+        users = [
+            SimpleNamespace(
+                max_user_id=1, first_name="X", phone="+79991234567",
+                is_blocked=True, subscribed_broadcast=False,
+                consent_pdn_at=None, consent_revoked_at=None,
+            )
+        ]
         with patch("aemr_bot.handlers.admin_audience.ensure_role",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_audience.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_audience.users_service.count_blocked",
+                   AsyncMock(return_value=1)), \
              patch("aemr_bot.handlers.admin_audience.users_service.list_blocked",
                    AsyncMock(return_value=users)), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_audience.run_audience_action(event, "op:aud:blocked")
-        # header + 1 user-line
-        assert event.bot.send_message.call_count == 2
+        # Один master-card.
+        event.bot.send_message.assert_called_once()
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "Заблокированные" in text
 
     @pytest.mark.asyncio
     async def test_unknown_suffix_returns(self) -> None:

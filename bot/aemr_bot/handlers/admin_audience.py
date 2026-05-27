@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import logging
 
+import time as _time
+
 from aemr_bot import texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
@@ -32,6 +34,28 @@ log = logging.getLogger(__name__)
 # Каждая строка ~50 символов = 500 char на page. Плюс 3 row-навигации
 # (pagination + 2 back). MAX-keyboard поддерживает заметно больше.
 _PAGE_SIZE = 10
+
+# Intent для поиска: оператор тапнул «🔍 Поиск», бот ждёт следующего
+# текстового сообщения. TTL 5 минут (как для admin_settings intent).
+# Key: operator_max_user_id, value: {"category": str | None, "expires_at": float}.
+_search_intents: dict[int, dict] = {}
+_SEARCH_INTENT_TTL_SEC = 300.0
+
+
+def _search_intent_set(operator_id: int, category: str | None) -> None:
+    _search_intents[operator_id] = {
+        "category": category,
+        "expires_at": _time.monotonic() + _SEARCH_INTENT_TTL_SEC,
+    }
+
+
+def _search_intent_pop(operator_id: int) -> dict | None:
+    state = _search_intents.pop(operator_id, None)
+    if state is None:
+        return None
+    if _time.monotonic() > state.get("expires_at", 0):
+        return None
+    return state
 
 
 async def run_audience_menu(event) -> None:
@@ -169,6 +193,156 @@ async def _render_audience_page(
     )
 
 
+async def _dump_audience_page(
+    event, category: str, page: int,
+) -> None:
+    """Bulk-dump: отправить N отдельных карточек жителей с страницы
+    в чат. Используется для распечатки/копирования или массовых
+    действий через action-кнопки под каждой карточкой.
+    """
+    from aemr_bot import keyboards as kbds
+
+    page = max(1, page)
+    offset = (page - 1) * _PAGE_SIZE
+    async with session_scope() as session:
+        if category == "subs":
+            items = await users_service.list_subscribers(
+                session, limit=_PAGE_SIZE, offset=offset,
+            )
+        elif category == "consent":
+            items = await users_service.list_consented(
+                session, limit=_PAGE_SIZE, offset=offset,
+            )
+        elif category == "blocked":
+            items = await users_service.list_blocked(
+                session, limit=_PAGE_SIZE, offset=offset,
+            )
+        else:
+            return
+
+    if not items:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text="Страница пуста.",
+            attachments=[kbds.op_back_to_audience_keyboard()],
+        )
+        return
+
+    # Отдельная карточка на жителя, каждая со status-линией +
+    # action-кнопками. Это «старый» поток, но теперь по явному
+    # запросу оператора, а не по умолчанию.
+    for u in items:
+        name = u.first_name or "—"
+        phone = _mask_phone(u.phone)
+        status = _citizen_status_line(u)
+        line = (
+            f"#{u.max_user_id} · {name} · {phone}\n"
+            f"{status}"
+        )
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=line,
+            attachments=[
+                kbds.op_audience_user_actions(
+                    u.max_user_id, blocked=u.is_blocked,
+                )
+            ],
+        )
+
+
+async def _start_search_intent(event, category: str | None) -> None:
+    """Начать поиск: ставим intent + показываем prompt."""
+    from aemr_bot import keyboards as kbds
+
+    operator_id = get_user_id(event)
+    if operator_id is None:
+        return
+    _search_intent_set(operator_id, category)
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=(
+            "🔍 Поиск жителя\n"
+            "────────────────\n"
+            "Пришлите одним сообщением:\n"
+            "• имя или часть имени (поиск частичный, без учёта регистра);\n"
+            "• телефон или его фрагмент (например, последние 4 цифры);\n"
+            "• MAX user id (4+ цифр).\n"
+            "\n"
+            "Найдём всё, что подходит под запрос — до 20 совпадений.\n"
+            "Поиск ходит во всех категориях, не только в текущей."
+        ),
+        attachments=[kbds.op_audience_search_cancel_keyboard(category)],
+    )
+
+
+async def handle_audience_search_text(event, text: str) -> bool:
+    """Перехватчик: если у оператора активен search intent — выполняем
+    поиск и рендерим результаты. Возвращает True если поглотил
+    сообщение.
+    """
+    from aemr_bot import keyboards as kbds
+
+    operator_id = get_user_id(event)
+    if operator_id is None:
+        return False
+    state = _search_intent_pop(operator_id)
+    if state is None:
+        return False
+    if not await ensure_role(event, OperatorRole.IT):
+        return False
+
+    query = (text or "").strip()
+    if not query:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text="Пустой запрос — поиск отменён.",
+            attachments=[kbds.op_back_to_audience_keyboard()],
+        )
+        return True
+
+    async with session_scope() as session:
+        users = await users_service.search_audience(
+            session, query, limit=20,
+        )
+
+    if not users:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=(
+                f"🔍 По запросу «{query[:60]}» ничего не найдено.\n"
+                f"────────────────\n"
+                f"Попробуйте короче или другой фрагмент."
+            ),
+            attachments=[kbds.op_back_to_audience_keyboard()],
+        )
+        return True
+
+    rows = [
+        (u.max_user_id, _format_audience_row(u))
+        for u in users
+    ]
+    header = (
+        f"🔍 Найдено: {len(users)} по запросу «{query[:60]}»\n"
+        f"────────────────\n"
+        f"Тапните строку — откроется карточка жителя."
+    )
+    # Используем тот же paginated-keyboard, но без pagination
+    # (всё на одной странице). category='subs' как fallback —
+    # back-кнопка вернёт в общий audience-меню.
+    cat_fallback = state.get("category") or "subs"
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=header,
+        attachments=[
+            kbds.op_audience_paginated_list_keyboard(
+                cat_fallback, rows, page=1, total_pages=1,
+            )
+        ],
+    )
+    return True
+
+
 async def _render_user_card(
     event, max_user_id: int, category: str | None = None,
 ) -> None:
@@ -255,6 +429,32 @@ async def run_audience_action(event, payload: str) -> None:
         except ValueError:
             return
         await _render_audience_page(event, cat, page)
+        return
+
+    # Bulk dump: `dump:<cat>:<page>`.
+    if suffix.startswith("dump:"):
+        rest = suffix.removeprefix("dump:")
+        parts = rest.split(":", 1)
+        if len(parts) != 2:
+            return
+        cat, page_str = parts[0], parts[1]
+        if cat not in {"subs", "consent", "blocked"}:
+            return
+        try:
+            page = int(page_str)
+        except ValueError:
+            return
+        await _dump_audience_page(event, cat, page)
+        return
+
+    # Search intent: `search` либо `search:<cat>`.
+    if suffix == "search" or suffix.startswith("search:"):
+        cat = None
+        if suffix.startswith("search:"):
+            cat_candidate = suffix.removeprefix("search:")
+            if cat_candidate in {"subs", "consent", "blocked"}:
+                cat = cat_candidate
+        await _start_search_intent(event, cat)
         return
 
     # Карточка жителя: `show:<max_user_id>`.

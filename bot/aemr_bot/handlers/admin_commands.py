@@ -40,6 +40,7 @@ from aemr_bot.handlers.admin_appeal_ops import (
     run_show_attachments,
 )
 from aemr_bot.handlers.admin_audience import (
+    handle_audience_search_text,
     run_audience_action,
     run_audience_menu,
 )
@@ -110,6 +111,7 @@ __all__ = [
     "run_settings_action",
     "run_settings_menu",
     # Audience
+    "handle_audience_search_text",
     "run_audience_action",
     "run_audience_menu",
     # Per-appeal ops
