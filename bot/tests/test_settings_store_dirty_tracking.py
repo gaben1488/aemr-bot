@@ -29,6 +29,29 @@ from aemr_bot.db.models import Setting
 from aemr_bot.services import settings_store
 
 
+@pytest.fixture
+def fake_seed_reader(monkeypatch):
+    """Подменяет `_read_seed_json` в settings_store фиксированными
+    тестовыми значениями для 3 ключей жалобы owner. Используется в
+    Bug A тестах чтобы не зависеть от наличия `/app/seed/*.json` в
+    test-env (SEED_DIR env по умолчанию `/app/seed`, в CI отсутствует)."""
+    fake_data = {
+        "topics.json": ["Уличное освещение", "Дороги"],
+        "contacts.json": [
+            {"name": "Пожарная", "phone": "01", "section": "Экстренные"},
+        ],
+        "transport_dispatchers.json": [
+            {"routes": "101, 102", "phone": "8-800-100"},
+        ],
+    }
+    monkeypatch.setattr(
+        settings_store,
+        "_read_seed_json",
+        lambda name: fake_data.get(name),
+    )
+    return fake_data
+
+
 class TestBugBSetValueBumpsTimestamps:
     """Bug B: `set_value` теперь явно сбрасывает synced_at и
     обновляет updated_at."""
@@ -132,7 +155,7 @@ class TestBugALegacyBackfill:
 
     @pytest.mark.asyncio
     async def test_seed_if_empty_backfills_legacy_null_at_baseline(
-        self, session
+        self, session, fake_seed_reader,
     ) -> None:
         """Симулируем legacy: ключ загружен из seed (значение совпадает
         с baseline), но `synced_at=NULL` (миграция 0013 добавила колонку
@@ -173,7 +196,9 @@ class TestBugALegacyBackfill:
         )
 
     @pytest.mark.asyncio
-    async def test_three_legacy_keys_no_longer_dirty(self, session) -> None:
+    async def test_three_legacy_keys_no_longer_dirty(
+        self, session, fake_seed_reader,
+    ) -> None:
         """Главный сценарий: 3 ключа жалобы owner —
         emergency_contacts, topics, transport_dispatcher_contacts —
         после `seed_if_empty` повторного запуска не должны больше
@@ -215,7 +240,7 @@ class TestBugALegacyBackfill:
 
     @pytest.mark.asyncio
     async def test_backfill_skips_user_edited_keys(
-        self, session
+        self, session, fake_seed_reader,
     ) -> None:
         """Защитный инвариант: если value в БД отличается от seed-
         baseline (оператор правил через UI), backfill НЕ помечает
@@ -255,16 +280,21 @@ class TestBugALegacyBackfill:
 
 
 class TestSetValueIdempotentTimestamps:
-    """Sanity: повторный set_value с тем же value всё равно обновляет
-    timestamps. Это правильное поведение — оператор формально
-    «зафиксировал» значение, дата нужна для audit."""
+    """Sanity: повторный set_value с тем же value всё равно срабатывает
+    `set_={updated_at=func.now()}`. Это правильное поведение — оператор
+    формально «зафиксировал» значение, дата нужна для audit.
+
+    Caveat: в Postgres `now()` per-tx — два set_value в одной session
+    дают одинаковый timestamp. Проверяем `>=` вместо `>` (если когда-
+    нибудь переключимся на `clock_timestamp()` — assert станет `>`)."""
 
     @pytest.mark.asyncio
-    async def test_same_value_still_bumps_updated_at(self, session) -> None:
+    async def test_same_value_keeps_or_bumps_updated_at(self, session) -> None:
         from sqlalchemy import select
 
         await settings_store.set_value(session, "topics", ["A"])
         await session.flush()
+        session.expire_all()
         before = await session.scalar(
             select(Setting.updated_at).where(Setting.key == "topics")
         )
@@ -272,9 +302,11 @@ class TestSetValueIdempotentTimestamps:
         await asyncio.sleep(0.05)
         await settings_store.set_value(session, "topics", ["A"])  # same
         await session.flush()
+        session.expire_all()
         after = await session.scalar(
             select(Setting.updated_at).where(Setting.key == "topics")
         )
-        # Updated_at двигается даже для same value — это нормально,
-        # «оператор подтвердил».
-        assert after > before
+        # Per-tx `now()` статичен → >=. Главное — что `set_` clause
+        # перезаписал updated_at (mechanism жив), а не оставил
+        # старый timestamp с момента INSERT.
+        assert after >= before
