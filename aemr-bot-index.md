@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 05:57:59 UTC`
+Generated at: `2026-05-27 06:08:02 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `244`
 Max file size: `300 KB`
@@ -48,7 +48,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42735 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (22825 bytes)
-- `bot/aemr_bot/handlers/admin_settings.py` (46631 bytes)
+- `bot/aemr_bot/handlers/admin_settings.py` (49743 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (4466 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (28901 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (33699 bytes)
@@ -61,7 +61,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/operator_reply.py` (41155 bytes)
 - `bot/aemr_bot/handlers/start.py` (21062 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (71051 bytes)
+- `bot/aemr_bot/keyboards.py` (71707 bytes)
 - `bot/aemr_bot/main.py` (21047 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_bus.py` (10239 bytes)
@@ -6056,8 +6056,8 @@ async def _do_backup(event) -> None:
 
 ### `bot/aemr_bot/handlers/admin_settings.py`
 
-Size: `46631` bytes  
-SHA-256: `975a159f19cc77b7a3bd09fcb7d02c79d6c02188374715b7a033573754fc41cd`
+Size: `49743` bytes  
+SHA-256: `a6bda98b79af092b78d3af5abfc027ad5445bbe8db860be48a3148941c4d778f`
 
 ```python
 """Иерархическое меню «⚙️ Настройки бота».
@@ -6345,6 +6345,12 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         return
     if rest == "quiet:toggle":
         await _toggle_quiet(event)
+        return
+    if rest == "quiet:edit:start":
+        await _start_quiet_hour_intent(event, operator_id, which="start")
+        return
+    if rest == "quiet:edit:end":
+        await _start_quiet_hour_intent(event, operator_id, which="end")
         return
 
     if rest == "pr:start":
@@ -6682,10 +6688,7 @@ async def _show_quiet_card(event) -> None:
             "Критичные алёрты (фейл бэкапа, ответы операторам,\n"
             "сбои retention) идут всегда, тихий режим их\n"
             "не затрагивает.\n\n"
-            "Чтобы изменить часы окна:\n"
-            "  `/setting admin_quiet_hours_start 18`\n"
-            "  `/setting admin_quiet_hours_end 9`\n"
-            "Значения 0–23 (целое число)."
+            "Чтобы изменить часы — кнопки ниже."
         ),
         attachments=[kbds.op_settings_quiet_keyboard(enabled=enabled)],
     )
@@ -6700,6 +6703,76 @@ async def _toggle_quiet(event) -> None:
         new_value = not bool(current)
         await settings_store.set_value(
             session, "admin_quiet_hours_enabled", new_value,
+        )
+        await session.commit()
+        await quiet_hours.refresh_cache_from_db(session)
+    await _show_quiet_card(event)
+
+
+async def _start_quiet_hour_intent(
+    event, operator_id: int, *, which: str,
+) -> None:
+    """Запросить у IT-оператора новое значение часа start/end через
+    intent flow (как для текстовых ключей).
+
+    `which` = 'start' или 'end'. Сохраняет intent с
+    kind='quiet_hour' и payload-полем для `handle_settings_edit_text`.
+    """
+    assert which in {"start", "end"}, f"unknown which={which!r}"
+    label = "начала" if which == "start" else "конца"
+    _intent_set(
+        operator_id,
+        key=f"admin_quiet_hours_{which}",
+        kind="quiet_hour",
+        which=which,
+    )
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"🌙 Час {label} тихого режима\n"
+            "──────────\n"
+            "Пришлите одним сообщением число от 0 до 23.\n"
+            "Например: 18 — для начала в 18:00; 9 — для конца в 09:00.\n\n"
+            "Окно может пересекать полночь: start=18, end=9\n"
+            "значит «с 18:00 до 09:00, включая всю ночь»."
+        ),
+        attachments=[kbds.op_settings_quiet_input_cancel_keyboard()],
+    )
+
+
+async def _apply_quiet_hour_edit(
+    event, operator_id: int, which: str, new_text: str,
+) -> None:
+    """Применить введённое значение часа: parse → validate 0–23 →
+    set_value → refresh cache → перерисовка карточки."""
+    from aemr_bot.services import quiet_hours
+
+    raw = new_text.strip()
+    try:
+        new_value = int(raw)
+    except ValueError:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=f"❌ «{raw[:40]}» — не число. Пришлите целое 0–23.",
+            attachments=[kbds.op_settings_quiet_input_cancel_keyboard()],
+        )
+        return
+    if not (0 <= new_value <= 23):
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=f"❌ {new_value} вне диапазона. Допустимо 0–23.",
+            attachments=[kbds.op_settings_quiet_input_cancel_keyboard()],
+        )
+        return
+    key = f"admin_quiet_hours_{which}"
+    async with session_scope() as session:
+        await settings_store.set_value(session, key, new_value)
+        await ops_svc.write_audit(
+            session,
+            operator_max_user_id=operator_id,
+            action="setting_update",
+            target=key,
+            details={"value": new_value},
         )
         await session.commit()
         await quiet_hours.refresh_cache_from_db(session)
@@ -7030,6 +7103,11 @@ async def handle_settings_edit_text(event, text: str) -> bool:
         return True
     if kind == "obj_add":
         await _apply_obj_add(event, operator_id, key, new_text)
+        _intent_drop(operator_id)
+        return True
+    if kind == "quiet_hour":
+        which = intent.get("which", "start")
+        await _apply_quiet_hour_edit(event, operator_id, which, new_text)
         _intent_drop(operator_id)
         return True
     return False
@@ -14507,8 +14585,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `71051` bytes  
-SHA-256: `167f44b5a3458d6fcff280269115eb8adef3119145ee66776ebfca9289ad4d25`
+Size: `71707` bytes  
+SHA-256: `7c31b17b0e8034e2e17c384885efc634a599a5082c3d2520643674508a7e99f0`
 
 ```python
 from maxapi.types import (
@@ -15659,11 +15737,12 @@ def op_settings_obj_item_keyboard(key: str, index: int):
 
 
 def op_settings_quiet_keyboard(*, enabled: bool):
-    """Карточка «🌙 Тихий режим» — toggle через кнопку. Границы окна
-    (часы start/end) меняются через текстовую команду `/setting`
-    (валидация int + 0–23 уже в SCHEMA). Слайдер start/end в
-    callback'е MAX-API не сделать одним кликом, а полноценный
-    wizard для двух чисел — overkill для редко-используемой настройки.
+    """Карточка «🌙 Тихий режим» — toggle + wizard для часов start/end.
+
+    Edit start/end через стандартный intent flow (как для текстовых
+    ключей): оператор тапает «✏️ Изменить начало» → бот просит ввести
+    число 0–23 → следующее сообщение оператора сохраняется + cache
+    обновляется + карточка перерисовывается с новым значением.
     """
     kb = InlineKeyboardBuilder()
     toggle_label = (
@@ -15671,8 +15750,18 @@ def op_settings_quiet_keyboard(*, enabled: bool):
         else "🔔 Включить тихий режим"
     )
     kb.row(CallbackButton(text=toggle_label, payload="op:set:quiet:toggle"))
+    kb.row(CallbackButton(text="✏️ Изменить начало (час)", payload="op:set:quiet:edit:start"))
+    kb.row(CallbackButton(text="✏️ Изменить конец (час)", payload="op:set:quiet:edit:end"))
     kb.row(CallbackButton(text="↩️ К настройкам", payload="op:settings"))
     kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    return kb.as_markup()
+
+
+def op_settings_quiet_input_cancel_keyboard():
+    """Кнопка «❌ Отмена» под подсказкой ввода часа тихого режима —
+    возврат на карточку без сохранения."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="❌ Отмена", payload="op:set:quiet"))
     return kb.as_markup()
 
 
