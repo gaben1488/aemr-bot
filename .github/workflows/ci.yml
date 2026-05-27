@@ -72,7 +72,7 @@ jobs:
           python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off $IGNORE_FLAGS || true
           exit "$audit_status"
       - name: Upload security report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: pip-audit-report
@@ -139,7 +139,7 @@ jobs:
           --cov-fail-under=66
 
       - name: Upload coverage reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage-reports
