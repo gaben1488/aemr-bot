@@ -66,7 +66,10 @@ class TestAdminCard:
         # явный лейбл, эмодзи в начале строки для screen reader).
         assert "Суть обращения:" in result
         assert "Яма во дворе." in result
-        assert "Дополнение к обращению:" in result
+        # A1 (2026-05-27): единый timeline даже при отсутствии ответа
+        # оператора — раньше тут было «Дополнение к обращению:».
+        assert "История переписки:" in result
+        assert "📩 Дополнение жителя" in result
         assert "яма у второго подъезда" in result
 
 

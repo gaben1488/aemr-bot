@@ -60,34 +60,6 @@ def _loaded_messages(appeal: Appeal) -> list:
     return list(messages or [])
 
 
-def admin_followups_block(appeal: Appeal) -> str:
-    followups = [
-        msg for msg in _loaded_messages(appeal)
-        if getattr(msg, "direction", None) == MessageDirection.FROM_USER.value
-    ]
-    if not followups:
-        return ""
-
-    hidden_count = max(0, len(followups) - 5)
-    visible = followups[-5:]
-    title = "Дополнение к обращению:" if len(visible) == 1 else "Дополнения к обращению:"
-    lines = ["────────────────", title]
-    if hidden_count:
-        lines.append(f"Ранее было ещё {hidden_count} дополнений.")
-    for idx, msg in enumerate(visible, start=1):
-        text = (getattr(msg, "text", None) or "").strip()
-        attachments = getattr(msg, "attachments", None) or []
-        attach_line = attachments_summary_line(attachments)
-        body = _clip(text) if text else "Без текста."
-        if attach_line:
-            body = f"{body}\n{attach_line}"
-        if len(visible) == 1:
-            lines.append(body)
-        else:
-            lines.append(f"{idx}. {body}")
-    return "\n".join(lines)
-
-
 def _local_short(dt: datetime) -> str:
     """Короткая локальная дата для timeline — без года, экономия места."""
     return dt.astimezone(TZ).strftime("%d.%m %H:%M")
@@ -160,20 +132,17 @@ def _render_timeline(
 def appeal_timeline_block(appeal: Appeal) -> str:
     """Хронологическая лента переписки для admin-карточки.
 
-    Если ответов оператора ещё не было — fallback на старый
-    `admin_followups_block` (компактные «Дополнения к обращению»),
-    чтобы не вводить лишний заголовок «История переписки» для
-    обращений в состоянии NEW/IN_PROGRESS без диалога.
+    A1 (2026-05-27): унифицировано. Раньше при отсутствии ответа
+    оператора возвращался компактный `admin_followups_block`
+    («Дополнения к обращению»), а после первого ответа формат
+    переключался на полноценный timeline («История переписки»). Два
+    рендерера давали несогласованный UX: оператор видел разный
+    layout до и после собственного ответа. Теперь всегда timeline —
+    единый формат с момента появления хотя бы одного сообщения.
     """
     msgs = _loaded_messages(appeal)
     if not msgs:
         return ""
-    has_operator_msg = any(
-        getattr(m, "direction", None) == MessageDirection.FROM_OPERATOR.value
-        for m in msgs
-    )
-    if not has_operator_msg:
-        return admin_followups_block(appeal)
     return _render_timeline(
         msgs,
         operator_marker="📨 Ответ оператора",
@@ -243,10 +212,9 @@ def admin_card(appeal: Appeal, user: User) -> str:
     if summary_line:
         body = f"{body}\n{summary_line}"
     # Timeline: полная история переписки (followup'ы жителя + ответы
-    # оператора в хронологии). Когда ответов нет — fallback на старый
-    # «Дополнения к обращению» (см. appeal_timeline_block). Это
-    # выполняет запрос владельца про «явную прозрачную полностью
-    # информативную историю и конверсию ответов на обращения».
+    # оператора в хронологии). A1 (2026-05-27): единый формат
+    # «История переписки» с момента первого сообщения — без
+    # переключения layout при первом ответе оператора.
     timeline = appeal_timeline_block(appeal)
     if timeline:
         body = f"{body}\n\n{timeline}"
