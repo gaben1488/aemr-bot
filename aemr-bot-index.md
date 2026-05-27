@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 03:58:40 UTC`
+Generated at: `2026-05-27 04:14:56 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `240`
 Max file size: `300 KB`
@@ -79,7 +79,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/idempotency.py` (8575 bytes)
 - `bot/aemr_bot/services/operators.py` (10123 bytes)
 - `bot/aemr_bot/services/policy.py` (2979 bytes)
-- `bot/aemr_bot/services/progress.py` (9433 bytes)
+- `bot/aemr_bot/services/progress.py` (9940 bytes)
 - `bot/aemr_bot/services/repo_sync.py` (16984 bytes)
 - `bot/aemr_bot/services/settings_store.py` (44633 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
@@ -88,7 +88,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (11408 bytes)
-- `bot/aemr_bot/texts.py` (57987 bytes)
+- `bot/aemr_bot/texts.py` (58122 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -160,7 +160,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_menu_tracker_edit_policy.py` (12482 bytes)
 - `bot/tests/test_operator_reply_closed_guard.py` (3266 bytes)
 - `bot/tests/test_operator_reply_with_image.py` (7517 bytes)
-- `bot/tests/test_progress.py` (10480 bytes)
+- `bot/tests/test_progress.py` (10683 bytes)
 - `bot/tests/test_pure_functions.py` (11522 bytes)
 - `bot/tests/test_reliability_pass.py` (10544 bytes)
 - `bot/tests/test_repo_sync.py` (21989 bytes)
@@ -20909,8 +20909,8 @@ def build_file_attachment(token: str):
 
 ### `bot/aemr_bot/services/progress.py`
 
-Size: `9433` bytes  
-SHA-256: `55105a75789f4403df30f6e77a55335e4d618dd62beb59b3e4f438b6d9c698f3`
+Size: `9940` bytes  
+SHA-256: `bd405b2a8cd25ee0bd61b6b4ff6e4a25352ea48aab1480949497f3e0e9fe63dd`
 
 ```python
 """Прогресс-карта FSM-воронки приёма обращения.
@@ -20945,14 +20945,20 @@ _STAGES: tuple[Stage, ...] = ("name", "locality", "address", "topic", "summary")
 _STAGE_LABELS: dict[Stage, str] = {
     "name": "Имя",
     "locality": "Населённый пункт",
-    "address": "Адрес",
+    "address": "Адрес проблемы",
     "topic": "Тема",
     "summary": "Суть",
 }
 _STAGE_PROMPTS: dict[Stage, str] = {
     "name": "Введите ваше имя одним сообщением",
     "locality": "Выберите населённый пункт ниже",
-    "address": "Укажите адрес — улица и дом",
+    # 2026-05-27: явное «адрес проблемы», не «адрес где живёт житель».
+    # Жители путали поля и присылали свой домашний адрес вместо адреса
+    # происшествия — оператору приходилось перепрашивать.
+    "address": (
+        "Укажите адрес, по которому произошла проблема "
+        "(не ваш домашний адрес). Например: ул. Ленина, 13"
+    ),
     "topic": "Выберите тему обращения ниже",
     "summary": (
         "Опишите суть обращения одним сообщением. К нему можно "
@@ -24054,8 +24060,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `57987` bytes  
-SHA-256: `faad463c0b7929b88013f97312d6e0f18249124a0b18fe37e9f1fcfad19b4a00`
+Size: `58122` bytes  
+SHA-256: `ddfdd6bed718076c2b81d9995343297138402e942d991d607cb4bf472fd697c0`
 
 ```python
 WELCOME = (
@@ -24148,7 +24154,10 @@ APPEAL_EMPTY_REJECTED = (
 
 NAME_EMPTY = "Напишите имя одним словом или фразой. Например: Алексей."
 
-ADDRESS_EMPTY = "Укажите адрес проблемы. Например: г. Елизово, ул. Ленина, д. 13."
+ADDRESS_EMPTY = (
+    "Укажите адрес, по которому произошла проблема — не ваш домашний "
+    "адрес. Например: г. Елизово, ул. Ленина, д. 13."
+)
 
 CONTACT_RETRY = (
     "Номер телефона нужно отправить кнопкой — текстом мы его не примем. "
@@ -24174,7 +24183,7 @@ APPEAL_CARD_TEMPLATE = (
     "🗓 {created_at}\n"
     "\n"
     "📍 Населённый пункт: {locality}\n"
-    "🏠 Адрес: {address}\n"
+    "📍 Адрес проблемы: {address}\n"
     "🏷 Тема: {topic}\n"
     "\n"
     "📝 Суть обращения:\n"
@@ -24191,7 +24200,7 @@ ADMIN_CARD_TEMPLATE = (
     "· · ·\n"
     "\n"
     "📍 Населённый пункт: {locality}\n"
-    "🏠 Адрес: {address}\n"
+    "📍 Адрес проблемы: {address}\n"
     "🏷 Тема: {topic}\n"
     "\n"
     "📝 Суть обращения:\n"
@@ -43266,8 +43275,8 @@ class TestImageRelay:
 
 ### `bot/tests/test_progress.py`
 
-Size: `10480` bytes  
-SHA-256: `acc6529533161f8a55bc12e97b16df72bda29be151b0e993aa8838edfa303372`
+Size: `10683` bytes  
+SHA-256: `c37905d090a66197f4f2520e425deeb53a4070df718ec3a327bb08cb0047fd36`
 
 ```python
 """Тесты на services/progress — прогресс-карта FSM-воронки.
@@ -43302,7 +43311,7 @@ class TestRenderProgressCounter:
         )
         assert "<code>3 / 5</code>" in text
         assert "🟢🟢🟦⬜⬜" not in text
-        assert "▶ <b>Адрес</b>" in text
+        assert "▶ <b>Адрес проблемы</b>" in text
 
     def test_last_stage_counter_layout(self) -> None:
         text = render_progress(
@@ -43327,14 +43336,16 @@ class TestRenderProgressContent:
         # Завершённые шаги — ✓ + label + · + <b>value</b>
         assert "✓ Имя · <b>Иван</b>" in text
         assert "✓ Населённый пункт · <b>Елизово</b>" in text
-        assert "✓ Адрес · <b>ул. Ленина, 5</b>" in text
+        assert "✓ Адрес проблемы · <b>ул. Ленина, 5</b>" in text
 
     def test_current_step_blockquote_prompt(self) -> None:
         text = render_progress(stage="address", name="X", locality="Y")
         # Текущий шаг — ▶ <b>label</b> + <blockquote>prompt</blockquote>
-        assert "▶ <b>Адрес</b>" in text
+        assert "▶ <b>Адрес проблемы</b>" in text
         assert "<blockquote>" in text
-        assert "улица" in text  # подсказка внутри blockquote
+        # 2026-05-27: подсказка теперь упоминает «адрес проблемы»
+        # и «не ваш домашний адрес».
+        assert "не ваш домашний" in text
 
     def test_future_steps_are_not_rendered(self) -> None:
         text = render_progress(stage="locality", name="Иван")
@@ -43344,7 +43355,7 @@ class TestRenderProgressContent:
         assert "<code>2 / 5</code>" in text
         assert "✓ Имя · <b>Иван</b>" in text
         assert "▶ <b>Населённый пункт</b>" in text
-        assert "○ Адрес" not in text
+        assert "○ Адрес проблемы" not in text
         assert "○ Тема" not in text
         assert "○ Суть" not in text
 
