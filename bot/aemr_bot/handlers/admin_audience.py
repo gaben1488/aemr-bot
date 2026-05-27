@@ -198,14 +198,17 @@ def _mask_phone(phone: str | None) -> str:
     операторов; 152-ФЗ erasure эту копию не достанет. Полный номер
     нужен реально только при /erase phone= — точечно. В list-выводах
     оставляем 4 последние цифры и страновой префикс для распознавания.
-    Если телефон не задан — «—»; если короче 4 цифр (мусор) —
-    показываем как есть, скрывать там нечего.
+
+    SECURITY_REVIEW_2026-05-28 §A7: при len(digits) < 4 возвращаем
+    «—», а не raw `phone` — раньше короткие garbage-input'ы (test
+    данные, частично стёртые номера) выходили в admin-чат без
+    маскировки. Лучше «нет данных» чем «выдали как есть».
     """
     if not phone:
         return "—"
     digits = "".join(ch for ch in phone if ch.isdigit())
     if len(digits) < 4:
-        return phone
+        return "—"
     tail = digits[-4:]
     prefix = "+7" if digits[0] in {"7", "8"} and len(digits) >= 11 else "+"
     return f"{prefix}***{tail}"

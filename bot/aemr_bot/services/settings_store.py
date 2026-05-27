@@ -55,16 +55,53 @@ def _is_valid_phone(value: str) -> bool:
 
 
 def _is_whitelisted_url(value: str) -> bool:
-    """True если URL ведёт на разрешённый host (Elizovo / Kamchatka gov)."""
+    """True если URL ведёт на разрешённый host (Elizovo / Kamchatka gov).
+
+    SECURITY_REVIEW_2026-05-28 §A4 hardening:
+    - Reject если исходный host (из `parsed.netloc`, который Python НЕ
+      нормализует, в отличие от `parsed.hostname`) содержит UPPERCASE
+      символы. Mixed-case hosts (`https://Gosuslugi.RU`) формально
+      валидны по RFC 3986, но визуально подозрительны — phishing-
+      ссылки такого вида чаще обманывают пожилого жителя. Standard
+      DNS-практика — все hosts lowercase; legitimate гос-ссылки от
+      Администрации тоже всегда lowercase.
+    - Reject если host содержит символы вне `[a-z0-9.-]`. Защита от
+      unicode-омоглифов (`gоsuslugi.ru` с cyrillic «о» U+043E) и
+      других непечатных символов, которые могут попасть через
+      copy-paste из подозрительных источников.
+    """
     try:
         parsed = urlparse(value)
     except Exception:
         return False
     if parsed.scheme not in {"http", "https"}:
         return False
-    host = (parsed.hostname or "").lower()
-    if not host:
+    # `parsed.netloc` — raw host (case-sensitive, с возможным
+    # `user:pass@` префиксом и `:port` суффиксом). `parsed.hostname` —
+    # Python-normalized (lowercase). Берём raw для §A4-check, затем
+    # отделяем user-info и port, сравниваем с whitelist.
+    raw_netloc = parsed.netloc or ""
+    if not raw_netloc:
         return False
+    # Отбрасываем `user:pass@` если есть.
+    if "@" in raw_netloc:
+        raw_netloc = raw_netloc.split("@", 1)[1]
+    # Отбрасываем `:port` (но `[ipv6]:port` — оставим за рамками, у нас
+    # гос-домены ASCII).
+    if ":" in raw_netloc:
+        raw_netloc = raw_netloc.split(":", 1)[0]
+    raw_host = raw_netloc
+    if not raw_host:
+        return False
+    # §A4: reject mixed-case в исходном host.
+    if raw_host != raw_host.lower():
+        return False
+    # §A4: reject не-`[a-z0-9.-]` символы (unicode-омоглифы и
+    # подобные). punycode-домены здесь не страдают — они в ASCII
+    # как `xn--80a1acny.xn--p1ai`.
+    if not all(ch.isascii() and (ch.isalnum() or ch in ".-") for ch in raw_host):
+        return False
+    host = raw_host
     return any(
         host == suffix or host.endswith("." + suffix)
         for suffix in _URL_HOST_WHITELIST_SUFFIXES

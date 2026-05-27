@@ -34,12 +34,18 @@ async def _send(bot: Any, text: str) -> None:
 def _mask_phone(phone: str | None) -> str:
     """Маскированный телефон для admin-чата: «+7***1234». 152-ФЗ:
     операторы видят 4 последние цифры для идентификации, но не полный
-    номер (он попадает в backup MAX и в скриншоты)."""
+    номер (он попадает в backup MAX и в скриншоты).
+
+    SECURITY_REVIEW_2026-05-28 §A7: при len(digits) < 4 раньше
+    возвращали raw `phone` — это утечка PII на edge-case (короткие
+    test-input'ы, частично стёртые номера). Теперь возвращаем «—»:
+    лучше «нет данных» чем «выдали без маски».
+    """
     if not phone:
         return "—"
     digits = "".join(ch for ch in phone if ch.isdigit())
     if len(digits) < 4:
-        return phone
+        return "—"
     tail = digits[-4:]
     prefix = "+7" if digits[0] in {"7", "8"} and len(digits) >= 11 else "+"
     return f"{prefix}***{tail}"

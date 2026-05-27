@@ -69,6 +69,18 @@ _DEFANG_TLDS = (
     # Cheap/new (frequent phishing)
     "xyz", "top", "club", "online", "site", "shop", "store",
     "win", "vip", "icu", "app", "dev",
+    # IDN/punycode (SECURITY_REVIEW_2026-05-28 §A3). MAX-клиент
+    # auto-linkify'ит punycode-домены так же, как обычные ASCII.
+    # `xn--p1ai` = «.рф» в punycode, `xn--p1acf` = «.рус»,
+    # `xn--80aswg` = «.сайт». Не покрывать → фишинг через
+    # `xn--evil.xn--p1ai` пройдёт мимо defang'а.
+    "xn--p1ai", "xn--p1acf", "xn--80aswg",
+    # Country (расширение под §A3) — TLD'ы регулярно используются
+    # в международных скам-кампаниях против рунета.
+    "cn", "tr", "in", "ng", "mx", "br", "id", "vn", "ph", "th",
+    # 2024-2026 расширения — относительно новые TLD'ы,
+    # доступные за копейки, любимы скам-операциями.
+    "bot", "tech", "cloud", "live", "work", "social", "world",
 )
 
 # Pre-compile один большой regex для всех TLD. Группируем в (?:...) для
