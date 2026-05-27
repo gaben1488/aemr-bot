@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-26 23:48:48 UTC`
+Generated at: `2026-05-27 00:12:51 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `237`
 Max file size: `300 KB`
@@ -39,7 +39,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/db/alembic/versions/0017_appeals_last_card_mid.py` (1920 bytes)
 - `bot/aemr_bot/db/models.py` (20102 bytes)
 - `bot/aemr_bot/db/session.py` (2764 bytes)
-- `bot/aemr_bot/handlers/__init__.py` (6975 bytes)
+- `bot/aemr_bot/handlers/__init__.py` (7366 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (23186 bytes)
@@ -57,15 +57,15 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/broadcast.py` (59569 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (12935 bytes)
-- `bot/aemr_bot/handlers/menu.py` (53035 bytes)
+- `bot/aemr_bot/handlers/menu.py` (52692 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (41155 bytes)
 - `bot/aemr_bot/handlers/start.py` (21062 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (68253 bytes)
 - `bot/aemr_bot/main.py` (21047 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
-- `bot/aemr_bot/services/admin_bus.py` (12331 bytes)
-- `bot/aemr_bot/services/admin_card.py` (13031 bytes)
+- `bot/aemr_bot/services/admin_bus.py` (13836 bytes)
+- `bot/aemr_bot/services/admin_card.py` (12815 bytes)
 - `bot/aemr_bot/services/admin_events.py` (6489 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
 - `bot/aemr_bot/services/appeals.py` (27094 bytes)
@@ -92,9 +92,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
-- `bot/aemr_bot/utils/event.py` (13349 bytes)
+- `bot/aemr_bot/utils/event.py` (13650 bytes)
 - `bot/aemr_bot/utils/image_attachments.py` (1137 bytes)
-- `bot/aemr_bot/utils/menu_tracker.py` (2996 bytes)
+- `bot/aemr_bot/utils/menu_tracker.py` (11191 bytes)
 - `bot/aemr_bot/utils/typing_indicator.py` (3976 bytes)
 - `bot/aemr_bot/utils/url_defang.py` (5100 bytes)
 - `bot/alembic.ini` (619 bytes)
@@ -103,15 +103,15 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/_helpers.py` (5713 bytes)
 - `bot/tests/conftest.py` (1882 bytes)
 - `bot/tests/test_admin_appeal_ops.py` (29769 bytes)
-- `bot/tests/test_admin_bus.py` (10575 bytes)
+- `bot/tests/test_admin_bus.py` (12152 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
 - `bot/tests/test_admin_card_detached_safety.py` (8432 bytes)
-- `bot/tests/test_admin_card_render.py` (17380 bytes)
+- `bot/tests/test_admin_card_render.py` (18711 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
 - `bot/tests/test_admin_events_descriptor.py` (5856 bytes)
 - `bot/tests/test_admin_handlers_small.py` (21842 bytes)
 - `bot/tests/test_admin_operators.py` (19228 bytes)
-- `bot/tests/test_admin_outgoing_hook.py` (7012 bytes)
+- `bot/tests/test_admin_outgoing_hook.py` (7453 bytes)
 - `bot/tests/test_admin_panel.py` (12999 bytes)
 - `bot/tests/test_admin_settings_audit.py` (1917 bytes)
 - `bot/tests/test_appeal_card_edit_policy.py` (5805 bytes)
@@ -141,7 +141,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_event_helpers.py` (9073 bytes)
 - `bot/tests/test_extract_location.py` (5053 bytes)
 - `bot/tests/test_final_p1_regressions.py` (6078 bytes)
-- `bot/tests/test_freshness_full_coverage.py` (33982 bytes)
+- `bot/tests/test_freshness_full_coverage.py` (35624 bytes)
 - `bot/tests/test_funnel_state_hardening.py` (6421 bytes)
 - `bot/tests/test_geo.py` (9324 bytes)
 - `bot/tests/test_handlers_appeal_funnel.py` (24730 bytes)
@@ -2696,8 +2696,8 @@ async def session_scope() -> AsyncIterator[AsyncSession]:
 
 ### `bot/aemr_bot/handlers/__init__.py`
 
-Size: `6975` bytes  
-SHA-256: `66586beaeb3c39fc9b81f602531607c9e5000e52bf9cd422a20953f5e177b13e`
+Size: `7366` bytes  
+SHA-256: `2ad9a7497b06474b2dc1f228f4fb6d94e26e745159ee873c57c19939e1675e2f`
 
 ```python
 from maxapi import Dispatcher
@@ -2767,6 +2767,11 @@ class AdminChatActivityMiddleware(BaseMiddleware):
                     body = getattr(getattr(event_object, "message", None), "body", None)
                     mid = getattr(body, "mid", None)
                     if mid:
+                        # 2026-05-27 dual-tracker: incoming op-message
+                        # двигает только physical_mid, editable_mid
+                        # остаётся на mid предыдущего меню. См.
+                        # `admin_bus.note_incoming_admin_message`
+                        # (теперь зовёт `menu_tracker.note_incoming`).
                         admin_bus.note_incoming_admin_message(str(mid))
             except Exception:
                 # Tracker-sync не должен ломать pipeline — это best-effort.
@@ -11778,8 +11783,8 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 
 ### `bot/aemr_bot/handlers/menu.py`
 
-Size: `53035` bytes  
-SHA-256: `8edf02974ad6cd3fb8e286262f3d94ed2b21152fd907238d1e4ee8f07a655706`
+Size: `52692` bytes  
+SHA-256: `620a2e78b13c1ff8d501cf140d810f76b8ee0f22e3db67add21b1c6f3f254699`
 
 ```python
 import logging
@@ -11857,44 +11862,36 @@ async def _send_or_edit_menu(
     chat_id = get_chat_id(event)
     user_id = None if chat_id is not None else get_user_id(event)
 
-    # Freshness check: edit разрешён только если callback пришёл от
-    # АКТУАЛЬНОЙ карточки-меню (last в этом чате). Per-chat tracker
-    # поддерживает любой chat_id, не только admin (см.
-    # `utils/menu_tracker.py`).
-    last_known_mid = (
-        menu_tracker.get_last_menu_mid(chat_id)
-        if chat_id is not None
-        else None
-    )
-    can_edit = (
-        callback_mid is not None
-        and last_known_mid is not None
-        and callback_mid == last_known_mid
+    # 2026-05-27 dual-tracker: edit разрешён только если callback пришёл
+    # с АКТУАЛЬНОЙ редактируемой карточки И она физически последняя в
+    # чате (см. `menu_tracker.can_edit` для трёх условий: physical,
+    # editable, kind). Если ниже карточки появилось event-уведомление
+    # (CITIZEN_REPLY, APPEAL_ACCEPTED) — physical_mid сдвинулся,
+    # can_edit вернёт False, идём в send_new.
+    edit_allowed = (
+        chat_id is not None
+        and menu_tracker.can_edit(chat_id, callback_mid, kind="menu")
         and hasattr(event.bot, "edit_message")
     )
 
     log.debug(
-        "menu freshness: chat=%s callback_mid=%s tracker=%s decision=%s",
-        chat_id, callback_mid, last_known_mid,
-        "edit" if can_edit else "send_new",
+        "menu freshness: chat=%s callback_mid=%s decision=%s",
+        chat_id, callback_mid, "edit" if edit_allowed else "send_new",
     )
 
-    if can_edit:
+    if edit_allowed:
         try:
             await event.bot.edit_message(
                 message_id=callback_mid,
                 text=text,
                 attachments=attachments,
             )
-            # edit сохраняет mid — tracker не меняем.
             return
         except (MaxApiError, MaxConnection, aiohttp.ClientError, TimeoutError):
             log.info(
                 "menu: edit_message %s failed, fallback to send",
                 callback_mid, exc_info=False,
             )
-            # На fail edit'а tracker может быть невалиден — очистим,
-            # чтобы следующий callback тоже пошёл в send_new.
             if chat_id is not None:
                 menu_tracker.clear(chat_id)
 
@@ -11904,15 +11901,14 @@ async def _send_or_edit_menu(
         text=text,
         attachments=attachments,
     )
-    # Обновляем tracker свежим mid отправленного сообщения. Без этого
-    # next-callback не сможет edit'нуть свежее меню — приведёт к
-    # лишним copies меню при wizard'ных переходах. extract_message_id
-    # tolerant к старым mock-структурам (вернёт None, tracker не двинется).
+    # citizen-меню — редактируемая карточка. Регистрируем оба mid +
+    # kind='menu', чтобы следующий тап кнопки на этом меню edit'ил
+    # его на месте.
     if chat_id is not None:
         from aemr_bot.utils.event import extract_message_id  # noqa: PLC0415
         new_mid = extract_message_id(sent)
         if new_mid:
-            menu_tracker.set_last_menu_mid(chat_id, new_mid)
+            menu_tracker.note_editable_send(chat_id, new_mid, kind="menu")
 
 
 async def open_main_menu(event):
@@ -16196,8 +16192,8 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ### `bot/aemr_bot/services/admin_bus.py`
 
-Size: `12331` bytes  
-SHA-256: `cc078bc04e7b61a37748f05f0b2e8fcd2a269625e8f475121596e5bf54703e5d`
+Size: `13836` bytes  
+SHA-256: `975e11aa6d0e03db5e50e72c406e04c8a60fdf595f08036acd71959374778572`
 
 ```python
 """Единая шина для отправки сообщений в служебную группу (admin chat).
@@ -16294,10 +16290,16 @@ async def send(
         return None
     mid = extract_message_id(sent)
     if mid:
-        # Атомарный sync: physical chat сдвинулся вниз, tracker должен
-        # отразить это сразу. Иначе следующий callback оператора на
-        # карточку выше получит freshness false-positive.
-        menu_tracker.set_last_menu_mid(cfg.admin_group_id, mid)
+        # 2026-05-27 dual-tracker: admin_bus.send используется для
+        # **historic events** (pulse, audit-уведомления, retention,
+        # operator confirmations, audit-notice). Это НЕ редактируемые
+        # меню — клик кнопки на них не должен превращать их в меню.
+        # Поэтому двигаем только `physical_mid` через `note_event`,
+        # `editable_mid` остаётся на mid предыдущего меню (если было).
+        # Следующий тап оператора по кнопке на этом events callback_mid
+        # != editable_mid → can_edit=False → send_new. Event остаётся
+        # в чате как историчная запись.
+        menu_tracker.note_event(cfg.admin_group_id, mid)
     return mid
 
 
@@ -16316,7 +16318,12 @@ def note_incoming_admin_message(mid: str | None) -> None:
     """
     if not cfg.admin_group_id or not mid:
         return
-    menu_tracker.set_last_menu_mid(cfg.admin_group_id, mid)
+    # 2026-05-27 dual-tracker: incoming op-message — двигает только
+    # physical_mid. Editable_mid остаётся на mid предыдущего меню;
+    # клик оператора по нему всё ещё может редактировать его, но
+    # callback_mid != physical_mid (потому что op написал текст ниже)
+    # → freshness откажет → send_new.
+    menu_tracker.note_incoming(cfg.admin_group_id, mid)
 
 
 # Маркер: к одному и тому же bot.send_message hook ставим только один
@@ -16403,12 +16410,17 @@ def install_outgoing_tracker_hook(bot) -> None:
             ):
                 mid = extract_message_id(result)
                 if mid:
-                    menu_tracker.set_last_menu_mid(
-                        cfg.admin_group_id, mid
-                    )
+                    # 2026-05-27 dual-tracker: hook ловит ВСЕ исходящие
+                    # в admin chat. Большинство — historic events (pulse,
+                    # audit, broadcast progress, прямые sends в коде).
+                    # Двигаем только physical_mid. Editable_mid должен
+                    # обновляться явно через send_or_edit_screen или
+                    # _send_or_edit_menu (которые сами знают, что они
+                    # шлют редактируемый экран).
+                    menu_tracker.note_event(cfg.admin_group_id, mid)
                     log.debug(
                         "outgoing-tracker-hook: admin chat send → "
-                        "tracker = %s", mid,
+                        "physical_mid = %s", mid,
                     )
         except Exception:
             # tracker-sync best-effort, никогда не ломает caller.
@@ -16430,8 +16442,8 @@ def install_outgoing_tracker_hook(bot) -> None:
 
 ### `bot/aemr_bot/services/admin_card.py`
 
-Size: `13031` bytes  
-SHA-256: `611e7d5819d14badf9e0fae3c585b40adaac0deccde0a352b718fa9a06b37cfd`
+Size: `12815` bytes  
+SHA-256: `05e92ad5bafdcf32df4ffb2a056e9c0d54d0ee1d69c241d0970fce94dc85acfe`
 
 ```python
 """Admin appeal card с freshness-rule (унифицированное правило для
@@ -16609,45 +16621,30 @@ async def render(
     )
     attachments = [kb]
 
-    # Freshness check.
-    last_in_chat = menu_tracker.get_last_menu_mid(cfg.admin_group_id)
-    can_edit = (
-        not force_new
-        and callback_mid is not None
-        and last_in_chat is not None
-        and callback_mid == last_in_chat
-    )
+    # 2026-05-27 sacred event log: карточка обращения **никогда** не
+    # редактируется. Каждое op-действие (close, reopen, reply, block)
+    # или followup жителя — это **event** в timeline'е обращения,
+    # должен появиться новой записью внизу чата. Старая карточка
+    # остаётся в истории как иммутабельный slice.
+    #
+    # Раньше тут была ветка `can_edit` (callback_mid == tracker → edit).
+    # Это работало, пока tracker совпадал с editable-mid и не было
+    # historic events ниже. Но даже когда edit формально допустим,
+    # карточка обращения — sacred (см. жалобу владельца «открыл 2,
+    # закрыл, одна обновилась, другая нет» — root cause именно эта
+    # ветка). Удалена полностью.
+    #
+    # `callback_mid` теперь используется только для diagnostics-логов
+    # и для пометки force_new=False как ошибка (на самом деле всегда
+    # send_new — дальше идёт прямой bot.send_message).
+    _ = callback_mid  # noqa: F841 — параметр оставлен для совместимости
+    _ = force_new  # noqa: F841 — тоже совместимость; теперь всегда send_new
 
-    # На edit event_header НЕ применяется: карточку правят in-place,
-    # маркер «новое событие» теряет смысл — оператор сам только что
-    # тапнул кнопку, контекст у него уже в голове.
     text_for_send = (
         f"{event_header}\n────────────────\n{text}"
-        if event_header and not can_edit
+        if event_header
         else text
     )
-
-    if can_edit:
-        try:
-            await bot.edit_message(
-                message_id=callback_mid,
-                text=text,
-                attachments=attachments,
-            )
-            # На edit мы НЕ обновляем last_admin_card_mid в БД и не
-            # меняем menu_tracker (mid и так остался прежним).
-            return callback_mid
-        except Exception:
-            log.info(
-                "admin_card.render: edit_message %s failed for #%s — "
-                "fallback to send_new",
-                callback_mid, appeal.id, exc_info=False,
-            )
-            # На fail edit'а tracker может быть невалиден — очистим,
-            # чтобы следующий callback тоже пошёл в send_new.
-            menu_tracker.clear(cfg.admin_group_id)
-
-    # Отправляем новую карточку (edit не сработал или не применим).
     try:
         sent = await bot.send_message(
             chat_id=cfg.admin_group_id,
@@ -16662,19 +16659,15 @@ async def render(
 
     new_mid = extract_message_id(sent)
     if new_mid:
-        # SACRED rule (исправлено 2026-05-26 после жалобы владельца):
-        # admin appeal card НЕ является menu-карточкой и НЕ должна
-        # участвовать в `menu_tracker`. Раньше set_last_menu_mid
-        # тут писал mid карточки обращения как «последнее меню»,
-        # из-за чего любой callback `op:menu` / `op:diag` /
-        # `op:stats:*` с кнопок этой же карточки EDIT'ил sacred-
-        # карточку (превращая переписку обращения в админ-меню).
-        #
-        # Теперь — `menu_tracker.clear()`. Следующий клик меню
-        # увидит «текущего меню нет» и пошлёт НОВОЕ сообщение
-        # (через `send_or_edit_screen` ветка без edit). Sacred
-        # admin appeal card остаётся неизменной.
-        menu_tracker.clear(cfg.admin_group_id)
+        # 2026-05-27 dual-tracker: карточка обращения — historic event.
+        # Регистрируем через `note_event` — двигаем только physical_mid,
+        # editable_mid не трогаем (оно осталось на mid предыдущего
+        # editable меню, если было). Когда оператор тапнет кнопку на
+        # этой карточке обращения, `can_edit` вернёт False по двум
+        # признакам сразу: kind != menu (это карточка, не меню) и
+        # editable_mid != callback_mid (editable указывает на меню
+        # выше). Sacred event log соблюдён без специальных hack'ов.
+        menu_tracker.note_event(cfg.admin_group_id, new_mid)
         async with session_scope() as session:
             await appeals_service.set_last_admin_card_mid(
                 session, appeal.id, new_mid
@@ -25716,8 +25709,8 @@ def spawn_background_task(
 
 ### `bot/aemr_bot/utils/event.py`
 
-Size: `13349` bytes  
-SHA-256: `a3bc5c7b273e2c6affc3ecb859e0e3e87c7e6c1e228370756f5c4b4e934a8608`
+Size: `13650` bytes  
+SHA-256: `7ebe940fb159e52cf9a418e8e58c2713de883f814ab365c36f302bb0709075b2`
 
 ```python
 """Адаптер поверх объектов событий maxapi.
@@ -25956,27 +25949,27 @@ async def send_or_edit_screen(
     callback_mid = (
         None if force_new_message else get_callback_message_id(event)
     )
-    last_known_mid = (
-        menu_tracker.get_last_menu_mid(target_chat_id)
-        if target_chat_id is not None
-        else None
-    )
-    # Edit разрешён только когда callback пришёл от АКТУАЛЬНОЙ карточки.
-    can_edit = (
-        callback_mid is not None
-        and last_known_mid is not None
-        and callback_mid == last_known_mid
+
+    # 2026-05-27 dual-tracker: edit разрешён только если callback пришёл
+    # от АКТУАЛЬНОЙ редактируемой карточки И она физически последняя в
+    # чате (см. `menu_tracker.can_edit` для трёх условий). Если ниже
+    # карточки появилось что-то (event, op-message, другой меню) —
+    # physical_mid сдвинулся, can_edit вернёт False, идём в send_new.
+    edit_allowed = (
+        target_chat_id is not None
+        and menu_tracker.can_edit(target_chat_id, callback_mid, kind="menu")
         and hasattr(bot, "edit_message")
     )
 
-    if can_edit:
+    if edit_allowed:
         try:
             result = await bot.edit_message(
                 message_id=callback_mid,
                 text=text,
                 attachments=attachments,
             )
-            # edit сохраняет mid — tracker не меняем.
+            # edit сохраняет mid — tracker не меняем (оба поля уже
+            # указывают на этот mid).
             return result
         except Exception:
             log.info(
@@ -25984,8 +25977,8 @@ async def send_or_edit_screen(
                 callback_mid,
                 exc_info=False,
             )
-            # Tracker очищаем, чтобы следующий callback тоже привёл к
-            # send new (не пытался опять редактировать «битый» mid).
+            # Edit fail — очищаем editable_mid, чтобы следующий callback
+            # на этот же mid не пытался опять edit'ить битый.
             if target_chat_id is not None:
                 menu_tracker.clear(target_chat_id)
 
@@ -25995,12 +25988,12 @@ async def send_or_edit_screen(
         text=text,
         attachments=attachments,
     )
-    # Обновляем tracker свежим mid отправленного сообщения. На случай
-    # если send_message вернул структуру без `.body.mid` (старые тесты-
-    # моки) — extract_message_id вернёт None, tracker не двинется.
+    # send_or_edit_screen используется для админ-меню/wizard/listing —
+    # это РЕДАКТИРУЕМЫЕ карточки. Регистрируем через
+    # `note_editable_send` — двигаем оба mid и ставим kind='menu'.
     new_mid = extract_message_id(sent)
     if new_mid and target_chat_id is not None:
-        menu_tracker.set_last_menu_mid(target_chat_id, new_mid)
+        menu_tracker.note_editable_send(target_chat_id, new_mid, kind="menu")
     return sent
 
 
@@ -26099,62 +26092,225 @@ def attachment_meta(stored: list[dict] | None) -> dict[str, int]:
 
 ### `bot/aemr_bot/utils/menu_tracker.py`
 
-Size: `2996` bytes  
-SHA-256: `757a7202b4361497e5d5fb1fe0d04cdf7aa170fc4b6bc3d2d76470c23e4f1460`
+Size: `11191` bytes  
+SHA-256: `1b376e48759c172b3e14cfe4dd9911fe833e30b12c8aed15db5f6e9a73a36d21`
 
 ```python
-"""Per-chat tracker «какая карточка-меню сейчас актуальна».
+"""Per-chat tracker с двумя независимыми смыслами: физическое последнее
+сообщение и последняя редактируемая карточка.
 
-**Зачем:** `send_or_edit_screen` решал «edit vs send new» только по типу
-события (callback → edit). Это ломалось когда оператор скроллил вверх
-к давно отредактированной карточке-меню и кликал кнопку на ней — бот
-редактировал далеко вверх по чату, а оператор не видел изменение
-(находится внизу).
+**Архитектурное обоснование** (2026-05-27, после семидневного выявления
+конфликта смыслов): раньше один `menu_tracker[chat_id]` совмещал две
+несовместимые роли:
 
-**Правило:** edit разрешён **только** если callback пришёл от того
-же `mid`, что в tracker[chat_id]. Иначе шлём новое сообщение, и
-tracker обновляется на новый mid.
+1. «Какое сообщение физически последнее в чате» — нужно, чтобы
+   freshness-rule не редактировал карточку, выше которой уже что-то
+   появилось.
+2. «Какую карточку разрешено редактировать» — нужно, чтобы клик кнопки
+   менял экран меню, а не превращал historic event в меню.
 
-**Не покрывается:**
-- «Sacred» карточки (admin appeal card, citizen reply, broadcast
-  progress, audit-уведомления, pulse, reminders) отправляются напрямую
-  через `bot.send_message`, не через `send_or_edit_screen` — они НЕ
-  трогают tracker. Edit на них через send_or_edit_screen не доходит
-  (callback_mid не совпадёт с tracker'ом → send new).
+Когда же эти смыслы совпадали в одном поле, любое исходящее сообщение
+бота двигало tracker — в том числе historic-уведомление с кнопкой «🏠
+В админ-меню». Следующий клик на это уведомление видел совпадение
+mid → редактировал уведомление в меню. Sacred event log нарушался.
 
-**Хранение:** in-memory `dict[int, str]`. Однопроцессный бот. После
-рестарта tracker пуст — первое нажатие callback пошлёт new (graceful,
-без падений). Для multi-процессного бота понадобится Redis/DB; пока
-single-process — in-memory достаточно.
+**Целевая модель.** Три независимых поля на чат:
+
+- `last_physical_mid` — mid последнего физического сообщения в чате
+  (любого: меню, события, карточки обращения, pulse, ack-уведомления).
+  Двигается каждый раз, когда бот шлёт что-либо или приходит сообщение
+  оператора/жителя.
+- `last_editable_mid` — mid последней карточки, которую разрешено
+  редактировать (меню, wizard-экран, listing). Не двигается на
+  historic events (CITIZEN_REPLY, APPEAL_ACCEPTED, audit-уведомления,
+  pulse, broadcast progress).
+- `last_editable_kind` — категория последней редактируемой карточки
+  (`menu`, `wizard`, `progress`, `listing`). Защита от «callback на
+  menu редактирует wizard»: если kind не совпадает с тем, что caller
+  собирается показать, разрешение не выдаётся.
+
+**Контракт edit:** разрешён только когда все три условия выполнены
+одновременно:
+
+1. `callback_mid == last_physical_mid` — карточка физически последняя.
+2. `callback_mid == last_editable_mid` — это была редактируемая карточка.
+3. `kind == last_editable_kind` — caller показывает экран той же
+   категории.
+
+Иначе — send_new, и оба tracker'а сдвигаются на новый mid.
+
+**Хранение:** in-memory dict с `ChatState`. Single-process бот, после
+рестарта tracker пуст (graceful — первое нажатие даёт send_new).
+
+**Обратная совместимость:** старый API `get_last_menu_mid` /
+`set_last_menu_mid` оставлен как тонкая обёртка над новой структурой
+(чтобы не ломать сотни usage-сайтов одним PR'ом). По смыслу:
+- `get_last_menu_mid` теперь возвращает `last_editable_mid`.
+- `set_last_menu_mid` устанавливает оба — физический И editable.
+Это совместимо с предыдущим поведением, потому что старый код
+вызывал `set_last_menu_mid` только из freshness-aware send'ов
+(send_or_edit_screen / _send_or_edit_menu / admin_bus.send), где это
+эквивалентно «новое меню стало последним и физически, и как карточка».
+
+Миграция на явное API (`set_after_event`, `set_after_editable_send`)
+— следующим PR'ом. Здесь только базовая структура и совместимость.
 """
 from __future__ import annotations
 
-# chat_id → last mid of a menu-card sent/edited via send_or_edit_screen.
-# Не используем `_LAST_MENU_MID` (с подчёркиванием) намеренно: модуль
-# уже private по namespace'у `utils.menu_tracker`, а tests мокают
-# через `menu_tracker.set_last_menu_mid` без обращения к внутреннему dict.
-_chat_to_mid: dict[int, str] = {}
+from dataclasses import dataclass
+from typing import Literal
+
+EditableKind = Literal["menu", "wizard", "progress", "listing"]
 
 
-def get_last_menu_mid(chat_id: int) -> str | None:
-    """Вернуть mid последней карточки-меню для чата, или None если
-    бот ещё не отправлял меню в этот чат (например, после рестарта)."""
-    return _chat_to_mid.get(chat_id)
+@dataclass
+class ChatState:
+    """Тройка состояний на чат. Все поля Optional — None означает «бот
+    ещё не отправлял ничего в этот чат» (cold start)."""
+
+    last_physical_mid: str | None = None
+    last_editable_mid: str | None = None
+    last_editable_kind: EditableKind | None = None
 
 
-def set_last_menu_mid(chat_id: int, mid: str) -> None:
-    """Запомнить mid отправленной/отредактированной карточки-меню."""
-    _chat_to_mid[chat_id] = mid
+_state_by_chat: dict[int, ChatState] = {}
+
+
+# ───────────────────── Новое явное API ─────────────────────
+
+
+def _state_for(chat_id: int) -> ChatState:
+    """Получить (или создать) ChatState для чата."""
+    state = _state_by_chat.get(chat_id)
+    if state is None:
+        state = ChatState()
+        _state_by_chat[chat_id] = state
+    return state
+
+
+def note_event(chat_id: int, mid: str) -> None:
+    """Зарегистрировать historic event в чате — двигает ТОЛЬКО physical mid.
+
+    Используется для:
+    - CITIZEN_REPLY жителю.
+    - APPEAL_ACCEPTED после finalize.
+    - audit-уведомлений в admin chat (pulse, retention, deactivation).
+    - broadcast progress кадров.
+    - admin_card.render (карточка обращения — sacred event log).
+    - Любое сообщение бота, которое не является редактируемой
+      меню-карточкой.
+
+    Editable mid НЕ двигается — clicks по кнопкам на historic event
+    дадут send_new menu, event остаётся в чате.
+    """
+    state = _state_for(chat_id)
+    state.last_physical_mid = mid
+
+
+def note_editable_send(
+    chat_id: int, mid: str, kind: EditableKind = "menu"
+) -> None:
+    """Зарегистрировать отправку редактируемой карточки — двигает ОБА mid.
+
+    Используется когда бот шлёт новый экран меню/wizard, который можно
+    редактировать при следующем тапе кнопки. После этого:
+    - `last_physical_mid` = mid (карточка теперь физически последняя).
+    - `last_editable_mid` = mid (она же редактируемая).
+    - `last_editable_kind` = kind.
+
+    Каллер должен указывать `kind` явно (по умолчанию `menu`), чтобы
+    edit-чек разрешил только смену экрана той же категории.
+    """
+    state = _state_for(chat_id)
+    state.last_physical_mid = mid
+    state.last_editable_mid = mid
+    state.last_editable_kind = kind
+
+
+def note_incoming(chat_id: int, mid: str) -> None:
+    """Зарегистрировать входящее сообщение пользователя — двигает ТОЛЬКО
+    physical mid.
+
+    Используется middleware'ом `AdminChatActivityMiddleware` на каждое
+    MessageCreated в admin chat. Editable mid не двигается — клик
+    оператора по старой карточке-меню всё ещё должен редактировать
+    её, если она была последней редактируемой (но callback_mid !=
+    physical → freshness откажет).
+    """
+    state = _state_for(chat_id)
+    state.last_physical_mid = mid
+
+
+def can_edit(
+    chat_id: int, callback_mid: str | None, kind: EditableKind = "menu"
+) -> bool:
+    """Проверить, разрешён ли edit для callback'а.
+
+    Три условия одновременно:
+    1. callback_mid == last_physical_mid (физически последняя).
+    2. callback_mid == last_editable_mid (была редактируемой).
+    3. kind == last_editable_kind (caller показывает экран той же
+       категории).
+
+    Если хотя бы одно False — edit не разрешён, caller должен сделать
+    send_new + позвать `note_editable_send` для регистрации нового
+    редактируемого экрана.
+    """
+    if callback_mid is None:
+        return False
+    state = _state_by_chat.get(chat_id)
+    if state is None:
+        return False
+    return (
+        callback_mid == state.last_physical_mid
+        and callback_mid == state.last_editable_mid
+        and kind == state.last_editable_kind
+    )
+
+
+def get_chat_state(chat_id: int) -> ChatState | None:
+    """Доступ к полному состоянию чата — для тестов и диагностики."""
+    return _state_by_chat.get(chat_id)
 
 
 def clear(chat_id: int) -> None:
-    """Забыть mid для чата. Используется редко — в основном для тестов."""
-    _chat_to_mid.pop(chat_id, None)
+    """Забыть состояние чата."""
+    _state_by_chat.pop(chat_id, None)
 
 
 def clear_all() -> None:
-    """Очистить весь tracker. Используется в тестах для изоляции."""
-    _chat_to_mid.clear()
+    """Очистить весь tracker — используется в тестах для изоляции."""
+    _state_by_chat.clear()
+
+
+# ───────────────────── Старое API (совместимость) ─────────────────────
+
+
+def get_last_menu_mid(chat_id: int) -> str | None:
+    """СОВМЕСТИМОСТЬ: вернуть last_editable_mid.
+
+    Старый API. Новый код должен использовать `can_edit()` напрямую —
+    это правильнее, потому что проверяет также physical и kind.
+    Старый код работает с предположением «если editable mid совпал —
+    можно edit», что эквивалентно нашему `can_edit(kind='menu')` для
+    случаев, где kind не различается.
+    """
+    state = _state_by_chat.get(chat_id)
+    return state.last_editable_mid if state else None
+
+
+def set_last_menu_mid(chat_id: int, mid: str) -> None:
+    """СОВМЕСТИМОСТЬ: двигает ОБА mid (physical + editable) с kind='menu'.
+
+    Старый API. По смыслу старые caller'ы (send_or_edit_screen,
+    _send_or_edit_menu, admin_bus.send) звали это только когда отправляли
+    меню или wizard — то есть редактируемую карточку. Поэтому эквивалент
+    `note_editable_send(chat_id, mid, kind='menu')`.
+
+    Если caller хотел зарегистрировать historic event (без edit), он
+    должен использовать `note_event` вместо этого.
+    """
+    note_editable_send(chat_id, mid, kind="menu")
 ```
 
 ### `bot/aemr_bot/utils/typing_indicator.py`
@@ -27317,8 +27473,8 @@ class TestRunEraseForAppeal:
 
 ### `bot/tests/test_admin_bus.py`
 
-Size: `10575` bytes  
-SHA-256: `ac901c9abf6cac8b7dba9bd6eb99bc5cbb860cd6a724e2a88febaf9e2cb84ba5`
+Size: `12152` bytes  
+SHA-256: `6fd24ea8c5db51ea09d5ba4c196024d549c71f4e76e3e7c97161532642f39f7b`
 
 ```python
 """Тесты единой admin_bus и AdminChatActivityMiddleware.
@@ -27350,7 +27506,15 @@ def _clean_tracker():
 
 class TestAdminBusSend:
     @pytest.mark.asyncio
-    async def test_send_advances_tracker_on_success(self) -> None:
+    async def test_send_advances_physical_tracker_on_success(self) -> None:
+        """admin_bus.send используется для historic events (pulse, audit,
+        retention). Двигает ТОЛЬКО physical_mid, editable_mid не трогает.
+
+        2026-05-27 dual-tracker: раньше тут assertion был на
+        `get_last_menu_mid` (editable). Это совмещало два смысла в одном
+        поле, из-за чего пульс мог стать «редактируемым меню» при тапе.
+        Теперь — physical only, editable не трогается.
+        """
         from aemr_bot.services import admin_bus
         from aemr_bot.utils import menu_tracker
 
@@ -27363,7 +27527,11 @@ class TestAdminBusSend:
         with patch("aemr_bot.config.settings.admin_group_id", 555):
             mid = await admin_bus.send(bot, text="test pulse")
         assert mid == "msg-7"
-        assert menu_tracker.get_last_menu_mid(555) == "msg-7"
+        state = menu_tracker.get_chat_state(555)
+        assert state is not None
+        assert state.last_physical_mid == "msg-7"
+        # Editable_mid НЕ должен двинуться — это historic event, не меню.
+        assert state.last_editable_mid is None
         bot.send_message.assert_awaited_once()
         kwargs = bot.send_message.await_args.kwargs
         assert kwargs.get("chat_id") == 555
@@ -27432,13 +27600,20 @@ class TestAdminBusSend:
 
 
 class TestNoteIncomingAdminMessage:
-    def test_advances_tracker_on_valid_mid(self) -> None:
+    def test_advances_physical_tracker_on_valid_mid(self) -> None:
+        """incoming op-message двигает только physical_mid. Editable_mid
+        не трогается — клик оператора на старую карточку-меню всё ещё
+        должен редактировать её... но callback_mid != physical_mid
+        (текст оператора ниже) → can_edit вернёт False → send_new."""
         from aemr_bot.services import admin_bus
         from aemr_bot.utils import menu_tracker
 
         with patch("aemr_bot.config.settings.admin_group_id", 555):
             admin_bus.note_incoming_admin_message("operator-msg-9")
-        assert menu_tracker.get_last_menu_mid(555) == "operator-msg-9"
+        state = menu_tracker.get_chat_state(555)
+        assert state is not None
+        assert state.last_physical_mid == "operator-msg-9"
+        assert state.last_editable_mid is None
 
     def test_no_admin_group_noop(self) -> None:
         from aemr_bot.services import admin_bus
@@ -27482,7 +27657,9 @@ class TestAdminChatActivityMiddleware:
         return event
 
     @pytest.mark.asyncio
-    async def test_advances_tracker_on_admin_chat_message(self) -> None:
+    async def test_advances_physical_tracker_on_admin_chat_message(self) -> None:
+        """MessageCreated в admin_chat двигает только physical_mid.
+        Editable_mid не трогается."""
         from aemr_bot.handlers import AdminChatActivityMiddleware
         from aemr_bot.utils import menu_tracker
 
@@ -27492,7 +27669,10 @@ class TestAdminChatActivityMiddleware:
         with patch("aemr_bot.config.settings.admin_group_id", 555):
             result = await mw(handler, event, {})
         assert result == "handler-result"
-        assert menu_tracker.get_last_menu_mid(555) == "op-text-42"
+        state = menu_tracker.get_chat_state(555)
+        assert state is not None
+        assert state.last_physical_mid == "op-text-42"
+        assert state.last_editable_mid is None
 
     @pytest.mark.asyncio
     async def test_skips_non_admin_chat(self) -> None:
@@ -28021,8 +28201,8 @@ class TestFinalizeSurvivesDetachedAppeal:
 
 ### `bot/tests/test_admin_card_render.py`
 
-Size: `17380` bytes  
-SHA-256: `695cf758a24771020500e5f7ed4bb8506e2707078cac533233accf0bff57161a`
+Size: `18711` bytes  
+SHA-256: `5a423b83e4165a5ef73992b9dc1baff12d11f17a8cc4bf44d83532cf7de88a70`
 
 ```python
 """Тесты freshness-rule семантики `services/admin_card.render`.
@@ -28100,35 +28280,51 @@ def _clean_tracker():
 
 class TestFreshnessRule:
     @pytest.mark.asyncio
-    async def test_callback_on_last_card_edits(self) -> None:
-        """callback_mid == menu_tracker[chat] → edit на месте."""
+    async def test_render_always_sends_new_sacred_event_log(self) -> None:
+        """2026-05-27 dual-tracker: карточка обращения всегда send_new,
+        никогда не edit'ится. Раньше тут была edit-ветка
+        (callback_mid == tracker → edit), что нарушало sacred event log
+        (см. жалобу «закрыл 2 — одна обновила, другая нет»). Удалена.
+        """
         from aemr_bot.services import admin_card
         from aemr_bot.utils import menu_tracker
 
         appeal = _make_appeal(last_card_mid="card-7")
-        bot = _make_bot()
-        menu_tracker.set_last_menu_mid(555, "card-7")  # карточка последняя
+        bot = _make_bot(new_mid="card-new-8")
+        # Симулируем «карточка ещё свежая» — раньше это бы дало edit.
+        # Теперь должно дать send_new (sacred).
+        menu_tracker.set_last_menu_mid(555, "card-7")
         with (
             patch("aemr_bot.config.settings.admin_group_id", 555),
             patch("aemr_bot.services.admin_card.session_scope",
                   _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_admin_message_id",
+                AsyncMock(),
+            ),
         ):
             mid = await admin_card.render(bot, appeal, callback_mid="card-7")
 
-        bot.edit_message.assert_awaited_once()
-        bot.send_message.assert_not_called()
-        assert mid == "card-7"
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited_once()
+        assert mid == "card-new-8"
 
     @pytest.mark.asyncio
-    async def test_callback_on_non_last_card_sends_new(self) -> None:
-        """callback_mid != menu_tracker[chat] (что-то появилось ниже) →
-        send new. Закрывает bug «закрыл 2 карточки, одна обновилась»."""
+    async def test_render_marks_physical_only(self) -> None:
+        """После render карточка регистрируется как event (только
+        physical_mid). Editable_mid не трогается — клик кнопки на
+        карточке не превратит её в меню."""
         from aemr_bot.services import admin_card
         from aemr_bot.utils import menu_tracker
 
         appeal = _make_appeal(last_card_mid="old-3")
         bot = _make_bot(new_mid="fresh-9")
-        menu_tracker.set_last_menu_mid(555, "something-else-7")
+        # Pre-state: было меню "menu-prev" — editable_mid должен остаться.
+        menu_tracker.note_editable_send(555, "menu-prev", kind="menu")
         with (
             patch("aemr_bot.config.settings.admin_group_id", 555),
             patch("aemr_bot.services.admin_card.session_scope",
@@ -28144,14 +28340,12 @@ class TestFreshnessRule:
         ):
             mid = await admin_card.render(bot, appeal, callback_mid="old-3")
 
-        bot.edit_message.assert_not_called()
-        bot.send_message.assert_awaited_once()
         assert mid == "fresh-9"
-        # SACRED-fix 2026-05-26: admin_card.render теперь делает
-        # menu_tracker.clear() после send, потому что карточка обращения
-        # НЕ является меню и не должна edit'иться через op:* callback'и
-        # с её же кнопок.
-        assert menu_tracker.get_last_menu_mid(555) is None
+        state = menu_tracker.get_chat_state(555)
+        assert state is not None
+        assert state.last_physical_mid == "fresh-9"  # карточка теперь физически последняя
+        # Editable_mid остался на предыдущем меню — sacred.
+        assert state.last_editable_mid == "menu-prev"
 
     @pytest.mark.asyncio
     async def test_no_callback_sends_new(self) -> None:
@@ -28415,28 +28609,36 @@ class TestEventHeader:
         assert "Обращение #5" in sent_text or "#5" in sent_text
 
     @pytest.mark.asyncio
-    async def test_event_header_skipped_on_edit(self) -> None:
-        """edit: маркер НЕ применяется (карточка остаётся «обычной»)."""
+    async def test_event_header_always_applied_after_dual_tracker(self) -> None:
+        """2026-05-27 dual-tracker: edit-ветка удалена, render всегда
+        send_new. Значит event_header применяется ВСЕГДА, если задан.
+        Раньше тут проверялось, что на edit маркер не появляется — это
+        больше не actual (edit ветки нет)."""
         from aemr_bot.services import admin_card
         from aemr_bot.utils import menu_tracker
 
         appeal = _make_appeal(last_card_mid="card-7")
-        bot = _make_bot()
+        bot = _make_bot(new_mid="card-new-1")
         menu_tracker.set_last_menu_mid(555, "card-7")
         with (
             patch("aemr_bot.config.settings.admin_group_id", 555),
             patch("aemr_bot.services.admin_card.session_scope",
                   _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
         ):
             await admin_card.render(
                 bot,
                 appeal,
                 callback_mid="card-7",
-                event_header="📩 этого не должно быть на edit",
+                event_header="📩 теперь маркер всегда применяется",
             )
-        bot.edit_message.assert_awaited_once()
-        edited_text = bot.edit_message.call_args.kwargs.get("text", "")
-        assert "📩 этого не должно быть на edit" not in edited_text
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited_once()
+        sent_text = bot.send_message.call_args.kwargs.get("text", "")
+        assert "📩 теперь маркер всегда применяется" in sent_text
 
 
 class TestGuards:
@@ -29646,8 +29848,8 @@ class TestHandleWizardText:
 
 ### `bot/tests/test_admin_outgoing_hook.py`
 
-Size: `7012` bytes  
-SHA-256: `db928dd543e4dc5ab660debc44014cc824a7fa7e0e46280c83378120b8309bbf`
+Size: `7453` bytes  
+SHA-256: `9084589f2552334ec2a2a1e94b1230dc2b91870d5627ee9cb00ca1baa46474a4`
 
 ```python
 """Тесты для `admin_bus.install_outgoing_tracker_hook` — sacred-инвариант
@@ -29736,7 +29938,9 @@ class TestHookSyncsAdminTracker:
     """Главный sacred-контракт: send в admin chat обновляет tracker."""
 
     @pytest.mark.asyncio
-    async def test_admin_send_updates_tracker(self) -> None:
+    async def test_admin_send_updates_physical_tracker(self) -> None:
+        """2026-05-27 dual-tracker: hook ловит исходящие и регистрирует
+        как event (физический only). Editable_mid не трогается."""
         from aemr_bot.services import admin_bus
         from aemr_bot.utils import menu_tracker
 
@@ -29745,7 +29949,11 @@ class TestHookSyncsAdminTracker:
             admin_bus.install_outgoing_tracker_hook(bot)
             await bot.send_message(chat_id=ADMIN_CHAT_ID, text="hello admin")
 
-        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "fresh-1"
+        state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+        assert state is not None
+        assert state.last_physical_mid == "fresh-1"
+        # Editable не трогался — это generic event, не меню.
+        assert state.last_editable_mid is None
 
     @pytest.mark.asyncio
     async def test_non_admin_send_does_not_touch_admin_tracker(self) -> None:
@@ -29789,8 +29997,9 @@ class TestHookSyncsAdminTracker:
 
     @pytest.mark.asyncio
     async def test_hook_works_via_admin_bus_send(self) -> None:
-        """`admin_bus.send` сам делает set_last_menu_mid — после hook'а
-        это становится двойным sync, что идемпотентно (один и тот же mid)."""
+        """`admin_bus.send` сам зовёт `note_event` — после hook'а
+        это становится двойным sync на physical_mid, идемпотентно
+        (тот же mid). Editable_mid остаётся не тронутым."""
         from aemr_bot.services import admin_bus
         from aemr_bot.utils import menu_tracker
 
@@ -29800,8 +30009,9 @@ class TestHookSyncsAdminTracker:
             mid = await admin_bus.send(bot, text="from bus")
 
         assert mid == "bus-mid-1"
-        # Tracker = bus-mid-1, неважно через какой путь он был set.
-        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "bus-mid-1"
+        state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+        assert state.last_physical_mid == "bus-mid-1"
+        assert state.last_editable_mid is None
 ```
 
 ### `bot/tests/test_admin_panel.py`
@@ -37485,8 +37695,8 @@ async def test_list_consented_excludes_blocked_and_deleted(session) -> None:
 
 ### `bot/tests/test_freshness_full_coverage.py`
 
-Size: `33982` bytes  
-SHA-256: `efe412e13b2db75d4561afb68fd4720abe8972aec512d9910979f0b8525e2c84`
+Size: `35624` bytes  
+SHA-256: `e34bef9c92082bcdd8f1bccd6e396f1f622929759bf720e6c847fc777fc2a823`
 
 ```python
 """Характеризация полного контракта freshness-rule для admin-чата.
@@ -37664,9 +37874,16 @@ class TestA_AdminCardRender:
 
         bot.send_message.assert_awaited_once()
         bot.edit_message.assert_not_called()
-        # SACRED: tracker очищен, sacred card НЕ участвует в freshness
-        # для следующих callback'ов меню.
-        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+        # 2026-05-27 dual-tracker: admin_card.render двигает только
+        # physical_mid (note_event), editable_mid не трогается. Если
+        # до render было меню — editable остался на нём. Здесь до render
+        # было "stale-listing-7" (через set_last_menu_mid → set оба).
+        # После render: physical = card-new-1, editable = stale-listing-7
+        # (не двигался).
+        state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+        assert state is not None
+        assert state.last_physical_mid == "card-new-1"
+        assert state.last_editable_mid == "stale-listing-7"
 
 
 # ============================================================================
@@ -37808,27 +38025,35 @@ class TestC_ListingOpenCardMenu:
             assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "menu-1"
 
             # Шаг 3: open_card → admin_card.render(force_new=True).
+            # 2026-05-27 dual-tracker: только physical_mid сдвигается,
+            # editable_mid остаётся на "menu-1" (предыдущее меню).
             card_mid = await admin_card.render(bot, appeal, force_new=True)
             assert card_mid == "card-2"
-            # SACRED clear — tracker должен быть None.
-            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+            state_after_card = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+            assert state_after_card is not None
+            assert state_after_card.last_physical_mid == "card-2"
+            assert state_after_card.last_editable_mid == "menu-1"
 
-            # Шаг 4: тап op:menu на listing (или callback на любом
-            # сообщении) → send_new menu.
+            # Шаг 4: тап op:menu callback_mid=menu-1. Edit разрешён?
+            # callback_mid (menu-1) == editable_mid (menu-1) ✓
+            # callback_mid (menu-1) == physical_mid (card-2) ✗
+            # → can_edit False → send_new menu.
             event_4 = _make_event(bot=bot, callback_mid="menu-1")
             await send_or_edit_screen(
                 event_4, chat_id=ADMIN_CHAT_ID, text="меню 4"
             )
 
         # CRITICAL: bot.edit_message вызван РОВНО ОДИН РАЗ — только в
-        # шаге 2 (listing edit'ит меню). НЕ должен быть вызван в шаге 4
-        # (это было бы sacred-violation: меню edit'ит карточку).
+        # шаге 2 (listing edit'ит меню). В шаге 4 — send_new, потому что
+        # карточка стоит между меню и callback'ом.
         assert bot.edit_message.await_count == 1
-        # И вызван с callback_mid = menu-1 (mid menu, не card).
         edit_call_kwargs = bot.edit_message.call_args.kwargs
         assert edit_call_kwargs["message_id"] == "menu-1"
-        # Tracker в конце = menu-4 (последнее menu).
-        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "menu-4"
+        # Tracker в конце: physical = menu-4 (свежее меню), editable =
+        # menu-4 (тоже редактируемое).
+        final_state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+        assert final_state.last_physical_mid == "menu-4"
+        assert final_state.last_editable_mid == "menu-4"
 
 
 # ============================================================================
@@ -37873,32 +38098,32 @@ class TestD_OpActionAfterOpenCard:
         assert bot.send_message.await_count == 2
 
     @pytest.mark.asyncio
-    async def test_render_when_tracker_matches_edits_inplace(self) -> None:
-        """Контр-кейс: tracker = card_mid (например, после первой
-        публикации карточки без force_new и без других сообщений
-        между), render(callback_mid=card_mid) → edit-in-place.
-
-        Это правильное поведение, когда карточка ЕЩЁ последняя в чате —
-        оператор тапает кнопку, бот обновляет её на месте, чтобы
-        оператор видел изменение."""
+    async def test_render_never_edits_after_dual_tracker(self) -> None:
+        """2026-05-27 dual-tracker: edit-ветка из admin_card.render
+        удалена полностью. Карточка обращения = sacred event log,
+        всегда send_new. Раньше этот тест закреплял edit-поведение —
+        теперь закрепляет, что edit не происходит даже если tracker
+        формально совпадает."""
         from aemr_bot.services import admin_card
         from aemr_bot.utils import menu_tracker
 
         appeal = _make_appeal(last_card_mid="card-1")
-        bot = _make_bot()
-        # Имитация: tracker выставлен на карточку (например, после
-        # finalize первой публикации с особой логикой outer кода).
+        bot = _make_bot(send_mids=["card-new-2"])
         menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "card-1")
 
         with (
             patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID),
             patch("aemr_bot.services.admin_card.session_scope",
                   _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
         ):
             await admin_card.render(bot, appeal, callback_mid="card-1")
 
-        bot.edit_message.assert_awaited_once()
-        bot.send_message.assert_not_called()
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited_once()
 
 
 # ============================================================================
@@ -37926,18 +38151,22 @@ class TestE_TrackerInvalidationByExternalMessages:
             # = old_card_mid.
             menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "old-card-99")
 
-            # Pulse приходит — admin_bus.send → tracker = pulse_mid.
+            # Pulse приходит — admin_bus.send двигает только physical_mid.
             await admin_bus.send(bot, text="🟢 Pulse")
-            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "pulse-mid-1"
+            state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+            assert state.last_physical_mid == "pulse-mid-1"
+            # editable_mid остался на old-card-99 (там было меню, через
+            # set_last_menu_mid → set оба).
+            assert state.last_editable_mid == "old-card-99"
 
             # Op тапает кнопку на старой карточке (на «old-card-99»).
             event = _make_event(bot=bot, callback_mid="old-card-99")
             await send_or_edit_screen(event, chat_id=ADMIN_CHAT_ID, text="меню")
 
-        # Send_or_edit_screen видит callback_mid (old-card-99) != tracker
-        # (pulse-mid-1) → send_new, НЕ edit старой карточки выше.
+        # Send_or_edit_screen видит: callback_mid (old-card-99) ==
+        # editable_mid ✓, но != physical_mid (pulse-mid-1) ✗. Pulse стоит
+        # ниже → send_new, НЕ edit карточки выше.
         bot.edit_message.assert_not_called()
-        # 2 send'а: pulse и меню.
         assert bot.send_message.await_count == 2
 
     @pytest.mark.asyncio
@@ -37953,12 +38182,16 @@ class TestE_TrackerInvalidationByExternalMessages:
         with patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID):
             menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "old-card-99")
             # Op написал в чат — middleware зарегистрировал mid.
+            # 2026-05-27: note_incoming двигает только physical.
             admin_bus.note_incoming_admin_message("op-msg-77")
-            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "op-msg-77"
+            state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+            assert state.last_physical_mid == "op-msg-77"
+            assert state.last_editable_mid == "old-card-99"
 
             event = _make_event(bot=bot, callback_mid="old-card-99")
             await send_or_edit_screen(event, chat_id=ADMIN_CHAT_ID, text="меню")
 
+        # can_edit: callback_mid == editable_mid ✓, != physical_mid ✗ → send_new.
         bot.edit_message.assert_not_called()
         bot.send_message.assert_awaited_once()
 
@@ -38048,16 +38281,20 @@ class TestG_TwoActionsBothPublishNewCards:
                 AsyncMock(),
             ),
         ):
-            # close #1 → force_new=True → send_new "closed-1-new",
-            # tracker.clear() → None.
+            # close #1 → force_new=True → send_new "closed-1-new".
+            # dual-tracker: physical_mid → closed-1-new, editable_mid
+            # остаётся на "card-1" (старое меню, которое мы set'нули
+            # выше через set_last_menu_mid).
             mid_1 = await admin_card.render(bot, appeal_1, force_new=True)
             assert mid_1 == "closed-1-new"
-            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+            state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+            assert state.last_physical_mid == "closed-1-new"
 
             # close #2 → force_new=True → send_new "closed-2-new".
             mid_2 = await admin_card.render(bot, appeal_2, force_new=True)
             assert mid_2 == "closed-2-new"
-            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+            state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+            assert state.last_physical_mid == "closed-2-new"
 
         # CRITICAL: обе карточки send_new (НЕ edit). Каждая — новая
         # запись внизу с актуальным статусом CLOSED. Оператор видит обе
