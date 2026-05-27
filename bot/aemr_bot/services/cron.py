@@ -12,10 +12,17 @@ from apscheduler.triggers.date import DateTrigger
 from sqlalchemy import delete
 from zoneinfo import ZoneInfo
 
+from aemr_bot import keyboards as kbds
 from aemr_bot.config import settings
 from aemr_bot.db.models import AuditLog, Event
 from aemr_bot.db.session import session_scope
+from aemr_bot.health import heartbeat
+from aemr_bot.services import appeals as appeals_service
+from aemr_bot.services import broadcasts as broadcasts_service
+from aemr_bot.services import operators as operators_service
 from aemr_bot.services import stats as stats_service
+from aemr_bot.services import threat_intel
+from aemr_bot.services import users as users_service
 from aemr_bot.services.calendar_ru import is_workday
 from aemr_bot.services.db_backup import backup_db as _backup_db
 
@@ -273,7 +280,6 @@ async def _job_threat_intel_refresh() -> None:
     чтобы не пересекаться по нагрузке.
     """
     try:
-        from aemr_bot.services import threat_intel
         counts = await threat_intel.refresh_all()
         if counts:
             log.info("threat-intel-refresh ok: %s", counts)
@@ -297,7 +303,6 @@ async def _job_reap_orphaned_drafts() -> None:
     cooldown'а либо отмены».
     """
     try:
-        from aemr_bot.services import broadcasts as broadcasts_service
 
         async with session_scope() as session:
             reaped = await broadcasts_service.reap_orphaned_draft(
@@ -334,7 +339,6 @@ async def _job_stale_operators_cleanup(bot, send_admin_text) -> None:
         # чтобы любая ошибка MAX API → пустой список → no-op (см.
         # защиту в cleanup_stale_operators при пустом current_member_ids).
         from aemr_bot.handlers.admin_operators import _safe_get_chat_members
-        from aemr_bot.services import operators as ops_svc
 
         members = await _safe_get_chat_members(bot)
         if not members:
@@ -356,7 +360,7 @@ async def _job_stale_operators_cleanup(bot, send_admin_text) -> None:
         # катастрофа (50 легитимных IT-сотрудников разом помечены
         # ушедшими). Лучше пропустить итерацию и подождать следующей.
         async with session_scope() as session:
-            active_count = len(await ops_svc.list_active(session))
+            active_count = len(await operators_service.list_active(session))
             if active_count > 0 and len(current_ids) < active_count:
                 log.warning(
                     "stale-operators-cleanup: получено %d членов чата, "
@@ -366,7 +370,7 @@ async def _job_stale_operators_cleanup(bot, send_admin_text) -> None:
                     len(current_ids), active_count,
                 )
                 return
-            deactivated = await ops_svc.cleanup_stale_operators(
+            deactivated = await operators_service.cleanup_stale_operators(
                 session, current_member_ids=current_ids
             )
         if deactivated:
@@ -394,7 +398,6 @@ async def _job_stale_operators_cleanup(bot, send_admin_text) -> None:
 
 async def _job_selfcheck(send_admin_text) -> None:
     """Алёрт при смене статуса бота: heartbeat fresh ↔ stale."""
-    from aemr_bot.health import heartbeat
     was_healthy = _SELFCHECK_HEALTHY["healthy"]
     is_healthy = heartbeat.is_fresh()
     if was_healthy and not is_healthy:
@@ -484,7 +487,6 @@ async def _job_appeals_5y_retention(send_admin_text) -> None:
     что в БД остаются только метаданные (даты, статусы, числа).
     """
     try:
-        from aemr_bot.services import appeals as appeals_service
 
         async with session_scope() as session:
             purged_a, purged_m = await appeals_service.purge_old_appeals_content(
@@ -517,8 +519,6 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
     что — формально — нарушение закона.
     """
     try:
-        from aemr_bot.services import operators as ops_service
-        from aemr_bot.services import users as users_service
 
         async with session_scope() as session:
             candidates = await users_service.find_pending_pdn_retention(
@@ -541,7 +541,7 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                         continue
                     ok = await users_service.erase_pdn(session, max_user_id)
                     if ok:
-                        await ops_service.write_audit(
+                        await operators_service.write_audit(
                             session,
                             operator_max_user_id=None,
                             action="auto_erase_pdn_retention",
@@ -598,8 +598,6 @@ async def _job_funnel_watchdog(bot, send_admin_text) -> None:
     после простоя.
     """
     try:
-        from aemr_bot import keyboards as kbds
-        from aemr_bot.services import users as users_service
 
         cutoff_seconds = 24 * 3600  # сутки
         async with session_scope() as session:
@@ -666,7 +664,6 @@ async def _job_working_hours_open_reminder(bot) -> None:
     try:
         if not is_workday(datetime.now(TZ).date()):
             return
-        from aemr_bot.services import appeals as appeals_service
 
         async with session_scope() as session:
             appeals = await appeals_service.list_unanswered(session)
@@ -702,7 +699,6 @@ async def _job_working_hours_overdue_reminder(bot) -> None:
     try:
         if not is_workday(datetime.now(TZ).date()):
             return
-        from aemr_bot.services import appeals as appeals_service
 
         async with session_scope() as session:
             overdue = await appeals_service.find_overdue_unanswered(
