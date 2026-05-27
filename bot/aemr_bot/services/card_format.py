@@ -212,10 +212,9 @@ def admin_card(appeal: Appeal, user: User) -> str:
     if summary_line:
         body = f"{body}\n{summary_line}"
     # Timeline: полная история переписки (followup'ы жителя + ответы
-    # оператора в хронологии). Когда ответов нет — fallback на старый
-    # «Дополнения к обращению» (см. appeal_timeline_block). Это
-    # выполняет запрос владельца про «явную прозрачную полностью
-    # информативную историю и конверсию ответов на обращения».
+    # оператора в хронологии). A1 (2026-05-27): единый формат
+    # «История переписки» с момента первого сообщения — без
+    # переключения layout при первом ответе оператора.
     timeline = appeal_timeline_block(appeal)
     if timeline:
         body = f"{body}\n\n{timeline}"
