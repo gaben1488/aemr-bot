@@ -173,45 +173,30 @@ async def render(
     )
     attachments = [kb]
 
-    # Freshness check.
-    last_in_chat = menu_tracker.get_last_menu_mid(cfg.admin_group_id)
-    can_edit = (
-        not force_new
-        and callback_mid is not None
-        and last_in_chat is not None
-        and callback_mid == last_in_chat
-    )
+    # 2026-05-27 sacred event log: карточка обращения **никогда** не
+    # редактируется. Каждое op-действие (close, reopen, reply, block)
+    # или followup жителя — это **event** в timeline'е обращения,
+    # должен появиться новой записью внизу чата. Старая карточка
+    # остаётся в истории как иммутабельный slice.
+    #
+    # Раньше тут была ветка `can_edit` (callback_mid == tracker → edit).
+    # Это работало, пока tracker совпадал с editable-mid и не было
+    # historic events ниже. Но даже когда edit формально допустим,
+    # карточка обращения — sacred (см. жалобу владельца «открыл 2,
+    # закрыл, одна обновилась, другая нет» — root cause именно эта
+    # ветка). Удалена полностью.
+    #
+    # `callback_mid` теперь используется только для diagnostics-логов
+    # и для пометки force_new=False как ошибка (на самом деле всегда
+    # send_new — дальше идёт прямой bot.send_message).
+    _ = callback_mid  # noqa: F841 — параметр оставлен для совместимости
+    _ = force_new  # noqa: F841 — тоже совместимость; теперь всегда send_new
 
-    # На edit event_header НЕ применяется: карточку правят in-place,
-    # маркер «новое событие» теряет смысл — оператор сам только что
-    # тапнул кнопку, контекст у него уже в голове.
     text_for_send = (
         f"{event_header}\n────────────────\n{text}"
-        if event_header and not can_edit
+        if event_header
         else text
     )
-
-    if can_edit:
-        try:
-            await bot.edit_message(
-                message_id=callback_mid,
-                text=text,
-                attachments=attachments,
-            )
-            # На edit мы НЕ обновляем last_admin_card_mid в БД и не
-            # меняем menu_tracker (mid и так остался прежним).
-            return callback_mid
-        except Exception:
-            log.info(
-                "admin_card.render: edit_message %s failed for #%s — "
-                "fallback to send_new",
-                callback_mid, appeal.id, exc_info=False,
-            )
-            # На fail edit'а tracker может быть невалиден — очистим,
-            # чтобы следующий callback тоже пошёл в send_new.
-            menu_tracker.clear(cfg.admin_group_id)
-
-    # Отправляем новую карточку (edit не сработал или не применим).
     try:
         sent = await bot.send_message(
             chat_id=cfg.admin_group_id,
@@ -226,19 +211,15 @@ async def render(
 
     new_mid = extract_message_id(sent)
     if new_mid:
-        # SACRED rule (исправлено 2026-05-26 после жалобы владельца):
-        # admin appeal card НЕ является menu-карточкой и НЕ должна
-        # участвовать в `menu_tracker`. Раньше set_last_menu_mid
-        # тут писал mid карточки обращения как «последнее меню»,
-        # из-за чего любой callback `op:menu` / `op:diag` /
-        # `op:stats:*` с кнопок этой же карточки EDIT'ил sacred-
-        # карточку (превращая переписку обращения в админ-меню).
-        #
-        # Теперь — `menu_tracker.clear()`. Следующий клик меню
-        # увидит «текущего меню нет» и пошлёт НОВОЕ сообщение
-        # (через `send_or_edit_screen` ветка без edit). Sacred
-        # admin appeal card остаётся неизменной.
-        menu_tracker.clear(cfg.admin_group_id)
+        # 2026-05-27 dual-tracker: карточка обращения — historic event.
+        # Регистрируем через `note_event` — двигаем только physical_mid,
+        # editable_mid не трогаем (оно осталось на mid предыдущего
+        # editable меню, если было). Когда оператор тапнет кнопку на
+        # этой карточке обращения, `can_edit` вернёт False по двум
+        # признакам сразу: kind != menu (это карточка, не меню) и
+        # editable_mid != callback_mid (editable указывает на меню
+        # выше). Sacred event log соблюдён без специальных hack'ов.
+        menu_tracker.note_event(cfg.admin_group_id, new_mid)
         async with session_scope() as session:
             await appeals_service.set_last_admin_card_mid(
                 session, appeal.id, new_mid

@@ -173,9 +173,16 @@ class TestA_AdminCardRender:
 
         bot.send_message.assert_awaited_once()
         bot.edit_message.assert_not_called()
-        # SACRED: tracker очищен, sacred card НЕ участвует в freshness
-        # для следующих callback'ов меню.
-        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+        # 2026-05-27 dual-tracker: admin_card.render двигает только
+        # physical_mid (note_event), editable_mid не трогается. Если
+        # до render было меню — editable остался на нём. Здесь до render
+        # было "stale-listing-7" (через set_last_menu_mid → set оба).
+        # После render: physical = card-new-1, editable = stale-listing-7
+        # (не двигался).
+        state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+        assert state is not None
+        assert state.last_physical_mid == "card-new-1"
+        assert state.last_editable_mid == "stale-listing-7"
 
 
 # ============================================================================
@@ -317,27 +324,35 @@ class TestC_ListingOpenCardMenu:
             assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "menu-1"
 
             # Шаг 3: open_card → admin_card.render(force_new=True).
+            # 2026-05-27 dual-tracker: только physical_mid сдвигается,
+            # editable_mid остаётся на "menu-1" (предыдущее меню).
             card_mid = await admin_card.render(bot, appeal, force_new=True)
             assert card_mid == "card-2"
-            # SACRED clear — tracker должен быть None.
-            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+            state_after_card = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+            assert state_after_card is not None
+            assert state_after_card.last_physical_mid == "card-2"
+            assert state_after_card.last_editable_mid == "menu-1"
 
-            # Шаг 4: тап op:menu на listing (или callback на любом
-            # сообщении) → send_new menu.
+            # Шаг 4: тап op:menu callback_mid=menu-1. Edit разрешён?
+            # callback_mid (menu-1) == editable_mid (menu-1) ✓
+            # callback_mid (menu-1) == physical_mid (card-2) ✗
+            # → can_edit False → send_new menu.
             event_4 = _make_event(bot=bot, callback_mid="menu-1")
             await send_or_edit_screen(
                 event_4, chat_id=ADMIN_CHAT_ID, text="меню 4"
             )
 
         # CRITICAL: bot.edit_message вызван РОВНО ОДИН РАЗ — только в
-        # шаге 2 (listing edit'ит меню). НЕ должен быть вызван в шаге 4
-        # (это было бы sacred-violation: меню edit'ит карточку).
+        # шаге 2 (listing edit'ит меню). В шаге 4 — send_new, потому что
+        # карточка стоит между меню и callback'ом.
         assert bot.edit_message.await_count == 1
-        # И вызван с callback_mid = menu-1 (mid menu, не card).
         edit_call_kwargs = bot.edit_message.call_args.kwargs
         assert edit_call_kwargs["message_id"] == "menu-1"
-        # Tracker в конце = menu-4 (последнее menu).
-        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "menu-4"
+        # Tracker в конце: physical = menu-4 (свежее меню), editable =
+        # menu-4 (тоже редактируемое).
+        final_state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+        assert final_state.last_physical_mid == "menu-4"
+        assert final_state.last_editable_mid == "menu-4"
 
 
 # ============================================================================
@@ -382,32 +397,32 @@ class TestD_OpActionAfterOpenCard:
         assert bot.send_message.await_count == 2
 
     @pytest.mark.asyncio
-    async def test_render_when_tracker_matches_edits_inplace(self) -> None:
-        """Контр-кейс: tracker = card_mid (например, после первой
-        публикации карточки без force_new и без других сообщений
-        между), render(callback_mid=card_mid) → edit-in-place.
-
-        Это правильное поведение, когда карточка ЕЩЁ последняя в чате —
-        оператор тапает кнопку, бот обновляет её на месте, чтобы
-        оператор видел изменение."""
+    async def test_render_never_edits_after_dual_tracker(self) -> None:
+        """2026-05-27 dual-tracker: edit-ветка из admin_card.render
+        удалена полностью. Карточка обращения = sacred event log,
+        всегда send_new. Раньше этот тест закреплял edit-поведение —
+        теперь закрепляет, что edit не происходит даже если tracker
+        формально совпадает."""
         from aemr_bot.services import admin_card
         from aemr_bot.utils import menu_tracker
 
         appeal = _make_appeal(last_card_mid="card-1")
-        bot = _make_bot()
-        # Имитация: tracker выставлен на карточку (например, после
-        # finalize первой публикации с особой логикой outer кода).
+        bot = _make_bot(send_mids=["card-new-2"])
         menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "card-1")
 
         with (
             patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID),
             patch("aemr_bot.services.admin_card.session_scope",
                   _fake_session_scope),
+            patch(
+                "aemr_bot.services.admin_card.appeals_service.set_last_admin_card_mid",
+                AsyncMock(),
+            ),
         ):
             await admin_card.render(bot, appeal, callback_mid="card-1")
 
-        bot.edit_message.assert_awaited_once()
-        bot.send_message.assert_not_called()
+        bot.edit_message.assert_not_called()
+        bot.send_message.assert_awaited_once()
 
 
 # ============================================================================
@@ -435,18 +450,22 @@ class TestE_TrackerInvalidationByExternalMessages:
             # = old_card_mid.
             menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "old-card-99")
 
-            # Pulse приходит — admin_bus.send → tracker = pulse_mid.
+            # Pulse приходит — admin_bus.send двигает только physical_mid.
             await admin_bus.send(bot, text="🟢 Pulse")
-            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "pulse-mid-1"
+            state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+            assert state.last_physical_mid == "pulse-mid-1"
+            # editable_mid остался на old-card-99 (там было меню, через
+            # set_last_menu_mid → set оба).
+            assert state.last_editable_mid == "old-card-99"
 
             # Op тапает кнопку на старой карточке (на «old-card-99»).
             event = _make_event(bot=bot, callback_mid="old-card-99")
             await send_or_edit_screen(event, chat_id=ADMIN_CHAT_ID, text="меню")
 
-        # Send_or_edit_screen видит callback_mid (old-card-99) != tracker
-        # (pulse-mid-1) → send_new, НЕ edit старой карточки выше.
+        # Send_or_edit_screen видит: callback_mid (old-card-99) ==
+        # editable_mid ✓, но != physical_mid (pulse-mid-1) ✗. Pulse стоит
+        # ниже → send_new, НЕ edit карточки выше.
         bot.edit_message.assert_not_called()
-        # 2 send'а: pulse и меню.
         assert bot.send_message.await_count == 2
 
     @pytest.mark.asyncio
@@ -462,12 +481,16 @@ class TestE_TrackerInvalidationByExternalMessages:
         with patch("aemr_bot.config.settings.admin_group_id", ADMIN_CHAT_ID):
             menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "old-card-99")
             # Op написал в чат — middleware зарегистрировал mid.
+            # 2026-05-27: note_incoming двигает только physical.
             admin_bus.note_incoming_admin_message("op-msg-77")
-            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "op-msg-77"
+            state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+            assert state.last_physical_mid == "op-msg-77"
+            assert state.last_editable_mid == "old-card-99"
 
             event = _make_event(bot=bot, callback_mid="old-card-99")
             await send_or_edit_screen(event, chat_id=ADMIN_CHAT_ID, text="меню")
 
+        # can_edit: callback_mid == editable_mid ✓, != physical_mid ✗ → send_new.
         bot.edit_message.assert_not_called()
         bot.send_message.assert_awaited_once()
 
@@ -557,16 +580,20 @@ class TestG_TwoActionsBothPublishNewCards:
                 AsyncMock(),
             ),
         ):
-            # close #1 → force_new=True → send_new "closed-1-new",
-            # tracker.clear() → None.
+            # close #1 → force_new=True → send_new "closed-1-new".
+            # dual-tracker: physical_mid → closed-1-new, editable_mid
+            # остаётся на "card-1" (старое меню, которое мы set'нули
+            # выше через set_last_menu_mid).
             mid_1 = await admin_card.render(bot, appeal_1, force_new=True)
             assert mid_1 == "closed-1-new"
-            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+            state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+            assert state.last_physical_mid == "closed-1-new"
 
             # close #2 → force_new=True → send_new "closed-2-new".
             mid_2 = await admin_card.render(bot, appeal_2, force_new=True)
             assert mid_2 == "closed-2-new"
-            assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) is None
+            state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+            assert state.last_physical_mid == "closed-2-new"
 
         # CRITICAL: обе карточки send_new (НЕ edit). Каждая — новая
         # запись внизу с актуальным статусом CLOSED. Оператор видит обе
