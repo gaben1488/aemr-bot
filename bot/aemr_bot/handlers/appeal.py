@@ -268,10 +268,39 @@ async def _cb_consent_no(event, max_user_id: int, payload: str) -> None:
 
 
 async def _cb_cancel(event, max_user_id: int, payload: str) -> None:
+    """Тап «❌ Отмена» в воронке подачи обращения.
+
+    A2 (2026-05-27): если воронка уже завершена (житель отправил
+    обращение и `dialog_state == IDLE`), тап на старой 5/5 карточке
+    — это stale-callback. Sacred event log запрещает редактировать
+    старые карточки. Раньше handler сбрасывал state (no-op, оно уже
+    IDLE) и слал «Действие отменено» — путаница, обращение уже
+    принято. Теперь: stale-detection → отдаём понятное уведомление,
+    не пересоздаём «Отменено».
+    """
     async with session_scope() as session:
-        await users_service.reset_state(session, max_user_id)
+        user = await users_service.find_by_max_id(session, max_user_id)
+        # Snap state до сброса — нужен для stale-detection.
+        is_stale = (
+            user is None
+            or user.dialog_state == DialogState.IDLE.value
+        )
+        if not is_stale:
+            await users_service.reset_state(session, max_user_id)
     drop_user_lock(max_user_id)
     await ack_callback(event)
+    if is_stale:
+        # Stale-cancel: житель тапнул кнопку на старой карточке шага
+        # воронки, после того как обращение уже было отправлено или
+        # отменено ранее. Новое сообщение даёт явный feedback вместо
+        # ввода в заблуждение «Действие отменено».
+        await _send_to_citizen(
+            event,
+            max_user_id,
+            text=texts.CANCEL_ALREADY_DONE,
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+        return
     await _send_to_citizen(
         event,
         max_user_id,
