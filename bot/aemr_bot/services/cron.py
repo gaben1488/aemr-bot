@@ -103,18 +103,31 @@ async def _send_with_open_tickets_button(bot, text: str) -> None:
         log.exception("send admin reminder with button failed")
 
 
-async def _send_admin_text_with_retry(send_admin_text, text: str, *, context: str) -> bool:
+async def _send_admin_text_with_retry(
+    send_admin_text,
+    text: str,
+    *,
+    context: str,
+    critical: bool = False,
+) -> bool:
     """Отправить служебное сообщение в админ-группу с коротким retry.
 
     Пульс и сообщение о рестарте не должны теряться из-за одного
     сетевого сбоя MAX, короткого rate-limit или задержки сразу после
     старта контейнера. Если все попытки не удались, job не роняет
     scheduler-loop, но оставляет понятный лог.
+
+    `critical=True` пробрасывается в `send_admin_text` и заставляет
+    `admin_bus.send` игнорировать quiet режим. Используется для алёртов
+    (фейл бэкапа, ошибки retention, stale-operators, funnel-watchdog),
+    которые должны пробить ночь — иначе 152-ФЗ retention или
+    потерянный бэкап замолчат до утра понедельника.
+    См. SECURITY_REVIEW_2026-05-28 §A1.
     """
     attempts = len(_ADMIN_SEND_RETRY_DELAYS_SEC) + 1
     for attempt in range(1, attempts + 1):
         try:
-            await send_admin_text(text)
+            await send_admin_text(text, critical=critical)
             return True
         except Exception:
             if attempt >= attempts:
@@ -163,6 +176,11 @@ async def _job_backup_with_alert(send_admin_text) -> None:
     одно общее сообщение «бэкап не выполнен», по нему было неясно,
     проблема в pg_dump (БД), в gpg (шифрование) или в .env (конфиг).
     """
+    # critical=True во всех ветках: фейл бэкапа должен пробить
+    # quiet режим (sec/A1, SECURITY_REVIEW_2026-05-28). Backup-cron
+    # 0 3 * * 6 (сб 03:00) попадает в default quiet окно [18, 9) —
+    # без critical алёрт молчит до утра понедельника, окно реакции
+    # ~30 часов без свежей точки восстановления.
     try:
         result = await _backup_db()
         if result.ok:
@@ -174,7 +192,8 @@ async def _job_backup_with_alert(send_admin_text) -> None:
                 "Возможные причины: Postgres недоступен, нет места на "
                 "диске, сменились права. Снимите бэкап вручную через "
                 "/backup, как только разберётесь — мы пропустили "
-                "еженедельную точку восстановления."
+                "еженедельную точку восстановления.",
+                critical=True,
             )
         elif result.fail_kind == "gpg":
             await send_admin_text(
@@ -186,13 +205,15 @@ async def _job_backup_with_alert(send_admin_text) -> None:
                 "Проверьте BACKUP_GPG_PASSPHRASE и логи. Снимите бэкап "
                 "вручную через /backup, либо временно работайте без "
                 "gpg (пустой BACKUP_GPG_PASSPHRASE → plain SQL — "
-                "только при защищённом /backups том)."
+                "только при защищённом /backups том).",
+                critical=True,
             )
         elif result.fail_kind == "config":
             await send_admin_text(
                 "⚙️ Еженедельный бэкап БД не выполнен: "
                 "BACKUP_LOCAL_DIR пуст в .env — некуда писать. "
-                "Проверьте конфигурацию (`docs/SYSADMIN.md §5.4`)."
+                "Проверьте конфигурацию (`docs/SYSADMIN.md §5.4`).",
+                critical=True,
             )
         else:  # "unknown" — fallback
             await send_admin_text(
@@ -200,14 +221,16 @@ async def _job_backup_with_alert(send_admin_text) -> None:
                 "ошибкой.\n"
                 f"Детали: {result.fail_detail}\n"
                 "См. логи бота: `docker compose logs --tail 200 bot`. "
-                "Снимите бэкап вручную через /backup."
+                "Снимите бэкап вручную через /backup.",
+                critical=True,
             )
     except Exception:
         log.exception("backup_with_alert wrapper failed")
         await send_admin_text(
             "⚠️ Еженедельный бэкап БД упал с исключением вне самого "
             "backup_db (вероятно, сбой admin-канала или OOM). "
-            "Срочно проверьте логи и снимите бэкап вручную через /backup."
+            "Срочно проверьте логи и снимите бэкап вручную через /backup.",
+            critical=True,
         )
 
 
@@ -387,8 +410,12 @@ async def _job_stale_operators_cleanup(bot, send_admin_text) -> None:
                 f"Если кто-то ушёл по ошибке — восстановите через меню "
                 f"«👥 Операторы» → «➕ Добавить»."
             )
+            # critical=True (sec/A1): авто-деактивация stale операторов
+            # — событие, которое нужно увидеть в день когда оно произошло,
+            # чтобы быстро восстановить ошибочно выкинутых.
             await _send_admin_text_with_retry(
-                send_admin_text, msg, context="stale-operators-cleanup"
+                send_admin_text, msg, context="stale-operators-cleanup",
+                critical=True,
             )
         else:
             log.info("stale-operators-cleanup: no changes")
@@ -397,7 +424,12 @@ async def _job_stale_operators_cleanup(bot, send_admin_text) -> None:
 
 
 async def _job_selfcheck(send_admin_text) -> None:
-    """Алёрт при смене статуса бота: heartbeat fresh ↔ stale."""
+    """Алёрт при смене статуса бота: heartbeat fresh ↔ stale.
+
+    critical=True (sec/A1): selfcheck должен пробить quiet режим. Если
+    бот завис ночью, оператор должен увидеть это сразу — а не утром
+    после простоя 9 часов.
+    """
     was_healthy = _SELFCHECK_HEALTHY["healthy"]
     is_healthy = heartbeat.is_fresh()
     if was_healthy and not is_healthy:
@@ -407,12 +439,14 @@ async def _job_selfcheck(send_admin_text) -> None:
             "Возможное состояние: завис главный цикл. Проверьте логи и "
             "перезапустите контейнер, если бот не восстановится автоматически.",
             context="health-selfcheck-stale",
+            critical=True,
         )
     elif not was_healthy and is_healthy:
         await _send_admin_text_with_retry(
             send_admin_text,
             "✅ Проверка здоровья: бот снова отвечает на внутренний heartbeat.",
             context="health-selfcheck-recovered",
+            critical=True,
         )
     _SELFCHECK_HEALTHY["healthy"] = is_healthy
 
@@ -577,6 +611,12 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                     "pdn_retention: не удалось обезличить max_user_id=%s",
                     max_user_id,
                 )
+        # critical=True (sec/A1): 152-ФЗ retention — compliance-критично.
+        # Cron 0 6 * * * → попадает в default quiet окно [18, 9). Без
+        # critical owner не узнает что произошло обезличивание (либо
+        # что оно НЕ произошло из-за бага) до утра следующего рабочего
+        # дня. ФЗ-152 ст. 21 ч. 5 — формальное требование уведомить
+        # ответственное лицо.
         for erased_id in erased_ids:
             await _send_admin_text_with_retry(
                 send_admin_text,
@@ -587,12 +627,14 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                     "открытых обращений нет."
                 ),
                 context="pdn_retention",
+                critical=True,
             )
         if erased or skipped_open:
             await send_admin_text(
                 f"🛡 Архивная очистка ПДн по сроку: "
                 f"обезличено {erased}, отложено {skipped_open} "
-                f"(есть открытые обращения)."
+                f"(есть открытые обращения).",
+                critical=True,
             )
     except Exception:
         log.exception("pdn_retention_check crashed")
@@ -656,6 +698,9 @@ async def _job_funnel_watchdog(bot, send_admin_text) -> None:
         # Под порогом — тишина, чтобы не флудить (1-4 застрявших в час
         # — норма «житель отвлёкся, не дошёл до конца»).
         if len(stuck) >= _FUNNEL_WATCHDOG_ADMIN_ALERT_THRESHOLD:
+            # critical=True (sec/A1): аномальный спайк в воронке —
+            # сигнал о UX-баге или DDoS. Должен пробить quiet режим
+            # (cron каждый час 24/7, лёгко попадает в [18, 9)).
             await _send_admin_text_with_retry(
                 send_admin_text,
                 (
@@ -667,6 +712,7 @@ async def _job_funnel_watchdog(bot, send_admin_text) -> None:
                     f"бота, шаги анкеты и оповестите ИТ при повторении."
                 ),
                 context="funnel-watchdog-anomaly",
+                critical=True,
             )
     except Exception:
         log.exception("funnel_watchdog crashed")

@@ -106,16 +106,24 @@ async def _seed_settings():
 def _build_admin_senders(bot: Bot):
     from aemr_bot.services import uploads
 
-    async def send_admin_text(text: str):
+    async def send_admin_text(text: str, *, critical: bool = False):
         # Идёт через admin_bus, чтобы tracker сдвигался автоматически
         # после каждого pulse / cron-уведомления / алерта. Иначе
         # freshness-rule в admin_card.render / send_or_edit_screen
         # отставала бы от реального состояния чата.
+        #
+        # `critical=True` — обязательно для cron-алёртов (фейл бэкапа,
+        # ошибки retention, stale-operators, funnel-watchdog). Это
+        # пробивает quiet режим: ночные алёрты должны быть видны утром,
+        # иначе 152-ФЗ retention или потеря бэкапа окажется
+        # незамеченной до понедельника. Pulse-heartbeat'ы остаются
+        # `critical=False` — они и должны затихать ночью.
+        # См. SECURITY_REVIEW_2026-05-28 §A1.
         from aemr_bot.services import admin_bus
 
         if not settings.admin_group_id:
             return
-        await admin_bus.send(bot, text=text)
+        await admin_bus.send(bot, text=text, critical=critical)
 
     async def send_admin_document(filename: str, content: bytes, caption: str = ""):
         if not settings.admin_group_id:
@@ -275,6 +283,24 @@ async def main() -> None:
         log.exception("set_my_commands failed; продолжаем без подсказок в /-меню")
 
     await _seed_settings()
+
+    # Прогрев in-memory cache для quiet режима — до запуска polling и
+    # cron'ов, чтобы первая же отправка через admin_bus.send уже видела
+    # актуальный enabled/start/end из БД. Без этого первые ~5 секунд
+    # (до первого pulse-cron'а) cache держит default disabled и
+    # non-critical сообщения могут проскочить в quiet окне.
+    # См. SECURITY_REVIEW_2026-05-28 §A2.
+    try:
+        from aemr_bot.services import quiet_hours
+
+        async with session_scope() as session:
+            await quiet_hours.refresh_cache_from_db(session)
+    except Exception:
+        log.debug(
+            "quiet_hours.refresh_cache_from_db boot warmup failed — "
+            "cache останется в default disabled, безопасно",
+            exc_info=False,
+        )
 
     # На холодном старте создаём первого ИТ-оператора из env, если ни одного ещё нет.
     if settings.bootstrap_it_max_user_id is not None:

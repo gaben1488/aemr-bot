@@ -263,3 +263,89 @@ class TestAdminChatActivityMiddleware:
             await mw(handler, event, {})
         # Tracker не сдвинулся — это и есть смысл fix'а.
         assert menu_tracker.get_last_menu_mid(555) == "menu-existing-1"
+
+
+class TestAdminBusCriticalBypassesQuiet:
+    """SEC delta A1 (SECURITY_REVIEW_2026-05-28): critical=True ОБЯЗАН
+    пробить quiet режим. Без этого cron-алёрты (фейл бэкапа, retention
+    error, stale-operators-cleanup, funnel-watchdog аномалия)
+    подавляются ночью и admin узнаёт о реальной проблеме только утром
+    следующего рабочего дня — окно ~30 часов.
+    """
+
+    @pytest.mark.asyncio
+    async def test_non_critical_suppressed_in_quiet(self) -> None:
+        """critical=False (default) + quiet активен → не шлём, return None."""
+        from aemr_bot.services import admin_bus
+        from aemr_bot.services import quiet_hours
+        from aemr_bot.utils import menu_tracker
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock()
+        # Принудительно включаем quiet окно on всё время суток.
+        quiet_hours._cache["enabled"] = True
+        quiet_hours._cache["start"] = 0
+        quiet_hours._cache["end"] = 24
+        try:
+            with patch("aemr_bot.config.settings.admin_group_id", 555):
+                mid = await admin_bus.send(bot, text="pulse-heartbeat")
+        finally:
+            quiet_hours.reset_cache_for_tests()
+        assert mid is None
+        bot.send_message.assert_not_called()
+        # Tracker не двинулся (мы вообще не отправляли).
+        assert menu_tracker.get_chat_state(555) is None
+
+    @pytest.mark.asyncio
+    async def test_critical_bypasses_quiet(self) -> None:
+        """critical=True + quiet активен → всё равно шлём.
+
+        Сценарий A1: фейл бэкапа сб 03:00 (внутри quiet окна) должен
+        дойти до admin chat. Без этого 152-ФЗ retention или потеря
+        бэкапа окажется незамеченной до утра понедельника.
+        """
+        from aemr_bot.services import admin_bus
+        from aemr_bot.services import quiet_hours
+        from aemr_bot.utils import menu_tracker
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="alert-1"))
+            )
+        )
+        quiet_hours._cache["enabled"] = True
+        quiet_hours._cache["start"] = 0
+        quiet_hours._cache["end"] = 24
+        try:
+            with patch("aemr_bot.config.settings.admin_group_id", 555):
+                mid = await admin_bus.send(
+                    bot, text="⚠️ backup failed", critical=True
+                )
+        finally:
+            quiet_hours.reset_cache_for_tests()
+        assert mid == "alert-1"
+        bot.send_message.assert_awaited_once()
+        # Tracker сдвинулся, потому что отправка прошла.
+        state = menu_tracker.get_chat_state(555)
+        assert state is not None
+        assert state.last_physical_mid == "alert-1"
+
+    @pytest.mark.asyncio
+    async def test_non_critical_outside_quiet_sends(self) -> None:
+        """critical=False вне quiet окна — стандартный путь, шлём."""
+        from aemr_bot.services import admin_bus
+        from aemr_bot.services import quiet_hours
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="ok-1"))
+            )
+        )
+        # quiet выключен (default).
+        quiet_hours.reset_cache_for_tests()
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            mid = await admin_bus.send(bot, text="normal pulse")
+        assert mid == "ok-1"
+        bot.send_message.assert_awaited_once()
