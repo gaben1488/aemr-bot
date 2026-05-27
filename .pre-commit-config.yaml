@@ -1,0 +1,56 @@
+# pre-commit hooks для aemr-bot.
+#
+# Установка: `pip install pre-commit && pre-commit install`.
+# Запуск вручную: `pre-commit run --all-files`.
+# Все hook'и зеркалят CI lint job — что упало здесь, упадёт и в CI.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: "^(aemr-bot-index\\.md|docs/.*\\.md)$"
+      - id: end-of-file-fixer
+        exclude: "^(aemr-bot-index\\.md|docs/_extracted/.*)$"
+      - id: check-yaml
+        args: ["--unsafe"]  # GitHub Actions использует !!python tags
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: ["--maxkb=2048"]  # 2 МБ — защита от случайных дампов БД,
+                                # backup'ов, screenshot-серий.
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.14
+    hooks:
+      - id: ruff
+        args: ["--fix", "--exit-non-zero-on-fix"]
+        files: ^bot/aemr_bot/|^bot/tests/
+      - id: ruff-format
+        files: ^bot/aemr_bot/|^bot/tests/
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.20.2
+    hooks:
+      - id: mypy
+        files: ^bot/aemr_bot/
+        # Mypy под pre-commit запускается без deps проекта — отключаем
+        # missing-imports чтобы не тянуть полный venv в hook.
+        args: ["--ignore-missing-imports", "--python-version=3.12"]
+        # additional_dependencies можно дополнить, если нужны конкретные
+        # type-stubs (`types-requests`, etc.). Сейчас минимальный набор —
+        # mypy сам валит только на наших файлах.
+
+  - repo: local
+    hooks:
+      - id: forbid-binary-secrets-in-env
+        # Защита от случайного commit'а .env с реальными секретами.
+        # bot/.env.example — единственный разрешённый .env-файл в репо.
+        name: forbid .env files with secrets
+        entry: bash -c 'if git diff --cached --name-only | grep -qE "(^|/)\\.env$|(^|/)\\.env\\.local$"; then echo "ERROR: .env / .env.local нельзя commit'ить. Только .env.example."; exit 1; fi'
+        language: system
+        pass_filenames: false

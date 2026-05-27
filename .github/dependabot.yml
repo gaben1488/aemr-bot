@@ -1,0 +1,72 @@
+# Dependabot для aemr-bot.
+#
+# Автоматические security/version updates для:
+# - Python зависимости (uv через pip-ecosystem)
+# - GitHub Actions
+# - Docker base images (python:3.12-slim)
+#
+# Стратегия: weekly schedule, max 5 open PR'ов на ecosystem чтобы не
+# завалить tracker. Maxapi 1.1.0 — критическая зависимость, любой
+# major update требует ручной верификации (см. docs/RUNBOOK.md
+# секцию «Процедура обновления зависимости»), поэтому maxapi
+# исключён из автообновлений — только manual review.
+
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/bot"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Kamchatka"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    ignore:
+      # Maxapi: критическая зависимость от MAX-API SDK, любые обновления
+      # требуют ручного аудита breaking changes (см. PR #50/#52 история
+      # 0.9.18 → 1.1.0). Manual review через docs/RUNBOOK.md.
+      - dependency-name: "maxapi"
+      # SQLAlchemy 2.0.x — стабильный major, минор обновления безопасны;
+      # 2.1+ требуют ручной проверки (async API мог поменяться).
+      - dependency-name: "sqlalchemy"
+        update-types: ["version-update:semver-major"]
+      # Pydantic 2.x: то же самое — major bump требует ручной проверки
+      # моделей (settings, ChatMembersManager).
+      - dependency-name: "pydantic"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Kamchatka"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+
+  - package-ecosystem: "docker"
+    directory: "/infra"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Kamchatka"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(docker)"
+      include: "scope"
