@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 01:24:34 UTC`
+Generated at: `2026-05-27 01:56:22 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `239`
 Max file size: `300 KB`
@@ -72,7 +72,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (15994 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
-- `bot/aemr_bot/services/card_format.py` (20502 bytes)
+- `bot/aemr_bot/services/card_format.py` (19371 bytes)
 - `bot/aemr_bot/services/cron.py` (50456 bytes)
 - `bot/aemr_bot/services/db_backup.py` (16664 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
@@ -115,7 +115,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_panel.py` (12999 bytes)
 - `bot/tests/test_admin_settings_audit.py` (1917 bytes)
 - `bot/tests/test_appeal_card_edit_policy.py` (5805 bytes)
-- `bot/tests/test_appeal_card_timeline.py` (8946 bytes)
+- `bot/tests/test_appeal_card_timeline.py` (9393 bytes)
 - `bot/tests/test_appeal_dispatcher.py` (25415 bytes)
 - `bot/tests/test_appeal_flow.py` (10966 bytes)
 - `bot/tests/test_appeals_service_pg.py` (15229 bytes)
@@ -132,7 +132,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_callback_coverage_contract.py` (13488 bytes)
 - `bot/tests/test_callback_router.py` (9462 bytes)
 - `bot/tests/test_callback_router_coverage.py` (5487 bytes)
-- `bot/tests/test_card_format.py` (10753 bytes)
+- `bot/tests/test_card_format.py` (11020 bytes)
 - `bot/tests/test_cron_jobs.py` (22687 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (15690 bytes)
@@ -18416,8 +18416,8 @@ def is_workday(d: date) -> bool:
 
 ### `bot/aemr_bot/services/card_format.py`
 
-Size: `20502` bytes  
-SHA-256: `0e56becc952b727d96c3ddde80deeabe16ac43d022a60ebe1ac98855fbbdee82`
+Size: `19371` bytes  
+SHA-256: `22515798cf3a5fd0bd7bec8023034b04fdc8b892165177614cc624139daf0317`
 
 ```python
 from datetime import datetime
@@ -18480,34 +18480,6 @@ def _loaded_messages(appeal: Appeal) -> list:
     """
     messages = getattr(appeal, "__dict__", {}).get("messages")
     return list(messages or [])
-
-
-def admin_followups_block(appeal: Appeal) -> str:
-    followups = [
-        msg for msg in _loaded_messages(appeal)
-        if getattr(msg, "direction", None) == MessageDirection.FROM_USER.value
-    ]
-    if not followups:
-        return ""
-
-    hidden_count = max(0, len(followups) - 5)
-    visible = followups[-5:]
-    title = "Дополнение к обращению:" if len(visible) == 1 else "Дополнения к обращению:"
-    lines = ["────────────────", title]
-    if hidden_count:
-        lines.append(f"Ранее было ещё {hidden_count} дополнений.")
-    for idx, msg in enumerate(visible, start=1):
-        text = (getattr(msg, "text", None) or "").strip()
-        attachments = getattr(msg, "attachments", None) or []
-        attach_line = attachments_summary_line(attachments)
-        body = _clip(text) if text else "Без текста."
-        if attach_line:
-            body = f"{body}\n{attach_line}"
-        if len(visible) == 1:
-            lines.append(body)
-        else:
-            lines.append(f"{idx}. {body}")
-    return "\n".join(lines)
 
 
 def _local_short(dt: datetime) -> str:
@@ -18582,20 +18554,17 @@ def _render_timeline(
 def appeal_timeline_block(appeal: Appeal) -> str:
     """Хронологическая лента переписки для admin-карточки.
 
-    Если ответов оператора ещё не было — fallback на старый
-    `admin_followups_block` (компактные «Дополнения к обращению»),
-    чтобы не вводить лишний заголовок «История переписки» для
-    обращений в состоянии NEW/IN_PROGRESS без диалога.
+    A1 (2026-05-27): унифицировано. Раньше при отсутствии ответа
+    оператора возвращался компактный `admin_followups_block`
+    («Дополнения к обращению»), а после первого ответа формат
+    переключался на полноценный timeline («История переписки»). Два
+    рендерера давали несогласованный UX: оператор видел разный
+    layout до и после собственного ответа. Теперь всегда timeline —
+    единый формат с момента появления хотя бы одного сообщения.
     """
     msgs = _loaded_messages(appeal)
     if not msgs:
         return ""
-    has_operator_msg = any(
-        getattr(m, "direction", None) == MessageDirection.FROM_OPERATOR.value
-        for m in msgs
-    )
-    if not has_operator_msg:
-        return admin_followups_block(appeal)
     return _render_timeline(
         msgs,
         operator_marker="📨 Ответ оператора",
@@ -18665,10 +18634,9 @@ def admin_card(appeal: Appeal, user: User) -> str:
     if summary_line:
         body = f"{body}\n{summary_line}"
     # Timeline: полная история переписки (followup'ы жителя + ответы
-    # оператора в хронологии). Когда ответов нет — fallback на старый
-    # «Дополнения к обращению» (см. appeal_timeline_block). Это
-    # выполняет запрос владельца про «явную прозрачную полностью
-    # информативную историю и конверсию ответов на обращения».
+    # оператора в хронологии). A1 (2026-05-27): единый формат
+    # «История переписки» с момента первого сообщения — без
+    # переключения layout при первом ответе оператора.
     timeline = appeal_timeline_block(appeal)
     if timeline:
         body = f"{body}\n\n{timeline}"
@@ -30380,8 +30348,8 @@ class TestCloseClosesBothCardsBug:
 
 ### `bot/tests/test_appeal_card_timeline.py`
 
-Size: `8946` bytes  
-SHA-256: `95b01c1bb785e816934659e278c91911b3868e754e39185146a0e4639938415e`
+Size: `9393` bytes  
+SHA-256: `43293083485c0c0350cd52365877d7b741492ba8db12ad35a62077acaea67d98`
 
 ```python
 """Тесты на timeline-блок (полная переписка) в карточках обращения.
@@ -30439,18 +30407,24 @@ class TestAdminTimeline:
         appeal = _make_appeal_with_messages([])
         assert appeal_timeline_block(appeal) == ""
 
-    def test_only_followups_falls_back_to_old_block(self) -> None:
-        """Если только дополнения жителя (нет ответов оператора) —
-        старый формат «Дополнения к обращению» без timeline-маркеров."""
+    def test_only_followups_uses_unified_timeline(self) -> None:
+        """A1 (2026-05-27): единый timeline даже когда ответа оператора
+        ещё не было. Раньше fallback'ил на «Дополнение к обращению» —
+        UX был непредсказуем (формат менялся при первом ответе)."""
         from aemr_bot.services.card_format import appeal_timeline_block
 
         appeal = _make_appeal_with_messages([
             _make_msg("from_user", "Уточнение по фото"),
         ])
         result = appeal_timeline_block(appeal)
-        # Старый формат: «Дополнение к обращению:» без «История переписки»
-        assert "Дополнение к обращению:" in result
-        assert "История переписки:" not in result
+        # Новый формат: всегда «История переписки:» + маркер дополнения.
+        assert "История переписки:" in result
+        assert "📩 Дополнение жителя" in result
+        assert "Уточнение по фото" in result
+        # Старого fallback'а больше нет — следов «Дополнение к обращению»
+        # быть не должно.
+        assert "Дополнение к обращению:" not in result
+        assert "Дополнения к обращению:" not in result
 
     def test_reply_present_uses_timeline_format(self) -> None:
         """Как только появился ответ оператора — переключаемся на
@@ -35433,8 +35407,8 @@ class TestAdminCallbackClassification:
 
 ### `bot/tests/test_card_format.py`
 
-Size: `10753` bytes  
-SHA-256: `65c4a813370610e1745bc3544ded5175ce811acffe439704f9d8fbc3f03d4a34`
+Size: `11020` bytes  
+SHA-256: `69d157eeb2315ff40c49cb556771dc406f25cc2fd20cadb89d36074dfe5cffdc`
 
 ```python
 """Тесты на services/card_format — рендер карточек обращений.
@@ -35505,7 +35479,10 @@ class TestAdminCard:
         # явный лейбл, эмодзи в начале строки для screen reader).
         assert "Суть обращения:" in result
         assert "Яма во дворе." in result
-        assert "Дополнение к обращению:" in result
+        # A1 (2026-05-27): единый timeline даже при отсутствии ответа
+        # оператора — раньше тут было «Дополнение к обращению:».
+        assert "История переписки:" in result
+        assert "📩 Дополнение жителя" in result
         assert "яма у второго подъезда" in result
 
 
