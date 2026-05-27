@@ -342,20 +342,30 @@ SCHEMA: dict[str, dict] = {
     # мошенников» в главном меню (`SECURITY_INFO_TEXT`, handler
     # `menu:security`). Двойное упоминание перегружало welcome без
     # пользы; антифишинг живёт только в отдельной кнопке.
+    # D1-fix 2026-05-27: max_len опущен с 4000 до 3800. SCHEMA-лимит
+    # совпадал с MAX-API hard limit и оставлял ноль запаса под
+    # будущие ack-маркеры/event_header'ы. Те же 200 char запаса, что
+    # в `test_texts_length_guard.MAX_LEN=3900`, плюс ~100 char под
+    # placeholder подстановку на render-time (`{policy_url}` до 200
+    # char заменяет 12-char-шаблон → нетто +188 на каждом render'е).
+    # Силовая защита от silent prod-overflow типа OP_HELP_FULL_LEGACY,
+    # но через UI настроек — текстовый CI guard PR #101 покрывает
+    # только `aemr_bot.texts.*` constants, не БД.
     "welcome_text": {
         "type": str,
         "min_len": 1,
-        "max_len": 4000,
+        "max_len": 3800,
     },
     # C1: consent_text используется как шаблон с placeholder
     # `{policy_url}`. Если IT перепишет без placeholder — житель увидит
     # consent без ссылки на политику (формальное нарушение 152-ФЗ).
     # required_substr — мягкое требование: текст обязан содержать
     # {policy_url} как подстроку, иначе validate отклонит.
+    # D1-fix 2026-05-27: max_len 3800 (см. welcome_text выше).
     "consent_text": {
         "type": str,
         "min_len": 1,
-        "max_len": 4000,
+        "max_len": 3800,
         "required_substr": "{policy_url}",
     },
     "commit_author_name": {"type": str, "min_len": 1, "max_len": 120},

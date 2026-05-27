@@ -61,6 +61,29 @@ class TestValidate:
         # max_len ограничение
         assert "длин" in reason.lower() or "max" in reason.lower()
 
+    def test_welcome_text_max_len_below_max_api_limit(self) -> None:
+        """D1 (SECURITY_REVIEW_2026-05-27): max_len для welcome_text
+        не должен совпадать с MAX-API hard limit 4000. SCHEMA-лимит
+        оставляет 200 char запаса под будущие ack-маркеры и
+        event_header'ы; иначе IT-оператор через UI может сохранить
+        текст ровно 4000 char, бот добавит маркер → silent overflow
+        с ValueError, аналогично закрытому в PR #101
+        OP_HELP_FULL_LEGACY (8348 char)."""
+        assert SCHEMA["welcome_text"]["max_len"] <= 3800, (
+            "welcome_text max_len в SCHEMA должен быть ≤ 3800 — "
+            "200 char запаса перед MAX-API hard limit 4000 на ack/event_header."
+        )
+
+    def test_consent_text_max_len_below_max_api_limit(self) -> None:
+        """D1: то же, что и welcome_text. Дополнительно consent_text
+        содержит placeholder `{policy_url}` (≤200 char URL), который
+        при render подставляется поверх 12-char-шаблона → нетто +188
+        char на каждом рендере. Запас должен покрывать и это."""
+        assert SCHEMA["consent_text"]["max_len"] <= 3800, (
+            "consent_text max_len в SCHEMA должен быть ≤ 3800 — "
+            "запас под `{policy_url}` подстановку (до +188 char/render)."
+        )
+
     @pytest.mark.parametrize(
         "key,value,expected_ok",
         [
