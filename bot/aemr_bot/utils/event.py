@@ -234,27 +234,27 @@ async def send_or_edit_screen(
     callback_mid = (
         None if force_new_message else get_callback_message_id(event)
     )
-    last_known_mid = (
-        menu_tracker.get_last_menu_mid(target_chat_id)
-        if target_chat_id is not None
-        else None
-    )
-    # Edit разрешён только когда callback пришёл от АКТУАЛЬНОЙ карточки.
-    can_edit = (
-        callback_mid is not None
-        and last_known_mid is not None
-        and callback_mid == last_known_mid
+
+    # 2026-05-27 dual-tracker: edit разрешён только если callback пришёл
+    # от АКТУАЛЬНОЙ редактируемой карточки И она физически последняя в
+    # чате (см. `menu_tracker.can_edit` для трёх условий). Если ниже
+    # карточки появилось что-то (event, op-message, другой меню) —
+    # physical_mid сдвинулся, can_edit вернёт False, идём в send_new.
+    edit_allowed = (
+        target_chat_id is not None
+        and menu_tracker.can_edit(target_chat_id, callback_mid, kind="menu")
         and hasattr(bot, "edit_message")
     )
 
-    if can_edit:
+    if edit_allowed:
         try:
             result = await bot.edit_message(
                 message_id=callback_mid,
                 text=text,
                 attachments=attachments,
             )
-            # edit сохраняет mid — tracker не меняем.
+            # edit сохраняет mid — tracker не меняем (оба поля уже
+            # указывают на этот mid).
             return result
         except Exception:
             log.info(
@@ -262,8 +262,8 @@ async def send_or_edit_screen(
                 callback_mid,
                 exc_info=False,
             )
-            # Tracker очищаем, чтобы следующий callback тоже привёл к
-            # send new (не пытался опять редактировать «битый» mid).
+            # Edit fail — очищаем editable_mid, чтобы следующий callback
+            # на этот же mid не пытался опять edit'ить битый.
             if target_chat_id is not None:
                 menu_tracker.clear(target_chat_id)
 
@@ -273,12 +273,12 @@ async def send_or_edit_screen(
         text=text,
         attachments=attachments,
     )
-    # Обновляем tracker свежим mid отправленного сообщения. На случай
-    # если send_message вернул структуру без `.body.mid` (старые тесты-
-    # моки) — extract_message_id вернёт None, tracker не двинется.
+    # send_or_edit_screen используется для админ-меню/wizard/listing —
+    # это РЕДАКТИРУЕМЫЕ карточки. Регистрируем через
+    # `note_editable_send` — двигаем оба mid и ставим kind='menu'.
     new_mid = extract_message_id(sent)
     if new_mid and target_chat_id is not None:
-        menu_tracker.set_last_menu_mid(target_chat_id, new_mid)
+        menu_tracker.note_editable_send(target_chat_id, new_mid, kind="menu")
     return sent
 
 

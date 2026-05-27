@@ -27,7 +27,15 @@ def _clean_tracker():
 
 class TestAdminBusSend:
     @pytest.mark.asyncio
-    async def test_send_advances_tracker_on_success(self) -> None:
+    async def test_send_advances_physical_tracker_on_success(self) -> None:
+        """admin_bus.send используется для historic events (pulse, audit,
+        retention). Двигает ТОЛЬКО physical_mid, editable_mid не трогает.
+
+        2026-05-27 dual-tracker: раньше тут assertion был на
+        `get_last_menu_mid` (editable). Это совмещало два смысла в одном
+        поле, из-за чего пульс мог стать «редактируемым меню» при тапе.
+        Теперь — physical only, editable не трогается.
+        """
         from aemr_bot.services import admin_bus
         from aemr_bot.utils import menu_tracker
 
@@ -40,7 +48,11 @@ class TestAdminBusSend:
         with patch("aemr_bot.config.settings.admin_group_id", 555):
             mid = await admin_bus.send(bot, text="test pulse")
         assert mid == "msg-7"
-        assert menu_tracker.get_last_menu_mid(555) == "msg-7"
+        state = menu_tracker.get_chat_state(555)
+        assert state is not None
+        assert state.last_physical_mid == "msg-7"
+        # Editable_mid НЕ должен двинуться — это historic event, не меню.
+        assert state.last_editable_mid is None
         bot.send_message.assert_awaited_once()
         kwargs = bot.send_message.await_args.kwargs
         assert kwargs.get("chat_id") == 555
@@ -109,13 +121,20 @@ class TestAdminBusSend:
 
 
 class TestNoteIncomingAdminMessage:
-    def test_advances_tracker_on_valid_mid(self) -> None:
+    def test_advances_physical_tracker_on_valid_mid(self) -> None:
+        """incoming op-message двигает только physical_mid. Editable_mid
+        не трогается — клик оператора на старую карточку-меню всё ещё
+        должен редактировать её... но callback_mid != physical_mid
+        (текст оператора ниже) → can_edit вернёт False → send_new."""
         from aemr_bot.services import admin_bus
         from aemr_bot.utils import menu_tracker
 
         with patch("aemr_bot.config.settings.admin_group_id", 555):
             admin_bus.note_incoming_admin_message("operator-msg-9")
-        assert menu_tracker.get_last_menu_mid(555) == "operator-msg-9"
+        state = menu_tracker.get_chat_state(555)
+        assert state is not None
+        assert state.last_physical_mid == "operator-msg-9"
+        assert state.last_editable_mid is None
 
     def test_no_admin_group_noop(self) -> None:
         from aemr_bot.services import admin_bus
@@ -159,7 +178,9 @@ class TestAdminChatActivityMiddleware:
         return event
 
     @pytest.mark.asyncio
-    async def test_advances_tracker_on_admin_chat_message(self) -> None:
+    async def test_advances_physical_tracker_on_admin_chat_message(self) -> None:
+        """MessageCreated в admin_chat двигает только physical_mid.
+        Editable_mid не трогается."""
         from aemr_bot.handlers import AdminChatActivityMiddleware
         from aemr_bot.utils import menu_tracker
 
@@ -169,7 +190,10 @@ class TestAdminChatActivityMiddleware:
         with patch("aemr_bot.config.settings.admin_group_id", 555):
             result = await mw(handler, event, {})
         assert result == "handler-result"
-        assert menu_tracker.get_last_menu_mid(555) == "op-text-42"
+        state = menu_tracker.get_chat_state(555)
+        assert state is not None
+        assert state.last_physical_mid == "op-text-42"
+        assert state.last_editable_mid is None
 
     @pytest.mark.asyncio
     async def test_skips_non_admin_chat(self) -> None:

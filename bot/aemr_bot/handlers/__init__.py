@@ -65,6 +65,11 @@ class AdminChatActivityMiddleware(BaseMiddleware):
                     body = getattr(getattr(event_object, "message", None), "body", None)
                     mid = getattr(body, "mid", None)
                     if mid:
+                        # 2026-05-27 dual-tracker: incoming op-message
+                        # двигает только physical_mid, editable_mid
+                        # остаётся на mid предыдущего меню. См.
+                        # `admin_bus.note_incoming_admin_message`
+                        # (теперь зовёт `menu_tracker.note_incoming`).
                         admin_bus.note_incoming_admin_message(str(mid))
             except Exception:
                 # Tracker-sync не должен ломать pipeline — это best-effort.

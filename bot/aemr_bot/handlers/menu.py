@@ -73,44 +73,36 @@ async def _send_or_edit_menu(
     chat_id = get_chat_id(event)
     user_id = None if chat_id is not None else get_user_id(event)
 
-    # Freshness check: edit разрешён только если callback пришёл от
-    # АКТУАЛЬНОЙ карточки-меню (last в этом чате). Per-chat tracker
-    # поддерживает любой chat_id, не только admin (см.
-    # `utils/menu_tracker.py`).
-    last_known_mid = (
-        menu_tracker.get_last_menu_mid(chat_id)
-        if chat_id is not None
-        else None
-    )
-    can_edit = (
-        callback_mid is not None
-        and last_known_mid is not None
-        and callback_mid == last_known_mid
+    # 2026-05-27 dual-tracker: edit разрешён только если callback пришёл
+    # с АКТУАЛЬНОЙ редактируемой карточки И она физически последняя в
+    # чате (см. `menu_tracker.can_edit` для трёх условий: physical,
+    # editable, kind). Если ниже карточки появилось event-уведомление
+    # (CITIZEN_REPLY, APPEAL_ACCEPTED) — physical_mid сдвинулся,
+    # can_edit вернёт False, идём в send_new.
+    edit_allowed = (
+        chat_id is not None
+        and menu_tracker.can_edit(chat_id, callback_mid, kind="menu")
         and hasattr(event.bot, "edit_message")
     )
 
     log.debug(
-        "menu freshness: chat=%s callback_mid=%s tracker=%s decision=%s",
-        chat_id, callback_mid, last_known_mid,
-        "edit" if can_edit else "send_new",
+        "menu freshness: chat=%s callback_mid=%s decision=%s",
+        chat_id, callback_mid, "edit" if edit_allowed else "send_new",
     )
 
-    if can_edit:
+    if edit_allowed:
         try:
             await event.bot.edit_message(
                 message_id=callback_mid,
                 text=text,
                 attachments=attachments,
             )
-            # edit сохраняет mid — tracker не меняем.
             return
         except (MaxApiError, MaxConnection, aiohttp.ClientError, TimeoutError):
             log.info(
                 "menu: edit_message %s failed, fallback to send",
                 callback_mid, exc_info=False,
             )
-            # На fail edit'а tracker может быть невалиден — очистим,
-            # чтобы следующий callback тоже пошёл в send_new.
             if chat_id is not None:
                 menu_tracker.clear(chat_id)
 
@@ -120,15 +112,14 @@ async def _send_or_edit_menu(
         text=text,
         attachments=attachments,
     )
-    # Обновляем tracker свежим mid отправленного сообщения. Без этого
-    # next-callback не сможет edit'нуть свежее меню — приведёт к
-    # лишним copies меню при wizard'ных переходах. extract_message_id
-    # tolerant к старым mock-структурам (вернёт None, tracker не двинется).
+    # citizen-меню — редактируемая карточка. Регистрируем оба mid +
+    # kind='menu', чтобы следующий тап кнопки на этом меню edit'ил
+    # его на месте.
     if chat_id is not None:
         from aemr_bot.utils.event import extract_message_id  # noqa: PLC0415
         new_mid = extract_message_id(sent)
         if new_mid:
-            menu_tracker.set_last_menu_mid(chat_id, new_mid)
+            menu_tracker.note_editable_send(chat_id, new_mid, kind="menu")
 
 
 async def open_main_menu(event):

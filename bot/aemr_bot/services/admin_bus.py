@@ -92,10 +92,16 @@ async def send(
         return None
     mid = extract_message_id(sent)
     if mid:
-        # Атомарный sync: physical chat сдвинулся вниз, tracker должен
-        # отразить это сразу. Иначе следующий callback оператора на
-        # карточку выше получит freshness false-positive.
-        menu_tracker.set_last_menu_mid(cfg.admin_group_id, mid)
+        # 2026-05-27 dual-tracker: admin_bus.send используется для
+        # **historic events** (pulse, audit-уведомления, retention,
+        # operator confirmations, audit-notice). Это НЕ редактируемые
+        # меню — клик кнопки на них не должен превращать их в меню.
+        # Поэтому двигаем только `physical_mid` через `note_event`,
+        # `editable_mid` остаётся на mid предыдущего меню (если было).
+        # Следующий тап оператора по кнопке на этом events callback_mid
+        # != editable_mid → can_edit=False → send_new. Event остаётся
+        # в чате как историчная запись.
+        menu_tracker.note_event(cfg.admin_group_id, mid)
     return mid
 
 
@@ -114,7 +120,12 @@ def note_incoming_admin_message(mid: str | None) -> None:
     """
     if not cfg.admin_group_id or not mid:
         return
-    menu_tracker.set_last_menu_mid(cfg.admin_group_id, mid)
+    # 2026-05-27 dual-tracker: incoming op-message — двигает только
+    # physical_mid. Editable_mid остаётся на mid предыдущего меню;
+    # клик оператора по нему всё ещё может редактировать его, но
+    # callback_mid != physical_mid (потому что op написал текст ниже)
+    # → freshness откажет → send_new.
+    menu_tracker.note_incoming(cfg.admin_group_id, mid)
 
 
 # Маркер: к одному и тому же bot.send_message hook ставим только один
@@ -201,12 +212,17 @@ def install_outgoing_tracker_hook(bot) -> None:
             ):
                 mid = extract_message_id(result)
                 if mid:
-                    menu_tracker.set_last_menu_mid(
-                        cfg.admin_group_id, mid
-                    )
+                    # 2026-05-27 dual-tracker: hook ловит ВСЕ исходящие
+                    # в admin chat. Большинство — historic events (pulse,
+                    # audit, broadcast progress, прямые sends в коде).
+                    # Двигаем только physical_mid. Editable_mid должен
+                    # обновляться явно через send_or_edit_screen или
+                    # _send_or_edit_menu (которые сами знают, что они
+                    # шлют редактируемый экран).
+                    menu_tracker.note_event(cfg.admin_group_id, mid)
                     log.debug(
                         "outgoing-tracker-hook: admin chat send → "
-                        "tracker = %s", mid,
+                        "physical_mid = %s", mid,
                     )
         except Exception:
             # tracker-sync best-effort, никогда не ломает caller.

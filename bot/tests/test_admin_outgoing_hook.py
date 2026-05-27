@@ -84,7 +84,9 @@ class TestHookSyncsAdminTracker:
     """Главный sacred-контракт: send в admin chat обновляет tracker."""
 
     @pytest.mark.asyncio
-    async def test_admin_send_updates_tracker(self) -> None:
+    async def test_admin_send_updates_physical_tracker(self) -> None:
+        """2026-05-27 dual-tracker: hook ловит исходящие и регистрирует
+        как event (физический only). Editable_mid не трогается."""
         from aemr_bot.services import admin_bus
         from aemr_bot.utils import menu_tracker
 
@@ -93,7 +95,11 @@ class TestHookSyncsAdminTracker:
             admin_bus.install_outgoing_tracker_hook(bot)
             await bot.send_message(chat_id=ADMIN_CHAT_ID, text="hello admin")
 
-        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "fresh-1"
+        state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+        assert state is not None
+        assert state.last_physical_mid == "fresh-1"
+        # Editable не трогался — это generic event, не меню.
+        assert state.last_editable_mid is None
 
     @pytest.mark.asyncio
     async def test_non_admin_send_does_not_touch_admin_tracker(self) -> None:
@@ -137,8 +143,9 @@ class TestHookSyncsAdminTracker:
 
     @pytest.mark.asyncio
     async def test_hook_works_via_admin_bus_send(self) -> None:
-        """`admin_bus.send` сам делает set_last_menu_mid — после hook'а
-        это становится двойным sync, что идемпотентно (один и тот же mid)."""
+        """`admin_bus.send` сам зовёт `note_event` — после hook'а
+        это становится двойным sync на physical_mid, идемпотентно
+        (тот же mid). Editable_mid остаётся не тронутым."""
         from aemr_bot.services import admin_bus
         from aemr_bot.utils import menu_tracker
 
@@ -148,5 +155,6 @@ class TestHookSyncsAdminTracker:
             mid = await admin_bus.send(bot, text="from bus")
 
         assert mid == "bus-mid-1"
-        # Tracker = bus-mid-1, неважно через какой путь он был set.
-        assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "bus-mid-1"
+        state = menu_tracker.get_chat_state(ADMIN_CHAT_ID)
+        assert state.last_physical_mid == "bus-mid-1"
+        assert state.last_editable_mid is None
