@@ -1,39 +1,13 @@
-"""Тонкий helper для typing-indicator в долгих операциях.
+"""Тонкий helper `mark_typing(event_or_bot, chat_id)` для индикатора
+«бот печатает» (`maxapi.SenderAction.TYPING_ON`) перед длинными
+операциями (>500 мс): listing обращений, broadcast confirm.
 
-**Зачем.** maxapi 1.1.0 поддерживает `bot.send_action(chat_id,
-SenderAction.TYPING_ON)` — мигающие точки «бот печатает», как в
-Telegram. Жителю/оператору сразу понятно: «нажатие услышали, идёт
-работа», особенно когда дальше будет несколько сообщений
-(listing открытых обращений, broadcast confirm с превью).
+Best-effort: любой Exception от MAX API НЕ ломает handler — typing
+лишь UX-улучшение, логируем DEBUG и продолжаем. MAX гасит TYPING_ON
+сам через ~5 сек или при следующем сообщении — explicit OFF не нужен.
 
-Без индикатора оператор тапает «📂 Открытые обращения» и ждёт 1-2
-секунды без обратной связи — кажется, что бот завис. С индикатором
-точки появляются мгновенно, listing подъезжает следом.
-
-**Контракт `mark_typing(event_or_bot, chat_id)`:**
-
-- На вход: либо event (берём `event.bot` и `chat_id` через `get_ids`),
-  либо явный `(bot, chat_id)`.
-- Best-effort: любой Exception от MAX API НЕ должен ломать handler.
-  `send_action` — UX-улучшение, не критичная часть flow. Логируем на
-  DEBUG и продолжаем.
-- TYPING_ON автоматически гасится MAX'ом через ~5 секунд или при
-  следующем сообщении бота — explicit OFF не нужен.
-
-**Где применять (выявлено CARDS_UX_SWEEP 2026-05-26):**
-
-1. `admin_panel._do_open_tickets` — listing открытых обращений требует
-   query + transform → 1-2 сек.
-2. `menu.do_my_appeals` — listing обращений жителя.
-3. `broadcast._handle_confirm` — перед запуском send-loop рассылки.
-4. Любые другие точки, где handler делает >500 мс работы перед
-   первым send_message.
-
-**Где НЕ применять:**
-- Простые callbacks с одним send_message <100 мс — typing на 5 секунд
-  выглядит дольше реакции, UX хуже.
-- Cron / pulse — там нет «оператор ждёт реакцию».
-- На карточке обращения (force_new) — она сама и есть фидбек.
+Контракт где применять / не применять и full мотивация: см.
+`docs/_meta/_archive/CODE_DECISIONS_LOG.md §4`.
 """
 from __future__ import annotations
 
