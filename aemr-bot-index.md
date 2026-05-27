@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 00:12:51 UTC`
+Generated at: `2026-05-27 00:31:52 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `237`
+Indexed files: `238`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -88,7 +88,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/users.py` (31152 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (5363 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (12943 bytes)
-- `bot/aemr_bot/texts.py` (71361 bytes)
+- `bot/aemr_bot/texts.py` (56048 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (15338 bytes)
 - `bot/aemr_bot/utils/background.py` (1682 bytes)
@@ -171,6 +171,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_settings_seed_baseline.py` (5309 bytes)
 - `bot/tests/test_settings_store_validation.py` (6731 bytes)
 - `bot/tests/test_stale_operators_cleanup.py` (5188 bytes)
+- `bot/tests/test_texts_length_guard.py` (8424 bytes)
 - `bot/tests/test_threat_intel.py` (3737 bytes)
 - `bot/tests/test_typing_indicator.py` (2923 bytes)
 - `bot/tests/test_uploads_policy_admin_relay.py` (11634 bytes)
@@ -24160,8 +24161,8 @@ def schedule_persist_broadcast(
 
 ### `bot/aemr_bot/texts.py`
 
-Size: `71361` bytes  
-SHA-256: `9a7cd06b02706e3263651e78f85da1e528ed58d092343cfc998bb686e4b6c8ef`
+Size: `56048` bytes  
+SHA-256: `c815a5d8855aa0cf8fee38448c80c02df37333c420c2a508c2bbcca7fbd40b1a`
 
 ```python
 WELCOME = (
@@ -24635,225 +24636,15 @@ OP_HELP = (
 # кнопке — её можно открыть один раз перед сменой и при любом
 # вопросе, не перечитывать при каждом тапе /menu.
 
-OP_HELP_FULL_LEGACY = (
-    "📋 ПАМЯТКА ОПЕРАТОРА\n"
-    "\n"
-    "Дата актуализации: 2026-05-26. Бот aemr-bot — обратная связь "
-    "Администрации Елизовского муниципального округа в мессенджере MAX.\n"
-    "\n"
-    "━━━━━━━━━━━━━━━━\n"
-    "🛡️ АНТИФИШИНГ — ЗАЩИТА ВАС И ЖИТЕЛЯ\n"
-    "\n"
-    "Полная инструкция: `docs/OPERATOR_SECURITY.md` §1. Здесь — короткая "
-    "выжимка для быстрого освежения памяти.\n"
-    "\n"
-    "**Что бот защищает автоматически:**\n"
-    "• Исходящие ссылки оператора/рассылки — только гос-домены "
-    "(elizovomr.ru, kamgov.ru, gosuslugi.ru, kamchatka.gov.ru). Другие "
-    "блокируются.\n"
-    "• Welcome жителя обязан содержать антифишинг-блок «НИКОГДА не "
-    "запрашиваем» (через `validate` в SCHEMA — нельзя сохранить без).\n"
-    "• URL в обращениях жителя экранируются (defang) — оператор не "
-    "может случайно тапнуть фишинг.\n"
-    "• Threat-intel URL-feed (URLhaus + ThreatFox + опц. PhishTank) — "
-    "карточка с известной malware-ссылкой получает усиленный warning.\n"
-    "\n"
-    "**Что вы должны делать сознательно:**\n"
-    "• Не вставлять в ответ жителю ссылки на сторонние сайты — "
-    "блокировка отклонит, потеряете время.\n"
-    "• Не пересылать ПДн жителя в личные мессенджеры/email — это "
-    "нарушение 152-ФЗ.\n"
-    "• Перед массовой рассылкой использовать паузу cooldown (5 мин) "
-    "для финальной вычитки.\n"
-    "• Маркер `[ЧС]` сокращает cooldown до 30 сек — только для "
-    "реальных чрезвычайных ситуаций.\n"
-    "\n"
-    "**Если житель столкнулся с мошенниками:**\n"
-    "1. Подтвердить: «Администрация общается только через этот бот, "
-    "не звонит голосом и не пишет в другие мессенджеры».\n"
-    "2. Напомнить: прекратить диалог, не вводить данные, не "
-    "переводить деньги. Если перевод сделан — деньги, как правило, "
-    "вернуть нельзя.\n"
-    "3. Направить в МВД (отделение полиции по месту жительства, "
-    "единый экстренный номер 112).\n"
-    "4. Зафиксировать факт followup'ом в обращении.\n"
-    "5. Уведомить ИТ-оператора через служебную группу.\n"
-    "\n"
-    "**Если ваш аккаунт скомпрометирован** (потеря телефона, странные "
-    "сообщения от вашего имени):\n"
-    "→ немедленно ИТ-оператору через альтернативный канал (звонок, "
-    "личный визит). ИТ деактивирует вашу учётную запись через wizard.\n"
-    "\n"
-    "━━━━━━━━━━━━━━━━\n"
-    "🛡️ ПЕРЕД СМЕНОЙ — ОБЯЗАТЕЛЬНО\n"
-    "\n"
-    "1. Прочтите `docs/OPERATOR_SECURITY.md` — антифишинг, реакция на "
-    "скам, личная гигиена аккаунта, ответственность по 152-ФЗ. "
-    "Документ обязателен к прочтению до первой смены.\n"
-    "2. Все ваши действия в боте пишутся в audit_log на 365 дней — для "
-    "проверок Роскомнадзора и расследования инцидентов. Это требование "
-    "закона, не «отслеживание».\n"
-    "3. При подозрении на компрометацию аккаунта (потеря телефона, "
-    "странные сообщения от вашего имени) — немедленно ИТ-оператору "
-    "через альтернативный канал (звонок, личный визит).\n"
-    "\n"
-    "━━━━━━━━━━━━━━━━\n"
-    "✉️ ОТВЕТ ЖИТЕЛЮ ПО ОБРАЩЕНИЮ\n"
-    "\n"
-    "• Кнопка «✉️ Ответить и закрыть» под карточкой обращения (или "
-    "потяните карточку влево, или команда `/reply N текст`).\n"
-    "• Промежуточный ответ без закрытия — «💬 Ответить промежуточно».\n"
-    "• Лимит ответа: {answer_limit} символов.\n"
-    "• Ссылки в ответе — ТОЛЬКО на гос-домены: `elizovomr.ru`, "
-    "`kamgov.ru`, `gosuslugi.ru`, `kamchatka.gov.ru`. Любая другая "
-    "ссылка блокируется ботом, ответ жителю не уходит — оператор "
-    "получает уведомление с причиной.\n"
-    "• Подробности — `docs/OPERATOR_SECURITY.md` §3.2.\n"
-    "\n"
-    "━━━━━━━━━━━━━━━━\n"
-    "📣 РАССЫЛКА (координатор, ИТ)\n"
-    "\n"
-    "• Кнопка «📢 Сделать рассылку» в админ-меню (или `/broadcast`).\n"
-    "• Текст проходит проверку на гос-whitelist URL — то же правило, "
-    "что и для ответа жителю.\n"
-    "• Между подтверждением и реальной отправкой — пауза **5 минут** "
-    "(для отмены при опечатке). Маркер `[ЧС]` в начале текста "
-    "сокращает паузу до **30 секунд** — используйте ТОЛЬКО для "
-    "реальных чрезвычайных ситуаций (отключение горячей воды, авария, "
-    "эвакуация). Злоупотребление маркером снижает доверие жителей.\n"
-    "• История рассылок — кнопка «📜 История рассылок».\n"
-    "• Шаблоны для повторных рассылок — «📋 Шаблоны рассылок».\n"
-    "• Подробности — `docs/OPERATOR_SECURITY.md` §3.1.\n"
-    "\n"
-    "━━━━━━━━━━━━━━━━\n"
-    "👥 УПРАВЛЕНИЕ ОПЕРАТОРАМИ (только ИТ)\n"
-    "\n"
-    "• Кнопка «👥 Операторы» → мастер «Добавить / Сменить роль / "
-    "Деактивировать / Реактивировать».\n"
-    "• Добавляемый человек ДОЛЖЕН быть в служебной MAX-группе — иначе "
-    "wizard не найдёт его в списке участников.\n"
-    "• Раз в сутки бот автоматически сверяет активных операторов с "
-    "реальным составом группы (`stale-operators-cleanup` в 04:20) и "
-    "деактивирует тех, кого нет в чате. ИТ-роль защищена от автодеактивации.\n"
-    "• Подробности — `docs/OPERATOR_SECURITY.md` §3.3.\n"
-    "\n"
-    "━━━━━━━━━━━━━━━━\n"
-    "⚙️ НАСТРОЙКИ БОТА (только ИТ)\n"
-    "\n"
-    "• Кнопка «⚙️ Настройки бота» → 14 редактируемых ключей через UI: "
-    "приветствие, согласие на ПДн, тексты приёма граждан, контакты "
-    "экстренных служб, маршруты транспорта, темы обращений, ссылки на "
-    "официальные документы, лимит картинок в рассылке, автор коммитов "
-    "при синхронизации с репо.\n"
-    "• `welcome_text` обязан содержать антифишинговый блок «НИКОГДА не "
-    "запрашиваем» — `validate` отклонит сохранение без него.\n"
-    "• Ссылки в настройках — только гос-домены из whitelist.\n"
-    "• «🔄 Синхронизировать с репо» создаёт Pull Request с обновлённым "
-    "`seed/runtime_config.json` (нужен `GITHUB_PAT` в `.env`).\n"
-    "\n"
-    "━━━━━━━━━━━━━━━━\n"
-    "🗑 УДАЛЕНИЕ ПДн ЖИТЕЛЯ (только ИТ, 152-ФЗ)\n"
-    "\n"
-    "• `/erase max_user_id=N` или `/erase phone=+7XXXXXXXXXX` или "
-    "кнопка «🗑 Удалить ПДн» в карточке обращения.\n"
-    "• Действие НЕОБРАТИМО в основной БД. Backup'ы могут содержать "
-    "ПДн до конца периода удержания резервных копий.\n"
-    "• Запись в audit_log сохраняется (кто, когда, по какому обращению) "
-    "— это требование закона.\n"
-    "• Полная процедура — `docs/RUNBOOK_PDN_ERASURE.md`.\n"
-    "\n"
-    "━━━━━━━━━━━━━━━━\n"
-    "💾 БЭКАПЫ (только ИТ)\n"
-    "\n"
-    "• Кнопка «💾 Снять бэкап» (или `/backup`) — ручной снимок БД "
-    "поверх еженедельного автоматического (см. `BACKUP_DAY_OF_WEEK` "
-    "в `.env`).\n"
-    "• Бэкапы зашифрованы GPG-парольной фразой (`BACKUP_GPG_PASSPHRASE`).\n"
-    "• Без парольной фразы бэкап ОТКАЗЫВАЕТСЯ создаваться — защита "
-    "152-ФЗ (см. SEC #2 в SECURITY.md).\n"
-    "\n"
-    "━━━━━━━━━━━━━━━━\n"
-    "🛠 ДИАГНОСТИКА И НАБЛЮДАЕМОСТЬ\n"
-    "\n"
-    "• Кнопка «🛠 Диагностика» (или `/diag`) — сводка состояния бота: "
-    "активность за 24 часа, pulse-индикатор, зависшие рассылки, "
-    "ошибки доставки.\n"
-    "• Pulse-сигналы (heartbeat «бот живой»): каждый час 24/7, "
-    "плюс пн-пт 09:00-17:59 ещё раз на :35 (раз в 30 минут в рабочее "
-    "время).\n"
-    "• Внешний watchdog `scripts/healthwatch.sh` — root-cron, при "
-    "недоступности `/livez` 15 минут перезапускает контейнер, при "
-    "40 минутах — alert в служебную группу.\n"
-    "\n"
-    "━━━━━━━━━━━━━━━━\n"
-    "📊 СТАТИСТИКА\n"
-    "\n"
-    "• Кнопка «📊 Статистика» → выбор периода (today/week/month/quarter/"
-    "half_year/year/all) → XLSX-файл с обращениями.\n"
-    "• Раз в месяц бот сам присылает отчёт за прошлый месяц (1 число, "
-    "9:00 камчатского).\n"
-    "\n"
-    "━━━━━━━━━━━━━━━━\n"
-    "📚 ССЫЛКИ НА КЛЮЧЕВЫЕ ДОКУМЕНТЫ\n"
-    "\n"
-    "• `docs/OPERATOR_SECURITY.md` — главное руководство оператора по "
-    "ИБ, антифишингу, 152-ФЗ.\n"
-    "• `docs/SECURITY.md` — технические защиты бота и known limitations.\n"
-    "• `docs/_extracted/REGLAMENT_v7_FULL.md` — юридическая основа "
-    "(Регламент Администрации, утверждаемый распоряжением).\n"
-    "• `docs/Регламент_v8_draft.md` — проект следующей редакции, §74 "
-    "про антифишинговую бдительность.\n"
-    "• `docs/RUNBOOK_PDN_ERASURE.md` — пошаговая процедура удаления "
-    "ПДн жителя.\n"
-    "• `docs/SYSADMIN.md` — для системного администратора (деплой, "
-    "автозапуск, log rotation).\n"
-    "• `docs/Политика_v2.md` — публикуемая политика обработки ПДн.\n"
-    "• `docs/_meta/SECURITY_REVIEW_2026-05-26.md` — последний "
-    "security-пасс со всеми findings.\n"
-    "\n"
-    "━━━━━━━━━━━━━━━━\n"
-    "🔠 ВСЕ КОМАНДЫ — БЫСТРАЯ СПРАВКА\n"
-    "\n"
-    "**Ответы и работа с обращениями (любая роль):**\n"
-    "`/reply N <текст>` — ответить по обращению № N (закрывает обращение)\n"
-    "`/reopen N` — вернуть закрытое обращение в работу\n"
-    "`/close N` — закрыть обращение без ответа\n"
-    "`/open_tickets` — список открытых обращений\n"
-    "`/stats <период>` — XLSX-отчёт. Период: `today` / `week` / "
-    "`month` / `quarter` / `half_year` / `year` / `all`\n"
-    "`/diag` — сводка состояния бота\n"
-    "\n"
-    "**Рассылки (координатор, ИТ):**\n"
-    "`/broadcast` — открыть мастер новой рассылки\n"
-    "`/broadcast list` — последние рассылки\n"
-    "Маркер `[ЧС]` в начале текста рассылки → cooldown 30 сек вместо 5 мин\n"
-    "\n"
-    "**Администрирование (только ИТ):**\n"
-    "`/erase max_user_id=N` — удалить ПДн жителя по ID (необратимо)\n"
-    "`/erase phone=+7XXXXXXXXXX` — удалить ПДн по телефону\n"
-    "`/setting list` — список настраиваемых ключей\n"
-    "`/setting <key> <value>` — изменить настройку\n"
-    "`/add_operators` — массовая регистрация операторов\n"
-    "`/backup` — снять GPG-зашифрованный pg_dump\n"
-    "\n"
-    "**Стандартные:**\n"
-    "`/start`, `/menu`, `/help`, `/op_help` — открыть админ-меню\n"
-    "\n"
-    "Большинство команд продублировано кнопками. Команды нужны для "
-    "опытных операторов и для скрытых действий (массовая регистрация, "
-    "/erase по телефону).\n"
-    "\n"
-    "━━━━━━━━━━━━━━━━\n"
-    "🔁 КАК ОТКРЫТЬ ЭТУ ПАМЯТКУ СНОВА\n"
-    "\n"
-    "Кнопка «📋 Памятка оператора» в админ-меню (это меню откроется "
-    "по `/menu` или `/op_help`)."
-)
-# OP_HELP_FULL_LEGACY (~8230 char) превышал MAX-API hard limit 4000 char,
-# при тапе кнопки `📋 Памятка оператора` бот падал с
-# `ValueError: text должен быть меньше 4000 символов` (VPS-лог
-# 2026-05-27 09:25:04). Разбит на 2 экрана с навигацией между собой,
-# каждый ≤ 3000 char.
+# OP_HELP_FULL_LEGACY был здесь — монолитная памятка ~8230 char,
+# превышавшая MAX-API hard limit 4000 char. Удалена 2026-05-27 в
+# рамках text length guard (test_texts_length_guard.py не пропустил
+# бы её). Содержимое разбито на OP_HELP_MAIN + OP_HELP_SECURITY
+# с навигацией между экранами. Если нужна полная памятка одним
+# документом — `docs/OPERATOR_SECURITY.md` остаётся как формальный
+# регламент-источник. См. историю git до 2026-05-27 если нужен
+# оригинал. Constraint защищён test_texts_length_guard.py — CI валится
+# если любая константа в texts.py превышает 3900 char.
 
 
 OP_HELP_MAIN = (
@@ -46252,6 +46043,175 @@ class TestCleanupStaleOperators:
             session, current_member_ids={9999}
         )
         assert deactivated == []
+```
+
+### `bot/tests/test_texts_length_guard.py`
+
+Size: `8424` bytes  
+SHA-256: `bd4754301e296a45f6edf1fef2fe61cd6b0121ae6486f6a07d3e8cd76b04bb27`
+
+```python
+"""Превентивный гард: ни одна str-константа в `aemr_bot.texts` после
+форматирования не должна превышать MAX-API hard limit 4000 символов.
+
+**Зачем.** 2026-05-27 жалоба владельца: тап «📋 Памятка оператора»
+падал в проде с `ValueError: text должен быть меньше 4000 символов` —
+константа `OP_HELP_FULL_LEGACY` разрослась до ~8230 char. Это
+бесшумный fail: бот не отправлял ничего, в чате тишина, ошибка только
+в docker logs.
+
+После split'a OP_HELP на 2 экрана (OP_HELP_MAIN + OP_HELP_SECURITY)
+текущий main чистый, но без guard'а любая будущая правка может
+вернуть overflow. Этот тест валит CI на любом attempt'е такой
+регрессии.
+
+**Метод.** Итерируем по модулю `aemr_bot.texts`, для каждой публичной
+str-константы:
+- Если содержит `{...}`-плейсхолдеры → форматируем с типичными
+  значениями (`answer_limit=4000`, `number=1`, `max_user_id=42`, и т.п.).
+  Список значений ниже — расширяется при появлении новых placeholder'ов.
+- Если без плейсхолдеров → используем как есть.
+Assert `len(formatted) <= MAX_LEN` (4000, с запасом — MAX-API лимит
+ровно 4000, наш guard 3900 даёт буфер на ack-маркеры и event_header).
+"""
+from __future__ import annotations
+
+import pytest
+
+
+MAX_LEN = 3900  # с запасом перед hard limit MAX-API 4000.
+
+# Типичные значения для всех известных placeholder'ов в текстах.
+# Расширяется при появлении новых полей в .format(...). Берём
+# реалистичные размеры:
+# - `answer_limit` (cfg.answer_max_chars) — обычно 4000, но в тестах
+#   ставим max разумное.
+# - `number` — id обращения, до 6 цифр.
+# - `max_user_id` — MAX user id, обычно 9 цифр.
+# - `phone` — телефон, 12 символов.
+# - `name` — имя оператора, до 50 char.
+# - `topic`, `address`, `locality` — текстовые поля обращения.
+# - `policy_url`, `policy_url_or_link` — URL до 200 char.
+# - `created_at` — отформатированная дата.
+# - `failed`, `total`, `delivered` — числа.
+# - `limit`, `actual`, `len` — размеры контента.
+_PLACEHOLDER_VALUES = {
+    "answer_limit": 4000,
+    "number": 999999,  # макс реалистичный id
+    "max_user_id": 999999999,
+    "phone": "+79991234567",
+    "name": "Иванов Иван Иванович (длинное имя оператора 50 символов)",
+    "topic": "Уличное освещение и дворовая территория",
+    "address": "г. Елизово, ул. Ленина, д. 13, кв. 145",
+    "locality": "Елизовское городское поселение",
+    "policy_url": "https://elizovomr.ru/policy/personal-data-processing.pdf",
+    "policy_url_or_link": "https://elizovomr.ru/p/personal-data.pdf",
+    "created_at": "27.05.2026 12:34",
+    "failed": 42,
+    "total": 999,
+    "delivered": 957,
+    "limit": 4000,
+    "actual": 5500,
+    "len": 1234,
+    "key": "welcome_text",
+    "broadcast_id": 999,
+    "appeal_id": 999999,
+    "url": "https://elizovomr.ru/some/long/path/to/document.pdf",
+    "reason": "Не валидно по SCHEMA — поле «phone» не похоже на телефон.",
+    "error": "MAX API timeout после 30 секунд",
+    "summary": "Краткое описание проблемы для жителя — до 200 символов.",
+    "reply_text": "x" * 200,  # реалистичный ответ оператора
+    "details": "Подробности об инциденте",
+    "when": "27.05.2026 в 12:34 камчатского",
+}
+
+
+def _try_format(value: str) -> str:
+    """Попытаться отформатировать строку с типичными плейсхолдерами.
+
+    Если в шаблоне есть `{some_unknown_field}` — пропускаем (placeholder
+    не вызовет overflow сам по себе, а реальное значение в проде
+    подставляется тоже разумного размера). На случай KeyError используем
+    `format_map` с дефолтным fallback'ом «UNKNOWN_FIELD».
+    """
+
+    class _DefaultDict(dict):
+        def __missing__(self, key):
+            # Возвращаем strigified имя плейсхолдера длиной ≤ 30 char
+            # — заведомо безопасный proxy для unknown placeholder'ов.
+            return f"[{key}]"
+
+    try:
+        return value.format_map(_DefaultDict(**_PLACEHOLDER_VALUES))
+    except (ValueError, IndexError):
+        # Битый format-string (например, `{` без закрытия) — возвращаем
+        # raw, ассертим через сырую длину.
+        return value
+
+
+def _iter_text_constants():
+    """Yield (name, value) для всех public str-констант в aemr_bot.texts."""
+    from aemr_bot import texts
+
+    for name in dir(texts):
+        if name.startswith("_"):
+            continue
+        value = getattr(texts, name)
+        if not isinstance(value, str):
+            continue
+        yield name, value
+
+
+def test_all_text_constants_within_max_api_limit() -> None:
+    """ВСЕ str-константы из `aemr_bot.texts` после форматирования
+    должны укладываться в `MAX_LEN` (= 3900, с запасом перед hard
+    limit MAX-API 4000).
+
+    Это превентивная защита от регрессий типа `OP_HELP_FULL_LEGACY`
+    (8230 char → silent ValueError в проде). При любой будущей правке
+    `texts.py`, которая раздувает константу — CI валится с понятным
+    сообщением «текст X превышает X char, нужен split на 2 экрана».
+    """
+    violations: list[tuple[str, int]] = []
+    for name, value in _iter_text_constants():
+        formatted = _try_format(value)
+        if len(formatted) > MAX_LEN:
+            violations.append((name, len(formatted)))
+
+    assert not violations, (
+        "Найдены константы в `aemr_bot.texts`, превышающие MAX-API "
+        f"hard limit ({MAX_LEN} char с запасом перед 4000):\n"
+        + "\n".join(
+            f"  - {name}: {length} char (нужен split на 2 экрана)"
+            for name, length in sorted(violations, key=lambda x: -x[1])
+        )
+        + "\n\nПример split'a: OP_HELP_FULL_LEGACY (8230 char) → "
+        "OP_HELP_MAIN + OP_HELP_SECURITY с навигацией. См. PR #94."
+    )
+
+
+def test_typical_long_constants_examples() -> None:
+    """Sanity-check: явно проверяем константы, которые в прошлом
+    разрастались (OP_HELP*, WELCOME, SECURITY_INFO_TEXT). На регрессии
+    основной тест поймает любую новую — а эти спот-проверки даёт
+    быстрый сигнал «именно эта часть проекта снова раздулась»."""
+    from aemr_bot import texts
+
+    known_long = {
+        "OP_HELP_MAIN": getattr(texts, "OP_HELP_MAIN", ""),
+        "OP_HELP_SECURITY": getattr(texts, "OP_HELP_SECURITY", ""),
+        "OP_HELP": getattr(texts, "OP_HELP", ""),
+        "WELCOME": getattr(texts, "WELCOME", ""),
+        "SECURITY_INFO_TEXT": getattr(texts, "SECURITY_INFO_TEXT", ""),
+        "CITIZEN_REPLY_TEMPLATE": getattr(texts, "CITIZEN_REPLY_TEMPLATE", ""),
+    }
+    for name, value in known_long.items():
+        if not value:
+            continue
+        formatted = _try_format(value)
+        assert len(formatted) <= MAX_LEN, (
+            f"{name}: {len(formatted)} char (нужен split на 2 экрана)"
+        )
 ```
 
 ### `bot/tests/test_threat_intel.py`
