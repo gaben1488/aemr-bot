@@ -193,7 +193,7 @@ class TestRunBackup:
         from aemr_bot.handlers import admin_panel
 
         event = _make_event()
-        with patch("aemr_bot.handlers._auth.ensure_role",
+        with patch("aemr_bot.handlers.admin_panel.ensure_role",
                    AsyncMock(return_value=False)):
             await admin_panel.run_backup(event)
         event.bot.send_message.assert_not_called()
@@ -205,7 +205,7 @@ class TestRunBackup:
 
         event = _make_event()
         do_backup = AsyncMock()
-        with patch("aemr_bot.handlers._auth.ensure_role",
+        with patch("aemr_bot.handlers.admin_panel.ensure_role",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_panel._do_backup", do_backup):
             await admin_panel.run_backup(event)
