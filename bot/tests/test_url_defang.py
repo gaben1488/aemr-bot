@@ -135,3 +135,56 @@ class TestDefangBareDomain:
         out = defang_url_in_text("проверь ya.ru и google.com тоже")
         assert f"ya{ZWSP}.ru" in out
         assert f"google{ZWSP}.com" in out
+
+
+class TestDefangExtendedTlds:
+    """SECURITY_REVIEW_2026-05-28 §A3: расширение TLD list.
+
+    Раньше `phish.cn`, `xn--evil.xn--p1ai`, `scam.tech` проходили
+    мимо defang'а — MAX-клиент авто-линкифицировал, оператор тапал.
+    Теперь покрыты.
+    """
+
+    def test_punycode_rf(self) -> None:
+        """.рф в punycode (`xn--p1ai`) — частый IDN-фишинг под госуслуги."""
+        out = defang_url_in_text("zайди на xn--evil.xn--p1ai")
+        assert f"xn--evil{ZWSP}.xn--p1ai" in out
+
+    def test_punycode_rus(self) -> None:
+        out = defang_url_in_text("открой test.xn--p1acf")
+        assert f"test{ZWSP}.xn--p1acf" in out
+
+    def test_country_cn(self) -> None:
+        """`.cn` — частый источник международных скам-кампаний."""
+        out = defang_url_in_text("vip.cn/login")
+        assert f"vip{ZWSP}.cn" in out
+
+    def test_country_tr(self) -> None:
+        out = defang_url_in_text("phish.tr/x")
+        assert f"phish{ZWSP}.tr" in out
+
+    def test_country_in(self) -> None:
+        out = defang_url_in_text("evil.in/auth")
+        assert f"evil{ZWSP}.in" in out
+
+    def test_new_tld_tech(self) -> None:
+        """`.tech` — относительно новый дешёвый TLD, любимый скамом."""
+        out = defang_url_in_text("scam.tech")
+        assert f"scam{ZWSP}.tech" in out
+
+    def test_new_tld_cloud(self) -> None:
+        out = defang_url_in_text("bad.cloud/file")
+        assert f"bad{ZWSP}.cloud" in out
+
+    def test_new_tld_live(self) -> None:
+        out = defang_url_in_text("phish.live")
+        assert f"phish{ZWSP}.live" in out
+
+    def test_new_tld_world(self) -> None:
+        out = defang_url_in_text("evil.world/x")
+        assert f"evil{ZWSP}.world" in out
+
+    def test_has_defangable_url_punycode(self) -> None:
+        """`has_defangable_url` тоже должен ловить новые TLD."""
+        assert has_defangable_url("откроется xn--evil.xn--p1ai") is True
+        assert has_defangable_url("посмотри на scam.tech") is True

@@ -152,5 +152,11 @@ class TestMaskPhone:
         assert _mask_phone("89991234567") == "+7***4567"
         assert _mask_phone(None) == "—"
         assert _mask_phone("") == "—"
-        # короткий номер не маскируем (нечего скрывать)
-        assert _mask_phone("12") == "12"
+
+    def test_short_input_returns_dash(self) -> None:
+        """SECURITY_REVIEW_2026-05-28 §A7: <4 цифр → «—», не raw."""
+        from aemr_bot.services.admin_events import _mask_phone
+
+        assert _mask_phone("12") == "—"
+        assert _mask_phone("ab") == "—"
+        assert _mask_phone("123") == "—"

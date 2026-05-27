@@ -48,13 +48,14 @@ class TestMaskPhone:
         assert _mask_phone("89991234567") == "+7***4567"
         assert _mask_phone("79991234567") == "+7***4567"
 
-    def test_short_garbage_kept_as_is(self) -> None:
-        """Если телефон короче 4 цифр — это явно мусор; маскировать
-        там нечего. Пусть оператор увидит, что номер сломан."""
+    def test_short_garbage_returns_dash(self) -> None:
+        """SECURITY_REVIEW_2026-05-28 §A7: при <4 цифр возвращаем «—»,
+        не raw input. Раньше garbage-номера выходили в admin-чат как
+        есть (PII утечка на edge case). Теперь «нет данных»."""
         from aemr_bot.handlers.admin_audience import _mask_phone
 
-        assert _mask_phone("ab") == "ab"
-        assert _mask_phone("123") == "123"
+        assert _mask_phone("ab") == "—"
+        assert _mask_phone("123") == "—"
 
     def test_non_ru_format(self) -> None:
         from aemr_bot.handlers.admin_audience import _mask_phone

@@ -164,3 +164,65 @@ class TestObjListGrouping:
         ])
         assert "▸ Электроэнергия" in body
         assert "▸ Прочее" in body
+
+
+class TestIsWhitelistedUrl:
+    """SECURITY_REVIEW_2026-05-28 §A4: hardening URL whitelist matcher.
+
+    Существующая логика принимала `https://Gosuslugi.RU` (через
+    `urlparse + .lower()`). Защитимся явно от:
+    - mixed-case host (визуально подозрительно, обманывает пожилого
+      жителя);
+    - не-ASCII символов в host (unicode-омоглифы, ноль-width).
+    """
+
+    def test_valid_lowercase_passes(self) -> None:
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url("https://elizovomr.ru/news") is True
+        assert is_whitelisted_url("https://www.gosuslugi.ru") is True
+        assert is_whitelisted_url("https://kamgov.ru/path") is True
+
+    def test_phishing_lookalike_rejected(self) -> None:
+        """Phishing-домен `gosuslugi.ru.evil.example.com` не должен
+        пройти suffix-match (host endswith `.example.com`, не
+        `.gosuslugi.ru`)."""
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url(
+            "https://gosuslugi.ru.evil.example.com"
+        ) is False
+
+    def test_mixed_case_host_rejected(self) -> None:
+        """§A4: `https://Gosuslugi.RU` визуально подозрителен —
+        rejected даже хотя `urlparse + .lower()` дал бы валидный
+        suffix-match. Lowercase — стандартная DNS-практика."""
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url("https://Gosuslugi.RU") is False
+        assert is_whitelisted_url("https://ELIZOVOMR.RU") is False
+        assert is_whitelisted_url("https://kamgov.RU/x") is False
+
+    def test_unicode_homoglyph_rejected(self) -> None:
+        """§A4: `gоsuslugi.ru` с cyrillic «о» (U+043E) — типичный
+        омоглиф-фишинг. Host содержит non-ASCII → rejected."""
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        # cyrillic 'о' вместо latin 'o'
+        assert is_whitelisted_url("https://gоsuslugi.ru") is False
+
+    def test_non_http_scheme_rejected(self) -> None:
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url("ftp://elizovomr.ru") is False
+        assert is_whitelisted_url("javascript:alert(1)") is False
+
+    def test_empty_or_garbage_rejected(self) -> None:
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url("") is False
+        assert is_whitelisted_url("not a url at all") is False
+        assert is_whitelisted_url("https://") is False
+
+    def test_subdomain_of_whitelisted_passes(self) -> None:
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url(
+            "https://news.elizovomr.ru/article/1"
+        ) is True
+        assert is_whitelisted_url(
+            "https://lk.gosuslugi.ru/profile"
+        ) is True
