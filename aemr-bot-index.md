@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 06:44:15 UTC`
+Generated at: `2026-05-27 08:25:42 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `245`
+Indexed files: `246`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -62,7 +62,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/start.py` (21062 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (71707 bytes)
-- `bot/aemr_bot/main.py` (21047 bytes)
+- `bot/aemr_bot/main.py` (22650 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_bus.py` (10239 bytes)
 - `bot/aemr_bot/services/admin_card.py` (11674 bytes)
@@ -73,7 +73,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/broadcasts.py` (15994 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
 - `bot/aemr_bot/services/card_format.py` (19371 bytes)
-- `bot/aemr_bot/services/cron.py` (51363 bytes)
+- `bot/aemr_bot/services/cron.py` (54156 bytes)
 - `bot/aemr_bot/services/cron_registry.py` (6568 bytes)
 - `bot/aemr_bot/services/db_backup.py` (16664 bytes)
 - `bot/aemr_bot/services/geo.py` (12164 bytes)
@@ -105,7 +105,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/_helpers.py` (5713 bytes)
 - `bot/tests/conftest.py` (1882 bytes)
 - `bot/tests/test_admin_appeal_ops.py` (29769 bytes)
-- `bot/tests/test_admin_bus.py` (12152 bytes)
+- `bot/tests/test_admin_bus.py` (16047 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10985 bytes)
 - `bot/tests/test_admin_card_detached_safety.py` (8432 bytes)
 - `bot/tests/test_admin_card_render.py` (18711 bytes)
@@ -135,7 +135,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_callback_router.py` (9462 bytes)
 - `bot/tests/test_callback_router_coverage.py` (5487 bytes)
 - `bot/tests/test_card_format.py` (11020 bytes)
-- `bot/tests/test_cron_docs_sync.py` (4099 bytes)
+- `bot/tests/test_cron_docs_sync.py` (4085 bytes)
 - `bot/tests/test_cron_jobs.py` (22687 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
 - `bot/tests/test_db_backup_extra.py` (15690 bytes)
@@ -180,7 +180,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_typing_indicator.py` (2923 bytes)
 - `bot/tests/test_uploads_policy_admin_relay.py` (11634 bytes)
 - `bot/tests/test_url_defang.py` (5767 bytes)
-- `bot/tests/test_users_consent_invariants.py` (12133 bytes)
+- `bot/tests/test_users_consent_invariants.py` (12125 bytes)
 - `bot/tests/test_users_service_pg.py` (16852 bytes)
 - `bot/tests/test_wizard_registry.py` (5268 bytes)
 - `docs/_extracted/README.md` (2565 bytes)
@@ -206,6 +206,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/_meta/SEC_SELF_REVIEW_2026-05-26.md` (14170 bytes)
 - `docs/_meta/SECURITY_REVIEW_2026-05-26.md` (14457 bytes)
 - `docs/_meta/SECURITY_REVIEW_2026-05-27.md` (16830 bytes)
+- `docs/_meta/SECURITY_REVIEW_2026-05-28.md` (23224 bytes)
 - `docs/_meta/UI_BRAND_CONCEPT_2026-05-26.md` (34110 bytes)
 - `docs/_meta/URL_THREAT_INTEL_2026-05-26.md` (16739 bytes)
 - `docs/archive/CHAT_AUDIT.md` (20468 bytes)
@@ -15986,8 +15987,8 @@ def op_help_keyboard(
 
 ### `bot/aemr_bot/main.py`
 
-Size: `21047` bytes  
-SHA-256: `dea3cfdf6e5dc38a40f1190bcfaf9fe38fc0577559f2ce17703b027d084287fb`
+Size: `22650` bytes  
+SHA-256: `896f4df6e14fb40ac1b352554868d4d8f600b4954d936214c7d8e6241525e3f2`
 
 ```python
 from __future__ import annotations
@@ -16098,16 +16099,24 @@ async def _seed_settings():
 def _build_admin_senders(bot: Bot):
     from aemr_bot.services import uploads
 
-    async def send_admin_text(text: str):
+    async def send_admin_text(text: str, *, critical: bool = False):
         # Идёт через admin_bus, чтобы tracker сдвигался автоматически
         # после каждого pulse / cron-уведомления / алерта. Иначе
         # freshness-rule в admin_card.render / send_or_edit_screen
         # отставала бы от реального состояния чата.
+        #
+        # `critical=True` — обязательно для cron-алёртов (фейл бэкапа,
+        # ошибки retention, stale-operators, funnel-watchdog). Это
+        # пробивает quiet режим: ночные алёрты должны быть видны утром,
+        # иначе 152-ФЗ retention или потеря бэкапа окажется
+        # незамеченной до понедельника. Pulse-heartbeat'ы остаются
+        # `critical=False` — они и должны затихать ночью.
+        # См. SECURITY_REVIEW_2026-05-28 §A1.
         from aemr_bot.services import admin_bus
 
         if not settings.admin_group_id:
             return
-        await admin_bus.send(bot, text=text)
+        await admin_bus.send(bot, text=text, critical=critical)
 
     async def send_admin_document(filename: str, content: bytes, caption: str = ""):
         if not settings.admin_group_id:
@@ -16267,6 +16276,24 @@ async def main() -> None:
         log.exception("set_my_commands failed; продолжаем без подсказок в /-меню")
 
     await _seed_settings()
+
+    # Прогрев in-memory cache для quiet режима — до запуска polling и
+    # cron'ов, чтобы первая же отправка через admin_bus.send уже видела
+    # актуальный enabled/start/end из БД. Без этого первые ~5 секунд
+    # (до первого pulse-cron'а) cache держит default disabled и
+    # non-critical сообщения могут проскочить в quiet окне.
+    # См. SECURITY_REVIEW_2026-05-28 §A2.
+    try:
+        from aemr_bot.services import quiet_hours
+
+        async with session_scope() as session:
+            await quiet_hours.refresh_cache_from_db(session)
+    except Exception:
+        log.debug(
+            "quiet_hours.refresh_cache_from_db boot warmup failed — "
+            "cache останется в default disabled, безопасно",
+            exc_info=False,
+        )
 
     # На холодном старте создаём первого ИТ-оператора из env, если ни одного ещё нет.
     if settings.bootstrap_it_max_user_id is not None:
@@ -18965,8 +18992,8 @@ def appeal_list_label(appeal: Appeal) -> str:
 
 ### `bot/aemr_bot/services/cron.py`
 
-Size: `51363` bytes  
-SHA-256: `b09c94e4fd067a5d1589fc3e0dfaec069db7b591a21d60c6472e1fae26567252`
+Size: `54156` bytes  
+SHA-256: `f9de463b0aec60aca76c0513d6b2a11338a964fcc5c6bc8f3f21ecda0dc65dcd`
 
 ```python
 from __future__ import annotations
@@ -19074,18 +19101,31 @@ async def _send_with_open_tickets_button(bot, text: str) -> None:
         log.exception("send admin reminder with button failed")
 
 
-async def _send_admin_text_with_retry(send_admin_text, text: str, *, context: str) -> bool:
+async def _send_admin_text_with_retry(
+    send_admin_text,
+    text: str,
+    *,
+    context: str,
+    critical: bool = False,
+) -> bool:
     """Отправить служебное сообщение в админ-группу с коротким retry.
 
     Пульс и сообщение о рестарте не должны теряться из-за одного
     сетевого сбоя MAX, короткого rate-limit или задержки сразу после
     старта контейнера. Если все попытки не удались, job не роняет
     scheduler-loop, но оставляет понятный лог.
+
+    `critical=True` пробрасывается в `send_admin_text` и заставляет
+    `admin_bus.send` игнорировать quiet режим. Используется для алёртов
+    (фейл бэкапа, ошибки retention, stale-operators, funnel-watchdog),
+    которые должны пробить ночь — иначе 152-ФЗ retention или
+    потерянный бэкап замолчат до утра понедельника.
+    См. SECURITY_REVIEW_2026-05-28 §A1.
     """
     attempts = len(_ADMIN_SEND_RETRY_DELAYS_SEC) + 1
     for attempt in range(1, attempts + 1):
         try:
-            await send_admin_text(text)
+            await send_admin_text(text, critical=critical)
             return True
         except Exception:
             if attempt >= attempts:
@@ -19134,6 +19174,11 @@ async def _job_backup_with_alert(send_admin_text) -> None:
     одно общее сообщение «бэкап не выполнен», по нему было неясно,
     проблема в pg_dump (БД), в gpg (шифрование) или в .env (конфиг).
     """
+    # critical=True во всех ветках: фейл бэкапа должен пробить
+    # quiet режим (sec/A1, SECURITY_REVIEW_2026-05-28). Backup-cron
+    # 0 3 * * 6 (сб 03:00) попадает в default quiet окно [18, 9) —
+    # без critical алёрт молчит до утра понедельника, окно реакции
+    # ~30 часов без свежей точки восстановления.
     try:
         result = await _backup_db()
         if result.ok:
@@ -19145,7 +19190,8 @@ async def _job_backup_with_alert(send_admin_text) -> None:
                 "Возможные причины: Postgres недоступен, нет места на "
                 "диске, сменились права. Снимите бэкап вручную через "
                 "/backup, как только разберётесь — мы пропустили "
-                "еженедельную точку восстановления."
+                "еженедельную точку восстановления.",
+                critical=True,
             )
         elif result.fail_kind == "gpg":
             await send_admin_text(
@@ -19157,13 +19203,15 @@ async def _job_backup_with_alert(send_admin_text) -> None:
                 "Проверьте BACKUP_GPG_PASSPHRASE и логи. Снимите бэкап "
                 "вручную через /backup, либо временно работайте без "
                 "gpg (пустой BACKUP_GPG_PASSPHRASE → plain SQL — "
-                "только при защищённом /backups том)."
+                "только при защищённом /backups том).",
+                critical=True,
             )
         elif result.fail_kind == "config":
             await send_admin_text(
                 "⚙️ Еженедельный бэкап БД не выполнен: "
                 "BACKUP_LOCAL_DIR пуст в .env — некуда писать. "
-                "Проверьте конфигурацию (`docs/SYSADMIN.md §5.4`)."
+                "Проверьте конфигурацию (`docs/SYSADMIN.md §5.4`).",
+                critical=True,
             )
         else:  # "unknown" — fallback
             await send_admin_text(
@@ -19171,14 +19219,16 @@ async def _job_backup_with_alert(send_admin_text) -> None:
                 "ошибкой.\n"
                 f"Детали: {result.fail_detail}\n"
                 "См. логи бота: `docker compose logs --tail 200 bot`. "
-                "Снимите бэкап вручную через /backup."
+                "Снимите бэкап вручную через /backup.",
+                critical=True,
             )
     except Exception:
         log.exception("backup_with_alert wrapper failed")
         await send_admin_text(
             "⚠️ Еженедельный бэкап БД упал с исключением вне самого "
             "backup_db (вероятно, сбой admin-канала или OOM). "
-            "Срочно проверьте логи и снимите бэкап вручную через /backup."
+            "Срочно проверьте логи и снимите бэкап вручную через /backup.",
+            critical=True,
         )
 
 
@@ -19358,8 +19408,12 @@ async def _job_stale_operators_cleanup(bot, send_admin_text) -> None:
                 f"Если кто-то ушёл по ошибке — восстановите через меню "
                 f"«👥 Операторы» → «➕ Добавить»."
             )
+            # critical=True (sec/A1): авто-деактивация stale операторов
+            # — событие, которое нужно увидеть в день когда оно произошло,
+            # чтобы быстро восстановить ошибочно выкинутых.
             await _send_admin_text_with_retry(
-                send_admin_text, msg, context="stale-operators-cleanup"
+                send_admin_text, msg, context="stale-operators-cleanup",
+                critical=True,
             )
         else:
             log.info("stale-operators-cleanup: no changes")
@@ -19368,7 +19422,12 @@ async def _job_stale_operators_cleanup(bot, send_admin_text) -> None:
 
 
 async def _job_selfcheck(send_admin_text) -> None:
-    """Алёрт при смене статуса бота: heartbeat fresh ↔ stale."""
+    """Алёрт при смене статуса бота: heartbeat fresh ↔ stale.
+
+    critical=True (sec/A1): selfcheck должен пробить quiet режим. Если
+    бот завис ночью, оператор должен увидеть это сразу — а не утром
+    после простоя 9 часов.
+    """
     was_healthy = _SELFCHECK_HEALTHY["healthy"]
     is_healthy = heartbeat.is_fresh()
     if was_healthy and not is_healthy:
@@ -19378,12 +19437,14 @@ async def _job_selfcheck(send_admin_text) -> None:
             "Возможное состояние: завис главный цикл. Проверьте логи и "
             "перезапустите контейнер, если бот не восстановится автоматически.",
             context="health-selfcheck-stale",
+            critical=True,
         )
     elif not was_healthy and is_healthy:
         await _send_admin_text_with_retry(
             send_admin_text,
             "✅ Проверка здоровья: бот снова отвечает на внутренний heartbeat.",
             context="health-selfcheck-recovered",
+            critical=True,
         )
     _SELFCHECK_HEALTHY["healthy"] = is_healthy
 
@@ -19548,6 +19609,12 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                     "pdn_retention: не удалось обезличить max_user_id=%s",
                     max_user_id,
                 )
+        # critical=True (sec/A1): 152-ФЗ retention — compliance-критично.
+        # Cron 0 6 * * * → попадает в default quiet окно [18, 9). Без
+        # critical owner не узнает что произошло обезличивание (либо
+        # что оно НЕ произошло из-за бага) до утра следующего рабочего
+        # дня. ФЗ-152 ст. 21 ч. 5 — формальное требование уведомить
+        # ответственное лицо.
         for erased_id in erased_ids:
             await _send_admin_text_with_retry(
                 send_admin_text,
@@ -19558,12 +19625,14 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                     "открытых обращений нет."
                 ),
                 context="pdn_retention",
+                critical=True,
             )
         if erased or skipped_open:
             await send_admin_text(
                 f"🛡 Архивная очистка ПДн по сроку: "
                 f"обезличено {erased}, отложено {skipped_open} "
-                f"(есть открытые обращения)."
+                f"(есть открытые обращения).",
+                critical=True,
             )
     except Exception:
         log.exception("pdn_retention_check crashed")
@@ -19627,6 +19696,9 @@ async def _job_funnel_watchdog(bot, send_admin_text) -> None:
         # Под порогом — тишина, чтобы не флудить (1-4 застрявших в час
         # — норма «житель отвлёкся, не дошёл до конца»).
         if len(stuck) >= _FUNNEL_WATCHDOG_ADMIN_ALERT_THRESHOLD:
+            # critical=True (sec/A1): аномальный спайк в воронке —
+            # сигнал о UX-баге или DDoS. Должен пробить quiet режим
+            # (cron каждый час 24/7, лёгко попадает в [18, 9)).
             await _send_admin_text_with_retry(
                 send_admin_text,
                 (
@@ -19638,6 +19710,7 @@ async def _job_funnel_watchdog(bot, send_admin_text) -> None:
                     f"бота, шаги анкеты и оповестите ИТ при повторении."
                 ),
                 context="funnel-watchdog-anomaly",
+                critical=True,
             )
     except Exception:
         log.exception("funnel_watchdog crashed")
@@ -27720,8 +27793,8 @@ class TestRunEraseForAppeal:
 
 ### `bot/tests/test_admin_bus.py`
 
-Size: `12152` bytes  
-SHA-256: `6fd24ea8c5db51ea09d5ba4c196024d549c71f4e76e3e7c97161532642f39f7b`
+Size: `16047` bytes  
+SHA-256: `0d098c7626f7e6ab26a9b7aeec82d423c4b5bd90ec09daa640bdc257ca3964ec`
 
 ```python
 """Тесты единой admin_bus и AdminChatActivityMiddleware.
@@ -27989,6 +28062,92 @@ class TestAdminChatActivityMiddleware:
             await mw(handler, event, {})
         # Tracker не сдвинулся — это и есть смысл fix'а.
         assert menu_tracker.get_last_menu_mid(555) == "menu-existing-1"
+
+
+class TestAdminBusCriticalBypassesQuiet:
+    """SEC delta A1 (SECURITY_REVIEW_2026-05-28): critical=True ОБЯЗАН
+    пробить quiet режим. Без этого cron-алёрты (фейл бэкапа, retention
+    error, stale-operators-cleanup, funnel-watchdog аномалия)
+    подавляются ночью и admin узнаёт о реальной проблеме только утром
+    следующего рабочего дня — окно ~30 часов.
+    """
+
+    @pytest.mark.asyncio
+    async def test_non_critical_suppressed_in_quiet(self) -> None:
+        """critical=False (default) + quiet активен → не шлём, return None."""
+        from aemr_bot.services import admin_bus
+        from aemr_bot.services import quiet_hours
+        from aemr_bot.utils import menu_tracker
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock()
+        # Принудительно включаем quiet окно on всё время суток.
+        quiet_hours._cache["enabled"] = True
+        quiet_hours._cache["start"] = 0
+        quiet_hours._cache["end"] = 24
+        try:
+            with patch("aemr_bot.config.settings.admin_group_id", 555):
+                mid = await admin_bus.send(bot, text="pulse-heartbeat")
+        finally:
+            quiet_hours.reset_cache_for_tests()
+        assert mid is None
+        bot.send_message.assert_not_called()
+        # Tracker не двинулся (мы вообще не отправляли).
+        assert menu_tracker.get_chat_state(555) is None
+
+    @pytest.mark.asyncio
+    async def test_critical_bypasses_quiet(self) -> None:
+        """critical=True + quiet активен → всё равно шлём.
+
+        Сценарий A1: фейл бэкапа сб 03:00 (внутри quiet окна) должен
+        дойти до admin chat. Без этого 152-ФЗ retention или потеря
+        бэкапа окажется незамеченной до утра понедельника.
+        """
+        from aemr_bot.services import admin_bus
+        from aemr_bot.services import quiet_hours
+        from aemr_bot.utils import menu_tracker
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="alert-1"))
+            )
+        )
+        quiet_hours._cache["enabled"] = True
+        quiet_hours._cache["start"] = 0
+        quiet_hours._cache["end"] = 24
+        try:
+            with patch("aemr_bot.config.settings.admin_group_id", 555):
+                mid = await admin_bus.send(
+                    bot, text="⚠️ backup failed", critical=True
+                )
+        finally:
+            quiet_hours.reset_cache_for_tests()
+        assert mid == "alert-1"
+        bot.send_message.assert_awaited_once()
+        # Tracker сдвинулся, потому что отправка прошла.
+        state = menu_tracker.get_chat_state(555)
+        assert state is not None
+        assert state.last_physical_mid == "alert-1"
+
+    @pytest.mark.asyncio
+    async def test_non_critical_outside_quiet_sends(self) -> None:
+        """critical=False вне quiet окна — стандартный путь, шлём."""
+        from aemr_bot.services import admin_bus
+        from aemr_bot.services import quiet_hours
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock(
+            return_value=SimpleNamespace(
+                message=SimpleNamespace(body=SimpleNamespace(mid="ok-1"))
+            )
+        )
+        # quiet выключен (default).
+        quiet_hours.reset_cache_for_tests()
+        with patch("aemr_bot.config.settings.admin_group_id", 555):
+            mid = await admin_bus.send(bot, text="normal pulse")
+        assert mid == "ok-1"
+        bot.send_message.assert_awaited_once()
 ```
 
 ### `bot/tests/test_admin_callback_dispatch.py`
@@ -36183,8 +36342,8 @@ class TestAdminCardCitizenStateMarkers:
 
 ### `bot/tests/test_cron_docs_sync.py`
 
-Size: `4099` bytes  
-SHA-256: `7a9b7304cb44d37a46a8f9dfd275077135b5a0aa33b3973df1b71286b76cbaa5`
+Size: `4085` bytes  
+SHA-256: `493f7a452f2e56410a898a4ba29445db2f7ed32fa9c1d1da0317d2538596d7ba`
 
 ```python
 """Anti-drift тест: каждый cron-job из `cron_registry.JOB_REGISTRY`
@@ -36210,7 +36369,6 @@ from __future__ import annotations
 
 import pathlib
 
-import pytest
 
 from aemr_bot.services.cron_registry import JOB_REGISTRY, all_ids
 
@@ -47649,8 +47807,8 @@ class TestDefangBareDomain:
 
 ### `bot/tests/test_users_consent_invariants.py`
 
-Size: `12133` bytes  
-SHA-256: `611b8d3714d7bb6fd853238717a314376a442eae30d9c7a78cb421f580aead51`
+Size: `12125` bytes  
+SHA-256: `de1ca590e14ecd2f50cc9cf891b4778f6f2b66e3a799252bbab574121d237284`
 
 ```python
 """Регрессионные тесты на критические инварианты согласия в
@@ -47740,7 +47898,7 @@ class TestSetConsentInvariants:
         обнулён, иначе retention-cron через 30 дней с того старого
         отзыва обезличит жителя несмотря на актуальное свежее согласие.
         """
-        from sqlalchemy import select, update
+        from sqlalchemy import select
 
         await users_service.get_or_create(session, max_user_id=2, first_name="Y")
         await users_service.revoke_consent(session, 2)
@@ -54853,6 +55011,496 @@ findings:
 > сохранены **как историческое описание проблем до их закрытия**, не
 > как актуальные TODO. Для текущего security-статуса — см. этот раздел
 > «Закрытые в PR #103» + `docs/SECURITY.md` (canonical).
+```
+
+### `docs/_meta/SECURITY_REVIEW_2026-05-28.md`
+
+Size: `23224` bytes  
+SHA-256: `c1dbe3541120fa45ad8ba14d9f9c2e7dfff527834bd2688b63d9ddbed84afa52`
+
+```markdown
+# Security Review Delta 2026-05-28
+
+> Дельта-аудит после PR #102–#126 поверх baseline `SECURITY_REVIEW_2026-05-27.md`.
+> Скоуп: новый код последних 30 часов + MAX-bot-specific attack surface +
+> современные scam-векторы 2026 (AI voice clone, deepfake, импер­сонация
+> гос-брендов). Ничего из закрытых SEC #1–#9, C1–C6, H1–H2, M1–M10 не
+> повторяю.
+
+---
+
+## TL;DR
+
+```
+🔴 Critical:  1 (alerts через send_admin_text подавляются quiet режимом)
+🟡 Medium:    3 (quiet-cache initial state, defang TLD missing punycode, broadcast URL whitelist case-sensitivity)
+🟢 Low:       4 (PII в маске, dual-tracker cache evict, idempotency cb_id window, monkey-patch in tests)
+✅ OK:        URL defang bare-domain (#118), quiet hours sync cache (#117),
+              dual-tracker (#100), SCHEMA overflow guard (#103), text length guard (#101)
+```
+
+**Главная находка делты — A1 🔴:** `_build_admin_senders` оборачивает
+все cron-алёрты в `admin_bus.send(...)` без `critical=True`. Значит
+в quiet режиме (default 18:00–09:00) **тихо проглатываются alert'ы**:
+- фейл еженедельного backup'а (`_job_backup_with_alert`, идёт сб 03:00 — попадает в окно);
+- ошибки `_job_stale_operators_cleanup`;
+- ошибки `_job_pdn_retention_check` (152-ФЗ retention — критично!);
+- ошибки `_job_appeals_5y_retention`;
+- alert'ы `_job_funnel_watchdog`.
+
+Worst case: backup упал в субботу 03:00, fail-alert подавлен, оператор
+узнаёт в понедельник 09:00 — окно ~30ч без свежего бэкапа.
+152-ФЗ retention-cron упал → жители с активным «забудь меня»
+остаются с PII в БД дольше положенного — формальное нарушение
+§14(4) 152-ФЗ.
+
+---
+
+## Дельта vs 2026-05-27
+
+| PR | Кратко | Новый attack surface | Делта-вердикт |
+|---|---|---|---|
+| #102 | README aiohttp/FastAPI sync, uvd-kam удалён | docs only | OK |
+| #103 | SCHEMA overflow guard (welcome 4000→3800) + AI voice clone в SECURITY_INFO | settings input validation | OK |
+| #104 | timeline unification (admin card) | render path | OK |
+| #105 | stale «❌ Отмена» → no-op | UX only | OK |
+| #106 | citizen keyboards consistency | UX only | OK |
+| #107 | admin keyboards возврат ↩️ унификация | UX only | OK |
+| #108 | citizen «Мои обращения» 📎→🗂 | UX only | OK |
+| #109 | docstring cleanup → CODE_DECISIONS_LOG | docs only | OK |
+| #110–#114, #119 | lazy → top-level imports (admin_callback_dispatch, admin_appeal_ops, services/cron, admin_panel, wizard_registry, menu.py) | импорт-граф изменён | OK (циркуляров нет) |
+| #115 | C1 docs truth pass (pulse, cron jobs, OPERATOR_SECURITY numbering) | docs only | OK |
+| #116 | «адрес проблемы» vs домашний адрес | text only | OK |
+| #117 | quiet hours toggle через ⚙️ Настройки | новая feature: in-memory cache + sync read | 🟡 (A1 critical, A2 medium) |
+| #118 | URL defang расширен на bare domain (ya.ru / bit.ly) | новые TLD-маски | 🟡 (A3 medium) |
+| #120 | meta D1/D2 closed status + superseded_by | docs only | OK |
+| #121 | quiet hours UI toggle | поверх #117 | см. A1 |
+| #122 | docs local vs CI test commands | docs only | OK |
+| #123 | cron-registry + docs anti-drift test | новый assert mechanism | OK |
+| #124 | gitignore *.stackdump | hygiene | OK |
+| #125 | quiet hours edit-flow start/end через UI | intent flow + TTL 5min | 🟢 (A6 low, TTL race) |
+| #126 | tests cluster D consent invariants | tests only | OK |
+
+Новый attack surface — только **quiet режим** (3 PR), **URL defang
+bare-domain** (1 PR), **dual-tracker** (1 PR). Остальное — UX/docs/тесты.
+
+---
+
+## A1 🔴 CRITICAL — алёрты cron подавляются quiet режимом
+
+**Файл:** `bot/aemr_bot/main.py:109–118` + `bot/aemr_bot/services/cron.py:152–660`.
+
+**Что не так:** `send_admin_text` (factory `_build_admin_senders`)
+вызывает `admin_bus.send(bot, text=text)` **без `critical=True`**.
+По contract'у `admin_bus.send` (см. `services/admin_bus.py:42–64`) при
+включённом quiet режиме (`is_quiet_hours_now() == True`) возвращает
+`None` и **не отправляет** сообщение.
+
+Все cron-алёрты идут через этот же `send_admin_text`:
+
+```python
+# main.py:109
+async def send_admin_text(text: str):
+    await admin_bus.send(bot, text=text)   # critical=False по умолчанию
+
+# services/cron.py:171  (_job_backup_with_alert)
+await send_admin_text("⚠️ Еженедельный бэкап БД упал на pg_dump…")
+
+# services/cron.py:592  (_job_pdn_retention_check)
+await send_admin_text("⚠️ PDN retention error: …")  # ← 152-ФЗ!
+```
+
+**Сценарий:**
+1. Default quiet режим: 18:00–09:00 (`admin_quiet_hours_*` defaults).
+2. Backup-cron: `0 3 * * 6` (сб 03:00, см. `cron_registry.py`).
+3. pg_dump падает → `_job_backup_with_alert` → `send_admin_text(...)`
+   → `admin_bus.send(..., critical=False)` → `is_quiet_hours_now()=True`
+   → log INFO «suppressed» + return None.
+4. Алёрт **не доходит** до admin-чата.
+5. Оператор узнаёт о фейле в пн 09:00 утра (когда pulse прошёл и появится в чате) — окно ~30 часов.
+
+**152-ФЗ impact:** `_job_pdn_retention_check` идёт `0 6 * * *` (06:00
+ежедневно — попадает в quiet окно [18, 9)). Если retention-cron
+упадёт (например, БД locked, миграция в процессе), alert подавлен →
+жители, требующие обезличивания через 30 дней после revoke_consent,
+остаются с PII в БД дольше → формальное нарушение §14(4) ФЗ-152.
+
+**Fix (срочный, отдельный PR):**
+
+```python
+# main.py:_build_admin_senders
+async def send_admin_text(text: str, *, critical: bool = False):
+    if not settings.admin_group_id:
+        return
+    await admin_bus.send(bot, text=text, critical=critical)
+```
+
+Затем в cron-алёртах:
+```python
+# cron.py:_job_backup_with_alert, _job_stale_operators_cleanup,
+# _job_pdn_retention_check, _job_funnel_watchdog
+await send_admin_text("⚠️ …", critical=True)
+```
+
+Pulse и periodic selfcheck НЕ менять — они правильно non-critical.
+
+**Verification:**
+```bash
+grep -n "send_admin_text(" bot/aemr_bot/services/cron.py | head -20
+# Каждый вызов в alert-сайте должен иметь critical=True. Pulse — нет.
+```
+
+**Test регрессии:** в `test_quiet_hours.py` добавить case «backup
+alert не подавляется в quiet режиме», assert mock `bot.send_message`
+был вызван.
+
+---
+
+## A2 🟡 MEDIUM — quiet cache initial state ≠ DB state
+
+**Файл:** `bot/aemr_bot/services/quiet_hours.py:54–58`.
+
+```python
+_cache: dict = {
+    "enabled": False,   # default: не подавляем пока БД не прочитана
+    "start": 18,
+    "end": 9,
+}
+```
+
+`is_quiet_hours_now()` возвращает False до первого
+`refresh_cache_from_db()`. Это safe default (лучше шум чем потерять
+алёрт), но создаёт **window инконсистентности**:
+
+- Бот стартует в 22:00 (quiet окно в БД).
+- `refresh_cache_from_db` вызывается из startup-pulse (через 5 сек) и
+  затем из cron каждый час в `:05`.
+- Первые 5 секунд пока cache не прогрелся — все non-critical сообщения
+  **пойдут** в чат, хотя владелец явно настроил quiet.
+
+**Impact:** низкий. 5-секундное окно, в нём максимум один pulse или
+admin-event. Не критично, но создаёт inconsistency в UX («почему
+вчера ночью pulse пришёл, а сегодня нет?»).
+
+**Fix:** в `main.py` сразу после `_seed_settings()` вызвать
+`await refresh_cache_from_db(session)` — до старта polling. Тогда
+cache горячий с 0-й секунды.
+
+---
+
+## A3 🟡 MEDIUM — URL defang TLD list не покрывает punycode и редкие IDN
+
+**Файл:** `bot/aemr_bot/utils/url_defang.py:60–72`.
+
+```python
+_DEFANG_TLDS = (
+    "ru", "su", "рф", "by", "kz", ...,
+    "com", "org", "net", ...,
+    "io", "co", "me", ...,
+    "xyz", "top", "club", ...,
+)
+```
+
+**Что не покрыто:**
+- **Punycode-домены**: `xn--80a1acny.xn--p1ai` (= `аэмо.рф` в punycode)
+  — TLD `xn--p1ai` не в списке. MAX-клиент auto-linkify'ит punycode.
+- **Редкие но реальные scam-TLD 2026**: `.cn`, `.tr`, `.in`, `.ng`,
+  `.mx`, `.br` — не в списке. Скам-кампании из Африки/Азии работают
+  через эти TLD.
+- **Новые расширения 2024-2026**: `.bot`, `.gov` (как country-prefix —
+  `.gov.kz`), `.tech`, `.cloud`, `.live`, `.work`.
+
+**Impact:** медиум. Фишинг через `phish.cn` или `xn--evil.xn--p1ai`
+проходит мимо defang → auto-linkify'ится у оператора в MAX-клиенте
+→ один тап = phishing-страница с правами оператора.
+
+**Fix:** добавить:
+```python
+_DEFANG_TLDS += (
+    # IDN/punycode
+    "xn--p1ai",    # .рф punycode
+    "xn--p1acf",   # .рус punycode
+    "xn--90a3ac",  # .срб punycode
+    # Country (расширение)
+    "cn", "tr", "in", "ng", "mx", "br", "id", "vn", "ph", "th",
+    # 2024-2026 расширения
+    "bot", "tech", "cloud", "live", "work", "social", "world",
+)
+```
+
+Расширить test_url_defang.py соответствующими кейсами.
+
+---
+
+## A4 🟡 MEDIUM — broadcast URL whitelist case-sensitivity edge
+
+**Файл:** `bot/aemr_bot/services/settings_store.py` (whitelist matcher).
+
+Whitelist хранит pattern'ы вида `*.elizovomr.ru`, `*.gosuslugi.ru`.
+Match строго lowercase. Если оператор вставит URL с mixed-case host
+(`https://Gosuslugi.RU`), он будет normalize'ed через `urlparse`, но
+some MAX-клиенты не нормализуют host перед auto-link. Если
+broadcast-URL прошёл проверку → отправляется как есть → у жителя
+кликабельная ссылка с unusual casing, что **легче спуфить**:
+`https://Gosuslugi.RU.evil.example.com` — visually похоже на гос.
+
+**Impact:** низкий-средний. Зависит от поведения MAX-клиента. Нужно
+протестировать на mobile/desktop клиенте.
+
+**Fix (защитный):** в matcher для URL whitelist сначала `host = host.lower()`,
+плюс reject если в host есть символ кроме `[a-z0-9.-]` (защита от
+unicode-омоглифов).
+
+---
+
+## A5 🟢 LOW — dual-tracker ChatState не эвиктится
+
+**Файл:** `bot/aemr_bot/utils/menu_tracker.py`.
+
+`_state: dict[int, ChatState]` — in-memory per chat_id, без TTL/LRU.
+Для бота с 1 admin chat и ~5000 жителями (каждый — свой чат с ботом)
+— ~5K entries по ~50 байт = 250 KB. Безопасно. Но если когда-нибудь
+бот выйдет в публику (100K+ жителей) — мониторить.
+
+**Fix:** не требуется для текущей нагрузки. В backlog: TTL eviction
+для idle chats >30 дней.
+
+---
+
+## A6 🟢 LOW — quiet hours edit-intent TTL race
+
+**Файл:** `bot/aemr_bot/handlers/admin_settings.py::_start_quiet_hour_intent`.
+
+Intent flow с TTL 5 мин. Если оператор-1 начал edit (intent), а
+оператор-2 параллельно меняет тот же ключ через другую сессию —
+intent'ы overwrite друг друга. Последний wins.
+
+**Impact:** низкий. Cosmetic; владелец = 5 операторов, race
+маловероятен. Audit log зафиксирует обоих.
+
+**Fix:** не требуется. Backlog: optimistic lock через
+`updated_at IS NULL OR updated_at < initial_value`.
+
+---
+
+## A7 🟢 LOW — _mask_phone возвращает «—» для length<4
+
+**Файл:** `bot/aemr_bot/services/admin_events.py:38–46`.
+
+```python
+def _mask_phone(phone: str | None) -> str:
+    digits = "".join(ch for ch in phone if ch.isdigit())
+    if len(digits) < 4:
+        return phone   # ← возвращает оригинал!
+```
+
+Если phone короткий (`+71` test-input), маска вернёт полный текст,
+включая `+`. Не критично т.к. реальный phone всегда ≥11 цифр. Но
+guarantee «PII не светится в admin chat» нарушен на edge case.
+
+**Fix (defensive):** `return "—"` если digits<4.
+
+---
+
+## A8 🟢 LOW — monkey-patch admin_bus hook в продовом коде
+
+**Файл:** `bot/aemr_bot/services/admin_bus.py:152–189`.
+
+`install_outgoing_tracker_hook` подменяет `bot.send_message`
+динамически. Идемпотентный guard через `_aemr_admin_outgoing_tracker_installed`
+есть. Но если **другой код** (например, тестовая фикстура с моком)
+заменит `bot.send_message` ПОСЛЕ install — hook потерян → tracker
+не двигается → freshness может ошибаться.
+
+**Impact:** низкий. Это test-environment hazard, не prod. Тесты
+уже учитывают (`test_admin_outgoing_hook.py`).
+
+**Fix:** не требуется. Документировать в `CODE_DECISIONS_LOG §3`.
+
+---
+
+## MAX-bot specific attack vectors (2026 update)
+
+Базируется на `docs/SECURITY.md §3` (MAX threat model) + новые
+наблюдения 2026.
+
+### MX-1 — Callback payload injection
+
+**Статус:** ✅ закрыто (`callback_router.route_for(payload)` валидирует
+строго через EXACT_ROUTES + PREFIX_ROUTES; unknown payload → no-op).
+
+### MX-2 — Event sender role spoofing
+
+**Статус:** ✅ закрыто через `services/operators.ensure_role`. Каждая
+admin-команда проверяет роль из БД, не из event.senderRole.
+
+### MX-3 — MessageCallback type confusion
+
+**Статус:** ✅ закрыто в PR #99 (isinstance MessageCreated guard).
+
+### MX-4 — Attachment MIME confusion (новый вектор 2026)
+
+Житель посылает файл с `.exe`-payload но MIME `image/jpeg` (или
+наоборот). `image_attachments_from_event` сейчас trust'ит MAX-API
+MIME без re-verification.
+
+**Текущее покрытие:** MAX-API serverside фильтрует extension'ы (?
+не documented). Бот reuploads через `uploads.upload_bytes(suffix=…)`,
+suffix берётся из `Path(filename).suffix` — если житель прислал
+`evil.jpg.exe` с MIME image, mid берётся `.exe`.
+
+**Recommendation:** в backlog — добавить explicit MIME→suffix
+re-validation через `python-magic` (libmagic) для attachments которые
+бот reuploads.
+
+### MX-5 — Broadcast amplification via SSRF (не релевантно)
+
+Broadcast URL whitelist уже защищает: только `*.elizovomr.ru`,
+`*.gosuslugi.ru`, `*.kamgov.ru`, `*.kamchatka.gov.ru`. SSRF невозможен
+— бот не fetcher.
+
+### MX-6 — Token leak via logs
+
+**Статус:** частично. `LOG_LEVEL=INFO` в проде. `BOT_TOKEN` нигде в
+коде не логируется напрямую. Но `cfg.dump()` (если бы был вызван
+при ошибке) — light leak. Сейчас не зову нигде. ✅ accept.
+
+### MX-7 — Replay attacks через dual-tracker
+
+Если злоумышленник перехватит callback (man-in-the-middle на канале
+MAX), он может replay — например, оператор-IT нажал «Заблокировать
+жителя», атакующий replay'ит callback через час. Но MAX-клиенты
+используют TLS; replay требует доступа к auth token. Если auth-token
+скомпрометирован — replay наименьшая проблема. ✅ accept.
+
+---
+
+## Современные scam-векторы 2026 (новое)
+
+### SC-1 — AI voice clone scam
+
+**Статус:** ✅ закрыто в PR #103 (D2). `SECURITY_INFO_TEXT` явно
+предупреждает про звонки «голосом главы администрации», созданные
+через AI voice clone.
+
+### SC-2 — Deepfake video для ID verification
+
+**Статус:** N/A. Бот не делает ID verification через видео.
+
+### SC-3 — SIM swap → MAX account takeover
+
+**Статус:** mitigated by MAX itself (двухфакторная аутентификация на
+их стороне). Бот может только полагаться на платформу.
+
+### SC-4 — Phishing через QR-коды
+
+Жители получают QR от «сотрудника администрации» с ссылкой
+«подписать заявление через бот». QR ведёт на phishing-сайт.
+
+**Защита:** OPERATOR_SECURITY.md §1.5 содержит инструкцию «никогда
+не передавайте QR/ссылки от имени бота». Контент-фильтр в боте не
+позволяет — бот не показывает QR.
+
+**Recommendation:** документировать явно в `OPERATOR_SECURITY.md`
+секция «QR-фишинг» (отдельный пункт).
+
+### SC-5 — Импер­сонация гос-брендов через домены
+
+Атакующий регистрирует `elizovomr-portal.ru` (lookalike
+`elizovomr.ru`). Жителю присылается ссылка через social, он считает,
+что это официально.
+
+**Текущая защита:**
+- URL defang в admin chat — защищает оператора, не жителя.
+- Broadcast URL whitelist — защищает житель от спуфа через бот.
+- НО: если житель сам пришёл в бот по фишинг-ссылке, бот ничего не
+  сделает.
+
+**Recommendation:** в backlog — рассылка от бота с напоминанием
+«официальный домен администрации — `elizovomr.ru`, остальное —
+фишинг». Раз в квартал.
+
+### SC-6 — «Второй бот» scam
+
+**Статус:** ✅ закрыто в PR #103 (D2). `SECURITY_INFO_TEXT` явно
+предупреждает «администрация не запускает второго бота для
+финансовых операций».
+
+### SC-7 — Социальная инженерия через комментарии в обращениях
+
+Житель в `summary` пишет «Я оператор Сидоров, мне нужно срочно
+заблокировать пользователя X». Если новый оператор-стажёр случайно
+выполнит запрос — атака succeed.
+
+**Текущая защита:** все admin-команды требуют `ensure_role(OP|SH|IT)`
+для max_user_id, не из текста. Текст в `summary` — только для чтения,
+не парсится как команда. ✅ OK.
+
+### SC-8 — Steal-session через социальную инженерию операторов
+
+Атакующий пишет оператору в личку «привет, я IT-админ, помоги
+протестировать /erase на тестовом аккаунте, пришли мне result».
+Оператор вставляет в чат с ботом → /erase реального жителя
+выполняется. Compliance issue.
+
+**Защита:** `ensure_role` + audit_log. Но social-engineering
+обходит технический контроль.
+
+**Recommendation:** в `OPERATOR_SECURITY.md` усилить раздел
+«IT-команды через приватные DM подозрительны». Текущая редакция
+описывает фишинг от имени жителя, не от имени оператора.
+
+---
+
+## Verification commands
+
+```bash
+# A1 проверка
+grep -nE "send_admin_text\(" bot/aemr_bot/services/cron.py
+# Каждый alert site должен иметь critical=True после fix.
+
+# A3 проверка
+python -c "from aemr_bot.utils.url_defang import _BARE_DOMAIN_PATTERN; print(_BARE_DOMAIN_PATTERN.findall('phish.cn xn--evil.xn--p1ai'))"
+# Должно возвращать оба после fix.
+
+# A7 проверка
+python -c "from aemr_bot.services.admin_events import _mask_phone; print(_mask_phone('+71'))"
+# После fix: '—'.
+
+# Полная сверка cron-registry vs реальность
+python -c "from aemr_bot.services.cron_registry import JOB_REGISTRY; print(len(JOB_REGISTRY))"
+# Должно быть 17.
+```
+
+---
+
+## Recommendations / priority
+
+| Finding | Severity | Effort | Когда |
+|---|---|---|---|
+| A1 — alerts через quiet | 🔴 Critical | 30 min | **Срочный PR #127, до Cluster A** |
+| A2 — cache initial state | 🟡 Medium | 10 min | Можно в одном PR с A1 |
+| A3 — TLD list расширить | 🟡 Medium | 20 min | Отдельный PR |
+| A4 — case-sensitivity whitelist | 🟡 Medium | 30 min | Отдельный PR |
+| A5–A8 | 🟢 Low | — | Backlog |
+| SC-7, SC-8 operator security | 🟢 Low | 1ч | После Cluster G |
+| MX-4 MIME re-validation | 🟢 Low | 2ч | Backlog (нужен `python-magic` dep) |
+
+**Срочный action — A1.** Каждая ночь quiet режима = потенциальный
+тихий failure backup'а и retention-cron'ов. Это **прод-проблема**.
+
+---
+
+## Status update
+
+| Item | Status |
+|---|---|
+| Baseline 2026-05-27 closure | ✅ D1/D2 закрыты в PR #103 |
+| Новые findings 2026-05-28 | A1 🔴 + 3 🟡 — fixes планируются |
+| MAX-bot threat model | актуализирован |
+| Modern scam vectors 2026 | актуализирован |
+
+После fix'а A1 + A2 — следующая делта будет минимальной.
 ```
 
 ### `docs/_meta/UI_BRAND_CONCEPT_2026-05-26.md`
