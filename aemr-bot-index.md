@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 05:26:28 UTC`
+Generated at: `2026-05-27 05:39:47 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `242`
 Max file size: `300 KB`
@@ -48,7 +48,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42735 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (22825 bytes)
-- `bot/aemr_bot/handlers/admin_settings.py` (43448 bytes)
+- `bot/aemr_bot/handlers/admin_settings.py` (46631 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (4466 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (28901 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (33699 bytes)
@@ -61,7 +61,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/operator_reply.py` (41155 bytes)
 - `bot/aemr_bot/handlers/start.py` (21062 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (69914 bytes)
+- `bot/aemr_bot/keyboards.py` (71051 bytes)
 - `bot/aemr_bot/main.py` (21047 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_bus.py` (10239 bytes)
@@ -6050,8 +6050,8 @@ async def _do_backup(event) -> None:
 
 ### `bot/aemr_bot/handlers/admin_settings.py`
 
-Size: `43448` bytes  
-SHA-256: `7775306082957a9692d7e24f780215a00499c18f10b72b16f30f877a9911bd0e`
+Size: `46631` bytes  
+SHA-256: `975a159f19cc77b7a3bd09fcb7d02c79d6c02188374715b7a033573754fc41cd`
 
 ```python
 """Иерархическое меню «⚙️ Настройки бота».
@@ -6332,6 +6332,13 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
 
     if rest == "author":
         await _show_author_card(event)
+        return
+
+    if rest == "quiet":
+        await _show_quiet_card(event)
+        return
+    if rest == "quiet:toggle":
+        await _toggle_quiet(event)
         return
 
     if rest == "pr:start":
@@ -6631,6 +6638,66 @@ async def _obj_delete(event, operator_id: int, suffix: str) -> None:
 # ──────────────────────────────────────────────────────────────────────
 # Автор коммитов
 # ──────────────────────────────────────────────────────────────────────
+
+
+async def _show_quiet_card(event) -> None:
+    """Карточка «🌙 Тихий режим в админ-чате».
+
+    Показывает текущее состояние (enabled + окно start–end) и две
+    кнопки: toggle + переход в expert-edit hours через `op:setkey:*`.
+    Edit hours делается стандартным intent flow (как для текстовых
+    ключей) — оператор шлёт число одним сообщением.
+    """
+    from aemr_bot.services import quiet_hours
+
+    async with session_scope() as session:
+        # refresh cache из БД на случай если оператор только что
+        # включил через `/setting` без рестарта.
+        await quiet_hours.refresh_cache_from_db(session)
+        enabled = await settings_store.get(session, "admin_quiet_hours_enabled")
+        start = await settings_store.get(session, "admin_quiet_hours_start")
+        end = await settings_store.get(session, "admin_quiet_hours_end")
+    enabled = bool(enabled)
+    if not isinstance(start, int):
+        start = 18
+    if not isinstance(end, int):
+        end = 9
+    status_line = "🔕 включён" if enabled else "🔔 выключен"
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            "🌙 Тихий режим в админ-чате\n"
+            "──────────\n"
+            f"Сейчас: {status_line}\n"
+            f"Окно: с {start:02d}:00 до {end:02d}:00 (Камчатка)\n\n"
+            "Когда включён и текущее время в окне — не приходят\n"
+            "пульс и рутинные уведомления (новые обращения,\n"
+            "followup'ы, подписки/отписки/erase).\n\n"
+            "Критичные алёрты (фейл бэкапа, ответы операторам,\n"
+            "сбои retention) идут всегда, тихий режим их\n"
+            "не затрагивает.\n\n"
+            "Чтобы изменить часы окна:\n"
+            "  `/setting admin_quiet_hours_start 18`\n"
+            "  `/setting admin_quiet_hours_end 9`\n"
+            "Значения 0–23 (целое число)."
+        ),
+        attachments=[kbds.op_settings_quiet_keyboard(enabled=enabled)],
+    )
+
+
+async def _toggle_quiet(event) -> None:
+    """Переключить `admin_quiet_hours_enabled` + обновить cache."""
+    from aemr_bot.services import quiet_hours
+
+    async with session_scope() as session:
+        current = await settings_store.get(session, "admin_quiet_hours_enabled")
+        new_value = not bool(current)
+        await settings_store.set_value(
+            session, "admin_quiet_hours_enabled", new_value,
+        )
+        await session.commit()
+        await quiet_hours.refresh_cache_from_db(session)
+    await _show_quiet_card(event)
 
 
 async def _show_author_card(event) -> None:
@@ -14434,8 +14501,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `69914` bytes  
-SHA-256: `76a7d38e8c3c2da888a4892d800acd109bcf50f1298ea172b218a93cfc59d3d7`
+Size: `71051` bytes  
+SHA-256: `167f44b5a3458d6fcff280269115eb8adef3119145ee66776ebfca9289ad4d25`
 
 ```python
 from maxapi.types import (
@@ -15487,6 +15554,7 @@ def op_settings_menu_keyboard(dirty_count: int = 0):
     kb.row(CallbackButton(text="🆘 Экстренные службы", payload="op:set:obj:emergency_contacts"))
     kb.row(CallbackButton(text="🚌 Диспетчерские транспорта", payload="op:set:obj:transport_dispatcher_contacts"))
     kb.row(CallbackButton(text="👤 Автор коммитов от бота", payload="op:set:author"))
+    kb.row(CallbackButton(text="🌙 Тихий режим в админ-чате", payload="op:set:quiet"))
     pr_label = "💾 Создать PR с изменениями"
     if dirty_count > 0:
         pr_label = f"💾 Создать PR ({dirty_count} изм.)"
@@ -15581,6 +15649,24 @@ def op_settings_obj_item_keyboard(key: str, index: int):
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="🗑 Удалить запись", payload=f"op:set:obj_del:{key}:{index}"))
     kb.row(CallbackButton(text="↩️ Назад", payload=f"op:set:obj:{key}"))
+    return kb.as_markup()
+
+
+def op_settings_quiet_keyboard(*, enabled: bool):
+    """Карточка «🌙 Тихий режим» — toggle через кнопку. Границы окна
+    (часы start/end) меняются через текстовую команду `/setting`
+    (валидация int + 0–23 уже в SCHEMA). Слайдер start/end в
+    callback'е MAX-API не сделать одним кликом, а полноценный
+    wizard для двух чисел — overkill для редко-используемой настройки.
+    """
+    kb = InlineKeyboardBuilder()
+    toggle_label = (
+        "🔕 Выключить тихий режим" if enabled
+        else "🔔 Включить тихий режим"
+    )
+    kb.row(CallbackButton(text=toggle_label, payload="op:set:quiet:toggle"))
+    kb.row(CallbackButton(text="↩️ К настройкам", payload="op:settings"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
