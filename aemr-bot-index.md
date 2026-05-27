@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 23:09:27 UTC`
+Generated at: `2026-05-27 23:28:38 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `264`
+Indexed files: `265`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -61,8 +61,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_funnel.py` (33699 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (13147 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (57273 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (39662 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (45704 bytes)
+- `bot/aemr_bot/handlers/broadcast_wizard.py` (22241 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (12935 bytes)
 - `bot/aemr_bot/handlers/menu.py` (51993 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (41155 bytes)
@@ -140,12 +141,12 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
 - `bot/tests/test_bot_init_concurrency.py` (2821 bytes)
 - `bot/tests/test_broadcast_429_backoff.py` (4525 bytes)
-- `bot/tests/test_broadcast_handlers.py` (35403 bytes)
+- `bot/tests/test_broadcast_handlers.py` (35592 bytes)
 - `bot/tests/test_broadcast_history_card.py` (10153 bytes)
 - `bot/tests/test_broadcast_templates_handlers.py` (16676 bytes)
 - `bot/tests/test_broadcast_templates_service_pg.py` (14817 bytes)
-- `bot/tests/test_broadcast_with_image.py` (23848 bytes)
-- `bot/tests/test_broadcast_wizard_fsm.py` (25638 bytes)
+- `bot/tests/test_broadcast_with_image.py` (24051 bytes)
+- `bot/tests/test_broadcast_wizard_fsm.py` (25876 bytes)
 - `bot/tests/test_broadcasts_service_pg.py` (6324 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
 - `bot/tests/test_callback_coverage_contract.py` (14804 bytes)
@@ -11114,11 +11115,11 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `57273` bytes  
-SHA-256: `0e58372a7b850b0a68610690a887665ffdfc840eb8852eb281da6e6153ad048e`
+Size: `39662` bytes  
+SHA-256: `85f1477bbf3a3e8c056fcc45a6938860f19eb1a603dea1cbdfc49df5abf41a57`
 
 ```python
-"""Мастер рассылок и цикл их отправки.
+"""Send pipeline + история рассылок + диспетчер `/broadcast`.
 
 Сценарий оператора в админ-чате:
 
@@ -11130,9 +11131,19 @@ SHA-256: `0e58372a7b850b0a68610690a887665ffdfc840eb8852eb281da6e6153ad048e`
                                  раз в BROADCAST_PROGRESS_UPDATE_SEC секунд.
   5. любой жмёт ⛔ stop       → статус переключается в cancelled, цикл выходит.
 
-Состояние мастера (шаги 1–3) живёт только в памяти процесса. Операторов нет
-в таблице `users`, а недозаполненный мастер дёшево пройти заново. Состояние
-вытесняется автоматически по истечении BROADCAST_WIZARD_TTL_SEC.
+ИСТОРИЯ. Cluster C wave 2 (Codex PR 7, 2026-05-28): wizard FSM
+(_WizardState, _wizards, _start_wizard, _handle_wizard_text,
+_handle_confirm, _handle_abort, _handle_edit, prefill_wizard_from_template,
+_drop_expired_wizards, _resolve_broadcast_max_images) физически живёт в
+`handlers/broadcast_wizard`. Здесь — send pipeline (`_send_one`,
+`_run_broadcast`), cooldown (`_run_with_cooldown`,
+`_handle_cancel_cooldown`, `_handle_stop`), история (_list_broadcasts,
+_open_broadcast, _clone_broadcast, _list_failed_deliveries) и
+`register(dp)`. Wizard символы re-export'нуты ниже, чтобы 12 тестовых
+файлов + 4 production callsite (`broadcast_templates.py:601`,
+`admin_callback_dispatch.py:31`, `admin_operators.py:730`,
+`admin_appeal_ops.py:127`) продолжали импорт `from
+aemr_bot.handlers.broadcast import _wizards` без правок.
 """
 
 from __future__ import annotations
@@ -11141,9 +11152,8 @@ import asyncio
 import logging
 import time
 from collections.abc import Sequence
-from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any
 
 from maxapi import Dispatcher
 from maxapi.types import Command, MessageCreated
@@ -11155,8 +11165,6 @@ from aemr_bot.db.models import BroadcastStatus, OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.services import broadcasts as broadcasts_service
-from aemr_bot.services import operators as operators_service
-from aemr_bot.services import settings_store
 # Cluster C (Codex PR 7): pure utility функции вынесены в
 # `services/broadcast_utils`. Re-export через `import` чтобы старые
 # тестовые импорты `from aemr_bot.handlers.broadcast import _format_progress`
@@ -11173,48 +11181,35 @@ from aemr_bot.services.broadcast_utils import (  # noqa: F401
     _format_dt as _format_dt_pure,
     _format_progress,
 )
+# Cluster C wave 2 (Codex PR 7): wizard FSM физически живёт в
+# broadcast_wizard. Re-export нужен, чтобы существующие импорты
+# `from aemr_bot.handlers.broadcast import _wizards` продолжали
+# работать без правок (12 файлов тестов + broadcast_templates.py +
+# admin_callback_dispatch.py + admin_operators.py + admin_appeal_ops.py).
+from aemr_bot.handlers.broadcast_wizard import (  # noqa: F401
+    WizardStep,
+    _WizardState,
+    _drop_expired_wizards,
+    _handle_abort,
+    _handle_confirm,
+    _handle_edit,
+    _handle_wizard_text,
+    _resolve_broadcast_max_images,
+    _start_wizard,
+    _wizards,
+    prefill_wizard_from_template,
+)
 from aemr_bot.utils import image_attachments as _image_attachments
-from aemr_bot.utils.background import spawn_background_task
 from aemr_bot.utils.event import (
-    ack_callback,
-    extract_message_id,
-    get_callback_message_id,
     get_message_text,
-    get_user_id,
     is_admin_chat,
     send_or_edit_screen,
 )
+from aemr_bot.utils.event import ack_callback, get_user_id  # noqa: F401
 
 log = logging.getLogger(__name__)
 
 TZ = ZoneInfo(cfg.timezone)
-
-
-WizardStep = Literal["awaiting_text", "awaiting_confirm"]
-
-
-@dataclass
-class _WizardState:
-    step: WizardStep
-    text: str = ""
-    # Картинки, приложенные оператором к шагу awaiting_text. Сериализованные
-    # dict'ы attachment'ов (тот же формат, что Appeal.attachments). Пустой
-    # список = text-only рассылка. На confirm уходит в Broadcast.attachments.
-    attachments: list = field(default_factory=list)
-    expires_at: float = field(
-        default_factory=lambda: time.monotonic() + cfg.broadcast_wizard_ttl_sec
-    )
-
-    def expired(self) -> bool:
-        return time.monotonic() > self.expires_at
-
-    def renew(self) -> None:
-        self.expires_at = time.monotonic() + cfg.broadcast_wizard_ttl_sec
-
-
-# Состояние мастера для каждого оператора. Только для одного экземпляра приложения.
-# При горизонтальном масштабировании потребуется хранение в Redis или через pg_advisory_lock.
-_wizards: dict[int, _WizardState] = {}
 
 
 # SECURITY_REVIEW C2: pending-таски на cooldown между confirm и реальной
@@ -11227,326 +11222,19 @@ _wizards: dict[int, _WizardState] = {}
 # рестарта без подтверждения оператора».
 _pending_broadcasts: dict[int, "asyncio.Task"] = {}
 
-# Маркер «срочная рассылка», cooldown-константы и pure-функция
-# `_broadcast_cooldown_seconds` теперь живут в `services/broadcast_utils`
-# и импортированы выше — см. Cluster C (Codex PR 7) decomp.
 
-
-async def _resolve_broadcast_max_images(session) -> int:
-    """Текущий лимит картинок в рассылке из настроек БД.
-
-    Возвращает `settings_store.broadcast_max_images` (диапазон 1–20).
-    DEFAULTS гарантирует число — функция никогда не вернёт None или 0.
-    IT-оператор меняет лимит через UI «⚙️ Настройки бота» без редеплоя;
-    значение применяется со следующего нажатия `/broadcast`.
-
-    Устойчив к DB-проблемам: если query упал (нет таблицы, потеря
-    соединения), молча падаем на DEFAULTS — рассылка не должна
-    блокироваться технической проблемой админ-таблицы.
-    """
-    try:
-        value = await settings_store.get(session, "broadcast_max_images")
-    except Exception:
-        log.warning(
-            "settings_store.broadcast_max_images недоступен, "
-            "используем DEFAULTS",
-            exc_info=True,
-        )
-        value = None
-    # Защитная нормализация: если кто-то вручную записал в БД не int
-    # (например, через psql), скатываемся к DEFAULTS.
-    if isinstance(value, int) and not isinstance(value, bool) and value > 0:
-        return value
-    return int(settings_store.DEFAULTS["broadcast_max_images"])
-
-
-# Локальные псевдонимы общих хелперов авторизации. Подчёркивание в начале имени
-# подчёркивает, что это служебные средства для админ-стороны, не для жителя.
+# Локальные псевдонимы общих хелперов авторизации. Используются
+# `_handle_stop` (оператор завершает идущую рассылку) и cmd_broadcast
+# (только админ-чат). Wizard'ы свои дублируют в `broadcast_wizard.py`.
+# `_get_operator` сохранён как compat-алиас: после Cluster C wave 2
+# wizard функции переехали в broadcast_wizard, но тесты по-прежнему
+# делают `patch("aemr_bot.handlers.broadcast._get_operator", ...)`
+# и читают `broadcast._get_operator`. Удалять алиас нельзя без
+# обновления ~10 test files — это держится здесь как noop-binding.
 _is_admin_chat = is_admin_chat
-_get_operator = get_operator
 _ensure_role = ensure_role
 _ensure_operator = ensure_operator
-
-
-def _drop_expired_wizards() -> None:
-    """Чистит просроченные мастера. Вызывается попутно при каждом новом событии мастера."""
-    stale = [uid for uid, st in _wizards.items() if st.expired()]
-    for uid in stale:
-        _wizards.pop(uid, None)
-
-
-async def _start_wizard(event) -> None:
-    if not await _ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
-        log.info(
-            "broadcast: wizard NOT started — caller failed _ensure_role "
-            "(needs it/coordinator)"
-        )
-        return
-    _drop_expired_wizards()
-    actor_id = get_user_id(event)
-    if actor_id is None:
-        log.warning("broadcast: wizard NOT started — no user_id in event")
-        return
-    # Сбрасываем чужие wizard'ы и reply-intent этого оператора — иначе
-    # текст рассылки уйдёт в wizard добавления оператора или жителю
-    # как ответ. См. F-003 в operator-аудите.
-    try:
-        from aemr_bot.handlers import admin_commands as admin_cmd_module
-        from aemr_bot.handlers import operator_reply as op_reply
-
-        admin_cmd_module._op_wizards.pop(actor_id, None)
-        op_reply.drop_reply_intent(actor_id)
-    except Exception:
-        log.exception("broadcast: cleanup чужих wizard'ов упал, продолжаем")
-
-    _wizards[actor_id] = _WizardState(step="awaiting_text")
-    log.info("broadcast: wizard started for operator max_user_id=%s", actor_id)
-    async with session_scope() as session:
-        max_images = await _resolve_broadcast_max_images(session)
-    prompt = texts.OP_BROADCAST_PROMPT.format(
-        limit=cfg.broadcast_max_chars,
-        max_images=max_images,
-    )
-    await send_or_edit_screen(
-        event,
-        chat_id=cfg.admin_group_id,
-        text=prompt,
-        attachments=[keyboards.broadcast_cancel_keyboard()],
-    )
-
-
-async def _handle_wizard_text(event, text_body: str) -> bool:
-    """Вызывается из глобального обработчика on_message, когда у автора активен
-    мастер в шаге awaiting_text. Возвращает True, если сообщение поглощено."""
-    actor_id = get_user_id(event)
-    if actor_id is None:
-        return False
-    state = _wizards.get(actor_id)
-    if state is None or state.step != "awaiting_text":
-        return False
-    log.info(
-        "broadcast: wizard text accepted — operator=%s text_len=%d",
-        actor_id, len(text_body),
-    )
-
-    if state.expired():
-        _wizards.pop(actor_id, None)
-        await event.message.answer(
-            texts.OP_BROADCAST_WIZARD_EXPIRED,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
-        return True
-
-    if text_body.strip() == "/cancel":
-        _wizards.pop(actor_id, None)
-        await event.message.answer(
-            texts.OP_BROADCAST_CANCELLED_BY_USER,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
-        return True
-
-    text = text_body.strip()
-    if len(text) > cfg.broadcast_max_chars:
-        await event.message.answer(
-            texts.OP_BROADCAST_TOO_LONG.format(
-                limit=cfg.broadcast_max_chars, actual=len(text)
-            ),
-            attachments=[keyboards.broadcast_cancel_keyboard()],
-        )
-        return True
-    # SECURITY_REVIEW C2: URL-whitelist на текст рассылки. Симметрично
-    # M3 для operator reply. Защищает от ошибки оператора (вставил
-    # анонс с ссылкой на сторонний сайт по копи-пейсту) и от
-    # компрометации аккаунта (фишинг-рассылка всем подписчикам). Если
-    # есть хоть один URL не из гос-whitelist — отказываем, перечисляем
-    # плохие ссылки оператору в чате.
-    bad_urls = settings_store.find_non_whitelisted_urls(text)
-    if bad_urls:
-        await event.message.answer(
-            "❌ В тексте рассылки найдены ссылки на сторонние сайты: "
-            f"{', '.join(bad_urls[:3])}"
-            f"{'…' if len(bad_urls) > 3 else ''}.\n\n"
-            "Разрешены только официальные ресурсы: elizovomr.ru, "
-            "kamgov.ru, gosuslugi.ru, kamchatka.gov.ru.\n\n"
-            "Уберите ссылку или замените на гос-домен и пришлите текст "
-            "заново.",
-            attachments=[keyboards.broadcast_cancel_keyboard()],
-        )
-        log.warning(
-            "broadcast: blocked non-whitelisted URLs in wizard text — "
-            "operator=%s count=%d", actor_id, len(bad_urls),
-        )
-        return True
-    if not text:
-        # Пусто. Просим ввести ещё раз, состояние не меняем. Для re-
-        # prompt'a показываем DEFAULTS-значение max_images: открывать
-        # session ради этого редкого пути с пустой строкой избыточно
-        # (это early-return). Реальный flow ниже читает актуальное
-        # значение из БД.
-        await event.message.answer(
-            texts.OP_BROADCAST_PROMPT.format(
-                limit=cfg.broadcast_max_chars,
-                max_images=int(
-                    settings_store.DEFAULTS["broadcast_max_images"]
-                ),
-            ),
-            attachments=[keyboards.broadcast_cancel_keyboard()],
-        )
-        return True
-
-    # Текущий лимит картинок — из настроек БД (settings_store), а не
-    # из env. IT-оператор может поменять оперативно через UI
-    # «⚙️ Настройки бота» → «broadcast_max_images» без редеплоя.
-    async with session_scope() as session:
-        max_images = await _resolve_broadcast_max_images(session)
-        count = await broadcasts_service.count_subscribers(session)
-
-    if count == 0:
-        _wizards.pop(actor_id, None)
-        await event.message.answer(
-            texts.OP_BROADCAST_NO_SUBSCRIBERS,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
-        return True
-
-    state.text = text
-    # Захват картинок оператора (если в том же сообщении были). Лимит —
-    # из settings_store, по умолчанию 5: афиша, схема, фото-комплект
-    # из 2-3 кадров укладываются, multi-image-спам отрезается.
-    # ВАЖНО: считаем сколько ВСЕГО было — для warning'а оператору, если
-    # обрезалось. Тихая обрезка (приложили 7, разошлось 5) ломает UX.
-    all_images_in_event = _image_attachments.image_attachments_from_event(
-        event, limit=0  # 0 = unlimited, чтобы подсчитать «приложено»
-    )
-    provided = len(all_images_in_event)
-    state.attachments = all_images_in_event[:max_images]
-    state.step = "awaiting_confirm"
-    state.renew()
-    # Превью включает все приложенные картинки рядом с confirm-клавой,
-    # чтобы оператор видел, что именно увидит подписчик. До этой правки
-    # preview был text-only, оператор «вслепую» подтверждал.
-    preview_outbound_images = _image_attachments.build_outbound_image_attachments(
-        state.attachments
-    )
-    image_warning = ""
-    if provided > max_images:
-        image_warning = texts.OP_BROADCAST_PREVIEW_TRIM_WARN.format(
-            provided=provided, limit=max_images
-        )
-    await event.message.answer(
-        texts.OP_BROADCAST_PREVIEW.format(
-            text=text,
-            count=count,
-            image_count=len(state.attachments),
-            image_warning=image_warning,
-        ),
-        attachments=[
-            *preview_outbound_images,
-            keyboards.broadcast_confirm_keyboard(),
-        ],
-    )
-    return True
-
-
-async def _handle_confirm(event) -> None:
-    actor_id = get_user_id(event)
-    if actor_id is None:
-        return
-    state = _wizards.pop(actor_id, None)
-    if state is None or state.step != "awaiting_confirm" or state.expired():
-        await ack_callback(event, "Мастер закрыт.")
-        return
-    # ack с фидбеком: оператор сразу видит «принято», broadcast wizard
-    # переходит в подготовку. Без notification ack — тихий, оператор
-    # тапает «Отправить» и думает, ушла ли команда.
-    await ack_callback(event, "Готовлю рассылку…")
-    # Typing-indicator: count subscribers + create broadcast +
-    # start scheduler могут занять секунды на большой базе. Без
-    # индикатора кажется, что бот завис.
-    from aemr_bot.utils.typing_indicator import mark_typing
-    await mark_typing(event, cfg.admin_group_id)
-
-    op = await _get_operator(event)
-    if op is None:
-        return
-
-    async with session_scope() as session:
-        count = await broadcasts_service.count_subscribers(session)
-        if count == 0:
-            await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_BROADCAST_NO_SUBSCRIBERS,
-                attachments=[keyboards.op_back_to_menu_keyboard()],
-            )
-            return
-        broadcast = await broadcasts_service.create_broadcast(
-            session,
-            text=state.text,
-            operator_id=op.id,
-            subscriber_count=count,
-            attachments=list(state.attachments),
-        )
-        await operators_service.write_audit(
-            session,
-            operator_max_user_id=actor_id,
-            action="broadcast_send",
-            target=f"broadcast #{broadcast.id}",
-            # Не дублируем полный текст в audit_log: он уже хранится в broadcasts.text.
-            # Оставляем только метаданные, чтобы audit_log оставался лёгким и не
-            # превращался во второе хранилище тел рассылок.
-            details={"chars": len(state.text), "subscriber_count": count},
-        )
-        broadcast_id = broadcast.id
-
-    log.info(
-        "broadcast: confirmed by operator=%s — broadcast_id=%s subscribers=%d",
-        actor_id, broadcast_id, count,
-    )
-
-    # SECURITY_REVIEW C2: cooldown между confirm и реальной отправкой.
-    # Стандарт — 5 минут. Для рассылок с маркером [ЧС] (ситуация
-    # требует немедленного оповещения) — 30 секунд: оператор всё ещё
-    # может отменить, но мы не задерживаем ЧС-сигнал.
-    cooldown_sec = _broadcast_cooldown_seconds(state.text)
-    minutes = cooldown_sec // 60
-    seconds = cooldown_sec % 60
-    eta_text = (
-        f"{minutes} мин {seconds} сек" if minutes else f"{seconds} сек"
-    )
-    is_emergency = cooldown_sec == _COOLDOWN_EMERGENCY_SEC
-    cooldown_label = "🚨 ЧС-рассылка" if is_emergency else "📤 Рассылка"
-    sent = await send_or_edit_screen(
-        event,
-        chat_id=cfg.admin_group_id,
-        text=(
-            f"{cooldown_label} #{broadcast_id} уйдёт жителям через "
-            f"{eta_text} ({count} получателей).\n\n"
-            f"Если заметили ошибку или передумали — нажмите «❌ Отменить "
-            f"отправку». После окна cooldown'а рассылка стартует "
-            f"автоматически и появится клавиша экстренной остановки."
-        ),
-        attachments=[keyboards.broadcast_cooldown_keyboard(broadcast_id)],
-    )
-    admin_mid = extract_message_id(sent) or get_callback_message_id(event)
-
-    # Strong ref: без spawn_background_task GC может прервать рассылку
-    # посреди списка получателей (Python 3.11+ держит только weakref на
-    # таску из голого create_task). Конкретно для рассылки это значило
-    # бы потерянные доставки и broadcast в статусе SENDING без
-    # завершения.
-    cooldown_task = spawn_background_task(
-        _run_with_cooldown(
-            event.bot,
-            broadcast_id,
-            state.text,
-            count,
-            admin_mid=admin_mid,
-            cooldown_sec=cooldown_sec,
-        ),
-        name=f"broadcast_cooldown_{broadcast_id}",
-    )
-    _pending_broadcasts[broadcast_id] = cooldown_task
+_get_operator = get_operator
 
 
 async def _run_with_cooldown(
@@ -11614,6 +11302,8 @@ async def _handle_cancel_cooldown(event, broadcast_id: int) -> None:
     # F5: mark_cancelled может фейлить — task всё равно отменён, рассылка
     # не пойдёт. Логируем, но не падаем; reaper подберёт DRAFT row позже.
     try:
+        from aemr_bot.services import operators as operators_service
+
         async with session_scope() as session:
             await broadcasts_service.mark_cancelled(session, broadcast_id)
             actor_id = get_user_id(event) or 0
@@ -11643,71 +11333,6 @@ async def _handle_cancel_cooldown(event, broadcast_id: int) -> None:
             f"заново через «📣 Рассылка»."
         ),
         attachments=[keyboards.op_back_to_menu_keyboard()],
-    )
-
-
-async def _handle_abort(event) -> None:
-    actor_id = get_user_id(event)
-    if actor_id is not None:
-        _wizards.pop(actor_id, None)
-    await ack_callback(event, "Отменено.")
-    await send_or_edit_screen(
-        event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_BROADCAST_CANCELLED_BY_USER,
-        attachments=[keyboards.op_back_to_menu_keyboard()],
-    )
-
-
-def prefill_wizard_from_template(
-    actor_id: int, *, text: str, attachments: list
-) -> None:
-    """Зарядить state мастера рассылок данными из шаблона (PR H).
-
-    Используется handlers/broadcast_templates.py при «📨 Отправить как
-    рассылку»: создаёт state со step=awaiting_confirm, чтобы оператор
-    увидел preview и нажал «Разослать» либо «Изменить текст» — точно
-    тот же UX, что после набора текста с нуля. Прежний state (если был
-    в любом шаге) затирается полностью.
-    """
-    state = _WizardState(
-        step="awaiting_confirm",
-        text=text,
-        attachments=list(attachments),
-    )
-    _wizards[actor_id] = state
-
-
-async def _handle_edit(event) -> None:
-    """Кнопка «✏️ Изменить текст» в превью. Возвращает мастер в шаг
-    ожидания текста, обнуляя предыдущий текст И ранее приложенные
-    картинки: следующее сообщение оператора полностью пересоберёт
-    черновик. Без явного обнуления `state.attachments` старые картинки
-    тихо сохранялись бы между попытками — UX-ловушка («исправил текст,
-    а тут ещё и старые картинки всплывают»). Текст подсказки
-    OP_BROADCAST_EDIT_HINT явно предупреждает оператора, чтобы он
-    приложил картинки заново."""
-    actor_id = get_user_id(event)
-    if actor_id is None:
-        await ack_callback(event)
-        return
-    state = _wizards.get(actor_id)
-    if state is None:
-        await ack_callback(event, "Мастер закрыт.")
-        return
-    state.step = "awaiting_text"
-    state.text = ""
-    # Чистим картинки тоже: «Изменить текст» = новый черновик целиком.
-    state.attachments = []
-    state.renew()
-    await ack_callback(event)
-    await send_or_edit_screen(
-        event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_BROADCAST_EDIT_HINT.format(
-            limit=cfg.broadcast_max_chars,
-        ),
-        attachments=[keyboards.broadcast_cancel_keyboard()],
     )
 
 
@@ -13603,6 +13228,484 @@ async def _step_search(
         ],
     )
     return True
+```
+
+### `bot/aemr_bot/handlers/broadcast_wizard.py`
+
+Size: `22241` bytes  
+SHA-256: `79157fc565611ce25674b34bcb53f88dff7850e1cb7d00ed63e9497f8b80eb49`
+
+```python
+"""Мастер рассылок (FSM): state, helpers, command handlers.
+
+Сценарий оператора в админ-чате:
+
+  1. /broadcast               → бот просит ввести текст.
+  2. оператор вводит текст    → бот показывает предпросмотр с числом подписчиков.
+  3. оператор жмёт ✅          → бот переводит в `_pending_broadcasts`
+                                 на cooldown, по истечении — фоновая отправка.
+
+Состояние мастера (шаги 1–3) живёт только в памяти процесса.
+Операторов нет в таблице `users`, а недозаполненный мастер дёшево
+пройти заново. Состояние вытесняется автоматически по истечении
+BROADCAST_WIZARD_TTL_SEC.
+
+ИСТОРИЯ. Cluster C wave 2 (Codex PR 7, 2026-05-28): вынесено из
+`handlers/broadcast.py`. Send pipeline (`_send_one`, `_run_broadcast`,
+история, `register(dp)`) остаются там же. Wizard FSM — здесь.
+Compat re-export wizard-символов сохранён в broadcast.py для всех
+12 файлов тестов + 4 production callsites.
+"""
+
+from __future__ import annotations
+
+import logging
+import time
+from dataclasses import dataclass, field
+from typing import Literal
+
+from aemr_bot import keyboards, texts
+from aemr_bot.config import settings as cfg
+from aemr_bot.db.models import OperatorRole
+from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
+from aemr_bot.services import broadcasts as broadcasts_service
+from aemr_bot.services import operators as operators_service
+from aemr_bot.services import settings_store
+from aemr_bot.services.broadcast_utils import (
+    _COOLDOWN_EMERGENCY_SEC,
+    _broadcast_cooldown_seconds,
+)
+from aemr_bot.utils import image_attachments as _image_attachments
+from aemr_bot.utils.background import spawn_background_task
+from aemr_bot.utils.event import (
+    ack_callback,
+    extract_message_id,
+    get_callback_message_id,
+    get_user_id,
+    send_or_edit_screen,
+)
+
+log = logging.getLogger(__name__)
+
+
+WizardStep = Literal["awaiting_text", "awaiting_confirm"]
+
+
+@dataclass
+class _WizardState:
+    step: WizardStep
+    text: str = ""
+    # Картинки, приложенные оператором к шагу awaiting_text. Сериализованные
+    # dict'ы attachment'ов (тот же формат, что Appeal.attachments). Пустой
+    # список = text-only рассылка. На confirm уходит в Broadcast.attachments.
+    attachments: list = field(default_factory=list)
+    expires_at: float = field(
+        default_factory=lambda: time.monotonic() + cfg.broadcast_wizard_ttl_sec
+    )
+
+    def expired(self) -> bool:
+        return time.monotonic() > self.expires_at
+
+    def renew(self) -> None:
+        self.expires_at = time.monotonic() + cfg.broadcast_wizard_ttl_sec
+
+
+# Состояние мастера для каждого оператора. Только для одного экземпляра приложения.
+# При горизонтальном масштабировании потребуется хранение в Redis или через pg_advisory_lock.
+_wizards: dict[int, _WizardState] = {}
+
+
+# Локальные псевдонимы общих хелперов авторизации. Подчёркивание в начале имени
+# подчёркивает, что это служебные средства для админ-стороны, не для жителя.
+# Дублируем алиасы из broadcast.py, чтобы тесты могли патчить через
+# `patch.object(broadcast_wizard, "_ensure_role", ...)` без обращения к
+# исходному модулю.
+_get_operator = get_operator
+_ensure_role = ensure_role
+_ensure_operator = ensure_operator
+
+
+async def _resolve_broadcast_max_images(session) -> int:
+    """Текущий лимит картинок в рассылке из настроек БД.
+
+    Возвращает `settings_store.broadcast_max_images` (диапазон 1–20).
+    DEFAULTS гарантирует число — функция никогда не вернёт None или 0.
+    IT-оператор меняет лимит через UI «⚙️ Настройки бота» без редеплоя;
+    значение применяется со следующего нажатия `/broadcast`.
+
+    Устойчив к DB-проблемам: если query упал (нет таблицы, потеря
+    соединения), молча падаем на DEFAULTS — рассылка не должна
+    блокироваться технической проблемой админ-таблицы.
+    """
+    try:
+        value = await settings_store.get(session, "broadcast_max_images")
+    except Exception:
+        log.warning(
+            "settings_store.broadcast_max_images недоступен, "
+            "используем DEFAULTS",
+            exc_info=True,
+        )
+        value = None
+    # Защитная нормализация: если кто-то вручную записал в БД не int
+    # (например, через psql), скатываемся к DEFAULTS.
+    if isinstance(value, int) and not isinstance(value, bool) and value > 0:
+        return value
+    return int(settings_store.DEFAULTS["broadcast_max_images"])
+
+
+def _drop_expired_wizards() -> None:
+    """Чистит просроченные мастера. Вызывается попутно при каждом новом событии мастера."""
+    stale = [uid for uid, st in _wizards.items() if st.expired()]
+    for uid in stale:
+        _wizards.pop(uid, None)
+
+
+async def _start_wizard(event) -> None:
+    if not await _ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        log.info(
+            "broadcast: wizard NOT started — caller failed _ensure_role "
+            "(needs it/coordinator)"
+        )
+        return
+    _drop_expired_wizards()
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        log.warning("broadcast: wizard NOT started — no user_id in event")
+        return
+    # Сбрасываем чужие wizard'ы и reply-intent этого оператора — иначе
+    # текст рассылки уйдёт в wizard добавления оператора или жителю
+    # как ответ. См. F-003 в operator-аудите.
+    try:
+        from aemr_bot.handlers import admin_commands as admin_cmd_module
+        from aemr_bot.handlers import operator_reply as op_reply
+
+        admin_cmd_module._op_wizards.pop(actor_id, None)
+        op_reply.drop_reply_intent(actor_id)
+    except Exception:
+        log.exception("broadcast: cleanup чужих wizard'ов упал, продолжаем")
+
+    _wizards[actor_id] = _WizardState(step="awaiting_text")
+    log.info("broadcast: wizard started for operator max_user_id=%s", actor_id)
+    async with session_scope() as session:
+        max_images = await _resolve_broadcast_max_images(session)
+    prompt = texts.OP_BROADCAST_PROMPT.format(
+        limit=cfg.broadcast_max_chars,
+        max_images=max_images,
+    )
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=prompt,
+        attachments=[keyboards.broadcast_cancel_keyboard()],
+    )
+
+
+async def _handle_wizard_text(event, text_body: str) -> bool:
+    """Вызывается из глобального обработчика on_message, когда у автора активен
+    мастер в шаге awaiting_text. Возвращает True, если сообщение поглощено."""
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        return False
+    state = _wizards.get(actor_id)
+    if state is None or state.step != "awaiting_text":
+        return False
+    log.info(
+        "broadcast: wizard text accepted — operator=%s text_len=%d",
+        actor_id, len(text_body),
+    )
+
+    if state.expired():
+        _wizards.pop(actor_id, None)
+        await event.message.answer(
+            texts.OP_BROADCAST_WIZARD_EXPIRED,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return True
+
+    if text_body.strip() == "/cancel":
+        _wizards.pop(actor_id, None)
+        await event.message.answer(
+            texts.OP_BROADCAST_CANCELLED_BY_USER,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return True
+
+    text = text_body.strip()
+    if len(text) > cfg.broadcast_max_chars:
+        await event.message.answer(
+            texts.OP_BROADCAST_TOO_LONG.format(
+                limit=cfg.broadcast_max_chars, actual=len(text)
+            ),
+            attachments=[keyboards.broadcast_cancel_keyboard()],
+        )
+        return True
+    # SECURITY_REVIEW C2: URL-whitelist на текст рассылки. Симметрично
+    # M3 для operator reply. Защищает от ошибки оператора (вставил
+    # анонс с ссылкой на сторонний сайт по копи-пейсту) и от
+    # компрометации аккаунта (фишинг-рассылка всем подписчикам). Если
+    # есть хоть один URL не из гос-whitelist — отказываем, перечисляем
+    # плохие ссылки оператору в чате.
+    bad_urls = settings_store.find_non_whitelisted_urls(text)
+    if bad_urls:
+        await event.message.answer(
+            "❌ В тексте рассылки найдены ссылки на сторонние сайты: "
+            f"{', '.join(bad_urls[:3])}"
+            f"{'…' if len(bad_urls) > 3 else ''}.\n\n"
+            "Разрешены только официальные ресурсы: elizovomr.ru, "
+            "kamgov.ru, gosuslugi.ru, kamchatka.gov.ru.\n\n"
+            "Уберите ссылку или замените на гос-домен и пришлите текст "
+            "заново.",
+            attachments=[keyboards.broadcast_cancel_keyboard()],
+        )
+        log.warning(
+            "broadcast: blocked non-whitelisted URLs in wizard text — "
+            "operator=%s count=%d", actor_id, len(bad_urls),
+        )
+        return True
+    if not text:
+        # Пусто. Просим ввести ещё раз, состояние не меняем. Для re-
+        # prompt'a показываем DEFAULTS-значение max_images: открывать
+        # session ради этого редкого пути с пустой строкой избыточно
+        # (это early-return). Реальный flow ниже читает актуальное
+        # значение из БД.
+        await event.message.answer(
+            texts.OP_BROADCAST_PROMPT.format(
+                limit=cfg.broadcast_max_chars,
+                max_images=int(
+                    settings_store.DEFAULTS["broadcast_max_images"]
+                ),
+            ),
+            attachments=[keyboards.broadcast_cancel_keyboard()],
+        )
+        return True
+
+    # Текущий лимит картинок — из настроек БД (settings_store), а не
+    # из env. IT-оператор может поменять оперативно через UI
+    # «⚙️ Настройки бота» → «broadcast_max_images» без редеплоя.
+    async with session_scope() as session:
+        max_images = await _resolve_broadcast_max_images(session)
+        count = await broadcasts_service.count_subscribers(session)
+
+    if count == 0:
+        _wizards.pop(actor_id, None)
+        await event.message.answer(
+            texts.OP_BROADCAST_NO_SUBSCRIBERS,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return True
+
+    state.text = text
+    # Захват картинок оператора (если в том же сообщении были). Лимит —
+    # из settings_store, по умолчанию 5: афиша, схема, фото-комплект
+    # из 2-3 кадров укладываются, multi-image-спам отрезается.
+    # ВАЖНО: считаем сколько ВСЕГО было — для warning'а оператору, если
+    # обрезалось. Тихая обрезка (приложили 7, разошлось 5) ломает UX.
+    all_images_in_event = _image_attachments.image_attachments_from_event(
+        event, limit=0  # 0 = unlimited, чтобы подсчитать «приложено»
+    )
+    provided = len(all_images_in_event)
+    state.attachments = all_images_in_event[:max_images]
+    state.step = "awaiting_confirm"
+    state.renew()
+    # Превью включает все приложенные картинки рядом с confirm-клавой,
+    # чтобы оператор видел, что именно увидит подписчик. До этой правки
+    # preview был text-only, оператор «вслепую» подтверждал.
+    preview_outbound_images = _image_attachments.build_outbound_image_attachments(
+        state.attachments
+    )
+    image_warning = ""
+    if provided > max_images:
+        image_warning = texts.OP_BROADCAST_PREVIEW_TRIM_WARN.format(
+            provided=provided, limit=max_images
+        )
+    await event.message.answer(
+        texts.OP_BROADCAST_PREVIEW.format(
+            text=text,
+            count=count,
+            image_count=len(state.attachments),
+            image_warning=image_warning,
+        ),
+        attachments=[
+            *preview_outbound_images,
+            keyboards.broadcast_confirm_keyboard(),
+        ],
+    )
+    return True
+
+
+async def _handle_confirm(event) -> None:
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        return
+    state = _wizards.pop(actor_id, None)
+    if state is None or state.step != "awaiting_confirm" or state.expired():
+        await ack_callback(event, "Мастер закрыт.")
+        return
+    # ack с фидбеком: оператор сразу видит «принято», broadcast wizard
+    # переходит в подготовку. Без notification ack — тихий, оператор
+    # тапает «Отправить» и думает, ушла ли команда.
+    await ack_callback(event, "Готовлю рассылку…")
+    # Typing-indicator: count subscribers + create broadcast +
+    # start scheduler могут занять секунды на большой базе. Без
+    # индикатора кажется, что бот завис.
+    from aemr_bot.utils.typing_indicator import mark_typing
+    await mark_typing(event, cfg.admin_group_id)
+
+    op = await _get_operator(event)
+    if op is None:
+        return
+
+    async with session_scope() as session:
+        count = await broadcasts_service.count_subscribers(session)
+        if count == 0:
+            await send_or_edit_screen(
+                event,
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_BROADCAST_NO_SUBSCRIBERS,
+                attachments=[keyboards.op_back_to_menu_keyboard()],
+            )
+            return
+        broadcast = await broadcasts_service.create_broadcast(
+            session,
+            text=state.text,
+            operator_id=op.id,
+            subscriber_count=count,
+            attachments=list(state.attachments),
+        )
+        await operators_service.write_audit(
+            session,
+            operator_max_user_id=actor_id,
+            action="broadcast_send",
+            target=f"broadcast #{broadcast.id}",
+            # Не дублируем полный текст в audit_log: он уже хранится в broadcasts.text.
+            # Оставляем только метаданные, чтобы audit_log оставался лёгким и не
+            # превращался во второе хранилище тел рассылок.
+            details={"chars": len(state.text), "subscriber_count": count},
+        )
+        broadcast_id = broadcast.id
+
+    log.info(
+        "broadcast: confirmed by operator=%s — broadcast_id=%s subscribers=%d",
+        actor_id, broadcast_id, count,
+    )
+
+    # SECURITY_REVIEW C2: cooldown между confirm и реальной отправкой.
+    # Стандарт — 5 минут. Для рассылок с маркером [ЧС] (ситуация
+    # требует немедленного оповещения) — 30 секунд: оператор всё ещё
+    # может отменить, но мы не задерживаем ЧС-сигнал.
+    cooldown_sec = _broadcast_cooldown_seconds(state.text)
+    minutes = cooldown_sec // 60
+    seconds = cooldown_sec % 60
+    eta_text = (
+        f"{minutes} мин {seconds} сек" if minutes else f"{seconds} сек"
+    )
+    is_emergency = cooldown_sec == _COOLDOWN_EMERGENCY_SEC
+    cooldown_label = "🚨 ЧС-рассылка" if is_emergency else "📤 Рассылка"
+    sent = await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=(
+            f"{cooldown_label} #{broadcast_id} уйдёт жителям через "
+            f"{eta_text} ({count} получателей).\n\n"
+            f"Если заметили ошибку или передумали — нажмите «❌ Отменить "
+            f"отправку». После окна cooldown'а рассылка стартует "
+            f"автоматически и появится клавиша экстренной остановки."
+        ),
+        attachments=[keyboards.broadcast_cooldown_keyboard(broadcast_id)],
+    )
+    admin_mid = extract_message_id(sent) or get_callback_message_id(event)
+
+    # Strong ref: без spawn_background_task GC может прервать рассылку
+    # посреди списка получателей (Python 3.11+ держит только weakref на
+    # таску из голого create_task). Конкретно для рассылки это значило
+    # бы потерянные доставки и broadcast в статусе SENDING без
+    # завершения.
+    #
+    # Lazy import: send pipeline (_run_with_cooldown) живёт в
+    # handlers/broadcast вместе с _pending_broadcasts. Top-level import
+    # сюда вызвал бы циркулярную зависимость с compat-фасадом.
+    from aemr_bot.handlers.broadcast import (
+        _pending_broadcasts,
+        _run_with_cooldown,
+    )
+    cooldown_task = spawn_background_task(
+        _run_with_cooldown(
+            event.bot,
+            broadcast_id,
+            state.text,
+            count,
+            admin_mid=admin_mid,
+            cooldown_sec=cooldown_sec,
+        ),
+        name=f"broadcast_cooldown_{broadcast_id}",
+    )
+    _pending_broadcasts[broadcast_id] = cooldown_task
+
+
+async def _handle_abort(event) -> None:
+    actor_id = get_user_id(event)
+    if actor_id is not None:
+        _wizards.pop(actor_id, None)
+    await ack_callback(event, "Отменено.")
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_BROADCAST_CANCELLED_BY_USER,
+        attachments=[keyboards.op_back_to_menu_keyboard()],
+    )
+
+
+def prefill_wizard_from_template(
+    actor_id: int, *, text: str, attachments: list
+) -> None:
+    """Зарядить state мастера рассылок данными из шаблона (PR H).
+
+    Используется handlers/broadcast_templates.py при «📨 Отправить как
+    рассылку»: создаёт state со step=awaiting_confirm, чтобы оператор
+    увидел preview и нажал «Разослать» либо «Изменить текст» — точно
+    тот же UX, что после набора текста с нуля. Прежний state (если был
+    в любом шаге) затирается полностью.
+    """
+    state = _WizardState(
+        step="awaiting_confirm",
+        text=text,
+        attachments=list(attachments),
+    )
+    _wizards[actor_id] = state
+
+
+async def _handle_edit(event) -> None:
+    """Кнопка «✏️ Изменить текст» в превью. Возвращает мастер в шаг
+    ожидания текста, обнуляя предыдущий текст И ранее приложенные
+    картинки: следующее сообщение оператора полностью пересоберёт
+    черновик. Без явного обнуления `state.attachments` старые картинки
+    тихо сохранялись бы между попытками — UX-ловушка («исправил текст,
+    а тут ещё и старые картинки всплывают»). Текст подсказки
+    OP_BROADCAST_EDIT_HINT явно предупреждает оператора, чтобы он
+    приложил картинки заново."""
+    actor_id = get_user_id(event)
+    if actor_id is None:
+        await ack_callback(event)
+        return
+    state = _wizards.get(actor_id)
+    if state is None:
+        await ack_callback(event, "Мастер закрыт.")
+        return
+    state.step = "awaiting_text"
+    state.text = ""
+    # Чистим картинки тоже: «Изменить текст» = новый черновик целиком.
+    state.attachments = []
+    state.renew()
+    await ack_callback(event)
+    await send_or_edit_screen(
+        event,
+        chat_id=cfg.admin_group_id,
+        text=texts.OP_BROADCAST_EDIT_HINT.format(
+            limit=cfg.broadcast_max_chars,
+        ),
+        attachments=[keyboards.broadcast_cancel_keyboard()],
+    )
 ```
 
 ### `bot/aemr_bot/handlers/callback_router.py`
@@ -35653,8 +35756,8 @@ class TestSendOne429Backoff:
 
 ### `bot/tests/test_broadcast_handlers.py`
 
-Size: `35403` bytes  
-SHA-256: `21cd6a664cb15dd9d7bec8c10ac9cbe8d7472972824560074c1493d5eb2e103d`
+Size: `35592` bytes  
+SHA-256: `be8ebefb7646c5006af10d07c8c4822766e47a8001956b603d811e600825c811`
 
 ```python
 """Тесты для handlers/broadcast — wizard рассылок и helpers.
@@ -35764,7 +35867,7 @@ class TestStartWizard:
         from aemr_bot.handlers import broadcast
 
         event = _make_event()
-        with patch("aemr_bot.handlers.broadcast._ensure_role",
+        with patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
                    AsyncMock(return_value=False)):
             await broadcast._start_wizard(event)
         # wizard не создан
@@ -35778,7 +35881,7 @@ class TestStartWizard:
             bot=MagicMock(),
             message=SimpleNamespace(sender=None, answer=AsyncMock()),
         )
-        with patch("aemr_bot.handlers.broadcast._ensure_role",
+        with patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
                    AsyncMock(return_value=True)):
             await broadcast._start_wizard(event)
 
@@ -35793,7 +35896,7 @@ class TestStartWizard:
         from aemr_bot.handlers import admin_commands as admin_cmd_module
         admin_cmd_module._op_wizards[7] = {"step": "awaiting_id"}
         drop_intent = MagicMock()
-        with patch("aemr_bot.handlers.broadcast._ensure_role",
+        with patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.operator_reply.drop_reply_intent",
                    drop_intent):
@@ -35891,9 +35994,9 @@ class TestHandleWizardText:
 
         event = _make_event(user_id=7)
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=0)):
             result = await broadcast._handle_wizard_text(event, "сообщение")
         assert result is True
@@ -35905,9 +36008,9 @@ class TestHandleWizardText:
 
         event = _make_event(user_id=7)
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=42)):
             result = await broadcast._handle_wizard_text(event, "сообщение")
         assert result is True
@@ -35936,7 +36039,7 @@ class TestHandleConfirm:
         event = _make_event(user_id=7)
         # awaiting_text вместо awaiting_confirm
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
-        with patch("aemr_bot.handlers.broadcast.ack_callback",
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback",
                    AsyncMock()) as ack:
             await broadcast._handle_confirm(event)
         ack.assert_called_once()
@@ -35949,8 +36052,8 @@ class TestHandleConfirm:
         event = _make_event(user_id=7)
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
         broadcast._wizards[7].text = "hi"
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast._get_operator",
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=None)):
             await broadcast._handle_confirm(event)
         # broadcast service не вызван
@@ -35965,14 +36068,14 @@ class TestHandleConfirm:
         broadcast._wizards[7].text = "hi"
         op = SimpleNamespace(id=10)
         create_broadcast = AsyncMock()
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast._get_operator",
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=op)), \
-             patch("aemr_bot.handlers.broadcast.session_scope",
+             patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=0)), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.create_broadcast",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.create_broadcast",
                    create_broadcast):
             await broadcast._handle_confirm(event)
         create_broadcast.assert_not_called()
@@ -35994,18 +36097,18 @@ class TestHandleConfirm:
             coro.close()
 
         spawn = MagicMock(side_effect=_consume)
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast._get_operator",
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=op)), \
-             patch("aemr_bot.handlers.broadcast.session_scope",
+             patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=15)), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.create_broadcast",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.create_broadcast",
                    AsyncMock(return_value=broadcast_obj)), \
-             patch("aemr_bot.handlers.broadcast.operators_service.write_audit",
+             patch("aemr_bot.handlers.broadcast_wizard.operators_service.write_audit",
                    AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast.spawn_background_task", spawn):
+             patch("aemr_bot.handlers.broadcast_wizard.spawn_background_task", spawn):
             await broadcast._handle_confirm(event)
         spawn.assert_called_once()
         # C2: имя task теперь «broadcast_cooldown_<id>» — рассылка идёт
@@ -36023,7 +36126,7 @@ class TestHandleAbort:
 
         event = _make_event(user_id=7)
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()):
             await broadcast._handle_abort(event)
         assert 7 not in broadcast._wizards
         event.bot.send_message.assert_called_once()
@@ -36041,7 +36144,7 @@ class TestHandleAbort:
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
         # «m-1» — текущая preview-карточка в админ-чате (ADMIN_GROUP_ID=123 из conftest)
         menu_tracker.set_last_menu_mid(123, "m-1")
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()):
             await broadcast._handle_abort(event)
 
         assert 7 not in broadcast._wizards
@@ -36059,7 +36162,7 @@ class TestHandleEdit:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        with patch("aemr_bot.handlers.broadcast.ack_callback",
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback",
                    AsyncMock()) as ack:
             await broadcast._handle_edit(event)
         ack.assert_called_once()
@@ -36073,7 +36176,7 @@ class TestHandleEdit:
         state = broadcast._WizardState(step="awaiting_confirm")
         state.text = "уже введённый текст"
         broadcast._wizards[7] = state
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()):
             await broadcast._handle_edit(event)
         # text сброшен, шаг = awaiting_text
         assert broadcast._wizards[7].step == "awaiting_text"
@@ -36092,7 +36195,7 @@ class TestHandleEdit:
         state.text = "старый текст"
         broadcast._wizards[7] = state
         menu_tracker.set_last_menu_mid(123, "m-1")
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()):
             await broadcast._handle_edit(event)
 
         assert broadcast._wizards[7].step == "awaiting_text"
@@ -37591,8 +37694,8 @@ async def test_archived_name_can_be_reused(session) -> None:
 
 ### `bot/tests/test_broadcast_with_image.py`
 
-Size: `23848` bytes  
-SHA-256: `d4fbe9a5762cb8d7f60850eb389bf9743cb97c6dd3a20e49344187655beb1358`
+Size: `24051` bytes  
+SHA-256: `20ea1254c30670fd58e15dcc09d8f99c5e738d351d1f2dd322d99c3edcc47892`
 
 ```python
 """TDD-тесты image-attachments в рассылках.
@@ -37764,9 +37867,9 @@ class TestWizardCapturesImage:
         bc._wizards.clear()
         bc._wizards[7] = bc._WizardState(step="awaiting_text")
 
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)):
             handled = await bc._handle_wizard_text(event, "текст рассылки")
 
@@ -37785,7 +37888,7 @@ class TestWizardCapturesImage:
         Это путь IT-оператора, изменившего лимит через UI «Настройки бота»."""
         from aemr_bot.handlers import broadcast as bc
 
-        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+        with patch("aemr_bot.handlers.broadcast_wizard.settings_store.get",
                    AsyncMock(return_value=8)):
             result = await bc._resolve_broadcast_max_images(MagicMock())
         assert result == 8
@@ -37797,7 +37900,7 @@ class TestWizardCapturesImage:
         не блокирует работу с гражданами."""
         from aemr_bot.handlers import broadcast as bc
 
-        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+        with patch("aemr_bot.handlers.broadcast_wizard.settings_store.get",
                    AsyncMock(side_effect=RuntimeError("settings table missing"))):
             result = await bc._resolve_broadcast_max_images(MagicMock())
         # DEFAULTS.broadcast_max_images = 5
@@ -37811,15 +37914,15 @@ class TestWizardCapturesImage:
         from aemr_bot.handlers import broadcast as bc
 
         # bool — подкласс int в Python; явно отсекаем
-        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+        with patch("aemr_bot.handlers.broadcast_wizard.settings_store.get",
                    AsyncMock(return_value=True)):
             assert await bc._resolve_broadcast_max_images(MagicMock()) == 5
         # 0 / отрицательное — невалидно
-        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+        with patch("aemr_bot.handlers.broadcast_wizard.settings_store.get",
                    AsyncMock(return_value=0)):
             assert await bc._resolve_broadcast_max_images(MagicMock()) == 5
         # строка — невалидно
-        with patch("aemr_bot.handlers.broadcast.settings_store.get",
+        with patch("aemr_bot.handlers.broadcast_wizard.settings_store.get",
                    AsyncMock(return_value="5")):
             assert await bc._resolve_broadcast_max_images(MagicMock()) == 5
 
@@ -37833,9 +37936,9 @@ class TestWizardCapturesImage:
         bc._wizards.clear()
         bc._wizards[7] = bc._WizardState(step="awaiting_text")
 
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)):
             handled = await bc._handle_wizard_text(event, "только текст")
 
@@ -37865,11 +37968,11 @@ class TestWizardCapturesMultipleImages:
         bc._wizards.clear()
         bc._wizards[7] = bc._WizardState(step="awaiting_text")
 
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+             patch("aemr_bot.handlers.broadcast_wizard._resolve_broadcast_max_images",
                    AsyncMock(return_value=5)):
             handled = await bc._handle_wizard_text(event, "три картинки")
 
@@ -37897,11 +38000,11 @@ class TestWizardCapturesMultipleImages:
         bc._wizards.clear()
         bc._wizards[7] = bc._WizardState(step="awaiting_text")
 
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+             patch("aemr_bot.handlers.broadcast_wizard._resolve_broadcast_max_images",
                    AsyncMock(return_value=2)):
             await bc._handle_wizard_text(event, "слишком много")
 
@@ -37937,11 +38040,11 @@ class TestPreviewCardIncludesImages:
             type="image", payload={"url": "preview.jpg"}
         )
 
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+             patch("aemr_bot.handlers.broadcast_wizard._resolve_broadcast_max_images",
                    AsyncMock(return_value=5)), \
              patch("aemr_bot.utils.image_attachments.deserialize_for_relay",
                    return_value=[fake_preview_image]):
@@ -37977,11 +38080,11 @@ class TestPreviewCardIncludesImages:
         bc._wizards.clear()
         bc._wizards[7] = bc._WizardState(step="awaiting_text")
 
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch("aemr_bot.handlers.broadcast._resolve_broadcast_max_images",
+             patch("aemr_bot.handlers.broadcast_wizard._resolve_broadcast_max_images",
                    AsyncMock(return_value=5)):
             await bc._handle_wizard_text(event, "text only")
 
@@ -38030,20 +38133,20 @@ class TestConfirmPassesAttachmentsToCreate:
             coro.close()
 
         create_mock = AsyncMock(return_value=broadcast_obj)
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast._get_operator",
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=op)), \
-             patch("aemr_bot.handlers.broadcast.session_scope",
+             patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=5)), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.create_broadcast",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.create_broadcast",
                    create_mock), \
-             patch("aemr_bot.handlers.broadcast.operators_service.write_audit",
+             patch("aemr_bot.handlers.broadcast_wizard.operators_service.write_audit",
                    AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast.send_or_edit_screen",
+             patch("aemr_bot.handlers.broadcast_wizard.send_or_edit_screen",
                    AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast.spawn_background_task",
+             patch("aemr_bot.handlers.broadcast_wizard.spawn_background_task",
                    MagicMock(side_effect=_consume)):
             await bc._handle_confirm(event)
 
@@ -38110,8 +38213,8 @@ class TestRunBroadcastImplPassesImages:
 
 ### `bot/tests/test_broadcast_wizard_fsm.py`
 
-Size: `25638` bytes  
-SHA-256: `89c465168252b2dede18a018de8f987d055a951865cebd6cbced218a5cb59c35`
+Size: `25876` bytes  
+SHA-256: `b39f52265a19435601a02ca7c8c6d50600b9dcc904f12e03a3f59bbde48604a1`
 
 ```python
 """Characterization-тесты broadcast wizard FSM.
@@ -38206,7 +38309,7 @@ class TestDropExpiredWizards:
 
     @pytest.fixture(autouse=True)
     def _clean(self):
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         mod._wizards.clear()
         yield
         mod._wizards.clear()
@@ -38217,7 +38320,7 @@ class TestDropExpiredWizards:
         _drop_expired_wizards()  # не падает на пустом dict
 
     def test_expired_removed(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import (
             _drop_expired_wizards,
             _WizardState,
@@ -38230,7 +38333,7 @@ class TestDropExpiredWizards:
         assert 42 not in mod._wizards
 
     def test_fresh_kept(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import (
             _drop_expired_wizards,
             _WizardState,
@@ -38241,7 +38344,7 @@ class TestDropExpiredWizards:
         assert 42 in mod._wizards
 
     def test_mixed_only_expired_removed(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import (
             _drop_expired_wizards,
             _WizardState,
@@ -38268,14 +38371,14 @@ class TestStartWizard:
 
     @pytest.fixture(autouse=True)
     def _clean(self):
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         mod._wizards.clear()
         yield
         mod._wizards.clear()
 
     @pytest.mark.asyncio
     async def test_non_role_no_op(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         with patch.object(mod, "_ensure_role",
@@ -38285,7 +38388,7 @@ class TestStartWizard:
 
     @pytest.mark.asyncio
     async def test_no_user_id_no_op(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         with patch.object(mod, "_ensure_role",
@@ -38296,7 +38399,7 @@ class TestStartWizard:
 
     @pytest.mark.asyncio
     async def test_role_passes_state_awaiting_text(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         with patch.object(mod, "_ensure_role",
@@ -38317,7 +38420,7 @@ class TestStartWizard:
         reply_intent — они должны сброситься, иначе текст рассылки
         случайно уйдёт жителю как ответ."""
         from aemr_bot.handlers import admin_commands
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers import operator_reply
 
         admin_commands._op_wizards[42] = {"step": "awaiting_id"}
@@ -38346,14 +38449,14 @@ class TestHandleWizardText:
 
     @pytest.fixture(autouse=True)
     def _clean(self):
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         mod._wizards.clear()
         yield
         mod._wizards.clear()
 
     @pytest.mark.asyncio
     async def test_no_actor_id_returns_false(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event()
         with patch.object(mod, "get_user_id", return_value=None):
@@ -38362,7 +38465,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_no_wizard_returns_false(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         result = await mod._handle_wizard_text(event, "text")
@@ -38372,7 +38475,7 @@ class TestHandleWizardText:
     async def test_wrong_step_returns_false(self) -> None:
         """Если wizard в awaiting_confirm — текст НЕ перехватываем
         (это срабатывает только в awaiting_text)."""
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -38382,7 +38485,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_expired_wiped_and_message(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -38396,7 +38499,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_cancel_command_drops_wizard(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -38407,7 +38510,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_too_long_text_rejected_state_intact(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
         from aemr_bot.config import settings as cfg
 
@@ -38423,7 +38526,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_non_whitelisted_url_rejected(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -38444,7 +38547,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_no_subscribers_closes_wizard(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -38467,7 +38570,7 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_happy_path_advances_to_awaiting_confirm(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -38508,14 +38611,14 @@ class TestHandleConfirmBase:
 
     @pytest.fixture(autouse=True)
     def _clean(self):
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         mod._wizards.clear()
         yield
         mod._wizards.clear()
 
     @pytest.mark.asyncio
     async def test_no_actor_id_no_op(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         with patch.object(mod, "get_user_id", return_value=None):
@@ -38524,7 +38627,7 @@ class TestHandleConfirmBase:
 
     @pytest.mark.asyncio
     async def test_no_wizard_acks_closed(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         with patch.object(mod, "ack_callback", AsyncMock()) as ack:
@@ -38536,7 +38639,7 @@ class TestHandleConfirmBase:
 
     @pytest.mark.asyncio
     async def test_wrong_step_acks_closed(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -38550,7 +38653,7 @@ class TestHandleConfirmBase:
 
     @pytest.mark.asyncio
     async def test_expired_state_acks_closed(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -38566,14 +38669,14 @@ class TestHandleConfirmBase:
 class TestHandleAbort:
     @pytest.fixture(autouse=True)
     def _clean(self):
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         mod._wizards.clear()
         yield
         mod._wizards.clear()
 
     @pytest.mark.asyncio
     async def test_pops_wizard_and_acks(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -38587,7 +38690,7 @@ class TestHandleAbort:
 
     @pytest.mark.asyncio
     async def test_no_actor_id_still_acks(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         with patch.object(mod, "get_user_id", return_value=None), \
@@ -38604,14 +38707,14 @@ class TestHandleEdit:
 
     @pytest.fixture(autouse=True)
     def _clean(self):
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         mod._wizards.clear()
         yield
         mod._wizards.clear()
 
     @pytest.mark.asyncio
     async def test_no_wizard_acks_closed(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
         with patch.object(mod, "ack_callback", AsyncMock()) as ack:
@@ -38620,7 +38723,7 @@ class TestHandleEdit:
 
     @pytest.mark.asyncio
     async def test_resets_to_awaiting_text_clears_attachments(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
@@ -38649,13 +38752,13 @@ class TestPrefillWizardFromTemplate:
 
     @pytest.fixture(autouse=True)
     def _clean(self):
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         mod._wizards.clear()
         yield
         mod._wizards.clear()
 
     def test_creates_state_in_awaiting_confirm(self) -> None:
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import prefill_wizard_from_template
 
         prefill_wizard_from_template(
@@ -38670,7 +38773,7 @@ class TestPrefillWizardFromTemplate:
     def test_overwrites_previous_state(self) -> None:
         """Если у оператора был активный wizard в awaiting_text —
         template-prefill полностью заменяет state, не сохраняет ввод."""
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import (
             _WizardState,
             prefill_wizard_from_template,
@@ -38688,7 +38791,7 @@ class TestPrefillWizardFromTemplate:
     def test_attachments_list_copy_not_reference(self) -> None:
         """Изменение исходной list attachments не должно мутировать
         state (`list(attachments)` создаёт копию)."""
-        from aemr_bot.handlers import broadcast as mod
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import prefill_wizard_from_template
 
         src = [{"image": "a"}]
