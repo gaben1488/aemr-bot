@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 19:03:46 UTC`
+Generated at: `2026-05-27 21:25:37 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `262`
 Max file size: `300 KB`
@@ -49,7 +49,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (22816 bytes)
-- `bot/aemr_bot/handlers/admin_audience.py` (9243 bytes)
+- `bot/aemr_bot/handlers/admin_audience.py` (9434 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (16294 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42735 bytes)
@@ -73,7 +73,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_bus.py` (10239 bytes)
 - `bot/aemr_bot/services/admin_card.py` (11715 bytes)
-- `bot/aemr_bot/services/admin_events.py` (6489 bytes)
+- `bot/aemr_bot/services/admin_events.py` (6857 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (9924 bytes)
 - `bot/aemr_bot/services/appeals.py` (27094 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (7910 bytes)
@@ -91,7 +91,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/progress.py` (9940 bytes)
 - `bot/aemr_bot/services/quiet_hours.py` (6462 bytes)
 - `bot/aemr_bot/services/repo_sync.py` (16984 bytes)
-- `bot/aemr_bot/services/settings_store.py` (45941 bytes)
+- `bot/aemr_bot/services/settings_store.py` (48201 bytes)
 - `bot/aemr_bot/services/stats.py` (7451 bytes)
 - `bot/aemr_bot/services/threat_intel.py` (11404 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
@@ -112,7 +112,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/utils/image_attachments.py` (1137 bytes)
 - `bot/aemr_bot/utils/menu_tracker.py` (7735 bytes)
 - `bot/aemr_bot/utils/typing_indicator.py` (2310 bytes)
-- `bot/aemr_bot/utils/url_defang.py` (9770 bytes)
+- `bot/aemr_bot/utils/url_defang.py` (10687 bytes)
 - `bot/alembic.ini` (619 bytes)
 - `bot/pyproject.toml` (3047 bytes)
 - `bot/tests/__init__.py` (0 bytes)
@@ -124,8 +124,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_card_detached_safety.py` (8432 bytes)
 - `bot/tests/test_admin_card_render.py` (18711 bytes)
 - `bot/tests/test_admin_events.py` (2176 bytes)
-- `bot/tests/test_admin_events_descriptor.py` (5856 bytes)
-- `bot/tests/test_admin_handlers_small.py` (21842 bytes)
+- `bot/tests/test_admin_events_descriptor.py` (6048 bytes)
+- `bot/tests/test_admin_handlers_small.py` (21909 bytes)
 - `bot/tests/test_admin_operators.py` (19228 bytes)
 - `bot/tests/test_admin_outgoing_hook.py` (7453 bytes)
 - `bot/tests/test_admin_panel.py` (13011 bytes)
@@ -189,13 +189,13 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_security_batch_d.py` (6992 bytes)
 - `bot/tests/test_services_no_db.py` (9640 bytes)
 - `bot/tests/test_settings_seed_baseline.py` (5309 bytes)
-- `bot/tests/test_settings_store_validation.py` (8317 bytes)
+- `bot/tests/test_settings_store_validation.py` (11429 bytes)
 - `bot/tests/test_stale_operators_cleanup.py` (5188 bytes)
 - `bot/tests/test_texts_length_guard.py` (8409 bytes)
 - `bot/tests/test_threat_intel.py` (3737 bytes)
 - `bot/tests/test_typing_indicator.py` (2923 bytes)
 - `bot/tests/test_uploads_policy_admin_relay.py` (11634 bytes)
-- `bot/tests/test_url_defang.py` (5767 bytes)
+- `bot/tests/test_url_defang.py` (7954 bytes)
 - `bot/tests/test_users_consent_invariants.py` (12125 bytes)
 - `bot/tests/test_users_service_pg.py` (16852 bytes)
 - `bot/tests/test_wizard_registry.py` (5268 bytes)
@@ -4724,8 +4724,8 @@ async def run_erase_for_appeal(event, appeal_id: int) -> None:
 
 ### `bot/aemr_bot/handlers/admin_audience.py`
 
-Size: `9243` bytes  
-SHA-256: `e32db9a3ed02e1eb6456c58f2e6a2bbbd847488938fa814c34877cb5d418aada`
+Size: `9434` bytes  
+SHA-256: `38717f4bf5e1a3b81a9c1a4119829c9b3a7253a3aa2d56254ded40511fab3801`
 
 ```python
 """Меню «📊 Аудитория и согласия» — IT-выборки + точечные действия
@@ -4928,14 +4928,17 @@ def _mask_phone(phone: str | None) -> str:
     операторов; 152-ФЗ erasure эту копию не достанет. Полный номер
     нужен реально только при /erase phone= — точечно. В list-выводах
     оставляем 4 последние цифры и страновой префикс для распознавания.
-    Если телефон не задан — «—»; если короче 4 цифр (мусор) —
-    показываем как есть, скрывать там нечего.
+
+    SECURITY_REVIEW_2026-05-28 §A7: при len(digits) < 4 возвращаем
+    «—», а не raw `phone` — раньше короткие garbage-input'ы (test
+    данные, частично стёртые номера) выходили в admin-чат без
+    маскировки. Лучше «нет данных» чем «выдали как есть».
     """
     if not phone:
         return "—"
     digits = "".join(ch for ch in phone if ch.isdigit())
     if len(digits) < 4:
-        return phone
+        return "—"
     tail = digits[-4:]
     prefix = "+7" if digits[0] in {"7", "8"} and len(digits) >= 11 else "+"
     return f"{prefix}***{tail}"
@@ -16950,8 +16953,8 @@ def _count_attachments(appeal: "Appeal") -> int:
 
 ### `bot/aemr_bot/services/admin_events.py`
 
-Size: `6489` bytes  
-SHA-256: `dc64aa83272220e05259530e68bc746482f1bcb7d9b9eb8489fb407c9d6152d4`
+Size: `6857` bytes  
+SHA-256: `2c2c15c5eff94265e9e39279bac1a1b3408f1dc58e209f0cdf9c1a40f4928598`
 
 ```python
 """Короткие уведомления в служебную группу о действиях жителя."""
@@ -16990,12 +16993,18 @@ async def _send(bot: Any, text: str) -> None:
 def _mask_phone(phone: str | None) -> str:
     """Маскированный телефон для admin-чата: «+7***1234». 152-ФЗ:
     операторы видят 4 последние цифры для идентификации, но не полный
-    номер (он попадает в backup MAX и в скриншоты)."""
+    номер (он попадает в backup MAX и в скриншоты).
+
+    SECURITY_REVIEW_2026-05-28 §A7: при len(digits) < 4 раньше
+    возвращали raw `phone` — это утечка PII на edge-case (короткие
+    test-input'ы, частично стёртые номера). Теперь возвращаем «—»:
+    лучше «нет данных» чем «выдали без маски».
+    """
     if not phone:
         return "—"
     digits = "".join(ch for ch in phone if ch.isdigit())
     if len(digits) < 4:
-        return phone
+        return "—"
     tail = digits[-4:]
     prefix = "+7" if digits[0] in {"7", "8"} and len(digits) >= 11 else "+"
     return f"{prefix}***{tail}"
@@ -22377,8 +22386,8 @@ async def fetch_main_runtime_config(
 
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `45941` bytes  
-SHA-256: `18bda15d852ee1b4ba42c2cbb67a99a06fd08035cc9c9a2e81d6da88a690376e`
+Size: `48201` bytes  
+SHA-256: `e60332d3cd36ebd2ebc299a0f18f01846d6481492e331872d9f1d226fba5d6f1`
 
 ```python
 import asyncio
@@ -22438,16 +22447,53 @@ def _is_valid_phone(value: str) -> bool:
 
 
 def _is_whitelisted_url(value: str) -> bool:
-    """True если URL ведёт на разрешённый host (Elizovo / Kamchatka gov)."""
+    """True если URL ведёт на разрешённый host (Elizovo / Kamchatka gov).
+
+    SECURITY_REVIEW_2026-05-28 §A4 hardening:
+    - Reject если исходный host (из `parsed.netloc`, который Python НЕ
+      нормализует, в отличие от `parsed.hostname`) содержит UPPERCASE
+      символы. Mixed-case hosts (`https://Gosuslugi.RU`) формально
+      валидны по RFC 3986, но визуально подозрительны — phishing-
+      ссылки такого вида чаще обманывают пожилого жителя. Standard
+      DNS-практика — все hosts lowercase; legitimate гос-ссылки от
+      Администрации тоже всегда lowercase.
+    - Reject если host содержит символы вне `[a-z0-9.-]`. Защита от
+      unicode-омоглифов (`gоsuslugi.ru` с cyrillic «о» U+043E) и
+      других непечатных символов, которые могут попасть через
+      copy-paste из подозрительных источников.
+    """
     try:
         parsed = urlparse(value)
     except Exception:
         return False
     if parsed.scheme not in {"http", "https"}:
         return False
-    host = (parsed.hostname or "").lower()
-    if not host:
+    # `parsed.netloc` — raw host (case-sensitive, с возможным
+    # `user:pass@` префиксом и `:port` суффиксом). `parsed.hostname` —
+    # Python-normalized (lowercase). Берём raw для §A4-check, затем
+    # отделяем user-info и port, сравниваем с whitelist.
+    raw_netloc = parsed.netloc or ""
+    if not raw_netloc:
         return False
+    # Отбрасываем `user:pass@` если есть.
+    if "@" in raw_netloc:
+        raw_netloc = raw_netloc.split("@", 1)[1]
+    # Отбрасываем `:port` (но `[ipv6]:port` — оставим за рамками, у нас
+    # гос-домены ASCII).
+    if ":" in raw_netloc:
+        raw_netloc = raw_netloc.split(":", 1)[0]
+    raw_host = raw_netloc
+    if not raw_host:
+        return False
+    # §A4: reject mixed-case в исходном host.
+    if raw_host != raw_host.lower():
+        return False
+    # §A4: reject не-`[a-z0-9.-]` символы (unicode-омоглифы и
+    # подобные). punycode-домены здесь не страдают — они в ASCII
+    # как `xn--80a1acny.xn--p1ai`.
+    if not all(ch.isascii() and (ch.isalnum() or ch in ".-") for ch in raw_host):
+        return False
+    host = raw_host
     return any(
         host == suffix or host.endswith("." + suffix)
         for suffix in _URL_HOST_WHITELIST_SUFFIXES
@@ -27562,8 +27608,8 @@ async def mark_typing(event_or_bot, chat_id: int | None = None) -> None:
 
 ### `bot/aemr_bot/utils/url_defang.py`
 
-Size: `9770` bytes  
-SHA-256: `1678fbd7b66a2e745919dd4db7237b987cc25d43a308bc9f92979b27acf97faa`
+Size: `10687` bytes  
+SHA-256: `40f73ee3e458893799c85e2763d96312083ad4fd4068ff209a0ad52f9064f6c6`
 
 ```python
 """Экранирование URL'ов («defang») для безопасного показа в admin-чате.
@@ -27637,6 +27683,18 @@ _DEFANG_TLDS = (
     # Cheap/new (frequent phishing)
     "xyz", "top", "club", "online", "site", "shop", "store",
     "win", "vip", "icu", "app", "dev",
+    # IDN/punycode (SECURITY_REVIEW_2026-05-28 §A3). MAX-клиент
+    # auto-linkify'ит punycode-домены так же, как обычные ASCII.
+    # `xn--p1ai` = «.рф» в punycode, `xn--p1acf` = «.рус»,
+    # `xn--80aswg` = «.сайт». Не покрывать → фишинг через
+    # `xn--evil.xn--p1ai` пройдёт мимо defang'а.
+    "xn--p1ai", "xn--p1acf", "xn--80aswg",
+    # Country (расширение под §A3) — TLD'ы регулярно используются
+    # в международных скам-кампаниях против рунета.
+    "cn", "tr", "in", "ng", "mx", "br", "id", "vn", "ph", "th",
+    # 2024-2026 расширения — относительно новые TLD'ы,
+    # доступные за копейки, любимы скам-операциями.
+    "bot", "tech", "cloud", "live", "work", "social", "world",
 )
 
 # Pre-compile один большой regex для всех TLD. Группируем в (?:...) для
@@ -30066,8 +30124,8 @@ async def test_notify_logs_and_does_not_raise_on_delivery_error() -> None:
 
 ### `bot/tests/test_admin_events_descriptor.py`
 
-Size: `5856` bytes  
-SHA-256: `03f2d14711fb2237f890b2a23c6d54df2088b2f2231b7049ed017da426c15079`
+Size: `6048` bytes  
+SHA-256: `ed83100678d68fd60f361381b3163c4648c0196dab95ee0dc3b56a12b018832d`
 
 ```python
 """Тесты на info-богатые уведомления оператору.
@@ -30224,14 +30282,20 @@ class TestMaskPhone:
         assert _mask_phone("89991234567") == "+7***4567"
         assert _mask_phone(None) == "—"
         assert _mask_phone("") == "—"
-        # короткий номер не маскируем (нечего скрывать)
-        assert _mask_phone("12") == "12"
+
+    def test_short_input_returns_dash(self) -> None:
+        """SECURITY_REVIEW_2026-05-28 §A7: <4 цифр → «—», не raw."""
+        from aemr_bot.services.admin_events import _mask_phone
+
+        assert _mask_phone("12") == "—"
+        assert _mask_phone("ab") == "—"
+        assert _mask_phone("123") == "—"
 ```
 
 ### `bot/tests/test_admin_handlers_small.py`
 
-Size: `21842` bytes  
-SHA-256: `cedcbd4d3a3132ee60c48aaeffc6ee10bfb58969d3839efb4abce72a5efe65d7`
+Size: `21909` bytes  
+SHA-256: `fef7224d59cee67514e6aa8ffe745d093b6ae6c3b45654f30b845b2a2a97b77c`
 
 ```python
 """Тесты для трёх небольших admin-handlers (выделены из admin_commands
@@ -30284,13 +30348,14 @@ class TestMaskPhone:
         assert _mask_phone("89991234567") == "+7***4567"
         assert _mask_phone("79991234567") == "+7***4567"
 
-    def test_short_garbage_kept_as_is(self) -> None:
-        """Если телефон короче 4 цифр — это явно мусор; маскировать
-        там нечего. Пусть оператор увидит, что номер сломан."""
+    def test_short_garbage_returns_dash(self) -> None:
+        """SECURITY_REVIEW_2026-05-28 §A7: при <4 цифр возвращаем «—»,
+        не raw input. Раньше garbage-номера выходили в admin-чат как
+        есть (PII утечка на edge case). Теперь «нет данных»."""
         from aemr_bot.handlers.admin_audience import _mask_phone
 
-        assert _mask_phone("ab") == "ab"
-        assert _mask_phone("123") == "123"
+        assert _mask_phone("ab") == "—"
+        assert _mask_phone("123") == "—"
 
     def test_non_ru_format(self) -> None:
         from aemr_bot.handlers.admin_audience import _mask_phone
@@ -48814,8 +48879,8 @@ class TestSeedBaseline:
 
 ### `bot/tests/test_settings_store_validation.py`
 
-Size: `8317` bytes  
-SHA-256: `4816656cbff47fb3a1ae6ce20d8397e290051c219e4dc50ecfa652d1a9c50cfc`
+Size: `11429` bytes  
+SHA-256: `35edc710dc195e7b7f010a80b0b3fab9f2324030f8d61b512c545b2cc15b58e9`
 
 ```python
 """Тесты на services/settings_store — валидация ключей и значений.
@@ -48984,6 +49049,68 @@ class TestObjListGrouping:
         ])
         assert "▸ Электроэнергия" in body
         assert "▸ Прочее" in body
+
+
+class TestIsWhitelistedUrl:
+    """SECURITY_REVIEW_2026-05-28 §A4: hardening URL whitelist matcher.
+
+    Существующая логика принимала `https://Gosuslugi.RU` (через
+    `urlparse + .lower()`). Защитимся явно от:
+    - mixed-case host (визуально подозрительно, обманывает пожилого
+      жителя);
+    - не-ASCII символов в host (unicode-омоглифы, ноль-width).
+    """
+
+    def test_valid_lowercase_passes(self) -> None:
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url("https://elizovomr.ru/news") is True
+        assert is_whitelisted_url("https://www.gosuslugi.ru") is True
+        assert is_whitelisted_url("https://kamgov.ru/path") is True
+
+    def test_phishing_lookalike_rejected(self) -> None:
+        """Phishing-домен `gosuslugi.ru.evil.example.com` не должен
+        пройти suffix-match (host endswith `.example.com`, не
+        `.gosuslugi.ru`)."""
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url(
+            "https://gosuslugi.ru.evil.example.com"
+        ) is False
+
+    def test_mixed_case_host_rejected(self) -> None:
+        """§A4: `https://Gosuslugi.RU` визуально подозрителен —
+        rejected даже хотя `urlparse + .lower()` дал бы валидный
+        suffix-match. Lowercase — стандартная DNS-практика."""
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url("https://Gosuslugi.RU") is False
+        assert is_whitelisted_url("https://ELIZOVOMR.RU") is False
+        assert is_whitelisted_url("https://kamgov.RU/x") is False
+
+    def test_unicode_homoglyph_rejected(self) -> None:
+        """§A4: `gоsuslugi.ru` с cyrillic «о» (U+043E) — типичный
+        омоглиф-фишинг. Host содержит non-ASCII → rejected."""
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        # cyrillic 'о' вместо latin 'o'
+        assert is_whitelisted_url("https://gоsuslugi.ru") is False
+
+    def test_non_http_scheme_rejected(self) -> None:
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url("ftp://elizovomr.ru") is False
+        assert is_whitelisted_url("javascript:alert(1)") is False
+
+    def test_empty_or_garbage_rejected(self) -> None:
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url("") is False
+        assert is_whitelisted_url("not a url at all") is False
+        assert is_whitelisted_url("https://") is False
+
+    def test_subdomain_of_whitelisted_passes(self) -> None:
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url(
+            "https://news.elizovomr.ru/article/1"
+        ) is True
+        assert is_whitelisted_url(
+            "https://lk.gosuslugi.ru/profile"
+        ) is True
 ```
 
 ### `bot/tests/test_stale_operators_cleanup.py`
@@ -49791,8 +49918,8 @@ class TestAdminRelay:
 
 ### `bot/tests/test_url_defang.py`
 
-Size: `5767` bytes  
-SHA-256: `29c88c8557c9b62640e84153426f15a3bdd1c391ff78e0d805188ff40dba59ab`
+Size: `7954` bytes  
+SHA-256: `488a91cba38c85f73a5c8768e6c500a4ce7cb2aeb81288af12df1da6dabb8022`
 
 ```python
 """Тесты на utils/url_defang.py — защита оператора от случайного
@@ -49932,6 +50059,59 @@ class TestDefangBareDomain:
         out = defang_url_in_text("проверь ya.ru и google.com тоже")
         assert f"ya{ZWSP}.ru" in out
         assert f"google{ZWSP}.com" in out
+
+
+class TestDefangExtendedTlds:
+    """SECURITY_REVIEW_2026-05-28 §A3: расширение TLD list.
+
+    Раньше `phish.cn`, `xn--evil.xn--p1ai`, `scam.tech` проходили
+    мимо defang'а — MAX-клиент авто-линкифицировал, оператор тапал.
+    Теперь покрыты.
+    """
+
+    def test_punycode_rf(self) -> None:
+        """.рф в punycode (`xn--p1ai`) — частый IDN-фишинг под госуслуги."""
+        out = defang_url_in_text("zайди на xn--evil.xn--p1ai")
+        assert f"xn--evil{ZWSP}.xn--p1ai" in out
+
+    def test_punycode_rus(self) -> None:
+        out = defang_url_in_text("открой test.xn--p1acf")
+        assert f"test{ZWSP}.xn--p1acf" in out
+
+    def test_country_cn(self) -> None:
+        """`.cn` — частый источник международных скам-кампаний."""
+        out = defang_url_in_text("vip.cn/login")
+        assert f"vip{ZWSP}.cn" in out
+
+    def test_country_tr(self) -> None:
+        out = defang_url_in_text("phish.tr/x")
+        assert f"phish{ZWSP}.tr" in out
+
+    def test_country_in(self) -> None:
+        out = defang_url_in_text("evil.in/auth")
+        assert f"evil{ZWSP}.in" in out
+
+    def test_new_tld_tech(self) -> None:
+        """`.tech` — относительно новый дешёвый TLD, любимый скамом."""
+        out = defang_url_in_text("scam.tech")
+        assert f"scam{ZWSP}.tech" in out
+
+    def test_new_tld_cloud(self) -> None:
+        out = defang_url_in_text("bad.cloud/file")
+        assert f"bad{ZWSP}.cloud" in out
+
+    def test_new_tld_live(self) -> None:
+        out = defang_url_in_text("phish.live")
+        assert f"phish{ZWSP}.live" in out
+
+    def test_new_tld_world(self) -> None:
+        out = defang_url_in_text("evil.world/x")
+        assert f"evil{ZWSP}.world" in out
+
+    def test_has_defangable_url_punycode(self) -> None:
+        """`has_defangable_url` тоже должен ловить новые TLD."""
+        assert has_defangable_url("откроется xn--evil.xn--p1ai") is True
+        assert has_defangable_url("посмотри на scam.tech") is True
 ```
 
 ### `bot/tests/test_users_consent_invariants.py`
