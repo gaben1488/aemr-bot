@@ -14,6 +14,10 @@ import asyncio
 import logging
 from typing import Any
 
+from aemr_bot.db.session import session_scope
+from aemr_bot.services import wizard_persist
+from aemr_bot.utils.background import spawn_background_task
+
 log = logging.getLogger(__name__)
 
 # ---- Internal storage (private to this module) ----------------------------
@@ -182,8 +186,6 @@ def _spawn_persist(coro_factory) -> None:
     except RuntimeError:
         return
     try:
-        from aemr_bot.utils.background import spawn_background_task
-
         spawn_background_task(
             coro_factory(), name="wizard_registry.persist"
         )
@@ -193,9 +195,6 @@ def _spawn_persist(coro_factory) -> None:
 
 async def _persist_save_op(operator_id: int, state: dict[str, Any]) -> None:
     try:
-        from aemr_bot.db.session import session_scope
-        from aemr_bot.services import wizard_persist
-
         async with session_scope() as session:
             await wizard_persist.save_op_wizard(session, operator_id, state)
     except Exception:
@@ -207,9 +206,6 @@ async def _persist_save_op(operator_id: int, state: dict[str, Any]) -> None:
 
 async def _persist_delete_op(operator_id: int) -> None:
     try:
-        from aemr_bot.db.session import session_scope
-        from aemr_bot.services import wizard_persist
-
         async with session_scope() as session:
             await wizard_persist.delete_op_wizard(session, operator_id)
     except Exception:
@@ -223,9 +219,6 @@ async def _persist_save_broadcast(
     operator_id: int, state: dict[str, Any]
 ) -> None:
     try:
-        from aemr_bot.db.session import session_scope
-        from aemr_bot.services import wizard_persist
-
         async with session_scope() as session:
             await wizard_persist.save_broadcast_wizard(
                 session, operator_id, state
@@ -239,9 +232,6 @@ async def _persist_save_broadcast(
 
 async def _persist_delete_broadcast(operator_id: int) -> None:
     try:
-        from aemr_bot.db.session import session_scope
-        from aemr_bot.services import wizard_persist
-
         async with session_scope() as session:
             await wizard_persist.delete_broadcast_wizard(
                 session, operator_id
