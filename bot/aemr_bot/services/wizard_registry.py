@@ -1,36 +1,12 @@
-"""Единое хранилище мутабельного состояния визардов и intent'ов
-оператора.
+"""Единое хранилище мутабельного in-memory состояния визардов и
+intent'ов оператора (op_wizard, broadcast_wizard, reply_intent,
+recent_replies). Публичный API: `set_op_wizard`, `get_op_wizard`,
+`clear_all_for(operator_id)`, `reset_all()` (тесты).
 
-До этого модуля каждый handler хранил собственный module-level dict:
-- `handlers/admin_commands.py:_op_wizards` — wizard «Добавить оператора»
-- `handlers/broadcast.py:_wizards` — wizard рассылки
-- `handlers/operator_reply.py:_reply_intent` — короткоживущий «оператор
-  готовится ответить на обращение N»
-- `handlers/operator_reply.py:_recent_replies` — дедуп уже отправленных
-  ответов (кросс-процессная защита от двойного нажатия)
+Не вносит логику, только хранение — бизнес-логика остаётся в handlers.
 
-Минусы старой схемы:
-- кросс-handler доступ через приватные имена (ruff SLF001 — 12+ мест:
-  `broadcast_handler._wizards.pop(...)` в `appeal.py` etc)
-- нет единой точки сброса при `/cancel` оператора — приходилось
-  вручную дёргать каждое из 4 хранилищ
-- состояние раскидано — при тестах не понятно что нужно мокать
-
-Этот модуль — единая точка с публичным API. Сами мутабельные dict'ы
-остаются на module-level (in-memory, single-process), но доступ к
-ним идёт через явные функции:
-
-    from aemr_bot.services import wizard_registry as wr
-
-    wr.set_op_wizard(operator_id, {"step": "awaiting_id"})
-    state = wr.get_op_wizard(operator_id)
-    wr.clear_all_for(operator_id)  # сброс всех визардов оператора
-
-Для тестов есть `wr.reset_all()` — обнуляет все хранилища.
-
-Не вносит логику — только хранение. Бизнес-логика остаётся в handlers.
-Это снижает риск регрессии при выделении: данные не меняются, меняется
-только способ доступа.
+Мотивация (рефакторинг SLF001, единая точка сброса при /cancel,
+testability): см. `docs/_meta/_archive/CODE_DECISIONS_LOG.md §5`.
 """
 from __future__ import annotations
 

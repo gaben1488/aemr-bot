@@ -1,34 +1,16 @@
-"""Admin appeal card с freshness-rule (унифицированное правило для
-карточек с кнопками — меню и admin appeal).
+"""Admin appeal card — sacred event log (PR #100, dual-tracker).
 
-**Унифицированное правило (Freshness)**:
+Каждая публикация карточки — новая запись в журнале чата. Edit
+после dual-tracker не делается; reply/reopen/close/followup → новая
+карточка с обновлённым timeline, старая остаётся как след.
 
-Любая карточка с кнопками редактируется ТОЛЬКО если она физически
-последнее сообщение бота в этом чате прямо сейчас. Если ниже неё
-что-то появилось (другая карточка, событие, другое обращение) —
-send new card.
+`Appeal.admin_message_id` — mid ПЕРВОЙ публикации (для reply-link
+при relay вложений), `last_admin_card_mid` — mid последней публикации
+(для всех остальных нужд).
 
-Реализуется через общий `menu_tracker[admin_group_id]` — все
-карточки (меню, wizard, admin appeal) пишут туда свой mid при
-send/edit. Перед edit'ом сверяем `callback_mid` с tracker:
-- callback_mid == tracker → это последнее сообщение → edit OK;
-- callback_mid != tracker → старая карточка → send new.
-
-Это **то же** правило, что у `send_or_edit_screen` для меню. Тут
-оно применено к admin appeal card.
-
-**Что НЕ карточка** (события — без кнопок, иммутабельные): ответ
-оператора жителю, followup-уведомления, подписки/отписки/erase ack.
-Идут через прямой `bot.send_message` без trackers.
-
-**Контракт `Appeal`-полей:**
-
-- `admin_message_id` — mid ПЕРВОЙ публикации карточки (finalize).
-  Используется как reply-link при relay вложений жителя. Не меняется
-  после finalize.
-- `last_admin_card_mid` — mid последней опубликованной карточки
-  этого обращения. Обновляется при send_new и при edit-с-new-mid
-  (edit fail fallback).
+Sacred-event-log контракт, перечень «что НЕ карточка», полная
+мотивация edit-removal: см.
+`docs/_meta/_archive/CODE_DECISIONS_LOG.md §6`.
 """
 from __future__ import annotations
 

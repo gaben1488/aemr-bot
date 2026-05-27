@@ -1,49 +1,15 @@
-"""Единая шина для отправки сообщений в служебную группу (admin chat).
+"""Единая шина для отправки сообщений в admin chat.
 
-**Зачем существует.** Раньше десятки путей шли в admin chat напрямую через
-`bot.send_message(chat_id=cfg.admin_group_id, ...)` — pulse, admin_events,
-broadcast progress, operator_reply confirmations, retention notifications.
-Каждое такое сообщение физически сдвигает чат вниз, но никто из этих
-путей не обновлял `menu_tracker`. Tracker отставал от реального состояния
-чата, и freshness-rule (`callback_mid == tracker → edit`) врал:
-оператор тапал кнопку на старой карточке, бот edit'ал её на месте далеко
-вверху чата, оператор внизу ничего не видел.
+`admin_bus.send` оборачивает `bot.send_message` + `note_event` атомарно,
+чтобы tracker не отставал от физического состояния чата. Шина — только
+для новых сообщений; edit идёт через freshness-aware пути
+(`admin_card.render`, `send_or_edit_screen`).
 
-**Решение.** Любая отправка в admin chat теперь идёт через `admin_bus.send`.
-Шина делает три действия атомарно:
-1. `bot.send_message(chat_id=cfg.admin_group_id, ...)`
-2. `extract_message_id(sent)` — достаёт mid из ответа MAX API.
-3. `menu_tracker.set_last_menu_mid(cfg.admin_group_id, mid)` — двигает
-   tracker на свежий mid. После этого любой следующий callback оператора
-   на карточку выше будет иметь `callback_mid != tracker` → freshness
-   корректно вернёт `can_edit=False` → send_new.
+Также: `note_incoming_admin_message(mid)` двигает tracker на mid
+входящего сообщения оператора (handler'ом, не самой шиной).
 
-**Что НЕ делает шина:**
-- Не интерпретирует attachments / семантику сообщения. Это тонкий
-  wrapper, не бизнес-логика.
-- Не делает retry / circuit-breaker. Это responsibility вызывающего
-  (для broadcast есть `_send_with_retry`, для admin notifications —
-  `_send_admin_text_with_retry` в `services/cron.py`).
-- Не делает freshness-check на edit. Edit'ить через шину нельзя
-  принципиально — карточки с кнопками идут через `admin_card.render`
-  (freshness-aware), карточки меню — через `send_or_edit_screen`
-  (тоже freshness-aware). Шина — для **новых** сообщений.
-
-**Использование:**
-
-```python
-from aemr_bot.services import admin_bus
-
-await admin_bus.send(bot, text="🟢 Pulse: бот живой")
-await admin_bus.send(bot, text=text, attachments=[kb])
-```
-
-**Incoming admin-message hook.** Отдельная функция
-`note_incoming_admin_message(mid)` — вызывается из handler'а на каждое
-новое сообщение в admin chat (operator-text, voice, sticker). Она
-сдвигает tracker на mid входящего сообщения. Это закрывает дыру
-«оператор написал в чат, но tracker по-прежнему на карточке выше —
-следующий тап freshness-mismatch не увидит».
+Полная мотивация и контракт «что шина делает и не делает»: см.
+`docs/_meta/_archive/CODE_DECISIONS_LOG.md §2`.
 """
 from __future__ import annotations
 
@@ -136,48 +102,17 @@ _HOOK_INSTALLED_ATTR = "_aemr_admin_outgoing_tracker_installed"
 
 
 def install_outgoing_tracker_hook(bot) -> None:
-    """Обернуть `bot.send_message` декоратором, который синхронизирует
-    `menu_tracker[admin_group_id]` после любой успешной отправки в admin chat.
+    """Monkey-patch `bot.send_message`: после успешной отправки в admin
+    chat двигает `menu_tracker.note_event(admin_group_id, mid)`.
 
-    **Зачем.** Жалоба владельца 2026-05-27: «меню в админ-чате
-    редактируется при тапе кнопки на не-последнем сообщении». Корень —
-    62 прямых `bot.send_message(chat_id=admin_group_id, ...)` в коде
-    (handlers + services), большинство из них не вызывают
-    `menu_tracker.set_last_menu_mid` после send. Tracker отстаёт от
-    физического состояния чата. Любой следующий тап на «карточку выше»
-    callback_mid (старой карточки) == tracker → freshness ошибочно
-    edit'ит вверху, ниже всё остаётся.
+    Закрывает 62 прямых `bot.send_message(...)` сайта одним hook'ом
+    вместо миграции всех через `admin_bus.send` (большая правка, риск
+    регрессий). Идемпотентно — повторный install на тот же bot no-op
+    (маркер `_aemr_admin_outgoing_tracker_installed`).
 
-    Раньше единственное место с правильным sync — `admin_bus.send` —
-    мигрировать все 62 sites через шину было бы 200+ строк правок в
-    14 файлах, с риском регрессий. Этот hook решает проблему один раз
-    на старте бота: оборачивает оригинальный `bot.send_message`, после
-    каждого успешного `send_message(chat_id=admin_group_id, ...)`
-    извлекает mid и двигает tracker.
-
-    **Что делает hook:**
-    1. Если `chat_id != admin_group_id` — пробрасывает вызов без
-       изменений (citizen-chat tracker имеет свой sync через
-       `_send_or_edit_menu`).
-    2. Если `chat_id == admin_group_id` — выполняет оригинальный send,
-       извлекает mid, обновляет tracker. Возвращает результат как был.
-    3. Ошибки send_message не глотает — пробрасывает caller'у. Tracker
-       обновляет только при успешном send.
-
-    **Идемпотентность.** Повторный вызов на тот же bot — no-op (маркер
-    на bot-объекте). Иначе hook оборачивал бы себя рекурсивно и каждое
-    сообщение проходило бы N tracker.set.
-
-    **Где НЕ применять:**
-    - `admin_card.render` сам делает `menu_tracker.clear()` после
-      send_new (sacred event log, карточка обращения не должна
-      участвовать в tracker как меню). Hook сначала set'нет tracker
-      на mid карточки — потом сразу clear перезатрёт. Финальное
-      состояние = None, корректно.
-    - `admin_bus.send` сам делает set_last_menu_mid после send. Hook
-      повторит то же действие — это идемпотентно (tracker сидит на
-      том же mid). Не дублируем явный set, оставляем для читаемости
-      `admin_bus.send`.
+    Полная мотивация (жалоба владельца, рассуждения «hook vs миграция»),
+    идемпотентность guard, отношения с `admin_card.render` и
+    `admin_bus.send`: см. `docs/_meta/_archive/CODE_DECISIONS_LOG.md §3`.
 
     Args:
         bot: maxapi Bot, на котором будет установлен hook.
