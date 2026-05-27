@@ -42,9 +42,33 @@ import pytest
 
 # Источник истины (импорт лениво в каждом тесте, чтобы тест-файл сам
 # падал с понятным импорт-ошибкой, а не на module-load).
+#
+# После Cluster A (2026-05-27, PR #128) keyboards.py — compatibility
+# facade на 25 строк (`from aemr_bot.ui.* import *`). Реальные payload-
+# литералы живут в 5 доменных модулях под `aemr_bot/ui/`. Сканируем оба
+# слоя: и facade, и ui/*_keyboards.py — на случай если когда-то добавят
+# inline-payload в facade или появится новый ui-модуль.
 KEYBOARDS_PATH = (
     Path(__file__).parent.parent / "aemr_bot" / "keyboards.py"
 )
+_UI_DIR = Path(__file__).parent.parent / "aemr_bot" / "ui"
+
+
+def _read_keyboard_sources() -> str:
+    """Считать исходники всех UI-модулей в одну строку для парсинга.
+
+    Включает `keyboards.py` (facade) + все `aemr_bot/ui/*_keyboards.py`.
+    Если ui-директории ещё нет (старый код до Cluster A) — возвращает
+    только facade. Это делает контракт-тесты forward- и backward-
+    совместимыми с обоими layout'ами.
+    """
+    parts: list[str] = []
+    if KEYBOARDS_PATH.exists():
+        parts.append(KEYBOARDS_PATH.read_text(encoding="utf-8"))
+    if _UI_DIR.exists():
+        for module_file in sorted(_UI_DIR.glob("*_keyboards.py")):
+            parts.append(module_file.read_text(encoding="utf-8"))
+    return "\n".join(parts)
 
 
 # Payload'ы, которые не должны иметь route в callback_router:
@@ -116,7 +140,7 @@ class TestKeyboardsCoverContractRouter:
     def test_all_keyboard_payloads_have_routes(self) -> None:
         from aemr_bot.handlers import callback_router
 
-        source = KEYBOARDS_PATH.read_text(encoding="utf-8")
+        source = _read_keyboard_sources()
         keyboard_payloads = _extract_payload_literals(source)
 
         exact_routes = {r.pattern for r in callback_router.EXACT_ROUTES}
@@ -175,7 +199,7 @@ class TestRouterRoutesAreUsedByKeyboards:
     def test_no_dead_routes(self) -> None:
         from aemr_bot.handlers import callback_router
 
-        source = KEYBOARDS_PATH.read_text(encoding="utf-8")
+        source = _read_keyboard_sources()
         keyboard_payloads = _extract_payload_literals(source)
 
         # Для exact-routes: должен быть точный матч в keyboards.
