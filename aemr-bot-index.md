@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 03:32:13 UTC`
+Generated at: `2026-05-27 03:51:14 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `240`
 Max file size: `300 KB`
@@ -47,7 +47,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (16294 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42735 bytes)
-- `bot/aemr_bot/handlers/admin_panel.py` (23101 bytes)
+- `bot/aemr_bot/handlers/admin_panel.py` (22825 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (43448 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (4466 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (28901 bytes)
@@ -112,7 +112,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_handlers_small.py` (21842 bytes)
 - `bot/tests/test_admin_operators.py` (19228 bytes)
 - `bot/tests/test_admin_outgoing_hook.py` (7453 bytes)
-- `bot/tests/test_admin_panel.py` (12999 bytes)
+- `bot/tests/test_admin_panel.py` (13011 bytes)
 - `bot/tests/test_admin_settings_audit.py` (1917 bytes)
 - `bot/tests/test_appeal_card_edit_policy.py` (5805 bytes)
 - `bot/tests/test_appeal_card_timeline.py` (9393 bytes)
@@ -5532,8 +5532,8 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
 
 ### `bot/aemr_bot/handlers/admin_panel.py`
 
-Size: `23101` bytes  
-SHA-256: `e7e381b060b817ccd7c7476d6079d6bf9cf10115bef73b348a4649b6b291bbc2`
+Size: `22825` bytes  
+SHA-256: `bd9e21b74b599c852650a351bdff7c8f0354fbdc01d4a696c513bc97a1a85592`
 
 ```python
 """Общие операции админ-панели: меню /op_help, диагностика, бэкап,
@@ -5549,10 +5549,31 @@ import asyncio
 import logging
 
 from aemr_bot import keyboards as kbds
+from aemr_bot import texts
 from aemr_bot.config import settings as cfg
+from aemr_bot.db.models import (
+    Appeal,
+    AppealStatus,
+    Broadcast,
+    BroadcastDelivery,
+    BroadcastStatus,
+    Event,
+    Message,
+    MessageDirection,
+    OperatorRole,
+    User,
+)
 from aemr_bot.db.session import session_scope
-from aemr_bot.handlers._auth import ensure_operator, get_operator
-from aemr_bot.utils.event import get_message_text, send_or_edit_screen
+from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
+from aemr_bot.services import appeals as appeals_service
+from aemr_bot.services import broadcasts as broadcasts_service
+from aemr_bot.services import db_backup
+from aemr_bot.utils.event import (
+    extract_message_id,
+    get_message_text,
+    send_or_edit_screen,
+)
+from aemr_bot.utils.typing_indicator import mark_typing
 
 log = logging.getLogger(__name__)
 
@@ -5578,10 +5599,6 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
     роль у автора события: счётчик и админ-ряд кнопок собираются по
     этим данным.
     """
-    from aemr_bot import keyboards as kbds, texts
-    from aemr_bot.db.models import OperatorRole
-    from aemr_bot.services import appeals as appeals_service
-    from aemr_bot.utils.event import extract_message_id
 
     is_it = False
     can_broadcast = False
@@ -5648,8 +5665,6 @@ async def run_diag(event) -> None:
 
 async def run_backup(event) -> None:
     """Кнопочный аналог /backup. Только IT."""
-    from aemr_bot.db.models import OperatorRole
-    from aemr_bot.handlers._auth import ensure_role
 
     if not await ensure_role(event, OperatorRole.IT):
         return
@@ -5671,8 +5686,6 @@ async def _do_open_tickets(event) -> None:
     """
     from sqlalchemy import select
 
-    from aemr_bot.db.models import Appeal, AppealStatus
-    from aemr_bot.utils.typing_indicator import mark_typing
 
     # Typing-indicator: query+transform могут занять 1-2 сек на загруженной
     # базе. Без него оператор видит «зависание» после тапа кнопки.
@@ -5742,18 +5755,6 @@ async def _do_diag(event) -> None:
 
     from sqlalchemy import func, select
 
-    from aemr_bot.db.models import (
-        Appeal,
-        AppealStatus,
-        Broadcast,
-        BroadcastDelivery,
-        BroadcastStatus,
-        Event,
-        Message,
-        MessageDirection,
-        User,
-    )
-
     now = datetime.now(timezone.utc)
     since_24h = now - timedelta(hours=24)
     stuck_threshold = now - timedelta(minutes=10)
@@ -5763,7 +5764,6 @@ async def _do_diag(event) -> None:
     # реально уйдёт следующий broadcast (а не просто
     # subscribed_broadcast=True). Раньше /diag показывал больше, чем
     # рассылка доставляла — оператор удивлялся «подписан 100, ушло 80».
-    from aemr_bot.services import broadcasts as broadcasts_service
 
     # Reliability-pass: было 13 отдельных `await session.scalar(...)` —
     # последовательные round-trip'ы к Postgres (~13 × RTT в худшем
@@ -5972,7 +5972,6 @@ async def _do_diag(event) -> None:
 
 async def _do_backup(event) -> None:
     """Снять pg_dump прямо сейчас. Общая реализация для /backup и кнопки."""
-    from aemr_bot.services import db_backup
 
     await send_or_edit_screen(
         event,
@@ -29650,8 +29649,8 @@ class TestHookSyncsAdminTracker:
 
 ### `bot/tests/test_admin_panel.py`
 
-Size: `12999` bytes  
-SHA-256: `7e40fefbd0a401f26f7e095ab8f4cef01475ba6c0628414b184f0cddc8fe8093`
+Size: `13011` bytes  
+SHA-256: `11e5d7f1e6cb3a8fdf4d99dc6d33146ca1091854efbb181362a8863ccfa221bb`
 
 ```python
 """Тесты для handlers/admin_panel — общие операции админ-панели
@@ -29849,7 +29848,7 @@ class TestRunBackup:
         from aemr_bot.handlers import admin_panel
 
         event = _make_event()
-        with patch("aemr_bot.handlers._auth.ensure_role",
+        with patch("aemr_bot.handlers.admin_panel.ensure_role",
                    AsyncMock(return_value=False)):
             await admin_panel.run_backup(event)
         event.bot.send_message.assert_not_called()
@@ -29861,7 +29860,7 @@ class TestRunBackup:
 
         event = _make_event()
         do_backup = AsyncMock()
-        with patch("aemr_bot.handlers._auth.ensure_role",
+        with patch("aemr_bot.handlers.admin_panel.ensure_role",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_panel._do_backup", do_backup):
             await admin_panel.run_backup(event)
