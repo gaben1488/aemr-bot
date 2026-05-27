@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 17:11:02 UTC`
+Generated at: `2026-05-27 19:03:46 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `260`
+Indexed files: `262`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -19,7 +19,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/__init__.py` (22 bytes)
 - `bot/aemr_bot/config.py` (10460 bytes)
 - `bot/aemr_bot/copy/__init__.py` (1142 bytes)
-- `bot/aemr_bot/copy/admin_texts.py` (9801 bytes)
+- `bot/aemr_bot/copy/admin_texts.py` (11672 bytes)
 - `bot/aemr_bot/copy/broadcast_texts.py` (18083 bytes)
 - `bot/aemr_bot/copy/citizen_funnel.py` (19589 bytes)
 - `bot/aemr_bot/copy/errors_texts.py` (1987 bytes)
@@ -45,7 +45,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/db/alembic/versions/0017_appeals_last_card_mid.py` (1920 bytes)
 - `bot/aemr_bot/db/models.py` (20102 bytes)
 - `bot/aemr_bot/db/session.py` (2764 bytes)
-- `bot/aemr_bot/handlers/__init__.py` (7366 bytes)
+- `bot/aemr_bot/handlers/__init__.py` (7432 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (3081 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (22816 bytes)
@@ -54,6 +54,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_commands.py` (18364 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (42735 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (22825 bytes)
+- `bot/aemr_bot/handlers/admin_resident_search.py` (10715 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (49743 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (4466 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (28901 bytes)
@@ -128,6 +129,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_operators.py` (19228 bytes)
 - `bot/tests/test_admin_outgoing_hook.py` (7453 bytes)
 - `bot/tests/test_admin_panel.py` (13011 bytes)
+- `bot/tests/test_admin_resident_search.py` (16082 bytes)
 - `bot/tests/test_admin_settings_audit.py` (1917 bytes)
 - `bot/tests/test_admin_settings_handlers.py` (38395 bytes)
 - `bot/tests/test_appeal_card_edit_policy.py` (5805 bytes)
@@ -917,8 +919,8 @@ SHA-256: `b7a23b3fde2e7853b5c0fb526f84ac53b2947c9b02542998c4be004529b62871`
 
 ### `bot/aemr_bot/copy/admin_texts.py`
 
-Size: `9801` bytes  
-SHA-256: `611f3a3e8923f9a9be2e358a704367e5a9bdca1a15f82a70c4dbdfe75a797094`
+Size: `11672` bytes  
+SHA-256: `812216fb4b06bcd152bba16b526c86bdd9dfee9318e330152e7f9782168d8ac9`
 
 ```python
 """Тексты операторской панели (admin chat).
@@ -1098,6 +1100,49 @@ OP_USER_UNBLOCKED = "Житель {max_user_id} разблокирован."
 OP_SETTING_UPDATED = "Настройка «{key}» обновлена."
 OP_STATS_EMPTY = "За выбранный период обращений не было."
 
+# Поиск жителя по телефону/MAX user id (Cluster G, Codex PR 9).
+OP_FIND_RESIDENT_USAGE = (
+    "🔍 Поиск жителя\n"
+    "──────────\n"
+    "Использование:\n"
+    "  /find_resident <max_user_id>\n"
+    "  /find_resident <телефон>\n\n"
+    "Примеры:\n"
+    "  /find_resident 123456789\n"
+    "  /find_resident +79991234567\n\n"
+    "Все запросы пишутся в audit_log (152-ФЗ)."
+)
+
+OP_FIND_RESIDENT_NOT_FOUND = (
+    "🔍 По запросу «{query_masked}» ничего не найдено.\n"
+    "──────────\n"
+    "Проверьте: телефон с кодом страны (+7) или max_user_id "
+    "(целое число из карточки обращения)."
+)
+
+OP_FIND_RESIDENT_AMBIGUOUS_PHONE = (
+    "🔍 По телефону найдено несколько жителей.\n"
+    "──────────\n"
+    "Один номер привязан к разным аккаунтам (бывает у супругов на "
+    "одной симке). Уточните max_user_id из карточки обращения и "
+    "повторите поиск."
+)
+
+OP_FIND_RESIDENT_CARD = (
+    "🔍 Найден житель\n"
+    "──────────\n"
+    "👤 Имя: {name}\n"
+    "📞 Телефон: {phone_masked}\n"
+    "🆔 MAX user id: {max_user_id}\n"
+    "\n"
+    "🔐 Согласие на ПДн: {consent_status}\n"
+    "🔔 Подписка на рассылку: {subscribe_status}\n"
+    "{blocked_line}"
+    "\n"
+    "📂 Последнее обращение: {last_appeal}\n"
+    "📊 Всего обращений: {appeals_count}"
+)
+
 
 __all__ = [
     "ADMIN_CARD_TEMPLATE",
@@ -1122,6 +1167,10 @@ __all__ = [
     "OP_USER_UNBLOCKED",
     "OP_SETTING_UPDATED",
     "OP_STATS_EMPTY",
+    "OP_FIND_RESIDENT_USAGE",
+    "OP_FIND_RESIDENT_NOT_FOUND",
+    "OP_FIND_RESIDENT_AMBIGUOUS_PHONE",
+    "OP_FIND_RESIDENT_CARD",
 ]
 ```
 
@@ -3907,8 +3956,8 @@ async def session_scope() -> AsyncIterator[AsyncSession]:
 
 ### `bot/aemr_bot/handlers/__init__.py`
 
-Size: `7366` bytes  
-SHA-256: `2ad9a7497b06474b2dc1f228f4fb6d94e26e745159ee873c57c19939e1675e2f`
+Size: `7432` bytes  
+SHA-256: `46a54d6a31d9ca95fab1a6869704f6d43ee786892da5fefc65182e080849d788`
 
 ```python
 from maxapi import Dispatcher
@@ -3918,6 +3967,7 @@ from maxapi.types import MessageCreated
 from aemr_bot.config import settings as cfg
 from aemr_bot.handlers import (
     admin_commands,
+    admin_resident_search,
     appeal,
     broadcast,
     start,
@@ -4030,6 +4080,7 @@ def register_handlers(dp: Dispatcher) -> None:
     _attach_outer_middleware(dp, AdminChatActivityMiddleware())
     start.register(dp)
     admin_commands.register(dp)
+    admin_resident_search.register(dp)
     broadcast.register(dp)
     # Catch-all последним: см. докстринг выше.
     appeal.register(dp)
@@ -7252,6 +7303,254 @@ async def _do_backup(event) -> None:
         ),
         attachments=[kbds.op_back_to_menu_keyboard()],
     )
+```
+
+### `bot/aemr_bot/handlers/admin_resident_search.py`
+
+Size: `10715` bytes  
+SHA-256: `747173817d77932323784444b664e5a6a05a243a6f6cfdddcd619a9989f1b61c`
+
+```python
+"""Поиск жителя по телефону или MAX user id для оператора.
+
+Cluster G (Codex PR 9). До этого оператор мог попасть на карточку
+жителя только через listing открытых обращений или /erase phone=.
+Прямой lookup отсутствовал — приходилось вручную листать длинные
+списки или открывать карточки одну за другой.
+
+Команда `/find_resident <phone|max_user_id>` доступна любой роли
+оператора (OP/SH/IT — `ensure_operator`). Возвращает карточку:
+имя, **маскированный** телефон, статус согласия, подписка,
+блокировка, последнее обращение, всего обращений.
+
+Каждый запрос пишется в `audit_log` (152-ФЗ, retention 365 дней).
+Без этого оператор мог бы тихо искать жителей по телефону без
+следа — нарушение compliance.
+
+Маскировка телефона обязательна на всех уровнях:
+- В выводе оператору — `+7***1234` (`services/admin_events._mask_phone`).
+- В audit-log запись — хешированный fragment, не plain телефон.
+- В логах — никогда полный телефон.
+"""
+from __future__ import annotations
+
+import logging
+
+from aemr_bot.config import settings as cfg
+from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._auth import ensure_operator
+from aemr_bot.services import appeals as appeals_service
+from aemr_bot.services import operators as ops_svc
+from aemr_bot.services import users as users_service
+from aemr_bot.services.admin_events import _mask_phone
+from aemr_bot.utils.event import is_admin_chat
+
+from aemr_bot import texts
+
+log = logging.getLogger(__name__)
+
+
+def _detect_query_kind(query: str) -> tuple[str, str]:
+    """Определить, чем является `query`: max_user_id или телефон.
+
+    Возвращает `(kind, normalized)`:
+    - `("max_user_id", "123456789")` — целое число без `+` или `-`,
+      длиной ≥ 4 (избегаем коротких 1-3-значных опечаток).
+    - `("phone", "+79991234567")` — содержит `+` или ≥ 10 цифр.
+    - `("invalid", query)` — не классифицировался.
+
+    Логика: цифры-только и длина 4-9 → max_user_id (типичный MAX id 6-9
+    цифр). Цифры-только длина ≥ 10 ИЛИ символ `+` → phone. Меньше 4
+    цифр → invalid.
+    """
+    stripped = query.strip()
+    if not stripped:
+        return ("invalid", "")
+    # Чисто цифровые без знаков.
+    if stripped.isdigit():
+        if 4 <= len(stripped) <= 9:
+            return ("max_user_id", stripped)
+        if len(stripped) >= 10:
+            return ("phone", "+" + stripped if not stripped.startswith("+") else stripped)
+        return ("invalid", stripped)
+    # С `+` — телефон.
+    if stripped.startswith("+"):
+        return ("phone", stripped)
+    # Любое другое (буквы, спец-символы) — невалидно.
+    return ("invalid", stripped)
+
+
+def _mask_query_for_audit(kind: str, value: str) -> str:
+    """Подготовить query для audit-log: для phone маскируем последние
+    4 цифры, для max_user_id оставляем как есть (это не PII)."""
+    if kind == "phone":
+        return _mask_phone(value)
+    return value
+
+
+def _format_consent_status(user) -> str:
+    """Формальный статус согласия одной строкой."""
+    if getattr(user, "consent_revoked_at", None) is not None:
+        return "🔁 отозвано"
+    if getattr(user, "consent_pdn_at", None) is not None:
+        return "✅ активно"
+    return "— нет"
+
+
+def _format_subscribe_status(user) -> str:
+    """Подписка на рассылку — короткой строкой."""
+    if getattr(user, "subscribed_broadcast", False):
+        return "🔔 активна"
+    return "🔕 нет"
+
+
+def _format_last_appeal(appeal) -> str:
+    """Последнее обращение жителя — краткое описание для карточки."""
+    if appeal is None:
+        return "— нет"
+    created = appeal.created_at.strftime("%d.%m.%Y") if appeal.created_at else "—"
+    topic = (appeal.topic or "—")[:40]
+    return f"#{appeal.id} от {created} · {topic} · {appeal.status}"
+
+
+async def run_find_resident(event, query: str) -> None:
+    """Главная точка входа `/find_resident <phone|max_user_id>`.
+
+    Только в админ-чате. Любая роль оператора. Один результат на запрос:
+    либо карточка найденного жителя, либо not-found / usage / ambiguous.
+    Каждый запрос — запись в audit_log (152-ФЗ).
+    """
+    if not is_admin_chat(event):
+        return
+    operator = await ensure_operator(event)
+    if operator is None:
+        return
+
+    if not query or not query.strip():
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_FIND_RESIDENT_USAGE,
+        )
+        return
+
+    kind, value = _detect_query_kind(query)
+    if kind == "invalid":
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=texts.OP_FIND_RESIDENT_USAGE,
+        )
+        return
+
+    audit_target = _mask_query_for_audit(kind, value)
+    async with session_scope() as session:
+        if kind == "max_user_id":
+            try:
+                max_id_int = int(value)
+            except ValueError:
+                await event.bot.send_message(
+                    chat_id=cfg.admin_group_id,
+                    text=texts.OP_FIND_RESIDENT_USAGE,
+                )
+                return
+            user = await users_service.find_by_max_id(session, max_id_int)
+        else:  # phone
+            user = await users_service.find_by_phone(session, value)
+            # find_by_phone возвращает None и при множественном совпадении,
+            # и при отсутствии. Различить через прямой повторный count —
+            # дорого; вместо этого даём отдельную подсказку только когда
+            # явно telephone-формат + None.
+            if user is None and value.lstrip("+").isdigit() and len(value) >= 11:
+                # Audit: фиксируем попытку поиска независимо от результата.
+                await ops_svc.write_audit(
+                    session,
+                    operator_max_user_id=operator.max_user_id,
+                    action="resident_search_not_found",
+                    target=audit_target,
+                    details={"kind": kind},
+                )
+                # Не различаем not-found vs ambiguous: пишем общий
+                # not-found текст (для оператора результат всё равно
+                # один — «нужен max_user_id»).
+                await event.bot.send_message(
+                    chat_id=cfg.admin_group_id,
+                    text=texts.OP_FIND_RESIDENT_NOT_FOUND.format(
+                        query_masked=audit_target,
+                    ),
+                )
+                return
+
+        if user is None:
+            await ops_svc.write_audit(
+                session,
+                operator_max_user_id=operator.max_user_id,
+                action="resident_search_not_found",
+                target=audit_target,
+                details={"kind": kind},
+            )
+            await event.bot.send_message(
+                chat_id=cfg.admin_group_id,
+                text=texts.OP_FIND_RESIDENT_NOT_FOUND.format(
+                    query_masked=audit_target,
+                ),
+            )
+            return
+
+        # Found. Audit + расчёт последнего обращения.
+        await ops_svc.write_audit(
+            session,
+            operator_max_user_id=operator.max_user_id,
+            action="resident_search_found",
+            target=audit_target,
+            details={
+                "kind": kind,
+                "found_max_user_id": user.max_user_id,
+            },
+        )
+        last_appeals = await appeals_service.list_for_user(
+            session, user.id, limit=1
+        )
+        count = await appeals_service.count_for_user(session, user.id)
+        last_appeal = last_appeals[0] if last_appeals else None
+
+    name = (user.first_name or "—").strip() or "—"
+    blocked_line = ""
+    if getattr(user, "is_blocked", False):
+        blocked_line = "🚫 Заблокирован: да\n"
+    text_out = texts.OP_FIND_RESIDENT_CARD.format(
+        name=name,
+        phone_masked=_mask_phone(user.phone),
+        max_user_id=user.max_user_id,
+        consent_status=_format_consent_status(user),
+        subscribe_status=_format_subscribe_status(user),
+        blocked_line=blocked_line,
+        last_appeal=_format_last_appeal(last_appeal),
+        appeals_count=count,
+    )
+    await event.bot.send_message(
+        chat_id=cfg.admin_group_id,
+        text=text_out,
+    )
+
+
+def register(dp) -> None:
+    """Регистрация обработчика `/find_resident <query>`.
+
+    Команда работает только в админ-чате (`is_admin_chat` гард внутри
+    `run_find_resident`). Аргумент обязательный — без аргумента
+    показываем usage-подсказку.
+    """
+    from maxapi.types import Command, MessageCreated
+
+    @dp.message_created(Command("find_resident"))
+    async def _handler(event: MessageCreated) -> None:
+        # Достаём текст команды безопасно — `event.message.body` объявлен
+        # как `MessageBody | None` в maxapi-схеме (mypy strict).
+        body = getattr(event.message, "body", None)
+        text = (getattr(body, "text", None) or "") if body is not None else ""
+        # Удаляем команду из начала: «/find_resident +79991234567» → «+79991234567».
+        parts = text.split(maxsplit=1)
+        query = parts[1] if len(parts) > 1 else ""
+        await run_find_resident(event, query)
 ```
 
 ### `bot/aemr_bot/handlers/admin_settings.py`
@@ -31364,6 +31663,363 @@ class TestDoOpenTickets:
         event.bot.send_message.assert_called_once()
         text = event.bot.send_message.call_args.kwargs["text"]
         assert "🎉" in text
+```
+
+### `bot/tests/test_admin_resident_search.py`
+
+Size: `16082` bytes  
+SHA-256: `a3ee67e2f9a1b5f0d0fde39a0013b63d8d640f96ffdfd6a41615ce1faa12215f`
+
+```python
+"""Тесты `/find_resident` — Cluster G (Codex PR 9).
+
+Поиск жителя оператором по телефону или MAX user id. Покрываем
+все ветки `run_find_resident`:
+
+1. **`_detect_query_kind`** — pure классификатор: max_user_id (4-9 цифр),
+   phone (10+ цифр или с `+`), invalid.
+2. **`_mask_query_for_audit`** — маскировка PII для audit-log.
+3. **`_format_*` helpers** — рендер карточки результата.
+4. **`run_find_resident`** — non-admin chat / non-operator / empty query /
+   invalid query / max_user_id found / phone found / not found /
+   audit-log запись.
+
+Поведение `find_by_phone` при множественном совпадении — отдельный
+тест (возвращает None, оператор видит not-found с подсказкой о
+max_user_id).
+"""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+
+pytest.importorskip("maxapi", reason="нужен maxapi для admin_resident_search импортов")
+
+from tests._helpers import make_event
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Pure helpers — детектор и маскировка
+# ──────────────────────────────────────────────────────────────────────
+
+
+class TestDetectQueryKind:
+    """`_detect_query_kind(query)` — классификатор входа."""
+
+    @pytest.mark.parametrize(
+        "query,expected_kind",
+        [
+            ("123456789", "max_user_id"),  # 9 цифр — макс граница id
+            ("12345", "max_user_id"),  # короткий id 5 цифр
+            ("1234", "max_user_id"),  # граница 4 цифры
+            ("+79991234567", "phone"),  # явный phone
+            ("79991234567", "phone"),  # 11 цифр без `+` → phone
+            ("999123456789", "phone"),  # 12 цифр (международный)
+            ("", "invalid"),
+            ("   ", "invalid"),
+            ("abc", "invalid"),
+            ("12", "invalid"),  # < 4 цифр
+            ("123", "invalid"),
+            ("+abc", "phone"),  # `+` префикс → phone (let downstream validate)
+        ],
+    )
+    def test_classifies(self, query: str, expected_kind: str) -> None:
+        from aemr_bot.handlers.admin_resident_search import _detect_query_kind
+
+        kind, _ = _detect_query_kind(query)
+        assert kind == expected_kind
+
+    def test_phone_without_plus_gets_normalised(self) -> None:
+        from aemr_bot.handlers.admin_resident_search import _detect_query_kind
+
+        kind, value = _detect_query_kind("79991234567")
+        assert kind == "phone"
+        assert value.startswith("+")
+
+    def test_phone_with_plus_kept_as_is(self) -> None:
+        from aemr_bot.handlers.admin_resident_search import _detect_query_kind
+
+        kind, value = _detect_query_kind("+79991234567")
+        assert kind == "phone"
+        assert value == "+79991234567"
+
+
+class TestMaskQueryForAudit:
+    """`_mask_query_for_audit(kind, value)` — PII masking перед audit."""
+
+    def test_phone_masked(self) -> None:
+        from aemr_bot.handlers.admin_resident_search import _mask_query_for_audit
+
+        masked = _mask_query_for_audit("phone", "+79991234567")
+        # _mask_phone возвращает «+7***NNNN».
+        assert "***" in masked
+        assert "4567" in masked
+        assert "9991" not in masked  # средние цифры не должны утечь
+
+    def test_max_user_id_passthrough(self) -> None:
+        from aemr_bot.handlers.admin_resident_search import _mask_query_for_audit
+
+        # max_user_id — публичный идентификатор MAX, не PII.
+        assert _mask_query_for_audit("max_user_id", "123456") == "123456"
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Format helpers
+# ──────────────────────────────────────────────────────────────────────
+
+
+class TestFormatStatuses:
+    def test_consent_active(self) -> None:
+        from aemr_bot.handlers.admin_resident_search import _format_consent_status
+
+        user = SimpleNamespace(
+            consent_pdn_at=datetime.now(timezone.utc),
+            consent_revoked_at=None,
+        )
+        assert "активно" in _format_consent_status(user)
+
+    def test_consent_revoked(self) -> None:
+        from aemr_bot.handlers.admin_resident_search import _format_consent_status
+
+        user = SimpleNamespace(
+            consent_pdn_at=None,
+            consent_revoked_at=datetime.now(timezone.utc),
+        )
+        assert "отозвано" in _format_consent_status(user)
+
+    def test_consent_never(self) -> None:
+        from aemr_bot.handlers.admin_resident_search import _format_consent_status
+
+        user = SimpleNamespace(consent_pdn_at=None, consent_revoked_at=None)
+        assert "нет" in _format_consent_status(user)
+
+    def test_subscribe_active(self) -> None:
+        from aemr_bot.handlers.admin_resident_search import _format_subscribe_status
+
+        user = SimpleNamespace(subscribed_broadcast=True)
+        assert "активна" in _format_subscribe_status(user)
+
+    def test_subscribe_none(self) -> None:
+        from aemr_bot.handlers.admin_resident_search import _format_subscribe_status
+
+        user = SimpleNamespace(subscribed_broadcast=False)
+        assert "нет" in _format_subscribe_status(user)
+
+    def test_last_appeal_none(self) -> None:
+        from aemr_bot.handlers.admin_resident_search import _format_last_appeal
+
+        assert "нет" in _format_last_appeal(None)
+
+    def test_last_appeal_renders(self) -> None:
+        from aemr_bot.handlers.admin_resident_search import _format_last_appeal
+
+        appeal = SimpleNamespace(
+            id=42,
+            created_at=datetime(2026, 5, 28, 12, 30, tzinfo=timezone.utc),
+            topic="Уличное освещение",
+            status="new",
+        )
+        result = _format_last_appeal(appeal)
+        assert "#42" in result
+        assert "Уличное освещение" in result
+        assert "new" in result
+
+
+# ──────────────────────────────────────────────────────────────────────
+# run_find_resident — top-level handler
+# ──────────────────────────────────────────────────────────────────────
+
+
+class TestRunFindResident:
+    """Top-level handler — диспетчер по query + audit + render."""
+
+    @pytest.mark.asyncio
+    async def test_non_admin_chat_returns_silently(self) -> None:
+        from aemr_bot.handlers import admin_resident_search as mod
+
+        event = make_event(chat_id=42)  # не admin
+        with patch.object(mod, "is_admin_chat", return_value=False):
+            await mod.run_find_resident(event, "12345")
+        event.bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_non_operator_returns_silently(self) -> None:
+        from aemr_bot.handlers import admin_resident_search as mod
+
+        event = make_event()
+        with patch.object(mod, "is_admin_chat", return_value=True), \
+             patch.object(mod, "ensure_operator",
+                          AsyncMock(return_value=None)):
+            await mod.run_find_resident(event, "12345")
+        event.bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_empty_query_shows_usage(self) -> None:
+        from aemr_bot.handlers import admin_resident_search as mod
+
+        event = make_event()
+        operator = SimpleNamespace(max_user_id=999)
+        with patch.object(mod, "is_admin_chat", return_value=True), \
+             patch.object(mod, "ensure_operator",
+                          AsyncMock(return_value=operator)):
+            await mod.run_find_resident(event, "")
+        event.bot.send_message.assert_awaited_once()
+        kwargs = event.bot.send_message.await_args.kwargs
+        assert "Использование" in kwargs["text"]
+
+    @pytest.mark.asyncio
+    async def test_invalid_query_shows_usage(self) -> None:
+        from aemr_bot.handlers import admin_resident_search as mod
+
+        event = make_event()
+        operator = SimpleNamespace(max_user_id=999)
+        with patch.object(mod, "is_admin_chat", return_value=True), \
+             patch.object(mod, "ensure_operator",
+                          AsyncMock(return_value=operator)):
+            await mod.run_find_resident(event, "abc")
+        kwargs = event.bot.send_message.await_args.kwargs
+        assert "Использование" in kwargs["text"]
+
+    @pytest.mark.asyncio
+    async def test_max_user_id_found_renders_card(self) -> None:
+        from aemr_bot.handlers import admin_resident_search as mod
+
+        event = make_event()
+        operator = SimpleNamespace(max_user_id=999)
+        user = SimpleNamespace(
+            id=7,
+            max_user_id=123456,
+            first_name="Алексей",
+            phone="+79991234567",
+            consent_pdn_at=datetime.now(timezone.utc),
+            consent_revoked_at=None,
+            subscribed_broadcast=True,
+            is_blocked=False,
+        )
+        with patch.object(mod, "is_admin_chat", return_value=True), \
+             patch.object(mod, "ensure_operator",
+                          AsyncMock(return_value=operator)), \
+             patch.object(mod, "session_scope") as scope, \
+             patch.object(mod.users_service, "find_by_max_id",
+                          AsyncMock(return_value=user)), \
+             patch.object(mod.ops_svc, "write_audit",
+                          AsyncMock()) as audit, \
+             patch.object(mod.appeals_service, "list_for_user",
+                          AsyncMock(return_value=[])), \
+             patch.object(mod.appeals_service, "count_for_user",
+                          AsyncMock(return_value=0)):
+            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
+            scope.return_value.__aexit__ = AsyncMock(return_value=False)
+            await mod.run_find_resident(event, "123456")
+        # Audit: один resident_search_found.
+        audit.assert_awaited_once()
+        audit_kwargs = audit.await_args.kwargs
+        assert audit_kwargs["action"] == "resident_search_found"
+        assert audit_kwargs["operator_max_user_id"] == 999
+        # Карточка отправлена.
+        event.bot.send_message.assert_awaited_once()
+        text = event.bot.send_message.await_args.kwargs["text"]
+        assert "Алексей" in text
+        assert "123456" in text
+        # PII маскировка: полный телефон НЕ должен светиться.
+        assert "+79991234567" not in text
+        assert "***" in text
+
+    @pytest.mark.asyncio
+    async def test_phone_found_renders_card_with_masked_phone(self) -> None:
+        from aemr_bot.handlers import admin_resident_search as mod
+
+        event = make_event()
+        operator = SimpleNamespace(max_user_id=999)
+        user = SimpleNamespace(
+            id=7,
+            max_user_id=123456,
+            first_name="Мария",
+            phone="+79997654321",
+            consent_pdn_at=None,
+            consent_revoked_at=None,
+            subscribed_broadcast=False,
+            is_blocked=False,
+        )
+        with patch.object(mod, "is_admin_chat", return_value=True), \
+             patch.object(mod, "ensure_operator",
+                          AsyncMock(return_value=operator)), \
+             patch.object(mod, "session_scope") as scope, \
+             patch.object(mod.users_service, "find_by_phone",
+                          AsyncMock(return_value=user)), \
+             patch.object(mod.ops_svc, "write_audit", AsyncMock()), \
+             patch.object(mod.appeals_service, "list_for_user",
+                          AsyncMock(return_value=[])), \
+             patch.object(mod.appeals_service, "count_for_user",
+                          AsyncMock(return_value=3)):
+            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
+            scope.return_value.__aexit__ = AsyncMock(return_value=False)
+            await mod.run_find_resident(event, "+79997654321")
+        text = event.bot.send_message.await_args.kwargs["text"]
+        assert "Мария" in text
+        assert "+79997654321" not in text
+        assert "***" in text
+
+    @pytest.mark.asyncio
+    async def test_not_found_audit_and_message(self) -> None:
+        from aemr_bot.handlers import admin_resident_search as mod
+
+        event = make_event()
+        operator = SimpleNamespace(max_user_id=999)
+        with patch.object(mod, "is_admin_chat", return_value=True), \
+             patch.object(mod, "ensure_operator",
+                          AsyncMock(return_value=operator)), \
+             patch.object(mod, "session_scope") as scope, \
+             patch.object(mod.users_service, "find_by_max_id",
+                          AsyncMock(return_value=None)), \
+             patch.object(mod.ops_svc, "write_audit",
+                          AsyncMock()) as audit:
+            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
+            scope.return_value.__aexit__ = AsyncMock(return_value=False)
+            await mod.run_find_resident(event, "123456")
+        audit.assert_awaited_once()
+        audit_kwargs = audit.await_args.kwargs
+        assert audit_kwargs["action"] == "resident_search_not_found"
+        text = event.bot.send_message.await_args.kwargs["text"]
+        assert "не найдено" in text.lower() or "ничего не найдено" in text
+
+    @pytest.mark.asyncio
+    async def test_blocked_user_shows_blocked_line(self) -> None:
+        from aemr_bot.handlers import admin_resident_search as mod
+
+        event = make_event()
+        operator = SimpleNamespace(max_user_id=999)
+        user = SimpleNamespace(
+            id=7,
+            max_user_id=42,
+            first_name="X",
+            phone="+79991234567",
+            consent_pdn_at=None,
+            consent_revoked_at=None,
+            subscribed_broadcast=False,
+            is_blocked=True,
+        )
+        with patch.object(mod, "is_admin_chat", return_value=True), \
+             patch.object(mod, "ensure_operator",
+                          AsyncMock(return_value=operator)), \
+             patch.object(mod, "session_scope") as scope, \
+             patch.object(mod.users_service, "find_by_max_id",
+                          AsyncMock(return_value=user)), \
+             patch.object(mod.ops_svc, "write_audit", AsyncMock()), \
+             patch.object(mod.appeals_service, "list_for_user",
+                          AsyncMock(return_value=[])), \
+             patch.object(mod.appeals_service, "count_for_user",
+                          AsyncMock(return_value=0)):
+            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
+            scope.return_value.__aexit__ = AsyncMock(return_value=False)
+            # 5-значный max_user_id (≥ 4 цифр для классификатора).
+            await mod.run_find_resident(event, "12345")
+        text = event.bot.send_message.await_args.kwargs["text"]
+        assert "Заблокирован" in text
 ```
 
 ### `bot/tests/test_admin_settings_audit.py`
