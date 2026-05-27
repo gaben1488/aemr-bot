@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-27 02:16:09 UTC`
+Generated at: `2026-05-27 02:35:44 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `239`
 Max file size: `300 KB`
@@ -61,7 +61,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/operator_reply.py` (41155 bytes)
 - `bot/aemr_bot/handlers/start.py` (21062 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
-- `bot/aemr_bot/keyboards.py` (69635 bytes)
+- `bot/aemr_bot/keyboards.py` (69661 bytes)
 - `bot/aemr_bot/main.py` (21047 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_bus.py` (13836 bytes)
@@ -14454,8 +14454,8 @@ async def heartbeat_pulse(interval: float | None = None):
 
 ### `bot/aemr_bot/keyboards.py`
 
-Size: `69635` bytes  
-SHA-256: `d2de9629e037052b5605d4ebfa4fafcfa106b1148dd11a09ce9a8ecca4d448b2`
+Size: `69661` bytes  
+SHA-256: `cd1010d503d55cdd5c2b87768ebaf517ffe957ad3f120b2c328fb3b158460964`
 
 ```python
 from maxapi.types import (
@@ -14949,7 +14949,7 @@ def broadcast_stop_keyboard(broadcast_id: int):
             payload=f"broadcast:stop:{broadcast_id}",
         )
     )
-    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -14967,7 +14967,7 @@ def broadcast_cooldown_keyboard(broadcast_id: int):
             payload=f"broadcast:cancel-cooldown:{broadcast_id}",
         )
     )
-    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -15004,7 +15004,7 @@ def op_help_security_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(
         CallbackButton(
-            text="📋 Назад к памятке",
+            text="↩️ Назад к памятке",
             payload="op:help_full",
         )
     )
@@ -15043,7 +15043,7 @@ def open_tickets_listing_keyboard(items):
                 payload=f"op:open_card:{appeal_id}",
             )
         )
-    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -15105,7 +15105,7 @@ def broadcast_failed_list_keyboard(broadcast_id: int):
             payload=f"op:bc:open:{broadcast_id}",
         )
     )
-    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -15277,21 +15277,21 @@ def broadcast_template_step2_keyboard():
 def op_back_to_operators_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="↩️ К операторам", payload="op:operators"))
-    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
 def op_back_to_settings_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="↩️ К настройкам", payload="op:settings"))
-    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
 def op_back_to_audience_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
-    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -15380,7 +15380,7 @@ def op_operator_card_keyboard(
             )
         )
     kb.row(CallbackButton(text="↩️ К списку", payload="op:opadd:list"))
-    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -15483,7 +15483,7 @@ def op_add_done_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="➕ Добавить ещё", payload="op:operators"))
     kb.row(CallbackButton(text="📋 К списку операторов", payload="op:opadd:list"))
-    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -15624,7 +15624,7 @@ def op_settings_pr_done_keyboard(pr_url: str | None):
     if pr_url:
         kb.row(LinkButton(text="🔗 Открыть PR в браузере", url=pr_url))
     kb.row(CallbackButton(text="📋 К настройкам", payload="op:settings"))
-    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -15679,7 +15679,7 @@ def op_audience_user_actions(max_user_id: int, *, blocked: bool):
         ),
     )
     kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
-    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
@@ -15763,7 +15763,7 @@ def appeal_admin_actions(
             CallbackButton(text=block_label, payload=block_payload),
             CallbackButton(text="🗑 Удалить ПДн", payload=f"op:erase:{appeal_id}"),
         )
-    kb.row(CallbackButton(text="🏠 В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
     return kb.as_markup()
 
 
