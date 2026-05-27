@@ -148,11 +148,11 @@ async def _send_admin_text_with_retry(
 
 
 # ============================================================================
-# Module-level cron jobs
+# Cron-задачи модульного уровня
 # ============================================================================
-# Все jobs принимают зависимости явными параметрами (раньше были
-# captured через замыкание в build_scheduler). build_scheduler
-# регистрирует их через functools.partial.
+# Все задачи принимают зависимости явными параметрами (раньше брали
+# через замыкание в build_scheduler). build_scheduler регистрирует
+# их через functools.partial.
 #
 # Преимущества:
 # - Тестируемость: можно мокать send_admin_text через AsyncMock.
@@ -850,7 +850,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             CronTrigger(minute=17, timezone=TZ),
             "threat-intel-refresh",
         ),
-        # Auto-deactivate stale operators (CVE-9 from SECURITY_REVIEW_2026-05-26).
+        # Авто-деактивация stale операторов (CVE-9 из SECURITY_REVIEW_2026-05-26).
         # Сверяет активных операторов с реальными членами админ-группы MAX
         # и мягко деактивирует тех, кого больше нет. IT-операторы не
         # трогаются (защита от self-lock-out). 04:20 — между audit-log
@@ -860,7 +860,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             CronTrigger(hour=4, minute=20, timezone=TZ),
             "stale-operators-cleanup",
         ),
-        # Selfcheck heartbeat
+        # Self-check heartbeat: следит за зависанием главного цикла бота
         (
             functools.partial(_job_selfcheck, send_admin_text),
             CronTrigger(
