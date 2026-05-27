@@ -28,21 +28,47 @@ async def send(
     text: str,
     attachments: list | None = None,
     link=None,
+    critical: bool = False,
 ) -> str | None:
     """Отправить сообщение в admin chat + сдвинуть tracker.
 
     Возвращает mid отправленного сообщения, либо None если ADMIN_GROUP_ID
-    не настроен / send упал.
+    не настроен / send упал / тихий режим подавил отправку.
 
     Args:
         bot: maxapi Bot.
         text: текст сообщения.
         attachments: опциональный список вложений (клавиатуры, image, etc).
         link: опциональный NewMessageLink (для reply-цитирования).
+        critical: если True — игнорировать quiet hours и отправлять всегда.
+            Используется для алёртов о реальных инцидентах: фейл бэкапа,
+            сбой ретеншена, ответы оператору в реальном времени. Default
+            False — рутинные уведомления подавляются ночью если включён
+            тихий режим (см. `services/quiet_hours.py`).
     """
     if not cfg.admin_group_id:
         log.warning("admin_bus.send: ADMIN_GROUP_ID не задан, пропускаем")
         return None
+    if not critical:
+        # quiet hours: проверяем в БД, подавляем рутинные уведомления
+        # ночью. Best-effort: если БД недоступна — не подавляем.
+        try:
+            from aemr_bot.db.session import session_scope
+            from aemr_bot.services.quiet_hours import is_quiet_hours_now
+
+            async with session_scope() as session:
+                if await is_quiet_hours_now(session):
+                    log.info(
+                        "admin_bus.send: quiet hours active, suppressed "
+                        "(text prefix=%r)",
+                        text[:40],
+                    )
+                    return None
+        except Exception:
+            log.debug(
+                "admin_bus.send: quiet_hours check failed, отправляем",
+                exc_info=False,
+            )
     kwargs: dict = {"chat_id": cfg.admin_group_id, "text": text}
     if attachments is not None:
         kwargs["attachments"] = attachments
