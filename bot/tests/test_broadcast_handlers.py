@@ -105,7 +105,7 @@ class TestStartWizard:
         from aemr_bot.handlers import broadcast
 
         event = _make_event()
-        with patch("aemr_bot.handlers.broadcast._ensure_role",
+        with patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
                    AsyncMock(return_value=False)):
             await broadcast._start_wizard(event)
         # wizard не создан
@@ -119,7 +119,7 @@ class TestStartWizard:
             bot=MagicMock(),
             message=SimpleNamespace(sender=None, answer=AsyncMock()),
         )
-        with patch("aemr_bot.handlers.broadcast._ensure_role",
+        with patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
                    AsyncMock(return_value=True)):
             await broadcast._start_wizard(event)
 
@@ -134,7 +134,7 @@ class TestStartWizard:
         from aemr_bot.handlers import admin_commands as admin_cmd_module
         admin_cmd_module._op_wizards[7] = {"step": "awaiting_id"}
         drop_intent = MagicMock()
-        with patch("aemr_bot.handlers.broadcast._ensure_role",
+        with patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.operator_reply.drop_reply_intent",
                    drop_intent):
@@ -232,9 +232,9 @@ class TestHandleWizardText:
 
         event = _make_event(user_id=7)
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=0)):
             result = await broadcast._handle_wizard_text(event, "сообщение")
         assert result is True
@@ -246,9 +246,9 @@ class TestHandleWizardText:
 
         event = _make_event(user_id=7)
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
-        with patch("aemr_bot.handlers.broadcast.session_scope",
+        with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=42)):
             result = await broadcast._handle_wizard_text(event, "сообщение")
         assert result is True
@@ -277,7 +277,7 @@ class TestHandleConfirm:
         event = _make_event(user_id=7)
         # awaiting_text вместо awaiting_confirm
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
-        with patch("aemr_bot.handlers.broadcast.ack_callback",
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback",
                    AsyncMock()) as ack:
             await broadcast._handle_confirm(event)
         ack.assert_called_once()
@@ -290,8 +290,8 @@ class TestHandleConfirm:
         event = _make_event(user_id=7)
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
         broadcast._wizards[7].text = "hi"
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast._get_operator",
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=None)):
             await broadcast._handle_confirm(event)
         # broadcast service не вызван
@@ -306,14 +306,14 @@ class TestHandleConfirm:
         broadcast._wizards[7].text = "hi"
         op = SimpleNamespace(id=10)
         create_broadcast = AsyncMock()
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast._get_operator",
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=op)), \
-             patch("aemr_bot.handlers.broadcast.session_scope",
+             patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=0)), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.create_broadcast",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.create_broadcast",
                    create_broadcast):
             await broadcast._handle_confirm(event)
         create_broadcast.assert_not_called()
@@ -335,18 +335,18 @@ class TestHandleConfirm:
             coro.close()
 
         spawn = MagicMock(side_effect=_consume)
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast._get_operator",
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=op)), \
-             patch("aemr_bot.handlers.broadcast.session_scope",
+             patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.count_subscribers",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
                    AsyncMock(return_value=15)), \
-             patch("aemr_bot.handlers.broadcast.broadcasts_service.create_broadcast",
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.create_broadcast",
                    AsyncMock(return_value=broadcast_obj)), \
-             patch("aemr_bot.handlers.broadcast.operators_service.write_audit",
+             patch("aemr_bot.handlers.broadcast_wizard.operators_service.write_audit",
                    AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast.spawn_background_task", spawn):
+             patch("aemr_bot.handlers.broadcast_wizard.spawn_background_task", spawn):
             await broadcast._handle_confirm(event)
         spawn.assert_called_once()
         # C2: имя task теперь «broadcast_cooldown_<id>» — рассылка идёт
@@ -364,7 +364,7 @@ class TestHandleAbort:
 
         event = _make_event(user_id=7)
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()):
             await broadcast._handle_abort(event)
         assert 7 not in broadcast._wizards
         event.bot.send_message.assert_called_once()
@@ -382,7 +382,7 @@ class TestHandleAbort:
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
         # «m-1» — текущая preview-карточка в админ-чате (ADMIN_GROUP_ID=123 из conftest)
         menu_tracker.set_last_menu_mid(123, "m-1")
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()):
             await broadcast._handle_abort(event)
 
         assert 7 not in broadcast._wizards
@@ -400,7 +400,7 @@ class TestHandleEdit:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        with patch("aemr_bot.handlers.broadcast.ack_callback",
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback",
                    AsyncMock()) as ack:
             await broadcast._handle_edit(event)
         ack.assert_called_once()
@@ -414,7 +414,7 @@ class TestHandleEdit:
         state = broadcast._WizardState(step="awaiting_confirm")
         state.text = "уже введённый текст"
         broadcast._wizards[7] = state
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()):
             await broadcast._handle_edit(event)
         # text сброшен, шаг = awaiting_text
         assert broadcast._wizards[7].step == "awaiting_text"
@@ -433,7 +433,7 @@ class TestHandleEdit:
         state.text = "старый текст"
         broadcast._wizards[7] = state
         menu_tracker.set_last_menu_mid(123, "m-1")
-        with patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()):
             await broadcast._handle_edit(event)
 
         assert broadcast._wizards[7].step == "awaiting_text"
