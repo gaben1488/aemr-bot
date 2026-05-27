@@ -11,10 +11,31 @@ import asyncio
 import logging
 
 from aemr_bot import keyboards as kbds
+from aemr_bot import texts
 from aemr_bot.config import settings as cfg
+from aemr_bot.db.models import (
+    Appeal,
+    AppealStatus,
+    Broadcast,
+    BroadcastDelivery,
+    BroadcastStatus,
+    Event,
+    Message,
+    MessageDirection,
+    OperatorRole,
+    User,
+)
 from aemr_bot.db.session import session_scope
-from aemr_bot.handlers._auth import ensure_operator, get_operator
-from aemr_bot.utils.event import get_message_text, send_or_edit_screen
+from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
+from aemr_bot.services import appeals as appeals_service
+from aemr_bot.services import broadcasts as broadcasts_service
+from aemr_bot.services import db_backup
+from aemr_bot.utils.event import (
+    extract_message_id,
+    get_message_text,
+    send_or_edit_screen,
+)
+from aemr_bot.utils.typing_indicator import mark_typing
 
 log = logging.getLogger(__name__)
 
@@ -40,10 +61,6 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
     роль у автора события: счётчик и админ-ряд кнопок собираются по
     этим данным.
     """
-    from aemr_bot import keyboards as kbds, texts
-    from aemr_bot.db.models import OperatorRole
-    from aemr_bot.services import appeals as appeals_service
-    from aemr_bot.utils.event import extract_message_id
 
     is_it = False
     can_broadcast = False
@@ -110,8 +127,6 @@ async def run_diag(event) -> None:
 
 async def run_backup(event) -> None:
     """Кнопочный аналог /backup. Только IT."""
-    from aemr_bot.db.models import OperatorRole
-    from aemr_bot.handlers._auth import ensure_role
 
     if not await ensure_role(event, OperatorRole.IT):
         return
@@ -133,8 +148,6 @@ async def _do_open_tickets(event) -> None:
     """
     from sqlalchemy import select
 
-    from aemr_bot.db.models import Appeal, AppealStatus
-    from aemr_bot.utils.typing_indicator import mark_typing
 
     # Typing-indicator: query+transform могут занять 1-2 сек на загруженной
     # базе. Без него оператор видит «зависание» после тапа кнопки.
@@ -204,18 +217,6 @@ async def _do_diag(event) -> None:
 
     from sqlalchemy import func, select
 
-    from aemr_bot.db.models import (
-        Appeal,
-        AppealStatus,
-        Broadcast,
-        BroadcastDelivery,
-        BroadcastStatus,
-        Event,
-        Message,
-        MessageDirection,
-        User,
-    )
-
     now = datetime.now(timezone.utc)
     since_24h = now - timedelta(hours=24)
     stuck_threshold = now - timedelta(minutes=10)
@@ -225,7 +226,6 @@ async def _do_diag(event) -> None:
     # реально уйдёт следующий broadcast (а не просто
     # subscribed_broadcast=True). Раньше /diag показывал больше, чем
     # рассылка доставляла — оператор удивлялся «подписан 100, ушло 80».
-    from aemr_bot.services import broadcasts as broadcasts_service
 
     # Reliability-pass: было 13 отдельных `await session.scalar(...)` —
     # последовательные round-trip'ы к Postgres (~13 × RTT в худшем
@@ -434,7 +434,6 @@ async def _do_diag(event) -> None:
 
 async def _do_backup(event) -> None:
     """Снять pg_dump прямо сейчас. Общая реализация для /backup и кнопки."""
-    from aemr_bot.services import db_backup
 
     await send_or_edit_screen(
         event,
