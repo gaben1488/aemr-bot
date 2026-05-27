@@ -19,8 +19,18 @@ default 18:00–09:00 включает всю ночь.
 - Прямые ответы оператора жителю и обратно (это не cron, это оператор
   работает прямо сейчас и ждёт реакции бота).
 
-Реализация — best-effort: при любой ошибке чтения settings возвращаем
-False (не подавляем), чтобы не молча резать всё подряд при сбое БД.
+**Архитектура caching (2026-05-27):**
+Чтобы `admin_bus.send` не открывал новую DB-сессию при каждом
+сообщении (это создавало pool-contention в pytest и общий
+перерасход коннектов в проде), флаг и часы кэшируются в-памяти.
+`refresh_cache_from_db(session)` обновляет кэш — вызывается из
+- старта бота (один раз при boot);
+- pulse-cron'а каждый час;
+- `settings_store.set_value` при правке `admin_quiet_hours_*`.
+
+`is_quiet_hours_now()` — sync, читает только cached values. По
+умолчанию False (cache не initialized → не подавляем, лучше шум,
+чем потеря критичного уведомления).
 
 См. `services/admin_bus.send(critical=...)` и `services/cron.py`
 pulse-job'ы.
@@ -36,6 +46,16 @@ from aemr_bot.services import settings_store
 
 log = logging.getLogger(__name__)
 _TZ = ZoneInfo(cfg.timezone)
+
+
+# In-memory cache. Sync read через `is_quiet_hours_now()`. Async
+# refresh через `refresh_cache_from_db(session)` — вызывается из мест,
+# где session уже открыта (cron, set_value).
+_cache: dict = {
+    "enabled": False,  # default: не подавляем пока БД не прочитана
+    "start": 18,
+    "end": 9,
+}
 
 
 def _is_in_window(now_hour: int, start: int, end: int) -> bool:
@@ -62,28 +82,65 @@ def _is_in_window(now_hour: int, start: int, end: int) -> bool:
     return now_hour >= start or now_hour < end
 
 
-async def is_quiet_hours_now(session) -> bool:
-    """True если сейчас тихий режим И он включён в настройках.
+def is_quiet_hours_now() -> bool:
+    """True если сейчас тихий режим И он включён в кэше.
 
-    Best-effort: при ошибке БД / отсутствующих ключах возвращает False
-    (не подавляем — пусть лучше уведомление пройдёт, чем потеряется).
+    Sync, без DB-доступа. Читает только cached values, обновляемые
+    через `refresh_cache_from_db`. До первого refresh возвращает
+    False (cache initialised as disabled). Это **намеренный** default —
+    лучше пропустить настройку чем тихо проглотить алёрты.
+    """
+    if not _cache.get("enabled"):
+        return False
+    start = _cache.get("start")
+    end = _cache.get("end")
+    if not isinstance(start, int) or not isinstance(end, int):
+        return False
+    now_hour = datetime.now(_TZ).hour
+    return _is_in_window(now_hour, start, end)
+
+
+async def refresh_cache_from_db(session) -> None:
+    """Обновить cache из settings_store. Best-effort: при любой ошибке
+    БД оставляем cache в текущем состоянии (предыдущие values, либо
+    initial defaults).
+
+    Вызывается из:
+    - старта бота (main.py после seed);
+    - pulse-cron'а (каждый час обновляет cache);
+    - `settings_store.set_value('admin_quiet_hours_*', ...)` — чтобы
+      тогда же отразить смену UI'ем.
     """
     try:
         enabled = await settings_store.get(session, "admin_quiet_hours_enabled")
-        if not enabled:
-            return False
         start = await settings_store.get(session, "admin_quiet_hours_start")
         end = await settings_store.get(session, "admin_quiet_hours_end")
-        if not isinstance(start, int) or not isinstance(end, int):
-            return False
     except Exception:
-        log.debug("quiet_hours: settings read failed, treating as off", exc_info=False)
-        return False
-    now_hour = datetime.now(_TZ).hour
-    in_window = _is_in_window(now_hour, start, end)
-    if in_window:
         log.debug(
-            "quiet_hours: active now (hour=%d, window=[%d, %d))",
-            now_hour, start, end,
+            "quiet_hours.refresh_cache_from_db: settings read failed; "
+            "оставляем cache в текущем состоянии",
+            exc_info=False,
         )
-    return in_window
+        return
+
+    if enabled is None:
+        enabled = False
+    if not isinstance(start, int):
+        start = 18
+    if not isinstance(end, int):
+        end = 9
+
+    _cache["enabled"] = bool(enabled)
+    _cache["start"] = start
+    _cache["end"] = end
+    log.debug(
+        "quiet_hours.refresh_cache_from_db: enabled=%s window=[%d, %d)",
+        _cache["enabled"], _cache["start"], _cache["end"],
+    )
+
+
+def reset_cache_for_tests() -> None:
+    """Сбросить cache в initial state — для изоляции test'ов."""
+    _cache["enabled"] = False
+    _cache["start"] = 18
+    _cache["end"] = 9

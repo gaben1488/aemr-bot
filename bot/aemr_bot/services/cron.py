@@ -450,14 +450,21 @@ async def _job_pulse(send_admin_text) -> None:
     `health-selfcheck` и `healthcheck-ping` продолжают работать как
     fallback, оператор всё равно узнает о реальном сбое.
     """
+    # quiet_hours: refresh cache из БД (этот cron — основное место
+    # регулярного обновления, кроме старта бота и `set_value`-hook'а),
+    # затем sync-check.
     try:
         from aemr_bot.db.session import session_scope
-        from aemr_bot.services.quiet_hours import is_quiet_hours_now
+        from aemr_bot.services.quiet_hours import (
+            is_quiet_hours_now,
+            refresh_cache_from_db,
+        )
 
         async with session_scope() as session:
-            if await is_quiet_hours_now(session):
-                log.info("pulse: quiet hours active, suppressed")
-                return
+            await refresh_cache_from_db(session)
+        if is_quiet_hours_now():
+            log.info("pulse: quiet hours active, suppressed")
+            return
     except Exception:
         log.debug("pulse: quiet_hours check failed, отправляем", exc_info=False)
     now = datetime.now(TZ).strftime("%H:%M")

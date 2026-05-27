@@ -50,25 +50,18 @@ async def send(
         log.warning("admin_bus.send: ADMIN_GROUP_ID не задан, пропускаем")
         return None
     if not critical:
-        # quiet hours: проверяем в БД, подавляем рутинные уведомления
-        # ночью. Best-effort: если БД недоступна — не подавляем.
-        try:
-            from aemr_bot.db.session import session_scope
-            from aemr_bot.services.quiet_hours import is_quiet_hours_now
+        # quiet hours: sync-проверка in-memory cache, без открытия
+        # новой DB-сессии (cache обновляется cron'ом и при set_value
+        # в settings_store, см. `services/quiet_hours`).
+        from aemr_bot.services.quiet_hours import is_quiet_hours_now
 
-            async with session_scope() as session:
-                if await is_quiet_hours_now(session):
-                    log.info(
-                        "admin_bus.send: quiet hours active, suppressed "
-                        "(text prefix=%r)",
-                        text[:40],
-                    )
-                    return None
-        except Exception:
-            log.debug(
-                "admin_bus.send: quiet_hours check failed, отправляем",
-                exc_info=False,
+        if is_quiet_hours_now():
+            log.info(
+                "admin_bus.send: quiet hours active, suppressed "
+                "(text prefix=%r)",
+                text[:40],
             )
+            return None
     kwargs: dict = {"chat_id": cfg.admin_group_id, "text": text}
     if attachments is not None:
         kwargs["attachments"] = attachments
