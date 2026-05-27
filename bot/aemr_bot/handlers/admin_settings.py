@@ -284,6 +284,12 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
     if rest == "quiet:toggle":
         await _toggle_quiet(event)
         return
+    if rest == "quiet:edit:start":
+        await _start_quiet_hour_intent(event, operator_id, which="start")
+        return
+    if rest == "quiet:edit:end":
+        await _start_quiet_hour_intent(event, operator_id, which="end")
+        return
 
     if rest == "pr:start":
         await _show_pr_confirm(event)
@@ -620,10 +626,7 @@ async def _show_quiet_card(event) -> None:
             "Критичные алёрты (фейл бэкапа, ответы операторам,\n"
             "сбои retention) идут всегда, тихий режим их\n"
             "не затрагивает.\n\n"
-            "Чтобы изменить часы окна:\n"
-            "  `/setting admin_quiet_hours_start 18`\n"
-            "  `/setting admin_quiet_hours_end 9`\n"
-            "Значения 0–23 (целое число)."
+            "Чтобы изменить часы — кнопки ниже."
         ),
         attachments=[kbds.op_settings_quiet_keyboard(enabled=enabled)],
     )
@@ -638,6 +641,76 @@ async def _toggle_quiet(event) -> None:
         new_value = not bool(current)
         await settings_store.set_value(
             session, "admin_quiet_hours_enabled", new_value,
+        )
+        await session.commit()
+        await quiet_hours.refresh_cache_from_db(session)
+    await _show_quiet_card(event)
+
+
+async def _start_quiet_hour_intent(
+    event, operator_id: int, *, which: str,
+) -> None:
+    """Запросить у IT-оператора новое значение часа start/end через
+    intent flow (как для текстовых ключей).
+
+    `which` = 'start' или 'end'. Сохраняет intent с
+    kind='quiet_hour' и payload-полем для `handle_settings_edit_text`.
+    """
+    assert which in {"start", "end"}, f"unknown which={which!r}"
+    label = "начала" if which == "start" else "конца"
+    _intent_set(
+        operator_id,
+        key=f"admin_quiet_hours_{which}",
+        kind="quiet_hour",
+        which=which,
+    )
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=(
+            f"🌙 Час {label} тихого режима\n"
+            "──────────\n"
+            "Пришлите одним сообщением число от 0 до 23.\n"
+            "Например: 18 — для начала в 18:00; 9 — для конца в 09:00.\n\n"
+            "Окно может пересекать полночь: start=18, end=9\n"
+            "значит «с 18:00 до 09:00, включая всю ночь»."
+        ),
+        attachments=[kbds.op_settings_quiet_input_cancel_keyboard()],
+    )
+
+
+async def _apply_quiet_hour_edit(
+    event, operator_id: int, which: str, new_text: str,
+) -> None:
+    """Применить введённое значение часа: parse → validate 0–23 →
+    set_value → refresh cache → перерисовка карточки."""
+    from aemr_bot.services import quiet_hours
+
+    raw = new_text.strip()
+    try:
+        new_value = int(raw)
+    except ValueError:
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=f"❌ «{raw[:40]}» — не число. Пришлите целое 0–23.",
+            attachments=[kbds.op_settings_quiet_input_cancel_keyboard()],
+        )
+        return
+    if not (0 <= new_value <= 23):
+        await event.bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=f"❌ {new_value} вне диапазона. Допустимо 0–23.",
+            attachments=[kbds.op_settings_quiet_input_cancel_keyboard()],
+        )
+        return
+    key = f"admin_quiet_hours_{which}"
+    async with session_scope() as session:
+        await settings_store.set_value(session, key, new_value)
+        await ops_svc.write_audit(
+            session,
+            operator_max_user_id=operator_id,
+            action="setting_update",
+            target=key,
+            details={"value": new_value},
         )
         await session.commit()
         await quiet_hours.refresh_cache_from_db(session)
@@ -968,6 +1041,11 @@ async def handle_settings_edit_text(event, text: str) -> bool:
         return True
     if kind == "obj_add":
         await _apply_obj_add(event, operator_id, key, new_text)
+        _intent_drop(operator_id)
+        return True
+    if kind == "quiet_hour":
+        which = intent.get("which", "start")
+        await _apply_quiet_hour_edit(event, operator_id, which, new_text)
         _intent_drop(operator_id)
         return True
     return False
