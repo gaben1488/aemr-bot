@@ -695,6 +695,40 @@ docker compose exec bot python -m aemr_bot.services.db_backup
 
 Описано в `BACKUP_RESTORE_TEST.md`.
 
+## Календарь ротации секретов
+
+Чтобы скомпрометированный токен не жил годами, держим плановую ротацию. Записываем в календарь и проходимся раз в полугодие.
+
+| Когда | Что ротировать | Как |
+|---|---|---|
+| **Январь** ежегодно | `BOT_TOKEN` (платформа MAX) | Выпустить новый токен в `business.max.ru`, заменить в `infra/.env` на VPS, `docker compose restart bot`. Старый — отозвать. |
+| **Январь + июль** ежегодно | `DATABASE_URL` (пароль `pg`) | `ALTER ROLE aemr_bot PASSWORD '...'` в Postgres, обновить `DATABASE_URL` в `.env`, рестарт бота. |
+| **При компрометации** | `BACKUP_GPG_PASSPHRASE` | Новый passphrase, обязательно перешифровать существующие бэкапы (`gpg --decrypt → --encrypt`) или утилизировать старые. Старая passphrase утрачивает доступ к зашифрованным дампам. |
+| **При увольнении оператора с ролью `it`** | `BOT_TOKEN` + `BACKUP_GPG_PASSPHRASE` | Если у уходящего был доступ к `infra/.env` — все секреты считаем потенциально скомпрометированными. |
+| **При утечке `audit_log`** | `BACKUP_GPG_PASSPHRASE` | В аудит-логе хранятся фрагменты переписки. Если утечка возможна — ротируем passphrase, ограничиваем доступ к каталогу. |
+
+Опциональные секреты:
+
+- `HEALTHCHECK_URL` (внешний пинг, например healthchecks.io) — ротировать раз в год или при компрометации.
+- `PHISHTANK_APP_KEY` (если активирован) — ротировать по требованию provider'а.
+- `BACKUP_S3_SECRET_KEY` (если включена S3-копия) — раз в полугодие или при компрометации.
+
+После ротации:
+
+1. Проверить, что бот стартовал: `docker logs aemr-bot-bot-1 --tail 50` показывает `Loaded settings_store entries`.
+2. `/livez` и `/readyz` отвечают 200 (`curl http://127.0.0.1:8000/livez`).
+3. Pulse в админ-группе пришёл по расписанию (или вручную дёрнуть `/diag`).
+
+## SBOM (опционально)
+
+Если требуется отчёт о компонентах (Software Bill of Materials):
+
+```bash
+docker compose exec bot pip-audit --format=cyclonedx-json > sbom-$(date +%Y%m%d).json
+```
+
+`pip-audit` уже в dev-deps. SBOM публиковать в SECURITY-зону репозитория (не в публичный README).
+
 ---
 
 # Часть V — pre-launch чек-лист
