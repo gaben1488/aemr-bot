@@ -1,3 +1,13 @@
+---
+status: applied
+applied_in_pr: 89
+applied_at: 2026-05-26
+superseded_by: bot/aemr_bot/services/threat_intel.py (abuse.ch URLhaus + ThreatFox
+  + Kaspersky OpenTIP реализация); cron `threat-intel-refresh` ежечасно :17.
+note: Research выбрал abuse.ch как primary + Kaspersky OpenTIP как secondary.
+  Реализация в PR #89, далее F11-fix через ChatMembersManager (PR #90).
+---
+
 # URL threat-intelligence для aemr-bot: research + рекомендация
 
 Дата: 2026-05-26. Цель — выбрать источник IOC-списков (Indicators of

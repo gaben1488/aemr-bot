@@ -1,3 +1,12 @@
+---
+status: applied
+applied_in_pr: 127, 134
+applied_at: 2026-05-28
+note: A1+A2 (cron quiet bypass) closed PR #127; A3+A4+A7 (URL defang IDN
+  расширение + whitelist mixed-case reject + mask phone digits<4 → «—»)
+  closed PR #134. Low/medium findings A5–A8 + MX-4 + SC-4/5/7/8 — backlog.
+---
+
 # Security Review Delta 2026-05-28
 
 > Дельта-аудит после PR #102–#126 поверх baseline `SECURITY_REVIEW_2026-05-27.md`.
