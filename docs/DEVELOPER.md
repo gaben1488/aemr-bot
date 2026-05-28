@@ -1138,25 +1138,25 @@ uv run pytest tests/ -v
 
 #### Локально vs CI — две разные конфигурации
 
-Тестовая база `bot/tests/` рассчитана на два режима: лёгкий локальный (без Postgres, проверка чистой логики) и полный CI (с реальной БД, миграциями, coverage gate). Не пытайтесь запустить «CI-режим» локально без Postgres — упрётесь в `RuntimeError: Event loop is closed` или `pytest --cov-fail-under=66` ниже порога.
+Тестовая база `bot/tests/` рассчитана на два режима: лёгкий локальный (без Postgres, проверка чистой логики) и полный CI (с реальной БД, миграциями, coverage gate). Не пытайтесь запустить «CI-режим» локально без Postgres — упрётесь в `RuntimeError: Event loop is closed` или `pytest --cov-fail-under=67` ниже порога.
 
 | Сценарий | Команда | Что покрывается | Что не покрывается |
 |---|---|---|---|
-| **Локально, быстро** (pure-юниты) | `uv run pytest tests/ -q` | ≈1127 passed, ≈106 skipped: маркер `@pytest.fixture(session)` для тестов с реальной БД даёт skip; остальное прогоняется на mock'ах. | Coverage по веткам, integration-тесты на Postgres-specific (JSONB upserts, `pg_advisory_xact_lock`, миграции). Coverage по умолчанию ≈ **61.3%** — ниже CI-gate **66**, потому что не работают тесты на сервисном слое БД. |
+| **Локально, быстро** (pure-юниты) | `uv run pytest tests/ -q` | ≈1127 passed, ≈106 skipped: маркер `@pytest.fixture(session)` для тестов с реальной БД даёт skip; остальное прогоняется на mock'ах. | Coverage по веткам, integration-тесты на Postgres-specific (JSONB upserts, `pg_advisory_xact_lock`, миграции). Coverage по умолчанию ≈ **61.3%** — ниже CI-gate **67**, потому что не работают тесты на сервисном слое БД. |
 | **Локально, как CI** (нужен Postgres) | `docker compose up -d db` + `DATABASE_URL=postgresql+asyncpg://aemr:abrakadabra@localhost:5432/aemr uv run pytest tests/ -q` | Полный набор тестов, включая БД-фикстуру `session` (см. `tests/conftest.py`). Должно быть ≈1127 passed, ≈30–50 skipped (только тесты с `pytest.importorskip("maxapi")` если локально нет maxapi). | — |
-| **CI (`Pytest with Postgres 16`)** | `uv run pytest tests/ -q --cov=aemr_bot --cov-branch --cov-fail-under=66 --cov-report=xml:coverage.xml` | Тот же набор + coverage gate 66% (актуально в `.github/workflows/ci.yml:139`). + `alembic upgrade head && alembic check` отдельным шагом. | Smoke на VPS (docker build → run → /livez ping) — отдельный CI job `Docker build smoke test`. |
+| **CI (`Pytest with Postgres 16`)** | `uv run pytest tests/ -q --cov=aemr_bot --cov-branch --cov-fail-under=67 --cov-report=xml:coverage.xml` | Тот же набор + coverage gate 67% (актуально в `.github/workflows/ci.yml:139`). + `alembic upgrade head && alembic check` отдельным шагом. | Smoke на VPS (docker build → run → /livez ping) — отдельный CI job `Docker build smoke test`. |
 
 **Триггеры известных flake'ов:**
 
 - `tests/test_handlers_menu.py::TestOpenMainMenu::test_normal_user_gets_main_menu` (и подобные) могут падать `RuntimeError: Event loop is closed` на CI Pytest-runner'е если предыдущий тест в той же сессии закрыл async event loop. Mitigation: явный `patch("aemr_bot.handlers.menu.settings_store.get_text_with_fallback", AsyncMock(...))` в самом тесте, чтобы не открывать новое соединение к Postgres pool. Применено в PR #117.
-- `pytest --cov-fail-under=66` локально без Postgres падает на 61.3% — это **не баг**, это ожидаемая разница между local-pure и CI-with-DB режимами.
+- `pytest --cov-fail-under=67` локально без Postgres падает на 61.3% — это **не баг**, это ожидаемая разница между local-pure и CI-with-DB режимами.
 
 #### Сейчас (2026-05-27, post-PR #110-#121)
 
 - `bot/tests/` содержит ≈79 тест-файлов.
 - На CI: ≈1127 passed, ≈106 skipped.
 - На local pure (без Postgres): тот же набор collect'ится, но `session`-fixture делает skip → ≈455 passed, ≈158 skipped (зависит от наличия `maxapi` в local env — без него ещё ~150 файлов с `importorskip`).
-- Coverage gate на CI: `--cov-fail-under=66` (см. `.github/workflows/ci.yml:139`). Цель — поднимать постепенно до 80% (Phase E в плане MLP). Текущий реальный coverage на CI — 66.77% после Cluster E tests; gate 66 даёт 0.77% margin до regression-fail.
+- Coverage gate на CI: `--cov-fail-under=67` (см. `.github/workflows/ci.yml:139`). Цель — поднимать постепенно до 80% (Phase E в плане MLP). Текущий реальный coverage на CI — **67.54%** после Step 3 MLP-polish (PR #160 — характеризационные тесты card_format + wizard_registry); gate 67 даёт 0.54% margin до regression-fail.
 
 #### Что покрываем
 
