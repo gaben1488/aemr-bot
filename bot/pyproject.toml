@@ -46,6 +46,11 @@ dev = [
     "pip-audit~=2.7",
     "aiosqlite~=0.20",
     "types-python-dateutil~=2.9",
+    # Property-based testing для валидаторов (нормализация телефона,
+    # имени, URL). Дополняет example-based pytest — Hypothesis
+    # генерирует edge cases (юникод, отрицательные числа, длинные
+    # строки), которые тестировщик руками не придумает.
+    "hypothesis~=6.115",
 ]
 
 [build-system]
