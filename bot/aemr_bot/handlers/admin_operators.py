@@ -80,9 +80,9 @@ def _op_wizard_drop(operator_id: int) -> None:
     _wr.schedule_persist_op(operator_id, None)
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Хелперы
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def _safe_get_chat_members(bot) -> list:
@@ -123,9 +123,9 @@ def _full_name_from_member(member) -> str:
     return first or last or f"User {getattr(member, 'user_id', '?')}"
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Точка входа в меню «👥 Операторы»
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def run_operators_menu(event) -> None:
@@ -138,7 +138,7 @@ async def run_operators_menu(event) -> None:
         chat_id=cfg.admin_group_id,
         text=(
             "👥 Управление операторами\n"
-            "──────────\n"
+            "· · · · · · · ·\n"
             "📋 Список — все операторы с возможностью смены роли\n"
             "    и деактивации через карточку.\n\n"
             "➕ Из участников группы — подобрать из тех, кто уже\n"
@@ -239,9 +239,9 @@ async def run_operators_action(event, payload: str) -> None:
         return
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Список и карточка оператора
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def _show_operators_list(event) -> None:
@@ -308,7 +308,7 @@ async def _show_operator_card(event, payload: str, operator_id: int) -> None:
         )
     lines = [
         f"👤 {op.full_name}",
-        "──────────",
+        "· · · · · · · ·",
         f"ID:       {op.max_user_id}",
         f"Роль:     {op.role}",
         f"Статус:   {status_line}",
@@ -332,9 +332,9 @@ async def _show_operator_card(event, payload: str, operator_id: int) -> None:
     )
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Смена роли
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def _show_role_change(event, payload: str, operator_id: int) -> None:
@@ -449,9 +449,9 @@ async def _apply_role_change(event, payload: str, operator_id: int) -> None:
     )
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Деактивация / Реактивация
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def _show_deactivate_confirm(event, payload: str, operator_id: int) -> None:
@@ -495,7 +495,7 @@ async def _show_deactivate_confirm(event, payload: str, operator_id: int) -> Non
         event, chat_id=cfg.admin_group_id,
         text=(
             f"⚠️ Деактивировать оператора?\n"
-            f"──────────\n"
+            f"· · · · · · · ·\n"
             f"{op.full_name} ({op.role})\n\n"
             f"Сотрудник потеряет доступ к командам бота.\n"
             f"Данные сохранятся — при необходимости его\n"
@@ -603,9 +603,9 @@ async def _apply_reactivate(event, payload: str, operator_id: int) -> None:
     )
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Добавление из участников группы
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def _show_from_group(event, operator_id: int) -> None:
@@ -659,7 +659,7 @@ async def _show_from_group(event, operator_id: int) -> None:
         event, chat_id=cfg.admin_group_id,
         text=(
             f"👥 Кого зарегистрировать?\n"
-            f"──────────\n"
+            f"· · · · · · · ·\n"
             f"Участников группы: {len(candidates)}\n"
             f"Доступно для добавления: {addable}\n\n"
             f"Тапните по человеку для добавления, или\n"
@@ -710,7 +710,7 @@ async def _start_add_with_picked(
         event, chat_id=cfg.admin_group_id,
         text=(
             f"👥 Шаг 2 — выбор роли\n"
-            f"──────────\n"
+            f"· · · · · · · ·\n"
             f"ID:  {picked_user_id}\n"
             f"{extra}\n"
             f"Выберите роль:"
@@ -719,9 +719,9 @@ async def _start_add_with_picked(
     )
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Добавление по ID вручную (старый wizard)
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def _start_manual_add(event, operator_id: int) -> None:
@@ -739,7 +739,7 @@ async def _start_manual_add(event, operator_id: int) -> None:
         chat_id=cfg.admin_group_id,
         text=(
             "👥 Шаг 1 — ID оператора\n"
-            "──────────\n"
+            "· · · · · · · ·\n"
             "Введите max_user_id будущего оператора.\n\n"
             "Узнать ID можно несколькими способами:\n"
             "• попросите человека добавиться в служебную\n"
@@ -779,7 +779,7 @@ async def _apply_role_choice(event, suffix: str, operator_id: int) -> None:
             event, chat_id=cfg.admin_group_id,
             text=(
                 f"👥 Шаг 3 — ФИО для журнала\n"
-                f"──────────\n"
+                f"· · · · · · · ·\n"
                 f"Роль: {role_value} ✅\n"
                 f"Имя из MAX: {suggested}\n\n"
                 f"Сохранить как есть или указать полное\n"
@@ -794,7 +794,7 @@ async def _apply_role_choice(event, suffix: str, operator_id: int) -> None:
             event, chat_id=cfg.admin_group_id,
             text=(
                 f"👥 Шаг 3 — ФИО\n"
-                f"──────────\n"
+                f"· · · · · · · ·\n"
                 f"Роль {role_value} выбрана.\n\n"
                 f"Введите ФИО оператора одним сообщением.\n"
                 f"Пример: «Иванова Анна Петровна»"
@@ -836,7 +836,7 @@ async def _start_name_edit(event, operator_id: int) -> None:
         event, chat_id=cfg.admin_group_id,
         text=(
             "👥 Шаг 3 — ФИО полностью\n"
-            "──────────\n"
+            "· · · · · · · ·\n"
             "Введите ФИО оператора одним сообщением.\n"
             "Пример: «Иванова Анна Петровна»"
         ),
@@ -860,7 +860,7 @@ async def _back_to_role_pick(event, operator_id: int) -> None:
         event, chat_id=cfg.admin_group_id,
         text=(
             f"👥 Шаг 2 — выбор роли\n"
-            f"──────────\n"
+            f"· · · · · · · ·\n"
             f"ID: {target_id}\n\n"
             f"Выберите роль:"
         ),
@@ -880,7 +880,7 @@ async def _show_add_confirm(event, operator_id: int) -> None:
         event, chat_id=cfg.admin_group_id,
         text=(
             f"👥 Подтверждение\n"
-            f"──────────\n"
+            f"· · · · · · · ·\n"
             f"ID:   {target_id}\n"
             f"Роль: {role}\n"
             f"ФИО:  {full_name}\n\n"
@@ -952,9 +952,9 @@ async def _confirm_save(event, operator_id: int) -> None:
     )
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Перехватчик текстовых сообщений wizard'а
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def handle_operators_wizard_text(event, text: str) -> bool:
@@ -983,7 +983,7 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
             chat_id=cfg.admin_group_id,
             text=(
                 f"👥 Шаг 2 — выбор роли\n"
-                f"──────────\n"
+                f"· · · · · · · ·\n"
                 f"ID:  {target_id}\n\n"
                 f"Выберите роль:"
             ),

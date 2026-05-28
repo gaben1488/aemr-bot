@@ -69,7 +69,7 @@ async def run_audience_menu(event) -> None:
         chat_id=cfg.admin_group_id,
         text=(
             "📊 Аудитория и согласия\n"
-            "────────────────\n"
+            "· · · · · · · ·\n"
             "Выберите выборку. Master-listing с pagination —\n"
             "по 10 жителей на страницу, тап по строке открывает\n"
             "карточку с действиями (блок/erase)."
@@ -162,7 +162,7 @@ async def _render_audience_page(
             chat_id=cfg.admin_group_id,
             text=(
                 f"{title}\n"
-                "────────────────\n"
+                "· · · · · · · ·\n"
                 "Список пуст."
             ),
             attachments=[kbds.op_back_to_audience_keyboard()],
@@ -175,7 +175,7 @@ async def _render_audience_page(
     ]
     header = (
         f"{title}\n"
-        f"────────────────\n"
+        f"· · · · · · · ·\n"
         f"Страница {page} из {total_pages} · всего: {total}\n"
         f"\n"
         f"Тапните строку — откроется карточка жителя\n"
@@ -263,7 +263,7 @@ async def _start_search_intent(event, category: str | None) -> None:
         chat_id=cfg.admin_group_id,
         text=(
             "🔍 Поиск жителя\n"
-            "────────────────\n"
+            "· · · · · · · ·\n"
             "Пришлите одним сообщением:\n"
             "• имя или часть имени (поиск частичный, без учёта регистра);\n"
             "• телефон или его фрагмент (например, последние 4 цифры);\n"
@@ -311,7 +311,7 @@ async def handle_audience_search_text(event, text: str) -> bool:
             chat_id=cfg.admin_group_id,
             text=(
                 f"🔍 По запросу «{query[:60]}» ничего не найдено.\n"
-                f"────────────────\n"
+                f"· · · · · · · ·\n"
                 f"Попробуйте короче или другой фрагмент."
             ),
             attachments=[kbds.op_back_to_audience_keyboard()],
@@ -324,7 +324,7 @@ async def handle_audience_search_text(event, text: str) -> bool:
     ]
     header = (
         f"🔍 Найдено: {len(users)} по запросу «{query[:60]}»\n"
-        f"────────────────\n"
+        f"· · · · · · · ·\n"
         f"Тапните строку — откроется карточка жителя."
     )
     # Используем тот же paginated-keyboard, но без pagination
@@ -367,7 +367,7 @@ async def _render_user_card(
     status_line = _citizen_status_line(user)
     body = (
         f"👤 Карточка жителя\n"
-        f"────────────────\n"
+        f"· · · · · · · ·\n"
         f"Имя:     {name}\n"
         f"Телефон: {phone}\n"
         f"MAX id:  {user.max_user_id}\n"

@@ -397,7 +397,8 @@ class TestEventHeader:
         bot.send_message.assert_awaited_once()
         sent_text = bot.send_message.call_args.kwargs.get("text", "")
         assert "📩 Новое дополнение по обращению #5" in sent_text
-        assert "────────────────" in sent_text
+        # UI canon (2026-05-28): separator → `· · ·` per UI_BRAND_CONCEPT.
+        assert "· · · · · · · ·" in sent_text
         # Карточка идёт под маркером — содержимое тоже на месте.
         assert "Обращение #5" in sent_text or "#5" in sent_text
 

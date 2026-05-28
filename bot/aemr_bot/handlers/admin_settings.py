@@ -107,9 +107,9 @@ def _render_value(value: Any, *, limit: int = 1500) -> str:
     return rendered if len(rendered) <= limit else rendered[:limit] + "\n…(обрезано)"
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Точка входа
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def run_settings_menu(event) -> None:
@@ -134,7 +134,7 @@ async def run_settings_menu(event) -> None:
         chat_id=cfg.admin_group_id,
         text=(
             "⚙️ Настройки бота\n"
-            "──────────\n"
+            "· · · · · · · ·\n"
             "Выберите категорию для редактирования.\n"
             "Каждое изменение применяется к боту сразу.\n"
             "Чтобы зафиксировать изменения в репозитории,\n"
@@ -145,9 +145,9 @@ async def run_settings_menu(event) -> None:
     )
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Главный диспетчер callback'ов
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def run_settings_action(event, payload: str) -> None:
@@ -181,7 +181,7 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
             event, chat_id=cfg.admin_group_id,
             text=(
                 "⌨️ Все ключи (экспертный режим)\n"
-                "──────────\n"
+                "· · · · · · · ·\n"
                 "Здесь видны все ключи /setting, включая\n"
                 "те, что обычно не редактируются через UI."
             ),
@@ -196,7 +196,7 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
                 event, chat_id=cfg.admin_group_id,
                 text=(
                     "📢 Тексты для жителей\n"
-                    "──────────\n"
+                    "· · · · · · · ·\n"
                     "Что отредактировать?"
                 ),
                 attachments=[kbds.op_settings_texts_keyboard()],
@@ -207,7 +207,7 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
                 event, chat_id=cfg.admin_group_id,
                 text=(
                     "🔗 Внешние ссылки\n"
-                    "──────────\n"
+                    "· · · · · · · ·\n"
                     "Выберите ссылку для редактирования."
                 ),
                 attachments=[kbds.op_settings_urls_keyboard()],
@@ -246,7 +246,7 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
             event, chat_id=cfg.admin_group_id,
             text=(
                 f"➕ Добавление в «{key}»\n"
-                f"──────────\n"
+                f"· · · · · · · ·\n"
                 f"Пришлите название одним сообщением."
             ),
             attachments=[kbds.op_settings_text_cancel_keyboard(key)],
@@ -302,9 +302,9 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         return
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Тексты и URL: одинаковый паттерн card + edit
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def _show_text_card(event, key: str) -> None:
@@ -335,7 +335,7 @@ async def _show_text_card(event, key: str) -> None:
         event, chat_id=cfg.admin_group_id,
         text=(
             f"{title} ({type_label})\n"
-            f"──────────\n"
+            f"· · · · · · · ·\n"
             f"Текущее значение:\n{_render_value(value)}"
             f"{constraints}"
         ),
@@ -364,16 +364,16 @@ async def _start_edit_intent(event, operator_id: int, key: str) -> None:
         event, chat_id=cfg.admin_group_id,
         text=(
             f"✏️ Редактирование «{key}»\n"
-            f"──────────"
+            f"· · · · · · · ·"
             f"{hint}"
         ),
         attachments=[kbds.op_settings_text_cancel_keyboard(key)],
     )
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Списки строк (topics, localities)
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def _show_list_card(event, key: str) -> None:
@@ -395,9 +395,9 @@ async def _show_list_card(event, key: str) -> None:
         event, chat_id=cfg.admin_group_id,
         text=(
             f"{title} ({len(items)})\n"
-            f"──────────\n"
+            f"· · · · · · · ·\n"
             f"{body}\n"
-            f"──────────\n"
+            f"· · · · · · · ·\n"
             f"Тап «🗑 N» — удалить запись.\n"
             f"Тап «➕ Добавить» — добавить новую."
         ),
@@ -444,9 +444,9 @@ async def _list_delete(event, operator_id: int, suffix: str) -> None:
     await _show_list_card(event, key)
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Списки объектов (emergency_contacts, transport_dispatcher_contacts)
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def _show_obj_card(event, key: str) -> None:
@@ -485,7 +485,7 @@ async def _show_obj_card(event, key: str) -> None:
         event, chat_id=cfg.admin_group_id,
         text=(
             f"{title} ({len(items)})\n"
-            f"──────────\n"
+            f"· · · · · · · ·\n"
             f"{body}"
             f"{hint}"
         ),
@@ -539,7 +539,7 @@ async def _start_obj_add(event, operator_id: int, key: str) -> None:
         event, chat_id=cfg.admin_group_id,
         text=(
             f"➕ Добавление в «{key}»\n"
-            f"──────────\n"
+            f"· · · · · · · ·\n"
             f"{hint}"
         ),
         attachments=[kbds.op_settings_text_cancel_keyboard(key)],
@@ -585,9 +585,9 @@ async def _obj_delete(event, operator_id: int, suffix: str) -> None:
     await _show_obj_card(event, key)
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Автор коммитов
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def _show_quiet_card(event) -> None:
@@ -617,7 +617,7 @@ async def _show_quiet_card(event) -> None:
         event, chat_id=cfg.admin_group_id,
         text=(
             "🌙 Тихий режим в админ-чате\n"
-            "──────────\n"
+            "· · · · · · · ·\n"
             f"Сейчас: {status_line}\n"
             f"Окно: с {start:02d}:00 до {end:02d}:00 (Камчатка)\n\n"
             "Когда включён и текущее время в окне — не приходят\n"
@@ -668,7 +668,7 @@ async def _start_quiet_hour_intent(
         event, chat_id=cfg.admin_group_id,
         text=(
             f"🌙 Час {label} тихого режима\n"
-            "──────────\n"
+            "· · · · · · · ·\n"
             "Пришлите одним сообщением число от 0 до 23.\n"
             "Например: 18 — для начала в 18:00; 9 — для конца в 09:00.\n\n"
             "Окно может пересекать полночь: start=18, end=9\n"
@@ -728,7 +728,7 @@ async def _show_author_card(event) -> None:
         event, chat_id=cfg.admin_group_id,
         text=(
             "👤 Автор коммитов от бота\n"
-            "──────────\n"
+            "· · · · · · · ·\n"
             f"ФИО:   {name_line}\n"
             f"Email: {email_line}\n\n"
             "Это значения подставляются в коммиты,\n"
@@ -739,9 +739,9 @@ async def _show_author_card(event) -> None:
     )
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Pull Request
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def _show_pr_confirm(event) -> None:
@@ -757,7 +757,7 @@ async def _show_pr_confirm(event) -> None:
             event, chat_id=cfg.admin_group_id,
             text=(
                 "📥 Нет несинхронизированных изменений.\n"
-                "──────────\n"
+                "· · · · · · · ·\n"
                 "Все настройки совпадают с последним PR в репо."
             ),
             attachments=[kbds.op_back_to_settings_keyboard()],
@@ -780,7 +780,7 @@ async def _show_pr_confirm(event) -> None:
             event, chat_id=cfg.admin_group_id,
             text=(
                 "💾 Создать PR с изменениями\n"
-                "──────────\n"
+                "· · · · · · · ·\n"
                 f"Будет включено {len(dirty)} ключей:\n{keys_preview}\n\n"
                 "❌ Нельзя создать PR:\n" + "\n".join(blockers) +
                 "\n\nИзменения уже применены в боте — это\n"
@@ -794,7 +794,7 @@ async def _show_pr_confirm(event) -> None:
         event, chat_id=cfg.admin_group_id,
         text=(
             "💾 Создать PR с изменениями\n"
-            "──────────\n"
+            "· · · · · · · ·\n"
             f"Будет включено {len(dirty)} ключей:\n{keys_preview}\n\n"
             f"Автор: {name} <{email}>\n\n"
             "После создания PR откройте его в браузере,\n"
@@ -824,7 +824,7 @@ async def _create_pr(event, operator_id: int) -> None:
             event, chat_id=cfg.admin_group_id,
             text=(
                 "❌ Не настроено GitHub-подключение.\n"
-                "──────────\n"
+                "· · · · · · · ·\n"
                 "Заполните GITHUB_PAT в .env и/или\n"
                 "автора коммитов в меню «👤 Автор»."
             ),
@@ -851,7 +851,7 @@ async def _create_pr(event, operator_id: int) -> None:
             event, chat_id=cfg.admin_group_id,
             text=(
                 "❌ Не удалось создать PR.\n"
-                "──────────\n"
+                "· · · · · · · ·\n"
                 f"Причина: {result.reason}\n"
                 f"{result.message}"
             ),
@@ -877,7 +877,7 @@ async def _create_pr(event, operator_id: int) -> None:
         event, chat_id=cfg.admin_group_id,
         text=(
             f"✅ PR создан: #{result.pr_number}\n"
-            f"──────────\n"
+            f"· · · · · · · ·\n"
             f"Ветка: {result.branch}\n"
             f"Изменено ключей: {len(dirty)}\n\n"
             f"Откройте PR в браузере, проверьте diff\n"
@@ -903,7 +903,7 @@ async def _show_pr_diff(event) -> None:
             event, chat_id=cfg.admin_group_id,
             text=(
                 "📥 Проверка расхождений с репо\n"
-                "──────────\n"
+                "· · · · · · · ·\n"
                 "GITHUB_PAT не задан в .env.\n\n"
                 f"Локально dirty-ключей: {len(dirty)}\n"
                 + ("\n".join(f"• {k}" for k in dirty[:10]) if dirty else "—")
@@ -927,7 +927,7 @@ async def _show_pr_diff(event) -> None:
             event, chat_id=cfg.admin_group_id,
             text=(
                 "📥 Проверка расхождений с репо\n"
-                "──────────\n"
+                "· · · · · · · ·\n"
                 "Файла seed/runtime_config.json в main\n"
                 "пока нет. Первый PR создаст его."
             ),
@@ -963,16 +963,16 @@ async def _show_pr_diff(event) -> None:
         event, chat_id=cfg.admin_group_id,
         text=(
             "📥 Проверка расхождений с репо\n"
-            "──────────\n"
+            "· · · · · · · ·\n"
             + body
         ),
         attachments=[kbds.op_back_to_settings_keyboard()],
     )
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Старая экспертная карточка ключа (op:setkey:<key>)
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def _show_expert_key(event, payload: str) -> None:
@@ -997,9 +997,9 @@ async def _show_expert_key(event, payload: str) -> None:
         chat_id=cfg.admin_group_id,
         text=(
             f"⚙️ Настройка «{key}» (тип {expected_name})\n"
-            f"──────────\n"
+            f"· · · · · · · ·\n"
             f"Текущее значение:\n{rendered}\n"
-            f"──────────\n"
+            f"· · · · · · · ·\n"
             f"Изменить: /setting {key} <новое значение>\n"
             f"Для списков и объектов передавайте JSON."
         ),
@@ -1007,9 +1007,9 @@ async def _show_expert_key(event, payload: str) -> None:
     )
 
 
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Перехватчик текстовых сообщений для редактирования
-# ──────────────────────────────────────────────────────────────────────
+# · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 
 
 async def handle_settings_edit_text(event, text: str) -> bool:
