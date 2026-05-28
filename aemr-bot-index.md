@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-28 00:16:25 UTC`
+Generated at: `2026-05-28 00:16:42 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `268`
 Max file size: `300 KB`
@@ -117,7 +117,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/utils/typing_indicator.py` (2310 bytes)
 - `bot/aemr_bot/utils/url_defang.py` (10687 bytes)
 - `bot/alembic.ini` (619 bytes)
-- `bot/pyproject.toml` (3463 bytes)
+- `bot/pyproject.toml` (3464 bytes)
 - `bot/tests/__init__.py` (0 bytes)
 - `bot/tests/_helpers.py` (5713 bytes)
 - `bot/tests/conftest.py` (1882 bytes)
@@ -28857,8 +28857,8 @@ datefmt = %H:%M:%S
 
 ### `bot/pyproject.toml`
 
-Size: `3463` bytes  
-SHA-256: `606861bc1ed71b86c0a46edf2c4068f24f903ef984d66f0219824d022b84ed00`
+Size: `3464` bytes  
+SHA-256: `0ead6cccd90ea32309a13b7983c49b1d9dc765bf662237121541fef403f923a7`
 
 ```toml
 [project]
@@ -28902,7 +28902,7 @@ dev = [
     # поддержку pytest 9, поэтому обновляем плагин вместе с pytest, а не
     # глушим pip-audit и не форсируем несовместимый resolver.
     "pytest-asyncio>=1.3,<2",
-    "pytest-cov~=6.0",
+    "pytest-cov>=6,<8",
     "ruff~=0.7",
     "mypy>=1.13,<3.0",
     "bandit~=1.7",
