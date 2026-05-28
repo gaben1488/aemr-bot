@@ -295,10 +295,13 @@ journalctl -t aemr-bot-deploy -n 100 --no-pager
 
 Активация:
 
-1. Установить optional-зависимость: `pip install -e ".[observability]"` (либо добавить `sentry-sdk` в Dockerfile, если поднимаете через docker).
-2. Указать `SENTRY_DSN` в `infra/.env` (DSN получите при создании проекта в Sentry).
-3. Опционально — `SENTRY_ENVIRONMENT=staging` или `production` (по умолчанию `production`).
-4. Перезапустить бот: `docker compose restart bot`. На старте увидите `sentry: инициализирован для environment=production` в логах.
+1. Указать `SENTRY_DSN` в `infra/.env` (DSN получите при создании проекта в Sentry).
+2. Опционально — `SENTRY_ENVIRONMENT=staging` или `production` (по умолчанию `production`).
+3. Пересобрать и перезапустить бот: `docker compose up -d --build bot`. На старте увидите `sentry: инициализирован для environment=production` в логах.
+
+`sentry-sdk` уже включён в Docker-образ через optional-dependency `[observability]` в `infra/Dockerfile`. Без `SENTRY_DSN` — `init_sentry()` no-op, никаких сетевых вызовов; бот работает без observability.
+
+Для локальной разработки вне docker: `pip install -e ".[observability]"` в `bot/` каталоге.
 
 Два варианта установки сервера Sentry:
 
