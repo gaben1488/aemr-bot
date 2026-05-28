@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-28 02:39:07 UTC`
+Generated at: `2026-05-28 02:43:26 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `272`
 Max file size: `300 KB`
@@ -256,11 +256,11 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/README.md` (8656 bytes)
 - `docs/ROLLBACK.md` (7416 bytes)
 - `docs/RULES.md` (9993 bytes)
-- `docs/RUNBOOK.md` (60856 bytes)
+- `docs/RUNBOOK.md` (63825 bytes)
 - `docs/RUNBOOK_PDN_ERASURE.md` (11320 bytes)
 - `docs/SECURITY.md` (53202 bytes)
 - `docs/SETUP.md` (40625 bytes)
-- `docs/SYSADMIN.md` (40922 bytes)
+- `docs/SYSADMIN.md` (43660 bytes)
 - `docs/VPS_SMOKE_CHECKLIST.md` (5736 bytes)
 - `docs/Политика.md` (6113 bytes)
 - `docs/Политика_v2.md` (30510 bytes)
@@ -68204,8 +68204,8 @@ SHA-256: `4c2f6ed76eff5a3c3f67b3ffb7a2c63f093b76b91826b6de47a30f23045b85ca`
 
 ### `docs/RUNBOOK.md`
 
-Size: `60856` bytes  
-SHA-256: `0f0d35b0c0b98836f5366e68bd86f6d43e91a60f5186a43024f3e90668faddf4`
+Size: `63825` bytes  
+SHA-256: `1d72a28125845de835118d535ccf3abfc445b824320fdc8e403a9d6a05aa9151`
 
 ```markdown
 # Регламент работы координатора и ИТ-специалиста
@@ -68904,6 +68904,40 @@ docker compose exec bot python -m aemr_bot.services.db_backup
 ## Восстановление
 
 Описано в `BACKUP_RESTORE_TEST.md`.
+
+## Календарь ротации секретов
+
+Чтобы скомпрометированный токен не жил годами, держим плановую ротацию. Записываем в календарь и проходимся раз в полугодие.
+
+| Когда | Что ротировать | Как |
+|---|---|---|
+| **Январь** ежегодно | `BOT_TOKEN` (платформа MAX) | Выпустить новый токен в `business.max.ru`, заменить в `infra/.env` на VPS, `docker compose restart bot`. Старый — отозвать. |
+| **Январь + июль** ежегодно | `DATABASE_URL` (пароль `pg`) | `ALTER ROLE aemr_bot PASSWORD '...'` в Postgres, обновить `DATABASE_URL` в `.env`, рестарт бота. |
+| **При компрометации** | `BACKUP_GPG_PASSPHRASE` | Новый passphrase, обязательно перешифровать существующие бэкапы (`gpg --decrypt → --encrypt`) или утилизировать старые. Старая passphrase утрачивает доступ к зашифрованным дампам. |
+| **При увольнении оператора с ролью `it`** | `BOT_TOKEN` + `BACKUP_GPG_PASSPHRASE` | Если у уходящего был доступ к `infra/.env` — все секреты считаем потенциально скомпрометированными. |
+| **При утечке `audit_log`** | `BACKUP_GPG_PASSPHRASE` | В аудит-логе хранятся фрагменты переписки. Если утечка возможна — ротируем passphrase, ограничиваем доступ к каталогу. |
+
+Опциональные секреты:
+
+- `HEALTHCHECK_URL` (внешний пинг, например healthchecks.io) — ротировать раз в год или при компрометации.
+- `PHISHTANK_APP_KEY` (если активирован) — ротировать по требованию provider'а.
+- `BACKUP_S3_SECRET_KEY` (если включена S3-копия) — раз в полугодие или при компрометации.
+
+После ротации:
+
+1. Проверить, что бот стартовал: `docker logs aemr-bot-bot-1 --tail 50` показывает `Loaded settings_store entries`.
+2. `/livez` и `/readyz` отвечают 200 (`curl http://127.0.0.1:8000/livez`).
+3. Pulse в админ-группе пришёл по расписанию (или вручную дёрнуть `/diag`).
+
+## SBOM (опционально)
+
+Если требуется отчёт о компонентах (Software Bill of Materials):
+
+```bash
+docker compose exec bot pip-audit --format=cyclonedx-json > sbom-$(date +%Y%m%d).json
+```
+
+`pip-audit` уже в dev-deps. SBOM публиковать в SECURITY-зону репозитория (не в публичный README).
 
 ---
 
@@ -70001,8 +70035,8 @@ docker compose up -d --build
 
 ### `docs/SYSADMIN.md`
 
-Size: `40922` bytes  
-SHA-256: `233f36eb6faf066dda2c636cb8684e50ef24e8954b228ff93307472daffd94e1`
+Size: `43660` bytes  
+SHA-256: `87f829a63eeb3a11c9c8d005e48a808db66475cb28f2959b3522302459e46fc0`
 
 ```markdown
 # SYSADMIN.md — операционное руководство
@@ -70468,6 +70502,49 @@ sudo bash /home/aemr/aemr-bot/scripts/audit_vps.sh
 Выгрузка в `/tmp/aemr_audit_<timestamp>.tar.gz`. Внутри: системные данные, git state, env с замаскированными секретами, docker compose ps, healthchecks, последние логи бота и БД. Скрипт **не** выводит реальные значения `BOT_TOKEN`, `POSTGRES_PASSWORD`, `BACKUP_GPG_PASSPHRASE`, `WEBHOOK_SECRET`, `BACKUP_S3_*_KEY`, заголовки `Authorization`, параметры `access_token` — все заменены на `***HIDDEN***`.
 
 Архив безопасно прислать в чат или приложить к тикету.
+
+## 13a. Сетевая изоляция (опционально)
+
+Бот в проде делает исходящие запросы строго на ограниченный список доменов: MAX API (`botapi.max.ru`, `platform-api.max.ru`), GitHub (auto-deploy `git pull`), healthchecks-сервис (если задан `HEALTHCHECK_URL`), abuse.ch и PhishTank (threat-intel). Всё остальное — потенциальная утечка PII или признак компрометации.
+
+Если требуется иметь жёсткий outbound-whitelist через `iptables`:
+
+```bash
+# Базовое правило: запретить весь outbound, разрешать только нужное
+sudo iptables -P OUTPUT DROP
+sudo iptables -A OUTPUT -o lo -j ACCEPT
+sudo iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# DNS на 8.8.8.8 / 1.1.1.1 (или внутренний DNS муниципалитета)
+sudo iptables -A OUTPUT -p udp --dport 53 -d 8.8.8.8 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --dport 53 -d 1.1.1.1 -j ACCEPT
+
+# MAX API + GitHub + healthchecks-сервис + threat-intel
+# (используйте `dig +short` для актуальных IP — они могут меняться)
+for host in botapi.max.ru platform-api.max.ru \
+           github.com api.github.com codeload.github.com \
+           hc-ping.com healthchecks.io \
+           urlhaus.abuse.ch threatfox.abuse.ch data.phishtank.com; do
+  for ip in $(dig +short A "$host"); do
+    sudo iptables -A OUTPUT -p tcp -d "$ip" --dport 443 -j ACCEPT
+  done
+done
+
+# NTP синхронизация времени
+sudo iptables -A OUTPUT -p udp --dport 123 -j ACCEPT
+
+# Сохранить
+sudo iptables-save | sudo tee /etc/iptables/rules.v4
+```
+
+Подводные камни:
+
+- IP-адреса CDN меняются — нужно либо пересоздавать правила раз в неделю по cron, либо использовать `nftables` с динамическим resolution.
+- Если включён GPG-encrypted S3-бэкап — добавить endpoint S3 в whitelist.
+- Локальный repo-sync (auto-deploy) дёргает `github.com` каждые 10 минут — нельзя блокировать его, иначе деплои встанут.
+- После изменений проверить: `/livez`, `/readyz`, `/diag` в админ-чате.
+
+В нашей текущей инсталляции **iptables outbound не включён** — VPS обслуживает только бот, риск утечки минимальный. Включаем при появлении других сервисов на той же машине.
 
 ## 14. Типичные проблемы и куда смотреть
 
