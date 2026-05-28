@@ -526,7 +526,7 @@ sudo iptables-save | sudo tee /etc/iptables/rules.v4
 На каждом push в main и каждом PR прогоняется `.github/workflows/ci.yml`:
 
 - **lint job**: `ruff check --output-format=github`, `mypy`, `bandit -ll` (medium+), `pip-audit --strict` (hard fail на любой CVE), `shellcheck` на все `*.sh`.
-- **test job**: `pytest --cov-fail-under=66`, `alembic upgrade head`, `alembic check` (drift между моделями и миграциями), `alembic round-trip` (upgrade → downgrade base → upgrade head).
+- **test job**: `pytest --cov-fail-under=67`, `alembic upgrade head`, `alembic check` (drift между моделями и миграциями), `alembic round-trip` (upgrade → downgrade base → upgrade head).
 - **docker-build job**: смок-сборка образа без push.
 
 Auto-deploy на сервере подтягивает только из `main`. PR-ветки не деплоятся.
