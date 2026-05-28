@@ -21,12 +21,7 @@ RUN groupadd --system --gid 1000 botuser \
 WORKDIR /app
 
 COPY bot/pyproject.toml /app/pyproject.toml
-# `[observability]` ставит sentry-sdk. Без DSN в `.env` он сам no-op
-# через `aemr_bot/observability/sentry.py::init_sentry`; с DSN —
-# агрегирует exception'ы с PII-фильтром (152-ФЗ). Optional-deps
-# подключены сразу, чтобы перезапуск с заполненным SENTRY_DSN
-# заработал без пересборки образа.
-RUN pip install --upgrade pip && pip install -e "/app[observability]"
+RUN pip install --upgrade pip && pip install -e /app
 
 COPY bot/aemr_bot /app/aemr_bot
 COPY bot/alembic.ini /app/alembic.ini

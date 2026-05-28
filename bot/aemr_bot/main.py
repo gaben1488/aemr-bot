@@ -268,17 +268,6 @@ async def main() -> None:
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
 
-    # Sentry — наблюдаемость без тяжёлого стека. Если SENTRY_DSN
-    # не задан, init_sentry становится no-op. PII-фильтр маскирует
-    # телефоны, max_user_id, appeal_id в exception messages перед
-    # отправкой на сервер.
-    from aemr_bot.observability import init_sentry
-
-    init_sentry(
-        dsn=settings.sentry_dsn,
-        environment=settings.sentry_environment,
-    )
-
     # Сначала проверяем токен MAX, до любых других сетевых операций.
     # См. _preflight_check_token: без этого первый сбой (политика, рассылки)
     # ронял aiohttp-сессию и dispatcher падал на «Session is closed».

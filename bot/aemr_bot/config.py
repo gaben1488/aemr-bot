@@ -145,17 +145,6 @@ class Settings(BaseSettings):
     seed_dir: Path = Field(Path("/app/seed"), alias="SEED_DIR")
     log_level: str = Field("INFO", alias="LOG_LEVEL")
 
-    # Sentry для агрегации исключений в проде. Без DSN — наблюдаемость
-    # отключена (no-op init). Тихие fail'ы вроде OP_HELP_FULL overflow
-    # без Sentry находятся только когда жалуется владелец; с Sentry —
-    # видим частоту, traceback, контекст. Все exception messages
-    # проходят через PII-фильтр перед отправкой
-    # (`observability/sentry._before_send`).
-    sentry_dsn: str | None = Field(None, alias="SENTRY_DSN")
-    sentry_environment: str = Field(
-        "production", alias="SENTRY_ENVIRONMENT"
-    )
-
     @field_validator(
         "admin_group_id",
         "bootstrap_it_max_user_id",
