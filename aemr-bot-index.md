@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-28 00:15:24 UTC`
+Generated at: `2026-05-28 00:16:25 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `268`
 Max file size: `300 KB`
@@ -117,7 +117,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/utils/typing_indicator.py` (2310 bytes)
 - `bot/aemr_bot/utils/url_defang.py` (10687 bytes)
 - `bot/alembic.ini` (619 bytes)
-- `bot/pyproject.toml` (3458 bytes)
+- `bot/pyproject.toml` (3463 bytes)
 - `bot/tests/__init__.py` (0 bytes)
 - `bot/tests/_helpers.py` (5713 bytes)
 - `bot/tests/conftest.py` (1882 bytes)
@@ -28857,8 +28857,8 @@ datefmt = %H:%M:%S
 
 ### `bot/pyproject.toml`
 
-Size: `3458` bytes  
-SHA-256: `67db54525ad92fadaea9d1c24bcc28c2ea338a58935fb8cb9bbd3a3375b2370e`
+Size: `3463` bytes  
+SHA-256: `606861bc1ed71b86c0a46edf2c4068f24f903ef984d66f0219824d022b84ed00`
 
 ```toml
 [project]
@@ -28904,7 +28904,7 @@ dev = [
     "pytest-asyncio>=1.3,<2",
     "pytest-cov~=6.0",
     "ruff~=0.7",
-    "mypy~=1.13",
+    "mypy>=1.13,<3.0",
     "bandit~=1.7",
     "pip-audit~=2.7",
     "aiosqlite~=0.20",
