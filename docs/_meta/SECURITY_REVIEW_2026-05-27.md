@@ -1,3 +1,13 @@
+---
+status: applied
+applied_in_pr: 103, 127
+applied_at: 2026-05-27
+note: D1+D2 (SCHEMA welcome overflow guard + AI voice clone в SECURITY_INFO)
+  closed by PR #103. A1+A2 (cron-алёрты пробивают quiet режим) closed by PR #127.
+  Историческое status `🟡 active` на D1/D2 в этом файле — drift, актуальное
+  состояние — closed. См. SECURITY_REVIEW_2026-05-28.md для последующей delta.
+---
+
 # Security Review Delta 2026-05-27
 
 > Дельта-аудит после PR #98–#101 поверх baseline `SECURITY_REVIEW_2026-05-26.md`.

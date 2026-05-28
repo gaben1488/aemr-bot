@@ -1,3 +1,16 @@
+---
+status: applied
+applied_in_pr: 104, 105, 106, 107, 108
+applied_at: 2026-05-27
+superseded_by: docs/_meta/UI_BRAND_CONCEPT_2026-05-26.md (канон-спецификация),
+  bot/aemr_bot/ui/citizen_keyboards.py, bot/aemr_bot/ui/operator_keyboards.py,
+  bot/aemr_bot/services/card_format.py
+note: A1 timeline unification (#104), A2 5/5 stale (#105), A4.1 citizen funnel
+  (#106), A4.2 citizen «Мои обращения» (#108), A4.3 admin menu (#107). A4.4
+  admin wizards audit 2026-05-28 — done-in-spirit (UI_BRAND_CONCEPT уже
+  соблюдён, drift не выявлен).
+---
+
 # Cards UX Sweep — 2026-05-26
 
 Полный backlog для распространения единой визуальной грамматики

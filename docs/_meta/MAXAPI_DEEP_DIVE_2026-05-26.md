@@ -1,3 +1,15 @@
+---
+status: applied
+applied_in_pr: 80, 84, 90, 91
+applied_at: 2026-05-27
+superseded_by: реализованные insights ушли в код. typing-indicator (PR #80,
+  P0.2), URL defang (PR #84), ChatMembersManager.iter_all() для F11
+  (PR #90, P2), HTTP 429 + BOT_STOPPED handling (PR #91, P1).
+note: Pending — P0.1 (event.message.answer() refactor), P1.2
+  (CallbackPayload(BaseModel) типизация) — оставляются в backlog как
+  низкий приоритет (не блокируют MLP).
+---
+
 # maxapi 1.1.0 — глубокая разведка для AEMR-bot
 
 > 2026-05-26. Источник: `bot/.venv/Lib/site-packages/maxapi/`.

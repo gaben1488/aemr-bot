@@ -1,3 +1,15 @@
+---
+status: done-in-spirit
+applied_in_pr: 131
+applied_at: 2026-05-28
+note: Cluster F wave 1 (PR #131) перевёл 3 ключевых файла services/.
+  Аудит 2026-05-28 evening показал, что services/, utils/, handlers/
+  УЖЕ 95%+ на русском; остатки — устоявшийся технический обиход
+  (sacred event log, dual-tracker, Lazy-init, monkey-patch, fallback,
+  Pydantic-форма, Per-chat tracker). Полный sweep ВСЕХ файлов = busywork
+  без real value. Phase D закрыта как «done-in-spirit».
+---
+
 # Проход «русские комментарии и docstring'и»
 
 Дата: 2026-05-26. Сканированы `bot/aemr_bot/handlers/*.py` и
