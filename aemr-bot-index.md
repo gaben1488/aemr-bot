@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-28 00:16:58 UTC`
+Generated at: `2026-05-28 00:29:22 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `268`
+Indexed files: `271`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -19,7 +19,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `.gitignore` (1402 bytes)
 - `.pre-commit-config.yaml` (2537 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
-- `bot/aemr_bot/config.py` (10460 bytes)
+- `bot/aemr_bot/config.py` (11148 bytes)
 - `bot/aemr_bot/copy/__init__.py` (1142 bytes)
 - `bot/aemr_bot/copy/admin_texts.py` (12251 bytes)
 - `bot/aemr_bot/copy/broadcast_texts.py` (18083 bytes)
@@ -72,7 +72,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/start.py` (21062 bytes)
 - `bot/aemr_bot/health.py` (7127 bytes)
 - `bot/aemr_bot/keyboards.py` (1363 bytes)
-- `bot/aemr_bot/main.py` (22650 bytes)
+- `bot/aemr_bot/main.py` (23131 bytes)
+- `bot/aemr_bot/observability/__init__.py` (697 bytes)
+- `bot/aemr_bot/observability/sentry.py` (9223 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_bus.py` (10239 bytes)
 - `bot/aemr_bot/services/admin_card.py` (11715 bytes)
@@ -117,7 +119,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/utils/typing_indicator.py` (2310 bytes)
 - `bot/aemr_bot/utils/url_defang.py` (10687 bytes)
 - `bot/alembic.ini` (619 bytes)
-- `bot/pyproject.toml` (3464 bytes)
+- `bot/pyproject.toml` (3872 bytes)
 - `bot/tests/__init__.py` (0 bytes)
 - `bot/tests/_helpers.py` (5713 bytes)
 - `bot/tests/conftest.py` (1882 bytes)
@@ -182,6 +184,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_main_helpers.py` (8679 bytes)
 - `bot/tests/test_menu_tracker_edit_policy.py` (12482 bytes)
 - `bot/tests/test_normalize_phone_hypothesis.py` (9022 bytes)
+- `bot/tests/test_observability_sentry.py` (10556 bytes)
 - `bot/tests/test_operator_reply_closed_guard.py` (3266 bytes)
 - `bot/tests/test_operator_reply_with_image.py` (7517 bytes)
 - `bot/tests/test_progress.py` (10683 bytes)
@@ -256,12 +259,12 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/RUNBOOK_PDN_ERASURE.md` (11320 bytes)
 - `docs/SECURITY.md` (53202 bytes)
 - `docs/SETUP.md` (40625 bytes)
-- `docs/SYSADMIN.md` (40922 bytes)
+- `docs/SYSADMIN.md` (43547 bytes)
 - `docs/VPS_SMOKE_CHECKLIST.md` (5736 bytes)
 - `docs/Политика.md` (6113 bytes)
 - `docs/Политика_v2.md` (30510 bytes)
 - `docs/Регламент_v8_draft.md` (50220 bytes)
-- `infra/.env.example` (62450 bytes)
+- `infra/.env.example` (64253 bytes)
 - `infra/docker-compose.yml` (5867 bytes)
 - `infra/Dockerfile` (1655 bytes)
 - `infra/nginx/feedback.conf` (976 bytes)
@@ -848,8 +851,8 @@ __version__ = "0.1.0"
 
 ### `bot/aemr_bot/config.py`
 
-Size: `10460` bytes  
-SHA-256: `996bef9869b7e8053f9b6215cb9b650483f34c5b7ef9884a4dc434f29b14e035`
+Size: `11148` bytes  
+SHA-256: `cf77f9dcc9f5d12ca60d39d2551cb1ddffe62eee61e09341edbe98dbd4329d03`
 
 ```python
 from pathlib import Path
@@ -998,6 +1001,17 @@ class Settings(BaseSettings):
 
     seed_dir: Path = Field(Path("/app/seed"), alias="SEED_DIR")
     log_level: str = Field("INFO", alias="LOG_LEVEL")
+
+    # Sentry для агрегации исключений в проде. Без DSN — наблюдаемость
+    # отключена (no-op init). Тихие fail'ы вроде OP_HELP_FULL overflow
+    # без Sentry находятся только когда жалуется владелец; с Sentry —
+    # видим частоту, traceback, контекст. Все exception messages
+    # проходят через PII-фильтр перед отправкой
+    # (`observability/sentry._before_send`).
+    sentry_dsn: str | None = Field(None, alias="SENTRY_DSN")
+    sentry_environment: str = Field(
+        "production", alias="SENTRY_ENVIRONMENT"
+    )
 
     @field_validator(
         "admin_group_id",
@@ -16696,8 +16710,8 @@ from aemr_bot.ui.wizard_keyboards import *  # noqa: F401, F403
 
 ### `bot/aemr_bot/main.py`
 
-Size: `22650` bytes  
-SHA-256: `896f4df6e14fb40ac1b352554868d4d8f600b4954d936214c7d8e6241525e3f2`
+Size: `23131` bytes  
+SHA-256: `7ad62e897182aaf1e694fc51360cecc430e6426844152735ffc3f55fb8e8786a`
 
 ```python
 from __future__ import annotations
@@ -16970,6 +16984,17 @@ async def main() -> None:
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
 
+    # Sentry — наблюдаемость без тяжёлого стека. Если SENTRY_DSN
+    # не задан, init_sentry становится no-op. PII-фильтр маскирует
+    # телефоны, max_user_id, appeal_id в exception messages перед
+    # отправкой на сервер.
+    from aemr_bot.observability import init_sentry
+
+    init_sentry(
+        dsn=settings.sentry_dsn,
+        environment=settings.sentry_environment,
+    )
+
     # Сначала проверяем токен MAX, до любых других сетевых операций.
     # См. _preflight_check_token: без этого первый сбой (политика, рассылки)
     # ронял aiohttp-сессию и dispatcher падал на «Session is closed».
@@ -17126,6 +17151,244 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+```
+
+### `bot/aemr_bot/observability/__init__.py`
+
+Size: `697` bytes  
+SHA-256: `c8d0b0326898ea81bd6d5996393d49cd5926c2e9fbc7902fb2062613d003025b`
+
+```python
+"""Наблюдаемость aemr-bot: Sentry + PII-фильтр.
+
+Лёгкая обвязка вокруг sentry-sdk. Цель — поймать тихие ошибки в
+производстве (как было с `OP_HELP_FULL` overflow до жалобы владельца)
+без тяжёлого observability-стека (Prometheus / Grafana / ELK / Loki —
+out-of-scope MLP для гос-бота на одном VPS).
+
+Включается через `SENTRY_DSN` env-переменную. Без неё `init_sentry()`
+становится no-op; никакого вызова в Sentry нет.
+"""
+
+from aemr_bot.observability.sentry import init_sentry
+
+__all__ = ["init_sentry"]
+```
+
+### `bot/aemr_bot/observability/sentry.py`
+
+Size: `9223` bytes  
+SHA-256: `a72c96e01e2b5cee68ba07b5029776a01f2b2190357d4b1dc6efa717aa692f01`
+
+```python
+"""Sentry-обвязка с PII-фильтром для гос-бота aemr-bot.
+
+## Зачем
+
+`OP_HELP_FULL` overflow в проде не был замечен мониторингом — только
+после жалобы владельца. `docker logs` достаточно для разовой
+диагностики, но плохо ловит редкие исключения и тихие fail'ы. Sentry
+агрегирует похожие исключения, показывает частоту, traceback и
+контекст. Это **наблюдаемость без тяжёлого стека** — ELK/Loki/Grafana
+out-of-scope MLP для одного VPS на 5-7 операторов.
+
+## 152-ФЗ соблюдение
+
+Сообщения и stacktrace'ы могут случайно содержать ПДн — номер
+телефона жителя в логах при ошибке handler'а, max_user_id в
+exception'е. `before_send` хук маскирует:
+
+- `+7XXXXXXXXXX` → `+7***NNNN`
+- `max_user_id=NNN` → `max_user_id=***`
+- `phone=+7NNN` → `phone=***`
+
+Это второй слой защиты поверх `audit_log` retention 365 дней и
+GPG-encrypted backup. До Sentry такие подстроки попадали в `docker
+logs` без маскирования — теперь стираются перед отправкой.
+
+## Активация
+
+Env: `SENTRY_DSN=https://<key>@sentry.io/<project>` (или self-host
+DSN). Без env — `init_sentry()` no-op, никаких сетевых вызовов.
+
+## Self-host для гос-сервиса
+
+Sentry Server можно поднять отдельным docker-compose на VPS — все
+данные остаются в РФ. Альтернатива — sentry.io free tier (5K events
+в месяц, достаточно для бота на 200-2000 событий в день).
+"""
+
+from __future__ import annotations
+
+import logging
+import re
+from typing import Any
+
+log = logging.getLogger(__name__)
+
+
+# Регулярные выражения для PII-фильтра. Применяются по приоритету:
+# specific patterns с context (phone=, max_user_id=) ловятся раньше,
+# чтобы при последующей подстановке `+7\d{10}` не попало в уже
+# замаскированный контекст.
+_PII_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    # `phone=+7XXX` / `phone: +7XXX` — наиболее частый pattern в exc
+    # messages из handler-кода («failed to deliver phone=+7...»).
+    (
+        re.compile(r"(?i)(phone\s*[=:]\s*)\+?\d{6,}"),
+        r"\1+7***",
+    ),
+    # `max_user_id=NNN` — pattern из admin_card / admin_events
+    # debug-сообщений.
+    (
+        re.compile(r"(?i)(max_user_id\s*[=:]\s*)\d{4,}"),
+        r"\1***",
+    ),
+    # `user_id=NNN` (без max_ префикса).
+    (
+        re.compile(r"(?i)(user_id\s*[=:]\s*)\d{4,}"),
+        r"\1***",
+    ),
+    # `appeal_id=NNN` — не строго PII, но дополнительный context который
+    # Sentry-fingerprinting может использовать; маскируем для
+    # consistency.
+    (
+        re.compile(r"(?i)(appeal_id\s*[=:]\s*)\d+"),
+        r"\1***",
+    ),
+    # «голый» телефон в любом месте сообщения: `+7XXXXXXXXXX` или
+    # `89XXXXXXXXX`. Ставим в конец, чтобы более специфичные
+    # phone= / max_user_id= шаблоны сработали раньше.
+    (
+        re.compile(r"\+7\d{10}\b"),
+        "+7***NNNN",
+    ),
+    (
+        re.compile(r"\b8\d{10}\b"),
+        "8***NNNN",
+    ),
+)
+
+
+def _mask_pii(text: str) -> str:
+    """Прогнать строку через все PII-паттерны.
+
+    Идемпотентна: повторный вызов не меняет уже замаскированную строку
+    (паттерны не совпадают с уже подставленными `***`).
+    """
+    if not text:
+        return text
+    result = text
+    for pattern, replacement in _PII_PATTERNS:
+        result = pattern.sub(replacement, result)
+    return result
+
+
+def _scrub_event(event: dict[str, Any]) -> dict[str, Any]:
+    """Маскировать PII во всех текстовых полях Sentry event.
+
+    Sentry event — вложенный dict с exception messages, breadcrumbs,
+    request data, extra context. Проходим только текстовые поля
+    верхнего уровня + exception messages + breadcrumb messages, чтобы
+    не сломать структуру (numeric IDs Sentry'а, timestamps).
+    """
+    # Top-level message
+    if isinstance(event.get("message"), str):
+        event["message"] = _mask_pii(event["message"])
+
+    # Exception chain (главный traceback)
+    if isinstance(event.get("exception"), dict):
+        values = event["exception"].get("values") or []
+        for exc in values:
+            if isinstance(exc.get("value"), str):
+                exc["value"] = _mask_pii(exc["value"])
+
+    # Breadcrumbs (история до exception'а)
+    if isinstance(event.get("breadcrumbs"), dict):
+        values = event["breadcrumbs"].get("values") or []
+        for crumb in values:
+            if isinstance(crumb.get("message"), str):
+                crumb["message"] = _mask_pii(crumb["message"])
+            # data dict в breadcrumb'е может содержать произвольные ключи
+            data = crumb.get("data")
+            if isinstance(data, dict):
+                for k, v in list(data.items()):
+                    if isinstance(v, str):
+                        data[k] = _mask_pii(v)
+
+    # Extra context (заданный в коде через sentry_sdk.set_context)
+    if isinstance(event.get("extra"), dict):
+        for k, v in list(event["extra"].items()):
+            if isinstance(v, str):
+                event["extra"][k] = _mask_pii(v)
+
+    return event
+
+
+def _before_send(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
+    """Хук sentry_sdk, вызывается перед отправкой event'а на сервер.
+
+    Маскирует PII во всех текстовых полях. Возврат `None` отменяет
+    отправку (используется для дедупликации шумных категорий, если
+    появится необходимость).
+    """
+    try:
+        return _scrub_event(event)
+    except Exception:
+        # Любая ошибка в фильтре не должна ронять бот. Sentry получит
+        # пустое уведомление о сбое — но лучше так, чем silent crash
+        # в production.
+        log.exception("sentry _before_send PII scrubber failed")
+        return event
+
+
+def init_sentry(dsn: str | None, environment: str = "production") -> bool:
+    """Инициализировать Sentry если задан DSN.
+
+    Возвращает True, если инициализация состоялась. False — если DSN
+    пустой / отсутствует sentry-sdk, либо init упал. В любом случае
+    основное приложение продолжает работать (Sentry — optional слой
+    наблюдаемости, не критический путь).
+    """
+    if not dsn:
+        log.info("sentry: SENTRY_DSN не задан, наблюдаемость отключена")
+        return False
+
+    try:
+        import sentry_sdk
+    except ImportError:
+        log.warning(
+            "sentry: SENTRY_DSN задан, но sentry-sdk не установлен — "
+            "наблюдаемость отключена. `pip install sentry-sdk`."
+        )
+        return False
+
+    try:
+        sentry_sdk.init(
+            dsn=dsn,
+            environment=environment,
+            # send_default_pii=False (по умолчанию) — sentry-sdk сам
+            # не отправляет IP/cookies/user.email. Наш PII-фильтр
+            # дополняет: чистит ПДн из exception messages.
+            send_default_pii=False,
+            before_send=_before_send,
+            # Trace-sampling: 0.0 чтобы не слать ни одной транзакции —
+            # это performance monitoring, нам не нужно (overhead+quota).
+            # Только exception'ы.
+            traces_sample_rate=0.0,
+            # release не задаём — Sentry автоматически берёт из git
+            # commit SHA если CI / env GIT_COMMIT задан. Иначе
+            # помечает релиз как "unknown".
+        )
+        log.info(
+            "sentry: инициализирован для environment=%s, "
+            "PII-фильтр активирован",
+            environment,
+        )
+        return True
+    except Exception:
+        log.exception("sentry: init упал, наблюдаемость отключена")
+        return False
 ```
 
 ### `bot/aemr_bot/services/__init__.py`
@@ -28857,8 +29120,8 @@ datefmt = %H:%M:%S
 
 ### `bot/pyproject.toml`
 
-Size: `3464` bytes  
-SHA-256: `f6490a9d37ec3718a799d17c97272b1915ad385efdec108e048661760b3fff9a`
+Size: `3872` bytes  
+SHA-256: `9296863c64c826b04708d97fab077d8cdc69fc8742b1a300c0e6e097e694e172`
 
 ```toml
 [project]
@@ -28894,6 +29157,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Sentry — наблюдаемость без тяжёлого ELK/Loki стека. Опционально:
+# init_sentry() — no-op без SENTRY_DSN, и graceful fail при отсутствии
+# пакета. Прод-deploy ставит через `pip install -e .[observability]`.
+# См. aemr_bot/observability/sentry.py для подробностей.
+observability = [
+    "sentry-sdk~=2.20",
+]
 dev = [
     # pytest 8.4.2 уязвим к CVE-2025-71176; нижняя граница стоит на
     # первой исправленной версии по данным pip-audit.
@@ -47872,6 +48142,257 @@ def test_eleven_digits_starting_with_9_not_stripped() -> None:
     """11 цифр НЕ начинающихся с 7 или 8 — не РФ-format, не трогаем."""
     result = _normalize_phone("91234567890")
     assert result == "91234567890"
+```
+
+### `bot/tests/test_observability_sentry.py`
+
+Size: `10556` bytes  
+SHA-256: `95828ead268bca22a39be763043c1f9562b8a8f7a29b7e9feb5548da6f0a6837`
+
+```python
+"""Тесты PII-фильтра + init_sentry для observability/sentry.py.
+
+Sentry-sdk опционален: тестируем только нашу обвязку (PII-маскирование,
+no-op без DSN), а саму sentry-sdk мокаем.
+"""
+from __future__ import annotations
+
+import logging
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from aemr_bot.observability.sentry import (
+    _before_send,
+    _mask_pii,
+    _scrub_event,
+    init_sentry,
+)
+
+
+# ──────────────────────────────────────────────────────────────────────
+# _mask_pii — PII-фильтр на строках
+# ──────────────────────────────────────────────────────────────────────
+
+
+class TestMaskPii:
+    def test_empty_string(self) -> None:
+        assert _mask_pii("") == ""
+
+    def test_plain_text_unchanged(self) -> None:
+        assert _mask_pii("Hello world, no PII") == "Hello world, no PII"
+
+    def test_bare_phone_plus7(self) -> None:
+        assert _mask_pii("Call +79991234567 ASAP") == "Call +7***NNNN ASAP"
+
+    def test_bare_phone_starts_with_8(self) -> None:
+        assert _mask_pii("Phone 89991234567 logged") == "Phone 8***NNNN logged"
+
+    def test_phone_equals_pattern(self) -> None:
+        assert _mask_pii("Failed: phone=+79991234567") == "Failed: phone=+7***"
+
+    def test_phone_colon_pattern(self) -> None:
+        assert _mask_pii("phone: 89991234567") == "phone: +7***"
+
+    def test_max_user_id_pattern(self) -> None:
+        assert (
+            _mask_pii("Error for max_user_id=165729385 in handler")
+            == "Error for max_user_id=*** in handler"
+        )
+
+    def test_user_id_without_max_prefix(self) -> None:
+        assert _mask_pii("user_id=12345") == "user_id=***"
+
+    def test_appeal_id_pattern(self) -> None:
+        assert _mask_pii("appeal_id=42 not found") == "appeal_id=*** not found"
+
+    def test_multiple_patterns_in_one_string(self) -> None:
+        text = (
+            "Crash in handler for max_user_id=165729385 "
+            "with phone=+79991234567 — appeal_id=42"
+        )
+        result = _mask_pii(text)
+        assert "165729385" not in result
+        assert "79991234567" not in result
+        assert "appeal_id=42" not in result
+        assert "max_user_id=***" in result
+
+    def test_idempotent(self) -> None:
+        """Повторный mask не должен ничего менять."""
+        text = "phone=+79991234567 max_user_id=165729385"
+        once = _mask_pii(text)
+        twice = _mask_pii(once)
+        assert once == twice
+
+    def test_short_number_not_masked(self) -> None:
+        """4-5 цифр без PII-контекста — не телефон. Не маскируем."""
+        assert _mask_pii("Found 1234 items") == "Found 1234 items"
+
+    def test_case_insensitive_field_names(self) -> None:
+        assert _mask_pii("PHONE=+79991234567") == "PHONE=+7***"
+        assert _mask_pii("Max_User_Id=165729385") == "Max_User_Id=***"
+
+
+# ──────────────────────────────────────────────────────────────────────
+# _scrub_event — обход вложенной структуры Sentry event
+# ──────────────────────────────────────────────────────────────────────
+
+
+class TestScrubEvent:
+    def test_top_level_message_masked(self) -> None:
+        event = {"message": "Failed for max_user_id=12345"}
+        result = _scrub_event(event)
+        assert result["message"] == "Failed for max_user_id=***"
+
+    def test_exception_values_masked(self) -> None:
+        event = {
+            "exception": {
+                "values": [
+                    {"value": "phone=+79991234567 invalid"},
+                    {"value": "another error"},
+                ]
+            }
+        }
+        result = _scrub_event(event)
+        assert result["exception"]["values"][0]["value"] == "phone=+7*** invalid"
+        assert result["exception"]["values"][1]["value"] == "another error"
+
+    def test_breadcrumbs_message_masked(self) -> None:
+        event = {
+            "breadcrumbs": {
+                "values": [
+                    {"message": "callback for max_user_id=12345"},
+                    {"message": "no PII here"},
+                ]
+            }
+        }
+        result = _scrub_event(event)
+        assert (
+            result["breadcrumbs"]["values"][0]["message"]
+            == "callback for max_user_id=***"
+        )
+        assert result["breadcrumbs"]["values"][1]["message"] == "no PII here"
+
+    def test_breadcrumbs_data_dict_masked(self) -> None:
+        event = {
+            "breadcrumbs": {
+                "values": [
+                    {
+                        "message": "DB query",
+                        "data": {
+                            "query": "SELECT * FROM users WHERE phone=+79991234567",
+                            "rows": 5,
+                        },
+                    }
+                ]
+            }
+        }
+        result = _scrub_event(event)
+        data = result["breadcrumbs"]["values"][0]["data"]
+        assert "+79991234567" not in data["query"]
+        assert data["rows"] == 5  # non-string не трогаем
+
+    def test_extra_context_masked(self) -> None:
+        event = {
+            "extra": {
+                "context": "max_user_id=12345",
+                "level": "error",
+            }
+        }
+        result = _scrub_event(event)
+        assert result["extra"]["context"] == "max_user_id=***"
+        assert result["extra"]["level"] == "error"
+
+    def test_missing_fields_safe(self) -> None:
+        """Минимальный event без всех опциональных полей."""
+        result = _scrub_event({})
+        assert result == {}
+
+    def test_unexpected_types_safe(self) -> None:
+        """Поля могут быть None / int / list — не должны валить scrubber."""
+        event: dict = {
+            "message": None,
+            "exception": "not a dict",
+            "breadcrumbs": {"values": None},
+            "extra": [1, 2, 3],
+        }
+        # Не должен падать
+        result = _scrub_event(event)
+        assert result is event
+
+
+# ──────────────────────────────────────────────────────────────────────
+# _before_send — sentry hook
+# ──────────────────────────────────────────────────────────────────────
+
+
+class TestBeforeSend:
+    def test_returns_scrubbed_event(self) -> None:
+        event = {"message": "phone=+79991234567"}
+        result = _before_send(event, hint={})
+        assert result is not None
+        assert result["message"] == "phone=+7***"
+
+    def test_scrubber_exception_does_not_drop_event(self) -> None:
+        """Если scrubber падает, event всё равно возвращается (лучше
+        пропустить unscrubbed, чем потерять exception в проде)."""
+        with patch(
+            "aemr_bot.observability.sentry._scrub_event",
+            side_effect=RuntimeError("scrubber broken"),
+        ):
+            event = {"message": "something"}
+            result = _before_send(event, hint={})
+            assert result is event
+
+
+# ──────────────────────────────────────────────────────────────────────
+# init_sentry — env-toggle + graceful no-op
+# ──────────────────────────────────────────────────────────────────────
+
+
+class TestInitSentry:
+    def test_no_dsn_returns_false(self, caplog: pytest.LogCaptureFixture) -> None:
+        with caplog.at_level(logging.INFO):
+            assert init_sentry(dsn=None) is False
+            assert init_sentry(dsn="") is False
+        assert any("SENTRY_DSN не задан" in r.message for r in caplog.records)
+
+    def test_missing_sentry_sdk_returns_false(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Если sentry-sdk не установлен — init возвращает False, бот
+        работает без observability."""
+        with patch.dict("sys.modules", {"sentry_sdk": None}):
+            with caplog.at_level(logging.WARNING):
+                result = init_sentry(dsn="https://x@sentry.io/1")
+            assert result is False
+            assert any(
+                "sentry-sdk не установлен" in r.message for r in caplog.records
+            )
+
+    def test_init_with_dsn_calls_sdk(self) -> None:
+        """С DSN — sentry_sdk.init вызван с правильными параметрами."""
+        fake_sdk = MagicMock()
+        with patch.dict("sys.modules", {"sentry_sdk": fake_sdk}):
+            result = init_sentry(
+                dsn="https://abc@sentry.io/42", environment="staging"
+            )
+            assert result is True
+            fake_sdk.init.assert_called_once()
+            kwargs = fake_sdk.init.call_args.kwargs
+            assert kwargs["dsn"] == "https://abc@sentry.io/42"
+            assert kwargs["environment"] == "staging"
+            assert kwargs["send_default_pii"] is False
+            assert kwargs["traces_sample_rate"] == 0.0
+            # before_send hook подключён — это наш PII-фильтр.
+            assert kwargs["before_send"] is not None
+
+    def test_init_failure_returns_false(self) -> None:
+        """Если sentry_sdk.init упал — init_sentry не валит бот."""
+        fake_sdk = MagicMock()
+        fake_sdk.init.side_effect = RuntimeError("init broken")
+        with patch.dict("sys.modules", {"sentry_sdk": fake_sdk}):
+            assert init_sentry(dsn="https://x@sentry.io/1") is False
 ```
 
 ### `bot/tests/test_operator_reply_closed_guard.py`
@@ -68517,8 +69038,8 @@ docker compose up -d --build
 
 ### `docs/SYSADMIN.md`
 
-Size: `40922` bytes  
-SHA-256: `233f36eb6faf066dda2c636cb8684e50ef24e8954b228ff93307472daffd94e1`
+Size: `43547` bytes  
+SHA-256: `6fab5062f4eb8a2ac621e5b5a6d6bd85f105349cc3172795848e294572602547`
 
 ```markdown
 # SYSADMIN.md — операционное руководство
@@ -68811,6 +69332,33 @@ Watchdog и auto-deploy пишут через `logger -t aemr-bot-watchdog` / `-
 journalctl -t aemr-bot-watchdog -n 100 --no-pager
 journalctl -t aemr-bot-deploy -n 100 --no-pager
 ```
+
+### 9.1 Sentry (опциональная агрегация исключений)
+
+`docker logs` хороший базовый инструмент, но тихие сбои (как `OP_HELP_FULL` overflow в прошлом) ловятся только когда жалуется владелец. Sentry агрегирует похожие исключения, показывает частоту, traceback и breadcrumbs.
+
+Активация:
+
+1. Установить optional-зависимость: `pip install -e ".[observability]"` (либо добавить `sentry-sdk` в Dockerfile, если поднимаете через docker).
+2. Указать `SENTRY_DSN` в `infra/.env` (DSN получите при создании проекта в Sentry).
+3. Опционально — `SENTRY_ENVIRONMENT=staging` или `production` (по умолчанию `production`).
+4. Перезапустить бот: `docker compose restart bot`. На старте увидите `sentry: инициализирован для environment=production` в логах.
+
+Два варианта установки сервера Sentry:
+
+- **Self-host Sentry Server** отдельным docker-compose на VPS — все данные жителей остаются в РФ. Документация по установке: [develop.sentry.dev/self-hosted](https://develop.sentry.dev/self-hosted/).
+- **sentry.io free tier** — 5K events в месяц. Достаточно для бота на 200-2000 событий в день. Подходит, если уровень secure посылается фильтр PII (см. ниже).
+
+**Защита 152-ФЗ.** Перед отправкой каждого event'а в Sentry бот пропускает все сообщения и breadcrumbs через PII-фильтр (`aemr_bot/observability/sentry.py:_before_send`):
+
+- Телефоны `+7XXXXXXXXXX` или `8XXXXXXXXXX` → `+7***NNNN` / `8***NNNN`.
+- `phone=+7XXX` / `phone: +7XXX` → `phone=+7***`.
+- `max_user_id=NNN` / `user_id=NNN` → `max_user_id=***`.
+- `appeal_id=NNN` → `appeal_id=***`.
+
+Это второй слой защиты поверх audit_log retention 365 дней и GPG-encrypted backup'ов. Фильтр идемпотентен — повторный прогон не меняет уже замаскированную строку.
+
+Если `SENTRY_DSN` не задан — `init_sentry()` no-op, никаких сетевых вызовов. Если `sentry-sdk` не установлен — graceful warning в логах, бот продолжает работать.
 
 ## 10. Бэкап и восстановление
 
@@ -69770,8 +70318,8 @@ SHA-256: `40c9ae7d1e6db688b2acda3e1b77359bf6d6fa9dce1fefc8c4395aea58784630`
 
 ### `infra/.env.example`
 
-Size: `62450` bytes  
-SHA-256: `13d527d58664b4bc88998fdfec056632b49ef210a510c0fe6b11b0262c638dd0`
+Size: `64253` bytes  
+SHA-256: `958f9d41bd77e83380fdcd10af53248c09afeb8ed28fb31fa2227a832e30754a`
 
 ```text
 # =====================================================================
@@ -70211,6 +70759,37 @@ RECOVER_BATCH_SIZE=1000
 # Что произойдёт, если оставить пустым: применится INFO.
 
 LOG_LEVEL=INFO
+
+
+# =====================================================================
+#  Наблюдаемость: Sentry для агрегации исключений
+# =====================================================================
+#
+# SENTRY_DSN — адрес проекта в Sentry. Если оставить пустым,
+# наблюдаемость отключена (бот работает без него полностью). С DSN
+# каждое необработанное исключение в боте уходит в Sentry, где их
+# можно агрегировать, видеть частоту и стектрейс.
+#
+# Зачем это нужно: тихие сбои (типа OP_HELP_FULL overflow раньше)
+# до Sentry находились только когда жалуется владелец. С Sentry
+# админ видит проблему в течение минут.
+#
+# Защита 152-ФЗ: перед отправкой в Sentry бот пропускает все
+# сообщения через PII-фильтр — номер телефона маскируется в
+# «+7***NNNN», max_user_id и appeal_id заменяются на «***».
+# См. aemr_bot/observability/sentry.py.
+#
+# Два варианта установки:
+#   1. Self-host Sentry Server отдельным docker-compose на VPS
+#      (все данные остаются в РФ).
+#   2. sentry.io free tier (5K events в месяц, достаточно для
+#      бота на 200-2000 событий в день).
+#
+# Что произойдёт, если оставить пустым: наблюдаемость отключена,
+# бот пишет ошибки только в `docker logs aemr-bot`.
+
+SENTRY_DSN=
+SENTRY_ENVIRONMENT=production
 
 
 # =====================================================================
