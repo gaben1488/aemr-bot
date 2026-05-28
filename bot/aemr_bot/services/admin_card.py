@@ -175,7 +175,7 @@ async def render(
     _ = force_new  # noqa: F841 — тоже совместимость; теперь всегда send_new
 
     text_for_send = (
-        f"{event_header}\n────────────────\n{text}"
+        f"{event_header}\n· · · · · · · ·\n{text}"
         if event_header
         else text
     )

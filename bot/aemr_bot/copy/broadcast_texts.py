@@ -34,9 +34,9 @@ OP_BROADCAST_NO_SUBSCRIBERS = (
 )
 OP_BROADCAST_PREVIEW = (
     "Предпросмотр рассылки\n"
-    "────────────────\n"
+    "· · · · · · · ·\n"
     "{text}\n"
-    "────────────────\n"
+    "· · · · · · · ·\n"
     "📷 Картинок: {image_count}{image_warning}\n"
     "Готово к отправке. Получателей: {count}."
 )
@@ -81,7 +81,7 @@ OP_BROADCAST_CARD = (
     "Создана: {created_at}\n"
     "Доставлено: {delivered}/{total}{failed_line}\n"
     "Картинок: {image_count}\n"
-    "──────────\n"
+    "· · · · · · · ·\n"
     "{text}"
 )
 OP_BROADCAST_CARD_FAILED_LINE = "\nНе доставлено: {failed}"

@@ -95,7 +95,7 @@ def _render_timeline(
     )
     hidden_count = max(0, len(ordered) - _TIMELINE_MAX_MESSAGES)
     visible = ordered[-_TIMELINE_MAX_MESSAGES:]
-    lines = ["────────────────", "История переписки:"]
+    lines = ["· · · · · · · ·", "История переписки:"]
     if hidden_count:
         lines.append(f"Ранее ещё {hidden_count} сообщений (скрыты).")
     for msg in visible:

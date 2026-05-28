@@ -284,7 +284,7 @@ async def _apply(event, template_id: int) -> None:
     )
     citation_footer = (
         f"📋 Источник: шаблон «{tmpl.name}»\n"
-        f"────────────────\n"
+        f"· · · · · · · ·\n"
     )
     body = citation_footer + texts.OP_BROADCAST_PREVIEW.format(
         text=tmpl.text,
