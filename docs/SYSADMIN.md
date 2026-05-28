@@ -462,6 +462,49 @@ sudo bash /home/aemr/aemr-bot/scripts/audit_vps.sh
 
 Архив безопасно прислать в чат или приложить к тикету.
 
+## 13a. Сетевая изоляция (опционально)
+
+Бот в проде делает исходящие запросы строго на ограниченный список доменов: MAX API (`botapi.max.ru`, `platform-api.max.ru`), GitHub (auto-deploy `git pull`), healthchecks-сервис (если задан `HEALTHCHECK_URL`), abuse.ch и PhishTank (threat-intel). Всё остальное — потенциальная утечка PII или признак компрометации.
+
+Если требуется иметь жёсткий outbound-whitelist через `iptables`:
+
+```bash
+# Базовое правило: запретить весь outbound, разрешать только нужное
+sudo iptables -P OUTPUT DROP
+sudo iptables -A OUTPUT -o lo -j ACCEPT
+sudo iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# DNS на 8.8.8.8 / 1.1.1.1 (или внутренний DNS муниципалитета)
+sudo iptables -A OUTPUT -p udp --dport 53 -d 8.8.8.8 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --dport 53 -d 1.1.1.1 -j ACCEPT
+
+# MAX API + GitHub + healthchecks-сервис + threat-intel
+# (используйте `dig +short` для актуальных IP — они могут меняться)
+for host in botapi.max.ru platform-api.max.ru \
+           github.com api.github.com codeload.github.com \
+           hc-ping.com healthchecks.io \
+           urlhaus.abuse.ch threatfox.abuse.ch data.phishtank.com; do
+  for ip in $(dig +short A "$host"); do
+    sudo iptables -A OUTPUT -p tcp -d "$ip" --dport 443 -j ACCEPT
+  done
+done
+
+# NTP синхронизация времени
+sudo iptables -A OUTPUT -p udp --dport 123 -j ACCEPT
+
+# Сохранить
+sudo iptables-save | sudo tee /etc/iptables/rules.v4
+```
+
+Подводные камни:
+
+- IP-адреса CDN меняются — нужно либо пересоздавать правила раз в неделю по cron, либо использовать `nftables` с динамическим resolution.
+- Если включён GPG-encrypted S3-бэкап — добавить endpoint S3 в whitelist.
+- Локальный repo-sync (auto-deploy) дёргает `github.com` каждые 10 минут — нельзя блокировать его, иначе деплои встанут.
+- После изменений проверить: `/livez`, `/readyz`, `/diag` в админ-чате.
+
+В нашей текущей инсталляции **iptables outbound не включён** — VPS обслуживает только бот, риск утечки минимальный. Включаем при появлении других сервисов на той же машине.
+
 ## 14. Типичные проблемы и куда смотреть
 
 **Бот молчит, в служебной группе тишина**. Сначала `/livez`. Если 200 — процесс жив, проблема в MAX-сессии или сети. Если 5xx или таймаут — `docker compose logs --tail 200 bot`.
