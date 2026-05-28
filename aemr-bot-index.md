@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-28 00:40:30 UTC`
+Generated at: `2026-05-28 00:55:07 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `272`
 Max file size: `300 KB`
@@ -260,14 +260,14 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/RUNBOOK_PDN_ERASURE.md` (11320 bytes)
 - `docs/SECURITY.md` (53202 bytes)
 - `docs/SETUP.md` (40625 bytes)
-- `docs/SYSADMIN.md` (43547 bytes)
+- `docs/SYSADMIN.md` (43776 bytes)
 - `docs/VPS_SMOKE_CHECKLIST.md` (5736 bytes)
 - `docs/Политика.md` (6113 bytes)
 - `docs/Политика_v2.md` (30510 bytes)
 - `docs/Регламент_v8_draft.md` (50220 bytes)
 - `infra/.env.example` (64253 bytes)
 - `infra/docker-compose.yml` (5867 bytes)
-- `infra/Dockerfile` (1655 bytes)
+- `infra/Dockerfile` (2082 bytes)
 - `infra/nginx/feedback.conf` (976 bytes)
 - `README.md` (20958 bytes)
 - `REPO_INDEX.md` (2264 bytes)
@@ -69347,8 +69347,8 @@ docker compose up -d --build
 
 ### `docs/SYSADMIN.md`
 
-Size: `43547` bytes  
-SHA-256: `6fab5062f4eb8a2ac621e5b5a6d6bd85f105349cc3172795848e294572602547`
+Size: `43776` bytes  
+SHA-256: `145bc0244bb2a50ff133f4affa0b339c74c482fdd8e0df343285c9b850f632a2`
 
 ```markdown
 # SYSADMIN.md — операционное руководство
@@ -69648,10 +69648,13 @@ journalctl -t aemr-bot-deploy -n 100 --no-pager
 
 Активация:
 
-1. Установить optional-зависимость: `pip install -e ".[observability]"` (либо добавить `sentry-sdk` в Dockerfile, если поднимаете через docker).
-2. Указать `SENTRY_DSN` в `infra/.env` (DSN получите при создании проекта в Sentry).
-3. Опционально — `SENTRY_ENVIRONMENT=staging` или `production` (по умолчанию `production`).
-4. Перезапустить бот: `docker compose restart bot`. На старте увидите `sentry: инициализирован для environment=production` в логах.
+1. Указать `SENTRY_DSN` в `infra/.env` (DSN получите при создании проекта в Sentry).
+2. Опционально — `SENTRY_ENVIRONMENT=staging` или `production` (по умолчанию `production`).
+3. Пересобрать и перезапустить бот: `docker compose up -d --build bot`. На старте увидите `sentry: инициализирован для environment=production` в логах.
+
+`sentry-sdk` уже включён в Docker-образ через optional-dependency `[observability]` в `infra/Dockerfile`. Без `SENTRY_DSN` — `init_sentry()` no-op, никаких сетевых вызовов; бот работает без observability.
+
+Для локальной разработки вне docker: `pip install -e ".[observability]"` в `bot/` каталоге.
 
 Два варианта установки сервера Sentry:
 
@@ -71745,8 +71748,8 @@ volumes:
 
 ### `infra/Dockerfile`
 
-Size: `1655` bytes  
-SHA-256: `789e30bc6f4047d1db3c93cf088e34218de6cac9b976110c01cb91fa53948fdb`
+Size: `2082` bytes  
+SHA-256: `f33a1fca367f6bb03d1c7a5252c70117c77193f22b149455053e37fff9a48936`
 
 ```dockerfile
 FROM python:3.12-slim@sha256:4386a385d81dba9f72ed72a6fe4237755d7f5440c84b417650f38336bbc43117
@@ -71772,7 +71775,12 @@ RUN groupadd --system --gid 1000 botuser \
 WORKDIR /app
 
 COPY bot/pyproject.toml /app/pyproject.toml
-RUN pip install --upgrade pip && pip install -e /app
+# `[observability]` ставит sentry-sdk. Без DSN в `.env` он сам no-op
+# через `aemr_bot/observability/sentry.py::init_sentry`; с DSN —
+# агрегирует exception'ы с PII-фильтром (152-ФЗ). Optional-deps
+# подключены сразу, чтобы перезапуск с заполненным SENTRY_DSN
+# заработал без пересборки образа.
+RUN pip install --upgrade pip && pip install -e "/app[observability]"
 
 COPY bot/aemr_bot /app/aemr_bot
 COPY bot/alembic.ini /app/alembic.ini
