@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-28 00:16:42 UTC`
+Generated at: `2026-05-28 00:16:58 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `268`
 Max file size: `300 KB`
@@ -28858,7 +28858,7 @@ datefmt = %H:%M:%S
 ### `bot/pyproject.toml`
 
 Size: `3464` bytes  
-SHA-256: `0ead6cccd90ea32309a13b7983c49b1d9dc765bf662237121541fef403f923a7`
+SHA-256: `f6490a9d37ec3718a799d17c97272b1915ad385efdec108e048661760b3fff9a`
 
 ```toml
 [project]
@@ -28876,7 +28876,7 @@ dependencies = [
     # starlette<0.49.0 — fix невозможен.
     # Верхняя граница `<0.136` исключает 0.136.3 (MAL-2026-4750:
     # dependency-confusion typosquat «fastar» в [standard] extras).
-    "fastapi>=0.118,<0.136",
+    "fastapi>=0.118,<0.137",
     "uvicorn[standard]~=0.32",
     "sqlalchemy~=2.0",
     "asyncpg~=0.30",
