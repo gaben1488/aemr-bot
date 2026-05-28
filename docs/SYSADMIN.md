@@ -289,36 +289,6 @@ journalctl -t aemr-bot-watchdog -n 100 --no-pager
 journalctl -t aemr-bot-deploy -n 100 --no-pager
 ```
 
-### 9.1 Sentry (опциональная агрегация исключений)
-
-`docker logs` хороший базовый инструмент, но тихие сбои (как `OP_HELP_FULL` overflow в прошлом) ловятся только когда жалуется владелец. Sentry агрегирует похожие исключения, показывает частоту, traceback и breadcrumbs.
-
-Активация:
-
-1. Указать `SENTRY_DSN` в `infra/.env` (DSN получите при создании проекта в Sentry).
-2. Опционально — `SENTRY_ENVIRONMENT=staging` или `production` (по умолчанию `production`).
-3. Пересобрать и перезапустить бот: `docker compose up -d --build bot`. На старте увидите `sentry: инициализирован для environment=production` в логах.
-
-`sentry-sdk` уже включён в Docker-образ через optional-dependency `[observability]` в `infra/Dockerfile`. Без `SENTRY_DSN` — `init_sentry()` no-op, никаких сетевых вызовов; бот работает без observability.
-
-Для локальной разработки вне docker: `pip install -e ".[observability]"` в `bot/` каталоге.
-
-Два варианта установки сервера Sentry:
-
-- **Self-host Sentry Server** отдельным docker-compose на VPS — все данные жителей остаются в РФ. Документация по установке: [develop.sentry.dev/self-hosted](https://develop.sentry.dev/self-hosted/).
-- **sentry.io free tier** — 5K events в месяц. Достаточно для бота на 200-2000 событий в день. Подходит, если уровень secure посылается фильтр PII (см. ниже).
-
-**Защита 152-ФЗ.** Перед отправкой каждого event'а в Sentry бот пропускает все сообщения и breadcrumbs через PII-фильтр (`aemr_bot/observability/sentry.py:_before_send`):
-
-- Телефоны `+7XXXXXXXXXX` или `8XXXXXXXXXX` → `+7***NNNN` / `8***NNNN`.
-- `phone=+7XXX` / `phone: +7XXX` → `phone=+7***`.
-- `max_user_id=NNN` / `user_id=NNN` → `max_user_id=***`.
-- `appeal_id=NNN` → `appeal_id=***`.
-
-Это второй слой защиты поверх audit_log retention 365 дней и GPG-encrypted backup'ов. Фильтр идемпотентен — повторный прогон не меняет уже замаскированную строку.
-
-Если `SENTRY_DSN` не задан — `init_sentry()` no-op, никаких сетевых вызовов. Если `sentry-sdk` не установлен — graceful warning в логах, бот продолжает работать.
-
 ## 10. Бэкап и восстановление
 
 ### 10.1 Что бэкапится
