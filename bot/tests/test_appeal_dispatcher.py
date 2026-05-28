@@ -256,7 +256,13 @@ class TestCallbackCancel:
         event.bot.send_message.assert_called_once()
         sent_text = event.bot.send_message.call_args.kwargs["text"]
         # Явный stale-feedback вместо «Действие отменено».
-        assert "уже неактуальна" in sent_text or "уже отправлено" in sent_text
+        # 2026-05-28: текст переписан без IT-жаргона («воронка»).
+        # Канон-фразы: «уже не нужна» (start) либо «отправлено, либо
+        # отменено» (mid).
+        assert (
+            "уже не нужна" in sent_text
+            or "отправлено, либо отменено" in sent_text
+        )
         assert "Действие отменено" not in sent_text
 
 
