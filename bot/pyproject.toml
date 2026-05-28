@@ -31,6 +31,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Sentry — наблюдаемость без тяжёлого ELK/Loki стека. Опционально:
+# init_sentry() — no-op без SENTRY_DSN, и graceful fail при отсутствии
+# пакета. Прод-deploy ставит через `pip install -e .[observability]`.
+# См. aemr_bot/observability/sentry.py для подробностей.
+observability = [
+    "sentry-sdk~=2.20",
+]
 dev = [
     # pytest 8.4.2 уязвим к CVE-2025-71176; нижняя граница стоит на
     # первой исправленной версии по данным pip-audit.
