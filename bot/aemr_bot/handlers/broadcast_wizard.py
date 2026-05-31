@@ -304,6 +304,15 @@ async def _handle_confirm(event) -> None:
     if state is None or state.step != "awaiting_confirm" or state.expired():
         await ack_callback(event, "Мастер закрыт.")
         return
+    # SECURITY (audit 2026-05-28): повторная проверка роли на confirm.
+    # Между _start_wizard (требует IT/COORDINATOR) и нажатием
+    # «Разослать» оператора могли понизить в роли. get_operator
+    # фильтрует только is_active, не роль — поэтому пере-проверяем
+    # явно, чтобы понижённый оператор не выпустил рассылку. Состояние
+    # мастера уже снято (pop выше) — незаконный черновик отбрасываем.
+    # _ensure_role сам делает ack и шлёт текст-отказ.
+    if not await _ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        return
     # ack с фидбеком: оператор сразу видит «принято», broadcast wizard
     # переходит в подготовку. Без notification ack — тихий, оператор
     # тапает «Отправить» и думает, ушла ли команда.
