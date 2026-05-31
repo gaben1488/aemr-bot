@@ -32,6 +32,7 @@ from aemr_bot.utils.event import get_user_id, send_or_edit_screen
 from aemr_bot.handlers.broadcast_templates_state import (
     _TmplWizardState,
     _drop_expired,
+    _validate_tmpl_name,
     _wizards,
 )
 
@@ -79,17 +80,9 @@ async def _step_rename(
     *,
     op_id: int | None,
 ) -> bool:
-    if not text:
+    if (err := _validate_tmpl_name(text)) is not None:
         await event.message.answer(
-            texts.OP_TMPL_NAME_EMPTY,
-            attachments=[keyboards.broadcast_template_cancel_keyboard()],
-        )
-        return True
-    if len(text) > templates_service.MAX_NAME_LEN:
-        await event.message.answer(
-            texts.OP_TMPL_NAME_TOO_LONG.format(
-                actual=len(text), limit=templates_service.MAX_NAME_LEN
-            ),
+            err,
             attachments=[keyboards.broadcast_template_cancel_keyboard()],
         )
         return True
@@ -191,17 +184,9 @@ async def _step_clone_name(
 ) -> bool:
     """Принять имя для клона; создать шаблон сразу (text+attachments
     уже в pending_*, превью не нужен — это копия)."""
-    if not text:
+    if (err := _validate_tmpl_name(text)) is not None:
         await event.message.answer(
-            texts.OP_TMPL_NAME_EMPTY,
-            attachments=[keyboards.broadcast_template_cancel_keyboard()],
-        )
-        return True
-    if len(text) > templates_service.MAX_NAME_LEN:
-        await event.message.answer(
-            texts.OP_TMPL_NAME_TOO_LONG.format(
-                actual=len(text), limit=templates_service.MAX_NAME_LEN
-            ),
+            err,
             attachments=[keyboards.broadcast_template_cancel_keyboard()],
         )
         return True

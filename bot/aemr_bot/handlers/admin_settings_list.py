@@ -13,6 +13,7 @@ from __future__ import annotations
 from aemr_bot import keyboards as kbds
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers.admin_settings_shared import _parse_key_idx
 from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
 from aemr_bot.utils.event import send_or_edit_screen
@@ -49,14 +50,10 @@ async def _show_list_card(event, key: str) -> None:
 
 async def _list_delete(event, operator_id: int, suffix: str) -> None:
 
-    parts = suffix.split(":", 1)
-    if len(parts) != 2:
+    parsed = _parse_key_idx(suffix)
+    if parsed is None:
         return
-    key, idx_str = parts[0], parts[1]
-    try:
-        idx = int(idx_str)
-    except ValueError:
-        return
+    key, idx = parsed
     async with session_scope() as session:
         items = await settings_store.get(session, key) or []
         if not isinstance(items, list) or idx < 0 or idx >= len(items):
@@ -88,7 +85,15 @@ async def _list_delete(event, operator_id: int, suffix: str) -> None:
 
 async def _apply_list_add(
     event, operator_id: int, key: str, new_text: str
-) -> None:
+) -> bool:
+    """Добавить строку в список через intent.
+
+    Возвращает True, если строка добавлена; False — если ввод отклонён
+    (пустая строка / дубль / нарушение лимита по validate) и показана
+    ошибка с cancel-клавиатурой. На False перехватчик
+    `handle_settings_edit_text` сохраняет intent, чтобы оператор мог
+    прислать корректную строку следующим сообщением.
+    """
 
     if len(new_text) < 1:
         await event.bot.send_message(
@@ -96,7 +101,7 @@ async def _apply_list_add(
             text="❌ Пустая строка.",
             attachments=[kbds.op_settings_text_cancel_keyboard(key)],
         )
-        return
+        return False
     async with session_scope() as session:
         items = await settings_store.get(session, key) or []
         if not isinstance(items, list):
@@ -107,7 +112,7 @@ async def _apply_list_add(
                 text="❌ Такая запись уже есть.",
                 attachments=[kbds.op_settings_text_cancel_keyboard(key)],
             )
-            return
+            return False
         items.append(new_text)
         ok, msg = settings_store.validate(key, items)
         if not ok:
@@ -116,7 +121,7 @@ async def _apply_list_add(
                 text=f"❌ {msg}",
                 attachments=[kbds.op_settings_text_cancel_keyboard(key)],
             )
-            return
+            return False
         await settings_store.set_value(session, key, items)
         await ops_svc.write_audit(
             session,
@@ -126,3 +131,4 @@ async def _apply_list_add(
             details={"added": new_text},
         )
     await _show_list_card(event, key)
+    return True

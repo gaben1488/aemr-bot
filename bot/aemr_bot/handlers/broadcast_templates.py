@@ -56,17 +56,17 @@ from aemr_bot.utils.event import (
 from aemr_bot.handlers._auth import get_operator
 
 # ---- разделяемое ядро (state + dedupe + helpers) ---------------------
+# Re-export'ятся только символы, которые читаются через фасад
+# (`bt._wizards` / `bt._TmplWizardState` / dedupe-helpers в
+# характеризационных тестах). `_drop_expired`/`_format_dt`/`WizardStep`/
+# TTL-/window-константы подмодули берут напрямую из state — здесь не
+# реэкспортируются (0 читателей `broadcast_templates.<symbol>`).
 from aemr_bot.handlers.broadcast_templates_state import (  # noqa: F401
-    _APPLY_DEDUPE_WINDOW_SEC,
     _TmplWizardState,
-    _WIZARD_TTL_SEC,
     _apply_dedupe,
-    _drop_expired,
-    _format_dt,
     _is_recent_apply,
     _mark_apply,
     _wizards,
-    WizardStep,
 )
 
 # ---- чтение/применение (list / open / apply / search) ----------------

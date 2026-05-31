@@ -40,17 +40,14 @@ Inline-редактирование текстов и URL идёт через TT
 """
 from __future__ import annotations
 
-import json  # noqa: F401  # historически в namespace фасада
+import json  # noqa: F401  # `_show_expert_key` рендерит значение через json.dumps
 import logging
-import os  # noqa: F401  # historически в namespace фасада
-from typing import Any  # noqa: F401  # historически в namespace фасада
 
 from aemr_bot import keyboards as kbds
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
-from aemr_bot.services import operators as ops_svc  # noqa: F401  # re-export для тестов
 from aemr_bot.services import settings_store
 from aemr_bot.utils.event import ack_callback, get_user_id, send_or_edit_screen
 
@@ -58,9 +55,11 @@ from aemr_bot.utils.event import ack_callback, get_user_id, send_or_edit_screen
 # `mod._edit_intents` / `mod._intent_set` / `from ...admin_settings import
 # _clip_audit_value` в тестах продолжают резолвиться. Это ссылки на те же
 # объекты, что использует shared-модуль (общий мутабельный dict).
+# `_clip_audit_value` / `_render_value` re-export'ятся ради
+# test_admin_settings_handlers / test_admin_settings_audit, которые
+# импортируют их из этого фасада (вместе с `_AUDIT_VALUE_CLIP_LEN`).
 from aemr_bot.handlers.admin_settings_shared import (  # noqa: F401
     _AUDIT_VALUE_CLIP_LEN,
-    _EDIT_INTENT_TTL_SEC,
     _clip_audit_value,
     _edit_intents,
     _intent_drop,
@@ -360,21 +359,27 @@ async def handle_settings_edit_text(event, text: str) -> bool:
     kind = intent["kind"]
     new_text = text.strip()
 
+    # Intent снимаем ТОЛЬКО когда `_apply_*` вернул True (значение
+    # применено). На False ввод отклонён валидатором — apply уже показал
+    # ошибку + cancel-клавиатуру; intent сохраняется, чтобы следующее
+    # сообщение оператора было перехвачено как повторная попытка (иначе
+    # «🌙 Час начала» → `99` → ошибка → `18` уходил бы в пустоту). В обоих
+    # случаях сообщение поглощено (return True) — оно адресовано wizard'у.
     if kind == "single":
-        await _apply_single_edit(event, operator_id, key, new_text)
-        _intent_drop(operator_id)
+        if await _apply_single_edit(event, operator_id, key, new_text):
+            _intent_drop(operator_id)
         return True
     if kind == "list_add":
-        await _apply_list_add(event, operator_id, key, new_text)
-        _intent_drop(operator_id)
+        if await _apply_list_add(event, operator_id, key, new_text):
+            _intent_drop(operator_id)
         return True
     if kind == "obj_add":
-        await _apply_obj_add(event, operator_id, key, new_text)
-        _intent_drop(operator_id)
+        if await _apply_obj_add(event, operator_id, key, new_text):
+            _intent_drop(operator_id)
         return True
     if kind == "quiet_hour":
         which = intent.get("which", "start")
-        await _apply_quiet_hour_edit(event, operator_id, which, new_text)
-        _intent_drop(operator_id)
+        if await _apply_quiet_hour_edit(event, operator_id, which, new_text):
+            _intent_drop(operator_id)
         return True
     return False

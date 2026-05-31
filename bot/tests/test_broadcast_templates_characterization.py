@@ -826,6 +826,35 @@ class TestStepEdit:
         assert 7 not in bt._wizards
         assert event.message.answer.await_args.args[0] == texts.OP_TMPL_NOT_FOUND
 
+    @pytest.mark.asyncio
+    async def test_target_id_none_with_text_returns_false_drops_wizard(
+        self,
+    ) -> None:
+        """Граничный кейс: непустой валидный текст, но `state.target_id`
+        is None (битый/устаревший state). `_step_edit` дропает wizard и
+        возвращает False — caller (handle_wizard_text) делает
+        fallthrough, сообщение НЕ поглощается. Закрепляем текущий
+        контракт: ни session_scope, ни message.answer не дёргаются —
+        ранний guard ДО обращения к БД."""
+        event = _make_event(user_id=7)
+        bt._wizards[7] = bt._TmplWizardState(
+            step="edit_awaiting_text", target_id=None
+        )
+        state = bt._wizards[7]
+        get_by_id = AsyncMock()
+        with patch(f"{_WIZ}.session_scope", _fake_session_scope), \
+             patch(f"{_WIZ}.broadcast_handler._resolve_broadcast_max_images",
+                   AsyncMock(return_value=5)), \
+             patch(f"{_WIZ}.templates_service.get_by_id", get_by_id):
+            consumed = await bt._step_edit(
+                event, 7, state, "какой-то текст", op_id=99
+            )
+        assert consumed is False
+        # Wizard снят, к БД не обращались, оператору ничего не ответили.
+        assert 7 not in bt._wizards
+        get_by_id.assert_not_awaited()
+        event.message.answer.assert_not_awaited()
+
 
 # ══════════════════════════════════════════════════════════════════════
 # 9. _save_edit — wrong-state guard, TemplateNotFound, happy-path

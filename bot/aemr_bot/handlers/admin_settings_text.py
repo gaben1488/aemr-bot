@@ -109,7 +109,15 @@ async def _start_edit_intent(event, operator_id: int, key: str) -> None:
 
 async def _apply_single_edit(
     event, operator_id: int, key: str, new_text: str
-) -> None:
+) -> bool:
+    """Применить новое значение текст/URL-ключа (и commit_author_*) с
+    записью before→after в audit_log.
+
+    Возвращает True, если значение применено; False — если validate
+    отклонил ввод (показана ошибка + cancel-клавиатура). На False
+    перехватчик `handle_settings_edit_text` сохраняет intent, чтобы
+    оператор мог прислать исправленное значение следующим сообщением.
+    """
 
     ok, msg = settings_store.validate(key, new_text)
     if not ok:
@@ -118,7 +126,7 @@ async def _apply_single_edit(
             text=f"❌ {msg}",
             attachments=[kbds.op_settings_text_cancel_keyboard(key)],
         )
-        return
+        return False
     async with session_scope() as session:
         old_value = await settings_store.get(session, key)
         await settings_store.set_value(session, key, new_text)
@@ -141,3 +149,4 @@ async def _apply_single_edit(
         await _show_author_card(event)
     else:
         await _show_text_card(event, key)
+    return True

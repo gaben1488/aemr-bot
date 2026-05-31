@@ -19,11 +19,13 @@ from aemr_bot.utils.event import send_or_edit_screen
 # intent на добавление объекта ставится здесь (`_start_obj_add`),
 # поэтому нужен `_intent_set` из общего модуля. `_edit_intents` /
 # `_intent_get` реэкспортируются для тестов `TestStartObjAdd`, которые
-# патчат/читают intent-кэш «по месту» на этом подмодуле.
+# патчат/читают intent-кэш «по месту» на этом подмодуле. `_parse_key_idx`
+# — общий парсер callback-суффикса «<key>:<idx>» (просмотр/удаление).
 from aemr_bot.handlers.admin_settings_shared import (  # noqa: F401
     _edit_intents,
     _intent_get,
     _intent_set,
+    _parse_key_idx,
 )
 
 
@@ -73,14 +75,10 @@ async def _show_obj_card(event, key: str) -> None:
 
 async def _show_obj_item(event, suffix: str) -> None:
 
-    parts = suffix.split(":", 1)
-    if len(parts) != 2:
+    parsed = _parse_key_idx(suffix)
+    if parsed is None:
         return
-    key, idx_str = parts[0], parts[1]
-    try:
-        idx = int(idx_str)
-    except ValueError:
-        return
+    key, idx = parsed
     async with session_scope() as session:
         items = await settings_store.get(session, key) or []
     if idx < 0 or idx >= len(items):
@@ -126,14 +124,10 @@ async def _start_obj_add(event, operator_id: int, key: str) -> None:
 
 async def _obj_delete(event, operator_id: int, suffix: str) -> None:
 
-    parts = suffix.split(":", 1)
-    if len(parts) != 2:
+    parsed = _parse_key_idx(suffix)
+    if parsed is None:
         return
-    key, idx_str = parts[0], parts[1]
-    try:
-        idx = int(idx_str)
-    except ValueError:
-        return
+    key, idx = parsed
     async with session_scope() as session:
         items = await settings_store.get(session, key) or []
         if not isinstance(items, list) or idx < 0 or idx >= len(items):
@@ -165,7 +159,16 @@ async def _obj_delete(event, operator_id: int, suffix: str) -> None:
 
 async def _apply_obj_add(
     event, operator_id: int, key: str, new_text: str
-) -> None:
+) -> bool:
+    """Распарсить строки ввода в dict-item и добавить в список объектов.
+
+    Возвращает True, если запись добавлена; False — если ввод отклонён
+    (меньше двух строк / ключ не поддерживает формат / нарушение
+    validate, включая формат телефона) и показана ошибка с cancel-
+    клавиатурой. На False перехватчик `handle_settings_edit_text`
+    сохраняет intent, чтобы оператор мог прислать корректные строки
+    следующим сообщением.
+    """
 
     lines = [ln.strip() for ln in new_text.split("\n") if ln.strip()]
     if len(lines) < 2:
@@ -174,7 +177,7 @@ async def _apply_obj_add(
             text="❌ Нужно две строки (название/маршруты и телефон).",
             attachments=[kbds.op_settings_text_cancel_keyboard(key)],
         )
-        return
+        return False
     if key == "emergency_contacts":
         # Третья строка — необязательный раздел (Экстренные службы,
         # Электроэнергия, Отопление и т.п.). Если оператор её прислал,
@@ -191,7 +194,7 @@ async def _apply_obj_add(
             text=f"❌ Ключ «{key}» не поддерживает добавление через две строки.",
             attachments=[kbds.op_settings_text_cancel_keyboard(key)],
         )
-        return
+        return False
     async with session_scope() as session:
         items = await settings_store.get(session, key) or []
         if not isinstance(items, list):
@@ -204,7 +207,7 @@ async def _apply_obj_add(
                 text=f"❌ {msg}",
                 attachments=[kbds.op_settings_text_cancel_keyboard(key)],
             )
-            return
+            return False
         await settings_store.set_value(session, key, items)
         await ops_svc.write_audit(
             session,
@@ -214,3 +217,4 @@ async def _apply_obj_add(
             details={"added": item},
         )
     await _show_obj_card(event, key)
+    return True

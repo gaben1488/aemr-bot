@@ -23,7 +23,9 @@ import time
 from dataclasses import dataclass, field
 from typing import Literal
 
+from aemr_bot import texts
 from aemr_bot.config import settings as cfg
+from aemr_bot.services import broadcast_templates as templates_service
 
 
 _WIZARD_TTL_SEC = 600  # 10 минут — те же лимиты, что у broadcast wizard
@@ -86,6 +88,23 @@ def _format_dt(dt) -> str:
     return dt.astimezone(ZoneInfo(cfg.timezone)).strftime("%d.%m.%Y %H:%M")
 
 
+def _validate_tmpl_name(text: str) -> str | None:
+    """Проверить имя шаблона: непустое и в пределах MAX_NAME_LEN.
+
+    Единая точка валидации имени для всех wizard-шагов, спрашивающих имя
+    (создание, переименование, клон). Возвращает готовый текст ошибки для
+    показа оператору либо None, если имя валидно. Тексты и лимит —
+    те же, что были инлайн в каждом шаге (NAME_EMPTY / NAME_TOO_LONG).
+    """
+    if not text:
+        return texts.OP_TMPL_NAME_EMPTY
+    if len(text) > templates_service.MAX_NAME_LEN:
+        return texts.OP_TMPL_NAME_TOO_LONG.format(
+            actual=len(text), limit=templates_service.MAX_NAME_LEN
+        )
+    return None
+
+
 # ---- apply double-tap dedupe -----------------------------------------
 
 # P3 #25 — double-tap dedupe для apply. MAX иногда задваивает callback
@@ -99,22 +118,18 @@ _APPLY_DEDUPE_WINDOW_SEC = 3.0
 
 
 def _is_recent_apply(actor_id: int, template_id: int) -> bool:
-    import time as _time
-
     key = (actor_id, template_id)
     prev = _apply_dedupe.get(key)
     if prev is None:
         return False
-    return _time.monotonic() - prev < _APPLY_DEDUPE_WINDOW_SEC
+    return time.monotonic() - prev < _APPLY_DEDUPE_WINDOW_SEC
 
 
 def _mark_apply(actor_id: int, template_id: int) -> None:
-    import time as _time
-
-    _apply_dedupe[(actor_id, template_id)] = _time.monotonic()
+    _apply_dedupe[(actor_id, template_id)] = time.monotonic()
     # GC: чистим записи старше 5 окон, чтобы dict не разрастался.
     if len(_apply_dedupe) > 256:
-        cutoff = _time.monotonic() - _APPLY_DEDUPE_WINDOW_SEC * 5
+        cutoff = time.monotonic() - _APPLY_DEDUPE_WINDOW_SEC * 5
         for k in list(_apply_dedupe.keys()):
             if _apply_dedupe[k] < cutoff:
                 _apply_dedupe.pop(k, None)

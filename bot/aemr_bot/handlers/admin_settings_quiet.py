@@ -113,9 +113,16 @@ async def _start_quiet_hour_intent(
 
 async def _apply_quiet_hour_edit(
     event, operator_id: int, which: str, new_text: str,
-) -> None:
+) -> bool:
     """Применить введённое значение часа: parse → validate 0–23 →
-    set_value → refresh cache → перерисовка карточки."""
+    set_value → refresh cache → перерисовка карточки.
+
+    Возвращает True, если значение применено; False — если ввод
+    отклонён (не число / вне диапазона) и показана ошибка с cancel-
+    клавиатурой. На False вызывающий перехватчик сохраняет intent,
+    чтобы оператор мог прислать корректное значение следующим
+    сообщением (иначе бот «молчал» бы на повторный ввод).
+    """
     from aemr_bot.services import quiet_hours
 
     raw = new_text.strip()
@@ -127,14 +134,14 @@ async def _apply_quiet_hour_edit(
             text=f"❌ «{raw[:40]}» — не число. Пришлите целое 0–23.",
             attachments=[kbds.op_settings_quiet_input_cancel_keyboard()],
         )
-        return
+        return False
     if not (0 <= new_value <= 23):
         await event.bot.send_message(
             chat_id=cfg.admin_group_id,
             text=f"❌ {new_value} вне диапазона. Допустимо 0–23.",
             attachments=[kbds.op_settings_quiet_input_cancel_keyboard()],
         )
-        return
+        return False
     key = f"admin_quiet_hours_{which}"
     async with session_scope() as session:
         await settings_store.set_value(session, key, new_value)
@@ -148,3 +155,4 @@ async def _apply_quiet_hour_edit(
         await session.commit()
         await quiet_hours.refresh_cache_from_db(session)
     await _show_quiet_card(event)
+    return True

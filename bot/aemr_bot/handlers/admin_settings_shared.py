@@ -92,3 +92,23 @@ def _render_value(value: Any, *, limit: int = 1500) -> str:
         return value if len(value) <= limit else value[:limit] + "\n…(обрезано)"
     rendered = json.dumps(value, ensure_ascii=False, indent=2)
     return rendered if len(rendered) <= limit else rendered[:limit] + "\n…(обрезано)"
+
+
+def _parse_key_idx(suffix: str) -> tuple[str, int] | None:
+    """Разобрать callback-суффикс «<key>:<idx>» в пару (key, idx).
+
+    Единый парсер для list/obj-операций по индексу (удаление строки,
+    просмотр/удаление объекта). Возвращает None, если разделителя нет
+    или индекс не целое — вызывающий тогда молча выходит (как было в
+    каждой инлайн-копии: `if len(parts) != 2: return` /
+    `except ValueError: return`).
+    """
+    parts = suffix.split(":", 1)
+    if len(parts) != 2:
+        return None
+    key, idx_str = parts[0], parts[1]
+    try:
+        idx = int(idx_str)
+    except ValueError:
+        return None
+    return key, idx

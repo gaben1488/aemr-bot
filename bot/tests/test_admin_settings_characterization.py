@@ -1378,3 +1378,189 @@ class TestShowExpertKey:
              patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
             await mod._show_expert_key(event, "op:setkey:welcome_text")
         assert "—" in send.await_args.kwargs["text"]
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 9. Intent survives validation error (закрепляет P0-фикс bool-return).
+#
+# `handle_settings_edit_text` снимает intent ТОЛЬКО когда `_apply_*`
+# вернул True. На False (валидатор отклонил ввод) intent сохраняется,
+# чтобы следующее сообщение оператора снова перехватилось как повторная
+# попытка. Repro бага до фикса: «🌙 Час начала» → `99` (вне 0–23) →
+# ошибка → `18` уходил в пустоту, потому что intent уже был снят.
+#
+# Тесты гоняют РЕАЛЬНЫЙ `_apply_*` (не мок) через фасадный перехватчик,
+# поэтому патчим зависимости ПО МЕСТУ их резолва в подмодуле, где живёт
+# leaf-функция (`admin_settings_quiet` / `_list` / `_obj`), а
+# `ensure_role` — на фасаде (его резолвит сам перехватчик).
+# ══════════════════════════════════════════════════════════════════════
+
+
+class TestIntentSurvivesValidationError:
+    """P0: невалидный ввод сохраняет intent; повторный валидный —
+    применяется и снимает intent."""
+
+    @pytest.fixture(autouse=True)
+    def _clean(self):
+        from aemr_bot.handlers import admin_settings as facade
+        facade._edit_intents.clear()
+        yield
+        facade._edit_intents.clear()
+
+    @pytest.mark.asyncio
+    async def test_quiet_hour_out_of_range_keeps_intent_then_retry_applies(
+        self,
+    ) -> None:
+        from aemr_bot.handlers import admin_settings as facade
+        from aemr_bot.handlers import admin_settings_quiet as quiet
+
+        event = make_event(user_id=500)
+        facade._intent_set(
+            500, key="admin_quiet_hours_start", kind="quiet_hour",
+            which="start",
+        )
+        scope_patch, sess = _patch_scope(quiet)
+        sess.commit = AsyncMock()
+        with patch.object(facade, "ensure_role", AsyncMock(return_value=True)), \
+             scope_patch, \
+             patch.object(quiet.settings_store, "set_value",
+                          AsyncMock()) as set_value, \
+             patch.object(quiet.ops_svc, "write_audit", AsyncMock()), \
+             patch("aemr_bot.services.quiet_hours.refresh_cache_from_db",
+                   AsyncMock()), \
+             patch.object(quiet, "_show_quiet_card", AsyncMock()):
+            # 1) «99» — вне диапазона 0–23: сообщение поглощено (True),
+            #    но intent НЕ снят, set_value НЕ вызван.
+            consumed = await facade.handle_settings_edit_text(event, "99")
+            assert consumed is True
+            event.bot.send_message.assert_awaited()
+            assert "вне диапазона" in (
+                event.bot.send_message.await_args.kwargs["text"]
+            )
+            assert facade._intent_get(500) is not None  # intent ЖИВ
+            set_value.assert_not_awaited()
+
+            # 2) Повторный валидный «18» — применяется, intent снят.
+            consumed2 = await facade.handle_settings_edit_text(event, "18")
+            assert consumed2 is True
+            set_value.assert_awaited_once()
+            assert set_value.await_args.args[2] == 18
+            assert facade._intent_get(500) is None  # intent СНЯТ
+
+    @pytest.mark.asyncio
+    async def test_list_add_empty_keeps_intent_then_retry_applies(self) -> None:
+        from aemr_bot.handlers import admin_settings as facade
+        from aemr_bot.handlers import admin_settings_list as lst
+
+        event = make_event(user_id=501)
+        facade._intent_set(501, key="topics", kind="list_add")
+        scope_patch, _ = _patch_scope(lst)
+        with patch.object(facade, "ensure_role", AsyncMock(return_value=True)), \
+             scope_patch, \
+             patch.object(lst.settings_store, "get",
+                          AsyncMock(return_value=["ЖКХ"])), \
+             patch.object(lst.settings_store, "set_value",
+                          AsyncMock()) as set_value, \
+             patch.object(lst.ops_svc, "write_audit", AsyncMock()), \
+             patch.object(lst, "_show_list_card", AsyncMock()):
+            # 1) Пустая строка отбита `_apply_list_add` (len < 1) ДО
+            #    session_scope: возврат False, intent сохранён.
+            consumed = await facade.handle_settings_edit_text(event, "   ")
+            assert consumed is True
+            event.bot.send_message.assert_awaited()
+            assert "Пустая строка" in (
+                event.bot.send_message.await_args.kwargs["text"]
+            )
+            assert facade._intent_get(501) is not None
+            set_value.assert_not_awaited()
+
+            # 2) Валидная «Дороги» — добавляется, intent снят.
+            consumed2 = await facade.handle_settings_edit_text(event, "Дороги")
+            assert consumed2 is True
+            set_value.assert_awaited_once()
+            assert set_value.await_args.args[2] == ["ЖКХ", "Дороги"]
+            assert facade._intent_get(501) is None
+
+    @pytest.mark.asyncio
+    async def test_obj_add_one_line_keeps_intent_then_retry_applies(
+        self,
+    ) -> None:
+        from aemr_bot.handlers import admin_settings as facade
+        from aemr_bot.handlers import admin_settings_obj as obj
+
+        event = make_event(user_id=502)
+        facade._intent_set(502, key="emergency_contacts", kind="obj_add")
+        scope_patch, _ = _patch_scope(obj)
+        with patch.object(facade, "ensure_role", AsyncMock(return_value=True)), \
+             scope_patch, \
+             patch.object(obj.settings_store, "get",
+                          AsyncMock(return_value=[])), \
+             patch.object(obj.settings_store, "set_value",
+                          AsyncMock()) as set_value, \
+             patch.object(obj.ops_svc, "write_audit", AsyncMock()), \
+             patch.object(obj, "_show_obj_card", AsyncMock()):
+            # 1) Одна строка (<2) отбита `_apply_obj_add` ДО session_scope:
+            #    возврат False, intent сохранён.
+            consumed = await facade.handle_settings_edit_text(
+                event, "ТолькоНазвание"
+            )
+            assert consumed is True
+            event.bot.send_message.assert_awaited()
+            assert "две строки" in (
+                event.bot.send_message.await_args.kwargs["text"]
+            )
+            assert facade._intent_get(502) is not None
+            set_value.assert_not_awaited()
+
+            # 2) Две строки «Полиция / 02» — добавляется, intent снят.
+            consumed2 = await facade.handle_settings_edit_text(
+                event, "Полиция\n02"
+            )
+            assert consumed2 is True
+            set_value.assert_awaited_once()
+            assert set_value.await_args.args[2] == [
+                {"name": "Полиция", "phone": "02"}
+            ]
+            assert facade._intent_get(502) is None
+
+    @pytest.mark.asyncio
+    async def test_single_edit_invalid_url_keeps_intent_then_retry_applies(
+        self,
+    ) -> None:
+        """`_apply_single_edit` для policy_url: невалидный URL отклоняется
+        `settings_store.validate` → False → intent жив. Повторный
+        валидный (из whitelist) — применяется."""
+        from aemr_bot.handlers import admin_settings as facade
+        from aemr_bot.handlers import admin_settings_text as txt
+
+        event = make_event(user_id=503)
+        facade._intent_set(503, key="policy_url", kind="single")
+        scope_patch, _ = _patch_scope(txt)
+        # validate отдаёт (False) на первый ввод, (True) на второй —
+        # имитируем без зависимости от точного whitelist.
+        validate = MagicMock(side_effect=[(False, "ссылка вне whitelist"),
+                                          (True, "")])
+        with patch.object(facade, "ensure_role", AsyncMock(return_value=True)), \
+             scope_patch, \
+             patch.object(txt.settings_store, "validate", validate), \
+             patch.object(txt.settings_store, "get",
+                          AsyncMock(return_value="https://old.example")), \
+             patch.object(txt.settings_store, "set_value",
+                          AsyncMock()) as set_value, \
+             patch.object(txt.ops_svc, "write_audit", AsyncMock()), \
+             patch.object(txt, "_show_text_card", AsyncMock()):
+            consumed = await facade.handle_settings_edit_text(
+                event, "https://evil.example"
+            )
+            assert consumed is True
+            event.bot.send_message.assert_awaited()
+            assert "❌" in event.bot.send_message.await_args.kwargs["text"]
+            assert facade._intent_get(503) is not None
+            set_value.assert_not_awaited()
+
+            consumed2 = await facade.handle_settings_edit_text(
+                event, "https://kamgov.ru/policy"
+            )
+            assert consumed2 is True
+            set_value.assert_awaited_once()
+            assert facade._intent_get(503) is None
