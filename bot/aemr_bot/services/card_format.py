@@ -238,7 +238,16 @@ def admin_card(appeal: Appeal, user: User) -> str:
         )
     )
     if has_url:
-        body = body + _maybe_url_warning(appeal.summary or "X http://X")
+        # audit 2026-05-28: раньше в _maybe_url_warning подавался только
+        # appeal.summary — усиленный threat-intel warning (⛔ известный
+        # фишинг) не срабатывал на вредоносный URL, присланный в
+        # followup'е жителя, а не в исходной сути. Сканируем summary И
+        # тексты всех загруженных сообщений ленты.
+        warn_src = "\n".join(
+            [appeal.summary or ""]
+            + [(getattr(m, "text", "") or "") for m in loaded_messages]
+        )
+        body = body + _maybe_url_warning(warn_src)
     return body
 
 

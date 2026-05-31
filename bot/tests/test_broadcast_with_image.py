@@ -434,6 +434,8 @@ class TestConfirmPassesAttachmentsToCreate:
 
         create_mock = AsyncMock(return_value=broadcast_obj)
         with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=op)), \
              patch("aemr_bot.handlers.broadcast_wizard.session_scope",

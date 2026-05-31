@@ -291,11 +291,38 @@ class TestHandleConfirm:
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
         broadcast._wizards[7].text = "hi"
         with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=None)):
             await broadcast._handle_confirm(event)
         # broadcast service не вызван
         event.bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_downgraded_operator_blocked_at_confirm(self) -> None:
+        """SECURITY (audit 2026-05-28): если между открытием мастера и
+        нажатием «Разослать» оператора понизили в роли, _ensure_role на
+        confirm должен заблокировать отправку — рассылка не создаётся."""
+        from aemr_bot.handlers import broadcast
+
+        event = _make_event(user_id=7)
+        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
+        broadcast._wizards[7].text = "hi"
+        create_broadcast = AsyncMock()
+        get_operator = AsyncMock()
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.broadcast_wizard._get_operator", get_operator), \
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.create_broadcast",
+                   create_broadcast):
+            await broadcast._handle_confirm(event)
+        # роль не прошла → даже до _get_operator не дошли, рассылка не создана
+        get_operator.assert_not_called()
+        create_broadcast.assert_not_called()
+        # незаконный черновик отброшен (pop в начале _handle_confirm)
+        assert 7 not in broadcast._wizards
 
     @pytest.mark.asyncio
     async def test_no_subscribers_aborts(self) -> None:
@@ -307,6 +334,8 @@ class TestHandleConfirm:
         op = SimpleNamespace(id=10)
         create_broadcast = AsyncMock()
         with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=op)), \
              patch("aemr_bot.handlers.broadcast_wizard.session_scope",
@@ -336,6 +365,8 @@ class TestHandleConfirm:
 
         spawn = MagicMock(side_effect=_consume)
         with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=op)), \
              patch("aemr_bot.handlers.broadcast_wizard.session_scope",
@@ -484,6 +515,7 @@ class TestHandleStop:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.request_cancel",
                    AsyncMock(return_value=True)), \
+             patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
              patch("aemr_bot.handlers.broadcast.ack_callback", ack):
             await broadcast._handle_stop(event, 99)
         ack.assert_called_once()
@@ -508,6 +540,120 @@ class TestHandleStop:
             await broadcast._handle_stop(event, 99)
         msg_arg = ack.call_args.args[1]
         assert "Уже завершено" in msg_arg
+
+    @pytest.mark.asyncio
+    async def test_flipped_writes_audit(self) -> None:
+        """audit 2026-05-28: экстренная остановка пишется в audit_log
+        (action=broadcast_stop), симметрично отмене во время cooldown."""
+        from aemr_bot.handlers import broadcast
+
+        write_audit = AsyncMock()
+        with patch("aemr_bot.handlers.broadcast._is_admin_chat",
+                   return_value=True), \
+             patch("aemr_bot.handlers.broadcast._ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.request_cancel",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.services.operators.write_audit", write_audit), \
+             patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+            await broadcast._handle_stop(_make_event(), 99)
+        write_audit.assert_awaited_once()
+        assert write_audit.await_args.kwargs.get("action") == "broadcast_stop"
+
+    @pytest.mark.asyncio
+    async def test_not_flipped_no_audit(self) -> None:
+        """Если рассылка уже завершена (request_cancel вернул False) —
+        audit-запись не делается (нечего останавливать)."""
+        from aemr_bot.handlers import broadcast
+
+        write_audit = AsyncMock()
+        with patch("aemr_bot.handlers.broadcast._is_admin_chat",
+                   return_value=True), \
+             patch("aemr_bot.handlers.broadcast._ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.request_cancel",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.services.operators.write_audit", write_audit), \
+             patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+            await broadcast._handle_stop(_make_event(), 99)
+        write_audit.assert_not_awaited()
+
+
+# --- _handle_cancel_cooldown auth gate (audit 2026-05-28) ---------------------
+
+
+class TestHandleCancelCooldownAuth:
+    """SECURITY: отмена рассылки во время cooldown теперь под тем же
+    гейтом, что и экстренная остановка — случайный гость в админ-группе
+    или удалённый из БД member не должен мочь отменить срочную рассылку."""
+
+    @pytest.mark.asyncio
+    async def test_non_admin_chat_cannot_cancel(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        task = MagicMock()
+        task.done.return_value = False
+        broadcast._pending_broadcasts[99] = task
+        try:
+            with patch("aemr_bot.handlers.broadcast._is_admin_chat",
+                       return_value=False), \
+                 patch("aemr_bot.handlers.broadcast.ack_callback",
+                       AsyncMock()) as ack:
+                await broadcast._handle_cancel_cooldown(_make_event(), 99)
+            ack.assert_called_once()          # тихий ack, без текста-подтверждения
+            task.cancel.assert_not_called()   # рассылка НЕ отменена
+            assert 99 in broadcast._pending_broadcasts  # pending-метка цела
+        finally:
+            broadcast._pending_broadcasts.pop(99, None)
+
+    @pytest.mark.asyncio
+    async def test_non_operator_cannot_cancel(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        task = MagicMock()
+        task.done.return_value = False
+        broadcast._pending_broadcasts[99] = task
+        try:
+            with patch("aemr_bot.handlers.broadcast._is_admin_chat",
+                       return_value=True), \
+                 patch("aemr_bot.handlers.broadcast._ensure_operator",
+                       AsyncMock(return_value=False)), \
+                 patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+                await broadcast._handle_cancel_cooldown(_make_event(), 99)
+            task.cancel.assert_not_called()
+            assert 99 in broadcast._pending_broadcasts
+        finally:
+            broadcast._pending_broadcasts.pop(99, None)
+
+    @pytest.mark.asyncio
+    async def test_operator_passes_gate_and_cancels(self) -> None:
+        """Зарегистрированный оператор проходит гейт и реально отменяет."""
+        from aemr_bot.handlers import broadcast
+
+        task = MagicMock()
+        task.done.return_value = False
+        broadcast._pending_broadcasts[99] = task
+        try:
+            with patch("aemr_bot.handlers.broadcast._is_admin_chat",
+                       return_value=True), \
+                 patch("aemr_bot.handlers.broadcast._ensure_operator",
+                       AsyncMock(return_value=True)), \
+                 patch("aemr_bot.handlers.broadcast.session_scope",
+                       _fake_session_scope), \
+                 patch("aemr_bot.handlers.broadcast.broadcasts_service.mark_cancelled",
+                       AsyncMock()), \
+                 patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
+                 patch("aemr_bot.handlers.broadcast.send_or_edit_screen", AsyncMock()), \
+                 patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+                await broadcast._handle_cancel_cooldown(_make_event(), 99)
+            task.cancel.assert_called_once()
+            assert 99 not in broadcast._pending_broadcasts
+        finally:
+            broadcast._pending_broadcasts.pop(99, None)
 
 
 class TestRunBroadcastImpl:

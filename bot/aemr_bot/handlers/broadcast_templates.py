@@ -962,12 +962,39 @@ async def _step_edit(
     apply.
     """
     if not text:
-        # пустой ввод — повторим prompt
-        tmpl = None
+        # Пустой текст. Но если оператор прислал ТОЛЬКО картинки без
+        # подписи — это валидная замена вложений шаблона: текст
+        # оставляем прежним. audit 2026-05-28: раньше image-only правка
+        # была невозможна — `if not text` отбивал ввод до обработки
+        # картинок ниже, и заменить вложения, не перенабрав текст,
+        # оператор физически не мог.
+        tmpl_before = None
+        new_attachments: list = []
         if state.target_id is not None:
             async with session_scope() as session:
-                tmpl = await templates_service.get_by_id(session, state.target_id)
-        name = tmpl.name if tmpl else "?"
+                max_images = await broadcast_handler._resolve_broadcast_max_images(
+                    session
+                )
+                tmpl_before = await templates_service.get_by_id(
+                    session, state.target_id
+                )
+            if tmpl_before is not None:
+                new_attachments = list(
+                    _image_attachments.image_attachments_from_event(
+                        event, limit=max_images
+                    )
+                )
+        if tmpl_before is not None and new_attachments:
+            state.step = "edit_preview"
+            state.pending_text = tmpl_before.text
+            state.pending_attachments = new_attachments
+            state.pending_name = tmpl_before.name
+            state._edit_image_replaced = True  # type: ignore[attr-defined]
+            state.renew()
+            await _render_preview_edit(event, state)
+            return True
+        # Иначе — обычный пустой ввод: повторим prompt.
+        name = tmpl_before.name if tmpl_before else "?"
         await event.message.answer(
             texts.OP_TMPL_EDIT_PROMPT.format(
                 name=name, limit=cfg.broadcast_max_chars

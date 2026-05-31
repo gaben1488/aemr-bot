@@ -156,6 +156,18 @@ async def _handle_cancel_cooldown(event, broadcast_id: int) -> None:
     не пойдёт, но row в БД останется DRAFT. Логируем + alert. Отдельный
     cron `reap_orphaned_draft` чистит такие row'ы по TTL.
     """
+    # SECURITY (audit 2026-05-28): тот же гейт, что в _handle_stop.
+    # Случайный гость в админ-группе или удалённый из БД member, у
+    # которого ещё не отозван доступ к чату, не должен мочь отменить
+    # срочную рассылку (например, объявление о ЧС). Раньше проверка
+    # была только у _handle_stop — cancel-cooldown её пропускал
+    # (асимметрия авторизации).
+    if not _is_admin_chat(event):
+        await ack_callback(event)
+        return
+    if not await _ensure_operator(event):
+        await ack_callback(event)
+        return
     await ack_callback(event, "Отменяю…")
     # peek, не pop — pop делаем только если реально отменили
     task = _pending_broadcasts.get(broadcast_id)
@@ -228,6 +240,20 @@ async def _handle_stop(event, broadcast_id: int) -> None:
         return
     async with session_scope() as session:
         flipped = await broadcasts_service.request_cancel(session, broadcast_id)
+        if flipped:
+            # audit 2026-05-28: экстренная остановка идущей рассылки —
+            # действие не менее значимое, чем отмена во время cooldown
+            # (которая уже пишет audit). Фиксируем симметрично, чтобы
+            # в audit_log была полная картина «кто и когда остановил».
+            from aemr_bot.services import operators as operators_service
+
+            await operators_service.write_audit(
+                session,
+                operator_max_user_id=get_user_id(event) or 0,
+                action="broadcast_stop",
+                target=f"broadcast #{broadcast_id}",
+                details={"reason": "operator_emergency_stop"},
+            )
     await ack_callback(
         event, "Остановлено." if flipped else "Уже завершено."
     )

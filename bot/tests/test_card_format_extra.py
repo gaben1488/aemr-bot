@@ -497,3 +497,68 @@ class TestAttachmentsSummaryLineEdges:
             {"type": "image"},
         ])
         assert "фото 3" in result
+
+
+class TestAdminCardThreatWarningScansFollowups:
+    """audit 2026-05-28: усиленный threat-intel warning (⛔ известный
+    фишинг) раньше сканировал только appeal.summary. Если житель прислал
+    вредоносную ссылку в followup'е, а не в исходной сути — warning не
+    усиливался. Фикс: в _maybe_url_warning подаётся summary + тексты
+    всех сообщений ленты."""
+
+    def test_malicious_url_in_followup_triggers_enhanced_warning(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        class _FakeStore:
+            def is_malicious(self, url: str) -> tuple[bool, str | None]:
+                if "phish.example.com" in url:
+                    return True, "URLhaus"
+                return False, None
+
+        monkeypatch.setattr(
+            "aemr_bot.services.threat_intel.get_store",
+            lambda: _FakeStore(),
+        )
+        # Суть — чистая. Вредоносный URL — только в followup'е жителя.
+        appeal = _appeal(
+            id=42,
+            summary="Во дворе яма, помогите.",
+            messages=[
+                _msg(
+                    direction=MessageDirection.FROM_USER.value,
+                    text="Мне это прислали: https://phish.example.com/login",
+                )
+            ],
+        )
+        user = _user()
+        result = cf.admin_card(appeal, user)
+
+        # Усиленный warning должен сработать по followup-URL.
+        assert "⛔" in result
+        assert "phish.example.com" in result
+        assert "112" in result
+
+    def test_clean_followup_no_warning(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Контроль: без URL ни в сути, ни в ленте — никакого warning."""
+        class _EmptyStore:
+            def is_malicious(self, url: str) -> tuple[bool, str | None]:
+                return False, None
+
+        monkeypatch.setattr(
+            "aemr_bot.services.threat_intel.get_store",
+            lambda: _EmptyStore(),
+        )
+        appeal = _appeal(
+            summary="Во дворе яма.",
+            messages=[
+                _msg(
+                    direction=MessageDirection.FROM_USER.value,
+                    text="Уточняю: у второго подъезда.",
+                )
+            ],
+        )
+        result = cf.admin_card(appeal, _user())
+        assert "⛔" not in result
+        assert "⚠️" not in result
