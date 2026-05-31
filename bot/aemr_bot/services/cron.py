@@ -211,8 +211,8 @@ async def _job_backup_with_alert(send_admin_text) -> None:
         elif result.fail_kind == "config":
             await send_admin_text(
                 "⚙️ Еженедельный бэкап БД не выполнен: "
-                "BACKUP_LOCAL_DIR пуст в .env — некуда писать. "
-                "Проверьте конфигурацию (`docs/SYSADMIN.md §5.4`).",
+                "в настройках (.env) пуст параметр BACKUP_LOCAL_DIR, "
+                "некуда писать. Заполните его и повторите.",
                 critical=True,
             )
         else:  # "unknown" — fallback
