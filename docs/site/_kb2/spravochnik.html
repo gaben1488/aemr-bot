@@ -1,0 +1,1094 @@
+<h2 id="spravochnik">8. Справочник: переменные, схема БД, команды, расписание, секреты, карта репозитория, словарь</h2>
+
+<p>Это «сухой» раздел-справочник. Сюда сведены точные значения, по которым настраивается и работает бот: переменные окружения (env — настройки, которые читаются из файла <code class="kbd">infra/.env</code> при запуске контейнера), все таблицы базы данных с полями и правилами, список миграций, полный перечень команд жителя и оператора с точным поведением и записями в журнал, расписание фоновых задач с реальными триггерами, ключи настроек, реестр секретов, карта файлов репозитория, шпаргалка консольных команд и словарь терминов. Всё сверено с реальным кодом репозитория <code class="kbd">C:\Users\filat\Documents\aemr-bot</code>, а не только с документацией. Если в старом документе встретится другое число — верно то, что здесь и в коде.</p>
+
+<div class="note">
+<p class="note__label">Главное правило двух механизмов настройки</p>
+<p>Env-переменные задаются один раз в файле <code class="kbd">infra/.env</code> и применяются при перезапуске бота (<code class="kbd">docker compose up -d --force-recreate bot</code>). А «настройки» (ссылки, тексты, контакты, тематики, населённые пункты) меняются прямо на ходу через меню «⚙️ Настройки бота» в служебной группе и хранятся в таблице <code class="kbd">settings</code> — перезапуск им не нужен. Это два разных места хранения, их нельзя путать: пароль базы лежит в <code class="kbd">.env</code> и без перезапуска не подхватится, а текст приветствия лежит в <code class="kbd">settings</code> и меняется мгновенно.</p>
+</div>
+
+<h3 id="spr-env">Полный реестр переменных окружения</h3>
+
+<p>Ниже все переменные из файла-образца <code class="kbd">infra/.env.example</code>. Большинство необязательны: если переменная не задана или закомментирована знаком <code class="kbd">#</code>, бот берёт встроенное значение по умолчанию из кода. Обязательные перечислены первыми в каждой группе. Значения сверены с <code class="kbd">bot/aemr_bot/config.py</code> (класс <code class="kbd">Settings</code> на Pydantic). В скобках после имени переменной — alias, то есть как именно она пишется в <code class="kbd">.env</code>; имя поля в коде может отличаться (например, поле <code class="kbd">appeal_collect_timeout_seconds</code> читается из переменной <code class="kbd">APPEAL_TIMEOUT</code>).</p>
+
+<h4>Подключение к мессенджеру MAX</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Переменная</th><th>Обязательность</th><th>По умолчанию</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">BOT_TOKEN</code></td><td>обязательна</td><td>—</td><td>Секретный токен бота. Получается только на <code class="kbd">max.ru/business</code> (раздел «Боты»). Это Base64-подобная строка. Без токена бот не запустится. Регистрация через <code class="kbd">@MasterBot</code> не работает — только корпоративный портал.</td></tr>
+<tr><td><code class="kbd">BOT_MODE</code></td><td>опциональна</td><td><code class="kbd">polling</code></td><td>Как бот узнаёт о сообщениях: <code class="kbd">polling</code> (опросный, рекомендуется, без портов наружу) или <code class="kbd">webhook</code> (серверный, нужен домен и сертификат). Для self-host по умолчанию <code class="kbd">polling</code>.</td></tr>
+<tr><td><code class="kbd">WEBHOOK_URL</code></td><td>обязательна при <code class="kbd">BOT_MODE=webhook</code></td><td>—</td><td>Публичный HTTPS-адрес для приёма событий. Пример: <code class="kbd">https://feedback.elizovomr.ru/max/webhook</code>.</td></tr>
+<tr><td><code class="kbd">WEBHOOK_SECRET</code></td><td>обязательна при webhook (минимум 16 символов)</td><td>—</td><td>Секрет, который MAX присылает в заголовке каждого запроса. Бот отбрасывает запросы без него. Сгенерировать: <code class="kbd">python3 -c "import secrets; print(secrets.token_urlsafe(32))"</code>.</td></tr>
+<tr><td><code class="kbd">WEBHOOK_HOST</code></td><td>опциональна</td><td><code class="kbd">0.0.0.0</code></td><td>Сетевой адрес внутри контейнера, на котором бот слушает. Наружу контейнер всё равно прячет Nginx. Менять обычно не нужно.</td></tr>
+<tr><td><code class="kbd">WEBHOOK_PORT</code></td><td>опциональна</td><td><code class="kbd">8080</code></td><td>Порт внутри контейнера для входящих запросов и проб здоровья (<code class="kbd">/livez</code>, <code class="kbd">/readyz</code>, <code class="kbd">/healthz</code>). Наружу проброшен только на loopback: <code class="kbd">127.0.0.1:8080:8080</code>.</td></tr>
+<tr><td><code class="kbd">POLLING_TIMEOUT_SECONDS</code></td><td>опциональна (0..90)</td><td><code class="kbd">30</code></td><td>Сколько секунд сервер MAX держит соединение, ожидая новые события (long-polling). Больше — меньше «холостых» запросов при простое; потолок сервера 90.</td></tr>
+<tr><td><code class="kbd">MAX_API_TIMEOUT_SECONDS</code></td><td>опциональна (0,1..180)</td><td><code class="kbd">30</code></td><td>Таймаут одного запроса к MAX (отправка/редактирование сообщения, подтверждение нажатия). По умолчанию в библиотеке maxapi — 150; снижено до 30, чтобы один «зависший» запрос не блокировал очередь.</td></tr>
+<tr><td><code class="kbd">MAX_API_RETRIES</code></td><td>опциональна (0..5)</td><td><code class="kbd">1</code></td><td>Сколько раз повторять запрос при временных ошибках MAX (502/503/504). По умолчанию в maxapi — 3; снижено до 1 ради быстрой реакции.</td></tr>
+</tbody>
+</table></div>
+
+<h4>База данных PostgreSQL</h4>
+<p>Эти переменные читает контейнер базы данных и команда сборки строки подключения. Сам бот из них использует только <code class="kbd">DATABASE_URL</code> (остальные нужны контейнеру Postgres и docker-compose). Подстановка автоматическая через интерполяцию переменных хоста в <code class="kbd">docker-compose.yml</code> (синтаксис <code class="kbd">${VAR:-default}</code> / <code class="kbd">${VAR:?error}</code>): один и тот же набор <code class="kbd">POSTGRES_*</code> подставляется и в секцию контейнера базы, и внутрь <code class="kbd">DATABASE_URL</code> бота. Рассинхрон пользователя/пароля/имени базы между Postgres и ботом невозможен by construction — обе строки ссылаются на одни и те же переменные.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Переменная</th><th>Обязательность</th><th>По умолчанию</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">POSTGRES_DB</code></td><td>опциональна</td><td><code class="kbd">aemr</code></td><td>Имя базы данных.</td></tr>
+<tr><td><code class="kbd">POSTGRES_USER</code></td><td>опциональна</td><td><code class="kbd">aemr</code></td><td>Имя пользователя базы (живёт только внутри контейнера, к Linux-учётке отношения не имеет).</td></tr>
+<tr><td><code class="kbd">POSTGRES_PASSWORD</code></td><td>обязательна</td><td>—</td><td>Пароль базы. Задан без значения по умолчанию намеренно: если пусто, compose падает с сообщением «Set POSTGRES_PASSWORD in infra/.env». Сгенерировать: <code class="kbd">python3 -c "import secrets; print(secrets.token_urlsafe(32))"</code>.</td></tr>
+<tr><td><code class="kbd">DATABASE_URL</code></td><td>обязательна</td><td>—</td><td>Строка подключения, которую читает бот. Формат: <code class="kbd">postgresql+asyncpg://USER:PASS@db:5432/DB</code>. Часть <code class="kbd">@db:5432</code> менять не нужно — <code class="kbd">db</code> это имя контейнера базы в сети compose. Пароль внутри <code class="kbd">DATABASE_URL</code> обязан совпадать с <code class="kbd">POSTGRES_PASSWORD</code>, иначе бот падает с <code class="kbd">password authentication failed</code>.</td></tr>
+</tbody>
+</table></div>
+
+<h4>Служебная группа и операторы</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Переменная</th><th>Обязательность</th><th>По умолчанию</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">ADMIN_GROUP_ID</code></td><td>фактически обязательна на рабочей установке</td><td>—</td><td>Числовой идентификатор служебной группы MAX (отрицательное число, например <code class="kbd">-74181728103785</code>). Узнать: написать в группе <code class="kbd">/whoami</code>. Без него бот не отличит групповой чат от лички (в коде проверка <code class="kbd">chat_id == ADMIN_GROUP_ID</code>).</td></tr>
+<tr><td><code class="kbd">BOOTSTRAP_IT_MAX_USER_ID</code></td><td>опциональна</td><td>—</td><td>Ваш числовой <code class="kbd">max_user_id</code> в MAX. На первом старте, если таблица <code class="kbd">operators</code> не содержит ни одного активного <code class="kbd">it</code>, бот вставит вас с ролью <code class="kbd">it</code>. На повторных стартах игнорируется. Можно оставить в <code class="kbd">.env</code> навсегда.</td></tr>
+<tr><td><code class="kbd">BOOTSTRAP_IT_FULL_NAME</code></td><td>опциональна (вместе с предыдущей)</td><td>—</td><td>ФИО первого ИТ-оператора для журнала действий и карточек.</td></tr>
+</tbody>
+</table></div>
+
+<h4>Поведение бота, лимиты ввода жителя</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Переменная</th><th>По умолчанию</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">TZ</code></td><td><code class="kbd">Asia/Kamchatka</code></td><td>Часовой пояс. По нему считаются рабочее время, сроки ответа и все задачи по расписанию. Формат IANA (<code class="kbd">Asia/Kamchatka</code>, <code class="kbd">Europe/Moscow</code> и т. д.).</td></tr>
+<tr><td><code class="kbd">SLA_RESPONSE_HOURS</code></td><td><code class="kbd">4</code></td><td>Сколько рабочих часов есть у оператора на ответ (базовый срок в коде). По истечении бот пишет в группу «обращение просрочено».</td></tr>
+<tr><td><code class="kbd">APPEAL_TIMEOUT</code></td><td><code class="kbd">60</code></td><td>Сколько <strong>секунд</strong> бот ждёт после последнего сообщения жителя, прежде чем собрать обращение в карточку (чтобы человек успел дослать фото или дописать). Это окно «сбора», а не сброс зависшей анкеты. Сброс брошенных анкет делает отдельная задача <code class="kbd">funnel-watchdog</code> с порогом 24 часа.</td></tr>
+<tr><td><code class="kbd">ANSWER_MAX_CHARS</code></td><td><code class="kbd">300</code></td><td>Максимум символов в одном ответе оператора жителю (свайп или <code class="kbd">/reply</code>). Жёстче лимита Telegram-стандарта качества (1024) — намеренно, ради коротких ответов.</td></tr>
+<tr><td><code class="kbd">NAME_MAX_CHARS</code></td><td><code class="kbd">120</code></td><td>Максимум символов в имени жителя на шаге анкеты.</td></tr>
+<tr><td><code class="kbd">ADDRESS_MAX_CHARS</code></td><td><code class="kbd">500</code></td><td>Максимум символов в адресе обращения.</td></tr>
+<tr><td><code class="kbd">SUMMARY_MAX_CHARS</code></td><td><code class="kbd">2000</code></td><td>Максимум символов в собранном тексте обращения, попадающем в карточку. Меньше лимита MAX (4000) — запас под «шапку» карточки.</td></tr>
+<tr><td><code class="kbd">ATTACHMENTS_MAX_PER_APPEAL</code></td><td><code class="kbd">20</code></td><td>Сколько вложений житель может приложить к одному обращению.</td></tr>
+<tr><td><code class="kbd">ATTACHMENTS_PER_RELAY_MESSAGE</code></td><td><code class="kbd">10</code></td><td>Сколько вложений бот пересылает операторам в одном сообщении. Большие пачки режутся на части <code class="kbd">(1/3)</code>, <code class="kbd">(2/3)</code> и т. д.</td></tr>
+<tr><td><code class="kbd">RECOVER_BATCH_SIZE</code></td><td><code class="kbd">1000</code></td><td>Размер пачки при восстановлении застрявших анкет после рестарта (функция <code class="kbd">recover_stuck_funnels</code>).</td></tr>
+<tr><td><code class="kbd">LOG_LEVEL</code></td><td><code class="kbd">INFO</code></td><td>Подробность журнала: <code class="kbd">DEBUG</code> / <code class="kbd">INFO</code> / <code class="kbd">WARNING</code> / <code class="kbd">ERROR</code>.</td></tr>
+<tr><td><code class="kbd">SEED_DIR</code></td><td><code class="kbd">/app/seed</code></td><td>Папка внутри контейнера со стартовыми данными (тексты, контакты, тематики, геоданные). Путь зашит в Dockerfile, менять обычно не нужно.</td></tr>
+</tbody>
+</table></div>
+
+<h4>Защита от «потока дополнений» от одного жителя</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Переменная</th><th>По умолчанию</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">FOLLOWUP_MAX_PER_HOUR_PER_APPEAL</code></td><td><code class="kbd">5</code> (диапазон 1..100)</td><td>Максимум дополнений в час на одно обращение. Каждое дополнение публикует полную карточку с пересылкой вложений, поэтому есть лимит против флуда.</td></tr>
+<tr><td><code class="kbd">FOLLOWUP_MIN_INTERVAL_SECONDS</code></td><td><code class="kbd">30</code> (диапазон 0..3600)</td><td>Минимум секунд между двумя дополнениями. Защищает от случайных двойных нажатий и примитивных скриптов.</td></tr>
+</tbody>
+</table></div>
+
+<h4>Рассылки подписчикам</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Переменная</th><th>По умолчанию</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">BROADCAST_MAX_CHARS</code></td><td><code class="kbd">1000</code></td><td>Максимум символов в одном сообщении рассылки.</td></tr>
+<tr><td><code class="kbd">BROADCAST_RATE_LIMIT_PER_SEC</code></td><td><code class="kbd">1.0</code></td><td>Скорость рассылки (сообщений в секунду). Намеренно ниже лимита MAX (2 запроса/сек), чтобы рассылка не мешала обычной работе. На 1000 подписчиков около 17 минут.</td></tr>
+<tr><td><code class="kbd">BROADCAST_PROGRESS_UPDATE_SEC</code></td><td><code class="kbd">5</code></td><td>Раз во сколько секунд бот обновляет сообщение «отправлено X из Y» во время рассылки.</td></tr>
+<tr><td><code class="kbd">BROADCAST_WIZARD_TTL_SEC</code></td><td><code class="kbd">300</code></td><td>Сколько секунд хранится неоконченный черновик рассылки, прежде чем мастер сбросится (5 минут).</td></tr>
+</tbody>
+</table></div>
+<div class="note">
+<p class="note__label">Где задаётся число картинок в рассылке</p>
+<p>Количество картинок в одной рассылке задаётся не здесь, а в меню «⚙️ Настройки бота» (ключ <code class="kbd">broadcast_max_images</code>, по умолчанию 5, диапазон 1..20). Это сделано, чтобы оперативное управление было в одном месте и без перезапуска контейнера.</p>
+</div>
+
+<h4>Внутренние проверки работоспособности</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Переменная</th><th>По умолчанию</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">HEALTHCHECK_PULSE_SECONDS</code></td><td><code class="kbd">30</code></td><td>Раз во сколько секунд бот отмечает «я жив» во внутренней метрике (heartbeat — внутренний пульс).</td></tr>
+<tr><td><code class="kbd">HEALTHCHECK_STALE_SECONDS</code></td><td><code class="kbd">120</code></td><td>Через сколько секунд молчания метрика считается «протухшей», а бот — зависшим. Должно быть заметно больше PULSE.</td></tr>
+<tr><td><code class="kbd">HEALTHCHECK_INTERVAL_MIN</code></td><td><code class="kbd">5</code></td><td>Раз во сколько минут запускается внутренняя самопроверка (cron <code class="kbd">health-selfcheck</code> и внешний <code class="kbd">healthcheck-ping</code>).</td></tr>
+<tr><td><code class="kbd">HEALTHCHECK_URL</code></td><td>—</td><td>Опционально: внешний адрес (например, healthchecks.io или Uptime Kuma), который бот «дёргает» как отметку «я жив». Пусто — внешняя отметка не шлётся, задача <code class="kbd">healthcheck-ping</code> в расписание не добавляется. Это единственный оставшийся внешний мониторинг: Sentry из кода удалён полностью.</td></tr>
+</tbody>
+</table></div>
+
+<h4>Резервное копирование базы</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Переменная</th><th>По умолчанию</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">BACKUP_DAY_OF_WEEK</code></td><td><code class="kbd">sun</code></td><td>День недели бэкапа в коротком виде (<code class="kbd">mon</code>..<code class="kbd">sun</code>) или <code class="kbd">*</code> для ежедневного.</td></tr>
+<tr><td><code class="kbd">BACKUP_HOUR</code></td><td><code class="kbd">3</code></td><td>Час запуска бэкапа (0..23) по часовому поясу <code class="kbd">TZ</code>.</td></tr>
+<tr><td><code class="kbd">BACKUP_MINUTE</code></td><td><code class="kbd">0</code></td><td>Минута запуска бэкапа (0..59). По умолчанию бэкап идёт в воскресенье 03:00 по Камчатке.</td></tr>
+<tr><td><code class="kbd">BACKUP_LOCAL_DIR</code></td><td><code class="kbd">/backups</code></td><td>Папка внутри контейнера для копий (через docker-compose смонтирована в именованный том). Пусто — локальные копии не сохраняются.</td></tr>
+<tr><td><code class="kbd">BACKUP_KEEP_COUNT</code></td><td><code class="kbd">8</code></td><td>Сколько последних файлов хранить. Восемь еженедельных копий ≈ два месяца истории. Ротация по времени модификации файла удаляет лишние сверх <code class="kbd">keep</code>.</td></tr>
+<tr><td><code class="kbd">BACKUP_GPG_PASSPHRASE</code></td><td>—</td><td>Парольная фраза для GPG-шифрования копии. Технический порог отказа — <strong>12 символов</strong>: если фраза от 1 до 11 символов, она сбрасывается, и дальше срабатывает запрет на незашифрованный дамп. <strong>Без фразы бэкап не создаётся</strong> (в дампе персональные данные по 152-ФЗ), кроме случая <code class="kbd">BACKUP_ALLOW_UNENCRYPTED=1</code>. Рекомендация при выпуске — 32 символа (<code class="kbd">token_urlsafe(32)</code>). Зашифрованный файл получает расширение <code class="kbd">.sql.gpg</code>.</td></tr>
+<tr><td><code class="kbd">BACKUP_ALLOW_UNENCRYPTED</code></td><td>пусто (запрещено)</td><td>Разрешить незашифрованную копию: пусто = запрещено, <code class="kbd">1</code> = разрешено. Ставить <code class="kbd">1</code> только на машине разработчика; на рабочем сервере это нарушение 152-ФЗ.</td></tr>
+<tr><td><code class="kbd">BACKUP_S3_ENDPOINT</code></td><td>—</td><td>Адрес S3-совместимого хранилища (MinIO, Amazon S3, любой generic-провайдер). Загрузка в облако включается, только если заполнены все четыре поля <code class="kbd">BACKUP_S3_*</code>. Привязки к конкретному облаку в коде нет.</td></tr>
+<tr><td><code class="kbd">BACKUP_S3_BUCKET</code></td><td>—</td><td>Имя «корзины» в хранилище (создаётся заранее).</td></tr>
+<tr><td><code class="kbd">BACKUP_S3_ACCESS_KEY</code></td><td>—</td><td>Публичная часть ключа доступа к S3.</td></tr>
+<tr><td><code class="kbd">BACKUP_S3_SECRET_KEY</code></td><td>—</td><td>Секретная часть ключа S3 (видна один раз при создании).</td></tr>
+</tbody>
+</table></div>
+
+<h4>Хранение журнала действий</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Переменная</th><th>По умолчанию</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">AUDIT_LOG_RETENTION_DAYS</code></td><td><code class="kbd">365</code> (диапазон 30..3650)</td><td>Сколько дней хранить записи в таблице <code class="kbd">audit_log</code>. Ежедневная задача в 04:15 удаляет более старые. Год — типовая глубина расследования инцидента информационной безопасности. Это значение трогать не нужно: оно подтверждено решением (мера ФСТЭК РСБ.1 требует пол в три месяца, 152-ФЗ статья 5 часть 7 требует минимизации; 5 лет отклонены). Обращения хранятся отдельно — пять лет, см. задачу <code class="kbd">appeals-5y-retention</code>.</td></tr>
+</tbody>
+</table></div>
+
+<h4>Связь с GitHub (опционально, для синхронизации настроек)</h4>
+<p>Эти переменные читаются напрямую из окружения (в модуле <code class="kbd">services/repo_sync.py</code>), а не через общий класс настроек. Нужны, только если хотите, чтобы изменения настроек через меню бота автоматически создавали заявку (Pull Request — предложение изменения) на GitHub.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Переменная</th><th>По умолчанию</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">GITHUB_PAT</code></td><td>—</td><td>Личный токен доступа GitHub fine-grained (вид <code class="kbd">github_pat_…</code>, права Contents:RW + PullRequests:RW на репозиторий). Без него меню настроек работает, но кнопка «🔄 Синхронизировать с репо» вернёт «не настроено» (в коде <code class="kbd">SyncResult(ok=False, reason='no_token')</code>), бот при этом не падает.</td></tr>
+<tr><td><code class="kbd">GITHUB_REPO</code></td><td><code class="kbd">Gaben1488/aemr-bot</code></td><td>Репозиторий, в который бот создаёт заявки. Формат <code class="kbd">владелец/название</code>.</td></tr>
+<tr><td><code class="kbd">GITHUB_PR_BASE_BRANCH</code></td><td><code class="kbd">main</code></td><td>Ветка, в которую идут заявки на изменение. Бот никогда не пишет напрямую в <code class="kbd">main</code> и не делает force-push: каждое изменение проходит через PR-ревью.</td></tr>
+</tbody>
+</table></div>
+<div class="note">
+<p class="note__label">Две переменные, которых нет в образце</p>
+<p>Имя и почта автора коммитов берутся <strong>не</strong> из env, а из настроек в базе (ключи <code class="kbd">commit_author_name</code> / <code class="kbd">commit_author_email</code>, меню «Автор коммитов»). Есть ещё одна необязательная переменная окружения — <code class="kbd">PHISHTANK_APP_KEY</code>: если её задать, к источникам антифишинга добавится PhishTank. Её нет в файле-образце, потому что основные источники URLhaus и ThreatFox (оба от abuse.ch) работают без ключей.</p>
+</div>
+
+<h3 id="spr-db">Схема базы данных</h3>
+
+<p>База — PostgreSQL. Все таблицы описаны в файле <code class="kbd">bot/aemr_bot/db/models.py</code>. Ниже — 11 таблиц с их полями, связями и важными правилами (инвариантами). Тип <code class="kbd">jsonb</code> — «гибкое» поле, куда кладут структуру (список вложений, произвольный словарь). Тип <code class="kbd">timestamptz</code> — дата и время с часовым поясом. «PK» — первичный ключ (primary key, уникальный идентификатор строки), «FK» — внешний ключ (foreign key, ссылка на строку другой таблицы), «UK» — ограничение уникальности.</p>
+
+<div class="note">
+<p class="note__label">11 таблиц, не 8 и не 9</p>
+<p>В старой восстановленной схеме (<code class="kbd">db-schema.md</code>) и в ранних диаграммах было 8 или 9 таблиц. Это устарело: миграции добавили <code class="kbd">wizard_state</code> (миграция 0011) и <code class="kbd">broadcast_templates</code> (0015). Актуально — 11 таблиц: <code class="kbd">users</code>, <code class="kbd">operators</code>, <code class="kbd">appeals</code>, <code class="kbd">messages</code>, <code class="kbd">events</code>, <code class="kbd">audit_log</code>, <code class="kbd">settings</code>, <code class="kbd">broadcasts</code>, <code class="kbd">broadcast_deliveries</code>, <code class="kbd">wizard_state</code>, <code class="kbd">broadcast_templates</code>. Таблица настроек называется <code class="kbd">settings</code> (а не <code class="kbd">app_settings</code>, как писала часть старых документов).</p>
+</div>
+
+<h4>Как таблицы связаны</h4>
+<ol class="steps">
+<li><strong>users → appeals.</strong> Один житель — много обращений (<code class="kbd">appeals.user_id</code> ссылается на <code class="kbd">users.id</code>).</li>
+<li><strong>appeals → messages.</strong> Одно обращение — много сообщений переписки (<code class="kbd">messages.appeal_id</code>). Есть композитный индекс <code class="kbd">messages(appeal_id, created_at)</code> под ленту переписки.</li>
+<li><strong>operators → appeals.</strong> Оператор может быть назначен на обращение (<code class="kbd">appeals.assigned_operator_id</code>). При удалении оператора ссылка обнуляется.</li>
+<li><strong>operators → messages.</strong> Сообщение оператора помнит, кто его написал (<code class="kbd">messages.operator_id</code>).</li>
+<li><strong>broadcasts → broadcast_deliveries.</strong> Одна рассылка — много записей о доставке (по одной на получателя).</li>
+<li><strong>operators → broadcasts / broadcast_templates.</strong> Рассылку и шаблон помнят, какой оператор их создал.</li>
+</ol>
+
+<h4>users — жители</h4>
+<p>Профиль жителя, его согласия и состояние пошаговой анкеты.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Поле</th><th>Тип</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">id</code></td><td>int, PK</td><td>Внутренний идентификатор.</td></tr>
+<tr><td><code class="kbd">max_user_id</code></td><td>bigint, UK, индекс</td><td>Идентификатор жителя в MAX. Уникален в пределах платформы, по нему ищут жителя при следующем <code class="kbd">/start</code>.</td></tr>
+<tr><td><code class="kbd">first_name</code></td><td>строка(120)</td><td>Имя жителя (может быть пустым). После полного удаления данных становится «Удалено».</td></tr>
+<tr><td><code class="kbd">phone</code></td><td>строка(32)</td><td>Телефон в том виде, как житель его поделился.</td></tr>
+<tr><td><code class="kbd">phone_normalized</code></td><td>строка(32), индекс</td><td>Телефон только из цифр. Нужен для поиска по номеру (<code class="kbd">/find_resident</code>, <code class="kbd">/erase phone=</code>). Нормализация: только цифры, у одиннадцатизначных номеров обрезается ведущая 7 или 8.</td></tr>
+<tr><td><code class="kbd">consent_pdn_at</code></td><td>timestamptz</td><td>Когда житель дал согласие на обработку персональных данных (имя/телефон).</td></tr>
+<tr><td><code class="kbd">consent_revoked_at</code></td><td>timestamptz</td><td>Когда житель отозвал согласие («Уйти из бота»). Точка отсечения: по обращениям до отзыва оператор ещё может дать финальный ответ; новые без нового согласия не принимаются.</td></tr>
+<tr><td><code class="kbd">consent_broadcast_at</code></td><td>timestamptz</td><td>Отдельное согласие на рассылку. Подписка не требует полного согласия на ПДн — для рассылки нужен только <code class="kbd">max_user_id</code>.</td></tr>
+<tr><td><code class="kbd">is_blocked</code></td><td>bool</td><td>Житель заблокирован (по умолчанию <code class="kbd">false</code>). После полного удаления данных ставится <code class="kbd">true</code>. Это IT-блокировка за злоупотребления — при обычном отзыве согласия НЕ ставится (житель может передумать).</td></tr>
+<tr><td><code class="kbd">subscribed_broadcast</code></td><td>bool</td><td>Подписан ли житель на рассылку (по умолчанию <code class="kbd">false</code>).</td></tr>
+<tr><td><code class="kbd">dialog_state</code></td><td>строка(32)</td><td>Текущий шаг пошаговой анкеты (см. перечень состояний ниже). По умолчанию <code class="kbd">idle</code>.</td></tr>
+<tr><td><code class="kbd">dialog_data</code></td><td>jsonb</td><td>Черновые данные текущего шага анкеты (накопленный текст, вложения, распознанный по геолокации адрес).</td></tr>
+<tr><td><code class="kbd">created_at</code> / <code class="kbd">updated_at</code></td><td>timestamptz</td><td>Когда запись создана и когда обновлена.</td></tr>
+</tbody>
+</table></div>
+
+<h4>operators — операторы</h4>
+<p>Сотрудники в служебной группе и их роли.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Поле</th><th>Тип</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">id</code></td><td>int, PK</td><td>Внутренний идентификатор.</td></tr>
+<tr><td><code class="kbd">max_user_id</code></td><td>bigint, UK, индекс</td><td>Идентификатор оператора в MAX.</td></tr>
+<tr><td><code class="kbd">full_name</code></td><td>строка(255)</td><td>ФИО для журнала и карточек.</td></tr>
+<tr><td><code class="kbd">role</code></td><td>строка(32)</td><td>Роль: <code class="kbd">coordinator</code>, <code class="kbd">aemr</code>, <code class="kbd">egp</code> или <code class="kbd">it</code> (перечисление <code class="kbd">OperatorRole</code>).</td></tr>
+<tr><td><code class="kbd">is_active</code></td><td>bool</td><td>Активен ли оператор (по умолчанию <code class="kbd">true</code>). Ушедших из служебной группы MAX задача <code class="kbd">stale-operators-cleanup</code> деактивирует автоматически (ИТ-операторов не трогает).</td></tr>
+<tr><td><code class="kbd">created_at</code></td><td>timestamptz</td><td>Когда добавлен.</td></tr>
+</tbody>
+</table></div>
+
+<h4>appeals — обращения</h4>
+<p>Одно обращение — одна строка с номером <code class="kbd">#N</code>.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Поле</th><th>Тип</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">id</code></td><td>int, PK</td><td>Номер обращения (он же <code class="kbd">#N</code> в карточках).</td></tr>
+<tr><td><code class="kbd">user_id</code></td><td>int, FK → users.id, индекс</td><td>Чьё обращение.</td></tr>
+<tr><td><code class="kbd">status</code></td><td>строка(32), индекс</td><td>Статус: <code class="kbd">new</code>, <code class="kbd">in_progress</code>, <code class="kbd">answered</code>, <code class="kbd">closed</code>. По умолчанию <code class="kbd">new</code>. Поля важности/приоритета у обращения <strong>нет</strong> — приоритезации по теме в коде не существует.</td></tr>
+<tr><td><code class="kbd">locality</code></td><td>строка(120)</td><td>Населённый пункт (миграция 0005).</td></tr>
+<tr><td><code class="kbd">address</code></td><td>строка(500)</td><td>Адрес. Очищается при удалении ПДн.</td></tr>
+<tr><td><code class="kbd">topic</code></td><td>строка(120)</td><td>Тематика.</td></tr>
+<tr><td><code class="kbd">summary</code></td><td>текст</td><td>Собранный текст обращения. Очищается при удалении ПДн.</td></tr>
+<tr><td><code class="kbd">attachments</code></td><td>jsonb</td><td>Список вложений (фото/видео/файлы) в сериализованном виде. Очищается при удалении ПДн.</td></tr>
+<tr><td><code class="kbd">admin_message_id</code></td><td>строка(64)</td><td>Идентификатор сообщения <strong>первой</strong> публикации карточки в группе. Используется как ссылка-якорь для пересылки вложений и для поиска обращения при ответе свайпом. После публикации не меняется. До публикации — пусто.</td></tr>
+<tr><td><code class="kbd">last_admin_card_mid</code></td><td>строка(64)</td><td>Идентификатор <strong>последней</strong> карточки-события (миграция 0017). Обновляется при каждом изменении статуса. Нужен, чтобы понять, что оператор нажал на устаревшей карточке вверху чата.</td></tr>
+<tr><td><code class="kbd">assigned_operator_id</code></td><td>int, FK → operators.id, индекс</td><td>Назначенный оператор (может быть пустым).</td></tr>
+<tr><td><code class="kbd">created_at</code></td><td>timestamptz, индекс</td><td>Когда обращение создано.</td></tr>
+<tr><td><code class="kbd">answered_at</code></td><td>timestamptz</td><td>Когда дан первый ответ.</td></tr>
+<tr><td><code class="kbd">closed_at</code></td><td>timestamptz</td><td>Когда закрыто.</td></tr>
+<tr><td><code class="kbd">closed_due_to_revoke</code></td><td>bool</td><td>True, если обращение закрыто из-за отзыва согласия или удаления данных. Тогда кнопка «🔁 Возобновить» не показывается, доставка ответа запрещена гардом ПДн.</td></tr>
+</tbody>
+</table></div>
+
+<h4>messages — переписка по обращению</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Поле</th><th>Тип</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">id</code></td><td>int, PK</td><td>Идентификатор сообщения.</td></tr>
+<tr><td><code class="kbd">appeal_id</code></td><td>int, FK → appeals.id, индекс</td><td>К какому обращению относится.</td></tr>
+<tr><td><code class="kbd">direction</code></td><td>строка(32)</td><td>Направление: <code class="kbd">from_user</code> (от жителя), <code class="kbd">from_operator</code> (от оператора), <code class="kbd">system</code> (системное).</td></tr>
+<tr><td><code class="kbd">text</code></td><td>текст</td><td>Текст сообщения. Очищается при удалении ПДн.</td></tr>
+<tr><td><code class="kbd">attachments</code></td><td>jsonb</td><td>Вложения сообщения.</td></tr>
+<tr><td><code class="kbd">max_message_id</code></td><td>строка(64)</td><td>Идентификатор исходного сообщения в MAX.</td></tr>
+<tr><td><code class="kbd">operator_id</code></td><td>int, FK → operators.id, индекс</td><td>Какой оператор написал (для сообщений оператора).</td></tr>
+<tr><td><code class="kbd">created_at</code></td><td>timestamptz</td><td>Когда сообщение создано.</td></tr>
+</tbody>
+</table></div>
+
+<h4>events — журнал событий MAX</h4>
+<p>Сырые обновления (Update) от MAX. Нужны для защиты от повторов и для отладки.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Поле</th><th>Тип</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">id</code></td><td>int, PK</td><td>Идентификатор записи.</td></tr>
+<tr><td><code class="kbd">idempotency_key</code></td><td>строка(255), UK, индекс</td><td>Уникальный ключ события. Повтор того же ключа тихо отбрасывается — это и есть защита от двойной обработки.</td></tr>
+<tr><td><code class="kbd">update_type</code></td><td>строка(64)</td><td>Тип события MAX.</td></tr>
+<tr><td><code class="kbd">payload</code></td><td>jsonb</td><td>Полное тело события (содержит персональные данные, поэтому таблица чистится через 30 дней).</td></tr>
+<tr><td><code class="kbd">received_at</code></td><td>timestamptz, индекс</td><td>Когда событие получено. По нему удаляются записи старше 30 дней.</td></tr>
+</tbody>
+</table></div>
+
+<h4>audit_log — журнал действий операторов</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Поле</th><th>Тип</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">id</code></td><td>int, PK</td><td>Идентификатор записи.</td></tr>
+<tr><td><code class="kbd">operator_max_user_id</code></td><td>bigint</td><td>Кто совершил действие (пусто, если действие сделал сам бот по расписанию).</td></tr>
+<tr><td><code class="kbd">action</code></td><td>строка(64)</td><td>Код действия (полный перечень ниже).</td></tr>
+<tr><td><code class="kbd">target</code></td><td>строка(255)</td><td>Над чем действие (житель, обращение, настройка).</td></tr>
+<tr><td><code class="kbd">details</code></td><td>jsonb</td><td>Подробности (метаданные: длина, тип, количество элементов). Может содержать ПДн, поэтому запись удаляется по сроку <code class="kbd">AUDIT_LOG_RETENTION_DAYS</code>. Тексты обращений, ответов, рассылок и значений настроек сюда <strong>не</strong> пишутся.</td></tr>
+<tr><td><code class="kbd">created_at</code></td><td>timestamptz, индекс</td><td>Когда записано.</td></tr>
+</tbody>
+</table></div>
+<p>Таблица работает только на дозапись (append-only). Полный перечень кодов <code class="kbd">action</code>, которые пишет бот (сверено с кодом), сгруппирован по объектам:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Группа</th><th>Коды <code class="kbd">action</code></th></tr></thead>
+<tbody>
+<tr><td>По обращениям</td><td><code class="kbd">reply</code> (ответ свайпом), <code class="kbd">reply_via_command</code> (ответ командой <code class="kbd">/reply</code>), <code class="kbd">reopen</code>, <code class="kbd">close</code></td></tr>
+<tr><td>По жителям</td><td><code class="kbd">block</code>, <code class="kbd">unblock</code>, <code class="kbd">erase</code>, <code class="kbd">self_erase</code> (<code class="kbd">/forget</code> от жителя), <code class="kbd">self_consent_revoke</code>, <code class="kbd">self_subscribe_broadcast</code>, <code class="kbd">auto_erase_pdn_retention</code> (авто-обезличивание через 30 дней), <code class="kbd">resident_search_found</code>, <code class="kbd">resident_search_not_found</code></td></tr>
+<tr><td>По настройкам</td><td><code class="kbd">setting_update</code>, <code class="kbd">setting_list_add</code>, <code class="kbd">setting_list_del</code>, <code class="kbd">setting_obj_add</code>, <code class="kbd">setting_obj_del</code>, <code class="kbd">settings_pr_created</code></td></tr>
+<tr><td>По операторам</td><td><code class="kbd">operator_upsert</code>, <code class="kbd">operator_role_change</code>, <code class="kbd">operator_deactivate</code>, <code class="kbd">operator_reactivate</code>, <code class="kbd">operator_auto_deactivated_stale</code></td></tr>
+<tr><td>По рассылкам</td><td><code class="kbd">broadcast_send</code> (НЕ <code class="kbd">broadcast_started</code>), <code class="kbd">broadcast_stop</code>, <code class="kbd">broadcast_cancel_cooldown</code></td></tr>
+<tr><td>По шаблонам рассылок</td><td><code class="kbd">broadcast_template_create</code>, <code class="kbd">broadcast_template_rename</code>, <code class="kbd">broadcast_template_update</code>, <code class="kbd">broadcast_template_clone</code>, <code class="kbd">broadcast_template_delete</code></td></tr>
+</tbody>
+</table></div>
+<div class="note">
+<p class="note__label">Канонические имена действий</p>
+<p>В старых черновиках встречались <code class="kbd">broadcast_started</code> и <code class="kbd">setting_changed</code> — в коде их нет. Канонические имена: <code class="kbd">broadcast_send</code> (подтверждение рассылки) и <code class="kbd">setting_update</code> (изменение настройки и командой, и кнопочным мастером). Действия типа <code class="kbd">pdn_incident</code> в коде тоже нет — инциденты с ПДн отдельным типом записи не фиксируются (это организационная процедура, не автоматизирована).</p>
+</div>
+
+<h4>settings — динамические настройки</h4>
+<p>Параметры, которые редактируются прямо в боте без перезапуска. Подробный перечень ключей — в разделе «Ключи настроек» ниже.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Поле</th><th>Тип</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">key</code></td><td>строка(64), PK</td><td>Имя настройки.</td></tr>
+<tr><td><code class="kbd">value</code></td><td>jsonb</td><td>Значение (строка, число, список, объект).</td></tr>
+<tr><td><code class="kbd">updated_at</code></td><td>timestamptz</td><td>Когда настройку правили в последний раз.</td></tr>
+<tr><td><code class="kbd">synced_at</code></td><td>timestamptz</td><td>Когда ключ в последний раз выгрузили в репозиторий через заявку (PR) — миграция 0013. Пусто или раньше <code class="kbd">updated_at</code> = ключ «грязный» (не синхронизирован) и попадёт в следующую заявку.</td></tr>
+</tbody>
+</table></div>
+
+<h4>broadcasts — рассылки</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Поле</th><th>Тип</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">id</code></td><td>int, PK</td><td>Идентификатор рассылки.</td></tr>
+<tr><td><code class="kbd">created_by_operator_id</code></td><td>int, FK → operators.id</td><td>Кто создал.</td></tr>
+<tr><td><code class="kbd">text</code></td><td>текст</td><td>Текст рассылки (в журнал действий не дублируется).</td></tr>
+<tr><td><code class="kbd">subscriber_count_at_start</code></td><td>int</td><td>Снимок числа получателей на момент старта (для прогресс-бара, в ходе рассылки не пересчитывается).</td></tr>
+<tr><td><code class="kbd">started_at</code> / <code class="kbd">finished_at</code></td><td>timestamptz</td><td>Время старта и завершения.</td></tr>
+<tr><td><code class="kbd">status</code></td><td>строка(16), индекс</td><td>Статус: <code class="kbd">draft</code>, <code class="kbd">sending</code>, <code class="kbd">done</code>, <code class="kbd">cancelled</code>, <code class="kbd">failed</code>. По умолчанию <code class="kbd">draft</code>.</td></tr>
+<tr><td><code class="kbd">delivered_count</code> / <code class="kbd">failed_count</code></td><td>int</td><td>Сколько доставлено и сколько не удалось.</td></tr>
+<tr><td><code class="kbd">admin_message_id</code></td><td>строка(64)</td><td>Идентификатор служебного сообщения о рассылке.</td></tr>
+<tr><td><code class="kbd">attachments</code></td><td>jsonb</td><td>Картинки рассылки (миграция 0014; пустой список = только текст).</td></tr>
+<tr><td><code class="kbd">created_at</code></td><td>timestamptz, индекс</td><td>Когда создана.</td></tr>
+</tbody>
+</table></div>
+
+<h4>broadcast_deliveries — доставка рассылки по получателям</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Поле</th><th>Тип</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">id</code></td><td>int, PK</td><td>Идентификатор записи.</td></tr>
+<tr><td><code class="kbd">broadcast_id</code></td><td>int, FK → broadcasts.id, индекс</td><td>К какой рассылке.</td></tr>
+<tr><td><code class="kbd">user_id</code></td><td>int, FK → users.id, индекс</td><td>Кому.</td></tr>
+<tr><td><code class="kbd">delivered_at</code></td><td>timestamptz</td><td>Когда доставлено (пусто, если не удалось).</td></tr>
+<tr><td><code class="kbd">error</code></td><td>текст</td><td>Текст ошибки, если доставка не прошла. <code class="kbd">error IS NULL</code> = доставлено успешно.</td></tr>
+</tbody>
+</table></div>
+
+<h4>wizard_state — сохранение шага мастера оператора</h4>
+<p>Чтобы оператор не терял прогресс регистрации или составления рассылки при перезапуске бота (миграция 0011). В памяти бот держит быстрый кэш, а эта таблица — «долговечная» копия.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Поле</th><th>Тип</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">id</code></td><td>int, PK</td><td>Идентификатор записи.</td></tr>
+<tr><td><code class="kbd">kind</code></td><td>строка(32)</td><td>Тип мастера. Пара (<code class="kbd">kind</code>, <code class="kbd">operator_max_user_id</code>) уникальна.</td></tr>
+<tr><td><code class="kbd">operator_max_user_id</code></td><td>bigint</td><td>Чей мастер.</td></tr>
+<tr><td><code class="kbd">state</code></td><td>jsonb</td><td>Состояние мастера.</td></tr>
+<tr><td><code class="kbd">expires_at</code></td><td>timestamptz, индекс</td><td>Когда состояние истекает (после этого не восстанавливается).</td></tr>
+<tr><td><code class="kbd">updated_at</code></td><td>timestamptz</td><td>Когда обновлено.</td></tr>
+</tbody>
+</table></div>
+
+<h4>broadcast_templates — шаблоны типовых рассылок</h4>
+<p>Сохранённые частые тексты («плановое отключение воды», «расписание автобусов на праздники»), которые оператор выбирает вместо набора с нуля (миграции 0015, 0016).</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Поле</th><th>Тип</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">id</code></td><td>int, PK</td><td>Идентификатор шаблона.</td></tr>
+<tr><td><code class="kbd">name</code></td><td>строка(64), UK</td><td>Человекочитаемое имя (уникальное).</td></tr>
+<tr><td><code class="kbd">text</code></td><td>текст</td><td>Текст шаблона.</td></tr>
+<tr><td><code class="kbd">attachments</code></td><td>jsonb</td><td>Картинки шаблона.</td></tr>
+<tr><td><code class="kbd">created_by_operator_id</code></td><td>int, FK → operators.id</td><td>Кто создал.</td></tr>
+<tr><td><code class="kbd">created_at</code> / <code class="kbd">updated_at</code></td><td>timestamptz</td><td>Когда создан и обновлён.</td></tr>
+<tr><td><code class="kbd">archived_at</code></td><td>timestamptz, индекс</td><td>Когда отправлен в архив (мягкое удаление — запись остаётся для аудита, но не показывается в списке).</td></tr>
+<tr><td><code class="kbd">use_count</code></td><td>int</td><td>Сколько раз шаблон применён как рассылка.</td></tr>
+<tr><td><code class="kbd">last_used_at</code></td><td>timestamptz</td><td>Когда применён в последний раз. Помогает раз в год прибраться в списке.</td></tr>
+</tbody>
+</table></div>
+
+<h4>Состояния анкеты (поле dialog_state)</h4>
+<p>Перечисление <code class="kbd">DialogState</code> описывает все шаги воронки подачи обращения. Порядок состояний по коду:</p>
+<ol class="steps">
+<li><code class="kbd">idle</code> — нет активной анкеты, житель в меню.</li>
+<li><code class="kbd">awaiting_consent</code> — показан текст согласия и PDF политики, ждём «Согласен» / «Не согласен».</li>
+<li><code class="kbd">awaiting_contact</code> — нативная кнопка «📲 Поделиться контактом», MAX отдаёт визитку (телефон + имя).</li>
+<li><code class="kbd">awaiting_name</code> — свободный ввод имени (если из контакта не пришло).</li>
+<li><code class="kbd">awaiting_locality</code> — выбор населённого пункта из списка либо нативная кнопка «📍 Поделиться геолокацией».</li>
+<li><code class="kbd">awaiting_address</code> — свободный ввод адреса.</li>
+<li><code class="kbd">awaiting_topic</code> — выбор тематики кнопкой.</li>
+<li><code class="kbd">awaiting_summary</code> — суть обращения текстом, можно слать фото и видео несколькими сообщениями подряд.</li>
+<li><code class="kbd">awaiting_followup_text</code> — житель нажал «📎 Дополнить» по существующему обращению.</li>
+<li><code class="kbd">awaiting_geo_confirm</code> — подтверждение адреса, распознанного по геолокации.</li>
+</ol>
+<div class="note">
+<p class="note__label">Геолокация — штатная кнопка, не вложение</p>
+<p>На шаге выбора населённого пункта первой стоит нативная кнопка «📍 Поделиться геолокацией». Житель тапает её — бот определяет поселение и адрес по локальным геоданным (модуль <code class="kbd">services/geo.py</code>, библиотека shapely по полигонам поселений) и переводит в состояние <code class="kbd">awaiting_geo_confirm</code> с вариантами «подтвердить» / «изменить адрес» / «другой населённый пункт». То есть житель не шлёт геолокацию вложением — есть штатная кнопка запроса геопозиции.</p>
+</div>
+
+<h4>Прогресс-карта анкеты</h4>
+<p>Во время заполнения житель видит карточку прогресса. Заголовок дословно рендерится как «📋 Подача обращения · <code class="kbd">N / 5</code>», где числитель меняется, а знаменатель всегда 5. Пять шагов прогресса: «Имя», «Населённый пункт», «Адрес проблемы», «Тема», «Суть». Знаменатель 5 жёстко зафиксирован и <strong>не</strong> зависит от того, заполнены ли заранее телефон и имя: контакт — отдельный предшаг, который в счётчик не входит и обрабатывается текстовыми экранами без счётчика. Маркеры в карте: пройденный шаг — «✓», текущий — «▶».</p>
+
+<h4>Статусы обращения, которые видит житель</h4>
+<p>В карточке «Мои обращения» и в ленте житель видит статусы с эмодзи (сверено с кодом):</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Код статуса</th><th>Эмодзи</th><th>Подпись жителю</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">new</code></td><td>🆕</td><td>Новое</td></tr>
+<tr><td><code class="kbd">in_progress</code></td><td>🔄</td><td>В работе</td></tr>
+<tr><td><code class="kbd">answered</code></td><td>✅</td><td>Завершено</td></tr>
+<tr><td><code class="kbd">closed</code></td><td>⛔</td><td>Закрыто без ответа</td></tr>
+</tbody>
+</table></div>
+<p>Для XLSX-выгрузки статистики используется отдельный маппинг без эмодзи («Новое» / «В работе» / «Завершено» / «Закрыто без ответа») — это другая таблица, не та, что показывается жителю.</p>
+
+<h4>Ключевые правила (инварианты)</h4>
+<ul class="dot">
+<li><code class="kbd">users.max_user_id</code> уникален — дублей жителей не возникает, при следующем <code class="kbd">/start</code> находят существующую запись.</li>
+<li><code class="kbd">events.idempotency_key</code> уникален — повтор того же события MAX тихо отбрасывается ограничением уникальности (защита от двойной обработки при дребезге polling/webhook).</li>
+<li><code class="kbd">appeals.admin_message_id</code> до публикации карточки пусто; после — это якорь, по которому оператор отвечает свайпом или командой <code class="kbd">/reply</code> (функция <code class="kbd">appeals.get_by_admin_message_id</code>).</li>
+<li>Подписчики рассылки определяются условием <code class="kbd">subscribed_broadcast=true AND consent_broadcast_at IS NOT NULL AND is_blocked=false AND first_name &lt;&gt; 'Удалено'</code>. Жители, отозвавшие согласие через <code class="kbd">/forget</code> или удалённые через <code class="kbd">/erase</code>, исключаются автоматически.</li>
+<li><code class="kbd">broadcasts.subscriber_count_at_start</code> — снимок на момент старта, в ходе рассылки не меняется.</li>
+<li>Особая «техническая» запись жителя с <code class="kbd">max_user_id = -1</code> (anonymous) — на неё переподвешиваются обращения после полного удаления персональных данных, чтобы статистика «было обращение №N» сохранилась, а сам житель исчез. Исходная строка <code class="kbd">users</code> при этом физически удаляется (DELETE, не обезличивание-флагом).</li>
+</ul>
+
+<h3 id="spr-migrations">Миграции базы (Alembic)</h3>
+
+<p>Миграция — это шаг изменения структуры базы. Они лежат в <code class="kbd">bot/aemr_bot/db/alembic/versions/</code> и применяются автоматически при старте контейнера. Всего на текущий момент 17 миграций, без пропусков номеров. Цепочка линейная (0001 → 0017), каждая обратно-совместимая — удалять любую нельзя, это порушит цепочку в проде.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Файл</th><th>Что добавила</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">0001_initial</code></td><td>Базовая схема: users, operators, appeals, messages, events, audit_log, settings.</td></tr>
+<tr><td><code class="kbd">0002_broadcast</code></td><td>Подписка на рассылку и таблицы broadcasts / broadcast_deliveries.</td></tr>
+<tr><td><code class="kbd">0003_phone_normalized</code></td><td>Поле <code class="kbd">users.phone_normalized</code> с индексом и заполнением по существующим строкам.</td></tr>
+<tr><td><code class="kbd">0004_indexes_and_autovacuum</code></td><td>Индексы по внешним ключам и настройка автоочистки (autovacuum) отдельных таблиц.</td></tr>
+<tr><td><code class="kbd">0005_appeals_locality</code></td><td>Поле <code class="kbd">appeals.locality</code> (шаг выбора населённого пункта).</td></tr>
+<tr><td><code class="kbd">0006_consent_revoked_at</code></td><td>Поле <code class="kbd">users.consent_revoked_at</code> (отзыв согласия без удаления).</td></tr>
+<tr><td><code class="kbd">0007_consent_broadcast_anonymous</code></td><td>Отдельное согласие на рассылку, anonymous-запись жителя, поле <code class="kbd">closed_due_to_revoke</code>.</td></tr>
+<tr><td><code class="kbd">0008_backfill_consent_broadcast</code></td><td>Заполнение <code class="kbd">consent_broadcast_at</code> для подписавшихся до 0007.</td></tr>
+<tr><td><code class="kbd">0009_partial_indexes_for_hot_paths</code></td><td>Частичные индексы под частые запросы (подписчики, «застрявшие в воронке»).</td></tr>
+<tr><td><code class="kbd">0010_pg_ops_hardening</code></td><td>Операционные настройки Postgres: <code class="kbd">statement_timeout=30s</code> и <code class="kbd">pg_stat_statements</code>.</td></tr>
+<tr><td><code class="kbd">0011_wizard_state_persistence</code></td><td>Таблица wizard_state (сохранение шага мастера оператора при рестарте).</td></tr>
+<tr><td><code class="kbd">0012_messages_appeal_created_index</code></td><td>Композитный индекс <code class="kbd">messages(appeal_id, created_at)</code> под ленту переписки.</td></tr>
+<tr><td><code class="kbd">0013_settings_synced_at</code></td><td>Поле <code class="kbd">settings.synced_at</code> и настройки автора коммитов для синхронизации с репозиторием.</td></tr>
+<tr><td><code class="kbd">0014_broadcasts_attachments</code></td><td>Картинки в рассылках (поле <code class="kbd">broadcasts.attachments</code>).</td></tr>
+<tr><td><code class="kbd">0015_broadcast_templates</code></td><td>Таблица broadcast_templates (пул типовых рассылок).</td></tr>
+<tr><td><code class="kbd">0016_broadcast_template_usage</code></td><td>Счётчик применений шаблона и дата последнего применения.</td></tr>
+<tr><td><code class="kbd">0017_appeals_last_card_mid</code></td><td>Поле <code class="kbd">appeals.last_admin_card_mid</code> (указатель на последнюю карточку-событие, DDD-переход на event-log карточек).</td></tr>
+</tbody>
+</table></div>
+<p>Полезные команды (выполняются внутри контейнера):</p>
+<div class="cmd"><code>docker compose exec bot alembic current</code><span class="cmd__what">текущая версия схемы в базе</span></div>
+<div class="cmd"><code>docker compose exec bot alembic history --verbose</code><span class="cmd__what">вся история миграций</span></div>
+<div class="cmd"><code>docker compose exec bot alembic upgrade head</code><span class="cmd__what">применить новые миграции</span></div>
+<div class="cmd"><code>docker compose exec bot alembic downgrade -1</code><span class="cmd__what">откатить одну ревизию назад</span></div>
+
+<h3 id="spr-citizen-cmd">Команды жителя в личке</h3>
+
+<p>Все команды доступны без входа в систему. Если житель отправит команду в служебную группу, бот её проигнорирует. Единственное исключение — <code class="kbd">/whoami</code>, которая в служебной группе отвечает, а в личке у жителя тихо игнорируется (намеренно, чтобы команда не «светилась» обычным жителям).</p>
+
+<div class="note">
+<p class="note__label">Меню команд MAX очищено намеренно</p>
+<p>При старте бот вызывает <code class="kbd">set_my_commands()</code> без аргументов — список команд в клиенте MAX очищен для всех чатов. Причина: MAX API не поддерживает команды на конкретный чат (нет <code class="kbd">BotCommandScopeChat</code>), а раньше публикация команд жителя приводила к тому, что операторы в служебной группе видели те же <code class="kbd">/forget</code> и <code class="kbd">/subscribe</code> и могли тапнуть случайно. Жители работают через кнопочное меню, операторы вызывают <code class="kbd">/op_help</code> руками. Сами команды (например, <code class="kbd">/start</code>, <code class="kbd">/help</code>) при ручном вводе работают.</p>
+</div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Команда</th><th>Что делает</th><th>Журнал действий</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">/start</code></td><td>Присылает приветствие и главное меню жителя. Если жителя ещё нет в таблице <code class="kbd">users</code> — создаёт запись с <code class="kbd">dialog_state=idle</code>. Если житель уже общался — состояние и история не сбрасываются. Текст приветствия — из настройки <code class="kbd">welcome_text</code> (если пусто — из <code class="kbd">seed/welcome.md</code>). Нажатие «Старт» в карточке бота даёт тот же эффект.</td><td>не пишет</td></tr>
+<tr><td><code class="kbd">/menu</code></td><td>То же, что <code class="kbd">/start</code>: заново показывает главное меню. Полезно, если житель удалил кнопки.</td><td>не пишет</td></tr>
+<tr><td><code class="kbd">/help</code></td><td>Список доступных команд жителя с кратким описанием.</td><td>не пишет</td></tr>
+<tr><td><code class="kbd">/policy</code></td><td>Присылает PDF политики обработки ПДн (<code class="kbd">docs/PRIVACY.pdf</code>). Токен файла кешируется в <code class="kbd">policy_pdf_token</code>. Если кеш пуст — пробует загрузить заново; если и это не вышло — присылает прямую ссылку из <code class="kbd">policy_url</code>.</td><td>не пишет</td></tr>
+<tr><td><code class="kbd">/rules</code></td><td>Правила пользования ботом для жителей (текст <code class="kbd">RULES_TEXT</code>).</td><td>не пишет</td></tr>
+<tr><td><code class="kbd">/subscribe</code></td><td>Подписывает на рассылки: <code class="kbd">subscribed_broadcast=true</code>. Доставка работает только при <code class="kbd">is_blocked=false</code>. Альтернатива — кнопка подписки в главном меню.</td><td><code class="kbd">self_subscribe_broadcast</code></td></tr>
+<tr><td><code class="kbd">/unsubscribe</code></td><td>Отписывает: <code class="kbd">subscribed_broadcast=false</code>. Альтернатива — кнопка «🔕 Отписаться» под каждым сообщением рассылки.</td><td>—</td></tr>
+<tr><td><code class="kbd">/forget</code></td><td>Обезличивает данные жителя (право по статье 21 152-ФЗ). Равнозначно <code class="kbd">/erase</code> от ИТ на самого себя. Что меняется: <code class="kbd">first_name='Удалено'</code>, <code class="kbd">phone=NULL</code>, <code class="kbd">phone_normalized=NULL</code>, <code class="kbd">consent_pdn_at=NULL</code>, <code class="kbd">dialog_state='idle'</code>, <code class="kbd">dialog_data={}</code>, <code class="kbd">subscribed_broadcast=false</code>, <code class="kbd">is_blocked=true</code>. Тексты обращений и сообщений очищаются до NULL/пусто.</td><td><code class="kbd">self_erase</code></td></tr>
+<tr><td><code class="kbd">/export</code></td><td>Скрытая команда выгрузки собственных данных жителем (право на доступ, статья 14 152-ФЗ).</td><td>—</td></tr>
+<tr><td><code class="kbd">/cancel</code></td><td>Прерывает текущую анкету, возвращает в <code class="kbd">idle</code> и в главное меню. Работает на любом шаге.</td><td>не пишет</td></tr>
+<tr><td><code class="kbd">/whoami</code></td><td>В личке у жителя <strong>тихо игнорируется</strong>. (В служебной группе возвращает <code class="kbd">max_user_id</code>, <code class="kbd">first_name</code>, <code class="kbd">chat_id</code>.)</td><td>не пишет</td></tr>
+</tbody>
+</table></div>
+
+<h4>Главное меню жителя</h4>
+<p>Под приветствием житель видит inline-кнопки. По коду их семь рядов (по одной кнопке в ряду):</p>
+<ol class="steps">
+<li><strong>📝 Написать обращение</strong> (<code class="kbd">menu:new_appeal</code>) — запускает анкету. Сначала проверяется <code class="kbd">consent_pdn_at</code>; если согласия ещё нет — добавляется шаг с PDF политики.</li>
+<li><strong>📂 Мои обращения</strong> (<code class="kbd">menu:my_appeals</code>) — список обращений по 5 на страницу, с эмодзи статуса и датой.</li>
+<li><strong>Подписка/отписка от рассылки</strong> — кнопка динамическая: «🔕 Не хочу получать рассылку» (<code class="kbd">info:subscribe_off</code>) для подписанного, иначе «🔔 Подписаться на рассылку» (<code class="kbd">info:subscribe_on</code>).</li>
+<li><strong>🏛 Приём граждан</strong> (<code class="kbd">menu:appointment</code>) — текст из настройки <code class="kbd">appointment_text</code> (расписание приёма и телефон записи). Электронная приёмная открывается отсюда, если ссылка задана.</li>
+<li><strong>ℹ️ Полезная информация</strong> (<code class="kbd">menu:useful_info</code>) — открывает подменю (экстренные службы, маршруты, диспетчеры).</li>
+<li><strong>🛡️ Защита от мошенников</strong> (<code class="kbd">menu:security</code>) — антифишинговый раздел.</li>
+<li><strong>⚙️ Настройки и помощь</strong> (<code class="kbd">menu:settings</code>).</li>
+</ol>
+<div class="note">
+<p class="note__label">Семь кнопок, не шесть</p>
+<p>Часть старых документов и даже комментарий в коде говорят про «6 кнопок» и про переезд электронной приёмной в подменю. Фактически в текущем коде семь рядов: кнопка «🛡️ Защита от мошенников» добавлена отдельным пунктом сверх исходных шести. Верно — семь.</p>
+</div>
+
+<h4>Подменю «Полезная информация»</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Кнопка</th><th>Что делает</th></tr></thead>
+<tbody>
+<tr><td>☎️ Телефоны экстренных и аварийных служб</td><td>Сгруппированный список из настройки <code class="kbd">emergency_contacts</code> (массив объектов <code class="kbd">{name, phone}</code>).</td></tr>
+<tr><td>🚌 Муниципальные маршруты</td><td>Прямая ссылка на <code class="kbd">udth_schedule_url</code> (кнопка-ссылка).</td></tr>
+<tr><td>🚍 Межмуниципальные маршруты</td><td>Прямая ссылка на <code class="kbd">udth_schedule_intermunicipal_url</code>.</td></tr>
+<tr><td>📞 Диспетчерские автотранспорта</td><td>Список из <code class="kbd">transport_dispatcher_contacts</code> (массив объектов <code class="kbd">{routes, phone}</code>).</td></tr>
+<tr><td>🔔/🔕 Подписка</td><td>Переключает <code class="kbd">subscribed_broadcast</code> — то же, что <code class="kbd">/subscribe</code> / <code class="kbd">/unsubscribe</code>.</td></tr>
+</tbody>
+</table></div>
+
+<h3 id="spr-operator-cmd">Команды оператора в служебной группе</h3>
+
+<p>Эти команды работают, только когда оператор вызывает их из чата с идентификатором <code class="kbd">ADMIN_GROUP_ID</code>. Гард <code class="kbd">ensure_operator</code> пропускает любую активную роль; гард <code class="kbd">ensure_role(IT)</code> пропускает строго роль <code class="kbd">it</code> (координатор НЕ проходит).</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Команда</th><th>Доступ</th><th>Назначение и поведение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">/reply &lt;N&gt; &lt;текст&gt;</code></td><td>все операторы</td><td>Ответ жителю по обращению <code class="kbd">#N</code>. Проверяет лимит (≤300 символов) и <code class="kbd">is_blocked</code>. Оборачивает текст в формальную шапку письма (<code class="kbd">CITIZEN_REPLY_TEMPLATE</code>): «✉️ ОТВЕТ АДМИНИСТРАЦИИ ЕЛИЗОВСКОГО МУНИЦИПАЛЬНОГО ОКРУГА», ниже строка «📌 Обращение #N от {дата}», тема и адрес, затем сам ответ. Доставляет жителю, ставит <code class="kbd">status='answered'</code>, <code class="kbd">answered_at=now()</code>. Можно приложить одну картинку. Журнал: <code class="kbd">reply_via_command</code>.</td></tr>
+<tr><td><code class="kbd">/reopen &lt;N&gt;</code></td><td>все операторы</td><td>Возвращает закрытое/отвеченное обращение в работу. Четыре исхода: <em>reopened</em> (статус → <code class="kbd">in_progress</code>, сброс <code class="kbd">answered_at</code>/<code class="kbd">closed_at</code>, audit <code class="kbd">reopen</code>); <em>already_open</em> (уже в работе, ничего не меняем); <em>blocked_by_revoke</em> (закрыто из-за отзыва — возобновлять нельзя); <em>not_found</em>. Жителю при reopen ничего не уходит.</td></tr>
+<tr><td><code class="kbd">/close &lt;N&gt;</code></td><td>все операторы</td><td>Закрывает без ответа (спам, дубль, не по адресу). <code class="kbd">status='closed'</code>, <code class="kbd">closed_at=now()</code>, жителю ничего не уходит. Журнал: <code class="kbd">close</code>.</td></tr>
+<tr><td><code class="kbd">/stats [период]</code></td><td>все операторы</td><td>XLSX-выгрузка за период: <code class="kbd">today</code> (по умолчанию), <code class="kbd">week</code>, <code class="kbd">month</code>, <code class="kbd">quarter</code>, <code class="kbd">half_year</code>, <code class="kbd">year</code>, <code class="kbd">all</code>. 17 колонок: №, создано, имя, телефон, <code class="kbd">max_user_id</code>, населённый пункт, адрес, тематика, суть, статус, ответ оператора, время ответа в часах, «В SLA (4ч)» (да/нет), согласие на ПДн, согласие отозвано, подписан на рассылку, заблокирован. Операция чтения, в журнал не пишет.</td></tr>
+<tr><td><code class="kbd">/open_tickets</code></td><td>все операторы</td><td>Публикует заголовок «⏳ Найдено неотвеченных обращений: N» и затем по карточке на каждое открытое обращение. Свайп-ответ по этим карточкам работает (распознаётся по тексту «Обращение #N»). Операция чтения.</td></tr>
+<tr><td><code class="kbd">/find_resident &lt;phone&#124;max_user_id&gt;</code></td><td>все операторы</td><td>Карточка одного жителя без открытия обращения. Различает запрос: только цифры длиной 4–9 → <code class="kbd">max_user_id</code>; цифры ≥10 или с <code class="kbd">+</code> → телефон. Возвращает имя, <strong>маскированный</strong> телефон <code class="kbd">+7***1234</code>, статус согласия, подписку, блокировку, последнее обращение, общее число обращений. Запрос пишется в журнал: <code class="kbd">resident_search_found</code> / <code class="kbd">resident_search_not_found</code> (телефон в журнале маскируется).</td></tr>
+<tr><td><code class="kbd">/diag</code></td><td>все операторы</td><td>Текстовая сводка: пульс (последнее событие, всего), жители (всего/подписаны/заблокированы, новые за 24ч), обращения (всего/в работе, новые за 24ч, ответов за 24ч), рассылки (DONE/FAILED, запущено за 24ч, зависших SENDING, неуспешных доставок), конфигурация (режим, лимит ответа, SLA). Блок «Внимание» — только если есть аномалии.</td></tr>
+<tr><td><code class="kbd">/op_help</code></td><td>админ-чат</td><td>Закрепляемая панель быстрых действий (состав по роли, см. ниже).</td></tr>
+<tr><td><code class="kbd">/whoami</code></td><td>админ-чат</td><td>Возвращает <code class="kbd">max_user_id</code>, <code class="kbd">first_name</code>, <code class="kbd">chat_id</code> служебной группы.</td></tr>
+<tr><td><code class="kbd">/help</code>, <code class="kbd">/menu</code>, <code class="kbd">/start</code></td><td>админ-чат</td><td>Открывают меню оператора, но <strong>без закрепления</strong>. Закрепление включается только при <code class="kbd">/op_help</code>.</td></tr>
+<tr><td><code class="kbd">/broadcast [list]</code></td><td>coordinator, it</td><td>Мастер рассылки; <code class="kbd">list</code> — последние 10 рассылок со статусами и счётчиками.</td></tr>
+<tr><td><code class="kbd">/erase max_user_id=&#124;phone=</code></td><td>только it</td><td>Удаление ПДн жителя (статья 21 152-ФЗ). Журнал: <code class="kbd">erase</code>.</td></tr>
+<tr><td><code class="kbd">/setting [list&#124;&lt;key&gt; &lt;value&gt;]</code></td><td>только it</td><td>Управление настройками. Журнал: <code class="kbd">setting_update</code> (само значение не пишется).</td></tr>
+<tr><td><code class="kbd">/add_operators</code></td><td>только it</td><td>Массовая регистрация операторов (многострочно). Журнал: <code class="kbd">operator_upsert</code> на каждого.</td></tr>
+<tr><td><code class="kbd">/backup</code></td><td>только it</td><td>Внеплановый <code class="kbd">pg_dump</code> прямо сейчас.</td></tr>
+</tbody>
+</table></div>
+
+<div class="note">
+<p class="note__label">Команды жителя в служебной группе</p>
+<p>Если в служебной группе набрать команду жителя (<code class="kbd">/forget</code>, <code class="kbd">/cancel</code>, <code class="kbd">/export</code>, <code class="kbd">/policy</code>, <code class="kbd">/rules</code>, <code class="kbd">/subscribe</code>, <code class="kbd">/unsubscribe</code>), бот не открывает меню оператора, а отвечает подсказкой «Эта команда — для жителей в личке с ботом. В этом чате используйте /op_help».</p>
+</div>
+
+<h4>Панель «/op_help» по ролям</h4>
+<p>Состав панели зависит от роли вызвавшего оператора. Базовые действия есть у всех; добавки даются по флагам роли. Кнопка «📋 Памятка оператора» (полная инструкция отдельным экраном с разделом «Безопасность и антифишинг») доступна любой роли сверх перечисленных действий.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Группа кнопок</th><th>Кому видна</th><th>Кнопки</th></tr></thead>
+<tbody>
+<tr><td>Базовые действия</td><td>любая роль (aemr, egp, coordinator, it)</td><td>📋 Открытые обращения (со счётчиком), 📊 Статистика (подменю периодов), 🛠 Диагностика</td></tr>
+<tr><td>Добавка для рассылок</td><td>coordinator и it</td><td>📢 Сделать рассылку, 📜 История рассылок, 📋 Шаблоны рассылок</td></tr>
+<tr><td>Добавка для администрирования</td><td>только it</td><td>💾 Снять бэкап, 👥 Операторы, ⚙️ Настройки бота, 📊 Аудитория и согласия</td></tr>
+</tbody>
+</table></div>
+<p>Итог по ролям: <code class="kbd">aemr</code> и <code class="kbd">egp</code> — 3 действия, <code class="kbd">coordinator</code> — 6 действий, <code class="kbd">it</code> — 10 действий. Плюс кнопка «Памятка оператора» сверх для всех (то есть в массиве кнопок фактически 4 / 7 / 11 элементов). Старые числа «9 для всех» и «13 для ИТ» устарели.</p>
+
+<h4>Кнопки под карточкой обращения</h4>
+<p>Набор кнопок под карточкой зависит от роли и статуса обращения:</p>
+<ul class="dot">
+<li><strong>Статусы <code class="kbd">new</code> / <code class="kbd">in_progress</code>, всем ролям:</strong> «✉️ Ответить и закрыть», «💬 Ответить промежуточно (не закрывая)», «⛔ Закрыть без ответа».</li>
+<li><strong>Статусы <code class="kbd">answered</code> / <code class="kbd">closed</code> (если не закрыто из-за отзыва):</strong> «🔁 Возобновить».</li>
+<li><strong>Только роли <code class="kbd">it</code> (кнопки видны всем, но callback отбивается гардом):</strong> «🚫 Заблокировать» / «✅ Разблокировать», «🗑 Удалить ПДн».</li>
+<li><strong>Всегда внизу:</strong> «🏠 В админ-меню».</li>
+</ul>
+<p>Кнопки «🔄 В работу» нет — статус <code class="kbd">in_progress</code> присваивается логикой бота, а не явным действием оператора.</p>
+
+<h4>Подробности «details» в журнале действий</h4>
+<p>Что именно бот кладёт в поле <code class="kbd">details</code> при типовых действиях (только метаданные, без текстов):</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Действие</th><th><code class="kbd">action</code></th><th><code class="kbd">target</code></th><th><code class="kbd">details</code></th></tr></thead>
+<tbody>
+<tr><td>Ответ свайпом</td><td><code class="kbd">reply</code></td><td><code class="kbd">appeal #N</code></td><td><code class="kbd">{"chars": длина}</code></td></tr>
+<tr><td>Ответ командой <code class="kbd">/reply</code></td><td><code class="kbd">reply_via_command</code></td><td><code class="kbd">appeal #N</code></td><td><code class="kbd">{"chars": длина}</code></td></tr>
+<tr><td><code class="kbd">/reopen</code></td><td><code class="kbd">reopen</code></td><td><code class="kbd">appeal #N</code></td><td><code class="kbd">{}</code></td></tr>
+<tr><td><code class="kbd">/close</code></td><td><code class="kbd">close</code></td><td><code class="kbd">appeal #N</code></td><td><code class="kbd">{}</code></td></tr>
+<tr><td><code class="kbd">/erase</code></td><td><code class="kbd">erase</code></td><td><code class="kbd">user max_id=&lt;id&gt;</code></td><td><code class="kbd">{}</code></td></tr>
+<tr><td><code class="kbd">/forget</code> от жителя</td><td><code class="kbd">self_erase</code></td><td><code class="kbd">user max_id=&lt;id&gt;</code></td><td><code class="kbd">{}</code></td></tr>
+<tr><td><code class="kbd">/setting</code></td><td><code class="kbd">setting_update</code></td><td><code class="kbd">&lt;ключ&gt;</code></td><td><code class="kbd">{"kind": тип, "chars"/"items": …}</code></td></tr>
+<tr><td><code class="kbd">/add_operators</code> (на каждого)</td><td><code class="kbd">operator_upsert</code></td><td><code class="kbd">max_id=&lt;id&gt;</code></td><td><code class="kbd">{"role": роль, "full_name": ФИО}</code></td></tr>
+<tr><td>Подтверждение <code class="kbd">/broadcast</code></td><td><code class="kbd">broadcast_send</code></td><td><code class="kbd">broadcast #&lt;id&gt;</code></td><td><code class="kbd">{"chars": длина, "subscriber_count": N}</code></td></tr>
+</tbody>
+</table></div>
+
+<h3 id="spr-roles">Роли операторов</h3>
+
+<p>Бот различает четыре роли. Смысл — раздать «опасные» команды только тем, кто должен ими пользоваться. Все четыре роли отвечают жителям и работают с обращениями; разница только в админ-командах. Между <code class="kbd">coordinator</code>, <code class="kbd">aemr</code> и <code class="kbd">egp</code> в коде набор команд сейчас одинаковый (различие пока организационное: аудит «кто что сделал», возможная будущая маршрутизация по адресу, разбивка статистики по группам).</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Действие / роль</th><th>coordinator</th><th>aemr</th><th>egp</th><th>it</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">/reply</code>, <code class="kbd">/reopen</code>, <code class="kbd">/close</code>, <code class="kbd">/stats</code>, <code class="kbd">/diag</code>, <code class="kbd">/open_tickets</code>, <code class="kbd">/find_resident</code>, <code class="kbd">/op_help</code>, <code class="kbd">/whoami</code>, <code class="kbd">/help</code></td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code class="kbd">/broadcast</code>, <code class="kbd">/broadcast list</code></td><td>✓</td><td>✗</td><td>✗</td><td>✓</td></tr>
+<tr><td>Экстренная остановка рассылки</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td>Блокировка / разблокировка жителя из карточки</td><td>✗</td><td>✗</td><td>✗</td><td>✓</td></tr>
+<tr><td>Удаление ПДн кнопкой из карточки</td><td>✗</td><td>✗</td><td>✗</td><td>✓</td></tr>
+<tr><td><code class="kbd">/erase</code>, <code class="kbd">/setting</code>, <code class="kbd">/add_operators</code>, <code class="kbd">/backup</code></td><td>✗</td><td>✗</td><td>✗</td><td>✓</td></tr>
+</tbody>
+</table></div>
+
+<ul class="dot">
+<li><strong>Роль <code class="kbd">it</code> включает координатора.</strong> ИТ может всё, что делает координатор, плюс настройки и удаление ПДн. Если один человек одновременно ИТ и координатор — назначаем <code class="kbd">role=it</code>, две записи не нужны.</li>
+<li><strong>Самомодификация заблокирована.</strong> Даже ИТ не может изменить себе роль через <code class="kbd">/add_operators</code> (проверка <code class="kbd">actor_id == target_id</code>) — защита от случайного понижения и от social engineering. Сменить свою роль можно только через psql.</li>
+<li><strong>Защита последнего ИТ.</strong> Если в системе остался ровно один активный <code class="kbd">it</code>, бот блокирует попытку его деактивировать.</li>
+</ul>
+
+<h3 id="spr-sla">SLA: код и регламент</h3>
+
+<p>Срок ответа задаётся в двух плоскостях, и их полезно понимать вместе. В коде реализован <strong>один базовый срок</strong>: переменная <code class="kbd">SLA_RESPONSE_HOURS=4</code> (четыре часа на ответ). По истечении бот пишет в служебную группу, что обращение просрочено. Просрочка в коде считается по <strong>астрономическому времени</strong>, а не по рабочим часам. Функция <code class="kbd">find_overdue_unanswered</code> (<code class="kbd">services/appeals.py</code>) берёт порог <code class="kbd">now() − 4 часа</code> по календарю, а колонка «В SLA» в XLSX (<code class="kbd">services/stats.py</code>) сравнивает разницу <code class="kbd">answered_at − created_at</code> с <code class="kbd">4 × 3600</code> секунд — без вычета ночей, выходных и праздников. Поэтому обращение, поданное в пятницу 17:50 и отвеченное в понедельник 9:10, формально числится «просроченным на много часов», хотя по рабочему времени это около часа. Привязаны к будням 9:00–18:00 по Камчатке (с пропуском обеда и праздников) только <strong>сами напоминалки</strong> <code class="kbd">open-reminder-workhours</code> / <code class="kbd">overdue-reminder-workhours</code> — то есть бот не шлёт алёрты ночью и в выходные, но «часы SLA» внутри считает астрономически. Честный пересчёт в рабочие часы по Постановлению — задел на будущее (отдельный модуль расчёта рабочего времени), сейчас его нет.</p>
+
+<p>Регламент (Постановление № 2129 от 19.12.2025) описывает более детальную картину сроков: для обращений высокой важности — ответ за 2 рабочих часа; промежуточный ответ переходит в окончательное решение за срок до 8 рабочих дней; возврат обращения с пометкой «не наша компетенция» — за 30 минут. Эти сроки в коде отдельными значениями не выражены: бот считает один базовый срок 4 часа, а приоритезация по важности — организационная. «Высокую важность» назначает Куратор ЦУР вручную, не по теме обращения. Приоритезации по теме (вода/газ/отопление как «высокий приоритет») в коде нет вовсе: у обращения нет поля важности, в перечислении статусов только <code class="kbd">new</code> / <code class="kbd">in_progress</code> / <code class="kbd">answered</code> / <code class="kbd">closed</code>, и ни одного механизма маршрутизации важности по теме.</p>
+
+<p>Постановление № 2129 относит бот к работе в рамках МЦУ/ЦУР (Муниципального / Центра управления регионом). Его §1.2 устанавливает: к сообщениям из открытых источников через бот 59-ФЗ (о порядке рассмотрения обращений граждан) не применяется — персональные данные обрабатываются по 152-ФЗ. Стандарт качества ответов (Приложение 2 к Постановлению) требует действительного залога, запрещает канцелярит и ставит лимит длины Telegram ≤1024 символа; в коде лимит ответа жёстче — 300 символов, что Стандарту не противоречит.</p>
+
+<h4>Памятка по тону ответа</h4>
+<p>Перед ответом оператор определяет эмоцию жителя по тексту и подбирает тон:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Эмоция</th><th>Тон ответа</th><th>Первая фраза</th><th>Чего избегать</th></tr></thead>
+<tbody>
+<tr><td>Гнев</td><td>спокойный, уважительный, конкретный</td><td>«Понимаем ваше возмущение и благодарим за сигнал.»</td><td>оправдания, встречные обвинения</td></tr>
+<tr><td>Отчаяние</td><td>тёплый, участливый, с конкретным действием</td><td>«Понимаем, как это тяжело. Давайте разберёмся вместе.»</td><td>равнодушие, «мы не можем»</td></tr>
+<tr><td>Тревога</td><td>уверенный, успокаивающий, информативный</td><td>«Спасибо, что сообщили. Ситуация под контролем.»</td><td>«не волнуйтесь», игнорирование</td></tr>
+<tr><td>Раздражение</td><td>деловой, конкретный, с дедлайном</td><td>«Понимаем ваше недовольство. Вот что мы сделаем.»</td><td>«в ближайшее время»</td></tr>
+<tr><td>Ирония</td><td>профессиональный, без ответной иронии</td><td>«Благодарим за обращение. Отвечаем по существу.»</td><td>ответная ирония, оправдания</td></tr>
+<tr><td>Благодарность</td><td>тёплый, скромный</td><td>«Спасибо за тёплые слова! Рады, что помогли.»</td><td>самохвальство</td></tr>
+<tr><td>Нейтральный</td><td>дружелюбный, информативный</td><td>«Здравствуйте! Спасибо за обращение.»</td><td>сухость, канцелярит</td></tr>
+</tbody>
+</table></div>
+
+<h4>Чек-лист ответа оператора</h4>
+<p>Ответ должен содержать:</p>
+<ul class="check">
+<li>приветствие</li>
+<li>обращение по имени</li>
+<li>ответ по существу</li>
+<li>конкретные сроки или действия</li>
+<li>контактную информацию (диспетчерская / УК), если уместно</li>
+<li>предложение дополнительной помощи</li>
+</ul>
+<p>Ответ НЕ должен содержать: канцелярит («настоящим информируем», «в рамках действующего…»), страдательный залог («было направлено», «было передано»), аббревиатуры без расшифровки (ЕМО, ЕГП — раскрывать на первом упоминании), многоточие, обещания без дедлайна («в ближайшее время»), негативные формулировки («не можем», «невозможно»).</p>
+
+<h3 id="spr-cron">Расписание фоновых задач (cron)</h3>
+
+<p>cron здесь — это планировщик задач (APScheduler), работающий <strong>внутри</strong> процесса бота. Все времена — по часовому поясу <code class="kbd">TZ</code> (по умолчанию <code class="kbd">Asia/Kamchatka</code>). Расписания взяты из реальных триггеров в <code class="kbd">services/cron.py</code>. Всего 17 задач (последняя, внешний пинг, включается только если задан <code class="kbd">HEALTHCHECK_URL</code>). Общие параметры всех задач: <code class="kbd">max_instances=1</code>, <code class="kbd">coalesce=True</code>, <code class="kbd">misfire_grace_time=120</code> секунд.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Задача</th><th>Расписание</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">pulse-hourly</code></td><td>каждый час 24/7, в :05</td><td>Базовый сигнал «бот работает» в служебную группу. К календарю праздников не привязан.</td></tr>
+<tr><td><code class="kbd">pulse-workhours-extra</code></td><td>пн–пт 09:35–17:35 (в :35)</td><td>Дополнительный пульс в рабочее время (вместе с базовым — раз в полчаса).</td></tr>
+<tr><td><code class="kbd">startup-pulse</code></td><td>через 5 секунд после старта (однократно)</td><td>Подтверждение, что процесс поднялся (на случай, если регулярный пульс пропал при перезапуске).</td></tr>
+<tr><td><code class="kbd">health-selfcheck</code></td><td>каждые <code class="kbd">HEALTHCHECK_INTERVAL_MIN</code> мин (по умолчанию 5)</td><td>Следит за внутренним пульсом, шлёт алёрт при смене «жив ↔ завис».</td></tr>
+<tr><td><code class="kbd">healthcheck-ping</code></td><td>каждые 5 мин (только при заданном <code class="kbd">HEALTHCHECK_URL</code>)</td><td>Внешний пинг сервиса мониторинга. При пустом URL в расписание не добавляется.</td></tr>
+<tr><td><code class="kbd">funnel-watchdog</code></td><td>каждый час, в :15</td><td>Сброс зависших анкет воронки (житель начал и забыл) старше 24 часов; алёрт при ≥5 за час.</td></tr>
+<tr><td><code class="kbd">open-reminder-workhours</code></td><td>пн–пт 09:00–11:59 и 13:00–17:59, в :10</td><td>Напоминание операторам о неотвеченных обращениях (с пропуском обеденного часа).</td></tr>
+<tr><td><code class="kbd">overdue-reminder-workhours</code></td><td>пн–пт 09:00–11:59 и 13:00–17:59, в :40</td><td>Напоминание о просроченных по SLA (с пропуском обеда).</td></tr>
+<tr><td><code class="kbd">monthly-stats</code></td><td>1-го числа в 09:00</td><td>Автоматический XLSX-отчёт за прошлый месяц в служебную группу.</td></tr>
+<tr><td><code class="kbd">events-retention</code></td><td>ежедневно в 04:00</td><td>Удаление событий из таблицы events старше 30 дней (в payload есть ПДн).</td></tr>
+<tr><td><code class="kbd">audit-log-retention</code></td><td>ежедневно в 04:15</td><td>Удаление записей audit_log старше <code class="kbd">AUDIT_LOG_RETENTION_DAYS</code> (по умолчанию 365), 152-ФЗ.</td></tr>
+<tr><td><code class="kbd">stale-operators-cleanup</code></td><td>ежедневно в 04:20</td><td>Пометить покинувших служебную группу операторов как неактивных (ИТ-операторов не трогает).</td></tr>
+<tr><td><code class="kbd">pdn-retention</code></td><td>ежедневно в 04:30</td><td>Обезличивание персональных данных через 30 дней после отзыва согласия (152-ФЗ статья 21 часть 5).</td></tr>
+<tr><td><code class="kbd">appeals-5y-retention</code></td><td>ежедневно в 04:45</td><td>Обнуление текстового содержимого обращений старше 5 лет (метаданные сохраняются).</td></tr>
+<tr><td><code class="kbd">threat-intel-refresh</code></td><td>каждый час, в :17</td><td>Обновление локального кэша вредоносных URL-хостов (URLhaus + ThreatFox + при ключе PhishTank); critical-алёрт при устаревании более 6 часов.</td></tr>
+<tr><td><code class="kbd">broadcast-draft-reaper</code></td><td>каждый час, в :37</td><td>Зависшие черновики рассылок старше 30 минут переводятся в статус FAILED.</td></tr>
+<tr><td><code class="kbd">db-backup</code></td><td>каждое вс в <code class="kbd">BACKUP_HOUR:BACKUP_MINUTE</code> (по умолчанию 03:00)</td><td>Резервная копия: pg_dump → GPG → именованный том, ротация старых файлов; алёрт при сбое по категории.</td></tr>
+</tbody>
+</table></div>
+<div class="note">
+<p class="note__label">Праздники подавляют только напоминания</p>
+<p>Производственный календарь РФ из файла <code class="kbd">seed/holidays.json</code> подавляет SLA-напоминания (<code class="kbd">open-reminder-workhours</code>, <code class="kbd">overdue-reminder-workhours</code>) в государственные праздники. Пульс и задачи очистки данных (retention) к календарю не привязаны: ретенция ПДн обязана работать и в выходные (срок 30 дней не делает каникул), а пульс должен подтверждать жизнь бота круглосуточно. В файле даты на 2026 и 2027 годы с учётом переносов выходных. Если файла нет или он повреждён — fallback: рабочими считаются все дни кроме воскресенья (безопасный режим: лишние напоминания вместо тишины, но в праздники будет спам).</p>
+</div>
+<div class="note">
+<p class="note__label">Тихий режим и критические алёрты</p>
+<p>Сигнальные задачи (pulse, напоминания) и алёрты по-разному реагируют на «тихий режим» (quiet hours — настройка <code class="kbd">admin_quiet_hours_enabled</code>). Обычный пульс и не-срочные уведомления в тихие часы молчат, а критические алёрты (упавший бэкап, ошибки очистки данных, авто-деактивация операторов, аномалия в воронке, устаревший threat-intel) пробивают тишину — оператор узнаёт о реальном инциденте сразу.</p>
+</div>
+
+<h4>Тайм-линия суток: когда что срабатывает</h4>
+
+<p>Таблица выше перечисляет задачи по алфавиту, но в эксплуатации полезнее видеть их <strong>на 24-часовой шкале по Камчатке</strong> — чтобы понимать, в какие минуты процесс занят, и не путать «бот завис» с «бот делает ночную ретенцию». Схема ниже раскладывает все задачи из <code class="kbd">services/cron.py</code> по четырём смысловым полосам. <strong>Непрерывные</strong> работают круглосуточно и к календарю не привязаны (пульс, самопроверка, внешний пинг). <strong>Ежечасные метки</strong> — это разнесённые по минутам часа задачи, которые специально не ставят на одну минуту (:15 watchdog, :17 threat-intel, :37 reaper черновиков), чтобы не было одновременного всплеска нагрузки. <strong>Ночное окно очистки</strong> 03:00–04:45 — это «уборка» один раз в сутки: сначала бэкап (только по воскресеньям), затем шесть задач ретенции и деактивации, выстроенные лесенкой с шагом 15 минут, чтобы тяжёлый <code class="kbd">pg_dump</code> и удаление строк не толкались. <strong>Только рабочие часы</strong> — напоминания операторам и доп-пульс, привязанные к будням и производственному календарю. На схеме у каждого узла указано точное время триггера и минута, на которой он сидит в часе.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+    DAY{{"Сутки по Asia/Kamchatka<br/>00:00 → 24:00"}}:::axis
+
+    subgraph CONT["Непрерывно, 24/7 — к календарю не привязаны"]
+        direction TB
+        PH["pulse-hourly<br/>каждый час в :05<br/>сигнал «бот работает»"]:::cont
+        HS["health-selfcheck<br/>каждые 5 мин<br/>пульс жив ↔ завис"]:::cont
+        HP["healthcheck-ping<br/>каждые 5 мин<br/>только при HEALTHCHECK_URL"]:::contopt
+        SP["startup-pulse<br/>+5 сек после старта<br/>однократно"]:::cont
+    end
+
+    subgraph HOUR["Ежечасные метки — разнесены по минутам часа"]
+        direction TB
+        FW["funnel-watchdog<br/>в :15<br/>сброс анкет старше 24ч"]:::hour
+        TI["threat-intel-refresh<br/>в :17<br/>URLhaus+ThreatFox+PhishTank"]:::hour
+        BR["broadcast-draft-reaper<br/>в :37<br/>черновик >30 мин → FAILED"]:::hour
+    end
+
+    subgraph NIGHT["Ночное окно очистки 03:00–04:45 — лесенкой, шаг 15 мин"]
+        direction TB
+        BK["db-backup<br/>вс 03:00<br/>pg_dump → GPG → том"]:::backup
+        ER["events-retention<br/>04:00<br/>события >30 дней"]:::night
+        AR["audit-log-retention<br/>04:15<br/>журнал >365 дней"]:::night
+        SO["stale-operators-cleanup<br/>04:20<br/>ушедшие из группы"]:::night
+        PR["pdn-retention<br/>04:30<br/>обезличивание ПДн +30д"]:::night
+        A5["appeals-5y-retention<br/>04:45<br/>обнуление текста >5 лет"]:::night
+    end
+
+    subgraph WORK["Только рабочие часы — будни + календарь праздников"]
+        direction TB
+        OR["open-reminder-workhours<br/>пн–пт :10, 9–11 и 13–17<br/>неотвеченные обращения"]:::work
+        OV["overdue-reminder-workhours<br/>пн–пт :40, 9–11 и 13–17<br/>просрочка по SLA"]:::work
+        PX["pulse-workhours-extra<br/>пн–пт :35, 9:35–17:35<br/>доп-пульс в рабочее время"]:::work
+        MS["monthly-stats<br/>1-го числа 09:00<br/>XLSX-отчёт за месяц"]:::work
+    end
+
+    DAY --> CONT
+    DAY --> HOUR
+    DAY --> NIGHT
+    DAY --> WORK
+
+    classDef axis fill:#ede7f6,stroke:#5e35b1,color:#311b92
+    classDef cont fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
+    classDef contopt fill:#f1f8e9,stroke:#7cb342,color:#33691e,stroke-dasharray: 5 3
+    classDef hour fill:#fff8e1,stroke:#ff8f00,color:#e65100
+    classDef backup fill:#fce4ec,stroke:#c2185b,color:#880e4f
+    classDef night fill:#e1f5ff,stroke:#0288d1,color:#01579b
+    classDef work fill:#e0f2f1,stroke:#00695c,color:#004d40
+</pre>
+</div>
+
+<p>Две вещи, которые схема делает наглядными. Во-первых, <strong>ночью процесс намеренно занят</strong> с 03:00 до 04:45: если в это время кажется, что бот «тормозит» с ответами жителям, это ожидаемо — идёт ретенция и (по воскресеньям) бэкап, а не сбой. Во-вторых, <strong>почему задачи не на «ровном» времени</strong>: ежечасные метки (:15, :17, :37) и ночная лесенка (04:00, 04:15, 04:20, 04:30, 04:45) специально разведены по минутам, чтобы у каждой был свой слот и две тяжёлые операции не стартовали одновременно. Пунктирная рамка у <code class="kbd">healthcheck-ping</code> означает «условная задача»: она попадает в расписание только если задан <code class="kbd">HEALTHCHECK_URL</code> (без него остаётся 16 активных задач). Общие правила у всех одинаковы: <code class="kbd">max_instances=1</code> (два экземпляра одной задачи не пересекутся), <code class="kbd">coalesce=True</code> (пропущенные из-за простоя запуски схлопываются в один), <code class="kbd">misfire_grace_time=120</code> секунд (опоздание более чем на две минуты — запуск отменяется, чтобы не накапливать «хвост»).</p>
+
+<h3 id="spr-settings">Ключи настроек (таблица settings)</h3>
+
+<p>Это значения, которые ИТ-оператор меняет прямо в боте через меню «⚙️ Настройки бота» или командой <code class="kbd">/setting</code>, без перезапуска. Бот хранит их в таблице <code class="kbd">settings</code> и проверяет по «белому списку» допустимых ключей (схема в <code class="kbd">services/settings_store.py</code>). Изменить ключ вне этого списка нельзя. Всего 17 ключей.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Ключ</th><th>Тип / правила</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">welcome_text</code></td><td>строка, 1..3800</td><td>Текст приветствия жителю. Перед отправкой очищается от опасной разметки и нежелательных ссылок.</td></tr>
+<tr><td><code class="kbd">consent_text</code></td><td>строка, 1..3800, обязана содержать <code class="kbd">{policy_url}</code></td><td>Текст запроса согласия. Placeholder <code class="kbd">{policy_url}</code> бот подставляет на ссылку политики.</td></tr>
+<tr><td><code class="kbd">commit_author_name</code></td><td>строка, 1..120</td><td>Имя автора коммитов от бота при создании заявки на GitHub.</td></tr>
+<tr><td><code class="kbd">commit_author_email</code></td><td>строка, 3..200</td><td>Почта автора коммитов.</td></tr>
+<tr><td><code class="kbd">policy_url</code></td><td>строка-URL, только гос-домены</td><td>Ссылка на политику обработки персональных данных.</td></tr>
+<tr><td><code class="kbd">electronic_reception_url</code></td><td>строка-URL, только гос-домены</td><td>Ссылка на электронную приёмную.</td></tr>
+<tr><td><code class="kbd">udth_schedule_url</code></td><td>строка-URL, только гос-домены</td><td>Расписание муниципальных автобусов УДТХ.</td></tr>
+<tr><td><code class="kbd">udth_schedule_intermunicipal_url</code></td><td>строка-URL, только гос-домены</td><td>Расписание межмуниципальных автобусов.</td></tr>
+<tr><td><code class="kbd">appointment_text</code></td><td>строка, 1..2000</td><td>Текст про запись на приём граждан.</td></tr>
+<tr><td><code class="kbd">emergency_contacts</code></td><td>список объектов, ключи <code class="kbd">name</code>+<code class="kbd">phone</code></td><td>Экстренные контакты (службы, электроэнергия, отопление, вода). Поле <code class="kbd">phone</code> проверяется на формат телефона.</td></tr>
+<tr><td><code class="kbd">transport_dispatcher_contacts</code></td><td>список объектов, ключи <code class="kbd">routes</code>+<code class="kbd">phone</code></td><td>Контакты транспортных диспетчеров. Поле <code class="kbd">phone</code> проверяется на формат.</td></tr>
+<tr><td><code class="kbd">topics</code></td><td>список строк, 1..30</td><td>Список тематик обращений для шага анкеты.</td></tr>
+<tr><td><code class="kbd">broadcast_max_images</code></td><td>число, 1..20</td><td>Лимит картинок в одной рассылке (по умолчанию 5).</td></tr>
+<tr><td><code class="kbd">admin_quiet_hours_enabled</code></td><td>да/нет</td><td>Включён ли тихий режим служебного чата (по умолчанию выключен).</td></tr>
+<tr><td><code class="kbd">admin_quiet_hours_start</code></td><td>число, 0..23</td><td>Час начала тихого окна (по умолчанию 18).</td></tr>
+<tr><td><code class="kbd">admin_quiet_hours_end</code></td><td>число, 0..23</td><td>Час конца тихого окна (по умолчанию 9). Окно может переходить через полночь.</td></tr>
+<tr><td><code class="kbd">localities</code></td><td>список строк, 1..30</td><td>Список населённых пунктов для шага выбора в анкете.</td></tr>
+</tbody>
+</table></div>
+<p>Девять ключей выгружаются в репозиторий при синхронизации (через заявку-PR): <code class="kbd">policy_url</code>, <code class="kbd">electronic_reception_url</code>, <code class="kbd">udth_schedule_url</code>, <code class="kbd">udth_schedule_intermunicipal_url</code>, <code class="kbd">appointment_text</code>, <code class="kbd">emergency_contacts</code>, <code class="kbd">transport_dispatcher_contacts</code>, <code class="kbd">topics</code>, <code class="kbd">localities</code>. Тексты <code class="kbd">welcome_text</code> и <code class="kbd">consent_text</code> хранятся в репозитории отдельно (как markdown-файлы в <code class="kbd">seed/</code>), а <code class="kbd">commit_author_*</code> в репозиторий не выгружаются — это серверная мета-информация.</p>
+
+<h4>Стартовые значения (seed)</h4>
+<p>При первом запуске пустая база заполняется из seed-файлов и кода. Что заливается:</p>
+<ul class="dot">
+<li><strong>Тематики (<code class="kbd">topics</code>)</strong> — из <code class="kbd">seed/topics.json</code>, 9 штук по порядку: Дороги, Мусор, Свалки, Благоустройство, Управляющие компании, Транспорт, Образование, Культура и спорт, Другое. Это seed, а не хардкод-дефолт (дефолт в коде — пустой список), и список редактируется Администрацией. «Другое» удобно держать всегда.</li>
+<li><strong>Населённые пункты (<code class="kbd">localities</code>)</strong> — заданы в коде, 10 поселений: Елизовское ГП, Вулканное ГП, Корякское СП, Начикинское СП, Николаевское СП, Новоавачинское СП, Новолесновское СП, Паратунское СП, Пионерское СП, Раздольненское СП.</li>
+<li><strong>Текст приёма граждан (<code class="kbd">appointment_text</code>)</strong> — дефолт по умолчанию: «Приём граждан временно исполняющим полномочия Главы Елизовского муниципального района А.С. Гончаровым осуществляется два раза в месяц (1 и 3 среда каждого месяца) по предварительной записи. Запись на приём ведётся по номеру телефона 8 (415-31) 7-25-29.» Слово «района» и фамилия «А.С. Гончаров» в дефолте — осознанный seed на переходный период (по просьбе сотрудника отдела обращений). Территория формально называется «округ» (АЕМО). Реальный текст редактирует Администрация через меню без редеплоя.</li>
+</ul>
+
+<h3 id="spr-secrets">Реестр секретов и доступов</h3>
+
+<p>Что нужно надёжно хранить и уметь заменять (ротировать), чтобы сопровождать проект. Плановая ротация — раз в полугодие по календарю ниже.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Секрет / доступ</th><th>Где хранится</th><th>Как заменить</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">BOT_TOKEN</code> мессенджера MAX</td><td><code class="kbd">infra/.env</code> на сервере</td><td>На <code class="kbd">max.ru/business</code> сгенерировать новый токен бота. Прежний сразу перестаёт работать. Обновить <code class="kbd">.env</code>, перезапустить бота.</td></tr>
+<tr><td><code class="kbd">POSTGRES_PASSWORD</code></td><td><code class="kbd">infra/.env</code></td><td>Внутри контейнера сменить пароль (<code class="kbd">ALTER USER aemr WITH PASSWORD '...'</code>), затем обновить <code class="kbd">.env</code> и часть <code class="kbd">DATABASE_URL</code>.</td></tr>
+<tr><td><code class="kbd">BACKUP_GPG_PASSPHRASE</code></td><td><code class="kbd">infra/.env</code> + менеджер паролей</td><td>Сгенерировать новую. Старые файлы <code class="kbd">.sql.gpg</code> прежней фразой не откроются — храните обе с пометкой «до/после даты». При компрометации обязательно перешифровать существующие бэкапы или утилизировать старые.</td></tr>
+<tr><td><code class="kbd">WEBHOOK_SECRET</code> (если webhook)</td><td><code class="kbd">infra/.env</code></td><td>Сгенерировать новый (минимум 16 символов), перезапустить бота.</td></tr>
+<tr><td><code class="kbd">GITHUB_PAT</code> (если включена синхронизация)</td><td><code class="kbd">infra/.env</code> + менеджер паролей</td><td>В настройках GitHub отозвать старый и создать новый fine-grained токен (права Contents + Pull requests на репозиторий), обновить <code class="kbd">.env</code>.</td></tr>
+<tr><td><code class="kbd">BACKUP_S3_*</code> (опционально)</td><td><code class="kbd">infra/.env</code></td><td>Через панель управления вашего S3-провайдера.</td></tr>
+<tr><td><code class="kbd">PHISHTANK_APP_KEY</code> (если активирован)</td><td><code class="kbd">infra/.env</code></td><td>По требованию провайдера PhishTank.</td></tr>
+<tr><td>SSH-доступ к серверу</td><td><code class="kbd">~/.ssh/authorized_keys</code></td><td>Добавить новый ключ, проверить вход, удалить старый.</td></tr>
+<tr><td>Учётка <code class="kbd">max.ru/business</code></td><td>У ответственного администратора организации</td><td>Через стандартный порядок портала MAX.</td></tr>
+</tbody>
+</table></div>
+<p>Календарь плановой ротации: <code class="kbd">BOT_TOKEN</code> — ежегодно в январе; пароль базы (<code class="kbd">DATABASE_URL</code>) — январь и июль; при увольнении ИТ-оператора с доступом к <code class="kbd">infra/.env</code> — считать <code class="kbd">BOT_TOKEN</code> и <code class="kbd">BACKUP_GPG_PASSPHRASE</code> скомпрометированными и ротировать; при возможной утечке <code class="kbd">audit_log</code> (там есть фрагменты переписки) — ротировать <code class="kbd">BACKUP_GPG_PASSPHRASE</code> и ограничить доступ к каталогу.</p>
+<div class="note note--danger">
+<p class="note__label">Файл .env в репозиторий не коммитится</p>
+<p>В систему контроля версий (git) попадает только файл-образец <code class="kbd">infra/.env.example</code> с пустыми значениями. Сам <code class="kbd">.env</code> с реальными паролями и токенами исключён через <code class="kbd">.gitignore</code>. На сервере у файла должны быть права <code class="kbd">chmod 600</code> (читает только владелец). Если токен или пароль утёк — немедленно замените его по таблице выше.</p>
+</div>
+
+<h3 id="spr-files">Карта файлов репозитория</h3>
+
+<p>Краткий путеводитель по структуре кода. Помогает быстро понять, где что лежит, при поддержке и доработках. Подробный реестр всех файлов со статусами — в <code class="kbd">docs/_meta/FILE_INVENTORY.md</code>.</p>
+
+<h4>Точки входа и инфраструктура процесса</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Файл</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">bot/aemr_bot/main.py</code></td><td>Запуск: бот + диспетчер, проверка токена, seed, восстановление мастеров, планировщик, цикл polling/webhook.</td></tr>
+<tr><td><code class="kbd">bot/aemr_bot/config.py</code></td><td>Класс настроек Pydantic: токен, строка базы, лимиты, бэкап, рассылки, ретенция.</td></tr>
+<tr><td><code class="kbd">bot/aemr_bot/health.py</code></td><td>HTTP-эндпоинты <code class="kbd">/livez</code> / <code class="kbd">/readyz</code> / <code class="kbd">/healthz</code> + внутренний пульс.</td></tr>
+<tr><td><code class="kbd">bot/aemr_bot/db/models.py</code></td><td>Все 11 ORM-моделей SQLAlchemy и перечисления (DialogState, AppealStatus, OperatorRole, MessageDirection, BroadcastStatus).</td></tr>
+<tr><td><code class="kbd">bot/aemr_bot/db/session.py</code></td><td>Движок базы и асинхронный контекст сессии.</td></tr>
+<tr><td><code class="kbd">bot/pyproject.toml</code></td><td>Метаданные пакета, зависимости (maxapi ~=1.1 и др.), конфиг ruff/mypy/pytest.</td></tr>
+<tr><td><code class="kbd">bot/uv.lock</code></td><td>Зафиксированные версии всех зависимостей (lock-файл). Коммитится намеренно для защиты от дрейфа версий.</td></tr>
+<tr><td><code class="kbd">bot/alembic.ini</code></td><td>Конфиг Alembic (миграции).</td></tr>
+</tbody>
+</table></div>
+
+<h4>Обработчики событий (handlers/)</h4>
+<p>Слой, который ловит сообщения и нажатия и решает, что делать. Ключевые файлы:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Файл</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">appeal.py</code></td><td>Главная точка входа: один обработчик нажатий и один обработчик сообщений (таблица состояний + админ-поток).</td></tr>
+<tr><td><code class="kbd">appeal_funnel.py</code></td><td>Шаги воронки (контакт → имя → населённый пункт → адрес → тема → суть) и дополнения.</td></tr>
+<tr><td><code class="kbd">appeal_geo.py</code></td><td>Распознавание адреса по геолокации.</td></tr>
+<tr><td><code class="kbd">appeal_runtime.py</code></td><td>Блокировки, восстановление застрявших анкет, публикация обращения.</td></tr>
+<tr><td><code class="kbd">start.py</code></td><td>Команды жителя: <code class="kbd">/start</code>, <code class="kbd">/menu</code>, <code class="kbd">/help</code>, <code class="kbd">/policy</code>, <code class="kbd">/rules</code>, <code class="kbd">/subscribe</code>, <code class="kbd">/unsubscribe</code>, <code class="kbd">/forget</code>, <code class="kbd">/cancel</code>, <code class="kbd">/export</code>, <code class="kbd">/whoami</code>.</td></tr>
+<tr><td><code class="kbd">menu.py</code></td><td>Главное меню жителя и контактные подменю.</td></tr>
+<tr><td><code class="kbd">operator_reply.py</code></td><td>Ответ свайпом и логика дополнений.</td></tr>
+<tr><td><code class="kbd">admin_commands.py</code></td><td>Точка входа операторских команд (регистрация 11 slash-команд).</td></tr>
+<tr><td><code class="kbd">admin_panel.py</code></td><td><code class="kbd">/op_help</code>, <code class="kbd">/open_tickets</code>, <code class="kbd">/diag</code>, <code class="kbd">/backup</code>, меню оператора.</td></tr>
+<tr><td><code class="kbd">admin_settings.py</code></td><td>Иерархическое меню «⚙️ Настройки бота» по ключам.</td></tr>
+<tr><td><code class="kbd">admin_operators.py</code></td><td>Мастер добавления оператора и управление ролями.</td></tr>
+<tr><td><code class="kbd">admin_stats.py</code></td><td><code class="kbd">/stats</code> — XLSX за период.</td></tr>
+<tr><td><code class="kbd">admin_resident_search.py</code></td><td><code class="kbd">/find_resident</code> — карточка жителя.</td></tr>
+<tr><td><code class="kbd">broadcast.py</code></td><td>Мастер рассылок и фоновая отправка с ограничением скорости.</td></tr>
+<tr><td><code class="kbd">broadcast_templates.py</code></td><td>Интерфейс шаблонов рассылок.</td></tr>
+<tr><td><code class="kbd">_auth.py</code></td><td>Помощники авторизации: <code class="kbd">get_operator</code>, <code class="kbd">ensure_operator</code>, <code class="kbd">ensure_role</code>.</td></tr>
+</tbody>
+</table></div>
+
+<h4>Маршрутизация нажатий (callback): три диспетчера</h4>
+
+<p>Когда житель или оператор жмёт кнопку под сообщением, MAX присылает событие <code class="kbd">message_callback</code> с короткой строкой-меткой — <em>payload</em> (например <code class="kbd">op:close:142</code> или <code class="kbd">menu:new_appeal</code>). Точка входа одна на весь бот: обработчик <code class="kbd">on_callback</code> в <code class="kbd">handlers/appeal.py:510</code> (единственный <code class="kbd">@dp.message_callback()</code>). Но дальше он не разбирает кнопки сам — он по очереди передаёт payload <strong>трём разным диспетчерам</strong>, и первый, кто «узнал» свою группу префиксов, обрабатывает и возвращает «готово», иначе payload проваливается к следующему (паттерн «цепочка с fallthrough»). Схема ниже показывает, кто какие префиксы ловит. Это важно понимать при доработках: добавляя новую кнопку, нужно знать, в какой из трёх диспетчеров класть её обработчик, иначе нажатие «провалится» в меню и тихо ничего не сделает.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    MAX([MAX platform-api<br/>событие message_callback]):::ext
+    ENTRY["appeal.on_callback<br/>handlers/appeal.py:510<br/>единственный @dp.message_callback"]:::entry
+    GUARD{"чат = админ-группа<br/>и payload НЕ admin?"}:::guard
+    ACK["ack + стоп<br/>пользовательские кнопки<br/>в группе не работают"]:::stop
+
+    D1{"1. воронка жителя?<br/>_dispatch_citizen_callback"}:::cit
+    D2{"2. оператор/рассылка?<br/>admin_callback_dispatch<br/>:337"}:::adm
+    D3["3. иначе → меню<br/>menu.handle_callback<br/>:1077"]:::menu
+
+    REG[["callback_router.py<br/>EXACT_ROUTES + PREFIX_ROUTES<br/>один реестр групп + admin_allowed"]]:::reg
+
+    MAX --> ENTRY
+    ENTRY --> GUARD
+    GUARD -->|да| ACK
+    GUARD -->|нет| D1
+    D1 -->|"menu:* consent:* cancel<br/>addr:* locality: topic:<br/>geo:* appeal:submit/show/<br/>followup/repeat/atts appeals:page"| C_OK["обработано<br/>(шаги анкеты, карточки жителя)"]:::okcit
+    D1 -->|"не воронка"| D2
+    D2 -->|"op:* broadcast:*<br/>open_tickets stats close reopen<br/>reply replyint erase block<br/>operators set: tmpl: aud: bc:"| A_OK["обработано<br/>(действия оператора, рассылки)"]:::okadm
+    D2 -->|"не admin / неизвестный хвост"| D3
+    D3 --> M_OK["меню и подменю жителя<br/>info:* settings:* goodbye:*<br/>+ fallback для незнакомых"]:::okmenu
+
+    REG -.->|"таксономия префиксов<br/>и проверка чат-контекста"| GUARD
+    REG -.-> D1
+    REG -.-> D2
+    REG -.-> D3
+
+    classDef ext fill:#fce4ec,stroke:#c2185b,color:#880e4f
+    classDef entry fill:#ede7f6,stroke:#5e35b1,color:#311b92
+    classDef guard fill:#fff3e0,stroke:#e65100,color:#bf360c
+    classDef stop fill:#ffebee,stroke:#c62828,color:#b71c1c
+    classDef cit fill:#fff8e1,stroke:#ff8f00,color:#e65100
+    classDef adm fill:#e1f5ff,stroke:#0288d1,color:#01579b
+    classDef menu fill:#e0f2f1,stroke:#00695c,color:#004d40
+    classDef okcit fill:#fffde7,stroke:#fbc02d,color:#f57f17
+    classDef okadm fill:#e3f2fd,stroke:#1976d2,color:#0d47a1
+    classDef okmenu fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
+    classDef reg fill:#f3e5f5,stroke:#8e24aa,color:#4a148c
+</pre>
+</div>
+
+<p>Почему это кандидат на упрощение. Таксономия префиксов уже <strong>централизована</strong> в одном месте — <code class="kbd">callback_router.py</code> (реестр <code class="kbd">EXACT_ROUTES</code> + <code class="kbd">PREFIX_ROUTES</code>, на схеме фиолетовый узел): там для каждой группы кнопок прописано, к какому домену она относится и можно ли её жать в админ-группе (<code class="kbd">admin_allowed</code>). Но сам <strong>разбор</strong> по-прежнему размазан по трём функциям в трёх файлах: <code class="kbd">_dispatch_citizen_callback</code> (внутри <code class="kbd">appeal.py</code>), <code class="kbd">dispatch_admin_callback</code> (в <code class="kbd">admin_callback_dispatch.py</code>) и <code class="kbd">handle_callback</code> (в <code class="kbd">menu.py</code>). Получается раздвоение: реестр говорит «вот группа <code class="kbd">op:close:</code>, она операторская», но чтобы понять, <em>что именно</em> делает кнопка, надо открывать отдельный диспетчер. Связка «реестр знает группу → диспетчер знает действие» держится на договорённости, а не на коде: если завести новую кнопку в реестре и забыть про обработчик, payload молча провалится в меню (это поведение даже специально сохранено как инвариант в докстринге диспетчера). Логичный следующий шаг — собрать все три разбора в одну таблицу <code class="kbd">payload → handler</code>, привязанную прямо к <code class="kbd">callback_router</code>, чтобы реестр и обработчик нельзя было рассинхронизировать. Это та же идея типизированного <code class="kbd">CallbackPayload</code>-разбора, что висит в бэклоге MAXAPI (P1.2): сделать маршрут кнопок единым и проверяемым на этапе сборки, а не «по цепочке if».</p>
+
+<h4>Бизнес-логика (services/)</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Файл</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">cron.py</code></td><td>Сборка планировщика (все cron-задачи: пульс, отчёты, бэкап, SLA, ретенция).</td></tr>
+<tr><td><code class="kbd">cron_registry.py</code></td><td>Машинно-читаемый список имён задач для anti-drift теста синхронизации с документацией.</td></tr>
+<tr><td><code class="kbd">db_backup.py</code></td><td>pg_dump + GPG + локальный том + опциональный S3.</td></tr>
+<tr><td><code class="kbd">calendar_ru.py</code></td><td>Производственный календарь РФ из <code class="kbd">seed/holidays.json</code> (подавление напоминаний в праздники).</td></tr>
+<tr><td><code class="kbd">appeals.py</code></td><td>CRUD по обращениям, поиск, статусы, история.</td></tr>
+<tr><td><code class="kbd">users.py</code></td><td>CRUD по жителям, нормализация телефона, удаление ПДн, аудит.</td></tr>
+<tr><td><code class="kbd">operators.py</code></td><td>CRUD по операторам, первичная инициализация ИТ из env.</td></tr>
+<tr><td><code class="kbd">broadcasts.py</code></td><td>Подписки и отправка рассылок, подбор «осиротевших» SENDING.</td></tr>
+<tr><td><code class="kbd">settings_store.py</code></td><td>Дефолты и схема настроек (17 ключей) + get/set с белым списком URL.</td></tr>
+<tr><td><code class="kbd">stats.py</code></td><td>XLSX-отчёт за период (openpyxl).</td></tr>
+<tr><td><code class="kbd">card_format.py</code> / <code class="kbd">admin_card.py</code></td><td>Сборка карточек обращения (лента: суть → ответ → дополнение) и правило свежести (новая карточка vs редактирование).</td></tr>
+<tr><td><code class="kbd">geo.py</code></td><td>Локальное распознавание адреса по геоданным (shapely).</td></tr>
+<tr><td><code class="kbd">threat_intel.py</code></td><td>Локальный кэш вредоносных URL-хостов (URLhaus + ThreatFox + опц. PhishTank).</td></tr>
+<tr><td><code class="kbd">idempotency.py</code></td><td>Защита от повторной обработки события MAX.</td></tr>
+<tr><td><code class="kbd">policy.py</code></td><td>Загрузка PDF политики и кеширование токена.</td></tr>
+<tr><td><code class="kbd">repo_sync.py</code></td><td>Создание PR с актуальными настройками через GitHub API.</td></tr>
+<tr><td><code class="kbd">progress.py</code></td><td>Прогресс-карта воронки.</td></tr>
+</tbody>
+</table></div>
+
+<h4>Инфраструктура и скрипты</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Файл</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">infra/Dockerfile</code></td><td>Образ на <code class="kbd">python:3.12-slim</code> (запинен по digest), non-root пользователь <code class="kbd">botuser</code> (UID/GID 1000), запуск <code class="kbd">alembic upgrade head && python -m aemr_bot.main</code>.</td></tr>
+<tr><td><code class="kbd">infra/docker-compose.yml</code></td><td>Сервисы: db (postgres:16-alpine + pg_stat_statements), bot (read-only rootfs, cap_drop, mem_limit), профиль webhook (nginx + certbot).</td></tr>
+<tr><td><code class="kbd">infra/.env.example</code></td><td>Шаблон всех переменных с подробными комментариями.</td></tr>
+<tr><td><code class="kbd">infra/aemr-bot.service</code></td><td>systemd-юнит для автозапуска бота после перезагрузки сервера.</td></tr>
+<tr><td><code class="kbd">scripts/auto-deploy.sh</code></td><td>cron на сервере: pull → build → проверка здоровья с откатом (каждые 10 минут).</td></tr>
+<tr><td><code class="kbd">scripts/healthwatch.sh</code></td><td>Внешний watchdog: N подряд провалов <code class="kbd">/livez</code> → рестарт → сообщение в служебную группу.</td></tr>
+<tr><td><code class="kbd">scripts/audit_vps.sh</code></td><td>Технический отчёт по серверу без вывода секретов.</td></tr>
+<tr><td><code class="kbd">scripts/build_geo_database.py</code></td><td>Сборка геоданных 10 поселений из OpenStreetMap.</td></tr>
+<tr><td><code class="kbd">scripts/generate_privacy_pdf.py</code></td><td><code class="kbd">docs/Политика.md</code> → <code class="kbd">docs/PRIVACY.pdf</code> через reportlab.</td></tr>
+</tbody>
+</table></div>
+
+<h4>Стартовые данные (seed/)</h4>
+<p><code class="kbd">welcome.md</code> (приветствие), <code class="kbd">consent.md</code> (текст согласия), <code class="kbd">contacts.json</code> (экстренные службы), <code class="kbd">topics.json</code> (тематики), <code class="kbd">transport_dispatchers.json</code> (диспетчеры), <code class="kbd">holidays.json</code> (календарь РФ 2026–2027), и три geojson-файла в <code class="kbd">geo/</code> (здания, полигоны 10 поселений, улицы).</p>
+
+<h3 id="spr-shell">Шпаргалка консольных команд</h3>
+
+<p>Готовые команды для эксплуатации на сервере. Все <code class="kbd">docker compose</code> запускаются из каталога <code class="kbd">~/aemr-bot/infra/</code>. <code class="kbd">aemr</code> — имя базы и пользователя (значения <code class="kbd">POSTGRES_USER</code> и <code class="kbd">POSTGRES_DB</code>).</p>
+
+<h4>Запуск, остановка, обновление</h4>
+<div class="cmd"><code>docker compose up -d</code><span class="cmd__what">поднять весь стек</span></div>
+<div class="cmd"><code>docker compose up -d --force-recreate bot</code><span class="cmd__what">перезапустить бота после правки .env</span></div>
+<div class="cmd"><code>git pull && docker compose up -d --build bot</code><span class="cmd__what">применить новый код</span></div>
+<div class="cmd"><code>docker compose ps</code><span class="cmd__what">статус контейнеров (ждём «running (healthy)»)</span></div>
+
+<h4>Логи и диагностика</h4>
+<pre><code>docker compose logs -f --tail=200 bot           # хвост логов бота в реальном времени
+docker compose logs --since 24h bot | grep -iE "error|exception|warning"   # ошибки за сутки
+docker compose logs --tail=200 db               # логи Postgres
+docker stats --no-stream                        # потребление ресурсов
+curl -fsS http://127.0.0.1:8080/healthz | python3 -m json.tool   # проба здоровья</code></pre>
+<p>Проба здоровья должна вернуть HTTP 200 и JSON с <code class="kbd">"ok": true</code>, <code class="kbd">"db_ok": true</code>. Три эндпоинта: <code class="kbd">/livez</code> (жив ли процесс, базу не трогает — для авто-рестарта и health-gate деплоя), <code class="kbd">/readyz</code> (пульс + <code class="kbd">SELECT 1</code> к базе — для диагностики), <code class="kbd">/healthz</code> (то же, что <code class="kbd">/readyz</code>, оставлен для совместимости).</p>
+
+<h4>Резервное копирование вручную</h4>
+<div class="cmd"><code>docker compose exec bot ls -lh /backups/</code><span class="cmd__what">список существующих бэкапов</span></div>
+<pre><code># Снять бэкап вручную (та же функция, что по расписанию)
+docker compose exec bot python -m aemr_bot.services.db_backup
+
+# Скопировать конкретный бэкап на хост для оффлайн-хранения
+docker compose cp bot:/backups/aemr-20260601_030000.sql.gpg ~/backups/</code></pre>
+<p>Формат имени файла бэкапа: <code class="kbd">aemr-ГГГГММДД_ЧЧММСС.sql.gpg</code> (время по часовому поясу бота; без шифрования — <code class="kbd">.sql</code>). После записи права файла ужесточаются до <code class="kbd">0600</code>.</p>
+
+<h4>Восстановление из бэкапа (учебная отработка на тестовой базе)</h4>
+<pre><code># 1. Расшифровать GPG-копию во временный файл
+docker compose exec -e GPG_PASSPHRASE="$(grep ^BACKUP_GPG_PASSPHRASE= .env | cut -d= -f2-)" \
+  bot sh -c 'gpg --batch --passphrase "$GPG_PASSPHRASE" \
+    --decrypt /backups/aemr-20260601_030000.sql.gpg > /tmp/aemr-restore.sql'
+
+# 2. Создать одноразовую тестовую базу (боевую aemr не трогаем)
+docker compose exec db createdb -U aemr aemr_restore_test
+
+# 3. Залить дамп
+docker compose exec bot sh -c 'cat /tmp/aemr-restore.sql | psql -h db -U aemr -d aemr_restore_test'
+
+# 4. Проверка вменяемости
+docker compose exec db psql -U aemr -d aemr_restore_test -c \
+  "SELECT count(*) AS users FROM users; SELECT count(*) AS appeals FROM appeals;"
+
+# 5. Прибраться (тестовая база и расшифрованный дамп с ПДн в открытом виде)
+docker compose exec db dropdb -U aemr aemr_restore_test
+docker compose exec bot rm /tmp/aemr-restore.sql</code></pre>
+
+<h4>Мониторинг Postgres (раз в неделю или месяц)</h4>
+<pre><code># Размер таблиц с индексами (топ-10)
+docker compose exec db psql -U aemr -d aemr -c "
+SELECT schemaname||'.'||relname AS table,
+       pg_size_pretty(pg_total_relation_size(relid)) AS total
+FROM pg_catalog.pg_statio_user_tables
+ORDER BY pg_total_relation_size(relid) DESC LIMIT 10;"
+
+# Раздувание таблиц и устаревшие строки (dead tuples)
+docker compose exec db psql -U aemr -d aemr -c "
+SELECT relname, n_live_tup, n_dead_tup,
+       round(100.0*n_dead_tup/NULLIF(n_live_tup,0),1) AS dead_pct, last_autovacuum
+FROM pg_stat_user_tables ORDER BY n_dead_tup DESC LIMIT 10;"
+
+# Долгие активные запросы (больше 5 секунд)
+docker compose exec db psql -U aemr -d aemr -c "
+SELECT pid, now()-query_start AS dur, left(query,120)
+FROM pg_stat_activity
+WHERE state='active' AND now()-query_start > interval '5 seconds';"</code></pre>
+
+<h4>Управление операторами через psql (резервный путь)</h4>
+<pre><code># Посмотреть всех операторов
+docker compose exec db psql -U aemr -d aemr -c \
+  "SELECT id, max_user_id, role, full_name, is_active FROM operators ORDER BY id;"
+
+# Аварийно вписать первого ИТ, если автоинициализация не сработала
+docker compose exec db psql -U aemr -d aemr -c \
+  "INSERT INTO operators (max_user_id, full_name, role, is_active)
+   VALUES (<id>, 'Иванов И.И.', 'it', true);"
+
+# Сменить роль (бот этого не умеет — защита от самоповышения)
+docker compose exec db psql -U aemr -d aemr -c \
+  "UPDATE operators SET role='it' WHERE max_user_id=<их_id>;"</code></pre>
+
+<div class="note note--caution">
+<p class="note__label">Ошибка «password authentication failed for user aemr»</p>
+<p>Контейнер базы инициализирует пароль из <code class="kbd">POSTGRES_PASSWORD</code> только при первом запуске, пока том <code class="kbd">db_data</code> пуст. На последующих запусках значение игнорируется. Если поменять пароль в <code class="kbd">.env</code> после первого запуска — бот будет ломиться с новым паролем, а база хранит старый. На тесте можно снести данные (<code class="kbd">docker compose down -v</code>, всё пропадёт). На проде — поднять только базу со старым паролем, выполнить <code class="kbd">ALTER USER aemr WITH PASSWORD '...'</code>, затем синхронно обновить <code class="kbd">.env</code> и пароль внутри <code class="kbd">DATABASE_URL</code> и перезапустить бота.</p>
+</div>
+
+<h3 id="spr-glossary">Словарь терминов</h3>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Термин</th><th>Значение</th></tr></thead>
+<tbody>
+<tr><td>АЕМО</td><td>Администрация Елизовского муниципального округа (текущее официальное название).</td></tr>
+<tr><td>АЕМР</td><td>Старое название (Елизовский муниципальный район). В коде осталось как технический идентификатор — отсюда имя <code class="kbd">aemr-bot</code> и роль <code class="kbd">aemr</code>.</td></tr>
+<tr><td>ЕГП</td><td>Елизовское городское поселение — отдельная администрация в составе округа. Соответствует роли оператора <code class="kbd">egp</code>.</td></tr>
+<tr><td>МЦУ / ЦУР</td><td>Муниципальный / Центр управления регионом — в их рамках работает бот по Постановлению № 2129. Куратор ЦУР вручную назначает важность обращения.</td></tr>
+<tr><td>MAX</td><td>Российский мессенджер. Бот общается с жителями через его API (программный интерфейс). Токен бота выдаётся на <code class="kbd">max.ru/business</code>.</td></tr>
+<tr><td>long polling (опросный режим)</td><td>Бот сам периодически спрашивает у MAX, есть ли новые события. Не требует открытых наружу портов — режим по умолчанию.</td></tr>
+<tr><td>webhook (серверный режим)</td><td>MAX сам приходит на публичный HTTPS-адрес бота и приносит события. Требует домен, сертификат, Nginx и открытые порты.</td></tr>
+<tr><td>ПДн</td><td>Персональные данные (имя, телефон, тексты обращений).</td></tr>
+<tr><td>152-ФЗ</td><td>Федеральный закон «О персональных данных». Регулирует согласия, сроки хранения и удаление ПДн.</td></tr>
+<tr><td>59-ФЗ</td><td>Федеральный закон «О порядке рассмотрения обращений граждан». По §1.2 Постановления № 2129 к сообщениям через бот не применяется.</td></tr>
+<tr><td>SLA</td><td>Service Level Agreement — целевой срок ответа оператора (переменная <code class="kbd">SLA_RESPONSE_HOURS</code>, базовый срок 4 часа; в коде считается астрономически, не в рабочих часах).</td></tr>
+<tr><td>воронка (FSM)</td><td>Пошаговая анкета подачи обращения. FSM (Finite State Machine, конечный автомат) — набор состояний <code class="kbd">awaiting_*</code> из поля <code class="kbd">dialog_state</code>.</td></tr>
+<tr><td>idempotency / идемпотентность</td><td>Свойство «повтор не вредит». Ключ <code class="kbd">idempotency_key</code> в таблице events позволяет тихо отбросить повторно присланное событие MAX.</td></tr>
+<tr><td>heartbeat (внутренний пульс)</td><td>Метка «я жив», которую бот обновляет каждые <code class="kbd">HEALTHCHECK_PULSE_SECONDS</code>. По ней проверяют, не завис ли процесс.</td></tr>
+<tr><td>cron / планировщик</td><td>Механизм запуска задач по расписанию. У бота он встроен в процесс (библиотека APScheduler).</td></tr>
+<tr><td>backup (резервная копия)</td><td>Полная выгрузка базы утилитой pg_dump. Делается еженедельно, шифруется GPG (AES-256), хранится N последних файлов.</td></tr>
+<tr><td>migration (миграция)</td><td>Шаг изменения структуры базы (Alembic). Применяется автоматически при старте контейнера.</td></tr>
+<tr><td>named volume (именованный том)</td><td>Хранилище Docker, которое переживает пересоздание контейнера. Туда складываются бэкапы.</td></tr>
+<tr><td>quiet hours (тихий режим)</td><td>Окно времени, когда не-срочные сообщения бота в служебный чат подавляются. Критические алёрты его пробивают.</td></tr>
+<tr><td>PR (Pull Request, заявка на изменение)</td><td>Предложение изменения на GitHub. Бот может создавать PR с обновлёнными настройками, если задан <code class="kbd">GITHUB_PAT</code>.</td></tr>
+<tr><td>seed (стартовые данные)</td><td>Файлы из папки <code class="kbd">SEED_DIR</code> (тексты, контакты, тематики, геоданные), которыми бот заполняет настройки при первом запуске.</td></tr>
+<tr><td>anonymous-запись</td><td>Техническая запись жителя с <code class="kbd">max_user_id = -1</code>, на которую переподвешиваются обращения после полного удаления персональных данных.</td></tr>
+<tr><td>reply-связь</td><td>Связь сообщения-ответа и исходной карточки в служебных полях MAX (<code class="kbd">link.type=REPLY</code>, <code class="kbd">link.message.mid</code>). По ней бот находит обращение, на которое отвечает оператор свайпом.</td></tr>
+<tr><td>auto-deploy</td><td>Скрипт на сервере, который каждые 10 минут забирает новый код, пересобирает образ и проверяет здоровье; при неудаче откатывается на предыдущий коммит.</td></tr>
+</tbody>
+</table></div>
+
+<h3 id="spr-roadmap">Дорожная карта развития</h3>
+
+<p>Этот подраздел — про «куда дальше». Здесь нет ничего, что уже работает (всё рабочее описано в разделах выше), и здесь нет обещаний сроков. Это набор продуманных, но <strong>ещё не принятых</strong> идей: каждая ждёт явного решения владельца «делаем / не делаем». Цель — чтобы при разговоре «а можно вот так?» был один список с честной оценкой пользы и стоимости, а не импровизация. Идеи сгруппированы по горизонту: что реально близко, что в боте-меню, что на год вперёд, и какой визуальный стандарт всё это должно соблюдать.</p>
+
+<h4>Ближний горизонт: аналитика и веб-дашборд</h4>
+
+<p>Сейчас вся статистика — это текст и таблицы: команда <code class="kbd">/stats</code> отдаёт XLSX-отчёт за период, ежемесячная задача <code class="kbd">monthly-stats</code> кладёт такой же отчёт в служебную группу 1-го числа, а <code class="kbd">/diag</code> показывает мгновенный снимок. Чего не хватает — это <strong>тренда во времени и наглядного графика</strong>. Первый кандидат на доработку (в черновиках он проходит как спецификация <code class="kbd">telegram_analytics</code>) — компактный веб-дашборд для администрации: отдельная HTML-страница, где видно число обращений по неделям, разбивку по тематикам и адресам, среднее время ответа и процент просрочки SLA. Технически это ложится на уже имеющийся стек без новых тяжёлых зависимостей: веб-сервер <code class="kbd">FastAPI</code> в проекте уже есть (на нём держатся пробы здоровья), графики рисует <code class="kbd">Chart.js</code>, доступ закрывается простой авторизацией по списку ИТ-операторов. Польза прикладная: глава администрации заходит раз в неделю и видит, например, «по тематике „Дороги“ обращений втрое больше обычного — почему?», не выгружая и не открывая Excel.</p>
+
+<p>У той же идеи есть «лёгкая» версия прямо в боте, без отдельной веб-страницы — <strong>ASCII-тренд в чате</strong>: оператор жмёт кнопку «📈 Тренды» рядом со «📊 Статистикой», и бот рисует столбики прямо текстом (<code class="kbd">5 ▮▮▮▮▮</code>, <code class="kbd">12 ▮▮▮▮▮▮▮▮▮▮▮▮</code>) по дням за две недели — обращения, подписки, ответы, и внизу процент укладывания в SLA за месяц. Это дешевле полноценного дашборда и не требует ни авторизации, ни отдельного хостинга. Веб-дашборд и ASCII-тренд не исключают друг друга: тренд в чате — быстрый ежедневный взгляд, веб-страница — еженедельный разбор для руководства.</p>
+
+<h4>Что можно усилить прямо в меню оператора</h4>
+
+<p>Отдельный пласт идей не требует новых внешних сервисов — это доработки самого админ-меню «⚙️ Настройки бота» и операторской панели. Большая ревизия меню уже была проведена (иерархические подменю тексты/ссылки/списки/объекты, мастер добавления оператора, тихий режим), и почти все ключи настроек теперь правятся кнопками без команд. Но точечные удобства остаются как опции на будущее, и они хорошо окупаются по соотношению «польза к трудозатратам»:</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Идея (опция меню)</th><th>Что решает</th><th>Грубая оценка</th></tr></thead>
+<tbody>
+<tr><td>«🔍 Поиск обращения / жителя»</td><td>Оператор не помнит номер, но житель назвал телефон или фамилию. Сейчас поиск по жителю есть командой <code class="kbd">/find_resident</code>, но кнопки в меню и поиска по тексту обращения нет — только прокрутка списка открытых.</td><td>низкая (backend поиска по телефону/ID уже готов)</td></tr>
+<tr><td>«📋 Шаблоны быстрых ответов оператора»</td><td>Операторы каждый раз вручную набирают одни и те же фразы («передано в отдел ЖКХ», «работа начата, ответ в течение …»). Отдельная таблица шаблонов по образцу шаблонов рассылок, кнопка в карточке обращения, выбор → правка → отправка как обычный ответ. Бонус — статистика «топ-10 частых ответов» подскажет, что вынести в FAQ.</td><td>средняя</td></tr>
+<tr><td>Кнопки «✏️ изменить» и «⬆️ ⬇️ переставить» в списках</td><td>Сейчас в тематиках и населённых пунктах есть только «добавить» и «удалить». Исправить опечатку или поднять пункт выше можно только удалив и введя заново — теряется порядок (а он определяет порядок кнопок у жителя) и копятся лишние записи в журнале.</td><td>низкая</td></tr>
+<tr><td>«🧪 Тестовая рассылка себе»</td><td>Координатор боится отправлять рассылку «вслепую». Третья кнопка в подтверждении рассылки шлёт её только самому оператору на проверку, прежде чем разослать всем. Отправка уже параметризована списком получателей — нужно лишь перенаправить на одного.</td><td>очень низкая</td></tr>
+<tr><td>Двойное подтверждение опасных действий</td><td>Удаление ПДн и блокировка жителя сейчас срабатывают в одно нажатие без переспроса. Единый экран-подтверждение «✅ Да / ❌ Отмена» для всех необратимых действий (как уже сделано для деактивации оператора) снимает риск случайного тапа в проде.</td><td>низкая</td></tr>
+</tbody>
+</table></div>
+
+<p>Граница ответственности меню: <strong>инфраструктурные</strong> параметры из <code class="kbd">infra/.env</code> (токен, строка базы, <code class="kbd">SLA_RESPONSE_HOURS</code>, расписание бэкапа, часовой пояс) через меню править <strong>нельзя и не нужно</strong> — они влияют на запуск процесса и меняются только редеплоем. Это сознательное разделение: содержательное (тексты, ссылки, тематики) — кнопками на ходу, техническое — через файл и перезапуск, чтобы оператор не «выстрелил себе в ногу» одним тапом.</p>
+
+<h4>Дальний горизонт: внешние интеграции и ИИ</h4>
+
+<p>Идеи «на годы», требующие либо бюрократии, либо апгрейда сервера, либо накопленных данных. Перечислены, чтобы при росте проекта было от чего отталкиваться, а не для немедленного внедрения:</p>
+<ul class="dot">
+<li><strong>FAQ-автоответы (retrieval).</strong> База типовых вопросов → поиск по смыслу → бот предлагает готовый ответ <em>до</em> создания обращения. Снимает 30–50% повторных вопросов. Влезает в текущий сервер (4 ГБ), кандидат на ближайшее внедрение из «тяжёлых» — но всё равно после дашборда.</li>
+<li><strong>Голосовые обращения.</strong> Пожилые жители чаще наговаривают, чем печатают. Локальная транскрипция (Whisper-tiny) на русском без передачи данных вовне — это важно для 152-ФЗ, внешние облачные распознавалки за рубежом не подходят.</li>
+<li><strong>ML-классификация тем и приоритизация очереди.</strong> Сейчас тему выбирает сам житель, а очередь у оператора отсортирована по дате. Со временем (>500 обращений) можно подсказывать тему по тексту и поднимать аварийные (потоп, пожар, газ) выше. На холодном старте размеченных данных нет — поэтому это «через год». Правило-based вариант (по ключевым словам) дешевле и может появиться раньше.</li>
+<li><strong>ЕСИА и «Платформа обратной связи» (ПОС).</strong> Проброс через Госуслуги дал бы подтверждённые ФИО/телефон (закрывает требование достоверности ПДн), а интеграция с ПОС — официальный регистрационный номер и автоматическое соблюдение 59-ФЗ. Минус — регистрация информсистемы, договор с Минцифрой, подключение через СМЭВ: для района это месяцы согласований. Горизонт — год и больше, в связке друг с другом.</li>
+<li><strong>Дополнительные каналы (SMS / email).</strong> Если житель удалил MAX, ответ не дойдёт. Запасной канал решил бы это, но добавляет новый вектор ПДн (нужно хранить номер/почту с отдельным согласием на канал). Пока MAX покрывает потребность — не приоритет.</li>
+</ul>
+
+<div class="note">
+<p class="note__label">Геолокация — уже не идея, а рабочая функция</p>
+<p>В ранних набросках «дорожной карты» отдельным пунктом стояла геолокация перед вводом адреса (чтобы житель не печатал улицу вручную, а бот определял её по координатам). <strong>Это уже реализовано</strong> и описано выше в разделе про воронку: на шаге выбора населённого пункта стоит штатная кнопка «📍 Поделиться геолокацией», бот распознаёт адрес по локальным геоданным (модуль <code class="kbd">services/geo.py</code>) и просит подтвердить. Причём распознавание идёт по <strong>офлайн-полигонам</strong> десяти поселений, без обращения к внешним геокодерам (Яндекс / OSM из черновика не понадобились) — это и дешевле, и не зависит от стороннего API. На дорожной карте остаётся только производный пункт: «слой обращений на карте Елизово» — отдельный внутренний инструмент для координатора, который читал бы обезличенные точки (без ФИО и телефона, адрес обрезан до улицы) из API бота. Он осмыслен именно потому, что у обращений теперь есть настоящие координаты.</p>
+</div>
+
+<h4>Визуальный стандарт для всего нового</h4>
+
+<p>Любая новая карточка, кнопка или экран из идей выше должны говорить на одном визуальном языке, иначе бот станет «лоскутным». Этот язык уже сформулирован и наполовину внедрён; для новых доработок он обязателен. Кратко принцип звучит как <strong>«тихий канцелярский протокол с эмодзи-якорями»</strong>: бот пишет как аккуратный делопроизводитель администрации — короткая формальная шапка, на каждой смысловой строке слева один эмодзи-«якорь» (📍 для места, 📞 для телефона, 🏷 для темы, 📝 для текста), без декоративных гирлянд и без капса в теле. Эмодзи здесь — не украшение, а <strong>навигационный маяк для глаза</strong>, особенно для пожилого читателя, который не сканирует текст быстро: карточка строится как бумажная справка из МФЦ, а эту модель пенсионер уже знает по «талону» и «уведомлению».</p>
+
+<p>Из этого вытекают конкретные правила, которые экономят споры и переделки. <strong>Канонический набор эмодзи</strong> ограничен (📍 🏠 🏷 👤 📞 🆔 📊 🗓 📝 ✅ ⛔ ⚠️ 🛡️ и ещё несколько) — новые вводить только с обоснованием; «праздничные» 🎉 ✨ 💪 🚀 запрещены, потому что подрывают доверие к гос-каналу, особенно рядом с антифишинговыми предупреждениями. <strong>Никаких псевдо-таблиц с выравниванием по пробелам</strong> (<code class="kbd">ID:      123</code>): на узком экране MAX они ломаются, а скринридер (NVDA) читает выравнивающие пробелы как «id двоеточие пять пробелов сто двадцать три». Одна кнопка — одна строка (длинные русские подписи в две колонки обрезаются в «…»). Двоеточие после метки оставляем — оно даёт скринридеру естественную паузу. Эти решения опираются на доступность для пожилых: длина строки до 60 символов помещается без переноса, эмодзи в начале строки NVDA озвучивает осмысленно («булавка», «дом», «телефон»), а иерархия в карточке держится в пределах трёх уровней, чтобы не перегружать.</p>
+
+<p>Сверх текста есть три готовые возможности библиотеки MAX, которые пока не используются и дали бы заметный прирост удобства без нового функционала: <strong>индикатор «бот печатает»</strong> (<code class="kbd">TYPING_ON</code>) на долгих операциях вроде загрузки списка обращений — чтобы житель и оператор видели, что бот «живой» и не завис; <strong>упрощённый запрос геолокации</strong> (<code class="kbd">quick=True</code>) там, где она обязательна, — на один тап меньше для пенсионера; и <strong>пересылка (forward) дополнений</strong> жителя оператору вместо копии — чтобы сохранялась оригинальная плашка «переслано от …». Это мелкие, но честные улучшения, которые ложатся в тот же бренд и не ломают ни схему базы, ни API.</p>
+
+<h3 id="spr-faq">Частые вопросы</h3>
+
+<h4>Где задать пароль базы — в одном месте или в двух?</h4>
+<p>Пароль придумывается один раз и попадает в <code class="kbd">POSTGRES_PASSWORD</code>. Эту же строку нужно вписать внутрь <code class="kbd">DATABASE_URL</code> (часть <code class="kbd">USER:PASS@db:5432/DB</code>). То есть пароль фигурирует в файле дважды и должен совпадать, иначе бот не зайдёт в базу. Compose подставляет один и тот же <code class="kbd">${POSTGRES_PASSWORD}</code> и в контейнер базы, и в строку бота — рассинхрон возможен только если вписать пароль внутрь <code class="kbd">DATABASE_URL</code> руками и ошибиться.</p>
+
+<h4>Чем «переменная окружения» отличается от «настройки»?</h4>
+<p>Переменная окружения (env) — техническая настройка из файла <code class="kbd">infra/.env</code>: токен, пароль, лимиты, расписание бэкапа. Меняется редко и требует перезапуска бота. «Настройка» (таблица settings) — содержательные значения: ссылки, тексты, контакты, тематики. Меняется на ходу через меню бота, перезапуск не нужен.</p>
+
+<h4>Почему бэкап иногда «не создаётся»?</h4>
+<p>По умолчанию бот отказывается делать незашифрованную копию, потому что в дампе лежат персональные данные. Чтобы бэкап заработал, задайте парольную фразу <code class="kbd">BACKUP_GPG_PASSPHRASE</code> (рабочий вариант, минимум 12 символов) либо явно разрешите незашифрованную копию через <code class="kbd">BACKUP_ALLOW_UNENCRYPTED=1</code> (только на машине разработчика). При отказе бот пишет понятное сообщение в служебную группу с упоминанием 152-ФЗ.</p>
+
+<h4>Почему в коде осталось «AEMR», хотя теперь округ?</h4>
+<p>«АЕМР» — прежнее название (район). Оно зашито как технический идентификатор: имя проекта <code class="kbd">aemr-bot</code>, роль оператора <code class="kbd">aemr</code>, переменные. Переименовывать это в коде рискованно, поэтому в интерфейсе для жителей используется актуальное «округ» (АЕМО), а внутри техники остаётся «aemr». В дефолте текста приёма граждан слово «района» оставлено намеренно на переходный период.</p>
+
+<h4>Сколько хранятся данные?</h4>
+<p>События MAX (таблица events) — 30 дней. Журнал действий (audit_log) — по умолчанию 365 дней (<code class="kbd">AUDIT_LOG_RETENTION_DAYS</code>). Персональные данные жителя после отзыва согласия обезличиваются через 30 дней. Тексты обращений старше 5 лет обнуляются, но метаданные (даты, статусы, номера) сохраняются для статистики. Резервных копий хранится последние <code class="kbd">BACKUP_KEEP_COUNT</code> штук (по умолчанию 8 ≈ два месяца).</p>
+
+<h4>Есть ли в боте приоритет «вода/газ/отопление»?</h4>
+<p>Нет. В коде нет приоритезации обращений по теме — у обращения вообще нет поля важности. Бот считает один базовый срок ответа (4 часа астрономического времени; в рабочих часах он пока не пересчитывается). Если регламент требует ускоренного ответа для обращения высокой важности, эту важность назначает Куратор ЦУР вручную; бот к такой маршрутизации не привязан.</p>
+
+<div class="next">
+<p class="next__label">Следующие шаги</p>
+<ul>
+<li><a href="#spr-cron" data-go="spravochnik">Тайм-линия cron — все фоновые задачи на 24-часовой шкале</a></li>
+<li><a href="#spr-roadmap" data-go="spravochnik">Дорожная карта развития — аналитика, доработки меню, бренд-стандарт</a></li>
+<li><a href="#zhitel" data-go="zhitel">Раздел «Для жителя» — как выглядит воронка и меню изнутри</a></li>
+<li><a href="#operator" data-go="operator">Раздел «Для оператора» — как отвечать, закрывать, делать рассылку</a></li>
+<li><a href="#admin" data-go="admin">Раздел «Администратор/инфраструктура» — установка, деплой, бэкап на сервере</a></li>
+<li><a href="#pravovoe" data-go="pravovoe">Раздел «Правовое» — 152-ФЗ, Постановление № 2129, Политика ПДн</a></li>
+</ul>
+</div>

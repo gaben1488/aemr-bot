@@ -1,0 +1,619 @@
+<h2 id="admin">Администратору: установка, настройка, обслуживание</h2>
+
+<p>Этот раздел для ИТ-специалиста, который ставит бота на сервер и потом его обслуживает. Здесь всё по шагам: от чистого сервера до рабочего бота, что лежит в настройках, как делать резервные копии (backup) и восстанавливаться, как выкатывать новые версии и откатываться, куда смотреть при сбоях. Команды можно копировать как есть.</p>
+
+<div class="note">
+<p class="note__label">Подсказка</p>
+<p>Бот «Администрация Елизовского муниципального округа. Обратная связь» — это один процесс в мессенджере MAX, который сам опрашивает сервер MAX (режим long polling — длинный опрос). Он живёт в двух Docker-контейнерах на одной виртуальной машине (VPS): сам бот плюс база данных PostgreSQL. Никаких облаков, никаких входящих портов наружу. Связь только исходящая на серверы MAX.</p>
+</div>
+
+<h3 id="admin-bird-eye">Что вообще происходит (картинка целиком)</h3>
+
+<p>Чтобы понимать, что чинить, держите в голове общую схему:</p>
+
+<ol class="steps">
+<li><strong>Шаг.</strong> Житель пишет боту в личке. Бот ведёт его по анкете (имя, населённый пункт, адрес, тема, суть) и создаёт обращение №N.</li>
+<li><strong>Шаг.</strong> Карточка обращения №N уходит в служебную группу MAX (это отдельный чат, где сидят операторы).</li>
+<li><strong>Шаг.</strong> Оператор отвечает на карточку (свайпом или командой <code class="kbd">/reply</code>). Бот проверяет ответ и доставляет его жителю в личку.</li>
+<li><strong>Шаг.</strong> В служебную группу приходит подтверждение «ответ отправлен жителю».</li>
+</ol>
+
+<p>Бот отличает жителя от оператора по идентификатору чата (<code class="kbd">chat_id</code>). Сообщение из чата, у которого <code class="kbd">chat_id</code> совпадает с переменной <code class="kbd">ADMIN_GROUP_ID</code>, считается операторским. Любой другой чат — это житель в личке. Поэтому правильный <code class="kbd">ADMIN_GROUP_ID</code> в файле настроек — обязательное условие.</p>
+
+<div class="note">
+<p class="note__label">Подсказка</p>
+<p>Канонический репозиторий проекта: <code class="kbd">github.com/gaben1488/aemr-bot</code>. Все пути в командах ниже даны для рабочего пользователя <code class="kbd">aemr</code> и каталога <code class="kbd">/home/aemr/aemr-bot</code> (в инструкции по первой установке встречается также вариант <code class="kbd">/opt/aemr-bot</code> — это одно и то же, выберите один путь и держитесь его).</p>
+</div>
+
+<h3 id="admin-requirements">Минимальные требования к серверу</h3>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Ресурс</th><th>Минимум</th><th>Почему</th></tr></thead>
+<tbody>
+<tr><td>Процессор</td><td>1–2 vCPU</td><td>Один процесс бота и одна база. Нагрузка низкая.</td></tr>
+<tr><td>Память (RAM)</td><td>2 ГБ (комфортно 4 ГБ)</td><td>Бот в контейнере ограничен 512 МБ, PostgreSQL съедает 200–400 МБ. Остальное — на cron-задачи и пиковый backup.</td></tr>
+<tr><td>Диск</td><td>20 ГБ SSD</td><td>ОС ~5 ГБ, слои Docker ~3 ГБ, база ~1 ГБ на старте плюс ~50 МБ в год, 8 еженедельных backup под GPG ~400 МБ, логи 30 МБ.</td></tr>
+<tr><td>ОС</td><td>Ubuntu 22.04 / 24.04 LTS (Debian 12 тоже годится)</td><td>Нужен Docker. Время на сервере должно быть синхронизировано (NTP) — бот считает сроки по часовому поясу <code class="kbd">Asia/Kamchatka</code>.</td></tr>
+<tr><td>Сеть</td><td>Исходящий HTTPS (443/TCP)</td><td>Бот сам опрашивает MAX (<code class="kbd">botapi.max.ru</code>, <code class="kbd">platform-api.max.ru</code>). Входящие порты в режиме polling <strong>не нужны</strong>.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно</p>
+<p>Ubuntu 20.04 LTS уже снята с поддержки (закончилась в апреле 2025). Если сервер на ней — запланируйте апгрейд до 22.04/24.04 до сдачи в эксплуатацию. Бот живёт в контейнерах, поэтому апгрейд относительно безопасен, но базовая ОС без security-обновлений — это риск.</p>
+</div>
+
+<h3 id="admin-install">Установка с нуля по шагам</h3>
+
+<h4>Шаг 1. Получить токен бота через MAX для бизнеса</h4>
+
+<p>Боты в MAX регистрируются через корпоративный портал, а не через @MasterBot (он не работает):</p>
+
+<ol class="steps">
+<li><strong>Шаг.</strong> Откройте <code class="kbd">https://max.ru/business</code>, войдите под учёткой администратора организации. Юрлицо должно быть верифицировано (это заранее закрывает ИТ-отдел).</li>
+<li><strong>Шаг.</strong> Раздел «Боты» → «Создать бота» (или откройте уже заведённого).</li>
+<li><strong>Шаг.</strong> Заполните имя, описание, аватар.</li>
+<li><strong>Шаг.</strong> Скопируйте <strong>Bot API token</strong> — длинную строку. Это значение для <code class="kbd">BOT_TOKEN</code>. Префикс «Bearer» не нужен.</li>
+</ol>
+
+<div class="note note--danger">
+<p class="note__label">Опасно</p>
+<p>Токен — это полный доступ к боту. Храните в защищённом месте (менеджер паролей либо файл <code class="kbd">.env</code> с правами 600 на сервере). В git не коммитьте. Если токен утёк или уволился человек, у которого был доступ к серверу, — выпустите новый токен на той же странице, старый сразу отзовите.</p>
+</div>
+
+<h4>Шаг 2. Подготовить систему и поставить Docker</h4>
+
+<p>Создаём отдельного пользователя для бота, ставим базовые пакеты, включаем брандмауэр (firewall — межсетевой экран):</p>
+
+<pre><code># Пользователь для бота, добавляем в группу docker
+sudo adduser --disabled-password --gecos "" aemr
+sudo usermod -aG docker aemr
+
+# Базовые пакеты и firewall: открыт только SSH, всё остальное закрыто
+sudo apt update &amp;&amp; sudo apt upgrade -y
+sudo apt install -y ca-certificates curl gnupg git ufw
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp
+sudo ufw enable</code></pre>
+
+<div class="note">
+<p class="note__label">Подсказка</p>
+<p>Порт бота (8080) слушает только внутри сервера (<code class="kbd">127.0.0.1</code>) и наружу не публикуется — отдельное правило firewall для него заводить не нужно. Установка Docker Engine и плагина Compose — по официальной инструкции Docker (на старых Ubuntu в стандартных репозиториях лежит устаревший пакет без <code class="kbd">docker compose</code>). После установки проверьте: <code class="kbd">docker --version</code> и <code class="kbd">docker compose version</code>.</p>
+</div>
+
+<h4>Шаг 3. Склонировать репозиторий и подготовить настройки</h4>
+
+<pre><code>sudo -u aemr -i
+git clone https://github.com/gaben1488/aemr-bot.git
+cd aemr-bot
+
+# Скопировать образец настроек и закрыть права (только владелец читает)
+cp infra/.env.example infra/.env
+chmod 600 infra/.env</code></pre>
+
+<p>Откройте <code class="kbd">infra/.env</code> и заполните как минимум обязательные поля (полный справочник — ниже в разделе «Файл настроек .env»). На первом запуске <code class="kbd">ADMIN_GROUP_ID</code> оставьте пустым — его узнаем позже.</p>
+
+<h4>Шаг 4. Первый запуск</h4>
+
+<pre><code>cd /home/aemr/aemr-bot/infra
+docker compose pull
+docker compose up -d --build
+docker compose ps</code></pre>
+
+<p>Через 30–60 секунд у обоих контейнеров в колонке STATUS должно быть <code class="kbd">Up (healthy)</code>. В логах бота (<code class="kbd">docker compose logs -f bot</code>) должна появиться строка <code class="kbd">Starting in long polling mode</code>. Бот уже отвечает в личке жителям. На сообщения в группе он пока не реагирует — <code class="kbd">ADMIN_GROUP_ID</code> ещё не задан.</p>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно</p>
+<p>После первого запуска нужен <strong>один лишний рестарт базы</strong>, чтобы заработала статистика медленных запросов (<code class="kbd">pg_stat_statements</code> подхватывается из настройки <code class="kbd">shared_preload_libraries</code> только при старте PostgreSQL): <code class="kbd">docker compose restart db</code>.</p>
+</div>
+
+<h4>Шаг 5. Создать служебную группу и узнать её chat_id</h4>
+
+<ol class="steps">
+<li><strong>Шаг.</strong> В MAX создайте группу (например, «АЕМО · Обратная связь · служебка»). Добавьте туда бота и операторов. В группы добавляются только верифицированные боты — если ошибка, проверьте, что юрлицо подтверждено.</li>
+<li><strong>Шаг.</strong> В группе напишите <code class="kbd">/whoami</code>. Бот ответит вашим <code class="kbd">max_user_id</code>, именем и <code class="kbd">chat_id</code> группы. <code class="kbd">chat_id</code> группы — это отрицательное число вида <code class="kbd">-74181728103785</code>. Сохраните его и свой <code class="kbd">max_user_id</code>.</li>
+</ol>
+
+<div class="note">
+<p class="note__label">Подсказка</p>
+<p>Команда <code class="kbd">/whoami</code> отвечает только в служебной группе. В личке у жителя она тихо игнорируется — это сделано намеренно, чтобы обычные жители не видели служебных команд. Пусть каждый будущий оператор напишет <code class="kbd">/whoami</code> в группе — соберёте их <code class="kbd">max_user_id</code> в табличку для массовой регистрации.</p>
+</div>
+
+<h4>Шаг 6. Прописать ADMIN_GROUP_ID и перезапустить</h4>
+
+<pre><code>nano /home/aemr/aemr-bot/infra/.env
+# вписать: ADMIN_GROUP_ID=-74181728103785
+docker compose up -d --force-recreate bot</code></pre>
+
+<p>Перезапуск обязателен — файл <code class="kbd">.env</code> читается только при старте контейнера. С этого момента сообщения в группе с этим <code class="kbd">chat_id</code> обрабатываются как операторские.</p>
+
+<h4>Шаг 7. Создать первого ИТ-оператора</h4>
+
+<p>Команда регистрации операторов доступна только роли <code class="kbd">it</code>, а при первом запуске в базе нет ни одного <code class="kbd">it</code>. Чтобы развязать эту петлю, бот умеет создать первого ИТ из переменных окружения. Впишите в <code class="kbd">.env</code> свой <code class="kbd">max_user_id</code> и ФИО:</p>
+
+<pre><code>BOOTSTRAP_IT_MAX_USER_ID=&lt;ваш_max_user_id&gt;
+BOOTSTRAP_IT_FULL_NAME=Ваше ФИО
+docker compose up -d --force-recreate bot</code></pre>
+
+<p>При старте, если в таблице <code class="kbd">operators</code> нет ни одной активной записи с ролью <code class="kbd">it</code>, бот вставит её из этих переменных. На повторных запусках — ничего не делает (no-op), переменные можно оставить навсегда. Запасной путь, если автоинициализация не сработала, — напрямую через psql:</p>
+
+<pre><code>docker compose exec db psql -U aemr -d aemr -c \
+  "INSERT INTO operators (max_user_id, full_name, role, is_active) \
+   VALUES (&lt;ваш_max_user_id&gt;, 'Ваше ФИО', 'it', true);"</code></pre>
+
+<p>Дальше всех остальных операторов удобнее заводить кнопочным мастером «👥 Операторы» в меню <code class="kbd">/op_help</code> или командой <code class="kbd">/add_operators</code> — это уже работа оператора, описана в разделе для оператора.</p>
+
+<h4>Шаг 8. Установить страховочные службы (один раз)</h4>
+
+<p>Эти службы запускаются от root и держат бота живым между перезапусками сервера и при зависаниях:</p>
+
+<pre><code>exit   # выйти из-под пользователя aemr обратно в root
+
+# Auto-deploy: каждые 10 минут тянет новый код из main и пересобирает
+sudo bash /home/aemr/aemr-bot/scripts/install-auto-deploy.sh
+# выдаст публичный ключ — добавьте его в GitHub: Settings → Deploy keys (read-only)
+
+# Watchdog: каждые 5 минут проверяет, что бот жив
+sudo bash /home/aemr/aemr-bot/scripts/install-healthwatch.sh
+
+# Автозапуск контейнеров после перезагрузки сервера
+sudo bash /home/aemr/aemr-bot/scripts/install-systemd-autostart.sh</code></pre>
+
+<p>Подробнее про каждую службу — в разделах «Автодеплой и откат», «Сторожевые механизмы», «Автозапуск после reboot» ниже.</p>
+
+<h4>Шаг 9. Проверочный прогон</h4>
+
+<p>Финальная проверка, что всё работает (полный сценарий со стороны жителя и оператора — в разделе «Чек-лист первого боевого запуска» в конце):</p>
+
+<pre><code>docker compose ps                              # оба контейнера healthy
+docker compose logs --tail 50 bot             # последние строки без ERROR
+curl -fsS http://127.0.0.1:8080/livez &amp;&amp; echo  # 200
+curl -fsS http://127.0.0.1:8080/readyz &amp;&amp; echo  # 200</code></pre>
+
+<h3 id="admin-env">Файл настроек <code class="kbd">infra/.env</code></h3>
+
+<p>Это главный файл конфигурации. Читается только при старте контейнера — после любой правки нужен <code class="kbd">docker compose up -d --force-recreate bot</code>. Полный справочник всех полей с комментариями лежит в образце <code class="kbd">infra/.env.example</code>. Ниже — что обязательно и где подводные камни.</p>
+
+<h4>Обязательные поля</h4>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Переменная</th><th>Значение по умолчанию</th><th>Что это</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">BOT_TOKEN</code></td><td>—</td><td>Токен бота с max.ru/business. Без префикса «Bearer».</td></tr>
+<tr><td><code class="kbd">POSTGRES_PASSWORD</code></td><td>—</td><td>Пароль базы, минимум 24 символа случайно: <code class="kbd">python3 -c "import secrets; print(secrets.token_urlsafe(32))"</code>. Compose откажется стартовать с пустым.</td></tr>
+<tr><td><code class="kbd">DATABASE_URL</code></td><td>—</td><td><code class="kbd">postgresql+asyncpg://aemr:&lt;тот же пароль&gt;@db:5432/aemr</code>. Compose подставляет его автоматически из <code class="kbd">POSTGRES_*</code>, но строку стоит держать согласованной.</td></tr>
+<tr><td><code class="kbd">POSTGRES_DB</code> / <code class="kbd">POSTGRES_USER</code></td><td><code class="kbd">aemr</code> / <code class="kbd">aemr</code></td><td>Имя базы и пользователя PostgreSQL.</td></tr>
+<tr><td><code class="kbd">ADMIN_GROUP_ID</code></td><td>—</td><td>chat_id служебной группы (отрицательное число). Узнаётся <code class="kbd">/whoami</code> в группе.</td></tr>
+<tr><td><code class="kbd">BOOTSTRAP_IT_MAX_USER_ID</code></td><td>—</td><td>max_user_id первого ИТ-оператора (cold-start без psql).</td></tr>
+<tr><td><code class="kbd">BOOTSTRAP_IT_FULL_NAME</code></td><td><code class="kbd">ИТ-специалист</code></td><td>ФИО первого ИТ-оператора.</td></tr>
+<tr><td><code class="kbd">TZ</code></td><td><code class="kbd">Asia/Kamchatka</code></td><td>Часовой пояс. По нему считаются SLA, расписания и все cron-задачи.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>Очень рекомендуется (резервные копии и аудит)</h4>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Переменная</th><th>По умолчанию</th><th>Что это</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">BACKUP_GPG_PASSPHRASE</code></td><td>пусто</td><td>Парольная фраза для шифрования backup (минимум 12 символов, лучше 32+). <strong>В production обязательна</strong>: без неё backup отказывается выполняться.</td></tr>
+<tr><td><code class="kbd">BACKUP_ALLOW_UNENCRYPTED</code></td><td>пусто</td><td><code class="kbd">1</code> разрешает незашифрованный <code class="kbd">.sql</code> без фразы. <strong>Только для dev/локальной машины.</strong></td></tr>
+<tr><td><code class="kbd">HEALTHCHECK_URL</code></td><td>пусто</td><td>URL внешнего пинг-сервиса (Healthchecks.io, Uptime Kuma). Если задан — бот раз в 5 минут «стучится» туда.</td></tr>
+<tr><td><code class="kbd">AUDIT_LOG_RETENTION_DAYS</code></td><td>365</td><td>Сколько дней хранить журнал действий операторов (диапазон 30–3650). Чистится cron-задачей <code class="kbd">audit-log-retention</code>.</td></tr>
+<tr><td><code class="kbd">FOLLOWUP_MAX_PER_HOUR_PER_APPEAL</code></td><td>5</td><td>Лимит дополнений жителя по одному обращению в час (защита от флуда).</td></tr>
+<tr><td><code class="kbd">FOLLOWUP_MIN_INTERVAL_SECONDS</code></td><td>30</td><td>Минимум секунд между двумя дополнениями жителя.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>Расписание и хранение backup</h4>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Переменная</th><th>По умолчанию</th><th>Что это</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">BACKUP_DAY_OF_WEEK</code></td><td><code class="kbd">sun</code></td><td>День недели для backup (crontab-стиль: <code class="kbd">sun</code>, <code class="kbd">mon</code>… или <code class="kbd">*</code>).</td></tr>
+<tr><td><code class="kbd">BACKUP_HOUR</code> / <code class="kbd">BACKUP_MINUTE</code></td><td>3 / 0</td><td>Час и минута backup (по часовому поясу бота). По умолчанию 03:00.</td></tr>
+<tr><td><code class="kbd">BACKUP_LOCAL_DIR</code></td><td><code class="kbd">/backups</code></td><td>Каталог внутри контейнера (смонтирован в Docker-том <code class="kbd">backups</code>). Если пусто — локальные backup не сохраняются.</td></tr>
+<tr><td><code class="kbd">BACKUP_KEEP_COUNT</code></td><td>8</td><td>Сколько последних файлов хранить (8 еженедельных ≈ 2 месяца).</td></tr>
+<tr><td><code class="kbd">BACKUP_S3_ENDPOINT</code> / <code class="kbd">_BUCKET</code> / <code class="kbd">_ACCESS_KEY</code> / <code class="kbd">_SECRET_KEY</code></td><td>пусто</td><td>Опциональная копия в S3-совместимое хранилище. Если все четыре пустые — только локальные backup.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>Webhook-режим (по умолчанию НЕ используется)</h4>
+
+<p>Боевая сборка работает в режиме long polling. Webhook оставлен на случай будущего перехода. Если включаете (<code class="kbd">BOT_MODE=webhook</code>), нужны:</p>
+
+<pre><code>BOT_MODE=webhook
+WEBHOOK_URL=https://feedback.elizovomr.ru/max/webhook
+WEBHOOK_SECRET=&lt;≥16 символов: python -c 'import secrets; print(secrets.token_urlsafe(32))'&gt;</code></pre>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно</p>
+<p>Без <code class="kbd">WEBHOOK_URL</code> и <code class="kbd">WEBHOOK_SECRET</code> длиной ≥16 символов процесс бота просто не стартует в webhook-режиме (валидатор в <code class="kbd">config.py</code> остановит запуск). В режиме polling эти поля не нужны.</p>
+</div>
+
+<h4>Repo-sync — синхронизация настроек в репозиторий (опционально)</h4>
+
+<p>Фича для роли <code class="kbd">it</code>: из меню «⚙️ Настройки бота» одной кнопкой создать Pull Request с обновлённым <code class="kbd">seed/runtime_config.json</code>. Если не нужна — оставьте переменные пустыми, кнопка покажет «не настроено», бот не падает.</p>
+
+<pre><code>GITHUB_PAT=&lt;fine-grained токен: Contents Read/Write + Pull requests Read/Write&gt;
+GITHUB_REPO=Gaben1488/aemr-bot
+GITHUB_PR_BASE_BRANCH=main
+COMMIT_AUTHOR_NAME=&lt;имя автора коммитов&gt;
+COMMIT_AUTHOR_EMAIL=&lt;email&gt;</code></pre>
+
+<p>Токен передаётся только в HTTP-заголовке <code class="kbd">Authorization</code>, не логируется и не появляется в текстах PR. Каждое нажатие создаёт отдельную ветку <code class="kbd">bot-config-sync-YYYYMMDD-HHMMSS</code> и отдельный PR; в <code class="kbd">main</code> напрямую бот не пишет. Срок жизни токена ставьте 90 дней и заводите напоминание о ротации.</p>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно</p>
+<p>В старых production-файлах <code class="kbd">.env</code> встречаются <strong>мёртвые</strong> переменные <code class="kbd">COORDINATOR_MAX_USER_ID</code> и <code class="kbd">BACKUP_TMP_DIR</code> — остатки ранних версий. Бот их не читает (конфиг игнорирует всё, чего нет в схеме). Их можно и нужно удалить, чтобы не путать того, кто откроет файл через год.</p>
+</div>
+
+<h3 id="admin-ports">Порты и проверки здоровья</h3>
+
+<p>Бот слушает порт <strong>8080</strong>, но только на петлевом адресе <code class="kbd">127.0.0.1</code> — то есть он доступен только внутри сервера, из интернета его не видно. PostgreSQL на хост вообще не пробрасывается — доступен только боту по внутренней сети Docker.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Сервис</th><th>Привязка</th><th>Кому виден</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td>bot, порт 8080</td><td><code class="kbd">127.0.0.1:8080</code></td><td>только localhost сервера</td><td>проверки здоровья (<code class="kbd">/livez</code>, <code class="kbd">/readyz</code>, <code class="kbd">/healthz</code>); приёмник webhook, если включён</td></tr>
+<tr><td>db, порт 5432</td><td>внутри сети Docker</td><td>только бот (по имени <code class="kbd">db</code>)</td><td>PostgreSQL</td></tr>
+<tr><td>nginx, порты 80/443</td><td><code class="kbd">0.0.0.0</code></td><td>публично</td><td>только под профилем <code class="kbd">webhook</code>, в боевой сборке не используется</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Три точки проверки здоровья (health endpoints) различаются по смыслу:</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Адрес</th><th>Что проверяет</th><th>Кто использует</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">/livez</code></td><td>жив ли главный цикл бота. Базу <strong>не трогает</strong>. Отвечает 200, если внутренний «пульс» обновлялся за последние <code class="kbd">HEALTHCHECK_STALE_SECONDS</code> (120 сек).</td><td>Docker healthcheck, watchdog, авто-деплой</td></tr>
+<tr><td><code class="kbd">/readyz</code></td><td>готов ли бот работать с данными. Делает <code class="kbd">SELECT 1</code> к PostgreSQL (кэш 10 сек). Падение при живом <code class="kbd">/livez</code> = «процесс жив, но база лежит».</td><td>ручная диагностика</td></tr>
+<tr><td><code class="kbd">/healthz</code></td><td>то же, что <code class="kbd">/readyz</code> (оставлен для совместимости со старыми инструкциями).</td><td>ручная диагностика</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p class="note__label">Подсказка</p>
+<p>Docker и watchdog проверяют именно <code class="kbd">/livez</code>, а не <code class="kbd">/readyz</code>. Это сделано специально: кратковременная проблема с базой не должна перезапускать живой процесс — иначе теряется возможность спокойно разобраться в причине.</p>
+</div>
+
+<h3 id="admin-stack">Технологический стек и образы</h3>
+
+<p>Базовые Docker-образы закреплены не только тегом, но и цифровым отпечатком (digest) — чтобы <code class="kbd">docker compose pull</code> не утянул втихую новый минорный выпуск с поломанными скриптами. Актуальные digest всегда смотрите в <code class="kbd">infra/docker-compose.yml</code> (не по памяти).</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Образ</th><th>Тег</th><th>Зачем</th></tr></thead>
+<tbody>
+<tr><td>python (для бота)</td><td><code class="kbd">3.12-slim</code></td><td>среда исполнения бота</td></tr>
+<tr><td>postgres</td><td><code class="kbd">16-alpine</code></td><td>база данных</td></tr>
+<tr><td>nginx</td><td><code class="kbd">1.27-alpine</code></td><td>только профиль <code class="kbd">webhook</code>, TLS-терминация</td></tr>
+<tr><td>certbot</td><td><code class="kbd">latest</code></td><td>только профиль <code class="kbd">webhook</code>, выпуск сертификатов</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Чтобы обновить digest вручную: <code class="kbd">docker pull postgres:16-alpine</code>, скопировать значение из строки «Digest: sha256:…» в <code class="kbd">docker-compose.yml</code>. Автообновление выключено намеренно — сломанный или скомпрометированный минор не должен попасть в production молча.</p>
+
+<p>Внутри образа бота дополнительно ставятся apt-пакеты: <code class="kbd">postgresql-client</code>, <code class="kbd">gnupg</code>, <code class="kbd">ca-certificates</code>, <code class="kbd">curl</code>, <code class="kbd">tzdata</code>, <code class="kbd">unzip</code>, <code class="kbd">rclone</code> (для S3-выгрузки). Python-зависимости фиксируются через <code class="kbd">~=</code> в <code class="kbd">bot/pyproject.toml</code> (патчи разрешены, скачки минорных версий — нет). Ключевые из них:</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Пакет</th><th>Версия</th><th>Роль</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">maxapi</code></td><td><code class="kbd">~=1.1</code></td><td>клиент MAX Bot API</td></tr>
+<tr><td><code class="kbd">fastapi</code></td><td><code class="kbd">&gt;=0.118,&lt;0.137</code></td><td>для webhook-режима</td></tr>
+<tr><td><code class="kbd">uvicorn[standard]</code></td><td><code class="kbd">~=0.32</code></td><td>ASGI-сервер</td></tr>
+<tr><td><code class="kbd">sqlalchemy</code> / <code class="kbd">asyncpg</code></td><td><code class="kbd">~=2.0</code> / <code class="kbd">~=0.30</code></td><td>асинхронная работа с PostgreSQL</td></tr>
+<tr><td><code class="kbd">alembic</code></td><td><code class="kbd">~=1.14</code></td><td>миграции базы</td></tr>
+<tr><td><code class="kbd">apscheduler</code></td><td><code class="kbd">~=3.10</code></td><td>cron-задачи внутри процесса</td></tr>
+<tr><td><code class="kbd">pydantic</code> / <code class="kbd">pydantic-settings</code></td><td><code class="kbd">~=2.9</code> / <code class="kbd">~=2.6</code></td><td>валидация конфига</td></tr>
+<tr><td><code class="kbd">openpyxl</code></td><td><code class="kbd">~=3.1</code></td><td>выгрузка статистики в XLSX</td></tr>
+<tr><td><code class="kbd">shapely</code></td><td><code class="kbd">~=2.0</code></td><td>геопривязка по поселениям (локально, без внешних API)</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p class="note__label">Подсказка</p>
+<p>Точные согласованные версии всех пакетов (включая транзитивные) лежат в <code class="kbd">bot/uv.lock</code> — он закоммичен в репозиторий. Обновление любой зависимости делается отдельным Pull Request с проверкой каждого слоя, процедура — в <code class="kbd">docs/DEPS.md</code> и <code class="kbd">docs/MAXAPI_UPGRADE_PROCEDURE.md</code>.</p>
+</div>
+
+<h3 id="admin-cron">Фоновые задачи (cron внутри бота)</h3>
+
+<p>Внутри процесса бота крутится планировщик APScheduler — это «cron» (запуск по расписанию), но не системный, а встроенный. Все расписания — в часовом поясе <code class="kbd">Asia/Kamchatka</code>. Источник истины — функция <code class="kbd">build_scheduler</code> в <code class="kbd">bot/aemr_bot/services/cron.py</code>. Ниже все 17 задач с точными идентификаторами и реальным расписанием.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>id задачи</th><th>Когда запускается</th><th>Что делает</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">db-backup</code></td><td>каждое вс в <code class="kbd">BACKUP_HOUR</code>:<code class="kbd">BACKUP_MINUTE</code> (по умолчанию 03:00)</td><td>еженедельный pg_dump → GPG → Docker-том, ротация старых файлов</td></tr>
+<tr><td><code class="kbd">events-retention</code></td><td>ежедневно 04:00</td><td>удаляет события старше 30 дней (ключи защиты от повторов)</td></tr>
+<tr><td><code class="kbd">audit-log-retention</code></td><td>ежедневно 04:15</td><td>удаляет журнал действий старше <code class="kbd">AUDIT_LOG_RETENTION_DAYS</code> (по умолчанию 365), требование 152-ФЗ</td></tr>
+<tr><td><code class="kbd">stale-operators-cleanup</code></td><td>ежедневно 04:20</td><td>помечает операторов, покинувших служебную группу, как неактивных (ИТ не трогает)</td></tr>
+<tr><td><code class="kbd">pdn-retention</code></td><td>ежедневно 04:30</td><td>обезличивает жителей через 30 дней после отзыва согласия (152-ФЗ ст. 21)</td></tr>
+<tr><td><code class="kbd">appeals-5y-retention</code></td><td>ежедневно 04:45</td><td>обнуляет текст обращений старше 5 лет (метаданные остаются)</td></tr>
+<tr><td><code class="kbd">funnel-watchdog</code></td><td>ежечасно в :15</td><td>сбрасывает зависшие анкеты (житель начал и ушёл); при ≥5/час шлёт алёрт</td></tr>
+<tr><td><code class="kbd">threat-intel-refresh</code></td><td>ежечасно в :17</td><td>обновляет локальный список вредоносных хостов (URLhaus + ThreatFox + PhishTank)</td></tr>
+<tr><td><code class="kbd">broadcast-draft-reaper</code></td><td>ежечасно в :37</td><td>зависшие черновики рассылок (DRAFT старше 30 минут) переводит в FAILED</td></tr>
+<tr><td><code class="kbd">pulse-hourly</code></td><td>каждый час 24/7 в :05</td><td>базовый «пульс» в служебную группу: «🟢 Пульс: бот работает»</td></tr>
+<tr><td><code class="kbd">pulse-workhours-extra</code></td><td>пн–пт 09:00–17:59 в :35</td><td>дополнительный «пульс» в рабочее время (вместе с базовым = раз в 30 минут)</td></tr>
+<tr><td><code class="kbd">startup-pulse</code></td><td>один раз через 5 сек после старта</td><td>сообщение «🔄 Рестарт: процесс бота запущен заново»</td></tr>
+<tr><td><code class="kbd">health-selfcheck</code></td><td>каждые <code class="kbd">HEALTHCHECK_INTERVAL_MIN</code> мин (5 по умолчанию)</td><td>следит за зависанием цикла; шлёт алёрт при смене «жив ↔ завис»</td></tr>
+<tr><td><code class="kbd">monthly-stats</code></td><td>1 числа в 09:00</td><td>XLSX-отчёт за прошлый месяц в служебную группу</td></tr>
+<tr><td><code class="kbd">open-reminder-workhours</code></td><td>пн–пт 09:00–11:59 и 13:00–17:59 в :10</td><td>напоминание оператору об открытых обращениях</td></tr>
+<tr><td><code class="kbd">overdue-reminder-workhours</code></td><td>пн–пт 09:00–11:59 и 13:00–17:59 в :40</td><td>напоминание о просроченных по SLA</td></tr>
+<tr><td><code class="kbd">healthcheck-ping</code></td><td>каждые <code class="kbd">HEALTHCHECK_INTERVAL_MIN</code> мин</td><td>внешний пинг на <code class="kbd">HEALTHCHECK_URL</code> — только если URL задан</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p class="note__label">Подсказка</p>
+<p>Несколько тонкостей расписания. Напоминалки операторам не дёргают в обеденный перерыв (12:00–13:00 выпадает из расписания) и в субботу. «Пульс» же идёт 24/7 — это технический сигнал «процесс жив», и непрерывность мониторинга важнее. Напоминалки по SLA молчат в государственные праздники РФ (даты берутся из <code class="kbd">seed/holidays.json</code>). Все задачи имеют «окно прощения» опоздания (<code class="kbd">misfire_grace_time</code>) 120 секунд — это покрывает паузу 30–90 сек, пока контейнер пересобирается при деплое, так что пропущенный тик догоняется. Дублей не будет: настройки <code class="kbd">coalesce=True</code> и <code class="kbd">max_instances=1</code> сливают просроченные тики в один и не дают запустить второй экземпляр.</p>
+</div>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно</p>
+<p>Планировщик хранит расписание в памяти. Если сервер был выключен ровно в момент еженедельного backup — этот запуск не наверстается (в отличие от тиков, пропущенных на короткую пересборку: их покрывает окно прощения). Перед опасными операциями (миграции, выкладка) делайте <code class="kbd">/backup</code> руками.</p>
+</div>
+
+<h3 id="admin-backup">Резервное копирование и восстановление</h3>
+
+<h4>Что и как бэкапится</h4>
+
+<p>Каждое воскресенье в 03:00 по Камчатке бот делает <code class="kbd">pg_dump</code> всей базы, шифрует его GPG (алгоритм AES-256) с паролем <code class="kbd">BACKUP_GPG_PASSPHRASE</code> и кладёт файл в Docker-том <code class="kbd">backups</code> (внутри контейнера путь <code class="kbd">/backups/aemr-YYYYMMDD_HHMMSS.sql.gpg</code>, права 0600). Хранятся последние 8 файлов (≈2 месяца). Опционально — дополнительная копия в S3.</p>
+
+<div class="note note--danger">
+<p class="note__label">Опасно</p>
+<p>Без <code class="kbd">BACKUP_GPG_PASSPHRASE</code> (или с фразой короче 12 символов) backup <strong>отказывается выполняться</strong> и шлёт алёрт в служебную группу. Это требование закона 152-ФЗ: дамп содержит телефоны жителей, имена и тексты обращений — это персональные данные (ПДн), хранить их на диске в открытом виде нельзя. Для dev-машины открыть незашифрованный режим можно явным <code class="kbd">BACKUP_ALLOW_UNENCRYPTED=1</code>, но в production это запрещено.</p>
+</div>
+
+<h4>Снять backup вручную и посмотреть список</h4>
+
+<div class="cmd"><code>/backup</code><span class="cmd__what">из служебной группы (только роль it) — внеплановый pg_dump прямо сейчас</span></div>
+
+<pre><code># Список файлов
+docker compose exec bot ls -lah /backups
+
+# Снять backup из shell (альтернатива кнопке)
+docker compose exec bot python -m aemr_bot.services.db_backup</code></pre>
+
+<h4>Восстановление из backup</h4>
+
+<div class="note note--danger">
+<p class="note__label">Опасно</p>
+<p>Никогда не восстанавливайте backup прямо в боевую базу <code class="kbd">aemr</code>. Всегда сначала в отдельную тестовую базу <code class="kbd">aemr_restore_test</code>, сверьте, и только потом принимайте решение. Восстановление из backup — терминальный шаг: теряются данные, появившиеся между моментом backup и моментом сбоя.</p>
+</div>
+
+<ol class="steps">
+<li><strong>Шаг.</strong> Найдите свежий файл: <code class="kbd">sudo ls -lah /var/lib/docker/volumes/aemr-bot_backups/_data/</code></li>
+<li><strong>Шаг.</strong> Создайте тестовую базу:
+<pre><code>cd /home/aemr/aemr-bot/infra
+. ./.env
+docker compose exec -T db psql -U "$POSTGRES_USER" -d postgres -c 'DROP DATABASE IF EXISTS aemr_restore_test;'
+docker compose exec -T db psql -U "$POSTGRES_USER" -d postgres -c 'CREATE DATABASE aemr_restore_test;'</code></pre></li>
+<li><strong>Шаг.</strong> Расшифруйте и залейте (для зашифрованного <code class="kbd">.sql.gpg</code>):
+<pre><code>BACKUP=/var/lib/docker/volumes/aemr-bot_backups/_data/aemr-YYYYMMDD_HHMMSS.sql.gpg
+sudo cat "$BACKUP" \
+  | gpg --batch --passphrase "$BACKUP_GPG_PASSPHRASE" --decrypt \
+  | docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test</code></pre></li>
+<li><strong>Шаг.</strong> Проверьте, что таблицы есть и счётчики правдоподобны:
+<pre><code>docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test -c '\dt'
+docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test -c 'select count(*) from users;'
+docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test -c 'select count(*) from appeals;'</code></pre></li>
+<li><strong>Шаг.</strong> Удалите тестовую базу: <code class="kbd">docker compose exec -T db psql -U "$POSTGRES_USER" -d postgres -c 'DROP DATABASE IF EXISTS aemr_restore_test;'</code></li>
+</ol>
+
+<div class="note note--danger">
+<p class="note__label">Опасно</p>
+<p>Если пароль <code class="kbd">BACKUP_GPG_PASSPHRASE</code> утерян — зашифрованный backup восстановить <strong>невозможно</strong>. Поэтому фразу храните отдельно от сервера (в менеджере паролей). Полный регламент проверки восстановления — в <code class="kbd">docs/BACKUP_RESTORE_TEST.md</code>.</p>
+</div>
+
+<h4>Тест восстановления (раз в квартал)</h4>
+
+<p>Backup, который ни разу не восстанавливали, официально считается непроверенным. Раз в квартал (в первый рабочий день января, апреля, июля, октября) проходите процедуру восстановления из <code class="kbd">docs/BACKUP_RESTORE_TEST.md</code> в тестовую базу и записывайте результат в журнал эксплуатации (кто, когда, итог). Проверка занимает ~15 минут. Дополнительно — после каждой новой миграции схемы.</p>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно</p>
+<p>Локальный backup защищает от логической ошибки в базе, но не от потери самой VPS. Если сгорит диск — потеряются и база, и backup, лежащие на нём. Цель восстановления по времени при потере всего сервера (RPO) — до 1 недели (backup раз в воскресенье). Чтобы это закрыть, либо включите <code class="kbd">BACKUP_S3_*</code>, либо настройте внешний <code class="kbd">rsync</code>/<code class="kbd">scp</code> по cron на отдельный хост. Сейчас offsite-копии нет — это документированный риск.</p>
+</div>
+
+<h3 id="admin-deploy">Выкладка новой версии и откат</h3>
+
+<h4>Автодеплой (auto-deploy)</h4>
+
+<p>Скрипт <code class="kbd">scripts/auto-deploy.sh</code> запускается из cron от root каждые 10 минут. Логика:</p>
+
+<ol class="steps">
+<li><strong>Шаг.</strong> <code class="kbd">git fetch origin main</code>. Если новых коммитов нет — тихо выходит, контейнер не трогает.</li>
+<li><strong>Шаг.</strong> Запоминает текущий коммит как «предыдущий рабочий» (для отката).</li>
+<li><strong>Шаг.</strong> <code class="kbd">git reset --hard origin/main</code> и <code class="kbd">docker compose up -d --build</code>.</li>
+<li><strong>Шаг.</strong> Health-gate: до 60 секунд опрашивает <code class="kbd">/livez</code> каждые 5 секунд.</li>
+<li><strong>Шаг.</strong> Успех → запись в журнал «deploy ok». Провал → <strong>авто-откат</strong> на предыдущий коммит, пересборка, запись «DEPLOY FAILED: ROLLBACK».</li>
+</ol>
+
+<div class="note">
+<p class="note__label">Подсказка</p>
+<p>Откат управляется только проверкой <code class="kbd">/livez</code>, а не <code class="kbd">/readyz</code> — кратковременная проблема с базой не должна откатывать корректный код. Авто-деплой тянет код только из ветки <code class="kbd">main</code>; ветки Pull Request на сервер не попадают. После мержа PR изменения доезжают на сервер в течение 10 минут. Логи деплоя: <code class="kbd">journalctl -t aemr-bot-deploy -n 80 --no-pager</code>.</p>
+</div>
+
+<h4>Ручная выкладка</h4>
+
+<pre><code>sudo -u aemr -i
+cd aemr-bot
+git fetch origin main &amp;&amp; git checkout main &amp;&amp; git pull --ff-only
+cd infra
+docker compose up -d --build bot
+docker compose logs -f bot     # убедиться, что стартовал без ошибок</code></pre>
+
+<p>Миграции базы (alembic) применяются автоматически при старте контейнера (команда запуска — <code class="kbd">alembic upgrade head &amp;&amp; python -m aemr_bot.main</code>). Если миграция падает — контейнер уходит в перезапуск; смотрите <code class="kbd">docker compose logs --tail 200 bot | grep -A20 alembic</code>. После выкладки пройдите чек-лист <code class="kbd">docs/VPS_SMOKE_CHECKLIST.md</code>.</p>
+
+<h4>Откат при сбое (цель — за ≤10 минут)</h4>
+
+<p>Подробный playbook — <code class="kbd">docs/ROLLBACK.md</code>. Главное: бот «health-down» НЕ значит «потеря данных» — база живёт независимо от приложения, откатываем только код.</p>
+
+<ol class="steps">
+<li><strong>Шаг.</strong> Сначала диагностика, 30 секунд логов: <code class="kbd">docker logs aemr-bot-bot-1 --tail 50</code>. Если ошибка явно временная (сеть, таймаут MAX) — не откатывайте, дайте 5 минут на самовосстановление.</li>
+<li><strong>Шаг.</strong> Откат кода на сервере: на коммит назад через <code class="kbd">git reset --hard HEAD~1</code>, <code class="kbd">chown -R aemr:aemr .</code>, затем <code class="kbd">docker compose up -d --build</code>.</li>
+<li><strong>Шаг.</strong> <strong>Сразу</strong> сделайте revert-коммит в репозитории на машине разработчика (<code class="kbd">git revert HEAD --no-edit &amp;&amp; git push origin main</code>) — иначе через 10 минут авто-деплой снова подтянет сломанный <code class="kbd">main</code> и снова упадёт.</li>
+<li><strong>Шаг.</strong> Если виновата миграция и она обратима — <code class="kbd">docker exec aemr-bot-bot-1 alembic downgrade -1</code>. Но не каждая миграция обратима: проверьте, есть ли реальный код в <code class="kbd">downgrade()</code>. На проде даунгрейд миграций — крайняя мера, обычно проще восстановить из backup.</li>
+<li><strong>Шаг.</strong> После восстановления убедитесь, что <code class="kbd">/livez</code> отвечает 200, и дождитесь «пульса» в служебной группе.</li>
+</ol>
+
+<h3 id="admin-watchdog">Сторожевые механизмы и автозапуск</h3>
+
+<h4>Watchdog (внешний сторож)</h4>
+
+<p>Внутри контейнера уже есть Docker healthcheck и политика <code class="kbd">restart: unless-stopped</code> — если процесс упал, Docker сам поднимет контейнер. Но Docker не перезапускает контейнер, который «жив, но не отвечает» (висит). Для этого случая есть скрипт <code class="kbd">scripts/healthwatch.sh</code> в cron от root каждые 5 минут:</p>
+
+<ul>
+<li>успешный <code class="kbd">/livez</code> → счётчик провалов сбрасывается;</li>
+<li>3 провала подряд (≈15 минут) → <code class="kbd">docker compose restart bot</code>;</li>
+<li>8 провалов подряд (≈40 минут) → пишет алёрт прямо в служебную группу через MAX API (минуя бота — он же завис), отправляя POST на <code class="kbd">platform-api.max.ru/messages</code> с заголовком <code class="kbd">Authorization</code>.</li>
+</ul>
+
+<div class="note">
+<p class="note__label">Подсказка</p>
+<p>Не путайте watchdog и health-gate авто-деплоя. Health-gate ловит сломанный новый коммит сразу после выкладки. Watchdog ловит зависший живой контейнер в любой момент. Логи сторожа: <code class="kbd">journalctl -t aemr-bot-watchdog -n 80 --no-pager</code>.</p>
+</div>
+
+<h4>Автозапуск после перезагрузки сервера</h4>
+
+<p>Контейнеры с <code class="kbd">restart: unless-stopped</code> поднимаются вместе с Docker при штатной перезагрузке. Но если до reboot контейнеры были остановлены вручную (<code class="kbd">docker compose down</code>) — Docker сам их не вернёт. На этот случай есть systemd-юнит <code class="kbd">infra/aemr-bot.service</code>, который при старте системы делает <code class="kbd">docker compose up -d</code>. Операция идемпотентная (если уже подняты — ничего не меняет). Устанавливается один раз: <code class="kbd">sudo bash /home/aemr/aemr-bot/scripts/install-systemd-autostart.sh</code>. Проверка: <code class="kbd">sudo systemctl is-enabled aemr-bot.service</code> (должно быть <code class="kbd">enabled</code>).</p>
+
+<h3 id="admin-logs">Логи</h3>
+
+<p>Все три контейнера пишут логи в формате json-file с ротацией: 10 МБ × 3 файла = до 30 МБ на контейнер. Бесконечного роста логов не будет.</p>
+
+<pre><code>cd /home/aemr/aemr-bot/infra
+docker compose logs --tail 300 bot                                   # последние 300 строк бота
+docker compose logs --since 24h bot | grep -Ei 'error|exception|misfire|pulse'  # за сутки, отфильтровано
+docker compose logs --tail 200 db                                    # логи PostgreSQL</code></pre>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно</p>
+<p>Docker отдельно хранит сырой stdout контейнера в файлах <code class="kbd">/var/lib/docker/containers/&lt;id&gt;/&lt;id&gt;-json.log</code>. В них попадают псевдоидентификаторы жителей (<code class="kbd">max_user_id</code>), а команда <code class="kbd">/erase</code> чистит только базу, не эти файлы. После запроса жителя на удаление данных вручную обнулите docker-логи бота за последние 7 дней, не удаляя сам файл (Docker держит его открытым): <code class="kbd">sudo truncate -s 0 /var/lib/docker/containers/&lt;id&gt;/*-json.log</code>. Это компромисс под 152-ФЗ, чтобы не строить отдельный пайплайн ради одного запроса в месяц.</p>
+</div>
+
+<h3 id="admin-troubleshoot">Диагностика типичных сбоев</h3>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Симптом</th><th>Куда смотреть / что делать</th></tr></thead>
+<tbody>
+<tr><td>Бот молчит, в служебной группе тишина</td><td>Сначала <code class="kbd">curl http://127.0.0.1:8080/livez</code>. Если 200 — процесс жив, проблема в сессии MAX или сети. Если 5xx или таймаут — <code class="kbd">docker compose logs --tail 200 bot</code>. Контейнер упал → <code class="kbd">docker compose up -d bot</code>. Жив, но молчит → <code class="kbd">docker compose restart bot</code>.</td></tr>
+<tr><td>Бот в группе игнорирует сообщения</td><td>Проверьте, что <code class="kbd">ADMIN_GROUP_ID</code> в <code class="kbd">.env</code> совпадает с <code class="kbd">chat_id</code> из <code class="kbd">/whoami</code> в группе (минус на месте?). Бот после правки перезапущен? Бот не покинул группу? Если <code class="kbd">/whoami</code> в группе ещё отвечает — бот видит группу, но chat_id не совпадает.</td></tr>
+<tr><td>Оператор пишет, а бот не доставляет</td><td>Ответ должен быть <strong>свайпом</strong> на карточку (иначе бот промолчит) и не длиннее 300 символов. Оператор зарегистрирован в <code class="kbd">operators</code> с <code class="kbd">is_active=true</code>? Логи: <code class="kbd">docker compose logs bot --tail 100 | grep -i error</code> (частые причины: житель заблокировал бота, MAX рвёт TLS).</td></tr>
+<tr><td>«Пульс» не приходит</td><td>Окно прощения 120 сек уже учтено, значит либо <code class="kbd">BOT_TOKEN</code> истёк/отозван, либо MAX rate-limit. <code class="kbd">/diag</code> в группе подскажет.</td></tr>
+<tr><td>«DEPLOY FAILED» в журнале</td><td>Авто-откат сработал, сейчас работает предыдущий коммит. Проверьте новый локально, найдите причину, запушьте фикс. Журнал: <code class="kbd">journalctl -t aemr-bot-deploy -n 50</code>.</td></tr>
+<tr><td>Контейнер в restart-loop</td><td><code class="kbd">docker compose ps</code> покажет <code class="kbd">Restarting</code>. <code class="kbd">docker compose logs --tail 500 bot</code> — почему. Частая причина — упавшая миграция или битый <code class="kbd">BOT_TOKEN</code> (бот логирует «❌ BOT_TOKEN неверный» и выходит специально, чтобы не крутиться в петле).</td></tr>
+<tr><td>База растёт быстрее ожидаемого</td><td><code class="kbd">docker compose exec db psql -U aemr aemr -c "\dt+"</code> — размеры таблиц. Обычно самая большая <code class="kbd">events</code> (защита от повторов), её сдерживает retention 30 дней.</td></tr>
+<tr><td><code class="kbd">/readyz</code> падает, а <code class="kbd">/livez</code> ок</td><td>Процесс жив, но база лежит или зависла. Не рестартуйте бота — сначала <code class="kbd">docker compose logs --tail 100 db</code> и проверьте <code class="kbd">DATABASE_URL</code>.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="admin-audit">Аудит сервера одной командой</h3>
+
+<p>Скрипт собирает срез состояния сервера для передачи в чат или тикет:</p>
+
+<div class="cmd"><code>sudo bash /home/aemr/aemr-bot/scripts/audit_vps.sh</code><span class="cmd__what">выгрузка в /tmp/aemr_audit_&lt;timestamp&gt;.tar.gz</span></div>
+
+<p>Внутри: системные данные, состояние git, <code class="kbd">.env</code> с замаскированными секретами, <code class="kbd">docker compose ps</code>, проверки здоровья, последние логи бота и базы. Скрипт <strong>не</strong> выводит реальные значения <code class="kbd">BOT_TOKEN</code>, <code class="kbd">POSTGRES_PASSWORD</code>, <code class="kbd">BACKUP_GPG_PASSPHRASE</code>, <code class="kbd">WEBHOOK_SECRET</code> и ключей S3 — все заменены на <code class="kbd">***HIDDEN***</code>, поэтому архив безопасно пересылать.</p>
+
+<h3 id="admin-secrets">Ротация секретов</h3>
+
+<p>Чтобы скомпрометированный секрет не жил годами, держите плановую ротацию. Заведите напоминание в календарь и проходитесь по списку.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Когда</th><th>Что ротировать</th><th>Как</th></tr></thead>
+<tbody>
+<tr><td>Январь, ежегодно</td><td><code class="kbd">BOT_TOKEN</code></td><td>Выпустить новый токен на max.ru/business, заменить в <code class="kbd">infra/.env</code>, <code class="kbd">docker compose restart bot</code>. Старый отозвать.</td></tr>
+<tr><td>Январь + июль, ежегодно</td><td>пароль PostgreSQL (в <code class="kbd">DATABASE_URL</code>)</td><td><code class="kbd">ALTER ROLE aemr PASSWORD '...'</code> в базе, обновить <code class="kbd">POSTGRES_PASSWORD</code> и <code class="kbd">DATABASE_URL</code>, рестарт бота.</td></tr>
+<tr><td>При компрометации</td><td><code class="kbd">BACKUP_GPG_PASSPHRASE</code></td><td>Новая фраза. Обязательно перешифровать существующие backup (расшифровать старой → зашифровать новой) или утилизировать старые: старая фраза теряет доступ к зашифрованным дампам.</td></tr>
+<tr><td>При увольнении ИТ-оператора с доступом к серверу</td><td><code class="kbd">BOT_TOKEN</code> + <code class="kbd">BACKUP_GPG_PASSPHRASE</code></td><td>Если у уходящего был доступ к <code class="kbd">infra/.env</code> — все секреты считаем потенциально скомпрометированными.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Опциональные секреты (<code class="kbd">HEALTHCHECK_URL</code>, <code class="kbd">PHISHTANK_APP_KEY</code>, <code class="kbd">BACKUP_S3_SECRET_KEY</code>, <code class="kbd">GITHUB_PAT</code>) — раз в полугодие или при компрометации. После любой ротации проверьте: бот стартовал (в логах есть загрузка настроек), <code class="kbd">/livez</code> и <code class="kbd">/readyz</code> отвечают 200, «пульс» в группе пришёл (или дёрните <code class="kbd">/diag</code>).</p>
+
+<h3 id="admin-network">Сетевая изоляция (опционально)</h3>
+
+<p>В боевой сборке бот делает исходящие запросы строго на ограниченный список доменов: MAX API (<code class="kbd">botapi.max.ru</code>, <code class="kbd">platform-api.max.ru</code>), GitHub (для авто-деплоя), пинг-сервис (если задан <code class="kbd">HEALTHCHECK_URL</code>) и источники угроз для антифишинга (<code class="kbd">urlhaus.abuse.ch</code>, <code class="kbd">threatfox.abuse.ch</code>, <code class="kbd">data.phishtank.com</code>). Всё остальное — потенциальная утечка ПДн или признак компрометации.</p>
+
+<p>Если нужен жёсткий исходящий whitelist через <code class="kbd">iptables</code> — порядок такой: запретить весь исходящий трафик (<code class="kbd">OUTPUT DROP</code>), затем точечно разрешить loopback, установленные соединения, DNS (порт 53), перечисленные домены на 443/TCP и NTP (порт 123). Точная схема — в <code class="kbd">docs/SYSADMIN.md §13a</code>.</p>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно</p>
+<p>Подводные камни: IP-адреса CDN меняются — правила надо пересоздавать по расписанию либо использовать <code class="kbd">nftables</code> с динамическим резолвингом. Авто-деплой дёргает <code class="kbd">github.com</code> каждые 10 минут — его блокировать нельзя, иначе деплои встанут. Если включён S3-backup — добавьте endpoint S3 в whitelist. В текущей инсталляции исходящий whitelist <strong>не включён</strong>: на VPS работает только бот, риск утечки минимальный. Включать стоит при появлении других сервисов на той же машине.</p>
+</div>
+
+<h3 id="admin-sbom">SBOM и CI</h3>
+
+<p>Если нужен отчёт о составе компонентов (SBOM — Software Bill of Materials), сгенерируйте его из контейнера:</p>
+
+<pre><code>docker compose exec bot pip-audit --format=cyclonedx-json &gt; sbom-$(date +%Y%m%d).json</code></pre>
+
+<p>Утилита <code class="kbd">pip-audit</code> уже в dev-зависимостях. SBOM публикуйте в защищённую зону репозитория, не в публичный README.</p>
+
+<p>На каждый push в <code class="kbd">main</code> и каждый Pull Request гоняется <code class="kbd">.github/workflows/ci.yml</code>: проверка стиля (<code class="kbd">ruff</code>, <code class="kbd">mypy</code>, <code class="kbd">bandit</code>), аудит уязвимостей (<code class="kbd">pip-audit --strict</code> — жёсткое падение на любой CVE), <code class="kbd">shellcheck</code> на все скрипты; тесты с порогом покрытия <code class="kbd">--cov-fail-under=67</code>, проверка миграций (<code class="kbd">alembic upgrade head</code>, drift между моделями и миграциями, round-trip upgrade→downgrade→upgrade); смок-сборка образа. На сервер попадает только то, что прошло CI и смержено в <code class="kbd">main</code>.</p>
+
+<h3 id="admin-checklist">Чек-лист первого боевого запуска</h3>
+
+<p>Пройдите перед публикацией бота жителям:</p>
+
+<ul>
+<li>☐ <code class="kbd">docker compose ps</code> — оба контейнера <code class="kbd">Up (healthy)</code>.</li>
+<li>☐ <code class="kbd">curl http://127.0.0.1:8080/livez</code> и <code class="kbd">/readyz</code> — оба 200.</li>
+<li>☐ <code class="kbd">/start</code> в личке у тестового жителя — приходит приветствие и главное меню из 6 кнопок.</li>
+<li>☐ Полная анкета (согласие → контакт → имя → населённый пункт → адрес → тема → суть с фото) укладывается в 2 минуты, бот отвечает «Обращение #N принято в работу».</li>
+<li>☐ В служебной группе появляется карточка #N с кнопками действий; фото жителя приходит ответом к карточке.</li>
+<li>☐ Свайп-ответ на карточку и команда <code class="kbd">/reply 42 Тест</code> доставляют жителю письмо с шапкой Администрации.</li>
+<li>☐ <code class="kbd">/op_help</code> присылает панель из 3 / 6 / 10 кнопок в зависимости от роли вызвавшего.</li>
+<li>☐ Под карточкой у роли <code class="kbd">it</code> видны «🚫 Заблокировать» и «🗑 Удалить ПДн»; у остальных ролей — нет.</li>
+<li>☐ <code class="kbd">/whoami</code> в группе возвращает данные, в личке у жителя — тихо игнорируется.</li>
+<li>☐ <code class="kbd">/stats today</code> отдаёт XLSX; <code class="kbd">/forget</code> от тестового жителя удаляет данные.</li>
+<li>☐ <code class="kbd">/backup</code> создаёт файл в <code class="kbd">/backups</code> (зашифрованный <code class="kbd">.sql.gpg</code>, если задана GPG-фраза).</li>
+<li>☐ <code class="kbd">/policy</code> доставляет PDF политики ПДн.</li>
+<li>☐ «Пульс» приходит по расписанию; алёрт о просрочке — при искусственном создании просроченного обращения.</li>
+<li>☐ Установлены и проверены страховочные службы: авто-деплой (deploy key в GitHub), watchdog (cron */5), автозапуск systemd (<code class="kbd">enabled</code>).</li>
+<li>☐ Заведено напоминание о ротации секретов (январь/июль) и квартальном тесте восстановления backup.</li>
+</ul>
+
+<h3 id="admin-faq">Частые вопросы</h3>
+
+<h4>Чем менять настройки бота — файлом или через бота?</h4>
+<p>Зависит от того, что меняете. Технические параметры (токен, пароль базы, <code class="kbd">ADMIN_GROUP_ID</code>, расписание backup, webhook) — только в <code class="kbd">infra/.env</code>, с перезапуском контейнера. Содержательные настройки (тематики обращений, населённые пункты, тексты приветствия и согласия, контакты служб, ссылки) — в таблице <code class="kbd">settings</code>, через меню «⚙️ Настройки бота» в <code class="kbd">/op_help</code> (роль <code class="kbd">it</code>) или командой <code class="kbd">/setting</code>, без редеплоя. Этих редактируемых ключей <strong>17</strong>. Список операторов — в таблице <code class="kbd">operators</code> через мастер «👥 Операторы».</p>
+
+<h4>Нужно ли открывать порты в firewall?</h4>
+<p>Нет. В режиме long polling бот сам исходящими запросами опрашивает MAX, входящих соединений снаружи нет. Откройте только SSH (22). Порт 8080 слушает на <code class="kbd">127.0.0.1</code> и наружу не виден. Порты 80/443 нужны только в webhook-режиме, который в боевой сборке не используется.</p>
+
+<h4>Где физически лежат backup?</h4>
+<p>В Docker-томе <code class="kbd">backups</code>, на диске сервера по пути <code class="kbd">/var/lib/docker/volumes/aemr-bot_backups/_data/</code>. Том переживает пересборку контейнера. Уносить копии с сервера на отдельный хост — отдельная задача ИТ-отдела (S3 или внешний <code class="kbd">rsync</code>), без неё локальный backup не спасёт от потери всей VPS.</p>
+
+<h4>Бот ушёл в restart-loop после деплоя — что делать?</h4>
+<p>Если включён авто-деплой, он сам должен был откатиться по health-gate (ищите «DEPLOY FAILED: ROLLBACK» в <code class="kbd">journalctl -t aemr-bot-deploy</code>). Если не откатился — откатитесь вручную (см. «Откат при сбое») и обязательно сделайте revert-коммит в репозитории, иначе авто-деплой через 10 минут снова подтянет сломанный код.</p>
+
+<h4>Почему в служебной группе у бота нет списка команд в меню «/»?</h4>
+<p>Так задумано. MAX не умеет показывать разные команды в личке и в группе. Раньше 7 команд жителя были видны и операторам, что путало. Поэтому при старте бот очищает <code class="kbd">/</code>-меню для всех чатов (отправляет в MAX пустой список команд). Сами команды по-прежнему работают, если набрать их руками; жители работают через кнопочное меню, операторы — через <code class="kbd">/op_help</code>.</p>
+
+<h4>Можно ли восстановить backup, если потерян GPG-пароль?</h4>
+<p>Нет. Зашифрованный backup без пароля не расшифровать — это by design. Именно поэтому <code class="kbd">BACKUP_GPG_PASSPHRASE</code> храните отдельно от сервера (в менеджере паролей), а тест восстановления проводите раз в квартал, чтобы вовремя заметить проблему.</p>
+
+<h4>Что будет, если сервер выключится в момент еженедельного backup?</h4>
+<p>Этот запуск не наверстается — планировщик хранит расписание в памяти. На следующее воскресенье цикл продолжится. Перед опасными операциями делайте <code class="kbd">/backup</code> руками. Короткие пропуски (на пересборку контейнера 30–90 сек) при этом догоняются за счёт окна прощения опоздания (120 сек) — это касается частых задач вроде «пульса», но не еженедельного backup.</p>
