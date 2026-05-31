@@ -1,6 +1,6 @@
 # aemr-bot repository index
 
-Generated at: `2026-05-28 02:48:21 UTC`
+Generated at: `2026-05-31 06:17:37 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
 Indexed files: `272`
 Max file size: `300 KB`
@@ -63,9 +63,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal_funnel.py` (33699 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (7566 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (13147 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (39662 bytes)
-- `bot/aemr_bot/handlers/broadcast_templates.py` (45679 bytes)
-- `bot/aemr_bot/handlers/broadcast_wizard.py` (22241 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (41242 bytes)
+- `bot/aemr_bot/handlers/broadcast_templates.py` (47212 bytes)
+- `bot/aemr_bot/handlers/broadcast_wizard.py` (23048 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (12935 bytes)
 - `bot/aemr_bot/handlers/menu.py` (51993 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (41155 bytes)
@@ -83,7 +83,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/broadcast_utils.py` (6005 bytes)
 - `bot/aemr_bot/services/broadcasts.py` (15994 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3474 bytes)
-- `bot/aemr_bot/services/card_format.py` (19346 bytes)
+- `bot/aemr_bot/services/card_format.py` (19956 bytes)
 - `bot/aemr_bot/services/cron.py` (54291 bytes)
 - `bot/aemr_bot/services/cron_registry.py` (6568 bytes)
 - `bot/aemr_bot/services/db_backup.py` (16664 bytes)
@@ -144,11 +144,11 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_attachments_helpers.py` (3440 bytes)
 - `bot/tests/test_bot_init_concurrency.py` (2821 bytes)
 - `bot/tests/test_broadcast_429_backoff.py` (4525 bytes)
-- `bot/tests/test_broadcast_handlers.py` (35592 bytes)
+- `bot/tests/test_broadcast_handlers.py` (43464 bytes)
 - `bot/tests/test_broadcast_history_card.py` (10153 bytes)
 - `bot/tests/test_broadcast_templates_handlers.py` (16676 bytes)
 - `bot/tests/test_broadcast_templates_service_pg.py` (14817 bytes)
-- `bot/tests/test_broadcast_with_image.py` (24051 bytes)
+- `bot/tests/test_broadcast_with_image.py` (24173 bytes)
 - `bot/tests/test_broadcast_wizard_fsm.py` (25876 bytes)
 - `bot/tests/test_broadcasts_service_pg.py` (6324 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
@@ -156,7 +156,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_callback_router.py` (9462 bytes)
 - `bot/tests/test_callback_router_coverage.py` (5487 bytes)
 - `bot/tests/test_card_format.py` (11020 bytes)
-- `bot/tests/test_card_format_extra.py` (19516 bytes)
+- `bot/tests/test_card_format_extra.py` (22142 bytes)
 - `bot/tests/test_cron_docs_sync.py` (4085 bytes)
 - `bot/tests/test_cron_jobs.py` (22687 bytes)
 - `bot/tests/test_db_backup.py` (5050 bytes)
@@ -11265,8 +11265,8 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `39662` bytes  
-SHA-256: `85f1477bbf3a3e8c056fcc45a6938860f19eb1a603dea1cbdfc49df5abf41a57`
+Size: `41242` bytes  
+SHA-256: `ca53e2d9d0a2f965171c65b9531674791c142051d934b37f4a38488c8d2ab461`
 
 ```python
 """Send pipeline + история рассылок + диспетчер `/broadcast`.
@@ -11427,6 +11427,18 @@ async def _handle_cancel_cooldown(event, broadcast_id: int) -> None:
     не пойдёт, но row в БД останется DRAFT. Логируем + alert. Отдельный
     cron `reap_orphaned_draft` чистит такие row'ы по TTL.
     """
+    # SECURITY (audit 2026-05-28): тот же гейт, что в _handle_stop.
+    # Случайный гость в админ-группе или удалённый из БД member, у
+    # которого ещё не отозван доступ к чату, не должен мочь отменить
+    # срочную рассылку (например, объявление о ЧС). Раньше проверка
+    # была только у _handle_stop — cancel-cooldown её пропускал
+    # (асимметрия авторизации).
+    if not _is_admin_chat(event):
+        await ack_callback(event)
+        return
+    if not await _ensure_operator(event):
+        await ack_callback(event)
+        return
     await ack_callback(event, "Отменяю…")
     # peek, не pop — pop делаем только если реально отменили
     task = _pending_broadcasts.get(broadcast_id)
@@ -11499,6 +11511,20 @@ async def _handle_stop(event, broadcast_id: int) -> None:
         return
     async with session_scope() as session:
         flipped = await broadcasts_service.request_cancel(session, broadcast_id)
+        if flipped:
+            # audit 2026-05-28: экстренная остановка идущей рассылки —
+            # действие не менее значимое, чем отмена во время cooldown
+            # (которая уже пишет audit). Фиксируем симметрично, чтобы
+            # в audit_log была полная картина «кто и когда остановил».
+            from aemr_bot.services import operators as operators_service
+
+            await operators_service.write_audit(
+                session,
+                operator_max_user_id=get_user_id(event) or 0,
+                action="broadcast_stop",
+                target=f"broadcast #{broadcast_id}",
+                details={"reason": "operator_emergency_stop"},
+            )
     await ack_callback(
         event, "Остановлено." if flipped else "Уже завершено."
     )
@@ -12144,8 +12170,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/broadcast_templates.py`
 
-Size: `45679` bytes  
-SHA-256: `ecdb2255c9fe24382b342ae179ebd07d1ad7a45fe93b1200d2f33e8a1107fead`
+Size: `47212` bytes  
+SHA-256: `a322e7430c74ea7956b249995faef9ade2c413b3ce3b3ff0804e647e25c0c553`
 
 ```python
 """UI шаблонов рассылок (PR H).
@@ -13112,12 +13138,39 @@ async def _step_edit(
     apply.
     """
     if not text:
-        # пустой ввод — повторим prompt
-        tmpl = None
+        # Пустой текст. Но если оператор прислал ТОЛЬКО картинки без
+        # подписи — это валидная замена вложений шаблона: текст
+        # оставляем прежним. audit 2026-05-28: раньше image-only правка
+        # была невозможна — `if not text` отбивал ввод до обработки
+        # картинок ниже, и заменить вложения, не перенабрав текст,
+        # оператор физически не мог.
+        tmpl_before = None
+        new_attachments: list = []
         if state.target_id is not None:
             async with session_scope() as session:
-                tmpl = await templates_service.get_by_id(session, state.target_id)
-        name = tmpl.name if tmpl else "?"
+                max_images = await broadcast_handler._resolve_broadcast_max_images(
+                    session
+                )
+                tmpl_before = await templates_service.get_by_id(
+                    session, state.target_id
+                )
+            if tmpl_before is not None:
+                new_attachments = list(
+                    _image_attachments.image_attachments_from_event(
+                        event, limit=max_images
+                    )
+                )
+        if tmpl_before is not None and new_attachments:
+            state.step = "edit_preview"
+            state.pending_text = tmpl_before.text
+            state.pending_attachments = new_attachments
+            state.pending_name = tmpl_before.name
+            state._edit_image_replaced = True  # type: ignore[attr-defined]
+            state.renew()
+            await _render_preview_edit(event, state)
+            return True
+        # Иначе — обычный пустой ввод: повторим prompt.
+        name = tmpl_before.name if tmpl_before else "?"
         await event.message.answer(
             texts.OP_TMPL_EDIT_PROMPT.format(
                 name=name, limit=cfg.broadcast_max_chars
@@ -13382,8 +13435,8 @@ async def _step_search(
 
 ### `bot/aemr_bot/handlers/broadcast_wizard.py`
 
-Size: `22241` bytes  
-SHA-256: `79157fc565611ce25674b34bcb53f88dff7850e1cb7d00ed63e9497f8b80eb49`
+Size: `23048` bytes  
+SHA-256: `98800abfec2fbea936325c042e7d8193f8bddcab2e22ca4778373a6eef50f885`
 
 ```python
 """Мастер рассылок (FSM): state, helpers, command handlers.
@@ -13691,6 +13744,15 @@ async def _handle_confirm(event) -> None:
     state = _wizards.pop(actor_id, None)
     if state is None or state.step != "awaiting_confirm" or state.expired():
         await ack_callback(event, "Мастер закрыт.")
+        return
+    # SECURITY (audit 2026-05-28): повторная проверка роли на confirm.
+    # Между _start_wizard (требует IT/COORDINATOR) и нажатием
+    # «Разослать» оператора могли понизить в роли. get_operator
+    # фильтрует только is_active, не роль — поэтому пере-проверяем
+    # явно, чтобы понижённый оператор не выпустил рассылку. Состояние
+    # мастера уже снято (pop выше) — незаконный черновик отбрасываем.
+    # _ensure_role сам делает ack и шлёт текст-отказ.
+    if not await _ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
         return
     # ack с фидбеком: оператор сразу видит «принято», broadcast wizard
     # переходит в подготовку. Без notification ack — тихий, оператор
@@ -19451,8 +19513,8 @@ def is_workday(d: date) -> bool:
 
 ### `bot/aemr_bot/services/card_format.py`
 
-Size: `19346` bytes  
-SHA-256: `21cd3c7c5cecf43e54a4716a6dd86bb375bbb3bc8c15aa22c44f41c5ae10522d`
+Size: `19956` bytes  
+SHA-256: `4a4a36125a5f43ed8c14709207252ce62a74027cd7bc97c3a53f47c414413031`
 
 ```python
 from datetime import datetime
@@ -19695,7 +19757,16 @@ def admin_card(appeal: Appeal, user: User) -> str:
         )
     )
     if has_url:
-        body = body + _maybe_url_warning(appeal.summary or "X http://X")
+        # audit 2026-05-28: раньше в _maybe_url_warning подавался только
+        # appeal.summary — усиленный threat-intel warning (⛔ известный
+        # фишинг) не срабатывал на вредоносный URL, присланный в
+        # followup'е жителя, а не в исходной сути. Сканируем summary И
+        # тексты всех загруженных сообщений ленты.
+        warn_src = "\n".join(
+            [appeal.summary or ""]
+            + [(getattr(m, "text", "") or "") for m in loaded_messages]
+        )
+        body = body + _maybe_url_warning(warn_src)
     return body
 
 
@@ -36259,8 +36330,8 @@ class TestSendOne429Backoff:
 
 ### `bot/tests/test_broadcast_handlers.py`
 
-Size: `35592` bytes  
-SHA-256: `be8ebefb7646c5006af10d07c8c4822766e47a8001956b603d811e600825c811`
+Size: `43464` bytes  
+SHA-256: `8acf7adfa35f9154e969a0a31a0f4e834cf7c659b0a1a3fbc8cdb08fa031ea42`
 
 ```python
 """Тесты для handlers/broadcast — wizard рассылок и helpers.
@@ -36556,11 +36627,38 @@ class TestHandleConfirm:
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
         broadcast._wizards[7].text = "hi"
         with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=None)):
             await broadcast._handle_confirm(event)
         # broadcast service не вызван
         event.bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_downgraded_operator_blocked_at_confirm(self) -> None:
+        """SECURITY (audit 2026-05-28): если между открытием мастера и
+        нажатием «Разослать» оператора понизили в роли, _ensure_role на
+        confirm должен заблокировать отправку — рассылка не создаётся."""
+        from aemr_bot.handlers import broadcast
+
+        event = _make_event(user_id=7)
+        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
+        broadcast._wizards[7].text = "hi"
+        create_broadcast = AsyncMock()
+        get_operator = AsyncMock()
+        with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.broadcast_wizard._get_operator", get_operator), \
+             patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.create_broadcast",
+                   create_broadcast):
+            await broadcast._handle_confirm(event)
+        # роль не прошла → даже до _get_operator не дошли, рассылка не создана
+        get_operator.assert_not_called()
+        create_broadcast.assert_not_called()
+        # незаконный черновик отброшен (pop в начале _handle_confirm)
+        assert 7 not in broadcast._wizards
 
     @pytest.mark.asyncio
     async def test_no_subscribers_aborts(self) -> None:
@@ -36572,6 +36670,8 @@ class TestHandleConfirm:
         op = SimpleNamespace(id=10)
         create_broadcast = AsyncMock()
         with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=op)), \
              patch("aemr_bot.handlers.broadcast_wizard.session_scope",
@@ -36601,6 +36701,8 @@ class TestHandleConfirm:
 
         spawn = MagicMock(side_effect=_consume)
         with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=op)), \
              patch("aemr_bot.handlers.broadcast_wizard.session_scope",
@@ -36749,6 +36851,7 @@ class TestHandleStop:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.request_cancel",
                    AsyncMock(return_value=True)), \
+             patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
              patch("aemr_bot.handlers.broadcast.ack_callback", ack):
             await broadcast._handle_stop(event, 99)
         ack.assert_called_once()
@@ -36773,6 +36876,120 @@ class TestHandleStop:
             await broadcast._handle_stop(event, 99)
         msg_arg = ack.call_args.args[1]
         assert "Уже завершено" in msg_arg
+
+    @pytest.mark.asyncio
+    async def test_flipped_writes_audit(self) -> None:
+        """audit 2026-05-28: экстренная остановка пишется в audit_log
+        (action=broadcast_stop), симметрично отмене во время cooldown."""
+        from aemr_bot.handlers import broadcast
+
+        write_audit = AsyncMock()
+        with patch("aemr_bot.handlers.broadcast._is_admin_chat",
+                   return_value=True), \
+             patch("aemr_bot.handlers.broadcast._ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.request_cancel",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.services.operators.write_audit", write_audit), \
+             patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+            await broadcast._handle_stop(_make_event(), 99)
+        write_audit.assert_awaited_once()
+        assert write_audit.await_args.kwargs.get("action") == "broadcast_stop"
+
+    @pytest.mark.asyncio
+    async def test_not_flipped_no_audit(self) -> None:
+        """Если рассылка уже завершена (request_cancel вернул False) —
+        audit-запись не делается (нечего останавливать)."""
+        from aemr_bot.handlers import broadcast
+
+        write_audit = AsyncMock()
+        with patch("aemr_bot.handlers.broadcast._is_admin_chat",
+                   return_value=True), \
+             patch("aemr_bot.handlers.broadcast._ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.broadcast.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.request_cancel",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.services.operators.write_audit", write_audit), \
+             patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+            await broadcast._handle_stop(_make_event(), 99)
+        write_audit.assert_not_awaited()
+
+
+# --- _handle_cancel_cooldown auth gate (audit 2026-05-28) ---------------------
+
+
+class TestHandleCancelCooldownAuth:
+    """SECURITY: отмена рассылки во время cooldown теперь под тем же
+    гейтом, что и экстренная остановка — случайный гость в админ-группе
+    или удалённый из БД member не должен мочь отменить срочную рассылку."""
+
+    @pytest.mark.asyncio
+    async def test_non_admin_chat_cannot_cancel(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        task = MagicMock()
+        task.done.return_value = False
+        broadcast._pending_broadcasts[99] = task
+        try:
+            with patch("aemr_bot.handlers.broadcast._is_admin_chat",
+                       return_value=False), \
+                 patch("aemr_bot.handlers.broadcast.ack_callback",
+                       AsyncMock()) as ack:
+                await broadcast._handle_cancel_cooldown(_make_event(), 99)
+            ack.assert_called_once()          # тихий ack, без текста-подтверждения
+            task.cancel.assert_not_called()   # рассылка НЕ отменена
+            assert 99 in broadcast._pending_broadcasts  # pending-метка цела
+        finally:
+            broadcast._pending_broadcasts.pop(99, None)
+
+    @pytest.mark.asyncio
+    async def test_non_operator_cannot_cancel(self) -> None:
+        from aemr_bot.handlers import broadcast
+
+        task = MagicMock()
+        task.done.return_value = False
+        broadcast._pending_broadcasts[99] = task
+        try:
+            with patch("aemr_bot.handlers.broadcast._is_admin_chat",
+                       return_value=True), \
+                 patch("aemr_bot.handlers.broadcast._ensure_operator",
+                       AsyncMock(return_value=False)), \
+                 patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+                await broadcast._handle_cancel_cooldown(_make_event(), 99)
+            task.cancel.assert_not_called()
+            assert 99 in broadcast._pending_broadcasts
+        finally:
+            broadcast._pending_broadcasts.pop(99, None)
+
+    @pytest.mark.asyncio
+    async def test_operator_passes_gate_and_cancels(self) -> None:
+        """Зарегистрированный оператор проходит гейт и реально отменяет."""
+        from aemr_bot.handlers import broadcast
+
+        task = MagicMock()
+        task.done.return_value = False
+        broadcast._pending_broadcasts[99] = task
+        try:
+            with patch("aemr_bot.handlers.broadcast._is_admin_chat",
+                       return_value=True), \
+                 patch("aemr_bot.handlers.broadcast._ensure_operator",
+                       AsyncMock(return_value=True)), \
+                 patch("aemr_bot.handlers.broadcast.session_scope",
+                       _fake_session_scope), \
+                 patch("aemr_bot.handlers.broadcast.broadcasts_service.mark_cancelled",
+                       AsyncMock()), \
+                 patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
+                 patch("aemr_bot.handlers.broadcast.send_or_edit_screen", AsyncMock()), \
+                 patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+                await broadcast._handle_cancel_cooldown(_make_event(), 99)
+            task.cancel.assert_called_once()
+            assert 99 not in broadcast._pending_broadcasts
+        finally:
+            broadcast._pending_broadcasts.pop(99, None)
 
 
 class TestRunBroadcastImpl:
@@ -38197,8 +38414,8 @@ async def test_archived_name_can_be_reused(session) -> None:
 
 ### `bot/tests/test_broadcast_with_image.py`
 
-Size: `24051` bytes  
-SHA-256: `20ea1254c30670fd58e15dcc09d8f99c5e738d351d1f2dd322d99c3edcc47892`
+Size: `24173` bytes  
+SHA-256: `55ab6acb83825c936a51da8323c5fbe4f575412518323a50188c8f5b20d223da`
 
 ```python
 """TDD-тесты image-attachments в рассылках.
@@ -38637,6 +38854,8 @@ class TestConfirmPassesAttachmentsToCreate:
 
         create_mock = AsyncMock(return_value=broadcast_obj)
         with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
+             patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast_wizard._get_operator",
                    AsyncMock(return_value=op)), \
              patch("aemr_bot.handlers.broadcast_wizard.session_scope",
@@ -40520,8 +40739,8 @@ class TestAdminCardCitizenStateMarkers:
 
 ### `bot/tests/test_card_format_extra.py`
 
-Size: `19516` bytes  
-SHA-256: `eb207c87e19715d2fa29da33b2fbeb1f6256d99e4d4d09b2817b6ec2215a5247`
+Size: `22142` bytes  
+SHA-256: `fc07ec7030bcab00d350d52061f6650274914e581800dce5da8c05c6b8256428`
 
 ```python
 """Характеризационные тесты для services/card_format.
@@ -41023,6 +41242,71 @@ class TestAttachmentsSummaryLineEdges:
             {"type": "image"},
         ])
         assert "фото 3" in result
+
+
+class TestAdminCardThreatWarningScansFollowups:
+    """audit 2026-05-28: усиленный threat-intel warning (⛔ известный
+    фишинг) раньше сканировал только appeal.summary. Если житель прислал
+    вредоносную ссылку в followup'е, а не в исходной сути — warning не
+    усиливался. Фикс: в _maybe_url_warning подаётся summary + тексты
+    всех сообщений ленты."""
+
+    def test_malicious_url_in_followup_triggers_enhanced_warning(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        class _FakeStore:
+            def is_malicious(self, url: str) -> tuple[bool, str | None]:
+                if "phish.example.com" in url:
+                    return True, "URLhaus"
+                return False, None
+
+        monkeypatch.setattr(
+            "aemr_bot.services.threat_intel.get_store",
+            lambda: _FakeStore(),
+        )
+        # Суть — чистая. Вредоносный URL — только в followup'е жителя.
+        appeal = _appeal(
+            id=42,
+            summary="Во дворе яма, помогите.",
+            messages=[
+                _msg(
+                    direction=MessageDirection.FROM_USER.value,
+                    text="Мне это прислали: https://phish.example.com/login",
+                )
+            ],
+        )
+        user = _user()
+        result = cf.admin_card(appeal, user)
+
+        # Усиленный warning должен сработать по followup-URL.
+        assert "⛔" in result
+        assert "phish.example.com" in result
+        assert "112" in result
+
+    def test_clean_followup_no_warning(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Контроль: без URL ни в сути, ни в ленте — никакого warning."""
+        class _EmptyStore:
+            def is_malicious(self, url: str) -> tuple[bool, str | None]:
+                return False, None
+
+        monkeypatch.setattr(
+            "aemr_bot.services.threat_intel.get_store",
+            lambda: _EmptyStore(),
+        )
+        appeal = _appeal(
+            summary="Во дворе яма.",
+            messages=[
+                _msg(
+                    direction=MessageDirection.FROM_USER.value,
+                    text="Уточняю: у второго подъезда.",
+                )
+            ],
+        )
+        result = cf.admin_card(appeal, _user())
+        assert "⛔" not in result
+        assert "⚠️" not in result
 ```
 
 ### `bot/tests/test_cron_docs_sync.py`
