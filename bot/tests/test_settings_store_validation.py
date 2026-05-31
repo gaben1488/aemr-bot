@@ -226,3 +226,28 @@ class TestIsWhitelistedUrl:
         assert is_whitelisted_url(
             "https://lk.gosuslugi.ru/profile"
         ) is True
+
+
+class TestNfkcNormalization:
+    """NFKC-нормализация в extract_urls закрывает полноширинные и
+    совместимые символы-двойники: мошенник пишет адрес полноширинными
+    знаками, чтобы обойти whitelist/defang."""
+
+    def test_fullwidth_url_extracted(self) -> None:
+        from aemr_bot.services.settings_store import extract_urls
+
+        urls = extract_urls("Пишут ｈｔｔｐｓ：／／attacker.com сюда")
+        assert urls == ["https://attacker.com"]
+
+    def test_fullwidth_url_flagged_non_whitelisted(self) -> None:
+        from aemr_bot.services.settings_store import find_non_whitelisted_urls
+
+        bad = find_non_whitelisted_urls(
+            "ссылка ｈｔｔｐｓ：／／attacker.com"
+        )
+        assert bad == ["https://attacker.com"]
+
+    def test_normal_url_unaffected(self) -> None:
+        from aemr_bot.services.settings_store import extract_urls
+
+        assert extract_urls("см https://example.org/x") == ["https://example.org/x"]

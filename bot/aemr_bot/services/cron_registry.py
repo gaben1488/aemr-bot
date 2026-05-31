@@ -60,12 +60,12 @@ JOB_REGISTRY: list[dict[str, str]] = [
     },
     {
         "id": "open-reminder-workhours",
-        "schedule_human": "пн–сб 09:00–17:59 в :10",
+        "schedule_human": "пн–пт 09:00–11:59 и 13:00–17:59 в :10",
         "purpose": "напоминание оператору об открытых обращениях",
     },
     {
         "id": "overdue-reminder-workhours",
-        "schedule_human": "пн–сб 09:00–17:59 в :40",
+        "schedule_human": "пн–пт 09:00–11:59 и 13:00–17:59 в :40",
         "purpose": "напоминание о просроченных по SLA",
     },
     {
@@ -102,13 +102,13 @@ JOB_REGISTRY: list[dict[str, str]] = [
     },
     {
         "id": "threat-intel-refresh",
-        "schedule_human": "каждые 12 часов в :15",
-        "purpose": "обновление локального кэша URL-хостов (abuse.ch + Kaspersky OpenTIP)",
+        "schedule_human": "ежечасно в :17",
+        "purpose": "обновление локального кэша URL-хостов (URLhaus + ThreatFox + PhishTank)",
     },
     {
         "id": "broadcast-draft-reaper",
-        "schedule_human": "ежедневно 03:30",
-        "purpose": "DRAFT-рассылки старше 24 ч → FAILED",
+        "schedule_human": "ежечасно в :37",
+        "purpose": "DRAFT-рассылки старше 30 минут → FAILED",
     },
     # ── Backup ──────────────────────────────────────────────────────
     {
