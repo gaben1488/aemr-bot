@@ -378,20 +378,24 @@ class TestWizardText:
                 "aemr_bot.handlers.broadcast_templates.get_operator",
                 new=AsyncMock(return_value=SimpleNamespace(id=99)),
             ),
+            # Внутренние зависимости _step_new_text переехали в подмодуль
+            # broadcast_templates_wizard — патчим символы ПО МЕСТУ их
+            # резолва (урок PR #139). Диспетчерные get_operator/is_admin_chat
+            # остаются на фасаде.
             patch(
-                "aemr_bot.handlers.broadcast_templates.session_scope",
+                "aemr_bot.handlers.broadcast_templates_wizard.session_scope",
                 _fake_session_scope,
             ),
             patch(
-                "aemr_bot.handlers.broadcast_templates.broadcast_handler._resolve_broadcast_max_images",
+                "aemr_bot.handlers.broadcast_templates_wizard.broadcast_handler._resolve_broadcast_max_images",
                 new=AsyncMock(return_value=5),
             ),
             patch(
-                "aemr_bot.handlers.broadcast_templates._image_attachments.image_attachments_from_event",
+                "aemr_bot.handlers.broadcast_templates_wizard._image_attachments.image_attachments_from_event",
                 return_value=[],
             ),
             patch(
-                "aemr_bot.handlers.broadcast_templates._image_attachments.build_outbound_image_attachments",
+                "aemr_bot.handlers.broadcast_templates_wizard._image_attachments.build_outbound_image_attachments",
                 return_value=[],
             ),
         ):
@@ -418,25 +422,27 @@ class TestWizardText:
         )
         event = _make_event(user_id=7)
         fake_tmpl = SimpleNamespace(id=1, name="Foo")
+        # _save_new переехал в подмодуль broadcast_templates_wizard;
+        # все его внутренние зависимости патчим там (урок PR #139).
         with (
             patch(
-                "aemr_bot.handlers.broadcast_templates.get_operator",
+                "aemr_bot.handlers.broadcast_templates_wizard.get_operator",
                 new=AsyncMock(return_value=SimpleNamespace(id=99)),
             ),
             patch(
-                "aemr_bot.handlers.broadcast_templates.session_scope",
+                "aemr_bot.handlers.broadcast_templates_wizard.session_scope",
                 _fake_session_scope,
             ),
             patch(
-                "aemr_bot.handlers.broadcast_templates.templates_service.create_template",
+                "aemr_bot.handlers.broadcast_templates_wizard.templates_service.create_template",
                 new=AsyncMock(return_value=fake_tmpl),
             ),
             patch(
-                "aemr_bot.handlers.broadcast_templates.operators_service.write_audit",
+                "aemr_bot.handlers.broadcast_templates_wizard.operators_service.write_audit",
                 new=AsyncMock(),
             ),
             patch(
-                "aemr_bot.handlers.broadcast_templates.send_or_edit_screen",
+                "aemr_bot.handlers.broadcast_templates_wizard.send_or_edit_screen",
                 new=AsyncMock(),
             ),
         ):

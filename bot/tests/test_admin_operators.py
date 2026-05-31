@@ -173,9 +173,9 @@ class TestOperatorsAction:
         event = _make_event()
         with patch("aemr_bot.handlers.admin_operators.ensure_role",
                    AsyncMock(return_value=True)), \
-             patch("aemr_bot.handlers.admin_operators.session_scope",
+             patch("aemr_bot.handlers.admin_operators_list.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.admin_operators.operators_service.list_all",
+             patch("aemr_bot.handlers.admin_operators_list.operators_service.list_all",
                    AsyncMock(return_value=[])), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_operators.run_operators_action(event, "op:opadd:list")
@@ -193,9 +193,9 @@ class TestOperatorsAction:
         ]
         with patch("aemr_bot.handlers.admin_operators.ensure_role",
                    AsyncMock(return_value=True)), \
-             patch("aemr_bot.handlers.admin_operators.session_scope",
+             patch("aemr_bot.handlers.admin_operators_list.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.admin_operators.operators_service.list_all",
+             patch("aemr_bot.handlers.admin_operators_list.operators_service.list_all",
                    AsyncMock(return_value=ops)), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_operators.run_operators_action(event, "op:opadd:list")
@@ -366,7 +366,7 @@ class TestHandleWizardText:
         )
         upsert = AsyncMock()
         # Шаг 1: ввод ФИО — переход в ready_to_confirm
-        with patch("aemr_bot.handlers.admin_operators.session_scope",
+        with patch("aemr_bot.handlers.admin_operators_wizard.session_scope",
                    _fake_session_scope):
             result = await admin_operators.handle_operators_wizard_text(
                 event, "Иванова Анна Петровна"
@@ -381,13 +381,13 @@ class TestHandleWizardText:
         # Шаг 2: тап «Сохранить» → upsert
         with patch("aemr_bot.handlers.admin_operators.ensure_role",
                    AsyncMock(return_value=True)), \
-             patch("aemr_bot.handlers.admin_operators.session_scope",
+             patch("aemr_bot.handlers.admin_operators_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.admin_operators.operators_service.get",
+             patch("aemr_bot.handlers.admin_operators_wizard.operators_service.get",
                    AsyncMock(return_value=None)), \
-             patch("aemr_bot.handlers.admin_operators.operators_service.upsert",
+             patch("aemr_bot.handlers.admin_operators_wizard.operators_service.upsert",
                    upsert), \
-             patch("aemr_bot.handlers.admin_operators.operators_service.write_audit",
+             patch("aemr_bot.handlers.admin_operators_wizard.operators_service.write_audit",
                    AsyncMock()), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_operators.run_operators_action(event, "op:opadd:confirm")
@@ -408,7 +408,7 @@ class TestHandleWizardText:
         existing = SimpleNamespace(id=10)
 
         # Шаг 1: ввод ФИО
-        with patch("aemr_bot.handlers.admin_operators.session_scope",
+        with patch("aemr_bot.handlers.admin_operators_wizard.session_scope",
                    _fake_session_scope):
             await admin_operators.handle_operators_wizard_text(
                 event, "Иванова Анна"
@@ -417,13 +417,13 @@ class TestHandleWizardText:
         # Шаг 2: подтверждение
         with patch("aemr_bot.handlers.admin_operators.ensure_role",
                    AsyncMock(return_value=True)), \
-             patch("aemr_bot.handlers.admin_operators.session_scope",
+             patch("aemr_bot.handlers.admin_operators_wizard.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.admin_operators.operators_service.get",
+             patch("aemr_bot.handlers.admin_operators_wizard.operators_service.get",
                    AsyncMock(return_value=existing)), \
-             patch("aemr_bot.handlers.admin_operators.operators_service.upsert",
+             patch("aemr_bot.handlers.admin_operators_wizard.operators_service.upsert",
                    AsyncMock()), \
-             patch("aemr_bot.handlers.admin_operators.operators_service.write_audit",
+             patch("aemr_bot.handlers.admin_operators_wizard.operators_service.write_audit",
                    AsyncMock()), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_operators.run_operators_action(event, "op:opadd:confirm")
