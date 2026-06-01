@@ -139,6 +139,17 @@ uv run ruff check aemr_bot/</code></pre>
 
 <p>Два сообщения от одного жителя за миллисекунды (например, свайп с фото и текст следом) могут параллельно изменить <code class="kbd">dialog_data</code> и привести к двойной финализации. Функция <code class="kbd">persist_and_dispatch_appeal</code> обёрнута в блокировку на пользователя (<code class="kbd">asyncio.Lock</code> в словаре <code class="kbd">_user_locks: dict[int, asyncio.Lock]</code>). Внутри блокировки делается проверка на повтор по полю <code class="kbd">user.dialog_state == IDLE</code> и повторная проверка лимита трёх новых обращений за час. Второй параллельный вызов после успешной финализации первого видит состояние <code class="kbd">IDLE</code> и выходит без создания дубля. Хелпер <code class="kbd">_drop_user_lock</code> удаляет блокировку после завершения, чтобы словарь не рос неограниченно. Важно: это рассчитано на <strong>один</strong> экземпляр сервиса; горизонтальное масштабирование (более одного контейнера бота) потребует <code class="kbd">pg_advisory_xact_lock</code> или блокировку на Redis.</p>
 
+<h4>Фоновые задачи: <code class="kbd">spawn_background_task</code></h4>
+
+<p>Иногда боту нужно запустить работу «в фоне», не блокируя обработку текущего события: разослать тысяче жителей объявление, восстановить зависшие анкеты на старте. Наивный <code class="kbd">asyncio.create_task(...)</code> здесь — ловушка: в Python 3.11+ event loop хранит лишь <em>слабую</em> ссылку на задачу, и сборщик мусора (garbage collector) может прервать её посреди работы, если на task больше никто не ссылается. Для рассылки это значит «оборвалась на середине без следа».</p>
+
+<p>Поэтому фоновые задачи запускаются <strong>только</strong> через хелпер <code class="kbd">utils/background.spawn_background_task(coro, name=...)</code>. Он кладёт task в модульное множество <code class="kbd">_BACKGROUND_TASKS</code> (сильная ссылка, GC не тронет), а в <code class="kbd">done_callback</code> вычищает её оттуда, чтобы множество не росло. Где применяется: фоновый прогон рассылки (<code class="kbd">_run_broadcast</code>) и восстановление зависших анкет на старте (<code class="kbd">recover_stuck_funnels</code>) — ровно те места, где обрыв на середине был бы заметнее всего.</p>
+
+<div class="note note--caution">
+<p class="note__label">Не теряйте исключения в фоне</p>
+<p>Хелпер защищает task от GC, но <strong>не</strong> логирует исключения за вас: необработанная ошибка внутри фоновой корутины всплывёт в asyncio только при сборке task и легко проходит незаметно. Внутри фоновой корутины оборачивайте тело в <code class="kbd">try/except</code> с логированием (как сделано в рассылке и восстановлении), иначе сбой «растворится». Импортировать хелпер — из <code class="kbd">aemr_bot.utils.background</code>, а не из <code class="kbd">aemr_bot.main</code>: <code class="kbd">utils/</code> — нижний слой без обратных зависимостей, импорт из <code class="kbd">main</code> создавал бы цикл (раньше так и было, чинили).</p>
+</div>
+
 <h3 id="dev-tree">Структура каталогов</h3>
 
 <p>Главные части пакета <code class="kbd">bot/aemr_bot/</code> и их назначение.</p>
@@ -520,6 +531,26 @@ UPDATE users SET dialog_state='idle', dialog_data='{}'::jsonb WHERE max_user_id=
 <p>Частые причины: тайм-аут pull от Docker Hub (повторить); забит диск (<code class="kbd">docker system prune -a -f</code>); битый WSL2 (в Docker Desktop: Settings → Troubleshoot → Clean / Purge data). Ошибка <code class="kbd">password authentication failed for user "aemr"</code> возникает после смены пароля: при первом запуске <code class="kbd">POSTGRES_PASSWORD</code> записывается в данные тома и больше не перечитывается — либо <code class="kbd">ALTER USER aemr WITH PASSWORD '...'</code> в живой базе, либо пересоздать том <code class="kbd">docker compose down -v</code> (сотрёт все данные, только на dev). Ошибка <code class="kbd">ssl negotiation packet</code> означает, что бот стучится в Postgres до готовности контейнера — проверьте <code class="kbd">docker compose ps</code>, у <code class="kbd">db</code> должен быть статус <code class="kbd">healthy</code>.</p>
 </div>
 
+<h4>Запуск без Docker (прямо из <code class="kbd">.venv</code>)</h4>
+
+<p>Контейнер удобен для «как на проде», но при отладке быстрее гонять бота прямо из локального окружения <code class="kbd">.venv</code> — тогда работают точки останова в IDE и моментальный перезапуск. Боту по сути нужны две вещи: строка подключения к Postgres (<code class="kbd">DATABASE_URL</code> — обязательное поле настроек, без него процесс не стартует) и токен (<code class="kbd">BOT_TOKEN</code>). Базу проще всего поднять одним контейнером, а сам бот запустить процессом на хосте:</p>
+
+<pre><code>cd bot
+uv sync --extra dev                       # окружение .venv ровно по uv.lock
+# Postgres — отдельным контейнером (данные боту всё равно нужны):
+cd ../infra &amp;&amp; docker compose up -d db
+# миграции и запуск процессом на хосте (не в контейнере):
+cd ../bot
+DATABASE_URL=postgresql+asyncpg://aemr:&lt;пароль&gt;@localhost:5432/aemr uv run alembic upgrade head
+DATABASE_URL=postgresql+asyncpg://aemr:&lt;пароль&gt;@localhost:5432/aemr BOT_TOKEN=&lt;токен&gt; uv run python -m aemr_bot.main</code></pre>
+
+<p>Точка входа — модуль <code class="kbd">aemr_bot.main</code> (тот же, что в контейнере: <code class="kbd">CMD</code> образа делает <code class="kbd">alembic upgrade head &amp;&amp; python -m aemr_bot.main</code>). На Windows переменные окружения задаются иначе, чем в примере выше для bash: <code class="kbd">$env:DATABASE_URL="…"; uv run python -m aemr_bot.main</code> в PowerShell. Запускать обязательно через <code class="kbd">uv run</code> — иначе подхватится системный Python мимо <code class="kbd">uv.lock</code> (см. предупреждение выше).</p>
+
+<div class="note">
+<p class="note__label">Что работает без <code class="kbd">ADMIN_GROUP_ID</code></p>
+<p><code class="kbd">ADMIN_GROUP_ID</code> — поле необязательное (<code class="kbd">None</code> по умолчанию). Без него бот поднимается в «citizen-only» режиме: вся гражданская сторона работает полностью — приветствие, меню, воронка приёма обращения, согласие, «Мои обращения», подписка. Не работает только всё, что адресовано в служебную группу: карточки новых обращений никуда не уходят (<code class="kbd">admin_bus.send</code> видит пустой <code class="kbd">ADMIN_GROUP_ID</code> и возвращает <code class="kbd">None</code>), hook-трекер исходящих не ставится (это штатно для citizen-only), операторские команды и ответы жителю недоступны. То есть для отладки чистого диалога с жителем группа не нужна; она нужна, как только хотите проверить путь «обращение → карточка → ответ оператора» (тогда заполните <code class="kbd">ADMIN_GROUP_ID</code> и bootstrap-переменные, как в шаге 4 выше).</p>
+</div>
+
 <h3 id="dev-tests">Тесты: два режима и реальный порог покрытия</h3>
 
 <p>Тестовая база <code class="kbd">bot/tests/</code> рассчитана на два режима: лёгкий локальный (без Postgres, проверка чистой логики на mock-ах) и полный CI (с реальной БД, миграциями и порогом покрытия). Канонический способ запуска, совпадающий со средой Docker, — через <code class="kbd">uv</code> и lock-файл.</p>
@@ -568,6 +599,28 @@ UPDATE users SET dialog_state='idle', dialog_data='{}'::jsonb WHERE max_user_id=
 <h4>Job «Docker build smoke test»</h4>
 <p>Собирает образ из <code class="kbd">infra/Dockerfile</code> без публикации — проверяет, что Dockerfile не сломан, миграции применяются и <code class="kbd">/livez</code> отвечает.</p>
 
+<h4>Контракт-тесты против дрейфа «код ↔ док ↔ реестр»</h4>
+
+<p>Помимо обычных юнит-тестов в наборе есть несколько <strong>контракт-тестов</strong> (anti-drift): их задача — не проверить логику, а поймать рассинхрон между двумя источниками, которые обязаны совпадать. Они дёшевы и ловят целый класс ошибок «поправил тут, забыл там» до прода. Знать их полезно, потому что многие рецепты выше заканчиваются словами «иначе контракт-тест покраснеет».</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Тест</th><th>Что сверяет / что ловит</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">test_callback_payloads_contract</code></td><td>Строки, которые собирает <code class="kbd">callback_payloads.py</code>, байт-в-байт ложатся на маршруты <code class="kbd">callback_router.py</code> (+ группа совпадает, + round-trip <code class="kbd">parse_int_tail(builder(N))==N</code>). Ловит «кнопка строит <code class="kbd">op:reploy:5</code> вместо <code class="kbd">op:reply:5</code>» и забытый/лишний маршрут.</td></tr>
+<tr><td><code class="kbd">test_callback_coverage_contract</code></td><td>Каждый payload из <code class="kbd">ui/</code> зарегистрирован в роутере, и наоборот — каждый маршрут реально используется хотя бы одной кнопкой. Ловит «кнопка с незарегистрированным payload → тихо в fallback» и мёртвые маршруты.</td></tr>
+<tr><td><code class="kbd">test_cron_docs_sync</code></td><td>Имена и назначение cron-задач в <code class="kbd">cron_registry.py</code> совпадают с документацией. Ловит cron-задачу, добавленную в код, но не отражённую в реестре/доках.</td></tr>
+<tr><td><code class="kbd">test_deps_environment</code></td><td>Установленная версия <code class="kbd">maxapi</code> (и сигнатура ключевого API) совпадает с закреплённой в <code class="kbd">uv.lock</code>. Ловит drift среды — тот самый инцидент <code class="kbd">TypeError: ClientSession got max_retries</code>. Зелёный только через <code class="kbd">uv run</code>.</td></tr>
+<tr><td>миграции (в job «Pytest»)</td><td>Не отдельный файл, а три шага job'а: <code class="kbd">upgrade head</code> на чистой БД, <code class="kbd">alembic check</code> (модель ↔ последняя миграция), round-trip <code class="kbd">upgrade→downgrade→upgrade</code>. Ловит модель без миграции и сломанный откат.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note note--caution">
+<p class="note__label">CI ставит зависимости мимо <code class="kbd">uv.lock</code> — как и Docker</p>
+<p>Тонкость, о которой стоит знать. Несмотря на правило «<code class="kbd">uv.lock</code> — закон», и пайплайн CI, и Docker-образ сегодня ставят зависимости <em>мимо</em> lock: CI делает <code class="kbd">pip install -e ".[dev]"</code> из диапазонов <code class="kbd">pyproject.toml</code>, образ — <code class="kbd">pip install -e /app</code> (см. раздел про миграцию образа на <code class="kbd">uv sync --frozen</code> выше). Поэтому guard-тест <code class="kbd">test_deps_environment</code> сейчас зелёный <em>по совпадению</em> — пока <code class="kbd">~=1.1</code> резолвится ровно в закреплённую версию. В день выхода новой версии <code class="kbd">pip</code> молча подтянет её, а lock останется на старой. Перевод и образа, и CI на <code class="kbd">uv sync --frozen</code> закрывает эту дыру; пока этого нет — запускайте локальные тесты через <code class="kbd">uv run</code>, это единственная среда, которая реально уважает lock.</p>
+</div>
+
 <h3 id="dev-howto">Как добавить команду, кнопку, настройку, cron, миграцию</h3>
 
 <div class="table-wrap">
@@ -576,6 +629,10 @@ UPDATE users SET dialog_state='idle', dialog_data='{}'::jsonb WHERE max_user_id=
 <tbody>
 <tr><td>Изменить текст приветствия / шага анкеты / ошибки</td><td>Модули в <code class="kbd">copy/</code> (через фасад <code class="kbd">texts.py</code>). Тексты <code class="kbd">welcome_text</code> и <code class="kbd">consent_text</code> можно менять и в БД через настройки.</td></tr>
 <tr><td>Поменять кнопки или клавиатуры</td><td>Модули в <code class="kbd">ui/</code> (через фасад <code class="kbd">keyboards.py</code>).</td></tr>
+<tr><td>Добавить inline-кнопку с действием (callback)</td><td>Строка/билдер в <code class="kbd">handlers/callback_payloads.py</code> → маршрут в <code class="kbd">handlers/callback_router.py</code> → кнопка в нужном <code class="kbd">ui/*_keyboards.py</code> через <code class="kbd">cp.&lt;билдер&gt;</code> → ветка-обработчик. Подробный рецепт — <a href="#dev-recipe-button" data-go="dev-recipe-button">ниже</a>.</td></tr>
+<tr><td>Добавить новый статус обращения</td><td>Значение в <code class="kbd">AppealStatus</code> (<code class="kbd">db/models.py</code>) + три места, читающих статус (карточки, статистика, листинг). Рецепт — <a href="#dev-recipe-status" data-go="dev-recipe-status">ниже</a>.</td></tr>
+<tr><td>Добавить роль оператора</td><td>Значение в <code class="kbd">OperatorRole</code> (<code class="kbd">db/models.py</code>) + флаги доступа в <code class="kbd">admin_panel.py</code> + гард в <code class="kbd">_auth.py</code> + кнопки в <code class="kbd">operator_keyboards.py</code>. Рецепт — <a href="#dev-recipe-role" data-go="dev-recipe-role">ниже</a>.</td></tr>
+<tr><td>Добавить поле в карточку обращения</td><td><code class="kbd">db/models.py</code> + миграция → отрисовка в <code class="kbd">services/card_format.py</code> (<code class="kbd">admin_card</code> и/или <code class="kbd">user_card</code>). Рецепт — <a href="#dev-recipe-card" data-go="dev-recipe-card">ниже</a>.</td></tr>
 <tr><td>Добавить новый шаг в анкету</td><td>Новое значение в <code class="kbd">DialogState</code> (<code class="kbd">db/models.py</code>), функция-обработчик шага в <code class="kbd">handlers/appeal_funnel.py</code> или <code class="kbd">appeal_geo.py</code>, и строка в справочнике <code class="kbd">_STATE_HANDLERS</code> в <code class="kbd">handlers/appeal.py</code>.</td></tr>
 <tr><td>Добавить операторскую команду</td><td><code class="kbd">handlers/admin_commands.py</code> (или профильный <code class="kbd">admin_*.py</code>). Команда регистрируется до catch-all маршрутизатора.</td></tr>
 <tr><td>Добавить редактируемую настройку</td><td><code class="kbd">services/settings_store.py</code>: добавить ключ в <code class="kbd">DEFAULTS</code> и правило в <code class="kbd">SCHEMA</code> (тип и валидация). Если настройка должна попадать в репозиторий через PR — добавить ключ в <code class="kbd">SYNCED_KEYS</code>.</td></tr>
@@ -654,6 +711,92 @@ flowchart TD
 <p>Реестр <code class="kbd">cron_registry.py</code> — машиночитаемый источник имён задач и их назначения для anti-drift-теста <code class="kbd">test_cron_docs_sync</code>. Но <strong>точное расписание</strong> (минуты, дни недели) надо брать из реальных объектов <code class="kbd">CronTrigger</code> в <code class="kbd">cron.py</code> — именно там фактический триггер. Сами расписания подробно расписаны в разделе <a href="#admin" data-go="admin">«Администратору»</a>; здесь достаточно знать имена ключевых задач: <code class="kbd">pulse-hourly</code> (heartbeat каждый час 24/7), <code class="kbd">pulse-workhours-extra</code> (доп. пинг в рабочее время), <code class="kbd">startup-pulse</code>, <code class="kbd">health-selfcheck</code>, <code class="kbd">funnel-watchdog</code> (сброс зависших анкет старше 24 ч), <code class="kbd">events-retention</code> (30 дней), <code class="kbd">audit-log-retention</code> (365 дней), <code class="kbd">appeals-5y-retention</code>, <code class="kbd">pdn-retention</code>, <code class="kbd">threat-intel-refresh</code>, <code class="kbd">broadcast-draft-reaper</code>, <code class="kbd">db-backup</code> и две reminder-задачи по открытым и просроченным обращениям. Общие параметры всех задач: <code class="kbd">max_instances=1</code>, <code class="kbd">coalesce=True</code>, <code class="kbd">misfire_grace_time=120</code> секунд.</p>
 </div>
 
+<h4 id="dev-recipe-button">Рецепт: добавить inline-кнопку с действием (callback)</h4>
+
+<p>Самый частый рецепт после «поменять текст». Кнопка в MAX, у которой есть полезное действие (не просто открыть подменю), несёт строку-payload — например <code class="kbd">op:reply:42</code> значит «ответить по обращению №42». Чтобы кнопка не сломалась, эта строка должна <em>собираться</em> и <em>разбираться</em> в одном понятном месте, а не россыпью f-строк по файлам. В проекте за это отвечают два модуля-близнеца: <code class="kbd">handlers/callback_payloads.py</code> (где строка собирается) и <code class="kbd">handlers/callback_router.py</code> (где объявлен маршрут). Их совпадение пинит контракт-тест — если разойдутся, CI покраснеет до прода. Порядок действий на примере «кнопка оператора по обращению»:</p>
+
+<ol class="steps">
+<li><strong>Объявить payload.</strong> В <code class="kbd">handlers/callback_payloads.py</code> добавить либо EXACT-константу для кнопки без параметра (<code class="kbd">OP_FOO = "op:foo"</code>), либо билдер-функцию для кнопки с числовым хвостом (<code class="kbd">def op_foo(appeal_id: int) -&gt; str: return PREFIX_OP_FOO + str(appeal_id)</code>, рядом — голый префикс <code class="kbd">PREFIX_OP_FOO = "op:foo:"</code>). Билдер принимает типизированный аргумент — это и есть защита от «подставили объект вместо id».</li>
+<li><strong>Зарегистрировать маршрут.</strong> В <code class="kbd">handlers/callback_router.py</code> добавить <code class="kbd">CallbackRoute</code> в <code class="kbd">EXACT_ROUTES</code> (точное совпадение) или <code class="kbd">PREFIX_ROUTES</code> (по префиксу). Обязательны четыре поля: паттерн (тот же литерал, что в шаге 1), группа (<code class="kbd">CallbackGroup.OPERATOR_ADMIN</code> для операторских), <code class="kbd">admin_allowed=True</code> — иначе кнопка не сработает в служебной группе, — и человеко-читаемое описание.</li>
+<li><strong>Поставить кнопку в клавиатуру.</strong> В нужном модуле <code class="kbd">ui/*_keyboards.py</code> импортировать <code class="kbd">from aemr_bot.handlers import callback_payloads as cp</code> и собрать кнопку через билдер: <code class="kbd">CallbackButton(text="✉️ Сделать", payload=cp.op_foo(appeal_id))</code>. Никаких сырых строк <code class="kbd">f"op:foo:{id}"</code> — только через <code class="kbd">cp</code>, тогда контракт-тест видит payload.</li>
+<li><strong>Написать обработчик.</strong> В диспетчере callback'ов разобрать хвост через готовый хелпер <code class="kbd">callback_router.parse_int_tail(payload, cp.PREFIX_OP_FOO)</code> — он вернёт <code class="kbd">int</code> или <code class="kbd">None</code> для битой/устаревшей кнопки (тогда сделать <code class="kbd">ack</code> и выйти, не выполняя действие). Не парсить вручную через <code class="kbd">.split(":")</code>.</li>
+<li><strong>Прогнать тесты.</strong> <code class="kbd">uv run pytest tests/test_callback_payloads_contract.py tests/test_callback_coverage_contract.py -q</code>. Первый проверит, что строка билдера байт-в-байт ложится на маршрут; второй — что кнопка не «осиротела» (есть и в UI, и в реестре).</li>
+</ol>
+
+<div class="note">
+<p class="note__label">Живой пример — кнопка «Ответить»</p>
+<p>Кнопка оператора «✉️ Ответить и закрыть» собрана ровно по этому рецепту: билдер <code class="kbd">op_reply(appeal_id)</code> в <code class="kbd">callback_payloads.py</code> → маршрут <code class="kbd">CallbackRoute("op:reply:", CallbackGroup.OPERATOR_ADMIN, True, ...)</code> в <code class="kbd">callback_router.py</code> → кнопка в <code class="kbd">ui/operator_keyboards.py</code> через <code class="kbd">payload=cp.op_reply(appeal_id)</code>. Рядом — близнец <code class="kbd">op_replyint</code> («промежуточно, не закрывая»). Куда дальше уходит нажатие — это уже путь <code class="kbd">/reply</code>, разобранный диаграммой выше.</p>
+</div>
+
+<h4 id="dev-recipe-status">Рецепт: добавить новый статус обращения</h4>
+
+<p>Статус обращения — это перечисление <code class="kbd">AppealStatus</code> в <code class="kbd">db/models.py</code>. Сейчас в нём четыре значения: <code class="kbd">new</code>, <code class="kbd">in_progress</code>, <code class="kbd">answered</code>, <code class="kbd">closed</code>. Поле хранится строкой (<code class="kbd">String(...)</code>), не базовым enum-типом, — поэтому новое значение <strong>не требует миграции базы</strong>, достаточно тронуть код. Но статус читается в нескольких местах, и если забыть хоть одно — обращение «провалится» в нераспознанное состояние. Места по порядку:</p>
+
+<ol class="steps">
+<li><strong>Само перечисление.</strong> Новое значение в <code class="kbd">AppealStatus</code> (<code class="kbd">db/models.py</code>), например <code class="kbd">DEFERRED = "deferred"</code>.</li>
+<li><strong>Переход в это состояние.</strong> Логика, которая ставит статус, — воронка и операции с обращениями (<code class="kbd">handlers/appeal_runtime.py</code> для приёма, <code class="kbd">handlers/operator_reply.py</code> и <code class="kbd">admin_*</code> для смены оператором). Здесь же решить, считается ли статус «открытым» (карточка <code class="kbd">operator_keyboards.py</code> делит статусы на <code class="kbd">open_states</code>/<code class="kbd">closed_states</code> — новое значение надо явно отнести к одной из групп, иначе у обращения пропадут кнопки действий).</li>
+<li><strong>Подпись для жителя.</strong> Таблица эмодзи+подпись <code class="kbd">STATUS_LABELS</code> в <code class="kbd">copy/citizen_funnel.py</code> (её читают карточка жителя и лента в <code class="kbd">services/card_format.py</code>). Без новой строки статус покажется жителю «как есть», латиницей.</li>
+<li><strong>Подпись для статистики.</strong> Отдельный маппинг <code class="kbd">_status_label</code> в <code class="kbd">services/stats.py</code> (для XLSX-выгрузки, без эмодзи) — это <em>другая</em> таблица, не та, что видит житель.</li>
+<li><strong>Выборки и сортировка.</strong> Запросы в <code class="kbd">services/appeals.py</code>, которые фильтруют по статусу (листинг открытых, поиск просроченных, сортировка <code class="kbd">status_priority</code>). Решить, куда новый статус попадает в порядке.</li>
+</ol>
+
+<div class="note note--caution">
+<p class="note__label">Две таблицы подписей — не перепутайте</p>
+<p>Подпись статуса живёт в двух местах сознательно: <code class="kbd">STATUS_LABELS</code> (<code class="kbd">copy/citizen_funnel.py</code>) — с эмодзи, для жителя; <code class="kbd">_status_label</code> (<code class="kbd">services/stats.py</code>) — без эмодзи, для Excel-отчёта. Это разные аудитории и разный формат, поэтому новое значение надо добавить в <strong>обе</strong>.</p>
+</div>
+
+<h4 id="dev-recipe-role">Рецепт: добавить роль оператора</h4>
+
+<p>Роли оператора — перечисление <code class="kbd">OperatorRole</code> в <code class="kbd">db/models.py</code> (сейчас четыре: <code class="kbd">coordinator</code>, <code class="kbd">aemr</code>, <code class="kbd">egp</code>, <code class="kbd">it</code>). Роль решает, что оператор видит и может. Полный разбор того, какая роль что умеет, — в разделе <a href="#operator" data-go="operator">«Оператору»</a>; здесь только инженерные точки правки:</p>
+
+<ol class="steps">
+<li><strong>Перечисление.</strong> Новое значение в <code class="kbd">OperatorRole</code> (<code class="kbd">db/models.py</code>). Поле <code class="kbd">operators.role</code> — строка, миграция базы не нужна.</li>
+<li><strong>Флаги доступа.</strong> В <code class="kbd">handlers/admin_panel.py</code> задаются производные флаги по роли (<code class="kbd">is_it = role == IT</code>, <code class="kbd">can_broadcast = role in {IT, COORDINATOR}</code>). Решить, какие способности даёт новая роль, и включить её в нужные множества.</li>
+<li><strong>Гард команд.</strong> Проверка роли — <code class="kbd">handlers/_auth.py</code>: <code class="kbd">ensure_operator</code> пропускает любую активную роль, <code class="kbd">ensure_role(event, IT)</code> требует <em>точного</em> вхождения в множество (координатор через IT-гард не проходит). Если новой роли нужен доступ к командам под <code class="kbd">ensure_role(...)</code> — добавить её в соответствующий вызов.</li>
+<li><strong>Кнопки меню.</strong> <code class="kbd">ui/operator_keyboards.py</code> (<code class="kbd">op_help_keyboard</code>) собирает набор кнопок по флагам из шага 2 — новые способности появятся в меню автоматически, если флаги расставлены верно. Picker смены роли (мастер операторов) тоже перечисляет роли — проверить, что новая там видна.</li>
+</ol>
+
+<div class="note">
+<p class="note__label">Сменить роль можно только прямым SQL</p>
+<p>Повышение роли через интерфейс намеренно ограничено (защита от самоповышения) — отсюда команда «сменить роль оператора» делается прямым <code class="kbd">UPDATE operators SET role=...</code>, см. блок <a href="#dev-db" data-go="developer">«Подключение к живой базе»</a> выше. Это не баг рецепта, а защитное решение.</p>
+</div>
+
+<h4 id="dev-recipe-card">Рецепт: добавить поле в карточку обращения</h4>
+
+<p>Карточка — это то, что оператор видит в служебной группе (<code class="kbd">admin_card</code>) и что житель видит в «Моих обращениях» (<code class="kbd">user_card</code>); обе живут в <code class="kbd">services/card_format.py</code>. Добавление нового видимого поля — это два независимых шага: сначала завести его в схеме, потом отрисовать.</p>
+
+<ol class="steps">
+<li><strong>Поле в модели + миграция.</strong> Колонка в нужной модели (<code class="kbd">Appeal</code> в <code class="kbd">db/models.py</code>), затем миграция Alembic (см. «Работа с миграциями» выше — авто-сгенерированный файл обязательно прочитать глазами). Если поле заполняется в воронке — добавить шаг (рецепт «новый шаг анкеты») или запись при финализации.</li>
+<li><strong>Отрисовка.</strong> Вывести поле в <code class="kbd">services/card_format.py</code>: <code class="kbd">admin_card</code> — карточка оператора, <code class="kbd">user_card</code> — карточка жителя. Решить, нужно ли поле обеим аудиториям (например, внутренняя пометка оператора жителю не показывается). Тексты-обёртки берутся из <code class="kbd">copy/</code> через презентационный слой, не зашиваются в сервис.</li>
+</ol>
+
+<p>Скелет «модель → миграция → отрисовка» — тот же, что у любого расширения схемы: данные внизу (<code class="kbd">db/</code>), презентация наверху (<code class="kbd">card_format</code> + <code class="kbd">copy/</code>), и нельзя тянуть тексты прямо в сервис в обход слоя <code class="kbd">copy/</code>.</p>
+
+<h4 id="dev-recipe-adminbus">Рецепт: отправить что-то в служебную группу</h4>
+
+<p>Есть тонкость, на которой легко сделать «съезжающее меню». Любое <em>новое</em> сообщение боту в служебную группу надо слать через единую шину <code class="kbd">services/admin_bus.send(bot, text=...)</code>, а не напрямую <code class="kbd">bot.send_message(chat_id=ADMIN_GROUP_ID, ...)</code>. Причина — «трекер свежести меню» (<code class="kbd">utils/menu_tracker.py</code>): он помнит, какое сообщение в чате сейчас «редактируемое меню», и по нему решает «перерисовать на месте или прислать новое». Если слать в группу мимо шины, трекер отстаёт от реального состояния чата, и следующее меню перерисуется поверх не того сообщения.</p>
+
+<ul>
+<li><strong>Новое сообщение</strong> (уведомление, алёрт, подтверждение, pulse) → <code class="kbd">admin_bus.send(bot, text=..., critical=...)</code>. Шина атомарно шлёт и двигает трекер. Возвращает <code class="kbd">mid</code> отправленного сообщения либо <code class="kbd">None</code> (если <code class="kbd">ADMIN_GROUP_ID</code> не задан, отправка упала или тихий режим подавил).</li>
+<li><strong>Редактируемое меню</strong> (карточка обращения, экран мастера) → не шина, а freshness-aware пути <code class="kbd">admin_card.render</code> / <code class="kbd">send_or_edit_screen</code>: они сами знают, что шлют именно перерисовываемый экран.</li>
+<li><strong>Прямые <code class="kbd">bot.send_message</code> в группу</strong>, которые остались в коде, подстрахованы общим monkey-patch hook'ом (<code class="kbd">admin_bus.install_outgoing_tracker_hook</code>): он двигает трекер после любой отправки в группу. Но осознанно полагаться на hook не стоит — пишите через <code class="kbd">admin_bus.send</code>.</li>
+</ul>
+
+<div class="note">
+<p class="note__label">Два трекера: editable_mid против physical_mid</p>
+<p>Под капотом трекер хранит <strong>две</strong> отметки. <code class="kbd">physical_mid</code> — последнее физическое сообщение в чате (двигается на каждое исходящее и входящее, в том числе через hook и <code class="kbd">admin_bus.send</code>). <code class="kbd">editable_mid</code> — последнее <em>редактируемое меню</em> (двигается только когда бот осознанно шлёт перерисовываемый экран). Историческое уведомление (pulse, алёрт, подтверждение через <code class="kbd">admin_bus.send</code>) двигает только <code class="kbd">physical_mid</code> и остаётся в чате навсегда — тап оператора по нему не превратит его в меню, потому что <code class="kbd">callback_mid ≠ editable_mid</code>. Это разделение починило жалобу «меню в админ-чате редактируется при тапе на не-последнем сообщении».</p>
+</div>
+
+<h4 id="dev-recipe-middleware">Рецепт: добавить промежуточный слой (middleware)</h4>
+
+<p>Промежуточный слой (middleware) выполняется на каждое событие <em>до</em> обработчиков. Сейчас их два, оба внешние (outer): <code class="kbd">IdempotencyMiddleware</code> (защита от повторов) и <code class="kbd">AdminChatActivityMiddleware</code> (сдвиг трекера на входящее сообщение оператора). Оба объявлены и подключены в <code class="kbd">handlers/__init__.py</code>.</p>
+
+<ul>
+<li><strong>Подключение — только через <code class="kbd">register_outer_middleware</code>.</strong> В проекте обёртка <code class="kbd">_attach_outer_middleware</code> требует именно публичный API <code class="kbd">maxapi 1.1+</code> и падает ясной ошибкой, если метода нет (никакого тихого фолбэка на устаревшие формы). Класс наследует <code class="kbd">BaseMiddleware</code> из <code class="kbd">maxapi.filters.middleware</code> и реализует <code class="kbd">async def __call__(self, handler, event_object, data)</code>.</li>
+<li><strong>Порядок важен.</strong> <code class="kbd">IdempotencyMiddleware</code> подключается <em>первым</em> (отбрасывает дубли до всего остального — иначе MAX-повтор того же события сдвинул бы трекер дважды), активность-слой — <em>вторым</em> (двигает трекер уже на реально новое сообщение). Новый слой ставьте в эту цепочку осознанно.</li>
+<li><strong>Ловушка <code class="kbd">isinstance(event_object, MessageCreated)</code>.</strong> Если слой реагирует на входящие сообщения — обязательно сначала проверить тип. Без проверки слой поймает <em>все</em> события с <code class="kbd">event.message</code>, в том числе нажатие кнопки (<code class="kbd">MessageCallback</code>), у которого <code class="kbd">event.message</code> — это <strong>старая карточка, на которой нажали</strong>, а не новое сообщение. Трекер съедет на старую карточку, и следующий экран перерисуется поверх неё. Это уже ловили — комментарий в <code class="kbd">AdminChatActivityMiddleware</code> хранит разбор инцидента.</li>
+</ul>
+
 <h3 id="dev-decisions">Архитектурные обоснования (почему так)</h3>
 
 <p>Самое ценное — не «как», а «почему». Эти решения зафиксированы в ADR и в коде, чтобы их не переоткрывали и не ломали по незнанию.</p>
@@ -720,13 +863,13 @@ flowchart TD
 <li><strong>Индикатор «бот печатает».</strong> Долгие операции (снимок аудитории рассылки, листинг «Мои обращения», тяжёлые PDF/XLSX) обёрнуты в авто-периодический typing-индикатор (<code class="kbd">utils/typing_indicator.py</code>) — пользователь видит, что бот не завис.</li>
 <li><strong>Обход аудитории через <code class="kbd">iter_all()</code>.</strong> Перечисление участников группы идёт через библиотечный async-итератор с защитой от зацикливания marker-пагинации вместо ручного цикла.</li>
 <li><strong>Обработка HTTP 429 и <code class="kbd">BOT_STOPPED</code>.</strong> Библиотека сама не парсит <code class="kbd">Retry-After</code> и игнорирует 429 — поэтому для рассылки на 1000+ жителей добавлена ручная обработка ограничения скорости; событие <code class="kbd">BOT_STOPPED</code> (житель остановил бота) исключает его из аудитории рассылки.</li>
+<li><strong>Типизированный слой callback-payload.</strong> Идея «не парсить callback-строки руками» <strong>уже внедрена</strong> — но своим, более лёгким способом, чем pydantic-модель <code class="kbd">CallbackPayload</code> из примеров библиотеки. Все строки кнопок собираются в одном модуле <code class="kbd">handlers/callback_payloads.py</code> (EXACT-константы вида <code class="kbd">OP_MENU = "op:menu"</code> и билдеры-функции вида <code class="kbd">op_reply(appeal_id: int) → "op:reply:&lt;id&gt;"</code>), маршруты перечислены в реестре <code class="kbd">handlers/callback_router.py</code> (<code class="kbd">EXACT_ROUTES</code> + <code class="kbd">PREFIX_ROUTES</code>), а разбор числового хвоста делает один хелпер <code class="kbd">callback_router.parse_int_tail</code> (а не россыпь <code class="kbd">.split(":")</code> по обработчикам). Совпадение «то, что собрала кнопка» ↔ «то, что ждёт роутер» байт-в-байт пинит контракт-тест <code class="kbd">test_callback_payloads_contract</code>. Рецепт «как добавить кнопку оператора» — ниже в разделе рецептов. От полноценного <code class="kbd">CallbackPayload</code> сознательно отказались: 30+ pydantic-моделей на каждую кнопку для MLP-бота читаются и проверяются тяжелее, чем простые константы и тонкие билдеры (см. докстринг <code class="kbd">callback_payloads.py</code>).</li>
 </ul>
 
 <h4>Сознательно отложено (декларативный сдвиг парадигмы)</h4>
 <p>Библиотека предлагает целый декларативный слой, который сейчас в боте написан вручную. Это не дефект, а осознанный выбор «не сейчас» — миграция большая и рискованная, а текущая ручная реализация работает.</p>
 <ul>
 <li><strong>FSM через <code class="kbd">StatesGroup</code> + <code class="kbd">MemoryContext</code>.</strong> В maxapi есть встроенное состояние per пара <code class="kbd">(chat_id, user_id)</code>: <code class="kbd">context.set_state(...)</code>, <code class="kbd">get_data()</code>/<code class="kbd">update_data(...)</code>, фильтр по состоянию вторым аргументом декоратора, LRU-вытеснение и TTL, подменяемое хранилище (вплоть до <code class="kbd">RedisContext</code>). У нас этот механизм фактически переизобретён руками: <code class="kbd">wizard_registry.py</code> + <code class="kbd">wizard_persist.py</code> + миграция <code class="kbd">0011</code> + несколько module-level словарей. Переход на встроенный FSM снял бы сотни строк и убрал бы ручной catch-all диспетчер (каждое сообщение приходило бы сразу в правильный обработчик по состоянию). Это самый весомый кандидат на будущий рефакторинг, но он требует полной регрессии всей анкеты через сквозные тесты.</li>
-<li><strong>Типизированный payload кнопок (<code class="kbd">CallbackPayload</code>).</strong> Сейчас callback-строки вида <code class="kbd">appeal:123:reply</code> парсятся вручную через <code class="kbd">.split(":")</code>, префиксы зашиты в строках, формат легко спутать между местом сборки кнопки и местом разбора. Pydantic-модель <code class="kbd">CallbackPayload</code> с <code class="kbd">pack()</code>/<code class="kbd">unpack()</code> и фильтром по полю сделала бы такие регрессии невозможными конструктивно — особенно для самого чувствительного к безопасности пути обращений.</li>
 <li><strong>Event-helpers вместо ручного send.</strong> Примеры используют <code class="kbd">event.message.answer(text)</code>, <code class="kbd">event.message.reply(...)</code>, <code class="kbd">event.ack()</code>; мы во многих местах пишем <code class="kbd">event.bot.send_message(chat_id=..., user_id=...)</code> — 6 строк вместо 1. Идиома в коде смешана (часть файлов уже на helper-ах).</li>
 <li><strong>Готовый фильтр контакта и <code class="kbd">html_text</code>/<code class="kbd">md_text</code>.</strong> Фильтр <code class="kbd">Contact()</code> из maxapi уже распаршивает vCard и инжектит <code class="kbd">ContactAttachment</code> в обработчик — нашу ручную реализацию парсинга vCard можно было бы убрать. Свойства <code class="kbd">MessageBody.html_text</code>/<code class="kbd">md_text</code> отдают форматированный текст с правильным экранированием — сейчас в карточке «суть» оператор не видит жирный/курсив, которым писал житель.</li>
 <li><strong>Раздельные роутеры.</strong> <code class="kbd">Router</code> со своими middleware и фильтрами, подключаемый через <code class="kbd">dp.include_routers(...)</code> — естественные кандидаты на вынос крупные модули рассылок и настроек.</li>
@@ -744,7 +887,7 @@ flowchart TD
 
 <ul>
 <li><strong>Рассылка открывает три <code class="kbd">session_scope</code> на получателя</strong> (проверка флага отмены, запись доставки, периодический прогресс). На текущем масштабе это копейки. Триггер фикса: устойчиво &gt;1000 подписчиков или несколько одновременных рассылок. Лечение: батчить запись доставок пачками по 50, флаг проверять раз в N сообщений.</li>
-<li><strong>Длинная if-цепочка в <code class="kbd">on_callback</code></strong> (~200 строк ветвлений по префиксам payload). Читается линейно, но новый callback добавляется в общую кучу. Триггер: 5+ новых callback-ов. Лечение: словарь <code class="kbd">{prefix: handler_fn}</code> по образцу <code class="kbd">_STATE_HANDLERS</code> (или переход на <code class="kbd">CallbackPayload</code>, см. выше).</li>
+<li><strong>Длинная цепочка диспетчеризации в <code class="kbd">on_callback</code></strong> (ветвление по префиксам payload — какой обработчик звать). Сборка и разбор самих строк уже централизованы (<code class="kbd">callback_payloads.py</code> + <code class="kbd">callback_router.parse_int_tail</code>), но выбор обработчика по префиксу всё ещё линейный. Читается сверху вниз, однако новый callback добавляется в общую кучу. Триггер: 5+ новых callback-ов. Лечение: словарь <code class="kbd">{prefix: handler_fn}</code> по образцу <code class="kbd">_STATE_HANDLERS</code>.</li>
 <li><strong>Анонимные обработчики <code class="kbd">_(event)</code></strong> в <code class="kbd">start.py</code> и др. — удобно для регистрации, но в стектрейсе вместо имени команды будет <code class="kbd">&lt;locals&gt;._</code>. Триггер: ловля сложного бага. Лечение: именовать функции по команде.</li>
 <li><strong><code class="kbd">_user_locks</code> в памяти процесса</strong> — не разделяется между репликами. На MVP один инстанс, это нормально. Триггер: multi-replica. Лечение: <code class="kbd">pg_advisory_xact_lock</code> или Redis.</li>
 <li><strong>Inline русские usage-строки в <code class="kbd">admin_commands.py</code></strong> (десяток коротких подсказок «Используйте: /reopen &lt;номер&gt;») — технические, жителю не видны. Триггер: третья ревизия команд или i18n. Лечение: вынести в константы.</li>
@@ -769,6 +912,16 @@ flowchart TD
 <li>Комментарии объясняют <em>зачем</em>, а не <em>что</em>: невидимые ограничения, тонкие инварианты, ссылки на документацию. Имена переменных уже говорят, что делает код. Комментарии в проекте пишутся на русском.</li>
 <li>Импорты — сверху файла. Импорт внутри функции оправдан только честной циклической зависимостью.</li>
 <li>Никогда не обращайтесь к полям события напрямую — только через адаптер <code class="kbd">utils/event.py</code>.</li>
+</ul>
+
+<h4>Доступ к репозиторию и секретам</h4>
+
+<p>Репозиторий приватный (<code class="kbd">github.com/gaben1488/aemr-bot</code>). Чтобы начать работать, нужен доступ от владельца — он добавляет вас как коллаборатора либо в команду организации. Дальше клонирование по HTTPS с personal access token или по SSH-ключу — как удобнее.</p>
+
+<ul>
+<li><strong>Поток через форк (fork-flow).</strong> Внешний контрибьютор без прав на запись форкает репозиторий к себе, ведёт работу в ветке форка и открывает pull request в <code class="kbd">main</code> основного репозитория. Коллаборатор с правом записи может ветвиться прямо в основном репозитории (<code class="kbd">git checkout -b feat/…</code>, как в шагах деплоя выше) — это быстрее, потому что CI с секретами на форк-PR по умолчанию ограничен.</li>
+<li><strong>Деплой-ключ (deploy key).</strong> На боевом сервере доступ к приватному репозиторию даётся не личным логином, а deploy key — SSH-ключом, привязанным к одному репозиторию (как правило, read-only, чтобы сервер только тянул код). Это позволяет <code class="kbd">git pull</code> при авто-деплое без хранения чьих-то личных учёток на VPS.</li>
+<li><strong>Секреты — не в репозитории.</strong> Реальные значения (<code class="kbd">BOT_TOKEN</code>, пароль Postgres, GPG-фраза бэкапов) живут только в <code class="kbd">infra/.env</code> на сервере и никогда не коммитятся; в репозитории — лишь <code class="kbd">.env.example</code> с пустыми полями. Pre-commit-хук дополнительно ловит случайно добавленные <code class="kbd">.env</code> и приватные ключи. Кто физически владеет секретами, как передаются дела при увольнении и где резерв GPG-фразы — это организационный вопрос; канон — в разделе <a href="#admin-secrets" data-go="admin">«Администратору» (владение секретами)</a>, здесь не дублируется.</li>
 </ul>
 
 <h3 id="dev-glossary">Словарь терминов</h3>
