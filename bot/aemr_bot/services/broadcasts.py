@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -195,8 +195,6 @@ async def reap_orphaned_draft(
     переводить в FAILED — это означает «мастер был открыт, но рассылка
     так и не пошла». Не путать с CANCELLED (явная отмена оператором).
     """
-    from datetime import datetime, timedelta, timezone
-
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=ttl_minutes)
     result = await session.execute(
         update(Broadcast)

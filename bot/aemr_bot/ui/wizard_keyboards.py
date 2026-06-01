@@ -7,6 +7,7 @@
 from maxapi.types import CallbackButton
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
+from aemr_bot.db.models import OperatorRole
 from aemr_bot.handlers import callback_payloads as cp
 
 
@@ -85,8 +86,6 @@ def op_operator_card_keyboard(
 def op_operator_role_change_keyboard(max_user_id: int, current_role: str):
     """Смена роли существующему оператору. Текущую роль показываем
     как заблокированную (без callback'а)."""
-    from aemr_bot.db.models import OperatorRole
-
     kb = InlineKeyboardBuilder()
     roles = [
         (OperatorRole.IT.value, "🛠 it — ИТ, полный доступ"),

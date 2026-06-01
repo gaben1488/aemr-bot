@@ -26,6 +26,7 @@ malware/phishing. Не блокирует сообщение жителя — у
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import os
 import time
@@ -197,7 +198,6 @@ def _parse_threatfox_hostfile(body: str) -> set[str]:
 
 def _parse_phishtank_json(body: str) -> set[str]:
     """PhishTank online-valid.json: список объектов с полем `url`."""
-    import json
     try:
         items = json.loads(body)
     except json.JSONDecodeError:

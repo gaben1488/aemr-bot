@@ -1,4 +1,6 @@
+from sqlalchemy import func as _func
 from sqlalchemy import select
+from sqlalchemy import text as sql_text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.db.models import AuditLog, Operator, OperatorRole
@@ -126,8 +128,6 @@ async def count_active_by_role(
 ) -> int:
     """Сколько активных операторов в роли. Используется для защиты от
     деактивации единственного IT-оператора."""
-    from sqlalchemy import func as _func
-
     val = await session.scalar(
         select(_func.count(Operator.id)).where(
             Operator.role == role.value,
@@ -229,8 +229,6 @@ async def bootstrap_it_from_env(
     различался по env). Lock-ID 0xAE57B07 — фиксированный, чтобы не
     пересекался с приложенческими advisory-locks.
     """
-    from sqlalchemy import text as sql_text
-
     await session.execute(sql_text("SELECT pg_advisory_xact_lock(:lid)"), {"lid": 0xAE57B07})
     if await has_any_it(session):
         return False

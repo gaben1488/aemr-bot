@@ -16,6 +16,7 @@ from maxapi.types.attachments.buttons.request_geo_location_button import (
 )
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
+from aemr_bot.db.models import AppealStatus
 from aemr_bot.handlers import callback_payloads as cp
 
 
@@ -313,8 +314,6 @@ def user_appeal_card_keyboard(
     «📎 Дополнить» в той же клавиатуре — оператор/житель могли
     спутать действие.
     """
-    from aemr_bot.db.models import AppealStatus
-
     kb = InlineKeyboardBuilder()
     if status in {
         AppealStatus.NEW.value,

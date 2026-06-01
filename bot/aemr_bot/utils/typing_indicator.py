@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import logging
 
+from aemr_bot.utils.event import get_chat_id
+
 log = logging.getLogger(__name__)
 
 
@@ -39,7 +41,6 @@ async def mark_typing(event_or_bot, chat_id: int | None = None) -> None:
     if chat_id is None:
         # Попробуем достать из event.
         try:
-            from aemr_bot.utils.event import get_chat_id
             chat_id = get_chat_id(event_or_bot)
         except Exception:
             log.debug("mark_typing: не смог извлечь chat_id из event")

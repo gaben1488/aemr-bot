@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import logging
+import shutil
+import tempfile
 from pathlib import Path
 
 from aemr_bot.config import settings as cfg
@@ -43,9 +45,6 @@ async def ensure_uploaded(bot, *, force: bool = False) -> str | None:
     # чате увидит «Политика обработки персональных данных.pdf», а не
     # «PRIVACY.pdf». Пишем в /tmp (он смонтирован как tmpfs внутри
     # контейнера, см. infra/docker-compose.yml).
-    import shutil
-    import tempfile
-
     tmp_dir = Path(tempfile.mkdtemp(prefix="policy_"))
     display_path = tmp_dir / POLICY_PDF_DISPLAY_NAME
     try:

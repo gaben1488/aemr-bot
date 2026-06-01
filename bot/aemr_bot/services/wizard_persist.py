@@ -27,6 +27,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import delete, select
+from sqlalchemy import func as sa_func
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -71,8 +72,6 @@ async def _upsert(
     # не срабатывает. Если на wizard_state есть наблюдатели или
     # отчёты по «давность последней правки» — они врали. Тот же
     # паттерн в `settings_store.set_value` (см. там Bug B fix).
-    from sqlalchemy import func as sa_func
-
     stmt = stmt.on_conflict_do_update(
         constraint="uq_wizard_state_kind_operator",
         set_={

@@ -15,6 +15,7 @@
 from maxapi.types import CallbackButton
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
+from aemr_bot.db.models import AppealStatus
 from aemr_bot.handlers import callback_payloads as cp
 
 
@@ -81,8 +82,6 @@ def open_tickets_listing_keyboard(items):
     где `topic_preview` уже обрезан до разумной длины вызывающим.
     Если items пуст — клавиатура только с кнопкой «↩️ В меню».
     """
-    from aemr_bot.db.models import AppealStatus
-
     kb = InlineKeyboardBuilder()
     status_emoji = {
         AppealStatus.NEW.value: "🆕",
@@ -341,8 +340,6 @@ def appeal_admin_actions(
     автоматически при listing'е и приводило к hang'у — теперь только
     по явному тапу.
     """
-    from aemr_bot.db.models import AppealStatus
-
     kb = InlineKeyboardBuilder()
     open_states = {AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value}
     closed_states = {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}

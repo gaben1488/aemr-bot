@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from dateutil.relativedelta import relativedelta
-from sqlalchemy import desc, func, or_, select, update
+from sqlalchemy import case, desc, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -164,8 +164,6 @@ async def list_for_user(
     концептуально новый, ему незачем видеть свою прошлую жизнь.
     Записи в БД сохраняются для статистики и аудита.
     """
-    from sqlalchemy import case
-
     user = await session.scalar(select(User).where(User.id == user_id))
     query = select(Appeal).where(Appeal.user_id == user_id)
     if user is not None and user.consent_revoked_at is not None:
