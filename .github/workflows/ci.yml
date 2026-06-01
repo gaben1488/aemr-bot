@@ -129,6 +129,15 @@ jobs:
       - name: Install
         run: pip install --upgrade pip && pip install -e ".[dev]"
       - name: Run pytest with coverage
+        # Порог 84: консервативная планка ниже локального floor'а.
+        # Локальный прогон (sqlite, 123 PG-теста skip) даёт ~85.5%; CI
+        # на Postgres-16 запускает ВСЕ тесты включая PG-gated (services/
+        # users, appeals, broadcast_templates, settings_store, stats,
+        # idempotency.claim и т.д.), поэтому реальное покрытие в CI строго
+        # выше локального. 84 оставляет буфер против обоих и не ловит
+        # шум. Поднято с 80 после гигиены покрытия (cov2-тесты на pure-
+        # логику: ui-клавиатуры, threat_intel, attachments, event,
+        # calendar_ru loader, wizard_persist.hydrate, quiet_hours-defaults).
         run: >-
           python -m pytest tests/ -v --tb=short
           --cov=aemr_bot
@@ -136,7 +145,7 @@ jobs:
           --cov-report=term-missing:skip-covered
           --cov-report=xml:coverage.xml
           --cov-report=html:htmlcov
-          --cov-fail-under=80
+          --cov-fail-under=84
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
