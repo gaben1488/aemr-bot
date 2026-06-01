@@ -476,8 +476,9 @@ async def _do_backup(event) -> None:
             )
         elif result.fail_kind == "config":
             err_text = (
-                "⚙️ Бэкап не выполнен: BACKUP_LOCAL_DIR пуст. "
-                "Проверьте `.env` (`docs/SYSADMIN.md §5.4`)."
+                "⚙️ Бэкап не выполнен: в настройках (.env) пуст "
+                "параметр BACKUP_LOCAL_DIR — некуда сохранять копию. "
+                "Заполните его и повторите."
             )
         else:
             err_text = (
