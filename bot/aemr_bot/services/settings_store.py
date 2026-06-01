@@ -2,6 +2,7 @@ import asyncio
 import html
 import json
 import re
+import unicodedata
 from typing import Any
 from urllib.parse import urlparse
 
@@ -155,6 +156,13 @@ def extract_urls(text: str) -> list[str]:
     """
     if not text:
         return []
+    # NFKC-нормализация: приводит «совместимые» символы-двойники к
+    # каноническому виду (полноширинные ＨＴＴＰＳ：／／ → HTTPS://, дроби,
+    # лигатуры). Закрывает класс атак, где мошенник пишет адрес
+    # полноширинными или совместимыми символами, чтобы обойти
+    # whitelist/defang. Кириллические гомоглифы (е→e) NFKC не трогает —
+    # это разные буквы разных алфавитов; их ловит _QUASI_URL_PATTERN ниже.
+    text = unicodedata.normalize("NFKC", text)
     seen: list[str] = []
     for u in _URL_IN_TEXT_PATTERN.findall(text):
         if u not in seen:

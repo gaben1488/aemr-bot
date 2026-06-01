@@ -291,7 +291,7 @@ async def _job_audit_log_retention() -> None:
         log.exception("audit_log retention failed")
 
 
-async def _job_threat_intel_refresh() -> None:
+async def _job_threat_intel_refresh(send_admin_text) -> None:
     """Обновить локальный set threat-intel host'ов из feed'ов.
 
     Раз в час подтягиваем URLhaus + ThreatFox (+ PhishTank если задан
@@ -301,6 +301,13 @@ async def _job_threat_intel_refresh() -> None:
 
     Запуск на :17 — между нашими утренними job'ами и watchdog'ом,
     чтобы не пересекаться по нагрузке.
+
+    Сигнал устаревания: если после обновления данные всё равно старше
+    бюджета (6 часов без успешного refresh — источники стабильно
+    недоступны), шлём critical-алёрт в служебный чат. Бот продолжает
+    работать со старым set'ом, но оператор должен знать, что
+    предупреждения о фишинге могут отставать. critical=True пробивает
+    quiet hours — безопасность важнее тишины.
     """
     try:
         counts = await threat_intel.refresh_all()
@@ -312,6 +319,28 @@ async def _job_threat_intel_refresh() -> None:
             )
     except Exception:
         log.exception("threat-intel-refresh crashed")
+
+    # Алёрт устаревания. Отдельный try: даже если refresh упал,
+    # проверку и уведомление делаем — это и есть момент, когда
+    # оператору важнее всего узнать о проблеме.
+    try:
+        store = threat_intel.get_store()
+        if store.is_stale():
+            age_h = (store.staleness_age_seconds() or 0) / 3600
+            await _send_admin_text_with_retry(
+                send_admin_text,
+                (
+                    "⚠️ База угроз (антифишинг) не обновлялась "
+                    f"{age_h:.0f} ч. Источники недоступны. Бот работает "
+                    "со старыми данными — предупреждения о вредоносных "
+                    "ссылках в обращениях могут отставать. Проверьте "
+                    "доступ в интернет к URLhaus, ThreatFox, PhishTank."
+                ),
+                context="threat-intel-stale",
+                critical=True,
+            )
+    except Exception:
+        log.exception("threat-intel staleness alert failed")
 
 
 async def _job_reap_orphaned_drafts() -> None:
@@ -846,7 +875,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         # внутренних утренних job'ов, не пересекается по нагрузке.
         # См. services/threat_intel.py и URL_THREAT_INTEL_2026-05-26.md.
         (
-            _job_threat_intel_refresh,
+            functools.partial(_job_threat_intel_refresh, send_admin_text),
             CronTrigger(minute=17, timezone=TZ),
             "threat-intel-refresh",
         ),

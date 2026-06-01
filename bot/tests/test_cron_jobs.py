@@ -524,3 +524,48 @@ class TestBuildScheduler:
         text = str(job.trigger)
         assert "mon-fri" in text
         assert "9-11" in text and "13-17" in text
+
+
+class TestThreatIntelRefresh:
+    """_job_threat_intel_refresh — обновление базы угроз + critical-алёрт,
+    если данные устарели (источники недоступны >6 ч)."""
+
+    @pytest.mark.asyncio
+    async def test_stale_sends_critical_alert(self) -> None:
+        from types import SimpleNamespace
+
+        send = AsyncMock()
+        stale_store = SimpleNamespace(
+            is_stale=lambda: True,
+            staleness_age_seconds=lambda: 7 * 3600,
+        )
+        with patch(
+            "aemr_bot.services.threat_intel.refresh_all",
+            AsyncMock(return_value={}),
+        ), patch(
+            "aemr_bot.services.threat_intel.get_store",
+            return_value=stale_store,
+        ), patch("asyncio.sleep", AsyncMock()):
+            await cron._job_threat_intel_refresh(send)
+        send.assert_awaited()
+        assert send.await_args.kwargs.get("critical") is True
+        assert "не обновлялась" in send.await_args.args[0]
+
+    @pytest.mark.asyncio
+    async def test_fresh_no_alert(self) -> None:
+        from types import SimpleNamespace
+
+        send = AsyncMock()
+        fresh_store = SimpleNamespace(
+            is_stale=lambda: False,
+            staleness_age_seconds=lambda: 100.0,
+        )
+        with patch(
+            "aemr_bot.services.threat_intel.refresh_all",
+            AsyncMock(return_value={"URLhaus": 10}),
+        ), patch(
+            "aemr_bot.services.threat_intel.get_store",
+            return_value=fresh_store,
+        ):
+            await cron._job_threat_intel_refresh(send)
+        send.assert_not_awaited()
