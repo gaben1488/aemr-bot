@@ -12,10 +12,9 @@ Workflow:
 3. Этот тест укажет, в каких docs отсутствует `id`.
 4. Дописать в docs → CI зелёный.
 
-Покрываемые docs (минимум — где есть таблицы cron):
-- `docs/HOW_IT_WORKS.md` — раздел «Регулярные задачи»
-- `docs/RUNBOOK.md` — таблица расписания
-- `docs/SYSADMIN.md` — таблица расписания
+Покрываемые docs:
+- `docs/site/index.html` — единая вики (разделы «Администратору» и
+  «Справочник» содержат таблицу фоновых задач со всеми cron-id).
 """
 from __future__ import annotations
 
@@ -28,13 +27,12 @@ from aemr_bot.services.cron_registry import JOB_REGISTRY, all_ids
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 DOCS = REPO_ROOT / "docs"
 
-# Каноничные документы, в которых КАЖДЫЙ id из реестра должен встречаться.
-# Если cron upper-tier (например, специфический backup), и его смысла
-# нет в operator-facing docs — можно убрать оттуда явно.
+# Канон документации консолидирован в единую вики `docs/site/index.html`
+# (поглощённые ролевые .md удалены при сборке базы знаний). Anti-drift теперь
+# проверяет вику: каждый cron-id из реестра обязан встречаться в ней
+# (разделы «Администратору» и «Справочник» — таблица фоновых задач).
 CANONICAL_DOCS: tuple[pathlib.Path, ...] = (
-    DOCS / "HOW_IT_WORKS.md",
-    DOCS / "RUNBOOK.md",
-    DOCS / "SYSADMIN.md",
+    DOCS / "site" / "index.html",
 )
 
 
