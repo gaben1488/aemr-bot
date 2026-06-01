@@ -1,7 +1,9 @@
+import hashlib
 import logging
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import delete, select, text, update
+from sqlalchemy import func as sa_func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.config import settings as cfg
@@ -515,8 +517,6 @@ async def count_subscribers_audience(session: AsyncSession) -> int:
     листинге. Отделено от `count_subscribers` в `broadcasts` чтобы
     избежать circular import и потому что фильтр чуть отличается
     (там нужно для send-loop, тут — для UI)."""
-    from sqlalchemy import func as sa_func
-
     return await session.scalar(
         select(sa_func.count(User.id)).where(*_subscribers_where())
     ) or 0
@@ -542,8 +542,6 @@ async def list_consented(
 
 async def count_consented(session: AsyncSession) -> int:
     """Общее число жителей с активным consent_pdn_at."""
-    from sqlalchemy import func as sa_func
-
     return await session.scalar(
         select(sa_func.count(User.id)).where(*_consented_where())
     ) or 0
@@ -628,8 +626,6 @@ async def list_blocked(
 
 async def count_blocked(session: AsyncSession) -> int:
     """Общее число заблокированных жителей."""
-    from sqlalchemy import func as sa_func
-
     return await session.scalar(
         select(sa_func.count(User.id)).where(*_blocked_where())
     ) or 0
@@ -753,11 +749,8 @@ async def find_by_phone(session: AsyncSession, phone: str) -> User | None:
         # В лог пишем только хеш — чистый номер в логах docker
         # переживёт events-retention и попадает в log shipper'ы,
         # которые 152-ФЗ erasure не обходит.
-        import hashlib
-        import logging
-
         digest = hashlib.sha256(target.encode()).hexdigest()[:8]
-        logging.getLogger(__name__).warning(
+        log.warning(
             "find_by_phone: найдено %d совпадений по phone#%s, "
             "требуется уточнение max_user_id",
             len(rows), digest,

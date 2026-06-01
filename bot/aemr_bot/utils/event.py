@@ -14,6 +14,8 @@
 import logging
 from typing import Any
 
+from aemr_bot.config import settings
+
 log = logging.getLogger(__name__)
 
 
@@ -67,9 +69,6 @@ def is_admin_chat(event: Any) -> bool:
     единственный, чтобы случайное расхождение в условии не сломало одну из
     проверок незаметно.
     """
-    # Локальный импорт ради избежания circular dep utils.event ↔ config.
-    from aemr_bot.config import settings
-
     return settings.admin_group_id is not None and get_chat_id(event) == settings.admin_group_id
 
 

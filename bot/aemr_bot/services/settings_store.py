@@ -1,18 +1,25 @@
 import asyncio
 import html
 import json
+import logging
 import re
 import unicodedata
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
 
+from sqlalchemy import func as sa_func
 from sqlalchemy import select
+from sqlalchemy import select as sa_select
+from sqlalchemy import update as sa_update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import Setting
+
+log = logging.getLogger(__name__)
 
 # SEC #4: whitelist хостов для URL-настроек. Operator-facing botов
 # (citizens click trusted govbot link) — должны вести только на
@@ -626,8 +633,7 @@ async def get_text_with_fallback(
         # programming bug в нашем коде, должен взлететь с traceback,
         # не маскироваться под «БД молчит». Логируем как WARNING —
         # частая нештатная ситуация заслуживает внимания.
-        import logging as _logging
-        _logging.getLogger(__name__).warning(
+        log.warning(
             "get_text_with_fallback: fallback because get(%r) raised %s",
             key, type(exc).__name__,
         )
@@ -649,8 +655,7 @@ async def get_text_with_fallback(
         is_valid, reason = validate(key, raw)
         if is_valid:
             return sanitize_settings_text(raw)
-        import logging as _logging
-        _logging.getLogger(__name__).warning(
+        log.warning(
             "get_text_with_fallback: БД-значение для %r не проходит "
             "SCHEMA-validate (%s) — отдаём hardcoded fallback. "
             "IT-оператору рекомендуется обновить настройку через UI.",
@@ -678,7 +683,6 @@ async def set_value(session: AsyncSession, key: str, value: Any) -> None:
     `synced_at` остаётся NULL (default) → ключ dirty с момента
     появления.
     """
-    from sqlalchemy import func as sa_func
 
     stmt = (
         pg_insert(Setting)
@@ -750,8 +754,6 @@ async def mark_synced(
     """Проставить synced_at = now() для ключей из списка (или для всех
     SYNCED_KEYS, если keys=None). Вызывается после успешного создания
     PR. Возвращает количество обновлённых строк."""
-    from datetime import datetime, timezone
-    from sqlalchemy import update as sa_update
 
     target_keys = list(keys) if keys is not None else list(SYNCED_KEYS)
     now = datetime.now(timezone.utc)
@@ -820,8 +822,6 @@ async def seed_if_empty(session: AsyncSession) -> None:
 
     newly_seeded: list[str] = []
     repaired: list[str] = []
-    import logging as _logging
-    _log = _logging.getLogger(__name__)
 
     # Legacy auto-strip (2026-05-27): C1-hardening снят, антифишинг
     # переехал в кнопку «🛡️ Защита от мошенников». Но IT мог сохранить
@@ -843,7 +843,7 @@ async def seed_if_empty(session: AsyncSession) -> None:
         and isinstance(seed_pairs["welcome_text"], str)
         and legacy_marker not in seed_pairs["welcome_text"]
     ):
-        _log.warning(
+        log.warning(
             "seed_if_empty: legacy welcome_text с C1-блоком обнаружен в БД — "
             "перезаписываем актуальным seed/welcome.md (C1 снят 2026-05-27, "
             "антифишинг живёт в кнопке «🛡️ Защита от мошенников»)."
@@ -872,13 +872,13 @@ async def seed_if_empty(session: AsyncSession) -> None:
         # неполным seed-файлом.
         seed_is_valid, seed_reason = validate(k, v)
         if not seed_is_valid:
-            _log.error(
+            log.error(
                 "seed_if_empty: ключ %r невалиден в БД (%s) И в seed-файле "
                 "тоже (%s) — не трогаем. Требуется ручная правка через UI.",
                 k, reason, seed_reason,
             )
             continue
-        _log.warning(
+        log.warning(
             "seed_if_empty: repair ключа %r — БД-значение не проходит "
             "validate (%s), перезаписываем актуальным seed-значением.",
             k, reason,
@@ -923,7 +923,6 @@ async def seed_if_empty(session: AsyncSession) -> None:
         and k in seed_pairs
     ]
     if backfill_candidates:
-        from sqlalchemy import select as sa_select
         rows = await session.execute(
             sa_select(Setting.key).where(
                 Setting.key.in_(backfill_candidates),
@@ -939,7 +938,7 @@ async def seed_if_empty(session: AsyncSession) -> None:
             if _values_equivalent(db_value, seed_value):
                 legacy_at_baseline.append(key)
         if legacy_at_baseline:
-            _log.info(
+            log.info(
                 "seed_if_empty: backfill synced_at для %d legacy ключей "
                 "(миграция 0013 + value совпадает с seed-baseline): %s",
                 len(legacy_at_baseline), legacy_at_baseline,
