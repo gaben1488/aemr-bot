@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -76,5 +76,10 @@ async def test_mark_typing_with_none_bot_is_noop() -> None:
     from aemr_bot.utils.typing_indicator import mark_typing
 
     event = SimpleNamespace(bot=None, get_ids=lambda: (555, 7))
-    # Не должно бросить.
-    await mark_typing(event)
+    # bot is None → ранний выход ДО резолва chat_id: get_chat_id (его
+    # ленивый импорт берётся из aemr_bot.utils.event) не дёргается,
+    # ничего не отправляется, наружу не бросает.
+    with patch("aemr_bot.utils.event.get_chat_id") as get_chat_id:
+        result = await mark_typing(event)
+    assert result is None
+    get_chat_id.assert_not_called()

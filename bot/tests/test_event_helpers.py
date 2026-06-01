@@ -4,6 +4,7 @@ MAX-events могут приходить в нескольких формах: U
 MessageCallback, голый Message. Хелперы должны работать для всех."""
 from __future__ import annotations
 
+import logging
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -234,18 +235,24 @@ class TestSendOrEditScreen:
 
 
 @pytest.mark.asyncio
-async def test_ack_callback_swallows_exceptions() -> None:
-    """ack_callback не должен пропустить exception от bot.answer_on_callback —
+async def test_ack_callback_swallows_exceptions(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """ack_callback не должен пропустить exception от event.ack —
     иначе любая ошибка MAX-API сломает обработку callback'а."""
     from aemr_bot.utils.event import ack_callback
 
-    class _FailingBot:
-        async def answer_on_callback(self, **_: object) -> None:
-            raise RuntimeError("network error")
+    ack = AsyncMock(side_effect=RuntimeError("network error"))
+    event = SimpleNamespace(ack=ack)
+    with caplog.at_level(logging.DEBUG, logger="aemr_bot.utils.event"):
+        result = await ack_callback(event, "готово")
 
-    event = SimpleNamespace(
-        bot=_FailingBot(),
-        callback=SimpleNamespace(callback_id="cb-123"),
+    # Дошли до реального event.ack (а не вышли раньше по callable-guard),
+    # исключение проглочено и не пробросилось наружу, в debug-лог ушла
+    # запись о неудаче.
+    assert result is None
+    ack.assert_awaited_once_with(notification="готово")
+    assert any(
+        "не удалось подтвердить callback" in rec.message
+        for rec in caplog.records
     )
-    # Должно проглотить exception
-    await ack_callback(event)

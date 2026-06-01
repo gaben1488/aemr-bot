@@ -272,7 +272,7 @@ def extract_contact_name(message: Any) -> str | None:
                 if val:
                     return str(val).strip() or None
 
-        # Dict-fallback
+        # Запасной разбор словаря
         if isinstance(payload, dict):
             mi = payload.get("max_info") or {}
             if isinstance(mi, dict):

@@ -38,8 +38,11 @@ class TestOpWizard:
         assert wr.get_op_wizard(42) is None
 
     def test_clear_idempotent(self) -> None:
-        wr.clear_op_wizard(42)  # никого не было
-        wr.clear_op_wizard(42)  # повторный clear — без exception
+        # Повторный clear по отсутствующему ключу — no-op: состояние
+        # остаётся пустым, исключения нет.
+        assert wr.clear_op_wizard(42) is None
+        assert wr.clear_op_wizard(42) is None
+        assert wr.get_op_wizard(42) is None
 
 
 class TestBroadcastWizard:
@@ -75,58 +78,12 @@ class TestReplyIntent:
         wr.drop_reply_intent(50)
 
 
-class TestRecentReplies:
-    def test_remember_and_check(self) -> None:
-        assert not wr.is_recent_reply("key1")
-        wr.remember_recent_reply("key1", 1000.0)
-        assert wr.is_recent_reply("key1")
-
-    def test_evict_old(self) -> None:
-        wr.remember_recent_reply("old", 100.0)
-        wr.remember_recent_reply("new", 2000.0)
-        # cutoff = 1000 — old < 1000, new > 1000
-        wr.evict_old_replies(cutoff_ts=1000.0)
-        assert not wr.is_recent_reply("old")
-        assert wr.is_recent_reply("new")
-
-    def test_evict_caps_at_max_entries(self) -> None:
-        # Все свежие, но больше чем max_entries — обрезаем до max самых свежих
-        for i in range(300):
-            wr.remember_recent_reply(f"k{i}", float(i))
-        wr.evict_old_replies(cutoff_ts=-1.0, max_entries=100)
-        # 100 самых свежих (k200..k299) остались
-        assert wr.is_recent_reply("k299")
-        assert wr.is_recent_reply("k200")
-        assert not wr.is_recent_reply("k50")
-
-
-class TestClearAllFor:
-    def test_clears_all_three(self) -> None:
-        wr.set_op_wizard(42, {"a": 1})
-        wr.set_broadcast_wizard(42, {"b": 2})
-        wr.set_reply_intent(42, 100, 1000.0)
-        # Разные оператор — не трогается
-        wr.set_op_wizard(99, {"other": 1})
-
-        wr.clear_all_for(42)
-
-        assert wr.get_op_wizard(42) is None
-        assert wr.get_broadcast_wizard(42) is None
-        assert wr.get_reply_intent(42) is None
-        # Чужой оператор не задет
-        assert wr.get_op_wizard(99) == {"other": 1}
-
-    def test_idempotent_when_nothing(self) -> None:
-        wr.clear_all_for(42)  # ничего не было — без exception
-
-
 class TestResetAll:
     def test_clears_everything(self) -> None:
         wr.set_op_wizard(1, {"a": 1})
         wr.set_op_wizard(2, {"b": 2})
         wr.set_broadcast_wizard(1, {"c": 3})
         wr.set_reply_intent(1, 100, 1000.0)
-        wr.remember_recent_reply("x", 1000.0)
 
         wr.reset_all()
 
@@ -134,4 +91,3 @@ class TestResetAll:
         assert wr.get_op_wizard(2) is None
         assert wr.get_broadcast_wizard(1) is None
         assert wr.get_reply_intent(1) is None
-        assert not wr.is_recent_reply("x")

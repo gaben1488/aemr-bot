@@ -96,9 +96,14 @@ class TestDropExpiredWizards:
         mod._wizards.clear()
 
     def test_empty_is_noop(self) -> None:
+        from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _drop_expired_wizards
 
-        _drop_expired_wizards()  # не падает на пустом dict
+        # Пустой dict → no-op без побочек: чистка ничего не добавляет и
+        # не падает.
+        result = _drop_expired_wizards()
+        assert result is None
+        assert mod._wizards == {}
 
     def test_expired_removed(self) -> None:
         from aemr_bot.handlers import broadcast_wizard as mod
@@ -402,9 +407,14 @@ class TestHandleConfirmBase:
         from aemr_bot.handlers import broadcast_wizard as mod
 
         event = make_event(user_id=42)
-        with patch.object(mod, "get_user_id", return_value=None):
-            await mod._handle_confirm(event)
-        # Ничего критичного не упало.
+        with patch.object(mod, "get_user_id", return_value=None), \
+             patch.object(mod, "ack_callback", AsyncMock()) as ack:
+            result = await mod._handle_confirm(event)
+        # Нет actor_id → выходим до ack и до любых побочек: реестр
+        # wizard'ов не тронут, подтверждение не отправлено.
+        assert result is None
+        ack.assert_not_called()
+        assert mod._wizards == {}
 
     @pytest.mark.asyncio
     async def test_no_wizard_acks_closed(self) -> None:

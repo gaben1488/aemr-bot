@@ -66,7 +66,10 @@ class TestRotateBackups:
         assert remaining == ["aemr-3.sql", "aemr-4.sql", "aemr-5.sql"]
 
     def test_no_files_no_op(self, tmp_path: Path) -> None:
-        _rotate_backups(tmp_path, keep=3, suffix=".sql")  # без exception
+        # Пустой каталог → no-op: ничего не создаётся и не падает.
+        result = _rotate_backups(tmp_path, keep=3, suffix=".sql")
+        assert result is None
+        assert list(tmp_path.iterdir()) == []
 
     def test_fewer_than_keep_no_delete(self, tmp_path: Path) -> None:
         for name in ["aemr-1.sql", "aemr-2.sql"]:

@@ -30,7 +30,7 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import users as users_service
 from aemr_bot.services.admin_events import _mask_phone
-from aemr_bot.utils.event import is_admin_chat
+from aemr_bot.utils.event import get_user_id, is_admin_chat
 
 from aemr_bot import texts
 
@@ -109,8 +109,15 @@ async def run_find_resident(event, query: str) -> None:
     """
     if not is_admin_chat(event):
         return
-    operator = await ensure_operator(event)
-    if operator is None:
+    # `ensure_operator` по контракту (handlers/_auth.py) возвращает bool:
+    # True — автор события активный оператор в админ-группе. Неавторизованный
+    # — тихий отбой (как у всех 15 прочих операторских хендлеров). Идентичность
+    # оператора для audit-log берём из самого события (`get_user_id`), а не из
+    # возвращаемого значения — оно булево, а не объект Operator.
+    if not await ensure_operator(event):
+        return
+    operator_max_user_id = get_user_id(event)
+    if operator_max_user_id is None:
         return
 
     if not query or not query.strip():
@@ -150,7 +157,7 @@ async def run_find_resident(event, query: str) -> None:
                 # Audit: фиксируем попытку поиска независимо от результата.
                 await ops_svc.write_audit(
                     session,
-                    operator_max_user_id=operator.max_user_id,
+                    operator_max_user_id=operator_max_user_id,
                     action="resident_search_not_found",
                     target=audit_target,
                     details={"kind": kind},
@@ -169,7 +176,7 @@ async def run_find_resident(event, query: str) -> None:
         if user is None:
             await ops_svc.write_audit(
                 session,
-                operator_max_user_id=operator.max_user_id,
+                operator_max_user_id=operator_max_user_id,
                 action="resident_search_not_found",
                 target=audit_target,
                 details={"kind": kind},
@@ -185,7 +192,7 @@ async def run_find_resident(event, query: str) -> None:
         # Found. Audit + расчёт последнего обращения.
         await ops_svc.write_audit(
             session,
-            operator_max_user_id=operator.max_user_id,
+            operator_max_user_id=operator_max_user_id,
             action="resident_search_found",
             target=audit_target,
             details={
