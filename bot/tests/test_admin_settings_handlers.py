@@ -476,7 +476,11 @@ class TestQuietHoursWizard:
 
     @pytest.mark.asyncio
     async def test_show_quiet_card_renders_window(self) -> None:
-        from aemr_bot.handlers import admin_settings as mod
+        # `_show_quiet_card` живёт в подмодуле admin_settings_quiet —
+        # патчим session_scope/settings_store/send_or_edit_screen на нём
+        # (урок PR #139: фасадный re-export не перехватывается patch'ем
+        # на старом namespace).
+        from aemr_bot.handlers import admin_settings_quiet as mod
 
         event = make_event()
 
@@ -504,7 +508,9 @@ class TestQuietHoursWizard:
 
     @pytest.mark.asyncio
     async def test_show_quiet_card_disabled_status(self) -> None:
-        from aemr_bot.handlers import admin_settings as mod
+        # См. test_show_quiet_card_renders_window — патчим на подмодуле
+        # admin_settings_quiet, где живёт `_show_quiet_card`.
+        from aemr_bot.handlers import admin_settings_quiet as mod
 
         event = make_event()
 
@@ -528,7 +534,10 @@ class TestQuietHoursWizard:
 
     @pytest.mark.asyncio
     async def test_toggle_quiet_flips_value(self) -> None:
-        from aemr_bot.handlers import admin_settings as mod
+        # `_toggle_quiet` живёт в admin_settings_quiet — патчим
+        # session_scope/settings_store и внутрисмодульный `_show_quiet_card`
+        # на нём (урок PR #139), иначе real session_scope утечёт в БД.
+        from aemr_bot.handlers import admin_settings_quiet as mod
 
         event = make_event()
 
@@ -553,11 +562,15 @@ class TestQuietHoursWizard:
 
     @pytest.mark.asyncio
     async def test_start_quiet_hour_intent_start(self) -> None:
+        # `_start_quiet_hour_intent` и его `send_or_edit_screen` живут в
+        # admin_settings_quiet — патчим на нём (урок PR #139). Сам intent
+        # пишется в общий `_edit_intents` (shared), читаем через фасад.
         from aemr_bot.handlers import admin_settings as mod
+        from aemr_bot.handlers import admin_settings_quiet as qmod
 
         event = make_event()
-        with patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
-            await mod._start_quiet_hour_intent(event, 42, which="start")
+        with patch.object(qmod, "send_or_edit_screen", AsyncMock()) as send:
+            await qmod._start_quiet_hour_intent(event, 42, which="start")
         intent = mod._intent_get(42)
         assert intent is not None
         assert intent["key"] == "admin_quiet_hours_start"
@@ -570,10 +583,11 @@ class TestQuietHoursWizard:
     @pytest.mark.asyncio
     async def test_start_quiet_hour_intent_end(self) -> None:
         from aemr_bot.handlers import admin_settings as mod
+        from aemr_bot.handlers import admin_settings_quiet as qmod
 
         event = make_event()
-        with patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
-            await mod._start_quiet_hour_intent(event, 42, which="end")
+        with patch.object(qmod, "send_or_edit_screen", AsyncMock()) as send:
+            await qmod._start_quiet_hour_intent(event, 42, which="end")
         intent = mod._intent_get(42)
         assert intent["which"] == "end"
         assert intent["key"] == "admin_quiet_hours_end"
@@ -620,7 +634,11 @@ class TestQuietHoursWizard:
 
     @pytest.mark.asyncio
     async def test_apply_quiet_hour_edit_valid_value_persists(self) -> None:
-        from aemr_bot.handlers import admin_settings as mod
+        # `_apply_quiet_hour_edit` живёт в admin_settings_quiet; патчим
+        # session_scope/settings_store/ops_svc и внутрисмодульный вызов
+        # `_show_quiet_card` на нём (урок PR #139 — фасадный re-export не
+        # перехватывается patch'ем по старому namespace).
+        from aemr_bot.handlers import admin_settings_quiet as mod
 
         event = make_event()
         with patch.object(mod, "session_scope") as scope, \
