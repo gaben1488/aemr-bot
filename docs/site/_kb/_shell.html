@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>База знаний · Обратная связь Администрации Елизовского МО</title>
+<meta name="description" content="Полная база знаний чат-бота обратной связи Администрации Елизовского муниципального округа в мессенджере MAX: для жителя, оператора, администратора, разработчика. Концепция, безопасность, справочник, правовая информация.">
+<style>
+/* =========================================================================
+   Единая база знаний — самодостаточный артефакт. Без внешних шрифтов и
+   библиотек, работает офлайн. Тёплая доступная тема, читаемо новичку.
+   ========================================================================= */
+:root{
+  --paper:oklch(0.985 0.004 85); --raised:oklch(0.997 0.003 85); --sunken:oklch(0.955 0.006 80);
+  --ink:oklch(0.255 0.012 70); --ink-soft:oklch(0.435 0.012 70); --ink-faint:oklch(0.515 0.011 70);
+  --pine:oklch(0.46 0.062 168); --pine-deep:oklch(0.38 0.060 168); --pine-tint:oklch(0.95 0.022 168); --pine-line:oklch(0.86 0.030 168);
+  --ochre:oklch(0.70 0.090 72); --ochre-tint:oklch(0.962 0.034 75);
+  --danger:oklch(0.52 0.150 27); --danger-tint:oklch(0.955 0.030 27);
+  --warn:oklch(0.60 0.110 65); --warn-tint:oklch(0.962 0.034 75); --ok:oklch(0.52 0.090 150);
+  --line:oklch(0.90 0.006 80);
+  --font-display:Georgia,"Iowan Old Style","Times New Roman",serif;
+  --font-text:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-mono:ui-monospace,"SF Mono","Cascadia Code",Consolas,monospace;
+  --radius:13px; --hit:oklch(0.93 0.04 95);
+}
+@media (prefers-color-scheme:dark){:root{
+  --paper:oklch(0.205 0.008 70); --raised:oklch(0.245 0.009 70); --sunken:oklch(0.175 0.008 70);
+  --ink:oklch(0.93 0.008 80); --ink-soft:oklch(0.78 0.008 80); --ink-faint:oklch(0.705 0.009 80);
+  --pine:oklch(0.74 0.075 168); --pine-deep:oklch(0.82 0.070 168); --pine-tint:oklch(0.30 0.035 168); --pine-line:oklch(0.40 0.040 168);
+  --ochre:oklch(0.80 0.080 75); --ochre-tint:oklch(0.30 0.035 75);
+  --danger:oklch(0.74 0.130 27); --danger-tint:oklch(0.30 0.045 27);
+  --warn:oklch(0.80 0.090 70); --warn-tint:oklch(0.30 0.040 70); --ok:oklch(0.72 0.080 150);
+  --line:oklch(0.32 0.010 80); --hit:oklch(0.45 0.08 95);
+}}
+*,*::before,*::after{box-sizing:border-box}
+html{font-size:18px;scroll-behavior:smooth}
+@media(min-width:60rem){html{font-size:19px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-text);line-height:1.62;-webkit-font-smoothing:antialiased}
+.skip{position:absolute;left:-9999px;top:0;background:var(--pine);color:var(--raised);padding:.7rem 1.2rem;border-radius:0 0 var(--radius) 0;z-index:100;font-weight:600}
+.skip:focus{left:0}
+.skip:focus-visible{outline:3px solid var(--ochre);outline-offset:2px}
+/* доступно скринридеру, скрыто визуально */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* --- Каркас: боковая навигация + контент --- */
+.layout{display:grid;grid-template-columns:1fr;min-height:100vh}
+@media(min-width:62rem){.layout{grid-template-columns:19rem minmax(0,1fr)}}
+.side{border-right:1px solid var(--line);background:var(--raised);position:sticky;top:0;height:auto}
+@media(min-width:62rem){.side{height:100vh;overflow-y:auto;display:flex;flex-direction:column}}
+.side__brand{display:flex;align-items:center;gap:.7rem;padding:1.1rem 1.2rem .8rem;font-weight:600;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
+.side__mark{width:2.2rem;height:2.2rem;flex:0 0 auto;border-radius:9px;background:var(--pine);color:var(--raised);display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:1.1rem}
+.side__brand small{display:block;color:var(--ink-faint);font-weight:400;font-size:.8rem;line-height:1.3}
+.side__search{padding:.9rem 1rem}
+.side__search input{width:100%;padding:.6rem .8rem;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);font:inherit;font-size:.95rem}
+.side__search input:focus{outline:2px solid var(--pine);outline-offset:-1px}
+.nav{list-style:none;margin:0;padding:0 .6rem 1.5rem;font-size:.96rem}
+.nav a{display:flex;align-items:center;gap:.6rem;color:var(--ink-soft);text-decoration:none;padding:.55rem .7rem;border-radius:9px;line-height:1.3}
+.nav a:hover{background:var(--pine-tint);color:var(--pine-deep)}
+.nav a[aria-current="true"]{background:var(--pine-tint);color:var(--pine-deep);font-weight:600}
+.nav__ico{width:1.2rem;height:1.2rem;flex:0 0 auto;color:var(--pine)}
+.side__foot{margin-top:auto;padding:1rem 1.2rem;border-top:1px solid var(--line);color:var(--ink-faint);font-size:.82rem}
+
+/* --- Контент --- */
+.main{min-width:0}
+.content{max-width:64rem;margin:0 auto;padding:2.4rem clamp(1.1rem,4vw,3rem) 6rem}
+.section{display:none}
+.section.is-active{display:block;animation:fade .18s ease-out}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.section>*{max-width:68ch}
+.section .wide,.section .table-wrap,.section .diagram{max-width:100%}
+
+/* типографика */
+h1,h2,h3,h4{font-family:var(--font-display);color:var(--ink);line-height:1.18;font-weight:700;text-wrap:balance}
+.section>h2:first-child{font-size:clamp(1.8rem,4.5vw,2.4rem);margin:0 0 1rem;letter-spacing:-.01em}
+h2{font-size:clamp(1.45rem,3.2vw,1.8rem);margin:2.6rem 0 .8rem;padding-top:.5rem}
+h3{font-size:1.32rem;margin:1.9rem 0 .5rem}
+h4{font-size:1.1rem;margin:1.4rem 0 .35rem}
+p{margin:0 0 1rem;overflow-wrap:break-word}
+li,dd,dt,figcaption,th,td{overflow-wrap:break-word}
+/* длинные технические идентификаторы и URL в тексте не ломают вёрстку */
+a,code,.kbd{overflow-wrap:anywhere}
+a{color:var(--pine-deep);text-underline-offset:.18em}
+a:hover{color:var(--pine)}
+strong{font-weight:650;color:var(--ink)}
+small,.meta{color:var(--ink-faint);font-size:.86rem}
+.lede{font-size:1.18rem;line-height:1.5;color:var(--ink-soft);margin:0 0 1.6rem}
+ul,ol{margin:0 0 1rem;padding-left:1.4rem}
+li{margin:.35rem 0}
+li::marker{color:var(--pine)}
+hr{border:none;border-top:1px solid var(--line);margin:2.2rem 0}
+.anchor{color:var(--pine-line);text-decoration:none;margin-left:.4rem;opacity:0;transition:opacity .15s;font-weight:400}
+h2:hover .anchor,h3:hover .anchor{opacity:1}
+
+/* плашки */
+.note{margin:1.4rem 0;padding:1rem 1.2rem;border:1px solid var(--pine-line);background:var(--pine-tint);border-radius:var(--radius)}
+.note>:last-child{margin-bottom:0}
+.note__label{font-weight:650;font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--pine-deep);margin:0 0 .4rem;display:flex;align-items:center;gap:.45rem}
+.note--caution{border-color:color-mix(in oklch,var(--warn),var(--line));background:var(--warn-tint)}
+.note--caution .note__label{color:oklch(0.46 0.10 65)}
+.note--danger{border-color:color-mix(in oklch,var(--danger),var(--line));background:var(--danger-tint)}
+.note--danger .note__label{color:var(--danger)}
+
+/* шаги */
+.steps{list-style:none;margin:1.5rem 0;padding:0;counter-reset:step}
+.steps>li{counter-increment:step;display:grid;grid-template-columns:2.5rem 1fr;gap:.2rem 1rem;padding:.2rem 0 1.3rem;align-items:start}
+.steps>li::before{content:counter(step);grid-row:1/3;font-family:var(--font-display);font-size:1.35rem;font-weight:700;color:var(--pine);width:2.5rem;height:2.5rem;border:2px solid var(--pine-line);border-radius:50%;display:grid;place-items:center}
+.steps>li>strong{display:block;margin-bottom:.1rem}
+.steps>li>:last-child{margin-bottom:0}
+
+/* команда/кнопка */
+.cmd{display:grid;grid-template-columns:minmax(8rem,auto) 1fr;gap:.3rem 1rem;align-items:baseline;margin:.6rem 0;padding:.6rem .85rem;background:var(--sunken);border-radius:10px}
+.cmd>code{background:transparent;padding:0;font-weight:600;color:var(--pine-deep);font-family:var(--font-mono);font-size:.92em;word-break:break-word}
+.cmd__what{color:var(--ink-soft)}
+@media(max-width:34rem){.cmd{grid-template-columns:1fr}}
+code.kbd{font-family:var(--font-mono);font-size:.9em;background:var(--sunken);padding:.12em .4em;border-radius:6px;color:var(--pine-deep);word-break:break-word}
+
+/* код */
+.code-wrap{position:relative;margin:1rem 0}
+pre{background:var(--sunken);border:1px solid var(--line);border-radius:var(--radius);padding:1rem 1.1rem;overflow-x:auto;font-family:var(--font-mono);font-size:.86rem;line-height:1.55;margin:0}
+pre code{background:none;padding:0;color:var(--ink);white-space:pre}
+pre[tabindex]:focus-visible{outline:3px solid var(--pine);outline-offset:2px}
+.copy-btn{position:absolute;top:.5rem;right:.5rem;padding:.3rem .7rem;background:var(--raised);border:1px solid var(--line);border-radius:7px;color:var(--ink-faint);cursor:pointer;font:inherit;font-size:.78rem}
+.copy-btn:hover{color:var(--pine);border-color:var(--pine-line)}
+.copy-btn.copied{color:var(--ok);border-color:var(--ok)}
+
+/* таблицы */
+.table-wrap{overflow-x:auto;margin:1.4rem 0;-webkit-overflow-scrolling:touch}
+/* скролл-бокс таблицы фокусируется с клавиатуры — стрелками можно прокрутить */
+.table-wrap[tabindex]:focus-visible{outline:3px solid var(--pine);outline-offset:2px;border-radius:6px}
+/* когда таблица шире экрана — тонкая рамка-намёк, что есть что прокрутить */
+.table-wrap.is-scrollable{border:1px solid var(--line);border-radius:10px}
+.scroll-hint{margin:-1rem 0 1.4rem;color:var(--ink-faint);font-size:.82rem;display:flex;align-items:center;gap:.35rem}
+.scroll-hint::before{content:"↔";font-weight:700;color:var(--pine);font-size:1.05em}
+table{border-collapse:collapse;width:100%;font-size:.94rem}
+th,td{text-align:left;padding:.65rem .85rem;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:var(--font-text);font-weight:650;color:var(--ink);border-bottom:2px solid var(--pine-line);white-space:nowrap}
+tbody tr:nth-child(even){background:color-mix(in oklch,var(--sunken),transparent 45%)}
+td code{white-space:nowrap}
+.tick{color:var(--ok);font-weight:700}.cross{color:var(--ink-faint)}
+
+/* чек-лист (для деплоя) */
+.check{list-style:none;padding-left:0}
+.check li{padding:.5rem 0;border-bottom:1px solid var(--line);display:flex;gap:.7rem;align-items:flex-start}
+.check li:last-child{border-bottom:0}
+.check input[type=checkbox]{margin-top:.35rem;accent-color:var(--pine);transform:scale(1.15);flex:0 0 auto}
+.check li.done{color:var(--ink-faint);text-decoration:line-through}
+
+/* поиск: подсветка + «нет результатов» */
+mark.hit{background:var(--hit);color:inherit;border-radius:3px;padding:0 .1em}
+.no-results{display:none;color:var(--ink-faint);padding:2rem 0;font-size:1.05rem}
+body.searching .nav a{opacity:.5}
+body.searching .nav a.has-hits{opacity:1;font-weight:600}
+
+/* бейджи достоверности факта */
+.badge{display:inline-flex;align-items:center;gap:.25em;font-family:var(--font-text);font-size:.72rem;font-weight:650;line-height:1;white-space:nowrap;padding:.28em .5em;border-radius:6px;border:1px solid;vertical-align:.08em;letter-spacing:.01em}
+.badge-code{background:var(--pine-tint);color:var(--pine-deep);border-color:var(--pine-line)}
+.badge-reg{background:var(--ochre-tint);color:oklch(0.50 0.10 65);border-color:color-mix(in oklch,var(--warn),var(--line))}
+.badge-legal{background:var(--danger-tint);color:var(--danger);border-color:color-mix(in oklch,var(--danger),var(--line))}
+.badge-off{background:var(--sunken);color:var(--ink-faint);border-color:var(--line)}
+@media(prefers-color-scheme:dark){.badge-reg{color:var(--warn)}.note--caution .note__label{color:var(--warn)}}
+
+/* легенда бейджей (вставляется на главной) */
+.legend{display:flex;flex-wrap:wrap;gap:.6rem 1.1rem;margin:1.2rem 0;padding:.9rem 1.1rem;background:var(--raised);border:1px solid var(--line);border-radius:var(--radius);font-size:.9rem}
+.legend>span{display:flex;align-items:center;gap:.45rem}
+
+/* блок «Следующие шаги» */
+.next{margin:2.4rem 0 .5rem;padding:1.1rem 1.2rem;background:var(--pine-tint);border:1px solid var(--pine-line);border-radius:var(--radius)}
+.next__label{font-family:var(--font-display);font-weight:700;color:var(--pine-deep);margin:0 0 .5rem;font-size:1.02rem}
+.next ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.4rem .9rem}
+.next li{margin:0}
+.next a{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .7rem;background:var(--raised);border:1px solid var(--pine-line);border-radius:8px;text-decoration:none;color:var(--pine-deep);font-size:.92rem;font-weight:600}
+.next a:hover{background:var(--paper);border-color:var(--pine)}
+
+/* карточки-входы по ролям (ключевой UX-вход на главной) */
+.role-cards{list-style:none;margin:1.6rem 0 .5rem;padding:0;display:grid;gap:.9rem;grid-template-columns:repeat(auto-fit,minmax(15.5rem,1fr))}
+.role-cards>li{margin:0}
+.role-card{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto auto;column-gap:.85rem;row-gap:.15rem;height:100%;padding:1.05rem 1.15rem;background:var(--raised);border:1px solid var(--line);border-radius:var(--radius);text-decoration:none;color:var(--ink);transition:border-color .15s,box-shadow .15s,transform .15s}
+.role-card:hover{border-color:var(--pine-line);box-shadow:0 6px 22px -14px color-mix(in oklch,var(--pine),transparent 35%);transform:translateY(-2px)}
+.role-card__ico{grid-row:1/3;align-self:start;width:2.6rem;height:2.6rem;flex:0 0 auto;display:grid;place-items:center;background:var(--pine-tint);color:var(--pine-deep);border:1px solid var(--pine-line);border-radius:11px;font-size:1.35rem;line-height:1}
+.role-card__title{font-family:var(--font-display);font-weight:700;font-size:1.16rem;color:var(--ink);line-height:1.2;margin:.1rem 0 0}
+.role-card__who{color:var(--ink-soft);font-size:.88rem;line-height:1.4}
+.role-card__do{grid-column:1/-1;margin:.55rem 0 0;padding-top:.55rem;border-top:1px solid var(--line);color:var(--ink-soft);font-size:.9rem;line-height:1.45}
+.role-card__do strong{color:var(--pine-deep);font-weight:650}
+.role-card__do code{white-space:nowrap}
+.role-card__go{margin-top:auto;grid-column:1/-1;display:inline-flex;align-items:center;gap:.4rem;color:var(--pine-deep);font-weight:650;font-size:.92rem;padding-top:.6rem}
+.role-card__go svg{transition:transform .15s}
+.role-card:hover .role-card__go svg{transform:translateX(3px)}
+.role-card:hover .role-card__go{color:var(--pine)}
+.role-card__arrow{flex:0 0 auto}
+.role-cards__extra{margin:1.1rem 0 .5rem;padding:.85rem 1.1rem;background:var(--sunken);border:1px solid var(--line);border-radius:var(--radius);font-size:.95rem;color:var(--ink-soft)}
+
+/* диаграммы (mermaid → запечённый inline SVG) */
+.diagram{position:relative;margin:1.6rem 0;padding:1.1rem 1rem;background:var(--raised);border:1px solid var(--line);border-radius:var(--radius);overflow:auto;max-height:80vh;text-align:center}
+.diagram svg{width:auto!important;max-width:none!important;height:auto;font-family:var(--font-text)!important}
+.diagram::-webkit-scrollbar{height:10px;width:10px}.diagram::-webkit-scrollbar-thumb{background:var(--pine-line);border-radius:5px}
+/* сырой исходник mermaid не должен быть отдельным скролл-боксом — прокрутку
+   берёт на себя родительский .diagram (он фокусируем с клавиатуры) */
+.diagram pre.mermaid{background:none;border:none;text-align:left;overflow:visible}
+.diagram__cap{display:block;margin-top:.5rem;color:var(--ink-faint);font-size:.84rem}
+/* скролл-бокс диаграммы доступен с клавиатуры */
+.diagram[tabindex]:focus-visible{outline:3px solid var(--pine);outline-offset:2px}
+/* ненавязчивая подсказка «прокрутите» — JS показывает её только когда диаграмма шире контейнера */
+.diagram__hint{position:sticky;left:100%;top:0;float:right;display:inline-flex;align-items:center;gap:.3rem;margin:-.35rem -.35rem 0 0;padding:.2rem .55rem;background:var(--pine-tint);color:var(--pine-deep);border:1px solid var(--pine-line);border-radius:999px;font-family:var(--font-text);font-size:.74rem;font-weight:650;white-space:nowrap;pointer-events:none;opacity:.92}
+.diagram:not(.is-scrollable) .diagram__hint{display:none}
+
+/* двухуровневая навигация: подписи групп */
+.nav__group{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);font-weight:700;padding:.95rem .7rem .25rem;margin:0}
+.nav__group:first-child{padding-top:.3rem}
+.nav li{margin:0}
+.nav__num{width:1.5rem;height:1.5rem;flex:0 0 auto;display:grid;place-items:center;background:var(--sunken);border-radius:6px;font-size:.78rem;font-weight:700;color:var(--pine);font-family:var(--font-display)}
+.nav a[aria-current="true"] .nav__num{background:var(--pine);color:var(--raised)}
+
+:focus-visible{outline:3px solid var(--pine);outline-offset:2px;border-radius:4px}
+/* фокус повторяет форму элемента — обводка не «разъезжается» с закруглением */
+.nav a:focus-visible,.next a:focus-visible,.role-card:focus-visible{border-radius:9px}
+.side__brand:focus-visible{outline-offset:-2px;border-radius:0}
+.copy-btn:focus-visible{border-radius:7px}
+.side__search input:focus-visible{outline:3px solid var(--pine);outline-offset:1px}
+a:focus-visible{outline-offset:1px}
+
+/* мобильное меню */
+.menu-toggle{display:none}
+.side__close{display:none}
+@media(max-width:62rem){
+  .menu-toggle{display:inline-flex;align-items:center;gap:.55rem;position:sticky;top:0;z-index:20;width:100%;border:none;border-bottom:1px solid var(--line);background:var(--raised);color:var(--ink);padding:.85rem 1.1rem;font:inherit;font-weight:600;cursor:pointer}
+  .menu-toggle__ico{color:var(--pine)}
+  .menu-toggle:hover{background:var(--pine-tint)}
+  .side{display:none}
+  .side.is-open{display:flex;flex-direction:column;position:fixed;inset:0;z-index:30;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  /* крестик закрытия в шапке открытой панели */
+  .side__close{display:grid;place-items:center;position:absolute;top:.7rem;right:.7rem;z-index:2;width:2.4rem;height:2.4rem;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink-soft);cursor:pointer}
+  .side__close:hover{color:var(--pine);border-color:var(--pine-line)}
+  .side__brand{padding-right:3.4rem}
+  body.menu-open{overflow:hidden}
+}
+
+@media print{
+  .side,.menu-toggle,.copy-btn{display:none!important}
+  .layout{grid-template-columns:1fr}
+  .section{display:block!important}
+  body{background:#fff;color:#000}
+  pre,table,.note{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Перейти к содержанию</a>
+
+<button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="sidebar" aria-label="Разделы базы знаний: открыть меню">
+  <svg class="menu-toggle__ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+  <span>Разделы</span>
+</button>
+
+<div class="layout">
+  <aside class="side" id="sidebar">
+    <button class="side__close" id="sideClose" type="button" aria-label="Закрыть меню">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <a class="side__brand" href="#obzor" data-go="obzor">
+      <span class="side__mark" aria-hidden="true">Е</span>
+      <span>База знаний<small>Обратная связь · Администрация Елизовского МО</small></span>
+    </a>
+    <div class="side__search">
+      <label class="sr-only" for="search">Поиск по базе знаний</label>
+      <input type="search" id="search" placeholder="Поиск по всей базе…" autocomplete="off" aria-label="Поиск по базе знаний" aria-describedby="searchHint">
+      <span id="searchHint" class="sr-only">Подсветит совпадения во всех разделах сразу. Минимум два символа.</span>
+    </div>
+    <nav class="side__nav" aria-label="Разделы базы знаний">
+    <ul class="nav" id="nav"><!--NAV--></ul>
+    </nav>
+    <div class="side__foot">
+      Чат-бот в мессенджере MAX. Открывается офлайн, без интернета.<br>
+      Печать раскрывает все разделы.
+    </div>
+  </aside>
+
+  <main class="main" id="content">
+    <div class="content">
+      <p class="no-results" id="noResults" role="status" aria-live="polite">По запросу ничего не найдено. Попробуйте другое слово.</p>
+<!--SECTIONS-->
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var sections=[].slice.call(document.querySelectorAll('.section'));
+  var search=document.getElementById('search');
+  var noResults=document.getElementById('noResults');
+  var sidebar=document.getElementById('sidebar');
+  var menuToggle=document.getElementById('menuToggle');
+  var sideClose=document.getElementById('sideClose');
+  var mq=window.matchMedia('(max-width:62rem)');
+
+  function show(id){
+    var found=false;
+    sections.forEach(function(s){var on=s.id===id;s.classList.toggle('is-active',on);if(on)found=true;});
+    if(!found&&sections[0]){sections[0].classList.add('is-active');id=sections[0].id;}
+    document.querySelectorAll('.nav a').forEach(function(a){
+      a.setAttribute('aria-current',a.getAttribute('data-go')===id?'true':'false');
+    });
+    if(mq.matches&&sidebar.classList.contains('is-open'))closeMenu(true);
+    document.getElementById('content').scrollTop=0;window.scrollTo(0,0);
+    if(typeof refreshScrollHints==='function')refreshScrollHints();
+  }
+  // переход по якорю: раздел ИЛИ под-якорь внутри раздела (с прокруткой к нему)
+  function go(target){
+    if(!target)return;
+    if(sections.some(function(s){return s.id===target;})){show(target);return;}
+    var el=document.getElementById(target);
+    if(el){var sec=el.closest('.section');if(sec){show(sec.id);try{el.scrollIntoView({block:'start',behavior:'auto'});}catch(e){}}}
+  }
+  // Делегированный роутер: любой элемент с data-go (навигация, бренд, карточки
+  // ролей на главной, ссылки в «Следующих шагах» и внутри текста) переключает
+  // раздел через SPA-логику, а не нативным якорным переходом по скрытой секции.
+  document.addEventListener('click',function(e){
+    var a=e.target.closest('[data-go]');if(!a)return;
+    var id=a.getAttribute('data-go');if(!id)return;
+    e.preventDefault();
+    history.replaceState(null,'','#'+id);go(id);
+  });
+  // стартовый раздел из hash (или под-якорь)
+  var start=(location.hash||'').replace('#','');
+  go(start);
+  if(!document.querySelector('.section.is-active')&&sections[0])show(sections[0].id);
+
+  // мобильное меню: открыть/закрыть с управлением фокусом и прокруткой
+  function openMenu(){
+    sidebar.classList.add('is-open');
+    if(menuToggle)menuToggle.setAttribute('aria-expanded','true');
+    document.body.classList.add('menu-open');
+    if(sideClose)try{sideClose.focus();}catch(e){}
+  }
+  function closeMenu(silent){
+    if(!sidebar.classList.contains('is-open'))return;
+    sidebar.classList.remove('is-open');
+    if(menuToggle)menuToggle.setAttribute('aria-expanded','false');
+    document.body.classList.remove('menu-open');
+    if(!silent&&menuToggle)try{menuToggle.focus();}catch(e){}
+  }
+  if(menuToggle){menuToggle.addEventListener('click',function(){
+    if(sidebar.classList.contains('is-open'))closeMenu();else openMenu();
+  });}
+  if(sideClose){sideClose.addEventListener('click',function(){closeMenu();});}
+  // Esc закрывает меню; клик по затемнённой подложке (вне навигации) — тоже
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&sidebar.classList.contains('is-open'))closeMenu();
+  });
+  sidebar.addEventListener('click',function(e){
+    if(e.target===sidebar)closeMenu();
+  });
+  // при переходе на широкий экран меню-оверлей сбрасывается
+  function onMQ(){if(!mq.matches)closeMenu(true);}
+  if(mq.addEventListener)mq.addEventListener('change',onMQ);else if(mq.addListener)mq.addListener(onMQ);
+
+  // копирование код-блоков
+  document.querySelectorAll('pre').forEach(function(pre){
+    if(pre.parentElement.classList.contains('code-wrap'))return;
+    if(pre.classList.contains('mermaid'))return;
+    var wrap=document.createElement('div');wrap.className='code-wrap';
+    pre.parentNode.insertBefore(wrap,pre);wrap.appendChild(pre);
+    var btn=document.createElement('button');btn.className='copy-btn';btn.type='button';btn.textContent='Копировать';
+    btn.addEventListener('click',function(){
+      navigator.clipboard.writeText(pre.innerText).then(function(){
+        btn.textContent='Скопировано';btn.classList.add('copied');
+        setTimeout(function(){btn.textContent='Копировать';btn.classList.remove('copied');},1400);
+      }).catch(function(){btn.textContent='Ошибка';});
+    });
+    wrap.appendChild(btn);
+  });
+
+  // Подсказки про горизонтальный скролл: диаграммы и таблицы, которые шире
+  // своего контейнера, получают деликатную плашку «прокрутите» и становятся
+  // фокусируемыми с клавиатуры (стрелками можно прокрутить). На узких экранах
+  // диаграммы, которые влезли целиком, остаются без лишнего шума.
+  var diagrams=[].slice.call(document.querySelectorAll('.diagram'));
+  diagrams.forEach(function(d){
+    if(d.querySelector('.diagram__hint'))return;
+    var hint=document.createElement('span');
+    hint.className='diagram__hint';hint.setAttribute('aria-hidden','true');
+    hint.innerHTML='&#8596;&nbsp;прокрутите';
+    d.insertBefore(hint,d.firstChild);
+  });
+  function refreshScrollHints(){
+    if(!diagrams)return; // вызвали из show() до инициализации — отработает позже
+    // порог: подсказку показываем, только когда скролл реально заметен,
+    // а не из-за округления в 1–2 пикселя
+    var TH=16;
+    diagrams.forEach(function(d){
+      if(d.offsetParent===null)return; // скрытая секция — пропускаем
+      var overX=d.scrollWidth-d.clientWidth>TH;
+      var overY=d.scrollHeight-d.clientHeight>TH;
+      // подсказку «↔ прокрутите» показываем только при горизонтальном скролле
+      d.classList.toggle('is-scrollable',overX);
+      // фокусируемой делаем при любом скролле (по горизонтали ИЛИ вертикали),
+      // иначе клавиатурой контент диаграммы не прокрутить
+      if(overX||overY){
+        d.setAttribute('tabindex','0');
+        if(!d.getAttribute('role'))d.setAttribute('role','group');
+        if(!d.getAttribute('aria-label'))d.setAttribute('aria-label','Диаграмма, прокручивается'+(overX?' по горизонтали':' по вертикали'));
+      }else{d.removeAttribute('tabindex');}
+    });
+    document.querySelectorAll('.table-wrap').forEach(function(t){
+      if(t.offsetParent===null)return;
+      var over=t.scrollWidth-t.clientWidth>TH;
+      t.classList.toggle('is-scrollable',over);
+      var hint=t.nextElementSibling&&t.nextElementSibling.classList.contains('scroll-hint')?t.nextElementSibling:null;
+      if(over){
+        t.setAttribute('tabindex','0');if(!t.getAttribute('role'))t.setAttribute('role','region');if(!t.getAttribute('aria-label'))t.setAttribute('aria-label','Таблица, прокручивается по горизонтали');
+        if(!hint){hint=document.createElement('p');hint.className='scroll-hint';hint.setAttribute('aria-hidden','true');hint.textContent='прокрутите таблицу вбок';t.parentNode.insertBefore(hint,t.nextSibling);}
+      }else{
+        t.removeAttribute('tabindex');
+        if(hint)hint.remove();
+      }
+    });
+    // код-блоки с горизонтальным скроллом — тоже доступны с клавиатуры.
+    // порог 1px: даже небольшой скролл кода реален, а фокус не создаёт
+    // визуального шума (проявляется лишь при переходе с клавиатуры)
+    document.querySelectorAll('pre').forEach(function(pre){
+      if(pre.offsetParent===null||pre.classList.contains('mermaid'))return;
+      var over=pre.scrollWidth-pre.clientWidth>1;
+      if(over){
+        pre.setAttribute('tabindex','0');
+        if(!pre.getAttribute('role'))pre.setAttribute('role','region');
+        if(!pre.getAttribute('aria-label'))pre.setAttribute('aria-label','Блок кода, прокручивается по горизонтали');
+      }else{pre.removeAttribute('tabindex');}
+    });
+  }
+  var rT;window.addEventListener('resize',function(){clearTimeout(rT);rT=setTimeout(refreshScrollHints,160);});
+  // первый расчёт после полной загрузки (шрифты/SVG влияют на ширину)
+  if(document.readyState==='complete')refreshScrollHints();
+  else window.addEventListener('load',refreshScrollHints);
+  refreshScrollHints();
+
+  // поиск с подсветкой по всем разделам
+  function clearHits(){
+    document.querySelectorAll('mark.hit').forEach(function(m){
+      var t=document.createTextNode(m.textContent);m.parentNode.replaceChild(t,m);
+    });
+    sections.forEach(function(s){s.normalize&&s.normalize();});
+  }
+  function walk(root,re){
+    var hits=0;var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:function(n){
+      if(!n.parentElement)return NodeFilter.FILTER_REJECT;
+      var tag=n.parentElement.tagName;if(tag==='SCRIPT'||tag==='STYLE')return NodeFilter.FILTER_REJECT;
+      if(n.parentElement.closest('.copy-btn'))return NodeFilter.FILTER_REJECT;
+      return n.nodeValue.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
+    }});
+    var nodes=[],nd;while(nd=w.nextNode())nodes.push(nd);
+    nodes.forEach(function(n){
+      if(!re.test(n.nodeValue)){re.lastIndex=0;return;}re.lastIndex=0;
+      var frag=document.createDocumentFragment(),last=0,m;
+      while((m=re.exec(n.nodeValue))!==null){
+        frag.appendChild(document.createTextNode(n.nodeValue.slice(last,m.index)));
+        var mk=document.createElement('mark');mk.className='hit';mk.textContent=m[0];frag.appendChild(mk);
+        last=m.index+m[0].length;hits++;
+      }
+      frag.appendChild(document.createTextNode(n.nodeValue.slice(last)));
+      n.parentNode.replaceChild(frag,n);
+    });
+    return hits;
+  }
+  var tmr;
+  search.addEventListener('input',function(){
+    clearTimeout(tmr);tmr=setTimeout(function(){
+      var q=search.value.trim();clearHits();
+      document.querySelectorAll('.nav a').forEach(function(a){a.classList.remove('has-hits');});
+      if(q.length<2){document.body.classList.remove('searching');sections.forEach(function(s){s.style.display='';});noResults.style.display='none';
+        show(document.querySelector('.nav a[aria-current="true"],.nav a').getAttribute('data-go'));return;}
+      document.body.classList.add('searching');
+      var re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+      var any=false;
+      sections.forEach(function(s){
+        var h=walk(s,re);var has=h>0;
+        s.style.display=has?'block':'none';s.classList.toggle('is-active',has);
+        if(has){any=true;var lnk=document.querySelector('.nav a[data-go="'+s.id+'"]');if(lnk)lnk.classList.add('has-hits');}
+      });
+      noResults.style.display=any?'none':'block';
+    },140);
+  });
+
+  // чек-лист: сохранение в браузере
+  var KEY='aemr-kb-checklist';
+  var state={};try{state=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  document.querySelectorAll('.check').forEach(function(ul){
+    var k=ul.id||'';ul.querySelectorAll('input[type=checkbox]').forEach(function(cb,i){
+      var ck=k+':'+i;
+      // подпись чекбокса для скринридера — из текста его пункта списка
+      if(!cb.getAttribute('aria-label')){
+        var li=cb.closest('li');
+        var txt=li?(li.textContent||'').replace(/\s+/g,' ').trim():'';
+        if(txt)cb.setAttribute('aria-label',txt.slice(0,140));
+      }
+      if(state[ck]){cb.checked=true;cb.closest('li').classList.add('done');}
+      cb.addEventListener('change',function(){
+        state[ck]=cb.checked;cb.closest('li').classList.toggle('done',cb.checked);
+        try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
