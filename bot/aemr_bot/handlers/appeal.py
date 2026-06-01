@@ -505,6 +505,72 @@ async def _dispatch_citizen_callback(
     return True
 
 
+async def _route_callback(event, max_user_id: int, payload: str) -> None:
+    """Единая точка диспетчеризации callback'ов через `callback_router`.
+
+    Раньше `on_callback` слепо прогонял payload через три диспетчера
+    подряд (`citizen → admin → menu`, first-True-wins). Теперь группу
+    выбирает `callback_router.route_for(payload).group` — единственный
+    реестр payload-маршрутов, — и payload идёт сразу в нужный диспетчер.
+    Это убирает «слепую цепочку»: admin-dispatch больше не вызывается
+    для жительских/меню-payload'ов, а реестр становится единственным
+    источником истины про границу citizen/admin (та же таблица, что
+    решает admin-chat gate через `is_admin_callback`).
+
+    **Почему сохраняется fallthrough в `menu`.** Группы реестра — это
+    грубая классификация admin/citizen (для security-гейта), а не
+    1:1 на диспетчер. Группа `CITIZEN_FLOW` намеренно покрывает и
+    воронку жителя (`menu:new_appeal`, `consent:*`, …), и навигацию
+    меню (`menu:main`, `settings:*`, `appeal:show:`, …): какой из двух
+    диспетчеров реально владеет payload'ом, решает уже их таблица
+    handler'ов. Поэтому для citizen-групп пробуем воронку, затем меню,
+    а для admin-групп — admin-dispatch, затем меню (admin может
+    «не узнать» гранулярный хвост вроде `op:bc:weird` — исторически
+    такой payload проваливался из admin-обёртки в меню). Это в точности
+    воспроизводит прежний порядок `citizen → admin → menu` для каждого
+    payload (доказано характеризационной сеткой 93 маршрутов).
+
+    Инвариант first-True-wins сохранён: первый диспетчер, вернувший
+    True, останавливает разбор; иначе управление спускается к
+    следующему звену.
+    """
+    from aemr_bot.handlers import menu as menu_handlers
+
+    group = callback_router.route_for(payload).group
+
+    if group in (
+        callback_router.CallbackGroup.CITIZEN_FLOW,
+        callback_router.CallbackGroup.GEO_FLOW,
+    ):
+        # Воронка жителя (menu:new_appeal, consent:*, cancel, addr:*,
+        # locality:, geo:*, topic:, appeal:submit) — её таблица
+        # _CITIZEN_EXACT / _CITIZEN_PREFIX. Не воронка (menu:main,
+        # settings:*, appeal:show:, appeals:page:, …) → меню.
+        if await _dispatch_citizen_callback(event, max_user_id, payload):
+            return
+        await menu_handlers.handle_callback(event, payload, max_user_id)
+        return
+
+    if group in (
+        callback_router.CallbackGroup.BROADCAST_ADMIN,
+        callback_router.CallbackGroup.OPERATOR_ADMIN,
+    ):
+        # Admin/operator callback'и (broadcast:* / op:*) — таблица в
+        # handlers/admin_callback_dispatch.py. Если admin-dispatch не
+        # распознал хвост (`op:`/`broadcast:`-обёртка с неизвестным
+        # суффиксом), исторически payload проваливался в меню —
+        # сохраняем fallthrough.
+        if await admin_callback_dispatch.dispatch_admin_callback(event, payload):
+            return
+        await menu_handlers.handle_callback(event, payload, max_user_id)
+        return
+
+    # MENU_FALLBACK — неизвестные реестру payload'ы. Обработчики
+    # меню/контактов/просмотра обращений (handle_callback сам вернёт
+    # False для совсем неизвестного payload — on_callback тихо завершится).
+    await menu_handlers.handle_callback(event, payload, max_user_id)
+
+
 def register(dp: Dispatcher) -> None:
     @dp.message_callback()
     async def on_callback(event: MessageCallback):
@@ -534,30 +600,13 @@ def register(dp: Dispatcher) -> None:
         if not await _ensure_funnel_callback_state(event, max_user_id, payload):
             return
 
-        # Коллбэки воронки жителя (menu:new_appeal, consent:*, cancel,
-        # addr:*, locality:, geo:*, topic:, appeal:submit) — единая
-        # dispatch-таблица (_dispatch_citizen_callback + _cb_* выше).
-        # Раньше здесь был ~195-строчный if-elif. dispatch вернёт True,
-        # если обработал; False — если payload не воронка-callback,
-        # тогда продолжаем fallthrough в admin-dispatch и menu.
-        if await _dispatch_citizen_callback(event, max_user_id, payload):
-            return
-
-        # Коллбэки мастера рассылок (на стороне оператора).
-        # Admin/operator callback'и (broadcast:* / op:*) — единая
-        # dispatch-таблица в handlers/admin_callback_dispatch.py.
-        # Раньше здесь был ~155-строчный if-elif. dispatch вернёт True,
-        # если обработал; False — если payload не admin-callback (или
-        # `op:`/`broadcast:` с неизвестным хвостом), тогда продолжаем
-        # обычный fallthrough в menu.handle_callback — поведение
-        # сохранено в точности (см. docstring диспетчера).
-        if await admin_callback_dispatch.dispatch_admin_callback(event, payload):
-            return
-
-        # Переход к обработчикам меню/контактов/просмотра обращений
-        from aemr_bot.handlers import menu as menu_handlers
-
-        await menu_handlers.handle_callback(event, payload, max_user_id)
+        # Единый путь диспетчеризации: группу payload'а определяет
+        # `callback_router.route_for(payload).group`, и `_route_callback`
+        # направляет его в нужный диспетчер (воронка жителя / admin /
+        # меню), сохраняя порядок citizen → admin → menu и first-True-wins.
+        # Раньше здесь были три слепых вызова диспетчеров подряд — см.
+        # docstring `_route_callback`.
+        await _route_callback(event, max_user_id, payload)
 
     @dp.message_created()
     async def on_message(event: MessageCreated):
@@ -577,13 +626,34 @@ def register(dp: Dispatcher) -> None:
                 broadcast as broadcast_handler,
             )
 
-            # /cancel в админ-чате — глобальный сброс
+            # /cancel в админ-чате — глобальный сброс. Должен гасить ВСЕ
+            # in-memory wizard/intent-хранилища, потребители которых
+            # перехватывают следующий текст оператора ниже в этом же
+            # on_message (broadcast-wizard, шаблоны рассылок, wizard
+            # операторов, intent правки настроек, intent поиска аудитории,
+            # черновик ответа). Иначе «сброшено» — ложь: оператор
+            # передумал, шлёт /cancel, но живой intent молча принимает
+            # следующее сообщение как значение настройки / имя шаблона /
+            # поисковый запрос.
             if text_body.strip().lower() in ("/cancel", "/cancel@aemo_chat_bot"):
+                from aemr_bot.handlers import (
+                    admin_audience,
+                    admin_settings,
+                    broadcast_templates as bcast_tmpl_cancel,
+                )
+
                 operator_id = get_user_id(event)
                 if operator_id is not None:
                     broadcast_handler._wizards.pop(operator_id, None)
                     admin_cmd_module._op_wizards.pop(operator_id, None)
                     op_reply.drop_reply_intent(operator_id)
+                    # Intent правки настроек (consumer handle_settings_edit_text).
+                    admin_settings._intent_drop(operator_id)
+                    # Wizard шаблонов рассылок (consumer handle_wizard_text).
+                    bcast_tmpl_cancel._wizards.pop(operator_id, None)
+                    # Intent поиска по аудитории (consumer
+                    # handle_audience_search_text).
+                    admin_audience._search_intents.pop(operator_id, None)
                 if event.bot is not None:
                     await event.bot.send_message(
                         chat_id=cfg.admin_group_id,

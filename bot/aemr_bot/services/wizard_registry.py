@@ -1,12 +1,27 @@
-"""Единое хранилище мутабельного in-memory состояния визардов и
-intent'ов оператора (op_wizard, broadcast_wizard, reply_intent,
-recent_replies). Публичный API: `set_op_wizard`, `get_op_wizard`,
-`clear_all_for(operator_id)`, `reset_all()` (тесты).
+"""Хранилище мутабельного in-memory состояния визардов и reply-intent'а
+оператора (op_wizard, broadcast_wizard, reply_intent).
 
 Не вносит логику, только хранение — бизнес-логика остаётся в handlers.
 
-Мотивация (рефакторинг SLF001, единая точка сброса при /cancel,
-testability): см. `docs/_meta/_archive/CODE_DECISIONS_LOG.md §5`.
+Фактический прод-контур (что реально читается вне тестов):
+- reply-intent: `set_reply_intent` / `get_reply_intent` / `drop_reply_intent`
+  — `handlers/operator_reply` (через wrapper-функции) и
+  `handlers/admin_appeal_ops`.
+- op/broadcast wizard persistence: `schedule_persist_op` /
+  `schedule_persist_broadcast` (вызываются из `admin_operators` при
+  set/clear), а `set_op_wizard` / `set_broadcast_wizard` + словари
+  `_op_wizards` / `_broadcast_wizards` наполняются на старте бота из БД
+  через `services/wizard_persist.hydrate_into_registry`.
+
+Глобальный сброс при `/cancel` живёт НЕ здесь: `handlers/appeal`
+явными pop'ами гасит каждое hand­ler-локальное хранилище (broadcast
+`_wizards`, op `_op_wizards`, reply-intent, settings `_edit_intents`,
+templates `_wizards`, audience `_search_intents`). Прежний агрегатор
+`clear_all_for` был мёртв и сломан-by-design (бил по чужим dict'ам) —
+удалён.
+
+Мотивация (рефакторинг SLF001, testability): см.
+`docs/_meta/_archive/CODE_DECISIONS_LOG.md §5`.
 """
 from __future__ import annotations
 
@@ -42,11 +57,6 @@ _broadcast_wizards: dict[int, dict[str, Any]] = {}
 #   - is_final=False — промежуточный ответ, обращение остаётся
 #     IN_PROGRESS. Для диалогов/уточнений (см. PR intermediate-reply).
 _reply_intent: dict[int, tuple[int, bool, float]] = {}
-
-# Дедуп недавно отправленных ответов оператора. Ключ: hash от
-# (appeal_id, normalized_text). Значение: timestamp. Защита от
-# мгновенного двойного нажатия «Ответить» с тем же текстом.
-_recent_replies: dict[str, float] = {}
 
 
 # ---- Public API: op_wizard ------------------------------------------------
@@ -108,44 +118,7 @@ def drop_reply_intent(operator_id: int) -> None:
     _reply_intent.pop(operator_id, None)
 
 
-# ---- Public API: recent replies (dedup) ----------------------------------
-
-
-def is_recent_reply(key: str) -> bool:
-    return key in _recent_replies
-
-
-def remember_recent_reply(key: str, ts: float) -> None:
-    _recent_replies[key] = ts
-
-
-def evict_old_replies(cutoff_ts: float, max_entries: int = 256) -> None:
-    """Очистить старые записи. Вызывается лениво из operator_reply
-    при каждом новом ответе. cutoff_ts — timestamp граница."""
-    # Удалить старые
-    for key in list(_recent_replies.keys()):
-        if _recent_replies[key] < cutoff_ts:
-            del _recent_replies[key]
-    # Если всё равно много — обрезать до max_entries (свежие)
-    if len(_recent_replies) > max_entries:
-        sorted_items = sorted(_recent_replies.items(), key=lambda kv: kv[1], reverse=True)
-        _recent_replies.clear()
-        _recent_replies.update(dict(sorted_items[:max_entries]))
-
-
 # ---- Public API: bulk operations -----------------------------------------
-
-
-def clear_all_for(operator_id: int) -> None:
-    """Глобальный сброс всех визардов и intent'ов оператора.
-
-    Вызывается из `/cancel` в админ-чате — оператор «потерялся» в
-    каком-то wizard'е и хочет начать с чистого листа. До этой функции
-    приходилось дёргать каждый dict отдельно через приватный доступ.
-    """
-    clear_op_wizard(operator_id)
-    clear_broadcast_wizard(operator_id)
-    drop_reply_intent(operator_id)
 
 
 def reset_all() -> None:
@@ -153,7 +126,6 @@ def reset_all() -> None:
     _op_wizards.clear()
     _broadcast_wizards.clear()
     _reply_intent.clear()
-    _recent_replies.clear()
 
 
 # ---- Persistence hooks (миграция 0011) -----------------------------------

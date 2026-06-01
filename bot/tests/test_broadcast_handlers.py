@@ -115,6 +115,7 @@ class TestStartWizard:
     async def test_no_user_id_returns(self) -> None:
         from aemr_bot.handlers import broadcast
 
+        broadcast._wizards.clear()
         event = SimpleNamespace(
             bot=MagicMock(),
             message=SimpleNamespace(sender=None, answer=AsyncMock()),
@@ -122,6 +123,11 @@ class TestStartWizard:
         with patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
                    AsyncMock(return_value=True)):
             await broadcast._start_wizard(event)
+
+        # Нет user_id → ранний выход: wizard не создан, prompt не
+        # отправлен (наружу ничего не утекает).
+        assert broadcast._wizards == {}
+        event.message.answer.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_starts_and_drops_other_wizards(self) -> None:
@@ -268,7 +274,13 @@ class TestHandleConfirm:
             bot=MagicMock(),
             message=SimpleNamespace(sender=None, answer=AsyncMock()),
         )
-        await broadcast._handle_confirm(event)
+        result = await broadcast._handle_confirm(event)
+
+        # Нет actor_id → выходим в самом начале: ни ack, ни ответ
+        # оператору, ничего не отправляется.
+        assert result is None
+        event.message.answer.assert_not_called()
+        event.bot.send_message.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_wrong_step_acks_with_message(self) -> None:
@@ -498,8 +510,15 @@ class TestHandleStop:
                    return_value=True), \
              patch("aemr_bot.handlers.broadcast._ensure_operator",
                    AsyncMock(return_value=False)), \
-             patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
+             patch("aemr_bot.handlers.broadcast.session_scope") as scope, \
+             patch("aemr_bot.handlers.broadcast.ack_callback",
+                   AsyncMock()) as ack:
             await broadcast._handle_stop(event, 99)
+
+        # Не оператор → тихий ack и ранний выход ДО session_scope:
+        # отмена рассылки в БД не запрашивается.
+        ack.assert_called_once()
+        scope.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_flipped(self) -> None:

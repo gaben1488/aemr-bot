@@ -58,15 +58,15 @@ _ZWSP = "​"
 # не в списке как отдельный TLD — но `someorg.gov.ru` всё равно
 # попадёт под match на `.ru`.
 _DEFANG_TLDS = (
-    # Cyrillic + CIS
+    # Кириллица и СНГ
     "ru", "su", "рф", "by", "kz", "ua", "uz", "tj", "kg", "am", "md",
-    # Common global
+    # Общемировые
     "com", "org", "net", "info", "biz", "edu", "gov", "mil",
     # Country (включая популярные shortener-домены `bit.ly`, `t.co`,
     # `goo.gl`, `youtu.be` — все часто используются в фишинге).
     "io", "co", "me", "cc", "tv", "ws", "tk", "ml", "ga",
     "ly", "gl", "be", "to", "im",
-    # Cheap/new (frequent phishing)
+    # Дешёвые/новые (частый фишинг)
     "xyz", "top", "club", "online", "site", "shop", "store",
     "win", "vip", "icu", "app", "dev",
     # IDN/punycode (SECURITY_REVIEW_2026-05-28 §A3). MAX-клиент

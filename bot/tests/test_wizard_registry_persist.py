@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager
+from unittest.mock import patch
 
 import pytest
 
@@ -31,12 +32,19 @@ class TestSpawnPersistOutsideLoop:
         """`schedule_persist_op` за пределами event loop — graceful
         no-op. Сюда попадают unit-тесты и импорт-сайд-эффекты."""
         wr.set_op_wizard(42, {"step": "awaiting_id"})
-        # Не должно быть exception.
-        wr.schedule_persist_op(42)
+        # Вне event loop фоновая задача persist НЕ спавнится (иначе
+        # RuntimeError), но и наружу ничего не бросается.
+        with patch.object(wr, "spawn_background_task") as spawn:
+            result = wr.schedule_persist_op(42)
+        assert result is None
+        spawn.assert_not_called()
 
     def test_schedule_persist_broadcast_outside_loop(self) -> None:
         wr.set_broadcast_wizard(42, {"step": "awaiting_text"})
-        wr.schedule_persist_broadcast(42)
+        with patch.object(wr, "spawn_background_task") as spawn:
+            result = wr.schedule_persist_broadcast(42)
+        assert result is None
+        spawn.assert_not_called()
 
 
 class TestSchedulePersistOpInsideLoop:

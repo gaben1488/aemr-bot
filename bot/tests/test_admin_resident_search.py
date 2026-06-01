@@ -175,24 +175,61 @@ class TestRunFindResident:
 
     @pytest.mark.asyncio
     async def test_non_operator_returns_silently(self) -> None:
+        """Неавторизованный (ensure_operator → False) — тихий отбой.
+
+        `ensure_operator` по контракту возвращает bool, поэтому гард —
+        `if not await ensure_operator(event): return`. Ни поиска, ни
+        ответа в чат: фича доступна только операторам.
+        """
         from aemr_bot.handlers import admin_resident_search as mod
 
         event = make_event()
+        find_by_max = AsyncMock()
         with patch.object(mod, "is_admin_chat", return_value=True), \
              patch.object(mod, "ensure_operator",
-                          AsyncMock(return_value=None)):
+                          AsyncMock(return_value=False)), \
+             patch.object(mod.users_service, "find_by_max_id", find_by_max):
             await mod.run_find_resident(event, "12345")
         event.bot.send_message.assert_not_called()
+        # До lookup'а жителя дело не дошло — отбой раньше.
+        find_by_max.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_authorized_operator_audits_with_event_user_id(self) -> None:
+        """Авторизованный оператор (ensure_operator → True) ищет жителя.
+
+        Регресс-гард F-A: до фикса гард был `operator = await
+        ensure_operator(...); if operator is None`, а затем
+        `operator.max_user_id` — на bool это AttributeError, фича падала
+        у всех. Теперь личность для audit берётся из самого события
+        (`get_user_id`). Проверяем, что поиск проходит и audit пишется
+        под id автора события (4242), а не под объект.
+        """
+        from aemr_bot.handlers import admin_resident_search as mod
+
+        event = make_event(user_id=4242)
+        with patch.object(mod, "is_admin_chat", return_value=True), \
+             patch.object(mod, "ensure_operator",
+                          AsyncMock(return_value=True)), \
+             patch.object(mod, "session_scope") as scope, \
+             patch.object(mod.users_service, "find_by_max_id",
+                          AsyncMock(return_value=None)), \
+             patch.object(mod.ops_svc, "write_audit",
+                          AsyncMock()) as audit:
+            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
+            scope.return_value.__aexit__ = AsyncMock(return_value=False)
+            await mod.run_find_resident(event, "12345")
+        audit.assert_awaited_once()
+        assert audit.await_args.kwargs["operator_max_user_id"] == 4242
 
     @pytest.mark.asyncio
     async def test_empty_query_shows_usage(self) -> None:
         from aemr_bot.handlers import admin_resident_search as mod
 
-        event = make_event()
-        operator = SimpleNamespace(max_user_id=999)
+        event = make_event(user_id=999)
         with patch.object(mod, "is_admin_chat", return_value=True), \
              patch.object(mod, "ensure_operator",
-                          AsyncMock(return_value=operator)):
+                          AsyncMock(return_value=True)):
             await mod.run_find_resident(event, "")
         event.bot.send_message.assert_awaited_once()
         kwargs = event.bot.send_message.await_args.kwargs
@@ -202,11 +239,10 @@ class TestRunFindResident:
     async def test_invalid_query_shows_usage(self) -> None:
         from aemr_bot.handlers import admin_resident_search as mod
 
-        event = make_event()
-        operator = SimpleNamespace(max_user_id=999)
+        event = make_event(user_id=999)
         with patch.object(mod, "is_admin_chat", return_value=True), \
              patch.object(mod, "ensure_operator",
-                          AsyncMock(return_value=operator)):
+                          AsyncMock(return_value=True)):
             await mod.run_find_resident(event, "abc")
         kwargs = event.bot.send_message.await_args.kwargs
         assert "Использование" in kwargs["text"]
@@ -215,8 +251,7 @@ class TestRunFindResident:
     async def test_max_user_id_found_renders_card(self) -> None:
         from aemr_bot.handlers import admin_resident_search as mod
 
-        event = make_event()
-        operator = SimpleNamespace(max_user_id=999)
+        event = make_event(user_id=999)
         user = SimpleNamespace(
             id=7,
             max_user_id=123456,
@@ -229,7 +264,7 @@ class TestRunFindResident:
         )
         with patch.object(mod, "is_admin_chat", return_value=True), \
              patch.object(mod, "ensure_operator",
-                          AsyncMock(return_value=operator)), \
+                          AsyncMock(return_value=True)), \
              patch.object(mod, "session_scope") as scope, \
              patch.object(mod.users_service, "find_by_max_id",
                           AsyncMock(return_value=user)), \
@@ -260,8 +295,7 @@ class TestRunFindResident:
     async def test_phone_found_renders_card_with_masked_phone(self) -> None:
         from aemr_bot.handlers import admin_resident_search as mod
 
-        event = make_event()
-        operator = SimpleNamespace(max_user_id=999)
+        event = make_event(user_id=999)
         user = SimpleNamespace(
             id=7,
             max_user_id=123456,
@@ -274,7 +308,7 @@ class TestRunFindResident:
         )
         with patch.object(mod, "is_admin_chat", return_value=True), \
              patch.object(mod, "ensure_operator",
-                          AsyncMock(return_value=operator)), \
+                          AsyncMock(return_value=True)), \
              patch.object(mod, "session_scope") as scope, \
              patch.object(mod.users_service, "find_by_phone",
                           AsyncMock(return_value=user)), \
@@ -295,11 +329,10 @@ class TestRunFindResident:
     async def test_not_found_audit_and_message(self) -> None:
         from aemr_bot.handlers import admin_resident_search as mod
 
-        event = make_event()
-        operator = SimpleNamespace(max_user_id=999)
+        event = make_event(user_id=999)
         with patch.object(mod, "is_admin_chat", return_value=True), \
              patch.object(mod, "ensure_operator",
-                          AsyncMock(return_value=operator)), \
+                          AsyncMock(return_value=True)), \
              patch.object(mod, "session_scope") as scope, \
              patch.object(mod.users_service, "find_by_max_id",
                           AsyncMock(return_value=None)), \
@@ -318,8 +351,7 @@ class TestRunFindResident:
     async def test_blocked_user_shows_blocked_line(self) -> None:
         from aemr_bot.handlers import admin_resident_search as mod
 
-        event = make_event()
-        operator = SimpleNamespace(max_user_id=999)
+        event = make_event(user_id=999)
         user = SimpleNamespace(
             id=7,
             max_user_id=42,
@@ -332,7 +364,7 @@ class TestRunFindResident:
         )
         with patch.object(mod, "is_admin_chat", return_value=True), \
              patch.object(mod, "ensure_operator",
-                          AsyncMock(return_value=operator)), \
+                          AsyncMock(return_value=True)), \
              patch.object(mod, "session_scope") as scope, \
              patch.object(mod.users_service, "find_by_max_id",
                           AsyncMock(return_value=user)), \

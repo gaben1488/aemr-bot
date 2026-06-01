@@ -127,8 +127,14 @@ class TestShowOpMenu:
                    AsyncMock(return_value=None)), \
              patch("aemr_bot.services.appeals.count_open",
                    AsyncMock(return_value=0)):
-            # Не должно бросить
-            await admin_panel.show_op_menu(event, pin=True)
+            # Не должно бросить, несмотря на сбой pin_message.
+            result = await admin_panel.show_op_menu(event, pin=True)
+
+        # Меню всё равно опубликовано, pin был предпринят и его падение
+        # проглочено (наружу исключение не ушло).
+        assert result is None
+        event.bot.send_message.assert_called_once()
+        event.bot.pin_message.assert_called_once()
 
 
 # --- run_open_tickets / run_diag / run_backup auth gates ---------------------

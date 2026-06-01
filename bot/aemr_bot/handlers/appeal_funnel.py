@@ -632,7 +632,11 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         )
         return
 
-    text = (text_body or "").strip()
+    # Лимит длины followup согласован с сутью обращения
+    # (on_awaiting_summary режет chunk[: cfg.summary_max_chars]). Без
+    # обрезки житель мог бы прислать мегабайтный текст в дополнение —
+    # raw в БД и в relay (DoS-storage класс). Усекаем единым лимитом.
+    text = (text_body or "").strip()[: cfg.summary_max_chars]
     attachments = collect_attachments(body)
     if not text and not attachments:
         await event.message.answer(

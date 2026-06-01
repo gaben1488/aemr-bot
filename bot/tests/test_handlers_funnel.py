@@ -184,13 +184,13 @@ class TestOnAwaitingName:
         ), patch(
             "aemr_bot.handlers.appeal_funnel.users_service.set_first_name",
             AsyncMock(),
-        ), patch(
+        ) as set_name, patch(
             "aemr_bot.handlers.appeal_funnel.ask_address_or_reuse",
             AsyncMock(return_value=False),
-        ), patch(
+        ) as ask_address, patch(
             "aemr_bot.handlers.appeal_funnel.ask_locality",
             AsyncMock(),
-        ), patch(
+        ) as ask_locality, patch(
             "aemr_bot.handlers.appeal_funnel.session_scope"
         ) as mock_scope:
             mock_scope.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
@@ -199,6 +199,14 @@ class TestOnAwaitingName:
             await appeal_funnel.on_awaiting_name(
                 event, body=None, text_body="...", max_user_id=42
             )
+
+        # «...» отброшено, имя взято из профиля MAX и сохранено, воронка
+        # двинулась дальше: спросили адрес, затем (адрес не переиспользован)
+        # населённый пункт. NAME_EMPTY житель не увидел.
+        assert set_name.await_args.args[1:] == (42, "Иван")
+        ask_address.assert_awaited_once()
+        ask_locality.assert_awaited_once()
+        event.message.answer.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_no_name_at_all_asks_again(self) -> None:

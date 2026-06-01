@@ -43,7 +43,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # 1) PDn-retention partial index.
+    # 1) Частичный индекс под retention ПДн.
     op.execute(
         "CREATE INDEX ix_users_pending_pdn_retention "
         "ON users (consent_revoked_at) "

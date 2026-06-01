@@ -9,6 +9,8 @@
 from maxapi.types import CallbackButton
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
+from aemr_bot.handlers import callback_payloads as cp
+
 
 def broadcast_unsubscribe_keyboard():
     """Inline-кнопка под каждым сообщением рассылки — отписка в одно нажатие."""
@@ -16,10 +18,10 @@ def broadcast_unsubscribe_keyboard():
     kb.row(
         CallbackButton(
             text="🔕 Отписаться от рассылки",
-            payload="broadcast:unsubscribe",
+            payload=cp.BROADCAST_UNSUBSCRIBE,
         )
     )
-    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
+    kb.row(CallbackButton(text="↩️ В меню", payload=cp.MENU_MAIN))
     return kb.as_markup()
 
 
@@ -32,10 +34,10 @@ def broadcast_confirm_keyboard():
     """
     kb = InlineKeyboardBuilder()
     kb.row(
-        CallbackButton(text="✅ Разослать", payload="broadcast:confirm"),
-        CallbackButton(text="✏️ Изменить текст", payload="broadcast:edit"),
+        CallbackButton(text="✅ Разослать", payload=cp.BROADCAST_CONFIRM),
+        CallbackButton(text="✏️ Изменить текст", payload=cp.BROADCAST_EDIT),
     )
-    kb.row(CallbackButton(text="❌ Отмена", payload="broadcast:abort"))
+    kb.row(CallbackButton(text="❌ Отмена", payload=cp.BROADCAST_ABORT))
     return kb.as_markup()
 
 
@@ -43,7 +45,7 @@ def broadcast_cancel_keyboard():
     """Кнопка отмены под промптом «введите текст рассылки». Чтобы оператор
     мог выйти из мастера в один тап вместо набора /cancel."""
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="❌ Отменить рассылку", payload="broadcast:abort"))
+    kb.row(CallbackButton(text="❌ Отменить рассылку", payload=cp.BROADCAST_ABORT))
     return kb.as_markup()
 
 
@@ -53,10 +55,10 @@ def broadcast_stop_keyboard(broadcast_id: int):
     kb.row(
         CallbackButton(
             text="⛔ Экстренно остановить",
-            payload=f"broadcast:stop:{broadcast_id}",
+            payload=cp.broadcast_stop(broadcast_id),
         )
     )
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -71,10 +73,10 @@ def broadcast_cooldown_keyboard(broadcast_id: int):
     kb.row(
         CallbackButton(
             text="❌ Отменить отправку",
-            payload=f"broadcast:cancel-cooldown:{broadcast_id}",
+            payload=cp.broadcast_cancel_cooldown(broadcast_id),
         )
     )
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -100,10 +102,10 @@ def broadcast_history_list_keyboard(items):
         kb.row(
             CallbackButton(
                 text=f"{mark} #{bc.id} · {bc.delivered_count}/{bc.subscriber_count_at_start}",
-                payload=f"op:bc:open:{bc.id}",
+                payload=cp.op_bc("open", bc.id),
             )
         )
-    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ Назад", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -113,17 +115,17 @@ def broadcast_history_card_keyboard(broadcast_id: int, *, has_failures: bool):
     kb.row(
         CallbackButton(
             text="📝 Создать на основе",
-            payload=f"op:bc:clone:{broadcast_id}",
+            payload=cp.op_bc("clone", broadcast_id),
         )
     )
     if has_failures:
         kb.row(
             CallbackButton(
                 text="👥 Не доставлено",
-                payload=f"op:bc:failed:{broadcast_id}",
+                payload=cp.op_bc("failed", broadcast_id),
             )
         )
-    kb.row(CallbackButton(text="↩️ К списку", payload="op:broadcast_list"))
+    kb.row(CallbackButton(text="↩️ К списку", payload=cp.OP_BROADCAST_LIST))
     return kb.as_markup()
 
 
@@ -133,10 +135,10 @@ def broadcast_failed_list_keyboard(broadcast_id: int):
     kb.row(
         CallbackButton(
             text="↩️ К рассылке",
-            payload=f"op:bc:open:{broadcast_id}",
+            payload=cp.op_bc("open", broadcast_id),
         )
     )
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -155,10 +157,10 @@ def broadcast_templates_list_keyboard(
     kb = InlineKeyboardBuilder()
     top_row: list = []
     if show_search:
-        top_row.append(CallbackButton(text="🔍 Найти", payload="op:tmpl:search"))
+        top_row.append(CallbackButton(text="🔍 Найти", payload=cp.op_tmpl("search")))
     if can_create:
         top_row.append(
-            CallbackButton(text="➕ Создать шаблон", payload="op:tmpl:new")
+            CallbackButton(text="➕ Создать шаблон", payload=cp.op_tmpl("new"))
         )
     if top_row:
         kb.row(*top_row)
@@ -174,10 +176,10 @@ def broadcast_templates_list_keyboard(
         kb.row(
             CallbackButton(
                 text=label,
-                payload=f"op:tmpl:open:{tmpl.id}",
+                payload=cp.op_tmpl(f"open:{tmpl.id}"),
             )
         )
-    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ Назад", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -193,12 +195,12 @@ def broadcast_templates_search_results_keyboard(items, query: str):
         kb.row(
             CallbackButton(
                 text=label,
-                payload=f"op:tmpl:open:{tmpl.id}",
+                payload=cp.op_tmpl(f"open:{tmpl.id}"),
             )
         )
     kb.row(
-        CallbackButton(text="🔍 Уточнить запрос", payload="op:tmpl:search"),
-        CallbackButton(text="↩️ К списку", payload="op:tmpl:list"),
+        CallbackButton(text="🔍 Уточнить запрос", payload=cp.op_tmpl("search")),
+        CallbackButton(text="↩️ К списку", payload=cp.op_tmpl("list")),
     )
     return kb.as_markup()
 
@@ -211,16 +213,16 @@ def broadcast_template_preview_keyboard(template_id: int | None):
     «↩️ Назад» возвращает на шаг ввода текста."""
     kb = InlineKeyboardBuilder()
     if template_id is None:
-        save_payload = "op:tmpl:save_new"
-        back_payload = "op:tmpl:back_to_text_new"
+        save_payload = cp.op_tmpl("save_new")
+        back_payload = cp.op_tmpl("back_to_text_new")
     else:
-        save_payload = f"op:tmpl:save_edit:{template_id}"
-        back_payload = f"op:tmpl:back_to_text_edit:{template_id}"
+        save_payload = cp.op_tmpl(f"save_edit:{template_id}")
+        back_payload = cp.op_tmpl(f"back_to_text_edit:{template_id}")
     kb.row(
         CallbackButton(text="✅ Сохранить", payload=save_payload),
         CallbackButton(text="↩️ Назад исправить", payload=back_payload),
     )
-    kb.row(CallbackButton(text="❌ Отменить", payload="op:tmpl:cancel"))
+    kb.row(CallbackButton(text="❌ Отменить", payload=cp.op_tmpl("cancel")))
     return kb.as_markup()
 
 
@@ -238,32 +240,32 @@ def broadcast_template_card_keyboard(template_id: int):
     kb.row(
         CallbackButton(
             text="📨 Отправить как рассылку",
-            payload=f"op:tmpl:apply:{template_id}",
+            payload=cp.op_tmpl(f"apply:{template_id}"),
         )
     )
     kb.row(
         CallbackButton(
             text="📑 Клонировать",
-            payload=f"op:tmpl:clone:{template_id}",
+            payload=cp.op_tmpl(f"clone:{template_id}"),
         )
     )
     kb.row(
         CallbackButton(
             text="✏️ Переименовать",
-            payload=f"op:tmpl:rename:{template_id}",
+            payload=cp.op_tmpl(f"rename:{template_id}"),
         ),
         CallbackButton(
             text="📝 Изменить текст",
-            payload=f"op:tmpl:edit:{template_id}",
+            payload=cp.op_tmpl(f"edit:{template_id}"),
         ),
     )
     kb.row(
         CallbackButton(
             text="🗑 Удалить шаблон",
-            payload=f"op:tmpl:delete:{template_id}",
+            payload=cp.op_tmpl(f"delete:{template_id}"),
         )
     )
-    kb.row(CallbackButton(text="↩️ К списку шаблонов", payload="op:tmpl:list"))
+    kb.row(CallbackButton(text="↩️ К списку шаблонов", payload=cp.op_tmpl("list")))
     return kb.as_markup()
 
 
@@ -273,11 +275,11 @@ def broadcast_template_delete_confirm_keyboard(template_id: int):
     kb.row(
         CallbackButton(
             text="🗑 Да, удалить",
-            payload=f"op:tmpl:delete_ok:{template_id}",
+            payload=cp.op_tmpl(f"delete_ok:{template_id}"),
         ),
         CallbackButton(
             text="↩️ Назад",
-            payload=f"op:tmpl:open:{template_id}",
+            payload=cp.op_tmpl(f"open:{template_id}"),
         ),
     )
     return kb.as_markup()
@@ -286,7 +288,7 @@ def broadcast_template_delete_confirm_keyboard(template_id: int):
 def broadcast_template_cancel_keyboard():
     """Отмена ввода в wizard'е шаблона (имя/текст/переименование)."""
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="❌ Отменить", payload="op:tmpl:cancel"))
+    kb.row(CallbackButton(text="❌ Отменить", payload=cp.op_tmpl("cancel")))
     return kb.as_markup()
 
 
@@ -298,10 +300,10 @@ def broadcast_template_step2_keyboard():
     kb.row(
         CallbackButton(
             text="↩️ Изменить название",
-            payload="op:tmpl:back_to_name",
+            payload=cp.op_tmpl("back_to_name"),
         )
     )
-    kb.row(CallbackButton(text="❌ Отменить", payload="op:tmpl:cancel"))
+    kb.row(CallbackButton(text="❌ Отменить", payload=cp.op_tmpl("cancel")))
     return kb.as_markup()
 
 

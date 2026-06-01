@@ -188,7 +188,7 @@ MY_APPEALS_PAGE_SIZE = 5
 
 
 async def open_my_appeals(event, max_user_id: int, page: int = 1):
-    # Typing-indicator: count + list по обращениям — у активных
+    # Индикатор набора: подсчёт и выборка по обращениям — у активных
     # жителей может занять >500 мс. Без него тап «📁 Мои обращения»
     # ощущается как «бот завис».
     await mark_typing(event)

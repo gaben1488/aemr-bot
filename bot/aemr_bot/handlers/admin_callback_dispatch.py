@@ -205,7 +205,7 @@ _EXACT: dict[str, ExactHandler] = {
     "broadcast:confirm": _broadcast_confirm,
     "broadcast:abort": _broadcast_abort,
     "broadcast:edit": _broadcast_edit,
-    # operator menu / actions
+    # Меню оператора / действия
     "op:menu": _ack_then(lambda e: admin_commands.show_op_menu(e, pin=False)),
     "op:stats_menu": _ack_then(lambda e: admin_commands.run_stats_menu(e)),
     "op:stats_today": _op_stats_today,

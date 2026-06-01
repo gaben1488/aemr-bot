@@ -285,7 +285,13 @@ class TestAdminRelay:
              patch("aemr_bot.services.admin_relay.deserialize_for_relay",
                    return_value=[{"type": "image"}]):
             # Не должно бросить.
-            await admin_relay.relay_attachments_to_admin(
+            result = await admin_relay.relay_attachments_to_admin(
                 bot, appeal_id=1, admin_mid=None,
                 stored_attachments=[{"type": "image"}],
             )
+
+        # Дошли до фактической отправки (sink вызван и упал), исключение
+        # проглочено ретраем — функция вернула None, наружу ничего не
+        # пробросилось, обработчик ответа жителю не падает.
+        assert result is None
+        bot.send_message.assert_awaited()

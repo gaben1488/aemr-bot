@@ -15,20 +15,22 @@
 from maxapi.types import CallbackButton
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
+from aemr_bot.handlers import callback_payloads as cp
+
 
 def cancel_reply_intent_keyboard():
     """Кнопка «❌ Отменить» под подсказкой ввода ответа. Без неё intent
     мог жить 5 минут, и любой следующий текст оператора уходил жителю —
     в т.ч. случайные «окей», текст для другого обращения, ввод wizard'а."""
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="❌ Отменить ответ", payload="op:reply_cancel"))
+    kb.row(CallbackButton(text="❌ Отменить ответ", payload=cp.OP_REPLY_CANCEL))
     return kb.as_markup()
 
 
 def op_back_to_menu_keyboard():
     """Одна кнопка возврата к главной операторской панели."""
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ Назад", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -43,10 +45,10 @@ def op_help_main_keyboard():
     kb.row(
         CallbackButton(
             text="🛡️ Безопасность и антифишинг",
-            payload="op:help_security",
+            payload=cp.OP_HELP_SECURITY,
         )
     )
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -59,10 +61,10 @@ def op_help_security_keyboard():
     kb.row(
         CallbackButton(
             text="↩️ Назад к памятке",
-            payload="op:help_full",
+            payload=cp.OP_HELP_FULL,
         )
     )
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -94,31 +96,31 @@ def open_tickets_listing_keyboard(items):
         kb.row(
             CallbackButton(
                 text=text,
-                payload=f"op:open_card:{appeal_id}",
+                payload=cp.op_open_card(appeal_id),
             )
         )
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
 def op_back_to_operators_keyboard():
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="↩️ К операторам", payload="op:operators"))
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ К операторам", payload=cp.OP_OPERATORS))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
 def op_back_to_settings_keyboard():
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="↩️ К настройкам", payload="op:settings"))
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ К настройкам", payload=cp.OP_SETTINGS))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
 def op_back_to_audience_keyboard():
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ К аудитории", payload=cp.OP_AUDIENCE))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -128,14 +130,14 @@ def op_stats_menu_keyboard():
     обрезаются на узких экранах MAX. После клика по периоду бот
     отправляет XLSX и возвращает оператору главную панель /op_help."""
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="📊 За сегодня", payload="op:stats_today"))
-    kb.row(CallbackButton(text="📊 За неделю", payload="op:stats_week"))
-    kb.row(CallbackButton(text="📊 За месяц", payload="op:stats_month"))
-    kb.row(CallbackButton(text="📊 За квартал", payload="op:stats_quarter"))
-    kb.row(CallbackButton(text="📊 За полгода", payload="op:stats_half_year"))
-    kb.row(CallbackButton(text="📊 За год", payload="op:stats_year"))
-    kb.row(CallbackButton(text="📊 За всё время", payload="op:stats_all"))
-    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    kb.row(CallbackButton(text="📊 За сегодня", payload=cp.OP_STATS_TODAY))
+    kb.row(CallbackButton(text="📊 За неделю", payload=cp.OP_STATS_WEEK))
+    kb.row(CallbackButton(text="📊 За месяц", payload=cp.OP_STATS_MONTH))
+    kb.row(CallbackButton(text="📊 За квартал", payload=cp.OP_STATS_QUARTER))
+    kb.row(CallbackButton(text="📊 За полгода", payload=cp.OP_STATS_HALF_YEAR))
+    kb.row(CallbackButton(text="📊 За год", payload=cp.OP_STATS_YEAR))
+    kb.row(CallbackButton(text="📊 За всё время", payload=cp.OP_STATS_ALL))
+    kb.row(CallbackButton(text="↩️ Назад", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -144,10 +146,10 @@ def op_audience_menu_keyboard():
     Три выборки: подписчики, давшие согласие, заблокированные.
     Каждая открывается отдельным сообщением со списком до 20 записей."""
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="📩 Подписчики", payload="op:aud:subs"))
-    kb.row(CallbackButton(text="🔐 Дали согласие", payload="op:aud:consent"))
-    kb.row(CallbackButton(text="🚫 Заблокированные", payload="op:aud:blocked"))
-    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    kb.row(CallbackButton(text="📩 Подписчики", payload=cp.op_aud("subs")))
+    kb.row(CallbackButton(text="🔐 Дали согласие", payload=cp.op_aud("consent")))
+    kb.row(CallbackButton(text="🚫 Заблокированные", payload=cp.op_aud("blocked")))
+    kb.row(CallbackButton(text="↩️ Назад", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -159,22 +161,22 @@ def op_audience_user_actions(max_user_id: int, *, blocked: bool):
     if blocked:
         kb.row(
             CallbackButton(
-                text="✅ Разблокировать", payload=f"op:aud:unblock:{max_user_id}"
+                text="✅ Разблокировать", payload=cp.op_aud(f"unblock:{max_user_id}")
             ),
         )
     else:
         kb.row(
             CallbackButton(
-                text="🚫 Заблокировать", payload=f"op:aud:block:{max_user_id}"
+                text="🚫 Заблокировать", payload=cp.op_aud(f"block:{max_user_id}")
             ),
         )
     kb.row(
         CallbackButton(
-            text="🗑 Удалить ПДн", payload=f"op:aud:erase:{max_user_id}"
+            text="🗑 Удалить ПДн", payload=cp.op_aud(f"erase:{max_user_id}")
         ),
     )
-    kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ К аудитории", payload=cp.OP_AUDIENCE))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -204,7 +206,7 @@ def op_audience_paginated_list_keyboard(
         kb.row(
             CallbackButton(
                 text=label,
-                payload=f"op:aud:show:{max_user_id}",
+                payload=cp.op_aud(f"show:{max_user_id}"),
             )
         )
     # Pagination row — показываем только при >1 странице.
@@ -214,20 +216,20 @@ def op_audience_paginated_list_keyboard(
             nav.append(
                 CallbackButton(
                     text="⬅️",
-                    payload=f"op:aud:page:{category}:{page - 1}",
+                    payload=cp.op_aud(f"page:{category}:{page - 1}"),
                 )
             )
         nav.append(
             CallbackButton(
                 text=f"{page} / {total_pages}",
-                payload=f"op:aud:page:{category}:noop",
+                payload=cp.op_aud(f"page:{category}:noop"),
             )
         )
         if page < total_pages:
             nav.append(
                 CallbackButton(
                     text="➡️",
-                    payload=f"op:aud:page:{category}:{page + 1}",
+                    payload=cp.op_aud(f"page:{category}:{page + 1}"),
                 )
             )
         kb.row(*nav)
@@ -238,17 +240,17 @@ def op_audience_paginated_list_keyboard(
         kb.row(
             CallbackButton(
                 text=f"📤 Выдать всех на странице ({len(rows)})",
-                payload=f"op:aud:dump:{category}:{page}",
+                payload=cp.op_aud(f"dump:{category}:{page}"),
             )
         )
     kb.row(
         CallbackButton(
             text="🔍 Найти жителя",
-            payload=f"op:aud:search:{category}",
+            payload=cp.op_aud(f"search:{category}"),
         )
     )
-    kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ К аудитории", payload=cp.OP_AUDIENCE))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -260,11 +262,11 @@ def op_audience_search_cancel_keyboard(category: str | None = None):
         kb.row(
             CallbackButton(
                 text="↩️ К списку",
-                payload=f"op:aud:{category}",
+                payload=cp.op_aud(category),
             )
         )
-    kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ К аудитории", payload=cp.OP_AUDIENCE))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -282,31 +284,31 @@ def op_audience_user_card_keyboard(max_user_id: int, *, blocked: bool, category:
         kb.row(
             CallbackButton(
                 text="✅ Разблокировать",
-                payload=f"op:aud:unblock:{max_user_id}",
+                payload=cp.op_aud(f"unblock:{max_user_id}"),
             )
         )
     else:
         kb.row(
             CallbackButton(
                 text="🚫 Заблокировать",
-                payload=f"op:aud:block:{max_user_id}",
+                payload=cp.op_aud(f"block:{max_user_id}"),
             )
         )
     kb.row(
         CallbackButton(
             text="🗑 Удалить ПДн",
-            payload=f"op:aud:erase:{max_user_id}",
+            payload=cp.op_aud(f"erase:{max_user_id}"),
         )
     )
     if category in {"subs", "consent", "blocked"}:
         kb.row(
             CallbackButton(
                 text="↩️ К списку",
-                payload=f"op:aud:{category}",
+                payload=cp.op_aud(category),
             )
         )
-    kb.row(CallbackButton(text="↩️ К аудитории", payload="op:audience"))
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ К аудитории", payload=cp.OP_AUDIENCE))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -352,31 +354,31 @@ def appeal_admin_actions(
         kb.row(
             CallbackButton(
                 text="✉️ Ответить и закрыть",
-                payload=f"op:reply:{appeal_id}",
+                payload=cp.op_reply(appeal_id),
             ),
         )
         kb.row(
             CallbackButton(
                 text="💬 Ответить промежуточно (не закрывая)",
-                payload=f"op:replyint:{appeal_id}",
+                payload=cp.op_replyint(appeal_id),
             ),
         )
         kb.row(
             CallbackButton(
-                text="⛔ Закрыть без ответа", payload=f"op:close:{appeal_id}"
+                text="⛔ Закрыть без ответа", payload=cp.op_close(appeal_id)
             ),
         )
     elif status in closed_states and not closed_due_to_revoke:
         kb.row(
             CallbackButton(
-                text="🔁 Возобновить", payload=f"op:reopen:{appeal_id}"
+                text="🔁 Возобновить", payload=cp.op_reopen(appeal_id)
             ),
         )
     if attachment_count > 0:
         kb.row(
             CallbackButton(
                 text=f"📎 Вложения ({attachment_count})",
-                payload=f"op:atts:{appeal_id}",
+                payload=cp.op_atts(appeal_id),
             ),
         )
     if is_it:
@@ -384,13 +386,13 @@ def appeal_admin_actions(
             "✅ Разблокировать" if user_blocked else "🚫 Заблокировать"
         )
         block_payload = (
-            f"op:unblock:{appeal_id}" if user_blocked else f"op:block:{appeal_id}"
+            cp.op_unblock(appeal_id) if user_blocked else cp.op_block(appeal_id)
         )
         kb.row(
             CallbackButton(text=block_label, payload=block_payload),
-            CallbackButton(text="🗑 Удалить ПДн", payload=f"op:erase:{appeal_id}"),
+            CallbackButton(text="🗑 Удалить ПДн", payload=cp.op_erase(appeal_id)),
         )
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -427,22 +429,22 @@ def op_help_keyboard(
     open_label = "📋 Открытые обращения"
     if open_count is not None:
         open_label = f"📋 Открытые обращения ({open_count})"
-    kb.row(CallbackButton(text=open_label, payload="op:open_tickets"))
-    kb.row(CallbackButton(text="📊 Статистика", payload="op:stats_menu"))
+    kb.row(CallbackButton(text=open_label, payload=cp.OP_OPEN_TICKETS))
+    kb.row(CallbackButton(text="📊 Статистика", payload=cp.OP_STATS_MENU))
     if can_broadcast:
-        kb.row(CallbackButton(text="📢 Сделать рассылку", payload="op:broadcast"))
-        kb.row(CallbackButton(text="📜 История рассылок", payload="op:broadcast_list"))
-        kb.row(CallbackButton(text="📋 Шаблоны рассылок", payload="op:tmpl:list"))
-    kb.row(CallbackButton(text="🛠 Диагностика", payload="op:diag"))
+        kb.row(CallbackButton(text="📢 Сделать рассылку", payload=cp.OP_BROADCAST))
+        kb.row(CallbackButton(text="📜 История рассылок", payload=cp.OP_BROADCAST_LIST))
+        kb.row(CallbackButton(text="📋 Шаблоны рассылок", payload=cp.op_tmpl("list")))
+    kb.row(CallbackButton(text="🛠 Диагностика", payload=cp.OP_DIAG))
     if is_it:
-        kb.row(CallbackButton(text="💾 Снять бэкап", payload="op:backup"))
-        kb.row(CallbackButton(text="👥 Операторы", payload="op:operators"))
-        kb.row(CallbackButton(text="⚙️ Настройки бота", payload="op:settings"))
-        kb.row(CallbackButton(text="📊 Аудитория и согласия", payload="op:audience"))
+        kb.row(CallbackButton(text="💾 Снять бэкап", payload=cp.OP_BACKUP))
+        kb.row(CallbackButton(text="👥 Операторы", payload=cp.OP_OPERATORS))
+        kb.row(CallbackButton(text="⚙️ Настройки бота", payload=cp.OP_SETTINGS))
+        kb.row(CallbackButton(text="📊 Аудитория и согласия", payload=cp.OP_AUDIENCE))
     # «📋 Памятка оператора» — полная инструкция в отдельном подменю
     # (раньше она печаталась простыней в каждом вызове админ-меню,
     # перегружая чат). Доступна любой роли.
-    kb.row(CallbackButton(text="📋 Памятка оператора", payload="op:help_full"))
+    kb.row(CallbackButton(text="📋 Памятка оператора", payload=cp.OP_HELP_FULL))
     return kb.as_markup()
 
 

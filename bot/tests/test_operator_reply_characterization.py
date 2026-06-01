@@ -23,6 +23,7 @@
 """
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -109,15 +110,28 @@ class TestSafeAdminNotice:
         assert event.bot.send_message.await_args.kwargs["text"] == "тест"
 
     @pytest.mark.asyncio
-    async def test_swallows_send_exception(self) -> None:
+    async def test_swallows_send_exception(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Фиксирует: сбой отправки в админ-чат НЕ пробрасывается —
         аварийная ветка не должна падать второй раз поверх первопричины."""
         from aemr_bot.handlers import operator_reply as opr
 
         event = _make_event()
         event.bot.send_message = AsyncMock(side_effect=RuntimeError("MAX down"))
-        # Не должно бросить.
-        await opr._safe_admin_notice(event, "тест")
+        with caplog.at_level(
+            logging.ERROR, logger="aemr_bot.handlers.operator_reply"
+        ):
+            result = await opr._safe_admin_notice(event, "тест")
+
+        # Попытка отправки была (дошли до sink), исключение проглочено
+        # и залогировано, наружу ничего не пробросилось.
+        assert result is None
+        event.bot.send_message.assert_awaited_once()
+        assert any(
+            "failed to send admin notice" in rec.message
+            for rec in caplog.records
+        )
 
 
 # --- идемпотентность по source-update -----------------------------------------
