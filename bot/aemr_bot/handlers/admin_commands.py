@@ -93,12 +93,12 @@ __all__ = [
     "register",
     # Открытое меню оператора
     "show_op_menu",
-    # Stats
+    # Статистика
     "_send_stats_xlsx",
     "run_stats",
     "run_stats_menu",
     "run_stats_today",
-    # Operators wizard
+    # Мастер операторов
     "_op_wizards",
     "_op_wizard_drop",
     "_op_wizard_get",
@@ -106,15 +106,15 @@ __all__ = [
     "handle_operators_wizard_text",
     "run_operators_action",
     "run_operators_menu",
-    # Settings
+    # Настройки
     "handle_settings_edit_text",
     "run_settings_action",
     "run_settings_menu",
-    # Audience
+    # Аудитория
     "handle_audience_search_text",
     "run_audience_action",
     "run_audience_menu",
-    # Per-appeal ops
+    # Операции по обращению
     "run_block_for_appeal",
     "run_close",
     "run_erase_for_appeal",
@@ -122,7 +122,7 @@ __all__ = [
     "run_reply_cancel",
     "run_reply_intent",
     "run_show_attachments",
-    # Common
+    # Общие
     "_do_backup",
     "_do_diag",
     "_do_open_tickets",

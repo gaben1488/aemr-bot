@@ -103,8 +103,11 @@ class TestResetFunnelIfStuck:
     async def test_skips_when_no_user_id(self) -> None:
         from aemr_bot.handlers import start
 
-        # Не должно лезть в БД.
-        await start._reset_funnel_if_stuck(None)
+        # max_user_id=None → ранний выход, в БД не лезем.
+        with patch("aemr_bot.handlers.start.session_scope") as scope:
+            result = await start._reset_funnel_if_stuck(None)
+        assert result is None
+        scope.assert_not_called()
 
 
 class TestCmdStart:
@@ -213,8 +216,13 @@ class TestCmdPolicy:
             message=None,
             user=None,
         )
-        await start.cmd_policy(event)
-        # Тихо вышло.
+        event.bot.send_message = AsyncMock()
+        with patch("aemr_bot.handlers.start.session_scope") as scope:
+            result = await start.cmd_policy(event)
+        # Нет chat_id → ранний выход: ни запроса настроек, ни отправки.
+        assert result is None
+        scope.assert_not_called()
+        event.bot.send_message.assert_not_called()
 
 
 class TestCmdSubscribeUnsubscribe:
@@ -306,8 +314,13 @@ class TestCmdCancel:
         from aemr_bot.handlers import start
 
         event = SimpleNamespace(message=None, user=None)
-        # Не должно бросить.
-        await start.cmd_cancel(event)
+        # Нет user_id → ранний выход: ни сброса состояния в БД, ни ответа.
+        with patch("aemr_bot.handlers.start.session_scope") as scope, \
+             patch("aemr_bot.handlers.start.reply", AsyncMock()) as reply_mock:
+            result = await start.cmd_cancel(event)
+        assert result is None
+        scope.assert_not_called()
+        reply_mock.assert_not_called()
 
 
 class TestCmdExport:

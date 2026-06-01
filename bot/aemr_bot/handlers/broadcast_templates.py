@@ -119,7 +119,7 @@ async def handle_callback(event, payload: str) -> bool:
     """
     if not is_admin_chat(event):
         return False
-    # Strip prefix
+    # Срезаем префикс
     if not payload.startswith("op:tmpl:"):
         return False
     rest = payload[len("op:tmpl:"):]

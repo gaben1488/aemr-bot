@@ -12,6 +12,7 @@ main.py импортирует maxapi на верху (Bot, Dispatcher, InvalidT
 from __future__ import annotations
 
 import asyncio
+import logging
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -169,17 +170,27 @@ class TestRegisterBotCommands:
         assert headers.get("Authorization") == "TOKEN-123"
 
     @pytest.mark.asyncio
-    async def test_swallows_network_errors(self) -> None:
+    async def test_swallows_network_errors(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         from aemr_bot import main
 
         bot = MagicMock()
         bot.api_url = "https://botapi.max.ru"
 
-        with patch.object(main.settings, "bot_token", "TOKEN"), \
+        with caplog.at_level(logging.ERROR, logger="aemr_bot"), \
+             patch.object(main.settings, "bot_token", "TOKEN"), \
              patch("aiohttp.ClientSession",
                    side_effect=RuntimeError("connection refused")):
             # Не должно поднять исключение наружу.
             await main._register_bot_commands(bot)
+
+        # Сбой проглочен именно веткой except (а не «тихо пропущен»):
+        # в лог ушло сообщение об ошибке PATCH /me.
+        assert any(
+            "PATCH /me" in rec.message and rec.levelno >= logging.ERROR
+            for rec in caplog.records
+        )
 
 
 class TestPreflightCheckToken:
@@ -199,21 +210,42 @@ class TestPreflightCheckToken:
         assert exc.value.code == 1
 
     @pytest.mark.asyncio
-    async def test_network_error_does_not_exit(self) -> None:
+    async def test_network_error_does_not_exit(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         from aemr_bot import main
 
         bot = MagicMock()
         bot.get_me = AsyncMock(side_effect=ConnectionError("network down"))
-        # Не должно ронять процесс — просто warning в лог.
-        await main._preflight_check_token(bot)
+        # Не должно ронять процесс — сетевая ошибка идёт как warning,
+        # без sys.exit (иначе сюда долетел бы SystemExit).
+        with caplog.at_level(logging.WARNING, logger="aemr_bot"):
+            await main._preflight_check_token(bot)
+
+        assert any(
+            rec.levelno == logging.WARNING and "preflight" in rec.message
+            for rec in caplog.records
+        )
+        # Подтверждаем, что НЕ ушли по ветке InvalidToken → sys.exit(1).
+        assert not any(rec.levelno >= logging.ERROR for rec in caplog.records)
 
     @pytest.mark.asyncio
-    async def test_valid_token_logs_info(self) -> None:
+    async def test_valid_token_logs_info(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         from aemr_bot import main
 
         bot = MagicMock()
         bot.get_me = AsyncMock(
             return_value=SimpleNamespace(first_name="TestBot", user_id=42)
         )
-        # Без exception. Логируется info.
-        await main._preflight_check_token(bot)
+        # Валидный токен → info с именем и id бота, без ошибок.
+        with caplog.at_level(logging.INFO, logger="aemr_bot"):
+            await main._preflight_check_token(bot)
+
+        assert any(
+            rec.levelno == logging.INFO
+            and "TestBot" in rec.message
+            and "42" in rec.message
+            for rec in caplog.records
+        )

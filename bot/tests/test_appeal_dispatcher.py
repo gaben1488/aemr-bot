@@ -554,6 +554,52 @@ class TestMessageAdminCancel:
         text = event.bot.send_message.call_args.kwargs["text"]
         assert "сброшены" in text
 
+    @pytest.mark.asyncio
+    async def test_cancel_clears_settings_templates_audience_intents(
+        self, captured_handlers
+    ) -> None:
+        """A-1 регресс-гард: /cancel гасит ВСЕ wizard/intent-хранилища.
+
+        До фикса /cancel чистил только broadcast-wizard, op-wizard и
+        reply-intent, но НЕ intent правки настроек (_edit_intents), НЕ
+        wizard шаблонов (_wizards), НЕ intent поиска аудитории
+        (_search_intents). Оператор передумывал, слал /cancel, бот
+        рапортовал «сброшено», а следующий текст молча уходил в живой
+        intent (например становился новым welcome_text для всех жителей).
+        Здесь предзаполняем три «забытых» стора для оператора 7 и
+        проверяем, что после /cancel они пусты.
+        """
+        _, on_message = captured_handlers
+        event = _make_message_event(chat_id=123, text="/cancel")
+        tmpl_wizards = {7: object()}
+        audience_intents = {7: {"category": None}}
+        # settings intent дропается через admin_settings._intent_drop (он
+        # закрывает свой собственный backing-dict в admin_settings_shared),
+        # поэтому проверяем сам вызов, а не подменённый dict.
+        intent_drop = MagicMock()
+        with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 123), \
+             patch("aemr_bot.handlers.appeal.get_chat_id", return_value=123), \
+             patch("aemr_bot.handlers.appeal.get_message_text",
+                   return_value="/cancel"), \
+             patch("aemr_bot.handlers.appeal.get_message_body",
+                   return_value=event.message.body), \
+             patch("aemr_bot.handlers.broadcast._wizards", {}), \
+             patch("aemr_bot.handlers.admin_commands._op_wizards", {}), \
+             patch("aemr_bot.handlers.operator_reply.drop_reply_intent"), \
+             patch("aemr_bot.handlers.admin_settings._intent_drop",
+                   intent_drop), \
+             patch("aemr_bot.handlers.broadcast_templates._wizards",
+                   tmpl_wizards), \
+             patch("aemr_bot.handlers.admin_audience._search_intents",
+                   audience_intents):
+            await on_message(event)
+        # Все три «забытых» стора очищены для оператора 7.
+        intent_drop.assert_called_once_with(7)
+        assert 7 not in tmpl_wizards
+        assert 7 not in audience_intents
+        text = event.bot.send_message.call_args.kwargs["text"]
+        assert "сброшены" in text
+
 
 class TestMessageCitizenUnknownCommand:
     @pytest.mark.asyncio

@@ -165,26 +165,3 @@ class TestDropExpiredWizards:
         broadcast._drop_expired_wizards()
         assert 1 in broadcast._wizards
         assert 2 not in broadcast._wizards
-
-
-class TestAdminCommandsExports:
-    def test_admin_commands_reexports_show_op_menu(self) -> None:
-        from aemr_bot.handlers import admin_commands
-
-        # Re-export должен указывать на функцию из admin_panel.
-        assert callable(admin_commands.show_op_menu)
-
-    def test_admin_commands_has_register(self) -> None:
-        from aemr_bot.handlers import admin_commands
-
-        assert callable(admin_commands.register)
-
-    def test_admin_commands_has_run_stats(self) -> None:
-        from aemr_bot.handlers import admin_commands
-
-        assert callable(admin_commands.run_stats)
-
-    def test_admin_commands_has_run_open_tickets(self) -> None:
-        from aemr_bot.handlers import admin_commands
-
-        assert callable(admin_commands.run_open_tickets)

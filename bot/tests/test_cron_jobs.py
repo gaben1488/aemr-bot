@@ -12,6 +12,7 @@
 """
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -215,20 +216,40 @@ class TestEventsRetention:
     """_job_events_retention — удаление старых events."""
 
     @pytest.mark.asyncio
-    async def test_swallows_exception(self) -> None:
+    async def test_swallows_exception(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Если БД недоступна — job не должна ронять scheduler-loop."""
-        # Нет реальной БД в unit-тестах → session_scope упадёт →
-        # должно проглотиться try/except внутри.
-        await cron._job_events_retention()
+        # Детерминированно роняем session_scope, а не полагаемся на
+        # отсутствие БД: исключение обязано проглотиться try/except и
+        # уйти в лог (а не пробросить наружу и убить scheduler-loop).
+        with caplog.at_level(logging.ERROR, logger="aemr_bot.services.cron"), \
+             patch("aemr_bot.services.cron.session_scope",
+                   side_effect=RuntimeError("db down")):
+            result = await cron._job_events_retention()
+        assert result is None
+        assert any(
+            "events retention failed" in rec.message for rec in caplog.records
+        )
 
 
 class TestAuditLogRetention:
     """_job_audit_log_retention — удаление старых audit_log записей."""
 
     @pytest.mark.asyncio
-    async def test_swallows_exception(self) -> None:
+    async def test_swallows_exception(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """БД недоступна → exception проглотиться, scheduler жив."""
-        await cron._job_audit_log_retention()
+        with caplog.at_level(logging.ERROR, logger="aemr_bot.services.cron"), \
+             patch("aemr_bot.services.cron.session_scope",
+                   side_effect=RuntimeError("db down")):
+            result = await cron._job_audit_log_retention()
+        assert result is None
+        assert any(
+            "audit_log retention failed" in rec.message
+            for rec in caplog.records
+        )
 
     @pytest.mark.asyncio
     async def test_uses_retention_days_from_config(self) -> None:
@@ -286,13 +307,24 @@ class TestFunnelWatchdog:
     """_job_funnel_watchdog — сброс зависших воронок."""
 
     @pytest.mark.asyncio
-    async def test_swallows_exception_no_db(self) -> None:
+    async def test_swallows_exception_no_db(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         bot = MagicMock()
         bot.send_message = AsyncMock()
         send_admin_text = AsyncMock()
-        await cron._job_funnel_watchdog(bot, send_admin_text)
-        # Не должно crash; bot.send_message может быть не вызван
-        # (если БД упала — попадаем в except верхнего уровня)
+        with caplog.at_level(logging.ERROR, logger="aemr_bot.services.cron"), \
+             patch("aemr_bot.services.cron.session_scope",
+                   side_effect=RuntimeError("db down")):
+            result = await cron._job_funnel_watchdog(bot, send_admin_text)
+        # Падение БД проглочено верхним try/except: ни житель, ни
+        # служебная группа уведомлений не получают, ошибка — в лог.
+        assert result is None
+        bot.send_message.assert_not_called()
+        send_admin_text.assert_not_called()
+        assert any(
+            "funnel_watchdog crashed" in rec.message for rec in caplog.records
+        )
 
     @pytest.mark.asyncio
     async def test_below_threshold_no_admin_alert(self) -> None:

@@ -755,8 +755,13 @@ class TestHandleCommandReply:
                 recipient=SimpleNamespace(chat_id=555),
             ),
         )
+        event.bot.send_message = AsyncMock()
         with patch.object(opr.cfg, "admin_group_id", 555):
-            await opr.handle_command_reply(event, appeal_id=1, text="test")
+            result = await opr.handle_command_reply(event, appeal_id=1, text="test")
+
+        # Нет автора → выходим до доставки: жителю ничего не уходит.
+        assert result is None
+        event.bot.send_message.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_unauthorized_user_gets_op_not_authorized(self) -> None:

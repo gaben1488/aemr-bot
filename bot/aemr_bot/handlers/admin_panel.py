@@ -149,7 +149,7 @@ async def _do_open_tickets(event) -> None:
     from sqlalchemy import select
 
 
-    # Typing-indicator: query+transform могут занять 1-2 сек на загруженной
+    # Индикатор набора: запрос и обработка могут занять 1-2 сек на загруженной
     # базе. Без него оператор видит «зависание» после тапа кнопки.
     await mark_typing(event, cfg.admin_group_id)
 

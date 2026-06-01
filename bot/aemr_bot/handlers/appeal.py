@@ -577,13 +577,34 @@ def register(dp: Dispatcher) -> None:
                 broadcast as broadcast_handler,
             )
 
-            # /cancel в админ-чате — глобальный сброс
+            # /cancel в админ-чате — глобальный сброс. Должен гасить ВСЕ
+            # in-memory wizard/intent-хранилища, потребители которых
+            # перехватывают следующий текст оператора ниже в этом же
+            # on_message (broadcast-wizard, шаблоны рассылок, wizard
+            # операторов, intent правки настроек, intent поиска аудитории,
+            # черновик ответа). Иначе «сброшено» — ложь: оператор
+            # передумал, шлёт /cancel, но живой intent молча принимает
+            # следующее сообщение как значение настройки / имя шаблона /
+            # поисковый запрос.
             if text_body.strip().lower() in ("/cancel", "/cancel@aemo_chat_bot"):
+                from aemr_bot.handlers import (
+                    admin_audience,
+                    admin_settings,
+                    broadcast_templates as bcast_tmpl_cancel,
+                )
+
                 operator_id = get_user_id(event)
                 if operator_id is not None:
                     broadcast_handler._wizards.pop(operator_id, None)
                     admin_cmd_module._op_wizards.pop(operator_id, None)
                     op_reply.drop_reply_intent(operator_id)
+                    # Intent правки настроек (consumer handle_settings_edit_text).
+                    admin_settings._intent_drop(operator_id)
+                    # Wizard шаблонов рассылок (consumer handle_wizard_text).
+                    bcast_tmpl_cancel._wizards.pop(operator_id, None)
+                    # Intent поиска по аудитории (consumer
+                    # handle_audience_search_text).
+                    admin_audience._search_intents.pop(operator_id, None)
                 if event.bot is not None:
                     await event.bot.send_message(
                         chat_id=cfg.admin_group_id,
