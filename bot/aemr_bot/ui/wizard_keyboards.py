@@ -7,20 +7,22 @@
 from maxapi.types import CallbackButton
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
+from aemr_bot.handlers import callback_payloads as cp
+
 
 def op_add_cancel_keyboard():
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="❌ Отменить добавление", payload="op:opadd:cancel"))
+    kb.row(CallbackButton(text="❌ Отменить добавление", payload=cp.op_opadd("cancel")))
     return kb.as_markup()
 
 
 def op_operators_menu_keyboard():
     """Меню «👥 Операторы» в админ-панели для роли it."""
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="📋 Список операторов", payload="op:opadd:list"))
-    kb.row(CallbackButton(text="➕ Добавить из участников группы", payload="op:opadd:from_group"))
-    kb.row(CallbackButton(text="🔢 Добавить по ID вручную", payload="op:opadd:start"))
-    kb.row(CallbackButton(text="↩️ Назад", payload="op:menu"))
+    kb.row(CallbackButton(text="📋 Список операторов", payload=cp.op_opadd("list")))
+    kb.row(CallbackButton(text="➕ Добавить из участников группы", payload=cp.op_opadd("from_group")))
+    kb.row(CallbackButton(text="🔢 Добавить по ID вручную", payload=cp.op_opadd("start")))
+    kb.row(CallbackButton(text="↩️ Назад", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -39,10 +41,10 @@ def op_operators_list_keyboard(rows: list[tuple[int, str, str, bool]]):
         kb.row(
             CallbackButton(
                 text=f"{marker} {name_short}{suffix}",
-                payload=f"op:opcard:{max_user_id}",
+                payload=cp.op_opcard(max_user_id),
             )
         )
-    kb.row(CallbackButton(text="↩️ Назад", payload="op:operators"))
+    kb.row(CallbackButton(text="↩️ Назад", payload=cp.OP_OPERATORS))
     return kb.as_markup()
 
 
@@ -62,21 +64,21 @@ def op_operator_card_keyboard(
     kb = InlineKeyboardBuilder()
     if is_active:
         if not is_self:
-            kb.row(CallbackButton(text="✏️ Сменить роль", payload=f"op:oprole:{max_user_id}"))
+            kb.row(CallbackButton(text="✏️ Сменить роль", payload=cp.op_oprole(max_user_id)))
         if can_deactivate and not is_self:
             kb.row(
                 CallbackButton(
-                    text="🚫 Деактивировать", payload=f"op:opdeact:{max_user_id}"
+                    text="🚫 Деактивировать", payload=cp.op_opdeact(max_user_id)
                 )
             )
     else:
         kb.row(
             CallbackButton(
-                text="🔄 Реактивировать", payload=f"op:opreact:{max_user_id}"
+                text="🔄 Реактивировать", payload=cp.op_opreact(max_user_id)
             )
         )
-    kb.row(CallbackButton(text="↩️ К списку", payload="op:opadd:list"))
-    kb.row(CallbackButton(text="↩️ В админ-меню", payload="op:menu"))
+    kb.row(CallbackButton(text="↩️ К списку", payload=cp.op_opadd("list")))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
 
@@ -98,17 +100,17 @@ def op_operator_role_change_keyboard(max_user_id: int, current_role: str):
             kb.row(
                 CallbackButton(
                     text=f"✓ {label} (текущая)",
-                    payload=f"op:opcard:{max_user_id}",
+                    payload=cp.op_opcard(max_user_id),
                 )
             )
         else:
             kb.row(
                 CallbackButton(
                     text=label,
-                    payload=f"op:opchrole:{max_user_id}:{role_value}",
+                    payload=cp.op_opchrole(max_user_id, role_value),
                 )
             )
-    kb.row(CallbackButton(text="❌ Отмена", payload=f"op:opcard:{max_user_id}"))
+    kb.row(CallbackButton(text="❌ Отмена", payload=cp.op_opcard(max_user_id)))
     return kb.as_markup()
 
 
@@ -116,8 +118,8 @@ def op_operator_deactivate_confirm_keyboard(max_user_id: int):
     """Подтверждение деактивации — две кнопки в ряд."""
     kb = InlineKeyboardBuilder()
     kb.row(
-        CallbackButton(text="✅ Да, деактивировать", payload=f"op:opdeact_ok:{max_user_id}"),
-        CallbackButton(text="❌ Отмена", payload=f"op:opcard:{max_user_id}"),
+        CallbackButton(text="✅ Да, деактивировать", payload=cp.op_opdeact_ok(max_user_id)),
+        CallbackButton(text="❌ Отмена", payload=cp.op_opcard(max_user_id)),
     )
     return kb.as_markup()
 
@@ -134,11 +136,11 @@ def op_from_group_keyboard(
         # 50 символов на label — место для имени + пометки
         text = label if len(label) <= 50 else label[:47] + "…"
         if role_hint is None:
-            kb.row(CallbackButton(text=f"➕ {text}", payload=f"op:opadd:pick:{user_id}"))
+            kb.row(CallbackButton(text=f"➕ {text}", payload=cp.op_opadd(f"pick:{user_id}")))
         else:
-            kb.row(CallbackButton(text=f"👤 {text}", payload=f"op:opcard:{user_id}"))
-    kb.row(CallbackButton(text="🔢 Ввести ID вручную", payload="op:opadd:start"))
-    kb.row(CallbackButton(text="❌ Отмена", payload="op:operators"))
+            kb.row(CallbackButton(text=f"👤 {text}", payload=cp.op_opcard(user_id)))
+    kb.row(CallbackButton(text="🔢 Ввести ID вручную", payload=cp.op_opadd("start")))
+    kb.row(CallbackButton(text="❌ Отмена", payload=cp.OP_OPERATORS))
     return kb.as_markup()
 
 
