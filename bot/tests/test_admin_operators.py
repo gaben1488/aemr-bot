@@ -325,6 +325,54 @@ class TestHandleWizardText:
         assert admin_operators._op_wizard_get(7) is not None
 
     @pytest.mark.asyncio
+    async def test_name_without_alnum_rejected(self) -> None:
+        """A-2/security: ФИО без единой буквы/цифры («...», «👍👍», «—») не
+        должно проходить — иначе мусор попадает в журнал 152-ФЗ как имя
+        оператора. Та же защита `_HAS_ALNUM`, что у имени жителя (она
+        пропускает цифры, поэтому «77» сюда НЕ входит — см. отдельный
+        тест-протокол)."""
+        from aemr_bot.handlers import admin_operators
+
+        for junk in ("...", "👍👍", "—  —"):
+            event = _make_event(user_id=7)
+            admin_operators._op_wizard_set(
+                7, step="awaiting_name", target_id=42, role="it"
+            )
+            result = await admin_operators.handle_operators_wizard_text(
+                event, junk
+            )
+            assert result is True, junk
+            text = event.bot.send_message.call_args.kwargs["text"]
+            assert "букв" in text.lower(), junk
+            # Шаг не продвинулся — wizard остаётся на awaiting_name.
+            state = admin_operators._op_wizard_get(7)
+            assert state is not None and state["step"] == "awaiting_name", junk
+            admin_operators._op_wizard_drop(7)
+
+    @pytest.mark.asyncio
+    async def test_name_clipped_to_name_max_chars(self) -> None:
+        """A-2/security: сверхдлинное ФИО усекается до cfg.name_max_chars,
+        чтобы не лить мегастроку в журнал/карточки."""
+        from aemr_bot.config import settings as cfg
+        from aemr_bot.handlers import admin_operators
+
+        event = _make_event(user_id=7)
+        admin_operators._op_wizard_set(
+            7, step="awaiting_name", target_id=42, role="it"
+        )
+        overlong = "Иванов " * 100  # >> name_max_chars
+        with patch("aemr_bot.handlers.admin_operators_wizard.session_scope",
+                   _fake_session_scope):
+            result = await admin_operators.handle_operators_wizard_text(
+                event, overlong
+            )
+        assert result is True
+        state = admin_operators._op_wizard_get(7)
+        assert state is not None
+        assert state["step"] == "ready_to_confirm"
+        assert len(state["full_name"]) <= cfg.name_max_chars
+
+    @pytest.mark.asyncio
     async def test_name_self_modification_blocked(self) -> None:
         """Свою роль через wizard менять нельзя — блокировка теперь
         срабатывает на шаге подтверждения (op:opadd:confirm), потому

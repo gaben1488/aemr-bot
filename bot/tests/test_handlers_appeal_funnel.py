@@ -497,6 +497,85 @@ class TestOnAwaitingFollowupText:
             f"followup text not in admin sends: {admin_calls}"
         )
 
+    @pytest.mark.asyncio
+    async def test_followup_text_clipped_to_summary_max_chars(self) -> None:
+        """F-B: followup-текст жителя усекается до cfg.summary_max_chars,
+        как и суть обращения (on_awaiting_summary). Иначе житель мог бы
+        прислать мегабайтную строку — сырьём в БД и в relay-карточку
+        (DoS-storage). Проверяем, что add_user_message получает уже
+        обрезанный текст ровно в summary_max_chars символов."""
+        from aemr_bot.config import settings as cfg
+        from aemr_bot.handlers import appeal_funnel
+
+        event = _make_event()
+        user = SimpleNamespace(
+            id=1,
+            max_user_id=42,
+            first_name="Сергей",
+            phone="+79991234567",
+            is_blocked=False,
+            dialog_data={"appeal_id": 5},
+            consent_pdn_at=datetime.now(timezone.utc),
+            subscribed_broadcast=False,
+            consent_revoked_at=None,
+        )
+        appeal = SimpleNamespace(
+            id=5,
+            user_id=1,
+            user=user,
+            status="new",
+            locality="Елизовское ГП",
+            address="ул. Ленина, 5",
+            topic="Дороги",
+            summary="Яма во дворе.",
+            attachments=[],
+            messages=[],
+            admin_message_id="admin-mid-5",
+            closed_due_to_revoke=False,
+        )
+        # Текст длиннее лимита — должен прийти усечённым.
+        overlong = "А" * (cfg.summary_max_chars + 500)
+        add_msg = AsyncMock()
+        with patch(
+            "aemr_bot.handlers.appeal_funnel.session_scope",
+            _fake_session_scope,
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
+            AsyncMock(return_value=user),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.users_service.reset_state",
+            AsyncMock(),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.appeals_service.get_by_id",
+            AsyncMock(return_value=appeal),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.appeals_service.get_by_id_with_messages",
+            AsyncMock(return_value=appeal),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.appeals_service.add_user_message",
+            add_msg,
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.appeals_service.followup_rate_limit_stats",
+            AsyncMock(return_value=(0, None)),
+        ), patch(
+            "aemr_bot.config.settings.admin_group_id",
+            None,
+        ), patch(
+            "aemr_bot.handlers.menu.open_main_menu",
+            AsyncMock(),
+        ):
+            await appeal_funnel.on_awaiting_followup_text(
+                event,
+                body=SimpleNamespace(attachments=[]),
+                text_body=overlong,
+                max_user_id=42,
+            )
+
+        add_msg.assert_awaited_once()
+        stored_text = add_msg.await_args.kwargs["text"]
+        assert stored_text is not None
+        assert len(stored_text) == cfg.summary_max_chars
+
 
 class TestOnIdle:
     @pytest.mark.asyncio

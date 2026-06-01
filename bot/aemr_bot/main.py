@@ -27,17 +27,6 @@ from aemr_bot.utils.background import spawn_background_task
 
 log = logging.getLogger("aemr_bot")
 
-# maxapi default = timeout 150s × max_retries 3 (до 10 мин на запрос).
-# При sequential polling один тормозящий запрос блокирует обработку
-# ВСЕХ следующих событий — видимое «тап → бот завис». Override через
-# наш конфиг: timeout 30s + 1 retry → worst case ~60s, не 10 минут.
-bot = Bot(
-    settings.bot_token,
-    default_connection=DefaultConnectionProperties(
-        timeout=settings.max_api_timeout_seconds,
-        max_retries=settings.max_api_retries,
-    ),
-)
 # Sacred event log hook: оборачивает bot.send_message декоратором,
 # который синхронизирует menu_tracker[admin_group_id] после каждого
 # успешного send в admin chat. Закрывает архитектурный gap «62
@@ -45,13 +34,55 @@ bot = Bot(
 # подробное обоснование в `services/admin_bus.install_outgoing_tracker_hook`.
 from aemr_bot.services import admin_bus  # noqa: E402
 
-admin_bus.install_outgoing_tracker_hook(bot)
 
-# use_create_task=True: handlers — отдельные asyncio.Task, polling loop
-# не блокируется одним долгим callback'ом. Per-user state защищён
-# asyncio.Lock в appeal_runtime, concurrent dispatch безопасен.
-dp = Dispatcher(use_create_task=True)
-register_handlers(dp)
+def build_bot() -> Bot:
+    """Собрать экземпляр Bot с нашими таймаутами и hook'ами.
+
+    maxapi default = timeout 150s × max_retries 3 (до 10 мин на запрос).
+    При sequential polling один тормозящий запрос блокирует обработку
+    ВСЕХ следующих событий — видимое «тап → бот завис». Override через
+    наш конфиг: timeout 30s + 1 retry → worst case ~60s, не 10 минут.
+
+    Здесь же ставится outgoing-tracker hook (sacred event log) и, для
+    polling-режима, фиксированный таймаут long-poll — чтобы поведение
+    запуска не зависело от того, через фабрику или модуль создан bot.
+    """
+    bot = Bot(
+        settings.bot_token,
+        default_connection=DefaultConnectionProperties(
+            timeout=settings.max_api_timeout_seconds,
+            max_retries=settings.max_api_retries,
+        ),
+    )
+    admin_bus.install_outgoing_tracker_hook(bot)
+    if settings.bot_mode == "polling":
+        _install_polling_timeout(bot, settings.polling_timeout_seconds)
+    return bot
+
+
+def build_dispatcher() -> Dispatcher:
+    """Собрать Dispatcher с зарегистрированными роутерами/хендлерами.
+
+    use_create_task=True: handlers — отдельные asyncio.Task, polling loop
+    не блокируется одним долгим callback'ом. Per-user state защищён
+    asyncio.Lock в appeal_runtime, concurrent dispatch безопасен.
+    """
+    dp = Dispatcher(use_create_task=True)
+    register_handlers(dp)
+    return dp
+
+
+def create_app() -> tuple[Bot, Dispatcher]:
+    """Фабрика приложения: (Bot, Dispatcher), готовые к запуску.
+
+    Объединяет build_bot + build_dispatcher в одну точку. Вызывается на
+    уровне модуля (ниже — `bot, dp = create_app()`), чтобы сохранить
+    исторические `from aemr_bot.main import bot/dp` и регистрацию
+    webhook-декоратора, замыкающего эти module-level имена. Поведение
+    запуска идентично прежней inline-инициализации.
+    """
+    return build_bot(), build_dispatcher()
+
 
 # Semaphore-окно для входящих webhook'ов. Без ограничения каждый POST
 # в /max/webhook порождает asyncio.create_task(...) — флуд (1000 RPS
@@ -94,8 +125,12 @@ def _install_polling_timeout(bot: Bot, timeout: int) -> None:
     bot.get_updates = get_updates_with_timeout  # type: ignore[method-assign]
 
 
-if settings.bot_mode == "polling":
-    _install_polling_timeout(bot, settings.polling_timeout_seconds)
+# Module-level bot/dp через фабрику. Сохраняем исторические
+# `from aemr_bot.main import bot/dp` и регистрацию webhook-декоратора
+# ниже (он замыкает эти имена). build_bot уже ставит polling-таймаут и
+# tracker-hook, build_dispatcher регистрирует роутеры — порядок и
+# побочные эффекты идентичны прежней inline-инициализации.
+bot, dp = create_app()
 
 
 async def _seed_settings():

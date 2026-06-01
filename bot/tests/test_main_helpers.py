@@ -69,6 +69,44 @@ class TestSpawnBackgroundTask:
         assert main.spawn_background_task is background.spawn_background_task
 
 
+class TestCreateAppFactory:
+    """E-3: фабрика create_app/build_bot/build_dispatcher. Поведение
+    запуска должно совпадать с module-level bot/dp."""
+
+    def test_module_level_bot_dp_built_via_factory(self) -> None:
+        """module-level bot/dp существуют и несут наши свойства
+        (use_create_task, наш http-таймаут < maxapi-дефолта)."""
+        from aemr_bot import main
+
+        assert main.bot is not None
+        assert main.dp.use_create_task is True
+        assert main.bot.default_connection.timeout.total < 150
+
+    def test_build_dispatcher_returns_fresh_dispatcher(self) -> None:
+        """build_dispatcher даёт НОВЫЙ Dispatcher с use_create_task=True
+        (роутеры зарегистрированы внутри register_handlers)."""
+        from aemr_bot import main
+
+        dp = main.build_dispatcher()
+        assert dp.use_create_task is True
+        assert dp is not main.dp  # свежий экземпляр, не module-level
+
+    def test_create_app_returns_bot_and_dispatcher(self) -> None:
+        """create_app возвращает кортеж (Bot, Dispatcher) с теми же
+        свойствами, что и module-level пара."""
+        from maxapi import Bot, Dispatcher
+
+        from aemr_bot import main
+
+        new_bot, new_dp = main.create_app()
+        assert isinstance(new_bot, Bot)
+        assert isinstance(new_dp, Dispatcher)
+        assert new_dp.use_create_task is True
+        assert new_bot.default_connection.timeout.total == pytest.approx(
+            main.settings.max_api_timeout_seconds
+        )
+
+
 class TestBuildAdminSenders:
     """_build_admin_senders возвращает две closures."""
 
