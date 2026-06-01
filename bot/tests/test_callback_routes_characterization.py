@@ -813,11 +813,18 @@ class TestDispatchChainOrder:
         menu.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_admin_payload_reached_after_citizen_false(
+    async def test_admin_payload_routes_to_admin_not_menu(
         self, on_callback
     ) -> None:
-        """Когда citizen-dispatch отдал False, управление идёт в admin-
-        dispatch; если тот вернул True — menu НЕ вызывается."""
+        """Admin payload (op:menu) идёт в admin-dispatch; тот вернул True —
+        menu НЕ вызывается.
+
+        После объединения через `callback_router.route_for(payload).group`
+        admin-payload классифицируется как OPERATOR_ADMIN и попадает СРАЗУ
+        в admin-dispatch — citizen-воронка для него больше не опрашивается
+        (раньше слепая цепочка дёргала citizen вхолостую). Наблюдаемый
+        контракт (admin обрабатывает op:menu, menu не трогается) сохранён.
+        """
         event = _make_callback_event(payload="op:menu")
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), patch.object(
             appeal_handler, "_dispatch_citizen_callback", AsyncMock(return_value=False)
@@ -829,16 +836,49 @@ class TestDispatchChainOrder:
             "aemr_bot.handlers.menu.handle_callback", AsyncMock(return_value=True)
         ) as menu:
             await on_callback(event)
-        citizen.assert_awaited_once()
+        # Router направляет admin-группу мимо citizen-воронки.
+        citizen.assert_not_awaited()
         admin.assert_awaited_once()
         menu.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_menu_reached_when_both_upstream_false(
+    async def test_admin_miss_falls_through_to_menu(
         self, on_callback
     ) -> None:
-        """Citizen False + admin False → fallthrough в menu.handle_callback
-        (последнее звено)."""
+        """Admin-обёртка с неизвестным хвостом: admin-dispatch вернул False
+        → fallthrough в menu.handle_callback (исторический контракт).
+
+        `op:bc:weird` реестр классифицирует как BROADCAST_ADMIN, но
+        admin-dispatch не знает такой хвост (есть только op:bc:open/clone/
+        failed) и возвращает False. Раньше такой payload проваливался из
+        admin-обёртки в меню — сохраняем это поведение."""
+        event = _make_callback_event(payload="op:bc:weird")
+        with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), patch.object(
+            appeal_handler, "_dispatch_citizen_callback", AsyncMock(return_value=False)
+        ) as citizen, patch.object(
+            appeal_handler.admin_callback_dispatch,
+            "dispatch_admin_callback",
+            AsyncMock(return_value=False),
+        ) as admin, patch(
+            "aemr_bot.handlers.menu.handle_callback", AsyncMock(return_value=True)
+        ) as menu:
+            await on_callback(event)
+        citizen.assert_not_awaited()
+        admin.assert_awaited_once()
+        menu.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_menu_payload_routes_to_menu_not_admin(
+        self, on_callback
+    ) -> None:
+        """Citizen-группа, не пойманная воронкой (menu:main) → menu.
+
+        `menu:main` реестр относит к CITIZEN_FLOW (security-классификация
+        грубая, покрывает и навигацию меню). Воронка его не знает (вернёт
+        False), управление спускается в menu.handle_callback. admin-
+        dispatch для citizen-группы НЕ вызывается — это и есть устранённая
+        слепая цепочка. Раньше admin дёргался вхолостую между citizen и
+        menu; наблюдаемый результат (payload доходит до menu) сохранён."""
         event = _make_callback_event(payload="menu:main")
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), patch.object(
             appeal_handler, "_dispatch_citizen_callback", AsyncMock(return_value=False)
@@ -851,7 +891,8 @@ class TestDispatchChainOrder:
         ) as menu:
             await on_callback(event)
         citizen.assert_awaited_once()
-        admin.assert_awaited_once()
+        # Router не отправляет citizen-группу в admin-dispatch.
+        admin.assert_not_awaited()
         menu.assert_awaited_once()
 
     @pytest.mark.asyncio
