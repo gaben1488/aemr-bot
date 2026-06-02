@@ -314,9 +314,12 @@ async def _send_one(
                 return err_repr[:500]
             if attempt == 2:
                 # Третья попытка тоже 429 — сдаёмся, идём к следующему
-                # получателю. Глобальная задержка между сообщениями уже
-                # есть в _run_broadcast_impl (rate_delay), 429 на ней —
-                # знак что нагрузка реально упёрлась.
+                # получателю. Темп между сообщениями держат ДВА уровня:
+                # per-broadcast rate_delay (_run_broadcast_impl) и
+                # процесс-глобальный лимитер ~1.5 msg/s в
+                # admin_bus.install_outgoing_tracker_hook (через него идёт
+                # этот send). 429 даже сквозь оба — знак, что нагрузка
+                # реально упёрлась (или MAX временно жёстче лимитит).
                 log.warning(
                     "broadcast: 429 после 3 попыток для user_id=%s — пропускаем",
                     max_user_id,
@@ -599,6 +602,17 @@ async def _run_broadcast_impl(
     async with session_scope() as session:
         await broadcasts_service.mark_started(session, broadcast_id, admin_mid)
 
+    # Per-broadcast pacing. Perf-кластер «2 RPS» (2026-06-02): авторитетный
+    # потолок исходящих теперь — глобальный token-bucket в
+    # `admin_bus.install_outgoing_tracker_hook`, через который проходит КАЖДЫЙ
+    # `bot.send_message` (включая этот цикл). Локальный `rate_delay` оставлен
+    # СОЗНАТЕЛЬНО как грубый per-broadcast pace: он держит темп одной рассылки
+    # (~1 msg/s по умолчанию) НИЖЕ глобального бюджета (~1.5 msg/s), оставляя
+    # запас в общем бакете под интерактив оператора и cron — иначе длинная
+    # рассылка выгребала бы все токены и подвешивала ответы. Дублирования
+    # троттла нет: глобальный лимитер почти не блокирует на этом цикле, пока
+    # rate_delay медленнее, и вступает в дело только когда рассылка идёт
+    # ОДНОВРЕМЕННО с другими отправками (ровно тот случай, что пробивал 429).
     rate_delay = (
         1.0 / cfg.broadcast_rate_limit_per_sec
         if cfg.broadcast_rate_limit_per_sec > 0

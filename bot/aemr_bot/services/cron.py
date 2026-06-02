@@ -94,6 +94,10 @@ async def _send_with_open_tickets_button(bot, text: str) -> None:
                 payload="op:open_tickets",
             )
         )
+        # Perf «2 RPS»: это прямой bot.send_message на хукнутом инстансе —
+        # значит проходит глобальный лимитер исходящих
+        # (admin_bus.install_outgoing_tracker_hook) автоматически. НЕ слать
+        # в обход bot.* — иначе напоминалка обойдёт общий бюджет темпа.
         await bot.send_message(
             chat_id=settings.admin_group_id,
             text=text,
@@ -708,6 +712,13 @@ async def _job_funnel_watchdog(bot, send_admin_text) -> None:
             try:
                 async with session_scope() as session:
                     await users_service.reset_state(session, max_user_id)
+                # Perf «2 RPS»: watchdog шлёт жителям напрямую через
+                # bot.send_message (хукнутый инстанс) → каждое уведомление
+                # проходит глобальный лимитер исходящих
+                # (admin_bus.install_outgoing_tracker_hook). При лавине
+                # зависших анкет после простоя это не даёт watchdog'у
+                # выжать MAX до 429 и подавить рассылку/интерактив —
+                # уведомления растягиваются под общий бюджет ~1.5 msg/s.
                 await bot.send_message(
                     user_id=max_user_id,
                     text=(
