@@ -6,7 +6,7 @@ main.py импортирует maxapi на верху (Bot, Dispatcher, InvalidT
 Покрываем:
 - spawn_background_task — слабая ссылка через _BACKGROUND_TASKS
 - _build_admin_senders — closures send_admin_text/send_admin_document
-- _register_bot_commands — PATCH /me с {"commands": []}
+- _register_bot_commands — PATCH /me публикует /start, /menu
 - _preflight_check_token — InvalidToken → sys.exit(1)
 """
 from __future__ import annotations
@@ -172,10 +172,10 @@ class TestBuildAdminSenders:
 
 
 class TestRegisterBotCommands:
-    """_register_bot_commands — PATCH /me с пустым commands."""
+    """_register_bot_commands — PATCH /me публикует /start и /menu."""
 
     @pytest.mark.asyncio
-    async def test_patch_uses_authorization_header_and_empty_commands(self) -> None:
+    async def test_patch_publishes_start_and_menu_commands(self) -> None:
         from aemr_bot import main
 
         bot = MagicMock()
@@ -202,7 +202,11 @@ class TestRegisterBotCommands:
         session.patch.assert_called_once()
         call = session.patch.call_args
         assert call.args[0].endswith("/me")
-        assert call.kwargs.get("json") == {"commands": []}
+        json_payload = call.kwargs.get("json")
+        names = [c["name"] for c in json_payload["commands"]]
+        assert names == ["start", "menu"]
+        # У каждой опубликованной команды есть текст-подсказка.
+        assert all(c.get("description") for c in json_payload["commands"])
         headers = call.kwargs.get("headers") or {}
         # Authorization без префикса Bearer (см. docstring).
         assert headers.get("Authorization") == "TOKEN-123"
