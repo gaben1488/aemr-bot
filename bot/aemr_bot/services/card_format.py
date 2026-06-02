@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 from zoneinfo import ZoneInfo
@@ -10,7 +11,7 @@ from aemr_bot.texts import (
     APPEAL_CARD_TEMPLATE,
     STATUS_LABELS,
 )
-from aemr_bot.utils.attachments import count_by_type
+from aemr_bot.utils.attachments import count_by_type, suspicious_attachment_names
 
 TZ = ZoneInfo(settings.timezone)
 
@@ -19,6 +20,20 @@ _ATTACHMENT_LABELS = {
     "video": "видео",
     "file": "файлов",
 }
+
+# Anti-spoof: карточка использует box-drawing глифы (`━━━ ОБРАЩЕНИЕ #N ━━━`)
+# как заголовки секций. Житель, вписав такой же `━━━ … ━━━` в текст
+# обращения, может нарисовать поддельный баннер («✅ Обращение закрыто
+# администрацией») и ввести оператора в заблуждение. Вырезаем box-drawing
+# (U+2500–U+257F) из текста жителя перед показом — он этими символами в
+# обращении не пишет, а спуфер рисует ими фейковую «шапку».
+_CARD_CHROME_RE = re.compile(r"[─-╿]+")
+
+
+def _strip_card_chrome(text: str | None) -> str | None:
+    if not text:
+        return text
+    return _CARD_CHROME_RE.sub("", text)
 
 
 def _local(dt: datetime) -> str:
@@ -39,7 +54,13 @@ def attachments_summary_line(attachments: list[dict]) -> str:
             parts.append(f"{label} {n}")
     if not parts:
         return ""
-    return "Вложения: " + ", ".join(parts)
+    line = "Вложения: " + ", ".join(parts)
+    # Anti-spoof: двойное расширение в имени файла (`.exe.pdf`) — попытка
+    # выдать исполняемое за документ. Предупреждаем оператора до открытия.
+    suspicious = suspicious_attachment_names(attachments or [])
+    if suspicious:
+        line += "\n⚠️ подозрительное имя (двойное расширение): " + ", ".join(suspicious)
+    return line
 
 
 def _clip(text: str, limit: int = 900) -> str:
@@ -97,8 +118,7 @@ def _visible_timeline_messages(msgs: list) -> list:
         return []
     ordered = sorted(
         msgs,
-        key=lambda m: getattr(m, "created_at", None)
-        or datetime.min.replace(tzinfo=TZ),
+        key=lambda m: getattr(m, "created_at", None) or datetime.min.replace(tzinfo=TZ),
     )
     return ordered[-_TIMELINE_MAX_MESSAGES:]
 
@@ -146,11 +166,12 @@ def _render_timeline(
         # outgoing, тем им defang не нужен.
         if direction == MessageDirection.FROM_USER.value and text:
             from aemr_bot.utils.url_defang import defang_url_in_text
-            text = defang_url_in_text(text)
+
+            # _strip_card_chrome: тот же anti-spoof, что для summary —
+            # followup жителя не должен рисовать поддельную «шапку».
+            text = defang_url_in_text(_strip_card_chrome(text) or "")
         body = _clip(text, limit=text_limit) if text else "Без текста."
-        attach_line = attachments_summary_line(
-            getattr(msg, "attachments", None) or []
-        )
+        attach_line = attachments_summary_line(getattr(msg, "attachments", None) or [])
         if attach_line:
             body = f"{body}\n{attach_line}"
         lines.append(f"{header}:")
@@ -232,9 +253,9 @@ def admin_card(appeal: Appeal, user: User) -> str:
         phone=user.phone or "—",
         status_line=_citizen_status_line(user),
         locality=appeal.locality or "—",
-        address=defang_for_admin(appeal.address) or "—",
+        address=defang_for_admin(_strip_card_chrome(appeal.address)) or "—",
         topic=appeal.topic or "—",
-        summary=defang_for_admin(appeal.summary) or "—",
+        summary=defang_for_admin(_strip_card_chrome(appeal.summary)) or "—",
         answer_limit=settings.answer_max_chars,
     )
     summary_line = attachments_summary_line(appeal.attachments or [])
@@ -292,9 +313,7 @@ def _bounded_scan_source(summary: str, visible_msgs: list) -> str:
     сматчится (warning — best-effort сигнал оператору, не блокировка),
     что приемлемо fail-closed-поведение.
     """
-    parts = [summary] + [
-        (getattr(m, "text", "") or "") for m in visible_msgs
-    ]
+    parts = [summary] + [(getattr(m, "text", "") or "") for m in visible_msgs]
     out = "\n".join(parts)
     if len(out) > _URL_SCAN_MAX_CHARS:
         out = out[:_URL_SCAN_MAX_CHARS]
@@ -330,6 +349,7 @@ def _maybe_url_warning(text: str) -> str:
     кейс «мне это прислали мошенники, разберитесь».
     """
     from aemr_bot.services.settings_store import extract_urls
+
     urls = extract_urls(text)
 
     # P3-4: bare-domain кандидаты (без схемы) — `login-gosuslugi.top`,
@@ -339,6 +359,7 @@ def _maybe_url_warning(text: str) -> str:
     bare_hosts: list[str] = []
     if text:
         from aemr_bot.utils.url_defang import _BARE_DOMAIN_PATTERN
+
         for m in _BARE_DOMAIN_PATTERN.finditer(text):
             bare_hosts.append(f"{m.group(1)}.{m.group(2)}")
 
@@ -353,6 +374,7 @@ def _maybe_url_warning(text: str) -> str:
     malicious: list[str] = []
     try:
         from aemr_bot.services.threat_intel import get_store
+
         store = get_store()
         for candidate in [*urls, *bare_hosts]:
             is_bad, _source = store.is_malicious(candidate)

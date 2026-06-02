@@ -126,8 +126,13 @@ async def _ping_db_cached() -> bool:
 
 
 def _is_local_request(request: web.Request) -> bool:
+    # Пустой remote НЕ считаем локальным: если health-порт когда-нибудь
+    # окажется за reverse-proxy, не выставляющим remote, диагностика
+    # (/readyz: db_ok, возраст heartbeat/poll) не должна утекать наружу.
+    # Штатно порт слушает 127.0.0.1 без входящих — здесь это лишь
+    # defense-in-depth на случай ошибки конфигурации.
     remote = request.remote or ""
-    return remote in ("127.0.0.1", "::1", "localhost", "")
+    return remote in ("127.0.0.1", "::1", "localhost")
 
 
 def _last_beat_age_seconds() -> float | None:
