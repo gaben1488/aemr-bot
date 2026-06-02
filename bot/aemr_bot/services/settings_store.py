@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import Setting
+from aemr_bot.utils.url_defang import extract_bare_hosts
 
 log = logging.getLogger(__name__)
 
@@ -62,6 +63,26 @@ def _is_valid_phone(value: str) -> bool:
     return bool(_PHONE_PATTERN.match(value.strip()))
 
 
+def _is_whitelisted_host(host: str) -> bool:
+    """True если «голый» host (без схемы) ведёт на гос-домен.
+
+    Выделено из `_is_whitelisted_url`, чтобы тем же критерием проверять
+    bare-домены из `find_non_whitelisted_urls` (исходящий фильтр).
+    §A4: mixed-case и не-`[a-z0-9.-]` хосты отвергаются как
+    подозрительные — стандартная DNS-практика lowercase ASCII, гос-
+    ссылки Администрации тоже такие, а omoglyph/punycode-подделки нет.
+    """
+    if not host:
+        return False
+    if host != host.lower():
+        return False
+    if not all(ch.isascii() and (ch.isalnum() or ch in ".-") for ch in host):
+        return False
+    return any(
+        host == suffix or host.endswith("." + suffix) for suffix in _URL_HOST_WHITELIST_SUFFIXES
+    )
+
+
 def _is_whitelisted_url(value: str) -> bool:
     """True если URL ведёт на разрешённый host (Elizovo / Kamchatka gov).
 
@@ -101,19 +122,10 @@ def _is_whitelisted_url(value: str) -> bool:
     raw_host = raw_netloc
     if not raw_host:
         return False
-    # §A4: reject mixed-case в исходном host.
-    if raw_host != raw_host.lower():
-        return False
-    # §A4: reject не-`[a-z0-9.-]` символы (unicode-омоглифы и
-    # подобные). punycode-домены здесь не страдают — они в ASCII
-    # как `xn--80a1acny.xn--p1ai`.
-    if not all(ch.isascii() and (ch.isalnum() or ch in ".-") for ch in raw_host):
-        return False
-    host = raw_host
-    return any(
-        host == suffix or host.endswith("." + suffix)
-        for suffix in _URL_HOST_WHITELIST_SUFFIXES
-    )
+    # §A4-проверки и suffix-match вынесены в `_is_whitelisted_host`,
+    # чтобы тем же критерием мерить и «голые» домены без схемы
+    # (см. find_non_whitelisted_urls).
+    return _is_whitelisted_host(raw_host)
 
 
 # Публичная обёртка — переиспользуется в operator_reply, broadcast и
@@ -170,17 +182,21 @@ def extract_urls(text: str) -> list[str]:
     # whitelist/defang. Кириллические гомоглифы (е→e) NFKC не трогает —
     # это разные буквы разных алфавитов; их ловит _QUASI_URL_PATTERN ниже.
     text = unicodedata.normalize("NFKC", text)
-    seen: list[str] = []
+    # Дедуп: членство через set (O(1)), порядок появления — в отдельном
+    # list. Раньше членство шло по list — O(n²) на тексте с сотнями
+    # разных URL (крафченая карточка жителя подвешивала event-loop).
+    seen: set[str] = set()
+    ordered: list[str] = []
     for u in _URL_IN_TEXT_PATTERN.findall(text):
         if u not in seen:
-            seen.append(u)
-    # Добавляем quasi-URL'ы (с unicode-омоглифом), которых нет в seen
+            seen.add(u)
+            ordered.append(u)
+    # Добавляем quasi-URL'ы (с unicode-омоглифом), которых нет в seen.
     for u in _QUASI_URL_PATTERN.findall(text):
-        # Защита: regex может зацепить ASCII URL тоже — пропускаем
-        # дубликаты.
         if u not in seen:
-            seen.append(u)
-    return seen
+            seen.add(u)
+            ordered.append(u)
+    return ordered
 
 
 # SECURITY_REVIEW F10 (CVSS 4.7): URL внутри querystring другого
@@ -223,6 +239,21 @@ def find_non_whitelisted_urls(text: str) -> list[str]:
             continue
         if _has_embedded_url(u):
             bad.append(u)
+    # «Голые» домены без схемы (`vk-gosuslugi.top`): MAX авто-линкует их
+    # в кликабельную ссылку, а `extract_urls` (только `http(s)://`) их не
+    # видит — для ИСХОДЯЩЕГО текста (ответ/рассылка/welcome) это дыра:
+    # не-гос домен дошёл бы до жителя под официальной шапкой. Гос-домены
+    # (`elizovomr.ru`) пропускаем — фильтруем только не-whitelisted.
+    #
+    # Сканируем текст БЕЗ уже-явных http(s)/quasi-URL: иначе `.ru`-подобный
+    # фрагмент пути гос-ссылки (`…/doc.app`) дал бы ложный срабат. Домен
+    # внутри чужого URL MAX отдельной кликабельной ссылкой не делает, так
+    # что терять тут нечего.
+    normalized = unicodedata.normalize("NFKC", text)
+    without_urls = _QUASI_URL_PATTERN.sub(" ", _URL_IN_TEXT_PATTERN.sub(" ", normalized))
+    for host in extract_bare_hosts(without_urls):
+        if not _is_whitelisted_host(host):
+            bad.append(host)
     return bad
 
 
@@ -334,6 +365,7 @@ def sanitize_settings_text(value: str) -> str:
 
     return out
 
+
 DEFAULTS: dict[str, Any] = {
     "welcome_text": None,
     "consent_text": None,
@@ -342,9 +374,7 @@ DEFAULTS: dict[str, Any] = {
     # коммитов» в админ-панели — без редеплоя.
     "commit_author_name": None,
     "commit_author_email": None,
-    "policy_url": (
-        "https://elizovomr.ru/storage/attachments/2024/08/15/U9XfgiWRETCF0KKT.pdf"
-    ),
+    "policy_url": ("https://elizovomr.ru/storage/attachments/2024/08/15/U9XfgiWRETCF0KKT.pdf"),
     "electronic_reception_url": "https://kamgov.ru/questions",
     "udth_schedule_url": (
         "https://udth.elizovomr.ru/publikatsiia/raspisanie-prigorodnykh-avtobusov"
@@ -565,7 +595,7 @@ def format_obj_list(items: list[dict]) -> str:
         for i, item in groups[section]:
             name = item.get("name") or item.get("routes") or "?"
             phone = item.get("phone") or ""
-            lines.append(f"{i+1}. {name} — {phone}")
+            lines.append(f"{i + 1}. {name} — {phone}")
     return "\n".join(lines).lstrip("\n")
 
 
@@ -576,9 +606,7 @@ async def get(session: AsyncSession, key: str) -> Any:
     return DEFAULTS.get(key)
 
 
-async def get_consent_request_text(
-    session: AsyncSession, *, policy_url: str, fallback: str
-) -> str:
+async def get_consent_request_text(session: AsyncSession, *, policy_url: str, fallback: str) -> str:
     """Готовый consent-request с подставленным policy_url, безопасно.
 
     Особый случай get_text_with_fallback: consent_text это шаблон с
@@ -602,9 +630,7 @@ async def get_consent_request_text(
     return fallback.format(policy_url=policy_url)
 
 
-async def get_text_with_fallback(
-    session: AsyncSession, key: str, fallback: str
-) -> str:
+async def get_text_with_fallback(session: AsyncSession, key: str, fallback: str) -> str:
     """Получить текстовую настройку из БД с санитизацией и fallback'ом.
 
     SECURITY_REVIEW C1: welcome_text / consent_text раньше были
@@ -635,7 +661,8 @@ async def get_text_with_fallback(
         # частая нештатная ситуация заслуживает внимания.
         log.warning(
             "get_text_with_fallback: fallback because get(%r) raised %s",
-            key, type(exc).__name__,
+            key,
+            type(exc).__name__,
         )
         return fallback
     if isinstance(raw, str) and raw.strip():
@@ -659,7 +686,8 @@ async def get_text_with_fallback(
             "get_text_with_fallback: БД-значение для %r не проходит "
             "SCHEMA-validate (%s) — отдаём hardcoded fallback. "
             "IT-оператору рекомендуется обновить настройку через UI.",
-            key, reason,
+            key,
+            reason,
         )
         return fallback
     return fallback
@@ -748,9 +776,7 @@ async def export_synced(session: AsyncSession) -> dict[str, Any]:
     return out
 
 
-async def mark_synced(
-    session: AsyncSession, keys: list[str] | None = None
-) -> int:
+async def mark_synced(session: AsyncSession, keys: list[str] | None = None) -> int:
     """Проставить synced_at = now() для ключей из списка (или для всех
     SYNCED_KEYS, если keys=None). Вызывается после успешного создания
     PR. Возвращает количество обновлённых строк."""
@@ -758,9 +784,7 @@ async def mark_synced(
     target_keys = list(keys) if keys is not None else list(SYNCED_KEYS)
     now = datetime.now(timezone.utc)
     result = await session.execute(
-        sa_update(Setting)
-        .where(Setting.key.in_(target_keys))
-        .values(synced_at=now)
+        sa_update(Setting).where(Setting.key.in_(target_keys)).values(synced_at=now)
     )
     return result.rowcount or 0
 
@@ -875,13 +899,16 @@ async def seed_if_empty(session: AsyncSession) -> None:
             log.error(
                 "seed_if_empty: ключ %r невалиден в БД (%s) И в seed-файле "
                 "тоже (%s) — не трогаем. Требуется ручная правка через UI.",
-                k, reason, seed_reason,
+                k,
+                reason,
+                seed_reason,
             )
             continue
         log.warning(
             "seed_if_empty: repair ключа %r — БД-значение не проходит "
             "validate (%s), перезаписываем актуальным seed-значением.",
-            k, reason,
+            k,
+            reason,
         )
         await set_value(session, k, v)
         repaired.append(k)
@@ -890,9 +917,7 @@ async def seed_if_empty(session: AsyncSession) -> None:
     # welcome_text / consent_text идут не сюда — их baseline хранится в
     # seed/welcome.md и seed/consent.md в формате markdown, репо-синк
     # их не трогает.
-    auto_synced = [
-        k for k in newly_seeded + repaired if k in SYNCED_KEYS
-    ]
+    auto_synced = [k for k in newly_seeded + repaired if k in SYNCED_KEYS]
     if auto_synced:
         await mark_synced(session, auto_synced)
 
@@ -916,11 +941,9 @@ async def seed_if_empty(session: AsyncSession) -> None:
     # `synced_at != NULL`. Для user-edited — компромисс: ключ остаётся
     # dirty до явного PR.
     backfill_candidates = [
-        k for k in SYNCED_KEYS
-        if k in existing
-        and k not in newly_seeded
-        and k not in repaired
-        and k in seed_pairs
+        k
+        for k in SYNCED_KEYS
+        if k in existing and k not in newly_seeded and k not in repaired and k in seed_pairs
     ]
     if backfill_candidates:
         rows = await session.execute(
@@ -941,7 +964,8 @@ async def seed_if_empty(session: AsyncSession) -> None:
             log.info(
                 "seed_if_empty: backfill synced_at для %d legacy ключей "
                 "(миграция 0013 + value совпадает с seed-baseline): %s",
-                len(legacy_at_baseline), legacy_at_baseline,
+                len(legacy_at_baseline),
+                legacy_at_baseline,
             )
             await mark_synced(session, legacy_at_baseline)
 
