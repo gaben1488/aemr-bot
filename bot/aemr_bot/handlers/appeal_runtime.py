@@ -38,6 +38,19 @@ _HAS_ALNUM = re.compile(r"[A-Za-zА-Яа-яЁё0-9]")
 _user_locks: dict[int, asyncio.Lock] = {}
 PERSIST_RATE_LIMITED = "rate_limited"
 
+# Потолок одновременных финализаций при восстановлении на старте (P2-2).
+# `recover_stuck_funnels` поднимает до `recover_batch_size` (default 1000)
+# застрявших воронок. Без bound каждый `persist_and_dispatch_appeal` —
+# отдельная корутина, которая берёт соединение из пула БД (всего 15) И
+# шлёт несколько запросов к MAX API. 1000 одновременных корутин = мгновенное
+# исчерпание пула (остальная работа бота встаёт на ожидание connection) и
+# burst к MAX за пределами его 2 RPS → 429-штормы. Семафор 5 держит
+# параллелизм восстановления заведомо ниже размера пула и оставляет
+# соединения живому трафику. Восстановление не интерактивно — небольшая
+# сериализация на старте безопасна; важно лишь не уронить пул и не упереться
+# в rate-limit MAX. Симметрично webhook/polling-семафорам в main.py.
+_RECOVERY_CONCURRENCY = 5
+
 
 def get_user_lock(max_user_id: int) -> asyncio.Lock:
     """Блокировка для каждого пользователя, чтобы параллельные пути
@@ -75,8 +88,18 @@ async def recover_stuck_funnels(bot) -> int:
     if not ids:
         return 0
 
+    # Bounded fan-out (P2-2): не больше _RECOVERY_CONCURRENCY одновременных
+    # финализаций, чтобы пул БД (15) и rate-limit MAX (2 RPS) не легли при
+    # большой пачке застрявших воронок. gather сохраняет порядок результатов,
+    # поэтому zip(ids, results) ниже остаётся корректным.
+    sem = asyncio.Semaphore(_RECOVERY_CONCURRENCY)
+
+    async def _bounded(uid: int) -> bool | str | None:
+        async with sem:
+            return await persist_and_dispatch_appeal(bot, uid)
+
     results = await asyncio.gather(
-        *(persist_and_dispatch_appeal(bot, uid) for uid in ids),
+        *(_bounded(uid) for uid in ids),
         return_exceptions=True,
     )
 

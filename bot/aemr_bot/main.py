@@ -66,10 +66,50 @@ def build_dispatcher() -> Dispatcher:
     use_create_task=True: handlers — отдельные asyncio.Task, polling loop
     не блокируется одним долгим callback'ом. Per-user state защищён
     asyncio.Lock в appeal_runtime, concurrent dispatch безопасен.
+
+    В polling-режиме оборачиваем `dp.handle` (P2-1): и `on_message`, и
+    `on_callback` диспетчеризуются ровно через него (maxapi зовёт
+    `dp.handle(event)` на каждый апдейт), поэтому это единственная точка,
+    закрывающая оба пути сразу — без правок в каждом handler'е. Обёртка
+    делает per-user токен-бакет (бёрст одного жителя гасится тихим ack'ом
+    без ответа) и bounded-семафор (потолок одновременных handle()-тасков,
+    симметрично webhook-семафору). В webhook-режиме поток уже ограничивает
+    _WEBHOOK_SEMAPHORE вокруг dp.handle в _max_webhook, поэтому второй
+    семафор там не вешаем (иначе двойное bounded-окно) — но токен-бакет
+    одинаково полезен и там; оставляем обёртку и для webhook, без своего
+    семафора.
     """
     dp = Dispatcher(use_create_task=True)
     register_handlers(dp)
+    _install_dispatch_guards(dp)
     return dp
+
+
+def _install_dispatch_guards(dp: Dispatcher) -> None:
+    """Навесить per-user throttle и bounded-семафор на `dp.handle`.
+
+    Переопределяем метод на ЭКЗЕМПЛЯРЕ (как `_install_polling_timeout`
+    для `bot.get_updates`), не трогая maxapi. Семафор берём только в
+    polling-режиме: webhook-путь уже обёрнут _WEBHOOK_SEMAPHORE, дублировать
+    bound нельзя. Троттлинг применяем в обоих режимах — это анти-флуд на
+    уровне жителя, ортогональный транспорту.
+    """
+    original_handle = dp.handle
+    polling = settings.bot_mode == "polling"
+
+    async def guarded_handle(event_object, *args, **kwargs):
+        # 1) Per-user токен-бакет — до любой работы. Затроттленное событие
+        #    тихо завершаем (callback — гасим спиннер ack'ом, текст роняем).
+        if not _throttle_allows_event(event_object):
+            await _ack_throttled_callback(event_object)
+            return None
+        # 2) Bounded-семафор только на polling-пути (webhook ограничен своим).
+        if polling:
+            async with _get_polling_dispatch_semaphore():
+                return await original_handle(event_object, *args, **kwargs)
+        return await original_handle(event_object, *args, **kwargs)
+
+    dp.handle = guarded_handle  # type: ignore[method-assign]
 
 
 def create_app() -> tuple[Bot, Dispatcher]:
@@ -102,6 +142,149 @@ def _get_webhook_semaphore() -> asyncio.Semaphore:
     if _WEBHOOK_SEMAPHORE is None:
         _WEBHOOK_SEMAPHORE = asyncio.Semaphore(_WEBHOOK_CONCURRENCY)
     return _WEBHOOK_SEMAPHORE
+
+
+# Semaphore-окно для polling-dispatch (P2-1). maxapi с use_create_task=True
+# спавнит `asyncio.create_task(dp.handle(event))` на КАЖДЫЙ апдейт без
+# верхней границы (см. maxapi/dispatcher.py:_dispatch_fetched_events). На
+# webhook-пути флуд ограничивает _WEBHOOK_SEMAPHORE, но polling-путь зиял:
+# ботнет или один зацикленный клиент мог накопить тысячи одновременных
+# handle()-тасков, каждый из которых берёт соединение из пула БД (15) →
+# исчерпание пула, рост памяти при mem_limit=512m, деградация для всех.
+# Симметрично webhook'у: bounded окно держит число параллельных dispatch'ей
+# в узде. 32 — тот же компромис throughput/память, что и у webhook-семафора.
+_POLLING_DISPATCH_CONCURRENCY = 32
+_POLLING_DISPATCH_SEMAPHORE: asyncio.Semaphore | None = None
+
+
+def _get_polling_dispatch_semaphore() -> asyncio.Semaphore:
+    """Lazy-init polling-dispatch семафора (нет event loop при импорте)."""
+    global _POLLING_DISPATCH_SEMAPHORE
+    if _POLLING_DISPATCH_SEMAPHORE is None:
+        _POLLING_DISPATCH_SEMAPHORE = asyncio.Semaphore(
+            _POLLING_DISPATCH_CONCURRENCY
+        )
+    return _POLLING_DISPATCH_SEMAPHORE
+
+
+# Per-user токен-бакет (P2-1). Polling-путь не имел per-user rate-limit:
+# один max_user_id мог гнать апдейты на скорости сети, и каждый порождал
+# отдельный handle()-таск (см. семафор выше) + запросы к БД и MAX API.
+# Бизнес-лимиты (3 обращения/час, followup-флуд) бьют ПОЗЖЕ — после того
+# как событие уже прошло dispatch, открыло сессию БД и, возможно, сходило
+# в MAX. Токен-бакет режет burst на самом входе: легитимный житель тапает
+# воронку (~10 нажатий) и НЕ упирается, а машинный флуд (десятки событий в
+# секунду от одного user_id) гасится до dispatch'а.
+#
+# Параметры: capacity 20 (запас на самый длинный человеческий всплеск —
+# пройти воронку + поправиться), refill 5 ток/сек (устойчивый человеческий
+# темп с большим запасом). Бакет в памяти, monotonic-часы; lazy-GC по TTL
+# не даёт словарю расти бесконечно. Админ-группа и события без user_id
+# НЕ троттлятся — операторов ограничивать нельзя, безатрибутные lifecycle-
+# события пропускаем (fail-open по доступности, бакет — анти-флуд жителя).
+_THROTTLE_CAPACITY = 20.0
+_THROTTLE_REFILL_PER_SEC = 5.0
+# Idle-бакет старше этого срока выбрасываем при следующей чистке, чтобы
+# словарь не рос по мере прохождения новых жителей через бота.
+_THROTTLE_TTL_SEC = 300.0
+
+
+class _UserThrottle:
+    """In-memory токен-бакет на max_user_id. Один процесс, один event loop.
+
+    `allow(user_id)` → True если есть токен (-1), False если бакет пуст.
+    Не блокирует и не спит: при отказе вызывающий тихо роняет событие.
+    Потокобезопасность не нужна — asyncio single-thread, между `await`
+    нет точки переключения внутри allow().
+    """
+
+    __slots__ = ("_capacity", "_refill", "_buckets")
+
+    def __init__(self, capacity: float, refill_per_sec: float) -> None:
+        self._capacity = capacity
+        self._refill = refill_per_sec
+        # user_id -> (tokens, last_monotonic)
+        self._buckets: dict[int, tuple[float, float]] = {}
+
+    def allow(self, user_id: int, *, now: float | None = None) -> bool:
+        ts = asyncio.get_running_loop().time() if now is None else now
+        tokens, last = self._buckets.get(user_id, (self._capacity, ts))
+        # Пополняем пропорционально прошедшему времени, но не выше потолка.
+        tokens = min(self._capacity, tokens + (ts - last) * self._refill)
+        if tokens < 1.0:
+            self._buckets[user_id] = (tokens, ts)
+            return False
+        self._buckets[user_id] = (tokens - 1.0, ts)
+        return True
+
+    def gc(self, *, now: float | None = None, ttl: float = _THROTTLE_TTL_SEC) -> None:
+        """Выбросить давно неактивные бакеты. O(n) по словарю, зовётся редко
+        (раз в N принятых событий) — амортизированно дёшево."""
+        ts = asyncio.get_running_loop().time() if now is None else now
+        stale = [uid for uid, (_, last) in self._buckets.items() if ts - last > ttl]
+        for uid in stale:
+            self._buckets.pop(uid, None)
+
+
+_user_throttle: _UserThrottle | None = None
+# Счётчик принятых событий — чтобы запускать gc() не на каждом, а раз в N.
+_throttle_events_since_gc = 0
+_THROTTLE_GC_EVERY = 500
+
+
+def _get_user_throttle() -> _UserThrottle:
+    global _user_throttle
+    if _user_throttle is None:
+        _user_throttle = _UserThrottle(
+            _THROTTLE_CAPACITY, _THROTTLE_REFILL_PER_SEC
+        )
+    return _user_throttle
+
+
+def _throttle_allows_event(event: object) -> bool:
+    """Решить, пропускать ли входящее событие per-user токен-бакетом.
+
+    Возвращает True (обрабатывать) если: событие из админ-группы (операторов
+    не троттлим), у события нет user_id (lifecycle/безатрибутное — fail-open),
+    или в бакете жителя есть токен. False — только когда конкретный житель
+    превысил бёрст-лимит; вызывающий обязан тихо завершить событие.
+    """
+    from aemr_bot.utils.event import get_chat_id, get_user_id
+
+    # Операторов в служебной группе не ограничиваем — они легитимно
+    # прокликивают много кнопок (карточки, статистика, настройки).
+    if settings.admin_group_id is not None and get_chat_id(event) == settings.admin_group_id:
+        return True
+
+    user_id = get_user_id(event)
+    if user_id is None:
+        return True
+
+    throttle = _get_user_throttle()
+    allowed = throttle.allow(user_id)
+    if allowed:
+        global _throttle_events_since_gc
+        _throttle_events_since_gc += 1
+        if _throttle_events_since_gc >= _THROTTLE_GC_EVERY:
+            _throttle_events_since_gc = 0
+            throttle.gc()
+    return allowed
+
+
+async def _ack_throttled_callback(event: object) -> None:
+    """Тихо погасить спиннер на кнопке у затроттленного callback'а.
+
+    Для MessageCallback без ack кнопка крутится у жителя. Тихий ack без
+    notification — событие проигнорировано, но UI не зависает. Для не-callback
+    (обычный текст) делать нечего: сообщение просто не обрабатывается.
+    """
+    from aemr_bot.utils.event import ack_callback
+
+    if getattr(event, "callback", None) is not None:
+        try:
+            await ack_callback(event)
+        except Exception:
+            log.debug("throttled callback ack failed", exc_info=True)
 
 
 
