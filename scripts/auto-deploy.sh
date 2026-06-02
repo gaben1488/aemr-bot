@@ -26,6 +26,14 @@ HEALTH_POLL_INTERVAL_SEC=5
 LIVE_URL=http://127.0.0.1:8080/livez
 READY_URL=http://127.0.0.1:8080/readyz
 
+# Gate проверки подписи коммита перед деплоем. По умолчанию ВЫКЛ (пусто):
+# поведение идентично прежнему, автодеплой не ломается, пока владелец не
+# настроил подписи и не завёл доверенный ключ/allowed-signers на сервере.
+# Включается выставлением REQUIRE_SIGNED_COMMITS=1 в окружении cron-юнита
+# (или /etc/default). Когда ВКЛ — неподписанный/непроверяемый origin/main
+# НЕ деплоится (fail-closed), см. блок верификации ниже.
+REQUIRE_SIGNED_COMMITS=${REQUIRE_SIGNED_COMMITS:-}
+
 # Git с явным ssh-ключом (deploy-key) — даже если у root есть свой github-ключ,
 # для этого репо берём именно deploy-key (минимум прав).
 export GIT_SSH_COMMAND="ssh -i $SSH_KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
@@ -50,6 +58,25 @@ logger -t "$LOG_TAG" "new commits: $LOCAL → $REMOTE, redeploying"
 
 # Запоминаем предыдущий рабочий коммит — пригодится для rollback'а.
 PREV_LOCAL=$LOCAL
+
+# Gate: верификация подписи входящего коммита ДО любых разрушительных
+# действий. Если флаг ВКЛ и подпись origin/main не проходит — выходим, НЕ
+# трогая working tree: контейнер продолжает крутить старый доверенный
+# коммит ($PREV_LOCAL), а свежий (непроверенный) scripts/*.sh так и не
+# попадает в /usr/local/bin под root-cron. Это и есть fail-closed.
+# Флаг ВЫКЛ (по умолчанию) — проверка пропускается, поведение прежнее.
+#
+# Доверие к ключу (GPG keyring или gpg.ssh.allowedSignersFile для
+# SSH-подписей) настраивает владелец на сервере — git verify-commit лишь
+# сверяется с уже сконфигурированным доверием и возвращает код выхода.
+if [ -n "$REQUIRE_SIGNED_COMMITS" ]; then
+    if git verify-commit "$REMOTE" >/dev/null 2>&1; then
+        logger -t "$LOG_TAG" "signature OK: $REMOTE подпись проверена, продолжаем деплой"
+    else
+        logger -t "$LOG_TAG" "DEPLOY BLOCKED: подпись $REMOTE не прошла проверку (REQUIRE_SIGNED_COMMITS=1), working tree НЕ тронут, остаёмся на $PREV_LOCAL"
+        exit 1
+    fi
+fi
 
 # Сохраняем .env (в git его нет, при reset --hard не пострадает,
 # но на всякий случай делаем копию)
