@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Index, String, Text, UniqueConstraint, func, text
+from sqlalchemy import BigInteger, Boolean, DateTime, DDL, ForeignKey, Index, String, Text, UniqueConstraint, event, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -67,6 +67,14 @@ class User(Base):
     # autogenerate не пытался их «удалить» при сравнении модели и БД.
     # postgresql_where + postgresql_using фиксируют partial-условие;
     # SQLAlchemy транслирует это в `WHERE <expr>` при создании индекса.
+    #
+    # Trigram GIN-индексы из миграции 0018 — под подстрочный ILIKE '%x%'
+    # в services/users.py::search_audience (поиск жителя по части имени /
+    # телефона). postgresql_using='gin' + postgresql_ops с gin_trgm_ops
+    # дают то же DDL, что генерит миграция, иначе `alembic check` видит
+    # drift. Эти индексы требуют extension pg_trgm — в проде её создаёт
+    # миграция 0018, для metadata.create_all (тесты) — before_create
+    # DDL-listener сразу после класса User (см. event.listen ниже).
     __table_args__ = (
         UniqueConstraint("max_user_id", name="users_max_user_id_key"),
         Index(
@@ -85,6 +93,18 @@ class User(Base):
             "dialog_state",
             "updated_at",
             postgresql_where=text("is_blocked = false"),
+        ),
+        Index(
+            "ix_users_first_name_trgm",
+            "first_name",
+            postgresql_using="gin",
+            postgresql_ops={"first_name": "gin_trgm_ops"},
+        ),
+        Index(
+            "ix_users_phone_normalized_trgm",
+            "phone_normalized",
+            postgresql_using="gin",
+            postgresql_ops={"phone_normalized": "gin_trgm_ops"},
         ),
     )
 
@@ -123,6 +143,26 @@ class User(Base):
     #   исключением для «прощального ответа» по обращениям ДО revoke.
     # Объединяющего @property специально нет: семантика отличается, и
     # унификация даст ложную уверенность «один canonical-гард».
+
+
+# pg_trgm нужен ПЕРЕД созданием таблицы users: два её trigram-индекса
+# (ix_users_*_trgm выше) ссылаются на operator class gin_trgm_ops, а он
+# появляется только с этим extension. В проде extension ставит миграция
+# 0018; но Base.metadata.create_all (тестовая session-фикстура поднимает
+# схему именно так, без alembic) обошёл бы 0018 и упал на «operator class
+# gin_trgm_ops does not exist». Этот before_create-listener выполняет
+# идемпотентный CREATE EXTENSION прямо перед DDL таблицы users.
+#
+# `.execute_if(dialect="postgresql")` — listener молчит на sqlite
+# (pure-юнит-тесты с _PSEUDO_DB): там GIN/pg_trgm не существуют, а
+# create_all для sqlite индексы с postgresql_* просто игнорирует.
+event.listen(
+    User.__table__,
+    "before_create",
+    DDL("CREATE EXTENSION IF NOT EXISTS pg_trgm").execute_if(
+        dialect="postgresql"
+    ),
+)
 
 
 class Operator(Base):
