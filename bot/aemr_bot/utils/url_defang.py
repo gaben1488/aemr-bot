@@ -162,15 +162,21 @@ def defang_for_admin(text: str | None) -> str:
 def has_defangable_url(text: str | None) -> bool:
     """True если в тексте есть URL, который имеет смысл defang'ить.
 
-    Используется в admin_card._maybe_url_warning — чтобы добавлять
-    warning «⚠️ содержит ссылку» только когда есть что показывать.
-    Не дублирует extract_urls из settings_store (та для исходящего
-    whitelist'а), здесь — узкая проверка на любую форму ссылки:
-    `http(s)://...` ИЛИ bare domain `name.TLD` (см. `_DEFANG_TLDS`).
+    Узкая проверка на любую форму ссылки: `http(s)://...` ИЛИ bare
+    domain `name.TLD` (см. `_DEFANG_TLDS`). Не дублирует extract_urls
+    из settings_store (та для исходящего whitelist'а) — здесь
+    domain-only детект поверх `_BARE_DOMAIN_PATTERN`.
 
     Расширено 2026-05-27: жители часто пишут `ya.ru` или `bit.ly/x`
-    без схемы. MAX-клиент их auto-linkify'ит — warning должен
-    показываться и в этом случае.
+    без схемы. MAX-клиент их auto-linkify'ит.
+
+    Статус (2026-06-02): сейчас вызывающих в продакшене нет —
+    `card_format._maybe_url_warning` гейтит ⚠️-warning напрямую через
+    `extract_urls` (http/quasi) и эскалирует до ⛔ через
+    `_BARE_DOMAIN_PATTERN` + threat-intel, не через эту функцию.
+    Оставлена как публичная утилита (есть тест-контракт в
+    `test_url_defang.py`); раньше docstring ошибочно утверждал, что её
+    зовёт `_maybe_url_warning`.
     """
     if not text:
         return False
