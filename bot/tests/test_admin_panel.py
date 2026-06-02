@@ -59,19 +59,36 @@ class TestParseArg:
 
 class TestShowOpMenu:
     @pytest.mark.asyncio
-    async def test_no_operator_uses_default_flags(self) -> None:
+    async def test_no_operator_refused_menu_not_rendered(self) -> None:
+        """P3-2 authz-гейт: нет операторской записи (не-оператор или вне
+        служебной группы) → нейтральный отказ через message.answer, а
+        опер-меню НЕ рисуется. Доказываем fail-closed на источнике:
+        keyboards-сборка не вызвана, count_open не читается, ничего не
+        отправлено через send_message, pin не предпринят.
+        """
         pytest.importorskip("maxapi")
         from aemr_bot.handlers import admin_panel
 
         event = _make_event()
+        kb = MagicMock(name="op_help_keyboard")
+        count_open = AsyncMock(return_value=3)
         with patch("aemr_bot.handlers.admin_panel.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_panel.get_operator",
                    AsyncMock(return_value=None)), \
-             patch("aemr_bot.services.appeals.count_open",
-                   AsyncMock(return_value=3)):
-            await admin_panel.show_op_menu(event, pin=False)
-        event.bot.send_message.assert_called_once()
+             patch("aemr_bot.keyboards.op_help_keyboard", kb), \
+             patch("aemr_bot.services.appeals.count_open", count_open):
+            result = await admin_panel.show_op_menu(event, pin=False)
+
+        # Гейт сработал: нейтральный отказ ушёл, меню не отрисовано.
+        assert result is None
+        event.message.answer.assert_called_once()
+        refusal = event.message.answer.call_args.args[0]
+        assert "только операторам" in refusal
+        # Опер-меню НЕ собрано и НЕ отправлено; pin не предпринят.
+        kb.assert_not_called()
+        count_open.assert_not_awaited()
+        event.bot.send_message.assert_not_called()
         event.bot.pin_message.assert_not_called()
 
     @pytest.mark.asyncio
@@ -97,23 +114,35 @@ class TestShowOpMenu:
 
     @pytest.mark.asyncio
     async def test_count_open_failure_does_not_crash(self) -> None:
-        """Если count_open упал, меню всё равно показываем с None-счётчиком."""
+        """Оператор есть (гейт пройден), но count_open упал — меню всё
+        равно показываем, просто с None-счётчиком в клавиатуре."""
         pytest.importorskip("maxapi")
+        from aemr_bot.db.models import OperatorRole
         from aemr_bot.handlers import admin_panel
 
         event = _make_event()
+        # Валидная операторская запись проводит через authz-гейт к
+        # count/render-логике, которую этот тест и проверяет.
+        op = SimpleNamespace(role=OperatorRole.IT.value)
+        kb = MagicMock(name="op_help_keyboard")
         with patch("aemr_bot.handlers.admin_panel.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_panel.get_operator",
-                   AsyncMock(return_value=None)), \
+                   AsyncMock(return_value=op)), \
+             patch("aemr_bot.keyboards.op_help_keyboard", kb), \
              patch("aemr_bot.services.appeals.count_open",
                    AsyncMock(side_effect=RuntimeError("db down"))):
             await admin_panel.show_op_menu(event, pin=False)
+        # Меню опубликовано несмотря на сбой count_open; клавиатура
+        # собрана с open_count=None. Нейтральный отказ НЕ слался.
         event.bot.send_message.assert_called_once()
+        event.message.answer.assert_not_called()
+        assert kb.call_args.kwargs["open_count"] is None
 
     @pytest.mark.asyncio
     async def test_pin_failure_does_not_crash(self) -> None:
         pytest.importorskip("maxapi")
+        from aemr_bot.db.models import OperatorRole
         from aemr_bot.handlers import admin_panel
 
         event = _make_event()
@@ -121,18 +150,23 @@ class TestShowOpMenu:
             message=SimpleNamespace(body=SimpleNamespace(mid="m-pin"))
         )
         event.bot.pin_message.side_effect = RuntimeError("pin failed")
+        # Оператор есть → гейт пройден, доходим до pin-логики (она и
+        # проверяется этим тестом).
+        op = SimpleNamespace(role=OperatorRole.IT.value)
         with patch("aemr_bot.handlers.admin_panel.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_panel.get_operator",
-                   AsyncMock(return_value=None)), \
+                   AsyncMock(return_value=op)), \
              patch("aemr_bot.services.appeals.count_open",
                    AsyncMock(return_value=0)):
             # Не должно бросить, несмотря на сбой pin_message.
             result = await admin_panel.show_op_menu(event, pin=True)
 
         # Меню всё равно опубликовано, pin был предпринят и его падение
-        # проглочено (наружу исключение не ушло).
+        # проглочено (наружу исключение не ушло). Нейтральный отказ не
+        # слался — прошли happy-path, а не authz-отказ.
         assert result is None
+        event.message.answer.assert_not_called()
         event.bot.send_message.assert_called_once()
         event.bot.pin_message.assert_called_once()
 

@@ -824,8 +824,13 @@ class TestDispatchChainOrder:
         в admin-dispatch — citizen-воронка для него больше не опрашивается
         (раньше слепая цепочка дёргала citizen вхолостую). Наблюдаемый
         контракт (admin обрабатывает op:menu, menu не трогается) сохранён.
+
+        P3-1 authz-гейт: admin-payload выполняется ТОЛЬКО из настроенной
+        админ-группы, поэтому легитимный кейс — событие ИЗ админ-чата
+        (chat_id == admin_group_id). Реверс-гейт для НЕ-админ-чата проверяет
+        отдельный тест `test_admin_payload_from_non_admin_chat_is_blocked`.
         """
-        event = _make_callback_event(payload="op:menu")
+        event = _make_callback_event(payload="op:menu", chat_id=999)
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), patch.object(
             appeal_handler, "_dispatch_citizen_callback", AsyncMock(return_value=False)
         ) as citizen, patch.object(
@@ -851,8 +856,12 @@ class TestDispatchChainOrder:
         `op:bc:weird` реестр классифицирует как BROADCAST_ADMIN, но
         admin-dispatch не знает такой хвост (есть только op:bc:open/clone/
         failed) и возвращает False. Раньше такой payload проваливался из
-        admin-обёртки в меню — сохраняем это поведение."""
-        event = _make_callback_event(payload="op:bc:weird")
+        admin-обёртки в меню — сохраняем это поведение.
+
+        P3-1 authz-гейт пропускает admin-payload только ИЗ админ-чата, поэтому
+        событие приходит с chat_id == admin_group_id; иначе fallthrough в
+        меню не дошёл бы (реверс-гейт отсёк бы payload раньше dispatch)."""
+        event = _make_callback_event(payload="op:bc:weird", chat_id=999)
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), patch.object(
             appeal_handler, "_dispatch_citizen_callback", AsyncMock(return_value=False)
         ) as citizen, patch.object(
@@ -866,6 +875,39 @@ class TestDispatchChainOrder:
         citizen.assert_not_awaited()
         admin.assert_awaited_once()
         menu.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_admin_payload_from_non_admin_chat_is_blocked(
+        self, on_callback
+    ) -> None:
+        """P3-1 реверс-гейт: admin-payload (op:menu) из НЕ-админ-чата (личка
+        жителя) отсекается в `_route_callback` ДО dispatch — тихий ack,
+        ни admin-dispatch, ни fallthrough в меню.
+
+        Это обратная граница к `test_admin_chat_blocks_non_admin_payload`
+        (та закрывает прямую: житель-payload в админ-группе). Здесь chat_id
+        (личка, 555) != admin_group_id (999): группа реестра OPERATOR_ADMIN,
+        но admin-dispatch НЕ зовётся (иначе отмена мастера рассылки / отмена
+        черновика ответа дёргала бы in-memory wizard/intent-хранилища из
+        лички ДО ролевой проверки — инъекция в опер-группу)."""
+        event = _make_callback_event(payload="op:menu", chat_id=555)
+        with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), patch.object(
+            appeal_handler, "ack_callback", AsyncMock()
+        ) as ack, patch.object(
+            appeal_handler, "_dispatch_citizen_callback", AsyncMock(return_value=True)
+        ) as citizen, patch.object(
+            appeal_handler.admin_callback_dispatch,
+            "dispatch_admin_callback",
+            AsyncMock(return_value=True),
+        ) as admin, patch(
+            "aemr_bot.handlers.menu.handle_callback", AsyncMock(return_value=True)
+        ) as menu:
+            await on_callback(event)
+        # Реверс-гейт: тихий ack, дальше ничего не выполняется.
+        ack.assert_awaited_once()
+        citizen.assert_not_awaited()
+        admin.assert_not_awaited()
+        menu.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_menu_payload_routes_to_menu_not_admin(
