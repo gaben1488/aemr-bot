@@ -23,6 +23,7 @@
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from aemr_bot import keyboards, texts
@@ -31,6 +32,7 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
+from aemr_bot.utils.typing_indicator import mark_typing
 
 log = logging.getLogger(__name__)
 
@@ -81,7 +83,15 @@ async def handle_location_for_locality(
     from aemr_bot.services import geo as geo_service
 
     lat, lon = location
-    result = geo_service.find_address(lat, lon)
+    # Индикатор «бот печатает»: первая геолокация после рестарта
+    # тянет холодный lazy-load 2.6 МБ GeoJSON — житель видит активность,
+    # а не «мёртвый» экран. Best-effort, ошибки MAX не ломают handler.
+    await mark_typing(event)
+    # CPU-bound shapely + ленивая загрузка GeoJSON блокируют единственный
+    # event-loop (Dispatcher use_create_task=True морозит всех жителей и
+    # операторов). Выносим в поток: find_address thread-safe — только
+    # чтение lru_cache-структур, без БД/сессии, ловит свои исключения.
+    result = await asyncio.to_thread(geo_service.find_address, lat, lon)
     log.info(
         "geo result for user=%s: locality=%r conf=%s",
         max_user_id, result.locality, result.confidence,
