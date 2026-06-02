@@ -94,10 +94,7 @@ def extract_location(message: Any) -> tuple[float, float] | None:
     # debug + только TYPE без координат.
     if log.isEnabledFor(logging.DEBUG):
         types_seen = [
-            str(
-                getattr(att, "type", None)
-                or (att.get("type") if isinstance(att, dict) else None)
-            )
+            str(getattr(att, "type", None) or (att.get("type") if isinstance(att, dict) else None))
             for att in raw
         ]
         log.debug("extract_location: attachments types=%s", types_seen)
@@ -114,10 +111,7 @@ def extract_location(message: Any) -> tuple[float, float] | None:
         # Координаты могут лежать в нескольких местах: для Location-
         # модели maxapi — прямо на att; для dict — в att или att.payload;
         # для legacy формата — в att.payload.location.
-        att_payload = (
-            att.get("payload") if isinstance(att, dict)
-            else getattr(att, "payload", None)
-        )
+        att_payload = att.get("payload") if isinstance(att, dict) else getattr(att, "payload", None)
         candidates = [
             ("att", att),
             ("att.payload", att_payload),
@@ -147,7 +141,8 @@ def extract_location(message: Any) -> tuple[float, float] | None:
                         # Без значений координат в info-логе (PII).
                         log.debug(
                             "extract_location: parsed from %s/%s",
-                            label, lat_attr,
+                            label,
+                            lat_attr,
                         )
                         return result
                     except (TypeError, ValueError):
@@ -313,6 +308,71 @@ def count_by_type(stored: list[dict]) -> dict[str, int]:
         if kind:
             counts[kind] = counts.get(kind, 0) + 1
     return counts
+
+
+# Внутренние расширения, которыми маскируют исполняемое под «документ»:
+# `Постановление.exe.pdf`, `справка.scr.jpg`. Оператор видит «безопасный»
+# хвост (.pdf/.jpg) и открывает, не заметив реального .exe/.scr.
+_DANGEROUS_INNER_EXT = frozenset(
+    {
+        "exe",
+        "scr",
+        "bat",
+        "cmd",
+        "com",
+        "pif",
+        "js",
+        "jse",
+        "vbs",
+        "vbe",
+        "jar",
+        "msi",
+        "cpl",
+        "hta",
+        "wsf",
+        "wsh",
+        "lnk",
+        "reg",
+        "ps1",
+        "apk",
+    }
+)
+
+
+def _attachment_filename(att: dict) -> str | None:
+    """Имя файла из сериализованного вложения, если MAX его отдал.
+
+    MAX не гарантирует имя в payload — ищем в нескольких местах и
+    возвращаем None, если ничего нет (тогда флаг просто не ставится).
+    """
+    if not isinstance(att, dict):
+        return None
+    for container in (att, att.get("payload")):
+        if not isinstance(container, dict):
+            continue
+        for key in ("filename", "file_name", "name"):
+            value = container.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    return None
+
+
+def has_suspicious_double_extension(filename: str) -> bool:
+    """True для имён вида `<...>.<exec>.<safe>` — маскировка исполняемого."""
+    parts = filename.lower().rsplit(".", 2)
+    if len(parts) < 3:  # нужно минимум два расширения: name.inner.outer
+        return False
+    return parts[-2] in _DANGEROUS_INNER_EXT
+
+
+def suspicious_attachment_names(attachments: list[dict]) -> list[str]:
+    """Имена вложений с опасным двойным расширением (для warning оператору)."""
+    out: list[str] = []
+    for att in attachments or []:
+        name = _attachment_filename(att)
+        if name and has_suspicious_double_extension(name):
+            out.append(name)
+    return out
 
 
 def deserialize_for_relay(stored: list[dict]) -> list:
