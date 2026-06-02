@@ -505,6 +505,17 @@ class TestDoDelete:
 
 
 class TestSaveNew:
+    @pytest.fixture(autouse=True)
+    def _allow_role(self):
+        """SECURITY_REVIEW P3-3: `_save_new` теперь начинается с
+        `ensure_role(IT, COORDINATOR)` — write-callback пере-проверяет роль
+        (между стартом wizard'а и «Сохранить» оператора могли понизить).
+        Эти характеризации проверяют поведение ПОСЛЕ ролевого гейта (сам
+        отказ роли покрыт в TestRoleGuards), поэтому роль мокаем как
+        разрешённую."""
+        with patch(f"{_WIZ}.ensure_role", AsyncMock(return_value=True)):
+            yield
+
     @pytest.mark.asyncio
     async def test_wrong_state_shows_cancelled(self) -> None:
         """state не в new_preview (устаревшая кнопка) → CANCELLED, create
@@ -863,6 +874,15 @@ class TestStepEdit:
 
 
 class TestSaveEdit:
+    @pytest.fixture(autouse=True)
+    def _allow_role(self):
+        """SECURITY_REVIEW P3-3: `_save_edit` теперь начинается с
+        `ensure_role(IT, COORDINATOR)` (как `_save_new`). Характеризации
+        проверяют поведение ПОСЛЕ ролевого гейта; отказ роли — в
+        TestRoleGuards. Роль мокаем как разрешённую."""
+        with patch(f"{_WIZ}.ensure_role", AsyncMock(return_value=True)):
+            yield
+
     def _preview_state(self, *, replaced: bool, target_id: int = 5):
         st = bt._TmplWizardState(
             step="edit_preview", target_id=target_id,

@@ -771,9 +771,14 @@ class TestActorNoneGuards:
 
     @pytest.mark.asyncio
     async def test_save_new_actor_none_noop(self) -> None:
+        """`_save_new` с actor_id None → noop. После SECURITY_REVIEW P3-3
+        первым стоит ensure_role-гейт, поэтому мокаем роль ОК (True), чтобы
+        дойти до проверяемой ветки `actor_id is None` (get_user_id→None):
+        внутренний return до create_template и до экрана."""
         event = _make_event(user_id=7)
         create = AsyncMock()
-        with patch(f"{_WIZ}.get_user_id", return_value=None), \
+        with patch(f"{_WIZ}.ensure_role", AsyncMock(return_value=True)), \
+             patch(f"{_WIZ}.get_user_id", return_value=None), \
              patch(f"{_WIZ}.get_operator",
                    AsyncMock(return_value=SimpleNamespace(id=99))), \
              patch(f"{_WIZ}.templates_service.create_template", create), \
@@ -784,9 +789,14 @@ class TestActorNoneGuards:
 
     @pytest.mark.asyncio
     async def test_save_edit_actor_none_noop(self) -> None:
+        """`_save_edit` с actor_id None → noop. Симметрично save_new:
+        ensure_role-гейт стоит первым (SECURITY_REVIEW P3-3), мокаем роль
+        ОК (True), чтобы дойти до ветки `actor_id is None` (get_user_id→
+        None) — return до update_text и до экрана."""
         event = _make_event(user_id=7)
         update = AsyncMock()
-        with patch(f"{_WIZ}.get_user_id", return_value=None), \
+        with patch(f"{_WIZ}.ensure_role", AsyncMock(return_value=True)), \
+             patch(f"{_WIZ}.get_user_id", return_value=None), \
              patch(f"{_WIZ}.get_operator",
                    AsyncMock(return_value=SimpleNamespace(id=99))), \
              patch(f"{_WIZ}.templates_service.update_text", update), \
@@ -881,7 +891,11 @@ class TestAuditSkipNoOperator:
     @pytest.mark.asyncio
     async def test_save_edit_no_operator_updates_skips_audit(self) -> None:
         """update_text выполняется, но при op_id=None write_audit
-        пропускается (ветка 483->495)."""
+        пропускается (ветка 498->510). После SECURITY_REVIEW P3-3 первым
+        стоит ensure_role-гейт: мокаем роль ОК (True) и get_user_id→7
+        (валидный actor проходит None-гард и находит state в _wizards[7]),
+        чтобы дойти до happy-path. get_operator→None даёт op_id=None →
+        audit-ветка пропущена, но сама правка применяется."""
         event = _make_event(user_id=7)
         st = bt._TmplWizardState(
             step="edit_preview", target_id=5,
@@ -892,7 +906,9 @@ class TestAuditSkipNoOperator:
         bt._wizards[7] = st
         update = AsyncMock()
         write_audit = AsyncMock()
-        with patch(f"{_WIZ}.get_operator", AsyncMock(return_value=None)), \
+        with patch(f"{_WIZ}.ensure_role", AsyncMock(return_value=True)), \
+             patch(f"{_WIZ}.get_user_id", return_value=7), \
+             patch(f"{_WIZ}.get_operator", AsyncMock(return_value=None)), \
              patch(f"{_WIZ}.session_scope", _fake_session_scope), \
              patch(f"{_WIZ}.templates_service.update_text", update), \
              patch(f"{_WIZ}.operators_service.write_audit", write_audit), \
