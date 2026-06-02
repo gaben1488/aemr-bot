@@ -45,8 +45,12 @@ async def test_wizard_registry_spawn_persist_uses_strong_ref() -> None:
         finished.set()
 
     wizard_registry._spawn_persist(coro)
-    # Дать запущенной task'е попасть в strong-ref set.
-    await asyncio.sleep(0)
+    # Дождаться старта задачи детерминированно через Event, а не счётом
+    # тиков sleep(0): под coverage трейсер замедляет шаги корутины, и
+    # фиксированное число тиков становится ненадёжным. wait_for с
+    # таймаутом-страховкой возвращается мгновенно, как только coro
+    # выставит `started` (happy-path без wall-clock ожидания).
+    await asyncio.wait_for(started.wait(), timeout=5)
     assert started.is_set(), "task должна стартовать в текущем loop'е"
     # Strong-ref зарегистрирован?
     assert any(

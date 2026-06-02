@@ -25,6 +25,44 @@ def _clean():
     wr.reset_all()
 
 
+async def _drain_persist(tasks: list[asyncio.Task]) -> None:
+    """Дождаться фоновых persist-задач напрямую — без угадывания числа
+    тиков ``asyncio.sleep(0)``.
+
+    Под coverage (`--cov`, branch-трейсер ``coverage.run``) каждый шаг
+    корутины замедляется, и фиксированной пары ``sleep(0)`` могло не
+    хватить, чтобы фоновая задача доехала до записи, — это даёт flaky
+    падения. ``await`` реального хэндла задачи делает ожидание
+    детерминированным независимо от скорости трейсера.
+
+    ``gather`` снимает копию ``tasks`` на момент вызова, поэтому
+    докручиваются ровно задачи, заспавненные предшествующим
+    ``schedule_persist_*``.
+    """
+    if tasks:
+        await asyncio.gather(*tasks)
+
+
+@pytest.fixture
+def persist_tasks(monkeypatch: pytest.MonkeyPatch) -> list[asyncio.Task]:
+    """Перехватывает фоновые persist-задачи, чтобы тест дожидался их
+    через :func:`_drain_persist`, а не прокручивал loop ``sleep(0)``.
+
+    Оборачивает ``wizard_registry.spawn_background_task``: реальный spawn
+    (strong-ref защита от GC сохраняется) плюс сбор хэндла в список.
+    """
+    tasks: list[asyncio.Task] = []
+    real_spawn = wr.spawn_background_task
+
+    def _record(coro, *, name=None):
+        task = real_spawn(coro, name=name)
+        tasks.append(task)
+        return task
+
+    monkeypatch.setattr(wr, "spawn_background_task", _record)
+    return tasks
+
+
 class TestSpawnPersistOutsideLoop:
     """`_spawn_persist` без running loop — no-op без exception."""
 
@@ -53,7 +91,7 @@ class TestSchedulePersistOpInsideLoop:
 
     @pytest.mark.asyncio
     async def test_save_spawns_background_task(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch, persist_tasks: list[asyncio.Task]
     ) -> None:
         captured: list[tuple[int, dict]] = []
 
@@ -75,9 +113,8 @@ class TestSchedulePersistOpInsideLoop:
         wr.set_op_wizard(42, {"step": "awaiting_id", "target_id": 100})
         wr.schedule_persist_op(42)
 
-        # Background task запущен — дать loop'у выполнить его.
-        await asyncio.sleep(0)
-        await asyncio.sleep(0)
+        # Дождаться фоновой задачи напрямую — без счёта тиков sleep(0).
+        await _drain_persist(persist_tasks)
 
         assert captured, "background save был ожидаем, но не сработал"
         assert captured[0][0] == 42
@@ -85,7 +122,7 @@ class TestSchedulePersistOpInsideLoop:
 
     @pytest.mark.asyncio
     async def test_delete_when_state_is_none(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch, persist_tasks: list[asyncio.Task]
     ) -> None:
         """Если state=None и в registry нет записи — спавнится delete."""
         deleted: list[int] = []
@@ -108,14 +145,13 @@ class TestSchedulePersistOpInsideLoop:
         # В registry нет op-wizard для оператора 99 — schedule с
         # state=None должен спавнить delete.
         wr.schedule_persist_op(99)
-        await asyncio.sleep(0)
-        await asyncio.sleep(0)
+        await _drain_persist(persist_tasks)
 
         assert deleted == [99]
 
     @pytest.mark.asyncio
     async def test_save_uses_explicit_state_when_given(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch, persist_tasks: list[asyncio.Task]
     ) -> None:
         """Если state передан явно — handler может хранить свой dict
         отдельно от registry. Snapshot должен быть передан как dict."""
@@ -138,15 +174,14 @@ class TestSchedulePersistOpInsideLoop:
 
         explicit_state = {"step": "awaiting_role", "target_id": 200}
         wr.schedule_persist_op(50, state=explicit_state)
-        await asyncio.sleep(0)
-        await asyncio.sleep(0)
+        await _drain_persist(persist_tasks)
 
         assert captured, "background save был ожидаем"
         assert captured[0] == explicit_state
 
     @pytest.mark.asyncio
     async def test_persist_save_swallows_exceptions(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch, persist_tasks: list[asyncio.Task]
     ) -> None:
         """Если save в БД упало — фоновая задача гасит exception,
         in-memory остаётся консистентным."""
@@ -169,9 +204,9 @@ class TestSchedulePersistOpInsideLoop:
         wr.set_op_wizard(42, {"x": 1})
         wr.schedule_persist_op(42)
 
-        # exception не должно всплыть наружу — caller продолжает.
-        await asyncio.sleep(0)
-        await asyncio.sleep(0)
+        # exception гасится внутри задачи — await задачи (через
+        # _drain_persist) завершается без проброса наружу.
+        await _drain_persist(persist_tasks)
 
         # in-memory не задет.
         assert wr.get_op_wizard(42) == {"x": 1}
@@ -182,7 +217,7 @@ class TestSchedulePersistBroadcastInsideLoop:
 
     @pytest.mark.asyncio
     async def test_save_spawns_background_task(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch, persist_tasks: list[asyncio.Task]
     ) -> None:
         captured: list[tuple[int, dict]] = []
 
@@ -205,8 +240,7 @@ class TestSchedulePersistBroadcastInsideLoop:
         wr.set_broadcast_wizard(42, {"step": "awaiting_text", "text": "hi"})
         wr.schedule_persist_broadcast(42)
 
-        await asyncio.sleep(0)
-        await asyncio.sleep(0)
+        await _drain_persist(persist_tasks)
 
         assert captured
         assert captured[0][0] == 42
@@ -214,7 +248,7 @@ class TestSchedulePersistBroadcastInsideLoop:
 
     @pytest.mark.asyncio
     async def test_delete_when_state_none(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch, persist_tasks: list[asyncio.Task]
     ) -> None:
         deleted: list[int] = []
 
@@ -235,7 +269,6 @@ class TestSchedulePersistBroadcastInsideLoop:
         )
 
         wr.schedule_persist_broadcast(77)
-        await asyncio.sleep(0)
-        await asyncio.sleep(0)
+        await _drain_persist(persist_tasks)
 
         assert deleted == [77]
