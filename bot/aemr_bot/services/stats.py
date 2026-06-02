@@ -17,6 +17,32 @@ TZ = ZoneInfo(settings.timezone)
 
 VALID_PERIODS = ("today", "week", "month", "quarter", "half_year", "year", "all")
 
+
+# Защита от CSV/formula-injection в XLSX. openpyxl сам пишет inline-строкой
+# (не формулой) почти всё, но строку с ведущим '=' превращает в живой тег
+# <f> — то есть `=HYPERLINK(...)` / `=cmd|...` из текста жителя (summary,
+# address, topic, first_name) или ответа оператора исполнится при открытии
+# в Excel. Ведущие + - @ \t \r остальные ридеры (LibreOffice, Excel при
+# ре-сейве) тоже трактуют как начало формулы. Fail-closed: для любого
+# user-controlled значения, начинающегося с этих символов, префиксуем
+# апострофом — Excel показывает текст как есть и не вычисляет.
+_FORMULA_TRIGGERS = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _sanitize_cell(value):
+    """Нейтрализует formula-injection для user-controlled ячеек XLSX.
+
+    Строку, начинающуюся с потенциального формула-триггера, префиксует
+    апострофом. Не-строки (int id, числа, None) возвращает без изменений —
+    они не могут нести формулу. Поведение для легитимного текста не
+    меняется: '=' в начале у обычного обращения встречается крайне редко,
+    а апостроф невидим в ячейке (Excel-конвенция «текст as-is»).
+    """
+    if isinstance(value, str) and value.startswith(_FORMULA_TRIGGERS):
+        return "'" + value
+    return value
+
+
 # Потолок строк в одной XLSX-выгрузке. На `period="all"` без лимита
 # годовой архив (10k+ обращений × N сообщений каждое, с selectinload)
 # тянет всё в RAM разом — при mem_limit:512m это риск OOM. 10000 строк
@@ -141,18 +167,22 @@ def _render_workbook(appeals: list[Appeal]) -> bytes:
             elapsed_hours = None
             in_sla = ""
         u = a.user
+        # _sanitize_cell — на всех ячейках с текстом жителя/оператора
+        # (formula-injection guard, см. _sanitize_cell). Числа и
+        # программно-сформированные строки (даты, статус, флаги да/нет)
+        # формулу нести не могут — их не оборачиваем.
         ws.append([
             a.id,
             _fmt_dt(a.created_at),
-            u.first_name if u else "",
-            u.phone if u else "",
+            _sanitize_cell(u.first_name if u else ""),
+            _sanitize_cell(u.phone if u else ""),
             u.max_user_id if u else "",
-            a.locality or "",
-            a.address or "",
-            a.topic or "",
-            a.summary or "",
+            _sanitize_cell(a.locality or ""),
+            _sanitize_cell(a.address or ""),
+            _sanitize_cell(a.topic or ""),
+            _sanitize_cell(a.summary or ""),
             _status_label(a.status),
-            operator_reply or "",
+            _sanitize_cell(operator_reply or ""),
             elapsed_hours if elapsed_hours is not None else "",
             in_sla,
             _fmt_dt(u.consent_pdn_at) if u else "",
