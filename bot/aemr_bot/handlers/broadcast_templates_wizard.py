@@ -231,6 +231,15 @@ async def _render_preview_new(event, state: _TmplWizardState) -> None:
 
 async def _save_new(event) -> None:
     """`op:tmpl:save_new` — окончательное сохранение нового шаблона."""
+    # SECURITY_REVIEW P3-3: authz на write-callback'е. `_start_new`
+    # требует IT/COORDINATOR, но save_new — отдельный callback: между
+    # стартом wizard'а и нажатием «Сохранить» оператора могли понизить
+    # в роли (или callback пришёл от понижённого/чужого оператора с
+    # сохранённым клиентом payload'ом). get_operator фильтрует только
+    # is_active, не роль — поэтому пере-проверяем явно. Симметрично
+    # confirm-gate в broadcast_wizard. ensure_role сам делает ack+отказ.
+    if not await ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        return
     actor_id = get_user_id(event)
     if actor_id is None:
         return
@@ -441,6 +450,12 @@ async def _render_preview_edit(event, state: _TmplWizardState) -> None:
 
 async def _save_edit(event, template_id: int) -> None:
     """`op:tmpl:save_edit:<id>` — сохранить изменения после превью."""
+    # SECURITY_REVIEW P3-3: authz на write-callback'е (как в _save_new).
+    # `_start_edit` требует IT/COORDINATOR, но save_edit — отдельный
+    # callback, и роль могли понизить между стартом и подтверждением.
+    # ensure_role сам делает ack+отказ.
+    if not await ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        return
     actor_id = get_user_id(event)
     if actor_id is None:
         return

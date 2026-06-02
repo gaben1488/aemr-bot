@@ -21,6 +21,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.db.models import BroadcastTemplate
+from aemr_bot.services import settings_store
 
 
 class TemplateNameAlreadyExists(Exception):
@@ -60,7 +61,34 @@ def _validate_text(text: str) -> str:
             f"Текст шаблона не длиннее {MAX_TEXT_LEN} символов "
             f"(получено {len(t)})."
         )
+    _reject_non_whitelisted_urls(t)
     return t
+
+
+def _reject_non_whitelisted_urls(text: str) -> None:
+    """SECURITY_REVIEW P1-2: URL-whitelist на write-time для шаблонов.
+
+    Шаблон — переиспользуемый источник рассылок: его применяют через
+    apply/clone, и текст уходит подписчикам. Раньше whitelist форсился
+    только при наборе free-text рассылки (`broadcast_wizard`); шаблон
+    с фишинг-ссылкой мог быть создан и затем разослан в обход проверки.
+    Валидируем при создании/правке текста — фишинг-URL не попадёт в
+    хранилище шаблонов вообще. Это defense-in-depth: confirm-gate в
+    broadcast_wizard ловит ту же ссылку как последний рубеж даже для
+    legacy-шаблонов, созданных до этой проверки.
+
+    Список гос-доменов и логика — в `settings_store` (SEC #4 whitelist,
+    F9/F10 hardening). Здесь только вызываем, не дублируем правила.
+    """
+    bad = settings_store.find_non_whitelisted_urls(text)
+    if bad:
+        shown = ", ".join(bad[:3]) + ("…" if len(bad) > 3 else "")
+        raise ValueError(
+            f"В тексте шаблона найдены ссылки на сторонние сайты: {shown}. "
+            f"Разрешены только официальные ресурсы: "
+            f"{', '.join(settings_store._URL_HOST_WHITELIST_SUFFIXES)}. "
+            f"Уберите ссылку или замените на гос-домен."
+        )
 
 
 async def create_template(

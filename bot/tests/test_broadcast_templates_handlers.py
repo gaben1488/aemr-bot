@@ -425,6 +425,13 @@ class TestWizardText:
         # _save_new переехал в подмодуль broadcast_templates_wizard;
         # все его внутренние зависимости патчим там (урок PR #139).
         with (
+            # SECURITY_REVIEW P3-3: _save_new теперь стартует с ensure_role —
+            # роль пере-проверяется на write-callback'е. Мокаем как
+            # разрешённую, чтобы дойти до happy-path сохранения.
+            patch(
+                "aemr_bot.handlers.broadcast_templates_wizard.ensure_role",
+                new=AsyncMock(return_value=True),
+            ),
             patch(
                 "aemr_bot.handlers.broadcast_templates_wizard.get_operator",
                 new=AsyncMock(return_value=SimpleNamespace(id=99)),

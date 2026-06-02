@@ -313,6 +313,39 @@ async def _handle_confirm(event) -> None:
     # _ensure_role сам делает ack и шлёт текст-отказ.
     if not await _ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
         return
+    # SECURITY_REVIEW P1-2: URL-whitelist gate на CONFIRM — последний
+    # рубеж перед create_broadcast. _handle_wizard_text форсит whitelist
+    # только на free-text пути; пути «применить шаблон» (_apply →
+    # prefill_wizard_from_template) и любой будущий prefill минуют его,
+    # ставя state сразу в awaiting_confirm. Поэтому проверяем здесь, в
+    # единой точке отправки: даже если фишинг-URL попал в шаблон до
+    # write-time валидации (legacy-шаблон, прямой psql), он не уйдёт
+    # подписчикам. Fail-closed: state уже снят pop'ом выше — незаконный
+    # черновик отброшен; перечисляем плохие ссылки оператору и возвращаем
+    # его в меню.
+    bad_urls = settings_store.find_non_whitelisted_urls(state.text)
+    if bad_urls:
+        log.warning(
+            "broadcast: blocked non-whitelisted URLs at confirm — "
+            "operator=%s count=%d", actor_id, len(bad_urls),
+        )
+        await ack_callback(event, "Рассылка отклонена.")
+        await send_or_edit_screen(
+            event,
+            chat_id=cfg.admin_group_id,
+            text=(
+                "❌ Рассылка отклонена: в тексте найдены ссылки на "
+                "сторонние сайты: "
+                f"{', '.join(bad_urls[:3])}"
+                f"{'…' if len(bad_urls) > 3 else ''}.\n\n"
+                "Разрешены только официальные ресурсы: elizovomr.ru, "
+                "kamgov.ru, gosuslugi.ru, kamchatka.gov.ru.\n\n"
+                "Уберите ссылку или замените на гос-домен и начните "
+                "рассылку заново."
+            ),
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
+        return
     # ack с фидбеком: оператор сразу видит «принято», broadcast wizard
     # переходит в подготовку. Без notification ack — тихий, оператор
     # тапает «Отправить» и думает, ушла ли команда.
