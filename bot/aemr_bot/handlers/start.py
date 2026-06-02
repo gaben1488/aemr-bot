@@ -324,13 +324,13 @@ def register(dp: Dispatcher) -> None:
     #   команда называется /op_help, а в личке у жителя — /help. Любая
     #   привычная команда работает в обоих местах.
     @dp.bot_started()
-    async def _(event: BotStarted):
+    async def _on_bot_started(event: BotStarted):
         if _is_admin_chat(event):
             return
         await cmd_start(event)
 
     @dp.bot_stopped()
-    async def _(event: BotStopped):
+    async def _on_bot_stopped(event: BotStopped):
         """MAXAPI_DEEP_DIVE §17 fix (P1): житель остановил бота
         (нажал «остановить» в MAX-клиенте, что эквивалентно блокировке
         бота). До этого фикса мы продолжали слать broadcast, каждое
@@ -371,7 +371,7 @@ def register(dp: Dispatcher) -> None:
             )
 
     @dp.message_created(Command("start"))
-    async def _(event: MessageCreated):
+    async def _on_start_command(event: MessageCreated):
         if _is_admin_chat(event):
             from aemr_bot.handlers import admin_commands
 
@@ -380,7 +380,7 @@ def register(dp: Dispatcher) -> None:
         await cmd_start(event)
 
     @dp.message_created(Command("help"))
-    async def _(event: MessageCreated):
+    async def _on_help_command(event: MessageCreated):
         if _is_admin_chat(event):
             from aemr_bot.handlers import admin_commands
 
@@ -389,7 +389,7 @@ def register(dp: Dispatcher) -> None:
         await cmd_help(event)
 
     @dp.message_created(Command("menu"))
-    async def _(event: MessageCreated):
+    async def _on_menu_command(event: MessageCreated):
         if _is_admin_chat(event):
             from aemr_bot.handlers import admin_commands
 
@@ -403,14 +403,14 @@ def register(dp: Dispatcher) -> None:
     # тут /op_help». MAX Bot API не поддерживает per-scope команды, и
     # эти имена остаются в /-меню для всех чатов.
     @dp.message_created(Command("forget"))
-    async def _(event: MessageCreated):
+    async def _on_forget_command(event: MessageCreated):
         if _is_admin_chat(event):
             await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
         await cmd_forget(event)
 
     @dp.message_created(Command("cancel"))
-    async def _(event: MessageCreated):
+    async def _on_cancel_command(event: MessageCreated):
         if _is_admin_chat(event):
             await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
@@ -420,42 +420,42 @@ def register(dp: Dispatcher) -> None:
     # субъекта на выгрузку своих ПДн (152-ФЗ ст. 14). Реальные
     # запросы редкие; нужно для регуляторных проверок.
     @dp.message_created(Command("export"))
-    async def _(event: MessageCreated):
+    async def _on_export_command(event: MessageCreated):
         if _is_admin_chat(event):
             await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
         await cmd_export(event)
 
     @dp.message_created(Command("policy"))
-    async def _(event: MessageCreated):
+    async def _on_policy_command(event: MessageCreated):
         if _is_admin_chat(event):
             await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
         await cmd_policy(event)
 
     @dp.message_created(Command("rules"))
-    async def _(event: MessageCreated):
+    async def _on_rules_command(event: MessageCreated):
         if _is_admin_chat(event):
             await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
         await cmd_rules(event)
 
     @dp.message_created(Command("subscribe"))
-    async def _(event: MessageCreated):
+    async def _on_subscribe_command(event: MessageCreated):
         if _is_admin_chat(event):
             await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
         await cmd_subscribe(event)
 
     @dp.message_created(Command("unsubscribe"))
-    async def _(event: MessageCreated):
+    async def _on_unsubscribe_command(event: MessageCreated):
         if _is_admin_chat(event):
             await reply(event, texts.CITIZEN_COMMAND_IN_ADMIN_CHAT)
             return
         await cmd_unsubscribe(event)
 
     @dp.message_created(Command("whoami"))
-    async def _(event: MessageCreated):
+    async def _on_whoami_command(event: MessageCreated):
         # /whoami работает ТОЛЬКО в админ-группе. У жителя в личке эта
         # команда не нужна и сбивает с толку — IDs не используются в
         # пользовательских сценариях. В личке тихо игнорируем.
