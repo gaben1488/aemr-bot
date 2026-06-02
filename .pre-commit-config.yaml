@@ -47,6 +47,17 @@ repos:
 
   - repo: local
     hooks:
+      - id: assemble-wiki
+        # Вика index.html СОБИРАЕТСЯ из фрагментов docs/site/_kb2/* — руками
+        # не правится. Любая правка фрагмента (или каркаса/сборщика) триггерит
+        # пересборку; если index.html изменился, pre-commit сообщит «files were
+        # modified by this hook» и потребует `git add` пересобранного файла.
+        # В CI эту же инвариантность сторожит bot/tests/test_wiki_in_sync.py.
+        name: rebuild docs/site/index.html from _kb2 fragments
+        entry: python docs/site/_kb/_assemble.py
+        language: system
+        files: ^docs/site/(_kb2/.*\.html|_kb/_shell\.html|_kb/_assemble\.py)$
+        pass_filenames: false
       - id: forbid-binary-secrets-in-env
         # Защита от случайного commit'а .env с реальными секретами.
         # bot/.env.example — единственный разрешённый .env-файл в репо.
