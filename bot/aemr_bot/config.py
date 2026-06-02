@@ -54,11 +54,44 @@ class Settings(BaseSettings):
     healthcheck_pulse_seconds: int = Field(30, alias="HEALTHCHECK_PULSE_SECONDS")
     healthcheck_interval_minutes: int = Field(5, alias="HEALTHCHECK_INTERVAL_MIN")
 
+    # Во сколько polling_timeout'ов разрешаем «застояться» last_poll_at,
+    # прежде чем /livez покраснеет (perf-resilience finding b). При
+    # use_create_task=True зависший handler/backup не гасит heartbeat-таск
+    # (он лишь спит и бьёт) → ложно-зелёный /livez, авто-рестарта нет.
+    # last_poll_at обновляется polling-обёрткой на каждом успешном
+    # get_updates; если poll-цикл встал (заморожен event-loop, мёртвая
+    # aiohttp-сессия), таймстемп протухает. 3× даёт запас на один
+    # потерянный long-poll + сетевой джиттер, не поднимая ложную тревогу
+    # на здоровом простаивающем боте. Это второй, независимый от
+    # heartbeat сигнал живости (defense-in-depth).
+    livez_poll_stale_factor: float = Field(
+        3.0, alias="LIVEZ_POLL_STALE_FACTOR", ge=1.0, le=20.0
+    )
+
     # Таймаут long-polling, передаваемый в MAX getUpdates. Больше — меньше
     # пустых обращений к серверу, когда бот простаивает (лучше для лимита
     # 2 RPS). Меньше — быстрее реагирует окно старта-остановки. Потолок
     # сервера 90 секунд.
-    polling_timeout_seconds: int = Field(30, alias="POLLING_TIMEOUT_SECONDS", ge=0, le=90)
+    #
+    # Держим строго НИЖЕ max_api_timeout_seconds на запас
+    # polling_client_timeout_buffer_seconds: серверный hold long-poll
+    # (этот параметр) не должен совпадать с клиентским ClientTimeout.total
+    # (= max_api_timeout_seconds, общий для всей aiohttp-сессии). Когда оба
+    # ~30с, каждый холостой цикл клиент рвёт AsyncioTimeoutError ровно в тот
+    # момент, когда сервер собирался ответить пустым [] → переподключение
+    # 24/7 (perf-resilience finding c). 20с + 10с буфера < 30с клиентского
+    # потолка → клиент всегда ждёт чуть дольше сервера.
+    polling_timeout_seconds: int = Field(20, alias="POLLING_TIMEOUT_SECONDS", ge=0, le=90)
+
+    # Запас клиентского ClientTimeout.total над серверным long-poll hold.
+    # build_bot() в polling-режиме поднимает потолок сессии до
+    # max(max_api_timeout_seconds, polling_timeout_seconds + этот буфер),
+    # гарантируя, что клиент не прервёт соединение раньше, чем сервер отдаст
+    # пустой ответ. 10с с запасом перекрывают сетевой джиттер и время на
+    # формирование ответа сервером.
+    polling_client_timeout_buffer_seconds: float = Field(
+        10.0, alias="POLLING_CLIENT_TIMEOUT_BUFFER_SECONDS", ge=1.0, le=60.0
+    )
 
     # Таймаут на один HTTP-запрос к MAX API (send_message / edit_message
     # / answers). maxapi default = 150 секунд; при sequential polling
@@ -108,6 +141,24 @@ class Settings(BaseSettings):
     backup_gpg_passphrase: str | None = Field(None, alias="BACKUP_GPG_PASSPHRASE")
     backup_allow_unencrypted: bool = Field(
         False, alias="BACKUP_ALLOW_UNENCRYPTED"
+    )
+
+    # Таймауты дочерних процессов бэкапа (perf-resilience finding d). Без них
+    # pg_dump/gpg/rclone ждут голым `await proc.wait()` бесконечно: повисший
+    # S3-эндпоинт или зависший Postgres → backup-job висит вечно, точка
+    # восстановления не создаётся, а категоризированный admin-алёрт никогда
+    # не отправляется (cron-job не возвращается). По таймауту процесс
+    # убивается (kill + reap), backup_db возвращает BackupResult(fail_kind=…)
+    # → штатный алёрт уходит. pg_dump/gpg щедрее (большая БД может дампиться
+    # минуты); rclone — сетевой шаг, режем агрессивнее.
+    backup_pg_dump_timeout_seconds: float = Field(
+        600.0, alias="BACKUP_PG_DUMP_TIMEOUT_SECONDS", gt=0.0, le=7200.0
+    )
+    backup_gpg_timeout_seconds: float = Field(
+        600.0, alias="BACKUP_GPG_TIMEOUT_SECONDS", gt=0.0, le=7200.0
+    )
+    backup_rclone_timeout_seconds: float = Field(
+        300.0, alias="BACKUP_RCLONE_TIMEOUT_SECONDS", gt=0.0, le=7200.0
     )
 
     # S3 опционально: если задан endpoint+bucket+keys, доп. заливаем в облако.
