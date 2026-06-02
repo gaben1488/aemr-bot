@@ -4,13 +4,13 @@ from io import BytesIO
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from zoneinfo import ZoneInfo
 
 from aemr_bot.config import settings
-from aemr_bot.db.models import Appeal, AppealStatus
+from aemr_bot.db.models import Appeal, AppealStatus, Message, MessageDirection
 
 TZ = ZoneInfo(settings.timezone)
 
@@ -90,9 +90,18 @@ async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, in
     start, end, title = period_window(period)
     # Берём свежайшие в пределах окна, с потолком _XLSX_ROW_CAP.
     # `+1` — чтобы детектировать факт обрезки, не делая отдельный count.
+    #
+    # ВАЖНО (perf): НЕ грузим selectinload(Appeal.messages). На period=all
+    # это тянуло в RAM всю переписку всех обращений (годовой архив: 10k
+    # обращений × N сообщений), хотя выгрузке нужен лишь последний ответ
+    # оператора по каждому обращению (колонка «Ответ оператора»). При
+    # mem_limit:512m полная материализация messages — риск OOM. Вместо
+    # этого отдельным запросом достаём словарь appeal_id → последний
+    # operator-reply (по одной строке на обращение, см.
+    # _load_last_operator_replies).
     query = (
         select(Appeal)
-        .options(selectinload(Appeal.user), selectinload(Appeal.messages))
+        .options(selectinload(Appeal.user))
         .where(Appeal.created_at <= end)
         .order_by(Appeal.created_at.desc())
         .limit(_XLSX_ROW_CAP + 1)
@@ -108,17 +117,79 @@ async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, in
     # Возвращаем хронологический порядок (запрос был DESC ради лимита).
     appeals.reverse()
 
+    # Только последний ответ оператора на каждое обращение — ровно то,
+    # что читает колонка «Ответ оператора». Одна строка messages на
+    # обращение вместо всей переписки.
+    operator_replies = await _load_last_operator_replies(
+        session, [a.id for a in appeals]
+    )
+
     # Построение workbook — синхронный CPU/IO-bound код (openpyxl).
     # На потолке в 10k строк это ощутимо; выносим в поток, чтобы не
     # блокировать event-loop бота на время генерации отчёта.
-    content = await asyncio.to_thread(_render_workbook, appeals)
+    content = await asyncio.to_thread(_render_workbook, appeals, operator_replies)
     return content, title, len(appeals)
 
 
-def _render_workbook(appeals: list[Appeal]) -> bytes:
+async def _load_last_operator_replies(
+    session: AsyncSession, appeal_ids: list[int]
+) -> dict[int, str | None]:
+    """Словарь appeal_id → текст ПОСЛЕДНЕГО ответа оператора.
+
+    Заменяет загрузку всей коллекции `Appeal.messages` для XLSX-выгрузки.
+    Раньше `_render_workbook` брал из полной переписки лишь последний
+    `from_operator`-ответ (`next(... reversed(a.messages) ...)`), а
+    остальные сообщения загружались зря — на period=all это вся история
+    бота в RAM.
+
+    Здесь оконная функция row_number() поверх messages, отфильтрованных
+    по direction='from_operator' и нужным appeal_id, отдаёт по одной
+    строке на обращение — самую свежую. Порядок `created_at DESC, id DESC`
+    повторяет семантику старого `reversed(messages)` (messages
+    отсортированы по created_at ASC), а `id DESC` добавлен как
+    детерминированный тай-брейк при совпадении created_at.
+
+    Обращения без ответа оператора в словарь не попадают —
+    `_render_workbook` подставит пустую строку через `.get()`.
+    """
+    if not appeal_ids:
+        return {}
+    rn = (
+        func.row_number()
+        .over(
+            partition_by=Message.appeal_id,
+            order_by=(Message.created_at.desc(), Message.id.desc()),
+        )
+        .label("rn")
+    )
+    ranked = (
+        select(Message.appeal_id, Message.text, rn)
+        .where(
+            Message.appeal_id.in_(appeal_ids),
+            Message.direction == MessageDirection.FROM_OPERATOR.value,
+        )
+        .subquery()
+    )
+    rows = await session.execute(
+        select(ranked.c.appeal_id, ranked.c.text).where(ranked.c.rn == 1)
+    )
+    return {appeal_id: text for appeal_id, text in rows}
+
+
+def _render_workbook(
+    appeals: list[Appeal],
+    operator_replies: dict[int, str | None] | None = None,
+) -> bytes:
     """Синхронная сборка XLSX. Работает только с уже загруженными
     данными (selectinload отработал в build_xlsx) — сессию не трогает,
-    поэтому безопасно вызывать из asyncio.to_thread."""
+    поэтому безопасно вызывать из asyncio.to_thread.
+
+    `operator_replies` — словарь appeal_id → последний ответ оператора,
+    подготовленный build_xlsx через _load_last_operator_replies (вместо
+    материализации всей переписки). Если не передан (None) — поведение
+    откатывается к чтению `a.messages`: так продолжают работать прямые
+    вызовы _render_workbook (например, security-тесты formula-injection,
+    собирающие appeal со списком .messages вручную)."""
     wb = Workbook()
     ws = wb.active
     ws.title = "Обращения"
@@ -155,10 +226,17 @@ def _render_workbook(appeals: list[Appeal]) -> bytes:
         return dt.astimezone(TZ).strftime("%d.%m.%Y %H:%M")
 
     for a in appeals:
-        operator_reply = next(
-            (m.text for m in reversed(a.messages) if m.direction == "from_operator"),
-            None,
-        )
+        if operator_replies is not None:
+            # Оптимизированный путь build_xlsx: последний ответ оператора
+            # уже выбран отдельным запросом. Обращения без ответа в
+            # словаре отсутствуют → пустая строка.
+            operator_reply = operator_replies.get(a.id)
+        else:
+            # Fallback для прямых вызовов (messages загружены целиком).
+            operator_reply = next(
+                (m.text for m in reversed(a.messages) if m.direction == "from_operator"),
+                None,
+            )
         if a.answered_at and a.created_at:
             elapsed = (a.answered_at - a.created_at).total_seconds()
             elapsed_hours = round(elapsed / 3600, 2)
