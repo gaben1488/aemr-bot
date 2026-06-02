@@ -555,6 +555,31 @@ async def _route_callback(event, max_user_id: int, payload: str) -> None:
         callback_router.CallbackGroup.BROADCAST_ADMIN,
         callback_router.CallbackGroup.OPERATOR_ADMIN,
     ):
+        # Структурный authz-гейт (P3-1, корень P2-4/P2-5). on_callback
+        # закрывает только прямую границу — жительские payload'ы в
+        # админ-группе. Обратная граница раньше зияла: admin-payload
+        # (broadcast:abort, op:reply_cancel, …) из НЕ-админ-чата (личка
+        # жителя) доходил до dispatch_admin_callback. dispatch сам не
+        # сверяет chat_id — операторские run_*-функции полагаются на
+        # ensure_operator/ensure_role, но часть admin-callback'ов
+        # (отмена мастера рассылки, отмена черновика ответа) трогает
+        # in-memory wizard/intent-хранилища ДО ролевой проверки. Это
+        # инъекция в опер-группу из лички. Fail-closed: admin-payload
+        # выполняется ТОЛЬКО из настроенной админ-группы. Иначе тихий
+        # ack (спиннер на кнопке гаснет) и выход — ни dispatch, ни
+        # fallthrough в меню.
+        if not (
+            cfg.admin_group_id is not None
+            and get_chat_id(event) == cfg.admin_group_id
+        ):
+            log.warning(
+                "admin callback %r из не-админ-чата заблокирован: chat=%s user=%s",
+                payload,
+                get_chat_id(event),
+                max_user_id,
+            )
+            await ack_callback(event)
+            return
         # Admin/operator callback'и (broadcast:* / op:*) — таблица в
         # handlers/admin_callback_dispatch.py. Если admin-dispatch не
         # распознал хвост (`op:`/`broadcast:`-обёртка с неизвестным

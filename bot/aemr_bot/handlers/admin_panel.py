@@ -60,19 +60,41 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
     Перед показом смотрим, сколько обращений висит без ответа, и какая
     роль у автора события: счётчик и админ-ряд кнопок собираются по
     этим данным.
+
+    Структурный authz-гейт (P3-2). Раньше show_op_menu не проверял
+    авторство сам и полагался на гейты вызывающих (cmd_op_help →
+    _is_admin_chat; admin_callback_dispatch → ничего для op:menu).
+    Это давало не-оператору опер-меню: участник админ-группы без
+    записи Operator открывал /op_help и видел кнопки операторских
+    действий; callback op:menu вообще не имел ролевого фильтра. Теперь
+    гейт fail-closed на источнике: операторскую запись (get_operator)
+    тянем ОДИН раз в начале — вне админ-чата или для не-оператора она
+    None, и тогда меню не рисуем вовсе, а шлём нейтральное сообщение.
+    Тот же объект op переиспользуем для ролевых флагов клавиатуры
+    (лишнего DB-round-trip не добавляем).
     """
 
-    is_it = False
-    can_broadcast = False
+    op = await get_operator(event)
+    if op is None:
+        try:
+            await event.message.answer(
+                "Это меню доступно только операторам Администрации в "
+                "служебной группе."
+            )
+        except Exception:
+            # message.answer может отсутствовать/упасть на нетипичном
+            # событии — для security-гейта это не критично: главное,
+            # что опер-меню не отрисовано. Полный путь — в debug-лог.
+            log.debug("show_op_menu refusal notice skipped", exc_info=True)
+        return
+
+    is_it = op.role == OperatorRole.IT.value
+    can_broadcast = op.role in {
+        OperatorRole.IT.value,
+        OperatorRole.COORDINATOR.value,
+    }
     open_count: int | None = None
     async with session_scope() as session:
-        op = await get_operator(event)
-        if op is not None:
-            is_it = op.role == OperatorRole.IT.value
-            can_broadcast = op.role in {
-                OperatorRole.IT.value,
-                OperatorRole.COORDINATOR.value,
-            }
         try:
             open_count = await appeals_service.count_open(session)
         except Exception:
