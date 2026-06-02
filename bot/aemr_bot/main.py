@@ -506,21 +506,22 @@ if settings.bot_mode == "webhook":
 
 
 async def _register_bot_commands(bot: Bot) -> None:
-    """Очистить /-меню MAX — отправить PATCH /me с пустым `commands`.
+    """Опубликовать /-меню MAX: универсальные /start и /menu (PATCH /me).
 
     MAX Bot API не поддерживает per-scope команды (нет
-    `BotCommandScopeChat` как в Telegram). Раньше публиковали 7 команд
-    жителя, но они показывались и в служебной группе тоже, путая
-    операторов («почему /forget виден в админ-чате?»). Жильцы работают
-    через кнопочное меню; операторам команды известны из RUNBOOK или
-    отображаются по `/op_help`.
+    `BotCommandScopeChat` как в Telegram) — одно /-меню на ВСЕ чаты:
+    и личку жителя, и служебную группу. Поэтому публикуем только
+    универсальные команды, осмысленные в любом чате: /start и /menu
+    (в личке открывают меню жителя, в админ-группе — памятку оператора).
+    Специфичные жительские команды (/forget, /export, /policy, …) НЕ
+    публикуем — в служебной группе они путали операторов («почему
+    /forget виден в админ-чате?»); их обработчики остаются рабочими как
+    запасной путь, но в подсказке /-меню их нет.
 
-    `bot.set_my_commands()` без аргументов НЕ ОЧИЩАЕТ команды у MAX:
-    в `maxapi.methods.change_info.ChangeInfo.fetch()` стоит
-    `if self.commands:` — пустой `[]` truthy-false и ключ просто не
-    включается в PATCH-тело. Чтобы реально очистить, нужно явно
-    отправить `{"commands": []}`. Делаем прямым aiohttp-вызовом, без
-    обхода через ChangeInfo.
+    Шлём `commands` прямым aiohttp-PATCH /me, а не через
+    `bot.set_my_commands()`: у того в `ChangeInfo.fetch()` стоит
+    `if self.commands:` (предохранитель против случайной очистки), и
+    нам проще держать явный предсказуемый список здесь.
     """
     import aiohttp
 
@@ -530,12 +531,17 @@ async def _register_bot_commands(bot: Bot) -> None:
     # тоже передаёт токен напрямую (см. bot.py:153 — `self.headers =
     # {"Authorization": self.__token}`). Подкладываем то же самое.
     headers = {"Authorization": settings.bot_token}
-    payload: dict[str, list] = {"commands": []}
+    payload: dict[str, list] = {
+        "commands": [
+            {"name": "start", "description": "Запустить бота и открыть меню"},
+            {"name": "menu", "description": "Открыть главное меню"},
+        ]
+    }
     try:
         async with aiohttp.ClientSession() as session:
             async with session.patch(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                 if resp.status == 200:
-                    log.info("set_my_commands: /-меню очищено через PATCH /me {commands: []}")
+                    log.info("set_my_commands: /-меню опубликовано (/start, /menu) через PATCH /me")
                 else:
                     body = await resp.text()
                     log.warning("set_my_commands PATCH вернул %s: %s", resp.status, body[:200])
@@ -589,10 +595,12 @@ async def main() -> None:
     # ронял aiohttp-сессию и dispatcher падал на «Session is closed».
     await _preflight_check_token(bot)
 
-    # Очищаем /-меню MAX для всех чатов. У MAX нет раздельного списка
-    # команд для лички и служебной группы, поэтому видимая подсказка
-    # только путает роли. Обработчики slash-команд остаются рабочими
-    # как запасной путь, но основной интерфейс — кнопки.
+    # Публикуем /-меню MAX (/start, /menu) для всех чатов. У MAX нет
+    # раздельного списка команд для лички и служебной группы, поэтому
+    # держим только универсальные команды: в личке они открывают меню
+    # жителя, в служебной группе — памятку оператора. Специфичные
+    # жительские команды (/forget, /export…) в подсказку не выносим;
+    # их обработчики работают как запасной путь.
     try:
         await _register_bot_commands(bot)
     except Exception:
