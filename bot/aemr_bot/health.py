@@ -50,6 +50,43 @@ class Heartbeat:
 heartbeat = Heartbeat()
 
 
+@dataclass
+class PollWatch:
+    """Свежесть polling-цикла: отдельный от heartbeat сигнал живости.
+
+    Heartbeat-таск только спит и бьёт — он остаётся зелёным, даже если
+    зависший await в handler'е/бэкапе (use_create_task=True) заморозил
+    обработку, а сам polling-цикл встал. PollWatch обновляется в
+    polling-обёртке main.py на каждом успешном get_updates: пока цикл
+    реально крутит long-poll к MAX, таймстемп свежий; если цикл встал
+    (мёртвая aiohttp-сессия, голодание event-loop) — протухает, и
+    /livez краснеет → внешняя watchdog/Docker healthcheck перезапустит.
+
+    В webhook-режиме polling-цикла нет: last_poll == 0.0, и
+    `is_fresh()` это специально игнорирует (возвращает True) — иначе
+    мы бы ложно краснили webhook-процесс, у которого нет long-poll'а.
+    """
+
+    last_poll: float = 0.0
+
+    def mark(self) -> None:
+        self.last_poll = time.monotonic()
+
+    def is_fresh(self, max_age: float | None = None) -> bool:
+        # 0.0 ⇒ цикл ещё ни разу не отметился. Это либо webhook-режим
+        # (long-poll'а нет вовсе), либо самый старт polling до первого
+        # get_updates. В обоих случаях НЕ краснеем по этому сигналу —
+        # liveness здесь несёт heartbeat. Fail-open по доступности.
+        if self.last_poll == 0.0:
+            return True
+        if max_age is None:
+            max_age = cfg.polling_timeout_seconds * cfg.livez_poll_stale_factor
+        return (time.monotonic() - self.last_poll) <= max_age
+
+
+poll_watch = PollWatch()
+
+
 async def _ping_db() -> bool:
     """SELECT 1 на живом движке. Возвращает False при любой ошибке.
 
@@ -99,10 +136,22 @@ def _last_beat_age_seconds() -> float | None:
     return round(time.monotonic() - heartbeat.last_beat, 1)
 
 
+def _last_poll_age_seconds() -> float | None:
+    if poll_watch.last_poll == 0.0:
+        return None
+    return round(time.monotonic() - poll_watch.last_poll, 1)
+
+
 async def _status_response(request: web.Request, *, include_db: bool) -> web.Response:
     fresh = heartbeat.is_fresh()
+    # Polling-цикл — второй независимый сигнал живости. Зависший handler
+    # при use_create_task=True не гасит heartbeat (тот лишь спит и бьёт),
+    # поэтому /livez мог бы остаться ложно-зелёным. Свежесть last_poll
+    # ловит вставший long-poll-цикл. В webhook-режиме poll_watch пуст и
+    # is_fresh()==True по конструкции — не краснит процесс без long-poll'а.
+    poll_fresh = poll_watch.is_fresh()
     db_ok = await _ping_db_cached() if include_db else None
-    ok = fresh and (bool(db_ok) if include_db else True)
+    ok = fresh and poll_fresh and (bool(db_ok) if include_db else True)
 
     # Полная диагностика только локальным запросам — Docker healthcheck,
     # watchdog и ручная проверка на сервере. Внешним клиентам не отдаём
@@ -112,6 +161,8 @@ async def _status_response(request: web.Request, *, include_db: bool) -> web.Res
             "ok": ok,
             "heartbeat_fresh": fresh,
             "last_beat_age_seconds": _last_beat_age_seconds(),
+            "poll_fresh": poll_fresh,
+            "last_poll_age_seconds": _last_poll_age_seconds(),
         }
         if include_db:
             payload["db_ok"] = bool(db_ok)
@@ -122,7 +173,8 @@ async def _status_response(request: web.Request, *, include_db: bool) -> web.Res
 
 
 async def _livez(request: web.Request) -> web.Response:
-    """Liveness: процесс и event-loop живы. БД намеренно не проверяется."""
+    """Liveness: процесс, event-loop и polling-цикл живы. БД намеренно
+    не проверяется."""
     return await _status_response(request, include_db=False)
 
 

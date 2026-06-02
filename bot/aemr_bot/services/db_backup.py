@@ -51,6 +51,51 @@ class BackupGpgError(BackupError):
     отсутствие gpg в контейнере."""
 
 
+class BackupTimeoutError(BackupError):
+    """Дочерний процесс бэкапа (pg_dump / gpg / rclone) не завершился за
+    отведённый таймаут и был убит. Причина — обычно повисший внешний
+    ресурс: недоступный S3-эндпоинт, зависший Postgres, заблокированный
+    диск. Без таймаута `await proc.wait()` висел бы вечно, и cron-job
+    никогда не вернул бы BackupResult — а значит, и admin-алёрт о провале
+    бэкапа не ушёл бы."""
+
+
+async def _wait_proc(
+    proc: asyncio.subprocess.Process, timeout: float, label: str
+) -> int:
+    """`await proc.wait()` с таймаутом и гарантированным reap при провале.
+
+    Возвращает код возврата. При превышении `timeout` процесс убивается
+    (kill), затем дожидается (reap — иначе остался бы зомби и FD-утечка),
+    и бросается BackupTimeoutError. Так зависший pg_dump/gpg/rclone не
+    морозит backup-job навечно: вызывающий получит исключение, переведёт
+    его в BackupResult(fail_kind=…) и отправит штатный admin-алёрт.
+    """
+    try:
+        return await asyncio.wait_for(proc.wait(), timeout=timeout)
+    except (asyncio.TimeoutError, TimeoutError) as e:
+        log.error(
+            "backup: %s не завершился за %.0fс — убиваю процесс (pid=%s)",
+            label,
+            timeout,
+            proc.pid,
+        )
+        try:
+            proc.kill()
+        except ProcessLookupError:
+            pass  # уже умер между таймаутом и kill — ок
+        # Reap убитого процесса, чтобы не оставить зомби и не утечь FD.
+        # Второй wait_for со скромным потолком — на случай, если kill не
+        # подействовал мгновенно (не должен зависнуть, но страхуемся).
+        try:
+            await asyncio.wait_for(proc.wait(), timeout=10.0)
+        except (asyncio.TimeoutError, TimeoutError):
+            log.warning("backup: %s не отозвался на kill за 10с", label)
+        raise BackupTimeoutError(
+            f"{label} timed out after {timeout:.0f}s"
+        ) from e
+
+
 @dataclass(frozen=True)
 class BackupResult:
     """Итог одной попытки бэкапа.
@@ -120,7 +165,9 @@ async def _run_pg_dump(out_path: Path, env: dict[str, str]) -> None:
             stdout=f,
             env=env,
         )
-        rc = await proc.wait()
+        rc = await _wait_proc(
+            proc, settings.backup_pg_dump_timeout_seconds, "pg_dump"
+        )
     finally:
         await asyncio.to_thread(f.close)
     if rc != 0:
@@ -191,7 +238,38 @@ async def _run_pg_dump_encrypted(
         os.close(pp_r)
         os.close(data_r)
 
-    gpg_rc, dump_rc = await asyncio.gather(gpg.wait(), dump.wait())
+    # pg_dump и gpg работают конкурентно (поток данных течёт по pipe),
+    # поэтому даём им один общий настенный бюджет. Берём больший из двух
+    # таймаутов — этого хватает обоим. По таймауту убиваем И reap'аем оба
+    # процесса (иначе зомби + утечка FD), затем бросаем BackupTimeoutError,
+    # чтобы backup_db вернул BackupResult(fail_kind="unknown") и ушёл
+    # штатный admin-алёрт. Без этого голый gather висел бы вечно при
+    # зависшем Postgres или забитом pipe.
+    budget = max(
+        settings.backup_pg_dump_timeout_seconds,
+        settings.backup_gpg_timeout_seconds,
+    )
+    try:
+        gpg_rc, dump_rc = await asyncio.wait_for(
+            asyncio.gather(gpg.wait(), dump.wait()), timeout=budget
+        )
+    except (asyncio.TimeoutError, TimeoutError) as e:
+        log.error(
+            "backup: pg_dump|gpg не завершились за %.0fс — убиваю оба",
+            budget,
+        )
+        for proc, label in ((gpg, "gpg"), (dump, "pg_dump")):
+            try:
+                proc.kill()
+            except ProcessLookupError:
+                pass
+            try:
+                await asyncio.wait_for(proc.wait(), timeout=10.0)
+            except (asyncio.TimeoutError, TimeoutError):
+                log.warning("backup: %s не отозвался на kill за 10с", label)
+        raise BackupTimeoutError(
+            f"pg_dump|gpg timed out after {budget:.0f}s"
+        ) from e
     # Сначала проверяем pg_dump: если дамп не сделан, gpg-проблема
     # вторична («не было что шифровать»). Это даёт точную категорию
     # для admin-алёрта.
@@ -229,7 +307,13 @@ async def _upload_to_s3(out_path: Path) -> None:
         f"backups3:{settings.backup_s3_bucket}/",
         env=env,
     )
-    rc = await rclone.wait()
+    # Сетевой шаг: повисший/недоступный S3-эндпоинт без таймаута заставил
+    # бы rclone (и весь backup-job) ждать вечно. По таймауту убиваем+reap
+    # и бросаем BackupTimeoutError. Здесь это не валит результат целиком —
+    # backup_db ловит ошибку S3 отдельно (локальный файл уже на диске).
+    rc = await _wait_proc(
+        rclone, settings.backup_rclone_timeout_seconds, "rclone"
+    )
     if rc != 0:
         raise RuntimeError(f"rclone failed with code {rc}")
     log.info("backup uploaded to s3: %s", out_path.name)

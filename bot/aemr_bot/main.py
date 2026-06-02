@@ -57,6 +57,10 @@ def build_bot() -> Bot:
     admin_bus.install_outgoing_tracker_hook(bot)
     if settings.bot_mode == "polling":
         _install_polling_timeout(bot, settings.polling_timeout_seconds)
+        # Клиентский ClientTimeout.total долгого poll'а должен превышать
+        # серверный hold (finding c) — иначе холостые циклы рвутся по
+        # таймауту и бот переподключается без передышки.
+        _apply_polling_client_timeout(bot)
     return bot
 
 
@@ -298,14 +302,68 @@ def _install_polling_timeout(bot: Bot, timeout: int) -> None:
     долго MAX держит запрос при отсутствии событий. Настройка торгует
     частотой пустых обращений против запаса по rate-limit. См.
     settings.polling_timeout_seconds.
+
+    Здесь же — единственная точка, через которую проходит каждая итерация
+    polling-цикла (start_polling зовёт get_updates ровно раз за оборот),
+    поэтому отмечаем здесь health.poll_watch на КАЖДОМ успешном возврате.
+    Это даёт /livez второй, независимый от heartbeat сигнал живости:
+    зависший handler при use_create_task=True не гасит heartbeat-таск, но
+    если встанет сам poll-цикл (мёртвая aiohttp-сессия, голодание
+    event-loop), last_poll протухнет и /livez покраснеет (finding b).
+    Отмечаем только при УСПЕХЕ: на исключении (timeout/сетевой сбой) метку
+    не двигаем — иначе мёртвый цикл, безостановочно бросающий ошибки,
+    выглядел бы живым.
     """
     original = bot.get_updates
 
     async def get_updates_with_timeout(*args, **kwargs):
         kwargs.setdefault("timeout", timeout)
-        return await original(*args, **kwargs)
+        result = await original(*args, **kwargs)
+        health.poll_watch.mark()
+        return result
 
     bot.get_updates = get_updates_with_timeout  # type: ignore[method-assign]
+
+
+def _apply_polling_client_timeout(bot: Bot) -> None:
+    """Развести серверный long-poll hold и клиентский ClientTimeout.total.
+
+    maxapi держит ОДНУ aiohttp-сессию с total = default_connection.timeout
+    (= max_api_timeout_seconds) на все запросы, включая long-poll
+    get_updates. Серверный hold long-poll (polling_timeout_seconds) и
+    клиентский total не должны совпадать: когда оба ~30с, каждый холостой
+    цикл клиент рвёт AsyncioTimeoutError ровно тогда, когда сервер
+    собирался ответить пустым [] — переподключение 24/7, бесполезная
+    нагрузка и шум в логах (finding c).
+
+    Поднимаем потолок сессии до max(текущий, polling_timeout + буфер), не
+    опуская его: send_message/edit по-прежнему получают как минимум свой
+    max_api_timeout_seconds. При дефолтах (polling 20 + буфер 10 = 30 ==
+    max_api 30) потолок не меняется — инвариант «клиент ждёт дольше
+    сервера» уже держится за счёт меньшего polling_timeout. Если оператор
+    поднимет polling_timeout выше, потолок подтянется автоматически.
+    """
+    from aiohttp import ClientTimeout
+
+    conn = bot.default_connection
+    needed = (
+        settings.polling_timeout_seconds
+        + settings.polling_client_timeout_buffer_seconds
+    )
+    current = conn.timeout
+    current_total = getattr(current, "total", None)
+    if current_total is not None and needed <= current_total:
+        return
+    # ClientTimeout — frozen attrs-класс; пересобираем явно с новым total,
+    # сохраняя прочие поля сессии (sock_connect/connect/sock_read/
+    # ceil_threshold), чтобы не потерять их при подмене.
+    conn.timeout = ClientTimeout(
+        total=needed,
+        connect=getattr(current, "connect", None),
+        sock_connect=getattr(current, "sock_connect", None),
+        sock_read=getattr(current, "sock_read", None),
+        ceil_threshold=getattr(current, "ceil_threshold", 5),
+    )
 
 
 # Module-level bot/dp через фабрику. Сохраняем исторические
@@ -319,6 +377,46 @@ bot, dp = create_app()
 async def _seed_settings():
     async with session_scope() as session:
         await settings_store.seed_if_empty(session)
+
+
+def _warm_geo_indexes_sync() -> None:
+    """Синхронный прогрев geo-индексов (вызывать через asyncio.to_thread).
+
+    geo.py читает ~2.6 МБ GeoJSON (localities/streets/buildings) лениво при
+    первом обращении и строит поверх STRtree-индексы. Холодная загрузка
+    O(сотни мс) блокировала бы event-loop, если бы случилась внутри
+    handler'а первого жителя, нажавшего «Поделиться геолокацией» — а это
+    в нашем одно-loop'овом процессе морозит ВСЕХ. Прогреваем заранее в
+    отдельном потоке: дергаем три @lru_cache-загрузчика (наполняют кеш) и
+    один реальный find_address по центру ЕМО (Елизово), чтобы прошёл весь
+    путь building→street индексов. Дальше первый запрос жителя бьёт по
+    тёплому кешу.
+
+    Полностью best-effort: при любой ошибке (нет seed-файлов, битый JSON)
+    просто логируем debug и выходим — geo.* сам деградирует в None-режим,
+    бот остаётся доступен (fail-open).
+    """
+    from aemr_bot.services import geo
+
+    geo._load_localities()
+    geo._load_buildings_index()
+    geo._load_streets_index()
+    # Центр Елизово (Wikidata P625) — заведомо внутри ЕМО, прогоняет
+    # полный каскад locality→building→street по тёплым индексам.
+    geo.find_address(53.184, 158.385)
+
+
+async def _warm_geo_indexes() -> None:
+    """Фоновая обёртка: гоняет прогрев в потоке, глушит любые ошибки."""
+    try:
+        await asyncio.to_thread(_warm_geo_indexes_sync)
+        log.info("geo indexes warmed up (localities/buildings/streets)")
+    except Exception:
+        log.debug(
+            "geo warmup failed — индексы прогреются лениво при первом "
+            "запросе жителя, безопасно",
+            exc_info=False,
+        )
 
 
 def _build_admin_senders(bot: Bot):
@@ -519,6 +617,14 @@ async def main() -> None:
             "cache останется в default disabled, безопасно",
             exc_info=False,
         )
+
+    # Прогрев geo-индексов (~2.6 МБ GeoJSON) — СТРОГО в фоне, не блокируя
+    # старт polling. Без него первый житель, нажавший «Поделиться
+    # геолокацией», оплатил бы холодную загрузку прямо в handler'е, что в
+    # одно-loop'овом процессе подморозило бы всех. spawn_background_task с
+    # asyncio.to_thread держит чтение/парсинг вне event-loop. См.
+    # _warm_geo_indexes (fail-open: ошибка прогрева не валит старт).
+    spawn_background_task(_warm_geo_indexes(), name="warm_geo_indexes")
 
     # На холодном старте создаём первого ИТ-оператора из env, если ни одного ещё нет.
     if settings.bootstrap_it_max_user_id is not None:
