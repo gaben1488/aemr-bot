@@ -31,6 +31,7 @@ from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import users as users_service
 from aemr_bot.services.admin_events import _mask_phone
 from aemr_bot.utils.event import get_user_id, is_admin_chat
+from aemr_bot.utils.typing_indicator import mark_typing
 
 from aemr_bot import texts
 
@@ -134,6 +135,13 @@ async def run_find_resident(event, query: str) -> None:
             text=texts.OP_FIND_RESIDENT_USAGE,
         )
         return
+
+    # Индикатор набора: lookup жителя + audit-запись + расчёт последнего
+    # обращения и счётчика могут занять 1-2 сек на загруженной базе. Без
+    # него оператор видит «зависание» после команды. Симметрично соседним
+    # listing-действиям оператора (admin_panel._do_open_tickets,
+    # broadcast_wizard). Best-effort: mark_typing глушит любую ошибку MAX.
+    await mark_typing(event, cfg.admin_group_id)
 
     audit_target = _mask_query_for_audit(kind, value)
     async with session_scope() as session:

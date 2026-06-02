@@ -24,6 +24,7 @@ from aemr_bot.handlers._common import current_user
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import users as users_service
+from aemr_bot.utils.background import spawn_background_task
 
 log = logging.getLogger(__name__)
 
@@ -205,42 +206,15 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
                 )
                 await users_service.reset_state(session, max_user_id)
 
-        # Единая точка рендера админской карточки обращения —
-        # services/admin_card.render. Helper отправляет новую карточку
-        # (admin_message_id ещё пуст) и сохранит admin_message_id в БД.
-        # Все последующие смены статуса проходят через этот же helper,
-        # чтобы edit-vs-new политика была централизована.
-        from aemr_bot.services import admin_card as admin_card_service
-
-        # appeal был загружен внутри уже закрытой session_scope —
-        # любое обращение к relationships (user, messages, attachments)
-        # вне сессии вызывает MissingGreenlet. Делаем snapshot:
-        # - appeal.user = user — копируем уже-загруженный объект
-        # - appeal.__dict__["messages"] = [] — на finalize история пуста;
-        #   без этого _loaded_messages в card_format и
-        #   _collect_all_user_attachments в admin_relay попытаются
-        #   lazy-load → exception → обращение не доходит до админа.
-        appeal.user = user
-        appeal.__dict__["messages"] = []
-        admin_mid = await admin_card_service.render(
-            bot, appeal, is_first_publication=True
-        )
-        if not admin_mid:
-            log.warning(
-                "обращение #%s создано, но карточка администратора не была "
-                "опубликована (admin_mid=None)",
-                appeal.id,
-            )
-
-        from aemr_bot.services.admin_relay import relay_attachments_to_admin
-
-        await relay_attachments_to_admin(
-            bot,
-            appeal_id=appeal.id,
-            admin_mid=admin_mid,
-            stored_attachments=attachments,
-        )
-
+        # Latency-UX (Волна 2): подтверждение жителю отправляем СРАЗУ
+        # после успешного commit обращения — ДО рендера админ-карточки и
+        # ДО relay вложений. Гарантия порядка сохранена: обращение уже
+        # закоммичено и state сброшен (блок `current_user` выше закрыт),
+        # поэтому ack не может опередить запись в БД. Раньше житель ждал
+        # `admin_card.render` + `relay_attachments_to_admin` (батчи под
+        # 2 RPS + retry-backoff) — секунды молчания при вложениях/сетевой
+        # дрожи. Теперь его latency = один send_message, а доставка
+        # оператору идёт следом и на ack не влияет.
         try:
             # «Обращение N принято» — event-уведомление, но с **полным
             # главным меню** для конверсии. Восстановлено 2026-05-27
@@ -272,6 +246,87 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
                 max_user_id, appeal.id,
             )
 
+        # Единая точка рендера админской карточки обращения —
+        # services/admin_card.render. Helper отправляет новую карточку
+        # (admin_message_id ещё пуст) и сохранит admin_message_id в БД.
+        # Все последующие смены статуса проходят через этот же helper,
+        # чтобы edit-vs-new политика была централизована.
+        #
+        # Карточку рендерим СИНХРОННО (не в фоне): это основной артефакт
+        # для оператора, его доставка — часть гарантии «обращение дошло до
+        # служебной группы». В фон уносим только relay вложений (ниже) —
+        # он best-effort и сам по себе самый медленный шаг.
+        from aemr_bot.services import admin_card as admin_card_service
+
+        # appeal был загружен внутри уже закрытой session_scope —
+        # любое обращение к relationships (user, messages, attachments)
+        # вне сессии вызывает MissingGreenlet. Делаем snapshot:
+        # - appeal.user = user — копируем уже-загруженный объект
+        # - appeal.__dict__["messages"] = [] — на finalize история пуста;
+        #   без этого _loaded_messages в card_format и
+        #   _collect_all_user_attachments в admin_relay попытаются
+        #   lazy-load → exception → обращение не доходит до админа.
+        appeal.user = user
+        appeal.__dict__["messages"] = []
+        admin_mid = await admin_card_service.render(
+            bot, appeal, is_first_publication=True
+        )
+        if not admin_mid:
+            log.warning(
+                "обращение #%s создано, но карточка администратора не была "
+                "опубликована (admin_mid=None)",
+                appeal.id,
+            )
+
+        # Relay вложений в служебную группу — в фон. Это best-effort шаг
+        # (батчи под 2 RPS + retry-backoff), и держать на нём latency
+        # жителя или event-loop незачем: ack уже ушёл, карточка уже
+        # опубликована, сами вложения сохранены в записи обращения
+        # (доступны оператору и без relay). Ошибки проглатываем+логируем
+        # внутри обёртки, чтобы фоновая задача не оставляла «Task
+        # exception was never retrieved».
+        spawn_background_task(
+            _relay_attachments_background(
+                bot,
+                appeal_id=appeal.id,
+                admin_mid=admin_mid,
+                stored_attachments=attachments,
+            ),
+            name=f"relay-attachments-{appeal.id}",
+        )
+
         return True
     finally:
         drop_user_lock(max_user_id)
+
+
+async def _relay_attachments_background(
+    bot,
+    *,
+    appeal_id: int,
+    admin_mid: str | None,
+    stored_attachments: list[dict[str, Any]],
+) -> None:
+    """Фоновая обёртка над `relay_attachments_to_admin`.
+
+    Relay вложений жителя в служебную группу best-effort и медленный
+    (батчи под 2 RPS + retry-backoff). Запускается в фоне через
+    `spawn_background_task`, чтобы не держать latency жителя на цепочке
+    отправки вложений. Любое исключение проглатываем+логируем здесь —
+    иначе фоновая задача завершится с необработанным исключением
+    («Task exception was never retrieved») и ошибка пройдёт незаметно.
+    """
+    from aemr_bot.services.admin_relay import relay_attachments_to_admin
+
+    try:
+        await relay_attachments_to_admin(
+            bot,
+            appeal_id=appeal_id,
+            admin_mid=admin_mid,
+            stored_attachments=stored_attachments,
+        )
+    except Exception:
+        log.exception(
+            "фоновый relay вложений не удался для обращения #%s",
+            appeal_id,
+        )
