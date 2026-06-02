@@ -1,5 +1,12 @@
 FROM python:3.12-slim@sha256:4386a385d81dba9f72ed72a6fe4237755d7f5440c84b417650f38336bbc43117
 
+# uv нужен только на этапе сборки — для `uv export` из bot/uv.lock в
+# requirements.txt с SHA256-хешами. Берём пиннутый бинарь из официального
+# образа astral-sh/uv (digest, не мутабельный тег) вместо
+# `curl astral.sh/uv/install.sh | sh`: компромет домена иначе исполнялся бы
+# в build-контексте. uv в финальный рантайм НЕ попадает (см. /usr/local/bin).
+COPY --from=ghcr.io/astral-sh/uv:0.11.12@sha256:3a59a3cdd5f7c217faa36e32dbc7fddbb0412889c2a0a5229f6d790e5a019dd7 /uv /usr/local/bin/uv
+
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -20,10 +27,27 @@ RUN groupadd --system --gid 1000 botuser \
 
 WORKDIR /app
 
+# Hash-enforced зависимости. bot/uv.lock — источник истины (фиксированные
+# версии + SHA256 каждого wheel'а). Раньше `pip install -e /app` ставил по
+# диапазонам из pyproject БЕЗ проверки хешей: подмена пакета на зеркале или
+# MITM прошли бы незаметно. Теперь:
+#   1) uv export разворачивает lock в requirements.txt с --hash на каждый пакет;
+#   2) pip --require-hashes отказывается ставить что-либо без совпадающего хеша
+#      (fail-closed: один неверный хеш — build падает).
+# --no-emit-project выкидывает сам aemr-bot (editable, ставится отдельно ниже).
+# uv.lock НЕ редактируется здесь — только читается.
 COPY bot/pyproject.toml /app/pyproject.toml
-RUN pip install --upgrade pip && pip install -e /app
+COPY bot/uv.lock /app/uv.lock
+RUN pip install --upgrade pip \
+    && uv export --frozen --no-emit-project --no-dev \
+        --format requirements-txt -o /tmp/requirements.txt \
+    && pip install --require-hashes --no-deps -r /tmp/requirements.txt \
+    && rm -f /tmp/requirements.txt /usr/local/bin/uv
 
 COPY bot/aemr_bot /app/aemr_bot
+# Сам пакет ставим editable БЕЗ зависимостей: весь дерево deps уже
+# установлено хеш-верифицированным шагом выше, повторно тянуть с PyPI нечего.
+RUN pip install -e /app --no-deps
 COPY bot/alembic.ini /app/alembic.ini
 COPY seed /app/seed
 COPY docs/PRIVACY.pdf /app/seed/PRIVACY.pdf
