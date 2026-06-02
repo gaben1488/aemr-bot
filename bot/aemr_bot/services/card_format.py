@@ -68,6 +68,40 @@ def _local_short(dt: datetime) -> str:
 # Лимит сообщений в timeline — карточка не должна разрастаться.
 _TIMELINE_MAX_MESSAGES = 10
 
+# SECURITY (P2-3, perf + scope): cap длины конкатенации текста перед
+# тем, как прогнать её через extract_urls / threat-intel в
+# _maybe_url_warning. Без cap'а карточка обращения с тысячами длинных
+# followup'ов заставляла бы синхронный regex-скан мегабайтов текста на
+# КАЖДОМ рендере (DoS-вектор: житель шлёт тонну текста, оператор
+# открывает карточку → подвисание event-loop). 50 КБ с запасом
+# покрывает видимый срез (10 сообщений × text_limit) + summary;
+# обрезка идёт по символам, не по URL — частичный URL на границе
+# среза в худшем случае просто не сматчится, что fail-closed для
+# нашей задачи (warning — best-effort сигнал, не блокировка).
+_URL_SCAN_MAX_CHARS = 50_000
+
+
+def _visible_timeline_messages(msgs: list) -> list:
+    """Видимый срез ленты — последние `_TIMELINE_MAX_MESSAGES` сообщений
+    в хронологическом порядке.
+
+    Единый источник истины для (а) того, что реально рендерится в
+    карточке (`_render_timeline`), и (б) того, по какому тексту мы ищем
+    URL для warning'а (`admin_card`). Раньше warning сканировал ВСЮ
+    историю (`appeal.messages`), а показывались только последние 10 —
+    рассинхрон: ⛔ мог сработать по ссылке, которой оператор в карточке
+    даже не видит, плюс O(N) regex-скан на каждом рендере. Теперь оба
+    пути берут один и тот же tail.
+    """
+    if not msgs:
+        return []
+    ordered = sorted(
+        msgs,
+        key=lambda m: getattr(m, "created_at", None)
+        or datetime.min.replace(tzinfo=TZ),
+    )
+    return ordered[-_TIMELINE_MAX_MESSAGES:]
+
 
 def _render_timeline(
     msgs: list,
@@ -88,13 +122,8 @@ def _render_timeline(
     """
     if not msgs:
         return ""
-    ordered = sorted(
-        msgs,
-        key=lambda m: getattr(m, "created_at", None)
-        or datetime.min.replace(tzinfo=TZ),
-    )
-    hidden_count = max(0, len(ordered) - _TIMELINE_MAX_MESSAGES)
-    visible = ordered[-_TIMELINE_MAX_MESSAGES:]
+    hidden_count = max(0, len(msgs) - _TIMELINE_MAX_MESSAGES)
+    visible = _visible_timeline_messages(msgs)
     lines = ["· · · · · · · ·", "История переписки:"]
     if hidden_count:
         lines.append(f"Ранее ещё {hidden_count} сообщений (скрыты).")
@@ -218,11 +247,19 @@ def admin_card(appeal: Appeal, user: User) -> str:
     timeline = appeal_timeline_block(appeal)
     if timeline:
         body = f"{body}\n\n{timeline}"
-    # SECURITY_REVIEW M5: текст обращения (summary) и followup'ы
-    # приходят от жителя и могут содержать фишинговые ссылки. Если
-    # хоть где-то в карточке (summary + любой followup) есть URL —
-    # один общий warning внизу карточки для оператора. Не блокируем
-    # отображение, только просим не кликать наугад.
+    # SECURITY_REVIEW M5 + P2-3: текст обращения (summary) и followup'ы
+    # приходят от жителя и могут содержать фишинговые ссылки. Один
+    # общий warning внизу карточки, если в ВИДИМОЙ части есть URL.
+    #
+    # Scope (P2-3 fix 2026-06-02): сканируем только тот же видимый срез
+    # ленты (`_visible_timeline_messages` — последние
+    # `_TIMELINE_MAX_MESSAGES`), что реально показан оператору, а НЕ всю
+    # историю `appeal.messages`. Раньше карточка обращения с тысячами
+    # followup'ов прогоняла extract_urls + threat-intel по всему объёму
+    # СИНХРОННО на каждом рендере (DoS-вектор + рассинхрон: ⛔ мог
+    # сработать по ссылке вне видимой части). Плюс длина конкатенации
+    # capped на `_URL_SCAN_MAX_CHARS` перед скан-функцией.
+    #
     # try/except защищает от MissingGreenlet (ORM ленивая загрузка
     # `appeal.messages` после закрытия сессии). Если detached — просто
     # не показываем URL warning по timeline, ограничиваемся summary.
@@ -230,33 +267,38 @@ def admin_card(appeal: Appeal, user: User) -> str:
         loaded_messages = list(appeal.messages or [])
     except Exception:
         loaded_messages = []
-    has_url = bool(
-        _url_in(appeal.summary or "")
-        or any(
-            _url_in(getattr(m, "text", "") or "")
-            for m in loaded_messages
-        )
+    warn_src = _bounded_scan_source(
+        appeal.summary or "",
+        _visible_timeline_messages(loaded_messages),
     )
-    if has_url:
-        # audit 2026-05-28: раньше в _maybe_url_warning подавался только
-        # appeal.summary — усиленный threat-intel warning (⛔ известный
-        # фишинг) не срабатывал на вредоносный URL, присланный в
-        # followup'е жителя, а не в исходной сути. Сканируем summary И
-        # тексты всех загруженных сообщений ленты.
-        warn_src = "\n".join(
-            [appeal.summary or ""]
-            + [(getattr(m, "text", "") or "") for m in loaded_messages]
-        )
-        body = body + _maybe_url_warning(warn_src)
+    # _maybe_url_warning возвращает "" если URL'ов нет — отдельный
+    # double-scan (старый `has_url`) больше не нужен, экономим проход.
+    body = body + _maybe_url_warning(warn_src)
     return body
 
 
-def _url_in(text: str) -> bool:
-    """Тонкая обёртка над extract_urls — bool вместо list, локальная
-    кешируемость (для admin_card обоих текстов). Использует тот же
-    regex, что и outgoing URL-whitelist (settings_store)."""
-    from aemr_bot.services.settings_store import extract_urls
-    return bool(extract_urls(text))
+def _bounded_scan_source(summary: str, visible_msgs: list) -> str:
+    """Собрать текст для URL-скана из summary + видимых сообщений,
+    обрезав суммарную длину до `_URL_SCAN_MAX_CHARS`.
+
+    Defense-in-depth (P2-3): даже если видимый срез ограничен 10
+    сообщениями, отдельное сообщение жителя теоретически может быть
+    очень длинным (валидация на входе ограничивает, но карточка не
+    должна полагаться на это). Cap гарантирует, что синхронный
+    regex-скан в `_maybe_url_warning` работает по ограниченному
+    объёму — линейно и предсказуемо, без подвисания event-loop.
+
+    Обрезаем по символам: частичный URL на границе в худшем случае не
+    сматчится (warning — best-effort сигнал оператору, не блокировка),
+    что приемлемо fail-closed-поведение.
+    """
+    parts = [summary] + [
+        (getattr(m, "text", "") or "") for m in visible_msgs
+    ]
+    out = "\n".join(parts)
+    if len(out) > _URL_SCAN_MAX_CHARS:
+        out = out[:_URL_SCAN_MAX_CHARS]
+    return out
 
 
 def _maybe_url_warning(text: str) -> str:
@@ -269,6 +311,17 @@ def _maybe_url_warning(text: str) -> str:
        усиленный warning «⛔ это известный фишинг/malware», с
        перечислением скомпрометированных host'ов.
 
+    P3-4 (2026-06-02): голые домены без схемы (`login-gosuslugi.top`)
+    раньше проходили мимо `extract_urls` (тот ловит только `http(s)://`
+    + unicode-омоглиф-quasi), поэтому defang их экранировал, но ⛔
+    threat-intel warning не срабатывал — оператор не получал сигнала,
+    что bare-host жителя есть в базе известного фишинга. Теперь хосты
+    извлекаются и через `url_defang._BARE_DOMAIN_PATTERN` (тот же
+    regex, что уже используется для defang'а) и прогоняются через
+    threat-intel. Базовый ⚠️ «содержит ссылку» по-прежнему гейтится на
+    `extract_urls` (http/quasi) — поведение для benign bare-domain не
+    меняется, эскалируем только при реальном malware-хосте.
+
     Threat-intel — best-effort: если бот только что стартовал и cron
     не успел подтянуть feed'ы (set пуст) — обычный warning без
     усиления. Stale-set'ом (старше 6ч) пользуемся, не отказываемся.
@@ -278,19 +331,33 @@ def _maybe_url_warning(text: str) -> str:
     """
     from aemr_bot.services.settings_store import extract_urls
     urls = extract_urls(text)
-    if not urls:
+
+    # P3-4: bare-domain кандидаты (без схемы) — `login-gosuslugi.top`,
+    # `vk-id.ru` и т.п. Берём ровно тот же `_BARE_DOMAIN_PATTERN`, что
+    # и defang, чтобы scope warning'а совпадал со scope экранирования.
+    # group(1) = имя 2-го уровня, group(2) = TLD → `host` = `имя.tld`.
+    bare_hosts: list[str] = []
+    if text:
+        from aemr_bot.utils.url_defang import _BARE_DOMAIN_PATTERN
+        for m in _BARE_DOMAIN_PATTERN.finditer(text):
+            bare_hosts.append(f"{m.group(1)}.{m.group(2)}")
+
+    if not urls and not bare_hosts:
         return ""
 
-    # Threat-intel check для каждого URL. Не падаем если модуль
-    # сломан — fall back на обычный warning.
+    # Threat-intel check для каждого http(s)-URL И каждого bare-host.
+    # Не падаем если модуль сломан — fall back на обычный warning.
+    # is_malicious сам нормализует host (lowercase, strip www), bare-host
+    # без схемы тоже корректно парсится (`_normalize_host` дописывает
+    # `http://` искусственно).
     malicious: list[str] = []
     try:
         from aemr_bot.services.threat_intel import get_store
         store = get_store()
-        for url in urls:
-            is_bad, _source = store.is_malicious(url)
-            if is_bad:
-                malicious.append(url)
+        for candidate in [*urls, *bare_hosts]:
+            is_bad, _source = store.is_malicious(candidate)
+            if is_bad and candidate not in malicious:
+                malicious.append(candidate)
     except Exception:
         pass
 
@@ -306,6 +373,13 @@ def _maybe_url_warning(text: str) -> str:
             "в МВД (отделение полиции по месту жительства, единый "
             "экстренный номер 112)."
         )
+    # Базовый ⚠️ показываем только при наличии http(s)/quasi-URL
+    # (`urls`). Голый домен без схемы сам по себе ⚠️ НЕ триггерит —
+    # поведение сохранено как до P3-4: defang его уже экранировал, а
+    # эскалация до ⛔ выше срабатывает лишь когда host реально в
+    # threat-intel базе. Иначе (только benign bare-host) — пусто.
+    if not urls:
+        return ""
     return (
         "\n\n⚠️ Текст содержит ссылку. Не открывайте напрямую из "
         "карточки — сверьте адрес визуально и при необходимости "
