@@ -1,6 +1,6 @@
 """Тесты на services/calendar_ru — праздники и рабочие дни РФ.
 
-Логика is_workday(): пн-сб + не праздник (воскресенье — всегда выходной).
+Логика is_workday(): пн-пт + не праздник (сб-вс — выходные).
 Файл holidays.json в production живёт в /app/seed/. Локально путь
 другой — мокаем _load_holidays напрямую."""
 from __future__ import annotations
@@ -43,10 +43,10 @@ class TestIsWorkday:
         # 17 мая 2026 — воскресенье
         assert not calendar_ru.is_workday(date(2026, 5, 17))
 
-    def test_saturday_is_workday_if_not_holiday(self, known_holidays) -> None:
-        # 16 мая 2026 — суббота, не праздник → workday по нашей логике
-        # (is_workday: пн-сб + не праздник)
-        assert calendar_ru.is_workday(date(2026, 5, 16))
+    def test_saturday_is_not_workday_even_if_not_holiday(self, known_holidays) -> None:
+        # 16 мая 2026 — суббота, не праздник, но reminder/SLA календарь
+        # работает по графику пн-пт.
+        assert not calendar_ru.is_workday(date(2026, 5, 16))
 
     def test_holiday_not_workday(self, known_holidays) -> None:
         # 9 мая — суббота-праздник
@@ -62,11 +62,11 @@ class TestIsWorkday:
 
 class TestEmptyHolidays:
     """Граничный кейс: holidays.json не загрузился — fallback на
-    weekend-only расписание (пн-сб все рабочие)."""
+    обычные будни пн-пт без праздников."""
 
     def test_fallback_no_crash(self, monkeypatch) -> None:
         monkeypatch.setattr(calendar_ru, "_load_holidays", lambda: frozenset())
         # 9 мая обычный день в этом fallback
         assert not calendar_ru.is_holiday(date(2026, 5, 9))
-        # is_workday работает: суббота 16 мая — рабочая
-        assert calendar_ru.is_workday(date(2026, 5, 16))
+        # is_workday работает: суббота 16 мая всё равно выходная
+        assert not calendar_ru.is_workday(date(2026, 5, 16))

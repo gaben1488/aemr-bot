@@ -336,7 +336,7 @@ def test_is_workday_handles_sunday_and_holiday(monkeypatch, tmp_path) -> None:
 
 
 def test_is_workday_falls_back_when_holidays_missing(monkeypatch, tmp_path) -> None:
-    """Без файла holidays.json считаем рабочими все дни кроме воскресенья.
+    """Без файла holidays.json считаем рабочими обычные будни пн-пт.
     Это безопасный fallback: лучше избыточный reminder чем тишина в
     рабочий день."""
     from datetime import date
@@ -347,5 +347,5 @@ def test_is_workday_falls_back_when_holidays_missing(monkeypatch, tmp_path) -> N
     monkeypatch.setattr(cal, "HOLIDAYS_PATH", Path(tmp_path) / "missing.json")
     cal._load_holidays.cache_clear()
 
-    assert cal.is_workday(date(2026, 5, 9))   # суббота — рабочий
-    assert not cal.is_workday(date(2026, 5, 10))  # воскресенье — нет
+    assert not cal.is_workday(date(2026, 5, 9))   # суббота — выходной
+    assert not cal.is_workday(date(2026, 5, 10))  # воскресенье — выходной
