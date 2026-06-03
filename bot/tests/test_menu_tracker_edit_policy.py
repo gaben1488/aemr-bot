@@ -113,6 +113,45 @@ class TestMenuTracker:
         assert menu_tracker.get_last_menu_mid(123) is None
         assert menu_tracker.get_last_menu_mid(456) is None
 
+    def test_auto_evicts_oldest_chat_when_cap_exceeded(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from aemr_bot.utils import menu_tracker
+
+        monkeypatch.setattr(menu_tracker, "_MAX_CHAT_STATES", 2, raising=False)
+        now_values = iter([100.0, 101.0, 102.0])
+        monkeypatch.setattr(menu_tracker, "_now", lambda: next(now_values), raising=False)
+
+        menu_tracker.set_last_menu_mid(1, "mid-oldest")
+        menu_tracker.set_last_menu_mid(2, "mid-middle")
+        menu_tracker.set_last_menu_mid(3, "mid-newest")
+
+        assert menu_tracker.get_last_menu_mid(1) is None
+        assert menu_tracker.get_last_menu_mid(2) == "mid-middle"
+        assert menu_tracker.get_last_menu_mid(3) == "mid-newest"
+
+    def test_evict_stale_removes_old_chat_states(self) -> None:
+        from aemr_bot.utils import menu_tracker
+
+        menu_tracker.set_last_menu_mid(1, "mid-old")
+        menu_tracker.set_last_menu_mid(2, "mid-fresh")
+        old_state = menu_tracker.get_chat_state(1)
+        fresh_state = menu_tracker.get_chat_state(2)
+        assert old_state is not None
+        assert fresh_state is not None
+        old_state.updated_at = 10.0
+        fresh_state.updated_at = 100.0
+
+        removed = menu_tracker.evict_stale(
+            now=110.0,
+            max_age_sec=50.0,
+            max_entries=10,
+        )
+
+        assert removed == 1
+        assert menu_tracker.get_last_menu_mid(1) is None
+        assert menu_tracker.get_last_menu_mid(2) == "mid-fresh"
+
 
 # ---- send_or_edit_screen — поведение edit vs send new ----------------------
 

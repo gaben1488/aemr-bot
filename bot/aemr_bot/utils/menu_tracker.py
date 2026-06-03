@@ -14,10 +14,14 @@ In-memory dict, после рестарта tracker пуст (graceful: перв
 """
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from typing import Literal
 
 EditableKind = Literal["menu", "wizard", "progress", "listing"]
+
+_STATE_TTL_SEC = 24 * 60 * 60
+_MAX_CHAT_STATES = 4096
 
 
 @dataclass
@@ -28,6 +32,7 @@ class ChatState:
     last_physical_mid: str | None = None
     last_editable_mid: str | None = None
     last_editable_kind: EditableKind | None = None
+    updated_at: float = 0.0
 
 
 _state_by_chat: dict[int, ChatState] = {}
@@ -45,6 +50,54 @@ def _state_for(chat_id: int) -> ChatState:
     return state
 
 
+def _now() -> float:
+    return time.monotonic()
+
+
+def _touch(state: ChatState, now: float) -> None:
+    state.updated_at = now
+
+
+def _evict_if_needed(now: float) -> int:
+    return evict_stale(now=now, max_age_sec=_STATE_TTL_SEC, max_entries=_MAX_CHAT_STATES)
+
+
+def evict_stale(
+    *,
+    now: float | None = None,
+    max_age_sec: float = _STATE_TTL_SEC,
+    max_entries: int = _MAX_CHAT_STATES,
+) -> int:
+    """Удалить idle state'ы и ограничить размер in-memory tracker'а.
+
+    Возвращает число удалённых chat_id. Функция публичная для cron/diagnostics
+    и тестов; обычным caller'ам ничего вызывать не нужно — mutating API ниже
+    запускает cap opportunistic.
+    """
+    current = _now() if now is None else now
+    stale_chat_ids = [
+        chat_id
+        for chat_id, state in _state_by_chat.items()
+        if current - state.updated_at > max_age_sec
+    ]
+    for chat_id in stale_chat_ids:
+        _state_by_chat.pop(chat_id, None)
+
+    max_entries = max(0, max_entries)
+    over_limit = max(0, len(_state_by_chat) - max_entries)
+    if over_limit:
+        oldest_chat_ids = sorted(
+            _state_by_chat,
+            key=lambda chat_id: _state_by_chat[chat_id].updated_at,
+        )[:over_limit]
+        for chat_id in oldest_chat_ids:
+            _state_by_chat.pop(chat_id, None)
+    else:
+        oldest_chat_ids = []
+
+    return len(stale_chat_ids) + len(oldest_chat_ids)
+
+
 def note_event(chat_id: int, mid: str) -> None:
     """Зарегистрировать historic event в чате — двигает ТОЛЬКО physical mid.
 
@@ -60,8 +113,11 @@ def note_event(chat_id: int, mid: str) -> None:
     Editable mid НЕ двигается — clicks по кнопкам на historic event
     дадут send_new menu, event остаётся в чате.
     """
+    now = _now()
     state = _state_for(chat_id)
     state.last_physical_mid = mid
+    _touch(state, now)
+    _evict_if_needed(now)
 
 
 def note_editable_send(
@@ -78,10 +134,13 @@ def note_editable_send(
     Каллер должен указывать `kind` явно (по умолчанию `menu`), чтобы
     edit-чек разрешил только смену экрана той же категории.
     """
+    now = _now()
     state = _state_for(chat_id)
     state.last_physical_mid = mid
     state.last_editable_mid = mid
     state.last_editable_kind = kind
+    _touch(state, now)
+    _evict_if_needed(now)
 
 
 def note_incoming(chat_id: int, mid: str) -> None:
@@ -94,8 +153,11 @@ def note_incoming(chat_id: int, mid: str) -> None:
     её, если она была последней редактируемой (но callback_mid !=
     physical → freshness откажет).
     """
+    now = _now()
     state = _state_for(chat_id)
     state.last_physical_mid = mid
+    _touch(state, now)
+    _evict_if_needed(now)
 
 
 def can_edit(
