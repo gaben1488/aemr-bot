@@ -174,7 +174,7 @@ mark.hit{background:var(--hit);color:inherit;border-radius:3px;padding:0 .1em}
 body.palette-open{overflow:hidden}
 .palette{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;align-items:flex-start;padding:max(8vh,2rem) 1rem 2rem}
 .palette[hidden]{display:none}
-.palette__backdrop{position:fixed;inset:0;background:rgba(15,23,20,.55);backdrop-filter:blur(2px)}
+.palette__backdrop{position:fixed;inset:0;background:rgba(15,23,20,.55);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
 .palette__box{position:relative;width:min(680px,100%);max-height:80vh;display:flex;flex-direction:column;background:var(--raised);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 60px -20px rgba(0,0,0,.5);overflow:hidden}
 #palette-input{appearance:none;-webkit-appearance:none;width:100%;border:0;border-bottom:1px solid var(--line);background:var(--raised);color:var(--ink);font:inherit;font-size:1.1rem;padding:1rem 1.2rem}
 #palette-input:focus{outline:none}
@@ -190,7 +190,8 @@ body.palette-open{overflow:hidden}
 #palette-empty{margin:0;padding:1.4rem 1.2rem;color:var(--ink-faint);font-size:.96rem}
 .palette__foot{border-top:1px solid var(--line);padding:.55rem 1rem;color:var(--ink-faint);font-size:.78rem;display:flex;gap:1rem;flex-wrap:wrap}
 .palette__foot kbd{font-family:var(--font-mono);background:var(--sunken);border:1px solid var(--line);border-radius:5px;padding:.05em .4em;font-size:.92em}
-@media (max-width:34rem){.palette{padding:0}.palette__box{max-height:100dvh;height:100dvh;border-radius:0;width:100%}}
+@media (max-width:34rem){.palette{padding:0}.palette__box{max-height:100dvh;height:auto;border-radius:0;width:100%}}
+@media (pointer:coarse){.palette__foot{display:none}}
 @media (prefers-reduced-motion:reduce){.palette__backdrop{backdrop-filter:none}}
 
 /* бейджи достоверности факта */
@@ -254,6 +255,7 @@ body.palette-open{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.dgm-bar{transition:none}}
 /* модалка-просмотрщик диаграмм */
 .dgm-modal{padding:0;border:0;background:transparent;max-width:100vw;max-height:100vh;width:100vw;height:100dvh}
+.dgm-modal[open]{position:fixed;inset:0;margin:0;z-index:80} /* перекрывает фоллбэк без showModal: оверлей вместо потока */
 .dgm-modal::backdrop{background:rgba(0,0,0,.72)}
 .dgm-modal-inner{position:relative;width:100vw;height:100dvh;background:var(--paper);display:flex;flex-direction:column;overflow:hidden}
 .dgm-modal-inner:fullscreen{width:100vw;height:100vh}
@@ -280,11 +282,14 @@ a:focus-visible{outline-offset:1px}
 
 /* мобильное меню */
 .menu-toggle{display:none}
+.mobile-search{display:none}
 .side__close{display:none}
 @media(max-width:62rem){
   .menu-toggle{display:inline-flex;align-items:center;gap:.55rem;position:sticky;top:0;z-index:20;width:100%;border:none;border-bottom:1px solid var(--line);background:var(--raised);color:var(--ink);padding:.85rem 1.1rem;font:inherit;font-weight:600;cursor:pointer}
   .menu-toggle__ico{color:var(--pine)}
   .menu-toggle:hover{background:var(--pine-tint)}
+  .mobile-search{display:grid;place-items:center;position:fixed;top:.42rem;right:.6rem;z-index:25;width:44px;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--raised);color:var(--pine);cursor:pointer}
+  .mobile-search:hover{background:var(--pine-tint)}
   .side{display:none}
   .side.is-open{display:flex;flex-direction:column;position:fixed;inset:0;z-index:30;overflow-y:auto;-webkit-overflow-scrolling:touch}
   /* крестик закрытия в шапке открытой панели */
@@ -327,6 +332,7 @@ a:focus-visible{outline-offset:1px}
 /* Windows High Contrast / forced-colors: смысл не должен держаться только на цвете */
 @media (forced-colors:active){
   :focus-visible{outline:2px solid Highlight}
+  mark.hit{background:Mark;color:MarkText}
   .note,.cmd,pre,.diagram,.table-wrap.is-scrollable{border:1px solid CanvasText}
   .badge{border:1px solid CanvasText}
   .nav a[aria-current="page"]{outline:2px solid Highlight;outline-offset:-2px}
@@ -339,6 +345,9 @@ a:focus-visible{outline-offset:1px}
 <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="sidebar" aria-label="Разделы базы знаний: открыть меню">
   <svg class="menu-toggle__ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
   <span>Разделы</span>
+</button>
+<button class="mobile-search" id="mobileSearch" type="button" aria-label="Поиск по базе знаний">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
 </button>
 
 <div class="layout">
@@ -374,9 +383,10 @@ a:focus-visible{outline-offset:1px}
 <div id="palette" class="palette" hidden>
   <div class="palette__backdrop"></div>
   <div class="palette__box" role="dialog" aria-modal="true" aria-label="Поиск по базе знаний">
-    <input id="palette-input" type="search" role="combobox" aria-expanded="false" aria-controls="palette-list" aria-autocomplete="list" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Поиск по всей базе… (Ctrl/Cmd+K или /)">
+    <input id="palette-input" type="search" role="combobox" aria-expanded="false" aria-controls="palette-list" aria-autocomplete="list" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Поиск по всей базе…">
     <ul id="palette-list" role="listbox" aria-label="Результаты поиска"></ul>
     <p id="palette-empty" role="status" aria-live="polite" hidden></p>
+    <p id="palette-status" class="sr-only" role="status" aria-live="polite"></p>
     <div class="palette__foot"><span><kbd>↑</kbd><kbd>↓</kbd> выбор</span><span><kbd>Enter</kbd> открыть</span><span><kbd>Esc</kbd> закрыть</span></div>
   </div>
 </div>
@@ -384,7 +394,7 @@ a:focus-visible{outline-offset:1px}
 <dialog id="dgmModal" class="dgm-modal" aria-label="Просмотр диаграммы">
   <div class="dgm-modal-inner">
     <div class="dgm-mbar" aria-label="Управление диаграммой"></div>
-    <div class="dgm-stage" tabindex="0" role="img" aria-label="Диаграмма: тяните мышью или пальцем, колесо или щипок — масштаб, R — поворот, 0 — сброс, Esc — закрыть"><div class="dgm-canvas"></div></div>
+    <div class="dgm-stage" tabindex="0" role="group" aria-label="Просмотр диаграммы. Тяните мышью или пальцем, колесо или щипок — масштаб, R — поворот, 0 — сброс, Esc — закрыть"><div class="dgm-canvas"></div></div>
   </div>
 </dialog>
 
@@ -393,7 +403,6 @@ a:focus-visible{outline-offset:1px}
   "use strict";
   var sections=[].slice.call(document.querySelectorAll('.section'));
   var search=document.getElementById('search');
-  var noResults=document.getElementById('noResults');
   var sidebar=document.getElementById('sidebar');
   var menuToggle=document.getElementById('menuToggle');
   var sideClose=document.getElementById('sideClose');
@@ -435,6 +444,7 @@ a:focus-visible{outline-offset:1px}
   // двойной запуск popstate+hashchange и лишнюю анимацию перехода).
   function go(target){
     if(!target)return;
+    document.querySelectorAll('mark.hit').forEach(function(m){var t=document.createTextNode(m.textContent);if(m.parentNode)m.parentNode.replaceChild(t,m);}); // навигация снимает прошлую подсветку
     var active=document.querySelector('.section.is-active');
     if(sections.some(function(s){return s.id===target;})){
       if(active&&active.id===target)return;
@@ -592,8 +602,9 @@ a:focus-visible{outline-offset:1px}
   var palInput=document.getElementById('palette-input');
   var palList=document.getElementById('palette-list');
   var palEmpty=document.getElementById('palette-empty');
+  var palStatus=document.getElementById('palette-status');
   if(pal&&palInput&&palList&&palEmpty){
-    var palIndex=null,palDf=null,palResults=[],palActive=-1,palLastFocus=null,palTmr=0;
+    var palIndex=null,palDf=null,palResults=[],palActive=-1,palLastFocus=null,palTmr=0,palCloseAt=0;
     var RECENT='aemr-kb-recent';
     var SUF=['иями','ями','ого','ему','ость','ами','ает','ыми','его','ие','ью','ой','ом','ах','ям','ы','и','а','е','о','у','я'];
     function pNorm(s){return (s||'').toLowerCase().normalize('NFKC').replace(/ё/g,'е');}
@@ -607,7 +618,7 @@ a:focus-visible{outline-offset:1px}
         if(/^H[1-6]$/.test(n.tagName)&&(+n.tagName.slice(1))<=lvl)break;
         if(!(n.matches&&n.matches('pre.mermaid,script,style'))){
           var c=n.cloneNode(true);
-          if(c.querySelectorAll)[].slice.call(c.querySelectorAll('pre.mermaid,.dgm-bar,.copy-btn,script,style')).forEach(function(x){x.remove();});
+          if(c.querySelectorAll)[].slice.call(c.querySelectorAll('pre.mermaid,.dgm-bar,.copy-btn,script,style,svg')).forEach(function(x){x.remove();});
           parts.push(c.textContent||'');
         }
         n=n.nextElementSibling;
@@ -686,7 +697,7 @@ a:focus-visible{outline-offset:1px}
     function pPushRecent(q){if(!q)return;var r=[];try{r=JSON.parse(localStorage.getItem(RECENT)||'[]');}catch(e){}
       r=r.filter(function(x){return x!==q;});r.unshift(q);r=r.slice(0,6);try{localStorage.setItem(RECENT,JSON.stringify(r));}catch(e){}}
     function pRender(q){
-      palList.textContent='';palActive=-1;palInput.removeAttribute('aria-activedescendant');
+      palList.textContent='';palActive=-1;palInput.removeAttribute('aria-activedescendant');if(palStatus)palStatus.textContent='';
       if(!q){palResults=[];var r=[];try{r=JSON.parse(localStorage.getItem(RECENT)||'[]');}catch(e){}
         if(r.length){palEmpty.hidden=true;palInput.setAttribute('aria-expanded','true');
           r.slice(0,6).forEach(function(t,i){var li=document.createElement('li');li.id='pres-'+i;li.setAttribute('role','option');li.setAttribute('aria-selected','false');li.className='res res--recent';li.setAttribute('data-recent',t);
@@ -696,6 +707,7 @@ a:focus-visible{outline-offset:1px}
       palResults=pSearch(q);
       if(!palResults.length){palEmpty.textContent='По запросу «'+q+'» ничего не найдено. Попробуйте короче или другое слово.';palEmpty.hidden=false;palInput.setAttribute('aria-expanded','false');return;}
       palEmpty.hidden=true;palInput.setAttribute('aria-expanded','true');
+      if(palStatus)palStatus.textContent='Найдено разделов: '+palResults.length;
       palResults.forEach(function(rec,i){
         var li=document.createElement('li');li.id='pres-'+i;li.setAttribute('role','option');li.setAttribute('aria-selected','false');li.className='res';
         var t=document.createElement('span');t.className='res__title';t.appendChild(pMark(rec.title,q));li.appendChild(t);
@@ -710,14 +722,16 @@ a:focus-visible{outline-offset:1px}
       palInput.setAttribute('aria-activedescendant',it[i].id);try{it[i].scrollIntoView({block:'nearest'});}catch(e){}}
     function pHighlight(rec,q){
       document.querySelectorAll('mark.hit').forEach(function(m){var t=document.createTextNode(m.textContent);m.parentNode.replaceChild(t,m);});
-      var h=document.getElementById(rec.id);if(!h)return;var lvl=/^H[1-6]$/.test(h.tagName)?+h.tagName.slice(1):2;
+      var h=document.getElementById(rec.id);if(!h)return;
+      if(!/^H[1-6]$/.test(h.tagName)){h=h.querySelector&&h.querySelector('h2');if(!h)return;} // дубль id вернул <section> — берём её h2
+      var lvl=+h.tagName.slice(1);
       var qt=pUniq(pTok(q));if(!qt.length)return;var src='('+qt.map(pEsc).join('|')+')';
       var n=h.nextElementSibling,nodes=[];while(n){if(/^H[1-6]$/.test(n.tagName)&&(+n.tagName.slice(1))<=lvl)break;nodes.push(n);n=n.nextElementSibling;}
       nodes.forEach(function(node){
         if(node.classList&&node.classList.contains('mermaid'))return;
         var w=document.createTreeWalker(node,NodeFilter.SHOW_TEXT,{acceptNode:function(tn){
           if(!tn.parentElement)return NodeFilter.FILTER_REJECT;var tag=tn.parentElement.tagName;
-          if(tag==='SCRIPT'||tag==='STYLE'||tag==='PRE'||tn.parentElement.closest('pre,.copy-btn,.dgm-bar'))return NodeFilter.FILTER_REJECT;
+          if(tag==='SCRIPT'||tag==='STYLE'||tag==='PRE'||tn.parentElement.closest('pre,.copy-btn,.dgm-bar,svg'))return NodeFilter.FILTER_REJECT;
           return tn.nodeValue.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;}});
         var tns=[],tn;while(tn=w.nextNode())tns.push(tn);
         tns.forEach(function(tn){var re;try{re=new RegExp(src,'giu');}catch(e){re=new RegExp(src,'gi');}
@@ -732,13 +746,16 @@ a:focus-visible{outline-offset:1px}
     }
     function pChoose(i){var it=palList.children;if(i<0||i>=it.length)return;var li=it[i];
       if(li.getAttribute('data-recent')!=null&&li.classList.contains('res--recent')){palInput.value=li.getAttribute('data-recent');pRender(palInput.value.trim());try{palInput.focus();}catch(e){}return;}
-      var rec=palResults[i];if(!rec)return;var q=palInput.value.trim();pPushRecent(q);pClose();go(rec.id);pHighlight(rec,q);}
-    function pOpen(seed){if(!pal)return;palLastFocus=document.activeElement;pal.hidden=false;document.body.classList.add('palette-open');
-      if(mainContent)try{mainContent.inert=true;}catch(e){}try{sidebar.inert=true;}catch(e){}
+      var rec=palResults[i];if(!rec)return;var q=palInput.value.trim();pPushRecent(q);pClose();go(rec.id);
+      requestAnimationFrame(function(){requestAnimationFrame(function(){pHighlight(rec,q);});});}
+    function pOpen(seed){if(!pal||!pal.hidden)return;palLastFocus=document.activeElement;pal.hidden=false;document.body.classList.add('palette-open');
+      if(mainContent)try{mainContent.inert=true;}catch(e){}try{sidebar.inert=true;}catch(e){}try{if(menuToggle)menuToggle.inert=true;}catch(e){}
       palInput.value=seed||'';pRender(palInput.value.trim());try{palInput.focus();}catch(e){}}
-    function pClose(){if(!pal||pal.hidden)return;pal.hidden=true;document.body.classList.remove('palette-open');
-      if(mainContent)try{mainContent.inert=false;}catch(e){}try{sidebar.inert=false;}catch(e){}
-      if(palLastFocus&&palLastFocus.focus)try{palLastFocus.focus();}catch(e){}}
+    function pClose(){if(!pal||pal.hidden)return;pal.hidden=true;palCloseAt=Date.now();document.body.classList.remove('palette-open');
+      if(mainContent)try{mainContent.inert=false;}catch(e){}try{sidebar.inert=false;}catch(e){}try{if(menuToggle)menuToggle.inert=false;}catch(e){}
+      // НЕ возвращать фокус на #search (его focus-листенер заново откроет палитру = клавиатурная ловушка)
+      var ret=(palLastFocus&&palLastFocus!==search&&palLastFocus.focus)?palLastFocus:((menuToggle&&menuToggle.offsetParent)?menuToggle:null);
+      if(ret)try{ret.focus();}catch(e){}}
     window.__palOpen=pOpen;window.__palClose=pClose;  // для навигации/диагностики
     palInput.addEventListener('input',function(){clearTimeout(palTmr);palTmr=setTimeout(function(){pRender(palInput.value.trim());},120);});
     palInput.addEventListener('keydown',function(e){var n=palList.children.length;
@@ -751,9 +768,10 @@ a:focus-visible{outline-offset:1px}
     document.addEventListener('keydown',function(e){
       if((e.ctrlKey||e.metaKey)&&!e.altKey&&(e.key==='k'||e.key==='K')){e.preventDefault();if(pal.hidden)pOpen();else pClose();return;}
       if(e.key==='/'&&pal.hidden){var a=document.activeElement,tg=a&&a.tagName;if(tg!=='INPUT'&&tg!=='TEXTAREA'&&!(a&&a.isContentEditable)){e.preventDefault();pOpen();}}});
-    if(search){search.readOnly=true;search.setAttribute('aria-label','Открыть поиск (Ctrl или Cmd + K)');
-      search.addEventListener('focus',function(){pOpen();try{search.blur();}catch(e){}});
-      search.addEventListener('click',function(){pOpen();});}
+    if(search){search.readOnly=true;search.removeAttribute('aria-describedby');search.setAttribute('aria-label','Открыть поиск по базе (Ctrl или Cmd + K, либо «/»)');
+      var trig=function(){if(Date.now()-palCloseAt<500)return;pOpen();try{search.blur();}catch(e){}}; // 500мс-гвард, чтобы refocus после закрытия не открыл заново
+      search.addEventListener('focus',trig);search.addEventListener('click',trig);}
+    var msb=document.getElementById('mobileSearch');if(msb)msb.addEventListener('click',function(){if(Date.now()-palCloseAt<500)return;pOpen();});
   }
 
   // чек-лист: сохранение в браузере
@@ -800,7 +818,9 @@ a:focus-visible{outline-offset:1px}
     var clone=svg.cloneNode(true),oid=clone.getAttribute('id')||'mmd';clone.setAttribute('id',oid+'-fs');
     var stl=clone.querySelector('style');if(stl)stl.textContent=stl.textContent.split('#'+oid).join('#'+oid+'-fs'); // развести id, иначе дубль со страницей
     clone.removeAttribute('width');clone.removeAttribute('height');clone.style.maxWidth='none';clone.style.width='';clone.style.height='';
-    dgmSvg=clone;dgmName=dgmNameOf(svg);dgmCanvas.textContent='';dgmCanvas.appendChild(clone);dst={scale:1,tx:0,ty:0,rot:0};
+    dgmSvg=clone;dgmName=dgmNameOf(svg);
+    if(dgmStage)dgmStage.setAttribute('aria-label','Просмотр диаграммы: '+dgmName.replace(/_/g,' ')+'. Колесо — масштаб, R — поворот, 0 — сброс, Esc — закрыть');
+    dgmCanvas.textContent='';dgmCanvas.appendChild(clone);dst={scale:1,tx:0,ty:0,rot:0};
     if(typeof dgmModal.showModal==='function'){try{dgmModal.showModal();}catch(e){dgmModal.setAttribute('open','');}}else dgmModal.setAttribute('open','');
     requestAnimationFrame(dgmFit);
   }

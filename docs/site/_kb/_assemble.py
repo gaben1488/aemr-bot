@@ -76,6 +76,9 @@ def build() -> tuple[str, list[str], list[str]]:
             missing.append(n)
             continue
         inner = f.read_text(encoding="utf-8").strip()
+        # снять дубль id: верхний <h2 id="{n}"> повторяет id <section> — оставляем id только у секции,
+        # иначе getElementById(n) возвращает <section> и подсветка/якоря метят не тот узел.
+        inner = re.sub(r'(<h2\b[^>]*?)\s+id="' + re.escape(n) + r'"', r"\1", inner, count=1)
         active = " is-active" if i == 0 else ""
         secs.append(
             f'<section class="section{active}" id="{n}" aria-label="{label}">\n'
@@ -98,6 +101,9 @@ def build() -> tuple[str, list[str], list[str]]:
     )
     targets = re.findall(r'(?:data-go|href)="#?([A-Za-z][\w-]*)"', out)
     broken = sorted({t for t in targets if t not in ids})
+    # guard: id каждой секции обязан быть уникален (дубль section/h2 ломает подсветку и якоря)
+    dup_secs = sorted(n for n, _, _ in SECTIONS if out.count('id="' + n + '"') > 1)
+    broken = sorted(set(broken) | {"dup-id:" + s for s in dup_secs})
     return out, missing, broken
 
 
