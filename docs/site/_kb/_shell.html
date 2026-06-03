@@ -103,8 +103,12 @@ h2:hover .anchor,h3:hover .anchor{opacity:1}
 
 /* шаги */
 .steps{list-style:none;margin:1.5rem 0;padding:0;counter-reset:step}
-.steps>li{counter-increment:step;display:grid;grid-template-columns:2.5rem 1fr;gap:.2rem 1rem;padding:.2rem 0 1.3rem;align-items:start}
-.steps>li::before{content:counter(step);grid-row:1/3;font-family:var(--font-display);font-size:1.35rem;font-weight:700;color:var(--pine);width:2.5rem;height:2.5rem;border:2px solid var(--pine-line);border-radius:50%;display:grid;place-items:center}
+/* номер — абсолютной позицией в левом жёлобе, а НЕ grid-колонкой: при grid'е
+   каждый <code>/<strong> и текстовый фрагмент шага становится отдельным
+   grid-элементом и съезжает в узкую колонку номера (текст в 1 символ/строку).
+   position:absolute + padding-left держит весь контент в обычном потоке. */
+.steps>li{counter-increment:step;position:relative;padding:.15rem 0 1.3rem 3.5rem;min-height:2.5rem}
+.steps>li::before{content:counter(step);position:absolute;left:0;top:.1rem;font-family:var(--font-display);font-size:1.35rem;font-weight:700;color:var(--pine);width:2.5rem;height:2.5rem;border:2px solid var(--pine-line);border-radius:50%;display:grid;place-items:center}
 .steps>li>strong{display:block;margin-bottom:.1rem}
 .steps>li>:last-child{margin-bottom:0}
 
