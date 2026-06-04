@@ -34,14 +34,15 @@ SECTIONS = [
     ("security", "Безопасность и ПДн", "7"),
     ("pravovoe", "Правовое", "8"),
     ("spravochnik", "Справочник", "9"),
-    ("adr", "Журнал решений", "10"),
+    ("voprosy", "Частые вопросы", "10"),
+    ("adr", "Журнал решений", "11"),
 ]
 GROUPS = [
     ("Начало", ["obzor"]),
     ("Людям", ["zhitel", "operator"]),
     ("Инженерам", ["admin", "developer", "codemap"]),
     ("Понять и проверить", ["koncept", "security", "pravovoe"]),
-    ("Справка", ["spravochnik", "adr"]),
+    ("Справка", ["spravochnik", "voprosy", "adr"]),
 ]
 
 
