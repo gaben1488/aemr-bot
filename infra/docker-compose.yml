@@ -85,7 +85,8 @@ services:
     # Hardening:
     # - read_only: rootfs is immutable; everything writable goes through
     #   tmpfs or named volumes.
-    # - tmpfs /tmp: pip wheels and tempfiles use /tmp during runtime.
+    # - tmpfs /tmp: runtime tempfiles only (gpg homedir for encrypted backups,
+    #   transient files). Deps are hash-verified from uv.lock at build, not here.
     # - mem_limit: a runaway broadcast or pathological FSM can't OOM the host.
     # - pids_limit: cap fork-bombs from any subprocess (pg_dump, gpg, rclone).
     # - cap_drop ALL + no-new-privileges: no need for any Linux capability.

@@ -30,6 +30,8 @@
 - Разработчик §1: число файлов миграций `alembic/versions/*.py == 18`,
   последняя ревизия `0018`, нумерация непрерывна 0001..0018.
 - Разработчик §2: число ORM-таблиц (классов `(Base)` в `models.py`) `== 11`.
+- Администратор §6: `infra/Dockerfile` ставит из `uv.lock` с `--require-hashes`
+  (content-check, не число — ловит откат образа на pip-из-диапазонов).
 """
 from __future__ import annotations
 
@@ -267,3 +269,24 @@ def test_imported_symbols_are_live() -> None:
     assert isinstance(settings_store.SCHEMA, dict)
     assert inspect.isclass(OperatorRole)
     assert "audit_log_retention_days" in Settings.model_fields
+
+
+# --- §6 Администратор / infra: Dockerfile ставит из uv.lock с хешами ---
+
+
+def test_dockerfile_uses_uv_lock_with_hashes() -> None:
+    """`_LEDGER.md` Администратор §6: образ ставит зависимости из `uv.lock`
+    с хеш-проверкой, а не `pip install -e` из диапазонов.
+
+    Content-дрейф (не числовой): Dockerfile уже мигрировал на
+    uv.lock + `--require-hashes`, и §6 это фиксирует. Если кто-то откатит
+    образ на `pip install -e` из pyproject-диапазонов — lock снова станет
+    декоративным, а §6 (и DEPS.md) начнут врать. Тест ловит откат.
+    """
+    dockerfile = (REPO_ROOT / "infra" / "Dockerfile").read_text(encoding="utf-8")
+    for needle in ("uv.lock", "uv export", "--require-hashes"):
+        assert needle in dockerfile, (
+            f"_LEDGER.md §6 фиксирует установку из uv.lock с хеш-проверкой, "
+            f"но в infra/Dockerfile нет «{needle}». Похоже на откат образа "
+            f"с lock+hash на pip-из-диапазонов." + _FIX
+        )

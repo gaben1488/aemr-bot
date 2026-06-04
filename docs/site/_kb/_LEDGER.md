@@ -246,8 +246,8 @@ _SCHEMA — ровно 17 ключей. Источник истины — код
 
 ## 6. infra/Dockerfile — pip или uv
 
-- **Зависимости ставятся через `pip`, НЕ uv** (Dockerfile:24): `RUN pip install --upgrade pip && pip install -e /app`. Установка из `pyproject.toml` (копируется на Dockerfile:23), editable-режим.
-- **`uv.lock` в образе НЕ используется.** Файл `bot/uv.lock` в репозитории существует, но Dockerfile его **не копирует** (копируются только `bot/pyproject.toml` → `/app/pyproject.toml`, затем `bot/aemr_bot`, `alembic.ini`, `seed`, `docs/PRIVACY.pdf` — Dockerfile:23, 26-29). Lock-файл влияет только на локальную dev-среду (uv), не на сборку контейнера. База: `python:3.12-slim` (pinned by digest, Dockerfile:1). Запуск: `alembic upgrade head && python -m aemr_bot.main` под non-root `botuser` UID/GID 1000 (Dockerfile:18-19, 38, 40).
+- **Зависимости ставятся из `uv.lock` с хеш-проверкой каждого пакета** (Dockerfile:39-45). Механика: `COPY bot/pyproject.toml` + `COPY bot/uv.lock`, затем `uv export --frozen --no-emit-project --no-dev --format requirements-txt` разворачивает lock в `requirements.txt` с `--hash` на каждый wheel, и `pip install --require-hashes --no-deps` ставит строго их (fail-closed: один неверный хеш — build падает). `uv` тянется build-time из `COPY --from=ghcr.io/astral-sh/uv` (пиннутый digest, не `curl|sh`) и удаляется из финального образа (Dockerfile:45). Сам пакет ставится `pip install -e /app --no-deps` (Dockerfile:50) — без повторного резолва deps.
+- **`uv.lock` — источник истины образа** (Dockerfile:40 его копирует, Dockerfile:42 экспортирует). База: `python:3.12-slim` (pinned by digest, Dockerfile:1). Запуск: `alembic upgrade head && python -m aemr_bot.main` под non-root `botuser` UID/GID 1000. _(Ревизия 2026-06-04: ранее тут значилось «pip из диапазонов, uv.lock не копируется» — Dockerfile с тех пор мигрировал на lock+hash; откат ловит анти-дрейф `test_ledger_facts_sync.py::test_dockerfile_uses_uv_lock_with_hashes`.)_
 
 ## 7. services/db_backup.py — формат, лимиты, поведение
 
@@ -266,7 +266,7 @@ _SCHEMA — ровно 17 ключей. Источник истины — код
 - Таблица настроек — models.py:272 — `"settings"`.
 - SCHEMA — settings_store.py:432-488 — 17 ключей (проверено импортом, анти-дрейф `test_ledger_facts_sync.py`).
 - DATABASE_URL — docker-compose.yml:65 — Compose-интерполяция `${POSTGRES_*}`.
-- Установка зависимостей — Dockerfile:24 — `pip install -e /app` (uv.lock не копируется).
+- Установка зависимостей — Dockerfile:39-50 — `uv export --frozen` из `uv.lock` → `pip install --require-hashes`, пакет `pip install -e --no-deps` (uv.lock = источник истины, не декоративен).
 - Имя бэкапа — db_backup.py:304-305 — `aemr-%Y%m%d_%H%M%S.sql[.gpg]`.
 - BACKUP_KEEP_COUNT — config.py:134 — 8.
 - Порог passphrase — db_backup.py:274 — `< 12` символов.
@@ -331,9 +331,11 @@ _Ниже — обоснованные вердикты по открытым в
 
 ---
 
-## РЕШЕНИЕ — uv vs pip в Docker
+## РЕШЕНИЕ — uv vs pip в Docker ✅ ПРИМЕНЕНО (2026-06-04)
 
-# Рекомендация: перевести Docker-образ на `uv sync --frozen`. Однозначно — да.
+> **Статус: реализовано, причём надёжнее рекомендации.** Образ уже ставит зависимости из `uv.lock` — не через `uv sync`, а через `uv export --frozen` → `pip install --require-hashes` (явная хеш-верификация каждого пакета, см. Часть I §6). Дрейф «lock декоративен» закрыт. Остаточный пункт — CI: `ci.yml` всё ещё `pip install -e ".[dev]"` из диапазонов (тестируем не то, что деплоим) — это «отдельный PR» из разбора ниже. Сам разбор сохранён как обоснование решения.
+
+# Рекомендация (выполнена): ставить зависимости образа из `uv.lock`. Однозначно — да.
 
 ## Короткий вердикт
 
