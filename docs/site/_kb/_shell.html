@@ -206,6 +206,10 @@ mark.hit--flash{animation:hitflash 1.2s cubic-bezier(.22,1,.36,1) 1}
 .to-top:hover{background:var(--pine-tint)}
 .to-top[hidden]{display:none}
 @media print{.to-top{display:none!important}}
+.nav__sub{list-style:none;margin:.05rem 0 .5rem;padding:0 0 0 1.55rem}
+.nav__sub li{margin:0}
+.nav__sub a{display:block;padding:.28rem .5rem;font-size:.85rem;line-height:1.3;color:var(--ink-faint);text-decoration:none;border-radius:6px}
+.nav__sub a:hover,.nav__sub a:focus-visible{color:var(--pine);background:var(--pine-tint)}
 #palette-empty{margin:0;padding:1.4rem 1.2rem;color:var(--ink-faint);font-size:.96rem}
 .palette__foot{border-top:1px solid var(--line);padding:.55rem 1rem;color:var(--ink-faint);font-size:.78rem;display:flex;gap:1rem;flex-wrap:wrap}
 .palette__foot kbd{font-family:var(--font-mono);background:var(--sunken);border:1px solid var(--line);border-radius:5px;padding:.05em .4em;font-size:.92em}
@@ -437,6 +441,25 @@ a:focus-visible{outline-offset:1px}
     document.querySelectorAll('.nav a').forEach(function(a){
       if(a.getAttribute('data-go')===id)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
     });
+    // контекстная под-навигация: h2-главы активного длинного раздела прямо в
+    // сайдбаре (двухуровневое меню — видно структуру и где ты, всегда под рукой).
+    try{
+      var oldSub=document.querySelector('.nav__sub');if(oldSub)oldSub.remove();
+      var secSub=document.getElementById(id);
+      var subs=secSub?[].slice.call(secSub.querySelectorAll('h2[id]')):[];
+      if(subs.length>=3){
+        var navLink=document.querySelector('.nav a[data-go="'+id+'"]');
+        var navLi=navLink&&navLink.closest('li');
+        if(navLi){
+          var subUl=document.createElement('ul');subUl.className='nav__sub';
+          subs.forEach(function(hh){var tt=(hh.textContent||'').replace(/\s+/g,' ').trim();if(!tt)return;
+            var sLi=document.createElement('li'),sA=document.createElement('a');
+            sA.href='#'+hh.id;sA.setAttribute('data-go',hh.id);sA.textContent=tt;
+            sLi.appendChild(sA);subUl.appendChild(sLi);});
+          navLi.parentNode.insertBefore(subUl,navLi.nextSibling);
+        }
+      }
+    }catch(e){}
     var sec=document.getElementById(id);
     if(sec){
       document.title=(sec.getAttribute('aria-label')||id)+' · База знаний';
