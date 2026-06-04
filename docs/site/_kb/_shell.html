@@ -202,6 +202,10 @@ mark.hit--flash{animation:hitflash 1.2s cubic-bezier(.22,1,.36,1) 1}
 .page-toc a:hover,.page-toc a:focus-visible{color:var(--pine);text-decoration:underline}
 .page-toc ul ul a{font-size:.88rem;color:var(--ink-faint)}
 @media (max-width:48rem){.page-toc>ul{columns:1}}
+.to-top{position:fixed;right:1.1rem;bottom:1.1rem;z-index:40;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--raised);color:var(--pine);font-size:1.25rem;line-height:1;cursor:pointer;box-shadow:0 6px 18px -8px rgba(0,0,0,.45)}
+.to-top:hover{background:var(--pine-tint)}
+.to-top[hidden]{display:none}
+@media print{.to-top{display:none!important}}
 #palette-empty{margin:0;padding:1.4rem 1.2rem;color:var(--ink-faint);font-size:.96rem}
 .palette__foot{border-top:1px solid var(--line);padding:.55rem 1rem;color:var(--ink-faint);font-size:.78rem;display:flex;gap:1rem;flex-wrap:wrap}
 .palette__foot kbd{font-family:var(--font-mono);background:var(--sunken);border:1px solid var(--line);border-radius:5px;padding:.05em .4em;font-size:.92em}
@@ -611,6 +615,23 @@ a:focus-visible{outline-offset:1px}
   if(document.readyState==='complete')refreshScrollHints();
   else window.addEventListener('load',refreshScrollHints);
   refreshScrollHints();
+
+  // кнопка «наверх» для длинных страниц (codemap/spravref): прокрутка живёт в
+  // #content, не в window, поэтому слушаем его.
+  (function(){
+    var c=document.getElementById('content');if(!c)return;
+    var btn=document.createElement('button');btn.type='button';btn.className='to-top';
+    btn.setAttribute('aria-label','Наверх');btn.innerHTML='↑';btn.hidden=true;
+    document.body.appendChild(btn);
+    function upd(){btn.hidden=c.scrollTop<c.clientHeight;}
+    var tt;c.addEventListener('scroll',function(){clearTimeout(tt);tt=setTimeout(upd,140);},{passive:true});
+    btn.addEventListener('click',function(){
+      var sm=!matchMedia('(prefers-reduced-motion:reduce)').matches;
+      try{c.scrollTo({top:0,behavior:sm?'smooth':'auto'});}catch(e){c.scrollTop=0;}
+      var h=document.querySelector('.section.is-active h2');if(h){try{h.focus({preventScroll:true});}catch(e){}}
+    });
+    upd();
+  })();
 
   // ===== Поиск 2.0: командная палитра (Ctrl/Cmd+K, «/», или фокус в поле поиска) =====
   // Индекс строится один раз; контент мутируется (подсветка) только при выборе результата.
