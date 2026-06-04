@@ -191,6 +191,17 @@ body.palette-open{overflow:hidden}
 @keyframes hitflash{0%{box-shadow:0 0 0 3px var(--hit)}55%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
 mark.hit--flash{animation:hitflash 1.2s cubic-bezier(.22,1,.36,1) 1}
 @media (prefers-reduced-motion:reduce){mark.hit--flash{animation:none}}
+.page-toc{margin:.2rem 0 1.7rem;border:1px solid var(--line);border-radius:10px;background:var(--sunken);padding:.2rem 1rem .7rem}
+.page-toc>summary{cursor:pointer;font-weight:600;color:var(--pine);padding:.65rem 0;list-style:none}
+.page-toc>summary::-webkit-details-marker{display:none}
+.page-toc>summary::before{content:"\2630  ";opacity:.6}
+.page-toc>ul{list-style:none;margin:.1rem 0 0;padding:0;columns:2;column-gap:2.4rem}
+.page-toc li{margin:.22rem 0;break-inside:avoid}
+.page-toc ul ul{columns:1;list-style:none;margin:.1rem 0 .45rem;padding-left:1rem}
+.page-toc a{color:var(--ink-soft);text-decoration:none;font-size:.95rem}
+.page-toc a:hover,.page-toc a:focus-visible{color:var(--pine);text-decoration:underline}
+.page-toc ul ul a{font-size:.88rem;color:var(--ink-faint)}
+@media (max-width:48rem){.page-toc>ul{columns:1}}
 #palette-empty{margin:0;padding:1.4rem 1.2rem;color:var(--ink-faint);font-size:.96rem}
 .palette__foot{border-top:1px solid var(--line);padding:.55rem 1rem;color:var(--ink-faint);font-size:.78rem;display:flex;gap:1rem;flex-wrap:wrap}
 .palette__foot kbd{font-family:var(--font-mono);background:var(--sunken);border:1px solid var(--line);border-radius:5px;padding:.05em .4em;font-size:.92em}

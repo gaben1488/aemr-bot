@@ -33,8 +33,8 @@ SECTIONS = [
     ("koncept", "Как устроено", "6"),
     ("security", "Безопасность и ПДн", "7"),
     ("pravovoe", "Правовое", "8"),
-    ("spravochnik", "Справочник", "9"),
-    ("spravref", "Полный справочник", "10"),
+    ("spravochnik", "Справочник (кратко)", "9"),
+    ("spravref", "Справочник (полный)", "10"),
     ("voprosy", "Частые вопросы", "11"),
     ("adr", "Журнал решений", "12"),
 ]
@@ -45,6 +45,50 @@ GROUPS = [
     ("Понять и проверить", ["koncept", "security", "pravovoe"]),
     ("Справка", ["spravochnik", "spravref", "voprosy", "adr"]),
 ]
+
+# Длинные секции (codemap/spravref) — простыни на сотни экранов. Достраиваем
+# «Содержание раздела» из их h2[id]/h3[id], чтобы читатель не терялся. Свёрнутый
+# <details>; ссылки через data-go — тот же SPA-роутер скроллит к якорю.
+TOC_SECTIONS = {"codemap", "spravref"}
+_HEAD_RE = re.compile(r'<h([23])\s+[^>]*\bid="([^"]+)"[^>]*>(.*?)</h\1>', re.S)
+
+
+def _toc_strip(s: str) -> str:
+    return re.sub(r"<[^>]+>", "", s).replace("&amp;", "&").strip()
+
+
+def _page_toc(inner: str) -> str:
+    """«Содержание раздела» из h2[id]/h3[id] (или '' если заголовков мало)."""
+    heads = [
+        (int(lvl), hid, _toc_strip(title))
+        for lvl, hid, title in _HEAD_RE.findall(inner)
+    ]
+    heads = [h for h in heads if h[2]]
+    if len(heads) < 4:
+        return ""
+    out = ['<details class="page-toc" open><summary>На этой странице</summary><ul>']
+    sub_open = li_open = False
+    for lvl, hid, title in heads:
+        link = f'<a href="#{hid}" data-go="{hid}">{title}</a>'
+        if lvl == 2:
+            if sub_open:
+                out.append("</ul>")
+                sub_open = False
+            if li_open:
+                out.append("</li>")
+            out.append(f"<li>{link}")
+            li_open = True
+        else:
+            if not sub_open:
+                out.append("<ul>")
+                sub_open = True
+            out.append(f"<li>{link}</li>")
+    if sub_open:
+        out.append("</ul>")
+    if li_open:
+        out.append("</li>")
+    out.append("</ul></details>")
+    return "".join(out)
 
 
 # Запечённый mermaid-SVG уже несёт текст-альтернативу (role="img" + aria-label) —
@@ -116,6 +160,12 @@ def build() -> tuple[str, list[str], list[str]]:
         # снять дубль id: верхний <h2 id="{n}"> повторяет id <section> — оставляем id только у секции,
         # иначе getElementById(n) возвращает <section> и подсветка/якоря метят не тот узел.
         inner = re.sub(r'(<h2\b[^>]*?)\s+id="' + re.escape(n) + r'"', r"\1", inner, count=1)
+        if n in TOC_SECTIONS:
+            toc = _page_toc(inner)
+            if toc:
+                m = re.search(r'<p class="lede">.*?</p>', inner, re.S) or re.search(r"</h2>", inner)
+                if m:
+                    inner = inner[: m.end()] + "\n" + toc + inner[m.end():]
         active = " is-active" if i == 0 else ""
         secs.append(
             f'<section class="section{active}" id="{n}" aria-label="{label}">\n'
