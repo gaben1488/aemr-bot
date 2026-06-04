@@ -44,6 +44,40 @@ GROUPS = [
 ]
 
 
+# Запечённый mermaid-SVG уже несёт текст-альтернативу (role="img" + aria-label) —
+# это закрывает WCAG 1.1.1 для скринридера. Но видимой подписи у диаграмм нет,
+# хотя класс `.diagram__cap` для неё определён в _shell.html. Достраиваем её здесь,
+# на этапе сборки, чтобы покрыть все диаграммы разом (и будущие тоже), не правя
+# 11 фрагментов руками. Подпись берём из того же aria-label (без хвоста
+# «(диаграмма)») и помечаем aria-hidden="true": SVG уже озвучивает этот текст,
+# второй раз скринридеру он не нужен — подпись чисто визуальная.
+_DIAGRAM_BLOCK = re.compile(
+    r'(<div class="diagram">\s*<svg\b[^>]*\baria-label="([^"]*)"[\s\S]*?</pre>\s*)(</div>)'
+)
+
+
+def _inject_diagram_captions(html: str) -> str:
+    """Дописать видимую `.diagram__cap` к каждому блоку `.diagram` из его aria-label."""
+    import html as _htmlmod
+
+    def repl(m: "re.Match[str]") -> str:
+        label = m.group(2).strip()
+        # хвост «(диаграмма)» нужен скринридеру в aria-label, но в видимой подписи он лишний
+        cap = re.sub(r"\s*\(диаграмма\)\s*$", "", label).strip()
+        if not cap:
+            return m.group(0)
+        # label берём из готового атрибута (уже HTML-экранирован при запекании);
+        # раскодируем сущности и заэкранируем заново, чтобы текст подписи был корректен
+        cap = _htmlmod.escape(_htmlmod.unescape(cap))
+        return (
+            m.group(1)
+            + f'<span class="diagram__cap" aria-hidden="true">{cap}</span>\n'
+            + m.group(3)
+        )
+
+    return _DIAGRAM_BLOCK.sub(repl, html)
+
+
 def build() -> tuple[str, list[str], list[str]]:
     """Собрать HTML вики из каркаса и фрагментов БЕЗ записи на диск.
 
@@ -94,6 +128,9 @@ def build() -> tuple[str, list[str], list[str]]:
         out,
         count=1,
     )
+
+    # видимые подписи диаграмм (.diagram__cap) из их aria-label — WCAG 1.1.1
+    out = _inject_diagram_captions(out)
 
     # guard: каждый data-go / href="#..." обязан резолвиться в существующий id
     ids = {n for n, _, _ in SECTIONS} | set(

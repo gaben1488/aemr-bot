@@ -389,6 +389,7 @@ a:focus-visible{outline-offset:1px}
 
   <main class="main" id="content">
     <div class="content">
+      <h1 class="sr-only">База знаний чат-бота обратной связи Администрации Елизовского муниципального округа</h1>
 <section class="section is-active" id="obzor" aria-label="Обзор">
 <h2>Обзор: что это и с чего начать</h2>
 
@@ -3773,6 +3774,7 @@ uv run ruff check aemr_bot/</code></pre>
     classDef s fill:#ede7f6,stroke:#5e35b1,color:#311b92
     classDef ui fill:#e1f5ff,stroke:#0288d1,color:#01579b
     classDef db fill:#e8f5e9,stroke:#388e3c,color:#1b5e20</pre>
+<span class="diagram__cap" aria-hidden="true">Карта модулей по слоям</span>
 </div>
 
 <p>Из карты видны два правила, которые легко нарушить по незнанию. Первое: обработчик не лезет в базу напрямую <code class="kbd">SELECT</code>-ом — для этого есть сервис (например, поиск обращения по карточке — это <code class="kbd">appeals.get_by_admin_message_id</code>, а не голый запрос в <code class="kbd">operator_reply.py</code>). Второе: всё чтение полей события идёт через <code class="kbd">utils/event.py</code>, поэтому на схеме стрелка от MAX входит в обработчики только через этот адаптер. Фасады <code class="kbd">keyboards.py</code> и <code class="kbd">texts.py</code> в корне пакета на схему не вынесены: это тонкие обёртки над <code class="kbd">ui/</code> и <code class="kbd">copy/</code> ради старых импортов, новый код импортирует домен напрямую.</p>
@@ -3941,6 +3943,7 @@ uv run ruff check aemr_bot/</code></pre>
         timestamp archived_at "мягкое удаление"
         int use_count "счётчик применений"
     }</pre>
+<span class="diagram__cap" aria-hidden="true">Карта таблиц и связей (ER-диаграмма)</span>
 </div>
 
 <p>Три «скелета» связей, на которые опирается вся логика: <code class="kbd">users → appeals → messages</code> (житель → его обращения → переписка внутри каждого), <code class="kbd">operators</code> подвешен к <code class="kbd">appeals</code> (кто взял) и к <code class="kbd">messages</code> (кто ответил) через <code class="kbd">SET NULL</code> — удаление оператора не рушит обращения, а просто обнуляет ссылку, и <code class="kbd">broadcasts → broadcast_deliveries ← users</code> (метаданные рассылки и матрица доставок: одна строка на пару «житель × рассылка», где <code class="kbd">error IS NULL</code> означает «доставлено»). Каскад <code class="kbd">CASCADE</code> на <code class="kbd">appeals.user_id</code> и на доставках означает: физическое удаление жителя унесёт за собой его обращения и записи доставок — но в норме житель не удаляется физически, а обезличивается (обращения переподвешиваются на технического anonymous-пользователя <code class="kbd">max_user_id = -1</code>, см. раздел про удаление ПДн).</p>
@@ -4203,6 +4206,7 @@ DATABASE_URL=postgresql+asyncpg://aemr:&lt;пароль&gt;@localhost:5432/aemr 
     classDef svc fill:#fce4ec,stroke:#c2185b,color:#880e4f
     classDef db fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
     classDef cz fill:#e1f5ff,stroke:#0288d1,color:#01579b</pre>
+<span class="diagram__cap" aria-hidden="true">Путь команды /reply — от оператора до жителя по слоям</span>
 </div>
 
 <p>Тот же скелет «обработчик → сервис → база» работает и для рецепта «добавить настройку». Когда оператор-ИТ меняет ключ через кнопочный мастер или команду <code class="kbd">/setting</code>, обработчик <code class="kbd">admin_settings.py</code> валидирует значение по правилу из <code class="kbd">SCHEMA</code> (тип, длина, обязательные подстроки), сервис <code class="kbd">settings_store</code> пишет его в таблицу <code class="kbd">settings</code> (ключ → JSONB), бампает <code class="kbd">updated_at</code> и сбрасывает <code class="kbd">synced_at</code> в NULL (ключ становится «грязным» — попадёт в следующий PR выгрузки настроек, если он в <code class="kbd">SYNCED_KEYS</code>), и фиксирует действие <code class="kbd">action="setting_update"</code> в <code class="kbd">audit_log</code> с парой before/after в <code class="kbd">details</code>. Чтобы завести совсем новый ключ, надо тронуть ровно три места в <code class="kbd">settings_store.py</code>: значение по умолчанию в <code class="kbd">DEFAULTS</code>, правило валидации в <code class="kbd">SCHEMA</code> (сейчас в ней 17 ключей) и — если ключ должен уезжать в репозиторий через Pull Request — список <code class="kbd">SYNCED_KEYS</code> (там 9 ключей из 17).</p>
@@ -4647,6 +4651,7 @@ DATABASE_URL=postgresql+asyncpg://aemr:&lt;пароль&gt;@localhost:5432/aemr 
     Bot -->|вс 03:00, pg_dump + GPG| Backup
     Bot --- Live
     Deploy -->|docker compose up --build| Bot</pre>
+<span class="diagram__cap" aria-hidden="true">6. Сознательная простота архитектуры</span>
 </div>
 
 <p>Простота здесь активно защищается. По проекту предлагалось много «продуктовых улучшений»: внедрить контейнер внедрения зависимостей (DI), вынести фоновые задачи в распределённую очередь на Celery с брокером Redis или RabbitMQ, поставить Redis для кэширования настроек и состояний диалога, перейти на сине-зелёный деплой (blue-green) ради нулевого простоя, добавить метрики Prometheus, хранилище секретов HashiCorp Vault, перевести связь на webhook за Nginx. Всё это правильные инструменты для системы под большой нагрузкой. Но здесь такой нагрузки не будет, а каждый из них добавляет деталь, которую надо разворачивать, обновлять и чинить. Поэтому они сознательно отложены до момента, когда появится реальная причина, а не «на всякий случай».</p>
@@ -4740,6 +4745,7 @@ DATABASE_URL=postgresql+asyncpg://aemr:&lt;пароль&gt;@localhost:5432/aemr 
     Reply -->|закрыть молча| Closed
     Inter -->|житель дополнил| Reply
     Inter --> Done</pre>
+<span class="diagram__cap" aria-hidden="true">Схема воронки: шаг за шагом и ветки статусов</span>
 </div>
 
 <p>Важно, что счётчик прогресса жителю показывает не все десять состояний, а только пять основных: имя, населённый пункт, адрес, тема, суть. Это шаги из массива <code class="kbd">_STAGES</code> (<code class="kbd">services/progress.py:29</code>), и подпись выглядит дословно как «📋 Подача обращения · 2 / 5». Согласие и контакт идут до счётчика отдельными экранами, а развилка геолокации в счётчик тоже не входит — она встроена внутрь шага населённого пункта. Поэтому знаменатель всегда пять, даже если телефон и имя уже известны и часть экранов пролетает мимо.</p>
@@ -4837,6 +4843,7 @@ DATABASE_URL=postgresql+asyncpg://aemr:&lt;пароль&gt;@localhost:5432/aemr 
     Bot->>DB: appeals.status = answered<br/>messages: ответ оператора<br/>audit_log: действие reply
     Bot-->>Cz: ✉️ формальное письмо<br/>Администрации с ответом
     Bot-->>Op: подтверждение: ответ доставлен</pre>
+<span class="diagram__cap" aria-hidden="true">Поток данных: как сообщение проходит сквозь таблицы</span>
 </div>
 
 <div class="note">
@@ -5129,6 +5136,7 @@ DATABASE_URL=postgresql+asyncpg://aemr:&lt;пароль&gt;@localhost:5432/aemr 
     classDef db fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
     classDef ext fill:#eceff1,stroke:#546e7a,color:#263238
     classDef note fill:#fffde7,stroke:#fbc02d,color:#f57f17</pre>
+<span class="diagram__cap" aria-hidden="true">Границы доверия: схема</span>
 </div>
 
 <p>Эта карта входов — не художественная метафора, а ревизия из кода: для security-аудита заранее составлен инвентарь всех мест, где недоверенные данные попадают в процесс (источник, файл и строка, уровень доверия, проверка, конечный приёмник-sink). Он и подтверждает, что «жёлтых» точек входа от жителя ровно столько, сколько на схеме, и что у каждой есть конкретная защита: текст — clamp по длине плюс проверка «есть ли хоть один буквенно-цифровой символ» (<code class="kbd">_HAS_ALNUM</code>); вложения — белый список типов (только image/video/file) и потолок 20 штук на обращение; vCard-контакт — ограничение в 10 000 символов; callback — точное или префиксное совпадение плюс проверка текущего шага диалога. Отдельно отмечу две вещи из инвентаря: один общий гос-домен <code class="kbd">gosuslugi.ru</code> в белом списке делит доверие со всеми его поддоменами, поэтому компрометация любого поддомена этого хоста теоретически даёт фишинг (осознанный компромисс), а админ-вход (служебная группа) — это отдельная граница: всё, что приходит от оператора, всё равно проходит проверку «это admin-чат» плюс проверку роли, прежде чем что-то изменить в базе.</p>
@@ -5228,6 +5236,7 @@ DATABASE_URL=postgresql+asyncpg://aemr:&lt;пароль&gt;@localhost:5432/aemr 
     H-->>R: ответ (для /erase — список закрытых #N, #M)
 
     Note over DB: НЕ трогает: сообщения в чатах MAX,<br/>бэкапы до момента удаления</pre>
+<span class="diagram__cap" aria-hidden="true">Удаление персональных данных жителя</span>
 </div>
 
 <p>Одна тонкость удаления вскрылась при поиске эксплойтов: <strong>логи Docker удаление не затрагивает</strong>. Журналы контейнера (формат <code class="kbd">json-file</code>, 10 МБ × 3 файла) могут содержать косвенные идентификаторы жителя — <code class="kbd">user_id</code>, <code class="kbd">chat_id</code>, <code class="kbd">mid</code> — и переживают <code class="kbd">/erase</code>, потому что это совсем другое хранилище, не рабочая база. По 152-ФЗ это формальный зазор: после удаления данные из базы исчезли, а из логов нет. Снижается он двумя способами: ограниченным сроком жизни логов (ротация на трёх файлах сама вытесняет старое за дни) и тем, что в коде намеренно убрали запись «горячих» персональных данных в лог — например, координаты геолокации больше не пишутся в лог в открытом виде, а пишутся только на уровне отладки и без самих чисел. Полностью совместить логи с правом на удаление одним кодом нельзя — это организационная часть регламента хранения.</p>
@@ -5740,6 +5749,7 @@ kamchatka.gov.ru</code></pre>
     classDef own fill:#e1f5ff,stroke:#0288d1,color:#01579b
     classDef law fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
     classDef ext fill:#eceff1,stroke:#546e7a,color:#263238</pre>
+<span class="diagram__cap" aria-hidden="true">Реагирование на инцидент: плейбуки</span>
 </div>
 
 <details open>
@@ -7086,6 +7096,7 @@ kamchatka.gov.ru</code></pre>
     classDef backup fill:#fce4ec,stroke:#c2185b,color:#880e4f
     classDef night fill:#e1f5ff,stroke:#0288d1,color:#01579b
     classDef work fill:#e0f2f1,stroke:#00695c,color:#004d40</pre>
+<span class="diagram__cap" aria-hidden="true">Тайм-линия суток: когда что срабатывает</span>
 </div>
 
 <p>Две вещи, которые схема делает наглядными. Во-первых, <strong>ночью процесс намеренно занят</strong> с 03:00 до 04:45: если в это время кажется, что бот «тормозит» с ответами жителям, это ожидаемо — идёт ретенция и (по воскресеньям) бэкап, а не сбой. Во-вторых, <strong>почему задачи не на «ровном» времени</strong>: ежечасные метки (:15, :17, :37) и ночная лесенка (04:00, 04:15, 04:20, 04:30, 04:45) специально разведены по минутам, чтобы у каждой был свой слот и две тяжёлые операции не стартовали одновременно. Пунктирная рамка у <code class="kbd">healthcheck-ping</code> означает «условная задача»: она попадает в расписание только если задан <code class="kbd">HEALTHCHECK_URL</code> (без него остаётся 16 активных задач). Общие правила у всех одинаковы: <code class="kbd">max_instances=1</code> (два экземпляра одной задачи не пересекутся), <code class="kbd">coalesce=True</code> (пропущенные из-за простоя запуски схлопываются в один), <code class="kbd">misfire_grace_time=120</code> секунд (опоздание более чем на две минуты — запуск отменяется, чтобы не накапливать «хвост»).</p>
@@ -7235,6 +7246,7 @@ kamchatka.gov.ru</code></pre>
     classDef okadm fill:#e3f2fd,stroke:#1976d2,color:#0d47a1
     classDef okmenu fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
     classDef reg fill:#f3e5f5,stroke:#8e24aa,color:#4a148c</pre>
+<span class="diagram__cap" aria-hidden="true">Маршрутизация нажатий (callback): три диспетчера</span>
 </div>
 
 <p>Почему это кандидат на упрощение. Таксономия префиксов уже <strong>централизована</strong> в одном месте — <code class="kbd">callback_router.py</code> (реестр <code class="kbd">EXACT_ROUTES</code> + <code class="kbd">PREFIX_ROUTES</code>, на схеме фиолетовый узел): там для каждой группы кнопок прописано, к какому домену она относится и можно ли её жать в админ-группе (<code class="kbd">admin_allowed</code>). Но сам <strong>разбор</strong> по-прежнему размазан по трём функциям в трёх файлах: <code class="kbd">_dispatch_citizen_callback</code> (внутри <code class="kbd">appeal.py</code>), <code class="kbd">dispatch_admin_callback</code> (в <code class="kbd">admin_callback_dispatch.py</code>) и <code class="kbd">handle_callback</code> (в <code class="kbd">menu.py</code>). Получается раздвоение: реестр говорит «вот группа <code class="kbd">op:close:</code>, она операторская», но чтобы понять, <em>что именно</em> делает кнопка, надо открывать отдельный диспетчер. Связка «реестр знает группу → диспетчер знает действие» держится на договорённости, а не на коде: если завести новую кнопку в реестре и забыть про обработчик, payload молча провалится в меню (это поведение даже специально сохранено как инвариант в докстринге диспетчера). Логичный следующий шаг — собрать все три разбора в одну таблицу <code class="kbd">payload → handler</code>, привязанную прямо к <code class="kbd">callback_router</code>, чтобы реестр и обработчик нельзя было рассинхронизировать. Это та же идея типизированного <code class="kbd">CallbackPayload</code>-разбора, что висит в бэклоге MAXAPI (P1.2): сделать маршрут кнопок единым и проверяемым на этапе сборки, а не «по цепочке if».</p>
