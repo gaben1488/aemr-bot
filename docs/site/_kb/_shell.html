@@ -187,6 +187,10 @@ body.palette-open{overflow:hidden}
 .res[aria-selected="true"],.res:hover{background:var(--pine-tint)}
 .res[aria-selected="true"] .res__crumb{background:var(--raised)}
 #palette-list mark.hit{background:var(--hit)}
+.section mark.hit{background:var(--hit);color:inherit;border-radius:3px;padding:0 .12em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+@keyframes hitflash{0%{box-shadow:0 0 0 3px var(--hit)}55%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+mark.hit--flash{animation:hitflash 1.2s cubic-bezier(.22,1,.36,1) 1}
+@media (prefers-reduced-motion:reduce){mark.hit--flash{animation:none}}
 #palette-empty{margin:0;padding:1.4rem 1.2rem;color:var(--ink-faint);font-size:.96rem}
 .palette__foot{border-top:1px solid var(--line);padding:.55rem 1rem;color:var(--ink-faint);font-size:.78rem;display:flex;gap:1rem;flex-wrap:wrap}
 .palette__foot kbd{font-family:var(--font-mono);background:var(--sunken);border:1px solid var(--line);border-radius:5px;padding:.05em .4em;font-size:.92em}
@@ -727,7 +731,7 @@ a:focus-visible{outline-offset:1px}
       if(!/^H[1-6]$/.test(h.tagName)){h=h.querySelector&&h.querySelector('h2');if(!h)return;} // дубль id вернул <section> — берём её h2
       var lvl=+h.tagName.slice(1);
       var qt=pUniq(pTok(q));if(!qt.length)return;var src='('+qt.map(pEsc).join('|')+')';
-      var n=h.nextElementSibling,nodes=[];while(n){if(/^H[1-6]$/.test(n.tagName)&&(+n.tagName.slice(1))<=lvl)break;nodes.push(n);n=n.nextElementSibling;}
+      var n=h.nextElementSibling,nodes=[h];while(n){if(/^H[1-6]$/.test(n.tagName)&&(+n.tagName.slice(1))<=lvl)break;nodes.push(n);n=n.nextElementSibling;}
       nodes.forEach(function(node){
         if(node.classList&&node.classList.contains('mermaid'))return;
         var w=document.createTreeWalker(node,NodeFilter.SHOW_TEXT,{acceptNode:function(tn){
@@ -743,7 +747,12 @@ a:focus-visible{outline-offset:1px}
             var mk=document.createElement('mark');mk.className='hit';mk.textContent=m[0];frag.appendChild(mk);last=m.index+m[0].length;}
           frag.appendChild(document.createTextNode(tn.nodeValue.slice(last)));tn.parentNode.replaceChild(frag,tn);});
       });
-      var fm=document.querySelector('.section.is-active mark.hit');if(fm)try{fm.scrollIntoView({block:'center',behavior:'auto'});}catch(e){}
+      // прокрутить на первое совпадение (центр); если в теле его нет — хотя бы на сам
+      // заголовок (а не в начало страницы, как было). Затем короткая «вспышка» термина.
+      var fm=document.querySelector('.section.is-active mark.hit')||h;
+      try{fm.scrollIntoView({block:(fm===h?'start':'center'),behavior:'auto'});}catch(e){}
+      var first=document.querySelector('.section.is-active mark.hit');
+      if(first){first.classList.add('hit--flash');setTimeout(function(){first.classList.remove('hit--flash');},1400);}
     }
     function pChoose(i){var it=palList.children;if(i<0||i>=it.length)return;var li=it[i];
       if(li.getAttribute('data-recent')!=null&&li.classList.contains('res--recent')){palInput.value=li.getAttribute('data-recent');pRender(palInput.value.trim());try{palInput.focus();}catch(e){}return;}
