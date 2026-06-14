@@ -276,11 +276,11 @@ FreeBSD не умеет нативный Docker (нет Linux-ядра), а об
 
 ### P0 — блокеры для гос-среды
 
-**P0-1. Бот не умеет ходить через прокси.** MAX-библиотека создаёт HTTP-сессию без `trust_env`, `build_bot()` не передаёт `proxy`/`kwargs` → `HTTP_PROXY`/`HTTPS_PROXY` молча игнорируются. За UserGate с прокси-only исходящим бот вечно ретраит при зелёном `/livez` и нуле апдейтов — невидимая полная неработоспособность. *Fix:* `trust_env=True` в обёртке сессии или явный `proxy=` через `DefaultConnectionProperties(**kwargs)`; либо добиться прямого исходящего 443.
-<sub>[main.py:50-56](bot/aemr_bot/main.py) · maxapi/bot.py:340-347 · maxapi/client/default.py:46,68</sub>
+**P0-1. Бот не умеет ходить через прокси.** ✅ **ЗАКРЫТО в коде (firewall mode).** Было: MAX-библиотека создаёт HTTP-сессию без `trust_env` → `HTTP_PROXY`/`HTTPS_PROXY` молча игнорировались. Стало: `BOT_FIREWALL_MODE=1` (+ опц. `BOT_OUTBOUND_PROXY`) включает `trust_env=True` во всех исходящих сессиях ([network.py](bot/aemr_bot/network.py) → `session_kwargs`, вшито в `build_bot` и в threat_intel/repo_sync/cron). Прокси теперь читается из окружения. Альтернатива по-прежнему лучше: прямой исходящий 443 (allowlist по FQDN).
+<sub>[network.py](bot/aemr_bot/network.py) · [main.py:50-64](bot/aemr_bot/main.py) · [config.py](bot/aemr_bot/config.py) (`BOT_FIREWALL_MODE`)</sub>
 
-**P0-2. UserGate SSL-инспекция сломает TLS.** CA-bundle внутри read-only `python:3.12-slim` не содержит корневой UserGate → `CERTIFICATE_VERIFY_FAILED` на каждый запрос; rootfs read-only — CA не докинуть на лету. *Fix:* bypass инспекции для `platform-api.max.ru` (предпочтительно), либо класть корп-CA в образ на сборке + `update-ca-certificates`. Проверить **до** переноса.
-<sub>[security.html:567](docs/site/_kb2/security.html) · [Dockerfile:1,41-50](infra/Dockerfile)</sub>
+**P0-2. UserGate SSL-инспекция сломает TLS.** ✅ **ЗАКРЫТО в коде (firewall mode) + ops.** Было: CA-bundle внутри read-only контейнера не содержит корневой UserGate → `CERTIFICATE_VERIFY_FAILED`. Стало: `BOT_EXTRA_CA_CERT=/certs/corp-ca.pem` собирает объединённый бандл (системные + корп-CA) и выставляет `SSL_CERT_FILE`/`REQUESTS_CA_BUNDLE` на старте — видят stdlib ssl, aiohttp и requests. Предпочтительно всё же **bypass инспекции** для `platform-api.max.ru` на межсетевике (и юридически чище по 152-ФЗ). Тонкость остаётся: вотчдог `healthwatch.sh` шлёт curl без `--cacert` — при инспекции нужен либо bypass, либо `--cacert` в скрипт.
+<sub>[network.py](bot/aemr_bot/network.py) (`apply_firewall_env`) · [config.py](bot/aemr_bot/config.py) (`BOT_EXTRA_CA_CERT`) · [healthwatch.sh:94-95](scripts/healthwatch.sh)</sub>
 
 **P0-3. Восстановимость бэкапа не проверяется, DR-учение не проводилось.** Только job `db-backup`, ни авто-`pg_restore`-теста, ни репетиции. В день потери VPS выяснится, что дамп/GPG-фраза/версия PG не разворачиваются. Для 152-ФЗ — провал на ревью. *Fix:* ежемесячный авто-restore последнего бэкапа во временную БД с алёртом при провале; провести и запротоколировать первое DR-учение, зафиксировать RTO.
 <sub>[cron_registry.py:113-116](bot/aemr_bot/services/cron_registry.py)</sub>

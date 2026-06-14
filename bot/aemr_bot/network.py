@@ -1,0 +1,112 @@
+"""Firewall/proxy mode: единый рычаг для работы за ЛЮБЫМ межсетевым экраном.
+
+Закрывает P0-1/P0-2 из docs/OPS_GUIDE.md: по умолчанию maxapi/aiohttp игнорируют
+HTTP(S)_PROXY (создают ClientSession без trust_env), а корпоративный CA не попадает
+в trust store — за корп-фаерволом (UserGate и любым другим) бот молча не выходит на
+platform-api.max.ru. Модель «врубил мод — добавил по месту — го»:
+
+  BOT_FIREWALL_MODE=1                      # врубить (aiohttp начнёт читать прокси из окружения)
+  BOT_OUTBOUND_PROXY=http://proxy:3128     # по месту: адрес корпоративного прокси
+  BOT_EXTRA_CA_CERT=/certs/corp-ca.pem     # по месту: корневой сертификат, если SSL-инспекция
+
+Два механизма:
+- `apply_firewall_env()` — вызывается ОДИН раз на старте, ДО любых HTTP-клиентов:
+  (1) пробрасывает BOT_OUTBOUND_PROXY в стандартные HTTP(S)_PROXY env — их читает
+  aiohttp при trust_env=True, а также дочерние процессы (curl в healthwatch, rclone,
+  git); (2) собирает объединённый CA-бандл (системные CA + корпоративный) и указывает
+  на него SSL_CERT_FILE/REQUESTS_CA_BUNDLE — это видит stdlib ssl, aiohttp и requests.
+- `session_kwargs()` — kwargs для aiohttp.ClientSession (`trust_env=True`), чтобы прокси
+  из окружения реально применился. Уходят в DefaultConnectionProperties(**kwargs) →
+  ClientSession (см. maxapi/bot.py ensure_session) и в наши прямые ClientSession.
+
+Библиотека maxapi НЕ патчится — только инъекция kwargs/env.
+"""
+
+from __future__ import annotations
+
+import os
+import ssl
+import tempfile
+from pathlib import Path
+from typing import Any
+
+from aemr_bot.config import Settings, settings
+
+_PROXY_ENV = ("HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy")
+_CA_BUNDLE_NAME = "aemr-ca-bundle.pem"
+
+
+def _mask(url: str) -> str:
+    """Скрыть креды в proxy-URL для лога: http://user:pass@host → http://***@host."""
+    if "@" not in url:
+        return url
+    scheme, sep, rest = url.partition("://")
+    host = rest.rpartition("@")[2]
+    return f"{scheme}://***@{host}" if sep else f"***@{host}"
+
+
+def _proxy_enabled(s: Settings) -> bool:
+    """Прокси-режим включён: явный флаг, наш proxy, или прокси уже есть в окружении."""
+    return bool(
+        s.firewall_mode
+        or s.outbound_proxy
+        or any(os.environ.get(v) for v in _PROXY_ENV)
+    )
+
+
+def session_kwargs(s: Settings | None = None) -> dict[str, Any]:
+    """kwargs для aiohttp.ClientSession (распаковываются как `ClientSession(**kwargs)`).
+
+    `trust_env=True` заставляет aiohttp читать HTTP(S)_PROXY / NO_PROXY / .netrc из
+    окружения. Вне прокси-режима возвращает пусто — поведение бота не меняется.
+    Тип значения — Any: ключи уходят keyword-аргументами в перегруженный ClientSession.
+    """
+    s = s or settings
+    return {"trust_env": True} if _proxy_enabled(s) else {}
+
+
+def _build_ca_bundle(extra_ca: str) -> str:
+    """Объединить системные CA с корпоративным в один файл, вернуть путь к нему.
+
+    Объединение (а не замена) сохраняет доверие к публичным CA — это нужно при
+    ВЫБОРОЧНОЙ SSL-инспекции, когда подменяется только часть трафика. Пишем в tmp:
+    в контейнере /tmp — tmpfs, доступна на запись даже при read-only rootfs.
+    """
+    extra = Path(extra_ca).expanduser()
+    if not extra.is_file():
+        raise FileNotFoundError(f"BOT_EXTRA_CA_CERT не найден: {extra_ca}")
+    parts: list[str] = []
+    sys_ca = ssl.get_default_verify_paths().cafile
+    if sys_ca and Path(sys_ca).is_file():
+        parts.append(Path(sys_ca).read_text(encoding="utf-8", errors="ignore"))
+    parts.append(extra.read_text(encoding="utf-8", errors="ignore"))
+    out = Path(tempfile.gettempdir()) / _CA_BUNDLE_NAME
+    out.write_text("\n".join(parts) + "\n", encoding="utf-8")
+    return str(out)
+
+
+def apply_firewall_env(s: Settings | None = None) -> list[str]:
+    """Применить настройки межсетевика ДО создания HTTP-клиентов. Идемпотентно.
+
+    Возвращает список применённых мер (для лога). Явно заданные оператором env НЕ
+    перетираем (`setdefault`) — ручная настройка всегда главнее нашего конфига;
+    CA-бандл собираем заново при каждом старте (детерминированно), это не секрет.
+    """
+    s = s or settings
+    applied: list[str] = []
+    if s.outbound_proxy:
+        for var in _PROXY_ENV:
+            os.environ.setdefault(var, s.outbound_proxy)
+        applied.append(f"proxy={_mask(s.outbound_proxy)}")
+    if s.no_proxy:
+        os.environ.setdefault("NO_PROXY", s.no_proxy)
+        os.environ.setdefault("no_proxy", s.no_proxy)
+        applied.append(f"no_proxy={s.no_proxy}")
+    if s.extra_ca_cert:
+        bundle = _build_ca_bundle(s.extra_ca_cert)
+        os.environ["SSL_CERT_FILE"] = bundle
+        os.environ["REQUESTS_CA_BUNDLE"] = bundle
+        applied.append(f"extra_ca={s.extra_ca_cert}")
+    if _proxy_enabled(s) and not any(a.startswith("proxy=") for a in applied):
+        applied.append("trust_env=True (HTTP(S)_PROXY из окружения)")
+    return applied

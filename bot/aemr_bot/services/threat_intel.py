@@ -35,6 +35,8 @@ from urllib.parse import urlparse
 
 import aiohttp
 
+from aemr_bot.network import session_kwargs
+
 log = logging.getLogger(__name__)
 
 # Источники feed'ов. URL'ы фиксированы в коде — это не пользовательский
@@ -227,7 +229,7 @@ async def refresh_all() -> dict[str, int]:
     store = get_store()
     counts: dict[str, int] = {}
     new_hosts: set[str] = set()
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(**session_kwargs()) as session:
         # Все три feed'а тянем параллельно — это IO-bound.
         urlhaus_task = _fetch_text(session, _URLHAUS_URL)
         threatfox_task = _fetch_text(session, _THREATFOX_URL)

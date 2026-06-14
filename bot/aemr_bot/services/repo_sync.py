@@ -37,6 +37,8 @@ from typing import Any
 
 import aiohttp
 
+from aemr_bot.network import session_kwargs
+
 log = logging.getLogger(__name__)
 
 GITHUB_API = "https://api.github.com"
@@ -345,7 +347,7 @@ async def create_settings_pr(
     content_str = serialize_runtime_config(runtime_config)
     gh = _GH(cfg)
 
-    async with aiohttp.ClientSession(timeout=DEFAULT_TIMEOUT) as session:
+    async with aiohttp.ClientSession(timeout=DEFAULT_TIMEOUT, **session_kwargs()) as session:
         # 1. base ref
         base_sha = await gh.get_ref_sha(session, cfg.base_branch)
         if base_sha is None:
@@ -409,7 +411,7 @@ async def fetch_main_runtime_config(
 ) -> tuple[dict[str, Any] | None, str]:
     """Скачать seed/runtime_config.json из base-ветки и распарсить.
     Возвращает (data, reason). data=None если файла нет или ошибка."""
-    async with aiohttp.ClientSession(timeout=DEFAULT_TIMEOUT) as session:
+    async with aiohttp.ClientSession(timeout=DEFAULT_TIMEOUT, **session_kwargs()) as session:
         gh = _GH(cfg)
         status, data = await gh._request(
             session,

@@ -15,6 +15,7 @@ from zoneinfo import ZoneInfo
 from aemr_bot import keyboards as kbds
 from aemr_bot.config import settings
 from aemr_bot.db.models import AuditLog, Event
+from aemr_bot.network import session_kwargs
 from aemr_bot.db.session import session_scope
 from aemr_bot.health import heartbeat
 from aemr_bot.services import appeals as appeals_service
@@ -1063,6 +1064,7 @@ def _get_healthcheck_session() -> aiohttp.ClientSession:
     if _HEALTHCHECK_SESSION is None or _HEALTHCHECK_SESSION.closed:
         _HEALTHCHECK_SESSION = aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=10),
+            **session_kwargs(),
         )
     return _HEALTHCHECK_SESSION
 

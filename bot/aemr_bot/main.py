@@ -9,7 +9,7 @@ from maxapi import Bot, Dispatcher
 from maxapi.client.default import DefaultConnectionProperties
 from maxapi.exceptions.max import InvalidToken
 
-from aemr_bot import health
+from aemr_bot import health, network
 from aemr_bot.config import settings
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import register_handlers
@@ -52,6 +52,10 @@ def build_bot() -> Bot:
         default_connection=DefaultConnectionProperties(
             timeout=settings.max_api_timeout_seconds,
             max_retries=settings.max_api_retries,
+            # firewall mode: при включённом прокси-режиме trust_env=True уходит в
+            # ClientSession (maxapi/bot.py ensure_session) → aiohttp читает
+            # HTTP(S)_PROXY из окружения. Вне режима dict пустой, поведение прежнее.
+            **network.session_kwargs(),
         ),
     )
     admin_bus.install_outgoing_tracker_hook(bot)
@@ -538,7 +542,7 @@ async def _register_bot_commands(bot: Bot) -> None:
         ]
     }
     try:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(**network.session_kwargs()) as session:
             async with session.patch(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                 if resp.status == 200:
                     log.info("set_my_commands: /-меню опубликовано (/start, /menu) через PATCH /me")
@@ -589,6 +593,12 @@ async def main() -> None:
         level=settings.log_level,
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
+
+    # Firewall mode ДО любых HTTP-клиентов: пробросить прокси в окружение и вшить
+    # корпоративный CA (SSL_CERT_FILE), если заданы. Без настроек — тихий no-op.
+    _firewall = network.apply_firewall_env()
+    if _firewall:
+        log.info("firewall mode: %s", ", ".join(_firewall))
 
     # Сначала проверяем токен MAX, до любых других сетевых операций.
     # См. _preflight_check_token: без этого первый сбой (политика, рассылки)
