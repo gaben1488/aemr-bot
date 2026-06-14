@@ -1,0 +1,44 @@
+# Опциональный оверлей: бот за корпоративным прокси с доменной NTLM/Kerberos-
+# аутентификацией. aiohttp умеет только Basic-proxy-auth, поэтому добавляем
+# sidecar cntlm: бот → cntlm:3128 (без auth) → корп-прокси (cntlm делает NTLM).
+#
+# Поднимать ВМЕСТЕ с основным compose из каталога infra/:
+#   cp cntlm/cntlm.conf.example cntlm/cntlm.conf   # заполнить, chmod 600
+#   docker compose -f docker-compose.yml -f docker-compose.cntlm.yml up -d
+#
+# В infra/.env при этом:
+#   BOT_FIREWALL_MODE=1
+#   BOT_OUTBOUND_PROXY=http://cntlm:3128
+#   BOT_NO_PROXY=localhost,127.0.0.1,db,cntlm
+#   # BOT_EXTRA_CA_CERT=/certs/corp-ca.pem   # если у прокси ещё и SSL-инспекция
+#
+# Для Kerberos/Negotiate-прокси вместо cntlm берут px-proxy (genotrance/px) —
+# конфиг иной (keytab/домен), идея та же: sidecar на 127.0.0.1, бот без auth.
+
+services:
+  cntlm:
+    # ⚠️ Перед боевым использованием запиньте digest (docker pull <image> →
+    # <image>@sha256:...): проект хеш-пинит образы (см. infra/Dockerfile).
+    # Образы cntlm: jaschac/cntlm, либо соберите свой из debian + apt install cntlm.
+    image: jaschac/cntlm:latest
+    container_name: aemr-bot-cntlm
+    restart: unless-stopped
+    volumes:
+      - ./cntlm/cntlm.conf:/etc/cntlm/cntlm.conf:ro
+    # Слушает только внутри compose-сети aemr-bot; наружу порт НЕ публикуем.
+    expose:
+      - "3128"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETUID
+      - SETGID
+    mem_limit: 64m
+    pids_limit: 32
+
+  bot:
+    depends_on:
+      cntlm:
+        condition: service_started
