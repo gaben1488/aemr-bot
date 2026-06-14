@@ -1,0 +1,26 @@
+# cntlm — sidecar-форвардер для корпоративного прокси с ДОМЕННОЙ аутентификацией
+# (NTLM/NTLMv2). Нужен, только если на периметре стоит явный прокси, требующий
+# вход по доменной учётке AD (типично для UserGate/Континент/ИКС/Ideco в AD-домене).
+#
+# Зачем: aiohttp (HTTP-клиент бота) умеет на прокси ТОЛЬКО Basic-аутентификацию,
+# NTLM/Kerberos — нет (by design). cntlm принимает от бота простые запросы без auth
+# и сам делает NTLM-handshake наружу к корп-прокси. Бот ходит на http://cntlm:3128.
+#
+# Установка: cp cntlm.conf.example cntlm.conf, заполнить под свою сеть, chmod 600.
+# Открытый пароль в файле НЕ держим — кладём хеш:
+#   1) сгенерировать NTLMv2-хеш:  cntlm -H -d ДОМЕН -u svc_maxbot
+#   2) вставить выданные строки Pass* ниже (Username/Domain/пароль уже не нужны открыто).
+
+Username        svc_maxbot
+Domain          ELIZOVO
+Proxy           corpproxy.example.local:8080
+
+# Хеш из `cntlm -H` (раскомментировать и вставить своё; открытый Password НЕ держать):
+# PassNTLMv2      0123456789abcdef0123456789abcdef
+
+# Слушаем ВНУТРИ compose-сети, наружу порт не публикуем (см. docker-compose.cntlm.yml):
+Listen          3128
+Gateway         no
+
+# Адреса в обход прокси (внутренние сервисы стека):
+NoProxy         localhost, 127.0.0.1, db
