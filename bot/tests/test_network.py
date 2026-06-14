@@ -14,7 +14,31 @@ from aemr_bot.config import Settings
 
 _PROXY_VARS = ("HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy", "NO_PROXY", "no_proxy")
 _CA_VARS = ("SSL_CERT_FILE", "REQUESTS_CA_BUNDLE")
-_VALID_CA = Path(__file__).parent / "fixtures" / "test_ca.pem"  # self-signed PEM-сертификат
+
+# Валидный self-signed PEM-сертификат (CN=AEMR Test CA, до 2036) — встроен строкой,
+# а не файлом-фикстурой: *.pem в .gitignore (безопасность), файл бы не закоммитился.
+# Приватного ключа здесь нет — только публичный сертификат.
+_VALID_CA_PEM = """\
+-----BEGIN CERTIFICATE-----
+MIIDDzCCAfegAwIBAgIUFRiWriwZVVW5nutaIFJWrbMqoTswDQYJKoZIhvcNAQEL
+BQAwFzEVMBMGA1UEAwwMQUVNUiBUZXN0IENBMB4XDTI2MDYxNDA2NTIxOFoXDTM2
+MDYxMTA2NTIxOFowFzEVMBMGA1UEAwwMQUVNUiBUZXN0IENBMIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxhAcSPd1fNHWYF43RV9VtoKQdowMGT3nqLgw
+5xd9SCillHtsjGO6Bb5adBaiXHPaoNI07gKcQfojPOisgCl0C7uQg81sB/dg8l0r
+/Gz8NiC1WgXXmUUStWs+sdKgOEZD0wa6Fxtp3JjtKPw5j3aTGrp3MqohWeh9hqFA
+JAmCgzUbvxy6hMeGdTQdSetvvmoqEb8kS12erS1jxblgek4YPPo42/m7sknLPfcj
+3g2cnbqxQsLY/Gy8WAXMGWpS+e0U6DtRbzTlqyHKG82e4wY/1S8ix2yVWNTu697r
+nazvNZAMbPEGx86gV14dye9+tsCK19Hz2+4rH4rBq07iOFmIWQIDAQABo1MwUTAd
+BgNVHQ4EFgQUiOA/INGYxJY1w1XTrMhE/D1imMcwHwYDVR0jBBgwFoAUiOA/INGY
+xJY1w1XTrMhE/D1imMcwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOC
+AQEACI4YgRX/R/sptvi56yjiN2y++GIcdR3nYLQUU6Nwxa6J4zAa2YKoZct2TZ2B
+y8qiFzarMMzVRaD3l5Aa5rx6fleCGwxhIKASQ0/K+00be7Kq82lVvNAGuewqxL9h
+TxkAbO+bYHYSpUwqLIGurY+0VkjUMy8wKYYvuPk11slL6ioDmmdcvn8ocJ5poGI7
+EVlDG5AbYaIcDcJMY9wd2Yus+JZ2m5uMm+nW4BkQLXrvZyr4u2Vd/QHSaitusG+h
+uYXP/ph1wqrTNd+RRpjikhQISUH9J14gGUqmK14TVdqADskCNs215ieUd1h67bXe
+Epssyhe2bPyP7E1gTTI0fk73tQ==
+-----END CERTIFICATE-----
+"""
 
 
 def _clean_env(monkeypatch):
@@ -77,15 +101,16 @@ def test_apply_proxy_does_not_override_manual_env(monkeypatch):
     assert os.environ["HTTPS_PROXY"] == "http://preset:8080"
 
 
-def test_apply_extra_ca_builds_combined_bundle(monkeypatch):
+def test_apply_extra_ca_builds_combined_bundle(monkeypatch, tmp_path):
     _clean_env(monkeypatch)
-    s = _settings(monkeypatch, BOT_EXTRA_CA_CERT=str(_VALID_CA))
+    ca = tmp_path / "corp-ca.pem"
+    ca.write_text(_VALID_CA_PEM, encoding="utf-8")
+    s = _settings(monkeypatch, BOT_EXTRA_CA_CERT=str(ca))
     applied = network.apply_firewall_env(s)
     bundle = os.environ["SSL_CERT_FILE"]
     assert os.environ["REQUESTS_CA_BUNDLE"] == bundle
     assert Path(bundle).is_file()
-    corp = _VALID_CA.read_text(encoding="utf-8").strip()
-    assert corp in Path(bundle).read_text(encoding="utf-8")  # корп-CA попал в объединённый бандл
+    assert _VALID_CA_PEM.strip() in Path(bundle).read_text(encoding="utf-8")  # корп-CA в объединённом бандле
     assert any("extra_ca" in a for a in applied)
     if os.name == "posix":  # chmod 0600 — defense-in-depth (на Windows mode-биты не те)
         assert os.stat(bundle).st_mode & 0o077 == 0
