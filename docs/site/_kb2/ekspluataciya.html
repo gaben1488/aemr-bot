@@ -1,0 +1,142 @@
+<h2 id="ekspluataciya">Эксплуатация: аварии, запуск по ОС, открытые риски</h2>
+
+<p class="lede">Аварийная реанимация, форс-мажоры по симптомам, запуск на разных операционных системах (включая FreeBSD за межсетевым экраном) и честный реестр слабых мест. Установка с нуля и повседневная работа — в разделе <a href="#admin" data-go="admin">«Администратору»</a>; запуск за корпоративным межсетевым экраном — в <a href="#admin-firewall" data-go="admin-firewall">«За корпоративным межсетевым экраном»</a>.</p>
+
+<h3 id="eksp-reanimation">Бот лёг — реанимация по шагам</h3>
+
+<p>Если бот перестал отвечать, не нужно паниковать и не нужно ничего удалять. Сначала смотрим, что происходит, и только потом действуем. База данных живёт в Docker независимо от самого бота, поэтому «бот не отвечает» почти никогда не значит «данные потеряны».</p>
+
+<div class="note note--danger">
+<p class="note__label">Главная ловушка, из-за которой бот лежал двое суток</p>
+<p>Не выключайте Docker, чтобы «починить бота»: в Docker живёт не только бот, но и <strong>база данных Postgres</strong>. Выключенный Docker — это выключенная база, бот не сможет работать ни в каком виде. И не снимайте оба cron-задания: вотчдог — единственное, что поднимает зависший процесс. Если выключить и Docker, и cron, бота не поднимет уже никто (это и был инцидент: «лежит двое суток»).</p>
+</div>
+
+<ol class="steps">
+<li><strong>Понять, что происходит</strong> (четыре команды, ничего не меняют):
+<pre><code>systemctl is-active docker     # ждём active; inactive — причина №1: Docker выключен
+docker compose ps              # из ~/aemr-bot/infra; ждём два контейнера Up
+ss -ltnp | grep 8080           # кто держит health-порт (должен один docker-proxy)
+sudo crontab -l | grep aemr    # живы ли страховки-cron'ы</code></pre></li>
+<li><strong>Включить Docker, если он выключен:</strong> <code class="kbd">sudo systemctl enable --now docker</code>.</li>
+<li><strong>Убедиться, что нет второго бота вне Docker</strong> (он тихо ворует сообщения, см. <a href="#eksp-two-bots" data-go="eksp-two-bots">ниже</a>): <code class="kbd">ps aux | grep aemr_bot | grep -v grep</code> и <code class="kbd">systemctl list-units | grep -i aemr</code>. Любой посторонний процесс или юнит — погасить.</li>
+<li><strong>Поднять стек:</strong> <code class="kbd">cd ~/aemr-bot/infra &amp;&amp; docker compose up -d</code>.</li>
+<li><strong>Проверить</strong> через 30–60 секунд: <code class="kbd">docker compose ps</code> (оба Up, bot <code class="kbd">healthy</code>), <code class="kbd">curl -s http://127.0.0.1:8080/readyz</code> (должно <code class="kbd">{"ok": true}</code>), <code class="kbd">docker compose logs --tail 50 bot</code> — в логе ищем строки «preflight: токен валидный — бот …» и «Starting in long polling mode». Если контейнер в <code class="kbd">Restarting</code> — идём в <a href="#eksp-forcemajor" data-go="eksp-forcemajor">форс-мажоры</a>, первым делом <code class="kbd">docker compose logs bot | grep 'BOT_TOKEN неверный'</code>.</li>
+<li><strong>Контроль:</strong> в служебной группе MAX в течение часа придёт «🟢 Пульс: бот работает». Пришёл — инцидент закрыт.</li>
+</ol>
+
+<h3 id="eksp-supervision">Кто кого перезапускает</h3>
+
+<p>У бота несколько уровней страховки, и каждый закрывает свою беду. Подробно про вотчдог и автозапуск — в разделе <a href="#admin-watchdog" data-go="admin-watchdog">«Сторожевые механизмы»</a>; здесь короткая сводка, кто реагирует на что.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Что случилось</th><th>Кто поднимает</th></tr></thead>
+<tbody>
+<tr><td>Процесс бота упал (любой выход)</td><td>Docker, политика <code class="kbd">restart: unless-stopped</code></td></tr>
+<tr><td>Процесс жив, но завис («живой труп», <code class="kbd">unhealthy</code>)</td><td>только вотчдог-cron healthwatch (если установлен)</td></tr>
+<tr><td>Перезагрузка сервера</td><td>systemd-юнит → <code class="kbd">docker compose up -d</code> (если <code class="kbd">docker.service</code> включён)</td></tr>
+<tr><td>Docker выключен и cron'ы сняты</td><td><strong>никто</strong> — это и есть «лежит двое суток»</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Важно не путать: <code class="kbd">systemctl stop aemr-bot</code> выполняет <code class="kbd">docker compose down</code> и гасит <strong>и бота, и базу</strong>. Перезапуск самого бота — это <code class="kbd">docker compose restart bot</code>, а не systemctl.</p>
+
+<h3 id="eksp-forcemajor">Форс-мажоры: симптом → диагноз → лечение</h3>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Симптом</th><th>Диагноз и лечение</th></tr></thead>
+<tbody>
+<tr><td><strong>Бот «работает через раз»</strong>, теряет нажатия, без ошибок в логах</td><td>Почти наверняка <strong>два экземпляра на один токен</strong> (см. <a href="#eksp-two-bots" data-go="eksp-two-bots">ниже</a>). Конфликт в логах не виден. Найти и погасить лишний; гарантия — ротация токена.</td></tr>
+<tr><td><strong>Контейнер bot в <code class="kbd">Restarting</code>, бот молчит</strong></td><td><code class="kbd">docker compose logs bot | grep -E 'BOT_TOKEN неверный|Неверный токен'</code>. Нашлось — токен бит/отозван: вписать действующий в <code class="kbd">infra/.env</code> и <code class="kbd">docker compose up -d</code>. Не нашлось — смотреть полный лог (падение alembic = проблема базы).</td></tr>
+<tr><td><strong>В логе «Ошибка подключения при получении обновлений, жду 30 секунд»</strong></td><td>Нет сети или DNS до <code class="kbd">platform-api.max.ru</code>. Бот жив и сам переподключится. За межсетевым экраном — см. <a href="#admin-firewall" data-go="admin-firewall">«За корпоративным межсетевым экраном»</a> (allowlist, инспекция, прокси).</td></tr>
+<tr><td><strong><code class="kbd">/readyz</code> красный при зелёном <code class="kbd">/livez</code></strong></td><td>Упала база. <code class="kbd">docker compose logs --tail 50 db</code>, проверить место <code class="kbd">df -h</code>. Бот специально не рестартует (краткий сбой базы не должен убивать живой polling) и, к сожалению, не алёртит — затяжное падение заметит только человек.</td></tr>
+<tr><td><strong>«Жив, healthy, но в чате не отвечает»</strong></td><td><code class="kbd">docker compose logs bot | grep 'БОТ ИГНОРИРУЕТ POLLING'</code>. Если есть — когда-то включили webhook-подписку, и она молча перехватывает события. Снять подписку, перезапустить.</td></tr>
+<tr><td><strong>Бот перезапускается без ошибок в логах</strong></td><td>Подозрение на нехватку памяти (OOM): <code class="kbd">docker inspect aemr-bot-bot-1 --format '{{.State.OOMKilled}} {{.RestartCount}}'</code> и <code class="kbd">dmesg | grep -i oom</code>. Признак в MAX — внеплановое «🔄 Рестарт».</td></tr>
+<tr><td><strong>Кончился диск</strong></td><td>См. <a href="#admin-disk" data-go="admin-disk">«Диск кончился»</a>. Запрещено <code class="kbd">docker system prune -a --volumes</code> — снесёт том с базой.</td></tr>
+<tr><td><strong>После перезагрузки ничего не поднялось</strong></td><td><code class="kbd">systemctl is-enabled docker aemr-bot.service</code> — оба должны быть <code class="kbd">enabled</code>. Дальше — реанимация выше.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="eksp-two-bots">Два бота на один токен и вывод лишней копии</h3>
+
+<p>Токен <code class="kbd">BOT_TOKEN</code> — это одновременно логин, пароль и адрес бота в MAX. Если этот токен крутят два процесса (например, на старом и на новом сервере), оба представляются одним ботом, и начинается тихий хаос: они делят входящие сообщения между собой, половина нажатий жителей теряется, а в логах ни единой ошибки. На одном хосте второй экземпляр умер бы сам на занятом порту 8080, но на разных хостах такого столкновения нет — поэтому всё тихо.</p>
+
+<p><strong>Восстановление</strong>: выбрать один канонический хост, на всех остальных погасить бота (<code class="kbd">docker compose down</code>), снять там страховки (иначе вернётся в течение десяти минут — это и был эффект «поработал пять минут и умер»), подождать минуту, чтобы MAX забыл лишнюю polling-сессию, и проверить, что канонический в одиночку получает все сообщения. Самая надёжная гарантия — <strong>перевыпустить токен</strong> в max.ru/business и вписать новый только на канонический хост: старый мгновенно умирает, любая забытая копия отваливается сама.</p>
+
+<div class="note">
+<p class="note__label">Как навсегда обезвредить старую копию на сервере</p>
+<p>Чтобы старый сервер никогда не поднял второй экземпляр, на нём убирают страховки (нужен root):</p>
+<pre><code># снять оба cron-задания (это они воскрешают бота)
+sudo crontab -l | grep -v aemr-bot | sudo crontab -
+# удалить обёртки и состояние вотчдога
+sudo rm -f /usr/local/bin/aemr-bot-autodeploy /usr/local/bin/aemr-bot-healthwatch
+sudo rm -rf /var/lib/aemr-bot-watchdog
+# на всякий случай снять автозапуск, если он был
+sudo systemctl disable --now aemr-bot.service 2>/dev/null
+# убедиться, что бот не запущен
+cd ~/aemr-bot/infra &amp;&amp; docker compose down</code></pre>
+<p>После этого на сервере остаётся репозиторий и <code class="kbd">infra/.env</code> с токеном, но запускать их уже нечему. Полностью убрать копию (<code class="kbd">rm -rf ~/aemr-bot</code>) стоит только после ротации токена и с бэкапом <code class="kbd">.env</code>.</p>
+</div>
+
+<h3 id="eksp-os">Запуск на разных операционных системах</h3>
+
+<p>Главный факт, от которого всё зависит: стек написан под <strong>Docker на Linux</strong> (образы <code class="kbd">python:3.12-slim</code> и <code class="kbd">postgres:16-alpine</code> оба линуксовые).</p>
+
+<p><strong>Ubuntu / Debian — эталон.</strong> Родная среда: Docker Engine плюс плагин <code class="kbd">docker compose</code> v2 (не snap-версия — она ломает тома). Дальше — установка по разделу <a href="#admin-install" data-go="admin-install">«Установка по шагам»</a>. Требования к серверу: 1–2 vCPU, 2–4 ГБ RAM, 20 ГБ SSD, верное время (NTP), иначе расписания бэкапа и ретенций уедут.</p>
+
+<p><strong>FreeBSD через виртуалку с Linux (bhyve) — рекомендованный путь для серверной Администрации.</strong> FreeBSD не умеет нативный Docker, поэтому внутри неё поднимают bhyve-VM с Ubuntu 24.04 (2 vCPU, 4 ГБ RAM, 30 ГБ диск) и гоняют Docker уже в ней. Автозапуск двойной: bhyve поднимает VM при загрузке FreeBSD (<code class="kbd">vm_enable=YES</code> в rc.conf), а systemd внутри VM поднимает стек при загрузке гостя. Подводные камни: проброс DNS в VM (gateway должен резолвить <code class="kbd">platform-api.max.ru</code>), часовой пояс <code class="kbd">Asia/Kamchatka</code> и NTP в VM, место на диске VM, и firewall FreeBSD (<code class="kbd">pf</code>/<code class="kbd">ipfw</code>) должен пропускать исходящий 443 от моста VM. Плюс этого пути: работают все защиты контейнера и все страховки, как на эталоне.</p>
+
+<p><strong>FreeBSD нативно, без Docker — запасной путь, честно про потери.</strong> Оправдан только если виртуализацию прямо запретит регламент. Из портов ставят <code class="kbd">python312</code>, <code class="kbd">postgresql16-server</code>+<code class="kbd">client</code>, <code class="kbd">gnupg</code> и обязательно <code class="kbd">geos</code> (без него не соберётся <code class="kbd">shapely</code>). Postgres поднимают рядом, <code class="kbd">DATABASE_URL</code> задают руками, демонизируют через <code class="kbd">rc.d</code>-скрипт. Потери большие: ни одна из четырёх серверных страховок не переносится (все на bash, systemd и <code class="kbd">docker compose</code>), теряется весь hardening контейнера — вотчдог и автодеплой пришлось бы писать заново, а изоляцию компенсировать средствами FreeBSD (jail, rctl).</p>
+
+<p><strong>Astra Linux / РЕД ОС (гос-Linux).</strong> Стек запускается, две тонкости. При включённом мандатном доступе (SELinux/PARSEC) тома могут ловить «permission denied» из-за меток контекста — лечится суффиксом <code class="kbd">:Z</code> на bind-mount'ах или настройкой контекста; смотреть <code class="kbd">ausearch -m avc</code>. И если штатно стоит podman вместо docker — он понимает <code class="kbd">docker-compose.yml</code>, но автозапуск и скрипты страховок завязаны на <code class="kbd">docker compose</code> и их пришлось бы править; часто проще поставить docker-ce из совместимого репозитория.</p>
+
+<p><strong>Windows / macOS — только разработка</strong>, для прода исключено архитектурно. Локально тесты гоняются на SQLite без Postgres. Категорически нельзя запускать локального бота с боевым токеном — это мгновенно устроит гонку с продом.</p>
+
+<p>Запуск за российским межсетевым экраном (UserGate, Континент, ALTELL, Рубикон, ИКС, Ideco), вопросы администратору и рецепт sidecar cntlm — отдельно в <a href="#admin-firewall" data-go="admin-firewall">«За корпоративным межсетевым экраном»</a>.</p>
+
+<h3 id="eksp-risks">Реестр открытых рисков</h3>
+
+<p>Это то, что senior-инженер отметил бы на ревью готовности к бою. Каждый пункт сверен с кодом. Часть уже закрыта.</p>
+
+<div class="note">
+<p class="note__label">Закрыто в коде</p>
+<p><strong>Прокси и SSL-инспекция за межсетевым экраном.</strong> Раньше бот не умел ходить через прокси и не доверял корпоративному сертификату при SSL-инспекции — за UserGate он молча не подключался. Закрыто режимом firewall (<code class="kbd">BOT_FIREWALL_MODE</code>, <code class="kbd">BOT_OUTBOUND_PROXY</code>, <code class="kbd">BOT_EXTRA_CA_CERT</code>) — подробно в <a href="#admin-firewall" data-go="admin-firewall">«За корпоративным межсетевым экраном»</a>.</p>
+</div>
+
+<p><strong>Высокий приоритет (важно для гос-данных):</strong></p>
+<ul>
+<li><strong>Восстановимость бэкапа не проверяется автоматически</strong>, полное учение по восстановлению не проводилось. Бэкап, который ни разу не разворачивали, — это надежда, а не страховка. Нужен ежемесячный авто-restore во временную базу с алёртом при провале и хотя бы одно учение с фиксацией времени восстановления.</li>
+<li><strong>Offsite-копии нет:</strong> все восемь копий лежат на том же диске, что и база; потеря сервера уносит и базу, и копии. Включить выгрузку в защищённое хранилище вне периметра либо настроить регламентный вынос зашифрованного дампа.</li>
+<li><strong>Единственность экземпляра не закреплена кодом:</strong> нет глобального замка «один бот на токен», поэтому два процесса молча делят апдейты. Лечится ротацией токена и снятием лишних копий; по-хорошему — взять на старте advisory-lock и при неудаче выходить с явной ошибкой.</li>
+<li><strong>Затяжное падение базы не алёртится:</strong> бот может сутками отвечать ошибками при зелёном <code class="kbd">/livez</code>, а оператор не узнает. Добавить в вотчдог отдельный сигнал по затяжному <code class="kbd">/readyz</code>.</li>
+<li><strong>Внешний «мёртвый человек» выключен</strong> (<code class="kbd">HEALTHCHECK_URL</code> пуст): полную смерть сервера или сети не заметит никто, кроме человека по тишине пульса. Поднять внутренний приёмник пингов на отдельном хосте.</li>
+<li><strong>Токен живёт на лишних хостах,</strong> права на <code class="kbd">.env</code> не форсятся install-скриптами. Ротировать токен, обнулить <code class="kbd">.env</code> на не-канонических хостах, рассмотреть docker secrets.</li>
+</ul>
+
+<p><strong>Средний приоритет:</strong> автодеплой не работает в закрытой сети и опасен на не-каноническом хосте (воскрешает лишний экземпляр); <code class="kbd">git reset --hard</code> автодеплоя молча затирает ручные правки на сервере; у страховок нет машинной проверки «я канонический хост?» (помог бы guard-файл); единый «однонаправленный шлюз» (data-diode) для бота не подходит — нужен дуплекс; вводящий в заблуждение комментарий про restart-loop в коде.</p>
+
+<p><strong>Гигиена:</strong> в репозитории не должно оставаться <code class="kbd">.env.example</code> с реальными секретами (стоит добавить секрет-сканер в CI). Битые ссылки на упразднённые отдельные документы переписаны на эту вику.</p>
+
+<h3 id="eksp-dont">Чего не делать</h3>
+
+<ul>
+<li>Не выключать Docker, чтобы «починить бота»: там база, станет только хуже.</li>
+<li>Не снимать оба cron-задания на работающем сервере: вотчдог — единственный, кто лечит зависший процесс.</li>
+<li>Не путать <code class="kbd">systemctl stop aemr-bot</code> (гасит всё, включая базу) с перезапуском бота <code class="kbd">docker compose restart bot</code>.</li>
+<li>Не запускать второй экземпляр с тем же токеном нигде, включая свой компьютер.</li>
+<li>Не коммитить <code class="kbd">infra/.env.example</code> с заполненными секретами.</li>
+<li>Не выполнять <code class="kbd">docker system prune -a --volumes</code> — снесёт том с базой.</li>
+</ul>
+
+<div class="next">
+<p class="next__label">Куда дальше</p>
+<ul>
+<li><a href="#admin" data-go="admin">Администратору</a> — установка с нуля, повседневная работа, бэкапы</li>
+<li><a href="#admin-firewall" data-go="admin-firewall">За корпоративным межсетевым экраном</a> — гос-контур, прокси, корп-CA, cntlm</li>
+<li><a href="#admin-watchdog" data-go="admin-watchdog">Сторожевые механизмы</a> — вотчдог и автозапуск подробно</li>
+<li><a href="#security" data-go="security">Безопасность и ПДн</a> — антифишинг, 152-ФЗ</li>
+</ul>
+</div>

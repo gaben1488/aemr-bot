@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     webhook_host: str = Field("0.0.0.0", alias="WEBHOOK_HOST")  # nosec
     webhook_port: int = Field(8080, alias="WEBHOOK_PORT")
 
-    # --- Firewall / proxy mode (P0-1/P0-2 из docs/OPS_GUIDE.md): работа за ЛЮБЫМ
+    # --- Firewall / proxy mode (вика → раздел «Эксплуатация»): работа за ЛЮБЫМ
     # корпоративным межсетевым экраном (UserGate и другие). «Врубил мод — добавил по
     # месту — го»: BOT_FIREWALL_MODE=1 заставляет aiohttp читать HTTP(S)_PROXY из
     # окружения; BOT_OUTBOUND_PROXY — адрес прокси (пробросится в env сам);
