@@ -20,6 +20,17 @@ class Settings(BaseSettings):
     webhook_host: str = Field("0.0.0.0", alias="WEBHOOK_HOST")  # nosec
     webhook_port: int = Field(8080, alias="WEBHOOK_PORT")
 
+    # --- Firewall / proxy mode (P0-1/P0-2 из docs/OPS_GUIDE.md): работа за ЛЮБЫМ
+    # корпоративным межсетевым экраном (UserGate и другие). «Врубил мод — добавил по
+    # месту — го»: BOT_FIREWALL_MODE=1 заставляет aiohttp читать HTTP(S)_PROXY из
+    # окружения; BOT_OUTBOUND_PROXY — адрес прокси (пробросится в env сам);
+    # BOT_EXTRA_CA_CERT — путь к корп-CA при SSL-инспекции (вшивается в trust store
+    # через SSL_CERT_FILE). Логику применяет aemr_bot.network. Вне режима — no-op.
+    firewall_mode: bool = Field(False, alias="BOT_FIREWALL_MODE")
+    outbound_proxy: str | None = Field(None, alias="BOT_OUTBOUND_PROXY")
+    no_proxy: str | None = Field(None, alias="BOT_NO_PROXY")
+    extra_ca_cert: str | None = Field(None, alias="BOT_EXTRA_CA_CERT")
+
     database_url: str = Field(..., alias="DATABASE_URL")
 
     admin_group_id: int | None = Field(None, alias="ADMIN_GROUP_ID")
@@ -209,6 +220,9 @@ class Settings(BaseSettings):
         "backup_s3_secret_key",
         "backup_gpg_passphrase",
         "healthcheck_url",
+        "outbound_proxy",
+        "no_proxy",
+        "extra_ca_cert",
         mode="before",
     )
     @classmethod
