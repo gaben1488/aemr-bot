@@ -15,6 +15,31 @@ from aemr_bot.config import Settings
 _PROXY_VARS = ("HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy", "NO_PROXY", "no_proxy")
 _CA_VARS = ("SSL_CERT_FILE", "REQUESTS_CA_BUNDLE")
 
+# Валидный self-signed PEM-сертификат (CN=AEMR Test CA, до 2036) — встроен строкой,
+# а не файлом-фикстурой: *.pem в .gitignore (безопасность), файл бы не закоммитился.
+# Приватного ключа здесь нет — только публичный сертификат.
+_VALID_CA_PEM = """\
+-----BEGIN CERTIFICATE-----
+MIIDDzCCAfegAwIBAgIUFRiWriwZVVW5nutaIFJWrbMqoTswDQYJKoZIhvcNAQEL
+BQAwFzEVMBMGA1UEAwwMQUVNUiBUZXN0IENBMB4XDTI2MDYxNDA2NTIxOFoXDTM2
+MDYxMTA2NTIxOFowFzEVMBMGA1UEAwwMQUVNUiBUZXN0IENBMIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxhAcSPd1fNHWYF43RV9VtoKQdowMGT3nqLgw
+5xd9SCillHtsjGO6Bb5adBaiXHPaoNI07gKcQfojPOisgCl0C7uQg81sB/dg8l0r
+/Gz8NiC1WgXXmUUStWs+sdKgOEZD0wa6Fxtp3JjtKPw5j3aTGrp3MqohWeh9hqFA
+JAmCgzUbvxy6hMeGdTQdSetvvmoqEb8kS12erS1jxblgek4YPPo42/m7sknLPfcj
+3g2cnbqxQsLY/Gy8WAXMGWpS+e0U6DtRbzTlqyHKG82e4wY/1S8ix2yVWNTu697r
+nazvNZAMbPEGx86gV14dye9+tsCK19Hz2+4rH4rBq07iOFmIWQIDAQABo1MwUTAd
+BgNVHQ4EFgQUiOA/INGYxJY1w1XTrMhE/D1imMcwHwYDVR0jBBgwFoAUiOA/INGY
+xJY1w1XTrMhE/D1imMcwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOC
+AQEACI4YgRX/R/sptvi56yjiN2y++GIcdR3nYLQUU6Nwxa6J4zAa2YKoZct2TZ2B
+y8qiFzarMMzVRaD3l5Aa5rx6fleCGwxhIKASQ0/K+00be7Kq82lVvNAGuewqxL9h
+TxkAbO+bYHYSpUwqLIGurY+0VkjUMy8wKYYvuPk11slL6ioDmmdcvn8ocJ5poGI7
+EVlDG5AbYaIcDcJMY9wd2Yus+JZ2m5uMm+nW4BkQLXrvZyr4u2Vd/QHSaitusG+h
+uYXP/ph1wqrTNd+RRpjikhQISUH9J14gGUqmK14TVdqADskCNs215ieUd1h67bXe
+Epssyhe2bPyP7E1gTTI0fk73tQ==
+-----END CERTIFICATE-----
+"""
+
 
 def _clean_env(monkeypatch):
     for v in (*_PROXY_VARS, *_CA_VARS):
@@ -79,19 +104,50 @@ def test_apply_proxy_does_not_override_manual_env(monkeypatch):
 def test_apply_extra_ca_builds_combined_bundle(monkeypatch, tmp_path):
     _clean_env(monkeypatch)
     ca = tmp_path / "corp-ca.pem"
-    ca.write_text("-----BEGIN CERTIFICATE-----\nCORPCAMARKER\n-----END CERTIFICATE-----\n", encoding="utf-8")
+    ca.write_text(_VALID_CA_PEM, encoding="utf-8")
     s = _settings(monkeypatch, BOT_EXTRA_CA_CERT=str(ca))
     applied = network.apply_firewall_env(s)
     bundle = os.environ["SSL_CERT_FILE"]
     assert os.environ["REQUESTS_CA_BUNDLE"] == bundle
     assert Path(bundle).is_file()
-    assert "CORPCAMARKER" in Path(bundle).read_text(encoding="utf-8")  # корп-CA попал в бандл
+    assert _VALID_CA_PEM.strip() in Path(bundle).read_text(encoding="utf-8")  # корп-CA в объединённом бандле
     assert any("extra_ca" in a for a in applied)
+    if os.name == "posix":  # chmod 0600 — defense-in-depth (на Windows mode-биты не те)
+        assert os.stat(bundle).st_mode & 0o077 == 0
+
+
+def test_apply_extra_ca_invalid_fails_closed(monkeypatch, tmp_path):
+    # битый CA (не сертификат) обязан падать на СТАРТЕ, а не позже на TLS в проде
+    _clean_env(monkeypatch)
+    bad = tmp_path / "not-a-cert.pem"
+    bad.write_text("-----BEGIN CERTIFICATE-----\nCORPCAMARKER-не-base64\n-----END CERTIFICATE-----\n", encoding="utf-8")
+    s = _settings(monkeypatch, BOT_EXTRA_CA_CERT=str(bad))
+    with pytest.raises(ValueError, match="не является валидным PEM"):
+        network.apply_firewall_env(s)
 
 
 def test_build_ca_bundle_missing_file_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
         network._build_ca_bundle(str(tmp_path / "does-not-exist.pem"))
+
+
+def test_proxy_from_file_secret(monkeypatch, tmp_path):
+    # прокси из файла-секрета (docker secret), а не из env — пароль не виден в docker inspect
+    _clean_env(monkeypatch)
+    secret = tmp_path / "proxy_url"
+    secret.write_text("http://user:pass@proxy:3128\n", encoding="utf-8")
+    s = _settings(monkeypatch, BOT_OUTBOUND_PROXY_FILE=str(secret))
+    applied = network.apply_firewall_env(s)
+    assert os.environ["HTTPS_PROXY"] == "http://user:pass@proxy:3128"
+    assert network.session_kwargs(s) == {"trust_env": True}
+    assert "***@proxy:3128" in " ".join(applied)
+
+
+def test_proxy_file_missing_fails_closed(monkeypatch, tmp_path):
+    _clean_env(monkeypatch)
+    s = _settings(monkeypatch, BOT_OUTBOUND_PROXY_FILE=str(tmp_path / "nope"))
+    with pytest.raises(FileNotFoundError):
+        network.apply_firewall_env(s)
 
 
 def test_apply_noop_without_settings(monkeypatch):

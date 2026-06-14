@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     # через SSL_CERT_FILE). Логику применяет aemr_bot.network. Вне режима — no-op.
     firewall_mode: bool = Field(False, alias="BOT_FIREWALL_MODE")
     outbound_proxy: str | None = Field(None, alias="BOT_OUTBOUND_PROXY")
+    # Адрес прокси из файла-секрета (docker secret, mode 0400) вместо env: пароль в
+    # BOT_OUTBOUND_PROXY виден в `docker inspect`/`/proc`, а /run/secrets/... — нет.
+    # Для гос-контура с ПДн предпочтительнее. Если задан и outbound_proxy пуст — читается он.
+    outbound_proxy_file: str | None = Field(None, alias="BOT_OUTBOUND_PROXY_FILE")
     no_proxy: str | None = Field(None, alias="BOT_NO_PROXY")
     extra_ca_cert: str | None = Field(None, alias="BOT_EXTRA_CA_CERT")
 
@@ -221,6 +225,7 @@ class Settings(BaseSettings):
         "backup_gpg_passphrase",
         "healthcheck_url",
         "outbound_proxy",
+        "outbound_proxy_file",
         "no_proxy",
         "extra_ca_cert",
         mode="before",

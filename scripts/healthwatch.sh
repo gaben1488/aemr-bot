@@ -91,7 +91,18 @@ if [ "$fails" -ge "$MAX_FAILS_BEFORE_ALERT" ]; then
     minutes=$((fails * 5))
     text="⛑️ Бот не отвечает на /livez уже ${minutes} минут. Авторестарт не помог. Проверьте на сервере: docker compose ps; docker compose logs --tail 200 bot. Для БД отдельно: curl -fsS http://127.0.0.1:8080/readyz."
     payload=$(jq -nc --arg t "$text" '{text: $t}')
-    if curl -fsS --max-time 15 -X POST \
+
+    # firewall mode: под SSL-инспекцией межсетевика этот curl тоже должен доверять
+    # корп-CA, иначе ⛑️-алёрт не уйдёт — двойной тихий отказ (бот лёг И сигнал не
+    # дошёл). И через корп-прокси, если наружу пускают только так. Берём те же
+    # BOT_EXTRA_CA_CERT / BOT_OUTBOUND_PROXY из .env, что и сам бот.
+    CA_CERT=$(awk -F= '$1=="BOT_EXTRA_CA_CERT"{print substr($0,index($0,$2))}' "$ENV_FILE" | head -1)
+    PROXY=$(awk -F= '$1=="BOT_OUTBOUND_PROXY"{print substr($0,index($0,$2))}' "$ENV_FILE" | head -1)
+    curl_extra=()
+    if [ -n "${CA_CERT:-}" ] && [ -f "$CA_CERT" ]; then curl_extra+=(--cacert "$CA_CERT"); fi
+    if [ -n "${PROXY:-}" ]; then curl_extra+=(--proxy "$PROXY"); fi
+
+    if curl -fsS --max-time 15 "${curl_extra[@]}" -X POST \
         "https://platform-api.max.ru/messages?chat_id=${ADMIN_GROUP_ID}" \
         -H "Authorization: ${MAX_AUTH}" \
         -H 'Content-Type: application/json' \

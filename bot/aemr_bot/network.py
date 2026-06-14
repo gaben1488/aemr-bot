@@ -46,12 +46,29 @@ def _mask(url: str) -> str:
 
 
 def _proxy_enabled(s: Settings) -> bool:
-    """Прокси-режим включён: явный флаг, наш proxy, или прокси уже есть в окружении."""
+    """Прокси-режим включён: явный флаг, наш proxy (env или файл-секрет), или прокси уже в окружении."""
     return bool(
         s.firewall_mode
         or s.outbound_proxy
+        or s.outbound_proxy_file
         or any(os.environ.get(v) for v in _PROXY_ENV)
     )
+
+
+def _read_proxy(s: Settings) -> str | None:
+    """Адрес прокси: из BOT_OUTBOUND_PROXY либо из файла-секрета BOT_OUTBOUND_PROXY_FILE.
+
+    Файл предпочтительнее для гос-контура: пароль в env виден в `docker inspect`/`/proc`,
+    а docker-secret (mode 0400, /run/secrets/...) — нет. Fail-closed: путь задан, а файла
+    нет → явная ошибка на старте, а не тихий выход в интернет напрямую."""
+    if s.outbound_proxy:
+        return s.outbound_proxy
+    if s.outbound_proxy_file:
+        pf = Path(s.outbound_proxy_file).expanduser()
+        if not pf.is_file():
+            raise FileNotFoundError(f"BOT_OUTBOUND_PROXY_FILE не найден: {s.outbound_proxy_file}")
+        return pf.read_text(encoding="utf-8").strip() or None
+    return None
 
 
 def session_kwargs(s: Settings | None = None) -> dict[str, Any]:
@@ -71,17 +88,31 @@ def _build_ca_bundle(extra_ca: str) -> str:
     Объединение (а не замена) сохраняет доверие к публичным CA — это нужно при
     ВЫБОРОЧНОЙ SSL-инспекции, когда подменяется только часть трафика. Пишем в tmp:
     в контейнере /tmp — tmpfs, доступна на запись даже при read-only rootfs.
+
+    Fail-closed: BOT_EXTRA_CA_CERT обязан быть валидным PEM-СЕРТИФИКАТОМ (не приватным
+    ключом, не мусором). Иначе бандл собрался бы, но stdlib ssl молча проигнорировал бы
+    битый блок → бот упал бы на TLS уже в проде непонятной ошибкой, а не на старте.
     """
     extra = Path(extra_ca).expanduser()
     if not extra.is_file():
         raise FileNotFoundError(f"BOT_EXTRA_CA_CERT не найден: {extra_ca}")
+    try:
+        extra_text = extra.read_text(encoding="utf-8")
+        # cadata требует ASCII-PEM; non-ASCII (мусор/не-сертификат) даёт TypeError, битый
+        # сертификат — ssl.SSLError. Любой из них = невалидный CA → падаем на старте.
+        ssl.create_default_context().load_verify_locations(cadata=extra_text)
+    except (ssl.SSLError, UnicodeDecodeError, ValueError, TypeError) as e:
+        raise ValueError(
+            f"BOT_EXTRA_CA_CERT не является валидным PEM-сертификатом ({extra_ca}): {e}"
+        ) from e
     parts: list[str] = []
     sys_ca = ssl.get_default_verify_paths().cafile
     if sys_ca and Path(sys_ca).is_file():
         parts.append(Path(sys_ca).read_text(encoding="utf-8", errors="ignore"))
-    parts.append(extra.read_text(encoding="utf-8", errors="ignore"))
+    parts.append(extra_text)
     out = Path(tempfile.gettempdir()) / _CA_BUNDLE_NAME
     out.write_text("\n".join(parts) + "\n", encoding="utf-8")
+    os.chmod(out, 0o600)  # defense-in-depth: бандл не перетереть/не прочитать чужим (CA публичен, но для аудита)
     return str(out)
 
 
@@ -94,10 +125,11 @@ def apply_firewall_env(s: Settings | None = None) -> list[str]:
     """
     s = s or settings
     applied: list[str] = []
-    if s.outbound_proxy:
+    proxy = _read_proxy(s)
+    if proxy:
         for var in _PROXY_ENV:
-            os.environ.setdefault(var, s.outbound_proxy)
-        applied.append(f"proxy={_mask(s.outbound_proxy)}")
+            os.environ.setdefault(var, proxy)
+        applied.append(f"proxy={_mask(proxy)}")
     if s.no_proxy:
         os.environ.setdefault("NO_PROXY", s.no_proxy)
         os.environ.setdefault("no_proxy", s.no_proxy)
