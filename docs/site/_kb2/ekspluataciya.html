@@ -24,6 +24,12 @@ sudo crontab -l | grep aemr    # живы ли страховки-cron'ы</code>
 <li><strong>Контроль:</strong> в служебной группе MAX в течение часа придёт «🟢 Пульс: бот работает». Пришёл — инцидент закрыт.</li>
 </ol>
 
+<div class="note note--danger">
+<p class="note__label">Почему бот «умирал сам» при живом сервере — запуск на переднем плане</p>
+<p>Если стек запущен командой <code class="kbd">docker compose up</code> / <code class="kbd">podman compose up</code> <strong>на переднем плане</strong> (процессом в терминале, а не фоном и не службой), он живёт ровно пока открыт терминал. Закрыли SSH-сессию, разлогинились, оборвалась связь — процесс получает сигнал, и контейнеры гаснут. В логах это видно как <code class="kbd">bot-1 | Terminated</code> и <code class="kbd">db-1 | received fast shutdown request</code>. Это и есть «бот падал, когда сисадмин закрывал терминал».</p>
+<p>Лечение — запускать <strong>не на переднем плане</strong>. Минимум: <code class="kbd">docker compose up -d</code> (фоном). Правильно: как <strong>службу</strong>, которая переживает логаут и перезагрузку — под Podman это Quadlet-юнит или <code class="kbd">aemr-bot-compose.service</code> (см. <a href="#eksp-podman" data-go="eksp-podman">«Запуск под Podman как systemd-служба»</a>), под Docker — systemd-юнит поверх <code class="kbd">compose up -d</code>. <code class="kbd">nohup</code>/<code class="kbd">screen</code> — не постоянное решение, а костыль на один раз. Логи при этом всё равно сохраняются на диск (см. <a href="#eksp-logs" data-go="eksp-logs">«Логи»</a>), так что разбор «почему лёг» не зависит от живого контейнера.</p>
+</div>
+
 <h3 id="eksp-supervision">Кто кого перезапускает</h3>
 
 <p>У бота несколько уровней страховки, и каждый закрывает свою беду. Подробно про вотчдог и автозапуск — в разделе <a href="#admin-watchdog" data-go="admin-watchdog">«Сторожевые механизмы»</a>; здесь короткая сводка, кто реагирует на что.</p>
@@ -192,6 +198,7 @@ sudo systemctl enable --now aemr-bot-compose.service</code></pre>
 <li>Не выключать Docker, чтобы «починить бота»: там база, станет только хуже.</li>
 <li>Не снимать оба cron-задания на работающем сервере: вотчдог — единственный, кто лечит зависший процесс.</li>
 <li>Не путать <code class="kbd">systemctl stop aemr-bot</code> (гасит всё, включая базу) с перезапуском бота <code class="kbd">docker compose restart bot</code>.</li>
+<li>Не запускать <code class="kbd">compose up</code> на переднем плане в терминале — при закрытии сессии (логаут, разрыв SSH) бот и база умрут. Только <code class="kbd">-d</code> или служба (см. <a href="#eksp-podman" data-go="eksp-podman">Podman</a>).</li>
 <li>Не запускать второй экземпляр с тем же токеном нигде, включая свой компьютер.</li>
 <li>Не коммитить <code class="kbd">infra/.env.example</code> с заполненными секретами.</li>
 <li>Не выполнять <code class="kbd">docker system prune -a --volumes</code> — снесёт том с базой.</li>

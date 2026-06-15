@@ -88,6 +88,14 @@ class TestValidate:
         "key,value,expected_ok",
         [
             ("emergency_contacts", [{"name": "01", "phone": "01"}], True),
+            # мультиномер через запятую — легитимный камчатский формат (seed/contacts.json)
+            (
+                "emergency_contacts",
+                [{"name": "ЦЭС", "phone": "8 (415-31) 2-00-22, 6-11-02"}],
+                True,
+            ),
+            # буквы по-прежнему запрещены (премиум-ник/email/текст вместо номера)
+            ("emergency_contacts", [{"name": "x", "phone": "позвоните нам"}], False),
             ("emergency_contacts", [{"name": "01"}], False),  # без phone
             ("emergency_contacts", [], False),  # пустой список
             ("emergency_contacts", "not-a-list", False),
