@@ -1,15 +1,27 @@
 # Dependabot для aemr-bot.
 #
-# Автоматические security/version updates для:
-# - Python зависимости (uv через pip-ecosystem)
-# - GitHub Actions
-# - Docker base images (python:3.12-slim)
+# Что покрыто:
+# - pip (/bot) — Python-зависимости из pyproject.toml. ВНИМАНИЕ: Dependabot
+#   правит pyproject, но НЕ регенерирует uv.lock (отдельной 'uv'-экосистемы нет).
+#   На каждом pip-PR нужно `cd bot && uv lock` и коммит обновлённого lock, иначе
+#   в прод-образ (он ставит из uv.lock) изменение не доедет — это та самая
+#   drift'-ошибка, что когда-то роняла бота.
+# - github-actions (/) — версии actions в workflow'ах (запинены по SHA).
+# - docker (/infra) — образы в Dockerfile (FROM python:3.12-slim, COPY --from
+#   ghcr.io/astral-sh/uv). docker-экосистема сканирует ТОЛЬКО Dockerfile.
+# - docker-compose (/infra) — образы в docker-compose*.yml (postgres, nginx).
+#   ОТДЕЛЬНАЯ экосистема: 'docker' compose-файлы не сканирует.
 #
-# Стратегия: weekly schedule, max 5 open PR'ов на ecosystem чтобы не
-# завалить tracker. Maxapi 1.1.0 — критическая зависимость, любой
-# major update требует ручной верификации (см. docs/RUNBOOK.md
-# секцию «Процедура обновления зависимости»), поэтому maxapi
-# исключён из автообновлений — только manual review.
+# Что НЕ покрыто (структурно, фиксится вручную):
+# - Образы в Quadlet-юнитах infra/podman/*.container (Image=...) — для Podman
+#   Quadlet/systemd экосистемы Dependabot нет. Digest Postgres там держим в
+#   lockstep с docker-compose.yml (guard-тест test_image_pins_in_sync).
+# - Теги ':latest' (certbot, jaschac/cntlm, спящие профили) — без версии/digest
+#   Dependabot их не отслеживает; чтобы включить — запинить версию+digest.
+#
+# Стратегия: weekly, лимит open-PR на экосистему. maxapi (сейчас 1.2.0) выведен
+# из автообновлений целиком — любой апдейт требует ручного аудита breaking
+# changes (процедура — в вике, «Разработчику» → обновление зависимостей).
 
 version: 2
 updates:
@@ -28,9 +40,9 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
     ignore:
-      # Maxapi: критическая зависимость от MAX-API SDK, любые обновления
-      # требуют ручного аудита breaking changes (см. PR #50/#52 история
-      # 0.9.18 → 1.1.0). Manual review через docs/RUNBOOK.md.
+      # Maxapi: критическая зависимость от MAX-API SDK, любое обновление
+      # требует ручного аудита breaking changes (история: 0.9.18 → 1.1.0 →
+      # 1.2.0). Процедура — в вике, «Разработчику» → обновление зависимостей.
       - dependency-name: "maxapi"
       # SQLAlchemy 2.0.x — стабильный major, минор обновления безопасны;
       # 2.1+ требуют ручной проверки (async API мог поменяться).
@@ -56,7 +68,29 @@ updates:
       prefix: "chore(ci)"
       include: "scope"
 
+  # Образы в Dockerfile (FROM python:3.12-slim, COPY --from ghcr.io/astral-sh/uv).
   - package-ecosystem: "docker"
+    directory: "/infra"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Kamchatka"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(docker)"
+      include: "scope"
+
+  # Образы в compose-файлах (postgres, nginx). ОТДЕЛЬНАЯ от 'docker' экосистема:
+  # 'docker' сканирует только Dockerfile. Регекс fetcher'а ловит и
+  # docker-compose.cntlm.yml. Теги ':latest' (certbot, cntlm) не отслеживаются,
+  # пока не запинены версия+digest. ВАЖНО: при бампе postgres синхронно правьте
+  # digest в infra/podman/aemr-bot-db.container (Quadlet) — Dependabot его не
+  # видит; lockstep сторожит test_image_pins_in_sync.
+  - package-ecosystem: "docker-compose"
     directory: "/infra"
     schedule:
       interval: "weekly"
