@@ -43,6 +43,23 @@ if ! grep -q '^DATABASE_URL=' "$ENV_FILE"; then
   exit 1
 fi
 
+# 2b. Каталог персистентных логов на диске хоста (bot.log с ротацией).
+# UID 1000 — пользователь botuser в образе; без chown read_only-контейнер
+# не сможет писать. Логи переживают любой rm/пересборку контейнера.
+LOG_DIR="/var/log/aemr-bot"
+echo "== Каталог логов $LOG_DIR (владелец UID 1000) =="
+mkdir -p "$LOG_DIR"
+chown 1000:1000 "$LOG_DIR" || echo "ВНИМАНИЕ: chown $LOG_DIR не удался — проверьте права."
+
+# 2c. Персистентный journald: контейнерный stdout (LogDriver=journald) должен
+# писаться на диск и переживать перезагрузку. На Debian Storage=auto хранит
+# журнал только если есть /var/log/journal — создаём, если нет.
+if [ ! -d /var/log/journal ]; then
+  echo "== Включаю персистентный journald (/var/log/journal) =="
+  mkdir -p /var/log/journal
+  systemctl restart systemd-journald || echo "ВНИМАНИЕ: перезапустите systemd-journald вручную."
+fi
+
 # 3. Сборка образа бота из Dockerfile
 echo "== Сборка образа localhost/aemr-bot:latest =="
 podman build -t localhost/aemr-bot:latest -f "$REPO/infra/Dockerfile" "$REPO"
@@ -69,5 +86,6 @@ echo "Готово. Полезные команды:"
 echo "  systemctl status aemr-bot.service        # состояние"
 echo "  podman ps                                 # контейнеры"
 echo "  curl -s http://127.0.0.1:8080/readyz      # здоровье (ждём {\"ok\": true})"
-echo "  journalctl -u aemr-bot.service -f         # логи бота"
+echo "  journalctl -u aemr-bot.service -f         # логи бота (host-level, переживают rm)"
+echo "  tail -f /var/log/aemr-bot/bot.log         # читаемый файл-лог приложения (с ротацией)"
 echo "  systemctl restart aemr-bot.service        # перезапуск после пересборки образа"

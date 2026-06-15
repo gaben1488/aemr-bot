@@ -25,6 +25,11 @@ Image=localhost/aemr-bot:latest
 Network=aemr-bot.network
 EnvironmentFile=/home/aemr/aemr-bot/infra/.env
 Volume=aemr-bot-backups:/backups
+# Персистентные логи приложения на диск хоста (bot.log с ротацией). Переживают
+# любой rm/пересборку контейнера, читаются `tail -f /var/log/aemr-bot/bot.log`.
+# Каталог создать заранее с владельцем UID 1000 (делает install-скрипт).
+# На SELinux-системах (RHEL/Astra) добавьте суффикс :Z для перемаркировки.
+Volume=/var/log/aemr-bot:/var/log/aemr-bot
 # Наружу — только loopback хоста (как в compose). Никаких входящих портов в мир.
 PublishPort=127.0.0.1:8080:8080
 # Liveness (как в compose): краткий сбой БД не красит живой polling.
