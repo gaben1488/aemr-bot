@@ -11,6 +11,7 @@ from maxapi.exceptions.max import InvalidToken
 
 from aemr_bot import health, network
 from aemr_bot.config import settings
+from aemr_bot.logging_setup import setup_logging
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import register_handlers
 from aemr_bot.handlers.appeal import recover_stuck_funnels
@@ -589,10 +590,8 @@ async def _preflight_check_token(bot: Bot) -> None:
 
 
 async def main() -> None:
-    logging.basicConfig(
-        level=settings.log_level,
-        format="%(asctime)s %(levelname)s %(name)s %(message)s",
-    )
+    # stdout + персистентный файл на диске (переживает удаление контейнера). См. logging_setup.
+    setup_logging()
 
     # Firewall mode ДО любых HTTP-клиентов: пробросить прокси в окружение и вшить
     # корпоративный CA (SSL_CERT_FILE), если заданы. Без настроек — тихий no-op.

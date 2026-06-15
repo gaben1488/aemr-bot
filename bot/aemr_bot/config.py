@@ -211,6 +211,16 @@ class Settings(BaseSettings):
     seed_dir: Path = Field(Path("/app/seed"), alias="SEED_DIR")
     log_level: str = Field("INFO", alias="LOG_LEVEL")
 
+    # Персистентное логирование на диск. Файл логов лежит на смонтированном с хоста
+    # каталоге (LOG_DIR), поэтому переживает остановку/удаление контейнера
+    # (docker compose down, podman rm) — в отличие от json-file драйвера, чьи логи
+    # удаляются вместе с контейнером. На корневой логгер вешается и файл, и stdout,
+    # поэтому в файл попадает ВСЁ Python-логирование (включая библиотеку maxapi).
+    # Пусто → файловое логирование выключено (остаётся только stdout), безопасно для dev/CI.
+    log_dir: str | None = Field("/var/log/aemr-bot", alias="LOG_DIR")
+    log_file_max_bytes: int = Field(10_000_000, alias="LOG_FILE_MAX_BYTES", ge=0)
+    log_file_backups: int = Field(10, alias="LOG_FILE_BACKUPS", ge=0, le=100)
+
     @field_validator(
         "admin_group_id",
         "bootstrap_it_max_user_id",
@@ -228,6 +238,7 @@ class Settings(BaseSettings):
         "outbound_proxy_file",
         "no_proxy",
         "extra_ca_cert",
+        "log_dir",
         mode="before",
     )
     @classmethod

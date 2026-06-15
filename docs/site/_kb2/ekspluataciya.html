@@ -40,7 +40,31 @@ sudo crontab -l | grep aemr    # живы ли страховки-cron'ы</code>
 </table>
 </div>
 
-<p>Важно не путать: <code class="kbd">systemctl stop aemr-bot</code> выполняет <code class="kbd">docker compose down</code> и гасит <strong>и бота, и базу</strong>. Перезапуск самого бота — это <code class="kbd">docker compose restart bot</code>, а не systemctl.</p>
+<p>Важно не путать: <code class="kbd">systemctl stop aemr-bot</code> выполняет <code class="kbd">docker compose down</code> и гасит <strong>и бота, и базу</strong>. Перезапуск самого бота — это <code class="kbd">docker compose restart bot</code>, а не systemctl. Логи при <code class="kbd">down</code> не теряются — они на диске хоста, см. <a href="#eksp-logs" data-go="eksp-logs">«Логи»</a> ниже.</p>
+
+<h3 id="eksp-logs">Логи: где лежат и почему переживают перезапуск</h3>
+
+<p>Важная тонкость: логи, которые показывает <code class="kbd">docker compose logs</code> / <code class="kbd">podman logs</code>, по умолчанию хранятся <em>внутри</em> контейнера и удаляются вместе с ним. Сделали <code class="kbd">docker compose down</code> или пересобрали образ — и история пропала. Для бота, который отвечает жителям и ведёт журнал по 152-ФЗ, это недопустимо. Поэтому логи дублируются на диск сервера двумя независимыми слоями, и оба переживают удаление контейнера.</p>
+
+<p><strong>Слой 1 — файл приложения <code class="kbd">bot.log</code>.</strong> Бот сам пишет читаемый лог в каталог <code class="kbd">/var/log/aemr-bot</code>, примонтированный с хоста, с автоматической ротацией (по умолчанию 10 файлов по 10 МБ, дальше самые старые удаляются). Это главный человекочитаемый журнал, и он не зависит от жизни контейнера:</p>
+<pre><code>tail -f /var/log/aemr-bot/bot.log         # следить в реальном времени
+grep ERROR /var/log/aemr-bot/bot.log      # найти ошибки</code></pre>
+<p>В файл попадает всё Python-логирование, включая саму библиотеку <code class="kbd">maxapi</code> (обработчик висит на корневом логгере), а не только наш код.</p>
+
+<p><strong>Слой 2 — journald.</strong> Драйвер логов контейнера переключён на <code class="kbd">journald</code>, поэтому весь вывод stdout/stderr уходит в системный журнал хоста и тоже переживает удаление контейнера. Этот слой ловит то, что до файлового логгера приложения не доходит: вывод <code class="kbd">alembic</code> при старте и аварийные трейсбэки до инициализации логирования.</p>
+<pre><code>journalctl CONTAINER_NAME=aemr-bot -f     # Docker
+journalctl -u aemr-bot.service -f         # Podman/Quadlet
+docker compose logs -f bot                # тоже работает (читает journald)</code></pre>
+
+<div class="note note--caution">
+<p class="note__label">Разовая подготовка хоста</p>
+<p>Чтобы оба слоя писали на диск, на хосте нужно один раз создать каталог логов с владельцем <code class="kbd">UID 1000</code> (пользователь внутри контейнера, иначе read-only-контейнер не сможет в него писать) и включить персистентный journald (иначе журнал живёт только в памяти и гибнет при перезагрузке):</p>
+<pre><code>sudo mkdir -p /var/log/aemr-bot &amp;&amp; sudo chown 1000:1000 /var/log/aemr-bot
+sudo mkdir -p /var/log/journal &amp;&amp; sudo systemctl restart systemd-journald</code></pre>
+<p>Для Podman это делает установщик <code class="kbd">install-podman-quadlet.sh</code> автоматически; для Docker выполните вручную перед <code class="kbd">docker compose up</code>. Каталог, размер и число файлов настраиваются переменными <code class="kbd">LOG_DIR</code>, <code class="kbd">LOG_FILE_MAX_BYTES</code>, <code class="kbd">LOG_FILE_BACKUPS</code> в <code class="kbd">infra/.env</code>; пустой <code class="kbd">LOG_DIR</code> выключает файловый слой (например, на dev-машине).</p>
+</div>
+
+<p>Тонкость для SELinux-систем (Astra / РЕД ОС): к bind-mount каталога логов в Podman добавьте суффикс <code class="kbd">:Z</code>, иначе метки контекста дадут «permission denied».</p>
 
 <h3 id="eksp-forcemajor">Форс-мажоры: симптом → диагноз → лечение</h3>
 

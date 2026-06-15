@@ -49,11 +49,12 @@ services:
       - SETUID
     security_opt:
       - no-new-privileges:true
+    # journald: логи Postgres идут в host-level журнал и переживают
+    # `docker compose down`/удаление контейнера. json-file логи удалялись
+    # вместе с контейнером — историю теряли. Нужен персистентный journald
+    # на хосте: mkdir -p /var/log/journal && systemctl restart systemd-journald.
     logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+      driver: journald
     restart: unless-stopped
 
   bot:
@@ -72,6 +73,11 @@ services:
       # Локальные еженедельные pg_dump'ы. Named-volume переживает пересборки
       # контейнера. Восстановление — см. RUNBOOK §7.
       - backups:/backups
+      # Персистентные логи приложения на диск хоста: bot.log с ротацией,
+      # переживает любой down/rm/пересборку. Каталог создать заранее с
+      # владельцем UID 1000 (см. вики «Эксплуатация» → «Логи»):
+      #   sudo mkdir -p /var/log/aemr-bot && sudo chown 1000:1000 /var/log/aemr-bot
+      - /var/log/aemr-bot:/var/log/aemr-bot
     healthcheck:
       # Liveness, а не readiness: краткая проблема Postgres не должна
       # помечать живой polling-процесс как unhealthy и запускать внешний
@@ -100,15 +106,15 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
-    # Logrotate для docker-логов: без лимита json-файл логов растёт
-    # неограниченно, на долгоживущем боте через год может занять
-    # десятки гигабайт и положить диск. 10×3 = до 30 МБ суммарно,
-    # старые ротируются автоматически без интервенции.
+    # journald: контейнерный stdout/stderr идёт в host-level журнал и переживает
+    # `docker compose down`/пересоздание (json-file логи удалялись вместе с
+    # контейнером — это и теряло историю). journald ловит и то, что до Python-
+    # логгера не доходит: вывод alembic при старте, аварийные трейсбэки. Плюс
+    # приложение само пишет человекочитаемый ротируемый bot.log в смонтированный
+    # /var/log/aemr-bot (volumes выше + aemr_bot/logging_setup.py). Нужен
+    # персистентный journald: mkdir -p /var/log/journal && systemctl restart systemd-journald.
     logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+      driver: journald
     restart: unless-stopped
 
   # Webhook-only stack; enable with: docker compose --profile webhook up -d
