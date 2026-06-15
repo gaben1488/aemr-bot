@@ -97,6 +97,48 @@ cd ~/aemr-bot/infra &amp;&amp; docker compose down</code></pre>
 
 <p>Запуск за российским межсетевым экраном (UserGate, Континент, ALTELL, Рубикон, ИКС, Ideco), вопросы администратору и рецепт sidecar cntlm — отдельно в <a href="#admin-firewall" data-go="admin-firewall">«За корпоративным межсетевым экраном»</a>.</p>
 
+<h3 id="eksp-podman">Запуск под Podman как systemd-служба (Debian, без Docker)</h3>
+
+<p>Наш случай: на рабочем сервере (Debian) бот запускают не на Docker, а на <strong>Podman</strong>, и нужна служба, которая переживает отключение терминала, сама перезапускается и стартует при загрузке. Правильный современный способ — <strong>Quadlet</strong>: декларативные юниты, из которых systemd сам делает службы. Это рекомендованный путь Podman, начиная с версии 4.4.</p>
+
+<div class="note">
+<p class="note__label">Сначала проверьте версию Podman</p>
+<p><code class="kbd">podman --version</code>. Quadlet есть только в Podman 4.4 и новее. На Debian 13 (Trixie) штатный Podman 5.x — Quadlet есть. На Debian 12 (Bookworm) штатный Podman 4.3 — Quadlet нет, тогда либо запасной путь (ниже), либо установка Podman 5 из стороннего репозитория.</p>
+</div>
+
+<p><strong>Способ 1 — Quadlet (рекомендуется, Podman 4.4+).</strong> В репозитории лежат готовые юниты <code class="kbd">infra/podman/aemr-bot.network</code>, <code class="kbd">aemr-bot-db.container</code>, <code class="kbd">aemr-bot.container</code> — это построчный перенос <code class="kbd">docker-compose.yml</code> (та же база Postgres, тот же hardening: неизменяемый rootfs, сброс capabilities, лимиты памяти и процессов, порт только на 127.0.0.1). Установка одной командой:</p>
+<pre><code>sudo bash infra/podman/install-podman-quadlet.sh</code></pre>
+<p>Скрипт проверит версию Podman, соберёт образ бота из <code class="kbd">Dockerfile</code>, положит юниты в <code class="kbd">/etc/containers/systemd/</code> (подставив реальный путь репозитория), перегенерирует службы и поднимет стек. Поскольку это <strong>системные</strong> службы, они не зависят от вашей сессии — переживают логаут и стартуют при загрузке автоматически, без всякого <code class="kbd">nohup</code> или <code class="kbd">screen</code>.</p>
+
+<div class="note note--caution">
+<p class="note__label">Одно отличие от Docker Compose — DATABASE_URL</p>
+<p>Compose выводил <code class="kbd">DATABASE_URL</code> из <code class="kbd">POSTGRES_*</code> автоматически. Quadlet так не умеет, поэтому добавьте в <code class="kbd">infra/.env</code> строку с реальным паролем:</p>
+<pre><code>DATABASE_URL=postgresql+asyncpg://aemr:ВАШ_ПАРОЛЬ@aemr-bot-db:5432/aemr</code></pre>
+<p>Хост здесь — имя контейнера базы (<code class="kbd">aemr-bot-db</code>), оно резолвится по DNS внутри сети <code class="kbd">aemr-bot</code>. Установщик предупредит, если строки нет.</p>
+</div>
+
+<p>Порядок запуска: бот зависит от базы (<code class="kbd">Requires=</code> + <code class="kbd">After=</code>). Если база ещё инициализируется на первом старте, бот пару раз перезапустится (alembic не достучался до базы) и поднимется, как только она будет готова — это нормальное самоисцеление, как <code class="kbd">depends_on</code> в compose. Управление:</p>
+<pre><code>systemctl status aemr-bot.service        # состояние
+podman ps                                 # контейнеры
+curl -s http://127.0.0.1:8080/readyz      # здоровье (ждём {"ok": true})
+journalctl -u aemr-bot.service -f         # логи
+systemctl restart aemr-bot.service        # после пересборки образа
+systemctl stop aemr-bot.service           # остановить бота (база останется жить)</code></pre>
+
+<p><strong>Способ 2 — запасной, для старого Podman (Debian 12).</strong> Если Quadlet нет и ставить Podman 5 не хочется, есть юнит <code class="kbd">infra/podman/aemr-bot-compose.service</code> — он гоняет тот же самый <code class="kbd">docker-compose.yml</code> через <code class="kbd">podman compose</code> (единый источник истины, дублировать ничего не надо):</p>
+<pre><code>sudo apt install podman-compose
+sudo cp infra/podman/aemr-bot-compose.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now aemr-bot-compose.service</code></pre>
+<p>Это тоже системная служба и так же переживает логаут. Минус — <code class="kbd">podman compose</code> это обёртка с менее полной поддержкой compose, чем нативный Quadlet.</p>
+
+<div class="note">
+<p class="note__label">За прокси с NTLM/Kerberos</p>
+<p>Если наружу пускают только через корпоративный прокси с доменной аутентификацией, к Quadlet добавляется sidecar cntlm — юнит <code class="kbd">infra/podman/aemr-bot-cntlm.container</code> и переменные в <code class="kbd">.env</code> (подробно — в <a href="#admin-firewall" data-go="admin-firewall">«За корпоративным межсетевым экраном»</a>).</p>
+</div>
+
+<p><strong>Rootful или rootless.</strong> Установщик ставит rootful (юниты в <code class="kbd">/etc/containers/systemd/</code>) — это проще всего и сразу переживает логаут, потому что служба системная. Для большей безопасности на гос-сервере Podman можно гонять rootless под отдельным пользователем: юниты кладут в <code class="kbd">~/.config/containers/systemd/</code> и включают <code class="kbd">loginctl enable-linger aemr</code>, чтобы службы пользователя жили после выхода из сессии и поднимались при загрузке. Сам бот в любом случае работает внутри контейнера под непривилегированным пользователем (UID 1000).</p>
+
 <h3 id="eksp-risks">Реестр открытых рисков</h3>
 
 <p>Это то, что senior-инженер отметил бы на ревью готовности к бою. Каждый пункт сверен с кодом. Часть уже закрыта.</p>

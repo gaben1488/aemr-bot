@@ -1,0 +1,50 @@
+# Quadlet-юнит самого бота для aemr-bot (Podman 4.4+).
+# Кладётся в /etc/containers/systemd/ (rootful) → генерится aemr-bot.service.
+# Перенос свойств из infra/docker-compose.yml (сервис bot).
+#
+# ВАЖНО: образ bot собирается из infra/Dockerfile локально перед стартом
+# (см. install-podman-quadlet.sh: podman build -t localhost/aemr-bot:latest ...).
+#
+# ВАЖНО про DATABASE_URL: docker-compose выводил его из POSTGRES_* автоматически,
+# Quadlet так не умеет. Добавьте в infra/.env строку (с реальным паролем):
+#   DATABASE_URL=postgresql+asyncpg://aemr:ВАШ_ПАРОЛЬ@aemr-bot-db:5432/aemr
+# Хост — имя контейнера БД (aemr-bot-db), резолвится по DNS внутри сети aemr-bot.
+[Unit]
+Description=aemr-bot (MAX messenger bot)
+After=network-online.target aemr-bot-db.service
+Wants=network-online.target
+# Бот стартует после БД. Если БД ещё инициализируется — alembic упадёт, и
+# Restart=always поднимет бота снова, пока БД не будет готова (self-heal,
+# поведение как у compose depends_on + restart). Пара рестартов на первом
+# запуске — норма.
+Requires=aemr-bot-db.service
+
+[Container]
+ContainerName=aemr-bot
+Image=localhost/aemr-bot:latest
+Network=aemr-bot.network
+EnvironmentFile=/home/aemr/aemr-bot/infra/.env
+Volume=aemr-bot-backups:/backups
+# Наружу — только loopback хоста (как в compose). Никаких входящих портов в мир.
+PublishPort=127.0.0.1:8080:8080
+# Liveness (как в compose): краткий сбой БД не красит живой polling.
+HealthCmd=curl -fsS http://localhost:8080/livez
+HealthInterval=30s
+HealthTimeout=10s
+HealthRetries=3
+HealthStartPeriod=30s
+# Hardening (как в compose): неизменяемый rootfs, tmpfs под /tmp, без capabilities,
+# без эскалаций, лимиты памяти и процессов.
+ReadOnly=true
+Tmpfs=/tmp:size=128m
+DropCapability=all
+NoNewPrivileges=true
+PodmanArgs=--memory=512m --memory-swap=512m --pids-limit=200
+LogDriver=journald
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=default.target

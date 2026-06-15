@@ -1,0 +1,15 @@
+# Quadlet-юнит сети для aemr-bot (Podman 4.4+). Кладётся в /etc/containers/systemd/
+# (rootful) или ~/.config/containers/systemd/ (rootless). Генератор systemd
+# превращает его в aemr-bot-network.service на boot/daemon-reload.
+#
+# Зачем отдельная сеть: контейнеры db и bot должны видеть друг друга по имени
+# (bot ходит на aemr-bot-db:5432). netavark (дефолт Podman 4.4+) даёт DNS внутри
+# этой сети. Наружу торчит только то, что явно опубликовано (порт 8080 на 127.0.0.1).
+[Unit]
+Description=aemr-bot internal network
+
+[Network]
+NetworkName=aemr-bot
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,36 @@
+# ОПЦИОНАЛЬНО. Quadlet-юнит sidecar cntlm — только если корпоративный прокси
+# требует доменную аутентификацию NTLM/Kerberos (aiohttp умеет только Basic).
+# Бот тогда ходит на cntlm:3128 без auth, а cntlm делает NTLM наружу.
+#
+# Включение: положить этот файл в /etc/containers/systemd/ ВМЕСТЕ с остальными,
+# заполнить infra/cntlm/cntlm.conf (см. infra/cntlm/cntlm.conf.example), и в
+# infra/.env добавить:
+#   BOT_FIREWALL_MODE=1
+#   BOT_OUTBOUND_PROXY=http://aemr-bot-cntlm:3128
+#   BOT_NO_PROXY=localhost,127.0.0.1,aemr-bot-db,aemr-bot-cntlm
+# Затем в aemr-bot.container раскомментировать зависимость от cntlm (After/Requires)
+# или просто перезапустить стек — бот подхватит прокси из .env.
+[Unit]
+Description=aemr-bot cntlm proxy-forwarder (NTLM/Kerberos)
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+ContainerName=aemr-bot-cntlm
+# ⚠️ Запинить digest перед боем: podman pull <image> → <image>@sha256:...
+Image=docker.io/jaschac/cntlm:latest
+Network=aemr-bot.network
+Volume=/home/aemr/aemr-bot/infra/cntlm/cntlm.conf:/etc/cntlm/cntlm.conf:ro,Z
+# Слушает только внутри сети aemr-bot; наружу порт НЕ публикуем.
+DropCapability=all
+AddCapability=SETUID
+AddCapability=SETGID
+NoNewPrivileges=true
+PodmanArgs=--memory=64m --pids-limit=32
+LogDriver=journald
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

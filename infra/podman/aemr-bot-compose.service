@@ -1,0 +1,36 @@
+# FALLBACK systemd-юнит для Podman < 4.4 (Debian 12 bookworm = podman 4.3, без
+# Quadlet). Гоняет ТОТ ЖЕ infra/docker-compose.yml через `podman compose` — единый
+# источник истины, нулевой дрейф. Менее «нативно», чем Quadlet, но работает везде.
+#
+# Это СИСТЕМНЫЙ юнит (запускается systemd, не сессией) → переживает отключение
+# терминала и стартует при загрузке сервера. Имя НЕ `aemr-bot.service`, чтобы не
+# конфликтовать с Quadlet-генерируемым aemr-bot.service (выбрать ОДИН способ).
+#
+# Установка:
+#   sudo cp infra/podman/aemr-bot-compose.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now aemr-bot-compose.service
+# Проверка:  systemctl status aemr-bot-compose.service ; podman ps
+#
+# Требуется `podman compose` (podman-compose в PATH). На Debian: apt install podman-compose.
+# Образ бота собирается через `build:` в compose; podman-compose это умеет, но при
+# проблемах со сборкой соберите образ заранее: podman build -t localhost/aemr-bot infra/ ..
+[Unit]
+Description=aemr-bot via podman compose (fallback без Quadlet)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+# Путь к репозиторию при необходимости поправьте.
+WorkingDirectory=/home/aemr/aemr-bot/infra
+Environment=PODMAN_COMPOSE_WARNING_LOGS=false
+ExecStartPre=/usr/bin/podman compose -f docker-compose.yml build
+ExecStart=/usr/bin/podman compose -f docker-compose.yml up
+ExecStop=/usr/bin/podman compose -f docker-compose.yml down
+Restart=always
+RestartSec=10
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target
