@@ -964,7 +964,7 @@ wheels = [
 
 [[package]]
 name = "maxapi"
-version = "1.1.0"
+version = "1.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -974,9 +974,9 @@ dependencies = [
     { name = "puremagic" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/02/e4/b7f10d7d456e853e8ae0ad7e3d07ab7a57bbbc187286d18347394530b744/maxapi-1.1.0.tar.gz", hash = "sha256:93f0327d131a2128d46f1364a1e39c26eef0ff52d736ab4cec0a58d421a5d309", size = 191550, upload-time = "2026-05-18T20:18:26.214Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c7/9d/f1c85f1c0050669908d6bea0914f381c93292a450d75e5e18cc9da914994/maxapi-1.2.0.tar.gz", hash = "sha256:cd71ff0853729df46ead895440561928cfd5498325216973b4188d844947f3c5", size = 214723, upload-time = "2026-06-15T20:11:31.878Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/be/ab/6339b095f4d5a0b75cf53fd8407527e77f1889df10a6613ae2e7ab1d216d/maxapi-1.1.0-py3-none-any.whl", hash = "sha256:d651f125afe219497d9db767000e5f897a7160071fd2e5bcdc91935b1e7f2115", size = 199015, upload-time = "2026-05-18T20:18:24.771Z" },
+    { url = "https://files.pythonhosted.org/packages/09/64/d5cde3ed1a06328898036197f4737406e52f5cb3cef0efa15149a72eae73/maxapi-1.2.0-py3-none-any.whl", hash = "sha256:d3198acb5cc1ca851a1b242f2cf8f28dbad0756a8c71ce1a95fb579e97a05f7e", size = 217828, upload-time = "2026-06-15T20:11:30.466Z" },
 ]
 
 [[package]]
