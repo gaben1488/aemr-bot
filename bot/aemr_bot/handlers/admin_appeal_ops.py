@@ -251,6 +251,9 @@ async def run_reply_cancel(event) -> None:
     """Кнопка «❌ Отменить ответ» под подсказкой ввода."""
     from aemr_bot.handlers import operator_reply as op_reply
 
+    if not await ensure_operator(event):
+        await ack_callback(event)
+        return
     operator_id = get_user_id(event)
     if operator_id is None:
         await ack_callback(event)

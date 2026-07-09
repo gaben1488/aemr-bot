@@ -3,9 +3,10 @@ from __future__ import annotations
 import asyncio
 import functools
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import aiohttp
+from apscheduler.events import EVENT_JOB_ERROR, JobExecutionEvent
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
@@ -26,6 +27,7 @@ from aemr_bot.services import threat_intel
 from aemr_bot.services import users as users_service
 from aemr_bot.services.calendar_ru import is_workday
 from aemr_bot.services.db_backup import backup_db as _backup_db
+from aemr_bot.services import sla as sla_service
 
 log = logging.getLogger(__name__)
 TZ = ZoneInfo(settings.timezone)
@@ -463,31 +465,51 @@ async def _job_selfcheck(send_admin_text) -> None:
     critical=True (sec/A1): selfcheck должен пробить quiet режим. Если
     бот завис ночью, оператор должен увидеть это сразу — а не утром
     после простоя 9 часов.
+
+    Раньше это был единственный job без try/except (находка ревью) —
+    любое исключение внутри (например, heartbeat.is_fresh() упал на
+    чтении файла) прибило бы весь тик scheduler'а вместо аккуратного
+    лога. Оборачиваем по общему для всех job'ов паттерну; присваивание
+    _SELFCHECK_HEALTHY делаем только после успешной проверки — если
+    heartbeat.is_fresh() упал, предыдущее известное состояние не
+    затирается мусором.
     """
-    was_healthy = _SELFCHECK_HEALTHY["healthy"]
-    is_healthy = heartbeat.is_fresh()
-    if was_healthy and not is_healthy:
-        await _send_admin_text_with_retry(
-            send_admin_text,
-            "⚠️ Проверка здоровья: бот перестал отвечать на внутренний heartbeat. "
-            "Возможное состояние: завис главный цикл. Проверьте логи и "
-            "перезапустите контейнер, если бот не восстановится автоматически.",
-            context="health-selfcheck-stale",
-            critical=True,
-        )
-    elif not was_healthy and is_healthy:
-        await _send_admin_text_with_retry(
-            send_admin_text,
-            "✅ Проверка здоровья: бот снова отвечает на внутренний heartbeat.",
-            context="health-selfcheck-recovered",
-            critical=True,
-        )
-    _SELFCHECK_HEALTHY["healthy"] = is_healthy
+    try:
+        was_healthy = _SELFCHECK_HEALTHY["healthy"]
+        is_healthy = heartbeat.is_fresh()
+        if was_healthy and not is_healthy:
+            await _send_admin_text_with_retry(
+                send_admin_text,
+                "⚠️ Проверка здоровья: бот перестал отвечать на внутренний heartbeat. "
+                "Возможное состояние: завис главный цикл. Проверьте логи и "
+                "перезапустите контейнер, если бот не восстановится автоматически.",
+                context="health-selfcheck-stale",
+                critical=True,
+            )
+        elif not was_healthy and is_healthy:
+            await _send_admin_text_with_retry(
+                send_admin_text,
+                "✅ Проверка здоровья: бот снова отвечает на внутренний heartbeat.",
+                context="health-selfcheck-recovered",
+                critical=True,
+            )
+        _SELFCHECK_HEALTHY["healthy"] = is_healthy
+    except Exception:
+        log.exception("health-selfcheck crashed")
 
 
 async def _job_monthly_report(send_admin_document) -> None:
-    """1-го числа в 09:00 — XLSX отчёт по месяцу в админ-чат."""
+    """1-го числа в 09:00 — XLSX отчёт по месяцу в админ-чат.
+
+    Гейт `admin_notify_monthly_stats` (services/notify_toggles.py):
+    выключен — отчёт не формируется и не отправляется.
+    """
     try:
+        from aemr_bot.services import notify_toggles
+
+        if not notify_toggles.is_enabled("admin_notify_monthly_stats"):
+            log.debug("monthly-stats: admin_notify_monthly_stats disabled, suppressed")
+            return
         async with session_scope() as session:
             content, title, count = await stats_service.build_xlsx(session, "month")
         filename = f"appeals_month_{datetime.now(TZ):%Y-%m-%d}.xlsx"
@@ -517,12 +539,19 @@ async def _job_pulse(send_admin_text) -> None:
     Дежурный явно попросил «не присылать pulse ночью» —
     `health-selfcheck` и `healthcheck-ping` продолжают работать как
     fallback, оператор всё равно узнает о реальном сбое.
+
+    Модульный тумблер `admin_notify_pulse` (services/notify_toggles.py):
+    если выключен — пульс не отправляется НЕЗАВИСИМО от времени суток
+    (в отличие от quiet hours, которые подавляют только ночью).
+    startup-pulse (`_job_startup_pulse`) этому тумблеру НЕ подчиняется —
+    разовое диагностическое событие при рестарте, не рутинный heartbeat.
     """
-    # quiet_hours: refresh cache из БД (этот cron — основное место
-    # регулярного обновления, кроме старта бота и `set_value`-hook'а),
-    # затем sync-check.
+    # quiet_hours + notify_toggles: refresh cache из БД (этот cron —
+    # основное место регулярного обновления обоих кэшей, кроме старта
+    # бота и UI-обработчиков тумблеров), затем sync-check.
     try:
         from aemr_bot.db.session import session_scope
+        from aemr_bot.services import notify_toggles
         from aemr_bot.services.quiet_hours import (
             is_quiet_hours_now,
             refresh_cache_from_db,
@@ -530,11 +559,21 @@ async def _job_pulse(send_admin_text) -> None:
 
         async with session_scope() as session:
             await refresh_cache_from_db(session)
+            await notify_toggles.refresh_cache_from_db(session)
         if is_quiet_hours_now():
             log.info("pulse: quiet hours active, suppressed")
             return
+        if not notify_toggles.is_enabled("admin_notify_pulse"):
+            log.debug("pulse: admin_notify_pulse disabled, suppressed")
+            return
     except Exception:
-        log.debug("pulse: quiet_hours check failed, отправляем", exc_info=False)
+        # Сбой самой проверки quiet_hours/notify_toggles (например,
+        # временная недоступность БД при refresh_cache_from_db) —
+        # не должен молчать: на debug это терялось бы в проде, а
+        # это сигнал, что кэш quiet-hours/notify-toggles мог не
+        # обновиться. Пульс всё равно шлём (fail-open — недоступность
+        # хуже, чем лишнее уведомление).
+        log.warning("pulse: quiet_hours check failed, отправляем", exc_info=True)
     now = datetime.now(TZ).strftime("%H:%M")
     sent = await _send_admin_text_with_retry(
         send_admin_text,
@@ -769,8 +808,16 @@ async def _job_working_hours_open_reminder(bot) -> None:
 
     Под сообщением кнопка «📋 Открытые обращения» — тап открывает
     полный список с кнопками действий по каждому.
+
+    Гейт `admin_notify_open_reminder` (services/notify_toggles.py):
+    выключен — напоминалка не считается и не отправляется.
     """
     try:
+        from aemr_bot.services import notify_toggles
+
+        if not notify_toggles.is_enabled("admin_notify_open_reminder"):
+            log.debug("open-reminder: admin_notify_open_reminder disabled, suppressed")
+            return
         if not is_workday(datetime.now(TZ).date()):
             return
 
@@ -778,11 +825,21 @@ async def _job_working_hours_open_reminder(bot) -> None:
             appeals = await appeals_service.list_unanswered(session)
         if not appeals:
             return
-        threshold = datetime.now(timezone.utc) - timedelta(
-            hours=settings.sla_response_hours
-        )
-        in_sla = [a for a in appeals if a.created_at > threshold]
-        overdue = [a for a in appeals if a.created_at <= threshold]
+        # Просрочка — по рабочему времени (services/sla.py), не
+        # календарному: обращение из пятничного вечера не «горит» в
+        # субботу. Раньше здесь же соседствовали datetime.now(timezone.utc)
+        # и datetime.now(TZ) в одной функции (находка ревью) — унифицировано
+        # на TZ (локальное время бота), т.к. sla_service сам приводит к TZ
+        # внутри, а now(TZ) читается счётчиком возраста ниже без конверсии.
+        now = datetime.now(TZ)
+        in_sla = [
+            a for a in appeals
+            if not sla_service.is_overdue(a.created_at, now, settings.sla_response_hours)
+        ]
+        overdue = [
+            a for a in appeals
+            if sla_service.is_overdue(a.created_at, now, settings.sla_response_hours)
+        ]
         header = (
             f"📋 Открытых обращений: {len(appeals)} "
             f"(в SLA — {len(in_sla)}, просрочено — {len(overdue)})"
@@ -804,8 +861,18 @@ async def _job_working_hours_overdue_reminder(bot) -> None:
     """Раз в час на :40 — отдельное напоминание ТОЛЬКО о просроченных.
     Вместе с :10 даёт «каждые полчаса для просрочки». Если нет
     просроченных — тишина. В госпраздники РФ молчит.
+
+    Гейт `admin_notify_overdue_reminder` (services/notify_toggles.py):
+    выключен — напоминалка не считается и не отправляется.
     """
     try:
+        from aemr_bot.services import notify_toggles
+
+        if not notify_toggles.is_enabled("admin_notify_overdue_reminder"):
+            log.debug(
+                "overdue-reminder: admin_notify_overdue_reminder disabled, suppressed"
+            )
+            return
         if not is_workday(datetime.now(TZ).date()):
             return
 
@@ -823,6 +890,29 @@ async def _job_working_hours_overdue_reminder(bot) -> None:
         await _send_with_open_tickets_button(bot, "\n".join(lines))
     except Exception:
         log.exception("working_hours_overdue_reminder crashed")
+
+
+def _on_job_error(event: JobExecutionEvent) -> None:
+    """Централизованная сеть безопасности для ошибок ДО входа в try job'а.
+
+    Каждый _job_* сам оборачивает свою логику в try/except и логирует
+    через log.exception — но это защищает только от исключений ВНУТРИ
+    тела корутины. Ошибки на более раннем этапе (например, сама
+    corutine не может быть создана, или APScheduler не смог её
+    запустить) раньше просто терялись — их некому было залогировать.
+    add_listener на EVENT_JOB_ERROR ловит такие случаи для любого job'а
+    без необходимости трогать каждый по отдельности.
+
+    Без отправки в админ-чат: это подстраховка на случай сбоя ДО
+    попадания в try, а не основной канал алёртов — не плодим шум,
+    основные алёрты уже идут через _send_admin_text_with_retry внутри
+    каждого job'а.
+    """
+    log.error(
+        "cron job %s упал вне собственного try/except",
+        event.job_id,
+        exc_info=event.exception,
+    )
 
 
 # ============================================================================
@@ -1008,6 +1098,56 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             ),
             "overdue-reminder-workhours",
         ),
+        # Catch-up для четырёх retention-джобов (events/pdn/appeals-5y/
+        # audit-log). Misfire grace (_MISFIRE_GRACE_SEC = 120 сек) не
+        # спасает от простоя ДОЛЬШЕ 2 минут в момент тика 04:xx — а
+        # `docker compose up --build`, обновление хоста или сетевой сбой
+        # в 04:00-04:45 запросто длится дольше. Без catch-up такой тик
+        # молча теряется до следующих суток (обнаружено ревью: retention
+        # 152-ФЗ должен срабатывать надёжно, а не «пока повезёт с
+        # аптаймом именно в это окно»).
+        #
+        # Разово через +30 сек после старта — по образцу startup-pulse.
+        # Безопасно запускать при КАЖДОМ старте процесса (а не только
+        # после реального пропуска), потому что все четыре job'а
+        # идемпотентны: каждый фильтрует по `created_at/closed_at <
+        # cutoff` и просто находит 0 совпадений, если предыдущий тик уже
+        # отработал. Повторный прогон не создаёт дублей и не портит
+        # данные повторно.
+        #
+        # `db-backup` в catch-up НЕ включён — тяжёлая операция
+        # (pg_dump + gpg), не годится на «а вдруг пропустили» при каждом
+        # рестарте контейнера; расписание раз в неделю даёт достаточный
+        # запас, а пропуск виден по алёрту `_job_backup_with_alert` и
+        # отслеживается вручную через /backup.
+        (
+            _job_events_retention,
+            DateTrigger(
+                run_date=datetime.now(TZ) + timedelta(seconds=30), timezone=TZ
+            ),
+            "events-retention-catchup",
+        ),
+        (
+            functools.partial(_job_pdn_retention_check, send_admin_text),
+            DateTrigger(
+                run_date=datetime.now(TZ) + timedelta(seconds=30), timezone=TZ
+            ),
+            "pdn-retention-catchup",
+        ),
+        (
+            functools.partial(_job_appeals_5y_retention, send_admin_text),
+            DateTrigger(
+                run_date=datetime.now(TZ) + timedelta(seconds=30), timezone=TZ
+            ),
+            "appeals-5y-retention-catchup",
+        ),
+        (
+            _job_audit_log_retention,
+            DateTrigger(
+                run_date=datetime.now(TZ) + timedelta(seconds=30), timezone=TZ
+            ),
+            "audit-log-retention-catchup",
+        ),
     ]
 
     # Внешний healthcheck-ping — только если URL задан в конфиге.
@@ -1024,11 +1164,16 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
         scheduler.add_job(
             func,
             trigger,
+            id=name,
             name=name,
             max_instances=1,
             coalesce=True,
             misfire_grace_time=_MISFIRE_GRACE_SEC,
         )
+
+    # Централизованный лог ошибок ДО входа в try конкретного job'а
+    # (см. docstring _on_job_error). Без send в админ-чат — не плодим шум.
+    scheduler.add_listener(_on_job_error, EVENT_JOB_ERROR)
 
     return scheduler
 

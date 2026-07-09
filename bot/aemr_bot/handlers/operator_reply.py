@@ -352,20 +352,26 @@ async def _send_reply_to_citizen(
         return False, None
 
     formatted_text = card_format.citizen_reply(fresh_appeal, text)
-    # Картинка оператора, если приложил — пробрасываем жителю рядом
-    # с inline-клавиатурой. limit=1 — формальный ответ оператора это
-    # «письмо» (Приложение 2 Регламента), к нему уместен один кадр-
-    # пояснение, не галерея. deserialize_for_relay в build_outbound
-    # устойчив к отсутствию maxapi (вернёт []), бот не падает.
+    # Картинки оператора, если приложил — пробрасываем жителю рядом
+    # с inline-клавиатурой. Раньше здесь было жёсткое [:1] («один
+    # кадр-пояснение, не галерея») — снято по запросу владельца:
+    # оператору нужно прикладывать несколько фото к одному ответу
+    # (например, «было / стало» или несколько ракурсов проблемы).
+    # deserialize_for_relay в build_outbound устойчив к отсутствию
+    # maxapi (вернёт []), бот не падает.
     #
-    # Сначала считаем ВСЕ приложенные картинки — если оператор приложил
-    # больше одной, шлём ему явное уведомление, чтобы он знал, что
-    # ушла только первая. Молчаливая обрезка ломала UX: оператор не
-    # понимал, почему житель видит «не то, что я приложил».
+    # Лимит — cfg.attachments_per_relay_message (10), а НЕ полный
+    # безлимит: это одно сообщение MAX (текст + клавиатура + вложения),
+    # а не relay-поток из admin_relay.py, который умеет чанковать на
+    # несколько сообщений. Резать на несколько сообщений здесь
+    # означало бы либо дублировать клавиатуру/текст в каждом чанке,
+    # либо оторвать кнопки от части картинок — оба варианта хуже
+    # простого потолка в 10 картинок на один ответ, чего с огромным
+    # запасом хватает на любой реалистичный случай.
     all_operator_images = _image_attachments.image_attachments_from_event(
         event, limit=0
     )
-    operator_images = all_operator_images[:1]
+    operator_images = all_operator_images[: cfg.attachments_per_relay_message]
     outbound_images = _image_attachments.build_outbound_image_attachments(
         operator_images
     )
@@ -395,18 +401,19 @@ async def _send_reply_to_citizen(
             ),
         )
         return False, None
-    # Уведомление оператору о множественных картинках. Шлём ПОСЛЕ
+    # Уведомление оператору, если он приложил больше, чем уходит одним
+    # сообщением (cfg.attachments_per_relay_message). Шлём ПОСЛЕ
     # успешной доставки, чтобы не блокировать сам ответ при сбое
     # admin-канала; _safe_admin_notice проглатывает свои исключения.
-    if len(all_operator_images) > 1:
+    if len(all_operator_images) > len(operator_images):
         await _safe_admin_notice(
             event,
             (
                 f"ℹ️ К ответу по обращению #{appeal_id} были приложены "
-                f"{len(all_operator_images)} картинок — жителю ушла только "
-                f"первая. Шаблон ответа Приложения 2 Регламента ожидает "
-                f"один кадр. Если нужно отправить остальные — пришлите их "
-                f"отдельным ответом на карточку обращения."
+                f"{len(all_operator_images)} картинок — жителю ушли первые "
+                f"{len(operator_images)} (лимит одного сообщения). Если "
+                f"нужно отправить остальные — пришлите их отдельным ответом "
+                f"на карточку обращения."
             ),
         )
     return True, extract_message_id(sent)
@@ -638,23 +645,34 @@ async def _deliver_operator_reply(
             "operator_reply: admin_card.render failed for #%s", appeal.id
         )
 
-    # Развязка финального и промежуточного ответа: текст подтверждения
-    # должен отражать реальное состояние обращения. До этого фикса
+    # Развязка финального и промежуточного ответа. До этого фикса
     # промежуточный ответ показывал «обращение #N закрыто» — регрессия,
     # путала оператора (житель остаётся в работе, но карточка говорит
-    # обратное). Теперь:
-    # - is_final=True  → ANSWERED+CLOSED, «финальный ответ отправлен»;
-    # - is_final=False → IN_PROGRESS, «промежуточный, остаётся в работе».
-    confirm_text = (
-        texts.ADMIN_REPLY_DELIVERED_FINAL
-        if is_final
-        else texts.ADMIN_REPLY_DELIVERED_INTERMEDIATE
-    ).format(number=appeal.id)
-    await event.bot.send_message(
-        chat_id=get_chat_id(event),
-        text=confirm_text,
-        attachments=[keyboards.op_back_to_menu_keyboard()],
-    )
+    # обратное).
+    #
+    # is_final=True: отдельная карточка-подтверждение (ADMIN_REPLY_
+    # DELIVERED_FINAL, «Финальный ответ отправлен жителю…») убрана по
+    # решению владельца — она дублировала свежий event_header карточки
+    # обращения выше (`reply_event_header`, «✉️ Финальный ответ отправлен
+    # по обращению #N — статус «Завершено»», строка ~629), который
+    # `admin_card_service.render` уже опубликовал только что. Оператору
+    # достаточно ОДНОГО подтверждения, не двух карточек подряд с одним
+    # и тем же смыслом. Перевод статуса, обновление карточки обращения
+    # и запись в audit_log происходят раньше (см. `_persist_reply_and_card`
+    # выше) и этой правкой не затронуты.
+    #
+    # is_final=False: отдельное сообщение оставлено — оно несёт другую
+    # информацию («остаётся в работе, можно дослать уточнения»), которой
+    # нет в event_header промежуточного ответа.
+    if not is_final:
+        confirm_text = texts.ADMIN_REPLY_DELIVERED_INTERMEDIATE.format(
+            number=appeal.id
+        )
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=confirm_text,
+            attachments=[keyboards.op_back_to_menu_keyboard()],
+        )
     return True
 
 

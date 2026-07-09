@@ -26,6 +26,7 @@ from aemr_bot.utils.event import (
     get_user_id,
     send_or_edit_screen,
 )
+from aemr_bot.utils.pii_mask import mask_phone as _mask_phone
 
 log = logging.getLogger(__name__)
 
@@ -543,24 +544,3 @@ async def run_audience_action(event, payload: str) -> None:
         await _render_audience_page(event, suffix, page=1)
 
 
-def _mask_phone(phone: str | None) -> str:
-    """Маскирование телефона для admin-выборок: «+7***1234».
-
-    PII в admin-чате попадает в backup MAX-серверов и в скриншоты
-    операторов; 152-ФЗ erasure эту копию не достанет. Полный номер
-    нужен реально только при /erase phone= — точечно. В list-выводах
-    оставляем 4 последние цифры и страновой префикс для распознавания.
-
-    SECURITY_REVIEW_2026-05-28 §A7: при len(digits) < 4 возвращаем
-    «—», а не raw `phone` — раньше короткие garbage-input'ы (test
-    данные, частично стёртые номера) выходили в admin-чат без
-    маскировки. Лучше «нет данных» чем «выдали как есть».
-    """
-    if not phone:
-        return "—"
-    digits = "".join(ch for ch in phone if ch.isdigit())
-    if len(digits) < 4:
-        return "—"
-    tail = digits[-4:]
-    prefix = "+7" if digits[0] in {"7", "8"} and len(digits) >= 11 else "+"
-    return f"{prefix}***{tail}"

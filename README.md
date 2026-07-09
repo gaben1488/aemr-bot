@@ -177,7 +177,7 @@ DATABASE_URL=postgresql+asyncpg://aemr:<пароль>@localhost:5432/aemr pytest
 
 **Режим связи:** `BOT_MODE=polling` (по умолчанию). Для `webhook` дополнительно нужны `WEBHOOK_URL` и `WEBHOOK_SECRET` (минимум 16 символов).
 
-**Бизнес-лимиты и SLA:** `TZ=Asia/Kamchatka`, `SLA_RESPONSE_HOURS=4`, `ANSWER_MAX_CHARS=300`, `SUMMARY_MAX_CHARS=2000`, `ATTACHMENTS_MAX_PER_APPEAL=20`. Анти-флуд дополнений: `FOLLOWUP_MAX_PER_HOUR_PER_APPEAL=5`, `FOLLOWUP_MIN_INTERVAL_SECONDS=30` (лимит «не более 3 новых сообщений в час на жителя» зашит в код и не настраивается).
+**Бизнес-лимиты и SLA:** `TZ=Asia/Kamchatka`, `SLA_RESPONSE_HOURS=4`, `ANSWER_MAX_CHARS=800`, `SUMMARY_MAX_CHARS=2000`, `ATTACHMENTS_MAX_PER_APPEAL=20`. Анти-флуд дополнений: `FOLLOWUP_MAX_PER_HOUR_PER_APPEAL=5`, `FOLLOWUP_MIN_INTERVAL_SECONDS=30` (лимит «не более 3 новых сообщений в час на жителя» зашит в код и не настраивается).
 
 **Рассылки:** `BROADCAST_MAX_CHARS=1000`, `BROADCAST_RATE_LIMIT_PER_SEC=1.0` (намеренно ниже заявленного сервером MAX потолка 2 req/s, чтобы рассылка не конкурировала с ответами), `BROADCAST_WIZARD_TTL_SEC=300`.
 
@@ -278,7 +278,7 @@ aemr-bot/
 
 - **Единая база знаний (вики)** — `docs/site/index.html`. Один самодостаточный HTML-файл (открыть в браузере): разделы для жителя, оператора, администратора и разработчика, плюс концепция, безопасность, правовое сопровождение и справочник фоновых задач и команд. Сюда сведены прежние отдельные руководства — установка, эксплуатация, архитектура.
 - **Регламент (Порядок работы с сообщениями)** — [docs/Регламент_ULTIMATE.md](docs/Регламент_ULTIMATE.md).
-- **Политика обработки персональных данных** — [docs/Политика_v2.md](docs/Политика_v2.md) и [docs/PRIVACY.pdf](docs/PRIVACY.pdf).
+- **Политика обработки персональных данных** — [docs/Политика_конфиденциальности_ИС_Чат-бот_MAX.md](docs/Политика_конфиденциальности_ИС_Чат-бот_MAX.md) и [docs/PRIVACY.pdf](docs/PRIVACY.pdf).
 - **Зависимости и их обоснование** — [docs/DEPS.md](docs/DEPS.md).
 - **Конфигурация** — [infra/.env.example](infra/.env.example) (все переменные с подробными комментариями).
 

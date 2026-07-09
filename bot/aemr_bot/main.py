@@ -635,6 +635,23 @@ async def main() -> None:
             exc_info=False,
         )
 
+    # Прогрев in-memory cache для модульных тумблеров уведомлений
+    # (services/notify_toggles.py) — тот же мотив, что у quiet_hours
+    # выше: до первого refresh кэш default True (не подавляет), но
+    # прогрев сразу после старта подтягивает реальное состояние из БД,
+    # если оператор уже выключил какой-то тумблер до рестарта.
+    try:
+        from aemr_bot.services import notify_toggles
+
+        async with session_scope() as session:
+            await notify_toggles.refresh_cache_from_db(session)
+    except Exception:
+        log.debug(
+            "notify_toggles.refresh_cache_from_db boot warmup failed — "
+            "cache останется в default enabled, безопасно",
+            exc_info=False,
+        )
+
     # Прогрев geo-индексов (~2.6 МБ GeoJSON) — СТРОГО в фоне, не блокируя
     # старт polling. Без него первый житель, нажавший «Поделиться
     # геолокацией», оплатил бы холодную загрузку прямо в handler'е, что в

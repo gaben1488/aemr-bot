@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from aemr_bot.db.models import Appeal, AppealStatus, Message, MessageDirection, User
+from aemr_bot.services import sla as sla_service
 
 
 async def create_appeal(
@@ -445,6 +446,23 @@ async def find_overdue_unanswered(
     второй IN-query на тысячи id. Дальше всё равно обрезается в
     форматтере, но БД-запрос уже отдал всё. 500 заведомо больше
     реальной очереди.
+
+    Просрочка считается по РАБОЧЕМУ времени (services/sla.py), а не
+    календарному: обращение, поступившее в пятницу вечером, не должно
+    считаться просроченным в субботу, если рабочих часов ещё не было.
+
+    SQL-префильтр ниже (`created_at <= now - sla_hours` КАЛЕНДАРНО)
+    сознательно оставлен как есть — это корректная надмножество-
+    оптимизация, а не забытая календарная логика: business-время между
+    двумя моментами всегда ≤ календарного (рабочее окно — подмножество
+    суток), поэтому если business_seconds_between(created_at, now) уже
+    достиг sla_hours*3600, то и календарная разница now - created_at
+    тем более ≥ sla_hours часов. Значит порог по календарному времени
+    не может ОТСЕЯТЬ настоящую просрочку (не теряет кандидатов), а лишь
+    расширяет выборку — точный отбор доделывает Python-фильтр по
+    `sla_service.is_overdue` ниже. Смысл префильтра — не тащить из БД
+    вообще все открытые обращения (см. защиту LIMIT выше), а не
+    заменить собой правильный business-time расчёт.
     """
     threshold = datetime.now(timezone.utc) - timedelta(hours=sla_hours)
     res = await session.scalars(
@@ -459,7 +477,13 @@ async def find_overdue_unanswered(
         .order_by(Appeal.created_at)
         .limit(limit)
     )
-    return list(res)
+    candidates = list(res)
+    now = datetime.now(timezone.utc)
+    return [
+        appeal
+        for appeal in candidates
+        if sla_service.is_overdue(appeal.created_at, now, sla_hours)
+    ]
 
 
 async def count_open(session: AsyncSession) -> int:
@@ -506,13 +530,24 @@ async def purge_old_appeals_content(
         Appeal.closed_at.isnot(None),
         Appeal.closed_at <= threshold,
     )
+    # address — тоже ПДн (адрес обращения жителя). При erase по отзыву
+    # согласия (services/users.py::_redact_appeal_payloads_for_user)
+    # address уже чистится вместе с summary/attachments; здесь этой же
+    # симметрии не хватало — retention обнулял summary/attachments,
+    # но оставлял address висеть в БД дольше положенных 5 лет (152-ФЗ
+    # ст. 5 ч. 7 «срок хранения ПДн не должен превышать сроков,
+    # необходимых для целей обработки»). Приводим к тому же поведению.
     appeals_result = await session.execute(
         update(Appeal)
         .where(
             Appeal.id.in_(closed_old_appeals),
-            or_(Appeal.summary.isnot(None), Appeal.attachments != []),
+            or_(
+                Appeal.summary.isnot(None),
+                Appeal.attachments != [],
+                Appeal.address.isnot(None),
+            ),
         )
-        .values(summary=None, attachments=[])
+        .values(summary=None, attachments=[], address=None)
     )
     purged_appeals = appeals_result.rowcount or 0
 

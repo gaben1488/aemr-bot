@@ -160,7 +160,7 @@ async def relay_attachments_to_admin(
     appeal_id: int,
     admin_mid: str | None,
     stored_attachments: list[dict],
-) -> None:
+) -> bool:
     """Переслать сохранённые вложения жителя в служебную группу.
 
     Если admin_mid задан и maxapi предоставляет NewMessageLink, делаем
@@ -171,12 +171,20 @@ async def relay_attachments_to_admin(
     Лимит `cfg.attachments_per_relay_message` режет большие наборы на
     батчи: серверный лимит MAX на одно сообщение не задокументирован,
     но 10 вложений за раз стабильно проходят.
+
+    Возвращает True, если ВСЕ батчи доставлены (или вложений не было).
+    False — если хотя бы один батч не удался после всех retry-попыток.
+    При ПОЛНОМ провале (ни один батч не доставлен, хотя бы один был) —
+    шлём critical-алёрт в админ-группу: без него вложения жителя
+    (фото места ямы, скан документа) молча пропадают из виду оператора
+    — БД-запись уже закоммичена, а relay это best-effort фон, который
+    раньше проигрывал только в лог.
     """
     if not cfg.admin_group_id or not stored_attachments:
-        return
+        return True
     relayable = deserialize_for_relay(stored_attachments)
     if not relayable:
-        return
+        return True
     try:
         from maxapi.enums.message_link_type import MessageLinkType
         from maxapi.types.message import NewMessageLink
@@ -203,6 +211,7 @@ async def relay_attachments_to_admin(
         for i in range(0, len(relayable), chunk_size)
     ]
     total_batches = len(batches)
+    succeeded = 0
     for idx, batch in enumerate(batches, start=1):
         header = (
             f"Вложения к обращению #{appeal_id}"
@@ -220,7 +229,34 @@ async def relay_attachments_to_admin(
                 link=link,
             )
 
-        await _send_with_retry(
+        ok = await _send_with_retry(
             _factory, batch_idx=idx, total_batches=total_batches,
             appeal_id=appeal_id,
         )
+        if ok:
+            succeeded += 1
+
+    if succeeded == 0:
+        # Полный провал: ни один батч не дошёл. Частичный провал
+        # (succeeded < total_batches, но > 0) НЕ алёртим — оператор уже
+        # видит часть вложений и карточку обращения, это не «пропало
+        # незаметно», а деградация, видная по логам relay batch.
+        try:
+            from aemr_bot.services import admin_bus
+
+            await admin_bus.send(
+                bot,
+                text=(
+                    f"⚠️ Вложения обращения #{appeal_id} не доставлены "
+                    f"(сбой сети), проверьте вручную."
+                ),
+                critical=True,
+            )
+        except Exception:
+            log.exception(
+                "relay_attachments_to_admin: алёрт о провале доставки "
+                "для #%s тоже не удался",
+                appeal_id,
+            )
+        return False
+    return succeeded == total_batches

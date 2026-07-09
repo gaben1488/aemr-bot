@@ -8,6 +8,7 @@
 - CRUD-карточки для текстов, list (topics/localities) и obj
   (emergency/transport).
 - `op_settings_quiet_*` — тихий режим (toggle + wizard для часов).
+- `op_settings_notify_*` — модульные тумблеры служебных уведомлений.
 - `op_settings_author_*` — автор коммитов.
 - `op_settings_pr_*` — PR-flow.
 - `op_settings_expert_*` — экспертный flat-list ключей.
@@ -31,6 +32,7 @@ def op_settings_menu_keyboard(dirty_count: int = 0):
     kb.row(CallbackButton(text="🚌 Диспетчерские транспорта", payload=cp.op_set("obj:transport_dispatcher_contacts")))
     kb.row(CallbackButton(text="👤 Автор коммитов от бота", payload=cp.op_set("author")))
     kb.row(CallbackButton(text="🌙 Тихий режим в админ-чате", payload=cp.op_set("quiet")))
+    kb.row(CallbackButton(text="🔔 Уведомления", payload=cp.op_set("notify")))
     pr_label = "💾 Создать PR с изменениями"
     if dirty_count > 0:
         pr_label = f"💾 Создать PR ({dirty_count} изм.)"
@@ -157,6 +159,52 @@ def op_settings_quiet_input_cancel_keyboard():
     return kb.as_markup()
 
 
+# Порядок + подписи тумблеров уведомлений. Единый источник для этой
+# клавиатуры И для текста карточки в handlers/admin_settings_notify.py
+# (тот модуль импортирует NOTIFY_LABELS отсюда, а не наоборот — так
+# зависимость идёт по обычному направлению handlers → ui, без цикла
+# ui → handlers, которого нет больше нигде в settings_keyboards.py).
+NOTIFY_TOGGLE_KEYS: tuple[str, ...] = (
+    "admin_notify_pulse",
+    "admin_notify_consent",
+    "admin_notify_subscriptions",
+    "admin_notify_open_reminder",
+    "admin_notify_overdue_reminder",
+    "admin_notify_monthly_stats",
+)
+
+NOTIFY_LABELS: dict[str, str] = {
+    "admin_notify_pulse": "Пульс (heartbeat)",
+    "admin_notify_consent": "Согласие на ПДн дано",
+    "admin_notify_subscriptions": "Подписки/отписки на рассылку",
+    "admin_notify_open_reminder": "Напоминалка: открытые обращения",
+    "admin_notify_overdue_reminder": "Напоминалка: просроченные обращения",
+    "admin_notify_monthly_stats": "Месячный отчёт (XLSX)",
+}
+
+
+def op_settings_notify_keyboard(values: dict[str, bool]):
+    """Карточка «🔔 Уведомления» — шесть независимых тумблеров.
+
+    ``values`` — словарь {key: bool} с текущим состоянием (из БД/кэша).
+    Каждая кнопка тапом переключает СВОЙ ключ через
+    ``op:set:notify:toggle:<key>`` и перерисовывает карточку.
+    """
+    kb = InlineKeyboardBuilder()
+    for key in NOTIFY_TOGGLE_KEYS:
+        enabled = values.get(key, True)
+        mark = "✅" if enabled else "⛔"
+        kb.row(
+            CallbackButton(
+                text=f"{mark} {NOTIFY_LABELS[key]}",
+                payload=cp.op_set(f"notify:toggle:{key}"),
+            )
+        )
+    kb.row(CallbackButton(text="↩️ К настройкам", payload=cp.OP_SETTINGS))
+    kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
+    return kb.as_markup()
+
+
 def op_settings_author_keyboard():
     """Меню «👤 Автор коммитов от бота»."""
     kb = InlineKeyboardBuilder()
@@ -211,6 +259,9 @@ __all__ = [
     "op_settings_obj_item_keyboard",
     "op_settings_quiet_keyboard",
     "op_settings_quiet_input_cancel_keyboard",
+    "op_settings_notify_keyboard",
+    "NOTIFY_TOGGLE_KEYS",
+    "NOTIFY_LABELS",
     "op_settings_author_keyboard",
     "op_settings_pr_confirm_keyboard",
     "op_settings_pr_done_keyboard",

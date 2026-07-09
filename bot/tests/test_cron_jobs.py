@@ -92,6 +92,70 @@ class TestPulse:
         assert send.call_count == len(cron._ADMIN_SEND_RETRY_DELAYS_SEC) + 1
 
 
+class TestPulseNotifyToggleGate:
+    """_job_pulse: гейт `admin_notify_pulse` (services/notify_toggles.py) —
+    независимый от quiet hours, действует круглосуточно."""
+
+    @pytest.fixture(autouse=True)
+    def _clean(self):
+        from aemr_bot.services import notify_toggles
+        notify_toggles.reset_cache_for_tests()
+        yield
+        notify_toggles.reset_cache_for_tests()
+
+    @pytest.mark.asyncio
+    async def test_pulse_suppressed_when_toggle_disabled(self) -> None:
+        send = AsyncMock()
+        fake_scope = _make_fake_session_scope()
+        with patch("aemr_bot.services.cron.session_scope", fake_scope), \
+             patch(
+                 "aemr_bot.services.quiet_hours.refresh_cache_from_db",
+                 AsyncMock(),
+             ), \
+             patch(
+                 "aemr_bot.services.notify_toggles.refresh_cache_from_db",
+                 AsyncMock(),
+             ), \
+             patch(
+                 "aemr_bot.services.notify_toggles.is_enabled",
+                 side_effect=lambda key: key != "admin_notify_pulse",
+             ):
+            await cron._job_pulse(send)
+        send.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_pulse_sent_when_toggle_enabled(self) -> None:
+        send = AsyncMock()
+        fake_scope = _make_fake_session_scope()
+        with patch("aemr_bot.services.cron.session_scope", fake_scope), \
+             patch(
+                 "aemr_bot.services.quiet_hours.refresh_cache_from_db",
+                 AsyncMock(),
+             ), \
+             patch(
+                 "aemr_bot.services.notify_toggles.refresh_cache_from_db",
+                 AsyncMock(),
+             ), \
+             patch(
+                 "aemr_bot.services.notify_toggles.is_enabled",
+                 return_value=True,
+             ):
+            await cron._job_pulse(send)
+        send.assert_called_once()
+
+
+def _make_fake_session_scope():
+    """Тонкий async context manager для `session_scope()` в тестах
+    гейтов — возвращает MagicMock как сессию, ничего не коммитит."""
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def _scope():
+        yield MagicMock()
+
+    return _scope
+
+
 class TestStartupPulse:
     """_job_startup_pulse — catch-up хеартбит при рестарте процесса."""
 
@@ -384,6 +448,106 @@ class TestFunnelWatchdog:
         assert "🧹" in msg
         # Подсказка про проверку логов/IT
         assert "проблем" in msg.lower() or "Funnel watchdog" in msg
+
+
+class TestNotifyToggleGates:
+    """Гейты `admin_notify_*` для monthly-report / open-reminder /
+    overdue-reminder (services/notify_toggles.py) — выключен тумблер →
+    job не считает данные и не шлёт сообщение; включён → работает
+    как раньше."""
+
+    @pytest.fixture(autouse=True)
+    def _clean(self):
+        from aemr_bot.services import notify_toggles
+        notify_toggles.reset_cache_for_tests()
+        yield
+        notify_toggles.reset_cache_for_tests()
+
+    # ── monthly report ──────────────────────────────────────────────
+
+    @pytest.mark.asyncio
+    async def test_monthly_report_suppressed_when_disabled(self) -> None:
+        send_doc = AsyncMock()
+        with patch(
+            "aemr_bot.services.notify_toggles.is_enabled", return_value=False,
+        ):
+            await cron._job_monthly_report(send_doc)
+        send_doc.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_monthly_report_sent_when_enabled(self) -> None:
+        send_doc = AsyncMock()
+        with patch(
+            "aemr_bot.services.notify_toggles.is_enabled", return_value=True,
+        ), patch.object(cron, "session_scope") as scope, patch.object(
+            cron.stats_service, "build_xlsx",
+            AsyncMock(return_value=(b"xlsx-bytes", "Июль 2026", 5)),
+        ):
+            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
+            scope.return_value.__aexit__ = AsyncMock(return_value=False)
+            await cron._job_monthly_report(send_doc)
+        send_doc.assert_awaited_once()
+        kwargs = send_doc.await_args.kwargs
+        assert kwargs["content"] == b"xlsx-bytes"
+        assert "5 обращений" in kwargs["caption"]
+
+    # ── open reminder ────────────────────────────────────────────────
+
+    @pytest.mark.asyncio
+    async def test_open_reminder_suppressed_when_disabled(self) -> None:
+        bot = AsyncMock()
+        with patch(
+            "aemr_bot.services.notify_toggles.is_enabled", return_value=False,
+        ), patch.object(cron, "is_workday", return_value=True) as workday:
+            await cron._job_working_hours_open_reminder(bot)
+        # Гейт срабатывает ДО проверки рабочего дня — считать не нужно.
+        workday.assert_not_called()
+        bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_open_reminder_runs_when_enabled(self) -> None:
+        bot = AsyncMock()
+        with patch(
+            "aemr_bot.services.notify_toggles.is_enabled", return_value=True,
+        ), patch.object(cron, "is_workday", return_value=True), patch.object(
+            cron, "session_scope",
+        ) as scope, patch.object(
+            cron.appeals_service, "list_unanswered", AsyncMock(return_value=[]),
+        ):
+            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
+            scope.return_value.__aexit__ = AsyncMock(return_value=False)
+            await cron._job_working_hours_open_reminder(bot)
+        # Список пуст → тишина (по контракту job'а), но исключений нет
+        # и гейт не заблокировал выполнение раньше времени.
+        bot.send_message.assert_not_called()
+
+    # ── overdue reminder ─────────────────────────────────────────────
+
+    @pytest.mark.asyncio
+    async def test_overdue_reminder_suppressed_when_disabled(self) -> None:
+        bot = AsyncMock()
+        with patch(
+            "aemr_bot.services.notify_toggles.is_enabled", return_value=False,
+        ), patch.object(cron, "is_workday", return_value=True) as workday:
+            await cron._job_working_hours_overdue_reminder(bot)
+        workday.assert_not_called()
+        bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_overdue_reminder_runs_when_enabled(self) -> None:
+        bot = AsyncMock()
+        with patch(
+            "aemr_bot.services.notify_toggles.is_enabled", return_value=True,
+        ), patch.object(cron, "is_workday", return_value=True), patch.object(
+            cron, "session_scope",
+        ) as scope, patch.object(
+            cron.appeals_service, "find_overdue_unanswered",
+            AsyncMock(return_value=[]),
+        ):
+            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
+            scope.return_value.__aexit__ = AsyncMock(return_value=False)
+            await cron._job_working_hours_overdue_reminder(bot)
+        bot.send_message.assert_not_called()
 
 
 class TestFormatAppealLines:

@@ -437,6 +437,24 @@ class TestRouteSetActionBranches:
         start.assert_awaited_once_with(event, 42, which="end")
 
     @pytest.mark.asyncio
+    async def test_notify_branch_shows_notify_card(self) -> None:
+        from aemr_bot.handlers import admin_settings as mod
+
+        event = make_event()
+        with patch.object(mod, "_show_notify_card", AsyncMock()) as show:
+            await mod._route_set_action(event, 1, "notify")
+        show.assert_awaited_once_with(event)
+
+    @pytest.mark.asyncio
+    async def test_notify_toggle_branch(self) -> None:
+        from aemr_bot.handlers import admin_settings as mod
+
+        event = make_event()
+        with patch.object(mod, "_toggle_notify", AsyncMock()) as toggle:
+            await mod._route_set_action(event, 1, "notify:toggle:admin_notify_pulse")
+        toggle.assert_awaited_once_with(event, "admin_notify_pulse")
+
+    @pytest.mark.asyncio
     async def test_pr_start_branch(self) -> None:
         from aemr_bot.handlers import admin_settings as mod
 
@@ -659,6 +677,138 @@ class TestQuietHoursWizard:
         assert args[2] == 23
         audit.assert_awaited_once()
         show.assert_awaited_once()
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Notify toggles wizard — карточка «🔔 Уведомления»
+# ──────────────────────────────────────────────────────────────────────
+
+
+class TestNotifyTogglesWizard:
+    """`_show_notify_card` / `_toggle_notify` — модульные тумблеры
+    служебных уведомлений (по образцу TestQuietHoursWizard)."""
+
+    @pytest.fixture(autouse=True)
+    def _clean(self):
+        from aemr_bot.services import notify_toggles
+        notify_toggles.reset_cache_for_tests()
+        yield
+        notify_toggles.reset_cache_for_tests()
+
+    @pytest.mark.asyncio
+    async def test_show_notify_card_renders_all_six_states(self) -> None:
+        # `_show_notify_card` живёт в admin_settings_notify — патчим
+        # session_scope/settings_store/send_or_edit_screen на нём (тот
+        # же урок PR #139, что и для quiet).
+        from aemr_bot.handlers import admin_settings_notify as mod
+
+        event = make_event()
+
+        values = {
+            "admin_notify_pulse": True,
+            "admin_notify_consent": False,
+            "admin_notify_subscriptions": True,
+            "admin_notify_open_reminder": False,
+            "admin_notify_overdue_reminder": True,
+            "admin_notify_monthly_stats": False,
+        }
+
+        async def fake_get(_session, key):
+            return values.get(key)
+
+        with patch.object(mod, "session_scope") as scope, \
+             patch(
+                 "aemr_bot.services.notify_toggles.refresh_cache_from_db",
+                 AsyncMock(),
+             ), \
+             patch.object(mod.settings_store, "get", side_effect=fake_get), \
+             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
+            scope.return_value.__aexit__ = AsyncMock(return_value=False)
+            await mod._show_notify_card(event)
+        send.assert_awaited_once()
+        kwargs = send.await_args.kwargs
+        text = kwargs["text"]
+        # Три включённых — ✅, три выключенных — ⛔.
+        assert text.count("✅") == 3
+        assert text.count("⛔") == 3
+        # Юридическая оговорка про 152-ФЗ присутствует.
+        assert "152-ФЗ" in text
+        assert "не отключаются" in text
+
+    @pytest.mark.asyncio
+    async def test_toggle_notify_flips_value(self) -> None:
+        from aemr_bot.handlers import admin_settings_notify as mod
+
+        event = make_event()
+
+        with patch.object(mod, "session_scope") as scope, \
+             patch.object(mod.settings_store, "get",
+                          AsyncMock(return_value=True)), \
+             patch.object(mod.settings_store, "set_value",
+                          AsyncMock()) as set_value, \
+             patch(
+                 "aemr_bot.services.notify_toggles.refresh_cache_from_db",
+                 AsyncMock(),
+             ), \
+             patch.object(mod, "_show_notify_card", AsyncMock()):
+            sess = MagicMock()
+            sess.commit = AsyncMock()
+            scope.return_value.__aenter__ = AsyncMock(return_value=sess)
+            scope.return_value.__aexit__ = AsyncMock(return_value=False)
+            await mod._toggle_notify(event, "admin_notify_pulse")
+        # Flip True → False.
+        set_value.assert_awaited_once()
+        args = set_value.await_args.args
+        assert args[1] == "admin_notify_pulse"
+        assert args[2] is False
+
+    @pytest.mark.asyncio
+    async def test_toggle_notify_unknown_key_is_noop(self) -> None:
+        """Незнакомый ключ (порча payload'а) — не падает, просто
+        перерисовывает карточку без изменений settings."""
+        from aemr_bot.handlers import admin_settings_notify as mod
+
+        event = make_event()
+        with patch.object(mod.settings_store, "set_value",
+                          AsyncMock()) as set_value, \
+             patch.object(mod, "_show_notify_card", AsyncMock()) as show:
+            await mod._toggle_notify(event, "not_a_real_key")
+        set_value.assert_not_called()
+        show.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_toggle_notify_each_key_independent(self) -> None:
+        """Переключение одного ключа не трогает остальные — каждый
+        toggle-вызов адресует ровно свой settings_store-ключ."""
+        from aemr_bot.handlers import admin_settings_notify as mod
+
+        for key in (
+            "admin_notify_consent",
+            "admin_notify_subscriptions",
+            "admin_notify_open_reminder",
+            "admin_notify_overdue_reminder",
+            "admin_notify_monthly_stats",
+        ):
+            event = make_event()
+            with patch.object(mod, "session_scope") as scope, \
+                 patch.object(mod.settings_store, "get",
+                              AsyncMock(return_value=False)), \
+                 patch.object(mod.settings_store, "set_value",
+                              AsyncMock()) as set_value, \
+                 patch(
+                     "aemr_bot.services.notify_toggles.refresh_cache_from_db",
+                     AsyncMock(),
+                 ), \
+                 patch.object(mod, "_show_notify_card", AsyncMock()):
+                sess = MagicMock()
+                sess.commit = AsyncMock()
+                scope.return_value.__aenter__ = AsyncMock(return_value=sess)
+                scope.return_value.__aexit__ = AsyncMock(return_value=False)
+                await mod._toggle_notify(event, key)
+            args = set_value.await_args.args
+            assert args[1] == key
+            assert args[2] is True  # False → True
 
 
 # ──────────────────────────────────────────────────────────────────────

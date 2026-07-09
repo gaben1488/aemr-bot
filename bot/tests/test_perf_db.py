@@ -105,6 +105,13 @@ def _operator_reply_cell(content: bytes) -> object:
     return ws.cell(row=2, column=11).value
 
 
+def _phone_cell(content: bytes) -> object:
+    """Значение ячейки «Телефон» (колонка 4) первой строки данных."""
+    wb = load_workbook(io.BytesIO(content))
+    ws = wb.active
+    return ws.cell(row=2, column=4).value
+
+
 # ══════════════════════════════════════════════════════════════════════
 # (a) Миграция 0018 — trigram-индексы
 # ══════════════════════════════════════════════════════════════════════
@@ -315,6 +322,33 @@ class TestBuildXlsxDoesNotMaterializeMessages:
         content, _title, _count = await stats.build_xlsx(sess, "all")
 
         assert _operator_reply_cell(content) in (None, "")
+
+    @pytest.mark.asyncio
+    async def test_phone_column_is_masked_not_raw(self) -> None:
+        """152-ФЗ: XLSX-выгрузка скачивается оператором на диск и может
+        уйти дальше без контроля доступа admin-чата — полный номер
+        телефона в файле недопустим. Колонка «Телефон» должна нести
+        маску `mask_phone` (+7***XXXX), а не сырой `user.phone`.
+        Регрессия: раньше build_xlsx писал `u.phone` напрямую, без
+        маски (см. `aemr_bot/utils/pii_mask.py::mask_phone`)."""
+        appeal = _appeal(
+            id=1, messages=[], user=_user(phone="+79991234567")
+        )
+        sess = _CapturingSession([appeal], reply_rows=[])
+
+        content, _title, _count = await stats.build_xlsx(sess, "all")
+
+        assert _phone_cell(content) == "+7***4567"
+        assert "9991234567" not in str(_phone_cell(content))
+
+    @pytest.mark.asyncio
+    async def test_phone_column_empty_dash_when_user_missing_phone(self) -> None:
+        appeal = _appeal(id=2, messages=[], user=_user(phone=None))
+        sess = _CapturingSession([appeal], reply_rows=[])
+
+        content, _title, _count = await stats.build_xlsx(sess, "all")
+
+        assert _phone_cell(content) == "—"
 
 
 class TestLoadLastOperatorRepliesPure:

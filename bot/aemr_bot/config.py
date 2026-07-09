@@ -51,8 +51,18 @@ class Settings(BaseSettings):
 
     timezone: str = Field("Asia/Kamchatka", alias="TZ")
     sla_response_hours: int = Field(4, alias="SLA_RESPONSE_HOURS")
+    # Границы рабочего окна для расчёта SLA-просрочки (services/sla.py) —
+    # локальное время по `timezone` (Камчатка). SLA-часы копятся ТОЛЬКО
+    # внутри [sla_work_start_hour, sla_work_end_hour) рабочих дней
+    # (calendar_ru.is_workday: пн-пт минус праздники РФ). Обед НЕ
+    # вычитаем сознательно: напоминалки-cron и так молчат в обеденный час
+    # (см. _job_working_hours_open_reminder), а вычитание обеда из самого
+    # SLA-счётчика усложнило бы объяснимость дедлайна оператору
+    # («почему просрочка не в ровно 13:00+4ч») без реальной пользы.
+    sla_work_start_hour: int = Field(9, alias="SLA_WORK_START_HOUR", ge=0, le=23)
+    sla_work_end_hour: int = Field(18, alias="SLA_WORK_END_HOUR", ge=1, le=24)
     appeal_collect_timeout_seconds: int = Field(60, alias="APPEAL_TIMEOUT")
-    answer_max_chars: int = Field(300, alias="ANSWER_MAX_CHARS")
+    answer_max_chars: int = Field(800, alias="ANSWER_MAX_CHARS")
     name_max_chars: int = Field(120, alias="NAME_MAX_CHARS")
     address_max_chars: int = Field(500, alias="ADDRESS_MAX_CHARS")
     # Жёсткие ограничения на одно обращение. summary 2000 оставляет запас
@@ -249,6 +259,15 @@ class Settings(BaseSettings):
             if not stripped or stripped.startswith("#"):
                 return None
         return v
+
+    @model_validator(mode="after")
+    def _enforce_sla_work_window(self):
+        if self.sla_work_start_hour >= self.sla_work_end_hour:
+            raise ValueError(
+                "SLA_WORK_START_HOUR must be strictly less than SLA_WORK_END_HOUR "
+                f"(got {self.sla_work_start_hour} >= {self.sla_work_end_hour})"
+            )
+        return self
 
     @model_validator(mode="after")
     def _enforce_webhook_secret(self):

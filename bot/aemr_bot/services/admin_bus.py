@@ -121,8 +121,12 @@ class _GlobalOutgoingLimiter:
             if wait > 0:
                 await asyncio.sleep(wait)
         except Exception:
-            # Никогда не ломаем отправку из-за лимитера.
-            log.debug("outgoing-limiter: acquire failed, fail-open", exc_info=False)
+            # Никогда не ломаем отправку из-за лимитера, но fail-open —
+            # это единственный сигнал, что темп исходящих временно не
+            # регулируется (риск 429 от MAX под нагрузкой) — на уровне
+            # debug такое молча терялось бы в проде (debug обычно не
+            # включён), warning делает это видимым в обычных логах.
+            log.warning("outgoing-limiter: acquire failed, fail-open", exc_info=True)
 
 
 _outgoing_limiter: _GlobalOutgoingLimiter | None = None

@@ -270,11 +270,29 @@ class TestRunReplyIntentRaceWarning:
 
 class TestRunReplyCancel:
     @pytest.mark.asyncio
+    async def test_not_operator_returns(self) -> None:
+        """P1 #6: гейт ensure_operator — не-оператор не должен ни
+        снимать reply-intent, ни получать подтверждение отмены."""
+        from aemr_bot.handlers import admin_appeal_ops
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.ack_callback", AsyncMock()) as ack, \
+             patch("aemr_bot.handlers.operator_reply.drop_reply_intent") as drop:
+            await admin_appeal_ops.run_reply_cancel(event)
+        drop.assert_not_called()
+        event.bot.send_message.assert_not_called()
+        ack.assert_awaited_once()
+
+    @pytest.mark.asyncio
     async def test_drops_intent_and_confirms(self) -> None:
         from aemr_bot.handlers import admin_appeal_ops
 
         event = _make_event()
-        with patch("aemr_bot.handlers.operator_reply.drop_reply_intent",
+        with patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.operator_reply.drop_reply_intent",
                    return_value=42), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_appeal_ops.run_reply_cancel(event)
@@ -286,7 +304,9 @@ class TestRunReplyCancel:
         from aemr_bot.handlers import admin_appeal_ops
 
         event = _make_event()
-        with patch("aemr_bot.handlers.operator_reply.drop_reply_intent",
+        with patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.operator_reply.drop_reply_intent",
                    return_value=None), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_appeal_ops.run_reply_cancel(event)

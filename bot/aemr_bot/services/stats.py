@@ -11,6 +11,8 @@ from zoneinfo import ZoneInfo
 
 from aemr_bot.config import settings
 from aemr_bot.db.models import Appeal, AppealStatus, Message, MessageDirection
+from aemr_bot.services import sla as sla_service
+from aemr_bot.utils.pii_mask import mask_phone
 
 TZ = ZoneInfo(settings.timezone)
 
@@ -218,8 +220,6 @@ def _render_workbook(
         cell.font = Font(bold=True)
         cell.alignment = Alignment(vertical="top", wrap_text=True)
 
-    sla_seconds = settings.sla_response_hours * 3600
-
     def _fmt_dt(dt) -> str:
         if dt is None:
             return ""
@@ -238,9 +238,19 @@ def _render_workbook(
                 None,
             )
         if a.answered_at and a.created_at:
+            # elapsed_hours — календарное время до ответа (факт «сколько
+            # реально прошло», интересен сам по себе). "В SLA" же —
+            # оценка просрочки и считается по РАБОЧЕМУ времени
+            # (services/sla.py), той же логикой, что и live-напоминалки
+            # cron'а: обращение, поступившее в пятницу вечером и
+            # отвеченное в понедельник утром, календарно «висело» почти
+            # трое суток, но по рабочим часам могло уложиться в SLA.
             elapsed = (a.answered_at - a.created_at).total_seconds()
             elapsed_hours = round(elapsed / 3600, 2)
-            in_sla = "да" if elapsed <= sla_seconds else "нет"
+            overdue = sla_service.is_overdue(
+                a.created_at, a.answered_at, settings.sla_response_hours
+            )
+            in_sla = "нет" if overdue else "да"
         else:
             elapsed_hours = None
             in_sla = ""
@@ -249,11 +259,17 @@ def _render_workbook(
         # (formula-injection guard, см. _sanitize_cell). Числа и
         # программно-сформированные строки (даты, статус, флаги да/нет)
         # формулу нести не могут — их не оборачиваем.
+        #
+        # Телефон — через mask_phone (152-ФЗ): XLSX-выгрузка скачивается
+        # оператором на диск и может уйти дальше без контроля доступа
+        # admin-чата, поэтому полный номер сюда попадать не должен —
+        # та же маска «+7***1234», что и в admin-уведомлениях/выборках
+        # (services/admin_events.py, handlers/admin_audience.py).
         ws.append([
             a.id,
             _fmt_dt(a.created_at),
             _sanitize_cell(u.first_name if u else ""),
-            _sanitize_cell(u.phone if u else ""),
+            mask_phone(u.phone if u else None),
             u.max_user_id if u else "",
             _sanitize_cell(a.locality or ""),
             _sanitize_cell(a.address or ""),

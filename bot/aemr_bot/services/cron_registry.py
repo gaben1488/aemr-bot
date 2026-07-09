@@ -94,6 +94,32 @@ JOB_REGISTRY: list[dict[str, str]] = [
         "schedule_human": "ежедневно 04:15",
         "purpose": "удаление audit_log старше AUDIT_LOG_RETENTION_DAYS (default 365), 152-ФЗ",
     },
+    # ── Retention catch-up (разово при старте, +30 сек) ──────────────
+    # Misfire grace (120 сек) не спасает от простоя дольше 2 минут в
+    # момент тика 04:xx — при более долгом простое regular-job молча
+    # теряется до следующих суток. Catch-up дублирует вызов той же
+    # идемпотентной функции при каждом старте процесса; повторный
+    # прогон безопасен (см. cron.py::build_scheduler).
+    {
+        "id": "events-retention-catchup",
+        "schedule_human": "+30 секунд после старта (DateTrigger, одноразово)",
+        "purpose": "догоняющий прогон events-retention, если суточный тик был пропущен простоем",
+    },
+    {
+        "id": "pdn-retention-catchup",
+        "schedule_human": "+30 секунд после старта (DateTrigger, одноразово)",
+        "purpose": "догоняющий прогон pdn-retention, если суточный тик был пропущен простоем",
+    },
+    {
+        "id": "appeals-5y-retention-catchup",
+        "schedule_human": "+30 секунд после старта (DateTrigger, одноразово)",
+        "purpose": "догоняющий прогон appeals-5y-retention, если суточный тик был пропущен простоем",
+    },
+    {
+        "id": "audit-log-retention-catchup",
+        "schedule_human": "+30 секунд после старта (DateTrigger, одноразово)",
+        "purpose": "догоняющий прогон audit-log-retention, если суточный тик был пропущен простоем",
+    },
     # ── Operational housekeeping ─────────────────────────────────────
     {
         "id": "stale-operators-cleanup",

@@ -283,7 +283,8 @@ class TestAdminRelay:
         with patch.object(admin_relay.cfg, "admin_group_id", 555), \
              patch.object(admin_relay.cfg, "attachments_per_relay_message", 10), \
              patch("aemr_bot.services.admin_relay.deserialize_for_relay",
-                   return_value=[{"type": "image"}]):
+                   return_value=[{"type": "image"}]), \
+             patch("aemr_bot.services.admin_bus.send", AsyncMock(return_value="mid")):
             # Не должно бросить.
             result = await admin_relay.relay_attachments_to_admin(
                 bot, appeal_id=1, admin_mid=None,
@@ -291,7 +292,99 @@ class TestAdminRelay:
             )
 
         # Дошли до фактической отправки (sink вызван и упал), исключение
-        # проглочено ретраем — функция вернула None, наружу ничего не
-        # пробросилось, обработчик ответа жителю не падает.
-        assert result is None
+        # проглочено ретраем — единственный батч не удался → функция
+        # вернула False (полный провал), наружу ничего не пробросилось,
+        # обработчик ответа жителю не падает.
+        assert result is False
         bot.send_message.assert_awaited()
+
+    @pytest.mark.asyncio
+    async def test_full_failure_sends_admin_alert(self) -> None:
+        """При полном провале доставки (все батчи не удались) должен
+        уйти critical-алёрт в админ-группу — иначе вложения жителя
+        пропадают из виду оператора молча."""
+        from aemr_bot.services import admin_relay
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock(side_effect=RuntimeError("network"))
+        alert = AsyncMock(return_value="alert-mid")
+        with patch.object(admin_relay.cfg, "admin_group_id", 555), \
+             patch.object(admin_relay.cfg, "attachments_per_relay_message", 10), \
+             patch("aemr_bot.services.admin_relay.deserialize_for_relay",
+                   return_value=[{"type": "image"}]), \
+             patch("aemr_bot.services.admin_bus.send", alert):
+            result = await admin_relay.relay_attachments_to_admin(
+                bot, appeal_id=77, admin_mid=None,
+                stored_attachments=[{"type": "image"}],
+            )
+
+        assert result is False
+        alert.assert_awaited_once()
+        call_kwargs = alert.call_args.kwargs
+        assert "#77" in call_kwargs.get("text", "")
+        assert "не доставлены" in call_kwargs.get("text", "")
+        assert call_kwargs.get("critical") is True
+
+    @pytest.mark.asyncio
+    async def test_alert_itself_failing_does_not_raise(self) -> None:
+        """Если сам admin_bus.send при алёрте тоже упадёт — не
+        пробрасываем исключение наружу (best-effort уведомление)."""
+        from aemr_bot.services import admin_relay
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock(side_effect=RuntimeError("network"))
+        with patch.object(admin_relay.cfg, "admin_group_id", 555), \
+             patch.object(admin_relay.cfg, "attachments_per_relay_message", 10), \
+             patch("aemr_bot.services.admin_relay.deserialize_for_relay",
+                   return_value=[{"type": "image"}]), \
+             patch("aemr_bot.services.admin_bus.send",
+                   AsyncMock(side_effect=RuntimeError("admin chat also down"))):
+            result = await admin_relay.relay_attachments_to_admin(
+                bot, appeal_id=1, admin_mid=None,
+                stored_attachments=[{"type": "image"}],
+            )
+
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_partial_failure_does_not_alert(self) -> None:
+        """Частичный провал (часть батчей ушла) — не алёртим, оператор
+        уже видит часть вложений и карточку обращения."""
+        from aemr_bot.services import admin_relay
+
+        bot = MagicMock()
+        # Первый батч ok, второй — все 3 попытки падают.
+        bot.send_message = AsyncMock(
+            side_effect=[MagicMock(), RuntimeError("x"), RuntimeError("x"), RuntimeError("x")]
+        )
+        relayable = [{"type": "image"}] * 6
+        alert = AsyncMock(return_value="mid")
+        with patch.object(admin_relay.cfg, "admin_group_id", 555), \
+             patch.object(admin_relay.cfg, "attachments_per_relay_message", 3), \
+             patch("aemr_bot.services.admin_relay.deserialize_for_relay",
+                   return_value=relayable), \
+             patch("aemr_bot.services.admin_bus.send", alert):
+            result = await admin_relay.relay_attachments_to_admin(
+                bot, appeal_id=5, admin_mid=None,
+                stored_attachments=relayable,
+            )
+
+        assert result is False
+        alert.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_full_success_returns_true(self) -> None:
+        from aemr_bot.services import admin_relay
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock(return_value=MagicMock())
+        with patch.object(admin_relay.cfg, "admin_group_id", 555), \
+             patch.object(admin_relay.cfg, "attachments_per_relay_message", 10), \
+             patch("aemr_bot.services.admin_relay.deserialize_for_relay",
+                   return_value=[{"type": "image"}]):
+            result = await admin_relay.relay_attachments_to_admin(
+                bot, appeal_id=1, admin_mid=None,
+                stored_attachments=[{"type": "image"}],
+            )
+
+        assert result is True

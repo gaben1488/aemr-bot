@@ -29,7 +29,7 @@
 
 <div class="note note--caution">
   <p class="note__label">Два слоя настроек: env и UI</p>
-  <p>Не путайте этот файл с настройками, которые IT правит кнопками в боте без передеплоя — приветствие, текст согласия, темы обращений, телефоны, населённые пункты, параметры тихого режима. Те 17 ключей живут в таблице <code class="kbd">settings</code> базы данных и описаны в главе про <code class="kbd">settings_store</code>. Здесь — только инфраструктурный слой из <code class="kbd">config.py</code>: то, что задаётся при развёртывании и меняется перезапуском контейнера, а не из чата. Единственная точка пересечения — <code class="kbd">SEED_DIR</code>: оттуда при первом старте подхватываются seed-файлы (темы, населённые пункты, праздники), которые дальше живут уже в базе.</p>
+  <p>Не путайте этот файл с настройками, которые IT правит кнопками в боте без передеплоя — приветствие, текст согласия, темы обращений, телефоны, населённые пункты, параметры тихого режима, тумблеры уведомлений. Те 23 ключа живут в таблице <code class="kbd">settings</code> базы данных и описаны в главе про <code class="kbd">settings_store</code>. Здесь — только инфраструктурный слой из <code class="kbd">config.py</code>: то, что задаётся при развёртывании и меняется перезапуском контейнера, а не из чата. Единственная точка пересечения — <code class="kbd">SEED_DIR</code>: оттуда при первом старте подхватываются seed-файлы (темы, населённые пункты, праздники), которые дальше живут уже в базе.</p>
 </div>
 
 <h4>Очистка пустых значений и валидация webhook</h4>
@@ -212,8 +212,15 @@
         <td><code class="kbd">sla_response_hours</code><br><code class="kbd">SLA_RESPONSE_HOURS</code></td>
         <td><code class="kbd">4</code></td>
         <td>целое (часы)</td>
-        <td>Срок ответа на обращение. По нему часовой cron находит просроченные и шлёт алёрт. Тематической приоритизации (вода/газ важнее) нет — срок единый для всех тем.</td>
-        <td><code class="kbd">cron.py:781</code>, <code class="kbd">stats.py:221</code></td>
+        <td>Срок ответа на обращение — в РАБОЧИХ часах (см. следующую строку). По нему часовой cron находит просроченные и шлёт алёрт. Тематической приоритизации (вода/газ важнее) нет — срок единый для всех тем.</td>
+        <td><code class="kbd">services/sla.py</code>, вызывается из <code class="kbd">appeals.py::find_overdue_unanswered</code>, <code class="kbd">cron.py</code>, <code class="kbd">stats.py</code></td>
+      </tr>
+      <tr>
+        <td><code class="kbd">sla_work_start_hour</code><br><code class="kbd">SLA_WORK_START_HOUR</code><br><code class="kbd">sla_work_end_hour</code><br><code class="kbd">SLA_WORK_END_HOUR</code></td>
+        <td><code class="kbd">9</code> / <code class="kbd">18</code></td>
+        <td>целое (часы, 0-23 / 1-24), <code class="kbd">start &lt; end</code></td>
+        <td>Границы рабочего окна для расчёта SLA-просрочки, локальное время по <code class="kbd">TZ</code>. SLA-часы копятся только внутри этого окна рабочих дней (пн-пт минус праздники РФ). Обед сознательно НЕ вычитается — см. комментарий в <code class="kbd">config.py</code>.</td>
+        <td><code class="kbd">services/sla.py</code></td>
       </tr>
       <tr>
         <td><code class="kbd">appeal_collect_timeout_seconds</code><br><code class="kbd">APPEAL_TIMEOUT</code></td>
@@ -224,7 +231,7 @@
       </tr>
       <tr>
         <td><code class="kbd">answer_max_chars</code><br><code class="kbd">ANSWER_MAX_CHARS</code></td>
-        <td><code class="kbd">300</code></td>
+        <td><code class="kbd">800</code></td>
         <td>целое</td>
         <td>Лимит длины одного ответа оператора (показывается в карточке как порог).</td>
         <td><code class="kbd">card_format.py:259</code></td>
@@ -2218,7 +2225,7 @@ DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-aemr}:${POSTGRES_PASSWORD:?.
       </tr>
       <tr>
         <td><code class="kbd">test_ledger_facts_sync.py</code></td>
-        <td>Ключевые числа супер-канона <code class="kbd">docs/site/_kb/_LEDGER.md</code> запиннены к коду. Падает, если разойдётся любое: <code class="kbd">SLA_RESPONSE_HOURS=4</code>, <code class="kbd">answer_max_chars=300</code>, <code class="kbd">audit_log_retention_days=365</code> (диапазон 30..3650), <code class="kbd">len(SCHEMA)=17</code>, <code class="kbd">OperatorRole</code> = 4 значения, 18 миграций (непрерывно 0001..0018), 11 ORM-таблиц. Плюс content-проверка: <code class="kbd">infra/Dockerfile</code> по-прежнему ставит из <code class="kbd">uv.lock</code> с <code class="kbd">--require-hashes</code> — ловит откат образа на pip-из-диапазонов.</td>
+        <td>Ключевые числа супер-канона <code class="kbd">docs/site/_kb/_LEDGER.md</code> запиннены к коду. Падает, если разойдётся любое: <code class="kbd">SLA_RESPONSE_HOURS=4</code>, <code class="kbd">answer_max_chars=800</code>, <code class="kbd">audit_log_retention_days=365</code> (диапазон 30..3650), <code class="kbd">len(SCHEMA)=23</code>, <code class="kbd">OperatorRole</code> = 4 значения, 19 миграций (непрерывно 0001..0019), 11 ORM-таблиц. Плюс content-проверка: <code class="kbd">infra/Dockerfile</code> по-прежнему ставит из <code class="kbd">uv.lock</code> с <code class="kbd">--require-hashes</code> — ловит откат образа на pip-из-диапазонов.</td>
       </tr>
     </tbody>
   </table>

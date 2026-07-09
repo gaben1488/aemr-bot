@@ -30,6 +30,7 @@ Inline-редактирование текстов и URL идёт через TT
 - admin_settings_list    — списки строк (topics, localities)
 - admin_settings_obj     — списки объектов (emergency/transport контакты)
 - admin_settings_quiet   — wizard тихого режима
+- admin_settings_notify  — модульные тумблеры служебных уведомлений
 - admin_settings_pr      — создание PR / diff с репозиторием
 
 Диспетчер `_route_set_action` и перехватчик `handle_settings_edit_text`
@@ -87,6 +88,10 @@ from aemr_bot.handlers.admin_settings_pr import (  # noqa: F401
     _create_pr,
     _show_pr_confirm,
     _show_pr_diff,
+)
+from aemr_bot.handlers.admin_settings_notify import (  # noqa: F401
+    _show_notify_card,
+    _toggle_notify,
 )
 from aemr_bot.handlers.admin_settings_quiet import (  # noqa: F401
     _apply_quiet_hour_edit,
@@ -285,6 +290,14 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         return
     if rest == "quiet:edit:end":
         await _start_quiet_hour_intent(event, operator_id, which="end")
+        return
+
+    if rest == "notify":
+        await _show_notify_card(event)
+        return
+    if rest.startswith("notify:toggle:"):
+        key = rest.removeprefix("notify:toggle:")
+        await _toggle_notify(event, key)
         return
 
     if rest == "pr:start":

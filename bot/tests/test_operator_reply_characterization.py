@@ -345,19 +345,16 @@ class TestOutgoingUrlBlock:
 
 class TestMultipleImagesNotice:
     @pytest.mark.asyncio
-    async def test_more_than_one_image_notifies_operator(self) -> None:
-        """Фиксирует UX: оператор приложил >1 картинки → жителю уходит
-        только первая, оператору отдельным сообщением уведомление «ушла
-        только первая». Без этого молчаливая обрезка путала оператора."""
+    async def test_images_within_relay_limit_all_delivered_no_notice(self) -> None:
+        """Снятие [:1]-обрезки (владелец разрешил несколько картинок в
+        ответе): пока картинок не больше cfg.attachments_per_relay_message,
+        уходят ВСЕ и уведомления-предупреждения не будет."""
         from aemr_bot.handlers import operator_reply as opr
 
         event = _make_event()
-        # Доставка жителю → SendedMessage; затем уведомление о картинках;
-        # затем confirm-сообщение оператору. Все возвращают что-нибудь.
         event.bot.send_message = AsyncMock(
             side_effect=[
                 SimpleNamespace(body=SimpleNamespace(mid="out-1")),
-                None,
                 None,
             ]
         )
@@ -410,13 +407,92 @@ class TestMultipleImagesNotice:
             )
 
         assert handled is True
+        # Ровно один send_message: доставка жителю (is_final=True по
+        # умолчанию → без отдельной confirm-карточки, см.
+        # TestIntermediateReplyConfirmText). Никакого «ушла только
+        # первая» warning'а — обе картинки в лимите.
+        assert event.bot.send_message.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_more_than_relay_limit_notifies_operator(self) -> None:
+        """Фиксирует UX: оператор приложил больше картинок, чем влезает в
+        одно сообщение (cfg.attachments_per_relay_message) → жителю уходит
+        только первые N, оператору отдельным сообщением уведомление.
+        Без этого молчаливая обрезка путала оператора."""
+        from aemr_bot.handlers import operator_reply as opr
+
+        event = _make_event()
+        # Доставка жителю → SendedMessage; затем уведомление о картинках;
+        # затем confirm-сообщение оператору. Все возвращают что-нибудь.
+        event.bot.send_message = AsyncMock(
+            side_effect=[
+                SimpleNamespace(body=SimpleNamespace(mid="out-1")),
+                None,
+                None,
+            ]
+        )
+        appeal = MagicMock(id=3)
+        operator = MagicMock(id=7, max_user_id=42)
+        live_op = SimpleNamespace(id=7, max_user_id=42, is_active=True)
+        fresh = _fresh_appeal(appeal_id=3)
+        fresh.admin_message_id = None  # карточку не перерисовываем
+
+        # attachments_per_relay_message по умолчанию 10 — приложим 12,
+        # чтобы гарантированно превысить лимит одного сообщения.
+        many_images = [{"type": "image"}] * 12
+
+        with patch.object(opr.cfg, "answer_max_chars", 1000), patch(
+            "aemr_bot.handlers.operator_reply.session_scope",
+            _fake_session_scope,
+        ), patch(
+            "aemr_bot.handlers.operator_reply.operators_service.get",
+            AsyncMock(return_value=live_op),
+        ), patch(
+            "aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
+            AsyncMock(side_effect=[fresh, fresh]),
+        ), patch(
+            "aemr_bot.handlers.operator_reply.appeals_service.get_by_id_with_messages",
+            AsyncMock(return_value=fresh),
+        ), patch(
+            "aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
+            AsyncMock(),
+        ), patch(
+            "aemr_bot.handlers.operator_reply.operators_service.write_audit",
+            AsyncMock(),
+        ), patch(
+            "aemr_bot.handlers.operator_reply._is_reply_success_recorded",
+            AsyncMock(return_value=False),
+        ), patch(
+            "aemr_bot.handlers.operator_reply._mark_reply_success_recorded",
+            AsyncMock(),
+        ), patch(
+            "aemr_bot.services.settings_store.find_non_whitelisted_urls",
+            return_value=[],
+        ), patch(
+            "aemr_bot.utils.image_attachments.image_attachments_from_event",
+            return_value=many_images,
+        ), patch(
+            "aemr_bot.utils.image_attachments.build_outbound_image_attachments",
+            return_value=[],
+        ), patch(
+            "aemr_bot.services.admin_card.render",
+            AsyncMock(return_value="new-mid"),
+        ):
+            handled = await opr._deliver_operator_reply(
+                event, appeal=appeal, operator=operator,
+                text="ответ с кучей картинок", audit_action="reply",
+            )
+
+        assert handled is True
         notice_texts = [
             c.kwargs.get("text", "")
             for c in event.bot.send_message.await_args_list
         ]
-        # Должно быть уведомление про две картинки.
-        assert any("2 картинок" in t for t in notice_texts), notice_texts
-        assert any("только" in t and "перв" in t.lower() for t in notice_texts)
+        # Должно быть уведомление про 12 приложенных картинок.
+        assert any("12 картинок" in t for t in notice_texts), notice_texts
+        assert any(
+            "лимит" in t.lower() for t in notice_texts
+        ), notice_texts
 
 
 # --- handle_operator_reply: kbd-intent dispatch -------------------------------
@@ -756,15 +832,18 @@ class TestCommandReplyAuditAction:
 class TestCommandReplyDeliversAndPersists:
     @pytest.mark.asyncio
     async def test_full_path_writes_messages_and_audit(self) -> None:
-        """Полный проход /reply N: фиксирует, что доставленный ответ
-        попадает в messages (add_operator_message) и в audit_log
-        (write_audit), а оператор получает confirm-текст про обращение."""
+        """Полный проход /reply N (is_final=True): фиксирует, что
+        доставленный ответ попадает в messages (add_operator_message) и
+        в audit_log (write_audit). Оператор НЕ получает отдельную
+        confirm-карточку — она убрана владельцем (дублировала
+        event_header свежей карточки обращения от admin_card.render,
+        замоканного здесь), уходит только сам ответ жителю."""
         from aemr_bot.handlers import operator_reply as opr
 
         event = _make_event(chat_id=555, user_id=7)
-        # житель → SendedMessage; затем confirm оператору.
+        # единственный ожидаемый вызов send_message — доставка жителю.
         event.bot.send_message = AsyncMock(
-            side_effect=[SimpleNamespace(body=SimpleNamespace(mid="out-1")), None]
+            side_effect=[SimpleNamespace(body=SimpleNamespace(mid="out-1"))]
         )
         operator = SimpleNamespace(id=7, max_user_id=42)
         live_op = SimpleNamespace(id=7, max_user_id=42, is_active=True)
@@ -823,8 +902,7 @@ class TestCommandReplyDeliversAndPersists:
         assert add_message.await_args.kwargs["is_final"] is True
         write_audit.assert_awaited_once()
         assert write_audit.await_args.kwargs["action"] == "reply_via_command"
-        # Первый send — жителю (user_id), последний — confirm оператору.
+        # Единственный send — жителю (user_id). Отдельной confirm-карточки
+        # оператору для is_final=True больше нет (убрана владельцем).
+        assert event.bot.send_message.await_count == 1
         assert event.bot.send_message.await_args_list[0].kwargs["user_id"] == 42
-        confirm = event.bot.send_message.await_args_list[-1].kwargs.get("text", "")
-        assert "#12" in confirm
-        assert "закрыт" in confirm.lower() or "Отвечено" in confirm

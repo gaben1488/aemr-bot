@@ -236,6 +236,71 @@ class TestIsWhitelistedUrl:
         ) is True
 
 
+class TestMaxBotExactWhitelist:
+    """Точечный whitelist двух официальных ботов MAX (не гос-домен,
+    поэтому не через `_URL_HOST_WHITELIST_SUFFIXES`, а через отдельный
+    `_URL_EXACT_WHITELIST` — см. комментарий в settings_store.py).
+
+    Ключевая гарантия: `max.ru` НЕ в host-suffix whitelist, поэтому
+    `https://max.ru/anything_else` обязан отклоняться — точный список
+    не должен случайно открыть весь домен."""
+
+    def test_solodov_comments_bot_passes(self) -> None:
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url("https://max.ru/solodov_comments_bot") is True
+
+    def test_pravitelstvo_kk_bot_passes(self) -> None:
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url("https://max.ru/pravitelstvo_kk_bot") is True
+
+    def test_trailing_slash_normalized_and_passes(self) -> None:
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url("https://max.ru/solodov_comments_bot/") is True
+        assert is_whitelisted_url("https://max.ru/pravitelstvo_kk_bot/") is True
+
+    def test_bare_max_ru_root_rejected(self) -> None:
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url("https://max.ru/") is False
+        assert is_whitelisted_url("https://max.ru") is False
+
+    def test_other_bot_on_max_ru_rejected(self) -> None:
+        """Суть защиты: whitelist двух ботов НЕ открывает весь max.ru."""
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url("https://max.ru/evil_bot") is False
+
+    def test_query_string_appended_rejected(self) -> None:
+        """`?x=1` — не точное совпадение, потенциальный tracking/redirect
+        довесок. Строгое сравнение отклоняет, а не молча игнорирует query."""
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url(
+            "https://max.ru/solodov_comments_bot?x=1"
+        ) is False
+
+    def test_uppercase_host_rejected(self) -> None:
+        """§A4-подобная логика: mixed/upper-case host подозрителен и НЕ
+        нормализуется в доверенный — та же дисциплина, что и для
+        гос-доменов (test_uppercase_host_rejected выше)."""
+        from aemr_bot.services.settings_store import is_whitelisted_url
+        assert is_whitelisted_url(
+            "https://MAX.ru/solodov_comments_bot"
+        ) is False
+
+    def test_find_non_whitelisted_urls_allows_both_bots(self) -> None:
+        """Исходящий фильтр (operator_reply/broadcast) обязан пропускать
+        оба URL — это симметрия с is_whitelisted_url."""
+        from aemr_bot.services.settings_store import find_non_whitelisted_urls
+        text = (
+            "Комментарии губернатора: https://max.ru/solodov_comments_bot "
+            "Правительство края: https://max.ru/pravitelstvo_kk_bot"
+        )
+        assert find_non_whitelisted_urls(text) == []
+
+    def test_find_non_whitelisted_urls_blocks_other_max_bot(self) -> None:
+        from aemr_bot.services.settings_store import find_non_whitelisted_urls
+        bad = find_non_whitelisted_urls("Подпишись: https://max.ru/evil_bot")
+        assert bad == ["https://max.ru/evil_bot"]
+
+
 class TestNfkcNormalization:
     """NFKC-нормализация в extract_urls закрывает полноширинные и
     совместимые символы-двойники: мошенник пишет адрес полноширинными

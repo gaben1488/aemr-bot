@@ -490,7 +490,10 @@ class TestDeliverOperatorReply:
         write_audit.assert_called_once()
         mark_success.assert_called_once()
         assert opr._is_duplicate_reply(operator.id, appeal.id, "ответ") is True
-        assert event.bot.send_message.call_count == 2
+        # is_final по умолчанию True → нет отдельной confirm-карточки
+        # (убрана владельцем, см. TestIntermediateReplyConfirmText),
+        # только доставка ответа жителю.
+        assert event.bot.send_message.call_count == 1
 
     @pytest.mark.asyncio
     async def test_success_publishes_event_card_via_render(self) -> None:
@@ -546,6 +549,13 @@ class TestIntermediateReplyConfirmText:
     Регрессия — раньше шёл ADMIN_REPLY_DELIVERED = «Обращение #N закрыто»
     даже для is_final=False. Это путало оператора (он понимал, что
     житель остаётся в работе, но карточка говорила обратное).
+
+    2026-07: для is_final=True отдельное confirm-сообщение
+    (ADMIN_REPLY_DELIVERED_FINAL, «Финальный ответ отправлен жителю…»)
+    убрано владельцем — оно дублировало event_header свежей карточки
+    обращения (`admin_card.render`, замоканный здесь). Для is_final=False
+    confirm-сообщение (ADMIN_REPLY_DELIVERED_INTERMEDIATE) сохранено —
+    несёт другую информацию, которой нет в event_header.
     """
 
     async def _run_deliver(self, *, is_final: bool) -> SimpleNamespace:
@@ -589,18 +599,26 @@ class TestIntermediateReplyConfirmText:
         return event
 
     @pytest.mark.asyncio
-    async def test_final_reply_says_closed(self) -> None:
+    async def test_final_reply_sends_no_extra_confirm_card(self) -> None:
+        """Финальный ответ: НЕТ отдельной confirm-карточки оператору
+        (`chat_id`-сообщения) — только доставка жителю (`user_id`).
+        Убрано владельцем: дублировало event_header карточки обращения,
+        которую только что опубликовал `admin_card.render` (замокан)."""
         event = await self._run_deliver(is_final=True)
-        # send_message вызвано 2 раза: житель + confirm оператору.
-        # Текст confirm — последний вызов с chat_id (не user_id).
         confirm_calls = [
             c for c in event.bot.send_message.await_args_list
             if "chat_id" in c.kwargs and c.kwargs.get("text")
         ]
-        assert confirm_calls, "не было confirm-сообщения оператору"
-        text = confirm_calls[-1].kwargs.get("text", "")
-        assert "закрыт" in text.lower() or "Отвечено" in text
-        assert "#42" in text
+        assert not confirm_calls, (
+            f"избыточная confirm-карточка оператору не должна отправляться "
+            f"для финального ответа; call(s)={confirm_calls}"
+        )
+        # Единственный вызов send_message — доставка жителю по user_id.
+        delivery_calls = [
+            c for c in event.bot.send_message.await_args_list
+            if c.kwargs.get("user_id") is not None
+        ]
+        assert len(delivery_calls) == 1
 
     @pytest.mark.asyncio
     async def test_intermediate_reply_says_in_progress(self) -> None:

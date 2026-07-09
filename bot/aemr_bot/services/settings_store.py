@@ -39,6 +39,76 @@ _URL_HOST_WHITELIST_SUFFIXES = (
 )
 
 
+# Точечное исключение для двух официальных ботов на площадке MAX (не гос-
+# домен — сам max.ru общий хостинг для любых ботов и каналов). НАМЕРЕННО
+# НЕ добавляем "max.ru" в `_URL_HOST_WHITELIST_SUFFIXES` выше — host-suffix
+# правило пропустило бы `https://max.ru/<любой-чужой-бот>`, открывая
+# фишинг/спам-канал под видом официальной ссылки. Вместо этого — точный
+# список ПОЛНЫХ URL, сверяемый ДО host-whitelist в `_is_whitelisted_url`.
+#
+# Это официальные боты Администрации: бот комментариев Губернатора
+# Камчатского края В. Солодова и бот Правительства Камчатского края —
+# оба размещены на площадке MAX, отдельного гос-домена для них нет.
+#
+# Сравнение — по нормализованному виду: scheme lowercase (URI-схема
+# регистронезависима по стандарту), RAW host БЕЗ лоуэркейсинга (та же
+# §A4-логика, что и в `_is_whitelisted_host` — mixed-case host вроде
+# `MAX.ru` отвергается как подозрительный, а не «нормализуется» в
+# доверенный), без trailing slash. Path регистро-чувствителен и
+# сравнивается как есть. URL с query/fragment/user-info НЕ считаются
+# совпадением (см. `_normalize_exact_url`).
+_URL_EXACT_WHITELIST: tuple[str, ...] = (
+    "https://max.ru/solodov_comments_bot",
+    "https://max.ru/pravitelstvo_kk_bot",
+)
+
+
+def _normalize_exact_url(value: str) -> str | None:
+    """Нормализованная форма URL для сверки с `_URL_EXACT_WHITELIST`.
+
+    Возвращает None, если URL несёт что-то, что делает его НЕ точным
+    совпадением с записью из whitelist (query/fragment/user-info/port —
+    признаки, что это не тот же самый ресурс, а похожая ссылка с
+    довеском, потенциально ведущая куда-то ещё через редирект/трекинг).
+    Иначе — `scheme://host` (scheme lowercase, host RAW — без
+    лоуэркейсинга, см. §A4 komментарий выше) + path как есть, без
+    trailing slash (кроме корня "/").
+    """
+    try:
+        parsed = urlparse(value)
+    except Exception:
+        return None
+    if parsed.scheme.lower() not in {"http", "https"}:
+        return None
+    # query/fragment/user-info/явный порт — не считаем точным совпадением,
+    # даже если host+path похожи на whitelisted. Это защита от
+    # `https://max.ru/solodov_comments_bot?x=1` и подобных вариаций.
+    if parsed.query or parsed.fragment or "@" in parsed.netloc or parsed.port:
+        return None
+    # `parsed.hostname` — Python-normalized (lowercase); нам нужен RAW
+    # host для §A4-сравнения, поэтому берём из netloc напрямую (port уже
+    # отсечён проверкой выше через parsed.port).
+    host = parsed.netloc or ""
+    if not host:
+        return None
+    path = parsed.path or ""
+    if path != "/" and path.endswith("/"):
+        path = path.rstrip("/")
+    return f"{parsed.scheme.lower()}://{host}{path}"
+
+
+def _is_exact_whitelisted_url(value: str) -> bool:
+    """True если URL точно совпадает с одним из `_URL_EXACT_WHITELIST`
+    (с учётом нормализации trailing slash и lowercase scheme+host)."""
+    normalized = _normalize_exact_url(value)
+    if normalized is None:
+        return False
+    whitelisted_normalized = {
+        _normalize_exact_url(u) for u in _URL_EXACT_WHITELIST
+    }
+    return normalized in whitelisted_normalized
+
+
 # SECURITY_REVIEW M4: phone-формат в emergency_contacts. Раньше любой
 # текст принимался — IT мог по ошибке (или умыслом) вписать вместо
 # номера telegram-ник, email, платный premium-номер «+7-900-911-XXXX»
@@ -112,6 +182,11 @@ def _is_whitelisted_url(value: str) -> bool:
       других непечатных символов, которые могут попасть через
       copy-paste из подозрительных источников.
     """
+    # Точный whitelist двух ботов MAX — проверяем ДО host-suffix логики
+    # ниже (host `max.ru` НЕ входит в `_URL_HOST_WHITELIST_SUFFIXES` и не
+    # должен туда попадать, см. комментарий у `_URL_EXACT_WHITELIST`).
+    if _is_exact_whitelisted_url(value):
+        return True
     try:
         parsed = urlparse(value)
     except Exception:
@@ -425,6 +500,31 @@ DEFAULTS: dict[str, Any] = {
     "admin_quiet_hours_enabled": False,
     "admin_quiet_hours_start": 18,
     "admin_quiet_hours_end": 9,
+    # 2026-07-09: модульные тумблеры служебных уведомлений в админ-чат.
+    # В отличие от quiet hours (глушение по времени скопом), эти флаги
+    # включают/выключают КОНКРЕТНЫЙ вид уведомления НЕЗАВИСИМО от времени
+    # суток. Default True у всех — поведение «из коробки» не меняется,
+    # оператор осознанно выключает то, что мешает. Архитектура кэша —
+    # services/notify_toggles.py (по образцу services/quiet_hours.py).
+    #
+    # admin_notify_pulse — гейтит cron._job_pulse (pulse-hourly +
+    #   pulse-workhours-extra). startup-pulse НЕ подчиняется этому флагу
+    #   (разовое событие при рестарте, отдельная диагностика).
+    # admin_notify_consent — гейтит admin_events.notify_consent_given.
+    #   ВАЖНО: notify_consent_revoked НЕ подчиняется — юридически значимое
+    #   событие (152-ФЗ), см. критично-critical в admin_events.py.
+    # admin_notify_subscriptions — гейтит notify_broadcast_subscribed /
+    #   notify_broadcast_unsubscribed.
+    # admin_notify_open_reminder / admin_notify_overdue_reminder —
+    #   гейтят cron._job_working_hours_open_reminder /
+    #   _job_working_hours_overdue_reminder по отдельности.
+    # admin_notify_monthly_stats — гейтит cron._job_monthly_report.
+    "admin_notify_pulse": True,
+    "admin_notify_consent": True,
+    "admin_notify_subscriptions": True,
+    "admin_notify_open_reminder": True,
+    "admin_notify_overdue_reminder": True,
+    "admin_notify_monthly_stats": True,
     "localities": [
         "Елизовское ГП",
         "Вулканное ГП",
@@ -497,6 +597,13 @@ SCHEMA: dict[str, dict] = {
     "admin_quiet_hours_enabled": {"type": bool},
     "admin_quiet_hours_start": {"type": int, "min": 0, "max": 23},
     "admin_quiet_hours_end": {"type": int, "min": 0, "max": 23},
+    # Модульные тумблеры уведомлений — все bool, см. DEFAULTS выше.
+    "admin_notify_pulse": {"type": bool},
+    "admin_notify_consent": {"type": bool},
+    "admin_notify_subscriptions": {"type": bool},
+    "admin_notify_open_reminder": {"type": bool},
+    "admin_notify_overdue_reminder": {"type": bool},
+    "admin_notify_monthly_stats": {"type": bool},
     "localities": {"type": list, "min_items": 1, "max_items": 30, "item_type": str},
 }
 

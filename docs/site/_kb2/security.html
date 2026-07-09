@@ -109,7 +109,7 @@
 
 <p>Когда бот показывает оператору сведения о жителе в служебной группе (уведомления о согласии, о подписке, карточки, результат поиска жителя), полный телефон <strong>не печатается</strong>. Вместо него — маскированная форма <code class="kbd">+7***NNNN</code>, где видны только последние 4 цифры. Этого достаточно, чтобы оператор узнал жителя для перезвона, но полный номер не попадает в бэкап MAX и в случайные скриншоты переписки.</p>
 
-<p>Логика функции <code class="kbd">_mask_phone</code> (файл <code class="kbd">services/admin_events.py</code>):</p>
+<p>Логика функции <code class="kbd">mask_phone</code> (файл <code class="kbd">utils/pii_mask.py</code> — единая каноничная реализация; <code class="kbd">services/admin_events.py</code>, <code class="kbd">handlers/admin_audience.py</code> и XLSX-выгрузка в <code class="kbd">services/stats.py</code> переиспользуют её, а не держат свои копии):</p>
 <div class="table-wrap"><table>
 <thead><tr><th>Вход</th><th>Результат</th></tr></thead>
 <tbody>
@@ -440,6 +440,11 @@ kamgov.ru
 gosuslugi.ru
 kamchatka.gov.ru</code></pre>
 <p>Любая другая ссылка (<code class="kbd">vk.com</code>, <code class="kbd">t.me</code>, <code class="kbd">bit.ly</code>, любой посторонний <code class="kbd">.ru</code> или <code class="kbd">.com</code>) → бот <strong>откажется отправлять</strong> и напишет оператору причину в служебную группу. Новый официальный домен добавляется только правкой кода (<code class="kbd">_URL_HOST_WHITELIST_SUFFIXES</code> в <code class="kbd">services/settings_store.py</code>) с редеплоем — через интерфейс настроек это поменять нельзя, чтобы скомпрометированный или ошибшийся ИТ не подставил жителю фишинг.</p>
+
+<p>Отдельно — точечное исключение для двух официальных ботов на площадке MAX (сам домен <code class="kbd">max.ru</code> в whitelist НЕ входит: это общий хостинг для любых ботов и каналов, и суффиксное правило открыло бы весь домен, включая чужие/поддельные боты). Разрешены только два <strong>полных URL</strong>, сверяемые отдельным точным списком (<code class="kbd">_URL_EXACT_WHITELIST</code>) до проверки по доменам:</p>
+<pre><code>https://max.ru/solodov_comments_bot
+https://max.ru/pravitelstvo_kk_bot</code></pre>
+<p>Это официальные боты Администрации — бот комментариев Губернатора Камчатского края и бот Правительства Камчатского края, отдельного гос-домена у них нет. Сравнение строгое: учитывается trailing slash (нормализуется), но наличие query-параметров, fragment или user-info в URL (например, <code class="kbd">https://max.ru/solodov_comments_bot?x=1</code>) — уже не точное совпадение, такая ссылка отклоняется. Любой другой путь на <code class="kbd">max.ru</code> (например, <code class="kbd">https://max.ru/evil_bot</code>) по-прежнему отклоняется — точный список не открывает домен целиком.</p>
 
 <p>Проверка ссылки (функция <code class="kbd">_is_whitelisted_url</code>) дополнительно защищает от обхода:</p>
 <ul>
@@ -877,7 +882,7 @@ kamchatka.gov.ru</code></pre>
 <p>Нет. Дублирующего бота не существует. Настоящий бот открывается только по ссылке с сайта <code class="kbd">elizovomr.ru</code> или по QR-коду из объявлений Администрации.</p>
 
 <h4>Оператор может вставить мне в ответ любую ссылку?</h4>
-<p>Нет. Исходящие ссылки проверяются по белому списку гос-доменов (<code class="kbd">elizovomr.ru</code>, <code class="kbd">kamgov.ru</code>, <code class="kbd">gosuslugi.ru</code>, <code class="kbd">kamchatka.gov.ru</code>). Любую постороннюю ссылку бот отправить не даст.</p>
+<p>Нет. Исходящие ссылки проверяются по белому списку гос-доменов (<code class="kbd">elizovomr.ru</code>, <code class="kbd">kamgov.ru</code>, <code class="kbd">gosuslugi.ru</code>, <code class="kbd">kamchatka.gov.ru</code>), плюс точный список из двух официальных ботов на MAX (<code class="kbd">https://max.ru/solodov_comments_bot</code>, <code class="kbd">https://max.ru/pravitelstvo_kk_bot</code>). Любую постороннюю ссылку, включая другие боты на <code class="kbd">max.ru</code>, бот отправить не даст.</p>
 
 <h4>Что будет, если у оператора украдут MAX-аккаунт?</h4>
 <p>Технически бот не отличит настоящего оператора от злоумышленника, но все действия пишутся в журнал, а другой ИТ-оператор быстро деактивирует скомпрометированную учётную запись через мастер операторов. Поэтому при потере телефона оператор обязан немедленно сообщить ИТ по другому каналу (звонок, личный визит).</p>

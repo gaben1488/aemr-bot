@@ -37,11 +37,14 @@ ADMIN_FOLLOWUP_TEMPLATE = (
     "🆔 №{number}"
 )
 
-ADMIN_REPLY_DELIVERED_FINAL = (
-    "✉️ Финальный ответ отправлен жителю. Обращение #{number} переведено "
-    "в «Отвечено» и закрыто. Если житель присылает дополнение — придёт "
-    "новая карточка с пометкой «Новое дополнение»."
-)
+# ADMIN_REPLY_DELIVERED_FINAL была здесь — отдельная карточка-подтверждение
+# «Финальный ответ отправлен жителю…» после финального ответа оператора.
+# Убрана 2026-07 по решению владельца: дублировала event_header свежей
+# карточки обращения («✉️ Финальный ответ отправлен по обращению #N —
+# статус «Завершено»», см. `handlers/operator_reply.py::_deliver_operator_reply`,
+# `reply_event_header`), которую `admin_card_service.render` публикует
+# непосредственно перед этим сообщением. Две карточки с одним и тем же
+# смыслом подряд — лишний шум в админ-чате.
 ADMIN_REPLY_DELIVERED_INTERMEDIATE = (
     "💬 Промежуточный ответ отправлен жителю. Обращение #{number} "
     "остаётся в работе — можно дослать уточнения через «✉️ Ответить» "
@@ -228,7 +231,6 @@ OP_FIND_RESIDENT_CARD = (
 __all__ = [
     "ADMIN_CARD_TEMPLATE",
     "ADMIN_FOLLOWUP_TEMPLATE",
-    "ADMIN_REPLY_DELIVERED_FINAL",
     "ADMIN_REPLY_DELIVERED_INTERMEDIATE",
     "ADMIN_REPLY_TOO_LONG",
     "ADMIN_REPLY_NO_APPEAL",

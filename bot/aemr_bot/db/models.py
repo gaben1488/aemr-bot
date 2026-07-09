@@ -181,6 +181,18 @@ class Operator(Base):
 
 class Appeal(Base):
     __tablename__ = "appeals"
+    # Композитный индекс (status, created_at) под горячий паттерн
+    # `WHERE status IN (...) AND created_at <= threshold ORDER BY
+    # created_at` (services/appeals.py::find_overdue_unanswered,
+    # list_unanswered*). Отдельные индексы на status и created_at
+    # (index=True ниже) покрывают каждый фильтр по отдельности, но не
+    # их комбинацию одним index scan. Создан миграцией 0019 — тот же
+    # паттерн, что 0012 (messages) и 0018 (users trigram): индекс
+    # продекларирован здесь, чтобы модель и БД не расходились
+    # (`alembic check` не видит drift).
+    __table_args__ = (
+        Index("ix_appeals_status_created_at", "status", "created_at"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)

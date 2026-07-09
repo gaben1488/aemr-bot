@@ -359,7 +359,8 @@ def op_set(path: str) -> str:
     ``edit:<key>`` / ``cancel:<key>`` / ``list_add:<key>`` /
     ``list_del:<key>:<i>`` / ``obj_add:<key>`` / ``obj_view:<key>:<i>`` /
     ``obj_del:<key>:<i>`` / ``author`` / ``quiet`` / ``quiet:toggle`` /
-    ``quiet:edit:start`` / ``pr:start`` / ``pr:diff`` / ``pr:confirm`` /
-    ``expert``. Разбирается в ``admin_settings.py``.
+    ``quiet:edit:start`` / ``notify`` / ``notify:toggle:<key>`` /
+    ``pr:start`` / ``pr:diff`` / ``pr:confirm`` / ``expert``.
+    Разбирается в ``admin_settings.py``.
     """
     return PREFIX_OP_SET + path

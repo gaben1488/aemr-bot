@@ -22,13 +22,14 @@
 
 **Покрываемые факты `_LEDGER.md` (Часть I):**
 - Оператор §3 / Сводка: `SLA_RESPONSE_HOURS == 4` (`config.py`).
-- Разработчик-MLP §B / config: `answer_max_chars == 300`.
+- Разработчик-MLP §B / config: `answer_max_chars == 800`.
 - Разработчик §4 / РЕШЕНИЕ audit_log: `audit_log_retention_days == 365`,
   диапазон `ge=30, le=3650`.
-- Администратор §4 / Сводка: `len(settings_store.SCHEMA) == 17`.
+- Администратор §4 / Сводка: `len(settings_store.SCHEMA) == 23` (2026-07-09:
+  +6 модульных тумблеров `admin_notify_*`, было 17).
 - Оператор §2: `OperatorRole` = 4 значения (coordinator/aemr/egp/it).
-- Разработчик §1: число файлов миграций `alembic/versions/*.py == 18`,
-  последняя ревизия `0018`, нумерация непрерывна 0001..0018.
+- Разработчик §1: число файлов миграций `alembic/versions/*.py == 19`,
+  последняя ревизия `0019`, нумерация непрерывна 0001..0019.
 - Разработчик §2: число ORM-таблиц (классов `(Base)` в `models.py`) `== 11`.
 - Администратор §6: `infra/Dockerfile` ставит из `uv.lock` с `--require-hashes`
   (content-check, не число — ловит откат образа на pip-из-диапазонов).
@@ -92,13 +93,13 @@ def test_sla_response_hours_is_4() -> None:
     )
 
 
-# --- §B Разработчик-MLP / config: answer_max_chars == 300 -------------
+# --- §B Разработчик-MLP / config: answer_max_chars == 800 -------------
 
 
-def test_answer_max_chars_is_300() -> None:
-    """`_LEDGER.md` (Этап B, спецификация): `answer_max_chars = 300`."""
-    assert settings.answer_max_chars == 300, (
-        f"_LEDGER.md фиксирует answer_max_chars=300, в коде "
+def test_answer_max_chars_is_800() -> None:
+    """`_LEDGER.md` (Этап B, спецификация): `answer_max_chars = 800`."""
+    assert settings.answer_max_chars == 800, (
+        f"_LEDGER.md фиксирует answer_max_chars=800, в коде "
         f"{settings.answer_max_chars} (config.py, alias ANSWER_MAX_CHARS)."
         + _FIX
     )
@@ -137,13 +138,18 @@ def test_audit_log_retention_range_is_30_to_3650() -> None:
     )
 
 
-# --- §4 Администратор / Сводка: len(settings_store.SCHEMA) == 17 ------
+# --- §4 Администратор / Сводка: len(settings_store.SCHEMA) == 23 ------
 
 
-def test_settings_schema_has_17_keys() -> None:
-    """`_LEDGER.md` Администратор §4: `settings_store.SCHEMA` — 17 ключей."""
-    assert len(settings_store.SCHEMA) == 17, (
-        f"_LEDGER.md фиксирует len(SCHEMA)=17, в коде "
+def test_settings_schema_has_23_keys() -> None:
+    """`_LEDGER.md` Администратор §4: `settings_store.SCHEMA` — 23 ключа.
+
+    2026-07-09: было 17, +6 модульных тумблеров служебных уведомлений
+    (`admin_notify_pulse/consent/subscriptions/open_reminder/
+    overdue_reminder/monthly_stats`, см. `services/notify_toggles.py`).
+    """
+    assert len(settings_store.SCHEMA) == 23, (
+        f"_LEDGER.md фиксирует len(SCHEMA)=23, в коде "
         f"{len(settings_store.SCHEMA)} (services/settings_store.py). "
         f"Ключи: {sorted(settings_store.SCHEMA)}." + _FIX
     )
@@ -162,36 +168,36 @@ def test_operator_role_has_four_values() -> None:
     )
 
 
-# --- §1 Разработчик: 18 миграций, последняя 0018 ---------------------
+# --- §1 Разработчик: 19 миграций, последняя 0019 ---------------------
 
 
-def test_migrations_count_is_18() -> None:
-    """`_LEDGER.md` Разработчик §1: ровно 18 файлов миграций.
+def test_migrations_count_is_19() -> None:
+    """`_LEDGER.md` Разработчик §1: ровно 19 файлов миграций.
 
     Считаем файлы `alembic/versions/*.py` (импортировать нечего —
-    миграции это файлы). В леджере уже был дрейф 17→18 — этот тест
+    миграции это файлы). В леджере уже были дрейфы 17→18→19 — этот тест
     ловит следующий.
     """
     nums = _migration_numbers()
-    assert len(nums) == 18, (
-        f"_LEDGER.md фиксирует 18 миграций (0001..0018), на диске "
+    assert len(nums) == 19, (
+        f"_LEDGER.md фиксирует 19 миграций (0001..0019), на диске "
         f"{len(nums)}: {nums}." + _FIX
     )
 
 
-def test_latest_migration_is_0018_and_contiguous() -> None:
-    """`_LEDGER.md` Разработчик §1: последняя ревизия `0018`, без дыр.
+def test_latest_migration_is_0019_and_contiguous() -> None:
+    """`_LEDGER.md` Разработчик §1: последняя ревизия `0019`, без дыр.
 
-    Нумерация обязана быть непрерывной 1..18 — иначе пропущена/удалена
-    миграция, и «последняя 0018» в леджере вводит в заблуждение.
+    Нумерация обязана быть непрерывной 1..19 — иначе пропущена/удалена
+    миграция, и «последняя 0019» в леджере вводит в заблуждение.
     """
     nums = _migration_numbers()
-    assert nums[-1] == 18, (
-        f"_LEDGER.md фиксирует последнюю миграцию 0018, максимальная на "
+    assert nums[-1] == 19, (
+        f"_LEDGER.md фиксирует последнюю миграцию 0019, максимальная на "
         f"диске {nums[-1]:04d}." + _FIX
     )
-    assert nums == list(range(1, 19)), (
-        f"_LEDGER.md подразумевает непрерывную нумерацию 0001..0018, на "
+    assert nums == list(range(1, 20)), (
+        f"_LEDGER.md подразумевает непрерывную нумерацию 0001..0019, на "
         f"диске пропуски/дубли: {nums}." + _FIX
     )
 

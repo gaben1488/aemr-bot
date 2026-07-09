@@ -95,6 +95,9 @@ async def test_purge_old_appeals_content_redacts_attachments_even_without_text(s
     assert stored_message is not None
     assert stored_appeal.summary is None
     assert stored_appeal.attachments == []
+    # address — тоже ПДн (152-ФЗ), retention должен обнулять его наравне
+    # с summary/attachments, а не оставлять висеть дольше 5 лет.
+    assert stored_appeal.address is None
     assert stored_message.text is None
     assert stored_message.attachments == []
 
