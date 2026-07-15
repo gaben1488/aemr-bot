@@ -22,6 +22,15 @@ ENV_FILE=/home/aemr/aemr-bot/infra/.env
 COMPOSE_DIR=/home/aemr/aemr-bot/infra
 LIVE_URL=http://127.0.0.1:8080/livez
 READY_URL=http://127.0.0.1:8080/readyz
+# Базовый адрес MAX Bot API для внеполосного алёрта. С 19.07.2026 старый
+# platform-api.max.ru умирает (GlobalSign отозвал сертификаты РФ-компаний;
+# официальная инструкция MAX — переход на platform-api2 + доверие нац-УЦ
+# Минцифры). Хост можно переопределить строкой MAX_API_BASE= в infra/.env.
+MAX_API_BASE_DEFAULT="https://platform-api2.max.ru"
+# Российский корневой CA (Минцифры) — цепочка platform-api2. Лежит в репо,
+# публичный сертификат. Без него curl не доверяет новому хосту и ⛑️-алёрт
+# молча не уходит — двойной тихий отказ.
+RUSSIAN_CA="$COMPOSE_DIR/certs/russian_trusted_root_ca.pem"
 STATE_DIR=/var/lib/aemr-bot-watchdog
 STATE_FILE=$STATE_DIR/state
 LOG_TAG=aemr-bot-watchdog
@@ -98,12 +107,26 @@ if [ "$fails" -ge "$MAX_FAILS_BEFORE_ALERT" ]; then
     # BOT_EXTRA_CA_CERT / BOT_OUTBOUND_PROXY из .env, что и сам бот.
     CA_CERT=$(awk -F= '$1=="BOT_EXTRA_CA_CERT"{print substr($0,index($0,$2))}' "$ENV_FILE" | head -1)
     PROXY=$(awk -F= '$1=="BOT_OUTBOUND_PROXY"{print substr($0,index($0,$2))}' "$ENV_FILE" | head -1)
+    API_BASE=$(awk -F= '$1=="MAX_API_BASE"{print substr($0,index($0,$2))}' "$ENV_FILE" | head -1)
+    API_BASE="${API_BASE:-$MAX_API_BASE_DEFAULT}"
+
+    # Доверие TLS: --cacert ЗАМЕНЯЕТ системный стор, поэтому один корп-CA сломал бы
+    # проверку российской цепочки platform-api2 (и наоборот). Собираем ОБЪЕДИНЁННЫЙ
+    # бандл: системные CA + российский корень Минцифры + корп-CA (если задан) —
+    # так алёрт уходит и под SSL-инспекцией, и на чистой сети.
+    SYS_CA=/etc/ssl/certs/ca-certificates.crt
+    BUNDLE=$(mktemp /tmp/aemr-healthwatch-ca.XXXXXX)
+    trap 'rm -f "$BUNDLE"' EXIT
+    [ -f "$SYS_CA" ] && cat "$SYS_CA" >> "$BUNDLE"
+    [ -f "$RUSSIAN_CA" ] && cat "$RUSSIAN_CA" >> "$BUNDLE"
+    if [ -n "${CA_CERT:-}" ] && [ -f "$CA_CERT" ]; then cat "$CA_CERT" >> "$BUNDLE"; fi
+
     curl_extra=()
-    if [ -n "${CA_CERT:-}" ] && [ -f "$CA_CERT" ]; then curl_extra+=(--cacert "$CA_CERT"); fi
+    if [ -s "$BUNDLE" ]; then curl_extra+=(--cacert "$BUNDLE"); fi
     if [ -n "${PROXY:-}" ]; then curl_extra+=(--proxy "$PROXY"); fi
 
     if curl -fsS --max-time 15 "${curl_extra[@]}" -X POST \
-        "https://platform-api.max.ru/messages?chat_id=${ADMIN_GROUP_ID}" \
+        "${API_BASE}/messages?chat_id=${ADMIN_GROUP_ID}" \
         -H "Authorization: ${MAX_AUTH}" \
         -H 'Content-Type: application/json' \
         -d "$payload" >/dev/null 2>&1; then
