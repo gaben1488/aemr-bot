@@ -54,13 +54,18 @@ class Settings(BaseSettings):
     # Границы рабочего окна для расчёта SLA-просрочки (services/sla.py) —
     # локальное время по `timezone` (Камчатка). SLA-часы копятся ТОЛЬКО
     # внутри [sla_work_start_hour, sla_work_end_hour) рабочих дней
-    # (calendar_ru.is_workday: пн-пт минус праздники РФ). Обед НЕ
-    # вычитаем сознательно: напоминалки-cron и так молчат в обеденный час
-    # (см. _job_working_hours_open_reminder), а вычитание обеда из самого
-    # SLA-счётчика усложнило бы объяснимость дедлайна оператору
-    # («почему просрочка не в ровно 13:00+4ч») без реальной пользы.
+    # (calendar_ru.is_workday: пн-пт минус праздники РФ) ЗА ВЫЧЕТОМ
+    # обеденного перерыва [sla_lunch_start_hour, sla_lunch_end_hour) —
+    # решение владельца: обед вычитается, т.к. в обед люди не работают.
+    # Дефолт обеда 12:00-13:00 сверен с фактическим окном cron-напоминалок
+    # (_job_working_hours_open_reminder: hour="9-11,13-17" — час 12
+    # выпадает), так что SLA-таймер и напоминалки замирают синхронно.
+    # Валидатор _enforce_sla_work_window требует: start < end у обоих
+    # окон и обед строго внутри рабочего окна.
     sla_work_start_hour: int = Field(9, alias="SLA_WORK_START_HOUR", ge=0, le=23)
     sla_work_end_hour: int = Field(18, alias="SLA_WORK_END_HOUR", ge=1, le=24)
+    sla_lunch_start_hour: int = Field(12, alias="SLA_LUNCH_START_HOUR", ge=0, le=23)
+    sla_lunch_end_hour: int = Field(13, alias="SLA_LUNCH_END_HOUR", ge=1, le=24)
     appeal_collect_timeout_seconds: int = Field(60, alias="APPEAL_TIMEOUT")
     answer_max_chars: int = Field(800, alias="ANSWER_MAX_CHARS")
     name_max_chars: int = Field(120, alias="NAME_MAX_CHARS")
@@ -266,6 +271,21 @@ class Settings(BaseSettings):
             raise ValueError(
                 "SLA_WORK_START_HOUR must be strictly less than SLA_WORK_END_HOUR "
                 f"(got {self.sla_work_start_hour} >= {self.sla_work_end_hour})"
+            )
+        if self.sla_lunch_start_hour >= self.sla_lunch_end_hour:
+            raise ValueError(
+                "SLA_LUNCH_START_HOUR must be strictly less than SLA_LUNCH_END_HOUR "
+                f"(got {self.sla_lunch_start_hour} >= {self.sla_lunch_end_hour})"
+            )
+        if (
+            self.sla_lunch_start_hour < self.sla_work_start_hour
+            or self.sla_lunch_end_hour > self.sla_work_end_hour
+        ):
+            raise ValueError(
+                "lunch window [SLA_LUNCH_START_HOUR, SLA_LUNCH_END_HOUR) must lie "
+                "inside the SLA work window [SLA_WORK_START_HOUR, SLA_WORK_END_HOUR) "
+                f"(got lunch {self.sla_lunch_start_hour}-{self.sla_lunch_end_hour}, "
+                f"work {self.sla_work_start_hour}-{self.sla_work_end_hour})"
             )
         return self
 
