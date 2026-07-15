@@ -72,3 +72,7 @@ htmlcov/
 
 # Optional local tree-only index
 aemr-bot-tree.md
+
+# Публичный корневой сертификат нац-УЦ (Минцифры) для healthwatch — НЕ секрет.
+# Общий запрет *.pem защищает от случайного коммита ключей; этот файл — исключение.
+!infra/certs/russian_trusted_root_ca.pem
