@@ -334,6 +334,35 @@ class TestLongPollClientTimeout:
             + cfg.polling_client_timeout_buffer_seconds
         )
 
+    @pytest.mark.parametrize("bad", [0, 1, 4])
+    def test_polling_timeout_below_floor_rejected(
+        self, monkeypatch: pytest.MonkeyPatch, bad: int
+    ) -> None:
+        """POLLING_TIMEOUT_SECONDS < 5 отвергается валидацией. timeout=0
+        вырождает long-poll в busy-loop (пробивает лимит MAX 2 RPS) и
+        обнуляет порог свежести /livez → restart-loop; ge=5 — безопасный пол."""
+        from pydantic import ValidationError
+
+        from aemr_bot.config import Settings
+
+        monkeypatch.setenv("BOT_TOKEN", "t")
+        monkeypatch.setenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+        monkeypatch.setenv("POLLING_TIMEOUT_SECONDS", str(bad))
+        with pytest.raises(ValidationError):
+            Settings(_env_file=None)  # type: ignore[call-arg]
+
+    def test_polling_timeout_floor_accepted(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Ровно на полу (5) — валидно."""
+        from aemr_bot.config import Settings
+
+        monkeypatch.setenv("BOT_TOKEN", "t")
+        monkeypatch.setenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+        monkeypatch.setenv("POLLING_TIMEOUT_SECONDS", "5")
+        s = Settings(_env_file=None)  # type: ignore[call-arg]
+        assert s.polling_timeout_seconds == 5
+
     def test_apply_raises_ceiling_when_polling_timeout_high(self) -> None:
         """Если серверный hold поднят выше клиентского потолка,
         _apply_polling_client_timeout подтягивает total так, чтобы клиент

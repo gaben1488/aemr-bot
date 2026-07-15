@@ -101,3 +101,64 @@ def test_extract_urls_many_distinct_ok() -> None:
     urls = extract_urls(text)
     assert len(urls) == 500
     assert urls[0] == "http://h0.ru/p"
+
+
+# --- P2 (2026-07-16): голый хост на НЕ-курируемом TLD тоже гейтится ---
+# Детекция для гейта список-независима: любой `label.TLD` c ASCII-буквенным
+# TLD ловится и проверяется по whitelist. Раньше `.click`/`.zip` и сотни
+# других TLD не были в `_DEFANG_TLDS` → фишинг-домен уходил жителю.
+
+
+def test_bare_domain_uncurated_tld_click_blocked() -> None:
+    # `.click` НЕ в старом `_DEFANG_TLDS` — раньше проходил мимо гейта.
+    bad = find_non_whitelisted_urls("Подтвердите: gosuslugi-kamchatka.click")
+    assert "gosuslugi-kamchatka.click" in bad
+
+
+def test_bare_domain_uncurated_tld_zip_blocked() -> None:
+    # `.zip` — реальный TLD (Google) и одновременно расширение файла;
+    # MAX авто-линкует `foo.zip`, поэтому гейтим.
+    bad = find_non_whitelisted_urls("скачайте архив foo.zip прямо сейчас")
+    assert "foo.zip" in bad
+
+
+def test_bare_domain_uncurated_tld_variety_blocked() -> None:
+    # Набор дешёвых фишинг-TLD, которых нет в курируемом списке.
+    for host in ("evil.link", "pay.mobi", "login.pro", "get.life", "x.cyou"):
+        bad = find_non_whitelisted_urls(f"перейдите на {host} немедленно")
+        assert host in bad, host
+
+
+def test_bare_gov_domain_still_allowed_after_broadening() -> None:
+    # Легитимный гос-домен по-прежнему проходит (whitelist решает).
+    assert find_non_whitelisted_urls("Подробнее на elizovomr.ru") == []
+    assert find_non_whitelisted_urls("новости: news.kamgov.ru") == []
+
+
+def test_version_number_not_treated_as_host() -> None:
+    # Числа/версии/IP/время не считаются хостами (TLD должен быть буквенным ≥2).
+    assert find_non_whitelisted_urls("обновление версии 1.2.3 доступно") == []
+    assert find_non_whitelisted_urls("адрес шлюза 192.168.1.1 в сети") == []
+    assert find_non_whitelisted_urls("приём с 8.00 до 17.30") == []
+
+
+def test_russian_missing_space_not_false_positive() -> None:
+    # Рус. предложение без пробела после точки НЕ должно ловиться как хост:
+    # кириллический «TLD» вне закрытого IDN-набора не матчится.
+    assert find_non_whitelisted_urls("Добрый день.Меня зовут Иван Петров.") == []
+    assert find_non_whitelisted_urls("Заявка принята.Ответ придёт позже.") == []
+
+
+def test_file_names_not_treated_as_host() -> None:
+    # Имена файлов с заведомо не-доменным расширением НЕ придерживают
+    # штатный ответ оператора (MAX их не авто-линкует): «справка.pdf»,
+    # «фото.jpg» — это файлы, а не домены.
+    assert find_non_whitelisted_urls("Направьте справку.pdf на почту") == []
+    assert find_non_whitelisted_urls("Приложите фото.jpg и скан.png") == []
+    assert find_non_whitelisted_urls("документ отчёт.docx и таблица.xlsx") == []
+
+
+def test_zip_still_gated_despite_file_extension() -> None:
+    # `.zip`/`.mov` — реальные gTLD (Google) и цель фишинга: остаются под
+    # гейтом, несмотря на то, что это ещё и файловые расширения.
+    assert "foo.zip" in find_non_whitelisted_urls("скачайте foo.zip сейчас")

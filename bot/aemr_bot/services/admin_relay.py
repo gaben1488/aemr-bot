@@ -31,6 +31,36 @@ _RELAY_MAX_ATTEMPTS = 3
 _RELAY_BASE_DELAY_SEC = 0.5
 
 
+def _chunk_relayable(relayable: list) -> list[list]:
+    """Порезать пересылаемые вложения на батчи по лимиту
+    `cfg.attachments_per_relay_message`. Серверный лимит MAX на одно
+    сообщение не задокументирован, но 10 вложений за раз стабильно
+    проходят. Единый источник батчинга для обеих relay-функций.
+    """
+    chunk_size = max(1, cfg.attachments_per_relay_message)
+    return [
+        relayable[i:i + chunk_size]
+        for i in range(0, len(relayable), chunk_size)
+    ]
+
+
+def _build_reply_link(mid: str | None):
+    """Собрать `NewMessageLink(REPLY)` на `mid` либо None, если `mid`
+    пуст или типы maxapi недоступны. Единый источник reply-link для
+    обеих relay-функций (raw-mid → связка с карточкой обращения).
+    """
+    if not mid:
+        return None
+    try:
+        from maxapi.enums.message_link_type import MessageLinkType
+        from maxapi.types.message import NewMessageLink
+
+        return NewMessageLink(type=MessageLinkType.REPLY, mid=mid)
+    except Exception:
+        log.exception("NewMessageLink build failed; relay без reply-link")
+        return None
+
+
 async def _send_with_retry(send_coro_factory, *, batch_idx: int,
                            total_batches: int, appeal_id: int) -> bool:
     """Запустить send_coro_factory() с retry. Возвращает True при успехе.
@@ -118,22 +148,9 @@ async def render_appeal_attachments(
     if not relayable:
         return
 
-    link = None
-    if reply_to_mid and chat_id is not None:
-        try:
-            from maxapi.enums.message_link_type import MessageLinkType
-            from maxapi.types.message import NewMessageLink
+    link = _build_reply_link(reply_to_mid if chat_id is not None else None)
 
-            link = NewMessageLink(type=MessageLinkType.REPLY, mid=reply_to_mid)
-        except Exception:
-            log.exception("NewMessageLink build failed; relay без reply-link")
-            link = None
-
-    chunk_size = max(1, cfg.attachments_per_relay_message)
-    batches = [
-        relayable[i:i + chunk_size]
-        for i in range(0, len(relayable), chunk_size)
-    ]
+    batches = _chunk_relayable(relayable)
     total = len(batches)
     for idx, batch in enumerate(batches, start=1):
         header = header_template.format(appeal_id=appeal.id)
@@ -185,31 +202,10 @@ async def relay_attachments_to_admin(
     relayable = deserialize_for_relay(stored_attachments)
     if not relayable:
         return True
-    try:
-        from maxapi.enums.message_link_type import MessageLinkType
-        from maxapi.types.message import NewMessageLink
-    except Exception:
-        log.exception(
-            "типы ссылок maxapi недоступны; пересылка без reply-link"
-        )
-        MessageLinkType = None  # type: ignore[misc,assignment]
-        NewMessageLink = None  # type: ignore[misc,assignment]
 
-    link = None
-    if admin_mid and MessageLinkType is not None and NewMessageLink is not None:
-        try:
-            link = NewMessageLink(type=MessageLinkType.REPLY, mid=admin_mid)
-        except Exception:
-            log.exception(
-                "не удалось собрать NewMessageLink для admin_mid=%s", admin_mid
-            )
-            link = None
+    link = _build_reply_link(admin_mid)
 
-    chunk_size = max(1, cfg.attachments_per_relay_message)
-    batches = [
-        relayable[i:i + chunk_size]
-        for i in range(0, len(relayable), chunk_size)
-    ]
+    batches = _chunk_relayable(relayable)
     total_batches = len(batches)
     succeeded = 0
     for idx, batch in enumerate(batches, start=1):

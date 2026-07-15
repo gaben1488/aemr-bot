@@ -133,24 +133,42 @@ def create_app() -> tuple[Bot, Dispatcher]:
     return build_bot(), build_dispatcher()
 
 
+# Общий потолок concurrency для входящих апдейтов и общая lazy-фабрика на
+# оба пути (webhook и polling). Инстансы семафоров РАЗНЫЕ — каждый транспорт
+# держит своё независимое окно, — но реализация и число одни. 32 —
+# компромисс между throughput и memory pressure (mem_limit=512m в
+# docker-compose): увеличивать только после реальных нагрузочных замеров.
+_SEMAPHORE_CONCURRENCY = 32
+
+
+def _lazy_semaphore(
+    holder_name: str, capacity: int = _SEMAPHORE_CONCURRENCY
+) -> asyncio.Semaphore:
+    """Lazy-init module-global семафора по имени `holder_name`.
+
+    Создавать семафор на module-level нельзя — при импорте main.py ещё нет
+    активного event loop. Общая реализация для webhook- и polling-семафоров:
+    они различаются только именем module-global, а значит дают два
+    независимых инстанса с одним и тем же потолком.
+    """
+    sem = globals().get(holder_name)
+    if sem is None:
+        sem = asyncio.Semaphore(capacity)
+        globals()[holder_name] = sem
+    return sem
+
+
 # Semaphore-окно для входящих webhook'ов. Без ограничения каждый POST
 # в /max/webhook порождает asyncio.create_task(...) — флуд (1000 RPS
 # или ботнет) получает unbounded task spawn → OOM при mem_limit=512m
 # в docker-compose. С 32 параллельными dispatchers очередь FastAPI
 # держит остальные на 200ms+ — клиенты MAX перетягивают, но процесс
-# не падает. 32 — компромисс между throughput и memory pressure;
-# увеличивать только после реальных нагрузочных замеров.
-_WEBHOOK_CONCURRENCY = 32
+# не падает.
 _WEBHOOK_SEMAPHORE: asyncio.Semaphore | None = None
 
 
 def _get_webhook_semaphore() -> asyncio.Semaphore:
-    """Lazy-init семафора. Создавать на module-level нельзя — нет
-    активного event loop при импорте main.py."""
-    global _WEBHOOK_SEMAPHORE
-    if _WEBHOOK_SEMAPHORE is None:
-        _WEBHOOK_SEMAPHORE = asyncio.Semaphore(_WEBHOOK_CONCURRENCY)
-    return _WEBHOOK_SEMAPHORE
+    return _lazy_semaphore("_WEBHOOK_SEMAPHORE")
 
 
 # Semaphore-окно для polling-dispatch (P2-1). maxapi с use_create_task=True
@@ -161,19 +179,12 @@ def _get_webhook_semaphore() -> asyncio.Semaphore:
 # handle()-тасков, каждый из которых берёт соединение из пула БД (15) →
 # исчерпание пула, рост памяти при mem_limit=512m, деградация для всех.
 # Симметрично webhook'у: bounded окно держит число параллельных dispatch'ей
-# в узде. 32 — тот же компромис throughput/память, что и у webhook-семафора.
-_POLLING_DISPATCH_CONCURRENCY = 32
+# в узде — тот же потолок _SEMAPHORE_CONCURRENCY, что и у webhook-семафора.
 _POLLING_DISPATCH_SEMAPHORE: asyncio.Semaphore | None = None
 
 
 def _get_polling_dispatch_semaphore() -> asyncio.Semaphore:
-    """Lazy-init polling-dispatch семафора (нет event loop при импорте)."""
-    global _POLLING_DISPATCH_SEMAPHORE
-    if _POLLING_DISPATCH_SEMAPHORE is None:
-        _POLLING_DISPATCH_SEMAPHORE = asyncio.Semaphore(
-            _POLLING_DISPATCH_CONCURRENCY
-        )
-    return _POLLING_DISPATCH_SEMAPHORE
+    return _lazy_semaphore("_POLLING_DISPATCH_SEMAPHORE")
 
 
 # Per-user токен-бакет (P2-1). Polling-путь не имел per-user rate-limit:
@@ -384,6 +395,33 @@ async def _seed_settings():
         await settings_store.seed_if_empty(session)
 
 
+async def _warm_cache(service_name: str) -> None:
+    """Прогреть in-memory cache сервиса `aemr_bot.services.<service_name>`
+    из БД на старте, под общей обработкой ошибок.
+
+    Оба boot-warmup (quiet_hours, notify_toggles) отличались лишь
+    импортируемым сервисом — общий lazy-import, `session_scope()` и
+    try/except держим здесь, в одном месте. Каждый сервис экспортирует
+    `refresh_cache_from_db(session)`. Полностью best-effort: любая ошибка
+    (сервис не поднялся, БД недоступна) роняется в debug и НЕ валит старт —
+    cache остаётся в своём default-состоянии, что безопасно.
+    См. SECURITY_REVIEW_2026-05-28 §A2.
+    """
+    from importlib import import_module
+
+    try:
+        service = import_module(f"aemr_bot.services.{service_name}")
+        async with session_scope() as session:
+            await service.refresh_cache_from_db(session)
+    except Exception:
+        log.debug(
+            "%s.refresh_cache_from_db boot warmup failed — cache останется "
+            "в default-состоянии, безопасно",
+            service_name,
+            exc_info=False,
+        )
+
+
 def _warm_geo_indexes_sync() -> None:
     """Синхронный прогрев geo-индексов (вызывать через asyncio.to_thread).
 
@@ -523,19 +561,24 @@ async def _register_bot_commands(bot: Bot) -> None:
     /forget виден в админ-чате?»); их обработчики остаются рабочими как
     запасной путь, но в подсказке /-меню их нет.
 
-    Шлём `commands` прямым aiohttp-PATCH /me, а не через
-    `bot.set_my_commands()`: у того в `ChangeInfo.fetch()` стоит
-    `if self.commands:` (предохранитель против случайной очистки), и
-    нам проще держать явный предсказуемый список здесь.
+    Шлём `commands` PATCH'ем /me, а не через `bot.set_my_commands()`:
+    у того в `ChangeInfo.fetch()` стоит `if self.commands:` (предохранитель
+    против случайной очистки), и нам проще держать явный предсказуемый
+    список здесь.
+
+    Транспорт — сессия самого maxapi (`bot.ensure_session()`), а не своя
+    голая `aiohttp.ClientSession`. Это принципиально: MAX мигрировал на
+    platform-api2.max.ru с сертификатом от «Russian Trusted CA» (Минцифры),
+    а штатный Dockerfile/наш CA-бандл несут только публичные корни — без
+    российского. Своя сессия молча падала бы `SSLCertVerificationError`,
+    ошибка гасилась бы дважды (log.exception + внешний try/except в main),
+    и /-меню не публиковалось бы незаметно для оператора. Сессия maxapi
+    уже несёт TCPConnector с этим корнем (client/ssl.with_default_connector),
+    base_url=api_url, Authorization-заголовок из bot.headers и trust_env
+    (proxy из окружения в firewall-режиме) — всё нужное наследуется.
     """
     import aiohttp
 
-    url = f"{bot.api_url}/me"
-    # API MAX перешёл на Authorization-header; access_token в query
-    # теперь возвращает 401. Префикс «Bearer» НЕ нужен: maxapi внутри
-    # тоже передаёт токен напрямую (см. bot.py:153 — `self.headers =
-    # {"Authorization": self.__token}`). Подкладываем то же самое.
-    headers = {"Authorization": settings.bot_token}
     payload: dict[str, list] = {
         "commands": [
             {"name": "start", "description": "Запустить бота и открыть меню"},
@@ -543,13 +586,18 @@ async def _register_bot_commands(bot: Bot) -> None:
         ]
     }
     try:
-        async with aiohttp.ClientSession(**network.session_kwargs()) as session:
-            async with session.patch(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                if resp.status == 200:
-                    log.info("set_my_commands: /-меню опубликовано (/start, /menu) через PATCH /me")
-                else:
-                    body = await resp.text()
-                    log.warning("set_my_commands PATCH вернул %s: %s", resp.status, body[:200])
+        # base_url сессии = api_url, поэтому путь относительный: '/me'.
+        # Per-request timeout сохраняет прежний 10-секундный потолок, не
+        # завися от долгого long-poll total сессии в polling-режиме.
+        session = await bot.ensure_session()
+        async with session.patch(
+            "/me", json=payload, timeout=aiohttp.ClientTimeout(total=10)
+        ) as resp:
+            if resp.status == 200:
+                log.info("set_my_commands: /-меню опубликовано (/start, /menu) через PATCH /me")
+            else:
+                body = await resp.text()
+                log.warning("set_my_commands PATCH вернул %s: %s", resp.status, body[:200])
     except Exception:
         log.exception("set_my_commands: PATCH /me failed (некритично, /-меню могут остаться у клиентов)")
 
@@ -623,34 +671,14 @@ async def main() -> None:
     # (до первого pulse-cron'а) cache держит default disabled и
     # non-critical сообщения могут проскочить в quiet окне.
     # См. SECURITY_REVIEW_2026-05-28 §A2.
-    try:
-        from aemr_bot.services import quiet_hours
-
-        async with session_scope() as session:
-            await quiet_hours.refresh_cache_from_db(session)
-    except Exception:
-        log.debug(
-            "quiet_hours.refresh_cache_from_db boot warmup failed — "
-            "cache останется в default disabled, безопасно",
-            exc_info=False,
-        )
+    await _warm_cache("quiet_hours")
 
     # Прогрев in-memory cache для модульных тумблеров уведомлений
     # (services/notify_toggles.py) — тот же мотив, что у quiet_hours
     # выше: до первого refresh кэш default True (не подавляет), но
     # прогрев сразу после старта подтягивает реальное состояние из БД,
     # если оператор уже выключил какой-то тумблер до рестарта.
-    try:
-        from aemr_bot.services import notify_toggles
-
-        async with session_scope() as session:
-            await notify_toggles.refresh_cache_from_db(session)
-    except Exception:
-        log.debug(
-            "notify_toggles.refresh_cache_from_db boot warmup failed — "
-            "cache останется в default enabled, безопасно",
-            exc_info=False,
-        )
+    await _warm_cache("notify_toggles")
 
     # Прогрев geo-индексов (~2.6 МБ GeoJSON) — СТРОГО в фоне, не блокируя
     # старт polling. Без него первый житель, нажавший «Поделиться

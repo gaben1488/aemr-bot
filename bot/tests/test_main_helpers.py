@@ -172,44 +172,55 @@ class TestBuildAdminSenders:
 
 
 class TestRegisterBotCommands:
-    """_register_bot_commands — PATCH /me публикует /start и /menu."""
+    """_register_bot_commands — PATCH /me публикует /start и /menu.
 
-    @pytest.mark.asyncio
-    async def test_patch_publishes_start_and_menu_commands(self) -> None:
-        from aemr_bot import main
+    Транспорт — сессия maxapi (`bot.ensure_session()`) с доверенным
+    Russian-CA коннектором, НЕ голая aiohttp.ClientSession к api2 (та
+    несёт только публичные CA и молча падала бы на TLS-проверке).
+    """
 
-        bot = MagicMock()
-        bot.api_url = "https://botapi.max.ru"
-
-        # Имитируем aiohttp.ClientSession.patch как async context manager.
-        resp = MagicMock()
-        resp.status = 200
-        resp.text = AsyncMock(return_value="ok")
+    @staticmethod
+    def _make_session(resp: MagicMock) -> MagicMock:
+        """Сессия-заглушка: `.patch(...)` — async context manager → resp."""
         resp_ctx = MagicMock()
         resp_ctx.__aenter__ = AsyncMock(return_value=resp)
         resp_ctx.__aexit__ = AsyncMock(return_value=None)
         session = MagicMock()
         session.patch = MagicMock(return_value=resp_ctx)
-        session_ctx = MagicMock()
-        session_ctx.__aenter__ = AsyncMock(return_value=session)
-        session_ctx.__aexit__ = AsyncMock(return_value=None)
+        return session
 
-        with patch.object(main.settings, "bot_token", "TOKEN-123"), \
-             patch("aiohttp.ClientSession", return_value=session_ctx):
+    @pytest.mark.asyncio
+    async def test_patch_goes_through_maxapi_trusted_session(self) -> None:
+        from aemr_bot import main
+
+        resp = MagicMock()
+        resp.status = 200
+        resp.text = AsyncMock(return_value="ok")
+        session = self._make_session(resp)
+
+        bot = MagicMock()
+        bot.ensure_session = AsyncMock(return_value=session)
+
+        # Голую ClientSession поднимать НЕЛЬЗЯ — только доверенный
+        # транспорт maxapi. Ловим любую попытку её создать.
+        with patch("aiohttp.ClientSession") as raw_session_cls:
             await main._register_bot_commands(bot)
 
-        # Проверяем сам PATCH-вызов: URL и payload.
+        # PATCH ушёл через сессию maxapi, а не через свою ClientSession.
+        bot.ensure_session.assert_awaited_once()
+        raw_session_cls.assert_not_called()
+
         session.patch.assert_called_once()
         call = session.patch.call_args
+        # base_url сессии = api_url, путь относительный.
         assert call.args[0].endswith("/me")
         json_payload = call.kwargs.get("json")
         names = [c["name"] for c in json_payload["commands"]]
         assert names == ["start", "menu"]
         # У каждой опубликованной команды есть текст-подсказка.
         assert all(c.get("description") for c in json_payload["commands"])
-        headers = call.kwargs.get("headers") or {}
-        # Authorization без префикса Bearer (см. docstring).
-        assert headers.get("Authorization") == "TOKEN-123"
+        # Per-request timeout сохранён (10-секундный потолок).
+        assert call.kwargs.get("timeout") is not None
 
     @pytest.mark.asyncio
     async def test_swallows_network_errors(
@@ -217,14 +228,13 @@ class TestRegisterBotCommands:
     ) -> None:
         from aemr_bot import main
 
+        # Транспорт maxapi падает (сеть/TLS) — не должно поднять наружу.
         bot = MagicMock()
-        bot.api_url = "https://botapi.max.ru"
+        bot.ensure_session = AsyncMock(
+            side_effect=RuntimeError("connection refused")
+        )
 
-        with caplog.at_level(logging.ERROR, logger="aemr_bot"), \
-             patch.object(main.settings, "bot_token", "TOKEN"), \
-             patch("aiohttp.ClientSession",
-                   side_effect=RuntimeError("connection refused")):
-            # Не должно поднять исключение наружу.
+        with caplog.at_level(logging.ERROR, logger="aemr_bot"):
             await main._register_bot_commands(bot)
 
         # Сбой проглочен именно веткой except (а не «тихо пропущен»):

@@ -141,7 +141,7 @@ class TestAskForgetConfirm:
         with patch.object(keyboards, "forget_confirm_keyboard",
                           MagicMock(return_value=None)), \
              patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
-             patch("aemr_bot.services.appeals.list_unanswered",
+             patch("aemr_bot.services.appeals.list_unanswered_for_user",
                    AsyncMock(return_value=[])):
             await menu.ask_forget_confirm(event)
         event.bot.send_message.assert_called_once()
@@ -162,7 +162,7 @@ class TestAskForgetConfirm:
         with patch.object(keyboards, "forget_confirm_keyboard",
                           MagicMock(return_value=None)), \
              patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
-             patch("aemr_bot.services.appeals.list_unanswered",
+             patch("aemr_bot.services.appeals.list_unanswered_for_user",
                    AsyncMock(return_value=[ap])):
             await menu.ask_forget_confirm(event)
         text = event.bot.send_message.call_args.kwargs.get("text", "")
@@ -199,10 +199,8 @@ class TestAskGoodbye:
 
         event = _make_event()
         user = SimpleNamespace(id=1)
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.menu.users_service.get_or_create",
-                   AsyncMock(return_value=user)), \
-             patch("aemr_bot.services.appeals.list_unanswered",
+        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
+             patch("aemr_bot.services.appeals.list_unanswered_for_user",
                    AsyncMock(return_value=[])):
             await menu.ask_goodbye_erase_confirm(event)
         event.bot.send_message.assert_called_once()
