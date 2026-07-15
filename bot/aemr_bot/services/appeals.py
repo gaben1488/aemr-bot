@@ -18,12 +18,18 @@ async def create_appeal(
     summary: str,
     attachments: list,
     locality: str | None = None,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    geo_confidence: float | None = None,
 ) -> Appeal:
     appeal = Appeal(
         user_id=user.id,
         status=AppealStatus.NEW.value,
         locality=locality,
         address=address,
+        latitude=latitude,
+        longitude=longitude,
+        geo_confidence=geo_confidence,
         topic=topic,
         summary=summary,
         attachments=attachments,

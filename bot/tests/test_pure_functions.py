@@ -101,6 +101,20 @@ def test_apply_repeat_context_without_source_keeps_texts() -> None:
     assert summary == "Текст обращения."
 
 
+def test_safe_float_coerces_and_tolerates_garbage() -> None:
+    """Координаты из dialog_data (через JSONB) могут прийти числом,
+    строкой или мусором — приводим к float или None, не падаем."""
+    from aemr_bot.handlers.appeal_runtime import _safe_float
+
+    assert _safe_float(53.1845) == pytest.approx(53.1845)
+    assert _safe_float("158.3865") == pytest.approx(158.3865)
+    assert _safe_float(0) == 0.0
+    assert _safe_float(None) is None
+    assert _safe_float("") is None
+    assert _safe_float("не число") is None
+    assert _safe_float({"lat": 1}) is None
+
+
 # ---------- settings_store.validate ----------
 
 

@@ -280,9 +280,9 @@ _SCHEMA — ровно 23 ключа (2026-07-09: было 17, +6 модульн
 
 ## Раздел «Разработчик»
 
-**1. Миграции Alembic — 19 файлов, последняя `0019_appeals_status_created_index`** _(ревизия 2026-07-09: ранее 18/0018, добавлена 0019 — композитный индекс appeals(status, created_at) под SLA-просрочку по рабочему времени)_
-`bot/aemr_bot/db/alembic/versions/` — полный список (0001..0019):
-0001_initial, 0002_broadcast, 0003_phone_normalized, 0004_indexes_and_autovacuum, 0005_appeals_locality, 0006_consent_revoked_at, 0007_consent_broadcast_anonymous, 0008_backfill_consent_broadcast, 0009_partial_indexes_for_hot_paths, 0010_pg_ops_hardening, 0011_wizard_state_persistence, 0012_messages_appeal_created_index, 0013_settings_synced_at, 0014_broadcasts_attachments, 0015_broadcast_templates, 0016_broadcast_template_usage, 0017_appeals_last_card_mid, 0018_users_trigram_search_indexes, 0019_appeals_status_created_index.
+**1. Миграции Alembic — 20 файлов, последняя `0020_appeals_coordinates`** _(ревизия 2026-07-16: ранее 19/0019, добавлена 0020 — координаты обращения latitude/longitude/geo_confidence под пин-точный слой карты округа)_
+`bot/aemr_bot/db/alembic/versions/` — полный список (0001..0020):
+0001_initial, 0002_broadcast, 0003_phone_normalized, 0004_indexes_and_autovacuum, 0005_appeals_locality, 0006_consent_revoked_at, 0007_consent_broadcast_anonymous, 0008_backfill_consent_broadcast, 0009_partial_indexes_for_hot_paths, 0010_pg_ops_hardening, 0011_wizard_state_persistence, 0012_messages_appeal_created_index, 0013_settings_synced_at, 0014_broadcasts_attachments, 0015_broadcast_templates, 0016_broadcast_template_usage, 0017_appeals_last_card_mid, 0018_users_trigram_search_indexes, 0019_appeals_status_created_index, 0020_appeals_coordinates.
 
 **2. ORM-модели — 11, ровно как в списке**
 `bot/aemr_bot/db/models.py`: User (models.py:61), Operator (:168), Appeal (:182), Message (:232), Event (:259), AuditLog (:272), Setting (:283), Broadcast (:305), BroadcastDelivery (:339), WizardState (:355), BroadcastTemplate (:389). Классы `Base` (:9) и StrEnum-перечисления (DialogState, AppealStatus, OperatorRole, MessageDirection, BroadcastStatus) — не таблицы. _(ревизия 2026-07-09: Appeal получил `__table_args__` с композитным индексом (status, created_at) — номера строк последующих классов сдвинулись; значения и состав те же. Анти-дрейф числа 11 — `test_ledger_facts_sync.py`.)
