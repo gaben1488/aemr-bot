@@ -14,7 +14,10 @@ ContainerName=aemr-bot-db
 # Тот же pinned tag+digest, что в docker-compose.yml. Обновлять вместе со смоук-тестом.
 Image=docker.io/library/postgres:16-alpine@sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50
 Network=aemr-bot.network
-Volume=aemr-bot-db_data:/var/lib/postgresql/data
+# Имя тома СОВПАДАЕТ с compose (`aemr-bot_db_data`, через подчёркивание) —
+# чтобы переход с compose на Quadlet подхватил СУЩЕСТВУЮЩУЮ базу, а не создал
+# пустую. Перед миграцией сверить `podman volume ls` (см. вику «Эксплуатация»).
+Volume=aemr-bot_db_data:/var/lib/postgresql/data
 EnvironmentFile=/home/aemr/aemr-bot/infra/.env
 # pg_stat_statements должен быть в shared_preload_libraries ДО старта Postgres.
 Exec=postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all
