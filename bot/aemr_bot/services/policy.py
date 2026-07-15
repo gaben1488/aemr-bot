@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import shutil
 import tempfile
@@ -17,6 +18,10 @@ log = logging.getLogger(__name__)
 POLICY_PDF_REL = "PRIVACY.pdf"
 # Это ключ записи в таблице settings, а не пароль.
 POLICY_TOKEN_KEY = "policy_pdf_token"  # nosec B105
+# SHA-256 загруженного PDF. Кэшируем рядом с токеном, чтобы перезаливать файл
+# ТОЛЬКО при его смене: без этого после обновления seed/PRIVACY.pdf в БД остаётся
+# старый токен, и житель получает предыдущую версию политики. Тоже ключ, не секрет.
+POLICY_HASH_KEY = "policy_pdf_sha256"  # nosec B105
 
 # Отображаемое жителю имя файла в чате MAX. На диске и в Dockerfile файл
 # хранится латиницей (Docker buildkit не справляется с unicode в COPY,
@@ -29,16 +34,34 @@ def _resolve_pdf_path() -> Path:
     return cfg.seed_dir / POLICY_PDF_REL
 
 
-async def ensure_uploaded(bot, *, force: bool = False) -> str | None:
-    async with session_scope() as session:
-        token = await settings_store.get(session, POLICY_TOKEN_KEY)
-    if token and not force:
-        return token
+def _pdf_sha256(path: Path) -> str:
+    """SHA-256 файла политики — маркер «этот PDF уже загружен» для кэша токена."""
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
+
+async def ensure_uploaded(bot, *, force: bool = False) -> str | None:
     path = _resolve_pdf_path()
     if not path.exists():
         log.warning("policy PDF not found at %s — skipping upload", path)
-        return None
+        async with session_scope() as session:
+            # PDF нет, но токен мог быть закэширован раньше — отдаём его,
+            # старый файл лучше, чем «политика недоступна».
+            return await settings_store.get(session, POLICY_TOKEN_KEY)
+
+    current_hash = _pdf_sha256(path)
+    async with session_scope() as session:
+        cached_token = await settings_store.get(session, POLICY_TOKEN_KEY)
+        stored_hash = await settings_store.get(session, POLICY_HASH_KEY)
+
+    # Кэш валиден, только если PDF не менялся с прошлой загрузки. Обновили
+    # seed/PRIVACY.pdf → хэш другой → перезаливаем и обновляем токен, иначе
+    # житель получал бы старую версию политики по устаревшему токену.
+    if cached_token and stored_hash == current_hash and not force:
+        return cached_token
 
     # Копируем во временный файл под русским именем и загружаем его.
     # MAX берёт имя из basename загружаемого файла, поэтому житель в
@@ -58,11 +81,12 @@ async def ensure_uploaded(bot, *, force: bool = False) -> str | None:
             log.debug("не удалось удалить временный файл политики", exc_info=True)
 
     if token is None:
-        return None
+        return cached_token  # загрузка не удалась — оставляем прежний токен, если был
 
     async with session_scope() as session:
         await settings_store.set_value(session, POLICY_TOKEN_KEY, token)
-    log.info("policy PDF uploaded; token cached")
+        await settings_store.set_value(session, POLICY_HASH_KEY, current_hash)
+    log.info("policy PDF uploaded; token cached (sha256=%s…)", current_hash[:12])
     return token
 
 

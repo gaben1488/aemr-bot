@@ -169,7 +169,63 @@ class TestPolicy:
                    AsyncMock(return_value="NEW-TOK")):
             token = await policy.ensure_uploaded(bot)
         assert token == "NEW-TOK"
-        set_value.assert_called_once()
+        # Пишем и токен, и хэш PDF (чтобы потом не перезаливать неизменный файл).
+        assert set_value.call_count == 2
+        keys = {c.args[1] for c in set_value.call_args_list}
+        assert keys == {policy.POLICY_TOKEN_KEY, policy.POLICY_HASH_KEY}
+
+    @pytest.mark.asyncio
+    async def test_ensure_uploaded_reuploads_when_pdf_changed(self, tmp_path: Path) -> None:
+        """Токен закэширован, но PDF сменился (хэш не совпал) → перезаливаем."""
+        from aemr_bot.services import policy
+
+        seed_pdf = tmp_path / "PRIVACY.pdf"
+        seed_pdf.write_bytes(b"%PDF-1.4 NEW CONTENT")
+        bot = MagicMock()
+        set_value = AsyncMock()
+        upload = AsyncMock(return_value="NEW-TOK")
+
+        async def _get(_session, key):
+            if key == policy.POLICY_TOKEN_KEY:
+                return "OLD-TOK"
+            if key == policy.POLICY_HASH_KEY:
+                return "stale-hash"
+            return None
+
+        with patch("aemr_bot.services.policy.session_scope", _fake_session_scope), \
+             patch("aemr_bot.services.policy.settings_store.get", AsyncMock(side_effect=_get)), \
+             patch("aemr_bot.services.policy.settings_store.set_value", set_value), \
+             patch("aemr_bot.services.policy._resolve_pdf_path", return_value=seed_pdf), \
+             patch("aemr_bot.services.policy.uploads.upload_path", upload):
+            token = await policy.ensure_uploaded(bot)
+        assert token == "NEW-TOK"  # перезалился, а не отдал старый
+        upload.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_ensure_uploaded_keeps_cache_when_hash_matches(self, tmp_path: Path) -> None:
+        """Хэш совпал с закэшированным → отдаём токен без перезалива."""
+        from aemr_bot.services import policy
+
+        seed_pdf = tmp_path / "PRIVACY.pdf"
+        seed_pdf.write_bytes(b"%PDF-1.4 stable")
+        real_hash = policy._pdf_sha256(seed_pdf)
+        bot = MagicMock()
+        upload = AsyncMock(return_value="SHOULD-NOT-CALL")
+
+        async def _get(_session, key):
+            if key == policy.POLICY_TOKEN_KEY:
+                return "CACHED-TOK"
+            if key == policy.POLICY_HASH_KEY:
+                return real_hash
+            return None
+
+        with patch("aemr_bot.services.policy.session_scope", _fake_session_scope), \
+             patch("aemr_bot.services.policy.settings_store.get", AsyncMock(side_effect=_get)), \
+             patch("aemr_bot.services.policy._resolve_pdf_path", return_value=seed_pdf), \
+             patch("aemr_bot.services.policy.uploads.upload_path", upload):
+            token = await policy.ensure_uploaded(bot)
+        assert token == "CACHED-TOK"
+        upload.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_ensure_uploaded_force_refreshes(self, tmp_path: Path) -> None:

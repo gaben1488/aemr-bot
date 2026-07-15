@@ -219,7 +219,14 @@
         <td><code class="kbd">sla_work_start_hour</code><br><code class="kbd">SLA_WORK_START_HOUR</code><br><code class="kbd">sla_work_end_hour</code><br><code class="kbd">SLA_WORK_END_HOUR</code></td>
         <td><code class="kbd">9</code> / <code class="kbd">18</code></td>
         <td>целое (часы, 0-23 / 1-24), <code class="kbd">start &lt; end</code></td>
-        <td>Границы рабочего окна для расчёта SLA-просрочки, локальное время по <code class="kbd">TZ</code>. SLA-часы копятся только внутри этого окна рабочих дней (пн-пт минус праздники РФ). Обед сознательно НЕ вычитается — см. комментарий в <code class="kbd">config.py</code>.</td>
+        <td>Границы рабочего окна для расчёта SLA-просрочки, локальное время по <code class="kbd">TZ</code>. SLA-часы копятся только внутри этого окна рабочих дней (пн-пт минус праздники РФ), за вычетом обеденного перерыва — см. следующую строку.</td>
+        <td><code class="kbd">services/sla.py</code></td>
+      </tr>
+      <tr>
+        <td><code class="kbd">sla_lunch_start_hour</code><br><code class="kbd">SLA_LUNCH_START_HOUR</code><br><code class="kbd">sla_lunch_end_hour</code><br><code class="kbd">SLA_LUNCH_END_HOUR</code></td>
+        <td><code class="kbd">12</code> / <code class="kbd">13</code></td>
+        <td>целое (часы, 0-23 / 1-24), <code class="kbd">start &lt; end</code>, окно строго внутри рабочего окна</td>
+        <td>Обеденный перерыв, вычитаемый из SLA-счёта каждого рабочего дня: в обед люди не работают, SLA-таймер стоит. Дефолт 12:00–13:00 совпадает с обеденным «молчанием» cron-напоминалок (<code class="kbd">hour="9-11,13-17"</code>).</td>
         <td><code class="kbd">services/sla.py</code></td>
       </tr>
       <tr>

@@ -117,10 +117,13 @@ async def test_find_overdue_unanswered(session) -> None:
     old = await appeals_service.create_appeal(
         session, user=user, address="A", topic="T", summary="y", attachments=[]
     )
-    # «Старое» — 30 часов назад.
+    # «Старое» — 60 дней назад. Берём с большим запасом намеренно: SLA считается
+    # по РАБОЧИМ часам (services/sla.py), поэтому малый сдвиг (напр. 30 часов) даёт
+    # разное число рабочих часов в зависимости от дня недели и времени запуска теста
+    # — отсюда флейк на CI. 60 дней заведомо просрочены при любом определении SLA.
     await session.execute(
         update(Appeal).where(Appeal.id == old.id)
-        .values(created_at=datetime.now(timezone.utc) - timedelta(hours=30))
+        .values(created_at=datetime.now(timezone.utc) - timedelta(days=60))
     )
     await session.flush()
     overdue = await appeals_service.find_overdue_unanswered(session, sla_hours=24)

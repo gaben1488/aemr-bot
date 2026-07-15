@@ -58,6 +58,13 @@ services:
     restart: unless-stopped
 
   bot:
+    # Явное имя образа — ОДНО И ТО ЖЕ для compose и Quadlet (localhost/aemr-bot:latest).
+    # Зачем: (1) обновление детерминировано — и compose, и Quadlet поднимают один
+    # образ, не плодятся дубли (по умолчанию compose назвал бы его aemr-bot-bot);
+    # (2) офлайн-перенос в закрытый контур: `podman save localhost/aemr-bot:latest`
+    # на машине со сборкой → `podman load` на проде → `up -d --force-recreate`
+    # поднимает без пересборки и без выхода в интернет.
+    image: localhost/aemr-bot:latest
     build:
       context: ..
       dockerfile: infra/Dockerfile
