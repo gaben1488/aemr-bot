@@ -48,9 +48,22 @@ def test_double_extension_flagged() -> None:
     assert has_suspicious_double_extension("справка.scr.jpg") is True
 
 
+def test_real_executable_last_extension_flagged() -> None:
+    """Главная угроза: исполняемое расширение ПОСЛЕДНЕЕ. Windows по умолчанию
+    скрывает известные расширения — оператор видит «Постановление.pdf», а
+    реально это .exe. Раньше проверялось только предпоследнее расширение,
+    и такие файлы проходили без ⚠️ (review 2026-07-15, P1)."""
+    assert has_suspicious_double_extension("Постановление.pdf.exe") is True
+    assert has_suspicious_double_extension("virus.exe") is True
+    assert has_suspicious_double_extension("отчёт.docx.scr") is True
+    assert has_suspicious_double_extension("установщик.apk") is True
+
+
 def test_normal_filename_not_flagged() -> None:
     assert has_suspicious_double_extension("photo.jpg") is False
     assert has_suspicious_double_extension("отчёт.pdf") is False
+    assert has_suspicious_double_extension("архив.тар") is False  # без расширений из списка
+    assert has_suspicious_double_extension("без_расширения") is False
     # inner-расширение не исполняемое — не флажим.
     assert has_suspicious_double_extension("doc.pdf.pdf") is False
 

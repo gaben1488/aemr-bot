@@ -358,11 +358,23 @@ def _attachment_filename(att: dict) -> str | None:
 
 
 def has_suspicious_double_extension(filename: str) -> bool:
-    """True для имён вида `<...>.<exec>.<safe>` — маскировка исполняемого."""
+    """True для имён, за которыми может прятаться исполняемый файл.
+
+    Главная угроза — когда ПОСЛЕДНЕЕ расширение исполняемое: `Приказ.pdf.exe`
+    (Windows по умолчанию скрывает известные расширения — оператор видит
+    «Приказ.pdf») и голый `virus.exe`. Раньше проверялось только
+    ПРЕДПОСЛЕДНЕЕ расширение — реальная маскировка `*.pdf.exe` проходила
+    без ⚠️, а безобидный `x.exe.pdf` (реально PDF) флагался. Ветку
+    «опасное внутреннее расширение» оставляем как дополнительный флаг:
+    такое имя всё равно социнженерия, ложных срабатываний на реальных
+    вложениях жителей не бывает.
+    """
     parts = filename.lower().rsplit(".", 2)
-    if len(parts) < 3:  # нужно минимум два расширения: name.inner.outer
+    if len(parts) < 2:  # нет ни одного расширения
         return False
-    return parts[-2] in _DANGEROUS_INNER_EXT
+    if parts[-1] in _DANGEROUS_INNER_EXT:  # реально исполняемый тип
+        return True
+    return len(parts) >= 3 and parts[-2] in _DANGEROUS_INNER_EXT
 
 
 def suspicious_attachment_names(attachments: list[dict]) -> list[str]:
