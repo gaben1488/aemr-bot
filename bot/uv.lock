@@ -51,7 +51,7 @@ requires-dist = [
     { name = "bandit", marker = "extra == 'dev'", specifier = "~=1.7" },
     { name = "fastapi", specifier = ">=0.118,<0.137" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = "~=6.115" },
-    { name = "maxapi", specifier = "~=1.1" },
+    { name = "maxapi", specifier = "==1.2.1" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13,<3.0" },
     { name = "openpyxl", specifier = "~=3.1" },
     { name = "pip-audit", marker = "extra == 'dev'", specifier = "~=2.7" },
@@ -964,7 +964,7 @@ wheels = [
 
 [[package]]
 name = "maxapi"
-version = "1.2.0"
+version = "1.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -974,9 +974,9 @@ dependencies = [
     { name = "puremagic" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c7/9d/f1c85f1c0050669908d6bea0914f381c93292a450d75e5e18cc9da914994/maxapi-1.2.0.tar.gz", hash = "sha256:cd71ff0853729df46ead895440561928cfd5498325216973b4188d844947f3c5", size = 214723, upload-time = "2026-06-15T20:11:31.878Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0b/ea/6c3c30882b998af0663efc0fa31f408922c44b27fb4fd5414655df1120dd/maxapi-1.2.1.tar.gz", hash = "sha256:a78345b5d2219e7e61a8c535340e444e1440d2dad7abc1c1e0d698c94319a05b", size = 224479, upload-time = "2026-06-30T11:45:41.008Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/09/64/d5cde3ed1a06328898036197f4737406e52f5cb3cef0efa15149a72eae73/maxapi-1.2.0-py3-none-any.whl", hash = "sha256:d3198acb5cc1ca851a1b242f2cf8f28dbad0756a8c71ce1a95fb579e97a05f7e", size = 217828, upload-time = "2026-06-15T20:11:30.466Z" },
+    { url = "https://files.pythonhosted.org/packages/30/28/f867f3038fc92dc9c1c7d0d550108eff883b8e39ebb2b74a575feae1f04a/maxapi-1.2.1-py3-none-any.whl", hash = "sha256:1b75e2ab325309398e58f6bd8d4b7c1e96615a2f0e499e42678c4808f88c1d8a", size = 225202, upload-time = "2026-06-30T11:45:39.652Z" },
 ]
 
 [[package]]
