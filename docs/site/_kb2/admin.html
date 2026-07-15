@@ -681,12 +681,16 @@ docker compose ps                       # дождаться healthy у обои
 
 <h3 id="admin-logs">Логи</h3>
 
-<p>Все контейнеры пишут логи в формате json-file с ротацией: 10 МБ × 3 файла = до 30 МБ на контейнер. Бесконечного роста логов не будет.</p>
+<p>Логи бота хранятся <strong>на диске сервера двумя независимыми слоями</strong>, и оба переживают удаление контейнера (<code class="kbd">docker compose down</code>, пересборку образа, <code class="kbd">podman rm</code>). Полное описание модели — в разделе «Эксплуатация», <a href="#eksp-logs" data-go="eksp-logs">«Логи: где лежат и почему переживают перезапуск»</a>; здесь — рабочие команды.</p>
 
-<pre><code>cd /home/aemr/aemr-bot/infra
-docker compose logs --tail 300 bot                                   # последние 300 строк бота
-docker compose logs --since 24h bot | grep -Ei 'error|exception|misfire|pulse'  # за сутки, отфильтровано
-docker compose logs --tail 200 db                                    # логи PostgreSQL</code></pre>
+<p><strong>Файл приложения</strong> — главный человекочитаемый журнал, пишется самим ботом в примонтированный каталог <code class="kbd">/var/log/aemr-bot</code> с ротацией (по умолчанию 10 файлов по 10 МБ). Ловит всё Python-логирование, включая библиотеку <code class="kbd">maxapi</code>:</p>
+<pre><code>tail -f /var/log/aemr-bot/bot.log                          # следить в реальном времени
+grep -Ei 'error|exception|misfire|pulse' /var/log/aemr-bot/bot.log   # отфильтровать</code></pre>
+
+<p><strong>Системный журнал (journald)</strong> — драйвер логов контейнера переключён на <code class="kbd">journald</code>, поэтому весь вывод stdout/stderr уходит в журнал хоста. Этот слой ловит то, что до файлового логгера не доходит (вывод <code class="kbd">alembic</code> при старте, аварийные трейсбэки). Команда <code class="kbd">docker compose logs</code> продолжает работать — она читает journald:</p>
+<pre><code>journalctl CONTAINER_NAME=aemr-bot -n 300 --no-pager       # Docker
+journalctl -u aemr-bot.service -n 300 --no-pager           # Podman/Quadlet
+cd /home/aemr/aemr-bot/infra &amp;&amp; docker compose logs --tail 300 bot   # тоже работает</code></pre>
 
 <p>Сторож и авто-деплой пишут через системный <code class="kbd">logger</code> в journald:</p>
 
@@ -694,13 +698,25 @@ docker compose logs --tail 200 db                                    # логи 
 journalctl -t aemr-bot-deploy   -n 100 --no-pager</code></pre>
 
 <div class="note note--caution">
-<p class="note__label">Осторожно: docker-логи и 152-ФЗ</p>
-<p>Docker отдельно хранит сырой stdout контейнера в файлах <code class="kbd">/var/lib/docker/containers/&lt;id&gt;/&lt;id&gt;-json.log</code>. В них попадают псевдоидентификаторы жителей (<code class="kbd">max_user_id</code>), а команда <code class="kbd">/erase</code> чистит только базу, не эти файлы. Поэтому ротация (10 МБ × 3) настроена в <code class="kbd">docker-compose.yml</code> и для бота, и для базы — без неё json-лог рос бы неограниченно и через год мог занять десятки гигабайт и положить диск. После запроса жителя на удаление данных, помимо <code class="kbd">/erase</code> в боте, вручную обнулите docker-логи бота за последние дни, не удаляя сам файл (Docker держит его открытым): <code class="kbd">sudo truncate -s 0 /var/lib/docker/containers/&lt;id&gt;/*-json.log</code>. Это компромисс под 152-ФЗ, чтобы не строить отдельный пайплайн ради одного запроса в месяц. Для расследования инцидента нужен журнал действий в базе (хранится 365 дней), а не docker-stdout, поэтому дольше держать сырые логи бессмысленно.</p>
+<p class="note__label">Логи и 152-ФЗ: очистка псевдоидентификаторов после /erase</p>
+<p>В логах приложения и в journald попадают псевдоидентификаторы жителей (идентификатор пользователя MAX), а команда <code class="kbd">/erase</code> чистит только базу данных, не логи. После запроса жителя на удаление данных, помимо <code class="kbd">/erase</code>, очистите оба слоя логов.</p>
+<p><strong>Файл приложения</strong> — усечь <code class="kbd">bot.log</code> и его ротированные копии (файл открыт процессом, поэтому усекаем, а не удаляем):</p>
+<pre><code>sudo truncate -s 0 /var/log/aemr-bot/bot.log
+sudo sh -c 'for f in /var/log/aemr-bot/bot.log.*; do : &gt; "$f"; done'</code></pre>
+<p><strong>journald</strong> — старые записи убираются ротацией журнала (по имени контейнера/юнита логи точечно не удаляются — это свойство journald):</p>
+<pre><code>sudo journalctl --rotate &amp;&amp; sudo journalctl --vacuum-time=1s   # сбросить накопленное
+# либо ограничить объём журнала заранее: sudo journalctl --vacuum-size=200M</code></pre>
+<p>Прежняя инструкция про <code class="kbd">/var/lib/docker/containers/&lt;id&gt;/*-json.log</code> больше не применима: драйвер логов переключён на journald, файлов <code class="kbd">*-json.log</code> у контейнера нет. Для расследования инцидента нужен журнал действий в базе (хранится 365 дней), а не сырой stdout, поэтому дольше держать логи бессмысленно.</p>
+</div>
+
+<div class="note">
+<p class="note__label">Оценка объёма логов на диске</p>
+<p>Файл приложения: до ~110 МБ по умолчанию (<code class="kbd">LOG_FILE_MAX_BYTES</code>=10 МБ × <code class="kbd">LOG_FILE_BACKUPS</code>=10 + текущий), настраивается в <code class="kbd">infra/.env</code>. journald ограничивается системно (<code class="kbd">--vacuum-size</code> / <code class="kbd">SystemMaxUse</code> в <code class="kbd">journald.conf</code>). Каталог логов создаётся один раз с владельцем UID 1000 (для Podman это делает установщик; для Docker — вручную): <code class="kbd">sudo mkdir -p /var/log/aemr-bot &amp;&amp; sudo chown 1000:1000 /var/log/aemr-bot</code>.</p>
 </div>
 
 <div class="note">
 <p class="note__label">О наблюдаемости (observability)</p>
-<p>Внешнего сбора ошибок (Sentry) в коде нет — его откатили целиком (разбор — в разделе <a href="#koncept-prostota" data-go="koncept">«Как устроено»</a>). Единственный механизм внешнего мониторинга — пинг на <code class="kbd">HEALTHCHECK_URL</code>, по умолчанию выключенный (задача-пинг добавляется в расписание, только если URL задан). Вся остальная диагностика — логи Docker плюс «пульс» и алёрты в служебную группу.</p>
+<p>Внешнего сбора ошибок (Sentry) в коде нет — его откатили целиком (разбор — в разделе <a href="#koncept-prostota" data-go="koncept">«Как устроено»</a>). Единственный механизм внешнего мониторинга — пинг на <code class="kbd">HEALTHCHECK_URL</code>, по умолчанию выключенный (задача-пинг добавляется в расписание, только если URL задан). Вся остальная диагностика — персистентный <code class="kbd">bot.log</code> и journald плюс «пульс» и алёрты в служебную группу.</p>
 </div>
 
 <h3 id="admin-troubleshoot">Диагностика типичных сбоев</h3>
@@ -759,8 +775,9 @@ docker builder prune -f
 docker container prune -f
 docker network prune -f
 
-# 3) Обрезать docker-логи, не удаляя файлы (Docker держит их открытыми)
-sudo truncate -s 0 /var/lib/docker/containers/*/*-json.log</code></pre>
+# 3) Обрезать логи приложения и сбросить накопленное в journald
+sudo truncate -s 0 /var/log/aemr-bot/bot.log
+sudo journalctl --rotate &amp;&amp; sudo journalctl --vacuum-time=2d</code></pre>
 
 <div class="note note--danger">
 <p class="note__label">Опасно: не трогайте тома и не используйте <code class="kbd">prune -a --volumes</code></p>
@@ -779,7 +796,7 @@ docker compose exec -T db psql -U aemr -d aemr -c 'select now();'   # запис
 <ol class="steps">
 <li><strong>Авто-уборка висячих образов.</strong> Скрипт авто-деплоя пересобирает образ постоянно, поэтому раз в сутки имеет смысл выметать висячие слои. Добавьте в cron от <code class="kbd">root</code> (например, рядом с прочими страховочными задачами): <code class="kbd">docker image prune -f &amp;&amp; docker builder prune -f --filter 'until=168h'</code> — это убирает безымянные образы и кэш старше недели, не задевая активный.</li>
 <li><strong>Следить за свободным местом.</strong> Раз в неделю (или в эксплуатационном календаре, см. <a href="#admin-routine" data-go="admin-routine">«Эксплуатационный календарь»</a>) смотрите <code class="kbd">df -h /</code>. Тревожный порог — заполнение выше 80%: пора чистить, не дожидаясь 100%. Если у вас подключён внешний пинг-мониторинг (<code class="kbd">HEALTHCHECK_URL</code>), помните: он ловит «бот завис», но <strong>не</strong> «диск кончается» — за местом следит человек по календарю.</li>
-<li><strong>Помнить про backup на том же диске.</strong> 8 еженедельных зашифрованных копий (≈400 МБ) и логи (до 60 МБ) уже учтены в минимальных 20 ГБ из <a href="#admin-requirements" data-go="admin-requirements">«Требований к серверу»</a>. Если включили S3-выгрузку — локальные копии всё равно лежат на диске, их число задаёт <code class="kbd">BACKUP_KEEP_COUNT</code> (по умолчанию 8).</li>
+<li><strong>Помнить про backup на том же диске.</strong> 8 еженедельных зашифрованных копий (≈400 МБ) и логи приложения (до ~110 МБ, плюс системный журнал) уже учтены в минимальных 20 ГБ из <a href="#admin-requirements" data-go="admin-requirements">«Требований к серверу»</a>. Если включили S3-выгрузку — локальные копии всё равно лежат на диске, их число задаёт <code class="kbd">BACKUP_KEEP_COUNT</code> (по умолчанию 8).</li>
 </ol>
 
 <div class="note">

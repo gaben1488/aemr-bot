@@ -616,7 +616,7 @@
 <p>Их нет, и это сознательно. Внешнего сбора ошибок (Sentry) в коде <strong>нет</strong> — его пробовали и откатили целиком. Вся наблюдаемость — это:</p>
 
 <ul>
-<li><strong>логи Docker</strong> (<code class="kbd">docker compose logs</code>, json-file с ротацией 10 МБ × 3 на контейнер — бесконечного роста не будет);</li>
+<li><strong>логи бота</strong> — файл приложения <code class="kbd">/var/log/aemr-bot/bot.log</code> (ротация ~110 МБ) плюс системный журнал хоста <code class="kbd">journald</code>, куда уходит <code class="kbd">stdout/stderr</code> контейнеров; <code class="kbd">docker compose logs</code> продолжает работать, читая journald, — бесконечного роста не будет);</li>
 <li><strong>journald</strong> для страховочных служб (<code class="kbd">journalctl -t aemr-bot-deploy</code> и <code class="kbd">-watchdog</code>);</li>
 <li><strong>«пульс» и алёрты в служебную группу</strong> — именно туда бот сам пишет о провалах backup, устаревании списков угроз, зависших анкетах;</li>
 <li><strong>опционально</strong> — пинг на <code class="kbd">HEALTHCHECK_URL</code> (Healthchecks.io / Uptime Kuma), по умолчанию выключен (задача-пинг добавляется в расписание, только если URL задан).</li>
