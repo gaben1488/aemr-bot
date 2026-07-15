@@ -469,25 +469,12 @@ async def _persist_reply_and_card(
                 target=f"appeal #{appeal_id}",
                 details={"chars": len(text)},
             )
-            admin_mid_to_refresh = getattr(
-                appeal_full, "admin_message_id", None
-            )
-            admin_card_text = None
-            admin_card_keyboard = None
-            if admin_mid_to_refresh and appeal_full.user is not None:
-                admin_card_text = card_format.admin_card(
-                    appeal_full, appeal_full.user
-                )
-                admin_card_keyboard = keyboards.appeal_admin_actions(
-                    appeal_full.id,
-                    appeal_full.status,
-                    is_it=True,
-                    user_blocked=bool(appeal_full.user.is_blocked),
-                    closed_due_to_revoke=bool(
-                        appeal_full.closed_due_to_revoke
-                    ),
-                )
-            return admin_mid_to_refresh, admin_card_text, admin_card_keyboard
+            # Возвращаем только признак успеха: карточку caller
+            # перерисовывает сам через admin_card_service.render
+            # (force_new). Раньше здесь ещё строились admin_card_text/
+            # keyboard, но caller их отбрасывал в `_`-переменные —
+            # мёртвая работа на каждый ответ оператора.
+            return True
     except Exception:
         log.exception(
             "operator_reply: delivered but local DB/audit write failed — "
@@ -600,7 +587,6 @@ async def _deliver_operator_reply(
     )
     if persisted is None:
         return True
-    _admin_mid_to_refresh, _admin_card_text, _admin_card_keyboard = persisted
 
     await _mark_reply_success_recorded(success_key)
     _remember_successful_reply(operator.id, appeal.id, text)

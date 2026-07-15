@@ -178,6 +178,64 @@ class TestDeserializeForRelay:
         assert type(out[0]).__name__ == "Image"
 
 
+class TestRelayAdapterCache:
+    """FIX 3 (P3): TypeAdapter(Attachments) кэшируется в модульной переменной
+    и переиспользуется между вызовами вместо пересборки core-schema на каждый
+    релей. Плюс сохранён fail-open fallback при отсутствии maxapi.
+    """
+
+    def test_adapter_is_cached_and_reused(self) -> None:
+        # Сбрасываем кэш, чтобы проверить построение с нуля.
+        A._RELAY_ADAPTER = None
+        first = A._get_relay_adapter()
+        assert first is not None
+        # После первого вызова модульная переменная закэширована.
+        assert A._RELAY_ADAPTER is first
+        # Второй вызов возвращает ТОТ ЖЕ объект — пересборки нет.
+        second = A._get_relay_adapter()
+        assert second is first
+
+    def test_deserialize_uses_cached_adapter(self, monkeypatch) -> None:
+        # deserialize_for_relay не должен строить адаптер сам — только брать
+        # из кэша через _get_relay_adapter. Считаем число обращений.
+        A._RELAY_ADAPTER = None
+        calls = {"n": 0}
+        base_adapter = A._get_relay_adapter()
+        assert base_adapter is not None
+
+        def counting_getter():
+            calls["n"] += 1
+            return base_adapter
+
+        monkeypatch.setattr(A, "_get_relay_adapter", counting_getter)
+        img = {"type": "image", "payload": {"token": "abc", "url": "http://x/y.jpg"}}
+        A.deserialize_for_relay([img])
+        A.deserialize_for_relay([img])
+        # Каждый вызов берёт адаптер из геттера (кэш), не пересобирает схему.
+        assert calls["n"] == 2
+
+    def test_fallback_when_maxapi_unavailable(self, monkeypatch) -> None:
+        # Симулируем отсутствие maxapi: ленивый импорт внутри геттера падает →
+        # None → deserialize_for_relay fail-open возвращает [] и не бросает.
+        import builtins
+
+        A._RELAY_ADAPTER = None
+        real_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name.startswith("maxapi"):
+                raise ImportError("simulated: maxapi missing")
+            return real_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", fake_import)
+        assert A._get_relay_adapter() is None
+        img = {"type": "image", "payload": {"token": "abc", "url": "http://x/y.jpg"}}
+        assert A.deserialize_for_relay([img]) == []
+        # Восстанавливаем кэш для последующих тестов (monkeypatch снимет патч
+        # импорта, но переменная должна снова строиться при первом вызове).
+        A._RELAY_ADAPTER = None
+
+
 class TestExtractLocationDebugLog:
     def test_debug_logging_branch_executes(self, caplog) -> None:
         # При DEBUG-уровне extract_location логирует список типов вложений

@@ -353,6 +353,8 @@ class TestSubscribeFlow:
 
         with patch("aemr_bot.handlers.menu.current_user",
                    fake_current_user(user, session=session)), \
+             patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
+                   AsyncMock(return_value=False)), \
              patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
              patch("aemr_bot.handlers.menu.admin_events.notify_broadcast_subscribed",
                    notify):
@@ -360,6 +362,36 @@ class TestSubscribeFlow:
 
         session.execute.assert_called_once()
         notify.assert_called_once_with(event.bot, max_user_id=42)
+
+    @pytest.mark.asyncio
+    async def test_subscribe_confirm_idempotent_when_already_subscribed(self) -> None:
+        """Повторный тап «✅ Подписаться» (двойной клик / старое сообщение
+        мини-согласия): уже подписан → SUBSCRIBE_ALREADY_ON, без второго
+        UPDATE, второй audit-строки и второго notify (FIX P3 idempotency)."""
+        from aemr_bot import texts
+        from aemr_bot.handlers import menu
+
+        event = _make_event()
+        session = AsyncMock()
+        user = SimpleNamespace(is_blocked=False)
+        notify = AsyncMock()
+        write_audit = AsyncMock()
+
+        with patch("aemr_bot.handlers.menu.current_user",
+                   fake_current_user(user, session=session)), \
+             patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.services.operators.write_audit", write_audit), \
+             patch("aemr_bot.handlers.menu.admin_events.notify_broadcast_subscribed",
+                   notify):
+            await menu.do_subscribe_confirm(event, max_user_id=42)
+
+        # Второй консент не пишется, audit не плодится, notify не шлётся.
+        session.execute.assert_not_called()
+        write_audit.assert_not_called()
+        notify.assert_not_called()
+        text = event.bot.send_message.call_args.kwargs.get("text", "")
+        assert text == texts.SUBSCRIBE_ALREADY_ON
 
 
 class TestUnsubscribe:
@@ -476,7 +508,7 @@ class TestConsentAndEraseNotifications:
         user = SimpleNamespace(id=1)
         notify = AsyncMock()
         with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
-             patch("aemr_bot.services.appeals.list_unanswered_with_messages",
+             patch("aemr_bot.services.appeals.list_unanswered_for_user",
                    AsyncMock(return_value=[])), \
              patch("aemr_bot.handlers.menu.users_service.revoke_consent",
                    AsyncMock()), \
@@ -511,7 +543,7 @@ class TestConsentAndEraseNotifications:
         notify = AsyncMock()
         repost = AsyncMock()
         with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
-             patch("aemr_bot.services.appeals.list_unanswered_with_messages",
+             patch("aemr_bot.services.appeals.list_unanswered_for_user",
                    AsyncMock(return_value=[appeal])), \
              patch("aemr_bot.handlers.menu.users_service.revoke_consent",
                    AsyncMock()), \
@@ -536,7 +568,7 @@ class TestConsentAndEraseNotifications:
         appeal = SimpleNamespace(id=9, user_id=1)
         notify = AsyncMock()
         with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
-             patch("aemr_bot.services.appeals.list_unanswered",
+             patch("aemr_bot.services.appeals.list_unanswered_for_user",
                    AsyncMock(return_value=[appeal])), \
              patch("aemr_bot.handlers.menu.users_service.erase_pdn", AsyncMock()), \
              patch("aemr_bot.services.operators.write_audit", AsyncMock()), \

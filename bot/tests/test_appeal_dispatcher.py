@@ -636,19 +636,40 @@ class TestMessageCitizenUnknownCommand:
         assert "не распознана" in text
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize("cmd", ["/start", "/menu", "/rules", "/export"])
     async def test_known_citizen_command_passes_silently(
-        self, captured_handlers
+        self, captured_handlers, cmd
     ) -> None:
-        """Известная команда жителя (`/start`, `/menu` …) не реагируем
-        на этом уровне — она обрабатывается отдельным @Command handler.
-        Здесь должно быть тихо, без ошибки."""
+        """Известная команда жителя (`/start`, `/menu`, `/rules`, `/export`)
+        на этом уровне не реагирует — её обрабатывает отдельный @Command
+        handler. Здесь тихо, без «не распознана»: иначе житель получил бы и
+        правильный ответ, и противоречащее «команда не распознана»."""
         _, on_message = captured_handlers
-        event = _make_message_event(chat_id=42, text="/start")
+        event = _make_message_event(chat_id=42, text=cmd)
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.get_chat_id", return_value=42), \
              patch("aemr_bot.handlers.appeal.get_message_text",
-                   return_value="/start"), \
+                   return_value=cmd), \
              patch("aemr_bot.handlers.appeal.get_message_body",
                    return_value=event.message.body):
             await on_message(event)
         event.message.answer.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_operator_command_in_dm_not_unknown(
+        self, captured_handlers
+    ) -> None:
+        """Операторская `/find_resident` в личке жителя даёт «только в
+        служебной группе», а не «не распознана» (whitelist-симметрия)."""
+        _, on_message = captured_handlers
+        event = _make_message_event(chat_id=42, text="/find_resident +79990000000")
+        with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
+             patch("aemr_bot.handlers.appeal.get_chat_id", return_value=42), \
+             patch("aemr_bot.handlers.appeal.get_message_text",
+                   return_value="/find_resident +79990000000"), \
+             patch("aemr_bot.handlers.appeal.get_message_body",
+                   return_value=event.message.body):
+            await on_message(event)
+        text = event.message.answer.call_args.args[0]
+        assert "только в служебной" in text
+        assert "не распознана" not in text

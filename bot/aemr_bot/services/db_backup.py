@@ -220,9 +220,8 @@ async def _run_pg_dump_encrypted(
     # другим UID. Жёсткое имя «.gnupg» под TMPDIR — стандартный
     # путь gpg-инсталляции.
     gpg_home = os.path.join(os.environ.get("TMPDIR", "/tmp"), ".gnupg")  # nosec
-    os.makedirs(gpg_home, mode=0o700, exist_ok=True)
-
     try:
+        os.makedirs(gpg_home, mode=0o700, exist_ok=True)
         gpg = await asyncio.create_subprocess_exec(
             "gpg",
             "--homedir", gpg_home,
@@ -233,10 +232,26 @@ async def _run_pg_dump_encrypted(
             stdin=data_r,
             pass_fds=(pp_r, data_r),
         )
-    finally:
-        # read-концы держат gpg-дочка; в родителе закрываем.
+    except Exception:
+        # pg_dump уже запущен и пишет в data-pipe. Если каталог gpg не
+        # создался (TMPDIR занят файлом, нет прав) или сам gpg не поднялся
+        # (нет бинаря), надо убить и reap'нуть dump — иначе он висит зомби
+        # на EPIPE, а pp_r/data_r утекают. Та же kill+reap дисциплина, что
+        # в timeout-ветке ниже.
+        try:
+            dump.kill()
+        except ProcessLookupError:
+            pass
+        try:
+            await asyncio.wait_for(dump.wait(), timeout=10.0)
+        except (asyncio.TimeoutError, TimeoutError):
+            pass
         os.close(pp_r)
         os.close(data_r)
+        raise
+    # read-концы теперь держит gpg-дочка; в родителе закрываем.
+    os.close(pp_r)
+    os.close(data_r)
 
     # pg_dump и gpg работают конкурентно (поток данных течёт по pipe),
     # поэтому даём им один общий настенный бюджет. Берём больший из двух

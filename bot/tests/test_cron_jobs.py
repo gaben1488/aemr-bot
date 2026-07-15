@@ -354,7 +354,7 @@ class TestPdnRetention:
         with patch("aemr_bot.services.cron.session_scope", fake_scope), \
              patch("aemr_bot.services.users.find_pending_pdn_retention",
                    AsyncMock(return_value=[42])), \
-             patch("aemr_bot.services.users.get_or_create",
+             patch("aemr_bot.services.users.find_by_max_id",
                    AsyncMock(return_value=user)), \
              patch("aemr_bot.services.users.has_open_appeals",
                    AsyncMock(return_value=False)), \
@@ -365,6 +365,41 @@ class TestPdnRetention:
 
         texts = [call.args[0] for call in send.call_args_list]
         assert any("30 дней" in text and "42" in text for text in texts)
+
+    @pytest.mark.asyncio
+    async def test_vanished_user_no_phantom_no_audit(self) -> None:
+        """Житель исчез между find_pending_pdn_retention() и итерацией
+        (успел /forget): find_by_max_id → None → continue. Не создаём
+        фантомного User, не зовём erase_pdn, не пишем лишний audit."""
+        send = AsyncMock()
+        session = AsyncMock()
+
+        @asynccontextmanager
+        async def fake_scope():
+            yield session
+
+        erase = AsyncMock(return_value=True)
+        write_audit = AsyncMock()
+        get_or_create = AsyncMock()
+        with patch("aemr_bot.services.cron.session_scope", fake_scope), \
+             patch("aemr_bot.services.users.find_pending_pdn_retention",
+                   AsyncMock(return_value=[42])), \
+             patch("aemr_bot.services.users.find_by_max_id",
+                   AsyncMock(return_value=None)) as find_by_max_id, \
+             patch("aemr_bot.services.users.get_or_create", get_or_create), \
+             patch("aemr_bot.services.users.has_open_appeals",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.services.users.erase_pdn", erase), \
+             patch("aemr_bot.services.operators.write_audit", write_audit):
+            await cron._job_pdn_retention_check(send)
+
+        find_by_max_id.assert_awaited_once()
+        get_or_create.assert_not_called()  # никакого фантома
+        erase.assert_not_called()
+        write_audit.assert_not_called()
+        # Ни одного «фактически обезличено» уведомления.
+        texts = [call.args[0] for call in send.call_args_list]
+        assert not any("обезличен" in text.lower() for text in texts)
 
 
 class TestFunnelWatchdog:
@@ -520,6 +555,55 @@ class TestNotifyToggleGates:
         # Список пуст → тишина (по контракту job'а), но исключений нет
         # и гейт не заблокировал выполнение раньше времени.
         bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_open_reminder_calls_is_overdue_once_per_appeal(self) -> None:
+        """FIX (perf): раньше in_sla/overdue считались двумя list-comp'ами
+        → is_overdue звался ДВАЖДЫ на каждое обращение (а он итерирует по
+        рабочим дням от created_at). Теперь один проход: ровно 1 вызов на
+        обращение, разбиение in_sla/overdue корректно."""
+        from datetime import datetime, timedelta
+
+        bot = AsyncMock()
+        now = datetime.now(cron.TZ)
+        appeals = []
+        for i in range(4):
+            ap = MagicMock()
+            ap.id = 100 + i
+            ap.created_at = now - timedelta(hours=i + 1)
+            ap.user = MagicMock(first_name=f"U{i}")
+            ap.locality = "Елизово"
+            appeals.append(ap)
+
+        # Чётные — просрочены, нечётные — в SLA (проверяем корректность разбиения).
+        def fake_is_overdue(created_at, now_arg, hrs):
+            idx = [a.created_at for a in appeals].index(created_at)
+            return idx % 2 == 0
+
+        is_overdue = MagicMock(side_effect=fake_is_overdue)
+
+        with patch(
+            "aemr_bot.services.notify_toggles.is_enabled", return_value=True,
+        ), patch.object(cron, "is_workday", return_value=True), patch.object(
+            cron, "session_scope",
+        ) as scope, patch.object(
+            cron.appeals_service, "list_unanswered",
+            AsyncMock(return_value=appeals),
+        ), patch.object(
+            cron.sla_service, "is_overdue", is_overdue,
+        ), patch.object(
+            cron, "_send_with_open_tickets_button", AsyncMock(),
+        ) as send_btn:
+            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
+            scope.return_value.__aexit__ = AsyncMock(return_value=False)
+            await cron._job_working_hours_open_reminder(bot)
+
+        # Ровно один вызов is_overdue на обращение (не два).
+        assert is_overdue.call_count == len(appeals)
+        # Разбиение корректно: 2 просрочено (idx 0,2), 2 в SLA (idx 1,3).
+        send_btn.assert_awaited_once()
+        text = send_btn.await_args.args[1]
+        assert "в SLA — 2" in text and "просрочено — 2" in text
 
     # ── overdue reminder ─────────────────────────────────────────────
 

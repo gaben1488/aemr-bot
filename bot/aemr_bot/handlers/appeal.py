@@ -742,12 +742,15 @@ def register(dp: Dispatcher) -> None:
                 "diag",
                 "op_help",
                 "open_tickets",
+                "find_resident",
             }
             citizen = {
                 "start",
                 "menu",
                 "help",
                 "policy",
+                "rules",
+                "export",
                 "subscribe",
                 "unsubscribe",
                 "forget",

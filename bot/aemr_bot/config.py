@@ -111,7 +111,13 @@ class Settings(BaseSettings):
     # момент, когда сервер собирался ответить пустым [] → переподключение
     # 24/7 (perf-resilience finding c). 20с + 10с буфера < 30с клиентского
     # потолка → клиент всегда ждёт чуть дольше сервера.
-    polling_timeout_seconds: int = Field(20, alias="POLLING_TIMEOUT_SECONDS", ge=0, le=90)
+    #
+    # Нижняя граница ge=5 (не 0): timeout=0 вырождает long-poll в busy-loop —
+    # getUpdates возвращается мгновенно, polling крутится на скорости сети и
+    # пробивает лимит MAX 2 RPS. Плюс порог свежести PollWatch.is_fresh =
+    # polling_timeout_seconds * livez_poll_stale_factor обнуляется → /livez
+    # отдаёт 503 на живом боте → бесконечный авто-рестарт. 5с — безопасный пол.
+    polling_timeout_seconds: int = Field(20, alias="POLLING_TIMEOUT_SECONDS", ge=5, le=90)
 
     # Запас клиентского ClientTimeout.total над серверным long-poll hold.
     # build_bot() в polling-режиме поднимает потолок сессии до

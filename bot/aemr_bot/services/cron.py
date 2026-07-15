@@ -662,9 +662,17 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
         for max_user_id in candidates:
             try:
                 async with session_scope() as session:
-                    user = await users_service.get_or_create(
-                        session, max_user_id=max_user_id
+                    # Read-only резолв (не get_or_create): между
+                    # find_pending_pdn_retention() и этой итерацией строка
+                    # жителя могла исчезнуть (другая сессия, житель успел
+                    # /forget). get_or_create молча вставил бы фантомного
+                    # User и erase_pdn отработал бы повторно с вводящей в
+                    # заблуждение audit-записью auto_erase_pdn_retention.
+                    user = await users_service.find_by_max_id(
+                        session, max_user_id
                     )
+                    if user is None:
+                        continue
                     if await users_service.has_open_appeals(session, user.id):
                         skipped_open += 1
                         continue
@@ -832,14 +840,15 @@ async def _job_working_hours_open_reminder(bot) -> None:
         # на TZ (локальное время бота), т.к. sla_service сам приводит к TZ
         # внутри, а now(TZ) читается счётчиком возраста ниже без конверсии.
         now = datetime.now(TZ)
-        in_sla = [
-            a for a in appeals
-            if not sla_service.is_overdue(a.created_at, now, settings.sla_response_hours)
+        # is_overdue() итерирует по рабочим дням от created_at до now — для
+        # годовалого обращения это сотни итераций. Считаем один раз на
+        # обращение и переиспользуем флаг, а не зовём дважды на каждое.
+        flags = [
+            (a, sla_service.is_overdue(a.created_at, now, settings.sla_response_hours))
+            for a in appeals
         ]
-        overdue = [
-            a for a in appeals
-            if sla_service.is_overdue(a.created_at, now, settings.sla_response_hours)
-        ]
+        in_sla = [a for a, is_od in flags if not is_od]
+        overdue = [a for a, is_od in flags if is_od]
         header = (
             f"📋 Открытых обращений: {len(appeals)} "
             f"(в SLA — {len(in_sla)}, просрочено — {len(overdue)})"

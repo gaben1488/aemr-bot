@@ -315,11 +315,34 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
     оператор для closed_due_to_revoke видел «Обращение не найдено», что
     дезориентировало. См. P1 #21.
     """
-    # Сначала читаем актуальный статус и флаг revoke — двух SELECT'ов
-    # нет, один row. Race с конкурентной правкой того же обращения
-    # маловероятен (операторский UI, не машинный поток), но если он
-    # есть — UPDATE ниже всё равно не сработает (where-clause не
-    # совпадёт) и мы вернёмся к разводящей логике на следующем клике.
+    # Гард — прямо в UPDATE WHERE (как в close/mark_in_progress), а не
+    # read-then-write: статус-предикат ANSWERED/CLOSED + флаг
+    # closed_due_to_revoke=False делают запись безопасной под гонкой с
+    # /forget. Раньше UPDATE был безусловным (WHERE только по id) поверх
+    # предварительного SELECT'а — между чтением и записью конкурентный
+    # отзыв согласия мог выставить closed_due_to_revoke=True, а reopen
+    # всё равно воскрешал стёртое обращение (status=IN_PROGRESS при
+    # closed_due_to_revoke=True). Теперь такое обновление не сматчит.
+    result = await session.execute(
+        update(Appeal)
+        .where(
+            Appeal.id == appeal_id,
+            Appeal.status.in_(
+                [AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value]
+            ),
+            Appeal.closed_due_to_revoke.is_(False),
+        )
+        .values(
+            status=AppealStatus.IN_PROGRESS.value,
+            answered_at=None,
+            closed_at=None,
+        )
+    )
+    if result.rowcount > 0:
+        return "reopened"
+    # UPDATE не затронул строк — гард отсёк запись. Разрешаем причину
+    # повторным чтением актуального состояния (already_open /
+    # blocked_by_revoke / not_found), сохраняя прежний контракт возврата.
     row = (
         await session.execute(
             select(Appeal.status, Appeal.closed_due_to_revoke).where(
@@ -329,21 +352,10 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
     ).one_or_none()
     if row is None:
         return "not_found"
-    status, blocked = row
+    _status, blocked = row
     if blocked:
         return "blocked_by_revoke"
-    if status not in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
-        return "already_open"
-    await session.execute(
-        update(Appeal)
-        .where(Appeal.id == appeal_id)
-        .values(
-            status=AppealStatus.IN_PROGRESS.value,
-            answered_at=None,
-            closed_at=None,
-        )
-    )
-    return "reopened"
+    return "already_open"
 
 
 async def close(session: AsyncSession, appeal_id: int) -> bool:
@@ -420,6 +432,42 @@ async def list_unanswered_with_messages(
             Appeal.status.in_(
                 [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
             )
+        )
+        .order_by(Appeal.created_at)
+        .limit(limit)
+    )
+    return list(res)
+
+
+async def list_unanswered_for_user(
+    session: AsyncSession, user_id: int, *, limit: int = 500
+) -> list[Appeal]:
+    """Открытые обращения (NEW + IN_PROGRESS) КОНКРЕТНОГО жителя, с
+    догруженными user и messages (selectinload).
+
+    Прицельный вариант `list_unanswered_with_messages`: `WHERE user_id`
+    задаётся прямо в SQL, а не «загрузить все открытые (до LIMIT 500) и
+    отфильтровать по user_id в Python». Используется в citizen-хендлерах
+    отзыва согласия и удаления данных (menu.do_consent_revoke,
+    ask_forget_confirm, ask_goodbye_erase_confirm, do_forget), где нужен
+    список открытых обращений именно этого жителя.
+
+    `messages` догружаются (selectinload), потому что `do_consent_revoke`
+    публикует `admin_card.render(appeal)` по каждому открытому обращению —
+    без загруженной переписки timeline в карточке пуст (SACRED #5, та же
+    причина, что в `list_unanswered_with_messages`). Прочим вызывающим
+    (счётчики/списки id/тем) лишний selectinload по messages стоит одного
+    IN-запроса на N≤LIMIT обращений жителя — на реальной очереди 1-2
+    открытых обращений это пренебрежимо.
+    """
+    res = await session.scalars(
+        select(Appeal)
+        .options(selectinload(Appeal.user), selectinload(Appeal.messages))
+        .where(
+            Appeal.user_id == user_id,
+            Appeal.status.in_(
+                [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+            ),
         )
         .order_by(Appeal.created_at)
         .limit(limit)

@@ -19,9 +19,13 @@ class _FakeProc:
 
     def __init__(self, returncode: int = 0) -> None:
         self._rc = returncode
+        self.killed = False
 
     async def wait(self) -> int:
         return self._rc
+
+    def kill(self) -> None:
+        self.killed = True
 
 
 class TestRunPgDump:
@@ -51,6 +55,32 @@ class TestRunPgDump:
         with patch("asyncio.create_subprocess_exec", side_effect=fake_create):
             with pytest.raises(db_backup.BackupPgDumpError, match="pg_dump failed"):
                 await db_backup._run_pg_dump(out, {})
+
+
+class TestRunPgDumpEncryptedLeakGuard:
+    @pytest.mark.asyncio
+    async def test_gpg_spawn_failure_reaps_dump(self, tmp_path: Path) -> None:
+        """Если gpg не поднялся (нет бинаря / TMPDIR занят файлом), уже
+        запущенный pg_dump обязан быть убит и reap'нут — иначе зомби на
+        EPIPE + утёкшие FD на каждой попытке бэкапа (P3 review 2026-07-16).
+        """
+        out = tmp_path / "dump.sql.gpg"
+        dump_proc = _FakeProc(returncode=0)
+        calls = {"n": 0}
+
+        async def fake_create(*args, **kwargs):
+            calls["n"] += 1
+            if calls["n"] == 1:  # pg_dump — успешно запущен
+                return dump_proc
+            raise FileNotFoundError("gpg not found")  # gpg-спавн падает
+
+        with patch("asyncio.create_subprocess_exec", side_effect=fake_create):
+            with pytest.raises(FileNotFoundError):
+                await db_backup._run_pg_dump_encrypted(
+                    out, {"PGHOST": "x"}, "passphrase-long-enough-1234"
+                )
+        # pg_dump должен быть убит (не оставлен зомби).
+        assert dump_proc.killed is True
 
 
 class TestUploadToS3:

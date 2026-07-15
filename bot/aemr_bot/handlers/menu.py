@@ -488,6 +488,18 @@ async def do_subscribe_confirm(event, max_user_id: int) -> None:
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
+        # Идемпотентность (симметрично do_subscribe/do_unsubscribe): повторный
+        # тап «✅ Подписаться» — двойной клик или нажатие на старом сообщении
+        # мини-согласия — не должен второй раз писать consent_broadcast_at,
+        # плодить вторую audit-запись и слать второй notify. Если житель уже
+        # подписан, показываем «уже подписаны» и выходим.
+        if await broadcasts_service.is_subscribed(session, max_user_id):
+            await _send_or_edit_menu(
+                event,
+                text=texts.SUBSCRIBE_ALREADY_ON,
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
         await session.execute(
             sql_update(User)
             .where(User.max_user_id == max_user_id)
@@ -632,6 +644,29 @@ async def ask_goodbye_revoke_confirm(event):
     )
 
 
+def _format_open_appeal_line(ap) -> str:
+    """Одна строка открытого обращения для экранов подтверждения отзыва/
+    удаления: ``#<id> от <дата> · <тема>``.
+
+    Дата — в таймзоне администрации (`cfg.timezone`), с защитой от None
+    у `created_at`. Единый источник формата для `ask_forget_confirm` и
+    `ask_goodbye_erase_confirm`: раньше goodbye печатал `created_at`
+    без перевода в таймзону (UTC-дата у обращения, поданного поздно
+    вечером, отличалась на день от локальной), а forget — конвертировал.
+    Приведено к общему, корректному по таймзоне поведению.
+    """
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    created = (
+        ap.created_at.astimezone(ZoneInfo(cfg.timezone)) if ap.created_at else None
+    )
+    created_str = (
+        created.strftime("%d.%m.%Y") if isinstance(created, datetime) else "—"
+    )
+    return f"#{ap.id} от {created_str} · {ap.topic or '—'}"
+
+
 async def ask_goodbye_erase_confirm(event):
     """Подтверждение полного стирания из A4-экрана.
 
@@ -645,13 +680,10 @@ async def ask_goodbye_erase_confirm(event):
     open_lines: list[str] = []
     if max_user_id is not None:
         async with current_user(max_user_id) as (session, user):
-            active = await appeals_service.list_unanswered(session)
-            mine = [a for a in active if a.user_id == user.id]
-            for ap in mine:
-                open_lines.append(
-                    f"#{ap.id} от {ap.created_at.strftime('%d.%m.%Y') if ap.created_at else '—'} · "
-                    f"{ap.topic or 'без темы'}"
-                )
+            mine = await appeals_service.list_unanswered_for_user(
+                session, user.id
+            )
+            open_lines = [_format_open_appeal_line(ap) for ap in mine]
     text = texts.ERASE_CONFIRM
     if open_lines:
         text += "\n\nСейчас у вас в работе:\n• " + "\n• ".join(open_lines)
@@ -674,17 +706,11 @@ async def ask_forget_confirm(event):
     open_lines: list[str] = []
     if max_user_id is not None:
         async with current_user(max_user_id) as (session, user):
-            active = await appeals_service.list_unanswered(session)
-            mine = [a for a in active if a.user_id == user.id]
+            mine = await appeals_service.list_unanswered_for_user(
+                session, user.id
+            )
         for ap in mine[:5]:
-            topic = ap.topic or "—"
-            from datetime import datetime
-            from zoneinfo import ZoneInfo
-
-
-            created = ap.created_at.astimezone(ZoneInfo(cfg.timezone)) if ap.created_at else None
-            created_str = created.strftime("%d.%m.%Y") if isinstance(created, datetime) else "—"
-            open_lines.append(f"• #{ap.id} от {created_str} · {topic}")
+            open_lines.append("• " + _format_open_appeal_line(ap))
         if len(mine) > 5:
             open_lines.append(f"… и ещё {len(mine) - 5}.")
 
@@ -758,13 +784,15 @@ async def do_consent_revoke(event, max_user_id: int):
     """
 
     async with current_user(max_user_id) as (session, user):
-        # SACRED #5: list_unanswered_with_messages (не list_unanswered),
-        # потому что ниже мы публикуем `admin_card.render(appeal)` для
-        # каждого открытого. Без selectinload(messages) timeline в
-        # карточке окажется пустым — это была причина бага «#44 без
-        # истории переписки».
-        active = await appeals_service.list_unanswered_with_messages(session)
-        my_open = [a for a in active if a.user_id == user.id]
+        # SACRED #5: list_unanswered_for_user догружает messages
+        # (selectinload) — ниже мы публикуем `admin_card.render(appeal)`
+        # по каждому открытому обращению, а без загруженной переписки
+        # timeline в карточке пуст (была причина бага «#44 без истории
+        # переписки»). Прицельный WHERE user_id прямо в SQL вместо
+        # «загрузить все открытые (до LIMIT 500) и отфильтровать в Python».
+        my_open = await appeals_service.list_unanswered_for_user(
+            session, user.id
+        )
         await users_service.revoke_consent(session, max_user_id)
         await ops_service.write_audit(
             session,
@@ -787,7 +815,7 @@ async def do_consent_revoke(event, max_user_id: int):
         # admin_card.render. force_new=True — это явное событие (отзыв
         # согласия), нужна новая запись внизу чата как маркер.
         #
-        # appeal.user уже подгружен через list_unanswered_with_messages,
+        # appeal.user уже подгружен через list_unanswered_for_user,
         # messages тоже загружены (selectinload) — НЕ ставим
         # __dict__.setdefault("messages", []), иначе перезаписали бы
         # реальные сообщения пустым списком и timeline снова исчез.
@@ -808,8 +836,10 @@ async def do_forget(event, max_user_id: int):
 
     closed_ids: list[int] = []
     async with current_user(max_user_id) as (session, user):
-        active = await appeals_service.list_unanswered(session)
-        closed_ids = [a.id for a in active if a.user_id == user.id]
+        mine = await appeals_service.list_unanswered_for_user(
+            session, user.id
+        )
+        closed_ids = [a.id for a in mine]
         await users_service.erase_pdn(session, max_user_id)
         await ops_service.write_audit(
             session,

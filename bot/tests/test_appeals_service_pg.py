@@ -9,7 +9,8 @@
 - find_overdue_unanswered: SLA-окно
 - count_open
 - list_unanswered: NEW + IN_PROGRESS, eager-load user
-- reopen: ANSWERED/CLOSED → IN_PROGRESS, идемпотентность
+- list_unanswered_for_user: WHERE user_id + открытые статусы
+- reopen: ANSWERED/CLOSED → IN_PROGRESS, идемпотентность, revoke-гард (TOCTOU)
 - close: not-already-closed
 - find_active_for_user
 - find_last_address_for_user: locality+address оба заполнены
@@ -162,6 +163,30 @@ async def test_list_unanswered(session) -> None:
 
 
 @pytest.mark.asyncio
+async def test_list_unanswered_for_user_scopes_and_filters(session) -> None:
+    """list_unanswered_for_user: только открытые (NEW/IN_PROGRESS)
+    обращения ЗАДАННОГО жителя. Чужие и закрытые в выборку не попадают —
+    WHERE user_id + status IN (...) прямо в SQL, без Python-фильтра."""
+    u1 = await users_service.get_or_create(session, max_user_id=1, first_name="A")
+    u2 = await users_service.get_or_create(session, max_user_id=2, first_name="B")
+    mine_open = await appeals_service.create_appeal(
+        session, user=u1, address="A", topic="T", summary="x", attachments=[]
+    )
+    mine_closed = await appeals_service.create_appeal(
+        session, user=u1, address="A", topic="T", summary="y", attachments=[]
+    )
+    await appeals_service.close(session, mine_closed.id)
+    other_open = await appeals_service.create_appeal(
+        session, user=u2, address="A", topic="T", summary="z", attachments=[]
+    )
+    rows = await appeals_service.list_unanswered_for_user(session, u1.id)
+    ids = [r.id for r in rows]
+    assert mine_open.id in ids
+    assert mine_closed.id not in ids  # закрытое — не открытое
+    assert other_open.id not in ids  # чужое обращение не в выборке
+
+
+@pytest.mark.asyncio
 async def test_reopen_idempotent_on_in_progress(session) -> None:
     """reopen на NEW/IN_PROGRESS — no-op, возвращает "already_open",
     чтобы повторный клик «🔁 Возобновить» не переписывал timestamps."""
@@ -196,6 +221,40 @@ async def test_reopen_returns_reopened_on_real_change(session) -> None:
     refreshed = await appeals_service.get_by_id(session, appeal.id)
     assert refreshed.status == AppealStatus.IN_PROGRESS.value
     assert refreshed.answered_at is None
+
+
+@pytest.mark.asyncio
+async def test_reopen_blocked_by_revoke_does_not_resurrect(session) -> None:
+    """closed_due_to_revoke=True: reopen НЕ воскрешает стёртое обращение.
+
+    Гард перенесён в UPDATE WHERE (status IN (ANSWERED, CLOSED) AND
+    closed_due_to_revoke IS FALSE) — при отзыве согласия обновление не
+    матчит ни одной строки (rowcount=0), функция возвращает
+    "blocked_by_revoke", а статус остаётся CLOSED (не IN_PROGRESS).
+    Закрывает TOCTOU-гонку reopen ↔ /forget: безусловный UPDATE раньше
+    мог поднять status=IN_PROGRESS при closed_due_to_revoke=True.
+    """
+    from sqlalchemy import update
+
+    user = await users_service.get_or_create(session, max_user_id=3, first_name="C")
+    appeal = await appeals_service.create_appeal(
+        session, user=user, address="A", topic="T", summary="x", attachments=[]
+    )
+    # Симулируем обращение, закрытое отзывом согласия / удалением ПДн.
+    await session.execute(
+        update(Appeal)
+        .where(Appeal.id == appeal.id)
+        .values(
+            status=AppealStatus.CLOSED.value,
+            closed_due_to_revoke=True,
+        )
+    )
+    await session.flush()
+
+    assert await appeals_service.reopen(session, appeal.id) == "blocked_by_revoke"
+    refreshed = await appeals_service.get_by_id(session, appeal.id)
+    # Не воскрешено: статус остался CLOSED, а не IN_PROGRESS.
+    assert refreshed.status == AppealStatus.CLOSED.value
 
 
 @pytest.mark.asyncio

@@ -46,6 +46,21 @@ def _attachment_to_dict(att: Any) -> dict:
 ALLOWED_APPEAL_TYPES = {"image", "video", "file"}
 
 
+def _raw_attachments(message: Any) -> list:
+    """Спуститься к телу события и вернуть сырой список вложений MAX.
+
+    Работает по MessageBody, по Message и даже по Update — спускаемся на
+    один уровень через `.body`, если он есть. Возвращает [] когда вложений
+    нет. Общий помощник для ПДн-парсеров ниже (collect_attachments,
+    extract_location, extract_phone, extract_contact_name): раньше этот
+    спуск был скопирован дословно в каждый — дедуп снижает риск дрейфа.
+    """
+    body = message
+    if hasattr(body, "body") and getattr(body, "body", None) is not None:
+        body = body.body
+    return getattr(body, "attachments", None) or []
+
+
 def collect_attachments(message: Any) -> list[dict]:
     """Взять вложения из тела сообщения MAX и сериализовать для хранения.
 
@@ -54,10 +69,7 @@ def collect_attachments(message: Any) -> list[dict]:
     в админ-группе нерелевантный поток.
     """
     out: list[dict] = []
-    body = message
-    if hasattr(body, "body") and getattr(body, "body", None) is not None:
-        body = body.body
-    raw = getattr(body, "attachments", None) or []
+    raw = _raw_attachments(message)
     for att in raw:
         att_type = getattr(att, "type", None)
         if att_type is None and isinstance(att, dict):
@@ -80,10 +92,7 @@ def extract_location(message: Any) -> tuple[float, float] | None:
     не в .payload. Для совместимости с возможными альтернативными
     форматами проверяем также .payload и lat/lon, lat/lng.
     """
-    body = message
-    if hasattr(body, "body") and getattr(body, "body", None) is not None:
-        body = body.body
-    raw = getattr(body, "attachments", None) or []
+    raw = _raw_attachments(message)
 
     if not raw:
         return None
@@ -158,10 +167,7 @@ def extract_phone(message: Any) -> str | None:
     Работает по MessageBody, по Message и даже по Update (мы спускаемся
     вглубь). Возвращает None, если контакт не найден.
     """
-    body = message
-    if hasattr(body, "body") and getattr(body, "body", None) is not None:
-        body = body.body
-    raw = getattr(body, "attachments", None) or []
+    raw = _raw_attachments(message)
 
     for att in raw:
         att_type = getattr(att, "type", None)
@@ -234,10 +240,7 @@ def extract_contact_name(message: Any) -> str | None:
     Без этого житель проходил бы шаг «как к вам обращаться» вручную
     даже после того, как уже отдал контакт, в котором его имя есть.
     """
-    body = message
-    if hasattr(body, "body") and getattr(body, "body", None) is not None:
-        body = body.body
-    raw = getattr(body, "attachments", None) or []
+    raw = _raw_attachments(message)
 
     for att in raw:
         att_type = getattr(att, "type", None)
@@ -387,6 +390,36 @@ def suspicious_attachment_names(attachments: list[dict]) -> list[str]:
     return out
 
 
+# Кэш TypeAdapter(Attachments). Раньше адаптер создавался на КАЖДЫЙ вызов
+# deserialize_for_relay — pydantic пересобирал core-schema (дорого) на
+# каждый релей вложений. Строим один раз при первом успешном импорте
+# maxapi и переиспользуем. None = ещё не построен ИЛИ maxapi недоступен
+# (тогда каждый вызов делает дешёвую повторную попытку импорта и
+# fail-open возвращает []).
+_RELAY_ADAPTER: Any = None
+
+
+def _get_relay_adapter() -> Any:
+    """Вернуть кэшированный TypeAdapter(Attachments) или None.
+
+    Ленивый импорт maxapi оставлен внутри (модуль грузится и в окружениях
+    без maxapi — например, часть unit-тестов). При первом успешном импорте
+    адаптер кэшируется в модульной переменной и переиспользуется. Если
+    maxapi недоступен — возвращает None, а вызывающий пропускает релей.
+    """
+    global _RELAY_ADAPTER
+    if _RELAY_ADAPTER is None:
+        try:
+            from pydantic import TypeAdapter
+
+            from maxapi.types.attachments import Attachments
+        except Exception:
+            log.exception("maxapi attachment types unavailable; skipping relay")
+            return None
+        _RELAY_ADAPTER = TypeAdapter(Attachments)
+    return _RELAY_ADAPTER
+
+
 def deserialize_for_relay(stored: list[dict]) -> list:
     """Развернуть сохранённые словари обратно в pydantic-объекты Attachment,
     чтобы send_message смог снова сбросить их в полезную нагрузку API.
@@ -395,15 +428,9 @@ def deserialize_for_relay(stored: list[dict]) -> list:
     """
     if not stored:
         return []
-    try:
-        from pydantic import TypeAdapter
-
-        from maxapi.types.attachments import Attachments
-    except Exception:
-        log.exception("maxapi attachment types unavailable; skipping relay")
+    adapter = _get_relay_adapter()
+    if adapter is None:
         return []
-
-    adapter: TypeAdapter = TypeAdapter(Attachments)
     out: list = []
     for raw in stored:
         if not isinstance(raw, dict):
