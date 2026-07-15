@@ -408,3 +408,36 @@ async def test_set_admin_message_id(session) -> None:
     assert found.id == appeal.id
     # Подавляем неиспользуемую переменную (DialogState импорт нужен для тестов выше)
     assert DialogState.IDLE is not None
+
+
+@pytest.mark.asyncio
+async def test_create_appeal_persists_coordinates(session) -> None:
+    """Координаты обращения сохраняются (раньше выбрасывались после
+    подтверждения) — фундамент пин-точного слоя карты округа."""
+    user = await users_service.get_or_create(session, max_user_id=1, first_name="A")
+    appeal = await appeals_service.create_appeal(
+        session, user=user, address="ул. Ленина, 10", topic="ЖКХ",
+        summary="яма", attachments=[], locality="Елизовское ГП",
+        latitude=53.1845, longitude=158.3865, geo_confidence=0.92,
+    )
+    fetched = await session.get(Appeal, appeal.id)
+    assert fetched is not None
+    assert fetched.latitude == pytest.approx(53.1845)
+    assert fetched.longitude == pytest.approx(158.3865)
+    assert fetched.geo_confidence == pytest.approx(0.92)
+
+
+@pytest.mark.asyncio
+async def test_create_appeal_without_coordinates_is_null(session) -> None:
+    """Ручной ввод адреса без геолокации → координаты NULL, обращение
+    создаётся штатно (координаты необязательны)."""
+    user = await users_service.get_or_create(session, max_user_id=2, first_name="B")
+    appeal = await appeals_service.create_appeal(
+        session, user=user, address="ул. Мира, 5", topic="Дороги",
+        summary="без гео", attachments=[],
+    )
+    fetched = await session.get(Appeal, appeal.id)
+    assert fetched is not None
+    assert fetched.latitude is None
+    assert fetched.longitude is None
+    assert fetched.geo_confidence is None

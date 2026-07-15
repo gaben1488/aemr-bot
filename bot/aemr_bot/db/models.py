@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import BigInteger, Boolean, DateTime, DDL, ForeignKey, Index, String, Text, UniqueConstraint, event, func, text
+from sqlalchemy import BigInteger, Boolean, DateTime, DDL, Float, ForeignKey, Index, String, Text, UniqueConstraint, event, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -199,6 +199,16 @@ class Appeal(Base):
     status: Mapped[str] = mapped_column(String(32), default=AppealStatus.NEW.value, server_default=AppealStatus.NEW.value, index=True)
     locality: Mapped[str | None] = mapped_column(String(120))
     address: Mapped[str | None] = mapped_column(String(500))
+    # Точные координаты обращения (WGS-84). Житель делится геолокацией,
+    # appeal_geo распознаёт населённый пункт и адрес по точке — но сама
+    # точка раньше выбрасывалась после подтверждения. Сохраняем её:
+    # разблокирует пин-точный слой «Обращения граждан» на карте округа
+    # (без координат потолок — гранулярность посёлка). Nullable: адрес
+    # можно ввести и вручную, без геолокации. geo_confidence — уверенность
+    # локального reverse-geocoding (services/geo.py), 0..1 либо None.
+    latitude: Mapped[float | None] = mapped_column(Float)
+    longitude: Mapped[float | None] = mapped_column(Float)
+    geo_confidence: Mapped[float | None] = mapped_column(Float)
     topic: Mapped[str | None] = mapped_column(String(120))
     summary: Mapped[str | None] = mapped_column(Text)
     attachments: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
