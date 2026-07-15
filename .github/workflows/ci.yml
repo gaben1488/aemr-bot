@@ -40,27 +40,14 @@ jobs:
           # зависимости остаются в списке и валят CI при CVE.
           python -m pip freeze --exclude-editable > audit-requirements.txt
           grep -vE '^(aemr-bot|aemr_bot)(==| @ )' audit-requirements.txt > audit-requirements.thirdparty.txt
-          # Игноры CVE с обоснованием неприменимости (привязать к коду —
-          # любой будущий разработчик может grep'нуть эти проверки и
-          # убедиться, что игнор всё ещё валиден):
-          #
-          # PYSEC-2026-161 / GHSA-86qp-5c8j-p5mr — starlette URL
-          # reconstruction from Host header → potential auth bypass.
-          # Бот НЕ reconstructs URL из Host (нет route'ов, auth
-          # которых зависит от host). Health endpoints /livez, /readyz
-          # возвращают plain status, не используют request.url.
-          # Проверка: grep -r 'request\.url\|HTTP_HOST' aemr_bot/ → 0.
-          #
-          # CVE-2025-62727 / GHSA-7f5h-v6xp-fcq8 — Range header ReDoS
-          # в FileResponse / StaticFiles. Бот НЕ использует ни
-          # FileResponse, ни StaticFiles — отдаёт только JSON через
-          # /livez и /readyz.
-          # Проверка: grep -r 'FileResponse\|StaticFiles' aemr_bot/ → 0.
-          #
-          # Оба CVE инапрозрачно прокидываются через fastapi → starlette
-          # (fastapi <0.137 пинит starlette<0.49 где fix). Reassess
-          # на следующем планируемом fastapi-bump.
-          IGNORE_FLAGS="--ignore-vuln PYSEC-2026-161 --ignore-vuln CVE-2025-62727"
+          # Игнорируемых CVE больше нет: PYSEC-2026-161 (Host-header → request.url)
+          # и CVE-2025-62727 (Range ReDoS в FileResponse) закрыты по-настоящему —
+          # starlette поднят до 1.3.1 в uv.lock (2026-07-15). Раньше они «игнорились»
+          # как неприменимые, но lock сидел на уязвимой 0.48.0 — обоснование ссылалось
+          # на паттерны кода, а не на версию. Урок: игнор CVE должен проверяться
+          # против lock-версии, не только против call-sites. Новые игноры добавлять
+          # только с обоснованием + датой + условием пересмотра.
+          IGNORE_FLAGS=""
           set +e
           python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off --format=json --output=pip-audit.json $IGNORE_FLAGS
           audit_status=$?

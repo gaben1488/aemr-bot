@@ -4,7 +4,9 @@
 по умолчанию maxapi/aiohttp игнорируют
 HTTP(S)_PROXY (создают ClientSession без trust_env), а корпоративный CA не попадает
 в trust store — за корп-фаерволом (UserGate и любым другим) бот молча не выходит на
-platform-api.max.ru. Модель «врубил мод — добавил по месту — го»:
+platform-api2.max.ru (до 19.07.2026 — platform-api.max.ru; MAX сменил хост из-за
+отзыва сертификатов GlobalSign, новая цепочка — нац-УЦ Минцифры, maxapi>=1.2.1
+доверяет ей из коробки). Модель «врубил мод — добавил по месту — го»:
 
   BOT_FIREWALL_MODE=1                      # врубить (aiohttp начнёт читать прокси из окружения)
   BOT_OUTBOUND_PROXY=http://proxy:3128     # по месту: адрес корпоративного прокси

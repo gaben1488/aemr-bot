@@ -37,7 +37,7 @@
 <tr><td>Память (RAM)</td><td>2 ГБ (комфортно 4 ГБ)</td><td>Контейнер бота ограничен 512 МБ (<code class="kbd">mem_limit</code>), PostgreSQL съедает 200–400 МБ. Остальное — на cron-задачи и пиковую нагрузку при резервном копировании. При устойчивом превышении лимита контейнер бота перезапускается по OOM, не роняя хост.</td></tr>
 <tr><td>Диск</td><td>20 ГБ SSD</td><td>ОС ~5 ГБ, слои Docker ~3 ГБ, база ~1 ГБ на старте плюс ~50 МБ в год, 8 еженедельных backup под GPG ~400 МБ, логи до 60 МБ (бот и база по 30 МБ с ротацией).</td></tr>
 <tr><td>ОС</td><td>Ubuntu 22.04 / 24.04 LTS (Debian 12 тоже годится)</td><td>Нужен Docker. Время на сервере должно быть синхронизировано (служба NTP) — бот считает все сроки по часовому поясу <code class="kbd">Asia/Kamchatka</code>.</td></tr>
-<tr><td>Сеть</td><td>Исходящий HTTPS (443/TCP)</td><td>Бот сам опрашивает MAX (<code class="kbd">botapi.max.ru</code>, <code class="kbd">platform-api.max.ru</code>). Входящие порты в режиме long polling <strong>не нужны</strong>. Если когда-нибудь перейдёте на webhook — понадобятся 80/443 и публичный домен.</td></tr>
+<tr><td>Сеть</td><td>Исходящий HTTPS (443/TCP)</td><td>Бот сам опрашивает MAX (<code class="kbd">botapi.max.ru</code>, <code class="kbd">platform-api2.max.ru</code>). Входящие порты в режиме long polling <strong>не нужны</strong>. Если когда-нибудь перейдёте на webhook — понадобятся 80/443 и публичный домен.</td></tr>
 </tbody>
 </table>
 </div>
@@ -661,7 +661,7 @@ docker compose ps                       # дождаться healthy у обои
 <ul>
 <li>успешный <code class="kbd">/livez</code> → счётчик провалов сбрасывается;</li>
 <li>3 провала подряд (≈15 минут) → <code class="kbd">docker compose restart bot</code>;</li>
-<li>8 провалов подряд (≈40 минут) → пишет алёрт прямо в служебную группу через MAX API (минуя бота — он же завис), отправляя POST на <code class="kbd">platform-api.max.ru/messages</code> с заголовком <code class="kbd">Authorization</code>.</li>
+<li>8 провалов подряд (≈40 минут) → пишет алёрт прямо в служебную группу через MAX API (минуя бота — он же завис), отправляя POST на <code class="kbd">platform-api2.max.ru/messages</code> с заголовком <code class="kbd">Authorization</code>.</li>
 </ul>
 
 <div class="note">
@@ -713,7 +713,7 @@ journalctl -t aemr-bot-deploy   -n 100 --no-pager</code></pre>
 <tr><td>Бот в группе игнорирует сообщения</td><td>Проверьте, что <code class="kbd">ADMIN_GROUP_ID</code> в <code class="kbd">.env</code> совпадает с <code class="kbd">chat_id</code> из <code class="kbd">/whoami</code> в группе (минус на месте?). Бот после правки перезапущен через <code class="kbd">--force-recreate</code>? Бот не покинул группу, не исключён? Если <code class="kbd">/whoami</code> в группе ещё отвечает — бот видит группу, но chat_id не совпадает с переменной.</td></tr>
 <tr><td>Оператор пишет, а бот не доставляет</td><td>Ответ должен быть <strong>свайпом</strong> на карточку (иначе бот промолчит: «Не понял, к какому обращению ответ») и не длиннее лимита (по умолчанию 800 символов). Оператор зарегистрирован в <code class="kbd">operators</code> с <code class="kbd">is_active=true</code>? Логи: <code class="kbd">docker compose logs bot --tail 100 | grep -i error</code> (частые причины: житель заблокировал бота, MAX рвёт TLS).</td></tr>
 <tr><td>«Пульс» не приходит</td><td>Окно прощения 120 сек уже учтено, значит либо <code class="kbd">BOT_TOKEN</code> истёк/отозван, либо MAX ограничил частоту запросов (rate-limit). <code class="kbd">/diag</code> в группе подскажет.</td></tr>
-<tr><td>В логах <code class="kbd">401</code>/<code class="kbd">403</code> от MAX, бот «онемел» целиком</td><td>HTTP 401 (Unauthorized) или 403 (Forbidden) от <code class="kbd">botapi.max.ru</code> / <code class="kbd">platform-api.max.ru</code> означают, что MAX перестал принимать токен: <code class="kbd">BOT_TOKEN</code> отозван/протух, либо <strong>снята верификация юрлица</strong> на стороне MAX (тогда бот теряет право работать в группах и слать сообщения). При этом <code class="kbd">/livez</code> может отвечать 200 — процесс жив, но MAX его «не пускает». Сначала отличите от обычной сетевой ошибки: единичные таймауты — не 401/403. Если код именно 401/403 устойчив — это <strong>потенциальный инцидент</strong> (токен мог утечь и быть отозван не вами): проверьте на max.ru/business статус юрлица и токена, при подозрении на компрометацию идите по плейбуку <a href="#security" data-go="security">«Реагирование на инцидент»</a> (раздел «Безопасность»), а не просто молча перевыпускайте токен. Перевыпуск токена и рестарт — финальный шаг, но сперва зафиксируйте, кто и почему отозвал.</td></tr>
+<tr><td>В логах <code class="kbd">401</code>/<code class="kbd">403</code> от MAX, бот «онемел» целиком</td><td>HTTP 401 (Unauthorized) или 403 (Forbidden) от <code class="kbd">botapi.max.ru</code> / <code class="kbd">platform-api2.max.ru</code> означают, что MAX перестал принимать токен: <code class="kbd">BOT_TOKEN</code> отозван/протух, либо <strong>снята верификация юрлица</strong> на стороне MAX (тогда бот теряет право работать в группах и слать сообщения). При этом <code class="kbd">/livez</code> может отвечать 200 — процесс жив, но MAX его «не пускает». Сначала отличите от обычной сетевой ошибки: единичные таймауты — не 401/403. Если код именно 401/403 устойчив — это <strong>потенциальный инцидент</strong> (токен мог утечь и быть отозван не вами): проверьте на max.ru/business статус юрлица и токена, при подозрении на компрометацию идите по плейбуку <a href="#security" data-go="security">«Реагирование на инцидент»</a> (раздел «Безопасность»), а не просто молча перевыпускайте токен. Перевыпуск токена и рестарт — финальный шаг, но сперва зафиксируйте, кто и почему отозвал.</td></tr>
 <tr><td>Пришёл startup-пульс и тишина</td><td>Бот рестартанул, скорее всего авто-деплой. Проверьте <code class="kbd">journalctl -t aemr-bot-deploy -n 50</code>.</td></tr>
 <tr><td>«DEPLOY FAILED» в журнале</td><td>Авто-откат сработал, сейчас работает предыдущий коммит. Проверьте новый локально, найдите причину, запушьте фикс. Журнал: <code class="kbd">journalctl -t aemr-bot-deploy -n 50</code>.</td></tr>
 <tr><td>Контейнер в restart-loop</td><td><code class="kbd">docker compose ps</code> покажет <code class="kbd">Restarting</code>. <code class="kbd">docker compose logs --tail 500 bot</code> — почему. Частая причина — упавшая миграция или битый <code class="kbd">BOT_TOKEN</code> (бот логирует ошибку токена и выходит специально, чтобы не крутиться в петле). Если новый коммит — авто-откат должен был сработать; если нет — откат вручную.</td></tr>
@@ -852,7 +852,7 @@ docker compose exec -T db psql -U aemr -d aemr -c 'select now();'   # запис
 
 <h3 id="admin-network">Сетевая изоляция (опционально)</h3>
 
-<p>В боевой сборке бот делает исходящие запросы строго на ограниченный список доменов: MAX API (<code class="kbd">botapi.max.ru</code>, <code class="kbd">platform-api.max.ru</code>), GitHub (для авто-деплоя — <code class="kbd">github.com</code>, <code class="kbd">api.github.com</code>, <code class="kbd">codeload.github.com</code>), пинг-сервис (если задан <code class="kbd">HEALTHCHECK_URL</code>) и источники угроз для антифишинга (<code class="kbd">urlhaus.abuse.ch</code>, <code class="kbd">threatfox.abuse.ch</code>, <code class="kbd">data.phishtank.com</code>). Всё остальное — потенциальная утечка ПДн или признак компрометации.</p>
+<p>В боевой сборке бот делает исходящие запросы строго на ограниченный список доменов: MAX API (<code class="kbd">botapi.max.ru</code>, <code class="kbd">platform-api2.max.ru</code>), GitHub (для авто-деплоя — <code class="kbd">github.com</code>, <code class="kbd">api.github.com</code>, <code class="kbd">codeload.github.com</code>), пинг-сервис (если задан <code class="kbd">HEALTHCHECK_URL</code>) и источники угроз для антифишинга (<code class="kbd">urlhaus.abuse.ch</code>, <code class="kbd">threatfox.abuse.ch</code>, <code class="kbd">data.phishtank.com</code>). Всё остальное — потенциальная утечка ПДн или признак компрометации.</p>
 
 <p>Если нужен жёсткий исходящий whitelist через <code class="kbd">iptables</code> — порядок такой: запретить весь исходящий трафик (<code class="kbd">OUTPUT DROP</code>), затем точечно разрешить loopback, установленные соединения, DNS (порт 53), перечисленные домены на 443/TCP и NTP-синхронизацию времени (порт 123). Запуск под FreeBSD и за межсетевым экраном — в разделах <a href="#eksp-os" data-go="eksp-os">«Эксплуатация»</a> и <a href="#admin-firewall" data-go="admin-firewall">«За корпоративным межсетевым экраном»</a>.</p>
 
@@ -868,11 +868,17 @@ docker compose exec -T db psql -U aemr -d aemr -c 'select now();'   # запис
 
 <h3 id="admin-firewall">За корпоративным межсетевым экраном (UserGate, Континент и др.)</h3>
 
-<p>Если бот разворачивается во внутренней сети организации за российским межсетевым экраном (UserGate, Континент 4, ALTELL NEO, Рубикон, ИКС, Ideco), наружу ему нужен <strong>ровно один адрес</strong> — <code class="kbd">platform-api.max.ru:443</code> по исходящему TLS. Чтобы заработало <strong>с первого раза</strong>, нужно одно действие на стороне межсетевика: код не поможет, пока администратор не разрешит исходящее соединение.</p>
+<div class="note note--caution">
+<p class="note__label">Смена адреса API: platform-api → platform-api2 (июль 2026)</p>
+<p>MAX сменил адрес Bot API на <code class="kbd">platform-api2.max.ru</code>: японский УЦ GlobalSign отозвал SSL-сертификаты российских компаний, и на новом имени поднята цепочка национального УЦ (Минцифры). Дедлайн перехода — <strong>19 июля 2026</strong>. Для бота ничего настраивать не надо: maxapi 1.2.1 уже ходит на новый адрес и доверяет российской цепочке из коробки; токен передаётся заголовком <code class="kbd">Authorization</code> (передача в query-параметрах прекращена). Что проверить руками: (1) прод собран с maxapi&nbsp;1.2.1 или новее — старые сборки перестанут подключаться; (2) allowlist на межсетевике включает <code class="kbd">platform-api2.max.ru:443</code> (IP-адреса те же — это CNAME на тот же кластер, меняется только имя и сертификат); (3) внеполосный сторож healthwatch обновлён — он шлёт алёрт своим curl и должен доверять российскому корню (<code class="kbd">infra/certs/russian_trusted_root_ca.pem</code>, скрипт собирает объединённый CA-бандл сам).</p>
+</div>
+
+
+<p>Если бот разворачивается во внутренней сети организации за российским межсетевым экраном (UserGate, Континент 4, ALTELL NEO, Рубикон, ИКС, Ideco), наружу ему нужен <strong>ровно один адрес</strong> — <code class="kbd">platform-api2.max.ru:443</code> по исходящему TLS. Чтобы заработало <strong>с первого раза</strong>, нужно одно действие на стороне межсетевика: код не поможет, пока администратор не разрешит исходящее соединение.</p>
 
 <div class="note">
 <p class="note__label">Лучший и самый безопасный путь</p>
-<p>Попросите администратора межсетевика сделать две вещи: <strong>(1)</strong> добавить <code class="kbd">platform-api.max.ru:443</code> в egress-allowlist по имени домена (FQDN); <strong>(2)</strong> исключить этот адрес из SSL-инспекции (decryption bypass). Тогда бот идёт напрямую обычным TLS, <code class="kbd">BOT_FIREWALL_MODE</code> можно даже не включать, а персональные данные жителей не расшифровываются на периметре — это снимает и юридический риск по 152-ФЗ и приказам ФСТЭК №17/№21.</p>
+<p>Попросите администратора межсетевика сделать две вещи: <strong>(1)</strong> добавить <code class="kbd">platform-api2.max.ru:443</code> в egress-allowlist по имени домена (FQDN); <strong>(2)</strong> исключить этот адрес из SSL-инспекции (decryption bypass). Тогда бот идёт напрямую обычным TLS, <code class="kbd">BOT_FIREWALL_MODE</code> можно даже не включать, а персональные данные жителей не расшифровываются на периметре — это снимает и юридический риск по 152-ФЗ и приказам ФСТЭК №17/№21.</p>
 </div>
 
 <p><strong>Четыре вопроса администратору ДО запуска</strong> — от ответов зависит, что прописать в <code class="kbd">.env</code>:</p>
@@ -910,7 +916,7 @@ docker compose exec -T db psql -U aemr -d aemr -c 'select now();'   # запис
 
 <div class="note">
 <p class="note__label">ГОСТ-шифрование для max.ru не нужно</p>
-<p>Проверено: <code class="kbd">platform-api.max.ru</code> отдаёт обычный сертификат Let's Encrypt (RSA-2048), стандартный TLS. ГОСТ-TLS — серверная и VPN-технология государственных сервисов, на исходящий трафик к MAX она не навешивается. Криптопровайдер с ГОСТ (КриптоПро и т.п.) ставить в бот не надо — это лишняя сложность и риск без пользы.</p>
+<p>Проверено: <code class="kbd">platform-api2.max.ru</code> отдаёт обычный сертификат Let's Encrypt (RSA-2048), стандартный TLS. ГОСТ-TLS — серверная и VPN-технология государственных сервисов, на исходящий трафик к MAX она не навешивается. Криптопровайдер с ГОСТ (КриптоПро и т.п.) ставить в бот не надо — это лишняя сложность и риск без пользы.</p>
 </div>
 
 <h3 id="admin-sbom">SBOM и CI</h3>
