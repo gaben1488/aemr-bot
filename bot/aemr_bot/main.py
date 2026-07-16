@@ -12,6 +12,7 @@ from maxapi.exceptions.max import InvalidToken
 from aemr_bot import health, network
 from aemr_bot.config import settings
 from aemr_bot.logging_setup import setup_logging
+from aemr_bot.db import single_instance
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import register_handlers
 from aemr_bot.handlers.appeal import recover_stuck_funnels
@@ -652,6 +653,21 @@ async def main() -> None:
     # ронял aiohttp-сессию и dispatcher падал на «Session is closed».
     await _preflight_check_token(bot)
 
+    # Single-instance гард ДО тяжёлой инициализации и polling: postgres
+    # advisory-lock по ключу от токена. Два процесса на одном токене молча
+    # делят long-poll апдейты и ломают FSM воронок; при неудаче выходим с
+    # явной ошибкой, а не тихо конкурируем. Соединение _lock_conn держим до
+    # конца процесса (его закрытие/падение снимает лок). См. db/single_instance.
+    _lock_conn = None
+    try:
+        _lock_conn = await single_instance.acquire_single_instance_lock()
+    except single_instance.SingleInstanceError:
+        log.critical(
+            "ОТКАЗ СТАРТА: другой экземпляр уже держит токен (single-instance "
+            "lock). Погасите второй контейнер/юнит и запустите один."
+        )
+        raise
+
     # Публикуем /-меню MAX (/start, /menu) для всех чатов. У MAX нет
     # раздельного списка команд для лички и служебной группы, поэтому
     # держим только универсальные команды: в личке они открывают меню
@@ -806,6 +822,11 @@ async def main() -> None:
         scheduler.shutdown(wait=False)
         if health_runner is not None:
             await health_runner.cleanup()
+        # Явно снимаем single-instance lock при штатном shutdown
+        # (pg_advisory_unlock + close; голый close вернул бы соединение в
+        # пул живым и лок остался бы висеть). При падении процесса лок
+        # снимается сам с разрывом соединения.
+        await single_instance.release_single_instance_lock(_lock_conn)
 
 
 if __name__ == "__main__":
