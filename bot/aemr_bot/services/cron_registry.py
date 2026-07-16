@@ -142,6 +142,15 @@ JOB_REGISTRY: list[dict[str, str]] = [
         "schedule_human": "каждое вс в BACKUP_HOUR:BACKUP_MINUTE (03:00 по умолчанию)",
         "purpose": "pg_dump → GPG → named volume, ротация",
     },
+    {
+        "id": "db-backup-verify",
+        "schedule_human": "1-го числа каждого месяца в 04:30 (BACKUP_VERIFY_*)",
+        "purpose": (
+            "проверка пригодности бэкапа: свежайший дамп расшифровывается "
+            "потоком (без диска и БД), сверяется сигнатура pg_dump; ловит "
+            "потерю GPG-фразы и обрезанный файл"
+        ),
+    },
 ]
 
 

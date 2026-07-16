@@ -354,13 +354,14 @@ COMMIT_AUTHOR_EMAIL=&lt;email&gt;</code></pre>
 
 <h3 id="admin-cron">Фоновые задачи (cron внутри бота)</h3>
 
-<p>Внутри процесса бота крутится планировщик APScheduler — это «cron» (запуск по расписанию), но не системный, а встроенный в приложение. Все расписания — в часовом поясе <code class="kbd">Asia/Kamchatka</code>. Источник истины — функция построения планировщика в <code class="kbd">bot/aemr_bot/services/cron.py</code>. Ниже все 21 задача с точными идентификаторами и реальным расписанием.</p>
+<p>Внутри процесса бота крутится планировщик APScheduler — это «cron» (запуск по расписанию), но не системный, а встроенный в приложение. Все расписания — в часовом поясе <code class="kbd">Asia/Kamchatka</code>. Источник истины — функция построения планировщика в <code class="kbd">bot/aemr_bot/services/cron.py</code>. Ниже все 22 задачи с точными идентификаторами и реальным расписанием.</p>
 
 <div class="table-wrap">
 <table>
 <thead><tr><th>id задачи</th><th>Когда запускается</th><th>Что делает</th></tr></thead>
 <tbody>
 <tr><td><code class="kbd">db-backup</code></td><td>каждое вс в <code class="kbd">BACKUP_HOUR</code>:<code class="kbd">BACKUP_MINUTE</code> (по умолчанию 03:00)</td><td>еженедельный pg_dump → GPG → Docker-том, ротация старых файлов, categorized-алёрт при провале</td></tr>
+<tr><td><code class="kbd">db-backup-verify</code></td><td>1-го числа месяца в 04:30 (<code class="kbd">BACKUP_VERIFY_*</code>)</td><td>проверка пригодности бэкапа: свежайшая копия расшифровывается потоком (на диск ничего не пишется, база не трогается) и сверяется сигнатура <code class="kbd">pg_dump</code>. Ловит потерю парольной фразы и обрезанный файл <em>до</em> аварии; успех — тихо в лог, провал — critical-алёрт. Выключается <code class="kbd">BACKUP_VERIFY_ENABLED=0</code></td></tr>
 <tr><td><code class="kbd">events-retention</code></td><td>ежедневно 04:00</td><td>удаляет служебные события старше 30 дней (ключи защиты от повторов — idempotency)</td></tr>
 <tr><td><code class="kbd">audit-log-retention</code></td><td>ежедневно 04:15</td><td>удаляет журнал действий старше <code class="kbd">AUDIT_LOG_RETENTION_DAYS</code> (по умолчанию 365 дней)</td></tr>
 <tr><td><code class="kbd">stale-operators-cleanup</code></td><td>ежедневно 04:20</td><td>помечает операторов, покинувших служебную группу MAX, как неактивных</td></tr>
@@ -504,6 +505,16 @@ docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test -c 'sele
 docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test -c 'select * from alembic_version;'</code></pre></li>
 <li><strong>Удалите тестовую базу:</strong> <code class="kbd">docker compose exec -T db psql -U "$POSTGRES_USER" -d postgres -c 'DROP DATABASE IF EXISTS aemr_restore_test;'</code></li>
 </ol>
+
+<h4 id="admin-backup-drill">Учение по восстановлению: раз в квартал, руками</h4>
+
+<p>Бэкап, который никто не восстанавливал, — это не бэкап, а надежда. Раз в квартал пройдите процедуру выше целиком, по шагам, не под аварию. Смысл не в том, чтобы «файлы были», а в том, чтобы человек, который будет это делать в 3 часа ночи после сбоя, уже делал это однажды спокойно. Отметьте в <a href="#admin-routine" data-go="admin-routine">эксплуатационном календаре</a> и запишите две вещи: сколько времени заняло восстановление (это ваше реальное время простоя при аварии) и совпала ли <code class="kbd">alembic_version</code> из копии с последней миграцией в <code class="kbd">main</code>.</p>
+
+<div class="note">
+<p class="note__label">Что проверяет бот сам, а что остаётся за человеком</p>
+<p>Ежемесячная задача <code class="kbd">db-backup-verify</code> (1-го числа в 04:30) берёт свежайшую копию и расшифровывает её потоком — на диск ничего не пишет и базу не трогает. Она отвечает ровно на два вопроса: <strong>подходит ли парольная фраза</strong> (её потеря обесценивает все копии разом, и без такой проверки это вскрылось бы только в аварию) и <strong>цел ли файл</strong> (у GPG есть контроль целостности — обрезанный дамп даёт ошибку). Успех — тихо в журнал, провал — critical-алёрт в админ-чат.</p>
+<p>Чего она НЕ проверяет: что дамп реально заливается в PostgreSQL и что данные внутри осмысленны. Это и есть предмет квартального учения — автоматизировать его в боте намеренно не стали: восстановление требует места под распаковку (в контейнере <code class="kbd">/tmp</code> — это tmpfs на 128 МБ) и создаёт лишнюю базу на том же диске, где живёт боевая. Дешёвый сторож + живое учение закрывают риск лучше, чем робот, который в самый нужный момент упрётся в место на диске.</p>
+</div>
 
 <div class="note note--danger">
 <p class="note__label">Опасно</p>

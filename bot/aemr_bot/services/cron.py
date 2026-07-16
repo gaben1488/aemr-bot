@@ -26,6 +26,9 @@ from aemr_bot.services import stats as stats_service
 from aemr_bot.services import threat_intel
 from aemr_bot.services import users as users_service
 from aemr_bot.services.calendar_ru import is_workday
+from aemr_bot.services.backup_verify import (
+    verify_latest_backup as _verify_latest_backup,
+)
 from aemr_bot.services.db_backup import backup_db as _backup_db
 from aemr_bot.services import sla as sla_service
 
@@ -237,6 +240,81 @@ async def _job_backup_with_alert(send_admin_text) -> None:
             "⚠️ Еженедельный бэкап БД упал с исключением вне самого "
             "backup_db (вероятно, сбой admin-канала или OOM). "
             "Срочно проверьте логи и снимите бэкап вручную через /backup.",
+            critical=True,
+        )
+
+
+async def _job_backup_verify_with_alert(send_admin_text) -> None:
+    """Ежемесячная проверка пригодности бэкапа с алёртом при провале.
+
+    Еженедельный бэкап доказывает, что файл записался. Эта проверка
+    доказывает, что файл можно ОТКРЫТЬ: расшифровывает свежайший дамп
+    потоком (на диск ничего не пишет, БД не трогает) и сверяет сигнатуру
+    pg_dump. Ловит две молчаливые поломки — потерю парольной фразы (без
+    неё все копии бесполезны) и обрезанный файл (у GPG есть контроль
+    целостности). Полное DR-учение остаётся ручным, раз в квартал.
+
+    Успех — тихо в лог: ещё одно «всё хорошо» раз в месяц только приучает
+    не читать алёрты. Провал — critical, как и у самого бэкапа: узнать о
+    непригодных копиях надо до аварии, а не после.
+    """
+    try:
+        result = await _verify_latest_backup()
+        if result.ok:
+            log.info(
+                "backup verify OK: %s (%d КБ после распаковки)",
+                result.backup_name, result.decrypted_bytes // 1024,
+            )
+            return
+        if result.fail_kind == "config":
+            # Проверка выключена или BACKUP_LOCAL_DIR пуст — осознанный
+            # выбор конфигурации, а не поломка. Про пустой BACKUP_LOCAL_DIR
+            # и так кричит сам бэкап; второй раз дёргать людей незачем.
+            log.info("backup verify пропущена: %s", result.fail_detail)
+            return
+        if result.fail_kind == "decrypt":
+            await send_admin_text(
+                "🔑 Проверка бэкапа: НЕ УДАЛОСЬ ОТКРЫТЬ дамп "
+                f"({result.backup_name}).\n"
+                f"Детали: {result.fail_detail}\n"
+                "Либо парольная фраза BACKUP_GPG_PASSPHRASE в .env не "
+                "подходит к сохранённым копиям, либо файл повреждён — "
+                "восстановиться из него СЕЙЧАС НЕЛЬЗЯ. Проверьте, не "
+                "менялась ли фраза (в том числе при переносе сервера), и "
+                "держите её резервную запись отдельно от сервера. Снимите "
+                "свежий бэкап через /backup.",
+                critical=True,
+            )
+        elif result.fail_kind == "signature":
+            await send_admin_text(
+                "🔍 Проверка бэкапа: файл открылся, но внутри НЕ ДАМП "
+                f"({result.backup_name}).\n"
+                f"Детали: {result.fail_detail}\n"
+                "Восстановление из такой копии не вернёт обращения. Снимите "
+                "свежий бэкап через /backup и проверьте логи pg_dump.",
+                critical=True,
+            )
+        elif result.fail_kind == "no_backup":
+            await send_admin_text(
+                "📭 Проверка бэкапа: в каталоге копий НЕТ НИ ОДНОГО файла.\n"
+                f"Детали: {result.fail_detail}\n"
+                "Точки восстановления не существует. Снимите бэкап вручную "
+                "через /backup и проверьте, что еженедельный cron живой "
+                "(`/pulse` → раздел задач).",
+                critical=True,
+            )
+        else:  # "unknown"
+            await send_admin_text(
+                "⚠️ Проверка бэкапа упала с неклассифицированной ошибкой.\n"
+                f"Детали: {result.fail_detail}\n"
+                "См. логи бота: `docker compose logs --tail 200 bot`.",
+                critical=True,
+            )
+    except Exception:
+        log.exception("backup_verify_with_alert wrapper failed")
+        await send_admin_text(
+            "⚠️ Проверка бэкапа упала с исключением вне самой проверки. "
+            "Проверьте логи бота.",
             critical=True,
         )
 
@@ -957,6 +1035,19 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
                 timezone=TZ,
             ),
             "db-backup",
+        ),
+        # Ежемесячная проверка восстановимости бэкапа (1-е число, 04:30):
+        # расшифровать свежайший дамп, залить во временную БД, снести.
+        # Ловит потерю парольной фразы и битые дампы ДО аварии.
+        (
+            functools.partial(_job_backup_verify_with_alert, send_admin_text),
+            CronTrigger(
+                day=settings.backup_verify_day,
+                hour=settings.backup_verify_hour,
+                minute=settings.backup_verify_minute,
+                timezone=TZ,
+            ),
+            "db-backup-verify",
         ),
         # Ежедневная очистка events (idempotency-ключи)
         (

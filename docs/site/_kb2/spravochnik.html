@@ -616,7 +616,7 @@
 
 <h3 id="spr-cron">Расписание фоновых задач (cron)</h3>
 
-<p>cron здесь — это планировщик задач (APScheduler), работающий <strong>внутри</strong> процесса бота. Все времена — по часовому поясу <code class="kbd">TZ</code> (по умолчанию <code class="kbd">Asia/Kamchatka</code>). Расписания взяты из реальных триггеров в <code class="kbd">services/cron.py</code>. Всего 21 задача (последняя из основных, внешний пинг, включается только если задан <code class="kbd">HEALTHCHECK_URL</code>; ещё 4 — разовые catch-up для retention-задач, см. ниже). Общие параметры всех задач: <code class="kbd">max_instances=1</code>, <code class="kbd">coalesce=True</code>, <code class="kbd">misfire_grace_time=120</code> секунд.</p>
+<p>cron здесь — это планировщик задач (APScheduler), работающий <strong>внутри</strong> процесса бота. Все времена — по часовому поясу <code class="kbd">TZ</code> (по умолчанию <code class="kbd">Asia/Kamchatka</code>). Расписания взяты из реальных триггеров в <code class="kbd">services/cron.py</code>. Всего 22 задачи (внешний пинг включается только если задан <code class="kbd">HEALTHCHECK_URL</code>; ещё 4 — разовые catch-up для retention-задач, см. ниже). Общие параметры всех задач: <code class="kbd">max_instances=1</code>, <code class="kbd">coalesce=True</code>, <code class="kbd">misfire_grace_time=120</code> секунд.</p>
 <div class="table-wrap"><table>
 <thead><tr><th>Задача</th><th>Расписание</th><th>Назначение</th></tr></thead>
 <tbody>
