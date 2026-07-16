@@ -77,3 +77,28 @@ async def acquire_single_instance_lock(
         )
     log.info("single-instance lock acquired (advisory key %d)", key)
     return conn
+
+
+async def release_single_instance_lock(conn: AsyncConnection | None) -> None:
+    """Снять single-instance lock и вернуть соединение в пул.
+
+    ВАЖНО: просто `conn.close()` НЕ снимает advisory-lock — SQLAlchemy
+    возвращает физическое соединение в пул живым, а session-level lock
+    держится на живом бэкенде. Поэтому явно зовём pg_advisory_unlock на
+    ТОМ ЖЕ соединении, потом закрываем. При падении процесса соединение
+    рвётся и лок снимается сам — эта функция для штатного shutdown.
+    """
+    if conn is None:
+        return
+    try:
+        await conn.execute(
+            text("SELECT pg_advisory_unlock(:k)"),
+            {"k": _lock_key(settings.bot_token)},
+        )
+    except Exception:
+        log.debug("pg_advisory_unlock failed (закроем соединение)", exc_info=True)
+    finally:
+        try:
+            await conn.close()
+        except Exception:
+            log.debug("single-instance lock conn close failed", exc_info=True)

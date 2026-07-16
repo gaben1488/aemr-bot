@@ -822,13 +822,11 @@ async def main() -> None:
         scheduler.shutdown(wait=False)
         if health_runner is not None:
             await health_runner.cleanup()
-        # Явно снимаем single-instance lock при штатном shutdown (при
-        # падении процесса он снимется сам с разрывом соединения).
-        if _lock_conn is not None:
-            try:
-                await _lock_conn.close()
-            except Exception:
-                log.debug("single-instance lock conn close failed", exc_info=True)
+        # Явно снимаем single-instance lock при штатном shutdown
+        # (pg_advisory_unlock + close; голый close вернул бы соединение в
+        # пул живым и лок остался бы висеть). При падении процесса лок
+        # снимается сам с разрывом соединения.
+        await single_instance.release_single_instance_lock(_lock_conn)
 
 
 if __name__ == "__main__":

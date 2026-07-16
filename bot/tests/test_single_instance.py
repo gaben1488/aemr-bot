@@ -57,11 +57,12 @@ async def test_pg_second_acquire_refused() -> None:
             with pytest.raises(single_instance.SingleInstanceError):
                 await single_instance.acquire_single_instance_lock(eng)
         finally:
-            # Снять лок — освобождается закрытием держащего соединения.
-            await first.close()
+            # Снять лок явным pg_advisory_unlock (голый close вернул бы
+            # соединение в пул живым — лок остался бы висеть).
+            await single_instance.release_single_instance_lock(first)
         # После освобождения захват снова возможен.
         again = await single_instance.acquire_single_instance_lock(eng)
         assert again is not None
-        await again.close()
+        await single_instance.release_single_instance_lock(again)
     finally:
         await eng.dispose()
