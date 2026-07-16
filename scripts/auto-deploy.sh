@@ -34,6 +34,33 @@ READY_URL=http://127.0.0.1:8080/readyz
 # НЕ деплоится (fail-closed), см. блок верификации ниже.
 REQUIRE_SIGNED_COMMITS=${REQUIRE_SIGNED_COMMITS:-}
 
+# Главный переключатель автодеплоя. Автодеплой применим ТОЛЬКО в контуре с
+# исходящим доступом к git-remote (github). В ЗАКРЫТОЙ гос-сети деплой
+# РУЧНОЙ — держать здесь cron с `git reset --hard` вредно: `git fetch`
+# всё равно не пройдёт (нет доступа к github), а reset затирает ручные
+# правки на сервере и способен воскресить лишний экземпляр бота. В таком
+# контуре ставят AUTODEPLOY_ENABLED=0 в окружении cron-юнита (или
+# /etc/default/aemr-bot) — и скрипт тихо выходит, ничего не трогая.
+AUTODEPLOY_ENABLED=${AUTODEPLOY_ENABLED:-1}
+if [ "$AUTODEPLOY_ENABLED" != "1" ]; then
+    logger -t "$LOG_TAG" "autodeploy disabled (AUTODEPLOY_ENABLED=$AUTODEPLOY_ENABLED) — закрытый контур/ручной деплой, выходим не трогая репозиторий"
+    exit 0
+fi
+
+# Гард «канонический хост». reset --hard воскрешает код из origin/main и
+# пересобирает контейнер — если скрипт по ошибке включён на НЕ-каноническом
+# хосте (тестовый/старый сервер с тем же токеном), это поднимет второй
+# экземпляр бота (см. single-instance) и затрёт локальные правки. Маркер-
+# файл подтверждает «это канонический прод». По умолчанию проверка ВЫКЛ
+# (обратная совместимость); включается REQUIRE_CANONICAL_MARKER=1, и тогда
+# на хосте без маркера автодеплой не запускается.
+CANONICAL_MARKER=${CANONICAL_MARKER:-/etc/aemr-bot/canonical}
+REQUIRE_CANONICAL_MARKER=${REQUIRE_CANONICAL_MARKER:-}
+if [ -n "$REQUIRE_CANONICAL_MARKER" ] && [ ! -f "$CANONICAL_MARKER" ]; then
+    logger -t "$LOG_TAG" "autodeploy skipped: маркер канонического хоста $CANONICAL_MARKER отсутствует (REQUIRE_CANONICAL_MARKER=1) — не деплоим на не-каноническом хосте"
+    exit 0
+fi
+
 # Git с явным ssh-ключом (deploy-key) — даже если у root есть свой github-ключ,
 # для этого репо берём именно deploy-key (минимум прав).
 export GIT_SSH_COMMAND="ssh -i $SSH_KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
@@ -81,6 +108,17 @@ fi
 # Сохраняем .env (в git его нет, при reset --hard не пострадает,
 # но на всякий случай делаем копию)
 cp "$COMPOSE_DIR/.env" /tmp/aemr-bot.env.bak.$$
+
+# Предупреждаем, если reset --hard реально что-то откатит: незакоммиченные
+# правки в ОТСЛЕЖИВАЕМЫХ файлах (ручная правка кода/конфига на сервере
+# «по-быстрому» без коммита) будут потеряны. .env и прочие untracked-файлы
+# не в git и не пострадают, поэтому --untracked-files=no. Это лог, не блок:
+# на каноническом хосте локальных правок быть не должно, и их появление —
+# сигнал дежурному, что кто-то правил прод в обход git.
+DIRTY=$(git status --porcelain --untracked-files=no 2>/dev/null | head -c 500)
+if [ -n "$DIRTY" ]; then
+    logger -t "$LOG_TAG" "WARNING: git reset --hard откатит незакоммиченные правки в tracked-файлах (потеряются): $DIRTY"
+fi
 
 git reset --hard "$REMOTE" --quiet
 chown -R aemr:aemr "$REPO_DIR"
