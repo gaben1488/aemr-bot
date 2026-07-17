@@ -153,6 +153,9 @@ class TestErasePdn:
             summary="Меня зовут Иван, телефон +79992223344, проблема у квартиры 7",
             attachments=[{"type": "photo", "token": "secret-media-token"}],
             locality="Елизово",
+            latitude=53.1845,
+            longitude=158.3865,
+            geo_confidence=0.92,
         )
         await appeals_service.add_user_message(
             session,
@@ -184,6 +187,15 @@ class TestErasePdn:
         assert stored_appeal.address is None
         assert stored_appeal.summary is None
         assert stored_appeal.attachments == []
+        # Координаты — тот же адрес, только цифрами: обнулить «ул. Ленина,
+        # 13», оставив точку на карте, значит не удалить ничего (по точке
+        # дом восстанавливается обратной геокодировкой). Пропущено при
+        # добавлении координат в PR #233.
+        assert stored_appeal.latitude is None
+        assert stored_appeal.longitude is None
+        assert stored_appeal.geo_confidence is None
+        # Метаданные для муниципальной статистики остаются — это не ПДн
+        # после отвязки от жителя.
         assert stored_appeal.topic == "Дороги"
         assert stored_appeal.locality == "Елизово"
         assert stored_appeal.closed_due_to_revoke is True
