@@ -176,20 +176,26 @@ class TestMaskPhone:
 
     @given(st.text(min_size=4, max_size=50))
     def test_does_not_leak_full_phone(self, value: str) -> None:
-        """Главный 152-ФЗ инвариант: output никогда не содержит более
-        4 последних цифр входа подряд."""
+        """Главный 152-ФЗ инвариант: раскрываются ТОЛЬКО последние 4
+        цифры (плюс, возможно, код страны +7), середина замаскирована.
+
+        Проверяем точный формат вывода, а не вхождение подстроки:
+        наивная проверка `leading not in result` ложно срабатывала на
+        повторяющихся цифрах (телефон из одних нулей `+0000` → маска
+        `+***0000`, где ведущий `0` совпадает с хвостовым — это не
+        утечка) и на коде страны. Точный формат ловит настоящую утечку
+        (попади в вывод любая срединная цифра — формат не совпадёт) без
+        ложных тревог."""
         digits = "".join(c for c in value if c.isdigit())
         result = _mask_phone(value)
         if result == "—":
             return  # masked completely, OK
-        # Output может содержать только последние 4 цифры из digits.
-        # Если в input цифр > 4 — первые `len(digits) - 4` цифр НЕ
-        # должны попасть в output.
-        if len(digits) > 4:
-            leading = digits[:-4]
-            assert leading not in result, (
-                f"Утечка PII: ведущие цифры {leading!r} попали в output {result!r}"
-            )
+        tail = digits[-4:]
+        # Вывод — ровно одна из двух форм, раскрывающих только хвост.
+        assert result in (f"+***{tail}", f"+7***{tail}"), (
+            f"Маска раскрыла лишнее: вход {value!r} (цифры {digits!r}) → "
+            f"{result!r}, ожидались только +***{tail} / +7***{tail}"
+        )
 
     def test_idempotent_after_first_mask(self) -> None:
         """Повторный mask masked-строки — output тоже masked, не

@@ -12,7 +12,7 @@
 - erase_pdn_by_phone
 - erase_pdn: переподвеска на anonymous + стирание свободного текста/attachments
 - list_subscribers / list_consented / list_blocked
-- find_pending_pdn_retention: окно, исключения по first_name='Удалено'
+- find_pending_pdn_retention: окно отзыва, NULL-имя в отбор, свежее согласие вон
 - has_open_appeals
 - find_stuck_in_summary / find_stuck_in_funnel: фильтры по времени
 """
@@ -284,17 +284,45 @@ class TestFindPendingPdnRetention:
         assert 1 not in ids
 
     @pytest.mark.asyncio
-    async def test_already_erased_excluded(self, session) -> None:
-        """first_name='Удалено' — признак уже выполненного обезличивания."""
+    async def test_null_first_name_still_selected(self, session) -> None:
+        """Житель без имени (отдал телефон, но ушёл до ввода имени) с
+        истёкшим отзывом ОБЯЗАН попасть в отбор.
+
+        Регресс: старый фильтр `first_name != 'Удалено'` NULL-небезопасен
+        — `NULL != 'Удалено'` в SQL даёт NULL, не TRUE, и такой житель не
+        попадал в отбор НИКОГДА. Его телефон висел бессрочно, без алёрта,
+        тихо ломая единственный верно обоснованный срок (ст. 21 ч. 5)."""
+        from sqlalchemy import update
+
+        u = await users_service.get_or_create(session, max_user_id=1)
+        await users_service.set_phone(session, 1, "+79990001122")
+        await users_service.revoke_consent(session, 1)
+        old = datetime.now(timezone.utc) - timedelta(days=40)
+        await session.execute(
+            update(User).where(User.id == u.id)
+            .values(consent_revoked_at=old, first_name=None)
+        )
+        await session.flush()
+
+        ids = await users_service.find_pending_pdn_retention(
+            session, days_after_revoke=30
+        )
+        assert 1 in ids
+
+    @pytest.mark.asyncio
+    async def test_fresh_consent_after_revoke_excluded(self, session) -> None:
+        """Дал согласие заново после отзыва → основание живо, не уничтожаем."""
         from sqlalchemy import update
 
         u = await users_service.get_or_create(session, max_user_id=1, first_name="X")
         await users_service.revoke_consent(session, 1)
         old = datetime.now(timezone.utc) - timedelta(days=40)
         await session.execute(
-            update(User).where(User.id == u.id)
-            .values(consent_revoked_at=old, first_name="Удалено")
+            update(User).where(User.id == u.id).values(consent_revoked_at=old)
         )
+        await session.flush()
+        # Свежее согласие обнуляет consent_revoked_at → из отбора уходит.
+        await users_service.set_consent(session, 1)
         await session.flush()
 
         ids = await users_service.find_pending_pdn_retention(

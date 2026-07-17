@@ -245,3 +245,45 @@ async def test_purge_old_appeals_5y_retention(session):
     # Свежее не тронуто
     assert by_id[fresh.id][1] == "Свежая жалоба"
     assert by_id[fresh.id][4] == "ул. Свежая, 2"
+
+
+@pytest.mark.asyncio
+async def test_purge_answered_without_closed_at(session):
+    """ANSWERED-обращение с answered_at, но БЕЗ closed_at обязано чиститься
+    по сроку.
+
+    Регресс: финальный ответ оператора («Ответить») ставит answered_at и
+    статус ANSWERED, но closed_at оставляет NULL (его ставит только явное
+    «Закрыть»). Старый фильтр требовал `closed_at IS NOT NULL`, поэтому
+    обращения на ОСНОВНОМ пути «оператор ответил» не чистились никогда —
+    адрес и текст жителя висели бессрочно. Якорь теперь
+    COALESCE(closed_at, answered_at)."""
+    from datetime import datetime, timezone, timedelta
+    from sqlalchemy import update, select
+    from aemr_bot.db.models import Appeal, AppealStatus
+
+    user = await users_service.get_or_create(session, max_user_id=7, first_name="Z")
+    ans = await appeals_service.create_appeal(
+        session, user=user, address="ул. Отвеченная, 9", topic="ЖКХ",
+        summary="ответили, но не закрывали", attachments=[],
+    )
+    six_y_ago = datetime.now(timezone.utc) - timedelta(days=365 * 6)
+    # ANSWERED: answered_at 6 лет назад, closed_at ОСТАЁТСЯ NULL.
+    await session.execute(
+        update(Appeal).where(Appeal.id == ans.id).values(
+            created_at=six_y_ago,
+            answered_at=six_y_ago,
+            closed_at=None,
+            status=AppealStatus.ANSWERED.value,
+        )
+    )
+    await session.flush()
+
+    purged_a, _ = await appeals_service.purge_old_appeals_content(session, years=5)
+    assert purged_a >= 1
+
+    row = (await session.execute(
+        select(Appeal.summary, Appeal.address).where(Appeal.id == ans.id)
+    )).one()
+    assert row[0] is None  # summary обнулён
+    assert row[1] is None  # address обнулён
