@@ -106,14 +106,16 @@ def verify_env(tmp_path, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_encrypted_backup_without_passphrase_is_decrypt_fail(
-    verify_env,
+    verify_env, monkeypatch
 ) -> None:
     """Зашифрованный дамп + пустая BACKUP_GPG_PASSPHRASE — ровно та
     катастрофа, ради которой проверка написана: копии есть, открыть
     нечем."""
-    import aemr_bot.services.backup_verify as bv
-
-    bv.settings.backup_gpg_passphrase = ""
+    # Через monkeypatch, а не присваиванием: settings — глобальный
+    # объект, и прямая мутация протекла бы в следующие тесты.
+    monkeypatch.setattr(
+        backup_verify.settings, "backup_gpg_passphrase", "", raising=False
+    )
     (verify_env / "aemr-20260701-030000.sql.gpg").write_bytes(b"encrypted")
 
     result = await verify_latest_backup()
