@@ -273,34 +273,19 @@ async def get_anonymous_user_id(session: AsyncSession) -> int:
 
 
 async def _redact_appeal_payloads_for_user(session: AsyncSession, user_id: int) -> tuple[int, int]:
-    """Стереть свободный текст, вложения и координаты по всем обращениям.
+    """Стереть свободный текст и вложения по всем обращениям жителя.
 
     Это отдельный шаг от удаления строки users. Без него `/erase` удалял
     имя и телефон, но оставлял ПДн в фактическом теле обращения:
     address, summary, messages.text, attachments. Для муниципальной
     статистики сохраняются только метаданные: дата, статус, тема,
     населённый пункт и факт обращения.
-
-    Координаты стираются вместе с address, потому что это ОДНО И ТО ЖЕ
-    сведение в двух видах: обнулить «ул. Ленина, 10», оставив
-    (53.18, 158.38), — значит не удалить ничего. Точка чаще всего
-    указывает на дом жителя, и по ней адрес восстанавливается обратной
-    геокодировкой. Пропущено при добавлении координат (PR #233) — ровно
-    та же асимметрия, что когда-то нашли у address (см. комментарий в
-    appeals.purge_old_appeals_content).
     """
     appeal_ids = select(Appeal.id).where(Appeal.user_id == user_id)
     appeals_result = await session.execute(
         update(Appeal)
         .where(Appeal.user_id == user_id)
-        .values(
-            address=None,
-            summary=None,
-            attachments=[],
-            latitude=None,
-            longitude=None,
-            geo_confidence=None,
-        )
+        .values(address=None, summary=None, attachments=[])
     )
     messages_result = await session.execute(
         update(Message)

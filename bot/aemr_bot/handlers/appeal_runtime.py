@@ -122,21 +122,6 @@ async def recover_stuck_funnels(bot) -> int:
     return finalized
 
 
-def _safe_float(value: Any) -> float | None:
-    """Привести значение из dialog_data к float или None.
-
-    Координаты в dialog_data проходят через JSONB и могут вернуться
-    как число либо строку; мусор/None → None, обращение всё равно
-    создаётся (координаты необязательны).
-    """
-    if value is None:
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
-
-
 def _apply_repeat_context(
     *,
     topic: str,
@@ -215,13 +200,6 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
                     user=user,
                     locality=data.get("locality") or None,
                     address=data.get("address", ""),
-                    # Координаты доезжают только если житель делился
-                    # геолокацией (appeal_geo кладёт detected_* в
-                    # dialog_data); при ручном вводе адреса их нет — тогда
-                    # None. JSONB мог сохранить их как строку, приводим.
-                    latitude=_safe_float(data.get("detected_lat")),
-                    longitude=_safe_float(data.get("detected_lon")),
-                    geo_confidence=_safe_float(data.get("detected_confidence")),
                     topic=topic,
                     summary=summary,
                     attachments=attachments,
