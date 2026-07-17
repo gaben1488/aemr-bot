@@ -131,20 +131,27 @@ async def start_appeal_flow(event, max_user_id: int):
         if policy_token:
             from aemr_bot.services.policy import build_file_attachment
             attachments.insert(0, build_file_attachment(policy_token))
-            text = (
-                "Перед оформлением обращения нужно ваше согласие на "
-                "обработку персональных данных. Полный текст политики — "
-                "в прикреплённом PDF.\n\nНажмите «Согласен», чтобы продолжить."
+        # Текст согласия ВСЕГДА берём из настроек (БД → fallback), а PDF
+        # прикладываем отдельно, вложением. Раньше ветка с PDF подменяла
+        # текст заглушкой «Полный текст политики — в прикреплённом PDF»,
+        # и consent_text не читался вообще: токен политики на проде есть
+        # всегда (Dockerfile кладёт PRIVACY.pdf в seed, main заливает его
+        # на старте), поэтому жила только заглушка. Житель нажимал
+        # «Согласен», не видя ни перечня данных, ни целей, ни срока — а
+        # 152-ФЗ ст. 9 ч. 1 требует согласия конкретного, предметного и
+        # информированного. Плюс та же норма требует, чтобы согласие было
+        # оформлено ОТДЕЛЬНО от иных документов: приложенная политика —
+        # это односторонний документ оператора (ст. 18.1), она не может
+        # нести содержание согласия и не заменяет его.
+        async with session_scope() as text_session:
+            text = await settings_store.get_consent_request_text(
+                text_session,
+                # policy_url в DEFAULTS есть всегда, но его могли явно
+                # стереть при живом PDF. Тогда подставляем отсылку к
+                # вложению — иначе в текст жителю уехало бы «None».
+                policy_url=policy_url or "в прикреплённом файле",
+                fallback=texts.CONSENT_REQUEST,
             )
-        else:
-            # C1: подгружаем consent_text из БД (если IT отредактировал)
-            # с автоматической санитизацией и fallback'ом на texts.CONSENT_REQUEST.
-            async with session_scope() as text_session:
-                text = await settings_store.get_consent_request_text(
-                    text_session,
-                    policy_url=policy_url,
-                    fallback=texts.CONSENT_REQUEST,
-                )
         await send_or_edit_screen(
             event,
             text=text,
