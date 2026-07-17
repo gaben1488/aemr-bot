@@ -556,15 +556,17 @@ async def count_open(session: AsyncSession) -> int:
 async def purge_old_appeals_content(
     session: AsyncSession, *, years: int = 5
 ) -> tuple[int, int]:
-    """Стереть текстовые поля и attachments у обращений, закрытых
+    """Стереть текстовые поля и attachments у обращений, отработанных
     больше N лет назад. Сами строки appeal/messages остаются — это
     нужно для статистики количества и сохранения связи с обезличенным
     жителем. Содержимое (summary, text сообщений, attachments) NULL'ится.
 
-    Срок 5 лет — стандарт делопроизводства в органах власти (по приказу
-    Минкультуры о номенклатуре дел) и одновременно соответствует
-    152-ФЗ ст. 5 ч. 7 «срок хранения ПДн не должен превышать сроков,
-    необходимых для целей обработки».
+    Срок N лет — установлен ОПЕРАТОРОМ исходя из цели обработки
+    (152-ФЗ ст. 18.1 ч. 1 п. 2 — локальный акт определяет способы и
+    сроки хранения; ст. 5 ч. 7 — не дольше, чем требует цель). В самом
+    152-ФЗ числа «5 лет» нет: срок закрепляется локальным актом
+    оператора (см. задачу «Вписать бот в ОРД»), а не выводится из
+    закона напрямую.
 
     Возвращает (purged_appeals, purged_messages).
     """
@@ -573,18 +575,27 @@ async def purge_old_appeals_content(
     # порог retention обращения, поданные ровно 5 лет назад, могут
     # не попасть в первую же ночь. Не критично, но честнее.
     threshold = datetime.now(timezone.utc) - relativedelta(years=years)
+    # Якорь отсчёта — COALESCE(closed_at, answered_at). closed_at ставит
+    # ТОЛЬКО явное «Закрыть» (close()); финальный ответ оператора
+    # (add_operator_message is_final=True) переводит в ANSWERED и ставит
+    # answered_at, но closed_at оставляет NULL. Раньше фильтр требовал
+    # `closed_at IS NOT NULL`, поэтому обращения на ОСНОВНОМ пути
+    # «оператор ответил» (ANSWERED без явного закрытия) не чистились
+    # НИКОГДА — адрес и текст висели бессрочно. Берём answered_at как
+    # запасной якорь: и ANSWERED, и CLOSED считаются «отработанными» с
+    # момента ответа/закрытия.
+    retention_anchor = func.coalesce(Appeal.closed_at, Appeal.answered_at)
     closed_old_appeals = select(Appeal.id).where(
         Appeal.status.in_([AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value]),
-        Appeal.closed_at.isnot(None),
-        Appeal.closed_at <= threshold,
+        retention_anchor.isnot(None),
+        retention_anchor <= threshold,
     )
     # address — тоже ПДн (адрес обращения жителя). При erase по отзыву
     # согласия (services/users.py::_redact_appeal_payloads_for_user)
     # address уже чистится вместе с summary/attachments; здесь этой же
     # симметрии не хватало — retention обнулял summary/attachments,
-    # но оставлял address висеть в БД дольше положенных 5 лет (152-ФЗ
-    # ст. 5 ч. 7 «срок хранения ПДн не должен превышать сроков,
-    # необходимых для целей обработки»). Приводим к тому же поведению.
+    # но оставлял address висеть в БД дольше срока, установленного
+    # оператором. Приводим к тому же поведению.
     appeals_result = await session.execute(
         update(Appeal)
         .where(
