@@ -95,12 +95,25 @@ class TestStartAppealFlowConsent:
     @pytest.mark.asyncio
     async def test_no_consent_with_pdf_token_attaches_file(self) -> None:
         """Нет согласия + есть policy_pdf_token → PDF прикладывается к
-        запросу согласия через build_file_attachment."""
+        запросу согласия через build_file_attachment, а сам текст согласия
+        по-прежнему берётся из настроек.
+
+        Регресс: раньше ветка с PDF подменяла текст заглушкой «Полный
+        текст политики — в прикреплённом PDF», и consent_text не читался
+        вовсе. На проде токен есть всегда, поэтому жила только заглушка —
+        житель давал согласие, не видя ни перечня данных, ни целей
+        (152-ФЗ ст. 9 ч. 1).
+        """
         from aemr_bot.handlers import appeal_funnel
 
         event = _funnel_event()
         user = SimpleNamespace(is_blocked=False, consent_pdn_at=None, id=1)
-        get_mock = AsyncMock(side_effect=["https://policy.example/p", "TOK-PDF"])
+        # 3-й вызов — внутренний get("consent_text") внутри
+        # get_consent_request_text: патч settings_store.get ловит и его.
+        # None → используется fallback texts.CONSENT_REQUEST.
+        get_mock = AsyncMock(
+            side_effect=["https://policy.example/p", "TOK-PDF", None]
+        )
         with patch("aemr_bot.handlers.appeal_funnel.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
@@ -119,7 +132,43 @@ class TestStartAppealFlowConsent:
         # PDF-вложение вставлено первым в список аттачей.
         assert {"type": "file", "token": "TOK-PDF"} in attachments
         text = event.bot.send_message.call_args.kwargs.get("text", "")
-        assert "PDF" in text
+        # Якорь против возврата заглушки: в тексте обязан быть перечень
+        # обрабатываемых данных и ссылка на политику, а не одна отсылка к
+        # вложению. Проверяем по существу, а не по вхождению слова «PDF».
+        assert "телефон" in text
+        assert "https://policy.example/p" in text
+
+    @pytest.mark.asyncio
+    async def test_pdf_without_policy_url_does_not_leak_none(self) -> None:
+        """policy_url стёрли, PDF живой → в тексте не должно быть «None».
+
+        consent_text — шаблон с обязательным {policy_url}; подставить
+        нечего, поэтому вместо ссылки идёт отсылка к вложению. Без этого
+        жителю уехало бы «Полная политика — None».
+        """
+        from aemr_bot.handlers import appeal_funnel
+
+        event = _funnel_event()
+        user = SimpleNamespace(is_blocked=False, consent_pdn_at=None, id=1)
+        get_mock = AsyncMock(side_effect=[None, "TOK-PDF", None])
+        with patch("aemr_bot.handlers.appeal_funnel.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.appeal_funnel.appeals_service.count_recent_for_user",
+                   AsyncMock(return_value=0)), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.set_state",
+                   AsyncMock()), \
+             patch("aemr_bot.handlers.appeal_funnel.settings_store.get", get_mock), \
+             patch("aemr_bot.services.policy.build_file_attachment",
+                   MagicMock(return_value={"type": "file", "token": "TOK-PDF"})):
+            await appeal_funnel.start_appeal_flow(event, max_user_id=42)
+
+        text = event.bot.send_message.call_args.kwargs.get("text", "")
+        assert "None" not in text
+        assert "в прикреплённом файле" in text
+        # Перечень данных на месте — согласие осталось информированным.
+        assert "телефон" in text
 
     @pytest.mark.asyncio
     async def test_no_consent_no_policy_config_stop(self) -> None:
