@@ -270,13 +270,6 @@ async def cmd_export(event):
                     "status": ap.status,
                     "locality": ap.locality,
                     "address": ap.address,
-                    # Координаты — такие же ПДн жителя, как и текстовый
-                    # адрес (152-ФЗ ст. 3 п. 1: информация, относящаяся к
-                    # определённому лицу). Ст. 14 даёт право на доступ ко
-                    # ВСЕМ своим данным, поэтому отдаём и их, иначе
-                    # выгрузка неполна. None, если геолокацией не делились.
-                    "latitude": ap.latitude,
-                    "longitude": ap.longitude,
                     "topic": ap.topic,
                     "summary": ap.summary,
                     "answered_at": ap.answered_at.isoformat() if ap.answered_at else None,

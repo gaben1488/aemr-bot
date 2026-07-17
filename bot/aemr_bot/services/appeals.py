@@ -18,18 +18,12 @@ async def create_appeal(
     summary: str,
     attachments: list,
     locality: str | None = None,
-    latitude: float | None = None,
-    longitude: float | None = None,
-    geo_confidence: float | None = None,
 ) -> Appeal:
     appeal = Appeal(
         user_id=user.id,
         status=AppealStatus.NEW.value,
         locality=locality,
         address=address,
-        latitude=latitude,
-        longitude=longitude,
-        geo_confidence=geo_confidence,
         topic=topic,
         summary=summary,
         attachments=attachments,
@@ -591,11 +585,6 @@ async def purge_old_appeals_content(
     # но оставлял address висеть в БД дольше положенных 5 лет (152-ФЗ
     # ст. 5 ч. 7 «срок хранения ПДн не должен превышать сроков,
     # необходимых для целей обработки»). Приводим к тому же поведению.
-    #
-    # Координаты — тот же адрес, только цифрами: обратная геокодировка
-    # возвращает из точки дом. Обнулять address, оставляя latitude/
-    # longitude, бессмысленно. Пропущено при добавлении координат
-    # (PR #233) — та же асимметрия, что была у address, повторно.
     appeals_result = await session.execute(
         update(Appeal)
         .where(
@@ -604,18 +593,9 @@ async def purge_old_appeals_content(
                 Appeal.summary.isnot(None),
                 Appeal.attachments != [],
                 Appeal.address.isnot(None),
-                Appeal.latitude.isnot(None),
-                Appeal.longitude.isnot(None),
             ),
         )
-        .values(
-            summary=None,
-            attachments=[],
-            address=None,
-            latitude=None,
-            longitude=None,
-            geo_confidence=None,
-        )
+        .values(summary=None, attachments=[], address=None)
     )
     purged_appeals = appeals_result.rowcount or 0
 
