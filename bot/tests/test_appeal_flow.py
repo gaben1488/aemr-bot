@@ -198,11 +198,13 @@ async def test_purge_old_appeals_5y_retention(session):
     old = await appeals_service.create_appeal(
         session, user=user, address="ул. Старая, 1", topic="Дороги",
         summary="Очень старая жалоба", attachments=[{"type": "image", "id": "x"}],
+        latitude=53.1845, longitude=158.3865, geo_confidence=0.9,
     )
     # Свежее обращение
     fresh = await appeals_service.create_appeal(
         session, user=user, address="ул. Свежая, 2", topic="Мусор",
         summary="Свежая жалоба", attachments=[],
+        latitude=53.19, longitude=158.39, geo_confidence=0.8,
     )
     # purge смотрит closed_at + status ∈ (ANSWERED, CLOSED).
     # Закрываем старое обращение и фейкаем closed_at на 6 лет назад.
@@ -228,7 +230,10 @@ async def test_purge_old_appeals_5y_retention(session):
     # identity map, читает свежие значения после bulk UPDATE.
     from sqlalchemy import select
     rows = (await session.execute(
-        select(Appeal.id, Appeal.summary, Appeal.attachments, Appeal.topic)
+        select(
+            Appeal.id, Appeal.summary, Appeal.attachments, Appeal.topic,
+            Appeal.address, Appeal.latitude, Appeal.longitude,
+        )
         .where(Appeal.id.in_([old.id, fresh.id]))
     )).all()
     by_id = {r[0]: r for r in rows}
@@ -237,6 +242,13 @@ async def test_purge_old_appeals_5y_retention(session):
     assert by_id[old.id][1] is None  # summary
     assert by_id[old.id][2] == []  # attachments
     assert by_id[old.id][3] == "Дороги"  # topic — метаданные сохраняются
+    assert by_id[old.id][4] is None  # address
+    # Координаты обнуляются вместе с адресом: точка на карте — тот же
+    # адрес, только цифрами. Оставлять её на 5+ лет = хранить ПДн дольше
+    # срока (152-ФЗ ст. 5 ч. 7). Пропущено в PR #233.
+    assert by_id[old.id][5] is None  # latitude
+    assert by_id[old.id][6] is None  # longitude
 
     # Свежее не тронуто
     assert by_id[fresh.id][1] == "Свежая жалоба"
+    assert by_id[fresh.id][5] == pytest.approx(53.19)
