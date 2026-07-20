@@ -316,10 +316,15 @@ class TestAuditLogRetention:
         )
 
     @pytest.mark.asyncio
-    async def test_uses_retention_days_from_config(self) -> None:
-        """Cutoff считается от настройки `audit_log_retention_days`.
-        Дефолт 365 — проверяем, что delete вызван с условием
-        `created_at < now - 365 дней`.
+    async def test_two_windows_ordinary_and_erasure(self) -> None:
+        """Два окна: обычные записи по `audit_log_retention_days`,
+        подтверждения уничтожения — по `audit_erasure_retention_days`.
+
+        Записи об уничтожении ПДн — доказательство исполнения обязанности
+        (152-ФЗ ст. 21 ч. 5). Стирать их через год, когда предъявлять
+        нужно три, — значит остаться в момент проверки ни с чем. Поэтому
+        DELETE ровно два: один исключает ERASURE_ACTIONS, второй берёт
+        только их.
         """
         from contextlib import asynccontextmanager
 
@@ -334,7 +339,28 @@ class TestAuditLogRetention:
 
         with patch("aemr_bot.services.cron.session_scope", fake_scope):
             await cron._job_audit_log_retention()
-        session.execute.assert_awaited_once()
+
+        assert session.execute.await_count == 2
+
+    def test_erasure_actions_cover_all_destruction_paths(self) -> None:
+        """ERASURE_ACTIONS перечисляет ВСЕ пути уничтожения ПДн.
+
+        Если появится новый путь (например, массовое удаление), а в этот
+        кортеж его не добавят, подтверждение будет стёрто через год
+        вместо трёх — тихо, без единой ошибки. Тест фиксирует состав.
+        """
+        assert set(cron.ERASURE_ACTIONS) == {
+            "auto_erase_pdn_retention",  # крон через 30 дней после отзыва
+            "erase",  # оператор удалил данные жителя
+            "self_erase",  # житель нажал /forget
+            "self_consent_revoke",  # отзыв согласия — старт 30-дневного срока
+        }
+
+    def test_erasure_retention_not_shorter_than_ordinary(self) -> None:
+        """Срок подтверждений не может быть короче общего срока аудита."""
+        from aemr_bot.config import settings as cfg
+
+        assert cfg.audit_erasure_retention_days >= cfg.audit_log_retention_days
 
 
 class TestPdnRetention:

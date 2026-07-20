@@ -35,6 +35,23 @@ from aemr_bot.services import sla as sla_service
 log = logging.getLogger(__name__)
 TZ = ZoneInfo(settings.timezone)
 
+# Действия, чья audit-запись является ПОДТВЕРЖДЕНИЕМ уничтожения ПДн.
+# Для них действует отдельный, более длинный срок хранения
+# (audit_erasure_retention_days) — см. _job_audit_log_retention.
+#   auto_erase_pdn_retention — уничтожение кроном через 30 дней после
+#     отзыва согласия (152-ФЗ ст. 21 ч. 5);
+#   erase                    — уничтожение по команде оператора;
+#   self_erase               — житель сам нажал /forget;
+#   self_consent_revoke      — житель отозвал согласие (событие, с
+#     которого стартует 30-дневный срок; без него нечем доказать, что
+#     срок соблюдён).
+ERASURE_ACTIONS: tuple[str, ...] = (
+    "auto_erase_pdn_retention",
+    "erase",
+    "self_erase",
+    "self_consent_revoke",
+)
+
 
 # Module-level state для selfcheck — раньше было local dict в closure.
 # Хранит последний известный статус «бот отвечает», чтобы шлать алёрт
@@ -346,32 +363,62 @@ async def _job_events_retention() -> None:
 
 
 async def _job_audit_log_retention() -> None:
-    """Удалить записи audit_log старше `settings.audit_log_retention_days`.
+    """Удалить записи audit_log по сроку — с ДВУМЯ разными окнами.
 
     AuditLog хранит операторские действия (block/unblock/reopen/close/
     erase/setting_update/setting_list_add и пр.) с `target` и `details`.
-    Внутри окна — глубина расследования инцидента (по умолчанию 365
-    дней). Дальше следы стираются вместе с любым PII в details
-    (например, `details={"value": "..."}` для setting_update).
+    Обычные записи живут `settings.audit_log_retention_days` (по
+    умолчанию 365 дней) — это глубина расследования инцидента; дальше
+    следы стираются вместе с любым PII в details (например,
+    `details={"value": "..."}` для setting_update).
+
+    ОТДЕЛЬНОЕ ОКНО для записей об УНИЧТОЖЕНИИ ПДн (`ERASURE_ACTIONS`).
+    Такая запись — не просто след действия, а ПОДТВЕРЖДЕНИЕ того, что
+    оператор исполнил обязанность уничтожить данные: именно ею
+    доказывается, что после отзыва согласия ПДн действительно удалены в
+    срок. Стирать доказательство раньше, чем истечёт срок его хранения,
+    бессмысленно: в момент проверки предъявить будет нечего. Поэтому
+    подтверждения живут `settings.audit_erasure_retention_days`
+    (по умолчанию 3 года) — срок взят из требований к подтверждению
+    уничтожения ПДн при автоматизированной обработке; решение владельца
+    2026-07-17.
 
     Запускается раз в сутки в 04:15 — после events-retention (04:00),
     чтобы не пересекаться по long-running purge, до appeals-5y-retention
     (04:45).
     """
     try:
-        cutoff = datetime.now(TZ) - timedelta(
-            days=settings.audit_log_retention_days
+        now = datetime.now(TZ)
+        cutoff = now - timedelta(days=settings.audit_log_retention_days)
+        erasure_cutoff = now - timedelta(
+            days=settings.audit_erasure_retention_days
         )
         async with session_scope() as session:
+            # Обычные записи: старше общего окна И не подтверждение
+            # уничтожения.
             result = await session.execute(
-                delete(AuditLog).where(AuditLog.created_at < cutoff)
+                delete(AuditLog).where(
+                    AuditLog.created_at < cutoff,
+                    AuditLog.action.notin_(ERASURE_ACTIONS),
+                )
             )
             purged = result.rowcount or 0
-        if purged:
+            # Подтверждения уничтожения: своё, более длинное окно.
+            erasure_result = await session.execute(
+                delete(AuditLog).where(
+                    AuditLog.created_at < erasure_cutoff,
+                    AuditLog.action.in_(ERASURE_ACTIONS),
+                )
+            )
+            purged_erasure = erasure_result.rowcount or 0
+        if purged or purged_erasure:
             log.info(
-                "audit_log retention: purged %d rows older than %s "
-                "(retention=%d days)",
+                "audit_log retention: purged %d обычных (старше %s, "
+                "retention=%d дн.) и %d подтверждений уничтожения "
+                "(старше %s, retention=%d дн.)",
                 purged, cutoff.date(), settings.audit_log_retention_days,
+                purged_erasure, erasure_cutoff.date(),
+                settings.audit_erasure_retention_days,
             )
     except Exception:
         log.exception("audit_log retention failed")
@@ -771,12 +818,14 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                     "pdn_retention: не удалось обезличить max_user_id=%s",
                     max_user_id,
                 )
-        # critical=True (sec/A1): 152-ФЗ retention — compliance-критично.
-        # Cron 0 6 * * * → попадает в default quiet окно [18, 9). Без
-        # critical owner не узнает что произошло обезличивание (либо
-        # что оно НЕ произошло из-за бага) до утра следующего рабочего
-        # дня. ФЗ-152 ст. 21 ч. 5 — формальное требование уведомить
-        # ответственное лицо.
+        # critical=True (sec/A1): уничтожение ПДн по отзыву согласия —
+        # compliance-критичное событие. Cron 0 6 * * * попадает в default
+        # quiet окно [18, 9). Без critical ответственный не узнает, что
+        # обезличивание произошло (либо что оно НЕ произошло из-за бага),
+        # до утра следующего рабочего дня. Это ТЕХНИЧЕСКОЕ решение проекта:
+        # ст. 21 ч. 5 задаёт срок уничтожения (30 дней), но требования
+        # уведомлять ответственное лицо в ней нет — не приписываем закону
+        # того, чего он не говорит.
         for erased_id in erased_ids:
             await _send_admin_text_with_retry(
                 send_admin_text,

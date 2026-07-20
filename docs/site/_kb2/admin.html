@@ -212,6 +212,7 @@ curl -fsS http://127.0.0.1:8080/readyz &amp;&amp; echo  # 200</code></pre>
 <tr><td><code class="kbd">BACKUP_ALLOW_UNENCRYPTED</code></td><td><code class="kbd">false</code></td><td><code class="kbd">1</code> разрешает незашифрованный <code class="kbd">.sql</code> без фразы. <strong>Только для dev/локальной машины.</strong></td></tr>
 <tr><td><code class="kbd">HEALTHCHECK_URL</code></td><td>пусто</td><td>URL внешнего пинг-сервиса (Healthchecks.io, Uptime Kuma). Если задан — бот раз в 5 минут «стучится» туда. Если пусто — внешний мониторинг отключён (задача-пинг даже не добавляется в расписание).</td></tr>
 <tr><td><code class="kbd">AUDIT_LOG_RETENTION_DAYS</code></td><td><code class="kbd">365</code></td><td>Сколько дней хранить журнал действий операторов (диапазон 30–3650). Чистится cron-задачей <code class="kbd">audit-log-retention</code>. Подробнее о выборе срока — в разделе «Сроки хранения данных».</td></tr>
+<tr><td><code class="kbd">AUDIT_ERASURE_RETENTION_DAYS</code></td><td><code class="kbd">1095</code></td><td>Отдельный срок для записей, подтверждающих уничтожение ПДн (диапазон 365–3650, то есть не короче общего). Ими доказывается, что данные жителя удалены в срок после отзыва согласия, — поэтому они переживают обычные записи журнала.</td></tr>
 <tr><td><code class="kbd">FOLLOWUP_MAX_PER_HOUR_PER_APPEAL</code></td><td><code class="kbd">5</code></td><td>Лимит дополнений жителя по одному обращению в час (защита от флуда).</td></tr>
 <tr><td><code class="kbd">FOLLOWUP_MIN_INTERVAL_SECONDS</code></td><td><code class="kbd">30</code></td><td>Минимум секунд между двумя дополнениями жителя.</td></tr>
 </tbody>
@@ -363,7 +364,7 @@ COMMIT_AUTHOR_EMAIL=&lt;email&gt;</code></pre>
 <tr><td><code class="kbd">db-backup</code></td><td>каждое вс в <code class="kbd">BACKUP_HOUR</code>:<code class="kbd">BACKUP_MINUTE</code> (по умолчанию 03:00)</td><td>еженедельный pg_dump → GPG → Docker-том, ротация старых файлов, categorized-алёрт при провале</td></tr>
 <tr><td><code class="kbd">db-backup-verify</code></td><td>1-го числа месяца в 04:30 (<code class="kbd">BACKUP_VERIFY_*</code>)</td><td>проверка пригодности бэкапа: свежайшая копия расшифровывается потоком (на диск ничего не пишется, база не трогается) и сверяется сигнатура <code class="kbd">pg_dump</code>. Ловит потерю парольной фразы и обрезанный файл <em>до</em> аварии; успех — тихо в лог, провал — critical-алёрт. Выключается <code class="kbd">BACKUP_VERIFY_ENABLED=0</code></td></tr>
 <tr><td><code class="kbd">events-retention</code></td><td>ежедневно 04:00</td><td>удаляет служебные события старше 30 дней (ключи защиты от повторов — idempotency)</td></tr>
-<tr><td><code class="kbd">audit-log-retention</code></td><td>ежедневно 04:15</td><td>удаляет журнал действий старше <code class="kbd">AUDIT_LOG_RETENTION_DAYS</code> (по умолчанию 365 дней)</td></tr>
+<tr><td><code class="kbd">audit-log-retention</code></td><td>ежедневно 04:15</td><td>удаляет журнал действий старше <code class="kbd">AUDIT_LOG_RETENTION_DAYS</code> (по умолчанию 365 дней); записи об уничтожении ПДн — отдельным окном по <code class="kbd">AUDIT_ERASURE_RETENTION_DAYS</code> (3 года)</td></tr>
 <tr><td><code class="kbd">stale-operators-cleanup</code></td><td>ежедневно 04:20</td><td>помечает операторов, покинувших служебную группу MAX, как неактивных</td></tr>
 <tr><td><code class="kbd">pdn-retention</code></td><td>ежедневно 04:30</td><td>обезличивает жителей через 30 дней после отзыва согласия (152-ФЗ ст. 21)</td></tr>
 <tr><td><code class="kbd">appeals-5y-retention</code></td><td>ежедневно 04:45</td><td>обнуляет текст обращений старше 5 лет (метаданные — id, дата, статус, тема, поселение — остаются)</td></tr>
@@ -982,7 +983,8 @@ docker compose exec -T db psql -U aemr -d aemr -c 'select now();'   # запис
 <table>
 <thead><tr><th>Что хранится</th><th>Срок</th><th>Чем чистится</th><th>Основание</th></tr></thead>
 <tbody>
-<tr><td>Журнал действий операторов (<code class="kbd">audit_log</code>)</td><td><strong>365 дней</strong> (диапазон 30–3650)</td><td>cron <code class="kbd">audit-log-retention</code>, ежедневно 04:15</td><td>152-ФЗ ст. 5 ч. 7 (минимизация) + приказ ФСТЭК №21, мера РСБ.1 (минимум 3 месяца)</td></tr>
+<tr><td>Журнал действий операторов (<code class="kbd">audit_log</code>)</td><td><strong>365 дней</strong> (диапазон 30–3650)</td><td>cron <code class="kbd">audit-log-retention</code>, ежедневно 04:15</td><td>срок установлен оператором как глубина расследования инцидента; журнал ведётся как мера защиты (152-ФЗ ст. 19), конкретного числа закон не задаёт</td></tr>
+<tr><td>Записи о <strong>уничтожении ПДн</strong> в журнале (отзыв согласия, <code class="kbd">/forget</code>, удаление оператором, авто-уничтожение по сроку)</td><td><strong>3 года</strong> (<code class="kbd">AUDIT_ERASURE_RETENTION_DAYS</code>, диапазон 365–3650)</td><td>тот же cron, но отдельным окном</td><td>это <em>доказательство</em> того, что данные удалены в срок после отзыва согласия (152-ФЗ ст. 21 ч. 5), а не просто след действия; требование к подтверждению уничтожения при автоматизированной обработке</td></tr>
 <tr><td>Тексты обращений (адрес, суть, переписка)</td><td><strong>5 лет</strong></td><td>cron <code class="kbd">appeals-5y-retention</code>, ежедневно 04:45</td><td>отдельный механизм; через 5 лет текст обнуляется, метаданные (id, дата, статус, тема, поселение) остаются</td></tr>
 <tr><td>ПДн жителя после отзыва согласия</td><td>30 дней</td><td>cron <code class="kbd">pdn-retention</code>, ежедневно 04:30</td><td>152-ФЗ ст. 21 (обезличивание после достижения целей)</td></tr>
 </tbody>
@@ -990,8 +992,9 @@ docker compose exec -T db psql -U aemr -d aemr -c 'select now();'   # запис
 </div>
 
 <div class="note">
-<p class="note__label">Почему журнал — 365 дней, а не 5 лет</p>
-<p>Журнал действий хранит <strong>не сами обращения</strong>, а кто из операторов что сделал; это журнал событий безопасности (приказ ФСТЭК №21, мера РСБ.1, нижний порог «не менее трёх месяцев»), а 5-летний срок относится к обращениям (<code class="kbd">appeals-5y-retention</code>) и был рассмотрен и отклонён как избыточный — в коде значение уже 365, трогать его не нужно. Полный правовой разбор норм — <a href="#pravovoe-audit-365" data-go="pravovoe">подробно в Правовом</a>.</p>
+<p class="note__label">Почему у журнала два разных срока</p>
+<p>Журнал действий хранит <strong>не сами обращения</strong>, а кто из операторов что сделал. Для обычных записей срок — <strong>год</strong>: это глубина расследования инцидента, установленная оператором. Закон конкретного числа здесь не задаёт: журнал ведётся как мера защиты (152-ФЗ ст. 19), а 5-летний срок относится к обращениям (<code class="kbd">appeals-5y-retention</code>) и к журналу отношения не имеет.</p>
+<p>Но часть записей — особые. Когда житель отзывает согласие и его данные уничтожаются, запись об этом становится <strong>доказательством</strong>, что оператор исполнил обязанность и уложился в 30 дней (152-ФЗ ст. 21 ч. 5). Стереть такое доказательство через год, когда предъявлять его нужно дольше, — значит в момент проверки остаться ни с чем. Поэтому подтверждения уничтожения живут <strong>три года</strong> отдельным окном (<code class="kbd">AUDIT_ERASURE_RETENTION_DAYS</code>). Правовой разбор — <a href="#pravovoe-audit-365" data-go="pravovoe">в Правовом разделе</a>.</p>
 </div>
 
 <h3 id="admin-storage-map">Что где меняется: <code class="kbd">.env</code>, база, seed</h3>
