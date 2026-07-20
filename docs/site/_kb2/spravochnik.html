@@ -441,7 +441,7 @@
 <thead><tr><th>Файл</th><th>Назначение</th></tr></thead>
 <tbody>
 <tr><td><code class="kbd">infra/Dockerfile</code></td><td>Образ на <code class="kbd">python:3.12-slim</code> (запинен по digest), non-root пользователь <code class="kbd">botuser</code> (UID/GID 1000), запуск <code class="kbd">alembic upgrade head && python -m aemr_bot.main</code>.</td></tr>
-<tr><td><code class="kbd">infra/docker-compose.yml</code></td><td>Сервисы: db (postgres:16-alpine + pg_stat_statements), bot (read-only rootfs, cap_drop, mem_limit), профиль webhook (nginx + certbot).</td></tr>
+<tr><td><code class="kbd">infra/docker-compose.yml</code></td><td>Штатная конфигурация: db (postgres:16-alpine + pg_stat_statements) и bot (read-only rootfs, cap_drop, mem_limit). Webhook-стек (nginx + certbot) вынесен в отдельный <code class="kbd">docker-compose.webhook.yml</code> — в обычной эксплуатации не участвует.</td></tr>
 <tr><td><code class="kbd">infra/.env.example</code></td><td>Шаблон всех переменных с подробными комментариями.</td></tr>
 <tr><td><code class="kbd">infra/aemr-bot.service</code></td><td>systemd-юнит для автозапуска бота после перезагрузки сервера.</td></tr>
 <tr><td><code class="kbd">scripts/auto-deploy.sh</code></td><td>cron на сервере: pull → build → проверка здоровья с откатом (каждые 10 минут).</td></tr>

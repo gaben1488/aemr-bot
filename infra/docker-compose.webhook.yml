@@ -1,0 +1,43 @@
+# Webhook-стек (nginx + certbot) — ОТДЕЛЬНО от эксплуатационной конфигурации.
+#
+# Штатный режим бота — long polling: только исходящие соединения, входящих
+# портов нет вовсе. На этом держится вывод модели угроз о неактуальности
+# целого класса сетевых угроз к серверу. Пока nginx/certbot (порты 80/443)
+# жили в основном docker-compose.yml под профилем `webhook`, у проверяющего
+# оставался вопрос: профиль выключен, но команду `--profile webhook` может
+# выполнить любой с доступом к docker. Аргумент «этих сервисов НЕТ в
+# эксплуатационной конфигурации» сильнее, чем «их запрещено запускать».
+# Поэтому webhook-стек вынесен сюда и в штатной сборке не участвует.
+#
+# Включать ТОЛЬКО если бот переводится в режим webhook (BOT_MODE=webhook),
+# что для self-host за межсетевым экраном не нужно:
+#   docker compose -f docker-compose.yml -f docker-compose.webhook.yml up -d
+#
+# Образы намеренно НЕ запинены по digest: стек нештатный, и фиксировать его
+# версии смысла нет до того, как webhook реально понадобится (тогда —
+# запинить актуальные digest'ы вместе с переводом бота в этот режим).
+
+services:
+  nginx:
+    image: nginx:1.31-alpine
+    volumes:
+      - ./nginx/feedback.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - bot
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: >
+      sh -c "trap exit TERM;
+             while :; do certbot renew --webroot -w /var/www/certbot --quiet;
+             sleep 12h & wait $${!}; done"
+    restart: unless-stopped
