@@ -347,3 +347,79 @@ class TestCmdExport:
             await start.cmd_export(event)
         # Был ответ с json'ом.
         assert event.bot.send_message.called or event.message.answer.called
+
+    @pytest.mark.asyncio
+    async def test_export_includes_full_correspondence(self) -> None:
+        """Выгрузка отдаёт ВСЮ переписку, а не только последний ответ.
+
+        Ст. 14 даёт право на доступ к обрабатываемым данным: уточнения
+        жителя и его вложения — такие же его данные, как текст
+        обращения. Раньше выгрузка возвращала одно последнее сообщение
+        оператора, хотя согласие обещает хранение всей переписки.
+        """
+        from aemr_bot.handlers import start
+
+        event = _make_event()
+        user = SimpleNamespace(
+            id=1, max_user_id=42, first_name="Иван", phone="79001234567",
+            consent_pdn_at=None, consent_revoked_at=None,
+            consent_broadcast_at=None, subscribed_broadcast=False,
+        )
+        appeal = SimpleNamespace(
+            id=7, created_at=None, status="answered", locality="Елизово",
+            address="ул. Ленина, 1", topic="Дороги", summary="яма",
+            attachments=[{"type": "image"}], answered_at=None, closed_at=None,
+            messages=[
+                SimpleNamespace(created_at=None, direction="from_user",
+                                text="уточнение жителя", attachments=[]),
+                SimpleNamespace(created_at=None, direction="from_operator",
+                                text="первый ответ", attachments=[]),
+                SimpleNamespace(created_at=None, direction="from_operator",
+                                text="второй ответ", attachments=[{"t": 1}]),
+            ],
+        )
+        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.start.users_service.get_or_create",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.start.appeals_service.list_for_user",
+                   AsyncMock(return_value=[appeal])), \
+             patch("aemr_bot.handlers.start.reply", AsyncMock()) as reply_mock:
+            await start.cmd_export(event)
+
+        sent = "".join(call.args[1] for call in reply_mock.call_args_list)
+        # Собственное сообщение жителя тоже в выгрузке.
+        assert "уточнение жителя" in sent
+        # И промежуточный ответ, а не только последний.
+        assert "первый ответ" in sent
+        assert "второй ответ" in sent
+
+    def test_chunker_splits_long_text_without_breaking_lines(self) -> None:
+        """Разбивка режет по строкам и укладывается в лимит.
+
+        Выгрузка уходила одним сообщением, а предел MAX ~4000 знаков:
+        у жителя с несколькими обращениями отправка падала, и он не
+        получал НИЧЕГО — молча, ошибку видел только лог.
+        """
+        from aemr_bot.handlers.start import _chunk_for_messenger
+
+        text = "\n".join(f"строка номер {i}" for i in range(300))
+        parts = _chunk_for_messenger(text, limit=200)
+
+        assert len(parts) > 1
+        assert all(len(p) <= 200 for p in parts)
+        # Ничего не потеряно и строки целы.
+        assert "\n".join(parts).replace("\n", "") == text.replace("\n", "")
+
+    def test_chunker_keeps_short_text_intact(self) -> None:
+        from aemr_bot.handlers.start import _chunk_for_messenger
+
+        assert _chunk_for_messenger("коротко", limit=100) == ["коротко"]
+
+    def test_chunker_splits_overlong_single_line(self) -> None:
+        """Строка длиннее лимита дробится принудительно — иначе часть
+        снова не уйдёт (житель с одним огромным обращением)."""
+        from aemr_bot.handlers.start import _chunk_for_messenger
+
+        parts = _chunk_for_messenger("x" * 500, limit=200)
+        assert all(len(p) <= 200 for p in parts)
+        assert "".join(parts) == "x" * 500
