@@ -183,9 +183,11 @@ async def test_anonymous_user_singleton(session):
 
 @pytest.mark.asyncio
 async def test_purge_old_appeals_5y_retention(session):
-    """152-ФЗ: тексты обращений старше 5 лет должны обнуляться, но
-    сама запись и метаданные (дата, статус, тематика) сохраняются для
-    статистики. Это требование Минкультуры о номенклатуре дел."""
+    """Тексты обращений старше 5 лет должны обнуляться, но сама запись
+    и метаданные (дата, статус, тематика) сохраняются для статистики.
+    Пятилетний срок установлен локальным актом оператора (152-ФЗ
+    ст. 18.1 ч. 1 п. 2), обоснование — в docstring
+    `purge_old_appeals_content`."""
     from datetime import datetime, timezone, timedelta
     from sqlalchemy import update
     from aemr_bot.db.models import Appeal
