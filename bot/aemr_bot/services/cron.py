@@ -773,12 +773,22 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
     прекратить обработку и уничтожить ПДн в срок 30 дней.
 
     Раз в сутки ищем жителей, у которых consent_revoked_at старше 30
-    дней, и обезличиваем их персоналку (erase_pdn). Открытые обращения
-    по 59-ФЗ должны быть закрыты до обезличивания — пропускаем таких
-    жителей до следующего дня.
+    дней, и уничтожаем их персоналку (erase_pdn).
 
-    Без этого крона ПДн отозвавших согласие висели бы в БД бессрочно,
-    что — формально — нарушение закона.
+    ПРО ОТКРЫТЫЕ ОБРАЩЕНИЯ. Раньше житель с обращением в NEW/IN_PROGRESS
+    пропускался «до следующего дня» — и так бессрочно, пока оператор не
+    ответит. Замысел был добрый (дать дослать финальный ответ тому, кто
+    выбрал «попрощаться, но дождаться ответа»), но результат — нарушение:
+    выборка берёт тех, у кого 30 дней УЖЕ истекли, значит пропуск тянул
+    срок за пределы, отведённые законом. Причём тихо: ни ошибки, ни
+    алёрта, просто счётчик skipped_open в логе.
+
+    Закон не даёт продлевать срок из-за того, что оператор не успел.
+    Тридцать дней — это и есть окно на финальный ответ. Поэтому теперь
+    уничтожаем безусловно: erase_pdn сам закроет открытые обращения
+    (closed_due_to_revoke=True), а оператор получит отдельный critical-
+    алёрт со списком — чтобы знал, что обращения закрылись без ответа
+    из-за истечения срока, и мог сделать выводы о скорости работы.
     """
     try:
 
@@ -792,6 +802,7 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
         erased = 0
         erased_ids: list[int] = []
         skipped_open = 0
+        closed_unanswered: list[int] = []
         for max_user_id in candidates:
             try:
                 async with session_scope() as session:
@@ -806,9 +817,16 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                     )
                     if user is None:
                         continue
-                    if await users_service.has_open_appeals(session, user.id):
+                    # Считаем, у кого срок истёк с ещё открытыми
+                    # обращениями — не чтобы пропустить (это и было
+                    # нарушением), а чтобы отдельно предупредить
+                    # оператора: эти обращения закроются без ответа.
+                    had_open = await users_service.has_open_appeals(
+                        session, user.id
+                    )
+                    if had_open:
                         skipped_open += 1
-                        continue
+                        closed_unanswered.append(max_user_id)
                     ok = await users_service.erase_pdn(session, max_user_id)
                     if ok:
                         await operators_service.write_audit(
@@ -834,22 +852,33 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
         # уведомлять ответственное лицо в ней нет — не приписываем закону
         # того, чего он не говорит.
         for erased_id in erased_ids:
+            unanswered_note = (
+                "\n⚠️ У жителя оставались открытые обращения — они закрыты "
+                "БЕЗ ответа, потому что 30-дневный срок уничтожения истёк."
+                if erased_id in closed_unanswered
+                else ""
+            )
             await _send_admin_text_with_retry(
                 send_admin_text,
                 (
-                    "🛡 Данные по отозванному согласию фактически обезличены.\n"
+                    "🛡 Данные по отозванному согласию уничтожены.\n"
                     f"MAX user id: {erased_id}\n"
-                    "Основание: прошло 30 дней после отзыва согласия, "
-                    "открытых обращений нет."
+                    "Основание: 152-ФЗ ст. 21 ч. 5 — прошло 30 дней после "
+                    "отзыва согласия." + unanswered_note
                 ),
                 context="pdn_retention",
                 critical=True,
             )
-        if erased or skipped_open:
+        if erased:
+            tail = (
+                f" Из них {skipped_open} — с обращениями, закрытыми без "
+                f"ответа: не успели ответить в отведённые 30 дней."
+                if skipped_open
+                else ""
+            )
             await send_admin_text(
-                f"🛡 Архивная очистка ПДн по сроку: "
-                f"обезличено {erased}, отложено {skipped_open} "
-                f"(есть открытые обращения).",
+                f"🛡 Очистка ПДн по сроку отзыва согласия: "
+                f"уничтожено {erased}.{tail}",
                 critical=True,
             )
     except Exception:
