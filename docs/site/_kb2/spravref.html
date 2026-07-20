@@ -1986,7 +1986,7 @@ DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-aemr}:${POSTGRES_PASSWORD:?.
 
 <h4>Webhook-профиль — про запас</h4>
 
-<p>Сервисы <code class="kbd">nginx</code> и <code class="kbd">certbot</code> помечены <code class="kbd">profiles: ["webhook"]</code> и поднимаются только явной командой <code class="kbd">docker compose --profile webhook up -d</code>. Бот работает через long polling и входящих портов не требует, так что в обычной эксплуатации эти два контейнера спят. Они нужны, только если когда-нибудь переключаться на webhook-доставку: <code class="kbd">nginx</code> терминирует TLS на 80/443, <code class="kbd">certbot</code> раз в 12 часов продлевает сертификат Let's Encrypt.</p>
+<p>Сервисы <code class="kbd">nginx</code> и <code class="kbd">certbot</code> (порты 80/443) вынесены в отдельный файл <code class="kbd">infra/docker-compose.webhook.yml</code> и в штатной эксплуатации не участвуют вообще: бот работает через long polling, входящих портов не требует. Раньше они жили в основном compose под <code class="kbd">profiles: ["webhook"]</code>, но профиль можно поднять одной командой — а модель угроз опирается на то, что входящих портов в конфигурации <strong>нет физически</strong>, а не «запрещено запускать». Если webhook-доставка когда-нибудь понадобится, стек включают наложением файла: <code class="kbd">docker compose -f docker-compose.yml -f docker-compose.webhook.yml up -d</code> (<code class="kbd">nginx</code> терминирует TLS на 80/443, <code class="kbd">certbot</code> раз в 12 часов продлевает сертификат Let's Encrypt).</p>
 
 <h3 id="ri-ci">CI — что проверяется на каждый push</h3>
 

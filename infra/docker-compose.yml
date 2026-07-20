@@ -124,32 +124,13 @@ services:
       driver: journald
     restart: unless-stopped
 
-  # Webhook-only stack; enable with: docker compose --profile webhook up -d
-  nginx:
-    profiles: ["webhook"]
-    image: nginx:1.31-alpine
-    volumes:
-      - ./nginx/feedback.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./certbot/conf:/etc/letsencrypt:ro
-      - ./certbot/www:/var/www/certbot:ro
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - bot
-    restart: unless-stopped
-
-  certbot:
-    profiles: ["webhook"]
-    image: certbot/certbot:latest
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    entrypoint: >
-      sh -c "trap exit TERM;
-             while :; do certbot renew --webroot -w /var/www/certbot --quiet;
-             sleep 12h & wait $${!}; done"
-    restart: unless-stopped
+  # Webhook-стек (nginx + certbot, порты 80/443) вынесен в отдельный файл
+  # infra/docker-compose.webhook.yml и в штатной конфигурации НЕ участвует:
+  # бот работает в режиме long polling, входящих портов нет. Раньше эти
+  # сервисы жили здесь под profiles: ["webhook"] — но профиль можно поднять
+  # одной командой, и модель угроз держалась на «запрещено запускать»
+  # вместо «в конфигурации отсутствует». Если webhook действительно нужен:
+  #   docker compose -f docker-compose.yml -f docker-compose.webhook.yml up -d
 
 volumes:
   db_data:
