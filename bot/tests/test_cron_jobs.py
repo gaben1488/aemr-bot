@@ -435,6 +435,61 @@ class TestPdnRetention:
         assert any("БЕЗ ответа" in text for text in texts)
 
     @pytest.mark.asyncio
+    async def test_warns_before_deadline_when_appeals_open(self) -> None:
+        """За неделю до истечения срока оператор предупреждён.
+
+        Уничтожение по истечении 30 дней закроет обращения без ответа.
+        Пока время есть, у оператора должен быть шанс ответить, а не
+        узнать постфактум.
+        """
+        send = AsyncMock()
+        session = AsyncMock()
+        user = MagicMock()
+        user.id = 100
+
+        @asynccontextmanager
+        async def fake_scope():
+            yield session
+
+        with patch("aemr_bot.services.cron.session_scope", fake_scope), \
+             patch("aemr_bot.services.users.find_revoked_deadline_approaching",
+                   AsyncMock(return_value=[77])), \
+             patch("aemr_bot.services.users.find_by_max_id",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.services.users.has_open_appeals",
+                   AsyncMock(return_value=True)):
+            await cron._warn_about_approaching_pdn_deadline(send)
+
+        texts = [call.args[0] for call in send.call_args_list]
+        assert any("77" in t and "закроются без ответа" in t for t in texts)
+
+    @pytest.mark.asyncio
+    async def test_no_warning_when_nothing_to_answer(self) -> None:
+        """Без открытых обращений предупреждать не о чем — молчим.
+
+        Иначе алёрт превратится в шум и его перестанут читать.
+        """
+        send = AsyncMock()
+        session = AsyncMock()
+        user = MagicMock()
+        user.id = 100
+
+        @asynccontextmanager
+        async def fake_scope():
+            yield session
+
+        with patch("aemr_bot.services.cron.session_scope", fake_scope), \
+             patch("aemr_bot.services.users.find_revoked_deadline_approaching",
+                   AsyncMock(return_value=[77])), \
+             patch("aemr_bot.services.users.find_by_max_id",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.services.users.has_open_appeals",
+                   AsyncMock(return_value=False)):
+            await cron._warn_about_approaching_pdn_deadline(send)
+
+        send.assert_not_awaited()
+
+    @pytest.mark.asyncio
     async def test_vanished_user_no_phantom_no_audit(self) -> None:
         """Житель исчез между find_pending_pdn_retention() и итерацией
         (успел /forget): find_by_max_id → None → continue. Не создаём

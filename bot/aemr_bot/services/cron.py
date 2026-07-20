@@ -45,6 +45,11 @@ TZ = ZoneInfo(settings.timezone)
 #   self_consent_revoke      — житель отозвал согласие (событие, с
 #     которого стартует 30-дневный срок; без него нечем доказать, что
 #     срок соблюдён).
+# За сколько дней до истечения 30-дневного срока уничтожения ПДн
+# предупреждать оператора о неотвеченных обращениях. Неделя — чтобы
+# успеть ответить даже при выходных и отпуске одного из специалистов.
+PDN_DEADLINE_WARN_DAYS = 7
+
 ERASURE_ACTIONS: tuple[str, ...] = (
     "auto_erase_pdn_retention",
     "erase",
@@ -768,6 +773,52 @@ async def _job_appeals_5y_retention(send_admin_text) -> None:
         log.exception("appeals_5y_retention crashed")
 
 
+async def _warn_about_approaching_pdn_deadline(send_admin_text) -> None:
+    """Предупредить оператора о жителях, чей срок уничтожения ПДн близок.
+
+    Уничтожение по истечении 30 дней после отзыва согласия безусловно и
+    закрывает открытые обращения БЕЗ ответа. Само по себе это законно
+    (152-ФЗ ст. 21 ч. 5 не даёт продлевать срок), но узнавать об этом
+    постфактум оператору незачем: пока неделя есть, ответить ещё можно.
+
+    Предупреждаем только по тем, у кого реально остались открытые
+    обращения — иначе алёрт превратится в шум и его перестанут читать.
+    Ошибки глушим: это вспомогательный шаг, он не должен ронять
+    основную задачу уничтожения.
+    """
+    try:
+        async with session_scope() as session:
+            approaching = await users_service.find_revoked_deadline_approaching(
+                session,
+                days_after_revoke=30,
+                warn_within_days=PDN_DEADLINE_WARN_DAYS,
+            )
+        if not approaching:
+            return
+        pending: list[int] = []
+        for max_user_id in approaching:
+            async with session_scope() as session:
+                user = await users_service.find_by_max_id(session, max_user_id)
+                if user is None:
+                    continue
+                if await users_service.has_open_appeals(session, user.id):
+                    pending.append(max_user_id)
+        if not pending:
+            return
+        ids = ", ".join(str(uid) for uid in pending[:20])
+        more = f" и ещё {len(pending) - 20}" if len(pending) > 20 else ""
+        await send_admin_text(
+            f"⏳ Скоро истекает срок хранения данных по отозванным "
+            f"согласиям — осталось не больше {PDN_DEADLINE_WARN_DAYS} дней.\n"
+            f"У этих жителей есть неотвеченные обращения: {ids}{more}.\n"
+            f"Если не ответить, обращения закроются без ответа: по закону "
+            f"данные придётся уничтожить.",
+            critical=True,
+        )
+    except Exception:
+        log.exception("pdn_deadline_warning failed")
+
+
 async def _job_pdn_retention_check(send_admin_text) -> None:
     """152-ФЗ ст. 21 ч. 5: после отзыва согласия оператор обязан
     прекратить обработку и уничтожить ПДн в срок 30 дней.
@@ -881,6 +932,12 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                 f"уничтожено {erased}.{tail}",
                 critical=True,
             )
+
+        # Предупреждение заранее: у кого срок истекает в ближайшую неделю
+        # и остались неотвеченные обращения. Уничтожение по истечении
+        # безусловно и закроет их без ответа — но пока время есть, у
+        # оператора должен быть шанс ответить, а не узнать постфактум.
+        await _warn_about_approaching_pdn_deadline(send_admin_text)
     except Exception:
         log.exception("pdn_retention_check crashed")
 

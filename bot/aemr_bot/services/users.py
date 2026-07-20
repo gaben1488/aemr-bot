@@ -597,6 +597,48 @@ async def find_pending_pdn_retention(
     return list(res)
 
 
+async def find_revoked_deadline_approaching(
+    session: AsyncSession,
+    *,
+    days_after_revoke: int,
+    warn_within_days: int,
+    limit: int = 1000,
+) -> list[int]:
+    """Жители, у которых срок уничтожения ПДн истекает в ближайшие дни.
+
+    Отбираем тех, кто отозвал согласие больше `days_after_revoke -
+    warn_within_days` дней назад, но чей срок ещё НЕ истёк. Например,
+    при сроке 30 дней и окне предупреждения 7 — это отозвавшие от 23 до
+    30 дней назад.
+
+    Зачем. Уничтожение по истечении срока безусловно и закрывает
+    открытые обращения без ответа (152-ФЗ ст. 21 ч. 5 не даёт продлевать
+    срок из-за нерасторопности оператора). Чтобы это не стало
+    неприятной неожиданностью, оператора предупреждают заранее — пока
+    ответить ещё можно.
+
+    Возвращает max_user_id. Проверку открытых обращений делает
+    вызывающий код: предупреждать есть смысл только по тем, у кого
+    действительно осталось что ответить.
+    """
+    now = datetime.now(timezone.utc)
+    # Срок ещё не истёк: отзыв позже этой границы.
+    deadline = now - timedelta(days=days_after_revoke)
+    # Но уже в зоне предупреждения: отзыв не позже этой границы.
+    warn_from = now - timedelta(days=days_after_revoke - warn_within_days)
+    res = await session.scalars(
+        select(User.max_user_id)
+        .where(
+            User.consent_revoked_at.isnot(None),
+            User.consent_revoked_at <= warn_from,
+            User.consent_revoked_at > deadline,
+            User.consent_pdn_at.is_(None),
+        )
+        .limit(limit)
+    )
+    return list(res)
+
+
 async def has_open_appeals(session: AsyncSession, user_id: int) -> bool:
     """Есть ли у жителя живые обращения (NEW/IN_PROGRESS).
 
