@@ -335,6 +335,7 @@ class TestCmdExport:
             first_name="Иван",
             phone="79001234567",
             consent_pdn_at=None,
+            consent_pdn_text_sha256=None,
             consent_revoked_at=None,
             consent_broadcast_at=None,
             subscribed_broadcast=False,
@@ -362,7 +363,8 @@ class TestCmdExport:
         event = _make_event()
         user = SimpleNamespace(
             id=1, max_user_id=42, first_name="Иван", phone="79001234567",
-            consent_pdn_at=None, consent_revoked_at=None,
+            consent_pdn_at=None, consent_pdn_text_sha256=None,
+            consent_revoked_at=None,
             consent_broadcast_at=None, subscribed_broadcast=False,
         )
         appeal = SimpleNamespace(

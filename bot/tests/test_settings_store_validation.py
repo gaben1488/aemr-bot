@@ -324,3 +324,47 @@ class TestNfkcNormalization:
         from aemr_bot.services.settings_store import extract_urls
 
         assert extract_urls("см https://example.org/x") == ["https://example.org/x"]
+
+
+class TestConsentTextHash:
+    """get_consent_text_hash — доказуемость согласия (152-ФЗ ст. 9 ч. 3)."""
+
+    @pytest.mark.asyncio
+    async def test_hash_changes_with_edition_not_policy_url(self) -> None:
+        """Хеш зависит от РЕДАКЦИИ текста, но НЕ от policy_url.
+
+        policy_url — отдельная настройка, меняется независимо. Хешируем
+        шаблон согласия, иначе смена ссылки ложно «меняла» бы редакцию.
+        """
+        from unittest.mock import AsyncMock, patch
+
+        from aemr_bot.services import settings_store
+
+        fb = "Согласие. Политика — {policy_url}."
+        # Текст из БД отсутствует → используется fallback.
+        with patch("aemr_bot.services.settings_store.get",
+                   AsyncMock(return_value=None)):
+            h_fallback = await settings_store.get_consent_text_hash(
+                object(), fallback=fb
+            )
+        # Другая редакция в БД → другой хеш.
+        with patch("aemr_bot.services.settings_store.get",
+                   AsyncMock(return_value="Иная редакция. {policy_url}")):
+            h_db = await settings_store.get_consent_text_hash(
+                object(), fallback=fb
+            )
+        assert len(h_fallback) == 64
+        assert h_fallback != h_db
+
+    @pytest.mark.asyncio
+    async def test_same_edition_same_hash(self) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        from aemr_bot.services import settings_store
+
+        fb = "Согласие {policy_url}"
+        with patch("aemr_bot.services.settings_store.get",
+                   AsyncMock(return_value=None)):
+            a = await settings_store.get_consent_text_hash(object(), fallback=fb)
+            b = await settings_store.get_consent_text_hash(object(), fallback=fb)
+        assert a == b

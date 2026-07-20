@@ -62,7 +62,12 @@ async def has_consent(session: AsyncSession, max_user_id: int) -> bool:
     return bool(user and user.consent_pdn_at)
 
 
-async def set_consent(session: AsyncSession, max_user_id: int) -> None:
+async def set_consent(
+    session: AsyncSession,
+    max_user_id: int,
+    *,
+    text_sha256: str | None = None,
+) -> None:
     """Дать (или возобновить) согласие на обработку ПДн.
 
     Снимаем is_blocked: житель мог раньше воспользоваться /forget или
@@ -72,12 +77,20 @@ async def set_consent(session: AsyncSession, max_user_id: int) -> None:
     Обнуляем consent_revoked_at: иначе свежее согласие соседствует
     с давним отзывом, и retention-cron через 30 дней с того отзыва
     обезличит жителя несмотря на актуальное согласие.
+
+    text_sha256 — хеш редакции текста согласия, которую житель видел в
+    момент нажатия «Согласен» (152-ФЗ ст. 9 ч. 3, доказывание на
+    операторе). Передаёт вызывающий код, взяв его из
+    settings_store.get_consent_text_hash. None допустим (например,
+    вызовы из тестов и миграционных сценариев), но боевой путь согласия
+    его проставляет.
     """
     await session.execute(
         update(User)
         .where(User.max_user_id == max_user_id)
         .values(
             consent_pdn_at=datetime.now(timezone.utc),
+            consent_pdn_text_sha256=text_sha256,
             consent_revoked_at=None,
             # SEC #1: НЕ сбрасываем is_blocked здесь — иначе blocked житель,
             # тапнув старую кнопку «✅ Согласен» из истории чата (после того

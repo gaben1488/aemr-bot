@@ -349,6 +349,7 @@ async def cmd_export(event):
             "first_name": user.first_name,
             "phone": user.phone,
             "consent_pdn_at": user.consent_pdn_at.isoformat() if user.consent_pdn_at else None,
+            "consent_text_sha256": user.consent_pdn_text_sha256,
             "consent_revoked_at": user.consent_revoked_at.isoformat() if user.consent_revoked_at else None,
             "consent_broadcast_at": user.consent_broadcast_at.isoformat() if user.consent_broadcast_at else None,
             "subscribed_broadcast": user.subscribed_broadcast,
