@@ -78,8 +78,15 @@ sudo apt update &amp;&amp; sudo apt upgrade -y
 sudo apt install -y ca-certificates curl gnupg git ufw
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
-sudo ufw allow 22/tcp
+# SSH — единственный вход. Ограничьте его доверенной сетью администратора,
+# а не «с любого адреса»: подставьте реальную подсеть/адрес вместо примера.
+sudo ufw allow from 10.0.0.0/8 to any port 22 proto tcp
 sudo ufw enable</code></pre>
+
+<div class="note note--caution">
+<p class="note__label">SSH — закалить до сдачи в эксплуатацию (требование модели угроз)</p>
+<p>SSH остаётся единственным входящим доступом к серверу, поэтому именно он — главная поверхность атаки. Правило <code class="kbd">ufw allow 22/tcp</code> «с любого адреса» для гос-ИСПДн не годится: ограничьте источник доверенной сетью администрации (пример выше — замените подсеть на свою; если фиксированного адреса нет, рассмотрите VPN до сервера). Дополнительно в <code class="kbd">/etc/ssh/sshd_config</code> обязательно: <code class="kbd">PermitRootLogin no</code> (root по SSH не входит), <code class="kbd">PasswordAuthentication no</code> (только по ключу — пароль перебирают, ключ нет), <code class="kbd">PubkeyAuthentication yes</code>. После правки — <code class="kbd">sudo systemctl restart ssh</code>. Это прямо закрывает пункт «SSH открыт с любого адреса» из модели угроз: без ограничения источника и отключения пароля довод о неактуальности сетевых угроз к серверу не держится.</p>
+</div>
 
 <div class="note">
 <p class="note__label">Порт 8080 закрыт наружу; установка Docker</p>
