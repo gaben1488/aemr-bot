@@ -238,12 +238,62 @@ async def cmd_forget(event):
     await reply(event, texts.ERASE_REQUESTED)
 
 
+# Порог разбивки выгрузки на сообщения. У MAX предел около 4000
+# символов; берём с запасом на заголовок части и обрамление кода.
+EXPORT_CHUNK_CHARS = 3200
+
+
+def _chunk_for_messenger(text: str, *, limit: int) -> list[str]:
+    """Нарезать текст на части не длиннее `limit`, не разрывая строки.
+
+    Зачем. Выгрузка уходила ОДНИМ сообщением, а предел MAX — около
+    четырёх тысяч символов. У жителя с несколькими обращениями и
+    перепиской отправка просто падала, и он не получал НИЧЕГО: право на
+    доступ к своим данным упиралось в лимит мессенджера. Молча — ошибку
+    видел только лог.
+
+    Режем по границам строк: JSON, разорванный посреди строки, читать
+    невозможно. Строку длиннее лимита (теоретически — очень длинный
+    текст обращения в одну строку) дробим принудительно, иначе часть
+    снова не уйдёт.
+    """
+    if len(text) <= limit:
+        return [text]
+
+    parts: list[str] = []
+    current: list[str] = []
+    current_len = 0
+    for line in text.split("\n"):
+        # Строка сама по себе длиннее лимита — режем её на куски.
+        while len(line) > limit:
+            if current:
+                parts.append("\n".join(current))
+                current, current_len = [], 0
+            parts.append(line[:limit])
+            line = line[limit:]
+        # +1 на перевод строки между строками.
+        addition = len(line) + (1 if current else 0)
+        if current_len + addition > limit:
+            parts.append("\n".join(current))
+            current, current_len = [line], len(line)
+        else:
+            current.append(line)
+            current_len += addition
+    if current:
+        parts.append("\n".join(current))
+    return parts
+
+
 async def cmd_export(event):
-    """Скрытая команда: житель получает JSON со своими обращениями
+    """Скрытая команда: житель получает JSON со своими данными
     (право субъекта по 152-ФЗ ст. 14). Не публикуется в /-меню MAX.
 
-    Состав: список обращений с темой, статусом, датами, ответом
-    оператора. Без admin-пометок и системных полей.
+    Состав: профиль (имя, телефон, отметки согласий), обращения и ВСЯ
+    переписка по каждому — уточнения жителя и ответы оператора, плюс
+    количество вложений. Без admin-пометок и системных полей.
+
+    Длинная выгрузка отправляется несколькими сообщениями: предел MAX
+    около 4000 символов, и одним куском она бы не ушла вовсе.
     """
     import json
     from datetime import datetime
@@ -255,14 +305,29 @@ async def cmd_export(event):
         appeals = await appeals_service.list_for_user(session, user.id, limit=500)
         appeals_payload = []
         for ap in appeals:
-            answer = next(
-                (
-                    m.text
-                    for m in reversed(ap.messages or [])
-                    if m.direction == "from_operator"
-                ),
-                None,
-            )
+            # ВСЯ переписка, а не только последний ответ оператора.
+            # Ст. 14 даёт право на доступ к обрабатываемым данным, а
+            # уточнения жителя и вложения — такие же его данные, как и
+            # текст обращения. Раньше выгрузка отдавала одно последнее
+            # сообщение оператора: житель не мог увидеть ни собственные
+            # дополнения, ни факт наличия вложений, хотя согласие прямо
+            # обещает хранение переписки.
+            messages_payload = [
+                {
+                    "created_at": m.created_at.isoformat() if m.created_at else None,
+                    "from": (
+                        "оператор"
+                        if m.direction == "from_operator"
+                        else "вы"
+                    ),
+                    "text": m.text,
+                    # Сами файлы лежат на стороне MAX, у нас только
+                    # метаданные — отдаём их количество, чтобы житель
+                    # видел, что вложения были.
+                    "attachments_count": len(m.attachments or []),
+                }
+                for m in (ap.messages or [])
+            ]
             appeals_payload.append(
                 {
                     "id": ap.id,
@@ -272,9 +337,10 @@ async def cmd_export(event):
                     "address": ap.address,
                     "topic": ap.topic,
                     "summary": ap.summary,
+                    "attachments_count": len(ap.attachments or []),
                     "answered_at": ap.answered_at.isoformat() if ap.answered_at else None,
                     "closed_at": ap.closed_at.isoformat() if ap.closed_at else None,
-                    "operator_answer": answer,
+                    "messages": messages_payload,
                 }
             )
         export = {
@@ -288,12 +354,16 @@ async def cmd_export(event):
             "subscribed_broadcast": user.subscribed_broadcast,
             "appeals": appeals_payload,
         }
-    await reply(
-        event,
-        "Ваши данные:\n\n```\n"
-        + json.dumps(export, ensure_ascii=False, indent=2)
-        + "\n```",
-    )
+    body = json.dumps(export, ensure_ascii=False, indent=2)
+    parts = _chunk_for_messenger(body, limit=EXPORT_CHUNK_CHARS)
+    total = len(parts)
+    for index, part in enumerate(parts, start=1):
+        header = (
+            "Ваши данные:"
+            if total == 1
+            else f"Ваши данные — часть {index} из {total}:"
+        )
+        await reply(event, f"{header}\n\n```\n{part}\n```")
 
 
 async def cmd_cancel(event):
