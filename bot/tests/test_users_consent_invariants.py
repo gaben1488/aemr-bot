@@ -121,6 +121,21 @@ class TestSetConsentInvariants:
         assert user.consent_pdn_at is not None
         assert before <= user.consent_pdn_at <= after
 
+    @pytest.mark.asyncio
+    async def test_set_consent_stores_text_hash(self, session) -> None:
+        """Хеш редакции согласия фиксируется — доказуемость по ст. 9 ч. 3.
+
+        Без привязки к редакции текста после его правки через админ-UI
+        доказать, под чем житель подписался, было бы нечем.
+        """
+        from sqlalchemy import select
+
+        await users_service.get_or_create(session, max_user_id=4, first_name="Z")
+        await users_service.set_consent(session, 4, text_sha256="a" * 64)
+
+        user = await session.scalar(select(User).where(User.max_user_id == 4))
+        assert user.consent_pdn_text_sha256 == "a" * 64
+
 
 class TestRevokeConsentInvariants:
     """`revoke_consent` — отзыв согласия + выход из бота без erase."""

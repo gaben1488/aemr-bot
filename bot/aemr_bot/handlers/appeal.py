@@ -248,7 +248,16 @@ async def _cb_consent_yes(event, max_user_id: int, payload: str) -> None:
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
-        await users_service.set_consent(session, max_user_id)
+        # Фиксируем хеш редакции согласия, которую житель видел сейчас —
+        # доказательство того, под чем он подписался (152-ФЗ ст. 9 ч. 3).
+        # Текст правится через админ-UI, поэтому без привязки к редакции
+        # доказать согласие после правки было бы нечем.
+        consent_hash = await settings_store.get_consent_text_hash(
+            session, fallback=texts.CONSENT_REQUEST
+        )
+        await users_service.set_consent(
+            session, max_user_id, text_sha256=consent_hash
+        )
     await ack_callback(event, texts.CONSENT_ACCEPTED)
     await admin_events.notify_consent_given(event.bot, max_user_id=max_user_id)
     await appeal_funnel.ask_contact_or_skip(event, max_user_id)

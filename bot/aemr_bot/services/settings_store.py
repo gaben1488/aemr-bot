@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import html
 import json
 import logging
@@ -748,6 +749,31 @@ async def get_consent_request_text(session: AsyncSession, *, policy_url: str, fa
             # которые format() не сможет разобрать. Не падаем — fallback.
             pass
     return fallback.format(policy_url=policy_url)
+
+
+async def get_consent_text_hash(session: AsyncSession, *, fallback: str) -> str:
+    """SHA-256 действующей редакции ТЕКСТА согласия (без policy_url).
+
+    152-ФЗ ст. 9 ч. 3 — доказывание согласия на операторе. Текст
+    согласия правится через админ-UI, поэтому в момент нажатия «Согласен»
+    фиксируем хеш редакции, чтобы потом доказать, под чем подписался
+    житель (см. users.consent_pdn_text_sha256).
+
+    Хешируем ШАБЛОН (с плейсхолдером {policy_url}), а не подставленный
+    текст: policy_url — отдельная настройка, она меняется независимо и к
+    редакции самого согласия отношения не имеет. Источник тот же, что у
+    get_consent_request_text: настройка consent_text из БД либо fallback.
+    """
+    try:
+        raw = await get(session, "consent_text")
+    except (SQLAlchemyError, asyncio.TimeoutError, TypeError):
+        raw = None
+    template = (
+        sanitize_settings_text(raw)
+        if isinstance(raw, str) and raw.strip() and "{policy_url}" in raw
+        else fallback
+    )
+    return hashlib.sha256(template.encode("utf-8")).hexdigest()
 
 
 async def get_text_with_fallback(session: AsyncSession, key: str, fallback: str) -> str:
