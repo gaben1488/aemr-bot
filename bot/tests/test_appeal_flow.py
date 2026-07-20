@@ -287,3 +287,54 @@ async def test_purge_answered_without_closed_at(session):
     )).one()
     assert row[0] is None  # summary обнулён
     assert row[1] is None  # address обнулён
+
+
+@pytest.mark.asyncio
+async def test_purge_abandoned_appeal_never_answered(session):
+    """Брошенное обращение (никто не ответил) обязано чиститься по сроку.
+
+    Регресс: у обращения, оставшегося в NEW, нет ни closed_at, ни
+    answered_at. Прежний фильтр требовал статус ANSWERED/CLOSED и
+    непустой якорь, поэтому такое обращение не чистилось НИКОГДА —
+    адрес и текст жителя жили в базе бессрочно. Именно молчаливое
+    бессрочное хранение и есть нарушение: житель давно забыл, а его
+    данные лежат. Третий якорь — created_at."""
+    from datetime import datetime, timezone, timedelta
+    from sqlalchemy import update, select
+    from aemr_bot.db.models import Appeal, AppealStatus
+
+    user = await users_service.get_or_create(session, max_user_id=11, first_name="Б")
+    abandoned = await appeals_service.create_appeal(
+        session, user=user, address="ул. Забытая, 1", topic="Дороги",
+        summary="подал и никто не ответил", attachments=[],
+    )
+    fresh = await appeals_service.create_appeal(
+        session, user=user, address="ул. Свежая, 2", topic="Мусор",
+        summary="подано вчера", attachments=[],
+    )
+    six_y_ago = datetime.now(timezone.utc) - timedelta(days=365 * 6)
+    # Только created_at 6 лет назад; статус остаётся NEW, ответа не было.
+    await session.execute(
+        update(Appeal).where(Appeal.id == abandoned.id).values(
+            created_at=six_y_ago, answered_at=None, closed_at=None,
+            status=AppealStatus.NEW.value,
+        )
+    )
+    await session.flush()
+
+    purged_a, _ = await appeals_service.purge_old_appeals_content(session, years=5)
+    assert purged_a >= 1
+
+    rows = (await session.execute(
+        select(Appeal.id, Appeal.summary, Appeal.address, Appeal.topic)
+        .where(Appeal.id.in_([abandoned.id, fresh.id]))
+    )).all()
+    by_id = {r[0]: r for r in rows}
+
+    # Брошенное — текст и адрес обнулены, метаданные для статистики живы.
+    assert by_id[abandoned.id][1] is None
+    assert by_id[abandoned.id][2] is None
+    assert by_id[abandoned.id][3] == "Дороги"
+    # Свежее не тронуто.
+    assert by_id[fresh.id][1] == "подано вчера"
+    assert by_id[fresh.id][2] == "ул. Свежая, 2"
