@@ -393,6 +393,48 @@ class TestPdnRetention:
         assert any("30 дней" in text and "42" in text for text in texts)
 
     @pytest.mark.asyncio
+    async def test_open_appeals_do_not_postpone_erasure(self) -> None:
+        """Открытые обращения НЕ откладывают уничтожение ПДн.
+
+        Регресс: житель с обращением в NEW/IN_PROGRESS пропускался «до
+        следующего дня» — и так бессрочно, пока оператор не ответит.
+        Но выборка берёт тех, у кого 30 дней УЖЕ истекли (152-ФЗ ст. 21
+        ч. 5), то есть пропуск тянул срок за пределы закона, причём
+        молча. Закон не даёт продлевать срок из-за нерасторопности
+        оператора: 30 дней и есть окно на финальный ответ.
+
+        Теперь erase_pdn вызывается и при открытых обращениях (он сам их
+        закроет), а оператор получает явное предупреждение, что они
+        закрылись без ответа.
+        """
+        send = AsyncMock()
+        session = AsyncMock()
+        user = MagicMock()
+        user.id = 100
+        erase = AsyncMock(return_value=True)
+
+        @asynccontextmanager
+        async def fake_scope():
+            yield session
+
+        with patch("aemr_bot.services.cron.session_scope", fake_scope), \
+             patch("aemr_bot.services.users.find_pending_pdn_retention",
+                   AsyncMock(return_value=[42])), \
+             patch("aemr_bot.services.users.find_by_max_id",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.services.users.has_open_appeals",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.services.users.erase_pdn", erase), \
+             patch("aemr_bot.services.operators.write_audit", AsyncMock()):
+            await cron._job_pdn_retention_check(send)
+
+        # Главное: уничтожение состоялось, а не отложилось.
+        erase.assert_awaited_once()
+        texts = [call.args[0] for call in send.call_args_list]
+        # И оператор предупреждён, что обращения закрыты без ответа.
+        assert any("БЕЗ ответа" in text for text in texts)
+
+    @pytest.mark.asyncio
     async def test_vanished_user_no_phantom_no_audit(self) -> None:
         """Житель исчез между find_pending_pdn_retention() и итерацией
         (успел /forget): find_by_max_id → None → continue. Не создаём
