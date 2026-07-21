@@ -896,11 +896,33 @@ docker compose exec -T db psql -U aemr -d aemr -c 'select now();'   # запис
 
 <p>В боевой сборке бот делает исходящие запросы строго на ограниченный список доменов: MAX API (<code class="kbd">botapi.max.ru</code>, <code class="kbd">platform-api2.max.ru</code>), GitHub (для авто-деплоя — <code class="kbd">github.com</code>, <code class="kbd">api.github.com</code>, <code class="kbd">codeload.github.com</code>), пинг-сервис (если задан <code class="kbd">HEALTHCHECK_URL</code>) и источники угроз для антифишинга (<code class="kbd">urlhaus.abuse.ch</code>, <code class="kbd">threatfox.abuse.ch</code>, <code class="kbd">data.phishtank.com</code>). Всё остальное — потенциальная утечка ПДн или признак компрометации.</p>
 
-<p>Если нужен жёсткий исходящий whitelist через <code class="kbd">iptables</code> — порядок такой: запретить весь исходящий трафик (<code class="kbd">OUTPUT DROP</code>), затем точечно разрешить loopback, установленные соединения, DNS (порт 53), перечисленные домены на 443/TCP и NTP-синхронизацию времени (порт 123). Запуск под FreeBSD и за межсетевым экраном — в разделах <a href="#eksp-os" data-go="eksp-os">«Эксплуатация»</a> и <a href="#admin-firewall" data-go="admin-firewall">«За корпоративным межсетевым экраном»</a>.</p>
+<p>Зачем это нужно. Если на сервер попадёт вредоносный код (например, закладка в сторонней библиотеке), ему нужен канал, чтобы вытащить данные наружу. Пока сервер может соединяться куда угодно, такой канал открыт. Ограничение исходящего трафика (egress) закрывает всё, кроме явно разрешённого, — и снимает в модели угроз целый класс угроз «утечка через исходящее соединение». Для уровня защищённости УЗ-4 это одна из значимых компенсирующих мер.</p>
+
+<p>Готовый скрипт: <code class="kbd">infra/egress-allowlist.sh</code>. Он написан так, чтобы <strong>не сломать бота</strong>: не трогает входящие соединения (ваш SSH цел), не рвёт уже открытые соединения, не включает блокировку с пустым списком адресов и откатывается одной командой. Порядок работы (от <code class="kbd">root</code> или через <code class="kbd">sudo</code>):</p>
+
+<pre><code># 1) Сначала посмотреть, что разрешится, НИЧЕГО не меняя:
+sudo ./infra/egress-allowlist.sh test
+
+# 2) Если список выглядит верно (там должны быть адреса MAX) — включить:
+sudo ./infra/egress-allowlist.sh enable
+
+# 3) СРАЗУ проверить, что бот жив:
+curl -fsS http://127.0.0.1:8080/livez &amp;&amp; echo OK
+#    и написать боту в MAX — должен ответить.
+
+# 4) Если что-то не так — мгновенный откат, вернёт как было:
+sudo ./infra/egress-allowlist.sh disable</code></pre>
+
+<p>Адреса MAX могут менять IP (это один кластер под несколькими именами), поэтому список наполняется по <em>именам</em> и его надо периодически обновлять. Добавьте в cron от <code class="kbd">root</code>:</p>
+
+<pre><code># обновлять список разрешённых адресов каждые 15 минут
+*/15 * * * * /home/aemr/aemr-bot/infra/egress-allowlist.sh refresh</code></pre>
 
 <div class="note note--caution">
-<p class="note__label">Осторожно</p>
-<p>Подводные камни: IP-адреса CDN меняются — правила надо пересоздавать по расписанию либо использовать <code class="kbd">nftables</code> с динамическим резолвингом. Авто-деплой дёргает <code class="kbd">github.com</code> каждые 10 минут — его блокировать нельзя, иначе деплои встанут. Если включён S3-backup — добавьте endpoint S3 в whitelist. После любых изменений правил проверьте <code class="kbd">/livez</code>, <code class="kbd">/readyz</code> и <code class="kbd">/diag</code> в группе. В текущей инсталляции исходящий whitelist <strong>не включён</strong>: на VPS работает только бот, риск утечки минимальный. Включать стоит при появлении других сервисов на той же машине.</p>
+<p class="note__label">Что разрешено и как это менять</p>
+<p>По умолчанию скрипт разрешает: серверы MAX (<code class="kbd">platform-api2.max.ru</code> и старый <code class="kbd">platform-api.max.ru</code>), DNS (порт 53), сверку времени NTP (порт 123), ответы на исходящие соединения, локальную петлю и внутренние сети Docker (связь бота с базой). Всё остальное исходящее запрещается и пишется в журнал с меткой <code class="kbd">aemr-egress-drop</code>.</p>
+<p>Если используете <strong>автодеплой из GitHub</strong>, <strong>антифишинг-фиды</strong> или <strong>внешний пинг-мониторинг</strong> — раскомментируйте нужные домены в начале скрипта (список <code class="kbd">ALLOWED_DOMAINS</code>) и запустите <code class="kbd">enable</code> заново. В <strong>закрытом гос-контуре</strong> автодеплой и так выключен (<code class="kbd">AUTODEPLOY_ENABLED=0</code>), GitHub добавлять не нужно.</p>
+<p>Проверить состояние в любой момент: <code class="kbd">sudo ./infra/egress-allowlist.sh status</code>. Если в журнале (<code class="kbd">journalctl -k | grep aemr-egress-drop</code>) появляются заблокированные соединения к незнакомому адресу — это либо забытый нужный сервис (добавить в список), либо признак компрометации (разобраться).</p>
 </div>
 
 <div class="note note--caution">
