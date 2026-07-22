@@ -91,3 +91,7 @@ docs/_akt_ocenki_vreda_DRAFT.md
 docs/*.odt
 docs/_ПРАВОВОЙ_ПАКЕТ_README.md
 docs/_ЧЕКЛИСТ_ОПЕРАТОРА.md
+
+# Локальные служебные каталоги инструментов разработки — не для публичного репозитория.
+.claude/
+.claude-flow/
