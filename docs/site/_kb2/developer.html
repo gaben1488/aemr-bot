@@ -21,7 +21,7 @@
 <table>
 <thead><tr><th>Пакет</th><th>Версия в pyproject.toml</th><th>Зачем</th></tr></thead>
 <tbody>
-<tr><td><code class="kbd">maxapi</code></td><td><code class="kbd">~=1.1</code></td><td>Библиотека сообщества (<code class="kbd">love-apples/maxapi</code>) для Bot API мессенджера MAX. Через неё бот получает события и отправляет сообщения. Ключевая зависимость, её особенностям посвящён отдельный раздел ниже.</td></tr>
+<tr><td><code class="kbd">maxapi</code></td><td><code class="kbd">==1.2.1</code></td><td>Библиотека сообщества (<code class="kbd">love-apples/maxapi</code>) для Bot API мессенджера MAX. Через неё бот получает события и отправляет сообщения. Единственная зависимость, прибитая точной версией (а не диапазоном <code class="kbd">~=</code>): она критична и обновляется только осознанной правкой. Её особенностям посвящён отдельный раздел ниже.</td></tr>
 <tr><td><code class="kbd">fastapi</code></td><td><code class="kbd">&gt;=0.118,&lt;0.137</code></td><td>HTTP-каркас. В боевом опросном режиме не используется, нужен только для серверного (webhook) режима. Обе границы диапазона закрывают конкретные уязвимости: нижняя <code class="kbd">&gt;=0.118</code> поднимает starlette до 0.49.1+ (две CVE — обход проверки заголовка Host и ReDoS на Range-заголовке в FileResponse), верхняя <code class="kbd">&lt;0.137</code> исключает 0.136.3 с typosquat-зависимостью «fastar» в extras <code class="kbd">[standard]</code>. Почему обе starlette-CVE боту не страшны (он не реконструирует URL из Host и не использует FileResponse/StaticFiles) — расписано в комментарии <code class="kbd">pyproject.toml</code> и продублировано в YAML пайплайна CI.</td></tr>
 <tr><td><code class="kbd">uvicorn[standard]</code></td><td><code class="kbd">~=0.32</code></td><td>ASGI-сервер под FastAPI (только webhook-режим).</td></tr>
 <tr><td><code class="kbd">sqlalchemy</code></td><td><code class="kbd">~=2.0</code></td><td>ORM (object-relational mapping — объектно-реляционное отображение) для работы с PostgreSQL. Модели лежат в <code class="kbd">db/models.py</code>.</td></tr>
@@ -1027,7 +1027,7 @@ DATABASE_URL=postgresql+asyncpg://aemr:&lt;пароль&gt;@localhost:5432/aemr 
 <p>Имена и назначение — в <code class="kbd">services/cron_registry.py</code> (его соответствие документации проверяет тест <code class="kbd">test_cron_docs_sync</code>). А точные минуты и дни недели — в реальных <code class="kbd">CronTrigger</code> в <code class="kbd">services/cron.py</code>: реестр человекочитаемый и в одном месте может отставать от фактического триггера.</p>
 
 <h4>Сколько в проекте таблиц и миграций?</h4>
-<p>11 таблиц (<code class="kbd">db/models.py</code>) и 18 миграций (<code class="kbd">0001</code>..<code class="kbd">0018</code>, последняя — <code class="kbd">0018_users_trigram_search_indexes</code>). Цифры «9 таблиц» и «5 миграций» в старых документах устарели.</p>
+<p>11 таблиц (<code class="kbd">db/models.py</code>) и 22 миграции (<code class="kbd">0001</code>..<code class="kbd">0022</code>, последняя — <code class="kbd">0022_users_consent_text_hash</code>). Цифры «9 таблиц» и «5 миграций» в старых документах устарели.</p>
 
 <h4>Можно ли менять <code class="kbd">phone</code> прямым SQL?</h4>
 <p>Нет. Всегда через <code class="kbd">services/users.set_phone</code> — иначе рассинхронизируется <code class="kbd">phone_normalized</code> и сломается поиск по телефону (<code class="kbd">/erase phone=</code>, поиск жителя).</p>
