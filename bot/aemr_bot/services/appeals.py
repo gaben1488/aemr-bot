@@ -251,6 +251,23 @@ async def count_recent_for_user(
     ) or 0
 
 
+async def earliest_recent_for_user(
+    session: AsyncSession, user_id: int, *, hours: int = 1
+) -> datetime | None:
+    """created_at самого раннего обращения жителя за последние `hours`.
+
+    Нужен, чтобы сказать жителю, КОГДА освободится слот лимита: самое
+    старое из обращений в окне выпадет из него первым, и после этого
+    можно подать новое. reset ≈ earliest + `hours`.
+    """
+    threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
+    return await session.scalar(
+        select(func.min(Appeal.created_at)).where(
+            Appeal.user_id == user_id, Appeal.created_at >= threshold
+        )
+    )
+
+
 async def count_for_user(session: AsyncSession, user_id: int) -> int:
     """Счётчик обращений жителя для пагинации «📂 Мои обращения».
 

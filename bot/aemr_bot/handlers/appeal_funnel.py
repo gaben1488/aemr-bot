@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
@@ -167,7 +167,30 @@ async def _has_consent_step_pending(max_user_id: int) -> bool:
         return user.consent_pdn_at is None
 
 
-async def _send_rate_limit_message(event, *, has_open_unanswered: bool) -> None:
+def _format_reset_hint(reset_at: datetime | None) -> str:
+    """«примерно через N мин» для сообщения о лимите.
+
+    reset_at — момент, когда самое старое обращение выпадет из часового
+    окна. Если он в прошлом или неизвестен — слот уже свободен, подсказку
+    про ожидание не даём.
+    """
+    if reset_at is None:
+        return ""
+    wait = reset_at - datetime.now(timezone.utc)
+    minutes = int(wait.total_seconds() // 60) + 1
+    if minutes <= 0:
+        return ""
+    if minutes == 1:
+        return "Лимит освободится примерно через минуту."
+    if minutes < 5:
+        return f"Лимит освободится примерно через {minutes} минуты."
+    return f"Лимит освободится примерно через {minutes} минут."
+
+
+async def _send_rate_limit_message(
+    event, *, has_open_unanswered: bool, reset_at: datetime | None = None
+) -> None:
+    reset_hint = _format_reset_hint(reset_at)
     if has_open_unanswered:
         text = (
             "Лимит новых обращений временно исчерпан: можно создать не больше "
@@ -177,11 +200,12 @@ async def _send_rate_limit_message(event, *, has_open_unanswered: bool) -> None:
             "и нажмите «📎 Дополнить»."
         )
     else:
+        tail = reset_hint or "Пожалуйста, попробуйте позже."
         text = (
             "Лимит новых обращений временно исчерпан: можно создать не больше "
             "3 обращений за последний час.\n\n"
             "Сейчас у вас нет неотвеченного обращения, которое можно "
-            "дополнить. Пожалуйста, дождитесь сброса лимита и попробуйте позже."
+            f"дополнить. {tail}"
         )
     await send_or_edit_screen(
         event,
@@ -414,7 +438,15 @@ async def finalize_appeal(event, max_user_id: int):
     if persisted == PERSIST_RATE_LIMITED:
         async with current_user(max_user_id) as (session, user):
             active = await appeals_service.find_active_for_user(session, user.id)
-        await _send_rate_limit_message(event, has_open_unanswered=active is not None)
+            earliest = await appeals_service.earliest_recent_for_user(
+                session, user.id, hours=1
+            )
+        reset_at = earliest + timedelta(hours=1) if earliest else None
+        await _send_rate_limit_message(
+            event,
+            has_open_unanswered=active is not None,
+            reset_at=reset_at,
+        )
     elif persisted is False:
         await event.bot.send_message(
             chat_id=get_chat_id(event),

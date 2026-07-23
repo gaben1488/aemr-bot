@@ -461,11 +461,42 @@ class TestFinalizeAppeal:
              patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
                    AsyncMock(return_value=user)), \
              patch("aemr_bot.handlers.appeal_funnel.appeals_service.find_active_for_user",
-                   AsyncMock(return_value=SimpleNamespace(id=7))):
+                   AsyncMock(return_value=SimpleNamespace(id=7))), \
+             patch("aemr_bot.handlers.appeal_funnel.appeals_service.earliest_recent_for_user",
+                   AsyncMock(return_value=None)):
             await appeal_funnel.finalize_appeal(event, max_user_id=42)
 
         text = event.bot.send_message.call_args.kwargs.get("text", "")
         assert "лимит" in text.lower()
+
+    @pytest.mark.asyncio
+    async def test_rate_limited_no_open_shows_reset_minutes(self) -> None:
+        """Нет открытого обращения → сообщение содержит время до сброса
+        лимита (было «дождитесь сброса» без указания сколько ждать)."""
+        from datetime import datetime, timedelta, timezone
+        from aemr_bot.handlers import appeal_funnel
+        from aemr_bot.handlers.appeal_runtime import PERSIST_RATE_LIMITED
+
+        event = _funnel_event()
+        user = SimpleNamespace(id=1)
+        # Самое старое обращение создано 40 минут назад → слот освободится
+        # примерно через 20 минут.
+        earliest = datetime.now(timezone.utc) - timedelta(minutes=40)
+        with patch("aemr_bot.handlers.appeal_funnel.persist_and_dispatch_appeal",
+                   AsyncMock(return_value=PERSIST_RATE_LIMITED)), \
+             patch("aemr_bot.handlers.appeal_funnel.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.appeal_funnel.appeals_service.find_active_for_user",
+                   AsyncMock(return_value=None)), \
+             patch("aemr_bot.handlers.appeal_funnel.appeals_service.earliest_recent_for_user",
+                   AsyncMock(return_value=earliest)):
+            await appeal_funnel.finalize_appeal(event, max_user_id=42)
+
+        text = event.bot.send_message.call_args.kwargs.get("text", "")
+        assert "освободится примерно через" in text
+        assert "минут" in text
 
     @pytest.mark.asyncio
     async def test_empty_rejected_sends_hint(self) -> None:

@@ -200,7 +200,7 @@ async def open_my_appeals(event, max_user_id: int, page: int = 1):
             await _send_or_edit_menu(
                 event,
                 text=texts.APPEAL_LIST_EMPTY,
-                attachments=[keyboards.back_to_menu_keyboard()],
+                attachments=[keyboards.empty_list_keyboard()],
             )
             return
         total_pages = max(1, (total + MY_APPEALS_PAGE_SIZE - 1) // MY_APPEALS_PAGE_SIZE)
