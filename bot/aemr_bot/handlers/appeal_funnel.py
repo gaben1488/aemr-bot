@@ -494,6 +494,18 @@ async def on_awaiting_address(event, body, text_body, max_user_id):
     await ask_topic(event, max_user_id, force_new_message=True)
 
 
+def _truncation_tail(kept: str) -> str:
+    """Последние три слова принятой части текста.
+
+    Показываются жителю в предупреждении об обрезке («…почему не сдел…»),
+    чтобы он видел, ГДЕ именно оборвалось. Хвост дополнительно ограничен
+    60 символами — одно аномально длинное «слово» не раздует сообщение.
+    """
+    words = kept.rstrip().split()
+    tail = " ".join(words[-3:])
+    return tail[-60:]
+
+
 async def on_awaiting_summary(event, body, text_body, max_user_id):
     """Один шаг сути: первое же непустое сообщение или вложение —
     это и есть обращение."""
@@ -505,6 +517,14 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
             attachments=[keyboards.cancel_keyboard()],
         )
         return
+
+    # Обрезка длинного текста была молчаливой: житель не знал, что
+    # оператор увидит только первые summary_max_chars символов, и был
+    # уверен, что его прочитали целиком. Теперь предупреждаем и называем
+    # последние принятые слова — видно, где оборвалось.
+    truncated_tail: str | None = None
+    if chunk and len(chunk) > cfg.summary_max_chars:
+        truncated_tail = _truncation_tail(chunk[: cfg.summary_max_chars])
 
     async with current_user(max_user_id) as (session, user):
         # dict() — shallow copy. Nested list (summary_chunks, attachments)
@@ -522,6 +542,13 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
 
         user.dialog_data = data
         await session.flush()
+
+    if truncated_tail is not None:
+        await event.message.answer(
+            texts.APPEAL_TEXT_TRUNCATED.format(
+                limit=cfg.summary_max_chars, tail=truncated_tail
+            )
+        )
 
     await finalize_appeal(event, max_user_id)
 
@@ -643,7 +670,9 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     # (on_awaiting_summary режет chunk[: cfg.summary_max_chars]). Без
     # обрезки житель мог бы прислать мегабайтный текст в дополнение —
     # raw в БД и в relay (DoS-storage класс). Усекаем единым лимитом.
-    text = (text_body or "").strip()[: cfg.summary_max_chars]
+    _raw_followup = (text_body or "").strip()
+    text = _raw_followup[: cfg.summary_max_chars]
+    followup_truncated = len(_raw_followup) > cfg.summary_max_chars
     attachments = collect_attachments(body)
     if not text and not attachments:
         await event.message.answer(
@@ -746,7 +775,12 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             except Exception:
                 log.exception("relay followup attachments failed")
 
+    confirm_text = f"✅ Дополнение отправлено оператору по обращению #{appeal.id}."
+    if followup_truncated:
+        confirm_text += "\n\n" + texts.FOLLOWUP_TEXT_TRUNCATED.format(
+            limit=cfg.summary_max_chars, tail=_truncation_tail(text)
+        )
     await event.message.answer(
-        f"✅ Дополнение отправлено оператору по обращению #{appeal.id}.",
+        confirm_text,
         attachments=[keyboards.back_to_menu_keyboard()],
     )

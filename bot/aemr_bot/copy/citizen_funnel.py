@@ -295,6 +295,18 @@ SUBSCRIBE_MINI_CONSENT = (
     "для указанной цели."
 )
 
+APPEAL_TEXT_TRUNCATED = (
+    "⚠️ Сообщение оказалось длиннее {limit} символов. Принята часть, "
+    "которая заканчивается на «{tail}…» — дальше текст не сохранился.\n\n"
+    "Продолжение пришлите после отправки обращения: откройте его в "
+    "«📂 Мои обращения» и нажмите «Дополнить»."
+)
+FOLLOWUP_TEXT_TRUNCATED = (
+    "⚠️ Дополнение оказалось длиннее {limit} символов. Принята часть, "
+    "которая заканчивается на «{tail}…» — остальное пришлите отдельным "
+    "дополнением."
+)
+
 BROADCAST_HEADER = (
     "Объявление Администрации Елизовского муниципального округа\n"
     "· · · · · · · ·"
@@ -356,6 +368,8 @@ __all__ = [
     "UNSUBSCRIBE_CONFIRMED",
     "UNSUBSCRIBE_ALREADY_OFF",
     "SUBSCRIBE_MINI_CONSENT",
+    "APPEAL_TEXT_TRUNCATED",
+    "FOLLOWUP_TEXT_TRUNCATED",
     "BROADCAST_HEADER",
     "POLICY_DELIVERED",
     "POLICY_FALLBACK_URL",

@@ -56,6 +56,12 @@ ADMIN_REPLY_TOO_LONG = (
     "не ушло. Сократите и пришлите ещё раз."
 )
 
+ADMIN_REPLY_INTENT_EXPIRED = (
+    "⏱ Окно ответа истекло (5 минут с нажатия «Ответить») — ваш текст "
+    "жителю НЕ отправлен. Нажмите «✉️ Ответить» на карточке обращения "
+    "ещё раз и пришлите текст повторно."
+)
+
 ADMIN_REPLY_NO_APPEAL = (
     "Не понял, к какому обращению ответ. Потяните карточку обращения "
     "влево или нажмите «✉️ Ответить» под ней."
@@ -233,6 +239,7 @@ __all__ = [
     "ADMIN_FOLLOWUP_TEMPLATE",
     "ADMIN_REPLY_DELIVERED_INTERMEDIATE",
     "ADMIN_REPLY_TOO_LONG",
+    "ADMIN_REPLY_INTENT_EXPIRED",
     "ADMIN_REPLY_NO_APPEAL",
     "OP_HELP",
     "OP_HELP_MAIN",
