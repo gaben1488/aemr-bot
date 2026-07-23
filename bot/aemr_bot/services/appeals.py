@@ -148,6 +148,22 @@ async def get_by_admin_message_id(session: AsyncSession, admin_message_id: str) 
     )
 
 
+async def get_by_last_admin_card_mid(session: AsyncSession, mid: str) -> Appeal | None:
+    """Резолв обращения по mid ПОСЛЕДНЕЙ опубликованной карточки.
+
+    `admin_message_id` хранит mid первой публикации; каждая перепубликация
+    (промежуточный ответ, reopen/close, /open_tickets) записывает свой mid
+    в `last_admin_card_mid`. Свайп-ответ оператора чаще всего приходит по
+    самой свежей карточке — без этого резолва он попадал в «не понял, к
+    какому обращению ответ».
+    """
+    return await session.scalar(
+        select(Appeal)
+        .options(selectinload(Appeal.user))
+        .where(Appeal.last_admin_card_mid == mid)
+    )
+
+
 async def list_for_user(
     session: AsyncSession,
     user_id: int,

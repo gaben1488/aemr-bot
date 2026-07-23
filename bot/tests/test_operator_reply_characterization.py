@@ -762,6 +762,9 @@ class TestHandleOperatorReplySwipe:
         ), patch(
             "aemr_bot.handlers.operator_reply.appeals_service.get_by_admin_message_id",
             AsyncMock(return_value=None),
+        ), patch(
+            "aemr_bot.handlers.operator_reply.appeals_service.get_by_last_admin_card_mid",
+            AsyncMock(return_value=None),
         ):
             result = await opr.handle_operator_reply(
                 event, body=None, text="ответ"
@@ -773,6 +776,46 @@ class TestHandleOperatorReplySwipe:
             event.bot.send_message.await_args.kwargs.get("text")
             == texts.ADMIN_REPLY_NO_APPEAL
         )
+
+    @pytest.mark.asyncio
+    async def test_swipe_on_republished_card_resolves_by_last_mid(self) -> None:
+        """Свайп по ПЕРЕОПУБЛИКОВАННОЙ карточке: admin_message_id (mid первой
+        публикации) не находит обращение, но mid совпадает с
+        last_admin_card_mid последней карточки → обращение резолвится и
+        ответ доставляется (раньше падало в ADMIN_REPLY_NO_APPEAL)."""
+        from aemr_bot.handlers import operator_reply as opr
+
+        event = _make_event(user_id=7)
+        event.message.link = SimpleNamespace(
+            type="reply", message=SimpleNamespace(mid="MID-REPUBLISHED")
+        )
+        operator = SimpleNamespace(id=7, max_user_id=42)
+        appeal = _fresh_appeal(appeal_id=9)
+
+        deliver = AsyncMock(return_value=True)
+        with patch(
+            "aemr_bot.handlers.operator_reply.session_scope",
+            _fake_session_scope,
+        ), patch(
+            "aemr_bot.handlers.operator_reply.operators_service.get",
+            AsyncMock(return_value=operator),
+        ), patch(
+            "aemr_bot.handlers.operator_reply.appeals_service.get_by_admin_message_id",
+            AsyncMock(return_value=None),
+        ), patch(
+            "aemr_bot.handlers.operator_reply.appeals_service.get_by_last_admin_card_mid",
+            AsyncMock(return_value=appeal),
+        ) as by_last, patch(
+            "aemr_bot.handlers.operator_reply._deliver_operator_reply", deliver
+        ):
+            result = await opr.handle_operator_reply(
+                event, body=None, text="ответ свайпом по свежей карточке"
+            )
+
+        assert result is True
+        by_last.assert_awaited_once()
+        deliver.assert_awaited_once()
+        assert deliver.await_args.kwargs["appeal"] is appeal
 
 
 # --- handle_command_reply: финальный vs промежуточный audit_action ------------
