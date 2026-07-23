@@ -87,12 +87,19 @@ def remember_reply_intent(
     )
 
 
-def consume_reply_intent(operator_id: int) -> tuple[int, bool] | None:
+def consume_reply_intent(
+    operator_id: int,
+) -> tuple[int, bool] | str | None:
     """Достать и сбросить намерение, если оно ещё не протухло.
 
     Возвращает (appeal_id, is_final), если оператор недавно нажимал
     «✉️ Ответить» / «💬 Промежуточный» и окно не истекло. Сбрасывает
     запись — intent одноразовое.
+
+    Возвращает строку "expired", если намерение БЫЛО, но окно истекло:
+    раньше протухший интент молча съедал текст оператора (return False
+    выше по стеку) — оператор был уверен, что ответил, а письмо никуда
+    не ушло. Вызывающий код обязан явно сообщить об этом.
     """
     from aemr_bot.services import wizard_registry as _wr
 
@@ -102,7 +109,7 @@ def consume_reply_intent(operator_id: int) -> tuple[int, bool] | None:
     appeal_id, is_final, expires_at = item
     _wr.drop_reply_intent(operator_id)
     if _time.monotonic() > expires_at:
-        return None
+        return "expired"
     return appeal_id, is_final
 
 
@@ -676,7 +683,12 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
     author_id = get_user_id(event)
     if author_id is not None:
         intent = consume_reply_intent(author_id)
-        if intent is not None:
+        if intent == "expired":
+            # Оператор нажал «Ответить», но писал дольше окна. Молчать
+            # нельзя: он уверен, что ответил, а текст никуда не ушёл.
+            await _safe_admin_notice(event, texts.ADMIN_REPLY_INTENT_EXPIRED)
+            return True
+        if isinstance(intent, tuple):
             intent_appeal_id, is_final = intent
             log.info(
                 "operator_reply: kbd-intent — operator=%s appeal=%s "
