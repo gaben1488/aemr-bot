@@ -769,6 +769,16 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
         appeal = None
         if target_mid:
             appeal = await appeals_service.get_by_admin_message_id(session, target_mid)
+            if appeal is None:
+                # Свайп по переопубликованной карточке: admin_message_id —
+                # это mid ПЕРВОЙ публикации, а перепубликации (после
+                # промежуточного ответа, reopen/close, /open_tickets)
+                # обновляют last_admin_card_mid. Именно на свежей карточке
+                # футер предлагает «потяните влево» — без этого резолва
+                # такой свайп падал в ADMIN_REPLY_NO_APPEAL.
+                appeal = await appeals_service.get_by_last_admin_card_mid(
+                    session, target_mid
+                )
 
         if appeal is None and appeal_id_from_text:
             appeal = await appeals_service.get_by_id(session, appeal_id_from_text)
