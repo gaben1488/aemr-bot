@@ -377,6 +377,17 @@ def back_to_menu_keyboard():
     return kb.as_markup()
 
 
+def empty_list_keyboard():
+    # Экран пустого списка обещал «нажмите „Написать обращение" в меню
+    # ниже», но back_to_menu_keyboard даёт только «↩️ В меню» — кнопки
+    # из текста под сообщением не было (житель искал несуществующую).
+    # Даём прямую кнопку создания обращения + возврат в меню.
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="📝 Написать обращение", payload=cp.MENU_NEW_APPEAL))
+    kb.row(CallbackButton(text="↩️ В меню", payload=cp.MENU_MAIN))
+    return kb.as_markup()
+
+
 def back_to_settings_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="↩️ К настройкам", payload=cp.MENU_SETTINGS))
@@ -471,6 +482,7 @@ __all__ = [
     "user_appeal_card_keyboard",
     "my_appeals_list_keyboard",
     "back_to_menu_keyboard",
+    "empty_list_keyboard",
     "back_to_settings_keyboard",
     "back_to_useful_info_keyboard",
     "subscribe_mini_consent_keyboard",
