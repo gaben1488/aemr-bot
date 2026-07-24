@@ -748,9 +748,13 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
             # уникальна, в обычном тексте обращения не встречается.
             # Прежний «[appeal:N]» был стабилен по regex, но выглядел как
             # код; новый формат читаем оператором глазами.
-            match = _APPEAL_MARKER_RE.search(replied_text)
-            if match:
-                appeal_id_from_text = int(match.group(1))
+            # ПОСЛЕДНИЙ маркер, а не первый: настоящий «🆔 №N» бот ставит
+            # в самый конец карточки, а текст жителя стоит РАНЬШЕ и мог бы
+            # содержать поддельный «🆔 №<чужой_id>» — leftmost .search
+            # увёл бы ответ чужому жителю.
+            ids = _APPEAL_MARKER_RE.findall(replied_text)
+            if ids:
+                appeal_id_from_text = int(ids[-1])
         elif replied_text and _APPEAL_MARKER_RE.search(replied_text):
             log.warning(
                 "operator_reply: маркер 🆔 №N в НЕ-bot сообщении — "

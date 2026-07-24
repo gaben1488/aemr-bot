@@ -29,6 +29,7 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.handlers.appeal_runtime import (
     _HAS_ALNUM,
+    PERSIST_NO_CONSENT,
     PERSIST_RATE_LIMITED,
     persist_and_dispatch_appeal,
 )
@@ -446,6 +447,15 @@ async def finalize_appeal(event, max_user_id: int):
             event,
             has_open_unanswered=active is not None,
             reset_at=reset_at,
+        )
+    elif persisted == PERSIST_NO_CONSENT:
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=(
+                "Чтобы подать обращение, нужно согласие на обработку "
+                "персональных данных. Откройте /start и дайте согласие."
+            ),
+            attachments=[keyboards.back_to_menu_keyboard()],
         )
     elif persisted is False:
         await event.bot.send_message(
