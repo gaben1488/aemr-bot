@@ -82,6 +82,10 @@ aemr-bot-tree.md
 # сводки и рабочие версии политики — внутренние документы оператора.
 # Публикуется только финальная политика (её раздают жителям), отдельно.
 docs/model_ugroz_ISPDn_chatbot_MAX_DRAFT*.md
+# Устаревшие версии модели угроз перенесены в архив — тоже карта атаки,
+# в публичный репозиторий не попадают (сама папка archive частично
+# отслеживается, поэтому правило точечное).
+docs/archive/versions/model_ugroz_ISPDn_chatbot_MAX_DRAFT*.md
 docs/_rasporyazhenie_ORD_DRAFT.md
 docs/_prikaz179_svodka.md
 docs/_politika_novaya_DRAFT.md
