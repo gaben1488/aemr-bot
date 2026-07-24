@@ -27,7 +27,10 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "docs" / "Политика.md"
+# Единый мастер-текст политики (тот же, из которого build_policy.mjs собирает
+# DOCX). Прежде генератор читал отдельный docs/Политика.md — файл разошёлся с
+# мастером и пропал, PDF устаревал. Теперь один источник на DOCX и PDF.
+SRC = ROOT / "docs" / "Политика_конфиденциальности_ИС_Чат-бот_MAX.md"
 # На диске PDF лежит под латинским именем — Docker buildkit не справляется
 # с unicode в инструкции COPY. Имя, которое видит житель в чате MAX,
 # подменяется на русское при загрузке файла, см.
@@ -37,6 +40,27 @@ OUT = ROOT / "docs" / "PRIVACY.pdf"
 WIN_FONTS = Path("C:/Windows/Fonts")
 FONT_REGULAR = WIN_FONTS / "arial.ttf"
 FONT_BOLD = WIN_FONTS / "arialbd.ttf"
+
+
+def preprocess(md: str) -> str:
+    """Мастер-текст политики → чистый markdown для гражданского PDF.
+
+    Мастер несёт служебную разметку build_policy.mjs: ведущий HTML-комментарий,
+    угловой реквизит приложения, блок наименования и чек-лист юриста ниже
+    маркера ПРИЛОЖЕНИЕ-А. В PDF для жителя идёт только тело политики.
+    """
+    cut = md.find("<!-- ПРИЛОЖЕНИЕ-А")
+    if cut != -1:
+        md = md[:cut]
+    md = re.sub(r"<!--.*?-->", "", md, count=1, flags=re.S)
+    md = re.sub(r"\[УГЛОВОЙ-РЕКВИЗИТ\].*?\[/УГЛОВОЙ-РЕКВИЗИТ\]", "", md, flags=re.S)
+
+    def _title(m: re.Match) -> str:
+        title = " ".join(s.strip() for s in m.group(1).splitlines() if s.strip())
+        return "# " + title
+
+    md = re.sub(r"\[НАИМЕНОВАНИЕ\](.*?)\[/НАИМЕНОВАНИЕ\]", _title, md, flags=re.S)
+    return md
 
 
 def parse_blocks(md: str) -> list[tuple[str, str]]:
@@ -110,7 +134,7 @@ def main() -> int:
     li = ParagraphStyle("li", parent=body, leftIndent=14, bulletIndent=4, spaceAfter=2)
     bq = ParagraphStyle("bq", parent=body, leftIndent=10, textColor="#555", fontSize=9.5)
 
-    md = SRC.read_text(encoding="utf-8")
+    md = preprocess(SRC.read_text(encoding="utf-8"))
     flow = []
     for kind, raw in parse_blocks(md):
         text = render_inline(raw)
