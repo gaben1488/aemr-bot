@@ -36,21 +36,57 @@ set -euo pipefail
 
 # --- ЧТО РАЗРЕШЕНО -----------------------------------------------------
 #
-# Домены, к которым боту РАЗРЕШЕНО ходить по HTTPS (443). Меняются редко.
-# Обязательные — серверы MAX. Остальное раскомментируйте, только если
-# реально используете (автодеплой, антифишинг-фиды, внешний мониторинг).
+# Домены, к которым РАЗРЕШЁН исходящий HTTPS (443): рантайм бота (MAX,
+# антифишинг-фиды) + инфраструктура обновлений (Debian, PyPI/uv, Docker,
+# GitHub) — чтобы сервер можно было патчить и обновлять зависимости, не
+# снимая allowlist. Решение владельца 2026-07-24.
+#
+# ВАЖНО про CDN. deb.debian.org, pypi.org, *.docker.io, github.com отдают
+# МНОГО быстро сменяющихся IP (Fastly/Cloudflare). Скрипт резолвит домены
+# в IP на момент `refresh`/`enable`; между рефрешами IP у CDN могут
+# уехать. Поэтому:
+#   • держите `refresh` в cron (см. вику), И
+#   • перед `apt update` / `uv sync` / `docker pull` выполните
+#     `sudo ./egress-allowlist.sh refresh` вручную,
+#   • либо на окно обслуживания `disable`, обновитесь, затем `enable`.
+# Модель угроз: allowlist по-прежнему закрывает произвольный exfil на
+# хосты атакующего; открыты только доверенные MAX + пакетная
+# инфраструктура — это осознанный компромисс (патчи важнее сужения).
 ALLOWED_DOMAINS=(
-    # --- MAX Bot API (обязательно, без них бот не работает) ---
+    # --- MAX Bot API (обязательно, рантайм бота) ---
     "platform-api2.max.ru"
     "platform-api.max.ru"   # старое имя, до полного вывода из эксплуатации
-    # --- Опционально: автодеплой из GitHub (в ЗАКРЫТОЙ сети НЕ нужен) ---
-    # "api.github.com"
-    # "github.com"
-    # "codeload.github.com"
-    # --- Опционально: антифишинг-фиды (если включён их сбор) ---
-    # "threatfox.abuse.ch"
-    # "urlhaus.abuse.ch"
-    # "data.phishtank.com"
+
+    # --- Обновления ОС Debian (apt) ---
+    # Нужны, чтобы сервер можно было патчить, не снимая allowlist.
+    "deb.debian.org"
+    "security.debian.org"
+    "ftp.debian.org"
+
+    # --- Обновления зависимостей Python (uv / pip) ---
+    "pypi.org"
+    "files.pythonhosted.org"
+    "astral.sh"                 # установщик и релизы uv
+
+    # --- Обновление образов контейнеров (docker/podman pull) ---
+    "registry-1.docker.io"
+    "index.docker.io"
+    "auth.docker.io"
+    "production.cloudflare.docker.com"
+    "ghcr.io"                   # если базовые образы с GitHub Container Registry
+    "pkg-containers.githubusercontent.com"
+
+    # --- GitHub (исходники зависимостей, автодеплой, actions) ---
+    "github.com"
+    "api.github.com"
+    "codeload.github.com"
+    "objects.githubusercontent.com"
+    "raw.githubusercontent.com"
+
+    # --- Антифишинг-фиды (рантайм: проверка ссылок жителей) ---
+    "threatfox.abuse.ch"
+    "urlhaus.abuse.ch"
+    "data.phishtank.com"
 )
 
 # Порты, разрешённые к адресам из списка выше.
