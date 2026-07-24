@@ -452,16 +452,22 @@ class TestSubscriptionAndEligibility:
         s = sqlite_session
         _add_user(s, max_user_id=1, first_name="Годный")  # eligible
         _add_user(s, max_user_id=2, first_name="Заблок", blocked=True)
-        _add_user(s, max_user_id=3, first_name="Удалено")  # обезличен
+        # anonymous-sentinel обезличивания: max_user_id=-1, is_blocked=true —
+        # отсекается условием is_blocked (не по имени: фильтр first_name убран
+        # как NULL-небезопасный).
+        _add_user(s, max_user_id=-1, first_name="Удалено", blocked=True)
         _add_user(s, max_user_id=4, first_name="БезСогл", consent=False)
         _add_user(s, max_user_id=5, first_name="Отписан", subscribed=False)
+        # житель без имени (MAX не отдал first_name), но подписанный и с
+        # согласием — ДОЛЖЕН попасть в рассылку (регресс NULL-бага).
+        _add_user(s, max_user_id=6, first_name=None)
         await s.flush()
 
-        assert await bc.count_subscribers(s) == 1
+        assert await bc.count_subscribers(s) == 2
         targets = await bc.list_subscriber_targets(s)
-        # (db_id, max_user_id) — единственный годный.
-        assert len(targets) == 1
-        assert targets[0][1] == 1
+        # (db_id, max_user_id) — годные: с именем (1) и БЕЗ имени (6).
+        assert len(targets) == 2
+        assert {t[1] for t in targets} == {1, 6}
 
     @pytest.mark.asyncio
     async def test_count_subscribers_zero_when_empty(

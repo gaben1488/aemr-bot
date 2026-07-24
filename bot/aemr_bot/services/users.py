@@ -486,7 +486,6 @@ def _subscribers_where():
         User.subscribed_broadcast.is_(True),
         User.consent_broadcast_at.isnot(None),
         User.is_blocked.is_(False),
-        User.first_name != "Удалено",
     )
 
 
@@ -494,7 +493,6 @@ def _consented_where():
     return (
         User.consent_pdn_at.isnot(None),
         User.is_blocked.is_(False),
-        User.first_name != "Удалено",
     )
 
 

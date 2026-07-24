@@ -253,7 +253,9 @@ class TestUsersNormalizePhone:
 class TestBroadcastsEligibleFilter:
     def test_compiles_to_sql(self) -> None:
         """_eligible_filter должно скомпилироваться в SQLAlchemy-выражение
-        без исключений. Эмитимое SQL содержит все четыре условия."""
+        без исключений. Эмитимое SQL содержит три условия (фильтр по
+        first_name убран как NULL-небезопасный — sentinel отсекается
+        is_blocked)."""
         from aemr_bot.services.broadcasts import _eligible_filter
 
         expr = _eligible_filter()
@@ -261,4 +263,4 @@ class TestBroadcastsEligibleFilter:
         assert "subscribed_broadcast" in compiled
         assert "consent_broadcast_at" in compiled
         assert "is_blocked" in compiled
-        assert "first_name" in compiled
+        assert "first_name" not in compiled

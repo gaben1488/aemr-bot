@@ -40,9 +40,12 @@ def _eligible_filter():
     - consent_broadcast_at IS NOT NULL — есть зафиксированный факт
       согласия именно на цель «рассылка» (152-ФЗ ст. 9 ч. 1:
       «конкретное, предметное, информированное»);
-    - is_blocked=false — IT не заблокировал;
-    - first_name != 'Удалено' — anonymous-запись или обезличенный
-      житель в выборку получателей не попадает.
+    - is_blocked=false — IT не заблокировал; этим же условием отсекается
+      anonymous-sentinel (создаётся с is_blocked=true). Прежний фильтр
+      `first_name != 'Удалено'` убран: он был NULL-небезопасен
+      (`NULL != 'Удалено'` в SQL даёт NULL, не TRUE), из-за чего житель
+      без имени молча не попадал в получатели, включая экстренные [ЧС]
+      (тот же баг, что убран в users.find_pending_pdn_retention).
 
     Если consent_broadcast_at отсутствует у подписчика — это легаси
     подписка ДО миграции 0007. Backfill в миграции 0008 либо
@@ -53,7 +56,6 @@ def _eligible_filter():
         (User.subscribed_broadcast.is_(True))
         & (User.consent_broadcast_at.isnot(None))
         & (User.is_blocked.is_(False))
-        & (User.first_name != "Удалено")
     )
 
 
