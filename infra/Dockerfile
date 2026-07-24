@@ -61,4 +61,10 @@ ENV SEED_DIR=/app/seed
 
 USER botuser
 
-CMD ["sh", "-c", "alembic upgrade head && python -m aemr_bot.main"]
+# exec: python становится PID 1 и получает SIGTERM от `compose stop|restart`.
+# Без exec PID 1 = sh, SIGTERM до python не доходит → advisory-lock снимается
+# только по reap соединения Postgres, и новый процесс не может стартовать
+# (рестарт-цикл). ponytail: exec закрывает graceful-stop; жёсткий краш без
+# FIN всё ещё держит лок до keepalive Postgres — добавить TCP-keepalive на
+# lock-соединение, если станет проблемой.
+CMD ["sh", "-c", "alembic upgrade head && exec python -m aemr_bot.main"]

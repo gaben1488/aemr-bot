@@ -513,6 +513,23 @@ class TestFinalizeAppeal:
         assert text == texts.APPEAL_EMPTY_REJECTED
 
     @pytest.mark.asyncio
+    async def test_no_consent_directs_to_start(self) -> None:
+        """persist вернул PERSIST_NO_CONSENT (обход блокировки/согласия через
+        «Подать похожее») → житель получает подсказку про /start, не создаётся
+        неотвечаемое обращение."""
+        from aemr_bot.handlers import appeal_funnel
+        from aemr_bot.handlers.appeal_runtime import PERSIST_NO_CONSENT
+
+        event = _funnel_event()
+        with patch("aemr_bot.handlers.appeal_funnel.persist_and_dispatch_appeal",
+                   AsyncMock(return_value=PERSIST_NO_CONSENT)):
+            await appeal_funnel.finalize_appeal(event, max_user_id=42)
+
+        text = event.bot.send_message.call_args.kwargs.get("text", "")
+        assert "согласие" in text.lower()
+        assert "/start" in text
+
+    @pytest.mark.asyncio
     async def test_persist_success_sends_nothing_extra(self) -> None:
         """persist вернул что-то truthy (успех) — finalize не шлёт ни
         rate-limit, ни empty-rejected (их шлёт persist-цепочка)."""

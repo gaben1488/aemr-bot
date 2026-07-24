@@ -38,6 +38,7 @@ _HAS_ALNUM = re.compile(r"[A-Za-zА-Яа-яЁё0-9]")
 # pg_advisory_xact_lock или Redis-lock. См. _persist_and_dispatch_appeal.
 _user_locks: dict[int, asyncio.Lock] = {}
 PERSIST_RATE_LIMITED = "rate_limited"
+PERSIST_NO_CONSENT = "no_consent"
 
 # Потолок одновременных финализаций при восстановлении на старте (P2-2).
 # `recover_stuck_funnels` поднимает до `recover_batch_size` (default 1000)
@@ -174,6 +175,15 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
                         max_user_id,
                     )
                     return None
+                # Единый гейт согласия/блокировки в точке создания: путь
+                # «Подать похожее» (menu.start_appeal_repeat) выставляет
+                # AWAITING_SUMMARY напрямую, минуя проверки start_appeal_flow.
+                # Заблокированный или отозвавший согласие иначе создал бы
+                # неотвечаемое обращение. Один гейт здесь закрывает все
+                # входы в финализацию.
+                if user.is_blocked or user.consent_pdn_at is None:
+                    await users_service.reset_state(session, max_user_id)
+                    return PERSIST_NO_CONSENT
                 recent = await appeals_service.count_recent_for_user(
                     session, user.id, hours=1
                 )
