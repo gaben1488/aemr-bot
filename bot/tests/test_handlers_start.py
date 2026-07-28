@@ -350,6 +350,43 @@ class TestCmdExport:
         assert event.bot.send_message.called or event.message.answer.called
 
     @pytest.mark.asyncio
+    async def test_export_goes_as_file_when_upload_works(self) -> None:
+        """Основной путь выгрузки — ФАЙЛ, а не текст кусками.
+
+        Политика обещает жителю выгрузку «в виде электронного файла в
+        машиночитаемом виде»; файл к тому же не упирается в лимит длины
+        сообщения и в разметку — именно на этом выгрузка молча срывалась.
+        Если это перестанет работать, житель снова получит нарезку в
+        блоках кода (или ничего).
+        """
+        from aemr_bot.handlers import start
+
+        event = _make_event()
+        user = SimpleNamespace(
+            id=1, max_user_id=42, first_name="Иван", phone="79001234567",
+            consent_pdn_at=None, consent_pdn_text_sha256=None,
+            consent_revoked_at=None, consent_broadcast_at=None,
+            subscribed_broadcast=False,
+        )
+        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.start.users_service.get_or_create",
+                   AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.start.appeals_service.list_for_user",
+                   AsyncMock(return_value=[])), \
+             patch("aemr_bot.handlers.start.uploads.upload_path",
+                   AsyncMock(return_value="TOKEN-1")) as upload, \
+             patch("aemr_bot.handlers.start.uploads.file_attachment",
+                   lambda token: {"type": "file", "token": token}):
+            await start.cmd_export(event)
+
+        upload.assert_awaited_once()
+        # Ушло одно сообщение с вложением, без нарезки в блоках кода.
+        sent = event.bot.send_message.call_args
+        assert sent is not None
+        assert sent.kwargs.get("attachments"), "выгрузка должна уйти вложением"
+        assert "```" not in (sent.kwargs.get("text") or "")
+
+    @pytest.mark.asyncio
     async def test_export_includes_full_correspondence(self) -> None:
         """Выгрузка отдаёт ВСЮ переписку, а не только последний ответ.
 

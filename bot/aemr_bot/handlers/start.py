@@ -11,6 +11,7 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as ops_service
 from aemr_bot.services import policy as policy_service
+from aemr_bot.services import uploads
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import (
@@ -284,6 +285,50 @@ def _chunk_for_messenger(text: str, *, limit: int) -> list[str]:
     return parts
 
 
+EXPORT_FILE_NAME = "Мои данные из чат-бота.json"
+
+
+async def _send_export_as_file(event, body: str) -> bool:
+    """Отправить выгрузку файлом. True — ушло, False — нужен запасной путь.
+
+    Имя файла берётся из basename загружаемого файла, поэтому пишем во
+    временный каталог под русским именем — житель увидит осмысленное
+    «Мои данные из чат-бота.json», а не служебное имя (тот же приём, что
+    в `services/policy.py` для политики).
+    """
+    import tempfile
+    from pathlib import Path
+
+    bot = getattr(event, "bot", None)
+    if bot is None:
+        return False
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="export_"))
+    path = tmp_dir / EXPORT_FILE_NAME
+    try:
+        path.write_text(body, encoding="utf-8")
+        token = await uploads.upload_path(bot, path)
+        if token is None:
+            log.warning("export: загрузка файла не удалась, уходим в текст")
+            return False
+        await reply(
+            event,
+            "Ваши данные — во вложении. Это машиночитаемый файл: "
+            "его можно сохранить и открыть любым текстовым редактором.",
+            attachments=[uploads.file_attachment(token)],
+        )
+        return True
+    except Exception:
+        log.exception("export: отправка файлом не удалась, уходим в текст")
+        return False
+    finally:
+        try:
+            path.unlink(missing_ok=True)
+            tmp_dir.rmdir()
+        except Exception:
+            log.debug("export: временный файл не удалён", exc_info=True)
+
+
 async def cmd_export(event):
     """Скрытая команда: житель получает JSON со своими данными
     (право субъекта по 152-ФЗ ст. 14). Не публикуется в /-меню MAX.
@@ -356,15 +401,43 @@ async def cmd_export(event):
             "appeals": appeals_payload,
         }
     body = json.dumps(export, ensure_ascii=False, indent=2)
+
+    # Основной путь — ФАЙЛ. Так обещает жителю политика («выгрузка в виде
+    # электронного файла в машиночитаемом виде») и так надёжнее: файл не
+    # упирается ни в лимит длины сообщения, ни в разметку. Текстовая
+    # нарезка остаётся запасным путём — если загрузка файла не удалась,
+    # житель всё равно получит свои данные, право по статье 14 закона
+    # № 152-ФЗ не должно зависеть от доступности загрузки.
+    if await _send_export_as_file(event, body):
+        return
+
     parts = _chunk_for_messenger(body, limit=EXPORT_CHUNK_CHARS)
     total = len(parts)
+    delivered = False
     for index, part in enumerate(parts, start=1):
         header = (
             "Ваши данные:"
             if total == 1
             else f"Ваши данные — часть {index} из {total}:"
         )
-        await reply(event, f"{header}\n\n```\n{part}\n```")
+        try:
+            await reply(event, f"{header}\n\n```\n{part}\n```")
+            delivered = True
+        except Exception:
+            log.exception("export: часть %d из %d не ушла жителю", index, total)
+
+    if not delivered:
+        # Молчать нельзя: житель ждёт свои данные и не понимает, почему
+        # тишина. Раньше сбой доставки виден был только в логе.
+        try:
+            await reply(
+                event,
+                "Не удалось отправить выгрузку — техническая ошибка. "
+                "Сообщите об этом в Администрацию, данные подготовим "
+                "и передадим другим способом.",
+            )
+        except Exception:
+            log.exception("export: не удалось сообщить жителю о сбое выгрузки")
 
 
 async def cmd_cancel(event):
