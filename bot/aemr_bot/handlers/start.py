@@ -3,10 +3,13 @@ import logging
 from maxapi import Dispatcher
 from maxapi.types import BotStarted, BotStopped, Command, MessageCreated
 
+from datetime import datetime, timezone
+
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import admin_events
+from aemr_bot.services import card_format
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as ops_service
@@ -285,7 +288,109 @@ def _chunk_for_messenger(text: str, *, limit: int) -> list[str]:
     return parts
 
 
-EXPORT_FILE_NAME = "Мои данные из чат-бота.json"
+EXPORT_FILE_NAME = "Мои данные из чат-бота.txt"
+
+
+def _export_dt(value) -> str:
+    """Дата для жителя: «02.07.2026 11:05» вместо машинного формата."""
+    if value is None:
+        return "—"
+    try:
+        return card_format._local(value)
+    except Exception:
+        return str(value)
+
+
+def _render_export_for_human(user, appeals) -> str:
+    """Собрать выгрузку в виде, понятном человеку без подготовки.
+
+    Раньше жителю уходил JSON — он годится регулятору, но пенсионер видит
+    в нём кашу из скобок и латинских ключей. Право на доступ к своим
+    данным (статья 14 закона № 152-ФЗ) осмысленно ровно настолько,
+    насколько человек может эти данные прочитать.
+    """
+    L: list[str] = []
+    L.append("ВАШИ ДАННЫЕ В ЧАТ-БОТЕ АДМИНИСТРАЦИИ")
+    L.append("Елизовского муниципального округа")
+    L.append(f"Выгрузка сформирована: {_export_dt(datetime.now(timezone.utc))}")
+    L.append("")
+    L.append("О ВАС")
+    L.append(f"  Имя: {user.first_name or '—'}")
+    L.append(f"  Телефон: {user.phone or '—'}")
+    L.append(f"  Номер вашего аккаунта в мессенджере MAX: {user.max_user_id}")
+    L.append("")
+    L.append("СОГЛАСИЯ")
+    L.append(f"  Согласие на обработку данных дано: {_export_dt(user.consent_pdn_at)}")
+    if user.consent_revoked_at:
+        L.append(f"  Согласие отозвано: {_export_dt(user.consent_revoked_at)}")
+    else:
+        L.append("  Согласие отозвано: нет, действует")
+    if user.subscribed_broadcast:
+        L.append(
+            "  Подписка на оповещения: оформлена "
+            f"{_export_dt(user.consent_broadcast_at)}"
+        )
+    else:
+        L.append("  Подписка на оповещения: не оформлена")
+    if user.consent_pdn_text_sha256:
+        L.append(
+            "  Служебная отметка (отпечаток текста согласия): "
+            f"{user.consent_pdn_text_sha256[:16]}… — по ней видно, "
+            "какую именно редакцию согласия вы принимали"
+        )
+    L.append("")
+
+    if not appeals:
+        L.append("ВАШИ ОБРАЩЕНИЯ")
+        L.append("  Обращений пока нет.")
+    else:
+        L.append(f"ВАШИ ОБРАЩЕНИЯ: {len(appeals)}")
+    for ap in appeals:
+        _, status_label = texts.STATUS_LABELS.get(
+            ap.status, ("", ap.status or "—")
+        )
+        L.append("")
+        L.append(f"── Обращение № {ap.id} " + "─" * 30)
+        L.append(f"  Подано: {_export_dt(ap.created_at)}")
+        L.append(f"  Состояние: {status_label}")
+        L.append(f"  Тема: {ap.topic or '—'}")
+        L.append(f"  Населённый пункт: {ap.locality or '—'}")
+        L.append(f"  Адрес: {ap.address or '—'}")
+        attach_n = len(ap.attachments or [])
+        if attach_n:
+            L.append(f"  Вы приложили файлов: {attach_n}")
+        if ap.answered_at:
+            L.append(f"  Ответ дан: {_export_dt(ap.answered_at)}")
+        if ap.closed_at:
+            L.append(f"  Закрыто: {_export_dt(ap.closed_at)}")
+        L.append("")
+        L.append("  Текст обращения:")
+        for line in (ap.summary or "—").splitlines() or ["—"]:
+            L.append(f"    {line}")
+        messages = list(ap.messages or [])
+        if messages:
+            L.append("")
+            L.append("  Переписка:")
+            for m in messages:
+                who = "Оператор" if m.direction == "from_operator" else "Вы"
+                L.append(f"    [{_export_dt(m.created_at)}] {who}:")
+                for line in (m.text or "—").splitlines() or ["—"]:
+                    L.append(f"      {line}")
+                m_attach = len(m.attachments or [])
+                if m_attach:
+                    L.append(f"      (приложено файлов: {m_attach})")
+
+    L.append("")
+    L.append("─" * 46)
+    L.append(
+        "Сами файлы и фотографии хранятся в мессенджере MAX — в этой "
+        "выгрузке указано только их количество."
+    )
+    L.append(
+        "Изменить данные, потребовать их удаления или обжаловать наши "
+        "действия можно письмом в Администрацию."
+    )
+    return "\n".join(L)
 
 
 async def _send_export_as_file(event, body: str) -> bool:
@@ -313,8 +418,8 @@ async def _send_export_as_file(event, body: str) -> bool:
             return False
         await reply(
             event,
-            "Ваши данные — во вложении. Это машиночитаемый файл: "
-            "его можно сохранить и открыть любым текстовым редактором.",
+            "Ваши данные — во вложении. Файл можно сохранить и открыть "
+            "на телефоне или компьютере.",
             attachments=[uploads.file_attachment(token)],
         )
         return True
@@ -330,84 +435,32 @@ async def _send_export_as_file(event, body: str) -> bool:
 
 
 async def cmd_export(event):
-    """Скрытая команда: житель получает JSON со своими данными
+    """Скрытая команда: житель получает свои данные файлом
     (право субъекта по 152-ФЗ ст. 14). Не публикуется в /-меню MAX.
 
     Состав: профиль (имя, телефон, отметки согласий), обращения и ВСЯ
     переписка по каждому — уточнения жителя и ответы оператора, плюс
     количество вложений. Без admin-пометок и системных полей.
 
-    Длинная выгрузка отправляется несколькими сообщениями: предел MAX
-    около 4000 символов, и одним куском она бы не ушла вовсе.
+    Формат — ЧЕЛОВЕКОЧИТАЕМЫЙ текст, а не JSON: выгрузку читает житель,
+    в том числе пожилой, а не программа. Машинный формат право на доступ
+    формально закрывал, но фактически оставлял человека наедине с
+    латинскими ключами и скобками.
     """
-    import json
-    from datetime import datetime
-
     max_user_id = get_user_id(event)
     if max_user_id is None:
         return
     async with current_user(max_user_id) as (session, user):
+        # ВСЯ переписка, а не только последний ответ оператора: статья 14
+        # даёт право на доступ к обрабатываемым данным, а уточнения жителя
+        # и его вложения — такие же его данные, как текст обращения.
         appeals = await appeals_service.list_for_user(session, user.id, limit=500)
-        appeals_payload = []
-        for ap in appeals:
-            # ВСЯ переписка, а не только последний ответ оператора.
-            # Ст. 14 даёт право на доступ к обрабатываемым данным, а
-            # уточнения жителя и вложения — такие же его данные, как и
-            # текст обращения. Раньше выгрузка отдавала одно последнее
-            # сообщение оператора: житель не мог увидеть ни собственные
-            # дополнения, ни факт наличия вложений, хотя согласие прямо
-            # обещает хранение переписки.
-            messages_payload = [
-                {
-                    "created_at": m.created_at.isoformat() if m.created_at else None,
-                    "from": (
-                        "оператор"
-                        if m.direction == "from_operator"
-                        else "вы"
-                    ),
-                    "text": m.text,
-                    # Сами файлы лежат на стороне MAX, у нас только
-                    # метаданные — отдаём их количество, чтобы житель
-                    # видел, что вложения были.
-                    "attachments_count": len(m.attachments or []),
-                }
-                for m in (ap.messages or [])
-            ]
-            appeals_payload.append(
-                {
-                    "id": ap.id,
-                    "created_at": ap.created_at.isoformat() if ap.created_at else None,
-                    "status": ap.status,
-                    "locality": ap.locality,
-                    "address": ap.address,
-                    "topic": ap.topic,
-                    "summary": ap.summary,
-                    "attachments_count": len(ap.attachments or []),
-                    "answered_at": ap.answered_at.isoformat() if ap.answered_at else None,
-                    "closed_at": ap.closed_at.isoformat() if ap.closed_at else None,
-                    "messages": messages_payload,
-                }
-            )
-        export = {
-            "exported_at": datetime.now().isoformat(),
-            "max_user_id": user.max_user_id,
-            "first_name": user.first_name,
-            "phone": user.phone,
-            "consent_pdn_at": user.consent_pdn_at.isoformat() if user.consent_pdn_at else None,
-            "consent_text_sha256": user.consent_pdn_text_sha256,
-            "consent_revoked_at": user.consent_revoked_at.isoformat() if user.consent_revoked_at else None,
-            "consent_broadcast_at": user.consent_broadcast_at.isoformat() if user.consent_broadcast_at else None,
-            "subscribed_broadcast": user.subscribed_broadcast,
-            "appeals": appeals_payload,
-        }
-    body = json.dumps(export, ensure_ascii=False, indent=2)
+        body = _render_export_for_human(user, appeals)
 
-    # Основной путь — ФАЙЛ. Так обещает жителю политика («выгрузка в виде
-    # электронного файла в машиночитаемом виде») и так надёжнее: файл не
-    # упирается ни в лимит длины сообщения, ни в разметку. Текстовая
-    # нарезка остаётся запасным путём — если загрузка файла не удалась,
-    # житель всё равно получит свои данные, право по статье 14 закона
-    # № 152-ФЗ не должно зависеть от доступности загрузки.
+    # Основной путь — ФАЙЛ: он не упирается ни в лимит длины сообщения,
+    # ни в разметку (на этом выгрузка молча срывалась). Текстовая нарезка
+    # остаётся запасным путём — право по статье 14 закона № 152-ФЗ не
+    # должно зависеть от доступности загрузки файлов.
     if await _send_export_as_file(event, body):
         return
 
