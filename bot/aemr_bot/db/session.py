@@ -13,8 +13,15 @@ def _engine_kwargs() -> dict:
     if settings.database_url.startswith("postgresql"):
         base.update(
             pool_pre_ping=True,
-            pool_size=5,
-            max_overflow=10,
+            # Потолок пула (pool_size + max_overflow) выровнен с окном
+            # одновременной обработки апдейтов (main._SEMAPHORE_CONCURRENCY
+            # = 32). Раньше было 5+10=15: в пик (массовая подача после ЧС)
+            # семафор пропускал 32 обработчика, а соединений на всех было
+            # 15 — семнадцать стояли в очереди за коннектом, снаружи это
+            # выглядело как «бот тормозит». Инвариант стережёт
+            # tests/test_deps_environment.py.
+            pool_size=8,
+            max_overflow=24,
             # 30 минут: переподключение после Postgres failover/restart
             # либо обрыва TCP. Без этого pool отдаёт мёртвые соединения,
             # pool_pre_ping ловит, но даёт лишний RTT на каждый запрос.

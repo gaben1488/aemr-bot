@@ -129,3 +129,38 @@ def test_dispatcher_handle_signature_matches_dispatch_guards() -> None:
         "Dispatcher.handle больше не coroutine — guarded_handle в "
         "aemr_bot/main.py сломается."
     )
+
+
+def test_db_pool_ceiling_matches_dispatch_semaphore() -> None:
+    """Потолок пула БД не меньше окна одновременной обработки апдейтов.
+
+    Если semaphore пропускает больше обработчиков, чем пул может дать
+    соединений, лишние молча стоят в очереди за коннектом — в пик
+    (массовая подача после ЧС) это выглядит как «бот тормозит», а
+    причина не видна ни в одном логе. Числа живут в разных файлах
+    (main.py и db/session.py) и однажды уже разъехались: 32 против 15.
+    """
+    from aemr_bot import main
+    from aemr_bot.db import session as db_session
+
+    # _engine_kwargs читает settings.database_url — на юнит-окружении там
+    # sqlite и pool-параметров нет. Достаём числа из исходника, это
+    # честный контракт файла, а не рантайма.
+    import ast
+    import inspect as _inspect
+
+    tree = ast.parse(_inspect.getsource(db_session._engine_kwargs))
+    found = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.keyword) and node.arg in ("pool_size", "max_overflow"):
+            if isinstance(node.value, ast.Constant):
+                found[node.arg] = node.value.value
+    assert set(found) == {"pool_size", "max_overflow"}, (
+        f"не нашёл pool_size/max_overflow в db/session.py: {found}"
+    )
+    ceiling = found["pool_size"] + found["max_overflow"]
+    assert ceiling >= main._SEMAPHORE_CONCURRENCY, (
+        f"пул БД ({found['pool_size']}+{found['max_overflow']}={ceiling}) меньше "
+        f"окна обработки (main._SEMAPHORE_CONCURRENCY={main._SEMAPHORE_CONCURRENCY}) — "
+        "обработчики будут стоять в очереди за соединением; выровняй числа."
+    )
