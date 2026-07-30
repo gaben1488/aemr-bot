@@ -255,11 +255,15 @@ async def _cb_consent_yes(event, max_user_id: int, payload: str) -> None:
         consent_hash = await settings_store.get_consent_text_hash(
             session, fallback=texts.CONSENT_REQUEST
         )
-        await users_service.set_consent(
+        newly_granted = await users_service.set_consent(
             session, max_user_id, text_sha256=consent_hash
         )
     await ack_callback(event, texts.CONSENT_ACCEPTED)
-    await admin_events.notify_consent_given(event.bot, max_user_id=max_user_id)
+    # Уведомляем оператора только при переходе «согласия не было → дано»
+    # (атомарный признак из set_consent). Дубль callback'а или двойной
+    # тап по «✅ Согласен» раньше слал оператору второе уведомление.
+    if newly_granted:
+        await admin_events.notify_consent_given(event.bot, max_user_id=max_user_id)
     await appeal_funnel.ask_contact_or_skip(event, max_user_id)
 
 

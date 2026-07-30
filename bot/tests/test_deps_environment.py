@@ -80,3 +80,52 @@ def test_default_connection_signature_matches_prod_api() -> None:
         f"`aemr_bot/main.py` перед деплоем, обновите EXPECTED версию и "
         f"эту проверку."
     )
+
+
+def test_bot_get_updates_signature_matches_polling_patch() -> None:
+    """Guard на monkey-patch `bot.get_updates` в main.py.
+
+    `_install_polling_timeout` подменяет метод на экземпляре и полагается
+    на именованный параметр `timeout` (kwargs.setdefault('timeout', ...))
+    и на то, что метод — coroutine. При апгрейде maxapi патч отвяжется
+    МОЛЧА: таймаут перестанет проставляться, poll_watch перестанет
+    отмечаться, /livez ослепнет. Если этот тест RED — обнови патч
+    `_install_polling_timeout` в aemr_bot/main.py.
+    """
+    from maxapi import Bot
+
+    sig = inspect.signature(Bot.get_updates)
+    params = list(sig.parameters.keys())
+    assert params == ["self", "limit", "timeout", "marker", "types"], (
+        f"Сигнатура Bot.get_updates изменилась: {params}. Обнови "
+        f"monkey-patch `_install_polling_timeout` в aemr_bot/main.py "
+        f"(он полагается на kwarg `timeout`)."
+    )
+    assert inspect.iscoroutinefunction(Bot.get_updates), (
+        "Bot.get_updates больше не coroutine — обёртка "
+        "get_updates_with_timeout в aemr_bot/main.py сломается."
+    )
+
+
+def test_dispatcher_handle_signature_matches_dispatch_guards() -> None:
+    """Guard на monkey-patch `dp.handle` в main.py.
+
+    `_install_dispatch_guards` подменяет метод на экземпляре
+    (guarded_handle) и полагается: handle — coroutine, первый аргумент —
+    событие (event_object). Если maxapi переименует/уберёт метод или
+    сменит форму вызова, per-user троттлинг и bounded-семафор отвяжутся
+    молча — polling-путь останется без анти-флуда. Если этот тест RED —
+    обнови патч `_install_dispatch_guards` в aemr_bot/main.py.
+    """
+    from maxapi import Dispatcher
+
+    sig = inspect.signature(Dispatcher.handle)
+    params = list(sig.parameters.keys())
+    assert params == ["self", "event_object"], (
+        f"Сигнатура Dispatcher.handle изменилась: {params}. Обнови "
+        f"monkey-patch `_install_dispatch_guards` в aemr_bot/main.py."
+    )
+    assert inspect.iscoroutinefunction(Dispatcher.handle), (
+        "Dispatcher.handle больше не coroutine — guarded_handle в "
+        "aemr_bot/main.py сломается."
+    )

@@ -568,22 +568,28 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
     if chunk and len(chunk) > cfg.summary_max_chars:
         truncated_tail = _truncation_tail(chunk[: cfg.summary_max_chars])
 
-    async with current_user(max_user_id) as (session, user):
-        # dict() — shallow copy. Nested list (summary_chunks, attachments)
-        # должен быть отдельной копией, иначе append мутирует list,
-        # лежащий в SQLAlchemy-tracked user.dialog_data ДО flush.
-        data = dict(user.dialog_data or {})
-        data["summary_chunks"] = list(data.get("summary_chunks") or [])
-        data["attachments"] = list(data.get("attachments") or [])
+    def _merge_summary(data: dict) -> dict:
+        """Накопить chunks/attachments поверх СВЕЖЕГО dialog_data.
 
+        Вызывается внутри update_dialog_data ПОД pg_advisory_xact_lock —
+        прямой read-modify-write здесь терял одно из двух сообщений,
+        пришедших подряд (текст и фото): оба читали старый список,
+        последний writer затирал изменения первого. list() — отдельные
+        копии: append не должен мутировать list, лежащий в
+        SQLAlchemy-tracked user.dialog_data до flush.
+        """
+        chunks = list(data.get("summary_chunks") or [])
+        attachments = list(data.get("attachments") or [])
         if chunk:
-            data["summary_chunks"].append(chunk[: cfg.summary_max_chars])
-
+            chunks.append(chunk[: cfg.summary_max_chars])
         if atts:
-            data["attachments"].extend(atts[: cfg.attachments_max_per_appeal])
+            attachments.extend(atts[: cfg.attachments_max_per_appeal])
+        return {"summary_chunks": chunks, "attachments": attachments}
 
-        user.dialog_data = data
-        await session.flush()
+    async with session_scope() as session:
+        await users_service.update_dialog_data(
+            session, max_user_id, _merge_summary
+        )
 
     if truncated_tail is not None:
         await event.message.answer(

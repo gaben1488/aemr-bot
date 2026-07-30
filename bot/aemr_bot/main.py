@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -720,6 +721,47 @@ async def main() -> None:
             "lock). Погасите второй контейнер/юнит и запустите один."
         )
         raise
+
+    # Watchdog замка: session-level advisory-lock живёт на соединении —
+    # рестарт postgres или обрыв сети тихо снимает его, а процесс
+    # продолжает работать без гарантии единственности. Периодически
+    # проверяем соединение; при потере — переакквизиция; если замок уже
+    # у другого процесса — немедленный выход (systemd/compose
+    # перезапустит, рестарт встанет в обычную очередь за замком).
+    async def _lock_watchdog() -> None:
+        nonlocal _lock_conn
+        while True:
+            await asyncio.sleep(
+                single_instance.LOCK_WATCHDOG_INTERVAL_SECONDS
+            )
+            try:
+                status, _lock_conn = (
+                    await single_instance.verify_single_instance_lock(_lock_conn)
+                )
+            except single_instance.SingleInstanceError:
+                log.critical(
+                    "single-instance lock ПОТЕРЯН (обрыв соединения с БД) и "
+                    "уже занят другим процессом — завершаемся, чтобы не "
+                    "работать вторым экземпляром на одном токене."
+                )
+                # os._exit, не sys.exit: SystemExit в фоновом таске лишь
+                # погасил бы сам таск, polling продолжил бы жить без замка.
+                os._exit(1)
+            except Exception:
+                # БД целиком недоступна: ни проверить, ни переакквизировать.
+                # Не валим процесс — второй экземпляр в этот момент тоже
+                # не может взять замок; повторим на следующем тике.
+                log.exception(
+                    "single-instance lock check failed; повтор на следующем тике"
+                )
+            else:
+                if status == single_instance.LOCK_REACQUIRED:
+                    log.warning(
+                        "single-instance lock переакквизирован после обрыва "
+                        "соединения с БД"
+                    )
+
+    spawn_background_task(_lock_watchdog(), name="single_instance_watchdog")
 
     # Публикуем /-меню MAX (/start, /menu) для всех чатов. У MAX нет
     # раздельного списка команд для лички и служебной группы, поэтому

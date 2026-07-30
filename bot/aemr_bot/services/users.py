@@ -1,5 +1,6 @@
 import hashlib
 import logging
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import delete, select, text, update
@@ -67,12 +68,16 @@ async def set_consent(
     max_user_id: int,
     *,
     text_sha256: str | None = None,
-) -> None:
+) -> bool:
     """Дать (или возобновить) согласие на обработку ПДн.
 
-    Снимаем is_blocked: житель мог раньше воспользоваться /forget или
-    его блокировал IT, потом вернулся и дал согласие заново — это
-    явное «свяжитесь со мной снова», блокировка устаревает.
+    is_blocked НАМЕРЕННО НЕ снимается (security-фикс SEC #1): иначе
+    blocked житель, тапнув старую кнопку «✅ Согласен» из истории чата
+    (после того как IT заблокировал его), снял бы блок себе сам.
+    Разблокировку делает только IT через admin_audience /
+    admin_appeal_ops с ensure_role(IT) — явным вызовом
+    users_service.set_blocked(blocked=False). НЕ «чинить» это под
+    старую формулировку доки — дыра самоснятия блокировки вернётся.
 
     Обнуляем consent_revoked_at: иначе свежее согласие соседствует
     с давним отзывом, и retention-cron через 30 дней с того отзыва
@@ -84,22 +89,40 @@ async def set_consent(
     settings_store.get_consent_text_hash. None допустим (например,
     вызовы из тестов и миграционных сценариев), но боевой путь согласия
     его проставляет.
+
+    Возвращает True, если согласие дано ЗАНОВО (consent_pdn_at был
+    NULL — первый раз или после отзыва): по этому признаку вызывающий
+    код шлёт уведомление оператору ровно один раз. False — согласие уже
+    действовало (повторный тап / дубль callback'а): освежаются только
+    отметка времени и хеш редакции, уведомлять не нужно. Признак
+    атомарен: conditional UPDATE под row-lock'ом — из двух конкурентных
+    транзакций ровно одна увидит переход NULL→значение.
     """
-    await session.execute(
-        update(User)
-        .where(User.max_user_id == max_user_id)
-        .values(
-            consent_pdn_at=datetime.now(timezone.utc),
-            consent_pdn_text_sha256=text_sha256,
-            consent_revoked_at=None,
-            # SEC #1: НЕ сбрасываем is_blocked здесь — иначе blocked житель,
-            # тапнув старую кнопку «✅ Согласен» из истории чата (после того
-            # как IT заблокировал его), снимет блок себе сам. Разблокировку
-            # делает только IT через admin_audience / admin_appeal_ops с
-            # ensure_role(IT). is_blocked сбрасывается явно через
-            # users_service.set_blocked(blocked=False).
-        )
+    values = dict(
+        consent_pdn_at=datetime.now(timezone.utc),
+        consent_pdn_text_sha256=text_sha256,
+        consent_revoked_at=None,
     )
+    fresh = await session.execute(
+        update(User)
+        .where(
+            User.max_user_id == max_user_id,
+            # Условие — сам механизм идемпотентности: проигравшая
+            # конкурентная транзакция после снятия row-lock'а
+            # перепроверит предикат на свежей версии строки и получит
+            # rowcount=0 (постгресовый EvalPlanQual при READ COMMITTED).
+            User.consent_pdn_at.is_(None),
+        )
+        .values(**values)
+    )
+    if (fresh.rowcount or 0) > 0:
+        return True
+    # Согласие уже действует — житель подтвердил актуальную редакцию
+    # текста: освежаем отметку и хеш, без уведомления.
+    await session.execute(
+        update(User).where(User.max_user_id == max_user_id).values(**values)
+    )
+    return False
 
 
 async def set_phone(session: AsyncSession, max_user_id: int, phone: str) -> None:
@@ -132,7 +155,11 @@ async def reset_state(session: AsyncSession, max_user_id: int) -> None:
     )
 
 
-async def update_dialog_data(session: AsyncSession, max_user_id: int, patch: dict) -> dict:
+async def update_dialog_data(
+    session: AsyncSession,
+    max_user_id: int,
+    patch: dict | Callable[[dict], dict],
+) -> dict:
     """Read-modify-write апдейт jsonb dialog_data с защитой от гонки.
 
     Без advisory-lock два параллельных callback'а одного жителя
@@ -141,6 +168,14 @@ async def update_dialog_data(session: AsyncSession, max_user_id: int, patch: dic
     `pg_advisory_xact_lock(max_user_id)` сериализует параллельные
     транзакции по этому конкретному `max_user_id`, не трогая других
     жителей. Lock освобождается на commit/rollback автоматически.
+
+    `patch` — либо готовый dict-патч, либо функция от ТЕКУЩЕГО
+    dialog_data, возвращающая dict-патч. Функция нужна для
+    accumulate-обновлений (append в summary_chunks/attachments):
+    она вычисляется уже ПОД lock'ом на свежепрочитанных данных.
+    Готовый dict для таких обновлений не годится — он был бы посчитан
+    от устаревшего снимка до взятия lock'а, и конкурентный append
+    (текст и фото двумя сообщениями подряд) терял бы одно из двух.
 
     На SQLite (тесты с `_PSEUDO_DB`) advisory_xact_lock отсутствует —
     игнорируем ошибку и идём дальше: для unit-тестов гонок нет.
@@ -158,7 +193,7 @@ async def update_dialog_data(session: AsyncSession, max_user_id: int, patch: dic
     if user is None:
         return {}
     data = dict(user.dialog_data or {})
-    data.update(patch)
+    data.update(patch(data) if callable(patch) else patch)
     user.dialog_data = data
     await session.flush()
     return data

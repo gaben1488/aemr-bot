@@ -49,6 +49,59 @@ class TestUpdateDialogData:
         result = await users_service.update_dialog_data(session, 99999, {"x": 1})
         assert result == {}
 
+    @pytest.mark.asyncio
+    async def test_callable_patch_sees_fresh_data(self, session) -> None:
+        """P2-1: patch-коллабл получает ТЕКУЩИЙ dialog_data (прочитанный
+        под advisory-lock) — accumulate-обновления (append в списки)
+        не теряют конкурентных изменений, в отличие от готового dict,
+        посчитанного от устаревшего снимка."""
+        await users_service.get_or_create(session, max_user_id=1, first_name="X")
+        await users_service.update_dialog_data(
+            session, 1, {"summary_chunks": ["первое"]}
+        )
+
+        def _append(data: dict) -> dict:
+            return {"summary_chunks": [*data.get("summary_chunks", []), "второе"]}
+
+        result = await users_service.update_dialog_data(session, 1, _append)
+        assert result["summary_chunks"] == ["первое", "второе"]
+        u = await users_service.get_or_create(session, max_user_id=1)
+        assert u.dialog_data["summary_chunks"] == ["первое", "второе"]
+
+
+class TestSetConsent:
+    @pytest.mark.asyncio
+    async def test_first_grant_returns_true_repeat_false(self, session) -> None:
+        """P3-6: первый переход NULL→согласие возвращает True (уведомить
+        оператора один раз), повтор (дубль callback'а / второй тап) —
+        False, но отметка и хеш освежаются."""
+        await users_service.get_or_create(session, max_user_id=1, first_name="X")
+        assert await users_service.set_consent(session, 1, text_sha256="aaa") is True
+        assert await users_service.set_consent(session, 1, text_sha256="bbb") is False
+        u = await users_service.get_or_create(session, max_user_id=1)
+        assert u.consent_pdn_at is not None
+        # Повтор освежил хеш редакции — житель подтвердил актуальный текст.
+        assert u.consent_pdn_text_sha256 == "bbb"
+
+    @pytest.mark.asyncio
+    async def test_regrant_after_revoke_returns_true(self, session) -> None:
+        """После отзыва согласие даётся заново — это снова «свежий» грант,
+        оператора уведомляем."""
+        await users_service.get_or_create(session, max_user_id=1, first_name="X")
+        assert await users_service.set_consent(session, 1) is True
+        await users_service.revoke_consent(session, 1)
+        assert await users_service.set_consent(session, 1) is True
+
+    @pytest.mark.asyncio
+    async def test_does_not_unblock(self, session) -> None:
+        """SEC #1: повторное согласие НЕ снимает is_blocked — иначе
+        blocked житель снял бы IT-блокировку сам, тапнув старую кнопку."""
+        await users_service.get_or_create(session, max_user_id=1, first_name="X")
+        await users_service.set_blocked(session, 1, blocked=True)
+        await users_service.set_consent(session, 1)
+        u = await users_service.get_or_create(session, max_user_id=1)
+        assert u.is_blocked is True
+
 
 class TestSetFirstName:
     @pytest.mark.asyncio

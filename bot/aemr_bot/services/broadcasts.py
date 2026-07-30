@@ -12,6 +12,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import desc, func, select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.db.models import Broadcast, BroadcastDelivery, BroadcastStatus, User
@@ -248,15 +249,19 @@ async def record_delivery(
     error: str | None,
 ) -> None:
     delivered_at = datetime.now(timezone.utc) if error is None else None
-    session.add(
-        BroadcastDelivery(
+    # on_conflict_do_nothing по UNIQUE(broadcast_id, user_id): повторная
+    # запись той же пары (ретрай после сетевого сбоя) — тихий no-op,
+    # счётчики доставки не задваиваются. См. миграцию 0023.
+    await session.execute(
+        pg_insert(BroadcastDelivery)
+        .values(
             broadcast_id=broadcast_id,
             user_id=user_id,
             delivered_at=delivered_at,
             error=error,
         )
+        .on_conflict_do_nothing(index_elements=["broadcast_id", "user_id"])
     )
-    await session.flush()
 
 
 async def record_deliveries(
@@ -271,23 +276,34 @@ async def record_deliveries(
     Раньше цикл рассылки писал каждую доставку отдельной транзакцией
     (`record_delivery` + свой `session_scope`): на 10k подписчиков —
     10k+ коммитов, каждый со своим BEGIN/COMMIT и checkout из пула.
-    Здесь один `add_all` + один flush на пачку (типично 50 строк) —
-    в ~50 раз меньше round-trip'ов к БД. Вызывающий код накапливает
-    буфер и сбрасывает его этой функцией по таймеру/переполнению.
+    Здесь один INSERT на пачку (типично 50 строк) — в ~50 раз меньше
+    round-trip'ов к БД. Вызывающий код накапливает буфер и сбрасывает
+    его этой функцией по таймеру/переполнению.
+
+    on_conflict_do_nothing по UNIQUE(broadcast_id, user_id): flush
+    буфера в handlers/broadcast.py best-effort — при сбое буфер НЕ
+    очищается и уходит повторно вместе со следующей пачкой. Если часть
+    строк успела закоммититься до обрыва, повтор без ограничения
+    задваивал счётчики; теперь дубли пары тихо пропускаются.
     """
     if not results:
         return
     now = datetime.now(timezone.utc)
-    session.add_all(
-        BroadcastDelivery(
-            broadcast_id=broadcast_id,
-            user_id=user_id,
-            delivered_at=now if error is None else None,
-            error=error,
+    await session.execute(
+        pg_insert(BroadcastDelivery)
+        .values(
+            [
+                {
+                    "broadcast_id": broadcast_id,
+                    "user_id": user_id,
+                    "delivered_at": now if error is None else None,
+                    "error": error,
+                }
+                for user_id, error in results
+            ]
         )
-        for user_id, error in results
+        .on_conflict_do_nothing(index_elements=["broadcast_id", "user_id"])
     )
-    await session.flush()
 
 
 async def count_delivery_results(

@@ -34,6 +34,14 @@ class SingleInstanceError(RuntimeError):
     """Другой процесс уже держит single-instance lock для этого токена."""
 
 
+# Статусы verify_single_instance_lock. Интервал проверки — константа,
+# а не settings: это внутренний watchdog без операционной надобности
+# его крутить.
+LOCK_OK = "ok"
+LOCK_REACQUIRED = "reacquired"
+LOCK_WATCHDOG_INTERVAL_SECONDS = 60.0
+
+
 def _lock_key(token: str) -> int:
     """Стабильный int64-ключ advisory-lock из токена.
 
@@ -77,6 +85,51 @@ async def acquire_single_instance_lock(
         )
     log.info("single-instance lock acquired (advisory key %d)", key)
     return conn
+
+
+async def verify_single_instance_lock(
+    conn: AsyncConnection | None,
+    eng: AsyncEngine | None = None,
+) -> tuple[str, AsyncConnection | None]:
+    """Проверить, что advisory-lock всё ещё наш; вернуть (status, conn).
+
+    Session-level lock живёт на соединении: рестарт postgres или обрыв
+    сети тихо снимает замок, а процесс продолжает работать так, будто
+    держит его, — окно для второго экземпляра. Периодический вызов
+    (lock-watchdog в main.py) закрывает окно:
+
+    - соединение живо (`SELECT 1` прошёл) → замок держится:
+      (LOCK_OK, прежний conn);
+    - соединение мертво → переакквизиция свежим соединением удалась:
+      (LOCK_REACQUIRED, новый conn) — держать его вместо старого;
+    - соединение мертво и замок занят другим процессом →
+      SingleInstanceError пробрасывается: вызывающий обязан завершить
+      процесс (работать вторым экземпляром нельзя, systemd/compose
+      перезапустит и рестарт встанет в обычную очередь за замком).
+
+    Прочие исключения (БД целиком недоступна — ни проверить, ни
+    переакквизировать) тоже пробрасываются: вызывающий решает, ждать ли
+    следующего тика.
+
+    conn=None (sqlite no-op режим) → всегда (LOCK_OK, None).
+    """
+    if conn is None:
+        return LOCK_OK, None
+    try:
+        await conn.scalar(text("SELECT 1"))
+        return LOCK_OK, conn
+    except Exception:
+        log.warning(
+            "single-instance lock: соединение потеряно, замок снят БД — "
+            "пробуем переакквизицию",
+            exc_info=True,
+        )
+    try:
+        await conn.close()
+    except Exception:
+        log.debug("stale lock conn close failed", exc_info=True)
+    new_conn = await acquire_single_instance_lock(eng)
+    return LOCK_REACQUIRED, new_conn
 
 
 async def release_single_instance_lock(conn: AsyncConnection | None) -> None:

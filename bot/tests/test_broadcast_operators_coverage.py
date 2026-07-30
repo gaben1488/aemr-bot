@@ -798,11 +798,15 @@ class TestListings:
         # Пользователи с db-id (PK), на них ссылается BroadcastDelivery.user_id.
         u1 = User(max_user_id=1001, first_name="Анна", subscribed_broadcast=True)
         u2 = User(max_user_id=1002, first_name=None, subscribed_broadcast=True)
-        s.add_all([u1, u2])
+        # Успешная доставка — у ОТДЕЛЬНОГО получателя: пара (broadcast,
+        # user) уникальна (P2-2), второй результат того же жителя
+        # схлопнулся бы и success-строка не легла бы в таблицу вовсе.
+        u3 = User(max_user_id=1003, first_name="Олег", subscribed_broadcast=True)
+        s.add_all([u1, u2, u3])
         await s.flush()
 
         b = await bc.create_broadcast(
-            s, text="x", operator_id=None, subscriber_count=2
+            s, text="x", operator_id=None, subscriber_count=3
         )
         await bc.record_deliveries(
             s,
@@ -810,7 +814,7 @@ class TestListings:
             results=[
                 (u1.id, "bot blocked"),
                 (u2.id, "user deleted"),
-                (u1.id, None),  # успех — НЕ должен попасть в failed
+                (u3.id, None),  # успех — НЕ должен попасть в failed
             ],
         )
         failed = await bc.list_failed_deliveries(s, b.id)
@@ -828,8 +832,14 @@ class TestListings:
         """Лимит отсечки соблюдается — caller по длине==limit понимает,
         что есть ещё."""
         s = sqlite_session
-        u = User(max_user_id=2001, first_name="Петр", subscribed_broadcast=True)
-        s.add(u)
+        # Пять РАЗНЫХ получателей: пара (broadcast_id, user_id) уникальна
+        # (P2-2, миграция 0023) — повтор одной пары тихо схлопнулся бы в
+        # одну строку и лимит было бы не на чем проверять.
+        users = [
+            User(max_user_id=2001 + i, first_name="Петр", subscribed_broadcast=True)
+            for i in range(5)
+        ]
+        s.add_all(users)
         await s.flush()
         b = await bc.create_broadcast(
             s, text="x", operator_id=None, subscriber_count=5
@@ -837,7 +847,7 @@ class TestListings:
         await bc.record_deliveries(
             s,
             broadcast_id=b.id,
-            results=[(u.id, f"err-{i}") for i in range(5)],
+            results=[(u.id, f"err-{i}") for i, u in enumerate(users)],
         )
         failed = await bc.list_failed_deliveries(s, b.id, limit=3)
         assert len(failed) == 3
