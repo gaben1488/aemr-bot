@@ -24,11 +24,11 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
 from aemr_bot.services import wizard_registry
+from aemr_bot.handlers._common import op_screen, op_send
 from aemr_bot.utils.event import (
     ack_callback,
     get_user_id,
     is_admin_chat,
-    send_or_edit_screen,
 )
 
 log = logging.getLogger(__name__)
@@ -94,13 +94,23 @@ async def _show_appeal_card_or_result(
                 "admin_card.render failed for appeal_id=%s", appeal_id
             )
     # Fallback — не нашли appeal/user, просто пишем сообщение оператору.
-    await send_or_edit_screen(
-        event,
-        chat_id=cfg.admin_group_id,
-        text=fallback_text,
-        attachments=[kbds.op_back_to_menu_keyboard()],
-        force_new_message=True,
-    )
+    await op_screen(event, fallback_text, new=True)
+
+
+async def _op_appeal_not_found(event, appeal_id: int) -> None:
+    """Тупиковый экран «обращение не найдено».
+
+    Ровно один и тот же экран в четырёх местах файла (reply-intent,
+    block, attachments, erase): оператор тапнул кнопку под карточкой
+    обращения, которого в базе уже нет (удалено по retention либо
+    стёрто через /erase). Раньше вызов был скопирован дословно.
+
+    `ack_callback` здесь НЕ вызывается: у трёх из четырёх мест он идёт
+    строкой выше, у `run_show_attachments` — раньше, до открытия
+    сессии. Порядок ack относительно экрана видим оператору (крутилка
+    на кнопке), поэтому он остаётся на местах вызова.
+    """
+    await op_screen(event, texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id))
 
 
 async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> None:
@@ -142,36 +152,23 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
         appeal = await appeals_service.get_by_id(session, appeal_id)
         if appeal is None:
             await ack_callback(event)
-            await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
-                attachments=[kbds.op_back_to_menu_keyboard()],
-            )
+            await _op_appeal_not_found(event, appeal_id)
             return
         if appeal.status == AppealStatus.CLOSED.value:
             await ack_callback(event)
-            await send_or_edit_screen(
+            await op_screen(
                 event,
-                chat_id=cfg.admin_group_id,
-                text=(
-                    f"Обращение #{appeal_id} закрыто. Сначала верните его в "
-                    f"работу кнопкой «🔁 Возобновить» под карточкой."
-                ),
-                attachments=[kbds.op_back_to_menu_keyboard()],
+                f"Обращение #{appeal_id} закрыто. Сначала верните его в "
+                f"работу кнопкой «🔁 Возобновить» под карточкой.",
             )
             return
         if appeal.user is None or appeal.user.is_blocked:
             await ack_callback(event)
-            await send_or_edit_screen(
+            await op_screen(
                 event,
-                chat_id=cfg.admin_group_id,
-                text=(
-                    f"Житель по обращению #{appeal_id} заблокирован — ответ не "
-                    f"будет доставлен через бот. Если ответ всё-таки нужен, "
-                    f"сначала снимите блокировку."
-                ),
-                attachments=[kbds.op_back_to_menu_keyboard()],
+                f"Житель по обращению #{appeal_id} заблокирован — ответ не "
+                f"будет доставлен через бот. Если ответ всё-таки нужен, "
+                f"сначала снимите блокировку.",
             )
             return
         # NEW → IN_PROGRESS: оператор взял в работу. Видно жителю.
@@ -192,9 +189,9 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
         prev_appeal_id, _prev_is_final, _prev_ts = existing
         if prev_appeal_id != appeal_id:
             try:
-                await event.bot.send_message(
-                    chat_id=cfg.admin_group_id,
-                    text=(
+                await op_send(
+                    event,
+                    (
                         f"⚠️ Подготовка ответа на обращение #{prev_appeal_id} "
                         f"отменена — вы только что переключились на ответ "
                         f"по обращению #{appeal_id}. Если хотели остаться на "
@@ -228,16 +225,13 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
     # timeline'ом превратилась бы в input-prompt — содержимое потеряно.
     # force_new_message=True гарантирует, что prompt всегда уходит
     # отдельным новым сообщением, а карточка остаётся видимой выше.
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=(
-            f"{prompt_hint}"
-            f"Лимит {cfg.answer_max_chars} символов. Просто отправьте "
-            f"следующее сообщение в этот чат, либо «Отменить» ниже."
-        ),
-        attachments=[kbds.cancel_reply_intent_keyboard()],
-        force_new_message=True,
+        f"{prompt_hint}"
+        f"Лимит {cfg.answer_max_chars} символов. Просто отправьте "
+        f"следующее сообщение в этот чат, либо «Отменить» ниже.",
+        kbds.cancel_reply_intent_keyboard(),
+        new=True,
     )
     # Памятка про whitelist гос-доменов раньше дублировалась здесь
     # (2026-05-27 убрана по решению владельца). Полная памятка живёт
@@ -262,21 +256,13 @@ async def run_reply_cancel(event) -> None:
     await ack_callback(event)
     # SACRED #4: cancel-сообщение тоже отдельным new (не trample prompt).
     if cancelled_appeal is not None:
-        await send_or_edit_screen(
+        await op_screen(
             event,
-            chat_id=cfg.admin_group_id,
-            text=f"Ответ на обращение #{cancelled_appeal} отменён.",
-            attachments=[kbds.op_back_to_menu_keyboard()],
-            force_new_message=True,
+            f"Ответ на обращение #{cancelled_appeal} отменён.",
+            new=True,
         )
     else:
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text="Мастер ответа уже закрыт.",
-            attachments=[kbds.op_back_to_menu_keyboard()],
-            force_new_message=True,
-        )
+        await op_screen(event, "Мастер ответа уже закрыт.", new=True)
 
 
 _REOPEN_FALLBACK_TEXT = {
@@ -372,12 +358,7 @@ async def run_block_for_appeal(
         appeal = await appeals_service.get_by_id(session, appeal_id)
         if appeal is None or appeal.user is None:
             await ack_callback(event)
-            await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
-                attachments=[kbds.op_back_to_menu_keyboard()],
-            )
+            await _op_appeal_not_found(event, appeal_id)
             return
         target_id = appeal.user.max_user_id
         ok = await users_service.set_blocked(session, target_id, blocked=blocked)
@@ -418,13 +399,7 @@ async def run_show_attachments(event, appeal_id: int) -> None:
         )
     await ack_callback(event)
     if appeal is None:
-
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
-            attachments=[kbds.op_back_to_menu_keyboard()],
-        )
+        await _op_appeal_not_found(event, appeal_id)
         return
     await admin_relay.render_appeal_attachments(
         event.bot,
@@ -445,12 +420,7 @@ async def run_erase_for_appeal(event, appeal_id: int) -> None:
         appeal = await appeals_service.get_by_id(session, appeal_id)
         if appeal is None or appeal.user is None:
             await ack_callback(event)
-            await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id),
-                attachments=[kbds.op_back_to_menu_keyboard()],
-            )
+            await _op_appeal_not_found(event, appeal_id)
             return
         target_id = appeal.user.max_user_id
         ok = await users_service.erase_pdn(session, target_id)
@@ -463,16 +433,9 @@ async def run_erase_for_appeal(event, appeal_id: int) -> None:
             )
     await ack_callback(event)
     if ok:
-        await send_or_edit_screen(
+        await op_screen(
             event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_USER_ERASED.format(max_user_id=target_id),
-            attachments=[kbds.op_back_to_menu_keyboard()],
+            texts.OP_USER_ERASED.format(max_user_id=target_id),
         )
     else:
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text="Пользователь не найден.",
-            attachments=[kbds.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, "Пользователь не найден.")

@@ -7,10 +7,13 @@
   3. оператор жмёт ✅          → бот переводит в `_pending_broadcasts`
                                  на cooldown, по истечении — фоновая отправка.
 
-Состояние мастера (шаги 1–3) живёт только в памяти процесса.
-Операторов нет в таблице `users`, а недозаполненный мастер дёшево
-пройти заново. Состояние вытесняется автоматически по истечении
-BROADCAST_WIZARD_TTL_SEC.
+Состояние мастера (шаги 1–3) живёт в памяти процесса и дублируется в
+таблицу `wizard_state` (см. `_schedule_persist` ниже). Раньше дублирования
+не было, и рассуждение «недозаполненный мастер дёшево пройти заново» не
+выдержало практики: рассылка — путь экстренного оповещения, оператор
+набирает текст [ЧС], а рестарт бота (`docker compose up --build`) стирал
+черновик. Состояние вытесняется автоматически по истечении
+BROADCAST_WIZARD_TTL_SEC — и в памяти, и в БД (TTL там тот же).
 
 ИСТОРИЯ. Cluster C wave 2 (Codex PR 7, 2026-05-28): вынесено из
 `handlers/broadcast.py`. Send pipeline (`_send_one`, `_run_broadcast`,
@@ -34,10 +37,12 @@ from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import settings_store
+from aemr_bot.services import wizard_registry
 from aemr_bot.services.broadcast_utils import (
     _COOLDOWN_EMERGENCY_SEC,
     _broadcast_cooldown_seconds,
 )
+from aemr_bot.handlers._common import op_screen
 from aemr_bot.utils import image_attachments as _image_attachments
 from aemr_bot.utils.background import spawn_background_task
 from aemr_bot.utils.event import (
@@ -45,7 +50,6 @@ from aemr_bot.utils.event import (
     extract_message_id,
     get_callback_message_id,
     get_user_id,
-    send_or_edit_screen,
 )
 
 log = logging.getLogger(__name__)
@@ -73,9 +77,72 @@ class _WizardState:
         self.expires_at = time.monotonic() + cfg.broadcast_wizard_ttl_sec
 
 
+def _schedule_persist(operator_id: int, state: _WizardState | None) -> None:
+    """Синхронизировать черновик оператора с таблицей `wizard_state`.
+
+    `state=None` — удалить строку. Запись фоновая и best-effort: если БД
+    недоступна, in-memory черновик остаётся правильным (см.
+    `wizard_registry._spawn_persist`).
+
+    `expires_at` в снимок не кладём: это `time.monotonic()`, который
+    после рестарта процесса не значит ничего. Срок жизни строки в БД
+    считает сам `wizard_persist` (тот же TTL), а при гидратации мастер
+    получает свежий отсчёт.
+
+    Зеркало в `wizard_registry` обновляем тем же снимком. Иначе
+    `schedule_persist_broadcast(id, None)` при удалении подобрал бы в
+    registry уцелевшую копию (её кладёт гидратация) и превратил бы
+    DELETE в повторный UPSERT — отменённый черновик воскресал бы.
+    """
+    if state is None:
+        wizard_registry.clear_broadcast_wizard(operator_id)
+        wizard_registry.schedule_persist_broadcast(operator_id, None)
+        return
+    snapshot = {
+        "step": state.step,
+        "text": state.text,
+        "attachments": list(state.attachments),
+    }
+    wizard_registry.set_broadcast_wizard(operator_id, snapshot)
+    wizard_registry.schedule_persist_broadcast(operator_id, snapshot)
+
+
+class _PersistingWizards(dict):
+    """Словарь «оператор → черновик», сам зеркалящий правки в БД.
+
+    Почему подкласс, а не явный вызов `_schedule_persist` в каждой
+    точке: черновик гасят pop'ом ещё три модуля вне мастера — `/cancel`
+    в `handlers/appeal`, `admin_appeal_ops` и старт мастера операторов.
+    После такого pop'а строка в `wizard_state` пережила бы отмену, и
+    рестарт вернул бы оператору превью уже отменённой рассылки с живой
+    кнопкой «Разослать». Подкласс закрывает все точки разом.
+
+    Правки состояния «на месте» (`state.text = …`) мимо словаря
+    проходят — там `_schedule_persist` зовём руками.
+
+    `clear()` намеренно не перехвачен: в проде его нет, он живёт только
+    в тестовых fixture'ах, где БД отсутствует.
+    """
+
+    def __setitem__(self, operator_id: int, state: _WizardState) -> None:
+        super().__setitem__(operator_id, state)
+        _schedule_persist(operator_id, state)
+
+    def __delitem__(self, operator_id: int) -> None:
+        super().__delitem__(operator_id)
+        _schedule_persist(operator_id, None)
+
+    def pop(self, operator_id, *default):
+        existed = operator_id in self
+        state = super().pop(operator_id, *default)
+        if existed:
+            _schedule_persist(operator_id, None)
+        return state
+
+
 # Состояние мастера для каждого оператора. Только для одного экземпляра приложения.
 # При горизонтальном масштабировании потребуется хранение в Redis или через pg_advisory_lock.
-_wizards: dict[int, _WizardState] = {}
+_wizards: dict[int, _WizardState] = _PersistingWizards()
 
 
 # Локальные псевдонимы общих хелперов авторизации. Подчёркивание в начале имени
@@ -155,12 +222,7 @@ async def _start_wizard(event) -> None:
         limit=cfg.broadcast_max_chars,
         max_images=max_images,
     )
-    await send_or_edit_screen(
-        event,
-        chat_id=cfg.admin_group_id,
-        text=prompt,
-        attachments=[keyboards.broadcast_cancel_keyboard()],
-    )
+    await op_screen(event, prompt, keyboards.broadcast_cancel_keyboard())
 
 
 async def _handle_wizard_text(event, text_body: str) -> bool:
@@ -270,6 +332,9 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
     state.attachments = all_images_in_event[:max_images]
     state.step = "awaiting_confirm"
     state.renew()
+    # Текст и картинки правились «на месте», мимо словаря — сохраняем
+    # руками, иначе рестарт потерял бы самое ценное в черновике.
+    _schedule_persist(actor_id, state)
     # Превью включает все приложенные картинки рядом с confirm-клавой,
     # чтобы оператор видел, что именно увидит подписчик. До этой правки
     # preview был text-only, оператор «вслепую» подтверждал.
@@ -330,20 +395,16 @@ async def _handle_confirm(event) -> None:
             "operator=%s count=%d", actor_id, len(bad_urls),
         )
         await ack_callback(event, "Рассылка отклонена.")
-        await send_or_edit_screen(
+        await op_screen(
             event,
-            chat_id=cfg.admin_group_id,
-            text=(
-                "❌ Рассылка отклонена: в тексте найдены ссылки на "
-                "сторонние сайты: "
-                f"{', '.join(bad_urls[:3])}"
-                f"{'…' if len(bad_urls) > 3 else ''}.\n\n"
-                "Разрешены только официальные ресурсы: elizovomr.ru, "
-                "kamgov.ru, gosuslugi.ru, kamchatka.gov.ru.\n\n"
-                "Уберите ссылку или замените на гос-домен и начните "
-                "рассылку заново."
-            ),
-            attachments=[keyboards.op_back_to_menu_keyboard()],
+            "❌ Рассылка отклонена: в тексте найдены ссылки на "
+            "сторонние сайты: "
+            f"{', '.join(bad_urls[:3])}"
+            f"{'…' if len(bad_urls) > 3 else ''}.\n\n"
+            "Разрешены только официальные ресурсы: elizovomr.ru, "
+            "kamgov.ru, gosuslugi.ru, kamchatka.gov.ru.\n\n"
+            "Уберите ссылку или замените на гос-домен и начните "
+            "рассылку заново.",
         )
         return
     # ack с фидбеком: оператор сразу видит «принято», broadcast wizard
@@ -363,12 +424,7 @@ async def _handle_confirm(event) -> None:
     async with session_scope() as session:
         count = await broadcasts_service.count_subscribers(session)
         if count == 0:
-            await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_BROADCAST_NO_SUBSCRIBERS,
-                attachments=[keyboards.op_back_to_menu_keyboard()],
-            )
+            await op_screen(event, texts.OP_BROADCAST_NO_SUBSCRIBERS)
             return
         broadcast = await broadcasts_service.create_broadcast(
             session,
@@ -406,17 +462,14 @@ async def _handle_confirm(event) -> None:
     )
     is_emergency = cooldown_sec == _COOLDOWN_EMERGENCY_SEC
     cooldown_label = "🚨 ЧС-рассылка" if is_emergency else "📤 Рассылка"
-    sent = await send_or_edit_screen(
+    sent = await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=(
-            f"{cooldown_label} #{broadcast_id} уйдёт жителям через "
-            f"{eta_text} ({count} получателей).\n\n"
-            f"Если заметили ошибку или передумали — нажмите «❌ Отменить "
-            f"отправку». После окна cooldown'а рассылка стартует "
-            f"автоматически и появится клавиша экстренной остановки."
-        ),
-        attachments=[keyboards.broadcast_cooldown_keyboard(broadcast_id)],
+        f"{cooldown_label} #{broadcast_id} уйдёт жителям через "
+        f"{eta_text} ({count} получателей).\n\n"
+        f"Если заметили ошибку или передумали — нажмите «❌ Отменить "
+        f"отправку». После окна cooldown'а рассылка стартует "
+        f"автоматически и появится клавиша экстренной остановки.",
+        keyboards.broadcast_cooldown_keyboard(broadcast_id),
     )
     admin_mid = extract_message_id(sent) or get_callback_message_id(event)
 
@@ -452,12 +505,7 @@ async def _handle_abort(event) -> None:
     if actor_id is not None:
         _wizards.pop(actor_id, None)
     await ack_callback(event, "Отменено.")
-    await send_or_edit_screen(
-        event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_BROADCAST_CANCELLED_BY_USER,
-        attachments=[keyboards.op_back_to_menu_keyboard()],
-    )
+    await op_screen(event, texts.OP_BROADCAST_CANCELLED_BY_USER)
 
 
 def prefill_wizard_from_template(
@@ -501,12 +549,13 @@ async def _handle_edit(event) -> None:
     # Чистим картинки тоже: «Изменить текст» = новый черновик целиком.
     state.attachments = []
     state.renew()
+    # Правка «на месте» — словарь про неё не знает (см. _schedule_persist).
+    _schedule_persist(actor_id, state)
     await ack_callback(event)
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_BROADCAST_EDIT_HINT.format(
+        texts.OP_BROADCAST_EDIT_HINT.format(
             limit=cfg.broadcast_max_chars,
         ),
-        attachments=[keyboards.broadcast_cancel_keyboard()],
+        keyboards.broadcast_cancel_keyboard(),
     )

@@ -332,7 +332,7 @@ class TestWizardText:
                 new=AsyncMock(return_value=None),
             ),
             patch(
-                "aemr_bot.handlers.broadcast_templates.send_or_edit_screen",
+                "aemr_bot.handlers._common.send_or_edit_screen",
                 new=AsyncMock(),
             ),
         ):
@@ -449,7 +449,7 @@ class TestWizardText:
                 new=AsyncMock(),
             ),
             patch(
-                "aemr_bot.handlers.broadcast_templates_wizard.send_or_edit_screen",
+                "aemr_bot.handlers._common.send_or_edit_screen",
                 new=AsyncMock(),
             ),
         ):

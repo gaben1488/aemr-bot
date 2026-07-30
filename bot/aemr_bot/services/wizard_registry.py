@@ -7,11 +7,13 @@
 - reply-intent: `set_reply_intent` / `get_reply_intent` / `drop_reply_intent`
   — `handlers/operator_reply` (через wrapper-функции) и
   `handlers/admin_appeal_ops`.
-- op/broadcast wizard persistence: `schedule_persist_op` /
-  `schedule_persist_broadcast` (вызываются из `admin_operators` при
-  set/clear), а `set_op_wizard` / `set_broadcast_wizard` + словари
+- op/broadcast wizard persistence: `schedule_persist_op` вызывается из
+  `admin_operators` при set/clear, `schedule_persist_broadcast` — из
+  `handlers/broadcast_wizard` (там же поддерживается зеркало через
+  `set_broadcast_wizard` / `clear_broadcast_wizard`). Словари
   `_op_wizards` / `_broadcast_wizards` наполняются на старте бота из БД
-  через `services/wizard_persist.hydrate_into_registry`.
+  через `services/wizard_persist.hydrate_into_registry`, а main.py
+  раскладывает восстановленное по словарям самих handler'ов.
 
 Глобальный сброс при `/cancel` живёт НЕ здесь: `handlers/appeal`
 явными pop'ами гасит каждое hand­ler-локальное хранилище (broadcast

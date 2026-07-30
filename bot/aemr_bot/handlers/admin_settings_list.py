@@ -11,12 +11,11 @@ Intent на добавление ставится в диспетчере `_rout
 from __future__ import annotations
 
 from aemr_bot import keyboards as kbds
-from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers.admin_settings_shared import _parse_key_idx
 from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
-from aemr_bot.utils.event import send_or_edit_screen
+from aemr_bot.handlers._common import op_screen, op_send
 
 
 async def _show_list_card(event, key: str) -> None:
@@ -34,17 +33,15 @@ async def _show_list_card(event, key: str) -> None:
         body = "\n".join(f"{i+1}. {x}" for i, x in enumerate(items))
     else:
         body = "(список пуст)"
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            f"{title} ({len(items)})\n"
-            f"· · · · · · · ·\n"
-            f"{body}\n"
-            f"· · · · · · · ·\n"
-            f"Тап «🗑 N» — удалить запись.\n"
-            f"Тап «➕ Добавить» — добавить новую."
-        ),
-        attachments=[kbds.op_settings_list_keyboard(key, items)],
+    await op_screen(
+        event,
+        f"{title} ({len(items)})\n"
+        f"· · · · · · · ·\n"
+        f"{body}\n"
+        f"· · · · · · · ·\n"
+        f"Тап «🗑 N» — удалить запись.\n"
+        f"Тап «➕ Добавить» — добавить новую.",
+        kbds.op_settings_list_keyboard(key, items),
     )
 
 
@@ -57,19 +54,19 @@ async def _list_delete(event, operator_id: int, suffix: str) -> None:
     async with session_scope() as session:
         items = await settings_store.get(session, key) or []
         if not isinstance(items, list) or idx < 0 or idx >= len(items):
-            await send_or_edit_screen(
-                event, chat_id=cfg.admin_group_id,
-                text="Элемент не найден.",
-                attachments=[kbds.op_back_to_settings_keyboard()],
+            await op_screen(
+                event,
+                "Элемент не найден.",
+                kbds.op_back_to_settings_keyboard(),
             )
             return
         removed = items.pop(idx)
         ok, msg = settings_store.validate(key, items)
         if not ok:
-            await send_or_edit_screen(
-                event, chat_id=cfg.admin_group_id,
-                text=f"Удаление отменено: {msg}",
-                attachments=[kbds.op_back_to_settings_keyboard()],
+            await op_screen(
+                event,
+                f"Удаление отменено: {msg}",
+                kbds.op_back_to_settings_keyboard(),
             )
             return
         await settings_store.set_value(session, key, items)
@@ -96,10 +93,8 @@ async def _apply_list_add(
     """
 
     if len(new_text) < 1:
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text="❌ Пустая строка.",
-            attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+        await op_send(
+            event, "❌ Пустая строка.", kbds.op_settings_text_cancel_keyboard(key)
         )
         return False
     async with session_scope() as session:
@@ -107,19 +102,17 @@ async def _apply_list_add(
         if not isinstance(items, list):
             items = []
         if new_text in items:
-            await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text="❌ Такая запись уже есть.",
-                attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+            await op_send(
+                event,
+                "❌ Такая запись уже есть.",
+                kbds.op_settings_text_cancel_keyboard(key),
             )
             return False
         items.append(new_text)
         ok, msg = settings_store.validate(key, items)
         if not ok:
-            await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text=f"❌ {msg}",
-                attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+            await op_send(
+                event, f"❌ {msg}", kbds.op_settings_text_cancel_keyboard(key)
             )
             return False
         await settings_store.set_value(session, key, items)

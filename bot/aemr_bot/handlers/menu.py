@@ -2,9 +2,6 @@ import logging
 from collections.abc import Callable
 from typing import Any, NamedTuple
 
-import aiohttp
-from maxapi.exceptions.max import MaxApiError, MaxConnection
-
 from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import AppealStatus, DialogState, User
@@ -22,26 +19,20 @@ from aemr_bot.services import users as users_service
 from aemr_bot.utils import menu_tracker
 from aemr_bot.utils.event import (
     ack_callback,
-    extract_message_id,
+    get_callback_message_id,
     get_chat_id,
     get_user_id,
+    send_or_edit_screen,
 )
 from aemr_bot.utils.typing_indicator import mark_typing
 
 log = logging.getLogger(__name__)
 
 
-def _callback_mid(event) -> str | None:
-    """mid сообщения, на котором нажали кнопку.
-
-    MAX позволяет редактировать именно это сообщение. Для обычных команд
-    callback отсутствует — тогда меню отправляется новым сообщением.
-    """
-    if getattr(event, "callback", None) is None:
-        return None
-    body = getattr(getattr(event, "message", None), "body", None)
-    mid = getattr(body, "mid", None)
-    return str(mid) if mid else None
+# mid сообщения, на котором нажали кнопку. Локальная копия разъехалась бы
+# с каноном незаметно, поэтому это просто имя для общей функции —
+# `_callback_mid` зовут ~десяток мест в menu.py, start.py и тесты.
+_callback_mid = get_callback_message_id
 
 
 async def _send_or_edit_menu(
@@ -82,7 +73,6 @@ async def _send_or_edit_menu(
     attachments = attachments or []
     callback_mid = None if force_new_message else _callback_mid(event)
     chat_id = get_chat_id(event)
-    user_id = None if chat_id is not None else get_user_id(event)
 
     # 2026-05-27 dual-tracker: edit разрешён только если callback пришёл
     # с АКТУАЛЬНОЙ редактируемой карточки И она физически последняя в
@@ -109,7 +99,19 @@ async def _send_or_edit_menu(
                 attachments=attachments,
             )
             return
-        except (MaxApiError, MaxConnection, aiohttp.ClientError, TimeoutError):
+        # RuntimeError — единственное сознательное расхождение с общей
+        # `utils.event.send_or_edit_screen` (регрессия:
+        # tests/test_reliability_pass.py): он означает баг в коде или
+        # неверно замоканный bot, такое должно всплывать, а не прятаться
+        # за тихим fallback'ом.
+        except RuntimeError:
+            raise
+        # Всё остальное ловим широко, как общая функция. Прежний узкий
+        # кортеж (MaxApiError, MaxConnection, aiohttp.ClientError,
+        # TimeoutError) оставлял жителя вообще без экрана, если maxapi
+        # падал иначе — например pydantic ValidationError на изменившемся
+        # ответе MAX. Экран для жителя важнее точности диагноза.
+        except Exception:
             log.info(
                 "menu: edit_message %s failed, fallback to send",
                 callback_mid, exc_info=False,
@@ -117,19 +119,16 @@ async def _send_or_edit_menu(
             if chat_id is not None:
                 menu_tracker.clear(chat_id)
 
-    sent = await event.bot.send_message(
-        chat_id=chat_id,
-        user_id=user_id,
+    # Ветка «отправить новым сообщением» полностью совпадает с общей
+    # функцией (send_message + note_editable_send(kind='menu')), поэтому
+    # не дублируем её здесь. force_new_message=True — потому что решение
+    # про edit уже принято выше.
+    await send_or_edit_screen(
+        event,
         text=text,
         attachments=attachments,
+        force_new_message=True,
     )
-    # citizen-меню — редактируемая карточка. Регистрируем оба mid +
-    # kind='menu', чтобы следующий тап кнопки на этом меню edit'ил
-    # его на месте.
-    if chat_id is not None:
-        new_mid = extract_message_id(sent)
-        if new_mid:
-            menu_tracker.note_editable_send(chat_id, new_mid, kind="menu")
 
 
 async def open_main_menu(event):

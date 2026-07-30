@@ -10,11 +10,10 @@ transport_dispatcher_contacts) — CRUD по dict-записям.
 from __future__ import annotations
 
 from aemr_bot import keyboards as kbds
-from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
-from aemr_bot.utils.event import send_or_edit_screen
+from aemr_bot.handlers._common import op_screen, op_send
 
 # intent на добавление объекта ставится здесь (`_start_obj_add`),
 # поэтому нужен `_intent_set` из общего модуля. `_edit_intents` /
@@ -61,15 +60,13 @@ async def _show_obj_card(event, key: str) -> None:
             "Автобусы 101, 102, 103\n"
             "+7 (415-31) 7-25-29"
         )
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            f"{title} ({len(items)})\n"
-            f"· · · · · · · ·\n"
-            f"{body}"
-            f"{hint}"
-        ),
-        attachments=[kbds.op_settings_obj_keyboard(key, items)],
+    await op_screen(
+        event,
+        f"{title} ({len(items)})\n"
+        f"· · · · · · · ·\n"
+        f"{body}"
+        f"{hint}",
+        kbds.op_settings_obj_keyboard(key, items),
     )
 
 
@@ -82,18 +79,18 @@ async def _show_obj_item(event, suffix: str) -> None:
     async with session_scope() as session:
         items = await settings_store.get(session, key) or []
     if idx < 0 or idx >= len(items):
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Запись не найдена.",
-            attachments=[kbds.op_back_to_settings_keyboard()],
+        await op_screen(
+            event,
+            "Запись не найдена.",
+            kbds.op_back_to_settings_keyboard(),
         )
         return
     item = items[idx]
     lines = [f"{k}: {v}" for k, v in item.items()]
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text="\n".join(lines),
-        attachments=[kbds.op_settings_obj_item_keyboard(key, idx)],
+    await op_screen(
+        event,
+        "\n".join(lines),
+        kbds.op_settings_obj_item_keyboard(key, idx),
     )
 
 
@@ -111,14 +108,12 @@ async def _start_obj_add(event, operator_id: int, key: str) -> None:
         hint = "Пришлите две строки: маршруты и телефон."
     else:
         hint = "Пришлите данные двумя строками."
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            f"➕ Добавление в «{key}»\n"
-            f"· · · · · · · ·\n"
-            f"{hint}"
-        ),
-        attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+    await op_screen(
+        event,
+        f"➕ Добавление в «{key}»\n"
+        f"· · · · · · · ·\n"
+        f"{hint}",
+        kbds.op_settings_text_cancel_keyboard(key),
     )
 
 
@@ -131,19 +126,19 @@ async def _obj_delete(event, operator_id: int, suffix: str) -> None:
     async with session_scope() as session:
         items = await settings_store.get(session, key) or []
         if not isinstance(items, list) or idx < 0 or idx >= len(items):
-            await send_or_edit_screen(
-                event, chat_id=cfg.admin_group_id,
-                text="Запись не найдена.",
-                attachments=[kbds.op_back_to_settings_keyboard()],
+            await op_screen(
+                event,
+                "Запись не найдена.",
+                kbds.op_back_to_settings_keyboard(),
             )
             return
         removed = items.pop(idx)
         ok, msg = settings_store.validate(key, items)
         if not ok:
-            await send_or_edit_screen(
-                event, chat_id=cfg.admin_group_id,
-                text=f"Удаление отменено: {msg}",
-                attachments=[kbds.op_back_to_settings_keyboard()],
+            await op_screen(
+                event,
+                f"Удаление отменено: {msg}",
+                kbds.op_back_to_settings_keyboard(),
             )
             return
         await settings_store.set_value(session, key, items)
@@ -172,10 +167,10 @@ async def _apply_obj_add(
 
     lines = [ln.strip() for ln in new_text.split("\n") if ln.strip()]
     if len(lines) < 2:
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text="❌ Нужно две строки (название/маршруты и телефон).",
-            attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+        await op_send(
+            event,
+            "❌ Нужно две строки (название/маршруты и телефон).",
+            kbds.op_settings_text_cancel_keyboard(key),
         )
         return False
     if key == "emergency_contacts":
@@ -189,10 +184,10 @@ async def _apply_obj_add(
     elif key == "transport_dispatcher_contacts":
         item = {"routes": lines[0], "phone": lines[1]}
     else:
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=f"❌ Ключ «{key}» не поддерживает добавление через две строки.",
-            attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+        await op_send(
+            event,
+            f"❌ Ключ «{key}» не поддерживает добавление через две строки.",
+            kbds.op_settings_text_cancel_keyboard(key),
         )
         return False
     async with session_scope() as session:
@@ -202,10 +197,8 @@ async def _apply_obj_add(
         items.append(item)
         ok, msg = settings_store.validate(key, items)
         if not ok:
-            await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text=f"❌ {msg}",
-                attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+            await op_send(
+                event, f"❌ {msg}", kbds.op_settings_text_cancel_keyboard(key)
             )
             return False
         await settings_store.set_value(session, key, items)

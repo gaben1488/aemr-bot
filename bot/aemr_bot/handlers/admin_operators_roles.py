@@ -18,11 +18,11 @@
 from __future__ import annotations
 
 from aemr_bot import keyboards as kbds
-from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import operators as operators_service
-from aemr_bot.utils.event import ack_callback, send_or_edit_screen
+from aemr_bot.handlers._common import op_screen
+from aemr_bot.utils.event import ack_callback
 
 
 # · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
@@ -39,30 +39,27 @@ async def _show_role_change(event, payload: str, operator_id: int) -> None:
         return
     await ack_callback(event)
     if target_id == operator_id:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Изменить свою роль через меню нельзя.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Изменить свою роль через меню нельзя.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     async with session_scope() as session:
         op = await operators_service.get_any(session, target_id)
     if op is None or not op.is_active:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Оператор не найден или деактивирован.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Оператор не найден или деактивирован.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=(
-            f"✏️ Смена роли: {op.full_name}\n"
-            f"Текущая роль: {op.role}\n\n"
-            f"Выберите новую:"
-        ),
-        attachments=[kbds.op_operator_role_change_keyboard(op.max_user_id, op.role)],
+        f"✏️ Смена роли: {op.full_name}\n"
+        f"Текущая роль: {op.role}\n\n"
+        f"Выберите новую:",
+        kbds.op_operator_role_change_keyboard(op.max_user_id, op.role),
     )
 
 
@@ -82,26 +79,26 @@ async def _apply_role_change(event, payload: str, operator_id: int) -> None:
     await ack_callback(event)
     valid_roles = {r.value for r in OperatorRole}
     if new_role_value not in valid_roles:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=f"Роль «{new_role_value}» неизвестна.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            f"Роль «{new_role_value}» неизвестна.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     if target_id == operator_id:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Изменить свою роль нельзя.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Изменить свою роль нельзя.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     async with session_scope() as session:
         op = await operators_service.get_any(session, target_id)
         if op is None or not op.is_active:
-            await send_or_edit_screen(
-                event, chat_id=cfg.admin_group_id,
-                text="Оператор не найден или деактивирован.",
-                attachments=[kbds.op_back_to_operators_keyboard()],
+            await op_screen(
+                event,
+                "Оператор не найден или деактивирован.",
+                kbds.op_back_to_operators_keyboard(),
             )
             return
         # Если меняем IT на не-IT, нужно убедиться, что есть ещё хотя бы
@@ -111,14 +108,12 @@ async def _apply_role_change(event, payload: str, operator_id: int) -> None:
                 session, OperatorRole.IT
             )
             if active_it <= 1:
-                await send_or_edit_screen(
-                    event, chat_id=cfg.admin_group_id,
-                    text=(
-                        "❌ Нельзя забрать IT-роль у единственного активного "
-                        "IT-оператора. Сначала добавьте второго IT, потом "
-                        "повторите смену роли."
-                    ),
-                    attachments=[kbds.op_back_to_operators_keyboard()],
+                await op_screen(
+                    event,
+                    "❌ Нельзя забрать IT-роль у единственного активного "
+                    "IT-оператора. Сначала добавьте второго IT, потом "
+                    "повторите смену роли.",
+                    kbds.op_back_to_operators_keyboard(),
                 )
                 return
         old_role = op.role
@@ -132,13 +127,11 @@ async def _apply_role_change(event, payload: str, operator_id: int) -> None:
             target=f"user max_id={target_id}",
             details={"old_role": old_role, "new_role": new_role_value},
         )
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            f"✅ Роль изменена: {op.full_name}\n"
-            f"{old_role} → {new_role_value}"
-        ),
-        attachments=[kbds.op_back_to_operators_keyboard()],
+    await op_screen(
+        event,
+        f"✅ Роль изменена: {op.full_name}\n"
+        f"{old_role} → {new_role_value}",
+        kbds.op_back_to_operators_keyboard(),
     )
 
 
@@ -156,45 +149,41 @@ async def _show_deactivate_confirm(event, payload: str, operator_id: int) -> Non
         return
     await ack_callback(event)
     if target_id == operator_id:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Себя деактивировать нельзя.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Себя деактивировать нельзя.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     async with session_scope() as session:
         op = await operators_service.get(session, target_id)
         if op is None:
-            await send_or_edit_screen(
-                event, chat_id=cfg.admin_group_id,
-                text="Активный оператор не найден.",
-                attachments=[kbds.op_back_to_operators_keyboard()],
+            await op_screen(
+                event,
+                "Активный оператор не найден.",
+                kbds.op_back_to_operators_keyboard(),
             )
             return
         active_it = await operators_service.count_active_by_role(
             session, OperatorRole.IT
         )
     if op.role == OperatorRole.IT.value and active_it <= 1:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=(
-                "❌ Нельзя деактивировать единственного активного IT.\n"
-                "Сначала добавьте второго IT-оператора."
-            ),
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "❌ Нельзя деактивировать единственного активного IT.\n"
+            "Сначала добавьте второго IT-оператора.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            f"⚠️ Деактивировать оператора?\n"
-            f"· · · · · · · ·\n"
-            f"{op.full_name} ({op.role})\n\n"
-            f"Сотрудник потеряет доступ к командам бота.\n"
-            f"Данные сохранятся — при необходимости его\n"
-            f"можно будет восстановить через карточку."
-        ),
-        attachments=[kbds.op_operator_deactivate_confirm_keyboard(op.max_user_id)],
+    await op_screen(
+        event,
+        f"⚠️ Деактивировать оператора?\n"
+        f"· · · · · · · ·\n"
+        f"{op.full_name} ({op.role})\n\n"
+        f"Сотрудник потеряет доступ к командам бота.\n"
+        f"Данные сохранятся — при необходимости его\n"
+        f"можно будет восстановить через карточку.",
+        kbds.op_operator_deactivate_confirm_keyboard(op.max_user_id),
     )
 
 
@@ -207,19 +196,19 @@ async def _apply_deactivate(event, payload: str, operator_id: int) -> None:
         return
     await ack_callback(event)
     if target_id == operator_id:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Себя деактивировать нельзя.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Себя деактивировать нельзя.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     async with session_scope() as session:
         op = await operators_service.get(session, target_id)
         if op is None:
-            await send_or_edit_screen(
-                event, chat_id=cfg.admin_group_id,
-                text="Активный оператор не найден.",
-                attachments=[kbds.op_back_to_operators_keyboard()],
+            await op_screen(
+                event,
+                "Активный оператор не найден.",
+                kbds.op_back_to_operators_keyboard(),
             )
             return
         if op.role == OperatorRole.IT.value:
@@ -227,10 +216,10 @@ async def _apply_deactivate(event, payload: str, operator_id: int) -> None:
                 session, OperatorRole.IT
             )
             if active_it <= 1:
-                await send_or_edit_screen(
-                    event, chat_id=cfg.admin_group_id,
-                    text="❌ Нельзя деактивировать единственного активного IT.",
-                    attachments=[kbds.op_back_to_operators_keyboard()],
+                await op_screen(
+                    event,
+                    "❌ Нельзя деактивировать единственного активного IT.",
+                    kbds.op_back_to_operators_keyboard(),
                 )
                 return
         saved_name = op.full_name
@@ -243,10 +232,10 @@ async def _apply_deactivate(event, payload: str, operator_id: int) -> None:
             target=f"user max_id={target_id}",
             details={"role": saved_role, "full_name": saved_name},
         )
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=f"🚫 Деактивирован: {saved_name} ({saved_role})",
-        attachments=[kbds.op_back_to_operators_keyboard()],
+    await op_screen(
+        event,
+        f"🚫 Деактивирован: {saved_name} ({saved_role})",
+        kbds.op_back_to_operators_keyboard(),
     )
 
 
@@ -261,17 +250,17 @@ async def _apply_reactivate(event, payload: str, operator_id: int) -> None:
     async with session_scope() as session:
         op = await operators_service.get_any(session, target_id)
         if op is None:
-            await send_or_edit_screen(
-                event, chat_id=cfg.admin_group_id,
-                text="Оператор не найден.",
-                attachments=[kbds.op_back_to_operators_keyboard()],
+            await op_screen(
+                event,
+                "Оператор не найден.",
+                kbds.op_back_to_operators_keyboard(),
             )
             return
         if op.is_active:
-            await send_or_edit_screen(
-                event, chat_id=cfg.admin_group_id,
-                text="Оператор уже активен.",
-                attachments=[kbds.op_back_to_operators_keyboard()],
+            await op_screen(
+                event,
+                "Оператор уже активен.",
+                kbds.op_back_to_operators_keyboard(),
             )
             return
         await operators_service.upsert(
@@ -289,8 +278,8 @@ async def _apply_reactivate(event, payload: str, operator_id: int) -> None:
         )
         saved_name = op.full_name
         saved_role = op.role
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=f"🔄 Реактивирован: {saved_name} ({saved_role})",
-        attachments=[kbds.op_back_to_operators_keyboard()],
+    await op_screen(
+        event,
+        f"🔄 Реактивирован: {saved_name} ({saved_role})",
+        kbds.op_back_to_operators_keyboard(),
     )

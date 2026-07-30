@@ -21,13 +21,13 @@ from __future__ import annotations
 import logging
 
 from aemr_bot import keyboards, texts
-from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role, get_operator
 from aemr_bot.services import broadcast_templates as templates_service
 from aemr_bot.services import operators as operators_service
-from aemr_bot.utils.event import get_user_id, send_or_edit_screen
+from aemr_bot.handlers._common import op_screen
+from aemr_bot.utils.event import get_user_id
 
 from aemr_bot.handlers.broadcast_templates_state import (
     _TmplWizardState,
@@ -51,24 +51,18 @@ async def _start_rename(event, template_id: int) -> None:
     async with session_scope() as session:
         tmpl = await templates_service.get_by_id(session, template_id)
     if tmpl is None:
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_TMPL_NOT_FOUND,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, texts.OP_TMPL_NOT_FOUND)
         return
     _drop_expired()
     _wizards[actor_id] = _TmplWizardState(
         step="rename_awaiting_name", target_id=template_id
     )
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_TMPL_RENAME_PROMPT.format(
+        texts.OP_TMPL_RENAME_PROMPT.format(
             old_name=tmpl.name, limit=templates_service.MAX_NAME_LEN
         ),
-        attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        keyboards.broadcast_template_cancel_keyboard(),
     )
 
 
@@ -147,12 +141,7 @@ async def _start_clone(event, template_id: int) -> None:
     async with session_scope() as session:
         tmpl = await templates_service.get_by_id(session, template_id)
     if tmpl is None:
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_TMPL_NOT_FOUND,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, texts.OP_TMPL_NOT_FOUND)
         return
     _drop_expired()
     _wizards[actor_id] = _TmplWizardState(
@@ -162,15 +151,14 @@ async def _start_clone(event, template_id: int) -> None:
         target_id=tmpl.id,  # источник, для аудит-лога
         source_name=tmpl.name,
     )
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_TMPL_CLONE_NAME_PROMPT.format(
+        texts.OP_TMPL_CLONE_NAME_PROMPT.format(
             source_name=tmpl.name,
             image_count=len(tmpl.attachments),
             limit=templates_service.MAX_NAME_LEN,
         ),
-        attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        keyboards.broadcast_template_cancel_keyboard(),
     )
 
 
@@ -238,20 +226,12 @@ async def _ask_delete(event, template_id: int) -> None:
     async with session_scope() as session:
         tmpl = await templates_service.get_by_id(session, template_id)
     if tmpl is None:
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_TMPL_NOT_FOUND,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, texts.OP_TMPL_NOT_FOUND)
         return
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_TMPL_DELETE_CONFIRM.format(name=tmpl.name),
-        attachments=[
-            keyboards.broadcast_template_delete_confirm_keyboard(template_id)
-        ],
+        texts.OP_TMPL_DELETE_CONFIRM.format(name=tmpl.name),
+        keyboards.broadcast_template_delete_confirm_keyboard(template_id),
     )
 
 
@@ -263,12 +243,7 @@ async def _do_delete(event, template_id: int) -> None:
     async with session_scope() as session:
         tmpl = await templates_service.get_by_id(session, template_id)
         if tmpl is None:
-            await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_TMPL_NOT_FOUND,
-                attachments=[keyboards.op_back_to_menu_keyboard()],
-            )
+            await op_screen(event, texts.OP_TMPL_NOT_FOUND)
             return
         name = tmpl.name
         await templates_service.archive(session, template_id)
@@ -280,9 +255,4 @@ async def _do_delete(event, template_id: int) -> None:
                 target=f"template #{template_id}",
                 details={"name": name},
             )
-    await send_or_edit_screen(
-        event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_TMPL_DELETED.format(name=name),
-        attachments=[keyboards.op_back_to_menu_keyboard()],
-    )
+    await op_screen(event, texts.OP_TMPL_DELETED.format(name=name))

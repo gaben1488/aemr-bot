@@ -28,6 +28,7 @@ import logging
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator
+from aemr_bot.handlers._common import op_send
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import users as users_service
@@ -124,18 +125,12 @@ async def run_find_resident(event, query: str) -> None:
         return
 
     if not query or not query.strip():
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_FIND_RESIDENT_USAGE,
-        )
+        await op_send(event, texts.OP_FIND_RESIDENT_USAGE)
         return
 
     kind, value = _detect_query_kind(query)
     if kind == "invalid":
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_FIND_RESIDENT_USAGE,
-        )
+        await op_send(event, texts.OP_FIND_RESIDENT_USAGE)
         return
 
     # Индикатор набора: lookup жителя + audit-запись + расчёт последнего
@@ -151,10 +146,7 @@ async def run_find_resident(event, query: str) -> None:
             try:
                 max_id_int = int(value)
             except ValueError:
-                await event.bot.send_message(
-                    chat_id=cfg.admin_group_id,
-                    text=texts.OP_FIND_RESIDENT_USAGE,
-                )
+                await op_send(event, texts.OP_FIND_RESIDENT_USAGE)
                 return
             user = await users_service.find_by_max_id(session, max_id_int)
         else:  # phone
@@ -175,9 +167,9 @@ async def run_find_resident(event, query: str) -> None:
                 # Не различаем not-found vs ambiguous: пишем общий
                 # not-found текст (для оператора результат всё равно
                 # один — «нужен max_user_id»).
-                await event.bot.send_message(
-                    chat_id=cfg.admin_group_id,
-                    text=texts.OP_FIND_RESIDENT_NOT_FOUND.format(
+                await op_send(
+                    event,
+                    texts.OP_FIND_RESIDENT_NOT_FOUND.format(
                         query_masked=audit_target,
                     ),
                 )
@@ -191,9 +183,9 @@ async def run_find_resident(event, query: str) -> None:
                 target=audit_target,
                 details={"kind": kind},
             )
-            await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_FIND_RESIDENT_NOT_FOUND.format(
+            await op_send(
+                event,
+                texts.OP_FIND_RESIDENT_NOT_FOUND.format(
                     query_masked=audit_target,
                 ),
             )
@@ -230,10 +222,7 @@ async def run_find_resident(event, query: str) -> None:
         last_appeal=_format_last_appeal(last_appeal),
         appeals_count=count,
     )
-    await event.bot.send_message(
-        chat_id=cfg.admin_group_id,
-        text=text_out,
-    )
+    await op_send(event, text_out)
 
 
 def register(dp) -> None:

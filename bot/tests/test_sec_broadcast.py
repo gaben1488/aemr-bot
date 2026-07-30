@@ -74,7 +74,7 @@ class TestConfirmWhitelistGate:
         create_broadcast = AsyncMock()
         with patch.object(mod, "_ensure_role", AsyncMock(return_value=True)), \
              patch.object(mod, "ack_callback", AsyncMock()) as ack, \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send, \
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send, \
              patch.object(mod, "session_scope") as scope, \
              patch.object(mod.broadcasts_service, "count_subscribers",
                           AsyncMock(return_value=100)), \
@@ -110,7 +110,7 @@ class TestConfirmWhitelistGate:
         created = SimpleNamespace(id=777)
         with patch.object(mod, "_ensure_role", AsyncMock(return_value=True)), \
              patch.object(mod, "ack_callback", AsyncMock()), \
-             patch.object(mod, "send_or_edit_screen",
+             patch("aemr_bot.handlers._common.send_or_edit_screen",
                           AsyncMock(return_value=None)), \
              patch.object(mod, "session_scope") as scope, \
              patch.object(mod, "_get_operator",
@@ -252,7 +252,7 @@ class TestTemplateSaveAuthz:
                    AsyncMock(return_value=False)), \
              patch(f"{self._WIZ}.templates_service.create_template", create), \
              patch(f"{self._WIZ}.session_scope", _fake_session_scope), \
-             patch(f"{self._WIZ}.send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await bt._save_new(event)
         create.assert_not_awaited()
 
@@ -276,7 +276,7 @@ class TestTemplateSaveAuthz:
              patch(f"{self._WIZ}.session_scope", _fake_session_scope), \
              patch(f"{self._WIZ}.templates_service.create_template", create), \
              patch(f"{self._WIZ}.operators_service.write_audit", AsyncMock()), \
-             patch(f"{self._WIZ}.send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await bt._save_new(event)
         create.assert_awaited_once()
         assert 7 not in bt._wizards
@@ -301,7 +301,7 @@ class TestTemplateSaveAuthz:
                    AsyncMock(return_value=False)), \
              patch(f"{self._WIZ}.templates_service.update_text", update), \
              patch(f"{self._WIZ}.session_scope", _fake_session_scope), \
-             patch(f"{self._WIZ}.send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await bt._save_edit(event, 5)
         update.assert_not_awaited()
 
@@ -328,7 +328,7 @@ class TestTemplateSaveAuthz:
              patch(f"{self._WIZ}.session_scope", _fake_session_scope), \
              patch(f"{self._WIZ}.templates_service.update_text", update), \
              patch(f"{self._WIZ}.operators_service.write_audit", AsyncMock()), \
-             patch(f"{self._WIZ}.send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await bt._save_edit(event, 5)
         update.assert_awaited_once()
         assert 7 not in bt._wizards

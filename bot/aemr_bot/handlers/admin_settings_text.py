@@ -17,11 +17,10 @@ consent_text, appointment_text) и внешние ссылки (4 URL) деля�
 from __future__ import annotations
 
 from aemr_bot import keyboards as kbds
-from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
-from aemr_bot.utils.event import send_or_edit_screen
+from aemr_bot.handlers._common import op_screen, op_send
 
 # Intent-кэш и общие helper'ы живут в admin_settings_shared —
 # импортируем как ссылки на те же объекты (dict `_edit_intents`
@@ -67,25 +66,23 @@ async def _show_text_card(event, key: str) -> None:
             constraints = f"\nЛимит: до {rule['max_len']} символов."
         if is_url:
             constraints += "\nДолжно начинаться с http:// или https://"
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            f"{title} ({type_label})\n"
-            f"· · · · · · · ·\n"
-            f"Текущее значение:\n{_render_value(value)}"
-            f"{constraints}"
-        ),
-        attachments=[kbds.op_settings_text_actions_keyboard(key)],
+    await op_screen(
+        event,
+        f"{title} ({type_label})\n"
+        f"· · · · · · · ·\n"
+        f"Текущее значение:\n{_render_value(value)}"
+        f"{constraints}",
+        kbds.op_settings_text_actions_keyboard(key),
     )
 
 
 async def _start_edit_intent(event, operator_id: int, key: str) -> None:
 
     if key not in settings_store.SCHEMA:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=f"Ключ «{key}» нельзя править из меню.",
-            attachments=[kbds.op_back_to_settings_keyboard()],
+        await op_screen(
+            event,
+            f"Ключ «{key}» нельзя править из меню.",
+            kbds.op_back_to_settings_keyboard(),
         )
         return
     _intent_set(operator_id, key=key, kind="single")
@@ -96,14 +93,12 @@ async def _start_edit_intent(event, operator_id: int, key: str) -> None:
     elif rule.get("type") is str:
         max_len = rule.get("max_len", "?")
         hint = f"\n\nПришлите новый текст одним сообщением (до {max_len} симв)."
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            f"✏️ Редактирование «{key}»\n"
-            f"· · · · · · · ·"
-            f"{hint}"
-        ),
-        attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+    await op_screen(
+        event,
+        f"✏️ Редактирование «{key}»\n"
+        f"· · · · · · · ·"
+        f"{hint}",
+        kbds.op_settings_text_cancel_keyboard(key),
     )
 
 
@@ -121,11 +116,7 @@ async def _apply_single_edit(
 
     ok, msg = settings_store.validate(key, new_text)
     if not ok:
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=f"❌ {msg}",
-            attachments=[kbds.op_settings_text_cancel_keyboard(key)],
-        )
+        await op_send(event, f"❌ {msg}", kbds.op_settings_text_cancel_keyboard(key))
         return False
     async with session_scope() as session:
         old_value = await settings_store.get(session, key)

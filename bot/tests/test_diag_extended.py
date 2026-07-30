@@ -66,7 +66,7 @@ async def test_diag_pulse_warning_when_events_silent(session) -> None:
 
     with (
         patch("aemr_bot.handlers.admin_panel.session_scope", _scope),
-        patch("aemr_bot.handlers.admin_panel.send_or_edit_screen",
+        patch("aemr_bot.handlers._common.send_or_edit_screen",
               new=fake_send_or_edit),
     ):
         await admin_panel._do_diag(_make_event())
@@ -106,7 +106,7 @@ async def test_diag_no_warnings_when_pulse_fresh(session) -> None:
 
     with (
         patch("aemr_bot.handlers.admin_panel.session_scope", _scope),
-        patch("aemr_bot.handlers.admin_panel.send_or_edit_screen",
+        patch("aemr_bot.handlers._common.send_or_edit_screen",
               new=fake_send_or_edit),
     ):
         await admin_panel._do_diag(_make_event())
@@ -162,7 +162,7 @@ async def test_diag_stuck_broadcast_in_warnings(session) -> None:
 
     with (
         patch("aemr_bot.handlers.admin_panel.session_scope", _scope),
-        patch("aemr_bot.handlers.admin_panel.send_or_edit_screen",
+        patch("aemr_bot.handlers._common.send_or_edit_screen",
               new=fake_send_or_edit),
     ):
         await admin_panel._do_diag(_make_event())
@@ -191,7 +191,7 @@ async def test_diag_24h_counters_present(session) -> None:
 
     with (
         patch("aemr_bot.handlers.admin_panel.session_scope", _scope),
-        patch("aemr_bot.handlers.admin_panel.send_or_edit_screen",
+        patch("aemr_bot.handlers._common.send_or_edit_screen",
               new=fake_send_or_edit),
     ):
         await admin_panel._do_diag(_make_event())

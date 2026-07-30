@@ -1,9 +1,8 @@
 """Coverage-добор для кластера handlers/broadcast_templates.* .
 
-Характеризационный файл (`test_broadcast_templates_characterization.py`)
-уже плотно покрывает leaf-функции end-to-end (apply/save/step_*), а
-`test_broadcast_templates_handlers.py` — часть разводки `handle_callback`
-и happy-path wizard-текста. Этот файл — ДОБОР по непокрытым веткам,
+`test_broadcast_templates_handlers.py` покрывает разводку
+`handle_callback` и happy-path wizard-текста, `test_broadcast_templates_
+service_pg.py` — сервисный слой на PG. Этот файл — ДОБОР по веткам,
 найденным через `--cov-report=term-missing`. Ничего из перечисленного
 ниже не дублирует существующие файлы:
 
@@ -107,7 +106,7 @@ class TestStartNew:
         send = AsyncMock()
         with patch(f"{_WIZ}.ensure_role", AsyncMock(return_value=False)), \
              patch(f"{_WIZ}.get_user_id", return_value=7), \
-             patch(f"{_WIZ}.send_or_edit_screen", send):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", send):
             await bt._start_new(event)
         assert 7 not in bt._wizards
         send.assert_not_awaited()
@@ -119,7 +118,7 @@ class TestStartNew:
         send = AsyncMock()
         with patch(f"{_WIZ}.ensure_role", AsyncMock(return_value=True)), \
              patch(f"{_WIZ}.get_user_id", return_value=7), \
-             patch(f"{_WIZ}.send_or_edit_screen", send):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", send):
             await bt._start_new(event)
         assert 7 in bt._wizards
         assert bt._wizards[7].step == "new_awaiting_name"
@@ -133,7 +132,7 @@ class TestStartEdit:
         get_by_id = AsyncMock()
         with patch(f"{_WIZ}.ensure_role", AsyncMock(return_value=False)), \
              patch(f"{_WIZ}.templates_service.get_by_id", get_by_id), \
-             patch(f"{_WIZ}.send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await bt._start_edit(event, 5)
         get_by_id.assert_not_awaited()
         assert 7 not in bt._wizards
@@ -148,7 +147,7 @@ class TestStartEdit:
              patch(f"{_WIZ}.session_scope", _fake_session_scope), \
              patch(f"{_WIZ}.templates_service.get_by_id",
                    AsyncMock(return_value=None)), \
-             patch(f"{_WIZ}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._start_edit(event, 999)
         assert send.await_args.kwargs["text"] == texts.OP_TMPL_NOT_FOUND
         # Шаблона нет → wizard не открываем.
@@ -162,7 +161,7 @@ class TestStartEdit:
              patch(f"{_WIZ}.session_scope", _fake_session_scope), \
              patch(f"{_WIZ}.templates_service.get_by_id",
                    AsyncMock(return_value=_tmpl(tid=5, name="Док"))), \
-             patch(f"{_WIZ}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._start_edit(event, 5)
         assert bt._wizards[7].step == "edit_awaiting_text"
         assert bt._wizards[7].target_id == 5
@@ -176,7 +175,7 @@ class TestStartRename:
         get_by_id = AsyncMock()
         with patch(f"{_CRUD}.ensure_role", AsyncMock(return_value=False)), \
              patch(f"{_CRUD}.templates_service.get_by_id", get_by_id), \
-             patch(f"{_CRUD}.send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await bt._start_rename(event, 5)
         get_by_id.assert_not_awaited()
         assert 7 not in bt._wizards
@@ -191,7 +190,7 @@ class TestStartRename:
              patch(f"{_CRUD}.session_scope", _fake_session_scope), \
              patch(f"{_CRUD}.templates_service.get_by_id",
                    AsyncMock(return_value=None)), \
-             patch(f"{_CRUD}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._start_rename(event, 999)
         assert send.await_args.kwargs["text"] == texts.OP_TMPL_NOT_FOUND
         assert 7 not in bt._wizards
@@ -206,7 +205,7 @@ class TestStartRename:
              patch(f"{_CRUD}.session_scope", _fake_session_scope), \
              patch(f"{_CRUD}.templates_service.get_by_id",
                    AsyncMock(return_value=_tmpl(tid=5, name="Старое имя"))), \
-             patch(f"{_CRUD}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._start_rename(event, 5)
         assert bt._wizards[7].step == "rename_awaiting_name"
         assert bt._wizards[7].target_id == 5
@@ -220,7 +219,7 @@ class TestStartClone:
         get_by_id = AsyncMock()
         with patch(f"{_CRUD}.ensure_role", AsyncMock(return_value=False)), \
              patch(f"{_CRUD}.templates_service.get_by_id", get_by_id), \
-             patch(f"{_CRUD}.send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await bt._start_clone(event, 5)
         get_by_id.assert_not_awaited()
         assert 7 not in bt._wizards
@@ -235,7 +234,7 @@ class TestStartClone:
              patch(f"{_CRUD}.session_scope", _fake_session_scope), \
              patch(f"{_CRUD}.templates_service.get_by_id",
                    AsyncMock(return_value=None)), \
-             patch(f"{_CRUD}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._start_clone(event, 999)
         assert send.await_args.kwargs["text"] == texts.OP_TMPL_NOT_FOUND
         assert 7 not in bt._wizards
@@ -258,7 +257,7 @@ class TestStartClone:
              patch(f"{_CRUD}.session_scope", _fake_session_scope), \
              patch(f"{_CRUD}.templates_service.get_by_id",
                    AsyncMock(return_value=src)), \
-             patch(f"{_CRUD}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._start_clone(event, 3)
         st = bt._wizards[7]
         assert st.step == "clone_awaiting_name"
@@ -277,7 +276,7 @@ class TestAskDelete:
         get_by_id = AsyncMock()
         with patch(f"{_CRUD}.ensure_role", AsyncMock(return_value=False)), \
              patch(f"{_CRUD}.templates_service.get_by_id", get_by_id), \
-             patch(f"{_CRUD}.send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await bt._ask_delete(event, 5)
         get_by_id.assert_not_awaited()
 
@@ -290,7 +289,7 @@ class TestAskDelete:
              patch(f"{_CRUD}.session_scope", _fake_session_scope), \
              patch(f"{_CRUD}.templates_service.get_by_id",
                    AsyncMock(return_value=None)), \
-             patch(f"{_CRUD}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._ask_delete(event, 999)
         assert send.await_args.kwargs["text"] == texts.OP_TMPL_NOT_FOUND
 
@@ -303,7 +302,7 @@ class TestAskDelete:
              patch(f"{_CRUD}.session_scope", _fake_session_scope), \
              patch(f"{_CRUD}.templates_service.get_by_id",
                    AsyncMock(return_value=_tmpl(tid=5, name="Удаляемый"))), \
-             patch(f"{_CRUD}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._ask_delete(event, 5)
         assert "Удаляемый" in send.await_args.kwargs["text"]
 
@@ -314,7 +313,7 @@ class TestStartSearch:
         event = _make_event(user_id=7)
         with patch(f"{_LIST}.ensure_role", AsyncMock(return_value=False)), \
              patch(f"{_LIST}.get_user_id", return_value=7), \
-             patch(f"{_LIST}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._start_search(event)
         assert 7 not in bt._wizards
         send.assert_not_awaited()
@@ -326,7 +325,7 @@ class TestStartSearch:
         event = _make_event(user_id=7)
         with patch(f"{_LIST}.ensure_role", AsyncMock(return_value=True)), \
              patch(f"{_LIST}.get_user_id", return_value=7), \
-             patch(f"{_LIST}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._start_search(event)
         assert bt._wizards[7].step == "search_awaiting_query"
         assert send.await_args.kwargs["text"] == texts.OP_TMPL_SEARCH_PROMPT
@@ -631,7 +630,7 @@ class TestStartActorNoneGuards:
         send = AsyncMock()
         with patch(f"{_WIZ}.ensure_role", AsyncMock(return_value=True)), \
              patch(f"{_WIZ}.get_user_id", return_value=None), \
-             patch(f"{_WIZ}.send_or_edit_screen", send):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", send):
             await bt._start_new(event)
         # actor_id None → return до посадки state и до prompt.
         assert bt._wizards == {}
@@ -643,7 +642,7 @@ class TestStartActorNoneGuards:
         send = AsyncMock()
         with patch(f"{_LIST}.ensure_role", AsyncMock(return_value=True)), \
              patch(f"{_LIST}.get_user_id", return_value=None), \
-             patch(f"{_LIST}.send_or_edit_screen", send):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", send):
             await bt._start_search(event)
         assert bt._wizards == {}
         send.assert_not_awaited()
@@ -725,7 +724,7 @@ class TestActorNoneGuards:
 
         event = _make_event(user_id=7)
         with patch(f"{_WIZ}.get_user_id", return_value=None), \
-             patch(f"{_WIZ}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._cancel(event)
         assert send.await_args.kwargs["text"] == texts.OP_TMPL_CANCELLED
 
@@ -735,7 +734,7 @@ class TestActorNoneGuards:
         рисуется."""
         event = _make_event(user_id=7)
         with patch(f"{_WIZ}.get_user_id", return_value=None), \
-             patch(f"{_WIZ}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._back_to_name(event)
         send.assert_not_awaited()
 
@@ -743,7 +742,7 @@ class TestActorNoneGuards:
     async def test_back_to_text_new_actor_none_noop(self) -> None:
         event = _make_event(user_id=7)
         with patch(f"{_WIZ}.get_user_id", return_value=None), \
-             patch(f"{_WIZ}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._back_to_text_new(event)
         send.assert_not_awaited()
 
@@ -751,7 +750,7 @@ class TestActorNoneGuards:
     async def test_back_to_text_edit_actor_none_noop(self) -> None:
         event = _make_event(user_id=7)
         with patch(f"{_WIZ}.get_user_id", return_value=None), \
-             patch(f"{_WIZ}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._back_to_text_edit(event, 5)
         send.assert_not_awaited()
 
@@ -763,7 +762,7 @@ class TestActorNoneGuards:
         bt._wizards[7] = bt._TmplWizardState(step="edit_awaiting_text",
                                              target_id=5)
         with patch(f"{_WIZ}.get_user_id", return_value=7), \
-             patch(f"{_WIZ}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._back_to_text_edit(event, 5)
         send.assert_not_awaited()
         # Шаг не тронут.
@@ -782,7 +781,7 @@ class TestActorNoneGuards:
              patch(f"{_WIZ}.get_operator",
                    AsyncMock(return_value=SimpleNamespace(id=99))), \
              patch(f"{_WIZ}.templates_service.create_template", create), \
-             patch(f"{_WIZ}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._save_new(event)
         create.assert_not_awaited()
         send.assert_not_awaited()
@@ -800,7 +799,7 @@ class TestActorNoneGuards:
              patch(f"{_WIZ}.get_operator",
                    AsyncMock(return_value=SimpleNamespace(id=99))), \
              patch(f"{_WIZ}.templates_service.update_text", update), \
-             patch(f"{_WIZ}.send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await bt._save_edit(event, 5)
         update.assert_not_awaited()
         send.assert_not_awaited()
@@ -814,7 +813,7 @@ class TestActorNoneGuards:
         with patch(f"{_LIST}.ensure_role", AsyncMock(return_value=True)), \
              patch(f"{_LIST}.get_user_id", return_value=None), \
              patch(f"{_LIST}.templates_service.get_by_id", get_by_id), \
-             patch(f"{_LIST}.send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await bt._apply(event, 5)
         get_by_id.assert_not_awaited()
         assert bt._apply_dedupe == {}
@@ -826,7 +825,7 @@ class TestActorNoneGuards:
         with patch(f"{_CRUD}.ensure_role", AsyncMock(return_value=True)), \
              patch(f"{_CRUD}.get_user_id", return_value=None), \
              patch(f"{_CRUD}.templates_service.get_by_id", get_by_id), \
-             patch(f"{_CRUD}.send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await bt._start_rename(event, 5)
         get_by_id.assert_not_awaited()
         assert bt._wizards == {}
@@ -838,7 +837,7 @@ class TestActorNoneGuards:
         with patch(f"{_CRUD}.ensure_role", AsyncMock(return_value=True)), \
              patch(f"{_CRUD}.get_user_id", return_value=None), \
              patch(f"{_CRUD}.templates_service.get_by_id", get_by_id), \
-             patch(f"{_CRUD}.send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await bt._start_clone(event, 5)
         get_by_id.assert_not_awaited()
         assert bt._wizards == {}
@@ -850,7 +849,7 @@ class TestActorNoneGuards:
         with patch(f"{_WIZ}.ensure_role", AsyncMock(return_value=True)), \
              patch(f"{_WIZ}.get_user_id", return_value=None), \
              patch(f"{_WIZ}.templates_service.get_by_id", get_by_id), \
-             patch(f"{_WIZ}.send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await bt._start_edit(event, 5)
         get_by_id.assert_not_awaited()
         assert bt._wizards == {}
@@ -912,7 +911,7 @@ class TestAuditSkipNoOperator:
              patch(f"{_WIZ}.session_scope", _fake_session_scope), \
              patch(f"{_WIZ}.templates_service.update_text", update), \
              patch(f"{_WIZ}.operators_service.write_audit", write_audit), \
-             patch(f"{_WIZ}.send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await bt._save_edit(event, 5)
         update.assert_awaited_once()
         write_audit.assert_not_awaited()

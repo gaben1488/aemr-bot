@@ -15,11 +15,10 @@ from __future__ import annotations
 import os
 
 from aemr_bot import keyboards as kbds
-from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
-from aemr_bot.utils.event import send_or_edit_screen
+from aemr_bot.handlers._common import op_screen
 
 
 async def _show_pr_confirm(event) -> None:
@@ -31,14 +30,12 @@ async def _show_pr_confirm(event) -> None:
 
     pat_present = bool(os.environ.get("GITHUB_PAT", "").strip())
     if not dirty:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=(
-                "📥 Нет несинхронизированных изменений.\n"
-                "· · · · · · · ·\n"
-                "Все настройки совпадают с последним PR в репо."
-            ),
-            attachments=[kbds.op_back_to_settings_keyboard()],
+        await op_screen(
+            event,
+            "📥 Нет несинхронизированных изменений.\n"
+            "· · · · · · · ·\n"
+            "Все настройки совпадают с последним PR в репо.",
+            kbds.op_back_to_settings_keyboard(),
         )
         return
     blockers: list[str] = []
@@ -54,32 +51,28 @@ async def _show_pr_confirm(event) -> None:
         keys_preview += f"\n…и ещё {len(dirty) - 10}"
 
     if blockers:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=(
-                "💾 Создать PR с изменениями\n"
-                "· · · · · · · ·\n"
-                f"Будет включено {len(dirty)} ключей:\n{keys_preview}\n\n"
-                "❌ Нельзя создать PR:\n" + "\n".join(blockers) +
-                "\n\nИзменения уже применены в боте — это\n"
-                "только про их фиксацию в репозитории."
-            ),
-            attachments=[kbds.op_back_to_settings_keyboard()],
-        )
-        return
-
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
+        await op_screen(
+            event,
             "💾 Создать PR с изменениями\n"
             "· · · · · · · ·\n"
             f"Будет включено {len(dirty)} ключей:\n{keys_preview}\n\n"
-            f"Автор: {name} <{email}>\n\n"
-            "После создания PR откройте его в браузере,\n"
-            "проверьте diff и нажмите Merge. Auto-deploy\n"
-            "подхватит изменения в течение 10 минут."
-        ),
-        attachments=[kbds.op_settings_pr_confirm_keyboard()],
+            "❌ Нельзя создать PR:\n" + "\n".join(blockers) +
+            "\n\nИзменения уже применены в боте — это\n"
+            "только про их фиксацию в репозитории.",
+            kbds.op_back_to_settings_keyboard(),
+        )
+        return
+
+    await op_screen(
+        event,
+        "💾 Создать PR с изменениями\n"
+        "· · · · · · · ·\n"
+        f"Будет включено {len(dirty)} ключей:\n{keys_preview}\n\n"
+        f"Автор: {name} <{email}>\n\n"
+        "После создания PR откройте его в браузере,\n"
+        "проверьте diff и нажмите Merge. Auto-deploy\n"
+        "подхватит изменения в течение 10 минут.",
+        kbds.op_settings_pr_confirm_keyboard(),
     )
 
 
@@ -98,22 +91,20 @@ async def _create_pr(event, operator_id: int) -> None:
         author_name=name, author_email=email,
     )
     if cfg_repo is None:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=(
-                "❌ Не настроено GitHub-подключение.\n"
-                "· · · · · · · ·\n"
-                "Заполните GITHUB_PAT в .env и/или\n"
-                "автора коммитов в меню «👤 Автор»."
-            ),
-            attachments=[kbds.op_back_to_settings_keyboard()],
+        await op_screen(
+            event,
+            "❌ Не настроено GitHub-подключение.\n"
+            "· · · · · · · ·\n"
+            "Заполните GITHUB_PAT в .env и/или\n"
+            "автора коммитов в меню «👤 Автор».",
+            kbds.op_back_to_settings_keyboard(),
         )
         return
     if not dirty:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Нет несинхронизированных изменений.",
-            attachments=[kbds.op_back_to_settings_keyboard()],
+        await op_screen(
+            event,
+            "Нет несинхронизированных изменений.",
+            kbds.op_back_to_settings_keyboard(),
         )
         return
 
@@ -125,15 +116,13 @@ async def _create_pr(event, operator_id: int) -> None:
         operator_id=operator_id,
     )
     if not result.ok:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=(
-                "❌ Не удалось создать PR.\n"
-                "· · · · · · · ·\n"
-                f"Причина: {result.reason}\n"
-                f"{result.message}"
-            ),
-            attachments=[kbds.op_back_to_settings_keyboard()],
+        await op_screen(
+            event,
+            "❌ Не удалось создать PR.\n"
+            "· · · · · · · ·\n"
+            f"Причина: {result.reason}\n"
+            f"{result.message}",
+            kbds.op_back_to_settings_keyboard(),
         )
         return
 
@@ -151,19 +140,17 @@ async def _create_pr(event, operator_id: int) -> None:
                 "keys": dirty,
             },
         )
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            f"✅ PR создан: #{result.pr_number}\n"
-            f"· · · · · · · ·\n"
-            f"Ветка: {result.branch}\n"
-            f"Изменено ключей: {len(dirty)}\n\n"
-            f"Откройте PR в браузере, проверьте diff\n"
-            f"и нажмите Merge.\n\n"
-            f"Auto-deploy подхватит изменения в течение\n"
-            f"10 минут после мержа."
-        ),
-        attachments=[kbds.op_settings_pr_done_keyboard(result.pr_url)],
+    await op_screen(
+        event,
+        f"✅ PR создан: #{result.pr_number}\n"
+        f"· · · · · · · ·\n"
+        f"Ветка: {result.branch}\n"
+        f"Изменено ключей: {len(dirty)}\n\n"
+        f"Откройте PR в браузере, проверьте diff\n"
+        f"и нажмите Merge.\n\n"
+        f"Auto-deploy подхватит изменения в течение\n"
+        f"10 минут после мержа.",
+        kbds.op_settings_pr_done_keyboard(result.pr_url),
     )
 
 
@@ -177,46 +164,42 @@ async def _show_pr_diff(event) -> None:
         email = await settings_store.get(session, "commit_author_email")
 
     if not os.environ.get("GITHUB_PAT", "").strip():
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=(
-                "📥 Проверка расхождений с репо\n"
-                "· · · · · · · ·\n"
-                "GITHUB_PAT не задан в .env.\n\n"
-                f"Локально dirty-ключей: {len(dirty)}\n"
-                + ("\n".join(f"• {k}" for k in dirty[:10]) if dirty else "—")
-            ),
-            attachments=[kbds.op_back_to_settings_keyboard()],
+        await op_screen(
+            event,
+            "📥 Проверка расхождений с репо\n"
+            "· · · · · · · ·\n"
+            "GITHUB_PAT не задан в .env.\n\n"
+            f"Локально dirty-ключей: {len(dirty)}\n"
+            + ("\n".join(f"• {k}" for k in dirty[:10]) if dirty else "—"),
+            kbds.op_back_to_settings_keyboard(),
         )
         return
     cfg_repo = repo_sync.load_config_from_env_and_settings(
         author_name=name or "bot", author_email=email or "bot@example.com",
     )
     if cfg_repo is None:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="❌ Не настроено GitHub-подключение.",
-            attachments=[kbds.op_back_to_settings_keyboard()],
+        await op_screen(
+            event,
+            "❌ Не настроено GitHub-подключение.",
+            kbds.op_back_to_settings_keyboard(),
         )
         return
     remote, reason = await repo_sync.fetch_main_runtime_config(cfg_repo)
     if remote is None and reason == "not_in_repo":
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=(
-                "📥 Проверка расхождений с репо\n"
-                "· · · · · · · ·\n"
-                "Файла seed/runtime_config.json в main\n"
-                "пока нет. Первый PR создаст его."
-            ),
-            attachments=[kbds.op_back_to_settings_keyboard()],
+        await op_screen(
+            event,
+            "📥 Проверка расхождений с репо\n"
+            "· · · · · · · ·\n"
+            "Файла seed/runtime_config.json в main\n"
+            "пока нет. Первый PR создаст его.",
+            kbds.op_back_to_settings_keyboard(),
         )
         return
     if remote is None:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=f"❌ Не удалось скачать из репо: {reason}",
-            attachments=[kbds.op_back_to_settings_keyboard()],
+        await op_screen(
+            event,
+            f"❌ Не удалось скачать из репо: {reason}",
+            kbds.op_back_to_settings_keyboard(),
         )
         return
 
@@ -237,12 +220,10 @@ async def _show_pr_diff(event) -> None:
             + "локально (например, через ручной PR) —\n"
             + "перезапустите бота, он перечитает seed."
         )
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            "📥 Проверка расхождений с репо\n"
-            "· · · · · · · ·\n"
-            + body
-        ),
-        attachments=[kbds.op_back_to_settings_keyboard()],
+    await op_screen(
+        event,
+        "📥 Проверка расхождений с репо\n"
+        "· · · · · · · ·\n"
+        + body,
+        kbds.op_back_to_settings_keyboard(),
     )

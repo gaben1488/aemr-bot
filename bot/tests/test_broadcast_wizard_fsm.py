@@ -193,7 +193,7 @@ class TestStartWizard:
              patch.object(mod, "session_scope") as scope, \
              patch.object(mod, "_resolve_broadcast_max_images",
                           AsyncMock(return_value=5)), \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
             await mod._start_wizard(event)
@@ -217,7 +217,7 @@ class TestStartWizard:
              patch.object(mod, "_resolve_broadcast_max_images",
                           AsyncMock(return_value=5)), \
              patch.object(operator_reply, "drop_reply_intent") as drop, \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
             await mod._start_wizard(event)
@@ -473,7 +473,7 @@ class TestHandleAbort:
         event = make_event(user_id=42)
         mod._wizards[42] = _WizardState(step="awaiting_text")
         with patch.object(mod, "ack_callback", AsyncMock()) as ack, \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await mod._handle_abort(event)
         assert 42 not in mod._wizards
         ack.assert_awaited_once()
@@ -486,7 +486,7 @@ class TestHandleAbort:
         event = make_event(user_id=42)
         with patch.object(mod, "get_user_id", return_value=None), \
              patch.object(mod, "ack_callback", AsyncMock()) as ack, \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await mod._handle_abort(event)
         ack.assert_awaited_once()
 
@@ -525,7 +525,7 @@ class TestHandleEdit:
         )
         mod._wizards[42] = state
         with patch.object(mod, "ack_callback", AsyncMock()), \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()):
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await mod._handle_edit(event)
         assert mod._wizards[42].step == "awaiting_text"
         assert mod._wizards[42].text == ""
