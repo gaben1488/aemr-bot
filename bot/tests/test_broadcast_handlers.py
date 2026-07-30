@@ -666,7 +666,7 @@ class TestHandleCancelCooldownAuth:
                  patch("aemr_bot.handlers.broadcast.broadcasts_service.mark_cancelled",
                        AsyncMock()), \
                  patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
-                 patch("aemr_bot.handlers.broadcast.send_or_edit_screen", AsyncMock()), \
+                 patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()), \
                  patch("aemr_bot.handlers.broadcast.ack_callback", AsyncMock()):
                 await broadcast._handle_cancel_cooldown(_make_event(), 99)
             task.cancel.assert_called_once()

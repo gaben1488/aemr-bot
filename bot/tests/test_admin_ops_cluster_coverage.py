@@ -3,8 +3,8 @@ admin_commands. Цель — реальные непокрытые ветки, �
 
 Существующие наборы уже плотно покрывают:
   - operator_reply: intent/dedupe/mid/_deliver/handle_* (test_handlers_operator_reply
-    + test_operator_reply_characterization + closed_guard + with_image);
-  - admin_appeal_ops: 100% (test_admin_appeal_ops + characterization);
+    + test_operator_reply_guards + closed_guard + with_image);
+  - admin_appeal_ops: test_admin_appeal_ops + test_operator_admin_guards;
   - admin_panel: show_op_menu / run_* гейты / _do_backup / _do_open_tickets пустой
     (test_admin_panel).
 

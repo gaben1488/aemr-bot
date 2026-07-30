@@ -1,10 +1,9 @@
 """Покрытие непокрытых веток кластера admin_operators.
 
-Дополняет ``test_admin_operators.py`` и
-``test_admin_operators_characterization.py``: те фиксируют основные
-сценарии (happy / гарды самомодификации / гард единственного IT / audit-
-контракты), а здесь добиваются ветки, которые term-missing показал как
-непройденные:
+Дополняет ``test_admin_operators.py`` (основные сценарии мастера) и
+``test_operator_admin_guards.py`` (гарды самомодификации, гард
+единственного активного IT, запись в audit_log). Здесь — ветки, которые
+term-missing показал как непройденные:
 
 - ``admin_operators`` (фасад): диспетчер ``name_edit``.
 - ``admin_operators_list``: счётчик деактивированных в шапке списка.

@@ -78,11 +78,11 @@ from aemr_bot.handlers.broadcast_wizard import (  # noqa: F401
     _wizards,
     prefill_wizard_from_template,
 )
+from aemr_bot.handlers._common import op_screen
 from aemr_bot.utils import image_attachments as _image_attachments
 from aemr_bot.utils.event import (
     get_message_text,
     is_admin_chat,
-    send_or_edit_screen,
 )
 from aemr_bot.utils.event import ack_callback, get_user_id  # noqa: F401
 
@@ -176,16 +176,12 @@ async def _handle_cancel_cooldown(event, broadcast_id: int) -> None:
         # уже pop'нул себя (cooldown отработал).
         # task.done() — то же самое, но atomically (task ещё в dict, но
         # уже завершён в asyncio).
-        await send_or_edit_screen(
+        await op_screen(
             event,
-            chat_id=cfg.admin_group_id,
-            text=(
-                f"⚠️ Рассылка #{broadcast_id} уже стартовала — cooldown "
-                f"истёк раньше, чем вы успели нажать «отменить». Для "
-                f"остановки уже идущей рассылки используйте кнопку "
-                f"«⛔ Экстренно остановить» под progress-карточкой."
-            ),
-            attachments=[keyboards.op_back_to_menu_keyboard()],
+            f"⚠️ Рассылка #{broadcast_id} уже стартовала — cooldown "
+            f"истёк раньше, чем вы успели нажать «отменить». Для "
+            f"остановки уже идущей рассылки используйте кнопку "
+            f"«⛔ Экстренно остановить» под progress-карточкой.",
         )
         return
     task.cancel()
@@ -215,15 +211,11 @@ async def _handle_cancel_cooldown(event, broadcast_id: int) -> None:
         "broadcast: cancelled during cooldown — operator=%s broadcast_id=%s",
         get_user_id(event), broadcast_id,
     )
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=(
-            f"❌ Рассылка #{broadcast_id} отменена. Жителям ничего не "
-            f"отправлено. Если нужно переотправить — начните мастер "
-            f"заново через «📣 Рассылка»."
-        ),
-        attachments=[keyboards.op_back_to_menu_keyboard()],
+        f"❌ Рассылка #{broadcast_id} отменена. Жителям ничего не "
+        f"отправлено. Если нужно переотправить — начните мастер "
+        f"заново через «📣 Рассылка».",
     )
 
 
@@ -694,12 +686,7 @@ async def _list_broadcasts(event) -> None:
     async with session_scope() as session:
         items = await broadcasts_service.list_recent(session, limit=10)
     if not items:
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_BROADCAST_LIST_EMPTY,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, texts.OP_BROADCAST_LIST_EMPTY)
         return
     lines = [texts.OP_BROADCAST_LIST_HEADER.rstrip()]
     for bc in items:
@@ -715,11 +702,10 @@ async def _list_broadcasts(event) -> None:
     # PR G: кнопки-строки списка → клик открывает карточку рассылки.
     # Текст списка остаётся (быстрый обзор), кнопки выше дублируют
     # цифры и кликабельны.
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text="\n".join(lines),
-        attachments=[keyboards.broadcast_history_list_keyboard(items)],
+        "\n".join(lines),
+        keyboards.broadcast_history_list_keyboard(items),
     )
 
 
@@ -735,12 +721,7 @@ async def _open_broadcast(event, broadcast_id: int) -> None:
     async with session_scope() as session:
         bc = await broadcasts_service.get_by_id(session, broadcast_id)
     if bc is None:
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_BROADCAST_NOT_FOUND,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, texts.OP_BROADCAST_NOT_FOUND)
         return
     failed_line = (
         texts.OP_BROADCAST_CARD_FAILED_LINE.format(failed=bc.failed_count)
@@ -760,11 +741,10 @@ async def _open_broadcast(event, broadcast_id: int) -> None:
     preview_images = _image_attachments.build_outbound_image_attachments(
         bc.attachments or []
     )
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=body,
-        attachments=[
+        body,
+        [
             *preview_images,
             keyboards.broadcast_history_card_keyboard(
                 bc.id, has_failures=bool(bc.failed_count)
@@ -788,21 +768,11 @@ async def _clone_broadcast(event, broadcast_id: int) -> None:
     async with session_scope() as session:
         bc = await broadcasts_service.get_by_id(session, broadcast_id)
         if bc is None:
-            await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_BROADCAST_NOT_FOUND,
-                attachments=[keyboards.op_back_to_menu_keyboard()],
-            )
+            await op_screen(event, texts.OP_BROADCAST_NOT_FOUND)
             return
         subscribers = await broadcasts_service.count_subscribers(session)
     if subscribers == 0:
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_BROADCAST_CLONE_NO_SUBSCRIBERS,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, texts.OP_BROADCAST_CLONE_NO_SUBSCRIBERS)
         return
     prefill_wizard_from_template(
         actor_id,
@@ -812,16 +782,15 @@ async def _clone_broadcast(event, broadcast_id: int) -> None:
     preview_images = _image_attachments.build_outbound_image_attachments(
         bc.attachments or []
     )
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_BROADCAST_PREVIEW.format(
+        texts.OP_BROADCAST_PREVIEW.format(
             text=bc.text,
             count=subscribers,
             image_count=len(bc.attachments or []),
             image_warning="",
         ),
-        attachments=[
+        [
             *preview_images,
             keyboards.broadcast_confirm_keyboard(),
         ],
@@ -841,24 +810,16 @@ async def _list_failed_deliveries(event, broadcast_id: int) -> None:
     async with session_scope() as session:
         bc = await broadcasts_service.get_by_id(session, broadcast_id)
         if bc is None:
-            await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_BROADCAST_NOT_FOUND,
-                attachments=[keyboards.op_back_to_menu_keyboard()],
-            )
+            await op_screen(event, texts.OP_BROADCAST_NOT_FOUND)
             return
         rows = await broadcasts_service.list_failed_deliveries(
             session, broadcast_id, limit=LIMIT
         )
     if not rows:
-        await send_or_edit_screen(
+        await op_screen(
             event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_BROADCAST_FAILED_LIST_EMPTY.format(number=bc.id),
-            attachments=[
-                keyboards.broadcast_failed_list_keyboard(broadcast_id)
-            ],
+            texts.OP_BROADCAST_FAILED_LIST_EMPTY.format(number=bc.id),
+            keyboards.broadcast_failed_list_keyboard(broadcast_id),
         )
         return
     lines = [
@@ -882,11 +843,10 @@ async def _list_failed_deliveries(event, broadcast_id: int) -> None:
                 more=bc.failed_count - len(rows), limit=len(rows)
             )
         )
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text="\n".join(lines),
-        attachments=[keyboards.broadcast_failed_list_keyboard(broadcast_id)],
+        "\n".join(lines),
+        keyboards.broadcast_failed_list_keyboard(broadcast_id),
     )
 
 

@@ -208,7 +208,7 @@ class TestRunSettingsMenu:
              patch.object(mod, "session_scope") as scope, \
              patch.object(mod.settings_store, "get_dirty_keys",
                           AsyncMock(return_value=["welcome_text", "policy_url"])), \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
             await mod.run_settings_menu(event)
@@ -226,7 +226,7 @@ class TestRunSettingsMenu:
              patch.object(mod, "session_scope") as scope, \
              patch.object(mod.settings_store, "get_dirty_keys",
                           AsyncMock(return_value=[])), \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
             await mod.run_settings_menu(event)
@@ -373,7 +373,7 @@ class TestRouteSetActionBranches:
         from aemr_bot.handlers import admin_settings as mod
 
         event = make_event()
-        with patch.object(mod, "send_or_edit_screen", AsyncMock()):
+        with patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await mod._route_set_action(event, 42, "list_add:topics")
         intent = mod._intent_get(42)
         assert intent is not None
@@ -513,7 +513,7 @@ class TestQuietHoursWizard:
              patch("aemr_bot.services.quiet_hours.refresh_cache_from_db",
                    AsyncMock()), \
              patch.object(mod.settings_store, "get", side_effect=fake_get), \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
             await mod._show_quiet_card(event)
@@ -543,7 +543,7 @@ class TestQuietHoursWizard:
              patch("aemr_bot.services.quiet_hours.refresh_cache_from_db",
                    AsyncMock()), \
              patch.object(mod.settings_store, "get", side_effect=fake_get), \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
             await mod._show_quiet_card(event)
@@ -587,7 +587,7 @@ class TestQuietHoursWizard:
         from aemr_bot.handlers import admin_settings_quiet as qmod
 
         event = make_event()
-        with patch.object(qmod, "send_or_edit_screen", AsyncMock()) as send:
+        with patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await qmod._start_quiet_hour_intent(event, 42, which="start")
         intent = mod._intent_get(42)
         assert intent is not None
@@ -604,7 +604,7 @@ class TestQuietHoursWizard:
         from aemr_bot.handlers import admin_settings_quiet as qmod
 
         event = make_event()
-        with patch.object(qmod, "send_or_edit_screen", AsyncMock()) as send:
+        with patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await qmod._start_quiet_hour_intent(event, 42, which="end")
         intent = mod._intent_get(42)
         assert intent["which"] == "end"
@@ -722,7 +722,7 @@ class TestNotifyTogglesWizard:
                  AsyncMock(),
              ), \
              patch.object(mod.settings_store, "get", side_effect=fake_get), \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
             await mod._show_notify_card(event)

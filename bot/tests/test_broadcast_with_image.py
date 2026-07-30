@@ -446,7 +446,7 @@ class TestConfirmPassesAttachmentsToCreate:
                    create_mock), \
              patch("aemr_bot.handlers.broadcast_wizard.operators_service.write_audit",
                    AsyncMock()), \
-             patch("aemr_bot.handlers.broadcast_wizard.send_or_edit_screen",
+             patch("aemr_bot.handlers._common.send_or_edit_screen",
                    AsyncMock()), \
              patch("aemr_bot.handlers.broadcast_wizard.spawn_background_task",
                    MagicMock(side_effect=_consume)):

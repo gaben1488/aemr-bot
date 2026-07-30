@@ -28,8 +28,9 @@ from aemr_bot.handlers import broadcast as broadcast_handler
 from aemr_bot.handlers._auth import ensure_role, get_operator
 from aemr_bot.services import broadcast_templates as templates_service
 from aemr_bot.services import operators as operators_service
+from aemr_bot.handlers._common import op_screen
 from aemr_bot.utils import image_attachments as _image_attachments
-from aemr_bot.utils.event import get_user_id, send_or_edit_screen
+from aemr_bot.utils.event import get_user_id
 
 from aemr_bot.handlers.broadcast_templates_state import (
     _TmplWizardState,
@@ -53,13 +54,12 @@ async def _start_new(event) -> None:
         return
     _drop_expired()
     _wizards[actor_id] = _TmplWizardState(step="new_awaiting_name")
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_TMPL_NEW_NAME_PROMPT.format(
+        texts.OP_TMPL_NEW_NAME_PROMPT.format(
             limit=templates_service.MAX_NAME_LEN
         ),
-        attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        keyboards.broadcast_template_cancel_keyboard(),
     )
 
 
@@ -72,24 +72,18 @@ async def _start_edit(event, template_id: int) -> None:
     async with session_scope() as session:
         tmpl = await templates_service.get_by_id(session, template_id)
     if tmpl is None:
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_TMPL_NOT_FOUND,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, texts.OP_TMPL_NOT_FOUND)
         return
     _drop_expired()
     _wizards[actor_id] = _TmplWizardState(
         step="edit_awaiting_text", target_id=template_id
     )
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_TMPL_EDIT_PROMPT.format(
+        texts.OP_TMPL_EDIT_PROMPT.format(
             name=tmpl.name, limit=cfg.broadcast_max_chars
         ),
-        attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        keyboards.broadcast_template_cancel_keyboard(),
     )
 
 
@@ -99,12 +93,7 @@ async def _cancel(event) -> None:
     actor_id = get_user_id(event)
     if actor_id is not None:
         _wizards.pop(actor_id, None)
-    await send_or_edit_screen(
-        event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_TMPL_CANCELLED,
-        attachments=[keyboards.op_back_to_menu_keyboard()],
-    )
+    await op_screen(event, texts.OP_TMPL_CANCELLED)
 
 
 async def _back_to_name(event) -> None:
@@ -118,22 +107,16 @@ async def _back_to_name(event) -> None:
     state = _wizards.get(actor_id)
     if state is None or state.step != "new_awaiting_text":
         # Защита от устаревшей кнопки — wizard уже закрыт/в другом шаге.
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_TMPL_CANCELLED,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, texts.OP_TMPL_CANCELLED)
         return
     state.step = "new_awaiting_name"
     state.renew()
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_TMPL_NEW_NAME_PROMPT.format(
+        texts.OP_TMPL_NEW_NAME_PROMPT.format(
             limit=templates_service.MAX_NAME_LEN
         ),
-        attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        keyboards.broadcast_template_cancel_keyboard(),
     )
 
 
@@ -245,12 +228,7 @@ async def _save_new(event) -> None:
         return
     state = _wizards.get(actor_id)
     if state is None or state.step != "new_preview":
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_TMPL_CANCELLED,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, texts.OP_TMPL_CANCELLED)
         return
     op = await get_operator(event)
     op_id = op.id if op is not None else None
@@ -281,29 +259,22 @@ async def _save_new(event) -> None:
         # Имя могло «занять» параллельным оператором между шагом 1 и save.
         state.step = "new_awaiting_name"
         state.renew()
-        await send_or_edit_screen(
+        await op_screen(
             event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_TMPL_NAME_TAKEN.format(name=state.pending_name),
-            attachments=[keyboards.broadcast_template_cancel_keyboard()],
+            texts.OP_TMPL_NAME_TAKEN.format(name=state.pending_name),
+            keyboards.broadcast_template_cancel_keyboard(),
         )
         return
     except ValueError as exc:
         log.warning("broadcast_templates: create failed: %s", exc)
         _wizards.pop(actor_id, None)
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=f"Ошибка создания: {exc}",
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, f"Ошибка создания: {exc}")
         return
     _wizards.pop(actor_id, None)
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_TMPL_CREATED.format(name=new_name, number=new_id),
-        attachments=[keyboards.broadcast_template_card_keyboard(new_id)],
+        texts.OP_TMPL_CREATED.format(name=new_name, number=new_id),
+        keyboards.broadcast_template_card_keyboard(new_id),
     )
 
 
@@ -317,13 +288,12 @@ async def _back_to_text_new(event) -> None:
         return
     state.step = "new_awaiting_text"
     state.renew()
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_TMPL_NEW_TEXT_PROMPT.format(
+        texts.OP_TMPL_NEW_TEXT_PROMPT.format(
             name=state.pending_name, limit=cfg.broadcast_max_chars
         ),
-        attachments=[keyboards.broadcast_template_step2_keyboard()],
+        keyboards.broadcast_template_step2_keyboard(),
     )
 
 
@@ -465,12 +435,7 @@ async def _save_edit(event, template_id: int) -> None:
         or state.step != "edit_preview"
         or state.target_id != template_id
     ):
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_TMPL_CANCELLED,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, texts.OP_TMPL_CANCELLED)
         return
     op = await get_operator(event)
     op_id = op.id if op is not None else None
@@ -488,12 +453,7 @@ async def _save_edit(event, template_id: int) -> None:
             )
         except templates_service.TemplateNotFound:
             _wizards.pop(actor_id, None)
-            await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_TMPL_NOT_FOUND,
-                attachments=[keyboards.op_back_to_menu_keyboard()],
-            )
+            await op_screen(event, texts.OP_TMPL_NOT_FOUND)
             return
         if op_id is not None:
             await operators_service.write_audit(
@@ -516,11 +476,10 @@ async def _save_edit(event, template_id: int) -> None:
         )
     else:
         msg = texts.OP_TMPL_EDITED_TEXT_ONLY.format(name=name)
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=msg,
-        attachments=[keyboards.broadcast_template_card_keyboard(template_id)],
+        msg,
+        keyboards.broadcast_template_card_keyboard(template_id),
     )
 
 
@@ -534,11 +493,10 @@ async def _back_to_text_edit(event, template_id: int) -> None:
         return
     state.step = "edit_awaiting_text"
     state.renew()
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_TMPL_EDIT_PROMPT.format(
+        texts.OP_TMPL_EDIT_PROMPT.format(
             name=state.pending_name, limit=cfg.broadcast_max_chars
         ),
-        attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        keyboards.broadcast_template_cancel_keyboard(),
     )

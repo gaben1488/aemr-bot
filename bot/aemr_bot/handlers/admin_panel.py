@@ -30,10 +30,10 @@ from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import db_backup
+from aemr_bot.handlers._common import op_screen
 from aemr_bot.utils.event import (
     extract_message_id,
     get_message_text,
-    send_or_edit_screen,
 )
 from aemr_bot.utils.typing_indicator import mark_typing
 
@@ -110,16 +110,13 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
     # can_edit=False → send_new).
     # Если оператор переходит из меню в меню — edit нормальный
     # (две карточки меню не накапливаются в чате).
-    sent = await send_or_edit_screen(
+    sent = await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_HELP.format(answer_limit=cfg.answer_max_chars),
-        attachments=[
-            kbds.op_help_keyboard(
-                open_count=open_count, is_it=is_it, can_broadcast=can_broadcast
-            )
-        ],
-        force_new_message=pin,
+        texts.OP_HELP.format(answer_limit=cfg.answer_max_chars),
+        kbds.op_help_keyboard(
+            open_count=open_count, is_it=is_it, can_broadcast=can_broadcast
+        ),
+        new=pin,
     )
     if not pin:
         return
@@ -188,12 +185,7 @@ async def _do_open_tickets(event) -> None:
         open_appeals = (await session.scalars(query)).all()
 
     if not open_appeals:
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text="🎉 Нет открытых или неотвеченных обращений.",
-            attachments=[kbds.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, "🎉 Нет открытых или неотвеченных обращений.")
         return
 
     # Для каждого обращения формируем компактный label кнопки:
@@ -212,12 +204,7 @@ async def _do_open_tickets(event) -> None:
         f"Нажмите на обращение, чтобы открыть его полную карточку "
         f"с историей переписки."
     )
-    await send_or_edit_screen(
-        event,
-        chat_id=cfg.admin_group_id,
-        text=text,
-        attachments=[kbds.open_tickets_listing_keyboard(items)],
-    )
+    await op_screen(event, text, kbds.open_tickets_listing_keyboard(items))
 
 
 async def _do_diag(event) -> None:
@@ -446,22 +433,15 @@ async def _do_diag(event) -> None:
     else:
         body += "\n\n✅ Аномалий не обнаружено."
 
-    await send_or_edit_screen(
-        event,
-        chat_id=cfg.admin_group_id,
-        text=body,
-        attachments=[kbds.op_back_to_menu_keyboard()],
-    )
+    await op_screen(event, body)
 
 
 async def _do_backup(event) -> None:
     """Снять pg_dump прямо сейчас. Общая реализация для /backup и кнопки."""
 
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text="🗄️ Запускаю pg_dump… Это может занять несколько секунд.",
-        attachments=[kbds.op_back_to_menu_keyboard()],
+        "🗄️ Запускаю pg_dump… Это может занять несколько секунд.",
     )
     try:
         result = await db_backup.backup_db()
@@ -470,15 +450,11 @@ async def _do_backup(event) -> None:
         # может содержать DATABASE_URL компоненты, paths /backups,
         # GPG-passphrase fragments. Полный stack — только в логи.
         log.exception("admin_panel: backup_db crashed")
-        await send_or_edit_screen(
+        await op_screen(
             event,
-            chat_id=cfg.admin_group_id,
-            text=(
-                f"⚠️ Бэкап упал: {type(e).__name__}. Полный трейс — в "
-                f"журнале бота. Проверьте Postgres, GPG-passphrase, место "
-                f"на диске."
-            ),
-            attachments=[kbds.op_back_to_menu_keyboard()],
+            f"⚠️ Бэкап упал: {type(e).__name__}. Полный трейс — в "
+            f"журнале бота. Проверьте Postgres, GPG-passphrase, место "
+            f"на диске.",
         )
         return
     if not result.ok:
@@ -508,24 +484,15 @@ async def _do_backup(event) -> None:
                 f"{result.fail_detail}\n"
                 "Проверьте логи: `docker compose logs bot --tail 50`."
             )
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=err_text,
-            attachments=[kbds.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, err_text)
         return
     # result.ok гарантирует result.path не None (см. BackupResult.ok),
     # но mypy этого не выводит — assert закрывает union-narrowing.
     out = result.path
     assert out is not None
     size_kb = out.stat().st_size // 1024
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=(
-            f"✅ Бэкап готов: `{out.name}` ({size_kb} КБ).\n"
-            f"Лежит в named-volume `backups` контейнера."
-        ),
-        attachments=[kbds.op_back_to_menu_keyboard()],
+        f"✅ Бэкап готов: `{out.name}` ({size_kb} КБ).\n"
+        f"Лежит в named-volume `backups` контейнера.",
     )

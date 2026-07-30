@@ -33,10 +33,10 @@ from __future__ import annotations
 import logging
 
 from aemr_bot import keyboards as kbds
-from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.handlers._auth import ensure_role
-from aemr_bot.utils.event import ack_callback, get_user_id, send_or_edit_screen
+from aemr_bot.handlers._common import op_screen
+from aemr_bot.utils.event import ack_callback, get_user_id
 
 # --- Подмодули реализации (импортируем как пространства имён, чтобы
 # диспетчер дёргал хендлеры через них) ------------------------------------
@@ -75,19 +75,16 @@ async def run_operators_menu(event) -> None:
 
     if not await ensure_role(event, OperatorRole.IT):
         return
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=(
-            "👥 Управление операторами\n"
-            "· · · · · · · ·\n"
-            "📋 Список — все операторы с возможностью смены роли\n"
-            "    и деактивации через карточку.\n\n"
-            "➕ Из участников группы — подобрать из тех, кто уже\n"
-            "    в служебном чате (одним тапом, без /whoami).\n\n"
-            "🔢 По ID вручную — если человека ещё нет в группе."
-        ),
-        attachments=[kbds.op_operators_menu_keyboard()],
+        "👥 Управление операторами\n"
+        "· · · · · · · ·\n"
+        "📋 Список — все операторы с возможностью смены роли\n"
+        "    и деактивации через карточку.\n\n"
+        "➕ Из участников группы — подобрать из тех, кто уже\n"
+        "    в служебном чате (одним тапом, без /whoami).\n\n"
+        "🔢 По ID вручную — если человека ещё нет в группе.",
+        kbds.op_operators_menu_keyboard(),
     )
 
 
@@ -145,10 +142,10 @@ async def run_operators_action(event, payload: str) -> None:
         try:
             picked_user_id = int(suffix.removeprefix("pick:"))
         except ValueError:
-            await send_or_edit_screen(
-                event, chat_id=cfg.admin_group_id,
-                text="Некорректный выбор.",
-                attachments=[kbds.op_back_to_operators_keyboard()],
+            await op_screen(
+                event,
+                "Некорректный выбор.",
+                kbds.op_back_to_operators_keyboard(),
             )
             return
         await _wizard._start_add_with_picked(event, operator_id, picked_user_id)
@@ -158,10 +155,10 @@ async def run_operators_action(event, payload: str) -> None:
         return
     if suffix == "cancel":
         _op_wizard_drop(operator_id)
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Регистрация оператора отменена.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Регистрация оператора отменена.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     if suffix.startswith("role:"):

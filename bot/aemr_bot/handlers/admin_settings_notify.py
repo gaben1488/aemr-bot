@@ -24,11 +24,10 @@
 from __future__ import annotations
 
 from aemr_bot import keyboards as kbds
-from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import notify_toggles, settings_store
+from aemr_bot.handlers._common import op_screen
 from aemr_bot.ui.settings_keyboards import NOTIFY_LABELS  # noqa: F401 (re-export для UI-текста)
-from aemr_bot.utils.event import send_or_edit_screen
 
 
 async def _get_all_toggles(session) -> dict[str, bool]:
@@ -68,10 +67,10 @@ async def _show_notify_card(event) -> None:
         "идут всегда, даже в тихий режим.",
     ])
 
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text="\n".join(lines),
-        attachments=[kbds.op_settings_notify_keyboard(values)],
+    await op_screen(
+        event,
+        "\n".join(lines),
+        kbds.op_settings_notify_keyboard(values),
     )
 
 

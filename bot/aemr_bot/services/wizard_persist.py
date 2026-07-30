@@ -17,8 +17,9 @@ Workflow:
 
 Если БД-вызов упадёт (network blip), in-memory остаётся правильным;
 рестарт в этот момент потеряет state, но это не хуже чем раньше.
-TTL: op-wizard — 5 минут, broadcast — 30 минут (мастера в админ-чате
-не должны жить дольше).
+TTL: op-wizard — 5 минут, broadcast — BROADCAST_WIZARD_TTL_SEC. Оба
+совпадают с TTL соответствующего мастера в памяти, иначе рестарт
+воскрешал бы черновик, который в живом процессе уже протух.
 """
 from __future__ import annotations
 
@@ -31,6 +32,7 @@ from sqlalchemy import func as sa_func
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import WizardState
 from aemr_bot.services import wizard_registry as wr
 
@@ -39,11 +41,16 @@ log = logging.getLogger(__name__)
 KIND_OP = "op"
 KIND_BROADCAST = "broadcast"
 
-# TTL в секундах. Op-wizard короче — это узкое окно регистрации
-# нового сотрудника. Broadcast длиннее — оператор может думать над
-# текстом 10–20 минут.
+# TTL в секундах. Op-wizard — узкое окно регистрации нового сотрудника,
+# ровно столько же живёт его in-memory копия
+# (`admin_operators_wizard._OP_WIZARD_TTL_SEC`).
 TTL_OP_SEC = 5 * 60
-TTL_BROADCAST_SEC = 30 * 60
+# Broadcast: тот же TTL, что у мастера в памяти
+# (`_WizardState.expires_at` считает по cfg.broadcast_wizard_ttl_sec).
+# Раньше здесь стояло жёсткие 30 минут — вшестеро больше дефолтных 300 с,
+# и гидратация после рестарта поднимала черновик, который в работающем
+# процессе давно бы протух.
+TTL_BROADCAST_SEC = int(cfg.broadcast_wizard_ttl_sec)
 
 
 def _ttl_for(kind: str) -> int:

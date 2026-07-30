@@ -1,10 +1,9 @@
 """Добивка покрытия кластера «⚙️ Настройки бота» — остаточные ветки.
 
 Дополняет `test_admin_settings_handlers.py` (intent-lifecycle, dispatch,
-quiet-wizard), `test_admin_settings_characterization.py` (карточки, CRUD,
-apply-пути, PR-flow) и `test_admin_settings_audit.py` (`_clip_audit_value`).
-Здесь — узкие ветки, не закрытые широким characterization-набором, по
-факту term-missing на момент написания:
+quiet-wizard), `test_settings_edit_intent.py` (ввод переживает ошибку
+валидации) и `test_admin_settings_audit.py` (`_clip_audit_value`).
+Здесь — узкие ветки, по факту term-missing на момент написания:
 
 - `admin_settings.py`: preview «и ещё N» при >5 dirty (123); callback с
   `get_user_id is None` → ack без dispatch (155-156); усечение значения
@@ -80,7 +79,7 @@ class TestRunSettingsMenuManyDirty:
              patch.object(mod, "session_scope") as scope, \
              patch.object(mod.settings_store, "get_dirty_keys",
                           AsyncMock(return_value=dirty)), \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
             await mod.run_settings_menu(event)
@@ -127,7 +126,7 @@ class TestShowExpertKeyClip:
              patch.object(mod.settings_store, "get",
                           AsyncMock(return_value=long_value)), \
              patch.object(mod, "ack_callback", AsyncMock()), \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await mod._show_expert_key(event, "op:setkey:welcome_text")
         text = send.await_args.kwargs["text"]
         assert "…(значение обрезано)" in text
@@ -154,7 +153,7 @@ class TestShowTextCardNonStrKey:
         with scope_patch, \
              patch.object(mod.settings_store, "get",
                           AsyncMock(return_value=18)), \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await mod._show_text_card(event, "admin_quiet_hours_start")
         text = send.await_args.kwargs["text"]
         # Тип int отрисован, значение есть, но constraints-строк нет.
@@ -181,7 +180,7 @@ class TestStartEditIntentNonStrNonUrlKey:
         from aemr_bot.handlers import admin_settings_text as mod
 
         event = make_event()
-        with patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+        with patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             # broadcast_max_images есть в SCHEMA (тип int) → гард пройден,
             # intent ставится; ни url-hint, ни max_len-hint не добавляются.
             await mod._start_edit_intent(event, 42, "broadcast_max_images")
@@ -248,7 +247,7 @@ class TestShowObjCardEdgeBranches:
                           AsyncMock(return_value={"not": "a list"})), \
              patch.object(mod.settings_store, "format_obj_list",
                           MagicMock(return_value="(пусто)")) as fmt, \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await mod._show_obj_card(event, "emergency_contacts")
         # format_obj_list получил [] (не-list приведён).
         fmt.assert_called_once_with([])
@@ -268,7 +267,7 @@ class TestShowObjCardEdgeBranches:
                           AsyncMock(return_value=[])), \
              patch.object(mod.settings_store, "format_obj_list",
                           MagicMock(return_value="(пусто)")), \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await mod._show_obj_card(event, "some_unknown_obj_key")
         text = send.await_args.kwargs["text"]
         assert "some_unknown_obj_key" in text
@@ -333,7 +332,7 @@ class TestShowPrConfirmManyDirty:
              patch.object(mod.settings_store, "get_dirty_keys",
                           AsyncMock(return_value=dirty)), \
              patch.object(mod.settings_store, "get", side_effect=fake_get), \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             mod.os.environ["GITHUB_PAT"] = "ghp_dummy"
             try:
                 await mod._show_pr_confirm(event)
@@ -368,7 +367,7 @@ class TestShowPrDiffConfigNone:
              patch.object(repo_sync, "load_config_from_env_and_settings",
                           MagicMock(return_value=None)), \
              patch.object(repo_sync, "fetch_main_runtime_config", fetch_mock), \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             mod.os.environ["GITHUB_PAT"] = "ghp_dummy"
             try:
                 await mod._show_pr_diff(event)
@@ -411,7 +410,7 @@ class TestShowQuietCardNonIntHours:
              patch("aemr_bot.services.quiet_hours.refresh_cache_from_db",
                    AsyncMock()), \
              patch.object(mod.settings_store, "get", side_effect=fake_get), \
-             patch.object(mod, "send_or_edit_screen", AsyncMock()) as send:
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await mod._show_quiet_card(event)
         text = send.await_args.kwargs["text"]
         # Дефолтное окно 18:00–09:00.

@@ -15,16 +15,15 @@ import logging
 import time as _time
 
 from aemr_bot import texts
-from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
 from aemr_bot.services.card_format import _citizen_status_line
+from aemr_bot.handlers._common import op_screen, op_send
 from aemr_bot.utils.event import (
     get_user_id,
-    send_or_edit_screen,
 )
 from aemr_bot.utils.pii_mask import mask_phone as _mask_phone
 
@@ -65,17 +64,14 @@ async def run_audience_menu(event) -> None:
 
     if not await ensure_role(event, OperatorRole.IT):
         return
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=(
-            "📊 Аудитория и согласия\n"
-            "· · · · · · · ·\n"
-            "Выберите выборку. Master-listing с pagination —\n"
-            "по 10 жителей на страницу, тап по строке открывает\n"
-            "карточку с действиями (блок/erase)."
-        ),
-        attachments=[kbds.op_audience_menu_keyboard()],
+        "📊 Аудитория и согласия\n"
+        "· · · · · · · ·\n"
+        "Выберите выборку. Master-listing с pagination —\n"
+        "по 10 жителей на страницу, тап по строке открывает\n"
+        "карточку с действиями (блок/erase).",
+        kbds.op_audience_menu_keyboard(),
     )
 
 
@@ -158,15 +154,12 @@ async def _render_audience_page(
                 )
 
     if total == 0:
-        await send_or_edit_screen(
+        await op_screen(
             event,
-            chat_id=cfg.admin_group_id,
-            text=(
-                f"{title}\n"
-                "· · · · · · · ·\n"
-                "Список пуст."
-            ),
-            attachments=[kbds.op_back_to_audience_keyboard()],
+            f"{title}\n"
+            "· · · · · · · ·\n"
+            "Список пуст.",
+            kbds.op_back_to_audience_keyboard(),
         )
         return
 
@@ -182,15 +175,12 @@ async def _render_audience_page(
         f"Тапните строку — откроется карточка жителя\n"
         f"с действиями (блок/удалить ПДн)."
     )
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=header,
-        attachments=[
-            kbds.op_audience_paginated_list_keyboard(
-                category, rows, page=page, total_pages=total_pages,
-            )
-        ],
+        header,
+        kbds.op_audience_paginated_list_keyboard(
+            category, rows, page=page, total_pages=total_pages,
+        ),
     )
 
 
@@ -222,11 +212,7 @@ async def _dump_audience_page(
             return
 
     if not items:
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text="Страница пуста.",
-            attachments=[kbds.op_back_to_audience_keyboard()],
-        )
+        await op_send(event, "Страница пуста.", kbds.op_back_to_audience_keyboard())
         return
 
     # Отдельная карточка на жителя, каждая со status-линией +
@@ -240,14 +226,10 @@ async def _dump_audience_page(
             f"#{u.max_user_id} · {name} · {phone}\n"
             f"{status}"
         )
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=line,
-            attachments=[
-                kbds.op_audience_user_actions(
-                    u.max_user_id, blocked=u.is_blocked,
-                )
-            ],
+        await op_send(
+            event,
+            line,
+            kbds.op_audience_user_actions(u.max_user_id, blocked=u.is_blocked),
         )
 
 
@@ -259,21 +241,18 @@ async def _start_search_intent(event, category: str | None) -> None:
     if operator_id is None:
         return
     _search_intent_set(operator_id, category)
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=(
-            "🔍 Поиск жителя\n"
-            "· · · · · · · ·\n"
-            "Пришлите одним сообщением:\n"
-            "• имя или часть имени (поиск частичный, без учёта регистра);\n"
-            "• телефон или его фрагмент (например, последние 4 цифры);\n"
-            "• MAX user id (4+ цифр).\n"
-            "\n"
-            "Найдём всё, что подходит под запрос — до 20 совпадений.\n"
-            "Поиск ходит во всех категориях, не только в текущей."
-        ),
-        attachments=[kbds.op_audience_search_cancel_keyboard(category)],
+        "🔍 Поиск жителя\n"
+        "· · · · · · · ·\n"
+        "Пришлите одним сообщением:\n"
+        "• имя или часть имени (поиск частичный, без учёта регистра);\n"
+        "• телефон или его фрагмент (например, последние 4 цифры);\n"
+        "• MAX user id (4+ цифр).\n"
+        "\n"
+        "Найдём всё, что подходит под запрос — до 20 совпадений.\n"
+        "Поиск ходит во всех категориях, не только в текущей.",
+        kbds.op_audience_search_cancel_keyboard(category),
     )
 
 
@@ -295,10 +274,10 @@ async def handle_audience_search_text(event, text: str) -> bool:
 
     query = (text or "").strip()
     if not query:
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text="Пустой запрос — поиск отменён.",
-            attachments=[kbds.op_back_to_audience_keyboard()],
+        await op_send(
+            event,
+            "Пустой запрос — поиск отменён.",
+            kbds.op_back_to_audience_keyboard(),
         )
         return True
 
@@ -308,14 +287,14 @@ async def handle_audience_search_text(event, text: str) -> bool:
         )
 
     if not users:
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=(
+        await op_send(
+            event,
+            (
                 f"🔍 По запросу «{query[:60]}» ничего не найдено.\n"
                 f"· · · · · · · ·\n"
                 f"Попробуйте короче или другой фрагмент."
             ),
-            attachments=[kbds.op_back_to_audience_keyboard()],
+            kbds.op_back_to_audience_keyboard(),
         )
         return True
 
@@ -332,14 +311,12 @@ async def handle_audience_search_text(event, text: str) -> bool:
     # (всё на одной странице). category='subs' как fallback —
     # back-кнопка вернёт в общий audience-меню.
     cat_fallback = state.get("category") or "subs"
-    await event.bot.send_message(
-        chat_id=cfg.admin_group_id,
-        text=header,
-        attachments=[
-            kbds.op_audience_paginated_list_keyboard(
-                cat_fallback, rows, page=1, total_pages=1,
-            )
-        ],
+    await op_send(
+        event,
+        header,
+        kbds.op_audience_paginated_list_keyboard(
+            cat_fallback, rows, page=1, total_pages=1,
+        ),
     )
     return True
 
@@ -355,11 +332,10 @@ async def _render_user_card(
     async with session_scope() as session:
         user = await users_service.find_by_max_id(session, max_user_id)
     if user is None:
-        await send_or_edit_screen(
+        await op_screen(
             event,
-            chat_id=cfg.admin_group_id,
-            text=f"Житель #{max_user_id} не найден.",
-            attachments=[kbds.op_back_to_audience_keyboard()],
+            f"Житель #{max_user_id} не найден.",
+            kbds.op_back_to_audience_keyboard(),
         )
         return
 
@@ -377,17 +353,14 @@ async def _render_user_card(
         f"\n"
         f"Действия — кнопками ниже."
     )
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=body,
-        attachments=[
-            kbds.op_audience_user_card_keyboard(
-                user.max_user_id,
-                blocked=user.is_blocked,
-                category=category,
-            )
-        ],
+        body,
+        kbds.op_audience_user_card_keyboard(
+            user.max_user_id,
+            blocked=user.is_blocked,
+            category=category,
+        ),
     )
 
 
@@ -489,13 +462,12 @@ async def run_audience_action(event, payload: str) -> None:
                         action="block",
                         target=f"user max_id={target_id}",
                     )
-            await send_or_edit_screen(
+            await op_screen(
                 event,
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_USER_BLOCKED.format(max_user_id=target_id)
+                texts.OP_USER_BLOCKED.format(max_user_id=target_id)
                 if ok
                 else "Не удалось.",
-                attachments=[kbds.op_back_to_audience_keyboard()],
+                kbds.op_back_to_audience_keyboard(),
             )
             return
         if action == "unblock":
@@ -510,13 +482,12 @@ async def run_audience_action(event, payload: str) -> None:
                         action="unblock",
                         target=f"user max_id={target_id}",
                     )
-            await send_or_edit_screen(
+            await op_screen(
                 event,
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_USER_UNBLOCKED.format(max_user_id=target_id)
+                texts.OP_USER_UNBLOCKED.format(max_user_id=target_id)
                 if ok
                 else "Не удалось.",
-                attachments=[kbds.op_back_to_audience_keyboard()],
+                kbds.op_back_to_audience_keyboard(),
             )
             return
         if action == "erase":
@@ -529,13 +500,12 @@ async def run_audience_action(event, payload: str) -> None:
                         action="erase",
                         target=f"user max_id={target_id}",
                     )
-            await send_or_edit_screen(
+            await op_screen(
                 event,
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_USER_ERASED.format(max_user_id=target_id)
+                texts.OP_USER_ERASED.format(max_user_id=target_id)
                 if ok
                 else "Не удалось.",
-                attachments=[kbds.op_back_to_audience_keyboard()],
+                kbds.op_back_to_audience_keyboard(),
             )
             return
 

@@ -1,19 +1,25 @@
-"""Декларативный реестр cron-задач для anti-drift тестирования docs.
+"""Человекочитаемые описания cron-задач для вики и anti-drift тестов.
 
-`JOB_REGISTRY` — единственный source-of-truth (читаемый машиной) для
-имён, расписаний и назначения всех cron-задач, регистрируемых
-`build_scheduler` в `cron.py`. Тест `tests/test_cron_docs_sync.py`
-проверяет, что каждый `id` из реестра упомянут в каноничных docs
-(`HOW_IT_WORKS.md`, `RUNBOOK.md`, `SYSADMIN.md`, `COMPLIANCE_WITH_REGLAMENT_v7.md`)
-— любое добавление новой задачи без записи в docs валит CI с явным
-сообщением «cron `X` отсутствует в `Y.md`».
+**Источник истины по составу задач — `build_scheduler` в `cron.py`.**
+Раньше эту роль приписывали `JOB_REGISTRY`, и реестр был ручной копией
+списка задач: задача, добавленная только в `cron.py`, молча выпадала из
+проверок. Теперь `tests/test_cron_docs_sync.py` берёт id'ы из собранного
+планировщика и сверяет с ними и вику, и этот реестр.
+
+Реестр остаётся ради `schedule_human` / `purpose` — текста, которого у
+job'а нет и который читают люди: вика (`docs/site/_kb2/*.html`) ссылается
+сюда как на машинно-читаемый список имён и назначений. Расписание здесь
+человеческое и приблизительное; точные минуты и дни — только в
+`CronTrigger` внутри `cron.py`.
 
 **Workflow добавления нового cron:**
 
-1. Добавить новую запись в `JOB_REGISTRY` (id, schedule_human, purpose).
-2. `build_scheduler` в `cron.py` — `scheduler.add_job(...)`.
-3. CI-тест `test_cron_docs_sync` упадёт → добавить строку в таблицу
-   cron-задач в docs (HOW_IT_WORKS.md/RUNBOOK.md/SYSADMIN.md/COMPLIANCE_v7).
+1. `build_scheduler` в `cron.py` — `scheduler.add_job(...)`.
+2. `test_registry_covers_exactly_scheduler_jobs` упадёт → добавить сюда
+   запись (id, schedule_human, purpose).
+3. `test_every_cron_id_appears_in_every_canonical_doc` упадёт → добавить
+   строку в таблицу cron-задач в вике (`docs/site/_kb2/`, пересобрать
+   `index.html` через `docs/site/_kb/_assemble.py`).
 4. CI зелёный → можно мерджить.
 
 См. план MLP, Codex PR 8 «Cron registry + docs generation hook».

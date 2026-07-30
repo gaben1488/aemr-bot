@@ -303,7 +303,6 @@ class TestStartSearchIntent:
 
     @pytest.mark.asyncio
     async def test_sets_intent_and_sends_prompt(self) -> None:
-        from aemr_bot.handlers import admin_audience as mod
         from aemr_bot.handlers.admin_audience import (
             _search_intents,
             _start_search_intent,
@@ -311,7 +310,7 @@ class TestStartSearchIntent:
 
         event = make_event(user_id=42)
         send_mock = AsyncMock()
-        with patch.object(mod, "send_or_edit_screen", send_mock):
+        with patch("aemr_bot.handlers._common.send_or_edit_screen", send_mock):
             await _start_search_intent(event, "consent")
         # Intent set
         assert 42 in _search_intents
@@ -321,13 +320,12 @@ class TestStartSearchIntent:
 
     @pytest.mark.asyncio
     async def test_none_category_accepted(self) -> None:
-        from aemr_bot.handlers import admin_audience as mod
         from aemr_bot.handlers.admin_audience import (
             _search_intents,
             _start_search_intent,
         )
 
         event = make_event(user_id=42)
-        with patch.object(mod, "send_or_edit_screen", AsyncMock()):
+        with patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await _start_search_intent(event, None)
         assert _search_intents[42]["category"] is None

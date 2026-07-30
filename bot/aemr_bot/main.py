@@ -638,6 +638,59 @@ async def _preflight_check_token(bot: Bot) -> None:
     log.info("preflight: токен валидный — бот %s (id=%s)", name, bot_id)
 
 
+async def _hydrate_wizards() -> None:
+    """Поднять черновики мастеров из таблицы wizard_state в память.
+
+    Вызывается один раз на старте, до приёма событий. GC просроченных
+    записей делает сам `hydrate_into_registry` — сюда доезжает только
+    живое. Chicken-and-egg нет: in-memory dict'ы уже инициализированы
+    пустыми, гидратация их просто наполняет.
+
+    Восстанавливается ТОЛЬКО состояние мастеров. Никакая рассылка от
+    этого не стартует: отправку запускает подтверждение оператора, а
+    рассылки, брошенные в SENDING прошлым процессом, отдельно гасит
+    `reap_orphaned_sending` выше.
+    """
+    from aemr_bot.services import wizard_persist
+    async with session_scope() as session:
+        op_n, bcast_n = await wizard_persist.hydrate_into_registry(session)
+    # Handler'ы читают СВОИ словари, отдельные от wizard_registry —
+    # раскладываем восстановленное по ним.
+    from aemr_bot.services import wizard_registry as _wr
+    if op_n:
+        from aemr_bot.handlers import admin_operators
+        for op_id, state in list(_wr._op_wizards.items()):  # noqa: SLF001
+            # Восстанавливаем expires_at в monotonic-форму:
+            # реальный TTL уже отсчитан в БД, оставшийся остаток
+            # неизвестен — даём свежий полный TTL. Хуже не будет:
+            # оператор увидит свой шаг и продолжит.
+            local = dict(state)
+            local["expires_at"] = (
+                admin_operators._time_op.monotonic()
+                + admin_operators._OP_WIZARD_TTL_SEC
+            )
+            admin_operators._op_wizards[op_id] = local  # noqa: SLF001
+    if bcast_n:
+        from aemr_bot.handlers import broadcast_wizard
+        for op_id, state in list(_wr._broadcast_wizards.items()):  # noqa: SLF001
+            step = state.get("step")
+            if step not in ("awaiting_text", "awaiting_confirm"):
+                # Чужой/битый шаг (ручная правка в psql, старый формат) —
+                # мастер с таким step всё равно никуда не поедет.
+                log.warning(
+                    "wizard hydrate: broadcast-черновик оператора %s "
+                    "с неизвестным шагом %r — пропускаем", op_id, step,
+                )
+                continue
+            # expires_at считается заново от текущего monotonic —
+            # см. коммент про op-мастера выше.
+            broadcast_wizard._wizards[op_id] = broadcast_wizard._WizardState(  # noqa: SLF001
+                step=step,
+                text=state.get("text") or "",
+                attachments=list(state.get("attachments") or []),
+            )
+
+
 async def main() -> None:
     # stdout + персистентный файл на диске (переживает удаление контейнера). См. logging_setup.
     setup_logging()
@@ -744,30 +797,8 @@ async def main() -> None:
 
     # Hydrate wizard state из БД (миграция 0011) — закрывает «оператор
     # потерял регистрацию сотрудника при docker compose up --build».
-    # GC просроченных записей делает hydrate сам. На chicken-and-egg
-    # проблем нет: in-memory dict'ы уже инициализированы пустыми;
-    # hydrate просто наполняет.
     try:
-        from aemr_bot.services import wizard_persist
-        async with session_scope() as session:
-            op_n, _ = await wizard_persist.hydrate_into_registry(session)
-        # op-wizards в admin_operators._op_wizards — отдельный dict от
-        # wizard_registry. Копируем туда же, чтобы handlers (которые
-        # читают свой собственный dict) увидели восстановленное.
-        if op_n:
-            from aemr_bot.handlers import admin_operators
-            from aemr_bot.services import wizard_registry as _wr
-            for op_id, state in _wr._op_wizards.items():  # noqa: SLF001
-                # Восстанавливаем expires_at в monotonic-форму:
-                # реальный TTL уже отсчитан в БД, оставшийся остаток
-                # неизвестен — даём свежий полный TTL. Хуже не будет:
-                # оператор увидит свой шаг и продолжит.
-                local = dict(state)
-                local["expires_at"] = (
-                    admin_operators._time_op.monotonic()
-                    + admin_operators._OP_WIZARD_TTL_SEC
-                )
-                admin_operators._op_wizards[op_id] = local  # noqa: SLF001
+        await _hydrate_wizards()
     except Exception:
         log.exception("wizard hydrate failed; работаем без восстановленных wizards")
 

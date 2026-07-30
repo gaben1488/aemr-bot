@@ -69,7 +69,7 @@ class TestOpenBroadcast:
                 new=AsyncMock(return_value=None),
             ),
             patch(
-                "aemr_bot.handlers.broadcast.send_or_edit_screen",
+                "aemr_bot.handlers._common.send_or_edit_screen",
                 new=AsyncMock(),
             ) as mock_send,
         ):
@@ -97,7 +97,7 @@ class TestOpenBroadcast:
                 new=AsyncMock(return_value=bc),
             ),
             patch(
-                "aemr_bot.handlers.broadcast.send_or_edit_screen",
+                "aemr_bot.handlers._common.send_or_edit_screen",
                 new=AsyncMock(),
             ) as mock_send,
         ):
@@ -129,7 +129,7 @@ class TestOpenBroadcast:
                 new=AsyncMock(return_value=bc),
             ),
             patch(
-                "aemr_bot.handlers.broadcast.send_or_edit_screen",
+                "aemr_bot.handlers._common.send_or_edit_screen",
                 new=AsyncMock(),
             ) as mock_send,
         ):
@@ -163,7 +163,7 @@ class TestCloneBroadcast:
                 new=AsyncMock(return_value=42),
             ),
             patch(
-                "aemr_bot.handlers.broadcast.send_or_edit_screen",
+                "aemr_bot.handlers._common.send_or_edit_screen",
                 new=AsyncMock(),
             ),
         ):
@@ -198,7 +198,7 @@ class TestCloneBroadcast:
                 new=AsyncMock(return_value=0),
             ),
             patch(
-                "aemr_bot.handlers.broadcast.send_or_edit_screen",
+                "aemr_bot.handlers._common.send_or_edit_screen",
                 new=AsyncMock(),
             ) as mock_send,
         ):
@@ -234,7 +234,7 @@ class TestListFailed:
                 new=AsyncMock(return_value=[]),
             ),
             patch(
-                "aemr_bot.handlers.broadcast.send_or_edit_screen",
+                "aemr_bot.handlers._common.send_or_edit_screen",
                 new=AsyncMock(),
             ) as mock_send,
         ):
@@ -270,7 +270,7 @@ class TestListFailed:
                 new=AsyncMock(return_value=rows),
             ),
             patch(
-                "aemr_bot.handlers.broadcast.send_or_edit_screen",
+                "aemr_bot.handlers._common.send_or_edit_screen",
                 new=AsyncMock(),
             ) as mock_send,
         ):

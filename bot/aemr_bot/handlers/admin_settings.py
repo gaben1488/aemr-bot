@@ -45,12 +45,12 @@ import json  # noqa: F401  # `_show_expert_key` рендерит значени�
 import logging
 
 from aemr_bot import keyboards as kbds
-from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.services import settings_store
-from aemr_bot.utils.event import ack_callback, get_user_id, send_or_edit_screen
+from aemr_bot.handlers._common import op_screen
+from aemr_bot.utils.event import ack_callback, get_user_id
 
 # ── Общие примитивы (intent-кэш + helper'ы) — re-export из shared ──────
 # `mod._edit_intents` / `mod._intent_set` / `from ...admin_settings import
@@ -130,19 +130,16 @@ async def run_settings_menu(event) -> None:
             f"\n\n📌 Не выгружено в репо: {dirty_count}\n"
             f"({keys_preview})"
         )
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=(
-            "⚙️ Настройки бота\n"
-            "· · · · · · · ·\n"
-            "Выберите категорию для редактирования.\n"
-            "Каждое изменение применяется к боту сразу.\n"
-            "Чтобы зафиксировать изменения в репозитории,\n"
-            "создайте PR в нижней части меню."
-            + extra
-        ),
-        attachments=[kbds.op_settings_menu_keyboard(dirty_count)],
+        "⚙️ Настройки бота\n"
+        "· · · · · · · ·\n"
+        "Выберите категорию для редактирования.\n"
+        "Каждое изменение применяется к боту сразу.\n"
+        "Чтобы зафиксировать изменения в репозитории,\n"
+        "создайте PR в нижней части меню."
+        + extra,
+        kbds.op_settings_menu_keyboard(dirty_count),
     )
 
 
@@ -178,40 +175,34 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
     if rest == "expert":
         async with session_scope() as session:
             keys = await settings_store.list_keys(session)
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=(
-                "⌨️ Все ключи (экспертный режим)\n"
-                "· · · · · · · ·\n"
-                "Здесь видны все ключи /setting, включая\n"
-                "те, что обычно не редактируются через UI."
-            ),
-            attachments=[kbds.op_settings_expert_keyboard(keys)],
+        await op_screen(
+            event,
+            "⌨️ Все ключи (экспертный режим)\n"
+            "· · · · · · · ·\n"
+            "Здесь видны все ключи /setting, включая\n"
+            "те, что обычно не редактируются через UI.",
+            kbds.op_settings_expert_keyboard(keys),
         )
         return
 
     if rest.startswith("cat:"):
         cat = rest.removeprefix("cat:")
         if cat == "texts":
-            await send_or_edit_screen(
-                event, chat_id=cfg.admin_group_id,
-                text=(
-                    "📢 Тексты для жителей\n"
-                    "· · · · · · · ·\n"
-                    "Что отредактировать?"
-                ),
-                attachments=[kbds.op_settings_texts_keyboard()],
+            await op_screen(
+                event,
+                "📢 Тексты для жителей\n"
+                "· · · · · · · ·\n"
+                "Что отредактировать?",
+                kbds.op_settings_texts_keyboard(),
             )
             return
         if cat == "urls":
-            await send_or_edit_screen(
-                event, chat_id=cfg.admin_group_id,
-                text=(
-                    "🔗 Внешние ссылки\n"
-                    "· · · · · · · ·\n"
-                    "Выберите ссылку для редактирования."
-                ),
-                attachments=[kbds.op_settings_urls_keyboard()],
+            await op_screen(
+                event,
+                "🔗 Внешние ссылки\n"
+                "· · · · · · · ·\n"
+                "Выберите ссылку для редактирования.",
+                kbds.op_settings_urls_keyboard(),
             )
             return
 
@@ -243,14 +234,12 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
     if rest.startswith("list_add:"):
         key = rest.removeprefix("list_add:")
         _intent_set(operator_id, key=key, kind="list_add")
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=(
-                f"➕ Добавление в «{key}»\n"
-                f"· · · · · · · ·\n"
-                f"Пришлите название одним сообщением."
-            ),
-            attachments=[kbds.op_settings_text_cancel_keyboard(key)],
+        await op_screen(
+            event,
+            f"➕ Добавление в «{key}»\n"
+            f"· · · · · · · ·\n"
+            f"Пришлите название одним сообщением.",
+            kbds.op_settings_text_cancel_keyboard(key),
         )
         return
     if rest.startswith("list_del:"):
@@ -333,18 +322,15 @@ async def _show_expert_key(event, payload: str) -> None:
     expected = rule.get("type", "?")
     expected_name = expected.__name__ if hasattr(expected, "__name__") else str(expected)
     await ack_callback(event)
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=(
-            f"⚙️ Настройка «{key}» (тип {expected_name})\n"
-            f"· · · · · · · ·\n"
-            f"Текущее значение:\n{rendered}\n"
-            f"· · · · · · · ·\n"
-            f"Изменить: /setting {key} <новое значение>\n"
-            f"Для списков и объектов передавайте JSON."
-        ),
-        attachments=[kbds.op_back_to_settings_keyboard()],
+        f"⚙️ Настройка «{key}» (тип {expected_name})\n"
+        f"· · · · · · · ·\n"
+        f"Текущее значение:\n{rendered}\n"
+        f"· · · · · · · ·\n"
+        f"Изменить: /setting {key} <новое значение>\n"
+        f"Для списков и объектов передавайте JSON.",
+        kbds.op_back_to_settings_keyboard(),
     )
 
 

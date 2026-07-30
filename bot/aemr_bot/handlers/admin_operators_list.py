@@ -11,11 +11,11 @@
 from __future__ import annotations
 
 from aemr_bot import keyboards as kbds
-from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import operators as operators_service
-from aemr_bot.utils.event import ack_callback, send_or_edit_screen
+from aemr_bot.handlers._common import op_screen
+from aemr_bot.utils.event import ack_callback
 
 
 async def _show_operators_list(event) -> None:
@@ -23,11 +23,10 @@ async def _show_operators_list(event) -> None:
     async with session_scope() as session:
         ops = await operators_service.list_all(session)
     if not ops:
-        await send_or_edit_screen(
+        await op_screen(
             event,
-            chat_id=cfg.admin_group_id,
-            text="Список операторов пуст.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+            "Список операторов пуст.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     active_count = sum(1 for op in ops if op.is_active)
@@ -36,11 +35,10 @@ async def _show_operators_list(event) -> None:
     if inactive_count:
         header += f", деактивированных {inactive_count}"
     rows = [(op.max_user_id, op.full_name, op.role, op.is_active) for op in ops]
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=header + "\nТапните оператора, чтобы открыть карточку.",
-        attachments=[kbds.op_operators_list_keyboard(rows)],
+        header + "\nТапните оператора, чтобы открыть карточку.",
+        kbds.op_operators_list_keyboard(rows),
     )
 
 
@@ -58,11 +56,10 @@ async def _show_operator_card(event, payload: str, operator_id: int) -> None:
             session, OperatorRole.IT
         )
     if op is None:
-        await send_or_edit_screen(
+        await op_screen(
             event,
-            chat_id=cfg.admin_group_id,
-            text=f"Оператор с id={target_id} не найден.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+            f"Оператор с id={target_id} не найден.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     is_self = op.max_user_id == operator_id
@@ -91,16 +88,13 @@ async def _show_operator_card(event, payload: str, operator_id: int) -> None:
     if extra:
         lines.append("")
         lines.extend(extra)
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text="\n".join(line for line in lines if line),
-        attachments=[
-            kbds.op_operator_card_keyboard(
-                op.max_user_id,
-                is_active=op.is_active,
-                is_self=is_self,
-                can_deactivate=can_deactivate,
-            )
-        ],
+        "\n".join(line for line in lines if line),
+        kbds.op_operator_card_keyboard(
+            op.max_user_id,
+            is_active=op.is_active,
+            is_self=is_self,
+            can_deactivate=can_deactivate,
+        ),
     )

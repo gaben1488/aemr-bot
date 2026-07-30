@@ -186,7 +186,7 @@ class TestShowOpMenuOperatorGate:
         send_screen = AsyncMock()
         with patch("aemr_bot.handlers.admin_panel.get_operator",
                    AsyncMock(return_value=None)), \
-             patch("aemr_bot.handlers.admin_panel.send_or_edit_screen",
+             patch("aemr_bot.handlers._common.send_or_edit_screen",
                    send_screen), \
              patch("aemr_bot.handlers.admin_panel.session_scope",
                    _fake_session_scope), \
@@ -217,7 +217,7 @@ class TestShowOpMenuOperatorGate:
         send_screen = AsyncMock()
         with patch("aemr_bot.handlers.admin_panel.get_operator",
                    AsyncMock(return_value=None)), \
-             patch("aemr_bot.handlers.admin_panel.send_or_edit_screen",
+             patch("aemr_bot.handlers._common.send_or_edit_screen",
                    send_screen), \
              patch("aemr_bot.handlers.admin_panel.session_scope",
                    _fake_session_scope):
@@ -242,7 +242,7 @@ class TestShowOpMenuOperatorGate:
         send_screen = AsyncMock(return_value=None)
         with patch("aemr_bot.handlers.admin_panel.get_operator",
                    AsyncMock(return_value=op)), \
-             patch("aemr_bot.handlers.admin_panel.send_or_edit_screen",
+             patch("aemr_bot.handlers._common.send_or_edit_screen",
                    send_screen), \
              patch("aemr_bot.handlers.admin_panel.session_scope",
                    _fake_session_scope), \

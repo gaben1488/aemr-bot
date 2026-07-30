@@ -45,34 +45,12 @@ ExactHandler = Callable[[object], Awaitable[None]]
 PrefixHandler = Callable[[object, int], Awaitable[None]]
 
 
-# ---- broadcast:* exact ------------------------------------------------------
-
-
-async def _broadcast_confirm(event) -> None:
-    await broadcast_handler._handle_confirm(event)
-
-
-async def _broadcast_abort(event) -> None:
-    await broadcast_handler._handle_abort(event)
-
-
-async def _broadcast_edit(event) -> None:
-    await broadcast_handler._handle_edit(event)
-
-
-async def _broadcast_stop(event, broadcast_id: int) -> None:
-    await broadcast_handler._handle_stop(event, broadcast_id)
-
-
-async def _broadcast_cancel_cooldown(event, broadcast_id: int) -> None:
-    """C2: оператор отменил рассылку, пока она ждёт в cooldown'е."""
-    await broadcast_handler._handle_cancel_cooldown(event, broadcast_id)
-
-
 # ---- op:* exact -------------------------------------------------------------
 #
 # Большинство op-кнопок: ack_callback + один вызов admin_commands.run_*.
-# Однотипные сворачиваем фабриками, уникальные — явными функциями.
+# Однотипные сворачиваем фабриками, простой проброс живёт lambda'ой
+# прямо в таблице маршрутов; отдельными функциями остаются только те,
+# кто реально что-то делает сверх вызова.
 
 
 def _ack_then(coro_factory: Callable[[object], Awaitable[None]]) -> ExactHandler:
@@ -110,37 +88,9 @@ async def _op_stats_today(event) -> None:
 # Целочисленный хвост парсит dispatch_admin_callback и передаёт сюда.
 
 
-async def _op_reply(event, appeal_id: int) -> None:
-    await admin_commands.run_reply_intent(event, appeal_id)
-
-
 async def _op_reply_intermediate(event, appeal_id: int) -> None:
     """Промежуточный ответ — не закрывает обращение."""
     await admin_commands.run_reply_intent(event, appeal_id, is_final=False)
-
-
-async def _op_reopen(event, appeal_id: int) -> None:
-    await admin_commands.run_reopen(event, appeal_id)
-
-
-async def _op_close(event, appeal_id: int) -> None:
-    await admin_commands.run_close(event, appeal_id)
-
-
-async def _op_erase(event, appeal_id: int) -> None:
-    await admin_commands.run_erase_for_appeal(event, appeal_id)
-
-
-async def _op_block(event, appeal_id: int) -> None:
-    await admin_commands.run_block_for_appeal(event, appeal_id, blocked=True)
-
-
-async def _op_unblock(event, appeal_id: int) -> None:
-    await admin_commands.run_block_for_appeal(event, appeal_id, blocked=False)
-
-
-async def _op_atts(event, appeal_id: int) -> None:
-    await admin_commands.run_show_attachments(event, appeal_id)
 
 
 async def _op_open_card(event, appeal_id: int) -> None:
@@ -172,19 +122,6 @@ async def _op_open_card(event, appeal_id: int) -> None:
     await admin_card_service.render(event.bot, appeal, force_new=True)
 
 
-# PR G: история рассылок — карточка / клон / failed-deliveries.
-async def _op_bc_open(event, broadcast_id: int) -> None:
-    await broadcast_handler._open_broadcast(event, broadcast_id)
-
-
-async def _op_bc_clone(event, broadcast_id: int) -> None:
-    await broadcast_handler._clone_broadcast(event, broadcast_id)
-
-
-async def _op_bc_failed(event, broadcast_id: int) -> None:
-    await broadcast_handler._list_failed_deliveries(event, broadcast_id)
-
-
 # ---- Таблицы маршрутов ------------------------------------------------------
 #
 # _EXACT — точное совпадение payload. _PREFIX_ID — `op:<verb>:<id>`,
@@ -192,19 +129,14 @@ async def _op_bc_failed(event, broadcast_id: int) -> None:
 # / `op:setkey:`: handler сам разбирает payload и сам делает ack
 # (ack делегирован внутрь run_*-функций).
 
-async def _op_reply_cancel(event) -> None:
-    # ack делегирован внутрь run_reply_cancel — здесь не акаем.
-    await admin_commands.run_reply_cancel(event)
-
-
-# Все coro_factory — lambda, резолвящие вызов в рантайме (см.
+# Все вызовы в таблицах — lambda, резолвящие цель в рантайме (см.
 # docstring _ack_then). Прямые ссылки `admin_commands.run_X` тут
 # класть нельзя.
 _EXACT: dict[str, ExactHandler] = {
     # broadcast wizard (ack делегирован внутрь broadcast._handle_*)
-    "broadcast:confirm": _broadcast_confirm,
-    "broadcast:abort": _broadcast_abort,
-    "broadcast:edit": _broadcast_edit,
+    "broadcast:confirm": lambda e: broadcast_handler._handle_confirm(e),
+    "broadcast:abort": lambda e: broadcast_handler._handle_abort(e),
+    "broadcast:edit": lambda e: broadcast_handler._handle_edit(e),
     # Меню оператора / действия
     "op:menu": _ack_then(lambda e: admin_commands.show_op_menu(e, pin=False)),
     "op:stats_menu": _ack_then(lambda e: admin_commands.run_stats_menu(e)),
@@ -227,7 +159,8 @@ _EXACT: dict[str, ExactHandler] = {
     "op:audience": _ack_then(lambda e: admin_commands.run_audience_menu(e)),
     "op:help_full": _ack_then(lambda e: _show_op_help_full(e)),
     "op:help_security": _ack_then(lambda e: _show_op_help_security(e)),
-    "op:reply_cancel": _op_reply_cancel,
+    # ack делегирован внутрь run_reply_cancel — здесь не акаем.
+    "op:reply_cancel": lambda e: admin_commands.run_reply_cancel(e),
 }
 
 
@@ -271,66 +204,69 @@ async def _show_op_help_security(event) -> None:
 # prefix → (handler, нужен ли payload в handler).
 # _PREFIX_ID: `op:<verb>:<int>` — диспетчер парсит int-хвост.
 _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
-    ("broadcast:stop:", _broadcast_stop),
-    ("broadcast:cancel-cooldown:", _broadcast_cancel_cooldown),
-    ("op:reply:", _op_reply),
+    ("broadcast:stop:", lambda e, bid: broadcast_handler._handle_stop(e, bid)),
+    # C2: оператор отменил рассылку, пока она ждёт в cooldown'е.
+    (
+        "broadcast:cancel-cooldown:",
+        lambda e, bid: broadcast_handler._handle_cancel_cooldown(e, bid),
+    ),
+    ("op:reply:", lambda e, aid: admin_commands.run_reply_intent(e, aid)),
     ("op:replyint:", _op_reply_intermediate),
-    ("op:reopen:", _op_reopen),
-    ("op:close:", _op_close),
-    ("op:erase:", _op_erase),
-    ("op:block:", _op_block),
-    ("op:unblock:", _op_unblock),
-    ("op:atts:", _op_atts),
+    ("op:reopen:", lambda e, aid: admin_commands.run_reopen(e, aid)),
+    ("op:close:", lambda e, aid: admin_commands.run_close(e, aid)),
+    ("op:erase:", lambda e, aid: admin_commands.run_erase_for_appeal(e, aid)),
+    (
+        "op:block:",
+        lambda e, aid: admin_commands.run_block_for_appeal(e, aid, blocked=True),
+    ),
+    (
+        "op:unblock:",
+        lambda e, aid: admin_commands.run_block_for_appeal(e, aid, blocked=False),
+    ),
+    ("op:atts:", lambda e, aid: admin_commands.run_show_attachments(e, aid)),
     ("op:open_card:", _op_open_card),
-    # PR G: история рассылок.
-    ("op:bc:open:", _op_bc_open),
-    ("op:bc:clone:", _op_bc_clone),
-    ("op:bc:failed:", _op_bc_failed),
+    # PR G: история рассылок — карточка / клон / failed-deliveries.
+    ("op:bc:open:", lambda e, bid: broadcast_handler._open_broadcast(e, bid)),
+    ("op:bc:clone:", lambda e, bid: broadcast_handler._clone_broadcast(e, bid)),
+    (
+        "op:bc:failed:",
+        lambda e, bid: broadcast_handler._list_failed_deliveries(e, bid),
+    ),
 )
 
 # _PREFIX_RAW: handler получает весь payload и сам делает ack.
-# Обёртки (не прямые ссылки) — чтобы admin_commands.X резолвился в
-# рантайме, см. docstring _ack_then.
-async def _op_aud(event, payload: str) -> None:
-    await admin_commands.run_audience_action(event, payload)
-
-
-async def _op_opadd(event, payload: str) -> None:
-    await admin_commands.run_operators_action(event, payload)
-
-
-async def _op_setkey(event, payload: str) -> None:
-    await admin_commands.run_settings_action(event, payload)
-
-
+# Вызовы — lambda (не прямые ссылки), чтобы admin_commands.X
+# резолвился в рантайме, см. docstring _ack_then.
+#
 # Все callback'и иерархического меню «Настройки» и карточки оператора
 # идут через те же два диспетчера (run_settings_action / run_operators_action),
 # которые внутри сами разбирают конкретные суффиксы. Это минимизирует
 # изменения в admin_callback_dispatch и сохраняет один-в-один маппинг
 # «префикс → run-функция».
-
-
-async def _op_tmpl(event, payload: str) -> None:
-    """Шаблоны рассылок (PR H). Внутри handle_callback сам делает ack."""
-    await broadcast_templates_handler.handle_callback(event, payload)
+#
+# `_op_operators_action` остаётся именованной функцией: на неё смотрят
+# сразу семь префиксов, семь одинаковых lambda были бы хуже.
+async def _op_operators_action(event, payload: str) -> None:
+    await admin_commands.run_operators_action(event, payload)
 
 
 _PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[None]]], ...] = (
-    ("op:aud:", _op_aud),
+    ("op:aud:", lambda e, p: admin_commands.run_audience_action(e, p)),
     # Операторы — единое семейство:
-    ("op:opadd:", _op_opadd),
-    ("op:opcard:", _op_opadd),
-    ("op:oprole:", _op_opadd),
-    ("op:opchrole:", _op_opadd),
-    ("op:opdeact:", _op_opadd),
-    ("op:opdeact_ok:", _op_opadd),
-    ("op:opreact:", _op_opadd),
+    ("op:opadd:", _op_operators_action),
+    ("op:opcard:", _op_operators_action),
+    ("op:oprole:", _op_operators_action),
+    ("op:opchrole:", _op_operators_action),
+    ("op:opdeact:", _op_operators_action),
+    ("op:opdeact_ok:", _op_operators_action),
+    ("op:opreact:", _op_operators_action),
     # Настройки — старый експертный и новый иерархический:
-    ("op:setkey:", _op_setkey),
-    ("op:set:", _op_setkey),
+    ("op:setkey:", lambda e, p: admin_commands.run_settings_action(e, p)),
+    ("op:set:", lambda e, p: admin_commands.run_settings_action(e, p)),
     # Шаблоны рассылок (PR H) — list/new/open:<id>/apply:<id>/rename:<id>/
-    # edit:<id>/delete:<id>/delete_ok:<id>/cancel.
-    ("op:tmpl:", _op_tmpl),
+    # edit:<id>/delete:<id>/delete_ok:<id>/cancel. Внутри handle_callback
+    # сам делает ack.
+    ("op:tmpl:", lambda e, p: broadcast_templates_handler.handle_callback(e, p)),
 )
 
 

@@ -19,17 +19,16 @@ from __future__ import annotations
 import logging
 
 from aemr_bot import keyboards, texts
-from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import broadcast as broadcast_handler
 from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.services import broadcast_templates as templates_service
 from aemr_bot.services import broadcasts as broadcasts_service
+from aemr_bot.handlers._common import op_screen
 from aemr_bot.utils import image_attachments as _image_attachments
 from aemr_bot.utils.event import (
     get_user_id,
-    send_or_edit_screen,
 )
 
 from aemr_bot.handlers.broadcast_templates_state import (
@@ -54,22 +53,16 @@ async def _list(event) -> None:
     async with session_scope() as session:
         items = await templates_service.list_active(session)
     if not items:
-        await send_or_edit_screen(
+        await op_screen(
             event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_TMPL_LIST_EMPTY,
-            attachments=[
-                keyboards.broadcast_templates_list_keyboard([], can_create=True)
-            ],
+            texts.OP_TMPL_LIST_EMPTY,
+            keyboards.broadcast_templates_list_keyboard([], can_create=True),
         )
         return
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_TMPL_LIST_HEADER.format(count=len(items)),
-        attachments=[
-            keyboards.broadcast_templates_list_keyboard(items, can_create=True)
-        ],
+        texts.OP_TMPL_LIST_HEADER.format(count=len(items)),
+        keyboards.broadcast_templates_list_keyboard(items, can_create=True),
     )
 
 
@@ -80,12 +73,7 @@ async def _open(event, template_id: int) -> None:
     async with session_scope() as session:
         tmpl = await templates_service.get_by_id(session, template_id)
     if tmpl is None:
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_TMPL_NOT_FOUND,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, texts.OP_TMPL_NOT_FOUND)
         return
     if tmpl.use_count and tmpl.last_used_at:
         last_used_line = texts.OP_TMPL_CARD_LAST_USED.format(
@@ -110,11 +98,10 @@ async def _open(event, template_id: int) -> None:
     preview_images = _image_attachments.build_outbound_image_attachments(
         tmpl.attachments
     )
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=body,
-        attachments=[
+        body,
+        [
             *preview_images,
             keyboards.broadcast_template_card_keyboard(tmpl.id),
         ],
@@ -151,12 +138,7 @@ async def _apply(event, template_id: int) -> None:
     async with session_scope() as session:
         tmpl = await templates_service.get_by_id(session, template_id)
         if tmpl is None:
-            await send_or_edit_screen(
-                event,
-                chat_id=cfg.admin_group_id,
-                text=texts.OP_TMPL_NOT_FOUND,
-                attachments=[keyboards.op_back_to_menu_keyboard()],
-            )
+            await op_screen(event, texts.OP_TMPL_NOT_FOUND)
             return
         subscribers = await broadcasts_service.count_subscribers(session)
         # PR template-editor-upgrade: фиксируем «применил для подготовки
@@ -167,12 +149,7 @@ async def _apply(event, template_id: int) -> None:
         # списка важна именно частота обращений).
         await templates_service.record_usage(session, template_id)
     if subscribers == 0:
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=texts.OP_BROADCAST_NO_SUBSCRIBERS,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+        await op_screen(event, texts.OP_BROADCAST_NO_SUBSCRIBERS)
         return
     # Заряжаем broadcast wizard — выглядит, как если бы оператор набрал
     # этот текст и приложил картинки сейчас. Confirm/edit/abort работают
@@ -195,11 +172,10 @@ async def _apply(event, template_id: int) -> None:
         image_count=len(tmpl.attachments),
         image_warning="",
     )
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=body,
-        attachments=[
+        body,
+        [
             *preview_images,
             keyboards.broadcast_confirm_keyboard(),
         ],
@@ -222,11 +198,10 @@ async def _start_search(event) -> None:
         return
     _drop_expired()
     _wizards[actor_id] = _TmplWizardState(step="search_awaiting_query")
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=texts.OP_TMPL_SEARCH_PROMPT,
-        attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        texts.OP_TMPL_SEARCH_PROMPT,
+        keyboards.broadcast_template_cancel_keyboard(),
     )
 
 

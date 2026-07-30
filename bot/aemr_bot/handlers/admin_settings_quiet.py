@@ -13,11 +13,10 @@ start/end через intent-flow (как у текстовых ключей: о�
 from __future__ import annotations
 
 from aemr_bot import keyboards as kbds
-from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
-from aemr_bot.utils.event import send_or_edit_screen
+from aemr_bot.handlers._common import op_screen, op_send
 
 # intent на правку часа ставится здесь (`_start_quiet_hour_intent`).
 from aemr_bot.handlers.admin_settings_shared import _intent_set
@@ -46,22 +45,20 @@ async def _show_quiet_card(event) -> None:
     if not isinstance(end, int):
         end = 9
     status_line = "🔕 включён" if enabled else "🔔 выключен"
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            "🌙 Тихий режим в админ-чате\n"
-            "· · · · · · · ·\n"
-            f"Сейчас: {status_line}\n"
-            f"Окно: с {start:02d}:00 до {end:02d}:00 (Камчатка)\n\n"
-            "Когда включён и текущее время в окне — не приходят\n"
-            "пульс и рутинные уведомления (новые обращения,\n"
-            "followup'ы, подписки/отписки/erase).\n\n"
-            "Критичные алёрты (фейл бэкапа, ответы операторам,\n"
-            "сбои retention) идут всегда, тихий режим их\n"
-            "не затрагивает.\n\n"
-            "Чтобы изменить часы — кнопки ниже."
-        ),
-        attachments=[kbds.op_settings_quiet_keyboard(enabled=enabled)],
+    await op_screen(
+        event,
+        "🌙 Тихий режим в админ-чате\n"
+        "· · · · · · · ·\n"
+        f"Сейчас: {status_line}\n"
+        f"Окно: с {start:02d}:00 до {end:02d}:00 (Камчатка)\n\n"
+        "Когда включён и текущее время в окне — не приходят\n"
+        "пульс и рутинные уведомления (новые обращения,\n"
+        "followup'ы, подписки/отписки/erase).\n\n"
+        "Критичные алёрты (фейл бэкапа, ответы операторам,\n"
+        "сбои retention) идут всегда, тихий режим их\n"
+        "не затрагивает.\n\n"
+        "Чтобы изменить часы — кнопки ниже.",
+        kbds.op_settings_quiet_keyboard(enabled=enabled),
     )
 
 
@@ -97,17 +94,15 @@ async def _start_quiet_hour_intent(
         kind="quiet_hour",
         which=which,
     )
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            f"🌙 Час {label} тихого режима\n"
-            "· · · · · · · ·\n"
-            "Пришлите одним сообщением число от 0 до 23.\n"
-            "Например: 18 — для начала в 18:00; 9 — для конца в 09:00.\n\n"
-            "Окно может пересекать полночь: start=18, end=9\n"
-            "значит «с 18:00 до 09:00, включая всю ночь»."
-        ),
-        attachments=[kbds.op_settings_quiet_input_cancel_keyboard()],
+    await op_screen(
+        event,
+        f"🌙 Час {label} тихого режима\n"
+        "· · · · · · · ·\n"
+        "Пришлите одним сообщением число от 0 до 23.\n"
+        "Например: 18 — для начала в 18:00; 9 — для конца в 09:00.\n\n"
+        "Окно может пересекать полночь: start=18, end=9\n"
+        "значит «с 18:00 до 09:00, включая всю ночь».",
+        kbds.op_settings_quiet_input_cancel_keyboard(),
     )
 
 
@@ -129,17 +124,17 @@ async def _apply_quiet_hour_edit(
     try:
         new_value = int(raw)
     except ValueError:
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=f"❌ «{raw[:40]}» — не число. Пришлите целое 0–23.",
-            attachments=[kbds.op_settings_quiet_input_cancel_keyboard()],
+        await op_send(
+            event,
+            f"❌ «{raw[:40]}» — не число. Пришлите целое 0–23.",
+            kbds.op_settings_quiet_input_cancel_keyboard(),
         )
         return False
     if not (0 <= new_value <= 23):
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=f"❌ {new_value} вне диапазона. Допустимо 0–23.",
-            attachments=[kbds.op_settings_quiet_input_cancel_keyboard()],
+        await op_send(
+            event,
+            f"❌ {new_value} вне диапазона. Допустимо 0–23.",
+            kbds.op_settings_quiet_input_cancel_keyboard(),
         )
         return False
     key = f"admin_quiet_hours_{which}"

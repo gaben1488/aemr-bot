@@ -33,7 +33,8 @@ from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import operators as operators_service
-from aemr_bot.utils.event import get_user_id, send_or_edit_screen
+from aemr_bot.handlers._common import op_screen, op_send
+from aemr_bot.utils.event import get_user_id
 
 log = logging.getLogger(__name__)
 
@@ -132,13 +133,11 @@ async def _show_from_group(event, operator_id: int) -> None:
 
     members = await _safe_get_chat_members(event.bot)
     if not members:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=(
-                "Не удалось получить список участников группы.\n"
-                "Используйте «🔢 По ID вручную»."
-            ),
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Не удалось получить список участников группы.\n"
+            "Используйте «🔢 По ID вручную».",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
 
@@ -167,25 +166,23 @@ async def _show_from_group(event, operator_id: int) -> None:
             candidates.append((user_id, full_name, None))
 
     if not candidates:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="В группе нет участников, кроме бота.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "В группе нет участников, кроме бота.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
 
     addable = sum(1 for _, _, hint in candidates if hint is None)
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            f"👥 Кого зарегистрировать?\n"
-            f"· · · · · · · ·\n"
-            f"Участников группы: {len(candidates)}\n"
-            f"Доступно для добавления: {addable}\n\n"
-            f"Тапните по человеку для добавления, или\n"
-            f"по уже-оператору — чтобы открыть карточку."
-        ),
-        attachments=[kbds.op_from_group_keyboard(candidates)],
+    await op_screen(
+        event,
+        f"👥 Кого зарегистрировать?\n"
+        f"· · · · · · · ·\n"
+        f"Участников группы: {len(candidates)}\n"
+        f"Доступно для добавления: {addable}\n\n"
+        f"Тапните по человеку для добавления, или\n"
+        f"по уже-оператору — чтобы открыть карточку.",
+        kbds.op_from_group_keyboard(candidates),
     )
 
 
@@ -196,10 +193,10 @@ async def _start_add_with_picked(
     из MAX и переходим к выбору роли."""
 
     if picked_user_id == operator_id:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Себя через меню добавить/изменить нельзя.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Себя через меню добавить/изменить нельзя.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
 
@@ -226,16 +223,14 @@ async def _start_add_with_picked(
         if suggested_name else
         "Имя из MAX недоступно — введёте вручную позже.\n"
     )
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            f"👥 Шаг 2 — выбор роли\n"
-            f"· · · · · · · ·\n"
-            f"ID:  {picked_user_id}\n"
-            f"{extra}\n"
-            f"Выберите роль:"
-        ),
-        attachments=[kbds.op_role_picker_keyboard()],
+    await op_screen(
+        event,
+        f"👥 Шаг 2 — выбор роли\n"
+        f"· · · · · · · ·\n"
+        f"ID:  {picked_user_id}\n"
+        f"{extra}\n"
+        f"Выберите роль:",
+        kbds.op_role_picker_keyboard(),
     )
 
 
@@ -254,20 +249,17 @@ async def _start_manual_add(event, operator_id: int) -> None:
     op_reply.drop_reply_intent(operator_id)
 
     _op_wizard_set(operator_id, step="awaiting_id", source="manual")
-    await send_or_edit_screen(
+    await op_screen(
         event,
-        chat_id=cfg.admin_group_id,
-        text=(
-            "👥 Шаг 1 — ID оператора\n"
-            "· · · · · · · ·\n"
-            "Введите max_user_id будущего оператора.\n\n"
-            "Узнать ID можно несколькими способами:\n"
-            "• попросите человека добавиться в служебную\n"
-            "  группу и выберите «➕ Из участников»;\n"
-            "• попросите написать боту в личке /whoami\n"
-            "  и прислать вам число из ответа."
-        ),
-        attachments=[kbds.op_add_cancel_keyboard()],
+        "👥 Шаг 1 — ID оператора\n"
+        "· · · · · · · ·\n"
+        "Введите max_user_id будущего оператора.\n\n"
+        "Узнать ID можно несколькими способами:\n"
+        "• попросите человека добавиться в служебную\n"
+        "  группу и выберите «➕ Из участников»;\n"
+        "• попросите написать боту в личке /whoami\n"
+        "  и прислать вам число из ответа.",
+        kbds.op_add_cancel_keyboard(),
     )
 
 
@@ -276,50 +268,45 @@ async def _apply_role_choice(event, suffix: str, operator_id: int) -> None:
     role_value = suffix.removeprefix("role:")
     valid = {r.value for r in OperatorRole}
     if role_value not in valid:
-        await send_or_edit_screen(
+        await op_screen(
             event,
-            chat_id=cfg.admin_group_id,
-            text=f"Роль «{role_value}» неизвестна.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+            f"Роль «{role_value}» неизвестна.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     state = _op_wizard_get(operator_id)
     if state is None or state.get("step") != "awaiting_role":
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Мастер закрыт. Откройте «👥 Операторы → ➕» заново.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Мастер закрыт. Откройте «👥 Операторы → ➕» заново.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     _op_wizard_set(operator_id, role=role_value, step="picked_role")
     suggested = state.get("suggested_name")
     if suggested:
         # Есть имя из MAX — предложить «как есть» или ввести вручную
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=(
-                f"👥 Шаг 3 — ФИО для журнала\n"
-                f"· · · · · · · ·\n"
-                f"Роль: {role_value} ✅\n"
-                f"Имя из MAX: {suggested}\n\n"
-                f"Сохранить как есть или указать полное\n"
-                f"ФИО с отчеством?"
-            ),
-            attachments=[kbds.op_add_name_choice_keyboard()],
+        await op_screen(
+            event,
+            f"👥 Шаг 3 — ФИО для журнала\n"
+            f"· · · · · · · ·\n"
+            f"Роль: {role_value} ✅\n"
+            f"Имя из MAX: {suggested}\n\n"
+            f"Сохранить как есть или указать полное\n"
+            f"ФИО с отчеством?",
+            kbds.op_add_name_choice_keyboard(),
         )
     else:
         # Имени нет — сразу запрашиваем текстом
         _op_wizard_set(operator_id, step="awaiting_name")
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text=(
-                f"👥 Шаг 3 — ФИО\n"
-                f"· · · · · · · ·\n"
-                f"Роль {role_value} выбрана.\n\n"
-                f"Введите ФИО оператора одним сообщением.\n"
-                f"Пример: «Иванова Анна Петровна»"
-            ),
-            attachments=[kbds.op_add_cancel_keyboard()],
+        await op_screen(
+            event,
+            f"👥 Шаг 3 — ФИО\n"
+            f"· · · · · · · ·\n"
+            f"Роль {role_value} выбрана.\n\n"
+            f"Введите ФИО оператора одним сообщением.\n"
+            f"Пример: «Иванова Анна Петровна»",
+            kbds.op_add_cancel_keyboard(),
         )
 
 
@@ -327,10 +314,10 @@ async def _apply_name_keep(event, operator_id: int) -> None:
 
     state = _op_wizard_get(operator_id)
     if state is None or state.get("step") != "picked_role":
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Мастер закрыт.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Мастер закрыт.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     suggested = state.get("suggested_name")
@@ -345,22 +332,20 @@ async def _start_name_edit(event, operator_id: int) -> None:
 
     state = _op_wizard_get(operator_id)
     if state is None:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Мастер закрыт.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Мастер закрыт.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     _op_wizard_set(operator_id, step="awaiting_name")
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            "👥 Шаг 3 — ФИО полностью\n"
-            "· · · · · · · ·\n"
-            "Введите ФИО оператора одним сообщением.\n"
-            "Пример: «Иванова Анна Петровна»"
-        ),
-        attachments=[kbds.op_add_cancel_keyboard()],
+    await op_screen(
+        event,
+        "👥 Шаг 3 — ФИО полностью\n"
+        "· · · · · · · ·\n"
+        "Введите ФИО оператора одним сообщением.\n"
+        "Пример: «Иванова Анна Петровна»",
+        kbds.op_add_cancel_keyboard(),
     )
 
 
@@ -368,23 +353,21 @@ async def _back_to_role_pick(event, operator_id: int) -> None:
 
     state = _op_wizard_get(operator_id)
     if state is None:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Мастер закрыт.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Мастер закрыт.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     _op_wizard_set(operator_id, step="awaiting_role")
     target_id = state.get("target_id")
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            f"👥 Шаг 2 — выбор роли\n"
-            f"· · · · · · · ·\n"
-            f"ID: {target_id}\n\n"
-            f"Выберите роль:"
-        ),
-        attachments=[kbds.op_role_picker_keyboard()],
+    await op_screen(
+        event,
+        f"👥 Шаг 2 — выбор роли\n"
+        f"· · · · · · · ·\n"
+        f"ID: {target_id}\n\n"
+        f"Выберите роль:",
+        kbds.op_role_picker_keyboard(),
     )
 
 
@@ -396,17 +379,15 @@ async def _show_add_confirm(event, operator_id: int) -> None:
     target_id = state.get("target_id")
     role = state.get("role")
     full_name = state.get("full_name")
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            f"👥 Подтверждение\n"
-            f"· · · · · · · ·\n"
-            f"ID:   {target_id}\n"
-            f"Роль: {role}\n"
-            f"ФИО:  {full_name}\n\n"
-            f"Добавить оператора?"
-        ),
-        attachments=[kbds.op_add_confirm_keyboard()],
+    await op_screen(
+        event,
+        f"👥 Подтверждение\n"
+        f"· · · · · · · ·\n"
+        f"ID:   {target_id}\n"
+        f"Роль: {role}\n"
+        f"ФИО:  {full_name}\n\n"
+        f"Добавить оператора?",
+        kbds.op_add_confirm_keyboard(),
     )
 
 
@@ -414,36 +395,36 @@ async def _confirm_save(event, operator_id: int) -> None:
 
     state = _op_wizard_get(operator_id)
     if state is None:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Мастер закрыт.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Мастер закрыт.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     try:
         target_id = int(state["target_id"])
     except (KeyError, ValueError, TypeError):
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="ID не задан, начните заново.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "ID не задан, начните заново.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     role = state.get("role")
     full_name = state.get("full_name")
     if not role or not full_name:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Не хватает данных, начните заново.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Не хватает данных, начните заново.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     if target_id == operator_id:
         _op_wizard_drop(operator_id)
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Изменить свою роль через мастера нельзя.",
-            attachments=[kbds.op_back_to_operators_keyboard()],
+        await op_screen(
+            event,
+            "Изменить свою роль через мастера нельзя.",
+            kbds.op_back_to_operators_keyboard(),
         )
         return
     async with session_scope() as session:
@@ -462,13 +443,11 @@ async def _confirm_save(event, operator_id: int) -> None:
             details={"role": role, "full_name": full_name, "source": state.get("source", "?")},
         )
     _op_wizard_drop(operator_id)
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id,
-        text=(
-            f"✅ {'Обновлено' if existed else 'Добавлено'}:\n"
-            f"{full_name} · {role} · #{target_id}"
-        ),
-        attachments=[kbds.op_add_done_keyboard()],
+    await op_screen(
+        event,
+        f"✅ {'Обновлено' if existed else 'Добавлено'}:\n"
+        f"{full_name} · {role} · #{target_id}",
+        kbds.op_add_done_keyboard(),
     )
 
 
@@ -492,22 +471,22 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
         try:
             target_id = int(text.strip())
         except ValueError:
-            await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text="Это не число. Введите max_user_id (целое положительное).",
-                attachments=[kbds.op_add_cancel_keyboard()],
+            await op_send(
+                event,
+                "Это не число. Введите max_user_id (целое положительное).",
+                kbds.op_add_cancel_keyboard(),
             )
             return True
         _op_wizard_set(operator_id, target_id=target_id, step="awaiting_role")
-        await event.bot.send_message(
-            chat_id=cfg.admin_group_id,
-            text=(
+        await op_send(
+            event,
+            (
                 f"👥 Шаг 2 — выбор роли\n"
                 f"· · · · · · · ·\n"
                 f"ID:  {target_id}\n\n"
                 f"Выберите роль:"
             ),
-            attachments=[kbds.op_role_picker_keyboard()],
+            kbds.op_role_picker_keyboard(),
         )
         return True
     if step == "awaiting_name":
@@ -517,10 +496,10 @@ async def handle_operators_wizard_text(event, text: str) -> bool:
         if len(full_name) < 2 or not _HAS_ALNUM.search(full_name):
             # Пусто/короткое ИЛИ только пунктуация/эмодзи («77» проходит
             # длину, но это не ФИО — режем по alnum, как у жителя).
-            await event.bot.send_message(
-                chat_id=cfg.admin_group_id,
-                text="ФИО слишком короткое или без букв. Введите полностью.",
-                attachments=[kbds.op_add_cancel_keyboard()],
+            await op_send(
+                event,
+                "ФИО слишком короткое или без букв. Введите полностью.",
+                kbds.op_add_cancel_keyboard(),
             )
             return True
         _op_wizard_set(operator_id, full_name=full_name, step="ready_to_confirm")
