@@ -420,28 +420,44 @@ class TestOnAwaitingContact:
 class TestOnAwaitingSummaryHappy:
     @pytest.mark.asyncio
     async def test_text_and_attachment_appended_then_finalize(self) -> None:
-        """Непустой текст + вложение → оба добавлены в dialog_data,
-        вызван finalize_appeal."""
+        """Непустой текст + вложение → оба добавлены через
+        users_service.update_dialog_data (P2-1: НЕ прямой read-modify-write
+        — тот терял одно из двух сообщений, пришедших подряд), вызван
+        finalize_appeal."""
         from aemr_bot.handlers import appeal_funnel
 
         event = _funnel_event()
-        session = AsyncMock()
-        user = SimpleNamespace(dialog_data={})
+        update_data = AsyncMock()
         finalize = AsyncMock()
         with patch("aemr_bot.handlers.appeal_funnel.collect_attachments",
                    return_value=[{"type": "image", "token": "img1"}]), \
-             patch("aemr_bot.handlers.appeal_funnel.current_user",
-                   fake_current_user(user, session=session)), \
+             patch("aemr_bot.handlers.appeal_funnel.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data",
+                   update_data), \
              patch("aemr_bot.handlers.appeal_funnel.finalize_appeal", finalize):
             await appeal_funnel.on_awaiting_summary(
                 event, body=SimpleNamespace(), text_body="Яма во дворе",
                 max_user_id=42,
             )
 
-        # dialog_data обновлён обоими накоплениями.
-        assert user.dialog_data["summary_chunks"] == ["Яма во дворе"]
-        assert user.dialog_data["attachments"] == [{"type": "image", "token": "img1"}]
-        session.flush.assert_awaited()
+        # Хендлер отдаёт merge-КОЛЛАБЛ (append вычисляется под advisory-lock
+        # внутри update_dialog_data), а не готовый dict от старого снимка.
+        update_data.assert_awaited_once()
+        merge = update_data.call_args.args[2]
+        assert callable(merge)
+        # Коллабл поверх свежих данных копит, а не затирает.
+        merged = merge({"summary_chunks": ["старый кусок"],
+                        "attachments": [{"type": "image", "token": "old"}]})
+        assert merged["summary_chunks"] == ["старый кусок", "Яма во дворе"]
+        assert merged["attachments"] == [
+            {"type": "image", "token": "old"},
+            {"type": "image", "token": "img1"},
+        ]
+        # И с пустого dialog_data — просто добавляет.
+        fresh = merge({})
+        assert fresh["summary_chunks"] == ["Яма во дворе"]
+        assert fresh["attachments"] == [{"type": "image", "token": "img1"}]
         finalize.assert_called_once()
 
 

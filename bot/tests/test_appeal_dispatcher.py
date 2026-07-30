@@ -152,6 +152,35 @@ class TestCallbackConsent:
         ask_contact.assert_called_once()
 
     @pytest.mark.asyncio
+    async def test_consent_yes_duplicate_does_not_renotify(
+        self, captured_handlers
+    ) -> None:
+        """P3-6: согласие уже действовало (set_consent вернул False —
+        дубль callback'а или второй тап по «✅ Согласен») → уведомление
+        оператору НЕ дублируется, воронка продолжается штатно."""
+        on_callback, _ = captured_handlers
+        event = _make_callback_event(payload="consent:yes")
+        set_consent = AsyncMock(return_value=False)
+        ask_contact = AsyncMock()
+        notify = AsyncMock()
+        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7)
+        with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
+             patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal.users_service.get_or_create",
+                   AsyncMock(return_value=unblocked_user)), \
+             patch("aemr_bot.handlers.appeal.users_service.set_consent",
+                   set_consent), \
+             patch("aemr_bot.handlers.appeal.admin_events.notify_consent_given",
+                   notify), \
+             patch("aemr_bot.handlers.appeal.appeal_funnel.ask_contact_or_skip",
+                   ask_contact), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await on_callback(event)
+        set_consent.assert_called_once()
+        notify.assert_not_called()
+        ask_contact.assert_called_once()
+
+    @pytest.mark.asyncio
     async def test_consent_yes_REFUSED_for_blocked_user(
         self, captured_handlers
     ) -> None:

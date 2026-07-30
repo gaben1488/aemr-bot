@@ -354,6 +354,18 @@ class Broadcast(Base):
 
 class BroadcastDelivery(Base):
     __tablename__ = "broadcast_deliveries"
+    __table_args__ = (
+        # Одна строка на пару (рассылка, получатель): повтор пачки после
+        # сетевого сбоя (flush-буфер в handlers/broadcast.py best-effort
+        # и ретраится с теми же строками) не должен задваивать счётчики
+        # доставки. Запись идёт через on_conflict_do_nothing — см.
+        # services/broadcasts.record_delivery / record_deliveries.
+        # Миграция 0023.
+        UniqueConstraint(
+            "broadcast_id", "user_id",
+            name="uq_broadcast_deliveries_broadcast_user",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     broadcast_id: Mapped[int] = mapped_column(

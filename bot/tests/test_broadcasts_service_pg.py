@@ -2,15 +2,32 @@
 
 Проверяем не UI-мастер, а инварианты хранилища рассылок. Главный
 регресс: аварийное завершение рассылки не должно обнулять счётчики,
-если часть доставок уже записана в broadcast_deliveries.
+если часть доставок уже записана в broadcast_deliveries. Второй (P2-2):
+повтор пачки после сетевого сбоя не задваивает счётчики — пара
+(broadcast_id, user_id) уникальна, дубль тихо пропускается.
 """
 from __future__ import annotations
 
 import pytest
+from sqlalchemy import UniqueConstraint, func, select
 
-from aemr_bot.db.models import BroadcastStatus
+from aemr_bot.db.models import BroadcastDelivery, BroadcastStatus
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import users as users_service
+
+
+def test_broadcast_delivery_has_unique_pair_constraint() -> None:
+    """P2-2 (pure, без БД): модель несёт UNIQUE(broadcast_id, user_id) —
+    без него on_conflict_do_nothing в record_deliveries не срабатывал бы
+    и повтор пачки задваивал счётчики. Ограничение создаёт миграция 0023."""
+    uniques = [
+        c for c in BroadcastDelivery.__table__.constraints
+        if isinstance(c, UniqueConstraint)
+    ]
+    pairs = [sorted(col.name for col in c.columns) for c in uniques]
+    assert ["broadcast_id", "user_id"] in pairs, (
+        f"UNIQUE(broadcast_id, user_id) отсутствует в BroadcastDelivery: {pairs}"
+    )
 
 
 @pytest.mark.asyncio
@@ -39,6 +56,48 @@ async def test_count_delivery_results_counts_success_and_failures(session) -> No
 
     delivered, failed = await broadcasts_service.count_delivery_results(session, bc.id)
 
+    assert delivered == 1
+    assert failed == 1
+
+
+@pytest.mark.asyncio
+async def test_duplicate_delivery_pair_is_silently_skipped(session) -> None:
+    """P2-2: повторная запись той же пары (broadcast, user) — ретрай
+    flush-буфера после сетевого сбоя — не падает и не дублирует строку,
+    счётчики не задваиваются."""
+    user1 = await users_service.get_or_create(session, max_user_id=101, first_name="A")
+    user2 = await users_service.get_or_create(session, max_user_id=102, first_name="B")
+    bc = await broadcasts_service.create_broadcast(
+        session,
+        text="важное сообщение",
+        operator_id=None,
+        subscriber_count=2,
+    )
+    # Первая пачка записана, но flush «оборвался» до очистки буфера —
+    # повтор несёт те же строки плюс новую.
+    await broadcasts_service.record_deliveries(
+        session,
+        broadcast_id=bc.id,
+        results=[(user1.id, None)],
+    )
+    await broadcasts_service.record_deliveries(
+        session,
+        broadcast_id=bc.id,
+        results=[(user1.id, None), (user2.id, "RuntimeError('blocked')")],
+    )
+    # И одиночный повтор через record_delivery — тоже no-op.
+    await broadcasts_service.record_delivery(
+        session, broadcast_id=bc.id, user_id=user1.id, error=None
+    )
+
+    total_rows = await session.scalar(
+        select(func.count())
+        .select_from(BroadcastDelivery)
+        .where(BroadcastDelivery.broadcast_id == bc.id)
+    )
+    assert total_rows == 2  # по одной строке на получателя, без дублей
+
+    delivered, failed = await broadcasts_service.count_delivery_results(session, bc.id)
     assert delivered == 1
     assert failed == 1
 
