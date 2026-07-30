@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Сборка единого index.html из каркаса _shell.html + 10 фрагментов _kb2/.
+"""Сборка единого index.html из каркаса _shell.html + фрагментов _kb2/ (см. SECTIONS).
 
 Запуск (из корня репозитория или откуда угодно):
     python docs/site/_kb/_assemble.py
@@ -32,25 +32,26 @@ SECTIONS = [
     ("developer", "Разработчику", "5"),
     ("codemap", "Карта кода", "6"),
     ("koncept", "Как устроено", "7"),
-    ("security", "Безопасность и ПДн", "8"),
-    ("pravovoe", "Правовое", "9"),
-    ("spravochnik", "Справочник (кратко)", "10"),
-    ("spravref", "Справочник (полный)", "11"),
-    ("voprosy", "Частые вопросы", "12"),
-    ("adr", "Журнал решений", "13"),
+    ("shemy", "Схемы и модели", "8"),
+    ("security", "Безопасность и ПДн", "9"),
+    ("pravovoe", "Правовое", "10"),
+    ("spravochnik", "Справочник (кратко)", "11"),
+    ("spravref", "Справочник (полный)", "12"),
+    ("voprosy", "Частые вопросы", "13"),
+    ("adr", "Журнал решений", "14"),
 ]
 GROUPS = [
     ("Начало", ["obzor"]),
     ("Людям", ["zhitel", "operator"]),
     ("Инженерам", ["admin", "ekspluataciya", "developer", "codemap"]),
-    ("Понять и проверить", ["koncept", "security", "pravovoe"]),
+    ("Понять и проверить", ["koncept", "shemy", "security", "pravovoe"]),
     ("Справка", ["spravochnik", "spravref", "voprosy", "adr"]),
 ]
 
 # Длинные секции (codemap/spravref) — простыни на сотни экранов. Достраиваем
 # «Содержание раздела» из их h2[id]/h3[id], чтобы читатель не терялся. Свёрнутый
 # <details>; ссылки через data-go — тот же SPA-роутер скроллит к якорю.
-TOC_SECTIONS = {"codemap", "spravref"}
+TOC_SECTIONS = {"codemap", "spravref", "shemy"}
 _HEAD_RE = re.compile(r'<h([23])\s+[^>]*\bid="([^"]+)"[^>]*>(.*?)</h\1>', re.S)
 
 
