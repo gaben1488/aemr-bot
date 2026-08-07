@@ -2237,7 +2237,7 @@ DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-aemr}:${POSTGRES_PASSWORD:?.
       </tr>
       <tr>
         <td><code class="kbd">test_ledger_facts_sync.py</code></td>
-        <td>Ключевые числа супер-канона <code class="kbd">docs/site/_kb/_LEDGER.md</code> запиннены к коду. Падает, если разойдётся любое: <code class="kbd">SLA_RESPONSE_HOURS=4</code>, <code class="kbd">answer_max_chars=800</code>, <code class="kbd">audit_log_retention_days=365</code> (диапазон 30..3650), <code class="kbd">len(SCHEMA)=23</code>, <code class="kbd">OperatorRole</code> = 4 значения, 19 миграций (непрерывно 0001..0019), 11 ORM-таблиц. Плюс content-проверка: <code class="kbd">infra/Dockerfile</code> по-прежнему ставит из <code class="kbd">uv.lock</code> с <code class="kbd">--require-hashes</code> — ловит откат образа на pip-из-диапазонов.</td>
+        <td>Ключевые числа супер-канона <code class="kbd">docs/site/_kb/_LEDGER.md</code> запиннены к коду. Падает, если разойдётся любое: <code class="kbd">SLA_RESPONSE_HOURS=4</code>, <code class="kbd">answer_max_chars=800</code>, <code class="kbd">audit_log_retention_days=365</code> (диапазон 30..3650), <code class="kbd">len(SCHEMA)=23</code>, <code class="kbd">OperatorRole</code> = 4 значения, 23 миграции (непрерывно 0001..0023), 11 ORM-таблиц. Плюс content-проверка: <code class="kbd">infra/Dockerfile</code> по-прежнему ставит из <code class="kbd">uv.lock</code> с <code class="kbd">--require-hashes</code> — ловит откат образа на pip-из-диапазонов.</td>
       </tr>
     </tbody>
   </table>
