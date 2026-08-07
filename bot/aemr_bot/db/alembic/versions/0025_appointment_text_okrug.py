@@ -38,13 +38,18 @@ _NEW = _OLD.replace("муниципального района", "муницип
 
 
 def _swap(before: str, after: str) -> None:
+    # `settings.value` — колонка JSONB, текст лежит в ней JSON-строкой.
+    # Голая подстановка даёт «invalid input syntax for type json», а
+    # сравнение с сырым текстом не нашло бы строку даже при удачной
+    # записи. Поэтому `to_jsonb(...::text)` на запись и `#>> '{}'` —
+    # извлечение скалярной строки — на сравнение.
     op.get_bind().execute(
         text(
             """
             UPDATE settings
-               SET value = :after
+               SET value = to_jsonb(CAST(:after AS text))
              WHERE key = 'appointment_text'
-               AND value = :before
+               AND value #>> '{}' = :before
             """
         ),
         {"before": before, "after": after},
