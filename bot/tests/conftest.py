@@ -37,6 +37,59 @@ hypothesis_settings.register_profile(
 hypothesis_settings.load_profile("aemr")
 
 
+@pytest_asyncio.fixture(autouse=True)
+async def _no_async_leaks_between_tests() -> AsyncIterator[None]:
+    """Не выпускать фоновые задачи и соединения псевдо-БД за границу теста.
+
+    Диагноз (2026-08-07): полный прогон намертво вставал около 79 %
+    (`tests/test_sec_broadcast.py`), при этом любая партия файлов
+    проходила за секунды. Механизм:
+
+    1. Хендлеры дёргают `wizard_registry.schedule_persist_*`, тот через
+       `spawn_background_task` заводит НАСТОЯЩУЮ фоновую запись в БД.
+       Тест мокает сам хендлер, но задачу не ждёт — она переживает тест.
+    2. Псевдо-БД юнит-тестов — `sqlite+aiosqlite:///:memory:`, а это
+       StaticPool: одно соединение на весь процесс. У aiosqlite соединение
+       обслуживает поток, который отдаёт результат через
+       `future.get_loop().call_soon_threadsafe(...)`.
+    3. pytest-asyncio даёт каждому тесту СВОЙ event loop. Когда цикл
+       первого теста закрывается, поток соединения падает с
+       `RuntimeError: Event loop is closed` (это и есть россыпь
+       PytestUnhandledThreadExceptionWarning в отчёте) — и умирает.
+    4. Следующий тест берёт из пула то же мёртвое соединение. Фоновая
+       задача уходит в await на future, который резолвить уже некому.
+       На закрытии цикла `asyncio.Runner.close` отменяет задачи и ждёт
+       их в `run_until_complete` — а задача при отмене идёт в
+       `session_scope.__aexit__` и снова ждёт мёртвый поток. Прогон
+       встаёт навсегда.
+
+    Фикстура закрывает обе течи в правильном порядке: сначала гасит
+    фоновые задачи, пока их цикл и поток соединения ещё живы, затем
+    рассыпает engine — тогда следующий тест получает свежее соединение
+    в своём цикле. Прод не трогаем: там цикл ровно один и Postgres, а
+    не sqlite.
+    """
+    yield
+
+    import asyncio
+
+    from aemr_bot.utils.background import _BACKGROUND_TASKS
+
+    leaked = [t for t in list(_BACKGROUND_TASKS) if not t.done()]
+    if leaked:
+        for task in leaked:
+            task.cancel()
+        # Ждём с потолком: если задача всё-таки зависла на мёртвом
+        # соединении, тест закончится с предупреждением, а не повесит
+        # весь прогон.
+        await asyncio.wait(leaked, timeout=5)
+
+    if DATABASE_URL.startswith("sqlite"):
+        from aemr_bot.db import session as db_session
+
+        await db_session.engine.dispose()
+
+
 @pytest_asyncio.fixture
 async def session() -> AsyncIterator:
     if not _HAS_REAL_DB or DATABASE_URL.startswith("sqlite"):
