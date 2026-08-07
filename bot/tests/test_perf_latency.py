@@ -301,11 +301,17 @@ def _patched_runtime(mod, *, user, order: list[str]):
         scheduled.append(task)
         return task
 
+    # Мок reset_state отдаём наружу, а не только внутрь патча: после
+    # выхода из `_apply` атрибут модуля возвращается к настоящей функции,
+    # и проверять вызов через `mod.users_service.reset_state` уже поздно.
+    reset_state = AsyncMock()
+
     return {
         "session": session,
         "created_appeal": created_appeal,
         "render": _render,
         "relay": _relay,
+        "reset_state": reset_state,
         "scheduled": scheduled,
         "patches": [
             patch.object(mod, "current_user", _current_user),
@@ -315,7 +321,7 @@ def _patched_runtime(mod, *, user, order: list[str]):
             patch.object(mod.appeals_service, "count_recent_for_user",
                          AsyncMock(return_value=0)),
             patch.object(mod.appeals_service, "create_appeal", _create_appeal),
-            patch.object(mod.users_service, "reset_state", AsyncMock()),
+            patch.object(mod.users_service, "reset_state", reset_state),
             patch.object(mod, "session_scope", _sub_scope),
             patch.object(mod.broadcasts_service, "is_subscribed",
                          AsyncMock(return_value=False)),
@@ -463,8 +469,44 @@ class TestPersistAcksBeforeRelay:
 
 
 class TestPersistGuardsUnchanged:
-    """Регресс-гарды: ранние ветки (IDLE / rate-limit / пустое) НЕ
+    """Регресс-гарды: ранние ветки (IDLE / гейт согласия / пустое) НЕ
     шлют ack и НЕ создают обращение — фикс их не задел."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [("is_blocked", True), ("consent_pdn_at", None)],
+    )
+    async def test_blocked_or_revoked_gets_no_appeal(
+        self, field: str, value: object
+    ) -> None:
+        """Гейт согласия/блокировки в точке финализации (79294ab).
+
+        Проверяется здесь же, где живёт дублёр жителя: без этого теста
+        `_make_user` легко «починить» полем-заглушкой и не заметить, что
+        гейт перестал срабатывать — ровно так пять perf-тестов и упали,
+        когда дублёр отстал от контракта `User`. Заблокированный или
+        отозвавший согласие обращения не создаёт, ack не получает,
+        состояние воронки ему сбрасывают.
+        """
+        from aemr_bot.handlers import appeal_runtime as mod
+
+        user = _make_user()
+        setattr(user, field, value)
+        order: list[str] = []
+        setup = _patched_runtime(mod, user=user, order=order)
+
+        bot = MagicMock()
+        bot.send_message = AsyncMock()
+
+        with _apply(setup["patches"]):
+            result = await mod.persist_and_dispatch_appeal(bot, user.max_user_id)
+
+        assert result == mod.PERSIST_NO_CONSENT
+        bot.send_message.assert_not_awaited()
+        # Ни создания обращения, ни рендера карточки, ни relay.
+        assert order == []
+        setup["reset_state"].assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_idle_state_returns_none_no_ack(self) -> None:
