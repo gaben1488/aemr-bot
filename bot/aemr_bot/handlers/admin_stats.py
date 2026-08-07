@@ -11,6 +11,7 @@ from aemr_bot import texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator
+from aemr_bot.services import card_format
 from aemr_bot.services import stats as stats_service
 from aemr_bot.utils.event import get_chat_id, send_or_edit_screen
 
@@ -56,7 +57,13 @@ async def _send_stats_xlsx(
             attachments=[kbds.op_back_to_menu_keyboard()],
         )
         return False
-    filename = f"appeals_{period}_{datetime.now():%Y-%m-%d}.xlsx"
+    # Дата в имени файла — камчатская, а не серверная: оператор скачивает
+    # выгрузку и ищет её по своей дате. Контейнер живёт в UTC, поэтому
+    # голый `datetime.now()` с вечера до утра по местному времени дал бы
+    # вчерашнее число. Часовой пояс берём тот же, что и карточки
+    # (`services/card_format.TZ` ← settings.timezone).
+    local_date = datetime.now(card_format.TZ)
+    filename = f"appeals_{period}_{local_date:%Y-%m-%d}.xlsx"
     token = await uploads.upload_bytes(event.bot, content, suffix=".xlsx")
     if token is None:
         await send_or_edit_screen(

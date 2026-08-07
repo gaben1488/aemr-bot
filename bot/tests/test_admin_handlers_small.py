@@ -10,6 +10,7 @@
 """
 from __future__ import annotations
 
+from datetime import UTC
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -515,3 +516,48 @@ class TestRunStatsToday:
                    AsyncMock(return_value=(b"", "сегодня", 0))):
             await admin_stats.run_stats_today(event)
         event.bot.send_message.assert_called_once()
+
+
+class TestStatsFilenameTimezone:
+    """Дата в имени XLSX — камчатская, а не серверная."""
+
+    @pytest.mark.asyncio
+    async def test_filename_uses_local_date_not_utc(self) -> None:
+        """Оператор ищет выгрузку по СВОЕЙ дате, а не по дате контейнера.
+
+        Контейнер живёт в UTC, Камчатка — UTC+12. Голый `datetime.now()`
+        с вечера до полуночи по местному времени давал вчерашнее число:
+        оператор в 22:00 вторника получал файл, помеченный понедельником,
+        и не находил его среди других выгрузок. Тест берёт момент, когда
+        серверная и местная даты заведомо разные.
+        """
+        from datetime import datetime
+
+        from aemr_bot.handlers import admin_stats
+
+        # 21:30 по Камчатке 2 июля = 09:30 UTC того же дня... а вот
+        # 2 июля 12:30 UTC — это уже 3 июля 00:30 на Камчатке.
+        utc_moment = datetime(2026, 7, 2, 12, 30, tzinfo=UTC)
+
+        class _FrozenDatetime(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return utc_moment.astimezone(tz) if tz else utc_moment.replace(tzinfo=None)
+
+        event = _make_event()
+        event.bot.send_message = AsyncMock()
+        with patch.object(admin_stats, "datetime", _FrozenDatetime), \
+             patch.object(admin_stats, "session_scope", _fake_session_scope), \
+             patch("aemr_bot.services.stats.build_xlsx",
+                   AsyncMock(return_value=(b"xlsx", "2 июля", 3))), \
+             patch("aemr_bot.services.uploads.upload_bytes",
+                   AsyncMock(return_value="TOK")), \
+             patch("aemr_bot.services.uploads.file_attachment",
+                   lambda t: {"type": "file"}):
+            await admin_stats._send_stats_xlsx(event, "today", target_chat_id=-1)
+
+        text = event.bot.send_message.call_args.kwargs.get("text", "")
+        assert "2026-07-03" in text, (
+            f"ожидалась местная дата 03.07, в имени файла: {text}"
+        )
+        assert "2026-07-02" not in text, "серверная дата в имя файла попадать не должна"
