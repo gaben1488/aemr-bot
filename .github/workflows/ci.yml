@@ -169,7 +169,7 @@ jobs:
           psql -h localhost -U aemr -d postgres -c "DROP DATABASE IF EXISTS aemr_alembic_check;"
           psql -h localhost -U aemr -d postgres -c "CREATE DATABASE aemr_alembic_check;"
           DATABASE_URL=postgresql+asyncpg://aemr:test@localhost:5432/aemr_alembic_check \
-            python -m alembic upgrade head
+            uv run --no-sync python -m alembic upgrade head
 
       - name: Alembic — модели == миграции (alembic check)
         # alembic check (1.9+) сравнивает Base.metadata с последней
@@ -179,7 +179,7 @@ jobs:
         # __table_args__. Hard fail возвращён.
         run: |
           DATABASE_URL=postgresql+asyncpg://aemr:test@localhost:5432/aemr_alembic_check \
-            python -m alembic check
+            uv run --no-sync python -m alembic check
 
       - name: Alembic round-trip (downgrade base ↔ upgrade head)
         # Ловит broken downgrade(): typo в drop_index/drop_column,
@@ -192,11 +192,11 @@ jobs:
           psql -h localhost -U aemr -d postgres -c "DROP DATABASE IF EXISTS aemr_alembic_roundtrip;"
           psql -h localhost -U aemr -d postgres -c "CREATE DATABASE aemr_alembic_roundtrip;"
           DATABASE_URL=postgresql+asyncpg://aemr:test@localhost:5432/aemr_alembic_roundtrip \
-            python -m alembic upgrade head
+            uv run --no-sync python -m alembic upgrade head
           DATABASE_URL=postgresql+asyncpg://aemr:test@localhost:5432/aemr_alembic_roundtrip \
-            python -m alembic downgrade base
+            uv run --no-sync python -m alembic downgrade base
           DATABASE_URL=postgresql+asyncpg://aemr:test@localhost:5432/aemr_alembic_roundtrip \
-            python -m alembic upgrade head
+            uv run --no-sync python -m alembic upgrade head
 
   docker-build:
     name: Docker build smoke test
