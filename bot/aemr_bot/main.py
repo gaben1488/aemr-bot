@@ -26,7 +26,7 @@ from aemr_bot.services import settings_store
 # (батч 4), но исторические вызовы `from aemr_bot.main import
 # spawn_background_task` должны продолжать работать — импортированное
 # имя становится атрибутом модуля main.
-from aemr_bot.utils.background import spawn_background_task
+from aemr_bot.utils.background import drain_background_tasks, spawn_background_task
 
 log = logging.getLogger("aemr_bot")
 
@@ -746,11 +746,17 @@ async def main() -> None:
                 )
                 # os._exit, не sys.exit: SystemExit в фоновом таске лишь
                 # погасил бы сам таск, polling продолжил бы жить без замка.
-                # Перед этим флашим логи: os._exit не выполняет atexit, и
-                # без flush причина завершения не доедет ни в bot.log, ни в
-                # journald — админ увидит только рестарт без объяснения.
-                logging.shutdown()
-                os._exit(1)
+                # Флашим логи (os._exit не выполняет atexit, без flush
+                # причина завершения не доедет ни в bot.log, ни в
+                # journald), но выход — в finally: если shutdown бросит
+                # или зависнет на захваченной блокировке обработчика,
+                # внешний `except Exception` проглотит ошибку и сторож
+                # продолжит цикл — процесс останется работать без замка,
+                # ровно против чего он и поставлен.
+                try:
+                    logging.shutdown()
+                finally:
+                    os._exit(1)
             except Exception:
                 # БД целиком недоступна: ни проверить, ни переакквизировать.
                 # Не валим процесс — второй экземпляр в этот момент тоже
@@ -897,6 +903,19 @@ async def main() -> None:
             await dp.start_polling(bot)
     finally:
         scheduler.shutdown(wait=False)
+        # Сначала даём доиграть фоновым задачам, пока цикл и соединения
+        # ещё живы: иначе `asyncio.run` обрывает их на выходе — в том
+        # числе сброс буфера доставок рассылки, чей повтор задваивал
+        # счётчики (миграция 0023 чистит следствие, дренаж — причину).
+        try:
+            abandoned = await drain_background_tasks()
+            if abandoned:
+                log.warning(
+                    "остановка: не дождались фоновых задач (%s) — отменены",
+                    ", ".join(abandoned),
+                )
+        except Exception:
+            log.exception("остановка: дренаж фоновых задач не удался")
         if health_runner is not None:
             await health_runner.cleanup()
         # Явно снимаем single-instance lock при штатном shutdown

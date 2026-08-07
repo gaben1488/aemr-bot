@@ -71,43 +71,35 @@ async def _no_async_leaks_between_tests() -> AsyncIterator[None]:
     """
     yield
 
-    import asyncio
+    from aemr_bot.utils.background import _BACKGROUND_TASKS, drain_background_tasks
 
-    from aemr_bot.utils.background import _BACKGROUND_TASKS
+    try:
+        # Тот же механизм, что гасит задачи при остановке бота: один
+        # дренаж на два потребителя вместо двух похожих реализаций.
+        # Таймаут короткий — persist в псевдо-БД падает на первом же
+        # запросе («no such table») и укладывается в один тик.
+        abandoned = await drain_background_tasks(timeout=1.0)
+    except RuntimeError:
+        # Задача осталась с ПРОШЛОГО теста и висит на future уже закрытого
+        # цикла: cancel() делает call_soon на нём и падает «Event loop is
+        # closed». Гасить нечего — цикл мёртв вместе с задачей, а
+        # исключение здесь сорвало бы teardown ЧУЖОГО теста.
+        abandoned = ["<задача с закрытым циклом>"]
 
-    leaked = [t for t in list(_BACKGROUND_TASKS) if not t.done()]
-    if leaked:
-        # Сначала короткая отсрочка на естественное завершение: persist в
-        # псевдо-БД падает на первом же запросе («no such table») и
-        # укладывается в один тик. Отменять сразу — значит бросить в
-        # потоке aiosqlite запрос, чей future уже некому резолвить: поток
-        # доедет до call_soon_threadsafe на закрытом цикле и выдаст
-        # PytestUnhandledThreadExceptionWarning.
-        _, leaked_still = await asyncio.wait(leaked, timeout=1.0)
-        for task in leaked_still:
-            try:
-                task.cancel()
-            except RuntimeError:
-                # Задача осталась с прошлого теста и висит на future уже
-                # закрытого цикла: cancel() пытается сделать call_soon на
-                # нём и падает «Event loop is closed». Гасить нечего —
-                # цикл мёртв вместе с задачей, роняющее исключение здесь
-                # только сорвало бы teardown ЧУЖОГО теста.
-                pass
-        if leaked_still:
-            await asyncio.wait(leaked_still, timeout=5)
-        # Задачи, которые не доиграли и после отмены, выбрасываем из
-        # реестра сами: done-callback на них уже не сработает, а без
-        # этого КАЖДЫЙ следующий тест заново ждал бы их 1 + 5 секунд —
-        # разовое зависание превратилось бы в постоянный налог на прогон.
-        for task in leaked_still:
+    if abandoned:
+        # Недоигравшие выбрасываем из реестра: done-callback на них уже не
+        # сработает, и без этого КАЖДЫЙ следующий тест ждал бы их снова —
+        # разовое зависание стало бы постоянным налогом на прогон.
+        for task in list(_BACKGROUND_TASKS):
             if not task.done():
                 _BACKGROUND_TASKS.discard(task)
 
-    if DATABASE_URL.startswith("sqlite"):
-        from aemr_bot.db import session as db_session
+    # Пул соединений рассыпаем независимо от типа БД: соединения asyncpg
+    # привязаны к циклу так же, как aiosqlite, и в CI (Postgres) прогон
+    # PG-тестов — единственное место, где это вообще проверяется.
+    from aemr_bot.db import session as db_session
 
-        await db_session.engine.dispose()
+    await db_session.engine.dispose()
 
 
 @pytest_asyncio.fixture

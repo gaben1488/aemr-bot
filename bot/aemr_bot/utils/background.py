@@ -30,3 +30,35 @@ def spawn_background_task(
     _BACKGROUND_TASKS.add(task)
     task.add_done_callback(_BACKGROUND_TASKS.discard)
     return task
+
+
+async def drain_background_tasks(timeout: float = 10.0) -> list[str]:
+    """Дождаться фоновых задач перед остановкой. Вернуть имена недождавшихся.
+
+    Зачем: при выходе `asyncio.run` отменяет всё незавершённое. Без
+    ожидания рестарт рвёт задачу ровно там, где она была, — в том числе
+    посреди сброса буфера доставок рассылки. Такой оборванный сброс
+    повторяется со следующей пачки и задваивает счётчики «доставлено»,
+    от чего защищает ограничение из миграции 0023. То есть без дренажа
+    мы лечим следствие, оставляя причину.
+
+    По истечении `timeout` задачи отменяются: висящий запрос к MAX API
+    не должен держать остановку бесконечно — оператор перезапускает
+    контейнер и ждёт, а не смотрит на зависший процесс.
+
+    Имена возвращаются, чтобы вызывающий записал в лог, ЧТО именно не
+    доиграло: «оборвали broadcast_send» — это уже диагноз, а молчаливая
+    отмена диагнозом не является.
+    """
+    pending = [t for t in list(_BACKGROUND_TASKS) if not t.done()]
+    if not pending:
+        return []
+
+    _, still_running = await asyncio.wait(pending, timeout=timeout)
+    for task in still_running:
+        task.cancel()
+    if still_running:
+        # Даём отменённым отработать `finally` (закрыть сессию БД,
+        # снять блокировку) — без этого отмена оставляет ресурсы висеть.
+        await asyncio.wait(still_running, timeout=2.0)
+    return [t.get_name() for t in still_running]
