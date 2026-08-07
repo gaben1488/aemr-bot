@@ -140,7 +140,7 @@ jobs:
         # процентом. Локальный прогон (sqlite, PG-тесты skip) даёт ~82%;
         # CI на Postgres-16 гоняет и PG-gated тесты, там строго выше.
         run: >-
-          python -m pytest tests/ -v --tb=short
+          uv run --no-sync python -m pytest tests/ -v --tb=short
           --cov=aemr_bot
           --cov-branch
           --cov-report=term-missing:skip-covered
