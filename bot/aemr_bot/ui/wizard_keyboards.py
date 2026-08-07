@@ -83,15 +83,36 @@ def op_operator_card_keyboard(
     return kb.as_markup()
 
 
+# Подписи ролей в мастерах. Значения (payload/enum) историчны и не
+# меняются: `aemr` — от Администрации Елизовского муниципального района,
+# `egp` — от Елизовского городского поселения, упразднённого уставом
+# округа. Переименование значений = миграция данных, отдельное решение
+# владельца (см. docs/ЧЕКЛИСТ_ПРАВОПРЕЕМСТВА.md).
+#
+# Подписи же обязаны РАЗЛИЧАТЬ роли, иначе выбор в мастере бессмысленен.
+# По правам `aemr` и `egp` в коде идентичны (базовый набор; ни рассылок,
+# ни админ-действий — см. `can_broadcast`/`is_it` в ui/operator_keyboards.py
+# и `ensure_role(..., OperatorRole.IT)` в handlers/). Различает их зона
+# ответственности людей: один специалист ведёт округ в целом, второй —
+# город Елизово (бывшее ЕГП). Так это и описано в вике, раздел
+# «Оператору» → «Кто такие „два оператора“».
+ROLE_LABELS: dict[str, str] = {
+    OperatorRole.IT.value: "🛠 it — ИТ, полный доступ",
+    OperatorRole.COORDINATOR.value: "👤 coordinator — ответы + рассылки",
+    OperatorRole.AEMR.value: "👤 aemr — специалист по округу",
+    OperatorRole.EGP.value: "👤 egp — специалист по г. Елизово",
+}
+
+
 def op_operator_role_change_keyboard(max_user_id: int, current_role: str):
     """Смена роли существующему оператору. Текущую роль показываем
     как заблокированную (без callback'а)."""
     kb = InlineKeyboardBuilder()
     roles = [
-        (OperatorRole.IT.value, "🛠 it — ИТ, полный доступ"),
-        (OperatorRole.COORDINATOR.value, "👤 coordinator — ответы + рассылки"),
-        (OperatorRole.AEMR.value, "👤 aemr — рядовой специалист"),
-        (OperatorRole.EGP.value, "👤 egp — специалист администрации округа"),
+        (OperatorRole.IT.value, ROLE_LABELS[OperatorRole.IT.value]),
+        (OperatorRole.COORDINATOR.value, ROLE_LABELS[OperatorRole.COORDINATOR.value]),
+        (OperatorRole.AEMR.value, ROLE_LABELS[OperatorRole.AEMR.value]),
+        (OperatorRole.EGP.value, ROLE_LABELS[OperatorRole.EGP.value]),
     ]
     for role_value, label in roles:
         if role_value == current_role:
@@ -148,10 +169,10 @@ def op_role_picker_keyboard():
     кнопке в строку с пояснением что значит каждая роль. Самомодификация
     (попытка выдать it самому себе) ловится в обработчике."""
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="🛠 it — ИТ, полный доступ", payload="op:opadd:role:it"))
-    kb.row(CallbackButton(text="👤 coordinator — ответы + рассылки", payload="op:opadd:role:coordinator"))
-    kb.row(CallbackButton(text="👤 aemr — рядовой специалист", payload="op:opadd:role:aemr"))
-    kb.row(CallbackButton(text="👤 egp — специалист администрации округа", payload="op:opadd:role:egp"))
+    kb.row(CallbackButton(text=ROLE_LABELS[OperatorRole.IT.value], payload="op:opadd:role:it"))
+    kb.row(CallbackButton(text=ROLE_LABELS[OperatorRole.COORDINATOR.value], payload="op:opadd:role:coordinator"))
+    kb.row(CallbackButton(text=ROLE_LABELS[OperatorRole.AEMR.value], payload="op:opadd:role:aemr"))
+    kb.row(CallbackButton(text=ROLE_LABELS[OperatorRole.EGP.value], payload="op:opadd:role:egp"))
     kb.row(CallbackButton(text="❌ Отменить добавление", payload="op:opadd:cancel"))
     return kb.as_markup()
 
@@ -185,6 +206,7 @@ def op_add_done_keyboard():
 
 
 __all__ = [
+    "ROLE_LABELS",
     "op_add_cancel_keyboard",
     "op_operators_menu_keyboard",
     "op_operators_list_keyboard",
