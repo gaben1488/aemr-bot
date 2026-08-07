@@ -24,6 +24,7 @@ find_active LIMIT 1.
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -233,10 +234,21 @@ class TestFindResidentTyping:
 
 
 def _make_user(max_user_id: int = 7):
-    """Житель в состоянии воронки (не IDLE) с накопленными данными."""
+    """Житель в состоянии воронки (не IDLE) с накопленными данными.
+
+    Дублёр повторяет контракт ORM-модели `User` в той части, которую
+    читает `persist_and_dispatch_appeal`: помимо состояния воронки это
+    гейт согласия/блокировки (`is_blocked`, `consent_pdn_at`, см.
+    appeal_runtime, коммит 79294ab). Житель здесь — обычный: не
+    заблокирован, согласие действует, поэтому гейт пропускает его в
+    финализацию, и тест меряет именно порядок ack/render/relay.
+    Сам гейт проверяется отдельно в TestPersistGuardsUnchanged.
+    """
     return SimpleNamespace(
         id=1,
         max_user_id=max_user_id,
+        is_blocked=False,
+        consent_pdn_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         dialog_state=DialogState.AWAITING_SUMMARY.value,
         dialog_data={
             "summary_chunks": ["Яма во дворе"],
