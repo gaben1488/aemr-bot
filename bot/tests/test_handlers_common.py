@@ -15,7 +15,7 @@ import pytest
 
 pytest.importorskip("maxapi", reason="_common тянет handlers-цепочку")
 
-from aemr_bot.handlers import _common  # noqa: E402
+from aemr_bot.handlers import _common
 
 
 @asynccontextmanager

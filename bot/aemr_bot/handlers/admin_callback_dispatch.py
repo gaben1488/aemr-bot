@@ -27,10 +27,9 @@ from aemr_bot import keyboards as kbds
 from aemr_bot import texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
-from aemr_bot.handlers import admin_commands
+from aemr_bot.handlers import admin_commands, callback_router
 from aemr_bot.handlers import broadcast as broadcast_handler
 from aemr_bot.handlers import broadcast_templates as broadcast_templates_handler
-from aemr_bot.handlers import callback_router
 from aemr_bot.handlers._auth import ensure_operator
 from aemr_bot.services import admin_card as admin_card_service
 from aemr_bot.services import appeals as appeals_service

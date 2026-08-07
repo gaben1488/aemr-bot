@@ -29,15 +29,14 @@ fake_current_user, make_event) — паттерн существующих handl
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from tests._helpers import fake_current_user
+from tests._helpers import fake_current_user, make_event
 from tests._helpers import fake_session_scope as _fake_session_scope
-from tests._helpers import make_event
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
@@ -204,7 +203,7 @@ class TestStartAppealFlowConsent:
         event = _funnel_event()
         user = SimpleNamespace(
             is_blocked=False,
-            consent_pdn_at=datetime.now(timezone.utc),
+            consent_pdn_at=datetime.now(UTC),
             id=1,
         )
         ask_contact = AsyncMock()
@@ -489,7 +488,8 @@ class TestFinalizeAppeal:
     async def test_rate_limited_no_open_shows_reset_minutes(self) -> None:
         """Нет открытого обращения → сообщение содержит время до сброса
         лимита (было «дождитесь сброса» без указания сколько ждать)."""
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
+
         from aemr_bot.handlers import appeal_funnel
         from aemr_bot.handlers.appeal_runtime import PERSIST_RATE_LIMITED
 
@@ -497,7 +497,7 @@ class TestFinalizeAppeal:
         user = SimpleNamespace(id=1)
         # Самое старое обращение создано 40 минут назад → слот освободится
         # примерно через 20 минут.
-        earliest = datetime.now(timezone.utc) - timedelta(minutes=40)
+        earliest = datetime.now(UTC) - timedelta(minutes=40)
         with patch("aemr_bot.handlers.appeal_funnel.persist_and_dispatch_appeal",
                    AsyncMock(return_value=PERSIST_RATE_LIMITED)), \
              patch("aemr_bot.handlers.appeal_funnel.session_scope",
@@ -590,7 +590,7 @@ def _followup_user_appeal():
     user = SimpleNamespace(
         id=1,
         dialog_data={"appeal_id": 5},
-        consent_pdn_at=datetime.now(timezone.utc),
+        consent_pdn_at=datetime.now(UTC),
     )
     appeal = SimpleNamespace(id=5, user_id=1, status="new")
     return user, appeal
@@ -607,7 +607,7 @@ class TestFollowupRateLimit:
         user, appeal = _followup_user_appeal()
         reset = AsyncMock()
         # last_at = только что (1 секунду назад) — меньше дефолтных 30с.
-        last_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+        last_at = datetime.now(UTC) - timedelta(seconds=1)
         with patch("aemr_bot.handlers.appeal_funnel.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create",

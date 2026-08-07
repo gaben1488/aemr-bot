@@ -19,7 +19,6 @@ from aemr_bot.utils.attachments import (
     suspicious_attachment_names,
 )
 
-
 # --- Fix 1: anti-spoof box-drawing в тексте жителя ---
 
 

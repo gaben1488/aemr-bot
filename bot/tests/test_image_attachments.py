@@ -23,7 +23,6 @@ from unittest.mock import patch
 
 from aemr_bot.utils import image_attachments as ia
 
-
 # ---- is_image_attachment ---------------------------------------------------
 
 

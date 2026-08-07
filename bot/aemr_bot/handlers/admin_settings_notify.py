@@ -25,9 +25,9 @@ from __future__ import annotations
 
 from aemr_bot import keyboards as kbds
 from aemr_bot.db.session import session_scope
-from aemr_bot.services import notify_toggles, settings_store
 from aemr_bot.handlers._common import op_screen
-from aemr_bot.ui.settings_keyboards import NOTIFY_LABELS  # noqa: F401 (re-export для UI-текста)
+from aemr_bot.services import notify_toggles, settings_store
+from aemr_bot.ui.settings_keyboards import NOTIFY_LABELS
 
 
 async def _get_all_toggles(session) -> dict[str, bool]:

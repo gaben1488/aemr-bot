@@ -17,10 +17,10 @@
 
 См. `aemr_bot/copy/__init__.py` для карты доменов.
 """
-# noqa: F401,F403 на каждом импорте — это намеренные re-export'ы для
+
 # обратной совместимости старых сайтов `from aemr_bot import texts`.
-from aemr_bot.copy.admin_texts import *  # noqa: F401, F403
-from aemr_bot.copy.broadcast_texts import *  # noqa: F401, F403
-from aemr_bot.copy.citizen_funnel import *  # noqa: F401, F403
-from aemr_bot.copy.errors_texts import *  # noqa: F401, F403
-from aemr_bot.copy.security_texts import *  # noqa: F401, F403
+from aemr_bot.copy.admin_texts import *
+from aemr_bot.copy.broadcast_texts import *
+from aemr_bot.copy.citizen_funnel import *
+from aemr_bot.copy.errors_texts import *
+from aemr_bot.copy.security_texts import *

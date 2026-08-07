@@ -34,7 +34,6 @@ import pytest
 
 from aemr_bot.services import admin_bus
 
-
 ADMIN_CHAT_ID = 777
 
 

@@ -15,7 +15,7 @@ SLA-таймер в этот час стоит. Полный рабочий де
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -153,8 +153,8 @@ class TestBusinessSecondsBetween:
         # UTC-aware datetime корректно приводится к Asia/Kamchatka
         # (UTC+12) перед расчётом рабочего окна; обед 12-13 (локальный)
         # вычитается -> 3 часа.
-        start_utc = _local(2026, 6, 16, 10, 0).astimezone(timezone.utc)
-        end_utc = _local(2026, 6, 16, 14, 0).astimezone(timezone.utc)
+        start_utc = _local(2026, 6, 16, 10, 0).astimezone(UTC)
+        end_utc = _local(2026, 6, 16, 14, 0).astimezone(UTC)
         assert sla.business_seconds_between(start_utc, end_utc) == 3 * 3600
 
     def test_naive_datetime_raises_value_error(self) -> None:

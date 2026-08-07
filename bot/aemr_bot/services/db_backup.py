@@ -73,7 +73,7 @@ async def _wait_proc(
     """
     try:
         return await asyncio.wait_for(proc.wait(), timeout=timeout)
-    except (asyncio.TimeoutError, TimeoutError) as e:
+    except TimeoutError as e:
         log.error(
             "backup: %s не завершился за %.0fс — убиваю процесс (pid=%s)",
             label,
@@ -89,7 +89,7 @@ async def _wait_proc(
         # подействовал мгновенно (не должен зависнуть, но страхуемся).
         try:
             await asyncio.wait_for(proc.wait(), timeout=10.0)
-        except (asyncio.TimeoutError, TimeoutError):
+        except TimeoutError:
             log.warning("backup: %s не отозвался на kill за 10с", label)
         raise BackupTimeoutError(
             f"{label} timed out after {timeout:.0f}s"
@@ -244,7 +244,7 @@ async def _run_pg_dump_encrypted(
             pass
         try:
             await asyncio.wait_for(dump.wait(), timeout=10.0)
-        except (asyncio.TimeoutError, TimeoutError):
+        except TimeoutError:
             pass
         os.close(pp_r)
         os.close(data_r)
@@ -268,7 +268,7 @@ async def _run_pg_dump_encrypted(
         gpg_rc, dump_rc = await asyncio.wait_for(
             asyncio.gather(gpg.wait(), dump.wait()), timeout=budget
         )
-    except (asyncio.TimeoutError, TimeoutError) as e:
+    except TimeoutError as e:
         log.error(
             "backup: pg_dump|gpg не завершились за %.0fс — убиваю оба",
             budget,
@@ -280,7 +280,7 @@ async def _run_pg_dump_encrypted(
                 pass
             try:
                 await asyncio.wait_for(proc.wait(), timeout=10.0)
-            except (asyncio.TimeoutError, TimeoutError):
+            except TimeoutError:
                 log.warning("backup: %s не отозвался на kill за 10с", label)
         raise BackupTimeoutError(
             f"pg_dump|gpg timed out after {budget:.0f}s"

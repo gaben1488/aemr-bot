@@ -31,7 +31,7 @@ Postgres (advisory-lock, ILIKE, серверный rowcount) — они покр
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
@@ -39,11 +39,9 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-import aemr_bot.services.admin_events as admin_events
-import aemr_bot.services.db_backup as db_backup
 import aemr_bot.services.idempotency as idem
 import aemr_bot.services.settings_store as ss
-import aemr_bot.services.users as users
+from aemr_bot.services import admin_events, db_backup, users
 from aemr_bot.utils.url_defang import _ZWSP, defang_url_in_text
 
 # ──────────────────────────────────────────────────────────────────────
@@ -65,7 +63,7 @@ class _FakeSession:
         self._rowcount = rowcount
         self._exc = exc
 
-    async def execute(self, _stmt):  # noqa: ANN001
+    async def execute(self, _stmt):
         if self._exc is not None:
             raise self._exc
         return _FakeResult(self._rowcount)
@@ -298,7 +296,7 @@ class TestValuesEquivalentNone:
         assert ss._values_equivalent(None, None) is True
 
     @pytest.mark.parametrize("a,b", [(None, []), (None, "x"), ([], None), (0, None)])
-    def test_one_none_not_equivalent(self, a, b) -> None:  # noqa: ANN001
+    def test_one_none_not_equivalent(self, a, b) -> None:
         # Убивает мутанта: `a is None or b is None: return False` -> True.
         # None и любое не-None значение — НЕ эквивалентны (иначе backfill
         # пометил бы NULL-ключ как совпадающий с seed-baseline).
@@ -316,7 +314,7 @@ class TestGetDirtyKeys:
     @pytest.mark.asyncio
     async def test_updated_after_synced_is_dirty(self) -> None:
         # Убивает мутанта: `updated > synced` -> `updated < synced`.
-        now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        now = datetime(2026, 1, 1, tzinfo=UTC)
         older = now - timedelta(hours=1)
         newer = now + timedelta(hours=1)
 
@@ -365,7 +363,7 @@ class TestBackupPassphraseBoundary:
         # сбрасываться, дамп идёт без шифрования (.sql). Существующий
         # тест использовал 5-символьную фразу, которую и `<6` отвергает,
         # поэтому границу 6..11 никто не проверял.
-        async def fake_dump(out_path, _env):  # noqa: ANN001
+        async def fake_dump(out_path, _env):
             out_path.write_bytes(b"plain")
 
         with (
@@ -394,7 +392,7 @@ class TestBackupChmod:
     async def test_backup_file_chmod_0600(self, tmp_path: Path) -> None:
         # Убивает мутанта: `os.chmod(out, 0o600)` -> `0o644`.
         # Дамп содержит телефоны/тексты/audit-лог — права должны быть 0600.
-        async def fake_dump(out_path, _env):  # noqa: ANN001
+        async def fake_dump(out_path, _env):
             out_path.write_bytes(b"plain")
 
         with (
@@ -435,7 +433,7 @@ class TestRunPgDumpEncryptedReturnCodes:
     async def test_both_success_no_raise(self, tmp_path: Path) -> None:
         out = tmp_path / "x.sql.gpg"
 
-        async def mk(*_a, **_k):  # noqa: ANN002, ANN003
+        async def mk(*_a, **_k):
             return _RcProc(0)
 
         with (
@@ -449,7 +447,7 @@ class TestRunPgDumpEncryptedReturnCodes:
         # Убивает мутанта: `if gpg_rc != 0` -> `== 0`.
         out = tmp_path / "x.sql.gpg"
 
-        async def mk(prog, *_a, **_k):  # noqa: ANN001, ANN002, ANN003
+        async def mk(prog, *_a, **_k):
             # pg_dump ок (rc=0), gpg падает (rc=2).
             return _RcProc(0 if prog == "pg_dump" else 2)
 
@@ -465,7 +463,7 @@ class TestRunPgDumpEncryptedReturnCodes:
         # Убивает мутанта: `if dump_rc != 0` -> `== 0`.
         out = tmp_path / "x.sql.gpg"
 
-        async def mk(prog, *_a, **_k):  # noqa: ANN001, ANN002, ANN003
+        async def mk(prog, *_a, **_k):
             # pg_dump падает (rc=3), gpg «ок» (rc=0).
             return _RcProc(3 if prog == "pg_dump" else 0)
 
@@ -516,7 +514,7 @@ class _PhoneSession:
     def __init__(self, rows: list) -> None:
         self._rows = rows
 
-    async def scalars(self, _stmt):  # noqa: ANN001
+    async def scalars(self, _stmt):
         return _ScalarsResult(self._rows)
 
 

@@ -95,8 +95,8 @@ class TestSendOneWithImages:
 # ---- _run_send_loop с outbound_images --------------------------------------
 
 
-from tests._helpers import fake_session_scope as _fake_session_scope  # noqa: E402
-from tests._helpers import make_event  # noqa: E402
+from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._helpers import make_event
 
 
 class TestRunSendLoopWithImages:
@@ -118,7 +118,6 @@ class TestRunSendLoopWithImages:
 
         async def _stub_send_one(bot_arg, max_user_id, body_text, **kw):
             captured_kwargs.append(kw)
-            return None
 
         with patch.object(bc, "_send_one", side_effect=_stub_send_one), \
              patch("aemr_bot.handlers.broadcast.session_scope", _fake_session_scope), \

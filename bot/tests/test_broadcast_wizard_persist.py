@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace as NS
 
 import pytest
@@ -97,13 +97,13 @@ class _FakeSession:
         self.rows = list(rows)
 
     async def execute(self, _stmt):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         stale = [r for r in self.rows if r.expires_at <= now]
         self.rows = [r for r in self.rows if r.expires_at > now]
         return NS(rowcount=len(stale))
 
     async def scalars(self, _stmt):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         alive = [r for r in self.rows if r.expires_at > now]
         return NS(all=lambda: alive)
 
@@ -111,7 +111,7 @@ class _FakeSession:
 def _row(operator_id: int, state: dict, *, age_sec: float = 0.0) -> NS:
     """Строка wizard_state так, как её записал бы `_upsert`: expires_at =
     момент записи + TTL. `age_sec` сдвигает момент записи в прошлое."""
-    written_at = datetime.now(timezone.utc) - timedelta(seconds=age_sec)
+    written_at = datetime.now(UTC) - timedelta(seconds=age_sec)
     return NS(
         id=operator_id,
         kind=wp.KIND_BROADCAST,

@@ -410,9 +410,8 @@ def _get_relay_adapter() -> Any:
     global _RELAY_ADAPTER
     if _RELAY_ADAPTER is None:
         try:
-            from pydantic import TypeAdapter
-
             from maxapi.types.attachments import Attachments
+            from pydantic import TypeAdapter
         except Exception:
             log.exception("maxapi attachment types unavailable; skipping relay")
             return None

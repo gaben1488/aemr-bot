@@ -16,10 +16,10 @@
 
 См. `aemr_bot/ui/__init__.py` для карты доменов.
 """
-# noqa: F401,F403 на каждом импорте — это намеренные re-export'ы для
+
 # обратной совместимости старых сайтов `from aemr_bot import keyboards`.
-from aemr_bot.ui.broadcast_keyboards import *  # noqa: F401, F403
-from aemr_bot.ui.citizen_keyboards import *  # noqa: F401, F403
-from aemr_bot.ui.operator_keyboards import *  # noqa: F401, F403
-from aemr_bot.ui.settings_keyboards import *  # noqa: F401, F403
-from aemr_bot.ui.wizard_keyboards import *  # noqa: F401, F403
+from aemr_bot.ui.broadcast_keyboards import *
+from aemr_bot.ui.citizen_keyboards import *
+from aemr_bot.ui.operator_keyboards import *
+from aemr_bot.ui.settings_keyboards import *
+from aemr_bot.ui.wizard_keyboards import *

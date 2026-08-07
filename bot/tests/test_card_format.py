@@ -4,7 +4,7 @@
 test_appeal_flow."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 
 from aemr_bot.services.card_format import (
@@ -83,7 +83,7 @@ class TestAppealListLabel:
         return SimpleNamespace(
             id=42,
             status=status,
-            created_at=datetime(2026, 5, 10, 14, 30, tzinfo=timezone.utc),
+            created_at=datetime(2026, 5, 10, 14, 30, tzinfo=UTC),
             summary=summary,
         )
 
@@ -136,8 +136,8 @@ class TestAppealListLabel:
         appeal = SimpleNamespace(
             id=42,
             status="answered",
-            created_at=datetime(2026, 5, 10, 14, 30, tzinfo=timezone.utc),
-            answered_at=datetime(2026, 5, 11, 9, 15, tzinfo=timezone.utc),
+            created_at=datetime(2026, 5, 10, 14, 30, tzinfo=UTC),
+            answered_at=datetime(2026, 5, 11, 9, 15, tzinfo=UTC),
             closed_at=None,
             summary="Тест",
         )
@@ -152,9 +152,9 @@ class TestAppealListLabel:
         appeal = SimpleNamespace(
             id=42,
             status="closed",
-            created_at=datetime(2026, 5, 10, 14, 30, tzinfo=timezone.utc),
+            created_at=datetime(2026, 5, 10, 14, 30, tzinfo=UTC),
             answered_at=None,
-            closed_at=datetime(2026, 5, 12, 16, 0, tzinfo=timezone.utc),
+            closed_at=datetime(2026, 5, 12, 16, 0, tzinfo=UTC),
             summary="Тест",
         )
         label = appeal_list_label(appeal)
@@ -168,7 +168,7 @@ class TestAppealListLabel:
         appeal = SimpleNamespace(
             id=42,
             status="new",
-            created_at=datetime(2026, 5, 10, 14, 30, tzinfo=timezone.utc),
+            created_at=datetime(2026, 5, 10, 14, 30, tzinfo=UTC),
             answered_at=None,
             closed_at=None,
             summary="Тест",
@@ -201,7 +201,7 @@ class TestAdminCardCitizenStateMarkers:
         user = SimpleNamespace(
             first_name="Сергей",
             phone="+79991234567",
-            consent_pdn_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
+            consent_pdn_at=datetime(2026, 5, 1, tzinfo=UTC),
             consent_revoked_at=None,
             subscribed_broadcast=True,
             is_blocked=False,
@@ -220,7 +220,7 @@ class TestAdminCardCitizenStateMarkers:
         user = SimpleNamespace(
             first_name="Иван",
             phone="+79990000000",
-            consent_pdn_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
+            consent_pdn_at=datetime(2026, 5, 1, tzinfo=UTC),
             consent_revoked_at=None,
             subscribed_broadcast=False,
             is_blocked=True,
@@ -237,7 +237,7 @@ class TestAdminCardCitizenStateMarkers:
             first_name="Анна",
             phone="+79991111111",
             consent_pdn_at=None,
-            consent_revoked_at=datetime(2026, 5, 11, tzinfo=timezone.utc),
+            consent_revoked_at=datetime(2026, 5, 11, tzinfo=UTC),
             subscribed_broadcast=False,
             is_blocked=False,
         )
@@ -251,7 +251,7 @@ class TestAdminCardCitizenStateMarkers:
         user = SimpleNamespace(
             first_name="Пётр",
             phone="+79992222222",
-            consent_pdn_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
+            consent_pdn_at=datetime(2026, 5, 1, tzinfo=UTC),
             consent_revoked_at=None,
             subscribed_broadcast=False,
             is_blocked=False,

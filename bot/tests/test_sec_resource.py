@@ -192,9 +192,10 @@ async def test_throttled_callback_gets_silent_ack() -> None:
 async def test_polling_dispatch_semaphore_bounds_concurrency(monkeypatch) -> None:
     """`_install_dispatch_guards` в polling-режиме не пускает в обработку
     больше N одновременных handle()-вызовов."""
+    from maxapi import Dispatcher
+
     import aemr_bot.main as main_mod
     from aemr_bot.config import settings
-    from maxapi import Dispatcher
 
     assert settings.bot_mode == "polling", "тест рассчитан на polling-дефолт"
 
@@ -238,8 +239,9 @@ async def test_polling_dispatch_semaphore_bounds_concurrency(monkeypatch) -> Non
 
 async def test_throttle_blocks_before_dispatch(monkeypatch) -> None:
     """Затроттленное событие НЕ доходит до базового dp.handle."""
-    import aemr_bot.main as main_mod
     from maxapi import Dispatcher
+
+    import aemr_bot.main as main_mod
 
     # Бакет на 2 события, без refill.
     monkeypatch.setattr(

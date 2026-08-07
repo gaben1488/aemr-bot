@@ -39,7 +39,6 @@ import pytest
 
 from tests._helpers import fake_session_scope as _fake_session_scope
 
-
 pytest.importorskip("maxapi", reason="нужен maxapi для admin_card / event")
 
 
@@ -205,8 +204,8 @@ class TestB_MenuAfterAdminCard:
         menu (НЕ edit карточки).
         """
         from aemr_bot.services import admin_card
-        from aemr_bot.utils.event import send_or_edit_screen
         from aemr_bot.utils import menu_tracker
+        from aemr_bot.utils.event import send_or_edit_screen
 
         appeal = _make_appeal()
         bot = _make_bot(send_mids=["card-mid-1", "menu-mid-2"])
@@ -246,8 +245,8 @@ class TestB_MenuAfterAdminCard:
         """Если tracker = None (после admin_card.render clear), любой
         callback на меню → send_new, независимо от callback_mid.
         """
-        from aemr_bot.utils.event import send_or_edit_screen
         from aemr_bot.utils import menu_tracker
+        from aemr_bot.utils.event import send_or_edit_screen
 
         bot = _make_bot(send_mids=["menu-fresh-1"])
         # Tracker уже пуст (после _clean_tracker fixture).
@@ -288,8 +287,8 @@ class TestC_ListingOpenCardMenu:
     @pytest.mark.asyncio
     async def test_full_listing_open_card_flow_no_card_edit(self) -> None:
         from aemr_bot.services import admin_card
-        from aemr_bot.utils.event import send_or_edit_screen
         from aemr_bot.utils import menu_tracker
+        from aemr_bot.utils.event import send_or_edit_screen
 
         appeal = _make_appeal()
         # Sequence для send_message — только SEND'ы (edit не consume'ит).
@@ -623,9 +622,10 @@ class TestN_MiddlewareTreatsMessageCallbackCorrectly:
 
     @pytest.mark.asyncio
     async def test_message_callback_does_not_move_tracker(self) -> None:
+        from unittest.mock import patch as _patch
+
         from aemr_bot.handlers import AdminChatActivityMiddleware
         from aemr_bot.utils import menu_tracker
-        from unittest.mock import patch as _patch
 
         # Pre-state: tracker = some_existing_mid.
         menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "menu-existing-7")
@@ -666,10 +666,11 @@ class TestN_MiddlewareTreatsMessageCallbackCorrectly:
         3. Middleware вызван — tracker НЕ двигается (isinstance fix).
         4. send_or_edit_screen видит callback_mid != tracker → send_new.
         """
-        from aemr_bot.handlers import AdminChatActivityMiddleware
-        from aemr_bot.utils.event import send_or_edit_screen
-        from aemr_bot.utils import menu_tracker
         from unittest.mock import patch as _patch
+
+        from aemr_bot.handlers import AdminChatActivityMiddleware
+        from aemr_bot.utils import menu_tracker
+        from aemr_bot.utils.event import send_or_edit_screen
 
         menu_tracker.set_last_menu_mid(ADMIN_CHAT_ID, "menu-new-9")
         bot = _make_bot(send_mids=["fresh-menu-10"])
@@ -707,8 +708,8 @@ class TestH_EditFailureFallback:
 
     @pytest.mark.asyncio
     async def test_send_or_edit_screen_edit_fail_clears_tracker(self) -> None:
-        from aemr_bot.utils.event import send_or_edit_screen
         from aemr_bot.utils import menu_tracker
+        from aemr_bot.utils.event import send_or_edit_screen
 
         bot = _make_bot(send_mids=["recovery-mid-9"])
         bot.edit_message = AsyncMock(side_effect=Exception("MAX 404"))

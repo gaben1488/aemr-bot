@@ -20,10 +20,9 @@ from __future__ import annotations
 from aemr_bot import keyboards as kbds
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
-from aemr_bot.services import operators as operators_service
 from aemr_bot.handlers._common import op_screen
+from aemr_bot.services import operators as operators_service
 from aemr_bot.utils.event import ack_callback
-
 
 # · · · · · · · ·· · · · · · · ·· · · · · · · ·· · · · · · · ·──────
 # Смена роли

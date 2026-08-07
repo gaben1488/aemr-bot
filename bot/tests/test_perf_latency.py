@@ -24,7 +24,7 @@ find_active LIMIT 1.
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -32,11 +32,9 @@ import pytest
 
 from aemr_bot.db.models import AppealStatus, DialogState
 
-
 pytest.importorskip("maxapi", reason="нужен maxapi для handler-импортов")
 
 from tests._helpers import make_event
-
 
 # ──────────────────────────────────────────────────────────────────────
 # (c) appeals.find_active_for_user — .limit(1)
@@ -169,7 +167,6 @@ class TestFindResidentTyping:
 
         async def _find(*_a, **_k):
             order.append("lookup")
-            return None
 
         scope = MagicMock()
         scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
@@ -248,7 +245,7 @@ def _make_user(max_user_id: int = 7):
         id=1,
         max_user_id=max_user_id,
         is_blocked=False,
-        consent_pdn_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        consent_pdn_at=datetime(2026, 1, 1, tzinfo=UTC),
         dialog_state=DialogState.AWAITING_SUMMARY.value,
         dialog_data={
             "summary_chunks": ["Яма во дворе"],

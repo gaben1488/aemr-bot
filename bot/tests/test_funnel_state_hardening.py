@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -174,7 +174,7 @@ async def test_find_stuck_in_funnel_includes_geo_confirm(session) -> None:
         DialogState.AWAITING_GEO_CONFIRM,
         data={"detected_locality": "Елизовское ГП"},
     )
-    old = datetime.now(timezone.utc) - timedelta(hours=2)
+    old = datetime.now(UTC) - timedelta(hours=2)
     await session.execute(update(User).where(User.id == user.id).values(updated_at=old))
     await session.flush()
 

@@ -36,9 +36,8 @@ import pytest
 
 pytest.importorskip("apscheduler", reason="сверка тянет build_scheduler")
 
-from aemr_bot.services import cron  # noqa: E402
-from aemr_bot.services.cron_registry import JOB_REGISTRY, all_ids  # noqa: E402
-
+from aemr_bot.services import cron
+from aemr_bot.services.cron_registry import JOB_REGISTRY, all_ids
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 DOCS = REPO_ROOT / "docs"

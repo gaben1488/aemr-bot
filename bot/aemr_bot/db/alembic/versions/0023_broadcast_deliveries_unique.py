@@ -22,14 +22,14 @@ record_deliveries) переведён на INSERT .. ON CONFLICT DO NOTHING.
 Downgrade: drop constraint (удалённые дубли не восстанавливаются —
 они и были ошибочными повторами).
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
 
 revision: str = "0023"
-down_revision: Union[str, None] = "0022"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "0022"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 _CONSTRAINT = "uq_broadcast_deliveries_broadcast_user"
 

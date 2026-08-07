@@ -18,7 +18,7 @@
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -267,7 +267,7 @@ class TestListSubscribers:
         # subscribed_broadcast и is_blocked правится прямым UPDATE: в
         # services/users нет публичного set_subscribed. После миграции
         # 0008 активная рассылка требует ещё и consent_broadcast_at.
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         await session.execute(
             update(User).where(User.id == user1.id).values(
                 subscribed_broadcast=True,
@@ -324,7 +324,7 @@ class TestFindPendingPdnRetention:
         # Старый отзыв (40 дней назад) — попадает.
         u = await users_service.get_or_create(session, max_user_id=2, first_name="B")
         await users_service.revoke_consent(session, 2)
-        old = datetime.now(timezone.utc) - timedelta(days=40)
+        old = datetime.now(UTC) - timedelta(days=40)
         await session.execute(
             update(User).where(User.id == u.id).values(consent_revoked_at=old)
         )
@@ -350,7 +350,7 @@ class TestFindPendingPdnRetention:
         u = await users_service.get_or_create(session, max_user_id=1)
         await users_service.set_phone(session, 1, "+79990001122")
         await users_service.revoke_consent(session, 1)
-        old = datetime.now(timezone.utc) - timedelta(days=40)
+        old = datetime.now(UTC) - timedelta(days=40)
         await session.execute(
             update(User).where(User.id == u.id)
             .values(consent_revoked_at=old, first_name=None)
@@ -369,7 +369,7 @@ class TestFindPendingPdnRetention:
 
         u = await users_service.get_or_create(session, max_user_id=1, first_name="X")
         await users_service.revoke_consent(session, 1)
-        old = datetime.now(timezone.utc) - timedelta(days=40)
+        old = datetime.now(UTC) - timedelta(days=40)
         await session.execute(
             update(User).where(User.id == u.id).values(consent_revoked_at=old)
         )
@@ -421,7 +421,7 @@ class TestFindStuckInSummary:
         # Старый — попадает (updated_at = 2 часа назад).
         u = await users_service.get_or_create(session, max_user_id=2, first_name="B")
         await users_service.set_state(session, 2, DialogState.AWAITING_SUMMARY)
-        old = datetime.now(timezone.utc) - timedelta(hours=2)
+        old = datetime.now(UTC) - timedelta(hours=2)
         await session.execute(
             update(User).where(User.id == u.id).values(updated_at=old)
         )
@@ -443,7 +443,7 @@ class TestFindStuckInFunnel:
         # AWAITING_SUMMARY — НЕ попадает (отдельный watchdog).
         u2 = await users_service.get_or_create(session, max_user_id=2, first_name="B")
         await users_service.set_state(session, 2, DialogState.AWAITING_SUMMARY)
-        old = datetime.now(timezone.utc) - timedelta(hours=2)
+        old = datetime.now(UTC) - timedelta(hours=2)
         await session.execute(
             update(User).where(User.id.in_([u.id, u2.id])).values(updated_at=old)
         )
@@ -462,7 +462,7 @@ class TestFindStuckInFunnel:
 
         u = await users_service.get_or_create(session, max_user_id=1, first_name="A")
         await users_service.set_state(session, 1, DialogState.AWAITING_NAME)
-        old = datetime.now(timezone.utc) - timedelta(hours=2)
+        old = datetime.now(UTC) - timedelta(hours=2)
         await session.execute(
             update(User).where(User.id == u.id)
             .values(updated_at=old, is_blocked=True)

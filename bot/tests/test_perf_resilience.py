@@ -303,7 +303,7 @@ class TestPollingWrapperMarksOnSuccess:
 
         class _FailBot:
             async def get_updates(self, *args, **kwargs):
-                raise asyncio.TimeoutError()
+                raise TimeoutError()
 
         bot = _FailBot()
         main._install_polling_timeout(bot, cfg.polling_timeout_seconds)
@@ -509,13 +509,12 @@ class TestEncryptedPipelineTimeout:
             st.backup_gpg_timeout_seconds = 0.05
             with patch(
                 "asyncio.create_subprocess_exec", side_effect=fake_exec
-            ):
-                with pytest.raises(db_backup.BackupTimeoutError):
-                    await db_backup._run_pg_dump_encrypted(
-                        __import__("pathlib").Path("/tmp/x.sql.gpg"),
-                        {"PGHOST": "h"},
-                        "passphrase-12chars",
-                    )
+            ), pytest.raises(db_backup.BackupTimeoutError):
+                await db_backup._run_pg_dump_encrypted(
+                    __import__("pathlib").Path("/tmp/x.sql.gpg"),
+                    {"PGHOST": "h"},
+                    "passphrase-12chars",
+                )
 
         assert dump.killed is True, "pg_dump должен быть убит по таймауту"
         assert gpg.killed is True, "gpg должен быть убит по таймауту"

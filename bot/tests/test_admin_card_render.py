@@ -20,7 +20,6 @@ import pytest
 
 from tests._helpers import fake_session_scope as _fake_session_scope
 
-
 pytest.importorskip("maxapi", reason="нужен maxapi для card_format")
 
 

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 from dateutil.relativedelta import relativedelta
@@ -90,7 +90,7 @@ async def add_operator_message(
     if appeal.status != AppealStatus.CLOSED.value:
         if is_final:
             appeal.status = AppealStatus.ANSWERED.value
-            appeal.answered_at = datetime.now(timezone.utc)
+            appeal.answered_at = datetime.now(UTC)
         else:
             # Промежуточный: NEW → IN_PROGRESS, остальные оставляем
             # как есть (IN_PROGRESS остаётся IN_PROGRESS; ANSWERED не
@@ -215,7 +215,7 @@ async def followup_rate_limit_stats(
     блокировать жителя слать дополнения. `last_at` — глобальный max
     (не ограничен окном hours), нужен для min-interval-проверки.
     """
-    threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
+    threshold = datetime.now(UTC) - timedelta(hours=hours)
     row = (
         await session.execute(
             select(
@@ -241,7 +241,7 @@ async def count_recent_for_user(
     четвёртое и предлагаем дополнить уже открытое. Защита от
     случайного спама и от злоупотреблений.
     """
-    threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
+    threshold = datetime.now(UTC) - timedelta(hours=hours)
     return (
         await session.scalar(
             select(func.count())
@@ -260,7 +260,7 @@ async def earliest_recent_for_user(
     старое из обращений в окне выпадет из него первым, и после этого
     можно подать новое. reset ≈ earliest + `hours`.
     """
-    threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
+    threshold = datetime.now(UTC) - timedelta(hours=hours)
     return await session.scalar(
         select(func.min(Appeal.created_at)).where(
             Appeal.user_id == user_id, Appeal.created_at >= threshold
@@ -403,7 +403,7 @@ async def close(session: AsyncSession, appeal_id: int) -> bool:
             Appeal.id == appeal_id,
             Appeal.status != AppealStatus.CLOSED.value,
         )
-        .values(status=AppealStatus.CLOSED.value, closed_at=datetime.now(timezone.utc))
+        .values(status=AppealStatus.CLOSED.value, closed_at=datetime.now(UTC))
     )
     return result.rowcount > 0
 
@@ -545,7 +545,7 @@ async def find_overdue_unanswered(
     вообще все открытые обращения (см. защиту LIMIT выше), а не
     заменить собой правильный business-time расчёт.
     """
-    threshold = datetime.now(timezone.utc) - timedelta(hours=sla_hours)
+    threshold = datetime.now(UTC) - timedelta(hours=sla_hours)
     res = await session.scalars(
         select(Appeal)
         .options(selectinload(Appeal.user))
@@ -559,7 +559,7 @@ async def find_overdue_unanswered(
         .limit(limit)
     )
     candidates = list(res)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return [
         appeal
         for appeal in candidates
@@ -622,7 +622,7 @@ async def purge_old_appeals_content(
     # `timedelta(days=365*N)` теряет ~1 день за 4 года, и за 5-летний
     # порог retention обращения, поданные ровно 5 лет назад, могут
     # не попасть в первую же ночь. Не критично, но честнее.
-    threshold = datetime.now(timezone.utc) - relativedelta(years=years)
+    threshold = datetime.now(UTC) - relativedelta(years=years)
     # Якорь отсчёта — COALESCE(closed_at, answered_at). closed_at ставит
     # ТОЛЬКО явное «Закрыть» (close()); финальный ответ оператора
     # (add_operator_message is_final=True) переводит в ANSWERED и ставит

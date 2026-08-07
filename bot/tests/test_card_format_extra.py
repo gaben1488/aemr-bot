@@ -14,14 +14,13 @@ Cluster #12 coverage waves (2026-05-28). Тесты — safety net для буд
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
 
 from aemr_bot.db.models import MessageDirection
 from aemr_bot.services import card_format as cf
-
 
 # ---- Хелперы построения SimpleNamespace-фейков -----------------------------
 
@@ -38,7 +37,7 @@ def _msg(
     return SimpleNamespace(
         direction=direction,
         text=text,
-        created_at=created_at or datetime(2026, 5, 27, 10, 0, tzinfo=timezone.utc),
+        created_at=created_at or datetime(2026, 5, 27, 10, 0, tzinfo=UTC),
         attachments=attachments or [],
     )
 
@@ -67,7 +66,7 @@ def _appeal(
         messages=messages or [],
         status=status,
         created_at=created_at
-        or datetime(2026, 5, 27, 9, 0, tzinfo=timezone.utc),
+        or datetime(2026, 5, 27, 9, 0, tzinfo=UTC),
         answered_at=answered_at,
         closed_at=closed_at,
     )
@@ -87,7 +86,7 @@ def _user(
         phone=phone,
         subscribed_broadcast=subscribed_broadcast,
         consent_pdn_at=consent_pdn_at
-        or datetime(2026, 5, 1, tzinfo=timezone.utc),
+        or datetime(2026, 5, 1, tzinfo=UTC),
         consent_revoked_at=consent_revoked_at,
         is_blocked=is_blocked,
     )
@@ -140,7 +139,7 @@ class TestCitizenReply:
             topic="Дороги",
             locality="Елизовское ГП",
             address="ул. Ленина, 5",
-            created_at=datetime(2026, 5, 20, 12, 0, tzinfo=timezone.utc),
+            created_at=datetime(2026, 5, 20, 12, 0, tzinfo=UTC),
         )
         reply = "Ваше обращение принято. Дорога будет отремонтирована."
 
@@ -246,7 +245,7 @@ class TestAppealTimelineBlockEdges:
 
     def test_hidden_count_appears_when_over_max(self) -> None:
         """При >10 сообщений рендерится «Ранее ещё N сообщений (скрыты)»."""
-        base_dt = datetime(2026, 5, 27, 9, 0, tzinfo=timezone.utc)
+        base_dt = datetime(2026, 5, 27, 9, 0, tzinfo=UTC)
         messages = [
             _msg(
                 direction=MessageDirection.FROM_USER.value,
@@ -336,8 +335,8 @@ class TestAppealTimelineBlockEdges:
 
     def test_ordering_by_created_at_ascending(self) -> None:
         """Сообщения сортируются по created_at — старое сверху, новое снизу."""
-        old = datetime(2026, 5, 27, 8, 0, tzinfo=timezone.utc)
-        new = datetime(2026, 5, 27, 12, 0, tzinfo=timezone.utc)
+        old = datetime(2026, 5, 27, 8, 0, tzinfo=UTC)
+        new = datetime(2026, 5, 27, 12, 0, tzinfo=UTC)
         appeal = _appeal(
             messages=[
                 _msg(direction=MessageDirection.FROM_USER.value, text="new-msg", created_at=new),

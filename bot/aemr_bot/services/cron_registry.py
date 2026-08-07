@@ -26,7 +26,6 @@ job'а нет и который читают люди: вика (`docs/site/_kb2
 """
 from __future__ import annotations
 
-
 # Запись реестра. `id` — точное имя job_id из `scheduler.add_job(id=...)`.
 # `schedule_human` — человекочитаемое описание (не cron-expression).
 # `purpose` — короткое назначение для docs.

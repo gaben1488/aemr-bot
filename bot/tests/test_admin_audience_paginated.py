@@ -25,7 +25,6 @@ pytest.importorskip("maxapi", reason="нужен maxapi для admin_audience и
 
 from tests._helpers import make_event
 
-
 # ──────────────────────────────────────────────────────────────────────
 # _format_audience_row — pure formatter
 # ──────────────────────────────────────────────────────────────────────
@@ -67,6 +66,7 @@ class TestFormatAudienceRow:
 
     def test_consent_badge(self) -> None:
         from datetime import datetime
+
         from aemr_bot.handlers.admin_audience import _format_audience_row
 
         user = self._user(consent_pdn_at=datetime.now())
@@ -75,6 +75,7 @@ class TestFormatAudienceRow:
 
     def test_revoked_badge(self) -> None:
         from datetime import datetime
+
         from aemr_bot.handlers.admin_audience import _format_audience_row
 
         user = self._user(consent_pdn_at=None, consent_revoked_at=datetime.now())
@@ -115,6 +116,7 @@ class TestFormatAudienceRow:
 
     def test_multiple_badges_combined(self) -> None:
         from datetime import datetime
+
         from aemr_bot.handlers.admin_audience import _format_audience_row
 
         user = self._user(

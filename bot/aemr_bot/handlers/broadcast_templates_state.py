@@ -27,7 +27,6 @@ from aemr_bot import texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.services import broadcast_templates as templates_service
 
-
 _WIZARD_TTL_SEC = 600  # 10 минут — те же лимиты, что у broadcast wizard
 
 

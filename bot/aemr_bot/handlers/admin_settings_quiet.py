@@ -14,12 +14,12 @@ from __future__ import annotations
 
 from aemr_bot import keyboards as kbds
 from aemr_bot.db.session import session_scope
-from aemr_bot.services import operators as ops_svc
-from aemr_bot.services import settings_store
 from aemr_bot.handlers._common import op_screen, op_send
 
 # intent на правку часа ставится здесь (`_start_quiet_hour_intent`).
 from aemr_bot.handlers.admin_settings_shared import _intent_set
+from aemr_bot.services import operators as ops_svc
+from aemr_bot.services import settings_store
 
 
 async def _show_quiet_card(event) -> None:

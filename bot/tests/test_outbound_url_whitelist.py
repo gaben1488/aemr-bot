@@ -18,7 +18,6 @@ from __future__ import annotations
 
 from aemr_bot.services.settings_store import extract_urls, find_non_whitelisted_urls
 
-
 # --- Голые не-гос домены: должны блокироваться (суть фикса) ---
 
 

@@ -15,7 +15,7 @@ import pytest
 
 pytest.importorskip("maxapi", reason="dispatch тянет handlers-цепочку")
 
-from aemr_bot.handlers import admin_callback_dispatch as dispatch  # noqa: E402
+from aemr_bot.handlers import admin_callback_dispatch as dispatch
 
 
 def _event() -> SimpleNamespace:

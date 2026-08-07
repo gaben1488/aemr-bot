@@ -19,7 +19,7 @@
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -58,7 +58,7 @@ async def test_list_for_user_filters_by_revoke(session) -> None:
         summary="до revoke", attachments=[],
     )
     # Сначала старая дата у обращения, потом revoke с «свежей» датой.
-    old = datetime.now(timezone.utc) - timedelta(days=2)
+    old = datetime.now(UTC) - timedelta(days=2)
     await session.execute(
         update(Appeal).where(Appeal.id == appeal.id).values(created_at=old)
     )
@@ -96,7 +96,7 @@ async def test_count_recent_for_user_rate_limit(session) -> None:
     # Старое — 5 часов назад → не попадает в hours=1.
     await session.execute(
         update(Appeal).where(Appeal.id == old.id)
-        .values(created_at=datetime.now(timezone.utc) - timedelta(hours=5))
+        .values(created_at=datetime.now(UTC) - timedelta(hours=5))
     )
     await session.flush()
     assert await appeals_service.count_recent_for_user(
@@ -124,7 +124,7 @@ async def test_find_overdue_unanswered(session) -> None:
     # — отсюда флейк на CI. 60 дней заведомо просрочены при любом определении SLA.
     await session.execute(
         update(Appeal).where(Appeal.id == old.id)
-        .values(created_at=datetime.now(timezone.utc) - timedelta(days=60))
+        .values(created_at=datetime.now(UTC) - timedelta(days=60))
     )
     await session.flush()
     overdue = await appeals_service.find_overdue_unanswered(session, sla_hours=24)
@@ -285,7 +285,7 @@ async def test_find_active_for_user_returns_latest(session) -> None:
     # «Состарим» first на 1 час назад, чтобы second был свежее.
     await session.execute(
         update(Appeal).where(Appeal.id == first.id)
-        .values(created_at=datetime.now(timezone.utc) - timedelta(hours=1))
+        .values(created_at=datetime.now(UTC) - timedelta(hours=1))
     )
     await session.flush()
 
@@ -347,8 +347,9 @@ async def test_find_last_address_returns_none_without_locality(session) -> None:
 @pytest.mark.asyncio
 async def test_add_user_message(session) -> None:
     """Followup жителя записывается в messages с direction=FROM_USER."""
-    from aemr_bot.db.models import Message, MessageDirection
     from sqlalchemy import select
+
+    from aemr_bot.db.models import Message, MessageDirection
 
     user = await users_service.get_or_create(session, max_user_id=1, first_name="A")
     appeal = await appeals_service.create_appeal(

@@ -15,7 +15,7 @@ type=image), `bot.send_message` к жителю должен включать э
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -46,13 +46,13 @@ def _fresh_appeal() -> SimpleNamespace:
     user = SimpleNamespace(
         is_blocked=False,
         first_name="Иван",
-        consent_pdn_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        consent_pdn_at=datetime(2026, 1, 1, tzinfo=UTC),
         consent_revoked_at=None,
         max_user_id=42,
     )
     return SimpleNamespace(
         id=1, user=user,
-        created_at=datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc),
+        created_at=datetime(2026, 5, 1, 12, 0, tzinfo=UTC),
         topic="Дороги", locality="Елизово",
         address="ул. Ленина, д. 1", status="new", summary="яма",
         messages=[], answered_at=None,

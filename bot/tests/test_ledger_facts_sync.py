@@ -44,7 +44,6 @@ from aemr_bot.config import Settings, settings
 from aemr_bot.db.models import Base, OperatorRole
 from aemr_bot.services import settings_store
 
-
 # `bot/tests/<this>` → parents[2] == repo root (тот же приём, что в
 # test_cron_docs_sync.py). Отсюда дотягиваемся до леджера и до миграций.
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]

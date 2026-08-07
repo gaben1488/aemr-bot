@@ -1,3 +1,5 @@
+from datetime import UTC
+
 import pytest
 
 from aemr_bot.db.models import AppealStatus, DialogState, OperatorRole
@@ -173,8 +175,9 @@ async def test_anonymous_user_singleton(session):
     id3 = await users_service.get_anonymous_user_id(session)
     assert id1 == id2 == id3
     # И только одна запись в БД
-    from aemr_bot.db.models import ANONYMOUS_MAX_USER_ID, User
     from sqlalchemy import select
+
+    from aemr_bot.db.models import ANONYMOUS_MAX_USER_ID, User
     rows = (await session.execute(
         select(User).where(User.max_user_id == ANONYMOUS_MAX_USER_ID)
     )).scalars().all()
@@ -188,8 +191,10 @@ async def test_purge_old_appeals_5y_retention(session):
     Пятилетний срок установлен локальным актом оператора (152-ФЗ
     ст. 18.1 ч. 1 п. 2), обоснование — в docstring
     `purge_old_appeals_content`."""
-    from datetime import datetime, timezone, timedelta
+    from datetime import datetime, timedelta
+
     from sqlalchemy import update
+
     from aemr_bot.db.models import Appeal
 
     user = await users_service.get_or_create(session, max_user_id=88, first_name="X")
@@ -209,7 +214,7 @@ async def test_purge_old_appeals_5y_retention(session):
     # purge смотрит closed_at + status ∈ (ANSWERED, CLOSED).
     # Закрываем старое обращение и фейкаем closed_at на 6 лет назад.
     from aemr_bot.db.models import AppealStatus
-    six_y_ago = datetime.now(timezone.utc) - timedelta(days=365 * 6)
+    six_y_ago = datetime.now(UTC) - timedelta(days=365 * 6)
     await session.execute(
         update(Appeal)
         .where(Appeal.id == old.id)
@@ -260,8 +265,10 @@ async def test_purge_answered_without_closed_at(session):
     обращения на ОСНОВНОМ пути «оператор ответил» не чистились никогда —
     адрес и текст жителя висели бессрочно. Якорь теперь
     COALESCE(closed_at, answered_at)."""
-    from datetime import datetime, timezone, timedelta
-    from sqlalchemy import update, select
+    from datetime import datetime, timedelta
+
+    from sqlalchemy import select, update
+
     from aemr_bot.db.models import Appeal, AppealStatus
 
     user = await users_service.get_or_create(session, max_user_id=7, first_name="Z")
@@ -269,7 +276,7 @@ async def test_purge_answered_without_closed_at(session):
         session, user=user, address="ул. Отвеченная, 9", topic="ЖКХ",
         summary="ответили, но не закрывали", attachments=[],
     )
-    six_y_ago = datetime.now(timezone.utc) - timedelta(days=365 * 6)
+    six_y_ago = datetime.now(UTC) - timedelta(days=365 * 6)
     # ANSWERED: answered_at 6 лет назад, closed_at ОСТАЁТСЯ NULL.
     await session.execute(
         update(Appeal).where(Appeal.id == ans.id).values(
@@ -301,8 +308,10 @@ async def test_purge_abandoned_appeal_never_answered(session):
     адрес и текст жителя жили в базе бессрочно. Именно молчаливое
     бессрочное хранение и есть нарушение: житель давно забыл, а его
     данные лежат. Третий якорь — created_at."""
-    from datetime import datetime, timezone, timedelta
-    from sqlalchemy import update, select
+    from datetime import datetime, timedelta
+
+    from sqlalchemy import select, update
+
     from aemr_bot.db.models import Appeal, AppealStatus
 
     user = await users_service.get_or_create(session, max_user_id=11, first_name="Б")
@@ -314,7 +323,7 @@ async def test_purge_abandoned_appeal_never_answered(session):
         session, user=user, address="ул. Свежая, 2", topic="Мусор",
         summary="подано вчера", attachments=[],
     )
-    six_y_ago = datetime.now(timezone.utc) - timedelta(days=365 * 6)
+    six_y_ago = datetime.now(UTC) - timedelta(days=365 * 6)
     # Только created_at 6 лет назад; статус остаётся NEW, ответа не было.
     await session.execute(
         update(Appeal).where(Appeal.id == abandoned.id).values(

@@ -27,7 +27,7 @@ Override регистрируется один раз на процесс и н�
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
@@ -52,7 +52,7 @@ from aemr_bot.services import operators as ops
 # Регистрируется идемпотентно: повторный импорт модуля при сборе тестов не
 # создаёт второй обработчик (SQLAlchemy держит реестр по (тип, диалект)).
 @compiles(JSONB, "sqlite")
-def _compile_jsonb_as_json_on_sqlite(element, compiler, **kw):  # noqa: ANN001
+def _compile_jsonb_as_json_on_sqlite(element, compiler, **kw):
     return compiler.visit_JSON(JSON(), **kw)
 
 
@@ -77,7 +77,7 @@ async def sqlite_session() -> AsyncIterator:
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 # ══════════════════════════════════════════════════════════════════════════

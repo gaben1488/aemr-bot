@@ -16,9 +16,9 @@ import os
 
 from aemr_bot import keyboards as kbds
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._common import op_screen
 from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
-from aemr_bot.handlers._common import op_screen
 
 
 async def _show_pr_confirm(event) -> None:

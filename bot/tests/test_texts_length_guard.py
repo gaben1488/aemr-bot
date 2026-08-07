@@ -23,7 +23,6 @@ Assert `len(formatted) <= MAX_LEN` (4000, с запасом — MAX-API лими
 """
 from __future__ import annotations
 
-
 MAX_LEN = 3900  # с запасом перед hard limit MAX-API 4000.
 
 # Типичные значения для всех известных placeholder'ов в текстах.

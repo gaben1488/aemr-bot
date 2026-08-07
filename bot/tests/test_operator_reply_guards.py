@@ -11,7 +11,7 @@
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -41,14 +41,14 @@ def _fresh_appeal(*, appeal_id: int = 1) -> SimpleNamespace:
         first_name="Иван",
         phone="+79991234567",
         subscribed_broadcast=False,
-        consent_pdn_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        consent_pdn_at=datetime(2026, 1, 1, tzinfo=UTC),
         consent_revoked_at=None,
         max_user_id=42,
     )
     appeal = SimpleNamespace(
         id=appeal_id,
         user=user,
-        created_at=datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc),
+        created_at=datetime(2026, 5, 1, 12, 0, tzinfo=UTC),
         topic="Дороги",
         locality="Елизово",
         address="ул. Ленина, д. 1",

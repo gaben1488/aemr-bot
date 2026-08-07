@@ -20,7 +20,6 @@ from sqlalchemy.orm.exc import DetachedInstanceError
 
 from tests._helpers import fake_session_scope as _fake_session_scope
 
-
 pytest.importorskip("maxapi", reason="нужен для card_format")
 
 
@@ -168,11 +167,11 @@ class TestFinalizeSurvivesDetachedAppeal:
         снапшотом перед render. Это контракт фикса —
         appeal_runtime обязан подготовить appeal для detached-чтения."""
         # Импорт ради side-effect (модуль доступен).
-        from aemr_bot.handlers import appeal_runtime  # noqa: F401
-
         # Этот тест документирует контракт: финализация делает snapshot
         # для предотвращения lazy-load. Проверка прямого кода:
         import inspect
+
+        from aemr_bot.handlers import appeal_runtime
         src = inspect.getsource(appeal_runtime.persist_and_dispatch_appeal)
         assert '__dict__["messages"]' in src, (
             "persist_and_dispatch_appeal должен подготовить appeal "

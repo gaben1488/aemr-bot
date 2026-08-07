@@ -98,7 +98,7 @@ class TestExtractUrls:
 
     def test_empty_text(self) -> None:
         assert extract_urls("") == []
-        assert extract_urls(None) == []  # noqa: PIE810
+        assert extract_urls(None) == []
 
 
 class TestFindNonWhitelistedUrls:

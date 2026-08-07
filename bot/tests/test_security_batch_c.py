@@ -145,8 +145,8 @@ class TestBroadcastCooldownClassifier:
 
     def test_normal_text_5min(self) -> None:
         from aemr_bot.handlers.broadcast import (
-            _broadcast_cooldown_seconds,
             _COOLDOWN_NORMAL_SEC,
+            _broadcast_cooldown_seconds,
         )
         assert _broadcast_cooldown_seconds(
             "Внимание, плановое отключение электричества завтра"
@@ -155,8 +155,8 @@ class TestBroadcastCooldownClassifier:
 
     def test_emergency_marker_30sec(self) -> None:
         from aemr_bot.handlers.broadcast import (
-            _broadcast_cooldown_seconds,
             _COOLDOWN_EMERGENCY_SEC,
+            _broadcast_cooldown_seconds,
         )
         assert _broadcast_cooldown_seconds(
             "[ЧС] Отключение горячей воды в Елизово до утра"
@@ -165,16 +165,16 @@ class TestBroadcastCooldownClassifier:
 
     def test_emergency_marker_case_insensitive(self) -> None:
         from aemr_bot.handlers.broadcast import (
-            _broadcast_cooldown_seconds,
             _COOLDOWN_EMERGENCY_SEC,
+            _broadcast_cooldown_seconds,
         )
         assert _broadcast_cooldown_seconds("[чс] срочно") == _COOLDOWN_EMERGENCY_SEC
 
     def test_emergency_marker_in_middle(self) -> None:
         from aemr_bot.handlers.broadcast import (
-            _broadcast_cooldown_seconds,
             _COOLDOWN_EMERGENCY_SEC,
             _COOLDOWN_NORMAL_SEC,
+            _broadcast_cooldown_seconds,
         )
         # Marker должен быть в начале строки или после пробела —
         # «вСтречено[ЧС]внутри слова» не считается ЧС'ом.

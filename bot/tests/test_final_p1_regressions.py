@@ -8,7 +8,7 @@
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy import select, update
@@ -65,7 +65,7 @@ async def test_purge_old_appeals_content_redacts_attachments_even_without_text(s
         text="старый текст",
         attachments=[{"type": "file", "token": "old-message-media"}],
     )
-    old_closed_at = datetime.now(timezone.utc) - timedelta(days=366 * 6)
+    old_closed_at = datetime.now(UTC) - timedelta(days=366 * 6)
     await session.execute(
         update(Appeal)
         .where(Appeal.id == appeal.id)
@@ -114,7 +114,7 @@ async def test_nameless_resident_stays_eligible_for_broadcast(session) -> None:
     возвращающая трёхзначную логику, покраснеет здесь.
     """
     nameless = await users_service.get_or_create(session, max_user_id=401)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     await session.execute(
         update(User)
         .where(User.id == nameless.id)
@@ -143,7 +143,7 @@ async def test_blocked_erased_resident_excluded_from_broadcast(session) -> None:
     legacy = await users_service.get_or_create(
         session, max_user_id=402, first_name="Удалено"
     )
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     await session.execute(
         update(User)
         .where(User.id == legacy.id)
@@ -167,7 +167,7 @@ async def test_list_subscribers_matches_broadcast_eligibility(session) -> None:
     )
     deleted = await users_service.get_or_create(session, max_user_id=203, first_name="Удалено")
     blocked = await users_service.get_or_create(session, max_user_id=204, first_name="D")
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     await session.execute(
         update(User)
         .where(User.id == eligible.id)
@@ -211,7 +211,7 @@ async def test_list_consented_excludes_blocked(session) -> None:
     active = await users_service.get_or_create(session, max_user_id=301, first_name="A")
     deleted = await users_service.get_or_create(session, max_user_id=302, first_name="Удалено")
     blocked = await users_service.get_or_create(session, max_user_id=303, first_name="C")
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     await session.execute(
         update(User)
         .where(User.id.in_([active.id, deleted.id, blocked.id]))

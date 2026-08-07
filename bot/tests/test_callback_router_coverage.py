@@ -25,7 +25,7 @@ import pytest
 
 pytest.importorskip("maxapi", reason="callback_router тянет handlers-цепочку")
 
-from aemr_bot.handlers import callback_router  # noqa: E402
+from aemr_bot.handlers import callback_router
 
 # Файлы, где реально обрабатываются callback-payload'ы.
 # admin_callback_dispatch.py — куда вынесены broadcast:*/op:* ветки

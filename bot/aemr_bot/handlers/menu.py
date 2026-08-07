@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Callable
+from datetime import UTC
 from typing import Any, NamedTuple
 
 from aemr_bot import keyboards, texts
@@ -8,13 +9,10 @@ from aemr_bot.db.models import AppealStatus, DialogState, User
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import admin_card as admin_card_service
-from aemr_bot.services import admin_events
-from aemr_bot.services import admin_relay
+from aemr_bot.services import admin_events, admin_relay, card_format, settings_store
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
-from aemr_bot.services import card_format
 from aemr_bot.services import operators as ops_service
-from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 from aemr_bot.utils import menu_tracker
 from aemr_bot.utils.event import (
@@ -471,7 +469,7 @@ async def do_subscribe(event, max_user_id: int) -> None:
 async def do_subscribe_confirm(event, max_user_id: int) -> None:
     """Тап «✅ Подписаться» на экране мини-согласия. Проставляет
     consent_broadcast_at и subscribed_broadcast=True."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from sqlalchemy import update as sql_update
 
@@ -503,7 +501,7 @@ async def do_subscribe_confirm(event, max_user_id: int) -> None:
             sql_update(User)
             .where(User.max_user_id == max_user_id)
             .values(
-                consent_broadcast_at=datetime.now(timezone.utc),
+                consent_broadcast_at=datetime.now(UTC),
                 subscribed_broadcast=True,
             )
         )

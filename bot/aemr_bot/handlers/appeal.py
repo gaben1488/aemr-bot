@@ -38,9 +38,8 @@ from aemr_bot.handlers.appeal_runtime import (
     drop_user_lock,
     recover_stuck_funnels,
 )
-from aemr_bot.services import admin_events
+from aemr_bot.services import admin_events, settings_store
 from aemr_bot.services import appeals as appeals_service
-from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import (
     ack_callback,
@@ -57,7 +56,7 @@ log = logging.getLogger(__name__)
 
 
 # Re-export для обратной совместимости с main.py.
-__all__ = ["register", "recover_stuck_funnels"]
+__all__ = ["recover_stuck_funnels", "register"]
 
 
 # State-таблица: какой handler вызывать в каком DialogState когда
@@ -661,6 +660,8 @@ def register(dp: Dispatcher) -> None:
         if cfg.admin_group_id and chat_id == cfg.admin_group_id:
             from aemr_bot.handlers import (
                 admin_commands as admin_cmd_module,
+            )
+            from aemr_bot.handlers import (
                 broadcast as broadcast_handler,
             )
 
@@ -677,6 +678,8 @@ def register(dp: Dispatcher) -> None:
                 from aemr_bot.handlers import (
                     admin_audience,
                     admin_settings,
+                )
+                from aemr_bot.handlers import (
                     broadcast_templates as bcast_tmpl_cancel,
                 )
 

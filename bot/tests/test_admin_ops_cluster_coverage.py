@@ -30,7 +30,7 @@ maxapi, в CI идёт.
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -904,7 +904,7 @@ class TestDoDiag:
         from aemr_bot.handlers import admin_panel
 
         event = _diag_event()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         users, appeals, broadcasts, events_row = _diag_rows(
             last_event=now - timedelta(minutes=2)
         )
@@ -962,7 +962,7 @@ class TestDoDiag:
         from aemr_bot.handlers import admin_panel
 
         event = _diag_event()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         # last_event час назад → minutes_ago > 15 → pulse_warn.
         users, appeals, broadcasts, events_row = _diag_rows(
             last_event=now - timedelta(hours=1, minutes=5),
@@ -998,7 +998,7 @@ class TestDoDiag:
         from aemr_bot.handlers import admin_panel
 
         event = _diag_event()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         users, appeals, broadcasts, events_row = _diag_rows(
             last_event=now - timedelta(hours=2, minutes=10)
         )
@@ -1027,7 +1027,7 @@ class TestDoDiag:
         from aemr_bot.handlers import admin_panel
 
         event = _diag_event()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         users, appeals, broadcasts, events_row = _diag_rows(
             last_event=now - timedelta(minutes=3)
         )
@@ -1080,7 +1080,7 @@ class TestDoDiag:
         # Naive datetime «минуту назад» без deprecated utcnow():
         # берём aware-UTC и срезаем tzinfo, имитируя naive из БД.
         naive_recent = (
-            datetime.now(timezone.utc) - timedelta(minutes=1)
+            datetime.now(UTC) - timedelta(minutes=1)
         ).replace(tzinfo=None)
         users, appeals, broadcasts, events_row = _diag_rows(
             last_event=naive_recent

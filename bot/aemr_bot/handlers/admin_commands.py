@@ -57,12 +57,16 @@ from aemr_bot.handlers.admin_panel import (
     _do_backup,
     _do_diag,
     _do_open_tickets,
-    get_text as _get_text,
-    parse_arg as _parse_arg,
     run_backup,
     run_diag,
     run_open_tickets,
     show_op_menu,
+)
+from aemr_bot.handlers.admin_panel import (
+    get_text as _get_text,
+)
+from aemr_bot.handlers.admin_panel import (
+    parse_arg as _parse_arg,
 )
 from aemr_bot.handlers.admin_settings import (
     handle_settings_edit_text,

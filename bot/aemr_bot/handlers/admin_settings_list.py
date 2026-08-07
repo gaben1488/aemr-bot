@@ -12,10 +12,10 @@ from __future__ import annotations
 
 from aemr_bot import keyboards as kbds
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers._common import op_screen, op_send
 from aemr_bot.handlers.admin_settings_shared import _parse_key_idx
 from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
-from aemr_bot.handlers._common import op_screen, op_send
 
 
 async def _show_list_card(event, key: str) -> None:

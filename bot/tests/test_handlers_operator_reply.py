@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -42,14 +42,14 @@ def _fresh_appeal(*, user=None, appeal_id: int = 1) -> SimpleNamespace:
             first_name="Иван",
             phone="+79991234567",
             subscribed_broadcast=False,
-            consent_pdn_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            consent_pdn_at=datetime(2026, 1, 1, tzinfo=UTC),
             consent_revoked_at=None,
             max_user_id=42,
         )
     appeal = SimpleNamespace(
         id=appeal_id,
         user=user,
-        created_at=datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc),
+        created_at=datetime(2026, 5, 1, 12, 0, tzinfo=UTC),
         topic="Дороги",
         locality="Елизово",
         address="ул. Ленина, д. 1",
@@ -84,7 +84,6 @@ class TestReplyIntent:
 
     def test_drop_returns_appeal_id(self) -> None:
         from aemr_bot.handlers import operator_reply as opr
-
         from aemr_bot.services import wizard_registry as _wr
         _wr._reply_intent.clear()
         opr.remember_reply_intent(operator_id=8, appeal_id=99)
@@ -93,7 +92,6 @@ class TestReplyIntent:
 
     def test_drop_when_no_intent(self) -> None:
         from aemr_bot.handlers import operator_reply as opr
-
         from aemr_bot.services import wizard_registry as _wr
         _wr._reply_intent.clear()
         assert opr.drop_reply_intent(123) is None
@@ -357,7 +355,7 @@ class TestDeliverOperatorReply:
             is_blocked=False,
             first_name="Иван",
             consent_pdn_at=None,
-            consent_revoked_at=datetime(2026, 5, 2, 12, 0, tzinfo=timezone.utc),
+            consent_revoked_at=datetime(2026, 5, 2, 12, 0, tzinfo=UTC),
             max_user_id=42,
         )
         fresh_appeal = _fresh_appeal(user=fresh_user)
@@ -769,7 +767,7 @@ class TestReplyRejectionBeforeDelivery:
         appeal = _fresh_appeal()
         appeal.user.consent_pdn_at = None
         appeal.user.consent_revoked_at = datetime(
-            2026, 4, 1, tzinfo=timezone.utc
+            2026, 4, 1, tzinfo=UTC
         )
         assert _reply_rejection_before_delivery(
             fresh_appeal=appeal, appeal_id=1
@@ -786,7 +784,7 @@ class TestReplyRejectionBeforeDelivery:
         appeal = _fresh_appeal()
         appeal.user.consent_pdn_at = None
         appeal.user.consent_revoked_at = datetime(
-            2026, 5, 10, tzinfo=timezone.utc
+            2026, 5, 10, tzinfo=UTC
         )
         assert _reply_rejection_before_delivery(
             fresh_appeal=appeal, appeal_id=1

@@ -30,7 +30,7 @@
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -112,10 +112,10 @@ class TestSetConsentInvariants:
         """consent_pdn_at должен быть ~now (не далёкое прошлое)."""
         from sqlalchemy import select
 
-        before = datetime.now(timezone.utc) - timedelta(seconds=5)
+        before = datetime.now(UTC) - timedelta(seconds=5)
         await users_service.get_or_create(session, max_user_id=3, first_name="Z")
         await users_service.set_consent(session, 3)
-        after = datetime.now(timezone.utc) + timedelta(seconds=5)
+        after = datetime.now(UTC) + timedelta(seconds=5)
 
         user = await session.scalar(select(User).where(User.max_user_id == 3))
         assert user.consent_pdn_at is not None
@@ -151,7 +151,7 @@ class TestRevokeConsentInvariants:
         user = await users_service.get_or_create(
             session, max_user_id=4, first_name="A"
         )
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         await session.execute(
             update(User).where(User.id == user.id).values(
                 subscribed_broadcast=True,
@@ -238,9 +238,9 @@ class TestRevokeConsentInvariants:
         from sqlalchemy import select
 
         await users_service.get_or_create(session, max_user_id=8, first_name="E")
-        before = datetime.now(timezone.utc) - timedelta(seconds=5)
+        before = datetime.now(UTC) - timedelta(seconds=5)
         await users_service.revoke_consent(session, 8)
-        after = datetime.now(timezone.utc) + timedelta(seconds=5)
+        after = datetime.now(UTC) + timedelta(seconds=5)
 
         user = await session.scalar(select(User).where(User.max_user_id == 8))
         assert user.consent_revoked_at is not None

@@ -13,8 +13,8 @@ from __future__ import annotations
 
 from aemr_bot import keyboards as kbds
 from aemr_bot.db.session import session_scope
-from aemr_bot.services import settings_store
 from aemr_bot.handlers._common import op_screen
+from aemr_bot.services import settings_store
 
 
 async def _show_author_card(event) -> None:

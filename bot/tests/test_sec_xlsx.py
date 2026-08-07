@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import io
 import zipfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 
 import pytest
@@ -51,7 +51,7 @@ def _msg(text: str, direction: str = "from_operator"):
 def _appeal(**over):
     base = dict(
         id=1,
-        created_at=datetime(2026, 6, 1, 9, 0, tzinfo=timezone.utc),
+        created_at=datetime(2026, 6, 1, 9, 0, tzinfo=UTC),
         answered_at=None,
         status="new",
         locality="Посёлок",

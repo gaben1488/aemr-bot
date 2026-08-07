@@ -40,7 +40,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-
 pytest.importorskip("maxapi", reason="нужен maxapi для admin_settings импортов")
 
 from tests._helpers import make_callback_event, make_event

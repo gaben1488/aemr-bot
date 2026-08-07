@@ -18,9 +18,12 @@ from __future__ import annotations
 
 from aemr_bot import keyboards as kbds
 from aemr_bot.db.session import session_scope
-from aemr_bot.services import operators as ops_svc
-from aemr_bot.services import settings_store
 from aemr_bot.handlers._common import op_screen, op_send
+
+# `_show_author_card` нужен `_apply_single_edit` для commit_author_*;
+# импортируем из соседнего подмодуля — это namespace, который патчат
+# тесты `TestApplySingleEdit` (alias mod → admin_settings_text).
+from aemr_bot.handlers.admin_settings_author import _show_author_card
 
 # Intent-кэш и общие helper'ы живут в admin_settings_shared —
 # импортируем как ссылки на те же объекты (dict `_edit_intents`
@@ -36,10 +39,8 @@ from aemr_bot.handlers.admin_settings_shared import (  # noqa: F401
     _intent_set,
     _render_value,
 )
-# `_show_author_card` нужен `_apply_single_edit` для commit_author_*;
-# импортируем из соседнего подмодуля — это namespace, который патчат
-# тесты `TestApplySingleEdit` (alias mod → admin_settings_text).
-from aemr_bot.handlers.admin_settings_author import _show_author_card
+from aemr_bot.services import operators as ops_svc
+from aemr_bot.services import settings_store
 
 
 async def _show_text_card(event, key: str) -> None:

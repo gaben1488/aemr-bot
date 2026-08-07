@@ -47,13 +47,26 @@ from __future__ import annotations
 import logging
 
 from aemr_bot.handlers import broadcast as broadcast_handler  # noqa: F401
-from aemr_bot.utils.event import (
-    ack_callback,
-    get_user_id,
-    is_admin_chat,
-    send_or_edit_screen,  # noqa: F401
-)
 from aemr_bot.handlers._auth import get_operator
+
+# ---- CRUD (delete / rename / clone) ----------------------------------
+from aemr_bot.handlers.broadcast_templates_crud import (
+    _ask_delete,
+    _do_delete,
+    _start_clone,
+    _start_rename,
+    _step_clone_name,
+    _step_rename,
+)
+
+# ---- чтение/применение (list / open / apply / search) ----------------
+from aemr_bot.handlers.broadcast_templates_list import (
+    _apply,
+    _list,
+    _open,
+    _start_search,
+    _step_search,
+)
 
 # ---- разделяемое ядро (state + dedupe + helpers) ---------------------
 # Re-export'ятся только символы, которые читаются через фасад
@@ -62,30 +75,11 @@ from aemr_bot.handlers._auth import get_operator
 # TTL-/window-константы подмодули берут напрямую из state — здесь не
 # реэкспортируются (0 читателей `broadcast_templates.<symbol>`).
 from aemr_bot.handlers.broadcast_templates_state import (  # noqa: F401
-    _TmplWizardState,
     _apply_dedupe,
     _is_recent_apply,
     _mark_apply,
+    _TmplWizardState,
     _wizards,
-)
-
-# ---- чтение/применение (list / open / apply / search) ----------------
-from aemr_bot.handlers.broadcast_templates_list import (  # noqa: F401
-    _apply,
-    _list,
-    _open,
-    _start_search,
-    _step_search,
-)
-
-# ---- CRUD (delete / rename / clone) ----------------------------------
-from aemr_bot.handlers.broadcast_templates_crud import (  # noqa: F401
-    _ask_delete,
-    _do_delete,
-    _start_clone,
-    _start_rename,
-    _step_clone_name,
-    _step_rename,
 )
 
 # ---- create/edit wizard + навигация + cancel -------------------------
@@ -104,7 +98,12 @@ from aemr_bot.handlers.broadcast_templates_wizard import (  # noqa: F401
     _step_new_name,
     _step_new_text,
 )
-
+from aemr_bot.utils.event import (
+    ack_callback,
+    get_user_id,
+    is_admin_chat,
+    send_or_edit_screen,  # noqa: F401
+)
 
 log = logging.getLogger(__name__)
 

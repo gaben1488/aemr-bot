@@ -40,14 +40,14 @@ Downgrade: дропаем оба индекса. Extension pg_trgm НЕ дроп
 0010 (там pg_stat_statements дропается), потому что pg_trgm может стать
 зависимостью будущих индексов.
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
 
 revision: str = "0018"
-down_revision: Union[str, None] = "0017"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "0017"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

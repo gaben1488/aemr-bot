@@ -138,8 +138,7 @@ def _normalize_host(url_or_host: str) -> str:
     except (ValueError, AttributeError):
         return ""
     host = (parsed.hostname or "").lower()
-    if host.startswith("www."):
-        host = host[4:]
+    host = host.removeprefix("www.")
     return host
 
 

@@ -33,17 +33,38 @@ import time
 from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from maxapi import Dispatcher
 from maxapi.types import Command, MessageCreated
-from zoneinfo import ZoneInfo
 
 from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import BroadcastStatus, OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
+from aemr_bot.handlers._common import op_screen
+
+# Cluster C wave 2 (Codex PR 7): wizard FSM физически живёт в
+# broadcast_wizard. Re-export нужен, чтобы существующие импорты
+# `from aemr_bot.handlers.broadcast import _wizards` продолжали
+# работать без правок (12 файлов тестов + broadcast_templates.py +
+# admin_callback_dispatch.py + admin_operators.py + admin_appeal_ops.py).
+from aemr_bot.handlers.broadcast_wizard import (  # noqa: F401
+    WizardStep,
+    _drop_expired_wizards,
+    _handle_abort,
+    _handle_confirm,
+    _handle_edit,
+    _handle_wizard_text,
+    _resolve_broadcast_max_images,
+    _start_wizard,
+    _wizards,
+    _WizardState,
+    prefill_wizard_from_template,
+)
 from aemr_bot.services import broadcasts as broadcasts_service
+
 # Cluster C (Codex PR 7): pure utility функции вынесены в
 # `services/broadcast_utils`. Re-export через `import` чтобы старые
 # тестовые импорты `from aemr_bot.handlers.broadcast import _format_progress`
@@ -57,34 +78,18 @@ from aemr_bot.services.broadcast_utils import (  # noqa: F401
     _build_final_text,
     _compute_progress_step,
     _extract_retry_after,
-    _format_dt as _format_dt_pure,
     _format_progress,
 )
-# Cluster C wave 2 (Codex PR 7): wizard FSM физически живёт в
-# broadcast_wizard. Re-export нужен, чтобы существующие импорты
-# `from aemr_bot.handlers.broadcast import _wizards` продолжали
-# работать без правок (12 файлов тестов + broadcast_templates.py +
-# admin_callback_dispatch.py + admin_operators.py + admin_appeal_ops.py).
-from aemr_bot.handlers.broadcast_wizard import (  # noqa: F401
-    WizardStep,
-    _WizardState,
-    _drop_expired_wizards,
-    _handle_abort,
-    _handle_confirm,
-    _handle_edit,
-    _handle_wizard_text,
-    _resolve_broadcast_max_images,
-    _start_wizard,
-    _wizards,
-    prefill_wizard_from_template,
+from aemr_bot.services.broadcast_utils import (
+    _format_dt as _format_dt_pure,
 )
-from aemr_bot.handlers._common import op_screen
 from aemr_bot.utils import image_attachments as _image_attachments
 from aemr_bot.utils.event import (
+    ack_callback,
     get_message_text,
+    get_user_id,
     is_admin_chat,
 )
-from aemr_bot.utils.event import ack_callback, get_user_id  # noqa: F401
 
 log = logging.getLogger(__name__)
 
@@ -99,7 +104,7 @@ TZ = ZoneInfo(cfg.timezone)
 # и переотправит). Cooldown не хранится в БД сознательно: для гос-канала
 # лучше «случайно не отправили» чем «отправили автоматически после
 # рестарта без подтверждения оператора».
-_pending_broadcasts: dict[int, "asyncio.Task"] = {}
+_pending_broadcasts: dict[int, asyncio.Task] = {}
 
 
 # Локальные псевдонимы общих хелперов авторизации. Используются

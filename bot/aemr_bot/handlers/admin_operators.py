@@ -34,15 +34,14 @@ import logging
 
 from aemr_bot import keyboards as kbds
 from aemr_bot.db.models import OperatorRole
-from aemr_bot.handlers._auth import ensure_role
-from aemr_bot.handlers._common import op_screen
-from aemr_bot.utils.event import ack_callback, get_user_id
 
 # --- Подмодули реализации (импортируем как пространства имён, чтобы
 # диспетчер дёргал хендлеры через них) ------------------------------------
 from aemr_bot.handlers import admin_operators_list as _list
 from aemr_bot.handlers import admin_operators_roles as _roles
 from aemr_bot.handlers import admin_operators_wizard as _wizard
+from aemr_bot.handlers._auth import ensure_role
+from aemr_bot.handlers._common import op_screen
 
 # --- Re-export перенесённого (фасад: старый путь импорта сохраняется) -----
 # Wizard-state и примитивы (используют main.py, admin_appeal_ops.py,
@@ -61,6 +60,7 @@ from aemr_bot.handlers.admin_operators_wizard import (  # noqa: F401
     _time_op,
     handle_operators_wizard_text,
 )
+from aemr_bot.utils.event import ack_callback, get_user_id
 
 log = logging.getLogger(__name__)
 

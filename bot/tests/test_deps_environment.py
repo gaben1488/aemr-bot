@@ -17,7 +17,6 @@ import inspect
 
 import pytest
 
-
 pytest.importorskip("maxapi", reason="maxapi нужен для проверки версии и API")
 
 
@@ -140,14 +139,14 @@ def test_db_pool_ceiling_matches_dispatch_semaphore() -> None:
     причина не видна ни в одном логе. Числа живут в разных файлах
     (main.py и db/session.py) и однажды уже разъехались: 32 против 15.
     """
-    from aemr_bot import main
-    from aemr_bot.db import session as db_session
-
     # _engine_kwargs читает settings.database_url — на юнит-окружении там
     # sqlite и pool-параметров нет. Достаём числа из исходника, это
     # честный контракт файла, а не рантайма.
     import ast
     import inspect as _inspect
+
+    from aemr_bot import main
+    from aemr_bot.db import session as db_session
 
     tree = ast.parse(_inspect.getsource(db_session._engine_kwargs))
     found = {}

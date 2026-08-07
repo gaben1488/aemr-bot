@@ -41,16 +41,45 @@ Inline-редактирование текстов и URL идёт через TT
 """
 from __future__ import annotations
 
-import json  # noqa: F401  # `_show_expert_key` рендерит значение через json.dumps
+import json  # `_show_expert_key` рендерит значение через json.dumps
 import logging
 
 from aemr_bot import keyboards as kbds
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
-from aemr_bot.services import settings_store
 from aemr_bot.handlers._common import op_screen
-from aemr_bot.utils.event import ack_callback, get_user_id
+
+# ── Прикладные обработчики — re-export из подмодулей ───────────────────
+# Диспетчер и перехватчик ниже зовут их через эти фасадные имена.
+from aemr_bot.handlers.admin_settings_author import _show_author_card
+from aemr_bot.handlers.admin_settings_list import (
+    _apply_list_add,
+    _list_delete,
+    _show_list_card,
+)
+from aemr_bot.handlers.admin_settings_notify import (
+    _show_notify_card,
+    _toggle_notify,
+)
+from aemr_bot.handlers.admin_settings_obj import (
+    _apply_obj_add,
+    _obj_delete,
+    _show_obj_card,
+    _show_obj_item,
+    _start_obj_add,
+)
+from aemr_bot.handlers.admin_settings_pr import (
+    _create_pr,
+    _show_pr_confirm,
+    _show_pr_diff,
+)
+from aemr_bot.handlers.admin_settings_quiet import (
+    _apply_quiet_hour_edit,
+    _show_quiet_card,
+    _start_quiet_hour_intent,
+    _toggle_quiet,
+)
 
 # ── Общие примитивы (intent-кэш + helper'ы) — re-export из shared ──────
 # `mod._edit_intents` / `mod._intent_set` / `from ...admin_settings import
@@ -68,42 +97,13 @@ from aemr_bot.handlers.admin_settings_shared import (  # noqa: F401
     _intent_set,
     _render_value,
 )
-
-# ── Прикладные обработчики — re-export из подмодулей ───────────────────
-# Диспетчер и перехватчик ниже зовут их через эти фасадные имена.
-from aemr_bot.handlers.admin_settings_author import _show_author_card  # noqa: F401
-from aemr_bot.handlers.admin_settings_list import (  # noqa: F401
-    _apply_list_add,
-    _list_delete,
-    _show_list_card,
-)
-from aemr_bot.handlers.admin_settings_obj import (  # noqa: F401
-    _apply_obj_add,
-    _obj_delete,
-    _show_obj_card,
-    _show_obj_item,
-    _start_obj_add,
-)
-from aemr_bot.handlers.admin_settings_pr import (  # noqa: F401
-    _create_pr,
-    _show_pr_confirm,
-    _show_pr_diff,
-)
-from aemr_bot.handlers.admin_settings_notify import (  # noqa: F401
-    _show_notify_card,
-    _toggle_notify,
-)
-from aemr_bot.handlers.admin_settings_quiet import (  # noqa: F401
-    _apply_quiet_hour_edit,
-    _show_quiet_card,
-    _start_quiet_hour_intent,
-    _toggle_quiet,
-)
-from aemr_bot.handlers.admin_settings_text import (  # noqa: F401
+from aemr_bot.handlers.admin_settings_text import (
     _apply_single_edit,
     _show_text_card,
     _start_edit_intent,
 )
+from aemr_bot.services import settings_store
+from aemr_bot.utils.event import ack_callback, get_user_id
 
 log = logging.getLogger(__name__)
 

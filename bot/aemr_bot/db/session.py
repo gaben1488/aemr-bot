@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from aemr_bot.config import settings
 
+
 def _engine_kwargs() -> dict:
     """Параметры создания engine. SQLite (для unit-тестов) использует
     StaticPool и не принимает pool_size/max_overflow/pool_recycle —

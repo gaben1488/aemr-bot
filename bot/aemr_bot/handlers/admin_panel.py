@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import UTC
 
 from aemr_bot import keyboards as kbds
 from aemr_bot import texts
@@ -27,10 +28,10 @@ from aemr_bot.db.models import (
 )
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
+from aemr_bot.handlers._common import op_screen
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import db_backup
-from aemr_bot.handlers._common import op_screen
 from aemr_bot.utils.event import (
     extract_message_id,
     get_message_text,
@@ -222,11 +223,11 @@ async def _do_diag(event) -> None:
 
     Конфиг (режим, лимит ответа, SLA) сохраняем в конце — статика.
     """
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     from sqlalchemy import func, select
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     since_24h = now - timedelta(hours=24)
     stuck_threshold = now - timedelta(minutes=10)
 
@@ -370,7 +371,7 @@ async def _do_diag(event) -> None:
         pulse_line = "⚠️ событий нет вовсе (свежий старт?)"
     else:
         if last_event.tzinfo is None:
-            last_event = last_event.replace(tzinfo=timezone.utc)
+            last_event = last_event.replace(tzinfo=UTC)
         minutes_ago = int((now - last_event).total_seconds() // 60)
         if minutes_ago < 1:
             pulse_line = "< 1 мин назад"

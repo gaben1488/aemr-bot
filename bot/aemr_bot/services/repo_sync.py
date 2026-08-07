@@ -32,7 +32,7 @@ import os
 import re
 import unicodedata as _unicodedata
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import aiohttp
@@ -106,7 +106,7 @@ def serialize_runtime_config(data: dict[str, Any]) -> str:
 
 
 def _make_branch_name() -> str:
-    return "bot-config-sync-" + datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    return "bot-config-sync-" + datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
 
 
 def _build_commit_message(dirty_keys: list[str]) -> str:

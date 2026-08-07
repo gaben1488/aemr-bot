@@ -24,17 +24,17 @@ P3-4 (bare-domain threat-intel):
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
 
 pytest.importorskip("maxapi", reason="нужен maxapi для config/texts/card_format")
 
-from aemr_bot.db.models import MessageDirection  # noqa: E402
-from aemr_bot.services import card_format as cf  # noqa: E402
+from aemr_bot.db.models import MessageDirection
+from aemr_bot.services import card_format as cf
 
-_UTC = timezone.utc
+_UTC = UTC
 
 
 def _msg(text: str, *, minutes_offset: int = 0,

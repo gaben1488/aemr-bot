@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import logging
 
+from aemr_bot import texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator
@@ -35,8 +36,6 @@ from aemr_bot.services import users as users_service
 from aemr_bot.services.admin_events import _mask_phone
 from aemr_bot.utils.event import get_user_id, is_admin_chat
 from aemr_bot.utils.typing_indicator import mark_typing
-
-from aemr_bot import texts
 
 log = logging.getLogger(__name__)
 

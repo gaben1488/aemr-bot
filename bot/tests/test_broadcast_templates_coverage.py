@@ -47,8 +47,8 @@ from tests._helpers import make_event
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
-from aemr_bot.handlers import broadcast_templates as bt  # noqa: E402
-from aemr_bot.handlers import broadcast_templates_crud as bt_crud  # noqa: E402
+from aemr_bot.handlers import broadcast_templates as bt
+from aemr_bot.handlers import broadcast_templates_crud as bt_crud
 
 _BT = "aemr_bot.handlers.broadcast_templates"
 _LIST = "aemr_bot.handlers.broadcast_templates_list"

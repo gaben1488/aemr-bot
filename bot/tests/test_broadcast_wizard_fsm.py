@@ -23,11 +23,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-
 pytest.importorskip("maxapi", reason="нужен maxapi для broadcast импортов")
 
 from tests._helpers import make_event
-
 
 # ──────────────────────────────────────────────────────────────────────
 # _WizardState — pure dataclass
@@ -205,9 +203,8 @@ class TestStartWizard:
         """Если у оператора был активный admin_commands wizard или
         reply_intent — они должны сброситься, иначе текст рассылки
         случайно уйдёт жителю как ответ."""
-        from aemr_bot.handlers import admin_commands
+        from aemr_bot.handlers import admin_commands, operator_reply
         from aemr_bot.handlers import broadcast_wizard as mod
-        from aemr_bot.handlers import operator_reply
 
         admin_commands._op_wizards[42] = {"step": "awaiting_id"}
         event = make_event(user_id=42)
@@ -296,9 +293,9 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_too_long_text_rejected_state_intact(self) -> None:
+        from aemr_bot.config import settings as cfg
         from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
-        from aemr_bot.config import settings as cfg
 
         event = make_event(user_id=42)
         mod._wizards[42] = _WizardState(step="awaiting_text")

@@ -16,14 +16,14 @@ handlers/__init__.py делает `from maxapi import Dispatcher`, без maxapi
 """
 from __future__ import annotations
 
+from datetime import UTC
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from tests._helpers import fake_current_user
+from tests._helpers import fake_current_user, make_event
 from tests._helpers import fake_session_scope as _fake_session_scope
-from tests._helpers import make_event
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
@@ -303,13 +303,13 @@ class TestSubscribeFlow:
 
     @pytest.mark.asyncio
     async def test_already_subscribed_idempotent(self) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from aemr_bot.handlers import menu
 
         event = _make_event()
         user = SimpleNamespace(
-            is_blocked=False, consent_broadcast_at=datetime.now(timezone.utc)
+            is_blocked=False, consent_broadcast_at=datetime.now(UTC)
         )
         with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
@@ -321,13 +321,13 @@ class TestSubscribeFlow:
 
     @pytest.mark.asyncio
     async def test_subscribes_when_consent_ok(self) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from aemr_bot.handlers import menu
 
         event = _make_event()
         user = SimpleNamespace(
-            is_blocked=False, consent_broadcast_at=datetime.now(timezone.utc)
+            is_blocked=False, consent_broadcast_at=datetime.now(UTC)
         )
         set_sub = AsyncMock()
         notify = AsyncMock()

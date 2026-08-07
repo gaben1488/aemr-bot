@@ -11,14 +11,13 @@
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from tests._helpers import fake_session_scope as _fake_session_scope
-
 
 pytest.importorskip("maxapi", reason="нужен для config")
 
@@ -59,7 +58,7 @@ class TestDescribeUser:
 
         user = _make_user(
             subscribed_broadcast=True,
-            consent_pdn_at=datetime.now(timezone.utc),
+            consent_pdn_at=datetime.now(UTC),
         )
         with (
             patch("aemr_bot.services.admin_events.session_scope",
@@ -83,7 +82,7 @@ class TestDescribeUser:
     async def test_revoked_consent_marked(self) -> None:
         from aemr_bot.services import admin_events
 
-        user = _make_user(consent_revoked_at=datetime.now(timezone.utc))
+        user = _make_user(consent_revoked_at=datetime.now(UTC))
         with (
             patch("aemr_bot.services.admin_events.session_scope",
                   _fake_session_scope),
@@ -125,7 +124,7 @@ class TestNotifyHelpers:
         bot = SimpleNamespace(send_message=AsyncMock())
         user = _make_user(
             subscribed_broadcast=True,
-            consent_pdn_at=datetime.now(timezone.utc),
+            consent_pdn_at=datetime.now(UTC),
         )
         with (
             patch("aemr_bot.config.settings.admin_group_id", 555),

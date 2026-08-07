@@ -369,8 +369,8 @@ class TestRunReopen:
     async def test_blocked_by_revoke_no_audit_informative_text(self) -> None:
         """blocked_by_revoke → audit не пишем, оператор видит понятное
         сообщение про ПДн-гард (не дезориентирующее «не найдено»)."""
-        from aemr_bot.handlers import admin_appeal_ops
         from aemr_bot import texts
+        from aemr_bot.handlers import admin_appeal_ops
 
         event = _make_event()
         write_audit = AsyncMock()

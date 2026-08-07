@@ -171,57 +171,56 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
     re-check.
     """
     try:
-        async with get_user_lock(max_user_id):
-            async with current_user(max_user_id) as (session, user):
-                if user.dialog_state == DialogState.IDLE.value:
-                    log.info(
-                        "отправка пропущена для пользователя %s — состояние уже IDLE",
-                        max_user_id,
-                    )
-                    return None
-                # Единый гейт согласия/блокировки в точке создания: путь
-                # «Подать похожее» (menu.start_appeal_repeat) выставляет
-                # AWAITING_SUMMARY напрямую, минуя проверки start_appeal_flow.
-                # Заблокированный или отозвавший согласие иначе создал бы
-                # неотвечаемое обращение. Один гейт здесь закрывает все
-                # входы в финализацию.
-                if user.is_blocked:
-                    await users_service.reset_state(session, max_user_id)
-                    return PERSIST_BLOCKED
-                if user.consent_pdn_at is None:
-                    await users_service.reset_state(session, max_user_id)
-                    return PERSIST_NO_CONSENT
-                recent = await appeals_service.count_recent_for_user(
-                    session, user.id, hours=1
+        async with get_user_lock(max_user_id), current_user(max_user_id) as (session, user):
+            if user.dialog_state == DialogState.IDLE.value:
+                log.info(
+                    "отправка пропущена для пользователя %s — состояние уже IDLE",
+                    max_user_id,
                 )
-                if recent >= 3:
-                    log.warning(
-                        "лимит новых обращений при финализации: user=%s, "
-                        "recent=%d, обращение не создано",
-                        max_user_id, recent,
-                    )
-                    await users_service.reset_state(session, max_user_id)
-                    return PERSIST_RATE_LIMITED
-                data: dict[str, Any] = dict(user.dialog_data or {})
-                summary = "\n".join(data.get("summary_chunks") or []).strip()
-                attachments = data.get("attachments") or []
-                if not summary and not attachments:
-                    return False
-                topic, summary = _apply_repeat_context(
-                    topic=data.get("topic", ""),
-                    summary=summary,
-                    data=data,
-                )
-                appeal = await appeals_service.create_appeal(
-                    session,
-                    user=user,
-                    locality=data.get("locality") or None,
-                    address=data.get("address", ""),
-                    topic=topic,
-                    summary=summary,
-                    attachments=attachments,
+                return None
+            # Единый гейт согласия/блокировки в точке создания: путь
+            # «Подать похожее» (menu.start_appeal_repeat) выставляет
+            # AWAITING_SUMMARY напрямую, минуя проверки start_appeal_flow.
+            # Заблокированный или отозвавший согласие иначе создал бы
+            # неотвечаемое обращение. Один гейт здесь закрывает все
+            # входы в финализацию.
+            if user.is_blocked:
+                await users_service.reset_state(session, max_user_id)
+                return PERSIST_BLOCKED
+            if user.consent_pdn_at is None:
+                await users_service.reset_state(session, max_user_id)
+                return PERSIST_NO_CONSENT
+            recent = await appeals_service.count_recent_for_user(
+                session, user.id, hours=1
+            )
+            if recent >= 3:
+                log.warning(
+                    "лимит новых обращений при финализации: user=%s, "
+                    "recent=%d, обращение не создано",
+                    max_user_id, recent,
                 )
                 await users_service.reset_state(session, max_user_id)
+                return PERSIST_RATE_LIMITED
+            data: dict[str, Any] = dict(user.dialog_data or {})
+            summary = "\n".join(data.get("summary_chunks") or []).strip()
+            attachments = data.get("attachments") or []
+            if not summary and not attachments:
+                return False
+            topic, summary = _apply_repeat_context(
+                topic=data.get("topic", ""),
+                summary=summary,
+                data=data,
+            )
+            appeal = await appeals_service.create_appeal(
+                session,
+                user=user,
+                locality=data.get("locality") or None,
+                address=data.get("address", ""),
+                topic=topic,
+                summary=summary,
+                attachments=attachments,
+            )
+            await users_service.reset_state(session, max_user_id)
 
         # Latency-UX (Волна 2): подтверждение жителю отправляем СРАЗУ
         # после успешного commit обращения — ДО рендера админ-карточки и

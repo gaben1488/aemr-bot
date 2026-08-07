@@ -6,7 +6,7 @@
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -40,7 +40,7 @@ def _fake_broadcast(
     return SimpleNamespace(
         id=bc_id,
         status="done",
-        created_at=datetime(2026, 5, 21, 12, 0, tzinfo=timezone.utc),
+        created_at=datetime(2026, 5, 21, 12, 0, tzinfo=UTC),
         delivered_count=10,
         failed_count=failed,
         subscriber_count_at_start=10 + failed,

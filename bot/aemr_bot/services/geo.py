@@ -26,7 +26,6 @@ import os
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional
 
 from shapely.geometry import Point, shape
 from shapely.strtree import STRtree
@@ -74,13 +73,13 @@ _DEG_PER_METER_LAT = 1 / 111_000
 class GeoResult:
     """Результат reverse geocoding: что определили из координат."""
 
-    locality: Optional[str]
+    locality: str | None
     """Короткое имя поселения как в settings.localities, либо None."""
 
-    street: Optional[str]
+    street: str | None
     """Название улицы (без типа «ул.»), либо None."""
 
-    house_number: Optional[str]
+    house_number: str | None
     """Номер дома, либо None."""
 
     confidence: str
@@ -121,7 +120,7 @@ def _load_localities() -> list[tuple[str, object]]:
 
 
 @lru_cache(maxsize=1)
-def _load_buildings_index() -> tuple[Optional[STRtree], list[dict]]:
+def _load_buildings_index() -> tuple[STRtree | None, list[dict]]:
     """STRtree spatial index по точкам зданий.
 
     При отсутствии файла — возвращает (None, []), find_address уйдёт в
@@ -147,7 +146,7 @@ def _load_buildings_index() -> tuple[Optional[STRtree], list[dict]]:
 
 
 @lru_cache(maxsize=1)
-def _load_streets_index() -> tuple[Optional[STRtree], list[dict]]:
+def _load_streets_index() -> tuple[STRtree | None, list[dict]]:
     """STRtree spatial index по сегментам улиц."""
     path = _GEO_DIR / "streets.geojson"
     if not path.exists():
@@ -185,7 +184,7 @@ def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 # ---- public API ---------------------------------------------------------------
 
 
-def find_locality(lat: float, lon: float) -> Optional[str]:
+def find_locality(lat: float, lon: float) -> str | None:
     """Определить поселение ЕМО по координатам через point-in-polygon.
 
     Возвращает короткое имя как в settings.localities либо None если
@@ -231,7 +230,7 @@ def find_address(lat: float, lon: float, search_radius_m: int = _STREET_RADIUS_M
             radius_deg = _BUILDING_RADIUS_M * _DEG_PER_METER_LAT
             candidates = bld_tree.query(target.buffer(radius_deg))
             best_dist = float("inf")
-            best_idx: Optional[int] = None
+            best_idx: int | None = None
             for idx in candidates:
                 geom = bld_tree.geometries[idx]
                 dist_m = _haversine_m(lat, lon, geom.y, geom.x)

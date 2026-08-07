@@ -16,8 +16,7 @@ from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import AppealStatus
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import appeals as appeals_service
-from aemr_bot.services import card_format
-from aemr_bot.services import idempotency
+from aemr_bot.services import card_format, idempotency
 from aemr_bot.services import operators as operators_service
 from aemr_bot.utils import image_attachments as _image_attachments
 from aemr_bot.utils.event import (
@@ -396,7 +395,7 @@ async def _send_reply_to_citizen(
             text=formatted_text,
             attachments=[*outbound_images, keyboards.back_to_menu_keyboard()],
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         # В админ-чат — только имя класса исключения: `repr(exc)` из
         # maxapi часто содержит тело запроса (текст ответа, user_id),
         # которое осело бы в истории админ-группы. Полный стек — в логах.

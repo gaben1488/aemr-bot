@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import time
+from datetime import UTC
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -211,8 +212,8 @@ class TestHandleWizardText:
 
     @pytest.mark.asyncio
     async def test_too_long_kept_in_wizard(self) -> None:
-        from aemr_bot.handlers import broadcast
         from aemr_bot.config import settings as cfg
+        from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
         broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
@@ -896,8 +897,8 @@ class TestRunSendLoop:
 
     @pytest.mark.asyncio
     async def test_cancelled_status_breaks_loop_early(self) -> None:
-        from aemr_bot.handlers import broadcast
         from aemr_bot.db.models import BroadcastStatus
+        from aemr_bot.handlers import broadcast
 
         bot = MagicMock()
         bot.edit_message = AsyncMock()
@@ -936,11 +937,11 @@ class TestFormatDt:
         assert _format_dt(None) == "—"
 
     def test_datetime_in_local_tz(self) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from aemr_bot.handlers.broadcast import _format_dt
 
-        result = _format_dt(datetime(2026, 5, 11, 12, 0, tzinfo=timezone.utc))
+        result = _format_dt(datetime(2026, 5, 11, 12, 0, tzinfo=UTC))
         # Камчатка UTC+12: 12:00 UTC → 00:00 → дата +1 день
         assert "11.05.2026" in result or "12.05.2026" in result
         assert ":" in result
@@ -975,7 +976,7 @@ class TestListBroadcasts:
 
     @pytest.mark.asyncio
     async def test_with_items(self) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from aemr_bot.handlers import broadcast
 
@@ -983,7 +984,7 @@ class TestListBroadcasts:
         items = [
             SimpleNamespace(
                 id=42,
-                created_at=datetime(2026, 5, 11, 12, 0, tzinfo=timezone.utc),
+                created_at=datetime(2026, 5, 11, 12, 0, tzinfo=UTC),
                 status="done",
                 delivered_count=100,
                 subscriber_count_at_start=120,

@@ -6,6 +6,8 @@
 """
 from __future__ import annotations
 
+from datetime import UTC
+
 import pytest
 
 from aemr_bot.services import broadcast_templates as templates
@@ -88,14 +90,15 @@ async def test_list_active_orders_by_updated_at_desc(session) -> None:
     идентичные now()). Явно разносим timestamp'ы UPDATE'ом, чтобы тест
     проверял именно политику сортировки, а не клочковые гонки времени.
     """
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
+
     from sqlalchemy import update
 
     from aemr_bot.db.models import BroadcastTemplate
 
     t1 = await templates.create_template(session, name="A", text="a")
     t2 = await templates.create_template(session, name="B", text="b")
-    base = datetime.now(timezone.utc)
+    base = datetime.now(UTC)
     await session.execute(
         update(BroadcastTemplate)
         .where(BroadcastTemplate.id == t1.id)

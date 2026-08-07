@@ -11,17 +11,16 @@
 from __future__ import annotations
 
 import logging
-
 import time as _time
 
 from aemr_bot import texts
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
+from aemr_bot.handlers._common import op_screen, op_send
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
 from aemr_bot.services.card_format import _citizen_status_line
-from aemr_bot.handlers._common import op_screen, op_send
 from aemr_bot.utils.event import (
     get_user_id,
 )

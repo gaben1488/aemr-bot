@@ -12,7 +12,6 @@ import pytest
 from aemr_bot.services.stats import VALID_PERIODS, period_window
 from aemr_bot.services.users import _normalize_phone
 
-
 # ---------- _normalize_phone ----------
 
 

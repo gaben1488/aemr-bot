@@ -18,13 +18,12 @@ from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import AppealStatus, OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role
+from aemr_bot.handlers._common import op_screen, op_send
 from aemr_bot.services import admin_card as admin_card_service
-from aemr_bot.services import admin_relay
+from aemr_bot.services import admin_relay, wizard_registry
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
-from aemr_bot.services import wizard_registry
-from aemr_bot.handlers._common import op_screen, op_send
 from aemr_bot.utils.event import (
     ack_callback,
     get_user_id,

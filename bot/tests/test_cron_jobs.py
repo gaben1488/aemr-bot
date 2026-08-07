@@ -23,7 +23,9 @@ import pytest
 # без asyncpg-драйвера или с пустым DATABASE_URL — падает.
 asyncpg = pytest.importorskip("asyncpg", reason="cron-тесты требуют asyncpg драйвер для импорта")
 
-from aemr_bot.services import cron  # noqa: E402
+from datetime import UTC
+
+from aemr_bot.services import cron
 
 
 class TestSelfcheck:
@@ -258,6 +260,7 @@ class TestBackupWithAlert:
     async def test_silent_on_success(self) -> None:
         """Успешный бэкап — без алёрта (result.ok=True)."""
         from pathlib import Path
+
         from aemr_bot.services.db_backup import BackupResult
         send = AsyncMock()
         ok = BackupResult(path=Path("/tmp/backup.sql"))
@@ -552,8 +555,9 @@ class TestFunnelWatchdog:
     async def test_below_threshold_no_admin_alert(self) -> None:
         """Под порогом (4 застрявших) — никакого admin-уведомления.
         Регресс-страховка от шумных alert'ов на нормальной нагрузке."""
-        from aemr_bot.services import cron as cron_mod
         from contextlib import asynccontextmanager
+
+        from aemr_bot.services import cron as cron_mod
 
         bot = MagicMock()
         bot.send_message = AsyncMock()
@@ -579,8 +583,9 @@ class TestFunnelWatchdog:
     async def test_at_threshold_sends_admin_summary(self) -> None:
         """При ≥5 застрявших — bot отправляет в админ-чат сводку.
         Аномальный массовый зашпил — сигнал об UX-регрессии или DDoS."""
-        from aemr_bot.services import cron as cron_mod
         from contextlib import asynccontextmanager
+
+        from aemr_bot.services import cron as cron_mod
 
         bot = MagicMock()
         bot.send_message = AsyncMock()
@@ -764,10 +769,10 @@ class TestFormatAppealLines:
         assert cron._format_appeal_lines([]) == []
 
     def test_single_appeal(self) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
         ap = MagicMock()
         ap.id = 42
-        ap.created_at = datetime.now(timezone.utc)
+        ap.created_at = datetime.now(UTC)
         ap.locality = "Елизовское ГП"
         ap.user.first_name = "Иван"
         lines = cron._format_appeal_lines([ap])
@@ -776,12 +781,12 @@ class TestFormatAppealLines:
         assert "Иван" in lines[0]
 
     def test_truncates_with_more_marker(self) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
         appeals = []
         for i in range(15):
             ap = MagicMock()
             ap.id = i
-            ap.created_at = datetime.now(timezone.utc)
+            ap.created_at = datetime.now(UTC)
             ap.locality = "X"
             ap.user.first_name = "Y"
             appeals.append(ap)

@@ -19,7 +19,6 @@ import pytest
 from tests._helpers import fake_session_scope as _fake_session_scope
 from tests._helpers import make_event
 
-
 pytest.importorskip("maxapi", reason="handlers tests require maxapi")
 
 

@@ -16,12 +16,12 @@ from __future__ import annotations
 
 import string
 
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from aemr_bot.services.admin_events import _mask_phone
 from aemr_bot.services.settings_store import _is_whitelisted_url
 from aemr_bot.utils.url_defang import defang_url_in_text
-
 
 # ──────────────────────────────────────────────────────────────────────
 # Часть 1 — `_is_whitelisted_url`
@@ -217,7 +217,7 @@ class TestMaskPhone:
 # ──────────────────────────────────────────────────────────────────────
 
 
-_ZWSP = "​"
+_ZWSP = "\u200b"
 
 
 class TestDefangUrl:

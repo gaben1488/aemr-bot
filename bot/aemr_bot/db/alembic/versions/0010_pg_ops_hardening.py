@@ -36,14 +36,14 @@ asyncpg-pool продолжит работать со старыми настр�
 postgres skill rules: lock-short-transactions (MEDIUM-HIGH),
 monitor-pg-stat-statements (LOW-MEDIUM), conn-idle-timeout.
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
 
 revision: str = "0010"
-down_revision: Union[str, None] = "0009"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "0009"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def _current_dbname() -> str:
@@ -57,7 +57,7 @@ def _current_dbname() -> str:
 # Локальный импорт sa.text — чтобы не тащить тяжёлый sa в namespace
 # миграции; заодно понятнее, что используется именно для read-only
 # query, не DDL.
-from sqlalchemy import text as _text  # noqa: E402
+from sqlalchemy import text as _text
 
 
 def upgrade() -> None:

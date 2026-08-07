@@ -1,7 +1,7 @@
 import hashlib
 import logging
 from collections.abc import Callable
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import delete, select, text, update
 from sqlalchemy import func as sa_func
@@ -99,7 +99,7 @@ async def set_consent(
     транзакций ровно одна увидит переход NULL→значение.
     """
     values = dict(
-        consent_pdn_at=datetime.now(timezone.utc),
+        consent_pdn_at=datetime.now(UTC),
         consent_pdn_text_sha256=text_sha256,
         consent_revoked_at=None,
     )
@@ -214,7 +214,7 @@ async def find_stuck_in_summary(
     if limit is None:
 
         limit = cfg.recover_batch_size
-    threshold = datetime.now(timezone.utc) - timedelta(seconds=idle_seconds)
+    threshold = datetime.now(UTC) - timedelta(seconds=idle_seconds)
     result = await session.scalars(
         select(User.max_user_id)
         .where(
@@ -265,7 +265,7 @@ async def find_stuck_in_funnel(
         # запишется как followup случайному обращению.
         DialogState.AWAITING_FOLLOWUP_TEXT.value,
     ]
-    threshold = datetime.now(timezone.utc) - timedelta(seconds=idle_seconds)
+    threshold = datetime.now(UTC) - timedelta(seconds=idle_seconds)
     result = await session.execute(
         select(User.max_user_id, User.dialog_state)
         .where(
@@ -406,7 +406,7 @@ async def erase_pdn_detailed(
         )
         .values(
             status=AppealStatus.CLOSED.value,
-            closed_at=datetime.now(timezone.utc),
+            closed_at=datetime.now(UTC),
             closed_due_to_revoke=True,
         )
     )
@@ -453,7 +453,7 @@ async def revoke_consent(session: AsyncSession, max_user_id: int) -> bool:
         .where(User.max_user_id == max_user_id)
         .values(
             consent_pdn_at=None,
-            consent_revoked_at=datetime.now(timezone.utc),
+            consent_revoked_at=datetime.now(UTC),
             subscribed_broadcast=False,
             consent_broadcast_at=None,
             dialog_state=DialogState.IDLE.value,
@@ -498,7 +498,7 @@ async def set_blocked(
                 )
                 .values(
                     status=AppealStatus.CLOSED.value,
-                    closed_at=datetime.now(timezone.utc),
+                    closed_at=datetime.now(UTC),
                     # Помечаем «закрыто из-за отзыва/блокировки», чтобы
                     # кнопка «🔁 Возобновить» под карточкой не показывалась
                     # оператору — гард доставки всё равно откажет.
@@ -634,7 +634,7 @@ async def find_pending_pdn_retention(
     Возвращает max_user_id жителей под отбор. Лимит защищает от
     лавины при первом запуске после долгого простоя.
     """
-    threshold = datetime.now(timezone.utc) - timedelta(days=days_after_revoke)
+    threshold = datetime.now(UTC) - timedelta(days=days_after_revoke)
     res = await session.scalars(
         select(User.max_user_id)
         .where(
@@ -675,7 +675,7 @@ async def find_revoked_deadline_approaching(
     вызывающий код: предупреждать есть смысл только по тем, у кого
     действительно осталось что ответить.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     # Срок ещё не истёк: отзыв позже этой границы.
     deadline = now - timedelta(days=days_after_revoke)
     # Но уже в зоне предупреждения: отзыв не позже этой границы.

@@ -41,11 +41,10 @@ async def _send_stats_xlsx(
         typing_cm = None
 
     if typing_cm is not None:
-        async with typing_cm:
-            async with session_scope() as session:
-                content, title, count = await stats_service.build_xlsx(
-                    session, period
-                )
+        async with typing_cm, session_scope() as session:
+            content, title, count = await stats_service.build_xlsx(
+                session, period
+            )
     else:
         async with session_scope() as session:
             content, title, count = await stats_service.build_xlsx(session, period)

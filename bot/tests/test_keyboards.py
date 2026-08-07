@@ -7,7 +7,7 @@ import pytest
 # keyboards.py импортирует maxapi — без него локально skip
 pytest.importorskip("maxapi", reason="keyboards тесты требуют maxapi")
 
-from aemr_bot import keyboards  # noqa: E402
+from aemr_bot import keyboards
 
 
 class TestSimpleKeyboards:

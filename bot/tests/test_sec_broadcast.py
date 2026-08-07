@@ -33,7 +33,6 @@ pytest.importorskip("maxapi", reason="нужен maxapi для broadcast/handler
 from tests._helpers import fake_session_scope as _fake_session_scope
 from tests._helpers import make_event
 
-
 # ──────────────────────────────────────────────────────────────────────
 # P1-2a: confirm-gate в _handle_confirm блокирует non-gov URL на всех
 #        путях (включая apply/clone, минующие free-text whitelist).

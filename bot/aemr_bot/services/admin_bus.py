@@ -71,7 +71,7 @@ class _GlobalOutgoingLimiter:
     проход (доступность приоритетнее точности темпа).
     """
 
-    __slots__ = ("_capacity", "_rate", "_tokens", "_last")
+    __slots__ = ("_capacity", "_last", "_rate", "_tokens")
 
     def __init__(self, rate_per_sec: float, capacity: float) -> None:
         self._capacity = capacity

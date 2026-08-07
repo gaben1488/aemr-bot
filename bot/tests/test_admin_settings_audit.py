@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import pytest
 
-
 pytest.importorskip("maxapi", reason="нужен maxapi для admin_settings импорта")
 
 

@@ -18,7 +18,6 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-
 ADMIN_CHAT_ID = 555
 
 

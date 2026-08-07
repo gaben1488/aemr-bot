@@ -24,10 +24,10 @@ from __future__ import annotations
 
 import string
 
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from aemr_bot.services.users import _normalize_phone
-
 
 # ──────────────────────────────────────────────────────────────────────
 # Инвариант 1 — output только из цифр

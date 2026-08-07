@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 
 async def render(
     bot,
-    appeal: "Appeal",
+    appeal: Appeal,
     *,
     callback_mid: str | None = None,
     is_first_publication: bool = False,
@@ -171,8 +171,8 @@ async def render(
     # `callback_mid` теперь используется только для diagnostics-логов
     # и для пометки force_new=False как ошибка (на самом деле всегда
     # send_new — дальше идёт прямой bot.send_message).
-    _ = callback_mid  # noqa: F841 — параметр оставлен для совместимости
-    _ = force_new  # noqa: F841 — тоже совместимость; теперь всегда send_new
+    _ = callback_mid
+    _ = force_new
 
     text_for_send = (
         f"{event_header}\n· · · · · · · ·\n{text}"
@@ -213,7 +213,7 @@ async def render(
     return new_mid
 
 
-def _count_attachments(appeal: "Appeal") -> int:
+def _count_attachments(appeal: Appeal) -> int:
     """Сколько вложений у обращения (исходные + дополнения жителя).
     Устойчиво к detached state (lazy-fail → fallback на scalar)."""
     try:

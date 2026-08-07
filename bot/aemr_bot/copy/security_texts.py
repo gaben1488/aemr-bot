@@ -162,8 +162,8 @@ RULES_SHORT = (
 
 
 __all__ = [
-    "SECURITY_INFO_TEXT",
     "OP_HELP_SECURITY",
-    "RULES_TEXT",
     "RULES_SHORT",
+    "RULES_TEXT",
+    "SECURITY_INFO_TEXT",
 ]

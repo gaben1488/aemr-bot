@@ -12,16 +12,17 @@ from maxapi.exceptions.max import InvalidToken
 
 from aemr_bot import health, network
 from aemr_bot.config import settings
-from aemr_bot.logging_setup import setup_logging
 from aemr_bot.db import single_instance
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import register_handlers
 from aemr_bot.handlers.appeal import recover_stuck_funnels
+from aemr_bot.logging_setup import setup_logging
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import cron as cron_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import policy as policy_service
 from aemr_bot.services import settings_store
+
 # Ре-экспорт: spawn_background_task переехал в utils/background.py
 # (батч 4), но исторические вызовы `from aemr_bot.main import
 # spawn_background_task` должны продолжать работать — импортированное
@@ -35,7 +36,7 @@ log = logging.getLogger("aemr_bot")
 # успешного send в admin chat. Закрывает архитектурный gap «62
 # прямых send'a в admin chat без tracker.sync» одной строкой —
 # подробное обоснование в `services/admin_bus.install_outgoing_tracker_hook`.
-from aemr_bot.services import admin_bus  # noqa: E402
+from aemr_bot.services import admin_bus
 
 
 def build_bot() -> Bot:
@@ -220,7 +221,7 @@ class _UserThrottle:
     нет точки переключения внутри allow().
     """
 
-    __slots__ = ("_capacity", "_refill", "_buckets")
+    __slots__ = ("_buckets", "_capacity", "_refill")
 
     def __init__(self, capacity: float, refill_per_sec: float) -> None:
         self._capacity = capacity
@@ -660,7 +661,7 @@ async def _hydrate_wizards() -> None:
     from aemr_bot.services import wizard_registry as _wr
     if op_n:
         from aemr_bot.handlers import admin_operators
-        for op_id, state in list(_wr._op_wizards.items()):  # noqa: SLF001
+        for op_id, state in list(_wr._op_wizards.items()):
             # Восстанавливаем expires_at в monotonic-форму:
             # реальный TTL уже отсчитан в БД, оставшийся остаток
             # неизвестен — даём свежий полный TTL. Хуже не будет:
@@ -670,10 +671,10 @@ async def _hydrate_wizards() -> None:
                 admin_operators._time_op.monotonic()
                 + admin_operators._OP_WIZARD_TTL_SEC
             )
-            admin_operators._op_wizards[op_id] = local  # noqa: SLF001
+            admin_operators._op_wizards[op_id] = local
     if bcast_n:
         from aemr_bot.handlers import broadcast_wizard
-        for op_id, state in list(_wr._broadcast_wizards.items()):  # noqa: SLF001
+        for op_id, state in list(_wr._broadcast_wizards.items()):
             step = state.get("step")
             if step not in ("awaiting_text", "awaiting_confirm"):
                 # Чужой/битый шаг (ручная правка в psql, старый формат) —
@@ -685,7 +686,7 @@ async def _hydrate_wizards() -> None:
                 continue
             # expires_at считается заново от текущего monotonic —
             # см. коммент про op-мастера выше.
-            broadcast_wizard._wizards[op_id] = broadcast_wizard._WizardState(  # noqa: SLF001
+            broadcast_wizard._wizards[op_id] = broadcast_wizard._WizardState(
                 step=step,
                 text=state.get("text") or "",
                 attachments=list(state.get("attachments") or []),

@@ -11,7 +11,6 @@ from types import SimpleNamespace
 
 import pytest
 
-
 pytest.importorskip("maxapi")
 
 

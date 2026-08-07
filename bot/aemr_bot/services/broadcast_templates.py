@@ -13,8 +13,8 @@ text/attachments (template копируется в момент применен
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Sequence
+from collections.abc import Sequence
+from datetime import UTC, datetime
 
 from sqlalchemy import desc, func, or_, select
 from sqlalchemy.exc import IntegrityError
@@ -193,7 +193,7 @@ async def archive(session: AsyncSession, template_id: int) -> BroadcastTemplate:
     tmpl = await get_by_id(session, template_id)
     if tmpl is None:
         raise TemplateNotFound(template_id)
-    tmpl.archived_at = datetime.now(timezone.utc)
+    tmpl.archived_at = datetime.now(UTC)
     await session.flush()
     return tmpl
 
@@ -212,7 +212,7 @@ async def record_usage(
     if tmpl is None:
         return None
     tmpl.use_count = (tmpl.use_count or 0) + 1
-    tmpl.last_used_at = datetime.now(timezone.utc)
+    tmpl.last_used_at = datetime.now(UTC)
     await session.flush()
     return tmpl
 

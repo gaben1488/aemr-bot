@@ -219,7 +219,7 @@ async def send_or_edit_screen(
     Tracker обновляется после успешного send/edit с актуальным mid.
     """
     # Lazy-import чтобы избежать циклической зависимости через models.
-    from aemr_bot.utils import menu_tracker  # noqa: PLC0415
+    from aemr_bot.utils import menu_tracker
 
     bot = getattr(event, "bot", None)
     if bot is None:

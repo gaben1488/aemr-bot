@@ -18,15 +18,15 @@ Revision ID: 0025
 Revises: 0024
 Create Date: 2026-08-07
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
 from sqlalchemy import text
 
 revision: str = "0025"
-down_revision: Union[str, None] = "0024"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "0024"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 _OLD = (
     "Приём граждан временно исполняющим полномочия Главы Елизовского "

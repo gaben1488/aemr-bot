@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
@@ -178,7 +178,7 @@ def _format_reset_hint(reset_at: datetime | None) -> str:
     """
     if reset_at is None:
         return ""
-    wait = reset_at - datetime.now(timezone.utc)
+    wait = reset_at - datetime.now(UTC)
     minutes = int(wait.total_seconds() // 60) + 1
     if minutes <= 0:
         return ""
@@ -755,7 +755,7 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             _rl_session, appeal.id, hours=1
         )
     if last_at is not None:
-        elapsed = (datetime.now(timezone.utc) - last_at).total_seconds()
+        elapsed = (datetime.now(UTC) - last_at).total_seconds()
         if elapsed < cfg.followup_min_interval_seconds:
             wait = int(cfg.followup_min_interval_seconds - elapsed)
             await event.message.answer(

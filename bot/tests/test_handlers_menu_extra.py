@@ -4,15 +4,14 @@ emergency/dispatchers/appointment, handle_callback router.
 Локально skip без maxapi; в CI работает."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from tests._helpers import fake_current_user
+from tests._helpers import fake_current_user, make_event
 from tests._helpers import fake_session_scope as _fake_session_scope
-from tests._helpers import make_event
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
@@ -40,7 +39,7 @@ class TestShowConsentStatus:
 
         event = _make_event()
         user = SimpleNamespace(
-            consent_pdn_at=datetime.now(timezone.utc),
+            consent_pdn_at=datetime.now(UTC),
             consent_revoked_at=None,
         )
         with patch.object(keyboards, "consent_status_keyboard",
@@ -64,7 +63,7 @@ class TestShowConsentStatus:
         event = _make_event()
         user = SimpleNamespace(
             consent_pdn_at=None,
-            consent_revoked_at=datetime.now(timezone.utc),
+            consent_revoked_at=datetime.now(UTC),
         )
         with patch.object(keyboards, "consent_status_keyboard",
                           MagicMock(return_value=None)), \
@@ -157,7 +156,7 @@ class TestAskForgetConfirm:
             id=42,
             user_id=1,
             topic="ЖКХ",
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         with patch.object(keyboards, "forget_confirm_keyboard",
                           MagicMock(return_value=None)), \
@@ -178,7 +177,7 @@ class TestFormatDtLocal:
     def test_formats_datetime(self) -> None:
         from aemr_bot.handlers.menu import _format_dt_local
 
-        dt = datetime(2026, 5, 10, 12, 30, tzinfo=timezone.utc)
+        dt = datetime(2026, 5, 10, 12, 30, tzinfo=UTC)
         result = _format_dt_local(dt)
         assert "." in result
         assert ":" in result

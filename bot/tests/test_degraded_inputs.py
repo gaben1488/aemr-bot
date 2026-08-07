@@ -125,7 +125,7 @@ class TestThreatFeedsFailOpen:
         store.hosts = {"old.evil"}
         store.last_refresh_at = time.monotonic() - 100
 
-        async def fake_fetch(session, url):  # noqa: ARG001
+        async def fake_fetch(session, url):
             return None  # все feed'ы лежат
 
         monkeypatch.setattr(ti, "_fetch_text", fake_fetch)

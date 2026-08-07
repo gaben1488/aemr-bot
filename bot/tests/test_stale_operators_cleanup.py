@@ -14,7 +14,6 @@ PG-зависимый — пропускается в чисто-unit окруж
 from __future__ import annotations
 
 import pytest
-
 from sqlalchemy import select
 
 from aemr_bot.db.models import AuditLog, OperatorRole

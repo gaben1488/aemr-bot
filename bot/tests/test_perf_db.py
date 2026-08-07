@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import importlib
 import io
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
@@ -83,7 +83,7 @@ def _user(**over) -> SimpleNamespace:
 def _appeal(**over) -> SimpleNamespace:
     base = dict(
         id=1,
-        created_at=datetime(2026, 6, 1, 9, 0, tzinfo=timezone.utc),
+        created_at=datetime(2026, 6, 1, 9, 0, tzinfo=UTC),
         answered_at=None,
         status="new",
         locality="Посёлок",
@@ -419,7 +419,7 @@ class TestRenderWorkbookOperatorReplyParity:
 
         class _NoMessages:
             id = 1
-            created_at = datetime(2026, 6, 1, 9, 0, tzinfo=timezone.utc)
+            created_at = datetime(2026, 6, 1, 9, 0, tzinfo=UTC)
             answered_at = None
             status = "new"
             locality = "П"
@@ -461,13 +461,13 @@ class TestBuildXlsxIntegration:
             address="ул. Реальная, 1",
             topic="Дороги",
             summary="Текст обращения",
-            created_at=datetime.now(timezone.utc) - timedelta(days=1),
-            answered_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC) - timedelta(days=1),
+            answered_at=datetime.now(UTC),
         )
         session.add(appeal)
         await session.flush()
 
-        base = datetime.now(timezone.utc) - timedelta(hours=5)
+        base = datetime.now(UTC) - timedelta(hours=5)
         # Длинная переписка: чередуем сообщения жителя и оператора.
         msgs = [
             Message(

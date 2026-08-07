@@ -1,11 +1,10 @@
-import asyncio
 import hashlib
 import html
 import json
 import logging
 import re
 import unicodedata
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -742,7 +741,7 @@ async def get_consent_request_text(session: AsyncSession, *, policy_url: str, fa
     """
     try:
         raw = await get(session, "consent_text")
-    except (SQLAlchemyError, asyncio.TimeoutError, TypeError):
+    except (TimeoutError, SQLAlchemyError, TypeError):
         # F14: тот же узкий except, что и в get_text_with_fallback.
         raw = None
     if isinstance(raw, str) and raw.strip() and "{policy_url}" in raw:
@@ -770,7 +769,7 @@ async def get_consent_text_hash(session: AsyncSession, *, fallback: str) -> str:
     """
     try:
         raw = await get(session, "consent_text")
-    except (SQLAlchemyError, asyncio.TimeoutError, TypeError):
+    except (TimeoutError, SQLAlchemyError, TypeError):
         raw = None
     template = (
         sanitize_settings_text(raw)
@@ -802,7 +801,7 @@ async def get_text_with_fallback(session: AsyncSession, key: str, fallback: str)
     """
     try:
         raw = await get(session, key)
-    except (SQLAlchemyError, asyncio.TimeoutError, TypeError) as exc:
+    except (TimeoutError, SQLAlchemyError, TypeError) as exc:
         # F14 (narrow except): только узкий класс ожидаемых сбоев —
         # SQL/timeout (БД отвалилась) и TypeError (MagicMock вернул
         # не coroutine в тестах). NameError/AttributeError здесь —
@@ -932,7 +931,7 @@ async def mark_synced(session: AsyncSession, keys: list[str] | None = None) -> i
     PR. Возвращает количество обновлённых строк."""
 
     target_keys = list(keys) if keys is not None else list(SYNCED_KEYS)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     result = await session.execute(
         sa_update(Setting).where(Setting.key.in_(target_keys)).values(synced_at=now)
     )

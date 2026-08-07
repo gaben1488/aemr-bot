@@ -23,7 +23,6 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # wizard_registry: persist через spawn_background_task
 # ---------------------------------------------------------------------------

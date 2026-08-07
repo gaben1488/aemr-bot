@@ -244,7 +244,7 @@ async def verify_latest_backup() -> VerifyResult:
             decrypted_bytes=plain_size,
         )
 
-    except Exception as e:  # noqa: BLE001 — cron-обёртка ждёт результат, не исключение
+    except Exception as e:
         log.exception("backup verify: непредвиденная ошибка")
         return VerifyResult(
             ok=False, fail_kind="unknown", backup_name=src.name,

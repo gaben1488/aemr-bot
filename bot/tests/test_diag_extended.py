@@ -8,12 +8,11 @@ warnings) корректно собираются из реальной БД.
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 
 pytest.importorskip("maxapi", reason="diag — handler-level test, нужен maxapi")
 
@@ -46,7 +45,7 @@ async def test_diag_pulse_warning_when_events_silent(session) -> None:
         idempotency_key="diag-old-ping",
         update_type="ping",
         payload={},
-        received_at=datetime.now(timezone.utc) - timedelta(hours=2),
+        received_at=datetime.now(UTC) - timedelta(hours=2),
     )
     session.add(old_event)
     await session.flush()
@@ -87,7 +86,7 @@ async def test_diag_no_warnings_when_pulse_fresh(session) -> None:
         idempotency_key="diag-fresh-ping",
         update_type="ping",
         payload={},
-        received_at=datetime.now(timezone.utc) - timedelta(minutes=1),
+        received_at=datetime.now(UTC) - timedelta(minutes=1),
     )
     session.add(fresh)
     await session.flush()
@@ -126,7 +125,7 @@ async def test_diag_stuck_broadcast_in_warnings(session) -> None:
             idempotency_key="diag-stuck-pulse",
             update_type="ping",
             payload={},
-            received_at=datetime.now(timezone.utc),
+            received_at=datetime.now(UTC),
         )
     )
     # Зависшая рассылка
@@ -145,7 +144,7 @@ async def test_diag_stuck_broadcast_in_warnings(session) -> None:
     await session.execute(
         update(Broadcast)
         .where(Broadcast.id == stuck.id)
-        .values(created_at=datetime.now(timezone.utc) - timedelta(minutes=30))
+        .values(created_at=datetime.now(UTC) - timedelta(minutes=30))
     )
 
     sent: dict = {}

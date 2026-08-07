@@ -17,17 +17,15 @@ max_user_id).
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-
 pytest.importorskip("maxapi", reason="нужен maxapi для admin_resident_search импортов")
 
 from tests._helpers import make_event
-
 
 # ──────────────────────────────────────────────────────────────────────
 # Pure helpers — детектор и маскировка
@@ -104,7 +102,7 @@ class TestFormatStatuses:
         from aemr_bot.handlers.admin_resident_search import _format_consent_status
 
         user = SimpleNamespace(
-            consent_pdn_at=datetime.now(timezone.utc),
+            consent_pdn_at=datetime.now(UTC),
             consent_revoked_at=None,
         )
         assert "активно" in _format_consent_status(user)
@@ -114,7 +112,7 @@ class TestFormatStatuses:
 
         user = SimpleNamespace(
             consent_pdn_at=None,
-            consent_revoked_at=datetime.now(timezone.utc),
+            consent_revoked_at=datetime.now(UTC),
         )
         assert "отозвано" in _format_consent_status(user)
 
@@ -146,7 +144,7 @@ class TestFormatStatuses:
 
         appeal = SimpleNamespace(
             id=42,
-            created_at=datetime(2026, 5, 28, 12, 30, tzinfo=timezone.utc),
+            created_at=datetime(2026, 5, 28, 12, 30, tzinfo=UTC),
             topic="Уличное освещение",
             status="new",
         )
@@ -257,7 +255,7 @@ class TestRunFindResident:
             max_user_id=123456,
             first_name="Алексей",
             phone="+79991234567",
-            consent_pdn_at=datetime.now(timezone.utc),
+            consent_pdn_at=datetime.now(UTC),
             consent_revoked_at=None,
             subscribed_broadcast=True,
             is_blocked=False,

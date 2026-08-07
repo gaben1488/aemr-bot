@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import desc, func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -121,7 +121,7 @@ async def mark_started(
         .where(Broadcast.id == broadcast_id)
         .values(
             status=BroadcastStatus.SENDING.value,
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
             admin_message_id=admin_message_id,
         )
     )
@@ -146,7 +146,7 @@ async def mark_finished(
         .where(Broadcast.id == broadcast_id)
         .values(
             status=status.value,
-            finished_at=datetime.now(timezone.utc),
+            finished_at=datetime.now(UTC),
             delivered_count=delivered,
             failed_count=failed,
         )
@@ -204,7 +204,7 @@ async def reap_orphaned_draft(
     переводить в FAILED — это означает «мастер был открыт, но рассылка
     так и не пошла». Не путать с CANCELLED (явная отмена оператором).
     """
-    cutoff = datetime.now(timezone.utc) - timedelta(minutes=ttl_minutes)
+    cutoff = datetime.now(UTC) - timedelta(minutes=ttl_minutes)
     result = await session.execute(
         update(Broadcast)
         .where(
@@ -254,7 +254,7 @@ async def record_delivery(
     user_id: int,
     error: str | None,
 ) -> None:
-    delivered_at = datetime.now(timezone.utc) if error is None else None
+    delivered_at = datetime.now(UTC) if error is None else None
     # on_conflict_do_nothing по UNIQUE(broadcast_id, user_id): повторная
     # запись той же пары (ретрай после сетевого сбоя) — тихий no-op,
     # счётчики доставки не задваиваются. См. миграцию 0023.
@@ -294,7 +294,7 @@ async def record_deliveries(
     """
     if not results:
         return
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     await session.execute(
         pg_insert(BroadcastDelivery)
         .values(

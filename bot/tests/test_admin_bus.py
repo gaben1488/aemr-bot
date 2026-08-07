@@ -12,7 +12,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-
 pytest.importorskip("maxapi", reason="нужен maxapi для admin_bus импорта")
 
 
@@ -167,8 +166,9 @@ class TestAdminChatActivityMiddleware:
 
     def _make_message_created(self, *, chat_id: int, mid: str):
         """Создать Mock с spec=MessageCreated — isinstance вернёт True."""
-        from maxapi.types import MessageCreated
         from unittest.mock import MagicMock
+
+        from maxapi.types import MessageCreated
 
         event = MagicMock(spec=MessageCreated)
         event.message = SimpleNamespace(
@@ -227,9 +227,11 @@ class TestAdminChatActivityMiddleware:
         """Tracker-sync — best-effort. Любая ошибка внутри не должна
         мешать handler'у обработать событие. Здесь используем broken
         MessageCreated без body — внутренний try/except должен поглотить."""
-        from aemr_bot.handlers import AdminChatActivityMiddleware
-        from maxapi.types import MessageCreated
         from unittest.mock import MagicMock
+
+        from maxapi.types import MessageCreated
+
+        from aemr_bot.handlers import AdminChatActivityMiddleware
 
         mw = AdminChatActivityMiddleware()
         event = MagicMock(spec=MessageCreated)
@@ -276,8 +278,7 @@ class TestAdminBusCriticalBypassesQuiet:
     @pytest.mark.asyncio
     async def test_non_critical_suppressed_in_quiet(self) -> None:
         """critical=False (default) + quiet активен → не шлём, return None."""
-        from aemr_bot.services import admin_bus
-        from aemr_bot.services import quiet_hours
+        from aemr_bot.services import admin_bus, quiet_hours
         from aemr_bot.utils import menu_tracker
 
         bot = MagicMock()
@@ -304,8 +305,7 @@ class TestAdminBusCriticalBypassesQuiet:
         дойти до admin chat. Без этого 152-ФЗ retention или потеря
         бэкапа окажется незамеченной до утра понедельника.
         """
-        from aemr_bot.services import admin_bus
-        from aemr_bot.services import quiet_hours
+        from aemr_bot.services import admin_bus, quiet_hours
         from aemr_bot.utils import menu_tracker
 
         bot = MagicMock()
@@ -334,8 +334,7 @@ class TestAdminBusCriticalBypassesQuiet:
     @pytest.mark.asyncio
     async def test_non_critical_outside_quiet_sends(self) -> None:
         """critical=False вне quiet окна — стандартный путь, шлём."""
-        from aemr_bot.services import admin_bus
-        from aemr_bot.services import quiet_hours
+        from aemr_bot.services import admin_bus, quiet_hours
 
         bot = MagicMock()
         bot.send_message = AsyncMock(

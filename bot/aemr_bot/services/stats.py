@@ -1,13 +1,13 @@
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from io import BytesIO
+from zoneinfo import ZoneInfo
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from zoneinfo import ZoneInfo
 
 from aemr_bot.config import settings
 from aemr_bot.db.models import Appeal, AppealStatus, Message, MessageDirection
@@ -82,10 +82,10 @@ def period_window(period: str) -> tuple[datetime | None, datetime, str]:
         start = midnight - timedelta(days=365)
         title = f"за год с {start:%d.%m.%Y}"
     elif period == "all":
-        return None, now.astimezone(timezone.utc), "за всё время"
+        return None, now.astimezone(UTC), "за всё время"
     else:
         raise ValueError(f"Unknown period: {period}")
-    return start.astimezone(timezone.utc), now.astimezone(timezone.utc), title
+    return start.astimezone(UTC), now.astimezone(UTC), title
 
 
 async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, int]:

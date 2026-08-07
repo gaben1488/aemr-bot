@@ -14,7 +14,7 @@
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -309,7 +309,7 @@ class TestOnAwaitingFollowupText:
         from aemr_bot.handlers import appeal_funnel
 
         event = _make_event()
-        user = SimpleNamespace(id=1, dialog_data={"appeal_id": 999}, consent_pdn_at=datetime.now(timezone.utc))
+        user = SimpleNamespace(id=1, dialog_data={"appeal_id": 999}, consent_pdn_at=datetime.now(UTC))
         reset = AsyncMock()
         with patch("aemr_bot.handlers.appeal_funnel.session_scope",
                    _fake_session_scope), \
@@ -361,7 +361,7 @@ class TestOnAwaitingFollowupText:
         user = SimpleNamespace(
             id=1,
             dialog_data={"appeal_id": 5},
-            consent_pdn_at=datetime.now(timezone.utc),
+            consent_pdn_at=datetime.now(UTC),
         )
         appeal = SimpleNamespace(
             id=5, user_id=1, status=AppealStatus.CLOSED.value
@@ -403,7 +403,7 @@ class TestOnAwaitingFollowupText:
             phone="+79991234567",
             is_blocked=False,
             dialog_data={"appeal_id": 5},
-            consent_pdn_at=datetime.now(timezone.utc),
+            consent_pdn_at=datetime.now(UTC),
             subscribed_broadcast=False,
             consent_revoked_at=None,
         )
@@ -515,7 +515,7 @@ class TestOnAwaitingFollowupText:
             phone="+79991234567",
             is_blocked=False,
             dialog_data={"appeal_id": 5},
-            consent_pdn_at=datetime.now(timezone.utc),
+            consent_pdn_at=datetime.now(UTC),
             subscribed_broadcast=False,
             consent_revoked_at=None,
         )

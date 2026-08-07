@@ -41,7 +41,7 @@ import re
 # в большинстве чат-клиентов (Telegram, MAX, Slack, Discord, WhatsApp).
 # Не используем U+200D (ZWJ) — он, наоборот, склеивает символы в
 # некоторых рендерах. ZWSP — самый предсказуемый no-op для рендера.
-_ZWSP = "​"
+_ZWSP = "\u200b"
 
 
 # TLD-list для defang-without-scheme. Собран из топ-доменов, которые

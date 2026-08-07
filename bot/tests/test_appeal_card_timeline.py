@@ -10,7 +10,7 @@ admin) и `user_appeal_timeline_block` (для жителя). Здесь — к�
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
@@ -24,7 +24,7 @@ def _make_msg(direction: str, text: str, *, minutes_offset: int = 0,
         direction=direction,
         text=text,
         attachments=attachments or [],
-        created_at=datetime(2026, 5, 21, 14, 0, tzinfo=timezone.utc)
+        created_at=datetime(2026, 5, 21, 14, 0, tzinfo=UTC)
         + timedelta(minutes=minutes_offset),
     )
 
@@ -39,7 +39,7 @@ def _make_appeal_with_messages(messages: list) -> SimpleNamespace:
         topic="Дороги",
         summary="Яма во дворе.",
         attachments=[],
-        created_at=datetime(2026, 5, 21, 13, 0, tzinfo=timezone.utc),
+        created_at=datetime(2026, 5, 21, 13, 0, tzinfo=UTC),
     )
     # _loaded_messages читает из __dict__, поэтому ставим напрямую.
     appeal.__dict__["messages"] = messages

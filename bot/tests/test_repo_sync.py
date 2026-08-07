@@ -20,12 +20,12 @@ from __future__ import annotations
 
 import base64
 import json
+from datetime import UTC
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from aemr_bot.services import repo_sync
-
 
 # ---- pure helpers -----------------------------------------------------------
 
@@ -63,12 +63,12 @@ class TestMakeBranchName:
     def test_uses_utc(self) -> None:
         # Тест что utcnow используется, а не localtime: проверяем что
         # имя — это UTC timestamp на момент вызова, не локальный.
-        from datetime import datetime, timezone
+        from datetime import datetime
         n = repo_sync._make_branch_name()
         # Парсим обратно
         ts_str = n.removeprefix("bot-config-sync-")
         parsed = datetime.strptime(ts_str, "%Y%m%d-%H%M%S")
-        now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+        now_utc = datetime.now(UTC).replace(tzinfo=None)
         # В пределах 5 секунд от now-UTC
         delta = abs((now_utc - parsed).total_seconds())
         assert delta < 5

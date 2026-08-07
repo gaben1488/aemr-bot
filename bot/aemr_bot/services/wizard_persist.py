@@ -24,7 +24,7 @@ TTL: op-wizard — 5 минут, broadcast — BROADCAST_WIZARD_TTL_SEC. Оба
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import delete, select
@@ -63,7 +63,7 @@ async def _upsert(
     operator_max_user_id: int,
     state: dict[str, Any],
 ) -> None:
-    expires_at = datetime.now(timezone.utc) + timedelta(seconds=_ttl_for(kind))
+    expires_at = datetime.now(UTC) + timedelta(seconds=_ttl_for(kind))
     stmt = pg_insert(WizardState).values(
         kind=kind,
         operator_max_user_id=operator_max_user_id,
@@ -132,7 +132,7 @@ async def hydrate_into_registry(session: AsyncSession) -> tuple[int, int]:
 
     Возвращает: (op_count, broadcast_count) — для лога старта.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # GC просроченных
     deleted = await session.execute(

@@ -1,21 +1,17 @@
 import logging
+from datetime import UTC, datetime
 
 from maxapi import Dispatcher
 from maxapi.types import BotStarted, BotStopped, Command, MessageCreated
 
-from datetime import datetime, timezone
-
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
-from aemr_bot.services import admin_events
-from aemr_bot.services import card_format
+from aemr_bot.services import admin_events, card_format, settings_store, uploads
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as ops_service
 from aemr_bot.services import policy as policy_service
-from aemr_bot.services import uploads
-from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import (
     get_chat_id,
@@ -312,7 +308,7 @@ def _render_export_for_human(user, appeals) -> str:
     L: list[str] = []
     L.append("ВАШИ ДАННЫЕ В ЧАТ-БОТЕ АДМИНИСТРАЦИИ")
     L.append("Елизовского муниципального округа")
-    L.append(f"Выгрузка сформирована: {_export_dt(datetime.now(timezone.utc))}")
+    L.append(f"Выгрузка сформирована: {_export_dt(datetime.now(UTC))}")
     L.append("")
     L.append("О ВАС")
     L.append(f"  Имя: {user.first_name or '—'}")
