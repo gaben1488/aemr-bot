@@ -629,10 +629,13 @@ def register(dp: Dispatcher) -> None:
         # админ-группе. В админ-чате пропускаем только admin-flow, который
         # явно перечислен в callback_router.EXACT_ROUTES/PREFIX_ROUTES.
         chat_id = get_chat_id(event)
-        if cfg.admin_group_id and chat_id == cfg.admin_group_id:
-            if not callback_router.is_admin_callback(payload):
-                await ack_callback(event)
-                return
+        if (
+            cfg.admin_group_id
+            and chat_id == cfg.admin_group_id
+            and not callback_router.is_admin_callback(payload)
+        ):
+            await ack_callback(event)
+            return
 
         if not await _ensure_funnel_callback_state(event, max_user_id, payload):
             return

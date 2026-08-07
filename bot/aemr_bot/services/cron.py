@@ -1113,8 +1113,8 @@ async def _job_working_hours_overdue_reminder(bot) -> None:
         if not overdue:
             return
         lines = [
-            f"⚠️ Просрочено по SLA ({settings.sla_response_hours}ч): "
-            f"{len(overdue)} обращений."
+            (f"⚠️ Просрочено по SLA ({settings.sla_response_hours}ч): "
+            f"{len(overdue)} обращений.")
         ]
         lines.extend(_format_appeal_lines(overdue))
         await _send_with_open_tickets_button(bot, "\n".join(lines))

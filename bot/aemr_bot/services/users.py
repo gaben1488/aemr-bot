@@ -98,11 +98,11 @@ async def set_consent(
     атомарен: conditional UPDATE под row-lock'ом — из двух конкурентных
     транзакций ровно одна увидит переход NULL→значение.
     """
-    values = dict(
-        consent_pdn_at=datetime.now(UTC),
-        consent_pdn_text_sha256=text_sha256,
-        consent_revoked_at=None,
-    )
+    values = {
+        "consent_pdn_at": datetime.now(UTC),
+        "consent_pdn_text_sha256": text_sha256,
+        "consent_revoked_at": None,
+    }
     fresh = await session.execute(
         update(User)
         .where(

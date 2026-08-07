@@ -1,3 +1,4 @@
+import logging
 import re
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -11,6 +12,8 @@ from aemr_bot.texts import (
     STATUS_LABELS,
 )
 from aemr_bot.utils.attachments import count_by_type, suspicious_attachment_names
+
+log = logging.getLogger(__name__)
 
 TZ = ZoneInfo(settings.timezone)
 
@@ -380,7 +383,12 @@ def _maybe_url_warning(text: str) -> str:
             if is_bad and candidate not in malicious:
                 malicious.append(candidate)
     except Exception:
-        pass
+        # Проверка по базе угроз — не критичный путь: карточка обязана
+        # отрисоваться, даже если база недоступна. Но молчать нельзя:
+        # без записи в лог оператор увидит карточку БЕЗ предупреждения о
+        # вредоносной ссылке и решит, что ссылка чистая. Отличить «не
+        # нашли угроз» от «не смогли проверить» можно только по логу.
+        log.warning("проверка ссылок по базе угроз не отработала", exc_info=True)
 
     if malicious:
         # Показать до 3 ссылок, остальные за многоточием

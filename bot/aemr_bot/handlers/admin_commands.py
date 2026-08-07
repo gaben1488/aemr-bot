@@ -94,45 +94,45 @@ _ensure_role = ensure_role
 
 # Re-export для appeal.py (callback dispatcher) и других мест.
 __all__ = [
-    "register",
-    # Открытое меню оператора
-    "show_op_menu",
-    # Статистика
-    "_send_stats_xlsx",
-    "run_stats",
-    "run_stats_menu",
-    "run_stats_today",
-    # Мастер операторов
-    "_op_wizards",
-    "_op_wizard_drop",
-    "_op_wizard_get",
-    "_op_wizard_set",
-    "handle_operators_wizard_text",
-    "run_operators_action",
-    "run_operators_menu",
-    # Настройки
-    "handle_settings_edit_text",
-    "run_settings_action",
-    "run_settings_menu",
-    # Аудитория
-    "handle_audience_search_text",
-    "run_audience_action",
-    "run_audience_menu",
-    # Операции по обращению
-    "run_block_for_appeal",
-    "run_close",
-    "run_erase_for_appeal",
-    "run_reopen",
-    "run_reply_cancel",
-    "run_reply_intent",
-    "run_show_attachments",
     # Общие
     "_do_backup",
     "_do_diag",
     "_do_open_tickets",
+    "_op_wizard_drop",
+    "_op_wizard_get",
+    "_op_wizard_set",
+    # Мастер операторов
+    "_op_wizards",
+    # Статистика
+    "_send_stats_xlsx",
+    # Аудитория
+    "handle_audience_search_text",
+    "handle_operators_wizard_text",
+    # Настройки
+    "handle_settings_edit_text",
+    "register",
+    "run_audience_action",
+    "run_audience_menu",
     "run_backup",
+    # Операции по обращению
+    "run_block_for_appeal",
+    "run_close",
     "run_diag",
+    "run_erase_for_appeal",
     "run_open_tickets",
+    "run_operators_action",
+    "run_operators_menu",
+    "run_reopen",
+    "run_reply_cancel",
+    "run_reply_intent",
+    "run_settings_action",
+    "run_settings_menu",
+    "run_show_attachments",
+    "run_stats",
+    "run_stats_menu",
+    "run_stats_today",
+    # Открытое меню оператора
+    "show_op_menu",
 ]
 
 

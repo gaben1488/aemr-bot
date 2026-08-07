@@ -165,7 +165,7 @@ async def start_appeal_flow(event, max_user_id: int):
 
 
 async def _has_consent_step_pending(max_user_id: int) -> bool:
-    async with current_user(max_user_id) as (session, user):
+    async with current_user(max_user_id) as (_session, user):
         return user.consent_pdn_at is None
 
 

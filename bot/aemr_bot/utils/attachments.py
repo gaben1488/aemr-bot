@@ -288,7 +288,7 @@ def extract_contact_name(message: Any) -> str | None:
                 vcf_str = vcf_str[:VCF_INFO_MAX_CHARS]
             for line in vcf_str.replace("\r\n", "\n").splitlines():
                 upper = line.upper()
-                if upper.startswith("FN:") or upper.startswith("FN;"):
+                if upper.startswith(("FN:", "FN;")):
                     _, _, value = line.partition(":")
                     val = value.strip()
                     if val:

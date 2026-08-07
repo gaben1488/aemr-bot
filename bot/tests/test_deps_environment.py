@@ -151,9 +151,12 @@ def test_db_pool_ceiling_matches_dispatch_semaphore() -> None:
     tree = ast.parse(_inspect.getsource(db_session._engine_kwargs))
     found = {}
     for node in ast.walk(tree):
-        if isinstance(node, ast.keyword) and node.arg in ("pool_size", "max_overflow"):
-            if isinstance(node.value, ast.Constant):
-                found[node.arg] = node.value.value
+        if (
+            isinstance(node, ast.keyword)
+            and node.arg in ("pool_size", "max_overflow")
+            and isinstance(node.value, ast.Constant)
+        ):
+            found[node.arg] = node.value.value
     assert set(found) == {"pool_size", "max_overflow"}, (
         f"не нашёл pool_size/max_overflow в db/session.py: {found}"
     )

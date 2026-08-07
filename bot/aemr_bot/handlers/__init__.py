@@ -1,3 +1,5 @@
+import logging
+
 from maxapi import Dispatcher
 from maxapi.filters.middleware import BaseMiddleware
 from maxapi.types import MessageCreated
@@ -12,6 +14,7 @@ from aemr_bot.handlers import (
 )
 from aemr_bot.services import admin_bus, idempotency
 
+log = logging.getLogger(__name__)
 
 class IdempotencyMiddleware(BaseMiddleware):
     """Отбрасывает дубликаты событий до того, как они доходят до обработчиков."""
@@ -73,8 +76,13 @@ class AdminChatActivityMiddleware(BaseMiddleware):
                         # (теперь зовёт `menu_tracker.note_incoming`).
                         admin_bus.note_incoming_admin_message(str(mid))
             except Exception:
-                # Tracker-sync не должен ломать pipeline — это best-effort.
-                pass
+                # Tracker-sync не должен ломать обработку — это
+                # вспомогательный шаг. Но запись обязательна: если
+                # указатель на карточку перестанет двигаться, оператор
+                # увидит, что бот редактирует не то сообщение, а причина
+                # без лога будет невосстановима.
+                log.debug("tracker-sync входящего сообщения не отработал",
+                          exc_info=True)
         return await handler(event_object, data)
 
 
@@ -87,7 +95,11 @@ def _attach_outer_middleware(dp: Dispatcher, middleware: BaseMiddleware) -> None
     """
     register = getattr(dp, "register_outer_middleware", None)
     if not callable(register):
-        raise RuntimeError(
+        # RuntimeError, а не TypeError: это не «передали не тот тип», а
+        # «зависимость не та, что закреплена в lock» — состояние среды,
+        # а не ошибка вызывающего. TypeError увёл бы читателя лога в
+        # поиск неверного аргумента.
+        raise RuntimeError(  # noqa: TRY004
             "maxapi.Dispatcher.register_outer_middleware отсутствует — "
             "ожидается maxapi>=1.1; проверь pyproject.toml и uv sync"
         )

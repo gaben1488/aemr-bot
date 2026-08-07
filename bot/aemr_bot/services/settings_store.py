@@ -634,7 +634,7 @@ def validate(key: str, value: Any) -> tuple[bool, str]:
                 f"бот подставляет при отправке)."
             )
         if rule.get("url"):
-            if not (value.startswith("https://") or value.startswith("http://")):
+            if not (value.startswith(("https://", "http://"))):
                 return False, "URL must start with http:// or https://"
             if not _is_whitelisted_url(value):
                 return False, (
