@@ -250,7 +250,12 @@ async def _op_operators_action(event, payload: str) -> None:
     await admin_commands.run_operators_action(event, payload)
 
 
-_PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[None]]], ...] = (
+# Возврат — `Awaitable[object]`, а не `Awaitable[None]`: диспетчер
+# результат не читает, а часть целевых функций его всё же отдаёт
+# (`broadcast_templates.handle_callback` → bool). Узкий `None` заставлял
+# бы оборачивать такие цели пустой обёрткой ради типа — ровно те
+# обёртки, которые здесь и убирали.
+_PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[object]]], ...] = (
     ("op:aud:", lambda e, p: admin_commands.run_audience_action(e, p)),
     # Операторы — единое семейство:
     ("op:opadd:", _op_operators_action),
@@ -260,7 +265,7 @@ _PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[None]]], ...] = 
     ("op:opdeact:", _op_operators_action),
     ("op:opdeact_ok:", _op_operators_action),
     ("op:opreact:", _op_operators_action),
-    # Настройки — старый експертный и новый иерархический:
+    # Настройки — старый экспертный и новый иерархический:
     ("op:setkey:", lambda e, p: admin_commands.run_settings_action(e, p)),
     ("op:set:", lambda e, p: admin_commands.run_settings_action(e, p)),
     # Шаблоны рассылок (PR H) — list/new/open:<id>/apply:<id>/rename:<id>/

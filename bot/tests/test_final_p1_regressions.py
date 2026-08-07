@@ -135,11 +135,22 @@ async def test_list_subscribers_matches_broadcast_eligibility(session) -> None:
 
     rows = await users_service.list_subscribers(session, limit=10)
     ids = {u.max_user_id for u in rows}
-    assert ids == {201}
+    # 203 остаётся в выборке: имя «Удалено» больше НЕ исключает жителя
+    # (#270). Прежний фильтр по имени отсекал заодно всех, у кого имя
+    # пустое или совпало случайно, — они молча не получали оповещения
+    # о ЧС, хотя подписаны и согласие дали. Признак «стёрт» выражается
+    # блокировкой (204) и отсутствием согласия (202), а не строкой имени.
+    assert ids == {201, 203}
 
 
 @pytest.mark.asyncio
-async def test_list_consented_excludes_blocked_and_deleted(session) -> None:
+async def test_list_consented_excludes_blocked(session) -> None:
+    """Из выборки согласившихся выпадает заблокированный, но не «Удалено».
+
+    Имя перестало быть признаком стёртого жителя (#270): по нему
+    отсекались и те, у кого имя пустое или совпало случайно. Стёртого
+    выражает блокировка, а строка имени — обычные данные.
+    """
     active = await users_service.get_or_create(session, max_user_id=301, first_name="A")
     deleted = await users_service.get_or_create(session, max_user_id=302, first_name="Удалено")
     blocked = await users_service.get_or_create(session, max_user_id=303, first_name="C")
@@ -157,5 +168,5 @@ async def test_list_consented_excludes_blocked_and_deleted(session) -> None:
     rows = await users_service.list_consented(session, limit=10)
     ids = {u.max_user_id for u in rows}
     assert 301 in ids
-    assert 302 not in ids
-    assert 303 not in ids
+    assert 302 in ids, "имя «Удалено» больше не исключает жителя (#270)"
+    assert 303 not in ids, "заблокированный исключён — это и есть признак стёртого"
