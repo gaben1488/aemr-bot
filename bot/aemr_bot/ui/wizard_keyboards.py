@@ -91,7 +91,7 @@ def op_operator_role_change_keyboard(max_user_id: int, current_role: str):
         (OperatorRole.IT.value, "🛠 it — ИТ, полный доступ"),
         (OperatorRole.COORDINATOR.value, "👤 coordinator — ответы + рассылки"),
         (OperatorRole.AEMR.value, "👤 aemr — рядовой специалист"),
-        (OperatorRole.EGP.value, "👤 egp — специалист ЕГП"),
+        (OperatorRole.EGP.value, "👤 egp — специалист администрации округа"),
     ]
     for role_value, label in roles:
         if role_value == current_role:
@@ -151,7 +151,7 @@ def op_role_picker_keyboard():
     kb.row(CallbackButton(text="🛠 it — ИТ, полный доступ", payload="op:opadd:role:it"))
     kb.row(CallbackButton(text="👤 coordinator — ответы + рассылки", payload="op:opadd:role:coordinator"))
     kb.row(CallbackButton(text="👤 aemr — рядовой специалист", payload="op:opadd:role:aemr"))
-    kb.row(CallbackButton(text="👤 egp — специалист ЕГП", payload="op:opadd:role:egp"))
+    kb.row(CallbackButton(text="👤 egp — специалист администрации округа", payload="op:opadd:role:egp"))
     kb.row(CallbackButton(text="❌ Отменить добавление", payload="op:opadd:cancel"))
     return kb.as_markup()
 
