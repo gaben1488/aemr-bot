@@ -145,7 +145,9 @@ class User(Base):
     appeals: Mapped[list["Appeal"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     # «Нельзя связываться» — гард, разный в разных местах:
     # - broadcasts._eligible_filter — SQL-уровень: subscribed_broadcast +
-    #   consent_broadcast_at + NOT is_blocked + first_name != 'Удалено';
+    #   consent_broadcast_at + NOT is_blocked. Имя в гарде НЕ участвует:
+    #   сравнение с 'Удалено' NULL-небезопасно (#270), стёртого выражает
+    #   блокировка;
     # - operator_reply._deliver_operator_reply — Python-уровень с
     #   исключением для «прощального ответа» по обращениям ДО revoke.
     # Объединяющего @property специально нет: семантика отличается, и

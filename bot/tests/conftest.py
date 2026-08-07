@@ -85,12 +85,24 @@ async def _no_async_leaks_between_tests() -> AsyncIterator[None]:
         # PytestUnhandledThreadExceptionWarning.
         _, leaked_still = await asyncio.wait(leaked, timeout=1.0)
         for task in leaked_still:
-            task.cancel()
-        # Ждём с потолком: если задача всё-таки зависла на мёртвом
-        # соединении, тест закончится с предупреждением, а не повесит
-        # весь прогон.
+            try:
+                task.cancel()
+            except RuntimeError:
+                # Задача осталась с прошлого теста и висит на future уже
+                # закрытого цикла: cancel() пытается сделать call_soon на
+                # нём и падает «Event loop is closed». Гасить нечего —
+                # цикл мёртв вместе с задачей, роняющее исключение здесь
+                # только сорвало бы teardown ЧУЖОГО теста.
+                pass
         if leaked_still:
             await asyncio.wait(leaked_still, timeout=5)
+        # Задачи, которые не доиграли и после отмены, выбрасываем из
+        # реестра сами: done-callback на них уже не сработает, а без
+        # этого КАЖДЫЙ следующий тест заново ждал бы их 1 + 5 секунд —
+        # разовое зависание превратилось бы в постоянный налог на прогон.
+        for task in leaked_still:
+            if not task.done():
+                _BACKGROUND_TASKS.discard(task)
 
     if DATABASE_URL.startswith("sqlite"):
         from aemr_bot.db import session as db_session

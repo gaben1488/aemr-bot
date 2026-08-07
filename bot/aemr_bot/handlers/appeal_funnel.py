@@ -29,6 +29,7 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.handlers.appeal_runtime import (
     _HAS_ALNUM,
+    PERSIST_BLOCKED,
     PERSIST_NO_CONSENT,
     PERSIST_RATE_LIMITED,
     persist_and_dispatch_appeal,
@@ -454,6 +455,18 @@ async def finalize_appeal(event, max_user_id: int):
             text=(
                 "Чтобы подать обращение, нужно согласие на обработку "
                 "персональных данных. Откройте /start и дайте согласие."
+            ),
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+    elif persisted == PERSIST_BLOCKED:
+        # Заблокированному нельзя советовать /start: согласие блокировку
+        # не снимает, и житель ходит по кругу, не понимая, что происходит.
+        await event.bot.send_message(
+            chat_id=get_chat_id(event),
+            text=(
+                "Ваш аккаунт заблокирован — подача обращений недоступна. "
+                "Если блокировка ошибочна, обратитесь к координатору "
+                "Администрации."
             ),
             attachments=[keyboards.back_to_menu_keyboard()],
         )

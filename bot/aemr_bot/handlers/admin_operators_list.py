@@ -14,6 +14,7 @@ from aemr_bot import keyboards as kbds
 from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import operators as operators_service
+from aemr_bot.ui import wizard_keyboards
 from aemr_bot.handlers._common import op_screen
 from aemr_bot.utils.event import ack_callback
 
@@ -81,7 +82,10 @@ async def _show_operator_card(event, payload: str, operator_id: int) -> None:
         f"👤 {op.full_name}",
         "· · · · · · · ·",
         f"ID:       {op.max_user_id}",
-        f"Роль:     {op.role}",
+        # Подпись, а не голое значение enum: карточку читает ИТ перед
+        # сменой роли, а «aemr» и «egp» без пояснения не различить —
+        # ровно та проблема, ради которой заведён ROLE_LABELS.
+        f"Роль:     {wizard_keyboards.ROLE_LABELS.get(op.role, op.role)}",
         f"Статус:   {status_line}",
         f"Добавлен: {op.created_at.strftime('%d.%m.%Y')}" if op.created_at else "",
     ]

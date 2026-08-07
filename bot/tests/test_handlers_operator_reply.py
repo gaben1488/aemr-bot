@@ -718,16 +718,34 @@ class TestReplyRejectionBeforeDelivery:
             fresh_appeal=appeal, appeal_id=1
         ) is not None
 
-    def test_erased_user_rejected(self) -> None:
+    def test_erased_user_rejected_by_block_not_by_name(self) -> None:
+        """Стёртого жителя отбивает блокировка, а не строка имени.
+
+        Раньше здесь стоял отдельный запрет по `first_name == 'Удалено'`.
+        После #270 выборки рассылки перестали смотреть на имя, и запрет
+        по имени остался только тут — получалась инверсия: адресный
+        ответ жителю запрещён, а массовая рассылка ему уходит. Признак
+        один — `is_blocked`; легаси-строки блокирует миграция 0024,
+        служебная запись-заглушка создаётся заблокированной.
+        """
         from aemr_bot.handlers.operator_reply import (
             _reply_rejection_before_delivery,
         )
 
-        appeal = _fresh_appeal()
-        appeal.user.first_name = "Удалено"
+        erased = _fresh_appeal()
+        erased.user.first_name = "Удалено"
+        erased.user.is_blocked = True
         assert _reply_rejection_before_delivery(
-            fresh_appeal=appeal, appeal_id=1
+            fresh_appeal=erased, appeal_id=1
         ) is not None
+
+        # Одно лишь имя ответ не запрещает: житель мог назваться так сам,
+        # а у стёртого записи в базе уже нет.
+        named_only = _fresh_appeal()
+        named_only.user.first_name = "Удалено"
+        assert _reply_rejection_before_delivery(
+            fresh_appeal=named_only, appeal_id=1
+        ) is None
 
     def test_no_consent_ever_rejected(self) -> None:
         from aemr_bot.handlers.operator_reply import (

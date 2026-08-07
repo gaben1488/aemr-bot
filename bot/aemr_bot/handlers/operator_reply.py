@@ -269,7 +269,13 @@ def _reply_rejection_before_delivery(*, fresh_appeal, appeal_id: int) -> str | N
             f"сначала возобновите обращение через /reopen {appeal_id}."
         )
     user = fresh_appeal.user
-    hard_forbidden = user.is_blocked or user.first_name == "Удалено"
+    # Единый признак «нельзя связываться» — блокировка. Сравнение с
+    # именем «Удалено» держалось здесь после того, как из выборок
+    # рассылки его убрали (#270): получалась инверсия приоритетов —
+    # адресный ответ жителю запрещён, а массовая рассылка ему уходит.
+    # Легаси-записи стёртых жителей блокирует миграция 0024, служебная
+    # заглушка создаётся заблокированной.
+    hard_forbidden = user.is_blocked
     revoked_after_appeal = (
         user.consent_pdn_at is None
         and user.consent_revoked_at is not None

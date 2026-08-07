@@ -103,6 +103,63 @@ async def test_purge_old_appeals_content_redacts_attachments_even_without_text(s
 
 
 @pytest.mark.asyncio
+async def test_nameless_resident_stays_eligible_for_broadcast(session) -> None:
+    """Житель без имени получает оповещения — ради этого снят фильтр (#270).
+
+    Он отдал телефон и ушёл до ввода имени, поэтому `first_name IS NULL`.
+    Прежний фильтр `first_name != 'Удалено'` NULL-небезопасен: в SQL
+    `NULL != 'Удалено'` даёт NULL, а не TRUE, — строка молча выпадала из
+    выборки, и человек не получал оповещения о ЧС, будучи подписанным.
+    Тест сторожит именно этот случай: любая будущая переделка фильтра,
+    возвращающая трёхзначную логику, покраснеет здесь.
+    """
+    nameless = await users_service.get_or_create(session, max_user_id=401)
+    now = datetime.now(timezone.utc)
+    await session.execute(
+        update(User)
+        .where(User.id == nameless.id)
+        .values(
+            first_name=None,
+            subscribed_broadcast=True,
+            consent_broadcast_at=now,
+        )
+    )
+    await session.flush()
+
+    ids = {u.max_user_id for u in await users_service.list_subscribers(session, limit=10)}
+    assert 401 in ids, "житель без имени обязан получать оповещения о ЧС"
+
+
+@pytest.mark.asyncio
+async def test_blocked_erased_resident_excluded_from_broadcast(session) -> None:
+    """Легаси-стёртый (имя «Удалено» + блокировка) в рассылку не попадает.
+
+    Ранняя механика стирания не удаляла запись, а переименовывала жителя,
+    оставляя подписку и согласие живыми. Пока действовал фильтр по имени,
+    такие строки выпадали; после его снятия их закрывает миграция 0024,
+    проставляющая `is_blocked`. Тест сторожит результат: человек,
+    потребовавший стирания, не должен получить муниципальное оповещение.
+    """
+    legacy = await users_service.get_or_create(
+        session, max_user_id=402, first_name="Удалено"
+    )
+    now = datetime.now(timezone.utc)
+    await session.execute(
+        update(User)
+        .where(User.id == legacy.id)
+        .values(
+            subscribed_broadcast=True,
+            consent_broadcast_at=now,
+            is_blocked=True,
+        )
+    )
+    await session.flush()
+
+    ids = {u.max_user_id for u in await users_service.list_subscribers(session, limit=10)}
+    assert 402 not in ids, "стёртый житель не должен получать рассылку"
+
+
+@pytest.mark.asyncio
 async def test_list_subscribers_matches_broadcast_eligibility(session) -> None:
     eligible = await users_service.get_or_create(session, max_user_id=201, first_name="A")
     legacy_no_broadcast_consent = await users_service.get_or_create(

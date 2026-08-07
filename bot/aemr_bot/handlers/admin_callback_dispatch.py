@@ -298,7 +298,15 @@ async def dispatch_admin_callback(event, payload: str) -> bool:
 
     for prefix, raw_handler in _PREFIX_RAW:
         if payload.startswith(prefix):
-            await raw_handler(event, payload)
+            # Часть целей отвечает bool: False = «payload мой по префиксу,
+            # но хвост я не узнал» (`broadcast_templates.handle_callback`).
+            # Такой случай нельзя выдавать за обработанный: оператор
+            # тапнул устаревшую кнопку и не получил ни ack (спиннер
+            # крутится), ни текста, ни падения в menu.handle_callback.
+            # Симметрично ветке `_PREFIX_ID` выше: ack и стоп.
+            handled = await raw_handler(event, payload)
+            if handled is False:
+                await ack_callback(event)
             return True
 
     # Не admin-callback (или `op:`/`broadcast:` обёртка с неизвестным

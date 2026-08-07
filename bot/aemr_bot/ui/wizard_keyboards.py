@@ -108,13 +108,10 @@ def op_operator_role_change_keyboard(max_user_id: int, current_role: str):
     """Смена роли существующему оператору. Текущую роль показываем
     как заблокированную (без callback'а)."""
     kb = InlineKeyboardBuilder()
-    roles = [
-        (OperatorRole.IT.value, ROLE_LABELS[OperatorRole.IT.value]),
-        (OperatorRole.COORDINATOR.value, ROLE_LABELS[OperatorRole.COORDINATOR.value]),
-        (OperatorRole.AEMR.value, ROLE_LABELS[OperatorRole.AEMR.value]),
-        (OperatorRole.EGP.value, ROLE_LABELS[OperatorRole.EGP.value]),
-    ]
-    for role_value, label in roles:
+    # Источник ролей — сам ROLE_LABELS: перечисление их вручную означало
+    # бы, что новая роль в enum появится в одном мастере и пропадёт в
+    # другом, причём молча (кнопки нет — сценарий недостижим).
+    for role_value, label in ROLE_LABELS.items():
         if role_value == current_role:
             # Текущая роль — пометка, без активного callback'а
             kb.row(
@@ -169,11 +166,15 @@ def op_role_picker_keyboard():
     кнопке в строку с пояснением что значит каждая роль. Самомодификация
     (попытка выдать it самому себе) ловится в обработчике."""
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text=ROLE_LABELS[OperatorRole.IT.value], payload="op:opadd:role:it"))
-    kb.row(CallbackButton(text=ROLE_LABELS[OperatorRole.COORDINATOR.value], payload="op:opadd:role:coordinator"))
-    kb.row(CallbackButton(text=ROLE_LABELS[OperatorRole.AEMR.value], payload="op:opadd:role:aemr"))
-    kb.row(CallbackButton(text=ROLE_LABELS[OperatorRole.EGP.value], payload="op:opadd:role:egp"))
-    kb.row(CallbackButton(text="❌ Отменить добавление", payload="op:opadd:cancel"))
+    # Payload через cp.op_opadd, а не литералом: остальные кнопки файла
+    # строятся так же, и при смене префикса эти четыре не отстанут молча.
+    for role_value, label in ROLE_LABELS.items():
+        kb.row(
+            CallbackButton(text=label, payload=cp.op_opadd(f"role:{role_value}"))
+        )
+    kb.row(
+        CallbackButton(text="❌ Отменить добавление", payload=cp.op_opadd("cancel"))
+    )
     return kb.as_markup()
 
 

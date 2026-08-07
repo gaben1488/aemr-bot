@@ -248,7 +248,11 @@ async def _do_diag(event) -> None:
     def _users_query():
         return select(
             func.count().label("total"),
-            func.count().filter(User.first_name != "Удалено").label("active"),
+            # «Активные» = не заблокированные. Прежний фильтр по имени
+            # (`first_name != 'Удалено'`) NULL-небезопасен: у жителя без
+            # имени сравнение даёт NULL, и он молча не попадал в счётчик —
+            # оператор видел заниженную аудиторию перед рассылкой.
+            func.count().filter(User.is_blocked.is_(False)).label("active"),
             func.count().filter(User.is_blocked.is_(True)).label("blocked"),
             func.count().filter(User.created_at >= since_24h).label("new_24h"),
         ).select_from(User)
