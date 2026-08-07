@@ -77,12 +77,20 @@ async def _no_async_leaks_between_tests() -> AsyncIterator[None]:
 
     leaked = [t for t in list(_BACKGROUND_TASKS) if not t.done()]
     if leaked:
-        for task in leaked:
+        # Сначала короткая отсрочка на естественное завершение: persist в
+        # псевдо-БД падает на первом же запросе («no such table») и
+        # укладывается в один тик. Отменять сразу — значит бросить в
+        # потоке aiosqlite запрос, чей future уже некому резолвить: поток
+        # доедет до call_soon_threadsafe на закрытом цикле и выдаст
+        # PytestUnhandledThreadExceptionWarning.
+        _, leaked_still = await asyncio.wait(leaked, timeout=1.0)
+        for task in leaked_still:
             task.cancel()
         # Ждём с потолком: если задача всё-таки зависла на мёртвом
         # соединении, тест закончится с предупреждением, а не повесит
         # весь прогон.
-        await asyncio.wait(leaked, timeout=5)
+        if leaked_still:
+            await asyncio.wait(leaked_still, timeout=5)
 
     if DATABASE_URL.startswith("sqlite"):
         from aemr_bot.db import session as db_session
