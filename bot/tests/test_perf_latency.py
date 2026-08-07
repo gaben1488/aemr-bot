@@ -474,11 +474,14 @@ class TestPersistGuardsUnchanged:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        ("field", "value"),
-        [("is_blocked", True), ("consent_pdn_at", None)],
+        ("field", "value", "expected"),
+        [
+            ("is_blocked", True, "PERSIST_BLOCKED"),
+            ("consent_pdn_at", None, "PERSIST_NO_CONSENT"),
+        ],
     )
     async def test_blocked_or_revoked_gets_no_appeal(
-        self, field: str, value: object
+        self, field: str, value: object, expected: str
     ) -> None:
         """Гейт согласия/блокировки в точке финализации (79294ab).
 
@@ -488,6 +491,11 @@ class TestPersistGuardsUnchanged:
         когда дублёр отстал от контракта `User`. Заблокированный или
         отозвавший согласие обращения не создаёт, ack не получает,
         состояние воронки ему сбрасывают.
+
+        Исходы РАЗНЫЕ и обязаны такими остаться: отозвавшему согласие
+        помогает `/start`, а заблокированному — нет, блокировку снимает
+        только ИТ. Раньше обоим отвечали «дайте согласие», и житель ходил
+        по кругу, не понимая, почему обращение не уходит.
         """
         from aemr_bot.handlers import appeal_runtime as mod
 
@@ -502,7 +510,7 @@ class TestPersistGuardsUnchanged:
         with _apply(setup["patches"]):
             result = await mod.persist_and_dispatch_appeal(bot, user.max_user_id)
 
-        assert result == mod.PERSIST_NO_CONSENT
+        assert result == getattr(mod, expected)
         bot.send_message.assert_not_awaited()
         # Ни создания обращения, ни рендера карточки, ни relay.
         assert order == []

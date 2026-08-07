@@ -529,6 +529,28 @@ class TestFinalizeAppeal:
         assert text == texts.APPEAL_EMPTY_REJECTED
 
     @pytest.mark.asyncio
+    @pytest.mark.asyncio
+    async def test_blocked_is_not_told_to_give_consent(self) -> None:
+        """Заблокированному не советуют «дайте согласие через /start».
+
+        Согласие блокировку не снимает — снять её может только ИТ.
+        Прежний общий ответ отправлял человека по кругу: он открывал
+        /start, повторно соглашался, снова писал обращение и снова
+        упирался в тот же гейт, ни разу не узнав, что заблокирован.
+        """
+        from aemr_bot.handlers import appeal_funnel
+        from aemr_bot.handlers.appeal_runtime import PERSIST_BLOCKED
+
+        event = _funnel_event()
+        with patch("aemr_bot.handlers.appeal_funnel.persist_and_dispatch_appeal",
+                   AsyncMock(return_value=PERSIST_BLOCKED)):
+            await appeal_funnel.finalize_appeal(event, max_user_id=42)
+
+        text = event.bot.send_message.call_args.kwargs.get("text", "")
+        assert "заблокирован" in text.lower(), "житель должен узнать причину"
+        assert "/start" not in text, "совет, который не поможет, — хуже молчания"
+        assert "координатор" in text.lower(), "нужен путь решения проблемы"
+
     async def test_no_consent_directs_to_start(self) -> None:
         """persist вернул PERSIST_NO_CONSENT (обход блокировки/согласия через
         «Подать похожее») → житель получает подсказку про /start, не создаётся
