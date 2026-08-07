@@ -99,12 +99,37 @@ class TestReplyIntent:
         assert opr.drop_reply_intent(123) is None
 
     def test_intent_expires(self) -> None:
+        """Протухшее намерение возвращает маркер "expired", а не None.
+
+        До 2780cf5 здесь был None, и вызывающий код молча съедал текст
+        оператора: он был уверен, что ответил, а житель ничего не
+        получал. Теперь consume отличает «намерения не было» (None) от
+        «намерение было, но окно истекло» ("expired"), и хендлер по
+        этому маркеру шлёт ADMIN_REPLY_INTENT_EXPIRED. Тест сторожит
+        именно различие двух исходов.
+        """
         from aemr_bot.handlers import operator_reply as opr
         from aemr_bot.services import wizard_registry as _wr
 
         _wr._reply_intent.clear()
         # Ставим истёкшее намерение вручную через registry API.
         _wr.set_reply_intent(5, 10, time.monotonic() - 1.0)
+        assert opr.consume_reply_intent(5) == "expired"
+        # Одноразовость сохранена: протухшее намерение тоже сброшено,
+        # второй текст оператора уже не встретит «expired» повторно.
+        assert opr.consume_reply_intent(5) is None
+
+    def test_no_intent_is_none_not_expired(self) -> None:
+        """Контр-кейс к предыдущему: намерения не было вовсе — None.
+
+        Без этой пары «expired» легко подменить безусловным маркером, и
+        любой текст в админ-чате начнёт получать отбойник «окно
+        истекло».
+        """
+        from aemr_bot.handlers import operator_reply as opr
+        from aemr_bot.services import wizard_registry as _wr
+
+        _wr._reply_intent.clear()
         assert opr.consume_reply_intent(5) is None
 
 
