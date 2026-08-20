@@ -864,6 +864,45 @@ async def main() -> None:
 
     spawn_background_task(_recover(), name="recover_stuck_funnels")
 
+    async def _report_abandoned_broadcasts():
+        """Сообщить оператору о рассылке, брошенной перезапуском.
+
+        Оператор жмёт «Разослать», рассылка ждёт паузу на отмену (5 минут
+        обычно, 30 секунд для ЧС) в фоновой задаче. Перезапуск в этом окне
+        снимает задачу вместе с процессом: оповещение не уходит, а карточка
+        в служебной группе так и показывает «уйдёт через N секунд».
+        `reap_orphaned_draft` уберёт черновик через полчаса — молча и
+        поздно, для ЧС это вечность.
+
+        Сами НЕ отправляем: рассылку могли отменить, а статус не успел
+        записаться, и повторная отправка тысячам жителей необратима.
+        Решение — за человеком, наше дело сообщить.
+        """
+        try:
+            async with session_scope() as session:
+                drafts = await broadcasts_service.find_abandoned_drafts(session)
+            for draft in drafts:
+                preview = " ".join((draft.text or "").split())[:80]
+                await admin_bus.send(
+                    bot,
+                    text=(
+                        f"⚠️ Рассылка №{draft.id} не была отправлена: "
+                        "бот перезапустился, пока шёл отсчёт перед отправкой."
+                        f" Текст: «{preview}». "
+                        "Оповещение НЕ ушло ни одному жителю. Если оно "
+                        "по-прежнему нужно — создайте рассылку заново."
+                    ),
+                )
+                log.warning(
+                    "рассылка %s брошена перезапуском во время паузы", draft.id
+                )
+        except Exception:
+            log.exception("проверка брошенных рассылок не отработала")
+
+    spawn_background_task(
+        _report_abandoned_broadcasts(), name="report_abandoned_broadcasts"
+    )
+
     # /healthz: всегда поднят. В режиме webhook его раздаёт FastAPI, но в
     # режиме polling это единственная точка входа, поэтому пропустить нельзя.
     health_runner = None

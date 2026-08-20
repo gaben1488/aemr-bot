@@ -402,3 +402,36 @@ async def list_failed_deliveries(
         .limit(limit)
     )
     return [(row[0], row[1] or "—", row[2]) for row in result.all()]
+
+
+async def find_abandoned_drafts(
+    session: AsyncSession, *, max_age_seconds: int = 900
+) -> list[Broadcast]:
+    """Черновики рассылок, брошенные перезапуском во время паузы.
+
+    Оператор жмёт «Разослать» — рассылка ложится в базу черновиком, а
+    отправка ждёт паузу (5 минут обычно, 30 секунд для ЧС) в фоновой
+    задаче. Пауза существует, чтобы можно было отменить. Но если бот
+    в этом окне перезапустится, задача снимается вместе с процессом, и
+    черновик остаётся лежать навсегда: оповещение не ушло, а карточка в
+    служебной группе показывает «уйдёт через 30 секунд». Никто не узнаёт.
+
+    `max_age_seconds` с запасом больше самой длинной паузы, но меньше
+    получаса, за которую `reap_orphaned_draft` переводит зависшие
+    черновики в FAILED. Та уборка чистит базу, но молча и с опозданием:
+    для оповещения о ЧС полчаса — вечность. Здесь берём свежие черновики
+    сразу при запуске, чтобы оператор узнал в ту же минуту.
+
+    Возвращаем сами объекты (не идентификаторы): вызывающему нужен текст,
+    чтобы показать оператору, о какой именно рассылке речь.
+    """
+    cutoff = datetime.now(UTC) - timedelta(seconds=max_age_seconds)
+    rows = await session.scalars(
+        select(Broadcast)
+        .where(
+            Broadcast.status == BroadcastStatus.DRAFT.value,
+            Broadcast.created_at >= cutoff,
+        )
+        .order_by(Broadcast.created_at)
+    )
+    return list(rows)
