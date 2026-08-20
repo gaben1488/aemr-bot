@@ -94,12 +94,22 @@ async def _no_async_leaks_between_tests() -> AsyncIterator[None]:
             if not task.done():
                 _BACKGROUND_TASKS.discard(task)
 
-    # Пул соединений рассыпаем независимо от типа БД: соединения asyncpg
-    # привязаны к циклу так же, как aiosqlite, и в CI (Postgres) прогон
-    # PG-тестов — единственное место, где это вообще проверяется.
-    from aemr_bot.db import session as db_session
+    # Пул рассыпаем ТОЛЬКО для псевдо-БД (sqlite в юнит-прогоне).
+    #
+    # Пробовал снять эту привязку — рассуждение звучало верно: соединения
+    # asyncpg привязаны к циклу так же, как aiosqlite, и в CI с живым
+    # Postgres защита не работала. На практике вышло наоборот: dispose
+    # после КАЖДОГО теста рвёт пул под тестами, которые держат сессию,
+    # и PG-прогон посыпался (test_appeal_dispatcher и далее — обработчик
+    # не доходил до вызова). Локально это не воспроизводится: там
+    # псевдо-БД, dispose безвреден.
+    #
+    # Вывод: в PG-прогоне каждый тест берёт сессию из фикстуры `session`
+    # и сам её откатывает — общий пул рвать не нужно и вредно.
+    if DATABASE_URL.startswith("sqlite"):
+        from aemr_bot.db import session as db_session
 
-    await db_session.engine.dispose()
+        await db_session.engine.dispose()
 
 
 @pytest_asyncio.fixture
