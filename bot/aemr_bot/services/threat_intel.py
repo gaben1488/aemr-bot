@@ -239,7 +239,8 @@ def _parse_threatfox_hostfile(body: str) -> set[str]:
     hosts = set()
     for line in body.splitlines():
         parts = line.split()
-        if (len(parts) >= 2 and parts[0] in {"0.0.0.0", "127.0.0.1"}
+        # These are hosts-file data markers; this parser never binds a socket.
+        if (len(parts) >= 2 and parts[0] in {"0.0.0.0", "127.0.0.1"}  # nosec B104
                 and (host := _feed_host(parts[1]))):
             hosts.add(host)
     return hosts
