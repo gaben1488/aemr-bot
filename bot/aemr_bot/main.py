@@ -84,11 +84,9 @@ def build_dispatcher() -> Dispatcher:
 def _install_dispatch_guards(dp: Dispatcher) -> None:
     """Навесить per-user throttle и bounded-семафор на `dp.handle`.
 
-    Переопределяем метод на ЭКЗЕМПЛЯРЕ (как `_install_polling_timeout`
-    для `bot.get_updates`), не трогая maxapi. Семафор берём только в
-    polling-режиме: webhook-путь уже обёрнут _WEBHOOK_SEMAPHORE, дублировать
-    bound нельзя. Троттлинг применяем в обоих режимах — это анти-флуд на
-    уровне жителя, ортогональный транспорту.
+    Оба транспорта передают события последовательному durable inbox worker.
+    Троттлинг действует перед обработчиком. Polling-семафор дополнительно
+    ограничивает прямые вызовы dp.handle вне worker (тесты/адаптеры).
     """
     original_handle = dp.handle
     polling = settings.bot_mode == "polling"
@@ -103,7 +101,7 @@ def _install_dispatch_guards(dp: Dispatcher) -> None:
                 outcome.reason = "rate_limited"
             await _ack_throttled_callback(event_object)
             return None
-        # 2) Bounded-семафор только на polling-пути (webhook ограничен своим).
+        # 2) Дополнительный bound для прямого polling-dispatch вне inbox.
         if polling:
             async with _get_polling_dispatch_semaphore():
                 return await original_handle(event_object, *args, **kwargs)
@@ -117,18 +115,13 @@ def create_app() -> tuple[Bot, Dispatcher]:
 
     Объединяет build_bot + build_dispatcher в одну точку. Вызывается на
     уровне модуля (ниже — `bot, dp = create_app()`), чтобы сохранить
-    исторические `from aemr_bot.main import bot/dp` и регистрацию
-    webhook-декоратора, замыкающего эти module-level имена. Поведение
-    запуска идентично прежней inline-инициализации.
+    исторические `from aemr_bot.main import bot/dp`. Webhook-маршрут
+    регистрируется отдельно через transport.setup_webhook при запуске.
     """
     return build_bot(), build_dispatcher()
 
 
-# Общий потолок concurrency для входящих апдейтов и общая lazy-фабрика на
-# оба пути (webhook и polling). Инстансы семафоров РАЗНЫЕ — каждый транспорт
-# держит своё независимое окно, — но реализация и число одни. 32 —
-# компромисс между throughput и memory pressure (mem_limit=512m в
-# docker-compose): увеличивать только после реальных нагрузочных замеров.
+# Дополнительный предел прямого dispatch; штатный inbox worker последовательный.
 _SEMAPHORE_CONCURRENCY = 32
 
 
@@ -138,9 +131,7 @@ def _lazy_semaphore(
     """Lazy-init module-global семафора по имени `holder_name`.
 
     Создавать семафор на module-level нельзя — при импорте main.py ещё нет
-    активного event loop. Общая реализация для webhook- и polling-семафоров:
-    они различаются только именем module-global, а значит дают два
-    независимых инстанса с одним и тем же потолком.
+    активного event loop. Инициализация выполняется при первом dispatch.
     """
     sem = globals().get(holder_name)
     if sem is None:
@@ -149,28 +140,7 @@ def _lazy_semaphore(
     return sem
 
 
-# Semaphore-окно для входящих webhook'ов. Без ограничения каждый POST
-# в /max/webhook порождает asyncio.create_task(...) — флуд (1000 RPS
-# или ботнет) получает unbounded task spawn → OOM при mem_limit=512m
-# в docker-compose. С 32 параллельными dispatchers очередь FastAPI
-# держит остальные на 200ms+ — клиенты MAX перетягивают, но процесс
-# не падает.
-_WEBHOOK_SEMAPHORE: asyncio.Semaphore | None = None
-
-
-def _get_webhook_semaphore() -> asyncio.Semaphore:
-    return _lazy_semaphore("_WEBHOOK_SEMAPHORE")
-
-
-# Semaphore-окно для polling-dispatch (P2-1). maxapi с use_create_task=True
-# спавнит `asyncio.create_task(dp.handle(event))` на КАЖДЫЙ апдейт без
-# верхней границы (см. maxapi/dispatcher.py:_dispatch_fetched_events). На
-# webhook-пути флуд ограничивает _WEBHOOK_SEMAPHORE, но polling-путь зиял:
-# ботнет или один зацикленный клиент мог накопить тысячи одновременных
-# handle()-тасков, каждый из которых берёт соединение из пула БД (15) →
-# исчерпание пула, рост памяти при mem_limit=512m, деградация для всех.
-# Симметрично webhook'у: bounded окно держит число параллельных dispatch'ей
-# в узде — тот же потолок _SEMAPHORE_CONCURRENCY, что и у webhook-семафора.
+# Webhook принимает событие в БД; отдельного webhook-dispatch семафора нет.
 _POLLING_DISPATCH_SEMAPHORE: asyncio.Semaphore | None = None
 
 
