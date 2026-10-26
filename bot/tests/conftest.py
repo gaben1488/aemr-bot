@@ -22,6 +22,18 @@ DATABASE_URL = os.environ["DATABASE_URL"]
 # в URL (модели используют JSONB, sqlite не подойдёт).
 _HAS_REAL_DB = DATABASE_URL.startswith("postgresql")
 
+if _HAS_REAL_DB:
+    # Only the test harness disables pooling. asyncpg connections belong to the
+    # loop that created them; pytest-asyncio gives each test a fresh loop.
+    # Returning a connection to the production pool leaked it across tests.
+    from sqlalchemy.ext.asyncio import create_async_engine
+    from sqlalchemy.pool import NullPool
+
+    from aemr_bot.db import session as db_session
+
+    db_session.engine = create_async_engine(DATABASE_URL, poolclass=NullPool)
+    db_session.SessionFactory.configure(bind=db_session.engine)
+
 # Hypothesis: снять дедлайн на один пример (по умолчанию 200 мс).
 # Property-тесты (tests/test_validators_hypothesis.py) проверяют ЛОГИКУ
 # валидаторов, а не их скорость. Дефолтный дедлайн делал их флаки: в
@@ -94,22 +106,10 @@ async def _no_async_leaks_between_tests() -> AsyncIterator[None]:
             if not task.done():
                 _BACKGROUND_TASKS.discard(task)
 
-    # Пул рассыпаем ТОЛЬКО для псевдо-БД (sqlite в юнит-прогоне).
-    #
-    # Пробовал снять эту привязку — рассуждение звучало верно: соединения
-    # asyncpg привязаны к циклу так же, как aiosqlite, и в CI с живым
-    # Postgres защита не работала. На практике вышло наоборот: dispose
-    # после КАЖДОГО теста рвёт пул под тестами, которые держат сессию,
-    # и PG-прогон посыпался (test_appeal_dispatcher и далее — обработчик
-    # не доходил до вызова). Локально это не воспроизводится: там
-    # псевдо-БД, dispose безвреден.
-    #
-    # Вывод: в PG-прогоне каждый тест берёт сессию из фикстуры `session`
-    # и сам её откатывает — общий пул рвать не нужно и вредно.
-    if DATABASE_URL.startswith("sqlite"):
-        from aemr_bot.db import session as db_session
+    # Tests have separate event loops; no connection may survive into another.
+    from aemr_bot.db import session as db_session
 
-        await db_session.engine.dispose()
+    await db_session.engine.dispose()
 
 
 @pytest_asyncio.fixture
