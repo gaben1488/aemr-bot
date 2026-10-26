@@ -30,7 +30,8 @@ async def test_user_lifecycle(session):
 
 @pytest.mark.asyncio
 async def test_appeal_creation_and_card(session):
-    user = await users_service.get_or_create(session, max_user_id=42, first_name="Алексей")
+    user = await users_service.get_or_create(session, max_user_id=42)
+    await users_service.set_first_name(session, 42, "Алексей")
     await users_service.set_phone(session, 42, "89964240723")
     user = await users_service.get_or_create(session, max_user_id=42)
 
