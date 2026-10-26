@@ -1,279 +1,324 @@
-"""URL threat-intelligence для входящих сообщений жителей.
+"""Local threat-feed reputation checks; never visit resident-supplied URLs.
 
-См. `docs/_meta/URL_THREAT_INTEL_2026-05-26.md` для полной архитектуры.
-
-Цель: оператор в admin-карточке видит предупреждение «⛔ Подозрительные
-ссылки», если житель прислал в обращении URL из известных feed'ов
-malware/phishing. Не блокирует сообщение жителя — у него может быть
-легитимный кейс «мне это прислали мошенники, помогите» — но даёт
-оператору сигнал к осторожности.
-
-**Поведение**:
-- В памяти держим `set[str]` нормализованных host'ов (lowercase, без
-  www, без trailing slash). Lookup O(1).
-- Обновление раз в час из трёх free feed'ов: URLhaus, ThreatFox,
-  опционально PhishTank (если задан PHISHTANK_APP_KEY).
-- Staleness budget 6 часов: если за 6 часов ни одно обновление не
-  прошло — alert в admin chat, но бот продолжает работать со стейл-set'ом.
-- Fail-open: любая ошибка fetch (network, parse, format-change) → log
-  + использовать предыдущий set, не падать.
-
-**Что НЕ делает**:
-- Не выполняет live-lookup на API на hot-path (точка отказа).
-- Не блокирует сообщение жителя — только warning оператору.
-- Не персистит set на диск — restart бота = новая загрузка через cron.
+Refresh at startup and hourly. Valid snapshots are retained per source and
+persisted atomically. Failure never prevents receiving an appeal. A match is
+host reputation, not a verdict about a particular page or all its subdomains.
 """
 from __future__ import annotations
 
 import asyncio
+import csv
+import io
+import ipaddress
 import json
 import logging
 import os
+import tempfile
 import time
+import zipfile
 from dataclasses import dataclass, field
-from urllib.parse import urlparse
+from pathlib import Path
+from urllib.parse import quote, urlparse
 
 import aiohttp
 
 from aemr_bot.network import session_kwargs
 
 log = logging.getLogger(__name__)
-
-# Источники feed'ов. URL'ы фиксированы в коде — это не пользовательский
-# input, не нужно валидации; если abuse.ch поменяет endpoint, переписываем.
-_URLHAUS_URL = "https://urlhaus.abuse.ch/downloads/csv_online/"
-_THREATFOX_URL = "https://threatfox.abuse.ch/downloads/hostfile/"
-_PHISHTANK_URL_TEMPLATE = (
-    "https://data.phishtank.com/data/{app_key}/online-valid.json"
-)
-
-# Timeout запроса. Не критично долгий — cron job в фоне, не блокирует
-# пользователя, но 60 сек достаточно для медленного CDN.
+_URLHAUS_URL = "https://urlhaus-api.abuse.ch/v2/files/exports/{app_key}/recent.csv"
+_THREATFOX_URL = "https://threatfox-api.abuse.ch/v2/files/exports/{app_key}/full.csv.zip"
+_PHISHTANK_URL_TEMPLATE = "https://data.phishtank.com/data/{app_key}/online-valid.json"
+_OPENPHISH_URL = "https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt"
 _FETCH_TIMEOUT_SEC = 60
-# Staleness budget: после стольких секунд без успешного refresh — alert.
-_STALENESS_BUDGET_SEC = 6 * 3600  # 6 часов
+_STALENESS_BUDGET_SEC = 6 * 3600
+_MAX_FEED_BYTES = 32 * 1024 * 1024
+_MAX_UNPACKED_BYTES = 64 * 1024 * 1024
+
+
+def _enabled_sources() -> set[str]:
+    # Without an abuse.ch key use the limited public phishing feed.
+    names = ({"urlhaus", "threatfox"} if os.environ.get("ABUSECH_AUTH_KEY", "").strip()
+             else {"openphish"})
+    if os.environ.get("PHISHTANK_APP_KEY", "").strip():
+        names.add("phishtank")
+    return names
 
 
 @dataclass
 class ThreatIntelStore:
-    """In-memory хранилище host'ов из threat-intel feed'ов.
-
-    Singleton-инстанс получается через `get_store()` (lazy).
-    """
-
     hosts: set[str] = field(default_factory=set)
-    """Множество lowercase-host'ов известных malware/phishing-сайтов."""
-
     last_refresh_at: float | None = None
-    """Monotonic-timestamp последнего успешного refresh'а (любого feed'а)."""
-
     sources: dict[str, int] = field(default_factory=dict)
-    """Сколько host'ов вкладывает каждый feed (для observability)."""
+    source_hosts: dict[str, set[str]] = field(default_factory=dict)
+    source_updated_at: dict[str, float] = field(default_factory=dict)
+    started_at: float = field(default_factory=time.monotonic)
+    outage_notified: bool = False
+    refresh_lock: asyncio.Lock = field(default_factory=asyncio.Lock, repr=False)
 
     def is_malicious(self, url: str) -> tuple[bool, str | None]:
-        """Проверить URL по локальному set'у.
-
-        Возвращает (True, источник) если host URL в feed'е, иначе
-        (False, None). Источник — для отчёта оператору в admin card.
-
-        Sanity: пустой set (бот только что стартовал, cron ещё не
-        прошёл) → всегда False, не fail-positive.
-        """
-        if not self.hosts or not url:
-            return False, None
         host = _normalize_host(url)
-        if not host:
+        if not host or host not in self.hosts:
             return False, None
-        if host in self.hosts:
-            # Мы знаем что host в set'е, но не знаем точно из какого
-            # feed'а — set объединённый. Возвращаем generic-метку.
-            return True, "threat-intel"
-        return False, None
+        sources = sorted(name for name, hosts in self.source_hosts.items() if host in hosts)
+        return True, ", ".join(sources) if sources else "threat-intel"
 
     def staleness_age_seconds(self) -> float | None:
-        """Сколько секунд прошло с последнего успешного refresh'а.
-
-        None — если ни разу не обновлялись (бот только что стартовал
-        и cron ещё не прошёл).
-        """
         if self.last_refresh_at is None:
             return None
-        return time.monotonic() - self.last_refresh_at
+        return max(0, time.monotonic() - self.last_refresh_at)
 
     def is_stale(self) -> bool:
-        """True если данные старше staleness budget'а."""
-        age = self.staleness_age_seconds()
-        return age is not None and age > _STALENESS_BUDGET_SEC
+        if self.source_hosts:
+            return any(
+                time.time() - self.source_updated_at.get(
+                    name, time.time() - (time.monotonic() - self.started_at)
+                ) > _STALENESS_BUDGET_SEC
+                for name in _enabled_sources()
+            )
+        origin = self.last_refresh_at if self.last_refresh_at is not None else self.started_at
+        return time.monotonic() - origin > _STALENESS_BUDGET_SEC
+
+    def rebuild(self) -> None:
+        self.hosts = set().union(*self.source_hosts.values())
+        self.sources = {name: len(hosts) for name, hosts in self.source_hosts.items()}
 
 
-# Singleton — простой module-level dict. Не Class-method, чтобы было
-# легко тестировать через monkeypatch.
 _STORE: ThreatIntelStore | None = None
 
 
+def _cache_path() -> Path | None:
+    value = os.environ.get("THREAT_INTEL_CACHE_PATH", "/var/lib/aemr/threat-intel.json").strip()
+    return Path(value) if value else None
+
+
+def save_cache(store: ThreatIntelStore) -> None:
+    """No keys, resident data or URLs in cache; atomic replace on a persistent volume."""
+    path = _cache_path()
+    if path is None:
+        return
+    tmp = None
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        data = {
+            "version": 1, "outage_notified": store.outage_notified,
+            "started_at": time.time() - max(0, time.monotonic() - store.started_at),
+            "sources": {name: {"updated_at": store.source_updated_at[name], "hosts": sorted(hosts)}
+                        for name, hosts in store.source_hosts.items()},
+        }
+        with tempfile.NamedTemporaryFile(mode="w", dir=path.parent, delete=False) as f:
+            tmp = f.name
+            json.dump(data, f)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except Exception:
+        # Do not log exception strings: paths might contain credentials supplied by an operator.
+        log.warning("threat_intel: cache write failed; memory snapshot retained")
+    finally:
+        if tmp and os.path.exists(tmp):
+            os.unlink(tmp)
+
+
 def get_store() -> ThreatIntelStore:
-    """Lazy-singleton доступ к глобальному store."""
     global _STORE
     if _STORE is None:
-        _STORE = ThreatIntelStore()
+        store = ThreatIntelStore()
+        path = _cache_path()
+        if path and path.is_file():
+            try:
+                if path.stat().st_size > _MAX_UNPACKED_BYTES:
+                    raise ValueError("cache too large")
+                data = json.loads(path.read_text())
+                if data["version"] != 1:
+                    raise ValueError("cache version")
+                for name, item in data["sources"].items():
+                    if name not in _enabled_sources():
+                        continue
+                    hosts = item["hosts"]
+                    stamp = float(item["updated_at"])
+                    if not isinstance(hosts, list) or not all(
+                        isinstance(h, str) and h and _normalize_host(h) == h for h in hosts
+                    ) or not 0 < stamp <= time.time():
+                        raise ValueError("invalid cache")
+                    store.source_hosts[name] = set(hosts)
+                    store.source_updated_at[name] = stamp
+                store.rebuild()
+                if store.source_updated_at:
+                    age = time.time() - max(store.source_updated_at.values())
+                    store.last_refresh_at = time.monotonic() - max(0, age)
+                store.started_at -= max(0, time.time() - float(data.get("started_at", time.time())))
+                store.outage_notified = data.get("outage_notified") is True
+            except Exception:
+                store = ThreatIntelStore()
+                log.warning("threat_intel: invalid cache ignored")
+        _STORE = store
     return _STORE
 
 
 def _normalize_host(url_or_host: str) -> str:
-    """Извлечь и нормализовать hostname из URL или host'а напрямую.
-
-    `https://www.Attacker.com/path` → `attacker.com`.
-    `evil.example` → `evil.example`.
-    `https://[fe80::1]/x` → `fe80::1` (IPv6 без скобок).
-
-    Безопасно к парсе-ошибкам: всё, что не парсится — пустая строка.
-    """
     try:
-        # Если уже host без схемы — urlparse не вернёт hostname,
-        # дописываем схему искусственно.
-        if "://" not in url_or_host:
-            parsed = urlparse(f"http://{url_or_host}")
-        else:
-            parsed = urlparse(url_or_host)
-    except (ValueError, AttributeError):
+        value = url_or_host.strip()
+        # A bare IPv6 address from our own cache is not a URL authority.
+        try:
+            return ipaddress.ip_address(value).compressed
+        except ValueError:
+            pass
+        parsed = urlparse(value if "://" in value else f"http://{value}")
+        host = (parsed.hostname or "").lower().removeprefix("www.").rstrip(".")
+        return host.encode("idna").decode("ascii")
+    except (ValueError, AttributeError, UnicodeError):
         return ""
-    host = (parsed.hostname or "").lower()
-    host = host.removeprefix("www.")
-    return host
 
 
-async def _fetch_text(
-    session: aiohttp.ClientSession, url: str
-) -> str | None:
-    """Скачать URL как text. None при любой ошибке (log на WARNING)."""
+async def _fetch_text(session: aiohttp.ClientSession, url: str) -> str | None:
+    """Bound compressed AND uncompressed sizes; never log URLs or exception messages."""
+    label = urlparse(url).hostname
     try:
         async with session.get(
-            url, timeout=aiohttp.ClientTimeout(total=_FETCH_TIMEOUT_SEC)
+            url, timeout=aiohttp.ClientTimeout(total=_FETCH_TIMEOUT_SEC),
+            allow_redirects=False,
         ) as resp:
             if resp.status != 200:
-                log.warning(
-                    "threat_intel: %s returned HTTP %d", url, resp.status
-                )
+                log.warning("threat_intel: %s HTTP %d", label, resp.status)
                 return None
-            return await resp.text()
+            body = bytearray()
+            async for chunk in resp.content.iter_chunked(64 * 1024):
+                body.extend(chunk)
+                if len(body) > _MAX_FEED_BYTES:
+                    raise ValueError("feed too large")
+            if url.endswith(".zip"):
+                with zipfile.ZipFile(io.BytesIO(body)) as archive:
+                    files = [f for f in archive.infolist() if not f.is_dir()]
+                    if len(files) != 1 or files[0].file_size > _MAX_UNPACKED_BYTES:
+                        raise ValueError("unexpected archive")
+                    # Read at most the cap even if ZIP metadata lies; never extract paths.
+                    with archive.open(files[0]) as stream:
+                        body = bytearray(stream.read(_MAX_UNPACKED_BYTES + 1))
+                    if len(body) > _MAX_UNPACKED_BYTES:
+                        raise ValueError("archive too large")
+            return body.decode("utf-8-sig")
     except Exception as exc:
-        log.warning("threat_intel: fetch %s failed: %s", url, exc)
+        log.warning("threat_intel: %s fetch failed (%s)", label, type(exc).__name__)
         return None
 
 
+def _rows(body: str):
+    return csv.reader(io.StringIO("\n".join(
+        line for line in body.splitlines() if line.strip() and not line.lstrip().startswith("#")
+    )), skipinitialspace=True)
+
+
+def _feed_host(value: str) -> str:
+    host = _normalize_host(value)
+    if not host or any(c.isspace() for c in host) or any(c in host for c in "<>@/\\"):
+        return ""
+    try:
+        ipaddress.ip_address(host)
+        return host
+    except ValueError:
+        return host if "." in host and all(
+            part and len(part) <= 63 and all(c.isalnum() or c == "-" for c in part)
+            for part in host.split(".")
+        ) else ""
+
+
 def _parse_urlhaus_csv(body: str) -> set[str]:
-    """CSV URLhaus: первые 7 строк — комментарий, потом
-    `id,dateadded,url,...`. Берём `url` (поле 3, 0-indexed 2)."""
-    hosts: set[str] = set()
-    for line in body.splitlines():
-        if not line or line.startswith("#"):
-            continue
-        # Простой parse — split по `,` с учётом возможных кавычек.
-        # Полный CSV-parser избыточен для нашего use case (мы берём
-        # один столбец, без многострочных значений).
-        parts = line.split(",")
-        if len(parts) < 3:
-            continue
-        url = parts[2].strip().strip('"')
-        host = _normalize_host(url)
-        if host:
-            hosts.add(host)
+    hosts = set()
+    for row in _rows(body):
+        if len(row) >= 3 and row[0].strip().isdigit() and row[2].startswith(("http://", "https://")):
+            # recent.csv contains offline entries as well as online ones.
+            if len(row) > 3 and row[3] == "offline":
+                continue
+            if host := _feed_host(row[2]):
+                hosts.add(host)
     return hosts
 
 
 def _parse_threatfox_hostfile(body: str) -> set[str]:
-    """ThreatFox host-file: формат `0.0.0.0 evil.example` per line."""
-    hosts: set[str] = set()
+    """Legacy parser retained for older fixtures; live source uses CSV exports."""
+    hosts = set()
     for line in body.splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
         parts = line.split()
-        if len(parts) < 2:
+        if (len(parts) >= 2 and parts[0] in {"0.0.0.0", "127.0.0.1"}
+                and (host := _feed_host(parts[1]))):
+            hosts.add(host)
+    return hosts
+
+
+def _parse_threatfox_csv(body: str) -> set[str]:
+    # Official CSV schema: id,first_seen_utc,ioc_value,ioc_type,threat_type,...
+    hosts = set()
+    for row in _rows(body):
+        if len(row) < 4 or not row[0].strip().isdigit():
             continue
-        host = _normalize_host(parts[1])
-        if host:
+        if row[3] not in {"domain", "url", "ip:port"}:
+            continue  # hashes are not network indicators
+        if host := _feed_host(row[2]):
             hosts.add(host)
     return hosts
 
 
 def _parse_phishtank_json(body: str) -> set[str]:
-    """PhishTank online-valid.json: список объектов с полем `url`."""
     try:
         items = json.loads(body)
     except json.JSONDecodeError:
         return set()
     if not isinstance(items, list):
         return set()
-    hosts: set[str] = set()
-    for it in items:
-        if not isinstance(it, dict):
-            continue
-        url = it.get("url", "")
-        host = _normalize_host(url) if isinstance(url, str) else ""
-        if host:
-            hosts.add(host)
-    return hosts
+    return {host for item in items if isinstance(item, dict)
+            and isinstance(item.get("url"), str)
+            and item.get("online", "yes") == "yes" and item.get("verified", "yes") == "yes"
+            if (host := _feed_host(item["url"]))}
+
+
+def _parse_url_list(body: str) -> set[str]:
+    return {host for line in body.splitlines()
+            if line.startswith(("https://", "http://")) and (host := _feed_host(line))}
 
 
 async def refresh_all() -> dict[str, int]:
-    """Перетянуть все feed'ы и обновить singleton store.
-
-    Возвращает dict `{feed_name: count}` для логирования. Если ни один
-    feed не отдался — store не обновляется (сохраняется предыдущий
-    set), `last_refresh_at` тоже не двигается → staleness растёт.
-
-    Вызывается из cron `threat-intel-refresh` (раз в час).
-    """
     store = get_store()
-    counts: dict[str, int] = {}
-    new_hosts: set[str] = set()
+    async with store.refresh_lock:
+        return await _refresh(store)
+
+
+async def _refresh(store: ThreatIntelStore) -> dict[str, int]:
+    key = os.environ.get("ABUSECH_AUTH_KEY", "").strip()
+    feeds = []
+    if key:
+        feeds.extend([
+            ("urlhaus", _URLHAUS_URL.format(app_key=quote(key, safe="")), _parse_urlhaus_csv),
+            ("threatfox", _THREATFOX_URL.format(app_key=quote(key, safe="")), _parse_threatfox_csv),
+        ])
+    else:
+        log.info("threat_intel: ABUSECH_AUTH_KEY missing; using limited OpenPhish community feed")
+        feeds.append(("openphish", _OPENPHISH_URL, _parse_url_list))
+    phishtank_key = os.environ.get("PHISHTANK_APP_KEY", "").strip()
+    if phishtank_key:
+        feeds.append(("phishtank", _PHISHTANK_URL_TEMPLATE.format(
+            app_key=quote(phishtank_key, safe="")), _parse_phishtank_json))
     async with aiohttp.ClientSession(**session_kwargs()) as session:
-        # Все три feed'а тянем параллельно — это IO-bound.
-        urlhaus_task = _fetch_text(session, _URLHAUS_URL)
-        threatfox_task = _fetch_text(session, _THREATFOX_URL)
-
-        phishtank_key = os.environ.get("PHISHTANK_APP_KEY", "").strip()
-        phishtank_task: asyncio.Task | None = None
-        if phishtank_key:
-            phishtank_task = asyncio.create_task(
-                _fetch_text(
-                    session,
-                    _PHISHTANK_URL_TEMPLATE.format(app_key=phishtank_key),
-                )
-            )
-
-        urlhaus_body, threatfox_body = await asyncio.gather(
-            urlhaus_task, threatfox_task
-        )
-        phishtank_body = await phishtank_task if phishtank_task else None
-
-    if urlhaus_body:
-        hosts = _parse_urlhaus_csv(urlhaus_body)
-        new_hosts.update(hosts)
-        counts["urlhaus"] = len(hosts)
-    if threatfox_body:
-        hosts = _parse_threatfox_hostfile(threatfox_body)
-        new_hosts.update(hosts)
-        counts["threatfox"] = len(hosts)
-    if phishtank_body:
-        hosts = _parse_phishtank_json(phishtank_body)
-        new_hosts.update(hosts)
-        counts["phishtank"] = len(hosts)
-
-    if not counts:
-        log.warning(
-            "threat_intel: ни один feed не отдался — set не обновлён, "
-            "продолжаем со старым (age=%.0f сек)",
-            store.staleness_age_seconds() or 0,
-        )
-        return {}
-
-    store.hosts = new_hosts
-    store.sources = counts
-    store.last_refresh_at = time.monotonic()
-    log.info(
-        "threat_intel: refresh ok — %d host'ов из %d feed'ов: %s",
-        len(new_hosts), len(counts), counts,
-    )
+        bodies = await asyncio.gather(*(_fetch_text(session, url) for _, url, _ in feeds))
+    counts = {}
+    for (name, _, parse), body in zip(feeds, bodies, strict=True):
+        if not body:
+            continue
+        try:
+            hosts = await asyncio.to_thread(parse, body)
+        except Exception as exc:
+            log.warning("threat_intel: %s parse failed (%s)", name, type(exc).__name__)
+            continue
+        if not hosts:
+            log.warning("threat_intel: %s empty/invalid feed; previous snapshot retained", name)
+            continue
+        store.source_hosts[name] = hosts
+        store.source_updated_at[name] = time.time()
+        counts[name] = len(hosts)
+    if counts:
+        store.rebuild()
+        store.last_refresh_at = time.monotonic()
+        log.info("threat_intel: refresh ok: %s; retained coverage: %s", counts, store.sources)
+    if not store.is_stale():
+        store.outage_notified = False
+    await asyncio.to_thread(save_cache, store)
     return counts

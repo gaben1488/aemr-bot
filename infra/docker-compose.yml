@@ -80,6 +80,7 @@ services:
       # Локальные еженедельные pg_dump'ы. Named-volume переживает пересборки
       # контейнера. Восстановление — см. RUNBOOK §7.
       - backups:/backups
+      - threat_intel:/var/lib/aemr
       # Персистентные логи приложения на диск хоста: bot.log с ротацией,
       # переживает любой down/rm/пересборку. Каталог создать заранее с
       # владельцем UID 1000 (см. вики «Эксплуатация» → «Логи»):
@@ -133,5 +134,6 @@ services:
   #   docker compose -f docker-compose.yml -f docker-compose.webhook.yml up -d
 
 volumes:
+  threat_intel:
   db_data:
   backups:

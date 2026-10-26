@@ -39,8 +39,12 @@ class _FakeResp:
     def status(self) -> int:
         return self._status
 
-    async def text(self) -> str:
-        return self._text
+    @property
+    def content(self):
+        return self
+
+    async def iter_chunked(self, size):
+        yield self._text.encode()
 
 
 class _FakeSession:
@@ -49,12 +53,12 @@ class _FakeSession:
     def __init__(self, resp: _FakeResp) -> None:
         self._resp = resp
 
-    def get(self, url, timeout=None):
+    def get(self, url, timeout=None, **kwargs):
         return self._resp
 
 
 class _RaisingSession:
-    def get(self, url, timeout=None):
+    def get(self, url, timeout=None, **kwargs):
         raise RuntimeError("network down")
 
 
@@ -124,16 +128,18 @@ class TestRefreshAll:
     def _isolated_store(self, monkeypatch):
         """Свежий singleton на каждый тест, чтобы не зависеть от порядка."""
         monkeypatch.setattr(ti, "_STORE", None)
+        monkeypatch.setenv("ABUSECH_AUTH_KEY", "test-key")
+        monkeypatch.setenv("THREAT_INTEL_CACHE_PATH", "")
         # PhishTank по умолчанию выключен — убираем ключ из env.
         monkeypatch.delenv("PHISHTANK_APP_KEY", raising=False)
 
     @pytest.mark.asyncio
     async def test_two_feeds_populate_store(self, monkeypatch) -> None:
         async def fake_fetch(session, url):
-            if url == ti._URLHAUS_URL:
+            if "urlhaus-api.abuse.ch" in url:
                 return "1,date,https://a.evil/x,extra\n"
-            if url == ti._THREATFOX_URL:
-                return "0.0.0.0 b.evil\n"
+            if "threatfox-api.abuse.ch" in url:
+                return "1,date,b.evil,domain,botnet_cc\n"
             return None
 
         monkeypatch.setattr(ti, "_fetch_text", fake_fetch)
@@ -151,10 +157,10 @@ class TestRefreshAll:
 
         async def fake_fetch(session, url):
             seen_urls.append(url)
-            if url == ti._URLHAUS_URL:
+            if "urlhaus-api.abuse.ch" in url:
                 return "1,date,https://a.evil/x,extra\n"
-            if url == ti._THREATFOX_URL:
-                return "0.0.0.0 b.evil\n"
+            if "threatfox-api.abuse.ch" in url:
+                return "1,date,b.evil,domain,botnet_cc\n"
             # phishtank URL
             return '[{"url": "https://c.phish/login"}]'
 

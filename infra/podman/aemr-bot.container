@@ -27,6 +27,7 @@ EnvironmentFile=/home/aemr/aemr-bot/infra/.env
 # Имя тома совпадает с compose (`aemr-bot_backups`) — бэкапы переживают переход
 # compose→Quadlet без переноса файлов.
 Volume=aemr-bot_backups:/backups
+Volume=aemr-bot_threat_intel:/var/lib/aemr
 # Персистентные логи приложения на диск хоста (bot.log с ротацией). Переживают
 # любой rm/пересборку контейнера, читаются `tail -f /var/log/aemr-bot/bot.log`.
 # Каталог создать заранее с владельцем UID 1000 (делает install-скрипт).

@@ -192,6 +192,10 @@ class TestStartupPulse:
 class TestBackupWithAlert:
     """_job_backup_with_alert — обёртка над _backup_db с алёртами."""
 
+    @pytest.fixture(autouse=True)
+    def enable_backups(self, monkeypatch):
+        monkeypatch.setattr(cron.settings, "backup_local_dir", "/backups")
+
     @pytest.mark.asyncio
     async def test_alerts_on_pg_dump_fail(self) -> None:
         """pg_dump упал → специфический алёрт со словом «pg_dump»."""

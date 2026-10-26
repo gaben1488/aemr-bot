@@ -213,6 +213,9 @@ async def _job_backup_with_alert(send_admin_text) -> None:
     # 0 3 * * 6 (сб 03:00) попадает в default quiet окно [18, 9) —
     # без critical алёрт молчит до утра понедельника, окно реакции
     # ~30 часов без свежей точки восстановления.
+    if not settings.backup_local_dir:
+        log.info("backup skipped: BACKUP_LOCAL_DIR is empty (disabled)")
+        return
     try:
         result = await _backup_db()
         if result.ok:
@@ -463,20 +466,25 @@ async def _job_threat_intel_refresh(send_admin_text) -> None:
     # оператору важнее всего узнать о проблеме.
     try:
         store = threat_intel.get_store()
-        if store.is_stale():
-            age_h = (store.staleness_age_seconds() or 0) / 3600
-            await _send_admin_text_with_retry(
+        if store.is_stale() and not getattr(store, "outage_notified", False):
+            sent = await _send_admin_text_with_retry(
                 send_admin_text,
                 (
-                    "⚠️ База угроз (антифишинг) не обновлялась "
-                    f"{age_h:.0f} ч. Источники недоступны. Бот работает "
-                    "со старыми данными — предупреждения о вредоносных "
+                    "⚠️ База угроз (антифишинг) не обновлялась полностью более 6 ч. "
+                    "Часть источников или вся база недоступны. Приём обращений продолжается; "
+                    "проверка использует доступные локальные данные. Предупреждения о вредоносных "
                     "ссылках в обращениях могут отставать. Проверьте "
-                    "доступ в интернет к URLhaus, ThreatFox, PhishTank."
+                    "доступ к источникам и ABUSECH_AUTH_KEY / PHISHTANK_APP_KEY. "
+                    "Повторных уведомлений до восстановления не будет."
                 ),
                 context="threat-intel-stale",
                 critical=True,
             )
+            if sent:
+                store.outage_notified = True
+                await asyncio.to_thread(threat_intel.save_cache, store)
+        elif not store.is_stale():
+            store.outage_notified = False
     except Exception:
         log.exception("threat-intel staleness alert failed")
 
@@ -1412,6 +1420,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             max_instances=1,
             coalesce=True,
             misfire_grace_time=_MISFIRE_GRACE_SEC,
+            **({"next_run_time": datetime.now(TZ)} if name == "threat-intel-refresh" else {}),
         )
 
     # Централизованный лог ошибок ДО входа в try конкретного job'а

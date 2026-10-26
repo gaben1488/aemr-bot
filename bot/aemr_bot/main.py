@@ -919,6 +919,8 @@ async def main() -> None:
     scheduler = cron_service.build_scheduler(
         bot, send_admin_document, send_admin_text
     )
+    # Load last known snapshots before receiving messages; cron refreshes immediately.
+    cron_service.threat_intel.get_store()
     scheduler.start()
 
     try:

@@ -55,7 +55,7 @@ COPY docs/PRIVACY.pdf /app/seed/PRIVACY.pdf
 # /backups is the named volume mount target. Pre-create it so chown runs
 # at build time; compose will mount over it but ownership of the mount
 # point stays for the volume.
-RUN mkdir -p /backups && chown -R botuser:botuser /app /backups
+RUN mkdir -p /backups /var/lib/aemr && chown -R botuser:botuser /app /backups /var/lib/aemr
 
 ENV SEED_DIR=/app/seed
 

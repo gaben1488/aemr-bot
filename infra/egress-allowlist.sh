@@ -84,9 +84,10 @@ ALLOWED_DOMAINS=(
     "raw.githubusercontent.com"
 
     # --- Антифишинг-фиды (рантайм: проверка ссылок жителей) ---
-    "threatfox.abuse.ch"
-    "urlhaus.abuse.ch"
+    "threatfox-api.abuse.ch"
+    "urlhaus-api.abuse.ch"
     "data.phishtank.com"
+    "raw.githubusercontent.com"  # OpenPhish community fallback
 )
 
 # Порты, разрешённые к адресам из списка выше.

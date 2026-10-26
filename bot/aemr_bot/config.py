@@ -165,7 +165,7 @@ class Settings(BaseSettings):
 
     # Локальный бэкап: путь внутри контейнера, обычно смонтирован в named volume
     # `backups` (см. docker-compose). Если пусто — локальные бэкапы не сохраняются.
-    backup_local_dir: str | None = Field("/backups", alias="BACKUP_LOCAL_DIR")
+    backup_local_dir: str | None = Field(None, alias="BACKUP_LOCAL_DIR")
     # Сколько последних файлов хранить. 8 еженедельных ≈ 2 месяца истории.
     backup_keep_count: int = Field(8, alias="BACKUP_KEEP_COUNT")
 
