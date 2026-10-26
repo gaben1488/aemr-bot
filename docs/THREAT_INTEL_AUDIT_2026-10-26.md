@@ -112,7 +112,7 @@ docker compose logs --since 2h bot | rg 'threat_intel|threat-intel'
   URL индикаторов не выводились и не открывались.
 - Полный pytest с TZ=Asia/Kamchatka: 2421 passed, 144 skipped.
   Пропуски не являются доказательством интеграционной работоспособности VPS.
-- Три предупреждения PytestUnhandledThreadExceptionWarning (aiosqlite,
+- В первом прогоне возникли три предупреждения PytestUnhandledThreadExceptionWarning (aiosqlite,
   Event loop is closed) в существующих проверках:
   TestHandleEdit::test_resets_to_awaiting_text,
   TestRunBroadcastImpl::test_final_status_publishes_new_summary_event_card,
@@ -122,3 +122,33 @@ docker compose logs --since 2h bot | rg 'threat_intel|threat-intel'
 - Новые регрессии перед исправлениями воспроизвели потерю части базы,
   ложный успех HTML, холодный старт/старение, повторные уведомления,
   повторную вставку кликабельной ссылки и тихое отключение бэкапа.
+
+## Дополнительное исправление зависимостей после CI
+
+CI выявил 18 известных уязвимостей в шести пакетах исходного lock.
+Исправления включены в этот же PR, поскольку aiohttp непосредственно
+исполняет загрузку баз. Обновлены только затронутые пакеты и необходимый
+им совместимый yarl; maxapi остаётся 1.2.1.
+
+| Пакет | Было | Стало |
+| --- | --- | --- |
+| aiohttp | 3.14.3 | 3.14.5 |
+| multidict | 6.7.1 | 7.2.1 |
+| anyio | 4.13.0 | 4.14.2 / 4.15.1 по версии Python |
+| certifi | 2026.4.22 | 2026.10.23 |
+| filelock | 3.29.0 | 4.2.4 |
+| urllib3 | 2.7.0 | 2.8.0 |
+| yarl | 1.23.0 | 1.25.1 |
+
+Lock пересобран uv 0.11.12, как в Dockerfile, с сохранением revision=3.
+Hash-enforced экспорт тем же uv прошёл. Повторный полный pytest после
+обновления: **2421 passed, 144 skipped, без предупреждений**.
+Ruff, mypy и Bandit (medium+) прошли; pip-audit --strict по полному экспорту
+lock: **No known vulnerabilities found**. До смены lock GitHub отдельно
+успешно выполнил **2562 passed, 3 skipped** с PostgreSQL 16, миграции и Docker
+build; для обновлённого lock результат соответствующего нового CI следует
+смотреть непосредственно в PR.
+
+В парсере legacy hosts-файла точечный nosec B104 относится только к сравнению
+строки с маркером 0.0.0.0; открытия или привязки сокета здесь нет. Это ложное
+срабатывание статического анализатора, не отключение сетевой защиты.
