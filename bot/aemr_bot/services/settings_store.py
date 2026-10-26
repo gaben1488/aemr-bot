@@ -861,7 +861,26 @@ async def get_text_with_fallback(session: AsyncSession, key: str, fallback: str)
     return fallback
 
 
-async def set_value(session: AsyncSession, key: str, value: Any) -> None:
+class SettingConflictError(Exception):
+    """The setting changed after the caller read its previous value."""
+
+
+_UNCONDITIONAL_WRITE = object()
+
+
+def value_revision(value: Any) -> str:
+    """Stable token binding an indexed UI action to the displayed JSON list."""
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+async def set_value(
+    session: AsyncSession,
+    key: str,
+    value: Any,
+    *,
+    expected_value: Any = _UNCONDITIONAL_WRITE,
+) -> None:
     """Upsert значения настройки.
 
     **Bug B fix (2026-05-28):** при `on_conflict_do_update` SQLAlchemy
@@ -878,8 +897,18 @@ async def set_value(session: AsyncSession, key: str, value: Any) -> None:
     На INSERT (новый ключ) `updated_at` ставится через `server_default`,
     `synced_at` остаётся NULL (default) → ключ dirty с момента
     появления.
-    """
 
+    Read/modify/write callers pass their unmodified snapshot as
+    ``expected_value``. PostgreSQL checks it while holding the conflicting
+    row lock; a stale edit raises SettingConflictError without changing the
+    value or its dirty marker. Missing rows are inserted, so edits based on
+    DEFAULTS also work before bootstrap. This does not commit the session.
+    """
+    condition = None
+    if expected_value is not _UNCONDITIONAL_WRITE:
+        condition = Setting.value == bindparam(
+            "expected_value", expected_value, type_=Setting.value.type,
+        )
     stmt = (
         pg_insert(Setting)
         .values(key=key, value=value)
@@ -890,9 +919,15 @@ async def set_value(session: AsyncSession, key: str, value: Any) -> None:
                 "updated_at": sa_func.now(),
                 "synced_at": None,
             },
+            where=condition,
         )
     )
-    await session.execute(stmt)
+    if expected_value is _UNCONDITIONAL_WRITE:
+        await session.execute(stmt)
+    else:
+        result = await session.execute(stmt.returning(Setting.key))
+        if result.scalar_one_or_none() is None:
+            raise SettingConflictError(key)
 
 
 async def list_keys(session: AsyncSession) -> list[str]:

@@ -7,7 +7,9 @@ from types import SimpleNamespace
 from aemr_bot import keyboards
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import DialogState
+from aemr_bot.handlers import callback_router
 from aemr_bot.handlers._common import current_user
+from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.attachments import collect_attachments, extract_location
 from aemr_bot.utils.event import send_or_edit_screen
@@ -24,6 +26,7 @@ _SAFE_EXACT = {"menu:new_appeal", "menu:my_appeals", "addr:reuse", "addr:new",
                "geo:confirm", "geo:edit_address", "geo:other_locality", "appeal:submit"}
 _SAFE_PREFIXES = ("locality:", "topic:", "appeal:followup:", "appeal:repeat:",
                   "appeal:show:", "appeal:atts:", "appeals:page:")
+_CHOICE_SETTINGS = {"locality": "localities", "topic": "topics"}
 
 
 def needs_name(name) -> bool:
@@ -63,6 +66,15 @@ async def require_name(event, max_user_id: int, *, payload: str | None = None,
             pending = {"state": user.dialog_state, "data": data}
             if payload is not None and gates_callback(payload):
                 pending["payload"] = payload
+                field = payload.split(":", 1)[0]
+                if field in _CHOICE_SETTINGS:
+                    options = await settings_store.get(session, _CHOICE_SETTINGS[field]) or []
+                    index = callback_router.parse_int_tail(payload, f"{field}:")
+                    # Settings can change while the resident repairs their name.
+                    # Retain the selected value, not its mutable list position.
+                    pending["choice"] = (
+                        options[index] if index is not None and 0 <= index < len(options) else None
+                    )
             if text is not None:
                 pending["text"] = text[:cfg.summary_max_chars]
                 pending["attachments"] = collect_attachments(body)[:cfg.attachments_max_per_appeal]
@@ -74,7 +86,8 @@ async def require_name(event, max_user_id: int, *, payload: str | None = None,
                 data={RESUME_KEY: pending},
             )
     if replay is not None:
-        await resume_after_name(event, max_user_id, replay)
+        if not await resume_after_name(event, max_user_id, replay):
+            return True
         # The triggering event may itself be a retry of the name message.
         # Never reinterpret it as input to the newly restored next step.
         if text is not None:
@@ -98,7 +111,7 @@ async def require_name(event, max_user_id: int, *, payload: str | None = None,
     return True
 
 
-async def resume_after_name(event, max_user_id: int, pending: dict) -> None:
+async def resume_after_name(event, max_user_id: int, pending: dict) -> bool:
     """Retain the replay marker until the interrupted action succeeds.
 
     Appeal/followup persistence clears it atomically with the accepted input.
@@ -107,41 +120,72 @@ async def resume_after_name(event, max_user_id: int, pending: dict) -> None:
     """
     token = _replaying.set(True)
     try:
-        await _resume(event, max_user_id, pending)
+        if await _resume(event, max_user_id, pending) is False:
+            # A temporary rejection (for example a follow-up rate limit)
+            # has not consumed the saved message. Keep it for the next entry.
+            return False
         async with current_user(max_user_id) as (session, user):
             data = dict(user.dialog_data or {})
             if data.get(RESUME_KEY, {}).get("ready"):
                 data.pop(RESUME_KEY)
                 await users_service.set_state(session, max_user_id, DialogState(user.dialog_state), data=data)
+        return True
     finally:
         _replaying.reset(token)
 
 
-async def _resume(event, max_user_id: int, pending: dict) -> None:
+async def _resume(event, max_user_id: int, pending: dict) -> bool:
     from aemr_bot.handlers import appeal, appeal_funnel, appeal_geo, menu
 
     payload = pending.get("payload")
     if isinstance(payload, str) and gates_callback(payload):
+        field = payload.split(":", 1)[0]
+        if field in _CHOICE_SETTINGS:
+            choice = pending.get("choice")
+            async with current_user(max_user_id) as (session, _user):
+                options = await settings_store.get(session, _CHOICE_SETTINGS[field]) or []
+                valid = isinstance(choice, str) and choice in options
+                if valid:
+                    await users_service.update_dialog_data(session, max_user_id, {field: choice})
+            if valid:
+                next_prompt = (
+                    appeal_funnel.ask_address if field == "locality" else appeal_funnel.ask_summary
+                )
+                await next_prompt(event, max_user_id, force_new_message=True)
+            else:
+                # Also safe for drafts saved before semantic snapshots existed:
+                # an old index is not evidence of the resident's original choice.
+                await event.message.answer(
+                    "Список вариантов изменился. Выберите подходящий вариант ещё раз."
+                )
+                prompt = (
+                    appeal_funnel.ask_locality if field == "locality" else appeal_funnel.ask_topic
+                )
+                await prompt(event, max_user_id, force_new_message=True)
+            return True
         await appeal._route_callback(event, max_user_id, payload)
-        return
+        return True
     state = DialogState(pending["state"])
     if state == DialogState.AWAITING_SUMMARY and pending.get("applied"):
         await appeal_funnel.finalize_appeal(event, max_user_id)
-        return
+        return True
     if "text" in pending:
         if pending.get("location") and state == DialogState.AWAITING_LOCALITY:
             await appeal_geo.handle_location_for_locality(event, max_user_id, tuple(pending["location"]))
         else:
             handler = appeal._STATE_HANDLERS.get(state)
             if handler is not None:
-                await handler(event, SimpleNamespace(attachments=pending.get("attachments", [])),
-                              pending["text"], max_user_id)
-        return
+                result = await handler(
+                    event, SimpleNamespace(attachments=pending.get("attachments", [])),
+                    pending["text"], max_user_id,
+                )
+                return result is not False
+        return True
     if state == DialogState.AWAITING_SUMMARY and (
         pending["data"].get("summary_chunks") or pending["data"].get("attachments")
     ):
         await appeal_funnel.finalize_appeal(event, max_user_id)
-        return
+        return True
     prompts = {
         DialogState.AWAITING_LOCALITY: appeal_funnel.ask_locality,
         DialogState.AWAITING_ADDRESS: appeal_funnel.ask_address,
@@ -156,3 +200,4 @@ async def _resume(event, max_user_id: int, pending: dict) -> None:
         await menu.start_appeal_followup(event, pending["data"]["appeal_id"], max_user_id)
     else:
         await menu.open_main_menu(event)
+    return True

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import signal
 import sys
 from pathlib import Path
 
@@ -576,6 +577,39 @@ async def _hydrate_wizards() -> None:
             )
 
 
+async def _shutdown_step(name: str, close) -> None:
+    """Run every cleanup step even if an earlier resource fails to close."""
+    try:
+        abandoned = await close()
+        if abandoned:
+            log.warning(
+                "остановка: %s — не дождались задач (%s), отменены",
+                name, ", ".join(abandoned),
+            )
+    except Exception:
+        log.exception("остановка: %s не завершён", name)
+
+
+def _install_sigterm_handler():
+    """Docker sends SIGTERM; cancel main once so its finally can drain safely."""
+    loop = asyncio.get_running_loop()
+    task = asyncio.current_task()
+    assert task is not None
+    stopping = False
+
+    def stop() -> None:
+        nonlocal stopping
+        if not stopping:
+            stopping = True
+            task.cancel()
+
+    try:
+        loop.add_signal_handler(signal.SIGTERM, stop)
+    except NotImplementedError:  # Windows has no loop.add_signal_handler.
+        return lambda: None
+    return lambda: loop.remove_signal_handler(signal.SIGTERM)
+
+
 async def main() -> None:
     # stdout + персистентный файл на диске (переживает удаление контейнера). См. logging_setup.
     setup_logging()
@@ -586,226 +620,236 @@ async def main() -> None:
     if _firewall:
         log.info("firewall mode: %s", ", ".join(_firewall))
 
-    # Сначала проверяем токен MAX, до любых других сетевых операций.
-    # См. _preflight_check_token: без этого первый сбой (политика, рассылки)
-    # ронял aiohttp-сессию и dispatcher падал на «Session is closed».
-    await _preflight_check_token(bot)
-
-    # Single-instance гард ДО тяжёлой инициализации и polling: postgres
-    # advisory-lock по ключу от токена. Два процесса на одном токене молча
-    # делят long-poll апдейты и ломают FSM воронок; при неудаче выходим с
-    # явной ошибкой, а не тихо конкурируем. Соединение _lock_conn держим до
-    # конца процесса (его закрытие/падение снимает лок). См. db/single_instance.
     _lock_conn = None
+    health_runner = None
+    scheduler = None
+    service_tasks: list[asyncio.Task] = []
+    remove_sigterm_handler = _install_sigterm_handler()
+    # Cover initialization failures as well as the receive loop: preflight may
+    # already open HTTP, and seeding/health binding may fail after taking the lock.
     try:
-        _lock_conn = await single_instance.acquire_single_instance_lock()
-    except single_instance.SingleInstanceError:
-        log.critical(
-            "ОТКАЗ СТАРТА: другой экземпляр уже держит токен (single-instance "
-            "lock). Погасите второй контейнер/юнит и запустите один."
-        )
-        raise
+        # Сначала проверяем токен MAX, до любых других сетевых операций.
+        # См. _preflight_check_token: без этого первый сбой (политика, рассылки)
+        # ронял aiohttp-сессию и dispatcher падал на «Session is closed».
+        await _preflight_check_token(bot)
 
-    # Watchdog замка: session-level advisory-lock живёт на соединении —
-    # рестарт postgres или обрыв сети тихо снимает его, а процесс
-    # продолжает работать без гарантии единственности. Периодически
-    # проверяем соединение; при потере — переакквизиция; если замок уже
-    # у другого процесса — немедленный выход (systemd/compose
-    # перезапустит, рестарт встанет в обычную очередь за замком).
-    async def _lock_watchdog() -> None:
-        nonlocal _lock_conn
-        while True:
-            await asyncio.sleep(
-                single_instance.LOCK_WATCHDOG_INTERVAL_SECONDS
+        # Single-instance гард ДО тяжёлой инициализации и polling: postgres
+        # advisory-lock по ключу от токена. Два процесса на одном токене молча
+        # делят long-poll апдейты и ломают FSM воронок; при неудаче выходим с
+        # явной ошибкой, а не тихо конкурируем. Соединение _lock_conn держим до
+        # конца процесса (его закрытие/падение снимает лок). См. db/single_instance.
+        try:
+            _lock_conn = await single_instance.acquire_single_instance_lock()
+        except single_instance.SingleInstanceError:
+            log.critical(
+                "ОТКАЗ СТАРТА: другой экземпляр уже держит токен (single-instance "
+                "lock). Погасите второй контейнер/юнит и запустите один."
             )
-            try:
-                status, _lock_conn = (
-                    await single_instance.verify_single_instance_lock(_lock_conn)
+            raise
+
+        # Watchdog замка: session-level advisory-lock живёт на соединении —
+        # рестарт postgres или обрыв сети тихо снимает его, а процесс
+        # продолжает работать без гарантии единственности. Периодически
+        # проверяем соединение; при потере — переакквизиция; если замок уже
+        # у другого процесса — немедленный выход (systemd/compose
+        # перезапустит, рестарт встанет в обычную очередь за замком).
+        async def _lock_watchdog() -> None:
+            nonlocal _lock_conn
+            while True:
+                await asyncio.sleep(
+                    single_instance.LOCK_WATCHDOG_INTERVAL_SECONDS
                 )
-            except single_instance.SingleInstanceError:
-                log.critical(
-                    "single-instance lock ПОТЕРЯН (обрыв соединения с БД) и "
-                    "уже занят другим процессом — завершаемся, чтобы не "
-                    "работать вторым экземпляром на одном токене."
-                )
-                # os._exit, не sys.exit: SystemExit в фоновом таске лишь
-                # погасил бы сам таск, polling продолжил бы жить без замка.
-                # Флашим логи (os._exit не выполняет atexit, без flush
-                # причина завершения не доедет ни в bot.log, ни в
-                # journald), но выход — в finally: если shutdown бросит
-                # или зависнет на захваченной блокировке обработчика,
-                # внешний `except Exception` проглотит ошибку и сторож
-                # продолжит цикл — процесс останется работать без замка,
-                # ровно против чего он и поставлен.
                 try:
-                    logging.shutdown()
-                finally:
-                    os._exit(1)
-            except Exception:
-                # БД целиком недоступна: ни проверить, ни переакквизировать.
-                # Не валим процесс — второй экземпляр в этот момент тоже
-                # не может взять замок; повторим на следующем тике.
-                log.exception(
-                    "single-instance lock check failed; повтор на следующем тике"
-                )
-            else:
-                if status == single_instance.LOCK_REACQUIRED:
-                    log.warning(
-                        "single-instance lock переакквизирован после обрыва "
-                        "соединения с БД"
+                    status, _lock_conn = (
+                        await single_instance.verify_single_instance_lock(_lock_conn)
                     )
+                except single_instance.SingleInstanceError:
+                    log.critical(
+                        "single-instance lock ПОТЕРЯН (обрыв соединения с БД) и "
+                        "уже занят другим процессом — завершаемся, чтобы не "
+                        "работать вторым экземпляром на одном токене."
+                    )
+                    # os._exit, не sys.exit: SystemExit в фоновом таске лишь
+                    # погасил бы сам таск, polling продолжил бы жить без замка.
+                    # Флашим логи (os._exit не выполняет atexit, без flush
+                    # причина завершения не доедет ни в bot.log, ни в
+                    # journald), но выход — в finally: если shutdown бросит
+                    # или зависнет на захваченной блокировке обработчика,
+                    # внешний `except Exception` проглотит ошибку и сторож
+                    # продолжит цикл — процесс останется работать без замка,
+                    # ровно против чего он и поставлен.
+                    try:
+                        logging.shutdown()
+                    finally:
+                        os._exit(1)
+                except Exception:
+                    # БД целиком недоступна: ни проверить, ни переакквизировать.
+                    # Не валим процесс — второй экземпляр в этот момент тоже
+                    # не может взять замок; повторим на следующем тике.
+                    log.exception(
+                        "single-instance lock check failed; повтор на следующем тике"
+                    )
+                else:
+                    if status == single_instance.LOCK_REACQUIRED:
+                        log.warning(
+                            "single-instance lock переакквизирован после обрыва "
+                            "соединения с БД"
+                        )
 
-    spawn_background_task(_lock_watchdog(), name="single_instance_watchdog")
+        service_tasks.append(asyncio.create_task(
+            _lock_watchdog(), name="single_instance_watchdog"
+        ))
 
-    # Публикуем /-меню MAX (/start, /menu) для всех чатов. У MAX нет
-    # раздельного списка команд для лички и служебной группы, поэтому
-    # держим только универсальные команды: в личке они открывают меню
-    # жителя, в служебной группе — памятку оператора. Специфичные
-    # жительские команды (/forget, /export…) в подсказку не выносим;
-    # их обработчики работают как запасной путь.
-    try:
-        await _register_bot_commands(bot)
-    except Exception:
-        log.exception("set_my_commands failed; продолжаем без подсказок в /-меню")
+        # Публикуем /-меню MAX (/start, /menu) для всех чатов. У MAX нет
+        # раздельного списка команд для лички и служебной группы, поэтому
+        # держим только универсальные команды: в личке они открывают меню
+        # жителя, в служебной группе — памятку оператора. Специфичные
+        # жительские команды (/forget, /export…) в подсказку не выносим;
+        # их обработчики работают как запасной путь.
+        try:
+            await _register_bot_commands(bot)
+        except Exception:
+            log.exception("set_my_commands failed; продолжаем без подсказок в /-меню")
 
-    await _seed_settings()
+        await _seed_settings()
 
-    # Прогрев in-memory cache для quiet режима — до запуска polling и
-    # cron'ов, чтобы первая же отправка через admin_bus.send уже видела
-    # актуальный enabled/start/end из БД. Без этого первые ~5 секунд
-    # (до первого pulse-cron'а) cache держит default disabled и
-    # non-critical сообщения могут проскочить в quiet окне.
-    # См. SECURITY_REVIEW_2026-05-28 §A2.
-    await _warm_cache("quiet_hours")
+        # Прогрев in-memory cache для quiet режима — до запуска polling и
+        # cron'ов, чтобы первая же отправка через admin_bus.send уже видела
+        # актуальный enabled/start/end из БД. Без этого первые ~5 секунд
+        # (до первого pulse-cron'а) cache держит default disabled и
+        # non-critical сообщения могут проскочить в quiet окне.
+        # См. SECURITY_REVIEW_2026-05-28 §A2.
+        await _warm_cache("quiet_hours")
 
-    # Прогрев in-memory cache для модульных тумблеров уведомлений
-    # (services/notify_toggles.py) — тот же мотив, что у quiet_hours
-    # выше: до первого refresh кэш default True (не подавляет), но
-    # прогрев сразу после старта подтягивает реальное состояние из БД,
-    # если оператор уже выключил какой-то тумблер до рестарта.
-    await _warm_cache("notify_toggles")
+        # Прогрев in-memory cache для модульных тумблеров уведомлений
+        # (services/notify_toggles.py) — тот же мотив, что у quiet_hours
+        # выше: до первого refresh кэш default True (не подавляет), но
+        # прогрев сразу после старта подтягивает реальное состояние из БД,
+        # если оператор уже выключил какой-то тумблер до рестарта.
+        await _warm_cache("notify_toggles")
 
-    # Прогрев geo-индексов (~2.6 МБ GeoJSON) — СТРОГО в фоне, не блокируя
-    # старт polling. Без него первый житель, нажавший «Поделиться
-    # геолокацией», оплатил бы холодную загрузку прямо в handler'е, что в
-    # одно-loop'овом процессе подморозило бы всех. spawn_background_task с
-    # asyncio.to_thread держит чтение/парсинг вне event-loop. См.
-    # _warm_geo_indexes (fail-open: ошибка прогрева не валит старт).
-    spawn_background_task(_warm_geo_indexes(), name="warm_geo_indexes")
+        # Прогрев geo-индексов (~2.6 МБ GeoJSON) — СТРОГО в фоне, не блокируя
+        # старт polling. Без него первый житель, нажавший «Поделиться
+        # геолокацией», оплатил бы холодную загрузку прямо в handler'е, что в
+        # одно-loop'овом процессе подморозило бы всех. spawn_background_task с
+        # asyncio.to_thread держит чтение/парсинг вне event-loop. См.
+        # _warm_geo_indexes (fail-open: ошибка прогрева не валит старт).
+        spawn_background_task(_warm_geo_indexes(), name="warm_geo_indexes")
 
-    # На холодном старте создаём первого ИТ-оператора из env, если ни одного ещё нет.
-    if settings.bootstrap_it_max_user_id is not None:
+        # На холодном старте создаём первого ИТ-оператора из env, если ни одного ещё нет.
+        if settings.bootstrap_it_max_user_id is not None:
+            try:
+                async with session_scope() as session:
+                    inserted = await operators_service.bootstrap_it_from_env(
+                        session,
+                        max_user_id=settings.bootstrap_it_max_user_id,
+                        full_name=(
+                            settings.bootstrap_it_full_name or "ИТ-специалист"
+                        ),
+                    )
+                if inserted:
+                    log.info(
+                        "bootstrapped IT operator from env: max_user_id=%s",
+                        settings.bootstrap_it_max_user_id,
+                    )
+            except Exception:
+                log.exception("bootstrap_it_from_env failed")
+
+        # Один раз на старте загружаем PDF с политикой приватности; ошибки игнорируем, чтобы бот всё равно поднялся.
+        try:
+            await policy_service.ensure_uploaded(bot)
+        except Exception:
+            log.exception("policy upload failed; will fall back to URL consent")
+
+        # Подбираем рассылки, которые предыдущий процесс оставил в SENDING.
+        # Без этого они бы навсегда висели в SENDING. См. services/broadcasts.py.
         try:
             async with session_scope() as session:
-                inserted = await operators_service.bootstrap_it_from_env(
-                    session,
-                    max_user_id=settings.bootstrap_it_max_user_id,
-                    full_name=(
-                        settings.bootstrap_it_full_name or "ИТ-специалист"
-                    ),
-                )
-            if inserted:
-                log.info(
-                    "bootstrapped IT operator from env: max_user_id=%s",
-                    settings.bootstrap_it_max_user_id,
-                )
-        except Exception:
-            log.exception("bootstrap_it_from_env failed")
-
-    # Один раз на старте загружаем PDF с политикой приватности; ошибки игнорируем, чтобы бот всё равно поднялся.
-    try:
-        await policy_service.ensure_uploaded(bot)
-    except Exception:
-        log.exception("policy upload failed; will fall back to URL consent")
-
-    # Подбираем рассылки, которые предыдущий процесс оставил в SENDING.
-    # Без этого они бы навсегда висели в SENDING. См. services/broadcasts.py.
-    try:
-        async with session_scope() as session:
-            reaped = await broadcasts_service.reap_orphaned_sending(session)
-        if reaped:
-            log.warning(
-                "marked %d orphaned broadcast(s) as failed (left in SENDING by previous process)",
-                reaped,
-            )
-    except Exception:
-        log.exception("reap_orphaned_sending failed")
-
-    # Hydrate wizard state из БД (миграция 0011) — закрывает «оператор
-    # потерял регистрацию сотрудника при docker compose up --build».
-    try:
-        await _hydrate_wizards()
-    except Exception:
-        log.exception("wizard hydrate failed; работаем без восстановленных wizards")
-
-    # Восстановление не должно блокировать старт диспетчера — запускаем и забываем.
-    async def _recover():
-        try:
-            await recover_stuck_funnels(bot)
-        except Exception:
-            log.exception("recover_stuck_funnels failed")
-
-    spawn_background_task(_recover(), name="recover_stuck_funnels")
-
-    async def _report_abandoned_broadcasts():
-        """Сообщить оператору о рассылке, брошенной перезапуском.
-
-        Оператор жмёт «Разослать», рассылка ждёт паузу на отмену (5 минут
-        обычно, 30 секунд для ЧС) в фоновой задаче. Перезапуск в этом окне
-        снимает задачу вместе с процессом: оповещение не уходит, а карточка
-        в служебной группе так и показывает «уйдёт через N секунд».
-        `reap_orphaned_draft` уберёт черновик через полчаса — молча и
-        поздно, для ЧС это вечность.
-
-        Сами НЕ отправляем: рассылку могли отменить, а статус не успел
-        записаться, и повторная отправка тысячам жителей необратима.
-        Решение — за человеком, наше дело сообщить.
-        """
-        try:
-            async with session_scope() as session:
-                drafts = await broadcasts_service.find_abandoned_drafts(session)
-            for draft in drafts:
-                preview = " ".join((draft.text or "").split())[:80]
-                await admin_bus.send(
-                    bot,
-                    text=(
-                        f"⚠️ Рассылка №{draft.id} не была отправлена: "
-                        "бот перезапустился, пока шёл отсчёт перед отправкой."
-                        f" Текст: «{preview}». "
-                        "Оповещение НЕ ушло ни одному жителю. Если оно "
-                        "по-прежнему нужно — создайте рассылку заново."
-                    ),
-                )
+                reaped = await broadcasts_service.reap_orphaned_sending(session)
+            if reaped:
                 log.warning(
-                    "рассылка %s брошена перезапуском во время паузы", draft.id
+                    "marked %d orphaned broadcast(s) as failed (left in SENDING by previous process)",
+                    reaped,
                 )
         except Exception:
-            log.exception("проверка брошенных рассылок не отработала")
+            log.exception("reap_orphaned_sending failed")
 
-    spawn_background_task(
-        _report_abandoned_broadcasts(), name="report_abandoned_broadcasts"
-    )
+        # Hydrate wizard state из БД (миграция 0011) — закрывает «оператор
+        # потерял регистрацию сотрудника при docker compose up --build».
+        try:
+            await _hydrate_wizards()
+        except Exception:
+            log.exception("wizard hydrate failed; работаем без восстановленных wizards")
 
-    # Polling and webhook share health endpoints and heartbeat.
-    health_runner = await health.start(
-        host=settings.webhook_host, port=settings.webhook_port,
-        setup=(lambda app: setup_webhook(app, secret=settings.webhook_secret or ""))
-        if settings.bot_mode == "webhook" else None,
-    )
-    spawn_background_task(health.heartbeat_pulse(), name="heartbeat_pulse")
+        # Восстановление не должно блокировать старт диспетчера — запускаем и забываем.
+        async def _recover():
+            try:
+                await recover_stuck_funnels(bot)
+            except Exception:
+                log.exception("recover_stuck_funnels failed")
 
-    send_admin_text, send_admin_document = _build_admin_senders(bot)
-    # bot отдаём в build_scheduler, чтобы сервисы не импортировали `main`
-    # лазево (P0-2). Цикл services → main был хрупкий: любой рефакторинг
-    # main.py мог сломать cron-job.
-    scheduler = cron_service.build_scheduler(
-        bot, send_admin_document, send_admin_text
-    )
-    # Load last known snapshots before receiving messages; cron refreshes immediately.
-    cron_service.threat_intel.get_store()
-    scheduler.start()
+        spawn_background_task(_recover(), name="recover_stuck_funnels")
 
-    try:
+        async def _report_abandoned_broadcasts():
+            """Сообщить оператору о рассылке, брошенной перезапуском.
+
+            Оператор жмёт «Разослать», рассылка ждёт паузу на отмену (5 минут
+            обычно, 30 секунд для ЧС) в фоновой задаче. Перезапуск в этом окне
+            снимает задачу вместе с процессом: оповещение не уходит, а карточка
+            в служебной группе так и показывает «уйдёт через N секунд».
+            `reap_orphaned_draft` уберёт черновик через полчаса — молча и
+            поздно, для ЧС это вечность.
+
+            Сами НЕ отправляем: рассылку могли отменить, а статус не успел
+            записаться, и повторная отправка тысячам жителей необратима.
+            Решение — за человеком, наше дело сообщить.
+            """
+            try:
+                async with session_scope() as session:
+                    drafts = await broadcasts_service.find_abandoned_drafts(session)
+                for draft in drafts:
+                    preview = " ".join((draft.text or "").split())[:80]
+                    await admin_bus.send(
+                        bot,
+                        text=(
+                            f"⚠️ Рассылка №{draft.id} не была отправлена: "
+                            "бот перезапустился, пока шёл отсчёт перед отправкой."
+                            f" Текст: «{preview}». "
+                            "Оповещение НЕ ушло ни одному жителю. Если оно "
+                            "по-прежнему нужно — создайте рассылку заново."
+                        ),
+                    )
+                    log.warning(
+                        "рассылка %s брошена перезапуском во время паузы", draft.id
+                    )
+            except Exception:
+                log.exception("проверка брошенных рассылок не отработала")
+
+        spawn_background_task(
+            _report_abandoned_broadcasts(), name="report_abandoned_broadcasts"
+        )
+
+        # Polling and webhook share health endpoints and heartbeat.
+        health_runner = await health.start(
+            host=settings.webhook_host, port=settings.webhook_port,
+            setup=(lambda app: setup_webhook(app, secret=settings.webhook_secret or ""))
+            if settings.bot_mode == "webhook" else None,
+        )
+        service_tasks.append(asyncio.create_task(
+            health.heartbeat_pulse(), name="heartbeat_pulse"
+        ))
+
+        send_admin_text, send_admin_document = _build_admin_senders(bot)
+        # bot отдаём в build_scheduler, чтобы сервисы не импортировали `main`
+        # лазево (P0-2). Цикл services → main был хрупкий: любой рефакторинг
+        # main.py мог сломать cron-job.
+        scheduler = cron_service.build_scheduler(
+            bot, send_admin_document, send_admin_text
+        )
+        # Load last known snapshots before receiving messages; cron refreshes immediately.
+        cron_service.threat_intel.get_store()
+        scheduler.start()
+
         if settings.bot_mode == "webhook":
             await dp.startup(bot)
             await bot.subscribe_webhook(settings.webhook_url or "", secret=settings.webhook_secret)
@@ -815,29 +859,33 @@ async def main() -> None:
             log.info("Starting in long polling mode")
             await dp.start_polling(bot)
     finally:
-        await dp.shutdown()
-        scheduler.shutdown(wait=False)
-        # Сначала даём доиграть фоновым задачам, пока цикл и соединения
-        # ещё живы: иначе `asyncio.run` обрывает их на выходе — в том
-        # числе сброс буфера доставок рассылки, чей повтор задваивал
-        # счётчики (миграция 0023 чистит следствие, дренаж — причину).
-        try:
-            abandoned = await drain_background_tasks()
-            if abandoned:
-                log.warning(
-                    "остановка: не дождались фоновых задач (%s) — отменены",
-                    ", ".join(abandoned),
-                )
-        except Exception:
-            log.exception("остановка: дренаж фоновых задач не удался")
+        # Stop producers before draining consumers. Webhooks must stop accepting
+        # receipts before the inbox worker exits; pause cron before any awaits.
+        if scheduler is not None and scheduler.running:
+            scheduler.pause()
         if health_runner is not None:
-            await health_runner.cleanup()
-        # Явно снимаем single-instance lock при штатном shutdown
-        # (pg_advisory_unlock + close; голый close вернул бы соединение в
-        # пул живым и лок остался бы висеть). При падении процесса лок
-        # снимается сам с разрывом соединения.
-        await single_instance.release_single_instance_lock(_lock_conn)
-        await bot.close_session()
+            await _shutdown_step("health/webhook", health_runner.cleanup)
+        await _shutdown_step("dispatcher", dp.shutdown)
+        if scheduler is not None:
+            await _shutdown_step("cron", scheduler.shutdown_gracefully)
+        await _shutdown_step("background", drain_background_tasks)
+
+        # Infinite service loops are deliberately separate from finite writes:
+        # heartbeat/watchdog must not consume the entire drain budget each exit.
+        for task in service_tasks:
+            task.cancel()
+        await asyncio.gather(*service_tasks, return_exceptions=True)
+        await _shutdown_step("healthcheck HTTP", cron_service.close_healthcheck_session)
+        # Read the current connection AFTER stopping the watchdog: it may have
+        # reacquired the advisory lock while the other tasks were draining.
+        await _shutdown_step(
+            "single-instance lock",
+            lambda: single_instance.release_single_instance_lock(_lock_conn),
+        )
+        from aemr_bot.db.session import engine
+        await _shutdown_step("database pool", engine.dispose)
+        await _shutdown_step("MAX HTTP", bot.close_session)
+        remove_sigterm_handler()
 
 
 if __name__ == "__main__":

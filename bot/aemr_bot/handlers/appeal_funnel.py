@@ -783,6 +783,13 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         recent_count, last_at = await appeals_service.followup_rate_limit_stats(
             _rl_session, appeal.id, hours=1
         )
+    pending = (user.dialog_data or {}).get(resident_name_gate.RESUME_KEY) or {}
+    replay_pending = bool(pending.get("ready"))
+    retry_hint = (
+        "\n\nВаше сообщение сохранено. После паузы отправьте любое сообщение, "
+        "чтобы повторить отправку, или нажмите «Отмена»."
+        if replay_pending else ""
+    )
     if last_at is not None:
         elapsed = (datetime.now(UTC) - last_at).total_seconds()
         if elapsed < cfg.followup_min_interval_seconds:
@@ -790,18 +797,22 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             await event.message.answer(
                 f"Слишком часто. Подождите {wait}с перед следующим "
                 f"дополнением — это защита от случайного двойного "
-                f"сообщения.",
+                f"сообщения.{retry_hint}",
                 attachments=[keyboards.cancel_keyboard()],
             )
-            return
+            return False
     if recent_count >= cfg.followup_max_per_hour_per_appeal:
         await event.message.answer(
             f"По этому обращению уже {recent_count} дополнений за час — "
             f"лимит {cfg.followup_max_per_hour_per_appeal}. Подождите час "
             f"или дождитесь ответа оператора — он видит всю историю и "
-            f"свяжется по сути вопроса.",
-            attachments=[keyboards.back_to_menu_keyboard()],
+            f"свяжется по сути вопроса.{retry_hint}",
+            attachments=[
+                keyboards.cancel_keyboard() if replay_pending else keyboards.back_to_menu_keyboard()
+            ],
         )
+        if replay_pending:
+            return False
         # Сбрасываем state — иначе житель «застрянет» в AWAITING_FOLLOWUP
         async with session_scope() as session:
             await users_service.reset_state(session, max_user_id)

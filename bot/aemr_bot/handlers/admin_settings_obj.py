@@ -16,19 +16,19 @@ from aemr_bot.handlers._common import op_screen, op_send
 # intent на добавление объекта ставится здесь (`_start_obj_add`),
 # поэтому нужен `_intent_set` из общего модуля. `_edit_intents` /
 # `_intent_get` реэкспортируются для тестов `TestStartObjAdd`, которые
-# патчат/читают intent-кэш «по месту» на этом подмодуле. `_parse_key_idx`
-# — общий парсер callback-суффикса «<key>:<idx>» (просмотр/удаление).
+# патчат/читают intent-кэш «по месту» на этом подмодуле. Общий парсер
+# callback-суффикса читает «<key>:<idx>:<revision>» (просмотр/удаление).
 from aemr_bot.handlers.admin_settings_shared import (  # noqa: F401
     _edit_intents,
     _intent_get,
     _intent_set,
-    _parse_key_idx,
+    _parse_key_idx_revision,
 )
 from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
 
 
-async def _show_obj_card(event, key: str) -> None:
+async def _show_obj_card(event, key: str, *, notice: str = "") -> None:
 
     async with session_scope() as session:
         items = await settings_store.get(session, key) or []
@@ -62,7 +62,8 @@ async def _show_obj_card(event, key: str) -> None:
         )
     await op_screen(
         event,
-        f"{title} ({len(items)})\n"
+        (f"{notice}\n\n" if notice else "")
+        + f"{title} ({len(items)})\n"
         f"· · · · · · · ·\n"
         f"{body}"
         f"{hint}",
@@ -72,12 +73,19 @@ async def _show_obj_card(event, key: str) -> None:
 
 async def _show_obj_item(event, suffix: str) -> None:
 
-    parsed = _parse_key_idx(suffix)
+    parsed = _parse_key_idx_revision(suffix)
     if parsed is None:
         return
-    key, idx = parsed
+    key, idx, revision = parsed
     async with session_scope() as session:
         items = await settings_store.get(session, key) or []
+    if not isinstance(items, list):
+        items = []
+    if revision != settings_store.value_revision(items):
+        await _show_obj_card(
+            event, key, notice="Список изменён другим оператором. Выберите запись заново.",
+        )
+        return
     if idx < 0 or idx >= len(items):
         await op_screen(
             event,
@@ -90,7 +98,7 @@ async def _show_obj_item(event, suffix: str) -> None:
     await op_screen(
         event,
         "\n".join(lines),
-        kbds.op_settings_obj_item_keyboard(key, idx),
+        kbds.op_settings_obj_item_keyboard(key, idx, revision),
     )
 
 
@@ -119,36 +127,45 @@ async def _start_obj_add(event, operator_id: int, key: str) -> None:
 
 async def _obj_delete(event, operator_id: int, suffix: str) -> None:
 
-    parsed = _parse_key_idx(suffix)
+    parsed = _parse_key_idx_revision(suffix)
     if parsed is None:
         return
-    key, idx = parsed
-    async with session_scope() as session:
-        items = await settings_store.get(session, key) or []
-        if not isinstance(items, list) or idx < 0 or idx >= len(items):
-            await op_screen(
-                event,
-                "Запись не найдена.",
-                kbds.op_back_to_settings_keyboard(),
+    key, idx, revision = parsed
+    try:
+        async with session_scope() as session:
+            previous = await settings_store.get(session, key)
+            items = list(previous) if isinstance(previous, list) else []
+            if revision != settings_store.value_revision(items):
+                raise settings_store.SettingConflictError(key)
+            if idx < 0 or idx >= len(items):
+                await op_screen(
+                    event,
+                    "Запись не найдена.",
+                    kbds.op_back_to_settings_keyboard(),
+                )
+                return
+            removed = items.pop(idx)
+            ok, msg = settings_store.validate(key, items)
+            if not ok:
+                await op_screen(
+                    event,
+                    f"Удаление отменено: {msg}",
+                    kbds.op_back_to_settings_keyboard(),
+                )
+                return
+            await settings_store.set_value(session, key, items, expected_value=previous)
+            await ops_svc.write_audit(
+                session,
+                operator_max_user_id=operator_id,
+                action="setting_obj_del",
+                target=key,
+                details={"removed": removed, "index": idx},
             )
-            return
-        removed = items.pop(idx)
-        ok, msg = settings_store.validate(key, items)
-        if not ok:
-            await op_screen(
-                event,
-                f"Удаление отменено: {msg}",
-                kbds.op_back_to_settings_keyboard(),
-            )
-            return
-        await settings_store.set_value(session, key, items)
-        await ops_svc.write_audit(
-            session,
-            operator_max_user_id=operator_id,
-            action="setting_obj_del",
-            target=key,
-            details={"removed": removed, "index": idx},
+    except settings_store.SettingConflictError:
+        await _show_obj_card(
+            event, key, notice="Список изменён другим оператором. Выберите запись заново.",
         )
+        return
     await _show_obj_card(event, key)
 
 
@@ -190,24 +207,31 @@ async def _apply_obj_add(
             kbds.op_settings_text_cancel_keyboard(key),
         )
         return False
-    async with session_scope() as session:
-        items = await settings_store.get(session, key) or []
-        if not isinstance(items, list):
-            items = []
-        items.append(item)
-        ok, msg = settings_store.validate(key, items)
-        if not ok:
-            await op_send(
-                event, f"❌ {msg}", kbds.op_settings_text_cancel_keyboard(key)
+    try:
+        async with session_scope() as session:
+            previous = await settings_store.get(session, key)
+            items = list(previous) if isinstance(previous, list) else []
+            items.append(item)
+            ok, msg = settings_store.validate(key, items)
+            if not ok:
+                await op_send(
+                    event, f"❌ {msg}", kbds.op_settings_text_cancel_keyboard(key)
+                )
+                return False
+            await settings_store.set_value(session, key, items, expected_value=previous)
+            await ops_svc.write_audit(
+                session,
+                operator_max_user_id=operator_id,
+                action="setting_obj_add",
+                target=key,
+                details={"added": item},
             )
-            return False
-        await settings_store.set_value(session, key, items)
-        await ops_svc.write_audit(
-            session,
-            operator_max_user_id=operator_id,
-            action="setting_obj_add",
-            target=key,
-            details={"added": item},
+    except settings_store.SettingConflictError:
+        await op_send(
+            event,
+            "❌ Список изменён другим оператором. Пришлите запись ещё раз.",
+            kbds.op_settings_text_cancel_keyboard(key),
         )
+        return False
     await _show_obj_card(event, key)
     return True

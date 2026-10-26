@@ -201,7 +201,7 @@ async def test_batch_receipt_rolls_back_on_second_insert_failure(receipt_db, mon
             yield session
     monkeypatch.setattr(inbox, 'session_scope', failing_scope)
     with pytest.raises(RuntimeError, match='second insert'):
-        await inbox.accept([payload('one'), payload('two')])
+        await inbox.accept([payload(str(i)) for i in range(inbox._RECEIPT_BATCH_SIZE + 1)])
     assert await stored(receipt_db) == []
 
 
@@ -249,3 +249,55 @@ async def test_erased_claimed_event_never_reaches_business_handler(receipt_db, m
         resume.set()
         await asyncio.gather(task, return_exceptions=True)
         await bot.close_session()
+
+
+@pytest.mark.asyncio
+async def test_bulk_receipts_preserve_order_dedup_and_bound_sql(receipt_db, monkeypatch):
+    original = inbox.session_scope
+    counts = []
+    @asynccontextmanager
+    async def counted_scope():
+        async with original() as session:
+            execute = session.execute
+            async def counted(*args, **kwargs):
+                counts.append(1)
+                return await execute(*args, **kwargs)
+            session.execute = counted
+            yield session
+    monkeypatch.setattr(inbox, "session_scope", counted_scope)
+    await inbox.accept([payload(str(i)) for i in range(501)] + [payload("0")])
+    assert len(counts) == 3
+    rows = await stored(receipt_db)
+    assert [r.payload["message"]["body"]["mid"] for r in rows] == [str(i) for i in range(501)]
+
+
+def test_callback_receipt_never_attributes_actor_to_message_author():
+    _, user_id = inbox._identity({"update_type": "message_callback", "callback": {"callback_id": "c"},
+                                "message": {"sender": {"user_id": 123}}})
+    assert user_id is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fail_once", [False, True])
+async def test_worker_recovers_only_at_startup_and_after_failure(monkeypatch, fail_once):
+    import asyncio
+    stop = asyncio.Event()
+    attempts = 0
+    async def process(*args):
+        nonlocal attempts
+        attempts += 1
+        if fail_once and attempts == 1:
+            raise RuntimeError("outcome commit failed")
+        if attempts == 100:
+            stop.set()
+        return True
+    async def no_delay(waiter, **kwargs):
+        waiter.close()
+        raise TimeoutError
+    recover = AsyncMock()
+    monkeypatch.setattr(inbox, "recover_interrupted", recover)
+    monkeypatch.setattr(inbox, "maintenance", AsyncMock())
+    monkeypatch.setattr(inbox, "process_one", process)
+    monkeypatch.setattr(inbox.asyncio, "wait_for", no_delay)
+    await inbox.run(None, None, stop)
+    assert recover.await_count == (2 if fail_once else 1)

@@ -1,0 +1,1367 @@
+{
+  "release": "0.2.4",
+  "base_commit": "4bc87094b03e8a870099d18d7b41e8c64bf049bd",
+  "scope": "Static Python module inventory and absolute internal imports; not a claim of runtime branch coverage.",
+  "module_count": 140,
+  "missing_absolute_modules": [],
+  "modules": [
+    {
+      "path": "bot/aemr_bot/__init__.py",
+      "sha256": "48197610f156fa5b4fbd0eef6d5588b7202ccf768a608a633bbbdc7ebf381a45",
+      "lines": 1,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/config.py",
+      "sha256": "95b98314305e1e7ad5837285a733b8758b75fd08bac4ff128c570076ce5f4dff",
+      "lines": 346,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/copy/__init__.py",
+      "sha256": "b7a23b3fde2e7853b5c0fb526f84ac53b2947c9b02542998c4be004529b62871",
+      "lines": 20,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/copy/admin_texts.py",
+      "sha256": "853dfb8d228a71ec773e89ae21c3f3485dfbf4e955120281931609f65135ac27",
+      "lines": 264,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/copy/broadcast_texts.py",
+      "sha256": "92db73f8cdbce46bd50aa08680bec60e2483dcaeb294a944d052e6f27f5ad8d5",
+      "lines": 355,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/copy/citizen_funnel.py",
+      "sha256": "894a07372c0a3fc1067701cd26c5cfe0d856f683ab979d61651744b7fdec3b8f",
+      "lines": 380,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/copy/errors_texts.py",
+      "sha256": "20f7b96e7edfb32c7663a686a03b825cfe4dd6149f0087670f6152c6bb8ca0a4",
+      "lines": 40,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/copy/security_texts.py",
+      "sha256": "57af45c6b248b05722b10ae068565b1f81c852abf0109aa8c9f14c125a7abf9d",
+      "lines": 169,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/data/__init__.py",
+      "sha256": "af0a17d2526a3de2b104c77b4e8105c837ac78fed2b45ff16d408f2536dd95ee",
+      "lines": 1,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/data/resident_names_v1.py",
+      "sha256": "c105adf9e5ed5287c2cfd612c0f91f8762b79305a78deb7aa333175a3decf1e3",
+      "lines": 43,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/data/resident_names_v2.py",
+      "sha256": "9edfa21d98f110e6171823ed4d2ff7497e6388dc5f1bebb7999c8a1843704be0",
+      "lines": 41,
+      "internal_imports": [
+        "aemr_bot.data.resident_names_v1"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/db/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "lines": 0,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/env.py",
+      "sha256": "213d0cf12297ea03c9a5eb979c0c2532de17ee233c9b5f04d28b9529fa904156",
+      "lines": 52,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.db.models"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0001_initial.py",
+      "sha256": "0274ceb1f4208b8d7013666ea5fe829db14184f3ff22e4a9f29dbd6c61f91bfd",
+      "lines": 125,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0002_broadcast.py",
+      "sha256": "480172f4836b9c560f966a62efabf03d8d4c2810d4c2ef6e99b47fed524691ff",
+      "lines": 103,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0003_phone_normalized.py",
+      "sha256": "f041111806caeb24229563e26711f537b0ec4cfc1a22835024febc23f080ffd3",
+      "lines": 50,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0004_indexes_and_autovacuum.py",
+      "sha256": "bb87ff47279107cb93b257f3e8846bc0f67552c30bfc3035d71d20cfd92e8f05",
+      "lines": 65,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0005_appeals_locality.py",
+      "sha256": "a268e52134850a79b7a893e6ff0f6baec6ccd565160347baa83db122a453c79f",
+      "lines": 37,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0006_consent_revoked_at.py",
+      "sha256": "ec9201b7e7b8e0dd81f3f698972f61121d1cffa07618f3ed7191a8e50ccd8fc1",
+      "lines": 40,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0007_consent_broadcast_anonymous.py",
+      "sha256": "1345862c9450491a0596c89e1e00a80ce725399221c5a789debd9e241016792a",
+      "lines": 94,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0008_backfill_consent_broadcast.py",
+      "sha256": "d0e1d77dc416cb57a42126bccf586c932053f871515cb0ed8d593124551ec5c5",
+      "lines": 88,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0009_partial_indexes_for_hot_paths.py",
+      "sha256": "3f2758ee635b068db110dd8ccc997c270711457aeac681fe15f40cfb51b4de80",
+      "lines": 71,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0010_pg_ops_hardening.py",
+      "sha256": "03491bee7a5964c45e7b363af2a97a553487d90bbae23b5a6a175fa95080b9f8",
+      "lines": 94,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0011_wizard_state_persistence.py",
+      "sha256": "0b08f1ceef41d02320a991ee4e4c96f2177eeef2764e613e33212866cecfc814",
+      "lines": 85,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0012_messages_appeal_created_index.py",
+      "sha256": "79a4cf2b35d91c37f44131678aca1f853b7e80edcb1560cee22ceacbace87360",
+      "lines": 44,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0013_settings_synced_at.py",
+      "sha256": "15956f21ce26b6bb151ff5290bc5adc8c4f09ca9ecd162893f7ea16f8d70b889",
+      "lines": 50,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0014_broadcasts_attachments.py",
+      "sha256": "33fd603474ffa2cd0b08998666506e6299dcb8065e39e98fdbee4f3c75125cf0",
+      "lines": 50,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0015_broadcast_templates.py",
+      "sha256": "2f0d09481defff903fe8809ebb855e97d207b44b5e15abd35bdc41a8c7dd1296",
+      "lines": 74,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0016_broadcast_template_usage.py",
+      "sha256": "db4791a68a671f5a7cf341ce95fcab5788f5ed6442a0c434134a8c21a94d97af",
+      "lines": 51,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0017_appeals_last_card_mid.py",
+      "sha256": "4de3f6e76f0bd37f7627ee1c3fa4f079101b058a2e2d4bbfadf6eac91a2c382f",
+      "lines": 47,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0018_users_trigram_search_indexes.py",
+      "sha256": "4f1e9cdb0c1b927c566d8902d423f982008efff6e45798d67c50dd7442023834",
+      "lines": 68,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0019_appeals_status_created_index.py",
+      "sha256": "1bd487c7d85dc27a14d697506131c2d970b2183fca29ba03af1ecf78dc5f867f",
+      "lines": 59,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0020_appeals_coordinates.py",
+      "sha256": "a10b95808865f77d6bba107e3bc1204014f501987869dea9370165e6dac8136f",
+      "lines": 43,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0021_drop_appeals_coordinates.py",
+      "sha256": "a7d2222ffd6d3a1cbebe249f976bae93d7ea3127fa2b85e5391ad1126dc79b30",
+      "lines": 53,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0022_users_consent_text_hash.py",
+      "sha256": "942b1c9ce4d04a593108d06c0995cf0b0d2024d0b8408714146c9e2d56e0658a",
+      "lines": 45,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0023_broadcast_deliveries_unique.py",
+      "sha256": "86b9c2c969f1612d0bc22167bbc1cd157ca987d76fc8e05ea0057d1be885c7a7",
+      "lines": 57,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0024_block_legacy_erased_residents.py",
+      "sha256": "f11d8d8bd10d5dc7ca1d600f50b63c025c898c1442b317d0ecceb96d20bdf846",
+      "lines": 59,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0025_appointment_text_okrug.py",
+      "sha256": "0d4c9479f293365cc18fe43e1b0349bd9cbe6ddf66af7a1996a165bc972e8f76",
+      "lines": 66,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0026_durable_receipt.py",
+      "sha256": "0db3fe0cc7df4537cf17186a8d6ab27ffa574776eab2c962d7ce799d4052c506",
+      "lines": 36,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/alembic/versions/0027_clear_invalid_resident_names.py",
+      "sha256": "19fd522cbab063a4897c2601d8d3eb405a653eac3bd188875f282cff947dfee8",
+      "lines": 59,
+      "internal_imports": [
+        "aemr_bot.data.resident_names_v2"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/db/models.py",
+      "sha256": "040f41640fb6f35cebe34137c2edad2da001d102a0adb5984bf4c78c457ea73e",
+      "lines": 503,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/db/session.py",
+      "sha256": "7a2a2978272f2b3f9dce1f98745ef782a32384ba4b91fa296a333e15ef9f4a3e",
+      "lines": 60,
+      "internal_imports": [
+        "aemr_bot.config"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/db/single_instance.py",
+      "sha256": "608a7b027c69bac843eedc94326a9cf54bb7e29e8ca919599ed2f10d9ac2c69b",
+      "lines": 157,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.db.session"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/__init__.py",
+      "sha256": "81410d47f20ef239c1f354356312058fe52be1b420664534d2246e6709745511",
+      "lines": 159,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.handlers",
+        "aemr_bot.services",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/_auth.py",
+      "sha256": "ac0400be43eeceb68b522b69840c068c4c124c7bf451e970e90167d131366231",
+      "lines": 78,
+      "internal_imports": [
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.services",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/_common.py",
+      "sha256": "660b14bb2ec951721b07f6741c2aa96851dd66ef7c60f261e4410ebc8017dd36",
+      "lines": 130,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.services",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_appeal_ops.py",
+      "sha256": "108c5d40399ec2d983e11a9b2c4ab4592124a6bf52a13e77b9b7260239762388",
+      "lines": 440,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.handlers._common",
+        "aemr_bot.services",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_audience.py",
+      "sha256": "c54bc2b60512831c3bf2b26ac435d83fef12c33d89b120b145a31efa447e028c",
+      "lines": 515,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.handlers._common",
+        "aemr_bot.services",
+        "aemr_bot.services.card_format",
+        "aemr_bot.utils.event",
+        "aemr_bot.utils.pii_mask"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_callback_dispatch.py",
+      "sha256": "27a50e9bcf4c282eaf8c7c1ea35ef3d609b8a7f2e761dda41f9bb527be287990",
+      "lines": 314,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.services",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_commands.py",
+      "sha256": "86a4f4bc2ea9884b77f84b323d34cc48f5d5bb3fcc88eba2278cff37226e9def",
+      "lines": 459,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.handlers.admin_appeal_ops",
+        "aemr_bot.handlers.admin_audience",
+        "aemr_bot.handlers.admin_operators",
+        "aemr_bot.handlers.admin_panel",
+        "aemr_bot.handlers.admin_settings",
+        "aemr_bot.handlers.admin_stats",
+        "aemr_bot.services",
+        "aemr_bot.services.stats",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_operators.py",
+      "sha256": "e31cc9a07ba4374eaf14b157f9f980fb289ca6f2148d2ead23989566d3126007",
+      "lines": 178,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.models",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.admin_operators_wizard",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_operators_list.py",
+      "sha256": "4372a26e2de714ce2507805512d53e96396cddd23efa5e8997d509b333ae345d",
+      "lines": 104,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._common",
+        "aemr_bot.services",
+        "aemr_bot.ui",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_operators_roles.py",
+      "sha256": "431e96a8bdadc9869cfca47dc94e439c4fe1291878da5031a8d1904df78a5e01",
+      "lines": 284,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._common",
+        "aemr_bot.services",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_operators_wizard.py",
+      "sha256": "9e9fd8dbf200401d1cd2876928105efa8c1cd97d8989d82067771f5cba6e01ba",
+      "lines": 513,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._common",
+        "aemr_bot.services",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_panel.py",
+      "sha256": "4cb033b679e0d284e2a7427e918fb452cdce6c322ebcdc4751444cd34c0870c2",
+      "lines": 503,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.handlers._common",
+        "aemr_bot.services",
+        "aemr_bot.utils.event",
+        "aemr_bot.utils.typing_indicator"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_resident_search.py",
+      "sha256": "8825e5769c756a514b19abd336e203199a3b33129115d45675b8f6558c5b88ef",
+      "lines": 245,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.handlers._common",
+        "aemr_bot.services",
+        "aemr_bot.services.admin_events",
+        "aemr_bot.utils.event",
+        "aemr_bot.utils.typing_indicator"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_settings.py",
+      "sha256": "3ecd30499f49b7094e2469529c8e4d85d6aad7bfbb41e72438dfa798d721c627",
+      "lines": 384,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.admin_settings_author",
+        "aemr_bot.handlers.admin_settings_list",
+        "aemr_bot.handlers.admin_settings_notify",
+        "aemr_bot.handlers.admin_settings_obj",
+        "aemr_bot.handlers.admin_settings_pr",
+        "aemr_bot.handlers.admin_settings_quiet",
+        "aemr_bot.handlers.admin_settings_shared",
+        "aemr_bot.handlers.admin_settings_text",
+        "aemr_bot.services",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_settings_author.py",
+      "sha256": "9bda48412b3e901df398c3d7065e53a48429cb8f69ff2b18722a07ce144e4078",
+      "lines": 37,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._common",
+        "aemr_bot.services"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_settings_list.py",
+      "sha256": "7191751365aa06bc3c094599ad2b8c2ef6b7407bf1fb1b09ab193842291ece4b",
+      "lines": 144,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.admin_settings_shared",
+        "aemr_bot.services"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_settings_notify.py",
+      "sha256": "a8ebc18aa1112a669a2536173d9086d5a7454e17e884e642533672e173d88093",
+      "lines": 90,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._common",
+        "aemr_bot.services",
+        "aemr_bot.ui.settings_keyboards"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_settings_obj.py",
+      "sha256": "20612ec1fc99017cc3f781bf175d99d6c79a5255bc6d66bde4c0303f99617690",
+      "lines": 237,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.admin_settings_shared",
+        "aemr_bot.services"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_settings_pr.py",
+      "sha256": "1959217a98db17ae9b7ef3d1ea433cf7808e8f6439c7991c982c68997ea3c233",
+      "lines": 235,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._common",
+        "aemr_bot.services"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_settings_quiet.py",
+      "sha256": "ff8fec8f8ac8a3010d1ef7fd3a8db6fd261f17082368b1101dbb8beee76404cd",
+      "lines": 154,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.admin_settings_shared",
+        "aemr_bot.services"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_settings_shared.py",
+      "sha256": "da94a620dd8ac81a0ccca93f2ba05e0a2202abce34a8ebf07019da971cee102e",
+      "lines": 126,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_settings_text.py",
+      "sha256": "d2c0ec4ce729bc77bd78c492aaaabdeaa67f465298b7a6cd984d14071116cc57",
+      "lines": 144,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.admin_settings_author",
+        "aemr_bot.handlers.admin_settings_shared",
+        "aemr_bot.services"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/admin_stats.py",
+      "sha256": "effd8d81e06aa580c858eae0008b20433c72dd74e691e50a6305b4bf9d0079bd",
+      "lines": 116,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.handlers.admin_panel",
+        "aemr_bot.services",
+        "aemr_bot.services.stats",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/appeal.py",
+      "sha256": "43ffb6eded33bcf1893acda169d8bc883311c26856cc22bfcbf589ec2e1de97f",
+      "lines": 819,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.appeal_runtime",
+        "aemr_bot.services",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/appeal_funnel.py",
+      "sha256": "7b6184d9b4a98d6d2bbbce9e99900e778db172c601b7691c2507033aa5f30c3a",
+      "lines": 920,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.appeal_runtime",
+        "aemr_bot.services",
+        "aemr_bot.services.admin_relay",
+        "aemr_bot.services.policy",
+        "aemr_bot.services.progress",
+        "aemr_bot.utils.attachments",
+        "aemr_bot.utils.event",
+        "aemr_bot.utils.resident_names"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/appeal_geo.py",
+      "sha256": "98883857e4bb963b0a2297edbbea3e3cdf6d8d0524dc52d4157cb78c52bc5046",
+      "lines": 180,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._common",
+        "aemr_bot.services",
+        "aemr_bot.utils.attachments",
+        "aemr_bot.utils.event",
+        "aemr_bot.utils.typing_indicator"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/appeal_runtime.py",
+      "sha256": "0f8ae99230c93dbcf220502a8e7a0f8d431b1fb61ea4cca3fd42c83bbbce2bdd",
+      "lines": 420,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._common",
+        "aemr_bot.services",
+        "aemr_bot.services.admin_relay",
+        "aemr_bot.utils.background",
+        "aemr_bot.utils.resident_lifecycle"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/broadcast.py",
+      "sha256": "e1f1a237241ba3b24b858e22f75f183cb8edba6dacc505c379ab9bec4496e8be",
+      "lines": 926,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.broadcast_wizard",
+        "aemr_bot.services",
+        "aemr_bot.services.broadcast_utils",
+        "aemr_bot.utils",
+        "aemr_bot.utils.delivery_guard",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/broadcast_templates.py",
+      "sha256": "ae280918d63391c4b9b3fcdf91edffc076e0099e44a705fa45990191b6621575",
+      "lines": 249,
+      "internal_imports": [
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.handlers.broadcast_templates_crud",
+        "aemr_bot.handlers.broadcast_templates_list",
+        "aemr_bot.handlers.broadcast_templates_state",
+        "aemr_bot.handlers.broadcast_templates_wizard",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/broadcast_templates_crud.py",
+      "sha256": "e75a9d7ad23458937a2b51c01303c03abf953891009c2ad84cbd2584029c6c3f",
+      "lines": 274,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.broadcast_templates_state",
+        "aemr_bot.services",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/broadcast_templates_list.py",
+      "sha256": "f3c4537c079022e3e8ff36e696934533d073f5b8ed38f3ebd21deaa0ef86dce7",
+      "lines": 240,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.broadcast_templates_state",
+        "aemr_bot.services",
+        "aemr_bot.utils",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/broadcast_templates_state.py",
+      "sha256": "2d6d4d2890e5432885a8628f337d79d1cd843822707c77451537019dc9dc17b3",
+      "lines": 134,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.services"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/broadcast_templates_wizard.py",
+      "sha256": "c5d88cbce8147cbdc6791c10156e3c05cdbeb22b90d2e5857c2d5fb51d10bb13",
+      "lines": 513,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.broadcast_templates_state",
+        "aemr_bot.services",
+        "aemr_bot.utils",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/broadcast_wizard.py",
+      "sha256": "f1651a4f01d6b92dbe6f31d8deb680c76aed85f918c61b26a57ba4b1bebe7d62",
+      "lines": 559,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._auth",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.broadcast",
+        "aemr_bot.services",
+        "aemr_bot.services.broadcast_utils",
+        "aemr_bot.utils",
+        "aemr_bot.utils.background",
+        "aemr_bot.utils.event",
+        "aemr_bot.utils.typing_indicator"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/callback_payloads.py",
+      "sha256": "221ae6058faf9772ac64788b560e307d8ef02ff8788aaa6841e03c04f9096f8c",
+      "lines": 367,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/handlers/callback_router.py",
+      "sha256": "0417a04d7f4874e7bb775edbb89a11e0b475294c748368f46c1c689a1b26a36e",
+      "lines": 166,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/handlers/menu.py",
+      "sha256": "abf630518a409d3da0e73ac9da23a8daf236b6be328de1e55c8578ad822dc68a",
+      "lines": 1149,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.appeal_funnel",
+        "aemr_bot.handlers.start",
+        "aemr_bot.services",
+        "aemr_bot.utils",
+        "aemr_bot.utils.event",
+        "aemr_bot.utils.typing_indicator"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/operator_reply.py",
+      "sha256": "c837ba998c66b91a6a5b3adb6179079391fcb70a47698ad710ccb00eaee6acf6",
+      "lines": 878,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.services",
+        "aemr_bot.services.settings_store",
+        "aemr_bot.utils",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/resident_name_gate.py",
+      "sha256": "5557d37b5723521cebbac9736a20375890c2a23cb9394c6bf8a774300685c516",
+      "lines": 203,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._common",
+        "aemr_bot.services",
+        "aemr_bot.utils.attachments",
+        "aemr_bot.utils.event",
+        "aemr_bot.utils.resident_names"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/handlers/start.py",
+      "sha256": "dd362f3da4721b8739bcc74febbbd011867455947164911d392495b10bc91356",
+      "lines": 673,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers._common",
+        "aemr_bot.handlers.menu",
+        "aemr_bot.services",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/health.py",
+      "sha256": "2f95cf0cdecd3fe6c6cd34011f7fcdfe10f712874b3e06f285c1a68f791fab85",
+      "lines": 234,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.db.session"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/keyboards.py",
+      "sha256": "db84ebdc392b48eed2557510bc288f5165b977259a80285cb5cb445e489a6a60",
+      "lines": 25,
+      "internal_imports": [
+        "aemr_bot.ui.broadcast_keyboards",
+        "aemr_bot.ui.citizen_keyboards",
+        "aemr_bot.ui.operator_keyboards",
+        "aemr_bot.ui.settings_keyboards",
+        "aemr_bot.ui.wizard_keyboards"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/logging_setup.py",
+      "sha256": "0137b44569e599ea2d3476b26070fba145e2eb3f92f86bae1bd494ac79c4798e",
+      "lines": 96,
+      "internal_imports": [
+        "aemr_bot.config"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/main.py",
+      "sha256": "80c543bc07dbb0da495d62d828de950221e6985c904353b828e25b75ade45823",
+      "lines": 892,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers",
+        "aemr_bot.handlers.appeal",
+        "aemr_bot.logging_setup",
+        "aemr_bot.services",
+        "aemr_bot.transport",
+        "aemr_bot.utils.background",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/network.py",
+      "sha256": "b59c00c66deb6b456c8f3cb420021df02371ab8b1fcfe4ab013386f7e27c9a59",
+      "lines": 150,
+      "internal_imports": [
+        "aemr_bot.config"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "lines": 0,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/services/admin_bus.py",
+      "sha256": "3f39e48e75ed23429bcfa60c696add07b0da6d7d2c05b12ed498087965a846ae",
+      "lines": 361,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.services.quiet_hours",
+        "aemr_bot.utils",
+        "aemr_bot.utils.delivery_guard",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/admin_card.py",
+      "sha256": "c534f2a483e9de6d652ef6624f1e86fc977530467dc3e04a30f6507e8f9b6e7f",
+      "lines": 347,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.services",
+        "aemr_bot.services.admin_relay",
+        "aemr_bot.utils",
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/admin_events.py",
+      "sha256": "bda11ff3af003aa2f45ce42f6164624db14948cc1bdbc92a210b0c23b1ff1288",
+      "lines": 212,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.db.session",
+        "aemr_bot.services",
+        "aemr_bot.utils.pii_mask"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/admin_relay.py",
+      "sha256": "00655893f7420616f762c62b138d6ebe4d837ac0899839a8c3e207a9e77aab36",
+      "lines": 258,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.services",
+        "aemr_bot.utils.attachments"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/appeals.py",
+      "sha256": "2a301a3b856382daecb00029b2f0175db11ea6e39b4dffd09908785fe825b5ca",
+      "lines": 757,
+      "internal_imports": [
+        "aemr_bot.db.models",
+        "aemr_bot.services"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/backup_verify.py",
+      "sha256": "90740609557cf492018e9dcd9ca9b94df955511c7005004d7916d4f54d94bbee",
+      "lines": 272,
+      "internal_imports": [
+        "aemr_bot.config"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/broadcast_templates.py",
+      "sha256": "5d227ba4bd897612544f30d0ce2ed9543878297c2e5f105b6406d781b69cd296",
+      "lines": 255,
+      "internal_imports": [
+        "aemr_bot.db.models",
+        "aemr_bot.services"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/broadcast_utils.py",
+      "sha256": "15300e68906d49f69282d29d44724d4857f979d57d4af0ee991d2846296cb9c1",
+      "lines": 136,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/broadcasts.py",
+      "sha256": "42cc2cd0c49d85c811c5701036bc43e39c2c7b94899ab494fb6976e5450148d2",
+      "lines": 506,
+      "internal_imports": [
+        "aemr_bot.db.models"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/calendar_ru.py",
+      "sha256": "73793987226666ac81b302c3046f736e240e6f614ad14680e0fbe0cebd931a1e",
+      "lines": 79,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/services/card_format.py",
+      "sha256": "6d06efceeb34a22ad0c31242e2917e4f7ea28239fe7f076c544cd0d7efbc22fa",
+      "lines": 509,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.services.settings_store",
+        "aemr_bot.services.threat_intel",
+        "aemr_bot.texts",
+        "aemr_bot.utils.attachments",
+        "aemr_bot.utils.url_defang"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/cron.py",
+      "sha256": "029e619bfef58c57172a19fccb752ef5eb37a48128a63958f2610235a002d59d",
+      "lines": 1548,
+      "internal_imports": [
+        "aemr_bot",
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.handlers.admin_operators",
+        "aemr_bot.handlers.appeal_runtime",
+        "aemr_bot.health",
+        "aemr_bot.network",
+        "aemr_bot.services",
+        "aemr_bot.services.backup_verify",
+        "aemr_bot.services.calendar_ru",
+        "aemr_bot.services.db_backup",
+        "aemr_bot.services.quiet_hours"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/cron_registry.py",
+      "sha256": "cac2fe49da2a661e771e78e21b72f338e431ae24021a7dfd73016ab776509369",
+      "lines": 177,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/services/db_backup.py",
+      "sha256": "be3e1e69e4b69c41dbfe4b31623de471665a726deca369351db421b03ef08b41",
+      "lines": 467,
+      "internal_imports": [
+        "aemr_bot.config"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/geo.py",
+      "sha256": "f975cc0fd72a42efdefd1e5ea349f2f51d7c725ad68cf4142dac5179451f17c8",
+      "lines": 272,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/services/idempotency.py",
+      "sha256": "03ddbc5443b1a9cedf0e23b7504e6d6487cced3728dd41055909a38f1f7cef37",
+      "lines": 187,
+      "internal_imports": [
+        "aemr_bot.db.models",
+        "aemr_bot.db.session"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/inbox.py",
+      "sha256": "fb4bfbedcf1b383160d7fb9d14a2d5c0edbd89566d6325e4b1a9d53f128de8a1",
+      "lines": 216,
+      "internal_imports": [
+        "aemr_bot.db.models",
+        "aemr_bot.db.session",
+        "aemr_bot.services",
+        "aemr_bot.utils.resident_lifecycle"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/notify_toggles.py",
+      "sha256": "96aa18c46413b1c36bc8894861dfd6f83cb7d47e2cc233475bba250826091e89",
+      "lines": 104,
+      "internal_imports": [
+        "aemr_bot.services"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/operators.py",
+      "sha256": "3f9c578b66a16f0facca4e2611d3507eaec43d712d0ef6fd88066d9d689c6634",
+      "lines": 241,
+      "internal_imports": [
+        "aemr_bot.db.models"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/policy.py",
+      "sha256": "ed8b194d33f4c7c3b0c93b3610811e42bcffd93d602e06dceec98524fc675396",
+      "lines": 94,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.db.session",
+        "aemr_bot.services"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/progress.py",
+      "sha256": "bd405b2a8cd25ee0bd61b6b4ff6e4a25352ea48aab1480949497f3e0e9fe63dd",
+      "lines": 207,
+      "internal_imports": [
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/quiet_hours.py",
+      "sha256": "30b01fe38891cf93e46be81fb4fd7d927bd22044170987decc90646e1ade722d",
+      "lines": 146,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.services"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/repo_sync.py",
+      "sha256": "078afc8b465b33e2c03e7fdb4c8aeceea65d76aab7ae014b5ad31167a534b7c9",
+      "lines": 449,
+      "internal_imports": [
+        "aemr_bot.network"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/settings_store.py",
+      "sha256": "0e8aab12da6b52d12ff3339565212e52442782111e826ef69c3c9a9c16e2d487",
+      "lines": 1220,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.utils.url_defang"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/sla.py",
+      "sha256": "bdf89231edb027d0365cd10178ab712887867b2d06590a471fffff5717c7cdc1",
+      "lines": 135,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.services.calendar_ru"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/stats.py",
+      "sha256": "cc2429926e00603d2660d27daf937903b2c402f494e2c5bf9bbce3811ff48d85",
+      "lines": 314,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.services",
+        "aemr_bot.utils.pii_mask"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/threat_intel.py",
+      "sha256": "49a3c1a8b3a5b477af003b65d4fc92ba1fafa6766a8423b45a6b26be5964446d",
+      "lines": 325,
+      "internal_imports": [
+        "aemr_bot.network"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/uploads.py",
+      "sha256": "7532fedc2eaffebb13668770c3bf4d4ccadd0c462be83a7de7766dcdfa083881",
+      "lines": 102,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/services/users.py",
+      "sha256": "35645e347edb2c596d1ebb8e582f3f52cde701d4c88df2fe219b81d595887df4",
+      "lines": 907,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.services.inbox",
+        "aemr_bot.utils.resident_lifecycle",
+        "aemr_bot.utils.resident_names"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/wizard_persist.py",
+      "sha256": "8c5a43e226bd7d0de545ce41c8e1920389d0d341944f7a5bdef14313f832c231",
+      "lines": 172,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.db.models",
+        "aemr_bot.services"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/services/wizard_registry.py",
+      "sha256": "4de6c0f64497047af19546b087eef78d377aad0a525f816d927024c267e2f449",
+      "lines": 335,
+      "internal_imports": [
+        "aemr_bot.db.session",
+        "aemr_bot.services",
+        "aemr_bot.utils.background"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/texts.py",
+      "sha256": "ecd7b6129e5e23440c42153fd2fba7188e7c5ac0f233989a9c9f14dc688d43d3",
+      "lines": 26,
+      "internal_imports": [
+        "aemr_bot.copy.admin_texts",
+        "aemr_bot.copy.broadcast_texts",
+        "aemr_bot.copy.citizen_funnel",
+        "aemr_bot.copy.errors_texts",
+        "aemr_bot.copy.security_texts"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/transport.py",
+      "sha256": "0245e6af7ccb231b47eb6c3b0b5288dbad7990e0354acf59ded9ecd96603ac30",
+      "lines": 86,
+      "internal_imports": [
+        "aemr_bot.services"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/ui/__init__.py",
+      "sha256": "65e166158c8ec1c74a5b8e3677f1ef6d7d1b07caa0043e238011e4075871f14a",
+      "lines": 22,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/ui/broadcast_keyboards.py",
+      "sha256": "2c66a860a211d21f1a213ea08dc2dd704fc22bf09838a77ebf6cffced131ab36",
+      "lines": 326,
+      "internal_imports": [
+        "aemr_bot.handlers"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/ui/citizen_keyboards.py",
+      "sha256": "8a4b6618a23ddc7eb61de7a7edab4903620c9b481f0af3f104226acef1387471",
+      "lines": 490,
+      "internal_imports": [
+        "aemr_bot.db.models",
+        "aemr_bot.handlers"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/ui/operator_keyboards.py",
+      "sha256": "271489b7ff42b717060d63a51c4b0a451f7bdcc1161054bdd261202922286912",
+      "lines": 465,
+      "internal_imports": [
+        "aemr_bot.db.models",
+        "aemr_bot.handlers"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/ui/settings_keyboards.py",
+      "sha256": "caa7f43bf3167b48b967f8bedf91c862998fbde24d82bf087bb15bc6ba7c2ff4",
+      "lines": 275,
+      "internal_imports": [
+        "aemr_bot.handlers",
+        "aemr_bot.services.settings_store"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/ui/wizard_keyboards.py",
+      "sha256": "4ac8fb03e5948fcd6f1441e45ab04329ba7342185b9ca69ee53c7292554d94ea",
+      "lines": 229,
+      "internal_imports": [
+        "aemr_bot.db.models",
+        "aemr_bot.handlers"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/utils/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "lines": 0,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/utils/attachments.py",
+      "sha256": "f98e162ba4b2dbf3f00ea4abe934aceb9bd571724eae7159b3798e08051dc99b",
+      "lines": 548,
+      "internal_imports": [
+        "aemr_bot.utils.resident_names"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/utils/background.py",
+      "sha256": "4696843de52fb0f066b402549f9b50bde7df4542a870f67acfaa3ed0eae15149",
+      "lines": 64,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/utils/delivery_guard.py",
+      "sha256": "34b65de2d5ae7674e8dec275d137fb1453c7b6650f78e593f40df82758d0c9d1",
+      "lines": 26,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/utils/event.py",
+      "sha256": "f6e043082cbf10d05d253c791dd14f5c3f2b35206b2b2b68566a01ef635f6e8c",
+      "lines": 332,
+      "internal_imports": [
+        "aemr_bot.config",
+        "aemr_bot.utils"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/utils/image_attachments.py",
+      "sha256": "2cb0fcbcd092d40331ff978eebaed1584f140bd7fcd6778598f97bf5e19d09e7",
+      "lines": 34,
+      "internal_imports": [
+        "aemr_bot.utils.attachments"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/utils/menu_tracker.py",
+      "sha256": "1e434e7ca9c842214a39db7f86f506fe7be05a5bde2665b68d64d36f67a3d89a",
+      "lines": 232,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/utils/pii_mask.py",
+      "sha256": "e60686e1da5ef4ff57143de44164f3dd7a520c1218c275104e066ddb96a5b593",
+      "lines": 33,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/utils/resident_lifecycle.py",
+      "sha256": "ba9709777d357a00227316f962ded9dd7dc11e3cd41cbda1502bacb50fb5e391",
+      "lines": 88,
+      "internal_imports": []
+    },
+    {
+      "path": "bot/aemr_bot/utils/resident_names.py",
+      "sha256": "4b93fd8621b16d2a0c2f4debe171fd1a02c768590f7f8ee3feb63891ded0eeeb",
+      "lines": 4,
+      "internal_imports": [
+        "aemr_bot.data.resident_names_v2"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/utils/typing_indicator.py",
+      "sha256": "3da1011abf95b08c319fadb50cb5f4b3223f99aafccc71e369280b58ac3b0dbe",
+      "lines": 59,
+      "internal_imports": [
+        "aemr_bot.utils.event"
+      ]
+    },
+    {
+      "path": "bot/aemr_bot/utils/url_defang.py",
+      "sha256": "93a701997d492e1584e6601041047513d95d505a47dddf64a89ec4af465b13ef",
+      "lines": 331,
+      "internal_imports": []
+    }
+  ]
+}

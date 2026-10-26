@@ -1,3 +1,5 @@
+> Актуализация 0.2.4: maxapi закреплён на 1.2.3; health и webhook работают на aiohttp. Неиспользуемые FastAPI/Uvicorn и их исключительные транзитивные зависимости удалены после проверки импортов, команд запуска, Docker/Compose и истории удаления ASGI-приложения. CI выполняет pip-audit без игноров CVE. Исторические обоснования ниже не являются действующими исключениями.
+
 # Dependency management
 
 Один источник истины — `bot/uv.lock`. Локальная среда и Docker-образ работают с **одной** версией каждого пакета.
@@ -150,12 +152,7 @@ grep -vE '^(aemr-bot|aemr_bot)(==| @ )' audit-requirements.txt > audit-requireme
 pip_audit --strict -r audit-requirements.thirdparty.txt $IGNORE_FLAGS
 ```
 
-**Список игнорируемых CVE.** Две уязвимости помечены как неприменимые и не валят CI — каждая с обоснованием и grep-проверкой прямо в комментарии шага, чтобы любой разработчик мог убедиться, что игнор всё ещё валиден:
-
-- **PYSEC-2026-161** (starlette, реконструкция URL из заголовка Host → потенциальный обход аутентификации) — бот не реконструирует URL из Host; health-эндпоинты `/livez`, `/readyz` отдают plain-статус и не используют `request.url`. Проверка: `grep -r 'request\.url\|HTTP_HOST' aemr_bot/` → 0.
-- **CVE-2025-62727** (starlette, ReDoS на заголовке Range в `FileResponse`/`StaticFiles`) — бот не использует ни `FileResponse`, ни `StaticFiles`, отдаёт только JSON. Проверка: `grep -r 'FileResponse\|StaticFiles' aemr_bot/` → 0.
-
-Обе тянутся транзитивно через `fastapi → starlette` (fastapi пинит уязвимую `starlette`). **Этот список нужно пересматривать при каждом bump'е fastapi**: если новый fastapi подтянет starlette с фиксом, соответствующий `--ignore-vuln` убрать. Отчёт `pip-audit.json` выгружается как артефакт сборки (`actions/upload-artifact`).
+**Игнорируемых CVE нет.** Исторические исключения для Starlette удалены ранее; в 0.2.4 удалены и сами неиспользуемые FastAPI/Uvicorn с исключительными транзитивными зависимостями. Отчёт `pip-audit.json` выгружается как артефакт CI. Ошибка проверки не трактуется как отсутствие уязвимостей.
 
 ### При сборке образа (require-hashes)
 
