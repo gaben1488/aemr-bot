@@ -208,7 +208,7 @@ async def _start_wizard(event) -> None:
         from aemr_bot.handlers import admin_commands as admin_cmd_module
         from aemr_bot.handlers import operator_reply as op_reply
 
-        admin_cmd_module._op_wizards.pop(actor_id, None)
+        admin_cmd_module._op_wizard_drop(actor_id)
         op_reply.drop_reply_intent(actor_id)
     except Exception:
         log.exception("broadcast: cleanup чужих wizard'ов упал, продолжаем")

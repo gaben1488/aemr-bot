@@ -72,6 +72,11 @@ async def _step_rename(
     *,
     op_id: int | None,
 ) -> bool:
+    # Unlike create/edit, these text steps commit immediately, with no
+    # confirmation callback to recheck a revoked or downgraded role.
+    if not await ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        _wizards.pop(actor_id, None)
+        return True
     if (err := _validate_tmpl_name(text)) is not None:
         await event.message.answer(
             err,
@@ -170,6 +175,11 @@ async def _step_clone_name(
 ) -> bool:
     """Принять имя для клона; создать шаблон сразу (text+attachments
     уже в pending_*, превью не нужен — это копия)."""
+    # Unlike create/edit, these text steps commit immediately, with no
+    # confirmation callback to recheck a revoked or downgraded role.
+    if not await ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        _wizards.pop(actor_id, None)
+        return True
     if (err := _validate_tmpl_name(text)) is not None:
         await event.message.answer(
             err,
@@ -204,6 +214,14 @@ async def _step_clone_name(
         await event.message.answer(
             texts.OP_TMPL_NAME_TAKEN.format(name=text),
             attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        )
+        return True
+    except ValueError as exc:
+        # Legacy templates can violate today's text/URL validation.
+        _wizards.pop(actor_id, None)
+        await event.message.answer(
+            f"Ошибка клонирования: {exc}",
+            attachments=[keyboards.op_back_to_menu_keyboard()],
         )
         return True
     _wizards.pop(actor_id, None)

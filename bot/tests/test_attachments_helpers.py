@@ -135,3 +135,11 @@ class TestCountByType:
         # image учтён, audio либо в other либо skipped — главное чтоб
         # image была верно
         assert result.get("image") == 1
+
+
+def test_relay_validation_error_does_not_log_attachment_payload(caplog):
+    from aemr_bot.utils.attachments import deserialize_for_relay
+    secret = "private-download-token-12345"
+    assert deserialize_for_relay([{"type": "file", "payload": secret}]) == []
+    assert "failed to deserialize" in caplog.text
+    assert secret not in caplog.text

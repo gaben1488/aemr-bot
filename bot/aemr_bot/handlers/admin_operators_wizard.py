@@ -59,7 +59,7 @@ def _op_wizard_get(operator_id: int) -> dict | None:
     if state is None:
         return None
     if _time_op.monotonic() > state.get("expires_at", 0):
-        _op_wizards.pop(operator_id, None)
+        _op_wizard_drop(operator_id)
         return None
     return state
 
@@ -186,6 +186,16 @@ async def _show_from_group(event, operator_id: int) -> None:
     )
 
 
+def _prepare_add(operator_id: int) -> None:
+    """Start a registration without carrying over another input flow."""
+    from aemr_bot.handlers import broadcast as broadcast_handler
+    from aemr_bot.handlers import operator_reply as op_reply
+
+    broadcast_handler._wizards.pop(operator_id, None)
+    op_reply.drop_reply_intent(operator_id)
+    _op_wizards.pop(operator_id, None)
+
+
 async def _start_add_with_picked(
     event, operator_id: int, picked_user_id: int
 ) -> None:
@@ -211,6 +221,7 @@ async def _start_add_with_picked(
     except Exception as exc:
         log.warning("get_chat_member failed for %s: %s", picked_user_id, exc)
 
+    _prepare_add(operator_id)
     _op_wizard_set(
         operator_id,
         step="awaiting_role",
@@ -241,13 +252,7 @@ async def _start_add_with_picked(
 
 async def _start_manual_add(event, operator_id: int) -> None:
 
-    # Сбрасываем чужие wizard'ы и reply-intent этого оператора
-    from aemr_bot.handlers import broadcast as broadcast_handler
-    from aemr_bot.handlers import operator_reply as op_reply
-
-    broadcast_handler._wizards.pop(operator_id, None)
-    op_reply.drop_reply_intent(operator_id)
-
+    _prepare_add(operator_id)
     _op_wizard_set(operator_id, step="awaiting_id", source="manual")
     await op_screen(
         event,
@@ -394,7 +399,7 @@ async def _show_add_confirm(event, operator_id: int) -> None:
 async def _confirm_save(event, operator_id: int) -> None:
 
     state = _op_wizard_get(operator_id)
-    if state is None:
+    if state is None or state.get("step") != "ready_to_confirm":
         await op_screen(
             event,
             "Мастер закрыт.",

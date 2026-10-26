@@ -28,6 +28,7 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.background import spawn_background_task
+from aemr_bot.utils.resident_lifecycle import guard
 
 log = logging.getLogger(__name__)
 
@@ -153,21 +154,12 @@ async def recover_stuck_funnels(bot) -> int:
 
     async def _bounded(uid: int) -> bool | str | None:
         async with sem:
-            return await persist_and_dispatch_appeal(bot, uid)
+            return await persist_and_dispatch_appeal(bot, uid, reset_empty=True)
 
     results = await asyncio.gather(
         *(_bounded(uid) for uid in ids),
         return_exceptions=True,
     )
-
-    # Пустые обращения никогда не получают повторный запрос при
-    # восстановлении — сбрасываем их в IDLE, чтобы они не появлялись
-    # при каждом последующем проходе recover().
-    empty_ids = [uid for uid, r in zip(ids, results, strict=True) if r is False]
-    if empty_ids:
-        async with session_scope() as session:
-            for uid in empty_ids:
-                await users_service.reset_state(session, uid)
 
     finalized = sum(1 for r in results if r is True)
     failed = sum(1 for r in results if isinstance(r, BaseException))
@@ -205,12 +197,14 @@ def _apply_repeat_context(
     return marked_topic, marked_summary
 
 
-async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | None:
+async def persist_and_dispatch_appeal(
+    bot, max_user_id: int, *, reset_empty: bool = False
+) -> bool | str | None:
     """Создает обращение (Appeal) из накопленных данных dialog_data,
     публикует карточку для админов, подтверждает жителю по user_id.
     Возвращает True при успешном сохранении и отправке, False при
     пустом обращении, PERSIST_RATE_LIMITED при превышении лимита, None —
-    если состояние уже IDLE.
+    если состояние уже не AWAITING_SUMMARY.
 
     Защищено через asyncio.Lock для каждого пользователя, поэтому
     повторная доставка одного и того же события или восстановление после
@@ -222,10 +216,12 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
     re-check.
     """
     try:
-        async with get_user_lock(max_user_id), current_user(max_user_id) as (session, user):
-            if user.dialog_state == DialogState.IDLE.value:
+        # Recovery also participates in the inbox/erasure lifecycle gate:
+        # a startup scan must not overwrite a newer live citizen action.
+        async with guard(max_user_id), get_user_lock(max_user_id), current_user(max_user_id) as (session, user):
+            if user.dialog_state != DialogState.AWAITING_SUMMARY.value:
                 log.info(
-                    "отправка пропущена для пользователя %s — состояние уже IDLE",
+                    "отправка пропущена для пользователя %s — состояние уже не AWAITING_SUMMARY",
                     max_user_id,
                 )
                 return None
@@ -256,6 +252,10 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
             summary = "\n".join(data.get("summary_chunks") or []).strip()
             attachments = data.get("attachments") or []
             if not summary and not attachments:
+                if reset_empty:
+                    # Same lock and transaction as the state check; a later
+                    # cleanup transaction could erase a newly started funnel.
+                    await users_service.reset_state(session, max_user_id)
                 return False
             topic, summary = _apply_repeat_context(
                 topic=data.get("topic", ""),

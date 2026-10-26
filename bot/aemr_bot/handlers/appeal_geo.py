@@ -50,8 +50,8 @@ async def on_awaiting_locality(event, body, text_body, max_user_id):
 
     raw_atts = getattr(body, "attachments", None) or []
     log.info(
-        "awaiting_locality: user=%s text=%r attachments_count=%d",
-        max_user_id, (text_body or "")[:50], len(raw_atts),
+        "awaiting_locality: user=%s text_length=%d attachments_count=%d",
+        max_user_id, len(text_body or ""), len(raw_atts),
     )
 
     location = extract_location(body)

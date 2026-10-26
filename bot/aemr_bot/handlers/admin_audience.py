@@ -289,9 +289,9 @@ async def handle_audience_search_text(event, text: str) -> bool:
         await op_send(
             event,
             (
-                f"🔍 По запросу «{query[:60]}» ничего не найдено.\n"
-                f"· · · · · · · ·\n"
-                f"Попробуйте короче или другой фрагмент."
+                "🔍 По вашему запросу ничего не найдено.\n"
+                "· · · · · · · ·\n"
+                "Попробуйте короче или другой фрагмент."
             ),
             kbds.op_back_to_audience_keyboard(),
         )
@@ -302,7 +302,7 @@ async def handle_audience_search_text(event, text: str) -> bool:
         for u in users
     ]
     header = (
-        f"🔍 Найдено: {len(users)} по запросу «{query[:60]}»\n"
+        f"🔍 Найдено: {len(users)}\n"
         f"· · · · · · · ·\n"
         f"Тапните строку — откроется карточка жителя."
     )

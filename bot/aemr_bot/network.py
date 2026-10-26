@@ -70,7 +70,10 @@ def _read_proxy(s: Settings) -> str | None:
         pf = Path(s.outbound_proxy_file).expanduser()
         if not pf.is_file():
             raise FileNotFoundError(f"BOT_OUTBOUND_PROXY_FILE не найден: {s.outbound_proxy_file}")
-        return pf.read_text(encoding="utf-8").strip() or None
+        proxy = pf.read_text(encoding="utf-8").strip()
+        if not proxy:
+            raise ValueError("BOT_OUTBOUND_PROXY_FILE is empty")
+        return proxy
     return None
 
 

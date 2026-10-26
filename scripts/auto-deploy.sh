@@ -107,9 +107,7 @@ if [ -n "$REQUIRE_SIGNED_COMMITS" ]; then
     fi
 fi
 
-# Сохраняем .env (в git его нет, при reset --hard не пострадает,
-# но на всякий случай делаем копию)
-cp "$COMPOSE_DIR/.env" /tmp/aemr-bot.env.bak.$$
+# .env is untracked and survives reset; do not copy secrets to shared /tmp.
 
 # Предупреждаем, если reset --hard реально что-то откатит: незакоммиченные
 # правки в ОТСЛЕЖИВАЕМЫХ файлах (ручная правка кода/конфига на сервере
@@ -149,7 +147,6 @@ else
     chown -R aemr:aemr "$REPO_DIR"
     # Keep the new retry controller: PREV_LOCAL may contain the original skip bug.
     install -m 0755 "$REPO_DIR/scripts/healthwatch.sh" /usr/local/bin/aemr-bot-healthwatch
-    rm -f /tmp/aemr-bot.env.bak.$$
     exit "$BUILD_RC"
 fi
 
@@ -174,7 +171,6 @@ if [ "$healthy" -eq 1 ]; then
     if ! curl -fsS --max-time 5 "$READY_URL" >/dev/null 2>&1; then
         logger -t "$LOG_TAG" "deploy warning: /livez ok, но /readyz failed — проверьте БД/зависимости без rollback"
     fi
-    rm -f /tmp/aemr-bot.env.bak.$$
     exit 0
 fi
 

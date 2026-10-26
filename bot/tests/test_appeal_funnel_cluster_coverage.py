@@ -79,13 +79,14 @@ class TestStartAppealFlowConsent:
              patch("aemr_bot.handlers.appeal_funnel.users_service.set_state",
                    set_state), \
              patch("aemr_bot.handlers.appeal_funnel.settings_store.get", get_mock), \
-             patch("aemr_bot.handlers.appeal_funnel.settings_store.get_consent_request_text",
-                   AsyncMock(return_value="Дайте согласие на обработку ПДн")):
+             patch("aemr_bot.handlers.appeal_funnel.settings_store.get_consent_request_and_hash",
+                   AsyncMock(return_value=("Дайте согласие на обработку ПДн", "a" * 64))):
             await appeal_funnel.start_appeal_flow(event, max_user_id=42)
 
         # Запрошено согласие: state переведён в AWAITING_CONSENT.
         from aemr_bot.db.models import DialogState
-        set_state.assert_called_once()
+        assert set_state.await_count == 2
+        assert set_state.call_args.kwargs["data"]["consent_prompt_hash"] == "a" * 64
         assert set_state.call_args.args[2] == DialogState.AWAITING_CONSENT
         event.bot.send_message.assert_called()
         text = event.bot.send_message.call_args.kwargs.get("text", "")

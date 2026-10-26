@@ -121,6 +121,8 @@ class TestRunSendLoopWithImages:
 
         with patch.object(bc, "_send_one", side_effect=_stub_send_one), \
              patch("aemr_bot.handlers.broadcast.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.is_eligible_recipient",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.begin_delivery",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",

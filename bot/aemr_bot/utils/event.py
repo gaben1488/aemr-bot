@@ -38,19 +38,19 @@ def get_ids(event: Any) -> tuple[int | None, int | None]:
         recipient = getattr(msg, "recipient", None)
         if recipient is not None and chat_id is None:
             chat_id = getattr(recipient, "chat_id", None)
-        sender = getattr(msg, "sender", None)
-        if sender is not None and user_id is None:
-            user_id = getattr(sender, "user_id", None)
 
+    # A callback's message was authored by the bot (or another user), not
+    # necessarily by the person pressing the button. Missing actor fails closed.
     cb = getattr(event, "callback", None)
-    if cb is not None and user_id is None:
+    if cb is not None:
         cb_user = getattr(cb, "user", None)
-        if cb_user is not None:
-            user_id = getattr(cb_user, "user_id", None)
+        return chat_id, getattr(cb_user, "user_id", None)
 
     user = getattr(event, "user", None)
-    if user is not None and user_id is None:
+    if user is not None:
         user_id = getattr(user, "user_id", None)
+    if user_id is None and msg is not None:
+        user_id = getattr(getattr(msg, "sender", None), "user_id", None)
 
     return chat_id, user_id
 

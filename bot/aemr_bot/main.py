@@ -287,7 +287,8 @@ def _install_polling_timeout(bot: Bot, timeout: int) -> None:
     зависший handler при use_create_task=True не гасит heartbeat-таск, но
     если встанет сам poll-цикл (мёртвая aiohttp-сессия, голодание
     event-loop), last_poll протухнет и /livez покраснеет (finding b).
-    Отмечаем только при УСПЕХЕ: на исключении (timeout/сетевой сбой) метку
+    Начальную метку ставим перед первой попыткой; затем только при УСПЕХЕ.
+    На исключении (timeout/сетевой сбой) существующую метку
     не двигаем — иначе мёртвый цикл, безостановочно бросающий ошибки,
     выглядел бы живым.
     """
@@ -295,6 +296,10 @@ def _install_polling_timeout(bot: Bot, timeout: int) -> None:
 
     async def get_updates_with_timeout(*args, **kwargs):
         kwargs.setdefault("timeout", timeout)
+        # Arm once before the first attempt: permanent failure from cold start
+        # must not look healthy forever. Subsequent failures never refresh it.
+        if health.poll_watch.last_poll == 0.0:
+            health.poll_watch.mark()
         result = await original(*args, **kwargs)
         health.poll_watch.mark()
         return result

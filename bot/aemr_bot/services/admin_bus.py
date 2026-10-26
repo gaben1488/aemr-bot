@@ -190,11 +190,7 @@ async def send(
         from aemr_bot.services.quiet_hours import is_quiet_hours_now
 
         if is_quiet_hours_now():
-            log.info(
-                "admin_bus.send: quiet hours active, suppressed "
-                "(text prefix=%r)",
-                text[:40],
-            )
+            log.info("admin_bus.send: quiet hours active, suppressed")
             return None
     kwargs: dict = {"chat_id": cfg.admin_group_id, "text": text}
     if attachments is not None:

@@ -368,3 +368,72 @@ class TestConsentTextHash:
             a = await settings_store.get_consent_text_hash(object(), fallback=fb)
             b = await settings_store.get_consent_text_hash(object(), fallback=fb)
         assert a == b
+
+
+@pytest.mark.parametrize("port", ["abc", "99999", "-1"])
+def test_invalid_url_port_is_rejected_without_exception(port):
+    from aemr_bot.services.settings_store import is_whitelisted_url
+    url = f"https://elizovomr.ru:{port}/policy.pdf"
+    assert is_whitelisted_url(url) is False
+    assert validate("policy_url", url)[0] is False
+
+
+@pytest.mark.parametrize("phone", [None, 112, {}, []])
+def test_non_string_contact_phone_returns_validation_error(phone):
+    assert validate("emergency_contacts", [{"name": "Service", "phone": phone}])[0] is False
+
+
+@pytest.mark.asyncio
+async def test_get_returns_detached_value_for_edits():
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+
+    from aemr_bot.services import settings_store
+    baseline = list(settings_store.DEFAULTS["localities"])
+    session = SimpleNamespace(scalar=AsyncMock(return_value=None))
+    value = await settings_store.get(session, "localities")
+    value.clear()
+    assert settings_store.DEFAULTS["localities"] == baseline
+
+    stored = [{"name": "Service", "phone": "112"}]
+    session.scalar.return_value = SimpleNamespace(value=stored)
+    value = await settings_store.get(session, "emergency_contacts")
+    value[0]["phone"] = "bad"
+    assert stored[0]["phone"] == "112"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("extra", ["{unknown}", "{policy_url.missing}", "{"])
+async def test_consent_hash_matches_displayed_fallback_for_invalid_template(extra):
+    import hashlib
+    from unittest.mock import AsyncMock, patch
+
+    from aemr_bot.services import settings_store
+
+    fallback = "Consent: {policy_url}"
+    with patch.object(settings_store, "get", AsyncMock(return_value="Custom {policy_url} " + extra)):
+        text = await settings_store.get_consent_request_text(
+            object(), policy_url="https://elizovomr.ru/privacy", fallback=fallback,
+        )
+        digest = await settings_store.get_consent_text_hash(object(), fallback=fallback)
+    assert text == fallback.format(policy_url="https://elizovomr.ru/privacy")
+    assert digest == hashlib.sha256(fallback.encode()).hexdigest()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("template", ["Custom {policy_url}", "Invalid {policy_url} {unknown}"])
+async def test_consent_display_and_digest_use_one_read(template):
+    import hashlib
+    from unittest.mock import AsyncMock, patch
+
+    from aemr_bot.services import settings_store
+
+    fallback = "Consent {policy_url}"
+    expected = fallback if "{unknown}" in template else template
+    with patch.object(settings_store, "get", AsyncMock(side_effect=[template, "Changed {policy_url}"])) as get:
+        text, digest = await settings_store.get_consent_request_and_hash(
+            object(), policy_url="https://elizovomr.ru/privacy", fallback=fallback,
+        )
+    get.assert_awaited_once()
+    assert text == expected.format(policy_url="https://elizovomr.ru/privacy")
+    assert digest == hashlib.sha256(expected.encode()).hexdigest()

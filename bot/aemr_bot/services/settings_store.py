@@ -77,7 +77,8 @@ def _normalize_exact_url(value: str) -> str | None:
     """
     try:
         parsed = urlparse(value)
-    except Exception:
+        _ = parsed.port  # Invalid/non-numeric/out-of-range ports raise ValueError.
+    except (TypeError, ValueError):
         return None
     if parsed.scheme.lower() not in {"http", "https"}:
         return None
@@ -190,7 +191,8 @@ def _is_whitelisted_url(value: str) -> bool:
         return True
     try:
         parsed = urlparse(value)
-    except Exception:
+        _ = parsed.port  # Invalid/non-numeric/out-of-range ports raise ValueError.
+    except (TypeError, ValueError):
         return False
     if parsed.scheme not in {"http", "https"}:
         return False
@@ -665,7 +667,7 @@ def validate(key: str, value: Any) -> tuple[bool, str]:
                 if not _is_valid_phone(phone):
                     return False, (
                         f"Поле «phone» в одном из item'ов не похоже на телефон: "
-                        f"«{phone[:30]}…». Допустимо: цифры, пробелы, + ( ) - . , ; "
+                        f"«{str(phone)[:30]}…». Допустимо: цифры, пробелы, + ( ) - . , ; "
                         f"(несколько номеров через запятую — можно), длина 2–60."
                     )
     if expected is int:
@@ -727,8 +729,35 @@ def format_obj_list(items: list[dict]) -> str:
 async def get(session: AsyncSession, key: str) -> Any:
     row = await session.scalar(select(Setting).where(Setting.key == key))
     if row is not None:
-        return row.value
-    return DEFAULTS.get(key)
+        return deepcopy(row.value)
+    return deepcopy(DEFAULTS.get(key))
+
+
+def _consent_template(raw: Any, fallback: str) -> str:
+    """Choose the same renderable template for display and consent evidence."""
+    if isinstance(raw, str) and raw.strip() and "{policy_url}" in raw:
+        template = sanitize_settings_text(raw)
+        try:
+            template.format(policy_url="")
+        except (KeyError, IndexError, ValueError, AttributeError):
+            return fallback
+        return template
+    return fallback
+
+
+async def get_consent_request_and_hash(
+    session: AsyncSession, *, policy_url: str, fallback: str,
+) -> tuple[str, str]:
+    """Render consent and its evidence digest from a single settings read."""
+    try:
+        raw = await get(session, "consent_text")
+    except (TimeoutError, SQLAlchemyError, TypeError):
+        raw = None
+    template = _consent_template(raw, fallback)
+    return (
+        template.format(policy_url=policy_url),
+        hashlib.sha256(template.encode("utf-8")).hexdigest(),
+    )
 
 
 async def get_consent_request_text(session: AsyncSession, *, policy_url: str, fallback: str) -> str:
@@ -745,14 +774,7 @@ async def get_consent_request_text(session: AsyncSession, *, policy_url: str, fa
     except (TimeoutError, SQLAlchemyError, TypeError):
         # F14: тот же узкий except, что и в get_text_with_fallback.
         raw = None
-    if isinstance(raw, str) and raw.strip() and "{policy_url}" in raw:
-        try:
-            return sanitize_settings_text(raw).format(policy_url=policy_url)
-        except (KeyError, IndexError, ValueError):
-            # На случай если в тексте есть {другие_фигурные_скобки}
-            # которые format() не сможет разобрать. Не падаем — fallback.
-            pass
-    return fallback.format(policy_url=policy_url)
+    return _consent_template(raw, fallback).format(policy_url=policy_url)
 
 
 async def get_consent_text_hash(session: AsyncSession, *, fallback: str) -> str:
@@ -772,11 +794,7 @@ async def get_consent_text_hash(session: AsyncSession, *, fallback: str) -> str:
         raw = await get(session, "consent_text")
     except (TimeoutError, SQLAlchemyError, TypeError):
         raw = None
-    template = (
-        sanitize_settings_text(raw)
-        if isinstance(raw, str) and raw.strip() and "{policy_url}" in raw
-        else fallback
-    )
+    template = _consent_template(raw, fallback)
     return hashlib.sha256(template.encode("utf-8")).hexdigest()
 
 

@@ -75,7 +75,8 @@ class PollWatch:
     def is_fresh(self, max_age: float | None = None) -> bool:
         # 0.0 ⇒ цикл ещё ни разу не отметился. Это либо webhook-режим
         # (long-poll'а нет вовсе), либо самый старт polling до первого
-        # get_updates. В обоих случаях НЕ краснеем по этому сигналу —
+        # get_updates. Первая попытка polling взводит метку до запроса.
+        # До неё НЕ краснеем по этому сигналу —
         # liveness здесь несёт heartbeat. Fail-open по доступности.
         if self.last_poll == 0.0:
             return True

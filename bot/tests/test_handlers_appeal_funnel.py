@@ -268,7 +268,8 @@ class TestOnAwaitingConsent:
         with patch("aemr_bot.handlers.appeal_funnel.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.appeal_funnel.settings_store.get",
-                   AsyncMock(return_value="https://policy.example/p.pdf")):
+                   AsyncMock(return_value="https://policy.example/p.pdf")), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.set_state", AsyncMock()):
             await appeal_funnel.on_awaiting_consent(event, body=None, text_body="x", max_user_id=42)
         event.message.answer.assert_called_once()
 
@@ -284,7 +285,7 @@ class TestOnAwaitingConsent:
             await appeal_funnel.on_awaiting_consent(event, body=None, text_body="x", max_user_id=42)
         event.message.answer.assert_called_once()
         text = event.message.answer.call_args.args[0]
-        assert "согласи" in text.lower()
+        assert "недоступен" in text.lower()
 
 
 class TestOnAwaitingSummary:
@@ -402,6 +403,7 @@ class TestOnAwaitingFollowupText:
             first_name="Сергей",
             phone="+79991234567",
             is_blocked=False,
+            dialog_state="awaiting_followup_text",
             dialog_data={"appeal_id": 5},
             consent_pdn_at=datetime.now(UTC),
             subscribed_broadcast=False,
@@ -439,6 +441,9 @@ class TestOnAwaitingFollowupText:
             _fake_session_scope,
         ), patch(
             "aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
+            AsyncMock(return_value=user),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.users_service.find_by_max_id",
             AsyncMock(return_value=user),
         ), patch(
             "aemr_bot.handlers.appeal_funnel.users_service.reset_state",
@@ -514,6 +519,7 @@ class TestOnAwaitingFollowupText:
             first_name="Сергей",
             phone="+79991234567",
             is_blocked=False,
+            dialog_state="awaiting_followup_text",
             dialog_data={"appeal_id": 5},
             consent_pdn_at=datetime.now(UTC),
             subscribed_broadcast=False,
@@ -551,6 +557,9 @@ class TestOnAwaitingFollowupText:
         ), patch(
             "aemr_bot.handlers.appeal_funnel.appeals_service.get_by_id_with_messages",
             AsyncMock(return_value=appeal),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.users_service.find_by_max_id",
+            AsyncMock(return_value=user),
         ), patch(
             "aemr_bot.handlers.appeal_funnel.appeals_service.add_user_message",
             add_msg,

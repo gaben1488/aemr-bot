@@ -250,7 +250,7 @@ def _reply_rejection_before_delivery(*, fresh_appeal, appeal_id: int) -> str | N
 
     Логика согласия (152-ФЗ ст. 21 ч. 5): после отзыва оператор может
     дать финальный ответ только по обращению, ПРИНЯТОМУ до отзыва.
-      - is_blocked / first_name == 'Удалено' — жёсткий отказ;
+      - is_blocked (включая заглушку удалённого жителя) — жёсткий отказ;
       - нет согласия и обращение подано ПОСЛЕ revoked_at — отказ;
       - согласия не было никогда — отказ;
       - нет согласия, но обращение подано ДО revoked_at — доставка
@@ -716,6 +716,7 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
     # админ-чате обсуждают обращения этой же фразой, и свайп на их
     # сообщение отправил бы текст случайному жителю.
     link = get_message_link(event)
+    link_type = link.get("type") if isinstance(link, dict) else getattr(link, "type", None)
     if link:
         replied_text = ""
         replied_sender_is_bot = False
@@ -726,9 +727,10 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
             # bot-authored сообщениях. Иначе оператор-злоумышленник
             # (или вставленный текст «🆔 №N» из обращения жителя)
             # перенаправит ответ на чужого жителя.
-            inner_sender = getattr(inner, "sender", None) or getattr(
-                inner, "from_", None
-            )
+            # MAX LinkedMessage carries sender alongside MessageBody.
+            inner_sender = getattr(link, "sender", None) or getattr(
+                inner, "sender", None
+            ) or getattr(inner, "from_", None)
             replied_sender_is_bot = bool(
                 getattr(inner_sender, "is_bot", False)
             )
@@ -737,7 +739,8 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
             if isinstance(inner_dict, dict):
                 replied_text = inner_dict.get("text", "")
                 sender_dict = (
-                    inner_dict.get("sender") or inner_dict.get("from") or {}
+                    link.get("sender")
+                    or inner_dict.get("sender") or inner_dict.get("from") or {}
                 )
                 if isinstance(sender_dict, dict):
                     replied_sender_is_bot = bool(sender_dict.get("is_bot"))
@@ -747,7 +750,7 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
         # SEC #3: маркер только в bot-authored. Если link не даёт нам
         # sender — считаем небезопасным. Лучше попросить /reply N, чем
         # доставить чужому жителю.
-        if replied_text and replied_sender_is_bot:
+        if replied_text and replied_sender_is_bot and str(link_type).lower().endswith("reply"):
             # ТОЛЬКО служебный маркер «🆔 №N» — его генерирует сам бот в
             # карточках /open_tickets и followup. Комбинация эмодзи и №
             # уникальна, в обычном тексте обращения не встречается.
@@ -760,7 +763,7 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
             ids = _APPEAL_MARKER_RE.findall(replied_text)
             if ids:
                 appeal_id_from_text = int(ids[-1])
-        elif replied_text and _APPEAL_MARKER_RE.search(replied_text):
+        elif replied_text and not replied_sender_is_bot and _APPEAL_MARKER_RE.search(replied_text):
             log.warning(
                 "operator_reply: маркер 🆔 №N в НЕ-bot сообщении — "
                 "игнорируем (защита от spoofing). operator=%s",

@@ -43,6 +43,7 @@ from aemr_bot.utils.attachments import (
     extract_phone,
 )
 from aemr_bot.utils.event import (
+    extract_message_id,
     get_callback_message_id,
     get_chat_id,
     get_first_name,
@@ -146,7 +147,7 @@ async def start_appeal_flow(event, max_user_id: int):
         # это односторонний документ оператора (ст. 18.1), она не может
         # нести содержание согласия и не заменяет его.
         async with session_scope() as text_session:
-            text = await settings_store.get_consent_request_text(
+            text, consent_hash = await settings_store.get_consent_request_and_hash(
                 text_session,
                 # policy_url в DEFAULTS есть всегда, но его могли явно
                 # стереть при живом PDF. Тогда подставляем отсылку к
@@ -154,11 +155,17 @@ async def start_appeal_flow(event, max_user_id: int):
                 policy_url=policy_url or "в прикреплённом файле",
                 fallback=texts.CONSENT_REQUEST,
             )
-        await send_or_edit_screen(
+        sent = await send_or_edit_screen(
             event,
             text=text,
             attachments=attachments,
         )
+        async with session_scope() as session:
+            await users_service.set_state(
+                session, max_user_id, DialogState.AWAITING_CONSENT,
+                data={"consent_prompt_hash": consent_hash,
+                      "consent_prompt_mid": extract_message_id(sent) or get_callback_message_id(event)},
+            )
         return
 
     await ask_contact_or_skip(event, max_user_id)
@@ -490,7 +497,9 @@ async def on_awaiting_contact(event, body, text_body, max_user_id):
         digits_match = _PHONE_DIGITS_RE.search(text_body)
         if digits_match:
             phone = digits_match.group(0)
-    if phone is None:
+    # The profile column is VARCHAR(32). Reject malformed/oversized
+    # text or contact payloads before opening the write transaction.
+    if phone is None or len(phone) > 32 or not any(ch.isdigit() for ch in phone):
         await event.message.answer(
             texts.CONTACT_RETRY,
             attachments=[keyboards.contact_request_keyboard()],
@@ -636,21 +645,27 @@ async def on_awaiting_consent(event, body, text_body, max_user_id):
     """Житель пишет текст вместо тапа кнопок «Согласен/Отказаться»."""
     async with session_scope() as session:
         policy_url = await settings_store.get(session, "policy_url")
-        if policy_url:
-            # C1: подгружаем consent_text из БД с санитизацией и
-            # fallback'ом на hardcoded texts.CONSENT_REQUEST.
-            text = await settings_store.get_consent_request_text(
-                session,
-                policy_url=policy_url,
-                fallback=texts.CONSENT_REQUEST,
+        policy_token = await settings_store.get(session, "policy_pdf_token")
+        if not policy_url and not policy_token:
+            await event.message.answer(
+                "Сервис временно недоступен — не настроена политика обработки данных.",
+                attachments=[keyboards.back_to_menu_keyboard()],
             )
-        else:
-            text = (
-                "Чтобы принять обращение, нам нужно ваше согласие на "
-                "обработку персональных данных. Нажмите «Согласен», "
-                "чтобы продолжить."
-            )
-    await event.message.answer(text, attachments=[keyboards.consent_keyboard()])
+            return
+        text, consent_hash = await settings_store.get_consent_request_and_hash(
+            session, policy_url=policy_url or "в прикреплённом файле",
+            fallback=texts.CONSENT_REQUEST,
+        )
+    attachments = [keyboards.consent_keyboard()]
+    if policy_token:
+        from aemr_bot.services.policy import build_file_attachment
+        attachments.insert(0, build_file_attachment(policy_token))
+    sent = await event.message.answer(text, attachments=attachments)
+    async with session_scope() as session:
+        await users_service.set_state(
+            session, max_user_id, DialogState.AWAITING_CONSENT,
+            data={"consent_prompt_hash": consent_hash, "consent_prompt_mid": extract_message_id(sent)},
+        )
 
 
 async def on_idle(event, body, text_body, max_user_id):
@@ -779,6 +794,39 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         return
 
     async with session_scope() as session:
+        # The earlier checks only guide the UI. Reload and lock the rows in
+        # the insertion transaction: an operator may have closed the appeal
+        # or blocked the resident while the rate-limit query was running.
+        # Appeal -> User matches erasure's appeal updates before user deletion.
+        locked_appeal = await appeals_service.get_by_id(
+            session, appeal.id, for_update=True
+        )
+        locked_user = await users_service.find_by_max_id(
+            session, max_user_id, for_update=True
+        )
+        if (
+            locked_appeal is None
+            or locked_user is None
+            or locked_appeal.user_id != locked_user.id
+            or locked_appeal.status not in {AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value}
+            or locked_user.consent_pdn_at is None
+            or locked_user.is_blocked
+            or locked_user.dialog_state != DialogState.AWAITING_FOLLOWUP_TEXT.value
+            or (locked_user.dialog_data or {}).get("appeal_id") != appeal.id
+        ):
+            if (
+                locked_user is not None
+                and locked_user.dialog_state == DialogState.AWAITING_FOLLOWUP_TEXT.value
+                and (locked_user.dialog_data or {}).get("appeal_id") == appeal.id
+            ):
+                await users_service.reset_state(session, max_user_id)
+            await event.message.answer(
+                "Дополнение не сохранено: обращение или ваше разрешение на "
+                "отправку изменилось. Откройте «📂 Мои обращения» и проверьте статус.",
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
+        appeal = locked_appeal
         await appeals_service.add_user_message(
             session,
             appeal=appeal,

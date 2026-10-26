@@ -266,6 +266,10 @@ from aemr_bot.utils.delivery_guard import DeliveryCancelled as _BroadcastCancell
 from aemr_bot.utils.delivery_guard import send_guard
 
 
+class _RecipientIneligible(_BroadcastCancelled):
+    """This recipient withdrew consent or was blocked/deleted before sending."""
+
+
 async def _send_one(
     bot,
     max_user_id: int,
@@ -509,6 +513,8 @@ async def _run_send_loop(
             cancelled = True
             break
         async with session_scope() as session:
+            if not await broadcasts_service.is_eligible_recipient(session, user_db_id):
+                continue
             claimed = await broadcasts_service.begin_delivery(
                 session, broadcast_id=broadcast_id, user_id=user_db_id,
             )
@@ -517,17 +523,30 @@ async def _run_send_loop(
                 f"broadcast #{broadcast_id}: delivery already exists for user #{user_db_id}; "
                 "automatic replay is unsafe"
             )
+        async def recipient_can_send(recipient_id: int = user_db_id) -> bool:
+            if not await can_send():
+                return False
+            async with session_scope() as session:
+                eligible = await broadcasts_service.is_eligible_recipient(session, recipient_id)
+            if not eligible:
+                raise _RecipientIneligible
+            return True
+
         try:
             error = await _send_one(
                 bot, user_max_user_id, body,
-                outbound_images=outbound_images, can_send=can_send,
+                outbound_images=outbound_images, can_send=recipient_can_send,
             )
-        except _BroadcastCancelled:
+        except _BroadcastCancelled as exc:
             # The sender made no call, or only received explicit 429 rejections.
             async with session_scope() as session:
                 await broadcasts_service.discard_delivery_intent(
                     session, broadcast_id=broadcast_id, user_id=user_db_id,
                 )
+            if isinstance(exc, _RecipientIneligible):
+                # The guard runs again after the global limiter and on retries.
+                # This recipient is skipped; other subscribers still receive it.
+                continue
             cancelled = True
             break
 
@@ -588,7 +607,7 @@ async def _run_broadcast_impl(
     снимок получателей → цикл отправки → финальный статус и итог.
 
     Тяжёлая логика вынесена в помощники: `_resolve_admin_progress_message`
-    (стартовая карточка), `_run_send_loop` (цикл с буферизацией доставок),
+    (стартовая карточка), `_run_send_loop` (фиксация каждой доставки до следующей отправки),
     `_send_final_summary` (итог). Здесь — только последовательность шагов.
     """
     body = f"{texts.BROADCAST_HEADER}\n\n{text}"
@@ -674,15 +693,20 @@ async def _run_broadcast_impl(
         broadcast_id, final_status.value, delivered, failed,
     )
 
-    await _send_final_summary(
-        bot,
-        broadcast_id=broadcast_id,
-        total=total,
-        delivered=delivered,
-        failed=failed,
-        cancelled=cancelled,
-        admin_mid=admin_mid,
-    )
+    # Delivery is already committed. A failure publishing the operator's
+    # summary must not rewrite DONE/CANCELLED as FAILED or invite a resend.
+    try:
+        await _send_final_summary(
+            bot,
+            broadcast_id=broadcast_id,
+            total=total,
+            delivered=delivered,
+            failed=failed,
+            cancelled=cancelled,
+            admin_mid=admin_mid,
+        )
+    except Exception:
+        log.exception("broadcast #%s: final summary publication failed", broadcast_id)
 
 
 def _format_dt(dt: datetime | None) -> str:

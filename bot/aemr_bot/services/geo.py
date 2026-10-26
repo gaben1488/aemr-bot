@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-from shapely.geometry import Point, shape
+from shapely.geometry import Point, box, shape
 from shapely.strtree import STRtree
 
 log = logging.getLogger(__name__)
@@ -201,6 +201,16 @@ def find_locality(lat: float, lon: float) -> str | None:
     return None
 
 
+def _search_bounds(lat: float, lon: float, radius_m: int):
+    # One longitude degree is shorter at Kamchatka's latitude. Using a
+    # latitude-degree radius on both axes excludes nearby east/west objects.
+    # Query a conservative envelope; haversine below enforces the real radius.
+    delta_lat = radius_m * _DEG_PER_METER_LAT
+    poleward_lat = min(abs(lat) + delta_lat, 89.999999)
+    delta_lon = min(180.0, delta_lat / math.cos(math.radians(poleward_lat)))
+    return box(lon - delta_lon, lat - delta_lat, lon + delta_lon, lat + delta_lat)
+
+
 def find_address(lat: float, lon: float, search_radius_m: int = _STREET_RADIUS_M) -> GeoResult:
     """Полный reverse geocoding: поселение + улица + номер дома.
 
@@ -224,11 +234,7 @@ def find_address(lat: float, lon: float, search_radius_m: int = _STREET_RADIUS_M
         # Шаг 1: ближайшее здание
         bld_tree, bld_props = _load_buildings_index()
         if bld_tree is not None:
-            # Buffer считаем по широте — для 53°N это 1.5× избыточно по
-            # долготе. Безопасно: реальное расстояние фильтрует
-            # _haversine_m. Захват кандидатов через bbox-индекс O(log n).
-            radius_deg = _BUILDING_RADIUS_M * _DEG_PER_METER_LAT
-            candidates = bld_tree.query(target.buffer(radius_deg))
+            candidates = bld_tree.query(_search_bounds(lat, lon, _BUILDING_RADIUS_M))
             best_dist = float("inf")
             best_idx: int | None = None
             for idx in candidates:
@@ -246,8 +252,7 @@ def find_address(lat: float, lon: float, search_radius_m: int = _STREET_RADIUS_M
         # Шаг 2: ближайшая улица
         str_tree, str_props = _load_streets_index()
         if str_tree is not None:
-            radius_deg = search_radius_m * _DEG_PER_METER_LAT
-            candidates = str_tree.query(target.buffer(radius_deg))
+            candidates = str_tree.query(_search_bounds(lat, lon, search_radius_m))
             best_dist = float("inf")
             best_idx = None
             for idx in candidates:

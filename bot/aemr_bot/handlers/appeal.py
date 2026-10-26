@@ -43,6 +43,7 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import (
     ack_callback,
+    get_callback_message_id,
     get_chat_id,
     get_first_name,
     get_message_body,
@@ -247,16 +248,22 @@ async def _cb_consent_yes(event, max_user_id: int, payload: str) -> None:
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
-        # Фиксируем хеш редакции согласия, которую житель видел сейчас —
-        # доказательство того, под чем он подписался (152-ФЗ ст. 9 ч. 3).
-        # Текст правится через админ-UI, поэтому без привязки к редакции
-        # доказать согласие после правки было бы нечем.
-        consent_hash = await settings_store.get_consent_text_hash(
-            session, fallback=texts.CONSENT_REQUEST
+        # Evidence belongs to the prompt actually displayed, not a template
+        # an administrator may have edited between display and this tap.
+        data = user.dialog_data or {}
+        consent_hash = data.get("consent_prompt_hash")
+        prompt_mid = data.get("consent_prompt_mid")
+        needs_prompt = not consent_hash or (
+            prompt_mid is not None and prompt_mid != get_callback_message_id(event)
         )
-        newly_granted = await users_service.set_consent(
-            session, max_user_id, text_sha256=consent_hash
-        )
+        if not needs_prompt:
+            newly_granted = await users_service.set_consent(
+                session, max_user_id, text_sha256=consent_hash
+            )
+    if needs_prompt:
+        await ack_callback(event)
+        await appeal_funnel.start_appeal_flow(event, max_user_id)
+        return
     await ack_callback(event, texts.CONSENT_ACCEPTED)
     # Уведомляем оператора только при переходе «согласия не было → дано»
     # (атомарный признак из set_consent). Дубль callback'а или двойной
@@ -689,7 +696,7 @@ def register(dp: Dispatcher) -> None:
                 operator_id = get_user_id(event)
                 if operator_id is not None:
                     broadcast_handler._wizards.pop(operator_id, None)
-                    admin_cmd_module._op_wizards.pop(operator_id, None)
+                    admin_cmd_module._op_wizard_drop(operator_id)
                     op_reply.drop_reply_intent(operator_id)
                     # Intent правки настроек (consumer handle_settings_edit_text).
                     admin_settings._intent_drop(operator_id)

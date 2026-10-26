@@ -134,7 +134,7 @@ class TestCallbackConsent:
         # SEC #1: _cb_consent_yes теперь читает user перед set_consent,
         # чтобы blocked житель не мог снять блок через старую кнопку.
         # Мокаем get_or_create → активный (не-blocked) пользователь.
-        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7)
+        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7, dialog_data={"consent_prompt_hash": "a" * 64})
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.appeal.users_service.get_or_create",
@@ -163,7 +163,7 @@ class TestCallbackConsent:
         set_consent = AsyncMock(return_value=False)
         ask_contact = AsyncMock()
         notify = AsyncMock()
-        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7)
+        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7, dialog_data={"consent_prompt_hash": "a" * 64})
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.appeal.users_service.get_or_create",

@@ -2,8 +2,9 @@
 
 Создаёт Pull Request с актуальным `seed/runtime_config.json`, собранным
 из БД. PR — отдельная ветка, в main не идёт напрямую. После мержа
-вручную через GitHub UI scripts/auto-deploy.sh подтянет изменения на
-VPS.
+вручную через GitHub UI обновление сервера выполняется отдельно.
+Опциональный scripts/auto-deploy.sh работает только если настроен владельцем;
+экспорт runtime_config.json не импортируется при запуске бота.
 
 Feature-flag: модуль работает только если задан GITHUB_PAT в окружении
 (или в settings.commit_author_*). Если PAT отсутствует — функции
@@ -184,8 +185,9 @@ def _build_pr_body(
     lines.extend(
         [
             "",
-            "После мержа scripts/auto-deploy.sh подхватит изменения на VPS в",
-            "течение 10 минут и пересоберёт контейнер бота.",
+            "Обновление сервера выполняется вручную или через отдельно настроенный",
+            "scripts/auto-deploy.sh. Создание/merge PR не подтверждает развёртывание.",
+            "seed/runtime_config.json — экспорт; при запуске бота он не импортируется.",
             "",
             "_Этот PR создан ботом aemr-bot. Авторизация через GITHUB_PAT._",
         ]
@@ -347,62 +349,72 @@ async def create_settings_pr(
     content_str = serialize_runtime_config(runtime_config)
     gh = _GH(cfg)
 
-    async with aiohttp.ClientSession(timeout=DEFAULT_TIMEOUT, **session_kwargs()) as session:
-        # 1. base ref
-        base_sha = await gh.get_ref_sha(session, cfg.base_branch)
-        if base_sha is None:
-            return SyncResult(
-                ok=False, reason="no_base_branch",
-                message=(
-                    f"Не нашёл ветку {cfg.base_branch} в {cfg.repo}. "
-                    f"Проверьте GITHUB_REPO и GITHUB_PR_BASE_BRANCH."
-                ),
+    try:
+        async with aiohttp.ClientSession(timeout=DEFAULT_TIMEOUT, **session_kwargs()) as session:
+            # 1. base ref
+            base_sha = await gh.get_ref_sha(session, cfg.base_branch)
+            if base_sha is None:
+                return SyncResult(
+                    ok=False, reason="no_base_branch",
+                    message=(
+                        f"Не нашёл ветку {cfg.base_branch} в {cfg.repo}. "
+                        f"Проверьте GITHUB_REPO и GITHUB_PR_BASE_BRANCH."
+                    ),
+                )
+            # 2. новая ветка
+            created = await gh.create_branch(session, branch, base_sha)
+            if not created:
+                return SyncResult(
+                    ok=False, reason="branch_failed",
+                    message="Не удалось создать ветку. PAT без прав Contents:RW?",
+                )
+            # 3. файл — определяем, существовал ли уже
+            existing_sha = await gh.get_file_sha(session, TARGET_PATH, cfg.base_branch)
+            wrote = await gh.put_file(
+                session,
+                path=TARGET_PATH,
+                branch=branch,
+                content_str=content_str,
+                message=commit_message,
+                sha=existing_sha,
             )
-        # 2. новая ветка
-        created = await gh.create_branch(session, branch, base_sha)
-        if not created:
-            return SyncResult(
-                ok=False, reason="branch_failed",
-                message="Не удалось создать ветку. PAT без прав Contents:RW?",
+            if not wrote:
+                return SyncResult(
+                    ok=False, reason="write_failed",
+                    message="Файл не записался. Проверьте права PAT.",
+                )
+            # 4. PR
+            pr_number, pr_url = await gh.create_pr(
+                session,
+                title=pr_title,
+                head=branch,
+                base=cfg.base_branch,
+                body=pr_body,
             )
-        # 3. файл — определяем, существовал ли уже
-        existing_sha = await gh.get_file_sha(session, TARGET_PATH, cfg.base_branch)
-        wrote = await gh.put_file(
-            session,
-            path=TARGET_PATH,
-            branch=branch,
-            content_str=content_str,
-            message=commit_message,
-            sha=existing_sha,
-        )
-        if not wrote:
-            return SyncResult(
-                ok=False, reason="write_failed",
-                message="Файл не записался. Проверьте права PAT.",
+            if pr_number is None or pr_url is None:
+                return SyncResult(
+                    ok=False, reason="pr_failed",
+                    message="PR не создался. PAT без прав Pull requests:RW?",
+                )
+            log.info(
+                "settings PR created: branch=%s url=%s keys=%d",
+                branch, pr_url, len(dirty_keys),
             )
-        # 4. PR
-        pr_number, pr_url = await gh.create_pr(
-            session,
-            title=pr_title,
-            head=branch,
-            base=cfg.base_branch,
-            body=pr_body,
-        )
-        if pr_number is None or pr_url is None:
             return SyncResult(
-                ok=False, reason="pr_failed",
-                message="PR не создался. PAT без прав Pull requests:RW?",
+                ok=True,
+                pr_url=pr_url,
+                pr_number=pr_number,
+                branch=branch,
+                message=f"PR #{pr_number} создан",
             )
-        log.info(
-            "settings PR created: branch=%s url=%s keys=%d",
-            branch, pr_url, len(dirty_keys),
-        )
+    except (aiohttp.ClientError, TimeoutError, ValueError) as exc:
+        log.warning("settings PR request failed (%s)", type(exc).__name__)
         return SyncResult(
-            ok=True,
-            pr_url=pr_url,
-            pr_number=pr_number,
-            branch=branch,
-            message=f"PR #{pr_number} создан",
+            ok=False, reason="request_failed", branch=branch,
+            message=(
+                "Сбой запроса GitHub. Результат изменения может быть неизвестен. "
+                f"Проверьте ветку {branch} и открытые PR перед повтором."
+            ),
         )
 
 
@@ -411,20 +423,27 @@ async def fetch_main_runtime_config(
 ) -> tuple[dict[str, Any] | None, str]:
     """Скачать seed/runtime_config.json из base-ветки и распарсить.
     Возвращает (data, reason). data=None если файла нет или ошибка."""
-    async with aiohttp.ClientSession(timeout=DEFAULT_TIMEOUT, **session_kwargs()) as session:
-        gh = _GH(cfg)
-        status, data = await gh._request(
-            session,
-            "GET",
-            f"/repos/{cfg.repo}/contents/{TARGET_PATH}?ref={cfg.base_branch}",
-        )
-        if status == 404:
-            return None, "not_in_repo"
-        if status != 200 or not isinstance(data, dict):
-            return None, "fetch_failed"
-        encoded = data.get("content") or ""
-        try:
-            raw = base64.b64decode(encoded).decode("utf-8")
-            return json.loads(raw), "ok"
-        except Exception:
-            return None, "parse_failed"
+    try:
+        async with aiohttp.ClientSession(timeout=DEFAULT_TIMEOUT, **session_kwargs()) as session:
+            gh = _GH(cfg)
+            status, data = await gh._request(
+                session,
+                "GET",
+                f"/repos/{cfg.repo}/contents/{TARGET_PATH}?ref={cfg.base_branch}",
+            )
+            if status == 404:
+                return None, "not_in_repo"
+            if status != 200 or not isinstance(data, dict):
+                return None, "fetch_failed"
+            encoded = data.get("content") or ""
+            try:
+                raw = base64.b64decode(encoded).decode("utf-8")
+                decoded = json.loads(raw)
+                if not isinstance(decoded, dict):
+                    return None, "parse_failed"
+                return decoded, "ok"
+            except Exception:
+                return None, "parse_failed"
+    except (aiohttp.ClientError, TimeoutError, ValueError) as exc:
+        log.warning("settings fetch request failed (%s)", type(exc).__name__)
+        return None, "fetch_failed"

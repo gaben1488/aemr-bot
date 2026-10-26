@@ -296,7 +296,7 @@ async def test_recover_stuck_funnels_bounds_concurrency(monkeypatch) -> None:
 
     state = {"cur": 0, "peak": 0}
 
-    async def fake_persist(bot, uid):
+    async def fake_persist(bot, uid, *, reset_empty=False):
         state["cur"] += 1
         state["peak"] = max(state["peak"], state["cur"])
         await asyncio.sleep(0.01)  # форсируем перекрытие
@@ -318,8 +318,7 @@ async def test_recover_stuck_funnels_bounds_concurrency(monkeypatch) -> None:
 
 
 async def test_recover_preserves_result_order_with_bound(monkeypatch) -> None:
-    """Bounded gather сохраняет соответствие ids↔results: empty (False)
-    воронки корректно вычисляются и сбрасываются в IDLE."""
+    """Empty resets belong to the finalization transaction, never a later pass."""
     from aemr_bot.handlers import appeal_runtime
 
     ids = [10, 11, 12, 13]
@@ -337,7 +336,8 @@ async def test_recover_preserves_result_order_with_bound(monkeypatch) -> None:
     async def fake_scope():
         yield fake_session
 
-    async def fake_persist(bot, uid):
+    async def fake_persist(bot, uid, *, reset_empty=False):
+        assert reset_empty is True
         return uid not in empty  # False для пустых, True для остальных
 
     async def fake_reset(session, uid):
@@ -355,7 +355,4 @@ async def test_recover_preserves_result_order_with_bound(monkeypatch) -> None:
     finalized = await appeal_runtime.recover_stuck_funnels(bot=SimpleNamespace())
 
     assert finalized == 2, "финализировано должно быть 2 непустых воронки"
-    assert sorted(reset_calls) == sorted(empty), (
-        f"в IDLE сброшены {sorted(reset_calls)}, ожидались пустые {sorted(empty)} — "
-        f"порядок results разъехался с ids"
-    )
+    assert reset_calls == [], "Recovery must not reset states after releasing the finalization lock"

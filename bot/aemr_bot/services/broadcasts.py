@@ -78,6 +78,13 @@ def _eligible_filter():
     )
 
 
+async def is_eligible_recipient(session: AsyncSession, user_id: int) -> bool:
+    """Recheck consent/block/deletion immediately before each external attempt."""
+    return bool(await session.scalar(
+        select(User.id).where(User.id == user_id, _eligible_filter())
+    ))
+
+
 async def count_subscribers(session: AsyncSession) -> int:
     return (
         await session.scalar(

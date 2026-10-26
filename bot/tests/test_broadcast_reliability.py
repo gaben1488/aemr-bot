@@ -24,6 +24,7 @@ def pipeline(monkeypatch):
     monkeypatch.setattr(bc.broadcasts_service, "update_progress", AsyncMock())
     monkeypatch.setattr(bc.broadcasts_service, "record_deliveries", AsyncMock())
     monkeypatch.setattr(bc.broadcasts_service, "begin_delivery", AsyncMock(return_value=True))
+    monkeypatch.setattr(bc.broadcasts_service, "is_eligible_recipient", AsyncMock(return_value=True))
     monkeypatch.setattr(bc.broadcasts_service, "discard_delivery_intent", AsyncMock())
     return SimpleNamespace(send_message=AsyncMock())
 
@@ -201,3 +202,70 @@ async def test_failed_card_does_not_claim_unknown_delivery_was_not_delivered(pip
     text = screen.await_args.args[1]
     assert "неподтверждённые" in text
     assert "Не доставлено: 1" not in text
+
+
+@pytest.mark.parametrize("cancelled", [False, True])
+async def test_summary_failure_preserves_committed_delivery_status(pipeline, monkeypatch, cancelled):
+    monkeypatch.setattr(bc, "_resolve_admin_progress_message", AsyncMock(return_value=None))
+    monkeypatch.setattr(bc.broadcasts_service, "mark_started", AsyncMock())
+    monkeypatch.setattr(bc.broadcasts_service, "list_subscriber_targets", AsyncMock(return_value=[(1, 101)]))
+    monkeypatch.setattr(bc.broadcasts_service, "get_by_id", AsyncMock(return_value=SimpleNamespace(attachments=[])))
+    monkeypatch.setattr(bc, "_run_send_loop", AsyncMock(return_value=(1, 0, cancelled)))
+    monkeypatch.setattr(bc, "_send_final_summary", AsyncMock(side_effect=RuntimeError("MAX down")))
+    finished = AsyncMock()
+    monkeypatch.setattr(bc.broadcasts_service, "mark_finished", finished)
+    await bc._run_broadcast(pipeline, 7, "message", 1)
+    finished.assert_awaited_once()
+    assert finished.await_args.kwargs["status"].value == ("cancelled" if cancelled else "done")
+    assert finished.await_args.kwargs["delivered"] == 1
+
+
+async def test_withdrawn_recipient_skipped_without_stopping_other_targets(pipeline, monkeypatch):
+    monkeypatch.setattr(
+        bc.broadcasts_service, "is_eligible_recipient",
+        AsyncMock(side_effect=lambda session, uid: uid != 1),
+    )
+    assert await run_loop(pipeline) == (1, 0, False)
+    assert pipeline.send_message.await_args.kwargs["user_id"] == 102
+    bc.broadcasts_service.begin_delivery.assert_awaited_once()
+
+
+async def test_withdrawal_during_global_pacing_discards_intent(pipeline, monkeypatch):
+    from aemr_bot.utils.delivery_guard import check_before_send
+
+    withdrawn = set()
+    sent = []
+    monkeypatch.setattr(
+        bc.broadcasts_service, "is_eligible_recipient",
+        AsyncMock(side_effect=lambda session, uid: uid not in withdrawn),
+    )
+
+    async def paced_send(**kwargs):
+        # Mirrors admin_bus: the global limiter yields before this guard.
+        withdrawn.add(1)
+        await check_before_send()
+        sent.append(kwargs["user_id"])
+        return SimpleNamespace()
+
+    pipeline.send_message.side_effect = paced_send
+    assert await run_loop(pipeline) == (1, 0, False)
+    assert sent == [102]
+    bc.broadcasts_service.discard_delivery_intent.assert_awaited_once()
+    assert bc.broadcasts_service.discard_delivery_intent.await_args.kwargs["user_id"] == 1
+
+
+async def test_withdrawal_during_429_backoff_prevents_retry(pipeline, monkeypatch):
+    withdrawn = set()
+    monkeypatch.setattr(
+        bc.broadcasts_service, "is_eligible_recipient",
+        AsyncMock(side_effect=lambda session, uid: uid not in withdrawn),
+    )
+
+    async def wait(_delay):
+        withdrawn.add(1)
+
+    monkeypatch.setattr(bc.asyncio, "sleep", wait)
+    pipeline.send_message.side_effect = [MaxApiError(code=429, raw="Too Many Requests"), SimpleNamespace()]
+    assert await run_loop(pipeline) == (1, 0, False)
+    assert [call.kwargs["user_id"] for call in pipeline.send_message.await_args_list] == [101, 102]
+    bc.broadcasts_service.discard_delivery_intent.assert_awaited_once()

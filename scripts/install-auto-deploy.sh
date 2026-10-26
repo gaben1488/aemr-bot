@@ -60,7 +60,7 @@ echo "→ git remote переключён на ssh"
 # Тестовый fetch
 echo "→ тестовый git fetch с deploy-key..."
 if GIT_SSH_COMMAND="ssh -i $KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
-    sudo -u aemr git fetch origin main --quiet; then
+    git -c safe.directory="$PWD" fetch origin main --quiet; then
     echo "  fetch ok"
 else
     echo "  FAIL — pubkey не добавлен или нет доступа. Проверьте GitHub Deploy keys."
