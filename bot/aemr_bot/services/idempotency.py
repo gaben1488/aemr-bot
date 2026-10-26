@@ -1,14 +1,8 @@
-"""Хранить отпечаток каждого входящего обновления MAX для защиты от
-повторов (idempotency) при диспетчеризации.
+"""Legacy event-key deduplication and successful-operation keys.
 
-В режиме long-polling сервер MAX иногда повторно доставляет обновления
-после сетевого сбоя. В режиме webhook дубли — обычное дело: MAX
-повторяет любую не-2xx, а несимметричные сетевые ошибки приводят к
-двойной обработке одного и того же payload.
-
-Стратегия: построить устойчивый ключ для обновления, выполнить INSERT в
-events с уникальным ограничением и не делать ничего, если запись уже
-существует.
+Production transport uses services.inbox for new durable receipts. Its middleware
+consults old keys read-only during upgrade, so it cannot mark new work completed
+before execution. Raw success keys remain for operation-specific deduplication.
 """
 
 from __future__ import annotations
@@ -128,18 +122,11 @@ async def claim(event: Any) -> bool:
         return True
     except IntegrityError:
         return False
-    except Exception:
-        # SEC #7: fail-CLOSED, не fail-OPEN. Раньше тут было «defaulting
-        # to process» — attacker может induce DB stall (connection drop,
-        # transient timeout) и заставить handler обработать дубль.
-        # Для мутирующих callback'ов (op:close, op:erase, broadcast
-        # confirm, op:opchrole) это критично. Безопаснее пропустить
-        # событие — MAX повторит ack, при восстановлении БД handler
-        # обработает заново через свой полноценный путь.
-        log.exception(
-            "idempotency claim failed; SEC #7 fail-closed (event пропущен)"
-        )
-        return False
+    except Exception as exc:
+        # Transport has already durably received the event. Do not confuse
+        # unavailable storage with a duplicate: the inbox can retry before work.
+        log.error("idempotency unavailable (%s)", type(exc).__name__)
+        raise RuntimeError("idempotency unavailable") from None
 
 
 async def has_processed_raw(key: str) -> bool:
@@ -189,3 +176,12 @@ async def try_mark_processed_raw(key: str, kind: str) -> bool:
     except Exception:
         log.exception("raw idempotency claim failed; defaulting to process")
         return True
+
+
+async def is_legacy_duplicate(event: Any) -> bool:
+    """Read-only upgrade bridge. Storage failures must propagate before work."""
+    key = build_idempotency_key(event)
+    if key is None:
+        return False
+    async with session_scope() as session:
+        return await session.scalar(select(Event.id).where(Event.idempotency_key == key).limit(1)) is not None

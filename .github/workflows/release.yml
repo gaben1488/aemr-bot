@@ -1,0 +1,37 @@
+name: Publish release
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Publish verified 0.2.0 source release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(python3 -c 'import tomllib; print(tomllib.load(open("bot/pyproject.toml", "rb"))["project"]["version"])')
+          # This workflow publishes this authorized release only. Later versions
+          # require an explicit release change, not incidental dependency edits.
+          if [ "$version" != "0.2.0" ]; then exit 0; fi
+          if gh release view v0.2.0 >/dev/null 2>&1; then exit 0; fi
+          gh release create v0.2.0 --target "$RELEASE_SHA" \
+            --title "aemr-bot 0.2.0" --notes-file docs/RELEASE_0.2.0.md

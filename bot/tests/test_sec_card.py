@@ -237,7 +237,8 @@ class TestBareDomainThreatIntel:
         result = cf.admin_card(appeal, _user())
 
         assert "⛔" in result
-        assert "login-gosuslugi.top" in result
+        assert "login-gosuslugi\u200b.top" in result
+        assert "login-gosuslugi.top" not in result
         assert "112" in result
 
     def test_bare_malware_domain_in_followup_triggers_block_warning(
@@ -258,7 +259,8 @@ class TestBareDomainThreatIntel:
         result = cf.admin_card(appeal, _user())
 
         assert "⛔" in result
-        assert "vk-id-verify.ru" in result
+        assert "vk-id-verify\u200b.ru" in result
+        assert "vk-id-verify.ru" not in result
 
     def test_benign_bare_domain_no_warning(
         self, monkeypatch: pytest.MonkeyPatch
@@ -290,7 +292,8 @@ class TestBareDomainThreatIntel:
         )
         out = cf._maybe_url_warning("деньги уводят через phish-bank.xyz срочно")
         assert "⛔" in out
-        assert "phish-bank.xyz" in out
+        assert "phish-bank\u200b.xyz" in out
+        assert "phish-bank.xyz" not in out
 
     def test_maybe_url_warning_http_url_still_warns(
         self, monkeypatch: pytest.MonkeyPatch

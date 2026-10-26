@@ -306,6 +306,8 @@ def install_outgoing_tracker_hook(bot) -> None:
         # самой отправки по-прежнему всплывает наружу как раньше —
         # tracker-sync ниже не выполнится (result не получен).
         await _acquire_outgoing_slot()
+        from aemr_bot.utils.delivery_guard import check_before_send
+        await check_before_send()
         result = await original_send(*args, **kwargs)
         try:
             target_chat_id = kwargs.get("chat_id")

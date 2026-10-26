@@ -17,11 +17,23 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import desc, func, select, update
+from sqlalchemy import delete, desc, func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.db.models import Broadcast, BroadcastDelivery, BroadcastStatus, User
+
+# A committed intent means the external send may have happened. It must never
+# be replayed automatically, even when the process died before making the call.
+DELIVERY_UNKNOWN_PREFIX = "DELIVERY_UNKNOWN: "
+DELIVERY_INTENT = (
+    DELIVERY_UNKNOWN_PREFIX
+    + "Результат доставки неизвестен; требуется проверка перед повторной отправкой."
+)
+
+
+class DeliveryAccountingError(RuntimeError):
+    """The durable ledger cannot establish a safe final delivery result."""
 
 
 async def is_subscribed(session: AsyncSession, max_user_id: int) -> bool:
@@ -135,6 +147,18 @@ async def mark_finished(
     delivered: int,
     failed: int,
 ) -> None:
+    if status in (BroadcastStatus.DONE, BroadcastStatus.CANCELLED):
+        recorded = await count_delivery_results(session, broadcast_id)
+        unknown = await session.scalar(
+            select(func.count()).select_from(BroadcastDelivery).where(
+                BroadcastDelivery.broadcast_id == broadcast_id,
+                BroadcastDelivery.error.startswith(DELIVERY_UNKNOWN_PREFIX),
+            )
+        )
+        if recorded != (delivered, failed) or unknown:
+            raise DeliveryAccountingError(
+                f"broadcast #{broadcast_id}: delivery ledger incomplete or unknown"
+            )
     if status == BroadcastStatus.FAILED and delivered == 0 and failed == 0:
         # Защитный слой на уровне сервиса: старый wrapper рассылки при
         # непредвиденной ошибке передавал нули. Если доставки уже были
@@ -154,9 +178,11 @@ async def mark_finished(
 
 
 async def request_cancel(session: AsyncSession, broadcast_id: int) -> bool:
-    """Перевести статус в «отменено». Возвращает True, если рассылка
-    шла, и False, если она уже была в терминальном состоянии. По этому
-    флагу вызывающий код понимает, что отмена ничего не изменила."""
+    """Запросить остановку: CANCELLED до finished_at — ещё только запрос.
+
+    Текущий сетевой вызов может завершиться позднее. Цикл проверяет запрос
+    перед каждой новой отправкой, затем фиксирует finished_at и счётчики.
+    """
     result = await session.execute(
         update(Broadcast)
         .where(
@@ -233,10 +259,33 @@ async def reap_orphaned_sending(session: AsyncSession) -> int:
 
     Возвращает число переведённых записей для лога.
     """
+    # A cancelled request without finished_at can also have died during an
+    # in-flight send. Retain its durable unknown recipients in the visible
+    # counters instead of presenting an apparently completed zero-result stop.
+    delivered = select(func.count()).select_from(BroadcastDelivery).where(
+        BroadcastDelivery.broadcast_id == Broadcast.id,
+        BroadcastDelivery.error.is_(None),
+    ).correlate(Broadcast).scalar_subquery()
+    failed = select(func.count()).select_from(BroadcastDelivery).where(
+        BroadcastDelivery.broadcast_id == Broadcast.id,
+        BroadcastDelivery.error.isnot(None),
+    ).correlate(Broadcast).scalar_subquery()
     result = await session.execute(
         update(Broadcast)
-        .where(Broadcast.status == BroadcastStatus.SENDING.value)
-        .values(status=BroadcastStatus.FAILED.value)
+        .where(
+            (Broadcast.status == BroadcastStatus.SENDING.value)
+            | (
+                (Broadcast.status == BroadcastStatus.CANCELLED.value)
+                & Broadcast.started_at.isnot(None)
+                & Broadcast.finished_at.is_(None)
+            )
+        )
+        .values(
+            status=BroadcastStatus.FAILED.value,
+            delivered_count=delivered,
+            failed_count=failed,
+        )
+        .execution_options(synchronize_session=False)
     )
     return result.rowcount or 0
 
@@ -247,6 +296,36 @@ async def get_status(session: AsyncSession, broadcast_id: int) -> str | None:
     )
 
 
+async def begin_delivery(
+    session: AsyncSession, *, broadcast_id: int, user_id: int,
+) -> bool:
+    """Reserve one recipient durably BEFORE sending; commit before using True.
+
+    False means this recipient already has an intent/result. Replaying it
+    could duplicate a message whose response or journal commit was lost.
+    """
+    result = await session.execute(
+        pg_insert(BroadcastDelivery)
+        .values(broadcast_id=broadcast_id, user_id=user_id, error=DELIVERY_INTENT)
+        .on_conflict_do_nothing(index_elements=["broadcast_id", "user_id"])
+        .returning(BroadcastDelivery.id)
+    )
+    return result.scalar_one_or_none() is not None
+
+
+async def discard_delivery_intent(
+    session: AsyncSession, *, broadcast_id: int, user_id: int,
+) -> None:
+    """Remove an intent only when the sender knows no attempt was accepted."""
+    await session.execute(
+        delete(BroadcastDelivery).where(
+            BroadcastDelivery.broadcast_id == broadcast_id,
+            BroadcastDelivery.user_id == user_id,
+            BroadcastDelivery.error == DELIVERY_INTENT,
+        )
+    )
+
+
 async def record_delivery(
     session: AsyncSession,
     *,
@@ -254,19 +333,8 @@ async def record_delivery(
     user_id: int,
     error: str | None,
 ) -> None:
-    delivered_at = datetime.now(UTC) if error is None else None
-    # on_conflict_do_nothing по UNIQUE(broadcast_id, user_id): повторная
-    # запись той же пары (ретрай после сетевого сбоя) — тихий no-op,
-    # счётчики доставки не задваиваются. См. миграцию 0023.
-    await session.execute(
-        pg_insert(BroadcastDelivery)
-        .values(
-            broadcast_id=broadcast_id,
-            user_id=user_id,
-            delivered_at=delivered_at,
-            error=error,
-        )
-        .on_conflict_do_nothing(index_elements=["broadcast_id", "user_id"])
+    await record_deliveries(
+        session, broadcast_id=broadcast_id, results=[(user_id, error)],
     )
 
 
@@ -276,26 +344,16 @@ async def record_deliveries(
     broadcast_id: int,
     results: list[tuple[int, str | None]],
 ) -> None:
-    """Батчевая запись результатов доставки.
+    """Write results, resolving only pre-send intents on conflict.
 
-    `results` — список `(user_id, error)`; `error=None` означает успех.
-    Раньше цикл рассылки писал каждую доставку отдельной транзакцией
-    (`record_delivery` + свой `session_scope`): на 10k подписчиков —
-    10k+ коммитов, каждый со своим BEGIN/COMMIT и checkout из пула.
-    Здесь один INSERT на пачку (типично 50 строк) — в ~50 раз меньше
-    round-trip'ов к БД. Вызывающий код накапливает буфер и сбрасывает
-    его этой функцией по таймеру/переполнению.
-
-    on_conflict_do_nothing по UNIQUE(broadcast_id, user_id): flush
-    буфера в handlers/broadcast.py best-effort — при сбое буфер НЕ
-    очищается и уходит повторно вместе со следующей пачкой. Если часть
-    строк успела закоммититься до обрыва, повтор без ограничения
-    задваивал счётчики; теперь дубли пары тихо пропускаются.
+    Confirmed/unknown outcomes remain immutable: repeating a journal write
+    is safe, but it must never turn into permission to repeat an API send.
+    Legacy callers can still insert a result without an existing intent.
     """
     if not results:
         return
     now = datetime.now(UTC)
-    await session.execute(
+    statement = (
         pg_insert(BroadcastDelivery)
         .values(
             [
@@ -308,8 +366,12 @@ async def record_deliveries(
                 for user_id, error in results
             ]
         )
-        .on_conflict_do_nothing(index_elements=["broadcast_id", "user_id"])
     )
+    await session.execute(statement.on_conflict_do_update(
+        index_elements=["broadcast_id", "user_id"],
+        set_={"delivered_at": statement.excluded.delivered_at, "error": statement.excluded.error},
+        where=BroadcastDelivery.error == DELIVERY_INTENT,
+    ))
 
 
 async def count_delivery_results(

@@ -12,7 +12,7 @@ from aemr_bot.handlers import (
     broadcast,
     start,
 )
-from aemr_bot.services import admin_bus, idempotency
+from aemr_bot.services import admin_bus, idempotency, inbox
 
 log = logging.getLogger(__name__)
 
@@ -20,9 +20,32 @@ class IdempotencyMiddleware(BaseMiddleware):
     """Отбрасывает дубликаты событий до того, как они доходят до обработчиков."""
 
     async def __call__(self, handler, event_object, data):
-        if not await idempotency.claim(event_object):
+        outcome = inbox.current_outcome.get()
+        try:
+            # Durable inbox already owns new events. Only consult the legacy
+            # dedup table; inserting a key here would recreate claim-before-work.
+            claimed = (not await idempotency.is_legacy_duplicate(event_object)
+                       if outcome is not None else await idempotency.claim(event_object))
+        except Exception:
+            if outcome is not None:
+                outcome.failed = True
+                outcome.retry_safe = True
+                outcome.reason = "idempotency_unavailable"
+            raise
+        if not claimed:
+            if outcome is not None:
+                outcome.finished = True
             return None
-        return await handler(event_object, data)
+        try:
+            result = await handler(event_object, data)
+            if outcome is not None:
+                outcome.finished = True
+            return result
+        except BaseException:
+            if outcome is not None:
+                outcome.failed = True
+                outcome.reason = "handler_failed_unknown_result"
+            raise
 
 
 class AdminChatActivityMiddleware(BaseMiddleware):
@@ -89,7 +112,7 @@ class AdminChatActivityMiddleware(BaseMiddleware):
 def _attach_outer_middleware(dp: Dispatcher, middleware: BaseMiddleware) -> None:
     """Подключить outer middleware. Полагается на публичный API maxapi 1.1+.
 
-    Pyproject pin = `maxapi~=1.1`, поэтому 1.1.x гарантированно даёт
+    Pyproject pin = `maxapi==1.2.3`, поэтому 1.1.x гарантированно даёт
     `register_outer_middleware`. Если апгрейд сломал API — отказываем
     ясной ошибкой, без silent-fallback на устаревшие формы.
     """

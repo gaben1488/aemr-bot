@@ -172,77 +172,37 @@ class TestBuildAdminSenders:
 
 
 class TestRegisterBotCommands:
-    """_register_bot_commands — PATCH /me публикует /start и /menu.
+    """_register_bot_commands — SDK PATCH /me/commands публикует /start и /menu.
 
     Транспорт — сессия maxapi (`bot.ensure_session()`) с доверенным
     Russian-CA коннектором, НЕ голая aiohttp.ClientSession к api2 (та
     несёт только публичные CA и молча падала бы на TLS-проверке).
     """
 
-    @staticmethod
-    def _make_session(resp: MagicMock) -> MagicMock:
-        """Сессия-заглушка: `.patch(...)` — async context manager → resp."""
-        resp_ctx = MagicMock()
-        resp_ctx.__aenter__ = AsyncMock(return_value=resp)
-        resp_ctx.__aexit__ = AsyncMock(return_value=None)
-        session = MagicMock()
-        session.patch = MagicMock(return_value=resp_ctx)
-        return session
-
     @pytest.mark.asyncio
-    async def test_patch_goes_through_maxapi_trusted_session(self) -> None:
+    async def test_commands_use_sdk_and_retain_the_existing_menu(self) -> None:
         from aemr_bot import main
 
-        resp = MagicMock()
-        resp.status = 200
-        resp.text = AsyncMock(return_value="ok")
-        session = self._make_session(resp)
-
         bot = MagicMock()
-        bot.ensure_session = AsyncMock(return_value=session)
-
-        # Голую ClientSession поднимать НЕЛЬЗЯ — только доверенный
-        # транспорт maxapi. Ловим любую попытку её создать.
+        bot.set_commands = AsyncMock()
         with patch("aiohttp.ClientSession") as raw_session_cls:
             await main._register_bot_commands(bot)
-
-        # PATCH ушёл через сессию maxapi, а не через свою ClientSession.
-        bot.ensure_session.assert_awaited_once()
         raw_session_cls.assert_not_called()
-
-        session.patch.assert_called_once()
-        call = session.patch.call_args
-        # base_url сессии = api_url, путь относительный.
-        assert call.args[0].endswith("/me")
-        json_payload = call.kwargs.get("json")
-        names = [c["name"] for c in json_payload["commands"]]
-        assert names == ["start", "menu"]
-        # У каждой опубликованной команды есть текст-подсказка.
-        assert all(c.get("description") for c in json_payload["commands"])
-        # Per-request timeout сохранён (10-секундный потолок).
-        assert call.kwargs.get("timeout") is not None
+        bot.set_commands.assert_awaited_once()
+        commands = bot.set_commands.await_args.args
+        assert [command.name for command in commands] == ["start", "menu"]
+        assert all(command.description for command in commands)
 
     @pytest.mark.asyncio
-    async def test_swallows_network_errors(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    async def test_swallows_network_errors(self, caplog: pytest.LogCaptureFixture) -> None:
         from aemr_bot import main
 
-        # Транспорт maxapi падает (сеть/TLS) — не должно поднять наружу.
         bot = MagicMock()
-        bot.ensure_session = AsyncMock(
-            side_effect=RuntimeError("connection refused")
-        )
-
+        bot.set_commands = AsyncMock(side_effect=RuntimeError("connection refused"))
         with caplog.at_level(logging.ERROR, logger="aemr_bot"):
             await main._register_bot_commands(bot)
-
-        # Сбой проглочен именно веткой except (а не «тихо пропущен»):
-        # в лог ушло сообщение об ошибке PATCH /me.
-        assert any(
-            "PATCH /me" in rec.message and rec.levelno >= logging.ERROR
-            for rec in caplog.records
-        )
+        assert any("PATCH /me/commands" in rec.message and rec.levelno >= logging.ERROR
+                   for rec in caplog.records)
 
 
 class TestPreflightCheckToken:

@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import os
+from copy import deepcopy
 
 from aemr_bot import keyboards as kbds
 from aemr_bot.db.session import session_scope
@@ -34,7 +35,8 @@ async def _show_pr_confirm(event) -> None:
             event,
             "📥 Нет несинхронизированных изменений.\n"
             "· · · · · · · ·\n"
-            "Все настройки совпадают с последним PR в репо.",
+            "Все текущие настройки уже экспортированы.\n"
+            "Это не подтверждает merge или применение PR.",
             kbds.op_back_to_settings_keyboard(),
         )
         return
@@ -70,8 +72,9 @@ async def _show_pr_confirm(event) -> None:
         f"Будет включено {len(dirty)} ключей:\n{keys_preview}\n\n"
         f"Автор: {name} <{email}>\n\n"
         "После создания PR откройте его в браузере,\n"
-        "проверьте diff и нажмите Merge. Auto-deploy\n"
-        "подхватит изменения в течение 10 минут.",
+        "проверьте diff и нажмите Merge.\n"
+        "PR сохраняет экспорт seed/runtime_config.json.\n"
+        "Он не заменяет рабочие настройки бота.",
         kbds.op_settings_pr_confirm_keyboard(),
     )
 
@@ -81,7 +84,7 @@ async def _create_pr(event, operator_id: int) -> None:
 
     async with session_scope() as session:
         dirty = await settings_store.get_dirty_keys(session)
-        runtime_config = await settings_store.export_synced(session)
+        runtime_config = deepcopy(await settings_store.export_synced(session))
         name = await settings_store.get(session, "commit_author_name")
         email = await settings_store.get(session, "commit_author_email")
         op_record = await ops_svc.get(session, operator_id)
@@ -127,7 +130,7 @@ async def _create_pr(event, operator_id: int) -> None:
         return
 
     async with session_scope() as session:
-        await settings_store.mark_synced(session, dirty)
+        await settings_store.mark_synced(session, dirty, exported_values=runtime_config)
         await ops_svc.write_audit(
             session,
             operator_max_user_id=operator_id,
@@ -148,8 +151,10 @@ async def _create_pr(event, operator_id: int) -> None:
         f"Изменено ключей: {len(dirty)}\n\n"
         f"Откройте PR в браузере, проверьте diff\n"
         f"и нажмите Merge.\n\n"
-        f"Auto-deploy подхватит изменения в течение\n"
-        f"10 минут после мержа.",
+        f"В PR сохранён снимок настроек. Новые правки\n"
+        f"останутся в списке для следующего экспорта.\n"
+        f"Создание PR не означает merge или применение;\n"
+        f"runtime_config.json не загружается при старте.",
         kbds.op_settings_pr_done_keyboard(result.pr_url),
     )
 
@@ -218,7 +223,8 @@ async def _show_pr_diff(event) -> None:
             + "\n\nЕсли локальные изменения новее — создайте PR.\n"
             + "Если в репо есть изменения, которых нет\n"
             + "локально (например, через ручной PR) —\n"
-            + "перезапустите бота, он перечитает seed."
+            + "перенесите их через меню настроек: экспорт\n"
+            + "runtime_config.json не загружается при старте."
         )
     await op_screen(
         event,

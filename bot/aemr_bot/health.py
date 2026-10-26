@@ -201,12 +201,15 @@ async def _healthz(request: web.Request) -> web.Response:
 async def start(
     host: str = "0.0.0.0",  # nosec
     port: int = 8080,
+    setup=None,
 ) -> web.AppRunner:
     """Запустить health-сервер. Возвращает AppRunner для shutdown."""
     app = web.Application()
     app.router.add_get("/livez", _livez)
     app.router.add_get("/readyz", _readyz)
     app.router.add_get("/healthz", _healthz)
+    if setup is not None:
+        setup(app)
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, host, port)

@@ -137,13 +137,9 @@ class Settings(BaseSettings):
     max_api_timeout_seconds: float = Field(
         30.0, alias="MAX_API_TIMEOUT_SECONDS", gt=0.0, le=180.0
     )
-    # Retry на 502/503/504 от MAX. Default maxapi = 3 с
-    # экспоненциальным backoff (1s + 2s + 4s = 7s сверх timeout).
-    # 1 retry достаточно для transient blips, быстрее провал лучше
-    # для интерактивного UX оператора.
-    max_api_retries: int = Field(
-        1, alias="MAX_API_RETRIES", ge=0, le=5
-    )
+    # Legacy env compatibility only: SDK retries for mutating calls are disabled
+    # in build_bot. Polling and explicit rejection retry are application-owned.
+    max_api_retries: int = Field(0, alias="MAX_API_RETRIES", ge=0, le=5)
 
     # Broadcast / subscription. Rate-limit стоит ниже MAX-лимита 2 RPS, чтобы
     # обычная активность бота (ответы оператора, новые карточки) не упиралась
@@ -165,7 +161,7 @@ class Settings(BaseSettings):
 
     # Локальный бэкап: путь внутри контейнера, обычно смонтирован в named volume
     # `backups` (см. docker-compose). Если пусто — локальные бэкапы не сохраняются.
-    backup_local_dir: str | None = Field("/backups", alias="BACKUP_LOCAL_DIR")
+    backup_local_dir: str | None = Field(None, alias="BACKUP_LOCAL_DIR")
     # Сколько последних файлов хранить. 8 еженедельных ≈ 2 месяца истории.
     backup_keep_count: int = Field(8, alias="BACKUP_KEEP_COUNT")
 

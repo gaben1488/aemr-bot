@@ -162,7 +162,7 @@ _DEFANG_TLDS = (
 _BARE_DOMAIN_PATTERN = re.compile(
     r"(?<!//)"  # negative lookbehind: не префикс `//` (это уже scheme defang)
     r"(?<![\w.-])"  # negative lookbehind: не середина длинного слова/домена
-    r"([\w](?:[\w\-]{0,61}[\w])?)"  # имя 2-го уровня (включая кириллицу)
+    r"((?:[\w](?:[\w\-]{0,61}[\w])?\.)*[\w](?:[\w\-]{0,61}[\w])?)"
     r"\.(" + "|".join(re.escape(t) for t in _DEFANG_TLDS) + r")"
     r"(?![\w.-])",  # negative lookahead: не середина длинного домена
     re.IGNORECASE | re.UNICODE,

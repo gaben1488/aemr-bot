@@ -540,7 +540,8 @@ class TestHandleStop:
             await broadcast._handle_stop(event, 99)
         ack.assert_called_once()
         msg_arg = ack.call_args.args[1]
-        assert "Остановлено" in msg_arg
+        assert "Остановка запрошена" in msg_arg
+        assert "Остановлено" not in msg_arg
 
     @pytest.mark.asyncio
     async def test_already_done(self) -> None:
@@ -559,7 +560,8 @@ class TestHandleStop:
              patch("aemr_bot.handlers.broadcast.ack_callback", ack):
             await broadcast._handle_stop(event, 99)
         msg_arg = ack.call_args.args[1]
-        assert "Уже завершено" in msg_arg
+        assert "уже завершена" in msg_arg
+        assert "запрошена" in msg_arg
 
     @pytest.mark.asyncio
     async def test_flipped_writes_audit(self) -> None:
@@ -876,10 +878,12 @@ class TestRunSendLoop:
                    AsyncMock(return_value=None)) as send_one, \
              patch("aemr_bot.handlers.broadcast.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.begin_delivery",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",
                    AsyncMock()), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.get_status",
-                   AsyncMock(return_value="running")), \
+                   AsyncMock(return_value="sending")), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.update_progress",
                    AsyncMock()):
             delivered, failed, cancelled = await broadcast._run_send_loop(
@@ -903,11 +907,13 @@ class TestRunSendLoop:
         bot = MagicMock()
         bot.edit_message = AsyncMock()
         targets = [(1, 101), (2, 102), (3, 103)]
-        # get_status сразу отдаёт CANCELLED → цикл рвётся после 1-го.
+        # get_status сразу отдаёт CANCELLED → ни одна отправка не начинается.
         with patch("aemr_bot.handlers.broadcast._send_one",
                    AsyncMock(return_value=None)) as send_one, \
              patch("aemr_bot.handlers.broadcast.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.begin_delivery",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",
                    AsyncMock()), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.get_status",
@@ -925,9 +931,9 @@ class TestRunSendLoop:
                 progress_step_sec=0,
             )
         assert cancelled is True
-        # Прервались на первом получателе — остальные не тронуты.
-        assert send_one.await_count == 1
-        assert delivered == 1
+        # Запрос отмены проверяется до первого внешнего вызова.
+        assert send_one.await_count == 0
+        assert delivered == 0
 
 
 class TestFormatDt:

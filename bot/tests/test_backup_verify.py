@@ -6,7 +6,9 @@
 """
 from __future__ import annotations
 
+import asyncio
 import os
+import sys
 
 import pytest
 
@@ -292,3 +294,94 @@ def test_verify_result_defaults() -> None:
     assert r.backup_name == ""
     assert r.size_bytes == 0
     assert r.decrypted_bytes == 0
+
+
+@pytest.fixture
+def decrypt_child(monkeypatch, tmp_path):
+    """Replace gpg with a controlled child, retaining real OS pipe/reap behavior."""
+    spawn = asyncio.create_subprocess_exec
+    children = []
+    started = asyncio.Event()
+
+    async def create(*args, **kwargs):
+        assert kwargs["stderr"] == asyncio.subprocess.DEVNULL
+        proc = await spawn(
+            sys.executable, "-c",
+            "import os, time; os.write(2, b'e' * 1000000); time.sleep(60)",
+            **kwargs,
+        )
+        children.append(proc)
+        started.set()
+        return proc
+
+    monkeypatch.setenv("TMPDIR", str(tmp_path))
+    monkeypatch.setattr(backup_verify.asyncio, "create_subprocess_exec", create)
+    return children, started
+
+
+@pytest.mark.asyncio
+async def test_decrypt_timeout_bounds_stdout_and_reaps_child(decrypt_child, tmp_path):
+    children, started = decrypt_child
+    task = asyncio.create_task(backup_verify._decrypt_to_devnull(
+        tmp_path / "synthetic.sql.gpg", "synthetic-passphrase", timeout=0.05,
+    ))
+    try:
+        with pytest.raises(TimeoutError):
+            await asyncio.wait_for(asyncio.shield(task), 1)
+        assert task.done(), "configured timeout must bound stdout, without external cancellation"
+        assert children[0].returncode is not None, "timed out child must be reaped"
+    finally:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        for proc in children:
+            if proc.returncode is None:
+                proc.kill()
+            await proc.wait()
+
+
+@pytest.mark.asyncio
+async def test_decrypt_cancellation_reaps_child(decrypt_child, tmp_path):
+    children, started = decrypt_child
+    task = asyncio.create_task(backup_verify._decrypt_to_devnull(
+        tmp_path / "synthetic.sql.gpg", "synthetic-passphrase", timeout=30,
+    ))
+    try:
+        await asyncio.wait_for(started.wait(), 1)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await asyncio.wait_for(task, 1)
+        assert children[0].returncode is not None, "cancelled verification must reap its child"
+    finally:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        for proc in children:
+            if proc.returncode is None:
+                proc.kill()
+            await proc.wait()
+
+
+@pytest.mark.asyncio
+async def test_decrypt_streams_large_output_and_keeps_passphrase_off_argv(monkeypatch, tmp_path):
+    spawn = asyncio.create_subprocess_exec
+    secret = "synthetic-passphrase"
+
+    async def create(*args, **kwargs):
+        assert secret not in args
+        assert args[args.index("--passphrase-fd") + 1] == "0"
+        return await spawn(
+            sys.executable, "-c",
+            "import os, sys; "
+            "assert sys.stdin.buffer.readline() == b'synthetic-passphrase\\n'; "
+            "os.write(2, b'e' * 1000000); "
+            "sys.stdout.buffer.write(b'PostgreSQL database dump' + b'x' * 1000000)",
+            **kwargs,
+        )
+
+    monkeypatch.setenv("TMPDIR", str(tmp_path))
+    monkeypatch.setattr(backup_verify.asyncio, "create_subprocess_exec", create)
+    head, count = await backup_verify._decrypt_to_devnull(
+        tmp_path / "synthetic.sql.gpg", secret, timeout=2,
+    )
+    assert len(head) == 4096
+    assert head.startswith(PG_DUMP_SIGNATURE)
+    assert count == 1000024

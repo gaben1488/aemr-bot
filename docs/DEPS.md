@@ -2,18 +2,14 @@
 
 Один источник истины — `bot/uv.lock`. Локальная среда и Docker-образ работают с **одной** версией каждого пакета.
 
-> **Оговорка про CI (2026-08-07).** Джобы `lint` и `test` в `.github/workflows/ci.yml`
-> ставят зависимости через `pip install -e ".[dev]"`, то есть по диапазонам из
-> `pyproject.toml`, а не по lock. Практическое следствие: свежий релиз любого
-> dev-инструмента попадает в CI сразу, и пайплайн краснеет на неизменившемся коде —
-> так случилось с ruff 0.16 (285 замечаний по новым правилам). Поэтому dev-инструменты
-> в `pyproject.toml` пинуются по минорной версии (`ruff~=0.15.0`). Полный перевод CI на
-> `uv sync --locked` — открытая задача: он уберёт этот класс поломок, но требует
-> переписать шаг `pip-audit` (сейчас он строит список из `pip freeze`). Docker идёт дальше всех: он не просто берёт версии из lock, а проверяет SHA256-хеш каждого скачанного пакета (`uv export` → `pip install --require-hashes`, подробности в разделе «Как Docker-образ ставит зависимости»). Если среды расходятся («у меня работает, на проде падает») — см. раздел «Диагностика drift'а».
+На 26.10.2026 CI выполняет `uv sync --locked --extra dev`, а pip-audit читает
+полный экспорт lock (`uv export --frozen --no-emit-project --all-extras`).
+Docker дополнительно проверяет SHA256 через `pip install --require-hashes`.
+Для совместимости формата lock используйте uv 0.11.12, закреплённый в Dockerfile.
 
 ## Что у нас стоит
 
-- **`bot/pyproject.toml`** — верхняя граница пакетов через `~=` (например `maxapi~=1.1`). Это **диапазон**, не точная версия.
+- **`bot/pyproject.toml`** — ограничения зависимостей; maxapi закреплён точно: `maxapi==1.2.3`. Диапазоны других пакетов разрешаются в точные версии через lock.
 - **`bot/uv.lock`** — resolved транзитивные версии для всех пакетов **вместе с SHA256-хешем каждого wheel'а**. **Закоммичен в репозиторий** — без этого Docker и каждый разработчик резолвят независимо, версии расходятся. `uv sync` (локально) и `uv export` (в Docker) ставят ровно то, что в lock; lock читают обе среды, а не только разработчик.
 - **`bot/tests/test_deps_environment.py`** — guard-тесты: проверяют, что установленный `maxapi` и его API-сигнатура совпадают с ожиданием.
 
@@ -149,7 +145,7 @@ uv run pip-audit
 `.github/workflows/ci.yml` гоняет `pip-audit` на каждом push и pull request в `main` и **валит сборку на найденной CVE** (hard fail). Чтобы не аудитить сам aemr-bot (его нет на PyPI, он ставится editable), шаг сначала готовит список только сторонних пакетов:
 
 ```bash
-pip freeze --exclude-editable > audit-requirements.txt
+uv export --frozen --no-emit-project --no-hashes --all-extras > audit-requirements.txt
 grep -vE '^(aemr-bot|aemr_bot)(==| @ )' audit-requirements.txt > audit-requirements.thirdparty.txt
 pip_audit --strict -r audit-requirements.thirdparty.txt $IGNORE_FLAGS
 ```

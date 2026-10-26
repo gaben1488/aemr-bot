@@ -121,10 +121,12 @@ class TestRunSendLoopWithImages:
 
         with patch.object(bc, "_send_one", side_effect=_stub_send_one), \
              patch("aemr_bot.handlers.broadcast.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.begin_delivery",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",
                    AsyncMock()), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.get_status",
-                   AsyncMock(return_value="running")), \
+                   AsyncMock(return_value="sending")), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.update_progress",
                    AsyncMock()):
             delivered, failed, cancelled = await bc._run_send_loop(

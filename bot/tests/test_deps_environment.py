@@ -25,7 +25,7 @@ pytest.importorskip("maxapi", reason="maxapi нужен для проверки 
 # 2. `uv lock --upgrade-package maxapi`
 # 3. Поднять `EXPECTED_MAXAPI_VERSION` ниже
 # 4. Тесты + ручной smoke + Dockerfile rebuild перед merge
-EXPECTED_MAXAPI_VERSION = "1.2.1"  # обновлять вместе с пином maxapi в pyproject.toml
+EXPECTED_MAXAPI_VERSION = "1.2.3"  # обновлять вместе с пином maxapi в pyproject.toml
 
 
 def _installed_maxapi_version() -> str:

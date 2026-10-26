@@ -328,7 +328,7 @@ def _maybe_url_warning(text: str) -> str:
 
     Два уровня:
     1. Любой http(s) URL → стандартный warning «не открывайте напрямую».
-    2. URL в threat-intel базе (URLhaus / ThreatFox / PhishTank) →
+    2. Host URL в threat-intel базе (URLhaus / ThreatFox / PhishTank) →
        усиленный warning «⛔ это известный фишинг/malware», с
        перечислением скомпрометированных host'ов.
 
@@ -354,16 +354,11 @@ def _maybe_url_warning(text: str) -> str:
 
     urls = extract_urls(text)
 
-    # P3-4: bare-domain кандидаты (без схемы) — `login-gosuslugi.top`,
-    # `vk-id.ru` и т.п. Берём ровно тот же `_BARE_DOMAIN_PATTERN`, что
-    # и defang, чтобы scope warning'а совпадал со scope экранирования.
-    # group(1) = имя 2-го уровня, group(2) = TLD → `host` = `имя.tld`.
-    bare_hosts: list[str] = []
-    if text:
-        from aemr_bot.utils.url_defang import _BARE_DOMAIN_PATTERN
+    # Shared multi-label extractor: check the complete hostname, including
+    # subdomains and ASCII TLDs outside the cosmetic defang list.
+    from aemr_bot.utils.url_defang import defang_for_admin, extract_bare_hosts
 
-        for m in _BARE_DOMAIN_PATTERN.finditer(text):
-            bare_hosts.append(f"{m.group(1)}.{m.group(2)}")
+    bare_hosts = extract_bare_hosts(text)
 
     if not urls and not bare_hosts:
         return ""
@@ -374,12 +369,15 @@ def _maybe_url_warning(text: str) -> str:
     # без схемы тоже корректно парсится (`_normalize_host` дописывает
     # `http://` искусственно).
     malicious: list[str] = []
+    matched_sources: set[str] = set()
     try:
         from aemr_bot.services.threat_intel import get_store
 
         store = get_store()
         for candidate in [*urls, *bare_hosts]:
             is_bad, _source = store.is_malicious(candidate)
+            if is_bad and _source:
+                matched_sources.add(_source)
             if is_bad and candidate not in malicious:
                 malicious.append(candidate)
     except Exception:
@@ -392,11 +390,14 @@ def _maybe_url_warning(text: str) -> str:
 
     if malicious:
         # Показать до 3 ссылок, остальные за многоточием
-        sample = ", ".join(malicious[:3])
+        sample = defang_for_admin(", ".join(
+            candidate.replace(".", "\u200b.") for candidate in malicious[:3]
+        ))
+        attribution = ", ".join(sorted(matched_sources)) or "threat-intel"
         more = "" if len(malicious) <= 3 else f" и ещё {len(malicious) - 3}"
         return (
             "\n\n⛔ Подозрительные ссылки (известные фишинг/malware "
-            f"по threat-intel базе): {sample}{more}. "
+            f"по threat-intel базе; {attribution}): {sample}{more}. "
             "Категорически не открывайте, не пересылайте. Если житель "
             "просит разобраться — отметьте в audit, направьте жителя "
             "в МВД (отделение полиции по месту жительства, единый "

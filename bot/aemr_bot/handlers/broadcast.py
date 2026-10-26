@@ -30,12 +30,13 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from collections.abc import Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
 
 from maxapi import Dispatcher
+from maxapi.exceptions import MaxApiError
 from maxapi.types import Command, MessageCreated
 
 from aemr_bot import keyboards, texts
@@ -252,11 +253,17 @@ async def _handle_stop(event, broadcast_id: int) -> None:
                 details={"reason": "operator_emergency_stop"},
             )
     await ack_callback(
-        event, "Остановлено." if flipped else "Уже завершено."
+        event,
+        "Остановка запрошена. Текущая отправка может завершиться; дождитесь итога."
+        if flipped else "Рассылка уже завершена или остановка уже запрошена.",
     )
 
 
 # `_format_progress` теперь в services/broadcast_utils (Cluster C, PR 7).
+
+
+from aemr_bot.utils.delivery_guard import DeliveryCancelled as _BroadcastCancelled
+from aemr_bot.utils.delivery_guard import send_guard
 
 
 async def _send_one(
@@ -265,6 +272,7 @@ async def _send_one(
     body_text: str,
     *,
     outbound_images: Sequence[Any] = (),
+    can_send: Callable[[], Awaitable[bool]] | None = None,
 ) -> str | None:
     """Возвращает None при успехе и строку с ошибкой при сбое.
 
@@ -284,31 +292,36 @@ async def _send_one(
     """
     delay_sec = 1.0
     for attempt in range(3):
+        # Includes the first attempt and every retry after backoff. Exceptions
+        # checking the DB must propagate, rather than masquerading as API errors.
+        if can_send is not None and not await can_send():
+            raise _BroadcastCancelled
         try:
-            await bot.send_message(
-                user_id=max_user_id,
-                text=body_text,
-                attachments=[
-                    *outbound_images,
-                    keyboards.broadcast_unsubscribe_keyboard(),
-                ],
-            )
+            with send_guard(can_send):
+                response = await bot.send_message(
+                    user_id=max_user_id,
+                    text=body_text,
+                    attachments=[
+                        *outbound_images,
+                        keyboards.broadcast_unsubscribe_keyboard(),
+                    ],
+                )
+            if response is None:
+                return broadcasts_service.DELIVERY_UNKNOWN_PREFIX + "API returned no delivery response"
             return None
+        except _BroadcastCancelled:
+            raise
         except Exception as e:
             err_repr = repr(e)
-            # Детектируем 429 (Too Many Requests) по тексту ошибки.
-            # maxapi.MaxApiError содержит code в repr — проверяем
-            # через подстроку, чтобы не тащить imports конкретного
-            # exception класса (в разных версиях SDK имя отличается).
-            is_rate_limit = (
-                "429" in err_repr
-                or "rate" in err_repr.lower()
-                or "too many" in err_repr.lower()
-            )
+            # Prefer the actual HTTP status: arbitrary error payloads can
+            # contain digits 429 without establishing an explicit rejection.
+            is_rate_limit = isinstance(e, MaxApiError) and e.code == 429
             if not is_rate_limit:
-                # Не rate-limit — обычная ошибка (заблокирован, нет
-                # такого user_id, network), не ретраим.
-                return err_repr[:500]
+                if isinstance(e, MaxApiError) and 400 <= e.code < 500 and e.code != 408:
+                    return err_repr[:500]
+                # A timeout/lost response cannot establish non-delivery.
+                # Conservatively retain uncertainty for all other SDK errors.
+                return broadcasts_service.DELIVERY_UNKNOWN_PREFIX + err_repr[:500]
             if attempt == 2:
                 # Третья попытка тоже 429 — сдаёмся, идём к следующему
                 # получателю. Темп между сообщениями держат ДВА уровня:
@@ -368,6 +381,19 @@ async def _run_broadcast(
                 "broadcast: failed to mark broadcast_id=%s as failed",
                 broadcast_id,
             )
+        try:
+            from aemr_bot.services import admin_bus
+
+            await admin_bus.send(
+                bot,
+                text=(
+                    f"⚠️ Рассылка #{broadcast_id} прервана. Результаты части доставок "
+                    "могут быть неизвестны. Проверьте журнал через историю рассылок "
+                    "перед повторной отправкой: сообщение могло уже дойти."
+                ),
+            )
+        except Exception:
+            log.exception("broadcast #%s: failed to publish failure notice", broadcast_id)
 
 
 # `_compute_progress_step` и `_build_final_text` теперь в
@@ -456,118 +482,102 @@ async def _run_send_loop(
     progress_step_sec: float,
     outbound_images: Sequence[Any] = (),
 ) -> tuple[int, int, bool]:
-    """Цикл отправки рассылки. Возвращает ``(delivered, failed, cancelled)``.
+    """Send only after a committed intent; persist every result before advancing.
 
-    Результаты доставки копятся в буфер и сбрасываются батчем в единой
-    точке синхронизации с БД (по таймеру progress_step_sec либо при
-    переполнении буфера) — там же читается флаг отмены и пишется
-    прогресс. Раньше каждый получатель = 2-4 транзакции; на 10k
-    подписчиков было ~25000 коммитов за рассылку, теперь ~200.
+    Intent/result commits cost more than buffering, but retain a durable unknown
+    recipient even if the process dies or the result commit response is lost.
+    Cancellation is independent of progress updates and checked after waits.
     """
     delivered = 0
     failed = 0
     cancelled = False
     last_progress_at = time.monotonic()
 
-    _FLUSH_EVERY = 50
-    pending: list[tuple[int, str | None]] = []
-
-    async def _flush_pending() -> None:
-        """Сбросить буфер доставок в БД. Best-effort: при сбое логируем,
-        но не валим рассылку — count_delivery_results в mark_finished
-        пересчитает счётчики по факту записанных строк."""
-        if not pending:
-            return
-        try:
-            async with session_scope() as flush_session:
-                await broadcasts_service.record_deliveries(
-                    flush_session,
-                    broadcast_id=broadcast_id,
-                    results=pending,
-                )
-            pending.clear()
-        except Exception:
-            log.exception(
-                "broadcast #%s: failed to flush %d pending deliveries",
-                broadcast_id, len(pending),
+    async def can_send() -> bool:
+        async with session_scope() as session:
+            status = await broadcasts_service.get_status(session, broadcast_id)
+        if status == BroadcastStatus.CANCELLED.value:
+            return False
+        if status != BroadcastStatus.SENDING.value:
+            raise broadcasts_service.DeliveryAccountingError(
+                f"broadcast #{broadcast_id}: unexpected status {status!r}"
             )
+        return True
 
-    try:
-        for user_db_id, user_max_user_id in targets:
+    for user_db_id, user_max_user_id in targets:
+        if not await can_send():
+            cancelled = True
+            break
+        async with session_scope() as session:
+            claimed = await broadcasts_service.begin_delivery(
+                session, broadcast_id=broadcast_id, user_id=user_db_id,
+            )
+        if not claimed:
+            raise broadcasts_service.DeliveryAccountingError(
+                f"broadcast #{broadcast_id}: delivery already exists for user #{user_db_id}; "
+                "automatic replay is unsafe"
+            )
+        try:
             error = await _send_one(
                 bot, user_max_user_id, body,
-                outbound_images=outbound_images,
+                outbound_images=outbound_images, can_send=can_send,
             )
-            pending.append((user_db_id, error))
-            if error is None:
-                delivered += 1
-            else:
-                failed += 1
+        except _BroadcastCancelled:
+            # The sender made no call, or only received explicit 429 rejections.
+            async with session_scope() as session:
+                await broadcasts_service.discard_delivery_intent(
+                    session, broadcast_id=broadcast_id, user_id=user_db_id,
+                )
+            cancelled = True
+            break
 
-            now = time.monotonic()
-            # Единая точка синхронизации с БД: flush буфера + чтение
-            # флага отмены + запись прогресса + edit карточки. По
-            # таймеру либо при переполнении буфера.
-            if (
-                now - last_progress_at >= progress_step_sec
-                or len(pending) >= _FLUSH_EVERY
-            ):
-                last_progress_at = now
-                await _flush_pending()
-                async with session_scope() as sync_session:
-                    status = await broadcasts_service.get_status(
-                        sync_session, broadcast_id
-                    )
-                    await broadcasts_service.update_progress(
-                        sync_session,
-                        broadcast_id,
-                        delivered=delivered,
-                        failed=failed,
-                    )
-                if status == BroadcastStatus.CANCELLED.value:
-                    cancelled = True
-                    break
-                # SACRED #2: progress edit ТОЛЬКО если карточка прогресса
-                # всё ещё последнее сообщение бота в admin chat. Иначе
-                # её сдвинуло pulse / ответ оператора / другое событие
-                # выше — оператор внизу edit'а не увидит. На таком тике
-                # progress скипаем, finalize всё равно опубликует
-                # правильный итог свежим сообщением.
-                if admin_mid is not None:
-                    from aemr_bot.utils import menu_tracker
+        # Do not catch a failed journal transaction. The committed intent remains
+        # visibly unknown and the wrapper marks FAILED without sending onwards.
+        async with session_scope() as session:
+            await broadcasts_service.record_deliveries(
+                session, broadcast_id=broadcast_id, results=[(user_db_id, error)],
+            )
+        if error is None:
+            delivered += 1
+        else:
+            failed += 1
+            if error.startswith(broadcasts_service.DELIVERY_UNKNOWN_PREFIX):
+                raise broadcasts_service.DeliveryAccountingError(
+                    f"broadcast #{broadcast_id}: unknown delivery result for user #{user_db_id}"
+                )
 
-                    if (
-                        cfg.admin_group_id
-                        and menu_tracker.get_last_menu_mid(cfg.admin_group_id)
-                        == admin_mid
-                    ):
-                        try:
-                            await bot.edit_message(
-                                message_id=admin_mid,
-                                text=_format_progress(
-                                    broadcast_id=broadcast_id,
-                                    total=total,
-                                    delivered=delivered,
-                                    failed=failed,
-                                ),
-                                attachments=[
-                                    keyboards.broadcast_stop_keyboard(broadcast_id)
-                                ],
-                            )
-                        except Exception:
-                            log.exception(
-                                "failed to edit progress message for broadcast #%s",
-                                broadcast_id,
-                            )
+        now = time.monotonic()
+        if now - last_progress_at >= progress_step_sec:
+            last_progress_at = now
+            async with session_scope() as session:
+                await broadcasts_service.update_progress(
+                    session, broadcast_id, delivered=delivered, failed=failed,
+                )
+            if admin_mid is not None:
+                from aemr_bot.utils import menu_tracker
 
-            await asyncio.sleep(rate_delay)
-    finally:
-        # Любой выход из цикла (конец списка, break по отмене,
-        # исключение) — досбрасываем остаток буфера, иначе уже
-        # отправленные сообщения не попадут в broadcast_deliveries
-        # и при повторной рассылке жители получат дубль.
-        await _flush_pending()
+                if (
+                    cfg.admin_group_id
+                    and menu_tracker.get_last_menu_mid(cfg.admin_group_id) == admin_mid
+                ):
+                    try:
+                        await bot.edit_message(
+                            message_id=admin_mid,
+                            text=_format_progress(
+                                broadcast_id=broadcast_id, total=total,
+                                delivered=delivered, failed=failed,
+                            ),
+                            attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
+                        )
+                    except Exception:
+                        log.exception(
+                            "failed to edit progress message for broadcast #%s", broadcast_id,
+                        )
+        await asyncio.sleep(rate_delay)
 
+    # Covers cancellation during the last send/pacing wait, even in a one-user run.
+    if not cancelled and targets:
+        cancelled = not await can_send()
     return delivered, failed, cancelled
 
 
@@ -733,6 +743,11 @@ async def _open_broadcast(event, broadcast_id: int) -> None:
         if bc.failed_count
         else ""
     )
+    if bc.status == BroadcastStatus.FAILED.value and bc.failed_count:
+        failed_line = (
+            f"\nОшибки или неподтверждённые доставки: {bc.failed_count}. "
+            "Проверьте журнал перед повтором."
+        )
     body = texts.OP_BROADCAST_CARD.format(
         number=bc.id,
         status=bc.status,
@@ -832,11 +847,22 @@ async def _list_failed_deliveries(event, broadcast_id: int) -> None:
             number=bc.id, count=bc.failed_count
         ).rstrip()
     ]
+    if any((err or "").startswith(broadcasts_service.DELIVERY_UNKNOWN_PREFIX) for _, _, err in rows):
+        lines[0] = f"⚠️ Рассылка #{bc.id}: ошибки и неизвестные результаты доставки."
+        lines.append(
+            "Неизвестный результат означает, что сообщение могло дойти. "
+            "Проверьте получателя перед повторной отправкой."
+        )
     for _user_id, name, err in rows:
         # Обрезаем ошибку, чтобы не разорвать сообщение MAX-лимитом
         # длины: типичный repr-RuntimeError помещается, но иногда
         # бывает огромный traceback от bot.send_message.
-        err_short = (err or "").strip()[:100]
+        error = err or ""
+        if error.startswith(broadcasts_service.DELIVERY_UNKNOWN_PREFIX):
+            error = "Результат неизвестен: " + error.removeprefix(
+                broadcasts_service.DELIVERY_UNKNOWN_PREFIX
+            )
+        err_short = error.strip()[:100]
         lines.append(
             texts.OP_BROADCAST_FAILED_LIST_ITEM.format(
                 name=name, error=err_short or "—"

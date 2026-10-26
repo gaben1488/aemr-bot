@@ -36,7 +36,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from aemr_bot.config import settings
-from aemr_bot.services.db_backup import _wait_proc
 
 log = logging.getLogger(__name__)
 
@@ -112,41 +111,59 @@ async def _decrypt_to_devnull(
 ) -> tuple[bytes, int]:
     """`gpg --decrypt src` в поток; на диск ничего не пишем.
 
-    Passphrase уходит через os.pipe, не через argv — иначе она утечёт в
-    /proc/<pid>/cmdline (тот же приём, что в db_backup).
+    Passphrase уходит через stdin pipe, не через argv — иначе она утечёт
+    в /proc/<pid>/cmdline.
     Возвращает (первые байты дампа, размер расшифрованного).
     """
-    pp_r, pp_w = os.pipe()
-    try:
-        await asyncio.to_thread(os.write, pp_w, passphrase.encode() + b"\n")
-    finally:
-        os.close(pp_w)
-
-    # Контейнер read_only: ~/.gnupg не создать, уводим homedir в TMPDIR
-    # (приватная tmpfs). Тот же приём, что в db_backup._run_pg_dump_encrypted.
+    # Контейнер read_only: приватный homedir в TMPDIR, как при создании копии.
     # nosec B108: путь не пользовательский, задаём его мы сами.
     gpg_home = os.path.join(os.environ.get("TMPDIR", "/tmp"), ".gnupg")  # nosec B108
+    proc = None
     try:
-        os.makedirs(gpg_home, mode=0o700, exist_ok=True)
-        proc = await asyncio.create_subprocess_exec(
-            "gpg",
-            "--homedir", gpg_home,
-            "--batch", "--yes",
-            "--passphrase-fd", str(pp_r),
-            "--decrypt", str(src),
-            pass_fds=(pp_r,),
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL,
-        )
-    except Exception:
-        os.close(pp_r)
+        # Один бюджет на запуск, передачу фразы, чтение stdout и завершение.
+        # Отдельный таймаут только на wait() не ограничивал зависший stdout.
+        async with asyncio.timeout(timeout):
+            os.makedirs(gpg_home, mode=0o700, exist_ok=True)
+            proc = await asyncio.create_subprocess_exec(
+                "gpg",
+                "--homedir", gpg_home,
+                "--batch", "--yes",
+                "--passphrase-fd", "0",
+                "--decrypt", str(src),
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            # stdin — отдельный pipe для фразы; она не попадает в argv/на диск.
+            # Записываем после spawn: длинная фраза не заблокирует pipe до
+            # появления читателя. drain() тоже входит в общий таймаут.
+            if proc.stdin is None:
+                raise RuntimeError("gpg stdin pipe unavailable")
+            proc.stdin.write(passphrase.encode() + b"\n")
+            await proc.stdin.drain()
+            proc.stdin.close()
+            head, total = await _drain(proc.stdout, keep_head=_HEAD_BYTES)
+            rc = await proc.wait()
+    except BaseException as exc:
+        # CancelledError тоже требует kill+reap; отмену затем передаём выше.
+        if proc is not None:
+            try:
+                proc.kill()
+            except ProcessLookupError:
+                pass  # процесс уже завершился между ошибкой и kill
+            try:
+                async with asyncio.timeout(10):
+                    # После kill дочитываем pipe параллельно с wait: иначе
+                    # заполненный StreamReader может удерживать transport.
+                    await asyncio.gather(
+                        _drain(proc.stdout, keep_head=0), proc.wait(),
+                    )
+            except TimeoutError:
+                log.warning("backup verify: gpg не отозвался на kill за 10с")
+        if isinstance(exc, TimeoutError):
+            raise TimeoutError(f"gpg --decrypt timed out after {timeout:g}s") from exc
         raise
-    os.close(pp_r)
 
-    # Читаем поток и ждём процесс одновременно: gpg пишет в pipe, и без
-    # вычитывания он встанет на переполненном буфере.
-    head, total = await _drain(proc.stdout, keep_head=_HEAD_BYTES)
-    rc = await _wait_proc(proc, timeout, "gpg --decrypt")
     if rc != 0:
         raise RuntimeError(
             f"gpg вернул код {rc}: парольная фраза не подходит либо файл "
