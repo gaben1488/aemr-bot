@@ -43,7 +43,7 @@ async def test_wizard_registry_spawn_persist_uses_strong_ref() -> None:
         await asyncio.sleep(0)  # дать loop'у тик
         finished.set()
 
-    wizard_registry._spawn_persist(coro)
+    wizard_registry._spawn_persist(("test", 1), coro)
     # Дождаться старта задачи детерминированно через Event, а не счётом
     # тиков sleep(0): под coverage трейсер замедляет шаги корутины, и
     # фиксированное число тиков становится ненадёжным. wait_for с
@@ -71,7 +71,7 @@ def test_wizard_registry_spawn_persist_no_loop_noop() -> None:
     def coro_factory():
         calls.append(1)
 
-    wizard_registry._spawn_persist(coro_factory)
+    wizard_registry._spawn_persist(("test", 1), coro_factory)
     assert calls == [], (
         "без active event loop _spawn_persist обязан быть no-op "
         "(юнит-тесты импортируют модуль вне asyncio context'а)"

@@ -379,7 +379,8 @@ COMMIT_AUTHOR_EMAIL=&lt;email&gt;</code></pre>
 <tr><td><code class="kbd">audit-log-retention-catchup</code></td><td>+30 сек после старта процесса (разово)</td><td>догоняющий прогон <code class="kbd">audit-log-retention</code>, тот же принцип</td></tr>
 <tr><td><code class="kbd">pdn-retention-catchup</code></td><td>+30 сек после старта процесса (разово)</td><td>догоняющий прогон <code class="kbd">pdn-retention</code>, тот же принцип (152-ФЗ ст. 21)</td></tr>
 <tr><td><code class="kbd">appeals-5y-retention-catchup</code></td><td>+30 сек после старта процесса (разово)</td><td>догоняющий прогон <code class="kbd">appeals-5y-retention</code>, тот же принцип</td></tr>
-<tr><td><code class="kbd">funnel-watchdog</code></td><td>ежечасно в :15</td><td>сбрасывает зависшие анкеты (житель начал заполнять и ушёл, &gt;24 ч); при ≥5 за час шлёт алёрт</td></tr>
+<tr><td><code class="kbd">initial-card-recovery</code></td><td>при старте и каждые 60 секунд</td><td>восстановление первой карточки; неопределённая доставка требует проверки оператором</td><td><code class="kbd">recover_unpublished_appeals</code></td></tr>
+      <tr><td><code class="kbd">funnel-watchdog</code></td><td>ежечасно в :15</td><td>сбрасывает зависшие анкеты (житель начал заполнять и ушёл, &gt;24 ч); при ≥5 за час шлёт алёрт</td></tr>
 <tr><td><code class="kbd">threat-intel-refresh</code></td><td>ежечасно в :17</td><td>обновляет локальный список вредоносных хостов (URLhaus + ThreatFox + опц. PhishTank), critical-алёрт при устаревании &gt;6 ч</td></tr>
 <tr><td><code class="kbd">broadcast-draft-reaper</code></td><td>ежечасно в :37</td><td>зависшие черновики рассылок (DRAFT старше 30 минут) переводит в FAILED</td></tr>
 <tr><td><code class="kbd">pulse-hourly</code></td><td>каждый час 24/7 в :05</td><td>базовый «пульс» в служебную группу: «🟢 Пульс: бот работает. Время проверки: HH:MM»</td></tr>

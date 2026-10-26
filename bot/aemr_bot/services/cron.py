@@ -849,6 +849,8 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
     алёрт со списком — чтобы знал, что обращения закрылись без ответа
     из-за истечения срока, и мог сделать выводы о скорости работы.
     """
+    # Pre-deadline warnings must not depend on already overdue rows or cleanup.
+    await _warn_about_approaching_pdn_deadline(send_admin_text)
     try:
 
         async with session_scope() as session:
@@ -941,11 +943,6 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                 critical=True,
             )
 
-        # Предупреждение заранее: у кого срок истекает в ближайшую неделю
-        # и остались неотвеченные обращения. Уничтожение по истечении
-        # безусловно и закроет их без ответа — но пока время есть, у
-        # оператора должен быть шанс ответить, а не узнать постфактум.
-        await _warn_about_approaching_pdn_deadline(send_admin_text)
     except Exception:
         log.exception("pdn_retention_check crashed")
 
@@ -1422,6 +1419,13 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             misfire_grace_time=_MISFIRE_GRACE_SEC,
             **({"next_run_time": datetime.now(TZ)} if name == "threat-intel-refresh" else {}),
         )
+
+    from aemr_bot.handlers.appeal_runtime import recover_unpublished_appeals
+    scheduler.add_job(
+        functools.partial(recover_unpublished_appeals, bot), "interval", seconds=60,
+        id="initial-card-recovery", max_instances=1, coalesce=True,
+        next_run_time=datetime.now(TZ), misfire_grace_time=_MISFIRE_GRACE_SEC,
+    )
 
     # Централизованный лог ошибок ДО входа в try конкретного job'а
     # (см. docstring _on_job_error). Без send в админ-чат — не плодим шум.

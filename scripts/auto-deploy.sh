@@ -1,6 +1,6 @@
 #!/bin/bash
 # Auto-deploy на сервере: тащит изменения с github и пересобирает контейнер,
-# только если есть новые коммиты в origin/main.
+# если origin/main ещё не отмечен как успешно развёрнутый.
 #
 # Запускается из cron от root каждые 10 минут (или ручным `bash auto-deploy.sh`).
 # Требует деплой-ключа в /root/.ssh/aemr-bot-deploy с pubkey в GitHub Settings →
@@ -75,9 +75,11 @@ git fetch origin main --quiet || {
 
 LOCAL=$(git rev-parse HEAD)
 REMOTE=$(git rev-parse origin/main)
+DEPLOYED_FILE="$REPO_DIR/.aemr-deployed-commit"
+DEPLOYED=$(cat "$DEPLOYED_FILE" 2>/dev/null || true)
 
-if [ "$LOCAL" = "$REMOTE" ]; then
-    # Ничего не изменилось — выходим тихо
+if [ "$LOCAL" = "$REMOTE" ] && [ "$DEPLOYED" = "$REMOTE" ]; then
+    # Версия уже прошла health-gate — выходим тихо
     exit 0
 fi
 
@@ -134,8 +136,22 @@ chown -R aemr:aemr "$REPO_DIR"
 install -m 0755 "$REPO_DIR/scripts/auto-deploy.sh" /usr/local/bin/aemr-bot-autodeploy
 install -m 0755 "$REPO_DIR/scripts/healthwatch.sh" /usr/local/bin/aemr-bot-healthwatch
 
-# Пересборка от пользователя aemr (он в docker-group)
-su - aemr -c "cd $COMPOSE_DIR && docker compose up -d --build" 2>&1 | logger -t "$LOG_TAG"
+# Пересборка от пользователя aemr (он в docker-group).
+# При ошибке сборки HEAD уже указывает на REMOTE. Возвращаем исходники и
+# wrapper'ы к PREV_LOCAL, чтобы следующий cron повторил этот же REMOTE,
+# а не пропустил его как якобы уже развёрнутый. .env и схему БД не меняем.
+if su - aemr -c "cd $COMPOSE_DIR && docker compose up -d --build" 2>&1 | logger -t "$LOG_TAG"; then
+    :
+else
+    BUILD_RC=$?
+    logger -t "$LOG_TAG" "DEPLOY BUILD FAILED (rc=$BUILD_RC): восстанавливаем исходники $PREV_LOCAL для повторной попытки"
+    git reset --hard "$PREV_LOCAL" --quiet
+    chown -R aemr:aemr "$REPO_DIR"
+    # Keep the new retry controller: PREV_LOCAL may contain the original skip bug.
+    install -m 0755 "$REPO_DIR/scripts/healthwatch.sh" /usr/local/bin/aemr-bot-healthwatch
+    rm -f /tmp/aemr-bot.env.bak.$$
+    exit "$BUILD_RC"
+fi
 
 # Health-gate: ждём до HEALTH_TIMEOUT_SEC секунд /livez=200.
 # Опрашиваем каждые HEALTH_POLL_INTERVAL_SEC, чтобы не «висеть» все 60.
@@ -151,6 +167,9 @@ while [ "$elapsed" -lt "$HEALTH_TIMEOUT_SEC" ]; do
 done
 
 if [ "$healthy" -eq 1 ]; then
+    # HEAD alone does not prove that the legacy controller completed a build.
+    printf '%s\n' "$REMOTE" > "$DEPLOYED_FILE.tmp"
+    mv "$DEPLOYED_FILE.tmp" "$DEPLOYED_FILE"
     logger -t "$LOG_TAG" "deploy ok: $REMOTE livez healthy после ${elapsed}s"
     if ! curl -fsS --max-time 5 "$READY_URL" >/dev/null 2>&1; then
         logger -t "$LOG_TAG" "deploy warning: /livez ok, но /readyz failed — проверьте БД/зависимости без rollback"
@@ -163,9 +182,7 @@ fi
 logger -t "$LOG_TAG" "DEPLOY FAILED: /livez unreachable за ${HEALTH_TIMEOUT_SEC}s, ROLLBACK на $PREV_LOCAL"
 git reset --hard "$PREV_LOCAL" --quiet
 chown -R aemr:aemr "$REPO_DIR"
-# Wrapper'ы тоже откатываем к PREV_LOCAL — иначе на сервере останется
-# свежий код деплой-скрипта, а репо на старом коммите: рассинхрон.
-install -m 0755 "$REPO_DIR/scripts/auto-deploy.sh" /usr/local/bin/aemr-bot-autodeploy
+# Keep the new retry controller across rollback; restore application health wrapper.
 install -m 0755 "$REPO_DIR/scripts/healthwatch.sh" /usr/local/bin/aemr-bot-healthwatch
 su - aemr -c "cd $COMPOSE_DIR && docker compose up -d --build" 2>&1 | logger -t "$LOG_TAG"
 

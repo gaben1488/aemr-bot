@@ -29,6 +29,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections import deque
+from collections.abc import Callable, Coroutine
+from copy import deepcopy
 from typing import Any
 
 from aemr_bot.db.session import session_scope
@@ -147,24 +150,62 @@ def reset_all() -> None:
 # no-op без ошибок.
 
 
-def _spawn_persist(coro_factory) -> None:
-    """Запустить async-coro в фоне, если есть running loop. Без него —
-    no-op (юнит-тесты импортируют модуль вне asyncio context'а).
+# One worker owns all writes for a (wizard kind, operator) until drained.
+# Keep it in the shared background registry so shutdown waits for the whole
+# queue, including deletes enqueued while an older save is committing.
+_PersistFactory = Callable[[], Coroutine[Any, Any, None]]
+_persist_queues: dict[
+    tuple[str, int], tuple[deque[_PersistFactory], asyncio.Task[None]]
+] = {}
 
-    Использует `utils.background.spawn_background_task` для защиты от
-    GC: голый `loop.create_task` хранится в event loop только через
-    weakref, и сборщик мусора может прервать задачу до завершения
-    (особенно опасно для коротких persist'ов в БД)."""
+
+def _spawn_persist(key: tuple[str, int], coro_factory: _PersistFactory) -> None:
+    """Queue writes in caller order; separate wizard keys remain independent.
+
+    Errors are best effort (logged by the write), and the next write still
+    runs. Shutdown cancellation closes the active session, drops queued
+    writes with a warning, and releases the key; it never launches detached
+    successors. Outside a running loop this is a no-op.
+    """
     try:
         asyncio.get_running_loop()
     except RuntimeError:
         return
+    current = _persist_queues.get(key)
+    if current is not None and not current[1].done():
+        current[0].append(coro_factory)
+        return
+
+    pending = deque([coro_factory])
+
+    async def run() -> None:
+        while pending:
+            operation = pending.popleft()
+            try:
+                await operation()
+            except Exception:
+                log.warning("wizard_registry: queued write for %s failed", key, exc_info=True)
+
+    coro = run()
     try:
-        spawn_background_task(
-            coro_factory(), name="wizard_registry.persist"
-        )
+        task = spawn_background_task(coro, name="wizard_registry.persist")
     except Exception:
+        coro.close()
         log.warning("wizard_registry: persist task spawn failed", exc_info=False)
+        return
+    _persist_queues[key] = (pending, task)
+
+    def cleanup(done: asyncio.Task[None]) -> None:
+        if done.cancelled():
+            log.warning(
+                "wizard_registry: persistence for %s cancelled; %s queued writes discarded",
+                key, len(pending),
+            )
+        pending.clear()
+        if _persist_queues.get(key) == (pending, done):
+            _persist_queues.pop(key, None)
+
+    task.add_done_callback(cleanup)
 
 
 async def _persist_save_op(operator_id: int, state: dict[str, Any]) -> None:
@@ -229,11 +270,11 @@ def schedule_persist_op(
     if state is None:
         state = _op_wizards.get(operator_id)
     if state is None:
-        _spawn_persist(lambda: _persist_delete_op(operator_id))
+        _spawn_persist(("op", operator_id), lambda: _persist_delete_op(operator_id))
     else:
         # Копия dict, чтобы фоновая запись видела immutable snapshot.
-        snapshot = dict(state)
-        _spawn_persist(lambda: _persist_save_op(operator_id, snapshot))
+        snapshot = deepcopy(state)
+        _spawn_persist(("op", operator_id), lambda: _persist_save_op(operator_id, snapshot))
 
 
 def schedule_persist_broadcast(
@@ -246,7 +287,9 @@ def schedule_persist_broadcast(
     if state is None:
         state = _broadcast_wizards.get(operator_id)
     if state is None:
-        _spawn_persist(lambda: _persist_delete_broadcast(operator_id))
+        _spawn_persist(("broadcast", operator_id), lambda: _persist_delete_broadcast(operator_id))
     else:
-        snapshot = dict(state)
-        _spawn_persist(lambda: _persist_save_broadcast(operator_id, snapshot))
+        snapshot = deepcopy(state)
+        _spawn_persist(
+            ("broadcast", operator_id), lambda: _persist_save_broadcast(operator_id, snapshot)
+        )

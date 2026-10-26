@@ -30,6 +30,11 @@ from __future__ import annotations
 # `schedule_human` — человекочитаемое описание (не cron-expression).
 # `purpose` — короткое назначение для docs.
 JOB_REGISTRY: list[dict[str, str]] = [
+    {
+        "id": "initial-card-recovery",
+        "schedule_human": "при старте и каждые 60 секунд",
+        "purpose": "публикация сохранённых первых карточек; сигнал о неизвестном результате без повтора",
+    },
     # ── Pulse (heartbeat в админ-чат, проверка «бот жив») ────────────
     {
         "id": "pulse-hourly",

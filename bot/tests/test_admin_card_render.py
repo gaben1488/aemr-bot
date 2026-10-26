@@ -13,14 +13,21 @@ admin appeal):
 """
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from tests._helpers import fake_session_scope as _fake_session_scope
-
 pytest.importorskip("maxapi", reason="нужен maxapi для card_format")
+
+
+@asynccontextmanager
+async def _fake_session_scope():
+    # First publication now commits a durable send claim through execute.
+    session = MagicMock()
+    session.execute = AsyncMock(return_value=SimpleNamespace(rowcount=1))
+    yield session
 
 
 def _make_appeal(*, appeal_id: int = 5, admin_mid=None, last_card_mid=None):

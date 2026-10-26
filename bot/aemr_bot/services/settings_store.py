@@ -4,12 +4,13 @@ import json
 import logging
 import re
 import unicodedata
+from copy import deepcopy
 from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
+from sqlalchemy import bindparam, select
 from sqlalchemy import func as sa_func
-from sqlalchemy import select
 from sqlalchemy import select as sa_select
 from sqlalchemy import update as sa_update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -921,21 +922,47 @@ async def export_synced(session: AsyncSession) -> dict[str, Any]:
     diff'ов в git."""
     out: dict[str, Any] = {}
     for key in SYNCED_KEYS:
-        out[key] = await get(session, key)
+        out[key] = deepcopy(await get(session, key))
     return out
 
 
-async def mark_synced(session: AsyncSession, keys: list[str] | None = None) -> int:
-    """Проставить synced_at = now() для ключей из списка (или для всех
-    SYNCED_KEYS, если keys=None). Вызывается после успешного создания
-    PR. Возвращает количество обновлённых строк."""
+async def mark_synced(
+    session: AsyncSession,
+    keys: list[str] | None = None,
+    *,
+    exported_values: dict[str, Any] | None = None,
+) -> int:
+    """Mark exported settings, not merge/deployment status.
 
+    PR callers must supply their exported value snapshot. Each conditional
+    UPDATE compares the current JSON value atomically, so an edit made during
+    the network request remains dirty. Without a snapshot this is the seed
+    baseline operation; it must not be used to acknowledge an async export.
+    """
     target_keys = list(keys) if keys is not None else list(SYNCED_KEYS)
     now = datetime.now(UTC)
-    result = await session.execute(
-        sa_update(Setting).where(Setting.key.in_(target_keys)).values(synced_at=now)
-    )
-    return result.rowcount or 0
+    if exported_values is None:
+        result = await session.execute(
+            sa_update(Setting).where(Setting.key.in_(target_keys)).values(synced_at=now)
+        )
+        return result.rowcount or 0
+
+    marked = 0
+    for key in target_keys:
+        if key not in exported_values:
+            continue
+        result = await session.execute(
+            sa_update(Setting)
+            .where(
+                Setting.key == key,
+                Setting.value == bindparam(
+                    "exported_value", exported_values[key], type_=Setting.value.type,
+                ),
+            )
+            .values(synced_at=now)
+        )
+        marked += result.rowcount or 0
+    return marked
 
 
 def _read_seed_json(name: str) -> Any:

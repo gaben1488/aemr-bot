@@ -92,3 +92,7 @@ docs/*.odt
 # Локальные служебные каталоги инструментов разработки — не для публичного репозитория.
 .claude/
 .claude-flow/
+
+# Local successful deployment marker
+.aemr-deployed-commit
+.aemr-deployed-commit.tmp

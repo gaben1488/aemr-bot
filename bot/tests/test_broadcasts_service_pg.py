@@ -143,8 +143,8 @@ async def test_mark_finished_failed_zeroes_are_replaced_by_recorded_counters(ses
 
 
 @pytest.mark.asyncio
-async def test_mark_finished_done_keeps_explicit_counters(session) -> None:
-    """Для штатного DONE/CANCELLED пути сохраняем счётчики вызывающего кода."""
+async def test_mark_finished_done_rejects_unjournaled_counters(session) -> None:
+    """F04: DONE requires durable delivery results matching the counters."""
     bc = await broadcasts_service.create_broadcast(
         session,
         text="важное сообщение",
@@ -152,19 +152,44 @@ async def test_mark_finished_done_keeps_explicit_counters(session) -> None:
         subscriber_count=3,
     )
 
-    await broadcasts_service.mark_finished(
-        session,
-        bc.id,
-        status=BroadcastStatus.DONE,
-        delivered=3,
-        failed=0,
-    )
+    with pytest.raises(RuntimeError, match="ledger"):
+        await broadcasts_service.mark_finished(
+            session, bc.id, status=BroadcastStatus.DONE, delivered=3, failed=0,
+        )
 
-    refreshed = await broadcasts_service.get_by_id(session, bc.id)
-    assert refreshed is not None
-    assert refreshed.status == BroadcastStatus.DONE.value
-    assert refreshed.delivered_count == 3
-    assert refreshed.failed_count == 0
+
+@pytest.mark.asyncio
+async def test_intent_is_unique_and_result_replaces_it_idempotently(session) -> None:
+    user = await users_service.get_or_create(session, max_user_id=201, first_name="A")
+    bc = await broadcasts_service.create_broadcast(
+        session, text="t", operator_id=None, subscriber_count=1,
+    )
+    assert await broadcasts_service.begin_delivery(session, broadcast_id=bc.id, user_id=user.id)
+    assert not await broadcasts_service.begin_delivery(session, broadcast_id=bc.id, user_id=user.id)
+    failures = await broadcasts_service.list_failed_deliveries(session, bc.id)
+    assert "UNKNOWN" in failures[0][2]
+    with pytest.raises(RuntimeError, match="ledger"):
+        await broadcasts_service.mark_finished(
+            session, bc.id, status=BroadcastStatus.DONE, delivered=0, failed=1,
+        )
+    await broadcasts_service.record_deliveries(session, broadcast_id=bc.id, results=[(user.id, None)])
+    # A late duplicate failure cannot overwrite a confirmed successful result.
+    await broadcasts_service.record_deliveries(session, broadcast_id=bc.id, results=[(user.id, "late error")])
+    assert await broadcasts_service.count_delivery_results(session, bc.id) == (1, 0)
+
+
+@pytest.mark.asyncio
+async def test_cancelled_unsent_intent_can_be_removed(session) -> None:
+    user = await users_service.get_or_create(session, max_user_id=202, first_name="A")
+    bc = await broadcasts_service.create_broadcast(
+        session, text="t", operator_id=None, subscriber_count=1,
+    )
+    await broadcasts_service.begin_delivery(session, broadcast_id=bc.id, user_id=user.id)
+    await broadcasts_service.discard_delivery_intent(session, broadcast_id=bc.id, user_id=user.id)
+    assert await broadcasts_service.count_delivery_results(session, bc.id) == (0, 0)
+    await broadcasts_service.record_delivery(session, broadcast_id=bc.id, user_id=user.id, error=None)
+    await broadcasts_service.discard_delivery_intent(session, broadcast_id=bc.id, user_id=user.id)
+    assert await broadcasts_service.count_delivery_results(session, bc.id) == (1, 0)
 
 
 # ---- list_failed_deliveries (PR G) ---------------------------------

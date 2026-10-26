@@ -59,6 +59,7 @@ services:
 
   bot:
     # Явное имя образа — ОДНО И ТО ЖЕ для compose и Quadlet (localhost/aemr-bot:latest).
+    stop_grace_period: 45s
     # Зачем: (1) обновление детерминировано — и compose, и Quadlet поднимают один
     # образ, не плодятся дубли (по умолчанию compose назвал бы его aemr-bot-bot);
     # (2) офлайн-перенос в закрытый контур: `podman save localhost/aemr-bot:latest`

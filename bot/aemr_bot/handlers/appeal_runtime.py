@@ -15,10 +15,13 @@ import asyncio
 import logging
 import re
 from typing import Any
+from weakref import WeakValueDictionary
+
+from sqlalchemy import or_, select
 
 from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
-from aemr_bot.db.models import AppealStatus, DialogState
+from aemr_bot.db.models import Appeal, AppealStatus, DialogState, User
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import appeals as appeals_service
@@ -36,7 +39,7 @@ _HAS_ALNUM = re.compile(r"[A-Za-zА-Яа-яЁё0-9]")
 # Per-user lock для защиты от двойной финализации воронки. Только
 # один-инстанс — при горизонтальном масштабировании потребуется
 # pg_advisory_xact_lock или Redis-lock. См. _persist_and_dispatch_appeal.
-_user_locks: dict[int, asyncio.Lock] = {}
+_user_locks: WeakValueDictionary[int, asyncio.Lock] = WeakValueDictionary()
 PERSIST_RATE_LIMITED = "rate_limited"
 PERSIST_NO_CONSENT = "no_consent"
 # Заблокированного нельзя отправлять давать согласие: /start блокировку не
@@ -74,13 +77,61 @@ def get_user_lock(max_user_id: int) -> asyncio.Lock:
 
 
 def drop_user_lock(max_user_id: int) -> None:
-    """Освобождает объект блокировки после полного завершения воронки.
-    Предотвращает бесконечное разрастание словаря `_user_locks` по мере
-    прохождения пользователей через бота. Безопасно вызывать когда
-    никто не удерживает блокировку — операция dict-pop идемпотентна."""
-    lock = _user_locks.get(max_user_id)
-    if lock is not None and not lock.locked():
-        _user_locks.pop(max_user_id, None)
+    """Compatibility hook: weak registry removes locks when all users leave.
+
+    Releasing a lock can wake a waiter before it reacquires it. Neither
+    ``locked()`` nor a completed funnel proves that no caller still holds
+    this object, so explicitly removing the entry would split the lock.
+    """
+    _ = max_user_id
+
+
+async def recover_unpublished_appeals(bot) -> int:
+    """Publish a bounded batch of saved, eligible first cards.
+
+    Pending means no external send has started. Sending/uncertain records
+    receive an operator warning instead of an automatic replay. The card
+    service shares a per-appeal lock and a durable compare-and-set claim
+    with normal finalization, and reloads relationships before sending.
+    """
+    from aemr_bot.services import admin_card as admin_card_service
+
+    if not cfg.admin_group_id:
+        return 0
+    async with session_scope() as session:
+        result = await session.scalars(
+            select(Appeal.id)
+            .join(Appeal.user)
+            .where(
+                Appeal.admin_message_id.is_(None),
+                Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
+                Appeal.closed_due_to_revoke.is_(False),
+                User.is_blocked.is_(False),
+                User.consent_pdn_at.is_not(None),
+                or_(
+                    Appeal.initial_card_state == "pending",
+                    (
+                        Appeal.initial_card_state.in_(["sending", "uncertain"])
+                        & Appeal.initial_card_notified.is_(False)
+                    ),
+                ),
+            )
+            .order_by(Appeal.id)
+            .limit(100)
+        )
+        ids = list(result.all())
+
+    sem = asyncio.Semaphore(_RECOVERY_CONCURRENCY)
+
+    async def recover(appeal_id: int) -> bool:
+        async with sem:
+            try:
+                return await admin_card_service.recover_first_publication(bot, appeal_id)
+            except Exception:
+                log.exception("first admin-card recovery failed for appeal #%s", appeal_id)
+                return False
+
+    return sum(await asyncio.gather(*(recover(appeal_id) for appeal_id in ids)))
 
 
 async def recover_stuck_funnels(bot) -> int:

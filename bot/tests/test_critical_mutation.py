@@ -142,11 +142,12 @@ class TestIdempotencyClaim:
     async def test_db_stall_fails_closed_sec7(self) -> None:
         # Убивает мутанта: claim generic Exception -> return True
         # (регрессия SEC #7). Любой сбой БД (timeout, connection drop)
-        # ДОЛЖЕН вести к fail-CLOSED (return False): иначе attacker
+        # ДОЛЖЕН прервать обработку (raise): иначе attacker
         # индуцирует stall и заставляет повторно обработать мутирующий
         # callback (op:close / op:erase / broadcast confirm).
         with patch.object(idem, "session_scope", _scope_factory(exc=RuntimeError("db stall"))):
-            assert await idem.claim(_event_with_mid()) is False
+            with pytest.raises(RuntimeError, match="idempotency unavailable"):
+                await idem.claim(_event_with_mid())
 
 
 class TestBuildKeyCallbackGuard:

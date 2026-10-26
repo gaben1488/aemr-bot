@@ -643,6 +643,50 @@ class TestReapers:
 
 class TestDeliveriesAndCounts:
     @pytest.mark.asyncio
+    @pytest.mark.parametrize("cancel_requested", [False, True])
+    async def test_startup_reaper_exposes_durable_unknown_counts(
+        self, sqlite_session, cancel_requested,
+    ):
+        s = sqlite_session
+        b = await bc.create_broadcast(s, text="x", operator_id=None, subscriber_count=2)
+        await bc.mark_started(s, b.id, None)
+        await bc.begin_delivery(s, broadcast_id=b.id, user_id=1)
+        await bc.record_delivery(s, broadcast_id=b.id, user_id=2, error=None)
+        if cancel_requested:
+            await bc.request_cancel(s, b.id)
+        assert await bc.reap_orphaned_sending(s) == 1
+        broadcast_id = b.id
+        s.expire_all()
+        result = await bc.get_by_id(s, broadcast_id)
+        assert (result.delivered_count, result.failed_count) == (1, 1)
+        assert result.status == BroadcastStatus.FAILED.value
+
+    @pytest.mark.asyncio
+    async def test_intent_is_unique_and_only_intent_can_be_resolved(self, sqlite_session):
+        s = sqlite_session
+        b = await bc.create_broadcast(s, text="x", operator_id=None, subscriber_count=1)
+        assert await bc.begin_delivery(s, broadcast_id=b.id, user_id=1)
+        assert not await bc.begin_delivery(s, broadcast_id=b.id, user_id=1)
+        assert await bc.count_delivery_results(s, b.id) == (0, 1)
+        with pytest.raises(RuntimeError, match="ledger"):
+            await bc.mark_finished(s, b.id, status=BroadcastStatus.DONE, delivered=0, failed=1)
+        await bc.record_deliveries(s, broadcast_id=b.id, results=[(1, None)])
+        await bc.record_deliveries(s, broadcast_id=b.id, results=[(1, "late failure")])
+        assert await bc.count_delivery_results(s, b.id) == (1, 0)
+        await bc.mark_finished(s, b.id, status=BroadcastStatus.DONE, delivered=1, failed=0)
+
+    @pytest.mark.asyncio
+    async def test_discard_intent_keeps_confirmed_result(self, sqlite_session):
+        s = sqlite_session
+        b = await bc.create_broadcast(s, text="x", operator_id=None, subscriber_count=1)
+        await bc.begin_delivery(s, broadcast_id=b.id, user_id=1)
+        await bc.discard_delivery_intent(s, broadcast_id=b.id, user_id=1)
+        assert await bc.count_delivery_results(s, b.id) == (0, 0)
+        await bc.record_delivery(s, broadcast_id=b.id, user_id=1, error=None)
+        await bc.discard_delivery_intent(s, broadcast_id=b.id, user_id=1)
+        assert await bc.count_delivery_results(s, b.id) == (1, 0)
+
+    @pytest.mark.asyncio
     async def test_record_delivery_single(self, sqlite_session) -> None:
         """``record_delivery`` пишет одну строку доставки; успех →
         delivered_at проставлен, ошибка → delivered_at None + error."""
@@ -706,6 +750,10 @@ class TestMarkFinished:
             s, text="x", operator_id=None, subscriber_count=10
         )
         await bc.mark_started(s, b.id, None)
+        await bc.record_deliveries(
+            s, broadcast_id=b.id,
+            results=[(i, None if i <= 8 else "blocked") for i in range(1, 11)],
+        )
         await bc.mark_finished(
             s, b.id, status=BroadcastStatus.DONE, delivered=8, failed=2
         )

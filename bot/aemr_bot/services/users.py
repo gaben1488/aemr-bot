@@ -378,6 +378,10 @@ async def erase_pdn_detailed(
        конкретным MAX-пользователем физически уходит.
     5. Запись жителя в users физически удаляется.
     """
+    from aemr_bot.services.inbox import erase_pending
+    from aemr_bot.utils.resident_lifecycle import hold_until_commit
+    await hold_until_commit(session, max_user_id)
+    await erase_pending(session, max_user_id)
     user_row = await session.scalar(
         select(User.id).where(User.max_user_id == max_user_id)
     )

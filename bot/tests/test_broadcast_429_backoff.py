@@ -13,6 +13,8 @@ import pytest
 
 pytest.importorskip("maxapi")
 
+from maxapi.exceptions import MaxApiError
+
 
 class TestExtractRetryAfter:
     def test_returns_none_when_no_raw(self) -> None:
@@ -61,7 +63,7 @@ class TestSendOne429Backoff:
         async def fake_send_message(**kwargs):
             calls["count"] += 1
             if calls["count"] <= 2:
-                raise RuntimeError("HTTP 429 Too Many Requests")
+                raise MaxApiError(code=429, raw="Too Many Requests")
             return SimpleNamespace(body=SimpleNamespace(mid="ok"))
 
         # Patch asyncio.sleep чтобы тест не реально ждал секунды
@@ -82,7 +84,7 @@ class TestSendOne429Backoff:
         from aemr_bot.handlers import broadcast
 
         async def fake_send_message(**kwargs):
-            raise RuntimeError("HTTP 429 rate limit")
+            raise MaxApiError(code=429, raw="rate limit")
 
         async def fake_sleep(s):
             pass

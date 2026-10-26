@@ -19,9 +19,10 @@ from aemr_bot.handlers.appeal import recover_stuck_funnels
 from aemr_bot.logging_setup import setup_logging
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import cron as cron_service
+from aemr_bot.services import inbox, settings_store
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import policy as policy_service
-from aemr_bot.services import settings_store
+from aemr_bot.transport import DurableDispatcher, setup_webhook
 
 # Ре-экспорт: spawn_background_task переехал в utils/background.py
 # (батч 4), но исторические вызовы `from aemr_bot.main import
@@ -40,22 +41,18 @@ from aemr_bot.services import admin_bus
 
 
 def build_bot() -> Bot:
-    """Собрать экземпляр Bot с нашими таймаутами и hook'ами.
+    """Configure bounded SDK requests with no hidden mutation retries.
 
-    maxapi default = timeout 150s × max_retries 3 (до 10 мин на запрос).
-    При sequential polling один тормозящий запрос блокирует обработку
-    ВСЕХ следующих событий — видимое «тап → бот завис». Override через
-    наш конфиг: timeout 30s + 1 retry → worst case ~60s, не 10 минут.
-
-    Здесь же ставится outgoing-tracker hook (sacred event log) и, для
-    polling-режима, фиксированный таймаут long-poll — чтобы поведение
-    запуска не зависело от того, через фабрику или модуль создан bot.
+    Polling reconnects and explicitly rejected deliveries are retried by the
+    application. A timeout/5xx after a send is an unknown result, not permission
+    to send the same message again. Legacy MAX_API_RETRIES is accepted but ignored.
     """
     bot = Bot(
         settings.bot_token,
+        after_upload_attempts=1,  # Application owns explicit rejection retries.
         default_connection=DefaultConnectionProperties(
             timeout=settings.max_api_timeout_seconds,
-            max_retries=settings.max_api_retries,
+            max_retries=0,  # Never replay an uncertain mutating request inside the SDK.
             # firewall mode: при включённом прокси-режиме trust_env=True уходит в
             # ClientSession (maxapi/bot.py ensure_session) → aiohttp читает
             # HTTP(S)_PROXY из окружения. Вне режима dict пустой, поведение прежнее.
@@ -73,25 +70,12 @@ def build_bot() -> Bot:
 
 
 def build_dispatcher() -> Dispatcher:
-    """Собрать Dispatcher с зарегистрированными роутерами/хендлерами.
+    """Receive into the durable inbox; the serial worker dispatches in order.
 
-    use_create_task=True: handlers — отдельные asyncio.Task, polling loop
-    не блокируется одним долгим callback'ом. Per-user state защищён
-    asyncio.Lock в appeal_runtime, concurrent dispatch безопасен.
-
-    В polling-режиме оборачиваем `dp.handle` (P2-1): и `on_message`, и
-    `on_callback` диспетчеризуются ровно через него (maxapi зовёт
-    `dp.handle(event)` на каждый апдейт), поэтому это единственная точка,
-    закрывающая оба пути сразу — без правок в каждом handler'е. Обёртка
-    делает per-user токен-бакет (бёрст одного жителя гасится тихим ack'ом
-    без ответа) и bounded-семафор (потолок одновременных handle()-тасков,
-    симметрично webhook-семафору). В webhook-режиме поток уже ограничивает
-    _WEBHOOK_SEMAPHORE вокруг dp.handle в _max_webhook, поэтому второй
-    семафор там не вешаем (иначе двойное bounded-окно) — но токен-бакет
-    одинаково полезен и там; оставляем обёртку и для webhook, без своего
-    семафора.
+    Polling receipt does not wait for business handlers. Existing rate limiting
+    remains at dispatch, and per-user locks also cover cron recovery paths.
     """
-    dp = Dispatcher(use_create_task=True)
+    dp = DurableDispatcher(use_create_task=True)
     register_handlers(dp)
     _install_dispatch_guards(dp)
     return dp
@@ -113,6 +97,10 @@ def _install_dispatch_guards(dp: Dispatcher) -> None:
         # 1) Per-user токен-бакет — до любой работы. Затроттленное событие
         #    тихо завершаем (callback — гасим спиннер ack'ом, текст роняем).
         if not _throttle_allows_event(event_object):
+            outcome = inbox.current_outcome.get()
+            if outcome is not None:
+                outcome.finished = True
+                outcome.reason = "rate_limited"
             await _ack_throttled_callback(event_object)
             return None
         # 2) Bounded-семафор только на polling-пути (webhook ограничен своим).
@@ -505,52 +493,6 @@ def _build_admin_senders(bot: Bot):
     return send_admin_text, send_admin_document
 
 
-# Обработчик webhook'а регистрируется при загрузке модуля. В polling-режиме
-# (default по проекту) этот блок не активируется. webhook-режим оставлен
-# как dead-but-not-removed для возможного будущего возврата к FastAPI-стеку.
-# По Макс.docx раздел 12 (Quick Start Python webhook):
-#   from maxapi.methods.types.getted_updates import process_update_webhook
-#   @dp.webhook_post('/...') → возвращает 2xx, затем dp.handle(event) обрабатывает событие.
-if settings.bot_mode == "webhook":
-    from fastapi import Request
-    from fastapi.responses import JSONResponse
-
-    try:
-        from maxapi.methods.types.getted_updates import process_update_webhook
-    except ImportError:
-        process_update_webhook = None  # type: ignore[assignment]
-
-    @dp.webhook_post("/max/webhook")
-    async def _max_webhook(request: Request):
-        if settings.webhook_secret:
-            # Сравнение через hmac.compare_digest — защита от timing-oracle
-            # на проверке секрета. И только заголовок X-Max-Secret: query-
-            # параметр откладывается в логи nginx, в Referer и в браузерную
-            # историю — это утечка секрета в эфемерные логи.
-            import hmac
-
-            got = request.headers.get("X-Max-Secret") or ""
-            if not hmac.compare_digest(got, settings.webhook_secret):
-                return JSONResponse({"error": "forbidden"}, status_code=403)
-        try:
-            event_json = await request.json()
-            if process_update_webhook is not None:
-                event_object = await process_update_webhook(event_json=event_json, bot=bot)
-
-                async def _handle():
-                    sem = _get_webhook_semaphore()
-                    async with sem:  # bounded concurrency, защита от флуда
-                        try:
-                            await dp.handle(event_object)
-                        except Exception:
-                            log.exception("update handling failed")
-
-                spawn_background_task(_handle(), name="webhook_dispatch")
-        except Exception:
-            log.exception("webhook decode failed")
-        return JSONResponse({"ok": True})
-
-
 async def _register_bot_commands(bot: Bot) -> None:
     """Publish the existing /start and /menu entries via PATCH /me/commands.
 
@@ -869,14 +811,13 @@ async def main() -> None:
         _report_abandoned_broadcasts(), name="report_abandoned_broadcasts"
     )
 
-    # /healthz: всегда поднят. В режиме webhook его раздаёт FastAPI, но в
-    # режиме polling это единственная точка входа, поэтому пропустить нельзя.
-    health_runner = None
-    if settings.bot_mode == "polling":
-        health_runner = await health.start(
-            host=settings.webhook_host, port=settings.webhook_port
-        )
-        spawn_background_task(health.heartbeat_pulse(), name="heartbeat_pulse")
+    # Polling and webhook share health endpoints and heartbeat.
+    health_runner = await health.start(
+        host=settings.webhook_host, port=settings.webhook_port,
+        setup=(lambda app: setup_webhook(app, secret=settings.webhook_secret or ""))
+        if settings.bot_mode == "webhook" else None,
+    )
+    spawn_background_task(health.heartbeat_pulse(), name="heartbeat_pulse")
 
     send_admin_text, send_admin_document = _build_admin_senders(bot)
     # bot отдаём в build_scheduler, чтобы сервисы не импортировали `main`
@@ -891,25 +832,15 @@ async def main() -> None:
 
     try:
         if settings.bot_mode == "webhook":
-            log.info("Starting in webhook mode at %s", settings.webhook_url)
-            # maxapi 1.1 пометил init_serve как deprecated и оставил
-            # тонкую обёртку над handle_webhook (см. dispatcher.py:1476).
-            # Зовём целевой метод напрямую — без DeprecationWarning в
-            # логах и в готовности к будущему удалению init_serve.
-            # `log_level` уходил в AppRunner kwargs и тихо игнорировался,
-            # поэтому не пробрасываем — логгер настраивается через
-            # logging.basicConfig выше.
-            await dp.handle_webhook(
-                bot,
-                host=settings.webhook_host,
-                port=settings.webhook_port,
-                path="/max/webhook",
-                secret=settings.webhook_secret or None,
-            )
+            await dp.startup(bot)
+            await bot.subscribe_webhook(settings.webhook_url or "", secret=settings.webhook_secret)
+            log.info("Starting in webhook mode")
+            await asyncio.Event().wait()
         else:
             log.info("Starting in long polling mode")
             await dp.start_polling(bot)
     finally:
+        await dp.shutdown()
         scheduler.shutdown(wait=False)
         # Сначала даём доиграть фоновым задачам, пока цикл и соединения
         # ещё живы: иначе `asyncio.run` обрывает их на выходе — в том
@@ -931,6 +862,7 @@ async def main() -> None:
         # пул живым и лок остался бы висеть). При падении процесса лок
         # снимается сам с разрывом соединения.
         await single_instance.release_single_instance_lock(_lock_conn)
+        await bot.close_session()
 
 
 if __name__ == "__main__":

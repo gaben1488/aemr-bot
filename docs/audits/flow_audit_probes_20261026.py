@@ -1,6 +1,7 @@
 """Reproduce audit findings without changing production behavior or contacting MAX.
 
-Run from bot/: uv run --no-sync pytest -c pyproject.toml ../docs/audits/flow_audit_probes_20261026.py -q
+Historical reproductions for commit 547ae95 only; release regressions live in bot/tests.
+Run on that historical checkout from bot/: uv run --no-sync pytest -c pyproject.toml ../docs/audits/flow_audit_probes_20261026.py -q
 These assertions confirm existing defects, rather than specify their future fixes.
 """
 from __future__ import annotations
