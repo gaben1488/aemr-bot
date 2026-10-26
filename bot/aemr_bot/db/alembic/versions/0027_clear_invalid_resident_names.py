@@ -3,7 +3,9 @@
 import sqlalchemy as sa
 from alembic import op
 
-from aemr_bot.data.resident_names_v1 import normalize_resident_name
+# Corrected in 0.2.3: first-time upgrades must preserve surname-first names.
+# Already applied cleanup cannot restore a discarded name; residents re-enter it.
+from aemr_bot.data.resident_names_v2 import normalize_resident_name
 
 revision = "0027"
 down_revision = "0026"

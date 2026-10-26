@@ -13,6 +13,13 @@ from aemr_bot.utils.resident_names import normalize_resident_name
     "name, expected",
     [
         ("сергей", "Сергей"),
+        ("Беспаленко Лариса", "Беспаленко Лариса"),
+        ("Лариса Беспаленко", "Лариса Беспаленко"),
+        ("Беспаленко Лариса Ивановна", "Беспаленко Лариса Ивановна"),
+        ("Лариса Ивановна Беспаленко", "Лариса Ивановна Беспаленко"),
+        ("Иванов Иван", "Иванов Иван"),
+        ("беспаленко   ЛАРИСА", "Беспаленко Лариса"),
+        ("Беспаленко Анна-Мария", "Беспаленко Анна-Мария"),
         ("  ИВАН   ИВАНОВ ", "Иван Иванов"),
         ("Анна Марковна Иванова", "Анна Марковна Иванова"),
         ("Алёна", "Алёна"),
@@ -51,7 +58,11 @@ def test_known_cyrillic_names_and_optional_parts(name, expected):
         "Сер\u200bгей",
         "Сергей\u202eИванов",
         "Сергей Иванов Иванович Лишнее",
-        "Иванов Иван",
+        "Беспаленко Никнейм Лариса",
+        "Беспаленко Лaриса",
+        "Беспаленко\nЛариса",
+        "Беспаленко Лариса77",
+        "Беспаленко Никнейм",
         "Иван-Никнейм",
         "-Иван",
         "Иван-",
@@ -102,7 +113,11 @@ def test_migration_clears_only_invalid_names_preserving_all_relationships():
                 }
                 for i in range(1, 1004)
             ]
-            + [{"id": 1004, "uid": -1, "name": "Удалено", "data": "sentinel"}],
+            + [
+                {"id": 1004, "uid": -1, "name": "Удалено", "data": "sentinel"},
+                {"id": 1005, "uid": 1005, "name": "Беспаленко Лариса", "data": "draft"},
+                {"id": 1006, "uid": 1006, "name": "Лариса Беспаленко", "data": "draft"},
+            ],
         )
         conn.execute(sa.text("INSERT INTO appeals VALUES (1,1,'existing appeal')"))
         conn.execute(sa.text("INSERT INTO messages VALUES (1,1,'existing message')"))
@@ -110,7 +125,15 @@ def test_migration_clears_only_invalid_names_preserving_all_relationships():
             migration.upgrade()
             migration.upgrade()
             migration.downgrade()
-        assert conn.scalar(sa.text("SELECT count(*) FROM users")) == 1004
+        assert conn.scalar(sa.text("SELECT count(*) FROM users")) == 1006
+        assert (
+            conn.scalar(sa.text("SELECT first_name FROM users WHERE id=1005"))
+            == "Беспаленко Лариса"
+        )
+        assert (
+            conn.scalar(sa.text("SELECT first_name FROM users WHERE id=1006"))
+            == "Лариса Беспаленко"
+        )
         assert conn.scalar(sa.text("SELECT first_name FROM users WHERE id=1")) is None
         assert conn.scalar(sa.text("SELECT first_name FROM users WHERE id=2")) == "Сергей Иванов"
         assert (

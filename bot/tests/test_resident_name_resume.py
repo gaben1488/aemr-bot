@@ -50,7 +50,7 @@ def resident(monkeypatch):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("text", ["Иван", "Анна Ивановна Петрова"])
+@pytest.mark.parametrize("text", ["Иван", "Анна Ивановна Петрова", "Беспаленко Лариса", "Лариса Беспаленко"])
 async def test_address_input_survives_name_repair_and_resumes(resident, monkeypatch, text):
     event = make_event(chat_id=100, user_id=42, first_name="МегаБосс")
     original = dict(resident.dialog_data)

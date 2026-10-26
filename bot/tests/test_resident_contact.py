@@ -52,7 +52,7 @@ def test_nickname_candidate_can_fall_through_to_valid_fn():
     assert read(contact(name="Котик77", vcard="FN:Иван Иванов\nTEL:+79991112233"))[1] == "Иван Иванов"
 
 
-@pytest.mark.parametrize("name", ["Котик77", "Ivan", "Ивaн", "Иванов Иван", "👍"])
+@pytest.mark.parametrize("name", ["Котик77", "Ivan", "Ивaн", "Беспаленко Никнейм Лариса", "👍"])
 def test_invalid_name_never_imported(name):
     assert read(contact(name=name, vcard=f"FN:{name}\nTEL:+79991112233")) == (
         "+79991112233", None, False,
@@ -87,3 +87,15 @@ def test_foreign_first_contact_cannot_be_masked_by_second_contact():
 
 def test_no_contact():
     assert read() == (None, None, False)
+
+
+@pytest.mark.parametrize("name", ["Беспаленко Лариса", "Лариса Беспаленко", "Беспаленко Лариса Ивановна"])
+@pytest.mark.parametrize("as_dict", [False, True])
+@pytest.mark.parametrize("source", ["max_info", "vcard"])
+def test_contact_accepts_given_name_in_first_or_second_position(name, as_dict, source):
+    attachment = contact(
+        name=name if source == "max_info" else None,
+        vcard=(f"FN:{name}\n" if source == "vcard" else "") + "TEL:+79991112233",
+        as_dict=as_dict,
+    )
+    assert read(attachment) == ("+79991112233", name, False)

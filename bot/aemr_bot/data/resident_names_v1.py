@@ -1,4 +1,4 @@
-"""Frozen name policy v1, also used by data migration 0027.
+"""Original frozen name policy v1 from 0.2.2; v2 allows surname-first input.
 
 Do not change this policy or its dictionary in place: future revisions get a new
 version so replaying historical migrations has deterministic semantics.
