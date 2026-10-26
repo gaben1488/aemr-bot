@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
-      - name: Publish verified 0.2.2 source release
+      - name: Publish verified 0.2.3 source release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -31,7 +31,7 @@ jobs:
           version=$(python3 -c 'import tomllib; print(tomllib.load(open("bot/pyproject.toml", "rb"))["project"]["version"])')
           # This workflow publishes this authorized release only. Later versions
           # require an explicit release change, not incidental dependency edits.
-          if [ "$version" != "0.2.2" ]; then exit 0; fi
-          if gh release view v0.2.2 >/dev/null 2>&1; then exit 0; fi
-          gh release create v0.2.2 --target "$RELEASE_SHA" \
-            --title "aemr-bot 0.2.2" --notes-file docs/RELEASE_0.2.2.md
+          if [ "$version" != "0.2.3" ]; then exit 0; fi
+          if gh release view v0.2.3 >/dev/null 2>&1; then exit 0; fi
+          gh release create v0.2.3 --target "$RELEASE_SHA" \
+            --title "aemr-bot 0.2.3" --notes-file docs/RELEASE_0.2.3.md

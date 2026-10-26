@@ -534,3 +534,28 @@ async def test_name_cleanup_migration_preserves_pg_appeal_and_messages(session):
     assert stored.summary == "Яма"
     messages = (await session.scalars(select(Message).where(Message.appeal_id == appeal_id))).all()
     assert any(message.text == "Дополнение" for message in messages)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("name", ["Беспаленко Лариса", "Лариса Беспаленко", "Беспаленко Лариса Ивановна"])
+async def test_name_order_preserved_by_migration_and_runtime(session, name):
+    import importlib
+    from types import SimpleNamespace
+    from unittest.mock import patch
+
+    migration = importlib.import_module("aemr_bot.db.alembic.versions.0027_clear_invalid_resident_names")
+    user = User(max_user_id=888, first_name=name)
+    session.add(user)
+    await session.flush()
+    connection = await session.connection()
+
+    def migrate(conn):
+        with patch.object(migration, "op", SimpleNamespace(get_bind=lambda: conn)):
+            migration.upgrade()
+
+    await connection.run_sync(migrate)
+    await session.refresh(user)
+    assert user.first_name == name
+    assert (await users_service.get_or_create(session, 888)).first_name == name
+    await users_service.set_first_name(session, 888, name)
+    assert (await users_service.get_or_create(session, 888)).first_name == name

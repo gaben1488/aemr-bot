@@ -1,6 +1,6 @@
 [project]
 name = "aemr-bot"
-version = "0.2.2"
+version = "0.2.3"
 description = "Чат-бот Администрации Елизовского муниципального округа в MAX"
 requires-python = ">=3.12"
 dependencies = [
