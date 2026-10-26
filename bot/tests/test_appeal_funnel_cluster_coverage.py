@@ -266,8 +266,8 @@ class TestAskContactOrSkip:
             await appeal_funnel.ask_contact_or_skip(event, max_user_id=42)
 
         assert set_state.call_args.args[2] == DialogState.AWAITING_NAME
-        from aemr_bot import texts
-        assert event.bot.send_message.call_args.kwargs.get("text") == texts.CONTACT_RECEIVED
+        from aemr_bot.handlers.resident_name_gate import NAME_PROMPT
+        assert event.bot.send_message.call_args.kwargs.get("text") == NAME_PROMPT
 
     @pytest.mark.asyncio
     async def test_phone_and_name_goes_to_locality_via_reuse(self) -> None:
@@ -329,8 +329,8 @@ class TestOnAwaitingContact:
         from aemr_bot.handlers import appeal_funnel
 
         event = _funnel_event()
-        with patch("aemr_bot.handlers.appeal_funnel.extract_phone",
-                   return_value=None):
+        with patch("aemr_bot.handlers.appeal_funnel.extract_resident_contact",
+                   return_value=(None, None, False)):
             await appeal_funnel.on_awaiting_contact(
                 event, body=None, text_body="привет без цифр", max_user_id=42
             )
@@ -350,10 +350,8 @@ class TestOnAwaitingContact:
         set_phone = AsyncMock()
         set_first_name = AsyncMock()
         ask_contact = AsyncMock()
-        with patch("aemr_bot.handlers.appeal_funnel.extract_phone",
-                   return_value=None), \
-             patch("aemr_bot.handlers.appeal_funnel.extract_contact_name",
-                   return_value="Пётр Иванов"), \
+        with patch("aemr_bot.handlers.appeal_funnel.extract_resident_contact",
+                   return_value=(None, "Пётр Иванов", False)), \
              patch("aemr_bot.handlers.appeal_funnel.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
@@ -391,10 +389,8 @@ class TestOnAwaitingContact:
         event = _funnel_event()
         user = SimpleNamespace(first_name="Удалено")
         set_state = AsyncMock()
-        with patch("aemr_bot.handlers.appeal_funnel.extract_phone",
-                   return_value="+79991234567"), \
-             patch("aemr_bot.handlers.appeal_funnel.extract_contact_name",
-                   return_value=None), \
+        with patch("aemr_bot.handlers.appeal_funnel.extract_resident_contact",
+                   return_value=("+79991234567", None, False)), \
              patch("aemr_bot.handlers.appeal_funnel.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
@@ -408,8 +404,8 @@ class TestOnAwaitingContact:
             )
 
         assert set_state.call_args.args[2] == DialogState.AWAITING_NAME
-        from aemr_bot import texts
-        assert event.message.answer.call_args.args[0] == texts.CONTACT_RECEIVED
+        from aemr_bot.handlers.resident_name_gate import NAME_PROMPT
+        assert event.message.answer.call_args.args[0] == NAME_PROMPT
 
 
 # ============================================================================
@@ -696,6 +692,11 @@ class TestFollowupRateLimit:
 
 
 class TestMenuAppealHappyPaths:
+    @pytest.fixture(autouse=True)
+    def valid_resident_name(self, monkeypatch):
+        from aemr_bot.handlers import resident_name_gate
+        monkeypatch.setattr(resident_name_gate, "require_name", AsyncMock(return_value=False))
+
     @pytest.mark.asyncio
     async def test_followup_open_appeal_sets_state(self) -> None:
         """Открытое (NEW) обращение жителя → set_state в AWAITING_FOLLOWUP_TEXT
@@ -1145,6 +1146,11 @@ def appeal_handlers():
 
 
 class TestAppealOnMessageStateDispatch:
+    @pytest.fixture(autouse=True)
+    def valid_resident_name(self, monkeypatch):
+        from aemr_bot.handlers import resident_name_gate
+        monkeypatch.setattr(resident_name_gate, "require_name", AsyncMock(return_value=False))
+
     @pytest.mark.asyncio
     async def test_plain_text_routed_to_state_handler(self, appeal_handlers) -> None:
         """Личное непустое сообщение жителя (без слэша) → handler текущего

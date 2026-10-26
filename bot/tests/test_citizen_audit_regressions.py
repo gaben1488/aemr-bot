@@ -105,7 +105,7 @@ async def test_empty_recovery_reset_is_inside_finalization_transaction(reset_emp
 
     from aemr_bot.handlers import appeal_runtime
 
-    user = SimpleNamespace(id=1, is_blocked=False, consent_pdn_at=datetime.now(UTC),
+    user = SimpleNamespace(id=1, first_name="Иван", is_blocked=False, consent_pdn_at=datetime.now(UTC),
                            dialog_state=DialogState.AWAITING_SUMMARY.value, dialog_data={})
     in_transaction = False
 
@@ -165,7 +165,7 @@ async def test_oversized_phone_is_rejected_before_database_write(from_contact):
     event = make_event(chat_id=100, user_id=42)
     phone = "7" * 33
     save = AsyncMock()
-    with patch.object(appeal_funnel, "extract_phone", return_value=phone if from_contact else None), \
+    with patch.object(appeal_funnel, "extract_resident_contact", return_value=(phone if from_contact else None, None, False)), \
          patch.object(appeal_funnel.users_service, "set_phone", save):
         await appeal_funnel.on_awaiting_contact(event, None, "" if from_contact else phone, 42)
     save.assert_not_awaited()

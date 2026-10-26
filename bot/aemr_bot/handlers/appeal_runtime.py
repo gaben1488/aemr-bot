@@ -23,6 +23,7 @@ from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import Appeal, AppealStatus, DialogState, User
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers import resident_name_gate
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
@@ -47,6 +48,7 @@ PERSIST_NO_CONSENT = "no_consent"
 # снимает, житель ходит по кругу и не понимает, почему обращение не уходит.
 # Снять блокировку может только ИТ, поэтому исход отдельный.
 PERSIST_BLOCKED = "blocked"
+PERSIST_NAME_REQUIRED = "name_required"
 
 # Потолок одновременных финализаций при восстановлении на старте (P2-2).
 # `recover_stuck_funnels` поднимает до `recover_batch_size` (default 1000)
@@ -237,6 +239,20 @@ async def persist_and_dispatch_appeal(
             if user.consent_pdn_at is None:
                 await users_service.reset_state(session, max_user_id)
                 return PERSIST_NO_CONSENT
+            if resident_name_gate.needs_name(user.first_name):
+                await users_service.set_state(
+                    session, max_user_id, DialogState.AWAITING_NAME,
+                    data=resident_name_gate.resume_data(user.dialog_state, dict(user.dialog_data or {})),
+                )
+                try:
+                    await bot.send_message(
+                        user_id=max_user_id,
+                        text=resident_name_gate.NAME_PROMPT + "\n\nЧерновик обращения сохранён.",
+                        attachments=[keyboards.cancel_keyboard()],
+                    )
+                except Exception:
+                    log.exception("name request delivery failed for resident %s", max_user_id)
+                return PERSIST_NAME_REQUIRED
             recent = await appeals_service.count_recent_for_user(
                 session, user.id, hours=1
             )
@@ -249,6 +265,11 @@ async def persist_and_dispatch_appeal(
                 await users_service.reset_state(session, max_user_id)
                 return PERSIST_RATE_LIMITED
             data: dict[str, Any] = dict(user.dialog_data or {})
+            replay = data.get(resident_name_gate.RESUME_KEY) or {}
+            if replay.get("ready") and "text" in replay and not replay.get("applied"):
+                # A crash after name restoration but before replay must not
+                # let startup cleanup discard the saved input as an empty draft.
+                return None
             summary = "\n".join(data.get("summary_chunks") or []).strip()
             attachments = data.get("attachments") or []
             if not summary and not attachments:

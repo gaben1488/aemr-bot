@@ -702,3 +702,15 @@ class TestMessageCitizenUnknownCommand:
         text = event.message.answer.call_args.args[0]
         assert "только в служебной" in text
         assert "не распознана" not in text
+
+
+@pytest.fixture(autouse=True)
+def _registered_resident_name(monkeypatch):
+    """Routing unit cases start with a registered resident; name-gate cases
+    are exercised with persisted state in test_resident_name_resume.py.
+    """
+    from tests._helpers import fake_current_user
+    from aemr_bot.handlers import resident_name_gate
+    user = SimpleNamespace(first_name="Анна", is_blocked=False, consent_pdn_at=True,
+                           dialog_data={}, dialog_state="idle")
+    monkeypatch.setattr(resident_name_gate, "current_user", fake_current_user(user))

@@ -211,6 +211,8 @@ async def test_list_failed_deliveries_only_failures(session) -> None:
     user1 = await users_service.get_or_create(session, max_user_id=101, first_name="Анна")
     user2 = await users_service.get_or_create(session, max_user_id=102, first_name="Борис")
     user3 = await users_service.get_or_create(session, max_user_id=103, first_name="Вера")
+    for uid, name in ((101, "Анна"), (102, "Борис"), (103, "Вера")):
+        await users_service.set_first_name(session, uid, name)
     bc = await broadcasts_service.create_broadcast(
         session, text="t", operator_id=None, subscriber_count=3
     )

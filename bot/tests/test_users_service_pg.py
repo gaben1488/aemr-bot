@@ -107,9 +107,9 @@ class TestSetFirstName:
     @pytest.mark.asyncio
     async def test_overwrites(self, session) -> None:
         await users_service.get_or_create(session, max_user_id=1, first_name="Старое")
-        await users_service.set_first_name(session, 1, "Новое")
+        await users_service.set_first_name(session, 1, "Анна")
         u = await users_service.get_or_create(session, max_user_id=1)
-        assert u.first_name == "Новое"
+        assert u.first_name == "Анна"
 
 
 class TestSetBlocked:
@@ -472,3 +472,65 @@ class TestFindStuckInFunnel:
         rows = await users_service.find_stuck_in_funnel(session, idle_seconds=3600)
         ids = [r[0] for r in rows]
         assert 1 not in ids
+
+
+@pytest.mark.asyncio
+async def test_profile_name_is_not_trusted_and_repair_preserves_draft(session):
+    user = await users_service.get_or_create(session, 444, first_name="Анна")
+    assert user.first_name is None
+    user.first_name = "МегаБосс"
+    user.dialog_state = DialogState.AWAITING_SUMMARY.value
+    user.dialog_data = {"summary_chunks": ["Яма у дома"]}
+    await session.flush()
+    user_id = user.id
+    repaired = await users_service.get_or_create(session, 444, first_name="Иван")
+    assert repaired.id == user_id
+    assert repaired.first_name is None
+    assert repaired.dialog_state == DialogState.AWAITING_SUMMARY.value
+    assert repaired.dialog_data == {"summary_chunks": ["Яма у дома"]}
+    with pytest.raises(ValueError):
+        await users_service.set_first_name(session, 444, "Nickname")
+    await users_service.set_first_name(session, 444, "анна иванова")
+    assert (await users_service.get_or_create(session, 444)).first_name == "Анна Иванова"
+
+
+@pytest.mark.asyncio
+async def test_name_cleanup_migration_preserves_pg_appeal_and_messages(session):
+    import importlib
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    from sqlalchemy import select
+
+    migration = importlib.import_module(
+        "aemr_bot.db.alembic.versions.0027_clear_invalid_resident_names"
+    )
+    user = await users_service.get_or_create(session, 555)
+    user.first_name = "МегаБосс"
+    user.dialog_state = DialogState.AWAITING_ADDRESS.value
+    user.dialog_data = {"locality": "Елизово"}
+    await users_service.set_consent(session, 555)
+    appeal = await appeals_service.create_appeal(
+        session, user=user, address="Ленина 5", topic="Дороги",
+        summary="Яма", attachments=[],
+    )
+    await appeals_service.add_user_message(session, appeal, text="Дополнение", attachments=[])
+    await session.flush()
+    user_id, appeal_id = user.id, appeal.id
+    connection = await session.connection()
+
+    def migrate(conn):
+        with patch.object(migration, "op", SimpleNamespace(get_bind=lambda: conn)):
+            migration.upgrade()
+            migration.upgrade()
+
+    await connection.run_sync(migrate)
+    await session.refresh(user)
+    assert user.first_name is None
+    assert user.consent_pdn_at is not None
+    assert user.dialog_state == DialogState.AWAITING_ADDRESS.value
+    assert user.dialog_data == {"locality": "Елизово"}
+    stored = await session.get(Appeal, appeal_id)
+    assert stored.user_id == user_id
+    assert stored.summary == "Яма"
+    messages = (await session.scalars(select(Message).where(Message.appeal_id == appeal_id))).all()
+    assert any(message.text == "Дополнение" for message in messages)

@@ -32,6 +32,7 @@ from aemr_bot.handlers import (
     appeal_funnel,
     appeal_geo,
     callback_router,
+    resident_name_gate,
 )
 from aemr_bot.handlers._common import current_user
 from aemr_bot.handlers.appeal_runtime import (
@@ -647,6 +648,13 @@ def register(dp: Dispatcher) -> None:
         if not await _ensure_funnel_callback_state(event, max_user_id, payload):
             return
 
+        if resident_name_gate.gates_callback(payload) and await resident_name_gate.require_name(
+            event, max_user_id, payload=payload
+        ):
+            await ack_callback(event)
+            return
+
+
         # Единый путь диспетчеризации: группу payload'а определяет
         # `callback_router.route_for(payload).group`, и `_route_callback`
         # направляет его в нужный диспетчер (воронка жителя / admin /
@@ -799,6 +807,8 @@ def register(dp: Dispatcher) -> None:
         if max_user_id is None:
             return
 
+        if await resident_name_gate.require_name(event, max_user_id, text=text_body, body=body):
+            return
         async with current_user(
             max_user_id, first_name=get_first_name(event)
         ) as (_, user):

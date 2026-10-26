@@ -297,6 +297,105 @@ def extract_contact_name(message: Any) -> str | None:
     return None
 
 
+
+def _contact_field(value: Any, key: str) -> Any:
+    return value.get(key) if isinstance(value, dict) else getattr(value, key, None)
+
+
+def _vcard_parts(value: str, *, split_components: bool = False) -> list[str]:
+    """Decode vCard escapes, splitting N only at unescaped semicolons."""
+    parts = [""]
+    escaped = False
+    for char in value:
+        if escaped:
+            parts[-1] += "\n" if char in "nN" else char
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == ";" and split_components:
+            parts.append("")
+        else:
+            parts[-1] += char
+    if escaped:
+        parts[-1] += "\\"
+    return parts
+
+
+def _resident_vcard_fields(raw: Any) -> dict[str, str]:
+    # Do not access SDK payload.vcf: it parses the entire untrusted string.
+    # Reject oversized cards rather than validate a truncated name prefix.
+    if not isinstance(raw, str) or len(raw) > VCF_INFO_MAX_CHARS:
+        return {}
+    unfolded: list[str] = []
+    for line in raw.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+        if line.startswith((" ", "\t")) and unfolded:
+            unfolded[-1] += line[1:]
+        else:
+            unfolded.append(line)
+    fields: dict[str, str] = {}
+    for line in unfolded:
+        head, separator, value = line.partition(":")
+        if not separator:
+            continue
+        key = head.split(";", 1)[0].rsplit(".", 1)[-1].upper()
+        if key in {"N", "FN", "TEL"}:
+            fields.setdefault(key, value.strip())
+    return fields
+
+
+def extract_resident_contact(
+    message: Any, expected_user_id: int
+) -> tuple[str | None, str | None, bool]:
+    """Read one contact, keeping its phone and validated name together.
+
+    A known different MAX user ID is rejected. An absent ID means the
+    contact is self-declared, not proof that its phone belongs to the sender.
+    """
+    from aemr_bot.utils.resident_names import normalize_resident_name
+
+    for attachment in _raw_attachments(message):
+        if str(_contact_field(attachment, "type")).lower() != "contact":
+            continue
+        payload = _contact_field(attachment, "payload")
+        if payload is None:
+            continue
+        max_info = _contact_field(payload, "max_info")
+        contact_id = _contact_field(max_info, "user_id")
+        if contact_id is not None:
+            try:
+                foreign = int(contact_id) != expected_user_id
+            except (ValueError, TypeError):
+                foreign = True
+            if foreign:
+                return None, None, True
+
+        raw_vcard = _contact_field(payload, "vcf_info") or _contact_field(payload, "vcfInfo")
+        fields = _resident_vcard_fields(raw_vcard)
+        phone = _contact_field(max_info, "phone") or _contact_field(max_info, "phone_number")
+        if not phone and fields.get("TEL"):
+            phone = _vcard_parts(fields["TEL"])[0]
+
+        candidates: list[str] = []
+        if fields.get("N"):
+            parts = _vcard_parts(fields["N"], split_components=True)
+            # vCard N: surname;given;additional names;prefix;suffix.
+            # Resident policy: given name first, optional patronymic/surname.
+            if len(parts) >= 2 and parts[1].strip():
+                candidates.append(" ".join(
+                    part.strip() for part in (parts[1], parts[2] if len(parts) > 2 else "", parts[0])
+                    if part.strip()
+                ))
+        first = _contact_field(max_info, "first_name")
+        last = _contact_field(max_info, "last_name")
+        if isinstance(first, str):
+            candidates.append(" ".join(part for part in (first, last) if isinstance(part, str) and part))
+        if fields.get("FN"):
+            candidates.append(_vcard_parts(fields["FN"])[0])
+        name = next((normalized for candidate in candidates
+                     if (normalized := normalize_resident_name(candidate)) is not None), None)
+        return str(phone).strip() if phone else None, name, False
+    return None, None, False
+
 def _normalize_type(att: dict) -> str:
     return str(att.get("type", "")).lower()
 
