@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-10-26 09:36:58 UTC`
+Generated at: `2026-10-26 10:24:36 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `397`
+Indexed files: `407`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -21,7 +21,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `.github/workflows/repo-index.yml` (1211 bytes)
 - `.gitignore` (3114 bytes)
 - `.pre-commit-config.yaml` (3378 bytes)
-- `AGENTS.md` (3465 bytes)
+- `AGENTS.md` (3619 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
 - `bot/aemr_bot/config.py` (23443 bytes)
 - `bot/aemr_bot/copy/__init__.py` (1142 bytes)
@@ -64,63 +64,63 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/__init__.py` (9391 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (7211 bytes)
-- `bot/aemr_bot/handlers/admin_appeal_ops.py` (22007 bytes)
-- `bot/aemr_bot/handlers/admin_audience.py` (19926 bytes)
+- `bot/aemr_bot/handlers/admin_appeal_ops.py` (22001 bytes)
+- `bot/aemr_bot/handlers/admin_audience.py` (19882 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (16550 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (18606 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (7916 bytes)
 - `bot/aemr_bot/handlers/admin_operators_list.py` (4572 bytes)
 - `bot/aemr_bot/handlers/admin_operators_roles.py` (11128 bytes)
-- `bot/aemr_bot/handlers/admin_operators_wizard.py` (20850 bytes)
+- `bot/aemr_bot/handlers/admin_operators_wizard.py` (21010 bytes)
 - `bot/aemr_bot/handlers/admin_panel.py` (24117 bytes)
-- `bot/aemr_bot/handlers/admin_resident_search.py` (11894 bytes)
+- `bot/aemr_bot/handlers/admin_resident_search.py` (11953 bytes)
 - `bot/aemr_bot/handlers/admin_settings.py` (16143 bytes)
 - `bot/aemr_bot/handlers/admin_settings_author.py` (1686 bytes)
 - `bot/aemr_bot/handlers/admin_settings_list.py` (4913 bytes)
 - `bot/aemr_bot/handlers/admin_settings_notify.py` (4522 bytes)
 - `bot/aemr_bot/handlers/admin_settings_obj.py` (8790 bytes)
 - `bot/aemr_bot/handlers/admin_settings_pr.py` (9985 bytes)
-- `bot/aemr_bot/handlers/admin_settings_quiet.py` (7161 bytes)
+- `bot/aemr_bot/handlers/admin_settings_quiet.py` (7237 bytes)
 - `bot/aemr_bot/handlers/admin_settings_shared.py` (5509 bytes)
 - `bot/aemr_bot/handlers/admin_settings_text.py` (6888 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (5046 bytes)
-- `bot/aemr_bot/handlers/appeal.py` (37084 bytes)
-- `bot/aemr_bot/handlers/appeal_funnel.py` (39970 bytes)
-- `bot/aemr_bot/handlers/appeal_geo.py` (8438 bytes)
-- `bot/aemr_bot/handlers/appeal_runtime.py` (21438 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (42614 bytes)
-- `bot/aemr_bot/handlers/broadcast_templates.py` (10008 bytes)
-- `bot/aemr_bot/handlers/broadcast_templates_crud.py` (9575 bytes)
+- `bot/aemr_bot/handlers/appeal.py` (37129 bytes)
+- `bot/aemr_bot/handlers/appeal_funnel.py` (42727 bytes)
+- `bot/aemr_bot/handlers/appeal_geo.py` (8443 bytes)
+- `bot/aemr_bot/handlers/appeal_runtime.py` (21467 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (43842 bytes)
+- `bot/aemr_bot/handlers/broadcast_templates.py` (10122 bytes)
+- `bot/aemr_bot/handlers/broadcast_templates_crud.py` (10455 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates_list.py` (9527 bytes)
-- `bot/aemr_bot/handlers/broadcast_templates_state.py` (5886 bytes)
-- `bot/aemr_bot/handlers/broadcast_templates_wizard.py` (19849 bytes)
-- `bot/aemr_bot/handlers/broadcast_wizard.py` (28736 bytes)
+- `bot/aemr_bot/handlers/broadcast_templates_state.py` (5909 bytes)
+- `bot/aemr_bot/handlers/broadcast_templates_wizard.py` (20434 bytes)
+- `bot/aemr_bot/handlers/broadcast_wizard.py` (28730 bytes)
 - `bot/aemr_bot/handlers/callback_payloads.py` (16280 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (12935 bytes)
 - `bot/aemr_bot/handlers/menu.py` (54232 bytes)
-- `bot/aemr_bot/handlers/operator_reply.py` (45042 bytes)
+- `bot/aemr_bot/handlers/operator_reply.py` (45389 bytes)
 - `bot/aemr_bot/handlers/start.py` (31427 bytes)
-- `bot/aemr_bot/health.py` (10567 bytes)
+- `bot/aemr_bot/health.py` (10643 bytes)
 - `bot/aemr_bot/keyboards.py` (1161 bytes)
 - `bot/aemr_bot/logging_setup.py` (4912 bytes)
-- `bot/aemr_bot/main.py` (47047 bytes)
-- `bot/aemr_bot/network.py` (8655 bytes)
+- `bot/aemr_bot/main.py` (47397 bytes)
+- `bot/aemr_bot/network.py` (8756 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
-- `bot/aemr_bot/services/admin_bus.py` (21849 bytes)
+- `bot/aemr_bot/services/admin_bus.py` (21755 bytes)
 - `bot/aemr_bot/services/admin_card.py` (15634 bytes)
 - `bot/aemr_bot/services/admin_events.py` (9871 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (11900 bytes)
-- `bot/aemr_bot/services/appeals.py` (38089 bytes)
-- `bot/aemr_bot/services/backup_verify.py` (13431 bytes)
+- `bot/aemr_bot/services/appeals.py` (38229 bytes)
+- `bot/aemr_bot/services/backup_verify.py` (13577 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (9737 bytes)
 - `bot/aemr_bot/services/broadcast_utils.py` (6004 bytes)
-- `bot/aemr_bot/services/broadcasts.py` (22037 bytes)
+- `bot/aemr_bot/services/broadcasts.py` (22315 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3626 bytes)
 - `bot/aemr_bot/services/card_format.py` (28032 bytes)
 - `bot/aemr_bot/services/cron.py` (83723 bytes)
 - `bot/aemr_bot/services/cron_registry.py` (9788 bytes)
-- `bot/aemr_bot/services/db_backup.py` (22143 bytes)
-- `bot/aemr_bot/services/geo.py` (12115 bytes)
+- `bot/aemr_bot/services/db_backup.py` (22417 bytes)
+- `bot/aemr_bot/services/geo.py` (12262 bytes)
 - `bot/aemr_bot/services/idempotency.py` (7887 bytes)
 - `bot/aemr_bot/services/inbox.py` (8740 bytes)
 - `bot/aemr_bot/services/notify_toggles.py` (5680 bytes)
@@ -128,14 +128,14 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/policy.py` (4867 bytes)
 - `bot/aemr_bot/services/progress.py` (9940 bytes)
 - `bot/aemr_bot/services/quiet_hours.py` (6462 bytes)
-- `bot/aemr_bot/services/repo_sync.py` (17055 bytes)
-- `bot/aemr_bot/services/settings_store.py` (66561 bytes)
+- `bot/aemr_bot/services/repo_sync.py` (18624 bytes)
+- `bot/aemr_bot/services/settings_store.py` (67214 bytes)
 - `bot/aemr_bot/services/sla.py` (7948 bytes)
-- `bot/aemr_bot/services/stats.py` (15698 bytes)
+- `bot/aemr_bot/services/stats.py` (16011 bytes)
 - `bot/aemr_bot/services/threat_intel.py` (13066 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
-- `bot/aemr_bot/services/users.py` (44264 bytes)
-- `bot/aemr_bot/services/wizard_persist.py` (6600 bytes)
+- `bot/aemr_bot/services/users.py` (44404 bytes)
+- `bot/aemr_bot/services/wizard_persist.py` (6879 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (11671 bytes)
 - `bot/aemr_bot/texts.py` (1194 bytes)
 - `bot/aemr_bot/transport.py` (3442 bytes)
@@ -146,10 +146,10 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/ui/settings_keyboards.py` (14334 bytes)
 - `bot/aemr_bot/ui/wizard_keyboards.py` (12728 bytes)
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
-- `bot/aemr_bot/utils/attachments.py` (20367 bytes)
+- `bot/aemr_bot/utils/attachments.py` (20430 bytes)
 - `bot/aemr_bot/utils/background.py` (3804 bytes)
 - `bot/aemr_bot/utils/delivery_guard.py` (735 bytes)
-- `bot/aemr_bot/utils/event.py` (13526 bytes)
+- `bot/aemr_bot/utils/event.py` (13576 bytes)
 - `bot/aemr_bot/utils/image_attachments.py` (1137 bytes)
 - `bot/aemr_bot/utils/menu_tracker.py` (9549 bytes)
 - `bot/aemr_bot/utils/pii_mask.py` (1960 bytes)
@@ -159,11 +159,11 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/alembic.ini` (619 bytes)
 - `bot/pyproject.toml` (7566 bytes)
 - `bot/tests/__init__.py` (0 bytes)
-- `bot/tests/_helpers.py` (5713 bytes)
+- `bot/tests/_helpers.py` (5752 bytes)
 - `bot/tests/conftest.py` (8558 bytes)
 - `bot/tests/test_abandoned_broadcast_recovery.py` (5182 bytes)
 - `bot/tests/test_admin_appeal_ops.py` (30859 bytes)
-- `bot/tests/test_admin_audience_paginated.py` (12795 bytes)
+- `bot/tests/test_admin_audience_paginated.py` (13707 bytes)
 - `bot/tests/test_admin_bus.py` (15938 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10971 bytes)
 - `bot/tests/test_admin_card_detached_safety.py` (8417 bytes)
@@ -182,31 +182,32 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_settings_handlers.py` (47001 bytes)
 - `bot/tests/test_appeal_card_edit_policy.py` (5804 bytes)
 - `bot/tests/test_appeal_card_timeline.py` (9370 bytes)
-- `bot/tests/test_appeal_dispatcher.py` (33905 bytes)
+- `bot/tests/test_appeal_dispatcher.py` (33999 bytes)
 - `bot/tests/test_appeal_flow.py` (15940 bytes)
-- `bot/tests/test_appeal_funnel_cluster_coverage.py` (63071 bytes)
+- `bot/tests/test_appeal_funnel_cluster_coverage.py` (63175 bytes)
 - `bot/tests/test_appeal_publication_recovery.py` (12312 bytes)
 - `bot/tests/test_appeals_service_pg.py` (18813 bytes)
 - `bot/tests/test_attachments_cov2.py` (11714 bytes)
-- `bot/tests/test_attachments_helpers.py` (5500 bytes)
+- `bot/tests/test_attachments_helpers.py` (5849 bytes)
 - `bot/tests/test_auto_deploy.py` (6260 bytes)
 - `bot/tests/test_background_drain.py` (4360 bytes)
 - `bot/tests/test_backup_verify.py` (14149 bytes)
 - `bot/tests/test_bot_init_concurrency.py` (2820 bytes)
 - `bot/tests/test_broadcast_429_backoff.py` (4575 bytes)
-- `bot/tests/test_broadcast_handlers.py` (44808 bytes)
+- `bot/tests/test_broadcast_audit_regressions.py` (4029 bytes)
+- `bot/tests/test_broadcast_handlers.py` (45094 bytes)
 - `bot/tests/test_broadcast_history_card.py` (10125 bytes)
 - `bot/tests/test_broadcast_keyboards_cov2.py` (4865 bytes)
 - `bot/tests/test_broadcast_operators_coverage.py` (42561 bytes)
-- `bot/tests/test_broadcast_reliability.py` (8455 bytes)
-- `bot/tests/test_broadcast_templates_coverage.py` (49361 bytes)
+- `bot/tests/test_broadcast_reliability.py` (11670 bytes)
+- `bot/tests/test_broadcast_templates_coverage.py` (49665 bytes)
 - `bot/tests/test_broadcast_templates_handlers.py` (17714 bytes)
 - `bot/tests/test_broadcast_templates_service_pg.py` (14825 bytes)
 - `bot/tests/test_broadcast_utils.py` (10254 bytes)
-- `bot/tests/test_broadcast_with_image.py` (24248 bytes)
+- `bot/tests/test_broadcast_with_image.py` (24391 bytes)
 - `bot/tests/test_broadcast_wizard_fsm.py` (26452 bytes)
 - `bot/tests/test_broadcast_wizard_persist.py` (13430 bytes)
-- `bot/tests/test_broadcasts_service_pg.py` (11030 bytes)
+- `bot/tests/test_broadcasts_service_pg.py` (12102 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
 - `bot/tests/test_calendar_ru_loader_cov2.py` (4386 bytes)
 - `bot/tests/test_callback_coverage_contract.py` (23566 bytes)
@@ -216,6 +217,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_callback_router_parity.py` (2842 bytes)
 - `bot/tests/test_card_format.py` (10925 bytes)
 - `bot/tests/test_card_format_extra.py` (22073 bytes)
+- `bot/tests/test_citizen_audit_regressions.py` (8491 bytes)
 - `bot/tests/test_critical_mutation.py` (32383 bytes)
 - `bot/tests/test_cron_docs_sync.py` (7411 bytes)
 - `bot/tests/test_cron_jobs.py` (43971 bytes)
@@ -232,7 +234,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_funnel_state_hardening.py` (6407 bytes)
 - `bot/tests/test_geo.py` (9324 bytes)
 - `bot/tests/test_handler_registration_order.py` (6148 bytes)
-- `bot/tests/test_handlers_appeal_funnel.py` (27953 bytes)
+- `bot/tests/test_handlers_appeal_funnel.py` (28427 bytes)
 - `bot/tests/test_handlers_auth_broadcast.py` (6181 bytes)
 - `bot/tests/test_handlers_common.py` (3558 bytes)
 - `bot/tests/test_handlers_funnel.py` (10036 bytes)
@@ -265,7 +267,11 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_operator_keyboards_cov2.py` (11203 bytes)
 - `bot/tests/test_operator_reply_closed_guard.py` (3266 bytes)
 - `bot/tests/test_operator_reply_guards.py` (11934 bytes)
+- `bot/tests/test_operator_reply_link_contract.py` (2291 bytes)
 - `bot/tests/test_operator_reply_with_image.py` (7494 bytes)
+- `bot/tests/test_operator_wizard_persistence_cleanup.py` (3208 bytes)
+- `bot/tests/test_operator_wizard_restart.py` (2536 bytes)
+- `bot/tests/test_ops_audit_regressions.py` (4904 bytes)
 - `bot/tests/test_outbound_url_whitelist.py` (8758 bytes)
 - `bot/tests/test_p3_hardening.py` (4556 bytes)
 - `bot/tests/test_perf_db.py` (26667 bytes)
@@ -279,13 +285,13 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_quiet_hours_cov2.py` (2388 bytes)
 - `bot/tests/test_release_review_regressions.py` (2353 bytes)
 - `bot/tests/test_reliability_pass.py` (11056 bytes)
-- `bot/tests/test_repo_sync.py` (21994 bytes)
+- `bot/tests/test_repo_sync.py` (23685 bytes)
 - `bot/tests/test_retention_pre_warning.py` (857 bytes)
 - `bot/tests/test_sec_broadcast.py` (17175 bytes)
 - `bot/tests/test_sec_card.py` (16528 bytes)
 - `bot/tests/test_sec_dispatcher.py` (12332 bytes)
-- `bot/tests/test_sec_resource.py` (16069 bytes)
-- `bot/tests/test_sec_xlsx.py` (6780 bytes)
+- `bot/tests/test_sec_resource.py` (15905 bytes)
+- `bot/tests/test_sec_xlsx.py` (7150 bytes)
 - `bot/tests/test_security_batch_b.py` (7269 bytes)
 - `bot/tests/test_security_batch_c.py` (8999 bytes)
 - `bot/tests/test_security_batch_d.py` (6992 bytes)
@@ -294,10 +300,11 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_settings_export_snapshot.py` (4054 bytes)
 - `bot/tests/test_settings_seed_baseline.py` (5309 bytes)
 - `bot/tests/test_settings_store_dirty_tracking.py` (14272 bytes)
-- `bot/tests/test_settings_store_validation.py` (18835 bytes)
+- `bot/tests/test_settings_store_validation.py` (21806 bytes)
 - `bot/tests/test_single_instance.py` (5763 bytes)
 - `bot/tests/test_sla.py` (12272 bytes)
 - `bot/tests/test_stale_operators_cleanup.py` (5187 bytes)
+- `bot/tests/test_system_boundaries.py` (1965 bytes)
 - `bot/tests/test_texts_length_guard.py` (8408 bytes)
 - `bot/tests/test_threat_intel.py` (3737 bytes)
 - `bot/tests/test_threat_intel_cov2.py` (7739 bytes)
@@ -345,10 +352,13 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/archive/versions/Регламент_v8_draft@e8d96b0-2026-05-26.md` (50284 bytes)
 - `docs/audits/FLOW_AUDIT_2026-10-26.md` (26974 bytes)
 - `docs/audits/flow_audit_probes_20261026.py` (11079 bytes)
+- `docs/audits/MODULE_MAP_2026-10-26.json` (27663 bytes)
+- `docs/audits/SYSTEM_AUDIT_2026-10-26.md` (15227 bytes)
 - `docs/DEPS.md` (17780 bytes)
 - `docs/MAXAPI_REVIEW_2026-10-26.md` (13698 bytes)
 - `docs/README.md` (7709 bytes)
 - `docs/RELEASE_0.2.0.md` (15181 bytes)
+- `docs/RELEASE_0.2.1.md` (3881 bytes)
 - `docs/ROADMAP.md` (24960 bytes)
 - `docs/site/_kb/_archive/_audit/администратор-сисадмин.md` (42221 bytes)
 - `docs/site/_kb/_archive/_audit/безопасник-ИБ.md` (53534 bytes)
@@ -1084,7 +1094,7 @@ jobs:
 ### `.github/workflows/release.yml`
 
 Size: `1372` bytes  
-SHA-256: `8fa6e7d5b35e8f34fe40256aef0c1f1354ce716582c59c9666d1944d6c93c0d8`
+SHA-256: `dd368f0fc0ac4febddf76c6a8a677c650f34295f68b742e193dc713e73037267`
 
 ```yaml
 name: Publish release
@@ -1110,7 +1120,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
-      - name: Publish verified 0.2.0 source release
+      - name: Publish verified 0.2.1 source release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -1120,10 +1130,10 @@ jobs:
           version=$(python3 -c 'import tomllib; print(tomllib.load(open("bot/pyproject.toml", "rb"))["project"]["version"])')
           # This workflow publishes this authorized release only. Later versions
           # require an explicit release change, not incidental dependency edits.
-          if [ "$version" != "0.2.0" ]; then exit 0; fi
-          if gh release view v0.2.0 >/dev/null 2>&1; then exit 0; fi
-          gh release create v0.2.0 --target "$RELEASE_SHA" \
-            --title "aemr-bot 0.2.0" --notes-file docs/RELEASE_0.2.0.md
+          if [ "$version" != "0.2.1" ]; then exit 0; fi
+          if gh release view v0.2.1 >/dev/null 2>&1; then exit 0; fi
+          gh release create v0.2.1 --target "$RELEASE_SHA" \
+            --title "aemr-bot 0.2.1" --notes-file docs/RELEASE_0.2.1.md
 ```
 
 ### `.github/workflows/repo-index.yml`
@@ -1363,8 +1373,8 @@ repos:
 
 ### `AGENTS.md`
 
-Size: `3465` bytes  
-SHA-256: `2b636d56529dfbea2b5ae316ab65334e5e2bc6ffcb6ee779eecd3304be788044`
+Size: `3619` bytes  
+SHA-256: `bce7fb9c9fd33b7b16ade8ea0b097ffc1fc78321265c5a1452738256015b6d97`
 
 ```markdown
 # Работа с aemr-bot
@@ -1373,7 +1383,7 @@ SHA-256: `2b636d56529dfbea2b5ae316ab65334e5e2bc6ffcb6ee779eecd3304be788044`
 
 Это правило не требует сохранять воспроизведённые дефекты: исправляй их по требованиям пользователя и регрессионным тестам. Исторические аудиты описывают указанный в них commit, а не состояние текущего выпуска.
 
-- Рабочий контур владельца закрытый; обновление и запуск выполняются вручную. Наличие scripts/auto-deploy.sh не означает, что он установлен или используется. Не включай автодеплой и не объявляй GitHub-публикацию развёртыванием на сервере.
+- Рабочий контур владельца закрытый; обновление и запуск выполняются вручную. Наличие scripts/auto-deploy.sh не означает, что он установлен или используется. Сохраняй автодеплой рабочим альтернативным вариантом, но не включай его на сервере без указания владельца. Не объявляй GitHub-публикацию развёртыванием на сервере.
 - Python-код: bot/aemr_bot; тесты: bot/tests; миграции: bot/aemr_bot/db/alembic/versions; образ: infra/Dockerfile; Docker Compose: infra/docker-compose.yml. Проверяй фактические пути перед изменением.
 - Зависимости устанавливаются из bot/uv.lock. maxapi закреплён точно; при обновлении проверяй реальные модели, методы, обработку ошибок и повторы запросов.
 - Проверки из bot/: uv sync --locked --all-extras; TZ=Asia/Kamchatka uv run pytest; uv run ruff check aemr_bot/; uv run mypy aemr_bot/. Полные PostgreSQL-тесты выполняются в CI с Postgres 16.
@@ -6095,8 +6105,8 @@ async def op_send(event: Any, text: str, kb: Any = None):
 
 ### `bot/aemr_bot/handlers/admin_appeal_ops.py`
 
-Size: `22007` bytes  
-SHA-256: `728d62bae0a3111976e7e7bdb055fc0fd67f30e0d6720bab7e36f9e31d614078`
+Size: `22001` bytes  
+SHA-256: `108c5d40399ec2d983e11a9b2c4ab4592124a6bf52a13e77b9b7260239762388`
 
 ```python
 """Действия оператора над конкретным обращением.
@@ -6276,7 +6286,7 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
 
     # Сбрасываем чужие wizard'ы того же оператора.
     broadcast_handler._wizards.pop(operator_id, None)
-    admin_operators._op_wizards.pop(operator_id, None)
+    admin_operators._op_wizard_drop(operator_id)
 
     # P2 #22 — race rapid double-tap: если оператор уже готовил ответ
     # на ДРУГОЕ обращение, intent перезаписался бы молча, и следующее
@@ -6543,8 +6553,8 @@ async def run_erase_for_appeal(event, appeal_id: int) -> None:
 
 ### `bot/aemr_bot/handlers/admin_audience.py`
 
-Size: `19926` bytes  
-SHA-256: `a4a8fa1f14ca1e6da2683d97041addf39c113af128ed36450efbcf125a3896ff`
+Size: `19882` bytes  
+SHA-256: `c54bc2b60512831c3bf2b26ac435d83fef12c33d89b120b145a31efa447e028c`
 
 ```python
 """Меню «📊 Аудитория и согласия» — IT-выборки + точечные действия
@@ -6838,9 +6848,9 @@ async def handle_audience_search_text(event, text: str) -> bool:
         await op_send(
             event,
             (
-                f"🔍 По запросу «{query[:60]}» ничего не найдено.\n"
-                f"· · · · · · · ·\n"
-                f"Попробуйте короче или другой фрагмент."
+                "🔍 По вашему запросу ничего не найдено.\n"
+                "· · · · · · · ·\n"
+                "Попробуйте короче или другой фрагмент."
             ),
             kbds.op_back_to_audience_keyboard(),
         )
@@ -6851,7 +6861,7 @@ async def handle_audience_search_text(event, text: str) -> bool:
         for u in users
     ]
     header = (
-        f"🔍 Найдено: {len(users)} по запросу «{query[:60]}»\n"
+        f"🔍 Найдено: {len(users)}\n"
         f"· · · · · · · ·\n"
         f"Тапните строку — откроется карточка жителя."
     )
@@ -8443,8 +8453,8 @@ async def _apply_reactivate(event, payload: str, operator_id: int) -> None:
 
 ### `bot/aemr_bot/handlers/admin_operators_wizard.py`
 
-Size: `20850` bytes  
-SHA-256: `9e888d6596d8d78c02394166a2adf43ec8cc7fa5b00970139f88eb03ea7b83d6`
+Size: `21010` bytes  
+SHA-256: `9e9fd8dbf200401d1cd2876928105efa8c1cd97d8989d82067771f5cba6e01ba`
 
 ```python
 """Wizard добавления оператора + общий wizard-state.
@@ -8508,7 +8518,7 @@ def _op_wizard_get(operator_id: int) -> dict | None:
     if state is None:
         return None
     if _time_op.monotonic() > state.get("expires_at", 0):
-        _op_wizards.pop(operator_id, None)
+        _op_wizard_drop(operator_id)
         return None
     return state
 
@@ -8635,6 +8645,16 @@ async def _show_from_group(event, operator_id: int) -> None:
     )
 
 
+def _prepare_add(operator_id: int) -> None:
+    """Start a registration without carrying over another input flow."""
+    from aemr_bot.handlers import broadcast as broadcast_handler
+    from aemr_bot.handlers import operator_reply as op_reply
+
+    broadcast_handler._wizards.pop(operator_id, None)
+    op_reply.drop_reply_intent(operator_id)
+    _op_wizards.pop(operator_id, None)
+
+
 async def _start_add_with_picked(
     event, operator_id: int, picked_user_id: int
 ) -> None:
@@ -8660,6 +8680,7 @@ async def _start_add_with_picked(
     except Exception as exc:
         log.warning("get_chat_member failed for %s: %s", picked_user_id, exc)
 
+    _prepare_add(operator_id)
     _op_wizard_set(
         operator_id,
         step="awaiting_role",
@@ -8690,13 +8711,7 @@ async def _start_add_with_picked(
 
 async def _start_manual_add(event, operator_id: int) -> None:
 
-    # Сбрасываем чужие wizard'ы и reply-intent этого оператора
-    from aemr_bot.handlers import broadcast as broadcast_handler
-    from aemr_bot.handlers import operator_reply as op_reply
-
-    broadcast_handler._wizards.pop(operator_id, None)
-    op_reply.drop_reply_intent(operator_id)
-
+    _prepare_add(operator_id)
     _op_wizard_set(operator_id, step="awaiting_id", source="manual")
     await op_screen(
         event,
@@ -8843,7 +8858,7 @@ async def _show_add_confirm(event, operator_id: int) -> None:
 async def _confirm_save(event, operator_id: int) -> None:
 
     state = _op_wizard_get(operator_id)
-    if state is None:
+    if state is None or state.get("step") != "ready_to_confirm":
         await op_screen(
             event,
             "Мастер закрыт.",
@@ -9470,8 +9485,8 @@ async def _do_backup(event) -> None:
 
 ### `bot/aemr_bot/handlers/admin_resident_search.py`
 
-Size: `11894` bytes  
-SHA-256: `31ba3cce6a208082f93103f6fde66fa1db314a405d3d42a34eddbc1f9b5ac5be`
+Size: `11953` bytes  
+SHA-256: `8825e5769c756a514b19abd336e203199a3b33129115d45675b8f6558c5b88ef`
 
 ```python
 """Поиск жителя по телефону или MAX user id для оператора.
@@ -9494,7 +9509,7 @@ Cluster G (Codex PR 9). До этого оператор мог попасть �
 
 Маскировка телефона обязательна на всех уровнях:
 - В выводе оператору — `+7***1234` (`services/admin_events._mask_phone`).
-- В audit-log запись — хешированный fragment, не plain телефон.
+- В audit-log запись — маскированный номер с последними четырьмя цифрами.
 - В логах — никогда полный телефон.
 """
 from __future__ import annotations
@@ -9548,7 +9563,7 @@ def _detect_query_kind(query: str) -> tuple[str, str]:
 
 def _mask_query_for_audit(kind: str, value: str) -> str:
     """Подготовить query для audit-log: для phone маскируем последние
-    4 цифры, для max_user_id оставляем как есть (это не PII)."""
+    4 цифры, для max_user_id оставляем идентификатор для аудита поиска."""
     if kind == "phone":
         return _mask_phone(value)
     return value
@@ -10857,8 +10872,8 @@ async def _show_pr_diff(event) -> None:
 
 ### `bot/aemr_bot/handlers/admin_settings_quiet.py`
 
-Size: `7161` bytes  
-SHA-256: `f53e72c7a6d3e1a13b8ba188d66c01cc67c7829e6cb4f2256d120dd58dc0cc7a`
+Size: `7237` bytes  
+SHA-256: `ff8fec8f8ac8a3010d1ef7fd3a8db6fd261f17082368b1101dbb8beee76404cd`
 
 ```python
 """Wizard «🌙 Тихий режим в админ-чате».
@@ -10916,8 +10931,9 @@ async def _show_quiet_card(event) -> None:
         f"Окно: с {start:02d}:00 до {end:02d}:00 (Камчатка)\n\n"
         "Когда включён и текущее время в окне — не приходят\n"
         "пульс и рутинные уведомления (новые обращения,\n"
-        "followup'ы, подписки/отписки/erase).\n\n"
-        "Критичные алёрты (фейл бэкапа, ответы операторам,\n"
+        "followup'ы, подписки/отписки).\n\n"
+        "Отзыв согласия и удаление ПДн, а также\n"
+        "критичные алёрты (фейл бэкапа, ответы операторам,\n"
         "сбои retention) идут всегда, тихий режим их\n"
         "не затрагивает.\n\n"
         "Чтобы изменить часы — кнопки ниже.",
@@ -11416,8 +11432,8 @@ async def run_stats_menu(event) -> None:
 
 ### `bot/aemr_bot/handlers/appeal.py`
 
-Size: `37084` bytes  
-SHA-256: `234f7ef76e0a2ed56cf6a328adb45613ba402af9ae317e48c9314da80b619a98`
+Size: `37129` bytes  
+SHA-256: `e7bb990d3be6c7c49ae349083f47035327b862a3b85e2742c933e0daa4f058bb`
 
 ```python
 """Главный entry-point обработчика обращений.
@@ -11465,6 +11481,7 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import (
     ack_callback,
+    get_callback_message_id,
     get_chat_id,
     get_first_name,
     get_message_body,
@@ -11669,16 +11686,22 @@ async def _cb_consent_yes(event, max_user_id: int, payload: str) -> None:
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
-        # Фиксируем хеш редакции согласия, которую житель видел сейчас —
-        # доказательство того, под чем он подписался (152-ФЗ ст. 9 ч. 3).
-        # Текст правится через админ-UI, поэтому без привязки к редакции
-        # доказать согласие после правки было бы нечем.
-        consent_hash = await settings_store.get_consent_text_hash(
-            session, fallback=texts.CONSENT_REQUEST
+        # Evidence belongs to the prompt actually displayed, not a template
+        # an administrator may have edited between display and this tap.
+        data = user.dialog_data or {}
+        consent_hash = data.get("consent_prompt_hash")
+        prompt_mid = data.get("consent_prompt_mid")
+        needs_prompt = not consent_hash or (
+            prompt_mid is not None and prompt_mid != get_callback_message_id(event)
         )
-        newly_granted = await users_service.set_consent(
-            session, max_user_id, text_sha256=consent_hash
-        )
+        if not needs_prompt:
+            newly_granted = await users_service.set_consent(
+                session, max_user_id, text_sha256=consent_hash
+            )
+    if needs_prompt:
+        await ack_callback(event)
+        await appeal_funnel.start_appeal_flow(event, max_user_id)
+        return
     await ack_callback(event, texts.CONSENT_ACCEPTED)
     # Уведомляем оператора только при переходе «согласия не было → дано»
     # (атомарный признак из set_consent). Дубль callback'а или двойной
@@ -12111,7 +12134,7 @@ def register(dp: Dispatcher) -> None:
                 operator_id = get_user_id(event)
                 if operator_id is not None:
                     broadcast_handler._wizards.pop(operator_id, None)
-                    admin_cmd_module._op_wizards.pop(operator_id, None)
+                    admin_cmd_module._op_wizard_drop(operator_id)
                     op_reply.drop_reply_intent(operator_id)
                     # Intent правки настроек (consumer handle_settings_edit_text).
                     admin_settings._intent_drop(operator_id)
@@ -12226,8 +12249,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/appeal_funnel.py`
 
-Size: `39970` bytes  
-SHA-256: `efa2c8fcb4c445b871d87d9e5c1998218b94fb70a81c01b5fc1e74b6b6fbc9f6`
+Size: `42727` bytes  
+SHA-256: `acf43454eab82ef005d25d4e76407a02b3bfe4ab806f4d4a39d460bb09d629d0`
 
 ```python
 """FSM-воронка приёма обращения и явного дополнения.
@@ -12275,6 +12298,7 @@ from aemr_bot.utils.attachments import (
     extract_phone,
 )
 from aemr_bot.utils.event import (
+    extract_message_id,
     get_callback_message_id,
     get_chat_id,
     get_first_name,
@@ -12378,7 +12402,7 @@ async def start_appeal_flow(event, max_user_id: int):
         # это односторонний документ оператора (ст. 18.1), она не может
         # нести содержание согласия и не заменяет его.
         async with session_scope() as text_session:
-            text = await settings_store.get_consent_request_text(
+            text, consent_hash = await settings_store.get_consent_request_and_hash(
                 text_session,
                 # policy_url в DEFAULTS есть всегда, но его могли явно
                 # стереть при живом PDF. Тогда подставляем отсылку к
@@ -12386,11 +12410,17 @@ async def start_appeal_flow(event, max_user_id: int):
                 policy_url=policy_url or "в прикреплённом файле",
                 fallback=texts.CONSENT_REQUEST,
             )
-        await send_or_edit_screen(
+        sent = await send_or_edit_screen(
             event,
             text=text,
             attachments=attachments,
         )
+        async with session_scope() as session:
+            await users_service.set_state(
+                session, max_user_id, DialogState.AWAITING_CONSENT,
+                data={"consent_prompt_hash": consent_hash,
+                      "consent_prompt_mid": extract_message_id(sent) or get_callback_message_id(event)},
+            )
         return
 
     await ask_contact_or_skip(event, max_user_id)
@@ -12722,7 +12752,9 @@ async def on_awaiting_contact(event, body, text_body, max_user_id):
         digits_match = _PHONE_DIGITS_RE.search(text_body)
         if digits_match:
             phone = digits_match.group(0)
-    if phone is None:
+    # The profile column is VARCHAR(32). Reject malformed/oversized
+    # text or contact payloads before opening the write transaction.
+    if phone is None or len(phone) > 32 or not any(ch.isdigit() for ch in phone):
         await event.message.answer(
             texts.CONTACT_RETRY,
             attachments=[keyboards.contact_request_keyboard()],
@@ -12868,21 +12900,27 @@ async def on_awaiting_consent(event, body, text_body, max_user_id):
     """Житель пишет текст вместо тапа кнопок «Согласен/Отказаться»."""
     async with session_scope() as session:
         policy_url = await settings_store.get(session, "policy_url")
-        if policy_url:
-            # C1: подгружаем consent_text из БД с санитизацией и
-            # fallback'ом на hardcoded texts.CONSENT_REQUEST.
-            text = await settings_store.get_consent_request_text(
-                session,
-                policy_url=policy_url,
-                fallback=texts.CONSENT_REQUEST,
+        policy_token = await settings_store.get(session, "policy_pdf_token")
+        if not policy_url and not policy_token:
+            await event.message.answer(
+                "Сервис временно недоступен — не настроена политика обработки данных.",
+                attachments=[keyboards.back_to_menu_keyboard()],
             )
-        else:
-            text = (
-                "Чтобы принять обращение, нам нужно ваше согласие на "
-                "обработку персональных данных. Нажмите «Согласен», "
-                "чтобы продолжить."
-            )
-    await event.message.answer(text, attachments=[keyboards.consent_keyboard()])
+            return
+        text, consent_hash = await settings_store.get_consent_request_and_hash(
+            session, policy_url=policy_url or "в прикреплённом файле",
+            fallback=texts.CONSENT_REQUEST,
+        )
+    attachments = [keyboards.consent_keyboard()]
+    if policy_token:
+        from aemr_bot.services.policy import build_file_attachment
+        attachments.insert(0, build_file_attachment(policy_token))
+    sent = await event.message.answer(text, attachments=attachments)
+    async with session_scope() as session:
+        await users_service.set_state(
+            session, max_user_id, DialogState.AWAITING_CONSENT,
+            data={"consent_prompt_hash": consent_hash, "consent_prompt_mid": extract_message_id(sent)},
+        )
 
 
 async def on_idle(event, body, text_body, max_user_id):
@@ -13011,6 +13049,39 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         return
 
     async with session_scope() as session:
+        # The earlier checks only guide the UI. Reload and lock the rows in
+        # the insertion transaction: an operator may have closed the appeal
+        # or blocked the resident while the rate-limit query was running.
+        # Appeal -> User matches erasure's appeal updates before user deletion.
+        locked_appeal = await appeals_service.get_by_id(
+            session, appeal.id, for_update=True
+        )
+        locked_user = await users_service.find_by_max_id(
+            session, max_user_id, for_update=True
+        )
+        if (
+            locked_appeal is None
+            or locked_user is None
+            or locked_appeal.user_id != locked_user.id
+            or locked_appeal.status not in {AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value}
+            or locked_user.consent_pdn_at is None
+            or locked_user.is_blocked
+            or locked_user.dialog_state != DialogState.AWAITING_FOLLOWUP_TEXT.value
+            or (locked_user.dialog_data or {}).get("appeal_id") != appeal.id
+        ):
+            if (
+                locked_user is not None
+                and locked_user.dialog_state == DialogState.AWAITING_FOLLOWUP_TEXT.value
+                and (locked_user.dialog_data or {}).get("appeal_id") == appeal.id
+            ):
+                await users_service.reset_state(session, max_user_id)
+            await event.message.answer(
+                "Дополнение не сохранено: обращение или ваше разрешение на "
+                "отправку изменилось. Откройте «📂 Мои обращения» и проверьте статус.",
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
+        appeal = locked_appeal
         await appeals_service.add_user_message(
             session,
             appeal=appeal,
@@ -13081,8 +13152,8 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
 
 ### `bot/aemr_bot/handlers/appeal_geo.py`
 
-Size: `8438` bytes  
-SHA-256: `9de1aecd891ff6914c4c9f77a75ee8cb9a5c716ec0fc5b00a4ccdf878c9ffaba`
+Size: `8443` bytes  
+SHA-256: `98883857e4bb963b0a2297edbbea3e3cdf6d8d0524dc52d4157cb78c52bc5046`
 
 ```python
 """Geo-flow для FSM-воронки обращения.
@@ -13137,8 +13208,8 @@ async def on_awaiting_locality(event, body, text_body, max_user_id):
 
     raw_atts = getattr(body, "attachments", None) or []
     log.info(
-        "awaiting_locality: user=%s text=%r attachments_count=%d",
-        max_user_id, (text_body or "")[:50], len(raw_atts),
+        "awaiting_locality: user=%s text_length=%d attachments_count=%d",
+        max_user_id, len(text_body or ""), len(raw_atts),
     )
 
     location = extract_location(body)
@@ -13269,8 +13340,8 @@ async def on_awaiting_geo_confirm(event, body, text_body, max_user_id):
 
 ### `bot/aemr_bot/handlers/appeal_runtime.py`
 
-Size: `21438` bytes  
-SHA-256: `cb89c70abc621b02f1bd3c022c58a73df33da0022f1b11dcc94004645b98837f`
+Size: `21467` bytes  
+SHA-256: `dd551c2a6e02e5c97ddc0ab9b9c8e5ee67c21e709fcba9d044113ae23fd93905`
 
 ```python
 """Runtime-helpers и финализация обращения.
@@ -13303,6 +13374,7 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.background import spawn_background_task
+from aemr_bot.utils.resident_lifecycle import guard
 
 log = logging.getLogger(__name__)
 
@@ -13428,21 +13500,12 @@ async def recover_stuck_funnels(bot) -> int:
 
     async def _bounded(uid: int) -> bool | str | None:
         async with sem:
-            return await persist_and_dispatch_appeal(bot, uid)
+            return await persist_and_dispatch_appeal(bot, uid, reset_empty=True)
 
     results = await asyncio.gather(
         *(_bounded(uid) for uid in ids),
         return_exceptions=True,
     )
-
-    # Пустые обращения никогда не получают повторный запрос при
-    # восстановлении — сбрасываем их в IDLE, чтобы они не появлялись
-    # при каждом последующем проходе recover().
-    empty_ids = [uid for uid, r in zip(ids, results, strict=True) if r is False]
-    if empty_ids:
-        async with session_scope() as session:
-            for uid in empty_ids:
-                await users_service.reset_state(session, uid)
 
     finalized = sum(1 for r in results if r is True)
     failed = sum(1 for r in results if isinstance(r, BaseException))
@@ -13480,12 +13543,14 @@ def _apply_repeat_context(
     return marked_topic, marked_summary
 
 
-async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | None:
+async def persist_and_dispatch_appeal(
+    bot, max_user_id: int, *, reset_empty: bool = False
+) -> bool | str | None:
     """Создает обращение (Appeal) из накопленных данных dialog_data,
     публикует карточку для админов, подтверждает жителю по user_id.
     Возвращает True при успешном сохранении и отправке, False при
     пустом обращении, PERSIST_RATE_LIMITED при превышении лимита, None —
-    если состояние уже IDLE.
+    если состояние уже не AWAITING_SUMMARY.
 
     Защищено через asyncio.Lock для каждого пользователя, поэтому
     повторная доставка одного и того же события или восстановление после
@@ -13497,10 +13562,12 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
     re-check.
     """
     try:
-        async with get_user_lock(max_user_id), current_user(max_user_id) as (session, user):
-            if user.dialog_state == DialogState.IDLE.value:
+        # Recovery also participates in the inbox/erasure lifecycle gate:
+        # a startup scan must not overwrite a newer live citizen action.
+        async with guard(max_user_id), get_user_lock(max_user_id), current_user(max_user_id) as (session, user):
+            if user.dialog_state != DialogState.AWAITING_SUMMARY.value:
                 log.info(
-                    "отправка пропущена для пользователя %s — состояние уже IDLE",
+                    "отправка пропущена для пользователя %s — состояние уже не AWAITING_SUMMARY",
                     max_user_id,
                 )
                 return None
@@ -13531,6 +13598,10 @@ async def persist_and_dispatch_appeal(bot, max_user_id: int) -> bool | str | Non
             summary = "\n".join(data.get("summary_chunks") or []).strip()
             attachments = data.get("attachments") or []
             if not summary and not attachments:
+                if reset_empty:
+                    # Same lock and transaction as the state check; a later
+                    # cleanup transaction could erase a newly started funnel.
+                    await users_service.reset_state(session, max_user_id)
                 return False
             topic, summary = _apply_repeat_context(
                 topic=data.get("topic", ""),
@@ -13676,8 +13747,8 @@ async def _relay_attachments_background(
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `42614` bytes  
-SHA-256: `4dc73492c6d8e6b83a465982c4649084fe723e56e519c707beee4d0877b26a8a`
+Size: `43842` bytes  
+SHA-256: `e1f1a237241ba3b24b858e22f75f183cb8edba6dacc505c379ab9bec4496e8be`
 
 ```python
 """Send pipeline + история рассылок + диспетчер `/broadcast`.
@@ -13948,6 +14019,10 @@ from aemr_bot.utils.delivery_guard import DeliveryCancelled as _BroadcastCancell
 from aemr_bot.utils.delivery_guard import send_guard
 
 
+class _RecipientIneligible(_BroadcastCancelled):
+    """This recipient withdrew consent or was blocked/deleted before sending."""
+
+
 async def _send_one(
     bot,
     max_user_id: int,
@@ -14191,6 +14266,8 @@ async def _run_send_loop(
             cancelled = True
             break
         async with session_scope() as session:
+            if not await broadcasts_service.is_eligible_recipient(session, user_db_id):
+                continue
             claimed = await broadcasts_service.begin_delivery(
                 session, broadcast_id=broadcast_id, user_id=user_db_id,
             )
@@ -14199,17 +14276,30 @@ async def _run_send_loop(
                 f"broadcast #{broadcast_id}: delivery already exists for user #{user_db_id}; "
                 "automatic replay is unsafe"
             )
+        async def recipient_can_send(recipient_id: int = user_db_id) -> bool:
+            if not await can_send():
+                return False
+            async with session_scope() as session:
+                eligible = await broadcasts_service.is_eligible_recipient(session, recipient_id)
+            if not eligible:
+                raise _RecipientIneligible
+            return True
+
         try:
             error = await _send_one(
                 bot, user_max_user_id, body,
-                outbound_images=outbound_images, can_send=can_send,
+                outbound_images=outbound_images, can_send=recipient_can_send,
             )
-        except _BroadcastCancelled:
+        except _BroadcastCancelled as exc:
             # The sender made no call, or only received explicit 429 rejections.
             async with session_scope() as session:
                 await broadcasts_service.discard_delivery_intent(
                     session, broadcast_id=broadcast_id, user_id=user_db_id,
                 )
+            if isinstance(exc, _RecipientIneligible):
+                # The guard runs again after the global limiter and on retries.
+                # This recipient is skipped; other subscribers still receive it.
+                continue
             cancelled = True
             break
 
@@ -14270,7 +14360,7 @@ async def _run_broadcast_impl(
     снимок получателей → цикл отправки → финальный статус и итог.
 
     Тяжёлая логика вынесена в помощники: `_resolve_admin_progress_message`
-    (стартовая карточка), `_run_send_loop` (цикл с буферизацией доставок),
+    (стартовая карточка), `_run_send_loop` (фиксация каждой доставки до следующей отправки),
     `_send_final_summary` (итог). Здесь — только последовательность шагов.
     """
     body = f"{texts.BROADCAST_HEADER}\n\n{text}"
@@ -14356,15 +14446,20 @@ async def _run_broadcast_impl(
         broadcast_id, final_status.value, delivered, failed,
     )
 
-    await _send_final_summary(
-        bot,
-        broadcast_id=broadcast_id,
-        total=total,
-        delivered=delivered,
-        failed=failed,
-        cancelled=cancelled,
-        admin_mid=admin_mid,
-    )
+    # Delivery is already committed. A failure publishing the operator's
+    # summary must not rewrite DONE/CANCELLED as FAILED or invite a resend.
+    try:
+        await _send_final_summary(
+            bot,
+            broadcast_id=broadcast_id,
+            total=total,
+            delivered=delivered,
+            failed=failed,
+            cancelled=cancelled,
+            admin_mid=admin_mid,
+        )
+    except Exception:
+        log.exception("broadcast #%s: final summary publication failed", broadcast_id)
 
 
 def _format_dt(dt: datetime | None) -> str:
@@ -14586,8 +14681,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/broadcast_templates.py`
 
-Size: `10008` bytes  
-SHA-256: `9ab0f8ba28b3b0939257d1115777d3b9fc994b3a260cca96c75ac1b76ce28225`
+Size: `10122` bytes  
+SHA-256: `ae280918d63391c4b9b3fcdf91edffc076e0099e44a705fa45990191b6621575`
 
 ```python
 """UI шаблонов рассылок (PR H) — ФАСАД после декомпозиции god-объекта.
@@ -14606,7 +14701,8 @@ SHA-256: `9ab0f8ba28b3b0939257d1115777d3b9fc994b3a260cca96c75ac1b76ce28225`
     (с опциональными картинками);
   - **Переименовать** (`op:tmpl:rename:<id>`) — однострочный wizard;
   - **Изменить текст** (`op:tmpl:edit:<id>`) — однострочный wizard
-    (новый текст + опциональные картинки полностью заменяют);
+    (новый текст заменяет прежний; приложенные картинки заменяют
+    сохранённые, а без новых картинок прежние сохраняются);
   - **Удалить** (`op:tmpl:delete:<id>` → `op:tmpl:delete_ok:<id>`) —
     soft-delete (archive).
 
@@ -14842,8 +14938,8 @@ async def handle_wizard_text(event, text_body: str) -> bool:
 
 ### `bot/aemr_bot/handlers/broadcast_templates_crud.py`
 
-Size: `9575` bytes  
-SHA-256: `00b66ab0bd46d105a12f321f0a08bef68b39029debb859453525a1ffd7de2a19`
+Size: `10455` bytes  
+SHA-256: `e75a9d7ad23458937a2b51c01303c03abf953891009c2ad84cbd2584029c6c3f`
 
 ```python
 """UI шаблонов рассылок — CRUD-операции (delete / rename / clone).
@@ -14920,6 +15016,11 @@ async def _step_rename(
     *,
     op_id: int | None,
 ) -> bool:
+    # Unlike create/edit, these text steps commit immediately, with no
+    # confirmation callback to recheck a revoked or downgraded role.
+    if not await ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        _wizards.pop(actor_id, None)
+        return True
     if (err := _validate_tmpl_name(text)) is not None:
         await event.message.answer(
             err,
@@ -15018,6 +15119,11 @@ async def _step_clone_name(
 ) -> bool:
     """Принять имя для клона; создать шаблон сразу (text+attachments
     уже в pending_*, превью не нужен — это копия)."""
+    # Unlike create/edit, these text steps commit immediately, with no
+    # confirmation callback to recheck a revoked or downgraded role.
+    if not await ensure_role(event, OperatorRole.IT, OperatorRole.COORDINATOR):
+        _wizards.pop(actor_id, None)
+        return True
     if (err := _validate_tmpl_name(text)) is not None:
         await event.message.answer(
             err,
@@ -15052,6 +15158,14 @@ async def _step_clone_name(
         await event.message.answer(
             texts.OP_TMPL_NAME_TAKEN.format(name=text),
             attachments=[keyboards.broadcast_template_cancel_keyboard()],
+        )
+        return True
+    except ValueError as exc:
+        # Legacy templates can violate today's text/URL validation.
+        _wizards.pop(actor_id, None)
+        await event.message.answer(
+            f"Ошибка клонирования: {exc}",
+            attachments=[keyboards.op_back_to_menu_keyboard()],
         )
         return True
     _wizards.pop(actor_id, None)
@@ -15354,8 +15468,8 @@ async def _step_search(
 
 ### `bot/aemr_bot/handlers/broadcast_templates_state.py`
 
-Size: `5886` bytes  
-SHA-256: `0d0412be624af53b6617d2e5f304f789f1b11c024fb072827ab4c3ce9bf2a2e5`
+Size: `5909` bytes  
+SHA-256: `2d6d4d2890e5432885a8628f337d79d1cd843822707c77451537019dc9dc17b3`
 
 ```python
 """Разделяемое ядро UI шаблонов рассылок: wizard-state + apply-dedupe.
@@ -15387,7 +15501,7 @@ from aemr_bot import texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.services import broadcast_templates as templates_service
 
-_WIZARD_TTL_SEC = 600  # 10 минут — те же лимиты, что у broadcast wizard
+_WIZARD_TTL_SEC = 600  # 10 минут; TTL мастера рассылки задаётся отдельно в cfg
 
 
 # ---- wizard state ----------------------------------------------------
@@ -15496,8 +15610,8 @@ def _mark_apply(actor_id: int, template_id: int) -> None:
 
 ### `bot/aemr_bot/handlers/broadcast_templates_wizard.py`
 
-Size: `19849` bytes  
-SHA-256: `fa911b5a5b9e39702f3f54bbbc455d5eb3ff3baa2eed0dc1b7ee4211ea620e56`
+Size: `20434` bytes  
+SHA-256: `c5d88cbce8147cbdc6791c10156e3c05cdbeb22b90d2e5857c2d5fb51d10bb13`
 
 ```python
 """UI шаблонов рассылок — create/edit wizard с превью + навигация.
@@ -15727,7 +15841,9 @@ async def _save_new(event) -> None:
     if actor_id is None:
         return
     state = _wizards.get(actor_id)
-    if state is None or state.step != "new_preview":
+    if state is None or state.step != "new_preview" or state.expired():
+        if state is not None and state.expired():
+            _wizards.pop(actor_id, None)
         await op_screen(event, texts.OP_TMPL_CANCELLED)
         return
     op = await get_operator(event)
@@ -15934,7 +16050,10 @@ async def _save_edit(event, template_id: int) -> None:
         state is None
         or state.step != "edit_preview"
         or state.target_id != template_id
+        or state.expired()
     ):
+        if state is not None and state.expired():
+            _wizards.pop(actor_id, None)
         await op_screen(event, texts.OP_TMPL_CANCELLED)
         return
     op = await get_operator(event)
@@ -15954,6 +16073,14 @@ async def _save_edit(event, template_id: int) -> None:
         except templates_service.TemplateNotFound:
             _wizards.pop(actor_id, None)
             await op_screen(event, texts.OP_TMPL_NOT_FOUND)
+            return
+        except ValueError as exc:
+            state.step = "edit_awaiting_text"
+            state.renew()
+            await op_screen(
+                event, f"Ошибка сохранения: {exc}\n\nПришлите исправленный текст.",
+                keyboards.broadcast_template_cancel_keyboard(),
+            )
             return
         if op_id is not None:
             await operators_service.write_audit(
@@ -16004,8 +16131,8 @@ async def _back_to_text_edit(event, template_id: int) -> None:
 
 ### `bot/aemr_bot/handlers/broadcast_wizard.py`
 
-Size: `28736` bytes  
-SHA-256: `715ece20c47e587b5cb5c832e3e945234e4855bf0fb06aa2774cfe4dd8716ecc`
+Size: `28730` bytes  
+SHA-256: `bb841c4027aa6359fd01eaca943107c072f00e2403398db543ada174bf5c7923`
 
 ```python
 """Мастер рассылок (FSM): state, helpers, command handlers.
@@ -16218,7 +16345,7 @@ async def _start_wizard(event) -> None:
         from aemr_bot.handlers import admin_commands as admin_cmd_module
         from aemr_bot.handlers import operator_reply as op_reply
 
-        admin_cmd_module._op_wizards.pop(actor_id, None)
+        admin_cmd_module._op_wizard_drop(actor_id)
         op_reply.drop_reply_intent(actor_id)
     except Exception:
         log.exception("broadcast: cleanup чужих wizard'ов упал, продолжаем")
@@ -18269,8 +18396,8 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
 
 ### `bot/aemr_bot/handlers/operator_reply.py`
 
-Size: `45042` bytes  
-SHA-256: `69985ca6976fa29d99543bbc47a805200f963380bdbdc69f2e973d42e81491b3`
+Size: `45389` bytes  
+SHA-256: `c837ba998c66b91a6a5b3adb6179079391fcb70a47698ad710ccb00eaee6acf6`
 
 ```python
 """Логика ответов операторов и дополнительных сообщений от жителей, вызывается
@@ -18525,7 +18652,7 @@ def _reply_rejection_before_delivery(*, fresh_appeal, appeal_id: int) -> str | N
 
     Логика согласия (152-ФЗ ст. 21 ч. 5): после отзыва оператор может
     дать финальный ответ только по обращению, ПРИНЯТОМУ до отзыва.
-      - is_blocked / first_name == 'Удалено' — жёсткий отказ;
+      - is_blocked (включая заглушку удалённого жителя) — жёсткий отказ;
       - нет согласия и обращение подано ПОСЛЕ revoked_at — отказ;
       - согласия не было никогда — отказ;
       - нет согласия, но обращение подано ДО revoked_at — доставка
@@ -18991,6 +19118,7 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
     # админ-чате обсуждают обращения этой же фразой, и свайп на их
     # сообщение отправил бы текст случайному жителю.
     link = get_message_link(event)
+    link_type = link.get("type") if isinstance(link, dict) else getattr(link, "type", None)
     if link:
         replied_text = ""
         replied_sender_is_bot = False
@@ -19001,9 +19129,10 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
             # bot-authored сообщениях. Иначе оператор-злоумышленник
             # (или вставленный текст «🆔 №N» из обращения жителя)
             # перенаправит ответ на чужого жителя.
-            inner_sender = getattr(inner, "sender", None) or getattr(
-                inner, "from_", None
-            )
+            # MAX LinkedMessage carries sender alongside MessageBody.
+            inner_sender = getattr(link, "sender", None) or getattr(
+                inner, "sender", None
+            ) or getattr(inner, "from_", None)
             replied_sender_is_bot = bool(
                 getattr(inner_sender, "is_bot", False)
             )
@@ -19012,7 +19141,8 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
             if isinstance(inner_dict, dict):
                 replied_text = inner_dict.get("text", "")
                 sender_dict = (
-                    inner_dict.get("sender") or inner_dict.get("from") or {}
+                    link.get("sender")
+                    or inner_dict.get("sender") or inner_dict.get("from") or {}
                 )
                 if isinstance(sender_dict, dict):
                     replied_sender_is_bot = bool(sender_dict.get("is_bot"))
@@ -19022,7 +19152,7 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
         # SEC #3: маркер только в bot-authored. Если link не даёт нам
         # sender — считаем небезопасным. Лучше попросить /reply N, чем
         # доставить чужому жителю.
-        if replied_text and replied_sender_is_bot:
+        if replied_text and replied_sender_is_bot and str(link_type).lower().endswith("reply"):
             # ТОЛЬКО служебный маркер «🆔 №N» — его генерирует сам бот в
             # карточках /open_tickets и followup. Комбинация эмодзи и №
             # уникальна, в обычном тексте обращения не встречается.
@@ -19035,7 +19165,7 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
             ids = _APPEAL_MARKER_RE.findall(replied_text)
             if ids:
                 appeal_id_from_text = int(ids[-1])
-        elif replied_text and _APPEAL_MARKER_RE.search(replied_text):
+        elif replied_text and not replied_sender_is_bot and _APPEAL_MARKER_RE.search(replied_text):
             log.warning(
                 "operator_reply: маркер 🆔 №N в НЕ-bot сообщении — "
                 "игнорируем (защита от spoofing). operator=%s",
@@ -19826,8 +19956,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/health.py`
 
-Size: `10567` bytes  
-SHA-256: `253ca753ed0b3a1401302b3de6162ffdacdd8da4570994a26116ebb1752345a6`
+Size: `10643` bytes  
+SHA-256: `2f95cf0cdecd3fe6c6cd34011f7fcdfe10f712874b3e06f285c1a68f791fab85`
 
 ```python
 """Маленький aiohttp-сервер здоровья процесса.
@@ -19907,7 +20037,8 @@ class PollWatch:
     def is_fresh(self, max_age: float | None = None) -> bool:
         # 0.0 ⇒ цикл ещё ни разу не отметился. Это либо webhook-режим
         # (long-poll'а нет вовсе), либо самый старт polling до первого
-        # get_updates. В обоих случаях НЕ краснеем по этому сигналу —
+        # get_updates. Первая попытка polling взводит метку до запроса.
+        # До неё НЕ краснеем по этому сигналу —
         # liveness здесь несёт heartbeat. Fail-open по доступности.
         if self.last_poll == 0.0:
             return True
@@ -20204,8 +20335,8 @@ def setup_logging(s: Settings | None = None) -> None:
 
 ### `bot/aemr_bot/main.py`
 
-Size: `47047` bytes  
-SHA-256: `06bf427c2d975afa8d7924954b7a974cb707eb1ee843cd6d5c028bd7e54f71c3`
+Size: `47397` bytes  
+SHA-256: `083060399d4845730d02e5ad5e19eaa86413eb7a90adfd9d88a530be53fe1b13`
 
 ```python
 from __future__ import annotations
@@ -20497,7 +20628,8 @@ def _install_polling_timeout(bot: Bot, timeout: int) -> None:
     зависший handler при use_create_task=True не гасит heartbeat-таск, но
     если встанет сам poll-цикл (мёртвая aiohttp-сессия, голодание
     event-loop), last_poll протухнет и /livez покраснеет (finding b).
-    Отмечаем только при УСПЕХЕ: на исключении (timeout/сетевой сбой) метку
+    Начальную метку ставим перед первой попыткой; затем только при УСПЕХЕ.
+    На исключении (timeout/сетевой сбой) существующую метку
     не двигаем — иначе мёртвый цикл, безостановочно бросающий ошибки,
     выглядел бы живым.
     """
@@ -20505,6 +20637,10 @@ def _install_polling_timeout(bot: Bot, timeout: int) -> None:
 
     async def get_updates_with_timeout(*args, **kwargs):
         kwargs.setdefault("timeout", timeout)
+        # Arm once before the first attempt: permanent failure from cold start
+        # must not look healthy forever. Subsequent failures never refresh it.
+        if health.poll_watch.last_poll == 0.0:
+            health.poll_watch.mark()
         result = await original(*args, **kwargs)
         health.poll_watch.mark()
         return result
@@ -21051,8 +21187,8 @@ if __name__ == "__main__":
 
 ### `bot/aemr_bot/network.py`
 
-Size: `8655` bytes  
-SHA-256: `583768a6c9fdc875c2dde8ce53536eb40a10eb466f0fc7a39c8673b7d4a662ed`
+Size: `8756` bytes  
+SHA-256: `b59c00c66deb6b456c8f3cb420021df02371ab8b1fcfe4ab013386f7e27c9a59`
 
 ```python
 """Firewall/proxy mode: единый рычаг для работы за ЛЮБЫМ межсетевым экраном.
@@ -21127,7 +21263,10 @@ def _read_proxy(s: Settings) -> str | None:
         pf = Path(s.outbound_proxy_file).expanduser()
         if not pf.is_file():
             raise FileNotFoundError(f"BOT_OUTBOUND_PROXY_FILE не найден: {s.outbound_proxy_file}")
-        return pf.read_text(encoding="utf-8").strip() or None
+        proxy = pf.read_text(encoding="utf-8").strip()
+        if not proxy:
+            raise ValueError("BOT_OUTBOUND_PROXY_FILE is empty")
+        return proxy
     return None
 
 
@@ -21215,8 +21354,8 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ### `bot/aemr_bot/services/admin_bus.py`
 
-Size: `21849` bytes  
-SHA-256: `d2a5178a886f85e093c0bdcb51dedbcf38796879a444d88c2c60c73ff80a7046`
+Size: `21755` bytes  
+SHA-256: `3f39e48e75ed23429bcfa60c696add07b0da6d7d2c05b12ed498087965a846ae`
 
 ```python
 """Единая шина для отправки сообщений в admin chat.
@@ -21411,11 +21550,7 @@ async def send(
         from aemr_bot.services.quiet_hours import is_quiet_hours_now
 
         if is_quiet_hours_now():
-            log.info(
-                "admin_bus.send: quiet hours active, suppressed "
-                "(text prefix=%r)",
-                text[:40],
-            )
+            log.info("admin_bus.send: quiet hours active, suppressed")
             return None
     kwargs: dict = {"chat_id": cfg.admin_group_id, "text": text}
     if attachments is not None:
@@ -22429,8 +22564,8 @@ async def relay_attachments_to_admin(
 
 ### `bot/aemr_bot/services/appeals.py`
 
-Size: `38089` bytes  
-SHA-256: `2e38455aa0bc23472bcc5729bd941b2a941fa6a02cdbfc1c8acccb6227f88d49`
+Size: `38229` bytes  
+SHA-256: `2a301a3b856382daecb00029b2f0175db11ea6e39b4dffd09908785fe825b5ca`
 
 ```python
 from datetime import UTC, datetime, timedelta
@@ -22559,10 +22694,13 @@ async def mark_in_progress(session: AsyncSession, appeal_id: int) -> bool:
     return result.rowcount > 0
 
 
-async def get_by_id(session: AsyncSession, appeal_id: int) -> Appeal | None:
-    return await session.scalar(
-        select(Appeal).options(selectinload(Appeal.user)).where(Appeal.id == appeal_id)
-    )
+async def get_by_id(
+    session: AsyncSession, appeal_id: int, *, for_update: bool = False
+) -> Appeal | None:
+    query = select(Appeal).options(selectinload(Appeal.user)).where(Appeal.id == appeal_id)
+    if for_update:
+        query = query.with_for_update().execution_options(populate_existing=True)
+    return await session.scalar(query)
 
 
 async def get_by_id_with_messages(
@@ -23191,8 +23329,8 @@ async def find_active_for_user(session: AsyncSession, user_id: int) -> Appeal | 
 
 ### `bot/aemr_bot/services/backup_verify.py`
 
-Size: `13431` bytes  
-SHA-256: `5f6bf0a14ca06262c1002335db18af216fab16c815f0f953e33bacbee16b2a99`
+Size: `13577` bytes  
+SHA-256: `90740609557cf492018e9dcd9ca9b94df955511c7005004d7916d4f54d94bbee`
 
 ```python
 """Проверка ПРИГОДНОСТИ бэкапа: расшифровать поток и заглянуть внутрь.
@@ -23392,7 +23530,10 @@ async def verify_latest_backup() -> VerifyResult:
             fail_detail="BACKUP_LOCAL_DIR пуст — нечего проверять.",
         )
 
-    src = _latest_backup()
+    try:
+        src = await asyncio.to_thread(_latest_backup)
+    except OSError as exc:
+        return VerifyResult(ok=False, fail_kind="no_backup", fail_detail=str(exc))
     if src is None:
         return VerifyResult(
             ok=False, fail_kind="no_backup",
@@ -23875,8 +24016,8 @@ __all__ = [
 
 ### `bot/aemr_bot/services/broadcasts.py`
 
-Size: `22037` bytes  
-SHA-256: `8be47c9426b6d6b67d7496f1ea4564e1d0f52d0328e78d5e8ae91bb63abb58a9`
+Size: `22315` bytes  
+SHA-256: `42cc2cd0c49d85c811c5701036bc43e39c2c7b94899ab494fb6976e5450148d2`
 
 ```python
 """Сервис подписки и муниципальных рассылок.
@@ -23957,6 +24098,13 @@ def _eligible_filter():
         & (User.consent_broadcast_at.isnot(None))
         & (User.is_blocked.is_(False))
     )
+
+
+async def is_eligible_recipient(session: AsyncSession, user_id: int) -> bool:
+    """Recheck consent/block/deletion immediately before each external attempt."""
+    return bool(await session.scalar(
+        select(User.id).where(User.id == user_id, _eligible_filter())
+    ))
 
 
 async def count_subscribers(session: AsyncSession) -> int:
@@ -26660,8 +26808,8 @@ def lookup(job_id: str) -> dict[str, str] | None:
 
 ### `bot/aemr_bot/services/db_backup.py`
 
-Size: `22143` bytes  
-SHA-256: `cbe4606870ed7788cbdb8c627d185f65d7c76370ce0454844b34333fd8fcfd00`
+Size: `22417` bytes  
+SHA-256: `be3e1e69e4b69c41dbfe4b31623de471665a726deca369351db421b03ef08b41`
 
 ```python
 """Резервное копирование Postgres БД: pg_dump → опционально gpg →
@@ -26691,7 +26839,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 from zoneinfo import ZoneInfo
 
 from aemr_bot.config import settings
@@ -26739,7 +26887,7 @@ async def _wait_proc(
     """
     try:
         return await asyncio.wait_for(proc.wait(), timeout=timeout)
-    except TimeoutError as e:
+    except (TimeoutError, asyncio.CancelledError) as e:
         log.error(
             "backup: %s не завершился за %.0fс — убиваю процесс (pid=%s)",
             label,
@@ -26757,6 +26905,8 @@ async def _wait_proc(
             await asyncio.wait_for(proc.wait(), timeout=10.0)
         except TimeoutError:
             log.warning("backup: %s не отозвался на kill за 10с", label)
+        if isinstance(e, asyncio.CancelledError):
+            raise
         raise BackupTimeoutError(
             f"{label} timed out after {timeout:.0f}s"
         ) from e
@@ -26797,9 +26947,9 @@ def _build_pg_env() -> dict[str, str]:
         **os.environ,
         "PGHOST": parsed.hostname or "localhost",
         "PGPORT": str(parsed.port or 5432),
-        "PGUSER": parsed.username or "",
-        "PGPASSWORD": parsed.password or "",
-        "PGDATABASE": (parsed.path or "/").lstrip("/"),
+        "PGUSER": unquote(parsed.username or ""),
+        "PGPASSWORD": unquote(parsed.password or ""),
+        "PGDATABASE": unquote((parsed.path or "/").lstrip("/")),
     }
 
 
@@ -26848,15 +26998,14 @@ async def _run_pg_dump_encrypted(
     соединяем через ОС-pipe (Unix way) — asyncio StreamReader как
     stdin не работает в Python 3.12 (нет .fileno() у StreamReader).
     """
-    # Pipe для passphrase. Запись делаем через executor, потому что
-    # синхронный os.write блокирует event-loop: при passphrase >64KB
-    # или забитом OS pipe-буфере (если gpg ещё не запущен и не читает
-    # на той стороне) write зависнет, а с ним замрёт весь бот. Для
-    # типичных 30-символьных паролей буфер заведомо больше — но это
-    # не повод полагаться на «обычно норм».
+    # A passphrase is one line in GPG's fd protocol. Keep it within the
+    # POSIX minimum atomic pipe capacity so the pre-spawn write cannot block.
+    secret = passphrase.encode() + b"\n"
+    if len(secret) > 512 or b"\n" in secret[:-1] or b"\r" in secret[:-1]:
+        raise BackupGpgError("GPG passphrase must be one line and at most 511 UTF-8 bytes")
     pp_r, pp_w = os.pipe()
     try:
-        await asyncio.to_thread(os.write, pp_w, passphrase.encode() + b"\n")
+        await asyncio.to_thread(os.write, pp_w, secret)
     finally:
         os.close(pp_w)
 
@@ -26934,7 +27083,7 @@ async def _run_pg_dump_encrypted(
         gpg_rc, dump_rc = await asyncio.wait_for(
             asyncio.gather(gpg.wait(), dump.wait()), timeout=budget
         )
-    except TimeoutError as e:
+    except (TimeoutError, asyncio.CancelledError) as e:
         log.error(
             "backup: pg_dump|gpg не завершились за %.0fс — убиваю оба",
             budget,
@@ -26948,6 +27097,8 @@ async def _run_pg_dump_encrypted(
                 await asyncio.wait_for(proc.wait(), timeout=10.0)
             except TimeoutError:
                 log.warning("backup: %s не отозвался на kill за 10с", label)
+        if isinstance(e, asyncio.CancelledError):
+            raise
         raise BackupTimeoutError(
             f"pg_dump|gpg timed out after {budget:.0f}s"
         ) from e
@@ -27027,7 +27178,6 @@ async def backup_db() -> BackupResult:
         )
 
     target_dir = local_dir
-    target_dir.mkdir(parents=True, exist_ok=True)
 
     # Параноидальная проверка: пустая строка в env "" даст truthy False,
     # но если кто-то поставит passphrase из 1 символа — gpg запустится
@@ -27069,8 +27219,9 @@ async def backup_db() -> BackupResult:
     ts = datetime.now(TZ).strftime("%Y%m%d_%H%M%S")
     out = target_dir / f"aemr-{ts}{suffix}"
 
-    env = _build_pg_env()
     try:
+        target_dir.mkdir(parents=True, exist_ok=True)
+        env = _build_pg_env()
         if encrypt:
             await _run_pg_dump_encrypted(out, env, passphrase or "")
         else:
@@ -27082,6 +27233,12 @@ async def backup_db() -> BackupResult:
         except OSError:
             log.warning("could not chmod backup %s to 0600", out.name)
         log.info("backup written: %s (%d bytes)", out.name, out.stat().st_size)
+    except asyncio.CancelledError:
+        try:
+            out.unlink(missing_ok=True)
+        except OSError:
+            log.warning("could not remove cancelled backup %s", out.name)
+        raise
     except BackupPgDumpError as e:
         log.exception("backup failed: pg_dump")
         try:
@@ -27111,7 +27268,10 @@ async def backup_db() -> BackupResult:
             fail_detail=f"{type(e).__name__}: {str(e)[:150]}",
         )
 
-    _rotate_backups(target_dir, settings.backup_keep_count, suffix)
+    try:
+        _rotate_backups(target_dir, settings.backup_keep_count, suffix)
+    except OSError:
+        log.exception("backup rotation failed (local copy still intact)")
 
     try:
         await _upload_to_s3(out)
@@ -27123,8 +27283,8 @@ async def backup_db() -> BackupResult:
 
 ### `bot/aemr_bot/services/geo.py`
 
-Size: `12115` bytes  
-SHA-256: `ddad62d9f8b7a2e798ab209897c4f9c8e2fde47ee5f9c840eb07d7fff6e497ce`
+Size: `12262` bytes  
+SHA-256: `f975cc0fd72a42efdefd1e5ea349f2f51d7c725ad68cf4142dac5179451f17c8`
 
 ```python
 """Локальный reverse geocoding для Елизовского муниципального округа.
@@ -27156,7 +27316,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-from shapely.geometry import Point, shape
+from shapely.geometry import Point, box, shape
 from shapely.strtree import STRtree
 
 log = logging.getLogger(__name__)
@@ -27330,6 +27490,16 @@ def find_locality(lat: float, lon: float) -> str | None:
     return None
 
 
+def _search_bounds(lat: float, lon: float, radius_m: int):
+    # One longitude degree is shorter at Kamchatka's latitude. Using a
+    # latitude-degree radius on both axes excludes nearby east/west objects.
+    # Query a conservative envelope; haversine below enforces the real radius.
+    delta_lat = radius_m * _DEG_PER_METER_LAT
+    poleward_lat = min(abs(lat) + delta_lat, 89.999999)
+    delta_lon = min(180.0, delta_lat / math.cos(math.radians(poleward_lat)))
+    return box(lon - delta_lon, lat - delta_lat, lon + delta_lon, lat + delta_lat)
+
+
 def find_address(lat: float, lon: float, search_radius_m: int = _STREET_RADIUS_M) -> GeoResult:
     """Полный reverse geocoding: поселение + улица + номер дома.
 
@@ -27353,11 +27523,7 @@ def find_address(lat: float, lon: float, search_radius_m: int = _STREET_RADIUS_M
         # Шаг 1: ближайшее здание
         bld_tree, bld_props = _load_buildings_index()
         if bld_tree is not None:
-            # Buffer считаем по широте — для 53°N это 1.5× избыточно по
-            # долготе. Безопасно: реальное расстояние фильтрует
-            # _haversine_m. Захват кандидатов через bbox-индекс O(log n).
-            radius_deg = _BUILDING_RADIUS_M * _DEG_PER_METER_LAT
-            candidates = bld_tree.query(target.buffer(radius_deg))
+            candidates = bld_tree.query(_search_bounds(lat, lon, _BUILDING_RADIUS_M))
             best_dist = float("inf")
             best_idx: int | None = None
             for idx in candidates:
@@ -27375,8 +27541,7 @@ def find_address(lat: float, lon: float, search_radius_m: int = _STREET_RADIUS_M
         # Шаг 2: ближайшая улица
         str_tree, str_props = _load_streets_index()
         if str_tree is not None:
-            radius_deg = search_radius_m * _DEG_PER_METER_LAT
-            candidates = str_tree.query(target.buffer(radius_deg))
+            candidates = str_tree.query(_search_bounds(lat, lon, search_radius_m))
             best_dist = float("inf")
             best_idx = None
             for idx in candidates:
@@ -28636,16 +28801,17 @@ def reset_cache_for_tests() -> None:
 
 ### `bot/aemr_bot/services/repo_sync.py`
 
-Size: `17055` bytes  
-SHA-256: `d0d9dcdd39011483beca942c720f5a3f081ba61f3f2a7afa901fffe7a38caad1`
+Size: `18624` bytes  
+SHA-256: `078afc8b465b33e2c03e7fdb4c8aeceea65d76aab7ae014b5ad31167a534b7c9`
 
 ```python
 """Синхронизация настроек бота с GitHub-репозиторием.
 
 Создаёт Pull Request с актуальным `seed/runtime_config.json`, собранным
 из БД. PR — отдельная ветка, в main не идёт напрямую. После мержа
-вручную через GitHub UI scripts/auto-deploy.sh подтянет изменения на
-VPS.
+вручную через GitHub UI обновление сервера выполняется отдельно.
+Опциональный scripts/auto-deploy.sh работает только если настроен владельцем;
+экспорт runtime_config.json не импортируется при запуске бота.
 
 Feature-flag: модуль работает только если задан GITHUB_PAT в окружении
 (или в settings.commit_author_*). Если PAT отсутствует — функции
@@ -28826,8 +28992,9 @@ def _build_pr_body(
     lines.extend(
         [
             "",
-            "После мержа scripts/auto-deploy.sh подхватит изменения на VPS в",
-            "течение 10 минут и пересоберёт контейнер бота.",
+            "Обновление сервера выполняется вручную или через отдельно настроенный",
+            "scripts/auto-deploy.sh. Создание/merge PR не подтверждает развёртывание.",
+            "seed/runtime_config.json — экспорт; при запуске бота он не импортируется.",
             "",
             "_Этот PR создан ботом aemr-bot. Авторизация через GITHUB_PAT._",
         ]
@@ -28989,62 +29156,72 @@ async def create_settings_pr(
     content_str = serialize_runtime_config(runtime_config)
     gh = _GH(cfg)
 
-    async with aiohttp.ClientSession(timeout=DEFAULT_TIMEOUT, **session_kwargs()) as session:
-        # 1. base ref
-        base_sha = await gh.get_ref_sha(session, cfg.base_branch)
-        if base_sha is None:
-            return SyncResult(
-                ok=False, reason="no_base_branch",
-                message=(
-                    f"Не нашёл ветку {cfg.base_branch} в {cfg.repo}. "
-                    f"Проверьте GITHUB_REPO и GITHUB_PR_BASE_BRANCH."
-                ),
+    try:
+        async with aiohttp.ClientSession(timeout=DEFAULT_TIMEOUT, **session_kwargs()) as session:
+            # 1. base ref
+            base_sha = await gh.get_ref_sha(session, cfg.base_branch)
+            if base_sha is None:
+                return SyncResult(
+                    ok=False, reason="no_base_branch",
+                    message=(
+                        f"Не нашёл ветку {cfg.base_branch} в {cfg.repo}. "
+                        f"Проверьте GITHUB_REPO и GITHUB_PR_BASE_BRANCH."
+                    ),
+                )
+            # 2. новая ветка
+            created = await gh.create_branch(session, branch, base_sha)
+            if not created:
+                return SyncResult(
+                    ok=False, reason="branch_failed",
+                    message="Не удалось создать ветку. PAT без прав Contents:RW?",
+                )
+            # 3. файл — определяем, существовал ли уже
+            existing_sha = await gh.get_file_sha(session, TARGET_PATH, cfg.base_branch)
+            wrote = await gh.put_file(
+                session,
+                path=TARGET_PATH,
+                branch=branch,
+                content_str=content_str,
+                message=commit_message,
+                sha=existing_sha,
             )
-        # 2. новая ветка
-        created = await gh.create_branch(session, branch, base_sha)
-        if not created:
-            return SyncResult(
-                ok=False, reason="branch_failed",
-                message="Не удалось создать ветку. PAT без прав Contents:RW?",
+            if not wrote:
+                return SyncResult(
+                    ok=False, reason="write_failed",
+                    message="Файл не записался. Проверьте права PAT.",
+                )
+            # 4. PR
+            pr_number, pr_url = await gh.create_pr(
+                session,
+                title=pr_title,
+                head=branch,
+                base=cfg.base_branch,
+                body=pr_body,
             )
-        # 3. файл — определяем, существовал ли уже
-        existing_sha = await gh.get_file_sha(session, TARGET_PATH, cfg.base_branch)
-        wrote = await gh.put_file(
-            session,
-            path=TARGET_PATH,
-            branch=branch,
-            content_str=content_str,
-            message=commit_message,
-            sha=existing_sha,
-        )
-        if not wrote:
-            return SyncResult(
-                ok=False, reason="write_failed",
-                message="Файл не записался. Проверьте права PAT.",
+            if pr_number is None or pr_url is None:
+                return SyncResult(
+                    ok=False, reason="pr_failed",
+                    message="PR не создался. PAT без прав Pull requests:RW?",
+                )
+            log.info(
+                "settings PR created: branch=%s url=%s keys=%d",
+                branch, pr_url, len(dirty_keys),
             )
-        # 4. PR
-        pr_number, pr_url = await gh.create_pr(
-            session,
-            title=pr_title,
-            head=branch,
-            base=cfg.base_branch,
-            body=pr_body,
-        )
-        if pr_number is None or pr_url is None:
             return SyncResult(
-                ok=False, reason="pr_failed",
-                message="PR не создался. PAT без прав Pull requests:RW?",
+                ok=True,
+                pr_url=pr_url,
+                pr_number=pr_number,
+                branch=branch,
+                message=f"PR #{pr_number} создан",
             )
-        log.info(
-            "settings PR created: branch=%s url=%s keys=%d",
-            branch, pr_url, len(dirty_keys),
-        )
+    except (aiohttp.ClientError, TimeoutError, ValueError) as exc:
+        log.warning("settings PR request failed (%s)", type(exc).__name__)
         return SyncResult(
-            ok=True,
-            pr_url=pr_url,
-            pr_number=pr_number,
-            branch=branch,
-            message=f"PR #{pr_number} создан",
+            ok=False, reason="request_failed", branch=branch,
+            message=(
+                "Сбой запроса GitHub. Результат изменения может быть неизвестен. "
+                f"Проверьте ветку {branch} и открытые PR перед повтором."
+            ),
         )
 
 
@@ -29053,29 +29230,36 @@ async def fetch_main_runtime_config(
 ) -> tuple[dict[str, Any] | None, str]:
     """Скачать seed/runtime_config.json из base-ветки и распарсить.
     Возвращает (data, reason). data=None если файла нет или ошибка."""
-    async with aiohttp.ClientSession(timeout=DEFAULT_TIMEOUT, **session_kwargs()) as session:
-        gh = _GH(cfg)
-        status, data = await gh._request(
-            session,
-            "GET",
-            f"/repos/{cfg.repo}/contents/{TARGET_PATH}?ref={cfg.base_branch}",
-        )
-        if status == 404:
-            return None, "not_in_repo"
-        if status != 200 or not isinstance(data, dict):
-            return None, "fetch_failed"
-        encoded = data.get("content") or ""
-        try:
-            raw = base64.b64decode(encoded).decode("utf-8")
-            return json.loads(raw), "ok"
-        except Exception:
-            return None, "parse_failed"
+    try:
+        async with aiohttp.ClientSession(timeout=DEFAULT_TIMEOUT, **session_kwargs()) as session:
+            gh = _GH(cfg)
+            status, data = await gh._request(
+                session,
+                "GET",
+                f"/repos/{cfg.repo}/contents/{TARGET_PATH}?ref={cfg.base_branch}",
+            )
+            if status == 404:
+                return None, "not_in_repo"
+            if status != 200 or not isinstance(data, dict):
+                return None, "fetch_failed"
+            encoded = data.get("content") or ""
+            try:
+                raw = base64.b64decode(encoded).decode("utf-8")
+                decoded = json.loads(raw)
+                if not isinstance(decoded, dict):
+                    return None, "parse_failed"
+                return decoded, "ok"
+            except Exception:
+                return None, "parse_failed"
+    except (aiohttp.ClientError, TimeoutError, ValueError) as exc:
+        log.warning("settings fetch request failed (%s)", type(exc).__name__)
+        return None, "fetch_failed"
 ```
 
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `66561` bytes  
-SHA-256: `107d77147e06d9a2a4bcd1dc1b1443340821ee0936040b84b10a2f287fd4c8df`
+Size: `67214` bytes  
+SHA-256: `b393aad1ff5694805715399a48f3cdb6b279ed6ba291607bc69d2c3c5850a161`
 
 ```python
 import hashlib
@@ -29157,7 +29341,8 @@ def _normalize_exact_url(value: str) -> str | None:
     """
     try:
         parsed = urlparse(value)
-    except Exception:
+        _ = parsed.port  # Invalid/non-numeric/out-of-range ports raise ValueError.
+    except (TypeError, ValueError):
         return None
     if parsed.scheme.lower() not in {"http", "https"}:
         return None
@@ -29270,7 +29455,8 @@ def _is_whitelisted_url(value: str) -> bool:
         return True
     try:
         parsed = urlparse(value)
-    except Exception:
+        _ = parsed.port  # Invalid/non-numeric/out-of-range ports raise ValueError.
+    except (TypeError, ValueError):
         return False
     if parsed.scheme not in {"http", "https"}:
         return False
@@ -29745,7 +29931,7 @@ def validate(key: str, value: Any) -> tuple[bool, str]:
                 if not _is_valid_phone(phone):
                     return False, (
                         f"Поле «phone» в одном из item'ов не похоже на телефон: "
-                        f"«{phone[:30]}…». Допустимо: цифры, пробелы, + ( ) - . , ; "
+                        f"«{str(phone)[:30]}…». Допустимо: цифры, пробелы, + ( ) - . , ; "
                         f"(несколько номеров через запятую — можно), длина 2–60."
                     )
     if expected is int:
@@ -29807,8 +29993,35 @@ def format_obj_list(items: list[dict]) -> str:
 async def get(session: AsyncSession, key: str) -> Any:
     row = await session.scalar(select(Setting).where(Setting.key == key))
     if row is not None:
-        return row.value
-    return DEFAULTS.get(key)
+        return deepcopy(row.value)
+    return deepcopy(DEFAULTS.get(key))
+
+
+def _consent_template(raw: Any, fallback: str) -> str:
+    """Choose the same renderable template for display and consent evidence."""
+    if isinstance(raw, str) and raw.strip() and "{policy_url}" in raw:
+        template = sanitize_settings_text(raw)
+        try:
+            template.format(policy_url="")
+        except (KeyError, IndexError, ValueError, AttributeError):
+            return fallback
+        return template
+    return fallback
+
+
+async def get_consent_request_and_hash(
+    session: AsyncSession, *, policy_url: str, fallback: str,
+) -> tuple[str, str]:
+    """Render consent and its evidence digest from a single settings read."""
+    try:
+        raw = await get(session, "consent_text")
+    except (TimeoutError, SQLAlchemyError, TypeError):
+        raw = None
+    template = _consent_template(raw, fallback)
+    return (
+        template.format(policy_url=policy_url),
+        hashlib.sha256(template.encode("utf-8")).hexdigest(),
+    )
 
 
 async def get_consent_request_text(session: AsyncSession, *, policy_url: str, fallback: str) -> str:
@@ -29825,14 +30038,7 @@ async def get_consent_request_text(session: AsyncSession, *, policy_url: str, fa
     except (TimeoutError, SQLAlchemyError, TypeError):
         # F14: тот же узкий except, что и в get_text_with_fallback.
         raw = None
-    if isinstance(raw, str) and raw.strip() and "{policy_url}" in raw:
-        try:
-            return sanitize_settings_text(raw).format(policy_url=policy_url)
-        except (KeyError, IndexError, ValueError):
-            # На случай если в тексте есть {другие_фигурные_скобки}
-            # которые format() не сможет разобрать. Не падаем — fallback.
-            pass
-    return fallback.format(policy_url=policy_url)
+    return _consent_template(raw, fallback).format(policy_url=policy_url)
 
 
 async def get_consent_text_hash(session: AsyncSession, *, fallback: str) -> str:
@@ -29852,11 +30058,7 @@ async def get_consent_text_hash(session: AsyncSession, *, fallback: str) -> str:
         raw = await get(session, "consent_text")
     except (TimeoutError, SQLAlchemyError, TypeError):
         raw = None
-    template = (
-        sanitize_settings_text(raw)
-        if isinstance(raw, str) and raw.strip() and "{policy_url}" in raw
-        else fallback
-    )
+    template = _consent_template(raw, fallback)
     return hashlib.sha256(template.encode("utf-8")).hexdigest()
 
 
@@ -30392,11 +30594,12 @@ def is_overdue(created_at: datetime, now: datetime, sla_hours: int) -> bool:
 
 ### `bot/aemr_bot/services/stats.py`
 
-Size: `15698` bytes  
-SHA-256: `3832621c74f0888c64348164d0eb8add22ec1f641912cffc8586cf84a4076503`
+Size: `16011` bytes  
+SHA-256: `cc2429926e00603d2660d27daf937903b2c402f494e2c5bf9bbce3811ff48d85`
 
 ```python
 import asyncio
+import re
 from datetime import UTC, datetime, timedelta
 from io import BytesIO
 from zoneinfo import ZoneInfo
@@ -30426,6 +30629,8 @@ VALID_PERIODS = ("today", "week", "month", "quarter", "half_year", "year", "all"
 # ре-сейве) тоже трактуют как начало формулы. Fail-closed: для любого
 # user-controlled значения, начинающегося с этих символов, префиксуем
 # апострофом — Excel показывает текст как есть и не вычисляет.
+_XML_INVALID_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
+
 _FORMULA_TRIGGERS = ("=", "+", "-", "@", "\t", "\r")
 
 
@@ -30438,8 +30643,12 @@ def _sanitize_cell(value):
     меняется: '=' в начале у обычного обращения встречается крайне редко,
     а апостроф невидим в ячейке (Excel-конвенция «текст as-is»).
     """
-    if isinstance(value, str) and value.startswith(_FORMULA_TRIGGERS):
-        return "'" + value
+    if isinstance(value, str):
+        # Remove characters that XML 1.0 cannot serialize before checking
+        # formula prefixes: removing a control can expose a leading equals.
+        value = _XML_INVALID_CHARS.sub("", value)
+        if value.startswith(_FORMULA_TRIGGERS):
+            return "'" + value
     return value
 
 
@@ -31150,8 +31359,8 @@ def file_attachment(token: str):
 
 ### `bot/aemr_bot/services/users.py`
 
-Size: `44264` bytes  
-SHA-256: `65835d2810ffb3fd7f6647432ab3fc6359506cc933202f1cd670af9f198ed75e`
+Size: `44404` bytes  
+SHA-256: `fa2e523cb78c73a468ab69ba0da9de308cae20af6b325bead91cdf45447a121c`
 
 ```python
 import hashlib
@@ -31205,13 +31414,16 @@ async def get_or_create(session: AsyncSession, max_user_id: int, first_name: str
     return user
 
 
-async def find_by_max_id(session: AsyncSession, max_user_id: int) -> User | None:
+async def find_by_max_id(
+    session: AsyncSession, max_user_id: int, *, for_update: bool = False
+) -> User | None:
     """Read-only поиск без создания. Используется для уведомлений
     оператору, где запись жителя точно должна существовать; если её
     нет — пишем «—» вместо создания фантомной."""
-    return await session.scalar(
-        select(User).where(User.max_user_id == max_user_id)
-    )
+    query = select(User).where(User.max_user_id == max_user_id)
+    if for_update:
+        query = query.with_for_update().execution_options(populate_existing=True)
+    return await session.scalar(query)
 
 
 async def has_consent(session: AsyncSession, max_user_id: int) -> bool:
@@ -32045,8 +32257,8 @@ async def erase_pdn_by_phone(session: AsyncSession, phone: str) -> int | None:
 
 ### `bot/aemr_bot/services/wizard_persist.py`
 
-Size: `6600` bytes  
-SHA-256: `6d48c4d80387a4d5f8a50b67d46c73ec318aaa8d686563f825b652114fe97499`
+Size: `6879` bytes  
+SHA-256: `ae82b48ff519b7d808609e17ef69c9c9f77564e92bbe1c34a1dfff83d59d1479`
 
 ```python
 """DB persistence для wizard state'а оператора.
@@ -32060,11 +32272,12 @@ SHA-256: `6d48c4d80387a4d5f8a50b67d46c73ec318aaa8d686563f825b652114fe97499`
 Workflow:
 1. На старте бота `await hydrate_into_registry(session)` подгружает
    активные записи из БД в in-memory dict'ы registry.
-2. Handler зовёт `wr.set_op_wizard(operator_id, state)` — обновляет
-   in-memory СРАЗУ.
-3. Тот же handler зовёт `await save_op_wizard(session, ...)` —
-   обновляет БД (UPSERT).
-4. На clear то же самое: `wr.clear_op_wizard()` + `await delete_op_wizard()`.
+2. Handler обновляет in-memory состояние и зеркало в wizard_registry.
+3. `schedule_persist_op` / `schedule_persist_broadcast` ставит снимок
+   в фоновую очередь registry; очередь вызывает save_* (UPSERT)
+   в отдельной сессии, сохраняя порядок записей каждого мастера.
+4. При clear зеркало очищается, а schedule_persist_* ставит DELETE
+   в ту же очередь после ранее запланированных сохранений.
 
 Если БД-вызов упадёт (network blip), in-memory остаётся правильным;
 рестарт в этот момент потеряет state, но это не хуже чем раньше.
@@ -33018,7 +33231,7 @@ __all__ = [
 ### `bot/aemr_bot/ui/citizen_keyboards.py`
 
 Size: `26521` bytes  
-SHA-256: `656925abc8fb6652f1d1a15803f18589d2c7c540675afd69b66d52f8b1ed4b55`
+SHA-256: `8a4b6618a23ddc7eb61de7a7edab4903620c9b481f0af3f104226acef1387471`
 
 ```python
 """Клавиатуры экранов жителя (citizen-facing).
@@ -33044,8 +33257,8 @@ from aemr_bot.handlers import callback_payloads as cp
 
 
 def blocked_user_menu(electronic_reception_url: str | None = None):
-    """Урезанное меню для заблокированного жителя. После /forget или
-    ручной блокировки оператором у жителя is_blocked=true: подавать
+    """Урезанное меню для заблокированного жителя. После ручной
+    блокировки оператором у жителя is_blocked=true: подавать
     обращения и подписываться нельзя. Но «Полезная информация» —
     публичные контакты экстренных служб — остаётся доступна, потому
     что это статика, не привязанная к ПДн жителя.
@@ -33072,7 +33285,7 @@ def main_menu(
     Кнопка подписки динамическая: «🔔 Подписаться на рассылку» если
     ещё не подписан, «🔕 Не хочу получать рассылку» если подписан.
     Электронная приёмная (LinkButton) переехала в подменю «Приём
-    граждан», чтобы главное меню осталось на 6 кнопках без скролла."""
+    граждан». Главное меню содержит 7 кнопок, включая защиту от мошенников."""
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="📝 Написать обращение", payload=cp.MENU_NEW_APPEAL))
     kb.row(CallbackButton(text="📂 Мои обращения", payload=cp.MENU_MY_APPEALS))
@@ -34512,8 +34725,8 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ### `bot/aemr_bot/utils/attachments.py`
 
-Size: `20367` bytes  
-SHA-256: `a6f8ac0b4d2327c7215235f9d5d2167288c340174d30cf2b50ce2951926b03eb`
+Size: `20430` bytes  
+SHA-256: `f663a1294a95726996512f44a811c0505e9a21c29b19ba03d839f07a9ce9c862`
 
 ```python
 """Помощники для разбора вложений сообщения из событий maxapi.
@@ -34960,7 +35173,10 @@ def deserialize_for_relay(stored: list[dict]) -> list:
             # Расхождение схемы на стороне MAX или урезанный payload.
             # Пропускаем это вложение, чтобы не заблокировать отправку
             # всего обращения.
-            log.warning("attachment %s failed to deserialize: %r", _normalize_type(raw), e)
+            log.warning(
+                "attachment %s failed to deserialize (%s)",
+                _normalize_type(raw), type(e).__name__,
+            )
     return out
 ```
 
@@ -35072,8 +35288,8 @@ async def check_before_send() -> None:
 
 ### `bot/aemr_bot/utils/event.py`
 
-Size: `13526` bytes  
-SHA-256: `b9e1be8b38e9fd505a7655f59ba568443af1dbd53d05b64956a6227ca1ee5c95`
+Size: `13576` bytes  
+SHA-256: `f6e043082cbf10d05d253c791dd14f5c3f2b35206b2b2b68566a01ef635f6e8c`
 
 ```python
 """Адаптер поверх объектов событий maxapi.
@@ -35116,19 +35332,19 @@ def get_ids(event: Any) -> tuple[int | None, int | None]:
         recipient = getattr(msg, "recipient", None)
         if recipient is not None and chat_id is None:
             chat_id = getattr(recipient, "chat_id", None)
-        sender = getattr(msg, "sender", None)
-        if sender is not None and user_id is None:
-            user_id = getattr(sender, "user_id", None)
 
+    # A callback's message was authored by the bot (or another user), not
+    # necessarily by the person pressing the button. Missing actor fails closed.
     cb = getattr(event, "callback", None)
-    if cb is not None and user_id is None:
+    if cb is not None:
         cb_user = getattr(cb, "user", None)
-        if cb_user is not None:
-            user_id = getattr(cb_user, "user_id", None)
+        return chat_id, getattr(cb_user, "user_id", None)
 
     user = getattr(event, "user", None)
-    if user is not None and user_id is None:
+    if user is not None:
         user_id = getattr(user, "user_id", None)
+    if user_id is None and msg is not None:
+        user_id = getattr(getattr(msg, "sender", None), "user_id", None)
 
     return chat_id, user_id
 
@@ -36285,12 +36501,12 @@ datefmt = %H:%M:%S
 ### `bot/pyproject.toml`
 
 Size: `7566` bytes  
-SHA-256: `20b127fdf72c061851c6af52bf4a216038abe3aab5ed69166381c3bd282c4c80`
+SHA-256: `88f1fe9685387690662800cedac1a22f9b86b5abd62c03f29b8c2faf103e968f`
 
 ```toml
 [project]
 name = "aemr-bot"
-version = "0.2.0"
+version = "0.2.1"
 description = "Чат-бот Администрации Елизовского муниципального округа в MAX"
 requires-python = ">=3.12"
 dependencies = [
@@ -36435,8 +36651,8 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ### `bot/tests/_helpers.py`
 
-Size: `5713` bytes  
-SHA-256: `760a206b502eed6113f46fcb09062c17fbb0d3c95b948f391f2235bf2d605c16`
+Size: `5752` bytes  
+SHA-256: `c809124b8ff9e162fb53d803638e3881262b4ed241bd481e27365d3517021883`
 
 ```python
 """Общие фабрики тестовых событий и session-scope.
@@ -36520,7 +36736,7 @@ def make_event(
         ),
     }
     if with_callback:
-        event_kwargs["callback"] = SimpleNamespace(callback_id="cb-1")
+        event_kwargs["callback"] = SimpleNamespace(callback_id="cb-1", user=SimpleNamespace(**sender_kwargs))
     if with_user:
         event_kwargs["user"] = SimpleNamespace(**sender_kwargs)
     return SimpleNamespace(**event_kwargs)
@@ -37472,8 +37688,8 @@ class TestRunEraseForAppeal:
 
 ### `bot/tests/test_admin_audience_paginated.py`
 
-Size: `12795` bytes  
-SHA-256: `3511563ed676a4b021ada13235624048568c46b05859f97cfb62291369d8b919`
+Size: `13707` bytes  
+SHA-256: `db4eab9844bc51475658cb8cbd701638d2ec8d57848840d1be98cf6aced6e7e0`
 
 ```python
 """Тесты для paginated UX подсистемы «📊 Аудитория и согласия».
@@ -37809,6 +38025,28 @@ class TestStartSearchIntent:
         with patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await _start_search_intent(event, None)
         assert _search_intents[42]["category"] is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("found", [True, False])
+async def test_search_does_not_echo_private_phone_query(found):
+    from aemr_bot.handlers import admin_audience as mod
+
+    event = make_event(user_id=42)
+    phone = "+79991234567"
+    users = [TestFormatAudienceRow._user(phone=phone)] if found else []
+    cm = MagicMock()
+    cm.__aenter__ = AsyncMock(return_value=MagicMock())
+    cm.__aexit__ = AsyncMock(return_value=False)
+    mod._search_intent_set(42, "subs")
+    with (
+        patch.object(mod, "ensure_role", AsyncMock(return_value=True)),
+        patch.object(mod, "session_scope", return_value=cm),
+        patch.object(mod.users_service, "search_audience", AsyncMock(return_value=users)),
+        patch.object(mod, "op_send", AsyncMock()) as send,
+    ):
+        assert await mod.handle_audience_search_text(event, phone) is True
+    assert phone not in str(send.call_args)
 ```
 
 ### `bot/tests/test_admin_bus.py`
@@ -45304,8 +45542,8 @@ class TestCardIntegration:
 
 ### `bot/tests/test_appeal_dispatcher.py`
 
-Size: `33905` bytes  
-SHA-256: `c8c6c82c919d9bcf0049b9dc846934a45d98aa8b7e50db0d76be2f085eacc33b`
+Size: `33999` bytes  
+SHA-256: `7a3e27d2f30434869801561987106d0f9f5f0084dc184ad1bd6c236dd3fc2089`
 
 ```python
 """Тесты на handlers/appeal.register() — главный callback/message dispatcher.
@@ -45444,7 +45682,7 @@ class TestCallbackConsent:
         # SEC #1: _cb_consent_yes теперь читает user перед set_consent,
         # чтобы blocked житель не мог снять блок через старую кнопку.
         # Мокаем get_or_create → активный (не-blocked) пользователь.
-        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7)
+        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7, dialog_data={"consent_prompt_hash": "a" * 64})
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.appeal.users_service.get_or_create",
@@ -45473,7 +45711,7 @@ class TestCallbackConsent:
         set_consent = AsyncMock(return_value=False)
         ask_contact = AsyncMock()
         notify = AsyncMock()
-        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7)
+        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7, dialog_data={"consent_prompt_hash": "a" * 64})
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.appeal.users_service.get_or_create",
@@ -46375,8 +46613,8 @@ async def test_purge_abandoned_appeal_never_answered(session):
 
 ### `bot/tests/test_appeal_funnel_cluster_coverage.py`
 
-Size: `63071` bytes  
-SHA-256: `d3d257ed77dc181b63ea59c182dd6ecd4433c8aeeec50032096618d3f2022a64`
+Size: `63175` bytes  
+SHA-256: `7378f4b66af97c078b82ff7accbb93550a8264a471895c7ad483b2ed7c9da4db`
 
 ```python
 """Прицельное покрытие непокрытых веток кластера воронки обращения.
@@ -46460,13 +46698,14 @@ class TestStartAppealFlowConsent:
              patch("aemr_bot.handlers.appeal_funnel.users_service.set_state",
                    set_state), \
              patch("aemr_bot.handlers.appeal_funnel.settings_store.get", get_mock), \
-             patch("aemr_bot.handlers.appeal_funnel.settings_store.get_consent_request_text",
-                   AsyncMock(return_value="Дайте согласие на обработку ПДн")):
+             patch("aemr_bot.handlers.appeal_funnel.settings_store.get_consent_request_and_hash",
+                   AsyncMock(return_value=("Дайте согласие на обработку ПДн", "a" * 64))):
             await appeal_funnel.start_appeal_flow(event, max_user_id=42)
 
         # Запрошено согласие: state переведён в AWAITING_CONSENT.
         from aemr_bot.db.models import DialogState
-        set_state.assert_called_once()
+        assert set_state.await_count == 2
+        assert set_state.call_args.kwargs["data"]["consent_prompt_hash"] == "a" * 64
         assert set_state.call_args.args[2] == DialogState.AWAITING_CONSENT
         event.bot.send_message.assert_called()
         text = event.bot.send_message.call_args.kwargs.get("text", "")
@@ -48628,8 +48867,8 @@ class TestExtractLocationDebugLog:
 
 ### `bot/tests/test_attachments_helpers.py`
 
-Size: `5500` bytes  
-SHA-256: `071334efcc47cdfd3d98f85db3248c89290b98a3c76455a385024ca5f46689d3`
+Size: `5849` bytes  
+SHA-256: `7244cffbbb4a171c3cc359c2198f0b6ca3c95c334d3951e5c78d42f5f2a4043c`
 
 ```python
 """Тесты на utils/attachments — вспомогательные парсеры вложений MAX."""
@@ -48769,6 +49008,14 @@ class TestCountByType:
         # image учтён, audio либо в other либо skipped — главное чтоб
         # image была верно
         assert result.get("image") == 1
+
+
+def test_relay_validation_error_does_not_log_attachment_payload(caplog):
+    from aemr_bot.utils.attachments import deserialize_for_relay
+    secret = "private-download-token-12345"
+    assert deserialize_for_relay([{"type": "file", "payload": secret}]) == []
+    assert "failed to deserialize" in caplog.text
+    assert secret not in caplog.text
 ```
 
 ### `bot/tests/test_auto_deploy.py`
@@ -49629,10 +49876,106 @@ class TestSendOne429Backoff:
         assert calls["count"] == 1
 ```
 
+### `bot/tests/test_broadcast_audit_regressions.py`
+
+Size: `4029` bytes  
+SHA-256: `eb371345b06d527d6c28714490e7275d97bd50a35828ecc592e2a58b2b06d578`
+
+```python
+"""Broadcast post-0.2.0 regressions for write-step authorization."""
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
+
+from aemr_bot.handlers import broadcast_templates_crud as crud
+from aemr_bot.handlers.broadcast_templates_state import _TmplWizardState, _wizards
+
+
+@pytest.mark.parametrize("step", ["rename_awaiting_name", "clone_awaiting_name"])
+async def test_template_text_write_rechecks_revoked_role(monkeypatch, step):
+    state = _TmplWizardState(step=step, target_id=12, pending_text="Notice")
+    _wizards[7] = state
+    monkeypatch.setattr(crud, "ensure_role", AsyncMock(return_value=False))
+    rename = AsyncMock()
+    create = AsyncMock()
+    monkeypatch.setattr(crud.templates_service, "rename", rename)
+    monkeypatch.setattr(crud.templates_service, "create_template", create)
+    handler = crud._step_rename if step == "rename_awaiting_name" else crud._step_clone_name
+    assert await handler(SimpleNamespace(), 7, state, "Name", op_id=None)
+    assert 7 not in _wizards
+    rename.assert_not_awaited()
+    create.assert_not_awaited()
+
+
+@pytest.mark.parametrize("step", ["new_preview", "edit_preview"])
+async def test_expired_template_preview_cannot_write(monkeypatch, step):
+    from aemr_bot.handlers import broadcast_templates_wizard as wizard
+
+    _wizards[7] = _TmplWizardState(
+        step=step, target_id=12, pending_text="Notice", pending_name="Name", expires_at=0,
+    )
+    monkeypatch.setattr(wizard, "ensure_role", AsyncMock(return_value=True))
+    monkeypatch.setattr(wizard, "get_user_id", lambda event: 7)
+    monkeypatch.setattr(wizard, "op_screen", AsyncMock())
+    create = AsyncMock()
+    update = AsyncMock()
+    monkeypatch.setattr(wizard.templates_service, "create_template", create)
+    monkeypatch.setattr(wizard.templates_service, "update_text", update)
+    if step == "new_preview":
+        await wizard._save_new(SimpleNamespace())
+    else:
+        await wizard._save_edit(SimpleNamespace(), 12)
+    assert 7 not in _wizards
+    create.assert_not_awaited()
+    update.assert_not_awaited()
+
+
+async def test_template_edit_validation_error_returns_to_text(monkeypatch):
+    from aemr_bot.handlers import broadcast_templates_wizard as wizard
+    from tests._helpers import fake_session_scope
+
+    state = _TmplWizardState(
+        step="edit_preview", target_id=12, pending_text="https://untrusted.example",
+    )
+    _wizards[7] = state
+    monkeypatch.setattr(wizard, "ensure_role", AsyncMock(return_value=True))
+    monkeypatch.setattr(wizard, "get_user_id", lambda event: 7)
+    monkeypatch.setattr(wizard, "get_operator", AsyncMock(return_value=SimpleNamespace(id=7)))
+    monkeypatch.setattr(wizard, "session_scope", fake_session_scope)
+    screen = AsyncMock()
+    monkeypatch.setattr(wizard, "op_screen", screen)
+    monkeypatch.setattr(wizard.templates_service, "update_text", AsyncMock(side_effect=ValueError("URL forbidden")))
+    audit = AsyncMock()
+    monkeypatch.setattr(wizard.operators_service, "write_audit", audit)
+    try:
+        await wizard._save_edit(SimpleNamespace(), 12)
+        assert state.step == "edit_awaiting_text"
+        assert "URL forbidden" in screen.await_args.args[1]
+        audit.assert_not_awaited()
+    finally:
+        _wizards.pop(7, None)
+
+
+async def test_clone_legacy_invalid_template_reports_validation_error(monkeypatch):
+    from tests._helpers import fake_session_scope
+
+    state = _TmplWizardState(step="clone_awaiting_name", pending_text="bad legacy text")
+    _wizards[7] = state
+    monkeypatch.setattr(crud, "ensure_role", AsyncMock(return_value=True))
+    monkeypatch.setattr(crud, "session_scope", fake_session_scope)
+    monkeypatch.setattr(crud.templates_service, "create_template", AsyncMock(side_effect=ValueError("URL forbidden")))
+    answer = AsyncMock()
+    event = SimpleNamespace(message=SimpleNamespace(answer=answer))
+    assert await crud._step_clone_name(event, 7, state, "Clone", op_id=7)
+    assert 7 not in _wizards
+    assert "URL forbidden" in answer.await_args.args[0]
+```
+
 ### `bot/tests/test_broadcast_handlers.py`
 
-Size: `44808` bytes  
-SHA-256: `f82d4708a58845d34f1237cb4887ed55438312f21e05627ff75c2395c26c726d`
+Size: `45094` bytes  
+SHA-256: `d59aef802796a90d4ca77309ac66ab8951c17ce2482c7cca287cdd9462d6e3db`
 
 ```python
 """Тесты для handlers/broadcast — wizard рассылок и helpers.
@@ -50515,6 +50858,8 @@ class TestRunSendLoop:
                    AsyncMock(return_value=None)) as send_one, \
              patch("aemr_bot.handlers.broadcast.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.is_eligible_recipient",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.begin_delivery",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",
@@ -50549,6 +50894,8 @@ class TestRunSendLoop:
                    AsyncMock(return_value=None)) as send_one, \
              patch("aemr_bot.handlers.broadcast.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.is_eligible_recipient",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.begin_delivery",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",
@@ -51980,8 +52327,8 @@ class TestListings:
 
 ### `bot/tests/test_broadcast_reliability.py`
 
-Size: `8455` bytes  
-SHA-256: `33821db7f7572c9ed039665c6453c75d9d5e8520de3f3ea0f161d70376f97c15`
+Size: `11670` bytes  
+SHA-256: `c11c319615f33555ef350a4b38a681f758f22ce97da62643055f98a7d35c3d8f`
 
 ```python
 """Regression tests for F04/F07: accounting must precede external effects."""
@@ -52010,6 +52357,7 @@ def pipeline(monkeypatch):
     monkeypatch.setattr(bc.broadcasts_service, "update_progress", AsyncMock())
     monkeypatch.setattr(bc.broadcasts_service, "record_deliveries", AsyncMock())
     monkeypatch.setattr(bc.broadcasts_service, "begin_delivery", AsyncMock(return_value=True))
+    monkeypatch.setattr(bc.broadcasts_service, "is_eligible_recipient", AsyncMock(return_value=True))
     monkeypatch.setattr(bc.broadcasts_service, "discard_delivery_intent", AsyncMock())
     return SimpleNamespace(send_message=AsyncMock())
 
@@ -52187,12 +52535,79 @@ async def test_failed_card_does_not_claim_unknown_delivery_was_not_delivered(pip
     text = screen.await_args.args[1]
     assert "неподтверждённые" in text
     assert "Не доставлено: 1" not in text
+
+
+@pytest.mark.parametrize("cancelled", [False, True])
+async def test_summary_failure_preserves_committed_delivery_status(pipeline, monkeypatch, cancelled):
+    monkeypatch.setattr(bc, "_resolve_admin_progress_message", AsyncMock(return_value=None))
+    monkeypatch.setattr(bc.broadcasts_service, "mark_started", AsyncMock())
+    monkeypatch.setattr(bc.broadcasts_service, "list_subscriber_targets", AsyncMock(return_value=[(1, 101)]))
+    monkeypatch.setattr(bc.broadcasts_service, "get_by_id", AsyncMock(return_value=SimpleNamespace(attachments=[])))
+    monkeypatch.setattr(bc, "_run_send_loop", AsyncMock(return_value=(1, 0, cancelled)))
+    monkeypatch.setattr(bc, "_send_final_summary", AsyncMock(side_effect=RuntimeError("MAX down")))
+    finished = AsyncMock()
+    monkeypatch.setattr(bc.broadcasts_service, "mark_finished", finished)
+    await bc._run_broadcast(pipeline, 7, "message", 1)
+    finished.assert_awaited_once()
+    assert finished.await_args.kwargs["status"].value == ("cancelled" if cancelled else "done")
+    assert finished.await_args.kwargs["delivered"] == 1
+
+
+async def test_withdrawn_recipient_skipped_without_stopping_other_targets(pipeline, monkeypatch):
+    monkeypatch.setattr(
+        bc.broadcasts_service, "is_eligible_recipient",
+        AsyncMock(side_effect=lambda session, uid: uid != 1),
+    )
+    assert await run_loop(pipeline) == (1, 0, False)
+    assert pipeline.send_message.await_args.kwargs["user_id"] == 102
+    bc.broadcasts_service.begin_delivery.assert_awaited_once()
+
+
+async def test_withdrawal_during_global_pacing_discards_intent(pipeline, monkeypatch):
+    from aemr_bot.utils.delivery_guard import check_before_send
+
+    withdrawn = set()
+    sent = []
+    monkeypatch.setattr(
+        bc.broadcasts_service, "is_eligible_recipient",
+        AsyncMock(side_effect=lambda session, uid: uid not in withdrawn),
+    )
+
+    async def paced_send(**kwargs):
+        # Mirrors admin_bus: the global limiter yields before this guard.
+        withdrawn.add(1)
+        await check_before_send()
+        sent.append(kwargs["user_id"])
+        return SimpleNamespace()
+
+    pipeline.send_message.side_effect = paced_send
+    assert await run_loop(pipeline) == (1, 0, False)
+    assert sent == [102]
+    bc.broadcasts_service.discard_delivery_intent.assert_awaited_once()
+    assert bc.broadcasts_service.discard_delivery_intent.await_args.kwargs["user_id"] == 1
+
+
+async def test_withdrawal_during_429_backoff_prevents_retry(pipeline, monkeypatch):
+    withdrawn = set()
+    monkeypatch.setattr(
+        bc.broadcasts_service, "is_eligible_recipient",
+        AsyncMock(side_effect=lambda session, uid: uid not in withdrawn),
+    )
+
+    async def wait(_delay):
+        withdrawn.add(1)
+
+    monkeypatch.setattr(bc.asyncio, "sleep", wait)
+    pipeline.send_message.side_effect = [MaxApiError(code=429, raw="Too Many Requests"), SimpleNamespace()]
+    assert await run_loop(pipeline) == (1, 0, False)
+    assert [call.kwargs["user_id"] for call in pipeline.send_message.await_args_list] == [101, 102]
+    bc.broadcasts_service.discard_delivery_intent.assert_awaited_once()
 ```
 
 ### `bot/tests/test_broadcast_templates_coverage.py`
 
-Size: `49361` bytes  
-SHA-256: `c2879d9965c7c125028141902220474dccac6019cd88362e72aed30d3a9d2892`
+Size: `49665` bytes  
+SHA-256: `e45db7d39ea5878a652634b501b8447c9f6b8157428fee21cd01c5ac2280750a`
 
 ```python
 """Coverage-добор для кластера handlers/broadcast_templates.* .
@@ -52755,7 +53170,8 @@ class TestStepRenameGuards:
         )
         state = bt._wizards[7]
         get_by_id = AsyncMock()
-        with patch(f"{_CRUD}.session_scope", _fake_session_scope), \
+        with patch(f"{_CRUD}.ensure_role", AsyncMock(return_value=True)), \
+             patch(f"{_CRUD}.session_scope", _fake_session_scope), \
              patch(f"{_CRUD}.templates_service.get_by_id", get_by_id):
             consumed = await bt._step_rename(
                 event, 7, state, "Корректное имя", op_id=99
@@ -52780,7 +53196,8 @@ class TestStepCloneNameValidation:
         )
         state = bt._wizards[7]
         create = AsyncMock()
-        with patch(f"{_CRUD}.session_scope", _fake_session_scope), \
+        with patch(f"{_CRUD}.ensure_role", AsyncMock(return_value=True)), \
+             patch(f"{_CRUD}.session_scope", _fake_session_scope), \
              patch(f"{_CRUD}.templates_service.create_template", create):
             consumed = await bt._step_clone_name(
                 event, 7, state, "", op_id=99
@@ -52802,7 +53219,8 @@ class TestStepCloneNameValidation:
         )
         long_name = "z" * (bt_crud.templates_service.MAX_NAME_LEN + 1)
         create = AsyncMock()
-        with patch(f"{_CRUD}.session_scope", _fake_session_scope), \
+        with patch(f"{_CRUD}.ensure_role", AsyncMock(return_value=True)), \
+             patch(f"{_CRUD}.session_scope", _fake_session_scope), \
              patch(f"{_CRUD}.templates_service.create_template", create):
             consumed = await bt._step_clone_name(
                 event, 7, state, long_name, op_id=99
@@ -53071,7 +53489,8 @@ class TestAuditSkipNoOperator:
         state = bt._wizards[7]
         rename = AsyncMock(return_value=_tmpl(tid=5, name="Новое"))
         write_audit = AsyncMock()
-        with patch(f"{_CRUD}.session_scope", _fake_session_scope), \
+        with patch(f"{_CRUD}.ensure_role", AsyncMock(return_value=True)), \
+             patch(f"{_CRUD}.session_scope", _fake_session_scope), \
              patch(f"{_CRUD}.templates_service.get_by_id",
                    AsyncMock(return_value=_tmpl(tid=5, name="Старое"))), \
              patch(f"{_CRUD}.templates_service.rename", rename), \
@@ -54168,8 +54587,8 @@ class TestFormatDt:
 
 ### `bot/tests/test_broadcast_with_image.py`
 
-Size: `24248` bytes  
-SHA-256: `c863410caeb7315c3490a7272bc5d5606d082bafdd039e4a89e1f9635d23d4c9`
+Size: `24391` bytes  
+SHA-256: `4d1cef9aeb42426cade5054f479227024d4cd00ff81d708cf5e15e784909d722`
 
 ```python
 """TDD-тесты image-attachments в рассылках.
@@ -54295,6 +54714,8 @@ class TestRunSendLoopWithImages:
 
         with patch.object(bc, "_send_one", side_effect=_stub_send_one), \
              patch("aemr_bot.handlers.broadcast.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.is_eligible_recipient",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.begin_delivery",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",
@@ -55625,8 +56046,8 @@ class TestStaleDraftNotRevived:
 
 ### `bot/tests/test_broadcasts_service_pg.py`
 
-Size: `11030` bytes  
-SHA-256: `c7a572fbde1ba0991e233cc5e2ef88fa1e9cd1d0ae8dabe883a6ede94871d405`
+Size: `12102` bytes  
+SHA-256: `7772613d27dab2913e379a83901eecb0ea8299626c25172bdf5a5c835afea65c`
 
 ```python
 """PG-тесты services/broadcasts.
@@ -55883,6 +56304,32 @@ async def test_list_failed_deliveries_respects_limit(session) -> None:
         session, bc.id, limit=3
     )
     assert len(result) == 3
+
+
+@pytest.mark.asyncio
+async def test_late_eligibility_tracks_consent_subscription_block_and_deletion(session):
+    from datetime import UTC, datetime
+
+    user = await users_service.get_or_create(session, max_user_id=808, first_name="A")
+    user.subscribed_broadcast = True
+    user.consent_broadcast_at = datetime.now(UTC)
+    await session.flush()
+    assert await broadcasts_service.is_eligible_recipient(session, user.id)
+    user.subscribed_broadcast = False
+    await session.flush()
+    assert not await broadcasts_service.is_eligible_recipient(session, user.id)
+    user.subscribed_broadcast = True
+    user.is_blocked = True
+    await session.flush()
+    assert not await broadcasts_service.is_eligible_recipient(session, user.id)
+    user.is_blocked = False
+    user.consent_broadcast_at = None
+    await session.flush()
+    assert not await broadcasts_service.is_eligible_recipient(session, user.id)
+    user_id = user.id
+    await session.delete(user)
+    await session.flush()
+    assert not await broadcasts_service.is_eligible_recipient(session, user_id)
 ```
 
 ### `bot/tests/test_calendar_ru_full.py`
@@ -57996,6 +58443,186 @@ class TestAdminCardThreatWarningScansFollowups:
         result = cf.admin_card(appeal, _user())
         assert "⛔" not in result
         assert "⚠️" not in result
+```
+
+### `bot/tests/test_citizen_audit_regressions.py`
+
+Size: `8491` bytes  
+SHA-256: `f45dc302a6a4384590b2f79fb7bbb12196cb4934f5d793769fabd869dc8c35af`
+
+```python
+"""Regression probes from the post-0.2.0 citizen call-path audit."""
+import math
+from datetime import UTC, datetime
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+import pytest
+from shapely.geometry import LineString, Point
+from shapely.strtree import STRtree
+
+from aemr_bot.db.models import DialogState
+from aemr_bot.handlers import appeal_funnel
+from aemr_bot.services import geo
+from tests._helpers import fake_session_scope, make_event
+
+
+@pytest.mark.parametrize("direction", [-1, 1])
+@pytest.mark.parametrize("kind,radius", [("building", 100), ("street", 200)])
+def test_geo_east_west_candidates_within_radius(direction, kind, radius):
+    lat, lon = 53.0, 158.0
+    delta = direction * radius * .8 / (111_000 * math.cos(math.radians(lat)))
+    point = Point(lon + delta, lat)
+    building = (STRtree([point]), [{"street": "Тестовая", "housenumber": "7"}])
+    street = (STRtree([LineString([(point.x, lat - .001), (point.x, lat + .001)])]),
+              [{"name": "Тестовая"}])
+    with patch.object(geo, "find_locality", return_value="Елизовское ГП"), \
+         patch.object(geo, "_load_buildings_index", return_value=building if kind == "building" else (None, [])), \
+         patch.object(geo, "_load_streets_index", return_value=street if kind == "street" else (None, [])):
+        found = geo.find_address(lat, lon)
+    assert found.street == "Тестовая"
+    assert found.confidence == ("high" if kind == "building" else "medium")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("change", ["closed", "answered", "blocked", "revoked", "erased", "cancelled", "reassigned", "ok"])
+async def test_followup_rechecks_at_insert_boundary(change):
+    initial_user = SimpleNamespace(id=1, consent_pdn_at=datetime.now(UTC), dialog_data={"appeal_id": 5})
+    initial_appeal = SimpleNamespace(id=5, user_id=1, status="new")
+    fresh_user = SimpleNamespace(id=1, consent_pdn_at=datetime.now(UTC), is_blocked=False,
+                                 dialog_state=DialogState.AWAITING_FOLLOWUP_TEXT.value,
+                                 dialog_data={"appeal_id": 5})
+    fresh_appeal = SimpleNamespace(id=5, user_id=1, status="new", user=fresh_user)
+    if change in {"closed", "answered"}:
+        fresh_appeal.status = change
+    elif change == "blocked":
+        fresh_user.is_blocked = True
+    elif change == "revoked":
+        fresh_user.consent_pdn_at = None
+    elif change == "erased":
+        fresh_user = None
+    elif change == "cancelled":
+        fresh_user.dialog_state = DialogState.IDLE.value
+    elif change == "reassigned":
+        fresh_appeal.user_id = 2
+    event = make_event(chat_id=100, user_id=42)
+    add_message = AsyncMock()
+    get_appeal = AsyncMock(side_effect=[initial_appeal, fresh_appeal])
+    get_user = AsyncMock(return_value=fresh_user)
+    with patch.object(appeal_funnel, "session_scope", fake_session_scope), \
+         patch.object(appeal_funnel.users_service, "get_or_create", AsyncMock(return_value=initial_user)), \
+         patch.object(appeal_funnel.users_service, "find_by_max_id", get_user), \
+         patch.object(appeal_funnel.users_service, "reset_state", AsyncMock()), \
+         patch.object(appeal_funnel.appeals_service, "get_by_id", get_appeal), \
+         patch.object(appeal_funnel.appeals_service, "get_by_id_with_messages", AsyncMock(return_value=fresh_appeal)), \
+         patch.object(appeal_funnel.appeals_service, "followup_rate_limit_stats", AsyncMock(return_value=(0, None))), \
+         patch.object(appeal_funnel.appeals_service, "add_user_message", add_message), \
+         patch.object(appeal_funnel.cfg, "admin_group_id", None):
+        await appeal_funnel.on_awaiting_followup_text(event, SimpleNamespace(attachments=[]), "Детали", 42)
+    assert get_appeal.await_args.kwargs == {"for_update": True}
+    assert get_user.await_args.kwargs == {"for_update": True}
+    if change == "ok":
+        add_message.assert_awaited_once()
+    else:
+        add_message.assert_not_awaited()
+        assert "не сохранено" in event.message.answer.await_args.args[0]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("state", [state for state in DialogState if state != DialogState.AWAITING_SUMMARY])
+async def test_recovery_does_not_finalize_a_different_live_step(state):
+    from contextlib import asynccontextmanager
+
+    from aemr_bot.handlers import appeal_runtime
+
+    user = SimpleNamespace(dialog_state=state.value)
+
+    @asynccontextmanager
+    async def current_user(_uid):
+        yield object(), user
+
+    create = AsyncMock()
+    reset = AsyncMock()
+    with patch.object(appeal_runtime, "current_user", current_user), \
+         patch.object(appeal_runtime.appeals_service, "create_appeal", create), \
+         patch.object(appeal_runtime.users_service, "reset_state", reset):
+        assert await appeal_runtime.persist_and_dispatch_appeal(object(), 42, reset_empty=True) is None
+    create.assert_not_awaited()
+    reset.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("reset_empty", [True, False])
+async def test_empty_recovery_reset_is_inside_finalization_transaction(reset_empty):
+    from contextlib import asynccontextmanager
+
+    from aemr_bot.handlers import appeal_runtime
+
+    user = SimpleNamespace(id=1, is_blocked=False, consent_pdn_at=datetime.now(UTC),
+                           dialog_state=DialogState.AWAITING_SUMMARY.value, dialog_data={})
+    in_transaction = False
+
+    @asynccontextmanager
+    async def current_user(_uid):
+        nonlocal in_transaction
+        in_transaction = True
+        yield object(), user
+        in_transaction = False
+
+    async def reset(_session, uid):
+        assert in_transaction
+        assert appeal_runtime.get_user_lock(uid).locked()
+
+    reset_mock = AsyncMock(side_effect=reset)
+    with patch.object(appeal_runtime, "current_user", current_user), \
+         patch.object(appeal_runtime.appeals_service, "count_recent_for_user", AsyncMock(return_value=0)), \
+         patch.object(appeal_runtime.users_service, "reset_state", reset_mock):
+        assert await appeal_runtime.persist_and_dispatch_appeal(object(), 42, reset_empty=reset_empty) is False
+    assert reset_mock.await_count == int(reset_empty)
+    assert not in_transaction
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("snapshot", [None, {"consent_prompt_hash": "a" * 64},
+                                      {"consent_prompt_hash": "a" * 64, "consent_prompt_mid": "old-prompt"}])
+async def test_consent_evidence_is_bound_to_displayed_prompt(snapshot):
+    from aemr_bot.handlers import appeal
+
+    user = SimpleNamespace(is_blocked=False, dialog_data=snapshot)
+    event = make_event(chat_id=100, user_id=42)
+    accept = AsyncMock(return_value=True)
+    prompt = AsyncMock()
+    current_hash = AsyncMock(return_value="b" * 64)
+    with patch.object(appeal, "session_scope", fake_session_scope), \
+         patch.object(appeal.users_service, "get_or_create", AsyncMock(return_value=user)), \
+         patch.object(appeal.users_service, "set_consent", accept), \
+         patch.object(appeal.settings_store, "get_consent_text_hash", current_hash), \
+         patch.object(appeal, "ack_callback", AsyncMock()), \
+         patch.object(appeal, "get_callback_message_id", return_value="current-prompt"), \
+         patch.object(appeal.admin_events, "notify_consent_given", AsyncMock()), \
+         patch.object(appeal.appeal_funnel, "ask_contact_or_skip", AsyncMock()), \
+         patch.object(appeal.appeal_funnel, "start_appeal_flow", prompt):
+        await appeal._cb_consent_yes(event, 42, "consent:yes")
+    current_hash.assert_not_awaited()
+    if snapshot and "consent_prompt_mid" not in snapshot:
+        assert accept.await_args.kwargs["text_sha256"] == "a" * 64
+        prompt.assert_not_awaited()
+    else:
+        accept.assert_not_awaited()
+        prompt.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("from_contact", [True, False])
+async def test_oversized_phone_is_rejected_before_database_write(from_contact):
+    event = make_event(chat_id=100, user_id=42)
+    phone = "7" * 33
+    save = AsyncMock()
+    with patch.object(appeal_funnel, "extract_phone", return_value=phone if from_contact else None), \
+         patch.object(appeal_funnel.users_service, "set_phone", save):
+        await appeal_funnel.on_awaiting_contact(event, None, "" if from_contact else phone, 42)
+    save.assert_not_awaited()
+    assert event.message.answer.await_count == 1
 ```
 
 ### `bot/tests/test_critical_mutation.py`
@@ -62810,8 +63437,8 @@ def test_middleware_order_is_documented_and_stable() -> None:
 
 ### `bot/tests/test_handlers_appeal_funnel.py`
 
-Size: `27953` bytes  
-SHA-256: `fdd71883930461ff92c816f13b229d53c03b98d7133a15398b6434f23d779254`
+Size: `28427` bytes  
+SHA-256: `46fe06e5c63b55a74ec146aac9f5db7aae0d7c0e5f4466b2a466509812364dd6`
 
 ```python
 """Расширенные тесты handlers/appeal_funnel — состояния воронки и
@@ -63084,7 +63711,8 @@ class TestOnAwaitingConsent:
         with patch("aemr_bot.handlers.appeal_funnel.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.appeal_funnel.settings_store.get",
-                   AsyncMock(return_value="https://policy.example/p.pdf")):
+                   AsyncMock(return_value="https://policy.example/p.pdf")), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.set_state", AsyncMock()):
             await appeal_funnel.on_awaiting_consent(event, body=None, text_body="x", max_user_id=42)
         event.message.answer.assert_called_once()
 
@@ -63100,7 +63728,7 @@ class TestOnAwaitingConsent:
             await appeal_funnel.on_awaiting_consent(event, body=None, text_body="x", max_user_id=42)
         event.message.answer.assert_called_once()
         text = event.message.answer.call_args.args[0]
-        assert "согласи" in text.lower()
+        assert "недоступен" in text.lower()
 
 
 class TestOnAwaitingSummary:
@@ -63218,6 +63846,7 @@ class TestOnAwaitingFollowupText:
             first_name="Сергей",
             phone="+79991234567",
             is_blocked=False,
+            dialog_state="awaiting_followup_text",
             dialog_data={"appeal_id": 5},
             consent_pdn_at=datetime.now(UTC),
             subscribed_broadcast=False,
@@ -63255,6 +63884,9 @@ class TestOnAwaitingFollowupText:
             _fake_session_scope,
         ), patch(
             "aemr_bot.handlers.appeal_funnel.users_service.get_or_create",
+            AsyncMock(return_value=user),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.users_service.find_by_max_id",
             AsyncMock(return_value=user),
         ), patch(
             "aemr_bot.handlers.appeal_funnel.users_service.reset_state",
@@ -63330,6 +63962,7 @@ class TestOnAwaitingFollowupText:
             first_name="Сергей",
             phone="+79991234567",
             is_blocked=False,
+            dialog_state="awaiting_followup_text",
             dialog_data={"appeal_id": 5},
             consent_pdn_at=datetime.now(UTC),
             subscribed_broadcast=False,
@@ -63367,6 +64000,9 @@ class TestOnAwaitingFollowupText:
         ), patch(
             "aemr_bot.handlers.appeal_funnel.appeals_service.get_by_id_with_messages",
             AsyncMock(return_value=appeal),
+        ), patch(
+            "aemr_bot.handlers.appeal_funnel.users_service.find_by_max_id",
+            AsyncMock(return_value=user),
         ), patch(
             "aemr_bot.handlers.appeal_funnel.appeals_service.add_user_message",
             add_msg,
@@ -70819,6 +71455,67 @@ class TestSwipeResolvesAppeal:
         assert deliver.await_args.kwargs["appeal"] is appeal
 ```
 
+### `bot/tests/test_operator_reply_link_contract.py`
+
+Size: `2291` bytes  
+SHA-256: `89e87ee1e80ca8f45942609753c07e7ee63435fd63ddbe0e60bbd41e20d800c5`
+
+```python
+"""The MAX linked-message sender belongs to the link, not MessageBody."""
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+import pytest
+from maxapi.types import LinkedMessage
+
+from aemr_bot.handlers import operator_reply
+from tests._helpers import fake_session_scope, make_event
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("shape", ["sdk", "dict", "legacy"])
+@pytest.mark.parametrize("link_type", ["reply", "forward"])
+async def test_marker_fallback_requires_bot_authored_reply(shape, link_type):
+    event = make_event(chat_id=123, user_id=7)
+    operator_reply.drop_reply_intent(7)
+    payload = {
+        "type": link_type,
+        "sender": {"is_bot": True, "user_id": 999, "first_name": "Bot"},
+        "message": {"mid": "historical", "seq": 1, "text": "Card\n🆔 №42"},
+    }
+    if shape == "sdk":
+        event.message.link = LinkedMessage.model_validate(payload)
+    elif shape == "dict":
+        event.message.link = payload
+    else:
+        event.message.link = SimpleNamespace(
+            type=link_type,
+            message=SimpleNamespace(
+                mid="historical", text="Card\n🆔 №42",
+                sender=SimpleNamespace(is_bot=True),
+            ),
+        )
+    appeal = SimpleNamespace(id=42)
+    with (
+        patch.object(operator_reply, "session_scope", fake_session_scope),
+        patch.object(operator_reply.operators_service, "get", AsyncMock(return_value=SimpleNamespace(id=1))),
+        patch.object(operator_reply.appeals_service, "get_by_admin_message_id", AsyncMock(return_value=None)),
+        patch.object(operator_reply.appeals_service, "get_by_last_admin_card_mid", AsyncMock(return_value=None)),
+        patch.object(operator_reply.appeals_service, "get_by_id", AsyncMock(return_value=appeal)) as lookup,
+        patch.object(operator_reply, "_deliver_operator_reply", AsyncMock(return_value=True)) as deliver,
+    ):
+        handled = await operator_reply.handle_operator_reply(event, event.message.body, "Reply")
+    if link_type == "reply":
+        assert handled
+        lookup.assert_awaited_once()
+        assert lookup.await_args.args[1] == 42
+        deliver.assert_awaited_once()
+    else:
+        assert not handled
+        lookup.assert_not_awaited()
+        deliver.assert_not_awaited()
+```
+
 ### `bot/tests/test_operator_reply_with_image.py`
 
 Size: `7494` bytes  
@@ -71000,6 +71697,300 @@ class TestImageRelay:
             f"text-only ответ не должен иметь лишних вложений; "
             f"attachments={attachments}"
         )
+```
+
+### `bot/tests/test_operator_wizard_persistence_cleanup.py`
+
+Size: `3208` bytes  
+SHA-256: `fc86bc8c407d0dfe4c968609fe3e725a0b2a20dab32239f4201e221abafd1357`
+
+```python
+"""Abandoned operator registrations must not return after a restart."""
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, Mock
+
+import pytest
+
+from aemr_bot.handlers import admin_appeal_ops, admin_operators, admin_operators_wizard
+from aemr_bot.services import wizard_registry
+from tests._helpers import fake_session_scope, make_event
+from tests.test_appeal_dispatcher import _CapturingDispatcher
+
+
+@pytest.fixture
+def pending_registration(monkeypatch):
+    admin_operators_wizard._op_wizards[7] = {
+        "step": "awaiting_name", "expires_at": float("inf"),
+        "target_id": 42, "role": "it",
+    }
+    persist = Mock()
+    monkeypatch.setattr(wizard_registry, "schedule_persist_op", persist)
+    yield persist
+    admin_operators_wizard._op_wizards.clear()
+    wizard_registry.drop_reply_intent(7)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["expiry", "cancel_button", "cancel_command", "reply", "broadcast"])
+async def test_abandoning_registration_enqueues_persistent_delete(action, pending_registration, monkeypatch):
+    event = make_event(chat_id=123, user_id=7)
+    if action == "expiry":
+        admin_operators_wizard._op_wizards[7]["expires_at"] = -1
+        assert admin_operators_wizard._op_wizard_get(7) is None
+    elif action == "cancel_button":
+        monkeypatch.setattr(admin_operators, "ensure_role", AsyncMock(return_value=True))
+        monkeypatch.setattr(admin_operators, "op_screen", AsyncMock())
+        await admin_operators.run_operators_action(event, "op:opadd:cancel")
+    elif action == "cancel_command":
+        from aemr_bot.handlers import appeal
+        monkeypatch.setattr(appeal.cfg, "admin_group_id", 123)
+        event.message.body.text = "/cancel"
+        dispatcher = _CapturingDispatcher()
+        appeal.register(dispatcher)
+        await dispatcher.message_handler(event)
+    elif action == "reply":
+        monkeypatch.setattr(admin_appeal_ops, "is_admin_chat", lambda _: True)
+        monkeypatch.setattr(admin_appeal_ops, "ensure_operator", AsyncMock(return_value=True))
+        monkeypatch.setattr(admin_appeal_ops, "session_scope", fake_session_scope)
+        monkeypatch.setattr(admin_appeal_ops, "op_screen", AsyncMock())
+        monkeypatch.setattr(admin_appeal_ops.appeals_service, "get_by_id", AsyncMock(return_value=SimpleNamespace(
+            status="new", user=SimpleNamespace(is_blocked=False),
+        )))
+        monkeypatch.setattr(admin_appeal_ops.appeals_service, "mark_in_progress", AsyncMock())
+        await admin_appeal_ops.run_reply_intent(event, 12)
+    else:
+        from aemr_bot.handlers import broadcast_wizard
+        monkeypatch.setattr(broadcast_wizard, "_ensure_role", AsyncMock(return_value=True))
+        monkeypatch.setattr(broadcast_wizard, "session_scope", fake_session_scope)
+        monkeypatch.setattr(broadcast_wizard, "_resolve_broadcast_max_images", AsyncMock(return_value=10))
+        monkeypatch.setattr(broadcast_wizard, "op_screen", AsyncMock())
+        monkeypatch.setattr(broadcast_wizard, "_wizards", {})
+        await broadcast_wizard._start_wizard(event)
+    assert 7 not in admin_operators_wizard._op_wizards
+    pending_registration.assert_called_once_with(7, None)
+```
+
+### `bot/tests/test_operator_wizard_restart.py`
+
+Size: `2536` bytes  
+SHA-256: `04f12e49e2e66b19e97d1d5bc5e373d0624ad254afd6c3f2b99396f721f3e319`
+
+```python
+"""New registrations must not reuse a previous target's approved details."""
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+from aemr_bot.handlers import admin_operators_wizard as wizard
+from tests._helpers import make_event
+
+
+@pytest.fixture(autouse=True)
+def clean_wizard():
+    wizard._op_wizards.clear()
+    yield
+    wizard._op_wizards.clear()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("source", ["manual", "group"])
+async def test_restart_discards_previous_registration(source):
+    event = make_event(chat_id=123, user_id=7)
+    event.bot.get_chat_member = AsyncMock(return_value=None)
+    with patch.object(wizard, "op_screen", AsyncMock()):
+        wizard._op_wizard_set(
+            7, step="ready_to_confirm", target_id=42, role="it",
+            full_name="Previous Operator", suggested_name="Previous Name",
+        )
+        if source == "manual":
+            await wizard._start_manual_add(event, 7)
+        else:
+            await wizard._start_add_with_picked(event, 7, 43)
+    state = wizard._op_wizard_get(7)
+    assert "role" not in state
+    assert "full_name" not in state
+    assert state.get("suggested_name") is None
+    assert state.get("target_id") == (43 if source == "group" else None)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("step", ["awaiting_id", "awaiting_role", "picked_role", "awaiting_name"])
+async def test_stale_confirmation_does_not_save_unconfirmed_step(step):
+    event = make_event(chat_id=123, user_id=7)
+    wizard._op_wizard_set(
+        7, step=step, target_id=42, role="it", full_name="Old Name",
+    )
+    with (
+        patch.object(wizard, "op_screen", AsyncMock()),
+        patch.object(wizard, "session_scope") as scope,
+    ):
+        await wizard._confirm_save(event, 7)
+    scope.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_group_registration_cancels_competing_reply_and_broadcast():
+    from aemr_bot.handlers import broadcast, operator_reply
+    from aemr_bot.services import wizard_registry
+
+    event = make_event(chat_id=123, user_id=7)
+    event.bot.get_chat_member = AsyncMock(return_value=None)
+    operator_reply.remember_reply_intent(7, 42)
+    with (
+        patch.object(broadcast, "_wizards", {7: object()}) as broadcasts,
+        patch.object(wizard, "op_screen", AsyncMock()),
+    ):
+        try:
+            await wizard._start_add_with_picked(event, 7, 43)
+            assert 7 not in broadcasts
+            assert wizard_registry.get_reply_intent(7) is None
+        finally:
+            operator_reply.drop_reply_intent(7)
+```
+
+### `bot/tests/test_ops_audit_regressions.py`
+
+Size: `4904` bytes  
+SHA-256: `025286d3284b02ebaa65310ab17a5c9dd72f7ae8bc71e565edf26ac5e827c2bf`
+
+```python
+"""Failure paths reproduced during the operations audit."""
+import asyncio
+from unittest.mock import AsyncMock
+
+import pytest
+
+from aemr_bot import network
+from aemr_bot.services import backup_verify, db_backup
+
+
+def test_pg_dump_decodes_url_credentials(monkeypatch):
+    monkeypatch.setattr(db_backup.settings, "database_url",
+                        "postgresql+asyncpg://a%40b:p%2F%25%23@db/a%20b")
+    env = db_backup._build_pg_env()
+    assert (env["PGUSER"], env["PGPASSWORD"], env["PGDATABASE"]) == (
+        "a@b", "p/%#", "a b",
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("phrase", ["a" * 65536, "long-passphrase\nsecond-line"])
+async def test_invalid_passphrase_rejected_before_spawn(monkeypatch, tmp_path, phrase):
+    spawn = AsyncMock()
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", spawn)
+    with pytest.raises(db_backup.BackupGpgError, match="one line"):
+        await db_backup._run_pg_dump_encrypted(tmp_path / "dump", {}, phrase)
+    spawn.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_backup_directory_failure_is_result(monkeypatch, tmp_path):
+    target = tmp_path / "file"
+    target.write_text("not a directory")
+    monkeypatch.setattr(db_backup.settings, "backup_local_dir", str(target))
+    monkeypatch.setattr(db_backup.settings, "backup_allow_unencrypted", True)
+    result = await db_backup.backup_db()
+    assert not result.ok
+    assert result.fail_kind == "unknown"
+
+
+@pytest.mark.asyncio
+async def test_verify_discovery_failure_is_result(monkeypatch, tmp_path):
+    monkeypatch.setattr(backup_verify.settings, "backup_local_dir", str(tmp_path))
+    monkeypatch.setattr(backup_verify.settings, "backup_verify_enabled", True)
+
+    def fail():
+        raise PermissionError("unreadable directory")
+
+    monkeypatch.setattr(backup_verify, "_latest_backup", fail)
+    result = await backup_verify.verify_latest_backup()
+    assert not result.ok
+    assert result.fail_kind == "no_backup"
+
+
+def test_empty_proxy_secret_fails_closed(monkeypatch, tmp_path):
+    secret = tmp_path / "proxy"
+    secret.write_text(" \n")
+    monkeypatch.setattr(network.settings, "outbound_proxy", None)
+    monkeypatch.setattr(network.settings, "outbound_proxy_file", str(secret))
+    with pytest.raises(ValueError, match="empty"):
+        network.apply_firewall_env()
+
+
+@pytest.mark.asyncio
+async def test_subprocess_cancel_kills_and_reaps():
+    class Process:
+        pid = 123
+        killed = False
+        reaped = False
+
+        async def wait(self):
+            if not self.killed:
+                await asyncio.Future()
+            self.reaped = True
+            return -9
+
+        def kill(self):
+            self.killed = True
+
+    proc = Process()
+    task = asyncio.create_task(db_backup._wait_proc(proc, 60, "test"))
+    await asyncio.sleep(0)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert proc.killed and proc.reaped
+
+
+def test_manual_systemd_installer_uses_selected_checkout(tmp_path):
+    import os
+    import subprocess
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    repo = tmp_path / 'custom checkout%with"quote'
+    (repo / "infra").mkdir(parents=True)
+    (repo / "infra/aemr-bot.service").write_text(
+        (root / "infra/aemr-bot.service").read_text()
+    )
+    commands = tmp_path / "commands"
+    commands.mkdir()
+    for command in ("docker", "systemctl"):
+        stub = commands / command
+        stub.write_text("#!/bin/sh\nexit 0\n")
+        stub.chmod(0o700)
+    unit = tmp_path / "installed.service"
+    script = tmp_path / "install.sh"
+    script.write_text(
+        (root / "scripts/install-systemd-autostart.sh").read_text()
+        .replace('if [ "$EUID" -ne 0 ]; then', 'if false; then')
+        .replace('UNIT_DST="/etc/systemd/system/aemr-bot.service"', f'UNIT_DST="{unit}"')
+    )
+    result = subprocess.run(
+        ["bash", str(script)], capture_output=True, text=True,
+        env={**os.environ, "REPO_DIR": str(repo),
+             "PATH": str(commands) + os.pathsep + os.environ["PATH"]},
+        check=False, timeout=5,
+    )
+    assert result.returncode == 0, result.stderr
+    escaped = str(repo).replace('"', '\\"').replace('%', '%%')
+    assert f'WorkingDirectory="{escaped}/infra"' in unit.read_text()
+
+
+@pytest.mark.asyncio
+async def test_cancelled_backup_removes_partial_file(monkeypatch, tmp_path):
+    monkeypatch.setattr(db_backup.settings, "backup_local_dir", str(tmp_path))
+    monkeypatch.setattr(db_backup.settings, "backup_gpg_passphrase", None)
+    monkeypatch.setattr(db_backup.settings, "backup_allow_unencrypted", True)
+
+    async def dump(path, env):
+        path.write_bytes(b"partial")
+        raise asyncio.CancelledError
+
+    monkeypatch.setattr(db_backup, "_run_pg_dump", dump)
+    with pytest.raises(asyncio.CancelledError):
+        await db_backup.backup_db()
+    assert list(tmp_path.iterdir()) == []
 ```
 
 ### `bot/tests/test_outbound_url_whitelist.py`
@@ -74924,8 +75915,8 @@ async def test_menu_edit_fallback_does_not_mask_unexpected_runtimeerror() -> Non
 
 ### `bot/tests/test_repo_sync.py`
 
-Size: `21994` bytes  
-SHA-256: `6864724dcfa3f93591a44f28fc5471fb48aa0934473860a55430359a343e70c6`
+Size: `23685` bytes  
+SHA-256: `7276ac74d2b81e5e1e392930fbce3b682d122617d279d8797ba7621953c9a2ad`
 
 ```python
 """Тесты `services/repo_sync.py` — клиент GitHub REST для синхронизации настроек.
@@ -75460,6 +76451,40 @@ class TestFetchMainRuntimeConfig:
             data, reason = await repo_sync.fetch_main_runtime_config(_cfg())
         assert data is None
         assert reason == "parse_failed"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("payload", [[], "bad", 123, None])
+async def test_remote_runtime_config_must_be_an_object(payload):
+    encoded = base64.b64encode(json.dumps(payload).encode()).decode()
+    with patch.object(repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch()), patch.object(repo_sync, "_GH") as gh_cls:
+        gh_cls.return_value._request = AsyncMock(return_value=(200, {"content": encoded}))
+        data, reason = await repo_sync.fetch_main_runtime_config(_cfg())
+    assert data is None
+    assert reason == "parse_failed"
+
+
+@pytest.mark.asyncio
+async def test_pr_timeout_is_visible_without_retry():
+    with patch.object(repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch()), patch.object(repo_sync, "_GH") as gh_cls:
+        gh = gh_cls.return_value
+        gh.get_ref_sha = AsyncMock(return_value="sha")
+        gh.create_branch = AsyncMock(side_effect=TimeoutError("secret request details"))
+        result = await repo_sync.create_settings_pr(
+            _cfg(), runtime_config={"k": "v"}, dirty_keys=["k"], operator_name="X", operator_id=1,
+        )
+    assert result.ok is False
+    assert result.reason == "request_failed"
+    assert result.branch in result.message
+    assert "неизвестен" in result.message
+    gh.create_branch.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_fetch_timeout_returns_failure():
+    with patch.object(repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch()), patch.object(repo_sync, "_GH") as gh_cls:
+        gh_cls.return_value._request = AsyncMock(side_effect=TimeoutError())
+        assert await repo_sync.fetch_main_runtime_config(_cfg()) == (None, "fetch_failed")
 ```
 
 ### `bot/tests/test_retention_pre_warning.py`
@@ -76467,8 +77492,8 @@ class TestShowOpMenuOperatorGate:
 
 ### `bot/tests/test_sec_resource.py`
 
-Size: `16069` bytes  
-SHA-256: `5fd15478d58d5e315bd05f3c3ef4dabdbc18799b4f7b2e60e858010cd75a7f34`
+Size: `15905` bytes  
+SHA-256: `6ec87ed83d3e85bf327b42dfb364faab2a27031a596042d8d0bde79deb9d8bac`
 
 ```python
 """P2 resource-exhaustion guards: per-user throttle, bounded polling
@@ -76769,7 +77794,7 @@ async def test_recover_stuck_funnels_bounds_concurrency(monkeypatch) -> None:
 
     state = {"cur": 0, "peak": 0}
 
-    async def fake_persist(bot, uid):
+    async def fake_persist(bot, uid, *, reset_empty=False):
         state["cur"] += 1
         state["peak"] = max(state["peak"], state["cur"])
         await asyncio.sleep(0.01)  # форсируем перекрытие
@@ -76791,8 +77816,7 @@ async def test_recover_stuck_funnels_bounds_concurrency(monkeypatch) -> None:
 
 
 async def test_recover_preserves_result_order_with_bound(monkeypatch) -> None:
-    """Bounded gather сохраняет соответствие ids↔results: empty (False)
-    воронки корректно вычисляются и сбрасываются в IDLE."""
+    """Empty resets belong to the finalization transaction, never a later pass."""
     from aemr_bot.handlers import appeal_runtime
 
     ids = [10, 11, 12, 13]
@@ -76810,7 +77834,8 @@ async def test_recover_preserves_result_order_with_bound(monkeypatch) -> None:
     async def fake_scope():
         yield fake_session
 
-    async def fake_persist(bot, uid):
+    async def fake_persist(bot, uid, *, reset_empty=False):
+        assert reset_empty is True
         return uid not in empty  # False для пустых, True для остальных
 
     async def fake_reset(session, uid):
@@ -76828,16 +77853,13 @@ async def test_recover_preserves_result_order_with_bound(monkeypatch) -> None:
     finalized = await appeal_runtime.recover_stuck_funnels(bot=SimpleNamespace())
 
     assert finalized == 2, "финализировано должно быть 2 непустых воронки"
-    assert sorted(reset_calls) == sorted(empty), (
-        f"в IDLE сброшены {sorted(reset_calls)}, ожидались пустые {sorted(empty)} — "
-        f"порядок results разъехался с ids"
-    )
+    assert reset_calls == [], "Recovery must not reset states after releasing the finalization lock"
 ```
 
 ### `bot/tests/test_sec_xlsx.py`
 
-Size: `6780` bytes  
-SHA-256: `6244b963ea559916941b039b61fd06600ed28b26dbedccd49ddd57c26495e4c9`
+Size: `7150` bytes  
+SHA-256: `a195e385ee5b49157b84666e70b128ec96b9f9e5afaafae17a2ec08b7290d318`
 
 ```python
 """Security: formula-injection (CWE-1236) в XLSX-выгрузке /stats.
@@ -77006,6 +78028,14 @@ class TestNoLiveFormulaInWorkbook:
         cell = ws.cell(row=2, column=11)
         assert cell.data_type != "f"
         assert cell.value == "'" + payload
+
+
+@pytest.mark.parametrize("control", ["\x00", "\x01", "\x0b", "\ufffe", "\ud800"])
+def test_invalid_xml_characters_cannot_break_export_or_expose_formula(control):
+    content = stats._render_workbook([_appeal(summary=control + "=1+1")])
+    wb = load_workbook(io.BytesIO(content))
+    assert wb.active["I2"].value == "'=1+1"
+    assert wb.active["I2"].data_type == "s"
 ```
 
 ### `bot/tests/test_security_batch_b.py`
@@ -78550,8 +79580,8 @@ class TestSetValueIdempotentTimestamps:
 
 ### `bot/tests/test_settings_store_validation.py`
 
-Size: `18835` bytes  
-SHA-256: `f80810d074c455416dda307e6a2ca1dc76890999c1a474ecd440dcfeddbb27ed`
+Size: `21806` bytes  
+SHA-256: `2fd50a73da10be7784ee8196ce7a36b5da108f9ecc1f7a2610c1a3363589d724`
 
 ```python
 """Тесты на services/settings_store — валидация ключей и значений.
@@ -78924,6 +79954,75 @@ class TestConsentTextHash:
             a = await settings_store.get_consent_text_hash(object(), fallback=fb)
             b = await settings_store.get_consent_text_hash(object(), fallback=fb)
         assert a == b
+
+
+@pytest.mark.parametrize("port", ["abc", "99999", "-1"])
+def test_invalid_url_port_is_rejected_without_exception(port):
+    from aemr_bot.services.settings_store import is_whitelisted_url
+    url = f"https://elizovomr.ru:{port}/policy.pdf"
+    assert is_whitelisted_url(url) is False
+    assert validate("policy_url", url)[0] is False
+
+
+@pytest.mark.parametrize("phone", [None, 112, {}, []])
+def test_non_string_contact_phone_returns_validation_error(phone):
+    assert validate("emergency_contacts", [{"name": "Service", "phone": phone}])[0] is False
+
+
+@pytest.mark.asyncio
+async def test_get_returns_detached_value_for_edits():
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+
+    from aemr_bot.services import settings_store
+    baseline = list(settings_store.DEFAULTS["localities"])
+    session = SimpleNamespace(scalar=AsyncMock(return_value=None))
+    value = await settings_store.get(session, "localities")
+    value.clear()
+    assert settings_store.DEFAULTS["localities"] == baseline
+
+    stored = [{"name": "Service", "phone": "112"}]
+    session.scalar.return_value = SimpleNamespace(value=stored)
+    value = await settings_store.get(session, "emergency_contacts")
+    value[0]["phone"] = "bad"
+    assert stored[0]["phone"] == "112"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("extra", ["{unknown}", "{policy_url.missing}", "{"])
+async def test_consent_hash_matches_displayed_fallback_for_invalid_template(extra):
+    import hashlib
+    from unittest.mock import AsyncMock, patch
+
+    from aemr_bot.services import settings_store
+
+    fallback = "Consent: {policy_url}"
+    with patch.object(settings_store, "get", AsyncMock(return_value="Custom {policy_url} " + extra)):
+        text = await settings_store.get_consent_request_text(
+            object(), policy_url="https://elizovomr.ru/privacy", fallback=fallback,
+        )
+        digest = await settings_store.get_consent_text_hash(object(), fallback=fallback)
+    assert text == fallback.format(policy_url="https://elizovomr.ru/privacy")
+    assert digest == hashlib.sha256(fallback.encode()).hexdigest()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("template", ["Custom {policy_url}", "Invalid {policy_url} {unknown}"])
+async def test_consent_display_and_digest_use_one_read(template):
+    import hashlib
+    from unittest.mock import AsyncMock, patch
+
+    from aemr_bot.services import settings_store
+
+    fallback = "Consent {policy_url}"
+    expected = fallback if "{unknown}" in template else template
+    with patch.object(settings_store, "get", AsyncMock(side_effect=[template, "Changed {policy_url}"])) as get:
+        text, digest = await settings_store.get_consent_request_and_hash(
+            object(), policy_url="https://elizovomr.ru/privacy", fallback=fallback,
+        )
+    get.assert_awaited_once()
+    assert text == expected.format(policy_url="https://elizovomr.ru/privacy")
+    assert digest == hashlib.sha256(expected.encode()).hexdigest()
 ```
 
 ### `bot/tests/test_single_instance.py`
@@ -79418,6 +80517,66 @@ class TestCleanupStaleOperators:
             session, current_member_ids={9999}
         )
         assert deactivated == []
+```
+
+### `bot/tests/test_system_boundaries.py`
+
+Size: `1965` bytes  
+SHA-256: `361d7d5245f0c62f6feae4ce2cc8bfacfc7e0e2323e54400e714641280d3f995`
+
+```python
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
+
+from aemr_bot.utils.event import get_ids
+
+
+def test_callback_fallback_uses_clicker_not_original_message_author():
+    event = SimpleNamespace(
+        message=SimpleNamespace(recipient=SimpleNamespace(chat_id=500), sender=SimpleNamespace(user_id=1)),
+        callback=SimpleNamespace(user=SimpleNamespace(user_id=2)),
+    )
+    assert get_ids(event) == (500, 2)
+
+
+def test_callback_without_actor_does_not_impersonate_message_author():
+    event = SimpleNamespace(
+        message=SimpleNamespace(recipient=SimpleNamespace(chat_id=500), sender=SimpleNamespace(user_id=1)),
+        callback=SimpleNamespace(user=None),
+    )
+    assert get_ids(event) == (500, None)
+
+
+@pytest.mark.asyncio
+async def test_polling_that_never_succeeds_eventually_becomes_unhealthy(monkeypatch):
+    from aemr_bot import health, main
+    clock = [100.0]
+    monkeypatch.setattr(health.time, 'monotonic', lambda: clock[0])
+    monkeypatch.setattr(health.poll_watch, 'last_poll', 0.0)
+    bot = SimpleNamespace(get_updates=AsyncMock(side_effect=OSError('offline')))
+    main._install_polling_timeout(bot, 30)
+    with pytest.raises(OSError):
+        await bot.get_updates()
+    clock[0] = 1000.0
+    with pytest.raises(OSError):
+        await bot.get_updates()
+    assert not health.poll_watch.is_fresh(max_age=120)
+
+
+@pytest.mark.asyncio
+async def test_quiet_suppression_does_not_log_message_body(monkeypatch, caplog):
+    import logging
+    from aemr_bot.services import admin_bus, quiet_hours
+    monkeypatch.setattr(admin_bus.cfg, 'admin_group_id', 123)
+    monkeypatch.setattr(quiet_hours, 'is_quiet_hours_now', lambda: True)
+    bot = SimpleNamespace(send_message=AsyncMock())
+    secret = 'private resident message'
+    with caplog.at_level(logging.INFO):
+        assert await admin_bus.send(bot, text=secret) is None
+    bot.send_message.assert_not_awaited()
+    assert secret not in caplog.text
 ```
 
 ### `bot/tests/test_texts_length_guard.py`
@@ -91441,6 +92600,1258 @@ exit 42
     assert builds.read_text().splitlines() == ["attempt"]
 ```
 
+### `docs/audits/MODULE_MAP_2026-10-26.json`
+
+Size: `27663` bytes  
+SHA-256: `0705efbc015a05472f6dac46bc563a5e3833fe2b31980662def86d21e66a1bb7`
+
+```json
+[
+  {
+    "path": "bot/aemr_bot/__init__.py",
+    "lines": 1,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/config.py",
+    "lines": 346,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/copy/__init__.py",
+    "lines": 20,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/copy/admin_texts.py",
+    "lines": 264,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/copy/broadcast_texts.py",
+    "lines": 355,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/copy/citizen_funnel.py",
+    "lines": 380,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/copy/errors_texts.py",
+    "lines": 40,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/copy/security_texts.py",
+    "lines": 169,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/__init__.py",
+    "lines": 0,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/env.py",
+    "lines": 52,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.models"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0001_initial.py",
+    "lines": 125,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0002_broadcast.py",
+    "lines": 103,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0003_phone_normalized.py",
+    "lines": 50,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0004_indexes_and_autovacuum.py",
+    "lines": 65,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0005_appeals_locality.py",
+    "lines": 37,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0006_consent_revoked_at.py",
+    "lines": 40,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0007_consent_broadcast_anonymous.py",
+    "lines": 94,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0008_backfill_consent_broadcast.py",
+    "lines": 88,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0009_partial_indexes_for_hot_paths.py",
+    "lines": 71,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0010_pg_ops_hardening.py",
+    "lines": 94,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0011_wizard_state_persistence.py",
+    "lines": 85,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0012_messages_appeal_created_index.py",
+    "lines": 44,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0013_settings_synced_at.py",
+    "lines": 50,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0014_broadcasts_attachments.py",
+    "lines": 50,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0015_broadcast_templates.py",
+    "lines": 74,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0016_broadcast_template_usage.py",
+    "lines": 51,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0017_appeals_last_card_mid.py",
+    "lines": 47,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0018_users_trigram_search_indexes.py",
+    "lines": 68,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0019_appeals_status_created_index.py",
+    "lines": 59,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0020_appeals_coordinates.py",
+    "lines": 43,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0021_drop_appeals_coordinates.py",
+    "lines": 53,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0022_users_consent_text_hash.py",
+    "lines": 45,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0023_broadcast_deliveries_unique.py",
+    "lines": 57,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0024_block_legacy_erased_residents.py",
+    "lines": 59,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0025_appointment_text_okrug.py",
+    "lines": 66,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0026_durable_receipt.py",
+    "lines": 36,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/models.py",
+    "lines": 503,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/session.py",
+    "lines": 63,
+    "internal_imports": [
+      "aemr_bot.config"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/db/single_instance.py",
+    "lines": 157,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.session"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/__init__.py",
+    "lines": 159,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.handlers",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/_auth.py",
+    "lines": 78,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/_common.py",
+    "lines": 130,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_appeal_ops.py",
+    "lines": 440,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_audience.py",
+    "lines": 515,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.services.card_format",
+      "aemr_bot.utils.event",
+      "aemr_bot.utils.pii_mask"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_callback_dispatch.py",
+    "lines": 314,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_commands.py",
+    "lines": 459,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers.admin_appeal_ops",
+      "aemr_bot.handlers.admin_audience",
+      "aemr_bot.handlers.admin_operators",
+      "aemr_bot.handlers.admin_panel",
+      "aemr_bot.handlers.admin_settings",
+      "aemr_bot.handlers.admin_stats",
+      "aemr_bot.services",
+      "aemr_bot.services.stats",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_operators.py",
+    "lines": 178,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.admin_operators_wizard",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_operators_list.py",
+    "lines": 104,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.ui",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_operators_roles.py",
+    "lines": 284,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_operators_wizard.py",
+    "lines": 513,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_panel.py",
+    "lines": 503,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.utils.event",
+      "aemr_bot.utils.typing_indicator"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_resident_search.py",
+    "lines": 245,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.services.admin_events",
+      "aemr_bot.utils.event",
+      "aemr_bot.utils.typing_indicator"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings.py",
+    "lines": 384,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.admin_settings_author",
+      "aemr_bot.handlers.admin_settings_list",
+      "aemr_bot.handlers.admin_settings_notify",
+      "aemr_bot.handlers.admin_settings_obj",
+      "aemr_bot.handlers.admin_settings_pr",
+      "aemr_bot.handlers.admin_settings_quiet",
+      "aemr_bot.handlers.admin_settings_shared",
+      "aemr_bot.handlers.admin_settings_text",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_author.py",
+    "lines": 37,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_list.py",
+    "lines": 127,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.admin_settings_shared",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_notify.py",
+    "lines": 90,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.ui.settings_keyboards"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_obj.py",
+    "lines": 213,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.admin_settings_shared",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_pr.py",
+    "lines": 235,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_quiet.py",
+    "lines": 154,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.admin_settings_shared",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_shared.py",
+    "lines": 114,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_text.py",
+    "lines": 144,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.admin_settings_author",
+      "aemr_bot.handlers.admin_settings_shared",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_stats.py",
+    "lines": 116,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers.admin_panel",
+      "aemr_bot.services",
+      "aemr_bot.services.stats",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/appeal.py",
+    "lines": 809,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.appeal_runtime",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/appeal_funnel.py",
+    "lines": 887,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.appeal_runtime",
+      "aemr_bot.services",
+      "aemr_bot.services.admin_relay",
+      "aemr_bot.services.policy",
+      "aemr_bot.services.progress",
+      "aemr_bot.utils.attachments",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/appeal_geo.py",
+    "lines": 180,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.utils.attachments",
+      "aemr_bot.utils.event",
+      "aemr_bot.utils.typing_indicator"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/appeal_runtime.py",
+    "lines": 399,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.services.admin_relay",
+      "aemr_bot.utils.background",
+      "aemr_bot.utils.resident_lifecycle"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/broadcast.py",
+    "lines": 926,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.broadcast_wizard",
+      "aemr_bot.services",
+      "aemr_bot.services.broadcast_utils",
+      "aemr_bot.utils",
+      "aemr_bot.utils.delivery_guard",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/broadcast_templates.py",
+    "lines": 248,
+    "internal_imports": [
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers.broadcast_templates_crud",
+      "aemr_bot.handlers.broadcast_templates_list",
+      "aemr_bot.handlers.broadcast_templates_state",
+      "aemr_bot.handlers.broadcast_templates_wizard",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/broadcast_templates_crud.py",
+    "lines": 274,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.broadcast_templates_state",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/broadcast_templates_list.py",
+    "lines": 240,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.broadcast_templates_state",
+      "aemr_bot.services",
+      "aemr_bot.utils",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/broadcast_templates_state.py",
+    "lines": 134,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/broadcast_templates_wizard.py",
+    "lines": 513,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.broadcast_templates_state",
+      "aemr_bot.services",
+      "aemr_bot.utils",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/broadcast_wizard.py",
+    "lines": 560,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.broadcast",
+      "aemr_bot.services",
+      "aemr_bot.services.broadcast_utils",
+      "aemr_bot.utils",
+      "aemr_bot.utils.background",
+      "aemr_bot.utils.event",
+      "aemr_bot.utils.typing_indicator"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/callback_payloads.py",
+    "lines": 366,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/handlers/callback_router.py",
+    "lines": 166,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/handlers/menu.py",
+    "lines": 1141,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.appeal_funnel",
+      "aemr_bot.handlers.start",
+      "aemr_bot.services",
+      "aemr_bot.utils",
+      "aemr_bot.utils.event",
+      "aemr_bot.utils.typing_indicator"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/operator_reply.py",
+    "lines": 878,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.services",
+      "aemr_bot.services.settings_store",
+      "aemr_bot.utils",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/start.py",
+    "lines": 666,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.menu",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/health.py",
+    "lines": 234,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.session"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/keyboards.py",
+    "lines": 25,
+    "internal_imports": [
+      "aemr_bot.ui.broadcast_keyboards",
+      "aemr_bot.ui.citizen_keyboards",
+      "aemr_bot.ui.operator_keyboards",
+      "aemr_bot.ui.settings_keyboards",
+      "aemr_bot.ui.wizard_keyboards"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/logging_setup.py",
+    "lines": 96,
+    "internal_imports": [
+      "aemr_bot.config"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/main.py",
+    "lines": 844,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers.appeal",
+      "aemr_bot.logging_setup",
+      "aemr_bot.services",
+      "aemr_bot.transport",
+      "aemr_bot.utils.background",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/network.py",
+    "lines": 150,
+    "internal_imports": [
+      "aemr_bot.config"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/__init__.py",
+    "lines": 0,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/services/admin_bus.py",
+    "lines": 361,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.services.quiet_hours",
+      "aemr_bot.utils",
+      "aemr_bot.utils.delivery_guard",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/admin_card.py",
+    "lines": 347,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.services",
+      "aemr_bot.services.admin_relay",
+      "aemr_bot.utils",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/admin_events.py",
+    "lines": 212,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.session",
+      "aemr_bot.services",
+      "aemr_bot.utils.pii_mask"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/admin_relay.py",
+    "lines": 258,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.services",
+      "aemr_bot.utils.attachments"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/appeals.py",
+    "lines": 757,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/backup_verify.py",
+    "lines": 272,
+    "internal_imports": [
+      "aemr_bot.config"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/broadcast_templates.py",
+    "lines": 255,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/broadcast_utils.py",
+    "lines": 136,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/broadcasts.py",
+    "lines": 506,
+    "internal_imports": [
+      "aemr_bot.db.models"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/calendar_ru.py",
+    "lines": 79,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/services/card_format.py",
+    "lines": 509,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.services.settings_store",
+      "aemr_bot.services.threat_intel",
+      "aemr_bot.texts",
+      "aemr_bot.utils.attachments",
+      "aemr_bot.utils.url_defang"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/cron.py",
+    "lines": 1481,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers.admin_operators",
+      "aemr_bot.handlers.appeal_runtime",
+      "aemr_bot.health",
+      "aemr_bot.network",
+      "aemr_bot.services",
+      "aemr_bot.services.backup_verify",
+      "aemr_bot.services.calendar_ru",
+      "aemr_bot.services.db_backup",
+      "aemr_bot.services.quiet_hours"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/cron_registry.py",
+    "lines": 177,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/services/db_backup.py",
+    "lines": 467,
+    "internal_imports": [
+      "aemr_bot.config"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/geo.py",
+    "lines": 272,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/services/idempotency.py",
+    "lines": 187,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.db.session"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/inbox.py",
+    "lines": 203,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.services",
+      "aemr_bot.utils.resident_lifecycle"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/notify_toggles.py",
+    "lines": 104,
+    "internal_imports": [
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/operators.py",
+    "lines": 241,
+    "internal_imports": [
+      "aemr_bot.db.models"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/policy.py",
+    "lines": 94,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.session",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/progress.py",
+    "lines": 207,
+    "internal_imports": [
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/quiet_hours.py",
+    "lines": 146,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/repo_sync.py",
+    "lines": 449,
+    "internal_imports": [
+      "aemr_bot.network"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/settings_store.py",
+    "lines": 1185,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.utils.url_defang"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/sla.py",
+    "lines": 135,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.services.calendar_ru"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/stats.py",
+    "lines": 314,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.services",
+      "aemr_bot.utils.pii_mask"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/threat_intel.py",
+    "lines": 325,
+    "internal_imports": [
+      "aemr_bot.network"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/uploads.py",
+    "lines": 102,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/services/users.py",
+    "lines": 890,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.services.inbox",
+      "aemr_bot.utils.resident_lifecycle"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/wizard_persist.py",
+    "lines": 169,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/wizard_registry.py",
+    "lines": 295,
+    "internal_imports": [
+      "aemr_bot.db.session",
+      "aemr_bot.services",
+      "aemr_bot.utils.background"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/texts.py",
+    "lines": 26,
+    "internal_imports": [
+      "aemr_bot.copy.admin_texts",
+      "aemr_bot.copy.broadcast_texts",
+      "aemr_bot.copy.citizen_funnel",
+      "aemr_bot.copy.errors_texts",
+      "aemr_bot.copy.security_texts"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/transport.py",
+    "lines": 86,
+    "internal_imports": [
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/ui/__init__.py",
+    "lines": 22,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/ui/broadcast_keyboards.py",
+    "lines": 326,
+    "internal_imports": [
+      "aemr_bot.handlers"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/ui/citizen_keyboards.py",
+    "lines": 490,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.handlers"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/ui/operator_keyboards.py",
+    "lines": 465,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.handlers"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/ui/settings_keyboards.py",
+    "lines": 270,
+    "internal_imports": [
+      "aemr_bot.handlers"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/ui/wizard_keyboards.py",
+    "lines": 229,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.handlers"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/utils/__init__.py",
+    "lines": 0,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/utils/attachments.py",
+    "lines": 449,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/utils/background.py",
+    "lines": 64,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/utils/delivery_guard.py",
+    "lines": 26,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/utils/event.py",
+    "lines": 332,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.utils"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/utils/image_attachments.py",
+    "lines": 34,
+    "internal_imports": [
+      "aemr_bot.utils.attachments"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/utils/menu_tracker.py",
+    "lines": 232,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/utils/pii_mask.py",
+    "lines": 33,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/utils/resident_lifecycle.py",
+    "lines": 88,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/utils/typing_indicator.py",
+    "lines": 59,
+    "internal_imports": [
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/utils/url_defang.py",
+    "lines": 331,
+    "internal_imports": []
+  }
+]
+```
+
+### `docs/audits/SYSTEM_AUDIT_2026-10-26.md`
+
+Size: `15227` bytes  
+SHA-256: `26fde211354862a8deaabd429196b8b56d1389fd40991966e6ad5a8189eaae30`
+
+```markdown
+# Системная проверка aemr-bot — выпуск 0.2.1
+
+Проверка выполнена после v0.2.0 на основе main 9460dd8. Объект — приложение и поддерживаемые способы запуска, а не доступность сервера владельца. Модульная карта всех 134 Python-файлов и их внутренних абсолютных импортов: MODULE_MAP_2026-10-26.json. Отсутствующих модулей по этим импортам не найдено. Статическая карта не доказывает выполнение каждой ветви.
+
+## Охват по сквозным процессам
+
+| Процесс | Проверенные связи | Результат |
+|---|---|---|
+| Приём и диспетчеризация | main → transport → inbox → middleware → callback/command routers; identity adapter; health | Исправлены fallback авторства callback и незапускающийся cold-start polling health timeout. Durable receipt и прежние recovery-регрессии сохранены. |
+| Житель | start/menu → согласие → анкета → геолокация → сохранение → дополнение → отмена/восстановление/удаление | Исправлены геопоиск, повторная проверка состояния/прав на дополнение в транзакции, гонка восстановления SUMMARY, фиксация показанного согласия. |
+| Оператор | chat gate → active role → карточка/reply → регистрация/смена роли/блокировка | Исправлены устаревшие данные мастера, преждевременное подтверждение, конфликт мастеров и чтение реальной SDK-структуры reply link. |
+| Постоянные состояния | registry → FIFO persistence → hydration → отмена/переключение | Все найденные обходы persistent delete для оператора заменены каноническим drop. Существующая persist-aware реализация рассылок сохранена. |
+| Рассылка | шаблон → редактирование → preview → cooldown → журнал intent → limiter → MAX → результат | Повторная проверка подписки/блокировки перед внешней попыткой; завершённый статус не портится сбоем summary; текущие роли и TTL проверяются при записи шаблона. |
+| Настройки и экспорт | validation → settings store → template rendering → runtime snapshot → GitHub PR | Исправлены malformed port, mutable defaults, некорректные шаблоны согласия, сетевые ошибки/тип JSON; экспорт не выдаётся за применение. |
+| Поиск и отчётность | authenticated commands → parameterized queries → masked display → XLSX | Убрано эхо полного телефона; запрещённые XML-символы больше не роняют XLSX; формульная защита сохранена. |
+| Вложения | SDK input → stored JSON → deserialize/relay → uploads | Убрана печать полного payload из validation error; проверены действующие round-trip и upload fallback тесты. |
+| Фоновые задачи | cron registry → deadlines/retention/reminders → уведомления; quiet toggles | Реестр/расписания и существующие регрессии проверены; текст quiet hours согласован с critical erase/revoke. |
+| Данные | ORM → 26 миграций → FK/индексы → транзакции | Обязательны CI Postgres16 upgrade/check/downgrade/upgrade; 0.2.1 не добавляет новую схему. SQLite не заменяет PG concurrency. |
+| Сеть и угрозы | proxy/CA → HTTP → bounded feeds → per-source snapshots → alerts | Пустой proxy-file теперь fail-closed; threat cache/partial outage/однократные предупреждения проверены существующими тестами. |
+| Резервирование | pg_dump → GPG → rotation/rclone; verify discovery/decrypt | Декодирование URI credentials, границы passphrase, kill/reap при cancellation, ошибки файловой системы. Без пути — по-прежнему тихо выключено. |
+| Эксплуатация | Docker/Compose, Podman/Quadlet, systemd; optional autodeploy | Исправлены custom REPO_DIR systemd, identity ключа optional installer; удалены ненужные секретные копии .env в /tmp. Оба способа поддерживаются; не включались на сервере. |
+
+## Подтверждённые исправления
+
+1. Fallback callback использовал автора исходного сообщения вместо нажавшего пользователя. Теперь callback.user приоритетен; отсутствие автора не подменяется message.sender.
+2. Polling без единого успешного ответа оставлял last_poll=0 и бесконечно зелёный health. Первая попытка взводит таймер, последующие ошибки его не обновляют.
+3. Уведомления, подавленные quiet hours, писали начало произвольного текста в журнал; содержимое больше не логируется.
+4. Мастер нового оператора наследовал прежние имя/роль/target; старая кнопка могла подтвердить неготовые данные. Новый старт очищает снимок, confirm требует нужный шаг.
+5. Выбор оператора из группы не сбрасывал competing reply/broadcast; теперь оба способа запуска используют общую подготовку.
+6. Отмена/expiry/переключение оператора удаляли только RAM-состояние; теперь ставится persistent delete.
+7. Историческая карточка не находилась при reply по настоящему LinkedMessage.sender; исправлен контракт и запрещена подстановка маркера из forward.
+8. Геопоиск использовал градусы широты для долготы: близкие E/W объекты выпадали. Bounding box учитывает широту; итог фильтруется по расстоянию.
+9. Дополнение проверяло статус/согласие до другой транзакции. Теперь актуальные Appeal/User проверяются под row locks в транзакции записи.
+10. Recovery мог сбросить уже изменившийся шаг анкеты. Теперь допустим только SUMMARY, пустой сброс выполняется в той же защищённой транзакции.
+11. Принятие согласия хешировало текущую настройку, а не показанный текст. Показанный hash и prompt mid сохраняются в dialog_data; устаревшая/legacy кнопка требует нового показа.
+12. Отписка/блокировка после snapshot аудитории не учитывалась. Eligibility повторно проверяется до intent, перед каждой попыткой и после глобального ожидания лимитера.
+13. Ошибка итогового сообщения оператору заменяла DONE/CANCELLED на FAILED. Завершённые результаты теперь сохраняются.
+14. Rename/clone шаблона не перепроверяли текущие права; исправлено. Истёкшие preview не записываются. Ошибка проверки шаблона возвращает понятный шаг вместо обрыва.
+15. URL с нечисловым портом выбрасывал исключение вместо отказа валидации.
+16. Возвращаемые default lists/dicts позволяли менять глобальную настройку до успешной записи; теперь возвращается копия.
+17. Illegal XML characters срывали XLSX; применяется очистка без отмены защиты от формул.
+18. Ошибка десериализации вложений печатала исходный payload; остаётся только тип ошибки.
+19. Поиск показывал полный телефон в заголовке при маскированных строках; исходный запрос больше не повторяется.
+20. Ошибки GitHub API/тайм-ауты выходили за контракт SyncResult; теперь видимый отказ с указанием неопределённости и ветки, без слепого повтора. Некорректная форма JSON отклоняется.
+21. Некорректный consent template мог падать или показывать fallback при хеше другого текста. Выбор renderable template един для текста и хеша; добавлен helper одного чтения.
+22. Backup URI credentials оставались percent-encoded. Декодирование исправлено.
+23. Неограниченная запись passphrase в pipe до старта GPG могла зависнуть. Явно отклоняются >511 UTF-8 байт и CR/LF. Cancel убивает/дожидается процесса и убирает partial dump.
+24. Ошибки mkdir/discovery/rotation возвращаются через результат проверки; successful dump не теряется из-за сбоя rotation.
+25. Пустой proxy secret ошибочно позволял прямой egress; теперь конфигурация отклоняется.
+26. Systemd installer игнорировал заданный REPO_DIR; unit теперь содержит экранированный фактический путь.
+27. Optional deploy installer использовал root SSH key от имени aemr; identity выровнена с runner. Ненужная копия .env в предсказуемом /tmp удалена.
+
+28. Номер телефона длиннее VARCHAR(32) приводил к ошибке БД; текстовый ввод и контакт теперь отклоняются до записи с предложением повторить.
+29. INFO-лог выбора населённого пункта содержал свободный текст жителя; сохраняется только длина.
+
+Для дефектов добавлены регрессионные сценарии; проверки показывают целевое поведение, а не только наличие функции. Совместные результаты CI и ссылки публикуются в release PR.
+
+## Архитектурные решения и реальные границы
+
+- Сохранены работоспособные аварийные и альтернативные пути; функции не удалялись только из-за отсутствия текстовых вызовов. Ручной запуск основной у владельца, автодеплой — поддерживаемая опция.
+- Последовательный inbox сохраняет порядок; медленный обработчик до своего timeout задерживает других. Нагрузочные замеры в рабочем контуре не выполнялись, оптимальность параллелизма не заявляется.
+- Повторная eligibility не отзывает уже начавшийся HTTP-запрос. Сбой БД у последней проверки консервативно оставляет неизвестный результат. Exactly-once для внешнего API не обещается.
+- Wizard persistence остаётся best effort при недоступности БД. Одновременное редактирование списков настроек операторами сохраняет существующую read-modify-write семантику, без нового CAS.
+- Backup verify подтверждает формат/дешифрование, не полноценное восстановление всей БД. Реальные MAX/S3/vendor-key requests, production load, Docker/Podman/systemd запуск на сервере и полное restore здесь не выполнялись.
+- Optional deploy предполагает канонического пользователя/путь; ручной systemd допускает custom checkout. Пароли с URI-reserved символами требуют правильно закодированного DATABASE_URL; сырая подстановка POSTGRES_PASSWORD в Compose не является URL-encoder.
+- Архивные аудиты относятся к указанным исходным commit. Не переписывались работающие соглашения ради устаревших инструкций.
+
+## Исправленные расхождения документации
+
+Условность автодеплоя в settings PR; экспорт runtime_config не равен импорту; masked suffix вместо обещанного хеширования поиска; critical erase/revoke вместо обещанного quiet suppression; blocked flag вместо имени «Удалено»; per-recipient commit вместо buffered send; сохранение вложений при text-only template edit; реальный TTL шаблонов; FIFO queue persistence вместо awaited handler saves; начальная polling health отметка; удаление при /forget вместо блокировки; семь кнопок меню вместо шести.
+```
+
 ### `docs/DEPS.md`
 
 Size: `17780` bytes  
@@ -91918,6 +94329,31 @@ SDK `max_retries=0`, `after_upload_attempts=1`: скрытые повторы и
 Дополнительно исправлено расхождение комментария pyproject.toml с CI: CI использует lock, а не свободное разрешение зависимостей. В AGENTS.md закреплены приоритет проверенного кода над устаревшими инструкциями и проверка динамических путей перед удалением кода. Массовое удаление функций без доказательства не выполнялось.
 
 Удалён неиспользуемый webhook-семафор из main.py: после перехода на transport.setup_webhook и последовательный inbox worker у него нет вызовов или регистрации (проверены production-код и тесты). Уточнены устаревшие комментарии о FastAPI/task-per-webhook и регистрации webhook-декоратора. Polling-ограничитель прямых вызовов оставлен: он используется и покрыт тестами.
+```
+
+### `docs/RELEASE_0.2.1.md`
+
+Size: `3881` bytes  
+SHA-256: `2ca6dd9e2a16f6e696ebd405f6f56d974ff94f1b6f5c173f1783f9caf618f3e4`
+
+```markdown
+# aemr-bot 0.2.1
+
+Системная проверка после 0.2.0: исправлены подтверждённые ошибки в сценариях жителей и операторов, рассылках, хранении состояний, настройках, экспорте, интеграциях и установке. Полная карта процессов, доказательства, границы и расхождения документации: [SYSTEM_AUDIT_2026-10-26.md](https://github.com/gaben1488/aemr-bot/blob/v0.2.1/docs/audits/SYSTEM_AUDIT_2026-10-26.md).
+
+- Согласие связано с показанным текстом; устаревшая кнопка требует нового показа. Восстановление анкеты не затирает новый шаг, дополнения проверяют актуальный статус и права в транзакции.
+- Регистрация оператора не наследует старые данные; отмена мастера сохраняется, конфликтующие режимы сбрасываются. Ответ по исторической карточке совместим с реальным maxapi LinkedMessage.
+- Рассылка учитывает отписку/блокировку перед отправкой и повторами, а сбой итогового уведомления не портит завершённый статус. Проверяются текущие роли и срок жизни шаблонов.
+- Исправлены геопоиск, URL validation, XLSX, изменяемые defaults, GitHub network errors и согласованность consent template/hash; убраны лишние персональные данные из вывода и логов.
+- Исправлены backup credentials/тайм-ауты/очистка процессов, proxy-file fail-closed, ручной systemd custom path и SSH identity альтернативного autodeploy installer.
+
+maxapi остаётся закреплён на 1.2.3; новые зависимости и миграции не добавлены. Сохраняется схема 0026 из 0.2.0. При обновлении с более старого выпуска штатный запуск образа выполняет alembic upgrade head.
+
+Оба варианта запуска поддерживаются: ручной в контуре владельца и отдельно настроенный автодеплой. GitHub-публикация не запускает ничего на сервере. Ручная процедура — [RELEASE_0.2.0.md](https://github.com/gaben1488/aemr-bot/blob/v0.2.1/docs/RELEASE_0.2.0.md#ручное-обновление-в-контуре-владельца), с исходниками/образом v0.2.1. Сохраните действующие .env и постоянные тома, не запускайте два экземпляра и не используйте down -v.
+
+Встроенный бэкап без пути остаётся тихо выключенным; базы угроз сохраняют прежнюю логику одного сигнала на эпизод. Неизвестные результаты внешней отправки не выдаются за гарантированную недоставку.
+
+Проверки включают полный pytest, PostgreSQL16 и миграции в CI, Docker build, Ruff, mypy, Bandit, pip-audit, shellcheck. Численные результаты и commit — в release PR; реальная работоспособность сервера и нагрузочные характеристики здесь не заявляются.
 ```
 
 ### `docs/ROADMAP.md`
