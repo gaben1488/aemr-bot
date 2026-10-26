@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-10-26 11:05:12 UTC`
+Generated at: `2026-10-26 11:24:45 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `418`
+Indexed files: `420`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -33,7 +33,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/data/__init__.py` (69 bytes)
 - `bot/aemr_bot/data/given_names_v1.txt` (175737 bytes)
 - `bot/aemr_bot/data/NAMES_LICENSE.md` (1141 bytes)
-- `bot/aemr_bot/data/resident_names_v1.py` (1691 bytes)
+- `bot/aemr_bot/data/resident_names_v1.py` (1708 bytes)
+- `bot/aemr_bot/data/resident_names_v2.py` (1555 bytes)
 - `bot/aemr_bot/db/__init__.py` (0 bytes)
 - `bot/aemr_bot/db/alembic/env.py` (1446 bytes)
 - `bot/aemr_bot/db/alembic/versions/0001_initial.py` (5884 bytes)
@@ -62,7 +63,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/db/alembic/versions/0024_block_legacy_erased_residents.py` (3518 bytes)
 - `bot/aemr_bot/db/alembic/versions/0025_appointment_text_okrug.py` (3679 bytes)
 - `bot/aemr_bot/db/alembic/versions/0026_durable_receipt.py` (1755 bytes)
-- `bot/aemr_bot/db/alembic/versions/0027_clear_invalid_resident_names.py` (1621 bytes)
+- `bot/aemr_bot/db/alembic/versions/0027_clear_invalid_resident_names.py` (1780 bytes)
 - `bot/aemr_bot/db/models.py` (26897 bytes)
 - `bot/aemr_bot/db/session.py` (3470 bytes)
 - `bot/aemr_bot/db/single_instance.py` (7894 bytes)
@@ -104,7 +105,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/callback_router.py` (12935 bytes)
 - `bot/aemr_bot/handlers/menu.py` (54580 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (45389 bytes)
-- `bot/aemr_bot/handlers/resident_name_gate.py` (7666 bytes)
+- `bot/aemr_bot/handlers/resident_name_gate.py` (7753 bytes)
 - `bot/aemr_bot/handlers/start.py` (31754 bytes)
 - `bot/aemr_bot/health.py` (10643 bytes)
 - `bot/aemr_bot/keyboards.py` (1161 bytes)
@@ -293,9 +294,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_release_review_regressions.py` (2353 bytes)
 - `bot/tests/test_reliability_pass.py` (11056 bytes)
 - `bot/tests/test_repo_sync.py` (23685 bytes)
-- `bot/tests/test_resident_contact.py` (3484 bytes)
-- `bot/tests/test_resident_name_resume.py` (13538 bytes)
-- `bot/tests/test_resident_names_policy.py` (4743 bytes)
+- `bot/tests/test_resident_contact.py` (4126 bytes)
+- `bot/tests/test_resident_name_resume.py` (13612 bytes)
+- `bot/tests/test_resident_names_policy.py` (6157 bytes)
 - `bot/tests/test_retention_pre_warning.py` (857 bytes)
 - `bot/tests/test_sec_broadcast.py` (17175 bytes)
 - `bot/tests/test_sec_card.py` (16528 bytes)
@@ -323,7 +324,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_uploads_policy_admin_relay.py` (19596 bytes)
 - `bot/tests/test_url_defang.py` (7954 bytes)
 - `bot/tests/test_users_consent_invariants.py` (12863 bytes)
-- `bot/tests/test_users_service_pg.py` (24599 bytes)
+- `bot/tests/test_users_service_pg.py` (25672 bytes)
 - `bot/tests/test_validators_hypothesis.py` (16733 bytes)
 - `bot/tests/test_wiki_in_sync.py` (3387 bytes)
 - `bot/tests/test_wizard_persist_cov2.py` (3955 bytes)
@@ -370,6 +371,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/RELEASE_0.2.0.md` (15181 bytes)
 - `docs/RELEASE_0.2.1.md` (3881 bytes)
 - `docs/RELEASE_0.2.2.md` (6242 bytes)
+- `docs/RELEASE_0.2.3.md` (3015 bytes)
 - `docs/ROADMAP.md` (24960 bytes)
 - `docs/site/_kb/_archive/_audit/администратор-сисадмин.md` (42221 bytes)
 - `docs/site/_kb/_archive/_audit/безопасник-ИБ.md` (53534 bytes)
@@ -415,7 +417,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `infra/docker-compose.yml` (7920 bytes)
 - `infra/Dockerfile` (4409 bytes)
 - `infra/nginx/feedback.conf` (976 bytes)
-- `README.md` (41763 bytes)
+- `README.md` (41939 bytes)
 - `REPO_INDEX.md` (2264 bytes)
 - `scripts/build_geo_database.py` (9300 bytes)
 - `scripts/cross_verify_geo.py` (12519 bytes)
@@ -1105,7 +1107,7 @@ jobs:
 ### `.github/workflows/release.yml`
 
 Size: `1372` bytes  
-SHA-256: `6f38fcee87cde0c4e3244ee7eabc3678b3915d11f61fb2f8a741ace94698cc05`
+SHA-256: `240b3d5239cb51b04e6a0d3fd8f2f9639c2ca7029ffbeda0522e31fd2be1f453`
 
 ```yaml
 name: Publish release
@@ -1131,7 +1133,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
-      - name: Publish verified 0.2.2 source release
+      - name: Publish verified 0.2.3 source release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -1141,10 +1143,10 @@ jobs:
           version=$(python3 -c 'import tomllib; print(tomllib.load(open("bot/pyproject.toml", "rb"))["project"]["version"])')
           # This workflow publishes this authorized release only. Later versions
           # require an explicit release change, not incidental dependency edits.
-          if [ "$version" != "0.2.2" ]; then exit 0; fi
-          if gh release view v0.2.2 >/dev/null 2>&1; then exit 0; fi
-          gh release create v0.2.2 --target "$RELEASE_SHA" \
-            --title "aemr-bot 0.2.2" --notes-file docs/RELEASE_0.2.2.md
+          if [ "$version" != "0.2.3" ]; then exit 0; fi
+          if gh release view v0.2.3 >/dev/null 2>&1; then exit 0; fi
+          gh release create v0.2.3 --target "$RELEASE_SHA" \
+            --title "aemr-bot 0.2.3" --notes-file docs/RELEASE_0.2.3.md
 ```
 
 ### `.github/workflows/repo-index.yml`
@@ -1409,10 +1411,10 @@ SHA-256: `bce7fb9c9fd33b7b16ade8ea0b097ffc1fc78321265c5a1452738256015b6d97`
 ### `bot/aemr_bot/__init__.py`
 
 Size: `22` bytes  
-SHA-256: `9ba93268da7005c3f55d872aade957da84b73c9b8e9c494e7117416bda446fc7`
+SHA-256: `3cd883111e2a335f61f7376c75f80ab76fdd4f85a060aec482e27c454daa03f8`
 
 ```python
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 ```
 
 ### `bot/aemr_bot/config.py`
@@ -15236,11 +15238,11 @@ versioned dictionary and review; never download/update it during a request.
 
 ### `bot/aemr_bot/data/resident_names_v1.py`
 
-Size: `1691` bytes  
-SHA-256: `ce176848234b92b52499aba5936db19648aa42a096474a137c52f661bd57bc55`
+Size: `1708` bytes  
+SHA-256: `c105adf9e5ed5287c2cfd612c0f91f8762b79305a78deb7aa333175a3decf1e3`
 
 ```python
-"""Frozen name policy v1, also used by data migration 0027.
+"""Original frozen name policy v1 from 0.2.2; v2 allows surname-first input.
 
 Do not change this policy or its dictionary in place: future revisions get a new
 version so replaying historical migrations has deterministic semantics.
@@ -15281,6 +15283,55 @@ def normalize_resident_name(value: object, *, max_chars: int = 120) -> str | Non
     first = parts[0].casefold().replace("ё", "е")
     names = given_names()
     if first not in names and not ("-" in first and all(p in names for p in first.split("-"))):
+        return None
+    return " ".join(p.title() for p in parts)
+```
+
+### `bot/aemr_bot/data/resident_names_v2.py`
+
+Size: `1555` bytes  
+SHA-256: `9edfa21d98f110e6171823ed4d2ff7497e6388dc5f1bebb7999c8a1843704be0`
+
+```python
+"""Frozen name policy v2: given name in either of the first two positions.
+
+Do not change this policy or its dictionary in place: future revisions get a new
+version so replaying historical migrations has deterministic semantics.
+"""
+
+import unicodedata
+
+from aemr_bot.data.resident_names_v1 import given_names
+
+
+def _word(value: str) -> bool:
+    return all(
+        part and all(c.isalpha() and "CYRILLIC" in unicodedata.name(c, "") for c in part)
+        for part in value.split("-")
+    )
+
+
+def normalize_resident_name(value: object, *, max_chars: int = 120) -> str | None:
+    """Allow 1–3 Cyrillic words; at least one of the first two is a given name.
+
+    Preserve the supplied order. Other words are checked only for spelling
+    shape, not against a surname/patronymic dictionary or identity records.
+    """
+    if not isinstance(value, str) or not value or len(value) > min(max_chars, 120):
+        return None
+    if any(unicodedata.category(c).startswith("C") for c in value):
+        return None
+    value = unicodedata.normalize("NFC", value).replace("‐", "-").replace("‑", "-")
+    parts = value.split()
+    if not 1 <= len(parts) <= 3 or not all(_word(p) for p in parts):
+        return None
+    names = given_names()
+    candidates = [part.casefold().replace("ё", "е") for part in parts[:2]]
+    if not any(
+        candidate in names
+        or ("-" in candidate and all(part in names for part in candidate.split("-")))
+        for candidate in candidates
+    ):
         return None
     return " ".join(p.title() for p in parts)
 ```
@@ -17218,8 +17269,8 @@ def downgrade() -> None:
 
 ### `bot/aemr_bot/db/alembic/versions/0027_clear_invalid_resident_names.py`
 
-Size: `1621` bytes  
-SHA-256: `7adc68c28f56e3c421ff676e9a1a9a4609c47132dcb6bd4a020bd93918dfe079`
+Size: `1780` bytes  
+SHA-256: `19fd522cbab063a4897c2601d8d3eb405a653eac3bd188875f282cff947dfee8`
 
 ```python
 """Clear invalid resident names without deleting users, appeals or dialogue data."""
@@ -17227,7 +17278,9 @@ SHA-256: `7adc68c28f56e3c421ff676e9a1a9a4609c47132dcb6bd4a020bd93918dfe079`
 import sqlalchemy as sa
 from alembic import op
 
-from aemr_bot.data.resident_names_v1 import normalize_resident_name
+# Corrected in 0.2.3: first-time upgrades must preserve surname-first names.
+# Already applied cleanup cannot restore a discarded name; residents re-enter it.
+from aemr_bot.data.resident_names_v2 import normalize_resident_name
 
 revision = "0027"
 down_revision = "0026"
@@ -31651,8 +31704,8 @@ async def handle_command_reply(
 
 ### `bot/aemr_bot/handlers/resident_name_gate.py`
 
-Size: `7666` bytes  
-SHA-256: `0eb63aa851a8519d6f0f457555d3389fcc098a5668ad409756b587354c111991`
+Size: `7753` bytes  
+SHA-256: `d1ed2881d8ee48a599a8f2eb24e7291681e30f545e9e265074dffa271325b8ee`
 
 ```python
 """Request a resident name without losing an interrupted citizen workflow."""
@@ -31672,7 +31725,7 @@ from aemr_bot.utils.resident_names import normalize_resident_name
 
 NAME_PROMPT = (
     "Как вас зовут? Напишите настоящее имя кириллицей, например «Анна». "
-    "Можно добавить фамилию и отчество: «Анна Ивановна Петрова». "
+    "Имя можно указать первым или вторым: «Лариса Беспаленко» или «Беспаленко Лариса». Можно добавить отчество. "
     "Псевдонимы и имена из профиля автоматически не принимаются."
 )
 RESUME_KEY = "_name_resume"
@@ -48706,11 +48759,11 @@ async def hold_until_commit(session, user_id: int) -> None:
 ### `bot/aemr_bot/utils/resident_names.py`
 
 Size: `179` bytes  
-SHA-256: `26c09c8673625a446da22b34b55a8c4dde545533bd2aeae7f0a745f9dcbfb2ac`
+SHA-256: `4b93fd8621b16d2a0c2f4debe171fd1a02c768590f7f8ee3feb63891ded0eeeb`
 
 ```python
 """Current resident-name policy; shared by every profile input path."""
-from aemr_bot.data.resident_names_v1 import normalize_resident_name
+from aemr_bot.data.resident_names_v2 import normalize_resident_name
 
 __all__ = ["normalize_resident_name"]
 ```
@@ -49171,12 +49224,12 @@ datefmt = %H:%M:%S
 ### `bot/pyproject.toml`
 
 Size: `7634` bytes  
-SHA-256: `408926ec31fdb55a8a0036a0b4325075a9f87ae19a9d25b84448eb8ae7b438e6`
+SHA-256: `253f27c5f9e441cce0b31241f4913bca8f6aabe926b22dd0ab95ac048bc8a107`
 
 ```toml
 [project]
 name = "aemr-bot"
-version = "0.2.2"
+version = "0.2.3"
 description = "Чат-бот Администрации Елизовского муниципального округа в MAX"
 requires-python = ">=3.12"
 dependencies = [
@@ -89179,8 +89232,8 @@ async def test_fetch_timeout_returns_failure():
 
 ### `bot/tests/test_resident_contact.py`
 
-Size: `3484` bytes  
-SHA-256: `2ce4f1bb620b532f67627dffdce6e1636c7cb8bab3427d11d141372f19a0d038`
+Size: `4126` bytes  
+SHA-256: `c3f0270579f9673b092444da20d88130483e1a54c18601bff6c076b0ebadcdcc`
 
 ```python
 """Resident contact ingestion against the installed MAX SDK contract."""
@@ -89237,7 +89290,7 @@ def test_nickname_candidate_can_fall_through_to_valid_fn():
     assert read(contact(name="Котик77", vcard="FN:Иван Иванов\nTEL:+79991112233"))[1] == "Иван Иванов"
 
 
-@pytest.mark.parametrize("name", ["Котик77", "Ivan", "Ивaн", "Иванов Иван", "👍"])
+@pytest.mark.parametrize("name", ["Котик77", "Ivan", "Ивaн", "Беспаленко Никнейм Лариса", "👍"])
 def test_invalid_name_never_imported(name):
     assert read(contact(name=name, vcard=f"FN:{name}\nTEL:+79991112233")) == (
         "+79991112233", None, False,
@@ -89272,12 +89325,24 @@ def test_foreign_first_contact_cannot_be_masked_by_second_contact():
 
 def test_no_contact():
     assert read() == (None, None, False)
+
+
+@pytest.mark.parametrize("name", ["Беспаленко Лариса", "Лариса Беспаленко", "Беспаленко Лариса Ивановна"])
+@pytest.mark.parametrize("as_dict", [False, True])
+@pytest.mark.parametrize("source", ["max_info", "vcard"])
+def test_contact_accepts_given_name_in_first_or_second_position(name, as_dict, source):
+    attachment = contact(
+        name=name if source == "max_info" else None,
+        vcard=(f"FN:{name}\n" if source == "vcard" else "") + "TEL:+79991112233",
+        as_dict=as_dict,
+    )
+    assert read(attachment) == ("+79991112233", name, False)
 ```
 
 ### `bot/tests/test_resident_name_resume.py`
 
-Size: `13538` bytes  
-SHA-256: `0f3f8c1b4647c5cf56a79d02baef6f9532d7f084ea0fd6942b2cfba243267a48`
+Size: `13612` bytes  
+SHA-256: `0ee7eae59ec00c2e322a63d4e47311a6b9786d273c238119f76bf334928ee15f`
 
 ```python
 """Name repair preserves citizen state and resumes the interrupted action."""
@@ -89332,7 +89397,7 @@ def resident(monkeypatch):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("text", ["Иван", "Анна Ивановна Петрова"])
+@pytest.mark.parametrize("text", ["Иван", "Анна Ивановна Петрова", "Беспаленко Лариса", "Лариса Беспаленко"])
 async def test_address_input_survives_name_repair_and_resumes(resident, monkeypatch, text):
     event = make_event(chat_id=100, user_id=42, first_name="МегаБосс")
     original = dict(resident.dialog_data)
@@ -89563,8 +89628,8 @@ async def test_replay_consumes_triggering_text_with_explicit_resend_notice(resid
 
 ### `bot/tests/test_resident_names_policy.py`
 
-Size: `4743` bytes  
-SHA-256: `64c6dfdd8e27829bfc52e3f0ca446e19e5a8fdb9067a6c693d04fde543535104`
+Size: `6157` bytes  
+SHA-256: `40a67511277112500b050ae1d3dd827342756ffd2f8fb68395d5345d80c331b6`
 
 ```python
 import importlib
@@ -89582,6 +89647,13 @@ from aemr_bot.utils.resident_names import normalize_resident_name
     "name, expected",
     [
         ("сергей", "Сергей"),
+        ("Беспаленко Лариса", "Беспаленко Лариса"),
+        ("Лариса Беспаленко", "Лариса Беспаленко"),
+        ("Беспаленко Лариса Ивановна", "Беспаленко Лариса Ивановна"),
+        ("Лариса Ивановна Беспаленко", "Лариса Ивановна Беспаленко"),
+        ("Иванов Иван", "Иванов Иван"),
+        ("беспаленко   ЛАРИСА", "Беспаленко Лариса"),
+        ("Беспаленко Анна-Мария", "Беспаленко Анна-Мария"),
         ("  ИВАН   ИВАНОВ ", "Иван Иванов"),
         ("Анна Марковна Иванова", "Анна Марковна Иванова"),
         ("Алёна", "Алёна"),
@@ -89620,7 +89692,11 @@ def test_known_cyrillic_names_and_optional_parts(name, expected):
         "Сер\u200bгей",
         "Сергей\u202eИванов",
         "Сергей Иванов Иванович Лишнее",
-        "Иванов Иван",
+        "Беспаленко Никнейм Лариса",
+        "Беспаленко Лaриса",
+        "Беспаленко\nЛариса",
+        "Беспаленко Лариса77",
+        "Беспаленко Никнейм",
         "Иван-Никнейм",
         "-Иван",
         "Иван-",
@@ -89671,7 +89747,11 @@ def test_migration_clears_only_invalid_names_preserving_all_relationships():
                 }
                 for i in range(1, 1004)
             ]
-            + [{"id": 1004, "uid": -1, "name": "Удалено", "data": "sentinel"}],
+            + [
+                {"id": 1004, "uid": -1, "name": "Удалено", "data": "sentinel"},
+                {"id": 1005, "uid": 1005, "name": "Беспаленко Лариса", "data": "draft"},
+                {"id": 1006, "uid": 1006, "name": "Лариса Беспаленко", "data": "draft"},
+            ],
         )
         conn.execute(sa.text("INSERT INTO appeals VALUES (1,1,'existing appeal')"))
         conn.execute(sa.text("INSERT INTO messages VALUES (1,1,'existing message')"))
@@ -89679,7 +89759,15 @@ def test_migration_clears_only_invalid_names_preserving_all_relationships():
             migration.upgrade()
             migration.upgrade()
             migration.downgrade()
-        assert conn.scalar(sa.text("SELECT count(*) FROM users")) == 1004
+        assert conn.scalar(sa.text("SELECT count(*) FROM users")) == 1006
+        assert (
+            conn.scalar(sa.text("SELECT first_name FROM users WHERE id=1005"))
+            == "Беспаленко Лариса"
+        )
+        assert (
+            conn.scalar(sa.text("SELECT first_name FROM users WHERE id=1006"))
+            == "Лариса Беспаленко"
+        )
         assert conn.scalar(sa.text("SELECT first_name FROM users WHERE id=1")) is None
         assert conn.scalar(sa.text("SELECT first_name FROM users WHERE id=2")) == "Сергей Иванов"
         assert (
@@ -95482,8 +95570,8 @@ class TestRevokeConsentInvariants:
 
 ### `bot/tests/test_users_service_pg.py`
 
-Size: `24599` bytes  
-SHA-256: `6a722ef63381d2918d97358b1966f0c2fe122c7ca068633ee1c7c1541bf29687`
+Size: `25672` bytes  
+SHA-256: `9684a800e100fe7f570ba2a9177579d83764d883b0dcfe70aa3c7f937f6e0aee`
 
 ```python
 """PG-fixture-тесты services/users — недостающие ветви.
@@ -96022,6 +96110,31 @@ async def test_name_cleanup_migration_preserves_pg_appeal_and_messages(session):
     assert stored.summary == "Яма"
     messages = (await session.scalars(select(Message).where(Message.appeal_id == appeal_id))).all()
     assert any(message.text == "Дополнение" for message in messages)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("name", ["Беспаленко Лариса", "Лариса Беспаленко", "Беспаленко Лариса Ивановна"])
+async def test_name_order_preserved_by_migration_and_runtime(session, name):
+    import importlib
+    from types import SimpleNamespace
+    from unittest.mock import patch
+
+    migration = importlib.import_module("aemr_bot.db.alembic.versions.0027_clear_invalid_resident_names")
+    user = User(max_user_id=888, first_name=name)
+    session.add(user)
+    await session.flush()
+    connection = await session.connection()
+
+    def migrate(conn):
+        with patch.object(migration, "op", SimpleNamespace(get_bind=lambda: conn)):
+            migration.upgrade()
+
+    await connection.run_sync(migrate)
+    await session.refresh(user)
+    assert user.first_name == name
+    assert (await users_service.get_or_create(session, 888)).first_name == name
+    await users_service.set_first_name(session, 888, name)
+    assert (await users_service.get_or_create(session, 888)).first_name == name
 ```
 
 ### `bot/tests/test_validators_hypothesis.py`
@@ -107651,6 +107764,25 @@ SHA-256: `1c4f470487824e49378894416c886b9620572456fdcd3c9c78d14c6c65170847`
 QA: позитивные/негативные имена, реальные SDK-модели контакта, повторный ввод и возобновление диалога, сохранность связанных данных при повторном выполнении миграции, включение словаря в wheel; полный pytest и PostgreSQL16 CI, миграции upgrade/check/downgrade/upgrade, Ruff, mypy, Bandit, pip-audit, shellcheck, Docker build. Численные результаты зафиксированы в release PR. Работа живого контура MAX/VPS здесь не заявляется.
 
 Документация синхронизирована: текущий реестр схемы обновлён с 26/0026 до 27/0027, README описывает новое правило имён. Исправлена устаревшая внутренняя версия пакета 0.1.0; добавлена проверка её совпадения с pyproject.toml и lock. Исторические аудиты относятся к своим версиям.
+```
+
+### `docs/RELEASE_0.2.3.md`
+
+Size: `3015` bytes  
+SHA-256: `d801510066ba281b366f4435949fd1dac59a83ff8cc3698eec39476c71079d83`
+
+```markdown
+# aemr-bot 0.2.3
+
+Имя из словаря теперь допускается на первом **или втором** месте. «Беспаленко Лариса», «Лариса Беспаленко» и «Беспаленко Лариса Ивановна» принимаются; введённый порядок сохраняется. Всего допускается до трёх слов. Остальные слова проверяются по форме, без словаря фамилий/отчеств. Имя только на третьем месте не делает запись допустимой. Ограничения длины, кириллицы, дефисов, цифр и управляющих символов сохранены.
+
+Единое правило применяется к ручному вводу, контакту MAX/vCard, проверке сохранённого имени, повторному вводу и возобновлению обращения. Подсказка бота и README обновлены.
+
+Исправлена также политика очистки в миграции 0027: при первом применении этого выпуска существующие корректные записи «фамилия имя» сохраняются. Новая миграция схемы не нужна. Если очистка 0027 уже была выполнена версией 0.2.2, ранее очищенное имя восстановить из БД невозможно — житель вводит его заново, теперь в любом из двух порядков. Обращения и сообщения сохраняются. Автоматически угадывать удалённые имена или возвращать ники из профилей бот не будет.
+
+Словарь, зависимости и maxapi 1.2.3 не изменены. Полнота словаря всех возможных имён и подтверждение личности не заявляются. Ручной запуск в контуре владельца и альтернативный автодеплой сохранены; GitHub-публикация не обновляет сервер.
+
+QA: примеры обоих порядков с отчеством и без, двойное имя на втором месте, отклонение имени только на третьем месте и смешанного алфавита, реальные модели SDK и dict/vCard, восстановление черновика после ввода имени, сохранность записей при миграции и повторном чтении. Полный pytest, PostgreSQL16, миграции upgrade/check/downgrade/upgrade, Docker, Ruff, mypy и security-проверки; численные результаты — в release PR.
 ```
 
 ### `docs/ROADMAP.md`
@@ -123315,8 +123447,8 @@ server {
 
 ### `README.md`
 
-Size: `41763` bytes  
-SHA-256: `1ad26c72de680f150cc264f1f1e10c9ec74666245e4d366be6f633b541bab7fc`
+Size: `41939` bytes  
+SHA-256: `18788f84452f8ed71862863cc4a88e8e3b60c2ebc056d1de9eef4ae94201491d`
 
 ```markdown
 # Администрация ЕМО. Бот обратной связи
@@ -123358,7 +123490,7 @@ SHA-256: `1ad26c72de680f150cc264f1f1e10c9ec74666245e4d366be6f633b541bab7fc`
 
 ### Что делает житель (личный диалог)
 
-Имя проверяется по встроенному словарю из 12 143 имён в кириллице. Можно добавить фамилию и отчество (до трёх слов всего); латиница, цифры, управляющие символы и произвольные ники не принимаются. Контакт MAX проходит ту же проверку. После миграции 0027 некорректное старое имя запрашивается повторно, обращения и история сохраняются. Словарь не удостоверяет личность и не охватывает все существующие имена; источник и условия — `bot/aemr_bot/data/NAMES_LICENSE.md`.
+Имя проверяется по встроенному словарю из 12 143 имён в кириллице: достаточно совпадения первого или второго слова. Принимаются «Беспаленко Лариса» и «Лариса Беспаленко». Можно добавить отчество (до трёх слов всего); латиница, цифры, управляющие символы и произвольные ники не принимаются. Контакт MAX проходит ту же проверку. После миграции 0027 некорректное старое имя запрашивается повторно, обращения и история сохраняются. Словарь не удостоверяет личность и не охватывает все существующие имена; источник и условия — `bot/aemr_bot/data/NAMES_LICENSE.md`.
 
 **Главное меню** — приветствие и кнопки (текст приветствия редактируется ИТ-специалистом из меню без перезапуска):
 
