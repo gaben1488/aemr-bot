@@ -252,3 +252,29 @@ async def test_list_failed_deliveries_respects_limit(session) -> None:
         session, bc.id, limit=3
     )
     assert len(result) == 3
+
+
+@pytest.mark.asyncio
+async def test_late_eligibility_tracks_consent_subscription_block_and_deletion(session):
+    from datetime import UTC, datetime
+
+    user = await users_service.get_or_create(session, max_user_id=808, first_name="A")
+    user.subscribed_broadcast = True
+    user.consent_broadcast_at = datetime.now(UTC)
+    await session.flush()
+    assert await broadcasts_service.is_eligible_recipient(session, user.id)
+    user.subscribed_broadcast = False
+    await session.flush()
+    assert not await broadcasts_service.is_eligible_recipient(session, user.id)
+    user.subscribed_broadcast = True
+    user.is_blocked = True
+    await session.flush()
+    assert not await broadcasts_service.is_eligible_recipient(session, user.id)
+    user.is_blocked = False
+    user.consent_broadcast_at = None
+    await session.flush()
+    assert not await broadcasts_service.is_eligible_recipient(session, user.id)
+    user_id = user.id
+    await session.delete(user)
+    await session.flush()
+    assert not await broadcasts_service.is_eligible_recipient(session, user_id)

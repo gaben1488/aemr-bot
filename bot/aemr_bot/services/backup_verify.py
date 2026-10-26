@@ -195,7 +195,10 @@ async def verify_latest_backup() -> VerifyResult:
             fail_detail="BACKUP_LOCAL_DIR пуст — нечего проверять.",
         )
 
-    src = _latest_backup()
+    try:
+        src = await asyncio.to_thread(_latest_backup)
+    except OSError as exc:
+        return VerifyResult(ok=False, fail_kind="no_backup", fail_detail=str(exc))
     if src is None:
         return VerifyResult(
             ok=False, fail_kind="no_backup",

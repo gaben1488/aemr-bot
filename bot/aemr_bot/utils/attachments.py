@@ -442,5 +442,8 @@ def deserialize_for_relay(stored: list[dict]) -> list:
             # Расхождение схемы на стороне MAX или урезанный payload.
             # Пропускаем это вложение, чтобы не заблокировать отправку
             # всего обращения.
-            log.warning("attachment %s failed to deserialize: %r", _normalize_type(raw), e)
+            log.warning(
+                "attachment %s failed to deserialize (%s)",
+                _normalize_type(raw), type(e).__name__,
+            )
     return out

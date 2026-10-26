@@ -1,0 +1,1166 @@
+[
+  {
+    "path": "bot/aemr_bot/__init__.py",
+    "lines": 1,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/config.py",
+    "lines": 346,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/copy/__init__.py",
+    "lines": 20,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/copy/admin_texts.py",
+    "lines": 264,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/copy/broadcast_texts.py",
+    "lines": 355,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/copy/citizen_funnel.py",
+    "lines": 380,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/copy/errors_texts.py",
+    "lines": 40,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/copy/security_texts.py",
+    "lines": 169,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/__init__.py",
+    "lines": 0,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/env.py",
+    "lines": 52,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.models"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0001_initial.py",
+    "lines": 125,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0002_broadcast.py",
+    "lines": 103,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0003_phone_normalized.py",
+    "lines": 50,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0004_indexes_and_autovacuum.py",
+    "lines": 65,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0005_appeals_locality.py",
+    "lines": 37,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0006_consent_revoked_at.py",
+    "lines": 40,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0007_consent_broadcast_anonymous.py",
+    "lines": 94,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0008_backfill_consent_broadcast.py",
+    "lines": 88,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0009_partial_indexes_for_hot_paths.py",
+    "lines": 71,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0010_pg_ops_hardening.py",
+    "lines": 94,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0011_wizard_state_persistence.py",
+    "lines": 85,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0012_messages_appeal_created_index.py",
+    "lines": 44,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0013_settings_synced_at.py",
+    "lines": 50,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0014_broadcasts_attachments.py",
+    "lines": 50,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0015_broadcast_templates.py",
+    "lines": 74,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0016_broadcast_template_usage.py",
+    "lines": 51,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0017_appeals_last_card_mid.py",
+    "lines": 47,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0018_users_trigram_search_indexes.py",
+    "lines": 68,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0019_appeals_status_created_index.py",
+    "lines": 59,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0020_appeals_coordinates.py",
+    "lines": 43,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0021_drop_appeals_coordinates.py",
+    "lines": 53,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0022_users_consent_text_hash.py",
+    "lines": 45,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0023_broadcast_deliveries_unique.py",
+    "lines": 57,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0024_block_legacy_erased_residents.py",
+    "lines": 59,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0025_appointment_text_okrug.py",
+    "lines": 66,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/alembic/versions/0026_durable_receipt.py",
+    "lines": 36,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/models.py",
+    "lines": 503,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/db/session.py",
+    "lines": 63,
+    "internal_imports": [
+      "aemr_bot.config"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/db/single_instance.py",
+    "lines": 157,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.session"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/__init__.py",
+    "lines": 159,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.handlers",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/_auth.py",
+    "lines": 78,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/_common.py",
+    "lines": 130,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_appeal_ops.py",
+    "lines": 440,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_audience.py",
+    "lines": 515,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.services.card_format",
+      "aemr_bot.utils.event",
+      "aemr_bot.utils.pii_mask"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_callback_dispatch.py",
+    "lines": 314,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_commands.py",
+    "lines": 459,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers.admin_appeal_ops",
+      "aemr_bot.handlers.admin_audience",
+      "aemr_bot.handlers.admin_operators",
+      "aemr_bot.handlers.admin_panel",
+      "aemr_bot.handlers.admin_settings",
+      "aemr_bot.handlers.admin_stats",
+      "aemr_bot.services",
+      "aemr_bot.services.stats",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_operators.py",
+    "lines": 178,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.admin_operators_wizard",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_operators_list.py",
+    "lines": 104,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.ui",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_operators_roles.py",
+    "lines": 284,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_operators_wizard.py",
+    "lines": 513,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_panel.py",
+    "lines": 503,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.utils.event",
+      "aemr_bot.utils.typing_indicator"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_resident_search.py",
+    "lines": 245,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.services.admin_events",
+      "aemr_bot.utils.event",
+      "aemr_bot.utils.typing_indicator"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings.py",
+    "lines": 384,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.admin_settings_author",
+      "aemr_bot.handlers.admin_settings_list",
+      "aemr_bot.handlers.admin_settings_notify",
+      "aemr_bot.handlers.admin_settings_obj",
+      "aemr_bot.handlers.admin_settings_pr",
+      "aemr_bot.handlers.admin_settings_quiet",
+      "aemr_bot.handlers.admin_settings_shared",
+      "aemr_bot.handlers.admin_settings_text",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_author.py",
+    "lines": 37,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_list.py",
+    "lines": 127,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.admin_settings_shared",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_notify.py",
+    "lines": 90,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.ui.settings_keyboards"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_obj.py",
+    "lines": 213,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.admin_settings_shared",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_pr.py",
+    "lines": 235,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_quiet.py",
+    "lines": 154,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.admin_settings_shared",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_shared.py",
+    "lines": 114,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_settings_text.py",
+    "lines": 144,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.admin_settings_author",
+      "aemr_bot.handlers.admin_settings_shared",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/admin_stats.py",
+    "lines": 116,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers.admin_panel",
+      "aemr_bot.services",
+      "aemr_bot.services.stats",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/appeal.py",
+    "lines": 809,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.appeal_runtime",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/appeal_funnel.py",
+    "lines": 887,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.appeal_runtime",
+      "aemr_bot.services",
+      "aemr_bot.services.admin_relay",
+      "aemr_bot.services.policy",
+      "aemr_bot.services.progress",
+      "aemr_bot.utils.attachments",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/appeal_geo.py",
+    "lines": 180,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.utils.attachments",
+      "aemr_bot.utils.event",
+      "aemr_bot.utils.typing_indicator"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/appeal_runtime.py",
+    "lines": 399,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.services",
+      "aemr_bot.services.admin_relay",
+      "aemr_bot.utils.background",
+      "aemr_bot.utils.resident_lifecycle"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/broadcast.py",
+    "lines": 926,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.broadcast_wizard",
+      "aemr_bot.services",
+      "aemr_bot.services.broadcast_utils",
+      "aemr_bot.utils",
+      "aemr_bot.utils.delivery_guard",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/broadcast_templates.py",
+    "lines": 248,
+    "internal_imports": [
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers.broadcast_templates_crud",
+      "aemr_bot.handlers.broadcast_templates_list",
+      "aemr_bot.handlers.broadcast_templates_state",
+      "aemr_bot.handlers.broadcast_templates_wizard",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/broadcast_templates_crud.py",
+    "lines": 274,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.broadcast_templates_state",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/broadcast_templates_list.py",
+    "lines": 240,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.broadcast_templates_state",
+      "aemr_bot.services",
+      "aemr_bot.utils",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/broadcast_templates_state.py",
+    "lines": 134,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/broadcast_templates_wizard.py",
+    "lines": 513,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.broadcast_templates_state",
+      "aemr_bot.services",
+      "aemr_bot.utils",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/broadcast_wizard.py",
+    "lines": 560,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._auth",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.broadcast",
+      "aemr_bot.services",
+      "aemr_bot.services.broadcast_utils",
+      "aemr_bot.utils",
+      "aemr_bot.utils.background",
+      "aemr_bot.utils.event",
+      "aemr_bot.utils.typing_indicator"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/callback_payloads.py",
+    "lines": 366,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/handlers/callback_router.py",
+    "lines": 166,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/handlers/menu.py",
+    "lines": 1141,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.appeal_funnel",
+      "aemr_bot.handlers.start",
+      "aemr_bot.services",
+      "aemr_bot.utils",
+      "aemr_bot.utils.event",
+      "aemr_bot.utils.typing_indicator"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/operator_reply.py",
+    "lines": 878,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.services",
+      "aemr_bot.services.settings_store",
+      "aemr_bot.utils",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/handlers/start.py",
+    "lines": 666,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers._common",
+      "aemr_bot.handlers.menu",
+      "aemr_bot.services",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/health.py",
+    "lines": 234,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.session"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/keyboards.py",
+    "lines": 25,
+    "internal_imports": [
+      "aemr_bot.ui.broadcast_keyboards",
+      "aemr_bot.ui.citizen_keyboards",
+      "aemr_bot.ui.operator_keyboards",
+      "aemr_bot.ui.settings_keyboards",
+      "aemr_bot.ui.wizard_keyboards"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/logging_setup.py",
+    "lines": 96,
+    "internal_imports": [
+      "aemr_bot.config"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/main.py",
+    "lines": 844,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers",
+      "aemr_bot.handlers.appeal",
+      "aemr_bot.logging_setup",
+      "aemr_bot.services",
+      "aemr_bot.transport",
+      "aemr_bot.utils.background",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/network.py",
+    "lines": 150,
+    "internal_imports": [
+      "aemr_bot.config"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/__init__.py",
+    "lines": 0,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/services/admin_bus.py",
+    "lines": 361,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.services.quiet_hours",
+      "aemr_bot.utils",
+      "aemr_bot.utils.delivery_guard",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/admin_card.py",
+    "lines": 347,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.services",
+      "aemr_bot.services.admin_relay",
+      "aemr_bot.utils",
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/admin_events.py",
+    "lines": 212,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.session",
+      "aemr_bot.services",
+      "aemr_bot.utils.pii_mask"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/admin_relay.py",
+    "lines": 258,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.services",
+      "aemr_bot.utils.attachments"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/appeals.py",
+    "lines": 757,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/backup_verify.py",
+    "lines": 272,
+    "internal_imports": [
+      "aemr_bot.config"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/broadcast_templates.py",
+    "lines": 255,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/broadcast_utils.py",
+    "lines": 136,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/broadcasts.py",
+    "lines": 506,
+    "internal_imports": [
+      "aemr_bot.db.models"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/calendar_ru.py",
+    "lines": 79,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/services/card_format.py",
+    "lines": 509,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.services.settings_store",
+      "aemr_bot.services.threat_intel",
+      "aemr_bot.texts",
+      "aemr_bot.utils.attachments",
+      "aemr_bot.utils.url_defang"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/cron.py",
+    "lines": 1481,
+    "internal_imports": [
+      "aemr_bot",
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.handlers.admin_operators",
+      "aemr_bot.handlers.appeal_runtime",
+      "aemr_bot.health",
+      "aemr_bot.network",
+      "aemr_bot.services",
+      "aemr_bot.services.backup_verify",
+      "aemr_bot.services.calendar_ru",
+      "aemr_bot.services.db_backup",
+      "aemr_bot.services.quiet_hours"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/cron_registry.py",
+    "lines": 177,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/services/db_backup.py",
+    "lines": 467,
+    "internal_imports": [
+      "aemr_bot.config"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/geo.py",
+    "lines": 272,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/services/idempotency.py",
+    "lines": 187,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.db.session"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/inbox.py",
+    "lines": 203,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.db.session",
+      "aemr_bot.services",
+      "aemr_bot.utils.resident_lifecycle"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/notify_toggles.py",
+    "lines": 104,
+    "internal_imports": [
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/operators.py",
+    "lines": 241,
+    "internal_imports": [
+      "aemr_bot.db.models"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/policy.py",
+    "lines": 94,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.session",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/progress.py",
+    "lines": 207,
+    "internal_imports": [
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/quiet_hours.py",
+    "lines": 146,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/repo_sync.py",
+    "lines": 449,
+    "internal_imports": [
+      "aemr_bot.network"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/settings_store.py",
+    "lines": 1185,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.utils.url_defang"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/sla.py",
+    "lines": 135,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.services.calendar_ru"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/stats.py",
+    "lines": 314,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.services",
+      "aemr_bot.utils.pii_mask"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/threat_intel.py",
+    "lines": 325,
+    "internal_imports": [
+      "aemr_bot.network"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/uploads.py",
+    "lines": 102,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/services/users.py",
+    "lines": 890,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.services.inbox",
+      "aemr_bot.utils.resident_lifecycle"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/wizard_persist.py",
+    "lines": 169,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.db.models",
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/services/wizard_registry.py",
+    "lines": 295,
+    "internal_imports": [
+      "aemr_bot.db.session",
+      "aemr_bot.services",
+      "aemr_bot.utils.background"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/texts.py",
+    "lines": 26,
+    "internal_imports": [
+      "aemr_bot.copy.admin_texts",
+      "aemr_bot.copy.broadcast_texts",
+      "aemr_bot.copy.citizen_funnel",
+      "aemr_bot.copy.errors_texts",
+      "aemr_bot.copy.security_texts"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/transport.py",
+    "lines": 86,
+    "internal_imports": [
+      "aemr_bot.services"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/ui/__init__.py",
+    "lines": 22,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/ui/broadcast_keyboards.py",
+    "lines": 326,
+    "internal_imports": [
+      "aemr_bot.handlers"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/ui/citizen_keyboards.py",
+    "lines": 490,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.handlers"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/ui/operator_keyboards.py",
+    "lines": 465,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.handlers"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/ui/settings_keyboards.py",
+    "lines": 270,
+    "internal_imports": [
+      "aemr_bot.handlers"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/ui/wizard_keyboards.py",
+    "lines": 229,
+    "internal_imports": [
+      "aemr_bot.db.models",
+      "aemr_bot.handlers"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/utils/__init__.py",
+    "lines": 0,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/utils/attachments.py",
+    "lines": 449,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/utils/background.py",
+    "lines": 64,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/utils/delivery_guard.py",
+    "lines": 26,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/utils/event.py",
+    "lines": 332,
+    "internal_imports": [
+      "aemr_bot.config",
+      "aemr_bot.utils"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/utils/image_attachments.py",
+    "lines": 34,
+    "internal_imports": [
+      "aemr_bot.utils.attachments"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/utils/menu_tracker.py",
+    "lines": 232,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/utils/pii_mask.py",
+    "lines": 33,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/utils/resident_lifecycle.py",
+    "lines": 88,
+    "internal_imports": []
+  },
+  {
+    "path": "bot/aemr_bot/utils/typing_indicator.py",
+    "lines": 59,
+    "internal_imports": [
+      "aemr_bot.utils.event"
+    ]
+  },
+  {
+    "path": "bot/aemr_bot/utils/url_defang.py",
+    "lines": 331,
+    "internal_imports": []
+  }
+]

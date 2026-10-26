@@ -530,3 +530,37 @@ class TestFetchMainRuntimeConfig:
             data, reason = await repo_sync.fetch_main_runtime_config(_cfg())
         assert data is None
         assert reason == "parse_failed"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("payload", [[], "bad", 123, None])
+async def test_remote_runtime_config_must_be_an_object(payload):
+    encoded = base64.b64encode(json.dumps(payload).encode()).decode()
+    with patch.object(repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch()), patch.object(repo_sync, "_GH") as gh_cls:
+        gh_cls.return_value._request = AsyncMock(return_value=(200, {"content": encoded}))
+        data, reason = await repo_sync.fetch_main_runtime_config(_cfg())
+    assert data is None
+    assert reason == "parse_failed"
+
+
+@pytest.mark.asyncio
+async def test_pr_timeout_is_visible_without_retry():
+    with patch.object(repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch()), patch.object(repo_sync, "_GH") as gh_cls:
+        gh = gh_cls.return_value
+        gh.get_ref_sha = AsyncMock(return_value="sha")
+        gh.create_branch = AsyncMock(side_effect=TimeoutError("secret request details"))
+        result = await repo_sync.create_settings_pr(
+            _cfg(), runtime_config={"k": "v"}, dirty_keys=["k"], operator_name="X", operator_id=1,
+        )
+    assert result.ok is False
+    assert result.reason == "request_failed"
+    assert result.branch in result.message
+    assert "неизвестен" in result.message
+    gh.create_branch.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_fetch_timeout_returns_failure():
+    with patch.object(repo_sync.aiohttp, "ClientSession", _aiohttp_session_patch()), patch.object(repo_sync, "_GH") as gh_cls:
+        gh_cls.return_value._request = AsyncMock(side_effect=TimeoutError())
+        assert await repo_sync.fetch_main_runtime_config(_cfg()) == (None, "fetch_failed")

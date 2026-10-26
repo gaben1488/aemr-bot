@@ -52,7 +52,19 @@ if ! systemctl is-enabled docker.service >/dev/null 2>&1; then
 fi
 
 echo "==> Копирую юнит в $UNIT_DST"
-install -m 0644 "$UNIT_SRC" "$UNIT_DST"
+# Render the selected checkout path rather than silently starting the default one.
+# Escape systemd quoted values (backslash, quote, specifier percent).
+UNIT_WORKDIR="${REPO_DIR//\\/\\\\}/infra"
+UNIT_WORKDIR="${UNIT_WORKDIR//\"/\\\"}"
+UNIT_WORKDIR="${UNIT_WORKDIR//%/%%}"
+while IFS= read -r line; do
+    if [[ "$line" == WorkingDirectory=* ]]; then
+        printf 'WorkingDirectory="%s"\n' "$UNIT_WORKDIR"
+    else
+        printf '%s\n' "$line"
+    fi
+done < "$UNIT_SRC" > "$UNIT_DST"
+chmod 0644 "$UNIT_DST"
 
 echo "==> Перечитываю systemd"
 systemctl daemon-reload

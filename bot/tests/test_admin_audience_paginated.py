@@ -331,3 +331,25 @@ class TestStartSearchIntent:
         with patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             await _start_search_intent(event, None)
         assert _search_intents[42]["category"] is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("found", [True, False])
+async def test_search_does_not_echo_private_phone_query(found):
+    from aemr_bot.handlers import admin_audience as mod
+
+    event = make_event(user_id=42)
+    phone = "+79991234567"
+    users = [TestFormatAudienceRow._user(phone=phone)] if found else []
+    cm = MagicMock()
+    cm.__aenter__ = AsyncMock(return_value=MagicMock())
+    cm.__aexit__ = AsyncMock(return_value=False)
+    mod._search_intent_set(42, "subs")
+    with (
+        patch.object(mod, "ensure_role", AsyncMock(return_value=True)),
+        patch.object(mod, "session_scope", return_value=cm),
+        patch.object(mod.users_service, "search_audience", AsyncMock(return_value=users)),
+        patch.object(mod, "op_send", AsyncMock()) as send,
+    ):
+        assert await mod.handle_audience_search_text(event, phone) is True
+    assert phone not in str(send.call_args)

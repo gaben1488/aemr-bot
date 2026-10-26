@@ -225,7 +225,9 @@ async def _save_new(event) -> None:
     if actor_id is None:
         return
     state = _wizards.get(actor_id)
-    if state is None or state.step != "new_preview":
+    if state is None or state.step != "new_preview" or state.expired():
+        if state is not None and state.expired():
+            _wizards.pop(actor_id, None)
         await op_screen(event, texts.OP_TMPL_CANCELLED)
         return
     op = await get_operator(event)
@@ -432,7 +434,10 @@ async def _save_edit(event, template_id: int) -> None:
         state is None
         or state.step != "edit_preview"
         or state.target_id != template_id
+        or state.expired()
     ):
+        if state is not None and state.expired():
+            _wizards.pop(actor_id, None)
         await op_screen(event, texts.OP_TMPL_CANCELLED)
         return
     op = await get_operator(event)
@@ -452,6 +457,14 @@ async def _save_edit(event, template_id: int) -> None:
         except templates_service.TemplateNotFound:
             _wizards.pop(actor_id, None)
             await op_screen(event, texts.OP_TMPL_NOT_FOUND)
+            return
+        except ValueError as exc:
+            state.step = "edit_awaiting_text"
+            state.renew()
+            await op_screen(
+                event, f"Ошибка сохранения: {exc}\n\nПришлите исправленный текст.",
+                keyboards.broadcast_template_cancel_keyboard(),
+            )
             return
         if op_id is not None:
             await operators_service.write_audit(

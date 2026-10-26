@@ -18,7 +18,7 @@ Cluster G (Codex PR 9). До этого оператор мог попасть �
 
 Маскировка телефона обязательна на всех уровнях:
 - В выводе оператору — `+7***1234` (`services/admin_events._mask_phone`).
-- В audit-log запись — хешированный fragment, не plain телефон.
+- В audit-log запись — маскированный номер с последними четырьмя цифрами.
 - В логах — никогда полный телефон.
 """
 from __future__ import annotations
@@ -72,7 +72,7 @@ def _detect_query_kind(query: str) -> tuple[str, str]:
 
 def _mask_query_for_audit(kind: str, value: str) -> str:
     """Подготовить query для audit-log: для phone маскируем последние
-    4 цифры, для max_user_id оставляем как есть (это не PII)."""
+    4 цифры, для max_user_id оставляем идентификатор для аудита поиска."""
     if kind == "phone":
         return _mask_phone(value)
     return value

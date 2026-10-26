@@ -558,7 +558,8 @@ class TestStepRenameGuards:
         )
         state = bt._wizards[7]
         get_by_id = AsyncMock()
-        with patch(f"{_CRUD}.session_scope", _fake_session_scope), \
+        with patch(f"{_CRUD}.ensure_role", AsyncMock(return_value=True)), \
+             patch(f"{_CRUD}.session_scope", _fake_session_scope), \
              patch(f"{_CRUD}.templates_service.get_by_id", get_by_id):
             consumed = await bt._step_rename(
                 event, 7, state, "Корректное имя", op_id=99
@@ -583,7 +584,8 @@ class TestStepCloneNameValidation:
         )
         state = bt._wizards[7]
         create = AsyncMock()
-        with patch(f"{_CRUD}.session_scope", _fake_session_scope), \
+        with patch(f"{_CRUD}.ensure_role", AsyncMock(return_value=True)), \
+             patch(f"{_CRUD}.session_scope", _fake_session_scope), \
              patch(f"{_CRUD}.templates_service.create_template", create):
             consumed = await bt._step_clone_name(
                 event, 7, state, "", op_id=99
@@ -605,7 +607,8 @@ class TestStepCloneNameValidation:
         )
         long_name = "z" * (bt_crud.templates_service.MAX_NAME_LEN + 1)
         create = AsyncMock()
-        with patch(f"{_CRUD}.session_scope", _fake_session_scope), \
+        with patch(f"{_CRUD}.ensure_role", AsyncMock(return_value=True)), \
+             patch(f"{_CRUD}.session_scope", _fake_session_scope), \
              patch(f"{_CRUD}.templates_service.create_template", create):
             consumed = await bt._step_clone_name(
                 event, 7, state, long_name, op_id=99
@@ -874,7 +877,8 @@ class TestAuditSkipNoOperator:
         state = bt._wizards[7]
         rename = AsyncMock(return_value=_tmpl(tid=5, name="Новое"))
         write_audit = AsyncMock()
-        with patch(f"{_CRUD}.session_scope", _fake_session_scope), \
+        with patch(f"{_CRUD}.ensure_role", AsyncMock(return_value=True)), \
+             patch(f"{_CRUD}.session_scope", _fake_session_scope), \
              patch(f"{_CRUD}.templates_service.get_by_id",
                    AsyncMock(return_value=_tmpl(tid=5, name="Старое"))), \
              patch(f"{_CRUD}.templates_service.rename", rename), \

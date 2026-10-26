@@ -9,11 +9,12 @@
 Workflow:
 1. На старте бота `await hydrate_into_registry(session)` подгружает
    активные записи из БД в in-memory dict'ы registry.
-2. Handler зовёт `wr.set_op_wizard(operator_id, state)` — обновляет
-   in-memory СРАЗУ.
-3. Тот же handler зовёт `await save_op_wizard(session, ...)` —
-   обновляет БД (UPSERT).
-4. На clear то же самое: `wr.clear_op_wizard()` + `await delete_op_wizard()`.
+2. Handler обновляет in-memory состояние и зеркало в wizard_registry.
+3. `schedule_persist_op` / `schedule_persist_broadcast` ставит снимок
+   в фоновую очередь registry; очередь вызывает save_* (UPSERT)
+   в отдельной сессии, сохраняя порядок записей каждого мастера.
+4. При clear зеркало очищается, а schedule_persist_* ставит DELETE
+   в ту же очередь после ранее запланированных сохранений.
 
 Если БД-вызов упадёт (network blip), in-memory остаётся правильным;
 рестарт в этот момент потеряет state, но это не хуже чем раньше.

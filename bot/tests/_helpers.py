@@ -79,7 +79,7 @@ def make_event(
         ),
     }
     if with_callback:
-        event_kwargs["callback"] = SimpleNamespace(callback_id="cb-1")
+        event_kwargs["callback"] = SimpleNamespace(callback_id="cb-1", user=SimpleNamespace(**sender_kwargs))
     if with_user:
         event_kwargs["user"] = SimpleNamespace(**sender_kwargs)
     return SimpleNamespace(**event_kwargs)

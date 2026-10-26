@@ -124,10 +124,13 @@ async def mark_in_progress(session: AsyncSession, appeal_id: int) -> bool:
     return result.rowcount > 0
 
 
-async def get_by_id(session: AsyncSession, appeal_id: int) -> Appeal | None:
-    return await session.scalar(
-        select(Appeal).options(selectinload(Appeal.user)).where(Appeal.id == appeal_id)
-    )
+async def get_by_id(
+    session: AsyncSession, appeal_id: int, *, for_update: bool = False
+) -> Appeal | None:
+    query = select(Appeal).options(selectinload(Appeal.user)).where(Appeal.id == appeal_id)
+    if for_update:
+        query = query.with_for_update().execution_options(populate_existing=True)
+    return await session.scalar(query)
 
 
 async def get_by_id_with_messages(

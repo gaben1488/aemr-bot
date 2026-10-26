@@ -164,3 +164,11 @@ class TestNoLiveFormulaInWorkbook:
         cell = ws.cell(row=2, column=11)
         assert cell.data_type != "f"
         assert cell.value == "'" + payload
+
+
+@pytest.mark.parametrize("control", ["\x00", "\x01", "\x0b", "\ufffe", "\ud800"])
+def test_invalid_xml_characters_cannot_break_export_or_expose_formula(control):
+    content = stats._render_workbook([_appeal(summary=control + "=1+1")])
+    wb = load_workbook(io.BytesIO(content))
+    assert wb.active["I2"].value == "'=1+1"
+    assert wb.active["I2"].data_type == "s"

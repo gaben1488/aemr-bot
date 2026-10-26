@@ -1,4 +1,5 @@
 import asyncio
+import re
 from datetime import UTC, datetime, timedelta
 from io import BytesIO
 from zoneinfo import ZoneInfo
@@ -28,6 +29,8 @@ VALID_PERIODS = ("today", "week", "month", "quarter", "half_year", "year", "all"
 # ре-сейве) тоже трактуют как начало формулы. Fail-closed: для любого
 # user-controlled значения, начинающегося с этих символов, префиксуем
 # апострофом — Excel показывает текст как есть и не вычисляет.
+_XML_INVALID_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
+
 _FORMULA_TRIGGERS = ("=", "+", "-", "@", "\t", "\r")
 
 
@@ -40,8 +43,12 @@ def _sanitize_cell(value):
     меняется: '=' в начале у обычного обращения встречается крайне редко,
     а апостроф невидим в ячейке (Excel-конвенция «текст as-is»).
     """
-    if isinstance(value, str) and value.startswith(_FORMULA_TRIGGERS):
-        return "'" + value
+    if isinstance(value, str):
+        # Remove characters that XML 1.0 cannot serialize before checking
+        # formula prefixes: removing a control can expose a leading equals.
+        value = _XML_INVALID_CHARS.sub("", value)
+        if value.startswith(_FORMULA_TRIGGERS):
+            return "'" + value
     return value
 
 

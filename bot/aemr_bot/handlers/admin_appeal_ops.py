@@ -175,7 +175,7 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
 
     # Сбрасываем чужие wizard'ы того же оператора.
     broadcast_handler._wizards.pop(operator_id, None)
-    admin_operators._op_wizards.pop(operator_id, None)
+    admin_operators._op_wizard_drop(operator_id)
 
     # P2 #22 — race rapid double-tap: если оператор уже готовил ответ
     # на ДРУГОЕ обращение, intent перезаписался бы молча, и следующее

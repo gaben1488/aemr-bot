@@ -25,7 +25,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 from zoneinfo import ZoneInfo
 
 from aemr_bot.config import settings
@@ -73,7 +73,7 @@ async def _wait_proc(
     """
     try:
         return await asyncio.wait_for(proc.wait(), timeout=timeout)
-    except TimeoutError as e:
+    except (TimeoutError, asyncio.CancelledError) as e:
         log.error(
             "backup: %s не завершился за %.0fс — убиваю процесс (pid=%s)",
             label,
@@ -91,6 +91,8 @@ async def _wait_proc(
             await asyncio.wait_for(proc.wait(), timeout=10.0)
         except TimeoutError:
             log.warning("backup: %s не отозвался на kill за 10с", label)
+        if isinstance(e, asyncio.CancelledError):
+            raise
         raise BackupTimeoutError(
             f"{label} timed out after {timeout:.0f}s"
         ) from e
@@ -131,9 +133,9 @@ def _build_pg_env() -> dict[str, str]:
         **os.environ,
         "PGHOST": parsed.hostname or "localhost",
         "PGPORT": str(parsed.port or 5432),
-        "PGUSER": parsed.username or "",
-        "PGPASSWORD": parsed.password or "",
-        "PGDATABASE": (parsed.path or "/").lstrip("/"),
+        "PGUSER": unquote(parsed.username or ""),
+        "PGPASSWORD": unquote(parsed.password or ""),
+        "PGDATABASE": unquote((parsed.path or "/").lstrip("/")),
     }
 
 
@@ -182,15 +184,14 @@ async def _run_pg_dump_encrypted(
     соединяем через ОС-pipe (Unix way) — asyncio StreamReader как
     stdin не работает в Python 3.12 (нет .fileno() у StreamReader).
     """
-    # Pipe для passphrase. Запись делаем через executor, потому что
-    # синхронный os.write блокирует event-loop: при passphrase >64KB
-    # или забитом OS pipe-буфере (если gpg ещё не запущен и не читает
-    # на той стороне) write зависнет, а с ним замрёт весь бот. Для
-    # типичных 30-символьных паролей буфер заведомо больше — но это
-    # не повод полагаться на «обычно норм».
+    # A passphrase is one line in GPG's fd protocol. Keep it within the
+    # POSIX minimum atomic pipe capacity so the pre-spawn write cannot block.
+    secret = passphrase.encode() + b"\n"
+    if len(secret) > 512 or b"\n" in secret[:-1] or b"\r" in secret[:-1]:
+        raise BackupGpgError("GPG passphrase must be one line and at most 511 UTF-8 bytes")
     pp_r, pp_w = os.pipe()
     try:
-        await asyncio.to_thread(os.write, pp_w, passphrase.encode() + b"\n")
+        await asyncio.to_thread(os.write, pp_w, secret)
     finally:
         os.close(pp_w)
 
@@ -268,7 +269,7 @@ async def _run_pg_dump_encrypted(
         gpg_rc, dump_rc = await asyncio.wait_for(
             asyncio.gather(gpg.wait(), dump.wait()), timeout=budget
         )
-    except TimeoutError as e:
+    except (TimeoutError, asyncio.CancelledError) as e:
         log.error(
             "backup: pg_dump|gpg не завершились за %.0fс — убиваю оба",
             budget,
@@ -282,6 +283,8 @@ async def _run_pg_dump_encrypted(
                 await asyncio.wait_for(proc.wait(), timeout=10.0)
             except TimeoutError:
                 log.warning("backup: %s не отозвался на kill за 10с", label)
+        if isinstance(e, asyncio.CancelledError):
+            raise
         raise BackupTimeoutError(
             f"pg_dump|gpg timed out after {budget:.0f}s"
         ) from e
@@ -361,7 +364,6 @@ async def backup_db() -> BackupResult:
         )
 
     target_dir = local_dir
-    target_dir.mkdir(parents=True, exist_ok=True)
 
     # Параноидальная проверка: пустая строка в env "" даст truthy False,
     # но если кто-то поставит passphrase из 1 символа — gpg запустится
@@ -403,8 +405,9 @@ async def backup_db() -> BackupResult:
     ts = datetime.now(TZ).strftime("%Y%m%d_%H%M%S")
     out = target_dir / f"aemr-{ts}{suffix}"
 
-    env = _build_pg_env()
     try:
+        target_dir.mkdir(parents=True, exist_ok=True)
+        env = _build_pg_env()
         if encrypt:
             await _run_pg_dump_encrypted(out, env, passphrase or "")
         else:
@@ -416,6 +419,12 @@ async def backup_db() -> BackupResult:
         except OSError:
             log.warning("could not chmod backup %s to 0600", out.name)
         log.info("backup written: %s (%d bytes)", out.name, out.stat().st_size)
+    except asyncio.CancelledError:
+        try:
+            out.unlink(missing_ok=True)
+        except OSError:
+            log.warning("could not remove cancelled backup %s", out.name)
+        raise
     except BackupPgDumpError as e:
         log.exception("backup failed: pg_dump")
         try:
@@ -445,7 +454,10 @@ async def backup_db() -> BackupResult:
             fail_detail=f"{type(e).__name__}: {str(e)[:150]}",
         )
 
-    _rotate_backups(target_dir, settings.backup_keep_count, suffix)
+    try:
+        _rotate_backups(target_dir, settings.backup_keep_count, suffix)
+    except OSError:
+        log.exception("backup rotation failed (local copy still intact)")
 
     try:
         await _upload_to_s3(out)
