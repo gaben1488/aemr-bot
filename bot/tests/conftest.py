@@ -51,7 +51,7 @@ hypothesis_settings.load_profile("aemr")
 
 @pytest_asyncio.fixture(autouse=True)
 async def _no_async_leaks_between_tests() -> AsyncIterator[None]:
-    """Не выпускать фоновые задачи и соединения псевдо-БД за границу теста.
+    """Не выпускать фоновые задачи и соединения за границу теста.
 
     Диагноз (2026-08-07): полный прогон намертво вставал около 79 %
     (`tests/test_sec_broadcast.py`), при этом любая партия файлов

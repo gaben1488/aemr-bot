@@ -131,19 +131,10 @@ async def _ensure_funnel_callback_state(
     if not expected:
         return True
 
-    try:
-        async with current_user(max_user_id) as (_, user):
-            current = _state_value(getattr(user, "dialog_state", None))
-    except Exception:
-        # Если БД недоступна, основной handler всё равно не сможет
-        # корректно выполнить бизнес-операцию. Для unit-тестов с
-        # неполными session mocks не превращаем guard в источник падений.
-        log.debug("callback state guard skipped for %s", payload, exc_info=True)
-        return True
-
-    if current is None:
-        # Тестовые заглушки иногда не содержат настоящего dialog_state.
-        return True
+    # Storage errors must reach the dispatcher error path before any callback
+    # mutation. Test doubles must supply state, not weaken the production guard.
+    async with current_user(max_user_id) as (_, user):
+        current = _state_value(getattr(user, "dialog_state", None))
 
     expected_values = {state.value for state in expected}
     if current in expected_values:

@@ -593,8 +593,8 @@
     },
     {
       "path": "bot/aemr_bot/handlers/appeal.py",
-      "sha256": "43ffb6eded33bcf1893acda169d8bc883311c26856cc22bfcbf589ec2e1de97f",
-      "lines": 819,
+      "sha256": "bcc83381a35e354c8e65c65f6b282b9cd9a306bc690fca71426dbb4602669994",
+      "lines": 810,
       "internal_imports": [
         "aemr_bot",
         "aemr_bot.config",

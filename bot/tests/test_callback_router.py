@@ -224,8 +224,15 @@ class TestMalformedAdminPayloads:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("payload", ["topic:x", "locality:x"])
     async def test_malformed_citizen_ids_are_acked_without_action(
-        self, on_callback, payload
+        self, on_callback, payload, monkeypatch
     ) -> None:
+        from aemr_bot.handlers import appeal
+        from tests._helpers import fake_current_user
+
+        state = "awaiting_topic" if payload.startswith("topic:") else "awaiting_locality"
+        monkeypatch.setattr(appeal, "current_user", fake_current_user(
+            SimpleNamespace(dialog_state=state),
+        ))
         event = _callback_event(payload=payload, chat_id=555)
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 123), \
              patch("aemr_bot.handlers.appeal.ack_callback", AsyncMock()) as ack, \
