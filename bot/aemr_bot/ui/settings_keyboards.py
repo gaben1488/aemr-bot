@@ -17,6 +17,7 @@ from maxapi.types import CallbackButton, LinkButton
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
 from aemr_bot.handlers import callback_payloads as cp
+from aemr_bot.services.settings_store import value_revision
 
 
 def op_settings_menu_keyboard(dirty_count: int = 0):
@@ -83,6 +84,7 @@ def op_settings_list_keyboard(key: str, items: list[str]):
     """CRUD-меню для строкового списка (topics, localities). Сам список
     показывается в тексте, кнопки — действия над ним."""
     kb = InlineKeyboardBuilder()
+    revision = value_revision(items)
     kb.row(CallbackButton(text="➕ Добавить", payload=cp.op_set(f"list_add:{key}")))
     if items:
         # Показываем до 30 элементов по одной кнопке — больше MAX обрежет
@@ -91,7 +93,7 @@ def op_settings_list_keyboard(key: str, items: list[str]):
             kb.row(
                 CallbackButton(
                     text=f"🗑 {i+1}. {label}",
-                    payload=cp.op_set(f"list_del:{key}:{i}"),
+                    payload=cp.op_set(f"list_del:{key}:{i}:{revision}"),
                 )
             )
     kb.row(CallbackButton(text="↩️ Назад", payload=cp.OP_SETTINGS))
@@ -102,6 +104,7 @@ def op_settings_obj_keyboard(key: str, items: list[dict]):
     """CRUD-меню для списка объектов (emergency_contacts, transport_dispatcher_contacts).
     Каждый объект — кнопка с краткой подписью; тап откроет действия."""
     kb = InlineKeyboardBuilder()
+    revision = value_revision(items)
     kb.row(CallbackButton(text="➕ Добавить", payload=cp.op_set(f"obj_add:{key}")))
     for i, item in enumerate(items[:20]):
         # Подпись зависит от типа: для emergency — name+phone, для
@@ -115,17 +118,19 @@ def op_settings_obj_keyboard(key: str, items: list[dict]):
         kb.row(
             CallbackButton(
                 text=f"{i+1}. {label}",
-                payload=cp.op_set(f"obj_view:{key}:{i}"),
+                payload=cp.op_set(f"obj_view:{key}:{i}:{revision}"),
             )
         )
     kb.row(CallbackButton(text="↩️ Назад", payload=cp.OP_SETTINGS))
     return kb.as_markup()
 
 
-def op_settings_obj_item_keyboard(key: str, index: int):
+def op_settings_obj_item_keyboard(key: str, index: int, revision: str):
     """Карточка одного объекта — удалить / назад."""
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="🗑 Удалить запись", payload=cp.op_set(f"obj_del:{key}:{index}")))
+    kb.row(CallbackButton(
+        text="🗑 Удалить запись", payload=cp.op_set(f"obj_del:{key}:{index}:{revision}"),
+    ))
     kb.row(CallbackButton(text="↩️ Назад", payload=cp.op_set(f"obj:{key}")))
     return kb.as_markup()
 

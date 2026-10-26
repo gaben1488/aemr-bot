@@ -32,6 +32,8 @@ import logging
 from collections import deque
 from collections.abc import Callable, Coroutine
 from copy import deepcopy
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 from aemr_bot.db.session import session_scope
@@ -140,9 +142,9 @@ def reset_all() -> None:
 # но рестарт бота терял state. Эти хуки сохраняют state в Postgres
 # таблицу wizard_state без блокировки caller'а.
 #
-# Дизайн: handlers продолжают звать sync-функции (set_op_wizard,
-# clear_op_wizard и т.д.) — а эти хуки автоматически spawn'ят background
-# task, который запишет в БД. На старте бота `wizard_persist.hydrate_*`
+# Дизайн: handlers вызывают schedule_persist_* после изменения состояния.
+# Эти хуки spawn'ят background task, который запишет в БД.
+# На старте бота `wizard_persist.hydrate_*`
 # подгружает обратно в in-memory.
 #
 # Если БД-запись упала — лог warning, in-memory остаётся правильным.
@@ -154,13 +156,29 @@ def reset_all() -> None:
 # Keep it in the shared background registry so shutdown waits for the whole
 # queue, including deletes enqueued while an older save is committing.
 _PersistFactory = Callable[[], Coroutine[Any, Any, None]]
+
+
+@dataclass(frozen=True, slots=True)
+class _PersistOperation:
+    factory: _PersistFactory
+    is_delete: bool
+
+
 _persist_queues: dict[
-    tuple[str, int], tuple[deque[_PersistFactory], asyncio.Task[None]]
+    tuple[str, int], tuple[deque[_PersistOperation], asyncio.Task[None]]
 ] = {}
 
 
-def _spawn_persist(key: tuple[str, int], coro_factory: _PersistFactory) -> None:
-    """Queue writes in caller order; separate wizard keys remain independent.
+def _spawn_persist(
+    key: tuple[str, int], coro_factory: _PersistFactory, *, is_delete: bool = False,
+) -> None:
+    """Keep ordered, bounded writes; separate wizard keys remain independent.
+
+    Each write is a complete snapshot or a delete, so later writes supersede
+    intermediate snapshots. Keep at most three pending writes: the oldest,
+    the latest delete barrier, and the newest snapshot. Keeping the delete
+    before a recreated draft prevents an old draft returning if that new
+    save fails. A stalled DB cannot accumulate every intermediate snapshot.
 
     Errors are best effort (logged by the write), and the next write still
     runs. Shutdown cancellation closes the active session, drops queued
@@ -171,18 +189,27 @@ def _spawn_persist(key: tuple[str, int], coro_factory: _PersistFactory) -> None:
         asyncio.get_running_loop()
     except RuntimeError:
         return
+    operation = _PersistOperation(coro_factory, is_delete)
     current = _persist_queues.get(key)
     if current is not None and not current[1].done():
-        current[0].append(coro_factory)
+        pending = current[0]
+        if len(pending) >= 2:
+            if is_delete:
+                oldest = pending.popleft()
+                pending.clear()
+                pending.append(oldest)
+            elif not pending[-1].is_delete:
+                pending.pop()
+        pending.append(operation)
         return
 
-    pending = deque([coro_factory])
+    pending = deque([operation])
 
     async def run() -> None:
         while pending:
             operation = pending.popleft()
             try:
-                await operation()
+                await operation.factory()
             except Exception:
                 log.warning("wizard_registry: queued write for %s failed", key, exc_info=True)
 
@@ -258,19 +285,27 @@ async def _persist_delete_broadcast(operator_id: int) -> None:
         )
 
 
+class _RegistryDefault(Enum):
+    CURRENT = "current"
+
+
 def schedule_persist_op(
-    operator_id: int, state: dict[str, Any] | None = None
+    operator_id: int,
+    state: dict[str, Any] | None | _RegistryDefault = _RegistryDefault.CURRENT,
 ) -> None:
     """После set/update/clear op-wizard — синхронизировать с БД в фоне.
 
-    Если `state` передан явно — используем его (handler хранит свой
-    собственный dict, не registry's). Если не передан — берём из
-    registry. None в обоих случаях = delete.
+    Явный `state=None` всегда удаляет состояние, включая зеркало после
+    гидратации. Без аргумента берём состояние из registry. Переданный
+    dict — снимок handler'а, который хранит собственное состояние.
     """
-    if state is None:
+    if state is _RegistryDefault.CURRENT:
         state = _op_wizards.get(operator_id)
     if state is None:
-        _spawn_persist(("op", operator_id), lambda: _persist_delete_op(operator_id))
+        clear_op_wizard(operator_id)
+        _spawn_persist(
+            ("op", operator_id), lambda: _persist_delete_op(operator_id), is_delete=True,
+        )
     else:
         # Копия dict, чтобы фоновая запись видела immutable snapshot.
         snapshot = deepcopy(state)
@@ -278,16 +313,21 @@ def schedule_persist_op(
 
 
 def schedule_persist_broadcast(
-    operator_id: int, state: dict[str, Any] | None = None
+    operator_id: int,
+    state: dict[str, Any] | None | _RegistryDefault = _RegistryDefault.CURRENT,
 ) -> None:
     """После set/update/clear broadcast-wizard — синхронизировать с БД.
 
     `state` см. docstring `schedule_persist_op`.
     """
-    if state is None:
+    if state is _RegistryDefault.CURRENT:
         state = _broadcast_wizards.get(operator_id)
     if state is None:
-        _spawn_persist(("broadcast", operator_id), lambda: _persist_delete_broadcast(operator_id))
+        clear_broadcast_wizard(operator_id)
+        _spawn_persist(
+            ("broadcast", operator_id), lambda: _persist_delete_broadcast(operator_id),
+            is_delete=True,
+        )
     else:
         snapshot = deepcopy(state)
         _spawn_persist(

@@ -88,10 +88,9 @@ def _schedule_persist(operator_id: int, state: _WizardState | None) -> None:
     считает сам `wizard_persist` (тот же TTL), а при гидратации мастер
     получает свежий отсчёт.
 
-    Зеркало в `wizard_registry` обновляем тем же снимком. Иначе
-    `schedule_persist_broadcast(id, None)` при удалении подобрал бы в
-    registry уцелевшую копию (её кладёт гидратация) и превратил бы
-    DELETE в повторный UPSERT — отменённый черновик воскресал бы.
+    Зеркало в `wizard_registry` обновляем тем же снимком. Явный
+    `schedule_persist_broadcast(id, None)` всегда удаляет состояние;
+    вызов без второго аргумента сохраняет текущую копию из registry.
     """
     if state is None:
         wizard_registry.clear_broadcast_wizard(operator_id)

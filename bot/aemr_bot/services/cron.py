@@ -3,11 +3,13 @@ from __future__ import annotations
 import asyncio
 import functools
 import logging
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import aiohttp
-from apscheduler.events import EVENT_JOB_ERROR, JobExecutionEvent
+from apscheduler.events import EVENT_JOB_ERROR, EVENT_SCHEDULER_SHUTDOWN, JobExecutionEvent
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
@@ -1155,7 +1157,64 @@ def _on_job_error(event: JobExecutionEvent) -> None:
 # ============================================================================
 
 
-def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOScheduler:
+class GracefulAsyncIOScheduler(AsyncIOScheduler):
+    """Drain our coroutine jobs before APScheduler cancels executor futures.
+
+    APScheduler 3.11's AsyncIOExecutor ignores shutdown(wait=True). Keep an
+    application-owned registry instead of depending on executor internals.
+    """
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self._running_jobs: dict[asyncio.Task, str] = {}
+
+    def track_job(self, func: Callable[[], Awaitable[Any]], name: str):
+        @functools.wraps(func)
+        async def tracked():
+            task = asyncio.current_task()
+            assert task is not None
+            self._running_jobs[task] = name
+            try:
+                return await func()
+            finally:
+                self._running_jobs.pop(task, None)
+
+        return tracked
+
+    async def shutdown_gracefully(self, timeout: float = 10.0) -> list[str]:
+        """Stop new runs, allow current jobs a bounded drain, then stop APScheduler."""
+        if not self.running:
+            return []
+        self.pause()
+        # Jobs submitted in the preceding loop turn must enter track_job first.
+        await asyncio.sleep(0)
+        running = dict(self._running_jobs)
+        pending: set[asyncio.Task] = set()
+        if running:
+            _, pending = await asyncio.wait(running, timeout=timeout)
+        abandoned = sorted(running[task] for task in pending)
+        for task in pending:
+            task.cancel()
+        if pending:
+            # Join cancellation cleanup while DB and HTTP clients are still open.
+            await asyncio.wait(pending, timeout=2.0)
+
+        stopped = asyncio.Event()
+
+        def on_shutdown(event) -> None:
+            stopped.set()
+
+        self.add_listener(on_shutdown, EVENT_SCHEDULER_SHUTDOWN)
+        try:
+            self.shutdown(wait=False)
+            # AsyncIOScheduler.shutdown schedules its work on the event loop.
+            await stopped.wait()
+        finally:
+            self.remove_listener(on_shutdown)
+        return abandoned
+
+
+def build_scheduler(bot, send_admin_document, send_admin_text) -> GracefulAsyncIOScheduler:
     """Собрать APScheduler со всеми job'ами бота.
 
     Все jobs вынесены на module-level (см. _job_* выше); здесь —
@@ -1166,7 +1225,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
     явным параметром, чтобы services не импортировал точку входа
     `main.bot` лазево.
     """
-    scheduler = AsyncIOScheduler(timezone=TZ)
+    scheduler = GracefulAsyncIOScheduler(timezone=TZ)
     pulse = functools.partial(_job_pulse, send_admin_text)
 
     # (func, trigger, name). Общие max_instances=1 / coalesce=True /
@@ -1410,7 +1469,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
 
     for func, trigger, name in jobs:
         scheduler.add_job(
-            func,
+            scheduler.track_job(func, name),
             trigger,
             id=name,
             name=name,
@@ -1422,7 +1481,9 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
 
     from aemr_bot.handlers.appeal_runtime import recover_unpublished_appeals
     scheduler.add_job(
-        functools.partial(recover_unpublished_appeals, bot), "interval", seconds=60,
+        scheduler.track_job(
+            functools.partial(recover_unpublished_appeals, bot), "initial-card-recovery"
+        ), "interval", seconds=60,
         id="initial-card-recovery", max_instances=1, coalesce=True,
         next_run_time=datetime.now(TZ), misfire_grace_time=_MISFIRE_GRACE_SEC,
     )
@@ -1449,9 +1510,7 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
 # соединение пока процесс жив — один handshake на старте, дальше HTTP/1.1
 # pipelining либо новый коннект только если сервер закрыл предыдущий.
 #
-# Закрытия не делаем — session живёт до конца процесса. APScheduler при
-# shutdown отменяет джобы, висящий `await s.get(...)` свернётся через
-# timeout=10. Утечки не будет (один session на процесс).
+# main закрывает session после дренажа cron-задач, до выхода event loop.
 _HEALTHCHECK_SESSION: aiohttp.ClientSession | None = None
 
 
@@ -1479,3 +1538,11 @@ async def _ping_healthcheck() -> None:
         await session.get(settings.healthcheck_url)
     except Exception:
         log.warning("healthcheck ping failed", exc_info=True)
+
+
+async def close_healthcheck_session() -> None:
+    """Close the shared ping client after scheduler jobs have stopped."""
+    global _HEALTHCHECK_SESSION
+    if _HEALTHCHECK_SESSION is not None:
+        await _HEALTHCHECK_SESSION.close()
+        _HEALTHCHECK_SESSION = None

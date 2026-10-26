@@ -21,6 +21,7 @@ from aemr_bot.db.models import InboxEvent
 from aemr_bot.db.session import session_scope
 
 log = logging.getLogger(__name__)
+_RECEIPT_BATCH_SIZE = 250
 
 
 @dataclass
@@ -39,7 +40,8 @@ def _identity(payload: dict) -> tuple[str, int | None]:
         return value if isinstance(value, dict) else {}
     msg = obj(payload.get("message"))
     callback = obj(payload.get("callback"))
-    user = obj(callback.get("user")) or obj(payload.get("user")) or obj(msg.get("sender"))
+    user = (obj(callback.get("user")) if payload.get("update_type") == "message_callback"
+            else obj(payload.get("user")) or obj(msg.get("sender")))
     user_id = user.get("user_id")
     body = obj(msg.get("body"))
     # MAX IDs, not display text/name or JSON key order, define a duplicate.
@@ -60,12 +62,18 @@ async def accept(events: list[dict]) -> None:
     if not events:
         return
     async with session_scope() as session:
-        for payload in events:
-            key, user_id = _identity(payload)
-            await session.execute(insert(InboxEvent).values(
-                event_key=key, update_type=str(payload.get("update_type", "unknown"))[:64],
-                max_user_id=user_id, payload=payload,
-            ).on_conflict_do_nothing(index_elements=[InboxEvent.event_key]))
+        # Bound SQL parameter count while committing the entire transport batch
+        # atomically. Deduplication remains in PostgreSQL, including same-batch IDs.
+        for offset in range(0, len(events), _RECEIPT_BATCH_SIZE):
+            rows = []
+            for payload in events[offset:offset + _RECEIPT_BATCH_SIZE]:
+                key, user_id = _identity(payload)
+                rows.append({"event_key": key,
+                             "update_type": str(payload.get("update_type", "unknown"))[:64],
+                             "max_user_id": user_id, "payload": payload})
+            await session.execute(insert(InboxEvent).values(rows).on_conflict_do_nothing(
+                index_elements=[InboxEvent.event_key],
+            ))
 
 
 async def recover_interrupted() -> None:
@@ -183,9 +191,12 @@ async def _dispatch_claimed(dp, bot, event_id: int, payload: dict) -> bool:
 async def run(dp, bot, stop: asyncio.Event) -> None:
     """Serial dispatch preserves resident event order; ingestion remains independent."""
     next_maintenance = 0.0
+    needs_recovery = True
     while not stop.is_set():
         try:
-            await recover_interrupted()
+            if needs_recovery:
+                await recover_interrupted()
+                needs_recovery = False
             if asyncio.get_running_loop().time() >= next_maintenance:
                 await maintenance(bot)
                 next_maintenance = asyncio.get_running_loop().time() + 60
@@ -195,6 +206,8 @@ async def run(dp, bot, stop: asyncio.Event) -> None:
         except asyncio.CancelledError:
             raise
         except Exception as exc:
+            # An iteration may have claimed work but failed to commit its outcome.
+            needs_recovery = True
             # Never log payloads, SQL parameters or SDK exception representations.
             log.error("inbox iteration failed (%s)", type(exc).__name__)
         try:

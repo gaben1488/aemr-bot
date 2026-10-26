@@ -180,3 +180,29 @@ async def test_find_stuck_in_funnel_includes_geo_confirm(session) -> None:
 
     rows = await users_service.find_stuck_in_funnel(session, idle_seconds=3600)
     assert (404, DialogState.AWAITING_GEO_CONFIRM.value) in rows
+
+
+@pytest.mark.asyncio
+async def test_callback_state_lookup_failure_cannot_bypass_guard(monkeypatch):
+    @asynccontextmanager
+    async def unavailable(*args, **kwargs):
+        raise RuntimeError("database unavailable")
+        yield  # pragma: no cover
+
+    monkeypatch.setattr(appeal, "current_user", unavailable)
+    with pytest.raises(RuntimeError, match="database unavailable"):
+        await appeal._ensure_funnel_callback_state(SimpleNamespace(), 7, "appeal:submit")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("state", [None, 123, "not-a-dialog-state"])
+async def test_missing_or_invalid_callback_state_is_rejected(monkeypatch, state):
+    @asynccontextmanager
+    async def current_user(*args, **kwargs):
+        yield object(), SimpleNamespace(dialog_state=state)
+
+    ack = AsyncMock()
+    monkeypatch.setattr(appeal, "current_user", current_user)
+    monkeypatch.setattr(appeal, "ack_callback", ack)
+    assert not await appeal._ensure_funnel_callback_state(SimpleNamespace(), 7, "topic:0")
+    ack.assert_awaited_once()

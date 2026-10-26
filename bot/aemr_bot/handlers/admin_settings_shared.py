@@ -112,3 +112,15 @@ def _parse_key_idx(suffix: str) -> tuple[str, int] | None:
     except ValueError:
         return None
     return key, idx
+
+
+def _parse_key_idx_revision(suffix: str) -> tuple[str, int, str | None] | None:
+    """Accept legacy buttons for refresh, but require a revision to mutate."""
+    parts = suffix.split(":")
+    if len(parts) not in (2, 3):
+        return None
+    parsed = _parse_key_idx(":".join(parts[:2]))
+    if parsed is None:
+        return None
+    key, idx = parsed
+    return key, idx, parts[2] if len(parts) == 3 else None

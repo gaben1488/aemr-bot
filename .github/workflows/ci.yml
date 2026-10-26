@@ -46,13 +46,8 @@ jobs:
           # поедут в образ. `--no-emit-project` выкидывает сам aemr-bot
           # (его нет на PyPI), `--no-hashes` — pip-audit хеши не читает.
           uv export --frozen --no-emit-project --no-hashes --all-extras             > audit-requirements.thirdparty.txt
-          # Игнорируемых CVE больше нет: PYSEC-2026-161 (Host-header → request.url)
-          # и CVE-2025-62727 (Range ReDoS в FileResponse) закрыты по-настоящему —
-          # starlette поднят до 1.3.1 в uv.lock (2026-07-15). Раньше они «игнорились»
-          # как неприменимые, но lock сидел на уязвимой 0.48.0 — обоснование ссылалось
-          # на паттерны кода, а не на версию. Урок: игнор CVE должен проверяться
-          # против lock-версии, не только против call-sites. Новые игноры добавлять
-          # только с обоснованием + датой + условием пересмотра.
+          # Проверяем весь lock без исключений CVE. Неиспользуемые FastAPI,
+          # uvicorn и Starlette удалены в 0.2.4; webhook работает через aiohttp.
           IGNORE_FLAGS=""
           set +e
           uv run --no-sync python -m pip_audit --strict -r audit-requirements.thirdparty.txt --progress-spinner off --format=json --output=pip-audit.json $IGNORE_FLAGS

@@ -1,6 +1,7 @@
 """Name repair preserves citizen state and resumes the interrupted action."""
+import json
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -277,3 +278,166 @@ async def test_replay_consumes_triggering_text_with_explicit_resend_notice(resid
     assert await resident_name_gate.require_name(event, 42, text="Иван", body=None)
     assert resident.dialog_data["address"] == "Ленина 5"
     assert "ещё раз" in event.message.answer.await_args.args[0]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("limit", ["interval", "hourly"])
+async def test_rate_limited_followup_replay_keeps_text_and_attachment_until_retry(
+    resident, monkeypatch, limit,
+):
+    resident.dialog_state = DialogState.AWAITING_FOLLOWUP_TEXT.value
+    resident.dialog_data = {"appeal_id": 777}
+    original_text = "Фотография повреждения"
+    attachment = {"type": "image", "payload": {"token": "saved-photo"}}
+    event = make_event(chat_id=100, user_id=42)
+    await resident_name_gate.require_name(
+        event, 42, text=original_text, body=SimpleNamespace(attachments=[attachment])
+    )
+    target = SimpleNamespace(id=777, user_id=resident.id, status="new", user=resident)
+    monkeypatch.setattr(appeal_funnel.appeals_service, "get_by_id", AsyncMock(return_value=target))
+    monkeypatch.setattr(appeal_funnel.appeals_service, "get_by_id_with_messages", AsyncMock(return_value=target))
+    monkeypatch.setattr(appeal_funnel.users_service, "find_by_max_id", AsyncMock(return_value=resident))
+    stats = AsyncMock(return_value=(
+        (1, datetime.now(UTC) - timedelta(seconds=1))
+        if limit == "interval" else (appeal_funnel.cfg.followup_max_per_hour_per_appeal, None)
+    ))
+    monkeypatch.setattr(appeal_funnel.appeals_service, "followup_rate_limit_stats", stats)
+    save = AsyncMock()
+    monkeypatch.setattr(appeal_funnel.appeals_service, "add_user_message", save)
+    monkeypatch.setattr(appeal_funnel.cfg, "admin_group_id", None)
+
+    async def reset(*args):
+        resident.dialog_state = DialogState.IDLE.value
+        resident.dialog_data = {}
+
+    reset_mock = AsyncMock(side_effect=reset)
+    monkeypatch.setattr(appeal_funnel.users_service, "reset_state", reset_mock)
+    await appeal_funnel.on_awaiting_name(event, None, "Иван", 42)
+    reset_mock.assert_not_awaited()
+    pending = resident.dialog_data[resident_name_gate.RESUME_KEY]
+    assert pending["text"] == original_text
+    assert pending["attachments"] == [attachment]
+    assert pending["ready"]
+    save.assert_not_awaited()
+    assert "сохранено" in event.message.answer.await_args.args[0]
+
+    # A retry during the same rate-limit interval must keep the draft too,
+    # and must not claim it has already been handled.
+    event.message.answer.reset_mock()
+    await resident_name_gate.require_name(event, 42, text="Повторить", body=None)
+    assert resident.dialog_data[resident_name_gate.RESUME_KEY] == pending
+    assert not any("диалог восстановлен" in call.args[0]
+                   for call in event.message.answer.await_args_list)
+
+    stats.return_value = (0, None)
+    await resident_name_gate.require_name(event, 42, text="Повторить", body=None)
+    save.assert_awaited_once()
+    assert save.await_args.kwargs["text"] == original_text
+    assert save.await_args.kwargs["attachments"] == [attachment]
+    assert resident.dialog_state == DialogState.IDLE.value
+    assert resident.dialog_data == {}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("state,prefix,setting,field,prompt", [
+    (DialogState.AWAITING_LOCALITY, "locality", "localities", "locality", "ask_address"),
+    (DialogState.AWAITING_TOPIC, "topic", "topics", "topic", "ask_summary"),
+])
+async def test_callback_choice_survives_list_reorder_during_name_repair(
+    resident, monkeypatch, state, prefix, setting, field, prompt,
+):
+    from aemr_bot.services import settings_store
+
+    resident.dialog_state = state.value
+    choices = AsyncMock(return_value=["Первый", "Выбранный"])
+    monkeypatch.setattr(settings_store, "get", choices)
+    monkeypatch.setattr(appeal, "session_scope", appeal_funnel.session_scope)
+    next_step = AsyncMock()
+    monkeypatch.setattr(appeal_funnel, prompt, next_step)
+    event = make_event(chat_id=100, user_id=42)
+    await resident_name_gate.require_name(event, 42, payload=f"{prefix}:1")
+    # Persisted JSON after restart, with the admin having reordered options.
+    resident.dialog_data = json.loads(json.dumps(resident.dialog_data))
+    choices.return_value = ["Выбранный", "Первый"]
+    await appeal_funnel.on_awaiting_name(event, None, "Иван", 42)
+    assert resident.dialog_data[field] == "Выбранный"
+    next_step.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("legacy", [False, True])
+async def test_removed_or_legacy_callback_choice_requests_current_options(
+    resident, monkeypatch, legacy,
+):
+    from aemr_bot.services import settings_store
+
+    resident.dialog_state = DialogState.AWAITING_TOPIC.value
+    choices = AsyncMock(return_value=["Дороги", "Освещение"])
+    monkeypatch.setattr(settings_store, "get", choices)
+    prompt = AsyncMock()
+    monkeypatch.setattr(appeal_funnel, "ask_topic", prompt)
+    summary = AsyncMock()
+    monkeypatch.setattr(appeal_funnel, "ask_summary", summary)
+    event = make_event(chat_id=100, user_id=42)
+    await resident_name_gate.require_name(event, 42, payload="topic:1")
+    if legacy:
+        resident.dialog_data[resident_name_gate.RESUME_KEY].pop("choice")
+    choices.return_value = ["Дороги", "Другая тема"]
+    await appeal_funnel.on_awaiting_name(event, None, "Иван", 42)
+    assert "topic" not in resident.dialog_data
+    assert resident_name_gate.RESUME_KEY not in resident.dialog_data
+    summary.assert_not_awaited()
+    prompt.assert_awaited_once()
+    assert "изменился" in event.message.answer.await_args.args[0]
+
+
+@pytest.mark.asyncio
+async def test_location_survives_name_repair_json_restart(resident, monkeypatch):
+    from aemr_bot.handlers import appeal_geo
+
+    resident.dialog_state = DialogState.AWAITING_LOCALITY.value
+    event = make_event(chat_id=100, user_id=42)
+    body = SimpleNamespace(attachments=[{
+        "type": "location", "latitude": 53.18, "longitude": 158.39,
+    }])
+    await resident_name_gate.require_name(event, 42, text="", body=body)
+    resident.dialog_data = json.loads(json.dumps(resident.dialog_data))
+    process = AsyncMock()
+    monkeypatch.setattr(appeal_geo, "handle_location_for_locality", process)
+    await appeal_funnel.on_awaiting_name(event, None, "Беспаленко Лариса", 42)
+    process.assert_awaited_once_with(event, 42, (53.18, 158.39))
+    assert resident_name_gate.RESUME_KEY not in resident.dialog_data
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("payload", ["consent:yes", "consent:no", "topic:0", "geo:confirm", "appeal:submit"])
+async def test_stale_buttons_cannot_replace_name_repair_draft(resident, monkeypatch, payload):
+    monkeypatch.setattr(appeal, "current_user", resident_name_gate.current_user)
+    event = make_event(chat_id=100, user_id=42)
+    await resident_name_gate.require_name(event, 42, text="Ленина 5", body=None)
+    saved = json.loads(json.dumps(resident.dialog_data))
+    assert not await appeal._ensure_funnel_callback_state(event, 42, payload)
+    assert resident.dialog_state == DialogState.AWAITING_NAME.value
+    assert resident.dialog_data == saved
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("button", [False, True])
+async def test_explicit_cancel_discards_name_repair_draft(resident, monkeypatch, button):
+    event = make_event(chat_id=100, user_id=42)
+    await resident_name_gate.require_name(event, 42, text="Ленина 5", body=None)
+    monkeypatch.setattr(start, "session_scope", appeal_funnel.session_scope)
+    monkeypatch.setattr(appeal, "session_scope", appeal_funnel.session_scope)
+    monkeypatch.setattr(appeal.users_service, "find_by_max_id", AsyncMock(return_value=resident))
+
+    async def reset(*args):
+        resident.dialog_state = DialogState.IDLE.value
+        resident.dialog_data = {}
+
+    monkeypatch.setattr(appeal.users_service, "reset_state", AsyncMock(side_effect=reset))
+    if button:
+        await appeal._cb_cancel(event, 42, "cancel")
+    else:
+        await start.cmd_cancel(event)
+    assert resident.dialog_state == DialogState.IDLE.value
+    assert resident.dialog_data == {}

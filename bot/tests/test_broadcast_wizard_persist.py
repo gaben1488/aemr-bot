@@ -200,9 +200,9 @@ class TestPersistOnMutation:
     async def test_delete_wins_over_hydrated_registry_copy(self, db) -> None:
         """Удаление после гидратации — именно удаление.
 
-        `schedule_persist_broadcast(id, None)` без явного state берёт его
-        из registry. Если бы зеркало в registry не чистилось, уцелевший
-        там снимок превратил бы DELETE в повторный UPSERT.
+        Явный `schedule_persist_broadcast(id, None)` удаляет запись,
+        даже если после гидратации в registry остался снимок. Зеркало
+        тоже очищается, чтобы следующие чтения не вернули старый черновик.
         """
         wr.set_broadcast_wizard(7, {"step": "awaiting_confirm", "text": "x"})
         bw._wizards[7] = bw._WizardState(step="awaiting_confirm", text="x")
