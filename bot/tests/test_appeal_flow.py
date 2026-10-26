@@ -131,7 +131,8 @@ async def test_revoke_consent_152fz(session):
     воронку, но НЕ удаляет запись сразу: фактическое обезличивание делает
     /erase или 30-дневный retention. Открытые обращения остаются в работе
     для финального ответа оператора."""
-    user = await users_service.get_or_create(session, max_user_id=99, first_name="Анна")
+    user = await users_service.get_or_create(session, max_user_id=99)
+    await users_service.set_first_name(session, 99, "Анна")
     await users_service.set_consent(session, 99)
     await users_service.set_phone(session, 99, "+79991234567")
     appeal = await appeals_service.create_appeal(

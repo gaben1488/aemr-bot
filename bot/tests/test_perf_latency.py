@@ -244,6 +244,7 @@ def _make_user(max_user_id: int = 7):
     return SimpleNamespace(
         id=1,
         max_user_id=max_user_id,
+        first_name="Иван",
         is_blocked=False,
         consent_pdn_at=datetime(2026, 1, 1, tzinfo=UTC),
         dialog_state=DialogState.AWAITING_SUMMARY.value,

@@ -26,6 +26,7 @@ from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers import resident_name_gate
 from aemr_bot.handlers._common import current_user
 from aemr_bot.handlers.appeal_runtime import (
     _HAS_ALNUM,
@@ -39,17 +40,16 @@ from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.attachments import (
     collect_attachments,
-    extract_contact_name,
-    extract_phone,
+    extract_resident_contact,
 )
 from aemr_bot.utils.event import (
     extract_message_id,
     get_callback_message_id,
     get_chat_id,
-    get_first_name,
     get_user_id,
     send_or_edit_screen,
 )
+from aemr_bot.utils.resident_names import normalize_resident_name
 
 # Регекс на горячем пути: вызывается на каждом контактном шаге жителя
 # (on_awaiting_contact). Компиляция модуля — однократно, чтобы не
@@ -235,7 +235,7 @@ async def ask_contact_or_skip(
     async with current_user(max_user_id) as (session, user):
         if not user.phone:
             target_state = DialogState.AWAITING_CONTACT
-        elif not user.first_name or user.first_name == "Удалено":
+        elif resident_name_gate.needs_name(user.first_name):
             target_state = DialogState.AWAITING_NAME
         else:
             target_state = DialogState.AWAITING_LOCALITY
@@ -261,7 +261,7 @@ async def ask_contact_or_skip(
             keyboards.contact_request_keyboard(),
         ),
         DialogState.AWAITING_NAME: (
-            texts.CONTACT_RECEIVED,
+            resident_name_gate.NAME_PROMPT,
             keyboards.cancel_keyboard(),
         ),
     }
@@ -492,7 +492,11 @@ async def on_awaiting_contact(event, body, text_body, max_user_id):
     # Сначала пробуем достать телефон из contact-вложения. Если его
     # нет (старые клиенты MAX, либо житель напечатал номер текстом) —
     # берём цифры из текстового тела как запасной путь.
-    phone = extract_phone(body)
+    phone, contact_name, foreign_contact = extract_resident_contact(body, max_user_id)
+    if foreign_contact:
+        await event.message.answer("Пришлите свой контакт, а не контакт другого человека.",
+                                   attachments=[keyboards.contact_request_keyboard()])
+        return
     if phone is None and text_body:
         digits_match = _PHONE_DIGITS_RE.search(text_body)
         if digits_match:
@@ -506,41 +510,47 @@ async def on_awaiting_contact(event, body, text_body, max_user_id):
         )
         return
 
-    contact_name = extract_contact_name(body)
-
     async with current_user(max_user_id) as (session, user):
         await users_service.set_phone(session, max_user_id, phone)
-        if contact_name and (not user.first_name or user.first_name == "Удалено"):
-            cleaned = contact_name.strip()[: cfg.name_max_chars]
-            if cleaned and _HAS_ALNUM.search(cleaned):
+        if contact_name and resident_name_gate.needs_name(user.first_name):
+            cleaned = normalize_resident_name(contact_name, max_chars=cfg.name_max_chars)
+            if cleaned:
                 await users_service.set_first_name(session, max_user_id, cleaned)
                 user.first_name = cleaned
 
-    if not user.first_name or user.first_name == "Удалено":
+    if resident_name_gate.needs_name(user.first_name):
         async with session_scope() as session:
             await users_service.set_state(
                 session, max_user_id, DialogState.AWAITING_NAME
             )
         await event.message.answer(
-            texts.CONTACT_RECEIVED, attachments=[keyboards.cancel_keyboard()]
+            resident_name_gate.NAME_PROMPT, attachments=[keyboards.cancel_keyboard()]
         )
     else:
         await ask_contact_or_skip(event, max_user_id, force_new_message=True)
 
 
 async def on_awaiting_name(event, body, text_body, max_user_id):
-    name = text_body.strip()[: cfg.name_max_chars]
-    if not name or not _HAS_ALNUM.search(name):
-        # Пустая строка / только пробелы / только эмодзи / только
-        # пунктуация. Пытаемся подтянуть имя из профиля MAX.
-        name = get_first_name(event)
-        if not name or name == "Удалено":
-            await event.message.answer(texts.NAME_EMPTY)
-            return
-        name = name[: cfg.name_max_chars]
-
-    async with session_scope() as session:
+    _, contact_name, foreign_contact = extract_resident_contact(body, max_user_id)
+    name = None if foreign_contact else normalize_resident_name(
+        text_body or contact_name, max_chars=cfg.name_max_chars
+    )
+    if name is None:
+        await event.message.answer(resident_name_gate.NAME_PROMPT,
+                                   attachments=[keyboards.cancel_keyboard()])
+        return
+    async with current_user(max_user_id) as (session, user):
+        pending = (user.dialog_data or {}).get(resident_name_gate.RESUME_KEY)
         await users_service.set_first_name(session, max_user_id, name)
+        if pending:
+            pending = {**pending, "ready": True}
+            await users_service.set_state(
+                session, max_user_id, DialogState(pending["state"]),
+                data={**pending["data"], resident_name_gate.RESUME_KEY: pending},
+            )
+    if pending:
+        await resident_name_gate.resume_after_name(event, max_user_id, pending)
+        return
     if await ask_address_or_reuse(event, max_user_id, force_new_message=True):
         return
     await ask_locality(event, max_user_id, force_new_message=True)
@@ -606,7 +616,11 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
             chunks.append(chunk[: cfg.summary_max_chars])
         if atts:
             attachments.extend(atts[: cfg.attachments_max_per_appeal])
-        return {"summary_chunks": chunks, "attachments": attachments}
+        patch: dict = {"summary_chunks": chunks, "attachments": attachments}
+        pending = data.get(resident_name_gate.RESUME_KEY)
+        if pending and pending.get("ready"):
+            patch[resident_name_gate.RESUME_KEY] = {**pending, "applied": True}
+        return patch
 
     async with session_scope() as session:
         await users_service.update_dialog_data(

@@ -231,6 +231,10 @@ async def start_appeal_followup(event, appeal_id: int, max_user_id: int):
     «🔁 Подать похожее».
     """
 
+    from aemr_bot.handlers import resident_name_gate
+    if await resident_name_gate.require_name(event, max_user_id, payload=f"appeal:followup:{appeal_id}"):
+        return
+
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id(session, appeal_id)
         if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
@@ -279,6 +283,10 @@ async def start_appeal_repeat(event, appeal_id: int, max_user_id: int):
     проблемы. Если старое обращение было ANSWERED/CLOSED, новое
     обращение получит пометку связи с отвеченным или закрытым вопросом.
     """
+
+    from aemr_bot.handlers import resident_name_gate
+    if await resident_name_gate.require_name(event, max_user_id, payload=f"appeal:repeat:{appeal_id}"):
+        return
 
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id(session, appeal_id)

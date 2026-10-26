@@ -90,7 +90,7 @@ class TestResetFunnelIfStuck:
         from aemr_bot.db.models import DialogState
         from aemr_bot.handlers import start
 
-        user = SimpleNamespace(dialog_state=DialogState.IDLE.value)
+        user = SimpleNamespace(dialog_state=DialogState.IDLE.value, first_name=None, consent_pdn_at=None, is_blocked=False)
         reset = AsyncMock()
         with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.start.users_service.get_or_create",
@@ -116,7 +116,7 @@ class TestCmdStart:
         from aemr_bot.handlers import start
 
         event = _make_event()
-        user = SimpleNamespace(id=1, dialog_state="idle")
+        user = SimpleNamespace(id=1, dialog_state="idle", first_name=None, consent_pdn_at=None, is_blocked=False)
         with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.start.users_service.get_or_create",
                    AsyncMock(return_value=user)), \
@@ -163,7 +163,7 @@ class TestCmdMenu:
         from aemr_bot.handlers import start
 
         event = _make_event()
-        user = SimpleNamespace(dialog_state=DialogState.IDLE.value)
+        user = SimpleNamespace(dialog_state=DialogState.IDLE.value, first_name=None, consent_pdn_at=None, is_blocked=False)
         with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.start.users_service.get_or_create",
                    AsyncMock(return_value=user)), \

@@ -41,11 +41,21 @@ def _normalize_phone(phone: str) -> str:
 
 
 async def get_or_create(session: AsyncSession, max_user_id: int, first_name: str | None = None) -> User:
+    """Get/create identity; legacy profile-name argument is intentionally ignored.
+
+    A name is saved only through explicit validated manual/contact entry via
+    set_first_name. Clearing invalid legacy names preserves all other fields.
+    """
     user = await session.scalar(select(User).where(User.max_user_id == max_user_id))
     if user is None:
-        user = User(max_user_id=max_user_id, first_name=first_name)
+        user = User(max_user_id=max_user_id, first_name=None)
         session.add(user)
         await session.flush()
+    elif max_user_id != -1 and user.first_name:
+        from aemr_bot.utils.resident_names import normalize_resident_name
+        if normalize_resident_name(user.first_name, max_chars=cfg.name_max_chars) is None:
+            user.first_name = None
+            await session.flush()
     return user
 
 
@@ -140,7 +150,11 @@ async def set_phone(session: AsyncSession, max_user_id: int, phone: str) -> None
 
 
 async def set_first_name(session: AsyncSession, max_user_id: int, first_name: str) -> None:
-    await session.execute(update(User).where(User.max_user_id == max_user_id).values(first_name=first_name))
+    from aemr_bot.utils.resident_names import normalize_resident_name
+    normalized = normalize_resident_name(first_name, max_chars=cfg.name_max_chars)
+    if normalized is None:
+        raise ValueError("Resident name does not match the given-name policy")
+    await session.execute(update(User).where(User.max_user_id == max_user_id).values(first_name=normalized))
 
 
 async def set_state(session: AsyncSession, max_user_id: int, state: DialogState, data: dict | None = None) -> None:
@@ -273,6 +287,9 @@ async def find_stuck_in_funnel(
         select(User.max_user_id, User.dialog_state)
         .where(
             User.dialog_state.in_(pending_states),
+            # Name repair holds an already received draft: only explicit
+            # cancel/erase or successful resume may discard that input.
+            User.dialog_data["_name_resume"].is_(None),
             User.updated_at <= threshold,
             User.is_blocked.is_(False),
         )
@@ -758,7 +775,7 @@ async def search_audience(
 
     Возвращает до `limit` объектов User. Дубли (одна запись по
     нескольким критериям) исключаются по `User.id`. Удалённые
-    жители (first_name='Удалено') не возвращаются — иначе оператор
+    жители (is_blocked=true) не возвращаются — иначе оператор
     случайно ткнёт на pseudo-row.
     """
 

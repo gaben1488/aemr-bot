@@ -173,52 +173,11 @@ class TestOnAwaitingAddress:
 
 class TestOnAwaitingName:
     @pytest.mark.asyncio
-    async def test_empty_name_falls_back_to_max_profile(self) -> None:
-        """Если житель прислал «...» — пробуем имя из профиля MAX."""
+    @pytest.mark.parametrize("text", ["...", "", "Супергерой", "John"])
+    async def test_invalid_name_does_not_fall_back_to_max_profile(self, text) -> None:
         from aemr_bot.handlers import appeal_funnel
-
         event = _make_event()
-        with patch(
-            "aemr_bot.handlers.appeal_funnel.get_first_name",
-            return_value="Иван",
-        ), patch(
-            "aemr_bot.handlers.appeal_funnel.users_service.set_first_name",
-            AsyncMock(),
-        ) as set_name, patch(
-            "aemr_bot.handlers.appeal_funnel.ask_address_or_reuse",
-            AsyncMock(return_value=False),
-        ) as ask_address, patch(
-            "aemr_bot.handlers.appeal_funnel.ask_locality",
-            AsyncMock(),
-        ) as ask_locality, patch(
-            "aemr_bot.handlers.appeal_funnel.session_scope"
-        ) as mock_scope:
-            mock_scope.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
-            mock_scope.return_value.__aexit__ = AsyncMock(return_value=None)
-
-            await appeal_funnel.on_awaiting_name(
-                event, body=None, text_body="...", max_user_id=42
-            )
-
-        # «...» отброшено, имя взято из профиля MAX и сохранено, воронка
-        # двинулась дальше: спросили адрес, затем (адрес не переиспользован)
-        # населённый пункт. NAME_EMPTY житель не увидел.
-        assert set_name.await_args.args[1:] == (42, "Иван")
-        ask_address.assert_awaited_once()
-        ask_locality.assert_awaited_once()
-        event.message.answer.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_no_name_at_all_asks_again(self) -> None:
-        """Если ни в тексте ни в профиле — просит ввести."""
-        from aemr_bot.handlers import appeal_funnel
-
-        event = _make_event()
-        with patch(
-            "aemr_bot.handlers.appeal_funnel.get_first_name",
-            return_value=None,
-        ):
-            await appeal_funnel.on_awaiting_name(
-                event, body=None, text_body="", max_user_id=42
-            )
-        event.message.answer.assert_called()
+        with patch.object(appeal_funnel.users_service, "set_first_name", AsyncMock()) as save:
+            await appeal_funnel.on_awaiting_name(event, None, text, 42)
+        save.assert_not_awaited()
+        event.message.answer.assert_awaited_once()

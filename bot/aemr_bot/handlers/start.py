@@ -6,6 +6,7 @@ from maxapi.types import BotStarted, BotStopped, Command, MessageCreated
 
 from aemr_bot import keyboards, texts
 from aemr_bot.db.session import session_scope
+from aemr_bot.handlers import resident_name_gate
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import admin_events, card_format, settings_store, uploads
 from aemr_bot.services import appeals as appeals_service
@@ -97,7 +98,10 @@ async def cmd_start(event):
     from aemr_bot.handlers.menu import _send_or_edit_menu
 
     await _ensure_user(event)
-    await _reset_funnel_if_stuck(get_user_id(event))
+    max_user_id = get_user_id(event)
+    if max_user_id is not None and await resident_name_gate.require_name(event, max_user_id):
+        return
+    await _reset_funnel_if_stuck(max_user_id)
     welcome = await _welcome_text()
     await _send_or_edit_menu(
         event,
@@ -123,7 +127,10 @@ async def cmd_rules(event):
 async def cmd_menu(event):
     from aemr_bot.handlers.menu import _send_or_edit_menu
 
-    await _reset_funnel_if_stuck(get_user_id(event))
+    max_user_id = get_user_id(event)
+    if max_user_id is not None and await resident_name_gate.require_name(event, max_user_id):
+        return
+    await _reset_funnel_if_stuck(max_user_id)
     welcome = await _welcome_text()
     await _send_or_edit_menu(
         event,

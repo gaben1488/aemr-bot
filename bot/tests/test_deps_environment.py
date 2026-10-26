@@ -166,3 +166,14 @@ def test_db_pool_ceiling_matches_dispatch_semaphore() -> None:
         f"окна обработки (main._SEMAPHORE_CONCURRENCY={main._SEMAPHORE_CONCURRENCY}) — "
         "обработчики будут стоять в очереди за соединением; выровняй числа."
     )
+
+
+def test_application_version_matches_release_metadata():
+    import tomllib
+    from pathlib import Path
+    import aemr_bot
+    root = Path(__file__).resolve().parents[1]
+    project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
+    locked = tomllib.loads((root / "uv.lock").read_text())["package"]
+    assert aemr_bot.__version__ == project["version"]
+    assert next(p["version"] for p in locked if p["name"] == "aemr-bot") == project["version"]
