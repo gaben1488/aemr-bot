@@ -552,57 +552,23 @@ if settings.bot_mode == "webhook":
 
 
 async def _register_bot_commands(bot: Bot) -> None:
-    """Опубликовать /-меню MAX: универсальные /start и /menu (PATCH /me).
+    """Publish the existing /start and /menu entries via PATCH /me/commands.
 
-    MAX Bot API не поддерживает per-scope команды (нет
-    `BotCommandScopeChat` как в Telegram) — одно /-меню на ВСЕ чаты:
-    и личку жителя, и служебную группу. Поэтому публикуем только
-    универсальные команды, осмысленные в любом чате: /start и /menu
-    (в личке открывают меню жителя, в админ-группе — памятку оператора).
-    Специфичные жительские команды (/forget, /export, /policy, …) НЕ
-    публикуем — в служебной группе они путали операторов («почему
-    /forget виден в админ-чате?»); их обработчики остаются рабочими как
-    запасной путь, но в подсказке /-меню их нет.
-
-    Шлём `commands` PATCH'ем /me, а не через `bot.set_my_commands()`:
-    у того в `ChangeInfo.fetch()` стоит `if self.commands:` (предохранитель
-    против случайной очистки), и нам проще держать явный предсказуемый
-    список здесь.
-
-    Транспорт — сессия самого maxapi (`bot.ensure_session()`), а не своя
-    голая `aiohttp.ClientSession`. Это принципиально: MAX мигрировал на
-    platform-api2.max.ru с сертификатом от «Russian Trusted CA» (Минцифры),
-    а штатный Dockerfile/наш CA-бандл несут только публичные корни — без
-    российского. Своя сессия молча падала бы `SSLCertVerificationError`,
-    ошибка гасилась бы дважды (log.exception + внешний try/except в main),
-    и /-меню не публиковалось бы незаметно для оператора. Сессия maxapi
-    уже несёт TCPConnector с этим корнем (client/ssl.with_default_connector),
-    base_url=api_url, Authorization-заголовок из bot.headers и trust_env
-    (proxy из окружения в firewall-режиме) — всё нужное наследуется.
+    maxapi 1.2.3 sessions have no base_url. Use its supported SDK method,
+    which preserves the API path prefix, trusted CA, proxy and auth settings.
+    Keep the previous ten-second startup budget around the complete SDK call.
     """
-    import aiohttp
+    from maxapi.types.command import BotCommand
 
-    payload: dict[str, list] = {
-        "commands": [
-            {"name": "start", "description": "Запустить бота и открыть меню"},
-            {"name": "menu", "description": "Открыть главное меню"},
-        ]
-    }
     try:
-        # base_url сессии = api_url, поэтому путь относительный: '/me'.
-        # Per-request timeout сохраняет прежний 10-секундный потолок, не
-        # завися от долгого long-poll total сессии в polling-режиме.
-        session = await bot.ensure_session()
-        async with session.patch(
-            "/me", json=payload, timeout=aiohttp.ClientTimeout(total=10)
-        ) as resp:
-            if resp.status == 200:
-                log.info("set_my_commands: /-меню опубликовано (/start, /menu) через PATCH /me")
-            else:
-                body = await resp.text()
-                log.warning("set_my_commands PATCH вернул %s: %s", resp.status, body[:200])
+        async with asyncio.timeout(10):
+            await bot.set_commands(
+                BotCommand(name="start", description="Запустить бота и открыть меню"),
+                BotCommand(name="menu", description="Открыть главное меню"),
+            )
+        log.info("set_commands: /-меню опубликовано (/start, /menu) через PATCH /me/commands")
     except Exception:
-        log.exception("set_my_commands: PATCH /me failed (некритично, /-меню могут остаться у клиентов)")
+        log.exception("set_commands: PATCH /me/commands failed (/-меню может остаться прежним)")
 
 
 async def _preflight_check_token(bot: Bot) -> None:

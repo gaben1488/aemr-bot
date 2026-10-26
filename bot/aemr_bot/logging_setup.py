@@ -26,6 +26,27 @@ _FORMAT = "%(asctime)s %(levelname)s %(name)s %(message)s"
 _LOG_FILE_NAME = "bot.log"
 
 
+class _MaxUpdateDiagnosticsFilter(logging.Filter):
+    """Keep SDK parser failure signals without copying resident payloads to logs.
+
+    maxapi 1.2.3 logs complete unrecognized/malformed update JSON and may attach
+    validation exceptions containing that JSON. Filter only that SDK module;
+    unrelated dispatcher warnings and application logs remain available.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.name == "dispatcher" and record.module == "getted_updates":
+            error = "unknown-or-malformed-update"
+            if record.exc_info and record.exc_info[0] is not None:
+                error = record.exc_info[0].__name__
+            record.msg = "MAX: событие пропущено при разборе (%s); payload не записывается"
+            record.args = (error,)
+            record.exc_info = None
+            record.exc_text = None
+            record.stack_info = None
+        return True
+
+
 def setup_logging(s: Settings | None = None) -> None:
     """Поднять логирование: stdout всегда + файл на диске, если задан и доступен LOG_DIR.
 
@@ -34,6 +55,9 @@ def setup_logging(s: Settings | None = None) -> None:
     (важно для dev/CI, где /var/log/aemr-bot не существует).
     """
     s = s or settings
+    sdk_log = logging.getLogger("dispatcher")
+    if not any(isinstance(f, _MaxUpdateDiagnosticsFilter) for f in sdk_log.filters):
+        sdk_log.addFilter(_MaxUpdateDiagnosticsFilter())
     formatter = logging.Formatter(_FORMAT)
     root = logging.getLogger()
     root.setLevel(s.log_level)
