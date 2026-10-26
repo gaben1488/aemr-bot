@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-08-20 14:14:38 UTC`
+Generated at: `2026-10-26 09:36:58 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `372`
+Indexed files: `397`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -17,15 +17,17 @@ The committed template `.env.example` is allowed because it should not contain l
 - `.dockerignore` (539 bytes)
 - `.github/dependabot.yml` (4984 bytes)
 - `.github/workflows/ci.yml` (11055 bytes)
+- `.github/workflows/release.yml` (1372 bytes)
 - `.github/workflows/repo-index.yml` (1211 bytes)
-- `.gitignore` (3028 bytes)
+- `.gitignore` (3114 bytes)
 - `.pre-commit-config.yaml` (3378 bytes)
+- `AGENTS.md` (3465 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
-- `bot/aemr_bot/config.py` (23613 bytes)
+- `bot/aemr_bot/config.py` (23443 bytes)
 - `bot/aemr_bot/copy/__init__.py` (1142 bytes)
 - `bot/aemr_bot/copy/admin_texts.py` (12832 bytes)
 - `bot/aemr_bot/copy/broadcast_texts.py` (17866 bytes)
-- `bot/aemr_bot/copy/citizen_funnel.py` (22492 bytes)
+- `bot/aemr_bot/copy/citizen_funnel.py` (22854 bytes)
 - `bot/aemr_bot/copy/errors_texts.py` (1999 bytes)
 - `bot/aemr_bot/copy/security_texts.py` (13076 bytes)
 - `bot/aemr_bot/db/__init__.py` (0 bytes)
@@ -55,10 +57,11 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/db/alembic/versions/0023_broadcast_deliveries_unique.py` (2517 bytes)
 - `bot/aemr_bot/db/alembic/versions/0024_block_legacy_erased_residents.py` (3518 bytes)
 - `bot/aemr_bot/db/alembic/versions/0025_appointment_text_okrug.py` (3679 bytes)
-- `bot/aemr_bot/db/models.py` (25780 bytes)
+- `bot/aemr_bot/db/alembic/versions/0026_durable_receipt.py` (1755 bytes)
+- `bot/aemr_bot/db/models.py` (26897 bytes)
 - `bot/aemr_bot/db/session.py` (3470 bytes)
 - `bot/aemr_bot/db/single_instance.py` (7894 bytes)
-- `bot/aemr_bot/handlers/__init__.py` (8422 bytes)
+- `bot/aemr_bot/handlers/__init__.py` (9391 bytes)
 - `bot/aemr_bot/handlers/_auth.py` (3788 bytes)
 - `bot/aemr_bot/handlers/_common.py` (7211 bytes)
 - `bot/aemr_bot/handlers/admin_appeal_ops.py` (22007 bytes)
@@ -76,7 +79,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_settings_list.py` (4913 bytes)
 - `bot/aemr_bot/handlers/admin_settings_notify.py` (4522 bytes)
 - `bot/aemr_bot/handlers/admin_settings_obj.py` (8790 bytes)
-- `bot/aemr_bot/handlers/admin_settings_pr.py` (9445 bytes)
+- `bot/aemr_bot/handlers/admin_settings_pr.py` (9985 bytes)
 - `bot/aemr_bot/handlers/admin_settings_quiet.py` (7161 bytes)
 - `bot/aemr_bot/handlers/admin_settings_shared.py` (5509 bytes)
 - `bot/aemr_bot/handlers/admin_settings_text.py` (6888 bytes)
@@ -84,8 +87,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/appeal.py` (37084 bytes)
 - `bot/aemr_bot/handlers/appeal_funnel.py` (39970 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (8438 bytes)
-- `bot/aemr_bot/handlers/appeal_runtime.py` (19750 bytes)
-- `bot/aemr_bot/handlers/broadcast.py` (41386 bytes)
+- `bot/aemr_bot/handlers/appeal_runtime.py` (21438 bytes)
+- `bot/aemr_bot/handlers/broadcast.py` (42614 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates.py` (10008 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates_crud.py` (9575 bytes)
 - `bot/aemr_bot/handlers/broadcast_templates_list.py` (9527 bytes)
@@ -97,43 +100,45 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/menu.py` (54232 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (45042 bytes)
 - `bot/aemr_bot/handlers/start.py` (31427 bytes)
-- `bot/aemr_bot/health.py` (10506 bytes)
+- `bot/aemr_bot/health.py` (10567 bytes)
 - `bot/aemr_bot/keyboards.py` (1161 bytes)
-- `bot/aemr_bot/logging_setup.py` (3750 bytes)
-- `bot/aemr_bot/main.py` (56783 bytes)
+- `bot/aemr_bot/logging_setup.py` (4912 bytes)
+- `bot/aemr_bot/main.py` (47047 bytes)
 - `bot/aemr_bot/network.py` (8655 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
-- `bot/aemr_bot/services/admin_bus.py` (21747 bytes)
-- `bot/aemr_bot/services/admin_card.py` (11510 bytes)
+- `bot/aemr_bot/services/admin_bus.py` (21849 bytes)
+- `bot/aemr_bot/services/admin_card.py` (15634 bytes)
 - `bot/aemr_bot/services/admin_events.py` (9871 bytes)
 - `bot/aemr_bot/services/admin_relay.py` (11900 bytes)
 - `bot/aemr_bot/services/appeals.py` (38089 bytes)
-- `bot/aemr_bot/services/backup_verify.py` (12094 bytes)
+- `bot/aemr_bot/services/backup_verify.py` (13431 bytes)
 - `bot/aemr_bot/services/broadcast_templates.py` (9737 bytes)
 - `bot/aemr_bot/services/broadcast_utils.py` (6004 bytes)
-- `bot/aemr_bot/services/broadcasts.py` (20098 bytes)
+- `bot/aemr_bot/services/broadcasts.py` (22037 bytes)
 - `bot/aemr_bot/services/calendar_ru.py` (3626 bytes)
-- `bot/aemr_bot/services/card_format.py` (28061 bytes)
-- `bot/aemr_bot/services/cron.py` (83102 bytes)
-- `bot/aemr_bot/services/cron_registry.py` (9476 bytes)
+- `bot/aemr_bot/services/card_format.py` (28032 bytes)
+- `bot/aemr_bot/services/cron.py` (83723 bytes)
+- `bot/aemr_bot/services/cron_registry.py` (9788 bytes)
 - `bot/aemr_bot/services/db_backup.py` (22143 bytes)
 - `bot/aemr_bot/services/geo.py` (12115 bytes)
-- `bot/aemr_bot/services/idempotency.py` (8575 bytes)
+- `bot/aemr_bot/services/idempotency.py` (7887 bytes)
+- `bot/aemr_bot/services/inbox.py` (8740 bytes)
 - `bot/aemr_bot/services/notify_toggles.py` (5680 bytes)
 - `bot/aemr_bot/services/operators.py` (10113 bytes)
 - `bot/aemr_bot/services/policy.py` (4867 bytes)
 - `bot/aemr_bot/services/progress.py` (9940 bytes)
 - `bot/aemr_bot/services/quiet_hours.py` (6462 bytes)
 - `bot/aemr_bot/services/repo_sync.py` (17055 bytes)
-- `bot/aemr_bot/services/settings_store.py` (65831 bytes)
+- `bot/aemr_bot/services/settings_store.py` (66561 bytes)
 - `bot/aemr_bot/services/sla.py` (7948 bytes)
 - `bot/aemr_bot/services/stats.py` (15698 bytes)
-- `bot/aemr_bot/services/threat_intel.py` (11444 bytes)
+- `bot/aemr_bot/services/threat_intel.py` (13066 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
-- `bot/aemr_bot/services/users.py` (44046 bytes)
+- `bot/aemr_bot/services/users.py` (44264 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (6600 bytes)
-- `bot/aemr_bot/services/wizard_registry.py` (10294 bytes)
+- `bot/aemr_bot/services/wizard_registry.py` (11671 bytes)
 - `bot/aemr_bot/texts.py` (1194 bytes)
+- `bot/aemr_bot/transport.py` (3442 bytes)
 - `bot/aemr_bot/ui/__init__.py` (1477 bytes)
 - `bot/aemr_bot/ui/broadcast_keyboards.py` (13490 bytes)
 - `bot/aemr_bot/ui/citizen_keyboards.py` (26521 bytes)
@@ -143,14 +148,16 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/utils/__init__.py` (0 bytes)
 - `bot/aemr_bot/utils/attachments.py` (20367 bytes)
 - `bot/aemr_bot/utils/background.py` (3804 bytes)
+- `bot/aemr_bot/utils/delivery_guard.py` (735 bytes)
 - `bot/aemr_bot/utils/event.py` (13526 bytes)
 - `bot/aemr_bot/utils/image_attachments.py` (1137 bytes)
 - `bot/aemr_bot/utils/menu_tracker.py` (9549 bytes)
 - `bot/aemr_bot/utils/pii_mask.py` (1960 bytes)
+- `bot/aemr_bot/utils/resident_lifecycle.py` (2550 bytes)
 - `bot/aemr_bot/utils/typing_indicator.py` (2299 bytes)
-- `bot/aemr_bot/utils/url_defang.py` (17668 bytes)
+- `bot/aemr_bot/utils/url_defang.py` (17634 bytes)
 - `bot/alembic.ini` (619 bytes)
-- `bot/pyproject.toml` (7583 bytes)
+- `bot/pyproject.toml` (7566 bytes)
 - `bot/tests/__init__.py` (0 bytes)
 - `bot/tests/_helpers.py` (5713 bytes)
 - `bot/tests/conftest.py` (8558 bytes)
@@ -160,7 +167,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_bus.py` (15938 bytes)
 - `bot/tests/test_admin_callback_dispatch.py` (10971 bytes)
 - `bot/tests/test_admin_card_detached_safety.py` (8417 bytes)
-- `bot/tests/test_admin_card_render.py` (18765 bytes)
+- `bot/tests/test_admin_card_render.py` (18997 bytes)
 - `bot/tests/test_admin_events.py` (8838 bytes)
 - `bot/tests/test_admin_events_descriptor.py` (6015 bytes)
 - `bot/tests/test_admin_handlers_small.py` (25600 bytes)
@@ -178,25 +185,28 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_appeal_dispatcher.py` (33905 bytes)
 - `bot/tests/test_appeal_flow.py` (15940 bytes)
 - `bot/tests/test_appeal_funnel_cluster_coverage.py` (63071 bytes)
+- `bot/tests/test_appeal_publication_recovery.py` (12312 bytes)
 - `bot/tests/test_appeals_service_pg.py` (18813 bytes)
 - `bot/tests/test_attachments_cov2.py` (11714 bytes)
 - `bot/tests/test_attachments_helpers.py` (5500 bytes)
+- `bot/tests/test_auto_deploy.py` (6260 bytes)
 - `bot/tests/test_background_drain.py` (4360 bytes)
-- `bot/tests/test_backup_verify.py` (10763 bytes)
+- `bot/tests/test_backup_verify.py` (14149 bytes)
 - `bot/tests/test_bot_init_concurrency.py` (2820 bytes)
-- `bot/tests/test_broadcast_429_backoff.py` (4524 bytes)
-- `bot/tests/test_broadcast_handlers.py` (44406 bytes)
+- `bot/tests/test_broadcast_429_backoff.py` (4575 bytes)
+- `bot/tests/test_broadcast_handlers.py` (44808 bytes)
 - `bot/tests/test_broadcast_history_card.py` (10125 bytes)
 - `bot/tests/test_broadcast_keyboards_cov2.py` (4865 bytes)
-- `bot/tests/test_broadcast_operators_coverage.py` (39952 bytes)
+- `bot/tests/test_broadcast_operators_coverage.py` (42561 bytes)
+- `bot/tests/test_broadcast_reliability.py` (8455 bytes)
 - `bot/tests/test_broadcast_templates_coverage.py` (49361 bytes)
 - `bot/tests/test_broadcast_templates_handlers.py` (17714 bytes)
 - `bot/tests/test_broadcast_templates_service_pg.py` (14825 bytes)
 - `bot/tests/test_broadcast_utils.py` (10254 bytes)
-- `bot/tests/test_broadcast_with_image.py` (24112 bytes)
+- `bot/tests/test_broadcast_with_image.py` (24248 bytes)
 - `bot/tests/test_broadcast_wizard_fsm.py` (26452 bytes)
 - `bot/tests/test_broadcast_wizard_persist.py` (13430 bytes)
-- `bot/tests/test_broadcasts_service_pg.py` (9210 bytes)
+- `bot/tests/test_broadcasts_service_pg.py` (11030 bytes)
 - `bot/tests/test_calendar_ru_full.py` (3072 bytes)
 - `bot/tests/test_calendar_ru_loader_cov2.py` (4386 bytes)
 - `bot/tests/test_callback_coverage_contract.py` (23566 bytes)
@@ -206,9 +216,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_callback_router_parity.py` (2842 bytes)
 - `bot/tests/test_card_format.py` (10925 bytes)
 - `bot/tests/test_card_format_extra.py` (22073 bytes)
-- `bot/tests/test_critical_mutation.py` (32313 bytes)
+- `bot/tests/test_critical_mutation.py` (32383 bytes)
 - `bot/tests/test_cron_docs_sync.py` (7411 bytes)
-- `bot/tests/test_cron_jobs.py` (43818 bytes)
+- `bot/tests/test_cron_jobs.py` (43971 bytes)
 - `bot/tests/test_db_backup.py` (5223 bytes)
 - `bot/tests/test_db_backup_extra.py` (17040 bytes)
 - `bot/tests/test_degraded_inputs.py` (7681 bytes)
@@ -235,13 +245,17 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_idempotency_cov2.py` (1790 bytes)
 - `bot/tests/test_image_attachments.py` (7471 bytes)
 - `bot/tests/test_image_pins_in_sync.py` (1919 bytes)
+- `bot/tests/test_inbox_pg.py` (1110 bytes)
+- `bot/tests/test_inbox_recovery.py` (9501 bytes)
+- `bot/tests/test_inbox_transport.py` (2881 bytes)
 - `bot/tests/test_keyboards.py` (5459 bytes)
 - `bot/tests/test_keyboards_admin_behaviour.py` (10181 bytes)
 - `bot/tests/test_keyboards_behaviour.py` (9734 bytes)
 - `bot/tests/test_keyboards_misc_cov2.py` (5794 bytes)
 - `bot/tests/test_ledger_facts_sync.py` (15108 bytes)
 - `bot/tests/test_logging_setup.py` (4013 bytes)
-- `bot/tests/test_main_helpers.py` (12499 bytes)
+- `bot/tests/test_main_helpers.py` (10776 bytes)
+- `bot/tests/test_maxapi_migration.py` (10262 bytes)
 - `bot/tests/test_menu_tracker_edit_policy.py` (13989 bytes)
 - `bot/tests/test_migration_0025_appointment.py` (3159 bytes)
 - `bot/tests/test_network.py` (7198 bytes)
@@ -263,10 +277,12 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_pure_functions.py` (11525 bytes)
 - `bot/tests/test_quiet_hours.py` (5282 bytes)
 - `bot/tests/test_quiet_hours_cov2.py` (2388 bytes)
-- `bot/tests/test_reliability_pass.py` (11030 bytes)
+- `bot/tests/test_release_review_regressions.py` (2353 bytes)
+- `bot/tests/test_reliability_pass.py` (11056 bytes)
 - `bot/tests/test_repo_sync.py` (21994 bytes)
+- `bot/tests/test_retention_pre_warning.py` (857 bytes)
 - `bot/tests/test_sec_broadcast.py` (17175 bytes)
-- `bot/tests/test_sec_card.py` (16369 bytes)
+- `bot/tests/test_sec_card.py` (16528 bytes)
 - `bot/tests/test_sec_dispatcher.py` (12332 bytes)
 - `bot/tests/test_sec_resource.py` (16069 bytes)
 - `bot/tests/test_sec_xlsx.py` (6780 bytes)
@@ -275,6 +291,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_security_batch_d.py` (6992 bytes)
 - `bot/tests/test_services_no_db.py` (9771 bytes)
 - `bot/tests/test_settings_edit_intent.py` (8298 bytes)
+- `bot/tests/test_settings_export_snapshot.py` (4054 bytes)
 - `bot/tests/test_settings_seed_baseline.py` (5309 bytes)
 - `bot/tests/test_settings_store_dirty_tracking.py` (14272 bytes)
 - `bot/tests/test_settings_store_validation.py` (18835 bytes)
@@ -283,7 +300,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_stale_operators_cleanup.py` (5187 bytes)
 - `bot/tests/test_texts_length_guard.py` (8408 bytes)
 - `bot/tests/test_threat_intel.py` (3737 bytes)
-- `bot/tests/test_threat_intel_cov2.py` (7469 bytes)
+- `bot/tests/test_threat_intel_cov2.py` (7739 bytes)
+- `bot/tests/test_threat_intel_resilience.py` (8143 bytes)
 - `bot/tests/test_typing_indicator.py` (3312 bytes)
 - `bot/tests/test_uploads_policy_admin_relay.py` (19596 bytes)
 - `bot/tests/test_url_defang.py` (7954 bytes)
@@ -292,6 +310,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_validators_hypothesis.py` (16733 bytes)
 - `bot/tests/test_wiki_in_sync.py` (3387 bytes)
 - `bot/tests/test_wizard_persist_cov2.py` (3955 bytes)
+- `bot/tests/test_wizard_persist_ordering.py` (6714 bytes)
 - `bot/tests/test_wizard_registry.py` (3581 bytes)
 - `bot/tests/test_wizard_registry_persist.py` (10305 bytes)
 - `docs/archive/versions/consent_152fz_draft@4dda831-2026-06-01.md` (21236 bytes)
@@ -324,9 +343,13 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/archive/versions/Регламент_v8_draft@8cf28cf-2026-05-27.md` (50220 bytes)
 - `docs/archive/versions/Регламент_v8_draft@9efa2d3-2026-05-29.md` (50173 bytes)
 - `docs/archive/versions/Регламент_v8_draft@e8d96b0-2026-05-26.md` (50284 bytes)
-- `docs/DEPS.md` (18775 bytes)
+- `docs/audits/FLOW_AUDIT_2026-10-26.md` (26974 bytes)
+- `docs/audits/flow_audit_probes_20261026.py` (11079 bytes)
+- `docs/DEPS.md` (17780 bytes)
+- `docs/MAXAPI_REVIEW_2026-10-26.md` (13698 bytes)
 - `docs/README.md` (7709 bytes)
-- `docs/ROADMAP.md` (24168 bytes)
+- `docs/RELEASE_0.2.0.md` (15181 bytes)
+- `docs/ROADMAP.md` (24960 bytes)
 - `docs/site/_kb/_archive/_audit/администратор-сисадмин.md` (42221 bytes)
 - `docs/site/_kb/_archive/_audit/безопасник-ИБ.md` (53534 bytes)
 - `docs/site/_kb/_archive/_audit/житель.md` (34405 bytes)
@@ -341,7 +364,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/site/_kb/_archive/README.md` (1864 bytes)
 - `docs/site/_kb/_assemble.py` (10398 bytes)
 - `docs/site/_kb/_audit/_PLAN.md` (59119 bytes)
-- `docs/site/_kb/_LEDGER.md` (113923 bytes)
+- `docs/site/_kb/_LEDGER.md` (114312 bytes)
 - `docs/site/_kb/_shell.html` (75363 bytes)
 - `docs/site/_kb/_sources/_reglament_changelog.md` (33133 bytes)
 - `docs/site/_kb/_sources/analiz_yanao_bashkir_omsk.txt` (14545 bytes)
@@ -350,7 +373,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/site/_kb/_sources/reglament_v7.txt` (94258 bytes)
 - `docs/site/_kb/_sources/reserch.txt` (117351 bytes)
 - `docs/site/_kb/_STATUS.md` (7870 bytes)
-- `docs/site/_kb2/admin.html` (216926 bytes)
+- `docs/site/_kb2/admin.html` (217285 bytes)
 - `docs/site/_kb2/adr.html` (103161 bytes)
 - `docs/site/_kb2/ekspluataciya.html` (42501 bytes)
 - `docs/site/_kb2/obzor.html` (42521 bytes)
@@ -359,15 +382,17 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/site/_kb2/spravochnik.html` (217287 bytes)
 - `docs/site/_kb2/voprosy.html` (295865 bytes)
 - `docs/site/_kb2/zhitel.html` (79426 bytes)
+- `docs/superpowers/plans/2026-10-26-reliability-release.md` (6513 bytes)
+- `docs/THREAT_INTEL_AUDIT_2026-10-26.md` (13635 bytes)
 - `docs/Политика_конфиденциальности_ИС_Чат-бот_MAX.md` (44753 bytes)
 - `docs/Регламент_AEMR-bot_MAX_v8.md` (177658 bytes)
 - `docs/ЧЕКЛИСТ_ПРАВОПРЕЕМСТВА.md` (22958 bytes)
-- `infra/.env.example` (70274 bytes)
+- `infra/.env.example` (70804 bytes)
 - `infra/cntlm/cntlm.conf.example` (1796 bytes)
 - `infra/docker-compose.cntlm.yml` (1945 bytes)
 - `infra/docker-compose.webhook.yml` (2391 bytes)
-- `infra/docker-compose.yml` (7842 bytes)
-- `infra/Dockerfile` (4381 bytes)
+- `infra/docker-compose.yml` (7920 bytes)
+- `infra/Dockerfile` (4409 bytes)
 - `infra/nginx/feedback.conf` (976 bytes)
 - `README.md` (40562 bytes)
 - `REPO_INDEX.md` (2264 bytes)
@@ -1056,6 +1081,51 @@ jobs:
           cache-to: type=gha,mode=max
 ```
 
+### `.github/workflows/release.yml`
+
+Size: `1372` bytes  
+SHA-256: `8fa6e7d5b35e8f34fe40256aef0c1f1354ce716582c59c9666d1944d6c93c0d8`
+
+```yaml
+name: Publish release
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Publish verified 0.2.0 source release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(python3 -c 'import tomllib; print(tomllib.load(open("bot/pyproject.toml", "rb"))["project"]["version"])')
+          # This workflow publishes this authorized release only. Later versions
+          # require an explicit release change, not incidental dependency edits.
+          if [ "$version" != "0.2.0" ]; then exit 0; fi
+          if gh release view v0.2.0 >/dev/null 2>&1; then exit 0; fi
+          gh release create v0.2.0 --target "$RELEASE_SHA" \
+            --title "aemr-bot 0.2.0" --notes-file docs/RELEASE_0.2.0.md
+```
+
 ### `.github/workflows/repo-index.yml`
 
 Size: `1211` bytes  
@@ -1112,8 +1182,8 @@ jobs:
 
 ### `.gitignore`
 
-Size: `3028` bytes  
-SHA-256: `c7f11ff73850f3a3c7755502ba14df156d9a7809f7bddf418732ba817697c65b`
+Size: `3114` bytes  
+SHA-256: `a18fe94ac270b0570241d6b993e068de7f594d3f0efa90cbe6556d8b416a4c44`
 
 ```gitignore
 # Secrets and env
@@ -1210,6 +1280,10 @@ docs/*.odt
 # Локальные служебные каталоги инструментов разработки — не для публичного репозитория.
 .claude/
 .claude-flow/
+
+# Local successful deployment marker
+.aemr-deployed-commit
+.aemr-deployed-commit.tmp
 ```
 
 ### `.pre-commit-config.yaml`
@@ -1287,6 +1361,30 @@ repos:
         pass_filenames: false
 ```
 
+### `AGENTS.md`
+
+Size: `3465` bytes  
+SHA-256: `2b636d56529dfbea2b5ae316ab65334e5e2bc6ffcb6ee779eecd3304be788044`
+
+```markdown
+# Работа с aemr-bot
+
+Если документация репозитория противоречит существующему коду, следуй соглашениям, принятым в самом коде, а в финальном ответе укажи каждое найденное несоответствие между документацией и кодом.
+
+Это правило не требует сохранять воспроизведённые дефекты: исправляй их по требованиям пользователя и регрессионным тестам. Исторические аудиты описывают указанный в них commit, а не состояние текущего выпуска.
+
+- Рабочий контур владельца закрытый; обновление и запуск выполняются вручную. Наличие scripts/auto-deploy.sh не означает, что он установлен или используется. Не включай автодеплой и не объявляй GitHub-публикацию развёртыванием на сервере.
+- Python-код: bot/aemr_bot; тесты: bot/tests; миграции: bot/aemr_bot/db/alembic/versions; образ: infra/Dockerfile; Docker Compose: infra/docker-compose.yml. Проверяй фактические пути перед изменением.
+- Зависимости устанавливаются из bot/uv.lock. maxapi закреплён точно; при обновлении проверяй реальные модели, методы, обработку ошибок и повторы запросов.
+- Проверки из bot/: uv sync --locked --all-extras; TZ=Asia/Kamchatka uv run pytest; uv run ruff check aemr_bot/; uv run mypy aemr_bot/. Полные PostgreSQL-тесты выполняются в CI с Postgres 16.
+- Не удаляй код только по отсутствию текстовых ссылок: проверь регистрацию обработчиков/cron, динамические вызовы, экспортируемые API, миграции, эксплуатационные сценарии и историю git. Сохраняй аварийные выключатели и резервные пути. Для каждого удаления фиксируй доказательство ненужности и проверку поведения.
+- Не обещай exactly-once для внешнего MAX API; неизвестный результат отправки должен оставаться видимым. Не повторяй изменяющий запрос вслепую после тайм-аута.
+- Бэкап необязателен: отсутствие BACKUP_LOCAL_DIR должно оставаться тихим отключением. Сбой баз угроз — один сигнал на эпизод, без остановки приёма обращений.
+- Не выдавай предположения об ускорении или размере образа за измерения. Итог должен содержать выполненные проверки и оставшиеся ограничения.
+
+Основания: https://developers.openai.com/blog/maintaining-software-with-the-gpt-6-family и https://arxiv.org/abs/2610.30571.
+```
+
 ### `bot/aemr_bot/__init__.py`
 
 Size: `22` bytes  
@@ -1298,8 +1396,8 @@ __version__ = "0.1.0"
 
 ### `bot/aemr_bot/config.py`
 
-Size: `23613` bytes  
-SHA-256: `07a002337d9a2bdb007c3f5b0bf0fe1f7c09255aaf6f17d4fb7e3e1a570d90ee`
+Size: `23443` bytes  
+SHA-256: `95b98314305e1e7ad5837285a733b8758b75fd08bac4ff128c570076ce5f4dff`
 
 ```python
 from pathlib import Path
@@ -1441,13 +1539,9 @@ class Settings(BaseSettings):
     max_api_timeout_seconds: float = Field(
         30.0, alias="MAX_API_TIMEOUT_SECONDS", gt=0.0, le=180.0
     )
-    # Retry на 502/503/504 от MAX. Default maxapi = 3 с
-    # экспоненциальным backoff (1s + 2s + 4s = 7s сверх timeout).
-    # 1 retry достаточно для transient blips, быстрее провал лучше
-    # для интерактивного UX оператора.
-    max_api_retries: int = Field(
-        1, alias="MAX_API_RETRIES", ge=0, le=5
-    )
+    # Legacy env compatibility only: SDK retries for mutating calls are disabled
+    # in build_bot. Polling and explicit rejection retry are application-owned.
+    max_api_retries: int = Field(0, alias="MAX_API_RETRIES", ge=0, le=5)
 
     # Broadcast / subscription. Rate-limit стоит ниже MAX-лимита 2 RPS, чтобы
     # обычная активность бота (ответы оператора, новые карточки) не упиралась
@@ -1469,7 +1563,7 @@ class Settings(BaseSettings):
 
     # Локальный бэкап: путь внутри контейнера, обычно смонтирован в named volume
     # `backups` (см. docker-compose). Если пусто — локальные бэкапы не сохраняются.
-    backup_local_dir: str | None = Field("/backups", alias="BACKUP_LOCAL_DIR")
+    backup_local_dir: str | None = Field(None, alias="BACKUP_LOCAL_DIR")
     # Сколько последних файлов хранить. 8 еженедельных ≈ 2 месяца истории.
     backup_keep_count: int = Field(8, alias="BACKUP_KEEP_COUNT")
 
@@ -2319,8 +2413,8 @@ __all__ = [
 
 ### `bot/aemr_bot/copy/citizen_funnel.py`
 
-Size: `22492` bytes  
-SHA-256: `9b86ca38ecf2bbf6ed0e135de8deb29574af782cda6dadac596574bbb2f96efb`
+Size: `22854` bytes  
+SHA-256: `894a07372c0a3fc1067701cd26c5cfe0d856f683ab979d61651744b7fdec3b8f`
 
 ```python
 """Тексты, которые видит житель в личке с ботом.
@@ -2558,12 +2652,14 @@ ERASE_CONFIRM = (
     "• Согласие на обработку отзывается, рассылка отключается.\n"
     "• Открытые обращения закрываются — оператор не успеет ответить.\n"
     "• Прошлая история обращений в боте больше не покажется.\n"
+    "• Сообщения и файлы, уже отправленные в MAX, останутся в чатах.\n"
     "• Бот вас не узнает при следующем заходе — при необходимости "
     "придётся пройти регистрацию заново."
 )
 
 ERASE_REQUESTED = (
-    "Готово. Ваши данные удалены.\n\n"
+    "Готово. Ваши данные удалены из базы бота, тексты обращений и вложения в базе очищены.\n\n"
+    "Ранее отправленные сообщения и файлы в MAX этим действием не удаляются.\n\n"
     "Если захотите написать снова — откройте /start, бот пройдёт "
     "с вами всё с чистого листа."
 )
@@ -4815,10 +4911,54 @@ def downgrade() -> None:
     _swap(_NEW, _OLD)
 ```
 
+### `bot/aemr_bot/db/alembic/versions/0026_durable_receipt.py`
+
+Size: `1755` bytes  
+SHA-256: `0db3fe0cc7df4537cf17186a8d6ab27ffa574776eab2c962d7ce799d4052c506`
+
+```python
+"""Durable inbound receipts and explicit initial-card delivery state."""
+import sqlalchemy as sa
+from alembic import op
+from sqlalchemy.dialects import postgresql
+
+revision = "0026"
+down_revision = "0025"
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    op.add_column("appeals", sa.Column("initial_card_state", sa.String(16), nullable=False, server_default="pending"))
+    op.add_column("appeals", sa.Column("initial_card_notified", sa.Boolean(), nullable=False, server_default=sa.text("false")))
+    op.execute("UPDATE appeals SET initial_card_state = 'published' WHERE admin_message_id IS NOT NULL")
+    op.create_table(
+        "inbox_events",
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("event_key", sa.String(64), nullable=False, unique=True),
+        sa.Column("update_type", sa.String(64), nullable=False),
+        sa.Column("max_user_id", sa.BigInteger(), nullable=True),
+        sa.Column("payload", postgresql.JSONB(), nullable=False),
+        sa.Column("state", sa.String(16), nullable=False, server_default="pending"),
+        sa.Column("reason", sa.String(64), nullable=True),
+        sa.Column("notified", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column("received_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+    )
+    for name in ("max_user_id", "state", "received_at"):
+        op.create_index(f"ix_inbox_events_{name}", "inbox_events", [name])
+
+
+def downgrade() -> None:
+    op.drop_table("inbox_events")
+    op.drop_column("appeals", "initial_card_notified")
+    op.drop_column("appeals", "initial_card_state")
+```
+
 ### `bot/aemr_bot/db/models.py`
 
-Size: `25780` bytes  
-SHA-256: `914624790b97e29c2874e0bee5d88f650670aa09c27458c278802ac3889cdc10`
+Size: `26897` bytes  
+SHA-256: `040f41640fb6f35cebe34137c2edad2da001d102a0adb5984bf4c78c457ea73e`
 
 ```python
 from datetime import datetime
@@ -5066,6 +5206,8 @@ class Appeal(Base):
     # callback'ов: если оператор тапнул на карточке вверху и её mid
     # != last_admin_card_mid — это устаревшая, надо send-new.
     last_admin_card_mid: Mapped[str | None] = mapped_column(String(64))
+    initial_card_state: Mapped[str] = mapped_column(String(16), default="pending", server_default="pending")
+    initial_card_notified: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
     assigned_operator_id: Mapped[int | None] = mapped_column(
         ForeignKey("operators.id", ondelete="SET NULL"), index=True
     )
@@ -5121,6 +5263,22 @@ class Event(Base):
     update_type: Mapped[str] = mapped_column(String(64))
     payload: Mapped[dict] = mapped_column(JSONB)
     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+
+class InboxEvent(Base):
+    """Temporary durable receipt; payload is cleared on completion/failure/erasure."""
+    __tablename__ = "inbox_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    event_key: Mapped[str] = mapped_column(String(64), unique=True)
+    update_type: Mapped[str] = mapped_column(String(64))
+    max_user_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
+    payload: Mapped[dict] = mapped_column(JSONB)
+    state: Mapped[str] = mapped_column(String(16), server_default="pending", index=True)
+    reason: Mapped[str | None] = mapped_column(String(64))
+    notified: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class AuditLog(Base):
@@ -5546,8 +5704,8 @@ async def release_single_instance_lock(conn: AsyncConnection | None) -> None:
 
 ### `bot/aemr_bot/handlers/__init__.py`
 
-Size: `8422` bytes  
-SHA-256: `5a38afb47877ff9955e244b17e6f2c2f665564a98ea33d84061fa209ff9373db`
+Size: `9391` bytes  
+SHA-256: `81410d47f20ef239c1f354356312058fe52be1b420664534d2246e6709745511`
 
 ```python
 import logging
@@ -5564,7 +5722,7 @@ from aemr_bot.handlers import (
     broadcast,
     start,
 )
-from aemr_bot.services import admin_bus, idempotency
+from aemr_bot.services import admin_bus, idempotency, inbox
 
 log = logging.getLogger(__name__)
 
@@ -5572,9 +5730,32 @@ class IdempotencyMiddleware(BaseMiddleware):
     """Отбрасывает дубликаты событий до того, как они доходят до обработчиков."""
 
     async def __call__(self, handler, event_object, data):
-        if not await idempotency.claim(event_object):
+        outcome = inbox.current_outcome.get()
+        try:
+            # Durable inbox already owns new events. Only consult the legacy
+            # dedup table; inserting a key here would recreate claim-before-work.
+            claimed = (not await idempotency.is_legacy_duplicate(event_object)
+                       if outcome is not None else await idempotency.claim(event_object))
+        except Exception:
+            if outcome is not None:
+                outcome.failed = True
+                outcome.retry_safe = True
+                outcome.reason = "idempotency_unavailable"
+            raise
+        if not claimed:
+            if outcome is not None:
+                outcome.finished = True
             return None
-        return await handler(event_object, data)
+        try:
+            result = await handler(event_object, data)
+            if outcome is not None:
+                outcome.finished = True
+            return result
+        except BaseException:
+            if outcome is not None:
+                outcome.failed = True
+                outcome.reason = "handler_failed_unknown_result"
+            raise
 
 
 class AdminChatActivityMiddleware(BaseMiddleware):
@@ -5641,7 +5822,7 @@ class AdminChatActivityMiddleware(BaseMiddleware):
 def _attach_outer_middleware(dp: Dispatcher, middleware: BaseMiddleware) -> None:
     """Подключить outer middleware. Полагается на публичный API maxapi 1.1+.
 
-    Pyproject pin = `maxapi~=1.1`, поэтому 1.1.x гарантированно даёт
+    Pyproject pin = `maxapi==1.2.3`, поэтому 1.1.x гарантированно даёт
     `register_outer_middleware`. Если апгрейд сломал API — отказываем
     ясной ошибкой, без silent-fallback на устаревшие формы.
     """
@@ -10433,8 +10614,8 @@ async def _apply_obj_add(
 
 ### `bot/aemr_bot/handlers/admin_settings_pr.py`
 
-Size: `9445` bytes  
-SHA-256: `eafafba716f14482db7717aec659de7f690ba17dc00a1f8f60ea06b37423d679`
+Size: `9985` bytes  
+SHA-256: `1959217a98db17ae9b7ef3d1ea433cf7808e8f6439c7991c982c68997ea3c233`
 
 ```python
 """Создание PR с изменениями настроек (синхронизация с репозиторием).
@@ -10452,6 +10633,7 @@ SHA-256: `eafafba716f14482db7717aec659de7f690ba17dc00a1f8f60ea06b37423d679`
 from __future__ import annotations
 
 import os
+from copy import deepcopy
 
 from aemr_bot import keyboards as kbds
 from aemr_bot.db.session import session_scope
@@ -10473,7 +10655,8 @@ async def _show_pr_confirm(event) -> None:
             event,
             "📥 Нет несинхронизированных изменений.\n"
             "· · · · · · · ·\n"
-            "Все настройки совпадают с последним PR в репо.",
+            "Все текущие настройки уже экспортированы.\n"
+            "Это не подтверждает merge или применение PR.",
             kbds.op_back_to_settings_keyboard(),
         )
         return
@@ -10509,8 +10692,9 @@ async def _show_pr_confirm(event) -> None:
         f"Будет включено {len(dirty)} ключей:\n{keys_preview}\n\n"
         f"Автор: {name} <{email}>\n\n"
         "После создания PR откройте его в браузере,\n"
-        "проверьте diff и нажмите Merge. Auto-deploy\n"
-        "подхватит изменения в течение 10 минут.",
+        "проверьте diff и нажмите Merge.\n"
+        "PR сохраняет экспорт seed/runtime_config.json.\n"
+        "Он не заменяет рабочие настройки бота.",
         kbds.op_settings_pr_confirm_keyboard(),
     )
 
@@ -10520,7 +10704,7 @@ async def _create_pr(event, operator_id: int) -> None:
 
     async with session_scope() as session:
         dirty = await settings_store.get_dirty_keys(session)
-        runtime_config = await settings_store.export_synced(session)
+        runtime_config = deepcopy(await settings_store.export_synced(session))
         name = await settings_store.get(session, "commit_author_name")
         email = await settings_store.get(session, "commit_author_email")
         op_record = await ops_svc.get(session, operator_id)
@@ -10566,7 +10750,7 @@ async def _create_pr(event, operator_id: int) -> None:
         return
 
     async with session_scope() as session:
-        await settings_store.mark_synced(session, dirty)
+        await settings_store.mark_synced(session, dirty, exported_values=runtime_config)
         await ops_svc.write_audit(
             session,
             operator_max_user_id=operator_id,
@@ -10587,8 +10771,10 @@ async def _create_pr(event, operator_id: int) -> None:
         f"Изменено ключей: {len(dirty)}\n\n"
         f"Откройте PR в браузере, проверьте diff\n"
         f"и нажмите Merge.\n\n"
-        f"Auto-deploy подхватит изменения в течение\n"
-        f"10 минут после мержа.",
+        f"В PR сохранён снимок настроек. Новые правки\n"
+        f"останутся в списке для следующего экспорта.\n"
+        f"Создание PR не означает merge или применение;\n"
+        f"runtime_config.json не загружается при старте.",
         kbds.op_settings_pr_done_keyboard(result.pr_url),
     )
 
@@ -10657,7 +10843,8 @@ async def _show_pr_diff(event) -> None:
             + "\n\nЕсли локальные изменения новее — создайте PR.\n"
             + "Если в репо есть изменения, которых нет\n"
             + "локально (например, через ручной PR) —\n"
-            + "перезапустите бота, он перечитает seed."
+            + "перенесите их через меню настроек: экспорт\n"
+            + "runtime_config.json не загружается при старте."
         )
     await op_screen(
         event,
@@ -13082,8 +13269,8 @@ async def on_awaiting_geo_confirm(event, body, text_body, max_user_id):
 
 ### `bot/aemr_bot/handlers/appeal_runtime.py`
 
-Size: `19750` bytes  
-SHA-256: `0359bc84e0840258a68f7e6d895e6f07e8816e3a83dec88f2bd56b7cb9fdfbb7`
+Size: `21438` bytes  
+SHA-256: `cb89c70abc621b02f1bd3c022c58a73df33da0022f1b11dcc94004645b98837f`
 
 ```python
 """Runtime-helpers и финализация обращения.
@@ -13103,10 +13290,13 @@ import asyncio
 import logging
 import re
 from typing import Any
+from weakref import WeakValueDictionary
+
+from sqlalchemy import or_, select
 
 from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
-from aemr_bot.db.models import AppealStatus, DialogState
+from aemr_bot.db.models import Appeal, AppealStatus, DialogState, User
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import appeals as appeals_service
@@ -13124,7 +13314,7 @@ _HAS_ALNUM = re.compile(r"[A-Za-zА-Яа-яЁё0-9]")
 # Per-user lock для защиты от двойной финализации воронки. Только
 # один-инстанс — при горизонтальном масштабировании потребуется
 # pg_advisory_xact_lock или Redis-lock. См. _persist_and_dispatch_appeal.
-_user_locks: dict[int, asyncio.Lock] = {}
+_user_locks: WeakValueDictionary[int, asyncio.Lock] = WeakValueDictionary()
 PERSIST_RATE_LIMITED = "rate_limited"
 PERSIST_NO_CONSENT = "no_consent"
 # Заблокированного нельзя отправлять давать согласие: /start блокировку не
@@ -13162,13 +13352,61 @@ def get_user_lock(max_user_id: int) -> asyncio.Lock:
 
 
 def drop_user_lock(max_user_id: int) -> None:
-    """Освобождает объект блокировки после полного завершения воронки.
-    Предотвращает бесконечное разрастание словаря `_user_locks` по мере
-    прохождения пользователей через бота. Безопасно вызывать когда
-    никто не удерживает блокировку — операция dict-pop идемпотентна."""
-    lock = _user_locks.get(max_user_id)
-    if lock is not None and not lock.locked():
-        _user_locks.pop(max_user_id, None)
+    """Compatibility hook: weak registry removes locks when all users leave.
+
+    Releasing a lock can wake a waiter before it reacquires it. Neither
+    ``locked()`` nor a completed funnel proves that no caller still holds
+    this object, so explicitly removing the entry would split the lock.
+    """
+    _ = max_user_id
+
+
+async def recover_unpublished_appeals(bot) -> int:
+    """Publish a bounded batch of saved, eligible first cards.
+
+    Pending means no external send has started. Sending/uncertain records
+    receive an operator warning instead of an automatic replay. The card
+    service shares a per-appeal lock and a durable compare-and-set claim
+    with normal finalization, and reloads relationships before sending.
+    """
+    from aemr_bot.services import admin_card as admin_card_service
+
+    if not cfg.admin_group_id:
+        return 0
+    async with session_scope() as session:
+        result = await session.scalars(
+            select(Appeal.id)
+            .join(Appeal.user)
+            .where(
+                Appeal.admin_message_id.is_(None),
+                Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
+                Appeal.closed_due_to_revoke.is_(False),
+                User.is_blocked.is_(False),
+                User.consent_pdn_at.is_not(None),
+                or_(
+                    Appeal.initial_card_state == "pending",
+                    (
+                        Appeal.initial_card_state.in_(["sending", "uncertain"])
+                        & Appeal.initial_card_notified.is_(False)
+                    ),
+                ),
+            )
+            .order_by(Appeal.id)
+            .limit(100)
+        )
+        ids = list(result.all())
+
+    sem = asyncio.Semaphore(_RECOVERY_CONCURRENCY)
+
+    async def recover(appeal_id: int) -> bool:
+        async with sem:
+            try:
+                return await admin_card_service.recover_first_publication(bot, appeal_id)
+            except Exception:
+                log.exception("first admin-card recovery failed for appeal #%s", appeal_id)
+                return False
+
+    return sum(await asyncio.gather(*(recover(appeal_id) for appeal_id in ids)))
 
 
 async def recover_stuck_funnels(bot) -> int:
@@ -13438,8 +13676,8 @@ async def _relay_attachments_background(
 
 ### `bot/aemr_bot/handlers/broadcast.py`
 
-Size: `41386` bytes  
-SHA-256: `8fbbcb4ab0be5b03eab6fad44c76b14a75c7b4d7c638299afbb93b2e162e645b`
+Size: `42614` bytes  
+SHA-256: `4dc73492c6d8e6b83a465982c4649084fe723e56e519c707beee4d0877b26a8a`
 
 ```python
 """Send pipeline + история рассылок + диспетчер `/broadcast`.
@@ -13474,12 +13712,13 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from collections.abc import Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
 
 from maxapi import Dispatcher
+from maxapi.exceptions import MaxApiError
 from maxapi.types import Command, MessageCreated
 
 from aemr_bot import keyboards, texts
@@ -13696,11 +13935,17 @@ async def _handle_stop(event, broadcast_id: int) -> None:
                 details={"reason": "operator_emergency_stop"},
             )
     await ack_callback(
-        event, "Остановлено." if flipped else "Уже завершено."
+        event,
+        "Остановка запрошена. Текущая отправка может завершиться; дождитесь итога."
+        if flipped else "Рассылка уже завершена или остановка уже запрошена.",
     )
 
 
 # `_format_progress` теперь в services/broadcast_utils (Cluster C, PR 7).
+
+
+from aemr_bot.utils.delivery_guard import DeliveryCancelled as _BroadcastCancelled
+from aemr_bot.utils.delivery_guard import send_guard
 
 
 async def _send_one(
@@ -13709,6 +13954,7 @@ async def _send_one(
     body_text: str,
     *,
     outbound_images: Sequence[Any] = (),
+    can_send: Callable[[], Awaitable[bool]] | None = None,
 ) -> str | None:
     """Возвращает None при успехе и строку с ошибкой при сбое.
 
@@ -13728,31 +13974,36 @@ async def _send_one(
     """
     delay_sec = 1.0
     for attempt in range(3):
+        # Includes the first attempt and every retry after backoff. Exceptions
+        # checking the DB must propagate, rather than masquerading as API errors.
+        if can_send is not None and not await can_send():
+            raise _BroadcastCancelled
         try:
-            await bot.send_message(
-                user_id=max_user_id,
-                text=body_text,
-                attachments=[
-                    *outbound_images,
-                    keyboards.broadcast_unsubscribe_keyboard(),
-                ],
-            )
+            with send_guard(can_send):
+                response = await bot.send_message(
+                    user_id=max_user_id,
+                    text=body_text,
+                    attachments=[
+                        *outbound_images,
+                        keyboards.broadcast_unsubscribe_keyboard(),
+                    ],
+                )
+            if response is None:
+                return broadcasts_service.DELIVERY_UNKNOWN_PREFIX + "API returned no delivery response"
             return None
+        except _BroadcastCancelled:
+            raise
         except Exception as e:
             err_repr = repr(e)
-            # Детектируем 429 (Too Many Requests) по тексту ошибки.
-            # maxapi.MaxApiError содержит code в repr — проверяем
-            # через подстроку, чтобы не тащить imports конкретного
-            # exception класса (в разных версиях SDK имя отличается).
-            is_rate_limit = (
-                "429" in err_repr
-                or "rate" in err_repr.lower()
-                or "too many" in err_repr.lower()
-            )
+            # Prefer the actual HTTP status: arbitrary error payloads can
+            # contain digits 429 without establishing an explicit rejection.
+            is_rate_limit = isinstance(e, MaxApiError) and e.code == 429
             if not is_rate_limit:
-                # Не rate-limit — обычная ошибка (заблокирован, нет
-                # такого user_id, network), не ретраим.
-                return err_repr[:500]
+                if isinstance(e, MaxApiError) and 400 <= e.code < 500 and e.code != 408:
+                    return err_repr[:500]
+                # A timeout/lost response cannot establish non-delivery.
+                # Conservatively retain uncertainty for all other SDK errors.
+                return broadcasts_service.DELIVERY_UNKNOWN_PREFIX + err_repr[:500]
             if attempt == 2:
                 # Третья попытка тоже 429 — сдаёмся, идём к следующему
                 # получателю. Темп между сообщениями держат ДВА уровня:
@@ -13812,6 +14063,19 @@ async def _run_broadcast(
                 "broadcast: failed to mark broadcast_id=%s as failed",
                 broadcast_id,
             )
+        try:
+            from aemr_bot.services import admin_bus
+
+            await admin_bus.send(
+                bot,
+                text=(
+                    f"⚠️ Рассылка #{broadcast_id} прервана. Результаты части доставок "
+                    "могут быть неизвестны. Проверьте журнал через историю рассылок "
+                    "перед повторной отправкой: сообщение могло уже дойти."
+                ),
+            )
+        except Exception:
+            log.exception("broadcast #%s: failed to publish failure notice", broadcast_id)
 
 
 # `_compute_progress_step` и `_build_final_text` теперь в
@@ -13900,118 +14164,102 @@ async def _run_send_loop(
     progress_step_sec: float,
     outbound_images: Sequence[Any] = (),
 ) -> tuple[int, int, bool]:
-    """Цикл отправки рассылки. Возвращает ``(delivered, failed, cancelled)``.
+    """Send only after a committed intent; persist every result before advancing.
 
-    Результаты доставки копятся в буфер и сбрасываются батчем в единой
-    точке синхронизации с БД (по таймеру progress_step_sec либо при
-    переполнении буфера) — там же читается флаг отмены и пишется
-    прогресс. Раньше каждый получатель = 2-4 транзакции; на 10k
-    подписчиков было ~25000 коммитов за рассылку, теперь ~200.
+    Intent/result commits cost more than buffering, but retain a durable unknown
+    recipient even if the process dies or the result commit response is lost.
+    Cancellation is independent of progress updates and checked after waits.
     """
     delivered = 0
     failed = 0
     cancelled = False
     last_progress_at = time.monotonic()
 
-    _FLUSH_EVERY = 50
-    pending: list[tuple[int, str | None]] = []
-
-    async def _flush_pending() -> None:
-        """Сбросить буфер доставок в БД. Best-effort: при сбое логируем,
-        но не валим рассылку — count_delivery_results в mark_finished
-        пересчитает счётчики по факту записанных строк."""
-        if not pending:
-            return
-        try:
-            async with session_scope() as flush_session:
-                await broadcasts_service.record_deliveries(
-                    flush_session,
-                    broadcast_id=broadcast_id,
-                    results=pending,
-                )
-            pending.clear()
-        except Exception:
-            log.exception(
-                "broadcast #%s: failed to flush %d pending deliveries",
-                broadcast_id, len(pending),
+    async def can_send() -> bool:
+        async with session_scope() as session:
+            status = await broadcasts_service.get_status(session, broadcast_id)
+        if status == BroadcastStatus.CANCELLED.value:
+            return False
+        if status != BroadcastStatus.SENDING.value:
+            raise broadcasts_service.DeliveryAccountingError(
+                f"broadcast #{broadcast_id}: unexpected status {status!r}"
             )
+        return True
 
-    try:
-        for user_db_id, user_max_user_id in targets:
+    for user_db_id, user_max_user_id in targets:
+        if not await can_send():
+            cancelled = True
+            break
+        async with session_scope() as session:
+            claimed = await broadcasts_service.begin_delivery(
+                session, broadcast_id=broadcast_id, user_id=user_db_id,
+            )
+        if not claimed:
+            raise broadcasts_service.DeliveryAccountingError(
+                f"broadcast #{broadcast_id}: delivery already exists for user #{user_db_id}; "
+                "automatic replay is unsafe"
+            )
+        try:
             error = await _send_one(
                 bot, user_max_user_id, body,
-                outbound_images=outbound_images,
+                outbound_images=outbound_images, can_send=can_send,
             )
-            pending.append((user_db_id, error))
-            if error is None:
-                delivered += 1
-            else:
-                failed += 1
+        except _BroadcastCancelled:
+            # The sender made no call, or only received explicit 429 rejections.
+            async with session_scope() as session:
+                await broadcasts_service.discard_delivery_intent(
+                    session, broadcast_id=broadcast_id, user_id=user_db_id,
+                )
+            cancelled = True
+            break
 
-            now = time.monotonic()
-            # Единая точка синхронизации с БД: flush буфера + чтение
-            # флага отмены + запись прогресса + edit карточки. По
-            # таймеру либо при переполнении буфера.
-            if (
-                now - last_progress_at >= progress_step_sec
-                or len(pending) >= _FLUSH_EVERY
-            ):
-                last_progress_at = now
-                await _flush_pending()
-                async with session_scope() as sync_session:
-                    status = await broadcasts_service.get_status(
-                        sync_session, broadcast_id
-                    )
-                    await broadcasts_service.update_progress(
-                        sync_session,
-                        broadcast_id,
-                        delivered=delivered,
-                        failed=failed,
-                    )
-                if status == BroadcastStatus.CANCELLED.value:
-                    cancelled = True
-                    break
-                # SACRED #2: progress edit ТОЛЬКО если карточка прогресса
-                # всё ещё последнее сообщение бота в admin chat. Иначе
-                # её сдвинуло pulse / ответ оператора / другое событие
-                # выше — оператор внизу edit'а не увидит. На таком тике
-                # progress скипаем, finalize всё равно опубликует
-                # правильный итог свежим сообщением.
-                if admin_mid is not None:
-                    from aemr_bot.utils import menu_tracker
+        # Do not catch a failed journal transaction. The committed intent remains
+        # visibly unknown and the wrapper marks FAILED without sending onwards.
+        async with session_scope() as session:
+            await broadcasts_service.record_deliveries(
+                session, broadcast_id=broadcast_id, results=[(user_db_id, error)],
+            )
+        if error is None:
+            delivered += 1
+        else:
+            failed += 1
+            if error.startswith(broadcasts_service.DELIVERY_UNKNOWN_PREFIX):
+                raise broadcasts_service.DeliveryAccountingError(
+                    f"broadcast #{broadcast_id}: unknown delivery result for user #{user_db_id}"
+                )
 
-                    if (
-                        cfg.admin_group_id
-                        and menu_tracker.get_last_menu_mid(cfg.admin_group_id)
-                        == admin_mid
-                    ):
-                        try:
-                            await bot.edit_message(
-                                message_id=admin_mid,
-                                text=_format_progress(
-                                    broadcast_id=broadcast_id,
-                                    total=total,
-                                    delivered=delivered,
-                                    failed=failed,
-                                ),
-                                attachments=[
-                                    keyboards.broadcast_stop_keyboard(broadcast_id)
-                                ],
-                            )
-                        except Exception:
-                            log.exception(
-                                "failed to edit progress message for broadcast #%s",
-                                broadcast_id,
-                            )
+        now = time.monotonic()
+        if now - last_progress_at >= progress_step_sec:
+            last_progress_at = now
+            async with session_scope() as session:
+                await broadcasts_service.update_progress(
+                    session, broadcast_id, delivered=delivered, failed=failed,
+                )
+            if admin_mid is not None:
+                from aemr_bot.utils import menu_tracker
 
-            await asyncio.sleep(rate_delay)
-    finally:
-        # Любой выход из цикла (конец списка, break по отмене,
-        # исключение) — досбрасываем остаток буфера, иначе уже
-        # отправленные сообщения не попадут в broadcast_deliveries
-        # и при повторной рассылке жители получат дубль.
-        await _flush_pending()
+                if (
+                    cfg.admin_group_id
+                    and menu_tracker.get_last_menu_mid(cfg.admin_group_id) == admin_mid
+                ):
+                    try:
+                        await bot.edit_message(
+                            message_id=admin_mid,
+                            text=_format_progress(
+                                broadcast_id=broadcast_id, total=total,
+                                delivered=delivered, failed=failed,
+                            ),
+                            attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
+                        )
+                    except Exception:
+                        log.exception(
+                            "failed to edit progress message for broadcast #%s", broadcast_id,
+                        )
+        await asyncio.sleep(rate_delay)
 
+    # Covers cancellation during the last send/pacing wait, even in a one-user run.
+    if not cancelled and targets:
+        cancelled = not await can_send()
     return delivered, failed, cancelled
 
 
@@ -14177,6 +14425,11 @@ async def _open_broadcast(event, broadcast_id: int) -> None:
         if bc.failed_count
         else ""
     )
+    if bc.status == BroadcastStatus.FAILED.value and bc.failed_count:
+        failed_line = (
+            f"\nОшибки или неподтверждённые доставки: {bc.failed_count}. "
+            "Проверьте журнал перед повтором."
+        )
     body = texts.OP_BROADCAST_CARD.format(
         number=bc.id,
         status=bc.status,
@@ -14276,11 +14529,22 @@ async def _list_failed_deliveries(event, broadcast_id: int) -> None:
             number=bc.id, count=bc.failed_count
         ).rstrip()
     ]
+    if any((err or "").startswith(broadcasts_service.DELIVERY_UNKNOWN_PREFIX) for _, _, err in rows):
+        lines[0] = f"⚠️ Рассылка #{bc.id}: ошибки и неизвестные результаты доставки."
+        lines.append(
+            "Неизвестный результат означает, что сообщение могло дойти. "
+            "Проверьте получателя перед повторной отправкой."
+        )
     for _user_id, name, err in rows:
         # Обрезаем ошибку, чтобы не разорвать сообщение MAX-лимитом
         # длины: типичный repr-RuntimeError помещается, но иногда
         # бывает огромный traceback от bot.send_message.
-        err_short = (err or "").strip()[:100]
+        error = err or ""
+        if error.startswith(broadcasts_service.DELIVERY_UNKNOWN_PREFIX):
+            error = "Результат неизвестен: " + error.removeprefix(
+                broadcasts_service.DELIVERY_UNKNOWN_PREFIX
+            )
+        err_short = error.strip()[:100]
         lines.append(
             texts.OP_BROADCAST_FAILED_LIST_ITEM.format(
                 name=name, error=err_short or "—"
@@ -19562,8 +19826,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/health.py`
 
-Size: `10506` bytes  
-SHA-256: `bf74319389865a18ff7debe163b4029a378aedc333a53068bb5cd6bdcefebb9d`
+Size: `10567` bytes  
+SHA-256: `253ca753ed0b3a1401302b3de6162ffdacdd8da4570994a26116ebb1752345a6`
 
 ```python
 """Маленький aiohttp-сервер здоровья процесса.
@@ -19769,12 +20033,15 @@ async def _healthz(request: web.Request) -> web.Response:
 async def start(
     host: str = "0.0.0.0",  # nosec
     port: int = 8080,
+    setup=None,
 ) -> web.AppRunner:
     """Запустить health-сервер. Возвращает AppRunner для shutdown."""
     app = web.Application()
     app.router.add_get("/livez", _livez)
     app.router.add_get("/readyz", _readyz)
     app.router.add_get("/healthz", _healthz)
+    if setup is not None:
+        setup(app)
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, host, port)
@@ -19833,8 +20100,8 @@ from aemr_bot.ui.wizard_keyboards import *
 
 ### `bot/aemr_bot/logging_setup.py`
 
-Size: `3750` bytes  
-SHA-256: `32bc059577f63bccd4d83f3b83b08549c8b5c4193d93155a24abc8014c12f32d`
+Size: `4912` bytes  
+SHA-256: `0137b44569e599ea2d3476b26070fba145e2eb3f92f86bae1bd494ac79c4798e`
 
 ```python
 """Настройка логирования: stdout + персистентный ротируемый файл на диске.
@@ -19865,6 +20132,27 @@ _FORMAT = "%(asctime)s %(levelname)s %(name)s %(message)s"
 _LOG_FILE_NAME = "bot.log"
 
 
+class _MaxUpdateDiagnosticsFilter(logging.Filter):
+    """Keep SDK parser failure signals without copying resident payloads to logs.
+
+    maxapi 1.2.3 logs complete unrecognized/malformed update JSON and may attach
+    validation exceptions containing that JSON. Filter only that SDK module;
+    unrelated dispatcher warnings and application logs remain available.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.name == "dispatcher" and record.module == "getted_updates":
+            error = "unknown-or-malformed-update"
+            if record.exc_info and record.exc_info[0] is not None:
+                error = record.exc_info[0].__name__
+            record.msg = "MAX: событие пропущено при разборе (%s); payload не записывается"
+            record.args = (error,)
+            record.exc_info = None
+            record.exc_text = None
+            record.stack_info = None
+        return True
+
+
 def setup_logging(s: Settings | None = None) -> None:
     """Поднять логирование: stdout всегда + файл на диске, если задан и доступен LOG_DIR.
 
@@ -19873,6 +20161,9 @@ def setup_logging(s: Settings | None = None) -> None:
     (важно для dev/CI, где /var/log/aemr-bot не существует).
     """
     s = s or settings
+    sdk_log = logging.getLogger("dispatcher")
+    if not any(isinstance(f, _MaxUpdateDiagnosticsFilter) for f in sdk_log.filters):
+        sdk_log.addFilter(_MaxUpdateDiagnosticsFilter())
     formatter = logging.Formatter(_FORMAT)
     root = logging.getLogger()
     root.setLevel(s.log_level)
@@ -19913,8 +20204,8 @@ def setup_logging(s: Settings | None = None) -> None:
 
 ### `bot/aemr_bot/main.py`
 
-Size: `56783` bytes  
-SHA-256: `c634efcdff811136279083b2310bfcac91050e407c2416971fcfde9982037d82`
+Size: `47047` bytes  
+SHA-256: `06bf427c2d975afa8d7924954b7a974cb707eb1ee843cd6d5c028bd7e54f71c3`
 
 ```python
 from __future__ import annotations
@@ -19938,9 +20229,10 @@ from aemr_bot.handlers.appeal import recover_stuck_funnels
 from aemr_bot.logging_setup import setup_logging
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import cron as cron_service
+from aemr_bot.services import inbox, settings_store
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import policy as policy_service
-from aemr_bot.services import settings_store
+from aemr_bot.transport import DurableDispatcher, setup_webhook
 
 # Ре-экспорт: spawn_background_task переехал в utils/background.py
 # (батч 4), но исторические вызовы `from aemr_bot.main import
@@ -19959,22 +20251,18 @@ from aemr_bot.services import admin_bus
 
 
 def build_bot() -> Bot:
-    """Собрать экземпляр Bot с нашими таймаутами и hook'ами.
+    """Configure bounded SDK requests with no hidden mutation retries.
 
-    maxapi default = timeout 150s × max_retries 3 (до 10 мин на запрос).
-    При sequential polling один тормозящий запрос блокирует обработку
-    ВСЕХ следующих событий — видимое «тап → бот завис». Override через
-    наш конфиг: timeout 30s + 1 retry → worst case ~60s, не 10 минут.
-
-    Здесь же ставится outgoing-tracker hook (sacred event log) и, для
-    polling-режима, фиксированный таймаут long-poll — чтобы поведение
-    запуска не зависело от того, через фабрику или модуль создан bot.
+    Polling reconnects and explicitly rejected deliveries are retried by the
+    application. A timeout/5xx after a send is an unknown result, not permission
+    to send the same message again. Legacy MAX_API_RETRIES is accepted but ignored.
     """
     bot = Bot(
         settings.bot_token,
+        after_upload_attempts=1,  # Application owns explicit rejection retries.
         default_connection=DefaultConnectionProperties(
             timeout=settings.max_api_timeout_seconds,
-            max_retries=settings.max_api_retries,
+            max_retries=0,  # Never replay an uncertain mutating request inside the SDK.
             # firewall mode: при включённом прокси-режиме trust_env=True уходит в
             # ClientSession (maxapi/bot.py ensure_session) → aiohttp читает
             # HTTP(S)_PROXY из окружения. Вне режима dict пустой, поведение прежнее.
@@ -19992,25 +20280,12 @@ def build_bot() -> Bot:
 
 
 def build_dispatcher() -> Dispatcher:
-    """Собрать Dispatcher с зарегистрированными роутерами/хендлерами.
+    """Receive into the durable inbox; the serial worker dispatches in order.
 
-    use_create_task=True: handlers — отдельные asyncio.Task, polling loop
-    не блокируется одним долгим callback'ом. Per-user state защищён
-    asyncio.Lock в appeal_runtime, concurrent dispatch безопасен.
-
-    В polling-режиме оборачиваем `dp.handle` (P2-1): и `on_message`, и
-    `on_callback` диспетчеризуются ровно через него (maxapi зовёт
-    `dp.handle(event)` на каждый апдейт), поэтому это единственная точка,
-    закрывающая оба пути сразу — без правок в каждом handler'е. Обёртка
-    делает per-user токен-бакет (бёрст одного жителя гасится тихим ack'ом
-    без ответа) и bounded-семафор (потолок одновременных handle()-тасков,
-    симметрично webhook-семафору). В webhook-режиме поток уже ограничивает
-    _WEBHOOK_SEMAPHORE вокруг dp.handle в _max_webhook, поэтому второй
-    семафор там не вешаем (иначе двойное bounded-окно) — но токен-бакет
-    одинаково полезен и там; оставляем обёртку и для webhook, без своего
-    семафора.
+    Polling receipt does not wait for business handlers. Existing rate limiting
+    remains at dispatch, and per-user locks also cover cron recovery paths.
     """
-    dp = Dispatcher(use_create_task=True)
+    dp = DurableDispatcher(use_create_task=True)
     register_handlers(dp)
     _install_dispatch_guards(dp)
     return dp
@@ -20019,11 +20294,9 @@ def build_dispatcher() -> Dispatcher:
 def _install_dispatch_guards(dp: Dispatcher) -> None:
     """Навесить per-user throttle и bounded-семафор на `dp.handle`.
 
-    Переопределяем метод на ЭКЗЕМПЛЯРЕ (как `_install_polling_timeout`
-    для `bot.get_updates`), не трогая maxapi. Семафор берём только в
-    polling-режиме: webhook-путь уже обёрнут _WEBHOOK_SEMAPHORE, дублировать
-    bound нельзя. Троттлинг применяем в обоих режимах — это анти-флуд на
-    уровне жителя, ортогональный транспорту.
+    Оба транспорта передают события последовательному durable inbox worker.
+    Троттлинг действует перед обработчиком. Polling-семафор дополнительно
+    ограничивает прямые вызовы dp.handle вне worker (тесты/адаптеры).
     """
     original_handle = dp.handle
     polling = settings.bot_mode == "polling"
@@ -20032,9 +20305,13 @@ def _install_dispatch_guards(dp: Dispatcher) -> None:
         # 1) Per-user токен-бакет — до любой работы. Затроттленное событие
         #    тихо завершаем (callback — гасим спиннер ack'ом, текст роняем).
         if not _throttle_allows_event(event_object):
+            outcome = inbox.current_outcome.get()
+            if outcome is not None:
+                outcome.finished = True
+                outcome.reason = "rate_limited"
             await _ack_throttled_callback(event_object)
             return None
-        # 2) Bounded-семафор только на polling-пути (webhook ограничен своим).
+        # 2) Дополнительный bound для прямого polling-dispatch вне inbox.
         if polling:
             async with _get_polling_dispatch_semaphore():
                 return await original_handle(event_object, *args, **kwargs)
@@ -20048,18 +20325,13 @@ def create_app() -> tuple[Bot, Dispatcher]:
 
     Объединяет build_bot + build_dispatcher в одну точку. Вызывается на
     уровне модуля (ниже — `bot, dp = create_app()`), чтобы сохранить
-    исторические `from aemr_bot.main import bot/dp` и регистрацию
-    webhook-декоратора, замыкающего эти module-level имена. Поведение
-    запуска идентично прежней inline-инициализации.
+    исторические `from aemr_bot.main import bot/dp`. Webhook-маршрут
+    регистрируется отдельно через transport.setup_webhook при запуске.
     """
     return build_bot(), build_dispatcher()
 
 
-# Общий потолок concurrency для входящих апдейтов и общая lazy-фабрика на
-# оба пути (webhook и polling). Инстансы семафоров РАЗНЫЕ — каждый транспорт
-# держит своё независимое окно, — но реализация и число одни. 32 —
-# компромисс между throughput и memory pressure (mem_limit=512m в
-# docker-compose): увеличивать только после реальных нагрузочных замеров.
+# Дополнительный предел прямого dispatch; штатный inbox worker последовательный.
 _SEMAPHORE_CONCURRENCY = 32
 
 
@@ -20069,9 +20341,7 @@ def _lazy_semaphore(
     """Lazy-init module-global семафора по имени `holder_name`.
 
     Создавать семафор на module-level нельзя — при импорте main.py ещё нет
-    активного event loop. Общая реализация для webhook- и polling-семафоров:
-    они различаются только именем module-global, а значит дают два
-    независимых инстанса с одним и тем же потолком.
+    активного event loop. Инициализация выполняется при первом dispatch.
     """
     sem = globals().get(holder_name)
     if sem is None:
@@ -20080,28 +20350,7 @@ def _lazy_semaphore(
     return sem
 
 
-# Semaphore-окно для входящих webhook'ов. Без ограничения каждый POST
-# в /max/webhook порождает asyncio.create_task(...) — флуд (1000 RPS
-# или ботнет) получает unbounded task spawn → OOM при mem_limit=512m
-# в docker-compose. С 32 параллельными dispatchers очередь FastAPI
-# держит остальные на 200ms+ — клиенты MAX перетягивают, но процесс
-# не падает.
-_WEBHOOK_SEMAPHORE: asyncio.Semaphore | None = None
-
-
-def _get_webhook_semaphore() -> asyncio.Semaphore:
-    return _lazy_semaphore("_WEBHOOK_SEMAPHORE")
-
-
-# Semaphore-окно для polling-dispatch (P2-1). maxapi с use_create_task=True
-# спавнит `asyncio.create_task(dp.handle(event))` на КАЖДЫЙ апдейт без
-# верхней границы (см. maxapi/dispatcher.py:_dispatch_fetched_events). На
-# webhook-пути флуд ограничивает _WEBHOOK_SEMAPHORE, но polling-путь зиял:
-# ботнет или один зацикленный клиент мог накопить тысячи одновременных
-# handle()-тасков, каждый из которых берёт соединение из пула БД (15) →
-# исчерпание пула, рост памяти при mem_limit=512m, деградация для всех.
-# Симметрично webhook'у: bounded окно держит число параллельных dispatch'ей
-# в узде — тот же потолок _SEMAPHORE_CONCURRENCY, что и у webhook-семафора.
+# Webhook принимает событие в БД; отдельного webhook-dispatch семафора нет.
 _POLLING_DISPATCH_SEMAPHORE: asyncio.Semaphore | None = None
 
 
@@ -20424,104 +20673,24 @@ def _build_admin_senders(bot: Bot):
     return send_admin_text, send_admin_document
 
 
-# Обработчик webhook'а регистрируется при загрузке модуля. В polling-режиме
-# (default по проекту) этот блок не активируется. webhook-режим оставлен
-# как dead-but-not-removed для возможного будущего возврата к FastAPI-стеку.
-# По Макс.docx раздел 12 (Quick Start Python webhook):
-#   from maxapi.methods.types.getted_updates import process_update_webhook
-#   @dp.webhook_post('/...') → возвращает 2xx, затем dp.handle(event) обрабатывает событие.
-if settings.bot_mode == "webhook":
-    from fastapi import Request
-    from fastapi.responses import JSONResponse
-
-    try:
-        from maxapi.methods.types.getted_updates import process_update_webhook
-    except ImportError:
-        process_update_webhook = None  # type: ignore[assignment]
-
-    @dp.webhook_post("/max/webhook")
-    async def _max_webhook(request: Request):
-        if settings.webhook_secret:
-            # Сравнение через hmac.compare_digest — защита от timing-oracle
-            # на проверке секрета. И только заголовок X-Max-Secret: query-
-            # параметр откладывается в логи nginx, в Referer и в браузерную
-            # историю — это утечка секрета в эфемерные логи.
-            import hmac
-
-            got = request.headers.get("X-Max-Secret") or ""
-            if not hmac.compare_digest(got, settings.webhook_secret):
-                return JSONResponse({"error": "forbidden"}, status_code=403)
-        try:
-            event_json = await request.json()
-            if process_update_webhook is not None:
-                event_object = await process_update_webhook(event_json=event_json, bot=bot)
-
-                async def _handle():
-                    sem = _get_webhook_semaphore()
-                    async with sem:  # bounded concurrency, защита от флуда
-                        try:
-                            await dp.handle(event_object)
-                        except Exception:
-                            log.exception("update handling failed")
-
-                spawn_background_task(_handle(), name="webhook_dispatch")
-        except Exception:
-            log.exception("webhook decode failed")
-        return JSONResponse({"ok": True})
-
-
 async def _register_bot_commands(bot: Bot) -> None:
-    """Опубликовать /-меню MAX: универсальные /start и /menu (PATCH /me).
+    """Publish the existing /start and /menu entries via PATCH /me/commands.
 
-    MAX Bot API не поддерживает per-scope команды (нет
-    `BotCommandScopeChat` как в Telegram) — одно /-меню на ВСЕ чаты:
-    и личку жителя, и служебную группу. Поэтому публикуем только
-    универсальные команды, осмысленные в любом чате: /start и /menu
-    (в личке открывают меню жителя, в админ-группе — памятку оператора).
-    Специфичные жительские команды (/forget, /export, /policy, …) НЕ
-    публикуем — в служебной группе они путали операторов («почему
-    /forget виден в админ-чате?»); их обработчики остаются рабочими как
-    запасной путь, но в подсказке /-меню их нет.
-
-    Шлём `commands` PATCH'ем /me, а не через `bot.set_my_commands()`:
-    у того в `ChangeInfo.fetch()` стоит `if self.commands:` (предохранитель
-    против случайной очистки), и нам проще держать явный предсказуемый
-    список здесь.
-
-    Транспорт — сессия самого maxapi (`bot.ensure_session()`), а не своя
-    голая `aiohttp.ClientSession`. Это принципиально: MAX мигрировал на
-    platform-api2.max.ru с сертификатом от «Russian Trusted CA» (Минцифры),
-    а штатный Dockerfile/наш CA-бандл несут только публичные корни — без
-    российского. Своя сессия молча падала бы `SSLCertVerificationError`,
-    ошибка гасилась бы дважды (log.exception + внешний try/except в main),
-    и /-меню не публиковалось бы незаметно для оператора. Сессия maxapi
-    уже несёт TCPConnector с этим корнем (client/ssl.with_default_connector),
-    base_url=api_url, Authorization-заголовок из bot.headers и trust_env
-    (proxy из окружения в firewall-режиме) — всё нужное наследуется.
+    maxapi 1.2.3 sessions have no base_url. Use its supported SDK method,
+    which preserves the API path prefix, trusted CA, proxy and auth settings.
+    Keep the previous ten-second startup budget around the complete SDK call.
     """
-    import aiohttp
+    from maxapi.types.command import BotCommand
 
-    payload: dict[str, list] = {
-        "commands": [
-            {"name": "start", "description": "Запустить бота и открыть меню"},
-            {"name": "menu", "description": "Открыть главное меню"},
-        ]
-    }
     try:
-        # base_url сессии = api_url, поэтому путь относительный: '/me'.
-        # Per-request timeout сохраняет прежний 10-секундный потолок, не
-        # завися от долгого long-poll total сессии в polling-режиме.
-        session = await bot.ensure_session()
-        async with session.patch(
-            "/me", json=payload, timeout=aiohttp.ClientTimeout(total=10)
-        ) as resp:
-            if resp.status == 200:
-                log.info("set_my_commands: /-меню опубликовано (/start, /menu) через PATCH /me")
-            else:
-                body = await resp.text()
-                log.warning("set_my_commands PATCH вернул %s: %s", resp.status, body[:200])
+        async with asyncio.timeout(10):
+            await bot.set_commands(
+                BotCommand(name="start", description="Запустить бота и открыть меню"),
+                BotCommand(name="menu", description="Открыть главное меню"),
+            )
+        log.info("set_commands: /-меню опубликовано (/start, /menu) через PATCH /me/commands")
     except Exception:
-        log.exception("set_my_commands: PATCH /me failed (некритично, /-меню могут остаться у клиентов)")
+        log.exception("set_commands: PATCH /me/commands failed (/-меню может остаться прежним)")
 
 
 async def _preflight_check_token(bot: Bot) -> None:
@@ -20822,14 +20991,13 @@ async def main() -> None:
         _report_abandoned_broadcasts(), name="report_abandoned_broadcasts"
     )
 
-    # /healthz: всегда поднят. В режиме webhook его раздаёт FastAPI, но в
-    # режиме polling это единственная точка входа, поэтому пропустить нельзя.
-    health_runner = None
-    if settings.bot_mode == "polling":
-        health_runner = await health.start(
-            host=settings.webhook_host, port=settings.webhook_port
-        )
-        spawn_background_task(health.heartbeat_pulse(), name="heartbeat_pulse")
+    # Polling and webhook share health endpoints and heartbeat.
+    health_runner = await health.start(
+        host=settings.webhook_host, port=settings.webhook_port,
+        setup=(lambda app: setup_webhook(app, secret=settings.webhook_secret or ""))
+        if settings.bot_mode == "webhook" else None,
+    )
+    spawn_background_task(health.heartbeat_pulse(), name="heartbeat_pulse")
 
     send_admin_text, send_admin_document = _build_admin_senders(bot)
     # bot отдаём в build_scheduler, чтобы сервисы не импортировали `main`
@@ -20838,29 +21006,21 @@ async def main() -> None:
     scheduler = cron_service.build_scheduler(
         bot, send_admin_document, send_admin_text
     )
+    # Load last known snapshots before receiving messages; cron refreshes immediately.
+    cron_service.threat_intel.get_store()
     scheduler.start()
 
     try:
         if settings.bot_mode == "webhook":
-            log.info("Starting in webhook mode at %s", settings.webhook_url)
-            # maxapi 1.1 пометил init_serve как deprecated и оставил
-            # тонкую обёртку над handle_webhook (см. dispatcher.py:1476).
-            # Зовём целевой метод напрямую — без DeprecationWarning в
-            # логах и в готовности к будущему удалению init_serve.
-            # `log_level` уходил в AppRunner kwargs и тихо игнорировался,
-            # поэтому не пробрасываем — логгер настраивается через
-            # logging.basicConfig выше.
-            await dp.handle_webhook(
-                bot,
-                host=settings.webhook_host,
-                port=settings.webhook_port,
-                path="/max/webhook",
-                secret=settings.webhook_secret or None,
-            )
+            await dp.startup(bot)
+            await bot.subscribe_webhook(settings.webhook_url or "", secret=settings.webhook_secret)
+            log.info("Starting in webhook mode")
+            await asyncio.Event().wait()
         else:
             log.info("Starting in long polling mode")
             await dp.start_polling(bot)
     finally:
+        await dp.shutdown()
         scheduler.shutdown(wait=False)
         # Сначала даём доиграть фоновым задачам, пока цикл и соединения
         # ещё живы: иначе `asyncio.run` обрывает их на выходе — в том
@@ -20882,6 +21042,7 @@ async def main() -> None:
         # пул живым и лок остался бы висеть). При падении процесса лок
         # снимается сам с разрывом соединения.
         await single_instance.release_single_instance_lock(_lock_conn)
+        await bot.close_session()
 
 
 if __name__ == "__main__":
@@ -21054,8 +21215,8 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ### `bot/aemr_bot/services/admin_bus.py`
 
-Size: `21747` bytes  
-SHA-256: `a1710d574df92578b69ae58b791ec8e1178b811c951a54b610bede61f7136526`
+Size: `21849` bytes  
+SHA-256: `d2a5178a886f85e093c0bdcb51dedbcf38796879a444d88c2c60c73ff80a7046`
 
 ```python
 """Единая шина для отправки сообщений в admin chat.
@@ -21366,6 +21527,8 @@ def install_outgoing_tracker_hook(bot) -> None:
         # самой отправки по-прежнему всплывает наружу как раньше —
         # tracker-sync ниже не выполнится (result не получен).
         await _acquire_outgoing_slot()
+        from aemr_bot.utils.delivery_guard import check_before_send
+        await check_before_send()
         result = await original_send(*args, **kwargs)
         try:
             target_chat_id = kwargs.get("chat_id")
@@ -21425,8 +21588,8 @@ def install_outgoing_tracker_hook(bot) -> None:
 
 ### `bot/aemr_bot/services/admin_card.py`
 
-Size: `11510` bytes  
-SHA-256: `a2d45d63ba2dbb46204ac9a13162a2e9bf079f4580a3abdb3b8bacd4e92fb581`
+Size: `15634` bytes  
+SHA-256: `c534f2a483e9de6d652ef6624f1e86fc977530467dc3e04a30f6507e8f9b6e7f`
 
 ```python
 """Карточка обращения в админ-чате — sacred event log (PR #100, dual-tracker).
@@ -21445,23 +21608,124 @@ Sacred-event-log контракт, перечень «что НЕ карточк
 """
 from __future__ import annotations
 
+import asyncio
 import logging
-from typing import TYPE_CHECKING
+from weakref import WeakValueDictionary
 
+from maxapi.exceptions import InvalidToken, MaxApiError
+from sqlalchemy import update
 from sqlalchemy.orm.exc import DetachedInstanceError
 
 from aemr_bot import keyboards
 from aemr_bot.config import settings as cfg
+from aemr_bot.db.models import Appeal, AppealStatus, User
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format
 from aemr_bot.utils import menu_tracker
 from aemr_bot.utils.event import extract_message_id
 
-if TYPE_CHECKING:
-    from aemr_bot.db.models import Appeal
-
 log = logging.getLogger(__name__)
+_first_card_locks: WeakValueDictionary[int, asyncio.Lock] = WeakValueDictionary()
+
+
+def _first_card_lock(appeal_id: int) -> asyncio.Lock:
+    lock = _first_card_locks.get(appeal_id)
+    if lock is None:
+        lock = asyncio.Lock()
+        _first_card_locks[appeal_id] = lock
+    return lock
+
+
+def _eligible_first_card():
+    return (
+        Appeal.admin_message_id.is_(None),
+        Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
+        Appeal.closed_due_to_revoke.is_(False),
+        Appeal.user.has(User.is_blocked.is_(False) & User.consent_pdn_at.is_not(None)),
+    )
+
+
+async def _claim_first_publication(appeal_id: int) -> bool:
+    # Commit intent BEFORE the external effect. A crash or unknown HTTP
+    # result leaves sending, which recovery must never automatically replay.
+    async with session_scope() as session:
+        result = await session.execute(
+            update(Appeal)
+            .where(
+                Appeal.id == appeal_id,
+                Appeal.initial_card_state == "pending",
+                *_eligible_first_card(),
+            )
+            .values(initial_card_state="sending")
+        )
+        claimed = bool(result.rowcount)
+    return claimed
+
+
+async def _set_first_card_state(appeal_id: int, state: str) -> None:
+    async with session_scope() as session:
+        await session.execute(
+            update(Appeal)
+            .where(Appeal.id == appeal_id, Appeal.initial_card_state == "sending")
+            .values(initial_card_state=state)
+        )
+
+
+async def _warn_uncertain_first_card(bot, appeal_id: int) -> None:
+    # The caller holds the shared per-appeal lock. A failed warning remains
+    # eligible for retry; a crash after delivery but before commit can repeat
+    # the warning, but never replays the original card.
+    async with session_scope() as session:
+        result = await session.execute(
+            update(Appeal)
+            .where(
+                Appeal.id == appeal_id,
+                *_eligible_first_card(),
+                Appeal.initial_card_state.in_(["sending", "uncertain"]),
+                Appeal.initial_card_notified.is_(False),
+            )
+            .values(initial_card_state="uncertain")
+        )
+        eligible = bool(result.rowcount)
+    if not eligible:
+        return
+    log.error(
+        "Initial admin-card delivery uncertain for appeal #%s; manual reconciliation required",
+        appeal_id,
+    )
+    try:
+        sent = await bot.send_message(
+            chat_id=cfg.admin_group_id,
+            text=(f"⚠️ Обращение #{appeal_id} сохранено, но результат первой "
+                  "публикации карточки неизвестен. Автоматический повтор остановлен. "
+                  "Проверьте историю служебного чата и обращение в очереди; "
+                  "при необходимости откройте карточку вручную."),
+        )
+    except Exception:
+        log.exception("Could not notify admins of uncertain first card #%s", appeal_id)
+        return
+    if not extract_message_id(sent):
+        log.error("Uncertain first-card warning #%s returned no message id", appeal_id)
+        return
+    async with session_scope() as session:
+        await session.execute(
+            update(Appeal).where(Appeal.id == appeal_id)
+            .values(initial_card_notified=True)
+        )
+
+
+async def recover_first_publication(bot, appeal_id: int) -> bool:
+    """Reload and publish pending work, or surface an uncertain send once."""
+    async with _first_card_lock(appeal_id):
+        async with session_scope() as session:
+            appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+        if appeal is None or appeal.admin_message_id:
+            return False
+        if appeal.initial_card_state in {"sending", "uncertain"}:
+            await _warn_uncertain_first_card(bot, appeal_id)
+            return False
+        return bool(await _render(bot, appeal, is_first_publication=True))
 
 
 async def render(
@@ -21473,35 +21737,35 @@ async def render(
     force_new: bool = False,
     event_header: str | None = None,
 ) -> str | None:
-    """Опубликовать/обновить admin appeal card с freshness-rule.
+    """Publish event cards; first publication uses a durable send claim."""
+    if is_first_publication:
+        async with _first_card_lock(appeal.id):
+            if getattr(appeal, "admin_message_id", None):
+                return appeal.admin_message_id
+            return await _render(
+                bot, appeal, is_first_publication=True, event_header=event_header
+            )
+    return await _render(
+        bot, appeal, callback_mid=callback_mid,
+        force_new=force_new, event_header=event_header,
+    )
 
-    Args:
-        bot: maxapi Bot.
-        appeal: Appeal с подгруженными user и messages.
-        callback_mid: mid сообщения, на котором оператор тапнул кнопку
-            (callback.message.mid). Если None — это не callback (например
-            finalize, followup от жителя) → форсим send_new.
-        is_first_publication: True только при finalize — обновляет
-            admin_message_id (sacred ссылка для relay вложений).
-        force_new: True для событий «появилось новое» (followup
-            жителя): даже если карточка ещё последняя в чате,
-            нужна новая запись внизу для маркера событий.
-        event_header: опциональный маркер-заголовок над карточкой —
-            например «📩 Новое дополнение по обращению #N от жителя».
-            Нужен, когда карточка приходит как РЕАКЦИЯ на событие, а
-            не просто как переотрисовка статуса: оператор сразу видит,
-            что именно случилось, без поиска в timeline. Шапка отделена
-            от карточки разделителем. Только для send_new веток; на
-            edit-in-place не применяется (карточка остаётся «обычной»).
 
-    Returns:
-        mid опубликованной/отредактированной карточки, None при сбое.
+async def _render(
+    bot,
+    appeal: Appeal,
+    *,
+    callback_mid: str | None = None,
+    is_first_publication: bool = False,
+    force_new: bool = False,
+    event_header: str | None = None,
+) -> str | None:
+    """Publish a new immutable event card; return its mid or None on failure.
 
-    Логика freshness:
-    1. force_new=True → send new.
-    2. callback_mid задан И равен menu_tracker[admin_group_id] → edit
-       (карточка последняя в чате).
-    3. Иначе → send new (карточка не последняя, или это не callback).
+    callback_mid and force_new remain compatibility parameters. Cards are never
+    edited. is_first_publication records the stable first mid for attachment
+    replies; event_header adds context to a new event card. Durable first-card
+    claiming/recovery is handled by render/recover_first_publication.
     """
     if not cfg.admin_group_id:
         log.warning("admin_card.render: ADMIN_GROUP_ID не установлен")
@@ -21610,19 +21874,31 @@ async def render(
         if event_header
         else text
     )
+    if is_first_publication and not await _claim_first_publication(appeal.id):
+        return None
     try:
         sent = await bot.send_message(
             chat_id=cfg.admin_group_id,
             text=text_for_send,
             attachments=attachments,
         )
-    except Exception:
+    except Exception as exc:
         log.exception(
             "admin_card.render: send_message failed for appeal #%s", appeal.id
         )
+        if is_first_publication:
+            # Explicit client rejection proves no message was accepted.
+            # 408, 5xx, connection errors and unknown exceptions do not.
+            rejected = isinstance(exc, InvalidToken) or (
+                isinstance(exc, MaxApiError)
+                and exc.code in {400, 401, 403, 404, 405, 413, 415, 422, 429}
+            )
+            await _set_first_card_state(appeal.id, "pending" if rejected else "uncertain")
         return None
 
     new_mid = extract_message_id(sent)
+    if is_first_publication and not new_mid:
+        await _set_first_card_state(appeal.id, "uncertain")
     if new_mid:
         # 2026-05-27 dual-tracker: карточка обращения — historic event.
         # Регистрируем через `note_event` — двигаем только physical_mid,
@@ -21641,6 +21917,12 @@ async def render(
                 await appeals_service.set_admin_message_id(
                     session, appeal.id, new_mid
                 )
+                await session.execute(
+                    update(Appeal).where(Appeal.id == appeal.id)
+                    .values(initial_card_state="published")
+                )
+        if is_first_publication:
+            appeal.admin_message_id = new_mid
     return new_mid
 
 
@@ -22909,8 +23191,8 @@ async def find_active_for_user(session: AsyncSession, user_id: int) -> Appeal | 
 
 ### `bot/aemr_bot/services/backup_verify.py`
 
-Size: `12094` bytes  
-SHA-256: `cfbc6cacdff6f1a2229498d92f02a8a23de46814a8118b644235360199200301`
+Size: `13431` bytes  
+SHA-256: `5f6bf0a14ca06262c1002335db18af216fab16c815f0f953e33bacbee16b2a99`
 
 ```python
 """Проверка ПРИГОДНОСТИ бэкапа: расшифровать поток и заглянуть внутрь.
@@ -22951,7 +23233,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from aemr_bot.config import settings
-from aemr_bot.services.db_backup import _wait_proc
 
 log = logging.getLogger(__name__)
 
@@ -23027,41 +23308,59 @@ async def _decrypt_to_devnull(
 ) -> tuple[bytes, int]:
     """`gpg --decrypt src` в поток; на диск ничего не пишем.
 
-    Passphrase уходит через os.pipe, не через argv — иначе она утечёт в
-    /proc/<pid>/cmdline (тот же приём, что в db_backup).
+    Passphrase уходит через stdin pipe, не через argv — иначе она утечёт
+    в /proc/<pid>/cmdline.
     Возвращает (первые байты дампа, размер расшифрованного).
     """
-    pp_r, pp_w = os.pipe()
-    try:
-        await asyncio.to_thread(os.write, pp_w, passphrase.encode() + b"\n")
-    finally:
-        os.close(pp_w)
-
-    # Контейнер read_only: ~/.gnupg не создать, уводим homedir в TMPDIR
-    # (приватная tmpfs). Тот же приём, что в db_backup._run_pg_dump_encrypted.
+    # Контейнер read_only: приватный homedir в TMPDIR, как при создании копии.
     # nosec B108: путь не пользовательский, задаём его мы сами.
     gpg_home = os.path.join(os.environ.get("TMPDIR", "/tmp"), ".gnupg")  # nosec B108
+    proc = None
     try:
-        os.makedirs(gpg_home, mode=0o700, exist_ok=True)
-        proc = await asyncio.create_subprocess_exec(
-            "gpg",
-            "--homedir", gpg_home,
-            "--batch", "--yes",
-            "--passphrase-fd", str(pp_r),
-            "--decrypt", str(src),
-            pass_fds=(pp_r,),
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL,
-        )
-    except Exception:
-        os.close(pp_r)
+        # Один бюджет на запуск, передачу фразы, чтение stdout и завершение.
+        # Отдельный таймаут только на wait() не ограничивал зависший stdout.
+        async with asyncio.timeout(timeout):
+            os.makedirs(gpg_home, mode=0o700, exist_ok=True)
+            proc = await asyncio.create_subprocess_exec(
+                "gpg",
+                "--homedir", gpg_home,
+                "--batch", "--yes",
+                "--passphrase-fd", "0",
+                "--decrypt", str(src),
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            # stdin — отдельный pipe для фразы; она не попадает в argv/на диск.
+            # Записываем после spawn: длинная фраза не заблокирует pipe до
+            # появления читателя. drain() тоже входит в общий таймаут.
+            if proc.stdin is None:
+                raise RuntimeError("gpg stdin pipe unavailable")
+            proc.stdin.write(passphrase.encode() + b"\n")
+            await proc.stdin.drain()
+            proc.stdin.close()
+            head, total = await _drain(proc.stdout, keep_head=_HEAD_BYTES)
+            rc = await proc.wait()
+    except BaseException as exc:
+        # CancelledError тоже требует kill+reap; отмену затем передаём выше.
+        if proc is not None:
+            try:
+                proc.kill()
+            except ProcessLookupError:
+                pass  # процесс уже завершился между ошибкой и kill
+            try:
+                async with asyncio.timeout(10):
+                    # После kill дочитываем pipe параллельно с wait: иначе
+                    # заполненный StreamReader может удерживать transport.
+                    await asyncio.gather(
+                        _drain(proc.stdout, keep_head=0), proc.wait(),
+                    )
+            except TimeoutError:
+                log.warning("backup verify: gpg не отозвался на kill за 10с")
+        if isinstance(exc, TimeoutError):
+            raise TimeoutError(f"gpg --decrypt timed out after {timeout:g}s") from exc
         raise
-    os.close(pp_r)
 
-    # Читаем поток и ждём процесс одновременно: gpg пишет в pipe, и без
-    # вычитывания он встанет на переполненном буфере.
-    head, total = await _drain(proc.stdout, keep_head=_HEAD_BYTES)
-    rc = await _wait_proc(proc, timeout, "gpg --decrypt")
     if rc != 0:
         raise RuntimeError(
             f"gpg вернул код {rc}: парольная фраза не подходит либо файл "
@@ -23576,8 +23875,8 @@ __all__ = [
 
 ### `bot/aemr_bot/services/broadcasts.py`
 
-Size: `20098` bytes  
-SHA-256: `ce3469fd3ebf692c5b06bf016a687c2d391fb5ea818c533f638a3e26b9b727ab`
+Size: `22037` bytes  
+SHA-256: `8be47c9426b6d6b67d7496f1ea4564e1d0f52d0328e78d5e8ae91bb63abb58a9`
 
 ```python
 """Сервис подписки и муниципальных рассылок.
@@ -23599,11 +23898,23 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import desc, func, select, update
+from sqlalchemy import delete, desc, func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.db.models import Broadcast, BroadcastDelivery, BroadcastStatus, User
+
+# A committed intent means the external send may have happened. It must never
+# be replayed automatically, even when the process died before making the call.
+DELIVERY_UNKNOWN_PREFIX = "DELIVERY_UNKNOWN: "
+DELIVERY_INTENT = (
+    DELIVERY_UNKNOWN_PREFIX
+    + "Результат доставки неизвестен; требуется проверка перед повторной отправкой."
+)
+
+
+class DeliveryAccountingError(RuntimeError):
+    """The durable ledger cannot establish a safe final delivery result."""
 
 
 async def is_subscribed(session: AsyncSession, max_user_id: int) -> bool:
@@ -23717,6 +24028,18 @@ async def mark_finished(
     delivered: int,
     failed: int,
 ) -> None:
+    if status in (BroadcastStatus.DONE, BroadcastStatus.CANCELLED):
+        recorded = await count_delivery_results(session, broadcast_id)
+        unknown = await session.scalar(
+            select(func.count()).select_from(BroadcastDelivery).where(
+                BroadcastDelivery.broadcast_id == broadcast_id,
+                BroadcastDelivery.error.startswith(DELIVERY_UNKNOWN_PREFIX),
+            )
+        )
+        if recorded != (delivered, failed) or unknown:
+            raise DeliveryAccountingError(
+                f"broadcast #{broadcast_id}: delivery ledger incomplete or unknown"
+            )
     if status == BroadcastStatus.FAILED and delivered == 0 and failed == 0:
         # Защитный слой на уровне сервиса: старый wrapper рассылки при
         # непредвиденной ошибке передавал нули. Если доставки уже были
@@ -23736,9 +24059,11 @@ async def mark_finished(
 
 
 async def request_cancel(session: AsyncSession, broadcast_id: int) -> bool:
-    """Перевести статус в «отменено». Возвращает True, если рассылка
-    шла, и False, если она уже была в терминальном состоянии. По этому
-    флагу вызывающий код понимает, что отмена ничего не изменила."""
+    """Запросить остановку: CANCELLED до finished_at — ещё только запрос.
+
+    Текущий сетевой вызов может завершиться позднее. Цикл проверяет запрос
+    перед каждой новой отправкой, затем фиксирует finished_at и счётчики.
+    """
     result = await session.execute(
         update(Broadcast)
         .where(
@@ -23815,10 +24140,33 @@ async def reap_orphaned_sending(session: AsyncSession) -> int:
 
     Возвращает число переведённых записей для лога.
     """
+    # A cancelled request without finished_at can also have died during an
+    # in-flight send. Retain its durable unknown recipients in the visible
+    # counters instead of presenting an apparently completed zero-result stop.
+    delivered = select(func.count()).select_from(BroadcastDelivery).where(
+        BroadcastDelivery.broadcast_id == Broadcast.id,
+        BroadcastDelivery.error.is_(None),
+    ).correlate(Broadcast).scalar_subquery()
+    failed = select(func.count()).select_from(BroadcastDelivery).where(
+        BroadcastDelivery.broadcast_id == Broadcast.id,
+        BroadcastDelivery.error.isnot(None),
+    ).correlate(Broadcast).scalar_subquery()
     result = await session.execute(
         update(Broadcast)
-        .where(Broadcast.status == BroadcastStatus.SENDING.value)
-        .values(status=BroadcastStatus.FAILED.value)
+        .where(
+            (Broadcast.status == BroadcastStatus.SENDING.value)
+            | (
+                (Broadcast.status == BroadcastStatus.CANCELLED.value)
+                & Broadcast.started_at.isnot(None)
+                & Broadcast.finished_at.is_(None)
+            )
+        )
+        .values(
+            status=BroadcastStatus.FAILED.value,
+            delivered_count=delivered,
+            failed_count=failed,
+        )
+        .execution_options(synchronize_session=False)
     )
     return result.rowcount or 0
 
@@ -23829,6 +24177,36 @@ async def get_status(session: AsyncSession, broadcast_id: int) -> str | None:
     )
 
 
+async def begin_delivery(
+    session: AsyncSession, *, broadcast_id: int, user_id: int,
+) -> bool:
+    """Reserve one recipient durably BEFORE sending; commit before using True.
+
+    False means this recipient already has an intent/result. Replaying it
+    could duplicate a message whose response or journal commit was lost.
+    """
+    result = await session.execute(
+        pg_insert(BroadcastDelivery)
+        .values(broadcast_id=broadcast_id, user_id=user_id, error=DELIVERY_INTENT)
+        .on_conflict_do_nothing(index_elements=["broadcast_id", "user_id"])
+        .returning(BroadcastDelivery.id)
+    )
+    return result.scalar_one_or_none() is not None
+
+
+async def discard_delivery_intent(
+    session: AsyncSession, *, broadcast_id: int, user_id: int,
+) -> None:
+    """Remove an intent only when the sender knows no attempt was accepted."""
+    await session.execute(
+        delete(BroadcastDelivery).where(
+            BroadcastDelivery.broadcast_id == broadcast_id,
+            BroadcastDelivery.user_id == user_id,
+            BroadcastDelivery.error == DELIVERY_INTENT,
+        )
+    )
+
+
 async def record_delivery(
     session: AsyncSession,
     *,
@@ -23836,19 +24214,8 @@ async def record_delivery(
     user_id: int,
     error: str | None,
 ) -> None:
-    delivered_at = datetime.now(UTC) if error is None else None
-    # on_conflict_do_nothing по UNIQUE(broadcast_id, user_id): повторная
-    # запись той же пары (ретрай после сетевого сбоя) — тихий no-op,
-    # счётчики доставки не задваиваются. См. миграцию 0023.
-    await session.execute(
-        pg_insert(BroadcastDelivery)
-        .values(
-            broadcast_id=broadcast_id,
-            user_id=user_id,
-            delivered_at=delivered_at,
-            error=error,
-        )
-        .on_conflict_do_nothing(index_elements=["broadcast_id", "user_id"])
+    await record_deliveries(
+        session, broadcast_id=broadcast_id, results=[(user_id, error)],
     )
 
 
@@ -23858,26 +24225,16 @@ async def record_deliveries(
     broadcast_id: int,
     results: list[tuple[int, str | None]],
 ) -> None:
-    """Батчевая запись результатов доставки.
+    """Write results, resolving only pre-send intents on conflict.
 
-    `results` — список `(user_id, error)`; `error=None` означает успех.
-    Раньше цикл рассылки писал каждую доставку отдельной транзакцией
-    (`record_delivery` + свой `session_scope`): на 10k подписчиков —
-    10k+ коммитов, каждый со своим BEGIN/COMMIT и checkout из пула.
-    Здесь один INSERT на пачку (типично 50 строк) — в ~50 раз меньше
-    round-trip'ов к БД. Вызывающий код накапливает буфер и сбрасывает
-    его этой функцией по таймеру/переполнению.
-
-    on_conflict_do_nothing по UNIQUE(broadcast_id, user_id): flush
-    буфера в handlers/broadcast.py best-effort — при сбое буфер НЕ
-    очищается и уходит повторно вместе со следующей пачкой. Если часть
-    строк успела закоммититься до обрыва, повтор без ограничения
-    задваивал счётчики; теперь дубли пары тихо пропускаются.
+    Confirmed/unknown outcomes remain immutable: repeating a journal write
+    is safe, but it must never turn into permission to repeat an API send.
+    Legacy callers can still insert a result without an existing intent.
     """
     if not results:
         return
     now = datetime.now(UTC)
-    await session.execute(
+    statement = (
         pg_insert(BroadcastDelivery)
         .values(
             [
@@ -23890,8 +24247,12 @@ async def record_deliveries(
                 for user_id, error in results
             ]
         )
-        .on_conflict_do_nothing(index_elements=["broadcast_id", "user_id"])
     )
+    await session.execute(statement.on_conflict_do_update(
+        index_elements=["broadcast_id", "user_id"],
+        set_={"delivered_at": statement.excluded.delivered_at, "error": statement.excluded.error},
+        where=BroadcastDelivery.error == DELIVERY_INTENT,
+    ))
 
 
 async def count_delivery_results(
@@ -24108,8 +24469,8 @@ def is_workday(d: date) -> bool:
 
 ### `bot/aemr_bot/services/card_format.py`
 
-Size: `28061` bytes  
-SHA-256: `756ad7d307a29d182d396c3dac1f701f10e9449e4fd35a593db9781ed80d0576`
+Size: `28032` bytes  
+SHA-256: `6d06efceeb34a22ad0c31242e2917e4f7ea28239fe7f076c544cd0d7efbc22fa`
 
 ```python
 import logging
@@ -24442,7 +24803,7 @@ def _maybe_url_warning(text: str) -> str:
 
     Два уровня:
     1. Любой http(s) URL → стандартный warning «не открывайте напрямую».
-    2. URL в threat-intel базе (URLhaus / ThreatFox / PhishTank) →
+    2. Host URL в threat-intel базе (URLhaus / ThreatFox / PhishTank) →
        усиленный warning «⛔ это известный фишинг/malware», с
        перечислением скомпрометированных host'ов.
 
@@ -24468,16 +24829,11 @@ def _maybe_url_warning(text: str) -> str:
 
     urls = extract_urls(text)
 
-    # P3-4: bare-domain кандидаты (без схемы) — `login-gosuslugi.top`,
-    # `vk-id.ru` и т.п. Берём ровно тот же `_BARE_DOMAIN_PATTERN`, что
-    # и defang, чтобы scope warning'а совпадал со scope экранирования.
-    # group(1) = имя 2-го уровня, group(2) = TLD → `host` = `имя.tld`.
-    bare_hosts: list[str] = []
-    if text:
-        from aemr_bot.utils.url_defang import _BARE_DOMAIN_PATTERN
+    # Shared multi-label extractor: check the complete hostname, including
+    # subdomains and ASCII TLDs outside the cosmetic defang list.
+    from aemr_bot.utils.url_defang import defang_for_admin, extract_bare_hosts
 
-        for m in _BARE_DOMAIN_PATTERN.finditer(text):
-            bare_hosts.append(f"{m.group(1)}.{m.group(2)}")
+    bare_hosts = extract_bare_hosts(text)
 
     if not urls and not bare_hosts:
         return ""
@@ -24488,12 +24844,15 @@ def _maybe_url_warning(text: str) -> str:
     # без схемы тоже корректно парсится (`_normalize_host` дописывает
     # `http://` искусственно).
     malicious: list[str] = []
+    matched_sources: set[str] = set()
     try:
         from aemr_bot.services.threat_intel import get_store
 
         store = get_store()
         for candidate in [*urls, *bare_hosts]:
             is_bad, _source = store.is_malicious(candidate)
+            if is_bad and _source:
+                matched_sources.add(_source)
             if is_bad and candidate not in malicious:
                 malicious.append(candidate)
     except Exception:
@@ -24506,11 +24865,14 @@ def _maybe_url_warning(text: str) -> str:
 
     if malicious:
         # Показать до 3 ссылок, остальные за многоточием
-        sample = ", ".join(malicious[:3])
+        sample = defang_for_admin(", ".join(
+            candidate.replace(".", "\u200b.") for candidate in malicious[:3]
+        ))
+        attribution = ", ".join(sorted(matched_sources)) or "threat-intel"
         more = "" if len(malicious) <= 3 else f" и ещё {len(malicious) - 3}"
         return (
             "\n\n⛔ Подозрительные ссылки (известные фишинг/malware "
-            f"по threat-intel базе): {sample}{more}. "
+            f"по threat-intel базе; {attribution}): {sample}{more}. "
             "Категорически не открывайте, не пересылайте. Если житель "
             "просит разобраться — отметьте в audit, направьте жителя "
             "в МВД (отделение полиции по месту жительства, единый "
@@ -24624,8 +24986,8 @@ def appeal_list_label(appeal: Appeal) -> str:
 
 ### `bot/aemr_bot/services/cron.py`
 
-Size: `83102` bytes  
-SHA-256: `19bd088688c581ba360089fd9f34259f6188ffd1ca6bad4e13188b7f98ebc1b9`
+Size: `83723` bytes  
+SHA-256: `5dfc6cd6293d9c9947dbaafd8844630decff113818b955433883aad200179065`
 
 ```python
 from __future__ import annotations
@@ -24843,6 +25205,9 @@ async def _job_backup_with_alert(send_admin_text) -> None:
     # 0 3 * * 6 (сб 03:00) попадает в default quiet окно [18, 9) —
     # без critical алёрт молчит до утра понедельника, окно реакции
     # ~30 часов без свежей точки восстановления.
+    if not settings.backup_local_dir:
+        log.info("backup skipped: BACKUP_LOCAL_DIR is empty (disabled)")
+        return
     try:
         result = await _backup_db()
         if result.ok:
@@ -25093,20 +25458,25 @@ async def _job_threat_intel_refresh(send_admin_text) -> None:
     # оператору важнее всего узнать о проблеме.
     try:
         store = threat_intel.get_store()
-        if store.is_stale():
-            age_h = (store.staleness_age_seconds() or 0) / 3600
-            await _send_admin_text_with_retry(
+        if store.is_stale() and not getattr(store, "outage_notified", False):
+            sent = await _send_admin_text_with_retry(
                 send_admin_text,
                 (
-                    "⚠️ База угроз (антифишинг) не обновлялась "
-                    f"{age_h:.0f} ч. Источники недоступны. Бот работает "
-                    "со старыми данными — предупреждения о вредоносных "
+                    "⚠️ База угроз (антифишинг) не обновлялась полностью более 6 ч. "
+                    "Часть источников или вся база недоступны. Приём обращений продолжается; "
+                    "проверка использует доступные локальные данные. Предупреждения о вредоносных "
                     "ссылках в обращениях могут отставать. Проверьте "
-                    "доступ в интернет к URLhaus, ThreatFox, PhishTank."
+                    "доступ к источникам и ABUSECH_AUTH_KEY / PHISHTANK_APP_KEY. "
+                    "Повторных уведомлений до восстановления не будет."
                 ),
                 context="threat-intel-stale",
                 critical=True,
             )
+            if sent:
+                store.outage_notified = True
+                await asyncio.to_thread(threat_intel.save_cache, store)
+        elif not store.is_stale():
+            store.outage_notified = False
     except Exception:
         log.exception("threat-intel staleness alert failed")
 
@@ -25471,6 +25841,8 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
     алёрт со списком — чтобы знал, что обращения закрылись без ответа
     из-за истечения срока, и мог сделать выводы о скорости работы.
     """
+    # Pre-deadline warnings must not depend on already overdue rows or cleanup.
+    await _warn_about_approaching_pdn_deadline(send_admin_text)
     try:
 
         async with session_scope() as session:
@@ -25563,11 +25935,6 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                 critical=True,
             )
 
-        # Предупреждение заранее: у кого срок истекает в ближайшую неделю
-        # и остались неотвеченные обращения. Уничтожение по истечении
-        # безусловно и закроет их без ответа — но пока время есть, у
-        # оператора должен быть шанс ответить, а не узнать постфактум.
-        await _warn_about_approaching_pdn_deadline(send_admin_text)
     except Exception:
         log.exception("pdn_retention_check crashed")
 
@@ -26042,7 +26409,15 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> AsyncIOSchedul
             max_instances=1,
             coalesce=True,
             misfire_grace_time=_MISFIRE_GRACE_SEC,
+            **({"next_run_time": datetime.now(TZ)} if name == "threat-intel-refresh" else {}),
         )
+
+    from aemr_bot.handlers.appeal_runtime import recover_unpublished_appeals
+    scheduler.add_job(
+        functools.partial(recover_unpublished_appeals, bot), "interval", seconds=60,
+        id="initial-card-recovery", max_instances=1, coalesce=True,
+        next_run_time=datetime.now(TZ), misfire_grace_time=_MISFIRE_GRACE_SEC,
+    )
 
     # Централизованный лог ошибок ДО входа в try конкретного job'а
     # (см. docstring _on_job_error). Без send в админ-чат — не плодим шум.
@@ -26100,8 +26475,8 @@ async def _ping_healthcheck() -> None:
 
 ### `bot/aemr_bot/services/cron_registry.py`
 
-Size: `9476` bytes  
-SHA-256: `4840e3aed72f5e4ecb3689a99397e13fb2e22582fe1e86e082c4d5350dbca8e6`
+Size: `9788` bytes  
+SHA-256: `cac2fe49da2a661e771e78e21b72f338e431ae24021a7dfd73016ab776509369`
 
 ```python
 """Человекочитаемые описания cron-задач для вики и anti-drift тестов.
@@ -26136,6 +26511,11 @@ from __future__ import annotations
 # `schedule_human` — человекочитаемое описание (не cron-expression).
 # `purpose` — короткое назначение для docs.
 JOB_REGISTRY: list[dict[str, str]] = [
+    {
+        "id": "initial-card-recovery",
+        "schedule_human": "при старте и каждые 60 секунд",
+        "purpose": "публикация сохранённых первых карточек; сигнал о неизвестном результате без повтора",
+    },
     # ── Pulse (heartbeat в админ-чат, проверка «бот жив») ────────────
     {
         "id": "pulse-hourly",
@@ -27018,21 +27398,15 @@ def find_address(lat: float, lon: float, search_radius_m: int = _STREET_RADIUS_M
 
 ### `bot/aemr_bot/services/idempotency.py`
 
-Size: `8575` bytes  
-SHA-256: `f293c248e82831ec05026119236273723472a724fae2c409c85a7a83b20a6910`
+Size: `7887` bytes  
+SHA-256: `03ddbc5443b1a9cedf0e23b7504e6d6487cced3728dd41055909a38f1f7cef37`
 
 ```python
-"""Хранить отпечаток каждого входящего обновления MAX для защиты от
-повторов (idempotency) при диспетчеризации.
+"""Legacy event-key deduplication and successful-operation keys.
 
-В режиме long-polling сервер MAX иногда повторно доставляет обновления
-после сетевого сбоя. В режиме webhook дубли — обычное дело: MAX
-повторяет любую не-2xx, а несимметричные сетевые ошибки приводят к
-двойной обработке одного и того же payload.
-
-Стратегия: построить устойчивый ключ для обновления, выполнить INSERT в
-events с уникальным ограничением и не делать ничего, если запись уже
-существует.
+Production transport uses services.inbox for new durable receipts. Its middleware
+consults old keys read-only during upgrade, so it cannot mark new work completed
+before execution. Raw success keys remain for operation-specific deduplication.
 """
 
 from __future__ import annotations
@@ -27152,18 +27526,11 @@ async def claim(event: Any) -> bool:
         return True
     except IntegrityError:
         return False
-    except Exception:
-        # SEC #7: fail-CLOSED, не fail-OPEN. Раньше тут было «defaulting
-        # to process» — attacker может induce DB stall (connection drop,
-        # transient timeout) и заставить handler обработать дубль.
-        # Для мутирующих callback'ов (op:close, op:erase, broadcast
-        # confirm, op:opchrole) это критично. Безопаснее пропустить
-        # событие — MAX повторит ack, при восстановлении БД handler
-        # обработает заново через свой полноценный путь.
-        log.exception(
-            "idempotency claim failed; SEC #7 fail-closed (event пропущен)"
-        )
-        return False
+    except Exception as exc:
+        # Transport has already durably received the event. Do not confuse
+        # unavailable storage with a duplicate: the inbox can retry before work.
+        log.error("idempotency unavailable (%s)", type(exc).__name__)
+        raise RuntimeError("idempotency unavailable") from None
 
 
 async def has_processed_raw(key: str) -> bool:
@@ -27213,6 +27580,226 @@ async def try_mark_processed_raw(key: str, kind: str) -> bool:
     except Exception:
         log.exception("raw idempotency claim failed; defaulting to process")
         return True
+
+
+async def is_legacy_duplicate(event: Any) -> bool:
+    """Read-only upgrade bridge. Storage failures must propagate before work."""
+    key = build_idempotency_key(event)
+    if key is None:
+        return False
+    async with session_scope() as session:
+        return await session.scalar(select(Event.id).where(Event.idempotency_key == key).limit(1)) is not None
+```
+
+### `bot/aemr_bot/services/inbox.py`
+
+Size: `8740` bytes  
+SHA-256: `e906decea844658a53cb187be7fb9a797a0de3a55da6bbae7fc03979c3973a40`
+
+```python
+"""Durable transport receipts. Never replay an operation with unknown side effects.
+
+Pending payloads live at most 24 hours; done/failed payloads are removed immediately.
+Only metadata remains for 30-day deduplication and operator diagnostics.
+"""
+from __future__ import annotations
+
+import asyncio
+import hashlib
+import json
+import logging
+from contextvars import ContextVar
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
+from typing import Any
+
+from sqlalchemy import delete, select, update
+from sqlalchemy.dialects.postgresql import insert
+
+from aemr_bot.db.models import InboxEvent
+from aemr_bot.db.session import session_scope
+
+log = logging.getLogger(__name__)
+
+
+@dataclass
+class Outcome:
+    finished: bool = False
+    failed: bool = False
+    retry_safe: bool = False
+    reason: str | None = None
+
+
+current_outcome: ContextVar[Outcome | None] = ContextVar("inbox_outcome", default=None)
+
+
+def _identity(payload: dict) -> tuple[str, int | None]:
+    def obj(value):
+        return value if isinstance(value, dict) else {}
+    msg = obj(payload.get("message"))
+    callback = obj(payload.get("callback"))
+    user = obj(callback.get("user")) or obj(payload.get("user")) or obj(msg.get("sender"))
+    user_id = user.get("user_id")
+    body = obj(msg.get("body"))
+    # MAX IDs, not display text/name or JSON key order, define a duplicate.
+    identity: Any
+    if callback.get("callback_id"):
+        identity = [payload.get("update_type"), callback["callback_id"]]
+    elif body.get("mid"):
+        identity = [payload.get("update_type"), body["mid"], body.get("seq"),
+                    payload.get("timestamp", msg.get("timestamp")), user_id]
+    else:
+        identity = payload
+    raw = json.dumps(identity, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(raw.encode()).hexdigest(), user_id if isinstance(user_id, int) else None
+
+
+async def accept(events: list[dict]) -> None:
+    """Commit the whole batch before acknowledging it to MAX. Errors propagate."""
+    if not events:
+        return
+    async with session_scope() as session:
+        for payload in events:
+            key, user_id = _identity(payload)
+            await session.execute(insert(InboxEvent).values(
+                event_key=key, update_type=str(payload.get("update_type", "unknown"))[:64],
+                max_user_id=user_id, payload=payload,
+            ).on_conflict_do_nothing(index_elements=[InboxEvent.event_key]))
+
+
+async def recover_interrupted() -> None:
+    """At a serial worker boundary, classify any unfinished previous execution."""
+    async with session_scope() as session:
+        await session.execute(update(InboxEvent).where(InboxEvent.state == "processing").values(
+            state="failed", payload={}, reason="interrupted_unknown_result", updated_at=datetime.now(UTC),
+        ))
+
+
+async def take_next() -> tuple[int, dict] | None:
+    async with session_scope() as session:
+        row = await session.scalar(select(InboxEvent).where(InboxEvent.state == "pending")
+                                   .order_by(InboxEvent.id).limit(1).with_for_update(skip_locked=True))
+        if row is None:
+            return None
+        if row.received_at.replace(tzinfo=UTC) < datetime.now(UTC) - timedelta(hours=24):
+            row.state, row.reason, row.payload = "failed", "expired_before_execution", {}
+            row.updated_at = datetime.now(UTC)
+            return None
+        row.state = "processing"
+        row.updated_at = datetime.now(UTC)
+        return row.id, row.payload
+
+
+async def finish(event_id: int, outcome: Outcome) -> None:
+    async with session_scope() as session:
+        values: dict[str, Any] = {"updated_at": datetime.now(UTC), "reason": outcome.reason}
+        if outcome.retry_safe:
+            values["state"] = "pending"
+        else:
+            values.update(state="failed" if outcome.failed else "done", payload={})
+        # Erasure may have cancelled a pending/active receipt. Never restore its payload.
+        await session.execute(update(InboxEvent).where(
+            InboxEvent.id == event_id, InboxEvent.state == "processing",
+        ).values(**values))
+
+
+async def erase_pending(session, max_user_id: int) -> None:
+    """Erase receipt bodies in the same transaction as resident data."""
+    await session.execute(update(InboxEvent).where(InboxEvent.max_user_id == max_user_id).values(
+        state="done", payload={}, max_user_id=None, reason="erased", updated_at=datetime.now(UTC),
+    ))
+
+
+async def maintenance(bot) -> None:
+    from aemr_bot.services import admin_bus
+    now = datetime.now(UTC)
+    async with session_scope() as session:
+        await session.execute(update(InboxEvent).where(
+            InboxEvent.state == "pending", InboxEvent.received_at < now - timedelta(hours=24),
+        ).values(state="failed", payload={}, reason="expired_before_execution", updated_at=now))
+        await session.execute(delete(InboxEvent).where(InboxEvent.received_at < now - timedelta(days=30)))
+        failures = list((await session.scalars(select(InboxEvent).where(
+            InboxEvent.state == "failed", InboxEvent.notified.is_(False),
+        ).order_by(InboxEvent.id).limit(20))).all())
+    if not failures:
+        return
+    ids = ", ".join(f"#{r.id} ({r.update_type}, MAX ID {r.max_user_id or '—'})" for r in failures)
+    sent = await admin_bus.send(bot, text=(
+        "⚠️ Не завершена обработка событий: " + ids + ". "
+        "Автоматического повтора нет: часть действий могла выполниться. "
+        "Проверьте обращения и журнал рассылок перед повтором действия; "
+        "при необходимости попросите отправителя повторить сообщение."
+    ))
+    if sent:
+        async with session_scope() as session:
+            await session.execute(update(InboxEvent).where(InboxEvent.id.in_([r.id for r in failures]))
+                                  .values(notified=True))
+
+
+async def process_one(dp, bot) -> bool:
+    """Run one durable receipt. SDK swallows handler exceptions; middleware records them."""
+    item = await take_next()
+    if item is None:
+        return False
+    event_id, payload = item
+    from aemr_bot.utils.resident_lifecycle import guard
+    _, user_id = _identity(payload)
+    async with guard(user_id):
+        async with session_scope() as session:
+            state = await session.scalar(select(InboxEvent.state).where(InboxEvent.id == event_id))
+        if state != "processing":
+            return True
+        return await _dispatch_claimed(dp, bot, event_id, payload)
+
+
+async def _dispatch_claimed(dp, bot, event_id: int, payload: dict) -> bool:
+    from maxapi.methods.types.getted_updates import process_update_webhook
+    outcome = Outcome()
+    token = current_outcome.set(outcome)
+    try:
+        try:
+            event = await process_update_webhook(event_json=payload, bot=bot)
+            if event is None:
+                outcome.failed, outcome.reason = True, "unsupported_event"
+            else:
+                async with asyncio.timeout(120):
+                    await dp.handle(event)
+                if not outcome.finished and not outcome.failed:
+                    outcome.failed, outcome.reason = True, "dispatch_failed_before_handler"
+        except asyncio.CancelledError:
+            # Persisted processing state is deliberately NOT returned to pending.
+            raise
+        except Exception as exc:
+            outcome.failed, outcome.reason = True, type(exc).__name__[:64]
+        await finish(event_id, outcome)
+        if outcome.retry_safe:
+            await asyncio.sleep(2)
+    finally:
+        current_outcome.reset(token)
+    return True
+
+
+async def run(dp, bot, stop: asyncio.Event) -> None:
+    """Serial dispatch preserves resident event order; ingestion remains independent."""
+    next_maintenance = 0.0
+    while not stop.is_set():
+        try:
+            await recover_interrupted()
+            if asyncio.get_running_loop().time() >= next_maintenance:
+                await maintenance(bot)
+                next_maintenance = asyncio.get_running_loop().time() + 60
+            worked = await process_one(dp, bot)
+            if worked:
+                continue
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            # Never log payloads, SQL parameters or SDK exception representations.
+            log.error("inbox iteration failed (%s)", type(exc).__name__)
+        try:
+            await asyncio.wait_for(stop.wait(), timeout=1)
+        except TimeoutError:
+            pass
 ```
 
 ### `bot/aemr_bot/services/notify_toggles.py`
@@ -28487,8 +29074,8 @@ async def fetch_main_runtime_config(
 
 ### `bot/aemr_bot/services/settings_store.py`
 
-Size: `65831` bytes  
-SHA-256: `1147a35a52ab540a9fbbf7987a1716aeee9601d85af3481ca8528c73a55bbfc3`
+Size: `66561` bytes  
+SHA-256: `107d77147e06d9a2a4bcd1dc1b1443340821ee0936040b84b10a2f287fd4c8df`
 
 ```python
 import hashlib
@@ -28497,12 +29084,13 @@ import json
 import logging
 import re
 import unicodedata
+from copy import deepcopy
 from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
+from sqlalchemy import bindparam, select
 from sqlalchemy import func as sa_func
-from sqlalchemy import select
 from sqlalchemy import select as sa_select
 from sqlalchemy import update as sa_update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -29414,21 +30002,47 @@ async def export_synced(session: AsyncSession) -> dict[str, Any]:
     diff'ов в git."""
     out: dict[str, Any] = {}
     for key in SYNCED_KEYS:
-        out[key] = await get(session, key)
+        out[key] = deepcopy(await get(session, key))
     return out
 
 
-async def mark_synced(session: AsyncSession, keys: list[str] | None = None) -> int:
-    """Проставить synced_at = now() для ключей из списка (или для всех
-    SYNCED_KEYS, если keys=None). Вызывается после успешного создания
-    PR. Возвращает количество обновлённых строк."""
+async def mark_synced(
+    session: AsyncSession,
+    keys: list[str] | None = None,
+    *,
+    exported_values: dict[str, Any] | None = None,
+) -> int:
+    """Mark exported settings, not merge/deployment status.
 
+    PR callers must supply their exported value snapshot. Each conditional
+    UPDATE compares the current JSON value atomically, so an edit made during
+    the network request remains dirty. Without a snapshot this is the seed
+    baseline operation; it must not be used to acknowledge an async export.
+    """
     target_keys = list(keys) if keys is not None else list(SYNCED_KEYS)
     now = datetime.now(UTC)
-    result = await session.execute(
-        sa_update(Setting).where(Setting.key.in_(target_keys)).values(synced_at=now)
-    )
-    return result.rowcount or 0
+    if exported_values is None:
+        result = await session.execute(
+            sa_update(Setting).where(Setting.key.in_(target_keys)).values(synced_at=now)
+        )
+        return result.rowcount or 0
+
+    marked = 0
+    for key in target_keys:
+        if key not in exported_values:
+            continue
+        result = await session.execute(
+            sa_update(Setting)
+            .where(
+                Setting.key == key,
+                Setting.value == bindparam(
+                    "exported_value", exported_values[key], type_=Setting.value.type,
+                ),
+            )
+            .values(synced_at=now)
+        )
+        marked += result.rowcount or 0
+    return marked
 
 
 def _read_seed_json(name: str) -> Any:
@@ -30093,288 +30707,334 @@ def _status_label(status: str) -> str:
 
 ### `bot/aemr_bot/services/threat_intel.py`
 
-Size: `11444` bytes  
-SHA-256: `74844e3d4c6d9eead11ccb3fcb526f30254f1fedf7f221800f11cc273161ea04`
+Size: `13066` bytes  
+SHA-256: `49a3c1a8b3a5b477af003b65d4fc92ba1fafa6766a8423b45a6b26be5964446d`
 
 ```python
-"""URL threat-intelligence для входящих сообщений жителей.
+"""Local threat-feed reputation checks; never visit resident-supplied URLs.
 
-См. `docs/_meta/URL_THREAT_INTEL_2026-05-26.md` для полной архитектуры.
-
-Цель: оператор в admin-карточке видит предупреждение «⛔ Подозрительные
-ссылки», если житель прислал в обращении URL из известных feed'ов
-malware/phishing. Не блокирует сообщение жителя — у него может быть
-легитимный кейс «мне это прислали мошенники, помогите» — но даёт
-оператору сигнал к осторожности.
-
-**Поведение**:
-- В памяти держим `set[str]` нормализованных host'ов (lowercase, без
-  www, без trailing slash). Lookup O(1).
-- Обновление раз в час из трёх free feed'ов: URLhaus, ThreatFox,
-  опционально PhishTank (если задан PHISHTANK_APP_KEY).
-- Staleness budget 6 часов: если за 6 часов ни одно обновление не
-  прошло — alert в admin chat, но бот продолжает работать со стейл-set'ом.
-- Fail-open: любая ошибка fetch (network, parse, format-change) → log
-  + использовать предыдущий set, не падать.
-
-**Что НЕ делает**:
-- Не выполняет live-lookup на API на hot-path (точка отказа).
-- Не блокирует сообщение жителя — только warning оператору.
-- Не персистит set на диск — restart бота = новая загрузка через cron.
+Refresh at startup and hourly. Valid snapshots are retained per source and
+persisted atomically. Failure never prevents receiving an appeal. A match is
+host reputation, not a verdict about a particular page or all its subdomains.
 """
 from __future__ import annotations
 
 import asyncio
+import csv
+import io
+import ipaddress
 import json
 import logging
 import os
+import tempfile
 import time
+import zipfile
 from dataclasses import dataclass, field
-from urllib.parse import urlparse
+from pathlib import Path
+from urllib.parse import quote, urlparse
 
 import aiohttp
 
 from aemr_bot.network import session_kwargs
 
 log = logging.getLogger(__name__)
-
-# Источники feed'ов. URL'ы фиксированы в коде — это не пользовательский
-# input, не нужно валидации; если abuse.ch поменяет endpoint, переписываем.
-_URLHAUS_URL = "https://urlhaus.abuse.ch/downloads/csv_online/"
-_THREATFOX_URL = "https://threatfox.abuse.ch/downloads/hostfile/"
-_PHISHTANK_URL_TEMPLATE = (
-    "https://data.phishtank.com/data/{app_key}/online-valid.json"
-)
-
-# Timeout запроса. Не критично долгий — cron job в фоне, не блокирует
-# пользователя, но 60 сек достаточно для медленного CDN.
+_URLHAUS_URL = "https://urlhaus-api.abuse.ch/v2/files/exports/{app_key}/recent.csv"
+_THREATFOX_URL = "https://threatfox-api.abuse.ch/v2/files/exports/{app_key}/full.csv.zip"
+_PHISHTANK_URL_TEMPLATE = "https://data.phishtank.com/data/{app_key}/online-valid.json"
+_OPENPHISH_URL = "https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt"
 _FETCH_TIMEOUT_SEC = 60
-# Staleness budget: после стольких секунд без успешного refresh — alert.
-_STALENESS_BUDGET_SEC = 6 * 3600  # 6 часов
+_STALENESS_BUDGET_SEC = 6 * 3600
+_MAX_FEED_BYTES = 32 * 1024 * 1024
+_MAX_UNPACKED_BYTES = 64 * 1024 * 1024
+
+
+def _enabled_sources() -> set[str]:
+    # Without an abuse.ch key use the limited public phishing feed.
+    names = ({"urlhaus", "threatfox"} if os.environ.get("ABUSECH_AUTH_KEY", "").strip()
+             else {"openphish"})
+    if os.environ.get("PHISHTANK_APP_KEY", "").strip():
+        names.add("phishtank")
+    return names
 
 
 @dataclass
 class ThreatIntelStore:
-    """In-memory хранилище host'ов из threat-intel feed'ов.
-
-    Singleton-инстанс получается через `get_store()` (lazy).
-    """
-
     hosts: set[str] = field(default_factory=set)
-    """Множество lowercase-host'ов известных malware/phishing-сайтов."""
-
     last_refresh_at: float | None = None
-    """Monotonic-timestamp последнего успешного refresh'а (любого feed'а)."""
-
     sources: dict[str, int] = field(default_factory=dict)
-    """Сколько host'ов вкладывает каждый feed (для observability)."""
+    source_hosts: dict[str, set[str]] = field(default_factory=dict)
+    source_updated_at: dict[str, float] = field(default_factory=dict)
+    started_at: float = field(default_factory=time.monotonic)
+    outage_notified: bool = False
+    refresh_lock: asyncio.Lock = field(default_factory=asyncio.Lock, repr=False)
 
     def is_malicious(self, url: str) -> tuple[bool, str | None]:
-        """Проверить URL по локальному set'у.
-
-        Возвращает (True, источник) если host URL в feed'е, иначе
-        (False, None). Источник — для отчёта оператору в admin card.
-
-        Sanity: пустой set (бот только что стартовал, cron ещё не
-        прошёл) → всегда False, не fail-positive.
-        """
-        if not self.hosts or not url:
-            return False, None
         host = _normalize_host(url)
-        if not host:
+        if not host or host not in self.hosts:
             return False, None
-        if host in self.hosts:
-            # Мы знаем что host в set'е, но не знаем точно из какого
-            # feed'а — set объединённый. Возвращаем generic-метку.
-            return True, "threat-intel"
-        return False, None
+        sources = sorted(name for name, hosts in self.source_hosts.items() if host in hosts)
+        return True, ", ".join(sources) if sources else "threat-intel"
 
     def staleness_age_seconds(self) -> float | None:
-        """Сколько секунд прошло с последнего успешного refresh'а.
-
-        None — если ни разу не обновлялись (бот только что стартовал
-        и cron ещё не прошёл).
-        """
         if self.last_refresh_at is None:
             return None
-        return time.monotonic() - self.last_refresh_at
+        return max(0, time.monotonic() - self.last_refresh_at)
 
     def is_stale(self) -> bool:
-        """True если данные старше staleness budget'а."""
-        age = self.staleness_age_seconds()
-        return age is not None and age > _STALENESS_BUDGET_SEC
+        if self.source_hosts:
+            return any(
+                time.time() - self.source_updated_at.get(
+                    name, time.time() - (time.monotonic() - self.started_at)
+                ) > _STALENESS_BUDGET_SEC
+                for name in _enabled_sources()
+            )
+        origin = self.last_refresh_at if self.last_refresh_at is not None else self.started_at
+        return time.monotonic() - origin > _STALENESS_BUDGET_SEC
+
+    def rebuild(self) -> None:
+        self.hosts = set().union(*self.source_hosts.values())
+        self.sources = {name: len(hosts) for name, hosts in self.source_hosts.items()}
 
 
-# Singleton — простой module-level dict. Не Class-method, чтобы было
-# легко тестировать через monkeypatch.
 _STORE: ThreatIntelStore | None = None
 
 
+def _cache_path() -> Path | None:
+    value = os.environ.get("THREAT_INTEL_CACHE_PATH", "/var/lib/aemr/threat-intel.json").strip()
+    return Path(value) if value else None
+
+
+def save_cache(store: ThreatIntelStore) -> None:
+    """No keys, resident data or URLs in cache; atomic replace on a persistent volume."""
+    path = _cache_path()
+    if path is None:
+        return
+    tmp = None
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        data = {
+            "version": 1, "outage_notified": store.outage_notified,
+            "started_at": time.time() - max(0, time.monotonic() - store.started_at),
+            "sources": {name: {"updated_at": store.source_updated_at[name], "hosts": sorted(hosts)}
+                        for name, hosts in store.source_hosts.items()},
+        }
+        with tempfile.NamedTemporaryFile(mode="w", dir=path.parent, delete=False) as f:
+            tmp = f.name
+            json.dump(data, f)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except Exception:
+        # Do not log exception strings: paths might contain credentials supplied by an operator.
+        log.warning("threat_intel: cache write failed; memory snapshot retained")
+    finally:
+        if tmp and os.path.exists(tmp):
+            os.unlink(tmp)
+
+
 def get_store() -> ThreatIntelStore:
-    """Lazy-singleton доступ к глобальному store."""
     global _STORE
     if _STORE is None:
-        _STORE = ThreatIntelStore()
+        store = ThreatIntelStore()
+        path = _cache_path()
+        if path and path.is_file():
+            try:
+                if path.stat().st_size > _MAX_UNPACKED_BYTES:
+                    raise ValueError("cache too large")
+                data = json.loads(path.read_text())
+                if data["version"] != 1:
+                    raise ValueError("cache version")
+                for name, item in data["sources"].items():
+                    if name not in _enabled_sources():
+                        continue
+                    hosts = item["hosts"]
+                    stamp = float(item["updated_at"])
+                    if not isinstance(hosts, list) or not all(
+                        isinstance(h, str) and h and _normalize_host(h) == h for h in hosts
+                    ) or not 0 < stamp <= time.time():
+                        raise ValueError("invalid cache")
+                    store.source_hosts[name] = set(hosts)
+                    store.source_updated_at[name] = stamp
+                store.rebuild()
+                if store.source_updated_at:
+                    age = time.time() - max(store.source_updated_at.values())
+                    store.last_refresh_at = time.monotonic() - max(0, age)
+                store.started_at -= max(0, time.time() - float(data.get("started_at", time.time())))
+                store.outage_notified = data.get("outage_notified") is True
+            except Exception:
+                store = ThreatIntelStore()
+                log.warning("threat_intel: invalid cache ignored")
+        _STORE = store
     return _STORE
 
 
 def _normalize_host(url_or_host: str) -> str:
-    """Извлечь и нормализовать hostname из URL или host'а напрямую.
-
-    `https://www.Attacker.com/path` → `attacker.com`.
-    `evil.example` → `evil.example`.
-    `https://[fe80::1]/x` → `fe80::1` (IPv6 без скобок).
-
-    Безопасно к парсе-ошибкам: всё, что не парсится — пустая строка.
-    """
     try:
-        # Если уже host без схемы — urlparse не вернёт hostname,
-        # дописываем схему искусственно.
-        if "://" not in url_or_host:
-            parsed = urlparse(f"http://{url_or_host}")
-        else:
-            parsed = urlparse(url_or_host)
-    except (ValueError, AttributeError):
+        value = url_or_host.strip()
+        # A bare IPv6 address from our own cache is not a URL authority.
+        try:
+            return ipaddress.ip_address(value).compressed
+        except ValueError:
+            pass
+        parsed = urlparse(value if "://" in value else f"http://{value}")
+        host = (parsed.hostname or "").lower().removeprefix("www.").rstrip(".")
+        return host.encode("idna").decode("ascii")
+    except (ValueError, AttributeError, UnicodeError):
         return ""
-    host = (parsed.hostname or "").lower()
-    host = host.removeprefix("www.")
-    return host
 
 
-async def _fetch_text(
-    session: aiohttp.ClientSession, url: str
-) -> str | None:
-    """Скачать URL как text. None при любой ошибке (log на WARNING)."""
+async def _fetch_text(session: aiohttp.ClientSession, url: str) -> str | None:
+    """Bound compressed AND uncompressed sizes; never log URLs or exception messages."""
+    label = urlparse(url).hostname
     try:
         async with session.get(
-            url, timeout=aiohttp.ClientTimeout(total=_FETCH_TIMEOUT_SEC)
+            url, timeout=aiohttp.ClientTimeout(total=_FETCH_TIMEOUT_SEC),
+            allow_redirects=False,
         ) as resp:
             if resp.status != 200:
-                log.warning(
-                    "threat_intel: %s returned HTTP %d", url, resp.status
-                )
+                log.warning("threat_intel: %s HTTP %d", label, resp.status)
                 return None
-            return await resp.text()
+            body = bytearray()
+            async for chunk in resp.content.iter_chunked(64 * 1024):
+                body.extend(chunk)
+                if len(body) > _MAX_FEED_BYTES:
+                    raise ValueError("feed too large")
+            if url.endswith(".zip"):
+                with zipfile.ZipFile(io.BytesIO(body)) as archive:
+                    files = [f for f in archive.infolist() if not f.is_dir()]
+                    if len(files) != 1 or files[0].file_size > _MAX_UNPACKED_BYTES:
+                        raise ValueError("unexpected archive")
+                    # Read at most the cap even if ZIP metadata lies; never extract paths.
+                    with archive.open(files[0]) as stream:
+                        body = bytearray(stream.read(_MAX_UNPACKED_BYTES + 1))
+                    if len(body) > _MAX_UNPACKED_BYTES:
+                        raise ValueError("archive too large")
+            return body.decode("utf-8-sig")
     except Exception as exc:
-        log.warning("threat_intel: fetch %s failed: %s", url, exc)
+        log.warning("threat_intel: %s fetch failed (%s)", label, type(exc).__name__)
         return None
 
 
+def _rows(body: str):
+    return csv.reader(io.StringIO("\n".join(
+        line for line in body.splitlines() if line.strip() and not line.lstrip().startswith("#")
+    )), skipinitialspace=True)
+
+
+def _feed_host(value: str) -> str:
+    host = _normalize_host(value)
+    if not host or any(c.isspace() for c in host) or any(c in host for c in "<>@/\\"):
+        return ""
+    try:
+        ipaddress.ip_address(host)
+        return host
+    except ValueError:
+        return host if "." in host and all(
+            part and len(part) <= 63 and all(c.isalnum() or c == "-" for c in part)
+            for part in host.split(".")
+        ) else ""
+
+
 def _parse_urlhaus_csv(body: str) -> set[str]:
-    """CSV URLhaus: первые 7 строк — комментарий, потом
-    `id,dateadded,url,...`. Берём `url` (поле 3, 0-indexed 2)."""
-    hosts: set[str] = set()
-    for line in body.splitlines():
-        if not line or line.startswith("#"):
-            continue
-        # Простой parse — split по `,` с учётом возможных кавычек.
-        # Полный CSV-parser избыточен для нашего use case (мы берём
-        # один столбец, без многострочных значений).
-        parts = line.split(",")
-        if len(parts) < 3:
-            continue
-        url = parts[2].strip().strip('"')
-        host = _normalize_host(url)
-        if host:
-            hosts.add(host)
+    hosts = set()
+    for row in _rows(body):
+        if len(row) >= 3 and row[0].strip().isdigit() and row[2].startswith(("http://", "https://")):
+            # recent.csv contains offline entries as well as online ones.
+            if len(row) > 3 and row[3] == "offline":
+                continue
+            if host := _feed_host(row[2]):
+                hosts.add(host)
     return hosts
 
 
 def _parse_threatfox_hostfile(body: str) -> set[str]:
-    """ThreatFox host-file: формат `0.0.0.0 evil.example` per line."""
-    hosts: set[str] = set()
+    """Legacy parser retained for older fixtures; live source uses CSV exports."""
+    hosts = set()
     for line in body.splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
         parts = line.split()
-        if len(parts) < 2:
+        # These are hosts-file data markers; this parser never binds a socket.
+        if (len(parts) >= 2 and parts[0] in {"0.0.0.0", "127.0.0.1"}  # nosec B104
+                and (host := _feed_host(parts[1]))):
+            hosts.add(host)
+    return hosts
+
+
+def _parse_threatfox_csv(body: str) -> set[str]:
+    # Official CSV schema: id,first_seen_utc,ioc_value,ioc_type,threat_type,...
+    hosts = set()
+    for row in _rows(body):
+        if len(row) < 4 or not row[0].strip().isdigit():
             continue
-        host = _normalize_host(parts[1])
-        if host:
+        if row[3] not in {"domain", "url", "ip:port"}:
+            continue  # hashes are not network indicators
+        if host := _feed_host(row[2]):
             hosts.add(host)
     return hosts
 
 
 def _parse_phishtank_json(body: str) -> set[str]:
-    """PhishTank online-valid.json: список объектов с полем `url`."""
     try:
         items = json.loads(body)
     except json.JSONDecodeError:
         return set()
     if not isinstance(items, list):
         return set()
-    hosts: set[str] = set()
-    for it in items:
-        if not isinstance(it, dict):
-            continue
-        url = it.get("url", "")
-        host = _normalize_host(url) if isinstance(url, str) else ""
-        if host:
-            hosts.add(host)
-    return hosts
+    return {host for item in items if isinstance(item, dict)
+            and isinstance(item.get("url"), str)
+            and item.get("online", "yes") == "yes" and item.get("verified", "yes") == "yes"
+            if (host := _feed_host(item["url"]))}
+
+
+def _parse_url_list(body: str) -> set[str]:
+    return {host for line in body.splitlines()
+            if line.startswith(("https://", "http://")) and (host := _feed_host(line))}
 
 
 async def refresh_all() -> dict[str, int]:
-    """Перетянуть все feed'ы и обновить singleton store.
-
-    Возвращает dict `{feed_name: count}` для логирования. Если ни один
-    feed не отдался — store не обновляется (сохраняется предыдущий
-    set), `last_refresh_at` тоже не двигается → staleness растёт.
-
-    Вызывается из cron `threat-intel-refresh` (раз в час).
-    """
     store = get_store()
-    counts: dict[str, int] = {}
-    new_hosts: set[str] = set()
+    async with store.refresh_lock:
+        return await _refresh(store)
+
+
+async def _refresh(store: ThreatIntelStore) -> dict[str, int]:
+    key = os.environ.get("ABUSECH_AUTH_KEY", "").strip()
+    feeds = []
+    if key:
+        feeds.extend([
+            ("urlhaus", _URLHAUS_URL.format(app_key=quote(key, safe="")), _parse_urlhaus_csv),
+            ("threatfox", _THREATFOX_URL.format(app_key=quote(key, safe="")), _parse_threatfox_csv),
+        ])
+    else:
+        log.info("threat_intel: ABUSECH_AUTH_KEY missing; using limited OpenPhish community feed")
+        feeds.append(("openphish", _OPENPHISH_URL, _parse_url_list))
+    phishtank_key = os.environ.get("PHISHTANK_APP_KEY", "").strip()
+    if phishtank_key:
+        feeds.append(("phishtank", _PHISHTANK_URL_TEMPLATE.format(
+            app_key=quote(phishtank_key, safe="")), _parse_phishtank_json))
     async with aiohttp.ClientSession(**session_kwargs()) as session:
-        # Все три feed'а тянем параллельно — это IO-bound.
-        urlhaus_task = _fetch_text(session, _URLHAUS_URL)
-        threatfox_task = _fetch_text(session, _THREATFOX_URL)
-
-        phishtank_key = os.environ.get("PHISHTANK_APP_KEY", "").strip()
-        phishtank_task: asyncio.Task | None = None
-        if phishtank_key:
-            phishtank_task = asyncio.create_task(
-                _fetch_text(
-                    session,
-                    _PHISHTANK_URL_TEMPLATE.format(app_key=phishtank_key),
-                )
-            )
-
-        urlhaus_body, threatfox_body = await asyncio.gather(
-            urlhaus_task, threatfox_task
-        )
-        phishtank_body = await phishtank_task if phishtank_task else None
-
-    if urlhaus_body:
-        hosts = _parse_urlhaus_csv(urlhaus_body)
-        new_hosts.update(hosts)
-        counts["urlhaus"] = len(hosts)
-    if threatfox_body:
-        hosts = _parse_threatfox_hostfile(threatfox_body)
-        new_hosts.update(hosts)
-        counts["threatfox"] = len(hosts)
-    if phishtank_body:
-        hosts = _parse_phishtank_json(phishtank_body)
-        new_hosts.update(hosts)
-        counts["phishtank"] = len(hosts)
-
-    if not counts:
-        log.warning(
-            "threat_intel: ни один feed не отдался — set не обновлён, "
-            "продолжаем со старым (age=%.0f сек)",
-            store.staleness_age_seconds() or 0,
-        )
-        return {}
-
-    store.hosts = new_hosts
-    store.sources = counts
-    store.last_refresh_at = time.monotonic()
-    log.info(
-        "threat_intel: refresh ok — %d host'ов из %d feed'ов: %s",
-        len(new_hosts), len(counts), counts,
-    )
+        bodies = await asyncio.gather(*(_fetch_text(session, url) for _, url, _ in feeds))
+    counts = {}
+    for (name, _, parse), body in zip(feeds, bodies, strict=True):
+        if not body:
+            continue
+        try:
+            hosts = await asyncio.to_thread(parse, body)
+        except Exception as exc:
+            log.warning("threat_intel: %s parse failed (%s)", name, type(exc).__name__)
+            continue
+        if not hosts:
+            log.warning("threat_intel: %s empty/invalid feed; previous snapshot retained", name)
+            continue
+        store.source_hosts[name] = hosts
+        store.source_updated_at[name] = time.time()
+        counts[name] = len(hosts)
+    if counts:
+        store.rebuild()
+        store.last_refresh_at = time.monotonic()
+        log.info("threat_intel: refresh ok: %s; retained coverage: %s", counts, store.sources)
+    if not store.is_stale():
+        store.outage_notified = False
+    await asyncio.to_thread(save_cache, store)
     return counts
 ```
 
@@ -30490,8 +31150,8 @@ def file_attachment(token: str):
 
 ### `bot/aemr_bot/services/users.py`
 
-Size: `44046` bytes  
-SHA-256: `4b0c977ac4c463196fb9d8204f0af8c27e39a617b13b66e7050c486ae46d4528`
+Size: `44264` bytes  
+SHA-256: `65835d2810ffb3fd7f6647432ab3fc6359506cc933202f1cd670af9f198ed75e`
 
 ```python
 import hashlib
@@ -30874,6 +31534,10 @@ async def erase_pdn_detailed(
        конкретным MAX-пользователем физически уходит.
     5. Запись жителя в users физически удаляется.
     """
+    from aemr_bot.services.inbox import erase_pending
+    from aemr_bot.utils.resident_lifecycle import hold_until_commit
+    await hold_until_commit(session, max_user_id)
+    await erase_pending(session, max_user_id)
     user_row = await session.scalar(
         select(User.id).where(User.max_user_id == max_user_id)
     )
@@ -31558,8 +32222,8 @@ async def hydrate_into_registry(session: AsyncSession) -> tuple[int, int]:
 
 ### `bot/aemr_bot/services/wizard_registry.py`
 
-Size: `10294` bytes  
-SHA-256: `559719e6f4ed630bec9de78bc73517236b6ccdd4ac63ba7fe691a194bbe761db`
+Size: `11671` bytes  
+SHA-256: `bac1334d0ab7272418ce6cdb0f925bd173221dc20e4459c862205ebee990ab71`
 
 ```python
 """Хранилище мутабельного in-memory состояния визардов и reply-intent'а
@@ -31593,6 +32257,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections import deque
+from collections.abc import Callable, Coroutine
+from copy import deepcopy
 from typing import Any
 
 from aemr_bot.db.session import session_scope
@@ -31711,24 +32378,62 @@ def reset_all() -> None:
 # no-op без ошибок.
 
 
-def _spawn_persist(coro_factory) -> None:
-    """Запустить async-coro в фоне, если есть running loop. Без него —
-    no-op (юнит-тесты импортируют модуль вне asyncio context'а).
+# One worker owns all writes for a (wizard kind, operator) until drained.
+# Keep it in the shared background registry so shutdown waits for the whole
+# queue, including deletes enqueued while an older save is committing.
+_PersistFactory = Callable[[], Coroutine[Any, Any, None]]
+_persist_queues: dict[
+    tuple[str, int], tuple[deque[_PersistFactory], asyncio.Task[None]]
+] = {}
 
-    Использует `utils.background.spawn_background_task` для защиты от
-    GC: голый `loop.create_task` хранится в event loop только через
-    weakref, и сборщик мусора может прервать задачу до завершения
-    (особенно опасно для коротких persist'ов в БД)."""
+
+def _spawn_persist(key: tuple[str, int], coro_factory: _PersistFactory) -> None:
+    """Queue writes in caller order; separate wizard keys remain independent.
+
+    Errors are best effort (logged by the write), and the next write still
+    runs. Shutdown cancellation closes the active session, drops queued
+    writes with a warning, and releases the key; it never launches detached
+    successors. Outside a running loop this is a no-op.
+    """
     try:
         asyncio.get_running_loop()
     except RuntimeError:
         return
+    current = _persist_queues.get(key)
+    if current is not None and not current[1].done():
+        current[0].append(coro_factory)
+        return
+
+    pending = deque([coro_factory])
+
+    async def run() -> None:
+        while pending:
+            operation = pending.popleft()
+            try:
+                await operation()
+            except Exception:
+                log.warning("wizard_registry: queued write for %s failed", key, exc_info=True)
+
+    coro = run()
     try:
-        spawn_background_task(
-            coro_factory(), name="wizard_registry.persist"
-        )
+        task = spawn_background_task(coro, name="wizard_registry.persist")
     except Exception:
+        coro.close()
         log.warning("wizard_registry: persist task spawn failed", exc_info=False)
+        return
+    _persist_queues[key] = (pending, task)
+
+    def cleanup(done: asyncio.Task[None]) -> None:
+        if done.cancelled():
+            log.warning(
+                "wizard_registry: persistence for %s cancelled; %s queued writes discarded",
+                key, len(pending),
+            )
+        pending.clear()
+        if _persist_queues.get(key) == (pending, done):
+            _persist_queues.pop(key, None)
+
+    task.add_done_callback(cleanup)
 
 
 async def _persist_save_op(operator_id: int, state: dict[str, Any]) -> None:
@@ -31793,11 +32498,11 @@ def schedule_persist_op(
     if state is None:
         state = _op_wizards.get(operator_id)
     if state is None:
-        _spawn_persist(lambda: _persist_delete_op(operator_id))
+        _spawn_persist(("op", operator_id), lambda: _persist_delete_op(operator_id))
     else:
         # Копия dict, чтобы фоновая запись видела immutable snapshot.
-        snapshot = dict(state)
-        _spawn_persist(lambda: _persist_save_op(operator_id, snapshot))
+        snapshot = deepcopy(state)
+        _spawn_persist(("op", operator_id), lambda: _persist_save_op(operator_id, snapshot))
 
 
 def schedule_persist_broadcast(
@@ -31810,10 +32515,12 @@ def schedule_persist_broadcast(
     if state is None:
         state = _broadcast_wizards.get(operator_id)
     if state is None:
-        _spawn_persist(lambda: _persist_delete_broadcast(operator_id))
+        _spawn_persist(("broadcast", operator_id), lambda: _persist_delete_broadcast(operator_id))
     else:
-        snapshot = dict(state)
-        _spawn_persist(lambda: _persist_save_broadcast(operator_id, snapshot))
+        snapshot = deepcopy(state)
+        _spawn_persist(
+            ("broadcast", operator_id), lambda: _persist_save_broadcast(operator_id, snapshot)
+        )
 ```
 
 ### `bot/aemr_bot/texts.py`
@@ -31848,6 +32555,100 @@ from aemr_bot.copy.broadcast_texts import *
 from aemr_bot.copy.citizen_funnel import *
 from aemr_bot.copy.errors_texts import *
 from aemr_bot.copy.security_texts import *
+```
+
+### `bot/aemr_bot/transport.py`
+
+Size: `3442` bytes  
+SHA-256: `0245e6af7ccb231b47eb6c3b0b5288dbad7990e0354acf59ded9ecd96603ac30`
+
+```python
+"""MAX transport adapters: acknowledge only durable receipts, then dispatch locally."""
+from __future__ import annotations
+
+import asyncio
+import hmac
+import logging
+
+from aiohttp import web
+from maxapi import Dispatcher
+
+from aemr_bot.services import inbox
+
+log = logging.getLogger(__name__)
+
+
+class DurableDispatcher(Dispatcher):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._inbox_task: asyncio.Task | None = None
+        self._inbox_stop: asyncio.Event | None = None
+
+    def _start_inbox(self, bot) -> None:
+        if self._inbox_task is None:
+            self._inbox_stop = asyncio.Event()
+            self._inbox_task = asyncio.create_task(inbox.run(self, bot, self._inbox_stop), name="durable_inbox")
+
+    async def startup(self, bot) -> None:
+        await super().startup(bot)
+        self._start_inbox(bot)
+
+    async def _fetch_updates_once(self, bot):
+        # SDK has completed its polling-specific subscription checks and startup.
+        self._start_inbox(bot)
+        return await super()._fetch_updates_once(bot)
+
+    async def shutdown(self) -> None:
+        if self._inbox_task is not None and self._inbox_stop is not None:
+            await stop_worker(self._inbox_task, self._inbox_stop)
+            self._inbox_task = None
+        await super().shutdown()
+
+    async def _dispatch_fetched_events(self, events: dict, current_timestamp: int, *, skip_updates: bool) -> None:
+        try:
+            updates = events.get("updates") or []
+            if not isinstance(updates, list) or any(not isinstance(e, dict) for e in updates):
+                raise ValueError("invalid batch")
+            if skip_updates:
+                updates = [e for e in updates if e.get("timestamp", current_timestamp) >= current_timestamp]
+            await inbox.accept(updates)
+            self._ensure_bot().marker_updates = events.get("marker")
+        except Exception as exc:
+            log.error("inbox receipt failed (%s); retaining polling marker", type(exc).__name__)
+            await self._sleep_unless_stopped(2)
+
+
+def setup_webhook(app: web.Application, *, secret: str) -> None:
+    if not secret:
+        raise ValueError("webhook secret required")
+
+    async def receive(request: web.Request) -> web.Response:
+        got = request.headers.get("X-Max-Bot-Api-Secret", "")
+        if not hmac.compare_digest(got.encode(), secret.encode()):
+            return web.json_response({"error": "forbidden"}, status=403)
+        try:
+            payload = await request.json()
+        except (ValueError, UnicodeError):
+            return web.json_response({"error": "invalid json"}, status=400)
+        if not isinstance(payload, dict) or not isinstance(payload.get("update_type"), str):
+            return web.json_response({"error": "invalid event"}, status=400)
+        try:
+            await inbox.accept([payload])
+        except Exception as exc:
+            log.error("webhook receipt failed (%s)", type(exc).__name__)
+            return web.json_response({"error": "temporarily unavailable"}, status=503)
+        return web.json_response({"ok": True})
+
+    app.router.add_post("/max/webhook", receive)
+
+
+async def stop_worker(task: asyncio.Task, stop: asyncio.Event) -> None:
+    stop.set()
+    try:
+        await asyncio.wait_for(asyncio.shield(task), timeout=10)
+    except TimeoutError:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
 ```
 
 ### `bot/aemr_bot/ui/__init__.py`
@@ -34235,6 +35036,40 @@ async def drain_background_tasks(timeout: float = 10.0) -> list[str]:
     return [t.get_name() for t in still_running]
 ```
 
+### `bot/aemr_bot/utils/delivery_guard.py`
+
+Size: `735` bytes  
+SHA-256: `34b65de2d5ae7674e8dec275d137fb1453c7b6650f78e593f40df82758d0c9d1`
+
+```python
+"""Per-operation cancellation check after shared outbound pacing."""
+from collections.abc import Awaitable, Callable, Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
+
+
+class DeliveryCancelled(Exception):
+    """No HTTP request has started for this attempt."""
+
+
+_guard: ContextVar[Callable[[], Awaitable[bool]] | None] = ContextVar("delivery_guard", default=None)
+
+
+@contextmanager
+def send_guard(check: Callable[[], Awaitable[bool]] | None) -> Iterator[None]:
+    token = _guard.set(check)
+    try:
+        yield
+    finally:
+        _guard.reset(token)
+
+
+async def check_before_send() -> None:
+    check = _guard.get()
+    if check is not None and not await check():
+        raise DeliveryCancelled
+```
+
 ### `bot/aemr_bot/utils/event.py`
 
 Size: `13526` bytes  
@@ -34898,6 +35733,102 @@ def mask_phone(phone: str | None) -> str:
     return f"{prefix}***{tail}"
 ```
 
+### `bot/aemr_bot/utils/resident_lifecycle.py`
+
+Size: `2550` bytes  
+SHA-256: `ba9709777d357a00227316f962ded9dd7dc11e3cd41cbda1502bacb50fb5e391`
+
+```python
+"""Coordinate receipt execution with erasure through the erasure commit.
+
+Single-process singleton-lock deployment. The same task may erase itself while
+handling /forget, hence reentrancy is intentional. Weak storage keeps idle IDs out
+of memory; holders/waiters/transaction callbacks keep their gate alive.
+"""
+from __future__ import annotations
+
+import asyncio
+from contextlib import asynccontextmanager
+from weakref import WeakValueDictionary
+
+from sqlalchemy import event
+
+
+class _Gate:
+    def __init__(self):
+        self.lock = asyncio.Lock()
+        self.owner: asyncio.Task | None = None
+        self.depth = 0
+
+    async def acquire(self) -> None:
+        task = asyncio.current_task()
+        if self.owner is not task:
+            await self.lock.acquire()
+            self.owner = task
+        self.depth += 1
+
+    def release(self) -> None:
+        self.depth -= 1
+        if not self.depth:
+            self.owner = None
+            self.lock.release()
+
+
+_gates: WeakValueDictionary[int, _Gate] = WeakValueDictionary()
+
+
+def _gate(user_id: int) -> _Gate:
+    gate = _gates.get(user_id)
+    if gate is None:
+        gate = _Gate()
+        _gates[user_id] = gate
+    return gate
+
+
+@asynccontextmanager
+async def guard(user_id: int | None):
+    if user_id is None:
+        yield
+        return
+    gate = _gate(user_id)
+    await gate.acquire()
+    try:
+        yield
+    finally:
+        gate.release()
+
+
+async def hold_until_commit(session, user_id: int) -> None:
+    """Retain erasure's gate until its caller commits/rolls back the outer tx."""
+    holds = session.info.setdefault("resident_erasure_gates", {})
+    if user_id in holds:
+        return
+    gate = _gate(user_id)
+    await gate.acquire()
+    try:
+        if not session.in_transaction():
+            await session.begin()
+        sync_session = session.sync_session
+        loop = asyncio.get_running_loop()
+        released = False
+
+        def release_after_transaction(ended_session, transaction):
+            nonlocal released
+            if transaction.parent is not None or released:
+                return
+            released = True
+            holds.pop(user_id, None)
+            gate.release()
+            # Do not mutate SQLAlchemy's listener deque while dispatching it.
+            loop.call_soon(event.remove, sync_session, "after_transaction_end", release_after_transaction)
+
+        event.listen(sync_session, "after_transaction_end", release_after_transaction)
+        holds[user_id] = gate
+    except BaseException:
+        gate.release()
+        raise
+```
+
 ### `bot/aemr_bot/utils/typing_indicator.py`
 
 Size: `2299` bytes  
@@ -34967,8 +35898,8 @@ async def mark_typing(event_or_bot, chat_id: int | None = None) -> None:
 
 ### `bot/aemr_bot/utils/url_defang.py`
 
-Size: `17668` bytes  
-SHA-256: `c460b13df17deb028cdcb0a300b5d8ff135977aebcabcf775e432f2eba6cf5e3`
+Size: `17634` bytes  
+SHA-256: `93a701997d492e1584e6601041047513d95d505a47dddf64a89ec4af465b13ef`
 
 ```python
 """Экранирование URL'ов («defang») для безопасного показа в admin-чате.
@@ -35135,7 +36066,7 @@ _DEFANG_TLDS = (
 _BARE_DOMAIN_PATTERN = re.compile(
     r"(?<!//)"  # negative lookbehind: не префикс `//` (это уже scheme defang)
     r"(?<![\w.-])"  # negative lookbehind: не середина длинного слова/домена
-    r"([\w](?:[\w\-]{0,61}[\w])?)"  # имя 2-го уровня (включая кириллицу)
+    r"((?:[\w](?:[\w\-]{0,61}[\w])?\.)*[\w](?:[\w\-]{0,61}[\w])?)"
     r"\.(" + "|".join(re.escape(t) for t in _DEFANG_TLDS) + r")"
     r"(?![\w.-])",  # negative lookahead: не середина длинного домена
     re.IGNORECASE | re.UNICODE,
@@ -35353,30 +36284,29 @@ datefmt = %H:%M:%S
 
 ### `bot/pyproject.toml`
 
-Size: `7583` bytes  
-SHA-256: `8318dc091e3122f240ad6b3324a2afa1439466fa1f267b91e24372fcb522dfbe`
+Size: `7566` bytes  
+SHA-256: `20b127fdf72c061851c6af52bf4a216038abe3aab5ed69166381c3bd282c4c80`
 
 ```toml
 [project]
 name = "aemr-bot"
-version = "0.1.0"
+version = "0.2.0"
 description = "Чат-бот Администрации Елизовского муниципального округа в MAX"
 requires-python = ">=3.12"
 dependencies = [
     # Совместимые версии (~=) разрешают патчи, но не пропускают внезапные
     # breaking changes. Пересматривать раз в квартал.
     # Пин ТОЧНОЙ версии (не диапазон): maxapi — критичная зависимость под ручным
-    # аудитом, а CI ставит из pyproject (`pip install -e .[dev]`), не из lock. При
+    # аудитом. CI устанавливает зависимости через `uv sync --locked`. Ранее при
     # диапазоне `~=1.1` любой upstream-релиз (1.2.1, 1.3.0…) молча подтягивался и
     # ломал guard test_deps_environment. Обновление maxapi — осознанная правка этой
     # строки + uv lock + аудит по docs/DEPS.md.
-    "maxapi==1.2.1",
+    "maxapi==1.2.3",
     # fastapi нижняя граница 0.118 нужна для совместимости с starlette
     # 0.49.1+ (PYSEC-2026-161 host-header bypass + CVE-2025-62727
     # Range-header ReDoS в FileResponse). До 0.118 fastapi пинит
     # starlette<0.49.0 — fix невозможен.
-    # Верхняя граница `<0.136` исключает 0.136.3 (MAL-2026-4750:
-    # dependency-confusion typosquat «fastar» в [standard] extras).
+    # [standard] extras не используются; воспроизводимость обеспечивает uv.lock.
     "fastapi>=0.118,<0.140",
     "uvicorn[standard]~=0.32",
     "sqlalchemy~=2.0",
@@ -37695,8 +38625,8 @@ class TestFinalizeSurvivesDetachedAppeal:
 
 ### `bot/tests/test_admin_card_render.py`
 
-Size: `18765` bytes  
-SHA-256: `4bf9542121189854a28e17aaa8cfd5907efa38f5fc7859645eade60faae9151c`
+Size: `18997` bytes  
+SHA-256: `2170b3882b638876751b8f5492f4df39cf423e825c3ddf0284187f25430fa096`
 
 ```python
 """Тесты freshness-rule семантики `services/admin_card.render`.
@@ -37714,14 +38644,21 @@ admin appeal):
 """
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from tests._helpers import fake_session_scope as _fake_session_scope
-
 pytest.importorskip("maxapi", reason="нужен maxapi для card_format")
+
+
+@asynccontextmanager
+async def _fake_session_scope():
+    # First publication now commits a durable send claim through execute.
+    session = MagicMock()
+    session.execute = AsyncMock(return_value=SimpleNamespace(rowcount=1))
+    yield session
 
 
 def _make_appeal(*, appeal_id: int = 5, admin_mid=None, last_card_mid=None):
@@ -46698,6 +47635,323 @@ class TestEnsureFunnelCallbackStateGeo:
         ack.assert_not_called()
 ```
 
+### `bot/tests/test_appeal_publication_recovery.py`
+
+Size: `12312` bytes  
+SHA-256: `bf962209af32e319c01f3acf2f8f21c7fdd26664a0a3c93f22e21db0f96998d9`
+
+```python
+"""Durable first-card recovery and per-user serialization regressions."""
+from __future__ import annotations
+
+import asyncio
+import gc
+from contextlib import asynccontextmanager
+from datetime import UTC, datetime
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
+import pytest_asyncio
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.compiler import compiles
+
+from aemr_bot.db.models import Appeal, Base, Message, Operator, User
+from aemr_bot.handlers import appeal_runtime
+from aemr_bot.services import admin_card
+
+
+@compiles(JSONB, "sqlite")
+def _sqlite_jsonb(_type, _compiler, **_kw):
+    return "JSON"
+
+
+@pytest.mark.asyncio
+async def test_user_lock_survives_release_with_waiter_and_drop():
+    lock = appeal_runtime.get_user_lock(987654)
+    await lock.acquire()
+    entered = asyncio.Event()
+
+    async def waiter():
+        async with appeal_runtime.get_user_lock(987654):
+            entered.set()
+            await asyncio.sleep(0)
+
+    task = asyncio.create_task(waiter())
+    await asyncio.sleep(0)
+    lock.release()
+    appeal_runtime.drop_user_lock(987654)
+    replacement = appeal_runtime.get_user_lock(987654)
+    assert replacement is lock
+    await task
+    assert entered.is_set()
+    del lock, replacement, task
+    gc.collect()
+    assert 987654 not in appeal_runtime._user_locks
+
+
+@pytest_asyncio.fixture
+async def card_db(tmp_path, monkeypatch):
+    engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'cards.db'}")
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(
+            lambda sync: Base.metadata.create_all(
+                sync, tables=[User.__table__, Operator.__table__, Appeal.__table__, Message.__table__]
+            )
+        )
+
+    @asynccontextmanager
+    async def scope():
+        async with factory.begin() as session:
+            yield session
+
+    monkeypatch.setattr(admin_card, "session_scope", scope)
+    monkeypatch.setattr(appeal_runtime, "session_scope", scope)
+    monkeypatch.setattr(admin_card.cfg, "admin_group_id", 555)
+    async with scope() as session:
+        user = User(max_user_id=12, first_name="Житель", consent_pdn_at=datetime.now(UTC))
+        session.add(user)
+        await session.flush()
+        appeal = Appeal(user_id=user.id, summary="Не горит фонарь", topic="Свет")
+        session.add(appeal)
+        await session.flush()
+        appeal_id = appeal.id
+    yield SimpleNamespace(scope=scope, id=appeal_id)
+    await engine.dispose()
+
+
+def _bot(*, side_effect=None):
+    return SimpleNamespace(send_message=AsyncMock(
+        return_value=SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid="card-1"))),
+        side_effect=side_effect,
+    ))
+
+
+@pytest.mark.asyncio
+async def test_recovery_publishes_saved_card_once_and_loads_relationships(card_db):
+    bot = _bot()
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 1
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
+    assert bot.send_message.await_count == 1
+    assert "Не горит фонарь" in bot.send_message.call_args.kwargs["text"]
+    async with card_db.scope() as session:
+        saved = await session.get(Appeal, card_db.id)
+        assert saved.admin_message_id == "card-1"
+        assert saved.initial_card_state == "published"
+
+
+@pytest.mark.asyncio
+async def test_recovery_and_initial_publication_do_not_duplicate(card_db):
+    sending = asyncio.Event()
+    finish = asyncio.Event()
+
+    async def delayed_send(**_kwargs):
+        sending.set()
+        await finish.wait()
+        return SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid="card-1")))
+
+    bot = _bot(side_effect=delayed_send)
+    async with card_db.scope() as session:
+        appeal = await admin_card.appeals_service.get_by_id_with_messages(session, card_db.id)
+    initial = asyncio.create_task(admin_card.render(bot, appeal, is_first_publication=True))
+    await sending.wait()
+    recovery = asyncio.create_task(appeal_runtime.recover_unpublished_appeals(bot))
+    await asyncio.sleep(0)
+    finish.set()
+    await asyncio.gather(initial, recovery)
+    assert bot.send_message.await_count == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("reason", ["blocked", "revoked", "erased", "closed"])
+async def test_recovery_skips_ineligible_or_erased_appeal(card_db, reason):
+    async with card_db.scope() as session:
+        saved = await session.get(Appeal, card_db.id)
+        user = await session.scalar(select(User).where(User.id == saved.user_id))
+        if reason == "blocked":
+            user.is_blocked = True
+        elif reason == "revoked":
+            user.consent_pdn_at = None
+        elif reason == "erased":
+            saved.closed_due_to_revoke = True
+            saved.summary = None
+        else:
+            saved.status = "closed"
+    bot = _bot()
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
+    assert bot.send_message.await_count == 0
+
+
+@pytest.mark.asyncio
+async def test_started_send_is_not_replayed_and_warns_once_after_restart(card_db):
+    async with card_db.scope() as session:
+        saved = await session.get(Appeal, card_db.id)
+        saved.initial_card_state = "sending"
+    bot = _bot()
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
+    assert bot.send_message.await_count == 1
+    assert "Не горит фонарь" not in bot.send_message.call_args.kwargs["text"]
+    async with card_db.scope() as session:
+        saved = await session.get(Appeal, card_db.id)
+        assert saved.admin_message_id is None
+        assert saved.initial_card_state == "uncertain"
+        assert saved.initial_card_notified is True
+
+
+@pytest.mark.asyncio
+async def test_failed_uncertainty_warning_is_retried_without_replaying_card(card_db):
+    async with card_db.scope() as session:
+        saved = await session.get(Appeal, card_db.id)
+        saved.initial_card_state = "sending"
+    bot = _bot(side_effect=ConnectionError("offline"))
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
+    async with card_db.scope() as session:
+        saved = await session.get(Appeal, card_db.id)
+        assert saved.initial_card_notified is False
+    bot.send_message.side_effect = None
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
+    assert bot.send_message.await_count == 2
+    assert all("Не горит фонарь" not in call.kwargs["text"]
+               for call in bot.send_message.call_args_list)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", ["timeout", "missing_mid", "commit"])
+async def test_uncertain_result_is_never_automatically_replayed(card_db, monkeypatch, failure):
+    bot = _bot(side_effect=TimeoutError("response lost") if failure == "timeout" else None)
+    if failure == "missing_mid":
+        bot.send_message.return_value = None
+    async with card_db.scope() as session:
+        appeal = await admin_card.appeals_service.get_by_id_with_messages(session, card_db.id)
+    if failure == "commit":
+        # The network succeeded, but the transaction recording its result
+        # rolls back. A restart sees durable sending and must not repeat it.
+        original = admin_card.session_scope
+        calls = 0
+
+        @asynccontextmanager
+        async def fail_result_commit():
+            nonlocal calls
+            calls += 1
+            async with original() as session:
+                yield session
+                if calls == 2:
+                    raise RuntimeError("commit unavailable")
+
+        monkeypatch.setattr(admin_card, "session_scope", fail_result_commit)
+        with pytest.raises(RuntimeError, match="commit unavailable"):
+            await admin_card.render(bot, appeal, is_first_publication=True)
+        monkeypatch.setattr(admin_card, "session_scope", original)
+    else:
+        assert await admin_card.render(bot, appeal, is_first_publication=True) is None
+    bot.send_message.side_effect = None
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
+    # First call was the card, second is only the uncertainty warning.
+    assert bot.send_message.await_count == 2
+    assert "Не горит фонарь" not in bot.send_message.call_args.kwargs["text"]
+    async with card_db.scope() as session:
+        saved = await session.get(Appeal, card_db.id)
+        assert saved.admin_message_id is None
+        assert saved.initial_card_state == "uncertain"
+
+
+@pytest.mark.asyncio
+async def test_explicit_rejection_keeps_card_pending_for_retry(card_db):
+    from maxapi.exceptions import MaxApiError
+
+    bot = _bot(side_effect=MaxApiError(code=429, raw="rate limited"))
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
+    async with card_db.scope() as session:
+        saved = await session.get(Appeal, card_db.id)
+        assert saved.initial_card_state == "pending"
+    bot.send_message.side_effect = None
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 1
+    assert bot.send_message.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_recovery_batch_and_parallelism_are_bounded(card_db):
+    async with card_db.scope() as session:
+        saved = await session.get(Appeal, card_db.id)
+        for _ in range(100):
+            session.add(Appeal(user_id=saved.user_id, summary="Фонарь", topic="Свет"))
+    active = peak = 0
+
+    async def send(**_kwargs):
+        nonlocal active, peak
+        active += 1
+        peak = max(peak, active)
+        await asyncio.sleep(0.001)
+        active -= 1
+        return SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid="card-1")))
+
+    bot = _bot(side_effect=send)
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 100
+    assert bot.send_message.await_count == 100
+    assert peak <= 5
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 1
+
+
+@pytest.mark.asyncio
+async def test_failed_send_claim_commit_prevents_external_send(card_db, monkeypatch):
+    bot = _bot()
+    original = admin_card.session_scope
+
+    @asynccontextmanager
+    async def fail_claim_commit():
+        async with original() as session:
+            yield session
+            raise RuntimeError("claim commit unavailable")
+
+    monkeypatch.setattr(admin_card, "session_scope", fail_claim_commit)
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
+    assert bot.send_message.await_count == 0
+    monkeypatch.setattr(admin_card, "session_scope", original)
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 1
+
+
+@pytest.mark.asyncio
+async def test_cancelled_send_is_durable_and_not_replayed(card_db):
+    sending = asyncio.Event()
+
+    async def wait_forever(**_kwargs):
+        sending.set()
+        await asyncio.Event().wait()
+
+    bot = _bot(side_effect=wait_forever)
+    async with card_db.scope() as session:
+        appeal = await admin_card.appeals_service.get_by_id_with_messages(session, card_db.id)
+    task = asyncio.create_task(admin_card.render(bot, appeal, is_first_publication=True))
+    await sending.wait()
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    async with card_db.scope() as session:
+        saved = await session.get(Appeal, card_db.id)
+        assert saved.initial_card_state == "sending"
+    bot.send_message.side_effect = None
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
+    assert bot.send_message.await_count == 2
+    assert "Не горит фонарь" not in bot.send_message.call_args.kwargs["text"]
+
+
+@pytest.mark.asyncio
+async def test_warning_without_message_id_is_not_recorded_as_delivered(card_db):
+    async with card_db.scope() as session:
+        saved = await session.get(Appeal, card_db.id)
+        saved.initial_card_state = "sending"
+    bot = _bot()
+    bot.send_message.return_value = None
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
+    async with card_db.scope() as session:
+        saved = await session.get(Appeal, card_db.id)
+        assert saved.initial_card_notified is False
+```
+
 ### `bot/tests/test_appeals_service_pg.py`
 
 Size: `18813` bytes  
@@ -47517,6 +48771,171 @@ class TestCountByType:
         assert result.get("image") == 1
 ```
 
+### `bot/tests/test_auto_deploy.py`
+
+Size: `6260` bytes  
+SHA-256: `fa49ad7fa3f0e62b13176bcc1489c8a925eb33fcaf52b4c382c2661e9ed45f6f`
+
+```python
+"""Execute the real deploy flow against filesystem and command stubs only."""
+from __future__ import annotations
+
+import os
+import subprocess
+from pathlib import Path
+
+import pytest
+
+
+@pytest.fixture
+def deploy_harness(tmp_path):
+    root = Path(__file__).resolve().parents[2]
+    repo = tmp_path / "repo"
+    (repo / "infra").mkdir(parents=True)
+    (repo / "infra" / ".env").write_text("SYNTHETIC_CONFIG=preserved\n")
+    head, builds, resets = (tmp_path / name for name in ("head", "builds", "resets"))
+    head.write_text("old\n")
+    builds.write_text("")
+    resets.write_text("")
+    commands = tmp_path / "commands"
+    commands.mkdir()
+    stubs = {
+        "git": '''#!/bin/sh
+case "$1" in
+ fetch) exit 0 ;;
+ rev-parse)
+  if [ "$2" = HEAD ]; then cat "$AEMR_TEST_HEAD"; else printf 'new\\n'; fi ;;
+ status) exit 0 ;;
+ reset)
+  printf '%s\\n' "$3" > "$AEMR_TEST_HEAD"
+  printf '%s\\n' "$3" >> "$AEMR_TEST_RESETS"
+  if [ "${AEMR_TEST_REAL_INSTALL:-0}" = 1 ]; then
+    cp "$AEMR_TEST_VERSIONS/$3.sh" "$AEMR_TEST_REPO/scripts/auto-deploy.sh"
+  fi ;;
+ verify-commit) exit "${AEMR_TEST_SIGNATURE_RC:-0}" ;;
+ *) exit 99 ;;
+esac
+''',
+        "su": '''#!/bin/sh
+printf 'attempt\\n' >> "$AEMR_TEST_BUILDS"
+exit "${AEMR_TEST_BUILD_RC:-0}"
+''',
+        "curl": '''#!/bin/sh
+case "$*" in
+ */livez*) exit "${AEMR_TEST_LIVE_RC:-0}" ;;
+ */readyz*) exit "${AEMR_TEST_READY_RC:-0}" ;;
+ *) exit 99 ;;
+esac
+''',
+        "logger": "#!/bin/sh\nif [ $# -eq 2 ]; then cat >/dev/null; fi\n",
+        "install": '#!/bin/sh\nif [ "${AEMR_TEST_REAL_INSTALL:-0}" = 1 ]; then cp "$3" "$4.tmp"; mv "$4.tmp" "$4"; fi\n',
+        "chown": "#!/bin/sh\nexit 0\n",
+        "sleep": "#!/bin/sh\nexit 0\n",
+    }
+    for name, body in stubs.items():
+        command = commands / name
+        command.write_text(body)
+        command.chmod(0o700)
+    content = (root / "scripts/auto-deploy.sh").read_text()
+    content = content.replace("REPO_DIR=/home/aemr/aemr-bot", f"REPO_DIR={repo}")
+    content = content.replace("/tmp/aemr-bot.env.bak.", str(tmp_path / "env.bak."))
+    content = content.replace("HEALTH_TIMEOUT_SEC=60", "HEALTH_TIMEOUT_SEC=2")
+    content = content.replace("HEALTH_POLL_INTERVAL_SEC=5", "HEALTH_POLL_INTERVAL_SEC=1")
+    installed = tmp_path / "installed"
+    installed.mkdir()
+    content = content.replace("/usr/local/bin/", str(installed) + "/")
+    versions = tmp_path / "versions"
+    versions.mkdir()
+    (versions / "new.sh").write_text(content)
+    # Minimal legacy controller reproduces the old HEAD-only skip. Keep this
+    # fixture self-contained: CI uses a shallow checkout without old commits.
+    old = f'''#!/bin/bash
+set -euo pipefail
+cd "{repo}"
+LOCAL=$(git rev-parse HEAD)
+REMOTE=$(git rev-parse origin/main)
+if [ "$LOCAL" = "$REMOTE" ]; then exit 0; fi
+git reset --hard "$REMOTE" --quiet
+install -m 0755 "{repo}/scripts/auto-deploy.sh" "{installed / 'aemr-bot-autodeploy'}"
+su - aemr -c "docker compose up -d --build"
+'''
+    (versions / "old.sh").write_text(old)
+    (repo / "scripts").mkdir()
+    (repo / "scripts" / "auto-deploy.sh").write_text(content)
+    (repo / "scripts" / "healthwatch.sh").write_text("#!/bin/sh\nexit 0\n")
+    installed_script = installed / "aemr-bot-autodeploy"
+    installed_script.write_text(content)
+    script = tmp_path / "deploy.sh"
+    script.write_text(content)
+    env = dict(
+        os.environ, PATH=str(commands) + os.pathsep + os.environ["PATH"],
+        AEMR_TEST_HEAD=str(head), AEMR_TEST_BUILDS=str(builds),
+        AEMR_TEST_RESETS=str(resets), AUTODEPLOY_ENABLED="1",
+        AEMR_TEST_VERSIONS=str(versions), AEMR_TEST_REPO=str(repo),
+        REQUIRE_SIGNED_COMMITS="", REQUIRE_CANONICAL_MARKER="",
+    )
+
+    def run(**overrides):
+        return subprocess.run(
+            ["bash", str(installed_script if overrides.get("AEMR_TEST_REAL_INSTALL") == "1" else script)], env={**env, **overrides}, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True, check=False, timeout=5,
+        )
+
+    return run, head, builds, resets, repo
+
+
+def test_failed_build_restores_source_and_retries_same_commit(deploy_harness):
+    run, head, builds, resets, repo = deploy_harness
+    first = run(AEMR_TEST_BUILD_RC="42")
+    assert first.returncode == 42
+    assert head.read_text().strip() == "old"
+    second = run()
+    assert second.returncode == 0
+    assert head.read_text().strip() == "new"
+    assert builds.read_text().splitlines() == ["attempt", "attempt"]
+    assert (repo / "infra" / ".env").read_text() == "SYNTHETIC_CONFIG=preserved\n"
+    assert resets.read_text().splitlines() == ["new", "old", "new"]
+
+
+def test_successful_deployment_skips_unchanged_commit(deploy_harness):
+    run, head, builds, resets, repo = deploy_harness
+    assert run().returncode == 0
+    assert run().returncode == 0
+    assert builds.read_text().splitlines() == ["attempt"]
+
+
+def test_failed_liveness_still_rolls_back(deploy_harness):
+    run, head, builds, resets, repo = deploy_harness
+    assert run(AEMR_TEST_LIVE_RC="22").returncode == 1
+    assert head.read_text().strip() == "old"
+    assert builds.read_text().splitlines() == ["attempt", "attempt"]
+    assert resets.read_text().splitlines() == ["new", "old"]
+
+
+def test_readiness_failure_does_not_roll_back(deploy_harness):
+    run, head, builds, resets, repo = deploy_harness
+    assert run(AEMR_TEST_READY_RC="22").returncode == 0
+    assert head.read_text().strip() == "new"
+    assert builds.read_text().splitlines() == ["attempt"]
+
+
+def test_installed_retry_controller_survives_two_failed_upgrades(deploy_harness):
+    run, head, builds, resets, repo = deploy_harness
+    assert run(AEMR_TEST_REAL_INSTALL="1", AEMR_TEST_BUILD_RC="42").returncode == 42
+    assert run(AEMR_TEST_REAL_INSTALL="1", AEMR_TEST_BUILD_RC="42").returncode == 42
+    assert run(AEMR_TEST_REAL_INSTALL="1").returncode == 0
+    assert builds.read_text().splitlines() == ["attempt"] * 3
+    assert head.read_text().strip() == "new"
+
+
+def test_new_controller_retries_head_left_by_legacy_failed_build(deploy_harness):
+    run, head, builds, resets, repo = deploy_harness
+    # The old controller moved HEAD then failed before this controller existed.
+    head.write_text('new\n')
+    assert run().returncode == 0
+    assert builds.read_text().splitlines() == ['attempt']
+```
+
 ### `bot/tests/test_background_drain.py`
 
 Size: `4360` bytes  
@@ -47625,8 +49044,8 @@ async def test_no_tasks_is_cheap_noop() -> None:
 
 ### `bot/tests/test_backup_verify.py`
 
-Size: `10763` bytes  
-SHA-256: `4df815cbac4d47b32079ceb0f49127ada1958a960c97c53164cc4ed1c18510ca`
+Size: `14149` bytes  
+SHA-256: `0bdcc4476ed3517e31dc10933d69cec69f3e82ca4bc8adde4a789a654f2fa720`
 
 ```python
 """Проверка пригодности бэкапа (services/backup_verify.py).
@@ -47637,7 +49056,9 @@ SHA-256: `4df815cbac4d47b32079ceb0f49127ada1958a960c97c53164cc4ed1c18510ca`
 """
 from __future__ import annotations
 
+import asyncio
 import os
+import sys
 
 import pytest
 
@@ -47923,6 +49344,97 @@ def test_verify_result_defaults() -> None:
     assert r.backup_name == ""
     assert r.size_bytes == 0
     assert r.decrypted_bytes == 0
+
+
+@pytest.fixture
+def decrypt_child(monkeypatch, tmp_path):
+    """Replace gpg with a controlled child, retaining real OS pipe/reap behavior."""
+    spawn = asyncio.create_subprocess_exec
+    children = []
+    started = asyncio.Event()
+
+    async def create(*args, **kwargs):
+        assert kwargs["stderr"] == asyncio.subprocess.DEVNULL
+        proc = await spawn(
+            sys.executable, "-c",
+            "import os, time; os.write(2, b'e' * 1000000); time.sleep(60)",
+            **kwargs,
+        )
+        children.append(proc)
+        started.set()
+        return proc
+
+    monkeypatch.setenv("TMPDIR", str(tmp_path))
+    monkeypatch.setattr(backup_verify.asyncio, "create_subprocess_exec", create)
+    return children, started
+
+
+@pytest.mark.asyncio
+async def test_decrypt_timeout_bounds_stdout_and_reaps_child(decrypt_child, tmp_path):
+    children, started = decrypt_child
+    task = asyncio.create_task(backup_verify._decrypt_to_devnull(
+        tmp_path / "synthetic.sql.gpg", "synthetic-passphrase", timeout=0.05,
+    ))
+    try:
+        with pytest.raises(TimeoutError):
+            await asyncio.wait_for(asyncio.shield(task), 1)
+        assert task.done(), "configured timeout must bound stdout, without external cancellation"
+        assert children[0].returncode is not None, "timed out child must be reaped"
+    finally:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        for proc in children:
+            if proc.returncode is None:
+                proc.kill()
+            await proc.wait()
+
+
+@pytest.mark.asyncio
+async def test_decrypt_cancellation_reaps_child(decrypt_child, tmp_path):
+    children, started = decrypt_child
+    task = asyncio.create_task(backup_verify._decrypt_to_devnull(
+        tmp_path / "synthetic.sql.gpg", "synthetic-passphrase", timeout=30,
+    ))
+    try:
+        await asyncio.wait_for(started.wait(), 1)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await asyncio.wait_for(task, 1)
+        assert children[0].returncode is not None, "cancelled verification must reap its child"
+    finally:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        for proc in children:
+            if proc.returncode is None:
+                proc.kill()
+            await proc.wait()
+
+
+@pytest.mark.asyncio
+async def test_decrypt_streams_large_output_and_keeps_passphrase_off_argv(monkeypatch, tmp_path):
+    spawn = asyncio.create_subprocess_exec
+    secret = "synthetic-passphrase"
+
+    async def create(*args, **kwargs):
+        assert secret not in args
+        assert args[args.index("--passphrase-fd") + 1] == "0"
+        return await spawn(
+            sys.executable, "-c",
+            "import os, sys; "
+            "assert sys.stdin.buffer.readline() == b'synthetic-passphrase\\n'; "
+            "os.write(2, b'e' * 1000000); "
+            "sys.stdout.buffer.write(b'PostgreSQL database dump' + b'x' * 1000000)",
+            **kwargs,
+        )
+
+    monkeypatch.setenv("TMPDIR", str(tmp_path))
+    monkeypatch.setattr(backup_verify.asyncio, "create_subprocess_exec", create)
+    head, count = await backup_verify._decrypt_to_devnull(
+        tmp_path / "synthetic.sql.gpg", secret, timeout=2,
+    )
+    assert len(head) == 4096
+    assert head.startswith(PG_DUMP_SIGNATURE)
+    assert count == 1000024
 ```
 
 ### `bot/tests/test_bot_init_concurrency.py`
@@ -47991,8 +49503,8 @@ def test_bot_http_timeout_is_below_maxapi_default() -> None:
 
 ### `bot/tests/test_broadcast_429_backoff.py`
 
-Size: `4524` bytes  
-SHA-256: `1d9b64f71a91caaa51903b1ab9fcd00015b712a98040890ce96d91e21a6b03f1`
+Size: `4575` bytes  
+SHA-256: `957a199de29bb636814746dee83936870d83735bfc05a2f105ff7117214ffc1d`
 
 ```python
 """Тесты на 429-handling в `_send_one` (MAXAPI_DEEP_DIVE §14 P1)
@@ -48009,6 +49521,8 @@ from types import SimpleNamespace
 import pytest
 
 pytest.importorskip("maxapi")
+
+from maxapi.exceptions import MaxApiError
 
 
 class TestExtractRetryAfter:
@@ -48058,7 +49572,7 @@ class TestSendOne429Backoff:
         async def fake_send_message(**kwargs):
             calls["count"] += 1
             if calls["count"] <= 2:
-                raise RuntimeError("HTTP 429 Too Many Requests")
+                raise MaxApiError(code=429, raw="Too Many Requests")
             return SimpleNamespace(body=SimpleNamespace(mid="ok"))
 
         # Patch asyncio.sleep чтобы тест не реально ждал секунды
@@ -48079,7 +49593,7 @@ class TestSendOne429Backoff:
         from aemr_bot.handlers import broadcast
 
         async def fake_send_message(**kwargs):
-            raise RuntimeError("HTTP 429 rate limit")
+            raise MaxApiError(code=429, raw="rate limit")
 
         async def fake_sleep(s):
             pass
@@ -48117,8 +49631,8 @@ class TestSendOne429Backoff:
 
 ### `bot/tests/test_broadcast_handlers.py`
 
-Size: `44406` bytes  
-SHA-256: `bf05c1cc48bfc1c90180e90602f470770418bde67382b0240cdb4d267554dbd7`
+Size: `44808` bytes  
+SHA-256: `f82d4708a58845d34f1237cb4887ed55438312f21e05627ff75c2395c26c726d`
 
 ```python
 """Тесты для handlers/broadcast — wizard рассылок и helpers.
@@ -48663,7 +50177,8 @@ class TestHandleStop:
             await broadcast._handle_stop(event, 99)
         ack.assert_called_once()
         msg_arg = ack.call_args.args[1]
-        assert "Остановлено" in msg_arg
+        assert "Остановка запрошена" in msg_arg
+        assert "Остановлено" not in msg_arg
 
     @pytest.mark.asyncio
     async def test_already_done(self) -> None:
@@ -48682,7 +50197,8 @@ class TestHandleStop:
              patch("aemr_bot.handlers.broadcast.ack_callback", ack):
             await broadcast._handle_stop(event, 99)
         msg_arg = ack.call_args.args[1]
-        assert "Уже завершено" in msg_arg
+        assert "уже завершена" in msg_arg
+        assert "запрошена" in msg_arg
 
     @pytest.mark.asyncio
     async def test_flipped_writes_audit(self) -> None:
@@ -48999,10 +50515,12 @@ class TestRunSendLoop:
                    AsyncMock(return_value=None)) as send_one, \
              patch("aemr_bot.handlers.broadcast.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.begin_delivery",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",
                    AsyncMock()), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.get_status",
-                   AsyncMock(return_value="running")), \
+                   AsyncMock(return_value="sending")), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.update_progress",
                    AsyncMock()):
             delivered, failed, cancelled = await broadcast._run_send_loop(
@@ -49026,11 +50544,13 @@ class TestRunSendLoop:
         bot = MagicMock()
         bot.edit_message = AsyncMock()
         targets = [(1, 101), (2, 102), (3, 103)]
-        # get_status сразу отдаёт CANCELLED → цикл рвётся после 1-го.
+        # get_status сразу отдаёт CANCELLED → ни одна отправка не начинается.
         with patch("aemr_bot.handlers.broadcast._send_one",
                    AsyncMock(return_value=None)) as send_one, \
              patch("aemr_bot.handlers.broadcast.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.begin_delivery",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",
                    AsyncMock()), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.get_status",
@@ -49048,9 +50568,9 @@ class TestRunSendLoop:
                 progress_step_sec=0,
             )
         assert cancelled is True
-        # Прервались на первом получателе — остальные не тронуты.
-        assert send_one.await_count == 1
-        assert delivered == 1
+        # Запрос отмены проверяется до первого внешнего вызова.
+        assert send_one.await_count == 0
+        assert delivered == 0
 
 
 class TestFormatDt:
@@ -49551,8 +51071,8 @@ class TestTemplatesSearchResults:
 
 ### `bot/tests/test_broadcast_operators_coverage.py`
 
-Size: `39952` bytes  
-SHA-256: `28fb00fd45b78d935adaed4353796af15f2d6f073a9c140b4651a0510cce5f25`
+Size: `42561` bytes  
+SHA-256: `ed42058e37eb1164c9cb60d0dbc62b1192189d8a526e1e59c296ea925ae50483`
 
 ```python
 """Покрытие сервис-слоя БД: ``services/operators.py`` и
@@ -50200,6 +51720,50 @@ class TestReapers:
 
 class TestDeliveriesAndCounts:
     @pytest.mark.asyncio
+    @pytest.mark.parametrize("cancel_requested", [False, True])
+    async def test_startup_reaper_exposes_durable_unknown_counts(
+        self, sqlite_session, cancel_requested,
+    ):
+        s = sqlite_session
+        b = await bc.create_broadcast(s, text="x", operator_id=None, subscriber_count=2)
+        await bc.mark_started(s, b.id, None)
+        await bc.begin_delivery(s, broadcast_id=b.id, user_id=1)
+        await bc.record_delivery(s, broadcast_id=b.id, user_id=2, error=None)
+        if cancel_requested:
+            await bc.request_cancel(s, b.id)
+        assert await bc.reap_orphaned_sending(s) == 1
+        broadcast_id = b.id
+        s.expire_all()
+        result = await bc.get_by_id(s, broadcast_id)
+        assert (result.delivered_count, result.failed_count) == (1, 1)
+        assert result.status == BroadcastStatus.FAILED.value
+
+    @pytest.mark.asyncio
+    async def test_intent_is_unique_and_only_intent_can_be_resolved(self, sqlite_session):
+        s = sqlite_session
+        b = await bc.create_broadcast(s, text="x", operator_id=None, subscriber_count=1)
+        assert await bc.begin_delivery(s, broadcast_id=b.id, user_id=1)
+        assert not await bc.begin_delivery(s, broadcast_id=b.id, user_id=1)
+        assert await bc.count_delivery_results(s, b.id) == (0, 1)
+        with pytest.raises(RuntimeError, match="ledger"):
+            await bc.mark_finished(s, b.id, status=BroadcastStatus.DONE, delivered=0, failed=1)
+        await bc.record_deliveries(s, broadcast_id=b.id, results=[(1, None)])
+        await bc.record_deliveries(s, broadcast_id=b.id, results=[(1, "late failure")])
+        assert await bc.count_delivery_results(s, b.id) == (1, 0)
+        await bc.mark_finished(s, b.id, status=BroadcastStatus.DONE, delivered=1, failed=0)
+
+    @pytest.mark.asyncio
+    async def test_discard_intent_keeps_confirmed_result(self, sqlite_session):
+        s = sqlite_session
+        b = await bc.create_broadcast(s, text="x", operator_id=None, subscriber_count=1)
+        await bc.begin_delivery(s, broadcast_id=b.id, user_id=1)
+        await bc.discard_delivery_intent(s, broadcast_id=b.id, user_id=1)
+        assert await bc.count_delivery_results(s, b.id) == (0, 0)
+        await bc.record_delivery(s, broadcast_id=b.id, user_id=1, error=None)
+        await bc.discard_delivery_intent(s, broadcast_id=b.id, user_id=1)
+        assert await bc.count_delivery_results(s, b.id) == (1, 0)
+
+    @pytest.mark.asyncio
     async def test_record_delivery_single(self, sqlite_session) -> None:
         """``record_delivery`` пишет одну строку доставки; успех →
         delivered_at проставлен, ошибка → delivered_at None + error."""
@@ -50263,6 +51827,10 @@ class TestMarkFinished:
             s, text="x", operator_id=None, subscriber_count=10
         )
         await bc.mark_started(s, b.id, None)
+        await bc.record_deliveries(
+            s, broadcast_id=b.id,
+            results=[(i, None if i <= 8 else "blocked") for i in range(1, 11)],
+        )
         await bc.mark_finished(
             s, b.id, status=BroadcastStatus.DONE, delivered=8, failed=2
         )
@@ -50408,6 +51976,217 @@ class TestListings:
         )
         failed = await bc.list_failed_deliveries(s, b.id, limit=3)
         assert len(failed) == 3
+```
+
+### `bot/tests/test_broadcast_reliability.py`
+
+Size: `8455` bytes  
+SHA-256: `33821db7f7572c9ed039665c6453c75d9d5e8520de3f3ea0f161d70376f97c15`
+
+```python
+"""Regression tests for F04/F07: accounting must precede external effects."""
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from datetime import UTC, datetime
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
+from maxapi.exceptions import MaxApiError
+
+from aemr_bot.handlers import broadcast as bc
+
+
+@asynccontextmanager
+async def scope():
+    yield SimpleNamespace()
+
+
+@pytest.fixture
+def pipeline(monkeypatch):
+    monkeypatch.setattr(bc, "session_scope", scope)
+    monkeypatch.setattr(bc.broadcasts_service, "get_status", AsyncMock(return_value="sending"))
+    monkeypatch.setattr(bc.broadcasts_service, "update_progress", AsyncMock())
+    monkeypatch.setattr(bc.broadcasts_service, "record_deliveries", AsyncMock())
+    monkeypatch.setattr(bc.broadcasts_service, "begin_delivery", AsyncMock(return_value=True))
+    monkeypatch.setattr(bc.broadcasts_service, "discard_delivery_intent", AsyncMock())
+    return SimpleNamespace(send_message=AsyncMock())
+
+
+async def run_loop(bot, targets=None):
+    return await bc._run_send_loop(
+        bot, broadcast_id=7, body="message", total=2,
+        targets=targets or [(1, 101), (2, 102)], admin_mid=None,
+        rate_delay=0, progress_step_sec=999,
+    )
+
+
+async def test_existing_cancel_prevents_first_external_send(pipeline, monkeypatch):
+    monkeypatch.setattr(bc.broadcasts_service, "get_status", AsyncMock(return_value="cancelled"))
+    assert await run_loop(pipeline) == (0, 0, True)
+    pipeline.send_message.assert_not_awaited()
+
+
+async def test_journal_failure_aborts_before_next_recipient(pipeline, monkeypatch):
+    monkeypatch.setattr(
+        bc.broadcasts_service, "record_deliveries", AsyncMock(side_effect=RuntimeError("DB down"))
+    )
+    with pytest.raises(RuntimeError, match="DB down"):
+        await run_loop(pipeline)
+    assert pipeline.send_message.await_count == 1
+
+
+async def test_cancel_during_backoff_prevents_retry(pipeline, monkeypatch):
+    cancelled = False
+
+    async def status(*args):
+        return "cancelled" if cancelled else "sending"
+
+    async def wait(_delay):
+        nonlocal cancelled
+        cancelled = True
+
+    pipeline.send_message.side_effect = MaxApiError(code=429, raw="Too Many Requests")
+    monkeypatch.setattr(bc.broadcasts_service, "get_status", status)
+    monkeypatch.setattr(bc.asyncio, "sleep", wait)
+    assert await run_loop(pipeline) == (0, 0, True)
+    assert pipeline.send_message.await_count == 1
+
+
+async def test_journal_failure_never_finishes_done(pipeline, monkeypatch):
+    monkeypatch.setattr(bc, "_resolve_admin_progress_message", AsyncMock(return_value=None))
+    monkeypatch.setattr(bc, "_send_final_summary", AsyncMock())
+    monkeypatch.setattr(bc.broadcasts_service, "mark_started", AsyncMock())
+    monkeypatch.setattr(bc.broadcasts_service, "list_subscriber_targets", AsyncMock(return_value=[(1, 101)]))
+    monkeypatch.setattr(bc.broadcasts_service, "get_by_id", AsyncMock(return_value=SimpleNamespace(attachments=[])))
+    monkeypatch.setattr(bc.broadcasts_service, "record_deliveries", AsyncMock(side_effect=RuntimeError("DB down")))
+    finished = AsyncMock()
+    monkeypatch.setattr(bc.broadcasts_service, "mark_finished", finished)
+    await bc._run_broadcast(pipeline, 7, "message", 1)
+    assert finished.await_args.kwargs["status"].value == "failed"
+    bc._send_final_summary.assert_not_awaited()
+
+
+async def test_delivery_intent_commits_before_external_send(pipeline, monkeypatch):
+    durable = set()
+    staged = set()
+
+    @asynccontextmanager
+    async def transaction():
+        yield SimpleNamespace()
+        durable.update(staged)
+        staged.clear()
+
+    async def begin(session, *, broadcast_id, user_id):
+        staged.add(user_id)
+        return True
+
+    async def send(**kwargs):
+        assert kwargs["user_id"] - 100 in durable
+        return SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid="m")))
+
+    monkeypatch.setattr(bc, "session_scope", transaction)
+    monkeypatch.setattr(bc.broadcasts_service, "begin_delivery", begin, raising=False)
+    pipeline.send_message.side_effect = send
+    assert await run_loop(pipeline) == (2, 0, False)
+
+
+async def test_existing_intent_is_never_replayed(pipeline, monkeypatch):
+    monkeypatch.setattr(
+        bc.broadcasts_service, "begin_delivery", AsyncMock(return_value=False), raising=False
+    )
+    with pytest.raises(RuntimeError, match="already|существует"):
+        await run_loop(pipeline)
+    pipeline.send_message.assert_not_awaited()
+
+
+async def test_unknown_network_outcome_is_recorded_and_aborts(pipeline):
+    pipeline.send_message.side_effect = TimeoutError("response lost after send")
+    with pytest.raises(RuntimeError, match="unknown|неизвест"):
+        await run_loop(pipeline)
+    assert pipeline.send_message.await_count == 1
+    results = bc.broadcasts_service.record_deliveries.await_args.kwargs["results"]
+    assert "UNKNOWN" in results[0][1]
+
+
+async def test_intent_commit_failure_prevents_external_send(pipeline, monkeypatch):
+    @asynccontextmanager
+    async def broken_commit():
+        yield SimpleNamespace()
+        raise RuntimeError("commit response lost")
+
+    monkeypatch.setattr(bc, "session_scope", broken_commit)
+    with pytest.raises(RuntimeError, match="commit response lost"):
+        await run_loop(pipeline)
+    pipeline.send_message.assert_not_awaited()
+
+
+async def test_explicit_api_rejection_is_known_failure_not_unknown(pipeline):
+    from maxapi.exceptions import MaxApiError
+
+    pipeline.send_message.side_effect = MaxApiError(code=403, raw={"code": "user.blocked"})
+    result = await bc._send_one(pipeline, 101, "message")
+    assert "UNKNOWN" not in result
+    assert "403" in result
+
+
+async def test_unrelated_429_in_error_payload_does_not_trigger_replay(pipeline):
+    from maxapi.exceptions import MaxApiError
+
+    pipeline.send_message.side_effect = MaxApiError(code=503, raw="request id 429001")
+    result = await bc._send_one(pipeline, 101, "message")
+    assert "UNKNOWN" in result
+    assert pipeline.send_message.await_count == 1
+
+
+async def test_unknown_error_with_rate_limit_text_is_not_replayed(pipeline):
+    pipeline.send_message.side_effect = TimeoutError("rate limit response lost; request 429")
+    result = await bc._send_one(pipeline, 101, "message")
+    assert "UNKNOWN" in result
+    assert pipeline.send_message.await_count == 1
+
+
+async def test_missing_broadcast_status_prevents_send(pipeline, monkeypatch):
+    monkeypatch.setattr(bc.broadcasts_service, "get_status", AsyncMock(return_value=None))
+    with pytest.raises(RuntimeError, match="status"):
+        await run_loop(pipeline)
+    pipeline.send_message.assert_not_awaited()
+
+
+async def test_api_none_response_cannot_count_as_confirmed_delivery(pipeline):
+    pipeline.send_message.return_value = None
+    result = await bc._send_one(pipeline, 101, "message")
+    assert result is not None and "UNKNOWN" in result
+
+
+async def test_failed_list_explains_unknown_delivery_may_have_arrived(pipeline, monkeypatch):
+    monkeypatch.setattr(bc, "_ensure_role", AsyncMock(return_value=True))
+    monkeypatch.setattr(bc.broadcasts_service, "get_by_id", AsyncMock(return_value=SimpleNamespace(id=7, failed_count=1)))
+    monkeypatch.setattr(bc.broadcasts_service, "list_failed_deliveries", AsyncMock(return_value=[
+        (1, "Resident", "DELIVERY_UNKNOWN: TimeoutError('response lost')"),
+    ]))
+    screen = AsyncMock()
+    monkeypatch.setattr(bc, "op_screen", screen)
+    await bc._list_failed_deliveries(SimpleNamespace(), 7)
+    text = screen.await_args.args[1]
+    assert "могло дойти" in text
+    assert "перед повторной отправкой" in text
+
+
+async def test_failed_card_does_not_claim_unknown_delivery_was_not_delivered(pipeline, monkeypatch):
+    monkeypatch.setattr(bc, "_ensure_role", AsyncMock(return_value=True))
+    row = SimpleNamespace(
+        id=7, status="failed", failed_count=1, delivered_count=0,
+        subscriber_count_at_start=2, created_at=datetime.now(UTC), attachments=[], text="message",
+    )
+    monkeypatch.setattr(bc.broadcasts_service, "get_by_id", AsyncMock(return_value=row))
+    screen = AsyncMock()
+    monkeypatch.setattr(bc, "op_screen", screen)
+    await bc._open_broadcast(SimpleNamespace(), 7)
+    text = screen.await_args.args[1]
+    assert "неподтверждённые" in text
+    assert "Не доставлено: 1" not in text
 ```
 
 ### `bot/tests/test_broadcast_templates_coverage.py`
@@ -52389,8 +54168,8 @@ class TestFormatDt:
 
 ### `bot/tests/test_broadcast_with_image.py`
 
-Size: `24112` bytes  
-SHA-256: `ed0d0b3dfb01bd0a78367193d1ad975d98c3cd1550561a6e2fce3154fcfe34c7`
+Size: `24248` bytes  
+SHA-256: `c863410caeb7315c3490a7272bc5d5606d082bafdd039e4a89e1f9635d23d4c9`
 
 ```python
 """TDD-тесты image-attachments в рассылках.
@@ -52516,10 +54295,12 @@ class TestRunSendLoopWithImages:
 
         with patch.object(bc, "_send_one", side_effect=_stub_send_one), \
              patch("aemr_bot.handlers.broadcast.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.broadcast.broadcasts_service.begin_delivery",
+                   AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.record_deliveries",
                    AsyncMock()), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.get_status",
-                   AsyncMock(return_value="running")), \
+                   AsyncMock(return_value="sending")), \
              patch("aemr_bot.handlers.broadcast.broadcasts_service.update_progress",
                    AsyncMock()):
             delivered, failed, cancelled = await bc._run_send_loop(
@@ -53844,8 +55625,8 @@ class TestStaleDraftNotRevived:
 
 ### `bot/tests/test_broadcasts_service_pg.py`
 
-Size: `9210` bytes  
-SHA-256: `33e21710ea083c34b14306bc8749e6e17dc2b2fb3a5c7bac8acc387d0fcb961e`
+Size: `11030` bytes  
+SHA-256: `c7a572fbde1ba0991e233cc5e2ef88fa1e9cd1d0ae8dabe883a6ede94871d405`
 
 ```python
 """PG-тесты services/broadcasts.
@@ -53993,8 +55774,8 @@ async def test_mark_finished_failed_zeroes_are_replaced_by_recorded_counters(ses
 
 
 @pytest.mark.asyncio
-async def test_mark_finished_done_keeps_explicit_counters(session) -> None:
-    """Для штатного DONE/CANCELLED пути сохраняем счётчики вызывающего кода."""
+async def test_mark_finished_done_rejects_unjournaled_counters(session) -> None:
+    """F04: DONE requires durable delivery results matching the counters."""
     bc = await broadcasts_service.create_broadcast(
         session,
         text="важное сообщение",
@@ -54002,19 +55783,44 @@ async def test_mark_finished_done_keeps_explicit_counters(session) -> None:
         subscriber_count=3,
     )
 
-    await broadcasts_service.mark_finished(
-        session,
-        bc.id,
-        status=BroadcastStatus.DONE,
-        delivered=3,
-        failed=0,
-    )
+    with pytest.raises(RuntimeError, match="ledger"):
+        await broadcasts_service.mark_finished(
+            session, bc.id, status=BroadcastStatus.DONE, delivered=3, failed=0,
+        )
 
-    refreshed = await broadcasts_service.get_by_id(session, bc.id)
-    assert refreshed is not None
-    assert refreshed.status == BroadcastStatus.DONE.value
-    assert refreshed.delivered_count == 3
-    assert refreshed.failed_count == 0
+
+@pytest.mark.asyncio
+async def test_intent_is_unique_and_result_replaces_it_idempotently(session) -> None:
+    user = await users_service.get_or_create(session, max_user_id=201, first_name="A")
+    bc = await broadcasts_service.create_broadcast(
+        session, text="t", operator_id=None, subscriber_count=1,
+    )
+    assert await broadcasts_service.begin_delivery(session, broadcast_id=bc.id, user_id=user.id)
+    assert not await broadcasts_service.begin_delivery(session, broadcast_id=bc.id, user_id=user.id)
+    failures = await broadcasts_service.list_failed_deliveries(session, bc.id)
+    assert "UNKNOWN" in failures[0][2]
+    with pytest.raises(RuntimeError, match="ledger"):
+        await broadcasts_service.mark_finished(
+            session, bc.id, status=BroadcastStatus.DONE, delivered=0, failed=1,
+        )
+    await broadcasts_service.record_deliveries(session, broadcast_id=bc.id, results=[(user.id, None)])
+    # A late duplicate failure cannot overwrite a confirmed successful result.
+    await broadcasts_service.record_deliveries(session, broadcast_id=bc.id, results=[(user.id, "late error")])
+    assert await broadcasts_service.count_delivery_results(session, bc.id) == (1, 0)
+
+
+@pytest.mark.asyncio
+async def test_cancelled_unsent_intent_can_be_removed(session) -> None:
+    user = await users_service.get_or_create(session, max_user_id=202, first_name="A")
+    bc = await broadcasts_service.create_broadcast(
+        session, text="t", operator_id=None, subscriber_count=1,
+    )
+    await broadcasts_service.begin_delivery(session, broadcast_id=bc.id, user_id=user.id)
+    await broadcasts_service.discard_delivery_intent(session, broadcast_id=bc.id, user_id=user.id)
+    assert await broadcasts_service.count_delivery_results(session, bc.id) == (0, 0)
+    await broadcasts_service.record_delivery(session, broadcast_id=bc.id, user_id=user.id, error=None)
+    await broadcasts_service.discard_delivery_intent(session, broadcast_id=bc.id, user_id=user.id)
+    assert await broadcasts_service.count_delivery_results(session, bc.id) == (1, 0)
 
 
 # ---- list_failed_deliveries (PR G) ---------------------------------
@@ -56194,8 +58000,8 @@ class TestAdminCardThreatWarningScansFollowups:
 
 ### `bot/tests/test_critical_mutation.py`
 
-Size: `32313` bytes  
-SHA-256: `9f96a9dc46f07dcc00b26c01914188b733d7683703d68f8329b1ecb0f62d5b56`
+Size: `32383` bytes  
+SHA-256: `650d9c5ca0c65e13373f0479025e646f72213837469f20242f924c8a20835504`
 
 ```python
 """Целевые тесты на ВЫЖИВШИХ мутантов (mutation testing).
@@ -56342,11 +58148,12 @@ class TestIdempotencyClaim:
     async def test_db_stall_fails_closed_sec7(self) -> None:
         # Убивает мутанта: claim generic Exception -> return True
         # (регрессия SEC #7). Любой сбой БД (timeout, connection drop)
-        # ДОЛЖЕН вести к fail-CLOSED (return False): иначе attacker
+        # ДОЛЖЕН прервать обработку (raise): иначе attacker
         # индуцирует stall и заставляет повторно обработать мутирующий
         # callback (op:close / op:erase / broadcast confirm).
         with patch.object(idem, "session_scope", _scope_factory(exc=RuntimeError("db stall"))):
-            assert await idem.claim(_event_with_mid()) is False
+            with pytest.raises(RuntimeError, match="idempotency unavailable"):
+                await idem.claim(_event_with_mid())
 
 
 class TestBuildKeyCallbackGuard:
@@ -56944,8 +58751,8 @@ def test_all_ids_returns_set() -> None:
 
 ### `bot/tests/test_cron_jobs.py`
 
-Size: `43818` bytes  
-SHA-256: `cf24123d5ba38cdd33be62df25604c362cc22304bc6dcda65878c6eee2a34b7b`
+Size: `43971` bytes  
+SHA-256: `2ebc8252bdec788ed81674da380a6d4fa455bb8bc87084158c664e683055f7ec`
 
 ```python
 """Unit-тесты на cron jobs.
@@ -57141,6 +58948,10 @@ class TestStartupPulse:
 
 class TestBackupWithAlert:
     """_job_backup_with_alert — обёртка над _backup_db с алёртами."""
+
+    @pytest.fixture(autouse=True)
+    def enable_backups(self, monkeypatch):
+        monkeypatch.setattr(cron.settings, "backup_local_dir", "/backups")
 
     @pytest.mark.asyncio
     async def test_alerts_on_pg_dump_fail(self) -> None:
@@ -58540,7 +60351,7 @@ class TestAttachmentRelayIsolatesBadPayload:
 ### `bot/tests/test_deps_environment.py`
 
 Size: `8616` bytes  
-SHA-256: `4f4f763b87b0cabeac8e043a6618f160048ab7102198d7ca3f2d1fb6e29d2540`
+SHA-256: `970b1c53a79ad17a3515b282d9b9c9cd84fcdf230caec3ecd3de29478d318f4e`
 
 ```python
 """Guard на drift между локальной/CI/Docker средой и uv.lock.
@@ -58570,7 +60381,7 @@ pytest.importorskip("maxapi", reason="maxapi нужен для проверки 
 # 2. `uv lock --upgrade-package maxapi`
 # 3. Поднять `EXPECTED_MAXAPI_VERSION` ниже
 # 4. Тесты + ручной smoke + Dockerfile rebuild перед merge
-EXPECTED_MAXAPI_VERSION = "1.2.1"  # обновлять вместе с пином maxapi в pyproject.toml
+EXPECTED_MAXAPI_VERSION = "1.2.3"  # обновлять вместе с пином maxapi в pyproject.toml
 
 
 def _installed_maxapi_version() -> str:
@@ -65219,6 +67030,379 @@ def test_postgres_digest_in_sync_compose_vs_quadlet() -> None:
     )
 ```
 
+### `bot/tests/test_inbox_pg.py`
+
+Size: `1110` bytes  
+SHA-256: `3f4c135f0556d713ad9a9abfd7a325ffba52531a15ccf6b0d76318f8a6e6a9d8`
+
+```python
+"""Exercise durable receipt SQL and commit recovery on PostgreSQL in CI."""
+from contextlib import asynccontextmanager
+
+import pytest
+from sqlalchemy import select
+
+from aemr_bot.db.models import InboxEvent
+from aemr_bot.services import inbox
+
+
+@pytest.mark.asyncio
+async def test_pg_receipt_dedup_recovery_and_erasure(session, monkeypatch):
+    @asynccontextmanager
+    async def scope():
+        yield session
+        await session.commit()
+    monkeypatch.setattr(inbox, 'session_scope', scope)
+    raw = {'update_type': 'bot_started', 'timestamp': 1,
+           'user': {'user_id': 91002, 'first_name': 'Synthetic'}}
+    await inbox.accept([raw, raw])
+    rows = (await session.scalars(select(InboxEvent))).all()
+    assert len(rows) == 1
+    assert await inbox.take_next()
+    await inbox.recover_interrupted()
+    await session.refresh(rows[0])
+    assert rows[0].state == 'failed'
+    assert rows[0].payload == {}
+    assert await inbox.take_next() is None
+    await inbox.erase_pending(session, 91002)
+    await session.flush()
+    await session.refresh(rows[0])
+    assert rows[0].max_user_id is None
+```
+
+### `bot/tests/test_inbox_recovery.py`
+
+Size: `9501` bytes  
+SHA-256: `5085d1ee65882e382ad1207ea073e48c497930f129dce71e7a64591c8d2cf090`
+
+```python
+"""Real SQL persistence and real SDK dispatch against synthetic events."""
+from contextlib import asynccontextmanager
+from unittest.mock import AsyncMock
+
+import pytest
+from maxapi import Bot, Dispatcher
+from maxapi.types.users import User
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.compiler import compiles
+
+from aemr_bot.db.models import Event, InboxEvent
+from aemr_bot.handlers import IdempotencyMiddleware
+from aemr_bot.services import idempotency, inbox
+
+
+@compiles(JSONB, 'sqlite')
+def _jsonb_sqlite(type_, compiler, **kw):
+    return 'JSON'
+
+
+@pytest.fixture
+async def receipt_db(monkeypatch):
+    engine = create_async_engine('sqlite+aiosqlite:///:memory:')
+    async with engine.begin() as conn:
+        await conn.run_sync(lambda c: InboxEvent.__table__.create(c))
+        await conn.run_sync(lambda c: Event.__table__.create(c))
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    @asynccontextmanager
+    async def scope():
+        async with factory.begin() as session:
+            yield session
+    monkeypatch.setattr(inbox, 'session_scope', scope)
+    monkeypatch.setattr(idempotency, 'session_scope', scope)
+    yield scope
+    await engine.dispose()
+
+
+def payload(mid='synthetic-inbox'):
+    return {'update_type': 'message_created', 'timestamp': 1700000000000,
+            'message': {'timestamp': 1700000000000,
+                'recipient': {'chat_id': 91001, 'chat_type': 'dialog'},
+                'sender': {'user_id': 91002, 'first_name': 'Synthetic', 'is_bot': False},
+                'body': {'mid': mid, 'seq': 1, 'text': 'sensitive synthetic text'}}}
+
+
+async def stored(scope):
+    async with scope() as session:
+        return (await session.scalars(select(InboxEvent).order_by(InboxEvent.id))).all()
+
+
+@pytest.mark.asyncio
+async def test_duplicate_receipt_and_restart_preserve_pending_work(receipt_db):
+    await inbox.accept([payload(), payload()])
+    await inbox.recover_interrupted()
+    rows = await stored(receipt_db)
+    assert len(rows) == 1
+    assert rows[0].state == 'pending'
+    assert rows[0].payload['message']['body']['text'] == 'sensitive synthetic text'
+
+
+@pytest.mark.asyncio
+async def test_interrupted_execution_is_visible_not_replayed(receipt_db):
+    await inbox.accept([payload()])
+    item = await inbox.take_next()
+    assert item
+    await inbox.recover_interrupted()
+    assert await inbox.take_next() is None
+    row = (await stored(receipt_db))[0]
+    assert row.state == 'failed'
+    assert row.reason == 'interrupted_unknown_result'
+    assert row.payload == {}
+
+
+@pytest.mark.asyncio
+async def test_erasure_clears_pending_payload_and_actor(receipt_db):
+    await inbox.accept([payload()])
+    async with receipt_db() as session:
+        await inbox.erase_pending(session, 91002)
+    row = (await stored(receipt_db))[0]
+    assert row.state == 'done'
+    assert row.max_user_id is None
+    assert row.payload == {}
+    assert await inbox.take_next() is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('fail_handler', [False, True])
+async def test_real_sdk_handler_outcome_is_durable(receipt_db, fail_handler):
+    bot = Bot('synthetic-token', auto_requests=False, auto_check_subscriptions=False)
+    bot.get_me = AsyncMock(return_value=User(user_id=1, first_name='Audit', is_bot=True))
+    dp = Dispatcher()
+    dp.register_outer_middleware(IdempotencyMiddleware())
+    seen = []
+    @dp.message_created()
+    async def handler(event):
+        seen.append(event.message.body.text)
+        if fail_handler:
+            raise RuntimeError('synthetic failure after possible side effect')
+    await dp.startup(bot)
+    try:
+        await inbox.accept([payload()])
+        assert await inbox.process_one(dp, bot)
+        assert seen == ['sensitive synthetic text']
+        row = (await stored(receipt_db))[0]
+        assert row.state == ('failed' if fail_handler else 'done')
+        assert row.payload == {}
+        assert not await inbox.process_one(dp, bot)
+    finally:
+        await dp.shutdown()
+        await bot.close_session()
+
+
+@pytest.mark.asyncio
+async def test_pre_handler_db_failure_retries_without_claiming_key(receipt_db, monkeypatch):
+    bot = Bot('synthetic-token', auto_requests=False, auto_check_subscriptions=False)
+    bot.get_me = AsyncMock(return_value=User(user_id=1, first_name='Audit', is_bot=True))
+    dp = Dispatcher()
+    dp.register_outer_middleware(IdempotencyMiddleware())
+    seen = []
+    @dp.message_created()
+    async def handler(event):
+        seen.append(event.message.body.mid)
+    await dp.startup(bot)
+    original = idempotency.is_legacy_duplicate
+    try:
+        await inbox.accept([payload()])
+        monkeypatch.setattr(idempotency, 'is_legacy_duplicate', AsyncMock(side_effect=RuntimeError('DB outage')))
+        await inbox.process_one(dp, bot)
+        assert seen == []
+        assert (await stored(receipt_db))[0].state == 'pending'
+        monkeypatch.setattr(idempotency, 'is_legacy_duplicate', original)
+        await inbox.process_one(dp, bot)
+        assert seen == ['synthetic-inbox']
+        assert (await stored(receipt_db))[0].state == 'done'
+    finally:
+        await dp.shutdown()
+        await bot.close_session()
+
+
+@pytest.mark.asyncio
+async def test_failed_completion_commit_is_quarantined_without_replay(receipt_db, monkeypatch):
+    bot = Bot('synthetic-token', auto_requests=False, auto_check_subscriptions=False)
+    bot.get_me = AsyncMock(return_value=User(user_id=1, first_name='Audit', is_bot=True))
+    dp = Dispatcher()
+    dp.register_outer_middleware(IdempotencyMiddleware())
+    seen = []
+    @dp.message_created()
+    async def handler(event):
+        seen.append(event.message.body.mid)
+    await dp.startup(bot)
+    try:
+        await inbox.accept([payload()])
+        monkeypatch.setattr(inbox, 'finish', AsyncMock(side_effect=RuntimeError('lost commit')))
+        with pytest.raises(RuntimeError, match='lost commit'):
+            await inbox.process_one(dp, bot)
+        await inbox.recover_interrupted()
+        assert not await inbox.process_one(dp, bot)
+        assert seen == ['synthetic-inbox']
+        row = (await stored(receipt_db))[0]
+        assert row.state == 'failed'
+        assert row.payload == {}
+    finally:
+        await dp.shutdown()
+        await bot.close_session()
+
+
+@pytest.mark.asyncio
+async def test_failure_notice_retries_only_until_successful_delivery(receipt_db, monkeypatch):
+    from aemr_bot.services import admin_bus
+    await inbox.accept([payload()])
+    await inbox.take_next()
+    await inbox.recover_interrupted()
+    send = AsyncMock(return_value=None)
+    monkeypatch.setattr(admin_bus, 'send', send)
+    await inbox.maintenance(object())
+    assert not (await stored(receipt_db))[0].notified
+    send.return_value = 'synthetic-mid'
+    await inbox.maintenance(object())
+    assert (await stored(receipt_db))[0].notified
+    await inbox.maintenance(object())
+    assert send.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_batch_receipt_rolls_back_on_second_insert_failure(receipt_db, monkeypatch):
+    original = inbox.session_scope
+    @asynccontextmanager
+    async def failing_scope():
+        async with original() as session:
+            execute = session.execute
+            count = 0
+            async def failing_execute(*args, **kwargs):
+                nonlocal count
+                count += 1
+                if count == 2:
+                    raise RuntimeError('second insert failure')
+                return await execute(*args, **kwargs)
+            session.execute = failing_execute
+            yield session
+    monkeypatch.setattr(inbox, 'session_scope', failing_scope)
+    with pytest.raises(RuntimeError, match='second insert'):
+        await inbox.accept([payload('one'), payload('two')])
+    assert await stored(receipt_db) == []
+
+
+@pytest.mark.asyncio
+async def test_duplicate_does_not_depend_on_sender_display_name(receipt_db):
+    first = payload()
+    second = payload()
+    second['message']['sender']['first_name'] = 'Renamed'
+    await inbox.accept([first, second])
+    assert len(await stored(receipt_db)) == 1
+
+
+@pytest.mark.asyncio
+async def test_malformed_shape_is_retained_until_classified(receipt_db):
+    await inbox.accept([{'update_type': 'message_created', 'message': 'invalid-shape'}])
+    row = (await stored(receipt_db))[0]
+    assert row.state == 'pending'
+    assert row.max_user_id is None
+
+
+@pytest.mark.asyncio
+async def test_erased_claimed_event_never_reaches_business_handler(receipt_db, monkeypatch):
+    import asyncio
+    from types import SimpleNamespace
+    claimed, resume = asyncio.Event(), asyncio.Event()
+    take = inbox.take_next
+    async def delayed_take():
+        result = await take()
+        claimed.set()
+        await resume.wait()
+        return result
+    monkeypatch.setattr(inbox, 'take_next', delayed_take)
+    handle = AsyncMock()
+    bot = Bot('synthetic-token', auto_requests=False, auto_check_subscriptions=False)
+    await inbox.accept([payload()])
+    task = asyncio.create_task(inbox.process_one(SimpleNamespace(handle=handle), bot))
+    try:
+        await claimed.wait()
+        async with receipt_db() as session:
+            await inbox.erase_pending(session, 91002)
+        resume.set()
+        await task
+        handle.assert_not_awaited()
+    finally:
+        resume.set()
+        await asyncio.gather(task, return_exceptions=True)
+        await bot.close_session()
+```
+
+### `bot/tests/test_inbox_transport.py`
+
+Size: `2881` bytes  
+SHA-256: `f6341d3dfaab5e056a16cdfa004df32c68e0cda698bdeff66796955b240ee21b`
+
+```python
+"""Durable receipt must precede transport acknowledgement (no live MAX)."""
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
+from aiohttp import web
+from aiohttp.test_utils import TestClient, TestServer
+
+
+def transport_module():
+    from aemr_bot import transport
+    return transport
+
+
+@pytest.mark.asyncio
+async def test_marker_moves_only_after_durable_acceptance(monkeypatch):
+    transport = transport_module()
+    dp = transport.DurableDispatcher()
+    bot = SimpleNamespace(marker_updates=9)
+    monkeypatch.setattr(dp, '_ensure_bot', lambda: bot)
+    accepted = []
+
+    async def accept(events):
+        assert bot.marker_updates == 9
+        accepted.extend(events)
+
+    monkeypatch.setattr(transport.inbox, 'accept', accept)
+    await dp._dispatch_fetched_events({'updates': [{'update_type': 'bot_started'}], 'marker': 10}, 0, skip_updates=False)
+    assert accepted == [{'update_type': 'bot_started'}]
+    assert bot.marker_updates == 10
+
+
+@pytest.mark.asyncio
+async def test_receipt_failure_preserves_marker(monkeypatch):
+    transport = transport_module()
+    dp = transport.DurableDispatcher()
+    bot = SimpleNamespace(marker_updates=9)
+    monkeypatch.setattr(dp, '_ensure_bot', lambda: bot)
+    monkeypatch.setattr(transport.inbox, 'accept', AsyncMock(side_effect=RuntimeError('DB down')))
+    monkeypatch.setattr(dp, '_sleep_unless_stopped', AsyncMock())
+    await dp._dispatch_fetched_events({'updates': [{'update_type': 'bot_started'}], 'marker': 10}, 0, skip_updates=False)
+    assert bot.marker_updates == 9
+
+
+@pytest.mark.asyncio
+async def test_webhook_requires_canonical_header_and_committed_receipt(monkeypatch):
+    transport = transport_module()
+    persisted = []
+    async def accept(events):
+        persisted.extend(events)
+    monkeypatch.setattr(transport.inbox, 'accept', accept)
+    app = web.Application()
+    transport.setup_webhook(app, secret='synthetic-secret-value')
+    async with TestClient(TestServer(app)) as client:
+        payload = {'update_type': 'bot_started', 'timestamp': 1}
+        response = await client.post('/max/webhook', json=payload, headers={'X-Max-Secret': 'synthetic-secret-value'})
+        assert response.status == 403
+        assert persisted == []
+        response = await client.post('/max/webhook', json=payload, headers={'X-Max-Bot-Api-Secret': 'synthetic-secret-value'})
+        assert response.status == 200
+        assert persisted == [payload]
+        monkeypatch.setattr(transport.inbox, 'accept', AsyncMock(side_effect=RuntimeError('DB down')))
+        response = await client.post('/max/webhook', json=payload, headers={'X-Max-Bot-Api-Secret': 'synthetic-secret-value'})
+        assert response.status == 503
+        response = await client.post('/max/webhook', json=[], headers={'X-Max-Bot-Api-Secret': 'synthetic-secret-value'})
+        assert response.status == 400
+```
+
 ### `bot/tests/test_keyboards.py`
 
 Size: `5459` bytes  
@@ -65905,7 +68089,7 @@ class TestOperatorCardInactive:
 ### `bot/tests/test_ledger_facts_sync.py`
 
 Size: `15108` bytes  
-SHA-256: `d21f962c987e2a9a3e034e532c76e2cbd286404227b794dbbf2dc41779e726d5`
+SHA-256: `aec83652354d60662c6451baebe2dd87f6356168dd7074af422c0289a88596b1`
 
 ```python
 """Anti-drift тест: ключевые ЧИСЛА из `docs/site/_kb/_LEDGER.md`
@@ -66077,51 +68261,51 @@ def test_operator_role_has_four_values() -> None:
     )
 
 
-# --- §1 Разработчик: 25 миграций, последняя 0025 ---------------------
+# --- §1 Разработчик: 26 миграций, последняя 0026 ---------------------
 
 
-def test_migrations_count_is_25() -> None:
-    """`_LEDGER.md` Разработчик §1: ровно 25 файлов миграций.
+def test_migrations_count_is_26() -> None:
+    """`_LEDGER.md` Разработчик §1: ровно 26 файлов миграций.
 
     Считаем файлы `alembic/versions/*.py` (импортировать нечего —
-    миграции это файлы). В леджере уже были дрейфы 17→18→19→20→21→22→23→24→25 — этот
+    миграции это файлы). В леджере уже были дрейфы 17→18→19→20→21→22→23→24→26 — этот
     тест ловит следующий.
     """
     nums = _migration_numbers()
-    assert len(nums) == 25, (
-        f"_LEDGER.md фиксирует 25 миграций (0001..0025), на диске "
+    assert len(nums) == 26, (
+        f"_LEDGER.md фиксирует 26 миграций (0001..0026), на диске "
         f"{len(nums)}: {nums}." + _FIX
     )
 
 
-def test_latest_migration_is_0025_and_contiguous() -> None:
-    """`_LEDGER.md` Разработчик §1: последняя ревизия `0025`, без дыр.
+def test_latest_migration_is_0026_and_contiguous() -> None:
+    """`_LEDGER.md` Разработчик §1: последняя ревизия `0026`, без дыр.
 
-    Нумерация обязана быть непрерывной 1..25 — иначе пропущена/удалена
-    миграция, и «последняя 0025» в леджере вводит в заблуждение.
+    Нумерация обязана быть непрерывной 1..26 — иначе пропущена/удалена
+    миграция, и «последняя 0026» в леджере вводит в заблуждение.
     """
     nums = _migration_numbers()
-    assert nums[-1] == 25, (
-        f"_LEDGER.md фиксирует последнюю миграцию 0025, максимальная на "
+    assert nums[-1] == 26, (
+        f"_LEDGER.md фиксирует последнюю миграцию 0026, максимальная на "
         f"диске {nums[-1]:04d}." + _FIX
     )
-    assert nums == list(range(1, 26)), (
-        f"_LEDGER.md подразумевает непрерывную нумерацию 0001..0025, на "
+    assert nums == list(range(1, 27)), (
+        f"_LEDGER.md подразумевает непрерывную нумерацию 0001..0026, на "
         f"диске пропуски/дубли: {nums}." + _FIX
     )
 
 
-# --- §2 Разработчик: 11 ORM-таблиц -----------------------------------
+# --- §2 Разработчик: 12 ORM-таблиц -----------------------------------
 
 
-def test_orm_table_count_is_11() -> None:
-    """`_LEDGER.md` Разработчик §2: ровно 11 ORM-таблиц.
+def test_orm_table_count_is_12() -> None:
+    """`_LEDGER.md` Разработчик §2: ровно 12 ORM-таблиц.
 
-    Проверяем двумя независимыми путями, оба должны дать 11:
+    Проверяем двумя независимыми путями, оба должны дать 12:
     * рантайм — `len(Base.metadata.tables)` (живые таблицы);
     * исходник — число `class X(Base):` в `models.py`.
     Если значения разойдутся между собой — это тоже сигнал (например,
-    класс-таблица не подхватился metadata). Оба сверяются с каноном 11.
+    класс-таблица не подхватился metadata). Оба сверяются с каноном 12.
     """
     runtime_tables = sorted(Base.metadata.tables.keys())
     runtime_count = len(runtime_tables)
@@ -66135,8 +68319,8 @@ def test_orm_table_count_is_11() -> None:
         f"{source_count}. Проверь, что все табличные классы наследуют Base "
         f"и имеют __tablename__." + _FIX
     )
-    assert runtime_count == 11, (
-        f"_LEDGER.md фиксирует 11 ORM-таблиц, в коде {runtime_count}: "
+    assert runtime_count == 12, (
+        f"_LEDGER.md фиксирует 12 ORM-таблиц, в коде {runtime_count}: "
         f"{runtime_tables} (db/models.py)." + _FIX
     )
 
@@ -66312,8 +68496,8 @@ def test_idempotent(monkeypatch, tmp_path, restore_root_logger):
 
 ### `bot/tests/test_main_helpers.py`
 
-Size: `12499` bytes  
-SHA-256: `368830529e330c351183b616ce86312662b9cf747dcb22cb02f28bc8d9b74bdb`
+Size: `10776` bytes  
+SHA-256: `2353f90b7e63930ed33bf5d6e9ac63e12b7f3af3fd26cc34e9fe349beb68bd9e`
 
 ```python
 """Тесты на pure-helpers из main.py.
@@ -66490,77 +68674,37 @@ class TestBuildAdminSenders:
 
 
 class TestRegisterBotCommands:
-    """_register_bot_commands — PATCH /me публикует /start и /menu.
+    """_register_bot_commands — SDK PATCH /me/commands публикует /start и /menu.
 
     Транспорт — сессия maxapi (`bot.ensure_session()`) с доверенным
     Russian-CA коннектором, НЕ голая aiohttp.ClientSession к api2 (та
     несёт только публичные CA и молча падала бы на TLS-проверке).
     """
 
-    @staticmethod
-    def _make_session(resp: MagicMock) -> MagicMock:
-        """Сессия-заглушка: `.patch(...)` — async context manager → resp."""
-        resp_ctx = MagicMock()
-        resp_ctx.__aenter__ = AsyncMock(return_value=resp)
-        resp_ctx.__aexit__ = AsyncMock(return_value=None)
-        session = MagicMock()
-        session.patch = MagicMock(return_value=resp_ctx)
-        return session
-
     @pytest.mark.asyncio
-    async def test_patch_goes_through_maxapi_trusted_session(self) -> None:
+    async def test_commands_use_sdk_and_retain_the_existing_menu(self) -> None:
         from aemr_bot import main
 
-        resp = MagicMock()
-        resp.status = 200
-        resp.text = AsyncMock(return_value="ok")
-        session = self._make_session(resp)
-
         bot = MagicMock()
-        bot.ensure_session = AsyncMock(return_value=session)
-
-        # Голую ClientSession поднимать НЕЛЬЗЯ — только доверенный
-        # транспорт maxapi. Ловим любую попытку её создать.
+        bot.set_commands = AsyncMock()
         with patch("aiohttp.ClientSession") as raw_session_cls:
             await main._register_bot_commands(bot)
-
-        # PATCH ушёл через сессию maxapi, а не через свою ClientSession.
-        bot.ensure_session.assert_awaited_once()
         raw_session_cls.assert_not_called()
-
-        session.patch.assert_called_once()
-        call = session.patch.call_args
-        # base_url сессии = api_url, путь относительный.
-        assert call.args[0].endswith("/me")
-        json_payload = call.kwargs.get("json")
-        names = [c["name"] for c in json_payload["commands"]]
-        assert names == ["start", "menu"]
-        # У каждой опубликованной команды есть текст-подсказка.
-        assert all(c.get("description") for c in json_payload["commands"])
-        # Per-request timeout сохранён (10-секундный потолок).
-        assert call.kwargs.get("timeout") is not None
+        bot.set_commands.assert_awaited_once()
+        commands = bot.set_commands.await_args.args
+        assert [command.name for command in commands] == ["start", "menu"]
+        assert all(command.description for command in commands)
 
     @pytest.mark.asyncio
-    async def test_swallows_network_errors(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    async def test_swallows_network_errors(self, caplog: pytest.LogCaptureFixture) -> None:
         from aemr_bot import main
 
-        # Транспорт maxapi падает (сеть/TLS) — не должно поднять наружу.
         bot = MagicMock()
-        bot.ensure_session = AsyncMock(
-            side_effect=RuntimeError("connection refused")
-        )
-
+        bot.set_commands = AsyncMock(side_effect=RuntimeError("connection refused"))
         with caplog.at_level(logging.ERROR, logger="aemr_bot"):
             await main._register_bot_commands(bot)
-
-        # Сбой проглочен именно веткой except (а не «тихо пропущен»):
-        # в лог ушло сообщение об ошибке PATCH /me.
-        assert any(
-            "PATCH /me" in rec.message and rec.levelno >= logging.ERROR
-            for rec in caplog.records
-        )
+        assert any("PATCH /me/commands" in rec.message and rec.levelno >= logging.ERROR
+                   for rec in caplog.records)
 
 
 class TestPreflightCheckToken:
@@ -66619,6 +68763,260 @@ class TestPreflightCheckToken:
             and "42" in rec.message
             for rec in caplog.records
         )
+```
+
+### `bot/tests/test_maxapi_migration.py`
+
+Size: `10262` bytes  
+SHA-256: `86b6021a1c35ae361368ef7b915e4a697b6fae12b561822ccf08e71a59696b39`
+
+```python
+"""Exercise aemr adapters against the pinned SDK over a real local HTTP transport."""
+from __future__ import annotations
+
+import asyncio
+import logging
+
+import pytest
+import pytest_asyncio
+from aiohttp import TCPConnector, web
+from maxapi import Bot, Dispatcher
+from maxapi.client.default import DefaultConnectionProperties
+from maxapi.methods.types.getted_updates import process_update_request
+
+from aemr_bot import logging_setup, main
+from aemr_bot.config import Settings
+
+
+def message(text="synthetic text", mid="migration-message"):
+    return {
+        "recipient": {"chat_id": 98765001, "chat_type": "dialog"},
+        "sender": {"user_id": 98765002, "first_name": "Synthetic", "is_bot": False},
+        "body": {"mid": mid, "seq": 1, "text": text},
+        "timestamp": 1700000000000,
+    }
+
+
+@pytest_asyncio.fixture
+async def transport(monkeypatch):
+    requests = []
+    state = {"updates": [], "marker": 101}
+    base = ""
+
+    async def serve(request):
+        body = await request.read()
+        payload = await request.json() if body and request.content_type == "application/json" else None
+        requests.append((request.method, request.path, dict(request.query), payload, body))
+        path = request.path.removeprefix("/gateway")
+        if path == "/me/commands":
+            return web.json_response({"commands": payload["commands"]})
+        if path == "/me" and state.get("unauthorized"):
+            return web.json_response({"code": "verify.token", "message": "Invalid token"}, status=401)
+        if path == "/me":
+            return web.json_response({"user_id": 98765000, "first_name": "Test bot", "is_bot": True})
+        if path == "/subscriptions":
+            return web.json_response({"subscriptions": []})
+        if path == "/updates":
+            if state.get("hold"):
+                state["entered"].set()
+                await state["release"].wait()
+            return web.json_response({"updates": state["updates"], "marker": state["marker"]})
+        if path == "/uploads":
+            return web.json_response({"url": base + "/binary"})
+        if path == "/binary":
+            return web.json_response({"token": "synthetic-file-token"})
+        if path == "/messages" and request.method == "POST":
+            return web.json_response({"message": message(payload.get("text", ""))})
+        if path in {"/messages", "/answers"}:
+            return web.json_response({"success": True})
+        raise web.HTTPNotFound()
+
+    app = web.Application()
+    app.router.add_route("*", "/{path:.*}", serve)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "127.0.0.1", 0)
+    await site.start()
+    port = site._server.sockets[0].getsockname()[1]
+    base = f"http://127.0.0.1:{port}/gateway"
+    # A loopback transport should not depend on the runner's corporate proxy.
+    monkeypatch.setattr(main.network, "session_kwargs", dict)
+    monkeypatch.setattr(main.settings, "bot_mode", "polling")
+    bot = main.build_bot()
+    bot.set_api_url(base)
+    bot.auto_requests = False
+    try:
+        yield bot, requests, state
+    finally:
+        await bot.close_session()
+        await runner.cleanup()
+
+
+async def test_command_menu_uses_supported_sdk_endpoint_and_retains_commands(transport):
+    bot, requests, _ = transport
+    await main._register_bot_commands(bot)
+    commands = [r for r in requests if r[0] == "PATCH" and r[1] == "/gateway/me/commands"]
+    assert len(commands) == 1
+    assert [c["name"] for c in commands[0][3]["commands"]] == ["start", "menu"]
+    assert all(c["description"] for c in commands[0][3]["commands"])
+
+
+async def test_sdk_update_diagnostics_do_not_persist_resident_payload(tmp_path):
+    root = logging.getLogger()
+    saved_handlers, saved_level = list(root.handlers), root.level
+    dispatcher_log = logging.getLogger("dispatcher")
+    saved_filters = list(dispatcher_log.filters)
+    bot = Bot("synthetic-token", auto_requests=False)
+    try:
+        logging_setup.setup_logging(Settings(_env_file=None, LOG_DIR=str(tmp_path)))
+        private = "PRIVATE-RESIDENT-TEXT-DO-NOT-LOG"
+        await process_update_request({"updates": [
+            private,
+            {"update_type": "future_update", "text": private},
+            {"update_type": "message_created", "message": private},
+        ]}, bot)
+        for handler in root.handlers:
+            handler.flush()
+        output = (tmp_path / "bot.log").read_text()
+        assert private not in output
+        assert "MAX" in output
+        assert "WARNING" in output
+    finally:
+        await bot.close_session()
+        for handler in list(root.handlers):
+            root.removeHandler(handler)
+            handler.close()
+        for handler in saved_handlers:
+            root.addHandler(handler)
+        root.setLevel(saved_level)
+        dispatcher_log.filters[:] = saved_filters
+
+
+@pytest.mark.parametrize("parallel", [False, True])
+async def test_wrapped_polling_keeps_timeout_marker_and_valid_events(transport, monkeypatch, parallel):
+    bot, requests, state = transport
+    state["updates"] = [None, {"update_type": "message_created", "timestamp": 1700000000000,
+                               "message": message()}]
+    # The product wrapper must preserve the real SDK's transport parameters.
+    batch = await bot.get_updates(marker=99)
+    poll = next(r for r in requests if r[1] == "/gateway/updates")
+    assert poll[2]["marker"] == "99"
+    assert int(poll[2]["timeout"]) == main.settings.polling_timeout_seconds
+    seen = []
+    dp = Dispatcher(use_create_task=parallel)
+    dp.bot = bot
+    monkeypatch.setattr(main, "_POLLING_DISPATCH_SEMAPHORE", None)
+
+    @dp.message_created()
+    async def record(event):
+        seen.append(event.message.body.text)
+
+    main._install_dispatch_guards(dp)
+    await dp.startup(bot)
+    try:
+        await dp._dispatch_fetched_events(batch, 0, skip_updates=False)
+        # Production dispatch is concurrent; shutdown must drain queued handlers.
+        await dp.shutdown()
+        assert seen == ["synthetic text"]
+        assert bot.marker_updates == 101
+    finally:
+        await dp.shutdown()
+
+
+async def test_existing_message_edit_callback_and_file_adapters(transport):
+    from aemr_bot.services.uploads import file_attachment, upload_bytes
+    from aemr_bot.utils.event import ack_callback, get_ids
+
+    bot, requests, _ = transport
+    sent = await bot.send_message(chat_id=98765001, text="operator reply")
+    assert sent.message.body.text == "operator reply"
+    edited = await bot.edit_message(message_id=sent.message.body.mid, text="edited reply")
+    assert edited.success
+    token = await upload_bytes(bot, b"synthetic-unknown-format-file-data")
+    assert token == "synthetic-file-token"
+    await bot.send_message(chat_id=98765001, attachments=[file_attachment(token)])
+    assert any(r[1] == "/gateway/binary" and b"synthetic-unknown-format-file-data" in r[4]
+               for r in requests)
+    attachment_request = [r for r in requests if r[0] == "POST" and r[1] == "/gateway/messages"][-1]
+    assert attachment_request[3]["attachments"][0]["payload"]["token"] == token
+
+    [callback] = await process_update_request({"updates": [{
+        "update_type": "message_callback", "timestamp": 1700000000000,
+        "callback": {"timestamp": 1700000000000, "callback_id": "synthetic-callback",
+                     "payload": "menu", "user": {"user_id": 98765002,
+                     "first_name": "Synthetic", "is_bot": False}},
+    }]}, bot)
+    assert get_ids(callback) == (None, 98765002)
+    await ack_callback(callback)
+    assert any(r[1] == "/gateway/answers" for r in requests)
+
+
+async def test_factory_session_recreation_retains_proxy_and_timeout(monkeypatch):
+    import ssl
+
+    monkeypatch.setattr(main.network, "session_kwargs", lambda: {"trust_env": True})
+    bot = main.build_bot()
+    try:
+        first = await bot.ensure_session()
+        connector = first.connector
+        assert first.trust_env
+        assert connector._ssl.verify_mode == ssl.CERT_REQUIRED
+        ca_names = {value for cert in connector._ssl.get_ca_certs()
+                    for rdn in cert["subject"] for key, value in rdn if key == "commonName"}
+        assert "Russian Trusted Root CA" in ca_names
+        assert first.timeout.total > main.settings.polling_timeout_seconds
+        await bot.close_session()
+        assert first.closed and connector.closed
+        second = await bot.ensure_session()
+        assert second is not first
+        assert second.trust_env
+        assert second.timeout == first.timeout
+    finally:
+        await bot.close_session()
+
+
+async def test_custom_connector_remains_owned_by_caller():
+    connector = TCPConnector()
+    bot = Bot("synthetic-token", default_connection=DefaultConnectionProperties(connector=connector))
+    try:
+        first = await bot.ensure_session()
+        await bot.close_session()
+        assert not connector.closed
+        second = await bot.ensure_session()
+        assert second.connector is connector
+        assert second is not first
+    finally:
+        await bot.close_session()
+        await connector.close()
+
+
+async def test_stop_polling_cancels_inflight_wrapped_request(transport, monkeypatch):
+    bot, _, state = transport
+    state.update(hold=True, entered=asyncio.Event(), release=asyncio.Event())
+    dp = Dispatcher(use_create_task=True)
+    main._install_dispatch_guards(dp)
+    monkeypatch.setattr(main, "_POLLING_DISPATCH_SEMAPHORE", None)
+    task = asyncio.create_task(dp.start_polling(bot))
+    try:
+        await asyncio.wait_for(state["entered"].wait(), timeout=3)
+        await asyncio.wait_for(dp.stop_polling(), timeout=2)
+        await asyncio.wait_for(task, timeout=2)
+        assert not dp.polling
+    finally:
+        state["release"].set()
+        if not task.done():
+            task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        await dp.shutdown()
+
+
+async def test_invalid_token_reaches_product_preflight_without_retry(transport):
+    bot, requests, state = transport
+    state["unauthorized"] = True
+    with pytest.raises(SystemExit) as exc:
+        await main._preflight_check_token(bot)
+    assert exc.value.code == 1
+    assert len([r for r in requests if r[1] == "/gateway/me"]) == 1
 ```
 
 ### `bot/tests/test_menu_tracker_edit_policy.py`
@@ -72180,10 +74578,87 @@ async def test_non_int_start_end_fall_back_to_defaults() -> None:
     assert _cache["end"] == 9
 ```
 
+### `bot/tests/test_release_review_regressions.py`
+
+Size: `2353` bytes  
+SHA-256: `32f67413fd84574c63f8ac1be4372811f0943ce60e53c69fa939f97fa4b51dae`
+
+```python
+import asyncio
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
+
+from aemr_bot.handlers import broadcast
+from aemr_bot.services import admin_bus
+
+
+@pytest.fixture(autouse=True)
+def isolate_event_loop_gates(monkeypatch):
+    from weakref import WeakValueDictionary
+    from aemr_bot.utils import resident_lifecycle
+    monkeypatch.setattr(resident_lifecycle, "_gates", WeakValueDictionary())
+
+
+@pytest.mark.asyncio
+async def test_stop_while_waiting_global_limiter_prevents_http_send(monkeypatch):
+    waiting, release = asyncio.Event(), asyncio.Event()
+    cancelled = False
+    async def slot():
+        waiting.set()
+        await release.wait()
+    async def allowed():
+        return not cancelled
+    send = AsyncMock(return_value=SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid='synthetic-mid'))))
+    bot = SimpleNamespace(send_message=send)
+    monkeypatch.setattr(admin_bus, '_acquire_outgoing_slot', slot)
+    admin_bus.install_outgoing_tracker_hook(bot)
+    task = asyncio.create_task(broadcast._send_one(bot, 91002, 'synthetic', can_send=allowed))
+    await waiting.wait()
+    cancelled = True
+    release.set()
+    with pytest.raises(broadcast._BroadcastCancelled):
+        await task
+    send.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('rollback', [False, True])
+async def test_resident_gate_is_held_through_transaction_end(rollback):
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from aemr_bot.utils.resident_lifecycle import guard, hold_until_commit
+    session = AsyncSession()
+    waiting, entered = asyncio.Event(), asyncio.Event()
+    async def next_event():
+        waiting.set()
+        async with guard(91002):
+            entered.set()
+    # /forget may acquire the same gate again inside its own event handler.
+    async with guard(91002):
+        await hold_until_commit(session, 91002)
+    task = asyncio.create_task(next_event())
+    try:
+        await waiting.wait()
+        assert not entered.is_set()
+        if rollback:
+            await session.rollback()
+        else:
+            await session.commit()
+        await asyncio.wait_for(entered.wait(), 1)
+        await task
+    finally:
+        await session.close()
+        if not task.done():
+            task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+```
+
 ### `bot/tests/test_reliability_pass.py`
 
-Size: `11030` bytes  
-SHA-256: `fb5a4142de3b4420b7ae90acdd82ad8f7545eebfa6d4fda08bdcce56fdfb8cb9`
+Size: `11056` bytes  
+SHA-256: `4961afb491d143e06196aabc886cd0bc062001306f88a7397597cb6bd88bfd2c`
 
 ```python
 """Regression-тесты пакета reliability-pass.
@@ -72231,7 +74706,7 @@ async def test_wizard_registry_spawn_persist_uses_strong_ref() -> None:
         await asyncio.sleep(0)  # дать loop'у тик
         finished.set()
 
-    wizard_registry._spawn_persist(coro)
+    wizard_registry._spawn_persist(("test", 1), coro)
     # Дождаться старта задачи детерминированно через Event, а не счётом
     # тиков sleep(0): под coverage трейсер замедляет шаги корутины, и
     # фиксированное число тиков становится ненадёжным. wait_for с
@@ -72259,7 +74734,7 @@ def test_wizard_registry_spawn_persist_no_loop_noop() -> None:
     def coro_factory():
         calls.append(1)
 
-    wizard_registry._spawn_persist(coro_factory)
+    wizard_registry._spawn_persist(("test", 1), coro_factory)
     assert calls == [], (
         "без active event loop _spawn_persist обязан быть no-op "
         "(юнит-тесты импортируют модуль вне asyncio context'а)"
@@ -72987,6 +75462,36 @@ class TestFetchMainRuntimeConfig:
         assert reason == "parse_failed"
 ```
 
+### `bot/tests/test_retention_pre_warning.py`
+
+Size: `857` bytes  
+SHA-256: `7b7d6c805d91dd2f7cf9344874ecfd5af14816b77cebe16335318a2e2c634294`
+
+```python
+from contextlib import asynccontextmanager
+from unittest.mock import AsyncMock
+
+import pytest
+
+from aemr_bot.services import cron
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('cleanup_failure', [False, True])
+async def test_warning_runs_without_overdue_rows_or_when_cleanup_unavailable(monkeypatch, cleanup_failure):
+    @asynccontextmanager
+    async def scope():
+        yield object()
+    monkeypatch.setattr(cron, 'session_scope', scope)
+    monkeypatch.setattr(cron.users_service, 'find_pending_pdn_retention',
+                        AsyncMock(return_value=[], side_effect=RuntimeError('DB failure') if cleanup_failure else None))
+    warning = AsyncMock()
+    monkeypatch.setattr(cron, '_warn_about_approaching_pdn_deadline', warning)
+    send = AsyncMock()
+    await cron._job_pdn_retention_check(send)
+    warning.assert_awaited_once_with(send)
+```
+
 ### `bot/tests/test_sec_broadcast.py`
 
 Size: `17175` bytes  
@@ -73330,8 +75835,8 @@ class TestTemplateSaveAuthz:
 
 ### `bot/tests/test_sec_card.py`
 
-Size: `16369` bytes  
-SHA-256: `55d6f4d7751f518269c868715775b8173181f5c4fca8f0cc7a636610c318e9e1`
+Size: `16528` bytes  
+SHA-256: `fcfac15062459735aab3b32c15d281e4c73fc26ecbc48c901d1333946ec28243`
 
 ```python
 """Security-тесты для services/card_format — кластер P2-3 / P3-4.
@@ -73573,7 +76078,8 @@ class TestBareDomainThreatIntel:
         result = cf.admin_card(appeal, _user())
 
         assert "⛔" in result
-        assert "login-gosuslugi.top" in result
+        assert "login-gosuslugi\u200b.top" in result
+        assert "login-gosuslugi.top" not in result
         assert "112" in result
 
     def test_bare_malware_domain_in_followup_triggers_block_warning(
@@ -73594,7 +76100,8 @@ class TestBareDomainThreatIntel:
         result = cf.admin_card(appeal, _user())
 
         assert "⛔" in result
-        assert "vk-id-verify.ru" in result
+        assert "vk-id-verify\u200b.ru" in result
+        assert "vk-id-verify.ru" not in result
 
     def test_benign_bare_domain_no_warning(
         self, monkeypatch: pytest.MonkeyPatch
@@ -73626,7 +76133,8 @@ class TestBareDomainThreatIntel:
         )
         out = cf._maybe_url_warning("деньги уводят через phish-bank.xyz срочно")
         assert "⛔" in out
-        assert "phish-bank.xyz" in out
+        assert "phish-bank\u200b.xyz" in out
+        assert "phish-bank.xyz" not in out
 
     def test_maybe_url_warning_http_url_still_warns(
         self, monkeypatch: pytest.MonkeyPatch
@@ -75507,6 +78015,110 @@ class TestIntentSurvivesValidationError:
             assert facade._intent_get(503) is None
 ```
 
+### `bot/tests/test_settings_export_snapshot.py`
+
+Size: `4054` bytes  
+SHA-256: `f58dcbc66e5e0867a90532a8ff949e24d5f7d32f39a9088a31b9f963c03de790`
+
+```python
+"""Settings PRs clear only values present in the successful export."""
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+from aemr_bot.db.models import Setting
+from aemr_bot.services import settings_store
+
+
+@pytest.fixture
+async def settings_session():
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    async with engine.begin() as connection:
+        await connection.execute(text(
+            "CREATE TABLE settings (key VARCHAR(64) PRIMARY KEY, value JSON, "
+            "updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, synced_at DATETIME)"
+        ))
+    try:
+        async with async_sessionmaker(engine, expire_on_commit=False)() as session:
+            yield session
+    finally:
+        await engine.dispose()
+
+
+async def test_export_marking_preserves_newer_dirty_value(settings_session):
+    session = settings_session
+    await settings_store.set_value(session, "topics", ["old"])
+    await settings_store.set_value(session, "localities", ["unchanged"])
+    snapshot = await settings_store.export_synced(session)
+    await settings_store.set_value(session, "topics", ["new"])
+    marked = await settings_store.mark_synced(
+        session, ["topics", "localities"], exported_values=snapshot,
+    )
+    assert marked == 1
+    assert await settings_store.get_dirty_keys(session) == ["topics"]
+    assert await session.scalar(select(Setting.value).where(Setting.key == "topics")) == ["new"]
+
+
+async def test_export_detaches_nested_values(monkeypatch):
+    value = [{"name": "original"}]
+    monkeypatch.setattr(settings_store, "get", AsyncMock(return_value=value))
+    snapshot = await settings_store.export_synced(object())
+    value[0]["name"] = "changed"
+    assert snapshot["emergency_contacts"] == [{"name": "original"}]
+
+
+async def test_pr_creation_keeps_edits_during_network_request_dirty(monkeypatch, settings_session):
+    from aemr_bot.handlers import admin_settings_pr as handler
+    from aemr_bot.services import repo_sync
+
+    session = settings_session
+    await settings_store.set_value(session, "topics", ["old"])
+
+    @asynccontextmanager
+    async def scope():
+        yield session
+
+    exported = []
+
+    async def create(_config, *, runtime_config, **kwargs):
+        exported.append(runtime_config)
+        await settings_store.set_value(session, "topics", ["new"])
+        return SimpleNamespace(ok=True, pr_number=3, pr_url="https://example.test/pr/3", branch="settings")
+
+    monkeypatch.setattr(handler, "session_scope", scope)
+    monkeypatch.setattr(handler.ops_svc, "get", AsyncMock(return_value=None))
+    monkeypatch.setattr(handler.ops_svc, "write_audit", AsyncMock())
+    monkeypatch.setattr(repo_sync, "load_config_from_env_and_settings", lambda **_: SimpleNamespace(repo="test"))
+    monkeypatch.setattr(repo_sync, "create_settings_pr", create)
+    monkeypatch.setattr(handler, "op_screen", AsyncMock())
+    await handler._create_pr(object(), 1)
+    assert exported[0]["topics"] == ["old"]
+    assert await settings_store.get_dirty_keys(session) == ["topics"]
+
+
+@pytest.mark.parametrize("value", [None, "text", 42, False, [{"name": "Fire", "phone": "01"}]])
+async def test_conditional_export_marks_equal_json_values(settings_session, value):
+    await settings_store.set_value(settings_session, "topics", value)
+    assert await settings_store.mark_synced(
+        settings_session, ["topics"], exported_values={"topics": value},
+    ) == 1
+    assert await settings_store.get_dirty_keys(settings_session) == []
+
+
+async def test_conditional_export_does_not_acknowledge_unexported_key(settings_session):
+    await settings_store.set_value(settings_session, "topics", ["new"])
+    assert await settings_store.mark_synced(
+        settings_session, ["topics"], exported_values={},
+    ) == 0
+    assert await settings_store.get_dirty_keys(settings_session) == ["topics"]
+```
+
 ### `bot/tests/test_settings_seed_baseline.py`
 
 Size: `5309` bytes  
@@ -77092,8 +79704,8 @@ class TestThreatIntelStore:
 
 ### `bot/tests/test_threat_intel_cov2.py`
 
-Size: `7469` bytes  
-SHA-256: `a642f2ea26b81685547d60df747d74360cff466a62c497f12cd1212aeba7e31c`
+Size: `7739` bytes  
+SHA-256: `7c54b542e3e997c1531a0950c886b5c12ea5e8b1167cb165ffad4f91f1324ca2`
 
 ```python
 """Покрытие непокрытых веток services/threat_intel.
@@ -77137,8 +79749,12 @@ class _FakeResp:
     def status(self) -> int:
         return self._status
 
-    async def text(self) -> str:
-        return self._text
+    @property
+    def content(self):
+        return self
+
+    async def iter_chunked(self, size):
+        yield self._text.encode()
 
 
 class _FakeSession:
@@ -77147,12 +79763,12 @@ class _FakeSession:
     def __init__(self, resp: _FakeResp) -> None:
         self._resp = resp
 
-    def get(self, url, timeout=None):
+    def get(self, url, timeout=None, **kwargs):
         return self._resp
 
 
 class _RaisingSession:
-    def get(self, url, timeout=None):
+    def get(self, url, timeout=None, **kwargs):
         raise RuntimeError("network down")
 
 
@@ -77222,16 +79838,18 @@ class TestRefreshAll:
     def _isolated_store(self, monkeypatch):
         """Свежий singleton на каждый тест, чтобы не зависеть от порядка."""
         monkeypatch.setattr(ti, "_STORE", None)
+        monkeypatch.setenv("ABUSECH_AUTH_KEY", "test-key")
+        monkeypatch.setenv("THREAT_INTEL_CACHE_PATH", "")
         # PhishTank по умолчанию выключен — убираем ключ из env.
         monkeypatch.delenv("PHISHTANK_APP_KEY", raising=False)
 
     @pytest.mark.asyncio
     async def test_two_feeds_populate_store(self, monkeypatch) -> None:
         async def fake_fetch(session, url):
-            if url == ti._URLHAUS_URL:
+            if "urlhaus-api.abuse.ch" in url:
                 return "1,date,https://a.evil/x,extra\n"
-            if url == ti._THREATFOX_URL:
-                return "0.0.0.0 b.evil\n"
+            if "threatfox-api.abuse.ch" in url:
+                return "1,date,b.evil,domain,botnet_cc\n"
             return None
 
         monkeypatch.setattr(ti, "_fetch_text", fake_fetch)
@@ -77249,10 +79867,10 @@ class TestRefreshAll:
 
         async def fake_fetch(session, url):
             seen_urls.append(url)
-            if url == ti._URLHAUS_URL:
+            if "urlhaus-api.abuse.ch" in url:
                 return "1,date,https://a.evil/x,extra\n"
-            if url == ti._THREATFOX_URL:
-                return "0.0.0.0 b.evil\n"
+            if "threatfox-api.abuse.ch" in url:
+                return "1,date,b.evil,domain,botnet_cc\n"
             # phishtank URL
             return '[{"url": "https://c.phish/login"}]'
 
@@ -77277,6 +79895,220 @@ class TestRefreshAll:
         assert counts == {}
         # Старый набор и timestamp не тронуты — fail-open.
         assert ti.get_store().hosts == {"old.evil"}
+```
+
+### `bot/tests/test_threat_intel_resilience.py`
+
+Size: `8143` bytes  
+SHA-256: `9554eec4583a7cf994c32cab6d002220c86a028cfeed668aa382c7ba0eba20cd`
+
+```python
+"""Regression tests for threat-feed failures and notification episodes."""
+import time
+from unittest.mock import AsyncMock
+
+import pytest
+
+from aemr_bot.services import cron
+from aemr_bot.services import threat_intel as ti
+
+
+@pytest.fixture(autouse=True)
+def isolated_store(monkeypatch, tmp_path):
+    monkeypatch.setattr(ti, "_STORE", None)
+    monkeypatch.setenv("THREAT_INTEL_CACHE_PATH", str(tmp_path / "feeds.json"))
+    monkeypatch.setenv("ABUSECH_AUTH_KEY", "test-key")
+    monkeypatch.delenv("PHISHTANK_APP_KEY", raising=False)
+
+
+async def test_partial_failure_preserves_source_and_provenance(monkeypatch):
+    bodies = {"urlhaus": '1,date,https://a.evil/x,online\n',
+              "threatfox": '1,date,b.evil,domain,botnet_cc\n'}
+
+    async def fetch(session, url):
+        return bodies["urlhaus" if "urlhaus" in url else "threatfox"]
+
+    monkeypatch.setattr(ti, "_fetch_text", fetch)
+    await ti.refresh_all()
+    bodies["urlhaus"] = '2,date,https://new.evil/x,online\n'
+    bodies["threatfox"] = None
+    await ti.refresh_all()
+    store = ti.get_store()
+    assert store.is_malicious("https://b.evil/") == (True, "threatfox")
+    assert store.is_malicious("https://new.evil/") == (True, "urlhaus")
+    assert not store.is_malicious("https://a.evil/")[0]
+
+
+async def test_html_does_not_replace_valid_snapshot(monkeypatch):
+    async def fetch(session, url):
+        return '1,date,https://a.evil/x,online\n' if 'urlhaus' in url else None
+
+    monkeypatch.setattr(ti, "_fetch_text", fetch)
+    await ti.refresh_all()
+    stamp = ti.get_store().last_refresh_at
+    monkeypatch.setattr(ti, "_fetch_text", AsyncMock(return_value="<html>Login required</html>"))
+    assert await ti.refresh_all() == {}
+    assert ti.get_store().hosts == {"a.evil"}
+    assert ti.get_store().last_refresh_at == stamp
+
+
+async def test_cache_restores_snapshot_and_age(monkeypatch):
+    monkeypatch.setattr(ti, "_fetch_text", AsyncMock(
+        side_effect=['1,date,https://a.evil/x,online\n', None]))
+    await ti.refresh_all()
+    monkeypatch.setattr(ti, "_STORE", None)
+    assert ti.get_store().is_malicious("https://a.evil/") == (True, "urlhaus")
+    assert ti.get_store().staleness_age_seconds() < 10
+
+
+def test_never_successful_becomes_stale(monkeypatch):
+    store = ti.get_store()
+    monkeypatch.setattr(ti.time, "monotonic", lambda: store.started_at + 7 * 3600)
+    assert store.is_stale()
+
+
+def test_normalization_idn_trailing_dot_and_bad_ipv6():
+    assert ti._normalize_host("https://ПРИМЕР.РФ./a") == "xn--e1afmkfd.xn--p1ai"
+    assert ti._normalize_host("https://[broken/a") == ""
+
+
+async def test_outage_alert_once_until_recovered(monkeypatch):
+    store = ti.get_store()
+    store.last_refresh_at = time.monotonic() - 7 * 3600
+    monkeypatch.setattr(ti, "refresh_all", AsyncMock(return_value={}))
+    send = AsyncMock()
+    await cron._job_threat_intel_refresh(send)
+    await cron._job_threat_intel_refresh(send)
+    send.assert_awaited_once()
+    store.last_refresh_at = time.monotonic()
+    await cron._job_threat_intel_refresh(send)
+    store.last_refresh_at -= 7 * 3600
+    await cron._job_threat_intel_refresh(send)
+    assert send.await_count == 2
+
+
+async def test_backup_empty_path_is_quiet(monkeypatch):
+    from aemr_bot.config import settings
+    monkeypatch.setattr(settings, "backup_local_dir", None)
+    send = AsyncMock()
+    await cron._job_backup_with_alert(send)
+    send.assert_not_awaited()
+
+
+def test_warning_does_not_reintroduce_clickable_url(monkeypatch):
+    from aemr_bot.services.card_format import _maybe_url_warning
+    store = ti.get_store()
+    store.hosts = {"evil.com"}
+    warning = _maybe_url_warning("https://evil.com/login")
+    assert "⛔" in warning
+    assert "https://evil.com/login" not in warning
+    assert "evil.com" not in warning
+
+
+def test_bare_subdomain_checked_and_defanged():
+    from aemr_bot.services.card_format import _maybe_url_warning
+    from aemr_bot.utils.url_defang import defang_for_admin
+    ti.get_store().hosts = {"login.evil.com"}
+    assert "⛔" in _maybe_url_warning("проверьте login.evil.com")
+    assert "login.evil.com" not in defang_for_admin("проверьте login.evil.com")
+
+
+async def test_fetch_zip_limits_redirects_and_secret_redaction(monkeypatch, caplog):
+    import io
+    import zipfile
+
+    from aiohttp import web
+
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w") as z:
+        z.writestr("full.csv", '1,date,b.evil,domain,botnet_cc\n')
+    body = archive.getvalue()
+    app = web.Application()
+    async def serve_csv(request):
+        return web.Response(body=body)
+
+    async def redirect(request):
+        raise web.HTTPFound('/secret/full.csv.zip')
+
+    async def forbidden(request):
+        return web.Response(status=403)
+
+    app.router.add_get('/secret/full.csv.zip', serve_csv)
+    app.router.add_get('/redirect', redirect)
+    app.router.add_get('/secret/error', forbidden)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '127.0.0.1', 0)
+    await site.start()
+    port = site._server.sockets[0].getsockname()[1]
+    root = f'http://127.0.0.1:{port}'
+    try:
+        async with ti.aiohttp.ClientSession() as session:
+            csv_text = await ti._fetch_text(session, root + '/secret/full.csv.zip')
+            assert ti._parse_threatfox_csv(csv_text) == {'b.evil'}
+            assert await ti._fetch_text(session, root + '/redirect') is None
+            assert await ti._fetch_text(session, root + '/secret/error') is None
+            assert '/secret/' not in caplog.text
+            monkeypatch.setattr(ti, '_MAX_FEED_BYTES', 1)
+            assert await ti._fetch_text(session, root + '/secret/full.csv.zip') is None
+    finally:
+        await runner.cleanup()
+
+
+async def test_notification_survives_restart_and_send_failure_retries(monkeypatch):
+    store = ti.get_store()
+    store.started_at -= 7 * 3600
+    monkeypatch.setattr(ti, 'refresh_all', AsyncMock(return_value={}))
+    monkeypatch.setattr(cron.asyncio, 'sleep', AsyncMock())
+    failing = AsyncMock(side_effect=RuntimeError('MAX unavailable'))
+    await cron._job_threat_intel_refresh(failing)
+    assert not store.outage_notified
+    working = AsyncMock()
+    await cron._job_threat_intel_refresh(working)
+    assert store.outage_notified
+    monkeypatch.setattr(ti, '_STORE', None)
+    assert ti.get_store().is_stale()
+    await cron._job_threat_intel_refresh(working)
+    working.assert_awaited_once()
+
+
+def test_corrupt_cache_is_ignored(monkeypatch, tmp_path):
+    path = tmp_path / 'corrupt.json'
+    path.write_text('{broken')
+    monkeypatch.setenv('THREAT_INTEL_CACHE_PATH', str(path))
+    assert ti.get_store().hosts == set()
+
+
+def test_partial_feed_staleness_cannot_be_hidden_by_other_refresh(monkeypatch):
+    store = ti.get_store()
+    store.source_hosts = {'urlhaus': {'evil.com'}, 'threatfox': {'other.com'}}
+    store.source_updated_at = {'urlhaus': time.time(), 'threatfox': time.time() - 7 * 3600}
+    store.last_refresh_at = time.monotonic()
+    assert store.is_stale()
+
+
+def test_startup_refresh_is_scheduled_immediately():
+    scheduler = cron.build_scheduler(AsyncMock(), AsyncMock(), AsyncMock())
+    job = scheduler.get_job('threat-intel-refresh')
+    from datetime import datetime
+    assert abs((job.next_run_time - datetime.now(job.next_run_time.tzinfo)).total_seconds()) < 5
+
+
+def test_backup_unset_is_disabled(monkeypatch):
+    from aemr_bot.config import Settings
+    monkeypatch.delenv('BACKUP_LOCAL_DIR', raising=False)
+    assert Settings(_env_file=None).backup_local_dir is None
+
+
+async def test_without_abuse_key_uses_public_phishing_feed(monkeypatch):
+    monkeypatch.delenv('ABUSECH_AUTH_KEY')
+    async def fetch(session, url):
+        assert url == 'https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt'
+        return 'https://known-phish.example/login\nhttps://second-phish.example/a\n'
+    monkeypatch.setattr(ti, '_fetch_text', fetch)
+    assert await ti.refresh_all() == {'openphish': 2}
+    assert ti.get_store().is_malicious('https://known-phish.example/a') == (True, 'openphish')
+    assert not ti.get_store().is_stale()
 ```
 
 ### `bot/tests/test_typing_indicator.py`
@@ -79253,6 +82085,220 @@ class TestHydrateIntoRegistry:
 
         await wp.hydrate_into_registry(session)
         assert wr.get_op_wizard(12) == {}
+```
+
+### `bot/tests/test_wizard_persist_ordering.py`
+
+Size: `6714` bytes  
+SHA-256: `b007bffa0b95fba494df96a43d936d2e94b63905e943575e04edfbdd34504ead`
+
+```python
+"""Ordered best-effort writes must not resurrect a cancelled wizard."""
+from __future__ import annotations
+
+import asyncio
+from contextlib import asynccontextmanager
+
+import pytest
+
+from aemr_bot.services import wizard_registry as wr
+
+
+@pytest.fixture
+def writes(monkeypatch):
+    tasks = []
+    real_spawn = wr.spawn_background_task
+
+    def spawn(coro, *, name=None):
+        task = real_spawn(coro, name=name)
+        tasks.append(task)
+        return task
+
+    @asynccontextmanager
+    async def scope():
+        yield object()
+
+    monkeypatch.setattr(wr, "spawn_background_task", spawn)
+    monkeypatch.setattr(wr, "session_scope", scope)
+    return tasks
+
+
+@pytest.mark.parametrize("kind", ["op", "broadcast"])
+async def test_delete_waits_for_older_save_commit(monkeypatch, writes, kind):
+    started, release = asyncio.Event(), asyncio.Event()
+    stored = {}
+    calls = []
+
+    async def save(_session, operator_id, state):
+        started.set()
+        await release.wait()
+        stored[operator_id] = state
+        calls.append("save")
+
+    async def delete(_session, operator_id):
+        stored.pop(operator_id, None)
+        calls.append("delete")
+
+    monkeypatch.setattr(wr.wizard_persist, f"save_{kind}_wizard", save)
+    monkeypatch.setattr(wr.wizard_persist, f"delete_{kind}_wizard", delete)
+    schedule = getattr(wr, f"schedule_persist_{kind}")
+    schedule(901, {"step": "draft"})
+    await started.wait()
+    schedule(901)
+    await asyncio.sleep(0)
+    release.set()
+    await asyncio.gather(*writes)
+    assert calls == ["save", "delete"]
+    assert stored == {}
+
+
+@pytest.mark.parametrize("kind", ["op", "broadcast"])
+async def test_nested_snapshot_is_detached_before_task_starts(monkeypatch, writes, kind):
+    saved = []
+
+    async def save(_session, _operator_id, state):
+        saved.append(state)
+
+    monkeypatch.setattr(wr.wizard_persist, f"save_{kind}_wizard", save)
+    state = {"attachments": [{"token": "original"}]}
+    getattr(wr, f"schedule_persist_{kind}")(902, state)
+    state["attachments"][0]["token"] = "changed"
+    await asyncio.gather(*writes)
+    assert saved == [{"attachments": [{"token": "original"}]}]
+
+
+async def test_different_keys_progress_while_one_save_is_blocked(monkeypatch, writes):
+    started, release, independent = asyncio.Event(), asyncio.Event(), asyncio.Event()
+
+    async def save(_session, _operator_id, _state):
+        started.set()
+        await release.wait()
+
+    async def delete(_session, _operator_id):
+        independent.set()
+
+    monkeypatch.setattr(wr.wizard_persist, "save_op_wizard", save)
+    monkeypatch.setattr(wr.wizard_persist, "delete_op_wizard", delete)
+    monkeypatch.setattr(wr.wizard_persist, "delete_broadcast_wizard", delete)
+    wr.schedule_persist_op(903, {"step": "draft"})
+    await started.wait()
+    wr.schedule_persist_op(904)
+    wr.schedule_persist_broadcast(903)
+    try:
+        await asyncio.wait_for(independent.wait(), timeout=1)
+    finally:
+        release.set()
+        await asyncio.gather(*writes)
+
+
+async def test_failed_save_does_not_block_later_delete(monkeypatch, writes, caplog):
+    calls = []
+
+    async def save(_session, _operator_id, _state):
+        calls.append("save")
+        raise RuntimeError("database unavailable")
+
+    async def delete(_session, _operator_id):
+        calls.append("delete")
+
+    monkeypatch.setattr(wr.wizard_persist, "save_op_wizard", save)
+    monkeypatch.setattr(wr.wizard_persist, "delete_op_wizard", delete)
+    wr.schedule_persist_op(905, {"step": "draft"})
+    wr.schedule_persist_op(905)
+    await asyncio.gather(*writes)
+    assert calls == ["save", "delete"]
+    assert "failed" in caplog.text
+    assert ("op", 905) not in wr._persist_queues
+
+
+@pytest.mark.parametrize("start_worker", [False, True])
+async def test_cancelled_worker_discards_queue_and_releases_key(monkeypatch, writes, caplog, start_worker):
+    started = asyncio.Event()
+    calls = []
+
+    async def save(_session, _operator_id, _state):
+        started.set()
+        await asyncio.Event().wait()
+        calls.append("stale save")
+
+    async def delete(_session, _operator_id):
+        calls.append("delete")
+
+    monkeypatch.setattr(wr.wizard_persist, "save_op_wizard", save)
+    monkeypatch.setattr(wr.wizard_persist, "delete_op_wizard", delete)
+    wr.schedule_persist_op(906, {"step": "draft"})
+    if start_worker:
+        await started.wait()
+    wr.schedule_persist_op(906)
+    writes[0].cancel()
+    await asyncio.gather(*writes, return_exceptions=True)
+    assert calls == []
+    assert ("op", 906) not in wr._persist_queues
+    assert "cancelled" in caplog.text
+    wr.schedule_persist_op(906)
+    await asyncio.gather(*writes, return_exceptions=True)
+    assert calls == ["delete"]
+
+
+async def test_spawn_failure_closes_worker_and_allows_retry(monkeypatch, writes, caplog):
+    original_spawn = wr.spawn_background_task
+    failed_coroutines = []
+
+    def fail(coro, *, name=None):
+        failed_coroutines.append(coro)
+        raise RuntimeError("cannot spawn")
+
+    deleted = []
+
+    async def delete(_session, operator_id):
+        deleted.append(operator_id)
+
+    monkeypatch.setattr(wr.wizard_persist, "delete_op_wizard", delete)
+    monkeypatch.setattr(wr, "spawn_background_task", fail)
+    wr.schedule_persist_op(907)
+    assert failed_coroutines[0].cr_frame is None
+    assert ("op", 907) not in wr._persist_queues
+    assert "spawn failed" in caplog.text
+    monkeypatch.setattr(wr, "spawn_background_task", original_spawn)
+    wr.schedule_persist_op(907)
+    await asyncio.gather(*writes)
+    assert deleted == [907]
+
+
+async def test_queue_waits_for_session_commit_before_next_write(monkeypatch, writes):
+    committing, release = asyncio.Event(), asyncio.Event()
+    calls = []
+    first = True
+
+    @asynccontextmanager
+    async def scope():
+        nonlocal first
+        initial = first
+        first = False
+        yield object()
+        if initial:
+            committing.set()
+            await release.wait()
+        calls.append("commit")
+
+    async def save(_session, _operator_id, _state):
+        calls.append("save")
+
+    async def delete(_session, _operator_id):
+        calls.append("delete")
+
+    monkeypatch.setattr(wr, "session_scope", scope)
+    monkeypatch.setattr(wr.wizard_persist, "save_op_wizard", save)
+    monkeypatch.setattr(wr.wizard_persist, "delete_op_wizard", delete)
+    wr.schedule_persist_op(908, {"step": "draft"})
+    await committing.wait()
+    wr.schedule_persist_op(908)
+    wr.schedule_persist_op(908, {"step": "new draft"})
+    await asyncio.sleep(0)
+    assert calls == ["save"]
+    release.set()
+    await asyncio.gather(*writes)
+    assert calls == ["save", "commit", "delete", "commit", "save", "commit"]
 ```
 
 ### `bot/tests/test_wizard_registry.py`
@@ -87941,28 +90987,478 @@ SHA-256: `20ed3abe32c3377e4d8f1e15d7c7dc28b9d1be1676b603bb158380664cdcb90b`
 **Подготовил:** разработчик Чат-бота.
 ```
 
+### `docs/audits/FLOW_AUDIT_2026-10-26.md`
+
+Size: `26974` bytes  
+SHA-256: `358e0c3e56ebf43a5940ff0173733ccf1b6216c9d8470562e7aedf21d21f7e76`
+
+```markdown
+# Аудит путей выполнения aemr-bot — 26 октября 2026
+
+> Исторический срез до исправлений. Статус устранения и ограничения выпуска: [RELEASE_0.2.0.md](../RELEASE_0.2.0.md).
+
+Проверен код `547ae958844514ce6d96401243bd8a7b74299fd4` — версия с изменениями PR #297 и #298, включая maxapi 1.2.3. На момент проверки оба PR открыты; main находится на `aac8a79ddedcfefebe9f162a4dd1e8c0f680ef2d`. Это аудит исходников и локально воспроизведённых отказов, а не подтверждение состояния VPS. Рабочий код этим аудитом не изменён.
+
+Найдено 13 проблем и ограничений: девять воспроизведены отдельными проверками, четыре установлены чтением связанных путей. P1 — риск пропустить работу или оставить систему в несогласованном состоянии; P2 — отказ отдельного режима, восстановления или управления; P3 — документация. Приоритеты условны: например, неиспользуемый webhook не влияет на штатный polling.
+
+## Карта проверенных путей
+
+| Путь | Где состояние становится постоянным | Внешний эффект и восстановление |
+|---|---|---|
+| Получение MAX → middleware → обработчик | Ключ события записывается до бизнес-операции | Polling продвигает marker независимо от успешного завершения обработчика; надёжного inbox нет |
+| Диалог жителя → отправка обращения | Обращение и переход диалога сохраняются в БД | Карточка оператора отправляется после commit; отдельной очереди повторной публикации нет |
+| Вложения → служебная группа | Метаданные остаются у обращения | Relay в фоне, best effort; частичная недоставка не равна утрате обращения |
+| Ответ оператора → житель | Права и актуальное состояние проверяются перед отправкой | Есть обработка разрыва между отправкой и записью; повторять вслепую нельзя |
+| Рассылка → получатели → результаты | Задание и результаты хранятся отдельно | Ошибки записи результатов могут не помешать статусу DONE |
+| Мастера настроек/рассылок → восстановление | Асинхронные UPSERT/DELETE состояния | Порядок записи не гарантирован |
+| Фоновые задания → очистка данных | Изменения и удаления в БД | Предупреждение до срока ошибочно зависит от наличия уже просроченных записей |
+| Настройки → GitHub PR | Значения в БД; экспорт в PR | Отметка synced не проверяет, изменилось ли значение во время сетевого запроса |
+| Git → Docker → health gate | HEAD перемещается перед сборкой | После ошибки сборки следующий запуск может считать обновление выполненным |
+
+Дополнительно просмотрены запуск/остановка, recovery, ограничение исходящих ссылок, threat intel, экспорт статистики, удаление данных и проверка резервных копий. Это не формальное доказательство отсутствия других дефектов.
+
+## Подтверждённые воспроизведением дефекты
+
+### F01 · P1 · Входящее событие может быть пропущено при отказе БД
+
+**Путь:** `handlers/__init__.py:19`, `services/idempotency.py:82`, `main.py:94`; `_dispatch_fetched_events` в закреплённом maxapi 1.2.3.
+
+`IdempotencyMiddleware` вызывает `claim` до обработчика. При ошибке БД `claim` возвращает False, и обработчик не запускается. При этом SDK с `use_create_task=True` продвигает marker полученной пачки. Проверка с настоящим Dispatcher подтвердила: обработчик не вызван, marker уже 101. Ожидание автоматической повторной доставки после восстановления БД не обеспечено этим кодом.
+
+Отдельный статически установленный вариант: ключ успешно записан отдельной транзакцией, а бизнес-операция затем падает — повтор встретит уже занятый ключ. Проверка дублей сама по себе не гарантирует обработку.
+
+**Исправление:** durable inbox с состояниями received/processing/done, повторяемые операции и согласованные транзакционные границы. Простое удаление ключа после любого исключения опасно: внешний эффект мог уже произойти.
+
+### F02 · P1 · У одного жителя могут одновременно появиться две блокировки
+
+**Путь:** `handlers/appeal_runtime.py:61–83`, вызовы `drop_user_lock`, в том числе finally отправки обращения.
+
+`drop_user_lock` удаляет объект, если `locked()` возвращает False. Но после release в очереди уже может ожидать другой обработчик. Новый запрос получает новую блокировку из словаря, ожидавший — старую. Проверка воспроизводит одновременное удержание обеих для одного user_id.
+
+Это нарушает обещанную сериализацию отправки/отмены/восстановления. Дублирование конкретного обращения в настоящей БД этой проверкой не утверждается; доказана поломка самого механизма исключения параллельной работы. `current_user` не добавляет блокировку строки, которая закрывала бы этот разрыв.
+
+**Исправление:** учитывать всех владельцев и ожидающих при управлении жизненным циклом lock; удалять запись только после исчезновения всех пользователей блокировки.
+
+### F04 · P1 · Рассылка получает DONE без сохранённого журнала доставок
+
+**Путь:** `handlers/broadcast.py:447–675`, `services/broadcasts.py`.
+
+`_flush_pending` ловит ошибку `record_deliveries` и продолжает. Если запись не восстановилась до последнего flush, `_run_broadcast_impl` всё равно может выставить DONE с количеством фактически отправленных сообщений. Проверка получила DONE/delivered=1 при отсутствии строк результатов.
+
+Сообщение действительно могло дойти. Дефект — потеря устойчивого учёта и невозможность надёжно определить, кому нужен повтор после сбоя. Уникальный ключ в таблице доставок защищает только уже сохранённые строки.
+
+**Исправление:** сохранять незафиксированные результаты для восстановления; не завершать задание как полностью согласованное до записи журнала. Учитывать неопределённость «отправлено, но commit неизвестен».
+
+### F05 · P2 · Предупреждение перед сроком очистки обычно не проверяется
+
+**Путь:** `services/cron.py:784–948`, ранний return в строке 858.
+
+Задание сначала ищет уже просроченных пользователей. Если их нет, завершает работу до вызова `_warn_about_approaching_pdn_deadline`. Проверка подтвердила, что при пустом списке просроченных проверка приближающегося срока не запускается.
+
+Следствие: предупреждение до срока зависит от наличия других пользователей, у которых срок уже истёк. Для открытых обращений это существенно, поскольку последующая очистка меняет их состояние. Правомерность и сам срок хранения этим техническим аудитом не оцениваются.
+
+**Исправление:** запускать предупреждение независимо от результата поиска просроченных, сохранив ограничение повторных уведомлений.
+
+### F06 · P2 · Старое сохранение мастера может воскресить отменённый черновик
+
+**Путь:** `services/wizard_registry.py:150–252`, `services/wizard_persist.py`, `_hydrate_wizards` в `main.py`.
+
+Сохранение и удаление запускаются отдельными фоновыми задачами, без версии состояния и упорядочивания на оператора. Проверка задерживает старый SAVE: более новый DELETE завершается первым, затем SAVE восстанавливает удалённое состояние. После перезапуска оно может быть загружено из БД.
+
+Это не доказательство автоматического повторного запуска рассылки: подтверждение оператора по-прежнему необходимо. Доказана возможность возврата устаревшего черновика/шага мастера.
+
+**Исправление:** последовательная очередь записи на оператора либо монотонная версия с условным UPSERT/DELETE и tombstone.
+
+### F07 · P2 · «Остановлено» ещё не означает остановленную рассылку
+
+**Путь:** `handlers/broadcast.py:227–256`, `:496–527`.
+
+Обработчик отмечает запрос отмены и сразу подтверждает «Остановлено». Цикл проверяет отмену после отправки очередного сообщения, с привязкой к обновлению прогресса/буферу. В проверке отмена уже стояла до входа в цикл, но одно сообщение всё равно ушло.
+
+**Исправление:** проверять отмену перед следующей отправкой и после ожиданий; различать «остановка запрошена» и фактическое завершение. Уже выполняющийся сетевой запрос имеет отдельную неопределённость доставки.
+
+### F08 · P2 · Разрешённый конфигурацией webhook не запускается
+
+**Путь:** `config.py`, `main.py:523–532`; закреплённый maxapi 1.2.3.
+
+Конфигурация принимает BOT_MODE=webhook с URL и секретом. Но импорт main падает на `@dp.webhook_post`: у Dispatcher закреплённой версии такого API нет. Это воспроизведено свежим Python-процессом с синтетической конфигурацией.
+
+Дополнительно вручную проверено несовпадение заголовка: приложение читает `X-Max-Secret`, поддерживаемая webhook-интеграция SDK — `X-Max-Bot-Api-Secret`. Исправления одного декоратора недостаточно.
+
+**Исправление:** подключить поддерживаемую SDK-интеграцию с проверкой заголовка и жизненного цикла либо явно запретить неподдерживаемый режим. Штатный polling этой находкой не объявляется неработоспособным.
+
+### F09 · P2 · Тайм-аут проверки бэкапа не ограничивает чтение stdout
+
+**Путь:** `services/backup_verify.py:110–155`.
+
+Сначала выполняется `_drain(proc.stdout)`, и только затем `_wait_proc(..., timeout, ...)`. Если поток зависнет, исполнение не дойдёт до ограничения времени. Проверка с контролируемым зависшим потоком потребовала внешнего тайм-аута.
+
+**Исправление:** ограничить всю операцию decrypt/read/wait и корректно завершать дочерний процесс при отмене/истечении времени. Бэкап отключён по умолчанию по решению пользователя; включать его или возвращать предупреждения не требуется. Это дефект доступного, но необязательного пути.
+
+### F10 · P1 при включённом автодеплое · Ошибка сборки блокирует повтор той же версии
+
+**Путь:** `scripts/auto-deploy.sh:79`, `:123`, команда compose после self-sync скриптов.
+
+HEAD переводится на REMOTE до `docker compose up -d --build`. Ошибка сборки завершает скрипт из-за `set -e`/pipefail до health gate и его rollback. Следующий запуск видит LOCAL=REMOTE и выходит без повторной сборки.
+
+Проверка исполнила копию настоящего скрипта с временными путями и заглушками команд: первая сборка завершилась кодом 42 после перемещения HEAD, второй запуск завершился успешно без второй попытки сборки. Настоящий git/VPS/Docker не изменялись.
+
+Старый контейнер может продолжать работать; проблема — расхождение HEAD и реально развёрнутой версии плюс отсутствие повтора, а не доказанное падение контейнера.
+
+**Исправление:** отдельно хранить успешно развёрнутый commit, повторять неудавшееся развёртывание той же версии, обрабатывать ошибку сборки до health gate. Не вводить автоматический откат схемы БД без отдельного анализа.
+
+## Разрывы и ограничения, установленные чтением кода
+
+### F03 · P1 · Сохранённое обращение не имеет гарантированного повтора первой карточки
+
+**Путь:** `handlers/appeal_runtime.py:157–316`, `services/admin_card.py:36`, фоновые задания `services/cron.py`.
+
+Обращение сохраняется, диалог сбрасывается, житель получает подтверждение. Если `admin_card.render` возвращает None, пишется warning, но функция возвращает True. Отдельной долговечной очереди повторной первой публикации карточки в просмотренных путях нет.
+
+Обращение не исчезает из БД: оператор может найти его через очередь/список и другие доступные команды. Однако основное уведомление может не появиться автоматически после восстановления MAX. Это статический вывод, отдельный fault-injection тест всей цепочки не выполнялся.
+
+**Исправление:** outbox публикаций или состояние «сохранено / ожидает карточки / опубликовано» с фоновым восстановлением и защитой от дублей. Relay вложений уже намеренно best effort; его частичную недоставку нельзя смешивать с утратой записи обращения.
+
+### F11 · P2 · Настройки, изменённые во время создания PR, могут ошибочно считаться экспортированными
+
+**Путь:** `handlers/admin_settings_pr.py:79–154`, `services/settings_store.py:845`, `:928`.
+
+Снимок значений A читается до сетевого запроса создания PR. Пока идёт await, другой обработчик может записать B. После запроса `mark_synced` без проверки версии отмечает ключ синхронизированным. В PR остаётся A, в БД — B, а pending может стать нулём. Значение B из БД не стирается; ошибочна метка синхронизации.
+
+Кроме того, «создан PR» и «изменения применены» — разные этапы. Экспорт `seed/runtime_config.json` сам по себе не означает двустороннее восстановление: текущий startup seed читает отдельные seed-файлы, а не этот экспорт. Это организационная граница, которую нужно явно документировать.
+
+**Исправление:** фиксировать экспортированную версию и снимать dirty только при неизменившемся снимке; различать экспорт, merge и применение.
+
+### F12 · P2 · «Ваши данные удалены» шире реализованного технического удаления
+
+**Путь:** `handlers/menu.py:826–856`, `services/users.py:323–428`, `copy/citizen_funnel.py:240`, `services/admin_card.py`.
+
+Реализованы удаление/обезличивание записей БД. Этот путь не удаляет ранее отправленные карточки и файлы из MAX, а также ранее созданные внешние экспорты. Для всех частей составной карточки нет полного журнала message_id: сохраняются первая и последняя части. Само существование каких-либо VPS-бэкапов не утверждается.
+
+Это разрыв между пользовательским обещанием и технической областью действия, а не юридическое заключение. Нужны явные правила жизненного цикла каждой копии, точный текст подтверждения и, если требуется внешняя очистка, журнал артефактов и отдельный исполнитель. Не следует молча удалять служебную историю без согласованного правила.
+
+### F13 · P3 · Документация и комментарии расходятся с действующим кодом
+
+- `docs/ROADMAP.md` датирован 16 июля и сохраняет уже неактуальные пункты: отсутствие backup verify при существующих сервисе и cron; описание SDK I/O только как mocked, хотя добавлены проверки с настоящим SDK и локальным HTTP.
+- В `services/admin_card.py` описание `render` ещё говорит о редактировании, тогда как реализация намеренно публикует новые карточки; параметры совместимости игнорируются.
+- Комментарий в `handlers/__init__.py` ссылается на maxapi ~=1.1, фактическая закреплённая версия — 1.2.3.
+- В документации встречаются ссылки на отсутствующие `docs/_meta/...`.
+
+**Исправление:** отделить исторический roadmap от текущего backlog, синхронизировать контракты функций и проверить внутренние ссылки.
+
+## Воспроизводимость и пределы проверки
+
+Файл `flow_audit_probes_20261026.py` содержит девять проверок: F01, F02, F04–F10. Они намеренно проверяют наличие текущих дефектов. Зелёный результат означает «проблема воспроизведена», а не «механизм исправлен». После исправления соответствующее ожидание должно быть заменено проверкой желаемого поведения и перенесено в штатные тесты.
+
+Запуск из корня репозитория:
+
+```bash
+TZ=Asia/Kamchatka uv run --project bot --no-sync pytest -c bot/pyproject.toml docs/audits/flow_audit_probes_20261026.py -q
+```
+
+Результат: **9 passed**. Данные/секреты синтетические. Для входящих событий используется настоящий Dispatcher закреплённого SDK; для ошибок БД/сети/процессов — управляемые подмены. Доступа к реальному MAX и VPS эти проверки не требуют. F03/F11/F12/F13 установлены статически и не представлены как наблюдавшиеся на VPS инциденты.
+
+Предыдущий CI PR #298: 2571 passed, 3 skipped; это полезный baseline, но перечисленные отказные последовательности он не покрывал. Полный набор повторно ради документации не запускался. Локально выполнены девять новых probes и проверка Ruff этого файла; production diff отсутствует.
+
+Положительные проверки: XLSX-рендер вынесен в thread, есть защита от формул и маскирование телефонов; ответы оператора перепроверяют права и актуальные ограничения; отсутствие threat-intel совпадения не объявляется безопасностью ссылки. Из намеренных ограничений не сделаны фиктивные дефекты: best-effort relay, неподтверждённое автоматическое повторение рассылки и политика подписки для уже зафиксированной аудитории требуют своего контекста.
+
+## Порядок устранения
+
+1. **Надёжность приёма и доставки:** F01/F02/F03; сначала согласовать модель inbox/outbox и границы транзакций, затем покрыть сбои и повторы. Не объединять все ошибки под слепой retry.
+2. **Эксплуатация и рассылки:** F10/F04/F07; различать запрос, внешний результат и его фиксацию в БД.
+3. **Восстановление и фоновые режимы:** F05/F06/F08/F09; при этом оставить необязательный бэкап отключённым и тихим.
+4. **Контракты и организация данных:** F11/F12/F13; уточнить смысл synced, удаления и поддерживаемых режимов, обновить документацию.
+
+Обновление maxapi само по себе эти разрывы не закрывает: большинство относится к организации работы приложения. Подтверждать полное сохранение функционала только по успешной установке зависимостей и зелёному прежнему CI было бы неверно.
+```
+
+### `docs/audits/flow_audit_probes_20261026.py`
+
+Size: `11079` bytes  
+SHA-256: `58696111c9f9d5a1d43dd26b4352163cac62bc3f8189549d90208cee12194c2f`
+
+```python
+"""Reproduce audit findings without changing production behavior or contacting MAX.
+
+Historical reproductions for commit 547ae95 only; release regressions live in bot/tests.
+Run on that historical checkout from bot/: uv run --no-sync pytest -c pyproject.toml ../docs/audits/flow_audit_probes_20261026.py -q
+These assertions confirm existing defects, rather than specify their future fixes.
+"""
+from __future__ import annotations
+
+import asyncio
+import os
+import subprocess
+import sys
+from contextlib import asynccontextmanager
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
+
+os.environ.setdefault("BOT_TOKEN", "synthetic-audit-token")
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+os.environ.setdefault("ADMIN_GROUP_ID", "123")
+os.environ.setdefault("TZ", "Asia/Kamchatka")
+
+from aemr_bot.handlers import IdempotencyMiddleware, appeal_runtime
+from aemr_bot.handlers import broadcast as bc
+from aemr_bot.services import backup_verify, cron, idempotency
+from aemr_bot.services import wizard_registry as wr
+from maxapi import Bot, Dispatcher
+from maxapi.types.users import User as MaxUser
+
+
+@asynccontextmanager
+async def session():
+    yield SimpleNamespace()
+
+
+def update():
+    return {"update_type": "message_created", "timestamp": 1700000000000,
+            "message": {"timestamp": 1700000000000,
+                        "recipient": {"chat_id": 91001, "chat_type": "dialog"},
+                        "sender": {"user_id": 91002, "first_name": "Synthetic", "is_bot": False},
+                        "body": {"mid": "audit-message", "seq": 1, "text": "synthetic"}}}
+
+
+@pytest.mark.asyncio
+async def test_db_claim_failure_still_advances_polling_marker(monkeypatch):
+    @asynccontextmanager
+    async def broken_db():
+        raise RuntimeError("synthetic DB outage")
+        yield  # pragma: no cover
+
+    monkeypatch.setattr(idempotency, "session_scope", broken_db)
+    bot = Bot("synthetic-audit-token", auto_requests=False, auto_check_subscriptions=False)
+    bot.get_me = AsyncMock(return_value=MaxUser(user_id=1, first_name="Audit", is_bot=True))
+    dp = Dispatcher(use_create_task=True)
+    dp.register_outer_middleware(IdempotencyMiddleware())
+    handled = []
+
+    @dp.message_created()
+    async def handler(event):
+        handled.append(event.message.body.text)
+
+    try:
+        await dp.startup(bot)
+        await dp._dispatch_fetched_events({"updates": [update()], "marker": 101}, 0,
+                                         skip_updates=False)
+        await dp.shutdown()
+        assert handled == []
+        assert bot.marker_updates == 101
+    finally:
+        await dp.shutdown()
+        await bot.close_session()
+
+
+@pytest.mark.asyncio
+async def test_user_lock_can_split_while_an_existing_waiter_is_pending(monkeypatch):
+    monkeypatch.setattr(appeal_runtime, "_user_locks", {})
+    owner = appeal_runtime.get_user_lock(42)
+    await owner.acquire()
+    queued, entered, release = asyncio.Event(), asyncio.Event(), asyncio.Event()
+
+    async def waiting_request():
+        old_lock = appeal_runtime.get_user_lock(42)
+        queued.set()
+        async with old_lock:
+            entered.set()
+            await release.wait()
+
+    waiter = asyncio.create_task(waiting_request())
+    try:
+        await queued.wait()
+        owner.release()
+        appeal_runtime.drop_user_lock(42)
+        newcomer = appeal_runtime.get_user_lock(42)
+        await newcomer.acquire()
+        await asyncio.wait_for(entered.wait(), 0.5)
+        assert newcomer is not owner
+        assert owner.locked() and newcomer.locked()
+        newcomer.release()
+    finally:
+        release.set()
+        await waiter
+
+
+@pytest.mark.asyncio
+async def test_deadline_warning_is_not_checked_when_no_overdue_users(monkeypatch):
+    monkeypatch.setattr(cron, "session_scope", session)
+    monkeypatch.setattr(cron.users_service, "find_pending_pdn_retention", AsyncMock(return_value=[]))
+    nearing = AsyncMock(return_value=[91002])
+    monkeypatch.setattr(cron.users_service, "find_revoked_deadline_approaching", nearing)
+    notify = AsyncMock()
+    await cron._job_pdn_retention_check(notify)
+    assert nearing.await_count == 0
+    assert notify.await_count == 0
+
+
+@pytest.mark.asyncio
+async def test_gpg_timeout_does_not_bound_stdout_drain(monkeypatch, tmp_path):
+    class StalledStdout:
+        async def read(self, size):
+            await asyncio.Event().wait()
+
+    proc = SimpleNamespace(stdout=StalledStdout())
+    waited = AsyncMock(return_value=0)
+    monkeypatch.setenv("TMPDIR", str(tmp_path))
+    monkeypatch.setattr(backup_verify.asyncio, "create_subprocess_exec", AsyncMock(return_value=proc))
+    monkeypatch.setattr(backup_verify, "_wait_proc", waited)
+    # Configured 1 ms limit is never entered; only this external timeout stops it.
+    with pytest.raises(TimeoutError):
+        await asyncio.wait_for(backup_verify._decrypt_to_devnull(
+            tmp_path / "synthetic.sql.gpg", "synthetic-passphrase", timeout=0.001), 0.08)
+    assert waited.await_count == 0
+
+
+@pytest.mark.asyncio
+async def test_late_wizard_save_can_resurrect_cleared_durable_state(monkeypatch):
+    monkeypatch.setattr(wr, "_broadcast_wizards", {})
+    durable = {}
+    started, release = asyncio.Event(), asyncio.Event()
+
+    async def old_save(operator_id, snapshot):
+        started.set()
+        await release.wait()  # e.g. delayed connection acquisition before UPSERT
+        durable[operator_id] = snapshot
+
+    async def newer_delete(operator_id):
+        durable.pop(operator_id, None)
+
+    monkeypatch.setattr(wr, "_persist_save_broadcast", old_save)
+    monkeypatch.setattr(wr, "_persist_delete_broadcast", newer_delete)
+    wr.set_broadcast_wizard(7, {"step": "awaiting_confirm", "text": "synthetic"})
+    wr.schedule_persist_broadcast(7)
+    await started.wait()
+    wr.clear_broadcast_wizard(7)
+    wr.schedule_persist_broadcast(7)
+    await asyncio.sleep(0)
+    release.set()
+    from aemr_bot.utils.background import _BACKGROUND_TASKS
+    tasks = [task for task in _BACKGROUND_TASKS if task.get_name() == "wizard_registry.persist"]
+    await asyncio.gather(*tasks)
+    assert wr.get_broadcast_wizard(7) is None
+    assert durable[7]["step"] == "awaiting_confirm"
+
+
+@pytest.mark.asyncio
+async def test_cancelled_broadcast_still_sends_before_first_cancel_check(monkeypatch):
+    monkeypatch.setattr(bc, "session_scope", session)
+    monkeypatch.setattr(bc.broadcasts_service, "record_deliveries", AsyncMock())
+    monkeypatch.setattr(bc.broadcasts_service, "get_status", AsyncMock(return_value="cancelled"))
+    monkeypatch.setattr(bc.broadcasts_service, "update_progress", AsyncMock())
+    bot = SimpleNamespace(send_message=AsyncMock())
+    delivered, failed, cancelled = await bc._run_send_loop(
+        bot, broadcast_id=7, body="synthetic", total=1, targets=[(1, 91002)],
+        admin_mid=None, rate_delay=0, progress_step_sec=0)
+    assert delivered == 1 and failed == 0 and cancelled
+    assert bot.send_message.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_broadcast_can_finish_done_without_recorded_delivery_rows(monkeypatch):
+    monkeypatch.setattr(bc, "session_scope", session)
+    monkeypatch.setattr(bc, "_resolve_admin_progress_message", AsyncMock(return_value=None))
+    monkeypatch.setattr(bc, "_send_final_summary", AsyncMock())
+    monkeypatch.setattr(bc.broadcasts_service, "mark_started", AsyncMock())
+    monkeypatch.setattr(bc.broadcasts_service, "list_subscriber_targets", AsyncMock(return_value=[(1, 91002)]))
+    monkeypatch.setattr(bc.broadcasts_service, "get_by_id", AsyncMock(return_value=SimpleNamespace(attachments=[])))
+    record = AsyncMock(side_effect=RuntimeError("synthetic DB write failure"))
+    monkeypatch.setattr(bc.broadcasts_service, "record_deliveries", record)
+    finished = AsyncMock()
+    monkeypatch.setattr(bc.broadcasts_service, "mark_finished", finished)
+    monkeypatch.setattr(bc.cfg, "broadcast_rate_limit_per_sec", 1000)
+    bot = SimpleNamespace(send_message=AsyncMock())
+    await bc._run_broadcast_impl(bot, 7, "synthetic", 1)
+    assert record.await_count > 0
+    assert finished.await_args.kwargs["status"].value == "done"
+    assert finished.await_args.kwargs["delivered"] == 1
+
+
+def test_webhook_mode_fails_at_module_import_with_pinned_sdk():
+    env = dict(os.environ, BOT_TOKEN="synthetic-audit-token", BOT_MODE="webhook",
+               WEBHOOK_URL="https://synthetic.invalid/max/webhook",
+               WEBHOOK_SECRET="synthetic-audit-secret", DATABASE_URL="sqlite+aiosqlite:///:memory:")
+    root = Path(__file__).resolve().parents[2]
+    result = subprocess.run([sys.executable, "-c", "import aemr_bot.main"], cwd=root / "bot",
+                            env=env, capture_output=True, text=True, check=False, timeout=10)
+    assert result.returncode != 0
+    assert "webhook_post" in result.stderr and "AttributeError" in result.stderr
+
+
+def test_failed_build_moves_head_and_next_autodeploy_skips_retry(tmp_path):
+    root = Path(__file__).resolve().parents[2]
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "infra").mkdir()
+    (repo / "infra" / ".env").write_text("# synthetic audit environment\n")
+    state, builds = tmp_path / "head", tmp_path / "builds"
+    state.write_text("old\n")
+    builds.write_text("")
+    tools = tmp_path / "tools"
+    tools.mkdir()
+    scripts = {
+        "git": '''#!/bin/sh
+case "$1" in
+ fetch) exit 0 ;;
+ rev-parse)
+  if [ "$2" = HEAD ]; then cat "$AEMR_AUDIT_HEAD"; else printf 'new\\n'; fi ;;
+ status) exit 0 ;;
+ reset) printf '%s\\n' "$3" > "$AEMR_AUDIT_HEAD" ;;
+ *) exit 0 ;;
+esac
+''',
+        "su": '''#!/bin/sh
+printf 'attempt\\n' >> "$AEMR_AUDIT_BUILDS"
+exit 42
+''',
+        "logger": "#!/bin/sh\ncat >/dev/null\n",
+        "install": "#!/bin/sh\nexit 0\n",
+        "chown": "#!/bin/sh\nexit 0\n",
+    }
+    for name, body in scripts.items():
+        path = tools / name
+        path.write_text(body)
+        path.chmod(0o700)
+    # Only substitute filesystem locations; the deployment control flow is unchanged.
+    content = (root / "scripts/auto-deploy.sh").read_text()
+    content = content.replace("REPO_DIR=/home/aemr/aemr-bot", f"REPO_DIR={repo}")
+    content = content.replace("/tmp/aemr-bot.env.bak.", str(tmp_path / "env.bak."))
+    copy = tmp_path / "deploy.sh"
+    copy.write_text(content)
+    env = dict(os.environ, PATH=str(tools) + os.pathsep + os.environ["PATH"],
+               AEMR_AUDIT_HEAD=str(state), AEMR_AUDIT_BUILDS=str(builds),
+               AUTODEPLOY_ENABLED="1", REQUIRE_SIGNED_COMMITS="", REQUIRE_CANONICAL_MARKER="")
+    first = subprocess.run(["bash", str(copy)], env=env, stdin=subprocess.DEVNULL,
+                           capture_output=True, text=True, check=False, timeout=5)
+    assert first.returncode == 42
+    assert state.read_text().strip() == "new"
+    second = subprocess.run(["bash", str(copy)], env=env, stdin=subprocess.DEVNULL,
+                            capture_output=True, text=True, check=False, timeout=5)
+    assert second.returncode == 0
+    assert builds.read_text().splitlines() == ["attempt"]
+```
+
 ### `docs/DEPS.md`
 
-Size: `18775` bytes  
-SHA-256: `9d35409bac13426a506b0ed78d574cd05ae91ca474eff5d3565abe509523951a`
+Size: `17780` bytes  
+SHA-256: `19717bc060f860acfaada564b2efbb89a49a82a18b874179bba8030e33133c8c`
 
 ```markdown
 # Dependency management
 
 Один источник истины — `bot/uv.lock`. Локальная среда и Docker-образ работают с **одной** версией каждого пакета.
 
-> **Оговорка про CI (2026-08-07).** Джобы `lint` и `test` в `.github/workflows/ci.yml`
-> ставят зависимости через `pip install -e ".[dev]"`, то есть по диапазонам из
-> `pyproject.toml`, а не по lock. Практическое следствие: свежий релиз любого
-> dev-инструмента попадает в CI сразу, и пайплайн краснеет на неизменившемся коде —
-> так случилось с ruff 0.16 (285 замечаний по новым правилам). Поэтому dev-инструменты
-> в `pyproject.toml` пинуются по минорной версии (`ruff~=0.15.0`). Полный перевод CI на
-> `uv sync --locked` — открытая задача: он уберёт этот класс поломок, но требует
-> переписать шаг `pip-audit` (сейчас он строит список из `pip freeze`). Docker идёт дальше всех: он не просто берёт версии из lock, а проверяет SHA256-хеш каждого скачанного пакета (`uv export` → `pip install --require-hashes`, подробности в разделе «Как Docker-образ ставит зависимости»). Если среды расходятся («у меня работает, на проде падает») — см. раздел «Диагностика drift'а».
+На 26.10.2026 CI выполняет `uv sync --locked --extra dev`, а pip-audit читает
+полный экспорт lock (`uv export --frozen --no-emit-project --all-extras`).
+Docker дополнительно проверяет SHA256 через `pip install --require-hashes`.
+Для совместимости формата lock используйте uv 0.11.12, закреплённый в Dockerfile.
 
 ## Что у нас стоит
 
-- **`bot/pyproject.toml`** — верхняя граница пакетов через `~=` (например `maxapi~=1.1`). Это **диапазон**, не точная версия.
+- **`bot/pyproject.toml`** — ограничения зависимостей; maxapi закреплён точно: `maxapi==1.2.3`. Диапазоны других пакетов разрешаются в точные версии через lock.
 - **`bot/uv.lock`** — resolved транзитивные версии для всех пакетов **вместе с SHA256-хешем каждого wheel'а**. **Закоммичен в репозиторий** — без этого Docker и каждый разработчик резолвят независимо, версии расходятся. `uv sync` (локально) и `uv export` (в Docker) ставят ровно то, что в lock; lock читают обе среды, а не только разработчик.
 - **`bot/tests/test_deps_environment.py`** — guard-тесты: проверяют, что установленный `maxapi` и его API-сигнатура совпадают с ожиданием.
 
@@ -88098,7 +91594,7 @@ uv run pip-audit
 `.github/workflows/ci.yml` гоняет `pip-audit` на каждом push и pull request в `main` и **валит сборку на найденной CVE** (hard fail). Чтобы не аудитить сам aemr-bot (его нет на PyPI, он ставится editable), шаг сначала готовит список только сторонних пакетов:
 
 ```bash
-pip freeze --exclude-editable > audit-requirements.txt
+uv export --frozen --no-emit-project --no-hashes --all-extras > audit-requirements.txt
 grep -vE '^(aemr-bot|aemr_bot)(==| @ )' audit-requirements.txt > audit-requirements.thirdparty.txt
 pip_audit --strict -r audit-requirements.thirdparty.txt $IGNORE_FLAGS
 ```
@@ -88151,6 +91647,162 @@ pip_audit --strict -r audit-requirements.thirdparty.txt $IGNORE_FLAGS
 - **Rollback стратегия** — если деплой положил бот, revert немедленно, разбираться потом.
 ```
 
+### `docs/MAXAPI_REVIEW_2026-10-26.md`
+
+Size: `13698` bytes  
+SHA-256: `8ccb7203c360d21640b769aedcb0d4ed6352f3bdc80ff42cfc341f5a3e166729`
+
+```markdown
+# MAX API 1.2.3: миграция и проверка совместимости
+
+## Результат
+
+В этом изменении maxapi поднят с 1.2.1 до **1.2.3** в pyproject.toml,
+uv.lock (включая SHA256 wheel/sdist) и guard-тесте окружения.
+Lock пересобран uv 0.11.12 — тем же, что закреплён в Dockerfile.
+Другие версии зависимостей при этом переходе не изменились.
+
+Изменение подготовлено отдельной веткой поверх исправлений баз угроз PR #297.
+Оба PR направлены в main: порядок включения — #297, затем обновление SDK;
+до включения #297 diff второго PR также содержит изменения его родителя.
+Это изменение кода и проверка тестового контура; установка на VPS и реальный
+обмен сообщениями с боевым MAX не выполнялись.
+
+## Почему предыдущих зелёных тестов было недостаточно
+
+Предыдущее обновление aiohttp/anyio и остальных зависимостей проходило полный
+pytest и CI с PostgreSQL. Это подтверждает проверенные сценарии, но само по себе
+не доказывает совместимость с SDK другой версии. maxapi тогда оставался 1.2.1.
+
+В ходе перехода на 1.2.3 найдены два конкретных изменения, требующих адаптации:
+
+1. **Сессия больше не содержит base_url.** Прежний aemr helper выполнял
+   `session.patch('/me')`. С реальным SDK 1.2.3 это дало InvalidUrlClientError,
+   а прежняя функция только записывала ошибку и продолжала старт без меню.
+   Старый тест с подменённой сессией этого не выявлял.
+   Кроме того, SDK объявляет старый PATCH /me устаревшим и указывает окончание
+   его поддержки 15.09.2026.
+2. **Диагностика нераспознанных событий содержит raw payload.** Новый парсер
+   SDK записывает полный JSON в logger dispatcher; он может содержать текст
+   обращения. Проверка реальной записи файла лога воспроизвела утечку
+   синтетической приватной строки.
+
+Оба дефекта воспроизведены падающими тестами перед исправлением, а не выведены
+только из release notes.
+
+## Изменения приложения
+
+- Публикация /start и /menu переведена на `Bot.set_commands(BotCommand(...), ...)`,
+  то есть поддерживаемый **PATCH /me/commands**. Имена и описания команд сохранены.
+  SDK сам формирует абсолютный URL с сохранением prefix и использует собственные
+  Authorization, доверенные CA и настройки proxy. Общий десятисекундный бюджет
+  публикации меню сохранён через asyncio.timeout; сетевой сбой остаётся некритичным
+  для запуска.
+- В setup_logging добавлен точечный фильтр logger dispatcher только для модуля
+  getted_updates: сохраняются уровень ошибки и сигнал пропуска, но исключаются
+  payload, args и exception text/traceback, способные содержать входные данные.
+  Другие сообщения dispatcher и логи приложения этим фильтром не подавляются.
+  Это не универсальная очистка всех ПДн из любых логов приложения.
+- Обновлены старые тесты публикации меню и добавлены проверки настоящего SDK
+  поверх локального aiohttp-сервера. Методы SDK в этих проверках не подменены.
+- Документация DEPS приведена к фактическому CI: uv sync --locked и аудит lock,
+  а не старое описание pip install / pip freeze.
+
+## Что сверено по SDK
+
+Сопоставлены исходники установленных wheels 1.2.1 и 1.2.3, release notes,
+сигнатуры используемых методов и фактические вызовы приложения:
+
+| Контракт | Вывод |
+| --- | --- |
+| DefaultConnectionProperties, get_updates, Dispatcher.handle | Сигнатуры, на которых основаны обёртки aemr, совместимы; guard-тесты проходят |
+| send_message, edit_message, upload_media | Сигнатуры сохранены; отправка, редактирование и файл проверены через реальный HTTP |
+| get_me, get_chat_member, get_chat_by_id, get_chat_members, get_chat_admins, delete_message, pin_message, send_action | Сигнатуры сохранены; существующие тесты продолжают выполняться |
+| send_callback | Добавлен необязательный keyword disable_link_preview; прежние вызовы совместимы |
+| User.last_activity_time | Теперь допускает отсутствие; fake MAX /me намеренно возвращает пользователя без поля |
+| Callback.message | Отсутствующее исходное сообщение поддерживается; get_ids и подтверждение callback проверены |
+| ensure_session / close_session | Сессия без base_url; собственный коннектор закрывается, пользовательский остаётся у владельца; пересоздание проверено |
+| Proxy, CA, timeout | trust_env и timeout сохраняются при пересоздании; TLS verification включён, Russian Trusted Root CA присутствует |
+| Polling marker и повреждённый элемент пачки | Непригодный элемент пропускается, следующее валидное сообщение доходит через обёртку, marker обновляется |
+| Остановка polling | Зависший HTTP-запрос прерывается; stop_polling и задача цикла завершаются за ограниченное время |
+| InvalidToken | Доходит до product preflight; отказ 401 не превращается в бесконечный retry |
+| EventIsolation | Новые классы доступны, default SDK остаётся DisabledEventIsolation; существующая модель concurrency/локов aemr сохранена |
+
+Методы комментариев каналов, description в edit_chat и новые параметры SDK
+доступны в библиотеке. Новые пользовательские интерфейсы и сценарии работы
+с комментариями в рамках обновления не добавлялись.
+
+## Context7: фактический объём проверки
+
+Раньше Context7 для этой задачи не использовался. Для текущей миграции найден
+индекс `/love-apples/maxapi` и выполнены три тематических запроса:
+
+1. Polling lifecycle, marker, повреждённые события и обёртки handle/get_updates.
+2. HTTP session/connector ownership, trust_env и custom api_url.
+3. Модели событий, методы сообщений/загрузок/команд и default EventIsolation.
+
+Первый вернул релевантные выдержки по polling. Второй не нашёл подходящих
+документов. Третий смешивал корректные исходные выдержки с обобщёнными примерами
+API, которые не соответствуют реальному SDK. В частности, пример EditMessage
+указывал неверные метод/путь и демонстрационное поле. В одном выдержанном
+polling-примере была опечатка в asyncio-константе.
+
+Поэтому Context7 использован как навигация, а не доказательство совместимости.
+Решения основаны на опубликованном **v1.2.3**, а не непроверенных сниппетах main.
+Утверждать, что «весь Context7 подробно изучен и всё подтверждает», нельзя.
+
+## Ранее обновлённые зависимости
+
+| Пакет | Версия в Python 3.12 | Где применяется / что проверено |
+| --- | --- | --- |
+| aiohttp | 3.14.5 | Runtime HTTP MAX, базы угроз, health; SDK HTTP/файл/polling, общий pytest |
+| multidict | 7.2.1 | Runtime через aiohttp/yarl; прямых MultiDict-подклассов в приложении нет, HTTP/query тесты проходят |
+| yarl | 1.25.1 | Runtime URL/query в HTTP-клиенте; prefix, timeout/marker и callback query проверены |
+| anyio | 4.14.2 | Runtime через FastAPI/Starlette; собственные фоновые задачи используют asyncio. Изменение receive(max_bytes<=0) не требует правки прямых вызовов — их нет |
+| urllib3 | 2.8.0 | Только dev/audit через requests, не HTTP-клиент работающего бота |
+| certifi | 2026.10.23 | Только dev/audit; CA MAX загружаются собственным SSL-контекстом SDK |
+| filelock | 4.2.4 | Только dev/audit; в runtime export отсутствует |
+
+Классификация runtime/dev проверена через uv export --frozen --no-dev,
+а не предположена по названию библиотеки. Для других версий Python lock
+может выбирать другой anyio (4.15.1). Docker закреплён на Python 3.12;
+эти проверки не доказывают работоспособность на любой будущей версии Python.
+
+## Проверки
+
+- До адаптации новые HTTP/log тесты падали: не было запроса меню, приватная
+  синтетическая строка попадала в лог. После адаптации оба проходят.
+- Девять интеграционных сценариев настоящего SDK проходят, включая последовательный
+  и конкурентный dispatch с дренажом фоновых handlers. Профильный набор ранее
+  прошёл 92 теста; затем добавлены конкурентный вариант и assert на Russian Trusted Root CA.
+- Полный локальный pytest: **2430 passed, 144 skipped**, 2 предупреждения
+  aiosqlite/Event loop is closed, зарегистрированные pytest в существующем
+  TestIsHoliday::test_new_year. Это фоновые предупреждения тестовой SQLite-среды;
+  они не скрывались.
+- Ruff, mypy (129 файлов), Bandit medium+ проходят.
+- pip-audit --strict по полному экспорту lock: **No known vulnerabilities found**.
+- Результаты Docker build и PostgreSQL/migrations на итоговом коммите —
+  в checks PR обновления SDK.
+
+## Источники и границы
+
+- https://github.com/love-apples/maxapi/releases/tag/v1.2.3
+- https://github.com/love-apples/maxapi/compare/v1.2.1...v1.2.3
+- https://github.com/love-apples/maxapi/blob/v1.2.3/maxapi/bot.py
+- https://github.com/love-apples/maxapi/blob/v1.2.3/maxapi/methods/set_commands.py
+- https://github.com/love-apples/maxapi/blob/v1.2.3/maxapi/methods/types/getted_updates.py
+- https://github.com/love-apples/maxapi/blob/v1.2.3/maxapi/client/ssl.py
+- https://github.com/aio-libs/aiohttp/releases/tag/v3.14.5
+- https://github.com/aio-libs/multidict/releases/tag/v7.2.1
+- https://github.com/aio-libs/yarl/releases/tag/v1.25.1
+- https://github.com/agronholm/anyio/releases/tag/4.14.2
+
+Синтетический транспорт не проверяет доступность MAX с VPS, права реального
+бота, TLS-инспекцию корпоративного proxy и визуальное поведение клиента MAX.
+До merge/развёртывания это остаётся тестом опубликованного кода; боевой smoke
+нужен после установки. Получать/публиковать токены в отчёте не требуется.
+```
+
 ### `docs/README.md`
 
 Size: `7709` bytes  
@@ -88194,13 +91846,89 @@ SHA-256: `39cc88c4b3539013404cc013e95d975456b9527b941e7a64ed3a9693389c2eb1`
 > **Внутренняя кухня вики** (`site/_kb/`): `_LEDGER.md` — выверенный реестр фактов (КОД = истина, супер-канон, от него «питаются» регламент и вика); `_STATUS.md` — текущий статус проекта; `_audit/_PLAN.md` — план doc-пробелов; `_sources/` — провенанс сборки; `_archive/` — свёрнутые процессные снимки (с индексом `_archive/README.md`). Прежние ролевые `.md` (PRD / RUNBOOK / SYSADMIN / SECURITY / DEVELOPER / HOW_IT_WORKS и т.п.) упразднены — их содержание перенесено в вики и в регламент v8.
 ```
 
-### `docs/ROADMAP.md`
+### `docs/RELEASE_0.2.0.md`
 
-Size: `24168` bytes  
-SHA-256: `225238de3b6c60436b07ba17f9b4f9d7353aebeef4a55d6e2a5dfd19e0f31df4`
+Size: `15181` bytes  
+SHA-256: `4069c7a222e4e0bd623b8ee9e07613674ce3c30e9f37d90d695d590b87b55f91`
 
 ```markdown
-# Дорожная карта aemr-bot
+# aemr-bot 0.2.0 — надёжность обработки и восстановления
+
+Дата: 26 октября 2026, Камчатка. Выпуск объединяет обновление баз угроз и зависимостей из #297/#298 с исправлениями аудита F01–F13. maxapi закреплён на 1.2.3. Миграция схемы: **0026**, ORM-таблиц: **12**.
+
+## Что изменено
+
+| Аудит | Исправление |
+|---|---|
+| F01 | События MAX сначала сохраняются в inbox_events одной транзакцией. Marker polling / HTTP 200 webhook выдаётся только после commit. Pending обрабатывается после рестарта; начатая, но прерванная операция получает failed с явным неизвестным результатом и уведомлением оператору. Старые idempotency-ключи проверяются только чтением. |
+| F02 | Weak-value registry сохраняет одну блокировку, пока существуют владельцы или ожидающие. |
+| F03 | Первые карточки имеют durable pending/sending/published/uncertain. Pending восстанавливаются при старте и раз в минуту, пачками до 100 с параллельностью 5. Неопределённая отправка не повторяется автоматически. |
+| F04 | В журнал рассылки записывается намерение до отправки, результат — сразу после. Ошибка журнала или неизвестный результат прерывает рассылку с FAILED; не маскируется под DONE. Стартовый reaper сохраняет счётчики и неопределённые результаты. |
+| F05 | Предупреждение перед сроком очистки запускается независимо от наличия просроченных пользователей и результата самой очистки. |
+| F06 | SAVE/DELETE мастеров выполняются последовательно на ключ; состояние копируется до постановки в очередь. |
+| F07 | Отмена проверяется перед отправкой и повтором, а также после ожидания общего лимитера непосредственно перед HTTP; подтверждение говорит «запрошена остановка». Уже выполняющийся HTTP-запрос нельзя объявлять отменённым задним числом. |
+| F08 | Webhook принимает X-Max-Bot-Api-Secret, сохраняет событие до ответа, возвращает 503 при отказе БД; общие /livez, /readyz, /healthz работают в обоих режимах. Удалены обращения к отсутствующему dp.webhook_post. |
+| F09 | Тайм-аут охватывает создание GPG, чтение и ожидание; при отмене/истечении времени дочерний процесс завершается и собирается. |
+| F10 | При ошибке сборки автодеплой возвращает прежний HEAD и healthwatch; исправленный контроллер автодеплоя остаётся установленным, чтобы повторные ошибки сборки не возвращали старый дефект. Следующий запуск снова пытается развернуть нужную версию. Пропуск возможен только с маркером успешного health-gate; при первом переходе со старого контроллера выполняется одна проверочная сборка даже при совпадающем HEAD. |
+| F11 | Отметка экспорта настроек ставится только для значений, совпадающих со снимком PR. Интерфейс различает экспорт, merge и применение. |
+| F12 | Подтверждение удаления точно описывает область очистки БД и сохраняющиеся сообщения/файлы в MAX. Ожидающие входящие события очищаются в той же транзакции. Обработка и удаление синхронизированы до commit удаления; уже взятое, но очищенное событие не исполняется. |
+| F13 | Roadmap обозначен историческим, обновлены контракты, реестр cron и каноническая вики. Исторические ссылки docs/_meta в архивных документах не являются актуальной инструкцией. |
+
+## Доставка и восстановление
+
+Состояния inbox: pending → processing → done/failed. До начала бизнес-операции сбой проверки старого ключа безопасно возвращает событие в pending. После возможного внешнего эффекта слепого повтора нет. failed хранит идентификатор/тип и причину, оператор получает уведомление; перед повтором нужно проверить карточку, обращение или журнал рассылки. Exactly-once для внешнего API без серверного ключа идемпотентности не обещается.
+
+Обработка inbox последовательная, чтобы сохранять порядок диалога; приём новых событий независим. Один обработчик ограничен 120 секундами. Медленный обработчик задержит последующие события до завершения/тайм-аута. Для больших нагрузок параллелизм по пользователям требует отдельного измерения и расширения модели очереди.
+
+SDK `max_retries=0`, `after_upload_attempts=1`: скрытые повторы изменяющих запросов выключены. Polling сам переподключается; повтор явно отклонённой рассылки управляется приложением. `MAX_API_RETRIES` принимается для совместимости старых .env, но не включает скрытые повторы. Ошибка/тайм-аут после отправки не доказывают недоставку.
+
+Первое сообщение карточки и журнал рассылки могут иметь неизвестный внешний результат при потере ответа или commit. Это сохраняется как неопределённость, а не как успех. Оператор может найти сохранённое обращение через очередь и выполнить осознанное повторное действие после проверки. Автоматическая публикация не удаляет старые карточки.
+
+## Данные и настройки
+
+Полное входящее событие временно хранится в БД для восстановления **до начала обработки**, максимум 24 часа. После done/failed тело сразу очищается; метаданные дедупликации удаляются через 30 дней. При удалении данных жителя тело события и MAX ID очищаются транзакционно. Обезличивание базы не удаляет ранее отправленные сообщения/файлы MAX и созданные внешние экспорты; срок их хранения задаётся отдельно владельцем соответствующего хранилища. Автоматического удаления служебной истории выпуск не вводит.
+
+Сохранение мастера остаётся best effort при недоступности БД или принудительном убийстве процесса; исправлена гонка порядка успешных записей. Экспорт runtime_config.json — снимок для PR, не автоматическое восстановление всех настроек после рестарта. Успешное создание PR не означает его merge или применение.
+
+## Эксплуатация
+
+- Обязательна миграция `alembic upgrade head` до запуска 0.2.0; штатный entrypoint выполняет её.
+- Для webhook нужен HTTPS URL, корректный secret и маршрут `/max/webhook`; подписка регистрируется через SDK. HTTP 503 позволяет MAX повторить событие при недоступности БД.
+- Compose даёт 45 секунд на остановку: сначала завершается worker, затем фоновые записи и соединения. Принудительный SIGKILL сохраняет неопределённые операции для проверки после запуска.
+- Встроенный бэкап остаётся необязательным: пустой/неуказанный BACKUP_LOCAL_DIR — тихое отключение. Функции pg_dump/GPG/S3/verify сохранены.
+- Базы угроз: раздельные постоянные снимки, загрузка при старте, ограничение размеров и безопасные логи. Один сигнал на эпизод устаревания. Для abuse.ch нужен ключ; без него используется ограниченный OpenPhish Community.
+- Возврат старого кода обычно не требует downgrade: новая схема обратно совместима. Downgrade 0026 удаляет журнал ожидающих событий, поэтому не выполняется автоматически.
+
+## Проверка
+
+Новые regression-тесты проверяют желаемое поведение, включая настоящий maxapi с локальным HTTP, реальные транзакции SQLite и PostgreSQL-проверки в CI. Исторический файл docs/audits/flow_audit_probes_20261026.py предназначен для исходного commit 547ae95; он не является тестом исправленной версии.
+
+Итоговые результаты CI и commit выпуска указаны в release PR. Локальные/CI проверки не заменяют подтверждение доступности реального MAX и состояния VPS. Развёртывание на VPS этим документом не объявляется выполненным.
+
+## Ручное обновление в контуре владельца
+
+Автодеплой в рабочем контуре не используется. Наличие вспомогательных scripts/auto-deploy.sh не является инструкцией их устанавливать. Публикация GitHub Release не подключается к серверу.
+
+1. На разрешённой машине получите исходники тега v0.2.0 и подготовьте образ из infra/Dockerfile с контекстом корня репозитория. Для изолированной сети перенесите готовый образ штатным способом docker save/load (либо podman save/load), а не рассчитывайте на доступ к PyPI/GitHub из контура.
+2. Сохраните действующие infra/.env, данные PostgreSQL и постоянные тома. Используйте штатный способ резервирования администратора; встроенный бэкап включать не требуется.
+3. Остановите прежний процесс бота и запустите новый образ тем же способом, которым обслуживается контур (Compose либо существующий Podman/systemd). Одновременно должен работать один экземпляр. Не выполняйте down -v.
+4. Штатная команда образа сначала выполняет alembic upgrade head (0026), затем запускает бот. При нестандартной команде запуска выполните миграции отдельно до запуска приложения.
+5. Проверьте /livez, /readyz, логи запуска, тестовое обращение и ответ оператора. При недоступности внешних баз угроз приём обращений продолжает работать; свежая репутационная база требует разрешённого сетевого доступа.
+
+Дополнительно исправлено расхождение комментария pyproject.toml с CI: CI использует lock, а не свободное разрешение зависимостей. В AGENTS.md закреплены приоритет проверенного кода над устаревшими инструкциями и проверка динамических путей перед удалением кода. Массовое удаление функций без доказательства не выполнялось.
+
+Удалён неиспользуемый webhook-семафор из main.py: после перехода на transport.setup_webhook и последовательный inbox worker у него нет вызовов или регистрации (проверены production-код и тесты). Уточнены устаревшие комментарии о FastAPI/task-per-webhook и регистрации webhook-декоратора. Polling-ограничитель прямых вызовов оставлен: он используется и покрыт тестами.
+```
+
+### `docs/ROADMAP.md`
+
+Size: `24960` bytes  
+SHA-256: `12991d083685af90f029f20f24a00d94fc03536a184ab3a0cc73b5abf681af21`
+
+```markdown
+# Историческая дорожная карта aemr-bot (июль 2026)
+
+> Актуальный выпуск и статус исправлений: [0.2.0](RELEASE_0.2.0.md). Ниже сохранён исторический backlog; он не описывает текущее состояние всех механизмов. Проверка бэкапов уже реализована, бэкап остаётся необязательным. Есть тесты с настоящим maxapi и локальным HTTP; живой MAX/VPS ими не проверяется.
 
 Состояние на 16 июля 2026. Сведено из многомерного анализа (надёжность, приёмочное тестирование, ценность, разбор maxapi 1.2.1) и глобального код-ревью. Каждый пункт: почему важно, состояние сейчас, что делать, трудозатраты. Приоритеты P0 (блокер запуска) → P3 (осознанно отложено).
 
@@ -88232,7 +91960,7 @@ SHA-256: `225238de3b6c60436b07ba17f9b4f9d7353aebeef4a55d6e2a5dfd19e0f31df4`
 Трудозатраты: низкие, если юниты применить (часы); верификация обязательна.
 
 ### [ ] Нет E2E-прогонов против реального MAX (staging-бот)
-Весь ввод/вывод MAX замокан: события фабрикуются вручную (`tests/_helpers.py`), Bot — мок. Юнит-набор может быть 100% зелёным, а живой житель не пройдёт воронку — реальный контракт maxapi (форма события, attachments, callback.payload, long-poll) ни одним тестом не исполняется. При бампе `maxapi==1.2.1` схема события может уехать незаметно.
+В исходном июльском наборе ввод/вывод MAX был замокан: события фабрикуются вручную (`tests/_helpers.py`), Bot — мок. Юнит-набор может быть 100% зелёным, а живой житель не пройдёт воронку — реальный контракт maxapi (форма события, attachments, callback.payload, long-poll) ни одним тестом не исполняется. При бампе `maxapi==1.2.1` схема события может уехать незаметно.
 
 Фикс: staging-бот (отдельный BOT_TOKEN через max.ru/business) + тонкий E2E-харнесс: второй аккаунт-«житель» гоняет golden path (start → воронка → обращение → ответ оператора → получение → подписка → рассылка). Ручной прогон перед релизом или nightly (секрет-gated). Отдельно контракт-тест: сверять поля события с моделями maxapi при каждом бампе.
 
@@ -88244,7 +91972,7 @@ SHA-256: `225238de3b6c60436b07ba17f9b4f9d7353aebeef4a55d6e2a5dfd19e0f31df4`
 
 ### Аварийное восстановление
 
-**[ ] Восстановимость бэкапа не проверяется, DR-учение не проводилось.** `db_backup.py` умеет только снимать дамп (pg_dump → gpg → том → S3); restore/verify в коде нет. Бэкап, который ни разу не разворачивали, — надежда, а не страховка; проверка заодно подтверждает, что GPG-passphrase жив и известен держателю (bus-factor). Фикс: ежемесячная job — развернуть последний дамп в throwaway-контейнер, SELECT-санити, алёрт при провале; одно ручное учение с записью RTO. Трудозатраты: средние.
+**[частично закрыто] Проверка бэкапа реализована; DR-учение на VPS не подтверждено.** `db_backup.py` умеет только снимать дамп (pg_dump → gpg → том → S3); verify добавлен в services/backup_verify.py и cron; восстановление на отдельной БД требует отдельной эксплуатационной проверки. Бэкап, который ни разу не разворачивали, — надежда, а не страховка; проверка заодно подтверждает, что GPG-passphrase жив и известен держателю (bus-factor). Фикс: ежемесячная job — развернуть последний дамп в throwaway-контейнер, SELECT-санити, алёрт при провале; одно ручное учение с записью RTO. Трудозатраты: средние.
 
 **[внешнее] Нет offsite-копии — все бэкапы на том же диске, что и БД.** Отказ диска уносит и базу, и все 8 копий. Код выгрузки в S3 готов (`_upload_to_s3` через rclone), включается при заданных `BACKUP_S3_*`; в проде не заданы. Дамп уже AES-256-шифрован, выгрузка наружу безопасна. Действие: настроить offsite-таргет в РФ-контуре, заполнить `BACKUP_S3_*`. Трудозатраты: низкие-средние (код готов, нужен таргет + конфиг).
 
@@ -91550,10 +95278,12 @@ SHA-256: `234e929bd139f6ca72b41e563dbd8aef8f65efc1e4e52cc27fa8817793fcf4e2`
 
 ### `docs/site/_kb/_LEDGER.md`
 
-Size: `113923` bytes  
-SHA-256: `233c19ebf90b8485c70621e811d81bb19283a8e955d3372f06fb79900bae102d`
+Size: `114312` bytes  
+SHA-256: `abd946bfa63b7d0b0251a7785bcdece0d3cdbdc494de35b8682f5486aa64440a`
 
 ```markdown
+> Актуализация выпуска 0.2.0 (26.10.2026): 26 миграций, последняя 0026; 12 ORM-таблиц, включая inbox_events. Исторические разделы ниже сохраняют дату своего решения. Docker/CI устанавливают зависимости по uv.lock. Текущий обзор: docs/RELEASE_0.2.0.md.
+
 # _LEDGER.md — выверенный реестр фактов (супер-канон)
 
 > **Статус:** канонический источник истины проекта. **КОД = истина №1.**
@@ -95065,8 +98795,8 @@ llms.txt (для офлайнового self-host неприменимо), ар�
 
 ### `docs/site/_kb2/admin.html`
 
-Size: `216926` bytes  
-SHA-256: `b9b25e6fb536ac8231ae59dcf498d19ef11376d7242acdbe0c3ff22293c4a6c6`
+Size: `217285` bytes  
+SHA-256: `d610676af651d46e2767e9a029f1880325a7c847fd71f96b200c41765ec769ea`
 
 ```html
 <h2 id="admin">Администратору: установка, настройка, обслуживание</h2>
@@ -95450,7 +99180,8 @@ COMMIT_AUTHOR_EMAIL=&lt;email&gt;</code></pre>
 <tr><td><code class="kbd">audit-log-retention-catchup</code></td><td>+30 сек после старта процесса (разово)</td><td>догоняющий прогон <code class="kbd">audit-log-retention</code>, тот же принцип</td></tr>
 <tr><td><code class="kbd">pdn-retention-catchup</code></td><td>+30 сек после старта процесса (разово)</td><td>догоняющий прогон <code class="kbd">pdn-retention</code>, тот же принцип (152-ФЗ ст. 21)</td></tr>
 <tr><td><code class="kbd">appeals-5y-retention-catchup</code></td><td>+30 сек после старта процесса (разово)</td><td>догоняющий прогон <code class="kbd">appeals-5y-retention</code>, тот же принцип</td></tr>
-<tr><td><code class="kbd">funnel-watchdog</code></td><td>ежечасно в :15</td><td>сбрасывает зависшие анкеты (житель начал заполнять и ушёл, &gt;24 ч); при ≥5 за час шлёт алёрт</td></tr>
+<tr><td><code class="kbd">initial-card-recovery</code></td><td>при старте и каждые 60 секунд</td><td>восстановление первой карточки; неопределённая доставка требует проверки оператором</td><td><code class="kbd">recover_unpublished_appeals</code></td></tr>
+      <tr><td><code class="kbd">funnel-watchdog</code></td><td>ежечасно в :15</td><td>сбрасывает зависшие анкеты (житель начал заполнять и ушёл, &gt;24 ч); при ≥5 за час шлёт алёрт</td></tr>
 <tr><td><code class="kbd">threat-intel-refresh</code></td><td>ежечасно в :17</td><td>обновляет локальный список вредоносных хостов (URLhaus + ThreatFox + опц. PhishTank), critical-алёрт при устаревании &gt;6 ч</td></tr>
 <tr><td><code class="kbd">broadcast-draft-reaper</code></td><td>ежечасно в :37</td><td>зависшие черновики рассылок (DRAFT старше 30 минут) переводит в FAILED</td></tr>
 <tr><td><code class="kbd">pulse-hourly</code></td><td>каждый час 24/7 в :05</td><td>базовый «пульс» в служебную группу: «🟢 Пульс: бот работает. Время проверки: HH:MM»</td></tr>
@@ -101218,6 +104949,263 @@ SHA-256: `a91fc3411667da4b220195bb682f3823ee6bd1e4d46a745254888d7b80236976`
 </div>
 ```
 
+### `docs/superpowers/plans/2026-10-26-reliability-release.md`
+
+Size: `6513` bytes  
+SHA-256: `48e6765e520b0f850c7eae00fe48fc885e6bc64b39ba04cceaca39ab4a01db42`
+
+```markdown
+# Reliability release 0.2.0 Implementation Plan
+
+> **For agentic workers:** Use focused implementation tasks under dispatching-parallel-agents; integrate and review the complete branch before release.
+
+**Goal:** Close F01–F13 from the execution-path audit and publish a tested consolidated release.
+**Architecture:** Persist inbound events before acknowledging transport progress; recover only work known not to have started and explicitly surface uncertain outcomes. Preserve existing operator/citizen workflows; tighten state ordering, cancellation and deployment recovery.
+**Tech Stack:** Python 3.12, maxapi 1.2.3, SQLAlchemy/PostgreSQL, APScheduler, Docker Compose.
+**Spec:** docs/audits/FLOW_AUDIT_2026-10-26.md plus user's instruction to release a fully corrected version.
+
+## Global Constraints
+
+- Preserve existing functionality and current maxapi 1.2.3 integration.
+- Backups remain optional and quiet when disabled. Threat feeds signal once per outage.
+- Do not blindly repeat an external send after an uncertain outcome.
+- No real messages or production database mutations during testing.
+- Ship only after regression suite, migration/schema checks, security/lint/type checks and branch review.
+- User authorizes release; no further plan approval needed. Actual VPS access is not available.
+
+## Review Focus
+
+- Process death between durable acceptance and handler dispatch must leave recoverable work.
+- Process death during external sends must not cause silent replay or a false success claim.
+- Concurrent transitions must not resurrect cleared drafts or split locks.
+- Cancellation and privacy erasure must apply to pending work as well as current in-memory state.
+- A failed deployment must be retried even when Git HEAD already equals remote.
+
+## Task 1: inbound transport and supported webhook (F01/F08)
+
+Files: new services/inbox.py and transport module, db/models.py, migration 0026, main.py, handlers/__init__.py, idempotency.py; tests/test_inbox*.py and webhook tests.
+Interface: accept raw batch durably before advancing marker; pending worker dispatches supported SDK models. Done payload is cleared; uncertain/failed execution is recorded and signalled once. Webhook uses canonical secret header and durable acceptance, returns non-2xx on DB failure.
+- [ ] Write failing tests for durable acceptance, marker preservation, recovery and webhook auth/failure.
+- [ ] Implement persistence and bounded worker, integrate startup/shutdown and cleanup.
+- [ ] Run focused tests and commit.
+
+## Task 2: appeal locks and initial-card recovery (F02/F03)
+
+Files: handlers/appeal_runtime.py, services/admin_card.py, new focused tests. Root integrates recovery scheduling.
+Interface: get_user_lock/drop_user_lock retain identity while holders/waiters reference it; recover_unpublished_appeals(bot) finds saved open appeals lacking first card, loads relationships and republishes safely.
+- [ ] Convert lock failure into regression test, add first-card recovery tests.
+- [ ] Implement bounded recovery and concurrency protection.
+- [ ] Run appeal/card tests and commit only owned files.
+
+## Task 3: broadcast delivery accounting and cancellation (F04/F07)
+
+Files: handlers/broadcast.py, services/broadcasts.py, broadcast tests.
+Interface: cancellation checked before each new send; acknowledgement distinguishes requested/completed. Delivery accounting failures never yield normal DONE and never silently resume uncertain sends. Persist intent before sending if necessary using existing delivery ledger.
+- [ ] Reproduce failed journal and pre-existing cancellation with desired expectations.
+- [ ] Implement durable accounting/failure semantics and truthful progress.
+- [ ] Run broadcast tests and commit owned files.
+
+## Task 4: persistence ordering and settings export race (F06/F11)
+
+Files: services/wizard_registry.py, services/wizard_persist.py if needed, handlers/admin_settings_pr.py, services/settings_store.py, focused tests.
+Interface: ordered writes per wizard key; mark_synced only unchanged exported snapshots. Snapshot runtime settings by value before awaiting network.
+- [ ] Reproduce delayed SAVE after DELETE and change during PR creation.
+- [ ] Implement order and compare-and-set sync marking.
+- [ ] Run targeted tests and commit owned files.
+
+## Task 5: deployment and backup process budgets (F09/F10)
+
+Files: scripts/auto-deploy.sh, services/backup_verify.py, targeted tests.
+Interface: complete decrypt/read/wait bounded and child reaped on timeout/cancel; failed build retries same revision or restores source HEAD without pretending deploy succeeded.
+- [ ] Adapt audit reproductions to desired behavior.
+- [ ] Implement and run shellcheck/backup/deploy tests; commit owned files.
+
+## Task 6: cron, data scope, documentation and release (F05/F12/F13)
+
+Files: services/cron.py, copy/citizen_funnel.py, lifecycle docs, roadmap/contracts; pyproject/lock/version/release notes.
+- [ ] Test retention prewarning runs when no records overdue; run independently of cleanup failures.
+- [ ] Integrate card recovery and inbox housekeeping.
+- [ ] Accurately describe DB erasure and copies in MAX; no unsolicited destructive history cleanup.
+- [ ] Update stale documentation, mark audit probes historical, version 0.2.0 and changelog.
+- [ ] Full regression/security/schema checks, independent review, green CI.
+- [ ] Merge consolidated release, supersede old PRs, tag/publish if tools permit; report exact shipped state.
+
+## Execution record
+
+Initial branch base: c283d4e (includes #297/#298). origin/main remains aac8a79. No implementation changes in main yet.
+
+### Review and verification record
+
+- Tasks 1–5 implemented; task 6 integration and local verification complete, CI/publication pending.
+- Independent review of c283d4e..9937432: three Important findings (cancellation after global pacing; restoration of old deploy controller; erasure/active receipt race). All reproduced before fix and covered by test_release_review_regressions.py, test_auto_deploy.py, test_inbox_recovery.py.
+- Review Minor (outdated admin_card helper doc) corrected. No findings parked.
+- Previous integrated baseline: 2508 passed, 147 PostgreSQL-dependent skipped; mypy132 clean; lock offline check clean. Final rerun after review follows.
+- Decision: unknown external effects are quarantined and surfaced, never blindly replayed; MAX provides no application idempotency key.
+- Decision: erasure describes and enforces bot DB scope; prior external MAX messages are retained under their separate lifecycle.
+```
+
+### `docs/THREAT_INTEL_AUDIT_2026-10-26.md`
+
+Size: `13635` bytes  
+SHA-256: `af81e4a1bdaae76cde2dc546c9b34f5a37967d6d4a7a31532dd5b350d27fe26e`
+
+```markdown
+# Базы угроз и уведомления: проверка 26.10.2026
+
+Проверены исходники main на `aac8a79ddedcfefebe9f162a4dd1e8c0f680ef2d`.
+Это не проверка работающего VPS. Механизм существовал, не был заглушкой:
+`threat_intel.refresh_all` скачивал базы, а `card_format` сверял хосты ссылок
+из summary и последних 10 видимых сообщений (общий предел 50 000 символов).
+
+## Причина неисправности
+
+Старые `urlhaus.abuse.ch/downloads/csv_online/` и
+`threatfox.abuse.ch/downloads/hostfile/` при прямой проверке вернули HTTP 410.
+Документация https://urlhaus.abuse.ch/api/ и
+https://threatfox.abuse.ch/export/ теперь требует Auth-Key в адресе выгрузки.
+Ранее данное описание «оба подключаются автоматически без ключа» неверно.
+
+## Подключения после исправлений
+
+| Источник | Выгрузка | Включение |
+| --- | --- | --- |
+| URLhaus | `https://urlhaus-api.abuse.ch/v2/files/exports/{key}/recent.csv` | `ABUSECH_AUTH_KEY` |
+| ThreatFox | `https://threatfox-api.abuse.ch/v2/files/exports/{key}/full.csv.zip` | `ABUSECH_AUTH_KEY` |
+| PhishTank | `https://data.phishtank.com/data/{key}/online-valid.json` | `PHISHTANK_APP_KEY`, опционально |
+| OpenPhish Community | `https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt` | автоматически при отсутствии ключа abuse.ch |
+
+OpenPhish — официальная публичная ссылка с https://www.openphish.com/phishing_feeds.html.
+Community — ограниченный бесплатный список, обновляемый поставщиком раз в 12 часов;
+это не эквивалент платной базы и не замена всему покрытию malware/C2 abuse.ch.
+URLhaus recent — недавний срез, не вся прежняя online-выгрузка; явные offline
+строки отбрасываются. ThreatFox CSV обрабатывает domain/url/ip:port, а не хеши.
+Бот скачивает только эти фиксированные выгрузки, не посещает URL жителей
+и не передаёт поставщикам обращения или данные жителей.
+
+Если ключ abuse.ch задан, используются URLhaus/ThreatFox; их сбой не скрывается
+автоматической заменой на OpenPhish. Это позволяет заметить отказ настроенных
+источников. PhishTank добавляется при наличии его собственного ключа.
+Ключи следует задать на VPS; в репозиторий они не добавляются.
+
+## Исправления и фактическое поведение
+
+- При старте загружается сохранённый снимок и немедленно запускается та же
+  cron-job обновления; далее каждый час в :17. Приём обращений не ждёт сеть.
+- Отдельные снимки и времена обновления по источникам. Частичный сбой сохраняет
+  прежнюю часть отказавшего источника; успешная выгрузка заменяет только свою.
+- Пустой/нераспознанный ответ, HTML авторизации, повреждённый ZIP не объявляются
+  успешной базой. CSV разбирается стандартным csv.reader. Разбор вынесен из event loop.
+- HTTPS, 60 секунд на загрузку; до 32 MiB тела и 64 MiB распаковки. ZIP не извлекается
+  на диск. HTTP-редиректы отклоняются, чтобы не перенаправлять ключ из URL.
+  Неподходящий/слишком большой ответ сохраняет прежний снимок.
+- Загрузчик пишет только хост поставщика, HTTP-код или класс исключения.
+  Полные URL и текст сетевого исключения с возможными ключами не логируются.
+- Нормализация регистра, IDN/punycode, префикса www и конечной точки;
+  некорректные IPv6/URL безопасно отклоняются.
+- Проверяется точный хост, включая голые полные поддомены; автоматического
+  наследования репутации evil.example → login.evil.example нет.
+  В карточке показываются источники совпадений.
+- Исправлено повторное появление кликабельной ссылки в самом предупреждении:
+  схема и точки найденных индикаторов разрываются невидимыми разделителями.
+  Обезвреживание голых поддоменов с известными TLD также исправлено.
+- Атомарный JSON-кэш `/var/lib/aemr/threat-intel.json`: снимки, времена,
+  начало наблюдения и флаг уже отправленного предупреждения. Не содержит
+  ключей или обращений. Compose/Quadlet имеют отдельный persistent volume;
+  Dockerfile создаёт каталог с владельцем botuser. Бэкап БД не требуется.
+- Возраст считается по каждому включённому источнику. Свежая часть базы
+  не маскирует отказ другой; отказ с первого запуска тоже отслеживается.
+- После 6 часов неполного обновления — один critical-сигнал за эпизод.
+  После успешной отправки повторов нет, включая рестарт при исправном кэше.
+  После восстановления всех включённых источников флаг сбрасывается.
+  При неудачной доставке следующая cron-job вправе повторить попытку.
+- Egress allowlist обновлён для API-хостов abuse.ch и публичного OpenPhish.
+
+## Бэкап
+
+Не заданный или пустой `BACKUP_LOCAL_DIR` означает штатное отключение:
+автоматические дампы не запускаются и предупреждений в чат нет.
+Это теперь значение по умолчанию и в примере конфигурации.
+pg_dump/GPG/S3, ротация, `/backup` и проверка пригодности копий сохранены.
+При пустом пути S3-выгрузка также не выполняется. Для включения нужны путь
+и остальные параметры шифрования. Сбои уже включённого бэкапа остаются видимыми.
+Ранее явно записанный `/backups` не очищается автоматически: если он есть на VPS,
+для намеренного отключения нужно `BACKUP_LOCAL_DIR=`.
+
+## Проверка после установки на VPS
+
+Из infra, без вывода ключей или URL индикаторов:
+
+```bash
+docker compose exec bot python -c 'import asyncio; from aemr_bot.services.threat_intel import refresh_all, get_store; print("updated:", asyncio.run(refresh_all())); s=get_store(); print("retained:", s.sources, "hosts:", len(s.hosts), "stale:", s.is_stale())'
+docker compose logs --since 2h bot | rg 'threat_intel|threat-intel'
+```
+
+Проверить непустые счётчики настроенных источников, доступ к новым хостам,
+восстановление кэша после рестарта и отсутствие повторного сигнала при одном
+отказе. Успешное авторизованное скачивание abuse.ch/PhishTank в этой сессии
+не подтверждено: соответствующих ключей и доступа к VPS нет.
+
+## Пределы защиты
+
+Совпадение означает репутацию хоста, а не доказанный фишинг конкретной страницы:
+на общем хостинге возможны ложные совпадения. Отсутствие совпадения не означает
+безопасность. Содержимое страниц, цепочки редиректов, вложения и смысл обращения
+не исследуются. Устаревшие снимки сохраняются до успешной замены, а не выдаются
+за свежие. Непустая частично распознаваемая выгрузка не гарантирует полноту.
+Если кэш недоступен/повреждён, после рестарта возможен новый сигнал об отказе.
+Невидимые разделители проверены строковыми тестами; автоссылки конкретного
+клиента MAX требуют отдельной визуальной проверки.
+
+## Выполненная проверка
+
+- Настоящий публичный OpenPhish загружен через рабочую функцию refresh_all:
+  211 уникальных хостов, lookup одного загруженного индикатора дал True,
+  повторная инициализация восстановила тот же набор и источник из JSON-кэша.
+  URL индикаторов не выводились и не открывались.
+- Полный pytest с TZ=Asia/Kamchatka: 2421 passed, 144 skipped.
+  Пропуски не являются доказательством интеграционной работоспособности VPS.
+- В первом прогоне возникли три предупреждения PytestUnhandledThreadExceptionWarning (aiosqlite,
+  Event loop is closed) в существующих проверках:
+  TestHandleEdit::test_resets_to_awaiting_text,
+  TestRunBroadcastImpl::test_final_status_publishes_new_summary_event_card,
+  test_duplicate_delivery_pair_is_silently_skipped. Они не скрывались.
+- ruff: без замечаний; mypy: без ошибок в 129 файлах;
+  bash -n infra/egress-allowlist.sh и git diff --check: успешно.
+- Новые регрессии перед исправлениями воспроизвели потерю части базы,
+  ложный успех HTML, холодный старт/старение, повторные уведомления,
+  повторную вставку кликабельной ссылки и тихое отключение бэкапа.
+
+## Дополнительное исправление зависимостей после CI
+
+CI выявил 18 известных уязвимостей в шести пакетах исходного lock.
+Исправления включены в этот же PR, поскольку aiohttp непосредственно
+исполняет загрузку баз. Обновлены только затронутые пакеты и необходимый
+им совместимый yarl; maxapi остаётся 1.2.1.
+
+| Пакет | Было | Стало |
+| --- | --- | --- |
+| aiohttp | 3.14.3 | 3.14.5 |
+| multidict | 6.7.1 | 7.2.1 |
+| anyio | 4.13.0 | 4.14.2 / 4.15.1 по версии Python |
+| certifi | 2026.4.22 | 2026.10.23 |
+| filelock | 3.29.0 | 4.2.4 |
+| urllib3 | 2.7.0 | 2.8.0 |
+| yarl | 1.23.0 | 1.25.1 |
+
+Lock пересобран uv 0.11.12, как в Dockerfile, с сохранением revision=3.
+Hash-enforced экспорт тем же uv прошёл. Повторный полный pytest после
+обновления: **2421 passed, 144 skipped, без предупреждений**.
+Ruff, mypy и Bandit (medium+) прошли; pip-audit --strict по полному экспорту
+lock: **No known vulnerabilities found**. До смены lock GitHub отдельно
+успешно выполнил **2562 passed, 3 skipped** с PostgreSQL 16, миграции и Docker
+build; для обновлённого lock результат соответствующего нового CI следует
+смотреть непосредственно в PR.
+
+В парсере legacy hosts-файла точечный nosec B104 относится только к сравнению
+строки с маркером 0.0.0.0; открытия или привязки сокета здесь нет. Это ложное
+срабатывание статического анализатора, не отключение сетевой защиты.
+```
+
 ### `docs/Политика_конфиденциальности_ИС_Чат-бот_MAX.md`
 
 Size: `44753` bytes  
@@ -102133,8 +106121,8 @@ SHA-256: `5f5e435cb2c4820b28745357ccc324d7f19f539d54f1568a9950bf3d0aba00ed`
 
 ### `infra/.env.example`
 
-Size: `70274` bytes  
-SHA-256: `4c8758fb542cbf6db32f3e56b7d89a9eca56ae0615709f5f4a1cb25f0c58a768`
+Size: `70804` bytes  
+SHA-256: `96142038b1dc8b6262b4882b2366b6a46e7ee9341d21fcb4be5c19a3233b101d`
 
 ```text
 # =====================================================================
@@ -102740,7 +106728,7 @@ MAX_API_TIMEOUT_SECONDS=30
 #   • поставьте 3 — если у вас нестабильная связь и временные
 #     ошибки регулярные.
 
-MAX_API_RETRIES=1
+MAX_API_RETRIES=0
 
 
 # =====================================================================
@@ -102881,16 +106869,15 @@ BACKUP_MINUTE=0
 # ---------------------------------------------------------------------
 #
 # BACKUP_LOCAL_DIR — папка внутри контейнера, куда складываются
-#                    резервные копии. По умолчанию /backups. В обычной
+#                    резервные копии. По умолчанию выключено; для включения /backups. В обычной
 #                    установке эта папка через docker-compose
 #                    «прокинута» в именованный том Docker «backups»,
 #                    чтобы файлы не пропадали при пересоздании
 #                    контейнера.
 #
-#   Что произойдёт, если оставить пустым: локальные резервные копии
-#   не сохраняются. Включайте такой режим, только если у вас
-#   обязательно настроено S3-хранилище (см. ниже) — иначе резервных
-#   копий не будет вообще.
+#   Пустое значение — штатное отключение встроенного бэкапа без предупреждений.
+#   Выгрузки в S3 при этом также не выполняются. Команда /backup остаётся доступна
+#   и объяснит, что нужно настроить для создания копии.
 #
 # BACKUP_KEEP_COUNT — сколько последних файлов хранить. По умолчанию
 #                     8. Восемь еженедельных копий — это примерно
@@ -102903,7 +106890,7 @@ BACKUP_MINUTE=0
 #     • уменьшите до 4 — если место на диске ограничено и хватит
 #       месяца истории.
 
-BACKUP_LOCAL_DIR=/backups
+BACKUP_LOCAL_DIR=
 BACKUP_KEEP_COUNT=8
 
 # BACKUP_PG_DUMP_TIMEOUT_SECONDS / BACKUP_GPG_TIMEOUT_SECONDS /
@@ -103168,6 +107155,15 @@ SEED_DIR=/app/seed
 GITHUB_PAT=
 GITHUB_REPO=Gaben1488/aemr-bot
 GITHUB_PR_BASE_BRANCH=main
+
+# Threat intelligence: current abuse.ch exports require a key from https://auth.abuse.ch/
+# Without this key the limited OpenPhish Community feed is used (publisher cadence 12h).
+ABUSECH_AUTH_KEY=
+# Optional PhishTank feed (key issued by PhishTank)
+PHISHTANK_APP_KEY=
+# Persistent threat snapshots, separate from optional database backups. Empty disables cache.
+THREAT_INTEL_CACHE_PATH=/var/lib/aemr/threat-intel.json
+# BACKUP_LOCAL_DIR= deliberately disables automatic dumps without chat warnings.
 ```
 
 ### `infra/cntlm/cntlm.conf.example`
@@ -103309,8 +107305,8 @@ services:
 
 ### `infra/docker-compose.yml`
 
-Size: `7842` bytes  
-SHA-256: `ec542e34cec05b30eab2f3b8f485a11a4ca39cc9b7d0fdbb2916a4d2555f9ccc`
+Size: `7920` bytes  
+SHA-256: `48b279999930a253c0d08e5c034ccfb0fb4dbfe3784b228f6604d3047af4f630`
 
 ```yaml
 # Имя compose-проекта закреплено здесь, а не вставляется sed'ом в
@@ -103374,6 +107370,7 @@ services:
 
   bot:
     # Явное имя образа — ОДНО И ТО ЖЕ для compose и Quadlet (localhost/aemr-bot:latest).
+    stop_grace_period: 45s
     # Зачем: (1) обновление детерминировано — и compose, и Quadlet поднимают один
     # образ, не плодятся дубли (по умолчанию compose назвал бы его aemr-bot-bot);
     # (2) офлайн-перенос в закрытый контур: `podman save localhost/aemr-bot:latest`
@@ -103395,6 +107392,7 @@ services:
       # Локальные еженедельные pg_dump'ы. Named-volume переживает пересборки
       # контейнера. Восстановление — см. RUNBOOK §7.
       - backups:/backups
+      - threat_intel:/var/lib/aemr
       # Персистентные логи приложения на диск хоста: bot.log с ротацией,
       # переживает любой down/rm/пересборку. Каталог создать заранее с
       # владельцем UID 1000 (см. вики «Эксплуатация» → «Логи»):
@@ -103448,14 +107446,15 @@ services:
   #   docker compose -f docker-compose.yml -f docker-compose.webhook.yml up -d
 
 volumes:
+  threat_intel:
   db_data:
   backups:
 ```
 
 ### `infra/Dockerfile`
 
-Size: `4381` bytes  
-SHA-256: `79e0e7bbc35e309ac2a20a20d33e34797c87c5a5d69841a865b3c05943eb434a`
+Size: `4409` bytes  
+SHA-256: `df1e72eaee29d3e2e0e789150922cc1e7ee9de3b35d71023d515ee56c6bc25d9`
 
 ```dockerfile
 FROM python:3.12-slim@sha256:4386a385d81dba9f72ed72a6fe4237755d7f5440c84b417650f38336bbc43117
@@ -103515,7 +107514,7 @@ COPY docs/PRIVACY.pdf /app/seed/PRIVACY.pdf
 # /backups is the named volume mount target. Pre-create it so chown runs
 # at build time; compose will mount over it but ownership of the mount
 # point stays for the volume.
-RUN mkdir -p /backups && chown -R botuser:botuser /app /backups
+RUN mkdir -p /backups /var/lib/aemr && chown -R botuser:botuser /app /backups /var/lib/aemr
 
 ENV SEED_DIR=/app/seed
 
