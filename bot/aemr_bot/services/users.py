@@ -3,7 +3,7 @@ import logging
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import delete, select, text, update
+from sqlalchemy import delete, or_, select, text, update
 from sqlalchemy import func as sa_func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +14,7 @@ from aemr_bot.db.models import (
     AppealStatus,
     AuditLog,
     DialogState,
+    Event,
     Message,
     User,
 )
@@ -389,6 +390,23 @@ async def erase_pdn(
     return closed_ids is not None
 
 
+async def _erase_legacy_resident_events(session: AsyncSession, max_user_id: int) -> None:
+    """Remove legacy dedupe records which explicitly contain this MAX ID.
+
+    Legacy keys may embed the decimal ID as a pipe-delimited field; matching
+    the full field avoids erasing a different user whose ID has this prefix.
+    Modern inbox receipts are cleared separately by erase_pending().
+    """
+    user_field = f"user={max_user_id}"
+    await session.execute(
+        delete(Event).where(or_(
+            Event.payload["user_id"].as_string() == str(max_user_id),
+            Event.idempotency_key.like(f"%|{user_field}|%"),
+            Event.idempotency_key.like(f"%|{user_field}"),
+        ))
+    )
+
+
 async def erase_pdn_detailed(
     session: AsyncSession, max_user_id: int, *, revoked_before: datetime | None = None,
 ) -> list[int] | None:
@@ -431,8 +449,10 @@ async def erase_pdn_detailed(
     if user_row is None:
         if revoked_before is None:
             await erase_pending(session, max_user_id)
+            await _erase_legacy_resident_events(session, max_user_id)
         return None
     await erase_pending(session, max_user_id)
+    await _erase_legacy_resident_events(session, max_user_id)
     # Эти записи описывают жителя; журнал управления операторами может
     # содержать тот же MAX ID в другом качестве и должен сохраниться.
     resident_actions = (
