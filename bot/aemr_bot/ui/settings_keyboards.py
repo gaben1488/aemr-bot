@@ -186,12 +186,12 @@ NOTIFY_TOGGLE_KEYS: tuple[str, ...] = (
 )
 
 NOTIFY_LABELS: dict[str, str] = {
-    "admin_notify_pulse": "Пульс (heartbeat)",
-    "admin_notify_consent": "Согласие на ПДн дано",
-    "admin_notify_subscriptions": "Подписки/отписки на рассылку",
-    "admin_notify_open_reminder": "Напоминалка: открытые обращения",
-    "admin_notify_overdue_reminder": "Напоминалка: просроченные обращения",
-    "admin_notify_monthly_stats": "Месячный отчёт (XLSX)",
+    "admin_notify_pulse": "Пульс бота",
+    "admin_notify_consent": "Новые согласия",
+    "admin_notify_subscriptions": "Подписки",
+    "admin_notify_open_reminder": "Открытые обращения",
+    "admin_notify_overdue_reminder": "Просроченные",
+    "admin_notify_monthly_stats": "Месячный отчёт",
 }
 
 
