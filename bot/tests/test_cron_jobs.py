@@ -439,6 +439,7 @@ class TestPdnRetention:
 
         # Главное: уничтожение состоялось, а не отложилось.
         erase.assert_awaited_once()
+        assert erase.await_args.kwargs["revoked_before"] is not None
         texts = [call.args[0] for call in send.call_args_list]
         # И оператор предупреждён, что обращения закрыты без ответа.
         assert any("БЕЗ ответа" in text for text in texts)
