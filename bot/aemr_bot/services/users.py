@@ -82,6 +82,8 @@ async def set_consent(
     max_user_id: int,
     *,
     text_sha256: str | None = None,
+    consent_text: str | None = None,
+    prompt_mid: str | None = None,
 ) -> bool:
     """Дать (или возобновить) согласие на обработку ПДн.
 
@@ -112,8 +114,9 @@ async def set_consent(
     атомарен: conditional UPDATE под row-lock'ом — из двух конкурентных
     транзакций ровно одна увидит переход NULL→значение.
     """
+    accepted_at = datetime.now(UTC)
     values = {
-        "consent_pdn_at": datetime.now(UTC),
+        "consent_pdn_at": accepted_at,
         "consent_pdn_text_sha256": text_sha256,
         "consent_revoked_at": None,
     }
@@ -129,14 +132,32 @@ async def set_consent(
         )
         .values(**values)
     )
-    if (fresh.rowcount or 0) > 0:
-        return True
-    # Согласие уже действует — житель подтвердил актуальную редакцию
-    # текста: освежаем отметку и хеш, без уведомления.
-    await session.execute(
-        update(User).where(User.max_user_id == max_user_id).values(**values)
-    )
-    return False
+    newly_granted = (fresh.rowcount or 0) > 0
+    if not newly_granted:
+        await session.execute(
+            update(User).where(User.max_user_id == max_user_id).values(**values)
+        )
+    if consent_text is not None:
+        # The update above acquired the PostgreSQL row lock. Keep the exact
+        # rendered text rather than reconstructing it from current settings.
+        resident = await session.scalar(
+            select(User).where(User.max_user_id == max_user_id).with_for_update()
+        )
+        if resident is not None:
+            records = list(resident.consent_records or [])
+            duplicate = prompt_mid is not None and any(
+                item.get("prompt_mid") == prompt_mid for item in records
+            )
+            if not duplicate:
+                records.append({
+                    "accepted_at": accepted_at.isoformat(),
+                    "text": consent_text,
+                    "template_sha256": text_sha256,
+                    "prompt_mid": prompt_mid,
+                })
+                resident.consent_records = records
+                await session.flush()
+    return newly_granted
 
 
 async def set_phone(session: AsyncSession, max_user_id: int, phone: str) -> None:

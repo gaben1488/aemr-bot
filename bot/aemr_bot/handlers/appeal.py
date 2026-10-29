@@ -250,7 +250,8 @@ async def _cb_consent_yes(event, max_user_id: int, payload: str) -> None:
         )
         if not needs_prompt:
             newly_granted = await users_service.set_consent(
-                session, max_user_id, text_sha256=consent_hash
+                session, max_user_id, text_sha256=consent_hash,
+                consent_text=data.get("consent_prompt_text"), prompt_mid=prompt_mid,
             )
     if needs_prompt:
         await ack_callback(event)

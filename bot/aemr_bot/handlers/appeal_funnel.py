@@ -164,7 +164,7 @@ async def start_appeal_flow(event, max_user_id: int):
         async with session_scope() as session:
             await users_service.set_state(
                 session, max_user_id, DialogState.AWAITING_CONSENT,
-                data={"consent_prompt_hash": consent_hash,
+                data={"consent_prompt_hash": consent_hash, "consent_prompt_text": text,
                       "consent_prompt_mid": extract_message_id(sent) or get_callback_message_id(event)},
             )
         return
@@ -683,7 +683,8 @@ async def on_awaiting_consent(event, body, text_body, max_user_id):
     async with session_scope() as session:
         await users_service.set_state(
             session, max_user_id, DialogState.AWAITING_CONSENT,
-            data={"consent_prompt_hash": consent_hash, "consent_prompt_mid": extract_message_id(sent)},
+            data={"consent_prompt_hash": consent_hash, "consent_prompt_text": text,
+                  "consent_prompt_mid": extract_message_id(sent)},
         )
 
 

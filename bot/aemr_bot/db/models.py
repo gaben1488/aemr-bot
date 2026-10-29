@@ -137,6 +137,9 @@ class User(Base):
     # невозможно. Хеш даёт компактную несомненную привязку. NULL —
     # у согласий, данных до миграции 0022.
     consent_pdn_text_sha256: Mapped[str | None] = mapped_column(String(64))
+    # Only future acceptances can be reconstructed reliably. Existing users
+    # start with an empty list: never infer an old text from today's seed.
+    consent_records: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     # Когда житель явно отозвал согласие через сценарий «Уйти из бота».
     # Используется как точка отсечения: по обращениям, принятым до отзыва,
     # оператор может дать финальный ответ через бот; новые обращения после

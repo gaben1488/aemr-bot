@@ -31,7 +31,7 @@ from aemr_bot.handlers import admin_commands, callback_router
 from aemr_bot.handlers import broadcast as broadcast_handler
 from aemr_bot.handlers import broadcast_templates as broadcast_templates_handler
 from aemr_bot.handlers._auth import ensure_operator
-from aemr_bot.services import admin_relay, appeal_history, card_format
+from aemr_bot.services import admin_relay, appeal_history, card_format, consent_history
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.utils.event import ack_callback, send_or_edit_screen
 
@@ -164,6 +164,82 @@ async def _op_history(event, payload: str) -> None:
     )
 
 
+async def _op_consent(event, payload: str) -> None:
+    """Show only captured evidence; older consent text may be unavailable."""
+    from maxapi.types import CallbackButton
+    from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+
+    await ack_callback(event)
+    if not await ensure_operator(event):
+        return
+    try:
+        appeal_id, page = map(int, payload.removeprefix("op:consent:").split(":"))
+        if appeal_id <= 0 or page < 0:
+            return
+    except ValueError:
+        return
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+    if not appeal or not appeal.user:
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+                                  text="Данные жителя недоступны.",
+                                  attachments=[kbds.op_back_to_menu_keyboard()])
+        return
+    pages = consent_history.pages_for(getattr(appeal.user, "consent_records", None) or [])
+    keyboard = InlineKeyboardBuilder()
+    if not pages:
+        text = ("🔐 Согласие жителя\n\nТекст ранее данного согласия не сохранился. "
+                "Восстановить его по текущим настройкам нельзя.")
+    else:
+        page = min(page, len(pages) - 1)
+        item = pages[page]
+        text = (f"🔐 Согласие жителя · редакция {item.edition} из {item.editions}\n"
+                f"Подтверждено: {item.date}\nЧасть {item.part} из {item.parts}\n\n"
+                f"{item.text.replace('🆔 №', '🆔 \u200b№')}")
+        nav = []
+        if page:
+            nav.append(CallbackButton(text="◀️ Назад", payload=f"op:consent:{appeal_id}:{page - 1}"))
+        if page + 1 < len(pages):
+            nav.append(CallbackButton(text="Далее ▶️", payload=f"op:consent:{appeal_id}:{page + 1}"))
+        if nav:
+            keyboard.row(*nav)
+    keyboard.row(CallbackButton(text="↩️ К обращению", payload=f"op:open_card:{appeal_id}"))
+    await send_or_edit_screen(event, chat_id=cfg.admin_group_id, text=text,
+                              attachments=[keyboard.as_markup()])
+
+
+async def _op_word(event, appeal_id: int) -> None:
+    """Export one appeal only after checking the actor's operator role."""
+    import asyncio
+    from aemr_bot.services import admin_bus, appeal_word, uploads
+
+    await ack_callback(event, "Готовлю документ…")
+    if not await ensure_operator(event):
+        return
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+    if not appeal:
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+                                  text="Обращение не найдено.",
+                                  attachments=[kbds.op_back_to_menu_keyboard()])
+        return
+    document = await asyncio.to_thread(appeal_word.build_appeal_docx, appeal)
+    token = await uploads.upload_bytes(event.bot, document, suffix=".docx")
+    if not token:
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+                                  text="Не удалось загрузить документ. Попробуйте позже.",
+                                  attachments=[kbds.op_back_to_menu_keyboard()])
+        return
+    sent = await admin_bus.send(event.bot, text=f"📄 История обращения № {appeal_id} · Word",
+                                attachments=[uploads.file_attachment(token)], critical=True)
+    if not sent:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text="Не удалось подтвердить отправку документа. Проверьте чат перед повтором.",
+            attachments=[kbds.op_back_to_menu_keyboard()],
+        )
+
+
 async def _op_record_attachments(event, payload: str) -> None:
     await ack_callback(event)
     if not await ensure_operator(event):
@@ -292,6 +368,7 @@ _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
     ),
     ("op:atts:", lambda e, aid: admin_commands.run_show_attachments(e, aid)),
     ("op:open_card:", _op_open_card),
+    ("op:word:", _op_word),
     # PR G: история рассылок — карточка / клон / failed-deliveries.
     ("op:bc:open:", lambda e, bid: broadcast_handler._open_broadcast(e, bid)),
     ("op:bc:clone:", lambda e, bid: broadcast_handler._clone_broadcast(e, bid)),
@@ -323,6 +400,7 @@ async def _op_operators_action(event, payload: str) -> None:
 # бы оборачивать такие цели пустой обёрткой ради типа — ровно те
 # обёртки, которые здесь и убирали.
 _PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[object]]], ...] = (
+    ("op:consent:", _op_consent),
     ("op:history:", _op_history),
     ("op:record_atts:", _op_record_attachments),
     ("op:aud:", lambda e, p: admin_commands.run_audience_action(e, p)),

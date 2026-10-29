@@ -88,7 +88,9 @@ async def _start_edit_intent(event, operator_id: int, key: str) -> None:
             kbds.op_back_to_settings_keyboard(),
         )
         return
-    _intent_set(operator_id, key=key, kind="single")
+    async with session_scope() as session:
+        baseline = await settings_store.get(session, key)
+    _intent_set(operator_id, key=key, kind="single", baseline=baseline)
     rule = settings_store.SCHEMA[key]
     if rule.get("type") is str:
         await _show_edit_page(event, operator_id, key, 0)
@@ -117,9 +119,10 @@ async def _show_edit_page(event, operator_id: int, key: str, page: int) -> None:
     rule = settings_store.SCHEMA.get(key, {})
     if rule.get("type") is not str:
         return
-    _intent_set(operator_id, key=key, kind="single")
-    async with session_scope() as session:
-        value = await settings_store.get(session, key)
+    # Keep the same snapshot for every page: a colleague may change the
+    # setting while this operator is reading or preparing a replacement.
+    value = intent.get("baseline")
+    _intent_set(operator_id, key=key, kind="single", baseline=value)
     parts = split_text_units(value if isinstance(value, str) else "")
     page = max(0, min(page, len(parts) - 1))
     shown = parts[page] if parts[page] else "Не задано"
@@ -149,24 +152,35 @@ async def _apply_single_edit(
     if not ok:
         await op_send(event, f"❌ {msg}", kbds.op_settings_text_cancel_keyboard(key))
         return False
-    async with session_scope() as session:
-        old_value = await settings_store.get(session, key)
-        await settings_store.set_value(session, key, new_text)
-        # Полный audit-trail: храним «было → стало» (clip до 200 симв,
-        # чтобы не раздувать audit_log на длинных текстах вроде
-        # `goodbye_message`). PII под защитой retention (по умолчанию
-        # 365 дней, потом `_job_audit_log_retention` чистит).
-        await ops_svc.write_audit(
-            session,
-            operator_max_user_id=operator_id,
-            action="setting_update",
-            target=key,
-            details={
-                "len": len(new_text),
-                "before": _clip_audit_value(old_value),
-                "after": _clip_audit_value(new_text),
-            },
+    try:
+        async with session_scope() as session:
+            intent = _intent_get(operator_id)
+            if intent and intent.get("kind") == "single" and intent.get("key") == key and "baseline" in intent:
+                old_value = intent["baseline"]
+            else:
+                old_value = await settings_store.get(session, key)
+            await settings_store.set_value(session, key, new_text, expected_value=old_value)
+            await ops_svc.write_audit(
+                session,
+                operator_max_user_id=operator_id,
+                action="setting_update",
+                target=key,
+                details={
+                    "len": len(new_text),
+                    "before": _clip_audit_value(old_value),
+                    "after": _clip_audit_value(new_text),
+                },
+            )
+    except settings_store.SettingConflictError:
+        await op_screen(
+            event,
+            "Текст изменён другим сотрудником. Ваш вариант не сохранён. "
+            "Откройте настройку заново и сверьте текущее значение.",
+            kbds.op_back_to_settings_keyboard(),
         )
+        # The stale intent must be dropped; otherwise the next ordinary
+        # message would be treated as another edit of an outdated snapshot.
+        return True
     if key in {"commit_author_name", "commit_author_email"}:
         await _show_author_card(event)
     else:

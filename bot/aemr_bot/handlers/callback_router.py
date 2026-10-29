@@ -117,6 +117,8 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("op:atts:", CallbackGroup.OPERATOR_ADMIN, True, "показать вложения обращения"),
     CallbackRoute("op:open_card:", CallbackGroup.OPERATOR_ADMIN, True, "открыть полную карточку с историей"),
     CallbackRoute("op:history:", CallbackGroup.OPERATOR_ADMIN, True, "история обращения оператора"),
+    CallbackRoute("op:word:", CallbackGroup.OPERATOR_ADMIN, True, "история обращения в Word"),
+    CallbackRoute("op:consent:", CallbackGroup.OPERATOR_ADMIN, True, "редакции согласия жителя"),
     CallbackRoute("op:record_atts:", CallbackGroup.OPERATOR_ADMIN, True, "вложения записи обращения"),
     CallbackRoute("op:opadd:", CallbackGroup.OPERATOR_ADMIN, True, "мастер операторов: добавление"),
     CallbackRoute("op:opcard:", CallbackGroup.OPERATOR_ADMIN, True, "карточка оператора"),

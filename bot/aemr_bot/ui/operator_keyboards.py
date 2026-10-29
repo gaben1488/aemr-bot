@@ -372,6 +372,8 @@ def appeal_admin_actions(
             ),
         )
     kb.row(CallbackButton(text="📖 История обращения", payload=cp.op_history(appeal_id, 0)))
+    kb.row(CallbackButton(text="📄 История в Word", payload=f"op:word:{appeal_id}"))
+    kb.row(CallbackButton(text="🔐 Согласие жителя", payload=f"op:consent:{appeal_id}:0"))
     if attachment_count > 0:
         kb.row(
             CallbackButton(

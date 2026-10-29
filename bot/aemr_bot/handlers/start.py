@@ -338,12 +338,18 @@ def _render_export_for_human(user, appeals) -> str:
         )
     else:
         L.append("  Подписка на оповещения: не оформлена")
-    if user.consent_pdn_text_sha256:
-        L.append(
-            "  Служебная отметка (отпечаток текста согласия): "
-            f"{user.consent_pdn_text_sha256[:16]}… — по ней видно, "
-            "какую именно редакцию согласия вы принимали"
-        )
+    records = getattr(user, "consent_records", None) or []
+    if records:
+        for record in records:
+            if not isinstance(record, dict) or not isinstance(record.get("text"), str):
+                continue
+            try:
+                accepted = _export_dt(datetime.fromisoformat(record["accepted_at"]))
+            except (KeyError, TypeError, ValueError):
+                accepted = "дата не сохранилась"
+            L.extend(["", f"  Текст согласия, подтверждённого {accepted}:", record["text"]])
+    elif user.consent_pdn_at or user.consent_pdn_text_sha256:
+        L.append("  Текст ранее данного согласия не сохранился.")
     L.append("")
 
     if not appeals:
