@@ -293,6 +293,8 @@ class Message(Base):
     direction: Mapped[str] = mapped_column(String(32))
     # NULL means the historical response kind was not recorded.
     response_kind: Mapped[str | None] = mapped_column(String(16))
+    # Only new records can distinguish MAX confirmation from human review.
+    delivery_source: Mapped[str | None] = mapped_column(String(16))
     # NULL for historical records; follow-ups use pending/sending/sent/
     # partial/unknown and warning states to avoid replaying uncertain requests.
     admin_notice_state: Mapped[str | None] = mapped_column(String(16), index=True)

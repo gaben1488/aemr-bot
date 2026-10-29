@@ -73,7 +73,7 @@ async def record_confirmed(session, attempt_id: int, *, mid: str | None = None,
             session, appeal=appeal, text=attempt.text or "", operator_id=attempt.operator_id,
             max_message_id=delivery_mid, is_final=attempt.is_final, attachments=attempt.attachments,
             apply_status=await _can_apply_status(session, appeal, attempt),
-            created_at=attempt.confirmed_at,
+            created_at=attempt.confirmed_at, delivery_source="max",
         )
         operator = await session.get(Operator, attempt.operator_id) if attempt.operator_id else None
         await operators.write_audit(
@@ -126,6 +126,7 @@ async def resolve_unknown(session, attempt_id: int, *, delivered: bool,
             session, appeal=appeal, text=attempt.text or "", operator_id=attempt.operator_id,
             max_message_id=None, is_final=attempt.is_final, attachments=attempt.attachments,
             apply_status=await _can_apply_status(session, appeal, attempt),
+            delivery_source="manual",
         )
         attempt.state = "recorded"
         attempt.text = None

@@ -70,6 +70,7 @@ async def test_human_reconciliation_never_fabricates_platform_id(session):
     messages = list(await session.scalars(select(Message).where(Message.appeal_id == appeal.id)))
     assert len(messages) == 1 and messages[0].text == "Ответ"
     assert messages[0].max_message_id is None
+    assert messages[0].delivery_source == "manual"
     assert not await operator_reply_attempts.resolve_unknown(
         session, attempt_id, delivered=True, actor_max_id=operator.max_user_id,
     )

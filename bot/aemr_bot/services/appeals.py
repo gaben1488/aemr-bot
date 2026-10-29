@@ -65,6 +65,7 @@ async def add_operator_message(
     attachments: list | None = None,
     apply_status: bool = True,
     created_at: datetime | None = None,
+    delivery_source: str | None = None,
 ) -> Message:
     """Сохранить ответ оператора. Поведение статуса зависит от is_final.
 
@@ -88,6 +89,7 @@ async def add_operator_message(
         appeal_id=appeal.id,
         direction=MessageDirection.FROM_OPERATOR.value,
         response_kind="final" if is_final else "intermediate",
+        delivery_source=delivery_source,
         text=text,
         max_message_id=max_message_id,
         operator_id=operator_id,

@@ -15,6 +15,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    op.add_column("messages", sa.Column("delivery_source", sa.String(16), nullable=True))
     op.create_table(
         "operator_reply_attempts",
         sa.Column("id", sa.Integer(), primary_key=True),
@@ -37,3 +38,4 @@ def downgrade() -> None:
     op.drop_index("ix_operator_reply_attempts_state", table_name="operator_reply_attempts")
     op.drop_index("ix_operator_reply_attempts_appeal_id", table_name="operator_reply_attempts")
     op.drop_table("operator_reply_attempts")
+    op.drop_column("messages", "delivery_source")
