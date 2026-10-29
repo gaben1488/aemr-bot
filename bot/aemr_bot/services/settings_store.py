@@ -1040,12 +1040,9 @@ async def seed_if_empty(session: AsyncSession) -> None:
     1. **Bootstrap (раньше — основной):** если ключа нет в БД, кладём
        значение из seed-файла. Это первый запуск на свежей БД.
 
-    2. **Repair (системный фикс 2026-05-26, найдено владельцем):**
-       если ключ есть в БД, но его значение **не проходит SCHEMA-validate**
-       (например, в БД лежит старая версия welcome_text без обязательной
-       подстроки «НИКОГДА не запрашиваем», добавленной позже в SCHEMA),
-       перезаписываем seed-значением. Это закрывает дрейф «код обновился,
-       БД отстала».
+    2. **Repair:** невалидные значения могут заменяться корректным seed.
+       Непустой текст согласия сохраняется для ручной проверки даже при
+       ошибке валидации: это может быть единственная копия редакции.
 
     После вставки/перезаписи помечает свежие SYNCED_KEYS как уже
     синхронизированные с репо (synced_at = now()). Логика: seed-файлы
@@ -1119,6 +1116,13 @@ async def seed_if_empty(session: AsyncSession) -> None:
             continue
         is_valid, reason = validate(k, existing[k])
         if is_valid:
+            continue
+        if k == "consent_text" and isinstance(existing[k], str) and existing[k].strip():
+            # Invalid configured text is not safe to display, but it may be
+            # the only copy of an operator-authored consent. Keep it for
+            # review instead of destroying it on restart. The consent
+            # rendering path uses its validated fallback in the meantime.
+            log.warning("seed_if_empty: consent_text needs review; stored text preserved")
             continue
         # Перед перезаписью убеждаемся что seed-значение **само**
         # проходит validate — иначе можем сломать рабочий бот

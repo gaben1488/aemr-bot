@@ -199,6 +199,7 @@ class TestErasePdn:
             AuditLog(action="block", operator_max_user_id=12, target="user max_id=777"),
             AuditLog(action="operator_upsert", operator_max_user_id=12, target="user max_id=777"),
             AuditLog(action="self_consent_revoke", operator_max_user_id=778, target="user max_id=778"),
+            AuditLog(action="auto_erase_pdn_retention", operator_max_user_id=None, target="user max_id=777"),
         ]
         session.add_all(rows)
         await session.flush()
@@ -210,6 +211,7 @@ class TestErasePdn:
         assert (rows[1].operator_max_user_id, rows[1].target) == (12, None)
         assert (rows[2].operator_max_user_id, rows[2].target) == (12, "user max_id=777")
         assert (rows[3].operator_max_user_id, rows[3].target) == (778, "user max_id=778")
+        assert rows[4].target is None
 
     @pytest.mark.asyncio
     async def test_erases_user_and_redacts_appeal_payloads(self, session) -> None:

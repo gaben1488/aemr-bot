@@ -10,12 +10,45 @@ PG-зависимые тесты — отдельный файл (test_settings_
 """
 from __future__ import annotations
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 
 from aemr_bot.services.settings_store import (
     sanitize_settings_text,
     validate,
 )
+
+
+@pytest.mark.asyncio
+async def test_seed_does_not_replace_existing_consent_without_placeholder(monkeypatch):
+    from aemr_bot.services import settings_store
+
+    original = "Редакция оператора с постоянной ссылкой"
+    session = AsyncMock()
+    result = MagicMock()
+    result.all.return_value = [("consent_text", original)]
+    session.execute.return_value = result
+    monkeypatch.setattr(settings_store, "_read_seed_json", lambda name: None)
+    monkeypatch.setattr(settings_store, "_read_seed_text", lambda name: (
+        "Новое согласие: {policy_url}" if name == "consent.md" else None
+    ))
+    save = AsyncMock()
+    monkeypatch.setattr(settings_store, "set_value", save)
+    await settings_store.seed_if_empty(session)
+    save.assert_not_awaited()
+
+
+def test_initial_and_fallback_consent_are_same_and_fit_max() -> None:
+    from pathlib import Path
+
+    from aemr_bot.copy.citizen_funnel import CONSENT_REQUEST
+    from aemr_bot.services.settings_store import validate
+
+    seed = (Path(__file__).resolve().parents[2] / "seed" / "consent.md").read_text(encoding="utf-8").strip()
+    assert CONSENT_REQUEST == seed
+    assert validate("consent_text", seed)[0]
+    assert len(seed.format(policy_url="https://example.org/" + "a" * 180)) <= 4000
 
 
 class TestSanitizeSettingsText:

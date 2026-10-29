@@ -414,7 +414,7 @@ async def erase_pdn_detailed(
     # содержать тот же MAX ID в другом качестве и должен сохраниться.
     resident_actions = (
         "self_subscribe_broadcast", "self_consent_revoke", "self_erase",
-        "block", "unblock", "erase",
+        "block", "unblock", "erase", "auto_erase_pdn_retention",
     )
     await session.execute(
         update(AuditLog)

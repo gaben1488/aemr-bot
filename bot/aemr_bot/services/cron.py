@@ -863,9 +863,7 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
             return
         log.info("pdn_retention: %d жителей под обезличивание", len(candidates))
         erased = 0
-        erased_ids: list[int] = []
         skipped_open = 0
-        closed_unanswered: list[int] = []
         for max_user_id in candidates:
             try:
                 async with session_scope() as session:
@@ -887,20 +885,18 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                     had_open = await users_service.has_open_appeals(
                         session, user.id
                     )
-                    if had_open:
-                        skipped_open += 1
-                        closed_unanswered.append(max_user_id)
                     ok = await users_service.erase_pdn(session, max_user_id)
                     if ok:
                         await operators_service.write_audit(
                             session,
                             operator_max_user_id=None,
                             action="auto_erase_pdn_retention",
-                            target=f"user max_id={max_user_id}",
+                            target=None,
                             details={"reason": "152-FZ ст.21 ч.5, 30 дней после отзыва"},
                         )
                         erased += 1
-                        erased_ids.append(max_user_id)
+                        if had_open:
+                            skipped_open += 1
             except Exception:
                 log.exception(
                     "pdn_retention: не удалось обезличить max_user_id=%s",
@@ -914,34 +910,16 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
         # ст. 21 ч. 5 задаёт срок уничтожения (30 дней), но требования
         # уведомлять ответственное лицо в ней нет — не приписываем закону
         # того, чего он не говорит.
-        for erased_id in erased_ids:
-            unanswered_note = (
-                "\n⚠️ У жителя оставались открытые обращения — они закрыты "
-                "БЕЗ ответа, потому что 30-дневный срок уничтожения истёк."
-                if erased_id in closed_unanswered
-                else ""
-            )
-            await _send_admin_text_with_retry(
-                send_admin_text,
-                (
-                    "🛡 Данные по отозванному согласию уничтожены.\n"
-                    f"MAX user id: {erased_id}\n"
-                    "Основание: 152-ФЗ ст. 21 ч. 5 — прошло 30 дней после "
-                    "отзыва согласия." + unanswered_note
-                ),
-                context="pdn_retention",
-                critical=True,
-            )
         if erased:
             tail = (
-                f" Из них {skipped_open} — с обращениями, закрытыми без "
+                f" Из них {skipped_open} — с обращениями, закрытыми БЕЗ "
                 f"ответа: не успели ответить в отведённые 30 дней."
                 if skipped_open
                 else ""
             )
             await send_admin_text(
                 f"🛡 Очистка ПДн по сроку отзыва согласия: "
-                f"уничтожено {erased}.{tail}",
+                f"очищено записей в рабочей базе: {erased}.{tail}",
                 critical=True,
             )
 

@@ -393,11 +393,13 @@ class TestPdnRetention:
                    AsyncMock(return_value=False)), \
              patch("aemr_bot.services.users.erase_pdn",
                    AsyncMock(return_value=True)), \
-             patch("aemr_bot.services.operators.write_audit", AsyncMock()):
+             patch("aemr_bot.services.operators.write_audit", AsyncMock()) as audit:
             await cron._job_pdn_retention_check(send)
 
         texts = [call.args[0] for call in send.call_args_list]
-        assert any("30 дней" in text and "42" in text for text in texts)
+        assert len(texts) == 1
+        assert "42" not in texts[0]
+        assert audit.await_args.kwargs["target"] is None
 
     @pytest.mark.asyncio
     async def test_open_appeals_do_not_postpone_erasure(self) -> None:
