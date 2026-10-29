@@ -113,6 +113,33 @@ class TestFileAttachment:
 
 
 class TestPolicy:
+    def test_policy_filename_describes_the_chatbot_document(self) -> None:
+        from aemr_bot.services import policy
+
+        assert policy.POLICY_PDF_DISPLAY_NAME == "Политика конфиденциальности чат-бота.pdf"
+
+    @pytest.mark.asyncio
+    async def test_pdf_with_old_filename_is_reuploaded_even_when_content_unchanged(
+        self, tmp_path: Path
+    ) -> None:
+        from aemr_bot.services import policy
+
+        path = tmp_path / "PRIVACY.pdf"
+        path.write_bytes(b"%PDF-1.4 stable")
+        values = {policy.POLICY_TOKEN_KEY: "OLD", policy.POLICY_HASH_KEY: policy._pdf_sha256(path)}
+
+        async def get_value(_session, key):
+            return values.get(key)
+
+        upload = AsyncMock(return_value="NEW")
+        with patch("aemr_bot.services.policy.session_scope", _fake_session_scope), \
+             patch("aemr_bot.services.policy.settings_store.get", AsyncMock(side_effect=get_value)), \
+             patch("aemr_bot.services.policy.settings_store.set_value", AsyncMock()), \
+             patch("aemr_bot.services.policy._resolve_pdf_path", return_value=path), \
+             patch("aemr_bot.services.policy.uploads.upload_path", upload):
+            assert await policy.ensure_uploaded(MagicMock()) == "NEW"
+        upload.assert_awaited_once()
+
     def test_resolve_pdf_path(self) -> None:
         from aemr_bot.services import policy
 
@@ -170,9 +197,9 @@ class TestPolicy:
             token = await policy.ensure_uploaded(bot)
         assert token == "NEW-TOK"
         # Пишем и токен, и хэш PDF (чтобы потом не перезаливать неизменный файл).
-        assert set_value.call_count == 2
+        assert set_value.call_count == 3
         keys = {c.args[1] for c in set_value.call_args_list}
-        assert keys == {policy.POLICY_TOKEN_KEY, policy.POLICY_HASH_KEY}
+        assert keys == {policy.POLICY_TOKEN_KEY, policy.POLICY_HASH_KEY, policy.POLICY_NAME_KEY}
 
     @pytest.mark.asyncio
     async def test_ensure_uploaded_reuploads_when_pdf_changed(self, tmp_path: Path) -> None:
@@ -217,6 +244,8 @@ class TestPolicy:
                 return "CACHED-TOK"
             if key == policy.POLICY_HASH_KEY:
                 return real_hash
+            if key == policy.POLICY_NAME_KEY:
+                return policy.POLICY_PDF_DISPLAY_NAME
             return None
 
         with patch("aemr_bot.services.policy.session_scope", _fake_session_scope), \

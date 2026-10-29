@@ -162,9 +162,15 @@ async def cmd_policy(event):
 
     if token and bot is not None:
         try:
+            policy_text = texts.POLICY_DELIVERED
+            if policy_url:
+                policy_text += (
+                    "\n\n🏛 Политика обработки персональных данных администрации:\n"
+                    f"{policy_url}"
+                )
             await send_or_edit_screen(
                 event,
-                text=texts.POLICY_DELIVERED,
+                text=policy_text,
                 attachments=[
                     policy_service.build_file_attachment(token),
                     keyboards.back_to_settings_keyboard(),

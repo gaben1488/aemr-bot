@@ -175,6 +175,41 @@ class TestCmdMenu:
 
 class TestCmdPolicy:
     @pytest.mark.asyncio
+    async def test_names_both_distinct_documents_when_pdf_and_url_are_available(self) -> None:
+        from aemr_bot.handlers import start
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.start.settings_store.get",
+                   AsyncMock(side_effect=["TOK-X", "https://policy.example/p.pdf"])), \
+             patch("aemr_bot.handlers.start.policy_service.build_file_attachment",
+                   return_value={"type": "file"}), \
+             patch("aemr_bot.handlers.start.send_or_edit_screen", AsyncMock()) as send:
+            await start.cmd_policy(event)
+        text = send.await_args.kwargs["text"]
+        assert "Политика конфиденциальности чат-бота" in text
+        assert "Политика обработки персональных данных администрации" in text
+        assert "https://policy.example/p.pdf" in text
+        assert {"type": "file"} in send.await_args.kwargs["attachments"]
+
+    @pytest.mark.asyncio
+    async def test_missing_chatbot_pdf_is_not_described_as_municipal_policy(self) -> None:
+        from aemr_bot.handlers import start
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.start.settings_store.get",
+                   AsyncMock(side_effect=[None, "https://policy.example/p.pdf"])), \
+             patch("aemr_bot.handlers.start.policy_service.ensure_uploaded",
+                   AsyncMock(return_value=None)), \
+             patch("aemr_bot.handlers.start.send_or_edit_screen", AsyncMock()) as send:
+            await start.cmd_policy(event)
+        text = send.await_args.kwargs["text"]
+        assert "Политика конфиденциальности чат-бота" in text
+        assert "недоступ" in text.lower()
+        assert "https://policy.example/p.pdf" in text
+
+    @pytest.mark.asyncio
     async def test_uses_cached_token_to_send_pdf(self) -> None:
         from aemr_bot.handlers import start
 
