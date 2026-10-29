@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import logging
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
-from aemr_bot.db.models import Message, Operator, OperatorReplyAttempt
+from aemr_bot.db.models import AppealStatus, Message, Operator, OperatorReplyAttempt
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import appeal_locks, appeals, operators, privacy_epoch
 
@@ -35,7 +35,19 @@ async def mark_confirmed(attempt_id: int, mid: str) -> None:
     async with session_scope() as session:
         await session.execute(update(OperatorReplyAttempt).where(
             OperatorReplyAttempt.id == attempt_id, OperatorReplyAttempt.state == "sending",
-        ).values(state="confirmed", max_message_id=mid))
+        ).values(state="confirmed", max_message_id=mid, confirmed_at=func.now()))
+
+
+async def _can_apply_status(session, appeal, attempt) -> bool:
+    """Do not let a late recovery overwrite a newer message or reopened case."""
+    if appeal.status not in {AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value}:
+        return False
+    if appeal.sla_anchor_at and appeal.sla_anchor_at > attempt.created_at:
+        return False
+    newer = await session.scalar(select(Message.id).where(
+        Message.appeal_id == attempt.appeal_id, Message.created_at > attempt.created_at,
+    ).limit(1))
+    return newer is None
 
 
 async def record_confirmed(session, attempt_id: int, *, mid: str | None = None,
@@ -60,6 +72,8 @@ async def record_confirmed(session, attempt_id: int, *, mid: str | None = None,
         await appeals.add_operator_message(
             session, appeal=appeal, text=attempt.text or "", operator_id=attempt.operator_id,
             max_message_id=delivery_mid, is_final=attempt.is_final, attachments=attempt.attachments,
+            apply_status=await _can_apply_status(session, appeal, attempt),
+            created_at=attempt.confirmed_at,
         )
         operator = await session.get(Operator, attempt.operator_id) if attempt.operator_id else None
         await operators.write_audit(
@@ -111,6 +125,7 @@ async def resolve_unknown(session, attempt_id: int, *, delivered: bool,
         await appeals.add_operator_message(
             session, appeal=appeal, text=attempt.text or "", operator_id=attempt.operator_id,
             max_message_id=None, is_final=attempt.is_final, attachments=attempt.attachments,
+            apply_status=await _can_apply_status(session, appeal, attempt),
         )
         attempt.state = "recorded"
         attempt.text = None

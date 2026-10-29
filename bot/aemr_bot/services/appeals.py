@@ -63,6 +63,8 @@ async def add_operator_message(
     *,
     is_final: bool = True,
     attachments: list | None = None,
+    apply_status: bool = True,
+    created_at: datetime | None = None,
 ) -> Message:
     """Сохранить ответ оператора. Поведение статуса зависит от is_final.
 
@@ -91,11 +93,13 @@ async def add_operator_message(
         operator_id=operator_id,
         attachments=attachments or [],
     )
+    if created_at is not None:
+        msg.created_at = created_at
     session.add(msg)
-    if appeal.status != AppealStatus.CLOSED.value:
+    if apply_status and appeal.status != AppealStatus.CLOSED.value:
         if is_final:
             appeal.status = AppealStatus.ANSWERED.value
-            appeal.answered_at = datetime.now(UTC)
+            appeal.answered_at = created_at or datetime.now(UTC)
         else:
             # Промежуточный: NEW → IN_PROGRESS, остальные оставляем
             # как есть (IN_PROGRESS остаётся IN_PROGRESS; ANSWERED не
@@ -103,7 +107,7 @@ async def add_operator_message(
             # reopen, потом отвечать).
             if appeal.status == AppealStatus.NEW.value:
                 appeal.status = AppealStatus.IN_PROGRESS.value
-    if operator_id:
+    if apply_status and operator_id:
         appeal.assigned_operator_id = operator_id
     await session.flush()
     return msg

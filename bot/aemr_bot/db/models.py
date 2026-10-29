@@ -319,6 +319,7 @@ class OperatorReplyAttempt(Base):
     is_final: Mapped[bool] = mapped_column(Boolean)
     state: Mapped[str] = mapped_column(String(16), index=True)
     max_message_id: Mapped[str | None] = mapped_column(String(64))
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

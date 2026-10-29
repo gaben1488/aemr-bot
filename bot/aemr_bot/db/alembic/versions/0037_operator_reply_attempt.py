@@ -26,6 +26,7 @@ def upgrade() -> None:
         sa.Column("is_final", sa.Boolean(), nullable=False),
         sa.Column("state", sa.String(16), nullable=False),
         sa.Column("max_message_id", sa.String(64), nullable=True),
+        sa.Column("confirmed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
     )
     op.create_index("ix_operator_reply_attempts_appeal_id", "operator_reply_attempts", ["appeal_id"])

@@ -90,3 +90,25 @@ async def test_not_delivered_draft_is_preserved_until_explicit_discard(session):
     assert row.state == "not_delivered" and row.text == "Черновик"
     assert await operator_reply_attempts.discard_not_delivered(session, attempt_id, actor_max_id=operator.max_user_id)
     assert row.state == "discarded" and row.text is None
+
+
+@pytest.mark.asyncio
+async def test_late_reply_recovery_does_not_close_newer_followup(session):
+    from datetime import UTC, datetime, timedelta
+
+    appeal, operator = await _rows(session, 82040)
+    attempt_id = await operator_reply_attempts.reserve(
+        appeal_id=appeal.id, operator_id=operator.id, source_key="reply-event-5",
+        text="Старый итоговый ответ", attachments=[], is_final=True,
+    )
+    await operator_reply_attempts.mark_confirmed(attempt_id, "delivered-mid-5")
+    # A newer resident message has already arrived while history recovery
+    # was delayed. Do not close that newer work on the strength of an old reply.
+    session.add(Message(appeal_id=appeal.id, direction="from_user", text="Новая информация",
+                        attachments=[], created_at=datetime.now(UTC) + timedelta(seconds=1)))
+    await session.commit()
+    assert await operator_reply_attempts.recover_confirmed() == 1
+    await session.refresh(appeal)
+    assert appeal.status == "in_progress"
+    rows = list(await session.scalars(select(Message).where(Message.appeal_id == appeal.id)))
+    assert {m.text for m in rows} == {"Старый итоговый ответ", "Новая информация"}
