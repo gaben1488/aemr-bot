@@ -31,8 +31,7 @@ from aemr_bot.handlers import admin_commands, callback_router
 from aemr_bot.handlers import broadcast as broadcast_handler
 from aemr_bot.handlers import broadcast_templates as broadcast_templates_handler
 from aemr_bot.handlers._auth import ensure_operator
-from aemr_bot.services import admin_card as admin_card_service
-from aemr_bot.services import admin_relay, appeal_history
+from aemr_bot.services import admin_relay, appeal_history, card_format
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.utils.event import ack_callback, send_or_edit_screen
 
@@ -94,7 +93,7 @@ async def _op_reply_intermediate(event, appeal_id: int) -> None:
 
 
 async def _op_open_card(event, appeal_id: int) -> None:
-    """Открыть карточку, сохраняя привязку ответа реплаем к её ID."""
+    """Открыть редактируемый экран просмотра без новой записи события."""
 
     if not await ensure_operator(event):
         return
@@ -112,7 +111,28 @@ async def _op_open_card(event, appeal_id: int) -> None:
         )
         return
     await ack_callback(event, "Открываю…")
-    await admin_card_service.render(event.bot, appeal, force_new=True)
+    if appeal.user is None:
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id, text="Данные обращения недоступны.",
+            attachments=[kbds.op_back_to_menu_keyboard()],
+        )
+        return
+    # This is a mutable shared navigation screen, not a reply target. Strip
+    # every marker, including user-supplied ones, so a swipe on an edited
+    # screen cannot route a reply to another resident.
+    text = card_format.admin_card(appeal, appeal.user).replace("🆔 №", "🆔 \u200b№")
+    text = text.replace(
+        "✉️ Ответ — кнопкой ниже либо потяните карточку влево.",
+        "✉️ Ответ — кнопкой ниже.",
+    )
+    text += "\n\nДля ответа используйте кнопку под карточкой."
+    keyboard = kbds.appeal_admin_actions(
+        appeal.id, appeal.status, is_it=True,
+        user_blocked=bool(appeal.user.is_blocked),
+        closed_due_to_revoke=bool(getattr(appeal, "closed_due_to_revoke", False)),
+        attachment_count=len(admin_relay.collect_appeal_attachments(appeal)),
+    )
+    await send_or_edit_screen(event, chat_id=cfg.admin_group_id, text=text, attachments=[keyboard])
 
 
 async def _op_history(event, payload: str) -> None:

@@ -486,6 +486,7 @@ def useful_info_keyboard(
 
 
 __all__ = [
+    "appeal_history_keyboard",
     "appointment_keyboard",
     "back_to_menu_keyboard",
     "back_to_settings_keyboard",
