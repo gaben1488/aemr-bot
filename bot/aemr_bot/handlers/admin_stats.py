@@ -12,7 +12,7 @@ from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator
 from aemr_bot.services import card_format
-from aemr_bot.services import stats as stats_service
+from aemr_bot.services import complete_stats as stats_service
 from aemr_bot.utils.event import get_chat_id, send_or_edit_screen
 
 
