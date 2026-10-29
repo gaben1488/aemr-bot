@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     sla_lunch_start_hour: int = Field(12, alias="SLA_LUNCH_START_HOUR", ge=0, le=23)
     sla_lunch_end_hour: int = Field(13, alias="SLA_LUNCH_END_HOUR", ge=1, le=24)
     appeal_collect_timeout_seconds: int = Field(60, alias="APPEAL_TIMEOUT")
-    answer_max_chars: int = Field(800, alias="ANSWER_MAX_CHARS")
+    answer_max_chars: int = Field(3000, alias="ANSWER_MAX_CHARS")
     name_max_chars: int = Field(120, alias="NAME_MAX_CHARS")
     address_max_chars: int = Field(500, alias="ADDRESS_MAX_CHARS")
     # Лимит входящего сообщения не зависит от размера обзорной карточки:

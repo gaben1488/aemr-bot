@@ -380,6 +380,13 @@ async def _send_reply_to_citizen(
         return False, None, []
 
     formatted_text = card_format.citizen_reply(fresh_appeal, text)
+    from aemr_bot.utils.text_pages import fits_max_message
+    if not fits_max_message(formatted_text):
+        await _safe_admin_notice(
+            event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: вместе с "
+            "заголовком он превышает размер сообщения MAX. Сократите текст и отправьте заново.",
+        )
+        return False, None, []
     # MAX допускает набор фото/видео либо один документ вместе с
     # клавиатурой. Отправляем только полностью подготовленный набор.
     # Неподдерживаемые и лишние вложения отклоняем до отправки: ответ

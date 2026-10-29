@@ -179,7 +179,7 @@ DATABASE_URL=postgresql+asyncpg://aemr:<пароль>@localhost:5432/aemr pytest
 
 **Режим связи:** `BOT_MODE=polling` (по умолчанию). Для `webhook` дополнительно нужны `WEBHOOK_URL` и `WEBHOOK_SECRET` (минимум 16 символов).
 
-**Бизнес-лимиты и SLA:** `TZ=Asia/Kamchatka`, `SLA_RESPONSE_HOURS=4`, `ANSWER_MAX_CHARS=800`, `SUMMARY_MAX_CHARS=4000`, `ATTACHMENTS_MAX_PER_APPEAL=20`. Анти-флуд дополнений: `FOLLOWUP_MAX_PER_HOUR_PER_APPEAL=5`, `FOLLOWUP_MIN_INTERVAL_SECONDS=30` (лимит «не более 3 новых сообщений в час на жителя» зашит в код и не настраивается). Действующее значение `SUMMARY_MAX_CHARS` в окружении существующей установки имеет приоритет над новым значением по умолчанию.
+**Бизнес-лимиты и SLA:** `TZ=Asia/Kamchatka`, `SLA_RESPONSE_HOURS=4`, `ANSWER_MAX_CHARS=3000`, `SUMMARY_MAX_CHARS=20000`, `ATTACHMENTS_MAX_PER_APPEAL=20`. Предел текста обращения и дополнения относится к совокупности частей черновика. Ответ оператора проверяется также вместе с заголовком по ограничению сообщения MAX; при превышении он не отправляется. Анти-флуд дополнений: `FOLLOWUP_MAX_PER_HOUR_PER_APPEAL=5`, `FOLLOWUP_MIN_INTERVAL_SECONDS=30`; не более трёх новых обращений за час. Явные значения в окружении существующей установки имеют приоритет над значениями по умолчанию.
 
 **Рассылки:** `BROADCAST_MAX_CHARS=1000`, `BROADCAST_RATE_LIMIT_PER_SEC=1.0` (намеренно ниже заявленного сервером MAX потолка 2 req/s, чтобы рассылка не конкурировала с ответами), `BROADCAST_WIZARD_TTL_SEC=300`.
 
