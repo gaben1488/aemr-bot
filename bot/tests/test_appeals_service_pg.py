@@ -269,6 +269,23 @@ async def test_close_idempotent(session) -> None:
 
 
 @pytest.mark.asyncio
+async def test_stale_close_does_not_reclassify_answered_appeal(session) -> None:
+    user = await users_service.get_or_create(session, max_user_id=17, first_name="A")
+    appeal = await appeals_service.create_appeal(
+        session, user=user, address="A", topic="T", summary="x", attachments=[]
+    )
+    full = await appeals_service.get_by_id(session, appeal.id)
+    await appeals_service.add_operator_message(
+        session, appeal=full, text="Итоговый ответ", operator_id=None,
+        max_message_id=None,
+    )
+    assert await appeals_service.close(session, appeal.id) is False
+    await session.refresh(appeal)
+    assert appeal.status == AppealStatus.ANSWERED.value
+    assert appeal.closed_at is None
+
+
+@pytest.mark.asyncio
 async def test_find_active_for_user_returns_latest(session) -> None:
     """Несколько обращений с одинаковым created_at (микросекундная
     точность исчерпана) порядок не гарантируют — используем явный

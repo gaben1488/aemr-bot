@@ -306,47 +306,33 @@ async def run_reopen(event, appeal_id: int) -> None:
 
 
 async def run_close(event, appeal_id: int) -> None:
-    """Кнопочный аналог /close N — закрыть обращение без ответа.
-
-    P2 #23: если в обращении уже есть промежуточный ответ оператора,
-    «Закрыть без ответа» — спорное действие (формально ответ ушёл, но
-    обращение закрыто как «не отвечено»). Не блокируем, но добавляем
-    в сопровождающий текст подсказку про «✉️ Ответить и закрыть» —
-    финальный ответ корректнее закрывает воронку для жителя.
-    """
+    """Закрыть открытое обращение без окончательного ответа."""
 
     if not await ensure_operator(event):
         return
-    had_intermediate_reply = False
     async with session_scope() as session:
-        had_intermediate_reply = await appeals_service.has_operator_message(
-            session, appeal_id
-        )
         ok = await appeals_service.close(session, appeal_id)
         if ok:
+            had_prior_reply = await appeals_service.has_operator_message(
+                session, appeal_id
+            )
             await operators_service.write_audit(
                 session,
                 operator_max_user_id=get_user_id(event),
                 action="close",
                 target=f"appeal #{appeal_id}",
                 details=(
-                    {"after_intermediate_reply": True}
-                    if had_intermediate_reply else None
+                    {"after_prior_reply": True} if had_prior_reply else None
                 ),
             )
+    if not ok:
+        # Повторное нажатие старой кнопки не создаёт новую запись в чате.
+        await ack_callback(event, "Обращение уже завершено или недоступно")
+        return
     await ack_callback(event)
-    if ok:
-        fallback = texts.OP_APPEAL_CLOSED.format(number=appeal_id)
-        if had_intermediate_reply:
-            fallback += (
-                "\n\n⚠️ У обращения уже есть промежуточный ответ оператора. "
-                "В следующий раз для финального ответа удобнее использовать "
-                "«✉️ Ответить и закрыть» — житель получит полное письмо."
-            )
-    else:
-        fallback = texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
-    # freshness-rule: edit если карточка ещё последняя в чате, иначе new.
-    await _show_appeal_card_or_result(event, appeal_id, fallback)
+    await _show_appeal_card_or_result(
+        event, appeal_id, texts.OP_APPEAL_CLOSED.format(number=appeal_id)
+    )
 
 
 async def run_block_for_appeal(

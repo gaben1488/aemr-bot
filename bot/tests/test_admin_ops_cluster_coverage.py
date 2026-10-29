@@ -306,7 +306,7 @@ class TestCmdClose:
 
     @pytest.mark.asyncio
     async def test_not_found_no_audit(self, cmds) -> None:
-        """close ok=False → audit НЕ пишем, текст OP_APPEAL_NOT_FOUND."""
+        """Неактуальное закрытие не создаёт запись аудита."""
         from aemr_bot import texts
 
         event = _cmd_event(text="/close 999")
@@ -322,7 +322,7 @@ class TestCmdClose:
             await cmds["close"](event)
         write_audit.assert_not_awaited()
         assert event.message.answer.call_args.args[0] == \
-            texts.OP_APPEAL_NOT_FOUND.format(number=999)
+            texts.OP_APPEAL_CLOSE_UNAVAILABLE.format(number=999)
 
 
 class TestCmdErase:

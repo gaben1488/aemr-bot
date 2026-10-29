@@ -422,6 +422,25 @@ class TestRunClose:
         event.bot.send_message.assert_not_called()
 
     @pytest.mark.asyncio
+    async def test_stale_close_acknowledges_without_new_card(self) -> None:
+        from aemr_bot.handlers import admin_appeal_ops
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
+                   AsyncMock(return_value=True)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.session_scope",
+                   _fake_session_scope), \
+             patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.close",
+                   AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.admin_appeal_ops.ack_callback", AsyncMock()) as ack, \
+             patch("aemr_bot.handlers.admin_appeal_ops._show_appeal_card_or_result",
+                   AsyncMock()) as show:
+            await admin_appeal_ops.run_close(event, 5)
+        ack.assert_awaited_once()
+        assert "завершено" in ack.await_args.args[1]
+        show.assert_not_awaited()
+
+    @pytest.mark.asyncio
     async def test_ok_path(self) -> None:
         from aemr_bot.handlers import admin_appeal_ops
 
@@ -445,8 +464,8 @@ class TestRunClose:
         assert "промежуточный ответ" not in sent_text.lower()
 
     @pytest.mark.asyncio
-    async def test_close_after_intermediate_reply_shows_hint(self) -> None:
-        """P2 #23: close после intermediate reply → warning в тексте."""
+    async def test_close_after_prior_reply_records_fact_without_guessing_kind(self) -> None:
+        """Старый ответ мог быть и окончательным до возобновления."""
         from aemr_bot.handlers import admin_appeal_ops
 
         event = _make_event()
@@ -463,14 +482,9 @@ class TestRunClose:
                    write_audit), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await admin_appeal_ops.run_close(event, 5)
-        # Текст содержит подсказку про корректный путь.
-        sent_text = event.bot.send_message.call_args.kwargs.get("text", "")
-        assert "промежуточный ответ" in sent_text.lower()
-        assert "ответить и закрыть" in sent_text.lower()
-        # Audit пишет факт «закрыто после промежуточного».
         write_audit.assert_awaited_once()
         details = write_audit.call_args.kwargs.get("details")
-        assert details == {"after_intermediate_reply": True}
+        assert details == {"after_prior_reply": True}
 
 
 # --- run_block_for_appeal -----------------------------------------------------

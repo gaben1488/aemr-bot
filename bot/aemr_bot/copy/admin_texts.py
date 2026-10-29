@@ -183,7 +183,11 @@ OP_APPEAL_BLOCKED_BY_REVOKE = (
     "ПДн-гардом. Если нужна обратная связь — используйте электронную "
     "приёмную."
 )
-OP_APPEAL_CLOSED = "Обращение #{number} закрыто без ответа."
+OP_APPEAL_CLOSED = "Обращение #{number} закрыто без окончательного ответа."
+OP_APPEAL_CLOSE_UNAVAILABLE = (
+    "Обращение #{number} уже завершено, закрыто или недоступно. "
+    "Откройте актуальную карточку."
+)
 OP_USER_ERASED = "Данные жителя удалены из рабочей базы бота."
 OP_USER_BLOCKED = "Житель {max_user_id} заблокирован — больше не сможет отправлять обращения."
 OP_USER_UNBLOCKED = "Житель {max_user_id} разблокирован."
@@ -246,6 +250,7 @@ __all__ = [
     "OP_APPEAL_ALREADY_OPEN",
     "OP_APPEAL_BLOCKED_BY_REVOKE",
     "OP_APPEAL_CLOSED",
+    "OP_APPEAL_CLOSE_UNAVAILABLE",
     "OP_APPEAL_NOT_FOUND",
     "OP_APPEAL_REOPENED",
     "OP_FIND_RESIDENT_AMBIGUOUS_PHONE",

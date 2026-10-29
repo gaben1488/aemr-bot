@@ -330,7 +330,7 @@ def appeal_admin_actions(
     """Кнопки действий под карточкой обращения в админ-группе.
 
     Набор кнопок зависит от статуса:
-    - new / in_progress: «✉️ Ответить», «⛔ Закрыть без ответа»
+    - new / in_progress: «✉️ Ответить», «⛔ Закрыть без итога»
     - answered / closed: «🔁 Возобновить»
     Для роли it дополнительно: «🚫 Заблокировать жителя» (или
     «✅ Разблокировать», если уже заблокирован) и «🗑 Удалить ПДн жителя».
@@ -369,7 +369,7 @@ def appeal_admin_actions(
         )
         kb.row(
             CallbackButton(
-                text="⛔ Закрыть без ответа", payload=cp.op_close(appeal_id)
+                text="⛔ Закрыть без итога", payload=cp.op_close(appeal_id)
             ),
         )
     elif status in closed_states and not closed_due_to_revoke:

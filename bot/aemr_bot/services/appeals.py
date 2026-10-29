@@ -343,9 +343,8 @@ async def has_operator_message(
 ) -> bool:
     """True если хотя бы один ответ оператора уже доставлен по обращению.
 
-    Используется в `run_close` (P2 #23): если оператор отправлял
-    промежуточный ответ, потом закрывает «без ответа» — показываем
-    подсказку про «✉️ Ответить и закрыть» как более корректный путь.
+    Исторический ответ может предшествовать возобновлению, поэтому вид
+    ответа и его связь с текущим периодом из этого признака не выводятся.
     """
     return bool(
         await session.scalar(
@@ -459,10 +458,10 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
 
 
 async def close(session: AsyncSession, appeal_id: int) -> bool:
-    """Закрыть обращение без ответа.
+    """Закрыть открытое обращение без окончательного ответа.
 
-    Если обращение уже CLOSED, ничего не меняем — повторный клик
-    «⛔ Закрыть» не должен переписывать closed_at.
+    Устаревшая кнопка не должна изменять уже завершённое обращение или
+    переписывать дату его закрытия. Ранее мог быть промежуточный ответ.
     """
     from aemr_bot.services import appeal_locks
     await appeal_locks.hold(session, appeal_id)
@@ -470,7 +469,7 @@ async def close(session: AsyncSession, appeal_id: int) -> bool:
         update(Appeal)
         .where(
             Appeal.id == appeal_id,
-            Appeal.status != AppealStatus.CLOSED.value,
+            Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
         )
         .values(status=AppealStatus.CLOSED.value, closed_at=datetime.now(UTC))
     )

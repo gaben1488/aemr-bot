@@ -252,7 +252,7 @@ def register(dp: Dispatcher) -> None:
                 )
         await event.message.answer(
             texts.OP_APPEAL_CLOSED.format(number=appeal_id) if ok
-            else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
+            else texts.OP_APPEAL_CLOSE_UNAVAILABLE.format(number=appeal_id)
         )
 
     @dp.message_created(Command("erase"))
