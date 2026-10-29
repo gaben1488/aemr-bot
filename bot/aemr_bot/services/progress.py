@@ -171,12 +171,16 @@ async def send_or_edit_progress(
 
     if existing_mid:
         try:
-            await bot.edit_message(
+            from aemr_bot.utils.event import check_edit_result
+
+            result = await bot.edit_message(
                 message_id=existing_mid,
                 text=text,
                 attachments=attachments,
                 format=fmt,
+                notify=False,
             )
+            check_edit_result(result)
             return existing_mid, True
         except Exception:
             log.info(

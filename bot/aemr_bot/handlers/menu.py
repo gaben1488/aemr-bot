@@ -17,6 +17,7 @@ from aemr_bot.services import users as users_service
 from aemr_bot.utils import menu_tracker
 from aemr_bot.utils.event import (
     ack_callback,
+    check_edit_result,
     get_callback_message_id,
     get_chat_id,
     get_user_id,
@@ -91,11 +92,13 @@ async def _send_or_edit_menu(
 
     if edit_allowed:
         try:
-            await event.bot.edit_message(
+            result = await event.bot.edit_message(
                 message_id=callback_mid,
                 text=text,
                 attachments=attachments,
+                notify=False,
             )
+            check_edit_result(result)
             return
         # RuntimeError — единственное сознательное расхождение с общей
         # `utils.event.send_or_edit_screen` (регрессия:

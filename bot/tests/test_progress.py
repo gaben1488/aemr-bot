@@ -269,3 +269,19 @@ class TestStagesIntegrity:
         Если кто-то изменит этот порядок — счётчик этапов собьётся по
         логике в render_progress."""
         assert _STAGES == ("name", "locality", "address", "topic", "summary")
+
+
+@pytest.mark.asyncio
+async def test_edit_explicitly_rejected_falls_back_to_new_screen():
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+
+    bot = SimpleNamespace(edit_message=AsyncMock(return_value=SimpleNamespace(success=False)),
+                          send_message=AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid='new'))))
+    mid, edited = await send_or_edit_progress(
+        bot, chat_id=100, user_id=42, dialog_data={'progress_message_id': 'old'},
+        text='Текущий шаг', attachments=[],
+    )
+    assert (mid, edited) == ('new', False)
+    assert bot.edit_message.await_args.kwargs['notify'] is False
+    bot.send_message.assert_awaited_once()

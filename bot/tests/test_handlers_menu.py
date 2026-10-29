@@ -684,8 +684,20 @@ def _registered_resident_name(monkeypatch):
     """Routing unit cases start with a registered resident; name-gate cases
     are exercised with persisted state in test_resident_name_resume.py.
     """
-    from tests._helpers import fake_current_user
     from aemr_bot.handlers import resident_name_gate
+    from tests._helpers import fake_current_user
     user = SimpleNamespace(first_name="Анна", is_blocked=False, consent_pdn_at=True,
                            dialog_data={}, dialog_state="idle")
     monkeypatch.setattr(resident_name_gate, "current_user", fake_current_user(user))
+
+
+@pytest.mark.asyncio
+async def test_menu_does_not_treat_rejected_edit_as_success():
+    from aemr_bot.handlers import menu
+
+    event = _make_callback_event(chat_id=188, user_id=42)
+    event.bot.edit_message = AsyncMock(return_value=SimpleNamespace(success=False))
+    event.bot.send_message = AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid='replacement')))
+    await menu._send_or_edit_menu(event, text='Экран')
+    event.bot.send_message.assert_awaited_once()
+    assert event.bot.edit_message.await_args.kwargs['notify'] is False

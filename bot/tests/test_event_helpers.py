@@ -151,6 +151,7 @@ class TestSendOrEditScreen:
             message_id="m-current",
             text="Экран",
             attachments=["kb"],
+            notify=False,
         )
         bot.send_message.assert_not_called()
 
@@ -256,3 +257,20 @@ async def test_ack_callback_swallows_exceptions(
         "не удалось подтвердить callback" in rec.message
         for rec in caplog.records
     )
+
+
+@pytest.mark.asyncio
+async def test_edit_false_response_falls_back_and_does_not_claim_success():
+    from aemr_bot.utils import menu_tracker
+
+    menu_tracker.clear_all()
+    bot = SimpleNamespace(edit_message=AsyncMock(return_value=SimpleNamespace(success=False)),
+                          send_message=AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid='new'))))
+    event = SimpleNamespace(bot=bot, callback=SimpleNamespace(payload='menu:settings'),
+                            message=SimpleNamespace(sender=SimpleNamespace(user_id=42),
+                                                    recipient=SimpleNamespace(chat_id=100),
+                                                    body=SimpleNamespace(mid='old')))
+    menu_tracker.set_last_menu_mid(100, 'old')
+    await send_or_edit_screen(event, text='Новый экран')
+    bot.send_message.assert_awaited_once()
+    assert bot.edit_message.await_args.kwargs['notify'] is False
