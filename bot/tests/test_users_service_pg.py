@@ -28,6 +28,7 @@ from aemr_bot.db.models import (
     AppealStatus,
     AuditLog,
     DialogState,
+    Event,
     Message,
     User,
 )
@@ -191,6 +192,23 @@ class TestErasePdnByPhone:
 
 
 class TestErasePdn:
+    @pytest.mark.asyncio
+    async def test_erasure_clears_legacy_event_id_without_matching_prefix(self, session) -> None:
+        from sqlalchemy import select
+
+        await users_service.get_or_create(session, max_user_id=777)
+        session.add_all([
+            Event(idempotency_key="message|mid=a|user=777", update_type="message", payload={}),
+            Event(idempotency_key="message|mid=b", update_type="message", payload={"user_id": 777}),
+            Event(idempotency_key="message|mid=c|user=7770", update_type="message", payload={"user_id": 7770}),
+        ])
+        await session.flush()
+        assert await users_service.erase_pdn(session, 777)
+        remaining = set(await session.scalars(select(Event.idempotency_key)))
+        assert "message|mid=a|user=777" not in remaining
+        assert "message|mid=b" not in remaining
+        assert "message|mid=c|user=7770" in remaining
+
     @pytest.mark.asyncio
     async def test_retention_rechecks_consent_before_erasing(self, session) -> None:
         from sqlalchemy import select, update
