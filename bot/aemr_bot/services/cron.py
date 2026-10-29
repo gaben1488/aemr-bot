@@ -27,7 +27,6 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import sla as sla_service
-from aemr_bot.services import stats as stats_service
 from aemr_bot.services import threat_intel
 from aemr_bot.services import users as users_service
 from aemr_bot.services.backup_verify import (
@@ -658,14 +657,28 @@ async def _job_monthly_report(send_admin_document) -> None:
         if not notify_toggles.is_enabled("admin_notify_monthly_stats"):
             log.debug("monthly-stats: admin_notify_monthly_stats disabled, suppressed")
             return
+        from datetime import UTC, timedelta
+        from aemr_bot.services import complete_stats, privacy_epoch
+
+        now = datetime.now(TZ)
+        current_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        previous_month = (current_month - timedelta(days=1)).replace(day=1)
+        title = f"за {previous_month:%m.%Y}"
+        window = (previous_month.astimezone(UTC), current_month.astimezone(UTC), title)
         async with session_scope() as session:
-            content, title, count = await stats_service.build_xlsx(session, "month")
-        filename = f"appeals_month_{datetime.now(TZ):%Y-%m-%d}.xlsx"
-        await send_admin_document(
-            filename=filename,
-            content=content,
-            caption=f"📊 Статистика {title} ({count} обращений)",
-        )
+            content, title, count, epoch = await complete_stats.build_xlsx_with_epoch(
+                session, "month", window=window
+            )
+        filename = f"appeals_month_{previous_month:%Y-%m}.xlsx"
+        async with session_scope() as guard_session:
+            if not await privacy_epoch.hold_export_if_current(guard_session, epoch):
+                log.warning("monthly report suppressed: data erased while preparing")
+                return
+            await send_admin_document(
+                filename=filename,
+                content=content,
+                caption=f"📊 Статистика {title} ({count} обращений)",
+            )
     except Exception:
         log.exception("monthly report failed")
 

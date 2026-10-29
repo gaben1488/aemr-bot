@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC
+from datetime import UTC, datetime
 from io import BytesIO
 
 from openpyxl import Workbook
@@ -107,13 +107,15 @@ def _attachment_description(item) -> str:
     return f"{label}: {name}" if name else label
 
 
-async def build_xlsx_with_epoch(session, period: str) -> tuple[bytes, str, int, int]:
+async def build_xlsx_with_epoch(
+    session, period: str, *, window: tuple[datetime | None, datetime, str] | None = None
+) -> tuple[bytes, str, int, int]:
     if not session.in_transaction() and session.bind.dialect.name == "postgresql":
         # Keep the selected appeals and their histories at one consistent
         # point in time while other operators continue their work.
         await session.execute(text("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"))
     snapshot_epoch = await privacy_epoch.read(session)
-    start, end, title = stats.period_window(period)
+    start, end, title = window if window is not None else stats.period_window(period)
     workbook = Workbook(write_only=True)
     overview = _Sheet(workbook, "Обращения", ["№", "Связано с №", "Подано", "Житель", "Телефон", "Населённый пункт",
                         "Адрес", "Тема", "Статус", "Первый ответ периода", "Итоговый ответ", "Закрыто",
@@ -139,7 +141,7 @@ async def build_xlsx_with_epoch(session, period: str) -> tuple[bytes, str, int, 
     count, after_id = 0, 0
     while True:
         query = (select(Appeal).options(selectinload(Appeal.user))
-                 .where(Appeal.created_at <= end, Appeal.id > after_id)
+                 .where(Appeal.created_at < end, Appeal.id > after_id)
                  .order_by(Appeal.id).limit(_BATCH_SIZE))
         if start is not None:
             query = query.where(Appeal.created_at >= start)
