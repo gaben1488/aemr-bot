@@ -113,6 +113,7 @@ async def render_appeal_attachments(
     appeal,
     header_template: str = "Вложения обращения #{appeal_id}",
     reply_to_mid: str | None = None,
+    attachments_override: list[dict] | None = None,
 ) -> None:
     """Переотправить сохранённые вложения обращения и переписки в
     указанный чат/диалог.
@@ -129,7 +130,8 @@ async def render_appeal_attachments(
     """
     if not bot:
         return
-    all_atts = collect_appeal_attachments(appeal)
+    all_atts = (collect_appeal_attachments(appeal) if attachments_override is None
+                else attachments_override)
     if not all_atts:
         return
     relayable = deserialize_for_relay(all_atts)

@@ -18,6 +18,7 @@ _CONTENT_UNITS = 2600
 @dataclass(frozen=True)
 class HistoryPage:
     entry: int
+    message_id: int
     label: str
     date: datetime | None
     content: str
@@ -37,7 +38,7 @@ def pages_for(appeal: Any, *, operator: bool) -> list[HistoryPage]:
     entries = [(
         'Обращение', getattr(appeal, 'created_at', None),
         getattr(appeal, 'summary', None) or '', len(getattr(appeal, 'attachments', None) or []),
-        True,
+        True, 0,
     )]
     messages = list(getattr(appeal, 'messages', None) or [])
     messages.sort(key=lambda m: (getattr(m, 'created_at', None) or datetime.min.replace(tzinfo=UTC),
@@ -55,14 +56,30 @@ def pages_for(appeal: Any, *, operator: bool) -> list[HistoryPage]:
             'Ответ оператора' if operator else 'Ответ администрации'
         ) if direction == MessageDirection.FROM_OPERATOR.value else 'Запись'
         entries.append((label, getattr(message, 'created_at', None), getattr(message, 'text', None) or '',
-                        len(getattr(message, 'attachments', None) or []), from_user))
+                        len(getattr(message, 'attachments', None) or []), from_user,
+                        getattr(message, 'id', 0) or 0))
 
     result: list[HistoryPage] = []
-    for entry, (label, date, text, attachments, from_user) in enumerate(entries):
+    for entry, (label, date, text, attachments, from_user, message_id) in enumerate(entries):
         # For operators retain the existing protection against clickable links.
         if operator and from_user:
             text = defang_for_admin(text) or ''
         pieces = split_text_units(text, _CONTENT_UNITS)
-        result.extend(HistoryPage(entry, label, date, part, index + 1, len(pieces), attachments)
+        result.extend(HistoryPage(entry, message_id, label, date, part, index + 1, len(pieces), attachments)
                       for index, part in enumerate(pieces))
     return result
+
+
+def attachments_for(appeal: Any, message_id: int, *, operator: bool) -> list[dict] | None:
+    """Return only the selected record's attachments, never another appeal's."""
+    if message_id == 0:
+        return list(getattr(appeal, 'attachments', None) or [])
+    for message in getattr(appeal, 'messages', None) or []:
+        if getattr(message, 'id', None) != message_id:
+            continue
+        if not operator and getattr(message, 'direction', '') not in {
+            MessageDirection.FROM_USER.value, MessageDirection.FROM_OPERATOR.value,
+        }:
+            return None
+        return list(getattr(message, 'attachments', None) or [])
+    return None

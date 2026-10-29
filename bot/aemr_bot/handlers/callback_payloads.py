@@ -138,6 +138,7 @@ PREFIX_APPEAL_FOLLOWUP = "appeal:followup:"
 PREFIX_APPEAL_REPEAT = "appeal:repeat:"
 PREFIX_APPEAL_ATTS = "appeal:atts:"
 PREFIX_APPEAL_HISTORY = "appeal:history:"
+PREFIX_APPEAL_RECORD_ATTS = "appeal:record_atts:"
 PREFIX_APPEALS_PAGE = "appeals:page:"
 
 # BROADCAST_ADMIN
@@ -158,6 +159,7 @@ PREFIX_OP_UNBLOCK = "op:unblock:"
 PREFIX_OP_ATTS = "op:atts:"
 PREFIX_OP_OPEN_CARD = "op:open_card:"
 PREFIX_OP_HISTORY = "op:history:"
+PREFIX_OP_RECORD_ATTS = "op:record_atts:"
 PREFIX_OP_OPADD = "op:opadd:"
 PREFIX_OP_OPCARD = "op:opcard:"
 PREFIX_OP_OPROLE = "op:oprole:"
@@ -211,6 +213,14 @@ def appeal_history(appeal_id: int, page: int) -> str:
 
 def op_history(appeal_id: int, page: int) -> str:
     return f"{PREFIX_OP_HISTORY}{appeal_id}:{page}"
+
+
+def appeal_record_atts(appeal_id: int, message_id: int) -> str:
+    return f"{PREFIX_APPEAL_RECORD_ATTS}{appeal_id}:{message_id}"
+
+
+def op_record_atts(appeal_id: int, message_id: int) -> str:
+    return f"{PREFIX_OP_RECORD_ATTS}{appeal_id}:{message_id}"
 
 
 def appeals_page(page: int) -> str:

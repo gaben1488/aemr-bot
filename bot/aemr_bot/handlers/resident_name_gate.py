@@ -29,7 +29,7 @@ _replaying: ContextVar[bool] = ContextVar("resident_name_replaying", default=Fal
 _SAFE_EXACT = {"menu:new_appeal", "menu:my_appeals", "addr:reuse", "addr:new",
                "geo:confirm", "geo:edit_address", "geo:other_locality", "appeal:submit"}
 _SAFE_PREFIXES = ("locality:", "topic:", "appeal:followup:", "appeal:repeat:",
-                  "appeal:show:", "appeal:atts:", "appeal:history:", "appeals:page:")
+                  "appeal:show:", "appeal:atts:", "appeal:history:", "appeal:record_atts:", "appeals:page:")
 _CHOICE_SETTINGS = {"locality": "localities", "topic": "topics"}
 
 

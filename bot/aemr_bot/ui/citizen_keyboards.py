@@ -344,7 +344,7 @@ def user_appeal_card_keyboard(
 
 
 def appeal_history_keyboard(appeal_id: int, page: int, total: int, *, operator: bool = False,
-                            attachments: bool = False):
+                            attachments: bool = False, message_id: int | None = None):
     """Навигация по одной записи или части записи без пересылки всей истории."""
     kb = InlineKeyboardBuilder()
     build = cp.op_history if operator else cp.appeal_history
@@ -355,6 +355,9 @@ def appeal_history_keyboard(appeal_id: int, page: int, total: int, *, operator: 
         buttons.append(CallbackButton(text="Позже ▶️", payload=build(appeal_id, page + 1)))
     if buttons:
         kb.row(*buttons)
+    if message_id is not None:
+        build_record = cp.op_record_atts if operator else cp.appeal_record_atts
+        kb.row(CallbackButton(text="📎 Вложения записи", payload=build_record(appeal_id, message_id)))
     if attachments:
         payload = cp.op_atts(appeal_id) if operator else cp.appeal_atts(appeal_id)
         kb.row(CallbackButton(text="📎 Все вложения", payload=payload))

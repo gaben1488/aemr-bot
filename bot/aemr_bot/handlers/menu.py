@@ -1093,7 +1093,28 @@ async def show_appeal_history(event, appeal_id: int, page: int, max_user_id: int
     await _send_or_edit_menu(
         event, text=f"{pages[page].render(appeal_id)}\n\nСтраница {page + 1} из {len(pages)}",
         attachments=[keyboards.appeal_history_keyboard(appeal_id, page, len(pages),
-                                                       attachments=attachments)],
+                                                       attachments=attachments,
+                                                       message_id=pages[page].message_id
+                                                       if pages[page].attachments else None)],
+    )
+
+
+async def show_record_attachments(event, appeal_id: int, message_id: int, max_user_id: int):
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+    if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
+        await _send_or_edit_menu(event, text="Обращение не найдено.",
+                                 attachments=[keyboards.back_to_menu_keyboard()])
+        return
+    attachments = appeal_history.attachments_for(appeal, message_id, operator=False)
+    if not attachments:
+        await _send_or_edit_menu(event, text="Вложения этой записи недоступны.",
+                                 attachments=[keyboards.back_to_menu_keyboard()])
+        return
+    await admin_relay.render_appeal_attachments(
+        event.bot, chat_id=None, user_id=max_user_id, appeal=appeal,
+        header_template="📎 Вложения записи обращения #{appeal_id}",
+        attachments_override=attachments,
     )
 
 
@@ -1138,6 +1159,17 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
         except ValueError:
             return True
         await show_appeal_history(event, appeal_id, page, max_user_id)
+        return True
+
+    if payload.startswith("appeal:record_atts:") and max_user_id is not None:
+        await ack_callback(event)
+        try:
+            appeal_id, message_id = map(int, payload.removeprefix("appeal:record_atts:").split(":"))
+            if appeal_id <= 0 or message_id < 0:
+                return True
+        except ValueError:
+            return True
+        await show_record_attachments(event, appeal_id, message_id, max_user_id)
         return True
 
     # appeals:page:<N|noop> — пагинация «Мои обращения». noop = текущая

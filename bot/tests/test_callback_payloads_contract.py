@@ -58,6 +58,7 @@ _BUILDER_CASES: tuple[tuple[object, tuple, str, bool], ...] = (
     (cp.appeal_repeat, (42,), cp.PREFIX_APPEAL_REPEAT, True),
     (cp.appeal_atts, (42,), cp.PREFIX_APPEAL_ATTS, True),
     (cp.appeal_history, (42, 0), cp.PREFIX_APPEAL_HISTORY, False),
+    (cp.appeal_record_atts, (42, 0), cp.PREFIX_APPEAL_RECORD_ATTS, False),
     (cp.appeals_page, (2,), cp.PREFIX_APPEALS_PAGE, True),
     # BROADCAST_ADMIN — числовой хвост
     (cp.broadcast_stop, (7,), cp.PREFIX_BROADCAST_STOP, True),
@@ -78,6 +79,7 @@ _BUILDER_CASES: tuple[tuple[object, tuple, str, bool], ...] = (
     (cp.op_atts, (11,), cp.PREFIX_OP_ATTS, True),
     (cp.op_open_card, (11,), cp.PREFIX_OP_OPEN_CARD, True),
     (cp.op_history, (11, 0), cp.PREFIX_OP_HISTORY, False),
+    (cp.op_record_atts, (11, 0), cp.PREFIX_OP_RECORD_ATTS, False),
     # OPERATOR_ADMIN — строковый хвост (мастер операторов)
     (cp.op_opadd, ("list",), cp.PREFIX_OP_OPADD, False),
     # OPERATOR_ADMIN — числовой хвост (max_user_id)

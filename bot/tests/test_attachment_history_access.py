@@ -68,3 +68,54 @@ async def test_operator_response_persists_the_delivered_attachments():
     assert message.attachments == photos
     assert saved == [message]
     assert appeal.status == 'answered'
+
+
+def test_history_pages_point_to_the_specific_record_attachments():
+    from datetime import UTC, datetime
+
+    from aemr_bot.services import appeal_history
+
+    now = datetime(2026, 1, 1, tzinfo=UTC)
+    first = {'type': 'image', 'payload': {'token': 'initial'}}
+    second = {'type': 'image', 'payload': {'token': 'operator'}}
+    reply = SimpleNamespace(id=92, direction='from_operator', text='Готово', attachments=[second], created_at=now)
+    appeal = SimpleNamespace(id=3, summary='Проблема', attachments=[first], messages=[reply], created_at=now)
+    pages = appeal_history.pages_for(appeal, operator=False)
+    assert pages[0].message_id == 0
+    assert pages[1].message_id == 92
+    assert appeal_history.attachments_for(appeal, 0, operator=False) == [first]
+    assert appeal_history.attachments_for(appeal, 92, operator=False) == [second]
+    assert appeal_history.attachments_for(appeal, 999, operator=False) is None
+
+
+async def test_resident_cannot_get_another_residents_record_attachments(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    from aemr_bot.handlers import menu
+    from tests._helpers import fake_session_scope, make_event
+
+    appeal = SimpleNamespace(id=5, user=SimpleNamespace(max_user_id=900), attachments=[{'type': 'image'}], messages=[])
+    monkeypatch.setattr(menu, 'session_scope', fake_session_scope)
+    monkeypatch.setattr(menu.appeals_service, 'get_by_id_with_messages', AsyncMock(return_value=appeal))
+    relay = AsyncMock()
+    monkeypatch.setattr(menu.admin_relay, 'render_appeal_attachments', relay)
+    monkeypatch.setattr(menu, '_send_or_edit_menu', AsyncMock())
+    await menu.show_record_attachments(make_event(user_id=42), 5, 0, 42)
+    relay.assert_not_awaited()
+
+
+async def test_resident_gets_only_selected_record(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    from aemr_bot.handlers import menu
+    from tests._helpers import fake_session_scope, make_event
+
+    selected = [{'type': 'image', 'payload': {'token': 'sent-photo'}}]
+    msg = SimpleNamespace(id=8, direction='from_operator', attachments=selected)
+    appeal = SimpleNamespace(id=5, user=SimpleNamespace(max_user_id=42), attachments=[{'type': 'file'}], messages=[msg])
+    monkeypatch.setattr(menu, 'session_scope', fake_session_scope)
+    monkeypatch.setattr(menu.appeals_service, 'get_by_id_with_messages', AsyncMock(return_value=appeal))
+    relay = AsyncMock()
+    monkeypatch.setattr(menu.admin_relay, 'render_appeal_attachments', relay)
+    await menu.show_record_attachments(make_event(user_id=42), 5, 8, 42)
+    assert relay.await_args.kwargs['attachments_override'] == selected

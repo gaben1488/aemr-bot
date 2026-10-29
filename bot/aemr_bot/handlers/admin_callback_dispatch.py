@@ -139,7 +139,33 @@ async def _op_history(event, payload: str) -> None:
         attachments=[kbds.appeal_history_keyboard(
             appeal_id, page, len(pages), operator=True,
             attachments=bool(admin_relay.collect_appeal_attachments(appeal)),
+            message_id=pages[page].message_id if pages[page].attachments else None,
         )],
+    )
+
+
+async def _op_record_attachments(event, payload: str) -> None:
+    await ack_callback(event)
+    if not await ensure_operator(event):
+        return
+    try:
+        appeal_id, message_id = map(int, payload.removeprefix("op:record_atts:").split(":"))
+        if appeal_id <= 0 or message_id < 0:
+            return
+    except ValueError:
+        return
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+    attachments = appeal_history.attachments_for(appeal, message_id, operator=True) if appeal else None
+    if not attachments:
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+                                  text="Вложения этой записи недоступны.",
+                                  attachments=[kbds.op_back_to_menu_keyboard()])
+        return
+    await admin_relay.render_appeal_attachments(
+        event.bot, chat_id=cfg.admin_group_id, user_id=None, appeal=appeal,
+        header_template="📎 Вложения записи обращения #{appeal_id}",
+        attachments_override=attachments,
     )
 
 
@@ -278,6 +304,7 @@ async def _op_operators_action(event, payload: str) -> None:
 # обёртки, которые здесь и убирали.
 _PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[object]]], ...] = (
     ("op:history:", _op_history),
+    ("op:record_atts:", _op_record_attachments),
     ("op:aud:", lambda e, p: admin_commands.run_audience_action(e, p)),
     # Операторы — единое семейство:
     ("op:opadd:", _op_operators_action),
