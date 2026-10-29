@@ -52,3 +52,44 @@ async def test_unknown_followup_result_is_not_automatically_replayed(session, mo
     assert await session.scalar(select(Message.admin_notice_state).where(Message.id == message.id)) == "unknown"
     assert await followup_delivery.recover_pending(object()) == 0
     assert render.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_recovery_sends_pending_followup_after_restart(session, monkeypatch):
+    user = User(max_user_id=72012)
+    session.add(user)
+    await session.flush()
+    appeal = Appeal(user_id=user.id, status="in_progress", summary="Исходное", attachments=[])
+    session.add(appeal)
+    await session.flush()
+    message = Message(appeal_id=appeal.id, direction="from_user", text="Сохранено",
+                      attachments=[], admin_notice_state="pending")
+    session.add(message)
+    await session.commit()
+    render = AsyncMock(return_value="card-mid")
+    monkeypatch.setattr(admin_card, "render", render)
+
+    assert await followup_delivery.recover_pending(object()) == 1
+    assert await session.scalar(select(Message.admin_notice_state).where(Message.id == message.id)) == "sent"
+    assert await followup_delivery.recover_pending(object()) == 0
+    assert render.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_erasure_removes_pending_followup_payload_and_delivery_state(session):
+    from aemr_bot.services import users
+
+    user = User(max_user_id=72013)
+    session.add(user)
+    await session.flush()
+    appeal = Appeal(user_id=user.id, status="in_progress", summary="Исходное", attachments=[])
+    session.add(appeal)
+    await session.flush()
+    message = Message(appeal_id=appeal.id, direction="from_user", text="Личный текст",
+                      attachments=[], admin_notice_state="pending")
+    session.add(message)
+    await session.flush()
+    assert await users.erase_pdn(session, 72013)
+    await session.refresh(message)
+    assert message.text is None
+    assert message.admin_notice_state is None
