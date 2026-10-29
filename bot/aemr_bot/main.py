@@ -449,7 +449,7 @@ def _build_admin_senders(bot: Bot):
 
         if not settings.admin_group_id:
             return
-        await admin_bus.send(bot, text=text, critical=critical)
+        return await admin_bus.send(bot, text=text, critical=critical)
 
     async def send_admin_document(filename: str, content: bytes, caption: str = ""):
         if not settings.admin_group_id:

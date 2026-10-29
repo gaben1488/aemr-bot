@@ -108,55 +108,35 @@ async def set_consent(
 
     Возвращает True, если согласие дано ЗАНОВО (consent_pdn_at был
     NULL — первый раз или после отзыва): по этому признаку вызывающий
-    код шлёт уведомление оператору ровно один раз. False — согласие уже
-    действовало (повторный тап / дубль callback'а): освежаются только
-    отметка времени и хеш редакции, уведомлять не нужно. Признак
-    атомарен: conditional UPDATE под row-lock'ом — из двух конкурентных
-    транзакций ровно одна увидит переход NULL→значение.
+    код шлёт уведомление оператору ровно один раз. Повторное нажатие
+    той же кнопки не изменяет сохранённое время и не возобновляет
+    отозванное согласие. Операция выполняется под блокировкой строки.
     """
-    accepted_at = datetime.now(UTC)
-    values = {
-        "consent_pdn_at": accepted_at,
-        "consent_pdn_text_sha256": text_sha256,
-        "consent_revoked_at": None,
-    }
-    fresh = await session.execute(
-        update(User)
-        .where(
-            User.max_user_id == max_user_id,
-            # Условие — сам механизм идемпотентности: проигравшая
-            # конкурентная транзакция после снятия row-lock'а
-            # перепроверит предикат на свежей версии строки и получит
-            # rowcount=0 (постгресовый EvalPlanQual при READ COMMITTED).
-            User.consent_pdn_at.is_(None),
-        )
-        .values(**values)
+    resident = await session.scalar(
+        select(User).where(User.max_user_id == max_user_id)
+        .with_for_update().execution_options(populate_existing=True)
     )
-    newly_granted = (fresh.rowcount or 0) > 0
-    if not newly_granted:
-        await session.execute(
-            update(User).where(User.max_user_id == max_user_id).values(**values)
-        )
+    if resident is None:
+        return False
+    records = list(resident.consent_records or [])
+    if prompt_mid is not None and any(item.get("prompt_mid") == prompt_mid for item in records):
+        # A duplicate must neither alter the time of consent nor revive a
+        # subsequently withdrawn consent.
+        return False
+    accepted_at = datetime.now(UTC)
+    newly_granted = resident.consent_pdn_at is None
+    resident.consent_pdn_at = accepted_at
+    resident.consent_pdn_text_sha256 = text_sha256
+    resident.consent_revoked_at = None
     if consent_text is not None:
-        # The update above acquired the PostgreSQL row lock. Keep the exact
-        # rendered text rather than reconstructing it from current settings.
-        resident = await session.scalar(
-            select(User).where(User.max_user_id == max_user_id).with_for_update()
-        )
-        if resident is not None:
-            records = list(resident.consent_records or [])
-            duplicate = prompt_mid is not None and any(
-                item.get("prompt_mid") == prompt_mid for item in records
-            )
-            if not duplicate:
-                records.append({
-                    "accepted_at": accepted_at.isoformat(),
-                    "text": consent_text,
-                    "template_sha256": text_sha256,
-                    "prompt_mid": prompt_mid,
-                })
-                resident.consent_records = records
-                await session.flush()
+        records.append({
+            "accepted_at": accepted_at.isoformat(),
+            "text": consent_text,
+            "template_sha256": text_sha256,
+            "prompt_mid": prompt_mid,
+        })
+        resident.consent_records = records
+    await session.flush()
     return newly_granted
 
 
@@ -427,6 +407,10 @@ async def erase_pdn_detailed(
     from aemr_bot.services.inbox import erase_pending
     from aemr_bot.utils.resident_lifecycle import hold_until_commit
     await hold_until_commit(session, max_user_id)
+    # All erasure paths acquire the export barrier before row locks. Keeping
+    # this order avoids a cycle with the five-year cleanup transaction.
+    from aemr_bot.services import privacy_epoch
+    await privacy_epoch.mark_erasure(session)
     query = select(User.id).where(User.max_user_id == max_user_id).with_for_update()
     if revoked_before is not None:
         # The candidate scan can race with a renewed consent. Recheck under
@@ -437,8 +421,6 @@ async def erase_pdn_detailed(
         if revoked_before is None:
             await erase_pending(session, max_user_id)
         return None
-    from aemr_bot.services import privacy_epoch
-    await privacy_epoch.mark_erasure(session)
     await erase_pending(session, max_user_id)
     # Эти записи описывают жителя; журнал управления операторами может
     # содержать тот же MAX ID в другом качестве и должен сохраниться.

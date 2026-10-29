@@ -77,8 +77,6 @@ _SELFCHECK_HEALTHY = {"healthy": True}
 # параметр безвреден — там тик раз в 86400 сек.
 _MISFIRE_GRACE_SEC = 120
 
-_ADMIN_SEND_RETRY_DELAYS_SEC = (2, 5, 10)
-
 
 # ---- Module-level helpers (вынесены из build_scheduler для тестируемости) ----
 
@@ -143,12 +141,7 @@ async def _send_admin_text_with_retry(
     context: str,
     critical: bool = False,
 ) -> bool:
-    """Отправить служебное сообщение в админ-группу с коротким retry.
-
-    Пульс и сообщение о рестарте не должны теряться из-за одного
-    сетевого сбоя MAX, короткого rate-limit или задержки сразу после
-    старта контейнера. Если все попытки не удались, job не роняет
-    scheduler-loop, но оставляет понятный лог.
+    """Однократная отправка с подтверждением по идентификатору MAX.
 
     `critical=True` пробрасывается в `send_admin_text` и заставляет
     `admin_bus.send` игнорировать quiet режим. Используется для алёртов
@@ -157,27 +150,16 @@ async def _send_admin_text_with_retry(
     потерянный бэкап замолчат до утра понедельника.
     См. SECURITY_REVIEW_2026-05-28 §A1.
     """
-    attempts = len(_ADMIN_SEND_RETRY_DELAYS_SEC) + 1
-    for attempt in range(1, attempts + 1):
-        try:
-            await send_admin_text(text, critical=critical)
-            return True
-        except Exception:
-            if attempt >= attempts:
-                log.exception(
-                    "%s: не удалось отправить служебное сообщение после %d попыток",
-                    context, attempts,
-                )
-                return False
-            delay = _ADMIN_SEND_RETRY_DELAYS_SEC[attempt - 1]
-            log.warning(
-                "%s: отправка служебного сообщения не удалась, повтор через %s сек. "
-                "Попытка %d/%d",
-                context, delay, attempt, attempts,
-                exc_info=True,
-            )
-            await asyncio.sleep(delay)
-    return False
+    # A timeout can mean MAX accepted the message but the response was lost.
+    # Repeating a changing request blindly would create duplicates.
+    try:
+        confirmed = bool(await send_admin_text(text, critical=critical))
+    except Exception:
+        log.exception("%s: результат отправки не подтверждён", context)
+        return False
+    if not confirmed:
+        log.warning("%s: результат отправки не подтверждён", context)
+    return confirmed
 
 
 # ============================================================================
@@ -467,7 +449,15 @@ async def _job_threat_intel_refresh(send_admin_text) -> None:
     # оператору важнее всего узнать о проблеме.
     try:
         store = threat_intel.get_store()
-        if store.is_stale() and not getattr(store, "outage_notified", False):
+        from aemr_bot.services import alert_state
+
+        if store.is_stale():
+            # Commit the claim before sending: even a process crash during
+            # the request must not result in an automatic duplicate.
+            async with session_scope() as session:
+                claimed = await alert_state.claim(session, "threat_intel")
+            if not claimed:
+                return
             sent = await _send_admin_text_with_retry(
                 send_admin_text,
                 (
@@ -481,10 +471,13 @@ async def _job_threat_intel_refresh(send_admin_text) -> None:
                 context="threat-intel-stale",
                 critical=True,
             )
-            if sent:
-                store.outage_notified = True
-                await asyncio.to_thread(threat_intel.save_cache, store)
-        elif not store.is_stale():
+            async with session_scope() as session:
+                await alert_state.finish(session, "threat_intel", confirmed=sent)
+            store.outage_notified = sent
+            await asyncio.to_thread(threat_intel.save_cache, store)
+        else:
+            async with session_scope() as session:
+                await alert_state.clear(session, "threat_intel")
             store.outage_notified = False
     except Exception:
         log.exception("threat-intel staleness alert failed")
@@ -828,7 +821,7 @@ async def _warn_about_approaching_pdn_deadline(send_admin_text) -> None:
         log.exception("pdn_deadline_warning failed")
 
 
-async def _job_pdn_retention_check(send_admin_text) -> None:
+async def _job_pdn_retention_check(send_admin_text, *, warn: bool = True) -> None:
     """152-ФЗ ст. 21 ч. 5: после отзыва согласия оператор обязан
     прекратить обработку и уничтожить ПДн в срок 30 дней.
 
@@ -851,12 +844,13 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
     из-за истечения срока, и мог сделать выводы о скорости работы.
     """
     # Pre-deadline warnings must not depend on already overdue rows or cleanup.
-    await _warn_about_approaching_pdn_deadline(send_admin_text)
+    if warn:
+        await _warn_about_approaching_pdn_deadline(send_admin_text)
     try:
 
         async with session_scope() as session:
             candidates = await users_service.find_pending_pdn_retention(
-                session, days_after_revoke=30
+                session, days_after_revoke=29
             )
         if not candidates:
             return
@@ -885,7 +879,7 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                         session, user.id
                     )
                     ok = await users_service.erase_pdn(
-                        session, max_user_id, revoked_before=datetime.now(TZ) - timedelta(days=30),
+                        session, max_user_id, revoked_before=datetime.now(TZ) - timedelta(days=29),
                     )
                     if ok:
                         await operators_service.write_audit(
@@ -893,16 +887,13 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                             operator_max_user_id=None,
                             action="auto_erase_pdn_retention",
                             target=None,
-                            details={"reason": "152-FZ ст.21 ч.5, 30 дней после отзыва"},
+                            details={"reason": "очистка после отзыва согласия; запас до предельного срока"},
                         )
                         erased += 1
                         if had_open:
                             skipped_open += 1
             except Exception:
-                log.exception(
-                    "pdn_retention: не удалось обезличить max_user_id=%s",
-                    max_user_id,
-                )
+                log.exception("pdn_retention: не удалось очистить запись жителя")
         # critical=True (sec/A1): уничтожение ПДн по отзыву согласия —
         # compliance-критичное событие. Cron 0 6 * * * попадает в default
         # quiet окно [18, 9). Без critical ответственный не узнает, что
@@ -911,10 +902,10 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
         # ст. 21 ч. 5 задаёт срок уничтожения (30 дней), но требования
         # уведомлять ответственное лицо в ней нет — не приписываем закону
         # того, чего он не говорит.
-        if erased:
+        if skipped_open:
             tail = (
-                f" Из них {skipped_open} — с обращениями, закрытыми БЕЗ "
-                f"ответа: не успели ответить в отведённые 30 дней."
+                f" Из них {skipped_open} — с обращениями, закрытыми без "
+                f"ответа после отзыва согласия."
                 if skipped_open
                 else ""
             )
@@ -923,6 +914,8 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                 f"очищено записей в рабочей базе: {erased}.{tail}",
                 critical=True,
             )
+        elif erased:
+            log.info("pdn_retention: очищено записей: %d", erased)
 
     except Exception:
         log.exception("pdn_retention_check crashed")
@@ -1375,6 +1368,11 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> GracefulAsyncI
             functools.partial(_job_pdn_retention_check, send_admin_text),
             CronTrigger(hour=4, minute=30, timezone=TZ),
             "pdn-retention",
+        ),
+        (
+            functools.partial(_job_pdn_retention_check, send_admin_text, warn=False),
+            CronTrigger(minute=20, timezone=TZ),
+            "pdn-retention-hourly",
         ),
         # Funnel watchdog: сброс зависших воронок + admin-alert при
         # массовом зашпиле (≥5/час) — нужен send_admin_text в партиале.

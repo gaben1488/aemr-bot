@@ -245,9 +245,8 @@ async def _cb_consent_yes(event, max_user_id: int, payload: str) -> None:
         data = user.dialog_data or {}
         consent_hash = data.get("consent_prompt_hash")
         prompt_mid = data.get("consent_prompt_mid")
-        needs_prompt = not consent_hash or (
-            prompt_mid is not None and prompt_mid != get_callback_message_id(event)
-        )
+        needs_prompt = (not consent_hash or not data.get("consent_prompt_text") or
+                        not prompt_mid or prompt_mid != get_callback_message_id(event))
         if not needs_prompt:
             newly_granted = await users_service.set_consent(
                 session, max_user_id, text_sha256=consent_hash,

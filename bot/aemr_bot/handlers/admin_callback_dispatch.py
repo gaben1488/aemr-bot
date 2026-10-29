@@ -30,7 +30,8 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import admin_commands, callback_router
 from aemr_bot.handlers import broadcast as broadcast_handler
 from aemr_bot.handlers import broadcast_templates as broadcast_templates_handler
-from aemr_bot.handlers._auth import ensure_operator
+from aemr_bot.handlers._auth import ensure_operator, get_operator
+from aemr_bot.db.models import OperatorRole
 from aemr_bot.services import admin_relay, appeal_history, card_format, consent_history
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.utils.event import ack_callback, send_or_edit_screen
@@ -92,10 +93,19 @@ async def _op_reply_intermediate(event, appeal_id: int) -> None:
     await admin_commands.run_reply_intent(event, appeal_id, is_final=False)
 
 
+async def _op_open_page(event, page: int) -> None:
+    await ack_callback(event)
+    operator = await get_operator(event)
+    if operator is None:
+        return
+    await admin_commands._do_open_tickets(event, page=page)
+
+
 async def _op_open_card(event, appeal_id: int) -> None:
     """Открыть редактируемый экран просмотра без новой записи события."""
 
-    if not await ensure_operator(event):
+    operator = await get_operator(event)
+    if operator is None:
         return
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id_with_messages(
@@ -131,7 +141,7 @@ async def _op_open_card(event, appeal_id: int) -> None:
         text += f"\n\n⏱ Прошлых периодов: {len(periods)}, с просрочкой: {breaches}."
     text += "\n\nДля ответа используйте кнопку под карточкой."
     keyboard = kbds.appeal_admin_actions(
-        appeal.id, appeal.status, is_it=True,
+        appeal.id, appeal.status, is_it=operator.role == OperatorRole.IT.value,
         user_blocked=bool(appeal.user.is_blocked),
         closed_due_to_revoke=bool(getattr(appeal, "closed_due_to_revoke", False)),
         attachment_count=len(admin_relay.collect_appeal_attachments(appeal)),
@@ -383,6 +393,7 @@ _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
         lambda e, aid: admin_commands.run_block_for_appeal(e, aid, blocked=False),
     ),
     ("op:atts:", lambda e, aid: admin_commands.run_show_attachments(e, aid)),
+    ("op:open_page:", _op_open_page),
     ("op:open_card:", _op_open_card),
     ("op:word:", _op_word),
     # PR G: история рассылок — карточка / клон / failed-deliveries.

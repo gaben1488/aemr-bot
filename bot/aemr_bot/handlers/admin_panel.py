@@ -153,7 +153,7 @@ async def run_backup(event) -> None:
     await _do_backup(event)
 
 
-async def _do_open_tickets(event) -> None:
+async def _do_open_tickets(event, page: int = 0) -> None:
     """Компактный listing открытых обращений (шаг 2-в от 2026-05-26).
 
     Одно сообщение в чате: заголовок «📋 Открытые обращения (N)» +
@@ -166,7 +166,7 @@ async def _do_open_tickets(event) -> None:
     одно компактное сообщение, история разворачивается явно по
     клику.
     """
-    from sqlalchemy import select
+    from sqlalchemy import func, select
 
 
     # Индикатор набора: запрос и обработка могут занять 1-2 сек на загруженной
@@ -174,14 +174,17 @@ async def _do_open_tickets(event) -> None:
     await mark_typing(event, cfg.admin_group_id)
 
     async with session_scope() as session:
+        condition = Appeal.status.in_(
+            [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+        )
+        total = await session.scalar(select(func.count()).select_from(Appeal).where(condition)) or 0
+        pages = max(1, (total + 7) // 8)
+        page = min(max(0, page), pages - 1)
         query = (
             select(Appeal)
-            .where(
-                Appeal.status.in_(
-                    [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
-                )
-            )
-            .order_by(Appeal.created_at)
+            .where(condition)
+            .order_by(Appeal.created_at, Appeal.id)
+            .limit(8).offset(page * 8)
         )
         open_appeals = (await session.scalars(query)).all()
 
@@ -201,11 +204,12 @@ async def _do_open_tickets(event) -> None:
         items.append((appeal.id, appeal.status, topic_preview))
 
     text = (
-        f"📋 Открытые обращения ({len(open_appeals)})\n\n"
+        f"📋 Открытые обращения: {total}\n"
+        f"Страница {page + 1} из {pages}\n\n"
         f"Нажмите на обращение, чтобы открыть его полную карточку "
         f"с историей переписки."
     )
-    await op_screen(event, text, kbds.open_tickets_listing_keyboard(items))
+    await op_screen(event, text, kbds.open_tickets_listing_keyboard(items, page=page, pages=pages))
 
 
 async def _do_diag(event) -> None:
@@ -366,9 +370,9 @@ async def _do_diag(event) -> None:
     # случаях оператору полезно знать «pulse событий нет вовсе» —
     # раньше /diag показывал «—» без warn, на свежем кластере
     # выглядело как «всё ок».
-    pulse_warn = last_event is None
+    pulse_warn = False
     if last_event is None:
-        pulse_line = "⚠️ событий нет вовсе (свежий старт?)"
+        pulse_line = "событий пока нет"
     else:
         if last_event.tzinfo is None:
             last_event = last_event.replace(tzinfo=UTC)
@@ -381,12 +385,18 @@ async def _do_diag(event) -> None:
             hours = minutes_ago // 60
             pulse_line = f"{hours} ч {minutes_ago % 60} мин назад"
         if minutes_ago > 15:
-            pulse_warn = True
-            pulse_line = f"⚠️ {pulse_line}"
+            pulse_line = f"{pulse_line} (это не показатель сбоя)"
         else:
             pulse_line = f"✅ {pulse_line}"
 
     warnings_lines: list[str] = []
+    from aemr_bot.services import alert_state, threat_intel
+    async with session_scope() as session:
+        threat_alert = await alert_state.get(session, "threat_intel")
+    if threat_intel.get_store().is_stale():
+        warnings_lines.append("⚠️ Источники антифишинга давно не обновлялись; проверьте их доступность.")
+        if threat_alert == "unknown":
+            warnings_lines.append("⚠️ Доставка предупреждения о базе угроз не подтверждена; проверьте служебный чат.")
     if pulse_warn:
         warnings_lines.append(
             f"⚠️ Pulse молчит {pulse_line.replace('⚠️ ', '')} — проверить, "

@@ -957,7 +957,7 @@ async def set_value(
 
 async def list_keys(session: AsyncSession) -> list[str]:
     rows = await session.scalars(select(Setting.key))
-    in_db = set(rows)
+    in_db = {key for key in rows if not key.startswith("__incident_alert:")}
     return sorted(in_db.union(DEFAULTS.keys()))
 
 

@@ -69,7 +69,7 @@ def op_help_security_keyboard():
     return kb.as_markup()
 
 
-def open_tickets_listing_keyboard(items):
+def open_tickets_listing_keyboard(items, *, page=0, pages=1):
     """Listing открытых обращений в одном сообщении.
 
     Каждое обращение — одна кнопка-строка: «#N · 🆕 · тема (фрагмент)»
@@ -98,6 +98,13 @@ def open_tickets_listing_keyboard(items):
                 payload=cp.op_open_card(appeal_id),
             )
         )
+    nav = []
+    if page > 0:
+        nav.append(CallbackButton(text="◀️ Ранее", payload=f"op:open_page:{page - 1}"))
+    if page + 1 < pages:
+        nav.append(CallbackButton(text="Далее ▶️", payload=f"op:open_page:{page + 1}"))
+    if nav:
+        kb.row(*nav)
     kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
