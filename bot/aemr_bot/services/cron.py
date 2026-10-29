@@ -885,7 +885,9 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                     had_open = await users_service.has_open_appeals(
                         session, user.id
                     )
-                    ok = await users_service.erase_pdn(session, max_user_id)
+                    ok = await users_service.erase_pdn(
+                        session, max_user_id, revoked_before=datetime.now(TZ) - timedelta(days=30),
+                    )
                     if ok:
                         await operators_service.write_audit(
                             session,

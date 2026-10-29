@@ -192,6 +192,17 @@ class TestErasePdnByPhone:
 
 class TestErasePdn:
     @pytest.mark.asyncio
+    async def test_retention_rechecks_consent_before_erasing(self, session) -> None:
+        from sqlalchemy import select
+
+        await users_service.get_or_create(session, max_user_id=777)
+        await users_service.set_consent(session, 777)
+        assert await users_service.erase_pdn(
+            session, 777, revoked_before=datetime.now(UTC)
+        ) is False
+        assert await session.scalar(select(User).where(User.max_user_id == 777)) is not None
+
+    @pytest.mark.asyncio
     async def test_erasure_cleans_resident_audit_without_erasing_operator_history(self, session) -> None:
         await users_service.get_or_create(session, max_user_id=777)
         rows = [

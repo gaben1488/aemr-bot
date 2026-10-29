@@ -364,19 +364,21 @@ async def _redact_appeal_payloads_for_user(session: AsyncSession, user_id: int) 
     return appeals_result.rowcount or 0, messages_result.rowcount or 0
 
 
-async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
+async def erase_pdn(
+    session: AsyncSession, max_user_id: int, *, revoked_before: datetime | None = None,
+) -> bool:
     """Полное удаление ПДн жителя из рабочей БД.
 
     Wrapper для backwards-compat (возвращает bool). Новый код
     использует `erase_pdn_detailed` чтобы получить список закрытых
     обращений (для уведомления оператору).
     """
-    closed_ids = await erase_pdn_detailed(session, max_user_id)
+    closed_ids = await erase_pdn_detailed(session, max_user_id, revoked_before=revoked_before)
     return closed_ids is not None
 
 
 async def erase_pdn_detailed(
-    session: AsyncSession, max_user_id: int
+    session: AsyncSession, max_user_id: int, *, revoked_before: datetime | None = None,
 ) -> list[int] | None:
     """Очистка данных жителя в рабочей БД и список закрытых обращений.
 
@@ -404,12 +406,17 @@ async def erase_pdn_detailed(
     from aemr_bot.services.inbox import erase_pending
     from aemr_bot.utils.resident_lifecycle import hold_until_commit
     await hold_until_commit(session, max_user_id)
-    await erase_pending(session, max_user_id)
-    user_row = await session.scalar(
-        select(User.id).where(User.max_user_id == max_user_id)
-    )
+    query = select(User.id).where(User.max_user_id == max_user_id).with_for_update()
+    if revoked_before is not None:
+        # The candidate scan can race with a renewed consent. Recheck under
+        # the same row lock as deletion before touching any pending receipts.
+        query = query.where(User.consent_pdn_at.is_(None), User.consent_revoked_at <= revoked_before)
+    user_row = await session.scalar(query)
     if user_row is None:
+        if revoked_before is None:
+            await erase_pending(session, max_user_id)
         return None
+    await erase_pending(session, max_user_id)
     # Эти записи описывают жителя; журнал управления операторами может
     # содержать тот же MAX ID в другом качестве и должен сохраниться.
     resident_actions = (
