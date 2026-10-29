@@ -20,7 +20,11 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format, idempotency
 from aemr_bot.services import operators as operators_service
 from aemr_bot.utils import image_attachments as _image_attachments
-from aemr_bot.utils.attachments import _raw_attachments
+from aemr_bot.utils.attachments import (
+    _raw_attachments,
+    collect_attachments,
+    has_unsupported_appeal_attachments,
+)
 from aemr_bot.utils.event import (
     extract_message_id,
     get_chat_id,
@@ -156,11 +160,12 @@ def _remember_successful_reply(operator_id: int, appeal_id: int, text: str) -> N
 
 
 def _reply_dedupe_text(event, text: str) -> str:
-    """Одинаковый текст с разными фотографиями — разные ответы."""
-    images = _image_attachments.image_attachments_from_event(event, limit=0)
-    if not images:
+    """Одинаковый текст с разными вложениями — разные ответы."""
+    body = getattr(getattr(event, "message", None), "body", None)
+    attachments = collect_attachments(body)
+    if not attachments:
         return text
-    serialized = json.dumps(images, ensure_ascii=False, sort_keys=True, default=str)
+    serialized = json.dumps(attachments, ensure_ascii=False, sort_keys=True, default=str)
     digest = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
     return f"{text}\0{digest}"
 
@@ -375,44 +380,42 @@ async def _send_reply_to_citizen(
         return False, None, []
 
     formatted_text = card_format.citizen_reply(fresh_appeal, text)
-    # Картинки оператора, если приложил — пробрасываем жителю рядом
-    # с inline-клавиатурой. Раньше здесь было жёсткое [:1] («один
-    # кадр-пояснение, не галерея») — снято по запросу владельца:
-    # оператору нужно прикладывать несколько фото к одному ответу
-    # (например, «было / стало» или несколько ракурсов проблемы).
-    # deserialize_for_relay в build_outbound устойчив к отсутствию
-    # maxapi (вернёт []), бот не падает.
-    #
+    # MAX допускает набор фото/видео либо один документ вместе с
+    # клавиатурой. Отправляем только полностью подготовленный набор.
     # Неподдерживаемые и лишние вложения отклоняем до отправки: ответ
     # не должен считаться доставленным вместе с фотографиями, которых
     # житель в действительности не получил.
-    all_operator_images = _image_attachments.image_attachments_from_event(
-        event, limit=0
-    )
-    raw_attachments = _raw_attachments(getattr(getattr(event, "message", None), "body", None))
-    if any(not _image_attachments.is_image_attachment(att) for att in raw_attachments):
+    body = getattr(getattr(event, "message", None), "body", None)
+    raw_attachments = _raw_attachments(body)
+    operator_attachments = collect_attachments(body)
+    if has_unsupported_appeal_attachments(body):
         await _safe_admin_notice(
             event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: сейчас можно "
-            "приложить только фотографии. Удалите другие вложения, снова нажмите "
+            "приложить фото, видео или документ. Удалите другие вложения, снова нажмите "
             "«Ответить» и отправьте ответ.",
         )
         return False, None, []
-    photo_limit = max(1, min(11, cfg.attachments_per_relay_message))
-    if len(all_operator_images) > photo_limit:
+    file_count = sum(1 for att in operator_attachments if _image_attachments._type_name(att) == "file")
+    if file_count and len(operator_attachments) > 1:
         await _safe_admin_notice(
-            event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: можно приложить "
-            f"до {photo_limit} фотографий. Уменьшите их число, "
+            event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: MAX принимает "
+            "один документ отдельно от других вложений. Уберите остальные вложения, "
             "снова нажмите «Ответить» и отправьте ответ.",
         )
         return False, None, []
-    operator_images = all_operator_images
-    outbound_images = _image_attachments.build_outbound_image_attachments(
-        operator_images
-    )
-    if len(outbound_images) != len(operator_images) or len(operator_images) != len(raw_attachments):
+    media_limit = max(1, min(11, cfg.attachments_per_relay_message))
+    if len(operator_attachments) > media_limit:
+        await _safe_admin_notice(
+            event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: можно приложить "
+            f"до {media_limit} фото или видео. Уменьшите их число, "
+            "снова нажмите «Ответить» и отправьте ответ.",
+        )
+        return False, None, []
+    outbound_attachments = _image_attachments.deserialize_for_relay(operator_attachments)
+    if len(outbound_attachments) != len(operator_attachments) or len(operator_attachments) != len(raw_attachments):
         await _safe_admin_notice(
             event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: не удалось подготовить "
-            "все фотографии. Снова нажмите «Ответить» и приложите их ещё раз.",
+            "все вложения. Снова нажмите «Ответить» и приложите их ещё раз.",
         )
         return False, None, []
     try:
@@ -421,7 +424,7 @@ async def _send_reply_to_citizen(
         sent = await event.bot.send_message(
             user_id=target_user_id,
             text=formatted_text,
-            attachments=[*outbound_images, keyboards.back_to_menu_keyboard()],
+            attachments=[*outbound_attachments, keyboards.back_to_menu_keyboard()],
         )
     except Exception as exc:
         # Исключения MAX могут содержать текст ответа и токены вложений;
@@ -449,7 +452,7 @@ async def _send_reply_to_citizen(
             "статус обращения в базе пока не изменён.",
         )
         return False, None, []
-    return True, delivered_mid, operator_images
+    return True, delivered_mid, operator_attachments
 
 
 async def _persist_reply_and_card(

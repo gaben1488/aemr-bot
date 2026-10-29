@@ -202,7 +202,9 @@ async def test_sent_images_are_saved_with_corresponding_reply():
 @pytest.mark.asyncio
 @pytest.mark.parametrize('attachments', [
     [{'type': 'image', 'payload': {'url': 'https://cdn.max/img.jpg'}}] * 11,
-    [{'type': 'file', 'payload': {'token': 'document'}}],
+    [{'type': 'file', 'payload': {'token': 'document'}},
+     {'type': 'image', 'payload': {'token': 'photo'}}],
+    [{'type': 'audio', 'payload': {'token': 'audio'}}],
 ])
 async def test_unsupported_or_too_many_operator_attachments_do_not_send_partial_answer(attachments):
     from aemr_bot.handlers import operator_reply as opr
@@ -251,3 +253,40 @@ async def test_reply_without_message_id_requires_manual_delivery_check():
     result = await opr._send_reply_to_citizen(event, fresh_appeal=_fresh_appeal(), appeal_id=1, text='Ответ')
     assert result == (False, None, [])
     assert 'неизвестен' in event.bot.send_message.await_args_list[1].kwargs['text']
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('attachment', [
+    {'type': 'file', 'payload': {'token': 'document'}},
+    {'type': 'video', 'payload': {'token': 'video'}},
+])
+async def test_operator_can_send_a_single_document_or_video_and_store_it(attachment):
+    from aemr_bot.handlers import operator_reply as opr
+
+    event = _event_without_image()
+    event.message.body.attachments = [attachment]
+    event.bot.send_message = AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid='out-1')))
+    outbound = SimpleNamespace(type=attachment['type'])
+    with patch('aemr_bot.utils.image_attachments.deserialize_for_relay', return_value=[outbound]):
+        sent, mid, stored = await opr._send_reply_to_citizen(event, fresh_appeal=_fresh_appeal(),
+                                                            appeal_id=1, text='Материалы')
+    assert sent and mid == 'out-1'
+    assert stored == [attachment]
+    assert outbound in event.bot.send_message.await_args.kwargs['attachments']
+
+
+@pytest.mark.asyncio
+async def test_operator_can_send_photos_and_video_together():
+    from aemr_bot.handlers import operator_reply as opr
+
+    attachments = [{'type': 'image', 'payload': {'token': 'photo'}},
+                   {'type': 'video', 'payload': {'token': 'video'}}]
+    event = _event_without_image()
+    event.message.body.attachments = attachments
+    event.bot.send_message = AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid='out-1')))
+    outgoing = [SimpleNamespace(type='image'), SimpleNamespace(type='video')]
+    with patch('aemr_bot.utils.image_attachments.deserialize_for_relay', return_value=outgoing):
+        sent, mid, stored = await opr._send_reply_to_citizen(event, fresh_appeal=_fresh_appeal(),
+                                                            appeal_id=1, text='Материалы')
+    assert sent and mid == 'out-1' and stored == attachments
+    assert event.bot.send_message.await_args.kwargs['attachments'][:2] == outgoing
