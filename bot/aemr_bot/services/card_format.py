@@ -73,17 +73,30 @@ def _clip(text: str, limit: int = 900) -> str:
 
 
 def _bounded_preview(text: str, limit: int) -> str:
-    """MAX screen budget in UTF-16 units, with a visible path to the full text."""
+    """Fit the overview while retaining both its beginning and latest updates."""
     if len(text.encode("utf-16-le")) // 2 <= limit:
         return text
-    suffix = "\n\n… Продолжение — в истории обращения."
-    budget = limit - len(suffix.encode("utf-16-le")) // 2
+    separator = "\n\n… Полный текст — в истории обращения.\n\n"
+    budget = limit - len(separator.encode("utf-16-le")) // 2
+    left_budget = budget // 2
+    right_budget = budget - left_budget
     used = 0
     for index, char in enumerate(text):
         used += 2 if ord(char) > 0xFFFF else 1
-        if used > budget:
-            return text[:index].rstrip() + suffix
-    return text
+        if used > left_budget:
+            left = text[:index].rstrip()
+            break
+    else:
+        return text
+    used = 0
+    for reverse_index, char in enumerate(reversed(text)):
+        used += 2 if ord(char) > 0xFFFF else 1
+        if used > right_budget:
+            right = text[len(text) - reverse_index:].lstrip()
+            break
+    else:
+        right = text
+    return left + separator + right
 
 
 def _loaded_messages(appeal: Appeal) -> list:
