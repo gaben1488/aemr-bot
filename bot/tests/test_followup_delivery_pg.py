@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import select
 
 from aemr_bot.db.models import Appeal, Message, User
-from aemr_bot.services import admin_card, followup_delivery
+from aemr_bot.services import admin_bus, admin_card, followup_delivery
 from aemr_bot.services import admin_relay
 
 
@@ -47,11 +47,14 @@ async def test_unknown_followup_result_is_not_automatically_replayed(session, mo
     await session.commit()
     render = AsyncMock(side_effect=TimeoutError())
     monkeypatch.setattr(admin_card, "render", render)
+    warning = AsyncMock(return_value=None)
+    monkeypatch.setattr(admin_bus, "send", warning)
 
     assert not await followup_delivery.deliver(object(), message.id)
-    assert await session.scalar(select(Message.admin_notice_state).where(Message.id == message.id)) == "unknown"
+    assert await session.scalar(select(Message.admin_notice_state).where(Message.id == message.id)) == "unknown_alerted"
     assert await followup_delivery.recover_pending(object()) == 0
     assert render.await_count == 1
+    assert warning.await_count == 1
 
 
 @pytest.mark.asyncio

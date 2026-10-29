@@ -18,6 +18,38 @@ from aemr_bot.services import appeals, privacy_epoch
 log = logging.getLogger(__name__)
 
 
+async def _warn_unknown(bot, message_id: int) -> None:
+    """Reserve a single critical warning before contacting MAX."""
+    from aemr_bot.services import admin_bus
+
+    async with session_scope() as session:
+        result = await session.execute(
+            update(Message).where(Message.id == message_id,
+                                  Message.admin_notice_state == "unknown")
+            .values(admin_notice_state="alerting").returning(Message.appeal_id)
+        )
+        appeal_id = result.scalar_one_or_none()
+    if appeal_id is None:
+        return
+    try:
+        await admin_bus.send(
+            bot,
+            text=(f"⚠️ Дополнение к обращению № {appeal_id} сохранено, но публикация "
+                  "карточки не подтверждена. Проверьте чат и историю обращения; "
+                  "не отправляйте сообщение повторно вслепую."),
+            critical=True,
+        )
+    except Exception as exc:
+        log.warning("followup delivery warning not confirmed (%s)", type(exc).__name__)
+    finally:
+        # Even an exception can mean MAX accepted the warning. Never repeat it
+        # automatically; diagnostics keeps the underlying outcome visible.
+        async with session_scope() as session:
+            await session.execute(update(Message).where(
+                Message.id == message_id, Message.admin_notice_state == "alerting"
+            ).values(admin_notice_state="unknown_alerted"))
+
+
 async def deliver(bot, message_id: int) -> bool:
     """Deliver one pending notification and return whether the card was confirmed."""
     if not settings.admin_group_id:
@@ -66,6 +98,8 @@ async def deliver(bot, message_id: int) -> bool:
                                       Message.admin_notice_state == "sending")
                 .values(admin_notice_state=state)
             )
+        if state == "unknown":
+            await _warn_unknown(bot, message_id)
         return confirmed
 
 
@@ -84,4 +118,16 @@ async def recover_pending(bot, *, limit: int = 100) -> int:
             count += int(await deliver(bot, message_id))
         except Exception:
             log.exception("followup recovery failed for message id %s", message_id)
+    # A process may have stopped after recording unknown but before the
+    # warning was reserved. Only an unreserved warning may be attempted.
+    async with session_scope() as session:
+        unresolved = list(await session.scalars(
+            select(Message.id).where(Message.admin_notice_state == "unknown")
+            .order_by(Message.id).limit(limit)
+        ))
+    for message_id in unresolved:
+        try:
+            await _warn_unknown(bot, message_id)
+        except Exception:
+            log.exception("followup warning recovery failed for message id %s", message_id)
     return count

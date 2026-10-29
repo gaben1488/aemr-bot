@@ -223,7 +223,7 @@ async def run_delivery_issues(event, page: int = 0) -> None:
         await ack_callback(event)
         return
     await ack_callback(event)
-    states = ("pending", "sending", "unknown", "partial")
+    states = ("pending", "sending", "unknown", "alerting", "unknown_alerted", "partial")
     async with session_scope() as session:
         total = await session.scalar(select(func.count()).select_from(Message).where(
             Message.admin_notice_state.in_(states))) or 0
@@ -233,7 +233,8 @@ async def run_delivery_issues(event, page: int = 0) -> None:
             Message.admin_notice_state.in_(states)).order_by(Message.id.desc())
             .offset(page * 8).limit(8)))
     labels = {"pending": "ожидает отправки", "sending": "результат не подтверждён",
-              "unknown": "результат неизвестен", "partial": "вложения показаны не полностью"}
+              "unknown": "результат неизвестен", "alerting": "результат неизвестен",
+              "unknown_alerted": "результат неизвестен", "partial": "вложения показаны не полностью"}
     lines = ["📬 Доставка дополнений", f"Записей: {total} · страница {page + 1}/{pages}",
              "Проверьте чат и историю обращения перед повторной отправкой.", ""]
     keyboard = InlineKeyboardBuilder()
@@ -441,7 +442,7 @@ async def _do_diag(event) -> None:
         ) or 0
         uncertain_followups = await session.scalar(
             select(func.count()).select_from(Message).where(
-                Message.admin_notice_state.in_(["sending", "unknown", "partial"])
+                Message.admin_notice_state.in_(["sending", "unknown", "alerting", "unknown_alerted", "partial"])
             )
         ) or 0
         pending_followups = await session.scalar(
