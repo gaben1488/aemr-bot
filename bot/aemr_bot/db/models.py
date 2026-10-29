@@ -307,6 +307,21 @@ class Message(Base):
     appeal: Mapped[Appeal] = relationship(back_populates="messages")
 
 
+class OperatorReplyAttempt(Base):
+    __tablename__ = "operator_reply_attempts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    appeal_id: Mapped[int] = mapped_column(ForeignKey("appeals.id", ondelete="CASCADE"), index=True)
+    operator_id: Mapped[int | None] = mapped_column(ForeignKey("operators.id", ondelete="SET NULL"))
+    source_key: Mapped[str | None] = mapped_column(String(255), unique=True)
+    text: Mapped[str | None] = mapped_column(Text)
+    attachments: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
+    is_final: Mapped[bool] = mapped_column(Boolean)
+    state: Mapped[str] = mapped_column(String(16), index=True)
+    max_message_id: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class Event(Base):
     __tablename__ = "events"
     __table_args__ = (

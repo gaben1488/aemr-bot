@@ -135,8 +135,9 @@ async def recover_unpublished_appeals(bot) -> int:
                 return False
 
     published = sum(await asyncio.gather(*(recover(appeal_id) for appeal_id in ids)))
-    from aemr_bot.services import followup_delivery
-    return published + await followup_delivery.recover_pending(bot)
+    from aemr_bot.services import followup_delivery, operator_reply_attempts
+    return (published + await followup_delivery.recover_pending(bot)
+            + await operator_reply_attempts.recover_confirmed())
 
 
 async def recover_stuck_funnels(bot) -> int:

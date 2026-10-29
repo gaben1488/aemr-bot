@@ -24,6 +24,7 @@ from aemr_bot.db.models import (
     Message,
     MessageDirection,
     OperatorRole,
+    OperatorReplyAttempt,
     User,
 )
 from aemr_bot.db.session import session_scope
@@ -255,6 +256,47 @@ async def run_delivery_issues(event, page: int = 0) -> None:
     await op_screen(event, "\n".join(lines), keyboard.as_markup())
 
 
+async def run_reply_issues(event, page: int = 0) -> None:
+    """List outstanding reply attempts without exposing message contents."""
+    from maxapi.types import CallbackButton
+    from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+    from sqlalchemy import func, select
+    from aemr_bot.utils.event import ack_callback
+
+    if not await ensure_operator(event):
+        await ack_callback(event)
+        return
+    await ack_callback(event)
+    conditions = OperatorReplyAttempt.state.in_(["sending", "unknown", "confirmed", "not_delivered"])
+    async with session_scope() as session:
+        total = await session.scalar(select(func.count()).select_from(OperatorReplyAttempt).where(conditions)) or 0
+        pages = max(1, (total + 7) // 8)
+        page = min(max(page, 0), pages - 1)
+        records = list(await session.scalars(select(OperatorReplyAttempt).where(conditions)
+                                             .order_by(OperatorReplyAttempt.id.desc())
+                                             .offset(page * 8).limit(8)))
+    labels = {"sending": "результат неизвестен", "unknown": "результат неизвестен",
+              "confirmed": "записывается в историю", "not_delivered": "не доставлен · черновик"}
+    lines = ["✉️ Проверка ответов", f"Записей: {total} · страница {page + 1}/{pages}",
+             "Проверьте переписку перед повторной отправкой.", ""]
+    keyboard = InlineKeyboardBuilder()
+    for item in records:
+        lines.append(f"№ {item.appeal_id} · {labels[item.state]}")
+        keyboard.row(CallbackButton(text=f"📄 Ответ по № {item.appeal_id}",
+                                    payload=f"op:reply_attempt:{item.id}:0"))
+    if not records:
+        lines.append("Ответов для проверки нет.")
+    nav = []
+    if page:
+        nav.append(CallbackButton(text="◀️ Назад", payload=f"op:reply_issues:{page - 1}"))
+    if page + 1 < pages:
+        nav.append(CallbackButton(text="Далее ▶️", payload=f"op:reply_issues:{page + 1}"))
+    if nav:
+        keyboard.row(*nav)
+    keyboard.row(CallbackButton(text="↩️ Диагностика", payload="op:diag"))
+    await op_screen(event, "\n".join(lines), keyboard.as_markup())
+
+
 async def _do_diag(event) -> None:
     """Сводка состояния бота с actionable indicators (PR I).
 
@@ -440,6 +482,11 @@ async def _do_diag(event) -> None:
         failed_receipts = await session.scalar(
             select(func.count()).select_from(InboxEvent).where(InboxEvent.state == "failed")
         ) or 0
+        uncertain_replies = await session.scalar(
+            select(func.count()).select_from(OperatorReplyAttempt).where(
+                OperatorReplyAttempt.state.in_(["sending", "unknown", "confirmed", "not_delivered"])
+            )
+        ) or 0
         uncertain_followups = await session.scalar(
             select(func.count()).select_from(Message).where(
                 Message.admin_notice_state.in_(["sending", "unknown", "alerting", "unknown_alerted", "partial"])
@@ -455,6 +502,11 @@ async def _do_diag(event) -> None:
                 Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
             )
         ) or 0
+    if uncertain_replies:
+        warnings_lines.append(
+            f"⚠️ Ответов требуют проверки или дальнейшего действия: {uncertain_replies}. "
+            "Откройте список перед повторной отправкой."
+        )
     if pending_followups:
         warnings_lines.append(f"⏳ Дополнений ожидают уведомления: {pending_followups}.")
     if uncertain_followups:
@@ -527,11 +579,14 @@ async def _do_diag(event) -> None:
     else:
         body += "\n\n✅ Аномалий не обнаружено."
 
-    if pending_followups or uncertain_followups:
+    if pending_followups or uncertain_followups or uncertain_replies:
         from maxapi.types import CallbackButton
         from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
         keyboard = InlineKeyboardBuilder()
-        keyboard.row(CallbackButton(text="📬 Проверить доставку", payload="op:delivery_issues:0"))
+        if pending_followups or uncertain_followups:
+            keyboard.row(CallbackButton(text="📬 Дополнения", payload="op:delivery_issues:0"))
+        if uncertain_replies:
+            keyboard.row(CallbackButton(text="✉️ Ответы", payload="op:reply_issues:0"))
         keyboard.row(CallbackButton(text="↩️ В меню", payload="op:menu"))
         await op_screen(event, body, keyboard.as_markup())
     else:

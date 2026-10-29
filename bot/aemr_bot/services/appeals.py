@@ -2,11 +2,11 @@ from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 from dateutil.relativedelta import relativedelta
-from sqlalchemy import case, desc, func, or_, select, update
+from sqlalchemy import case, delete, desc, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from aemr_bot.db.models import Appeal, AppealStatus, Message, MessageDirection, User
+from aemr_bot.db.models import Appeal, AppealStatus, Message, MessageDirection, OperatorReplyAttempt, User
 from aemr_bot.services import sla as sla_service
 
 
@@ -118,6 +118,8 @@ async def mark_in_progress(session: AsyncSession, appeal_id: int) -> bool:
     придёт ответ. Если оператор отменил ввод — статус остаётся
     IN_PROGRESS («начали работать»), не откатывается в NEW.
     """
+    from aemr_bot.services import appeal_locks
+    await appeal_locks.hold(session, appeal_id)
     result = await session.execute(
         update(Appeal)
         .where(
@@ -365,6 +367,8 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
     # всё равно воскрешал стёртое обращение (status=IN_PROGRESS при
     # closed_due_to_revoke=True). Теперь такое обновление не сматчит.
     from aemr_bot.config import settings
+    from aemr_bot.services import appeal_locks
+    await appeal_locks.hold(session, appeal_id)
 
     # Capture the previous response period under the same row lock as the
     # reopen. The assessment uses the SLA configuration at this moment; it
@@ -434,6 +438,8 @@ async def close(session: AsyncSession, appeal_id: int) -> bool:
     Если обращение уже CLOSED, ничего не меняем — повторный клик
     «⛔ Закрыть» не должен переписывать closed_at.
     """
+    from aemr_bot.services import appeal_locks
+    await appeal_locks.hold(session, appeal_id)
     result = await session.execute(
         update(Appeal)
         .where(
@@ -722,6 +728,9 @@ async def purge_old_appeals_content(
     # симметрии не хватало — retention обнулял summary/attachments,
     # но оставлял address висеть в БД дольше срока, установленного
     # оператором. Приводим к тому же поведению.
+    await session.execute(delete(OperatorReplyAttempt).where(
+        OperatorReplyAttempt.appeal_id.in_(closed_old_appeals)
+    ))
     appeals_result = await session.execute(
         update(Appeal)
         .where(

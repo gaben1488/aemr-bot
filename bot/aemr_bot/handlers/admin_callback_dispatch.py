@@ -179,6 +179,145 @@ async def _op_history(event, payload: str) -> None:
     )
 
 
+async def _op_reply_attempt(event, payload: str) -> None:
+    """Display the saved response without sending or changing its state."""
+    from maxapi.types import CallbackButton
+    from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+    from aemr_bot.db.models import OperatorReplyAttempt
+    from aemr_bot.services import privacy_epoch
+    from aemr_bot.utils.text_pages import split_text_units
+    from aemr_bot.utils.url_defang import defang_for_admin
+
+    await ack_callback(event)
+    if not await ensure_operator(event):
+        return
+    try:
+        attempt_id, page = map(int, payload.removeprefix("op:reply_attempt:").split(":"))
+        if attempt_id <= 0 or page < 0:
+            return
+    except ValueError:
+        return
+    async with session_scope() as barrier:
+        await privacy_epoch.hold_delivery(barrier)
+        async with session_scope() as session:
+            attempt = await session.get(OperatorReplyAttempt, attempt_id)
+        if not attempt or attempt.state not in {"sending", "unknown", "confirmed", "not_delivered"}:
+            await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+                                     text="Ответ уже обработан или недоступен.",
+                                     attachments=[kbds.op_back_to_menu_keyboard()])
+            return
+        safe_text = (defang_for_admin(attempt.text or "") or "Без текста").replace("🆔 №", "🆔 \u200b№")
+        pages = split_text_units(safe_text, 2600)
+        page = min(page, len(pages) - 1)
+        status = ("MAX подтвердил отправку; запись истории восстанавливается."
+                  if attempt.state == "confirmed" else
+                  "Сотрудник отметил, что ответ не доставлен. Можно подготовить новый ответ."
+                  if attempt.state == "not_delivered" else
+                  "Результат отправки неизвестен. Проверьте переписку перед повтором.")
+        keyboard = InlineKeyboardBuilder()
+        nav = []
+        if page:
+            nav.append(CallbackButton(text="◀️ Назад", payload=f"op:reply_attempt:{attempt_id}:{page - 1}"))
+        if page + 1 < len(pages):
+            nav.append(CallbackButton(text="Далее ▶️", payload=f"op:reply_attempt:{attempt_id}:{page + 1}"))
+        if nav:
+            keyboard.row(*nav)
+        if attempt.attachments:
+            keyboard.row(CallbackButton(text="📎 Вложения", payload=f"op:reply_attempt_atts:{attempt_id}"))
+        if attempt.state in {"sending", "unknown"}:
+            keyboard.row(CallbackButton(text="✅ Доставлен", payload=f"op:reply_resolve:{attempt_id}:delivered"),
+                         CallbackButton(text="❌ Не доставлен", payload=f"op:reply_resolve:{attempt_id}:not_delivered"))
+        if attempt.state == "not_delivered":
+            keyboard.row(CallbackButton(text="🗑 Удалить черновик", payload=f"op:reply_resolve:{attempt_id}:discard"))
+        keyboard.row(CallbackButton(text="📂 Карточка", payload=f"op:open_card:{attempt.appeal_id}"))
+        keyboard.row(CallbackButton(text="↩️ К списку", payload="op:reply_issues:0"))
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+            text=(f"✉️ Ответ по обращению № {attempt.appeal_id} · часть {page + 1}/{len(pages)}\n"
+                  f"{status}\n📎 Вложений: {len(attempt.attachments or [])}\n\n{pages[page]}"),
+            attachments=[keyboard.as_markup()])
+
+
+async def _op_reply_attempt_atts(event, attempt_id: int) -> None:
+    """Explicitly show the attachment references saved with an attempt."""
+    from aemr_bot.db.models import OperatorReplyAttempt
+    from aemr_bot.services import privacy_epoch
+
+    await ack_callback(event)
+    if not await ensure_operator(event):
+        return
+    async with session_scope() as barrier:
+        await privacy_epoch.hold_delivery(barrier)
+        async with session_scope() as session:
+            attempt = await session.get(OperatorReplyAttempt, attempt_id)
+            appeal = (await appeals_service.get_by_id_with_messages(session, attempt.appeal_id)
+                      if attempt else None)
+        if not attempt or not appeal or attempt.state not in {"sending", "unknown", "confirmed", "not_delivered"}:
+            await send_or_edit_screen(event, chat_id=cfg.admin_group_id, text="Вложения недоступны.",
+                                      attachments=[kbds.op_back_to_menu_keyboard()])
+            return
+        await admin_relay.render_appeal_attachments(
+            event.bot, chat_id=cfg.admin_group_id, user_id=None, appeal=appeal,
+            header_template="Вложения ответа по обращению #{appeal_id}",
+            attachments_override=attempt.attachments,
+        )
+
+
+async def _op_reply_resolve(event, payload: str) -> None:
+    """Confirm a human's explicit reconciliation, never send automatically."""
+    from maxapi.types import CallbackButton
+    from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+    from aemr_bot.db.models import OperatorReplyAttempt
+    from aemr_bot.services import appeal_locks, operator_reply_attempts, privacy_epoch
+    from aemr_bot.utils.event import get_user_id
+
+    await ack_callback(event)
+    if not await ensure_operator(event):
+        return
+    bits = payload.split(":")
+    if len(bits) != 4 or not bits[2].isdigit() or bits[3] not in {"delivered", "not_delivered", "discard"}:
+        return
+    attempt_id, choice = int(bits[2]), bits[3]
+    if bits[1] == "reply_resolve":
+        keyboard = InlineKeyboardBuilder()
+        keyboard.row(CallbackButton(text="✅ Подтвердить", payload=f"op:reply_confirm:{attempt_id}:{choice}"))
+        keyboard.row(CallbackButton(text="↩️ Назад", payload=f"op:reply_attempt:{attempt_id}:0"))
+        conclusion = ("ответ действительно доставлен жителю" if choice == "delivered"
+                      else "ответ жителю не доставлен")
+        prompt = ("Удалить сохранённый черновик недоставленного ответа?"
+                  if choice == "discard" else
+                  f"Вы проверили переписку и установили, что {conclusion}?\n\n"
+                  "Подтверждайте только после проверки. Бот не отправит ответ повторно.")
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+            text=prompt,
+            attachments=[keyboard.as_markup()])
+        return
+    actor = get_user_id(event)
+    if actor is None:
+        return
+    async with session_scope() as barrier:
+        await privacy_epoch.hold_delivery(barrier)
+        async with session_scope() as session:
+            attempt = await session.get(OperatorReplyAttempt, attempt_id)
+            appeal_id = attempt.appeal_id if attempt else None
+        if appeal_id is None:
+            changed = False
+        else:
+            await appeal_locks.hold(barrier, appeal_id)
+            async with session_scope() as session:
+                if choice == "discard":
+                    changed = await operator_reply_attempts.discard_not_delivered(
+                        session, attempt_id, actor_max_id=actor,
+                    )
+                else:
+                    changed = await operator_reply_attempts.resolve_unknown(
+                        session, attempt_id, delivered=choice == "delivered", actor_max_id=actor,
+                    )
+        text = ("✅ Отметка сохранена. Повторной отправки не было." if changed else
+                "Состояние уже изменилось или ответ недоступен. Обновите список.")
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id, text=text,
+                                  attachments=[kbds.op_back_to_menu_keyboard()])
+
+
 async def _op_consent(event, payload: str) -> None:
     """Show only captured evidence; older consent text may be unavailable."""
     from maxapi.types import CallbackButton
@@ -395,6 +534,8 @@ _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
     ),
     ("op:atts:", lambda e, aid: admin_commands.run_show_attachments(e, aid)),
     ("op:delivery_issues:", lambda e, page: admin_panel.run_delivery_issues(e, page)),
+    ("op:reply_issues:", lambda e, page: admin_panel.run_reply_issues(e, page)),
+    ("op:reply_attempt_atts:", _op_reply_attempt_atts),
     ("op:open_page:", _op_open_page),
     ("op:open_card:", _op_open_card),
     ("op:word:", _op_word),
@@ -429,6 +570,9 @@ async def _op_operators_action(event, payload: str) -> None:
 # бы оборачивать такие цели пустой обёрткой ради типа — ровно те
 # обёртки, которые здесь и убирали.
 _PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[object]]], ...] = (
+    ("op:reply_resolve:", _op_reply_resolve),
+    ("op:reply_confirm:", _op_reply_resolve),
+    ("op:reply_attempt:", _op_reply_attempt),
     ("op:consent:", _op_consent),
     ("op:history:", _op_history),
     ("op:record_atts:", _op_record_attachments),

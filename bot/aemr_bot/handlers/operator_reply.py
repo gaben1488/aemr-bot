@@ -343,7 +343,7 @@ async def _check_reply_dedupe(
 
 
 async def _send_reply_to_citizen(
-    event, *, fresh_appeal, appeal_id: int, text: str
+    event, *, fresh_appeal, appeal_id: int, text: str, before_send=None
 ) -> tuple[bool, str | None, list[dict]]:
     """Доставить ответ и вернуть результат, ID и состав вложений.
 
@@ -425,6 +425,16 @@ async def _send_reply_to_citizen(
             "все вложения. Снова нажмите «Ответить» и приложите их ещё раз.",
         )
         return False, None, []
+    if before_send is not None:
+        try:
+            reserved = await before_send(operator_attachments)
+        except Exception as exc:
+            log.warning("operator reply could not be reserved (%s)", type(exc).__name__)
+            await _safe_admin_notice(event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: не удалось сохранить попытку. Попробуйте позже.")
+            return False, None, []
+        if not reserved:
+            await _safe_admin_notice(event, f"⚠️ Этот ответ по обращению #{appeal_id} уже обрабатывался. Проверьте историю и диагностику перед повтором.")
+            return False, None, []
     try:
         # ВАЖНО: доставляем по user_id (а не chat_id) — chat_id личного
         # диалога жителя мы не храним, только MAX user_id.
@@ -472,6 +482,7 @@ async def _persist_reply_and_card(
     delivered_mid: str | None,
     attachments: list[dict],
     is_final: bool = True,
+    attempt_id: int | None = None,
 ):
     """Записать доставленный ответ в БД + audit_log, подготовить данные
     для обновления админ-карточки.
@@ -483,6 +494,14 @@ async def _persist_reply_and_card(
     """
     try:
         async with session_scope() as session:
+            if attempt_id is not None:
+                from aemr_bot.services import operator_reply_attempts
+                recorded = await operator_reply_attempts.record_confirmed(
+                    session, attempt_id, mid=delivered_mid, audit_action=audit_action,
+                )
+                if not recorded:
+                    raise RuntimeError("confirmed reply could not be recorded")
+                return True
             appeal_full = await appeals_service.get_by_id(session, appeal_id)
             if appeal_full is None:
                 log.warning(
@@ -549,12 +568,13 @@ async def _deliver_operator_reply(
     # Erasure takes the local resident gate then the exclusive privacy lock.
     # Use the same order here and hold the shared database lock through MAX
     # delivery and the local write, including across independent processes.
-    from aemr_bot.services import privacy_epoch
+    from aemr_bot.services import appeal_locks, privacy_epoch
     from aemr_bot.utils.resident_lifecycle import guard
 
     resident_id = getattr(getattr(appeal, "user", None), "max_user_id", None)
     async with guard(resident_id), session_scope() as privacy_session:
         await privacy_epoch.hold_delivery(privacy_session)
+        await appeal_locks.hold(privacy_session, appeal.id)
         return await _deliver_operator_reply_guarded(
             event, appeal=appeal, operator=operator, text=text,
             audit_action=audit_action, is_final=is_final,
@@ -639,11 +659,35 @@ async def _deliver_operator_reply_guarded(
         )
         return True
 
+    from aemr_bot.services import operator_reply_attempts
+    attempt_id = None
+
+    async def reserve_attempt(attachments):
+        nonlocal attempt_id
+        attempt_id = await operator_reply_attempts.reserve(
+            appeal_id=appeal.id, operator_id=operator.id, source_key=success_key,
+            text=text, attachments=attachments, is_final=is_final,
+        )
+        return attempt_id is not None
+
     delivered_ok, delivered_mid, delivered_attachments = await _send_reply_to_citizen(
-        event, fresh_appeal=fresh_appeal, appeal_id=appeal.id, text=text
+        event, fresh_appeal=fresh_appeal, appeal_id=appeal.id, text=text,
+        before_send=reserve_attempt,
     )
     if not delivered_ok:
+        if attempt_id is not None:
+            try:
+                await operator_reply_attempts.mark_unknown(attempt_id)
+            except Exception:
+                log.warning("could not mark reply attempt outcome unknown", exc_info=True)
         return True
+    if attempt_id is not None and delivered_mid:
+        try:
+            await operator_reply_attempts.mark_confirmed(attempt_id, delivered_mid)
+        except Exception:
+            # The local write below can still record the confirmed response;
+            # if it also fails the saved attempt remains visibly uncertain.
+            log.warning("could not mark reply attempt confirmed", exc_info=True)
 
     persisted = await _persist_reply_and_card(
         event,
@@ -654,6 +698,7 @@ async def _deliver_operator_reply_guarded(
         delivered_mid=delivered_mid,
         attachments=delivered_attachments,
         is_final=is_final,
+        attempt_id=attempt_id,
     )
     if persisted is None:
         return True
