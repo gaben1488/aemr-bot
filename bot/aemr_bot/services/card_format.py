@@ -499,7 +499,10 @@ def user_appeal_timeline_block(appeal: Appeal) -> str:
     (700 vs 400 — житель хочет видеть полный ответ).
     """
     return _render_timeline(
-        _loaded_messages(appeal),
+        [m for m in _loaded_messages(appeal)
+         if getattr(m, "direction", "") in {
+             MessageDirection.FROM_USER.value, MessageDirection.FROM_OPERATOR.value,
+         }],
         operator_marker="📨 Ответ Администрации",
         user_marker="📩 Ваше дополнение",
         text_limit=700,

@@ -32,6 +32,15 @@ def test_history_reader_orders_ties_and_counts_each_messages_attachments():
     assert 'Вложения: 1' in pages[2].render(3)
 
 
+def test_resident_does_not_receive_internal_legacy_messages():
+    when = datetime(2026, 1, 1, tzinfo=UTC)
+    internal = SimpleNamespace(id=1, direction='system', text='Служебная запись',
+                               attachments=[], created_at=when)
+    appeal = SimpleNamespace(id=3, summary='Начало', attachments=[], messages=[internal], created_at=when)
+    assert [p.content for p in appeal_history.pages_for(appeal, operator=False)] == ['Начало']
+    assert [p.content for p in appeal_history.pages_for(appeal, operator=True)] == ['Начало', 'Служебная запись']
+
+
 def test_preview_is_bounded_and_explains_that_full_text_is_in_history():
     from aemr_bot.services.card_format import _bounded_preview
 
@@ -72,3 +81,12 @@ async def test_operator_history_checks_role_before_reading(monkeypatch):
     load.assert_not_awaited()
 
 
+
+
+def test_citizen_preview_does_not_show_internal_messages():
+    from aemr_bot.services.card_format import user_appeal_timeline_block
+
+    when = datetime(2026, 1, 1, tzinfo=UTC)
+    internal = SimpleNamespace(direction='system', text='Служебная запись', attachments=[], created_at=when)
+    appeal = SimpleNamespace(messages=[internal])
+    assert 'Служебная запись' not in user_appeal_timeline_block(appeal)

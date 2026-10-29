@@ -59,6 +59,12 @@ def pages_for(appeal: Any, *, operator: bool) -> list[HistoryPage]:
                                  getattr(m, 'id', 0) or 0))
     for message in messages:
         direction = getattr(message, 'direction', '')
+        # Служебные записи не являются перепиской с жителем. Старые базы
+        # могут содержать такие значения, даже если новый код их не пишет.
+        if not operator and direction not in {
+            MessageDirection.FROM_USER.value, MessageDirection.FROM_OPERATOR.value,
+        }:
+            continue
         from_user = direction == MessageDirection.FROM_USER.value
         label = ('Дополнение жителя' if operator else 'Ваше дополнение') if from_user else (
             'Ответ оператора' if operator else 'Ответ администрации'
