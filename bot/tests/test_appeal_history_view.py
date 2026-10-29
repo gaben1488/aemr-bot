@@ -72,24 +72,3 @@ async def test_operator_history_checks_role_before_reading(monkeypatch):
     load.assert_not_awaited()
 
 
-async def test_opening_card_is_a_view_not_a_new_event(monkeypatch):
-    from unittest.mock import AsyncMock
-
-    from aemr_bot.handlers import admin_callback_dispatch as dispatch
-    from tests._helpers import fake_session_scope, make_event
-
-    user = SimpleNamespace(is_blocked=False)
-    appeal = SimpleNamespace(id=7, user=user, status='new', closed_due_to_revoke=False)
-    monkeypatch.setattr(dispatch, 'session_scope', fake_session_scope)
-    monkeypatch.setattr(dispatch, 'ensure_operator', AsyncMock(return_value=True))
-    monkeypatch.setattr(dispatch, 'ack_callback', AsyncMock())
-    monkeypatch.setattr(dispatch.appeals_service, 'get_by_id_with_messages', AsyncMock(return_value=appeal))
-    monkeypatch.setattr(dispatch.card_format, 'admin_card', lambda a, u: 'Карточка')
-    monkeypatch.setattr(dispatch.admin_card_service, '_count_attachments', lambda a: 0)
-    event_card = AsyncMock()
-    monkeypatch.setattr(dispatch.admin_card_service, 'render', event_card)
-    show = AsyncMock()
-    monkeypatch.setattr(dispatch, 'send_or_edit_screen', show)
-    await dispatch._op_open_card(make_event(), 7)
-    event_card.assert_not_awaited()
-    assert show.await_args.kwargs['text'] == 'Карточка'

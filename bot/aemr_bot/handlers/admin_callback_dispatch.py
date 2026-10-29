@@ -32,7 +32,7 @@ from aemr_bot.handlers import broadcast as broadcast_handler
 from aemr_bot.handlers import broadcast_templates as broadcast_templates_handler
 from aemr_bot.handlers._auth import ensure_operator
 from aemr_bot.services import admin_card as admin_card_service
-from aemr_bot.services import admin_relay, appeal_history, card_format
+from aemr_bot.services import admin_relay, appeal_history
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.utils.event import ack_callback, send_or_edit_screen
 
@@ -94,7 +94,7 @@ async def _op_reply_intermediate(event, appeal_id: int) -> None:
 
 
 async def _op_open_card(event, appeal_id: int) -> None:
-    """Открыть текущее состояние в редактируемом экране, без нового события."""
+    """Открыть карточку, сохраняя привязку ответа реплаем к её ID."""
 
     if not await ensure_operator(event):
         return
@@ -112,19 +112,7 @@ async def _op_open_card(event, appeal_id: int) -> None:
         )
         return
     await ack_callback(event, "Открываю…")
-    if not appeal.user:
-        await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
-                                  text=f"Обращение № {appeal_id} недоступно.",
-                                  attachments=[kbds.op_back_to_menu_keyboard()])
-        return
-    await send_or_edit_screen(
-        event, chat_id=cfg.admin_group_id, text=card_format.admin_card(appeal, appeal.user),
-        attachments=[kbds.appeal_admin_actions(
-            appeal.id, appeal.status, is_it=True, user_blocked=bool(appeal.user.is_blocked),
-            closed_due_to_revoke=bool(appeal.closed_due_to_revoke),
-            attachment_count=admin_card_service._count_attachments(appeal),
-        )],
-    )
+    await admin_card_service.render(event.bot, appeal, force_new=True)
 
 
 async def _op_history(event, payload: str) -> None:
