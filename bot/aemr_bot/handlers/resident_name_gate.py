@@ -190,7 +190,7 @@ async def _resume(event, max_user_id: int, pending: dict) -> bool:
         return True
     state = DialogState(pending["state"])
     if state == DialogState.AWAITING_SUMMARY and pending.get("applied"):
-        await appeal_funnel.finalize_appeal(event, max_user_id)
+        await appeal_funnel.show_summary_draft(event, max_user_id)
         return True
     if "text" in pending:
         if pending.get("location") and state == DialogState.AWAITING_LOCALITY:
@@ -207,7 +207,7 @@ async def _resume(event, max_user_id: int, pending: dict) -> bool:
     if state == DialogState.AWAITING_SUMMARY and (
         pending["data"].get("summary_chunks") or pending["data"].get("attachments")
     ):
-        await appeal_funnel.finalize_appeal(event, max_user_id)
+        await appeal_funnel.show_summary_draft(event, max_user_id)
         return True
     prompts = {
         DialogState.AWAITING_LOCALITY: appeal_funnel.ask_locality,

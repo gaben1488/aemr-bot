@@ -50,12 +50,15 @@ async def _build_main_menu(max_user_id: int | None = None):
     Без идентификации показываем приглашение подписаться по умолчанию.
     """
     subscribed = False
+    has_draft = False
     if max_user_id is not None:
         async with session_scope() as session:
             subscribed = await broadcasts_service.is_subscribed(
                 session, max_user_id
             )
-    return keyboards.main_menu(subscribed=subscribed)
+            user = await users_service.find_by_max_id(session, max_user_id)
+            has_draft = bool(user and user.appeal_draft)
+    return keyboards.main_menu(subscribed=subscribed, has_draft=has_draft)
 
 
 async def _reset_funnel_if_stuck(max_user_id: int | None) -> None:
@@ -71,7 +74,10 @@ async def _reset_funnel_if_stuck(max_user_id: int | None) -> None:
 
     async with current_user(max_user_id) as (session, user):
         if user.dialog_state and user.dialog_state != DialogState.IDLE.value:
-            await users_service.reset_state(session, max_user_id)
+            from aemr_bot.services import resident_drafts
+            user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+            if user is not None and not await resident_drafts.pause(session, user):
+                await users_service.reset_state(session, max_user_id)
 
 
 async def _welcome_text() -> str:
@@ -515,6 +521,9 @@ async def cmd_cancel(event):
         return
     async with session_scope() as session:
         await users_service.reset_state(session, max_user_id)
+        user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+        if user is not None:
+            user.appeal_draft = None
     await reply(event, texts.CANCELLED, attachments=[keyboards.back_to_menu_keyboard()])
 
 

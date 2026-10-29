@@ -103,6 +103,7 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("appeal:history:", CallbackGroup.CITIZEN_FLOW, False, "история обращения жителя"),
     CallbackRoute("appeal:record_atts:", CallbackGroup.CITIZEN_FLOW, False, "вложения записи обращения"),
     CallbackRoute("appeals:page:", CallbackGroup.CITIZEN_FLOW, False, "пагинация списка обращений"),
+    CallbackRoute("draft:", CallbackGroup.CITIZEN_FLOW, False, "черновик обращения"),
     # ── Admin: broadcast история / wizard ──
     CallbackRoute("broadcast:stop:", CallbackGroup.BROADCAST_ADMIN, True, "остановить рассылку"),
     CallbackRoute("broadcast:cancel-cooldown:", CallbackGroup.BROADCAST_ADMIN, True, "отменить рассылку до отправки"),

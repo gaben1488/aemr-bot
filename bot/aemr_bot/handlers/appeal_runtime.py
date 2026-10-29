@@ -138,38 +138,8 @@ async def recover_unpublished_appeals(bot) -> int:
 
 
 async def recover_stuck_funnels(bot) -> int:
-    """Завершает воронки, оставшиеся в состоянии AWAITING_SUMMARY после
-    перезапуска. Запускается один раз при старте бота.
-    """
-    async with session_scope() as session:
-        ids = await users_service.find_stuck_in_summary(
-            session, idle_seconds=cfg.appeal_collect_timeout_seconds
-        )
-    if not ids:
-        return 0
-
-    # Bounded fan-out (P2-2): не больше _RECOVERY_CONCURRENCY одновременных
-    # финализаций, чтобы пул БД (15) и rate-limit MAX (2 RPS) не легли при
-    # большой пачке застрявших воронок. gather сохраняет порядок результатов,
-    # поэтому zip(ids, results) ниже остаётся корректным.
-    sem = asyncio.Semaphore(_RECOVERY_CONCURRENCY)
-
-    async def _bounded(uid: int) -> bool | str | None:
-        async with sem:
-            return await persist_and_dispatch_appeal(bot, uid, reset_empty=True)
-
-    results = await asyncio.gather(
-        *(_bounded(uid) for uid in ids),
-        return_exceptions=True,
-    )
-
-    finalized = sum(1 for r in results if r is True)
-    failed = sum(1 for r in results if isinstance(r, BaseException))
-    if failed:
-        log.warning("восстановление: %d/%d воронок завершились с ошибкой", failed, len(ids))
-    if finalized:
-        log.info("восстановлено %d застрявших воронок", finalized)
-    return finalized
+    """Keep the startup hook without sending unfinished resident drafts."""
+    return 0
 
 
 def _apply_repeat_context(
@@ -198,7 +168,7 @@ def _apply_repeat_context(
 
 
 async def persist_and_dispatch_appeal(
-    bot, max_user_id: int, *, reset_empty: bool = False
+    bot, max_user_id: int, *, reset_empty: bool = False, draft_token: str | None = None
 ) -> bool | str | None:
     """Создает обращение (Appeal) из накопленных данных dialog_data,
     публикует карточку для админов, подтверждает жителю по user_id.
@@ -219,11 +189,16 @@ async def persist_and_dispatch_appeal(
         # Recovery also participates in the inbox/erasure lifecycle gate:
         # a startup scan must not overwrite a newer live citizen action.
         async with guard(max_user_id), get_user_lock(max_user_id), current_user(max_user_id) as (session, user):
+            user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+            if user is None:
+                return None
             if user.dialog_state != DialogState.AWAITING_SUMMARY.value:
                 log.info(
                     "отправка пропущена для пользователя %s — состояние уже не AWAITING_SUMMARY",
                     max_user_id,
                 )
+                return None
+            if not draft_token or (user.dialog_data or {}).get("draft_token") != draft_token:
                 return None
             # Единый гейт согласия/блокировки в точке создания: путь
             # «Подать похожее» (menu.start_appeal_repeat) выставляет
@@ -260,7 +235,8 @@ async def persist_and_dispatch_appeal(
                     "recent=%d, обращение не создано",
                     max_user_id, recent,
                 )
-                await users_service.reset_state(session, max_user_id)
+                # Keep the draft so the resident can submit it once the
+                # rate-limit window clears, without typing it all again.
                 return PERSIST_RATE_LIMITED
             data: dict[str, Any] = dict(user.dialog_data or {})
             replay = data.get(resident_name_gate.RESUME_KEY) or {}

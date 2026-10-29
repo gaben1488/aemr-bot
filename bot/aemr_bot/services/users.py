@@ -532,6 +532,7 @@ async def revoke_consent(session: AsyncSession, max_user_id: int) -> bool:
             consent_broadcast_at=None,
             dialog_state=DialogState.IDLE.value,
             dialog_data={},
+            appeal_draft=None,
         )
     )
     # rowcount может быть -1 в asyncpg для UPDATE без точного знания

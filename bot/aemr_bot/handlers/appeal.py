@@ -296,6 +296,7 @@ async def _cb_cancel(event, max_user_id: int, payload: str) -> None:
         is_stale = (
             user is None
             or user.dialog_state == DialogState.IDLE.value
+            or bool((user.dialog_data or {}).get("draft_token"))
         )
         if not is_stale:
             await users_service.reset_state(session, max_user_id)
@@ -472,8 +473,117 @@ async def _cb_appeal_submit(event, max_user_id: int, payload: str) -> None:
     # Кнопка «Отправить» осталась в старых сообщениях клиента, которые
     # ещё могут крутиться у жителя в чате. Финализируем только если
     # пользователь всё ещё на шаге описания сути.
+    await ack_callback(event, "Эта кнопка устарела. Откройте текущий черновик.")
+
+
+async def _cb_draft(event, max_user_id: int, payload: str) -> None:
+    from aemr_bot.handlers import menu
+    from aemr_bot.utils.text_pages import split_text_units
+    from maxapi.types import CallbackButton
+    from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+
+    parts = payload.split(":")
+    action = parts[1] if len(parts) > 1 else ""
+    if action == "resume" and len(parts) == 2:
+        async with session_scope() as session:
+            user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+            if user is None or user.is_blocked or user.consent_pdn_at is None:
+                await ack_callback(event, "Черновик сейчас недоступен.")
+                return
+            saved = user.appeal_draft
+            if saved and user.dialog_state == DialogState.IDLE.value:
+                user.dialog_state = saved.get("state", DialogState.IDLE.value)
+                user.dialog_data = dict(saved.get("data") or {})
+                user.appeal_draft = None
+                await session.flush()
+            state = user.dialog_state
+        await ack_callback(event)
+        prompts = {
+            DialogState.AWAITING_LOCALITY.value: appeal_funnel.ask_locality,
+            DialogState.AWAITING_ADDRESS.value: appeal_funnel.ask_address,
+            DialogState.AWAITING_TOPIC.value: appeal_funnel.ask_topic,
+            DialogState.AWAITING_SUMMARY.value: appeal_funnel.show_summary_draft,
+        }
+        if state in prompts:
+            await prompts[state](event, max_user_id)
+        elif state == DialogState.AWAITING_GEO_CONFIRM.value:
+            await appeal_geo.on_awaiting_geo_confirm(event, None, "", max_user_id)
+        elif state == DialogState.AWAITING_FOLLOWUP_TEXT.value:
+            await appeal_funnel.show_summary_draft(event, max_user_id)
+        else:
+            await menu.open_main_menu(event)
+        return
+    if action not in {"submit", "cancel", "edit", "edit_cancel", "view"} or (
+        len(parts) != (4 if action == "view" else 3)
+    ):
+        await ack_callback(event, "Эта кнопка устарела.")
+        return
+    token = parts[2]
+    async with session_scope() as session:
+        user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+        valid = bool(user and user.dialog_state in {
+                     DialogState.AWAITING_SUMMARY.value, DialogState.AWAITING_FOLLOWUP_TEXT.value}
+                     and (user.dialog_data or {}).get("draft_token") == token)
+        draft_state = user.dialog_state if valid else None
+        data = dict(user.dialog_data or {}) if valid else {}
+        if valid and action == "cancel":
+            await users_service.reset_state(session, max_user_id)
+        elif valid and action in {"edit", "edit_cancel"}:
+            data = dict(user.dialog_data or {})
+            data["replace_text"] = action == "edit"
+            user.dialog_data = data
+            await session.flush()
+        elif valid and action == "submit" and (user.dialog_data or {}).get("replace_text"):
+            valid = False
+        elif valid and action == "view":
+            data = dict(user.dialog_data or {})
+    if not valid:
+        await ack_callback(event, "Эта кнопка относится к другому черновику.")
+        return
     await ack_callback(event)
-    await appeal_funnel.finalize_appeal(event, max_user_id)
+    if action == "submit":
+        if draft_state == DialogState.AWAITING_FOLLOWUP_TEXT.value:
+            from types import SimpleNamespace
+            body = SimpleNamespace(attachments=data.get("attachments") or [])
+            await appeal_funnel.submit_followup(
+                event, body, "\n".join(data.get("summary_chunks") or []),
+                max_user_id, draft_token=token,
+            )
+        else:
+            await appeal_funnel.finalize_appeal(event, max_user_id, draft_token=token)
+    elif action == "edit":
+        await _send_to_citizen(
+            event, max_user_id,
+            text="Пришлите новый текст одним сообщением. Прежний текст сохранится, пока вы не пришлёте замену; вложения останутся.",
+            attachments=[keyboards.draft_edit_cancel_keyboard(token)],
+        )
+    elif action == "edit_cancel":
+        await appeal_funnel.show_summary_draft(event, max_user_id)
+    elif action == "view":
+        try:
+            page = int(parts[3])
+            if page < 0:
+                return
+        except ValueError:
+            return
+        full_text = "\n".join(data.get("summary_chunks") or [])
+        pages = split_text_units(full_text)
+        page = min(page, len(pages) - 1)
+        keyboard = InlineKeyboardBuilder()
+        nav = []
+        if page:
+            nav.append(CallbackButton(text="◀️ Назад", payload=f"draft:view:{token}:{page - 1}"))
+        if page + 1 < len(pages):
+            nav.append(CallbackButton(text="Далее ▶️", payload=f"draft:view:{token}:{page + 1}"))
+        if nav:
+            keyboard.row(*nav)
+        keyboard.row(CallbackButton(text="↩️ К черновику", payload=f"draft:edit_cancel:{token}"))
+        await _send_to_citizen(event, max_user_id,
+                               text=f"📝 Текст черновика · часть {page + 1} из {len(pages)}\n\n{pages[page] or 'Текст не добавлен.'}",
+                               attachments=[keyboard.as_markup()])
+    else:
+        await _send_to_citizen(event, max_user_id, text="Черновик отменён.",
+                               attachments=[keyboards.back_to_menu_keyboard()])
 
 
 # Точные payload'ы воронки → handler. geo:* — три payload'а на один
@@ -494,6 +604,7 @@ _CITIZEN_EXACT = {
 # Префикс payload'а → handler. Числовой хвост парсит сам handler через
 # callback_router.parse_int_tail.
 _CITIZEN_PREFIX = (
+    ("draft:", _cb_draft),
     ("locality:", _cb_locality),
     ("topic:", _cb_topic),
 )

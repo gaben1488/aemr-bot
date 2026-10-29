@@ -145,12 +145,17 @@ async def open_main_menu(event):
     max_user_id = get_user_id(event)
     is_blocked = False
     subscribed = False
+    has_draft = False
     recep_url = None
     # Сессию открываем только когда есть кого искать: анонимному
     # событию (max_user_id is None) меню рендерится по дефолтам.
     if max_user_id is not None:
         async with current_user(max_user_id) as (session, user):
+            from aemr_bot.services import resident_drafts
+            user = await users_service.find_by_max_id(session, max_user_id, for_update=True) or user
+            await resident_drafts.pause(session, user)
             is_blocked = user.is_blocked
+            has_draft = bool(user.appeal_draft)
             if not is_blocked:
                 subscribed = await broadcasts_service.is_subscribed(session, max_user_id)
             else:
@@ -180,7 +185,7 @@ async def open_main_menu(event):
     await _send_or_edit_menu(
         event,
         text=welcome,
-        attachments=[keyboards.main_menu(subscribed=subscribed)],
+        attachments=[keyboards.main_menu(subscribed=subscribed, has_draft=has_draft)],
     )
 
 
@@ -234,10 +239,14 @@ async def start_appeal_followup(event, appeal_id: int, max_user_id: int):
     «🔁 Подать похожее».
     """
 
+    from aemr_bot.services import resident_drafts
+    if await resident_drafts.offer_saved(event, max_user_id):
+        return
     from aemr_bot.handlers import resident_name_gate
     if await resident_name_gate.require_name(event, max_user_id, payload=f"appeal:followup:{appeal_id}"):
         return
 
+    import secrets
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id(session, appeal_id)
         if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
@@ -262,19 +271,20 @@ async def start_appeal_followup(event, appeal_id: int, max_user_id: int):
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
+        draft_token = secrets.token_urlsafe(12)
         await users_service.set_state(
             session,
             max_user_id,
             DialogState.AWAITING_FOLLOWUP_TEXT,
-            data={"appeal_id": appeal_id},
+            data={"appeal_id": appeal_id, "draft_token": draft_token},
         )
     await _send_or_edit_menu(
         event,
         text=(
-            f"Опишите дополнение к обращению #{appeal_id} одним сообщением. "
-            f"Можно приложить фото, видео или файл."
+            f"Опишите дополнение к обращению #{appeal_id}. Можно прислать "
+            "несколько сообщений, фото, видео или файлов, затем подтвердить отправку."
         ),
-        attachments=[keyboards.cancel_keyboard()],
+        attachments=[keyboards.appeal_draft_keyboard(draft_token, has_content=False, followup=True)],
     )
 
 
@@ -287,6 +297,9 @@ async def start_appeal_repeat(event, appeal_id: int, max_user_id: int):
     обращение получит пометку связи с отвеченным или закрытым вопросом.
     """
 
+    from aemr_bot.services import resident_drafts
+    if await resident_drafts.offer_saved(event, max_user_id):
+        return
     from aemr_bot.handlers import resident_name_gate
     if await resident_name_gate.require_name(event, max_user_id, payload=f"appeal:repeat:{appeal_id}"):
         return
@@ -1149,6 +1162,12 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
     payload обработан, False — если это не меню-callback и вызывающему
     надо продолжить разбор.
     """
+    if max_user_id is not None and not payload.startswith(("appeal:followup:", "appeal:repeat:")):
+        from aemr_bot.services import resident_drafts
+        async with session_scope() as session:
+            user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+            if user is not None:
+                await resident_drafts.pause(session, user)
     route = _EXACT.get(payload)
     if route is not None:
         return await _run_exact_route(event, route, max_user_id)

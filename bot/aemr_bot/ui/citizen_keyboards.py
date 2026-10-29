@@ -37,6 +37,7 @@ def blocked_user_menu(electronic_reception_url: str | None = None):
 def main_menu(
     *,
     subscribed: bool = False,
+    has_draft: bool = False,
 ):
     """Главное меню жителя.
 
@@ -51,6 +52,8 @@ def main_menu(
     Электронная приёмная (LinkButton) переехала в подменю «Приём
     граждан». Главное меню содержит 7 кнопок, включая защиту от мошенников."""
     kb = InlineKeyboardBuilder()
+    if has_draft:
+        kb.row(CallbackButton(text="📝 Продолжить черновик", payload="draft:resume"))
     kb.row(CallbackButton(text="📝 Написать обращение", payload=cp.MENU_NEW_APPEAL))
     kb.row(CallbackButton(text="📂 Мои обращения", payload=cp.MENU_MY_APPEALS))
     # Идемпотентные payload'ы вместо toggle: чтобы кнопка из «старого»
@@ -80,6 +83,31 @@ def main_menu(
     # переписки, а официальный ответ оператора не перегружен меморандумом.
     kb.row(CallbackButton(text="🛡️ Защита от мошенников", payload=cp.MENU_SECURITY))
     kb.row(CallbackButton(text="⚙️ Настройки и помощь", payload=cp.MENU_SETTINGS))
+    return kb.as_markup()
+
+
+def appeal_draft_keyboard(token: str, *, has_content: bool = True, followup: bool = False):
+    kb = InlineKeyboardBuilder()
+    if has_content:
+        label = "✅ Отправить дополнение" if followup else "✅ Отправить обращение"
+        kb.row(CallbackButton(text=label, payload=f"draft:submit:{token}"))
+        kb.row(CallbackButton(text="📖 Полный текст", payload=f"draft:view:{token}:0"),
+               CallbackButton(text="✏️ Изменить текст", payload=f"draft:edit:{token}"))
+    kb.row(CallbackButton(text="🗑 Отменить черновик", payload=f"draft:cancel:{token}"))
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
+    return kb.as_markup()
+
+
+def draft_edit_cancel_keyboard(token: str):
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="↩️ Не изменять текст", payload=f"draft:edit_cancel:{token}"))
+    return kb.as_markup()
+
+
+def draft_resume_keyboard():
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="📝 Продолжить черновик", payload="draft:resume"))
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()
 
 
@@ -486,6 +514,9 @@ def useful_info_keyboard(
 
 
 __all__ = [
+    "appeal_draft_keyboard",
+    "draft_resume_keyboard",
+    "draft_edit_cancel_keyboard",
     "appeal_history_keyboard",
     "appointment_keyboard",
     "back_to_menu_keyboard",

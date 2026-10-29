@@ -72,7 +72,7 @@ class Settings(BaseSettings):
     address_max_chars: int = Field(500, alias="ADDRESS_MAX_CHARS")
     # Лимит входящего сообщения не зависит от размера обзорной карточки:
     # длинные сохранённые тексты читаются постранично.
-    summary_max_chars: int = Field(4000, alias="SUMMARY_MAX_CHARS")
+    summary_max_chars: int = Field(20000, alias="SUMMARY_MAX_CHARS")
     attachments_max_per_appeal: int = Field(20, alias="ATTACHMENTS_MAX_PER_APPEAL")
     # Лимит на число вложений в одном сообщении сервера MAX не задокументирован;
     # на всякий случай режем пересылку на куски.
