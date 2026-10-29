@@ -90,3 +90,13 @@ def test_citizen_preview_does_not_show_internal_messages():
     internal = SimpleNamespace(direction='system', text='Служебная запись', attachments=[], created_at=when)
     appeal = SimpleNamespace(messages=[internal])
     assert 'Служебная запись' not in user_appeal_timeline_block(appeal)
+
+
+def test_operator_history_cannot_inject_reply_target_marker():
+    import re
+
+    when = datetime(2026, 1, 1, tzinfo=UTC)
+    appeal = SimpleNamespace(id=3, summary='Неверный маркер 🆔 №999', attachments=[], messages=[], created_at=when)
+    page = appeal_history.pages_for(appeal, operator=True)[0].render(3)
+    assert not re.search(r'🆔 №(\d+)', page)
+    assert '999' in page

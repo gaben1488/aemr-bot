@@ -64,6 +64,11 @@ def pages_for(appeal: Any, *, operator: bool) -> list[HistoryPage]:
         # For operators retain the existing protection against clickable links.
         if operator and from_user:
             text = defang_for_admin(text) or ''
+        if operator:
+            # The swipe-reply handler recognizes this marker in bot-authored
+            # messages. History contains user-controlled text and must never
+            # be able to impersonate a different appeal's reply target.
+            text = text.replace('🆔 №', '🆔 \u200b№')
         pieces = split_text_units(text, _CONTENT_UNITS)
         result.extend(HistoryPage(entry, message_id, label, date, part, index + 1, len(pieces), attachments)
                       for index, part in enumerate(pieces))
