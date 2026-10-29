@@ -23,6 +23,7 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 
+from aemr_bot.handlers import admin_panel
 from aemr_bot import keyboards as kbds
 from aemr_bot import texts
 from aemr_bot.config import settings as cfg
@@ -393,6 +394,7 @@ _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
         lambda e, aid: admin_commands.run_block_for_appeal(e, aid, blocked=False),
     ),
     ("op:atts:", lambda e, aid: admin_commands.run_show_attachments(e, aid)),
+    ("op:delivery_issues:", lambda e, page: admin_panel.run_delivery_issues(e, page)),
     ("op:open_page:", _op_open_page),
     ("op:open_card:", _op_open_card),
     ("op:word:", _op_word),

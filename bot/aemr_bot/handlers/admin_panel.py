@@ -212,6 +212,48 @@ async def _do_open_tickets(event, page: int = 0) -> None:
     await op_screen(event, text, kbds.open_tickets_listing_keyboard(items, page=page, pages=pages))
 
 
+async def run_delivery_issues(event, page: int = 0) -> None:
+    """Show pending or uncertain follow-ups with links back to their cards."""
+    from maxapi.types import CallbackButton
+    from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+    from sqlalchemy import func, select
+    from aemr_bot.utils.event import ack_callback
+
+    if not await ensure_operator(event):
+        await ack_callback(event)
+        return
+    await ack_callback(event)
+    states = ("pending", "sending", "unknown", "partial")
+    async with session_scope() as session:
+        total = await session.scalar(select(func.count()).select_from(Message).where(
+            Message.admin_notice_state.in_(states))) or 0
+        pages = max(1, (total + 7) // 8)
+        page = min(max(0, page), pages - 1)
+        records = list(await session.scalars(select(Message).where(
+            Message.admin_notice_state.in_(states)).order_by(Message.id.desc())
+            .offset(page * 8).limit(8)))
+    labels = {"pending": "ожидает отправки", "sending": "результат не подтверждён",
+              "unknown": "результат неизвестен", "partial": "вложения показаны не полностью"}
+    lines = ["📬 Доставка дополнений", f"Записей: {total} · страница {page + 1}/{pages}",
+             "Проверьте чат и историю обращения перед повторной отправкой.", ""]
+    keyboard = InlineKeyboardBuilder()
+    for item in records:
+        lines.append(f"№ {item.appeal_id} · {labels.get(item.admin_notice_state, 'проверить')}")
+        keyboard.row(CallbackButton(text=f"📂 Обращение № {item.appeal_id}",
+                                    payload=f"op:open_card:{item.appeal_id}"))
+    if not records:
+        lines.append("Неподтверждённых дополнений нет.")
+    nav = []
+    if page:
+        nav.append(CallbackButton(text="◀️ Назад", payload=f"op:delivery_issues:{page - 1}"))
+    if page + 1 < pages:
+        nav.append(CallbackButton(text="Далее ▶️", payload=f"op:delivery_issues:{page + 1}"))
+    if nav:
+        keyboard.row(*nav)
+    keyboard.row(CallbackButton(text="↩️ Диагностика", payload="op:diag"))
+    await op_screen(event, "\n".join(lines), keyboard.as_markup())
+
+
 async def _do_diag(event) -> None:
     """Сводка состояния бота с actionable indicators (PR I).
 
@@ -484,7 +526,15 @@ async def _do_diag(event) -> None:
     else:
         body += "\n\n✅ Аномалий не обнаружено."
 
-    await op_screen(event, body)
+    if pending_followups or uncertain_followups:
+        from maxapi.types import CallbackButton
+        from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+        keyboard = InlineKeyboardBuilder()
+        keyboard.row(CallbackButton(text="📬 Проверить доставку", payload="op:delivery_issues:0"))
+        keyboard.row(CallbackButton(text="↩️ В меню", payload="op:menu"))
+        await op_screen(event, body, keyboard.as_markup())
+    else:
+        await op_screen(event, body)
 
 
 async def _do_backup(event) -> None:
