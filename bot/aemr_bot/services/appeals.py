@@ -558,12 +558,9 @@ async def find_overdue_unanswered(
     Возвращает результат с догруженным `user`, чтобы вызывающий код
     мог показать имя жителя без N+1.
 
-    LIMIT 500 — защита от лавины (то же, что `list_unanswered`): если
-    оператор был в отпуске, и месяцами копится сотни просрочек, без
-    лимита cron-алерт тянет всё разом + selectinload по `user` создаёт
-    второй IN-query на тысячи id. Дальше всё равно обрезается в
-    форматтере, но БД-запрос уже отдал всё. 500 заведомо больше
-    реальной очереди.
+    Возвращается не более limit просроченных; кандидаты читаются страницами
+    в порядке начала текущего SLA, чтобы возобновлённые обращения с новым
+    сроком не скрывали действительно просроченные за первой страницей.
 
     Просрочка считается по РАБОЧЕМУ времени (services/sla.py), а не
     календарному: обращение, поступившее в пятницу вечером, не должно
@@ -582,31 +579,46 @@ async def find_overdue_unanswered(
     вообще все открытые обращения (см. защиту LIMIT выше), а не
     заменить собой правильный business-time расчёт.
     """
-    threshold = datetime.now(UTC) - timedelta(hours=sla_hours)
-    res = await session.scalars(
-        select(Appeal)
-        .options(selectinload(Appeal.user))
-        .where(
-            Appeal.status.in_(
-                [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
-            ),
-            func.coalesce(Appeal.sla_anchor_at, Appeal.created_at) <= threshold,
-            ~select(Message.id).where(
-                Message.appeal_id == Appeal.id,
-                Message.direction == MessageDirection.FROM_OPERATOR.value,
-                Message.created_at >= func.coalesce(Appeal.sla_anchor_at, Appeal.created_at),
-            ).exists(),
-        )
-        .order_by(Appeal.created_at)
-        .limit(limit)
-    )
-    candidates = list(res)
+    if limit <= 0:
+        return []
     now = datetime.now(UTC)
-    return [
-        appeal
-        for appeal in candidates
-        if sla_service.is_overdue(appeal.sla_anchor_at or appeal.created_at, now, sla_hours)
-    ]
+    threshold = now - timedelta(hours=sla_hours)
+    anchor = func.coalesce(Appeal.sla_anchor_at, Appeal.created_at)
+    after_anchor = None
+    after_id = 0
+    overdue: list[Appeal] = []
+    # A reopened old appeal may have a recent SLA anchor, so a LIMIT on
+    # creation order can hide overdue appeals farther down the queue. Iterate
+    # in stable anchor order and apply the business-time check to every page
+    # until enough actually overdue results have been found.
+    while len(overdue) < limit:
+        query = (
+            select(Appeal).options(selectinload(Appeal.user))
+            .where(
+                Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
+                anchor <= threshold,
+                ~select(Message.id).where(
+                    Message.appeal_id == Appeal.id,
+                    Message.direction == MessageDirection.FROM_OPERATOR.value,
+                    Message.created_at >= anchor,
+                ).exists(),
+            )
+            .order_by(anchor, Appeal.id)
+            .limit(min(500, max(100, limit - len(overdue))))
+        )
+        if after_anchor is not None:
+            query = query.where(or_(anchor > after_anchor, (anchor == after_anchor) & (Appeal.id > after_id)))
+        batch = list(await session.scalars(query))
+        if not batch:
+            break
+        for appeal in batch:
+            if sla_service.is_overdue(appeal.sla_anchor_at or appeal.created_at, now, sla_hours):
+                overdue.append(appeal)
+                if len(overdue) == limit:
+                    break
+        after_anchor = batch[-1].sla_anchor_at or batch[-1].created_at
+        after_id = batch[-1].id
+    return overdue
 
 
 async def first_operator_reply_times(session: AsyncSession, appeal_ids: list[int]) -> dict[int, datetime]:
