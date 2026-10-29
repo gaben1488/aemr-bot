@@ -193,12 +193,21 @@ class TestErasePdnByPhone:
 class TestErasePdn:
     @pytest.mark.asyncio
     async def test_retention_rechecks_consent_before_erasing(self, session) -> None:
-        from sqlalchemy import select
+        from sqlalchemy import select, update
 
         await users_service.get_or_create(session, max_user_id=777)
         await users_service.set_consent(session, 777)
+        await users_service.revoke_consent(session, 777)
+        await session.execute(
+            update(User).where(User.max_user_id == 777).values(
+                consent_revoked_at=datetime.now(UTC) - timedelta(days=31),
+            )
+        )
+        assert 777 in await users_service.find_pending_pdn_retention(session, days_after_revoke=30)
+        # Consent was renewed after the candidate scan but before deletion.
+        await users_service.set_consent(session, 777)
         assert await users_service.erase_pdn(
-            session, 777, revoked_before=datetime.now(UTC)
+            session, 777, revoked_before=datetime.now(UTC) - timedelta(days=30)
         ) is False
         assert await session.scalar(select(User).where(User.max_user_id == 777)) is not None
 
