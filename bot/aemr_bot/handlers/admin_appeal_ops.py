@@ -227,8 +227,11 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
     await op_screen(
         event,
         f"{prompt_hint}"
-        f"Лимит {cfg.answer_max_chars} символов. Просто отправьте "
-        f"следующее сообщение в этот чат, либо «Отменить» ниже.",
+        f"Лимит текста — {cfg.answer_max_chars} символов; весь ответ вместе с заголовком "
+        "должен поместиться в сообщение MAX. "
+        f"Можно приложить до {max(1, min(11, cfg.attachments_per_relay_message))} фото или видео "
+        "либо один документ. Отправьте следующее сообщение в этот чат "
+        "или нажмите «Отменить».",
         kbds.cancel_reply_intent_keyboard(),
         new=True,
     )
