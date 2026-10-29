@@ -397,6 +397,18 @@ async def _do_diag(event) -> None:
         failed_receipts = await session.scalar(
             select(func.count()).select_from(InboxEvent).where(InboxEvent.state == "failed")
         ) or 0
+        uncertain_cards = await session.scalar(
+            select(func.count()).select_from(Appeal).where(
+                Appeal.admin_message_id.is_(None),
+                Appeal.initial_card_state.in_(["sending", "uncertain"]),
+                Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
+            )
+        ) or 0
+    if uncertain_cards:
+        warnings_lines.append(
+            f"⚠️ Не подтверждена публикация первых карточек: {uncertain_cards}. "
+            "Проверьте очередь и служебный чат перед повтором."
+        )
     if failed_receipts:
         warnings_lines.append(
             f"⚠️ Не завершено событий за период хранения: {failed_receipts}. "

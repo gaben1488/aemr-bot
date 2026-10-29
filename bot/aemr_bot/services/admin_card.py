@@ -79,9 +79,9 @@ async def _set_first_card_state(appeal_id: int, state: str) -> None:
 
 
 async def _warn_uncertain_first_card(bot, appeal_id: int) -> None:
-    # The caller holds the shared per-appeal lock. A failed warning remains
-    # eligible for retry; a crash after delivery but before commit can repeat
-    # the warning, but never replays the original card.
+    # Reserve the warning before contacting MAX. A timeout or crash has an
+    # unknown outcome; replay could duplicate it. Diagnostics still exposes
+    # every uncertain original card regardless of the warning outcome.
     async with session_scope() as session:
         result = await session.execute(
             update(Appeal)
@@ -91,7 +91,7 @@ async def _warn_uncertain_first_card(bot, appeal_id: int) -> None:
                 Appeal.initial_card_state.in_(["sending", "uncertain"]),
                 Appeal.initial_card_notified.is_(False),
             )
-            .values(initial_card_state="uncertain")
+            .values(initial_card_state="uncertain", initial_card_notified=True)
         )
         eligible = bool(result.rowcount)
     if not eligible:
@@ -114,11 +114,6 @@ async def _warn_uncertain_first_card(bot, appeal_id: int) -> None:
     if not extract_message_id(sent):
         log.error("Uncertain first-card warning #%s returned no message id", appeal_id)
         return
-    async with session_scope() as session:
-        await session.execute(
-            update(Appeal).where(Appeal.id == appeal_id)
-            .values(initial_card_notified=True)
-        )
 
 
 async def recover_first_publication(bot, appeal_id: int) -> bool:
