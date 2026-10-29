@@ -641,9 +641,23 @@ async def open_goodbye(event):
     переводит юридические термины в жизненные ситуации, чтобы пенсионер
     понимал «что мне выбрать», а не «что значит отозвать согласие».
     """
+    async with session_scope() as session:
+        consent_text = await settings_store.get(session, "consent_text")
+    text = texts.GOODBYE_PROMPT
+    if isinstance(consent_text, str):
+        # Existing operator-edited consent may name the previous buttons.
+        # Do not overwrite that document; explain the renamed actions until
+        # the operator reviews and updates the configured text.
+        aliases = []
+        if "Хочу попрощаться, но дождаться ответа" in consent_text:
+            aliases.append("«Хочу попрощаться, но дождаться ответа» — теперь «Отозвать согласие»")
+        if "Стереть данные обо мне прямо сейчас" in consent_text:
+            aliases.append("«Стереть данные обо мне прямо сейчас» — теперь «Удалить данные»")
+        if aliases:
+            text += "\n\nПрежние названия:\n" + "\n".join(aliases)
     await _send_or_edit_menu(
         event,
-        text=texts.GOODBYE_PROMPT,
+        text=text,
         attachments=[keyboards.goodbye_keyboard()],
     )
 

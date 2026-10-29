@@ -63,13 +63,13 @@ def main_menu(
     if subscribed:
         kb.row(
             CallbackButton(
-                text="🔕 Не хочу получать рассылку", payload=cp.INFO_SUBSCRIBE_OFF
+                text="🔕 Отписаться", payload=cp.INFO_SUBSCRIBE_OFF
             )
         )
     else:
         kb.row(
             CallbackButton(
-                text="🔔 Подписаться на рассылку", payload=cp.INFO_SUBSCRIBE_ON
+                text="🔔 Подписаться", payload=cp.INFO_SUBSCRIBE_ON
             )
         )
     # Электронная приёмная переехала в подменю «Приём граждан» — там она
@@ -170,14 +170,14 @@ def goodbye_keyboard():
     - ↩️ «Передумал, остаюсь» — назад в Настройки.
     """
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="🔕 Не хочу получать рассылку", payload=cp.GOODBYE_UNSUB))
-    kb.row(CallbackButton(text="👋 Хочу попрощаться, но дождаться ответа на обращение", payload=cp.GOODBYE_REVOKE_ASK))
+    kb.row(CallbackButton(text="🔕 Отписаться", payload=cp.GOODBYE_UNSUB))
+    kb.row(CallbackButton(text="👋 Отозвать согласие", payload=cp.GOODBYE_REVOKE_ASK))
     # A4.1 (2026-05-27): `🗑` вместо `❌` — UI_BRAND_CONCEPT B.7
     # требует разводить отмену (❌) и необратимое разрушительное
     # действие (🗑/🚫/⛔). Стирание данных — destructive,
     # эмодзи мусорной корзины ясно сигнализирует это пенсионеру.
-    kb.row(CallbackButton(text="🗑 Стереть данные обо мне прямо сейчас", payload=cp.GOODBYE_ERASE_ASK))
-    kb.row(CallbackButton(text="↩️ Передумал, остаюсь", payload=cp.MENU_SETTINGS))
+    kb.row(CallbackButton(text="🗑 Удалить данные", payload=cp.GOODBYE_ERASE_ASK))
+    kb.row(CallbackButton(text="↩️ Назад", payload=cp.MENU_SETTINGS))
     return kb.as_markup()
 
 
@@ -186,10 +186,8 @@ def goodbye_revoke_confirm_keyboard():
     «Уйти из бота», чтобы человек, передумавший на этом шаге, видел все
     три опции, а не сразу «Назад» в Настройки."""
     kb = InlineKeyboardBuilder()
-    kb.row(
-        CallbackButton(text="✅ Да, попрощаться", payload=cp.GOODBYE_REVOKE_YES),
-        CallbackButton(text="❌ Не отзывать", payload=cp.SETTINGS_GOODBYE),
-    )
+    kb.row(CallbackButton(text="✅ Отозвать согласие", payload=cp.GOODBYE_REVOKE_YES))
+    kb.row(CallbackButton(text="↩️ Назад", payload=cp.SETTINGS_GOODBYE))
     return kb.as_markup()
 
 
@@ -198,10 +196,8 @@ def goodbye_erase_confirm_keyboard():
     «бот не узнает вас при возврате», поэтому шаг подтверждения отдельный.
     Возврат на отказ — в «Уйти из бота», логика та же что у revoke."""
     kb = InlineKeyboardBuilder()
-    kb.row(
-        CallbackButton(text="✅ Да, стереть", payload=cp.GOODBYE_ERASE_YES),
-        CallbackButton(text="❌ Не стирать", payload=cp.SETTINGS_GOODBYE),
-    )
+    kb.row(CallbackButton(text="✅ Удалить данные", payload=cp.GOODBYE_ERASE_YES))
+    kb.row(CallbackButton(text="↩️ Назад", payload=cp.SETTINGS_GOODBYE))
     return kb.as_markup()
 
 
@@ -500,13 +496,13 @@ def useful_info_keyboard(
     if subscribed:
         kb.row(
             CallbackButton(
-                text="🔕 Не хочу получать рассылку", payload=cp.INFO_SUBSCRIBE_OFF
+                text="🔕 Отписаться", payload=cp.INFO_SUBSCRIBE_OFF
             )
         )
     else:
         kb.row(
             CallbackButton(
-                text="🔔 Подписаться на рассылку", payload=cp.INFO_SUBSCRIBE_ON
+                text="🔔 Подписаться", payload=cp.INFO_SUBSCRIBE_ON
             )
         )
     kb.row(CallbackButton(text="↩️ В меню", payload=cp.MENU_MAIN))

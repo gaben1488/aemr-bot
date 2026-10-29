@@ -106,14 +106,9 @@ class TestIsWhitelistedUrl:
         assert _is_whitelisted_url("") is False
 
     def test_user_info_does_not_bypass_whitelist(self) -> None:
-        """`https://attacker.com@elizovomr.ru` — user-info trick для
-        фишинга. Парсер должен видеть host как `elizovomr.ru`, не
-        `attacker.com`. Проверяем что matcher НЕ обманывается."""
-        # Корректное поведение: user-info срезается, остаётся host
-        # elizovomr.ru → True. Но: trick с `@` иногда заставляет
-        # рендер показать `attacker.com` как видимый host. Bot защищает
-        # whitelist'ом по реальному host'у, не по визуальной строке.
-        assert _is_whitelisted_url("https://attacker.com@elizovomr.ru/") is True
+        """Не принимать user-info даже при допустимом хосте: он может
+        вводить в заблуждение и передавать учетные данные в URL."""
+        assert _is_whitelisted_url("https://attacker.com@elizovomr.ru/") is False
         # А если whitelist'нутый host в user-info, а реальный — нет —
         # это попытка bypass, должна быть отвергнута.
         assert _is_whitelisted_url("https://elizovomr.ru@attacker.com/") is False

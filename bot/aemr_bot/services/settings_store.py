@@ -198,14 +198,13 @@ def _is_whitelisted_url(value: str) -> bool:
         return False
     # `parsed.netloc` — raw host (case-sensitive, с возможным
     # `user:pass@` префиксом и `:port` суффиксом). `parsed.hostname` —
-    # Python-normalized (lowercase). Берём raw для §A4-check, затем
-    # отделяем user-info и port, сравниваем с whitelist.
+    # Python-normalized (lowercase). User-info отклоняем, для host
+    # сравниваем исходный регистр; отдельно проверяем корректность порта.
     raw_netloc = parsed.netloc or ""
     if not raw_netloc:
         return False
-    # Отбрасываем `user:pass@` если есть.
     if "@" in raw_netloc:
-        raw_netloc = raw_netloc.split("@", 1)[1]
+        return False  # User-info can disguise the destination and expose credentials.
     # Отбрасываем `:port` (но `[ipv6]:port` — оставим за рамками, у нас
     # гос-домены ASCII).
     if ":" in raw_netloc:
@@ -317,8 +316,8 @@ def find_non_whitelisted_urls(text: str) -> list[str]:
     вложенный URL в querystring.
 
     Используется в operator_reply / broadcast для блокировки исходящей
-    фишинг-ссылки. Если возвращает пустой список — текст безопасен
-    с точки зрения URL. Покрывает:
+    фишинг-ссылки. Пустой список означает только отсутствие обнаруженных
+    нарушений этих правил, а не подтверждение безопасности. Покрывает:
     - Unicode-омоглифы (F9, через NFKC в `extract_urls`);
     - сторонние домены (исходный SEC #4 whitelist);
     - embedded URL внутри `?next=https://attacker` (F10).

@@ -17,7 +17,7 @@ def broadcast_unsubscribe_keyboard():
     kb = InlineKeyboardBuilder()
     kb.row(
         CallbackButton(
-            text="🔕 Отписаться от рассылки",
+            text="🔕 Отписаться",
             payload=cp.BROADCAST_UNSUBSCRIBE,
         )
     )
