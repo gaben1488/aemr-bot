@@ -497,7 +497,7 @@ async def run_audience_action(event, payload: str) -> None:
                         session,
                         operator_max_user_id=actor_id,
                         action="erase",
-                        target=f"user max_id={target_id}",
+                        target=None,
                     )
             await op_screen(
                 event,

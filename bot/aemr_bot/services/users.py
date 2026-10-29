@@ -12,6 +12,7 @@ from aemr_bot.db.models import (
     ANONYMOUS_MAX_USER_ID,
     Appeal,
     AppealStatus,
+    AuditLog,
     DialogState,
     Message,
     User,
@@ -377,7 +378,9 @@ async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
 async def erase_pdn_detailed(
     session: AsyncSession, max_user_id: int
 ) -> list[int] | None:
-    """Полное удаление ПДн с возвратом списка закрытых обращений.
+    """Очистка данных жителя в рабочей БД и список закрытых обращений.
+
+    Копии в MAX, журналах и резервных копиях этим вызовом не удаляются.
 
     Возвращает:
     - None — пользователь не найден (ничего не сделано);
@@ -407,6 +410,25 @@ async def erase_pdn_detailed(
     )
     if user_row is None:
         return None
+    # Эти записи описывают жителя; журнал управления операторами может
+    # содержать тот же MAX ID в другом качестве и должен сохраниться.
+    resident_actions = (
+        "self_subscribe_broadcast", "self_consent_revoke", "self_erase",
+        "block", "unblock", "erase",
+    )
+    await session.execute(
+        update(AuditLog)
+        .where(AuditLog.action.in_(resident_actions), AuditLog.target == f"user max_id={max_user_id}")
+        .values(target=None)
+    )
+    await session.execute(
+        update(AuditLog)
+        .where(
+            AuditLog.action.in_(("self_subscribe_broadcast", "self_consent_revoke", "self_erase")),
+            AuditLog.operator_max_user_id == max_user_id,
+        )
+        .values(operator_max_user_id=None)
+    )
     # 1. Список открытых обращений ДО UPDATE — нужен для уведомления.
     open_appeals_result = await session.execute(
         select(Appeal.id).where(

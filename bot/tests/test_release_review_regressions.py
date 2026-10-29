@@ -11,6 +11,7 @@ from aemr_bot.services import admin_bus
 @pytest.fixture(autouse=True)
 def isolate_event_loop_gates(monkeypatch):
     from weakref import WeakValueDictionary
+
     from aemr_bot.utils import resident_lifecycle
     monkeypatch.setattr(resident_lifecycle, "_gates", WeakValueDictionary())
 

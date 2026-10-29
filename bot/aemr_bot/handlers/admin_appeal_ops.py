@@ -428,7 +428,7 @@ async def run_erase_for_appeal(event, appeal_id: int) -> None:
                 session,
                 operator_max_user_id=get_user_id(event),
                 action="erase",
-                target=f"user max_id={target_id}",
+                target=None,
             )
     await ack_callback(event)
     if ok:

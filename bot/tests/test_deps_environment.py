@@ -171,6 +171,7 @@ def test_db_pool_ceiling_matches_dispatch_semaphore() -> None:
 def test_application_version_matches_release_metadata():
     import tomllib
     from pathlib import Path
+
     import aemr_bot
     root = Path(__file__).resolve().parents[1]
     project = tomllib.loads((root / "pyproject.toml").read_text())["project"]

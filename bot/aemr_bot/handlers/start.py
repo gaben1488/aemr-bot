@@ -225,16 +225,13 @@ async def cmd_forget(event):
     max_user_id = get_user_id(event)
     if max_user_id is None:
         return
-    # Аудит ставим ДО erase, потому что после удаления записи user
-    # пропадает max_user_id из таблицы users — но в audit_log
-    # operator_max_user_id остаётся как метка «было такое действие
-    # от такого человека».
+    # Оставляем факт операции без повторного сохранения ID жителя.
     async with session_scope() as session:
         await ops_service.write_audit(
             session,
-            operator_max_user_id=max_user_id,
+            operator_max_user_id=None,
             action="self_erase",
-            target=f"user max_id={max_user_id}",
+            target=None,
         )
         # erase_pdn_detailed возвращает список id закрытых обращений
         # (NEW/IN_PROGRESS до erase). Передаём в уведомление оператору

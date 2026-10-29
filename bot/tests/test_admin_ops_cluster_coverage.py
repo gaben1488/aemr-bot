@@ -416,7 +416,7 @@ class TestCmdErase:
     @pytest.mark.asyncio
     async def test_erase_by_phone_resolves_id(self, cmds) -> None:
         """`/erase phone=+7...`, erase_pdn_by_phone возвращает разрешённый
-        max_user_id → audit с этим id, текст OP_USER_ERASED."""
+        max_user_id → обезличенный audit и текст OP_USER_ERASED."""
         from aemr_bot import texts
 
         event = _cmd_event(text="/erase phone=+79001234567")
@@ -431,7 +431,7 @@ class TestCmdErase:
                    write_audit):
             await cmds["erase"](event)
         write_audit.assert_awaited_once()
-        assert write_audit.await_args.kwargs["target"] == "user max_id=777"
+        assert write_audit.await_args.kwargs["target"] is None
         assert event.message.answer.call_args.args[0] == \
             texts.OP_USER_ERASED.format(max_user_id=777)
 

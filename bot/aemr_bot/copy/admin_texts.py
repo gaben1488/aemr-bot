@@ -184,7 +184,7 @@ OP_APPEAL_BLOCKED_BY_REVOKE = (
     "приёмную."
 )
 OP_APPEAL_CLOSED = "Обращение #{number} закрыто без ответа."
-OP_USER_ERASED = "Данные жителя {max_user_id} удалены."
+OP_USER_ERASED = "Данные жителя удалены из рабочей базы бота."
 OP_USER_BLOCKED = "Житель {max_user_id} заблокирован — больше не сможет отправлять обращения."
 OP_USER_UNBLOCKED = "Житель {max_user_id} разблокирован."
 OP_SETTING_UPDATED = "Настройка «{key}» обновлена."

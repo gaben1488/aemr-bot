@@ -307,7 +307,7 @@ def register(dp: Dispatcher) -> None:
                     session,
                     operator_max_user_id=get_user_id(event),
                     action="erase",
-                    target=f"user max_id={target_id}",
+                    target=None,
                 )
 
         if ok and target_id is not None:

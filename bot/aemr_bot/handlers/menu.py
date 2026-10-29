@@ -848,9 +848,9 @@ async def do_forget(event, max_user_id: int):
         await users_service.erase_pdn(session, max_user_id)
         await ops_service.write_audit(
             session,
-            operator_max_user_id=max_user_id,
+            operator_max_user_id=None,
             action="self_erase",
-            target=f"user max_id={max_user_id}",
+            target=None,
         )
     await _send_or_edit_menu(
         event,

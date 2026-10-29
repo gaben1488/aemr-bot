@@ -306,6 +306,8 @@ class TestCmdForget:
              patch("aemr_bot.handlers.start.admin_events.notify_data_erased", notify):
             await start.cmd_forget(event)
         write_audit.assert_called_once()
+        assert write_audit.await_args.kwargs["operator_max_user_id"] is None
+        assert write_audit.await_args.kwargs["target"] is None
         erase.assert_called_once()
         notify.assert_called_once_with(
             event.bot, max_user_id=42, closed_appeal_ids=[7, 12]

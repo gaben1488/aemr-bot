@@ -195,9 +195,7 @@ async def notify_data_erased(
     этом сразу (карточки в чате устаревают, дальнейшая работа по ним
     бессмысленна). Тот же мотив, что у `notify_consent_revoked` выше.
     """
-    # Здесь _describe_user намеренно НЕ зовём: данные жителя уже
-    # erase'нуты к этому моменту (first_name='Удалено', phone обнулён).
-    # Описание не информативно. Пишем только id и факт.
+    # Не публикуем идентификатор жителя заново после удаления данных.
     if closed_appeal_ids:
         ids = ", ".join(f"#{appeal_id}" for appeal_id in closed_appeal_ids)
         detail = f"Закрыто без ответа: {ids}. Карточки в чате устарели."
@@ -206,7 +204,6 @@ async def notify_data_erased(
     await _send(
         bot,
         f"🗑 Житель удалил данные из рабочей базы бота.\n"
-        f"MAX user id: {max_user_id}\n"
         f"{detail}",
         critical=True,
     )
