@@ -193,9 +193,7 @@ def _apply_repeat_context(
 
     base_topic = (data.get("repeat_source_topic") or topic or "без темы").strip()
     marked_topic = f"{label.capitalize()}: {base_topic}"[:120]
-    marked_summary = (
-        f"Связано с обращением #{source_id}: {label}.\n\n{summary}"
-    )[: cfg.summary_max_chars]
+    marked_summary = f"Связано с обращением #{source_id}: {label}.\n\n{summary}"
     return marked_topic, marked_summary
 
 

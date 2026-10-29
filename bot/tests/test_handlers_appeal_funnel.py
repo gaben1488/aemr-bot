@@ -503,12 +503,8 @@ class TestOnAwaitingFollowupText:
         )
 
     @pytest.mark.asyncio
-    async def test_followup_text_clipped_to_summary_max_chars(self) -> None:
-        """F-B: followup-текст жителя усекается до cfg.summary_max_chars,
-        как и суть обращения (on_awaiting_summary). Иначе житель мог бы
-        прислать мегабайтную строку — сырьём в БД и в relay-карточку
-        (DoS-storage). Проверяем, что add_user_message получает уже
-        обрезанный текст ровно в summary_max_chars символов."""
+    async def test_followup_over_limit_is_not_partially_saved(self) -> None:
+        """Дополнение сверх лимита не должно сохраняться частично."""
         from aemr_bot.config import settings as cfg
         from aemr_bot.handlers import appeal_funnel
 
@@ -539,7 +535,7 @@ class TestOnAwaitingFollowupText:
             admin_message_id="admin-mid-5",
             closed_due_to_revoke=False,
         )
-        # Текст длиннее лимита — должен прийти усечённым.
+        # Текст длиннее лимита — не должен сохраняться частично.
         overlong = "А" * (cfg.summary_max_chars + 500)
         add_msg = AsyncMock()
         with patch(
@@ -580,10 +576,8 @@ class TestOnAwaitingFollowupText:
                 max_user_id=42,
             )
 
-        add_msg.assert_awaited_once()
-        stored_text = add_msg.await_args.kwargs["text"]
-        assert stored_text is not None
-        assert len(stored_text) == cfg.summary_max_chars
+        add_msg.assert_not_awaited()
+        assert "не" in event.message.answer.await_args.args[0].lower()
 
 
 class TestOnIdle:

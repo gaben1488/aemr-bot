@@ -415,6 +415,46 @@ class TestOnAwaitingContact:
 
 class TestOnAwaitingSummaryHappy:
     @pytest.mark.asyncio
+    async def test_too_many_attachments_are_not_partially_accepted(self) -> None:
+        from aemr_bot.config import settings
+        from aemr_bot.handlers import appeal_funnel
+
+        event = _funnel_event()
+        update = AsyncMock()
+        finalize = AsyncMock()
+        attachments = [{"type": "image"}] * (settings.attachments_max_per_appeal + 1)
+        with patch("aemr_bot.handlers.appeal_funnel.collect_attachments", return_value=attachments), \
+             patch("aemr_bot.handlers.appeal_funnel.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data", update), \
+             patch("aemr_bot.handlers.appeal_funnel.finalize_appeal", finalize):
+            await appeal_funnel.on_awaiting_summary(
+                event, body=SimpleNamespace(), text_body="Проблема", max_user_id=42,
+            )
+        update.assert_not_awaited()
+        finalize.assert_not_awaited()
+        assert "не" in event.message.answer.await_args.args[0].lower()
+
+    @pytest.mark.asyncio
+    async def test_oversized_text_is_rejected_without_partial_registration(self) -> None:
+        from aemr_bot.config import settings
+        from aemr_bot.handlers import appeal_funnel
+
+        event = _funnel_event()
+        update = AsyncMock()
+        finalize = AsyncMock()
+        with patch("aemr_bot.handlers.appeal_funnel.collect_attachments", return_value=[]), \
+             patch("aemr_bot.handlers.appeal_funnel.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data", update), \
+             patch("aemr_bot.handlers.appeal_funnel.finalize_appeal", finalize):
+            await appeal_funnel.on_awaiting_summary(
+                event, body=SimpleNamespace(), text_body="А" * (settings.summary_max_chars + 1),
+                max_user_id=42,
+            )
+        update.assert_not_awaited()
+        finalize.assert_not_awaited()
+        assert "не" in event.message.answer.await_args.args[0].lower()
+
+    @pytest.mark.asyncio
     async def test_text_and_attachment_appended_then_finalize(self) -> None:
         """Непустой текст + вложение → оба добавлены через
         users_service.update_dialog_data (P2-1: НЕ прямой read-modify-write

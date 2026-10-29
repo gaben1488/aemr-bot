@@ -592,13 +592,23 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
         )
         return
 
-    # Обрезка длинного текста была молчаливой: житель не знал, что
-    # оператор увидит только первые summary_max_chars символов, и был
-    # уверен, что его прочитали целиком. Теперь предупреждаем и называем
-    # последние принятые слова — видно, где оборвалось.
-    truncated_tail: str | None = None
+    if len(atts) > cfg.attachments_max_per_appeal:
+        await event.message.answer(
+            f"Обращение не отправлено: приложено {len(atts)} файлов, "
+            f"а сейчас можно до {cfg.attachments_max_per_appeal}. "
+            "Уменьшите число вложений и отправьте сообщение снова.",
+            attachments=[keyboards.cancel_keyboard()],
+        )
+        return
+
     if chunk and len(chunk) > cfg.summary_max_chars:
-        truncated_tail = _truncation_tail(chunk[: cfg.summary_max_chars])
+        await event.message.answer(
+            f"Текст не отправлен: в нём {len(chunk)} символов, а сейчас "
+            f"можно до {cfg.summary_max_chars}. Сократите текст и отправьте "
+            "его снова или приложите документ.",
+            attachments=[keyboards.cancel_keyboard()],
+        )
+        return
 
     def _merge_summary(data: dict) -> dict:
         """Накопить chunks/attachments поверх СВЕЖЕГО dialog_data.
@@ -613,9 +623,9 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
         chunks = list(data.get("summary_chunks") or [])
         attachments = list(data.get("attachments") or [])
         if chunk:
-            chunks.append(chunk[: cfg.summary_max_chars])
+            chunks.append(chunk)
         if atts:
-            attachments.extend(atts[: cfg.attachments_max_per_appeal])
+            attachments.extend(atts)
         patch: dict = {"summary_chunks": chunks, "attachments": attachments}
         pending = data.get(resident_name_gate.RESUME_KEY)
         if pending and pending.get("ready"):
@@ -625,13 +635,6 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
     async with session_scope() as session:
         await users_service.update_dialog_data(
             session, max_user_id, _merge_summary
-        )
-
-    if truncated_tail is not None:
-        await event.message.answer(
-            texts.APPEAL_TEXT_TRUNCATED.format(
-                limit=cfg.summary_max_chars, tail=truncated_tail
-            )
         )
 
     await finalize_appeal(event, max_user_id)
@@ -756,13 +759,16 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         )
         return
 
-    # Лимит длины followup согласован с сутью обращения
-    # (on_awaiting_summary режет chunk[: cfg.summary_max_chars]). Без
-    # обрезки житель мог бы прислать мегабайтный текст в дополнение —
-    # raw в БД и в relay (DoS-storage класс). Усекаем единым лимитом.
     _raw_followup = (text_body or "").strip()
-    text = _raw_followup[: cfg.summary_max_chars]
-    followup_truncated = len(_raw_followup) > cfg.summary_max_chars
+    if len(_raw_followup) > cfg.summary_max_chars:
+        await event.message.answer(
+            f"Дополнение не отправлено: в нём {len(_raw_followup)} символов, "
+            f"а сейчас можно до {cfg.summary_max_chars}. Сократите текст и "
+            "отправьте его снова или приложите документ.",
+            attachments=[keyboards.cancel_keyboard()],
+        )
+        return
+    text = _raw_followup
     attachments = collect_attachments(body)
     if not text and not attachments:
         await event.message.answer(
@@ -910,10 +916,6 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
                 log.exception("relay followup attachments failed")
 
     confirm_text = f"✅ Дополнение отправлено оператору по обращению #{appeal.id}."
-    if followup_truncated:
-        confirm_text += "\n\n" + texts.FOLLOWUP_TEXT_TRUNCATED.format(
-            limit=cfg.summary_max_chars, tail=_truncation_tail(text)
-        )
     await event.message.answer(
         confirm_text,
         attachments=[keyboards.back_to_menu_keyboard()],

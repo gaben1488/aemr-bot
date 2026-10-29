@@ -87,6 +87,19 @@ def test_apply_repeat_context_for_answered_appeal() -> None:
     assert "Проблема повторилась." in summary
 
 
+def test_repeat_context_does_not_discard_resident_text() -> None:
+    from aemr_bot.config import settings
+    from aemr_bot.handlers.appeal_runtime import _apply_repeat_context
+
+    resident_text = "А" * settings.summary_max_chars
+    _, summary = _apply_repeat_context(
+        topic="Дороги",
+        summary=resident_text,
+        data={"repeat_source_appeal_id": 107, "repeat_source_status": "answered"},
+    )
+    assert summary.endswith(resident_text)
+
+
 def test_apply_repeat_context_without_source_keeps_texts() -> None:
     from aemr_bot.handlers.appeal_runtime import _apply_repeat_context
 
