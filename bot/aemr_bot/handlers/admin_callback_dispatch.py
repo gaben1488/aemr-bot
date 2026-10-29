@@ -125,6 +125,10 @@ async def _op_open_card(event, appeal_id: int) -> None:
         "✉️ Ответ — кнопкой ниже либо потяните карточку влево.",
         "✉️ Ответ — кнопкой ниже.",
     )
+    periods = getattr(appeal, "sla_history", None) or []
+    breaches = sum(1 for period in periods if isinstance(period, dict) and period.get("overdue") is True)
+    if periods:
+        text += f"\n\n⏱ Прошлых периодов: {len(periods)}, с просрочкой: {breaches}."
     text += "\n\nДля ответа используйте кнопку под карточкой."
     keyboard = kbds.appeal_admin_actions(
         appeal.id, appeal.status, is_it=True,

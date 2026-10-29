@@ -361,6 +361,33 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
     # отзыв согласия мог выставить closed_due_to_revoke=True, а reopen
     # всё равно воскрешал стёртое обращение (status=IN_PROGRESS при
     # closed_due_to_revoke=True). Теперь такое обновление не сматчит.
+    from aemr_bot.config import settings
+
+    # Capture the previous response period under the same row lock as the
+    # reopen. The assessment uses the SLA configuration at this moment; it
+    # does not pretend to reconstruct settings from before this feature.
+    previous = await session.scalar(select(Appeal).where(Appeal.id == appeal_id).with_for_update())
+    if (previous is None or previous.status not in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}
+            or previous.closed_due_to_revoke):
+        if previous is None:
+            return "not_found"
+        return "blocked_by_revoke" if previous.closed_due_to_revoke else "already_open"
+    anchor = previous.sla_anchor_at or previous.created_at
+    first_response = await session.scalar(
+        select(func.min(Message.created_at)).where(
+            Message.appeal_id == appeal_id, Message.direction == MessageDirection.FROM_OPERATOR.value,
+            Message.created_at >= anchor,
+        )
+    )
+    period_end = first_response or previous.closed_at or previous.answered_at or datetime.now(UTC)
+    history = list(previous.sla_history or [])
+    history.append({
+        "start": anchor.isoformat(), "end": period_end.isoformat(),
+        "first_response": first_response.isoformat() if first_response else None,
+        "sla_hours": settings.sla_response_hours,
+        "overdue": sla_service.is_overdue(anchor, period_end, settings.sla_response_hours),
+        "assessment": "at_reopen",
+    })
     result = await session.execute(
         update(Appeal)
         .where(
@@ -374,6 +401,8 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
             status=AppealStatus.IN_PROGRESS.value,
             answered_at=None,
             closed_at=None,
+            sla_anchor_at=datetime.now(UTC),
+            sla_history=history,
         )
     )
     if result.rowcount > 0:
@@ -558,7 +587,12 @@ async def find_overdue_unanswered(
             Appeal.status.in_(
                 [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
             ),
-            Appeal.created_at <= threshold,
+            func.coalesce(Appeal.sla_anchor_at, Appeal.created_at) <= threshold,
+            ~select(Message.id).where(
+                Message.appeal_id == Appeal.id,
+                Message.direction == MessageDirection.FROM_OPERATOR.value,
+                Message.created_at >= func.coalesce(Appeal.sla_anchor_at, Appeal.created_at),
+            ).exists(),
         )
         .order_by(Appeal.created_at)
         .limit(limit)
@@ -568,8 +602,21 @@ async def find_overdue_unanswered(
     return [
         appeal
         for appeal in candidates
-        if sla_service.is_overdue(appeal.created_at, now, sla_hours)
+        if sla_service.is_overdue(appeal.sla_anchor_at or appeal.created_at, now, sla_hours)
     ]
+
+
+async def first_operator_reply_times(session: AsyncSession, appeal_ids: list[int]) -> dict[int, datetime]:
+    if not appeal_ids:
+        return {}
+    rows = await session.execute(
+        select(Message.appeal_id, func.min(Message.created_at))
+        .join(Appeal, Appeal.id == Message.appeal_id)
+        .where(Message.appeal_id.in_(appeal_ids), Message.direction == MessageDirection.FROM_OPERATOR.value,
+               Message.created_at >= func.coalesce(Appeal.sla_anchor_at, Appeal.created_at))
+        .group_by(Message.appeal_id)
+    )
+    return {appeal_id: first_at for appeal_id, first_at in rows if first_at is not None}
 
 
 async def count_open(session: AsyncSession) -> int:

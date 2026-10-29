@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from aemr_bot.config import settings
 from aemr_bot.db.models import Appeal, Message
+from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import sla, stats
 from aemr_bot.utils.pii_mask import mask_phone
 from aemr_bot.utils.text_pages import split_text_units
@@ -114,14 +115,18 @@ async def build_xlsx(session, period: str) -> tuple[bytes, str, int]:
     start, end, title = stats.period_window(period)
     workbook = Workbook(write_only=True)
     overview = _Sheet(workbook, "Обращения", ["№", "Подано", "Житель", "Телефон", "Населённый пункт",
-                        "Адрес", "Тема", "Статус", "Дата ответа", "Дата закрытия", "Время ответа, ч",
-                        "Ответ в срок", "Согласие дано", "Согласие отозвано", "Подписка", "Блокировка"],
-                      [9, 19, 22, 17, 25, 34, 25, 20, 19, 19, 18, 15, 19, 19, 15, 15])
+                        "Адрес", "Тема", "Статус", "Первый ответ периода", "Итоговый ответ", "Закрыто",
+                        "Время до первого ответа, ч", "Первый ответ в срок", "Согласие дано",
+                        "Согласие отозвано", "Подписка", "Блокировка"],
+                      [9, 19, 22, 17, 25, 34, 25, 20, 19, 19, 19, 18, 20, 19, 19, 15, 15])
     history = _Sheet(workbook, "История", ["Обращение №", "Запись", "Дата", "Автор", "Часть", "Текст"],
                      [16, 12, 19, 24, 12, 75])
     files = _Sheet(workbook, "Вложения", ["Обращение №", "Запись", "Дата", "Вложение"], [16, 12, 19, 60])
     consent = _Sheet(workbook, "Согласия", ["Обращение №", "Подтверждено", "Часть", "Текст согласия"],
                      [16, 19, 12, 75])
+    periods = _Sheet(workbook, "Сроки", ["Обращение №", "Начало периода", "Первый ответ",
+                     "Окончание оценки", "Норматив, рабочих часов", "Просрочено", "Пояснение"],
+                     [16, 20, 20, 20, 24, 15, 45])
 
     def add_entry(appeal_id, record_no, date, author, text, attachments):
         parts = cell_chunks(text or "")
@@ -141,22 +146,38 @@ async def build_xlsx(session, period: str) -> tuple[bytes, str, int]:
         if not appeals:
             break
         after_id = appeals[-1].id
+        first_replies = await appeals_service.first_operator_reply_times(session, [a.id for a in appeals])
         for appeal in appeals:
             user = appeal.user
             elapsed = ""
             on_time = ""
-            if appeal.answered_at and appeal.created_at:
-                elapsed = round((appeal.answered_at - appeal.created_at).total_seconds() / 3600, 2)
-                on_time = "нет" if sla.is_overdue(appeal.created_at, appeal.answered_at,
+            first_reply = first_replies.get(appeal.id)
+            anchor = appeal.sla_anchor_at or appeal.created_at
+            if first_reply and anchor:
+                elapsed = round((first_reply - anchor).total_seconds() / 3600, 2)
+                on_time = "нет" if sla.is_overdue(anchor, first_reply,
                                                 settings.sla_response_hours) else "да"
             overview.append([appeal.id, _date(appeal.created_at), getattr(user, "first_name", "") or "",
                              mask_phone(getattr(user, "phone", None)), appeal.locality or "",
                              appeal.address or "", appeal.topic or "", stats._status_label(appeal.status),
-                             _date(appeal.answered_at), _date(appeal.closed_at), elapsed, on_time,
+                             _date(first_reply), _date(appeal.answered_at), _date(appeal.closed_at), elapsed, on_time,
                              _date(getattr(user, "consent_pdn_at", None)),
                              _date(getattr(user, "consent_revoked_at", None)),
                              "да" if getattr(user, "subscribed_broadcast", False) else "нет",
                              "да" if getattr(user, "is_blocked", False) else "нет"])
+            for period_record in appeal.sla_history or []:
+                if not isinstance(period_record, dict):
+                    continue
+                def period_date(field):
+                    try:
+                        from datetime import datetime
+                        return _date(datetime.fromisoformat(period_record[field]))
+                    except (ValueError, KeyError, TypeError):
+                        return ""
+                periods.append([appeal.id, period_date("start"), period_date("first_response"),
+                                period_date("end"), period_record.get("sla_hours", ""),
+                                "да" if period_record.get("overdue") else "нет",
+                                "Оценка рассчитана при возобновлении обращения"])
             records = getattr(user, "consent_records", None) or []
             if not records:
                 consent.append([appeal.id, "", "", "Текст ранее данного согласия не сохранён"])
@@ -204,7 +225,7 @@ async def build_xlsx(session, period: str) -> tuple[bytes, str, int]:
             record_no = 0
         count += len(appeals)
 
-    for sheet in (overview, history, files, consent):
+    for sheet in (overview, history, files, consent, periods):
         sheet.finish()
     output = BytesIO()
     await asyncio.to_thread(workbook.save, output)

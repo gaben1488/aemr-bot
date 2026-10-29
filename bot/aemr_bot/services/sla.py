@@ -133,3 +133,14 @@ def is_overdue(created_at: datetime, now: datetime, sla_hours: int) -> bool:
     `sla_hours` рабочих часов (см. business_seconds_between).
     """
     return business_seconds_between(created_at, now) >= sla_hours * 3600
+
+
+def is_working_time(now: datetime) -> bool:
+    """Use the same calendar and hours for reminders and SLA calculation."""
+    _require_aware(now, param_name="now")
+    local = now.astimezone(_TZ)
+    if not is_workday(local.date()):
+        return False
+    start, end = _workday_window(local.date())
+    lunch_start, lunch_end = _lunch_window(local.date())
+    return start <= local < end and not lunch_start <= local < lunch_end

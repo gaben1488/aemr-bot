@@ -31,7 +31,6 @@ from aemr_bot.services import users as users_service
 from aemr_bot.services.backup_verify import (
     verify_latest_backup as _verify_latest_backup,
 )
-from aemr_bot.services.calendar_ru import is_workday
 from aemr_bot.services.db_backup import backup_db as _backup_db
 
 log = logging.getLogger(__name__)
@@ -1047,11 +1046,13 @@ async def _job_working_hours_open_reminder(bot) -> None:
         if is_quiet_hours_now() or not notify_toggles.is_enabled("admin_notify_open_reminder"):
             log.debug("open-reminder: admin_notify_open_reminder disabled, suppressed")
             return
-        if not is_workday(datetime.now(TZ).date()):
+        if not sla_service.is_working_time(datetime.now(TZ)):
             return
 
         async with session_scope() as session:
             appeals = await appeals_service.list_unanswered(session)
+            total = await appeals_service.count_open(session)
+            first_replies = await appeals_service.first_operator_reply_times(session, [a.id for a in appeals])
         if not appeals:
             return
         # Просрочка — по рабочему времени (services/sla.py), не
@@ -1064,16 +1065,20 @@ async def _job_working_hours_open_reminder(bot) -> None:
         # is_overdue() итерирует по рабочим дням от created_at до now — для
         # годовалого обращения это сотни итераций. Считаем один раз на
         # обращение и переиспользуем флаг, а не зовём дважды на каждое.
+        with_reply = [a for a in appeals if a.id in first_replies]
         flags = [
-            (a, sla_service.is_overdue(a.created_at, now, settings.sla_response_hours))
-            for a in appeals
+            (a, sla_service.is_overdue(getattr(a, "sla_anchor_at", None) or a.created_at, now, settings.sla_response_hours))
+            for a in appeals if a.id not in first_replies
         ]
         in_sla = [a for a, is_od in flags if not is_od]
         overdue = [a for a, is_od in flags if is_od]
         header = (
-            f"📋 Открытых обращений: {len(appeals)} "
-            f"(в SLA — {len(in_sla)}, просрочено — {len(overdue)})"
+            f"📋 Открытых обращений: {total}. "
+            f"Без первичного ответа: в срок — {len(in_sla)}, просрочено — {len(overdue)}; "
+            f"с промежуточным ответом — {len(with_reply)}."
         )
+        if total > len(appeals):
+            header += f" Показаны первые {len(appeals)}."
         lines = [header, ""]
         if overdue:
             lines.append(f"⚠️ Просрочено по SLA ({settings.sla_response_hours}ч):")
@@ -1082,6 +1087,9 @@ async def _job_working_hours_open_reminder(bot) -> None:
         if in_sla:
             lines.append("🆕 В SLA:")
             lines.extend(_format_appeal_lines(in_sla))
+        if with_reply:
+            lines.append("💬 В работе после первичного ответа:")
+            lines.extend(_format_appeal_lines(with_reply))
         await _send_with_open_tickets_button(bot, "\n".join(lines).rstrip())
     except Exception:
         log.exception("working_hours_open_reminder crashed")
@@ -1104,7 +1112,7 @@ async def _job_working_hours_overdue_reminder(bot) -> None:
                 "overdue-reminder: admin_notify_overdue_reminder disabled, suppressed"
             )
             return
-        if not is_workday(datetime.now(TZ).date()):
+        if not sla_service.is_working_time(datetime.now(TZ)):
             return
 
         async with session_scope() as session:
@@ -1388,14 +1396,14 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> GracefulAsyncI
         (
             functools.partial(_job_working_hours_open_reminder, bot),
             CronTrigger(
-                day_of_week="mon-fri", hour="9-11,13-17", minute=10, timezone=TZ
+                hour="*", minute=10, timezone=TZ
             ),
             "open-reminder-workhours",
         ),
         (
             functools.partial(_job_working_hours_overdue_reminder, bot),
             CronTrigger(
-                day_of_week="mon-fri", hour="9-11,13-17", minute=40, timezone=TZ
+                hour="*", minute=40, timezone=TZ
             ),
             "overdue-reminder-workhours",
         ),

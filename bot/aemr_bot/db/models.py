@@ -256,6 +256,10 @@ class Appeal(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
     answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # An explicit reopen starts a new first-response period; NULL retains the
+    # original creation timestamp for rows predating this feature.
+    sla_anchor_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    sla_history: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     # True, если обращение закрыто из-за отзыва согласия или удаления
     # данных. Используется чтобы не показывать оператору кнопку
     # «🔁 Возобновить» — гард доставки всё равно откажет.
