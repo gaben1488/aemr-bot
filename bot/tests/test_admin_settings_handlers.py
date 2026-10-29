@@ -510,6 +510,7 @@ class TestQuietHoursWizard:
         with patch.object(mod, "session_scope") as scope, \
              patch("aemr_bot.services.quiet_hours.refresh_cache_from_db",
                    AsyncMock()), \
+             patch("aemr_bot.services.quiet_hours.is_quiet_hours_now", return_value=True), \
              patch.object(mod.settings_store, "get", side_effect=fake_get), \
              patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
@@ -521,9 +522,28 @@ class TestQuietHoursWizard:
         assert "22:00" in kwargs["text"]
         assert "08:00" in kwargs["text"]
         assert "включён" in kwargs["text"]
+        assert "Сейчас действует" in kwargs["text"]
         assert "не откладываются" in kwargs["text"]
         assert "Карточки новых обращений" in kwargs["text"]
         assert "регулярные напоминания об" in kwargs["text"]
+
+    @pytest.mark.asyncio
+    async def test_quiet_card_warns_if_start_equals_end(self) -> None:
+        from aemr_bot.handlers import admin_settings_quiet as mod
+
+        async def fake_get(_session, key):
+            return {"admin_quiet_hours_enabled": True, "admin_quiet_hours_start": 9,
+                    "admin_quiet_hours_end": 9}.get(key)
+
+        with patch.object(mod, "session_scope") as scope, \
+             patch("aemr_bot.services.quiet_hours.refresh_cache_from_db", AsyncMock()), \
+             patch("aemr_bot.services.quiet_hours.is_quiet_hours_now", return_value=False), \
+             patch.object(mod.settings_store, "get", side_effect=fake_get), \
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
+            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
+            scope.return_value.__aexit__ = AsyncMock(return_value=False)
+            await mod._show_quiet_card(make_event())
+        assert "период не действует" in send.await_args.kwargs["text"]
 
     @pytest.mark.asyncio
     async def test_show_quiet_card_disabled_status(self) -> None:

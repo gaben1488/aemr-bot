@@ -45,12 +45,21 @@ async def _show_quiet_card(event) -> None:
     if not isinstance(end, int):
         end = 9
     status_line = "🔕 включён" if enabled else "🔔 выключен"
+    if enabled and start == end:
+        active_line = "⚠️ Начало и конец совпадают: период не действует."
+    elif enabled and quiet_hours.is_quiet_hours_now():
+        active_line = "🌙 Сейчас действует."
+    elif enabled:
+        active_line = "☀️ Сейчас не действует: время вне выбранного окна."
+    else:
+        active_line = "Сейчас не действует: режим выключен."
     await op_screen(
         event,
         "🌙 Тихий режим в админ-чате\n"
         "· · · · · · · ·\n"
-        f"Сейчас: {status_line}\n"
-        f"Окно: с {start:02d}:00 до {end:02d}:00 (Камчатка)\n\n"
+        f"Настройка: {status_line}\n"
+        f"Окно: с {start:02d}:00 до {end:02d}:00 (Камчатка)\n"
+        f"{active_line}\n\n"
         "В это время подавляются пульс, регулярные напоминания об "
         "обращениях и часть служебных уведомлений, например о подписке. "
         "Они не откладываются "
