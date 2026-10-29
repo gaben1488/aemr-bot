@@ -966,8 +966,20 @@ async def _job_funnel_watchdog(bot, send_admin_text) -> None:
         reset_ok = 0
         for max_user_id, _state in stuck:
             try:
-                async with session_scope() as session:
-                    await users_service.reset_state(session, max_user_id)
+                from aemr_bot.services import resident_drafts
+                from aemr_bot.utils.resident_lifecycle import guard
+                async with guard(max_user_id), session_scope() as session:
+                    user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+                    cutoff = datetime.now(UTC) - timedelta(seconds=cutoff_seconds)
+                    if (user is None or user.dialog_state != _state or user.updated_at > cutoff
+                            or (user.dialog_data or {}).get("_name_resume")):
+                        continue
+                    if user.appeal_draft:
+                        # Do not overwrite a previously paused draft.
+                        continue
+                    paused = await resident_drafts.pause(session, user)
+                    if not paused:
+                        await users_service.reset_state(session, max_user_id)
                 # Perf «2 RPS»: watchdog шлёт жителям напрямую через
                 # bot.send_message (хукнутый инстанс) → каждое уведомление
                 # проходит глобальный лимитер исходящих
@@ -977,11 +989,11 @@ async def _job_funnel_watchdog(bot, send_admin_text) -> None:
                 # уведомления растягиваются под общий бюджет ~1.5 msg/s.
                 await bot.send_message(
                     user_id=max_user_id,
-                    text=(
-                        "Похоже, вы начали оформлять обращение, но не "
-                        "закончили. Я сбросил черновик — если хотите "
-                        "снова, откройте меню кнопкой ниже."
-                    ),
+                    text=("Вы начали обращение, но пока не отправили его. "
+                          "Черновик сохранён: продолжить можно из главного меню."
+                          if paused else
+                          "Вы начали оформление, но не завершили его. "
+                          "Чтобы начать снова, откройте главное меню."),
                     attachments=[kbds.back_to_menu_keyboard()],
                 )
                 reset_ok += 1

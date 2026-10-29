@@ -166,12 +166,16 @@ async def cmd_policy(event):
         except Exception:
             log.exception("on-demand policy upload failed")
 
+    district_pdf = "https://elizovomr.ru/storage/attachments/2024/08/15/U9XfgiWRETCF0KKT.pdf"
+    label = ("Политика администрации Елизовского муниципального района "
+             "(до опубликования политики округа)" if policy_url == district_pdf
+             else "Политика обработки персональных данных")
     if token and bot is not None:
         try:
             policy_text = texts.POLICY_DELIVERED
             if policy_url:
                 policy_text += (
-                    "\n\n🏛 Политика обработки персональных данных администрации:\n"
+                    f"\n\n🏛 {label}:\n"
                     f"{policy_url}"
                 )
             await send_or_edit_screen(
@@ -189,7 +193,7 @@ async def cmd_policy(event):
     if policy_url:
         await send_or_edit_screen(
             event,
-            text=texts.POLICY_FALLBACK_URL.format(policy_url=policy_url),
+            text=f"📄 Политика конфиденциальности чат-бота сейчас недоступна.\n\n🏛 {label}:\n{policy_url}",
             attachments=[keyboards.back_to_settings_keyboard()],
         )
     else:
