@@ -486,7 +486,10 @@ async def cmd_export(event):
     max_user_id = get_user_id(event)
     if max_user_id is None:
         return
+    from aemr_bot.services import privacy_epoch
+
     async with session_scope() as session:
+        epoch = await privacy_epoch.read(session)
         user = await users_service.find_by_max_id(session, max_user_id)
         if user is None:
             await reply(event, "Сохранённые данные не найдены.")
@@ -508,6 +511,16 @@ async def cmd_export(event):
         ))
         body = _render_export_for_human(user, appeals)
 
+    # A deletion may have completed while the report was being assembled.
+    # Hold the same shared barrier as staff exports through every send.
+    async with session_scope() as guard_session:
+        if not await privacy_epoch.hold_export_if_current(guard_session, epoch):
+            await reply(event, "Данные изменились во время подготовки. Запросите их ещё раз.")
+            return
+        await _deliver_user_export(event, body)
+
+
+async def _deliver_user_export(event, body: str) -> None:
     # Основной путь — ФАЙЛ: он не упирается ни в лимит длины сообщения,
     # ни в разметку (на этом выгрузка молча срывалась). Текстовая нарезка
     # остаётся запасным путём — право по статье 14 закона № 152-ФЗ не
