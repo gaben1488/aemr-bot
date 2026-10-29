@@ -577,3 +577,20 @@ class _apply:
         for p in reversed(self._entered):
             p.__exit__(*exc)
         return False
+
+
+@pytest.mark.asyncio
+async def test_appeal_persistence_keeps_whitespace_from_received_text():
+    import asyncio
+
+    from aemr_bot.handlers import appeal_runtime as mod
+
+    user = _make_user()
+    user.dialog_data['summary_chunks'] = ['\n  Яма\n\n']
+    setup = _patched_runtime(mod, user=user, order=[])
+    create = AsyncMock(return_value=SimpleNamespace(id=555))
+    bot = MagicMock(send_message=AsyncMock())
+    with _apply(setup['patches']), patch.object(mod.appeals_service, 'create_appeal', create):
+        await mod.persist_and_dispatch_appeal(bot, user.max_user_id)
+        await asyncio.gather(*setup['scheduled'])
+    assert create.await_args.kwargs['summary'] == '\n  Яма\n\n'

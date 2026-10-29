@@ -1340,3 +1340,40 @@ async def test_followup_with_invalid_attachments_is_not_partially_saved(attachme
     save.assert_not_awaited()
     stats.assert_not_awaited()
     assert "не отправлено" in event.message.answer.await_args.args[0].lower()
+
+
+def test_default_input_limit_allows_a_full_max_message():
+    from aemr_bot.config import Settings
+
+    assert Settings.model_fields['summary_max_chars'].default == 4000
+
+
+@pytest.mark.asyncio
+async def test_full_sized_message_is_saved_without_truncation():
+    from aemr_bot.handlers import appeal_funnel
+
+    event = _funnel_event()
+    update = AsyncMock()
+    finalize = AsyncMock()
+    text = 'Д' * 4000
+    with patch.object(appeal_funnel.cfg, 'summary_max_chars', 4000), \
+         patch('aemr_bot.handlers.appeal_funnel.session_scope', _fake_session_scope), \
+         patch('aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data', update), \
+         patch('aemr_bot.handlers.appeal_funnel.finalize_appeal', finalize):
+        await appeal_funnel.on_awaiting_summary(event, body=SimpleNamespace(), text_body=text, max_user_id=42)
+    assert update.await_args.args[2]({})['summary_chunks'] == [text]
+    finalize.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_summary_preserves_leading_and_trailing_whitespace():
+    from aemr_bot.handlers import appeal_funnel
+
+    event = _funnel_event()
+    update = AsyncMock()
+    with patch('aemr_bot.handlers.appeal_funnel.session_scope', _fake_session_scope), \
+         patch('aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data', update), \
+         patch('aemr_bot.handlers.appeal_funnel.finalize_appeal', AsyncMock()):
+        await appeal_funnel.on_awaiting_summary(event, body=SimpleNamespace(),
+                                               text_body='\n  Яма\n\n', max_user_id=42)
+    assert update.await_args.args[2]({})['summary_chunks'] == ['\n  Яма\n\n']

@@ -578,7 +578,7 @@ async def on_awaiting_address(event, body, text_body, max_user_id):
 async def on_awaiting_summary(event, body, text_body, max_user_id):
     """Один шаг сути: первое же непустое сообщение или вложение —
     это и есть обращение."""
-    chunk = text_body.strip()
+    chunk = text_body or ""
     if has_unsupported_appeal_attachments(body):
         await event.message.answer(
             "Обращение не отправлено: можно приложить фото, видео или файл. "
@@ -587,7 +587,7 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
         )
         return
     atts = collect_attachments(body)
-    if not chunk and not atts:
+    if not chunk.strip() and not atts:
         await event.message.answer(
             texts.APPEAL_EMPTY_REJECTED,
             attachments=[keyboards.cancel_keyboard()],
@@ -624,7 +624,7 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
         """
         chunks = list(data.get("summary_chunks") or [])
         attachments = list(data.get("attachments") or [])
-        if chunk:
+        if chunk.strip():
             chunks.append(chunk)
         if atts:
             attachments.extend(atts)
@@ -761,7 +761,7 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         )
         return
 
-    _raw_followup = (text_body or "").strip()
+    _raw_followup = text_body or ""
     if len(_raw_followup) > cfg.summary_max_chars:
         await event.message.answer(
             f"Дополнение не отправлено: в нём {len(_raw_followup)} символов, "
@@ -787,7 +787,7 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             attachments=[keyboards.cancel_keyboard()],
         )
         return
-    if not text and not attachments:
+    if not text.strip() and not attachments:
         await event.message.answer(
             "Опишите дополнение к обращению одним сообщением или "
             "приложите фото, видео или файл.",

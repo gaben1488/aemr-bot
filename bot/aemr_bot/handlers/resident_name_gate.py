@@ -70,7 +70,7 @@ async def require_name(event, max_user_id: int, *, payload: str | None = None,
             if text is not None and user.dialog_state in {
                 DialogState.AWAITING_SUMMARY.value, DialogState.AWAITING_FOLLOWUP_TEXT.value,
             }:
-                if len(text.strip()) > cfg.summary_max_chars:
+                if len(text) > cfg.summary_max_chars:
                     await event.message.answer(
                         f"Сообщение не отправлено: сейчас можно до {cfg.summary_max_chars} символов. "
                         "Сократите текст и отправьте его снова или приложите документ."

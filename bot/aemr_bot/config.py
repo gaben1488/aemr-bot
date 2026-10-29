@@ -70,10 +70,9 @@ class Settings(BaseSettings):
     answer_max_chars: int = Field(800, alias="ANSWER_MAX_CHARS")
     name_max_chars: int = Field(120, alias="NAME_MAX_CHARS")
     address_max_chars: int = Field(500, alias="ADDRESS_MAX_CHARS")
-    # Жёсткие ограничения на одно обращение. summary 2000 оставляет запас
-    # внутри 4000-символьной карточки в админке; 20 вложений — с запасом
-    # для одного обращения от жителя.
-    summary_max_chars: int = Field(2000, alias="SUMMARY_MAX_CHARS")
+    # Лимит входящего сообщения не зависит от размера обзорной карточки:
+    # длинные сохранённые тексты читаются постранично.
+    summary_max_chars: int = Field(4000, alias="SUMMARY_MAX_CHARS")
     attachments_max_per_appeal: int = Field(20, alias="ATTACHMENTS_MAX_PER_APPEAL")
     # Лимит на число вложений в одном сообщении сервера MAX не задокументирован;
     # на всякий случай режем пересылку на куски.

@@ -268,9 +268,9 @@ async def persist_and_dispatch_appeal(
                 # A crash after name restoration but before replay must not
                 # let startup cleanup discard the saved input as an empty draft.
                 return None
-            summary = "\n".join(data.get("summary_chunks") or []).strip()
+            summary = "\n".join(data.get("summary_chunks") or [])
             attachments = data.get("attachments") or []
-            if not summary and not attachments:
+            if not summary.strip() and not attachments:
                 if reset_empty:
                     # Same lock and transaction as the state check; a later
                     # cleanup transaction could erase a newly started funnel.
