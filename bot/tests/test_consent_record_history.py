@@ -31,9 +31,20 @@ async def test_record_exact_text_and_do_not_duplicate_same_prompt(session):
     assert resident.consent_records[0]["text"] == "Первая редакция. Ссылка: первая"
     assert datetime.fromisoformat(resident.consent_records[0]["accepted_at"]).tzinfo is not None
 
+    original_time = resident.consent_pdn_at
+    await users.set_consent(session, resident.max_user_id, text_sha256="a" * 64,
+                            consent_text="Первая редакция. Ссылка: первая", prompt_mid="prompt-1")
+    await session.refresh(resident)
+    assert resident.consent_pdn_at == original_time
+
     resident.consent_pdn_at = None
     resident.consent_revoked_at = datetime.now(UTC)
     await session.flush()
+    assert not await users.set_consent(session, resident.max_user_id, text_sha256="a" * 64,
+                                       consent_text="Первая редакция. Ссылка: первая", prompt_mid="prompt-1")
+    await session.refresh(resident)
+    assert resident.consent_pdn_at is None
+    assert resident.consent_revoked_at is not None
     await users.set_consent(session, resident.max_user_id, text_sha256="b" * 64,
                             consent_text="Вторая редакция", prompt_mid="prompt-2")
     await session.refresh(resident)

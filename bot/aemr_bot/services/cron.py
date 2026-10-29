@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import functools
+import hashlib
+import json
 import logging
 from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
@@ -132,6 +134,19 @@ async def _send_with_open_tickets_button(bot, text: str) -> None:
         )
     except Exception:
         log.exception("send admin reminder with button failed")
+
+
+async def _claim_reminder_snapshot(name: str, groups: list[list[int]], total: int) -> bool:
+    """Notify on changed queue or once on a new working day, never every tick."""
+    from aemr_bot.services import alert_state
+
+    if not settings.admin_group_id:
+        return False
+    signature = hashlib.sha256(json.dumps(
+        [datetime.now(TZ).date().isoformat(), total, groups], separators=(",", ":"),
+    ).encode()).hexdigest()
+    async with session_scope() as session:
+        return await alert_state.claim_snapshot(session, name, signature)
 
 
 async def _send_admin_text_with_retry(
@@ -822,26 +837,13 @@ async def _warn_about_approaching_pdn_deadline(send_admin_text) -> None:
 
 
 async def _job_pdn_retention_check(send_admin_text, *, warn: bool = True) -> None:
-    """152-ФЗ ст. 21 ч. 5: после отзыва согласия оператор обязан
-    прекратить обработку и уничтожить ПДн в срок 30 дней.
+    """Очищать отозванные данные в рабочей базе с запасом до 30 дней.
 
-    Раз в сутки ищем жителей, у которых consent_revoked_at старше 30
-    дней, и уничтожаем их персоналку (erase_pdn).
-
-    ПРО ОТКРЫТЫЕ ОБРАЩЕНИЯ. Раньше житель с обращением в NEW/IN_PROGRESS
-    пропускался «до следующего дня» — и так бессрочно, пока оператор не
-    ответит. Замысел был добрый (дать дослать финальный ответ тому, кто
-    выбрал «попрощаться, но дождаться ответа»), но результат — нарушение:
-    выборка берёт тех, у кого 30 дней УЖЕ истекли, значит пропуск тянул
-    срок за пределы, отведённые законом. Причём тихо: ни ошибки, ни
-    алёрта, просто счётчик skipped_open в логе.
-
-    Закон не даёт продлевать срок из-за того, что оператор не успел.
-    Тридцать дней — это и есть окно на финальный ответ. Поэтому теперь
-    уничтожаем безусловно: erase_pdn сам закроет открытые обращения
-    (closed_due_to_revoke=True), а оператор получит отдельный critical-
-    алёрт со списком — чтобы знал, что обращения закрылись без ответа
-    из-за истечения срока, и мог сделать выводы о скорости работы.
+    По установленной конфигурации поиск начинается через 29 дней и
+    повторяется каждый час. Открытые обращения закрываются без ответа;
+    оператор получает предупреждение. Недоступность сервиса может задержать
+    выполнение, поэтому срок требует организационного контроля. Наличие
+    самостоятельного правового основания обработки оценивается отдельно.
     """
     # Pre-deadline warnings must not depend on already overdue rows or cleanup.
     if warn:
@@ -1047,6 +1049,7 @@ async def _job_working_hours_open_reminder(bot) -> None:
             total = await appeals_service.count_open(session)
             first_replies = await appeals_service.first_operator_reply_times(session, [a.id for a in appeals])
         if not appeals:
+            await _claim_reminder_snapshot("open_reminder", [], 0)
             return
         # Просрочка — по рабочему времени (services/sla.py), не
         # календарному: обращение из пятничного вечера не «горит» в
@@ -1065,6 +1068,9 @@ async def _job_working_hours_open_reminder(bot) -> None:
         ]
         in_sla = [a for a, is_od in flags if not is_od]
         overdue = [a for a, is_od in flags if is_od]
+        signature_groups = [sorted(a.id for a in group) for group in (overdue, in_sla, with_reply)]
+        if not await _claim_reminder_snapshot("open_reminder", signature_groups, total):
+            return
         header = (
             f"📋 Открытых обращений: {total}. "
             f"Без первичного ответа: в срок — {len(in_sla)}, просрочено — {len(overdue)}; "
@@ -1113,6 +1119,9 @@ async def _job_working_hours_overdue_reminder(bot) -> None:
                 session, settings.sla_response_hours
             )
         if not overdue:
+            await _claim_reminder_snapshot("overdue_reminder", [], 0)
+            return
+        if not await _claim_reminder_snapshot("overdue_reminder", [sorted(a.id for a in overdue)], len(overdue)):
             return
         lines = [
             (f"⚠️ Просрочено по SLA ({settings.sla_response_hours}ч): "

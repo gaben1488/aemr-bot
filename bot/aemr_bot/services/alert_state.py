@@ -35,3 +35,13 @@ async def get(session, name: str) -> str | None:
 
 async def clear(session, name: str) -> None:
     await session.execute(delete(Setting).where(Setting.key == _key(name)))
+
+
+async def claim_snapshot(session, name: str, signature: str) -> bool:
+    """Claim a changed digest before sending it, including after a restart."""
+    stmt = insert(Setting).values(key=_key(name), value=signature)
+    stmt = stmt.on_conflict_do_update(
+        index_elements=[Setting.key], set_={"value": signature},
+        where=Setting.value.is_distinct_from(signature),
+    ).returning(Setting.key)
+    return (await session.execute(stmt)).scalar_one_or_none() is not None

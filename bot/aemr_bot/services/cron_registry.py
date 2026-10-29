@@ -92,7 +92,12 @@ JOB_REGISTRY: list[dict[str, str]] = [
     {
         "id": "pdn-retention",
         "schedule_human": "ежедневно 04:30",
-        "purpose": "обезличивание жителей через 30 дней после revoke (152-ФЗ)",
+        "purpose": "очистка после отзыва с 29-го дня и предупреждение о сроке",
+    },
+    {
+        "id": "pdn-retention-hourly",
+        "schedule_human": "ежечасно в :20",
+        "purpose": "дополнительная очистка после отзыва с 29-го дня",
     },
     {
         "id": "appeals-5y-retention",

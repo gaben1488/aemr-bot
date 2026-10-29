@@ -278,10 +278,10 @@ def _reply_rejection_before_delivery(*, fresh_appeal, appeal_id: int) -> str | N
             f"⚠️ Не могу доставить ответ по обращению #{appeal_id}: "
             f"обращение или его автор не найдены."
         )
-    if fresh_appeal.status == AppealStatus.CLOSED.value:
+    if fresh_appeal.status in {AppealStatus.CLOSED.value, AppealStatus.ANSWERED.value}:
         return (
             f"⚠️ Не могу доставить ответ по обращению #{appeal_id}: "
-            f"обращение уже закрыто. Если ответ всё же нужен, "
+            f"обращение уже завершено. Если ответ всё же нужен, "
             f"сначала возобновите обращение через /reopen {appeal_id}."
         )
     user = fresh_appeal.user
@@ -538,6 +538,28 @@ async def _persist_reply_and_card(
 
 
 async def _deliver_operator_reply(
+    event,
+    *,
+    appeal,
+    operator,
+    text: str,
+    audit_action: str,
+    is_final: bool = True,
+) -> bool:
+    # Serialize a resident's delivery with erasure through the latter's
+    # commit, including the MAX request. The deployment's inbox is a single
+    # process; this is not a distributed lock across independent processes.
+    from aemr_bot.utils.resident_lifecycle import guard
+
+    resident_id = getattr(getattr(appeal, "user", None), "max_user_id", None)
+    async with guard(resident_id):
+        return await _deliver_operator_reply_guarded(
+            event, appeal=appeal, operator=operator, text=text,
+            audit_action=audit_action, is_final=is_final,
+        )
+
+
+async def _deliver_operator_reply_guarded(
     event,
     *,
     appeal,

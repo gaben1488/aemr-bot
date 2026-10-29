@@ -128,7 +128,7 @@ async def start_appeal_flow(event, max_user_id: int):
             event,
             text=(
                 "Сервис временно недоступен — не настроен текст политики "
-                "обработки данных. Сообщили координатору; попробуйте позже."
+                "обработки данных. Попробуйте позже или обратитесь в администрацию."
             ),
             attachments=[keyboards.back_to_menu_keyboard()],
         )
@@ -456,9 +456,7 @@ async def ask_summary(
 
 
 async def finalize_appeal(event, max_user_id: int, *, draft_token: str | None = None):
-    """Финализация. Вызывается сразу после первого непустого сообщения
-    жителя в шаге AWAITING_SUMMARY — без таймера и без отдельной
-    кнопки «Отправить». На пустой ввод отвечаем подсказкой."""
+    """Сохранить накопленный черновик после явного нажатия «Отправить»."""
     persisted = await persist_and_dispatch_appeal(event.bot, max_user_id, draft_token=draft_token)
     if persisted == PERSIST_RATE_LIMITED:
         async with current_user(max_user_id) as (session, user):
@@ -591,8 +589,7 @@ async def on_awaiting_address(event, body, text_body, max_user_id):
 
 
 async def on_awaiting_summary(event, body, text_body, max_user_id):
-    """Один шаг сути: первое же непустое сообщение или вложение —
-    это и есть обращение."""
+    """Добавить часть текста и вложения в устойчивый черновик."""
     chunk = text_body or ""
     if has_unsupported_appeal_attachments(body):
         await event.message.answer(
@@ -859,11 +856,7 @@ async def submit_followup(event, body, text_body, max_user_id, *, draft_token: s
         )
     pending = (user.dialog_data or {}).get(resident_name_gate.RESUME_KEY) or {}
     replay_pending = bool(pending.get("ready"))
-    retry_hint = (
-        "\n\nВаше сообщение сохранено. После паузы отправьте любое сообщение, "
-        "чтобы повторить отправку, или нажмите «Отмена»."
-        if replay_pending else ""
-    )
+    retry_hint = "\n\nЧерновик сохранён. После паузы снова нажмите «Отправить»."
     if last_at is not None:
         elapsed = (datetime.now(UTC) - last_at).total_seconds()
         if elapsed < cfg.followup_min_interval_seconds:
@@ -872,7 +865,7 @@ async def submit_followup(event, body, text_body, max_user_id, *, draft_token: s
                 f"Слишком часто. Подождите {wait}с перед следующим "
                 f"дополнением — это защита от случайного двойного "
                 f"сообщения.{retry_hint}",
-                attachments=[keyboards.cancel_keyboard()],
+                attachments=[keyboards.appeal_draft_keyboard(draft_token, has_content=True, followup=True)],
             )
             return False
     if recent_count >= cfg.followup_max_per_hour_per_appeal:
@@ -881,9 +874,7 @@ async def submit_followup(event, body, text_body, max_user_id, *, draft_token: s
             f"лимит {cfg.followup_max_per_hour_per_appeal}. Подождите час "
             f"или дождитесь ответа оператора — он видит всю историю и "
             f"свяжется по сути вопроса.{retry_hint}",
-            attachments=[
-                keyboards.cancel_keyboard() if replay_pending else keyboards.back_to_menu_keyboard()
-            ],
+            attachments=[keyboards.appeal_draft_keyboard(draft_token, has_content=True, followup=True)],
         )
         if replay_pending:
             return False
@@ -894,12 +885,12 @@ async def submit_followup(event, body, text_body, max_user_id, *, draft_token: s
         # The earlier checks only guide the UI. Reload and lock the rows in
         # the insertion transaction: an operator may have closed the appeal
         # or blocked the resident while the rate-limit query was running.
-        # Appeal -> User matches erasure's appeal updates before user deletion.
-        locked_appeal = await appeals_service.get_by_id(
-            session, appeal.id, for_update=True
-        )
+        # The same lock order as erasure: User before Appeal.
         locked_user = await users_service.find_by_max_id(
             session, max_user_id, for_update=True
+        )
+        locked_appeal = await appeals_service.get_by_id(
+            session, appeal.id, for_update=True
         )
         if (
             locked_appeal is None
@@ -916,6 +907,23 @@ async def submit_followup(event, body, text_body, max_user_id, *, draft_token: s
                 "Дополнение не сохранено: обращение или ваше разрешение на "
                 "отправку изменилось. Откройте «📂 Мои обращения» и проверьте статус.",
                 attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
+        # Read the draft again under its lock. Another message may have
+        # appended to it after the callback first read the screen.
+        current = locked_user.dialog_data or {}
+        text = "\n".join(current.get("summary_chunks") or [])
+        attachments = list(current.get("attachments") or [])
+        if not text.strip() and not attachments:
+            await event.message.answer("Черновик пуст. Добавьте текст или вложение.")
+            return
+        recent_count, last_at = await appeals_service.followup_rate_limit_stats(session, appeal.id, hours=1)
+        if (recent_count >= cfg.followup_max_per_hour_per_appeal or
+                (last_at is not None and
+                 (datetime.now(UTC) - last_at).total_seconds() < cfg.followup_min_interval_seconds)):
+            await event.message.answer(
+                "Слишком часто. Черновик сохранён: немного подождите и снова нажмите «Отправить».",
+                attachments=[keyboards.appeal_draft_keyboard(draft_token, has_content=True, followup=True)],
             )
             return
         appeal = locked_appeal
@@ -976,7 +984,9 @@ async def submit_followup(event, body, text_body, max_user_id, *, draft_token: s
             except Exception:
                 log.exception("relay followup attachments failed")
 
-    confirm_text = f"✅ Дополнение отправлено оператору по обращению #{appeal.id}."
+    confirm_text = f"✅ Дополнение сохранено в обращении № {appeal.id}."
+    if not new_card_mid:
+        confirm_text += " Не удалось подтвердить уведомление специалиста; обращение остаётся в очереди."
     await event.message.answer(
         confirm_text,
         attachments=[keyboards.back_to_menu_keyboard()],

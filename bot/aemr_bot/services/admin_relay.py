@@ -19,6 +19,7 @@ import logging
 
 from aemr_bot.config import settings as cfg
 from aemr_bot.utils.attachments import deserialize_for_relay
+from aemr_bot.utils.event import extract_message_id
 
 log = logging.getLogger(__name__)
 
@@ -66,8 +67,11 @@ async def _send_once(send_coro_factory, *, batch_idx: int,
                      total_batches: int, appeal_id: int) -> bool:
     """Одна попытка: исключение не доказывает, что MAX не принял сообщение."""
     try:
-        await send_coro_factory()
-        return True
+        sent = await send_coro_factory()
+        if extract_message_id(sent):
+            return True
+        log.warning("relay batch %d/%d for #%s was not confirmed", batch_idx, total_batches, appeal_id)
+        return False
     except Exception as exc:
         log.warning("relay batch %d/%d for #%s has an uncertain outcome (%s)",
                     batch_idx, total_batches, appeal_id, type(exc).__name__)
@@ -147,13 +151,15 @@ async def render_appeal_attachments(
         if total > 1:
             header = f"{header} ({idx}/{total})"
         try:
-            await bot.send_message(
+            sent = await bot.send_message(
                 chat_id=chat_id,
                 user_id=None if chat_id is not None else user_id,
                 text=header,
                 attachments=batch,
                 link=link,
             )
+            if not extract_message_id(sent):
+                failed += len(batch)
         except Exception as exc:
             failed += len(batch)
             log.warning(
