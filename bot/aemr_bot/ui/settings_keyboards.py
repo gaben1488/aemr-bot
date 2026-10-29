@@ -73,9 +73,16 @@ def op_settings_text_actions_keyboard(key: str):
     return kb.as_markup()
 
 
-def op_settings_text_cancel_keyboard(key: str):
+def op_settings_text_cancel_keyboard(key: str, *, page: int = 0, total_pages: int = 1):
     """Кнопка отмены при ожидании текстового ввода для ключа."""
     kb = InlineKeyboardBuilder()
+    buttons = []
+    if page > 0:
+        buttons.append(CallbackButton(text="◀️ Ранее", payload=cp.op_set(f"editview:{key}:{page - 1}")))
+    if page + 1 < total_pages:
+        buttons.append(CallbackButton(text="Позже ▶️", payload=cp.op_set(f"editview:{key}:{page + 1}")))
+    if buttons:
+        kb.row(*buttons)
     kb.row(CallbackButton(text="❌ Отмена", payload=cp.op_set(f"cancel:{key}")))
     return kb.as_markup()
 

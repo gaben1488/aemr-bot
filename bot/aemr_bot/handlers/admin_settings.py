@@ -99,6 +99,7 @@ from aemr_bot.handlers.admin_settings_shared import (  # noqa: F401
 )
 from aemr_bot.handlers.admin_settings_text import (
     _apply_single_edit,
+    _show_edit_page,
     _show_text_card,
     _start_edit_intent,
 )
@@ -213,6 +214,11 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
     if rest.startswith("url:"):
         key = rest.removeprefix("url:")
         await _show_text_card(event, key)
+        return
+    if rest.startswith("editview:"):
+        parts = rest.removeprefix("editview:").rsplit(":", 1)
+        if len(parts) == 2 and parts[1].isdigit():
+            await _show_edit_page(event, operator_id, parts[0], int(parts[1]))
         return
     if rest.startswith("edit:"):
         key = rest.removeprefix("edit:")

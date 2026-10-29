@@ -41,15 +41,9 @@ def test_old_string_matches_shipped_default_verbatim() -> None:
     )
 
 
-def test_new_string_equals_current_default() -> None:
-    """Строка «после» совпадает с действующим дефолтом в коде.
-
-    Иначе на новой установке и на обновлённой окажутся разные тексты —
-    расхождение, которое всплывёт только жалобой жителя.
-    """
-    from aemr_bot.services.settings_store import DEFAULTS
-
-    assert _load()._NEW == DEFAULTS["appointment_text"]
+def test_new_string_is_the_historical_district_to_okrug_change() -> None:
+    """0025 — историческая миграция; актуальный дефолт меняется в 0028."""
+    assert "временно исполняющим" in _load()._NEW
 
 
 def test_only_the_word_district_changes() -> None:

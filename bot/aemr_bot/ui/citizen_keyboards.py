@@ -357,7 +357,7 @@ def appeal_history_keyboard(appeal_id: int, page: int, total: int, *, operator: 
         kb.row(*buttons)
     if attachments:
         payload = cp.op_atts(appeal_id) if operator else cp.appeal_atts(appeal_id)
-        kb.row(CallbackButton(text="📎 Вложения жителя", payload=payload))
+        kb.row(CallbackButton(text="📎 Все вложения", payload=payload))
     payload = cp.op_open_card(appeal_id) if operator else cp.appeal_show(appeal_id)
     kb.row(CallbackButton(text="↩️ К обращению", payload=payload))
     return kb.as_markup()

@@ -138,7 +138,7 @@ async def _op_history(event, payload: str) -> None:
         text=f"{pages[page].render(appeal_id)}\n\nСтраница {page + 1} из {len(pages)}",
         attachments=[kbds.appeal_history_keyboard(
             appeal_id, page, len(pages), operator=True,
-            attachments=bool(admin_relay._collect_all_user_attachments(appeal)),
+            attachments=bool(admin_relay.collect_appeal_attachments(appeal)),
         )],
     )
 

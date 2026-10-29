@@ -9,15 +9,12 @@
 Сюда вынесена чистая сервисная функция; handler-ы импортируют её через
 обычный публичный путь.
 
-Retry-loop: каждый batch отправляется до 3 раз с экспоненциальным
-бэкофом (0.5/1.0/2.0 сек). Без этого сетевая дрожь в момент
-finalize_appeal приводила к потере вложений у оператора (БД-запись
-уже сделана commit'ом, retry на handler-уровне нет). Полноценный
-outbox-pattern (durable queue + worker) отложен до v2.
+Неизвестный результат отправки не повторяется автоматически: MAX мог
+принять вложение до сетевого тайм-аута. Вложения остаются в базе,
+оператору отправляется уведомление о необходимости проверки.
 """
 from __future__ import annotations
 
-import asyncio
 import logging
 
 from aemr_bot.config import settings as cfg
@@ -25,23 +22,27 @@ from aemr_bot.utils.attachments import deserialize_for_relay
 
 log = logging.getLogger(__name__)
 
-_RELAY_MAX_ATTEMPTS = 3
-# Экспоненциальный бэкоф: 0.5s, 1.0s, 2.0s. Между попытками —
-# короткая пауза, чтобы не поджарить MAX rate-limit (2 RPS).
-_RELAY_BASE_DELAY_SEC = 0.5
-
-
 def _chunk_relayable(relayable: list) -> list[list]:
-    """Порезать пересылаемые вложения на батчи по лимиту
-    `cfg.attachments_per_relay_message`. Серверный лимит MAX на одно
-    сообщение не задокументирован, но 10 вложений за раз стабильно
-    проходят. Единый источник батчинга для обеих relay-функций.
-    """
-    chunk_size = max(1, cfg.attachments_per_relay_message)
-    return [
-        relayable[i:i + chunk_size]
-        for i in range(0, len(relayable), chunk_size)
-    ]
+    """MAX разрешает группу фото/видео, но файлы — только по одному."""
+    chunk_size = max(1, min(12, cfg.attachments_per_relay_message))
+    batches: list[list] = []
+    media: list = []
+    for item in relayable:
+        raw_type = item.get("type") if isinstance(item, dict) else getattr(item, "type", None)
+        kind = str(raw_type or "").lower().rsplit(".", 1)[-1]
+        if kind in {"image", "video"}:
+            media.append(item)
+            if len(media) >= chunk_size:
+                batches.append(media)
+                media = []
+        else:
+            if media:
+                batches.append(media)
+                media = []
+            batches.append([item])
+    if media:
+        batches.append(media)
+    return batches
 
 
 def _build_reply_link(mid: str | None):
@@ -61,38 +62,16 @@ def _build_reply_link(mid: str | None):
         return None
 
 
-async def _send_with_retry(send_coro_factory, *, batch_idx: int,
-                           total_batches: int, appeal_id: int) -> bool:
-    """Запустить send_coro_factory() с retry. Возвращает True при успехе.
-
-    `send_coro_factory` — callable без аргументов, возвращающий
-    свежую coroutine. Вызывается заново на каждой попытке: однажды
-    выполненную coroutine пере-await'ить нельзя.
-    """
-    delay = _RELAY_BASE_DELAY_SEC
-    last_exc: BaseException | None = None
-    for attempt in range(1, _RELAY_MAX_ATTEMPTS + 1):
-        try:
-            await send_coro_factory()
-            return True
-        except Exception as exc:
-            last_exc = exc
-            if attempt < _RELAY_MAX_ATTEMPTS:
-                log.info(
-                    "relay batch %d/%d for #%s — attempt %d failed (%s), "
-                    "retry через %.1fs",
-                    batch_idx, total_batches, appeal_id, attempt,
-                    type(exc).__name__, delay,
-                )
-                await asyncio.sleep(delay)
-                delay *= 2
-    log.exception(
-        "relay batch %d/%d for #%s ОКОНЧАТЕЛЬНО не удался после %d "
-        "попыток: %r",
-        batch_idx, total_batches, appeal_id, _RELAY_MAX_ATTEMPTS,
-        last_exc,
-    )
-    return False
+async def _send_once(send_coro_factory, *, batch_idx: int,
+                     total_batches: int, appeal_id: int) -> bool:
+    """Одна попытка: исключение не доказывает, что MAX не принял сообщение."""
+    try:
+        await send_coro_factory()
+        return True
+    except Exception as exc:
+        log.warning("relay batch %d/%d for #%s has an uncertain outcome (%s)",
+                    batch_idx, total_batches, appeal_id, type(exc).__name__)
+        return False
 
 
 def _collect_all_user_attachments(appeal) -> list[dict]:
@@ -117,6 +96,15 @@ def _collect_all_user_attachments(appeal) -> list[dict]:
     return out
 
 
+def collect_appeal_attachments(appeal) -> list[dict]:
+    """Вложения исходного обращения и переписки обеих сторон, по порядку."""
+    out = list(appeal.attachments or [])
+    for msg in getattr(appeal, "messages", None) or []:
+        if getattr(msg, "direction", None) in {"from_user", "from_operator"}:
+            out.extend(getattr(msg, "attachments", None) or [])
+    return out
+
+
 async def render_appeal_attachments(
     bot,
     *,
@@ -126,7 +114,7 @@ async def render_appeal_attachments(
     header_template: str = "Вложения обращения #{appeal_id}",
     reply_to_mid: str | None = None,
 ) -> None:
-    """Переотправить все вложения обращения (исходник + дополнения) в
+    """Переотправить сохранённые вложения обращения и переписки в
     указанный чат/диалог.
 
     Универсальная функция для повторного показа обращения с
@@ -141,17 +129,17 @@ async def render_appeal_attachments(
     """
     if not bot:
         return
-    all_atts = _collect_all_user_attachments(appeal)
+    all_atts = collect_appeal_attachments(appeal)
     if not all_atts:
         return
     relayable = deserialize_for_relay(all_atts)
-    if not relayable:
-        return
+    unprepared = max(0, len(all_atts) - len(relayable))
 
     link = _build_reply_link(reply_to_mid if chat_id is not None else None)
 
     batches = _chunk_relayable(relayable)
     total = len(batches)
+    failed = 0
     for idx, batch in enumerate(batches, start=1):
         header = header_template.format(appeal_id=appeal.id)
         if total > 1:
@@ -164,11 +152,27 @@ async def render_appeal_attachments(
                 attachments=batch,
                 link=link,
             )
-        except Exception:
-            log.exception(
-                "render_appeal_attachments: batch %d/%d for #%s failed",
-                idx, total, appeal.id,
+        except Exception as exc:
+            failed += len(batch)
+            log.warning(
+                "render_appeal_attachments: batch %d/%d for #%s has uncertain outcome (%s)",
+                idx, total, appeal.id, type(exc).__name__,
             )
+    if unprepared or failed:
+        try:
+            notice = f"⚠️ Вложения обращения № {appeal.id}:"
+            if unprepared:
+                notice += f" не удалось подготовить {unprepared} из {len(all_atts)}."
+            if failed:
+                notice += (f" Результат отправки {failed} вложений неизвестен. "
+                           "Проверьте чат перед повторным показом.")
+            await bot.send_message(
+                chat_id=chat_id,
+                user_id=None if chat_id is not None else user_id,
+                text=notice,
+            )
+        except Exception:
+            log.exception("render_appeal_attachments: could not report missing attachments")
 
 
 async def relay_attachments_to_admin(
@@ -189,19 +193,13 @@ async def relay_attachments_to_admin(
     батчи: серверный лимит MAX на одно сообщение не задокументирован,
     но 10 вложений за раз стабильно проходят.
 
-    Возвращает True, если ВСЕ батчи доставлены (или вложений не было).
-    False — если хотя бы один батч не удался после всех retry-попыток.
-    При ПОЛНОМ провале (ни один батч не доставлен, хотя бы один был) —
-    шлём critical-алёрт в админ-группу: без него вложения жителя
-    (фото места ямы, скан документа) молча пропадают из виду оператора
-    — БД-запись уже закоммичена, а relay это best-effort фон, который
-    раньше проигрывал только в лог.
+    Возвращает True, если все вложения подготовлены и отправлены; иначе
+    False и по возможности сообщает оператору о неполной выдаче.
     """
     if not cfg.admin_group_id or not stored_attachments:
         return True
     relayable = deserialize_for_relay(stored_attachments)
-    if not relayable:
-        return True
+    unprepared = max(0, len(stored_attachments) - len(relayable))
 
     link = _build_reply_link(admin_mid)
 
@@ -215,8 +213,6 @@ async def relay_attachments_to_admin(
             else f"Вложения к обращению #{appeal_id} ({idx}/{total_batches})"
         )
 
-        # Замыкание: каждая попытка строит свежий kwargs (на случай
-        # если maxapi мутирует переданное при ошибке).
         def _factory(_batch=batch, _header=header):
             return bot.send_message(
                 chat_id=cfg.admin_group_id,
@@ -225,26 +221,24 @@ async def relay_attachments_to_admin(
                 link=link,
             )
 
-        ok = await _send_with_retry(
+        ok = await _send_once(
             _factory, batch_idx=idx, total_batches=total_batches,
             appeal_id=appeal_id,
         )
         if ok:
             succeeded += 1
 
-    if succeeded == 0:
-        # Полный провал: ни один батч не дошёл. Частичный провал
-        # (succeeded < total_batches, но > 0) НЕ алёртим — оператор уже
-        # видит часть вложений и карточку обращения, это не «пропало
-        # незаметно», а деградация, видная по логам relay batch.
+    if succeeded < total_batches or unprepared:
         try:
             from aemr_bot.services import admin_bus
 
             await admin_bus.send(
                 bot,
                 text=(
-                    f"⚠️ Вложения обращения #{appeal_id} не доставлены "
-                    f"(сбой сети), проверьте вручную."
+                    f"⚠️ Не все вложения обращения #{appeal_id} показаны в чате: "
+                    f"не подготовлено {unprepared}, результат отправки "
+                    f"{total_batches - succeeded} из {total_batches} групп неизвестен. "
+                    "Проверьте чат и вложения в карточке; не повторяйте отправку вслепую."
                 ),
                 critical=True,
             )
@@ -255,4 +249,4 @@ async def relay_attachments_to_admin(
                 appeal_id,
             )
         return False
-    return succeeded == total_batches
+    return True

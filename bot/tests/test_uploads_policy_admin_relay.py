@@ -304,19 +304,23 @@ class TestAdminRelay:
         bot.send_message.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_skips_when_deserialize_returns_empty(self) -> None:
+    async def test_reports_when_deserialize_returns_empty(self) -> None:
         from aemr_bot.services import admin_relay
 
         bot = MagicMock()
         bot.send_message = AsyncMock()
+        alert = AsyncMock(return_value="mid")
         with patch.object(admin_relay.cfg, "admin_group_id", 555), \
              patch("aemr_bot.services.admin_relay.deserialize_for_relay",
-                   return_value=[]):
-            await admin_relay.relay_attachments_to_admin(
+                   return_value=[]), \
+             patch("aemr_bot.services.admin_bus.send", alert):
+            result = await admin_relay.relay_attachments_to_admin(
                 bot, appeal_id=1, admin_mid=None,
                 stored_attachments=[{"type": "image"}],
             )
         bot.send_message.assert_not_called()
+        assert result is False
+        alert.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_sends_single_batch(self) -> None:
@@ -407,7 +411,7 @@ class TestAdminRelay:
         alert.assert_awaited_once()
         call_kwargs = alert.call_args.kwargs
         assert "#77" in call_kwargs.get("text", "")
-        assert "не доставлены" in call_kwargs.get("text", "")
+        assert "неизвестен" in call_kwargs.get("text", "")
         assert call_kwargs.get("critical") is True
 
     @pytest.mark.asyncio
@@ -432,13 +436,12 @@ class TestAdminRelay:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_partial_failure_does_not_alert(self) -> None:
-        """Частичный провал (часть батчей ушла) — не алёртим, оператор
-        уже видит часть вложений и карточку обращения."""
+    async def test_partial_failure_alerts(self) -> None:
+        """При частичной выдаче оператор должен увидеть, что показано не всё."""
         from aemr_bot.services import admin_relay
 
         bot = MagicMock()
-        # Первый батч ok, второй — все 3 попытки падают.
+        # Первый батч ok, результат второго неизвестен.
         bot.send_message = AsyncMock(
             side_effect=[MagicMock(), RuntimeError("x"), RuntimeError("x"), RuntimeError("x")]
         )
@@ -455,7 +458,7 @@ class TestAdminRelay:
             )
 
         assert result is False
-        alert.assert_not_called()
+        alert.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_full_success_returns_true(self) -> None:

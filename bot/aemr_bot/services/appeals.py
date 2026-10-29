@@ -60,6 +60,7 @@ async def add_operator_message(
     max_message_id: str | None,
     *,
     is_final: bool = True,
+    attachments: list | None = None,
 ) -> Message:
     """Сохранить ответ оператора. Поведение статуса зависит от is_final.
 
@@ -85,6 +86,7 @@ async def add_operator_message(
         text=text,
         max_message_id=max_message_id,
         operator_id=operator_id,
+        attachments=attachments or [],
     )
     session.add(msg)
     if appeal.status != AppealStatus.CLOSED.value:

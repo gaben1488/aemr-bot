@@ -173,3 +173,81 @@ class TestImageRelay:
             f"text-only ответ не должен иметь лишних вложений; "
             f"attachments={attachments}"
         )
+
+
+@pytest.mark.asyncio
+async def test_sent_images_are_saved_with_corresponding_reply():
+    from aemr_bot.handlers import operator_reply as opr
+
+    event = _event_with_image()
+    event.bot.send_message = AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid='out-1')))
+    save = AsyncMock()
+    stack = _patches_for_delivery()
+    for p in stack:
+        p.start()
+    try:
+        with patch.object(opr.appeals_service, 'add_operator_message', save), \
+             patch('aemr_bot.utils.image_attachments.deserialize_for_relay',
+                   return_value=[SimpleNamespace(type='image')]):
+            opr._recent_replies.clear()
+            await opr._deliver_operator_reply(event, appeal=SimpleNamespace(id=1),
+                                               operator=SimpleNamespace(id=7, max_user_id=42),
+                                               text='Фото результата', audit_action='reply')
+    finally:
+        for p in stack:
+            p.stop()
+    assert save.await_args.kwargs['attachments'] == event.message.body.attachments
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('attachments', [
+    [{'type': 'image', 'payload': {'url': 'https://cdn.max/img.jpg'}}] * 11,
+    [{'type': 'file', 'payload': {'token': 'document'}}],
+])
+async def test_unsupported_or_too_many_operator_attachments_do_not_send_partial_answer(attachments):
+    from aemr_bot.handlers import operator_reply as opr
+
+    event = _event_without_image()
+    event.message.body.attachments = attachments
+    event.bot.send_message = AsyncMock()
+    fresh = _fresh_appeal()
+    result = await opr._send_reply_to_citizen(event, fresh_appeal=fresh, appeal_id=1, text='Ответ')
+    assert not result[0]
+    assert not any(call.kwargs.get('user_id') == fresh.user.max_user_id
+                   for call in event.bot.send_message.await_args_list)
+
+
+def test_identical_text_with_different_photos_is_not_duplicate():
+    from aemr_bot.handlers import operator_reply as opr
+
+    first = _event_with_image()
+    second = _event_with_image()
+    second.message.body.attachments[0]['payload']['url'] = 'https://cdn.max/other.jpg'
+    opr._recent_replies.clear()
+    opr._remember_successful_reply(7, 1, opr._reply_dedupe_text(first, 'Готово'))
+    assert not opr._has_recent_successful_reply(7, 1, opr._reply_dedupe_text(second, 'Готово'))
+    assert opr._has_recent_successful_reply(7, 1, opr._reply_dedupe_text(first, 'Готово'))
+
+
+@pytest.mark.asyncio
+async def test_reply_timeout_reports_unknown_delivery_without_false_failure():
+    from aemr_bot.handlers import operator_reply as opr
+
+    event = _event_without_image()
+    event.bot.send_message = AsyncMock(side_effect=[TimeoutError(), None])
+    result = await opr._send_reply_to_citizen(event, fresh_appeal=_fresh_appeal(), appeal_id=1, text='Ответ')
+    assert result == (False, None, [])
+    notice = event.bot.send_message.await_args_list[1].kwargs['text']
+    assert 'неизвестен' in notice
+    assert 'мог быть доставлен' in notice
+
+
+@pytest.mark.asyncio
+async def test_reply_without_message_id_requires_manual_delivery_check():
+    from aemr_bot.handlers import operator_reply as opr
+
+    event = _event_without_image()
+    event.bot.send_message = AsyncMock(side_effect=[None, None])
+    result = await opr._send_reply_to_citizen(event, fresh_appeal=_fresh_appeal(), appeal_id=1, text='Ответ')
+    assert result == (False, None, [])
+    assert 'неизвестен' in event.bot.send_message.await_args_list[1].kwargs['text']

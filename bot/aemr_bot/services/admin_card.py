@@ -333,12 +333,12 @@ async def _render(
 
 
 def _count_attachments(appeal: Appeal) -> int:
-    """Сколько вложений у обращения (исходные + дополнения жителя).
+    """Сколько вложений у обращения и переписки обеих сторон.
     Устойчиво к detached state (lazy-fail → fallback на scalar)."""
     try:
-        from aemr_bot.services.admin_relay import _collect_all_user_attachments
+        from aemr_bot.services.admin_relay import collect_appeal_attachments
 
-        return len(_collect_all_user_attachments(appeal))
+        return len(collect_appeal_attachments(appeal))
     except Exception:
         log.debug(
             "admin_card._count_attachments: lazy-load fail for appeal #%s",

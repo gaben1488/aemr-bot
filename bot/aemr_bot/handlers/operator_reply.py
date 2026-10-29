@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import re
 import time as _time
@@ -19,6 +20,7 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format, idempotency
 from aemr_bot.services import operators as operators_service
 from aemr_bot.utils import image_attachments as _image_attachments
+from aemr_bot.utils.attachments import _raw_attachments
 from aemr_bot.utils.event import (
     extract_message_id,
     get_chat_id,
@@ -151,6 +153,16 @@ def _remember_successful_reply(operator_id: int, appeal_id: int, text: str) -> N
             _, t = _recent_replies[k]
             if t < cutoff:
                 _recent_replies.pop(k, None)
+
+
+def _reply_dedupe_text(event, text: str) -> str:
+    """Одинаковый текст с разными фотографиями — разные ответы."""
+    images = _image_attachments.image_attachments_from_event(event, limit=0)
+    if not images:
+        return text
+    serialized = json.dumps(images, ensure_ascii=False, sort_keys=True, default=str)
+    digest = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+    return f"{text}\0{digest}"
 
 
 def _is_duplicate_reply(operator_id: int, appeal_id: int, text: str) -> bool:
@@ -305,7 +317,7 @@ async def _check_reply_dedupe(
     проверок сохранён: сначала окно recent-success, затем persisted
     source-update.
     """
-    if _has_recent_successful_reply(operator.id, appeal.id, text):
+    if _has_recent_successful_reply(operator.id, appeal.id, _reply_dedupe_text(event, text)):
         log.info(
             "operator_reply: дубль за %.1fс отбит (recent-success) — "
             "operator=%s appeal=%s",
@@ -327,9 +339,8 @@ async def _check_reply_dedupe(
 
 async def _send_reply_to_citizen(
     event, *, fresh_appeal, appeal_id: int, text: str
-) -> tuple[bool, str | None]:
-    """Доставить отформатированный ответ жителю. Возвращает
-    ``(delivered_ok, delivered_mid)``.
+) -> tuple[bool, str | None, list[dict]]:
+    """Доставить ответ и вернуть результат, ID и состав вложений.
 
     delivered_ok=False означает, что доставка не удалась и оператору
     уже отправлено предупреждение — вызывающему остаётся вернуть True.
@@ -361,7 +372,7 @@ async def _send_reply_to_citizen(
             "appeal=%s (count=%d)",
             appeal_id, len(bad_urls),
         )
-        return False, None
+        return False, None, []
 
     formatted_text = card_format.citizen_reply(fresh_appeal, text)
     # Картинки оператора, если приложил — пробрасываем жителю рядом
@@ -372,21 +383,38 @@ async def _send_reply_to_citizen(
     # deserialize_for_relay в build_outbound устойчив к отсутствию
     # maxapi (вернёт []), бот не падает.
     #
-    # Лимит — cfg.attachments_per_relay_message (10), а НЕ полный
-    # безлимит: это одно сообщение MAX (текст + клавиатура + вложения),
-    # а не relay-поток из admin_relay.py, который умеет чанковать на
-    # несколько сообщений. Резать на несколько сообщений здесь
-    # означало бы либо дублировать клавиатуру/текст в каждом чанке,
-    # либо оторвать кнопки от части картинок — оба варианта хуже
-    # простого потолка в 10 картинок на один ответ, чего с огромным
-    # запасом хватает на любой реалистичный случай.
+    # Неподдерживаемые и лишние вложения отклоняем до отправки: ответ
+    # не должен считаться доставленным вместе с фотографиями, которых
+    # житель в действительности не получил.
     all_operator_images = _image_attachments.image_attachments_from_event(
         event, limit=0
     )
-    operator_images = all_operator_images[: cfg.attachments_per_relay_message]
+    raw_attachments = _raw_attachments(getattr(getattr(event, "message", None), "body", None))
+    if any(not _image_attachments.is_image_attachment(att) for att in raw_attachments):
+        await _safe_admin_notice(
+            event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: сейчас можно "
+            "приложить только фотографии. Удалите другие вложения, снова нажмите "
+            "«Ответить» и отправьте ответ.",
+        )
+        return False, None, []
+    photo_limit = max(1, min(11, cfg.attachments_per_relay_message))
+    if len(all_operator_images) > photo_limit:
+        await _safe_admin_notice(
+            event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: можно приложить "
+            f"до {photo_limit} фотографий. Уменьшите их число, "
+            "снова нажмите «Ответить» и отправьте ответ.",
+        )
+        return False, None, []
+    operator_images = all_operator_images
     outbound_images = _image_attachments.build_outbound_image_attachments(
         operator_images
     )
+    if len(outbound_images) != len(operator_images) or len(operator_images) != len(raw_attachments):
+        await _safe_admin_notice(
+            event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: не удалось подготовить "
+            "все фотографии. Снова нажмите «Ответить» и приложите их ещё раз.",
+        )
+        return False, None, []
     try:
         # ВАЖНО: доставляем по user_id (а не chat_id) — chat_id личного
         # диалога жителя мы не храним, только MAX user_id.
@@ -396,39 +424,32 @@ async def _send_reply_to_citizen(
             attachments=[*outbound_images, keyboards.back_to_menu_keyboard()],
         )
     except Exception as exc:
-        # В админ-чат — только имя класса исключения: `repr(exc)` из
-        # maxapi часто содержит тело запроса (текст ответа, user_id),
-        # которое осело бы в истории админ-группы. Полный стек — в логах.
-        log.exception(
-            "operator_reply: delivery failed for appeal=%s user_id=%s",
-            appeal_id, target_user_id,
+        # Исключения MAX могут содержать текст ответа и токены вложений;
+        # полное тело не пишем ни в чат, ни в системный лог.
+        log.warning(
+            "operator_reply: delivery outcome uncertain for appeal=%s (%s)",
+            appeal_id, type(exc).__name__,
         )
         await _safe_admin_notice(
             event,
             (
-                f"⚠️ Не удалось доставить ответ жителю по обращению "
-                f"#{appeal_id} ({type(exc).__name__}). Возможно, житель "
-                f"удалил диалог или заблокировал бота. Обращение остаётся "
-                f"в работе."
+                f"⚠️ Результат доставки ответа по обращению #{appeal_id} "
+                f"неизвестен ({type(exc).__name__}). Ответ мог быть доставлен. "
+                "Проверьте переписку перед повторной отправкой; статус "
+                "обращения в базе пока не изменён."
             ),
         )
-        return False, None
-    # Уведомление оператору, если он приложил больше, чем уходит одним
-    # сообщением (cfg.attachments_per_relay_message). Шлём ПОСЛЕ
-    # успешной доставки, чтобы не блокировать сам ответ при сбое
-    # admin-канала; _safe_admin_notice проглатывает свои исключения.
-    if len(all_operator_images) > len(operator_images):
+        return False, None, []
+    delivered_mid = extract_message_id(sent)
+    if not delivered_mid:
         await _safe_admin_notice(
             event,
-            (
-                f"ℹ️ К ответу по обращению #{appeal_id} были приложены "
-                f"{len(all_operator_images)} картинок — жителю ушли первые "
-                f"{len(operator_images)} (лимит одного сообщения). Если "
-                f"нужно отправить остальные — пришлите их отдельным ответом "
-                f"на карточку обращения."
-            ),
+            f"⚠️ Результат доставки ответа по обращению #{appeal_id} неизвестен: "
+            "MAX не вернул ID сообщения. Проверьте переписку перед повторной отправкой; "
+            "статус обращения в базе пока не изменён.",
         )
-    return True, extract_message_id(sent)
+        return False, None, []
+    return True, delivered_mid, operator_images
 
 
 async def _persist_reply_and_card(
@@ -439,6 +460,7 @@ async def _persist_reply_and_card(
     operator,
     audit_action: str,
     delivered_mid: str | None,
+    attachments: list[dict],
     is_final: bool = True,
 ):
     """Записать доставленный ответ в БД + audit_log, подготовить данные
@@ -473,6 +495,7 @@ async def _persist_reply_and_card(
                 operator_id=operator.id,
                 max_message_id=delivered_mid,
                 is_final=is_final,
+                attachments=attachments,
             )
             await operators_service.write_audit(
                 session,
@@ -582,7 +605,7 @@ async def _deliver_operator_reply(
         )
         return True
 
-    delivered_ok, delivered_mid = await _send_reply_to_citizen(
+    delivered_ok, delivered_mid, delivered_attachments = await _send_reply_to_citizen(
         event, fresh_appeal=fresh_appeal, appeal_id=appeal.id, text=text
     )
     if not delivered_ok:
@@ -595,13 +618,14 @@ async def _deliver_operator_reply(
         operator=operator,
         audit_action=audit_action,
         delivered_mid=delivered_mid,
+        attachments=delivered_attachments,
         is_final=is_final,
     )
     if persisted is None:
         return True
 
     await _mark_reply_success_recorded(success_key)
-    _remember_successful_reply(operator.id, appeal.id, text)
+    _remember_successful_reply(operator.id, appeal.id, _reply_dedupe_text(event, text))
 
     # DDD sacred event log (2026-05-26): ответ оператора — это **event**
     # в timeline'е обращения. Должна быть НОВАЯ карточка внизу чата с

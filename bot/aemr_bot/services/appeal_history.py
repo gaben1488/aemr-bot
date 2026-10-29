@@ -7,27 +7,12 @@ from typing import Any
 
 from aemr_bot.db.models import MessageDirection
 from aemr_bot.services.card_format import _local
+from aemr_bot.utils.text_pages import split_text_units
 from aemr_bot.utils.url_defang import defang_for_admin
 
 # Budget UTF-16 units, conservatively allowing for MAX's 4000-character
 # transport limit, header, navigation, and non-BMP characters.
 _CONTENT_UNITS = 2600
-
-
-def _chunks(text: str) -> list[str]:
-    if not text:
-        return ['']
-    chunks: list[str] = []
-    start = 0
-    units = 0
-    for index, char in enumerate(text):
-        width = 2 if ord(char) > 0xFFFF else 1
-        if units + width > _CONTENT_UNITS:
-            chunks.append(text[start:index])
-            start, units = index, 0
-        units += width
-    chunks.append(text[start:])
-    return chunks
 
 
 @dataclass(frozen=True)
@@ -77,7 +62,7 @@ def pages_for(appeal: Any, *, operator: bool) -> list[HistoryPage]:
         # For operators retain the existing protection against clickable links.
         if operator and from_user:
             text = defang_for_admin(text) or ''
-        pieces = _chunks(text)
+        pieces = split_text_units(text, _CONTENT_UNITS)
         result.extend(HistoryPage(entry, label, date, part, index + 1, len(pieces), attachments)
                       for index, part in enumerate(pieces))
     return result

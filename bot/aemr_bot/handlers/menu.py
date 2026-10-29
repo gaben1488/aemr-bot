@@ -351,11 +351,8 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
     - ANSWERED / CLOSED — «🔁 Подать похожее» для нового связанного обращения.
     - Везде «↩ В меню».
 
-    После карточки переотправляем все вложения, отправленные жителем
-    по этому обращению (исходные + дополнения). Без них контекст
-    исходного обращения «яма во дворе» искажается — половина смысла
-    в фотографии. Аналогично оператору в `/op_help → 📋 Открытые
-    обращения` (см. admin_panel._do_open_tickets).
+    Вложения обеих сторон доступны по отдельной кнопке; автоматически
+    при каждом открытии карточки они не пересылаются.
     """
     async with session_scope() as session:
         # get_by_id_with_messages нужен, чтобы посчитать
@@ -373,7 +370,7 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
-        attachment_count = len(admin_relay._collect_all_user_attachments(appeal))
+        attachment_count = len(admin_relay.collect_appeal_attachments(appeal))
         text = card_format.user_card(appeal)
         status = appeal.status
     await _send_or_edit_menu(
@@ -1061,10 +1058,7 @@ _EXACT: dict[str, _MenuRoute] = {
 }
 
 async def show_appeal_attachments(event, appeal_id: int, max_user_id: int):
-    """Кнопка «🗂 Показать вложения (N)» под карточкой обращения у
-    жителя (PR-fix-hang). До этого вложения переотправлялись каждый
-    раз при открытии карточки и могли подвешивать handler. Теперь —
-    только по явному тапу."""
+    """Показать сохранённые вложения обеих сторон по запросу владельца."""
     async with session_scope() as session:
         appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
     if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
@@ -1095,7 +1089,7 @@ async def show_appeal_history(event, appeal_id: int, page: int, max_user_id: int
         return
     pages = appeal_history.pages_for(appeal, operator=False)
     page = max(0, min(page, len(pages) - 1))
-    attachments = bool(admin_relay._collect_all_user_attachments(appeal))
+    attachments = bool(admin_relay.collect_appeal_attachments(appeal))
     await _send_or_edit_menu(
         event, text=f"{pages[page].render(appeal_id)}\n\nСтраница {page + 1} из {len(pages)}",
         attachments=[keyboards.appeal_history_keyboard(appeal_id, page, len(pages),

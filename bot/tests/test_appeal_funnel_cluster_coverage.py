@@ -809,7 +809,7 @@ class TestMenuAppealHappyPaths:
         with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.appeals_service.get_by_id_with_messages",
                    AsyncMock(return_value=appeal)), \
-             patch("aemr_bot.handlers.menu.admin_relay._collect_all_user_attachments",
+             patch("aemr_bot.handlers.menu.admin_relay.collect_appeal_attachments",
                    MagicMock(return_value=[1, 2])), \
              patch("aemr_bot.handlers.menu.card_format.user_card",
                    MagicMock(return_value="Карточка обращения #3")):
