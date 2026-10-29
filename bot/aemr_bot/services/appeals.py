@@ -746,7 +746,7 @@ async def purge_old_appeals_content(
             Message.appeal_id.in_(closed_old_appeals),
             or_(Message.text.isnot(None), Message.attachments != []),
         )
-        .values(text=None, attachments=[])
+        .values(text=None, attachments=[], admin_notice_state=None)
     )
     purged_messages = msg_result.rowcount or 0
     return purged_appeals, purged_messages

@@ -293,6 +293,9 @@ class Message(Base):
     direction: Mapped[str] = mapped_column(String(32))
     # NULL means the historical response kind was not recorded.
     response_kind: Mapped[str | None] = mapped_column(String(16))
+    # NULL for historical records; follow-ups use pending/sending/sent/
+    # partial/unknown to avoid replaying uncertain external requests.
+    admin_notice_state: Mapped[str | None] = mapped_column(String(16), index=True)
     text: Mapped[str | None] = mapped_column(Text)
     attachments: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     max_message_id: Mapped[str | None] = mapped_column(String(64))

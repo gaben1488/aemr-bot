@@ -372,7 +372,7 @@ async def _redact_appeal_payloads_for_user(session: AsyncSession, user_id: int) 
     messages_result = await session.execute(
         update(Message)
         .where(Message.appeal_id.in_(appeal_ids))
-        .values(text=None, attachments=[])
+        .values(text=None, attachments=[], admin_notice_state=None)
     )
     return appeals_result.rowcount or 0, messages_result.rowcount or 0
 

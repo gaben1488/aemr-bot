@@ -397,6 +397,14 @@ async def _do_diag(event) -> None:
         failed_receipts = await session.scalar(
             select(func.count()).select_from(InboxEvent).where(InboxEvent.state == "failed")
         ) or 0
+        uncertain_followups = await session.scalar(
+            select(func.count()).select_from(Message).where(
+                Message.admin_notice_state.in_(["sending", "unknown", "partial"])
+            )
+        ) or 0
+        pending_followups = await session.scalar(
+            select(func.count()).select_from(Message).where(Message.admin_notice_state == "pending")
+        ) or 0
         uncertain_cards = await session.scalar(
             select(func.count()).select_from(Appeal).where(
                 Appeal.admin_message_id.is_(None),
@@ -404,6 +412,13 @@ async def _do_diag(event) -> None:
                 Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
             )
         ) or 0
+    if pending_followups:
+        warnings_lines.append(f"⏳ Дополнений ожидают уведомления: {pending_followups}.")
+    if uncertain_followups:
+        warnings_lines.append(
+            f"⚠️ Не подтверждена полная доставка дополнений: {uncertain_followups}. "
+            "Проверьте служебный чат и историю обращений перед повтором."
+        )
     if uncertain_cards:
         warnings_lines.append(
             f"⚠️ Не подтверждена публикация первых карточек: {uncertain_cards}. "

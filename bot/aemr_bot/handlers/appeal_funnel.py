@@ -801,7 +801,7 @@ async def submit_followup(event, body, text_body, max_user_id, *, draft_token: s
     Отвеченные и закрытые обращения не переоткрываем. Повтор по ним
     оформляется новым связанным обращением через «🔁 Подать похожее».
     """
-    from aemr_bot.services.admin_relay import relay_attachments_to_admin
+    from aemr_bot.services import followup_delivery
 
     async with current_user(max_user_id) as (session, user):
         appeal_id = (user.dialog_data or {}).get("appeal_id")
@@ -959,66 +959,29 @@ async def submit_followup(event, body, text_body, max_user_id, *, draft_token: s
             )
             return
         appeal = locked_appeal
-        await appeals_service.add_user_message(
+        saved_message = await appeals_service.add_user_message(
             session,
             appeal=appeal,
             text=text or None,
             attachments=attachments,
         )
-        updated_appeal = await appeals_service.get_by_id_with_messages(
-            session, appeal.id
-        )
+        # Committed with the text and draft reset: after a crash only a
+        # genuinely unattempted notification can be recovered automatically.
+        saved_message.admin_notice_state = "pending"
+        saved_message_id = saved_message.id
         await users_service.reset_state(session, max_user_id)
-        appeal_for_card = updated_appeal or appeal
-        user_for_card = getattr(appeal_for_card, "user", None) or user
 
-    # Единое уведомление: ПОЛНАЯ admin appeal card с timeline (где видно
-    # свежее дополнение жителя как последнее сообщение) + маркер-шапка
-    # `📩 Новое дополнение по обращению #N от жителя`. Один объект в
-    # чате вместо двух — оператор не сканирует две сущности «короткое
-    # уведомление + карточка», а видит сразу контекст + содержание +
-    # все кнопки действий.
-    #
-    # force_new=True: дополнение = «новая инфа», нужна запись внизу
-    # чата даже если предыдущая карточка ещё была last_in_chat.
-    # admin_message_id оригинала НЕ двигаем (sacred-правило, PR #54),
-    # но last_admin_card_mid в БД обновится новым mid'ом.
-    new_card_mid: str | None = None
-    if cfg.admin_group_id:
-        try:
-            from aemr_bot.services import admin_card as admin_card_service
-
-            if getattr(appeal_for_card, "user", None) is None:
-                appeal_for_card.user = user_for_card
-            new_card_mid = await admin_card_service.render(
-                event.bot,
-                appeal_for_card,
-                force_new=True,
-                event_header=(
-                    f"📩 Новое дополнение по обращению #{appeal.id} от "
-                    f"жителя — см. ниже в истории переписки."
-                ),
-            )
-        except Exception:
-            log.exception("admin_card.render after followup failed")
-
-        if attachments:
-            try:
-                # Relay вложений жителя — reply-link на свежую карточку
-                # (new_card_mid). Без link — relay уйдёт отдельным
-                # сообщением, оператор всё равно увидит вложения.
-                await relay_attachments_to_admin(
-                    event.bot,
-                    appeal_id=appeal.id,
-                    admin_mid=new_card_mid,
-                    stored_attachments=attachments,
-                )
-            except Exception:
-                log.exception("relay followup attachments failed")
+    try:
+        notification_confirmed = await followup_delivery.deliver(event.bot, saved_message_id)
+    except Exception:
+        # The message is already committed. Recovery/diagnostics distinguish
+        # a safe pending state from a possibly executed send.
+        log.exception("followup notification failed for appeal #%s", appeal.id)
+        notification_confirmed = False
 
     confirm_text = f"✅ Дополнение сохранено в обращении № {appeal.id}."
-    if not new_card_mid:
-        confirm_text += " Не удалось подтвердить уведомление специалиста; обращение остаётся в очереди."
+    if not notification_confirmed:
+        confirm_text += " Уведомление специалиста пока не подтверждено; обращение остаётся в очереди."
     await event.message.answer(
         confirm_text,
         attachments=[keyboards.back_to_menu_keyboard()],

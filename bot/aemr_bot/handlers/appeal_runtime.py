@@ -134,7 +134,9 @@ async def recover_unpublished_appeals(bot) -> int:
                 log.exception("first admin-card recovery failed for appeal #%s", appeal_id)
                 return False
 
-    return sum(await asyncio.gather(*(recover(appeal_id) for appeal_id in ids)))
+    published = sum(await asyncio.gather(*(recover(appeal_id) for appeal_id in ids)))
+    from aemr_bot.services import followup_delivery
+    return published + await followup_delivery.recover_pending(bot)
 
 
 async def recover_stuck_funnels(bot) -> int:
