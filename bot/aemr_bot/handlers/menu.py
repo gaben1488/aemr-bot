@@ -9,7 +9,7 @@ from aemr_bot.db.models import AppealStatus, DialogState, User
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import admin_card as admin_card_service
-from aemr_bot.services import admin_events, admin_relay, card_format, settings_store
+from aemr_bot.services import admin_events, admin_relay, appeal_history, card_format, settings_store
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as ops_service
@@ -1086,6 +1086,23 @@ async def show_appeal_attachments(event, appeal_id: int, max_user_id: int):
     )
 
 
+async def show_appeal_history(event, appeal_id: int, page: int, max_user_id: int):
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+    if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
+        await _send_or_edit_menu(event, text="Обращение не найдено.",
+                                 attachments=[keyboards.back_to_menu_keyboard()])
+        return
+    pages = appeal_history.pages_for(appeal, operator=False)
+    page = max(0, min(page, len(pages) - 1))
+    attachments = bool(admin_relay._collect_all_user_attachments(appeal))
+    await _send_or_edit_menu(
+        event, text=f"{pages[page].render(appeal_id)}\n\nСтраница {page + 1} из {len(pages)}",
+        attachments=[keyboards.appeal_history_keyboard(appeal_id, page, len(pages),
+                                                       attachments=attachments)],
+    )
+
+
 # Префикс → handler(event, appeal_id, max_user_id). Хвост payload'а —
 # числовой id обращения (payload.split(":")[2]). Битый id → тап
 # «съедается» молча (return True без ack), как в исходном if-elif.
@@ -1117,6 +1134,17 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
     route = _EXACT.get(payload)
     if route is not None:
         return await _run_exact_route(event, route, max_user_id)
+
+    if payload.startswith("appeal:history:") and max_user_id is not None:
+        await ack_callback(event)
+        try:
+            appeal_id, page = map(int, payload.removeprefix("appeal:history:").split(":"))
+            if appeal_id <= 0 or page < 0:
+                return True
+        except ValueError:
+            return True
+        await show_appeal_history(event, appeal_id, page, max_user_id)
+        return True
 
     # appeals:page:<N|noop> — пагинация «Мои обращения». noop = текущая
     # страница, тап только ак'ается. Битый хвост глотается без ак'а.

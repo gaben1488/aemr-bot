@@ -330,6 +330,7 @@ def user_appeal_card_keyboard(
                 text="🔁 Подать похожее", payload=cp.appeal_repeat(appeal_id)
             )
         )
+    kb.row(CallbackButton(text="📖 История обращения", payload=cp.appeal_history(appeal_id, 0)))
     if attachment_count > 0:
         kb.row(
             CallbackButton(
@@ -339,6 +340,26 @@ def user_appeal_card_keyboard(
         )
     kb.row(CallbackButton(text="↩️ К моим обращениям", payload=cp.MENU_MY_APPEALS))
     kb.row(CallbackButton(text="↩️ В меню", payload=cp.MENU_MAIN))
+    return kb.as_markup()
+
+
+def appeal_history_keyboard(appeal_id: int, page: int, total: int, *, operator: bool = False,
+                            attachments: bool = False):
+    """Навигация по одной записи или части записи без пересылки всей истории."""
+    kb = InlineKeyboardBuilder()
+    build = cp.op_history if operator else cp.appeal_history
+    buttons = []
+    if page > 0:
+        buttons.append(CallbackButton(text="◀️ Ранее", payload=build(appeal_id, page - 1)))
+    if page + 1 < total:
+        buttons.append(CallbackButton(text="Позже ▶️", payload=build(appeal_id, page + 1)))
+    if buttons:
+        kb.row(*buttons)
+    if attachments:
+        payload = cp.op_atts(appeal_id) if operator else cp.appeal_atts(appeal_id)
+        kb.row(CallbackButton(text="📎 Все вложения", payload=payload))
+    payload = cp.op_open_card(appeal_id) if operator else cp.appeal_show(appeal_id)
+    kb.row(CallbackButton(text="↩️ К обращению", payload=payload))
     return kb.as_markup()
 
 

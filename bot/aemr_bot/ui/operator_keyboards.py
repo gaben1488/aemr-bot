@@ -371,6 +371,7 @@ def appeal_admin_actions(
                 text="🔁 Возобновить", payload=cp.op_reopen(appeal_id)
             ),
         )
+    kb.row(CallbackButton(text="📖 История обращения", payload=cp.op_history(appeal_id, 0)))
     if attachment_count > 0:
         kb.row(
             CallbackButton(

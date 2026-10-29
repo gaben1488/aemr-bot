@@ -100,6 +100,7 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("appeal:followup:", CallbackGroup.CITIZEN_FLOW, False, "дополнить обращение"),
     CallbackRoute("appeal:repeat:", CallbackGroup.CITIZEN_FLOW, False, "подать похожее обращение"),
     CallbackRoute("appeal:atts:", CallbackGroup.CITIZEN_FLOW, False, "посмотреть свои вложения"),
+    CallbackRoute("appeal:history:", CallbackGroup.CITIZEN_FLOW, False, "история обращения жителя"),
     CallbackRoute("appeals:page:", CallbackGroup.CITIZEN_FLOW, False, "пагинация списка обращений"),
     # ── Admin: broadcast история / wizard ──
     CallbackRoute("broadcast:stop:", CallbackGroup.BROADCAST_ADMIN, True, "остановить рассылку"),
@@ -114,6 +115,7 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("op:unblock:", CallbackGroup.OPERATOR_ADMIN, True, "разблокировать жителя"),
     CallbackRoute("op:atts:", CallbackGroup.OPERATOR_ADMIN, True, "показать вложения обращения"),
     CallbackRoute("op:open_card:", CallbackGroup.OPERATOR_ADMIN, True, "открыть полную карточку с историей"),
+    CallbackRoute("op:history:", CallbackGroup.OPERATOR_ADMIN, True, "история обращения оператора"),
     CallbackRoute("op:opadd:", CallbackGroup.OPERATOR_ADMIN, True, "мастер операторов: добавление"),
     CallbackRoute("op:opcard:", CallbackGroup.OPERATOR_ADMIN, True, "карточка оператора"),
     CallbackRoute("op:oprole:", CallbackGroup.OPERATOR_ADMIN, True, "смена роли — открыть picker"),

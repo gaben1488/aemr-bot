@@ -137,6 +137,7 @@ PREFIX_APPEAL_SHOW = "appeal:show:"
 PREFIX_APPEAL_FOLLOWUP = "appeal:followup:"
 PREFIX_APPEAL_REPEAT = "appeal:repeat:"
 PREFIX_APPEAL_ATTS = "appeal:atts:"
+PREFIX_APPEAL_HISTORY = "appeal:history:"
 PREFIX_APPEALS_PAGE = "appeals:page:"
 
 # BROADCAST_ADMIN
@@ -156,6 +157,7 @@ PREFIX_OP_BLOCK = "op:block:"
 PREFIX_OP_UNBLOCK = "op:unblock:"
 PREFIX_OP_ATTS = "op:atts:"
 PREFIX_OP_OPEN_CARD = "op:open_card:"
+PREFIX_OP_HISTORY = "op:history:"
 PREFIX_OP_OPADD = "op:opadd:"
 PREFIX_OP_OPCARD = "op:opcard:"
 PREFIX_OP_OPROLE = "op:oprole:"
@@ -201,6 +203,14 @@ def appeal_repeat(appeal_id: int) -> str:
 def appeal_atts(appeal_id: int) -> str:
     """Свои вложения по обращению. → ``appeal:atts:<appeal_id>``."""
     return PREFIX_APPEAL_ATTS + str(appeal_id)
+
+
+def appeal_history(appeal_id: int, page: int) -> str:
+    return f"{PREFIX_APPEAL_HISTORY}{appeal_id}:{page}"
+
+
+def op_history(appeal_id: int, page: int) -> str:
+    return f"{PREFIX_OP_HISTORY}{appeal_id}:{page}"
 
 
 def appeals_page(page: int) -> str:

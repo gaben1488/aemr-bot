@@ -32,6 +32,7 @@ from aemr_bot.handlers import broadcast as broadcast_handler
 from aemr_bot.handlers import broadcast_templates as broadcast_templates_handler
 from aemr_bot.handlers._auth import ensure_operator
 from aemr_bot.services import admin_card as admin_card_service
+from aemr_bot.services import admin_relay, appeal_history, card_format
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.utils.event import ack_callback, send_or_edit_screen
 
@@ -93,14 +94,7 @@ async def _op_reply_intermediate(event, appeal_id: int) -> None:
 
 
 async def _op_open_card(event, appeal_id: int) -> None:
-    """Открыть полную карточку обращения с timeline (история переписки).
-
-    Шаг 2-в от 2026-05-26: listing «Открытые обращения» компактный
-    (одна кнопка на обращение), история раскрывается явным кликом
-    через эту команду. Используем `admin_card.render(force_new=True)`
-    — карточка появится новой записью внизу чата, не редактирует
-    listing-сообщение (сохраняет sacred-инвариант).
-    """
+    """Открыть текущее состояние в редактируемом экране, без нового события."""
 
     if not await ensure_operator(event):
         return
@@ -118,7 +112,47 @@ async def _op_open_card(event, appeal_id: int) -> None:
         )
         return
     await ack_callback(event, "Открываю…")
-    await admin_card_service.render(event.bot, appeal, force_new=True)
+    if not appeal.user:
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+                                  text=f"Обращение № {appeal_id} недоступно.",
+                                  attachments=[kbds.op_back_to_menu_keyboard()])
+        return
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id, text=card_format.admin_card(appeal, appeal.user),
+        attachments=[kbds.appeal_admin_actions(
+            appeal.id, appeal.status, is_it=True, user_blocked=bool(appeal.user.is_blocked),
+            closed_due_to_revoke=bool(appeal.closed_due_to_revoke),
+            attachment_count=admin_card_service._count_attachments(appeal),
+        )],
+    )
+
+
+async def _op_history(event, payload: str) -> None:
+    await ack_callback(event)
+    if not await ensure_operator(event):
+        return
+    try:
+        appeal_id, page = map(int, payload.removeprefix("op:history:").split(":"))
+        if appeal_id <= 0 or page < 0:
+            return
+    except ValueError:
+        return
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+    if not appeal:
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id, text="Обращение не найдено.",
+                                  attachments=[kbds.op_back_to_menu_keyboard()])
+        return
+    pages = appeal_history.pages_for(appeal, operator=True)
+    page = min(page, len(pages) - 1)
+    await send_or_edit_screen(
+        event, chat_id=cfg.admin_group_id,
+        text=f"{pages[page].render(appeal_id)}\n\nСтраница {page + 1} из {len(pages)}",
+        attachments=[kbds.appeal_history_keyboard(
+            appeal_id, page, len(pages), operator=True,
+            attachments=bool(admin_relay._collect_all_user_attachments(appeal)),
+        )],
+    )
 
 
 # ---- Таблицы маршрутов ------------------------------------------------------
@@ -255,6 +289,7 @@ async def _op_operators_action(event, payload: str) -> None:
 # бы оборачивать такие цели пустой обёрткой ради типа — ровно те
 # обёртки, которые здесь и убирали.
 _PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[object]]], ...] = (
+    ("op:history:", _op_history),
     ("op:aud:", lambda e, p: admin_commands.run_audience_action(e, p)),
     # Операторы — единое семейство:
     ("op:opadd:", _op_operators_action),

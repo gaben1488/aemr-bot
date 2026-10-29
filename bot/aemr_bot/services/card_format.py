@@ -72,6 +72,20 @@ def _clip(text: str, limit: int = 900) -> str:
     return text[: limit - 1].rstrip() + "…"
 
 
+def _bounded_preview(text: str, limit: int) -> str:
+    """MAX screen budget in UTF-16 units, with a visible path to the full text."""
+    if len(text.encode("utf-16-le")) // 2 <= limit:
+        return text
+    suffix = "\n\n… Продолжение — в истории обращения."
+    budget = limit - len(suffix.encode("utf-16-le")) // 2
+    used = 0
+    for index, char in enumerate(text):
+        used += 2 if ord(char) > 0xFFFF else 1
+        if used > budget:
+            return text[:index].rstrip() + suffix
+    return text
+
+
 def _loaded_messages(appeal: Appeal) -> list:
     """Берём только уже загруженные messages.
 
@@ -296,8 +310,11 @@ def admin_card(appeal: Appeal, user: User) -> str:
     )
     # _maybe_url_warning возвращает "" если URL'ов нет — отдельный
     # double-scan (старый `has_url`) больше не нужен, экономим проход.
-    body = body + _maybe_url_warning(warn_src)
-    return body
+    warning = _maybe_url_warning(warn_src)
+    body = _bounded_preview(body, 2700)
+    if warning:
+        body += _bounded_preview(warning, 700)
+    return _bounded_preview(body, 3400)
 
 
 def _bounded_scan_source(summary: str, visible_msgs: list) -> str:
@@ -471,7 +488,7 @@ def user_card(appeal: Appeal) -> str:
     timeline = user_appeal_timeline_block(appeal)
     if timeline:
         body = f"{body}\n\n{timeline}"
-    return body
+    return _bounded_preview(body, 3400)
 
 
 def user_appeal_timeline_block(appeal: Appeal) -> str:
