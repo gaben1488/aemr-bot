@@ -17,7 +17,6 @@ from maxapi.types import CallbackButton, LinkButton
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
 from aemr_bot.handlers import callback_payloads as cp
-from aemr_bot.services.settings_store import value_revision
 
 
 def op_settings_menu_keyboard(dirty_count: int = 0):
@@ -87,15 +86,15 @@ def op_settings_text_cancel_keyboard(key: str, *, page: int = 0, total_pages: in
     return kb.as_markup()
 
 
-def op_settings_list_keyboard(key: str, items: list[str]):
+def op_settings_list_keyboard(key: str, items: list[str], version: int = 0, page: int = 0):
     """CRUD-меню для строкового списка (topics, localities). Сам список
     показывается в тексте, кнопки — действия над ним."""
     kb = InlineKeyboardBuilder()
-    revision = value_revision(items)
+    revision = f"v{version}"
     kb.row(CallbackButton(text="➕ Добавить", payload=cp.op_set(f"list_add:{key}")))
     if items:
         # Показываем до 30 элементов по одной кнопке — больше MAX обрежет
-        for i, item in enumerate(items[:30]):
+        for i, item in enumerate(items[page * 8:page * 8 + 8], page * 8):
             label = item if len(item) <= 45 else item[:42] + "…"
             kb.row(
                 CallbackButton(
@@ -103,17 +102,24 @@ def op_settings_list_keyboard(key: str, items: list[str]):
                     payload=cp.op_set(f"list_del:{key}:{i}:{revision}"),
                 )
             )
+    nav = []
+    if page > 0:
+        nav.append(CallbackButton(text="◀️ Ранее", payload=cp.op_set(f"list_page:{key}:{page - 1}")))
+    if (page + 1) * 8 < len(items):
+        nav.append(CallbackButton(text="Позже ▶️", payload=cp.op_set(f"list_page:{key}:{page + 1}")))
+    if nav:
+        kb.row(*nav)
     kb.row(CallbackButton(text="↩️ Назад", payload=cp.OP_SETTINGS))
     return kb.as_markup()
 
 
-def op_settings_obj_keyboard(key: str, items: list[dict]):
+def op_settings_obj_keyboard(key: str, items: list[dict], version: int = 0, page: int = 0):
     """CRUD-меню для списка объектов (emergency_contacts, transport_dispatcher_contacts).
     Каждый объект — кнопка с краткой подписью; тап откроет действия."""
     kb = InlineKeyboardBuilder()
-    revision = value_revision(items)
+    revision = f"v{version}"
     kb.row(CallbackButton(text="➕ Добавить", payload=cp.op_set(f"obj_add:{key}")))
-    for i, item in enumerate(items[:20]):
+    for i, item in enumerate(items[page * 8:page * 8 + 8], page * 8):
         # Подпись зависит от типа: для emergency — name+phone, для
         # transport — routes+phone. Берём первое непустое поле для
         # отображения.
@@ -128,6 +134,13 @@ def op_settings_obj_keyboard(key: str, items: list[dict]):
                 payload=cp.op_set(f"obj_view:{key}:{i}:{revision}"),
             )
         )
+    nav = []
+    if page > 0:
+        nav.append(CallbackButton(text="◀️ Ранее", payload=cp.op_set(f"obj_page:{key}:{page - 1}")))
+    if (page + 1) * 8 < len(items):
+        nav.append(CallbackButton(text="Позже ▶️", payload=cp.op_set(f"obj_page:{key}:{page + 1}")))
+    if nav:
+        kb.row(*nav)
     kb.row(CallbackButton(text="↩️ Назад", payload=cp.OP_SETTINGS))
     return kb.as_markup()
 
@@ -142,7 +155,7 @@ def op_settings_obj_item_keyboard(key: str, index: int, revision: str):
     return kb.as_markup()
 
 
-def op_settings_quiet_keyboard(*, enabled: bool):
+def op_settings_quiet_keyboard(*, enabled: bool, revision: int = 0):
     """Карточка «🌙 Тихий режим» — toggle + wizard для часов start/end.
 
     Edit start/end через стандартный intent flow (как для текстовых
@@ -155,7 +168,7 @@ def op_settings_quiet_keyboard(*, enabled: bool):
         "🔕 Выключить тихий режим" if enabled
         else "🔔 Включить тихий режим"
     )
-    kb.row(CallbackButton(text=toggle_label, payload=cp.op_set("quiet:toggle")))
+    kb.row(CallbackButton(text=toggle_label, payload=cp.op_set(f"quiet:set:{int(enabled)}:{revision}")))
     kb.row(CallbackButton(text="✏️ Изменить начало (час)", payload=cp.op_set("quiet:edit:start")))
     kb.row(CallbackButton(text="✏️ Изменить конец (час)", payload=cp.op_set("quiet:edit:end")))
     kb.row(CallbackButton(text="↩️ К настройкам", payload=cp.OP_SETTINGS))
@@ -195,7 +208,7 @@ NOTIFY_LABELS: dict[str, str] = {
 }
 
 
-def op_settings_notify_keyboard(values: dict[str, bool]):
+def op_settings_notify_keyboard(values: dict[str, bool], revisions: dict[str, int] | None = None):
     """Карточка «🔔 Уведомления» — шесть независимых тумблеров.
 
     ``values`` — словарь {key: bool} с текущим состоянием (из БД/кэша).
@@ -209,7 +222,7 @@ def op_settings_notify_keyboard(values: dict[str, bool]):
         kb.row(
             CallbackButton(
                 text=f"{mark} {NOTIFY_LABELS[key]}",
-                payload=cp.op_set(f"notify:toggle:{key}"),
+                payload=cp.op_set(f"notify:set:{key}:{int(enabled)}:{(revisions or {}).get(key, 0)}"),
             )
         )
     kb.row(CallbackButton(text="↩️ К настройкам", payload=cp.OP_SETTINGS))

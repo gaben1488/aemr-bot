@@ -173,6 +173,20 @@ async def run_settings_action(event, payload: str) -> None:
 
 async def _route_set_action(event, operator_id: int, rest: str) -> None:
 
+    if rest.startswith(("list_page:", "obj_page:")):
+        try:
+            kind, key, page = rest.split(":")
+            page_number = int(page)
+            if page_number < 0:
+                return
+        except ValueError:
+            return
+        if kind == "list_page" and key in {"topics", "localities"}:
+            await _show_list_card(event, key, page=page_number)
+        elif kind == "obj_page" and key in {"emergency_contacts", "transport_dispatcher_contacts"}:
+            await _show_obj_card(event, key, page=page_number)
+        return
+
     if rest == "expert":
         async with session_scope() as session:
             keys = await settings_store.list_keys(session)
@@ -278,7 +292,15 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         await _show_quiet_card(event)
         return
     if rest == "quiet:toggle":
-        await _toggle_quiet(event)
+        # Legacy toggle buttons are stale: refreshing cannot reverse a newer choice.
+        await _show_quiet_card(event)
+        return
+    if rest.startswith("quiet:set:"):
+        bits = rest.removeprefix("quiet:set:").split(":")
+        if len(bits) != 2 or bits[0] not in {"0", "1"} or not bits[1].isdigit():
+            await _show_quiet_card(event)
+            return
+        await _toggle_quiet(event, expected=bits[0] == "1", revision=int(bits[1]))
         return
     if rest == "quiet:edit:start":
         await _start_quiet_hour_intent(event, operator_id, which="start")
@@ -291,8 +313,14 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         await _show_notify_card(event)
         return
     if rest.startswith("notify:toggle:"):
-        key = rest.removeprefix("notify:toggle:")
-        await _toggle_notify(event, key)
+        await _show_notify_card(event)
+        return
+    if rest.startswith("notify:set:"):
+        rest2 = rest.removeprefix("notify:set:").rsplit(":", 2)
+        if len(rest2) != 3 or rest2[1] not in {"0", "1"} or not rest2[2].isdigit():
+            await _show_notify_card(event)
+            return
+        await _toggle_notify(event, rest2[0], expected=rest2[1] == "1", revision=int(rest2[2]))
         return
 
     if rest == "pr:start":

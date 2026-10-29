@@ -27,7 +27,9 @@ from aemr_bot import keyboards as kbds
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import op_screen
 from aemr_bot.services import notify_toggles, settings_store
+from aemr_bot.services import operators as ops_svc
 from aemr_bot.ui.settings_keyboards import NOTIFY_LABELS
+from aemr_bot.utils.event import get_user_id
 
 
 async def _get_all_toggles(session) -> dict[str, bool]:
@@ -41,13 +43,16 @@ async def _get_all_toggles(session) -> dict[str, bool]:
     return out
 
 
-async def _show_notify_card(event) -> None:
+async def _show_notify_card(event, *, notice: str | None = None) -> None:
     """Карточка «🔔 Уведомления» — шесть тумблеров, тап = toggle."""
     async with session_scope() as session:
         # refresh cache из БД на случай если оператор только что
         # поправил тумблер через `/setting` без рестарта.
         await notify_toggles.refresh_cache_from_db(session)
-        values = await _get_all_toggles(session)
+        snapshots = {key: await settings_store.get_versioned(session, key)
+                     for key in notify_toggles.TOGGLE_KEYS}
+        values = {key: True if value is None else bool(value) for key, (value, _) in snapshots.items()}
+        revisions = {key: rev for key, (_, rev) in snapshots.items()}
 
     lines = [
         "🔔 Уведомления в админ-чат",
@@ -60,6 +65,8 @@ async def _show_notify_card(event) -> None:
         "уведомления о новых обращениях они не отключают.",
         "",
     ]
+    if notice:
+        lines.extend([notice, ""])
     for key in notify_toggles.TOGGLE_KEYS:
         mark = "✅" if values[key] else "⛔"
         lines.append(f"{mark} {NOTIFY_LABELS[key]}")
@@ -72,21 +79,32 @@ async def _show_notify_card(event) -> None:
     await op_screen(
         event,
         "\n".join(lines),
-        kbds.op_settings_notify_keyboard(values),
+        kbds.op_settings_notify_keyboard(values, revisions),
     )
 
 
-async def _toggle_notify(event, key: str) -> None:
+async def _toggle_notify(event, key: str, *, expected: bool | None = None,
+                         revision: int | None = None) -> None:
     """Переключить один из шести `admin_notify_*` + обновить cache."""
     if key not in notify_toggles.TOGGLE_KEYS:
         # Незнакомый ключ (порча payload'а) — просто перерисовываем
         # карточку без изменений, ничего не ломаем.
         await _show_notify_card(event)
         return
-    async with session_scope() as session:
-        current = await settings_store.get(session, key)
-        new_value = not (True if current is None else bool(current))
-        await settings_store.set_value(session, key, new_value)
-        await session.commit()
-        await notify_toggles.refresh_cache_from_db(session)
+    try:
+        async with session_scope() as session:
+            current, current_revision = await settings_store.get_versioned(session, key)
+            current_enabled = True if current is None else bool(current)
+            if expected is None or revision is None or expected != current_enabled or revision != current_revision:
+                raise settings_store.SettingConflictError(key)
+            new_value = not current_enabled
+            await settings_store.set_value(session, key, new_value, expected_revision=revision)
+            await ops_svc.write_audit(session, operator_max_user_id=get_user_id(event),
+                                      action="setting_update", target=key,
+                                      details={"before": current_enabled, "after": new_value})
+            await session.commit()
+            await notify_toggles.refresh_cache_from_db(session)
+    except settings_store.SettingConflictError:
+        await _show_notify_card(event, notice="Настройка уже изменилась. Проверьте текущее значение.")
+        return
     await _show_notify_card(event)

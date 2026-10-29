@@ -18,10 +18,11 @@ from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
 
 
-async def _show_list_card(event, key: str, *, notice: str = "") -> None:
+async def _show_list_card(event, key: str, *, notice: str = "", page: int = 0) -> None:
 
     async with session_scope() as session:
-        items = await settings_store.get(session, key) or []
+        items, version = await settings_store.get_versioned(session, key)
+        items = items or []
     if not isinstance(items, list):
         items = []
     title_map = {
@@ -29,20 +30,21 @@ async def _show_list_card(event, key: str, *, notice: str = "") -> None:
         "localities": "📍 Населённые пункты",
     }
     title = title_map.get(key, key)
+    page = max(0, min(page, max(0, (len(items) - 1) // 8)))
     if items:
-        body = "\n".join(f"{i+1}. {x}" for i, x in enumerate(items))
+        body = "\n".join(f"{i+1}. {x}" for i, x in enumerate(items[page * 8:page * 8 + 8], page * 8))
     else:
         body = "(список пуст)"
     await op_screen(
         event,
         (f"{notice}\n\n" if notice else "")
-        + f"{title} ({len(items)})\n"
+        + f"{title} ({len(items)}) · страница {page + 1} из {max(1, (len(items) + 7) // 8)}\n"
         f"· · · · · · · ·\n"
         f"{body}\n"
         f"· · · · · · · ·\n"
         f"Тап «🗑 N» — удалить запись.\n"
         f"Тап «➕ Добавить» — добавить новую.",
-        kbds.op_settings_list_keyboard(key, items),
+        kbds.op_settings_list_keyboard(key, items, version, page),
     )
 
 
@@ -54,9 +56,9 @@ async def _list_delete(event, operator_id: int, suffix: str) -> None:
     key, idx, revision = parsed
     try:
         async with session_scope() as session:
-            previous = await settings_store.get(session, key)
+            previous, version = await settings_store.get_versioned(session, key)
             items = list(previous) if isinstance(previous, list) else []
-            if revision != settings_store.value_revision(items):
+            if revision != f"v{version}":
                 raise settings_store.SettingConflictError(key)
             if idx < 0 or idx >= len(items):
                 await op_screen(
@@ -74,7 +76,7 @@ async def _list_delete(event, operator_id: int, suffix: str) -> None:
                     kbds.op_back_to_settings_keyboard(),
                 )
                 return
-            await settings_store.set_value(session, key, items, expected_value=previous)
+            await settings_store.set_value(session, key, items, expected_revision=version)
             await ops_svc.write_audit(
                 session,
                 operator_max_user_id=operator_id,
@@ -109,7 +111,7 @@ async def _apply_list_add(
         return False
     try:
         async with session_scope() as session:
-            previous = await settings_store.get(session, key)
+            previous, version = await settings_store.get_versioned(session, key)
             items = list(previous) if isinstance(previous, list) else []
             if new_text in items:
                 await op_send(
@@ -125,7 +127,7 @@ async def _apply_list_add(
                     event, f"❌ {msg}", kbds.op_settings_text_cancel_keyboard(key)
                 )
                 return False
-            await settings_store.set_value(session, key, items, expected_value=previous)
+            await settings_store.set_value(session, key, items, expected_revision=version)
             await ops_svc.write_audit(
                 session,
                 operator_max_user_id=operator_id,

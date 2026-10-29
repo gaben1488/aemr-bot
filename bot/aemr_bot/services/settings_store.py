@@ -733,6 +733,16 @@ async def get(session: AsyncSession, key: str) -> Any:
     return deepcopy(DEFAULTS.get(key))
 
 
+async def get_versioned(session: AsyncSession, key: str) -> tuple[Any, int]:
+    """Value and monotonically increasing revision; 0 means no stored row."""
+    row = await session.scalar(
+        select(Setting).where(Setting.key == key).execution_options(populate_existing=True)
+    )
+    if row is None:
+        return deepcopy(DEFAULTS.get(key)), 0
+    return deepcopy(row.value), row.revision
+
+
 def _consent_template(raw: Any, fallback: str) -> str:
     """Choose the same renderable template for display and consent evidence."""
     if isinstance(raw, str) and raw.strip() and "{policy_url}" in raw:
@@ -880,6 +890,7 @@ async def set_value(
     value: Any,
     *,
     expected_value: Any = _UNCONDITIONAL_WRITE,
+    expected_revision: int | None = None,
 ) -> None:
     """Upsert значения настройки.
 
@@ -904,6 +915,19 @@ async def set_value(
     value or its dirty marker. Missing rows are inserted, so edits based on
     DEFAULTS also work before bootstrap. This does not commit the session.
     """
+    if expected_revision is not None:
+        if expected_revision == 0:
+            stmt = (pg_insert(Setting).values(key=key, value=value)
+                    .on_conflict_do_nothing(index_elements=[Setting.key])
+                    .returning(Setting.key))
+        else:
+            stmt = (sa_update(Setting).where(Setting.key == key, Setting.revision == expected_revision)
+                    .values(value=value, revision=Setting.revision + 1,
+                            updated_at=sa_func.now(), synced_at=None).returning(Setting.key))
+        result = await session.execute(stmt)
+        if result.scalar_one_or_none() is None:
+            raise SettingConflictError(key)
+        return
     condition = None
     if expected_value is not _UNCONDITIONAL_WRITE:
         condition = Setting.value == bindparam(
@@ -916,6 +940,7 @@ async def set_value(
             index_elements=[Setting.key],
             set_={
                 "value": value,
+                "revision": Setting.revision + 1,
                 "updated_at": sa_func.now(),
                 "synced_at": None,
             },

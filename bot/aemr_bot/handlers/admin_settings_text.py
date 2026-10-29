@@ -89,8 +89,8 @@ async def _start_edit_intent(event, operator_id: int, key: str) -> None:
         )
         return
     async with session_scope() as session:
-        baseline = await settings_store.get(session, key)
-    _intent_set(operator_id, key=key, kind="single", baseline=baseline)
+        baseline, revision = await settings_store.get_versioned(session, key)
+    _intent_set(operator_id, key=key, kind="single", baseline=baseline, revision=revision)
     rule = settings_store.SCHEMA[key]
     if rule.get("type") is str:
         await _show_edit_page(event, operator_id, key, 0)
@@ -122,7 +122,7 @@ async def _show_edit_page(event, operator_id: int, key: str, page: int) -> None:
     # Keep the same snapshot for every page: a colleague may change the
     # setting while this operator is reading or preparing a replacement.
     value = intent.get("baseline")
-    _intent_set(operator_id, key=key, kind="single", baseline=value)
+    _intent_set(operator_id, key=key, kind="single", baseline=value, revision=intent.get("revision"))
     parts = split_text_units(value if isinstance(value, str) else "")
     page = max(0, min(page, len(parts) - 1))
     shown = parts[page] if parts[page] else "Не задано"
@@ -157,9 +157,12 @@ async def _apply_single_edit(
             intent = _intent_get(operator_id)
             if intent and intent.get("kind") == "single" and intent.get("key") == key and "baseline" in intent:
                 old_value = intent["baseline"]
+                revision = intent.get("revision")
             else:
-                old_value = await settings_store.get(session, key)
-            await settings_store.set_value(session, key, new_text, expected_value=old_value)
+                old_value, revision = await settings_store.get_versioned(session, key)
+            if revision is None:
+                raise settings_store.SettingConflictError(key)
+            await settings_store.set_value(session, key, new_text, expected_revision=revision)
             await ops_svc.write_audit(
                 session,
                 operator_max_user_id=operator_id,

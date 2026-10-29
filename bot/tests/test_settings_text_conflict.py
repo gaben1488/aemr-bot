@@ -17,14 +17,14 @@ async def test_edit_uses_the_value_displayed_when_the_edit_began(monkeypatch):
         yield object()
 
     monkeypatch.setattr(editor, "session_scope", scope)
-    monkeypatch.setattr(settings_store, "get", AsyncMock(return_value="Текст до изменения"))
+    monkeypatch.setattr(settings_store, "get_versioned", AsyncMock(return_value=("Текст до изменения", 1)))
     show = AsyncMock()
     monkeypatch.setattr(editor, "op_screen", show)
     try:
         await editor._start_edit_intent(SimpleNamespace(), 999, "welcome_text")
         assert _edit_intents[999]["baseline"] == "Текст до изменения"
         # Flipping pages must not replace the baseline by a newer value.
-        settings_store.get.return_value = "Текст другого оператора"
+        settings_store.get_versioned.return_value = ("Текст другого оператора", 2)
         await editor._show_edit_page(SimpleNamespace(), 999, "welcome_text", 0)
         assert _edit_intents[999]["baseline"] == "Текст до изменения"
     finally:
@@ -39,16 +39,16 @@ async def test_conflicting_edit_is_rejected_without_overwriting(monkeypatch):
 
     monkeypatch.setattr(editor, "session_scope", scope)
     monkeypatch.setattr(settings_store, "validate", lambda *_: (True, ""))
-    monkeypatch.setattr(settings_store, "get", AsyncMock(return_value="Новая редакция коллеги"))
+    monkeypatch.setattr(settings_store, "get_versioned", AsyncMock(return_value=("Новая редакция коллеги", 2)))
     save = AsyncMock(side_effect=settings_store.SettingConflictError("welcome_text"))
     monkeypatch.setattr(settings_store, "set_value", save)
     screen = AsyncMock()
     monkeypatch.setattr(editor, "op_screen", screen)
     monkeypatch.setattr(editor.ops_svc, "write_audit", AsyncMock())
-    _edit_intents[999] = {"key": "welcome_text", "kind": "single", "baseline": "Старая редакция", "expires_at": float("inf")}
+    _edit_intents[999] = {"key": "welcome_text", "kind": "single", "baseline": "Старая редакция", "revision": 1, "expires_at": float("inf")}
     try:
         assert await editor._apply_single_edit(SimpleNamespace(), 999, "welcome_text", "Текст оператора")
-        assert save.await_args.kwargs["expected_value"] == "Старая редакция"
+        assert save.await_args.kwargs["expected_revision"] == 1
         assert "измен" in screen.await_args.args[1].lower()
         editor.ops_svc.write_audit.assert_not_awaited()
     finally:

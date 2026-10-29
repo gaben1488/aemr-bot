@@ -339,6 +339,7 @@ class Setting(Base):
 
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[dict | list | str | int | float | bool | None] = mapped_column(JSONB)
+    revision: Mapped[int] = mapped_column(BigInteger, default=1, server_default="1")
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     # Время последней успешной выгрузки этого ключа в репозиторий через
     # services/repo_sync. NULL = «никогда не выгружался» или «изменён
