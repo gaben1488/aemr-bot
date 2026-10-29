@@ -365,7 +365,8 @@ async def _redact_appeal_payloads_for_user(session: AsyncSession, user_id: int) 
     appeals_result = await session.execute(
         update(Appeal)
         .where(Appeal.user_id == user_id)
-        .values(address=None, summary=None, attachments=[], sla_anchor_at=None, sla_history=[])
+        .values(address=None, summary=None, attachments=[], sla_anchor_at=None, sla_history=[],
+                related_appeal_id=None)
     )
     messages_result = await session.execute(
         update(Message)

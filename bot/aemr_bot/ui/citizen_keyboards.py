@@ -111,6 +111,16 @@ def draft_resume_keyboard():
     return kb.as_markup()
 
 
+def closed_followup_draft_keyboard(token: str):
+    """Offer a new related appeal without losing the resident's draft."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="📝 Создать новое", payload=f"draft:new_related:{token}"))
+    kb.row(CallbackButton(text="📖 Полный текст", payload=f"draft:view:{token}:0"))
+    kb.row(CallbackButton(text="🗑 Отменить", payload=f"draft:cancel:{token}"))
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
+    return kb.as_markup()
+
+
 def appointment_keyboard(electronic_reception_url: str | None = None):
     """Подменю «🏛 Приём граждан» — расписание очного приёма + ссылка
     на электронную приёмную (если задана).
@@ -513,6 +523,7 @@ __all__ = [
     "appeal_draft_keyboard",
     "draft_resume_keyboard",
     "draft_edit_cancel_keyboard",
+    "closed_followup_draft_keyboard",
     "appeal_history_keyboard",
     "appointment_keyboard",
     "back_to_menu_keyboard",

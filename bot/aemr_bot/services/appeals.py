@@ -18,6 +18,7 @@ async def create_appeal(
     summary: str,
     attachments: list,
     locality: str | None = None,
+    related_appeal_id: int | None = None,
 ) -> Appeal:
     appeal = Appeal(
         user_id=user.id,
@@ -27,6 +28,7 @@ async def create_appeal(
         topic=topic,
         summary=summary,
         attachments=attachments,
+        related_appeal_id=related_appeal_id,
     )
     session.add(appeal)
     await session.flush()
@@ -717,7 +719,7 @@ async def purge_old_appeals_content(
                 Appeal.address.isnot(None),
             ),
         )
-        .values(summary=None, attachments=[], address=None)
+        .values(summary=None, attachments=[], address=None, related_appeal_id=None)
     )
     purged_appeals = appeals_result.rowcount or 0
 

@@ -237,6 +237,10 @@ class Appeal(Base):
     address: Mapped[str | None] = mapped_column(String(500))
     topic: Mapped[str | None] = mapped_column(String(120))
     summary: Mapped[str | None] = mapped_column(Text)
+    related_appeal_id: Mapped[int | None] = mapped_column(
+        ForeignKey("appeals.id", name="fk_appeals_related_appeal_id", ondelete="SET NULL"),
+        nullable=True,
+    )
     attachments: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     # admin_message_id = mid ПЕРВОЙ публикации карточки (finalize).
     # Используется только как reply-link для relay вложений.

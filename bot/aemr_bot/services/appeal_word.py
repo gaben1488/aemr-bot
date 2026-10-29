@@ -53,6 +53,8 @@ def build_appeal_docx(appeal) -> bytes:
               "closed": "Закрыто"}.get(appeal.status, "Статус не указан")
     body = [_paragraph(f"Обращение № {appeal.id}", "Title"),
             _paragraph(f"Подано: {_date(appeal.created_at)} · {status}", "Subtitle")]
+    if getattr(appeal, "related_appeal_id", None):
+        body.append(_paragraph(f"Связано с обращением № {appeal.related_appeal_id}"))
     fields = (("Житель", getattr(user, "first_name", None)),
               ("Телефон", getattr(user, "phone", None)),
               ("Населённый пункт", appeal.locality), ("Адрес", appeal.address),

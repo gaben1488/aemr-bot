@@ -142,31 +142,6 @@ async def recover_stuck_funnels(bot) -> int:
     return 0
 
 
-def _apply_repeat_context(
-    *,
-    topic: str,
-    summary: str,
-    data: dict[str, Any],
-) -> tuple[str, str]:
-    source_id = data.get("repeat_source_appeal_id")
-    source_status = data.get("repeat_source_status")
-    if not source_id or source_status not in {
-        AppealStatus.ANSWERED.value,
-        AppealStatus.CLOSED.value,
-    }:
-        return topic, summary
-
-    if source_status == AppealStatus.ANSWERED.value:
-        label = "обратная связь по отвеченному вопросу"
-    else:
-        label = "обратная связь по закрытому вопросу"
-
-    base_topic = (data.get("repeat_source_topic") or topic or "без темы").strip()
-    marked_topic = f"{label.capitalize()}: {base_topic}"[:120]
-    marked_summary = f"Связано с обращением #{source_id}: {label}.\n\n{summary}"
-    return marked_topic, marked_summary
-
-
 async def persist_and_dispatch_appeal(
     bot, max_user_id: int, *, reset_empty: bool = False, draft_token: str | None = None
 ) -> bool | str | None:
@@ -252,11 +227,16 @@ async def persist_and_dispatch_appeal(
                     # cleanup transaction could erase a newly started funnel.
                     await users_service.reset_state(session, max_user_id)
                 return False
-            topic, summary = _apply_repeat_context(
-                topic=data.get("topic", ""),
-                summary=summary,
-                data=data,
-            )
+            topic = data.get("topic", "")
+            related_id = data.get("repeat_source_appeal_id")
+            # A previously stored button or modified draft must never link
+            # another resident's appeal to this submission.
+            if related_id:
+                try:
+                    related = await appeals_service.get_by_id(session, int(related_id))
+                except (TypeError, ValueError):
+                    related = None
+                related_id = related.id if related is not None and related.user_id == user.id else None
             appeal = await appeals_service.create_appeal(
                 session,
                 user=user,
@@ -265,6 +245,7 @@ async def persist_and_dispatch_appeal(
                 topic=topic,
                 summary=summary,
                 attachments=attachments,
+                related_appeal_id=related_id,
             )
             await users_service.reset_state(session, max_user_id)
 

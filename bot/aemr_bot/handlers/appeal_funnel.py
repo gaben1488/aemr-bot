@@ -369,10 +369,16 @@ async def _show_progress_step(
     # Сохранить mid если новое сообщение (edit использовал прежний mid —
     # ничего сохранять не нужно).
     if not edited and new_mid:
-        async with session_scope() as session:
-            await users_service.update_dialog_data(
-                session, max_user_id, {"progress_message_id": new_mid}
-            )
+        try:
+            async with session_scope() as session:
+                await users_service.update_dialog_data(
+                    session, max_user_id, {"progress_message_id": new_mid},
+                    expected_states={next_state.value},
+                )
+        except users_service.StaleDialogStateError:
+            # The user moved on while MAX was responding. Do not attach an
+            # old screen to the new dialog state.
+            log.debug("progress screen arrived after its dialog step ended")
 
 
 async def ask_locality(
@@ -829,9 +835,9 @@ async def submit_followup(event, body, text_body, max_user_id, *, draft_token: s
     if appeal.status in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
         await event.message.answer(
             "Обращение уже завершено. Если ситуация повторилась — "
-            "откройте его в «📂 Мои обращения» и нажмите «🔁 Подать похожее». "
-            "Текст черновика сохранён — его можно посмотреть и скопировать.",
-            attachments=[keyboards.appeal_draft_keyboard(draft_token, followup=True)],
+            "можно создать новое обращение на основе черновика. "
+            "Текст и вложения сохранятся; перед отправкой вы их увидите.",
+            attachments=[keyboards.closed_followup_draft_keyboard(draft_token)],
         )
         return
 

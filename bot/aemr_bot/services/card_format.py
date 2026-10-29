@@ -287,6 +287,9 @@ def admin_card(appeal: Appeal, user: User) -> str:
         summary=defang_for_admin(_strip_card_chrome(appeal.summary)) or "—",
         answer_limit=settings.answer_max_chars,
     )
+    related = getattr(appeal, "related_appeal_id", None)
+    if related:
+        body = f"🔗 Связано с обращением № {related}\n\n" + body
     summary_line = attachments_summary_line(appeal.attachments or [])
     if summary_line:
         body = f"{body}\n{summary_line}"
@@ -495,6 +498,9 @@ def user_card(appeal: Appeal) -> str:
         topic=appeal.topic or "—",
         summary=appeal.summary or "—",
     )
+    related = getattr(appeal, "related_appeal_id", None)
+    if related:
+        body = f"🔗 Связано с обращением № {related}\n\n" + body
     # Лента для жителя: те же блоки что у admin_card, но житель видит
     # «Ваше дополнение» и «Ответ Администрации» вместо служебных
     # маркеров (через user_appeal_timeline_block).

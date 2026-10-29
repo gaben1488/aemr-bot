@@ -115,11 +115,11 @@ async def build_xlsx_with_epoch(session, period: str) -> tuple[bytes, str, int, 
     snapshot_epoch = await privacy_epoch.read(session)
     start, end, title = stats.period_window(period)
     workbook = Workbook(write_only=True)
-    overview = _Sheet(workbook, "Обращения", ["№", "Подано", "Житель", "Телефон", "Населённый пункт",
+    overview = _Sheet(workbook, "Обращения", ["№", "Связано с №", "Подано", "Житель", "Телефон", "Населённый пункт",
                         "Адрес", "Тема", "Статус", "Первый ответ периода", "Итоговый ответ", "Закрыто",
                         "Рабочих часов до первого ответа", "Первый ответ в срок", "Согласие дано",
                         "Согласие отозвано", "Подписка", "Блокировка"],
-                      [9, 19, 22, 17, 25, 34, 25, 20, 19, 19, 19, 18, 20, 19, 19, 15, 15])
+                      [9, 16, 19, 22, 17, 25, 34, 25, 20, 19, 19, 19, 18, 20, 19, 19, 15, 15])
     history = _Sheet(workbook, "История", ["Обращение №", "Запись", "Дата", "Автор", "Часть", "Текст"],
                      [16, 12, 19, 24, 12, 75])
     files = _Sheet(workbook, "Вложения", ["Обращение №", "Запись", "Дата", "Вложение"], [16, 12, 19, 60])
@@ -158,7 +158,7 @@ async def build_xlsx_with_epoch(session, period: str) -> tuple[bytes, str, int, 
                 elapsed = round(sla.business_seconds_between(anchor, first_reply) / 3600, 2)
                 on_time = "нет" if sla.is_overdue(anchor, first_reply,
                                                 settings.sla_response_hours) else "да"
-            overview.append([appeal.id, _date(appeal.created_at), getattr(user, "first_name", "") or "",
+            overview.append([appeal.id, appeal.related_appeal_id or "", _date(appeal.created_at), getattr(user, "first_name", "") or "",
                              mask_phone(getattr(user, "phone", None)), appeal.locality or "",
                              appeal.address or "", appeal.topic or "", stats._status_label(appeal.status),
                              _date(first_reply), _date(appeal.answered_at), _date(appeal.closed_at), elapsed, on_time,

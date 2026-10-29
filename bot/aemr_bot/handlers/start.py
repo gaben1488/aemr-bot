@@ -339,8 +339,10 @@ def _render_export_for_human(user, appeals) -> str:
     L.append(f"  Согласие на обработку данных дано: {_export_dt(user.consent_pdn_at)}")
     if user.consent_revoked_at:
         L.append(f"  Согласие отозвано: {_export_dt(user.consent_revoked_at)}")
-    else:
+    elif user.consent_pdn_at:
         L.append("  Согласие отозвано: нет, действует")
+    else:
+        L.append("  Согласие не зафиксировано")
     if user.subscribed_broadcast:
         L.append(
             "  Подписка на оповещения: оформлена "
@@ -373,6 +375,8 @@ def _render_export_for_human(user, appeals) -> str:
         )
         L.append("")
         L.append(f"── Обращение № {ap.id} " + "─" * 30)
+        if getattr(ap, "related_appeal_id", None):
+            L.append(f"  Связано с обращением № {ap.related_appeal_id}")
         L.append(f"  Подано: {_export_dt(ap.created_at)}")
         L.append(f"  Состояние: {status_label}")
         L.append(f"  Тема: {ap.topic or '—'}")
@@ -387,17 +391,15 @@ def _render_export_for_human(user, appeals) -> str:
             L.append(f"  Закрыто: {_export_dt(ap.closed_at)}")
         L.append("")
         L.append("  Текст обращения:")
-        for line in (ap.summary or "—").splitlines() or ["—"]:
-            L.append(f"    {line}")
-        messages = list(ap.messages or [])
+        L.append(ap.summary if ap.summary else "—")
+        messages = [m for m in (ap.messages or []) if m.direction in {"from_user", "from_operator"}]
         if messages:
             L.append("")
             L.append("  Переписка:")
             for m in messages:
                 who = "Оператор" if m.direction == "from_operator" else "Вы"
                 L.append(f"    [{_export_dt(m.created_at)}] {who}:")
-                for line in (m.text or "—").splitlines() or ["—"]:
-                    L.append(f"      {line}")
+                L.append(m.text if m.text else "—")
                 m_attach = len(m.attachments or [])
                 if m_attach:
                     L.append(f"      (приложено файлов: {m_attach})")
@@ -438,12 +440,24 @@ async def _send_export_as_file(event, body: str) -> bool:
         if token is None:
             log.warning("export: загрузка файла не удалась, уходим в текст")
             return False
-        await reply(
-            event,
-            "Ваши данные — во вложении. Файл можно сохранить и открыть "
-            "на телефоне или компьютере.",
-            attachments=[uploads.file_attachment(token)],
-        )
+        try:
+            from aemr_bot.utils.event import extract_message_id
+            sent = await reply(
+                event,
+                "Ваши данные — во вложении. Файл можно сохранить и открыть "
+                "на телефоне или компьютере.",
+                attachments=[uploads.file_attachment(token)],
+            )
+            confirmed = bool(extract_message_id(sent))
+        except Exception:
+            confirmed = False
+        if not confirmed:
+            # MAX may have accepted the file before the response was lost.
+            # Do not automatically send the same data again in text chunks.
+            try:
+                await reply(event, "Не удалось подтвердить отправку файла. Проверьте чат перед повтором или обратитесь в администрацию.")
+            except Exception:
+                log.warning("export: delivery and warning outcomes not confirmed")
         return True
     except Exception:
         log.exception("export: отправка файлом не удалась, уходим в текст")
@@ -472,11 +486,26 @@ async def cmd_export(event):
     max_user_id = get_user_id(event)
     if max_user_id is None:
         return
-    async with current_user(max_user_id) as (session, user):
+    async with session_scope() as session:
+        user = await users_service.find_by_max_id(session, max_user_id)
+        if user is None:
+            await reply(event, "Сохранённые данные не найдены.")
+            return
         # ВСЯ переписка, а не только последний ответ оператора: статья 14
         # даёт право на доступ к обрабатываемым данным, а уточнения жителя
         # и его вложения — такие же его данные, как текст обращения.
-        appeals = await appeals_service.list_for_user(session, user.id, limit=500)
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+        from aemr_bot.db.models import Appeal
+
+        # Rights-of-access export includes all still stored appeals, even
+        # if the normal "My appeals" screen hides older ones after revocation.
+        # Load correspondence explicitly; lazy loading from a synchronous
+        # renderer is not supported by SQLAlchemy's async session.
+        appeals = list(await session.scalars(
+            select(Appeal).where(Appeal.user_id == user.id)
+            .options(selectinload(Appeal.messages)).order_by(Appeal.id)
+        ))
         body = _render_export_for_human(user, appeals)
 
     # Основной путь — ФАЙЛ: он не упирается ни в лимит длины сообщения,
@@ -486,7 +515,9 @@ async def cmd_export(event):
     if await _send_export_as_file(event, body):
         return
 
-    parts = _chunk_for_messenger(body, limit=EXPORT_CHUNK_CHARS)
+    from aemr_bot.utils.event import extract_message_id
+    from aemr_bot.utils.text_pages import split_text_units
+    parts = split_text_units(body, limit=2600)
     total = len(parts)
     delivered = False
     for index, part in enumerate(parts, start=1):
@@ -496,10 +527,17 @@ async def cmd_export(event):
             else f"Ваши данные — часть {index} из {total}:"
         )
         try:
-            await reply(event, f"{header}\n\n```\n{part}\n```")
+            sent = await reply(event, f"{header}\n\n{part}")
+            if not extract_message_id(sent):
+                raise RuntimeError("MAX did not confirm the message")
             delivered = True
         except Exception:
-            log.exception("export: часть %d из %d не ушла жителю", index, total)
+            log.warning("export: результат части %d из %d не подтверждён", index, total)
+            try:
+                await reply(event, "Не удалось подтвердить отправку всех частей. Проверьте чат или обратитесь в администрацию.")
+            except Exception:
+                log.warning("export: warning delivery not confirmed")
+            return
 
     if not delivered:
         # Молчать нельзя: житель ждёт свои данные и не понимает, почему

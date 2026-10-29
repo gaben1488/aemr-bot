@@ -25,7 +25,7 @@ from maxapi.types import MessageCallback, MessageCreated
 
 from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
-from aemr_bot.db.models import DialogState
+from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import (
     admin_callback_dispatch,
@@ -512,12 +512,13 @@ async def _cb_draft(event, max_user_id: int, payload: str) -> None:
         else:
             await menu.open_main_menu(event)
         return
-    if action not in {"submit", "cancel", "edit", "edit_cancel", "view"} or (
+    if action not in {"submit", "cancel", "edit", "edit_cancel", "view", "new_related"} or (
         len(parts) != (4 if action == "view" else 3)
     ):
         await ack_callback(event, "Эта кнопка устарела.")
         return
     token = parts[2]
+    invalid_notice = "Эта кнопка относится к другому черновику."
     async with session_scope() as session:
         user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
         valid = bool(user and user.dialog_state in {
@@ -536,8 +537,33 @@ async def _cb_draft(event, max_user_id: int, payload: str) -> None:
             valid = False
         elif valid and action == "view":
             data = dict(user.dialog_data or {})
+        elif valid and action == "new_related":
+            source_id = (user.dialog_data or {}).get("appeal_id")
+            try:
+                source_id = int(source_id)
+            except (TypeError, ValueError):
+                source_id = 0
+            source = await appeals_service.get_by_id(session, source_id, for_update=True) if source_id > 0 else None
+            if (draft_state != DialogState.AWAITING_FOLLOWUP_TEXT.value or source is None
+                    or source.user_id != user.id or source.status not in {
+                        AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}
+                    or not source.locality or not source.address or user.is_blocked
+                    or user.consent_pdn_at is None):
+                valid = False
+                invalid_notice = "Не удалось создать связанное обращение: проверьте статус и адрес. Черновик сохранён."
+            else:
+                import secrets
+                data.update({"locality": source.locality, "address": source.address,
+                             "topic": source.topic, "repeat_source_appeal_id": source.id,
+                             "repeat_source_status": source.status, "repeat_source_topic": source.topic,
+                             "draft_token": secrets.token_urlsafe(12), "replace_text": False})
+                data.pop("appeal_id", None)
+                data.pop("progress_message_id", None)
+                user.dialog_state = DialogState.AWAITING_SUMMARY.value
+                user.dialog_data = data
+                await session.flush()
     if not valid:
-        await ack_callback(event, "Эта кнопка относится к другому черновику.")
+        await ack_callback(event, invalid_notice)
         return
     await ack_callback(event)
     if action == "submit":
@@ -557,6 +583,8 @@ async def _cb_draft(event, max_user_id: int, payload: str) -> None:
             attachments=[keyboards.draft_edit_cancel_keyboard(token)],
         )
     elif action == "edit_cancel":
+        await appeal_funnel.show_summary_draft(event, max_user_id)
+    elif action == "new_related":
         await appeal_funnel.show_summary_draft(event, max_user_id)
     elif action == "view":
         try:
