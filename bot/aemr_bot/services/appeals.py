@@ -10,6 +10,22 @@ from aemr_bot.db.models import Appeal, AppealStatus, Message, MessageDirection, 
 from aemr_bot.services import sla as sla_service
 
 
+async def current_first_response_hours(session: AsyncSession) -> int:
+    """New periods inherit the UI setting; missing settings preserve env."""
+    from aemr_bot.config import settings
+    from aemr_bot.services import settings_store
+
+    value = await settings_store.get(session, "sla_response_hours")
+    if isinstance(value, int) and not isinstance(value, bool) and 1 <= value <= 168:
+        return value
+    return settings.sla_response_hours
+
+
+def response_hours_for(appeal: Appeal, fallback: int) -> int:
+    value = getattr(appeal, "sla_hours_at_start", None)
+    return value if isinstance(value, int) and not isinstance(value, bool) and value > 0 else fallback
+
+
 async def create_appeal(
     session: AsyncSession,
     user: User,
@@ -29,6 +45,7 @@ async def create_appeal(
         summary=summary,
         attachments=attachments,
         related_appeal_id=related_appeal_id,
+        sla_hours_at_start=await current_first_response_hours(session),
     )
     session.add(appeal)
     await session.flush()
@@ -394,12 +411,14 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
     )
     period_end = first_response or previous.closed_at or previous.answered_at or datetime.now(UTC)
     history = list(previous.sla_history or [])
+    previous_hours = response_hours_for(previous, settings.sla_response_hours)
+    next_hours = await current_first_response_hours(session)
     history.append({
         "start": anchor.isoformat(), "end": period_end.isoformat(),
         "first_response": first_response.isoformat() if first_response else None,
-        "sla_hours": settings.sla_response_hours,
-        "overdue": sla_service.is_overdue(anchor, period_end, settings.sla_response_hours),
-        "assessment": "at_reopen",
+        "sla_hours": previous_hours,
+        "overdue": sla_service.is_overdue(anchor, period_end, previous_hours),
+        "assessment": "at_reopen" if previous.sla_hours_at_start else "at_reopen_legacy",
     })
     result = await session.execute(
         update(Appeal)
@@ -415,6 +434,7 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
             answered_at=None,
             closed_at=None,
             sla_anchor_at=datetime.now(UTC),
+            sla_hours_at_start=next_hours,
             sla_history=history,
         )
     )
@@ -579,23 +599,13 @@ async def find_overdue_unanswered(
     календарному: обращение, поступившее в пятницу вечером, не должно
     считаться просроченным в субботу, если рабочих часов ещё не было.
 
-    SQL-префильтр ниже (`created_at <= now - sla_hours` КАЛЕНДАРНО)
-    сознательно оставлен как есть — это корректная надмножество-
-    оптимизация, а не забытая календарная логика: business-время между
-    двумя моментами всегда ≤ календарного (рабочее окно — подмножество
-    суток), поэтому если business_seconds_between(created_at, now) уже
-    достиг sla_hours*3600, то и календарная разница now - created_at
-    тем более ≥ sla_hours часов. Значит порог по календарному времени
-    не может ОТСЕЯТЬ настоящую просрочку (не теряет кандидатов), а лишь
-    расширяет выборку — точный отбор доделывает Python-фильтр по
-    `sla_service.is_overdue` ниже. Смысл префильтра — не тащить из БД
-    вообще все открытые обращения (см. защиту LIMIT выше), а не
-    заменить собой правильный business-time расчёт.
+    В разных периодах могут действовать разные нормативы; поэтому кандидаты
+    отбираются по началу периода и уточняются в Python, без общего порога,
+    способного скрыть обращение с более коротким сроком.
     """
     if limit <= 0:
         return []
     now = datetime.now(UTC)
-    threshold = now - timedelta(hours=sla_hours)
     anchor = func.coalesce(Appeal.sla_anchor_at, Appeal.created_at)
     after_anchor = None
     after_id = 0
@@ -609,7 +619,7 @@ async def find_overdue_unanswered(
             select(Appeal).options(selectinload(Appeal.user))
             .where(
                 Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
-                anchor <= threshold,
+                anchor <= now,
                 ~select(Message.id).where(
                     Message.appeal_id == Appeal.id,
                     Message.direction == MessageDirection.FROM_OPERATOR.value,
@@ -625,7 +635,8 @@ async def find_overdue_unanswered(
         if not batch:
             break
         for appeal in batch:
-            if sla_service.is_overdue(appeal.sla_anchor_at or appeal.created_at, now, sla_hours):
+            if sla_service.is_overdue(appeal.sla_anchor_at or appeal.created_at, now,
+                                      response_hours_for(appeal, sla_hours)):
                 overdue.append(appeal)
                 if len(overdue) == limit:
                     break

@@ -288,6 +288,26 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         await _show_author_card(event)
         return
 
+    if rest == "sla":
+        from aemr_bot.handlers import admin_settings_sla
+        await admin_settings_sla.show(event)
+        return
+    if rest == "sla:edit":
+        from aemr_bot.handlers import admin_settings_sla
+        await admin_settings_sla.start(event, operator_id)
+        return
+    if rest.startswith("sla:cancel:"):
+        from aemr_bot.handlers import admin_settings_sla
+        intent = _intent_get(operator_id)
+        token = rest.removeprefix("sla:cancel:")
+        if intent and intent.get("kind") == "sla_hours" and intent.get("token") == token:
+            _intent_drop(operator_id)
+            await admin_settings_sla.show(event, notice="Изменение отменено.")
+        else:
+            await op_screen(event, "Эта кнопка устарела. Откройте настройку заново.",
+                            kbds.op_back_to_settings_keyboard())
+        return
+
     if rest == "quiet":
         await _show_quiet_card(event)
         return
@@ -408,6 +428,11 @@ async def handle_settings_edit_text(event, text: str) -> bool:
         return True
     if kind == "obj_add":
         if await _apply_obj_add(event, operator_id, key, new_text):
+            _intent_drop(operator_id)
+        return True
+    if kind == "sla_hours":
+        from aemr_bot.handlers import admin_settings_sla
+        if await admin_settings_sla.apply(event, operator_id, new_text):
             _intent_drop(operator_id)
         return True
     if kind == "quiet_hour":

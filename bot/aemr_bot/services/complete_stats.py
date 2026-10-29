@@ -11,7 +11,6 @@ from openpyxl.styles import Alignment, Font
 from sqlalchemy import select, text
 from sqlalchemy.orm import selectinload
 
-from aemr_bot.config import settings
 from aemr_bot.db.models import Appeal, Message
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import privacy_epoch, sla, stats
@@ -119,9 +118,9 @@ async def build_xlsx_with_epoch(
     workbook = Workbook(write_only=True)
     overview = _Sheet(workbook, "Обращения", ["№", "Связано с №", "Подано", "Житель", "Телефон", "Населённый пункт",
                         "Адрес", "Тема", "Статус", "Первый ответ периода", "Итоговый ответ", "Закрыто",
-                        "Рабочих часов до первого ответа", "Первый ответ в срок", "Согласие дано",
+                        "Рабочих часов до первого ответа", "Внутренний срок, рабочих часов", "Первый ответ в срок", "Согласие дано",
                         "Согласие отозвано", "Подписка", "Блокировка"],
-                      [9, 16, 19, 22, 17, 25, 34, 25, 20, 19, 19, 19, 18, 20, 19, 19, 15, 15])
+                      [9, 16, 19, 22, 17, 25, 34, 25, 20, 19, 19, 19, 18, 22, 20, 19, 19, 15, 15])
     history = _Sheet(workbook, "История", ["Обращение №", "Запись", "Дата", "Автор", "Часть", "Текст"],
                      [16, 12, 19, 24, 12, 75])
     files = _Sheet(workbook, "Вложения", ["Обращение №", "Запись", "Дата", "Вложение"], [16, 12, 19, 60])
@@ -158,12 +157,15 @@ async def build_xlsx_with_epoch(
             anchor = appeal.sla_anchor_at or appeal.created_at
             if first_reply and anchor:
                 elapsed = round(sla.business_seconds_between(anchor, first_reply) / 3600, 2)
-                on_time = "нет" if sla.is_overdue(anchor, first_reply,
-                                                settings.sla_response_hours) else "да"
+                if appeal.sla_hours_at_start is None:
+                    on_time = "Норматив не сохранился"
+                else:
+                    on_time = "нет" if sla.is_overdue(anchor, first_reply, appeal.sla_hours_at_start) else "да"
             overview.append([appeal.id, appeal.related_appeal_id or "", _date(appeal.created_at), getattr(user, "first_name", "") or "",
                              mask_phone(getattr(user, "phone", None)), appeal.locality or "",
                              appeal.address or "", appeal.topic or "", stats._status_label(appeal.status),
-                             _date(first_reply), _date(appeal.answered_at), _date(appeal.closed_at), elapsed, on_time,
+                             _date(first_reply), _date(appeal.answered_at), _date(appeal.closed_at), elapsed,
+                             appeal.sla_hours_at_start if appeal.sla_hours_at_start is not None else "Не сохранился", on_time,
                              _date(getattr(user, "consent_pdn_at", None)),
                              _date(getattr(user, "consent_revoked_at", None)),
                              "да" if getattr(user, "subscribed_broadcast", False) else "нет",
@@ -180,7 +182,9 @@ async def build_xlsx_with_epoch(
                 periods.append([appeal.id, period_date("start"), period_date("first_response"),
                                 period_date("end"), period_record.get("sla_hours", ""),
                                 "да" if period_record.get("overdue") else "нет",
-                                "Оценка рассчитана при возобновлении обращения"])
+                                "Оценка рассчитана при возобновлении; исходный норматив неизвестен"
+                                if period_record.get("assessment") == "at_reopen_legacy"
+                                else "Оценка рассчитана при возобновлении обращения"])
             records = getattr(user, "consent_records", None) or []
             if not records:
                 consent.append([appeal.id, "", "", "Текст ранее данного согласия не сохранён"])

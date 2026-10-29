@@ -1085,7 +1085,8 @@ async def _job_working_hours_open_reminder(bot) -> None:
         # обращение и переиспользуем флаг, а не зовём дважды на каждое.
         with_reply = [a for a in appeals if a.id in first_replies]
         flags = [
-            (a, sla_service.is_overdue(getattr(a, "sla_anchor_at", None) or a.created_at, now, settings.sla_response_hours))
+            (a, sla_service.is_overdue(getattr(a, "sla_anchor_at", None) or a.created_at, now,
+                                    appeals_service.response_hours_for(a, settings.sla_response_hours)))
             for a in appeals if a.id not in first_replies
         ]
         in_sla = [a for a, is_od in flags if not is_od]
@@ -1106,7 +1107,7 @@ async def _job_working_hours_open_reminder(bot) -> None:
             header += f" Показаны первые {len(appeals)}."
         lines = [header, ""]
         if overdue:
-            lines.append(f"⚠️ Просрочено по SLA ({settings.sla_response_hours}ч):")
+            lines.append("⚠️ Просрочено по внутреннему сроку первого ответа:")
             lines.extend(_format_appeal_lines(overdue))
             lines.append("")
         if in_sla:
@@ -1150,7 +1151,7 @@ async def _job_working_hours_overdue_reminder(bot) -> None:
         if not await _claim_reminder_snapshot("overdue_reminder", [sorted(a.id for a in overdue)], len(overdue)):
             return
         lines = [
-            (f"⚠️ Просрочено по SLA ({settings.sla_response_hours}ч): "
+            (f"⚠️ Просрочено по внутреннему сроку первого ответа: "
             f"{len(overdue)} обращений.")
         ]
         lines.extend(_format_appeal_lines(overdue))

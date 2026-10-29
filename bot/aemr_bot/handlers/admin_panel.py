@@ -477,6 +477,8 @@ async def _do_diag(event) -> None:
     warnings_lines: list[str] = []
     from aemr_bot.services import alert_state, threat_intel
     async with session_scope() as session:
+        from aemr_bot.services.appeals import current_first_response_hours
+        current_sla_hours = await current_first_response_hours(session)
         threat_alert = await alert_state.get(session, "threat_intel")
         from aemr_bot.db.models import InboxEvent
         failed_receipts = await session.scalar(
@@ -572,7 +574,7 @@ async def _do_diag(event) -> None:
         "Конфигурация:\n"
         f"• Режим: {cfg.bot_mode}\n"
         f"• Лимит ответа: {cfg.answer_max_chars} симв.\n"
-        f"• SLA: {cfg.sla_response_hours} ч"
+        f"• Новый период: {current_sla_hours} рабочих ч"
     )
     if warnings_lines:
         body += "\n\nВнимание:\n" + "\n".join(warnings_lines)

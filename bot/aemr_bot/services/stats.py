@@ -254,10 +254,15 @@ def _render_workbook(
             # трое суток, но по рабочим часам могло уложиться в SLA.
             elapsed = (a.answered_at - a.created_at).total_seconds()
             elapsed_hours = round(elapsed / 3600, 2)
-            overdue = sla_service.is_overdue(
-                a.created_at, a.answered_at, settings.sla_response_hours
-            )
-            in_sla = "нет" if overdue else "да"
+            from aemr_bot.services.appeals import response_hours_for
+            if getattr(a, "sla_hours_at_start", None) is None:
+                in_sla = "Норматив не сохранился"
+            else:
+                overdue = sla_service.is_overdue(
+                    a.sla_anchor_at or a.created_at, a.answered_at,
+                    response_hours_for(a, settings.sla_response_hours),
+                )
+                in_sla = "нет" if overdue else "да"
         else:
             elapsed_hours = None
             in_sla = ""
