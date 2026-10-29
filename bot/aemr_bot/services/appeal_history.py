@@ -7,6 +7,7 @@ from typing import Any
 
 from aemr_bot.db.models import MessageDirection
 from aemr_bot.services.card_format import _local
+from aemr_bot.services.message_labels import response_label
 from aemr_bot.utils.text_pages import split_text_units
 from aemr_bot.utils.url_defang import defang_for_admin
 
@@ -53,7 +54,7 @@ def pages_for(appeal: Any, *, operator: bool) -> list[HistoryPage]:
             continue
         from_user = direction == MessageDirection.FROM_USER.value
         label = ('Дополнение жителя' if operator else 'Ваше дополнение') if from_user else (
-            'Ответ оператора' if operator else 'Ответ администрации'
+            response_label(message, citizen=not operator)
         ) if direction == MessageDirection.FROM_OPERATOR.value else 'Запись'
         entries.append((label, getattr(message, 'created_at', None), getattr(message, 'text', None) or '',
                         len(getattr(message, 'attachments', None) or []), from_user,

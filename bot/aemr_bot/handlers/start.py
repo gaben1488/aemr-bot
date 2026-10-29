@@ -397,7 +397,8 @@ def _render_export_for_human(user, appeals) -> str:
             L.append("")
             L.append("  Переписка:")
             for m in messages:
-                who = "Оператор" if m.direction == "from_operator" else "Вы"
+                from aemr_bot.services.message_labels import response_label
+                who = response_label(m, citizen=True) if m.direction == "from_operator" else "Вы"
                 L.append(f"    [{_export_dt(m.created_at)}] {who}:")
                 L.append(m.text if m.text else "—")
                 m_attach = len(m.attachments or [])
@@ -518,7 +519,8 @@ async def _write_user_export(session, user, path) -> None:
                     if first:
                         output.write("\n  Переписка:\n")
                         first = False
-                    who = "Оператор" if message.direction == "from_operator" else "Вы"
+                    from aemr_bot.services.message_labels import response_label
+                    who = response_label(message, citizen=True) if message.direction == "from_operator" else "Вы"
                     output.write(f"    [{_export_dt(message.created_at)}] {who}:\n")
                     output.write((message.text or "—") + "\n")
                     if message.attachments:

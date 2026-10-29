@@ -219,6 +219,9 @@ async def build_xlsx_with_epoch(
             author = {"from_user": "Житель", "from_operator": "Специалист", "system": "Служебная запись"}.get(
                 message.direction, "Запись"
             )
+            if message.direction == "from_operator":
+                from aemr_bot.services.message_labels import response_label
+                author = response_label(message)
             add_entry(appeal.id, record_no, message.created_at, author, message.text, message.attachments)
         while index < len(appeals):
             appeal = appeals[index]

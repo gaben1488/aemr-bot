@@ -291,6 +291,8 @@ class Message(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     appeal_id: Mapped[int] = mapped_column(ForeignKey("appeals.id", ondelete="CASCADE"), index=True)
     direction: Mapped[str] = mapped_column(String(32))
+    # NULL means the historical response kind was not recorded.
+    response_kind: Mapped[str | None] = mapped_column(String(16))
     text: Mapped[str | None] = mapped_column(Text)
     attachments: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     max_message_id: Mapped[str | None] = mapped_column(String(64))

@@ -72,6 +72,9 @@ def build_appeal_docx(appeal) -> bytes:
     for message in messages:
         label = {"from_user": "Дополнение жителя", "from_operator": "Ответ специалиста",
                  "system": "Служебная запись"}.get(message.direction, "Запись")
+        if message.direction == "from_operator":
+            from aemr_bot.services.message_labels import response_label
+            label = response_label(message)
         body.append(_paragraph(f"{label} · {_date(message.created_at)}", "Heading2"))
         body.append(_paragraph(message.text or "Без текста"))
         body.extend(_paragraph(line) for line in _attachment_lines(message.attachments))

@@ -85,6 +85,7 @@ async def add_operator_message(
     msg = Message(
         appeal_id=appeal.id,
         direction=MessageDirection.FROM_OPERATOR.value,
+        response_kind="final" if is_final else "intermediate",
         text=text,
         max_message_id=max_message_id,
         operator_id=operator_id,
