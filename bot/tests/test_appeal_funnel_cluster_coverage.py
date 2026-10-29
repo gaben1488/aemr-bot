@@ -1299,3 +1299,44 @@ class TestEnsureFunnelCallbackStateGeo:
 
         assert ok is True
         ack.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_summary_with_unsupported_attachment_is_not_partially_accepted():
+    from aemr_bot.handlers import appeal_funnel
+
+    event = _funnel_event()
+    update = AsyncMock()
+    finalize = AsyncMock()
+    body = SimpleNamespace(attachments=[{"type": "audio"}, {"type": "image"}])
+    with patch("aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data", update), \
+         patch("aemr_bot.handlers.appeal_funnel.finalize_appeal", finalize):
+        await appeal_funnel.on_awaiting_summary(event, body=body, text_body="Яма", max_user_id=42)
+    update.assert_not_awaited()
+    finalize.assert_not_awaited()
+    assert "не отправлен" in event.message.answer.await_args.args[0].lower()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("attachments", [
+    [{"type": "image"}, {"type": "audio"}],
+    [{"type": "image"}] * 21,
+])
+async def test_followup_with_invalid_attachments_is_not_partially_saved(attachments):
+    from aemr_bot.handlers import appeal_funnel
+
+    event = _funnel_event()
+    user, appeal = _followup_user_appeal()
+    save = AsyncMock()
+    stats = AsyncMock()
+    with patch("aemr_bot.handlers.appeal_funnel.session_scope", _fake_session_scope), \
+         patch("aemr_bot.handlers.appeal_funnel.users_service.get_or_create", AsyncMock(return_value=user)), \
+         patch("aemr_bot.handlers.appeal_funnel.appeals_service.get_by_id", AsyncMock(return_value=appeal)), \
+         patch("aemr_bot.handlers.appeal_funnel.appeals_service.add_user_message", save), \
+         patch("aemr_bot.handlers.appeal_funnel.appeals_service.followup_rate_limit_stats", stats):
+        await appeal_funnel.on_awaiting_followup_text(
+            event, body=SimpleNamespace(attachments=attachments), text_body="Подробности", max_user_id=42,
+        )
+    save.assert_not_awaited()
+    stats.assert_not_awaited()
+    assert "не отправлено" in event.message.answer.await_args.args[0].lower()

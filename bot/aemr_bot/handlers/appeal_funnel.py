@@ -41,6 +41,7 @@ from aemr_bot.services import users as users_service
 from aemr_bot.utils.attachments import (
     collect_attachments,
     extract_resident_contact,
+    has_unsupported_appeal_attachments,
 )
 from aemr_bot.utils.event import (
     extract_message_id,
@@ -557,7 +558,13 @@ async def on_awaiting_name(event, body, text_body, max_user_id):
 
 
 async def on_awaiting_address(event, body, text_body, max_user_id):
-    address = text_body.strip()[: cfg.address_max_chars]
+    address = text_body.strip()
+    if len(address) > cfg.address_max_chars:
+        await event.message.answer(
+            f"Адрес не сохранён: сейчас можно до {cfg.address_max_chars} символов. "
+            "Укажите адрес короче и отправьте снова."
+        )
+        return
     if not address or not _HAS_ALNUM.search(address):
         await event.message.answer(texts.ADDRESS_EMPTY)
         return
@@ -568,22 +575,17 @@ async def on_awaiting_address(event, body, text_body, max_user_id):
     await ask_topic(event, max_user_id, force_new_message=True)
 
 
-def _truncation_tail(kept: str) -> str:
-    """Последние три слова принятой части текста.
-
-    Показываются жителю в предупреждении об обрезке («…почему не сдел…»),
-    чтобы он видел, ГДЕ именно оборвалось. Хвост дополнительно ограничен
-    60 символами — одно аномально длинное «слово» не раздует сообщение.
-    """
-    words = kept.rstrip().split()
-    tail = " ".join(words[-3:])
-    return tail[-60:]
-
-
 async def on_awaiting_summary(event, body, text_body, max_user_id):
     """Один шаг сути: первое же непустое сообщение или вложение —
     это и есть обращение."""
     chunk = text_body.strip()
+    if has_unsupported_appeal_attachments(body):
+        await event.message.answer(
+            "Обращение не отправлено: можно приложить фото, видео или файл. "
+            "Удалите остальные вложения и отправьте сообщение снова.",
+            attachments=[keyboards.cancel_keyboard()],
+        )
+        return
     atts = collect_attachments(body)
     if not chunk and not atts:
         await event.message.answer(
@@ -769,7 +771,22 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         )
         return
     text = _raw_followup
+    if has_unsupported_appeal_attachments(body):
+        await event.message.answer(
+            "Дополнение не отправлено: можно приложить фото, видео или файл. "
+            "Удалите остальные вложения и отправьте сообщение снова.",
+            attachments=[keyboards.cancel_keyboard()],
+        )
+        return
     attachments = collect_attachments(body)
+    if len(attachments) > cfg.attachments_max_per_appeal:
+        await event.message.answer(
+            f"Дополнение не отправлено: приложено {len(attachments)} файлов, "
+            f"а сейчас можно до {cfg.attachments_max_per_appeal}. "
+            "Уменьшите число вложений и отправьте сообщение снова.",
+            attachments=[keyboards.cancel_keyboard()],
+        )
+        return
     if not text and not attachments:
         await event.message.answer(
             "Опишите дополнение к обращению одним сообщением или "

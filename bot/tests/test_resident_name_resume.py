@@ -441,3 +441,41 @@ async def test_explicit_cancel_discards_name_repair_draft(resident, monkeypatch,
         await start.cmd_cancel(event)
     assert resident.dialog_state == DialogState.IDLE.value
     assert resident.dialog_data == {}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("state", [DialogState.AWAITING_SUMMARY, DialogState.AWAITING_FOLLOWUP_TEXT])
+async def test_name_gate_rejects_oversize_input_without_saving_partial_message(resident, state):
+    resident.dialog_state = state.value
+    original = dict(resident.dialog_data)
+    event = make_event(chat_id=100, user_id=42)
+    text = "А" * (resident_name_gate.cfg.summary_max_chars + 1)
+    assert await resident_name_gate.require_name(event, 42, text=text, body=None)
+    assert resident.dialog_state == state.value
+    assert resident.dialog_data == original
+    assert "не отправлен" in event.message.answer.await_args.args[0].lower()
+
+
+@pytest.mark.asyncio
+async def test_name_gate_rejects_unsupported_attachment_with_text(resident):
+    resident.dialog_state = DialogState.AWAITING_SUMMARY.value
+    original = dict(resident.dialog_data)
+    event = make_event(chat_id=100, user_id=42)
+    body = SimpleNamespace(attachments=[{"type": "audio"}, {"type": "image"}])
+    assert await resident_name_gate.require_name(event, 42, text="Яма", body=body)
+    assert resident.dialog_state == DialogState.AWAITING_SUMMARY.value
+    assert resident.dialog_data == original
+    assert "не отправлен" in event.message.answer.await_args.args[0].lower()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("state", [DialogState.AWAITING_SUMMARY, DialogState.AWAITING_FOLLOWUP_TEXT])
+async def test_name_gate_rejects_excess_attachments_without_saving_part(resident, state):
+    resident.dialog_state = state.value
+    original = dict(resident.dialog_data)
+    event = make_event(chat_id=100, user_id=42)
+    body = SimpleNamespace(attachments=[{"type": "image"}] * (resident_name_gate.cfg.attachments_max_per_appeal + 1))
+    assert await resident_name_gate.require_name(event, 42, text="Яма", body=body)
+    assert resident.dialog_state == state.value
+    assert resident.dialog_data == original
+    assert "не отправлено" in event.message.answer.await_args.args[0].lower()

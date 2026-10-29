@@ -11,7 +11,11 @@ from aemr_bot.handlers import callback_router
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.attachments import collect_attachments, extract_location
+from aemr_bot.utils.attachments import (
+    collect_attachments,
+    extract_location,
+    has_unsupported_appeal_attachments,
+)
 from aemr_bot.utils.event import send_or_edit_screen
 from aemr_bot.utils.resident_names import normalize_resident_name
 
@@ -63,6 +67,27 @@ async def require_name(event, max_user_id: int, *, payload: str | None = None,
             if text is not None:
                 return False
         else:
+            if text is not None and user.dialog_state in {
+                DialogState.AWAITING_SUMMARY.value, DialogState.AWAITING_FOLLOWUP_TEXT.value,
+            }:
+                if len(text.strip()) > cfg.summary_max_chars:
+                    await event.message.answer(
+                        f"Сообщение не отправлено: сейчас можно до {cfg.summary_max_chars} символов. "
+                        "Сократите текст и отправьте его снова или приложите документ."
+                    )
+                    return True
+                if has_unsupported_appeal_attachments(body):
+                    await event.message.answer(
+                        "Сообщение не отправлено: можно приложить фото, видео или файл. "
+                        "Удалите остальные вложения и отправьте сообщение снова."
+                    )
+                    return True
+                if len(collect_attachments(body)) > cfg.attachments_max_per_appeal:
+                    await event.message.answer(
+                        f"Сообщение не отправлено: сейчас можно до {cfg.attachments_max_per_appeal} "
+                        "вложений. Уменьшите их число и отправьте сообщение снова."
+                    )
+                    return True
             pending = {"state": user.dialog_state, "data": data}
             if payload is not None and gates_callback(payload):
                 pending["payload"] = payload
@@ -76,8 +101,8 @@ async def require_name(event, max_user_id: int, *, payload: str | None = None,
                         options[index] if index is not None and 0 <= index < len(options) else None
                     )
             if text is not None:
-                pending["text"] = text[:cfg.summary_max_chars]
-                pending["attachments"] = collect_attachments(body)[:cfg.attachments_max_per_appeal]
+                pending["text"] = text
+                pending["attachments"] = collect_attachments(body)
                 location = extract_location(body)
                 if location is not None:
                     pending["location"] = list(location)
@@ -104,8 +129,6 @@ async def require_name(event, max_user_id: int, *, payload: str | None = None,
     notice = NAME_PROMPT
     if text is not None:
         notice += "\n\nВаше сообщение сохранено. После ввода имени продолжим с него."
-        if len(text) > cfg.summary_max_chars:
-            notice += f" Сохранены первые {cfg.summary_max_chars} символов."
     await send_or_edit_screen(event, text=notice, attachments=[keyboards.cancel_keyboard()],
                               force_new_message=text is not None)
     return True
