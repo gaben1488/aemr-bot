@@ -82,27 +82,22 @@ _MISFIRE_GRACE_SEC = 120
 # ---- Module-level helpers (вынесены из build_scheduler для тестируемости) ----
 
 
-def _format_appeal_lines(appeals: list, *, max_rows: int = 10) -> list[str]:
-    """Унифицированный рендер строк «# id · имя · локалити · висит Nч»
-    для напоминалок. Список ограничен max_rows; если приходится
-    обрезать — добавляется хвостик «… ещё K».
-    """
+def _format_appeal_lines(appeals: list, *, max_rows: int = 10,
+                         anchors: dict[int, datetime] | None = None) -> list[str]:
+    """Show elapsed working time, with the relevant response-period anchor."""
     now = datetime.now(TZ)
     lines: list[str] = []
     for ap in appeals[:max_rows]:
-        created_local = (
-            ap.created_at.astimezone(TZ) if ap.created_at else now
-        )
-        age_h = int((now - created_local).total_seconds() // 3600)
+        anchor = ((anchors or {}).get(ap.id) or getattr(ap, "sla_anchor_at", None)
+                  or ap.created_at or now)
+        elapsed = sla_service.business_seconds_between(anchor, now) / 3600
         name = (ap.user.first_name or "—") if ap.user else "—"
-        lines.append(
-            f"• #{ap.id} · {name} · {ap.locality or '—'} · "
-            f"висит {age_h}ч"
-        )
+        description = "после первого ответа" if anchors and ap.id in anchors else "с начала периода"
+        lines.append(f"• #{ap.id} · {name} · {ap.locality or '—'} · "
+                     f"{description}: {elapsed:.1f} рабочих ч")
     if len(appeals) > max_rows:
         lines.append(f"… ещё {len(appeals) - max_rows}.")
     return lines
-
 
 async def _send_with_open_tickets_button(bot, text: str) -> None:
     """Сообщение в админ-группу с кнопкой «📋 Открытые обращения»
@@ -1119,7 +1114,7 @@ async def _job_working_hours_open_reminder(bot) -> None:
             lines.extend(_format_appeal_lines(in_sla))
         if with_reply:
             lines.append("💬 В работе после первичного ответа:")
-            lines.extend(_format_appeal_lines(with_reply))
+            lines.extend(_format_appeal_lines(with_reply, anchors=first_replies))
         await _send_with_open_tickets_button(bot, "\n".join(lines).rstrip())
     except Exception:
         log.exception("working_hours_open_reminder crashed")
