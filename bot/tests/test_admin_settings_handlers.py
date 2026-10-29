@@ -523,7 +523,7 @@ class TestQuietHoursWizard:
         assert "включён" in kwargs["text"]
         assert "не откладываются" in kwargs["text"]
         assert "Карточки новых обращений" in kwargs["text"]
-        assert "напоминания об" in kwargs["text"]
+        assert "регулярные напоминания об" in kwargs["text"]
 
     @pytest.mark.asyncio
     async def test_show_quiet_card_disabled_status(self) -> None:

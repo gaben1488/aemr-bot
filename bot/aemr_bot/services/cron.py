@@ -1050,8 +1050,9 @@ async def _job_working_hours_open_reminder(bot) -> None:
     """
     try:
         from aemr_bot.services import notify_toggles
+        from aemr_bot.services.quiet_hours import is_quiet_hours_now
 
-        if not notify_toggles.is_enabled("admin_notify_open_reminder"):
+        if is_quiet_hours_now() or not notify_toggles.is_enabled("admin_notify_open_reminder"):
             log.debug("open-reminder: admin_notify_open_reminder disabled, suppressed")
             return
         if not is_workday(datetime.now(TZ).date()):
@@ -1104,8 +1105,9 @@ async def _job_working_hours_overdue_reminder(bot) -> None:
     """
     try:
         from aemr_bot.services import notify_toggles
+        from aemr_bot.services.quiet_hours import is_quiet_hours_now
 
-        if not notify_toggles.is_enabled("admin_notify_overdue_reminder"):
+        if is_quiet_hours_now() or not notify_toggles.is_enabled("admin_notify_overdue_reminder"):
             log.debug(
                 "overdue-reminder: admin_notify_overdue_reminder disabled, suppressed"
             )

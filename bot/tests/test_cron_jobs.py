@@ -661,6 +661,19 @@ class TestNotifyToggleGates:
     # ── open reminder ────────────────────────────────────────────────
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize("job_name", [
+        "_job_working_hours_open_reminder", "_job_working_hours_overdue_reminder",
+    ])
+    async def test_routine_reminders_are_suppressed_in_quiet_hours(self, job_name) -> None:
+        bot = AsyncMock()
+        with patch("aemr_bot.services.quiet_hours.is_quiet_hours_now", return_value=True), \
+             patch("aemr_bot.services.notify_toggles.is_enabled", return_value=True), \
+             patch.object(cron, "session_scope") as scope:
+            await getattr(cron, job_name)(bot)
+        scope.assert_not_called()
+        bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
     async def test_open_reminder_suppressed_when_disabled(self) -> None:
         bot = AsyncMock()
         with patch(
