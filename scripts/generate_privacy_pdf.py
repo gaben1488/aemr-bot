@@ -16,6 +16,7 @@ DejaVu Serif. Движок Paragraph из reportlab
 from __future__ import annotations
 
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -37,6 +38,7 @@ SRC = ROOT / "docs" / "Политика_конфиденциальности_И�
 # подменяется на русское при загрузке файла, см.
 # bot/aemr_bot/services/policy.py::POLICY_PDF_DISPLAY_NAME.
 OUT = ROOT / "docs" / "PRIVACY.pdf"
+NAMED_OUT = ROOT / "docs" / "Политика_конфиденциальности_ИС_Чат-бот_MAX.pdf"
 
 FONT_PAIRS = (
     (Path("C:/Windows/Fonts/times.ttf"), Path("C:/Windows/Fonts/timesbd.ttf")),
@@ -169,6 +171,7 @@ def main() -> int:
         title="Политика конфиденциальности — aemr_feedback_bot",
     )
     doc.build(flow)
+    shutil.copyfile(OUT, NAMED_OUT)
     print(f"PDF written: {OUT}  ({OUT.stat().st_size} bytes)")
     return 0
 

@@ -507,7 +507,7 @@ async def list_unanswered_with_messages(
 
 
 async def list_unanswered_for_user(
-    session: AsyncSession, user_id: int, *, limit: int = 500
+    session: AsyncSession, user_id: int, *, limit: int | None = None
 ) -> list[Appeal]:
     """Открытые обращения (NEW + IN_PROGRESS) КОНКРЕТНОГО жителя, с
     догруженными user и messages (selectinload).
@@ -527,9 +527,8 @@ async def list_unanswered_for_user(
     IN-запроса на N≤LIMIT обращений жителя — на реальной очереди 1-2
     открытых обращений это пренебрежимо.
     """
-    res = await session.scalars(
+    query = (
         select(Appeal)
-        .options(selectinload(Appeal.user), selectinload(Appeal.messages))
         .where(
             Appeal.user_id == user_id,
             Appeal.status.in_(
@@ -537,8 +536,10 @@ async def list_unanswered_for_user(
             ),
         )
         .order_by(Appeal.created_at)
-        .limit(limit)
     )
+    if limit is not None:
+        query = query.limit(limit)
+    res = await session.scalars(query)
     return list(res)
 
 

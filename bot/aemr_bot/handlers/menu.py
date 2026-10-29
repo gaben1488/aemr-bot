@@ -9,7 +9,6 @@ from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import AppealStatus, DialogState, User
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
-from aemr_bot.services import admin_card as admin_card_service
 from aemr_bot.services import admin_events, admin_relay, appeal_history, card_format, settings_store
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
@@ -717,10 +716,12 @@ async def ask_goodbye_erase_confirm(event):
             mine = await appeals_service.list_unanswered_for_user(
                 session, user.id
             )
-            open_lines = [_format_open_appeal_line(ap) for ap in mine]
+            open_lines = [_format_open_appeal_line(ap) for ap in mine[:5]]
     text = texts.ERASE_CONFIRM
     if open_lines:
-        text += "\n\nСейчас у вас в работе:\n• " + "\n• ".join(open_lines)
+        text += f"\n\nСейчас в работе: {len(mine)}.\n• " + "\n• ".join(open_lines)
+        if len(mine) > len(open_lines):
+            text += f"\n… и ещё {len(mine) - len(open_lines)}."
         text += "\n\nПри стирании эти обращения закроются без ответа."
     await _send_or_edit_menu(
         event,
@@ -752,7 +753,7 @@ async def ask_forget_confirm(event):
     if open_lines:
         text = (
             f"{text}\n\n"
-            f"Сейчас у вас в работе {len(open_lines)} обращ.:\n"
+            f"Сейчас у вас в работе {len(mine)} обращ.:\n"
             + "\n".join(open_lines)
             + "\n\nПри удалении они будут закрыты без ответа."
         )
@@ -844,20 +845,6 @@ async def do_consent_revoke(event, max_user_id: int):
         max_user_id=max_user_id,
         open_appeal_ids=[a.id for a in my_open],
     )
-    if my_open:
-        # Перепубликовать карточки открытых обращений через единый
-        # admin_card.render. force_new=True — это явное событие (отзыв
-        # согласия), нужна новая запись внизу чата как маркер.
-        #
-        # appeal.user уже подгружен через list_unanswered_for_user,
-        # messages тоже загружены (selectinload) — НЕ ставим
-        # __dict__.setdefault("messages", []), иначе перезаписали бы
-        # реальные сообщения пустым списком и timeline снова исчез.
-
-        for appeal in my_open:
-            await admin_card_service.render(
-                event.bot, appeal, force_new=True
-            )
 
 
 async def do_forget(event, max_user_id: int):
@@ -870,11 +857,7 @@ async def do_forget(event, max_user_id: int):
 
     closed_ids: list[int] = []
     async with current_user(max_user_id) as (session, user):
-        mine = await appeals_service.list_unanswered_for_user(
-            session, user.id
-        )
-        closed_ids = [a.id for a in mine]
-        await users_service.erase_pdn(session, max_user_id)
+        closed_ids = await users_service.erase_pdn_detailed(session, max_user_id) or []
         await ops_service.write_audit(
             session,
             operator_max_user_id=None,
