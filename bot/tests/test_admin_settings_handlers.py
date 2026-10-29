@@ -521,6 +521,9 @@ class TestQuietHoursWizard:
         assert "22:00" in kwargs["text"]
         assert "08:00" in kwargs["text"]
         assert "включён" in kwargs["text"]
+        assert "не откладываются" in kwargs["text"]
+        assert "Карточки новых обращений" in kwargs["text"]
+        assert "напоминания об" in kwargs["text"]
 
     @pytest.mark.asyncio
     async def test_show_quiet_card_disabled_status(self) -> None:
@@ -730,8 +733,8 @@ class TestNotifyTogglesWizard:
         # Три включённых — ✅, три выключенных — ⛔.
         assert text.count("✅") == 3
         assert text.count("⛔") == 3
-        # Юридическая оговорка про 152-ФЗ присутствует.
-        assert "152-ФЗ" in text
+        # Пояснение описывает реальную настройку, а не приписывает её закону.
+        assert "отзыве согласия" in text
         assert "не отключаются" in text
 
     @pytest.mark.asyncio
