@@ -39,12 +39,12 @@ JOB_REGISTRY: list[dict[str, str]] = [
     {
         "id": "pulse-hourly",
         "schedule_human": "каждый час 24/7 в :05",
-        "purpose": "базовый heartbeat «бот работает»",
+        "purpose": "проверка возможности отправить включённый пульс не чаще раза в день",
     },
     {
         "id": "pulse-workhours-extra",
         "schedule_human": "пн–пт 09:00–17:59 в :35",
-        "purpose": "дополнительный пинг в рабочее время",
+        "purpose": "дополнительная попытка пульса, если сегодня ещё не отправлялся",
     },
     {
         "id": "startup-pulse",

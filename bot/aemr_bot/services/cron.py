@@ -684,12 +684,13 @@ async def _job_monthly_report(send_admin_document) -> None:
 
 
 async def _job_pulse(send_admin_text) -> None:
-    """Шлёт в служебную группу короткое подтверждение «бот жив».
+    """Шлёт включённый пульс в группу не чаще одного раза в сутки.
 
     Текущее расписание (после унификации 2026-05-22):
     • `pulse-hourly` — каждый час 24/7 в `:05` (базовый heartbeat).
-    • `pulse-workhours-extra` — пн–пт 09:00–17:59 в `:35`
-      (дополнительный пинг в рабочее время).
+    • `pulse-workhours-extra` — пн–пт 09:00–17:59 в `:35`.
+    Оба задания проверяют общую суточную отметку, а не отправляют два
+    сообщения каждый час.
 
     Это второй контур мониторинга поверх selfcheck: selfcheck ловит
     зависший event-loop, а пульс показывает дежурному, что процесс
@@ -735,6 +736,15 @@ async def _job_pulse(send_admin_text) -> None:
         # обновиться. Пульс всё равно шлём (fail-open — недоступность
         # хуже, чем лишнее уведомление).
         log.warning("pulse: quiet_hours check failed, отправляем", exc_info=True)
+    # The two scheduler ticks provide catch-up opportunities, not two
+    # chat messages per hour. Reserve the daily notification before the
+    # request: an unknown MAX result must not trigger an automatic resend.
+    try:
+        if not await _claim_reminder_snapshot("daily-pulse", [], 0):
+            return
+    except Exception:
+        log.warning("pulse: unable to reserve daily notification", exc_info=True)
+        return
     now = datetime.now(TZ).strftime("%H:%M")
     sent = await _send_admin_text_with_retry(
         send_admin_text,

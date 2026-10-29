@@ -919,7 +919,7 @@
         <td><code class="kbd">overdue-reminder-workhours</code></td>
         <td>пн–пт <strong>:40</strong>, часы <code class="kbd">9–11, 13–17</code> (без обеда в 12)</td>
         <td>Камчатка</td>
-        <td>Отдельное напоминание <em>только</em> о просроченных по SLA. Вместе с <code class="kbd">:10</code> даёт «каждые полчаса для просрочки». Нет просроченных — молчит.</td>
+        <td>Проверка очереди просроченных. Повтор неизменной сводки за те же сутки подавляется; нет просроченных — молчит.</td>
         <td><strong>молчит</strong></td>
         <td><code class="kbd">cron.py:1003</code> · <code class="kbd">_job_working_hours_overdue_reminder</code> <code class="kbd">:802</code></td>
       </tr>
@@ -927,7 +927,7 @@
         <td><code class="kbd">pulse-hourly</code></td>
         <td>каждый час <strong>:05</strong>, 24/7</td>
         <td>Камчатка</td>
-        <td>Базовый heartbeat «бот работает» в служебную группу. В тихие часы (quiet hours) подавляется по настройке; в праздники работает всегда.</td>
+        <td>Проверка пульса. Если включён и не действует тихий режим, сообщение отправляется не чаще раза за местные сутки; для сбоев есть отдельные сигналы.</td>
         <td>не молчит</td>
         <td><code class="kbd">cron.py:949</code> · <code class="kbd">_job_pulse</code> <code class="kbd">:502</code></td>
       </tr>
@@ -935,7 +935,7 @@
         <td><code class="kbd">pulse-workhours-extra</code></td>
         <td>пн–пт <strong>:35</strong>, часы <code class="kbd">9–17</code></td>
         <td>Камчатка</td>
-        <td>Дополнительный пульс в рабочее время. Вместе с <code class="kbd">:05</code> даёт два пульса в час → раз в 30 минут, чтобы быстрее поймать сбой во время активной работы.</td>
+        <td>Дополнительная возможность отправить суточный пульс, если он сегодня ещё не зарезервирован.</td>
         <td>не молчит</td>
         <td><code class="kbd">cron.py:957</code> · <code class="kbd">_job_pulse</code> <code class="kbd">:502</code></td>
       </tr>

@@ -5,7 +5,8 @@
 КОНКРЕТНЫЙ вид уведомления НЕЗАВИСИМО от времени суток:
 
 - `admin_notify_pulse` — pulse-hourly / pulse-workhours-extra
-  (гейт в `services/cron.py::_job_pulse`). startup-pulse НЕ подчиняется
+  (гейт в `services/cron.py::_job_pulse`, не чаще одного раза в день).
+  startup-pulse НЕ подчиняется
   этому флагу — это разовое диагностическое событие при рестарте
   процесса, а не рутинный heartbeat.
 - `admin_notify_consent` — уведомление о даче согласия
