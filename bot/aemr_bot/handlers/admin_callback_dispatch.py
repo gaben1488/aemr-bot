@@ -570,6 +570,7 @@ async def _op_operators_action(event, payload: str) -> None:
 # бы оборачивать такие цели пустой обёрткой ради типа — ровно те
 # обёртки, которые здесь и убирали.
 _PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[object]]], ...] = (
+    ("op:reply_cancel:", lambda e, p: admin_commands.run_reply_cancel(e, p.removeprefix("op:reply_cancel:"))),
     ("op:reply_resolve:", _op_reply_resolve),
     ("op:reply_confirm:", _op_reply_resolve),
     ("op:reply_attempt:", _op_reply_attempt),

@@ -75,21 +75,26 @@ async def _safe_admin_notice(event, text: str) -> None:
 
 def remember_reply_intent(
     operator_id: int, appeal_id: int, *, is_final: bool = True
-) -> None:
+) -> str:
     """Запомнить, что оператор собирается отвечать на обращение.
 
     is_final=True — финальный ответ, обращение перейдёт в ANSWERED.
     is_final=False — промежуточный ответ (диалог/уточнение), статус
     остаётся IN_PROGRESS.
     """
+    from secrets import token_hex
+
     from aemr_bot.services import wizard_registry as _wr
 
+    token = token_hex(8)
     _wr.set_reply_intent(
         operator_id,
         appeal_id,
         _time.monotonic() + _REPLY_INTENT_TTL_SEC,
         is_final=is_final,
+        token=token,
     )
+    return token
 
 
 def consume_reply_intent(
@@ -746,34 +751,9 @@ async def _deliver_operator_reply_guarded(
             "operator_reply: admin_card.render failed for #%s", appeal.id
         )
 
-    # Развязка финального и промежуточного ответа. До этого фикса
-    # промежуточный ответ показывал «обращение #N закрыто» — регрессия,
-    # путала оператора (житель остаётся в работе, но карточка говорит
-    # обратное).
-    #
-    # is_final=True: отдельная карточка-подтверждение (ADMIN_REPLY_
-    # DELIVERED_FINAL, «Финальный ответ отправлен жителю…») убрана по
-    # решению владельца — она дублировала свежий event_header карточки
-    # обращения выше (`reply_event_header`, «✉️ Финальный ответ отправлен
-    # по обращению #N — статус «Завершено»», строка ~629), который
-    # `admin_card_service.render` уже опубликовал только что. Оператору
-    # достаточно ОДНОГО подтверждения, не двух карточек подряд с одним
-    # и тем же смыслом. Перевод статуса, обновление карточки обращения
-    # и запись в audit_log происходят раньше (см. `_persist_reply_and_card`
-    # выше) и этой правкой не затронуты.
-    #
-    # is_final=False: отдельное сообщение оставлено — оно несёт другую
-    # информацию («остаётся в работе, можно дослать уточнения»), которой
-    # нет в event_header промежуточного ответа.
-    if not is_final:
-        confirm_text = texts.ADMIN_REPLY_DELIVERED_INTERMEDIATE.format(
-            number=appeal.id
-        )
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=confirm_text,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+    # Событийная карточка уже содержит тип ответа и актуальный статус.
+    # Дополнительное подтверждение дублировало её в служебном чате.
+    # При неизвестном исходе публикации карточки не повторяем запрос MAX.
     return True
 
 

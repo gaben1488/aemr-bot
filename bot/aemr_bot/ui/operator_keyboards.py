@@ -19,12 +19,13 @@ from aemr_bot.db.models import AppealStatus
 from aemr_bot.handlers import callback_payloads as cp
 
 
-def cancel_reply_intent_keyboard():
+def cancel_reply_intent_keyboard(token: str = ""):
     """Кнопка «❌ Отменить» под подсказкой ввода ответа. Без неё intent
     мог жить 5 минут, и любой следующий текст оператора уходил жителю —
     в т.ч. случайные «окей», текст для другого обращения, ввод wizard'а."""
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="❌ Отменить ответ", payload=cp.OP_REPLY_CANCEL))
+    payload = f"{cp.OP_REPLY_CANCEL}:{token}" if token else cp.OP_REPLY_CANCEL
+    kb.row(CallbackButton(text="❌ Отменить ответ", payload=payload))
     return kb.as_markup()
 
 

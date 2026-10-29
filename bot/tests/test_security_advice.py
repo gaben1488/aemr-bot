@@ -21,3 +21,16 @@ def test_operator_warning_does_not_recommend_visiting_unverified_link(monkeypatc
     text = _maybe_url_warning("Ссылка https://example.test/path")
     assert "не делает ссылку безопасной" in text
     assert "введите в браузер вручную" not in text
+
+
+def test_feed_match_is_a_risk_indicator_not_a_verdict(monkeypatch) -> None:
+    from aemr_bot.services import threat_intel
+
+    class MatchedStore:
+        def is_malicious(self, candidate):
+            return True, "источник"
+
+    monkeypatch.setattr(threat_intel, "get_store", lambda: MatchedStore())
+    text = _maybe_url_warning("Ссылка https://example.test/path")
+    assert "совпал" in text and "ошибаться" in text
+    assert "Не открывайте" in text

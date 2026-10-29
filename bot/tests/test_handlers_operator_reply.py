@@ -567,19 +567,7 @@ class TestDeliverOperatorReply:
 
 
 class TestIntermediateReplyConfirmText:
-    """Развязка confirm-сообщения оператора: финальный vs промежуточный.
-
-    Регрессия — раньше шёл ADMIN_REPLY_DELIVERED = «Обращение #N закрыто»
-    даже для is_final=False. Это путало оператора (он понимал, что
-    житель остаётся в работе, но карточка говорила обратное).
-
-    2026-07: для is_final=True отдельное confirm-сообщение
-    (ADMIN_REPLY_DELIVERED_FINAL, «Финальный ответ отправлен жителю…»)
-    убрано владельцем — оно дублировало event_header свежей карточки
-    обращения (`admin_card.render`, замоканный здесь). Для is_final=False
-    confirm-сообщение (ADMIN_REPLY_DELIVERED_INTERMEDIATE) сохранено —
-    несёт другую информацию, которой нет в event_header.
-    """
+    """Подтверждение содержится в событийной карточке без дубля в чате."""
 
     async def _run_deliver(self, *, is_final: bool) -> SimpleNamespace:
         from aemr_bot.handlers import operator_reply as opr
@@ -644,22 +632,13 @@ class TestIntermediateReplyConfirmText:
         assert len(delivery_calls) == 1
 
     @pytest.mark.asyncio
-    async def test_intermediate_reply_says_in_progress(self) -> None:
+    async def test_intermediate_reply_sends_no_duplicate_confirmation(self) -> None:
         event = await self._run_deliver(is_final=False)
         confirm_calls = [
             c for c in event.bot.send_message.await_args_list
             if "chat_id" in c.kwargs and c.kwargs.get("text")
         ]
-        assert confirm_calls
-        text = confirm_calls[-1].kwargs.get("text", "")
-        # Главное: НЕТ слова «закрыт».
-        assert "закрыт" not in text.lower(), text
-        # И есть маркер промежуточности.
-        assert (
-            "промежуточный" in text.lower()
-            or "в работе" in text.lower()
-        ), text
-        assert "#42" in text
+        assert not confirm_calls
 
 
 class TestReplyRejectionBeforeDelivery:

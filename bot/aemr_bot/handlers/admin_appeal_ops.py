@@ -153,13 +153,8 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
             await ack_callback(event)
             await _op_appeal_not_found(event, appeal_id)
             return
-        if appeal.status == AppealStatus.CLOSED.value:
-            await ack_callback(event)
-            await op_screen(
-                event,
-                f"Обращение #{appeal_id} закрыто. Сначала верните его в "
-                f"работу кнопкой «🔁 Возобновить» под карточкой.",
-            )
+        if appeal.status in {AppealStatus.CLOSED.value, AppealStatus.ANSWERED.value}:
+            await ack_callback(event, "Обращение завершено. Сначала возобновите его.")
             return
         if appeal.user is None or appeal.user.is_blocked:
             await ack_callback(event)
@@ -205,7 +200,7 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
                     operator_id, prev_appeal_id, appeal_id,
                 )
 
-    op_reply.remember_reply_intent(operator_id, appeal_id, is_final=is_final)
+    token = op_reply.remember_reply_intent(operator_id, appeal_id, is_final=is_final)
     label = "Ответ" if is_final else "Промежуточный ответ"
     await ack_callback(event, f"{label} на #{appeal_id}")
     prompt_hint = (
@@ -232,7 +227,7 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
         f"Можно приложить до {max(1, min(11, cfg.attachments_per_relay_message))} фото или видео "
         "либо один документ. Отправьте следующее сообщение в этот чат "
         "или нажмите «Отменить».",
-        kbds.cancel_reply_intent_keyboard(),
+        kbds.cancel_reply_intent_keyboard(token),
         new=True,
     )
     # Памятка про whitelist гос-доменов раньше дублировалась здесь
@@ -243,7 +238,7 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
     # десятки раз в день, не нужно каждый раз листать памятку.
 
 
-async def run_reply_cancel(event) -> None:
+async def run_reply_cancel(event, token: str = "") -> None:
     """Кнопка «❌ Отменить ответ» под подсказкой ввода."""
     from aemr_bot.handlers import operator_reply as op_reply
 
@@ -254,17 +249,14 @@ async def run_reply_cancel(event) -> None:
     if operator_id is None:
         await ack_callback(event)
         return
+    if not wizard_registry.reply_intent_token_matches(operator_id, token):
+        await ack_callback(event, "Кнопка устарела; текущий ответ не отменён")
+        return
     cancelled_appeal = op_reply.drop_reply_intent(operator_id)
-    await ack_callback(event)
-    # SACRED #4: cancel-сообщение тоже отдельным new (не trample prompt).
     if cancelled_appeal is not None:
-        await op_screen(
-            event,
-            f"Ответ на обращение #{cancelled_appeal} отменён.",
-            new=True,
-        )
+        await ack_callback(event, f"Ответ на обращение #{cancelled_appeal} отменён")
     else:
-        await op_screen(event, "Мастер ответа уже закрыт.", new=True)
+        await ack_callback(event, "Мастер ответа уже закрыт")
 
 
 _REOPEN_FALLBACK_TEXT = {
@@ -299,10 +291,18 @@ async def run_reopen(event, appeal_id: int) -> None:
                 action="reopen",
                 target=f"appeal #{appeal_id}",
             )
+    if result != "reopened":
+        notice = {
+            "already_open": "Обращение уже в работе",
+            "blocked_by_revoke": "Нельзя возобновить: данные жителя удалены или согласие отозвано",
+            "not_found": "Обращение не найдено",
+        }[result]
+        await ack_callback(event, notice)
+        return
     await ack_callback(event)
-    fallback = _REOPEN_FALLBACK_TEXT[result].format(number=appeal_id)
-    # freshness-rule: edit если карточка ещё последняя в чате, иначе new.
-    await _show_appeal_card_or_result(event, appeal_id, fallback)
+    await _show_appeal_card_or_result(
+        event, appeal_id, _REOPEN_FALLBACK_TEXT[result].format(number=appeal_id)
+    )
 
 
 async def run_close(event, appeal_id: int) -> None:

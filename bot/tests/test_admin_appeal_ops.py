@@ -81,14 +81,14 @@ class TestRunReplyIntent:
         assert "999" in text or "не найдено" in text.lower()
 
     @pytest.mark.asyncio
-    async def test_appeal_closed_blocks_reply(self) -> None:
-        from aemr_bot.db.models import AppealStatus
+    @pytest.mark.parametrize("status", ["closed", "answered"])
+    async def test_finished_appeal_blocks_reply(self, status) -> None:
         from aemr_bot.handlers import admin_appeal_ops
 
         event = _make_event()
         appeal = SimpleNamespace(
             id=5,
-            status=AppealStatus.CLOSED.value,
+            status=status,
             user=SimpleNamespace(is_blocked=False),
         )
         with patch("aemr_bot.handlers.admin_appeal_ops.is_admin_chat",
@@ -99,10 +99,10 @@ class TestRunReplyIntent:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_appeal_ops.appeals_service.get_by_id",
                    AsyncMock(return_value=appeal)), \
-             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+             patch("aemr_bot.handlers.admin_appeal_ops.ack_callback", AsyncMock()) as ack:
             await admin_appeal_ops.run_reply_intent(event, 5)
-        text = event.bot.send_message.call_args.kwargs["text"]
-        assert "закрыто" in text.lower()
+        assert "возобновите" in ack.await_args.args[1].lower()
+        event.bot.send_message.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_user_blocked_blocks_reply(self) -> None:
@@ -139,7 +139,7 @@ class TestRunReplyIntent:
             status=AppealStatus.NEW.value,
             user=SimpleNamespace(is_blocked=False),
         )
-        remember = MagicMock()
+        remember = MagicMock(return_value="token")
         with patch("aemr_bot.handlers.admin_appeal_ops.is_admin_chat",
                    return_value=True), \
              patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
@@ -173,7 +173,7 @@ class TestRunReplyIntent:
             status=AppealStatus.NEW.value,
             user=SimpleNamespace(is_blocked=False),
         )
-        remember = MagicMock()
+        remember = MagicMock(return_value="token")
         with patch("aemr_bot.handlers.admin_appeal_ops.is_admin_chat",
                    return_value=True), \
              patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
@@ -222,7 +222,7 @@ class TestRunReplyIntentRaceWarning:
              patch("aemr_bot.handlers.admin_appeal_ops.get_user_id",
                    return_value=7), \
              patch("aemr_bot.handlers.operator_reply.remember_reply_intent",
-                   MagicMock()), \
+                   MagicMock(return_value="token")), \
              patch("aemr_bot.services.wizard_registry.get_reply_intent",
                    return_value=existing_intent), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
@@ -294,24 +294,28 @@ class TestRunReplyCancel:
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.operator_reply.drop_reply_intent",
                    return_value=42), \
-             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
-            await admin_appeal_ops.run_reply_cancel(event)
-        text = event.bot.send_message.call_args.kwargs["text"]
-        assert "42" in text and "отменён" in text.lower()
+             patch("aemr_bot.services.wizard_registry.reply_intent_token_matches",
+                   return_value=True), \
+             patch("aemr_bot.handlers.admin_appeal_ops.ack_callback", AsyncMock()) as ack:
+            await admin_appeal_ops.run_reply_cancel(event, "current")
+        assert "42" in ack.await_args.args[1] and "отменён" in ack.await_args.args[1].lower()
+        event.bot.send_message.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_no_intent_no_confirmation(self) -> None:
+    async def test_old_cancel_button_does_not_cancel_current_intent(self) -> None:
         from aemr_bot.handlers import admin_appeal_ops
 
         event = _make_event()
         with patch("aemr_bot.handlers.admin_appeal_ops.ensure_operator",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.operator_reply.drop_reply_intent",
-                   return_value=None), \
-             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
-            await admin_appeal_ops.run_reply_cancel(event)
-        text = event.bot.send_message.call_args.kwargs["text"]
-        assert "уже закрыт" in text.lower()
+                   return_value=42) as drop, \
+             patch("aemr_bot.services.wizard_registry.reply_intent_token_matches",
+                   return_value=False), \
+             patch("aemr_bot.handlers.admin_appeal_ops.ack_callback", AsyncMock()) as ack:
+            await admin_appeal_ops.run_reply_cancel(event, "stale")
+        drop.assert_not_called()
+        assert "устарела" in ack.await_args.args[1].lower()
 
 
 # --- run_reopen / run_close ---------------------------------------------------
@@ -369,7 +373,6 @@ class TestRunReopen:
     async def test_blocked_by_revoke_no_audit_informative_text(self) -> None:
         """blocked_by_revoke → audit не пишем, оператор видит понятное
         сообщение про ПДн-гард (не дезориентирующее «не найдено»)."""
-        from aemr_bot import texts
         from aemr_bot.handlers import admin_appeal_ops
 
         event = _make_event()
@@ -382,13 +385,11 @@ class TestRunReopen:
                    AsyncMock(return_value="blocked_by_revoke")), \
              patch("aemr_bot.handlers.admin_appeal_ops.operators_service.write_audit",
                    write_audit), \
-             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+             patch("aemr_bot.handlers.admin_appeal_ops.ack_callback", AsyncMock()) as ack:
             await admin_appeal_ops.run_reopen(event, 7)
         write_audit.assert_not_called()
-        # хотя бы одно send_message с текстом про блокировку
-        sent_text = event.bot.send_message.call_args.kwargs.get("text", "")
-        expected = texts.OP_APPEAL_BLOCKED_BY_REVOKE.format(number=7)
-        assert expected in sent_text or sent_text == expected
+        assert "согласие отозвано" in ack.await_args.args[1]
+        event.bot.send_message.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_already_open_no_audit(self) -> None:
