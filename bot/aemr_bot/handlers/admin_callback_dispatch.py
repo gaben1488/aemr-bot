@@ -216,6 +216,7 @@ async def _op_word(event, appeal_id: int) -> None:
     """Export one appeal only after checking the actor's operator role."""
     import asyncio
     from aemr_bot.services import admin_bus, appeal_word, uploads
+    from aemr_bot.utils.resident_lifecycle import guard
 
     await ack_callback(event, "Готовлю документ…")
     if not await ensure_operator(event):
@@ -227,21 +228,32 @@ async def _op_word(event, appeal_id: int) -> None:
                                   text="Обращение не найдено.",
                                   attachments=[kbds.op_back_to_menu_keyboard()])
         return
-    document = await asyncio.to_thread(appeal_word.build_appeal_docx, appeal)
-    token = await uploads.upload_bytes(event.bot, document, suffix=".docx")
-    if not token:
-        await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
-                                  text="Не удалось загрузить документ. Попробуйте позже.",
-                                  attachments=[kbds.op_back_to_menu_keyboard()])
-        return
-    sent = await admin_bus.send(event.bot, text=f"📄 История обращения № {appeal_id} · Word",
-                                attachments=[uploads.file_attachment(token)], critical=True)
-    if not sent:
-        await send_or_edit_screen(
-            event, chat_id=cfg.admin_group_id,
-            text="Не удалось подтвердить отправку документа. Проверьте чат перед повтором.",
-            attachments=[kbds.op_back_to_menu_keyboard()],
-        )
+    resident_id = getattr(appeal.user, "max_user_id", None)
+    async with guard(resident_id):
+        # Erasure shares this guard. Re-read after acquiring it, and do not
+        # send a document built from a snapshot taken before deletion.
+        async with session_scope() as session:
+            current = await appeals_service.get_by_id_with_messages(session, appeal_id)
+        if not current or getattr(current.user, "max_user_id", None) != resident_id:
+            await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+                                      text="Данные обращения изменились. Откройте карточку заново.",
+                                      attachments=[kbds.op_back_to_menu_keyboard()])
+            return
+        document = await asyncio.to_thread(appeal_word.build_appeal_docx, current)
+        token = await uploads.upload_bytes(event.bot, document, suffix=".docx")
+        if not token:
+            await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+                                      text="Не удалось загрузить документ. Попробуйте позже.",
+                                      attachments=[kbds.op_back_to_menu_keyboard()])
+            return
+        sent = await admin_bus.send(event.bot, text=f"📄 История обращения № {appeal_id} · Word",
+                                    attachments=[uploads.file_attachment(token)], critical=True)
+        if not sent:
+            await send_or_edit_screen(
+                event, chat_id=cfg.admin_group_id,
+                text="Не удалось подтвердить отправку документа. Проверьте чат перед повтором.",
+                attachments=[kbds.op_back_to_menu_keyboard()],
+            )
 
 
 async def _op_record_attachments(event, payload: str) -> None:

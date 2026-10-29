@@ -14,7 +14,7 @@ from sqlalchemy.orm import selectinload
 from aemr_bot.config import settings
 from aemr_bot.db.models import Appeal, Message
 from aemr_bot.services import appeals as appeals_service
-from aemr_bot.services import sla, stats
+from aemr_bot.services import privacy_epoch, sla, stats
 from aemr_bot.utils.pii_mask import mask_phone
 from aemr_bot.utils.text_pages import split_text_units
 
@@ -107,11 +107,12 @@ def _attachment_description(item) -> str:
     return f"{label}: {name}" if name else label
 
 
-async def build_xlsx(session, period: str) -> tuple[bytes, str, int]:
+async def build_xlsx_with_epoch(session, period: str) -> tuple[bytes, str, int, int]:
     if not session.in_transaction() and session.bind.dialect.name == "postgresql":
         # Keep the selected appeals and their histories at one consistent
         # point in time while other operators continue their work.
         await session.execute(text("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"))
+    snapshot_epoch = await privacy_epoch.read(session)
     start, end, title = stats.period_window(period)
     workbook = Workbook(write_only=True)
     overview = _Sheet(workbook, "Обращения", ["№", "Подано", "Житель", "Телефон", "Населённый пункт",
@@ -229,4 +230,9 @@ async def build_xlsx(session, period: str) -> tuple[bytes, str, int]:
         sheet.finish()
     output = BytesIO()
     await asyncio.to_thread(workbook.save, output)
-    return output.getvalue(), title, count
+    return output.getvalue(), title, count, snapshot_epoch
+
+
+async def build_xlsx(session, period: str) -> tuple[bytes, str, int]:
+    content, title, count, _ = await build_xlsx_with_epoch(session, period)
+    return content, title, count

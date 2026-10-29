@@ -674,6 +674,8 @@ async def purge_old_appeals_content(
     # `timedelta(days=365*N)` теряет ~1 день за 4 года, и за 5-летний
     # порог retention обращения, поданные ровно 5 лет назад, могут
     # не попасть в первую же ночь. Не критично, но честнее.
+    from aemr_bot.services import privacy_epoch
+    await privacy_epoch.mark_erasure(session)
     threshold = datetime.now(UTC) - relativedelta(years=years)
     # Якорь отсчёта — COALESCE(closed_at, answered_at). closed_at ставит
     # ТОЛЬКО явное «Закрыть» (close()); финальный ответ оператора

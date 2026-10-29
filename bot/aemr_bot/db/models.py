@@ -353,6 +353,13 @@ class Setting(Base):
     synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class PrivacyEpoch(Base):
+    """Non-identifying counter used to invalidate exports after erasure."""
+    __tablename__ = "privacy_epoch"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    generation: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
+
+
 class BroadcastStatus(StrEnum):
     DRAFT = "draft"
     SENDING = "sending"

@@ -437,6 +437,8 @@ async def erase_pdn_detailed(
         if revoked_before is None:
             await erase_pending(session, max_user_id)
         return None
+    from aemr_bot.services import privacy_epoch
+    await privacy_epoch.mark_erasure(session)
     await erase_pending(session, max_user_id)
     # Эти записи описывают жителя; журнал управления операторами может
     # содержать тот же MAX ID в другом качестве и должен сохраниться.
