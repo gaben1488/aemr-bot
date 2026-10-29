@@ -129,20 +129,24 @@ async def maintenance(bot) -> None:
         await session.execute(delete(InboxEvent).where(InboxEvent.received_at < now - timedelta(days=30)))
         failures = list((await session.scalars(select(InboxEvent).where(
             InboxEvent.state == "failed", InboxEvent.notified.is_(False),
-        ).order_by(InboxEvent.id).limit(20))).all())
+        ).order_by(InboxEvent.id).limit(20).with_for_update(skip_locked=True))).all())
+        if failures:
+            # Claim before the MAX request. If the process crashes or the
+            # response is lost, sending the same alert again could duplicate it.
+            await session.execute(update(InboxEvent).where(
+                InboxEvent.id.in_([r.id for r in failures])
+            ).values(notified=True))
     if not failures:
         return
-    ids = ", ".join(f"#{r.id} ({r.update_type}, MAX ID {r.max_user_id or '—'})" for r in failures)
+    ids = ", ".join(f"#{r.id} ({r.update_type})" for r in failures)
     sent = await admin_bus.send(bot, text=(
         "⚠️ Не завершена обработка событий: " + ids + ". "
         "Автоматического повтора нет: часть действий могла выполниться. "
         "Проверьте обращения и журнал рассылок перед повтором действия; "
         "при необходимости попросите отправителя повторить сообщение."
-    ))
-    if sent:
-        async with session_scope() as session:
-            await session.execute(update(InboxEvent).where(InboxEvent.id.in_([r.id for r in failures]))
-                                  .values(notified=True))
+    ), critical=True)
+    if not sent:
+        log.warning("inbox: delivery of failed-event alert was not confirmed; inspect diagnostics")
 
 
 async def process_one(dp, bot) -> bool:

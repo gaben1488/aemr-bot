@@ -174,10 +174,15 @@ async def reset_state(session: AsyncSession, max_user_id: int) -> None:
     )
 
 
+class StaleDialogStateError(Exception):
+    """A delayed message no longer belongs to the current step."""
+
+
 async def update_dialog_data(
     session: AsyncSession,
     max_user_id: int,
     patch: dict | Callable[[dict], dict],
+    *, expected_states: set[str] | None = None,
 ) -> dict:
     """Read-modify-write апдейт jsonb dialog_data с защитой от гонки.
 
@@ -208,9 +213,14 @@ async def update_dialog_data(
         # SQLite / unsupported backend — без lock-а живём, в production
         # это postgres и lock работает.
         log.debug("advisory-lock недоступен для backend тестов", exc_info=True)
-    user = await session.scalar(select(User).where(User.max_user_id == max_user_id))
+    user = await session.scalar(
+        select(User).where(User.max_user_id == max_user_id).with_for_update()
+        .execution_options(populate_existing=True)
+    )
     if user is None:
         return {}
+    if expected_states is not None and user.dialog_state not in expected_states:
+        raise StaleDialogStateError
     data = dict(user.dialog_data or {})
     data.update(patch(data) if callable(patch) else patch)
     user.dialog_data = data

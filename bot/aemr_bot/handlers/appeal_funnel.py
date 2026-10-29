@@ -650,7 +650,11 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
     from aemr_bot.services.resident_drafts import DraftLimitError
     try:
         async with session_scope() as session:
-            await users_service.update_dialog_data(session, max_user_id, _merge_summary)
+            await users_service.update_dialog_data(
+                session, max_user_id, _merge_summary,
+                expected_states={DialogState.AWAITING_SUMMARY.value,
+                                 DialogState.AWAITING_FOLLOWUP_TEXT.value},
+            )
     except DraftLimitError:
         await event.message.answer(
             f"Эта часть не добавлена: в черновике может быть до {cfg.summary_max_chars} "
@@ -658,6 +662,11 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
             "Ранее добавленные части сохранены. Сократите новую часть или приложите документ."
         )
         await show_summary_draft(event, max_user_id)
+        return
+    except users_service.StaleDialogStateError:
+        await event.message.answer(
+            "Черновик уже отправлен или приостановлен. Откройте меню, чтобы продолжить."
+        )
         return
     await show_summary_draft(event, max_user_id)
 

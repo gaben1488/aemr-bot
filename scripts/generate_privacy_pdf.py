@@ -1,6 +1,7 @@
 """Собирает docs/Политика.pdf из docs/Политика.md через reportlab.
 
-Рендерит русский текст системным Arial. Движок Paragraph из reportlab
+Рендерит русский текст шрифтом Times New Roman при его наличии, иначе
+DejaVu Serif. Движок Paragraph из reportlab
 аккуратно обрабатывает длинные ссылки благодаря переносу слов с явными
 точками разрыва.
 
@@ -18,7 +19,7 @@ import re
 import sys
 from pathlib import Path
 
-from reportlab.lib.enums import TA_LEFT
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
@@ -37,9 +38,13 @@ SRC = ROOT / "docs" / "Политика_конфиденциальности_И�
 # bot/aemr_bot/services/policy.py::POLICY_PDF_DISPLAY_NAME.
 OUT = ROOT / "docs" / "PRIVACY.pdf"
 
-WIN_FONTS = Path("C:/Windows/Fonts")
-FONT_REGULAR = WIN_FONTS / "arial.ttf"
-FONT_BOLD = WIN_FONTS / "arialbd.ttf"
+FONT_PAIRS = (
+    (Path("C:/Windows/Fonts/times.ttf"), Path("C:/Windows/Fonts/timesbd.ttf")),
+    (Path("/usr/share/fonts/truetype/msttcorefonts/Times_New_Roman.ttf"),
+     Path("/usr/share/fonts/truetype/msttcorefonts/Times_New_Roman_Bold.ttf")),
+    (Path("/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"),
+     Path("/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf")),
+)
 
 
 def preprocess(md: str) -> str:
@@ -118,19 +123,22 @@ def main() -> int:
     if not SRC.exists():
         print(f"source not found: {SRC}", file=sys.stderr)
         return 1
-    if not FONT_REGULAR.exists() or not FONT_BOLD.exists():
-        print("Arial fonts not found in C:/Windows/Fonts.", file=sys.stderr)
+    fonts = next(((regular, bold) for regular, bold in FONT_PAIRS
+                  if regular.exists() and bold.exists()), None)
+    if fonts is None:
+        print("A Cyrillic serif font pair is required.", file=sys.stderr)
         return 2
 
-    pdfmetrics.registerFont(TTFont("Arial", str(FONT_REGULAR)))
-    pdfmetrics.registerFont(TTFont("Arial-Bold", str(FONT_BOLD)))
+    pdfmetrics.registerFont(TTFont("PolicySerif", str(fonts[0])))
+    pdfmetrics.registerFont(TTFont("PolicySerif-Bold", str(fonts[1])))
+    pdfmetrics.registerFontFamily("PolicySerif", normal="PolicySerif", bold="PolicySerif-Bold")
 
     styles = getSampleStyleSheet()
-    base = dict(fontName="Arial", alignment=TA_LEFT, leading=14)
-    body = ParagraphStyle("body", parent=styles["BodyText"], fontSize=10.5, spaceAfter=4, **base)
-    h1 = ParagraphStyle("h1", parent=body, fontName="Arial-Bold", fontSize=15, leading=18, spaceAfter=8)
-    h2 = ParagraphStyle("h2", parent=body, fontName="Arial-Bold", fontSize=12.5, leading=16, spaceBefore=8, spaceAfter=4)
-    h3 = ParagraphStyle("h3", parent=body, fontName="Arial-Bold", fontSize=11.5, leading=14, spaceBefore=6, spaceAfter=2)
+    base = dict(fontName="PolicySerif", alignment=TA_JUSTIFY, leading=18)
+    body = ParagraphStyle("body", parent=styles["BodyText"], fontSize=14, firstLineIndent=12.5 * mm, spaceAfter=4, **base)
+    h1 = ParagraphStyle("h1", parent=body, fontName="PolicySerif-Bold", alignment=TA_CENTER, firstLineIndent=0, fontSize=14, leading=18, spaceAfter=8)
+    h2 = ParagraphStyle("h2", parent=body, fontName="PolicySerif-Bold", alignment=TA_CENTER, firstLineIndent=0, fontSize=14, leading=18, spaceBefore=8, spaceAfter=4)
+    h3 = ParagraphStyle("h3", parent=body, fontName="PolicySerif-Bold", alignment=TA_CENTER, firstLineIndent=0, fontSize=14, leading=18, spaceBefore=6, spaceAfter=2)
     li = ParagraphStyle("li", parent=body, leftIndent=14, bulletIndent=4, spaceAfter=2)
     bq = ParagraphStyle("bq", parent=body, leftIndent=10, textColor="#555", fontSize=9.5)
 
@@ -154,10 +162,10 @@ def main() -> int:
     doc = SimpleDocTemplate(
         str(OUT),
         pagesize=A4,
-        leftMargin=20 * mm,
-        rightMargin=20 * mm,
-        topMargin=18 * mm,
-        bottomMargin=18 * mm,
+        leftMargin=30 * mm,
+        rightMargin=10 * mm,
+        topMargin=20 * mm,
+        bottomMargin=20 * mm,
         title="Политика конфиденциальности — aemr_feedback_bot",
     )
     doc.build(flow)

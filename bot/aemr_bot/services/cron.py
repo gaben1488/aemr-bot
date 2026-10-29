@@ -793,10 +793,8 @@ async def _job_appeals_5y_retention(send_admin_text) -> None:
 async def _warn_about_approaching_pdn_deadline(send_admin_text) -> None:
     """Предупредить оператора о жителях, чей срок уничтожения ПДн близок.
 
-    Уничтожение по истечении 30 дней после отзыва согласия безусловно и
-    закрывает открытые обращения БЕЗ ответа. Само по себе это законно
-    (152-ФЗ ст. 21 ч. 5 не даёт продлевать срок), но узнавать об этом
-    постфактум оператору незачем: пока неделя есть, ответить ещё можно.
+    Запланированная очистка закроет открытые обращения без ответа. Наличие
+    иных оснований обработки и порядок ответа оценивает ответственное лицо.
 
     Предупреждаем только по тем, у кого реально остались открытые
     обращения — иначе алёрт превратится в шум и его перестанут читать.
@@ -812,24 +810,30 @@ async def _warn_about_approaching_pdn_deadline(send_admin_text) -> None:
             )
         if not approaching:
             return
-        pending: list[int] = []
-        for max_user_id in approaching:
-            async with session_scope() as session:
-                user = await users_service.find_by_max_id(session, max_user_id)
-                if user is None:
-                    continue
-                if await users_service.has_open_appeals(session, user.id):
-                    pending.append(max_user_id)
-        if not pending:
+        from sqlalchemy import func, select
+        from aemr_bot.db.models import Appeal, AppealStatus, User
+
+        async with session_scope() as session:
+            condition = (
+                User.max_user_id.in_(approaching),
+                Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
+            )
+            count = await session.scalar(
+                select(func.count()).select_from(Appeal).join(User).where(*condition)
+            ) or 0
+            appeal_ids = list(await session.scalars(
+                select(Appeal.id).join(User).where(*condition).order_by(Appeal.id).limit(20)
+            ))
+        if not count:
             return
-        ids = ", ".join(str(uid) for uid in pending[:20])
-        more = f" и ещё {len(pending) - 20}" if len(pending) > 20 else ""
+        ids = ", ".join(f"№ {appeal_id}" for appeal_id in appeal_ids)
+        more = f" и ещё {count - 20}" if count > 20 else ""
         await send_admin_text(
             f"⏳ Скоро истекает срок хранения данных по отозванным "
             f"согласиям — осталось не больше {PDN_DEADLINE_WARN_DAYS} дней.\n"
-            f"У этих жителей есть неотвеченные обращения: {ids}{more}.\n"
-            f"Если не ответить, обращения закроются без ответа: по закону "
-            f"данные придётся уничтожить.",
+            f"Открытые обращения: {ids}{more}.\n"
+            f"Проверьте порядок дальнейшей работы: при очистке рабочей базы "
+            f"открытые обращения будут закрыты без ответа.",
             critical=True,
         )
     except Exception:

@@ -45,3 +45,18 @@ async def test_pause_preserves_completed_parts_and_does_not_replace_a_draft(sess
     await session.refresh(user)
     assert user.appeal_draft["data"]["draft_token"] == "first"
     assert user.dialog_data["draft_token"] == "second"
+
+
+@pytest.mark.asyncio
+async def test_late_part_does_not_recreate_a_cleared_draft(session):
+    from aemr_bot.db.models import DialogState, User
+    from aemr_bot.services.users import StaleDialogStateError, update_dialog_data
+
+    user = User(max_user_id=15002002, dialog_state=DialogState.IDLE.value, dialog_data={})
+    session.add(user)
+    await session.flush()
+    with pytest.raises(StaleDialogStateError):
+        await update_dialog_data(session, user.max_user_id, {"summary_chunks": ["опоздавшая часть"]},
+                                 expected_states={DialogState.AWAITING_SUMMARY.value})
+    await session.refresh(user)
+    assert user.dialog_data == {}

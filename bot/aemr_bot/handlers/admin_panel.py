@@ -393,6 +393,15 @@ async def _do_diag(event) -> None:
     from aemr_bot.services import alert_state, threat_intel
     async with session_scope() as session:
         threat_alert = await alert_state.get(session, "threat_intel")
+        from aemr_bot.db.models import InboxEvent
+        failed_receipts = await session.scalar(
+            select(func.count()).select_from(InboxEvent).where(InboxEvent.state == "failed")
+        ) or 0
+    if failed_receipts:
+        warnings_lines.append(
+            f"⚠️ Не завершено событий за период хранения: {failed_receipts}. "
+            "Проверьте журнал до повторных действий."
+        )
     if threat_intel.get_store().is_stale():
         warnings_lines.append("⚠️ Источники антифишинга давно не обновлялись; проверьте их доступность.")
         if threat_alert == "unknown":

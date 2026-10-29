@@ -1,4 +1,5 @@
 import logging
+import secrets
 from collections.abc import Callable
 from datetime import UTC
 from typing import Any, NamedTuple
@@ -325,6 +326,7 @@ async def start_appeal_repeat(event, appeal_id: int, max_user_id: int):
             "locality": appeal.locality,
             "address": appeal.address,
             "topic": appeal.topic,
+            "draft_token": secrets.token_urlsafe(12),
         }
         if appeal.status in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
             data.update(
@@ -352,10 +354,10 @@ async def start_appeal_repeat(event, appeal_id: int, max_user_id: int):
             f"Подаём новое обращение {context}:\n"
             f"📍 {appeal.locality}, {appeal.address}\n"
             f"🏷 {appeal.topic or '—'}\n\n"
-            f"Опишите суть одним сообщением. Можно приложить фото, видео "
-            f"или файл."
+            f"Опишите суть одним или несколькими сообщениями. Можно приложить фото, видео "
+            f"или файлы. Когда всё готово, подтвердите отправку черновика."
         ),
-        attachments=[keyboards.cancel_keyboard()],
+        attachments=[keyboards.appeal_draft_keyboard(data["draft_token"], has_content=False)],
     )
 
 
