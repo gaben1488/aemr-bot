@@ -287,6 +287,31 @@ def admin_card(appeal: Appeal, user: User) -> str:
         summary=defang_for_admin(_strip_card_chrome(appeal.summary)) or "—",
         answer_limit=settings.answer_max_chars,
     )
+    status = getattr(appeal, "status", None)
+    status_emoji, status_text = STATUS_LABELS.get(status, ("•", "Статус неизвестен"))
+    header = f"{status_emoji} Состояние: {status_text}"
+    anchor = getattr(appeal, "sla_anchor_at", None) or getattr(appeal, "created_at", None)
+    if (status in {"new", "in_progress"} and anchor is not None
+            and anchor.tzinfo is not None and "messages" in getattr(appeal, "__dict__", {})):
+        from datetime import UTC
+        from aemr_bot.services import sla
+
+        responses = [m for m in _loaded_messages(appeal)
+                     if getattr(m, "direction", None) == "from_operator"
+                     and getattr(m, "created_at", None) and m.created_at.tzinfo is not None
+                     and m.created_at >= anchor]
+        if responses:
+            first = min(m.created_at for m in responses)
+            elapsed = sla.business_seconds_between(first, datetime.now(UTC)) / 3600
+            header += f"\n💬 Первый ответ: {_local(first)} · после него {elapsed:.1f} рабочих ч"
+        else:
+            hours = getattr(appeal, "sla_hours_at_start", None)
+            target = hours if isinstance(hours, int) and hours > 0 else settings.sla_response_hours
+            elapsed = sla.business_seconds_between(anchor, datetime.now(UTC)) / 3600
+            origin = "срок периода" if hours else "ориентир настройки"
+            flag = "⚠️ " if elapsed >= target else "⏱ "
+            header += f"\n{flag}Первый ответ: {elapsed:.1f} из {target} рабочих ч ({origin})"
+    body = header + "\n\n" + body
     related = getattr(appeal, "related_appeal_id", None)
     if related:
         body = f"🔗 Связано с обращением № {related}\n\n" + body

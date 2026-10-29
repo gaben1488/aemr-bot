@@ -259,3 +259,18 @@ class TestAdminCardCitizenStateMarkers:
 
         result = admin_card(appeal, user)
         assert "🔕" in result, f"маркер «не подписан» не найден:\n{result}"
+
+
+def test_admin_card_reports_snapshot_status_and_prior_response():
+    from datetime import timedelta
+    now = datetime.now(UTC)
+    appeal = SimpleNamespace(id=90, status="in_progress", created_at=now - timedelta(days=2),
+                             sla_anchor_at=now - timedelta(days=2), sla_hours_at_start=4,
+                             locality="Елизово", address="Адрес", topic="Дорога",
+                             summary="Описание", attachments=[], messages=[
+                                 SimpleNamespace(direction="from_operator", text="Работаем",
+                                                 attachments=[], created_at=now - timedelta(days=1))])
+    result = admin_card(appeal, SimpleNamespace(first_name="Имя", phone="—"))
+    assert "В работе" in result
+    assert "Первый ответ" in result
+    assert "после него" in result
