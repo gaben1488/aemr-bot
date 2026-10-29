@@ -22,8 +22,13 @@ async def mark_erasure(session) -> None:
     await session.execute(statement)
 
 
-async def hold_export_if_current(session, expected: int) -> bool:
-    """Hold a shared lock through file upload/send, only for a fresh snapshot."""
+async def hold_delivery(session) -> None:
+    """Block erasure until this delivery transaction has ended."""
     if session.bind.dialect.name == "postgresql":
         await session.execute(text("SELECT pg_advisory_xact_lock_shared(:key)"), {"key": _LOCK_KEY})
+
+
+async def hold_export_if_current(session, expected: int) -> bool:
+    """Hold a shared lock through file upload/send, only for a fresh snapshot."""
+    await hold_delivery(session)
     return await read(session) == expected

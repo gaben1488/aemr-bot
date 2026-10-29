@@ -546,13 +546,15 @@ async def _deliver_operator_reply(
     audit_action: str,
     is_final: bool = True,
 ) -> bool:
-    # Serialize a resident's delivery with erasure through the latter's
-    # commit, including the MAX request. The deployment's inbox is a single
-    # process; this is not a distributed lock across independent processes.
+    # Erasure takes the local resident gate then the exclusive privacy lock.
+    # Use the same order here and hold the shared database lock through MAX
+    # delivery and the local write, including across independent processes.
+    from aemr_bot.services import privacy_epoch
     from aemr_bot.utils.resident_lifecycle import guard
 
     resident_id = getattr(getattr(appeal, "user", None), "max_user_id", None)
-    async with guard(resident_id):
+    async with guard(resident_id), session_scope() as privacy_session:
+        await privacy_epoch.hold_delivery(privacy_session)
         return await _deliver_operator_reply_guarded(
             event, appeal=appeal, operator=operator, text=text,
             audit_action=audit_action, is_final=is_final,
