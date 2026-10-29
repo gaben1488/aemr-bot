@@ -1071,6 +1071,10 @@ async def _job_working_hours_open_reminder(bot) -> None:
         signature_groups = [sorted(a.id for a in group) for group in (overdue, in_sla, with_reply)]
         if not await _claim_reminder_snapshot("open_reminder", signature_groups, total):
             return
+        if overdue:
+            # The main digest already contains this overdue set. The separate
+            # overdue job should send only if that set subsequently changes.
+            await _claim_reminder_snapshot("overdue_reminder", [sorted(a.id for a in overdue)], len(overdue))
         header = (
             f"📋 Открытых обращений: {total}. "
             f"Без первичного ответа: в срок — {len(in_sla)}, просрочено — {len(overdue)}; "

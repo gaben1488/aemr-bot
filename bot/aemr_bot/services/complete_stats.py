@@ -117,7 +117,7 @@ async def build_xlsx_with_epoch(session, period: str) -> tuple[bytes, str, int, 
     workbook = Workbook(write_only=True)
     overview = _Sheet(workbook, "Обращения", ["№", "Подано", "Житель", "Телефон", "Населённый пункт",
                         "Адрес", "Тема", "Статус", "Первый ответ периода", "Итоговый ответ", "Закрыто",
-                        "Время до первого ответа, ч", "Первый ответ в срок", "Согласие дано",
+                        "Рабочих часов до первого ответа", "Первый ответ в срок", "Согласие дано",
                         "Согласие отозвано", "Подписка", "Блокировка"],
                       [9, 19, 22, 17, 25, 34, 25, 20, 19, 19, 19, 18, 20, 19, 19, 15, 15])
     history = _Sheet(workbook, "История", ["Обращение №", "Запись", "Дата", "Автор", "Часть", "Текст"],
@@ -155,7 +155,7 @@ async def build_xlsx_with_epoch(session, period: str) -> tuple[bytes, str, int, 
             first_reply = first_replies.get(appeal.id)
             anchor = appeal.sla_anchor_at or appeal.created_at
             if first_reply and anchor:
-                elapsed = round((first_reply - anchor).total_seconds() / 3600, 2)
+                elapsed = round(sla.business_seconds_between(anchor, first_reply) / 3600, 2)
                 on_time = "нет" if sla.is_overdue(anchor, first_reply,
                                                 settings.sla_response_hours) else "да"
             overview.append([appeal.id, _date(appeal.created_at), getattr(user, "first_name", "") or "",

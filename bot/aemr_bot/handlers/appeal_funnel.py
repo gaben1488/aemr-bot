@@ -160,6 +160,15 @@ async def start_appeal_flow(event, max_user_id: int):
                 policy_url=policy_url or "в прикреплённом файле",
                 fallback=texts.CONSENT_REQUEST,
             )
+        from aemr_bot.utils.text_pages import fits_max_message
+        if not fits_max_message(text):
+            log.error("consent text exceeds MAX transport limit; administrator action required")
+            await send_or_edit_screen(
+                event,
+                text="Текст согласия временно недоступен. Попробуйте позже или обратитесь в администрацию.",
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
         sent = await send_or_edit_screen(
             event,
             text=text,
@@ -722,6 +731,14 @@ async def on_awaiting_consent(event, body, text_body, max_user_id):
             session, policy_url=policy_url or "в прикреплённом файле",
             fallback=texts.CONSENT_REQUEST,
         )
+    from aemr_bot.utils.text_pages import fits_max_message
+    if not fits_max_message(text):
+        log.error("consent text exceeds MAX transport limit; administrator action required")
+        await event.message.answer(
+            "Текст согласия временно недоступен. Попробуйте позже или обратитесь в администрацию.",
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+        return
     attachments = [keyboards.consent_keyboard()]
     if policy_token:
         from aemr_bot.services.policy import build_file_attachment

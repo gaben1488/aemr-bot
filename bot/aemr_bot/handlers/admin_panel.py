@@ -189,7 +189,7 @@ async def _do_open_tickets(event, page: int = 0) -> None:
         open_appeals = (await session.scalars(query)).all()
 
     if not open_appeals:
-        await op_screen(event, "🎉 Нет открытых или неотвеченных обращений.")
+        await op_screen(event, "🎉 Сейчас нет открытых обращений.", kbds.op_back_to_menu_keyboard())
         return
 
     # Для каждого обращения формируем компактный label кнопки:

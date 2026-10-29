@@ -862,10 +862,11 @@
         <td><code class="kbd">pdn-retention</code></td>
         <td>ежедневно <strong>04:30</strong></td>
         <td>Камчатка</td>
-        <td>152-ФЗ ст. 21 ч. 5: обезличивает жителей, у которых отзыв согласия старше 30 дней. Жителей с открытыми обращениями откладывает до следующего дня.</td>
+        <td>Очистка рабочей базы после отзыва с 29-го дня и ежедневное предупреждение о приближении срока. Другие копии и правовые основания проверяются отдельно.</td>
         <td>не молчит</td>
         <td><code class="kbd">cron.py:974</code> · <code class="kbd">_job_pdn_retention_check</code> <code class="kbd">:598</code></td>
       </tr>
+      <tr><td><code class="kbd">pdn-retention-hourly</code></td><td>ежечасно в :20</td><td>Камчатка</td><td>Дополнительный запуск очистки после отзыва с 29-го дня.</td><td>по результату</td><td><code class="kbd">_job_pdn_retention_check</code></td></tr>
       <tr>
         <td><code class="kbd">appeals-5y-retention</code></td>
         <td>ежедневно <strong>04:45</strong></td>
