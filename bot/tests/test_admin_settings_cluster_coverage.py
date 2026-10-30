@@ -179,7 +179,10 @@ class TestStartEditIntentNonStrNonUrlKey:
         from aemr_bot.handlers import admin_settings_text as mod
 
         event = make_event()
-        with patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
+        scope_patch, _ = _patch_scope(mod)
+        with scope_patch, \
+             patch.object(mod.settings_store, "get_versioned", AsyncMock(return_value=(3, 7))), \
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             # broadcast_max_images есть в SCHEMA (тип int) → гард пройден,
             # intent ставится; ни url-hint, ни max_len-hint не добавляются.
             await mod._start_edit_intent(event, 42, "broadcast_max_images")
@@ -187,6 +190,8 @@ class TestStartEditIntentNonStrNonUrlKey:
         assert intent is not None
         assert intent["key"] == "broadcast_max_images"
         assert intent["kind"] == "single"
+        assert intent["baseline"] == 3
+        assert intent["revision"] == 7
         text = send.await_args.kwargs["text"]
         # Заголовок редактирования есть, но НЕТ url-подсказки и НЕТ
         # «до N симв» (max_len-hint только для str).
@@ -201,7 +206,7 @@ class TestStartEditIntentNonStrNonUrlKey:
 
 
 class TestApplyListAddNonListCoercion:
-    """`_apply_list_add` — `settings_store.get` вернул не-list (мусор в
+    """`_apply_list_add` — `settings_store.get_versioned` вернул не-list (мусор в
     БД): handler приводит к [] и добавляет первый элемент (строка 108)."""
 
     @pytest.mark.asyncio
@@ -211,8 +216,8 @@ class TestApplyListAddNonListCoercion:
         event = make_event()
         scope_patch, _ = _patch_scope(mod)
         with scope_patch, \
-             patch.object(mod.settings_store, "get",
-                          AsyncMock(return_value="мусор-не-список")), \
+             patch.object(mod.settings_store, "get_versioned",
+                          AsyncMock(return_value=("мусор-не-список", 7))), \
              patch.object(mod.settings_store, "set_value",
                           AsyncMock()) as set_value, \
              patch.object(mod.ops_svc, "write_audit", AsyncMock()) as audit, \
@@ -220,6 +225,7 @@ class TestApplyListAddNonListCoercion:
             await mod._apply_list_add(event, 42, "topics", "ЖКХ")
         # Старое (не-list) отброшено → сохранён список ровно с новым.
         set_value.assert_awaited_once()
+        assert set_value.await_args.kwargs == {"expected_revision": 7}
         assert set_value.await_args.args[2] == ["ЖКХ"]
         audit.assert_awaited_once()
         assert audit.await_args.kwargs["details"]["added"] == "ЖКХ"
@@ -242,16 +248,13 @@ class TestShowObjCardEdgeBranches:
         event = make_event()
         scope_patch, _ = _patch_scope(mod)
         with scope_patch, \
-             patch.object(mod.settings_store, "get",
-                          AsyncMock(return_value={"not": "a list"})), \
-             patch.object(mod.settings_store, "format_obj_list",
-                          MagicMock(return_value="(пусто)")) as fmt, \
+             patch.object(mod.settings_store, "get_versioned",
+                          AsyncMock(return_value=({"not": "a list"}, 7))), \
              patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await mod._show_obj_card(event, "emergency_contacts")
-        # format_obj_list получил [] (не-list приведён).
-        fmt.assert_called_once_with([])
         text = send.await_args.kwargs["text"]
         assert "(0)" in text
+        assert "(список пуст)" in text
 
     @pytest.mark.asyncio
     async def test_unknown_key_no_format_hint(self) -> None:
@@ -262,10 +265,8 @@ class TestShowObjCardEdgeBranches:
         # Ключ не emergency/transport → ни «раздел», ни «маршруты» в hint;
         # заголовок падает на сам key (нет в title_map).
         with scope_patch, \
-             patch.object(mod.settings_store, "get",
-                          AsyncMock(return_value=[])), \
-             patch.object(mod.settings_store, "format_obj_list",
-                          MagicMock(return_value="(пусто)")), \
+             patch.object(mod.settings_store, "get_versioned",
+                          AsyncMock(return_value=([], 7))), \
              patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await mod._show_obj_card(event, "some_unknown_obj_key")
         text = send.await_args.kwargs["text"]
@@ -274,7 +275,7 @@ class TestShowObjCardEdgeBranches:
 
 
 class TestApplyObjAddNonListCoercion:
-    """`_apply_obj_add` — `settings_store.get` вернул не-list: приводим
+    """`_apply_obj_add` — `settings_store.get_versioned` вернул не-list: приводим
     к [] перед append (строка 201)."""
 
     @pytest.mark.asyncio
@@ -284,8 +285,8 @@ class TestApplyObjAddNonListCoercion:
         event = make_event()
         scope_patch, _ = _patch_scope(mod)
         with scope_patch, \
-             patch.object(mod.settings_store, "get",
-                          AsyncMock(return_value="garbage")), \
+             patch.object(mod.settings_store, "get_versioned",
+                          AsyncMock(return_value=("garbage", 7))), \
              patch.object(mod.settings_store, "validate",
                           MagicMock(return_value=(True, ""))), \
              patch.object(mod.settings_store, "set_value",
@@ -297,6 +298,7 @@ class TestApplyObjAddNonListCoercion:
                 "Автобус 1\n+7 (415) 000-00-00",
             )
         set_value.assert_awaited_once()
+        assert set_value.await_args.kwargs == {"expected_revision": 7}
         # Старый мусор отброшен → ровно один новый item.
         assert set_value.await_args.args[2] == [
             {"routes": "Автобус 1", "phone": "+7 (415) 000-00-00"}
@@ -409,6 +411,7 @@ class TestShowQuietCardNonIntHours:
              patch("aemr_bot.services.quiet_hours.refresh_cache_from_db",
                    AsyncMock()), \
              patch.object(mod.settings_store, "get", side_effect=fake_get), \
+             patch.object(mod.settings_store, "get_versioned", AsyncMock(return_value=(True, 7))), \
              patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await mod._show_quiet_card(event)
         text = send.await_args.kwargs["text"]

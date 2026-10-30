@@ -406,13 +406,30 @@ class TestRouteSetActionBranches:
         show.assert_awaited_once_with(event)
 
     @pytest.mark.asyncio
-    async def test_quiet_toggle_branch(self) -> None:
+    async def test_quiet_versioned_set_branch(self) -> None:
         from aemr_bot.handlers import admin_settings as mod
 
         event = make_event()
         with patch.object(mod, "_toggle_quiet", AsyncMock()) as toggle:
-            await mod._route_set_action(event, 1, "quiet:toggle")
-        toggle.assert_awaited_once_with(event)
+            await mod._route_set_action(event, 1, "quiet:set:0:7")
+        toggle.assert_awaited_once_with(event, expected=False, revision=7)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(("payload", "show_name", "toggle_name"), [
+        ("quiet:toggle", "_show_quiet_card", "_toggle_quiet"),
+        ("notify:toggle:admin_notify_pulse", "_show_notify_card", "_toggle_notify"),
+    ])
+    async def test_legacy_toggle_refreshes_without_mutation(
+        self, payload, show_name, toggle_name,
+    ) -> None:
+        from aemr_bot.handlers import admin_settings as mod
+
+        event = make_event()
+        with patch.object(mod, show_name, AsyncMock()) as show, \
+             patch.object(mod, toggle_name, AsyncMock()) as toggle:
+            await mod._route_set_action(event, 1, payload)
+        show.assert_awaited_once_with(event)
+        toggle.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_quiet_edit_start_intent(self) -> None:
@@ -444,13 +461,13 @@ class TestRouteSetActionBranches:
         show.assert_awaited_once_with(event)
 
     @pytest.mark.asyncio
-    async def test_notify_toggle_branch(self) -> None:
+    async def test_notify_versioned_set_branch(self) -> None:
         from aemr_bot.handlers import admin_settings as mod
 
         event = make_event()
         with patch.object(mod, "_toggle_notify", AsyncMock()) as toggle:
-            await mod._route_set_action(event, 1, "notify:toggle:admin_notify_pulse")
-        toggle.assert_awaited_once_with(event, "admin_notify_pulse")
+            await mod._route_set_action(event, 1, "notify:set:admin_notify_pulse:1:7")
+        toggle.assert_awaited_once_with(event, "admin_notify_pulse", expected=True, revision=7)
 
     @pytest.mark.asyncio
     async def test_pr_start_branch(self) -> None:
@@ -512,6 +529,8 @@ class TestQuietHoursWizard:
                    AsyncMock()), \
              patch("aemr_bot.services.quiet_hours.is_quiet_hours_now", return_value=True), \
              patch.object(mod.settings_store, "get", side_effect=fake_get), \
+             patch.object(mod.settings_store, "get_versioned",
+                          AsyncMock(return_value=(True, 7))), \
              patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
@@ -539,6 +558,8 @@ class TestQuietHoursWizard:
              patch("aemr_bot.services.quiet_hours.refresh_cache_from_db", AsyncMock()), \
              patch("aemr_bot.services.quiet_hours.is_quiet_hours_now", return_value=False), \
              patch.object(mod.settings_store, "get", side_effect=fake_get), \
+             patch.object(mod.settings_store, "get_versioned",
+                          AsyncMock(return_value=(True, 7))), \
              patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
@@ -564,6 +585,8 @@ class TestQuietHoursWizard:
              patch("aemr_bot.services.quiet_hours.refresh_cache_from_db",
                    AsyncMock()), \
              patch.object(mod.settings_store, "get", side_effect=fake_get), \
+             patch.object(mod.settings_store, "get_versioned",
+                          AsyncMock(return_value=(False, 7))), \
              patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
@@ -581,20 +604,22 @@ class TestQuietHoursWizard:
         event = make_event()
 
         with patch.object(mod, "session_scope") as scope, \
-             patch.object(mod.settings_store, "get",
-                          AsyncMock(return_value=False)), \
+             patch.object(mod.settings_store, "get_versioned",
+                          AsyncMock(return_value=(False, 7))), \
              patch.object(mod.settings_store, "set_value",
                           AsyncMock()) as set_value, \
              patch("aemr_bot.services.quiet_hours.refresh_cache_from_db",
                    AsyncMock()), \
+             patch.object(mod.ops_svc, "write_audit", AsyncMock()), \
              patch.object(mod, "_show_quiet_card", AsyncMock()):
             sess = MagicMock()
             sess.commit = AsyncMock()
             scope.return_value.__aenter__ = AsyncMock(return_value=sess)
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
-            await mod._toggle_quiet(event)
+            await mod._toggle_quiet(event, expected=False, revision=7)
         # Flip False → True.
         set_value.assert_awaited_once()
+        assert set_value.await_args.kwargs == {"expected_revision": 7}
         args = set_value.await_args.args
         assert args[1] == "admin_quiet_hours_enabled"
         assert args[2] is True
@@ -608,13 +633,19 @@ class TestQuietHoursWizard:
         from aemr_bot.handlers import admin_settings_quiet as qmod
 
         event = make_event()
-        with patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
+        with patch.object(qmod, "session_scope") as scope, \
+             patch.object(qmod.settings_store, "get_versioned", AsyncMock(return_value=(18, 7))), \
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
+            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
+            scope.return_value.__aexit__ = AsyncMock(return_value=False)
             await qmod._start_quiet_hour_intent(event, 42, which="start")
         intent = mod._intent_get(42)
         assert intent is not None
         assert intent["key"] == "admin_quiet_hours_start"
         assert intent["kind"] == "quiet_hour"
         assert intent["which"] == "start"
+        assert intent["baseline"] == 18
+        assert intent["revision"] == 7
         # В подсказке упомянуто «начала».
         kwargs = send.await_args.kwargs
         assert "начала" in kwargs["text"]
@@ -625,11 +656,17 @@ class TestQuietHoursWizard:
         from aemr_bot.handlers import admin_settings_quiet as qmod
 
         event = make_event()
-        with patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
+        with patch.object(qmod, "session_scope") as scope, \
+             patch.object(qmod.settings_store, "get_versioned", AsyncMock(return_value=(18, 7))), \
+             patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
+            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
+            scope.return_value.__aexit__ = AsyncMock(return_value=False)
             await qmod._start_quiet_hour_intent(event, 42, which="end")
         intent = mod._intent_get(42)
         assert intent["which"] == "end"
         assert intent["key"] == "admin_quiet_hours_end"
+        assert intent["baseline"] == 18
+        assert intent["revision"] == 7
         kwargs = send.await_args.kwargs
         assert "конца" in kwargs["text"]
 
@@ -681,6 +718,7 @@ class TestQuietHoursWizard:
 
         event = make_event()
         with patch.object(mod, "session_scope") as scope, \
+             patch.object(mod.settings_store, "get_versioned", AsyncMock(return_value=(18, 7))), \
              patch.object(mod.settings_store, "set_value",
                           AsyncMock()) as set_value, \
              patch.object(mod.ops_svc, "write_audit", AsyncMock()) as audit, \
@@ -693,6 +731,7 @@ class TestQuietHoursWizard:
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
             await mod._apply_quiet_hour_edit(event, 42, "start", "23")
         set_value.assert_awaited_once()
+        assert set_value.await_args.kwargs == {"expected_revision": 7}
         args = set_value.await_args.args
         assert args[1] == "admin_quiet_hours_start"
         assert args[2] == 23
@@ -735,14 +774,14 @@ class TestNotifyTogglesWizard:
         }
 
         async def fake_get(_session, key):
-            return values.get(key)
+            return values.get(key), 7
 
         with patch.object(mod, "session_scope") as scope, \
              patch(
                  "aemr_bot.services.notify_toggles.refresh_cache_from_db",
                  AsyncMock(),
              ), \
-             patch.object(mod.settings_store, "get", side_effect=fake_get), \
+             patch.object(mod.settings_store, "get_versioned", side_effect=fake_get), \
              patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
@@ -764,22 +803,24 @@ class TestNotifyTogglesWizard:
         event = make_event()
 
         with patch.object(mod, "session_scope") as scope, \
-             patch.object(mod.settings_store, "get",
-                          AsyncMock(return_value=True)), \
+             patch.object(mod.settings_store, "get_versioned",
+                          AsyncMock(return_value=(True, 7))), \
              patch.object(mod.settings_store, "set_value",
                           AsyncMock()) as set_value, \
              patch(
                  "aemr_bot.services.notify_toggles.refresh_cache_from_db",
                  AsyncMock(),
              ), \
+             patch.object(mod.ops_svc, "write_audit", AsyncMock()), \
              patch.object(mod, "_show_notify_card", AsyncMock()):
             sess = MagicMock()
             sess.commit = AsyncMock()
             scope.return_value.__aenter__ = AsyncMock(return_value=sess)
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
-            await mod._toggle_notify(event, "admin_notify_pulse")
+            await mod._toggle_notify(event, "admin_notify_pulse", expected=True, revision=7)
         # Flip True → False.
         set_value.assert_awaited_once()
+        assert set_value.await_args.kwargs == {"expected_revision": 7}
         args = set_value.await_args.args
         assert args[1] == "admin_notify_pulse"
         assert args[2] is False
@@ -813,20 +854,22 @@ class TestNotifyTogglesWizard:
         ):
             event = make_event()
             with patch.object(mod, "session_scope") as scope, \
-                 patch.object(mod.settings_store, "get",
-                              AsyncMock(return_value=False)), \
+                 patch.object(mod.settings_store, "get_versioned",
+                              AsyncMock(return_value=(False, 7))), \
                  patch.object(mod.settings_store, "set_value",
                               AsyncMock()) as set_value, \
                  patch(
                      "aemr_bot.services.notify_toggles.refresh_cache_from_db",
                      AsyncMock(),
                  ), \
-                 patch.object(mod, "_show_notify_card", AsyncMock()):
+                 patch.object(mod.ops_svc, "write_audit", AsyncMock()), \
+             patch.object(mod, "_show_notify_card", AsyncMock()):
                 sess = MagicMock()
                 sess.commit = AsyncMock()
                 scope.return_value.__aenter__ = AsyncMock(return_value=sess)
                 scope.return_value.__aexit__ = AsyncMock(return_value=False)
-                await mod._toggle_notify(event, key)
+                await mod._toggle_notify(event, key, expected=False, revision=7)
+            assert set_value.await_args.kwargs == {"expected_revision": 7}
             args = set_value.await_args.args
             assert args[1] == key
             assert args[2] is True  # False → True

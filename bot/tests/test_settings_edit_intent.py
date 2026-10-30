@@ -58,7 +58,7 @@ class TestIntentSurvivesValidationError:
 
         event = make_event(user_id=500)
         facade._intent_set(
-            500, key="admin_quiet_hours_start", kind="quiet_hour", which="start",
+            500, key="admin_quiet_hours_start", kind="quiet_hour", which="start", baseline=22, revision=7,
         )
         scope_patch, sess = _patch_scope(quiet)
         sess.commit = AsyncMock()
@@ -84,6 +84,7 @@ class TestIntentSurvivesValidationError:
             consumed2 = await facade.handle_settings_edit_text(event, "18")
             assert consumed2 is True
             set_value.assert_awaited_once()
+            assert set_value.await_args.kwargs == {"expected_revision": 7}
             assert set_value.await_args.args[2] == 18
             assert facade._intent_get(500) is None
 
@@ -100,8 +101,8 @@ class TestIntentSurvivesValidationError:
         scope_patch, _ = _patch_scope(lst)
         with patch.object(facade, "ensure_role", AsyncMock(return_value=True)), \
              scope_patch, \
-             patch.object(lst.settings_store, "get",
-                          AsyncMock(return_value=["ЖКХ"])), \
+             patch.object(lst.settings_store, "get_versioned",
+                          AsyncMock(return_value=(["ЖКХ"], 7))), \
              patch.object(lst.settings_store, "set_value",
                           AsyncMock()) as set_value, \
              patch.object(lst.ops_svc, "write_audit", AsyncMock()), \
@@ -117,6 +118,7 @@ class TestIntentSurvivesValidationError:
             consumed2 = await facade.handle_settings_edit_text(event, "Дороги")
             assert consumed2 is True
             set_value.assert_awaited_once()
+            assert set_value.await_args.kwargs == {"expected_revision": 7}
             assert set_value.await_args.args[2] == ["ЖКХ", "Дороги"]
             assert facade._intent_get(501) is None
 
@@ -129,7 +131,8 @@ class TestIntentSurvivesValidationError:
         from aemr_bot.handlers import admin_settings_text as txt
 
         event = make_event(user_id=503)
-        facade._intent_set(503, key="policy_url", kind="single")
+        facade._intent_set(503, key="policy_url", kind="single",
+                           baseline="https://old.example", revision=7)
         scope_patch, _ = _patch_scope(txt)
         # validate: отказ на первый ввод, согласие на второй — без
         # зависимости от точного состава whitelist.
@@ -139,8 +142,6 @@ class TestIntentSurvivesValidationError:
         with patch.object(facade, "ensure_role", AsyncMock(return_value=True)), \
              scope_patch, \
              patch.object(txt.settings_store, "validate", validate), \
-             patch.object(txt.settings_store, "get",
-                          AsyncMock(return_value="https://old.example")), \
              patch.object(txt.settings_store, "set_value",
                           AsyncMock()) as set_value, \
              patch.object(txt.ops_svc, "write_audit", AsyncMock()), \
@@ -158,4 +159,5 @@ class TestIntentSurvivesValidationError:
             )
             assert consumed2 is True
             set_value.assert_awaited_once()
+            assert set_value.await_args.kwargs == {"expected_revision": 7}
             assert facade._intent_get(503) is None
