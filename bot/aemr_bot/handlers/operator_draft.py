@@ -12,7 +12,7 @@ from aemr_bot.db.models import OperatorReplyAttempt
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import get_operator
 from aemr_bot.handlers._common import op_screen
-from aemr_bot.services import appeals, data_erasure, idempotency, operator_drafts
+from aemr_bot.services import appeal_locks, appeals, data_erasure, idempotency, operator_drafts
 from aemr_bot.utils.attachments import collect_attachments, has_unsupported_appeal_attachments
 from aemr_bot.utils.event import ack_callback, extract_message_id, is_admin_chat
 from aemr_bot.utils.text_pages import split_text_units
@@ -91,6 +91,8 @@ async def begin(event, appeal_id: int, *, is_final: bool):
         return
     notice = ""
     async with session_scope() as session:
+        # Recovery takes this advisory lock before touching the appeal row.
+        await appeal_locks.hold(session, appeal_id)
         appeal = await appeals.get_by_id(session, appeal_id, for_update=True)
         if (appeal is None or appeal.status not in {"new", "in_progress"}
                 or appeal.user is None or appeal.user.is_blocked or appeal.user.consent_pdn_at is None):
