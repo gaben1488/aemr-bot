@@ -1,7 +1,10 @@
 """Attachments sent by either side remain available from the appeal history."""
 from types import SimpleNamespace
 
+import pytest
+
 from aemr_bot.services import admin_relay
+from tests._personal_view_helpers import personal_view_boundary  # noqa: F401
 
 
 def test_attachment_collection_includes_resident_and_operator_without_internal_records():
@@ -93,6 +96,7 @@ def test_history_pages_point_to_the_specific_record_attachments():
     assert appeal_history.attachments_for(appeal, 999, operator=False) is None
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 async def test_resident_cannot_get_another_residents_record_attachments(monkeypatch):
     from unittest.mock import AsyncMock
 
@@ -109,6 +113,7 @@ async def test_resident_cannot_get_another_residents_record_attachments(monkeypa
     relay.assert_not_awaited()
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 async def test_resident_gets_only_selected_record(monkeypatch):
     from unittest.mock import AsyncMock
 

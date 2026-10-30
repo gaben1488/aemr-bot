@@ -323,7 +323,8 @@ class TestCmdForget:
         write_audit = AsyncMock()
         erase = AsyncMock(return_value=[7, 12])  # 2 закрытых обращения
         notify = AsyncMock()
-        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+        with patch("aemr_bot.services.data_erasure.tracked_send", AsyncMock()), \
+             patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.start.ops_service.write_audit", write_audit), \
              patch("aemr_bot.handlers.start.users_service.erase_pdn_detailed", erase), \
              patch("aemr_bot.handlers.start.admin_events.notify_data_erased", notify):
@@ -345,7 +346,8 @@ class TestCmdForget:
         event = _make_event()
         erase = AsyncMock(return_value=None)
         notify = AsyncMock()
-        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+        with patch("aemr_bot.services.data_erasure.tracked_send", AsyncMock()), \
+             patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.start.ops_service.write_audit", AsyncMock()), \
              patch("aemr_bot.handlers.start.users_service.erase_pdn_detailed", erase), \
              patch("aemr_bot.handlers.start.admin_events.notify_data_erased", notify):

@@ -102,6 +102,16 @@ def _install_dispatch_guards(dp: Dispatcher) -> None:
                 outcome.reason = "rate_limited"
             await _ack_throttled_callback(event_object)
             return None
+        from maxapi.types import MessageCreated
+
+        if isinstance(event_object, MessageCreated):
+            from aemr_bot.utils.event import get_chat_id, get_user_id
+
+            uid = get_user_id(event_object)
+            if uid is not None and get_chat_id(event_object) != settings.admin_group_id:
+                from aemr_bot.handlers.menu import invalidate_privacy_confirmation
+
+                await invalidate_privacy_confirmation(uid)
         # 2) Дополнительный bound для прямого polling-dispatch вне inbox.
         if polling:
             async with _get_polling_dispatch_semaphore():

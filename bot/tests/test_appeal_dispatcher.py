@@ -84,7 +84,8 @@ def captured_handlers(monkeypatch):
     """Регистрирует appeal.register на mock dp и возвращает (callback, message)."""
     from aemr_bot.handlers import appeal
 
-    # Routing unit tests isolate the two pre-routing gates. Their real database,
+    monkeypatch.setattr("aemr_bot.handlers.menu.invalidate_privacy_confirmation", AsyncMock())
+    # Routing unit tests isolate the SQL-backed pre-routing gates. Their real database,
     # stale-state and name-repair behavior is exercised in dedicated regressions
     # (test_funnel_state_hardening and test_resident_name_resume), not by relying
     # on missing tables or connections from an earlier pytest event loop.

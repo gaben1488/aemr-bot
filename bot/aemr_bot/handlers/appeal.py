@@ -749,6 +749,8 @@ async def _route_callback(event, max_user_id: int, payload: str) -> None:
 
 
 def register(dp: Dispatcher) -> None:
+    from aemr_bot.handlers import menu as menu_handlers
+
     @dp.message_callback()
     async def on_callback(event: MessageCallback):
         payload = get_payload(event)
@@ -776,6 +778,12 @@ def register(dp: Dispatcher) -> None:
         ):
             await ack_callback(event)
             return
+
+        if (chat_id != cfg.admin_group_id and payload not in {
+            "settings:forget_yes", "goodbye:erase_yes",
+            "settings:consent_revoke_yes", "goodbye:revoke_yes",
+        }):
+            await menu_handlers.invalidate_privacy_confirmation(max_user_id)
 
         if not await _ensure_funnel_callback_state(event, max_user_id, payload):
             return

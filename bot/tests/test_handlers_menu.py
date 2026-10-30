@@ -24,6 +24,7 @@ import pytest
 
 from tests._helpers import fake_current_user, make_event
 from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._personal_view_helpers import personal_view_boundary  # noqa: F401
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
@@ -60,6 +61,7 @@ def _make_callback_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleName
     return event
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 class TestOpenMainMenu:
     @pytest.mark.asyncio
     async def test_blocked_user_gets_blocked_menu(self) -> None:
@@ -99,6 +101,7 @@ class TestOpenMainMenu:
         event.bot.send_message.assert_called_once()
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 class TestOpenMyAppeals:
     @pytest.mark.asyncio
     async def test_empty_list_shows_empty_text(self) -> None:
@@ -139,6 +142,7 @@ class TestOpenMyAppeals:
         assert "всего 12" in text
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 class TestStartAppealFollowup:
     @pytest.mark.asyncio
     async def test_appeal_not_found(self) -> None:
@@ -212,6 +216,7 @@ class TestStartAppealFollowup:
         assert "Подать похожее" in text
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 class TestStartAppealRepeat:
     @pytest.mark.asyncio
     async def test_appeal_not_found(self) -> None:
@@ -277,6 +282,7 @@ class TestStartAppealRepeat:
         assert data["repeat_source_status"] == AppealStatus.ANSWERED.value
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 class TestShowAppeal:
     @pytest.mark.asyncio
     async def test_not_found_responds(self) -> None:
@@ -580,7 +586,8 @@ class TestConsentAndEraseNotifications:
         user = SimpleNamespace(id=1)
         appeal = SimpleNamespace(id=9, user_id=1)
         notify = AsyncMock()
-        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
+        with patch("aemr_bot.services.data_erasure.tracked_send", AsyncMock()), \
+             patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.services.appeals.list_unanswered_for_user",
                    AsyncMock(return_value=[appeal])), \
              patch("aemr_bot.handlers.menu.users_service.erase_pdn_detailed", AsyncMock(return_value=[9])), \
@@ -642,7 +649,7 @@ class TestSimpleScreens:
         event = _make_event()
         with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.users_service.find_by_max_id",
-                   AsyncMock(return_value=SimpleNamespace(dialog_state="idle", appeal_draft=None))), \
+                   AsyncMock(return_value=SimpleNamespace(dialog_state="idle", appeal_draft=None, dialog_data={}))), \
              patch("aemr_bot.services.resident_drafts.offer_saved", AsyncMock(return_value=False)), \
              patch("aemr_bot.handlers.menu.ack_callback", AsyncMock()) as ack:
             handled = await menu.handle_callback(
