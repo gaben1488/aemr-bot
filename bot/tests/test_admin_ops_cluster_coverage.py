@@ -896,7 +896,23 @@ def _diag_rows(*, last_event, users=None, appeals=None, broadcasts=None):
     return users, appeals, broadcasts, events_row
 
 
+@asynccontextmanager
+async def _diag_session_scope():
+    session = MagicMock()
+    session.scalar = AsyncMock(return_value=0)
+    yield session
+
+
 class TestDoDiag:
+    @pytest.fixture(autouse=True)
+    def _current_runtime_state(self):
+        with patch("aemr_bot.services.appeals.current_first_response_hours",
+                   AsyncMock(return_value=37)), \
+             patch("aemr_bot.services.alert_state.get", AsyncMock(return_value=None)), \
+             patch("aemr_bot.services.threat_intel.get_store") as store:
+            store.return_value.is_stale.return_value = False
+            yield
+
     @pytest.mark.asyncio
     async def test_healthy_pulse_no_warnings(self) -> None:
         """Свежий last_event (минуту назад), нет зависших рассылок и
@@ -917,7 +933,7 @@ class TestDoDiag:
             return (users, appeals, broadcasts, events_row, 5, 0, 50)
 
         with patch("aemr_bot.handlers.admin_panel.session_scope",
-                   _fake_session_scope), \
+                   _diag_session_scope), \
              patch("aemr_bot.handlers.admin_panel.mark_typing", AsyncMock()), \
              patch("aemr_bot.handlers.admin_panel.asyncio.gather", fake_gather):
             await admin_panel._do_diag(event)
@@ -927,13 +943,13 @@ class TestDoDiag:
         assert "✅ Аномалий не обнаружено" in body
         # счётчик ответов оператора за 24ч = 5 (replies scalar).
         assert "Ответов оператора за 24ч: 5" in body
+        assert "Новый период: 37 рабочих ч" in body
         # pulse зелёный (минуты < 15).
         assert "✅" in body
 
     @pytest.mark.asyncio
-    async def test_no_events_triggers_pulse_warning(self) -> None:
-        """last_event=None → pulse_warn, блок «Внимание» с предупреждением
-        про молчащий cron."""
+    async def test_no_events_are_neutral_without_delivery_anomalies(self) -> None:
+        """Отсутствие событий само по себе не доказывает сбой cron."""
         from aemr_bot.handlers import admin_panel
 
         event = _diag_event()
@@ -945,25 +961,25 @@ class TestDoDiag:
             return (users, appeals, broadcasts, events_row, 0, 0, 0)
 
         with patch("aemr_bot.handlers.admin_panel.session_scope",
-                   _fake_session_scope), \
+                   _diag_session_scope), \
              patch("aemr_bot.handlers.admin_panel.mark_typing", AsyncMock()), \
              patch("aemr_bot.handlers.admin_panel.asyncio.gather", fake_gather):
             await admin_panel._do_diag(event)
 
         body = event.bot.send_message.call_args.kwargs["text"]
-        assert "событий нет вовсе" in body
-        assert "Внимание" in body
+        assert "событий пока нет" in body
+        assert "Внимание" not in body
+        assert "✅ Аномалий не обнаружено" in body
         assert "Pulse" in body
 
     @pytest.mark.asyncio
     async def test_stale_pulse_and_stuck_and_failed_warnings(self) -> None:
-        """Старый last_event (>15 мин), зависшие SENDING и >=20 failed-
-        доставок → три предупреждения в блоке «Внимание», pulse с ⚠️."""
+        """Старое событие нейтрально; зависшие и failed-доставки требуют внимания."""
         from aemr_bot.handlers import admin_panel
 
         event = _diag_event()
         now = datetime.now(UTC)
-        # last_event час назад → minutes_ago > 15 → pulse_warn.
+        # Последнее событие старое, но предупреждения зависят от состояния доставок.
         users, appeals, broadcasts, events_row = _diag_rows(
             last_event=now - timedelta(hours=1, minutes=5),
             broadcasts=SimpleNamespace(done=2, failed=1, count_24h=3, stuck=2),
@@ -976,15 +992,16 @@ class TestDoDiag:
             return (users, appeals, broadcasts, events_row, 0, 25, 80)
 
         with patch("aemr_bot.handlers.admin_panel.session_scope",
-                   _fake_session_scope), \
+                   _diag_session_scope), \
              patch("aemr_bot.handlers.admin_panel.mark_typing", AsyncMock()), \
              patch("aemr_bot.handlers.admin_panel.asyncio.gather", fake_gather):
             await admin_panel._do_diag(event)
 
         body = event.bot.send_message.call_args.kwargs["text"]
         assert "Внимание" in body
-        # pulse стрелка часами назад → ⚠️.
-        assert "⚠️" in body
+        # Старое событие не создаёт ложное предупреждение о cron.
+        assert "Pulse молчит" not in body
+        assert "это не показатель сбоя" in body
         # зависшие рассылки.
         assert "Зависших" in body and "2" in body
         # failed-доставки.
@@ -1009,7 +1026,7 @@ class TestDoDiag:
             return (users, appeals, broadcasts, events_row, 1, 0, 10)
 
         with patch("aemr_bot.handlers.admin_panel.session_scope",
-                   _fake_session_scope), \
+                   _diag_session_scope), \
              patch("aemr_bot.handlers.admin_panel.mark_typing", AsyncMock()), \
              patch("aemr_bot.handlers.admin_panel.asyncio.gather", fake_gather):
             await admin_panel._do_diag(event)
@@ -1045,8 +1062,8 @@ class TestDoDiag:
         async def fake_execute(query):
             return _ExecResult(next(row_iter))
 
-        # scalar() для replies_24h и delivery_failed_24h.
-        scalar_iter = iter([7, 0])
+        # Два агрегата активности, затем пять счётчиков состояния доставки.
+        scalar_iter = iter([7, 0, 0, 0, 0, 0, 0])
 
         async def fake_scalar(query):
             return next(scalar_iter)
@@ -1092,7 +1109,7 @@ class TestDoDiag:
             return (users, appeals, broadcasts, events_row, 3, 0, 20)
 
         with patch("aemr_bot.handlers.admin_panel.session_scope",
-                   _fake_session_scope), \
+                   _diag_session_scope), \
              patch("aemr_bot.handlers.admin_panel.mark_typing", AsyncMock()), \
              patch("aemr_bot.handlers.admin_panel.asyncio.gather", fake_gather):
             # Не должно бросить (naive vs aware вычитание).
@@ -1173,6 +1190,7 @@ class TestDoOpenTicketsNonEmpty:
         scalars_result = MagicMock()
         scalars_result.all = MagicMock(return_value=appeals)
         session = MagicMock()
+        session.scalar = AsyncMock(return_value=len(appeals))
         session.scalars = AsyncMock(return_value=scalars_result)
 
         @asynccontextmanager
@@ -1187,7 +1205,8 @@ class TestDoOpenTicketsNonEmpty:
             await admin_panel._do_open_tickets(event)
 
         text = event.bot.send_message.call_args.kwargs["text"]
-        assert "Открытые обращения (3)" in text
+        assert "Открытые обращения: 3" in text
+        assert "Страница 1 из 1" in text
         # keyboard получил 3 элемента (id, status, preview).
         kbd.assert_called_once()
         items = kbd.call_args.args[0]
