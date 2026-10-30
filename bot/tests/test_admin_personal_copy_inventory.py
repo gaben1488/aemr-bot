@@ -9,7 +9,7 @@ from zipfile import ZipFile
 import pytest
 from sqlalchemy import select
 
-from aemr_bot.db.models import Appeal, Message, OperatorReplyAttempt, ResidentDataCopy, User
+from aemr_bot.db.models import Appeal, AuditLog, Message, OperatorReplyAttempt, ResidentDataCopy, User
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import data_erasure, users
 from tests._helpers import make_event
@@ -138,6 +138,42 @@ async def test_begin_does_not_create_draft_or_change_erased_appeal(source, monke
     async with session_scope() as session:
         assert (await session.get(Appeal, source.appeal_id)).status == "new"
         assert await session.scalar(select(func.count()).select_from(OperatorReplyDraft)) == 0
+
+
+@pytest.mark.parametrize("query_kind", ["max_user_id", "phone"])
+async def test_real_resident_search_audit_erases_subject_but_keeps_staff_trace(source, monkeypatch, query_kind):
+    from aemr_bot.handlers import admin_resident_search
+    monkeypatch.setattr(admin_resident_search, "ensure_operator", AsyncMock(return_value=True))
+    async with session_scope() as session:
+        resident = await users.find_by_max_id(session, source.user_id)
+        resident.phone = "+79991234567"
+        resident.phone_normalized = users._normalize_phone(resident.phone)
+        session.add(AuditLog(operator_max_user_id=77, action="resident_search_found", target="800999",
+            details={"kind": "max_user_id", "found_max_user_id": 800999}))
+        session.add(AuditLog(operator_max_user_id=source.user_id, action="operator_update",
+            target="operator 77", details={"actor_role": "it"}))
+    query = str(source.user_id) if query_kind == "max_user_id" else "+79991234567"
+    await admin_resident_search.run_find_resident(source.event, query)
+    async with session_scope() as session:
+        row = await session.scalar(select(AuditLog).where(AuditLog.action == "resident_search_found")
+                                   .order_by(AuditLog.id.desc()))
+        row_id, date = row.id, row.created_at
+        # Structured ownership permits removal of resident details, including
+        # older captured query fields, without removing unrelated staff facts.
+        row.details = {**row.details, "query": query, "phone": "+79991234567",
+                       "name": "PRIVATE_NAME", "operator_max_user_id": 77}
+    async with session_scope() as session:
+        await users.erase_pdn_detailed(session, source.user_id)
+    async with session_scope() as session:
+        row = await session.get(AuditLog, row_id)
+        assert row.action == "resident_search_found" and row.operator_max_user_id == 77
+        assert row.created_at == date
+        assert row.target is None
+        assert row.details == {"kind": query_kind, "operator_max_user_id": 77}
+        other = await session.scalar(select(AuditLog).where(AuditLog.target == "800999"))
+        assert other.details["found_max_user_id"] == 800999
+        operator = await session.scalar(select(AuditLog).where(AuditLog.action == "operator_update"))
+        assert operator.operator_max_user_id == source.user_id
 
 
 async def test_word_upload_finishes_before_retention_can_erase_source(source, monkeypatch):

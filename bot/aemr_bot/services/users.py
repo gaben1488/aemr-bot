@@ -482,6 +482,22 @@ async def erase_pdn_detailed(
         )
         .values(operator_max_user_id=None)
     )
+    # A search is a staff action, but its target and captured result identify
+    # the resident. Match only that structured association, preserving the
+    # staff actor, action and timestamp (including dual-role staff accounts).
+    search_details = AuditLog.details.op("-")("found_max_user_id")
+    for field in (
+        "query", "query_value", "phone", "phone_normalized",
+        "name", "first_name", "last_name", "found_phone", "found_name",
+    ):
+        search_details = search_details.op("-")(field)
+    await session.execute(update(AuditLog).where(
+        AuditLog.action == "resident_search_found",
+        or_(
+            AuditLog.target.in_([str(max_user_id), f"user max_id={max_user_id}"]),
+            AuditLog.details["found_max_user_id"].astext == str(max_user_id),
+        ),
+    ).values(target=None, details=search_details))
     # 1. Список открытых обращений ДО UPDATE — нужен для уведомления.
     open_appeals_result = await session.execute(
         select(Appeal.id).where(
