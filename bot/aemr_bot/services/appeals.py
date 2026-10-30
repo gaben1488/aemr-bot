@@ -177,8 +177,9 @@ async def mark_in_progress(session: AsyncSession, appeal_id: int) -> bool:
         .where(
             Appeal.id == appeal_id,
             Appeal.status == AppealStatus.NEW.value,
+            Appeal.content_erased_at.is_(None),
         )
-        .values(status=AppealStatus.IN_PROGRESS.value)
+        .values(status=AppealStatus.IN_PROGRESS.value, work_started_at=datetime.now(UTC))
     )
     return result.rowcount > 0
 
@@ -743,34 +744,19 @@ async def count_open(session: AsyncSession) -> int:
 async def purge_old_appeals_content(
     session: AsyncSession, *, years: int = 5
 ) -> tuple[int, int]:
-    """Стереть текстовые поля и attachments у обращений старше N лет.
+    """Clear content after the owner's operational horizon, not an archive term.
 
-    Сами строки appeal/messages остаются — это нужно для статистики
-    количества и сохранения связи с обезличенным жителем. Содержимое
-    (summary, address, text сообщений, attachments) NULL'ится.
+    The anchor is the latest of completion/creation, the current SLA-period
+    start and explicit taking-in-work. Reopening or taking an old case into
+    work restarts its retention horizon without delaying its response SLA.
+    A newer message also prevents redaction of the whole appeal. Metadata
+    remains personal while linked to an identifiable resident; it is not
+    automatically anonymous. The default five years is an operational choice,
+    whose purposes and local approval are documented separately. It is not a
+    period imposed by 152-FZ or a classification of an archival case.
 
-    Срок отсчитывается от даты отработки (закрытия либо ответа), а для
-    брошенных обращений — от даты подачи; статус при этом не важен.
-    Подробнее про якорь отсчёта — в комментарии ниже.
-
-    Срок N лет — установлен ОПЕРАТОРОМ исходя из цели обработки
-    (152-ФЗ ст. 18.1 ч. 1 п. 2 — локальный акт определяет способы и
-    сроки хранения; ст. 5 ч. 7 — не дольше, чем требует цель). В самом
-    152-ФЗ числа «5 лет» нет: срок закрепляется локальным актом
-    оператора (см. задачу «Вписать бот в ОРД»), а не выводится из
-    закона напрямую.
-
-    Откуда именно 5 лет (решение владельца 2026-07-17). Два довода:
-    (1) сообщение в боте может оказаться СМЕЖНЫМ с официальным
-    обращением гражданина — правовой порядок определяется отдельно, житель нередко
-    пишет по тому же вопросу и в электронную приёмную, и срок берётся
-    по аналогии с практикой хранения обращений граждан; (2) цели
-    отчётности и анализа эффективности принятых мер — по обращению
-    надо видеть, что было сделано, в горизонте нескольких лет.
-    Это осознанный выбор оператора с понятным ориентиром, а не
-    требование закона: писать «требование 152-ФЗ» здесь нельзя.
-
-    Возвращает (purged_appeals, purged_messages).
+    Returns counts of redacted appeals and messages. External copies require
+    the deletion inventory and backup/restore procedure as well.
     """
     # `relativedelta(years=N)` корректно учитывает високосные — иначе
     # `timedelta(days=365*N)` теряет ~1 день за 4 года, и за 5-летний
@@ -792,9 +778,14 @@ async def purge_old_appeals_content(
     # Старое открытое обращение тоже не хранится бессрочно. При этом
     # недавнее дополнение или ответ означают, что работа продолжалась:
     # не удаляем их вместе с текстом старой карточки по дате её создания.
-    retention_anchor = func.coalesce(
-        Appeal.closed_at, Appeal.answered_at, Appeal.created_at
-    )
+    completed_or_created = func.coalesce(Appeal.closed_at, Appeal.answered_at, Appeal.created_at)
+    period_started = func.coalesce(Appeal.sla_anchor_at, Appeal.created_at)
+    work_started = func.coalesce(Appeal.work_started_at, Appeal.created_at)
+    # A reopened case can have old creation/completion timestamps but a
+    # brand-new operational period. Taking NEW into work is activity too;
+    # keep that clock separate so it never postpones the first-response SLA.
+    latest_period = case((period_started > completed_or_created, period_started), else_=completed_or_created)
+    retention_anchor = case((work_started > latest_period, work_started), else_=latest_period)
     closed_old_appeals = select(Appeal.id).where(
         retention_anchor.isnot(None),
         retention_anchor <= threshold,

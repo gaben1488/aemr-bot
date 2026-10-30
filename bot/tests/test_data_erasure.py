@@ -652,3 +652,63 @@ async def test_repeat_retention_preserves_clean_reports_and_unrelated_personal_v
         assert await appeals.purge_old_appeals_content(session) == (0, 0)
         copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "clean-report"))
         assert copy.state == "retained" and not copy.erase_requested
+
+
+@pytest.mark.asyncio
+async def test_reopened_old_appeal_keeps_content_until_current_period_horizon_expires(erasure_db, monkeypatch):
+    from dateutil.relativedelta import relativedelta
+
+    from aemr_bot.services import appeals
+    db = erasure_db
+    old = datetime.now(UTC) - relativedelta(years=7)
+    async with db.scope() as session:
+        item = await session.get(Appeal, db.appeal_id)
+        item.created_at = item.closed_at = item.sla_anchor_at = old
+        item.status = "closed"
+        message = await session.scalar(select(Message).where(Message.appeal_id == item.id))
+        message.created_at = old
+    async with db.scope() as session:
+        assert await appeals.reopen(session, db.appeal_id) == "reopened"
+        item = await session.get(Appeal, db.appeal_id)
+        await session.refresh(item)
+        new_anchor = item.sla_anchor_at
+        assert new_anchor > old
+        assert await appeals.purge_old_appeals_content(session) == (0, 0)
+        await session.refresh(item)
+        assert item.summary == "Private" and item.content_erased_at is None
+        assert item.status == "in_progress"
+    class AfterHorizon(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return (new_anchor + relativedelta(years=6)).astimezone(tz) if tz else (new_anchor + relativedelta(years=6)).replace(tzinfo=None)
+    monkeypatch.setattr(appeals, "datetime", AfterHorizon)
+    async with db.scope() as session:
+        await appeals.purge_old_appeals_content(session)
+        item = await session.get(Appeal, db.appeal_id)
+        assert item.summary is None and item.content_erased_at is not None
+        assert item.status == "in_progress"
+
+
+@pytest.mark.asyncio
+async def test_taking_old_new_appeal_into_work_preserves_content_without_restarting_sla(erasure_db):
+    from dateutil.relativedelta import relativedelta
+
+    from aemr_bot.services import appeals
+    db = erasure_db
+    old = datetime.now(UTC) - relativedelta(years=7)
+    async with db.scope() as session:
+        item = await session.get(Appeal, db.appeal_id)
+        item.created_at = item.sla_anchor_at = old
+        message = await session.scalar(select(Message).where(Message.appeal_id == item.id))
+        message.created_at = old
+    async with db.scope() as session:
+        assert await appeals.mark_in_progress(session, db.appeal_id)
+        item = await session.get(Appeal, db.appeal_id)
+        assert item.sla_anchor_at == old
+        assert item.work_started_at > old
+        started = item.work_started_at
+        assert not await appeals.mark_in_progress(session, db.appeal_id)
+        await session.refresh(item)
+        assert item.work_started_at == started
+        assert await appeals.purge_old_appeals_content(session) == (0, 0)
+        assert item.summary == "Private" and item.content_erased_at is None

@@ -17,6 +17,7 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.add_column("appeals", sa.Column("content_erased_at", sa.DateTime(timezone=True), nullable=True))
+    op.add_column("appeals", sa.Column("work_started_at", sa.DateTime(timezone=True), nullable=True))
     op.create_table("erasure_tombstones",
         sa.Column("subject_digest", sa.String(64), primary_key=True),
         sa.Column("erased_before", sa.DateTime(timezone=True), nullable=False),
@@ -41,4 +42,5 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_table("resident_data_copies")
     op.drop_table("erasure_tombstones")
+    op.drop_column("appeals", "work_started_at")
     op.drop_column("appeals", "content_erased_at")

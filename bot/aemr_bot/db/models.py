@@ -265,6 +265,8 @@ class Appeal(Base):
     # An explicit reopen starts a new first-response period; NULL retains the
     # original creation timestamp for rows predating this feature.
     sla_anchor_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # First explicit taking-in-work is retention activity, not a new SLA period.
+    work_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # NULL for pre-existing periods whose original setting is unknown.
     sla_hours_at_start: Mapped[int | None] = mapped_column()
     sla_schedule_at_start: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
