@@ -275,6 +275,7 @@ class Settings(BaseSettings):
     # удаляются вместе с контейнером. На корневой логгер вешается и файл, и stdout,
     # поэтому в файл попадает ВСЁ Python-логирование (включая библиотеку maxapi).
     # Пусто → файловое логирование выключено (остаётся только stdout), безопасно для dev/CI.
+    erasure_state_dir: str = Field("/var/lib/aemr/erasure", alias="ERASURE_STATE_DIR")
     log_dir: str | None = Field("/var/log/aemr-bot", alias="LOG_DIR")
     log_file_max_bytes: int = Field(10_000_000, alias="LOG_FILE_MAX_BYTES", ge=0)
     log_file_backups: int = Field(10, alias="LOG_FILE_BACKUPS", ge=0, le=100)

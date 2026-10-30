@@ -62,15 +62,30 @@ async def accept(events: list[dict]) -> None:
     if not events:
         return
     async with session_scope() as session:
+        from aemr_bot.config import settings
+        from aemr_bot.services import data_erasure, privacy_epoch
+        await privacy_epoch.hold_delivery(session)
         # Bound SQL parameter count while committing the entire transport batch
         # atomically. Deduplication remains in PostgreSQL, including same-batch IDs.
         for offset in range(0, len(events), _RECEIPT_BATCH_SIZE):
             rows = []
+            incoming = []
             for payload in events[offset:offset + _RECEIPT_BATCH_SIZE]:
                 key, user_id = _identity(payload)
+                message = payload.get("message")
+                message = message if isinstance(message, dict) else {}
+                body = message.get("body")
+                body = body if isinstance(body, dict) else {}
+                recipient = message.get("recipient")
+                recipient = recipient if isinstance(recipient, dict) else {}
+                if (payload.get("update_type") == "message_created" and isinstance(user_id, int)
+                        and user_id > 0 and body.get("mid")
+                        and (settings.admin_group_id is None or recipient.get("chat_id") != settings.admin_group_id)):
+                    incoming.append((str(body["mid"]), user_id))
                 rows.append({"event_key": key,
                              "update_type": str(payload.get("update_type", "unknown"))[:64],
                              "max_user_id": user_id, "payload": payload})
+            await data_erasure.record_incoming_copies(session, incoming)
             await session.execute(insert(InboxEvent).values(rows).on_conflict_do_nothing(
                 index_elements=[InboxEvent.event_key],
             ))

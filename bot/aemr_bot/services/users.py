@@ -459,6 +459,8 @@ async def erase_pdn_detailed(
             await erase_pending(session, max_user_id)
             await _erase_legacy_resident_events(session, max_user_id)
         return None
+    from aemr_bot.services import data_erasure
+    await data_erasure.request_erasure(session, max_user_id, user_row)
     await erase_pending(session, max_user_id)
     await _erase_legacy_resident_events(session, max_user_id)
     # Эти записи описывают жителя; журнал управления операторами может
@@ -545,6 +547,8 @@ async def revoke_consent(session: AsyncSession, max_user_id: int) -> bool:
     is_blocked НЕ ставится: житель может передумать и дать согласие
     заново через /start.
     """
+    from aemr_bot.services.data_erasure import journal_restriction
+    journal_restriction(max_user_id, "revoke")
     result = await session.execute(
         update(User)
         .where(User.max_user_id == max_user_id)

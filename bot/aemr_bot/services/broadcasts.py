@@ -44,6 +44,9 @@ async def is_subscribed(session: AsyncSession, max_user_id: int) -> bool:
 async def set_subscription(
     session: AsyncSession, max_user_id: int, subscribed: bool
 ) -> None:
+    if not subscribed:
+        from aemr_bot.services.data_erasure import journal_restriction
+        journal_restriction(max_user_id, "unsubscribe")
     await session.execute(
         update(User)
         .where(User.max_user_id == max_user_id)

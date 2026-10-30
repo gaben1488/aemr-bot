@@ -15,7 +15,15 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.ext.compiler import compiles
 
-from aemr_bot.db.models import Appeal, Base, Message, Operator, User
+from aemr_bot.db.models import (
+    Appeal,
+    Base,
+    ErasureTombstone,
+    Message,
+    Operator,
+    ResidentDataCopy,
+    User,
+)
 from aemr_bot.handlers import appeal_runtime
 from aemr_bot.services import admin_card, followup_delivery, operator_reply_attempts
 
@@ -66,7 +74,7 @@ async def card_db(tmp_path, monkeypatch):
     async with engine.begin() as conn:
         await conn.run_sync(
             lambda sync: Base.metadata.create_all(
-                sync, tables=[User.__table__, Operator.__table__, Appeal.__table__, Message.__table__]
+                sync, tables=[User.__table__, Operator.__table__, Appeal.__table__, Message.__table__, ResidentDataCopy.__table__, ErasureTombstone.__table__]
             )
         )
 
@@ -77,6 +85,8 @@ async def card_db(tmp_path, monkeypatch):
 
     monkeypatch.setattr(admin_card, "session_scope", scope)
     monkeypatch.setattr(appeal_runtime, "session_scope", scope)
+    monkeypatch.setattr("aemr_bot.services.data_erasure.session_scope", scope)
+    monkeypatch.setattr("aemr_bot.services.queue_panel.refresh", AsyncMock())
     monkeypatch.setattr(followup_delivery, "session_scope", scope)
     monkeypatch.setattr(operator_reply_attempts, "recover_confirmed", AsyncMock(return_value=0))
     monkeypatch.setattr(admin_card.cfg, "admin_group_id", 555)
@@ -126,7 +136,7 @@ async def test_recovery_and_initial_publication_do_not_duplicate(card_db):
     async with card_db.scope() as session:
         appeal = await admin_card.appeals_service.get_by_id_with_messages(session, card_db.id)
     initial = asyncio.create_task(admin_card.render(bot, appeal, is_first_publication=True))
-    await sending.wait()
+    await asyncio.wait_for(sending.wait(), timeout=2)
     recovery = asyncio.create_task(appeal_runtime.recover_unpublished_appeals(bot))
     await asyncio.sleep(0)
     finish.set()
@@ -252,13 +262,16 @@ async def test_recovery_batch_and_parallelism_are_bounded(card_db):
             session.add(Appeal(user_id=saved.user_id, summary="Фонарь", topic="Свет"))
     active = peak = 0
 
+    import itertools
+    appeal_runtime_id = itertools.count(1).__next__
+
     async def send(**_kwargs):
         nonlocal active, peak
         active += 1
         peak = max(peak, active)
         await asyncio.sleep(0.001)
         active -= 1
-        return SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid="card-1")))
+        return SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid=f"card-{appeal_runtime_id()}")))
 
     bot = _bot(side_effect=send)
     assert await appeal_runtime.recover_unpublished_appeals(bot) == 100
@@ -297,7 +310,7 @@ async def test_cancelled_send_is_durable_and_not_replayed(card_db):
     async with card_db.scope() as session:
         appeal = await admin_card.appeals_service.get_by_id_with_messages(session, card_db.id)
     task = asyncio.create_task(admin_card.render(bot, appeal, is_first_publication=True))
-    await sending.wait()
+    await asyncio.wait_for(sending.wait(), timeout=2)
     task.cancel()
     with pytest.raises(asyncio.CancelledError):
         await task

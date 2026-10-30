@@ -73,6 +73,10 @@ async def create_appeal(
     return appeal
 
 
+class ContentErasedError(ValueError):
+    """An expired appeal is immutable; new work needs a new appeal id."""
+
+
 async def add_user_message(
     session: AsyncSession,
     appeal: Appeal,
@@ -80,6 +84,8 @@ async def add_user_message(
     attachments: list | None = None,
     max_message_id: str | None = None,
 ) -> Message:
+    if getattr(appeal, "content_erased_at", None) is not None:
+        raise ContentErasedError("Содержание очищено. Создайте новое обращение.")
     msg = Message(
         appeal_id=appeal.id,
         direction=MessageDirection.FROM_USER.value,
@@ -123,6 +129,8 @@ async def add_operator_message(
     обращению» (исторически фиксируется через message-запись плюс
     audit_log от вызывающего кода).
     """
+    if getattr(appeal, "content_erased_at", None) is not None:
+        raise ContentErasedError("Содержание очищено. Создайте новое обращение.")
     msg = Message(
         appeal_id=appeal.id,
         direction=MessageDirection.FROM_OPERATOR.value,
@@ -380,7 +388,7 @@ async def has_operator_message(
 
 
 ReopenResult = Literal[
-    "reopened", "already_open", "blocked_by_revoke", "not_found"
+    "reopened", "already_open", "blocked_by_revoke", "content_erased", "not_found"
 ]
 
 
@@ -416,6 +424,8 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
     # reopen. Only the saved historical setting supports an assessment;
     # the current setting must not be projected backwards.
     previous = await session.scalar(select(Appeal).where(Appeal.id == appeal_id).with_for_update())
+    if previous is not None and getattr(previous, "content_erased_at", None) is not None:
+        return "content_erased"
     if (previous is None or previous.status not in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}
             or previous.closed_due_to_revoke):
         if previous is None:

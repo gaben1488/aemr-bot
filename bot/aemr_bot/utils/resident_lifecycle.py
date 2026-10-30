@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager
+from contextvars import ContextVar
 from weakref import WeakValueDictionary
 
 from sqlalchemy import event
@@ -33,6 +34,9 @@ class _Gate:
             self.lock.release()
 
 
+current_subject: ContextVar[int | None] = ContextVar("resident_current_subject", default=None)
+
+
 _gates: WeakValueDictionary[int, _Gate] = WeakValueDictionary()
 
 
@@ -51,9 +55,11 @@ async def guard(user_id: int | None):
         return
     gate = _gate(user_id)
     await gate.acquire()
+    token = current_subject.set(user_id)
     try:
         yield
     finally:
+        current_subject.reset(token)
         gate.release()
 
 

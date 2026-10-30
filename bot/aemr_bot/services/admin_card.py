@@ -278,7 +278,8 @@ async def _render(
     if is_first_publication and not await _claim_first_publication(appeal.id):
         return None
     try:
-        sent = await bot.send_message(
+        from aemr_bot.services.data_erasure import tracked_send
+        sent = await tracked_send(bot, kind="admin_card", appeal_id=appeal.id,
             chat_id=cfg.admin_group_id,
             text=text_for_send,
             attachments=attachments,
@@ -324,6 +325,12 @@ async def _render(
                 )
         if is_first_publication:
             appeal.admin_message_id = new_mid
+    if new_mid:
+        try:
+            from aemr_bot.services import queue_panel
+            await queue_panel.refresh(bot)
+        except Exception:
+            log.warning("Queue refresh failed after confirmed appeal card", exc_info=True)
     return new_mid
 
 

@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import StrEnum
+from uuid import uuid4
 
 from sqlalchemy import (
     DDL,
@@ -237,6 +238,7 @@ class Appeal(Base):
     address: Mapped[str | None] = mapped_column(String(500))
     topic: Mapped[str | None] = mapped_column(String(120))
     summary: Mapped[str | None] = mapped_column(Text)
+    content_erased_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     related_appeal_id: Mapped[int | None] = mapped_column(
         ForeignKey("appeals.id", name="fk_appeals_related_appeal_id", ondelete="SET NULL"),
         nullable=True,
@@ -562,3 +564,31 @@ class BroadcastTemplate(Base):
     last_used_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True)
     )
+
+
+class ErasureTombstone(Base):
+    """Pseudonymous deletion instruction; also mirrored outside database dumps."""
+
+    __tablename__ = "erasure_tombstones"
+    subject_digest: Mapped[str] = mapped_column(String(64), primary_key=True)
+    erased_before: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    backups_state: Mapped[str] = mapped_column(String(16), default="pending", server_default="pending")
+    last_error: Mapped[str | None] = mapped_column(String(64))
+
+
+class ResidentDataCopy(Base):
+    """Durable inventory of outbound MAX copies; never stores message bodies."""
+
+    __tablename__ = "resident_data_copies"
+    __table_args__ = (UniqueConstraint("message_id", name="uq_resident_data_copy_mid"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    external_key: Mapped[str] = mapped_column(String(36), default=lambda: str(uuid4()), unique=True)
+    subjects: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
+    appeal_id: Mapped[int | None] = mapped_column(index=True)
+    kind: Mapped[str] = mapped_column(String(32))
+    message_id: Mapped[str | None] = mapped_column(String(255))
+    # reserved precedes send; unresolved sends without an id remain visible.
+    state: Mapped[str] = mapped_column(String(16), default="reserved", server_default="reserved", index=True)
+    erase_requested: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    last_error: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

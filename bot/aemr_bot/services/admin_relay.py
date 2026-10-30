@@ -18,6 +18,7 @@ from __future__ import annotations
 import logging
 
 from aemr_bot.config import settings as cfg
+from aemr_bot.services.data_erasure import tracked_send
 from aemr_bot.utils.attachments import deserialize_for_relay
 from aemr_bot.utils.event import extract_message_id
 
@@ -151,7 +152,7 @@ async def render_appeal_attachments(
         if total > 1:
             header = f"{header} ({idx}/{total})"
         try:
-            sent = await bot.send_message(
+            sent = await tracked_send(bot, kind="attachment_view", appeal_id=appeal.id,
                 chat_id=chat_id,
                 user_id=None if chat_id is not None else user_id,
                 text=header,
@@ -222,7 +223,7 @@ async def relay_attachments_to_admin(
         )
 
         def _factory(_batch=batch, _header=header):
-            return bot.send_message(
+            return tracked_send(bot, kind="attachment_relay", appeal_id=appeal_id,
                 chat_id=cfg.admin_group_id,
                 text=_header,
                 attachments=_batch,

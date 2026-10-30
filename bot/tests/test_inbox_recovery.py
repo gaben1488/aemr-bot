@@ -10,7 +10,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.ext.compiler import compiles
 
-from aemr_bot.db.models import Event, InboxEvent
+from aemr_bot.db.models import Event, InboxEvent, ResidentDataCopy
 from aemr_bot.handlers import IdempotencyMiddleware
 from aemr_bot.services import idempotency, inbox
 
@@ -26,6 +26,7 @@ async def receipt_db(monkeypatch):
     async with engine.begin() as conn:
         await conn.run_sync(lambda c: InboxEvent.__table__.create(c))
         await conn.run_sync(lambda c: Event.__table__.create(c))
+        await conn.run_sync(lambda c: ResidentDataCopy.__table__.create(c))
     factory = async_sessionmaker(engine, expire_on_commit=False)
     @asynccontextmanager
     async def scope():
@@ -278,7 +279,7 @@ async def test_bulk_receipts_preserve_order_dedup_and_bound_sql(receipt_db, monk
             yield session
     monkeypatch.setattr(inbox, "session_scope", counted_scope)
     await inbox.accept([payload(str(i)) for i in range(501)] + [payload("0")])
-    assert len(counts) == 3
+    assert len(counts) == 9  # three bounded batches: inventory insert/read + receipt insert
     rows = await stored(receipt_db)
     assert [r.payload["message"]["body"]["mid"] for r in rows] == [str(i) for i in range(501)]
 

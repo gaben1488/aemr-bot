@@ -819,6 +819,14 @@ async def submit_followup(event, body, text_body, max_user_id, *, draft_token: s
         )
         return
 
+    if getattr(appeal, "content_erased_at", None) is not None:
+        await event.message.answer(
+            "Содержание этого обращения очищено по сроку хранения. "
+            "Черновик дополнения сохранён. Создайте новое обращение и перенесите в него нужные части.",
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+        return
+
     # Если согласие отозвано между нажатием «📎 Дополнить» и присылкой
     # текста — дополнение в админ-чат не идёт. 152-ФЗ ст. 21 ч. 5: после
     # отзыва обработка прекращается, в том числе входящих сообщений.
@@ -939,6 +947,12 @@ async def submit_followup(event, body, text_body, max_user_id, *, draft_token: s
                 "Дополнение не сохранено: обращение или ваше разрешение на "
                 "отправку изменилось. Откройте «📂 Мои обращения» и проверьте статус.",
                 attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
+        if getattr(locked_appeal, "content_erased_at", None) is not None:
+            await event.message.answer(
+                "Содержание обращения уже очищено по сроку хранения. "
+                "Черновик сохранён: создайте новое обращение и перенесите нужные части."
             )
             return
         # Read the draft again under its lock. Another message may have
