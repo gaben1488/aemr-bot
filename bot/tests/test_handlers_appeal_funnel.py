@@ -7,7 +7,8 @@
 - on_awaiting_topic: пустой список тем → reset
 - on_awaiting_consent: с policy_url и без
 - on_awaiting_summary: пусто → отказ
-- on_awaiting_followup_text: appeal not found, consent revoked, closed
+- on_awaiting_followup_text: collects parts without delivery
+- submit_followup: appeal not found, consent revoked, closed, confirmed notification
 - ask_address_or_reuse: prev address found / not found
 - ask_locality / ask_address / ask_topic / ask_summary — pure-flow
 - on_idle: с активным обращением и без
@@ -221,7 +222,7 @@ class TestAskFunnelSteps:
              patch("aemr_bot.handlers.appeal_funnel.users_service.set_state",
                    AsyncMock()), \
              patch("aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data",
-                   AsyncMock()):
+                   AsyncMock(return_value={"topic": "Дороги", "draft_token": "draft"})):
             await appeal_funnel.ask_summary(event, max_user_id=42)
         text = event.bot.send_message.call_args.kwargs.get("text", "")
         assert "Дороги" in text
@@ -306,7 +307,7 @@ class TestOnAwaitingSummary:
 
 class TestOnAwaitingFollowupText:
     @pytest.mark.asyncio
-    async def test_appeal_not_found_resets(self) -> None:
+    async def test_appeal_not_found_keeps_draft(self) -> None:
         from aemr_bot.handlers import appeal_funnel
 
         event = _make_event()
@@ -320,10 +321,10 @@ class TestOnAwaitingFollowupText:
                    reset), \
              patch("aemr_bot.handlers.appeal_funnel.appeals_service.get_by_id",
                    AsyncMock(return_value=None)):
-            await appeal_funnel.on_awaiting_followup_text(
-                event, body=None, text_body="дополнение", max_user_id=42
+            await appeal_funnel.submit_followup(
+                event, body=None, text_body="дополнение", max_user_id=42, draft_token="draft"
             )
-        reset.assert_called_once()
+        reset.assert_not_awaited()
         event.message.answer.assert_called_once()
 
     @pytest.mark.asyncio
@@ -333,7 +334,8 @@ class TestOnAwaitingFollowupText:
         event = _make_event()
         user = SimpleNamespace(
             id=1,
-            dialog_data={"appeal_id": 5},
+            dialog_data={"appeal_id": 5, "draft_token": "draft",
+                         "summary_chunks": ["Уточнение: яма у второго подъезда."]},
             consent_pdn_at=None,  # отозвано
         )
         appeal = SimpleNamespace(id=5, user_id=1, status="new")
@@ -346,10 +348,10 @@ class TestOnAwaitingFollowupText:
                    reset), \
              patch("aemr_bot.handlers.appeal_funnel.appeals_service.get_by_id",
                    AsyncMock(return_value=appeal)):
-            await appeal_funnel.on_awaiting_followup_text(
-                event, body=None, text_body="x", max_user_id=42
+            await appeal_funnel.submit_followup(
+                event, body=None, text_body="x", max_user_id=42, draft_token="draft"
             )
-        reset.assert_called_once()
+        reset.assert_not_awaited()
         text = event.message.answer.call_args.args[0]
         assert "отозвано" in text.lower() or "согласие" in text.lower()
 
@@ -361,7 +363,8 @@ class TestOnAwaitingFollowupText:
         event = _make_event()
         user = SimpleNamespace(
             id=1,
-            dialog_data={"appeal_id": 5},
+            dialog_data={"appeal_id": 5, "draft_token": "draft",
+                         "summary_chunks": ["Уточнение: яма у второго подъезда."]},
             consent_pdn_at=datetime.now(UTC),
         )
         appeal = SimpleNamespace(
@@ -376,24 +379,16 @@ class TestOnAwaitingFollowupText:
                    reset), \
              patch("aemr_bot.handlers.appeal_funnel.appeals_service.get_by_id",
                    AsyncMock(return_value=appeal)):
-            await appeal_funnel.on_awaiting_followup_text(
-                event, body=None, text_body="x", max_user_id=42
+            await appeal_funnel.submit_followup(
+                event, body=None, text_body="x", max_user_id=42, draft_token="draft"
             )
-        reset.assert_called_once()
+        reset.assert_not_awaited()
         text = event.message.answer.call_args.args[0]
-        assert "закрыто" in text.lower() or "Подать похожее" in text
+        assert "завершено" in text.lower() and "Текст и вложения сохранятся" in text
 
     @pytest.mark.asyncio
-    async def test_success_sends_new_admin_card_for_followup(self) -> None:
-        """Followup-карточка = ПОЛНАЯ admin appeal card с event_header
-        («📩 Новое дополнение по обращению #N»), а не двойной комбо
-        «короткое уведомление + карточка». Один объект в чате —
-        оператор сразу видит контекст + содержание + все кнопки
-        действий, не сканирует две сущности (см. user feedback 2026-05-25).
-
-        Старая карточка вверху НЕ редактируется — followup = «появилась
-        новая инфа», явно показываем внизу чата.
-        """
+    async def test_success_notifies_by_committed_followup_id(self) -> None:
+        """Подтверждение сохраняет дополнение и уведомляет по его устойчивому ID."""
         from aemr_bot.handlers import appeal_funnel
 
         event = _make_event()
@@ -404,7 +399,8 @@ class TestOnAwaitingFollowupText:
             phone="+79991234567",
             is_blocked=False,
             dialog_state="awaiting_followup_text",
-            dialog_data={"appeal_id": 5},
+            dialog_data={"appeal_id": 5, "draft_token": "draft",
+                         "summary_chunks": ["Уточнение: яма у второго подъезда."]},
             consent_pdn_at=datetime.now(UTC),
             subscribed_broadcast=False,
             consent_revoked_at=None,
@@ -456,51 +452,32 @@ class TestOnAwaitingFollowupText:
             AsyncMock(return_value=updated_appeal),
         ), patch(
             "aemr_bot.handlers.appeal_funnel.appeals_service.add_user_message",
-            AsyncMock(),
+            AsyncMock(return_value=SimpleNamespace(id=77)),
         ), patch(
             # SEC #5: rate-limit-check (combined SQL); happy path = followup ok.
             "aemr_bot.handlers.appeal_funnel.appeals_service.followup_rate_limit_stats",
             AsyncMock(return_value=(0, None)),
         ), patch(
+            "aemr_bot.services.followup_delivery.deliver",
+            AsyncMock(return_value=True),
+        ) as deliver, patch(
             "aemr_bot.config.settings.admin_group_id",
             555,
         ), patch(
             "aemr_bot.handlers.menu.open_main_menu",
             AsyncMock(),
         ):
-            await appeal_funnel.on_awaiting_followup_text(
+            await appeal_funnel.submit_followup(
                 event,
                 body=SimpleNamespace(attachments=[]),
                 text_body="Уточнение: яма у второго подъезда.",
-                max_user_id=42,
+                max_user_id=42, draft_token="draft",
             )
 
         reset.assert_called_once()
-        # Главное правило новой политики: edit_message НЕ вызывается
-        # на admin-карточке. Шлём новую карточку через send_message.
+        deliver.assert_awaited_once_with(event.bot, 77)
         event.bot.edit_message.assert_not_called()
-        event.bot.send_message.assert_called()
-        # Среди отправленных в админ-группу должна быть карточка с
-        # обновлённой сутью (дополнение от жителя).
-        admin_calls = [
-            c for c in event.bot.send_message.call_args_list
-            if c.kwargs.get("chat_id") == 555
-        ]
-        assert admin_calls, "no admin-card send to admin_group_id"
-        # Карточка содержит «#5» — номер обращения.
-        any_card = any(
-            "#5" in (c.kwargs.get("text") or "")
-            for c in admin_calls
-        )
-        assert any_card, f"no admin card with #5 in: {admin_calls}"
-        # «второго подъезда» — содержимое followup-уведомления.
-        any_followup_with_quote = any(
-            "второго подъезда" in (c.kwargs.get("text") or "")
-            for c in admin_calls
-        )
-        assert any_followup_with_quote, (
-            f"followup text not in admin sends: {admin_calls}"
-        )
+        assert "Дополнение сохранено" in event.message.answer.await_args.args[0]
 
     @pytest.mark.asyncio
     async def test_followup_over_limit_is_not_partially_saved(self) -> None:
@@ -516,7 +493,8 @@ class TestOnAwaitingFollowupText:
             phone="+79991234567",
             is_blocked=False,
             dialog_state="awaiting_followup_text",
-            dialog_data={"appeal_id": 5},
+            dialog_data={"appeal_id": 5, "draft_token": "draft",
+                         "summary_chunks": ["Уточнение: яма у второго подъезда."]},
             consent_pdn_at=datetime.now(UTC),
             subscribed_broadcast=False,
             consent_revoked_at=None,
@@ -569,15 +547,47 @@ class TestOnAwaitingFollowupText:
             "aemr_bot.handlers.menu.open_main_menu",
             AsyncMock(),
         ):
-            await appeal_funnel.on_awaiting_followup_text(
+            await appeal_funnel.submit_followup(
                 event,
                 body=SimpleNamespace(attachments=[]),
                 text_body=overlong,
-                max_user_id=42,
+                max_user_id=42, draft_token="draft",
             )
 
         add_msg.assert_not_awaited()
         assert "не" in event.message.answer.await_args.args[0].lower()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("too_long", [False, True])
+    async def test_followup_input_collects_without_delivery_and_retains_old_parts(self, monkeypatch, too_long):
+        from aemr_bot.handlers import appeal_funnel
+
+        initial = {"appeal_id": 5, "draft_token": "saved", "summary_chunks": ["Первая часть"], "attachments": []}
+        data = dict(initial)
+        chunk = "А" * (appeal_funnel.cfg.summary_max_chars + 1) if too_long else "Вторая часть"
+
+        async def update(session, user_id, merge, *, expected_states):
+            assert user_id == 42
+            assert "awaiting_followup_text" in expected_states
+            data.update(merge(data))
+            return data
+
+        monkeypatch.setattr(appeal_funnel, "session_scope", _fake_session_scope)
+        monkeypatch.setattr(appeal_funnel.users_service, "update_dialog_data", update)
+        preview = AsyncMock()
+        monkeypatch.setattr(appeal_funnel, "show_summary_draft", preview)
+        save = AsyncMock()
+        monkeypatch.setattr(appeal_funnel.appeals_service, "add_user_message", save)
+        event = _make_event()
+        await appeal_funnel.on_awaiting_followup_text(event, None, chunk, 42)
+        assert data["summary_chunks"] == (["Первая часть"] if too_long else ["Первая часть", chunk])
+        assert data["appeal_id"] == 5 and data["draft_token"] == "saved"
+        preview.assert_awaited_once_with(event, 42)
+        save.assert_not_awaited()
+        event.bot.send_message.assert_not_awaited()
+        if too_long:
+            assert "Ранее добавленные части сохранены" in event.message.answer.await_args.args[0]
+
 
 
 class TestOnIdle:

@@ -20,7 +20,7 @@ async def test_open_uses_navigation_screen_and_neutralizes_reply_markers(monkeyp
         yield object()
 
     monkeypatch.setattr(dispatch, "session_scope", scope)
-    monkeypatch.setattr(dispatch, "ensure_operator", AsyncMock(return_value=True))
+    monkeypatch.setattr(dispatch, "get_operator", AsyncMock(return_value=SimpleNamespace(id=7, role="it")))
     monkeypatch.setattr(dispatch, "ack_callback", AsyncMock())
     monkeypatch.setattr(dispatch.appeals_service, "get_by_id_with_messages", AsyncMock(return_value=appeal))
     monkeypatch.setattr(dispatch.admin_relay, "collect_appeal_attachments", lambda _: [])
@@ -41,7 +41,10 @@ async def test_open_edits_fresh_list_but_preserves_historical_event(monkeypatch)
     from aemr_bot.handlers import admin_callback_dispatch as dispatch
     from aemr_bot.utils import menu_tracker
     from tests.test_freshness_full_coverage import (
-        ADMIN_CHAT_ID, _make_appeal, _make_bot, _make_event,
+        ADMIN_CHAT_ID,
+        _make_appeal,
+        _make_bot,
+        _make_event,
     )
 
     appeal = _make_appeal(appeal_id=107)
@@ -52,7 +55,7 @@ async def test_open_edits_fresh_list_but_preserves_historical_event(monkeypatch)
 
     monkeypatch.setattr(dispatch, "session_scope", scope)
     monkeypatch.setattr(dispatch.cfg, "admin_group_id", ADMIN_CHAT_ID)
-    monkeypatch.setattr(dispatch, "ensure_operator", AsyncMock(return_value=True))
+    monkeypatch.setattr(dispatch, "get_operator", AsyncMock(return_value=SimpleNamespace(id=7, role="it")))
     monkeypatch.setattr(dispatch, "ack_callback", AsyncMock())
     monkeypatch.setattr(dispatch.appeals_service, "get_by_id_with_messages", AsyncMock(return_value=appeal))
     bot = _make_bot(send_mids=["view-after-event"])

@@ -100,7 +100,7 @@ class _FakeSession:
         now = datetime.now(UTC)
         stale = [r for r in self.rows if r.expires_at <= now]
         self.rows = [r for r in self.rows if r.expires_at > now]
-        return NS(rowcount=len(stale))
+        return NS(rowcount=len(stale), all=list)
 
     async def scalars(self, _stmt):
         now = datetime.now(UTC)
