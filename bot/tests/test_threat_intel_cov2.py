@@ -63,12 +63,11 @@ class _RaisingSession:
 
 
 class TestNormalizeHostEdges:
-    def test_host_that_is_only_www_becomes_empty(self) -> None:
-        # "www." → после среза остаётся "" — покрывает return пустой строки.
-        assert ti._normalize_host("http://www./path") == ""
+    def test_host_that_is_only_www_is_not_stripped(self) -> None:
+        assert ti._normalize_host("http://www./path") == "www"
 
-    def test_bare_www_prefix_stripped(self) -> None:
-        assert ti._normalize_host("www.bad.test") == "bad.test"
+    def test_bare_www_prefix_preserved(self) -> None:
+        assert ti._normalize_host("www.bad.test") == "www.bad.test"
 
     def test_is_malicious_empty_host_short_circuits(self) -> None:
         # URL с непустым хостом в set, но проверяем URL без извлекаемого
@@ -110,7 +109,7 @@ class TestParserShortRows:
         assert ti._parse_threatfox_hostfile(body) == {"kept.test"}
 
     def test_threatfox_skips_token_that_yields_empty_host(self) -> None:
-        # 2 токена, но 2-й ("www.") нормализуется в "" → строка пропущена.
+        # Однометочный хост не допускается в набор сетевых индикаторов.
         body = "0.0.0.0 www.\n0.0.0.0 kept.test\n"
         assert ti._parse_threatfox_hostfile(body) == {"kept.test"}
 

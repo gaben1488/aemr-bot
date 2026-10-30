@@ -12,7 +12,7 @@ from aemr_bot.services.threat_intel import (
 
 class TestNormalizeHost:
     def test_full_url(self) -> None:
-        assert _normalize_host("https://www.Attacker.com/path") == "attacker.com"
+        assert _normalize_host("https://www.Attacker.com/path") == "www.attacker.com"
 
     def test_no_scheme(self) -> None:
         assert _normalize_host("evil.example") == "evil.example"
@@ -86,9 +86,16 @@ class TestThreatIntelStore:
 
     def test_malicious_host_caught(self) -> None:
         store = ThreatIntelStore(hosts={"evil.example"})
-        is_bad, source = store.is_malicious("https://www.Evil.example/path")
+        is_bad, source = store.is_malicious("https://Evil.example/path")
         assert is_bad is True
         assert source == "threat-intel"
+
+    def test_www_and_apex_are_not_interchangeable(self) -> None:
+        store = ThreatIntelStore(hosts={"www.evil.example"})
+        assert store.is_malicious("https://www.evil.example/a")[0]
+        assert not store.is_malicious("https://evil.example/a")[0]
+        store = ThreatIntelStore(hosts={"evil.example"})
+        assert not store.is_malicious("https://www.evil.example/a")[0]
 
     def test_clean_host_passes(self) -> None:
         store = ThreatIntelStore(hosts={"evil.example"})

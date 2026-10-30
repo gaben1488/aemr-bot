@@ -174,6 +174,18 @@ def test_corrupt_cache_is_ignored(monkeypatch, tmp_path):
     assert ti.get_store().hosts == set()
 
 
+def test_legacy_collapsed_www_cache_is_not_used_as_exact_evidence(monkeypatch, tmp_path):
+    import json
+    path = tmp_path / "old.json"
+    path.write_text(json.dumps({"version": 1, "sources": {
+        "openphish": {"hosts": ["example.test"], "updated_at": time.time()}
+    }}))
+    monkeypatch.setenv("THREAT_INTEL_CACHE_PATH", str(path))
+    monkeypatch.delenv("ABUSECH_AUTH_KEY", raising=False)
+    monkeypatch.setattr(ti, "_STORE", None)
+    assert not ti.get_store().is_malicious("https://example.test/")[0]
+
+
 def test_partial_feed_staleness_cannot_be_hidden_by_other_refresh(monkeypatch):
     store = ti.get_store()
     store.source_hosts = {'urlhaus': {'evil.com'}, 'threatfox': {'other.com'}}
