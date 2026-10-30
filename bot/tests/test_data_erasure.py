@@ -1,60 +1,17 @@
-"""Durable external copy cleanup and restore quarantine regressions."""
+"""Local erasure, manual external copies, and restore privacy regressions."""
 import asyncio
-import os
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-import pytest_asyncio
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.pool import NullPool
 
-from aemr_bot.db.models import Appeal, Base, ErasureTombstone, Message, ResidentDataCopy, User
+from aemr_bot.db.models import Appeal, ErasureTombstone, Message, ResidentDataCopy, User
 from aemr_bot.services import data_erasure, db_backup, users
-
-
-@pytest_asyncio.fixture
-async def erasure_db(monkeypatch, tmp_path):
-    engine = create_async_engine(os.environ["DATABASE_URL"], poolclass=NullPool)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
-    factory = async_sessionmaker(engine, expire_on_commit=False)
-
-    @asynccontextmanager
-    async def scope():
-        async with factory.begin() as session:
-            yield session
-
-    monkeypatch.setattr(data_erasure, "session_scope", scope)
-    monkeypatch.setattr("aemr_bot.db.session.session_scope", scope)
-    monkeypatch.setattr(data_erasure.settings, "erasure_state_dir", str(tmp_path / "journal"))
-    monkeypatch.setattr(data_erasure.settings, "log_dir", str(tmp_path / "logs"))
-    monkeypatch.setattr(data_erasure.settings, "backup_local_dir", str(tmp_path / "backups"))
-    monkeypatch.setattr(data_erasure.settings, "backup_s3_bucket", None)
-    (tmp_path / "backups").mkdir()
-    async with scope() as session:
-        resident = User(max_user_id=42, first_name="Иван", phone="+79123456789", consent_pdn_at=datetime.now(UTC))
-        other = User(max_user_id=43, first_name="Анна", consent_pdn_at=datetime.now(UTC))
-        session.add_all([resident, other])
-        await session.flush()
-        appeal = Appeal(user_id=resident.id, summary="Private", admin_message_id="first", last_admin_card_mid="last")
-        unrelated = Appeal(user_id=other.id, summary="Preserve")
-        session.add_all([appeal, unrelated])
-        await session.flush()
-        session.add(Message(appeal_id=appeal.id, direction="from_user", text="Private", max_message_id="incoming"))
-        appeal_id, unrelated_id = appeal.id, unrelated.id
-    yield SimpleNamespace(scope=scope, appeal_id=appeal_id, other_id=unrelated_id, path=tmp_path)
-    await engine.dispose()
-
-
-async def _send(db, *, mid="sent", kind="admin_card", appeal_id=None):
-    bot = SimpleNamespace(send_message=AsyncMock(return_value=SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid=mid)))))
-    await data_erasure.tracked_send(bot, kind=kind, appeal_id=appeal_id or db.appeal_id, text="Private")
-    return bot
+from tests._erasure_helpers import erasure_database  # noqa: F401
+from tests._erasure_helpers import send_copy as _send
 
 
 @pytest.mark.asyncio
@@ -70,7 +27,7 @@ async def test_erasure_inventories_known_history_and_preserves_unrelated_data(er
         assert (await session.get(Appeal, db.other_id)).summary == "Preserve"
         copies = list((await session.scalars(select(ResidentDataCopy))).all())
         requested = {copy.message_id for copy in copies if copy.erase_requested}
-        assert requested == {"sent", "first", "last", "incoming"}
+        assert requested == {"sent", "first", "last"}
         assert next(copy for copy in copies if copy.message_id == "unrelated").state == "retained"
     journal = list((db.path / "journal").glob("*.json"))
     assert journal
@@ -78,7 +35,7 @@ async def test_erasure_inventories_known_history_and_preserves_unrelated_data(er
 
 
 @pytest.mark.asyncio
-async def test_delete_claim_is_durable_and_unknown_outcome_never_retries(erasure_db):
+async def test_erasure_keeps_max_copies_manual_without_delete_attempts(erasure_db):
     db = erasure_db
     await _send(db)
     async with db.scope() as session:
@@ -86,25 +43,25 @@ async def test_delete_claim_is_durable_and_unknown_outcome_never_retries(erasure
     bot = SimpleNamespace(delete_message=AsyncMock(side_effect=TimeoutError("unknown")))
     assert await data_erasure.recover_deletions(bot) == 0
     attempts = bot.delete_message.await_count
-    assert attempts == 4
+    assert attempts == 0
     assert await data_erasure.recover_deletions(bot) == 0
     assert bot.delete_message.await_count == attempts
     status = await data_erasure.diagnostics()
-    assert status["uncertain"] == 4
+    assert status["manual"] == 3
 
 
 @pytest.mark.asyncio
-async def test_parallel_workers_delete_each_known_copy_once(erasure_db):
+async def test_legacy_workers_never_delete_known_copies(erasure_db):
     db = erasure_db
     async with db.scope() as session:
         await users.erase_pdn_detailed(session, 42)
     bot = SimpleNamespace(delete_message=AsyncMock(return_value=SimpleNamespace(success=True)))
-    assert sum(await asyncio.gather(data_erasure.recover_deletions(bot), data_erasure.recover_deletions(bot))) == 3
-    assert bot.delete_message.await_count == 3
+    assert sum(await asyncio.gather(data_erasure.recover_deletions(bot), data_erasure.recover_deletions(bot))) == 0
+    bot.delete_message.assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_unknown_send_is_visible_and_only_recovered_mid_can_be_queued(erasure_db):
+async def test_unknown_send_stays_visible_and_recovered_mid_stays_manual(erasure_db):
     db = erasure_db
     bot = SimpleNamespace(send_message=AsyncMock(side_effect=TimeoutError("unknown")))
     with pytest.raises(TimeoutError):
@@ -146,7 +103,7 @@ async def test_erase_waits_for_inflight_copy_inventory(erasure_db):
     await asyncio.gather(sending, erasing)
     async with db.scope() as session:
         copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "racing"))
-        assert copy.erase_requested and copy.state == "pending"
+        assert copy.erase_requested and copy.state == "manual"
 
 
 @pytest.mark.asyncio
@@ -167,7 +124,7 @@ async def test_restore_replays_independent_tombstone_without_erasing_new_identit
 
 
 @pytest.mark.asyncio
-async def test_backup_cleanup_preserves_non_dumps_and_surfaces_s3_version_limit(erasure_db, monkeypatch):
+async def test_local_backup_cleanup_preserves_non_dumps(erasure_db, monkeypatch):
     db = erasure_db
     directory = db.path / "backups"
     (directory / "aemr-20200101_010101.sql.gpg").write_text("encrypted")
@@ -231,19 +188,19 @@ async def test_restore_keeps_withdrawals_effective_and_preserves_newer_consent(e
 
 
 @pytest.mark.asyncio
-async def test_any_erasure_invalidates_aggregate_exports_without_deleting_other_sources(erasure_db):
+async def test_erasure_marks_issued_exports_manual_without_deleting_other_sources(erasure_db):
     db = erasure_db
     bot = SimpleNamespace(send_message=AsyncMock(return_value=SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid="export")))))
     await data_erasure.tracked_send(bot, kind="bulk_export", text="report")
     async with db.scope() as session:
         await users.erase_pdn_detailed(session, 42)
         exported = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.kind == "bulk_export"))
-        assert exported.erase_requested and exported.state == "pending"
+        assert exported.erase_requested and exported.state == "manual"
         assert (await session.get(Appeal, db.other_id)).summary == "Preserve"
 
 
 @pytest.mark.asyncio
-async def test_retention_queues_only_eligible_appeals_and_removes_reply_drafts(erasure_db):
+async def test_retention_restricts_only_eligible_appeals_and_removes_reply_drafts(erasure_db):
     from aemr_bot.db.models import Operator, OperatorReplyDraft
     from aemr_bot.services import appeals
     db = erasure_db
@@ -264,7 +221,7 @@ async def test_retention_queues_only_eligible_appeals_and_removes_reply_drafts(e
         assert await session.scalar(select(OperatorReplyDraft)) is None
         assert (await session.get(Appeal, db.other_id)).summary == "Preserve"
         copies = list((await session.scalars(select(ResidentDataCopy))).all())
-        assert {copy.message_id for copy in copies if copy.erase_requested} == {"first", "last", "incoming"}
+        assert {copy.message_id for copy in copies if copy.erase_requested} == {"first", "last"}
     # Restore an old pre-retention payload, then replay independent ledger.
     async with db.scope() as session:
         item = await session.get(Appeal, db.appeal_id)
@@ -276,28 +233,17 @@ async def test_retention_queues_only_eligible_appeals_and_removes_reply_drafts(e
 
 
 @pytest.mark.asyncio
-async def test_s3_cleanup_requires_explicit_version_confirmation_before_backup(erasure_db, monkeypatch):
+async def test_legacy_s3_configuration_never_contacts_remote_cleanup(erasure_db, monkeypatch):
     db = erasure_db
-    monkeypatch.setattr(data_erasure.settings, "backup_s3_bucket", "example")
-    monkeypatch.setattr(data_erasure.settings, "backup_s3_endpoint", "https://s3.example")
-    monkeypatch.setattr(data_erasure.settings, "backup_s3_access_key", "key")
-    monkeypatch.setattr(data_erasure.settings, "backup_s3_secret_key", "secret")
+    for key, value in {"bucket": "example", "endpoint": "https://s3.example", "access_key": "key", "secret_key": "secret"}.items():
+        monkeypatch.setattr(data_erasure.settings, f"backup_s3_{key}", value)
     async with db.scope() as session:
         await users.erase_pdn_detailed(session, 42)
-    process = SimpleNamespace(wait=AsyncMock(return_value=0))
-    spawn = AsyncMock(return_value=process)
+    spawn = AsyncMock(side_effect=AssertionError("remote storage is outside bot policy"))
     monkeypatch.setattr(db_backup.asyncio, "create_subprocess_exec", spawn)
-    assert await db_backup.cleanup_erased_backups() == 0
-    assert spawn.await_count == 1
-    result = await db_backup.backup_db()
-    assert result.path is None and result.fail_kind == "erasure"
-    # No second S3 mutation after a completed attempt whose history needs review.
-    assert spawn.await_count == 1
-    async with db.scope() as session:
-        instructions = (await session.execute(select(ErasureTombstone.subject_digest, ErasureTombstone.erased_before))).all()
-    for digest, cutoff in instructions:
-        assert not await data_erasure.confirm_backup_cleanup(digest, expected_erased_before=(cutoff - timedelta(seconds=1)).isoformat())
-        assert await data_erasure.confirm_backup_cleanup(digest, expected_erased_before=cutoff.isoformat())
+    assert await db_backup.cleanup_erased_backups() == 2
+    spawn.assert_not_awaited()
+    assert await data_erasure.unresolved_backups() == []
 
 
 @pytest.mark.asyncio
@@ -316,13 +262,13 @@ async def test_outgoing_hook_tracks_private_screens_without_double_tracking_expl
         copies = list((await session.scalars(select(ResidentDataCopy))).all())
         assert [(item.kind, item.message_id) for item in copies] == [("citizen_screen", "screen"), ("operator_part", "part")]
         await users.erase_pdn_detailed(session, 42)
-    with pytest.raises(RuntimeError, match="queued for erasure"):
+    with pytest.raises(RuntimeError, match="source was erased"):
         await bot.edit_message(message_id="screen", text="old profile")
     await bot.edit_message(message_id="unrelated-menu", text="public info")
 
 
 @pytest.mark.asyncio
-async def test_inbox_records_resident_source_mid_atomically_and_deduplicates(erasure_db, monkeypatch):
+async def test_inbox_deduplicates_without_creating_external_deletion_inventory(erasure_db, monkeypatch):
     from aemr_bot.db.models import InboxEvent
     from aemr_bot.services import inbox
     db = erasure_db
@@ -336,10 +282,11 @@ async def test_inbox_records_resident_source_mid_atomically_and_deduplicates(era
     async with db.scope() as session:
         copies = list((await session.scalars(select(ResidentDataCopy))).all())
         receipts = list((await session.scalars(select(InboxEvent))).all())
-        assert len(copies) == len(receipts) == 1
-        assert copies[0].kind == "resident_input" and copies[0].message_id == "inbound"
+        assert len(receipts) == 1
+        assert copies == []
         await users.erase_pdn_detailed(session, 42)
-        assert copies[0].erase_requested is True
+        assert await session.scalar(select(ResidentDataCopy.id).where(ResidentDataCopy.message_id == "inbound")) is None
+        assert receipts[0].payload == {}
 
 
 @pytest.mark.asyncio
@@ -418,7 +365,7 @@ async def test_independent_copy_inventory_survives_old_db_restore_without_reside
     async with db.scope() as session:
         assert await data_erasure.replay_restore_tombstones(session) == 0
         copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "post-dump-card"))
-        assert copy is not None and copy.erase_requested and copy.state == "uncertain"
+        assert copy is not None and copy.erase_requested and copy.state == "manual"
         assert await session.scalar(select(ErasureTombstone.subject_digest)) is not None
     before = bot.delete_message.await_count
     await data_erasure.recover_deletions(bot)
@@ -583,7 +530,7 @@ async def test_personal_view_holds_erasure_barrier_before_read_until_output(eras
     await erasing
     async with db.scope() as session:
         copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "racing-view"))
-        assert copy.erase_requested and copy.state == "pending"
+        assert copy.erase_requested and copy.state == "manual"
 
 
 @pytest.mark.asyncio
@@ -606,7 +553,7 @@ async def test_personal_edit_commits_union_before_unknown_external_result(erasur
     async with db.scope() as session:
         await users.erase_pdn_detailed(session, 42)
         copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "navigation"))
-        assert copy.erase_requested and copy.state == "pending"
+        assert copy.erase_requested and copy.state == "manual"
         assert (await session.get(Appeal, db.other_id)).summary == "Preserve"
 
 

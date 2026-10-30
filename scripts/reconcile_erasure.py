@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""IT reconciliation after checking MAX/S3 externally; never blindly retry deletes."""
+"""IT records manual copy verification; the bot never deletes MAX messages."""
 import argparse
 import asyncio
 
@@ -27,7 +27,7 @@ async def main():
         result = await data_erasure.confirm_backup_cleanup(digest, expected_erased_before=cutoff)
     if not result:
         raise SystemExit("Reconciliation rejected: record is absent or state does not permit this transition")
-    print("Reconciliation recorded; retain the external verification evidence with the deletion act.")
+    print("Reconciliation recorded; retain the manual verification evidence with the deletion act.")
 
 
 if __name__ == "__main__":

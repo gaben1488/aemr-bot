@@ -23,7 +23,7 @@
 <tr><td>Связь с мессенджером MAX</td><td>Токен бота, режим работы (опрос или webhook), адреса и секрет webhook, таймауты и повторы запросов к MAX.</td><td><a href="#rc-bot" data-go="rc-bot">MAX и режим бота</a></td></tr>
 <tr><td>Сроки и лимиты ввода</td><td>Срок ответа по SLA, окно сбора обращения в карточку, потолки длины имени, адреса, текста и ответа, число вложений, защита от потока дополнений.</td><td><a href="#rc-sla" data-go="rc-sla">SLA, лимиты обращения и ответов</a></td></tr>
 <tr><td>Рассылки</td><td>Длина сообщения рассылки, скорость отправки, частота обновления прогресса, срок жизни неоконченного черновика.</td><td><a href="#rc-broadcast" data-go="rc-broadcast">Рассылка</a></td></tr>
-<tr><td>Резервное копирование</td><td>День и час копии, папка и глубина хранения, парольная фраза GPG, таймауты шагов, выгрузка в S3-совместимое хранилище.</td><td><a href="#rc-backup" data-go="rc-backup">Бэкап</a></td></tr>
+<tr><td>Резервное копирование</td><td>День и час копии, папка и глубина хранения, парольная фраза GPG, таймауты шагов, ручной вынос на отдельный носитель.</td><td><a href="#rc-backup" data-go="rc-backup">Бэкап</a></td></tr>
 <tr><td>Проверки живости</td><td>Внутренний пульс и порог «протухания», интервал самопроверки, внешний адрес мониторинга, чувствительность пробы <code class="kbd">/livez</code> к остановке опроса.</td><td><a href="#rc-healthcheck" data-go="rc-healthcheck">Healthcheck и тайминги живости</a></td></tr>
 <tr><td>Журнал, время, логи</td><td>Глубина хранения журнала действий, часовой пояс (по нему считаются рабочие часы и всё расписание), подробность логов.</td><td><a href="#rc-misc" data-go="rc-misc">Аудит, время и логирование</a></td></tr>
 </tbody>
@@ -312,7 +312,7 @@
 <tr><td><code class="kbd">BACKUP_GPG_PASSPHRASE</code></td><td><code class="kbd">infra/.env</code> + менеджер паролей</td><td>Сгенерировать новую. Старые файлы <code class="kbd">.sql.gpg</code> прежней фразой не откроются — храните обе с пометкой «до/после даты». При компрометации обязательно перешифровать существующие бэкапы или утилизировать старые.</td></tr>
 <tr><td><code class="kbd">WEBHOOK_SECRET</code> (если webhook)</td><td><code class="kbd">infra/.env</code></td><td>Сгенерировать новый (минимум 16 символов), перезапустить бота.</td></tr>
 <tr><td><code class="kbd">GITHUB_PAT</code> (если включена синхронизация)</td><td><code class="kbd">infra/.env</code> + менеджер паролей</td><td>В настройках GitHub отозвать старый и создать новый fine-grained токен (права Contents + Pull requests на репозиторий), обновить <code class="kbd">.env</code>.</td></tr>
-<tr><td><code class="kbd">BACKUP_S3_*</code> (опционально)</td><td><code class="kbd">infra/.env</code></td><td>Через панель управления вашего S3-провайдера.</td></tr>
+
 <tr><td><code class="kbd">PHISHTANK_APP_KEY</code> (если активирован)</td><td><code class="kbd">infra/.env</code></td><td>По требованию провайдера PhishTank.</td></tr>
 <tr><td>SSH-доступ к серверу</td><td><code class="kbd">~/.ssh/authorized_keys</code></td><td>Добавить новый ключ, проверить вход, удалить старый.</td></tr>
 <tr><td>Учётка <code class="kbd">max.ru/business</code></td><td>У ответственного администратора организации</td><td>Через стандартный порядок портала MAX.</td></tr>
@@ -421,7 +421,7 @@
 <tbody>
 <tr><td><code class="kbd">cron.py</code></td><td>Сборка планировщика (все cron-задачи: пульс, отчёты, бэкап, SLA, ретенция).</td></tr>
 <tr><td><code class="kbd">cron_registry.py</code></td><td>Машинно-читаемый список имён задач для anti-drift теста синхронизации с документацией.</td></tr>
-<tr><td><code class="kbd">db_backup.py</code></td><td>pg_dump + GPG + локальный том + опциональный S3.</td></tr>
+<tr><td><code class="kbd">db_backup.py</code></td><td>pg_dump + GPG + локальный том; внешний носитель обслуживается вручную.</td></tr>
 <tr><td><code class="kbd">calendar_ru.py</code></td><td>Производственный календарь РФ из <code class="kbd">seed/holidays.json</code> (подавление напоминаний в праздники).</td></tr>
 <tr><td><code class="kbd">appeals.py</code></td><td>CRUD по обращениям, поиск, статусы, история.</td></tr>
 <tr><td><code class="kbd">users.py</code></td><td>CRUD по жителям, нормализация телефона, удаление ПДн, аудит.</td></tr>

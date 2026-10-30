@@ -178,13 +178,13 @@ class Settings(BaseSettings):
     )
 
     # Таймауты дочерних процессов бэкапа (perf-resilience finding d). Без них
-    # pg_dump/gpg/rclone ждут голым `await proc.wait()` бесконечно: повисший
-    # S3-эндпоинт или зависший Postgres → backup-job висит вечно, точка
+    # pg_dump/gpg ждут голым `await proc.wait()` бесконечно: повисший
+    # Зависший Postgres → backup-job висит вечно, точка
     # восстановления не создаётся, а категоризированный admin-алёрт никогда
     # не отправляется (cron-job не возвращается). По таймауту процесс
     # убивается (kill + reap), backup_db возвращает BackupResult(fail_kind=…)
     # → штатный алёрт уходит. pg_dump/gpg щедрее (большая БД может дампиться
-    # минуты); rclone — сетевой шаг, режем агрессивнее.
+    # минуты). Устаревший rclone-таймаут принимается для совместимости .env.
     backup_pg_dump_timeout_seconds: float = Field(
         600.0, alias="BACKUP_PG_DUMP_TIMEOUT_SECONDS", gt=0.0, le=7200.0
     )
@@ -220,9 +220,8 @@ class Settings(BaseSettings):
         600.0, alias="BACKUP_VERIFY_TIMEOUT_SECONDS", gt=0.0, le=7200.0
     )
 
-    # S3 опционально: если задан endpoint+bucket+keys, доп. заливаем в облако.
-    # Пусто — храним только локально. Для self-hosted без облачного хранилища
-    # оставить пустыми.
+    # Устаревшие S3-поля принимаются для совместимости старых .env.
+    # Бот хранит бэкапы только локально; эти значения не включают S3-доступ.
     backup_s3_endpoint: str | None = Field(None, alias="BACKUP_S3_ENDPOINT")
     backup_s3_bucket: str | None = Field(None, alias="BACKUP_S3_BUCKET")
     backup_s3_access_key: str | None = Field(None, alias="BACKUP_S3_ACCESS_KEY")

@@ -279,7 +279,7 @@ async def test_bulk_receipts_preserve_order_dedup_and_bound_sql(receipt_db, monk
             yield session
     monkeypatch.setattr(inbox, "session_scope", counted_scope)
     await inbox.accept([payload(str(i)) for i in range(501)] + [payload("0")])
-    assert len(counts) == 9  # three bounded batches: inventory insert/read + receipt insert
+    assert len(counts) == 3  # one receipt insert per bounded batch; no deletion inventory
     rows = await stored(receipt_db)
     assert [r.payload["message"]["body"]["mid"] for r in rows] == [str(i) for i in range(501)]
 

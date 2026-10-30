@@ -4,7 +4,7 @@ FROM python:3.12-slim@sha256:4386a385d81dba9f72ed72a6fe4237755d7f5440c84b417650f
 # requirements.txt с SHA256-хешами. Берём пиннутый бинарь из официального
 # образа astral-sh/uv (digest, не мутабельный тег) вместо
 # `curl astral.sh/uv/install.sh | sh`: компромет домена иначе исполнялся бы
-# в build-контексте. Пиннутый uv доступен и для служебных команд в образе.
+# в build-контексте. После установки зависимостей uv удаляется из runtime.
 COPY --from=ghcr.io/astral-sh/uv:0.11.12@sha256:3a59a3cdd5f7c217faa36e32dbc7fddbb0412889c2a0a5229f6d790e5a019dd7 /uv /usr/local/bin/uv
 
 ENV PYTHONUNBUFFERED=1 \
@@ -13,12 +13,8 @@ ENV PYTHONUNBUFFERED=1 \
     TZ=Asia/Kamchatka
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        postgresql-client gnupg ca-certificates curl tzdata unzip rclone \
+        postgresql-client gnupg ca-certificates curl tzdata unzip \
     && rm -rf /var/lib/apt/lists/*
-# rclone берём из debian apt вместо `curl rclone.org/install.sh | bash`:
-# любой будущий компромет домена rclone.org исполнялся бы как root в
-# образе. Версия из apt чуть старше (1.60 на bookworm), но достаточна
-# для S3-аплоада бэкапов; функциональность не урезана.
 
 # Non-root user. Fixed UID/GID so the named volume `backups` keeps the
 # same ownership across rebuilds and on hosts where bind-mounts are used.
