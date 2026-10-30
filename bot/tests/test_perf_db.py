@@ -247,13 +247,14 @@ class _CapturingSession:
 
     - первый `.scalars(stmt)` — это запрос обращений; записываем stmt и
       отдаём заранее заданные appeal-объекты.
-    - `.execute(stmt)` — это _load_last_operator_replies; отдаём заранее
-      заданные (appeal_id, text)-строки.
+    - `.execute(stmt)` — запросы последних ответов и MIN(created_at)
+      первого ответа; для них разные типы строк результата.
     """
 
-    def __init__(self, appeals, reply_rows):
+    def __init__(self, appeals, reply_rows, first_reply_rows=()):
         self._appeals = appeals
         self._reply_rows = list(reply_rows)
+        self._first_reply_rows = list(first_reply_rows)
         self.scalar_statements = []
         self.execute_statements = []
 
@@ -263,6 +264,8 @@ class _CapturingSession:
 
     async def execute(self, stmt):
         self.execute_statements.append(stmt)
+        if any(getattr(column, "name", None) == "min" for column in stmt.selected_columns):
+            return iter(self._first_reply_rows)
         return iter(self._reply_rows)
 
 
@@ -293,8 +296,8 @@ class TestBuildXlsxDoesNotMaterializeMessages:
 
         await stats.build_xlsx(sess, "all")
 
-        # Ровно один execute — _load_last_operator_replies.
-        assert len(sess.execute_statements) == 1
+        # Two bulk queries: latest reply text and first-reply timestamps.
+        assert len(sess.execute_statements) == 2
 
     @pytest.mark.asyncio
     async def test_operator_reply_from_dict_lands_in_workbook(self) -> None:
