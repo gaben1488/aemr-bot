@@ -537,3 +537,118 @@ async def test_expired_open_appeal_leaves_operational_queues_but_preserves_histo
     assert "новое обращение" in event.message.answer.await_args.args[0]
     async with db.scope() as session:
         assert (await users.find_by_max_id(session, 42)).dialog_data["summary_chunks"] == ["new private"]
+
+
+@pytest.mark.asyncio
+async def test_personal_view_tracks_admin_navigation_and_blocks_stale_source(erasure_db):
+    db = erasure_db
+    bot = SimpleNamespace(send_message=AsyncMock(return_value=SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid="admin-view")))), edit_message=AsyncMock())
+    original_send = bot.send_message
+    data_erasure.install_outgoing_hook(bot)
+    async with data_erasure.personal_view(appeal_id=db.appeal_id, max_user_ids=[42]):
+        async with db.scope() as session:
+            text = (await session.get(Appeal, db.appeal_id)).summary
+        await bot.send_message(chat_id=data_erasure.settings.admin_group_id, text=text)
+    async with db.scope() as session:
+        copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "admin-view"))
+        assert copy.appeal_id == db.appeal_id and copy.subjects == [data_erasure.subject_digest(42)]
+        await users.erase_pdn_detailed(session, 42)
+        assert copy.erase_requested
+    before = original_send.await_count
+    with pytest.raises(data_erasure.PersonalDataErasedError):
+        async with data_erasure.personal_view(appeal_id=db.appeal_id, max_user_ids=[42]):
+            await bot.send_message(chat_id=data_erasure.settings.admin_group_id, text="stale private")
+    assert original_send.await_count == before
+
+
+@pytest.mark.asyncio
+async def test_personal_view_holds_erasure_barrier_before_read_until_output(erasure_db):
+    db = erasure_db
+    bot = SimpleNamespace(send_message=AsyncMock(return_value=SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid="racing-view")))), edit_message=AsyncMock())
+    data_erasure.install_outgoing_hook(bot)
+    async def erase():
+        async with db.scope() as session:
+            await users.erase_pdn_detailed(session, 42)
+    async with data_erasure.personal_view(appeal_id=db.appeal_id):
+        async with db.scope() as session:
+            private = (await session.get(Appeal, db.appeal_id)).summary
+        erasing = asyncio.create_task(erase())
+        await asyncio.sleep(.03)
+        assert not erasing.done()
+        await bot.send_message(chat_id=data_erasure.settings.admin_group_id, text=private)
+    await erasing
+    async with db.scope() as session:
+        copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "racing-view"))
+        assert copy.erase_requested and copy.state == "pending"
+
+
+@pytest.mark.asyncio
+async def test_personal_edit_commits_union_before_unknown_external_result(erasure_db):
+    db = erasure_db
+    expected = {data_erasure.subject_digest(42), data_erasure.subject_digest(43)}
+    async def inspect_committed_then_timeout(*args, **kwargs):
+        async with db.scope() as session:
+            copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "navigation"))
+            assert set(copy.subjects) == expected
+            assert copy.appeal_id is None
+        raise TimeoutError("MAX may have applied the edit")
+    bot = SimpleNamespace(send_message=AsyncMock(return_value=SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid="navigation")))), edit_message=inspect_committed_then_timeout)
+    data_erasure.install_outgoing_hook(bot)
+    async with data_erasure.personal_view(appeal_id=db.appeal_id):
+        await bot.send_message(chat_id=data_erasure.settings.admin_group_id, text="resident42")
+    with pytest.raises(TimeoutError):
+        async with data_erasure.personal_view(appeal_id=db.other_id):
+            await bot.edit_message(message_id="navigation", text="resident43")
+    async with db.scope() as session:
+        await users.erase_pdn_detailed(session, 42)
+        copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "navigation"))
+        assert copy.erase_requested and copy.state == "pending"
+        assert (await session.get(Appeal, db.other_id)).summary == "Preserve"
+
+
+@pytest.mark.asyncio
+async def test_personal_edit_inventories_previously_untracked_mid(erasure_db):
+    db = erasure_db
+    bot = SimpleNamespace(send_message=AsyncMock(), edit_message=AsyncMock())
+    data_erasure.install_outgoing_hook(bot)
+    async with data_erasure.personal_view() as view:
+        await view.include(appeal_id=db.appeal_id)
+        await bot.edit_message(message_id="previous-menu", text="private history")
+    async with db.scope() as session:
+        copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "previous-menu"))
+        assert copy.appeal_id == db.appeal_id and copy.subjects == [data_erasure.subject_digest(42)]
+        await users.erase_pdn_detailed(session, 42)
+        assert copy.erase_requested
+
+
+@pytest.mark.asyncio
+async def test_repeat_retention_preserves_clean_reports_and_unrelated_personal_views(erasure_db):
+    from aemr_bot.services import appeals
+    db = erasure_db
+    sequence = iter(["user42-list", "user43-list", "audience", "clean-report"])
+    async def send(**kwargs):
+        return SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid=next(sequence))))
+    bot = SimpleNamespace(send_message=send, edit_message=AsyncMock())
+    data_erasure.install_outgoing_hook(bot)
+    for uid in [42, 43]:
+        async with data_erasure.personal_view(max_user_ids=[uid]):
+            await bot.send_message(chat_id=data_erasure.settings.admin_group_id, text="personal list")
+    async with data_erasure.personal_view(aggregate=True):
+        await bot.send_message(chat_id=data_erasure.settings.admin_group_id, text="all residents")
+    old = datetime.now(UTC) - timedelta(days=365 * 7)
+    async with db.scope() as session:
+        item = await session.get(Appeal, db.appeal_id)
+        item.created_at = old
+        message = await session.scalar(select(Message).where(Message.appeal_id == item.id))
+        message.created_at = old
+    async with db.scope() as session:
+        assert await appeals.purge_old_appeals_content(session) == (1, 1)
+        copies = {copy.message_id: copy for copy in (await session.scalars(select(ResidentDataCopy))).all()}
+        assert copies["user42-list"].erase_requested
+        assert copies["audience"].erase_requested
+        assert not copies["user43-list"].erase_requested
+    await data_erasure.tracked_send(bot, kind="bulk_export", text="clean post-retention report")
+    async with db.scope() as session:
+        assert await appeals.purge_old_appeals_content(session) == (0, 0)
+        copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "clean-report"))
+        assert copy.state == "retained" and not copy.erase_requested
