@@ -1,8 +1,8 @@
 """One durable, editable operator queue; never retry an uncertain creation.
 
 The initial claim commits before MAX. A crash leaves `attempting`, which is
-uncertain and requires reconciliation. Edits target the confirmed message
-under a database row lock and may safely converge again after a timeout.
+uncertain and requires reconciliation. Edits claim an uncertain state before MAX too. A timeout may apply late,
+so automatic updates stop until an IT operator checks MAX.
 Only IDs, counts and internal status labels appear in the shared panel.
 """
 from __future__ import annotations
@@ -88,7 +88,7 @@ async def refresh(bot: Any) -> None:
         row = await session.scalar(select(Setting).where(Setting.key == key).with_for_update())
         assert row is not None
         state = row.value if isinstance(row.value, dict) else {}
-        if state.get("state") in {"attempting", "unknown"}:
+        if state.get("state") in {"attempting", "unknown"} or state.get("edit_unknown"):
             return
         # Compute after locking: simultaneous ticks cannot overwrite a newer
         # snapshot with one computed before they waited for the lock.
@@ -96,23 +96,33 @@ async def refresh(bot: Any) -> None:
         signature = hashlib.sha256(text.encode()).hexdigest()
         mid = state.get("message_id")
         if mid:
-            if state.get("signature") == signature and not state.get("edit_unknown"):
+            if state.get("signature") == signature:
                 return
-            try:
-                result = await bot.edit_message(message_id=mid, text=text,
-                                                attachments=[kbds.queue_panel_keyboard()], notify=False)
-                check_edit_result(result)
-            except Exception:
-                row.value = {**state, "edit_unknown": True,
-                             "token": state.get("token") or uuid4().hex}
-                log.exception("queue panel edit failed for %s; preserving identity", mid)
+            token = uuid4().hex
+            row.value = {**state, "edit_unknown": True, "edit_pending": True, "token": token}
+        else:
+            if not nonempty:
                 return
-            row.value = {"state": "confirmed", "message_id": mid, "signature": signature}
-            return
-        if not nonempty:
-            return
-        token = uuid4().hex
-        row.value = {"state": "attempting", "token": token}
+            token = uuid4().hex
+            row.value = {"state": "attempting", "token": token}
+    if mid:
+        confirmed = False
+        try:
+            result = await bot.edit_message(message_id=mid, text=text,
+                                            attachments=[kbds.queue_panel_keyboard()], notify=False)
+            check_edit_result(result)
+            confirmed = True
+        except Exception:
+            log.exception("queue panel edit outcome uncertain for %s; freezing updates", mid)
+        async with session_scope() as session:
+            row = await session.scalar(select(Setting).where(Setting.key == key).with_for_update())
+            assert row is not None
+            if not isinstance(row.value, dict) or row.value.get("token") != token:
+                log.error("queue panel edit completed after recovery; reconcile old identity %s", mid)
+                return
+            row.value = ({"state": "confirmed", "message_id": mid, "signature": signature}
+                         if confirmed else {**row.value, "edit_pending": False})
+        return
     # Initial claim is durable before the external mutation. No other worker
     # may create another message while this request is in flight.
     mid = None
@@ -147,8 +157,10 @@ async def recovery_status() -> dict:
             return state
         # A live request must not be reset. After a crash the committed claim
         # becomes recoverable, but only following an explicit MAX check.
-        recoverable = (bool(state.get("edit_unknown")) or state.get("state") == "unknown"
-                       or row.updated_at < datetime.now(UTC) - timedelta(minutes=5))
+        stale = row.updated_at < datetime.now(UTC) - timedelta(minutes=5)
+        recoverable = (state.get("state") == "unknown"
+                       or bool(state.get("edit_unknown") and not state.get("edit_pending"))
+                       or stale)
         if recoverable and not state.get("token"):
             state["token"] = uuid4().hex
             state["state"] = "unknown"
@@ -167,7 +179,9 @@ async def allow_recreate(token: str) -> bool:
         state = row.value
         if not token or state.get("token") != token:
             return False
-        if not state.get("edit_unknown") and state.get("state") != "unknown" and not (
+        edit_recoverable = (state.get("edit_unknown") and (not state.get("edit_pending")
+                            or row.updated_at < datetime.now(UTC) - timedelta(minutes=5)))
+        if not edit_recoverable and state.get("state") != "unknown" and not (
             state.get("state") == "attempting"
             and row.updated_at < datetime.now(UTC) - timedelta(minutes=5)
         ):

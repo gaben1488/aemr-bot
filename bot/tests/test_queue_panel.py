@@ -100,7 +100,7 @@ async def test_crash_after_initial_claim_never_creates_replacement(session):
 
 
 @pytest.mark.asyncio
-async def test_rejected_edit_retries_only_confirmed_identity(session):
+async def test_rejected_edit_preserves_confirmed_identity_until_manual_check(session):
     panel = panel_module()
     bot = SimpleNamespace(send_message=AsyncMock(return_value=SimpleNamespace(message_id="panel-1")),
                           edit_message=AsyncMock(return_value={"success": False}))
@@ -112,7 +112,8 @@ async def test_rejected_edit_retries_only_confirmed_identity(session):
         await panel.refresh(bot)
         await panel.refresh(bot)
     assert bot.send_message.await_count == 1
-    assert bot.edit_message.await_count == 2
+    assert bot.edit_message.await_count == 1
+    assert (await panel.recovery_status())["edit_unknown"]
     assert all(c.kwargs["message_id"] == "panel-1" for c in bot.edit_message.await_args_list)
 
 
@@ -212,7 +213,7 @@ async def test_failed_confirmed_edit_is_visible_and_manual_recreation_is_version
 
 
 @pytest.mark.asyncio
-async def test_successful_edit_invalidates_old_recreation_confirmation(session):
+async def test_later_tick_does_not_clear_uncertain_edit_confirmation(session):
     panel = panel_module()
     bot = SimpleNamespace(send_message=AsyncMock(return_value=SimpleNamespace(message_id="panel")),
                           edit_message=AsyncMock(side_effect=TimeoutError()))
@@ -224,7 +225,7 @@ async def test_successful_edit_invalidates_old_recreation_confirmation(session):
         bot.edit_message.side_effect = None
         bot.edit_message.return_value = {"success": True}
         await panel.refresh(bot)
-        assert not await panel.allow_recreate(token)
+        assert await panel.allow_recreate(token)
     assert bot.send_message.await_count == 1
 
 
@@ -264,7 +265,7 @@ async def test_old_send_completion_cannot_overwrite_manually_recreated_panel(ses
 
 
 @pytest.mark.asyncio
-async def test_uncertain_edit_converges_even_when_queue_returns_to_last_confirmed_text(session):
+async def test_uncertain_edit_stays_frozen_when_queue_returns_to_last_confirmed_text(session):
     panel = panel_module()
     bot = SimpleNamespace(send_message=AsyncMock(return_value=SimpleNamespace(message_id="panel")),
                           edit_message=AsyncMock(side_effect=TimeoutError()))
@@ -276,5 +277,52 @@ async def test_uncertain_edit_converges_even_when_queue_returns_to_last_confirme
         bot.edit_message.side_effect = None
         bot.edit_message.return_value = {"success": True}
         await panel.refresh(bot)
-    assert bot.edit_message.await_count == 2
-    assert not (await panel.recovery_status()).get("edit_unknown")
+    assert bot.edit_message.await_count == 1
+    assert (await panel.recovery_status())["edit_unknown"]
+
+
+@pytest.mark.asyncio
+async def test_uncertain_edit_freezes_until_manual_max_reconciliation(session):
+    panel = panel_module()
+    bot = SimpleNamespace(send_message=AsyncMock(return_value=SimpleNamespace(message_id="panel")),
+                          edit_message=AsyncMock(side_effect=TimeoutError("may apply late")))
+    with patch.object(panel, "_snapshot", AsyncMock(return_value=("queue A", True))):
+        await panel.refresh(bot)
+    with patch.object(panel, "_snapshot", AsyncMock(return_value=("queue B", True))):
+        await panel.refresh(bot)
+    bot.edit_message.side_effect = None
+    bot.edit_message.return_value = {"success": True}
+    with patch.object(panel, "_snapshot", AsyncMock(return_value=("queue C", True))):
+        await panel.refresh(bot)
+        await panel.refresh(bot)
+    assert bot.edit_message.await_count == 1
+    assert bot.send_message.await_count == 1
+    assert (await panel.recovery_status())["edit_unknown"]
+
+
+@pytest.mark.asyncio
+async def test_cancel_during_edit_leaves_durable_uncertainty_and_blocks_live_reset(session):
+    panel = panel_module()
+    entered = asyncio.Event()
+
+    async def hanging_edit(**kwargs):
+        entered.set()
+        await asyncio.Future()
+
+    bot = SimpleNamespace(send_message=AsyncMock(return_value=SimpleNamespace(message_id="panel")),
+                          edit_message=AsyncMock(side_effect=hanging_edit))
+    with patch.object(panel, "_snapshot", AsyncMock(return_value=("queue A", True))):
+        await panel.refresh(bot)
+    with patch.object(panel, "_snapshot", AsyncMock(return_value=("queue B", True))):
+        task = asyncio.create_task(panel.refresh(bot))
+        await asyncio.wait_for(entered.wait(), timeout=5)
+        status = await panel.recovery_status()
+        assert status["edit_unknown"]
+        assert not status["recoverable"]
+        assert not await panel.allow_recreate(status["token"])
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        await panel.refresh(bot)
+    assert bot.edit_message.await_count == 1
+    assert (await panel.recovery_status())["edit_unknown"]
