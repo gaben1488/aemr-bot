@@ -42,6 +42,6 @@ async def claim_snapshot(session, name: str, signature: str) -> bool:
     stmt = insert(Setting).values(key=_key(name), value=signature)
     returning_stmt = stmt.on_conflict_do_update(
         index_elements=[Setting.key], set_={"value": signature},
-        where=Setting.value.is_distinct_from(signature),
+        where=Setting.value.is_distinct_from(stmt.excluded.value),
     ).returning(Setting.key)
     return (await session.execute(returning_stmt)).scalar_one_or_none() is not None

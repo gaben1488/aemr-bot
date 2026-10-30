@@ -337,6 +337,12 @@ def register(dp: Dispatcher) -> None:
             await event.message.answer("Используйте: /setting <key> <value>")
             return
         key, raw_value = parts
+        if key == "sla_work_schedule":
+            from aemr_bot.handlers import admin_settings_schedule
+            actor_id = get_user_id(event)
+            if actor_id is not None:
+                await admin_settings_schedule.start(event, actor_id)
+            return
         import json
         try:
             value = json.loads(raw_value)

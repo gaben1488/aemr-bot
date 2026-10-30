@@ -78,7 +78,7 @@ async def test_purge_old_appeals_content_redacts_attachments_even_without_text(s
     await session.execute(
         update(Message)
         .where(Message.id == msg.id)
-        .values(text=None)
+        .values(text=None, created_at=old_closed_at)
     )
     await session.flush()
 

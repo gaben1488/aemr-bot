@@ -539,6 +539,8 @@ async def _hydrate_wizards() -> None:
     """
     from aemr_bot.services import wizard_persist
     async with session_scope() as session:
+        from aemr_bot.services import operator_drafts
+        await operator_drafts.recover_unreserved(session)
         op_n, bcast_n = await wizard_persist.hydrate_into_registry(session)
     # Handler'ы читают СВОИ словари, отдельные от wizard_registry —
     # раскладываем восстановленное по ним.
@@ -712,6 +714,11 @@ async def main() -> None:
             log.exception("set_my_commands failed; продолжаем без подсказок в /-меню")
 
         await _seed_settings()
+        from aemr_bot.services import work_schedule
+        async with session_scope() as session:
+            await work_schedule.initialize(session)
+        async with session_scope() as session:
+            await work_schedule.refresh(session)
 
         # Прогрев in-memory cache для quiet режима — до запуска polling и
         # cron'ов, чтобы первая же отправка через admin_bus.send уже видела

@@ -55,7 +55,7 @@ async def show(event, draft, *, notice: str = "", page: int = 0, new: bool = Fal
     rendered = (summary + (f"\n{notice}\n" if notice else "") +
                 f"\nТекст · {page + 1}/{len(pages)}\n{pages[page] or 'Пока нет текста.'}")
     screen_mid = data.get("_screen_mid")
-    if screen_mid:
+    if screen_mid and not new:
         try:
             await event.bot.edit_message(message_id=screen_mid, text=rendered,
                                          attachments=[kb.as_markup()], notify=False)
@@ -127,7 +127,7 @@ async def collect(event, body, text: str) -> bool:
         except ValueError as exc:
             notice = {"text": "Часть не сохранена: превышен лимит текста.",
                       "attachments": "Часть не сохранена: превышен лимит вложений."}.get(str(exc), str(exc))
-    await show(event, draft, notice=notice, new=True)
+    await show(event, draft, notice=notice)
     return True
 
 
@@ -150,7 +150,9 @@ async def callback(event, payload: str):
             await session.delete(draft)
             await ack_callback(event, "Черновик отменён.")
             return
-        if action.startswith("page") and action[4:].isdigit():
+        if action == "open":
+            page = 0
+        elif action.startswith("page") and action[4:].isdigit():
             page = int(action[4:])
         elif action == "resume" and draft.state == "paused":
             draft.state = "editing"
@@ -180,7 +182,7 @@ async def callback(event, payload: str):
         appeal_id, is_final = draft.appeal_id, draft.is_final
     await ack_callback(event)
     if action != "send":
-        await show(event, draft, page=page,
+        await show(event, draft, page=page, new=action == "open",
                    notice="Следующая текстовая часть заменит текст. Вложения сохранятся." if action == "edit" else "")
         return
     from aemr_bot.handlers.operator_reply import _deliver_operator_reply

@@ -92,6 +92,19 @@ _BUILDER_CASES: tuple[tuple[object, tuple, str, bool], ...] = (
     (cp.op_opchrole, (123, "it"), cp.PREFIX_OP_OPCHROLE, False),
     (cp.op_setkey, ("welcome_text",), cp.PREFIX_OP_SETKEY, False),
     (cp.op_set, ("cat:texts",), cp.PREFIX_OP_SET, False),
+    (cp.op_reply_draft, ("send", "token"), cp.PREFIX_OP_REPLY_DRAFT, False),
+    (cp.op_reply_cancel, ("token",), cp.PREFIX_OP_REPLY_CANCEL, False),
+    (cp.resident_draft, ("submit", "token"), cp.PREFIX_RESIDENT_DRAFT, False),
+    (cp.op_queue_recreate, ("token",), cp.PREFIX_OP_QUEUE_RECREATE, False),
+    (cp.op_open_page, (0,), cp.PREFIX_OP_OPEN_PAGE, True),
+    (cp.op_delivery_issues, (0,), cp.PREFIX_OP_DELIVERY_ISSUES, True),
+    (cp.op_reply_issues, (0,), cp.PREFIX_OP_REPLY_ISSUES, True),
+    (cp.op_reply_attempt, (1, 0), cp.PREFIX_OP_REPLY_ATTEMPT, False),
+    (cp.op_reply_resolve, (1, "delivered"), cp.PREFIX_OP_REPLY_RESOLVE, False),
+    (cp.op_reply_confirm, (1, "delivered"), cp.PREFIX_OP_REPLY_CONFIRM, False),
+    (cp.op_reply_attempt_atts, (1,), cp.PREFIX_OP_REPLY_ATTEMPT_ATTS, True),
+    (cp.op_word, (1,), cp.PREFIX_OP_WORD, True),
+    (cp.op_consent, (1, 0), cp.PREFIX_OP_CONSENT, False),
 )
 
 

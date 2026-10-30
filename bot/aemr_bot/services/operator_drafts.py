@@ -7,11 +7,11 @@ from __future__ import annotations
 
 from secrets import token_hex
 
-from sqlalchemy import select
+from sqlalchemy import exists, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from aemr_bot.config import settings
-from aemr_bot.db.models import OperatorReplyDraft
+from aemr_bot.db.models import OperatorReplyAttempt, OperatorReplyDraft
 from aemr_bot.services.resident_drafts import append_part
 
 
@@ -89,3 +89,17 @@ async def cancel(session, operator_id: int, token: str) -> bool:
     await session.delete(draft)
     await session.flush()
     return True
+
+
+async def recover_unreserved(session) -> int:
+    """Startup only, before handlers: no reservation means no MAX send began.
+
+    The single-instance startup barrier must be held by the caller. Never
+    run this concurrently with live callbacks between claim and reserve.
+    """
+    reserved = exists(select(OperatorReplyAttempt.id).where(
+        OperatorReplyAttempt.source_key == "reply_draft:" + OperatorReplyDraft.token))
+    rows = await session.execute(update(OperatorReplyDraft).where(
+        OperatorReplyDraft.state == "sending", ~reserved,
+    ).values(state="editing").returning(OperatorReplyDraft.operator_id))
+    return len(rows.all())

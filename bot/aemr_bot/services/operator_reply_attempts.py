@@ -77,6 +77,15 @@ async def _can_apply_status(session, appeal, attempt) -> bool:
     return newer is None
 
 
+async def _release_composition(session, attempt) -> None:
+    source = attempt.source_key or ""
+    if source.startswith("reply_draft:"):
+        await session.execute(delete(OperatorReplyDraft).where(
+            OperatorReplyDraft.token == source.removeprefix("reply_draft:"),
+            OperatorReplyDraft.state == "sending",
+        ))
+
+
 async def record_confirmed(session, attempt_id: int, *, mid: str | None = None,
                            audit_action: str = "reply_recovered") -> bool:
     """Record confirmed text once, in the same transaction as the state change."""
@@ -85,6 +94,7 @@ async def record_confirmed(session, attempt_id: int, *, mid: str | None = None,
     if attempt is None:
         return False
     if attempt.state == "recorded":
+        await _release_composition(session, attempt)
         return True
     delivery_mid = mid or attempt.max_message_id
     if not delivery_mid or attempt.state not in {"sending", "confirmed"}:
@@ -113,6 +123,7 @@ async def record_confirmed(session, attempt_id: int, *, mid: str | None = None,
     # The canonical message now owns the content; keep only dedupe metadata.
     attempt.text = None
     attempt.attachments = []
+    await _release_composition(session, attempt)
     return True
 
 
@@ -173,11 +184,7 @@ async def resolve_unknown(session, attempt_id: int, *, delivered: bool,
         # Preserve the draft so the operator can copy it into a new reply.
         # No resend is initiated by this action.
         attempt.state = "not_delivered"
-    if attempt.source_key and attempt.source_key.startswith("reply_draft:"):
-        await session.execute(delete(OperatorReplyDraft).where(
-            OperatorReplyDraft.token == attempt.source_key.removeprefix("reply_draft:"),
-            OperatorReplyDraft.state == "sending",
-        ))
+    await _release_composition(session, attempt)
     await operators.write_audit(
         session, operator_max_user_id=actor_max_id, action="reply_reconciled",
         target=f"appeal #{attempt.appeal_id}",

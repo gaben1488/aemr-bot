@@ -78,6 +78,13 @@ def _read_keyboard_sources() -> str:
     if _UI_DIR.exists():
         for module_file in sorted(_UI_DIR.glob("*_keyboards.py")):
             parts.append(module_file.read_text(encoding="utf-8"))
+    # Screens assembled in handlers also emit callbacks (delivery diagnostics,
+    # consent editions and draft composition). Count actual emitters, never
+    # route declarations, so registration alone cannot satisfy this check.
+    for domain in ("handlers", "services"):
+        for module_file in sorted((_UI_DIR.parent / domain).glob("*.py")):
+            if module_file.name not in {"callback_router.py", "callback_payloads.py"}:
+                parts.append(module_file.read_text(encoding="utf-8"))
     return "\n".join(parts)
 
 

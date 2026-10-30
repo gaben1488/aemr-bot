@@ -295,7 +295,7 @@ def admin_card(appeal: Appeal, user: User) -> str:
             and anchor.tzinfo is not None and "messages" in getattr(appeal, "__dict__", {})):
         from datetime import UTC
 
-        from aemr_bot.services import sla
+        from aemr_bot.services import sla, work_schedule
 
         responses = [m for m in _loaded_messages(appeal)
                      if getattr(m, "direction", None) == "from_operator"
@@ -303,13 +303,13 @@ def admin_card(appeal: Appeal, user: User) -> str:
                      and m.created_at >= anchor]
         if responses:
             first = min(m.created_at for m in responses)
-            elapsed = sla.business_seconds_between(first, datetime.now(UTC)) / 3600
+            elapsed = sla.business_seconds_between(first, datetime.now(UTC), schedule=work_schedule.for_appeal(appeal)) / 3600
             header += f"\n💬 Первый ответ: {_local(first)} · после него {elapsed:.1f} рабочих ч"
         else:
             hours = getattr(appeal, "sla_hours_at_start", None)
             target = hours if isinstance(hours, int) and hours > 0 else settings.sla_response_hours
-            elapsed = sla.business_seconds_between(anchor, datetime.now(UTC)) / 3600
-            origin = "срок периода" if hours else "ориентир настройки"
+            elapsed = sla.business_seconds_between(anchor, datetime.now(UTC), schedule=work_schedule.for_appeal(appeal)) / 3600
+            origin = "срок периода" if hours and getattr(appeal, "sla_schedule_at_start", None) is not None else "ориентир без снимка периода"
             flag = "⚠️ " if elapsed >= target else "⏱ "
             header += f"\n{flag}Первый ответ: {elapsed:.1f} из {target} рабочих ч ({origin})"
     body = header + "\n\n" + body

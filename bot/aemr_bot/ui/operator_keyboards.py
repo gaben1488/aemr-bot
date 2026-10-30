@@ -24,7 +24,7 @@ def cancel_reply_intent_keyboard(token: str = ""):
     мог жить 5 минут, и любой следующий текст оператора уходил жителю —
     в т.ч. случайные «окей», текст для другого обращения, ввод wizard'а."""
     kb = InlineKeyboardBuilder()
-    payload = f"{cp.OP_REPLY_CANCEL}:{token}" if token else cp.OP_REPLY_CANCEL
+    payload = cp.op_reply_cancel(token) if token else cp.OP_REPLY_CANCEL
     kb.row(CallbackButton(text="❌ Отменить ответ", payload=payload))
     return kb.as_markup()
 
@@ -436,7 +436,7 @@ def op_help_keyboard(
     # один смысл, ничего не теряется.
     kb = InlineKeyboardBuilder()
     if reply_draft_token:
-        kb.row(CallbackButton(text="✍️ Сохранённый ответ", payload=f"op:replydraft:page0:{reply_draft_token}"))
+        kb.row(CallbackButton(text="✍️ Сохранённый ответ", payload=f"op:replydraft:open:{reply_draft_token}"))
     open_label = "📋 Открытые обращения"
     if open_count is not None:
         open_label = f"📋 Открытые обращения ({open_count})"

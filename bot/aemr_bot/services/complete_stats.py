@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from aemr_bot.db.models import Appeal, Message
 from aemr_bot.services import appeals as appeals_service
-from aemr_bot.services import privacy_epoch, sla, stats
+from aemr_bot.services import privacy_epoch, sla, stats, work_schedule
 from aemr_bot.utils.pii_mask import mask_phone
 from aemr_bot.utils.text_pages import split_text_units
 
@@ -185,11 +185,11 @@ async def build_xlsx_with_epoch(
                             appeal.closed_at, appeal.sla_anchor_at, latest_messages.get(appeal.id)) if date]
             latest_action = max(action_dates) if action_dates else ""
             if first_reply and anchor:
-                elapsed = round(sla.business_seconds_between(anchor, first_reply) / 3600, 2)
-                if appeal.sla_hours_at_start is None:
-                    on_time = "Норматив не сохранился"
+                elapsed = round(sla.business_seconds_between(anchor, first_reply, schedule=work_schedule.for_appeal(appeal)) / 3600, 2)
+                if appeal.sla_hours_at_start is None or appeal.sla_schedule_at_start is None:
+                    on_time = "Нет снимка срока или календаря"
                 else:
-                    on_time = "нет" if sla.is_overdue(anchor, first_reply, appeal.sla_hours_at_start) else "да"
+                    on_time = "нет" if sla.is_overdue(anchor, first_reply, appeal.sla_hours_at_start, schedule=work_schedule.for_appeal(appeal)) else "да"
             overview.append([appeal.id, appeal.related_appeal_id or "", _date(appeal.created_at), getattr(user, "first_name", "") or "",
                              mask_phone(getattr(user, "phone", None)), appeal.locality or "",
                              appeal.address or "", appeal.topic or "", _summary_preview(appeal.summary),

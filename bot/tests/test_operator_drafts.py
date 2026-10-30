@@ -123,3 +123,41 @@ async def test_erasure_removes_operator_composition(session):
     await drafts.append(session, operator.id, draft.token, source="1", text="ПДн в ответе", attachments=[])
     await users._redact_appeal_payloads_for_user(session, appeal.user_id)
     assert await drafts.get(session, operator.id) is None
+
+
+@pytest.mark.asyncio
+async def test_restart_thaws_only_claims_without_a_delivery_reservation(session):
+    from aemr_bot.db.models import OperatorReplyAttempt
+    from aemr_bot.services import operator_drafts as drafts
+    appeal, operator = await seed(session)
+    draft = await drafts.start(session, operator.id, appeal.id, is_final=True)
+    await drafts.append(session, operator.id, draft.token, source="1", text="Ответ", attachments=[])
+    await drafts.claim(session, operator.id, draft.token)
+    assert await drafts.recover_unreserved(session) == 1
+    assert (await drafts.get(session, operator.id)).state == "editing"
+    await drafts.claim(session, operator.id, draft.token)
+    session.add(OperatorReplyAttempt(appeal_id=appeal.id, operator_id=operator.id,
+        source_key="reply_draft:" + draft.token, text="Ответ", attachments=[],
+        is_final=True, state="sending"))
+    await session.flush()
+    assert await drafts.recover_unreserved(session) == 0
+    assert (await drafts.get(session, operator.id)).state == "sending"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("state", ["confirmed", "recorded"])
+async def test_history_recovery_releases_matching_frozen_composition(session, state):
+    from aemr_bot.db.models import OperatorReplyAttempt
+    from aemr_bot.services import operator_drafts as drafts
+    from aemr_bot.services import operator_reply_attempts
+    appeal, operator = await seed(session)
+    draft = await drafts.start(session, operator.id, appeal.id, is_final=True)
+    await drafts.append(session, operator.id, draft.token, source="1", text="Ответ", attachments=[])
+    await drafts.claim(session, operator.id, draft.token)
+    attempt = OperatorReplyAttempt(appeal_id=appeal.id, operator_id=operator.id,
+        source_key="reply_draft:" + draft.token, text="Ответ", attachments=[],
+        is_final=True, state=state, max_message_id="confirmed-mid")
+    session.add(attempt)
+    await session.flush()
+    assert await operator_reply_attempts.record_confirmed(session, attempt.id)
+    assert await drafts.get(session, operator.id) is None
