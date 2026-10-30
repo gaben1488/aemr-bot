@@ -1,5 +1,9 @@
 <h2 id="obzor">Обзор: что это и с чего начать</h2>
 
+<h3 id="obzor-current">Что изменилось в текущей реализации</h3>
+<p>Обращение и дополнение — сохраняемые черновики до 20000 символов и 20 вложений с явной отправкой. Ответ оператора — отдельный сохраняемый черновик до 3000 символов с предпросмотром и подтверждением. Одна общая очередь редактируется при изменениях; полная история, Word, вложения и XLSX доступны отдельно. IT редактирует рабочее время; новые периоды сохраняют снимки расписания и норматива. Неизвестные внешние результаты требуют проверки, а не слепого повтора. Реальная установка, MAX и восстановление проверяются на рабочем контуре отдельно.</p>
+
+
 <p class="lede">Прочитайте эту страницу за пять минут, прежде чем идти дальше. Сразу под кратким описанием — карточки ролей: нажмите свою (житель, оператор, администратор, разработчик, безопасность или право), и попадёте прямо в нужный раздел. Дальше идёт общая картина: что за сервис, кто им пользуется, как он устроен внутри и чего сознательно не делает — её читайте по желанию. Без этого обзора подробные разделы складываются как главы книги, открытые вразнобой.</p>
 
 <h3 id="obzor-chto">Что это такое</h3>
@@ -32,7 +36,7 @@
       <span class="role-card__title">Я житель</span>
       <span class="role-card__who">Живёте в округе или рядом, есть аккаунт MAX. Хотите сообщить о проблеме, найти телефон экстренной службы или подписаться на объявления.</span>
       <span class="role-card__do"><strong>Первый шаг:</strong> открыть бота, нажать «Написать обращение», дать согласие и пройти короткую анкету.</span>
-      <span class="role-card__go">Раздел «Для жителя»<svg class="role-card__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      <span class="role-card__go">Раздел «Для жителя»<details class="historical-diagram"><summary>Архивная статичная иллюстрация до сверки 30.10.2026</summary><p>Эта иллюстрация и её исходный Mermaid сохранены как предыдущий архитектурный снимок. Переходы черновиков, общая очередь, новые таблицы, расписание и удаление описаны в <a href="#shemy" data-go="shemy">актуальных схемах</a> и текущем реестре фактов; старую иллюстрацию нельзя использовать как спецификацию текущих переходов.</p><svg class="role-card__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg></details></span>
     </a>
   </li>
   <li>
@@ -41,7 +45,7 @@
       <span class="role-card__title">Я оператор</span>
       <span class="role-card__who">Муниципальный служащий в служебной группе, отвечаете жителям на обращения. Как координатор — ещё и запускаете рассылки.</span>
       <span class="role-card__do"><strong>Первый шаг:</strong> найти карточку обращения в группе, нажать ответ и написать жителю. Памятка — по команде <code class="kbd">/op_help</code>.</span>
-      <span class="role-card__go">Раздел «Для оператора»<svg class="role-card__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      <span class="role-card__go">Раздел «Для оператора»<details class="historical-diagram"><summary>Архивная статичная иллюстрация до сверки 30.10.2026</summary><p>Эта иллюстрация и её исходный Mermaid сохранены как предыдущий архитектурный снимок. Переходы черновиков, общая очередь, новые таблицы, расписание и удаление описаны в <a href="#shemy" data-go="shemy">актуальных схемах</a> и текущем реестре фактов; старую иллюстрацию нельзя использовать как спецификацию текущих переходов.</p><svg class="role-card__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg></details></span>
     </a>
   </li>
   <li>
@@ -50,7 +54,7 @@
       <span class="role-card__title">Я администратор</span>
       <span class="role-card__who">Технический администратор бота: настройки без переустановки, операторы, резервные копии, удаление данных по запросу, надзор за сервером.</span>
       <span class="role-card__do"><strong>Первый шаг:</strong> открыть «Настройки бота» через <code class="kbd">/op_help</code>, проверить состояние через <code class="kbd">/diag</code>, убедиться, что бэкап настроен.</span>
-      <span class="role-card__go">Раздел «Для администратора»<svg class="role-card__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      <span class="role-card__go">Раздел «Для администратора»<details class="historical-diagram"><summary>Архивная статичная иллюстрация до сверки 30.10.2026</summary><p>Эта иллюстрация и её исходный Mermaid сохранены как предыдущий архитектурный снимок. Переходы черновиков, общая очередь, новые таблицы, расписание и удаление описаны в <a href="#shemy" data-go="shemy">актуальных схемах</a> и текущем реестре фактов; старую иллюстрацию нельзя использовать как спецификацию текущих переходов.</p><svg class="role-card__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg></details></span>
     </a>
   </li>
   <li>
@@ -59,7 +63,7 @@
       <span class="role-card__title">Я разработчик</span>
       <span class="role-card__who">Правите код, миграции и тексты, разворачиваете бота на сервере или разбираетесь в архитектуре.</span>
       <span class="role-card__do"><strong>Первый шаг:</strong> поднять окружение, прогнать тесты, изучить схему базы и устройство воронки обращения.</span>
-      <span class="role-card__go">Раздел «Для разработчика»<svg class="role-card__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      <span class="role-card__go">Раздел «Для разработчика»<details class="historical-diagram"><summary>Архивная статичная иллюстрация до сверки 30.10.2026</summary><p>Эта иллюстрация и её исходный Mermaid сохранены как предыдущий архитектурный снимок. Переходы черновиков, общая очередь, новые таблицы, расписание и удаление описаны в <a href="#shemy" data-go="shemy">актуальных схемах</a> и текущем реестре фактов; старую иллюстрацию нельзя использовать как спецификацию текущих переходов.</p><svg class="role-card__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg></details></span>
     </a>
   </li>
 </ul>
@@ -127,7 +131,7 @@
 
 <h3 id="obzor-kachestvo">Стандарт качества ответов</h3>
 
-<p>Тексты, которые бот показывает жителю, и ответы операторов подчиняются Стандарту качества из Приложения 2 к Постановлению № 2129. Главные требования: писать в действительном залоге («мы включили улицу в план ремонта», а не «улица была включена»), без канцелярита («доводим до вашего сведения», «в рамках действующего законодательства» — под запретом), без аббревиатур без расшифровки, без многоточий и без агрессивных восклицательных знаков. Ответ оператора оборачивается в формальное письмо с шапкой Администрации. Есть и лимит длины: Стандарт качества (§14) задаёт пределы по площадкам (для Telegram — 1024 символа, рекомендовано до 800), а бот держит свой лимит на уровне рекомендации — ответ оператора не длиннее 800 символов.</p>
+<p>Ответы требуют человеческой проверки по тону и содержанию. Рекомендации Стандарта для других площадок не являются ограничением MAX. Технический исходный предел ответа этого бота — 3000 символов, дополнительно проверяется итоговое письмо с шапкой.</p>
 
 <h3 id="obzor-fakty">Ключевые факты одним списком</h3>
 

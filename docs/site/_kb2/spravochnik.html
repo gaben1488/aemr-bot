@@ -163,7 +163,7 @@
 <div class="table-wrap"><table>
 <thead><tr><th>Команда</th><th>Доступ</th><th>Назначение и поведение</th></tr></thead>
 <tbody>
-<tr><td><code class="kbd">/reply &lt;N&gt; &lt;текст&gt;</code></td><td>все операторы</td><td>Ответ жителю по обращению <code class="kbd">#N</code>. Проверяет лимит (≤800 символов) и <code class="kbd">is_blocked</code>. Оборачивает текст в формальную шапку письма (<code class="kbd">CITIZEN_REPLY_TEMPLATE</code>): «✉️ ОТВЕТ АДМИНИСТРАЦИИ ЕЛИЗОВСКОГО МУНИЦИПАЛЬНОГО ОКРУГА», ниже строка «📌 Обращение #N от {дата}», тема и адрес, затем сам ответ. Доставляет жителю, ставит <code class="kbd">status='answered'</code>, <code class="kbd">answered_at=now()</code>. Можно приложить несколько картинок (лимит одного сообщения MAX — <code class="kbd">ATTACHMENTS_PER_RELAY_MESSAGE</code>, по умолчанию 10). Журнал: <code class="kbd">reply_via_command</code>.</td></tr>
+<tr><td><code class="kbd">/reply &lt;N&gt; &lt;текст&gt;</code></td><td>все операторы</td><td>Ответ жителю по обращению <code class="kbd">#N</code>. Проверяет лимит (≤3000 символов) и <code class="kbd">is_blocked</code>. Оборачивает текст в формальную шапку письма (<code class="kbd">CITIZEN_REPLY_TEMPLATE</code>): «✉️ ОТВЕТ АДМИНИСТРАЦИИ ЕЛИЗОВСКОГО МУНИЦИПАЛЬНОГО ОКРУГА», ниже строка «📌 Обращение #N от {дата}», тема и адрес, затем сам ответ. Доставляет жителю, ставит <code class="kbd">status='answered'</code>, <code class="kbd">answered_at=now()</code>. Можно приложить несколько картинок (лимит одного сообщения MAX — <code class="kbd">ATTACHMENTS_PER_RELAY_MESSAGE</code>, по умолчанию 10). Журнал: <code class="kbd">reply_via_command</code>.</td></tr>
 <tr><td><code class="kbd">/reopen &lt;N&gt;</code></td><td>все операторы</td><td>Возвращает закрытое/отвеченное обращение в работу. Четыре исхода: <em>reopened</em> (статус → <code class="kbd">in_progress</code>, сброс <code class="kbd">answered_at</code>/<code class="kbd">closed_at</code>, audit <code class="kbd">reopen</code>); <em>already_open</em> (уже в работе, ничего не меняем); <em>blocked_by_revoke</em> (закрыто из-за отзыва — возобновлять нельзя); <em>not_found</em>. Жителю при reopen ничего не уходит.</td></tr>
 <tr><td><code class="kbd">/close &lt;N&gt;</code></td><td>все операторы</td><td>Закрывает без ответа (спам, дубль, не по адресу). <code class="kbd">status='closed'</code>, <code class="kbd">closed_at=now()</code>, жителю ничего не уходит. Журнал: <code class="kbd">close</code>.</td></tr>
 <tr><td><code class="kbd">/stats [период]</code></td><td>все операторы</td><td>XLSX-выгрузка за период: <code class="kbd">today</code> (по умолчанию), <code class="kbd">week</code>, <code class="kbd">month</code>, <code class="kbd">quarter</code>, <code class="kbd">half_year</code>, <code class="kbd">year</code>, <code class="kbd">all</code>. 17 колонок: №, создано, имя, телефон, <code class="kbd">max_user_id</code>, населённый пункт, адрес, тематика, суть, статус, ответ оператора, время ответа в часах, «В SLA (4ч)» (да/нет), согласие на ПДн, согласие отозвано, подписан на рассылку, заблокирован. Операция чтения, в журнал не пишет.</td></tr>
@@ -258,7 +258,7 @@
 
 <h3 id="spr-settings">Ключи настроек (таблица settings)</h3>
 
-<p>Это значения, которые ИТ-оператор меняет прямо в боте через меню «⚙️ Настройки бота» или командой <code class="kbd">/setting</code>, без перезапуска. Бот хранит их в таблице <code class="kbd">settings</code> и проверяет по «белому списку» допустимых ключей (схема в <code class="kbd">services/settings_store.py</code>). Изменить ключ вне этого списка нельзя. Всего 23 ключа.</p>
+<p>Это значения, которые ИТ-оператор меняет прямо в боте через меню «⚙️ Настройки бота» или командой <code class="kbd">/setting</code>, без перезапуска. Бот хранит их в таблице <code class="kbd">settings</code> и проверяет по «белому списку» допустимых ключей (схема в <code class="kbd">services/settings_store.py</code>). Изменить ключ вне этого списка нельзя. Всего 26 ключей.</p>
 <div class="table-wrap"><table>
 <thead><tr><th>Ключ</th><th>Тип / правила</th><th>Назначение</th></tr></thead>
 <tbody>
@@ -284,6 +284,9 @@
 <tr><td><code class="kbd">admin_notify_open_reminder</code></td><td>да/нет, по умолчанию да</td><td>Отключает почасовую напоминалку «открытые обращения» (<code class="kbd">open-reminder-workhours</code>).</td></tr>
 <tr><td><code class="kbd">admin_notify_overdue_reminder</code></td><td>да/нет, по умолчанию да</td><td>Отключает почасовую напоминалку «просрочено по SLA» (<code class="kbd">overdue-reminder-workhours</code>).</td></tr>
 <tr><td><code class="kbd">admin_notify_monthly_stats</code></td><td>да/нет, по умолчанию да</td><td>Отключает месячный XLSX-отчёт (<code class="kbd">monthly-stats</code>).</td></tr>
+<tr><td><code>sla_response_hours</code></td><td>целое, 1..168</td><td>Норматив первого ответа для новых/переоткрытых периодов; начатые сохраняют своё значение.</td></tr>
+<tr><td><code>sla_followup_hours</code></td><td>целое, 0..168</td><td>Текущий внутренний порог после промежуточного ответа; 0 отключает напоминание.</td></tr>
+<tr><td><code>sla_work_schedule</code></td><td>объект версии 1</td><td>Часовой пояс, часы работы и обеда, праздничные даты; редактирование через «🕘 Рабочее время», снимки для периодов.</td></tr>
 <tr><td><code class="kbd">localities</code></td><td>список строк, 1..30</td><td>Список населённых пунктов для шага выбора в анкете.</td></tr>
 </tbody>
 </table></div>
@@ -424,7 +427,7 @@
 <tr><td><code class="kbd">users.py</code></td><td>CRUD по жителям, нормализация телефона, удаление ПДн, аудит.</td></tr>
 <tr><td><code class="kbd">operators.py</code></td><td>CRUD по операторам, первичная инициализация ИТ из env.</td></tr>
 <tr><td><code class="kbd">broadcasts.py</code></td><td>Подписки и отправка рассылок, подбор «осиротевших» SENDING.</td></tr>
-<tr><td><code class="kbd">settings_store.py</code></td><td>Дефолты и схема настроек (23 ключа) + get/set с белым списком URL.</td></tr>
+<tr><td><code class="kbd">settings_store.py</code></td><td>Дефолты и схема настроек (26 ключей) + get/set с белым списком URL.</td></tr>
 <tr><td><code class="kbd">stats.py</code></td><td>XLSX-отчёт за период (openpyxl).</td></tr>
 <tr><td><code class="kbd">card_format.py</code> / <code class="kbd">admin_card.py</code></td><td>Сборка карточек обращения (лента: суть → ответ → дополнение) и правило свежести (новая карточка vs редактирование).</td></tr>
 <tr><td><code class="kbd">geo.py</code></td><td>Локальное распознавание адреса по геоданным (shapely).</td></tr>
