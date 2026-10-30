@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-10-30 08:23:37 UTC`
+Generated at: `2026-10-30 16:11:30 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `532`
+Indexed files: `533`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -124,7 +124,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/callback_payloads.py` (18910 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (15224 bytes)
 - `bot/aemr_bot/handlers/menu.py` (68429 bytes)
-- `bot/aemr_bot/handlers/operator_draft.py` (11729 bytes)
+- `bot/aemr_bot/handlers/operator_draft.py` (11871 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (47705 bytes)
 - `bot/aemr_bot/handlers/resident_name_gate.py` (11610 bytes)
 - `bot/aemr_bot/handlers/start.py` (39987 bytes)
@@ -336,6 +336,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_notify_toggles.py` (5107 bytes)
 - `bot/tests/test_operator_admin_guards.py` (11787 bytes)
 - `bot/tests/test_operator_appeal_view.py` (3784 bytes)
+- `bot/tests/test_operator_draft_recovery_lock_pg.py` (5922 bytes)
 - `bot/tests/test_operator_drafts.py` (8057 bytes)
 - `bot/tests/test_operator_keyboards_cov2.py` (11203 bytes)
 - `bot/tests/test_operator_reply_attempts_pg.py` (9602 bytes)
@@ -33385,8 +33386,8 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
 
 ### `bot/aemr_bot/handlers/operator_draft.py`
 
-Size: `11729` bytes  
-SHA-256: `77ccb3d8de1c49ca72c30a3a298819218a07abe60fc7b33dd485cff3d324b174`
+Size: `11871` bytes  
+SHA-256: `cee36e28d458dd570d12aee2ead08d347500d7f7dbb7dc4fa2303f38121bac3f`
 
 ```python
 """Explicit composition of operator replies, backed by PostgreSQL."""
@@ -33403,7 +33404,7 @@ from aemr_bot.db.models import OperatorReplyAttempt
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import get_operator
 from aemr_bot.handlers._common import op_screen
-from aemr_bot.services import appeals, data_erasure, idempotency, operator_drafts
+from aemr_bot.services import appeal_locks, appeals, data_erasure, idempotency, operator_drafts
 from aemr_bot.utils.attachments import collect_attachments, has_unsupported_appeal_attachments
 from aemr_bot.utils.event import ack_callback, extract_message_id, is_admin_chat
 from aemr_bot.utils.text_pages import split_text_units
@@ -33482,6 +33483,8 @@ async def begin(event, appeal_id: int, *, is_final: bool):
         return
     notice = ""
     async with session_scope() as session:
+        # Recovery takes this advisory lock before touching the appeal row.
+        await appeal_locks.hold(session, appeal_id)
         appeal = await appeals.get_by_id(session, appeal_id, for_update=True)
         if (appeal is None or appeal.status not in {"new", "in_progress"}
                 or appeal.user is None or appeal.user.is_blocked or appeal.user.consent_pdn_at is None):
@@ -92395,6 +92398,132 @@ def _fake_personal_source_boundary(monkeypatch):
     from aemr_bot.services import data_erasure
     from tests._helpers import fake_personal_view
     monkeypatch.setattr(data_erasure, "personal_view", fake_personal_view)
+```
+
+### `bot/tests/test_operator_draft_recovery_lock_pg.py`
+
+Size: `5922` bytes  
+SHA-256: `d60abab1f4b702829fc7cf2cfc5115f34825365876a47fff026491b9de87185b`
+
+```python
+"""Exercise PostgreSQL ordering between draft creation and recovery."""
+import asyncio
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock
+
+import pytest
+from sqlalchemy import select
+
+from aemr_bot.db.models import Appeal, Message, Operator, User
+from aemr_bot.db.session import session_scope
+from aemr_bot.handlers import operator_draft
+from aemr_bot.services import appeal_locks, operator_drafts, operator_reply_attempts
+from tests._helpers import make_event
+
+
+@pytest.mark.asyncio
+async def test_recovery_and_new_draft_do_not_invert_appeal_locks(session, monkeypatch):
+    user = User(max_user_id=90301, consent_pdn_at=datetime.now(UTC))
+    operator = Operator(max_user_id=90302, full_name="Operator", role="aemr")
+    session.add_all([user, operator])
+    await session.flush()
+    appeal = Appeal(user_id=user.id, status="new", summary="Test", attachments=[])
+    session.add(appeal)
+    await session.commit()
+    attempt_id = await operator_reply_attempts.reserve(
+        appeal_id=appeal.id, operator_id=operator.id, source_key="lock-order-test",
+        text="Confirmed reply", attachments=[], is_final=False,
+    )
+    await operator_reply_attempts.mark_confirmed(attempt_id, "lock-order-mid")
+    monkeypatch.setattr(operator_reply_attempts, "_recovery_cursor", 0)
+    monkeypatch.setattr(operator_draft, "get_operator", AsyncMock(return_value=operator))
+    monkeypatch.setattr(operator_draft, "is_admin_chat", lambda _: True)
+    monkeypatch.setattr(operator_draft, "ack_callback", AsyncMock())
+    monkeypatch.setattr(operator_draft, "show", AsyncMock())
+
+    barrier_held, draft_waiting, release = asyncio.Event(), asyncio.Event(), asyncio.Event()
+    original_hold = appeal_locks.hold
+
+    async def coordinated_hold(db, appeal_id):
+        if asyncio.current_task().get_name() == "draft":
+            draft_waiting.set()
+        await original_hold(db, appeal_id)
+        if asyncio.current_task().get_name() == "recovery":
+            barrier_held.set()
+            await release.wait()
+
+    monkeypatch.setattr(appeal_locks, "hold", coordinated_hold)
+    recovery = asyncio.create_task(operator_reply_attempts.recover_confirmed(), name="recovery")
+    draft_task = None
+    try:
+        await asyncio.wait_for(barrier_held.wait(), 5)
+        draft_task = asyncio.create_task(
+            operator_draft.begin(make_event(chat_id=123, user_id=operator.max_user_id),
+                                 appeal.id, is_final=False), name="draft"
+        )
+        await asyncio.wait_for(draft_waiting.wait(), 5)
+        # Recovery must be able to lock the row while draft waits for its barrier.
+        async with session_scope() as probe:
+            await probe.scalar(select(Appeal.id).where(Appeal.id == appeal.id).with_for_update(nowait=True))
+    except BaseException:
+        if draft_task is not None:
+            draft_task.cancel()
+            await asyncio.gather(draft_task, return_exceptions=True)
+        raise
+    finally:
+        release.set()
+        await asyncio.wait_for(recovery, 10)
+    await asyncio.wait_for(draft_task, 10)
+    assert recovery.result() == 1
+    async with session_scope() as check:
+        draft = await operator_drafts.get(check, operator.id)
+        assert draft is not None and draft.appeal_id == appeal.id
+        messages = list(await check.scalars(select(Message).where(Message.appeal_id == appeal.id)))
+        assert [message.max_message_id for message in messages] == ["lock-order-mid"]
+    assert await operator_reply_attempts.recover_confirmed() == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", ["error", "cancel"])
+async def test_begin_failure_releases_lock_and_keeps_existing_parts(session, monkeypatch, failure):
+    user = User(max_user_id=90311, consent_pdn_at=datetime.now(UTC))
+    operator = Operator(max_user_id=90312, full_name="Operator", role="aemr")
+    session.add_all([user, operator])
+    await session.flush()
+    appeal = Appeal(user_id=user.id, status="new", summary="Test", attachments=[])
+    session.add(appeal)
+    await session.flush()
+    draft = await operator_drafts.start(session, operator.id, appeal.id, is_final=False)
+    token = draft.token
+    files = [{"type": "file", "payload": {"token": "synthetic"}}]
+    await operator_drafts.append(session, operator.id, token, source="one", text="First", attachments=files)
+    await operator_drafts.append(session, operator.id, token, source="two", text="Second", attachments=[])
+    await session.commit()
+    monkeypatch.setattr(operator_draft, "get_operator", AsyncMock(return_value=operator))
+    monkeypatch.setattr(operator_draft, "is_admin_chat", lambda _: True)
+    monkeypatch.setattr(operator_draft, "ack_callback", AsyncMock())
+    monkeypatch.setattr(operator_draft, "show", AsyncMock())
+
+    async def fail_after_lock(*args, **kwargs):
+        if failure == "cancel":
+            raise asyncio.CancelledError()
+        raise RuntimeError("synthetic error")
+
+    original_get = operator_draft.appeals.get_by_id
+    monkeypatch.setattr(operator_draft.appeals, "get_by_id", fail_after_lock)
+    error = asyncio.CancelledError if failure == "cancel" else RuntimeError
+    with pytest.raises(error):
+        await operator_draft.begin(make_event(chat_id=123, user_id=operator.max_user_id),
+                                   appeal.id, is_final=True)
+    monkeypatch.setattr(operator_draft.appeals, "get_by_id", original_get)
+    await operator_draft.begin(make_event(chat_id=123, user_id=operator.max_user_id),
+                               appeal.id, is_final=True)
+    async with session_scope() as check:
+        await asyncio.wait_for(appeal_locks.hold(check, appeal.id), 5)
+        restored = await operator_drafts.get(check, operator.id)
+        assert restored.token == token and restored.is_final is False
+        assert restored.data["summary_chunks"] == ["First", "Second"]
+        assert restored.data["attachments"] == files
 ```
 
 ### `bot/tests/test_operator_drafts.py`
