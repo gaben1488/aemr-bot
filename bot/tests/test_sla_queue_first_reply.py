@@ -25,20 +25,20 @@ async def test_first_reply_removes_appeal_from_unanswered_sla_but_keeps_it_open(
 @pytest.mark.asyncio
 async def test_reopen_keeps_prior_period_and_starts_new_first_reply_clock(session, monkeypatch):
     from aemr_bot.db.models import Appeal, Message, User
-    from aemr_bot.services import appeals, sla
+    from aemr_bot.services import appeals, work_schedule
 
     user = User(max_user_id=514202, first_name="Иван")
     session.add(user)
     await session.flush()
-    start = datetime.now(UTC) - timedelta(days=2)
+    start = datetime(2026, 6, 16, 0, tzinfo=UTC)
     appeal = Appeal(user_id=user.id, status="answered", created_at=start, sla_hours_at_start=4,
+                    sla_schedule_at_start=work_schedule.environment(),
                     answered_at=start + timedelta(days=1), summary="Сообщение", attachments=[])
     session.add(appeal)
     await session.flush()
     session.add(Message(appeal_id=appeal.id, direction="from_operator", text="Ответ",
                         created_at=start + timedelta(days=1)))
     await session.flush()
-    monkeypatch.setattr(sla, "is_overdue", lambda *args: True)
     assert await appeals.reopen(session, appeal.id) == "reopened"
     await session.refresh(appeal)
     assert appeal.sla_anchor_at > start

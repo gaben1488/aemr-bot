@@ -15,6 +15,7 @@ from aemr_bot.db.models import (
     User,
 )
 from aemr_bot.services import sla as sla_service
+from aemr_bot.services import work_schedule
 
 
 async def current_first_response_hours(session: AsyncSession) -> int:
@@ -64,6 +65,7 @@ async def create_appeal(
         attachments=attachments,
         related_appeal_id=related_appeal_id,
         sla_hours_at_start=await current_first_response_hours(session),
+        sla_schedule_at_start=await work_schedule.snapshot(session),
     )
     session.add(appeal)
     await session.flush()
@@ -433,9 +435,12 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
         "start": anchor.isoformat(), "end": period_end.isoformat(),
         "first_response": first_response.isoformat() if first_response else None,
         "sla_hours": previous_hours,
-        "overdue": (sla_service.is_overdue(anchor, first_response, previous_hours)
-                    if first_response is not None and previous_hours is not None else None),
-        "assessment": ("at_reopen_legacy" if previous_hours is None else
+        "schedule": previous.sla_schedule_at_start,
+        "overdue": (sla_service.is_overdue(anchor, first_response, previous_hours,
+                                               schedule=previous.sla_schedule_at_start)
+                    if first_response is not None and previous_hours is not None
+                    and previous.sla_schedule_at_start is not None else None),
+        "assessment": ("at_reopen_legacy" if previous_hours is None or previous.sla_schedule_at_start is None else
                        "no_first_response" if first_response is None else "at_reopen"),
     })
     result = await session.execute(
@@ -453,6 +458,7 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
             closed_at=None,
             sla_anchor_at=datetime.now(UTC),
             sla_hours_at_start=next_hours,
+            sla_schedule_at_start=await work_schedule.snapshot(session),
             sla_history=history,
         )
     )
@@ -654,7 +660,8 @@ async def find_overdue_unanswered(
             break
         for appeal in batch:
             if sla_service.is_overdue(appeal.sla_anchor_at or appeal.created_at, now,
-                                      response_hours_for(appeal, sla_hours)):
+                                      response_hours_for(appeal, sla_hours),
+                                      schedule=work_schedule.for_appeal(appeal)):
                 overdue.append(appeal)
                 if len(overdue) == limit:
                     break

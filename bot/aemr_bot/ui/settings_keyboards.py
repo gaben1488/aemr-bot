@@ -34,6 +34,7 @@ def op_settings_menu_keyboard(dirty_count: int = 0):
     kb.row(CallbackButton(text="🌙 Тихий режим в админ-чате", payload=cp.op_set("quiet")))
     kb.row(CallbackButton(text="🔔 Уведомления", payload=cp.op_set("notify")))
     kb.row(CallbackButton(text="⏱ Срок ответа", payload=cp.op_set("sla")))
+    kb.row(CallbackButton(text="🕘 Рабочее время", payload=cp.op_set("schedule")))
     pr_label = "💾 Создать PR с изменениями"
     if dirty_count > 0:
         pr_label = f"💾 Создать PR ({dirty_count} изм.)"

@@ -265,6 +265,7 @@ class Appeal(Base):
     sla_anchor_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # NULL for pre-existing periods whose original setting is unknown.
     sla_hours_at_start: Mapped[int | None] = mapped_column()
+    sla_schedule_at_start: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     sla_history: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     # True, если обращение закрыто из-за отзыва согласия или удаления
     # данных. Используется чтобы не показывать оператору кнопку

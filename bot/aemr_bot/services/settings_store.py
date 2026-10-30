@@ -506,6 +506,7 @@ DEFAULTS: dict[str, Any] = {
     # None keeps the existing environment value until explicitly changed.
     "sla_response_hours": None,
     "sla_followup_hours": None,
+    "sla_work_schedule": None,
     "admin_quiet_hours_enabled": False,
     "admin_quiet_hours_start": 18,
     "admin_quiet_hours_end": 9,
@@ -605,6 +606,7 @@ SCHEMA: dict[str, dict] = {
     # quiet hours: bool + два часа 0–23.
     "sla_response_hours": {"type": int, "min": 1, "max": 168},
     "sla_followup_hours": {"type": int, "min": 0, "max": 168},
+    "sla_work_schedule": {"type": dict},
     "admin_quiet_hours_enabled": {"type": bool},
     "admin_quiet_hours_start": {"type": int, "min": 0, "max": 23},
     "admin_quiet_hours_end": {"type": int, "min": 0, "max": 23},
@@ -623,6 +625,12 @@ def validate(key: str, value: Any) -> tuple[bool, str]:
     """Возвращает (ok, message). В сообщении — причина при ошибке или 'ok' при успехе."""
     if key not in SCHEMA:
         return False, f"Unknown key '{key}'. Allowed: {sorted(SCHEMA)}"
+    if key == "sla_work_schedule":
+        from aemr_bot.services.work_schedule import validate as validate_schedule
+        try:
+            validate_schedule(value)
+        except ValueError as exc:
+            return False, str(exc)
     rule = SCHEMA[key]
     expected = rule["type"]
     if not isinstance(value, expected):
@@ -961,7 +969,7 @@ async def set_value(
 
 async def list_keys(session: AsyncSession) -> list[str]:
     rows = await session.scalars(select(Setting.key))
-    in_db = {key for key in rows if not key.startswith("__incident_alert:")}
+    in_db = {key for key in rows if not key.startswith(("__incident_alert:", "__sla_"))}
     return sorted(in_db.union(DEFAULTS.keys()))
 
 

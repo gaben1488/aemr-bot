@@ -288,6 +288,25 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         await _show_author_card(event)
         return
 
+    if rest == "schedule" or rest.startswith("schedule:"):
+        from aemr_bot.handlers import admin_settings_schedule
+        if rest == "schedule":
+            await admin_settings_schedule.show(event)
+        elif rest == "schedule:edit":
+            await admin_settings_schedule.start(event, operator_id)
+        elif rest.startswith("schedule:calendar:"):
+            revision = rest.removeprefix("schedule:calendar:")
+            if revision.isdigit():
+                await admin_settings_schedule.update_calendar(event, operator_id, int(revision))
+        elif rest.startswith("schedule:cancel:"):
+            intent = _intent_get(operator_id)
+            if intent and intent.get("kind") == "work_schedule" and intent.get("token") == rest.removeprefix("schedule:cancel:"):
+                _intent_drop(operator_id)
+                await admin_settings_schedule.show(event, notice="Изменение отменено.")
+            else:
+                await admin_settings_schedule.show(event, notice="Кнопка устарела. Текущее редактирование не отменено.")
+        return
+
     if rest == "sla":
         from aemr_bot.handlers import admin_settings_sla
         await admin_settings_sla.show(event)
@@ -432,6 +451,11 @@ async def handle_settings_edit_text(event, text: str) -> bool:
         return True
     if kind == "obj_add":
         if await _apply_obj_add(event, operator_id, key, new_text):
+            _intent_drop(operator_id)
+        return True
+    if kind == "work_schedule":
+        from aemr_bot.handlers import admin_settings_schedule
+        if await admin_settings_schedule.apply(event, operator_id, new_text):
             _intent_drop(operator_id)
         return True
     if kind == "sla_hours":
