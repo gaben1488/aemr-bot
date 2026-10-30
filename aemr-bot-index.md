@@ -1,9 +1,9 @@
 # aemr-bot repository index
 
-Generated at: `2026-10-30 05:25:23 UTC`
-Root: `/workspace/aemr-bot`
-Indexed files: `514`
-Max file size: `160 KB`
+Generated at: `2026-10-30 05:31:10 UTC`
+Root: `/home/runner/work/aemr-bot/aemr-bot`
+Indexed files: `516`
+Max file size: `300 KB`
 
 ## Safety policy
 
@@ -22,11 +22,6 @@ The committed template `.env.example` is allowed because it should not contain l
 - `.gitignore` (3187 bytes)
 - `.pre-commit-config.yaml` (3378 bytes)
 - `AGENTS.md` (6742 bytes)
-- `bot/.hypothesis/.gitignore` (429 bytes)
-- `bot/aemr_bot.egg-info/dependency_links.txt` (1 bytes)
-- `bot/aemr_bot.egg-info/requires.txt` (373 bytes)
-- `bot/aemr_bot.egg-info/SOURCES.txt` (12881 bytes)
-- `bot/aemr_bot.egg-info/top_level.txt` (9 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
 - `bot/aemr_bot/config.py` (23669 bytes)
 - `bot/aemr_bot/copy/__init__.py` (1142 bytes)
@@ -36,6 +31,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/copy/errors_texts.py` (1999 bytes)
 - `bot/aemr_bot/copy/security_texts.py` (14386 bytes)
 - `bot/aemr_bot/data/__init__.py` (69 bytes)
+- `bot/aemr_bot/data/given_names_v1.txt` (175737 bytes)
 - `bot/aemr_bot/data/NAMES_LICENSE.md` (1141 bytes)
 - `bot/aemr_bot/data/resident_names_v1.py` (1708 bytes)
 - `bot/aemr_bot/data/resident_names_v2.py` (1555 bytes)
@@ -431,7 +427,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/archive/versions/Политика_v2@efff2e4-2026-05-26.md` (30510 bytes)
 - `docs/archive/versions/Политика_конфиденциальности_ИС_Чат-бот_MAX@7a0beb2-2026-07-09.md` (34478 bytes)
 - `docs/archive/versions/Политика_мое_ревью@worktree-2026-07-15.md` (32849 bytes)
+- `docs/archive/versions/Регламент_AEMR-bot_MAX_v8@510d864-2026-06-04.md` (166743 bytes)
 - `docs/archive/versions/Регламент_ULTIMATE@4dda831-2026-06-01.md` (150660 bytes)
+- `docs/archive/versions/Регламент_ULTIMATE@d445646-2026-06-02.md` (167501 bytes)
 - `docs/archive/versions/Регламент_ULTIMATE@f4e68d8-2026-06-02.md` (160356 bytes)
 - `docs/archive/versions/Регламент_v6_draft@70a6d9e-2026-05-21.md` (17450 bytes)
 - `docs/archive/versions/Регламент_v6_draft@882e8fd-2026-05-21.md` (21119 bytes)
@@ -487,18 +485,22 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/site/_kb/_sources/reglament_v7.txt` (94258 bytes)
 - `docs/site/_kb/_sources/reserch.txt` (117351 bytes)
 - `docs/site/_kb/_STATUS.md` (7870 bytes)
+- `docs/site/_kb2/admin.html` (217483 bytes)
 - `docs/site/_kb2/adr.html` (99478 bytes)
 - `docs/site/_kb2/ekspluataciya.html` (42501 bytes)
 - `docs/site/_kb2/obzor.html` (44667 bytes)
 - `docs/site/_kb2/operator.html` (147319 bytes)
 - `docs/site/_kb2/pravovoe.html` (21622 bytes)
 - `docs/site/_kb2/shemy.html` (12290 bytes)
+- `docs/site/_kb2/spravochnik.html` (217689 bytes)
+- `docs/site/_kb2/voprosy.html` (281480 bytes)
 - `docs/site/_kb2/zhitel.html` (80813 bytes)
 - `docs/superpowers/plans/2026-10-26-reliability-release.md` (6513 bytes)
 - `docs/THREAT_INTEL_AUDIT_2026-10-26.md` (13635 bytes)
 - `docs/Инструкция_ПДн_удаление_восстановление.md` (21255 bytes)
 - `docs/Политика_конфиденциальности_ИС_Чат-бот_MAX.md` (48805 bytes)
 - `docs/ПОРЯДОК_УДАЛЕНИЯ_ДАННЫХ.md` (6692 bytes)
+- `docs/Регламент_AEMR-bot_MAX_v8.md` (177798 bytes)
 - `docs/ЧЕКЛИСТ_ПРАВОПРЕЕМСТВА.md` (22958 bytes)
 - `infra/.env.example` (70545 bytes)
 - `infra/cntlm/cntlm.conf.example` (1796 bytes)
@@ -533,261 +535,6 @@ The committed template `.env.example` is allowed because it should not contain l
 The following files were skipped intentionally:
 
 - `aemr-bot-index.md` — output file
-- `bot/.coverage` — non-text extension
-- `bot/.hypothesis/constants/00faff0a290f9b96` — non-text extension
-- `bot/.hypothesis/constants/0147e69c60d62467` — non-text extension
-- `bot/.hypothesis/constants/01dded8912a0befc` — non-text extension
-- `bot/.hypothesis/constants/0202f40b0c09f1bc` — non-text extension
-- `bot/.hypothesis/constants/02b74d467996ea99` — non-text extension
-- `bot/.hypothesis/constants/033f0d12825dcb98` — non-text extension
-- `bot/.hypothesis/constants/03a4a2dd3831e664` — non-text extension
-- `bot/.hypothesis/constants/06cfd80badcf7042` — non-text extension
-- `bot/.hypothesis/constants/07197d49c658018b` — non-text extension
-- `bot/.hypothesis/constants/0720fa60ab0f7082` — non-text extension
-- `bot/.hypothesis/constants/07f28a1822e461cd` — non-text extension
-- `bot/.hypothesis/constants/08f695ca5b71a0fb` — non-text extension
-- `bot/.hypothesis/constants/099d5efb5c793140` — non-text extension
-- `bot/.hypothesis/constants/09a7df541a003dc8` — non-text extension
-- `bot/.hypothesis/constants/09c8eb5e37b5b5ba` — non-text extension
-- `bot/.hypothesis/constants/09db382a57f4f961` — non-text extension
-- `bot/.hypothesis/constants/0d461569e059ca94` — non-text extension
-- `bot/.hypothesis/constants/0d9342c555b09818` — non-text extension
-- `bot/.hypothesis/constants/0dd461af2ce0cad9` — non-text extension
-- `bot/.hypothesis/constants/106f3e9ef905968b` — non-text extension
-- `bot/.hypothesis/constants/10e5a74b13264806` — non-text extension
-- `bot/.hypothesis/constants/11a15ce3bd0b263b` — non-text extension
-- `bot/.hypothesis/constants/11b37ac192627e5e` — non-text extension
-- `bot/.hypothesis/constants/121120c5dbc45731` — non-text extension
-- `bot/.hypothesis/constants/125c00acce605ac5` — non-text extension
-- `bot/.hypothesis/constants/133471ebbe45b7a5` — non-text extension
-- `bot/.hypothesis/constants/13f5772eb245d63f` — non-text extension
-- `bot/.hypothesis/constants/143746c4aad27d94` — non-text extension
-- `bot/.hypothesis/constants/143f719610d6b8c0` — non-text extension
-- `bot/.hypothesis/constants/144f085f1f3388c6` — non-text extension
-- `bot/.hypothesis/constants/15fdcc5020fd5a3d` — non-text extension
-- `bot/.hypothesis/constants/172d9f3405806c6f` — non-text extension
-- `bot/.hypothesis/constants/1764bd1d4095800d` — non-text extension
-- `bot/.hypothesis/constants/18292e0682f70288` — non-text extension
-- `bot/.hypothesis/constants/199aaf0d17eb6438` — non-text extension
-- `bot/.hypothesis/constants/1b0c2b2b483813aa` — non-text extension
-- `bot/.hypothesis/constants/1b809cc15465edf9` — non-text extension
-- `bot/.hypothesis/constants/1b8b26ec835a2d61` — non-text extension
-- `bot/.hypothesis/constants/1bb7fbcdfbe93eaf` — non-text extension
-- `bot/.hypothesis/constants/1cd03ef4dc80a34f` — non-text extension
-- `bot/.hypothesis/constants/1dcfb2720c702296` — non-text extension
-- `bot/.hypothesis/constants/1f37c7095a768d64` — non-text extension
-- `bot/.hypothesis/constants/205f1c5115feb759` — non-text extension
-- `bot/.hypothesis/constants/21b3389e3ed7f0b4` — non-text extension
-- `bot/.hypothesis/constants/238ed21372913f31` — non-text extension
-- `bot/.hypothesis/constants/2463e4f0a2b9a331` — non-text extension
-- `bot/.hypothesis/constants/24e7fbda619aae6a` — non-text extension
-- `bot/.hypothesis/constants/26579646773b8880` — non-text extension
-- `bot/.hypothesis/constants/26d97a583d6df49f` — non-text extension
-- `bot/.hypothesis/constants/27af9a2101107bc6` — non-text extension
-- `bot/.hypothesis/constants/2972c9bd1b1dc3ef` — non-text extension
-- `bot/.hypothesis/constants/297eda5806197e71` — non-text extension
-- `bot/.hypothesis/constants/29adea4184d182b8` — non-text extension
-- `bot/.hypothesis/constants/2a7495e4494d59bb` — non-text extension
-- `bot/.hypothesis/constants/2e339ff872f5cfde` — non-text extension
-- `bot/.hypothesis/constants/2eba1c88fc76f3b1` — non-text extension
-- `bot/.hypothesis/constants/2fb2c9fabe4e744a` — non-text extension
-- `bot/.hypothesis/constants/2fd79be1dffdc1b0` — non-text extension
-- `bot/.hypothesis/constants/30bbad9000fedd8d` — non-text extension
-- `bot/.hypothesis/constants/325b97a731093c2c` — non-text extension
-- `bot/.hypothesis/constants/33bbf7d5ba4731c3` — non-text extension
-- `bot/.hypothesis/constants/3430246f066b7073` — non-text extension
-- `bot/.hypothesis/constants/35e3939004c9653b` — non-text extension
-- `bot/.hypothesis/constants/38c17394cb8a14f1` — non-text extension
-- `bot/.hypothesis/constants/3938d49eb6b929d6` — non-text extension
-- `bot/.hypothesis/constants/398028e2ca38b100` — non-text extension
-- `bot/.hypothesis/constants/398799058ba12a00` — non-text extension
-- `bot/.hypothesis/constants/399675e0a11f3635` — non-text extension
-- `bot/.hypothesis/constants/39d4305887fd68d2` — non-text extension
-- `bot/.hypothesis/constants/3a1052a1f048056c` — non-text extension
-- `bot/.hypothesis/constants/3a72794326f328b3` — non-text extension
-- `bot/.hypothesis/constants/3c926c41b98b6f5e` — non-text extension
-- `bot/.hypothesis/constants/3de1922a63c54946` — non-text extension
-- `bot/.hypothesis/constants/406e4dda54b0991b` — non-text extension
-- `bot/.hypothesis/constants/40cdfd7661bd0ced` — non-text extension
-- `bot/.hypothesis/constants/422ae36313bc6bf7` — non-text extension
-- `bot/.hypothesis/constants/432d971e10a4e049` — non-text extension
-- `bot/.hypothesis/constants/434ccf032565be5f` — non-text extension
-- `bot/.hypothesis/constants/4453109409d9a31d` — non-text extension
-- `bot/.hypothesis/constants/44e4325607e95a06` — non-text extension
-- `bot/.hypothesis/constants/458145e54a01c81a` — non-text extension
-- `bot/.hypothesis/constants/4633cd1db7e28475` — non-text extension
-- `bot/.hypothesis/constants/478896b6047fb6a7` — non-text extension
-- `bot/.hypothesis/constants/495b8bee328d6d24` — non-text extension
-- `bot/.hypothesis/constants/4b691f7d1cc30067` — non-text extension
-- `bot/.hypothesis/constants/4b74b1333a16eb1d` — non-text extension
-- `bot/.hypothesis/constants/4c5a18ba03915049` — non-text extension
-- `bot/.hypothesis/constants/4c81dbf25edad504` — non-text extension
-- `bot/.hypothesis/constants/4cbdebb663b50272` — non-text extension
-- `bot/.hypothesis/constants/4ec17c749de81cd7` — non-text extension
-- `bot/.hypothesis/constants/4f3c00e762927810` — non-text extension
-- `bot/.hypothesis/constants/4f84293b84abef08` — non-text extension
-- `bot/.hypothesis/constants/4fb32e12bf0018ee` — non-text extension
-- `bot/.hypothesis/constants/4ffbcec75e3a6815` — non-text extension
-- `bot/.hypothesis/constants/5017b4f1ce7a6817` — non-text extension
-- `bot/.hypothesis/constants/50c6bdd771c3b4d8` — non-text extension
-- `bot/.hypothesis/constants/525baafb0f7605fc` — non-text extension
-- `bot/.hypothesis/constants/530819e7fd453908` — non-text extension
-- `bot/.hypothesis/constants/5405630d65132ce4` — non-text extension
-- `bot/.hypothesis/constants/540f80d859c83f44` — non-text extension
-- `bot/.hypothesis/constants/548aeddbd8361b4e` — non-text extension
-- `bot/.hypothesis/constants/5499f24ebf50d92d` — non-text extension
-- `bot/.hypothesis/constants/54e9ef9de7ce8628` — non-text extension
-- `bot/.hypothesis/constants/5529c3646592d3c9` — non-text extension
-- `bot/.hypothesis/constants/567bc361ab7dac39` — non-text extension
-- `bot/.hypothesis/constants/59a3094406156e4d` — non-text extension
-- `bot/.hypothesis/constants/5b38a1e4f0d04da3` — non-text extension
-- `bot/.hypothesis/constants/5d21b677ff53bde4` — non-text extension
-- `bot/.hypothesis/constants/5df7f229ff488514` — non-text extension
-- `bot/.hypothesis/constants/5eed6b9934d34632` — non-text extension
-- `bot/.hypothesis/constants/603c9882df0ea371` — non-text extension
-- `bot/.hypothesis/constants/63f8ab8cf132ce6f` — non-text extension
-- `bot/.hypothesis/constants/642cd7c11d8801e0` — non-text extension
-- `bot/.hypothesis/constants/64364bdc0f81c24f` — non-text extension
-- `bot/.hypothesis/constants/650c23981f923b18` — non-text extension
-- `bot/.hypothesis/constants/66df6573375b2782` — non-text extension
-- `bot/.hypothesis/constants/680c29b476110786` — non-text extension
-- `bot/.hypothesis/constants/6a44f3ab05bf566f` — non-text extension
-- `bot/.hypothesis/constants/6ad3437596161449` — non-text extension
-- `bot/.hypothesis/constants/6ca0705315d8331f` — non-text extension
-- `bot/.hypothesis/constants/6dfdb2915b6e12f2` — non-text extension
-- `bot/.hypothesis/constants/6f717d9c361ee8b8` — non-text extension
-- `bot/.hypothesis/constants/6fefccdcbfd5686b` — non-text extension
-- `bot/.hypothesis/constants/71e4282dbdad3678` — non-text extension
-- `bot/.hypothesis/constants/7405ea6e48a7786d` — non-text extension
-- `bot/.hypothesis/constants/74809396904cd6c5` — non-text extension
-- `bot/.hypothesis/constants/74b7fd390c31087b` — non-text extension
-- `bot/.hypothesis/constants/75782d41bb35c26d` — non-text extension
-- `bot/.hypothesis/constants/75e6dd9a92289a39` — non-text extension
-- `bot/.hypothesis/constants/768cd95c82cfcef6` — non-text extension
-- `bot/.hypothesis/constants/76e30ec637ddeb3a` — non-text extension
-- `bot/.hypothesis/constants/7893a542cd08b382` — non-text extension
-- `bot/.hypothesis/constants/78d8b8e4526bc55b` — non-text extension
-- `bot/.hypothesis/constants/79576006ac67ba06` — non-text extension
-- `bot/.hypothesis/constants/7b25b33a096e0054` — non-text extension
-- `bot/.hypothesis/constants/7c8573bc91d13c98` — non-text extension
-- `bot/.hypothesis/constants/7d2336118aa4bfee` — non-text extension
-- `bot/.hypothesis/constants/7d2afa3fc890edb7` — non-text extension
-- `bot/.hypothesis/constants/7ebfa0e9adc20236` — non-text extension
-- `bot/.hypothesis/constants/80d1918cafaabce1` — non-text extension
-- `bot/.hypothesis/constants/8140ef0a10739d45` — non-text extension
-- `bot/.hypothesis/constants/81ebd725d5c246c3` — non-text extension
-- `bot/.hypothesis/constants/841d8992440ac082` — non-text extension
-- `bot/.hypothesis/constants/847620e0c3a03ebe` — non-text extension
-- `bot/.hypothesis/constants/862dd775efd47f80` — non-text extension
-- `bot/.hypothesis/constants/86fdf49694324aa8` — non-text extension
-- `bot/.hypothesis/constants/8b9ae39ba03761da` — non-text extension
-- `bot/.hypothesis/constants/8bb00ed15135d0b0` — non-text extension
-- `bot/.hypothesis/constants/8bd3f423328ccb24` — non-text extension
-- `bot/.hypothesis/constants/8e9f9d448bdd2747` — non-text extension
-- `bot/.hypothesis/constants/8f13196b99cf2c4a` — non-text extension
-- `bot/.hypothesis/constants/8f7f8ccbe872dea6` — non-text extension
-- `bot/.hypothesis/constants/8fdb4e2293e1c27e` — non-text extension
-- `bot/.hypothesis/constants/910b97380e9de26d` — non-text extension
-- `bot/.hypothesis/constants/931f89f9cedc863b` — non-text extension
-- `bot/.hypothesis/constants/93cdfdca26752408` — non-text extension
-- `bot/.hypothesis/constants/9487a687307eb9f7` — non-text extension
-- `bot/.hypothesis/constants/96dfccab7d5499c6` — non-text extension
-- `bot/.hypothesis/constants/974b1f7cb0523494` — non-text extension
-- `bot/.hypothesis/constants/9a3e897755f2fa1e` — non-text extension
-- `bot/.hypothesis/constants/9b30174c41dd290f` — non-text extension
-- `bot/.hypothesis/constants/9dcfcc4bf015a44c` — non-text extension
-- `bot/.hypothesis/constants/9e820005736b8644` — non-text extension
-- `bot/.hypothesis/constants/a0221e57eb733d6e` — non-text extension
-- `bot/.hypothesis/constants/a127ec7d40109e6c` — non-text extension
-- `bot/.hypothesis/constants/a247a1a7cd82379a` — non-text extension
-- `bot/.hypothesis/constants/a38a35ec42b1a6f1` — non-text extension
-- `bot/.hypothesis/constants/a4fdfb1bdb291a3a` — non-text extension
-- `bot/.hypothesis/constants/a579e8cbaef18d43` — non-text extension
-- `bot/.hypothesis/constants/a57a92f310d96d02` — non-text extension
-- `bot/.hypothesis/constants/a624ce5bc4382490` — non-text extension
-- `bot/.hypothesis/constants/a66bf49ebe4ca514` — non-text extension
-- `bot/.hypothesis/constants/a6ce92c37df1d3ae` — non-text extension
-- `bot/.hypothesis/constants/a993ed84fd3953fc` — non-text extension
-- `bot/.hypothesis/constants/ac2a06305d9d204c` — non-text extension
-- `bot/.hypothesis/constants/ac51a7ae8b50e138` — non-text extension
-- `bot/.hypothesis/constants/ad57b25bafa291f1` — non-text extension
-- `bot/.hypothesis/constants/b04afe45b529a506` — non-text extension
-- `bot/.hypothesis/constants/b2188fe7bb08f859` — non-text extension
-- `bot/.hypothesis/constants/b3377a4bebb5033d` — non-text extension
-- `bot/.hypothesis/constants/b3417551f7469555` — non-text extension
-- `bot/.hypothesis/constants/b4d2e0e9f592bf81` — non-text extension
-- `bot/.hypothesis/constants/b6170b20ab4b1b1f` — non-text extension
-- `bot/.hypothesis/constants/b632923295c9b7f6` — non-text extension
-- `bot/.hypothesis/constants/b727fd79870ff20e` — non-text extension
-- `bot/.hypothesis/constants/b82694b62f3a152f` — non-text extension
-- `bot/.hypothesis/constants/b894d81f61bdd170` — non-text extension
-- `bot/.hypothesis/constants/bb40dfcfe6baf2f1` — non-text extension
-- `bot/.hypothesis/constants/bb90fe6b36ced883` — non-text extension
-- `bot/.hypothesis/constants/bc0923d2d5affb4e` — non-text extension
-- `bot/.hypothesis/constants/be238ddfe1ddc986` — non-text extension
-- `bot/.hypothesis/constants/c065c78ba94889ed` — non-text extension
-- `bot/.hypothesis/constants/c0960e86591d4303` — non-text extension
-- `bot/.hypothesis/constants/c18be677229d496e` — non-text extension
-- `bot/.hypothesis/constants/c21505472c656b7e` — non-text extension
-- `bot/.hypothesis/constants/c26d750e0dabf55c` — non-text extension
-- `bot/.hypothesis/constants/c4b78fb570f147c3` — non-text extension
-- `bot/.hypothesis/constants/c547ac4878940a67` — non-text extension
-- `bot/.hypothesis/constants/c5811cefeaa4bc14` — non-text extension
-- `bot/.hypothesis/constants/c781dbc806d22504` — non-text extension
-- `bot/.hypothesis/constants/c7f35cdc9fb10bba` — non-text extension
-- `bot/.hypothesis/constants/c8110b49a3ed5a35` — non-text extension
-- `bot/.hypothesis/constants/c82949951b153db8` — non-text extension
-- `bot/.hypothesis/constants/c8d4ce05b2da67f4` — non-text extension
-- `bot/.hypothesis/constants/c9369a8180a823e1` — non-text extension
-- `bot/.hypothesis/constants/c9edba22ef4e78f8` — non-text extension
-- `bot/.hypothesis/constants/cab008da3513bc90` — non-text extension
-- `bot/.hypothesis/constants/cb3718dd00a6732d` — non-text extension
-- `bot/.hypothesis/constants/cc5cd96baec09e7b` — non-text extension
-- `bot/.hypothesis/constants/cd78bdae53bcbdef` — non-text extension
-- `bot/.hypothesis/constants/cdeb444f455b6c31` — non-text extension
-- `bot/.hypothesis/constants/ce8a6519e6e28747` — non-text extension
-- `bot/.hypothesis/constants/ced67cae46e965ea` — non-text extension
-- `bot/.hypothesis/constants/cf3bba08ede987ce` — non-text extension
-- `bot/.hypothesis/constants/d078a8c3e2718e24` — non-text extension
-- `bot/.hypothesis/constants/d2586ac752c227d7` — non-text extension
-- `bot/.hypothesis/constants/d38573af1eea275f` — non-text extension
-- `bot/.hypothesis/constants/d47bc5a5762babd4` — non-text extension
-- `bot/.hypothesis/constants/d4ce0afa7120978e` — non-text extension
-- `bot/.hypothesis/constants/d55f39f38df59be9` — non-text extension
-- `bot/.hypothesis/constants/d6a2f39fe9a7e4a5` — non-text extension
-- `bot/.hypothesis/constants/d8c8b1eb51e2270d` — non-text extension
-- `bot/.hypothesis/constants/d9233a19746b1bb8` — non-text extension
-- `bot/.hypothesis/constants/da39a3ee5e6b4b0d` — non-text extension
-- `bot/.hypothesis/constants/dd3af15cdcd8f8ba` — non-text extension
-- `bot/.hypothesis/constants/dfb0e221d0a6b6d6` — non-text extension
-- `bot/.hypothesis/constants/e2ca37d239b7a748` — non-text extension
-- `bot/.hypothesis/constants/e4bfa5643d3acb48` — non-text extension
-- `bot/.hypothesis/constants/e5032a9fa31ffe5c` — non-text extension
-- `bot/.hypothesis/constants/e7066cf05e8299c7` — non-text extension
-- `bot/.hypothesis/constants/e8868673ec37234c` — non-text extension
-- `bot/.hypothesis/constants/e96d54338357d28c` — non-text extension
-- `bot/.hypothesis/constants/e9ccb9e82301bca9` — non-text extension
-- `bot/.hypothesis/constants/ea9400856718afa2` — non-text extension
-- `bot/.hypothesis/constants/eadbf3484ae72187` — non-text extension
-- `bot/.hypothesis/constants/ec1aa634de5d1967` — non-text extension
-- `bot/.hypothesis/constants/ecb6c231919334cc` — non-text extension
-- `bot/.hypothesis/constants/ecfaa2b9b9f4ede6` — non-text extension
-- `bot/.hypothesis/constants/f15258cd70b0a782` — non-text extension
-- `bot/.hypothesis/constants/f1d40a092f1b543f` — non-text extension
-- `bot/.hypothesis/constants/f25a9d9e9f9f5149` — non-text extension
-- `bot/.hypothesis/constants/f274025bcb943932` — non-text extension
-- `bot/.hypothesis/constants/f2addeaf8dd0c747` — non-text extension
-- `bot/.hypothesis/constants/f776a9cce782bc1a` — non-text extension
-- `bot/.hypothesis/constants/f924811dc9cedceb` — non-text extension
-- `bot/.hypothesis/constants/f9c09eb048adefc6` — non-text extension
-- `bot/.hypothesis/constants/fb51084e2f86889a` — non-text extension
-- `bot/.hypothesis/constants/fbcaecc7d3de4d9d` — non-text extension
-- `bot/.hypothesis/constants/fdda321d55cfd267` — non-text extension
-- `bot/.hypothesis/constants/fe3c6167765592f0` — non-text extension
-- `bot/.hypothesis/unicode_data/15.0.0/charmap.json.gz` — excluded glob
-- `bot/.hypothesis/unicode_data/15.0.0/codec-utf-8.json.gz` — excluded glob
-- `bot/aemr_bot.egg-info/PKG-INFO` — non-text extension
-- `bot/aemr_bot/data/given_names_v1.txt` — larger than 163840 bytes
 - `bot/aemr_bot/db/alembic/script.py.mako` — non-text extension
 - `bot/uv.lock` — non-text extension
 - `docs/archive/versions/PRIVACY@151c39b-2026-04-29.pdf` — excluded glob
@@ -798,8 +545,6 @@ The following files were skipped intentionally:
 - `docs/archive/versions/Регламент@9db482a-2026-05-25.docx` — non-text extension
 - `docs/archive/versions/Регламент@c98f8b1-2026-06-04.docx` — non-text extension
 - `docs/archive/versions/Регламент_AEMR-bot_MAX_v8@510d864-2026-06-04.docx` — non-text extension
-- `docs/archive/versions/Регламент_AEMR-bot_MAX_v8@510d864-2026-06-04.md` — larger than 163840 bytes
-- `docs/archive/versions/Регламент_ULTIMATE@d445646-2026-06-02.md` — larger than 163840 bytes
 - `docs/archive/versions/Регламент_v6_draft@4296583-2026-05-21.docx` — non-text extension
 - `docs/archive/Регламент.docx` — non-text extension
 - `docs/PRIVACY.pdf` — excluded glob
@@ -829,19 +574,15 @@ The following files were skipped intentionally:
 - `docs/site/_kb/_shots/E3_sec.png` — excluded glob
 - `docs/site/_kb/_shots/EL_dev_diagram.png` — excluded glob
 - `docs/site/_kb/_shots/F1_home_cards.png` — excluded glob
-- `docs/site/_kb2/admin.html` — larger than 163840 bytes
-- `docs/site/_kb2/codemap.html` — larger than 163840 bytes
-- `docs/site/_kb2/developer.html` — larger than 163840 bytes
-- `docs/site/_kb2/koncept.html` — larger than 163840 bytes
-- `docs/site/_kb2/security.html` — larger than 163840 bytes
-- `docs/site/_kb2/spravochnik.html` — larger than 163840 bytes
-- `docs/site/_kb2/spravref.html` — larger than 163840 bytes
-- `docs/site/_kb2/voprosy.html` — larger than 163840 bytes
-- `docs/site/index.html` — larger than 163840 bytes
+- `docs/site/_kb2/codemap.html` — larger than 307200 bytes
+- `docs/site/_kb2/developer.html` — larger than 307200 bytes
+- `docs/site/_kb2/koncept.html` — larger than 307200 bytes
+- `docs/site/_kb2/security.html` — larger than 307200 bytes
+- `docs/site/_kb2/spravref.html` — larger than 307200 bytes
+- `docs/site/index.html` — larger than 307200 bytes
 - `docs/Политика_конфиденциальности_ИС_Чат-бот_MAX.docx` — non-text extension
 - `docs/Политика_конфиденциальности_ИС_Чат-бот_MAX.pdf` — excluded glob
 - `docs/Регламент_AEMR-bot_MAX_v8.docx` — non-text extension
-- `docs/Регламент_AEMR-bot_MAX_v8.md` — larger than 163840 bytes
 - `docs/Регламент_AEMR-bot_MAX_v8.pdf` — excluded glob
 - `infra/aemr-bot.service` — non-text extension
 - `infra/certs/russian_trusted_root_ca.pem` — non-text extension
@@ -1767,439 +1508,6 @@ SHA-256: `878465c054a989f40eee795bb85b82b3edd274fbbd47ff3e2fe6b523c69c94f8`
 - Личные экраны и файлы: `data_erasure.personal_view` должен начинаться ДО чтения ПДн и длиться до завершения вывода/загрузки; точные источники задаются `appeal_id`/`max_user_ids`, списки — `aggregate=True`. Копии и правки экранов регистрирует установленный hook. Не выполнять erase/revoke внутри shared-view.
 - Порядок блокировок: lifecycle guard жителя → privacy barrier → строки/обращение. Вложенные shared-lease того же asyncio task используют живую внешнюю транзакцию; child tasks получают собственный lock. Не ожидать параллельные выводы дочерних tasks внутри удерживаемого view при возможном exclusive erasure.
 - Подтверждение удаления/отзыва в личке связывать с новым MID и текущей редакцией согласия, не выполнять мутацию по старому статическому payload. Переходы и новый текст отменяют только подтверждение, не содержимое черновика. После erase не публиковать MAX ID заново; только явное не содержащее ПДн подтверждение может использовать `allow_erased_recipient=True`.
-```
-
-### `bot/.hypothesis/.gitignore`
-
-Size: `429` bytes  
-SHA-256: `41e7ed0dbc23047cfa33374b5909f7b3c7875663fec73abdd23a22518567754a`
-
-```gitignore
-# This .gitignore file was automatically created by Hypothesis. Hypothesis gitignores
-# .hypothesis by default, because we generally recommend that .hypothesis not be checked
-# into version control.
-#
-# If you *would* like to check .hypothesis into version control, you should delete this
-# file. Hypothesis will not re-create this .gitignore unless .hypothesis is deleted (and
-# if it does, that's a bug - please report it!)
-
-*
-```
-
-### `bot/aemr_bot.egg-info/dependency_links.txt`
-
-Size: `1` bytes  
-SHA-256: `01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b`
-
-```text
-
-```
-
-### `bot/aemr_bot.egg-info/requires.txt`
-
-Size: `373` bytes  
-SHA-256: `89a2f28c17a7cfb3be0e604b598d5aea662a5c7741d2087d963b20d443933768`
-
-```text
-maxapi==1.2.3
-sqlalchemy~=2.0
-asyncpg~=0.30
-alembic~=1.14
-apscheduler~=3.10
-pydantic~=2.9
-pydantic-settings~=2.6
-openpyxl~=3.1
-python-dotenv~=1.0
-python-dateutil~=2.9
-aiohttp~=3.10
-shapely~=2.0
-
-[dev]
-pytest<10,>=9.0.3
-pytest-asyncio<2,>=1.3
-pytest-cov<8,>=6
-ruff~=0.16.0
-mypy~=1.20.0
-bandit~=1.7
-pip-audit~=2.7
-aiosqlite~=0.20
-types-python-dateutil~=2.9
-hypothesis~=6.115
-```
-
-### `bot/aemr_bot.egg-info/SOURCES.txt`
-
-Size: `12881` bytes  
-SHA-256: `435c52c6cb1fd4bf93118b1f5d73ad8a305d28130a7e9a7ced4fd6f30bca7c1c`
-
-```text
-pyproject.toml
-aemr_bot/__init__.py
-aemr_bot/config.py
-aemr_bot/health.py
-aemr_bot/keyboards.py
-aemr_bot/logging_setup.py
-aemr_bot/main.py
-aemr_bot/network.py
-aemr_bot/texts.py
-aemr_bot/transport.py
-aemr_bot.egg-info/PKG-INFO
-aemr_bot.egg-info/SOURCES.txt
-aemr_bot.egg-info/dependency_links.txt
-aemr_bot.egg-info/requires.txt
-aemr_bot.egg-info/top_level.txt
-aemr_bot/copy/__init__.py
-aemr_bot/copy/admin_texts.py
-aemr_bot/copy/broadcast_texts.py
-aemr_bot/copy/citizen_funnel.py
-aemr_bot/copy/errors_texts.py
-aemr_bot/copy/security_texts.py
-aemr_bot/data/NAMES_LICENSE.md
-aemr_bot/data/__init__.py
-aemr_bot/data/given_names_v1.txt
-aemr_bot/data/resident_names_v1.py
-aemr_bot/data/resident_names_v2.py
-aemr_bot/db/__init__.py
-aemr_bot/db/models.py
-aemr_bot/db/session.py
-aemr_bot/db/single_instance.py
-aemr_bot/db/alembic/env.py
-aemr_bot/db/alembic/versions/0001_initial.py
-aemr_bot/db/alembic/versions/0002_broadcast.py
-aemr_bot/db/alembic/versions/0003_phone_normalized.py
-aemr_bot/db/alembic/versions/0004_indexes_and_autovacuum.py
-aemr_bot/db/alembic/versions/0005_appeals_locality.py
-aemr_bot/db/alembic/versions/0006_consent_revoked_at.py
-aemr_bot/db/alembic/versions/0007_consent_broadcast_anonymous.py
-aemr_bot/db/alembic/versions/0008_backfill_consent_broadcast.py
-aemr_bot/db/alembic/versions/0009_partial_indexes_for_hot_paths.py
-aemr_bot/db/alembic/versions/0010_pg_ops_hardening.py
-aemr_bot/db/alembic/versions/0011_wizard_state_persistence.py
-aemr_bot/db/alembic/versions/0012_messages_appeal_created_index.py
-aemr_bot/db/alembic/versions/0013_settings_synced_at.py
-aemr_bot/db/alembic/versions/0014_broadcasts_attachments.py
-aemr_bot/db/alembic/versions/0015_broadcast_templates.py
-aemr_bot/db/alembic/versions/0016_broadcast_template_usage.py
-aemr_bot/db/alembic/versions/0017_appeals_last_card_mid.py
-aemr_bot/db/alembic/versions/0018_users_trigram_search_indexes.py
-aemr_bot/db/alembic/versions/0019_appeals_status_created_index.py
-aemr_bot/db/alembic/versions/0020_appeals_coordinates.py
-aemr_bot/db/alembic/versions/0021_drop_appeals_coordinates.py
-aemr_bot/db/alembic/versions/0022_users_consent_text_hash.py
-aemr_bot/db/alembic/versions/0023_broadcast_deliveries_unique.py
-aemr_bot/db/alembic/versions/0024_block_legacy_erased_residents.py
-aemr_bot/db/alembic/versions/0025_appointment_text_okrug.py
-aemr_bot/db/alembic/versions/0026_durable_receipt.py
-aemr_bot/db/alembic/versions/0027_clear_invalid_resident_names.py
-aemr_bot/db/alembic/versions/0028_appointment_head.py
-aemr_bot/db/alembic/versions/0029_consent_records.py
-aemr_bot/db/alembic/versions/0030_paused_appeal_draft.py
-aemr_bot/db/alembic/versions/0031_settings_revision.py
-aemr_bot/db/alembic/versions/0032_appeal_sla_anchor.py
-aemr_bot/db/alembic/versions/0033_privacy_epoch.py
-aemr_bot/db/alembic/versions/0034_related_appeal.py
-aemr_bot/db/alembic/versions/0035_message_response_kind.py
-aemr_bot/db/alembic/versions/0036_followup_delivery.py
-aemr_bot/db/alembic/versions/0037_operator_reply_attempt.py
-aemr_bot/db/alembic/versions/0038_appeal_sla_snapshot.py
-aemr_bot/handlers/__init__.py
-aemr_bot/handlers/_auth.py
-aemr_bot/handlers/_common.py
-aemr_bot/handlers/admin_appeal_ops.py
-aemr_bot/handlers/admin_audience.py
-aemr_bot/handlers/admin_callback_dispatch.py
-aemr_bot/handlers/admin_commands.py
-aemr_bot/handlers/admin_operators.py
-aemr_bot/handlers/admin_operators_list.py
-aemr_bot/handlers/admin_operators_roles.py
-aemr_bot/handlers/admin_operators_wizard.py
-aemr_bot/handlers/admin_panel.py
-aemr_bot/handlers/admin_resident_search.py
-aemr_bot/handlers/admin_settings.py
-aemr_bot/handlers/admin_settings_author.py
-aemr_bot/handlers/admin_settings_list.py
-aemr_bot/handlers/admin_settings_notify.py
-aemr_bot/handlers/admin_settings_obj.py
-aemr_bot/handlers/admin_settings_pr.py
-aemr_bot/handlers/admin_settings_quiet.py
-aemr_bot/handlers/admin_settings_shared.py
-aemr_bot/handlers/admin_settings_sla.py
-aemr_bot/handlers/admin_settings_text.py
-aemr_bot/handlers/admin_stats.py
-aemr_bot/handlers/appeal.py
-aemr_bot/handlers/appeal_funnel.py
-aemr_bot/handlers/appeal_geo.py
-aemr_bot/handlers/appeal_runtime.py
-aemr_bot/handlers/broadcast.py
-aemr_bot/handlers/broadcast_templates.py
-aemr_bot/handlers/broadcast_templates_crud.py
-aemr_bot/handlers/broadcast_templates_list.py
-aemr_bot/handlers/broadcast_templates_state.py
-aemr_bot/handlers/broadcast_templates_wizard.py
-aemr_bot/handlers/broadcast_wizard.py
-aemr_bot/handlers/callback_payloads.py
-aemr_bot/handlers/callback_router.py
-aemr_bot/handlers/menu.py
-aemr_bot/handlers/operator_reply.py
-aemr_bot/handlers/resident_name_gate.py
-aemr_bot/handlers/start.py
-aemr_bot/services/__init__.py
-aemr_bot/services/admin_bus.py
-aemr_bot/services/admin_card.py
-aemr_bot/services/admin_events.py
-aemr_bot/services/admin_relay.py
-aemr_bot/services/alert_state.py
-aemr_bot/services/appeal_history.py
-aemr_bot/services/appeal_locks.py
-aemr_bot/services/appeal_word.py
-aemr_bot/services/appeals.py
-aemr_bot/services/backup_verify.py
-aemr_bot/services/broadcast_templates.py
-aemr_bot/services/broadcast_utils.py
-aemr_bot/services/broadcasts.py
-aemr_bot/services/calendar_ru.py
-aemr_bot/services/card_format.py
-aemr_bot/services/complete_stats.py
-aemr_bot/services/consent_history.py
-aemr_bot/services/cron.py
-aemr_bot/services/cron_registry.py
-aemr_bot/services/db_backup.py
-aemr_bot/services/followup_delivery.py
-aemr_bot/services/geo.py
-aemr_bot/services/idempotency.py
-aemr_bot/services/inbox.py
-aemr_bot/services/message_labels.py
-aemr_bot/services/notify_toggles.py
-aemr_bot/services/operator_reply_attempts.py
-aemr_bot/services/operators.py
-aemr_bot/services/policy.py
-aemr_bot/services/privacy_epoch.py
-aemr_bot/services/progress.py
-aemr_bot/services/quiet_hours.py
-aemr_bot/services/repo_sync.py
-aemr_bot/services/resident_drafts.py
-aemr_bot/services/settings_store.py
-aemr_bot/services/sla.py
-aemr_bot/services/stats.py
-aemr_bot/services/threat_intel.py
-aemr_bot/services/uploads.py
-aemr_bot/services/users.py
-aemr_bot/services/wizard_persist.py
-aemr_bot/services/wizard_registry.py
-aemr_bot/ui/__init__.py
-aemr_bot/ui/broadcast_keyboards.py
-aemr_bot/ui/citizen_keyboards.py
-aemr_bot/ui/operator_keyboards.py
-aemr_bot/ui/settings_keyboards.py
-aemr_bot/ui/wizard_keyboards.py
-aemr_bot/utils/__init__.py
-aemr_bot/utils/attachments.py
-aemr_bot/utils/background.py
-aemr_bot/utils/delivery_guard.py
-aemr_bot/utils/event.py
-aemr_bot/utils/image_attachments.py
-aemr_bot/utils/menu_tracker.py
-aemr_bot/utils/pii_mask.py
-aemr_bot/utils/resident_lifecycle.py
-aemr_bot/utils/resident_names.py
-aemr_bot/utils/text_pages.py
-aemr_bot/utils/typing_indicator.py
-aemr_bot/utils/url_defang.py
-tests/test_abandoned_broadcast_recovery.py
-tests/test_admin_appeal_ops.py
-tests/test_admin_audience_paginated.py
-tests/test_admin_bus.py
-tests/test_admin_callback_dispatch.py
-tests/test_admin_card_detached_safety.py
-tests/test_admin_card_render.py
-tests/test_admin_events.py
-tests/test_admin_events_descriptor.py
-tests/test_admin_handlers_small.py
-tests/test_admin_operators.py
-tests/test_admin_operators_coverage.py
-tests/test_admin_ops_cluster_coverage.py
-tests/test_admin_outgoing_hook.py
-tests/test_admin_panel.py
-tests/test_admin_resident_search.py
-tests/test_admin_settings_audit.py
-tests/test_admin_settings_cluster_coverage.py
-tests/test_admin_settings_handlers.py
-tests/test_admin_toggle_stale.py
-tests/test_alert_delivery_state.py
-tests/test_appeal_card_edit_policy.py
-tests/test_appeal_card_timeline.py
-tests/test_appeal_dispatcher.py
-tests/test_appeal_flow.py
-tests/test_appeal_funnel_cluster_coverage.py
-tests/test_appeal_history_view.py
-tests/test_appeal_publication_recovery.py
-tests/test_appeal_word_export.py
-tests/test_appeals_service_pg.py
-tests/test_attachment_history_access.py
-tests/test_attachments_cov2.py
-tests/test_attachments_helpers.py
-tests/test_auto_deploy.py
-tests/test_background_drain.py
-tests/test_backup_verify.py
-tests/test_bot_init_concurrency.py
-tests/test_broadcast_429_backoff.py
-tests/test_broadcast_audit_regressions.py
-tests/test_broadcast_handlers.py
-tests/test_broadcast_history_card.py
-tests/test_broadcast_keyboards_cov2.py
-tests/test_broadcast_operators_coverage.py
-tests/test_broadcast_reliability.py
-tests/test_broadcast_templates_coverage.py
-tests/test_broadcast_templates_handlers.py
-tests/test_broadcast_templates_service_pg.py
-tests/test_broadcast_utils.py
-tests/test_broadcast_with_image.py
-tests/test_broadcast_wizard_fsm.py
-tests/test_broadcast_wizard_persist.py
-tests/test_broadcasts_service_pg.py
-tests/test_calendar_ru_full.py
-tests/test_calendar_ru_loader_cov2.py
-tests/test_callback_coverage_contract.py
-tests/test_callback_payloads_contract.py
-tests/test_callback_router.py
-tests/test_callback_router_coverage.py
-tests/test_callback_router_parity.py
-tests/test_card_format.py
-tests/test_card_format_extra.py
-tests/test_citizen_audit_regressions.py
-tests/test_complete_xlsx_chunks.py
-tests/test_consent_record_history.py
-tests/test_critical_mutation.py
-tests/test_cron_docs_sync.py
-tests/test_cron_jobs.py
-tests/test_db_backup.py
-tests/test_db_backup_extra.py
-tests/test_degraded_inputs.py
-tests/test_deps_environment.py
-tests/test_diag_extended.py
-tests/test_event_helpers.py
-tests/test_event_helpers_cov2.py
-tests/test_extract_location.py
-tests/test_final_p1_regressions.py
-tests/test_followup_delivery_pg.py
-tests/test_freshness_full_coverage.py
-tests/test_funnel_state_hardening.py
-tests/test_geo.py
-tests/test_handler_registration_order.py
-tests/test_handlers_appeal_funnel.py
-tests/test_handlers_auth_broadcast.py
-tests/test_handlers_common.py
-tests/test_handlers_funnel.py
-tests/test_handlers_menu.py
-tests/test_handlers_menu_extra.py
-tests/test_handlers_operator_reply.py
-tests/test_handlers_start.py
-tests/test_health.py
-tests/test_history_keyboard_facade.py
-tests/test_idempotency.py
-tests/test_idempotency_cov2.py
-tests/test_image_attachments.py
-tests/test_image_pins_in_sync.py
-tests/test_inbox_pg.py
-tests/test_inbox_recovery.py
-tests/test_inbox_transport.py
-tests/test_keyboards.py
-tests/test_keyboards_admin_behaviour.py
-tests/test_keyboards_behaviour.py
-tests/test_keyboards_misc_cov2.py
-tests/test_ledger_facts_sync.py
-tests/test_logging_setup.py
-tests/test_main_helpers.py
-tests/test_maxapi_migration.py
-tests/test_menu_tracker_edit_policy.py
-tests/test_migration_0025_appointment.py
-tests/test_migration_0028_appointment_head.py
-tests/test_network.py
-tests/test_normalize_phone_hypothesis.py
-tests/test_notify_toggles.py
-tests/test_operator_admin_guards.py
-tests/test_operator_appeal_view.py
-tests/test_operator_keyboards_cov2.py
-tests/test_operator_reply_attempts_pg.py
-tests/test_operator_reply_budget.py
-tests/test_operator_reply_closed_guard.py
-tests/test_operator_reply_guards.py
-tests/test_operator_reply_link_contract.py
-tests/test_operator_reply_with_image.py
-tests/test_operator_wizard_persistence_cleanup.py
-tests/test_operator_wizard_restart.py
-tests/test_ops_audit_regressions.py
-tests/test_outbound_url_whitelist.py
-tests/test_p3_hardening.py
-tests/test_perf_db.py
-tests/test_perf_geo.py
-tests/test_perf_latency.py
-tests/test_perf_limiter.py
-tests/test_perf_resilience.py
-tests/test_privacy_epoch.py
-tests/test_progress.py
-tests/test_pure_functions.py
-tests/test_quiet_hours.py
-tests/test_quiet_hours_cov2.py
-tests/test_release_review_regressions.py
-tests/test_reliability_pass.py
-tests/test_repo_sync.py
-tests/test_resident_contact.py
-tests/test_resident_draft_limits.py
-tests/test_resident_name_resume.py
-tests/test_resident_names_policy.py
-tests/test_response_kind_history.py
-tests/test_retention_pre_warning.py
-tests/test_sec_broadcast.py
-tests/test_sec_card.py
-tests/test_sec_dispatcher.py
-tests/test_sec_resource.py
-tests/test_sec_xlsx.py
-tests/test_security_advice.py
-tests/test_security_batch_b.py
-tests/test_security_batch_c.py
-tests/test_security_batch_d.py
-tests/test_services_no_db.py
-tests/test_settings_concurrent_edits.py
-tests/test_settings_edit_intent.py
-tests/test_settings_export_snapshot.py
-tests/test_settings_seed_baseline.py
-tests/test_settings_store_dirty_tracking.py
-tests/test_settings_store_validation.py
-tests/test_settings_text_conflict.py
-tests/test_settings_text_edit_preview.py
-tests/test_shutdown_integrity.py
-tests/test_single_instance.py
-tests/test_sla.py
-tests/test_sla_queue_first_reply.py
-tests/test_sla_setting_snapshot_pg.py
-tests/test_stale_operators_cleanup.py
-tests/test_system_boundaries.py
-tests/test_texts_length_guard.py
-tests/test_threat_intel.py
-tests/test_threat_intel_cov2.py
-tests/test_threat_intel_resilience.py
-tests/test_typing_indicator.py
-tests/test_uploads_policy_admin_relay.py
-tests/test_url_defang.py
-tests/test_users_consent_invariants.py
-tests/test_users_service_pg.py
-tests/test_validators_hypothesis.py
-tests/test_wiki_in_sync.py
-tests/test_wizard_persist_cov2.py
-tests/test_wizard_persist_lifecycle.py
-tests/test_wizard_persist_ordering.py
-tests/test_wizard_registry.py
-tests/test_wizard_registry_persist.py
-```
-
-### `bot/aemr_bot.egg-info/top_level.txt`
-
-Size: `9` bytes  
-SHA-256: `7af264d85e7f904476397023350e9e388638a78ce3dae1cdf98da6eab8766f95`
-
-```text
-aemr_bot
 ```
 
 ### `bot/aemr_bot/__init__.py`
@@ -3884,6 +3192,12157 @@ SHA-256: `af0a17d2526a3de2b104c77b4e8105c837ac78fed2b45ff16d408f2536dd95ee`
 
 ```python
 """Versioned offline reference data shipped with the application."""
+```
+
+### `bot/aemr_bot/data/given_names_v1.txt`
+
+Size: `175737` bytes  
+SHA-256: `974e7c3492ec13b818f8266c8211fb3d096d16acb6ddc3e662335e98ecdfcb26`
+
+```text
+Ёкуб
+Ёндан
+Ёсамин
+Ёсин
+Ёсина
+Ёсинджон
+Ёсинжон
+Ёсуман
+Аарон
+Абай
+Абайдулла
+Абайтулла
+Абак
+Абакар
+Абас
+Абат
+Аббас
+Аббос
+Абдаллах
+Абдельфарит
+Абдельхай
+Абдельхамит
+Абджалиль
+Абди
+Абдразак
+Абдрауф
+Абдрафик
+Абдрахим
+Абдрахман
+Абдрашит
+Абдубасир
+Абдувохид
+Абдужалил
+Абдукарим
+Абдукодир
+Абдул
+Абдула
+Абдулазиз
+Абдулазим
+Абдуламин
+Абдулатиф
+Абдулах
+Абдулахад
+Абдулбакий
+Абдулбар
+Абдулбарий
+Абдулбасир
+Абдулборий
+Абдулбосит
+Абдулвагаб
+Абдулвали
+Абдулвахид
+Абдулвахит
+Абдулгази
+Абдулгазиз
+Абдулгазим
+Абдулгали
+Абдулгалим
+Абдулгаллям
+Абдулгамид
+Абдулгани
+Абдулгарей
+Абдулгата
+Абдулгафар
+Абдулдаян
+Абдулджалил
+Абдулжалил
+Абдулкабир
+Абдулкадир
+Абдулкадыр
+Абдулкарим
+Абдулкерим
+Абдулла
+Абдуллабек
+Абдуллагь
+Абдуллатип
+Абдуллатиф
+Абдуллах
+Абдуллахь
+Абдулло
+Абдуллоджон
+Абдуллох
+Абдулмаджид
+Абдулмаджит
+Абдулмажид
+Абдулмажит
+Абдулмалик
+Абдулман
+Абдулманап
+Абдулманаф
+Абдулмеджид
+Абдулмуслим
+Абдулнасир
+Абдуло
+Абдулох
+Абдулрахим
+Абдулрахман
+Абдулрашид
+Абдулсабир
+Абдулсалам
+Абдулсалих
+Абдулсамат
+Абдулсаттар
+Абдулхай
+Абдулхак
+Абдулхаким
+Абдулхалик
+Абдулхалим
+Абдулхамид
+Абдулхамит
+Абдулхан
+Абдулчерим
+Абдульазиз
+Абдулькарим
+Абдульмалик
+Абдульхамид
+Абдулялиль
+Абдумалик
+Абдун
+Абдурагим
+Абдуразак
+Абдурасул
+Абдурауф
+Абдурахим
+Абдурахман
+Абдурахмон
+Абдурашид
+Абдурохман
+Абдуррахим
+Абдуррахман
+Абдуррахмон
+Абдуррахьман
+Абдуррохим
+Абдуррохман
+Абдуррохьман
+Абдусалам
+Абдусалом
+Абдусамад
+Абдусаттор
+Абдуссалам
+Абдуссамад
+Абдухалим
+Абдухолик
+Абдушукур
+Абей
+Абел
+Абельгарай
+Абельгасим
+Абельгата
+Абельгаяз
+Абельгаян
+Абелькарам
+Абелькарим
+Абелькасим
+Абельманих
+Абельхаир
+Абельхан
+Абельхарис
+Абельхасан
+Абзал
+Абзелил
+Абид
+Абида
+Абидат
+Абий
+Абийхан
+Абиль
+Абисал
+Аблай
+Аблистан
+Абляз
+Абос
+Абраам
+Абрам
+Абрар
+Абраретдин
+Абрек
+Аброр
+Абруй
+Абсабир
+Абсалям
+Абу
+Абуба
+Абубакар
+Абубакер
+Абубакир
+Абубакр
+Абубекир
+Абугали
+Абугалий
+Абугалим
+Абужан
+Абузан
+Абузар
+Абузарр
+Абузед
+Абузер
+Абук
+Абукалим
+Абукарим
+Абул
+Абулай
+Абулгаяз
+Абулмуслим
+Абулхаир
+Абулхан
+Абулхаят
+Абульхан
+Абумуслим
+Абунагим
+Абусагит
+Абусадык
+Абусаид
+Абусаит
+Абусалам
+Абусалим
+Абусалих
+Абутагир
+Абутаир
+Абуталиб
+Абуталип
+Абутахир
+Абухалит
+Абухамит
+Абухан
+Абушахман
+Абчара
+Абыз
+Абызбай
+Абызгарай
+Абызгильде
+Ава
+Аваз
+Авазбек
+Аван
+Август
+Августа
+Августин
+Августина
+Авдей
+Авдотия
+Авдотья
+Авелина
+Авелия
+Авель
+Авенир
+Аверьян
+Авет
+Аветик
+Аветис
+Авива
+Авигея
+Авиталь
+Авиэль
+Авраам
+Аврам
+Аврелий
+Аврелия
+Аврора
+Автандил
+Авхат
+Авырал
+Авырга
+Агабай
+Агабек
+Аганак
+Агап
+Агапия
+Агаси
+Агат
+Агата
+Агафия
+Агафон
+Агафья
+Агахан
+Агван
+Агдалия
+Агдас
+Агей
+Агзам
+Агзаметдин
+Агзамулла
+Агзиба
+Агзия
+Агиш
+Аглая
+Аглетдин
+Агли
+Аглислам
+Аглиулла
+Аглия
+Аглям
+Агляметдин
+Аглямзян
+Аглянур
+Агмаль
+Агнесса
+Агнея
+Агния
+Агой
+Аграпина
+Аграфена
+Аграфина
+Агрепина
+Агреппина
+Агрипена
+Агрипина
+Агриппина
+Агрофена
+Агунда
+Агурбий
+Агфар
+Ада
+Адалин
+Адалина
+Адалия
+Адальбий
+Адам
+Адамей
+Адамис
+Адана
+Адар
+Адахан
+Адаш
+Адвар
+Адгам
+Адгия
+Аделаида
+Аделина
+Аделия
+Адель
+Адельгерий
+Адельхан
+Адельша
+Аделья
+Аделя
+Адем
+Адема
+Адеми
+Адемир
+Адиб
+Адиба
+Адигам
+Адик
+Адил
+Адиле
+Адилет
+Адилия
+Адилхан
+Адиль
+Адильбай
+Адильбий
+Адильгерий
+Адильхан
+Адиля
+Адин
+Адина
+Адинай
+Адип
+Адис
+Адиса
+Адисса
+Адихам
+Адиюх
+Адия
+Адлан
+Адмир
+Аднан
+Адолат
+Адольф
+Адрай
+Адрахман
+Адриан
+Адриана
+Адрианна
+Адул
+Адхам
+Адхат
+Адыиф
+Адьян
+Адьяна
+Адэлина
+Адэлия
+Адэль
+Адэля
+Адэм
+Ажар
+Ажара
+Ажгерий
+Ажок
+Аза
+Азад
+Азада
+Азак
+Азалина
+Азалия
+Азаль
+Азам
+Азамат
+Азаматгерий
+Азаматулла
+Азан
+Азанбай
+Азангул
+Азар
+Азарий
+Азария
+Азат
+Азатбек
+Азатгерий
+Азатхан
+Азгар
+Азер
+Азибай
+Азигул
+Азид
+Азида
+Азиз
+Азиза
+Азизахон
+Азизбек
+Азизджон
+Азизжон
+Азиля
+Азим
+Азима
+Азимат
+Азимжон
+Азинат
+Азир
+Азира
+Азирет
+Азия
+Азият
+Азмет
+Азнабай
+Азнагул
+Азнагуль
+Азнаур
+Азнор
+Азра
+Азраил
+Азрет
+Азреталий
+Азхар
+Аида
+Аиза
+Аима
+Аина
+Аиса
+Аитбай
+Аиткужа
+Аиткул
+Аиша
+Аишат
+Айаал
+Айаан
+Айаана
+Айан
+Айана
+Айару
+Айас
+Айастаан
+Айат
+Айбак
+Айбанат
+Айбану
+Айбар
+Айбарс
+Айбатулла
+Айбатыр
+Айбаш
+Айбек
+Айбиби
+Айбийке
+Айбика
+Айбике
+Айбикя
+Айбирде
+Айбул
+Айбулат
+Айбуляк
+Айваз
+Айвар
+Айвара
+Айгали
+Айгерим
+Айгиз
+Айгиза
+Айгизар
+Айгина
+Айгузель
+Айгул
+Айгулем
+Айгуль
+Айгылаан
+Айгылаана
+Айгюль
+Айгюн
+Айдай
+Айдак
+Айдамир
+Айдамиркан
+Айдан
+Айдана
+Айданек
+Айдар
+Айдарбек
+Айдаргали
+Айдария
+Айдарук
+Айдархан
+Айдаш
+Айдеми
+Айдемир
+Айдер
+Айджамал
+Айджаяк
+Айдил
+Айдиля
+Айдима
+Айдин
+Айдина
+Айдос
+Айдус
+Айдын
+Айдыс
+Айжамал
+Айжан
+Айжана
+Айжыгаш
+Айза
+Айзада
+Айзак
+Айзалина
+Айзалия
+Айзамат
+Айзан
+Айзана
+Айзанат
+Айзар
+Айзара
+Айзат
+Айзатулла
+Айзере
+Айзигит
+Айзида
+Айзиза
+Айзиля
+Айзирек
+Айзиряк
+Айзифа
+Айзия
+Айиша
+Айишат
+Айк
+Айкен
+Айкол
+Айкумуш
+Айкуо
+Айкын
+Айла
+Айлаана
+Айлан
+Айлана
+Айлиза
+Айлин
+Айлина
+Айлита
+Айлия
+Айлун
+Айлуна
+Айлюза
+Айман
+Аймани
+Аймир
+Аймира
+Аймончок
+Аймурат
+Аймурза
+Аймухамет
+Аймээрим
+Аймёлек
+Айна
+Айнаара
+Айнагуль
+Айназ
+Айназа
+Айназар
+Айназик
+Айнар
+Айнара
+Айнелия
+Айнель
+Айнетдин
+Айниса
+Айнулла
+Айнур
+Айнура
+Айнурия
+Айпери
+Айрана
+Айрат
+Айрин
+Айрина
+Айрис
+Айс
+Айса
+Айсаана
+Айсан
+Айсана
+Айсанат
+Айсар
+Айсара
+Айсаф
+Айсезим
+Айсел
+Айселем
+Айселия
+Айсель
+Айсен
+Айсена
+Айсет
+Айсибар
+Айсиля
+Айсима
+Айсина
+Айсира
+Айсиэн
+Айсияр
+Айслан
+Айслана
+Айслу
+Айсу
+Айсуак
+Айсулпан
+Айсултан
+Айсулу
+Айсулуу
+Айсун
+Айсуна
+Айсурат
+Айсылу
+Айсын
+Айта
+Айтал
+Айталина
+Айталыына
+Айтана
+Айтач
+Айташ
+Айтек
+Айтеч
+Айтимер
+Айтимир
+Айтиряк
+Айтмурза
+Айтсан
+Айтуар
+Айтуган
+Айтунук
+Айтурган
+Айхаан
+Айхаана
+Айхал
+Айхан
+Айханум
+Айхээ
+Айчачак
+Айчурок
+Айша
+Айшабикя
+Айшан
+Айшат
+Айше
+Айшет
+Айыжы
+Айыллаан
+Айыллаана
+Айым
+Айыма
+Айыраа
+Айыс
+Айысхаан
+Айысхан
+Айыына
+Айэлина
+Айюб
+Айюлдуз
+Айя
+Айяна
+Акай
+Аканай
+Акбай
+Акбала
+Акбану
+Акбар
+Акбарали
+Акбаржон
+Акбарс
+Акбатыр
+Акбаш
+Акбек
+Акбер
+Акбермет
+Акби
+Акбиби
+Акбийче
+Акбика
+Акбикя
+Акбулат
+Акбута
+Акдавлет
+Акдам
+Акдас
+Акжол
+Акзигит
+Акзифа
+Акил
+Акилина
+Аким
+Акиф
+Аккай
+Аккубек
+Аккужа
+Аккул
+Аклим
+Аклима
+Акмаанай
+Акмал
+Акмалетдин
+Акмаль
+Акман
+Акманай
+Акмарал
+Акмаржан
+Акмулла
+Акмурат
+Акмурза
+Акмухамет
+Акмухаммет
+Акназар
+Ако
+Акоб
+Акобир
+Акоп
+Акрам
+Акрама
+Акраман
+Акраметдин
+Акрамзян
+Акрамниса
+Акрамулла
+Аксай
+Аксан
+Аксана
+Аксаскя
+Аксасяк
+Аксаф
+Аксель
+Аксения
+Аксенья
+Аксиния
+Аксинья
+Аксиня
+Аксулпан
+Аксултан
+Аксура
+Аксылу
+Актай
+Актамак
+Актан
+Актилек
+Актимер
+Актимир
+Актуган
+Актуташ
+Акулина
+Акхан
+Акчачак
+Акшин
+Акшоола
+Акъегет
+Акъюл
+Акылай
+Акылбай
+Акьян
+Акюндуз
+Алабай
+Алакёз
+Аламжи
+Алан
+Алана
+Алания
+Алантос
+Алаудин
+Алаш
+Албай
+Албек
+Албина
+Алвард
+Алгази
+Алгиз
+Алгиза
+Алгир
+Алгуш
+Алгыс
+Алгыстаан
+Алгыстаана
+Алдан
+Алдар
+Алдарбай
+Алдархан
+Алдияр
+Алдын
+Алдынай
+Алевтина
+Алек
+Алекс
+Алекса
+Алексан
+Александр
+Александра
+Александрина
+Александрия
+Александыр
+Алексей
+Алексий
+Алексина
+Алексис
+Алексия
+Алем
+Алембай
+Алемпиада
+Ален
+Алена
+Алесия
+Алессандра
+Алессия
+Алеста
+Алеся
+Алет
+Алефтина
+Алеша
+Алжана
+Алжанат
+Алзиля
+Алзира
+Алзиряк
+Али
+Алиакбар
+Алиакбер
+Алиана
+Алианна
+Алиаскар
+Алиасхаб
+Алибай
+Алибег
+Алибек
+Алибулат
+Аливия
+Алигаджи
+Алида
+Алиджан
+Алиджон
+Алие
+Алижан
+Алижон
+Ализа
+Алий
+Алийхан
+Алик
+Алика
+Аликсандр
+Аликсандра
+Аликсей
+Алим
+Алима
+Алимагомед
+Алимат
+Алимбай
+Алимбек
+Алимбика
+Алимгул
+Алиме
+Алимжан
+Алимпиада
+Алимурад
+Алимурза
+Алимухаммад
+Алимхан
+Алимя
+Алина
+Алинур
+Алира
+Алирза
+Алиса
+Алисаг
+Алисия
+Алиссия
+Алисултан
+Алисхан
+Алита
+Алиф
+Алифа
+Алифтина
+Алихан
+Аличон
+Алиш
+Алиша
+Алишер
+Алия
+Алияна
+Алиянур
+Алияр
+Алият
+Алкес
+Алла
+Аллабирде
+Аллабирди
+Аллагул
+Алламурат
+Аллан
+Алланур
+Аллахверди
+Аллахияр
+Аллаяр
+Алма
+Алмабану
+Алмабика
+Алмабикя
+Алмагизя
+Алмагуль
+Алмаз
+Алмаза
+Алмазия
+Алмакай
+Алманбет
+Алмас
+Алмасия
+Алмасхан
+Алмат
+Алмаш
+Алнур
+Алпар
+Алпарслан
+Алпият
+Алсасяк
+Алсина
+Алсира
+Алсу
+Алсылу
+Алсын
+Алсынбай
+Алсяска
+Алтай
+Алтан
+Алтана
+Алтея
+Алтн
+Алтын
+Алтына
+Алтынай
+Алтынбай
+Алтынбану
+Алтынбек
+Алтынбика
+Алтынбикя
+Алтынбулат
+Алтынгали
+Алтынгарай
+Алтынгужа
+Алтынгул
+Алтынгуль
+Алтынкай
+Алтынкыз
+Алтыннур
+Алтынсура
+Алтынсылу
+Алтынсяс
+Алтынтимир
+Алтынчач
+Алтынчеч
+Алтынша
+Алфия
+Алхазур
+Алхан
+Алхас
+Алчачак
+Алчин
+Алчинбай
+Алчира
+Алымбек
+Алып
+Альбара
+Альбек
+Альберт
+Альбеч
+Альбий
+Альбина
+Альбиян
+Альбот
+Альви
+Альвина
+Альгерий
+Альгиза
+Альджерий
+Альжан
+Альзамия
+Альзира
+Альма
+Альмандар
+Альмина
+Альмир
+Альмира
+Альмурза
+Альмухамет
+Альмухаммет
+Альпарслан
+Альсина
+Альтаир
+Альтаф
+Альтафетдин
+Альтемир
+Альтяф
+Альфарит
+Альфат
+Альфида
+Альфиз
+Альфиза
+Альфин
+Альфина
+Альфиназ
+Альфинур
+Альфир
+Альфира
+Альфируз
+Альфис
+Альфит
+Альфия
+Альфред
+Альфруза
+Альхам
+Альхо
+Альяна
+Аля
+Алям
+Алёна
+Амага
+Амайя
+Амали
+Амалий
+Амалия
+Амаль
+Амалья
+Амаля
+Аман
+Аманбай
+Амангельды
+Амангильди
+Амангул
+Аманда
+Амани
+Аманнур
+Аманта
+Амантай
+Амантур
+Аманулла
+Амар
+Амарсан
+Амарсана
+Амат
+Амата
+Аматулла
+Амбий
+Амвросий
+Амгалан
+Амдеж
+Амели
+Амелина
+Амелия
+Амербий
+Амерзан
+Амет
+Аметхан
+Амзан
+Амзилят
+Амид
+Амида
+Амил
+Амила
+Амилина
+Амилия
+Амилла
+Амиль
+Амиля
+Амин
+Амина
+Аминат
+Аминахон
+Аминбай
+Аминбек
+Аминджон
+Аминет
+Аминжон
+Аминхан
+Аминя
+Амир
+Амира
+Амирали
+Амиран
+Амират
+Амирбай
+Амирбек
+Амирбий
+Амиргали
+Амирджон
+Амиржан
+Амиржон
+Амирзагит
+Амирзахит
+Амирзян
+Амирина
+Амирлан
+Амирулла
+Амирхамза
+Амирхан
+Амирхон
+Амиршаих
+Амиршох
+Амит
+Амиш
+Аммар
+Амнат
+Амр
+Амра
+Амран
+Амрид
+Амрулла
+Амрулло
+Амсар
+Амсинат
+Амуланга
+Амур
+Амурбий
+Амхад
+Амыр
+Ана
+Анабелла
+Анабель
+Анабий
+Анаида
+Анаит
+Ананда
+Ананды
+Ананий
+Анар
+Анара
+Анас
+Анасджон
+Анастас
+Анастасия
+Анастасья
+Анастосия
+Анаталия
+Анатолий
+Анвар
+Анвара
+Анварбек
+Анварбий
+Анваргали
+Анвария
+Анварулла
+Анвархан
+Анвер
+Ангам
+Ангела
+Ангелика
+Ангелина
+Ангелия
+Ангиза
+Ангизя
+Ангира
+Ангыр
+Ангырак
+Андам
+Андар
+Андарбек
+Андархан
+Андас
+Андемир
+Андемиркан
+Анджела
+Анджелина
+Андзор
+Андраник
+Андреас
+Андрей
+Андреян
+Андриа
+Андриан
+Андриана
+Андриян
+Андроник
+Андуз
+Андулах
+Анелия
+Анель
+Анеля
+Анета
+Анетта
+Анжела
+Анжелика
+Анжелина
+Анжелла
+Анзат
+Анзаур
+Анзима
+Анзиф
+Анзифа
+Анзия
+Анзор
+Ани
+Аника
+Аникей
+Аниль
+Анир
+Анис
+Аниса
+Анисат
+Анисата
+Анисахон
+Анисим
+Анисия
+Анисья
+Анися
+Анита
+Анифе
+Ания
+Анна
+Аннабель
+Аннас
+Аннета
+Анника
+Анниса
+Аннур
+Аннура
+Анора
+Аностасия
+Аностосия
+Анотолий
+Анри
+Ансар
+Ансария
+Ансаф
+Ансель
+Ансор
+Ансора
+Ансори
+Антанас
+Антанида
+Антанина
+Антиб
+Антип
+Антон
+Антонида
+Антоний
+Антонина
+Антония
+Ануар
+Ануз
+Ануза
+Анур
+Анура
+Анурбий
+Анус
+Ануса
+Ануся
+Ануфрий
+Ануш
+Анушервон
+Анушик
+Анфас
+Анфиза
+Анфис
+Анфиса
+Анфисия
+Анфисья
+Анфия
+Анчы
+Анэлия
+Анэль
+Анэля
+Анюта
+Аня
+Аняс
+Апай
+Аполинария
+Аполинарья
+Аполлинария
+Аполлон
+Аппак
+Апполинария
+Апполинарья
+Апросинья
+Апсалям
+Апти
+Апу
+Апуаджан
+Ара
+Араз
+Араик
+Араксия
+Аралбай
+Арам
+Арамаис
+Арамбий
+Аранчын
+Арарат
+Арас
+Арат
+Арафат
+Арби
+Аргам
+Арген
+Аргишти
+Аргынбай
+Арда
+Ардан
+Ардашер
+Ардашир
+Ардуан
+Аревик
+Арег
+Арен
+Арес
+Арефий
+Аржаан
+Арзиуан
+Арзу
+Арзубай
+Арзубек
+Арзугуль
+Арзуу
+Арзухан
+Арзы
+Арзылан
+Ариадна
+Ариан
+Ариана
+Арианна
+Ариела
+Ариелла
+Ариет
+Арий
+Арик
+Арина
+Арип
+Арис
+Аристарх
+Ариужан
+Ариука
+Ариф
+Арифа
+Арифулла
+Ариша
+Ариэла
+Ариэлла
+Ариэль
+Ария
+Арияна
+Аркадий
+Аркес
+Арлан
+Арлен
+Арлтан
+Арман
+Армен
+Арменак
+Армида
+Армина
+Армине
+Арминэ
+Арнас
+Арнела
+Арнелла
+Арно
+Арнольд
+Арнэлла
+Арон
+Арпи
+Арпине
+Арсаг
+Арсалан
+Арсамаг
+Арсамат
+Арсан
+Арсен
+Арсений
+Арсения
+Арсентий
+Арслан
+Арсланали
+Арсланбай
+Арсланбек
+Арсланбика
+Арсланг
+Арслангали
+Арслангарей
+Арслангул
+Арсланхан
+Арстан
+Арсэн
+Артавазд
+Артак
+Артас
+Арташес
+Артем
+Артемида
+Артемий
+Артур
+Артуш
+Артыкбикя
+Артыш
+Артём
+Арубика
+Аруджан
+Аружан
+Арузат
+Аруке
+Аруна
+Арунат
+Арут
+Арутай
+Арутюн
+Аруужан
+Аруузат
+Арууке
+Арууна
+Архан
+Архип
+Архипп
+Арчил
+Арчылаан
+Арчын
+Аршак
+Арыйаан
+Арылхан
+Арыслан
+Арысланбай
+Арысланбек
+Арыслангали
+Арыслангарай
+Арыстан
+Арыя
+Арыяа
+Арья
+Арьян
+Арьяна
+Арэн
+Арюна
+Арюуна
+Аса
+Асад
+Асадбек
+Асадула
+Асадулла
+Асадуллах
+Асадулло
+Асал
+Асаль
+Асан
+Асана
+Асанали
+Асанбай
+Асанбек
+Асап
+Асар
+Асат
+Асаф
+Асах
+Асвад
+Асгар
+Асгат
+Аселия
+Асель
+Аселья
+Аселя
+Асем
+Асема
+Асена
+Асенат
+Асет
+Асида
+Асие
+Асила
+Асилбек
+Асилия
+Асиль
+Асиля
+Асим
+Асима
+Асина
+Асинат
+Асир
+Асиф
+Асия
+Асият
+Асияхон
+Аскал
+Аскап
+Аскар
+Аскарбий
+Аскат
+Аскер
+Аскербий
+Аскерхан
+Аскольд
+Аслам
+Асламбек
+Асламбеч
+Асламбий
+Аслан
+Асланалий
+Асланбек
+Асланбий
+Аслангерий
+Асланмурза
+Асланук
+Асланука
+Аслануко
+Асли
+Аслиддин
+Аслиджан
+Аслижан
+Аслихан
+Аслия
+Аслям
+Асляметдин
+Аслях
+Асляхетдин
+Асма
+Асмабика
+Асмабикя
+Асман
+Асмандияр
+Асманур
+Асмик
+Асмин
+Асмина
+Асмир
+Асмира
+Асмия
+Асмо
+Асмоа
+Асна
+Аспар
+Асрар
+Асрарулла
+Ассад
+Ассана
+Ассель
+Ассия
+Ассоль
+Астан
+Астап
+Астемир
+Астерия
+Астра
+Астрид
+Астхик
+Асфан
+Асфандияр
+Асфар
+Асфат
+Асфир
+Асфира
+Асхаб
+Асхабали
+Асхабджамал
+Асхабетдин
+Асхабулла
+Асхад
+Асхадулла
+Асхап
+Асхат
+Асхия
+Асыл
+Асылай
+Асылбай
+Асылбану
+Асылбек
+Асылбика
+Асылбикя
+Асылгали
+Асылгарай
+Асылгарей
+Асылгужа
+Асылгуль
+Асылзада
+Асылзат
+Асылмардан
+Асылмурат
+Асылтан
+Асылхан
+Асылъяр
+Асьма
+Асэль
+Ася
+Атабай
+Атабек
+Атабий
+Атай
+Атан
+Атаулла
+Атика
+Атикат
+Атилла
+Атия
+Атлас
+Атмир
+Атнабай
+Атнагул
+Атто
+Аубакир
+Аубек
+Аубекир
+Ауес
+Ауладин
+Аулина
+Аулиян
+Аулият
+Аурелия
+Ауржан
+Аурика
+Аусаф
+Аухади
+Афанас
+Афанасий
+Афанасия
+Афанасья
+Афгал
+Афган
+Афелия
+Афзал
+Афзалетдин
+Афзалия
+Афимия
+Афимья
+Афина
+Афия
+Афият
+Афкар
+Афлятун
+Афонасий
+Афонасия
+Афонасья
+Афраз
+Африкан
+Афродита
+Афросинья
+Афруза
+Афтаб
+Афтах
+Афтахетдин
+Афуажан
+Афуржан
+Ахад
+Ахап
+Ахат
+Ахатнур
+Ахдия
+Ахил
+Ахиллес
+Ахия
+Ахиян
+Ахияр
+Ахият
+Ахкам
+Ахкаметдин
+Ахкамзян
+Ахкамулла
+Ахкям
+Ахлетдин
+Ахлиддин
+Ахлидин
+Ахлиулла
+Ахлия
+Ахляф
+Ахмад
+Ахмадджон
+Ахмадельхак
+Ахмадетдин
+Ахмаджон
+Ахмади
+Ахмадиша
+Ахмадия
+Ахмадияр
+Ахмадулла
+Ахмадшох
+Ахмар
+Ахмат
+Ахматек
+Ахматхан
+Ахмед
+Ахмеднаби
+Ахмедхан
+Ахмер
+Ахмет
+Ахметбай
+Ахметбаки
+Ахметбакий
+Ахметбари
+Ахметбек
+Ахметбижан
+Ахметвали
+Ахметвафа
+Ахметгазиз
+Ахметгали
+Ахметгалим
+Ахметгани
+Ахметгарай
+Ахметгарей
+Ахметгариф
+Ахметгата
+Ахметдин
+Ахметзагир
+Ахметзада
+Ахметзаки
+Ахметзакир
+Ахметзариф
+Ахметзахир
+Ахметзия
+Ахметзян
+Ахметкабир
+Ахметкамал
+Ахметкарим
+Ахметкул
+Ахметлатиф
+Ахметмурза
+Ахметнаби
+Ахметнагим
+Ахметнаки
+Ахметнияз
+Ахметнур
+Ахметрахим
+Ахметрашит
+Ахметсабир
+Ахметсагир
+Ахметсагит
+Ахметсадык
+Ахметсаит
+Ахметсалим
+Ахметсалих
+Ахметсафа
+Ахметситдик
+Ахметсултан
+Ахметтагир
+Ахметтахир
+Ахметфаиз
+Ахметфаик
+Ахметхабиб
+Ахметхабир
+Ахметхади
+Ахметхаким
+Ахметхан
+Ахметхарис
+Ахметхафиз
+Ахметша
+Ахметшаих
+Ахметшакир
+Ахметшарип
+Ахметшариф
+Ахметьян
+Ахметьяр
+Ахнаф
+Ахнафетдин
+Ахняф
+Ахомгот
+Ахрам
+Ахрар
+Ахрор
+Ахсан
+Ахсана
+Ахсанетдин
+Ахсар
+Ахсарбек
+Ахсартаг
+Ахтар
+Ахтарьян
+Ахтем
+Ахтям
+Ахтямзян
+Ахтямьян
+Ахтяр
+Ахубек
+Ахун
+Ахунбай
+Ахунгарай
+Ахунзян
+Ахуньян
+Ахъяд
+Ахъяр
+Ахьмад
+Ахьяд
+Ахьян
+Ацамаз
+Ачахмат
+Ачей
+Ачемез
+Ачердан
+Ачылыг
+Ачыты
+Ашамаз
+Ашамез
+Ашан
+Ашираф
+Ашот
+Ашраф
+Ашрафетдин
+Ашрафзян
+Ашрафкамал
+Ашрафулла
+Ашрин
+Ашура
+Аэлина
+Аэлита
+Аюб
+Аюба
+Аюбжон
+Аюбхон
+Аюжана
+Аюка
+Аюна
+Аюп
+Аюпхан
+Аюр
+Аюржана
+Аюуш
+Аюхан
+Аюш
+Аюша
+Ая
+Аягма
+Аяз
+Аязбай
+Аязгул
+Аязнур
+Аяла
+Аялга
+Аян
+Аяна
+Аяра
+Аяс
+Аят
+Аята
+Баазан
+Баатр
+Баатыр
+Бабазян
+Бабахан
+Бабек
+Бабий
+Бабина
+Бабица
+Бабич
+Бабиш
+Бабиша
+Баблина
+Бабсак
+Бабу
+Бабун
+Бабуся
+Бабух
+Бабуш
+Баг
+Багавдин
+Багаветдин
+Багави
+Багавудин
+Баганд
+Багар
+Багатыр
+Багау
+Багаудин
+Багауитдин
+Багаутдин
+Багбустан
+Багдагуль
+Багдан
+Багданур
+Багдат
+Багжат
+Багид
+Багида
+Багир
+Багира
+Багия
+Багман
+Багомед
+Баграт
+Багратион
+Бада
+Бадави
+Бадакша
+Бадам
+Бадамша
+Бадар
+Бадерниса
+Бадерхаят
+Бадиг
+Бадига
+Бадигат
+Бадигул
+Бадигулла
+Бадигуль
+Бадик
+Бадинат
+Бадиноко
+Бадир
+Бадирниса
+Бадирхаят
+Бадиха
+Бадиян
+Бадма
+Бадрельхаят
+Бадретдин
+Бадри
+Бадриджамал
+Бадрикамал
+Бадриниса
+Бадринур
+Бадрислам
+Бадритдин
+Бадрия
+Бадриямал
+Бадрниса
+Бадрудин
+Бадрутдин
+Бады
+Бадын
+Баеш
+Бажен
+Бажена
+Базарбай
+Базаргул
+Базик
+Базыр
+Баик
+Баиля
+Баимбет
+Баин
+Баина
+Баир
+Баира
+Баирма
+Баиш
+Байаман
+Байарслан
+Байахмет
+Байбак
+Байбакты
+Байбатыр
+Байбек
+Байбика
+Байбир
+Байбирде
+Байбул
+Байбулат
+Байбулды
+Байбур
+Байбура
+Байбури
+Байгази
+Байгали
+Байгара
+Байгарей
+Байгильде
+Байгильди
+Байгинат
+Байгужа
+Байгул
+Байгура
+Байгутлы
+Байдавлет
+Байдам
+Байдулла
+Байдуллах
+Байегет
+Байел
+Байжигит
+Байза
+Байзак
+Байзет
+Байзигит
+Байислам
+Байкильде
+Байкуат
+Баймет
+Баймулла
+Баймурат
+Баймурза
+Баймухамет
+Баймухаммет
+Байназар
+Байнур
+Байр
+Байрам
+Байрамбай
+Байрамбикя
+Байрамгали
+Байрамгул
+Байрамгуль
+Байрамика
+Байрамсылу
+Байрамук
+Байрамхан
+Байрамша
+Байрас
+Байрат
+Байраш
+Байрта
+Байсаит
+Байсакал
+Байсал
+Байсана
+Байсангур
+Байсар
+Байсара
+Байсияр
+Байслам
+Байсултан
+Байсура
+Байсылу
+Байтазар
+Байтимер
+Байтимир
+Байтимур
+Байтиряк
+Байтуган
+Байтулла
+Байтура
+Байхан
+Байшат
+Байыр
+Байыш
+Байэл
+Байэль
+Бакай
+Бакер
+Баки
+Бакир
+Бакира
+Бакихан
+Бакташ
+Бактыбай
+Бакшан
+Бакыт
+Бакыят
+Баладжан
+Балажан
+Балапан
+Балатоко
+Балбу
+Балдан
+Балига
+Бализа
+Балий
+Балиль
+Балиля
+Балият
+Балкия
+Балкыз
+Балтабай
+Балханий
+Балхия
+Бальжина
+Баля
+Баляца
+Банат
+Бану
+Банубика
+Бапанай
+Бара
+Бараз
+Барак
+Барас
+Барасбий
+Бари
+Барий
+Барика
+Барина
+Барис
+Барисбий
+Бария
+Барият
+Барлас
+Барлыбай
+Бароко
+Барс
+Барсаг
+Барсбек
+Барсын
+Барый
+Барыс
+Барыш
+Басир
+Басира
+Басират
+Басыр
+Бася
+Бат
+Бата
+Батгерий
+Батей
+Батий
+Батима
+Батмурза
+Бато
+Батоко
+Батор
+Батрадз
+Батраз
+Баттал
+Бату
+Батулла
+Батун
+Батый
+Батыр
+Батыраз
+Батырай
+Батырбай
+Батырбек
+Батырбий
+Батырбулат
+Батыргали
+Батыргарай
+Батыргарей
+Батырзян
+Батыркай
+Батырхан
+Батырша
+Батырьян
+Батыш
+Бах
+Бахаветдин
+Бахави
+Бахадир
+Бахадур
+Бахар
+Бахау
+Бахет
+Бахетбай
+Бахетгани
+Бахетгарай
+Бахетзян
+Бахид
+Бахир
+Бахит
+Бахитьян
+Бахман
+Бахора
+Бахрам
+Бахрия
+Бахром
+Бахруза
+Бахсит
+Бахтегани
+Бахтегарай
+Бахти
+Бахтигарей
+Бахтиз
+Бахтинур
+Бахтиян
+Бахтияр
+Бахтиёр
+Бахтовар
+Баху
+Бац
+Баца
+Бацу
+Бачи
+Бачиля
+Баша
+Башар
+Башид
+Башир
+Башира
+Башчи
+Баяз
+Баязет
+Баязид
+Баязит
+Баязитхан
+Баяман
+Баян
+Баяна
+Баянгуль
+Баянсылу
+Баяр
+Баярма
+Баярто
+Баясана
+Баястан
+Баясхалан
+Баят
+Беата
+Беатрис
+Беатриса
+Бебулат
+Бегайым
+Бегимай
+Безир
+Безруко
+Бейбулат
+Беймурза
+Бек
+Бека
+Бекалий
+Бекан
+Бекбол
+Бекболат
+Бекболсун
+Бекжан
+Бекзат
+Бекзод
+Бекир
+Бекмурза
+Бекмырза
+Бекназар
+Бекнур
+Бексултан
+Бектур
+Бекул
+Бекхан
+Белек
+Белла
+Белояр
+Бемурза
+Беназир
+Беньямин
+Бенямин
+Бенёмин
+Берд
+Беркут
+Беркутбай
+Бермет
+Берс
+Берта
+Беслан
+Бесултан
+Бетал
+Бетан
+Бетбулат
+Бетуган
+Бехруз
+Бехрузбек
+Бечкан
+Беян
+Бжо
+Биарслан
+Биахмет
+Биба
+Бибарс
+Бибек
+Биберд
+Биберт
+Биби
+Бибиасма
+Бибибанат
+Бибибану
+Бибигазиза
+Бибигайша
+Бибигакифа
+Бибигалима
+Бибигамбар
+Бибигарифа
+Бибигаухар
+Бибигаян
+Бибигуль
+Бибиджамал
+Бибиджамиля
+Бибиджаннат
+Бибизагида
+Бибизайнаб
+Бибизайнап
+Бибизайтуна
+Бибизахида
+Бибизифа
+Бибизубайда
+Бибизулейха
+Бибизухра
+Бибикай
+Бибикамал
+Бибикамар
+Бибикамиля
+Бибикарима
+Бибикафия
+Бибилатифа
+Бибимагира
+Бибимариям
+Бибимарфуга
+Бибимарьям
+Бибимарям
+Бибимахира
+Бибиназ
+Бибинакия
+Бибинафиса
+Бибиниса
+Бибинур
+Бибиоиша
+Бибиойша
+Бибиразифа
+Бибиракия
+Бибирауза
+Бибирахиля
+Бибирахима
+Бибирашида
+Бибиробия
+Бибисагадат
+Бибисагида
+Бибисайда
+Бибисалима
+Бибисалиха
+Бибисамига
+Бибисара
+Бибисафа
+Бибисора
+Бибисоро
+Бибисылу
+Бибифаиза
+Бибифайруза
+Бибифарида
+Бибифатима
+Бибифотима
+Бибихадича
+Бибихакима
+Бибихалида
+Бибихалима
+Бибихамида
+Бибихан
+Бибиханифа
+Бибихатима
+Бибихаят
+Бибиш
+Бибишагида
+Бибиямал
+Бибо
+Биболат
+Биболет
+Бигали
+Бигат
+Бигеш
+Бигиш
+Бида
+Бижан
+Бижат
+Биза
+Бизян
+Бииш
+Бий
+Биймырза
+Бийнёгер
+Бийсултан
+Бийче
+Бика
+Бикай
+Бикбай
+Бикбау
+Бикбул
+Бикбулат
+Бикбулды
+Бике
+Бикзян
+Бикиш
+Биккужа
+Биккул
+Бикмулла
+Бикмурат
+Бикмурза
+Бикмухамет
+Бикмухаммет
+Бикназ
+Бикназар
+Бикнур
+Биксаит
+Биксентей
+Биксултан
+Биксылу
+Биктагир
+Биктахир
+Бикташ
+Биктимер
+Биктимир
+Биктуган
+Бикул
+Бикхан
+Бикчантай
+Бикчура
+Бикьян
+Бикя
+Бикясылу
+Билал
+Билалетдин
+Билаль
+Билол
+Билолбек
+Билолдин
+Билолжон
+Билолиддин
+Билостан
+Билух
+Бильсур
+Билю
+Биля
+Билял
+Биляль
+Биляр
+Бина
+Биназир
+Биньямин
+Бинямин
+Бинёмин
+Бирбика
+Биргали
+Бирдебек
+Бирлант
+Бислан
+Бисо
+Бита
+Биту
+Битуган
+Битун
+Бихат
+Бица
+Бицина
+Бицу
+Биша
+Блица
+Боба
+Бобур
+Богдан
+Богдана
+Божена
+Болат
+Болду
+Болеслав
+Болет
+Бону
+Бора
+Боран
+Борис
+Борислав
+Бостан
+Бот
+Боташ
+Ботта
+Боца
+Брам
+Братислав
+Бриллиант
+Бронислав
+Бронислава
+Буба
+Буберд
+Бувайсар
+Буга
+Буда
+Будиян
+Бузжигит
+Букминат
+Буланбай
+Булар
+Булат
+Булатбай
+Булатхан
+Булыш
+Буляк
+Булякай
+Булякбай
+Булякбика
+Буляккул
+Буран
+Буранбай
+Буранбика
+Бурангул
+Бураш
+Бурган
+Бурганетдин
+Буребай
+Бурзян
+Бурибай
+Бурлият
+Бурнаш
+Бурулай
+Бурхан
+Бурханетдин
+Бустан
+Бух
+Буха
+Бухар
+Бухарбай
+Буян
+Буяна
+Буянды
+Буянто
+Быйаман
+Былбыл
+Былбылниса
+Быца
+Бэла
+Бэлигма
+Бэлигто
+Бэликто
+Бэлла
+Бэргэн
+Ваагн
+Вагаб
+Вагабил
+Ваган
+Вагап
+Вагиба
+Вагид
+Вагиз
+Вагиза
+Вагип
+Вагира
+Вагиф
+Ваграм
+Вадиг
+Вадига
+Вадигулла
+Вадим
+Вадут
+Важида
+Важуда
+Вазген
+Вазгетдин
+Вазетдин
+Вази
+Вазиахмет
+Вазида
+Вазиль
+Вазина
+Вазип
+Вазир
+Вазирхан
+Вазиф
+Вазифа
+Вазих
+Вазиха
+Вазия
+Ваиз
+Ваис
+Вакиль
+Вакиля
+Вакиф
+Вакифа
+Ваккас
+Валей
+Валенсия
+Валентин
+Валентина
+Валериан
+Валерий
+Валерия
+Валериян
+Валерьян
+Вали
+Валиакбар
+Валиакрам
+Валиамин
+Валиахмет
+Валид
+Валида
+Вализян
+Валикарам
+Валим
+Валима
+Валимулла
+Валимурат
+Валимухаммет
+Валинтина
+Валинур
+Валирахман
+Валит
+Валиулла
+Валихан
+Валиша
+Валия
+Валияр
+Вальтер
+Ван
+Ванда
+Ванесса
+Ваник
+Варак
+Варакия
+Варвара
+Вардан
+Варига
+Варида
+Варис
+Вариса
+Вария
+Варлаам
+Варлам
+Вартан
+Варужан
+Варфоломей
+Васелина
+Васелиса
+Васик
+Васил
+Василей
+Васили
+Василий
+Василина
+Василиса
+Василисса
+Василь
+Василя
+Васим
+Васима
+Васимзян
+Васимхан
+Васит
+Васиф
+Васих
+Васихан
+Васия
+Васса
+Вассаф
+Васфикамал
+Васфия
+Вафа
+Вафида
+Вафир
+Вафира
+Вафия
+Ваха
+Вахап
+Вахиба
+Вахид
+Вахида
+Вахип
+Вахира
+Вахит
+Вахитзян
+Вахтанг
+Вацлав
+Вачаган
+Ваче
+Ведана
+Велена
+Велес
+Велеслав
+Велеслава
+Вели
+Велизар
+Велимир
+Велина
+Венедикт
+Венер
+Венера
+Венераа
+Венеция
+Вениамин
+Венидикт
+Вера
+Вераника
+Вергаз
+Вероника
+Версалия
+Веселина
+Весна
+Веста
+Вета
+Виалина
+Вивея
+Вивиана
+Вивьен
+Виген
+Видади
+Вика
+Викентий
+Виктор
+Викторина
+Виктория
+Вилен
+Вилена
+Вилия
+Вилория
+Вилуза
+Виль
+Вильгельм
+Вильдан
+Вильдана
+Вильдар
+Вильназ
+Вильнар
+Вильнур
+Вильсур
+Вильям
+Винарис
+Винер
+Винера
+Виниамин
+Виола
+Виолета
+Виолетта
+Виорика
+Виринея
+Вирсавия
+Виссарион
+Висхан
+Вита
+Виталий
+Виталина
+Виталия
+Витаутас
+Витольд
+Влад
+Влада
+Владик
+Владилен
+Владимер
+Владимир
+Владимира
+Владислав
+Владислава
+Владлен
+Владлена
+Влас
+Властислав
+Влодимер
+Влодимир
+Володар
+Володя
+Вольдемар
+Ворвара
+Восилий
+Всеволод
+Всеслав
+Вугар
+Вусал
+Вячеслав
+Вячеслава
+Вячислав
+Габаш
+Габбас
+Габделислам
+Габделихсан
+Габдель
+Габдельахат
+Габдельахмет
+Габдельбаки
+Габдельбар
+Габдельбари
+Габдельбасыр
+Габдельбаян
+Габдельвали
+Габдельвафа
+Габдельвахап
+Габдельвахит
+Габдельгазиз
+Габдельгали
+Габдельгалим
+Габдельгаллям
+Габдельгани
+Габдельгарай
+Габдельгафур
+Габдельгаффар
+Габдельдаян
+Габдельзян
+Габделькабир
+Габделькави
+Габделькадыр
+Габделькарим
+Габделькасим
+Габделькаюм
+Габдельлатиф
+Габдельмазит
+Габдельмалик
+Габдельман
+Габдельманнан
+Габдельманнаф
+Габдельмуталлип
+Габдельнагим
+Габдельназип
+Габдельназиф
+Габдельнасыр
+Габдельнур
+Габдельрафик
+Габдельсабир
+Габдельсалям
+Габдельсамат
+Габдельфаиз
+Габдельфан
+Габдельфарит
+Габдельфарт
+Габдельфат
+Габдельфаяз
+Габдельхабиб
+Габдельхабир
+Габдельхади
+Габдельхай
+Габдельхак
+Габдельхаким
+Габдельхалик
+Габдельхалиль
+Габдельхалим
+Габдельхамит
+Габдельхан
+Габдельханнан
+Габдельхарис
+Габдельшариф
+Габденур
+Габдесамат
+Габдин
+Габдинур
+Габдияр
+Габдразак
+Габдракип
+Габдрасуль
+Габдрауф
+Габдрафик
+Габдрахим
+Габдрахман
+Габдрашит
+Габдул
+Габдулбай
+Габдулбарий
+Габдулбаян
+Габдулвагап
+Габдулвали
+Габдулвахит
+Габдулгазиз
+Габдулгазим
+Габдулкарим
+Габдулла
+Габдуллазян
+Габдулхай
+Габдулхак
+Габдулхан
+Габибулла
+Габида
+Габидулла
+Габит
+Габитзян
+Габиш
+Габриел
+Габриела
+Габриелла
+Габриель
+Габриэл
+Габриэла
+Габриэлла
+Габриэль
+Гавас
+Гавриил
+Гаврил
+Гаврила
+Гага
+Гагик
+Гадам
+Гадан
+Гаделислам
+Гаделия
+Гадель
+Гадельбай
+Гадельбанат
+Гадельбану
+Гадельбек
+Гадельгарай
+Гадельзян
+Гадельниса
+Гадельнур
+Гадельхак
+Гадельхан
+Гадельша
+Гадения
+Гаджи
+Гаджикурбан
+Гаджимагомед
+Гаджимурад
+Гаджияв
+Гадиль
+Гадильбай
+Гадильбек
+Гадильхан
+Гадильша
+Гадильян
+Гадиля
+Гаднан
+Газалий
+Газалия
+Газетдин
+Газза
+Газзабика
+Газзал
+Гази
+Газибек
+Газида
+Газиз
+Газиза
+Газизабану
+Газизабикя
+Газизбек
+Газизетдин
+Газиззян
+Газизрахман
+Газизулла
+Газизьян
+Газий
+Газикамал
+Газиля
+Газим
+Газима
+Газимагомед
+Газимзян
+Газимулла
+Газимухаммад
+Газимхан
+Газинур
+Газитдин
+Газиф
+Газифа
+Гаит
+Гаитбай
+Гаиткул
+Гаитхан
+Гай
+Гайдар
+Гайдулла
+Гайзам
+Гайзулла
+Гайк
+Гайнавал
+Гайназар
+Гайнан
+Гайнанетдин
+Гайнат
+Гайневафа
+Гайнезян
+Гайнекамал
+Гайнениса
+Гайнетдин
+Гайнехаят
+Гайни
+Гайниахмет
+Гайниджамал
+Гайникамал
+Гайнисафа
+Гайнислам
+Гайнитдин
+Гайния
+Гайниямал
+Гайнияр
+Гайнулла
+Гайрат
+Гайса
+Гайсар
+Гайфетдин
+Гайфи
+Гайфулла
+Гайша
+Гайшабану
+Гайшабика
+Гайшабикя
+Гакиль
+Гакиля
+Гакиф
+Гакифа
+Галактион
+Галей
+Гали
+Галиакбар
+Галиакбер
+Галиакрам
+Галиарслан
+Галиасгар
+Галиаскар
+Галиастан
+Галиахмет
+Галибай
+Галибек
+Галиислам
+Галий
+Галикай
+Галикарам
+Галим
+Галима
+Галимабану
+Галимардан
+Галимат
+Галимбай
+Галимбек
+Галимдар
+Галимджан
+Галимзян
+Галимнур
+Галимулла
+Галимурат
+Галимурза
+Галимхан
+Галимша
+Галимьян
+Галина
+Галинур
+Галип
+Галирафик
+Галирахман
+Галисултан
+Галиулла
+Галихан
+Галиша
+Галишан
+Галия
+Галиябану
+Галиябика
+Галияздан
+Галиян
+Галияр
+Галлям
+Галляметдин
+Галлямитдин
+Галлямша
+Галсан
+Гальсар
+Галя
+Галяветдин
+Галяк
+Галялетдин
+Галяу
+Галяутдин
+Гамал
+Гамалия
+Гамбар
+Гамбарис
+Гамбария
+Гамза
+Гамзат
+Гамид
+Гамил
+Гамила
+Гамиль
+Гамиля
+Гамир
+Гамира
+Гамит
+Гамлет
+Ганбар
+Гани
+Ганиахмет
+Ганибай
+Ганима
+Ганиулла
+Ганиф
+Гания
+Ганна
+Гапсаттар
+Гарай
+Гарайхан
+Гарайша
+Гарапша
+Гараф
+Гарафетдин
+Гарафи
+Гардан
+Гарданислам
+Гарегин
+Гарей
+Гарейбек
+Гарейхан
+Гарий
+Гарик
+Гариф
+Гарифа
+Гарифабану
+Гарифбек
+Гарифетдин
+Гарифзян
+Гарифулла
+Гарифхан
+Гарифьян
+Гарник
+Гарри
+Гарун
+Гасан
+Гасиля
+Гасим
+Гасима
+Гасимзян
+Гасиф
+Гаскар
+Гаспар
+Гата
+Гатарахман
+Гатаулла
+Гатиатулла
+Гатифа
+Гатия
+Гатият
+Гатиятулла
+Гаттар
+Гаухар
+Гаухарбану
+Гаухария
+Гафар
+Гафиля
+Гафира
+Гафиулла
+Гафифа
+Гафифабану
+Гафия
+Гафият
+Гафиятулла
+Гафран
+Гафур
+Гафура
+Гафурбай
+Гафурбек
+Гафурхан
+Гафурьян
+Гаффар
+Гашика
+Гашия
+Гашура
+Гаяз
+Гаязетдин
+Гаян
+Гаяна
+Гаяне
+Гаянэ
+Гаяр
+Геворг
+Геворк
+Гегам
+Гейнрих
+Гектор
+Гела
+Гелена
+Гемха
+Геннадий
+Генри
+Генриетта
+Генрик
+Генрих
+Генриэтта
+Геня
+Георг
+Георги
+Георгий
+Гера
+Геральд
+Герандуко
+Герасим
+Герда
+Герей
+Герел
+Герий
+Герихан
+Герман
+Германн
+Герта
+Гертруда
+Гибадат
+Гибадатулла
+Гибадулла
+Гибат
+Гиви
+Гид
+Гидаят
+Гидза
+Гизам
+Гизар
+Гизбулла
+Гизелхак
+Гиззат
+Гиззатулла
+Гиззельбанат
+Гиззельджамал
+Гиззениса
+Гиззетдин
+Гизитдин
+Гилаж
+Гилажитдин
+Гилембану
+Гилемгали
+Гилемгарай
+Гилемдар
+Гилемзян
+Гилемхан
+Гилимдар
+Гилимхан
+Гильда
+Гильман
+Гильмебанат
+Гильмебану
+Гильмегали
+Гильмегаян
+Гильмекамал
+Гильменахар
+Гильмениса
+Гильменур
+Гильмерази
+Гильмерахман
+Гильмеруй
+Гильмесафа
+Гильметдин
+Гильмехан
+Гильмехаят
+Гильмеяр
+Гильмиахмет
+Гильмикамал
+Гильминаз
+Гильминиса
+Гильминур
+Гильмисафа
+Гильмислам
+Гильмитдин
+Гильмихан
+Гильмия
+Гильмияза
+Гильмиямал
+Гильмияр
+Гильмулла
+Гильмутдин
+Гильфан
+Гильфанетдин
+Гиляж
+Гиляжитдин
+Гиляз
+Гилязетдин
+Гиляна
+Гилястан
+Гиляхстан
+Гимади
+Гимаз
+Гимазетдин
+Гимай
+Гимал
+Гималитдин
+Гимат
+Гимран
+Гиндулла
+Гиният
+Гиниятулла
+Гиорги
+Гиоргий
+Гиргока
+Гирей
+Гирфан
+Гирфанетдин
+Гисам
+Гисмат
+Гисматулла
+Гита
+Гитче
+Гияз
+Гиязитдин
+Главдия
+Глафира
+Глеб
+Гликерия
+Глория
+Гоар
+Гоарик
+Говрил
+Гогуш
+Гокка
+Гор
+Гордей
+Гот
+Готлиб
+Гоча
+Градислава
+Грайр
+Грант
+Графена
+Графира
+Грета
+Гретта
+Григор
+Григорей
+Григори
+Григорий
+Гриша
+Гуага
+Гуаша
+Гуашагаг
+Гуашамида
+Гуашана
+Гуашахан
+Губай
+Губайдулла
+Губайт
+Гудаберд
+Гузаир
+Гузал
+Гузалия
+Гузаль
+Гузбер
+Гузелем
+Гузелия
+Гузель
+Гузельгуль
+Гузельнур
+Гузер
+Гузяль
+Гуко
+Гуласал
+Гулбахор
+Гулез
+Гулизар
+Гулина
+Гулинур
+Гулира
+Гулиса
+Гулия
+Гулли
+Гуллира
+Гулляра
+Гулноза
+Гулсум
+Гулум
+Гулус
+Гулуса
+Гулчехра
+Гулъямал
+Гульара
+Гульарам
+Гульасма
+Гульбагида
+Гульбадар
+Гульбадига
+Гульбадиян
+Гульбазан
+Гульбазир
+Гульбазира
+Гульбанат
+Гульбану
+Гульбария
+Гульбарият
+Гульбахар
+Гульбашира
+Гульбаян
+Гульбиби
+Гульбизар
+Гульбика
+Гульбикя
+Гульбиназ
+Гульбинур
+Гульбуляк
+Гульбустан
+Гульгайша
+Гульгаухар
+Гульгена
+Гульгизар
+Гульгина
+Гульгузель
+Гульгуль
+Гульдан
+Гульдания
+Гульдар
+Гульдария
+Гульджамал
+Гульджан
+Гульджаннат
+Гульджихан
+Гульемеш
+Гульжанат
+Гульзабида
+Гульзабира
+Гульзагида
+Гульзагира
+Гульзада
+Гульзайнап
+Гульзамина
+Гульзамира
+Гульзамия
+Гульзар
+Гульзара
+Гульзарифа
+Гульзария
+Гульзафар
+Гульзахида
+Гульзиган
+Гульзида
+Гульзира
+Гульзиряк
+Гульзифа
+Гульзия
+Гульзухра
+Гулькабира
+Гулькай
+Гулькамал
+Гульлария
+Гульляр
+Гульлярия
+Гульмагира
+Гульмадина
+Гульмарван
+Гульмарфуга
+Гульмарьям
+Гульмахира
+Гульминаз
+Гульминур
+Гульмира
+Гульмия
+Гульмунавара
+Гульнадия
+Гульназ
+Гульназа
+Гульназар
+Гульназира
+Гульназифа
+Гульназия
+Гульнар
+Гульнара
+Гульнария
+Гульнафис
+Гульнафиса
+Гульнахар
+Гульниса
+Гульнур
+Гульнура
+Гульнури
+Гульнурия
+Гульрайхан
+Гульруй
+Гульрух
+Гульсабира
+Гульсавия
+Гульсагида
+Гульсагира
+Гульсайда
+Гульсалима
+Гульсамира
+Гульсана
+Гульсания
+Гульсара
+Гульсарвар
+Гульсария
+Гульсасяк
+Гульсафа
+Гульсиба
+Гульсибар
+Гульсима
+Гульсина
+Гульсинур
+Гульсиня
+Гульсира
+Гульсирень
+Гульсирин
+Гульсия
+Гульсияр
+Гульстан
+Гульсу
+Гульсултан
+Гульсум
+Гульсурур
+Гульсылу
+Гульфайруза
+Гульфания
+Гульфара
+Гульфарида
+Гульфария
+Гульфатима
+Гульфая
+Гульфиза
+Гульфина
+Гульфиназ
+Гульфинур
+Гульфира
+Гульфируз
+Гульфия
+Гульхабира
+Гульхамида
+Гульхан
+Гульхаят
+Гульчачак
+Гульчира
+Гульшагида
+Гульшакар
+Гульшакира
+Гульшан
+Гульшат
+Гульшах
+Гульшахида
+Гульшаян
+Гульюзум
+Гульяз
+Гульяр
+Гульяухар
+Гулюза
+Гулюс
+Гулюса
+Гулюсар
+Гуля
+Гулямза
+Гуляндам
+Гуляндем
+Гуляп
+Гуляра
+Гулярам
+Гумар
+Гумарбай
+Гумарбек
+Гумарбий
+Гумаргали
+Гумархан
+Гумер
+Гумербай
+Гумербек
+Гумергали
+Гумерзак
+Гумерхан
+Гуна
+Гунас
+Гунеш
+Гурам
+Гурбан
+Гурген
+Гурий
+Гурия
+Гурьян
+Гусейин
+Гусейн
+Гусен
+Гусман
+Гусмангали
+Густав
+Гуфран
+Гучина
+Гыкка
+Гэсэр
+Гюзель
+Гюлай
+Гюльджан
+Гюльжан
+Гюльназ
+Гюльнара
+Гюнай
+Гюнель
+Гюнеш
+Гёзель
+Дабаго
+Дабир
+Даваа
+Давид
+Давина
+Давит
+Давлат
+Давлатбек
+Давлет
+Давлетбай
+Давлетбек
+Давлетбика
+Давлетбирде
+Давлетбирди
+Давлетгали
+Давлетгарай
+Давлетгарей
+Давлетдин
+Давлетзян
+Давлеткильде
+Давлеткильди
+Давлеткирей
+Давлеткул
+Давлетмурза
+Давлетмухамет
+Давлетнур
+Давлетсултан
+Давлетхан
+Давлетша
+Давлетьяр
+Давли
+Давлихан
+Даврон
+Давронбек
+Давуд
+Давыд
+Давыт
+Даги
+Дагина
+Дагир
+Дагия
+Дагмара
+Дадаш
+Дадий
+Даду
+Дадуна
+Дадух
+Дадуша
+Дадыко
+Даима
+Даир
+Дайаана
+Дайан
+Дайана
+Дайганат
+Дайси
+Далай
+Далан
+Далгат
+Далер
+Дали
+Далиана
+Далида
+Далил
+Далила
+Далиль
+Далиля
+Далимир
+Далир
+Далира
+Далия
+Далха
+Далхат
+Дамба
+Дамдин
+Дамдын
+Дамели
+Дамелия
+Дамеля
+Дамиан
+Дамиана
+Дамиль
+Дамиля
+Дамин
+Дамина
+Даминдар
+Дамир
+Дамира
+Дамирбек
+Дамирхан
+Дамла
+Дамырак
+Дан
+Дана
+Данара
+Данат
+Даная
+Дандар
+Данелия
+Данель
+Данеля
+Данзан
+Дани
+Даниал
+Даниел
+Даниела
+Даниелла
+Даниель
+Даниз
+Даниза
+Данизат
+Даниил
+Даника
+Данил
+Данила
+Даниль
+Данир
+Данис
+Данислав
+Данислам
+Данисхан
+Даниф
+Данифа
+Даниэл
+Даниэла
+Даниэлла
+Даниэль
+Дания
+Данияз
+Даниял
+Данияр
+Данияс
+Данна
+Данэлия
+Данэль
+Дао
+Дара
+Дарзаман
+Дарземан
+Дари
+Дариан
+Дариана
+Дарианна
+Дарига
+Дарида
+Дарий
+Дарика
+Дарима
+Дарина
+Дарис
+Дарихан
+Дария
+Дариям
+Даромир
+Дарсен
+Дарухан
+Дархан
+Дарый
+Дарыя
+Дарья
+Дарьяна
+Даря
+Дастан
+Даткайым
+Дауд
+Даулет
+Даум
+Даумхан
+Даурбек
+Даурен
+Даус
+Даут
+Даута
+Даутбай
+Даухан
+Даха
+Дахажан
+Дахалина
+Даханаго
+Даханур
+Дахапс
+Дахаужа
+Дахауос
+Дахий
+Дахина
+Даши
+Дашима
+Дая
+Даян
+Даяна
+Девлет
+Дейси
+Делия
+Дементий
+Демид
+Демир
+Демис
+Демитрий
+Демьян
+Демьяна
+Дензин
+Дени
+Дениз
+Дениза
+Денис
+Денислам
+Дерья
+Деши
+Дея
+Джаббар
+Джабир
+Джабраил
+Джабраиль
+Джавагира
+Джавад
+Джават
+Джаватхан
+Джавахира
+Джавгарат
+Джавид
+Джавит
+Джагфар
+Джалал
+Джалалитин
+Джалдузхан
+Джалий
+Джалил
+Джалиль
+Джалсан
+Джалял
+Джалялетдин
+Джамал
+Джамалдин
+Джамалетдин
+Джамали
+Джамалия
+Джамалудин
+Джамалутдин
+Джамаль
+Джамбот
+Джамбулат
+Джамий
+Джамила
+Джамилат
+Джамилия
+Джамиль
+Джамиля
+Джамилябану
+Джамилят
+Джаминат
+Джамит
+Джан
+Джанат
+Джанбикя
+Джангали
+Джандет
+Джанет
+Джанета
+Джанетта
+Джанибек
+Джанмурат
+Джанмурза
+Джаннат
+Джаннет
+Джансарай
+Джансу
+Джансултан
+Джансурат
+Джантемир
+Джантимер
+Джантуган
+Джанхот
+Джанчык
+Джарахмат
+Джарашты
+Джарий
+Джарихан
+Джарият
+Джарык
+Джасим
+Джасима
+Джасия
+Джасмина
+Джасур
+Джаудат
+Джаухар
+Джаухарат
+Джаухария
+Джафар
+Джахан
+Джахангир
+Джахар
+Джахид
+Джахонгир
+Джахфар
+Джашарбек
+Джашау
+Джемиле
+Джемиль
+Джемма
+Дженет
+Дженнет
+Джессика
+Дживан
+Джигит
+Джихан
+Джихангарай
+Джихангир
+Джиханша
+Джон
+Джонатан
+Джони
+Джонибек
+Джох
+Джохар
+Джувайрия
+Джулайбиб
+Джулдуз
+Джулейбиб
+Джулия
+Джульетта
+Джума
+Джундуллах
+Джюзтюмен
+Джюнюс
+Дзадзу
+Дзадзуна
+Дзамболат
+Дзантемир
+Дзапш
+Дзашу
+Дзерасса
+Дзу
+Дзудза
+Дзуна
+Диана
+Дианна
+Диас
+Дибир
+Дива
+Дивна
+Дига
+Дигацук
+Дидар
+Дидин
+Дижин
+Диккат
+Дилавар
+Дилавир
+Дилан
+Дилана
+Дилара
+Дилафруз
+Дилбар
+Дилдора
+Дилек
+Дилиана
+Дилия
+Дилияр
+Дилноза
+Дилнура
+Диловар
+Дилором
+Дилшод
+Дилшода
+Дильбар
+Дильбара
+Дильбария
+Дильмухамет
+Дильназ
+Дильнара
+Дильфар
+Дильфара
+Дильфат
+Дильфиза
+Дильшат
+Дильяр
+Дилюза
+Дилюс
+Дилюса
+Диля
+Дилявер
+Дилянур
+Диляра
+Дилярия
+Диляфруз
+Дим
+Димид
+Димир
+Димитрей
+Димитрий
+Димьян
+Дин
+Дина
+Диназ
+Диналия
+Динар
+Динара
+Динарис
+Динахмет
+Динбулат
+Дингизбай
+Дингизхан
+Диндар
+Динир
+Динис
+Динислам
+Диния
+Динияз
+Динияр
+Динмухаммет
+Динназ
+Диннур
+Динора
+Динсаф
+Динулла
+Динур
+Диньмухамет
+Диомид
+Дионис
+Дионисий
+Диора
+Дирар
+Диса
+Дисана
+Дифгат
+Дияз
+Дияна
+Дияр
+Дияс
+Диёр
+Диёра
+Диёрбек
+Дмитрей
+Дмитрий
+Добромир
+Добромира
+Доброслав
+Добрыня
+Довуд
+Довудбек
+Докка
+Докшуко
+Долаан
+Долаана
+Долгар
+Долгор
+Долет
+Долетбий
+Долзат
+Долма
+Долорес
+Долума
+Долун
+Дольган
+Домалай
+Доменика
+Доминик
+Доминика
+Домна
+Донат
+Донду
+Донир
+Дониёр
+Дора
+Дорджи
+Доржи
+Доржо
+Доржу
+Доротея
+Дорофей
+Дорофея
+Достон
+Дота
+Дотико
+Дох
+Драгомир
+Дуван
+Дугар
+Дугер
+Дугум
+Дударук
+Дука
+Дул
+Дулат
+Дулма
+Дульфат
+Думасара
+Дунай
+Дунё
+Дуолан
+Дурай
+Дурдона
+Дусай
+Дусанбай
+Дусмат
+Дусмурат
+Дусмухамет
+Дусмухаммет
+Дух
+Духбарина
+Духуца
+Душа
+Дыгын
+Дыша
+Дьулус
+Дьулустаан
+Дьулустан
+Дьулусхан
+Дьулуур
+Дэвид
+Дэйси
+Дэлия
+Дэмир
+Дэни
+Дэниел
+Дэниз
+Дэнис
+Дэниэл
+Дэниэль
+Дэнэф
+Дэя
+Дюгерхан
+Ева
+Евангелина
+Евангелия
+Евгений
+Евгения
+Евгенья
+Евграф
+Евдакия
+Евдокея
+Евдоким
+Евдокия
+Евлалия
+Евлампий
+Евлампия
+Евника
+Евпатий
+Евсевий
+Евсевия
+Евсей
+Евсения
+Евстафий
+Евстолия
+Евфалия
+Евфимий
+Евфимия
+Евфросиния
+Евфросинья
+Егор
+Едиг
+Езбика
+Езид
+Езира
+Екатерина
+Екатирина
+Еким
+Екотерина
+Екуб
+Елеазар
+Елезавета
+Елезовета
+Елена
+Елизавета
+Елизар
+Елизовета
+Елисавета
+Елисей
+Елкан
+Елкыбай
+Емельян
+Емешбика
+Емилия
+Емиш
+Еникей
+Енисей
+Епифан
+Ерванд
+Еремей
+Ержан
+Ерина
+Еркей
+Ерлан
+Ермак
+Ермек
+Ермил
+Ермолай
+Ернар
+Ерофей
+Есений
+Есения
+Есуна
+Есфирь
+Ефалия
+Ефим
+Ефимия
+Ефимья
+Ефрасиния
+Ефрасинья
+Ефрем
+Ефросиния
+Ефросинья
+Ефросиня
+Ехия
+Жабаг
+Жабаги
+Жабар
+Жабраил
+Жават
+Жавгарат
+Жавит
+Жавохир
+Жагафар
+Жазира
+Жайна
+Жалдуз
+Жалдузхан
+Жалсан
+Жамал
+Жамалдин
+Жамбек
+Жамбора
+Жамбот
+Жамбулат
+Жамид
+Жамий
+Жамиля
+Жамилят
+Жамсаран
+Жамсо
+Жамурза
+Жамьян
+Жан
+Жанат
+Жанатхан
+Жанаф
+Жанболат
+Жангерий
+Жангир
+Жангуаша
+Жангулез
+Жандар
+Жанель
+Жанета
+Жанетта
+Жанзиля
+Жани
+Жания
+Жанмурза
+Жанна
+Жаннат
+Жаннет
+Жаннета
+Жанох
+Жанпаго
+Жансара
+Жансарай
+Жансая
+Жансит
+Жансох
+Жансу
+Жансурат
+Жантемир
+Жантий
+Жантина
+Жантуган
+Жануос
+Жануса
+Жанхот
+Жанхуж
+Жанцук
+Жанчик
+Жарадат
+Жарахмат
+Жаргал
+Жаргалма
+Жарият
+Жаруз
+Жарык
+Жаслан
+Жасмин
+Жасмина
+Жасур
+Жасурбек
+Жауад
+Жаухарат
+Жахан
+Жахонгир
+Жахфар
+Ждан
+Ждана
+Жейна
+Женевьева
+Женя
+Жиба
+Жибек
+Жигангул
+Жигит
+Жида
+Жизель
+Жилябий
+Жинус
+Жираслан
+Жонибек
+Жора
+Жорж
+Жулдуз
+Жумабек
+Жумагул
+Жумуш
+Жунед
+Жунид
+Жюнюс
+Забава
+Заббар
+Забиб
+Забиба
+Забида
+Забидат
+Забидулла
+Забий
+Забинат
+Забир
+Забира
+Забирулла
+Забит
+Забитхан
+Забих
+Забиха
+Забихулла
+Забрат
+Забура
+Завар
+Завен
+Завиль
+Завиля
+Загафран
+Загафуран
+Загид
+Загида
+Загидабану
+Загидат
+Загидулла
+Загир
+Загира
+Загиретдин
+Загирзян
+Загирулла
+Загирьян
+Загит
+Загитбай
+Загитзян
+Загитьян
+Загра
+Заграт
+Загри
+Загритдин
+Загфран
+Зада
+Задин
+Заза
+Заим
+Заир
+Заира
+Заит
+Зайд
+Зайдулла
+Зайна
+Зайнаб
+Зайнабхон
+Зайнап
+Зайнапбану
+Зайнаф
+Зайненур
+Зайнетдин
+Зайни
+Зайнибашар
+Зайнислам
+Зайнитдин
+Зайния
+Зайнудин
+Зайнулла
+Зайнура
+Зайтун
+Зайтуна
+Зайтунгуль
+Зайтуня
+Зайфар
+Закарийя
+Закария
+Закариё
+Закарья
+Заки
+Закизян
+Закий
+Закир
+Закира
+Закирей
+Закирзян
+Закирулла
+Закирхан
+Закирьян
+Закиулла
+Закихан
+Закия
+Закиябану
+Закиябону
+Закрия
+Закуан
+Заладин
+Залейх
+Залида
+Залиля
+Залим
+Залима
+Залимгерий
+Залимхан
+Залина
+Залиф
+Залифа
+Залиха
+Залихат
+Залия
+Залкар
+Залман
+Залму
+Залпа
+Залял
+Залялетдин
+Заляли
+Зама
+Замалетдин
+Замали
+Заман
+Заманбек
+Заманшу
+Замах
+Замахшарий
+Замзам
+Замзамгуль
+Замзамия
+Замиль
+Замиля
+Замин
+Замина
+Замир
+Замира
+Замудин
+Замхарий
+Зандан
+Занифа
+Занфира
+Запир
+Зара
+Зарадин
+Заракуш
+Зарамук
+Зарбану
+Зарган
+Зарема
+Зарета
+Зарига
+Заригуль
+Зарим
+Зарима
+Зарина
+Зарип
+Зарипат
+Зарира
+Зариф
+Зарифа
+Зарифбай
+Зарифзян
+Зарифулла
+Зарифхан
+Зарифъян
+Зария
+Зарият
+Зарнигор
+Зарраф
+Заррафетдин
+Заршат
+Заря
+Заряна
+Зат
+Зауал
+Заудин
+Заужан
+Заукат
+Заукия
+Заур
+Заура
+Заурбек
+Заурбий
+Зауржан
+Зауркан
+Зафар
+Зафир
+Захар
+Захарий
+Захид
+Захида
+Захидабану
+Захидат
+Захидулла
+Захий
+Захир
+Захира
+Захират
+Захиретдин
+Захирзян
+Захирулла
+Захит
+Захитзян
+Захра
+Захрат
+Захретдин
+Захро
+Захрохон
+Зачий
+Зачрей
+Заян
+Заяна
+Заята
+Зебо
+Зед
+Зейд
+Зейн
+Зейнаб
+Зейнап
+Зейнеб
+Зейнеп
+Зейтун
+Зекер
+Зекерия
+Зекошу
+Зелим
+Зелимхан
+Земфира
+Зенфира
+Зера
+Зерат
+Зехра
+Зиан
+Зиангир
+Зиафат
+Зибат
+Зиган
+Зиганбай
+Зиганбика
+Зигангарай
+Зигангир
+Зигандар
+Зигания
+Зиганнур
+Зиганша
+Зигат
+Зигитбай
+Зилейля
+Зилина
+Зилия
+Зилола
+Зильбар
+Зильмат
+Зиля
+Зиляра
+Зимфира
+Зина
+Зинаида
+Зинира
+Зиния
+Зиннат
+Зиннатбану
+Зиннатзян
+Зиннатнур
+Зиннатулла
+Зиннатхан
+Зиннатша
+Зиннур
+Зиннура
+Зиновей
+Зиновий
+Зиновия
+Зиновья
+Зиноида
+Зинфир
+Зинфира
+Зирак
+Зиряк
+Зита
+Зифа
+Зифабану
+Зифагуль
+Зифанур
+Зия
+Зияд
+Зияда
+Зиядат
+Зиязитдин
+Зиярат
+Зиятдин
+Зиятулла
+Зиятхан
+Зияф
+Зияфат
+Зияфетдин
+Зияхан
+Зиёда
+Злата
+Златан
+Златаслава
+Златислава
+Златомира
+Златослава
+Зои
+Золто
+Золушка
+Зоригто
+Зоряна
+Зосим
+Зоя
+Зубаир
+Зубай
+Зубайда
+Зубайдат
+Зубайдулла
+Зубайир
+Зубайр
+Зубайра
+Зубанил
+Зубарджат
+Зубаржат
+Зубарьят
+Зубейда
+Зубейр
+Зубер
+Зубидат
+Зувайра
+Зугра
+Зуза
+Зул
+Зулай
+Зулайха
+Зулайхо
+Зулейфа
+Зулейха
+Зулейхабану
+Зулета
+Зулиджан
+Зулижан
+Зулий
+Зулим
+Зулима
+Зулимбий
+Зулифа
+Зулихан
+Зулихат
+Зулия
+Зулкарней
+Зулфия
+Зулькабир
+Зулькабира
+Зулькагда
+Зулькагида
+Зулькамал
+Зулькар
+Зулькарам
+Зулькарим
+Зулькарнай
+Зулькарней
+Зулькафиль
+Зульмат
+Зульмира
+Зульфа
+Зульфакар
+Зульфанур
+Зульфар
+Зульфара
+Зульфарит
+Зульфария
+Зульфат
+Зульфатулла
+Зульфикамал
+Зульфина
+Зульфиназ
+Зульфиниса
+Зульфинур
+Зульфир
+Зульфира
+Зульфия
+Зульхабир
+Зульхабира
+Зульхамида
+Зульхая
+Зульхаят
+Зульхиджа
+Зульхижа
+Зульхиза
+Зульхия
+Зульчиф
+Зульшат
+Зуляля
+Зумадин
+Зумайра
+Зумара
+Зумарат
+Зумария
+Зумрад
+Зумрат
+Зумрият
+Зумруд
+Зумурат
+Зура
+Зураб
+Зурабий
+Зурадин
+Зураф
+Зури
+Зурият
+Зуррия
+Зурум
+Зуфар
+Зуфарзян
+Зухал
+Зухра
+Зухрабану
+Зухрабика
+Зухрахон
+Зухро
+Зыякай
+Иаков
+Иба
+Ибадулла
+Ибак
+Ибат
+Ибатулла
+Ибнегаббас
+Ибнеислам
+Ибни
+Ибрагим
+Ибрагимхалил
+Ибраим
+Ибрай
+Ибрахим
+Ибрахьим
+Иброхим
+Иброхимбек
+Иброхимджон
+Иброхимжон
+Ива
+Иван
+Ивана
+Иванка
+Иванна
+Ивар
+Ивета
+Иветта
+Ивилина
+Ивон
+Игебай
+Игибай
+Игилик
+Иглам
+Игламетдин
+Игнат
+Игнатий
+Игорь
+Ида
+Идалия
+Идам
+Идар
+Идеал
+Идегей
+Идегел
+Иделия
+Идель
+Идельбай
+Идельбек
+Идельбика
+Идельмурат
+Идельхан
+Иделя
+Идея
+Идиллия
+Идирис
+Идият
+Идиятулла
+Идрис
+Ижад
+Иза
+Изабелла
+Изабель
+Изабэлла
+Изаиль
+Изах
+Изахетдин
+Изахитдин
+Изибай
+Изиль
+Измаил
+Изнаур
+Изольда
+Изосим
+Изот
+Израил
+Израиль
+Иймона
+Иймонахон
+Икбал
+Иклим
+Икрам
+Икраметдин
+Икрима
+Икром
+Иксан
+Илада
+Илай
+Илайда
+Илал
+Иламан
+Илан
+Илана
+Иларион
+Илария
+Илгар
+Илгиз
+Илдар
+Илдария
+Илдус
+Илез
+Илзида
+Илиа
+Илиан
+Илиана
+Илида
+Илиза
+Илим
+Илимбек
+Илина
+Илиш
+Илия
+Илкер
+Илларион
+Иллария
+Иллеука
+Илон
+Илона
+Илхам
+Илшат
+Иль
+Ильбай
+Ильбар
+Ильбарис
+Ильбарс
+Ильбатыр
+Ильбек
+Ильбика
+Ильвар
+Ильвина
+Ильвир
+Ильвира
+Ильгам
+Ильгаметдин
+Ильгамитдин
+Ильгамия
+Ильгар
+Ильгаяз
+Ильгиз
+Ильгиза
+Ильгизар
+Ильгина
+Ильгужа
+Ильгузель
+Ильгуль
+Ильдавлет
+Ильдан
+Ильдана
+Ильдания
+Ильданур
+Ильдар
+Ильдария
+Ильдархан
+Ильдибай
+Ильдус
+Ильзада
+Ильзалия
+Ильзат
+Ильзида
+Ильзиля
+Ильзина
+Ильзиннат
+Ильзир
+Ильзира
+Ильзия
+Илькай
+Илькен
+Ильман
+Ильмар
+Ильмас
+Ильмет
+Ильмир
+Ильмира
+Ильмурат
+Ильмурза
+Ильназ
+Ильназар
+Ильнар
+Ильнара
+Ильнария
+Ильнат
+Ильнур
+Ильнура
+Ильнурия
+Ильсания
+Ильсаф
+Ильсибай
+Ильсин
+Ильсина
+Ильсия
+Ильсияр
+Ильсуар
+Ильсун
+Ильсур
+Ильсылу
+Ильсюя
+Ильсюяр
+Ильтан
+Ильтания
+Ильтимер
+Ильтимир
+Ильтуган
+Ильтюзар
+Ильфак
+Ильфан
+Ильфар
+Ильфария
+Ильфат
+Ильфиза
+Ильфина
+Ильфир
+Ильфира
+Ильфруза
+Ильхам
+Ильхаметдин
+Ильхамия
+Ильхан
+Ильшат
+Ильюза
+Илья
+Ильяз
+Ильян
+Ильяна
+Ильяр
+Ильяс
+Ильёс
+Илюза
+Илюс
+Илюса
+Иляна
+Иляс
+Илёс
+Имай
+Имам
+Имамбай
+Имамбек
+Имамгали
+Имамгул
+Имаметдин
+Имамитдин
+Имаммалик
+Имаммухаммет
+Имамутдин
+Иман
+Имана
+Иманали
+Иманбай
+Иманбек
+Имангали
+Имангул
+Имани
+Имара
+Имаш
+Имилия
+Имиль
+Имин
+Имир
+Иммет
+Иммолат
+Имона
+Имонахон
+Имран
+Имранбек
+Имранхан
+Имрон
+Имрона
+Имронбек
+Имронжон
+Ина
+Инал
+Иналук
+Иналуко
+Иналь
+Инар
+Инара
+Инармас
+Инга
+Ингилизхан
+Инджи
+Индира
+Индирбий
+Индрис
+Индус
+Инесса
+Инжи
+Инжила
+Инжилхан
+Инжихан
+Инзалия
+Инзилхан
+Инзиль
+Инзиля
+Инзира
+Иниль
+Инйе
+Инйебика
+Инйегуль
+Инйекай
+Инна
+Иннеса
+Иннокентий
+Инсан
+Инсания
+Инсар
+Инсаф
+Инсафетдин
+Инсафия
+Инсур
+Интизор
+Иншар
+Инье
+Иньяр
+Иоаким
+Иоанн
+Иоанна
+Иоганнес
+Иозас
+Иоланта
+Ион
+Иона
+Ионас
+Иосиф
+Ипполит
+Ира
+Ирада
+Ираида
+Иракли
+Ираклий
+Ирали
+Ираман
+Ирбай
+Ирбатыр
+Ирбек
+Ирбул
+Ирбулат
+Иргази
+Иргали
+Иргиз
+Иргужа
+Ирдавлет
+Ирдан
+Ирек
+Иремель
+Ирена
+Ирендык
+Ирзат
+Ирзигит
+Ирида
+Ириза
+Ирик
+Ирина
+Иринья
+Ирисхан
+Ирка
+Иркабай
+Иркабика
+Иркагуль
+Иркен
+Иркенбай
+Иркенбек
+Иркя
+Иркябану
+Иркягуль
+Ирлан
+Ирма
+Ирмурат
+Ирмурза
+Ирмяк
+Ирназар
+Ирнас
+Ирода
+Ироида
+Ирса
+Ирсаит
+Ирсай
+Ирсана
+Ирсубай
+Иртуган
+Ирфан
+Ирхан
+Иршат
+Ирэн
+Ирэна
+Иса
+Исаак
+Исабек
+Исай
+Исак
+Исанбай
+Исанбек
+Исанбулат
+Исангали
+Исангул
+Исбах
+Исен
+Исидор
+Искак
+Искандар
+Искандер
+Искандербек
+Искендер
+Искра
+Искужа
+Ислам
+Исламбай
+Исламбей
+Исламбек
+Исламгази
+Исламгали
+Исламгарай
+Исламгерий
+Исламгул
+Исламетдин
+Исламия
+Исламмурат
+Исламнур
+Исламутдин
+Исламхан
+Исламша
+Исламшариф
+Ислах
+Ислибай
+Ислом
+Исломбек
+Исломжон
+Исломиддин
+Ислям
+Исмагил
+Исмаил
+Исмаиль
+Исмак
+Исмат
+Исмегуль
+Исмель
+Исменаз
+Исмет
+Исминаз
+Исмира
+Исмоил
+Исмоилжон
+Исо
+Исра
+Исраил
+Исрапил
+Исрафил
+Исрафиль
+Исроил
+Исса
+Исуф
+Исфира
+Исхак
+Исхан
+Исякай
+Исян
+Исянбай
+Исянбика
+Исянгали
+Исянгул
+Италмас
+Итан
+Итбай
+Иткул
+Иулиания
+Иустина
+Иустиния
+Ифора
+Ифрат
+Ихлас
+Ихсан
+Ихсана
+Ихтияр
+Ишангул
+Ишбай
+Ишбика
+Ишбикя
+Ишбирде
+Ишбирди
+Ишбулат
+Ишбулды
+Ишгали
+Ишдавлет
+Ишзигит
+Ишим
+Ишимбай
+Ишимьяр
+Ишкали
+Ишкарим
+Ишкильди
+Ишкина
+Ишкуват
+Ишкул
+Ишмай
+Ишмат
+Ишмулла
+Ишмурат
+Ишмурза
+Ишмухамет
+Ишмухаммет
+Ишназар
+Ишнияз
+Ишнияр
+Ишнур
+Ишсултан
+Ишсылу
+Иштимер
+Иштимир
+Иштиряк
+Иштуган
+Ишхан
+Ишьяр
+Июлия
+Ия
+Йусуф
+Каан
+Кабан
+Кабанбай
+Кабард
+Кабатыр
+Кабза
+Кабил
+Кабир
+Кабира
+Кабират
+Кави
+Кавим
+Кавия
+Кавсар
+Кавсарат
+Кагарман
+Кадархан
+Кадер
+Кадербай
+Кадербек
+Кадергали
+Кадергул
+Кадерзян
+Кадерниса
+Кадерхан
+Кади
+Кадим
+Кадима
+Кадир
+Кадира
+Кадирбай
+Кадирбек
+Кадирбика
+Кадиргали
+Кадирхан
+Кадирша
+Кадирьян
+Кадрия
+Кадыр
+Кадырбек
+Кадыргали
+Кадыргул
+Кадырзян
+Кажу
+Казакбай
+Казаккул
+Казанбай
+Казанбек
+Казбек
+Казбулат
+Казгерий
+Казиахмет
+Казий
+Казим
+Казима
+Казимагомед
+Казимир
+Казирбай
+Казихан
+Казнабика
+Казьма
+Каип
+Каир
+Кай
+Кайка
+Кайрат
+Кайсар
+Кайсын
+Кайтмурза
+Кайхан
+Кайыт
+Кайя
+Калган
+Калерия
+Кали
+Калиба
+Калим
+Калима
+Калимат
+Калимулла
+Калина
+Калиса
+Калиста
+Калистрат
+Калихан
+Калкаман
+Калмурза
+Каля
+Калямбай
+Кама
+Камал
+Камалдин
+Камалетдин
+Камали
+Камалитдин
+Камалия
+Камалудин
+Камалутдин
+Камаль
+Камар
+Камарбану
+Камаргуль
+Камаретдин
+Камарзян
+Камаритдин
+Камария
+Камац
+Камбот
+Камбулат
+Камелия
+Камета
+Камил
+Камила
+Камилия
+Камилла
+Камиль
+Камильзян
+Камильяр
+Камиля
+Камиш
+Камо
+Камола
+Камран
+Камранбек
+Камрон
+Камронбек
+Камса
+Камсир
+Каму
+Камук
+Канамат
+Канан
+Канат
+Канафи
+Кандига
+Кандиша
+Каней
+Канзафар
+Каний
+Каникай
+Канитат
+Канифа
+Канох
+Кансура
+Кантемир
+Кантимер
+Кану
+Каншао
+Каншобий
+Каншумас
+Каныкей
+Капиталина
+Капитолина
+Капитон
+Каплан
+Кара
+Караба
+Карабай
+Карабатыр
+Карабаш
+Карабек
+Карабий
+Карабулат
+Карагужа
+Карагул
+Карагуш
+Каражан
+Караиш
+Каракай
+Каракиши
+Каракыз
+Каралджан
+Каралина
+Караль
+Каральбий
+Каральжан
+Каральхан
+Карам
+Карамай
+Карамат
+Караматулла
+Караметдин
+Карамитдин
+Карамулла
+Карамурза
+Карамша
+Карамыш
+Каранай
+Карапаго
+Карапет
+Карасай
+Карасяс
+Каратай
+Карахан
+Карахмет
+Карачай
+Карачач
+Карен
+Карибулла
+Карим
+Карима
+Каримат
+Каримбай
+Каримбек
+Кариметдин
+Каримзян
+Каримкул
+Каримулла
+Каримхан
+Карина
+Карине
+Каринэ
+Карип
+Карихан
+Карл
+Карлен
+Карлугас
+Карлыгач
+Кармыш
+Карней
+Каро
+Каролина
+Карох
+Карп
+Кару
+Карча
+Касай
+Касбот
+Касбулат
+Касим
+Касима
+Касимбай
+Касимбек
+Касимзян
+Касимхан
+Касира
+Касифа
+Кассандра
+Кассия
+Касум
+Касым
+Касьян
+Каталея
+Каталина
+Каталия
+Катарина
+Катей
+Катерина
+Катиба
+Катим
+Катина
+Катифа
+Катрин
+Катрина
+Катумаш
+Каусар
+Каусария
+Кафи
+Кафиль
+Кафиля
+Кафия
+Кахун
+Кацина
+Кашан
+Кашап
+Кашаф
+Кашафетдин
+Кашафитдин
+Кашиф
+Кашифа
+Кашифулла
+Кашкар
+Кашкарбай
+Кашфельбаян
+Кашфельгаян
+Кашфетдин
+Кашфи
+Кашфитдин
+Кашфия
+Кашфулла
+Каюм
+Кая
+Кевин
+Кежик
+Кезибан
+Кезибат
+Келимат
+Келлет
+Келяш
+Кемал
+Кемаль
+Кемисхан
+Кемран
+Кенан
+Керам
+Кербек
+Керим
+Керимат
+Керман
+Кермахан
+Кермен
+Кертибий
+Кет
+Кетуко
+Киара
+Кибрия
+Кибриё
+Кидагаза
+Киекбай
+Килимбай
+Кильдибай
+Кильдияр
+Кильмет
+Кильмурза
+Кильмухамет
+Кильсен
+Кильсура
+Ким
+Кималь
+Кимран
+Кинжя
+Кинзя
+Кинзябай
+Кинзябулат
+Кинзягул
+Кинзякай
+Кинзямурза
+Кинья
+Киньябай
+Киньябика
+Киньябуз
+Киньябулат
+Киньягали
+Киньягужа
+Киньягул
+Киньякай
+Киньямурат
+Киньянур
+Киньясылу
+Киньяхмет
+Киприян
+Кир
+Кира
+Кирам
+Кираметдин
+Киргизбай
+Кирей
+Кирил
+Кирилл
+Кирим
+Кирия
+Кирман
+Кирсан
+Кирьян
+Кирьяна
+Кистаман
+Кита
+Кифая
+Кицу
+Кичибатыр
+Кишуко
+Киям
+Кияметдин
+Клавдея
+Клавдий
+Клавдия
+Клара
+Клементий
+Клементина
+Клеопатра
+Клим
+Климент
+Климентий
+Клишбий
+Кловдия
+Кнарик
+Князь
+Коз
+Козьма
+Койчу
+Кока
+Кокай
+Кокаш
+Комбу
+Комила
+Комрон
+Конак
+Конакбий
+Кондрат
+Кондратий
+Конон
+Константин
+Копай
+Коралина
+Коркмаз
+Корней
+Корнелия
+Корнил
+Косим
+Космос
+Крестина
+Крестинья
+Кристиан
+Кристина
+Кристине
+Кристофер
+Крым
+Крымгерий
+Ксения
+Ксенофонт
+Ксенья
+Ксеня
+Куака
+Куаныс
+Кубадий
+Кубат
+Кубатий
+Кубрат
+Кубура
+Кубяк
+Кувандык
+Куват
+Кудабай
+Кудай
+Кудас
+Кудаш
+Кудаяр
+Кудер
+Кудерек
+Кудрат
+Кужа
+Кужабай
+Кужак
+Кужахмет
+Кузбек
+Кузел
+Кузеш
+Кузибай
+Кузма
+Кузьма
+Куктай
+Кукуна
+Кул
+Кулай
+Куламза
+Куланбай
+Кулансяс
+Кулахмет
+Кулбагиза
+Кулбай
+Кулбарис
+Кулбек
+Кулби
+Кулбика
+Кулгали
+Кулемсар
+Кулибай
+Кулибек
+Кулижан
+Кулина
+Кулиос
+Кулистан
+Кулисум
+Кулиш
+Кулият
+Кулмурат
+Кулсар
+Кулсубай
+Кулсура
+Култуган
+Кулуй
+Кулумбет
+Кулунбет
+Кулуш
+Кульадам
+Кульбай
+Кульбарис
+Кульбек
+Кульгали
+Кульгана
+Кульгара
+Кульгуна
+Кульдавлет
+Кульманбет
+Кульмухамет
+Кульшарип
+Куля
+Куляца
+Кумсият
+Кумуш
+Кумушбай
+Кумушбика
+Кумык
+Куна
+Кунак
+Кунакай
+Кунакбай
+Кунакбика
+Кунаккильди
+Кунаккужа
+Кунаккул
+Кунанбай
+Кунаш
+Кунбика
+Кундет
+Кундуз
+Кундузбай
+Куннур
+Куннэй
+Кунсулу
+Кунтимер
+Куприян
+Кура
+Кураль
+Курамагомед
+Курамухаммад
+Курамша
+Курбан
+Курбанай
+Курбанали
+Курбанбай
+Курбанбек
+Курбанбика
+Курбанбикя
+Курбанбулат
+Курбангаджи
+Курбангали
+Курбангул
+Курбанмагомед
+Курбат
+Курбонали
+Кургоко
+Курдан
+Куржан
+Куркамбай
+Курман
+Курманай
+Курманалий
+Курманбай
+Курманбек
+Курманбий
+Курмангали
+Курманжан
+Курсай
+Курча
+Курша
+Курычбай
+Кусай
+Кусбика
+Кусей
+Кусен
+Кусим
+Кусимхан
+Кускар
+Кускун
+Кустыбай
+Кута
+Кутбетдин
+Кутдус
+Кутдуса
+Кутдусия
+Куткильди
+Кутлахмет
+Кутлу
+Кутлуахмет
+Кутлубай
+Кутлубика
+Кутлубулат
+Кутлугалям
+Кутлугафар
+Кутлугильди
+Кутлугужа
+Кутлузаман
+Кутлумурат
+Кутлумухамет
+Кутлурахман
+Кутлухужа
+Кутлуюл
+Кутлуяр
+Кутлыахмет
+Кутлыбай
+Кутлыхан
+Кутман
+Кутуш
+Кутфия
+Кух
+Куха
+Куца
+Кучбай
+Кучук
+Куш
+Куша
+Кушай
+Кушбай
+Кушбек
+Кушбий
+Кушмез
+Кушук
+Куяш
+Куяшбай
+Кыдрас
+Кызбика
+Кызтума
+Кылминур
+Кылысбай
+Кыыдаана
+Кыямыт
+Кьяра
+Кэрэл
+Кэрэли
+Кэрэчээнэ
+Кэскил
+Кэскилээнэ
+Кюльджан
+Кюльжан
+Кюмюш
+Кюндюл
+Кюннэй
+Кябахан
+Кязим
+Кямран
+Кяусар
+Кяша
+Кёкала
+Кёккёз
+Лабазан
+Лавия
+Лавр
+Лаврентий
+Лагерта
+Лада
+Ладомира
+Лазарь
+Лазиза
+Лазима
+Лазимат
+Лаис
+Лайжит
+Лайла
+Лайло
+Лайма
+Лала
+Лале
+Лали
+Лалина
+Лалита
+Ламан
+Ламара
+Ламига
+Ламик
+Ламия
+Лана
+Ландыш
+Ланоса
+Лара
+Лариана
+Ларианна
+Ларина
+Ларион
+Лариса
+Ласын
+Латвина
+Латип
+Латиф
+Латифа
+Латифулла
+Латифхан
+Латмир
+Лаура
+Лаурита
+Лаурия
+Лаурсан
+Лашин
+Лаяна
+Леа
+Леана
+Лев
+Леван
+Леви
+Левон
+Лейла
+Лейли
+Лейля
+Лейлягуль
+Лейсан
+Лейсана
+Лейсания
+Лейсира
+Лейсян
+Леля
+Лема
+Леман
+Лемар
+Лена
+Ленар
+Ленара
+Ленарис
+Ленария
+Ление
+Лениза
+Ленис
+Ленуза
+Ленур
+Ленура
+Лео
+Леокадия
+Леон
+Леона
+Леонард
+Леонардо
+Леонель
+Леонид
+Леонида
+Леонора
+Леонтий
+Леопольд
+Лера
+Лерон
+Лесана
+Леся
+Лета
+Летисия
+Летиция
+Лечи
+Лея
+Лиа
+Лиам
+Лиана
+Лианна
+Ливия
+Лид
+Лида
+Лиджи
+Лидия
+Лидья
+Лиза
+Лизавета
+Лика
+Ликерия
+Лила
+Лили
+Лилиана
+Лилианна
+Лилит
+Лилия
+Лилияна
+Лилу
+Лилю
+Лиля
+Лима
+Лимажан
+Лина
+Линар
+Линара
+Линда
+Лион
+Лиона
+Лионелла
+Лионель
+Лиор
+Лиора
+Лира
+Лиса
+Лисанна
+Лисса
+Лита
+Лиуаз
+Лиуаза
+Лиуан
+Лиэль
+Лия
+Лияна
+Логин
+Ложан
+Локан
+Локман
+Лола
+Лолита
+Лопсан
+Лора
+Лорена
+Лорс
+Лоя
+Лубсан
+Лудан
+Лудин
+Луза
+Луиза
+Луис
+Лука
+Лукас
+Лукерия
+Лукерья
+Лукиан
+Лукия
+Лукман
+Лукмания
+Лукманхаким
+Луко
+Лукьян
+Луна
+Лунара
+Луси
+Лусине
+Лут
+Лутферахман
+Лутфи
+Лутфиахмет
+Лутфия
+Лутфияр
+Лутфрахман
+Лутфулла
+Лучезар
+Лэйла
+Лю
+Люаза
+Люба
+Любава
+Любовь
+Любомир
+Люда
+Людвиг
+Людмила
+Люза
+Люзия
+Люл
+Люля
+Люн
+Люна
+Люсан
+Люсана
+Люсена
+Люси
+Люсия
+Люся
+Люсят
+Лют
+Люта
+Люха
+Люц
+Люца
+Люция
+Лючина
+Ляба
+Лябиб
+Лябиба
+Лябид
+Лябий
+Лябух
+Ляйля
+Ляйсан
+Ляйсян
+Ляко
+Лялина
+Лялица
+Лялю
+Лялюна
+Лялюх
+Лялюца
+Ляля
+Лям
+Ляман
+Лямига
+Лямиса
+Лямия
+Ляна
+Ляс
+Лят
+Лята
+Лятиф
+Ляу
+Ляуца
+Ляху
+Ляца
+Ляцу
+Ляша
+Лёва
+Лёля
+Маадыр
+Мавзуна
+Мавиле
+Мавия
+Мавлави
+Мавлан
+Мавлет
+Мавлетбай
+Мавлетбек
+Мавлетгарай
+Мавлетдин
+Мавлетзян
+Мавлеткул
+Мавлетхан
+Мавлетша
+Мавли
+Мавлида
+Мавликай
+Мавлит
+Мавлитбай
+Мавлитдин
+Мавлиткул
+Мавлитхан
+Мавлитьян
+Мавлиха
+Мавлихан
+Мавлия
+Мавлиян
+Мавлияр
+Мавлуда
+Мавлудахон
+Мавлюд
+Мавлюда
+Мавлют
+Мавля
+Мавлян
+Мавра
+Мавруза
+Мавсиль
+Магади
+Магаз
+Магамед
+Маган
+Магарам
+Магариф
+Магасум
+Магафур
+Магафура
+Магаш
+Магдалена
+Магдалина
+Магдан
+Магданетдин
+Магдания
+Магданур
+Магдасим
+Магди
+Магдия
+Магдуда
+Магзум
+Магзума
+Магзур
+Маги
+Магиасма
+Магибадар
+Магибанат
+Магибану
+Магигуль
+Магида
+Магиджамал
+Магиз
+Магизада
+Магизар
+Магизара
+Магикамал
+Магина
+Магиназ
+Магинур
+Магир
+Магира
+Магиря
+Магисара
+Магисарвар
+Магисурур
+Магит
+Магитап
+Магиша
+Магишакар
+Магия
+Магиян
+Магияр
+Магмур
+Магмура
+Магомед
+Магомедали
+Магомедамин
+Магомедарип
+Магомедгаджи
+Магомедзагир
+Магомедимин
+Магомедкамиль
+Магомедмурад
+Магомедмухтар
+Магомеднаби
+Магомедрасул
+Магомедсаид
+Магомедсалам
+Магомедсултан
+Магомедтагир
+Магомедхабиб
+Магомедхан
+Магомедшапи
+Магомет
+Магриф
+Магрифа
+Магруй
+Магрура
+Магруф
+Магруфа
+Магруфзян
+Магруфкамал
+Магсуд
+Магсуда
+Магсум
+Магсума
+Магсумзян
+Магсумхан
+Магуба
+Магуза
+Магфира
+Магфия
+Магфур
+Магфура
+Магшия
+Мада
+Мадания
+Маджа
+Маджид
+Маджир
+Маджит
+Мади
+Мадин
+Мадина
+Мадинабону
+Мадинат
+Мадинахон
+Мадих
+Мадияр
+Мадлен
+Мадлена
+Мадона
+Мадонна
+Мадхия
+Мадъяр
+Мажид
+Мажир
+Мажит
+Мазан
+Мазгар
+Мазит
+Мазуна
+Маида
+Маиза
+Маина
+Маирбек
+Маис
+Маиса
+Май
+Майа
+Майгуль
+Майдар
+Майджамал
+Майдыр
+Майк
+Майкл
+Маймуна
+Маймунат
+Майра
+Майрам
+Майрбек
+Майрусхан
+Майсара
+Майсарат
+Майсылу
+Майтап
+Майшакар
+Майя
+Макар
+Макарий
+Макарим
+Макей
+Макка
+Макс
+Максалина
+Максар
+Максат
+Максим
+Максимилиан
+Максимильян
+Максуд
+Максуда
+Максума
+Максут
+Максют
+Маладин
+Малак
+Малания
+Маланья
+Малбай
+Малдыбай
+Малена
+Малид
+Малий
+Малик
+Малика
+Маликабону
+Маликат
+Маликахон
+Малиль
+Малина
+Малиса
+Малих
+Малиха
+Малия
+Малкан
+Малкар
+Малкарбий
+Малыбай
+Мальвина
+Маля
+Мамат
+Маматкул
+Мамбет
+Мамдуда
+Мамдуза
+Мамдуха
+Мамед
+Мамида
+Мамиза
+Мамикон
+Мамита
+Мамиша
+Мамсир
+Мамуко
+Мамыш
+Манана
+Манап
+Манас
+Манат
+Манвел
+Мане
+Манефа
+Манзилулла
+Манзиль
+Манзиля
+Манзия
+Манзум
+Манзума
+Манзура
+Манижа
+Маниса
+Манисса
+Маннан
+Маннаф
+Маннур
+Маннура
+Мансарай
+Мансаф
+Мансур
+Мансура
+Мансурия
+Манук
+Мануэла
+Мануэль
+Манэ
+Маня
+Мара
+Марал
+Марат
+Марва
+Марван
+Марвар
+Марвара
+Марвария
+Марват
+Маргарита
+Маргия
+Марго
+Маргорита
+Маргуба
+Маргуп
+Мардан
+Мардана
+Марданша
+Марджан
+Марджона
+Мардигаллям
+Мардигалям
+Мардиша
+Мардия
+Мардума
+Марем
+Маремьяна
+Марет
+Марета
+Марея
+Маржан
+Маржана
+Маржанат
+Маржанет
+Маржона
+Марзидан
+Марзий
+Марзия
+Марзиямал
+Марзият
+Мари
+Мариа
+Мариам
+Мариами
+Мариана
+Марианна
+Мариет
+Мариета
+Мариетта
+Марик
+Марика
+Марина
+Марине
+Мариника
+Маринэ
+Марис
+Марита
+Мариэль
+Мариэтта
+Мария
+Мариям
+Мариямхон
+Мариян
+Марият
+Марйам
+Марк
+Маркел
+Маркелл
+Марко
+Маркос
+Маркс
+Маркус
+Марлен
+Марс
+Марсел
+Марселина
+Марсель
+Марселя
+Марсэль
+Марта
+Мартаз
+Мартемьян
+Мартин
+Мартина
+Мартын
+Маруко
+Марусжан
+Марусхан
+Маруся
+Маруф
+Марфа
+Марфуга
+Марха
+Мархаба
+Мархабо
+Мархам
+Мархия
+Маршан
+Марьен
+Марьенбика
+Марья
+Марьям
+Марьямбану
+Марьямбикя
+Марьямниса
+Марьямхон
+Марьян
+Марьяна
+Марьянна
+Марям
+Марямхон
+Марян
+Марят
+Масави
+Масалим
+Масгуда
+Масгут
+Масгутзян
+Масира
+Масират
+Маснави
+Маснавия
+Масрур
+Масрура
+Мастафа
+Мастура
+Масуд
+Масума
+Масфура
+Масхинур
+Масхия
+Масхуд
+Масхуда
+Масхут
+Масягут
+Мат
+Мата
+Матай
+Матвей
+Матео
+Матильда
+Матин
+Матлуба
+Матрена
+Матрона
+Матрёна
+Мату
+Матфей
+Матхан
+Маува
+Маугиза
+Маугуда
+Маудуда
+Маузуна
+Маулида
+Маулиха
+Маулия
+Мауруза
+Мафруза
+Мафтуна
+Мафтуха
+Махай
+Махаммад
+Махар
+Махарбек
+Махасип
+Махач
+Махбуба
+Махваш
+Махди
+Махдия
+Махдум
+Махдума
+Махиасма
+Махибадар
+Махибанат
+Махибану
+Махигуль
+Махида
+Махиджамал
+Махизар
+Махикамал
+Махил
+Махина
+Махир
+Махира
+Махисарвар
+Махисурур
+Махитап
+Махия
+Махиян
+Махияр
+Махлиё
+Махлюса
+Махмет
+Махмуд
+Махмуда
+Махмуджон
+Махмуза
+Махмут
+Махмутбай
+Махмутбек
+Махмутгали
+Махмутгарай
+Махмутхан
+Махмутьян
+Махо
+Махруй
+Махсида
+Махсуд
+Махсун
+Махти
+Махтум
+Махуб
+Махуп
+Махупкамал
+Махфират
+Махфия
+Махфуз
+Махфуза
+Мац
+Мацина
+Мацу
+Мачраил
+Маш
+Маша
+Машак
+Маштай
+Машуко
+Маэлуфа
+Мая
+Маянсылу
+Маяр
+Мгер
+Мед
+Медет
+Медея
+Меджид
+Медина
+Мединат
+Медине
+Медни
+Меер
+Мекка
+Мел
+Мелани
+Мелания
+Меланья
+Мелек
+Мелена
+Мелик
+Мелина
+Мелиса
+Мелисса
+Мелита
+Мелитина
+Мелия
+Меля
+Мемет
+Мен
+Менди
+Менли
+Менуа
+Мерген
+Мери
+Мерием
+Меркез
+Меркурий
+Мерт
+Меружан
+Мерьем
+Мерьям
+Меседа
+Меседо
+Меседу
+Метин
+Мефодий
+Мехди
+Мехман
+Мехмед
+Мехмет
+Мехрангез
+Мехрангиз
+Мехри
+Мехрибан
+Мехрибон
+Мехрима
+Мехримах
+Мехримох
+Мехринисо
+Мехроб
+Мехровар
+Мехрона
+Мехрубон
+Мехти
+Мзет
+Миа
+Миана
+Мианна
+Миасар
+Миассар
+Мигдат
+Мигель
+Мигран
+Мида
+Мидат
+Мидина
+Мидхат
+Мижгона
+Миза
+Мизан
+Мизат
+Мийя
+Мика
+Микаел
+Микаель
+Микаил
+Микаиль
+Микак
+Микан
+Микаэл
+Микаэла
+Микаэлла
+Микаэль
+Микелла
+Мила
+Милада
+Милай
+Милалика
+Милан
+Милана
+Милания
+Миланна
+Миланья
+Миласлава
+Милек
+Милена
+Милиана
+Милина
+Милиса
+Милисса
+Милита
+Милитина
+Милихана
+Милица
+Милия
+Милла
+Миллиана
+Миллят
+Милолика
+Милорада
+Милослав
+Милослава
+Милош
+Миля
+Миляуша
+Мима
+Мина
+Минавара
+Минавра
+Минара
+Минас
+Минатулла
+Минахмет
+Миная
+Минваис
+Минвали
+Минварис
+Минвафа
+Мингаж
+Мингажитдин
+Мингаз
+Мингазетдин
+Мингази
+Мингазиза
+Мингали
+Мингалим
+Мингарай
+Мингарей
+Мингиян
+Миндавлет
+Миндар
+Минджамал
+Миндигали
+Миндияр
+Миндубай
+Миндулла
+Минесса
+Минзагида
+Минзагир
+Минзагира
+Минзагит
+Минзада
+Минзакир
+Минзалия
+Минзаля
+Минзариф
+Минзахир
+Минзахит
+Минзиган
+Минзиля
+Минзира
+Минзифа
+Минзия
+Миниахмет
+Минигуль
+Миникамал
+Мининур
+Миниса
+Минислам
+Миниямал
+Минкабира
+Минкаил
+Минкамал
+Минлахмет
+Минлеагзам
+Минлеасма
+Минлеасхат
+Минлеахат
+Минлеахмет
+Минлебадар
+Минлебай
+Минлебанат
+Минлебану
+Минлебаян
+Минлебикя
+Минлебулат
+Минлевали
+Минлеварис
+Минлевасима
+Минлевафа
+Минлевахит
+Минлегазиз
+Минлегайша
+Минлегали
+Минлегалим
+Минлегани
+Минлегарай
+Минлегариф
+Минлегарифа
+Минлегаффар
+Минлегаяз
+Минлегаян
+Минлегул
+Минлегуль
+Минледжамал
+Минлезагит
+Минлезакир
+Минлезалия
+Минлезара
+Минлезариф
+Минлезахида
+Минлезахир
+Минлезахит
+Минлезиля
+Минлезифа
+Минлеислам
+Минлекабир
+Минлекамал
+Минлекарима
+Минлекасим
+Минлекул
+Минлемарьям
+Минлемухаммет
+Минлениса
+Минленур
+Минлерасих
+Минлерахим
+Минлерахман
+Минлеруй
+Минлесабир
+Минлесабира
+Минлесагида
+Минлесайда
+Минлесалим
+Минлесалима
+Минлесалих
+Минлесара
+Минлесафа
+Минлесылу
+Минлетагир
+Минлефагима
+Минлефаиз
+Минлефания
+Минлефарида
+Минлефарис
+Минлефаяз
+Минлехади
+Минлехаир
+Минлехайдар
+Минлехак
+Минлехакима
+Минлехан
+Минлехаят
+Минлешакир
+Минлеяр
+Минлибай
+Минлибанат
+Минлибану
+Минлибаян
+Минлибика
+Минливали
+Минлигази
+Минлигазим
+Минлигайша
+Минлигали
+Минлигалим
+Минлигарей
+Минлигариф
+Минлигарифа
+Минлигата
+Минлигаян
+Минлигул
+Минлигусман
+Минлизагит
+Минлизада
+Минлизаки
+Минлизиган
+Минлизифа
+Минлизуфар
+Минликай
+Минликамал
+Минликарима
+Минлимулла
+Минлимухамет
+Минлиниса
+Минлинур
+Минлиразия
+Минлирахман
+Минлирашида
+Минлирашит
+Минлисабира
+Минлисагида
+Минлисагир
+Минлисагит
+Минлисаит
+Минлисалим
+Минлисафа
+Минлислам
+Минлисылу
+Минлифан
+Минлифарит
+Минлихайдар
+Минлихан
+Минлихания
+Минлиханя
+Минлихарис
+Минлихаят
+Минлиямал
+Минлиян
+Минлияр
+Минна
+Миннигуль
+Минниса
+Миннияр
+Миннулла
+Миннур
+Миннури
+Миннурия
+Минсабира
+Минсагида
+Минсагира
+Минсаит
+Минсалим
+Минсара
+Минсаф
+Минсафа
+Минсафитдин
+Минслу
+Минсултан
+Минсылу
+Минтагир
+Минтагира
+Минтахир
+Минтимер
+Минтимир
+Минулла
+Минхабира
+Миншаих
+Миншариф
+Миншарифа
+Миньямал
+Миньян
+Миньяр
+Мир
+Мира
+Мирабелла
+Мирабель
+Мираида
+Мирай
+Мирали
+Миралиакбар
+Миралина
+Миралия
+Мирам
+Миран
+Мирана
+Миранда
+Мирас
+Мирасбай
+Мирасгат
+Мираслав
+Мираслава
+Мират
+Миратхан
+Мирахмет
+Мирбек
+Мирбулат
+Мирвали
+Миргазам
+Миргази
+Миргазиз
+Миргазим
+Миргазиян
+Миргали
+Миргалим
+Миргани
+Миргарай
+Миргариф
+Миргаяз
+Миргаян
+Мирель
+Миржан
+Мирза
+Мирзаахмет
+Мирзабай
+Мирзабек
+Мирзабулат
+Мирзавали
+Мирзагали
+Мирзагаллям
+Мирзагаян
+Мирзагит
+Мирзазян
+Мирзакамал
+Мирзамухаммет
+Мирзанур
+Мирзасаит
+Мирзасалих
+Мирзахан
+Мирзаханиф
+Мирзахасан
+Мирзахит
+Мирзашаих
+Мирзаян
+Мириам
+Миркадыр
+Миркамал
+Миркасим
+Мирлан
+Мирон
+Мироншох
+Мирослав
+Мирослава
+Мирра
+Мирсабит
+Мирсагит
+Мирсадык
+Мирсаид
+Мирсаит
+Мирсалим
+Мирсалих
+Мирсалия
+Мирсаф
+Мирсафа
+Мирсаяп
+Мирсаяф
+Миртимер
+Миртимир
+Мирфаиз
+Мирфатых
+Мирхабиб
+Мирхажи
+Мирхайдар
+Мирхан
+Мирхатим
+Мирхатип
+Мирхафиз
+Миршаих
+Мирьям
+Мирьян
+Мирэль
+Мисад
+Мисбах
+Мисбахетдин
+Мисиди
+Мисир
+Мисирбий
+Мисост
+Мисхуд
+Мита
+Митика
+Митрий
+Митрофан
+Миту
+Мифодий
+Мифтах
+Мифтахетдин
+Мифтахитдин
+Мифтахулла
+Михаил
+Михалина
+Михаэла
+Михаэль
+Михей
+Михелина
+Михран
+Михримах
+Мичийэ
+Мичийээнэ
+Мичил
+Миша
+Мишель
+Мия
+Миян
+Мияна
+Миясат
+Мияссар
+Мкртич
+Млада
+Мовсар
+Мовсес
+Модест
+Моза
+Моисей
+Моко
+Мона
+Монгун
+Моника
+Монте
+Монтэ
+Мория
+Моталлап
+Мотвей
+Мотрена
+Мохаммад
+Мохаммед
+Мохинур
+Мохира
+Мохмад
+Мохьмад
+Мстислав
+Муавия
+Муадин
+Муаед
+Муаз
+Муазин
+Муазир
+Муаллифа
+Муаминат
+Муаммар
+Муатасим
+Мубарак
+Мубаракзян
+Мубаракхан
+Мубаракша
+Мубариз
+Мубарик
+Мубин
+Мубина
+Мубинабону
+Мубинахон
+Муборак
+Мубориз
+Мугаббир
+Мугаззам
+Мугаззама
+Мугаззима
+Мугаллим
+Мугаллима
+Мугаллям
+Мугаммар
+Мугафия
+Мугаффар
+Мугашира
+Мугин
+Мугина
+Муглифа
+Мугьаммад
+Мудаббира
+Мудар
+Мударис
+Мударрис
+Мудасир
+Мудин
+Мужавир
+Мужагит
+Муждаба
+Мужип
+Муза
+Музавир
+Музагит
+Музакира
+Музаккар
+Музар
+Музарин
+Музариф
+Музафар
+Музафир
+Музаффар
+Музаффара
+Музахит
+Музачир
+Муззафар
+Музип
+Музир
+Музрач
+Муиз
+Мукарам
+Мукарама
+Мукаррам
+Мукаррама
+Мукатдам
+Мукатдима
+Муким
+Мукмин
+Мукминат
+Муксин
+Муксина
+Муктадир
+Муктасиб
+Мулид
+Муллаахмет
+Муллабай
+Муллагали
+Муллагалим
+Муллагалям
+Муллагарай
+Муллагул
+Муллазиятдин
+Муллазян
+Муллакай
+Мулланур
+Мулласалим
+Муллахан
+Муллахасан
+Муллахмет
+Муллаян
+Муллаяр
+Мулюк
+Мумин
+Мумина
+Муминат
+Мунавара
+Мунаварбикя
+Мунавир
+Муназзафа
+Мунасип
+Мунауир
+Мунзира
+Муниба
+Мунип
+Мунир
+Мунира
+Мунис
+Муниса
+Мунисахон
+Муниф
+Мунифа
+Мунко
+Мурават
+Мурад
+Мурадин
+Мурадхан
+Мурадым
+Мураз
+Мурас
+Мурасима
+Мурат
+Муратбай
+Муратбек
+Муратгали
+Муратхан
+Муратша
+Мурза
+Мурзабай
+Мурзабек
+Мурзаби
+Мурзагул
+Мурзакан
+Мурзахан
+Мурид
+Мурит
+Мурод
+Муроджон
+Мурсал
+Мурсалим
+Мурсалима
+Мурсалина
+Мурсиля
+Муртаза
+Муртазаали
+Муртазали
+Муртазо
+Муртай
+Муртузали
+Муршид
+Муршида
+Муршит
+Муса
+Мусаб
+Мусабай
+Мусаббиха
+Мусабек
+Мусабий
+Мусабир
+Мусавар
+Мусавара
+Мусават
+Мусаввир
+Мусавир
+Мусавира
+Мусавих
+Мусагида
+Мусагит
+Мусадик
+Мусадин
+Мусай
+Мусакай
+Мусалим
+Мусалима
+Мусалия
+Мусаллим
+Мусаллям
+Мусамира
+Мусанур
+Мусар
+Мусарбий
+Мусафир
+Мусахан
+Мусер
+Мусир
+Мусифа
+Муслим
+Муслима
+Муслимат
+Муслимахон
+Муслимбек
+Муслих
+Муслиха
+Муслихулла
+Мусо
+Мусос
+Мусса
+Мустаким
+Мустакима
+Мустафа
+Мустафар
+Мустафир
+Мустафира
+Мустафо
+Мустофо
+Мусфир
+Мусфира
+Мусхаб
+Мусъаб
+Муся
+Мута
+Мутагар
+Мутагир
+Мутагира
+Муталиб
+Муталлап
+Муталлип
+Мутахир
+Мутахира
+Мутиг
+Мутигулла
+Муфазал
+Муфаззал
+Муфаккира
+Муфаррах
+Муфарриха
+Муфида
+Муфлих
+Муфлиха
+Мухаб
+Мухаббат
+Мухад
+Мухаддис
+Мухаджир
+Мухадин
+Мухаж
+Мухажид
+Мухажир
+Мухаз
+Мухаззаба
+Мухазир
+Мухаймин
+Мухалиля
+Мухамад
+Мухамадали
+Мухамадамин
+Мухамаджон
+Мухамади
+Мухамадин
+Мухамадия
+Мухамадрасул
+Мухамадюсуф
+Мухамед
+Мухамедали
+Мухамедхан
+Мухамет
+Мухаметбай
+Мухаметвали
+Мухаметгали
+Мухаметгата
+Мухаметдин
+Мухаметкул
+Мухаметмурза
+Мухаметнур
+Мухаметсалим
+Мухаметсафа
+Мухаметхажи
+Мухаметхан
+Мухаметша
+Мухаметшарип
+Мухаметьян
+Мухаммад
+Мухаммадазиз
+Мухаммадали
+Мухаммадамин
+Мухаммадамир
+Мухаммадариф
+Мухаммадаюб
+Мухаммадбилол
+Мухаммадгаджи
+Мухаммадджон
+Мухаммаддиёр
+Мухаммаджон
+Мухаммадзиё
+Мухаммади
+Мухаммадий
+Мухаммадимрон
+Мухаммадисо
+Мухаммадкамиль
+Мухаммадкарим
+Мухаммадкодир
+Мухаммадмусо
+Мухаммадмустафо
+Мухаммаднаби
+Мухаммаднур
+Мухаммадрасул
+Мухаммадризо
+Мухаммадсаид
+Мухаммадсалах
+Мухаммадсалих
+Мухаммадсафо
+Мухаммадсиддик
+Мухаммадсодик
+Мухаммадсолех
+Мухаммадсолих
+Мухаммадумар
+Мухаммадусмон
+Мухаммадхабиб
+Мухаммадхон
+Мухаммадчон
+Мухаммадшариф
+Мухаммадшафи
+Мухаммадюнус
+Мухаммадюсуф
+Мухаммадясин
+Мухаммадёсин
+Мухаммат
+Мухаммед
+Мухаммедали
+Мухаммет
+Мухамметабрар
+Мухамметамин
+Мухамметвали
+Мухамметвафа
+Мухамметгазиз
+Мухамметгали
+Мухамметгалим
+Мухамметгата
+Мухамметгаяз
+Мухамметгаян
+Мухамметзаки
+Мухамметзян
+Мухамметнаби
+Мухамметнур
+Мухамметрахим
+Мухамметсабир
+Мухамметсафа
+Мухамметулла
+Мухамметфаиз
+Мухамметхабир
+Мухамметхан
+Мухамметханиф
+Мухамметхасан
+Мухамметша
+Мухамметшариф
+Мухара
+Мухарбек
+Мухарби
+Мухарбий
+Мухарлям
+Мухаррам
+Мухаррама
+Мухарям
+Мухасима
+Мухассана
+Мухбира
+Мухетдин
+Мухи
+Мухиб
+Мухиба
+Мухибджамал
+Мухибкамал
+Мухибулла
+Мухип
+Мухитдин
+Мухлис
+Мухлиса
+Мухсин
+Мухсина
+Мухтабар
+Мухтар
+Мухтарам
+Мухтарама
+Мухтария
+Мухтасиб
+Мухьаммад
+Муцал
+Мушарафа
+Мушариф
+Мушарифа
+Мушахид
+Мушег
+Муштарий
+Муштафар
+Муъмина
+Муъминат
+Муьмин
+Муьмина
+Мхитар
+Мырза
+Мырзабек
+Мырзайым
+Мырзакул
+Мэргэн
+Мэри
+Мээрим
+Мяхди
+Мёлек
+Мёлехан
+Наала
+Наби
+Набиахмет
+Набиб
+Набиба
+Набий
+Набиль
+Набиля
+Набир
+Набира
+Набиулла
+Набихан
+Набиюлла
+Набияр
+Наваз
+Навалия
+Навруз
+Нагай
+Нагиз
+Нагиза
+Нагим
+Нагима
+Нагимзян
+Нагимулла
+Нагимхан
+Нагимьян
+Нагман
+Наго
+Нагураш
+Надар
+Надежда
+Наджар
+Наджиба
+Наджметдин
+Наджми
+Надига
+Надим
+Надима
+Надина
+Надир
+Надира
+Надирбай
+Надиргул
+Надирхан
+Надирша
+Надия
+Надияхан
+Надмит
+Надыр
+Нажабат
+Нажават
+Нажар
+Нажиба
+Нажип
+Нажия
+Нажми
+Нажмитдин
+Нажмудин
+Нажмутдин
+Наза
+Назакат
+Назалия
+Назар
+Назарбай
+Назарбек
+Назаргали
+Назарий
+Назария
+Назафат
+Назбийке
+Назбика
+Назгуль
+Назели
+Назиб
+Назиба
+Назигуль
+Назий
+Назик
+Назиль
+Назиля
+Назим
+Назима
+Назимбай
+Назимбек
+Назимхан
+Назип
+Назир
+Назира
+Назират
+Назирбий
+Назирзян
+Назиря
+Назиф
+Назифа
+Назифат
+Назих
+Назиха
+Назич
+Назия
+Назли
+Назлихан
+Назлия
+Назлы
+Назлыгуль
+Назлым
+Назметдин
+Назокат
+Назрин
+Назрун
+Назсылу
+Наиб
+Наида
+Наил
+Наила
+Наиле
+Наиль
+Наиля
+Наим
+Наима
+Наина
+Наир
+Наира
+Наири
+Найдан
+Найле
+Найля
+Найман
+Найра
+Найыпхан
+Найыр
+Наки
+Накиба
+Накибулла
+Накип
+Накия
+Накулан
+Накура
+Накут
+Наланда
+Налджан
+Налжан
+Налий
+Налия
+Налмас
+Налмасхан
+Наль
+Нальбий
+Нальмес
+Намдар
+Намжил
+Намзырай
+Намыына
+Нана
+Нанак
+Нане
+Наний
+Нану
+Нанык
+Нанэ
+Наоми
+Написат
+Нара
+Наран
+Нарана
+Нарат
+Нарбек
+Нарбулат
+Наргиз
+Наргиза
+Наргис
+Наргуль
+Наре
+Нарек
+Нарзан
+Нарзифа
+Нарида
+Нарим
+Нарима
+Нариман
+Нарин
+Нарина
+Нарине
+Наринэ
+Нариса
+Нария
+Нарияна
+Наркас
+Наркиза
+Наркис
+Нармин
+Нармина
+Нарт
+Нартбий
+Нартшао
+Нарыйа
+Нарыйаана
+Нарыч
+Нарэ
+Насиб
+Насиба
+Насибат
+Насибулла
+Насиля
+Насим
+Насима
+Насип
+Насир
+Насира
+Насиф
+Насифа
+Насифулла
+Насих
+Насиха
+Насия
+Насрен
+Насритдин
+Насрулла
+Настасия
+Настасья
+Насыр
+Насырбай
+Насырулла
+Насыръян
+Натали
+Наталина
+Наталия
+Наталья
+Наталя
+Натан
+Натаниэль
+Наташа
+Натбий
+Натела
+Нателла
+Натиг
+Натриб
+Наук
+Наум
+Наурбек
+Наурбий
+Науруз
+Наурузбай
+Наурузбек
+Наурузгали
+Наурузхан
+Наурыз
+Науса
+Науфиля
+Науширван
+Нафасат
+Нафига
+Нафигулла
+Нафий
+Нафик
+Нафиль
+Нафиля
+Нафис
+Нафиса
+Нафисат
+Нафися
+Нафица
+Нафия
+Нафкат
+Нафо
+Нахар
+Нахарбану
+Нахман
+Нахо
+Нахупш
+Начын
+Наш
+Нашир
+Нашрудин
+Нашурдин
+Нашхо
+Наяна
+Нвер
+Нева
+Некруз
+Нели
+Нелла
+Нелли
+Нелля
+Нельсон
+Неля
+Ненила
+Неонила
+Нерсес
+Нестер
+Нестор
+Нефед
+Нефес
+Нея
+Ниаль
+Нигар
+Нигина
+Нигмат
+Нигматбай
+Нигматдин
+Нигматкул
+Нигматулла
+Нигматхан
+Нигматьян
+Нигора
+Нигяр
+Ниджат
+Низам
+Низаметдин
+Низами
+Низамитдин
+Низамия
+Ник
+Ника
+Никандр
+Никанор
+Никас
+Никит
+Никита
+Никифор
+Нико
+Никодим
+Никола
+Николаи
+Николай
+Николас
+Николетта
+Николина
+Николоз
+Николь
+Никон
+Никонор
+Никос
+Нил
+Нила
+Нилай
+Нилуфар
+Нилюфер
+Нима
+Нимгир
+Нина
+Нинель
+Нинила
+Нино
+Нинэль
+Нионила
+Ниса
+Нисанур
+Нисо
+Ниссо
+Нихад
+Нихан
+Нихат
+Нишан
+Нишанбай
+Нияз
+Ниязбай
+Ниязбек
+Ниязгали
+Ниязгул
+Ниязия
+Нияра
+Ниятбай
+Ниятша
+Новруз
+Ногай
+Нодар
+Нодира
+Нозанин
+Нозима
+Нозия
+Ноила
+Ной
+Номин
+Номина
+Номто
+Нона
+Нонна
+Нора
+Норайр
+Норбу
+Норжима
+Норик
+Носа
+Нох
+Ноха
+Ноян
+Нояна
+Нугай
+Нугайбек
+Нугман
+Нуза
+Нузула
+Нуна
+Нуне
+Нур
+Нура
+Нурагзам
+Нураддин
+Нурадил
+Нурай
+Нурайым
+Нурали
+Нуралий
+Нуран
+Нурана
+Нурания
+Нурат
+Нурахат
+Нурахмет
+Нурбай
+Нурбакыт
+Нурбанат
+Нурбану
+Нурбек
+Нурбиби
+Нурбий
+Нурбийке
+Нурбика
+Нурбикя
+Нурбол
+Нурболот
+Нурбону
+Нурбулат
+Нурбуляк
+Нурвали
+Нурвафа
+Нурвахит
+Нурвиль
+Нургази
+Нургазиз
+Нургазиза
+Нургазима
+Нургайша
+Нургалей
+Нургали
+Нургалий
+Нургалим
+Нургалима
+Нургаллям
+Нургани
+Нургарай
+Нургата
+Нургаяз
+Нургаян
+Нургелди
+Нургиз
+Нургиза
+Нургизар
+Нургуль
+Нурдавлет
+Нурдан
+Нурдания
+Нурджамал
+Нурджихан
+Нурдида
+Нурдин
+Нурдия
+Нурдоолот
+Нурел
+Нурель
+Нуретдин
+Нуржан
+Нуржаннат
+Нуржигит
+Нурзагит
+Нурзада
+Нурзалия
+Нурзат
+Нурзахит
+Нурзиган
+Нурзида
+Нурзиль
+Нурзиля
+Нурзифа
+Нурзия
+Нури
+Нуриахмет
+Нурибай
+Нурибек
+Нуригуль
+Нуриддин
+Нуридин
+Нурие
+Нурий
+Нурикамал
+Нурилхак
+Нуриман
+Нуримардан
+Нуриниса
+Нурис
+Нуриса
+Нурислам
+Нурит
+Нуритдин
+Нурихан
+Нурия
+Нурияз
+Нурияздан
+Нуриямал
+Нурият
+Нуркай
+Нуркелди
+Нуркыз
+Нурлан
+Нурлана
+Нурлибай
+Нурлигаян
+Нурлыбанат
+Нурлыбану
+Нурлыбаян
+Нурлыгайша
+Нурлыгали
+Нурлыгарай
+Нурлыгаян
+Нурлыхан
+Нурмагомед
+Нурмуаед
+Нурмухамед
+Нурмухамет
+Нурмухаммад
+Нурмухаммед
+Нурмухаммет
+Нурона
+Нурпери
+Нурсагадат
+Нурсагдия
+Нурсагида
+Нурсаит
+Нурсайда
+Нурсалим
+Нурсалима
+Нурсалия
+Нурсана
+Нурсания
+Нурсат
+Нурсаф
+Нурсиба
+Нурсида
+Нурсиля
+Нурсина
+Нурсия
+Нурсият
+Нурсултан
+Нурсултания
+Нурсылу
+Нуртдин
+Нуртилек
+Нурудин
+Нурулла
+Нурулло
+Нурфаиз
+Нурфания
+Нурфат
+Нурфая
+Нурфаяз
+Нурфиза
+Нурфия
+Нурхабиб
+Нурхак
+Нурхаким
+Нурхакима
+Нурхалим
+Нурхалит
+Нурхамит
+Нурхан
+Нурханиф
+Нурхасан
+Нурхатип
+Нурхая
+Нурхаят
+Нурчолпон
+Нуршагит
+Нуршат
+Нурьямал
+Нурьян
+Нурьяна
+Нурэл
+Нурэль
+Нурэмир
+Нусайба
+Нусейба
+Нусрат
+Нусратулла
+Нута
+Нутфулла
+Нуфуза
+Нух
+Нуцалай
+Нуша
+Ньургуйаана
+Ньургун
+Нэлла
+Нэлли
+Нэлля
+Нэля
+Нэркэс
+Нюра
+Нюрджан
+Нюржан
+Нюрхан
+Ованес
+Овик
+Овсеп
+Оганес
+Оганнес
+Огурли
+Огурлу
+Одина
+Одинахон
+Одисей
+Одиссей
+Озан
+Озермег
+Озермес
+Озир
+Озода
+Оиша
+Оишахон
+Ойбек
+Ойгор
+Ойиша
+Ойша
+Ойшабону
+Ойшахон
+Океана
+Оксана
+Октавия
+Октай
+Октябрина
+Олга
+Олег
+Олеся
+Оливер
+Оливия
+Олий
+Олимпиада
+Олимпия
+Олия
+Олча
+Олчей
+Ольга
+Омар
+Омарасхаб
+Омер
+Омина
+Оминахон
+Омурбек
+Она
+Онзагай
+Онур
+Оомат
+Опан
+Оразай
+Оргаадай
+Орест
+Орлан
+Орнелла
+Ортабай
+Ортай
+Орусбий
+Орхан
+Ос
+Осинот
+Осип
+Осия
+Осияхон
+Осиё
+Осиёхон
+Оскар
+Осман
+Осмон
+Остап
+Отабек
+Отар
+Отто
+Оттук
+Отчугаш
+Офелия
+Очир
+Очур
+Оэлун
+Оюна
+Оюу
+Оятулло
+Паварис
+Павел
+Павил
+Павла
+Павлин
+Павлина
+Паго
+Пазий
+Пазлий
+Пак
+Пака
+Пакиза
+Палагея
+Палагия
+Палина
+Палогея
+Панкрат
+Пантелей
+Пантелеймон
+Пантилей
+Панфил
+Папуржан
+Параскева
+Парасковия
+Парасковья
+Парасковя
+Парвиз
+Парвиза
+Парвина
+Пари
+Парижан
+Париза
+Паризода
+Парика
+Париноз
+Паросковья
+Парфен
+Парфирий
+Пасихат
+Пат
+Пата
+Патима
+Патимат
+Патина
+Патия
+Патрик
+Патрина
+Патрисия
+Патриция
+Паулина
+Пахом
+Паша
+Пашажан
+Пашахан
+Пашхан
+Пелагея
+Пелагия
+Пелогея
+Пелогия
+Пераскева
+Перасковия
+Перасковья
+Пересвет
+Пери
+Перизат
+Персей
+Петер
+Петимат
+Петмат
+Петор
+Петр
+Петра
+Петро
+Петрос
+Пилагея
+Пилагия
+Пилжан
+Пилогея
+Пилогия
+Пимен
+Пимон
+Питу
+Платон
+Платонида
+Повел
+Полагея
+Полад
+Поликарп
+Полина
+Полинария
+Полинарья
+Поллианна
+Пологея
+Пология
+Порасковья
+Поросковья
+Порфирий
+Потап
+Пракофий
+Праскева
+Прасковия
+Прасковья
+Прасковя
+Прокоп
+Прокопий
+Прокофий
+Просковия
+Просковья
+Прохор
+Псабида
+Пута
+Пшибий
+Пшизабий
+Пшикан
+Пшимахо
+Пятимат
+Пётр
+Раатбек
+Рабадан
+Рабазан
+Раббания
+Раббия
+Рабдан
+Рабиа
+Рабиат
+Рабиб
+Рабига
+Рабигат
+Рабит
+Рабия
+Рабият
+Раван
+Равганият
+Равза
+Равзанат
+Равзат
+Равида
+Равил
+Равиль
+Равиля
+Равис
+Равия
+Равшан
+Рагиба
+Рагибат
+Рагида
+Рагиля
+Рагим
+Рагимат
+Рагина
+Рагип
+Рагит
+Рагиф
+Рагия
+Рагна
+Рагнар
+Рада
+Радалина
+Радалия
+Радамир
+Радель
+Радж
+Раджаб
+Раджана
+Раджап
+Радий
+Радик
+Радиля
+Радим
+Радима
+Радимир
+Радимхан
+Радина
+Радион
+Радис
+Радиса
+Радислав
+Радислава
+Радиф
+Радифа
+Радия
+Радмил
+Радмила
+Радмилла
+Радмиль
+Радмир
+Радмира
+Радна
+Радомир
+Радомира
+Радослав
+Радослава
+Радэль
+Ражаб
+Ражап
+Разак
+Разалина
+Разалия
+Разап
+Разат
+Разет
+Разетдин
+Разида
+Разие
+Разиль
+Разиля
+Разим
+Разима
+Разин
+Разина
+Разиф
+Разифа
+Разиха
+Разия
+Разият
+Размик
+Раида
+Раиза
+Раил
+Раиль
+Раиля
+Раим
+Раима
+Раимбек
+Раина
+Раис
+Раиса
+Раисат
+Раисия
+Раисса
+Раисья
+Раися
+Раиф
+Раифа
+Райан
+Райана
+Райганат
+Раййона
+Райлина
+Райля
+Райман
+Райназ
+Райнур
+Района
+Райса
+Райсат
+Райся
+Райфа
+Райхан
+Райхана
+Райханат
+Райхангуль
+Райхона
+Райян
+Райяна
+Райёна
+Райёнахон
+Ракай
+Ракиба
+Ракига
+Ракип
+Ракия
+Ракият
+Раксана
+Ралан
+Ралина
+Ралиф
+Ралия
+Рамадан
+Рамазан
+Рамазон
+Рамал
+Раман
+Рамета
+Рамзан
+Рамзес
+Рамзи
+Рамзиль
+Рамзиля
+Рамзис
+Рамзия
+Рами
+Рамиз
+Рамиза
+Рамил
+Рамила
+Рамилия
+Рамиль
+Рамиля
+Рамин
+Рамина
+Рамир
+Рамис
+Рамия
+Рамнат
+Рамуза
+Ранелия
+Ранель
+Ранета
+Ранида
+Раниза
+Ранил
+Раниль
+Раниля
+Ранис
+Раниф
+Рания
+Раннур
+Рано
+Ранэлия
+Ранэль
+Ранэля
+Расида
+Расиль
+Расиля
+Расим
+Расима
+Расимзян
+Расина
+Расиф
+Расифа
+Расих
+Расиха
+Расмина
+Расмия
+Расул
+Расулбек
+Расуль
+Расуля
+Ратибор
+Ратимир
+Ратислав
+Ратмир
+Раудия
+Рауза
+Раузат
+Рауил
+Раул
+Рауль
+Рауф
+Рауфа
+Раушан
+Раушана
+Раушанбек
+Раушания
+Раушат
+Рафагат
+Рафаел
+Рафаил
+Рафаиль
+Рафак
+Рафат
+Рафаэл
+Рафаэлла
+Рафаэль
+Рафига
+Рафигулла
+Рафида
+Рафик
+Рафил
+Рафиль
+Рафиля
+Рафина
+Рафис
+Рафиса
+Рафит
+Рафия
+Рафкат
+Раффи
+Рафхат
+Рахай
+Рахиба
+Рахила
+Рахиль
+Рахиля
+Рахим
+Рахима
+Рахимабану
+Рахимат
+Рахимбай
+Рахимбек
+Рахимгарай
+Рахимгул
+Рахимзян
+Рахимкул
+Рахимнур
+Рахимулла
+Рахимхан
+Рахимьян
+Рахимя
+Рахина
+Рахинат
+Рахия
+Рахман
+Рахмангул
+Рахмат
+Рахматулла
+Рахматулло
+Рахмет
+Рахметхан
+Рахмия
+Рахмон
+Рашад
+Рашана
+Рашат
+Рашид
+Рашида
+Рашидат
+Рашидхан
+Рашидя
+Рашит
+Рашия
+Рая
+Раяз
+Раян
+Раяна
+Раят
+Раёна
+Реана
+Ребекка
+Реваз
+Реваль
+Реван
+Ревекка
+Регина
+Резван
+Резеда
+Резида
+Резуан
+Рейнгольд
+Рейхан
+Рейян
+Ремзи
+Рена
+Реналия
+Реналь
+Ренарт
+Ренас
+Ренат
+Рената
+Ресуль
+Рефат
+Решат
+Реян
+Реяна
+Рза
+Риан
+Риана
+Рианна
+Рива
+Риваль
+Ригина
+Рида
+Ридаль
+Ридан
+Ридван
+Риза
+Ризаитдин
+Ризак
+Ризаля
+Ризат
+Ризатдин
+Ризаэтдин
+Ризван
+Ризвон
+Ризида
+Ризиля
+Рим
+Рима
+Риман
+Римма
+Римнур
+Рина
+Ринад
+Риназ
+Риналия
+Риналь
+Ринара
+Ринас
+Ринат
+Рината
+Ринчин
+Рипсиме
+Рисалат
+Рисаля
+Рита
+Ритта
+Риф
+Рифа
+Рифат
+Рифгат
+Рифкат
+Рифмир
+Рифнур
+Рифхат
+Рихард
+Ричард
+Ришат
+Рияз
+Рияна
+Ркия
+Роббия
+Роберт
+Робиа
+Робия
+Робияхон
+Ровзат
+Ровшан
+Родион
+Родислав
+Родомир
+Родослав
+Роза
+Розагуль
+Розали
+Розалина
+Розалия
+Розана
+Розанна
+Рози
+Розия
+Роксалана
+Роксана
+Роксолана
+Ролан
+Роланд
+Рома
+Ромазан
+Роман
+Ромиз
+Рональд
+Рони
+Ростислав
+Ростислава
+Рохила
+Роял
+Рубен
+Рубик
+Рубин
+Рубина
+Рувайда
+Рувим
+Ругайя
+Ругая
+Рудик
+Рудольф
+Руза
+Рузалина
+Рузалия
+Рузаль
+Рузана
+Рузанна
+Рузи
+Рузигуль
+Рузида
+Рузил
+Рузила
+Рузиль
+Рузиля
+Рузина
+Рузия
+Рукайя
+Рукая
+Рукия
+Рукият
+Румайса
+Румайсо
+Румейса
+Румиль
+Румиля
+Румина
+Румиса
+Румия
+Рунис
+Русалина
+Руслан
+Руслана
+Русланбек
+Рустам
+Рустамбай
+Рустамбек
+Рустамхан
+Рустем
+Рустембек
+Рустэм
+Рустям
+Руфайда
+Руфат
+Руфиль
+Руфиля
+Руфима
+Руфина
+Руфис
+Руфия
+Руфь
+Рухилбаян
+Рухия
+Рухсора
+Рухшона
+Рушан
+Рушана
+Рушания
+Рушат
+Руё
+Рысай
+Рысбай
+Рысбика
+Рыскильди
+Рыскужа
+Рыскул
+Рысмухамет
+Рысьян
+Рэм
+Ряшидя
+Ряшит
+Саад
+Саада
+Саадат
+Саадия
+Саадула
+Саак
+Саба
+Сабай
+Сабан
+Сабанай
+Сабанак
+Сабангул
+Сабига
+Сабида
+Сабикамал
+Сабила
+Сабиля
+Сабина
+Сабинахон
+Сабир
+Сабира
+Сабирзян
+Сабирхан
+Сабирьян
+Сабит
+Сабитзян
+Сабитулла
+Сабих
+Сабиха
+Сабихан
+Сабият
+Сабри
+Сабрие
+Сабрина
+Сабринахон
+Сабрия
+Сабур
+Сава
+Саваш
+Савва
+Савватий
+Саввелий
+Савда
+Савдат
+Савелий
+Савелия
+Савиля
+Савия
+Савр
+Сагадат
+Сагадатбану
+Сагадатбика
+Сагадатбикя
+Сагадатгарай
+Сагадатгарей
+Сагадаткирей
+Сагадатнур
+Сагадатулла
+Сагадатхан
+Сагади
+Сагатгерий
+Сагда
+Сагдана
+Сагданур
+Сагдиана
+Сагдия
+Сагдулла
+Сагдуна
+Сагид
+Сагида
+Сагидабану
+Сагидулла
+Сагинбай
+Сагир
+Сагира
+Сагит
+Сагитбай
+Сагитхан
+Сагитьян
+Сагия
+Саглай
+Саглара
+Садам
+Садаф
+Саддам
+Садиа
+Садида
+Садик
+Садика
+Садира
+Садиса
+Садия
+Садияхон
+Садри
+Садрислам
+Садритдин
+Садрудин
+Садрутдин
+Садык
+Садыр
+Сажида
+Сазида
+Саиба
+Саибат
+Саид
+Саида
+Саидакбар
+Саидамир
+Саидат
+Саидахмад
+Саидахон
+Саидбек
+Саиджон
+Саидмухаммад
+Саидумар
+Саиля
+Саима
+Саимат
+Саина
+Саира
+Саит
+Саитахмет
+Саитбай
+Саитбаттал
+Саитбек
+Саитбурхан
+Саитвали
+Саитгази
+Саитгали
+Саитгарай
+Саитгарей
+Саитгафар
+Саитзян
+Саиткирей
+Саиткужа
+Саиткул
+Саитмухаммет
+Саитнур
+Саитхан
+Сайаан
+Сайаана
+Сайаара
+Сайгибат
+Сайгид
+Сайда
+Сайдабану
+Сайдагуль
+Сайдам
+Сайданур
+Сайдар
+Сайдат
+Сайдаш
+Сайдельджамал
+Сайдиль
+Сайдулла
+Сайдуллах
+Сайид
+Сайидмухаммад
+Сайкал
+Сайляна
+Сайма
+Саймон
+Сайнаара
+Сайнара
+Сайпудин
+Сайрам
+Сайран
+Сайфелислам
+Сайфельмулюк
+Сайфетдин
+Сайфи
+Сайфитдин
+Сайфихан
+Сайфия
+Сайфуддин
+Сайфула
+Сайфулла
+Сайфуллах
+Сайфуллахь
+Сайфулло
+Сайфуллох
+Сайфульмулюк
+Сайфутдин
+Сайхан
+Сайхат
+Сайын
+Сайыына
+Сайяр
+Сайёра
+Сакин
+Сакина
+Сакинат
+Салават
+Салаватулла
+Саладин
+Салам
+Саламат
+Саламбек
+Саламон
+Салах
+Салахаддин
+Салахадин
+Салахетдин
+Салахиддин
+Салахитдин
+Салахия
+Салахуддин
+Салахудин
+Салгал
+Салех
+Салигаскар
+Салим
+Салима
+Салимабану
+Салимат
+Салимбай
+Салимбек
+Салимгарай
+Салимгарей
+Салимгерий
+Салимзян
+Салимулла
+Салимхан
+Салимьян
+Салина
+Салиса
+Салих
+Салиха
+Салихан
+Салихат
+Салихбек
+Салихзян
+Салихкул
+Салихмурза
+Салиххан
+Салихьян
+Салия
+Салман
+Салмон
+Саломея
+Саломия
+Салохиддин
+Салтанат
+Сальва
+Сальви
+Сальма
+Сальман
+Сальмира
+Сальсабиль
+Салям
+Самаана
+Самад
+Самандар
+Самания
+Саманта
+Самар
+Самара
+Самарбай
+Самария
+Самархан
+Самат
+Самата
+Самая
+Самба
+Самбажык
+Самбу
+Самвел
+Самдан
+Самед
+Самелия
+Сами
+Самиг
+Самига
+Самигулла
+Самида
+Самий
+Самийя
+Самик
+Самима
+Самин
+Самина
+Самир
+Самира
+Самирбек
+Самиржон
+Самирхан
+Самит
+Самих
+Самиха
+Самия
+Самрат
+Самсикамал
+Самсикамар
+Самсинахар
+Самсиниса
+Самсинур
+Самсия
+Самсиямал
+Самсон
+Самуил
+Самуэль
+Сана
+Санаайа
+Санал
+Санам
+Санан
+Санат
+Санбай
+Сандаара
+Сандал
+Сандан
+Санджи
+Сандра
+Сандро
+Сандугас
+Санжар
+Санжарбек
+Санжи
+Сани
+Санига
+Сание
+Саний
+Санир
+Санита
+Санифа
+Сания
+Саниябану
+Санияр
+Саният
+Санчай
+Санчир
+Саньяр
+Санэль
+Саодат
+Сапий
+Сапият
+Сара
+Сарабий
+Саражан
+Сараждин
+Сарай
+Сараль
+Сарана
+Сарат
+Саратина
+Сарбай
+Сарби
+Сарбигуль
+Сарбиназ
+Сарбиниса
+Сарбиямал
+Сарбулат
+Сарвар
+Сарварбек
+Сарваретдин
+Сарвария
+Сарват
+Сарви
+Сарвикамал
+Сарвиназ
+Сарвиноз
+Саргис
+Саргылана
+Сардаана
+Сардана
+Сардар
+Сардарбек
+Сардария
+Сардор
+Сардорбек
+Саригаскар
+Сарима
+Сарина
+Сария
+Сариябану
+Сарият
+Саркис
+Сармадия
+Сарман
+Сармат
+Саро
+Сарра
+Сарула
+Саруул
+Сархан
+Сары
+Сарыал
+Сарыбай
+Сарыбаш
+Сарыбий
+Сарьян
+Сарюна
+Саса
+Сасан
+Сасяк
+Сасян
+Сатай
+Сатаней
+Сатгали
+Сатеник
+Сати
+Сатига
+Сатира
+Сатлык
+Саттар
+Саттархан
+Сатура
+Сатыбал
+Сатыбалды
+Саубан
+Саубана
+Сауда
+Сауле
+Саура
+Сауса
+Сафа
+Сафагарай
+Сафагарей
+Сафар
+Сафарали
+Сафарбай
+Сафарбек
+Сафарбий
+Сафарбика
+Сафаргали
+Сафаргарай
+Сафаргул
+Сафарзян
+Сафария
+Сафи
+Сафида
+Сафие
+Сафийа
+Сафийя
+Сафикан
+Сафина
+Сафиназ
+Сафинур
+Сафира
+Сафиулла
+Сафия
+Сафиянур
+Сафият
+Сафияхон
+Сафлина
+Сафназ
+Сафраил
+Сафрон
+Сафуан
+Сафуангали
+Сафудин
+Сафура
+Сахаайа
+Сахаб
+Сахабетдин
+Сахаби
+Сахамин
+Сахап
+Сахар
+Сахау
+Сахи
+Сахиб
+Сахиба
+Сахибетдин
+Сахиля
+Сахина
+Сахип
+Сахипгарай
+Сахипгарей
+Сахипджамал
+Сахипзян
+Сахипкамал
+Сахипкирей
+Сахипъямал
+Сахира
+Сахиулла
+Сахия
+Сацита
+Саъдия
+Саядулла
+Саян
+Саяна
+Саяп
+Саяр
+Саяра
+Саяргали
+Саят
+Саяф
+Саях
+Саёра
+Света
+Светлана
+Светозар
+Светозара
+Светослав
+Светослава
+Святогор
+Святозар
+Святослав
+Святослава
+Себастьян
+Себила
+Севак
+Севара
+Севастиан
+Севастьян
+Севастьяна
+Севги
+Севда
+Север
+Северин
+Северина
+Северьян
+Севил
+Севилия
+Севиль
+Севилья
+Севиля
+Севиндж
+Севинч
+Седа
+Сезим
+Сезимай
+Сеит
+Сеймур
+Сейпу
+Сейран
+Сейфулла
+Сейфуллах
+Секлетинья
+Селена
+Селиверст
+Селим
+Селима
+Селимат
+Селиме
+Селимхан
+Селин
+Селина
+Сельма
+Сема
+Семен
+Семён
+Сенан
+Сенги
+Серафим
+Серафима
+Сервер
+Сергей
+Сергек
+Сергий
+Сердар
+Серж
+Серик
+Серофима
+Серёжа
+Сеф
+Сиана
+Сиара
+Сибагат
+Сибагатулла
+Сибай
+Сибатулла
+Сибгат
+Сибгатулла
+Сибель
+Сибяр
+Сибярбика
+Сиддик
+Сидика
+Сидор
+Сидрат
+Сиксанбай
+Силантий
+Силина
+Силуан
+Сильва
+Сильвестр
+Сильвия
+Сима
+Симен
+Симеон
+Симон
+Симона
+Синан
+Сино
+Сираж
+Сиражи
+Сиражитдин
+Сиражия
+Сиражудин
+Сиражутдин
+Сиразетдин
+Сиразия
+Сирай
+Сирануш
+Сиратулло
+Сирафима
+Сирбай
+Сиргали
+Сирень
+Сирин
+Сирина
+Сисамбай
+Ситара
+Ситдик
+Ситора
+Сиуаз
+Сихат
+Сихатгерий
+Сиябика
+Сиядат
+Сияна
+Сияра
+Сиёвуш
+Слава
+Славик
+Славяна
+Смак
+Смбат
+Снежана
+Снежанна
+Собир
+Согдиана
+Содном
+Сожида
+Сойжина
+Сокина
+Сократ
+Солбон
+Солех
+Солеха
+Солих
+Солиха
+Солихабегим
+Солихабону
+Солихахон
+Солмаз
+Солман
+Соломея
+Соломия
+Соломон
+Соломонида
+Солтан
+Солтанбек
+Солтанмурат
+Солтанмурза
+Солтанхамит
+Сона
+Сонам
+Сония
+Соният
+Соня
+Сора
+Сорбон
+Соро
+Соруктуг
+Сослан
+Сосран
+Сосруко
+Сотта
+Софа
+Софи
+Софико
+Софина
+София
+Софият
+Софияхон
+Софрон
+Софья
+Сохиба
+Соёл
+Спартак
+Спиридон
+Ставр
+Сталина
+Станислав
+Станислава
+Стас
+Стелла
+Степан
+Степанида
+Степонида
+Стефан
+Стефани
+Стефанида
+Стефания
+Стивен
+Стипан
+Стипанида
+Стэлла
+Стэфан
+Стэфания
+Суайбат
+Суак
+Суанда
+Субай
+Субар
+Суббух
+Суббуха
+Субедей
+Субудай
+Субхан
+Субхана
+Субхангул
+Субхон
+Сувайба
+Сувсана
+Сугдер
+Судайс
+Судам
+Сужират
+Суйдимхан
+Сулайман
+Сулаймон
+Суламита
+Сулде
+Сулдем
+Сулейман
+Сулим
+Сулима
+Сулиман
+Сулпан
+Султан
+Султана
+Султанай
+Султанат
+Султанахмет
+Султанбай
+Султанбану
+Султанбек
+Султанби
+Султанбика
+Султангази
+Султангали
+Султангарай
+Султангирей
+Султангужа
+Султангул
+Султание
+Султания
+Султанмурат
+Султантимир
+Султон
+Сулустаан
+Сультим
+Сумайа
+Сумаййа
+Сумайра
+Сумайя
+Сумайяхон
+Суман
+Сумая
+Сумаяхон
+Сумбуль
+Суметей
+Сумия
+Суммайя
+Суммая
+Сумьян
+Суна
+Сунагат
+Сунагатулла
+Сунай
+Сунатулло
+Сунгат
+Сунгатулла
+Сунна
+Сура
+Сурагул
+Сурай
+Сурайя
+Сураман
+Сурат
+Сурая
+Сурен
+Сурик
+Сурия
+Сурур
+Суруретдин
+Сурхай
+Сурьяна
+Сусана
+Сусанна
+Сусара
+Суфа
+Суфиахмет
+Суфия
+Суфиян
+Суфияр
+Суфият
+Суфьян
+Сухад
+Сухайб
+Сухбат
+Сухбет
+Сухроб
+Суюмбек
+Суюмбика
+Суюндек
+Суюндук
+Суюш
+Суярбика
+Суяргул
+Сыдым
+Сыймык
+Сылдыс
+Сылу
+Сылубика
+Сылубикя
+Сылукай
+Сынбулат
+Сынгыз
+Сынтимир
+Сырлыбай
+Сырма
+Сырмахан
+Сыртлан
+Сыртланбек
+Сырур
+Сэлмэг
+Сэм
+Сэмуэль
+Сэмюэль
+Сэнгэ
+Сэсэг
+Сэсэгма
+Сюзанна
+Сюйдюм
+Сюлемен
+Сюмбель
+Сюмбеля
+Сююмбикя
+Сяна
+Табарик
+Табиб
+Табиба
+Табиля
+Табип
+Табиш
+Табриз
+Табриза
+Табрия
+Тавиль
+Тавиля
+Тавифа
+Тавлияр
+Таган
+Тагар
+Тагзима
+Тагзия
+Тагинур
+Тагир
+Тагира
+Тагирзян
+Тагирхан
+Тагирьян
+Таглима
+Тагмира
+Таджетдин
+Таджиахмет
+Таджиба
+Таджибай
+Таджигул
+Таджимурат
+Таджира
+Тажи
+Тажиба
+Тажира
+Тажудин
+Тазетдин
+Тазиахмет
+Тазимурат
+Тазия
+Тазкира
+Тазкия
+Тазрат
+Таиба
+Таибат
+Таина
+Таип
+Таир
+Таира
+Таиса
+Таисия
+Таисья
+Таися
+Таифа
+Тайба
+Тайиба
+Таймас
+Таймасхан
+Таймийя
+Таймия
+Таймур
+Таймураз
+Таймурас
+Таймурза
+Тайнур
+Тайси
+Тайфа
+Тайфур
+Тайя
+Таклима
+Такмиль
+Таксим
+Таксима
+Таку
+Такуля
+Такфиль
+Такфиля
+Талгат
+Талиб
+Талиба
+Талибулла
+Талига
+Талип
+Талия
+Талмас
+Талустан
+Талха
+Тальгат
+Тальха
+Таля
+Тамаз
+Тамази
+Тамара
+Тамари
+Тамата
+Тамаш
+Тамаша
+Тамерлан
+Тамиза
+Тамила
+Тамилла
+Тамина
+Таминдар
+Тамир
+Тамира
+Тамирис
+Тамирлан
+Тамси
+Тамсигуль
+Тамук
+Тамчы
+Тамчыгуль
+Тамъян
+Тан
+Тана
+Танай
+Танат
+Танатар
+Танбек
+Танбика
+Танбирди
+Танбулат
+Танвира
+Тангатар
+Тангуль
+Танзила
+Танзиль
+Танзиля
+Танзим
+Танзима
+Танзия
+Таннур
+Тансулпан
+Тансултан
+Тансулуу
+Тансык
+Тансыкбай
+Тансыкбика
+Тансылу
+Танчулпан
+Тапай
+Тарас
+Тарземан
+Тариел
+Тарина
+Тариэл
+Тарлан
+Тарон
+Тас
+Таса
+Таскира
+Таския
+Таслим
+Таслима
+Таслия
+Тасмина
+Тасмия
+Тасним
+Таснима
+Тасния
+Тасфия
+Тата
+Татаркан
+Татау
+Татев
+Татевик
+Татиана
+Татияна
+Татлустан
+Татлыбай
+Татлыбек
+Татлыбика
+Татлыхан
+Татым
+Татьяна
+Татяна
+Таубек
+Таубий
+Таужан
+Таузих
+Таузиха
+Тауис
+Таука
+Таукан
+Таулан
+Таулу
+Таумурза
+Таус
+Таусима
+Таусия
+Таусо
+Таусолтан
+Тауфик
+Тауфир
+Таухан
+Тауханий
+Таухетдин
+Таухит
+Тафкиль
+Тафкиля
+Тафкир
+Тафкира
+Тахау
+Тахауи
+Тахир
+Тахирзян
+Тахия
+Тахлима
+Тахлия
+Тахмина
+Тахния
+Тахсина
+Таци
+Ташбулат
+Ташмурза
+Ташмухамет
+Таштимир
+Тая
+Таяна
+Таяр
+Тезада
+Теймия
+Теймур
+Теймураз
+Тейя
+Телли
+Тельман
+Теляк
+Темболат
+Тембора
+Тембот
+Тембулат
+Темерлан
+Темир
+Темирбаш
+Темирбек
+Темирболат
+Темирбулат
+Темирджан
+Темиржан
+Темиркан
+Темирлан
+Темирхан
+Темофей
+Темруко
+Темур
+Темурбек
+Темучин
+Тенгиз
+Тензин
+Тео
+Теодор
+Теон
+Теона
+Терегул
+Тереза
+Терентий
+Тесса
+Теуваж
+Тея
+Тиана
+Тигран
+Тилек
+Тим
+Тимай
+Тимбек
+Тимбора
+Тимбулат
+Тимер
+Тимербай
+Тимербек
+Тимербулат
+Тимервали
+Тимергали
+Тимергарай
+Тимерзян
+Тимерлан
+Тимерсаит
+Тимерсултан
+Тимерфаяз
+Тимерхан
+Тимерша
+Тимершаих
+Тимерьяр
+Тимир
+Тимирай
+Тимирбай
+Тимирбек
+Тимирбика
+Тимирбулат
+Тимиргази
+Тимиргазим
+Тимиргали
+Тимиргарей
+Тимирказык
+Тимиркей
+Тимирлан
+Тимирсалих
+Тимирхан
+Тимирша
+Тимиршаих
+Тимиршариф
+Тимирьян
+Тимофей
+Тимур
+Тимурбек
+Тимурлан
+Тина
+Тинатин
+Тинхан
+Тит
+Тита
+Титал
+Тихан
+Тихомир
+Тихон
+Тлепш
+Тлимахо
+Тлиф
+Тлостан
+Тлостанаш
+Тлостанбек
+Тлостанбий
+Тлухпаго
+Тляпкул
+Товрат
+Тогрул
+Тоита
+Токай
+Токаш
+Токо
+Тольбий
+Томара
+Томас
+Томирис
+Топай
+Торнике
+Тотьяна
+Тофик
+Тохир
+Тохтамиш
+Трафим
+Тристан
+Трифон
+Трофим
+Туай
+Туальбай
+Туана
+Туган
+Туганай
+Туганбай
+Туганбий
+Тугузбай
+Тузбек
+Туйаара
+Туйбек
+Туйбика
+Туйбикя
+Туйгун
+Туйгууна
+Туймурза
+Туймухамет
+Тукай
+Тукбай
+Тукбулат
+Тукмурза
+Туктабика
+Туктагул
+Туктамыш
+Туктар
+Туктарбай
+Тукум
+Тукумбай
+Тулбай
+Тулганай
+Тулибай
+Тулпар
+Тулубай
+Тулумбай
+Тулькубай
+Тулябай
+Туман
+Туманбай
+Тумаш
+Тумен
+Туметей
+Тумиша
+Тумэн
+Тунар
+Тунгатар
+Тупей
+Турабай
+Турал
+Туран
+Турахан
+Тургун
+Тургут
+Туркмен
+Турпал
+Турсун
+Турсунбай
+Турумтай
+Турьян
+Турябай
+Тут
+Туташ
+Тутия
+Туфан
+Тухбат
+Тухбатулла
+Тухват
+Тухватулла
+Тухфат
+Тухфатулла
+Туяна
+Тэмуджин
+Тэона
+Тэя
+Тюйме
+Уаля
+Уата
+Убайда
+Убайдулла
+Убайдуллах
+Убайдулло
+Увайс
+Увжуко
+Угер
+Угулза
+Угур
+Угурли
+Удумбара
+Ужа
+Узайр
+Узар
+Узбек
+Узгулем
+Узеир
+Узлипат
+Узлифат
+Узянбай
+Уйгулаана
+Уйгун
+Уйгууна
+Уйусхан
+Уйылдан
+Ука
+Укабика
+Укбай
+Улан
+Улана
+Уланбай
+Улдан
+Улита
+Улкан
+Уллубий
+Улмасбика
+Улмаскамал
+Улмяс
+Улмясбай
+Улугбек
+Улфан
+Улшат
+Ульвие
+Ульмесхан
+Ульфат
+Ульябай
+Ульян
+Ульяна
+Уля
+Ума
+Умай
+Умайганат
+Умайр
+Умайра
+Умайя
+Умакусум
+Умалат
+Умалт
+Умар
+Умарали
+Умарасхаб
+Умарбек
+Умаргали
+Умарджон
+Умаржон
+Умархон
+Умат
+Уматгерий
+Умахан
+Умед
+Умеда
+Умеджон
+Умет
+Умид
+Умида
+Умиджон
+Умижат
+Умирбика
+Умият
+Умма
+Уммебану
+Уммегалима
+Уммегалия
+Уммегаян
+Уммегуль
+Уммегульсум
+Уммекамал
+Уммельхаят
+Уммениса
+Уммет
+Уммехабиба
+Уммия
+Уммугульсум
+Уммукульсум
+Уммуниса
+Умугульсум
+Умуд
+Умужат
+Умукусум
+Умукусюм
+Умуниса
+Умурзак
+Умут
+Умутай
+Умутбай
+Умутбика
+Умуткужа
+Умуткул
+Умухаят
+Умуямал
+Умяр
+Унзиля
+Уолан
+Ураз
+Уразай
+Уразбай
+Уразбак
+Уразбек
+Уразбика
+Уразгали
+Уразгул
+Уразгуль
+Уразимбет
+Уразман
+Уразмет
+Уразмухаммет
+Уразхан
+Урак
+Уракай
+Урал
+Уралбай
+Уралбек
+Уралия
+Уран
+Урания
+Урие
+Урия
+Уркия
+Уркуя
+Урман
+Урманай
+Урманбай
+Урмантай
+Урмат
+Урсула
+Урсун
+Урузмаг
+Уруйдаана
+Урусбий
+Усама
+Усеин
+Усман
+Усмангали
+Усмон
+Усмонали
+Усмонджон
+Усмонжон
+Усние
+Усома
+Устархан
+Устин
+Устина
+Устиния
+Устинья
+Ута
+Утарбай
+Утябай
+Утябика
+Утягали
+Утяган
+Утягул
+Утяй
+Утяш
+Уулжан
+Уфык
+Уца
+Учкун
+Ушан
+Ушияр
+Уянга
+Фаат
+Фаварис
+Фавария
+Фавзия
+Фавида
+Фагадия
+Фагиля
+Фагим
+Фагима
+Фагиметдин
+Фагимзян
+Фагира
+Фаддей
+Фадей
+Фадис
+Фазания
+Фазий
+Фазика
+Фазила
+Фазилат
+Фазиля
+Фазилят
+Фазират
+Фазлахмет
+Фазли
+Фазлиддин
+Фазлинур
+Фазлитдин
+Фазлихан
+Фазлия
+Фазлулла
+Фазулла
+Фазыл
+Фазылбек
+Фазылгарай
+Фазылгаян
+Фазылниса
+Фазылхан
+Фазыльян
+Фаида
+Фаиз
+Фаиза
+Фаизбек
+Фаизнур
+Фаизун
+Фаизхан
+Фаик
+Фаил
+Фаиль
+Фаиля
+Фаима
+Фаина
+Файданур
+Файза
+Файзелькабир
+Файзельхак
+Файзерахман
+Файзетдин
+Файзи
+Файзиахмет
+Файзикамал
+Файзильгаян
+Файзиля
+Файзинур
+Файзихан
+Файзия
+Файзрахман
+Файзулла
+Файзуллах
+Файзулло
+Файма
+Файруз
+Файруза
+Факига
+Факира
+Факиха
+Факия
+Фалахия
+Фалиса
+Фалих
+Фалиха
+Фалия
+Фалях
+Фаляхетдин
+Фан
+Фанави
+Фанавиль
+Фанавия
+Фангиз
+Фангиза
+Фандам
+Фандас
+Фандаса
+Фандида
+Фандил
+Фандиля
+Фандус
+Фандуса
+Фанзалия
+Фанзаман
+Фанзиль
+Фанзиля
+Фанзия
+Фаниза
+Фанил
+Фаниль
+Фаниля
+Фанир
+Фанира
+Фанис
+Фаниса
+Фания
+Фанияр
+Фаннур
+Фануз
+Фануза
+Фанур
+Фанус
+Фануса
+Фаня
+Фарагия
+Фарадис
+Фарадия
+Фарангиз
+Фарангиза
+Фарангис
+Фарасат
+Фарахат
+Фарахия
+Фарахноз
+Фарваз
+Фарваза
+Фарвазетдин
+Фарван
+Фаргат
+Фаргиз
+Фаргиза
+Фаргия
+Фардана
+Фардания
+Фардаус
+Фардетдин
+Фардия
+Фардуна
+Фардус
+Фардуса
+Фарзан
+Фарзана
+Фарзания
+Фарзетдин
+Фарзина
+Фарзитдин
+Фарзия
+Фарзона
+Фарига
+Фарид
+Фарида
+Фаридулла
+Фаридун
+Фариз
+Фариза
+Фаризат
+Фарина
+Фарис
+Фариса
+Фарит
+Фаритулла
+Фарих
+Фариха
+Фаришта
+Фариштамох
+Фария
+Фарман
+Фаррах
+Фаррахетдин
+Фаррух
+Фарсиль
+Фаруза
+Фарук
+Фарукша
+Фарух
+Фаруха
+Фархад
+Фархана
+Фархат
+Фархениса
+Фархетдин
+Фархи
+Фархиахмет
+Фархиджамал
+Фархиза
+Фархикамал
+Фархиназ
+Фархинур
+Фархисурур
+Фархитдин
+Фархиулла
+Фархия
+Фархиямал
+Фарход
+Фархулла
+Фархуна
+Фархунда
+Фархшат
+Фаршат
+Фасах
+Фасахат
+Фасахатбану
+Фасахатбикя
+Фасахетдин
+Фасиль
+Фасиля
+Фасих
+Фасихетдин
+Фасихзян
+Фасихулла
+Фассах
+Фасхетдин
+Фасхи
+Фасхитдин
+Фасхия
+Фасхиямал
+Фатима
+Фатимабану
+Фатимабикя
+Фатимат
+Фатимахон
+Фатиме
+Фатимет
+Фатих
+Фатиха
+Фаткулла
+Фатма
+Фаттах
+Фаттахетдин
+Фаттахитдин
+Фатхелислам
+Фатхельзян
+Фатхелькадыр
+Фатхерахман
+Фатхетдин
+Фатхи
+Фатхиахмет
+Фатхилбаян
+Фатхилислам
+Фатхиль
+Фатхинур
+Фатхитдин
+Фатхия
+Фатхиямал
+Фатхияр
+Фатхулла
+Фатыма
+Фатых
+Фатыхзян
+Фатьма
+Фаузан
+Фаузана
+Фаузария
+Фаузат
+Фаузельджихан
+Фаузи
+Фаузиля
+Фаузина
+Фаузитдин
+Фаузия
+Фаукат
+Фаукия
+Фаурия
+Фаухат
+Фаухитдин
+Фаухия
+Фахадия
+Фахерниса
+Фахим
+Фахима
+Фахиметдин
+Фахимзян
+Фахира
+Фахрази
+Фахрелислам
+Фахрельбанат
+Фахри
+Фахриахмет
+Фахригаллям
+Фахригалям
+Фахриддин
+Фахриджамал
+Фахрий
+Фахрикамал
+Фахриниса
+Фахринур
+Фахрислам
+Фахритдин
+Фахрия
+Фахриямал
+Фахрниса
+Фахрулла
+Фая
+Фаягуль
+Фаяз
+Фаянур
+Феврония
+Февронья
+Федар
+Федор
+Федора
+Федос
+Федосей
+Федосий
+Федосия
+Федосья
+Федот
+Федр
+Фекла
+Феклиния
+Феклинья
+Феликс
+Фелиция
+Феня
+Феодор
+Феодора
+Феодосий
+Феодосия
+Феодосья
+Феокла
+Феоктист
+Феоктиста
+Феона
+Феофан
+Феофания
+Фердау
+Фердаус
+Фердинанд
+Ферида
+Фериде
+Феруза
+Фиалка
+Фидаил
+Фидаиль
+Фидаир
+Фидаис
+Фидай
+Фидалия
+Фидан
+Фидания
+Фидар
+Фидарис
+Фидая
+Фидаяр
+Фидель
+Фидрат
+Физа
+Физалия
+Физули
+Фикрат
+Фикрет
+Филарет
+Филария
+Филат
+Филиза
+Филимон
+Филина
+Филип
+Филипп
+Филиса
+Филус
+Фильза
+Фильзя
+Фильсина
+Филюза
+Филюс
+Филюса
+Филя
+Фина
+Финат
+Финзиля
+Фиона
+Фира
+Фираз
+Фираза
+Фиразия
+Фирания
+Фирая
+Фиргали
+Фиргат
+Фирдавес
+Фирдавис
+Фирдавс
+Фирдания
+Фирдаус
+Фирдауса
+Фирдиля
+Фирдина
+Фирдия
+Фирдус
+Фирдуса
+Фирзар
+Фирзат
+Фирс
+Фирсина
+Фируз
+Фируза
+Фирюза
+Фисалия
+Фитрат
+Фица
+Фларит
+Флера
+Флора
+Флорид
+Флорида
+Флорис
+Флория
+Флюза
+Флюн
+Флюр
+Флюра
+Флюс
+Флюса
+Фоат
+Фоко
+Фома
+Фосат
+Фотех
+Фотима
+Фотимахон
+Фоусат
+Фрадия
+Франгиза
+Франц
+Фрейя
+Фрея
+Фрида
+Фридрих
+Фрол
+Фруза
+Фуад
+Фуат
+Фуза
+Фуса
+Фярит
+Фёдор
+Фёкла
+Хабад
+Хабала
+Хабас
+Хабат
+Хабаша
+Хабдин
+Хабек
+Хабетдин
+Хабиб
+Хабиба
+Хабибат
+Хабибджамал
+Хабибельхак
+Хабибетдин
+Хабибрахман
+Хабибула
+Хабибулла
+Хабибуллах
+Хабибулло
+Хабибуллох
+Хабибъямал
+Хабид
+Хабиж
+Хабий
+Хабиль
+Хабиля
+Хабип
+Хабир
+Хабира
+Хабирия
+Хабирулла
+Хабирьян
+Хабич
+Хабох
+Хабсат
+Хабцина
+Хабцица
+Хава
+Хавва
+Хавия
+Хавронья
+Хавса
+Хагурина
+Хаджар
+Хаджет
+Хаджи
+Хаджиахмет
+Хаджибий
+Хаджимурад
+Хаджимурат
+Хаджимурза
+Хаджимусса
+Хаджинур
+Хаджир
+Хаджира
+Хаджисеит
+Хаджият
+Хади
+Хадиахмет
+Хадида
+Хадиджа
+Хадиджат
+Хадижа
+Хадижат
+Хадижахон
+Хадизян
+Хадийжа
+Хадим
+Хадима
+Хадимулла
+Хадис
+Хадиса
+Хадиулла
+Хадича
+Хадичабану
+Хадичабегим
+Хадичабону
+Хадичахон
+Хадишат
+Хадия
+Хадиябану
+Хадиябикя
+Хадый
+Хадыча
+Хаерниса
+Хажар
+Хажбара
+Хажбат
+Хажбек
+Хажбекир
+Хажбий
+Хажгали
+Хажгерий
+Хажгуаша
+Хаждаут
+Хажи
+Хажиахмет
+Хажибек
+Хажигали
+Хажим
+Хажимухамет
+Хажира
+Хажислам
+Хажисмель
+Хажихан
+Хажия
+Хажкасим
+Хажмудар
+Хажмурид
+Хажмуса
+Хажмухамед
+Хажпаго
+Хажсет
+Хажсуф
+Хажумар
+Хазария
+Хазбулат
+Хазелислам
+Хазетдин
+Хазеша
+Хази
+Хазиахмет
+Хазиз
+Хазизат
+Хазизет
+Хазима
+Хазимурат
+Хазина
+Хазинур
+Хазип
+Хазир
+Хазира
+Хазиулла
+Хазраил
+Хазрат
+Хазраталий
+Хазрет
+Хазрит
+Хазяр
+Хаим
+Хаир
+Хаирбанат
+Хаирзаман
+Хаирнас
+Хаирнаса
+Хаишат
+Хай
+Хайбат
+Хайбрахман
+Хайбула
+Хайбулла
+Хайдар
+Хайдарбек
+Хайдаргали
+Хайдарзян
+Хайдархан
+Хаймулла
+Хайрезаман
+Хайрельбанат
+Хайрельбану
+Хайретдин
+Хайри
+Хайриджамал
+Хайрикамал
+Хайринисо
+Хайринур
+Хайрислам
+Хайритдин
+Хайрия
+Хайриямал
+Хайрула
+Хайрулла
+Хайруллах
+Хайят
+Хайём
+Хаким
+Хакима
+Хакимбай
+Хакимбек
+Хакимзян
+Хакимулла
+Хакимхан
+Хакимьян
+Хаккулай
+Хакмулла
+Хакназар
+Хакулина
+Хакуляля
+Хакуц
+Хакуцина
+Хакяша
+Халата
+Халау
+Халид
+Халида
+Халидулла
+Халидя
+Халик
+Халил
+Халилулла
+Халиль
+Халим
+Халима
+Халимат
+Халимахон
+Халимбек
+Халиме
+Халимулла
+Халимхан
+Халимша
+Халимя
+Халис
+Халиса
+Халисат
+Халися
+Халит
+Халиулла
+Халиф
+Халифа
+Халифат
+Халия
+Халфа
+Халфитдин
+Халяф
+Халяфетдин
+Хамада
+Хамади
+Хамазан
+Хамат
+Хамата
+Хаматгарей
+Хаматнур
+Хаматрахим
+Хаматсагит
+Хаматсафа
+Хаматхан
+Хамац
+Хамаш
+Хамбал
+Хамдебану
+Хамдегали
+Хамдениса
+Хамдиниса
+Хамдия
+Хамдиямал
+Хамдуллах
+Хамдуна
+Хамза
+Хамзагали
+Хамзат
+Хамзатхан
+Хамзет
+Хамзя
+Хамид
+Хамида
+Хамидулла
+Хамиз
+Хамила
+Хамис
+Хамит
+Хамита
+Хамитбай
+Хамитзян
+Хамитулла
+Хамитхан
+Хамия
+Хаммат
+Хамматвали
+Хамматгали
+Хамматсабир
+Хамматша
+Хамурза
+Хамшаса
+Хан
+Хана
+Ханака
+Ханаф
+Ханафи
+Ханафий
+Ханахо
+Ханашхо
+Ханбала
+Ханбек
+Ханбийке
+Ханбик
+Ханбика
+Ханбикя
+Ханбулат
+Ханват
+Хангали
+Хангарай
+Хангерий
+Хангильди
+Ханда
+Ханзада
+Ханзат
+Ханзафар
+Ханзифа
+Ханигуаша
+Ханий
+Ханика
+Ханиса
+Ханисат
+Ханислам
+Ханиф
+Ханифа
+Ханифахон
+Ханифзян
+Ханифулла
+Ханифя
+Хания
+Ханмурат
+Ханна
+Ханнан
+Ханох
+Хансияр
+Хансура
+Хантимер
+Хантимир
+Хануат
+Хануз
+Хануза
+Ханум
+Ханшият
+Ханшят
+Ханым
+Ханя
+Хапат
+Хапача
+Хапот
+Хапта
+Харетина
+Харис
+Хариса
+Харитина
+Харитинья
+Харитон
+Хария
+Харлампий
+Харон
+Харрас
+Харун
+Харысхан
+Хасайн
+Хасан
+Хасана
+Хасанбай
+Хасанбек
+Хасанби
+Хасанбий
+Хасанбой
+Хасангали
+Хасангата
+Хасанетдин
+Хасанзян
+Хасания
+Хасанхан
+Хасанш
+Хасанша
+Хасаньян
+Хасби
+Хасбиджамал
+Хасбикамал
+Хасбинур
+Хасбиулла
+Хасбия
+Хасбиямал
+Хасбула
+Хасбулат
+Хасейн
+Хасен
+Хасет
+Хасиба
+Хасина
+Хасифа
+Хасия
+Хасиян
+Хасият
+Хасиятулла
+Хасу
+Хасян
+Хата
+Хаталий
+Хаталь
+Хатау
+Хатгерий
+Хатиба
+Хатиджа
+Хатидже
+Хатижа
+Хатиза
+Хатим
+Хатима
+Хатимат
+Хатимя
+Хатип
+Хатира
+Хатифа
+Хатича
+Хатминур
+Хатмулла
+Хату
+Хатуко
+Хатута
+Хатфа
+Хатфикамал
+Хауа
+Хаужад
+Хаулат
+Хаутий
+Хафаза
+Хафаса
+Хафиз
+Хафиза
+Хафизетдин
+Хафизулла
+Хафисат
+Хафса
+Хафсат
+Хацаца
+Хацу
+Хацуко
+Хачатур
+Хачик
+Хачим
+Хачимат
+Хашао
+Хашига
+Хашим
+Хашима
+Хашир
+Хашира
+Хашия
+Хашора
+Хая
+Хаялетдин
+Хаяр
+Хаят
+Хаятбану
+Хеда
+Хеди
+Хельга
+Херел
+Хетаг
+Хибат
+Хибатулла
+Хидая
+Хидият
+Хидиятулла
+Хидхан
+Хизар
+Хизбулла
+Хизир
+Хизри
+Хикмат
+Хикматулла
+Хикматулло
+Хикмет
+Хикмулла
+Хилал
+Хилалетдин
+Хилалия
+Хилола
+Химиш
+Химмат
+Химматбану
+Химсад
+Хиндия
+Хисам
+Хисаметдин
+Хисамитдин
+Хисбулла
+Хисмат
+Хисматулла
+Хиял
+Хлоя
+Ходжа
+Хожиакбар
+Холид
+Хомгот
+Хомей
+Хорагай
+Хорун
+Хосият
+Хот
+Хочбар
+Хрестина
+Хрестиния
+Хрестинья
+Христиан
+Христина
+Христиния
+Христинья
+Христофор
+Хрусталина
+Хуата
+Хубби
+Хуббикамал
+Хуббиниса
+Хуббитдин
+Хуббиямал
+Хубджамал
+Худ
+Худайбирди
+Худин
+Хуж
+Хужа
+Хужабай
+Хужахмет
+Хужпаго
+Хужтата
+Хузайф
+Хузайфа
+Хузейф
+Хузейфа
+Хуззят
+Хуззятелислам
+Хуззятулла
+Хулимат
+Хуля
+Хуляца
+Хумайра
+Хумайро
+Хумейра
+Хура
+Хурамша
+Хурбану
+Хурина
+Хурират
+Хурия
+Хурма
+Хурмат
+Хурматбану
+Хурматулла
+Хуррия
+Хуршед
+Хуршид
+Хуршида
+Хуршидабану
+Хуса
+Хусаин
+Хусаингали
+Хусайн
+Хусан
+Хусанбой
+Хусеин
+Хусей
+Хусейин
+Хусейн
+Хусен
+Хусин
+Хуска
+Хусна
+Хуснегали
+Хуснерахман
+Хуснеруй
+Хуснетдин
+Хуснехатима
+Хусни
+Хуснибадар
+Хуснигуль
+Хусниджамал
+Хусниджихан
+Хусникамал
+Хуснитдин
+Хусния
+Хусниямал
+Хуснияр
+Хуснулла
+Хуснутдин
+Хусрав
+Хусяин
+Хута
+Хутита
+Хутмат
+Хуца
+Хуцина
+Хушия
+Хушруз
+Хушруй
+Хызыр
+Хыял
+Хьанифа
+Хэнэ
+Хяди
+Цаган
+Цагана
+Цана
+Царина
+Цац
+Цаца
+Цацу
+Цацуна
+Цветана
+Церен
+Цикира
+Циля
+Цина
+Цица
+Цу
+Цука
+Цукуна
+Цуца
+Цыден
+Цырен
+Цырена
+Чабихан
+Чагыл
+Чадихан
+Чазим
+Чайзат
+Чакар
+Чаки
+Чакира
+Чалбай
+Чалимат
+Чамал
+Чамсир
+Чаниуат
+Чарос
+Часам
+Чаус
+Чаусар
+Чафлен
+Чачак
+Чачка
+Чачкя
+Чашиф
+Чаян
+Челээш
+Челя
+Чемал
+Черим
+Чермен
+Чеслав
+Чечек
+Чика
+Чилле
+Чилю
+Чимис
+Чимит
+Чимита
+Чингиз
+Чингизхан
+Чингис
+Читаун
+Чичек
+Чодураа
+Чойган
+Чокка
+Чолдуг
+Чомай
+Чора
+Чоргаар
+Чотай
+Чотча
+Чубак
+Чукай
+Чулпан
+Чура
+Чылгычы
+Чыммак
+Чынгыз
+Чынтимер
+Чэмэлиинэ
+Шаанак
+Шаба
+Шабаз
+Шабан
+Шабат
+Шабатай
+Шабатхан
+Шабдан
+Шабнам
+Шавали
+Шавкат
+Шагабан
+Шагали
+Шагар
+Шагарбану
+Шагарбика
+Шагарбустан
+Шагаргази
+Шагаритдин
+Шаген
+Шаги
+Шагиахмет
+Шагибек
+Шагивали
+Шагигали
+Шагида
+Шагидулла
+Шагизада
+Шагизар
+Шагизян
+Шагиислам
+Шагикамал
+Шагиман
+Шагимардан
+Шагимулла
+Шагимурат
+Шагин
+Шагина
+Шагингарай
+Шагинур
+Шагир
+Шагисултан
+Шагит
+Шагитгали
+Шагия
+Шагияздан
+Шагура
+Шад
+Шадия
+Шаида
+Шаимат
+Шаира
+Шаират
+Шаихвали
+Шаихзада
+Шаихмирза
+Шайбек
+Шайда
+Шайдияр
+Шайдулла
+Шаймардан
+Шайми
+Шаймулла
+Шаймурат
+Шаймурза
+Шаймухамет
+Шайнур
+Шайха
+Шайхайдар
+Шайхаттар
+Шайхегали
+Шайхелимам
+Шайхелиман
+Шайхелислам
+Шайхерахман
+Шайхетдин
+Шайхи
+Шайхилислам
+Шайхинур
+Шайхислам
+Шайхитдин
+Шайхия
+Шайхулла
+Шакир
+Шакира
+Шакирзян
+Шакирулла
+Шакирьян
+Шакман
+Шакур
+Шакура
+Шалауат
+Шалва
+Шам
+Шама
+Шамаил
+Шамай
+Шамахан
+Шамбаз
+Шамбулат
+Шамгун
+Шамдарий
+Шамигул
+Шамиз
+Шамил
+Шамиль
+Шамиля
+Шамисат
+Шамка
+Шамкыз
+Шаммас
+Шамса
+Шамсадин
+Шамсеанвар
+Шамсеахмет
+Шамсебадар
+Шамсебанат
+Шамсебану
+Шамсебаян
+Шамсевафа
+Шамсегали
+Шамсегалим
+Шамсегалия
+Шамсегаллям
+Шамсегаян
+Шамсегуль
+Шамседжамал
+Шамседжихан
+Шамсекамал
+Шамсекамар
+Шамселислам
+Шамсемухаммет
+Шамсениса
+Шамсенур
+Шамсерахман
+Шамсеруй
+Шамсетдин
+Шамсехаят
+Шамси
+Шамсибадар
+Шамсибанат
+Шамсибану
+Шамсибика
+Шамсиддин
+Шамсикамал
+Шамсикамар
+Шамсинахар
+Шамсиниса
+Шамсинур
+Шамсира
+Шамситдин
+Шамсия
+Шамсиямал
+Шамсият
+Шамсудин
+Шамсун
+Шамсура
+Шамсутдин
+Шамук
+Шамхал
+Шамхан
+Шамшият
+Шанбек
+Шангарей
+Шангул
+Шанизат
+Шапи
+Шара
+Шарапудин
+Шарапутдин
+Шараф
+Шарафгали
+Шарафелислам
+Шарафетдин
+Шарафи
+Шарафудин
+Шарафулла
+Шарафутдин
+Шаргия
+Шарига
+Шариз
+Шаризат
+Шарип
+Шарипат
+Шариф
+Шарифа
+Шарифабану
+Шарифамох
+Шарифгали
+Шарифзян
+Шарифулла
+Шарифхан
+Шарифьян
+Шаркия
+Шарлотта
+Шарофат
+Шатмурат
+Шаукат
+Шаура
+Шаухал
+Шафагат
+Шафагатулла
+Шафак
+Шафи
+Шафиг
+Шафига
+Шафигулла
+Шафик
+Шафика
+Шафия
+Шафкат
+Шафкатулла
+Шафкия
+Шахада
+Шахадат
+Шахбаз
+Шахбай
+Шахбал
+Шахбан
+Шахбоз
+Шахбулат
+Шахгали
+Шахгарай
+Шахзада
+Шахзаман
+Шахзод
+Шахзода
+Шахиахмет
+Шахибек
+Шахид
+Шахида
+Шахидат
+Шахидулла
+Шахизар
+Шахизян
+Шахий
+Шахикамал
+Шахим
+Шахиман
+Шахимардан
+Шахимулла
+Шахимурат
+Шахимухаммет
+Шахин
+Шахина
+Шахинур
+Шахира
+Шахисултан
+Шахит
+Шахия
+Шахияздан
+Шахло
+Шахман
+Шахмурза
+Шахназ
+Шахназар
+Шахнияз
+Шахноза
+Шаходат
+Шахрезада
+Шахрибану
+Шахриджан
+Шахрижан
+Шахризат
+Шахризода
+Шахриназ
+Шахрислам
+Шахрияр
+Шахриёр
+Шахром
+Шахрудин
+Шахрузат
+Шахсанам
+Шахтимер
+Шаяхмет
+Шевкет
+Шейх
+Шенне
+Шерали
+Шерзод
+Шерифат
+Шерхан
+Шига
+Шигабетдин
+Шигай
+Шигап
+Шика
+Шилахан
+Шира
+Ширази
+Ширгази
+Ширгали
+Ширин
+Ширина
+Ширияздан
+Ширхан
+Шис
+Шифа
+Шихабетдин
+Шихап
+Шихарбий
+Шихбулат
+Шихим
+Шихмурза
+Шоваа
+Шовда
+Шодия
+Шодиёна
+Шойгу
+Шолбан
+Шолох
+Шора
+Шота
+Шохал
+Шохжахон
+Шохин
+Шохина
+Шохруз
+Шохрух
+Шу
+Шуайб
+Шуайнат
+Шуана
+Шувай
+Шугаип
+Шукрия
+Шукрона
+Шукронахон
+Шукрулло
+Шукурона
+Шумахо
+Шункар
+Шупаго
+Шура
+Шуру
+Шухиб
+Шухрат
+Шушаник
+Шушанна
+Ыйман
+Ырыскелди
+Эва
+Эвальд
+Эван
+Эванджелина
+Эвелина
+Эвилина
+Эвилия
+Эвита
+Эвия
+Эда
+Эдвард
+Эдвин
+Эдгар
+Эдгард
+Эдем
+Эдиг
+Эдие
+Эдик
+Эдита
+Эдмас
+Эдмон
+Эдмонд
+Эдмунд
+Эдуард
+Эзен
+Эзоза
+Эйнар
+Эйтан
+Эйюб
+Экемель
+Экер
+Элай
+Эламан
+Элан
+Элана
+Элария
+Элбек
+Элбэг
+Элвин
+Элдар
+Элдос
+Элен
+Элена
+Эленора
+Элеонора
+Элиана
+Элиза
+Элизабет
+Элима
+Элина
+Элис
+Элиса
+Элисса
+Элита
+Элиф
+Элия
+Элла
+Эллада
+Эллана
+Эллари
+Эллария
+Эллен
+Элли
+Эллина
+Элмир
+Элмира
+Элмирбек
+Элмырза
+Элнур
+Элнура
+Элона
+Элхан
+Эльбай
+Эльберд
+Эльберт
+Эльбрус
+Эльвег
+Эльвера
+Эльвин
+Эльвина
+Эльвир
+Эльвира
+Эльвис
+Эльдан
+Эльдана
+Эльданиз
+Эльдар
+Эльза
+Эльзана
+Эльзар
+Эльзара
+Эльмаз
+Эльман
+Эльмар
+Эльмара
+Эльмес
+Эльмесхан
+Эльмина
+Эльмир
+Эльмира
+Эльмурза
+Эльнар
+Эльнара
+Эльнур
+Эльнура
+Эльсана
+Эльта
+Эльтан
+Эльфир
+Эльфира
+Эльфрида
+Эльхан
+Эльчин
+Эльшад
+Эльшан
+Эльяна
+Эля
+Эмануил
+Эмелина
+Эми
+Эмил
+Эмили
+Эмилиан
+Эмилиана
+Эмилина
+Эмилия
+Эмиль
+Эмиля
+Эмин
+Эмина
+Эмине
+Эмир
+Эмира
+Эмирали
+Эмирбек
+Эмирлан
+Эмирхан
+Эмма
+Эммануил
+Эммануэла
+Эммануэль
+Эмми
+Эммилия
+Эмран
+Эмре
+Энвер
+Энгель
+Энгельс
+Эндже
+Энджегуль
+Энджия
+Энерел
+Энес
+Энже
+Энжебану
+Энжегуль
+Эниса
+Энкира
+Эннан
+Энхэ
+Эра
+Эраст
+Эрбол
+Эрвин
+Эрдем
+Эрдни
+Эрдэм
+Эрдэни
+Эренцен
+Эрес
+Эржан
+Эржена
+Эржиб
+Эрик
+Эрика
+Эрикхан
+Эркин
+Эрлан
+Эрмина
+Эрна
+Эрнест
+Эрнст
+Эрсан
+Эртине
+Эртугрул
+Эрулан
+Эрустам
+Эрфан
+Эрхаан
+Эрхан
+Эрчим
+Эрчимэн
+Эрэл
+Эсен
+Эсет
+Эсила
+Эскендер
+Эскерхан
+Эслий
+Эсма
+Эсманур
+Эсмеральда
+Эсмина
+Эсмира
+Эсмиральда
+Эсра
+Эстелла
+Эстель
+Эстер
+Эсфир
+Эсфира
+Эсфирь
+Эсят
+Этек
+Этель
+Этери
+Этигэл
+Эфенди
+Эхсон
+Эчис
+Эюб
+Ювеналий
+Юзарсиф
+Юзбай
+Юзбек
+Юзбика
+Юзей
+Юзефа
+Юзиля
+Юзлубай
+Юзлукбай
+Юзлунур
+Юзлюбика
+Юзорсиф
+Юзукай
+Юзум
+Юзумбика
+Юлабай
+Юлай
+Юламан
+Юлан
+Юлбагар
+Юлбай
+Юлбарис
+Юлбарс
+Юлбирде
+Юлгиз
+Юлгиза
+Юлдан
+Юлдаш
+Юлдашбай
+Юлдуз
+Юлдузай
+Юлдыбай
+Юлдыбика
+Юлдыкай
+Юлиан
+Юлиана
+Юлианна
+Юлий
+Юлия
+Юлмухамет
+Юлтай
+Юлтан
+Юлтимир
+Юлтый
+Юлый
+Юлья
+Юля
+Юмабай
+Юмабика
+Юмагильди
+Юмагул
+Юмат
+Юмаш
+Юмжана
+Юна
+Юнай
+Юндуз
+Юнир
+Юнис
+Юния
+Юнна
+Юнона
+Юнус
+Юнусбай
+Юнусбек
+Юпар
+Юра
+Юрий
+Юрик
+Юрис
+Юртай
+Юртбай
+Юртумбай
+Юсейра
+Юсеф
+Юсиф
+Юсра
+Юсро
+Юстина
+Юсуп
+Юсупьян
+Юсуф
+Юсуфбай
+Юсуфбек
+Юсуфгали
+Юсуфджон
+Юсуфжон
+Юсуфзян
+Юсуфхан
+Юсуфчон
+Юта
+Яват
+Явдат
+Явит
+Ягафар
+Ягмур
+Ягуб
+Ягуда
+Ягфар
+Ядвига
+Ядгар
+Ядегар
+Ядкар
+Язар
+Язгулем
+Язгуль
+Язида
+Язиль
+Язиля
+Язира
+Язнур
+Яик
+Яикбай
+Яким
+Якоб
+Яков
+Якуб
+Якуп
+Якут
+Якшибай
+Якшибика
+Якшигул
+Якшимбет
+Якъуб
+Ялал
+Ялалитдин
+Яланбай
+Ялиль
+Ялкын
+Ямал
+Ямалитдин
+Яман
+Ямангул
+Ямансары
+Ямаш
+Ямбика
+Ямгур
+Ямига
+Ямиль
+Ямиля
+Ямин
+Ямина
+Ямлих
+Ямлиха
+Ямлихан
+Ян
+Яна
+Янаби
+Янали
+Янахмет
+Янбай
+Янбарис
+Янбек
+Янбика
+Янбирди
+Янбулат
+Янгази
+Янгали
+Янгиль
+Янгильди
+Янгир
+Янгужа
+Янгузель
+Янгул
+Яндус
+Янжима
+Янжина
+Янзигит
+Яникей
+Янина
+Янис
+Янислав
+Янифа
+Яния
+Янмурза
+Яннат
+Яннис
+Янсар
+Янсура
+Янсылу
+Янтагир
+Янтимер
+Янтимир
+Янтуря
+Янузак
+Янур
+Януш
+Яныбай
+Япон
+Яппар
+Яр
+Яра
+Яраслав
+Ярбулат
+Ярина
+Ярия
+Яркей
+Ярмак
+Ярмулла
+Ярмухамет
+Яромир
+Яромира
+Ярополк
+Яросвет
+Ярослав
+Ярослава
+Ярославна
+Ярулла
+Ярхам
+Ярхаметдин
+Ярхан
+Ярыш
+Ясави
+Ясавир
+Ясавия
+Ясемин
+Ясения
+Ясиля
+Ясин
+Ясина
+Ясир
+Ясира
+Ясмиля
+Ясмин
+Ясмина
+Ясминахон
+Ясминур
+Ясмира
+Ясна
+Ясон
+Яубасар
+Яумбай
+Яуми
+Яухар
+Яухария
+Яуш
+Яуынбай
+Яха
+Яхита
+Яхия
+Яхъя
+Яхья
+Яхьё
+Яхё
+Яхёбек
+Яшар
 ```
 
 ### `bot/aemr_bot/data/NAMES_LICENSE.md`
@@ -102735,6 +114194,548 @@ E-mail: a.yakushkin@elizovomr.ru
 - [ ] Роскомнадзор: подача уведомления об обработке ПДн (если ещё не подавалось ранее)
 ```
 
+### `docs/archive/versions/Регламент_AEMR-bot_MAX_v8@510d864-2026-06-04.md`
+
+Size: `166743` bytes  
+SHA-256: `5f60ac1797251e9ba2c56a78e13f55f0000c894a328ae73f216224d2502563ad`
+
+```markdown
+Приложение к распоряжению  
+Администрации Елизовского  
+муниципального округа  
+от «\_\_\_\_» \_\_\_\_\_\_\_\_\_\_\_ 2026 года  
+№ \_\_\_\_\_\_
+
+**Регламент**  
+**работы с чат-ботом**  
+**«ЧАТ-БОТ / АДМИНИСТРАЦИЯ ЕМО»**  
+**в мессенджере MAX**
+
+# 1\. Общие положения
+
+1\. Настоящий Регламент устанавливает порядок организации работы с чат-ботом «ЧАТ-БОТ / АДМИНИСТРАЦИЯ ЕМО» в мессенджере MAX (далее — Чат-бот), включая порядок приема сообщений от жителей, подготовку и направление ответов, взаимодействие с профильными подразделениями Администрации и подведомственными муниципальными учреждениями при подготовке ответов, ведение информационных рассылок, обработку персональных данных, обеспечение информационной безопасности и контроль качества работы операторов.  
+2\. Чат-бот размещен по адресу @aemo\_chat\_bot (идентификатор 274913354\) и зарегистрирован на платформе MAX для бизнеса от имени Администрации Елизовского муниципального округа (далее — Администрация, АЕМО).  
+3\. Регламент разработан в соответствии с Федеральным законом от 02.05.2006 № 59-ФЗ «О порядке рассмотрения обращений граждан Российской Федерации» (далее — Федеральный закон № 59-ФЗ), Федеральным законом от 27.07.2006 № 152-ФЗ «О персональных данных» (далее — Федеральный закон № 152-ФЗ), Федеральным законом от 09.02.2009 № 8-ФЗ «Об обеспечении доступа к информации о деятельности государственных органов и органов местного самоуправления», постановлением Правительства Российской Федерации от 01.11.2012 № 1119 «Об утверждении требований к защите персональных данных при их обработке в информационных системах персональных данных», приказом Федеральной службы по техническому и экспортному контролю от 18.02.2013 № 21 «Об утверждении состава и содержания организационных и технических мер по обеспечению безопасности персональных данных при их обработке в информационных системах персональных данных», постановлением Правительства Российской Федерации от 16.11.2020 № 1844 «Об утверждении Правил предоставления субсидии из федерального бюджета автономной некоммерческой организации по развитию цифровых проектов в сфере общественных связей и коммуникаций «Диалог Регионы» на создание и обеспечение функционирования в субъектах Российской Федерации центров управления регионов и Правил создания и функционирования в субъектах Российской Федерации центров управления регионов», распоряжением Губернатора Камчатского края от 02.06.2020 № 540-Р (в редакции распоряжения от 10.06.2024 № 321-Р), регулирующим оперативное реагирование на сообщения из открытых источников и оценку качества ответов исполнителей, постановлением Администрации Елизовского муниципального округа от 19.12.2025 № 2129 «О Положении о муниципальном центре управления Елизовского муниципального округа» (далее — Постановление № 2129), включая Порядок работы с сообщениями из открытых источников (далее — Порядок работы с сообщениями) и Стандарт качества ответов на сообщения из открытых источников (далее — Стандарт качества ответов), являющиеся приложениями к указанному постановлению, нормативными правовыми актами уполномоченных федеральных органов исполнительной власти в области информационной безопасности, муниципальными правовыми актами Администрации.  
+4\. Регламент обязателен для применения координаторами отдела по работе с обращениями граждан Администрации, специалистами Администрации, Администрации Елизовского городского поселения (далее — ЕГП) и Территориальных управлений Администрации, ответственными за работу с обращениями, а также работниками отдела цифрового развития Администрации, обеспечивающими функционирование Чат-бота. Под отделом цифрового развития в настоящем Регламенте понимается отдел цифрового развития Администрации либо иное структурное подразделение Администрации, уполномоченное на администрирование и обеспечение функционирования Чат-бота правовым актом Администрации или поручением ее руководителя (далее — отдел цифрового развития). Под отделом по работе с обращениями граждан в настоящем Регламенте понимается отдел по работе с обращениями граждан Администрации либо иное структурное подразделение Администрации, уполномоченное на организацию работы с сообщениями жителей, поступающими через Чат-бот.
+
+# 2\. Правовая природа канала связи
+
+5\. Чат-бот является дополнительным электронным каналом обратной связи между гражданами и Администрацией. Сообщения, полученные через Чат-бот, рассматриваются в порядке, установленном настоящим Регламентом.  
+6\. Сообщение, поступившее через Чат-бот, является сообщением из открытого источника в значении Порядка работы с сообщениями и не является обращением гражданина в значении статьи 4 и части 3 статьи 7 Федерального закона № 59-ФЗ. Указанное сообщение не отвечает требованиям к форме обращения, установленным Федеральным законом № 59-ФЗ в редакции Федерального закона от 28.12.2024 № 547-ФЗ (вступил в силу 30.03.2025): оно не обеспечивает идентификацию и (или) аутентификацию заявителя через федеральную государственную информационную систему «Единый портал государственных и муниципальных услуг (функций)» либо иную информационную систему органа и не содержит адреса (уникального идентификатора) личного кабинета заявителя. В связи с этим при работе с таким сообщением положения Федерального закона № 59-ФЗ не применяются. Указанное соответствует подпункту 1.2 Порядка работы с сообщениями, утвержденного Постановлением № 2129.  
+7\. Правовым основанием обработки персональных данных при работе с Чат-ботом является пункт 2 части 1 статьи 6 Федерального закона № 152-ФЗ — обработка необходима для осуществления и выполнения возложенных законодательством Российской Федерации на оператора функций, полномочий и обязанностей. Функция работы с сообщениями граждан из открытых источников и информирования населения возложена на Администрацию Федеральным законом от 09.02.2009 № 8-ФЗ, Уставом и иными муниципальными правовыми актами. Согласие субъекта персональных данных (статья 9 Федерального закона № 152-ФЗ) является дополнительным основанием и используется в том числе для направления информационных рассылок. Процедурный статус сообщения (вне процедуры Федерального закона № 59-ФЗ) и правовое основание обработки персональных данных являются самостоятельными и не подменяют друг друга. Пункт 4 части 1 статьи 6 Федерального закона № 152-ФЗ (обработка при предоставлении государственных и муниципальных услуг в значении Федерального закона от 27.07.2010 № 210-ФЗ) в качестве основного основания не применяется, поскольку Чат-бот является каналом обратной связи и информирования, а не предоставления муниципальной услуги.  
+8\. Если поступившее через Чат-бот сообщение по своему содержанию является обращением в значении статьи 4 Федерального закона № 59-ФЗ, оператор информирует заявителя о порядке подачи официального обращения через электронную приемную Администрации, через платформу обратной связи «Госуслуги. Решаем вместе», иные официальные каналы либо в письменной форме. Администрация обеспечивает доведение до заявителя надлежащего маршрута и не оставляет сообщение без реакции.  
+9\. Чат-бот не заменяет работу с обращениями через платформу обратной связи «Госуслуги. Решаем вместе» и систему инцидент-менеджмента Центра управления регионом. Сообщения, поступившие через указанные каналы, рассматриваются в соответствии с регламентами этих каналов.
+
+# 3\. Технические компоненты
+
+10\. Чат-бот реализован как программный комплекс, включающий:  
+1\) программный сервис Bot API мессенджера MAX, размещенный на сервере Администрации;  
+2\) реляционную базу данных PostgreSQL, размещенную на территории Российской Федерации на том же сервере (часть 5 статьи 18 Федерального закона № 152-ФЗ);  
+3\) служебную групповую переписку в мессенджере MAX (АДМИНКА / ЧАТ-БОТ) (далее — служебная группа), в которой работают операторы;  
+4\) подсистему резервного копирования базы данных с хранением копий в локальном томе и (по конфигурации) в объектном хранилище.  
+11\. Идентификатор служебной группы в мессенджере MAX задается в параметре ADMIN\_GROUP\_ID. Программный сервис различает события из служебной группы и события в личной переписке с жителями по этому идентификатору.  
+12\. Связь программного сервиса с серверами мессенджера MAX осуществляется в режиме длинного опроса (long polling) без предоставления входящего публичного сетевого доступа.  
+13\. Резервные копии базы данных формируются автоматически еженедельно, по умолчанию в воскресенье в 03 часа 00 минут по времени UTC +12 (GMT +12). Подробный перечень фоновых задач приведен в Таблице 3 настоящего Регламента.
+
+# 4\. Роли и полномочия операторов
+
+14\. В Чат-боте реализованы четыре роли операторов:  
+1\) координатор АЕМО (coordinator);  
+2\) специалист АЕМО (aemr);  
+3\) специалист ЕГП, в дальнейшем — специалист Территориального управления (далее — ТУ) (egp);  
+4\) специалист отдела цифрового развития (it).  
+15\. В программном коде Чат-бота роль идентифицируется значением egp и отображается оператору как «специалист ЕГП». Наименование «Территориальное управление (ТУ)» является организационно-перспективным; в программном коде оно не закреплено и при переименовании структурного подразделения не требует изменения кода.  
+16\. Координатор АЕМО (coordinator) — муниципальный служащий, ответственный за прием и распределение сообщений в служебной группе, направление ответов жителям, отслеживание сроков ответа, взаимодействие с профильными подразделениями Администрации и подведомственными муниципальными учреждениями в порядке раздела 8 настоящего Регламента, а также специалист отдела информационного обеспечения деятельности Администрации либо иной профильный специалист пресс-службы, ответственный за подготовку информационных рассылок.  
+17\. Специалисты АЕМО (aemr) и ЕГП (egp) — муниципальные служащие, обеспечивающие подготовку ответов на сообщения в пределах своей компетенции. Специалисты Территориальных управлений Администрации, ответственные за работу с обращениями, регистрируются в Чат-боте в роли специалиста АЕМО (aemr) либо специалиста ЕГП (egp) по решению специалиста отдела цифрового развития; отдельная роль для Территориальных управлений в Чат-боте не предусмотрена.  
+18\. Специалист отдела цифрового развития (it) — работник отдела цифрового развития, ответственный за бесперебойное функционирование Чат-бота, ведение списка операторов, удаление персональных данных по запросам субъектов персональных данных, изменение настроек Чат-бота и снятие резервных копий базы данных.  
+19\. Назначение и прекращение полномочий операторов осуществляется специалистом отдела цифрового развития на основании письменного поручения руководителя соответствующего структурного подразделения одним из следующих способов:  
+1\) через кнопочный мастер «Операторы» в панели быстрых действий /op\_help, обеспечивающий выбор будущего оператора из участников служебной группы без необходимости копирования идентификатора max\_user\_id, назначение роли, изменение роли, мягкую деактивацию с сохранением записи в базе данных и записи в журнале действий, последующую реактивацию;  
+2\) через команду /add\_operators в служебной группе, обеспечивающую массовую регистрацию операторов по многострочному списку формата «\<идентификатор max\_user\_id\> \<роль\> \<фамилия, имя, отчество\>».  
+20\. Оба способа эквивалентны по правовым последствиям и фиксируются в журнале действий. Деактивация единственного активного оператора с ролью «it» программно заблокирована. Замена единственного активного оператора с ролью «it» производится последовательностью: назначение нового оператора с ролью «it», затем деактивация предшествующего.  
+21\. Первоначальная регистрация первого специалиста с ролью «it» при установке Чат-бота на серверном оборудовании выполняется через переменные окружения серверной части: BOOTSTRAP\_IT\_MAX\_USER\_ID (идентификатор max\_user\_id будущего специалиста с ролью «it») и BOOTSTRAP\_IT\_FULL\_NAME (фамилия, имя, отчество). При первом запуске Чат-бота на пустом списке операторов соответствующая запись создается автоматически. После первого запуска указанные переменные могут быть удалены из конфигурации. Все последующие операторы регистрируются в порядке, установленном настоящим разделом.  
+22\. Запросы операторов с ролями «coordinator», «aemr», «egp» в адрес специалиста с ролью «it» по любому из следующих оснований: необходимость блокировки или разблокировки жителя; необходимость удаления персональных данных конкретного жителя; необходимость добавления, изменения роли или деактивации оператора; необходимость изменения настраиваемого параметра Чат-бота; необходимость восстановления базы данных из резервной копии; необходимость ротации секретов или реакции на инцидент информационной безопасности — направляются в служебную группу с упоминанием специалиста с ролью «it» (@username) либо служебной запиской руководителю отдела цифрового развития. Специалист с ролью «it» подтверждает прием запроса в служебной группе в течение одного рабочего часа, выполняет запрос в порядке, установленном настоящим Регламентом, и фиксирует факт исполнения сообщением в служебной группе с цитированием запроса. Все действия, совершенные специалистом с ролью «it» по такому запросу, фиксируются в журнале действий в порядке раздела 13 настоящего Регламента.  
+23\. Заявка на получение роли оператора оформляется руководителем подразделения служебной запиской в адрес отдела цифрового развития. Служебная записка содержит: фамилию, имя, отчество и должность будущего оператора; идентификатор max\_user\_id (получаемый в порядке, установленном разделом 15 настоящего Регламента); запрашиваемую роль (coordinator, aemr, egp, it); служебное основание; подпись руководителя. На основании служебной записки специалист с ролью «it» добавляет будущего оператора в служебную группу мессенджера MAX и регистрирует роль через кнопочный мастер «Операторы». Прекращение полномочий оформляется в аналогичном порядке: служебная записка, затем мягкая деактивация через мастер «Операторы» в панели быстрых действий /op\_help.  
+24\. Матрица полномочий операторов приведена в Таблице 1\.
+
+Таблица 1
+
+| № п/п | Действие | coordinator | aemr | egp (ТУ) | it |
+| :---: | ----- | :---: | :---: | :---: | :---: |
+| 1 | 2 | 3 | 4 | 5 | 6 |
+| 1\. | Просмотр карточек обращений в служебной группе | да | да | да | да |
+| 2\. | Открытые обращения (/open\_tickets), статистика (/stats), диагностика (/diag) | да | да | да | да |
+| 3\. | Ответ жителю (свайп, /reply, кнопка «Ответить», промежуточный ответ) | да | да | да | да |
+| 4\. | Возобновление и закрытие обращения | да | да | да | да |
+| 5\. | Поиск жителя (/find\_resident) | да | да | да | да |
+| 6\. | Экстренная остановка рассылки | да | да | да | да |
+| 7\. | Подготовка и направление информационных рассылок (/broadcast), шаблоны рассылок | да | нет | нет | да |
+| 8\. | Блокировка и разблокировка жителя | нет | нет | нет | да |
+| 9\. | Удаление персональных данных жителя (/erase, кнопка «Удалить ПДн») | нет | нет | нет | да |
+| 10\. | Снятие резервной копии (/backup) | нет | нет | нет | да |
+| 11\. | Изменение настроек Чат-бота (/setting, меню «Настройки бота») | нет | нет | нет | да |
+| 12\. | Управление операторами (/add\_operators, мастер «Операторы») | нет | нет | нет | да |
+| 13\. | Раздел «Аудитория и согласия» | нет | нет | нет | да |
+
+**Примечание.** Право блокировки жителя и удаления его персональных данных непосредственно из карточки обращения предоставлено только специалисту отдела цифрового развития. Координатор АЕМО и специалисты АЕМО, ЕГП (ТУ) эскалируют необходимость блокировки или удаления персональных данных к специалисту отдела цифрового развития служебной запиской или сообщением в служебной группе в порядке, установленном разделом 4 настоящего Регламента.
+
+# 5\. Прием сообщения от жителя
+
+25\. Житель открывает Чат-бот в мессенджере MAX и нажимает кнопку «Написать обращение» в главном меню. Дальнейшее взаимодействие осуществляется через интерактивные кнопки.  
+26\. Главное меню жителя содержит семь позиций:  
+1\) «Написать обращение»;  
+2\) «Мои обращения»;  
+3\) «Подписаться на рассылку» либо «Не хочу получать рассылку» — в зависимости от текущего состояния подписки;  
+4\) «Прием граждан»;  
+5\) «Полезная информация»;  
+6\) «Защита от мошенников»;  
+7\) «Настройки и помощь».  
+27\. Чат-бот собирает сведения от жителя последовательно, по этапам конечного автомата диалога. Поддерживается десять состояний диалога: idle, awaiting\_consent, awaiting\_contact, awaiting\_name, awaiting\_locality, awaiting\_address, awaiting\_topic, awaiting\_summary, awaiting\_followup\_text (этап дополнения уже открытого обращения), awaiting\_geo\_confirm (этап подтверждения адреса, определенного по геолокации).  
+28\. На первом этапе Чат-бот получает от жителя согласие на обработку персональных данных. Согласие фиксируется в реквизите consent\_pdn\_at записи жителя. Без получения согласия дальнейшие этапы анкеты недоступны. Текст согласия, отображаемый жителю (настраиваемый параметр consent\_text), в обязательном порядке содержит ссылку на политику обработки персональных данных (параметр policy\_url); сохранить текст согласия без указанной ссылки технически невозможно. Согласие на обработку персональных данных в целях работы с обращением и согласие на получение информационных рассылок являются раздельными и даются жителем отдельно по каждой цели, что соответствует части 4 статьи 9 Федерального закона № 152-ФЗ и требованиям к содержанию согласия, установленным приказом Федеральной службы по надзору в сфере связи, информационных технологий и массовых коммуникаций от 19.06.2025 № 140 (вступил в силу 01.09.2025).  
+29\. На последующих этапах Чат-бот запрашивает: телефонный номер посредством нативной кнопки мессенджера MAX, имя жителя, населенный пункт (выбором из перечня либо передачей геолокации), адрес проблемы, тематику обращения (выбором из перечня), суть обращения с возможностью приложения файлов. Прогресс прохождения анкеты отображается счетчиком вида «N / 5» начиная с этапа ввода имени; этап получения согласия и этап передачи телефонного номера в счетчик не входят.  
+30\. На этапе выбора населенного пункта жителю доступна нативная кнопка мессенджера MAX «Поделиться геолокацией». При передаче жителем геолокации Чат-бот определяет населенный пункт и адрес по локальной базе данных географических объектов и запрашивает у жителя подтверждение определенного адреса (состояние awaiting\_geo\_confirm). Передача геолокации добровольна; житель вправе выбрать населенный пункт из перечня.  
+31\. Сообщение жителя считается принятым с момента поступления текста сути обращения. Чат-бот направляет жителю подтверждение «Обращение \#N принято».  
+32\. Один житель может направить через Чат-бот не более 3 (трех) новых обращений в течение одного часа. Указанное ограничение реализовано непосредственно в программном коде Чат-бота и не настраивается через параметры окружения.  
+33\. При превышении ограничения, установленного частью 27 настоящего Регламента, при наличии у жителя неотвеченного обращения Чат-бот предлагает дополнить открытое обращение через кнопку «Дополнить» в карточке обращения. При отсутствии неотвеченных обращений житель получает информацию о необходимости дождаться сброса лимита.  
+34\. По одному открытому обращению житель может направить не более 5 (пяти) дополнений в течение одного часа, при этом интервал между двумя дополнениями не должен быть менее 30 (тридцати) секунд. Указанные ограничения реализованы в программном коде Чат-бота и настраиваются параметрами FOLLOWUP\_MAX\_PER\_HOUR\_PER\_APPEAL (диапазон от 1 до 100\) и FOLLOWUP\_MIN\_INTERVAL\_SECONDS (диапазон от 0 до 3600). При превышении ограничения дополнение не принимается; житель получает уведомление с указанием времени до следующего разрешенного дополнения.  
+35\. Ограничения объема одного обращения:  
+1\) максимальное число вложений — 20 (двадцать);  
+2\) максимальный накопленный размер текста сути обращения — 2000 (две тысячи) символов;  
+3\) максимальная длина имени — 120 (сто двадцать) символов;  
+4\) максимальная длина адреса — 500 (пятьсот) символов.  
+36\. По факту приема сообщения от жителя Чат-бот направляет в служебную группу карточку обращения, содержащую: номер обращения, имя и телефон жителя, населенный пункт, адрес, тематику и текст обращения. Вложения (фотографии, видеозаписи, файлы, геолокация) направляются вторым сообщением в качестве ответа на карточку. При наличии более 10 (десяти) вложений Чат-бот разделяет их на несколько сообщений с пометкой «Вложения к обращению \#N (1/M)».  
+37\. При поступлении дополнения от жителя по уже открытому обращению, при отправке оператором промежуточного ответа жителю без закрытия обращения, при изменении статуса обращения по любой причине Чат-бот направляет в служебную группу новую карточку обращения, отражающую полную хронологию (суть обращения, все дополнения жителя, все промежуточные ответы оператора), с маркером в шапке («Новое дополнение по обращению \#N от жителя», «Промежуточный ответ оператора», «Закрыто оператором» и тому подобное). Ранее направленные карточки не редактируются — они остаются в служебной группе как историческая запись действий. Это обеспечивает сохранность операторской истории и корректность работы ответа цитированием (свайп-ответа) на любую из карточек.  
+38\. Под карточкой обращения отображаются интерактивные кнопки действий, состав которых зависит от статуса обращения и роли вызывающего оператора:  
+1\) для статусов «новое» и «в работе» всем ролям отображаются кнопки «Ответить» и «Закрыть без ответа»;  
+2\) для статусов «отвечено» (answered) и «закрыто» (closed) — за исключением случаев закрытия в связи с отзывом согласия жителем — отображается кнопка «Возобновить»;  
+3\) для специалиста с ролью «it» дополнительно отображаются кнопки «Заблокировать» (или «Разблокировать» — в зависимости от текущего состояния блокировки) и «Удалить ПДн»;  
+4\) при наличии у обращения вложений отображается кнопка «Вложения (N)», нажатие которой переотправляет вложения в служебную группу;  
+5\) независимо от статуса и роли отображается кнопка «В админ-меню» для возврата к панели быстрых действий.  
+39\. Промежуточный статус «в работе» (in\_progress) присваивается Чат-ботом автоматически при выполнении оператором действий, предполагающих принятие обращения в работу. Отдельная интерактивная кнопка переключения в указанный статус в карточке обращения не предусмотрена.  
+40\. Обращение может находиться в одном из четырех статусов. Внутренний код-идентификатор статуса и его отображение для жителя в разделе «Мои обращения» соотносятся следующим образом: new — «Новое»; in\_progress — «В работе»; answered — «Завершено»; closed — «Закрыто без ответа». В тексте настоящего Регламента статус answered обозначается также словом «отвечено» (как он отображается оператору в подтверждении доставки). Оператор видит статус «Отвечено», житель — «Завершено».
+
+# 6\. Целостность служебного канала
+
+41\. Все служебные сообщения в служебной группе (карточки обращений, кнопки операторов, уведомления оператора, системные ответы Чат-бота) фиксируются единым служебным каналом. Карточка обращения, индикатор хода рассылки, приглашение к ответу и итоговое уведомление об успешной доставке доставляются как отдельные сообщения и не редактируются после публикации. Этот принцип обеспечивает сохранность истории действий оператора, корректную работу ответа цитированием и предсказуемое поведение служебного канала при одновременной работе нескольких операторов.
+
+# 7\. Порядок работы оператора с сообщением
+
+42\. Поступившая в служебную группу карточка обращения распределяется координатором АЕМО между специалистами АЕМО, ЕГП (ТУ) в соответствии с компетенцией. Распределение производится в служебной группе путем упоминания (@username) ответственного специалиста.  
+43\. Принятие обращения в работу не требует отдельного действия оператора. Статус обращения изменяется на «в работе» автоматически при первом операторском действии — открытии ответа кнопкой «Ответить» или иной значимой операции, фиксируемой Чат-ботом.  
+44\. Ответ жителю формируется одним из следующих способов:  
+1\) ответ цитированием (свайп-ответ) — оператор выполняет цитирование на карточку обращения в служебной группе и вводит текст ответа. Чат-бот по связи цитирования определяет номер обращения и доставляет ответ жителю в личный чат;  
+2\) команда /reply \<номер\> \<текст\> — оператор направляет в служебную группу текстовое сообщение указанного формата. Способ применяется в случаях, когда клиент мессенджера MAX не передает связь цитирования;  
+3\) нажатие кнопки «Ответить» под карточкой обращения и ввод текста ответа;  
+4\) промежуточный ответ — оператор направляет жителю текстовое сообщение, не закрывающее обращение и не изменяющее его статус. Применяется в случаях, когда для подготовки окончательного ответа требуется получить фактические сведения в порядке раздела 8 настоящего Регламента, либо когда оператор уведомляет жителя о ходе рассмотрения. Промежуточный ответ фиксируется в карточке обращения, обращение остается в статусе «в работе» до отправки окончательного ответа.  
+45\. К ответу оператор вправе приложить одну фотографию, направляемую жителю в личном чате вместе с текстом ответа в составе формального письма. При приложении оператором более одной фотографии жителю направляется только первая; оператор получает соответствующее уведомление от Чат-бота.  
+46\. Лимит длины ответа оператора жителю — 300 (триста) символов (параметр ANSWER\_MAX\_CHARS). При превышении лимита Чат-бот возвращает оператору предупреждение, ответ жителю не доставляется.  
+47\. Ответ жителю формируется Чат-ботом автоматически в виде формального письма: текст оператора помещается в тело письма, к которому Чат-бот добавляет реквизиты обращения (номер, дата, тематика, населенный пункт, адрес) по сведениям из карточки обращения и при наличии — приложенную оператором фотографию. Изменение структуры письма оператором не предусмотрено.  
+48\. После успешной доставки окончательного ответа жителю статус обращения изменяется на «отвечено» (внутренний код-идентификатор статуса — answered; в карточке оператора отображается как «Отвечено», в личной переписке жителю — как «Завершено»). В служебной группе оператор получает подтверждение доставки окончательного ответа с указанием номера обращения и о его переводе в статус «Отвечено» с закрытием, а также с пояснением, что при поступлении дополнения от жителя будет направлена новая карточка с пометкой о новом дополнении. При направлении промежуточного ответа оператор получает подтверждение о том, что обращение остается в работе. При нажатии оператором кнопки «Закрыть без ответа» по обращению, по которому ранее был направлен промежуточный ответ оператора, Чат-бот не блокирует действие, но выводит оператору предупреждение о предпочтительности использования ответа с закрытием для направления полного письма. Факт закрытия после промежуточного ответа дополнительно отмечается в журнале действий.  
+49\. Целевые сроки направления первого ответа жителю установлены в Таблице 2 настоящего Регламента в соответствии с подпунктом 1.9 Порядка работы с сообщениями, утвержденного Постановлением № 2129.
+
+Таблица 2
+
+| № п/п | Категория важности | Целевой срок направления ответа |
+| :---: | ----- | ----- |
+| 1 | 2 | 3 |
+| 1\. | Высокая важность (назначается Куратором ЦУР) | не более 2 (двух) часов с момента выявления сообщения Куратором ЦУР |
+| 2\. | Стандартная важность | не более 4 (четырех) рабочих часов с момента выявления сообщения Куратором ЦУР |
+| 3\. | Промежуточный ответ направлен, готовится окончательный | окончательный ответ — не более 8 (восьми) рабочих дней со дня направления промежуточного ответа |
+
+**Примечание.** Категория важности сообщения определяется Куратором Центра управления регионом (далее — Куратор ЦУР) при выявлении сообщения и сообщается Администрации в порядке Порядка работы с сообщениями. В программном коде Чат-бота применяется единый целевой срок ответа продолжительностью 4 (четыре) часа (параметр SLA\_RESPONSE\_HOURS), используемый для автоматических напоминаний (Таблица 3). Дифференциация по категории важности и тематическая приоритизация в Чат-боте не автоматизированы; контроль повышенной важности обеспечивается организационно — оператором по указанию Куратора ЦУР. Автоматические напоминания Чат-бота являются вспомогательным средством контроля и не заменяют целевые сроки, установленные настоящей Таблицей.
+
+50\. Рабочее время операторов: понедельник — пятница с 09 часов 00 минут до 18 часов 00 минут по времени UTC +12 (GMT +12), перерыв с 12 часов 00 минут до 13 часов 00 минут. Деятельность операторов в нерабочие праздничные дни, определенные Центром управления регионом в Камчатском крае, обеспечивается в соответствии с подпунктом 1.7 Порядка работы с сообщениями, утвержденного Постановлением № 2129.  
+51\. Контроль соблюдения целевых сроков обеспечивается автоматическими напоминаниями Чат-бота, направляемыми в служебную группу. Перечень напоминаний приведен в Таблице 3 настоящего Регламента.  
+52\. Текст ответа оператора жителю составляется в соответствии со Стандартом качества ответов, утвержденным Постановлением № 2129, применяемым с учетом особенностей канала связи, установленных настоящим Регламентом.  
+53\. Ответ оператора жителю должен:  
+1\) начинаться с приветствия с указанием имени автора сообщения;  
+2\) содержать информацию по существу заданного вопроса (жалобы), быть понятным и информативным;  
+3\) излагаться в позитивном тоне с использованием действительного залога.  
+54\. В тексте ответа оператора жителю не допускается:  
+1\) изложение истории вопроса до ответа по существу;  
+2\) использование канцелярского стиля и страдательного залога;  
+3\) использование шаблонных слов и выражений «сообщаем, что», «поясняем, что», «информируем, что», «отметим, что» и аналогичных;  
+4\) использование аббревиатур;  
+5\) наличие орфографических и пунктуационных ошибок;  
+6\) употребление многоточий;  
+7\) использование поучений или саркастических замечаний, ироничного, снисходительного, шутливого или фамильярного отношения к жителю;  
+8\) вступление в дискуссии с автором сообщения;  
+9\) разглашение персональных данных в нарушение требований Федерального закона № 152-ФЗ.
+
+# 8\. Порядок взаимодействия оператора с профильными подразделениями Администрации и подведомственными муниципальными учреждениями при подготовке ответов
+
+55\. Настоящий раздел устанавливает порядок действий оператора при поступлении сообщений жителей, содержательный ответ на которые требует фактических сведений профильных подразделений Администрации либо подведомственных муниципальных учреждений, не участвующих в работе служебной группы (далее — профильные подразделения). Порядок применяется с учетом подпункта «а» пункта 2.4 Соглашения об информационном взаимодействии при работе с сообщениями граждан, размещенными в социальных сетях, заключенного 23.12.2025 между Центром управления регионом в Камчатском крае и Администрацией Елизовского муниципального округа, предусматривающего ежедневные совместные консультации с целью поиска вариантов решения и подготовки качественных ответов. Маршрутизация сообщений по профильным подразделениям, сроки направления фактических сведений и эскалация координатору в программном коде Чат-бота не автоматизированы и обеспечиваются операторами организационно.  
+56\. Оператор Чат-бота не несет ответственности за фактическое содержание ответа жителю по вопросам, выходящим за пределы зоны его служебной компетенции. Оператор обеспечивает прием сообщения, классификацию вопроса, направление запроса фактических сведений в адрес профильного подразделения, контроль соблюдения внутренних сроков, подготовку и направление ответа жителю в соответствии с разделом 7 настоящего Регламента. Профильное подразделение, к компетенции которого относится поставленный в сообщении вопрос, несет ответственность за достоверность, полноту, своевременность и пригодность для использования в ответе жителю направленных оператору фактических сведений.  
+57\. К зоне служебной компетенции оператора, в пределах которой оператор подготавливает и направляет ответ жителю самостоятельно, относятся вопросы:  
+1\) о работе Чат-бота, способах подачи сообщения, статусе ранее поданного сообщения, использовании сценариев главного меню Чат-бота;  
+2\) справочного характера, ответы на которые включены в значения настраиваемых параметров Чат-бота;  
+3\) относящиеся к функциям Администрации, Елизовского городского поселения и Территориальных управлений, ответы на которые могут быть подготовлены специалистами отдела по работе с обращениями граждан на основании имеющихся у них сведений;  
+4\) включенные во внутренний справочный материал, формируемый координатором АЕМО.  
+58\. При определении, что для подготовки ответа на сообщение жителя требуется направление запроса фактических сведений в адрес профильного подразделения, оператор:  
+1\) направляет жителю промежуточный ответ в личной переписке с Чат-ботом — в срок не более 30 (тридцати) минут с момента определения вопроса вне зоны служебной компетенции оператора. Промежуточный ответ содержит сведения о принятии сообщения в работу, о направлении запроса профильным специалистам и об ориентировочном сроке направления ответа;  
+2\) формирует запрос фактических сведений по форме, установленной Приложением 3 к настоящему Регламенту, и направляет указанный запрос в адрес профильного подразделения — в срок не более 30 (тридцати) минут с момента направления жителю промежуточного ответа;  
+3\) фиксирует факт направления запроса и реквизиты адресата в служебной группе сообщением с цитированием карточки обращения.  
+59\. Направление жителю промежуточного ответа с формулировками «не относится к нашей компетенции», «не занимаемся данным вопросом», «обращайтесь в другой орган» без указания компетентного подразделения либо органа и без обеспечения дальнейшей передачи запроса не допускается.  
+60\. Запрос фактических сведений, направляемый оператором в адрес профильного подразделения, передается одним из следующих способов:  
+1\) через служебную групповую переписку в мессенджере MAX (при наличии в служебной группе представителя профильного подразделения);  
+2\) посредством служебного телефонного обращения к специалисту профильного подразделения с фиксацией факта обращения в служебной группе с указанием фамилии, инициалов специалиста профильного подразделения, даты, времени и существа переданного запроса;  
+3\) посредством служебной электронной почты Администрации с приложением формы запроса фактических сведений, установленной Приложением 3 к настоящему Регламенту.  
+61\. Направление запросов через мессенджеры, не относящиеся к национальному мессенджеру MAX, и через иные незащищенные каналы связи не допускается. Включение в запрос персональных данных третьих лиц, не относящихся непосредственно к существу поставленного жителем вопроса, не допускается.  
+62\. Сроки направления фактических сведений профильным подразделением в адрес оператора устанавливаются с учетом целевых сроков ответа жителю, установленных Таблицей 2 настоящего Регламента, и составляют:  
+1\) для сообщений категории высокой важности — не более 1 (одного) рабочего часа с момента получения запроса от оператора;  
+2\) для сообщений со стандартной категорией важности — не более 2 (двух) рабочих часов с момента получения запроса от оператора;  
+3\) для сообщений, требующих проведения проверочных действий, выезда на объект или иных организационных мероприятий, — в срок, согласованный с оператором при направлении запроса, с обязательным направлением промежуточных фактических сведений в течение 4 (четырех) рабочих часов с момента получения запроса.  
+63\. Срок направления фактических сведений профильным подразделением составляет не более половины целевого срока ответа жителю, что обеспечивает оператору необходимое время на оформление ответа в соответствии со Стандартом качества ответов.  
+64\. Фактические сведения, направляемые профильным подразделением оператору, представляются в форме, пригодной для использования в ответе жителю, и содержат:  
+1\) подтверждение либо мотивированное отрицание отнесения вопроса к компетенции профильного подразделения. В случае отрицания указывается орган либо организация, к компетенции которой вопрос относится, с обоснованием;  
+2\) описание фактической ситуации на дату подготовки сведений;  
+3\) сведения о принятых либо планируемых мерах с указанием конкретных сроков и ответственных исполнителей;  
+4\) указание на необходимость подачи жителем официального обращения через каналы, предусмотренные разделом 2 настоящего Регламента, в случае если поставленный вопрос требует рассмотрения в порядке, установленном Федеральным законом № 59-ФЗ;  
+5\) перечень сведений, составляющих персональные данные третьих лиц и не подлежащих включению в ответ жителю.  
+65\. Направление профильным подразделением оператору сведений с формулировкой «вопрос не относится к нашей компетенции» без указания компетентного органа или организации и без передачи имеющихся фактических сведений в части собственной компетенции не допускается.  
+66\. При получении от профильного подразделения фактических сведений оператор подготавливает ответ жителю на основании полученных сведений в соответствии со Стандартом качества ответов, и направляет ответ жителю одним из способов, установленных разделом 7 настоящего Регламента, в пределах целевого срока, установленного Таблицей 2 настоящего Регламента. Оператор не вправе изменять фактическое содержание сведений, полученных от профильного подразделения, и вправе приводить формулировки в соответствие с требованиями Стандарта качества ответов без изменения фактического содержания.  
+67\. При нарушении профильным подразделением срока направления фактических сведений оператор:  
+1\) не позднее чем за 30 (тридцать) минут до истечения срока направляет в адрес профильного подразделения уведомление о приближающемся истечении срока тем же способом, которым был направлен исходный запрос;  
+2\) при истечении срока без получения фактических сведений направляет жителю в личной переписке с Чат-ботом уточняющее сообщение о продлении срока подготовки ответа с указанием нового предполагаемого срока;  
+3\) информирует координатора АЕМО о факте нарушения профильным подразделением срока сообщением в служебной группе с цитированием карточки обращения.  
+68\. Координатор АЕМО при систематических нарушениях профильным подразделением сроков (более 3 (трех) случаев в течение одного календарного месяца) уведомляет руководителя соответствующего структурного подразделения Администрации либо подведомственного муниципального учреждения для принятия мер.  
+69\. Если поставленный в сообщении вопрос относится к компетенции иного органа местного самоуправления, исполнительного органа Камчатского края либо федерального органа государственной власти, оператор направляет жителю в личной переписке с Чат-ботом ответ с указанием органа, к компетенции которого относится вопрос, способов обращения в указанный орган и (при наличии) ссылок на соответствующие официальные ресурсы. Если поставленный вопрос отвечает признакам обращения, установленным статьей 4 Федерального закона № 59-ФЗ, оператор дополнительно информирует жителя о необходимости подачи официального обращения через каналы, предусмотренные разделом 2 настоящего Регламента. Положения статей 8 и 9 Федерального закона № 59-ФЗ в части обязательной переадресации обращений в компетентный орган при работе через Чат-бот не применяются на основании раздела 2 настоящего Регламента.  
+70\. При относимости сообщения жителя одновременно к компетенции нескольких профильных подразделений оператор направляет запросы фактических сведений в каждое из соответствующих подразделений с указанием в запросе перечня одновременных получателей. Сводный ответ жителю подготавливается оператором на основании сведений всех получателей запроса.  
+71\. Фактические сведения, полученные от профильных подразделений в порядке настоящего раздела и обезличенные путем исключения персональных данных и сведений, не подлежащих публичному распространению, обобщаются координатором АЕМО в форме внутреннего справочного материала, предназначенного для использования операторами при подготовке ответов на типовые сообщения. Внутренний справочный материал включает три уровня сведений: ссылки на нормативные правовые акты и установленные ими правила; описание типовых ситуаций; готовые формулировки ответов на часто поступающие вопросы.  
+72\. Внутренний справочный материал подлежит актуализации координатором АЕМО при наступлении любого из следующих оснований:  
+1\) изменение законодательства Российской Федерации, нормативных правовых актов Камчатского края или муниципальных правовых актов Администрации, затрагивающее содержание справочного материала, — в срок не более 1 (одного) рабочего дня со дня, когда координатору АЕМО стало известно об изменении;  
+2\) поступление от операторов сведений о неточности или неполноте справочного материала;  
+3\) выявление сообщений, на которые операторы не смогли подготовить ответ на основании имеющегося справочного материала;  
+4\) выявление по результатам анализа поступающих сообщений новой часто встречающейся тематики.  
+73\. При повторном поступлении сообщения по тематике, отраженной во внутреннем справочном материале, в неизменных фактических обстоятельствах оператор направляет ответ жителю на основании указанного справочного материала без направления повторного запроса в профильное подразделение, за исключением случаев, требующих актуализации сведений. Распределение тематик сообщений между профильными подразделениями Администрации и подведомственными муниципальными учреждениями устанавливается отдельным правовым актом Администрации.
+
+# 9\. Информационные рассылки
+
+74\. Чат-бот обеспечивает возможность направления подписавшимся жителям информационных сообщений муниципального характера: о чрезвычайных ситуациях, отключениях коммунальных служб, проводимых работах, иной важной для жителей информации.  
+75\. Подписка жителя на рассылку оформляется добровольно через интерактивную кнопку в главном меню Чат-бота либо командой /subscribe. При оформлении подписки житель дает отдельное согласие на обработку персональных данных в целях направления информационных сообщений. Согласие фиксируется в реквизите consent\_broadcast\_at записи жителя. Указанное согласие является самостоятельным по отношению к согласию на обработку персональных данных в целях работы с обращением: отдельное согласие на каждую цель обработки соответствует части 4 статьи 9 Федерального закона № 152-ФЗ и приказу Федеральной службы по надзору в сфере связи, информационных технологий и массовых коммуникаций от 19.06.2025 № 140.  
+76\. Отказ от подписки оформляется одной из следующих операций: нажатие кнопки «Отписаться от рассылки» под любым сообщением рассылки, использование переключателя в главном меню Чат-бота, направление команды /unsubscribe.  
+77\. Подготовка и направление информационной рассылки осуществляется координатором АЕМО либо специалистом с ролью «it» через мастер /broadcast. Мастер предусматривает: ввод текста рассылки (не более 1000 (одной тысячи) символов), отображение предпросмотра с указанием числа получателей, подтверждение оператором, отправку сообщений с ограничением скорости (по умолчанию 1 (одно) сообщение в секунду, параметр BROADCAST\_RATE\_LIMIT\_PER\_SEC).  
+78\. Оператор вправе приложить к рассылке фотографии в количестве от 1 (одной) до значения настраиваемого параметра broadcast\_max\_images (по умолчанию 5 (пять), допустимый диапазон от 1 до 20). Приложенные фотографии направляются каждому подписчику в составе исходной рассылки. Карточка предпросмотра шага подтверждения мастера отображает количество приложенных фотографий и сами фотографии. При превышении установленного лимита Чат-бот выводит оператору предупреждение с указанием числа приложенных и числа направляемых фотографий; излишние фотографии не направляются.  
+79\. Между моментом подтверждения отправки рассылки оператором и моментом начала фактической отправки жителям Чат-бот выдерживает паузу 5 (пять) минут для возможности отмены при обнаружении ошибки. Для рассылок неотложного характера, помеченных в тексте маркером \[ЧС\] (в начале текста либо после пробела, без учета регистра), пауза сокращается до 30 (тридцати) секунд. Указанные значения паузы зафиксированы в программном коде Чат-бота и не настраиваются через параметры окружения. Использование маркера \[ЧС\] без действительной чрезвычайной ситуации не допускается — это снижает доверие жителей к маркеру и в перспективе приводит к игнорированию рассылок о реальных чрезвычайных ситуациях.  
+80\. В период паузы и в период выполнения рассылки в служебной группе доступна кнопка «Экстренно остановить». Указанная кнопка доступна оператору с любой ролью и предназначена для экстренного прекращения рассылки в случае выявления ошибки.  
+81\. Координатор АЕМО либо специалист с ролью «it» может сохранять часто используемые тексты информационных рассылок в качестве шаблонов через мастер «Шаблоны рассылок» в панели /op\_help. Шаблон содержит заголовок (для идентификации в перечне) и текст рассылки. При запуске мастера /broadcast доступна функция применения шаблона — выбор шаблона подставляет его текст в качестве черновика, дальнейшая отправка происходит в порядке, установленном настоящим разделом.  
+82\. Рассылка направляется исключительно жителям, имеющим действующее согласие на обработку персональных данных в целях направления информационных сообщений и не заблокированным в Чат-боте.  
+83\. Сведения о направленных рассылках сохраняются в журнале действий с указанием количества доставленных и недоставленных сообщений.
+
+# 10\. Защита персональных данных
+
+84\. При работе с Чат-ботом Администрацией обрабатываются следующие персональные данные жителей: идентификатор пользователя в мессенджере MAX (max\_user\_id), имя, абонентский номер телефонной связи, текст сообщения, приложенные жителем файлы, сведения о местоположении (при добровольной передаче жителем).  
+85\. Сведения о согласии на обработку персональных данных, об отзыве согласия, о подписке на рассылку и об отзыве подписки фиксируются в базе данных Чат-бота с указанием даты и времени.  
+86\. Информационная система Чат-бота относится к четвертому уровню защищенности персональных данных в соответствии с пунктом 13 постановления Правительства Российской Федерации от 01.11.2012 № 1119: обрабатываются иные категории персональных данных, актуальны угрозы 3-го типа, субъекты персональных данных не являются работниками оператора, и их число — менее 100 000 (ста тысяч). Совокупность указанных условий относит информационную систему именно к четвертому уровню защищенности. Отнесение информационной системы к четвертому уровню защищенности основывается на модели угроз безопасности персональных данных, утверждаемой Администрацией как оператором.  
+87\. Программно-технические меры защиты персональных данных реализованы с учетом базового набора мер для четвертого уровня защищенности, установленного приказом Федеральной службы по техническому и экспортному контролю от 18.02.2013 № 21 (в том числе меры групп идентификации и аутентификации субъектов доступа, управления доступом, регистрации событий безопасности). Требования к учету машинных носителей, ведению (хранению) журналов событий безопасности и иные организационные меры обеспечиваются Администрацией в соответствии с применимыми требованиями уполномоченных федеральных органов исполнительной власти в области информационной безопасности. Перечень реализованных в программном коде защитных механизмов приведен в разделе 11 настоящего Регламента.  
+88\. Право субъекта персональных данных на доступ к своим персональным данным и сведениям об их обработке (статья 14 Федерального закона № 152-ФЗ) реализуется через возможность жителя получить выгрузку своих обращений командой /export и просмотреть свои обращения в разделе «Мои обращения» Чат-бота. Дополнительно сведения об операторе и о порядке обработки персональных данных доводятся до жителя через политику обработки персональных данных (параметр policy\_url), ссылка на которую отображается в тексте согласия и в разделе «Полезная информация».  
+89\. Право на отзыв согласия (часть 2 статьи 9 Федерального закона № 152-ФЗ) реализуется через интерактивный сценарий «Уйти из бота» в подменю «Настройки и помощь», предусматривающий три варианта действий жителя:  
+1\) отключение получения рассылки с сохранением согласия на обработку персональных данных и истории обращений;  
+2\) отзыв согласия на обработку персональных данных с сохранением возможности получить ответ на ранее поданные открытые обращения;  
+3\) немедленное удаление персональных данных в рабочей базе данных Чат-бота.  
+90\. Обязанность Администрации как оператора прекратить обработку и уничтожить персональные данные жителя в случае отзыва согласия, если их хранение более не требуется для целей обработки (часть 5 статьи 21 Федерального закона № 152-ФЗ — в срок не более 30 (тридцати) дней с даты поступления отзыва), реализуется двумя способами:  
+1\) самостоятельно жителем — командой /forget в личной переписке с Чат-ботом либо нажатием соответствующей кнопки в сценарии «Уйти из бота»;  
+2\) по запросу субъекта персональных данных, направленному в Администрацию, — специалистом с ролью «it» командой /erase max\_user\_id=\<идентификатор\> или /erase phone=\<номер\>, либо нажатием кнопки «Удалить ПДн» в карточке обращения. Оба формата команды выполняются одним обработчиком.  
+91\. При удалении персональных данных свободный текст и вложения жителя по обращениям (адрес, текст сообщения, текст переписки, приложенные файлы) очищаются; обезличенные сведения о количестве и статусах обращений сохраняются путем переподвешивания обращений на техническую обезличенную запись. Запись жителя в базе данных при немедленном удалении удаляется физически. Открытые обращения жителя закрываются с отметкой об их закрытии в связи с отзывом согласия. Отзыв согласия не влечет автоматической блокировки жителя: житель вправе вернуться к работе с Чат-ботом.  
+92\. По истечении 30 (тридцати) календарных дней после отзыва жителем согласия на обработку персональных данных персональные данные жителя в рабочей базе данных Чат-бота автоматически обезличиваются во исполнение части 5 статьи 21 Федерального закона № 152-ФЗ. Указанная задача выполняется по расписанию ежедневно в 04 часа 30 минут. Если уничтожение персональных данных в указанный срок технически невозможно, Администрация в соответствии с частью 6 статьи 21 Федерального закона № 152-ФЗ блокирует такие персональные данные и обеспечивает их уничтожение в срок не более 6 (шести) месяцев.  
+93\. Содержание ранее поданных обращений (тематика, населенный пункт, сведения о городском объекте, текст обращения), не содержащее непосредственных персональных данных жителя, может сохраняться в Чат-боте в качестве муниципального документа в соответствии с применимыми нормативными актами Администрации в течение 5 (пяти) лет, после чего автоматически обезличивается. Указанная задача выполняется по расписанию ежедневно в 04 часа 45 минут.  
+94\. При выявлении инцидента, связанного с нарушением безопасности персональных данных и повлекшего неправомерную или случайную передачу (предоставление, распространение, доступ) персональных данных, Администрация уведомляет уполномоченный орган по защите прав субъектов персональных данных (Федеральную службу по надзору в сфере связи, информационных технологий и массовых коммуникаций) в порядке и сроки, установленные частью 3.1 статьи 21 Федерального закона № 152-ФЗ (введена Федеральным законом от 14.07.2022 № 266-ФЗ): в течение 24 (двадцати четырех) часов — о факте инцидента, его предполагаемых причинах, предполагаемом вреде правам субъектов персональных данных и принятых мерах по устранению последствий; в течение 72 (семидесяти двух) часов — о результатах внутреннего расследования и о лицах, действия которых стали причиной инцидента (при их установлении). Автоматическая фиксация такого инцидента в журнале действий Чат-бота не предусмотрена; уведомление готовится ответственными должностными лицами Администрации.
+
+# 11\. Защитные механизмы информационной безопасности
+
+95\. В Чат-боте реализованы следующие программно-технические меры защиты, обеспечивающие соблюдение требований к четвертому уровню защищенности персональных данных:  
+1\) защита от снятия блокировки жителем через устаревшие интерактивные кнопки согласия — повторное нажатие старой кнопки «Согласен» в истории чата не снимает признак блокировки жителя; разблокировка возможна только через операцию специалиста с ролью «it»;  
+2\) обязательное шифрование резервных копий базы данных алгоритмом GPG (AES-256) — резервные копии, не прошедшие шифрование, на сервере не сохраняются (создание незашифрованной копии допускается только при явной конфигурации BACKUP\_ALLOW\_UNENCRYPTED для целей разработки); при сбое на стадии шифрования незашифрованный файл автоматически удаляется;  
+3\) защита от подмены адресата операторского ответа через подделку маркера обращения — маркер обращения принимается Чат-ботом только из сообщений, отправленных самим Чат-ботом;  
+4\) ограничение значений настраиваемых параметров-ссылок официальными доменами — параметры policy\_url, electronic\_reception\_url, udth\_schedule\_url, udth\_schedule\_intermunicipal\_url принимаются только при принадлежности к доменам elizovomr.ru, kamgov.ru, gosuslugi.ru, kamchatka.gov.ru (включая поддомены); перечень доменов изменяется только правкой программного кода Чат-бота и не настраивается через интерфейс; проверка распространяется в том числе на ссылки, вложенные в параметры запроса разрешенной ссылки, и на ссылки с использованием визуально неотличимых символов из других алфавитов;  
+5\) ограничение скорости дополнений к обращению одним жителем — не более 5 (пяти) дополнений в час на одно обращение, не чаще одного раза в 30 (тридцать) секунд;  
+6\) проверка активности роли оператора непосредственно перед доставкой каждого ответа жителю — деактивированный оператор не может направить ответ, даже если до момента деактивации он успел инициировать формирование ответа;  
+7\) отказ от обработки события при невозможности зафиксировать ключ идемпотентности — любая ошибка записи ключа идемпотентности приводит к отбрасыванию события, что исключает повторное срабатывание изменяющей данные операции через искусственное замедление базы данных;  
+8\) маскирование персональных данных в служебных уведомлениях — номера телефонов в служебных уведомлениях маскируются (полный номер виден только при адресном запросе через команду /find\_resident);  
+9\) двухслойная проверка полномочий оператора при команде /reply — проверка роли и принадлежности к перечню активных операторов выполняется независимо от способа подачи команды.  
+96\. Чат-бот применяет автоматическую сверку входящих ссылок с открытыми источниками сведений о вредоносных и фишинговых ресурсах: URLhaus, ThreatFox и (при наличии заданного ключа PHISHTANK\_APP\_KEY) PhishTank. Иные источники сведений о вредоносных ресурсах в программном коде не используются. Сведения обновляются ежечасно; при устаревании указанных сведений более чем на 6 (шесть) часов специалисту с ролью «it» направляется критическое уведомление, пробивающее тихие часы. В карточках обращений ссылки, поступившие от жителей, обезвреживаются (процедура «defang»): между протоколом и доменом вставляется разделитель, в результате чего мессенджер MAX не определяет такой текст как переходящую ссылку. При проверке ссылок применяется нормализация по стандарту Unicode (NFKC) для выявления адресов с использованием совместимых и полноширинных символов.  
+97\. Чат-бот предоставляет три эндпоинта проверки работоспособности на локальном сетевом порте 8080: /livez (проверка «жив» — только внутренний сигнал работы, без обращения к базе данных; используется проверкой Docker, внешним контролем работоспособности и процедурой автоматического развертывания); /readyz (проверка готовности — сигнал работы и контрольный запрос к базе данных); /healthz (для обратной совместимости равнозначен /readyz). Указанные эндпоинты доступны только с самого сервера (локальный интерфейс 127.0.0.1) и наружу не публикуются, что согласуется с положением раздела 3 настоящего Регламента о работе Чат-бота без предоставления входящего публичного сетевого доступа. Полная диагностическая информация отдается только локальным запросам; внешним — лишь признак работоспособности.  
+98\. Контроль состояния защитных механизмов осуществляется специалистом с ролью «it» в соответствии с внутренней технической документацией отдела цифрового развития. Изменения в перечне защитных механизмов вносятся в порядке, установленном разделом 17 настоящего Регламента.
+
+# 12\. Блокировка жителя
+
+99\. Блокировка жителя в Чат-боте применяется как техническая мера защиты от злоупотреблений: массовых однотипных сообщений, угроз, оскорблений оператора, мошенничества, распространения незаконных материалов, действий, направленных на нарушение работы Чат-бота или служебной группы.  
+100\. Критика работы должностных лиц и муниципальных служб не является основанием для блокировки.  
+101\. Право блокировки и разблокировки жителя предоставлено исключительно специалисту с ролью «it». Указанное право реализуется нажатием кнопки «Заблокировать» или «Разблокировать» в карточке обращения жителя либо в разделе «Аудитория и согласия» панели быстрых действий /op\_help.  
+102\. Применению блокировки предшествует обсуждение в служебной группе с участием координатора АЕМО. Координатор АЕМО и иные операторы доводят основания для блокировки до специалиста с ролью «it» сообщением в служебной группе в порядке, установленном разделом 4 настоящего Регламента.  
+103\. Заблокированный житель не может направлять в Чат-бот новые сообщения, получать ответы операторов через Чат-бот и получать информационные рассылки. Открытые обращения такого жителя закрываются автоматически.  
+104\. Блокировка в Чат-боте не ограничивает право жителя обратиться в Администрацию по иным официальным каналам связи.  
+105\. Все действия по блокировке и разблокировке жителей фиксируются в журнале действий.
+
+# 13\. Журнал действий операторов
+
+106\. Чат-бот ведет автоматизированный журнал значимых действий операторов и системных событий безопасности (таблица audit\_log). В журнал фиксируются: идентификатор инициатора действия, тип действия, целевой объект, дата и время.  
+107\. Перечень типов действий, фиксируемых в журнале:  
+1\) reply — ответ жителю цитированием (свайп-ответ);  
+2\) reply\_via\_command — ответ жителю командой /reply;  
+3\) reopen — возобновление обращения;  
+4\) close — закрытие обращения без ответа;  
+5\) erase — удаление персональных данных жителя специалистом с ролью «it»;  
+6\) self\_erase — удаление персональных данных по инициативе жителя;  
+7\) self\_consent\_revoke — отзыв жителем согласия на обработку персональных данных в сценарии «Уйти из бота»;  
+8\) self\_subscribe\_broadcast — оформление жителем подписки на рассылку;  
+9\) block — блокировка жителя;  
+10\) unblock — разблокировка жителя;  
+11\) broadcast\_send — направление информационной рассылки;  
+12\) broadcast\_stop — экстренная остановка рассылки;  
+13\) broadcast\_cancel\_cooldown — отмена рассылки в период паузы перед отправкой;  
+14\) broadcast\_template\_create, broadcast\_template\_update, broadcast\_template\_rename, broadcast\_template\_clone, broadcast\_template\_delete — создание, изменение, переименование, копирование и удаление шаблона рассылки;  
+15\) operator\_upsert — регистрация или обновление сведений об операторе;  
+16\) operator\_role\_change — изменение роли оператора;  
+17\) operator\_deactivate — мягкая деактивация оператора;  
+18\) operator\_reactivate — реактивация ранее деактивированного оператора;  
+19\) operator\_auto\_deactivated\_stale — автоматическая деактивация оператора, покинувшего служебную группу;  
+20\) setting\_update — изменение значения настройки Чат-бота;  
+21\) setting\_list\_add, setting\_list\_del — добавление и удаление отдельного элемента списочного настраиваемого параметра (topics, localities);  
+22\) setting\_obj\_add, setting\_obj\_del — добавление и удаление отдельного элемента объектного настраиваемого параметра (emergency\_contacts, transport\_dispatcher\_contacts);  
+23\) settings\_pr\_created — создание запроса на включение изменений (pull request) для синхронизации настроек с репозиторием Чат-бота;  
+24\) resident\_search\_found, resident\_search\_not\_found — результат поиска жителя командой /find\_resident (с маскированием телефона в журнале);  
+25\) auto\_erase\_pdn\_retention — автоматическое обезличивание по истечении срока хранения после отзыва согласия.  
+108\. Тексты сообщений жителей, ответов операторов, рассылок и значения измененных настроек в журнале действий не сохраняются. Указанные сведения хранятся в основных таблицах базы данных и подлежат раскрытию исключительно в установленном законодательством порядке.  
+109\. Записи журнала действий хранятся 1 (один) год (365 дней) с момента события, после чего автоматически уничтожаются (параметр AUDIT\_LOG\_RETENTION\_DAYS, диапазон 30—3650 дней). Срок установлен Администрацией как оператором в соответствии с принципом ограничения хранения персональных данных (часть 7 статьи 5 Федерального закона № 152-ФЗ — хранение не дольше, чем требуют цели обработки) и обеспечивает возможность обнаружения, идентификации и анализа инцидентов информационной безопасности на протяжении достаточного периода. Указанная задача выполняется по расписанию ежедневно в 04 часа 15 минут.
+
+# 14\. Резервное копирование и фоновые задачи
+
+110\. Чат-бот выполняет фоновые задачи по расписанию (часовой пояс — UTC +12 (GMT +12)). Перечень задач приведен в Таблице 3\. В числе фоновых задач 1-го числа каждого месяца в 09 часов 00 минут Чат-бот автоматически формирует и направляет в служебную группу статистический отчет за предыдущий месяц в формате XLSX. Указанный автоматический отчет формируется независимо от выгрузки статистики по команде /stats, инициируемой оператором вручную.
+
+Таблица 3
+
+| № п/п | Наименование задачи | Расписание (время UTC +12 (GMT +12)) | Назначение |
+| :---: | ----- | ----- | ----- |
+| 1 | 2 | 3 | 4 |
+| 1\. | Резервное копирование базы данных | воскресенье, 03:00 | снятие дампа, шифрование GPG, ротация копий, уведомление о сбое |
+| 2\. | Ретенция технических событий | ежедневно, 04:00 | удаление служебных событий идемпотентности старше 30 дней |
+| 3\. | Ретенция журнала действий | ежедневно, 04:15 | удаление записей журнала действий старше срока хранения (по умолчанию 365 дней) |
+| 4\. | Деактивация выбывших операторов | ежедневно, 04:20 | деактивация операторов, покинувших служебную группу (учетные записи роли «it» исключены) |
+| 5\. | Обезличивание по отзыву согласия | ежедневно, 04:30 | обезличивание персональных данных жителей через 30 дней после отзыва согласия (часть 5 статьи 21 Федерального закона № 152-ФЗ) |
+| 6\. | Обезличивание обращений по сроку хранения | ежедневно, 04:45 | обнуление текста обращений старше 5 лет |
+| 7\. | Обновление сведений о вредоносных ссылках | ежечасно, в 17 минут | обновление баз URLhaus, ThreatFox, PhishTank; критическое уведомление при устаревании более 6 часов |
+| 8\. | Уборка зависших черновиков рассылок | ежечасно, в 37 минут | перевод черновиков рассылок старше 30 минут в статус «не отправлено» |
+| 9\. | Сброс зависших анкет | ежечасно, в 15 минут | сброс незавершенных анкет старше 24 часов; уведомление при массовом сбросе |
+| 10\. | Самопроверка работоспособности | каждые 5 минут | уведомление при изменении состояния «жив» / «не отвечает» |
+| 11\. | Месячный статистический отчет | 1-го числа, 09:00 | формирование отчета за месяц в формате XLSX в служебную группу |
+| 12\. | Сигнал жизни (базовый) | ежечасно, в 05 минут, круглосуточно | подтверждение работы Чат-бота |
+| 13\. | Сигнал жизни (рабочее время) | понедельник — пятница, 09:35—17:35 | дополнительное подтверждение работы в рабочее время |
+| 14\. | Напоминание об открытых обращениях | понедельник — пятница, в 10 минут (09:00—11:59 и 13:00—17:59) | напоминание операторам об открытых обращениях |
+| 15\. | Напоминание о просроченных обращениях | понедельник — пятница, в 40 минут (09:00—11:59 и 13:00—17:59) | напоминание операторам о просроченных по целевому сроку обращениях |
+| 16\. | Сигнал жизни при запуске | однократно через 5 секунд после старта | подтверждение восстановления работы после перезапуска |
+| 17\. | Внешний контроль работоспособности (опционально) | каждые 5 минут (при заданном параметре HEALTHCHECK\_URL) | внешний сигнал во внешнюю систему мониторинга |
+
+111\. Производственный календарь Российской Федерации (нерабочие праздничные дни) учитывают только напоминания об открытых и просроченных обращениях: в нерабочие праздничные дни они не направляются. Сигналы жизни направляются по календарному расписанию без учета праздничных дней. Задачи ретенции и обезличивания персональных данных выполняются ежедневно, включая выходные и праздничные дни. Внешний контроль работоспособности активируется только при заданном параметре HEALTHCHECK\_URL.  
+112\. Производственный календарь Чат-бота охватывает 2026 и 2027 годы (включая переносы выходных дней). При отсутствии либо повреждении файла календаря Чат-бот переходит в безопасный режим, считая нерабочими днями только воскресенья.  
+113\. Дополнительно на уровне операционной системы сервера выполняется внешний контроль (watchdog) состояния Чат-бота посредством служебного сценария, запускаемого средствами планировщика хостовой операционной системы: проверка эндпоинтов /livez и /readyz; при двух последовательных сбоях — попытка перезапуска контейнера Чат-бота; при безуспешности — запись в системный журнал и (при наличии) внешнее уведомление.  
+114\. Глубина хранения еженедельных резервных копий — последние 8 (восемь) файлов, что соответствует приблизительно 2 (двум) месяцам истории (параметр BACKUP\_KEEP\_COUNT). Имя файла резервной копии имеет вид aemr-ГГГГММДД\_ЧЧММСС.sql.gpg. Внеплановое снятие резервной копии осуществляется специалистом с ролью «it» командой /backup в служебной группе.  
+115\. При возникновении сбоя еженедельного резервного копирования Чат-бот направляет в служебную группу уведомление с указанием стадии сбоя (снятие дампа базы данных, шифрование, доставка во внешнее хранилище). В случае сбоя на стадии шифрования незашифрованный файл резервной копии, оставшийся на сервере, автоматически удаляется в целях недопущения хранения персональных данных в незашифрованном виде.  
+116\. Проверка целостности резервных копий путем пробного восстановления в изолированную среду проводится не реже одного раза в квартал. Настоящая проверка является организационной процедурой специалиста с ролью «it» и в программном коде Чат-бота не автоматизирована (Чат-бот обеспечивает создание, шифрование и ротацию копий, но не их пробное восстановление).  
+117\. Восстановление основной базы данных Чат-бота из резервной копии в случае повреждения данных, аварии серверного оборудования либо инцидента информационной безопасности, требующего отката, выполняется специалистом с ролью «it» в соответствии с внутренней технической документацией отдела цифрового развития. До начала восстановления в служебную группу направляется уведомление о технических работах с указанием ожидаемой длительности. По завершении направляется уведомление о восстановлении работоспособности с указанием даты и времени, к которым относится восстановленное состояние базы данных. Обращения и сообщения, поступившие в Чат-бот между моментом снятия использованной резервной копии и моментом восстановления, считаются утерянными по техническим причинам; операторы оповещают об этом жителей при получении повторных сообщений по той же тематике.  
+118\. Плановая ротация секретов Чат-бота (токен бота, пароль базы данных, парольная фраза шифрования резервных копий, при наличии — секрет веб\-перехватчика, реквизиты объектного хранилища, токены доступа к репозиторию, ключи для автоматического развертывания) выполняется специалистом с ролью «it» не реже одного раза в шесть календарных месяцев. Каждый факт ротации фиксируется в журнале эксплуатации отдела цифрового развития. Внеплановая ротация выполняется немедленно при наличии оснований полагать компрометацию (увольнение сотрудника, имевшего доступ к секретам; обнаружение секрета в постороннем канале; компрометация рабочего устройства специалиста с ролью «it»). При ротации парольной фразы шифрования резервных копий прежняя парольная фраза сохраняется в защищенном хранилище паролей до полного выпадения из ротации всех резервных копий, зашифрованных прежней фразой (приблизительно два месяца при глубине хранения 8 копий).
+
+# 15\. Изменение настроек и регистрация операторов
+
+119\. Изменение настраиваемых параметров Чат-бота осуществляется специалистом с ролью «it» одним из следующих способов:  
+1\) через раздел «Настройки бота» панели быстрых действий /op\_help, обеспечивающий иерархическое меню по группам параметров (тексты для жителей, внешние ссылки, контакты, контент-каталоги, метаданные синхронизации) с подсветкой ключей, измененных в базе данных, но не синхронизированных с репозиторием Чат-бота;  
+2\) командой /setting в служебной группе.  
+120\. Запрос на изменение настраиваемого параметра Чат-бота (например, ссылки на электронную приемную при изменении адреса приемной; графика приема граждан при изменении графика; перечня тематик обращений при пересмотре отраслевого распределения; контактов экстренных служб при изменении номеров) направляется заинтересованным оператором в служебную группу с указанием изменяемого ключа и нового значения. Специалист с ролью «it» в течение одного рабочего часа выполняет изменение через меню «Настройки бота» или командой /setting, проверяет результат и подтверждает в служебной группе. При необходимости параллельно синхронизирует изменение с репозиторием через действие синхронизации.  
+121\. Перечень настраиваемых параметров Чат-бота включает 14 (четырнадцать) содержательных ключей, изменяемых операторами:  
+1\) welcome\_text — приветственное сообщение, отправляемое жителю при первом обращении к Чат-боту;  
+2\) consent\_text — текст согласия на обработку персональных данных, отображаемый жителю перед началом работы с Чат-ботом;  
+3\) commit\_author\_name — фамилия, имя, отчество, указываемые в качестве автора при синхронизации настраиваемых параметров с репозиторием Чат-бота;  
+4\) commit\_author\_email — адрес электронной почты, указываемый в качестве адреса автора при синхронизации настраиваемых параметров с репозиторием Чат-бота;  
+5\) policy\_url — ссылка на политику обработки персональных данных (только в пределах официальных доменов);  
+6\) electronic\_reception\_url — ссылка на электронную приемную (только в пределах официальных доменов);  
+7\) udth\_schedule\_url — ссылка на расписание муниципальных автобусов (только в пределах официальных доменов);  
+8\) udth\_schedule\_intermunicipal\_url — ссылка на расписание межмуниципальных маршрутов (только в пределах официальных доменов);  
+9\) appointment\_text — текст о приеме граждан главой муниципального образования;  
+10\) emergency\_contacts — контакты экстренных служб (каждый элемент содержит наименование службы и номер телефона; не менее одного элемента);  
+11\) transport\_dispatcher\_contacts — контакты диспетчерских автотранспорта (каждый элемент содержит перечень маршрутов и номер телефона; не менее одного элемента);  
+12\) topics — перечень тематик обращений, не менее 1 (одной) и не более 30 (тридцати), ограничение программное;  
+13\) broadcast\_max\_images — максимальное количество фотографий, прилагаемых оператором к одной рассылке, в диапазоне от 1 (одной) до 20 (двадцати), по умолчанию — 5 (пять);  
+14\) localities — перечень населенных пунктов Елизовского муниципального округа, не менее 1 (одного) и не более 30 (тридцати), ограничение программное.  
+122\. Дополнительно в Чат-боте предусмотрены 3 (три) служебных параметра управления тихими часами служебных уведомлений (admin\_quiet\_hours\_enabled, admin\_quiet\_hours\_start, admin\_quiet\_hours\_end), настраиваемых специалистом с ролью «it» и не входящих в перечень содержательных ключей, изменяемых операторами.  
+123\. Все изменения настроек фиксируются в журнале действий с указанием специалиста и измененного ключа. Значение настройки в журнал действий не записывается.  
+124\. Изменения значений настраиваемых параметров, определяющих содержательную часть Чат-бота (ссылок, текстов о приеме граждан, контактных сведений, перечней тематик и населенных пунктов), могут быть синхронизированы с репозиторием Чат-бота посредством создания запроса на включение изменений (pull request) через раздел «Настройки бота» панели быстрых действий /op\_help. Синхронизация обеспечивает фиксацию текущих значений настраиваемых параметров в исходных файлах Чат-бота для последующих автоматических развертываний. Параметры commit\_author\_name, commit\_author\_email, welcome\_text, consent\_text, broadcast\_max\_images и служебные параметры тихих часов не синхронизируются с репозиторием. Создание запроса на включение изменений фиксируется в журнале действий с типом действия settings\_pr\_created.  
+125\. Регистрация операторов производится в порядке, установленном разделом 4 настоящего Регламента. Алгоритм регистрации операторов командой /add\_operators предусматривает:  
+1\) добавление будущего оператора в служебную группу;  
+2\) направление будущим оператором в служебную группу команды /whoami для получения идентификатора max\_user\_id;  
+3\) формирование специалистом с ролью «it» многострочного списка операторов с указанием идентификатора max\_user\_id, роли, фамилии, имени, отчества;  
+4\) направление специалистом с ролью «it» в служебную группу команды /add\_operators со сформированным списком.  
+126\. В личной переписке с жителями команда /whoami не выполняется. Указанное ограничение реализовано в программном коде в целях исключения отображения идентификатора жителю.  
+127\. Самостоятельное повышение роли через команду /add\_operators либо через кнопочный мастер «Операторы» программно заблокировано. Изменение роли действующего оператора осуществляется специалистом с ролью «it» через карточку оператора в кнопочном мастере либо через прямой доступ к базе данных на основании письменного поручения руководителя структурного подразделения.
+
+# 16\. Ответственность
+
+128\. Координатор АЕМО и специалисты АЕМО, ЕГП (ТУ) несут ответственность за качество и сроки ответов жителям в порядке, установленном законодательством Российской Федерации, муниципальными правовыми актами Администрации, трудовым законодательством.  
+129\. Профильные подразделения Администрации и подведомственные муниципальные учреждения несут ответственность за достоверность, полноту, своевременность и пригодность для использования в ответе жителю фактических сведений, направленных оператору в порядке раздела 8 настоящего Регламента.  
+130\. Специалист отдела цифрового развития несет ответственность за: бесперебойное функционирование Чат-бота, своевременное снятие резервных копий, исполнение запросов на удаление персональных данных, конфиденциальность сведений, к которым он имеет доступ в силу своих служебных обязанностей.  
+131\. Специалист с ролью «it» не реже одного раза в квартал выполняет аудит серверной конфигурации с использованием служебного сценария, проверяющего соблюдение карты сетевых портов и привязок, права доступа к файлам конфигурации и резервным копиям, отсутствие секретов в открытом виде в журналах, размер и срок хранения резервных копий, статус автоматических обновлений операционной системы. Выявленные отклонения фиксируются в журнале эксплуатации и устраняются в течение пяти рабочих дней. Специалист с ролью «it» обеспечивает автоматический запуск Чат-бота при перезагрузке серверного оборудования посредством установки в операционной системе сервера юнита автозапуска. Служебные сценарии аудита, контроля работоспособности и юнит автозапуска являются средствами уровня операционной системы сервера; их запуск настраивается планировщиком хостовой операционной системы и в программном коде самого Чат-бота не управляется.  
+132\. При обнаружении одним оператором фактов нарушения другим оператором требований раздела 7 настоящего Регламента (тон, содержание, сроки) либо требований Стандарта качества ответов оператор уведомляет об этом непосредственного руководителя нарушителя служебной запиской. Специалист с ролью «it» по запросу руководителя выгружает из журнала действий выписку действий конкретного оператора за заданный период.  
+133\. Об инцидентах информационной безопасности (компрометация секретов; утечка персональных данных в журналах либо во внешних каналах; попытка несанкционированного доступа к Чат-боту; сбой работы Чат-бота длительностью более одного часа в рабочее время; отказ резервного копирования; обнаружение признаков фишинга в настраиваемых параметрах-ссылках) операторы и специалисты с ролью «it» сообщают в служебную группу с упоминанием специалиста с ролью «it» и параллельно — руководителю отдела цифрового развития служебной запиской. Специалист с ролью «it» в течение одного рабочего часа подтверждает прием сообщения, оценивает категорию инцидента (критический либо стандартный) и инициирует реагирование. По итогам реагирования готовится рапорт руководителю Администрации с описанием инцидента, мер реагирования, последствий и рекомендаций по предотвращению повторения. При инциденте, затрагивающем безопасность персональных данных, дополнительно исполняется обязанность уведомления уполномоченного органа в порядке раздела 10 настоящего Регламента.  
+134\. Разглашение третьим лицам сведений, ставших известными оператору в связи с работой в служебной группе, влечет ответственность, предусмотренную законодательством Российской Федерации и трудовым законодательством.
+
+# 17\. Изменение Регламента и обновление программного кода
+
+135\. Изменения и дополнения в настоящий Регламент вносятся распоряжением Администрации Елизовского муниципального округа.  
+136\. Проект изменений готовится начальником отдела по работе с обращениями граждан Администрации совместно со специалистом отдела цифрового развития.  
+137\. Изменения программного кода Чат-бота, прошедшие проверку кода и включенные в основную ветку канонического репозитория, автоматически применяются на серверном оборудовании Чат-бота в течение 10 (десяти) минут после включения. Применение выполняется автоматизированной процедурой с предварительной фиксацией текущей версии, пересборкой компонентов и проверкой работоспособности (эндпоинт /livez). При сбое проверки работоспособности происходит автоматический откат на предыдущую версию с уведомлением в системный журнал. Специалист с ролью «it» контролирует факт успешного применения изменений (сигнал жизни в служебной группе).  
+138\. Обновление внешних программных зависимостей Чат-бота (в первую очередь — клиента Bot API мессенджера MAX, прочих библиотек) выполняется специалистом с ролью «it» в плановом порядке (не реже одного раза в квартал — проверка наличия новых версий и уведомлений о безопасности) и во внеплановом порядке при выпуске критического обновления безопасности. Процедура включает сверку версии в локальной среде с версией в контейнере, находящемся в эксплуатации, изучение перечня изменений обновляемой библиотеки, подготовку запроса на включение изменений с минимальной дельтой, прохождение всех проверок непрерывной интеграции, ручную проверку критических сценариев и мониторинг работы Чат-бота в течение 24—48 часов после применения. При обнаружении регрессии выполняется откат в порядке, установленном настоящим разделом.  
+139\. Настоящий Регламент пересматривается не реже одного раза в год, а также при существенном изменении программного кода Чат-бота, изменении законодательства Российской Федерации в области персональных данных или обращений граждан, изменении организационной структуры Администрации.
+
+# 18\. Антифишинговая бдительность оператора и защита жителя от мошенничества
+
+140\. Оператор (вне зависимости от роли) обязан исходить из того, что любая ссылка, поступившая от жителя в обращении или в дополнении к обращению, является потенциально опасной до тех пор, пока обратное не подтверждено визуальной проверкой адреса в адресной строке браузера. Техническое обезвреживание ссылок в карточках обращений не отменяет обязанности оператора лично сверять адрес перед открытием.  
+141\. Оператор обязан довести до сведения жителя — в ответе на обращение либо при получении подозрительного дополнения — перечень действий, которые Администрация через Чат-бот никогда не запрашивает у жителя:  
+1\) запрос данных паспорта, страхового номера индивидуального лицевого счета, номеров банковских карт, кодов из SMS-сообщений;  
+2\) запрос оплаты государственных пошлин, штрафов, «срочной обработки» обращений;  
+3\) предложение установить стороннее мобильное приложение для «отслеживания обращения» или «получения дополнительных услуг»;  
+4\) предложение перейти по ссылке для «авторизации через портал государственных услуг» в целях «подтверждения личности»;  
+5\) звонок «от Администрации» с просьбой продиктовать SMS-код для подтверждения какого-либо действия;  
+6\) уведомление о «блокировке аккаунта жителя в мессенджере MAX» с предложением «восстановить доступ» через ссылку.  
+142\. Указанный перечень доводится до жителя через раздел «Защита от мошенников» главного меню Чат-бота, а также воспроизводится оператором в ответе на обращение либо при получении подозрительного дополнения. Техническое требование об обязательном включении перечня в приветственное сообщение в программном коде не реализовано: содержание приветственного сообщения проверяется только по длине и наличию текста, поэтому полнота антифишингового перечня обеспечивается организационно — через отдельный раздел меню «Защита от мошенников» и через настоящий Регламент.  
+143\. При получении в обращении или дополнении сведений о том, что житель стал жертвой мошенничества от лица Администрации, оператор:  
+1\) подтверждает жителю, что обращение от лица Администрации возможно исключительно через данный Чат-бот; звонки, сообщения в других мессенджерах и через сторонние интернет-страницы Администрацией не направляются;  
+2\) уведомляет жителя, что денежные средства, переведенные мошенникам добровольно, как правило, не возвращаются;  
+3\) направляет жителя для подачи заявления в органы внутренних дел Российской Федерации (лично в отделение полиции по месту жительства; единый номер экстренных служб — 112);  
+4\) фиксирует факт мошенничества в качестве дополнения к обращению жителя;  
+5\) уведомляет специалиста с ролью «it» через служебную группу — для оценки необходимости предупреждения остальных жителей через информационную рассылку либо уточнения текста приветственного сообщения.  
+144\. Оператор несет ответственность за защиту собственной учетной записи в мессенджере MAX: использование сложного пароля, биометрии, недопущение передачи устройства третьим лицам. При подозрении на компрометацию (потеря телефона, неизвестные сессии, странные сообщения от собственного имени) оператор обязан незамедлительно сообщить специалисту с ролью «it» через альтернативный канал связи (телефон, личный визит). Специалист с ролью «it» производит мягкую деактивацию учетной записи оператора в Чат-боте через мастер «Операторы» с записью действия в журнале действий.  
+145\. Расширенная инструкция оператору по информационной безопасности, антифишингу, реагированию на инциденты и соблюдению Федерального закона № 152-ФЗ ведется отделом цифрового развития в виде отдельного документа. Документ обязателен к прочтению до начала исполнения обязанностей оператора Чат-бота и при каждом существенном обновлении указанного документа.
+
+Приложение 1  
+к Регламенту работы с чат-ботом  
+«ЧАТ-БОТ / АДМИНИСТРАЦИЯ ЕМО»  
+   
+в мессенджере MAX
+
+**Перечень**  
+**команд Чат-бота и их доступность по ролям**
+
+1\. Допустимые периоды команды /stats: today (за сегодня — значение по умолчанию), week (за неделю), month (за месяц), quarter (за квартал), half\_year (за полгода), year (за год), all (за все время).  
+2\. Команды операторов, доступные в служебной группе, приведены в таблице:
+
+| № п/п | Команда | Назначение | Доступность по ролям |
+| :---: | ----- | ----- | ----- |
+| 1 | 2 | 3 | 4 |
+| 1\. | /open\_tickets | перечень открытых обращений | все роли |
+| 2\. | /stats \[период\] | выгрузка статистики в формате XLSX | все роли |
+| 3\. | /reply \<номер\> \<текст\> | ответ жителю командой | все роли |
+| 4\. | /reopen \<номер\> | возобновление обращения | все роли |
+| 5\. | /close \<номер\> | закрытие обращения без ответа | все роли |
+| 6\. | /diag | сводка о состоянии Чат-бота | все роли |
+| 7\. | /find\_resident \<телефон либо max\_user\_id\> | поиск жителя (телефон в результате маскируется) | все роли |
+| 8\. | /op\_help | панель быстрых действий (состав кнопок зависит от роли) | любой участник служебной группы |
+| 9\. | /broadcast \[list\] | мастер информационной рассылки | coordinator, it |
+| 10\. | /erase max\_user\_id= либо /erase phone= | удаление персональных данных жителя | только it |
+| 11\. | /setting \[list либо \<ключ\> \<значение\>\] | изменение настройки | только it |
+| 12\. | /backup | внеплановое снятие резервной копии | только it |
+| 13\. | /add\_operators | массовая регистрация операторов | только it |
+
+3\. Панель быстрых действий /op\_help содержит набор кнопок в зависимости от роли вызывающего оператора (помимо кнопок действий во всех ролях доступна кнопка «Памятка оператора»):  
+1\) для специалистов АЕМО и ЕГП (ТУ) — 3 (три) кнопки действий: «Открытые обращения» (со счетчиком), «Статистика», «Диагностика»;  
+2\) для координатора АЕМО — 6 (шесть) кнопок действий: дополнительно «Сделать рассылку», «История рассылок», «Шаблоны рассылок»;  
+3\) для специалиста с ролью «it» — 10 (десять) кнопок действий: дополнительно «Снять бэкап», «Операторы», «Настройки бота», «Аудитория и согласия».  
+4\. Команды Чат-бота, доступные жителю в личной переписке с Чат-ботом: /start, /help, /menu, /forget, /cancel, /export, /policy, /rules, /subscribe, /unsubscribe, /whoami. Команды направляются жителем текстовым сообщением и исполняются Чат-ботом независимо от текущего состояния диалога. Указанные команды не отображаются в служебном перечне команд мессенджера MAX; основное взаимодействие жителя с Чат-ботом осуществляется через интерактивное главное меню.
+
+**Примечание 1\.** Команда /export не публикуется в служебном перечне команд мессенджера MAX и применяется при индивидуальном обращении жителя к должностному лицу Администрации с целью реализации права субъекта персональных данных на доступ к своим персональным данным.  
+**Примечание 2\.** Команда /whoami в личной переписке с жителями не выполняется. Указанное ограничение реализовано в программном коде Чат-бота в целях недопущения отображения служебного идентификатора max\_user\_id жителю.  
+**Примечание 3\.** Основным способом взаимодействия жителя с Чат-ботом является интерактивное главное меню, направляемое Чат-ботом по команде /start либо /menu. Перечисленные команды сохраняют работоспособность в целях обеспечения совместимости с ранее распространенными ссылками на команды Чат-бота и для жителей, предпочитающих работу через ввод команд.  
+Приложение 2  
+к Регламенту работы с чат-ботом  
+«ЧАТ-БОТ / АДМИНИСТРАЦИЯ ЕМО»  
+   
+в мессенджере MAX
+
+**Контрольный перечень**  
+**проверки готовности Чат-бота к эксплуатации**
+
+1\. Контрольный перечень используется специалистом отдела цифрового развития для подтверждения готовности Чат-бота после установки, обновления или восстановления после сбоя.  
+2\. После создания служебной группы, настройки секретов и регистрации операторов подлежат проверке следующие позиции:  
+1\) открыть Чат-бот в личной переписке от имени тестового жителя; убедиться в получении приветственного сообщения и главного меню из 7 (семи) кнопок;  
+2\) пройти полный цикл подачи обращения от получения согласия на обработку персональных данных до получения подтверждения «Обращение \#N принято»; контрольное время — не более 2 (двух) минут;  
+3\) убедиться, что в служебной группе появилась карточка обращения и что под карточкой отображены кнопки «Ответить», «Закрыть без ответа», «В админ-меню»; для специалиста с ролью «it» дополнительно отображены кнопки «Заблокировать» и «Удалить ПДн»;  
+4\) направить ответ нажатием кнопки «Ответить» либо иным способом, предусмотренным разделом 7 настоящего Регламента, при необходимости с приложением одной фотографии, и проверить доставку формального письма с фотографией жителю;  
+5\) выполнить команду выдачи статистики за сегодня /stats today и убедиться в получении выгрузки, открываемой в формате XLSX;  
+6\) выполнить команду /op\_help под учетной записью специалиста с ролью «it» и убедиться в отображении 10 (десяти) кнопок панели быстрых действий, а также в закреплении сообщения в служебной группе;  
+7\) выполнить команду /op\_help под учетной записью координатора АЕМО и убедиться в отображении 6 (шести) кнопок (без разделов «Операторы», «Настройки бота», «Аудитория и согласия», «Снять бэкап»);  
+8\) выполнить команду выдачи диагностики /diag и убедиться в получении сводки о состоянии Чат-бота;  
+9\) выполнить команду снятия резервной копии /backup и убедиться в создании файла резервной копии;  
+10\) оформить тестовую подписку на рассылку и выполнить мастер /broadcast с тестовым сообщением (при необходимости — с приложением фотографий в пределах значения параметра broadcast\_max\_images); убедиться в доставке подписавшимся жителям;  
+11\) оформить тестовый отзыв согласия командой /forget и убедиться в активации процессов обезличивания персональных данных в базе данных, а также в фиксации записи self\_erase в журнале действий;  
+12\) убедиться в получении сигналов жизни от Чат-бота по расписанию;  
+13\) открыть мастер «Операторы» в /op\_help под учетной записью специалиста с ролью «it»; убедиться, что отображается список активных операторов и доступны действия «Добавить», «Сменить роль», «Деактивировать», «Реактивировать»;  
+14\) открыть меню «Настройки бота» в /op\_help под учетной записью специалиста с ролью «it»; убедиться, что отображаются настраиваемые ключи и доступно действие синхронизации с репозиторием;  
+15\) открыть мастер «Шаблоны рассылок» в /op\_help под учетной записью координатора либо специалиста с ролью «it»; убедиться, что доступны сохранение и применение шаблонов;  
+16\) выполнить проверку автозапуска Чат-бота при перезагрузке серверного оборудования;  
+17\) выполнить проверку наличия записи планировщика хостовой операционной системы для регулярного контроля работоспособности.
+
+Дата выполнения проверки: «\_\_\_\_» \_\_\_\_\_\_\_\_\_\_\_ 2026 года
+
+Начальник отдела цифрового развития:
+
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_  /  \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_  
+       (подпись)                 (фамилия, имя, отчество)
+
+Приложение 3  
+к Регламенту работы с чат-ботом  
+«ЧАТ-БОТ / АДМИНИСТРАЦИЯ ЕМО»  
+   
+в мессенджере MAX
+
+**Форма**  
+**запроса фактических сведений, направляемого оператором Чат-бота в адрес профильного подразделения**
+
+1\. Форма запроса фактических сведений применяется оператором Чат-бота при необходимости получения от профильного подразделения Администрации либо подведомственного муниципального учреждения сведений, необходимых для подготовки ответа жителю в порядке, установленном разделом 8 настоящего Регламента.  
+2\. Форма запроса заполняется оператором и направляется в адрес профильного подразделения посредством служебной групповой переписки в мессенджере MAX, посредством служебного телефонного обращения либо посредством служебной электронной почты Администрации (с приложением заполненной формы запроса).
+
+| № п/п | Элемент запроса | Содержание |
+| :---: | ----- | ----- |
+| 1 | 2 | 3 |
+| 1\. | Номер обращения | \#N (из карточки обращения) |
+| 2\. | Дата и время направления запроса |  |
+| 3\. | Оператор (инициатор запроса) | фамилия, инициалы, роль |
+| 4\. | Профильное подразделение (получатель) | наименование; при нескольких получателях — перечень |
+| 5\. | Тематика обращения | из карточки обращения |
+| 6\. | Существо вопроса | формулировка запрашиваемых фактических сведений |
+| 7\. | Целевой срок направления сведений | в соответствии с разделом 8 настоящего Регламента |
+| 8\. | Персональные данные жителя (в необходимом объеме) | только относящиеся к существу вопроса |
+| 9\. | Категория важности | высокая либо стандартная (со слов Куратора ЦУР) |
+| 10\. | Способ направления ответа оператору | служебная группа, телефон либо служебная электронная почта |
+
+3\. Запрос, не содержащий обязательных элементов, перечисленных в строках 1—7, 9 и 10 настоящей формы, может быть возвращен профильным подразделением оператору с указанием отсутствующих элементов и подлежит повторному направлению оператором после устранения отмеченных недостатков.  
+4\. Включение в запрос персональных данных третьих лиц, не относящихся непосредственно к существу поставленного жителем вопроса, не допускается. Передача персональных данных жителя в составе запроса осуществляется в объеме, необходимом для подготовки ответа на поставленный жителем вопрос.
+
+Приложение 4  
+к Регламенту работы с чат-ботом  
+«ЧАТ-БОТ / АДМИНИСТРАЦИЯ ЕМО»  
+   
+в мессенджере MAX
+
+**Лист**  
+**ознакомления с Регламентом**
+
+1\. Лист ознакомления подтверждает доведение настоящего Регламента до сведения лиц, указанных в части 4 настоящего Регламента, до начала исполнения ими обязанностей, связанных с работой Чат-бота, а также при каждом внесении в настоящий Регламент изменений и дополнений.  
+2\. Ознакомление удостоверяется собственноручной подписью лица с указанием даты ознакомления:
+
+| № п/п | Фамилия, имя, отчество | Должность | Дата ознакомления | Подпись |
+| :---: | ----- | ----- | ----- | ----- |
+| 1 | 2 | 3 | 4 | 5 |
+| 1\. |  |  |  |  |
+| 2\. |  |  |  |  |
+| 3\. |  |  |  |  |
+| 4\. |  |  |  |  |
+| 5\. |  |  |  |  |
+| 6\. |  |  |  |  |
+| 7\. |  |  |  |  |
+| 8\. |  |  |  |  |
+| 9\. |  |  |  |  |
+| 10\. |  |  |  |  |
+| 11\. |  |  |  |  |
+| 12\. |  |  |  |  |
+```
+
 ### `docs/archive/versions/Регламент_ULTIMATE@4dda831-2026-06-01.md`
 
 Size: `150660` bytes  
@@ -103323,6 +115324,698 @@ SHA-256: `62295ef6a723a4645c629067da0d94265ae0e6054d98831f0e3c1fbd431998f9`
 | /broadcast [list] | Мастер информационной рассылки | coordinator, it |
 | /erase max_user_id=… | /erase phone=… | Удаление персональных данных жителя | только it |
 | /setting [list | <ключ> <значение>] | Изменение настройки | только it |
+| /backup | Внеплановое снятие резервной копии | только it |
+| /add_operators | Массовая регистрация операторов | только it |
+
+3. Панель быстрых действий /op_help содержит набор кнопок в зависимости от роли вызывающего оператора (помимо кнопок действий во всех ролях доступна кнопка «Памятка оператора»):
+1) для специалистов АЕМО и ЕГП (ТУ) — 3 (три) кнопки действий: «Открытые обращения» (со счётчиком), «Статистика», «Диагностика»;
+2) для координатора АЕМО — 6 (шесть) кнопок действий: дополнительно «Сделать рассылку», «История рассылок», «Шаблоны рассылок»;
+3) для специалиста с ролью «it» — 10 (десять) кнопок действий: дополнительно «Снять бэкап», «Операторы», «Настройки бота», «Аудитория и согласия».
+
+4. Команды Чат-бота, доступные жителю в личной переписке с Чат-ботом: /start, /help, /menu, /forget, /cancel, /export, /policy, /rules, /subscribe, /unsubscribe, /whoami. Команды направляются жителем текстовым сообщением и исполняются Чат-ботом независимо от текущего состояния диалога. Указанные команды не отображаются в служебном перечне команд мессенджера MAX; основное взаимодействие жителя с Чат-ботом осуществляется через интерактивное главное меню (см. пункт 21 Регламента).
+
+Примечание 1. Команда /export не публикуется в служебном перечне команд мессенджера MAX и применяется при индивидуальном обращении жителя к должностному лицу Администрации с целью реализации права субъекта персональных данных на доступ к своим персональным данным.
+
+Примечание 2. Команда /whoami в личной переписке с жителями не выполняется. Указанное ограничение реализовано в программном коде Чат-бота в целях недопущения отображения служебного идентификатора max_user_id жителю и применяется в соответствии с пунктом 104 Регламента.
+
+Примечание 3. Основным способом взаимодействия жителя с Чат-ботом является интерактивное главное меню, направляемое Чат-ботом по команде /start либо /menu. Перечисленные в настоящем приложении команды сохраняют работоспособность в целях обеспечения совместимости с ранее распространёнными ссылками на команды Чат-бота и для жителей, предпочитающих работу через ввод команд.
+
+---
+
+## Приложение 2 к Регламенту работы с чат-ботом «Администрация Елизовского муниципального округа. Обратная связь» в мессенджере MAX
+
+### Шаблон формального ответа жителю
+
+1. Чат-бот формирует ответ жителю автоматически с использованием формального шаблона. Текст оператора (длиной не более 300 (трёхсот) символов) подставляется в раздел «Ответ оператора». При приложении оператором фотографии в соответствии с пунктом 37 настоящего Регламента фотография направляется жителю в том же сообщении одновременно с текстом ответа.
+
+2. Параметры обращения (номер, дата, тематика, населённый пункт, адрес) подставляются Чат-ботом автоматически по сведениям из карточки обращения. Изменение указанных полей оператором не предусмотрено.
+
+---
+
+## Приложение 3 к Регламенту работы с чат-ботом «Администрация Елизовского муниципального округа. Обратная связь» в мессенджере MAX
+
+### Контрольный перечень проверки готовности Чат-бота к эксплуатации
+
+1. Контрольный перечень используется системным администратором для подтверждения готовности Чат-бота после установки, обновления или восстановления после сбоя.
+
+2. После создания служебной группы, настройки секретов и регистрации операторов подлежат проверке следующие позиции:
+1) открыть Чат-бот в личной переписке от имени тестового жителя; убедиться в получении приветственного сообщения и главного меню из 7 (семи) кнопок;
+2) пройти полный цикл подачи обращения от получения согласия на обработку персональных данных до получения подтверждения «Обращение #N принято»; контрольное время — не более 2 (двух) минут;
+3) убедиться, что в служебной группе появилась карточка обращения и что под карточкой отображены кнопки «Ответить», «Закрыть без ответа», «В админ-меню»; для специалиста с ролью «it» дополнительно отображены кнопки «Заблокировать» и «Удалить ПДн»;
+4) направить ответ нажатием кнопки «Ответить» либо иным способом, предусмотренным пунктом 37 настоящего Регламента, при необходимости с приложением одной фотографии, и проверить доставку формального письма с фотографией жителю;
+5) выполнить в меню команду выдачи статистики за сегодня /stats today и убедиться в получении выгрузки, открываемой в формате XLSX;
+6) выполнить команду /op_help (либо упрощённые /help, /menu, /start) под учётной записью специалиста с ролью «it» и убедиться в отображении 10 (десяти) кнопок панели быстрых действий, а также в закреплении сообщения в служебной группе;
+7) выполнить команду /op_help под учётной записью координатора АЕМО и убедиться в отображении 6 (шести) кнопок (без разделов «Операторы», «Настройки бота», «Аудитория и согласия», «Снять бэкап»);
+8) выполнить в меню команду выдачи диагностики /diag и убедиться в получении сводки о состоянии Чат-бота;
+9) выполнить в меню команду снятия резервной копии /backup и убедиться в создании файла резервной копии;
+10) оформить тестовую подписку на рассылку и выполнить через меню мастер /broadcast с тестовым сообщением (при необходимости — с приложением фотографий в пределах значения параметра broadcast_max_images); убедиться в доставке подписавшимся жителям;
+11) оформить тестовый отзыв согласия командой /forget и убедиться в активации процессов обезличивания персональных данных в базе данных, а также в фиксации записи self_erase в журнале действий;
+12) убедиться в получении сигналов жизни от Чат-бота по расписанию рабочего времени;
+13) открыть мастер «Операторы» в /op_help под учётной записью специалиста с ролью «it»; убедиться, что отображается список активных операторов и доступны действия «Добавить», «Сменить роль», «Деактивировать», «Реактивировать»;
+14) открыть меню «Настройки бота» в /op_help под учётной записью специалиста с ролью «it»; убедиться, что отображаются настраиваемые ключи и доступно действие синхронизации с репозиторием;
+15) открыть мастер «Шаблоны рассылок» в /op_help под учётной записью координатора либо специалиста с ролью «it»; убедиться, что доступны сохранение и применение шаблонов;
+16) выполнить смок-проверку автозапуска aemr-bot.service (статус active);
+17) выполнить смок-проверку scripts/healthwatch.sh и убедиться в наличии записи планировщика для регулярного запуска.
+
+Дата выполнения проверки: «____» ___________ 2026 года.
+
+Начальник отдела цифрового развития:
+
+_____________________ / _____________________________________________
+        (подпись)                              (фамилия, имя, отчество)
+
+---
+
+## Приложение 4 к Регламенту работы с чат-ботом «Администрация Елизовского муниципального округа. Обратная связь» в мессенджере MAX
+
+### Форма запроса фактических сведений, направляемого оператором Чат-бота в адрес профильного подразделения
+
+1. Форма запроса фактических сведений применяется оператором Чат-бота при необходимости получения от профильного подразделения Администрации либо подведомственного муниципального учреждения сведений, необходимых для подготовки ответа жителю в порядке, установленном Главой 7 настоящего Регламента.
+
+2. Форма запроса заполняется оператором и направляется в адрес профильного подразделения посредством служебной групповой переписки в мессенджере MAX, посредством служебного телефонного обращения либо посредством служебной электронной почты Администрации (с приложением заполненной формы запроса).
+
+| № | Элемент запроса | Содержание |
+|---|---|---|
+| 1 | Номер обращения | #N (из карточки обращения) |
+| 2 | Дата и время направления запроса | |
+| 3 | Оператор (инициатор запроса) | фамилия, инициалы, роль |
+| 4 | Профильное подразделение (получатель) | наименование; при нескольких получателях — перечень |
+| 5 | Тематика обращения | из карточки обращения |
+| 6 | Существо вопроса | формулировка запрашиваемых фактических сведений |
+| 7 | Целевой срок направления сведений | в соответствии с пунктом 51 Регламента |
+| 8 | Персональные данные жителя (в необходимом объёме) | только относящиеся к существу вопроса |
+| 9 | Категория важности | высокая / стандартная (со слов Куратора ЦУР) |
+| 10 | Способ направления ответа оператору | служебная группа / телефон / служебная электронная почта |
+
+3. Запрос, не содержащий обязательных элементов, перечисленных в строках 1—7, 9 и 10 настоящей формы, может быть возвращён профильным подразделением оператору с указанием отсутствующих элементов и подлежит повторному направлению оператором после устранения отмеченных недостатков.
+
+4. Включение в запрос персональных данных третьих лиц, не относящихся непосредственно к существу поставленного жителем вопроса, не допускается. Передача персональных данных жителя в составе запроса осуществляется в объёме, необходимом для подготовки ответа на поставленный жителем вопрос.
+```
+
+### `docs/archive/versions/Регламент_ULTIMATE@d445646-2026-06-02.md`
+
+Size: `167501` bytes  
+SHA-256: `f44b8fa74665a8132f98648e2285c9c79446ec70a725d2b9aba6f67286616b7e`
+
+```markdown
+Приложение к распоряжению
+Администрации Елизовского
+муниципального округа
+от «____» ___________ 2026 года
+№ ______
+
+
+# Регламент работы с чат-ботом «Администрация Елизовского муниципального округа. Обратная связь» в мессенджере MAX
+
+---
+
+## Глава 1. Общие положения
+
+1. Настоящий Регламент устанавливает порядок организации работы с чат-ботом «Администрация Елизовского муниципального округа. Обратная связь» в мессенджере MAX (далее — Чат-бот), включая порядок приёма сообщений от жителей, подготовку и направление ответов, взаимодействие с профильными подразделениями Администрации и подведомственными муниципальными учреждениями при подготовке ответов, ведение информационных рассылок, обработку персональных данных, обеспечение информационной безопасности и контроль качества работы операторов.
+
+2. Чат-бот размещён по адресу @aemo_chat_bot (идентификатор 274913354) и зарегистрирован в программном интерфейсе мессенджера MAX (Bot API) от имени Администрации Елизовского муниципального округа (далее — Администрация, АЕМО).
+
+3. Регламент разработан в соответствии с:
+1) Федеральным законом от 02.05.2006 № 59-ФЗ «О порядке рассмотрения обращений граждан Российской Федерации» (далее — Федеральный закон № 59-ФЗ);
+2) Федеральным законом от 27.07.2006 № 152-ФЗ «О персональных данных» (далее — Федеральный закон № 152-ФЗ);
+3) Федеральным законом от 09.02.2009 № 8-ФЗ «Об обеспечении доступа к информации о деятельности государственных органов и органов местного самоуправления»;
+4) постановлением Правительства Российской Федерации от 01.11.2012 № 1119 «Об утверждении требований к защите персональных данных при их обработке в информационных системах персональных данных»;
+5) приказом Федеральной службы по техническому и экспортному контролю от 18.02.2013 № 21 «Об утверждении состава и содержания организационных и технических мер по обеспечению безопасности персональных данных при их обработке в информационных системах персональных данных»;
+6) постановлением Правительства Российской Федерации от 16.11.2020 № 1844 «Об утверждении Правил предоставления субсидии из федерального бюджета автономной некоммерческой организации по развитию цифровых проектов в сфере общественных связей и коммуникаций «Диалог Регионы» на создание и обеспечение функционирования в субъектах Российской Федерации центров управления регионов и Правил создания и функционирования в субъектах Российской Федерации центров управления регионов»;
+7) распоряжением Губернатора Камчатского края от 02.06.2020 № 540-Р (в редакции распоряжения от 10.06.2024 № 321-Р), регулирующим оперативное реагирование на сообщения из открытых источников и оценку качества ответов исполнителей;
+8) постановлением Администрации Елизовского муниципального округа от 19.12.2025 № 2129 «О Положении о муниципальном центре управления Елизовского муниципального округа» (далее — Постановление № 2129), включая Порядок работы с сообщениями из открытых источников (далее — Порядок работы с сообщениями) и Стандарт качества ответов на сообщения из открытых источников (далее — Стандарт качества ответов), являющиеся приложениями к указанному постановлению;
+9) нормативными правовыми актами уполномоченных федеральных органов исполнительной власти в области информационной безопасности, муниципальными правовыми актами Администрации.
+
+4. Регламент обязателен для применения координаторами отдела по работе с обращениями граждан Администрации, специалистами Администрации и Администрации Елизовского городского поселения (далее — ЕГП), а также Территориальных Управлений, ответственными за работу с обращениями, и работниками отдела цифрового развития (или иного ИТ-подразделения, назначенного администрировать и поддерживать Чат-бот) Администрации, обеспечивающими функционирование Чат-бота.
+
+---
+
+## Глава 2. Правовая природа канала связи
+
+5. Чат-бот является дополнительным электронным каналом обратной связи между гражданами и Администрацией. Сообщения, полученные через Чат-бот, рассматриваются в порядке, установленном настоящим Регламентом.
+
+6. Сообщение, поступившее через Чат-бот, является сообщением из открытого источника в значении Порядка работы с сообщениями и не является обращением гражданина в значении статьи 4 и части 3 статьи 7 Федерального закона № 59-ФЗ. Указанное сообщение не отвечает требованиям к форме обращения, установленным Федеральным законом № 59-ФЗ в редакции Федерального закона от 28.12.2024 № 547-ФЗ (вступил в силу 30.03.2025): оно не обеспечивает идентификацию и (или) аутентификацию заявителя через федеральную государственную информационную систему «Единый портал государственных и муниципальных услуг (функций)» либо иную информационную систему органа и не содержит адреса (уникального идентификатора) личного кабинета заявителя. В связи с этим при работе с таким сообщением положения Федерального закона № 59-ФЗ не применяются. Указанное соответствует подпункту 1.2 Порядка работы с сообщениями, утверждённого Постановлением № 2129.
+
+7. Правовым основанием обработки персональных данных при работе с Чат-ботом является пункт 2 части 1 статьи 6 Федерального закона № 152-ФЗ — обработка необходима для осуществления и выполнения возложенных законодательством Российской Федерации на оператора функций, полномочий и обязанностей. Функция работы с сообщениями граждан из открытых источников и информирования населения возложена на Администрацию Федеральным законом от 09.02.2009 № 8-ФЗ, Уставом и иными муниципальными правовыми актами. Согласие субъекта персональных данных (статья 9 Федерального закона № 152-ФЗ) является дополнительным основанием и используется в том числе для направления информационных рассылок. Процедурный статус сообщения (вне процедуры Федерального закона № 59-ФЗ) и правовое основание обработки персональных данных являются самостоятельными и не подменяют друг друга.
+
+Примечание. Пункт 4 части 1 статьи 6 Федерального закона № 152-ФЗ (обработка при предоставлении государственных и муниципальных услуг в значении Федерального закона от 27.07.2010 № 210-ФЗ) в качестве основного основания не применяется, поскольку Чат-бот является каналом обратной связи и информирования, а не предоставления муниципальной услуги. Опора на пункт 2 части 1 статьи 6 является неоспоримым основанием для органа местного самоуправления, реализующего возложенные на него функции.
+
+8. Если поступившее через Чат-бот сообщение по своему содержанию является обращением в значении статьи 4 Федерального закона № 59-ФЗ, оператор информирует заявителя о порядке подачи официального обращения через электронную приёмную Администрации, через платформу обратной связи «Госуслуги. Решаем вместе», иные официальные каналы либо в письменной форме. Администрация обеспечивает доведение до заявителя надлежащего маршрута и не оставляет сообщение без реакции.
+
+9. Чат-бот не заменяет работу с обращениями через платформу обратной связи «Госуслуги. Решаем вместе» и систему инцидент-менеджмента Центра управления регионом. Сообщения, поступившие через указанные каналы, рассматриваются в соответствии с регламентами этих каналов.
+
+---
+
+## Глава 3. Технические компоненты
+
+10. Чат-бот реализован как программный комплекс, включающий:
+1) программный сервис Bot API мессенджера MAX, размещённый на сервере Администрации;
+2) реляционную базу данных PostgreSQL, размещённую на территории Российской Федерации на том же сервере (часть 5 статьи 18 Федерального закона № 152-ФЗ);
+3) служебную групповую переписку в мессенджере MAX (далее — служебная группа), в которой работают операторы;
+4) подсистему резервного копирования базы данных с хранением копий в локальном томе и (по конфигурации) в объектном хранилище.
+
+11. Идентификатор служебной группы в мессенджере MAX задаётся в параметре ADMIN_GROUP_ID. Программный сервис различает события из служебной группы и события в личной переписке с жителями по этому идентификатору.
+
+12. Связь программного сервиса с серверами мессенджера MAX осуществляется в режиме длинного опроса (long polling) без предоставления входящего публичного сетевого доступа.
+
+13. Резервные копии базы данных формируются автоматически еженедельно, по умолчанию в воскресенье в 03 часа 00 минут по времени Камчатского края. Подробный перечень фоновых задач приведён в Таблице 3 настоящего Регламента.
+
+---
+
+## Глава 4. Роли и полномочия операторов
+
+14. В Чат-боте реализованы четыре роли операторов:
+1) координатор АЕМО (coordinator);
+2) специалист АЕМО (aemr);
+3) специалист ЕГП, в дальнейшем — специалист Территориального Управления (далее — ТУ) (egp);
+4) специалист отдела цифрового развития или иного ИТ-подразделения, назначенного администрировать и поддерживать Чат-бот (it).
+
+В программном коде Чат-бота роль идентифицируется значением egp и отображается оператору как «специалист ЕГП». Наименование «Территориальное Управление (ТУ)» является организационно-перспективным; в программном коде оно не закреплено и при переименовании структурного подразделения не требует изменения кода.
+
+15. Координатор АЕМО (coordinator) — муниципальный служащий, ответственный за приём и распределение сообщений в служебной группе, направление ответов жителям, отслеживание сроков ответа, взаимодействие с профильными подразделениями Администрации и подведомственными муниципальными учреждениями в порядке Главы 7 настоящего Регламента, а также специалист отдела информационного обеспечения деятельности Администрации либо иной профильный специалист пресс-службы, ответственный за подготовку информационных рассылок.
+
+16. Специалисты АЕМО (aemr) и ЕГП, в дальнейшем — ТУ (egp), — муниципальные служащие, обеспечивающие подготовку ответов на сообщения в пределах своей компетенции.
+
+17. Специалист отдела цифрового развития или иного ИТ-подразделения (it) — работник отдела цифрового развития Администрации (или иного ИТ-подразделения), ответственный за бесперебойное функционирование Чат-бота, ведение списка операторов, удаление персональных данных по запросам субъектов персональных данных, изменение настроек Чат-бота и снятие резервных копий базы данных.
+
+18. Назначение и прекращение полномочий операторов осуществляется специалистом отдела цифрового развития (или иного ИТ-подразделения) на основании письменного поручения руководителя соответствующего структурного подразделения одним из следующих способов:
+1) через кнопочный мастер «Операторы» в панели быстрых действий /op_help, обеспечивающий выбор будущего оператора из участников служебной группы без необходимости копирования идентификатора max_user_id, назначение роли, изменение роли, мягкую деактивацию с сохранением записи в базе данных и записи в журнале действий, последующую реактивацию;
+2) через команду /add_operators в служебной группе, обеспечивающую массовую регистрацию операторов по многострочному списку формата «<идентификатор max_user_id> <роль> <фамилия, имя, отчество>».
+
+Оба способа эквивалентны по правовым последствиям и фиксируются в журнале действий. Деактивация единственного активного оператора с ролью «it» программно заблокирована. Замена единственного активного «it» производится последовательностью: назначение нового «it» — деактивация предшествующего.
+
+18.1. Первоначальная регистрация первого специалиста с ролью «it» при установке Чат-бота на серверном оборудовании выполняется через переменные окружения серверной части: BOOTSTRAP_IT_MAX_USER_ID (идентификатор max_user_id будущего ИТ-специалиста) и BOOTSTRAP_IT_FULL_NAME (фамилия, имя, отчество). При первом запуске Чат-бота на пустом списке операторов соответствующая запись создаётся автоматически. После первого запуска указанные переменные могут быть удалены из конфигурации. Все последующие операторы регистрируются в порядке пункта 18 настоящего Регламента.
+
+18.2. Запросы операторов с ролями «coordinator», «aemr», «egp» в адрес специалиста с ролью «it» по любому из следующих оснований: необходимость блокировки или разблокировки жителя; необходимость удаления персональных данных конкретного жителя; необходимость добавления, изменения роли или деактивации оператора; необходимость изменения настраиваемого параметра Чат-бота; необходимость восстановления базы данных из резервной копии; необходимость ротации секретов или реакции на инцидент информационной безопасности — направляются в служебную группу с упоминанием специалиста с ролью «it» (@username) либо служебной запиской руководителю отдела цифрового развития. Специалист с ролью «it» подтверждает приём запроса в служебной группе в течение одного рабочего часа, выполняет запрос в порядке, установленном настоящим Регламентом, и фиксирует факт исполнения сообщением в служебной группе с цитированием запроса. Все действия, совершённые специалистом с ролью «it» по такому запросу, фиксируются в журнале действий в порядке Главы 11 настоящего Регламента.
+
+18.3. Заявка на получение роли оператора оформляется руководителем подразделения служебной запиской в адрес отдела цифрового развития. Служебная записка содержит: фамилию, имя, отчество и должность будущего оператора; идентификатор max_user_id (получаемый в порядке пункта 84 настоящего Регламента); запрашиваемую роль (coordinator / aemr / egp / it); служебное основание; подпись руководителя. На основании служебной записки специалист с ролью «it» добавляет будущего оператора в служебную группу мессенджера MAX и регистрирует роль в порядке подпункта 1 пункта 18. Прекращение полномочий оформляется в аналогичном порядке: служебная записка — мягкая деактивация через мастер «Операторы» в /op_help.
+
+19. Матрица полномочий операторов приведена в Таблице 1.
+
+**Таблица 1. Матрица полномочий операторов**
+
+| Действие | coordinator | aemr | egp (ТУ) | it |
+|---|:---:|:---:|:---:|:---:|
+| Просмотр карточек обращений в служебной группе | да | да | да | да |
+| Открытые обращения (/open_tickets), статистика (/stats), диагностика (/diag) | да | да | да | да |
+| Ответ жителю (свайп, /reply, кнопка «Ответить», промежуточный ответ) | да | да | да | да |
+| Возобновление и закрытие обращения | да | да | да | да |
+| Поиск жителя (/find_resident) | да | да | да | да |
+| Экстренная остановка рассылки | да | да | да | да |
+| Подготовка и направление информационных рассылок (/broadcast), шаблоны рассылок | да | нет | нет | да |
+| Блокировка и разблокировка жителя | нет | нет | нет | да |
+| Удаление персональных данных жителя (/erase, кнопка «Удалить ПДн») | нет | нет | нет | да |
+| Снятие резервной копии (/backup) | нет | нет | нет | да |
+| Изменение настроек Чат-бота (/setting, меню «Настройки бота») | нет | нет | нет | да |
+| Управление операторами (/add_operators, мастер «Операторы») | нет | нет | нет | да |
+| Раздел «Аудитория и согласия» | нет | нет | нет | да |
+
+Примечание. Право блокировки жителя и удаления его персональных данных непосредственно из карточки обращения предоставлено только специалисту отдела цифрового развития (или иного ответственного ИТ-подразделения). Координатор АЕМО и специалисты АЕМО, ЕГП (ТУ) эскалируют необходимость блокировки или удаления персональных данных к специалисту отдела цифрового развития служебной запиской или сообщением в служебной группе в порядке пункта 18.2 настоящего Регламента.
+
+---
+
+## Глава 5. Приём сообщения от жителя
+
+20. Житель открывает Чат-бот в мессенджере MAX и нажимает кнопку «Написать обращение» в главном меню. Дальнейшее взаимодействие осуществляется через интерактивные кнопки.
+
+21. Главное меню жителя содержит семь позиций:
+1) «Написать обращение»;
+2) «Мои обращения»;
+3) «Подписаться на рассылку» либо «Не хочу получать рассылку» — в зависимости от текущего состояния подписки;
+4) «Приём граждан»;
+5) «Полезная информация»;
+6) «Защита от мошенников»;
+7) «Настройки и помощь».
+
+22. Чат-бот собирает сведения от жителя последовательно, по этапам конечного автомата диалога. Поддерживается десять состояний диалога: idle, awaiting_consent, awaiting_contact, awaiting_name, awaiting_locality, awaiting_address, awaiting_topic, awaiting_summary, awaiting_followup_text (этап дополнения уже открытого обращения), awaiting_geo_confirm (этап подтверждения адреса, определённого по геолокации).
+
+23. На первом этапе Чат-бот получает от жителя согласие на обработку персональных данных. Согласие фиксируется в реквизите consent_pdn_at записи жителя. Без получения согласия дальнейшие этапы анкеты недоступны. Текст согласия, отображаемый жителю (настраиваемый параметр consent_text), в обязательном порядке содержит ссылку на политику обработки персональных данных (параметр policy_url); сохранить текст согласия без указанной ссылки технически невозможно (пункт 78 подпункт 4 настоящего Регламента). Согласие на обработку персональных данных в целях работы с обращением и согласие на получение информационных рассылок (пункт 58 настоящего Регламента) являются раздельными и даются жителем отдельно по каждой цели, что соответствует части 4 статьи 9 Федерального закона № 152-ФЗ и требованиям к содержанию согласия, установленным приказом Федеральной службы по надзору в сфере связи, информационных технологий и массовых коммуникаций от 19.06.2025 № 140 (вступил в силу 01.09.2025).
+
+24. На последующих этапах Чат-бот запрашивает: телефонный номер посредством нативной кнопки мессенджера MAX, имя жителя, населённый пункт (выбором из перечня либо передачей геолокации), адрес проблемы, тематику обращения (выбором из перечня), суть обращения с возможностью приложения файлов. Прогресс прохождения анкеты отображается счётчиком вида «N / 5» начиная с этапа ввода имени; этап получения согласия и этап передачи телефонного номера в счётчик не входят.
+
+25. На этапе выбора населённого пункта жителю доступна нативная кнопка мессенджера MAX «Поделиться геолокацией». При передаче жителем геолокации Чат-бот определяет населённый пункт и адрес по локальной базе данных географических объектов и запрашивает у жителя подтверждение определённого адреса (состояние awaiting_geo_confirm). Передача геолокации добровольна; житель вправе выбрать населённый пункт из перечня.
+
+26. Сообщение жителя считается принятым с момента поступления текста сути обращения. Чат-бот направляет жителю подтверждение «Обращение #N принято».
+
+27. Один житель может направить через Чат-бот не более 3 (трёх) новых обращений в течение одного часа. Указанное ограничение реализовано непосредственно в программном коде Чат-бота и не настраивается через параметры окружения.
+
+28. При превышении ограничения, установленного пунктом 27 настоящего Регламента, при наличии у жителя неотвеченного обращения Чат-бот предлагает дополнить открытое обращение через кнопку «Дополнить» в карточке обращения. При отсутствии неотвеченных обращений житель получает информацию о необходимости дождаться сброса лимита.
+
+По одному открытому обращению житель может направить не более 5 (пяти) дополнений в течение одного часа, при этом интервал между двумя дополнениями не должен быть менее 30 (тридцати) секунд. Указанные ограничения реализованы в программном коде Чат-бота и настраиваются параметрами FOLLOWUP_MAX_PER_HOUR_PER_APPEAL (диапазон 1—100) и FOLLOWUP_MIN_INTERVAL_SECONDS (диапазон 0—3600). При превышении ограничения дополнение не принимается; житель получает уведомление с указанием времени до следующего разрешённого дополнения.
+
+29. Ограничения объёма одного обращения:
+1) максимальное число вложений — 20 (двадцать);
+2) максимальный накопленный размер текста сути обращения — 2000 (две тысячи) символов;
+3) максимальная длина имени — 120 (сто двадцать) символов;
+4) максимальная длина адреса — 500 (пятьсот) символов.
+
+30. По факту приёма сообщения от жителя Чат-бот направляет в служебную группу карточку обращения, содержащую: номер обращения, имя и телефон жителя, населённый пункт, адрес, тематику и текст обращения. Вложения (фотографии, видеозаписи, файлы, геолокация) направляются вторым сообщением в качестве ответа на карточку. При наличии более 10 (десяти) вложений Чат-бот разделяет их на несколько сообщений с пометкой «Вложения к обращению #N (1/M)».
+
+31. При поступлении дополнения от жителя по уже открытому обращению, при отправке оператором промежуточного ответа жителю без закрытия обращения, при изменении статуса обращения по любой причине Чат-бот направляет в служебную группу новую карточку обращения, отражающую полную хронологию (суть обращения, все дополнения жителя, все промежуточные ответы оператора), с маркером в шапке («Новое дополнение по обращению #N от жителя», «Промежуточный ответ оператора», «Закрыто оператором» и тому подобное). Ранее направленные карточки не редактируются — они остаются в служебной группе как историческая запись действий. Это обеспечивает сохранность операторской истории и корректность работы ответа цитированием (свайп-ответа) на любую из карточек.
+
+32. Под карточкой обращения отображаются интерактивные кнопки действий, состав которых зависит от статуса обращения и роли вызывающего оператора:
+1) для статусов «новое» и «в работе» всем ролям отображаются кнопки «Ответить» и «Закрыть без ответа»;
+2) для статусов «отвечено» (answered) и «закрыто» (closed) — за исключением случаев закрытия в связи с отзывом согласия жителем — отображается кнопка «Возобновить»;
+3) для роли специалиста с ролью «it» дополнительно отображаются кнопки «Заблокировать» (или «Разблокировать» — в зависимости от текущего состояния блокировки) и «Удалить ПДн»;
+4) при наличии у обращения вложений отображается кнопка «Вложения (N)», нажатие которой переотправляет вложения в служебную группу;
+5) независимо от статуса и роли отображается кнопка «В админ-меню» для возврата к панели быстрых действий.
+
+33. Промежуточный статус «в работе» (in_progress) присваивается Чат-ботом автоматически при выполнении оператором действий, предполагающих принятие обращения в работу. Отдельная интерактивная кнопка переключения в указанный статус в карточке обращения не предусмотрена.
+
+33.1. Обращение может находиться в одном из четырёх статусов. Внутренний код-идентификатор статуса и его отображение для жителя в разделе «Мои обращения» соотносятся следующим образом: new — «🆕 Новое»; in_progress — «🔄 В работе»; answered — «✅ Завершено»; closed — «⛔ Закрыто без ответа». В тексте настоящего Регламента статус answered обозначается также словом «отвечено» (как он отображается оператору в подтверждении доставки, пункт 40 настоящего Регламента). Следует учитывать различие отображения для двух аудиторий: оператор видит «Отвечено», житель — «Завершено».
+
+---
+
+## Глава 5.1. Целостность служебного канала
+
+34. Все служебные сообщения в служебной группе (карточки обращений, кнопки операторов, уведомления оператора, системные ответы Чат-бота) фиксируются единым служебным каналом. Карточка обращения, индикатор хода рассылки, приглашение к ответу и итоговое уведомление об успешной доставке доставляются как отдельные сообщения и не редактируются после публикации. Этот принцип обеспечивает сохранность истории действий оператора, корректную работу ответа цитированием и предсказуемое поведение служебного канала при одновременной работе нескольких операторов.
+
+---
+
+## Глава 6. Порядок работы оператора с сообщением
+
+35. Поступившая в служебную группу карточка обращения распределяется координатором АЕМО между специалистами АЕМО и ЕГП (ТУ) в соответствии с компетенцией. Распределение производится в служебной группе путём упоминания (@username) ответственного специалиста.
+
+36. Принятие обращения в работу не требует отдельного действия оператора. Статус обращения изменяется на «в работе» автоматически при первом операторском действии — открытии ответа кнопкой «Ответить» или иной значимой операции, фиксируемой Чат-ботом.
+
+37. Ответ жителю формируется одним из следующих способов:
+1) ответ цитированием (свайп-ответ) — оператор выполняет цитирование на карточку обращения в служебной группе и вводит текст ответа. Чат-бот по связи цитирования определяет номер обращения и доставляет ответ жителю в личный чат;
+2) команда /reply <номер> <текст> — оператор направляет в служебную группу текстовое сообщение указанного формата. Способ применяется в случаях, когда клиент мессенджера MAX не передаёт связь цитирования;
+3) нажатие кнопки «Ответить» и ввод сообщения;
+4) промежуточный ответ — оператор направляет жителю текстовое сообщение, не закрывающее обращение и не изменяющее его статус. Применяется в случаях, когда для подготовки окончательного ответа требуется получить фактические сведения в порядке Главы 7 настоящего Регламента, либо когда оператор уведомляет жителя о ходе рассмотрения. Промежуточный ответ фиксируется в карточке обращения, обращение остаётся в статусе «в работе» до отправки окончательного ответа в порядке подпунктов 1—3 настоящего пункта.
+
+К ответу оператор вправе приложить одну фотографию, направляемую жителю в личном чате вместе с текстом ответа в составе формального письма по шаблону Приложения 2 настоящего Регламента. При приложении оператором более одной фотографии жителю направляется только первая; оператор получает соответствующее уведомление от Чат-бота.
+
+38. Лимит длины ответа оператора жителю — 300 (триста) символов (параметр ANSWER_MAX_CHARS). При превышении лимита Чат-бот возвращает оператору предупреждение, ответ жителю не доставляется.
+
+39. Ответ жителю формируется Чат-ботом в виде формального письма по шаблону, приведённому в Приложении 2 к настоящему Регламенту.
+
+40. После успешной доставки окончательного ответа жителю статус обращения изменяется на «отвечено» (внутренний код-идентификатор статуса — answered; в карточке оператора отображается как «Отвечено», в личной переписке жителю — как «✅ Завершено»). В служебной группе оператор получает подтверждение доставки. Дословный текст подтверждения окончательного ответа: «✉️ Финальный ответ отправлен жителю. Обращение #N переведено в "Отвечено" и закрыто. Если житель присылает дополнение — придёт новая карточка с пометкой "Новое дополнение".» Дословный текст подтверждения промежуточного ответа: «💬 Промежуточный ответ отправлен жителю. Обращение #N остаётся в работе — можно дослать уточнения через "✉️ Ответить" под карточкой ниже.»
+
+При нажатии оператором кнопки «Закрыть без ответа» по обращению, по которому ранее был направлен промежуточный ответ оператора, Чат-бот не блокирует действие, но выводит оператору предупреждение: «⚠️ У обращения уже есть промежуточный ответ оператора. В следующий раз для финального ответа удобнее использовать "✉️ Ответить и закрыть" — житель получит полное письмо.» Факт закрытия после промежуточного ответа дополнительно отмечается в журнале действий пометкой after_intermediate_reply.
+
+41. Целевые сроки направления первого ответа жителю установлены в Таблице 2 настоящего Регламента в соответствии с подпунктом 1.9 Порядка работы с сообщениями, утверждённого Постановлением № 2129.
+
+**Таблица 2. Целевые сроки направления ответа жителю**
+
+| Категория важности | Целевой срок направления ответа |
+|---|---|
+| Высокая важность (назначается Куратором ЦУР) | не более 2 (двух) часов с момента выявления сообщения Куратором ЦУР |
+| Стандартная важность | не более 4 (четырёх) рабочих часов с момента выявления сообщения Куратором ЦУР |
+| Промежуточный ответ направлен, готовится окончательный | окончательный ответ — не более 8 (восьми) рабочих дней со дня направления промежуточного ответа |
+
+Примечание. Категория важности сообщения определяется Куратором Центра управления регионом (далее — Куратор ЦУР) при выявлении сообщения и сообщается Администрации в порядке Порядка работы с сообщениями. В программном коде Чат-бота применяется единый целевой срок ответа продолжительностью 4 (четыре) часа (параметр SLA_RESPONSE_HOURS), используемый для автоматических напоминаний (Таблица 3). Дифференциация по категории важности и тематическая приоритизация в Чат-боте не автоматизированы; контроль повышенной важности обеспечивается организационно — оператором по указанию Куратора ЦУР. Автоматические напоминания Чат-бота являются вспомогательным средством контроля и не заменяют целевые сроки, установленные настоящей Таблицей.
+
+42. Рабочее время операторов: понедельник — пятница с 09 часов 00 минут до 18 часов 00 минут по времени Камчатского края, перерыв с 12 часов 00 минут до 13 часов 00 минут. Деятельность операторов в нерабочие праздничные дни, определённые Центром управления регионом в Камчатском крае, обеспечивается в соответствии с подпунктом 1.7 Порядка работы с сообщениями, утверждённого Постановлением № 2129.
+
+43. Контроль соблюдения целевых сроков обеспечивается автоматическими напоминаниями Чат-бота, направляемыми в служебную группу. Перечень напоминаний приведён в Таблице 3 настоящего Регламента.
+
+44. Текст ответа оператора жителю составляется в соответствии со Стандартом качества ответов, утверждённым Постановлением № 2129, применяемым с учётом особенностей канала связи, установленных настоящим Регламентом.
+
+45. Ответ оператора жителю должен:
+1) начинаться с приветствия с указанием имени автора сообщения;
+2) содержать информацию по существу заданного вопроса (жалобы), быть понятным и информативным;
+3) излагаться в позитивном тоне с использованием действительного залога.
+
+46. В тексте ответа оператора жителю не допускается:
+1) изложение истории вопроса до ответа по существу;
+2) использование канцелярского стиля и страдательного залога;
+3) использование шаблонных слов и выражений «сообщаем, что», «поясняем, что», «информируем, что», «отметим, что» и аналогичных;
+4) использование аббревиатур;
+5) наличие орфографических и пунктуационных ошибок;
+6) употребление многоточий;
+7) использование поучений или саркастических замечаний, ироничного, снисходительного, шутливого или фамильярного отношения к жителю;
+8) вступление в дискуссии с автором сообщения;
+9) разглашение персональных данных в нарушение требований Федерального закона № 152-ФЗ.
+
+---
+
+## Глава 7. Порядок взаимодействия оператора с профильными подразделениями Администрации и подведомственными муниципальными учреждениями при подготовке ответов
+
+Настоящая глава является организационной нормой: маршрутизация сообщений по профильным подразделениям, сроки направления фактических сведений (1, 2, 4 рабочих часа) и эскалация координатору в программном коде Чат-бота не автоматизированы и обеспечиваются операторами организационно. Поле важности у обращения и тематическая приоритизация в Чат-боте отсутствуют.
+
+Настоящая глава устанавливает порядок действий оператора при поступлении сообщений жителей, содержательный ответ на которые требует фактических сведений профильных подразделений Администрации либо подведомственных муниципальных учреждений, не участвующих в работе служебной группы (далее — профильные подразделения). Порядок применяется с учётом подпункта «а» пункта 2.4 Соглашения об информационном взаимодействии при работе с сообщениями граждан, размещёнными в социальных сетях, заключённого 23.12.2025 между Центром управления регионом в Камчатском крае и Администрацией Елизовского муниципального округа, предусматривающего ежедневные совместные консультации с целью поиска вариантов решения и подготовки качественных ответов.
+
+47. Оператор Чат-бота не несёт ответственности за фактическое содержание ответа жителю по вопросам, выходящим за пределы зоны его служебной компетенции. Оператор обеспечивает приём сообщения, классификацию вопроса, направление запроса фактических сведений в адрес профильного подразделения, контроль соблюдения внутренних сроков, подготовку и направление ответа жителю в соответствии с Главой 6 настоящего Регламента. Профильное подразделение, к компетенции которого относится поставленный в сообщении вопрос, несёт ответственность за достоверность, полноту, своевременность и пригодность для использования в ответе жителю направленных оператору фактических сведений.
+
+48. К зоне служебной компетенции оператора, в пределах которой оператор подготавливает и направляет ответ жителю самостоятельно, относятся вопросы:
+1) о работе Чат-бота, способах подачи сообщения, статусе ранее поданного сообщения, использовании сценариев главного меню Чат-бота;
+2) справочного характера, ответы на которые включены в значения настраиваемых параметров Чат-бота, указанных в пункте 79 настоящего Регламента;
+3) относящиеся к функциям Администрации и Елизовского городского поселения, ответы на которые могут быть подготовлены специалистами отдела по работе с обращениями граждан АЕМО на основании имеющихся у них сведений в порядке, установленном пунктом 35 настоящего Регламента;
+4) включённые во внутренний справочный материал, формируемый координатором АЕМО в порядке, установленном пунктом 56 настоящего Регламента.
+
+49. При определении, что для подготовки ответа на сообщение жителя требуется направление запроса фактических сведений в адрес профильного подразделения, оператор:
+1) направляет жителю промежуточный ответ в личной переписке с Чат-ботом — в срок не более 30 (тридцати) минут с момента определения вопроса вне зоны служебной компетенции оператора. Промежуточный ответ направляется с использованием одной из следующих формулировок:
+«Ваше обращение принято в работу. Для подготовки полного ответа уточняем сведения у профильных специалистов. Ответ направим до [дата, время].»;
+«Ваше обращение принято в работу. Вопрос относится к компетенции [наименование профильного подразделения]. Передали запрос специалистам. Ответ направим в этой переписке после получения сведений, ориентировочно до [дата, время].»;
+«Ваше обращение № [номер] принято в работу. Подготовка ответа требует уточнения у профильных специалистов. Срок направления ответа — до [дата, время]. Если ситуация изменится, сообщим в этой переписке.»;
+2) формирует запрос фактических сведений по форме, установленной Приложением 4 к настоящему Регламенту, и направляет указанный запрос в адрес профильного подразделения — в срок не более 30 (тридцати) минут с момента направления жителю промежуточного ответа;
+3) фиксирует факт направления запроса и реквизиты адресата в служебной группе сообщением с цитированием карточки обращения.
+
+Направление жителю промежуточного ответа с формулировками «не относится к нашей компетенции», «не занимаемся данным вопросом», «обращайтесь в другой орган» без указания компетентного подразделения либо органа и без обеспечения дальнейшей передачи запроса не допускается.
+
+50. Запрос фактических сведений, направляемый оператором в адрес профильного подразделения, передаётся одним из следующих способов:
+1) через служебную групповую переписку в мессенджере MAX (при наличии в служебной группе представителя профильного подразделения);
+2) посредством служебного телефонного обращения к специалисту профильного подразделения. Факт направления запроса посредством служебного телефонного обращения фиксируется оператором в служебной группе сообщением с указанием фамилии, инициалов специалиста профильного подразделения, даты, времени и существа переданного запроса;
+3) посредством служебной электронной почты Администрации с приложением формы запроса фактических сведений, установленной Приложением 4 к настоящему Регламенту.
+
+Направление запросов через мессенджеры, не относящиеся к национальному мессенджеру MAX, и через иные незащищённые каналы связи не допускается. Включение в запрос персональных данных третьих лиц, не относящихся непосредственно к существу поставленного жителем вопроса, не допускается.
+
+51. Сроки направления фактических сведений профильным подразделением в адрес оператора устанавливаются с учётом целевых сроков ответа жителю, установленных Таблицей 2 настоящего Регламента, и составляют:
+1) для сообщений категории высокой важности — не более 1 (одного) рабочего часа с момента получения запроса от оператора;
+2) для сообщений со стандартной категорией важности — не более 2 (двух) рабочих часов с момента получения запроса от оператора;
+3) для сообщений, требующих проведения проверочных действий, выезда на объект или иных организационных мероприятий, — в срок, согласованный с оператором при направлении запроса, с обязательным направлением промежуточных фактических сведений в течение 4 (четырёх) рабочих часов с момента получения запроса.
+
+Срок направления фактических сведений профильным подразделением составляет не более половины целевого срока ответа жителю, что обеспечивает оператору необходимое время на оформление ответа в соответствии со Стандартом качества ответов.
+
+52. Фактические сведения, направляемые профильным подразделением оператору, представляются в форме, пригодной для использования в ответе жителю, и содержат:
+1) подтверждение либо мотивированное отрицание отнесения вопроса к компетенции профильного подразделения. В случае отрицания указывается орган либо организация, к компетенции которой вопрос относится, с обоснованием;
+2) описание фактической ситуации на дату подготовки сведений;
+3) сведения о принятых либо планируемых мерах с указанием конкретных сроков и ответственных исполнителей;
+4) указание на необходимость подачи жителем официального обращения через каналы, предусмотренные пунктом 8 настоящего Регламента, в случае если поставленный вопрос требует рассмотрения в порядке, установленном Федеральным законом № 59-ФЗ;
+5) перечень сведений, составляющих персональные данные третьих лиц и не подлежащих включению в ответ жителю.
+
+Направление профильным подразделением оператору сведений с формулировкой «вопрос не относится к нашей компетенции» без указания компетентного органа или организации и без передачи имеющихся фактических сведений в части собственной компетенции не допускается.
+
+53. При получении от профильного подразделения фактических сведений оператор:
+1) подготавливает ответ жителю на основании полученных сведений с применением шаблона, установленного Приложением 2 к настоящему Регламенту, и в соответствии со Стандартом качества ответов;
+2) направляет ответ жителю одним из способов, установленных пунктом 37 настоящего Регламента, в пределах целевого срока, установленного Таблицей 2 настоящего Регламента.
+
+Оператор не вправе изменять фактическое содержание сведений, полученных от профильного подразделения. Оператор вправе приводить формулировки в соответствие с требованиями пунктов 45, 46 настоящего Регламента и Стандарта качества ответов без изменения фактического содержания.
+
+54. При нарушении профильным подразделением срока направления фактических сведений, установленного пунктом 51 настоящего Регламента, оператор:
+1) не позднее чем за 30 (тридцать) минут до истечения срока — направляет в адрес профильного подразделения уведомление о приближающемся истечении срока тем же способом, которым был направлен исходный запрос;
+2) при истечении срока без получения фактических сведений — направляет жителю в личной переписке с Чат-ботом уточняющее сообщение о продлении срока подготовки ответа с указанием нового предполагаемого срока;
+3) информирует координатора АЕМО о факте нарушения профильным подразделением срока сообщением в служебной группе с цитированием карточки обращения.
+
+Координатор АЕМО при систематических нарушениях профильным подразделением сроков, установленных пунктом 51 настоящего Регламента (более 3 (трёх) случаев в течение одного календарного месяца), уведомляет руководителя соответствующего структурного подразделения Администрации либо подведомственного муниципального учреждения для принятия мер.
+
+55. В случае, если поставленный в сообщении вопрос относится к компетенции иного органа местного самоуправления, исполнительного органа Камчатского края либо федерального органа государственной власти, оператор направляет жителю в личной переписке с Чат-ботом ответ с указанием органа, к компетенции которого относится вопрос, способов обращения в указанный орган и (при наличии) ссылок на соответствующие официальные ресурсы. Если поставленный вопрос отвечает признакам обращения, установленным статьёй 4 Федерального закона № 59-ФЗ, оператор дополнительно информирует жителя о необходимости подачи официального обращения через каналы, предусмотренные пунктом 8 настоящего Регламента. Положения статей 8 и 9 Федерального закона № 59-ФЗ в части обязательной переадресации обращений в компетентный орган при работе через Чат-бот не применяются на основании пункта 6 настоящего Регламента.
+
+56. При относимости сообщения жителя одновременно к компетенции нескольких профильных подразделений оператор направляет запросы фактических сведений в каждое из соответствующих подразделений с указанием в запросе перечня одновременных получателей. Сводный ответ жителю подготавливается оператором на основании сведений всех получателей запроса. Фактические сведения, полученные от профильных подразделений в порядке настоящей главы и обезличенные путём исключения персональных данных и сведений, не подлежащих публичному распространению, обобщаются координатором АЕМО в форме внутреннего справочного материала, предназначенного для использования операторами при подготовке ответов на типовые сообщения. При повторном поступлении сообщения по той же тематике в неизменных фактических обстоятельствах оператор направляет ответ жителю на основании указанного справочного материала без направления повторного запроса в профильное подразделение, за исключением случаев, требующих актуализации сведений.
+
+Распределение тематик сообщений между профильными подразделениями Администрации и подведомственными муниципальными учреждениями устанавливается отдельным правовым актом Администрации.
+
+---
+
+## Глава 8. Информационные рассылки
+
+57. Чат-бот обеспечивает возможность направления подписавшимся жителям информационных сообщений муниципального характера: о чрезвычайных ситуациях, отключениях коммунальных служб, проводимых работах, иной важной для жителей информации.
+
+58. Подписка жителя на рассылку оформляется добровольно через интерактивную кнопку в главном меню Чат-бота либо командой /subscribe. При оформлении подписки житель даёт отдельное согласие на обработку персональных данных в целях направления информационных сообщений. Согласие фиксируется в реквизите consent_broadcast_at записи жителя. Указанное согласие является самостоятельным по отношению к согласию на обработку персональных данных в целях работы с обращением (пункт 23 настоящего Регламента): отдельное согласие на каждую цель обработки соответствует части 4 статьи 9 Федерального закона № 152-ФЗ и приказу Федеральной службы по надзору в сфере связи, информационных технологий и массовых коммуникаций от 19.06.2025 № 140.
+
+59. Отказ от подписки оформляется одной из следующих операций: нажатие кнопки «Отписаться от рассылки» под любым сообщением рассылки, использование переключателя в главном меню Чат-бота, направление команды /unsubscribe.
+
+60. Подготовка и направление информационной рассылки осуществляется координатором АЕМО либо специалистом с ролью «it» через мастер /broadcast. Мастер предусматривает: ввод текста рассылки (не более 1000 (одной тысячи) символов), отображение предпросмотра с указанием числа получателей, подтверждение оператором, отправку сообщений с ограничением скорости (по умолчанию 1 (одно) сообщение в секунду, параметр BROADCAST_RATE_LIMIT_PER_SEC).
+
+61. Оператор вправе приложить к рассылке фотографии в количестве от 1 (одной) до значения настраиваемого параметра broadcast_max_images (по умолчанию 5 (пять), допустимый диапазон 1—20). Приложенные фотографии направляются каждому подписчику в составе исходной рассылки. Карточка предпросмотра шага подтверждения мастера отображает количество приложенных фотографий и сами фотографии. При превышении установленного лимита Чат-бот выводит оператору предупреждение с указанием числа приложенных и числа направляемых фотографий; излишние фотографии не направляются.
+
+62. Между моментом подтверждения отправки рассылки оператором и моментом начала фактической отправки жителям Чат-бот выдерживает паузу 5 (пять) минут для возможности отмены при обнаружении ошибки. Для рассылок неотложного характера, помеченных в тексте маркером [ЧС] (в начале текста либо после пробела, без учёта регистра), пауза сокращается до 30 (тридцати) секунд. Указанные значения паузы зафиксированы в программном коде Чат-бота и не настраиваются через параметры окружения. Использование маркера [ЧС] без действительной чрезвычайной ситуации не допускается — это снижает доверие жителей к маркеру и в перспективе приводит к игнорированию рассылок о реальных чрезвычайных ситуациях.
+
+63. В период паузы и в период выполнения рассылки в служебной группе доступна кнопка «Экстренно остановить». Указанная кнопка доступна оператору с любой ролью и предназначена для экстренного прекращения рассылки в случае выявления ошибки.
+
+64. Координатор АЕМО либо специалист с ролью «it» может сохранять часто используемые тексты информационных рассылок в качестве шаблонов через мастер «Шаблоны рассылок» в панели /op_help. Шаблон содержит заголовок (для идентификации в перечне) и текст рассылки. При запуске мастера /broadcast доступна функция применения шаблона — выбор шаблона подставляет его текст в качестве черновика, дальнейшая отправка происходит в порядке пунктов 60—63 настоящего Регламента.
+
+65. Рассылка направляется исключительно жителям, имеющим действующее согласие на обработку персональных данных в целях направления информационных сообщений и не заблокированным в Чат-боте.
+
+66. Сведения о направленных рассылках сохраняются в журнале действий с указанием количества доставленных и недоставленных сообщений.
+
+---
+
+## Глава 9. Защита персональных данных
+
+67. При работе с Чат-ботом Администрацией обрабатываются следующие персональные данные жителей: идентификатор пользователя в мессенджере MAX (max_user_id), имя, абонентский номер телефонной связи, текст сообщения, приложенные жителем файлы, сведения о местоположении (при добровольной передаче жителем).
+
+68. Сведения о согласии на обработку персональных данных, об отзыве согласия, о подписке на рассылку и об отзыве подписки фиксируются в базе данных Чат-бота с указанием даты и времени.
+
+69. Информационная система Чат-бота относится к четвёртому уровню защищённости персональных данных в соответствии с пунктом 13 постановления Правительства Российской Федерации от 01.11.2012 № 1119: обрабатываются иные категории персональных данных, актуальны угрозы 3-го типа (неактуальность угроз, связанных с наличием недокументированных возможностей в системном и прикладном программном обеспечении), субъекты персональных данных не являются работниками оператора, и их число — менее 100 000 (ста тысяч). Совокупность указанных условий относит информационную систему именно к четвёртому уровню защищённости (а не к третьему по пункту 12 того же постановления). Отнесение информационной системы к четвёртому уровню защищённости основывается на модели угроз безопасности персональных данных, утверждаемой Администрацией как оператором.
+
+70. Программно-технические меры защиты персональных данных реализованы с учётом базового набора мер для четвёртого уровня защищённости, установленного приказом Федеральной службы по техническому и экспортному контролю от 18.02.2013 № 21 (в том числе меры групп идентификации и аутентификации субъектов доступа (ИАФ), управления доступом (УПД), регистрации событий безопасности (РСБ)). Требования к учёту машинных носителей, ведению (хранению) журналов событий безопасности и иные организационные меры обеспечиваются Администрацией в соответствии с применимыми требованиями уполномоченных федеральных органов исполнительной власти в области информационной безопасности. Перечень реализованных в программном коде защитных механизмов приведён в Главе 9.1 настоящего Регламента.
+
+71. Право субъекта персональных данных на доступ к своим персональным данным и сведениям об их обработке (статья 14 Федерального закона № 152-ФЗ) реализуется через возможность жителя получить выгрузку своих обращений командой /export и просмотреть свои обращения в разделе «Мои обращения» Чат-бота. Дополнительно сведения об операторе и о порядке обработки персональных данных доводятся до жителя через политику обработки персональных данных (параметр policy_url), ссылка на которую отображается в тексте согласия и в разделе «Полезная информация».
+
+72. Право на отзыв согласия (часть 2 статьи 9 Федерального закона № 152-ФЗ) реализуется через интерактивный сценарий «Уйти из бота» в подменю «Настройки и помощь», предусматривающий три варианта действий жителя:
+1) отключение получения рассылки с сохранением согласия на обработку персональных данных и истории обращений;
+2) отзыв согласия на обработку персональных данных с сохранением возможности получить ответ на ранее поданные открытые обращения;
+3) немедленное удаление персональных данных в рабочей базе данных Чат-бота.
+
+73. Обязанность Администрации как оператора прекратить обработку и уничтожить персональные данные жителя в случае отзыва согласия, если их хранение более не требуется для целей обработки (часть 5 статьи 21 Федерального закона № 152-ФЗ — в срок не более 30 (тридцати) дней с даты поступления отзыва), реализуется двумя способами:
+1) самостоятельно жителем — командой /forget в личной переписке с Чат-ботом либо нажатием соответствующей кнопки в сценарии «Уйти из бота»;
+2) по запросу субъекта персональных данных, направленному в Администрацию, — специалистом с ролью «it» командой /erase max_user_id=<идентификатор> или /erase phone=<номер>, либо нажатием кнопки «Удалить ПДн» в карточке обращения. Оба формата команды (max_user_id= и phone=) выполняются одним обработчиком.
+
+74. При удалении персональных данных свободный текст и вложения жителя по обращениям (адрес, текст сообщения, текст переписки, приложенные файлы) очищаются; обезличенные сведения о количестве и статусах обращений сохраняются путём переподвешивания обращений на техническую обезличенную запись. Запись жителя в базе данных при немедленном удалении удаляется физически. Открытые обращения жителя закрываются с отметкой об их закрытии в связи с отзывом согласия. Отзыв согласия не влечёт автоматической блокировки жителя: житель вправе вернуться к работе с Чат-ботом.
+
+75. По истечении 30 (тридцати) календарных дней после отзыва жителем согласия на обработку персональных данных персональные данные жителя в рабочей базе данных Чат-бота автоматически обезличиваются во исполнение части 5 статьи 21 Федерального закона № 152-ФЗ. Указанная задача выполняется по расписанию ежедневно в 04 часа 30 минут. Если уничтожение персональных данных в указанный срок технически невозможно, Администрация в соответствии с частью 6 статьи 21 Федерального закона № 152-ФЗ блокирует такие персональные данные и обеспечивает их уничтожение в срок не более 6 (шести) месяцев.
+
+Примечание (требует сверки юриста). Регламент применяет обезличивание (исключение возможности определить принадлежность персональных данных конкретному субъекту по пункту 9 статьи 3 Федерального закона № 152-ФЗ) как форму исполнения обязанности уничтожения по части 5 статьи 21. Юрист подтверждает, что выбранный механизм (переподвешивание обращений на техническую обезличенную запись и очистка свободного текста, пункт 74 настоящего Регламента) обеспечивает невосстановимость связи сохранённых сведений с субъектом и является надлежащим исполнением требования об уничтожении.
+
+76. Содержание ранее поданных обращений (тематика, населённый пункт, сведения о городском объекте, текст обращения), не содержащее непосредственных персональных данных жителя, может сохраняться в Чат-боте в качестве муниципального документа в соответствии с применимыми нормативными актами Администрации в течение 5 (пяти) лет, после чего автоматически обезличивается. Указанная задача выполняется по расписанию ежедневно в 04 часа 45 минут.
+
+77. При выявлении инцидента, связанного с нарушением безопасности персональных данных и повлёкшего неправомерную или случайную передачу (предоставление, распространение, доступ) персональных данных, Администрация уведомляет уполномоченный орган по защите прав субъектов персональных данных (Федеральную службу по надзору в сфере связи, информационных технологий и массовых коммуникаций) в порядке и сроки, установленные частью 3.1 статьи 21 Федерального закона № 152-ФЗ (введена Федеральным законом от 14.07.2022 № 266-ФЗ): в течение 24 (двадцати четырёх) часов — о факте инцидента, его предполагаемых причинах, предполагаемом вреде правам субъектов персональных данных и принятых мерах по устранению последствий; в течение 72 (семидесяти двух) часов — о результатах внутреннего расследования и о лицах, действия которых стали причиной инцидента (при их установлении). Автоматическая фиксация такого инцидента в журнале действий Чат-бота не предусмотрена; уведомление готовится ответственными должностными лицами Администрации.
+
+---
+
+## Глава 9.1. Защитные механизмы информационной безопасности
+
+78. В Чат-боте реализованы следующие программно-технические меры защиты, обеспечивающие соблюдение требований к четвёртому уровню защищённости персональных данных:
+1) защита от снятия блокировки жителем через устаревшие интерактивные кнопки согласия — повторное нажатие старой кнопки «Согласен» в истории чата не снимает признак блокировки жителя; разблокировка возможна только через операцию специалиста с ролью «it»;
+2) обязательное шифрование резервных копий базы данных алгоритмом GPG (AES-256) — резервные копии, не прошедшие шифрование, на сервере не сохраняются (создание незашифрованной копии допускается только при явной конфигурации BACKUP_ALLOW_UNENCRYPTED для целей разработки); при сбое на стадии шифрования незашифрованный файл автоматически удаляется;
+3) защита от подмены адресата операторского ответа через подделку маркера обращения — маркер обращения принимается Чат-ботом только из сообщений, отправленных самим Чат-ботом;
+4) ограничение значений настраиваемых URL-параметров официальными доменами — параметры policy_url, electronic_reception_url, udth_schedule_url, udth_schedule_intermunicipal_url принимаются только при принадлежности к доменам elizovomr.ru, kamgov.ru, gosuslugi.ru, kamchatka.gov.ru (включая поддомены); перечень доменов изменяется только правкой программного кода Чат-бота и не настраивается через интерфейс; проверка распространяется в том числе на ссылки, вложенные в параметры запроса разрешённой ссылки, и на ссылки с использованием визуально неотличимых символов из других алфавитов;
+5) ограничение скорости дополнений к обращению одним жителем — не более 5 (пяти) дополнений в час на одно обращение, не чаще одного раза в 30 (тридцать) секунд;
+6) проверка активности роли оператора непосредственно перед доставкой каждого ответа жителю — деактивированный оператор не может направить ответ, даже если до момента деактивации он успел инициировать формирование ответа;
+7) отказ от обработки события при невозможности зафиксировать ключ идемпотентности — любая ошибка записи ключа идемпотентности приводит к отбрасыванию события, что исключает повторное срабатывание изменяющей данные операции через искусственное замедление базы данных;
+8) маскирование персональных данных в служебных уведомлениях — номера телефонов в служебных уведомлениях маскируются (полный номер виден только при адресном запросе через команду /find_resident);
+9) двухслойная проверка полномочий оператора при команде /reply — проверка роли и принадлежности к перечню активных операторов выполняется независимо от способа подачи команды.
+
+79. Чат-бот применяет автоматическую сверку входящих ссылок с открытыми источниками сведений о вредоносных и фишинговых ресурсах: URLhaus, ThreatFox и (при наличии заданного ключа PHISHTANK_APP_KEY) PhishTank. Иные источники сведений о вредоносных ресурсах в программном коде не используются. Сведения обновляются ежечасно; при устаревании указанных сведений более чем на 6 (шесть) часов специалисту с ролью «it» направляется критическое уведомление, пробивающее тихие часы. В карточках обращений ссылки, поступившие от жителей, обезвреживаются (процедура «defang»): между протоколом и доменом вставляется разделитель, в результате чего мессенджер MAX не определяет такой текст как переходящую ссылку. При проверке ссылок применяется нормализация по стандарту Unicode (NFKC) для выявления адресов с использованием совместимых и полноширинных символов.
+
+80. Контроль состояния защитных механизмов осуществляется специалистом с ролью «it» в соответствии с внутренней технической документацией отдела цифрового развития. Изменения в перечне защитных механизмов вносятся в порядке Главы 15 настоящего Регламента.
+
+80.1. Чат-бот предоставляет три эндпоинта проверки работоспособности на локальном сетевом порте 8080: /livez (проверка «жив» — только внутренний сигнал работы, без обращения к базе данных; используется проверкой Docker, внешним контролем работоспособности (watchdog) и процедурой автоматического развёртывания); /readyz (проверка готовности — сигнал работы и контрольный запрос к базе данных); /healthz (для обратной совместимости равнозначен /readyz). Указанные эндпоинты доступны только с самого сервера (loopback 127.0.0.1) и наружу не публикуются, что согласуется с пунктом 12 настоящего Регламента о работе Чат-бота без предоставления входящего публичного сетевого доступа. Полная диагностическая информация отдаётся только локальным запросам; внешним — лишь признак работоспособности.
+
+---
+
+## Глава 10. Блокировка жителя
+
+81. Блокировка жителя в Чат-боте применяется как техническая мера защиты от злоупотреблений: массовых однотипных сообщений, угроз, оскорблений оператора, мошенничества, распространения незаконных материалов, действий, направленных на нарушение работы Чат-бота или служебной группы.
+
+82. Критика работы должностных лиц и муниципальных служб не является основанием для блокировки.
+
+83. Право блокировки и разблокировки жителя предоставлено исключительно специалисту с ролью «it». Указанное право реализуется нажатием кнопки «Заблокировать» или «Разблокировать» в карточке обращения жителя либо в разделе «Аудитория и согласия» панели быстрых действий /op_help.
+
+84. Применению блокировки предшествует обсуждение в служебной группе с участием координатора АЕМО. Координатор АЕМО и иные операторы доводят основания для блокировки до специалиста с ролью «it» сообщением в служебной группе в порядке пункта 18.2 настоящего Регламента.
+
+85. Заблокированный житель не может направлять в Чат-бот новые сообщения, получать ответы операторов через Чат-бот и получать информационные рассылки. Открытые обращения такого жителя закрываются автоматически.
+
+86. Блокировка в Чат-боте не ограничивает право жителя обратиться в Администрацию по иным официальным каналам связи.
+
+87. Все действия по блокировке и разблокировке жителей фиксируются в журнале действий.
+
+---
+
+## Глава 11. Журнал действий операторов
+
+88. Чат-бот ведёт автоматизированный журнал значимых действий операторов и системных событий безопасности (таблица audit_log). В журнал фиксируются: идентификатор инициатора действия, тип действия, целевой объект, дата и время.
+
+89. Перечень типов действий, фиксируемых в журнале:
+1) reply — ответ жителю цитированием (свайп-ответ);
+2) reply_via_command — ответ жителю командой /reply;
+3) reopen — возобновление обращения;
+4) close — закрытие обращения без ответа;
+5) erase — удаление персональных данных жителя специалистом с ролью «it»;
+6) self_erase — удаление персональных данных по инициативе жителя;
+7) self_consent_revoke — отзыв жителем согласия на обработку персональных данных в сценарии «Уйти из бота»;
+8) self_subscribe_broadcast — оформление жителем подписки на рассылку;
+9) block — блокировка жителя;
+10) unblock — разблокировка жителя;
+11) broadcast_send — направление информационной рассылки;
+12) broadcast_stop — экстренная остановка рассылки;
+13) broadcast_cancel_cooldown — отмена рассылки в период паузы перед отправкой;
+14) broadcast_template_create, broadcast_template_update, broadcast_template_rename, broadcast_template_clone, broadcast_template_delete — создание, изменение, переименование, копирование и удаление шаблона рассылки;
+15) operator_upsert — регистрация или обновление сведений об операторе;
+16) operator_role_change — изменение роли оператора;
+17) operator_deactivate — мягкая деактивация оператора;
+18) operator_reactivate — реактивация ранее деактивированного оператора;
+19) setting_update — изменение значения настройки Чат-бота;
+20) setting_list_add, setting_list_del — добавление и удаление отдельного элемента списочного настраиваемого параметра (topics, localities);
+21) setting_obj_add, setting_obj_del — добавление и удаление отдельного элемента объектного настраиваемого параметра (emergency_contacts, transport_dispatcher_contacts);
+22) settings_pr_created — создание запроса на включение изменений (pull request) для синхронизации настроек с репозиторием Чат-бота;
+23) resident_search_found, resident_search_not_found — результат поиска жителя командой /find_resident (с маскированием телефона в журнале);
+24) auto_erase_pdn_retention — автоматическое обезличивание по истечении срока хранения после отзыва согласия.
+
+90. Тексты сообщений жителей, ответов операторов, рассылок и значения изменённых настроек в журнале действий не сохраняются. Указанные сведения хранятся в основных таблицах базы данных и подлежат раскрытию исключительно в установленном законодательством порядке.
+
+91. Записи журнала действий хранятся 1 (один) год (365 дней) с момента события, после чего автоматически уничтожаются (параметр AUDIT_LOG_RETENTION_DAYS, диапазон 30—3650 дней). Срок установлен Администрацией как оператором в соответствии с принципом ограничения хранения персональных данных (часть 7 статьи 5 Федерального закона № 152-ФЗ — хранение не дольше, чем требуют цели обработки) и обеспечивает возможность обнаружения, идентификации и анализа инцидентов информационной безопасности на протяжении достаточного периода. Указанная задача выполняется по расписанию ежедневно в 04 часа 15 минут.
+
+---
+
+## Глава 12. Резервное копирование и фоновые задачи
+
+92. Чат-бот выполняет фоновые задачи по расписанию (часовой пояс — Камчатский край). Перечень задач приведён в Таблице 3. В числе фоновых задач 1-го числа каждого месяца в 09 часов 00 минут Чат-бот автоматически формирует и направляет в служебную группу статистический отчёт за предыдущий месяц в формате XLSX (задача 11 Таблицы 3). Указанный автоматический отчёт формируется независимо от выгрузки статистики по команде /stats, инициируемой оператором вручную.
+
+**Таблица 3. Фоновые задачи Чат-бота**
+
+| № | Наименование задачи | Расписание (время Камчатского края) | Назначение |
+|---|---|---|---|
+| 1 | Резервное копирование базы данных | Воскресенье, 03:00 | Снятие дампа, шифрование GPG, ротация копий, уведомление о сбое |
+| 2 | Ретенция технических событий | Ежедневно, 04:00 | Удаление служебных событий идемпотентности старше 30 дней |
+| 3 | Ретенция журнала действий | Ежедневно, 04:15 | Удаление записей audit_log старше срока хранения (по умолчанию 365 дней) |
+| 4 | Обезличивание по отзыву согласия | Ежедневно, 04:30 | Обезличивание персональных данных жителей через 30 дней после отзыва согласия (часть 5 статьи 21 Федерального закона № 152-ФЗ) |
+| 5 | Обезличивание обращений по сроку хранения | Ежедневно, 04:45 | Обнуление текста обращений старше 5 лет |
+| 6 | Деактивация выбывших операторов | Ежедневно, 04:20 | Деактивация операторов, покинувших служебную группу (учётные записи роли «it» исключены) |
+| 7 | Уборка зависших черновиков рассылок | Ежечасно, в 37 минут | Перевод черновиков рассылок старше 30 минут в статус «не отправлено» |
+| 8 | Обновление сведений о вредоносных ссылках | Ежечасно, в 17 минут | Обновление баз URLhaus, ThreatFox, PhishTank; критическое уведомление при устаревании более 6 часов |
+| 9 | Сброс зависших анкет воронки | Ежечасно, в 15 минут | Сброс незавершённых анкет старше 24 часов; уведомление при массовом сбросе |
+| 10 | Самопроверка работоспособности | Каждые 5 минут | Уведомление при изменении состояния «жив»/«не отвечает» |
+| 11 | Месячный статистический отчёт | 1-го числа, 09:00 | Формирование отчёта за месяц в формате XLSX в служебную группу |
+| 12 | Сигнал жизни (базовый) | Ежечасно, в 05 минут, круглосуточно (понедельник — воскресенье) | Подтверждение работы Чат-бота |
+| 13 | Сигнал жизни (рабочее время) | Понедельник — пятница, 09:35—17:35 | Дополнительное подтверждение работы в рабочее время |
+| 14 | Напоминание об открытых обращениях | Понедельник — пятница, в 10 минут (09:00—11:59 и 13:00—17:59) | Напоминание операторам об открытых обращениях |
+| 15 | Напоминание о просроченных обращениях | Понедельник — пятница, в 40 минут (09:00—11:59 и 13:00—17:59) | Напоминание операторам о просроченных по целевому сроку обращениях |
+| 16 | Сигнал жизни при запуске | Однократно через 5 секунд после старта | Подтверждение восстановления работы после перезапуска |
+| 17 | Внешний контроль работоспособности (опционально) | Каждые 5 минут (при заданном HEALTHCHECK_URL) | Внешний пинг во внешнюю систему мониторинга |
+
+Производственный календарь Российской Федерации (нерабочие праздничные дни) учитывают только напоминания об открытых и просроченных обращениях (задачи 14, 15): в нерабочие праздничные дни они не направляются. Сигналы жизни (задачи 12, 13, 16) направляются по календарному расписанию без учёта праздничных дней. Задачи ретенции и обезличивания персональных данных (задачи 3, 4, 5) выполняются ежедневно, включая выходные и праздничные дни. Внешний контроль работоспособности (задача 17) активируется только при заданном параметре HEALTHCHECK_URL.
+
+Примечание. Производственный календарь Чат-бота охватывает 2026 и 2027 годы (включая переносы выходных дней). При отсутствии либо повреждении файла календаря Чат-бот переходит в безопасный режим, считая нерабочими днями только воскресенья.
+
+Дополнительно на уровне операционной системы сервера выполняется внешний контроль (watchdog) состояния Чат-бота посредством скрипта scripts/healthwatch.sh, запускаемого средствами планировщика хостовой операционной системы: проверка эндпоинтов /livez и /readyz; при двух последовательных сбоях — попытка перезапуска контейнера Чат-бота; при безуспешности — запись в системный журнал и (при наличии) внешнее уведомление.
+
+93. Глубина хранения еженедельных резервных копий — последние 8 (восемь) файлов, что соответствует приблизительно 2 (двум) месяцам истории (параметр BACKUP_KEEP_COUNT). Имя файла резервной копии имеет вид aemr-ГГГГММДД_ЧЧММСС.sql.gpg. Внеплановое снятие резервной копии осуществляется специалистом с ролью «it» командой /backup в служебной группе.
+
+94. При возникновении сбоя еженедельного резервного копирования Чат-бот направляет в служебную группу уведомление с указанием стадии сбоя (снятие дампа базы данных, шифрование, доставка во внешнее хранилище). В случае сбоя на стадии шифрования незашифрованный файл резервной копии, оставшийся на сервере, автоматически удаляется в целях недопущения хранения персональных данных в незашифрованном виде.
+
+95. Проверка целостности резервных копий путём пробного восстановления в изолированную среду проводится не реже одного раза в квартал. Настоящая проверка является организационной процедурой специалиста с ролью «it» и в программном коде Чат-бота не автоматизирована (Чат-бот обеспечивает создание, шифрование и ротацию копий, но не их пробное восстановление).
+
+96. Восстановление основной базы данных Чат-бота из резервной копии в случае повреждения данных, аварии серверного оборудования либо инцидента информационной безопасности, требующего отката, выполняется специалистом с ролью «it» в соответствии с внутренней технической документацией отдела цифрового развития. До начала восстановления в служебную группу направляется уведомление о технических работах с указанием ожидаемой длительности. По завершении направляется уведомление о восстановлении работоспособности с указанием даты и времени, к которым относится восстановленное состояние базы данных. Обращения и сообщения, поступившие в Чат-бот между моментом снятия использованной резервной копии и моментом восстановления, считаются утерянными по техническим причинам; операторы оповещают об этом жителей при получении повторных сообщений по той же тематике.
+
+97. Плановая ротация секретов Чат-бота (BOT_TOKEN, POSTGRES_PASSWORD, BACKUP_GPG_PASSPHRASE, при наличии — WEBHOOK_SECRET, реквизиты объектного хранилища, токены доступа к репозиторию, ключи для авто-деплоя) выполняется специалистом с ролью «it» не реже одного раза в шесть календарных месяцев. Каждый факт ротации фиксируется в журнале эксплуатации отдела цифрового развития. Внеплановая ротация выполняется немедленно при наличии оснований полагать компрометацию (увольнение сотрудника, имевшего доступ к секретам; обнаружение секрета в постороннем канале; компрометация рабочего устройства специалиста с ролью «it»). При ротации BACKUP_GPG_PASSPHRASE прежняя парольная фраза сохраняется в защищённом хранилище паролей до полного выпадения из ротации всех резервных копий, зашифрованных прежней фразой (приблизительно два месяца при глубине хранения 8 копий).
+
+---
+
+## Глава 13. Изменение настроек и регистрация операторов
+
+98. Изменение настраиваемых параметров Чат-бота осуществляется специалистом с ролью «it» одним из следующих способов:
+1) через раздел «Настройки бота» панели быстрых действий /op_help, обеспечивающий иерархическое меню по группам параметров (тексты для жителей, внешние ссылки, контакты, контент-каталоги, метаданные синхронизации) с подсветкой ключей, изменённых в базе данных, но не синхронизированных с репозиторием Чат-бота;
+2) командой /setting в служебной группе.
+
+99. Запрос на изменение настраиваемого параметра Чат-бота (например, ссылки на электронную приёмную при изменении адреса приёмной; графика приёма граждан при изменении графика; перечня тематик обращений при пересмотре отраслевого распределения; контактов экстренных служб при изменении номеров) направляется заинтересованным оператором в служебную группу с указанием изменяемого ключа и нового значения. Специалист с ролью «it» в течение одного рабочего часа выполняет изменение через меню «Настройки бота» или командой /setting, проверяет результат и подтверждает в служебной группе. При необходимости параллельно синхронизирует изменение с репозиторием через действие синхронизации (пункт 102).
+
+100. Перечень настраиваемых параметров Чат-бота включает 14 (четырнадцать) содержательных ключей, изменяемых операторами:
+1) welcome_text — приветственное сообщение, отправляемое жителю при первом обращении к Чат-боту;
+2) consent_text — текст согласия на обработку персональных данных, отображаемый жителю перед началом работы с Чат-ботом;
+3) commit_author_name — фамилия, имя, отчество, указываемые в качестве автора при синхронизации настраиваемых параметров с репозиторием Чат-бота;
+4) commit_author_email — адрес электронной почты, указываемый в качестве адреса автора при синхронизации настраиваемых параметров с репозиторием Чат-бота;
+5) policy_url — ссылка на политику обработки персональных данных (только в пределах официальных доменов, см. пункт 78 подпункт 4);
+6) electronic_reception_url — ссылка на электронную приёмную (только в пределах официальных доменов);
+7) udth_schedule_url — ссылка на расписание муниципальных автобусов (только в пределах официальных доменов);
+8) udth_schedule_intermunicipal_url — ссылка на расписание межмуниципальных маршрутов (только в пределах официальных доменов);
+9) appointment_text — текст о приёме граждан главой муниципального образования;
+10) emergency_contacts — контакты экстренных служб (каждый элемент содержит наименование службы и номер телефона; не менее одного элемента);
+11) transport_dispatcher_contacts — контакты диспетчерских автотранспорта (каждый элемент содержит перечень маршрутов и номер телефона; не менее одного элемента);
+12) topics — перечень тематик обращений, не менее 1 (одной) и не более 30 (тридцати), ограничение программное;
+13) broadcast_max_images — максимальное количество фотографий, прилагаемых оператором к одной рассылке, в диапазоне от 1 (одной) до 20 (двадцати), по умолчанию — 5 (пять);
+14) localities — перечень населённых пунктов Елизовского муниципального округа, не менее 1 (одного) и не более 30 (тридцати), ограничение программное.
+
+Дополнительно в Чат-боте предусмотрены 3 (три) служебных параметра управления тихими часами служебных уведомлений (admin_quiet_hours_enabled, admin_quiet_hours_start, admin_quiet_hours_end), настраиваемых специалистом с ролью «it» и не входящих в перечень содержательных ключей, изменяемых операторами.
+
+101. Все изменения настроек фиксируются в журнале действий с указанием специалиста и изменённого ключа. Значение настройки в журнал действий не записывается.
+
+102. Изменения значений настраиваемых параметров, определяющих содержательную часть Чат-бота (ссылок, текстов о приёме граждан, контактных сведений, перечней тематик и населённых пунктов), могут быть синхронизированы с репозиторием Чат-бота посредством создания запроса на включение изменений (pull request) через раздел «Настройки бота» панели быстрых действий /op_help. Синхронизация обеспечивает фиксацию текущих значений настраиваемых параметров в исходных файлах Чат-бота для последующих автоматических развёртываний. Параметры commit_author_name, commit_author_email, welcome_text, consent_text, broadcast_max_images и служебные параметры тихих часов не синхронизируются с репозиторием. Создание запроса на включение изменений фиксируется в журнале действий с типом действия settings_pr_created.
+
+103. Регистрация операторов производится в порядке, установленном пунктом 18 настоящего Регламента. Алгоритм регистрации операторов командой /add_operators предусматривает:
+1) добавление будущего оператора в служебную группу;
+2) направление будущим оператором в служебную группу команды /whoami для получения идентификатора max_user_id;
+3) формирование специалистом с ролью «it» многострочного списка операторов с указанием идентификатора max_user_id, роли, фамилии, имени, отчества;
+4) направление специалистом с ролью «it» в служебную группу команды /add_operators со сформированным списком.
+
+104. В личной переписке с жителями команда /whoami не выполняется. Указанное ограничение реализовано в программном коде в целях исключения отображения идентификатора жителю.
+
+105. Самостоятельное повышение роли через команду /add_operators либо через кнопочный мастер «Операторы» программно заблокировано. Изменение роли действующего оператора осуществляется специалистом с ролью «it» через карточку оператора в кнопочном мастере либо через прямой доступ к базе данных на основании письменного поручения руководителя структурного подразделения. Реализовано также добавление нового оператора из списка участников служебной группы Чат-бота.
+
+---
+
+## Глава 14. Ответственность
+
+106. Координатор АЕМО и специалисты АЕМО, ЕГП (ТУ) несут ответственность за качество и сроки ответов жителям в порядке, установленном законодательством Российской Федерации, муниципальными правовыми актами Администрации, трудовым законодательством.
+
+107. Профильные подразделения Администрации и подведомственные муниципальные учреждения несут ответственность за достоверность, полноту, своевременность и пригодность для использования в ответе жителю фактических сведений, направленных оператору в порядке Главы 7 настоящего Регламента.
+
+108. Специалист отдела цифрового развития (или иного назначенного ИТ-подразделения) несёт ответственность за: бесперебойное функционирование Чат-бота, своевременное снятие резервных копий, исполнение запросов на удаление персональных данных, конфиденциальность сведений, к которым он имеет доступ в силу своих служебных обязанностей.
+
+109. Специалист с ролью «it» не реже одного раза в квартал выполняет аудит серверной конфигурации с использованием скрипта scripts/audit_vps.sh, проверяющего соблюдение карты сетевых портов и привязок, права доступа к файлам конфигурации и резервным копиям, отсутствие секретов в открытом виде в логах, размер и срок хранения резервных копий, статус автоматических обновлений операционной системы. Выявленные отклонения фиксируются в журнале эксплуатации и устраняются в течение пяти рабочих дней. Специалист с ролью «it» обеспечивает автоматический запуск Чат-бота при перезагрузке серверного оборудования посредством установки в операционной системе сервера юнита автозапуска aemr-bot.service. Скрипты scripts/audit_vps.sh, scripts/healthwatch.sh и юнит автозапуска aemr-bot.service являются средствами уровня операционной системы сервера; их запуск настраивается планировщиком хостовой операционной системы и в программном коде самого Чат-бота не управляется (организационно-операционная норма).
+
+110. При обнаружении одним оператором фактов нарушения другим оператором требований Главы 6 настоящего Регламента (тон, содержание, сроки) либо требований Стандарта качества ответов оператор уведомляет об этом непосредственного руководителя нарушителя служебной запиской. Специалист с ролью «it» по запросу руководителя выгружает из журнала действий выписку действий конкретного оператора за заданный период.
+
+111. Об инцидентах информационной безопасности (компрометация секретов; утечка персональных данных в логах либо во внешних каналах; попытка несанкционированного доступа к Чат-боту; сбой работы Чат-бота длительностью более одного часа в рабочее время; отказ резервного копирования; обнаружение признаков фишинга в настраиваемых URL-параметрах) операторы и специалисты с ролью «it» сообщают в служебную группу с упоминанием специалиста с ролью «it» и параллельно — руководителю отдела цифрового развития служебной запиской. Специалист с ролью «it» в течение одного рабочего часа подтверждает приём сообщения, оценивает категорию инцидента (критический либо стандартный) и инициирует реагирование. По итогам реагирования готовится рапорт руководителю Администрации с описанием инцидента, мер реагирования, последствий и рекомендаций по предотвращению повторения. При инциденте, затрагивающем безопасность персональных данных, дополнительно исполняется обязанность уведомления уполномоченного органа в порядке пункта 77 настоящего Регламента.
+
+112. Разглашение третьим лицам сведений, ставших известными оператору в связи с работой в служебной группе, влечёт ответственность, предусмотренную законодательством Российской Федерации и трудовым законодательством.
+
+---
+
+## Глава 15. Изменение Регламента и обновление программного кода
+
+113. Изменения и дополнения в настоящий Регламент вносятся распоряжением Администрации Елизовского муниципального округа.
+
+114. Проект изменений готовится начальником отдела по работе с обращениями граждан Администрации совместно со специалистом отдела цифрового развития (или иного назначенного ИТ-подразделения).
+
+115. Изменения программного кода Чат-бота, прошедшие проверку кода (code review) и включённые в основную ветку канонического репозитория, автоматически применяются на серверном оборудовании Чат-бота в течение 10 (десяти) минут после включения. Применение выполняется автоматизированной процедурой с предварительной фиксацией текущей версии, пересборкой компонентов и проверкой работоспособности (эндпоинт /livez). При сбое проверки работоспособности происходит автоматический откат на предыдущую версию с уведомлением в системный журнал. Специалист с ролью «it» контролирует факт успешного применения изменений (сигнал жизни в служебной группе).
+
+116. Обновление внешних программных зависимостей Чат-бота (в первую очередь — клиента Bot API мессенджера MAX, прочих библиотек) выполняется специалистом с ролью «it» в плановом порядке (не реже одного раза в квартал — проверка наличия новых версий и уведомлений о безопасности) и во внеплановом порядке при выпуске критического обновления безопасности. Процедура включает сверку версии в локальной среде с версией в продуктивном контейнере, изучение перечня изменений обновляемой библиотеки, подготовку запроса на включение изменений с минимальной дельтой, прохождение всех проверок непрерывной интеграции, ручную проверку критических сценариев и мониторинг работы Чат-бота в течение 24—48 часов после применения. При обнаружении регрессии выполняется откат в порядке пункта 115 настоящего Регламента.
+
+117. Настоящий Регламент пересматривается не реже одного раза в год, а также при существенном изменении программного кода Чат-бота, изменении законодательства Российской Федерации в области персональных данных или обращений граждан, изменении организационной структуры Администрации.
+
+---
+
+## Глава 16. Антифишинговая бдительность оператора и защита жителя от мошенничества
+
+118. Принцип «нулевого доверия» к ссылкам. Оператор (вне зависимости от роли) обязан исходить из того, что любая ссылка, поступившая от жителя в обращении или в дополнении к обращению, является потенциально опасной до тех пор, пока обратное не подтверждено визуальной проверкой адреса в адресной строке браузера. Техническое обезвреживание ссылок в карточках обращений (пункт 79) не отменяет обязанности оператора лично сверять адрес перед открытием.
+
+119. Перечень действий, которые Администрация через Чат-бот никогда не совершает. Оператор обязан довести до сведения жителя — в ответе на обращение либо при получении подозрительного дополнения — следующий перечень действий, которые Администрация через Чат-бот никогда не запрашивает у жителя:
+1) запрос данных паспорта, страхового номера индивидуального лицевого счёта, номеров банковских карт, кодов из SMS-сообщений;
+2) запрос оплаты государственных пошлин, штрафов, «срочной обработки» обращений;
+3) предложение установить стороннее мобильное приложение для «отслеживания обращения» или «получения дополнительных услуг»;
+4) предложение перейти по ссылке для «авторизации через портал государственных услуг» в целях «подтверждения личности»;
+5) звонок «от Администрации» с просьбой продиктовать SMS-код для подтверждения какого-либо действия;
+6) уведомление о «блокировке аккаунта жителя в мессенджере MAX» с предложением «восстановить доступ» через ссылку.
+
+Данный перечень доводится до жителя через раздел «🛡️ Защита от мошенников» главного меню Чат-бота (текст SECURITY_INFO_TEXT), а также воспроизводится оператором в ответе на обращение либо при получении подозрительного дополнения в порядке настоящего пункта. Техническое требование об обязательном включении перечня в приветственное сообщение (welcome_text) в программном коде не реализовано: содержание welcome_text проверяется только по длине и наличию текста, поэтому полнота антифишингового перечня обеспечивается организационно — через отдельный раздел меню «Защита от мошенников» и через настоящий Регламент.
+
+120. Реакция оператора на обращение жителя, подвергшегося мошенничеству. При получении в обращении или дополнении сведений о том, что житель стал жертвой мошенничества от лица Администрации, оператор:
+1) подтверждает жителю, что обращение от лица Администрации возможно исключительно через данный Чат-бот; звонки, сообщения в других мессенджерах и через сторонние интернет-страницы Администрацией не направляются;
+2) уведомляет жителя, что денежные средства, переведённые мошенникам добровольно, как правило, не возвращаются;
+3) направляет жителя для подачи заявления в органы внутренних дел Российской Федерации (лично в отделение полиции по месту жительства; единый номер экстренных служб — 112);
+4) фиксирует факт мошенничества в качестве дополнения к обращению жителя;
+5) уведомляет специалиста с ролью «it» через служебную группу — для оценки необходимости предупреждения остальных жителей через информационную рассылку либо уточнения текста приветственного сообщения.
+
+121. Защита оператором собственной учётной записи. Оператор несёт ответственность за защиту собственной учётной записи в мессенджере MAX: использование сложного пароля, биометрии, недопущение передачи устройства третьим лицам. При подозрении на компрометацию (потеря телефона, неизвестные сессии, странные сообщения от собственного имени) оператор обязан незамедлительно сообщить специалисту с ролью «it» через альтернативный канал связи (телефон, личный визит). Специалист с ролью «it» производит мягкую деактивацию учётной записи оператора в Чат-боте через мастер «Операторы» с записью действия в журнале действий.
+
+122. Расширенная инструкция оператору по информационной безопасности, антифишингу, реагированию на инциденты и соблюдению Федерального закона № 152-ФЗ ведётся отделом цифрового развития в виде отдельного документа (docs/OPERATOR_SECURITY.md). Документ обязателен к прочтению до первой смены за пультом Чат-бота и при каждом существенном обновлении.
+
+---
+
+## Приложение 1 к Регламенту работы с чат-ботом «Администрация Елизовского муниципального округа. Обратная связь» в мессенджере MAX
+
+### Перечень команд Чат-бота и их доступность по ролям
+
+1. Допустимые периоды команды /stats: today (за сегодня — значение по умолчанию), week (за неделю), month (за месяц), quarter (за квартал), half_year (за полгода), year (за год), all (за всё время).
+
+2. Команды операторов, доступные в служебной группе:
+
+| Команда | Назначение | Доступность по ролям |
+|---|---|---|
+| /open_tickets | Перечень открытых обращений | все роли |
+| /stats [период] | Выгрузка статистики в формате XLSX | все роли |
+| /reply <номер> <текст> | Ответ жителю командой | все роли |
+| /reopen <номер> | Возобновление обращения | все роли |
+| /close <номер> | Закрытие обращения без ответа | все роли |
+| /diag | Сводка о состоянии Чат-бота | все роли |
+| /find_resident <телефон либо max_user_id> | Поиск жителя (телефон в результате маскируется) | все роли |
+| /op_help | Панель быстрых действий | любой участник служебной группы (состав кнопок зависит от роли) |
+| /broadcast [list] | Мастер информационной рассылки | coordinator, it |
+| /erase max_user_id=… либо /erase phone=… | Удаление персональных данных жителя | только it |
+| /setting [list либо <ключ> <значение>] | Изменение настройки | только it |
 | /backup | Внеплановое снятие резервной копии | только it |
 | /add_operators | Массовая регистрация операторов | только it |
 
@@ -117235,6 +129928,1169 @@ llms.txt (для офлайнового self-host неприменимо), ар�
 выключено) · `docs/site/_kb/_audit/_PLAN.md` (план doc-пробелов).
 ```
 
+### `docs/site/_kb2/admin.html`
+
+Size: `217483` bytes  
+SHA-256: `87f4cb2e7c658b8bf00c13c5906e69aae444743abeaaead957506202fc80ffb5`
+
+```html
+<h2 id="admin">Администратору: установка, настройка, обслуживание</h2>
+
+<h3 id="admin-current-data">Актуальные настройки и границы эксплуатации</h3>
+<p>Текущая схема: 41 миграция <code>0001..0041</code>, 17 ORM-таблиц, 26 ключей настроек. IT-меню «Настройки бота → 🕘 Рабочее время» меняет часы работы/обеда; четыре целых часа вводятся вместе, например <code>9 18 12 13</code>. Праздники можно явно обновить из файла. Конкурентно устаревшее изменение отклоняется. Новые и переоткрытые периоды сохраняют снимки календаря, часов и норматива; исходные обращения без снимка используют замороженную операционную базу, которая не доказывает историческое расписание.</p>
+<p>Пустой <code>BACKUP_LOCAL_DIR</code> тихо отключает копирование. При включении локальная ротация хранит число файлов, а не гарантированный возраст. Рабочий сервер владелец обновляет вручную; GitHub PR и наличие auto-deploy.sh не означают, что автодеплой включён.</p>
+<p>Удаление использует устойчивый <code>ERASURE_STATE_DIR</code> и независимый HMAC-журнал вне дампов, очередь известных сообщений MAX, распознанные локальные дампы и активные объекты S3. До включения восстановленной базы применяют <code>scripts/replay_erasure_tombstones.py</code> на изолированной базе с явно проверенным DATABASE_URL. Неизвестные отправки/удаления не повторяются вслепую; старые неучтённые копии, скачанные файлы, journald, S3-версии/locks и снимки требуют ручной сверки. Незавершённая очистка блокирует новые дампы. Подробный порядок и границы — в инструкции удаления/восстановления и правовой сверке.</p>
+
+
+<p>Этот раздел — для ИТ-специалиста, который ставит бота на сервер и потом его обслуживает. Всё по шагам: от чистого сервера до работающего бота, что лежит в настройках, как делать резервные копии (backup — резервная копия базы) и восстанавливаться из них, как выкатывать новые версии и откатываться при сбое, куда смотреть, когда что-то сломалось. Команды можно копировать как есть.</p>
+
+<p>Раздел построен по принципу <strong>how-to</strong> (как сделать): задача → последовательность шагов → проверка. Если вы первый раз видите этот бот, прочитайте сначала <a href="#obzor" data-go="obzor">«Обзор»</a> и <a href="#koncept" data-go="koncept">«Концепцию»</a> — там объяснено, что это вообще такое и зачем. Точные значения отдельных переменных, типы и лимиты собраны в разделе <a href="#spravochnik" data-go="spravochnik">«Справочник»</a>.</p>
+
+<div class="note">
+<p class="note__label">Как развёрнут бот</p>
+<p>Бот «ЧАТ-БОТ / АДМИНИСТРАЦИЯ ЕМО» — это один процесс в мессенджере MAX, который сам опрашивает серверы MAX (режим long polling — длинный опрос: бот периодически спрашивает «нет ли новых сообщений»). Он живёт в двух Docker-контейнерах (изолированных коробках с приложением) на одном физическом сервере в серверном помещении Администрации: сам бот плюс база данных PostgreSQL. Никаких облачных сервисов, никакой аренды, никаких входящих портов наружу. Связь только исходящая, на серверы MAX. Это сознательная модель развёртывания: self-host, длинный опрос, без публичной точки входа — и потому без класса атак на открытый порт.</p>
+</div>
+
+<h3 id="admin-bird-eye">Что вообще происходит (картинка целиком)</h3>
+
+<p>Чтобы понимать, что чинить, держите в голове общую схему движения обращения:</p>
+
+<ol class="steps">
+<li><strong>Житель пишет боту в личке.</strong> Бот ведёт его по анкете (имя, населённый пункт, адрес проблемы, тема, суть) и создаёт обращение №N. На шаге населённого пункта житель может нажать штатную кнопку «📍 Поделиться геолокацией» — бот сам определит поселение и адрес, жителю не нужно присылать координаты вложением.</li>
+<li><strong>Карточка обращения №N уходит в служебную группу MAX.</strong> Это отдельный чат, где сидят операторы Администрации.</li>
+<li><strong>Оператор отвечает на карточку</strong> (свайпом-ответом на сообщение или командой <code class="kbd">/reply</code>). Бот проверяет ответ и доставляет его жителю в личку.</li>
+<li><strong>В служебную группу приходит подтверждение</strong> «ответ отправлен жителю», карточка дополняется лентой переписки.</li>
+</ol>
+
+<p>Бот отличает жителя от оператора по идентификатору чата (<code class="kbd">chat_id</code> — числовой номер чата). Сообщение из чата, чей <code class="kbd">chat_id</code> совпадает с переменной <code class="kbd">ADMIN_GROUP_ID</code>, считается операторским и попадает в обработчик ответов операторов. Любой другой чат — это житель в личке. Поэтому правильный <code class="kbd">ADMIN_GROUP_ID</code> в файле настроек — обязательное условие: без него операторская часть просто не работает (бот молчит в группе, потому что в конфиге <code class="kbd">admin_group_id is None</code> и весь блок группы пропускается).</p>
+
+<div class="note">
+<p class="note__label">Репозиторий, бот и пути в командах</p>
+<p>Канонический репозиторий проекта (хранилище исходного кода): <code class="kbd">github.com/gaben1488/aemr-bot</code>. Бот — <code class="kbd">@aemo_chat_bot</code>. Все пути в командах ниже даны для рабочего пользователя <code class="kbd">aemr</code> и каталога <code class="kbd">/home/aemr/aemr-bot</code>. В ранних инструкциях встречается также вариант <code class="kbd">/opt/aemr-bot</code> — это то же самое, просто выберите один путь и держитесь его. Адрес сервера и доменное имя в примерах — <strong>плейсхолдеры</strong>; подставьте свои (<code class="kbd">user@server</code>).</p>
+</div>
+
+<h3 id="admin-requirements">Шаг 0. Минимальные требования к серверу</h3>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Ресурс</th><th>Минимум</th><th>Почему столько</th></tr></thead>
+<tbody>
+<tr><td>Процессор</td><td>1–2 vCPU</td><td>Один процесс бота и одна база. Нагрузка низкая, тяжёлых вычислений нет (геопривязка по поселениям считается локально и дёшево, через библиотеку shapely — попадание точки в многоугольник, без внешних API).</td></tr>
+<tr><td>Память (RAM)</td><td>2 ГБ (комфортно 4 ГБ)</td><td>Контейнер бота ограничен 512 МБ (<code class="kbd">mem_limit</code>), PostgreSQL съедает 200–400 МБ. Остальное — на cron-задачи и пиковую нагрузку при резервном копировании. При устойчивом превышении лимита контейнер бота перезапускается по OOM, не роняя хост.</td></tr>
+<tr><td>Диск</td><td>20 ГБ SSD</td><td>ОС ~5 ГБ, слои Docker ~3 ГБ, база ~1 ГБ на старте плюс ~50 МБ в год, 8 еженедельных backup под GPG ~400 МБ, логи до 60 МБ (бот и база по 30 МБ с ротацией).</td></tr>
+<tr><td>ОС</td><td>Ubuntu 22.04 / 24.04 LTS (Debian 12 тоже годится)</td><td>Нужен Docker. Время на сервере должно быть синхронизировано (служба NTP) — бот считает все сроки по часовому поясу <code class="kbd">Asia/Kamchatka</code>.</td></tr>
+<tr><td>Сеть</td><td>Исходящий HTTPS (443/TCP)</td><td>Бот сам опрашивает MAX (<code class="kbd">botapi.max.ru</code>, <code class="kbd">platform-api2.max.ru</code>). Входящие порты в режиме long polling <strong>не нужны</strong>. Если когда-нибудь перейдёте на webhook — понадобятся 80/443 и публичный домен.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно</p>
+<p>Ubuntu 20.04 LTS уже снята с обычной поддержки (закончилась в апреле 2025) — обновления безопасности для базовой системы больше не приходят. Если сервер на ней — запланируйте апгрейд до 22.04/24.04 до сдачи в эксплуатацию. Бот живёт в контейнерах, для него ОС хоста — это только Docker, cron и SSH, поэтому смена базовой ОС относительно безопасна. Два пути: апгрейд на месте (<code class="kbd">do-release-upgrade</code> 20.04 → 22.04, перепрыгнуть сразу на 24.04 нельзя) или чистый новый сервер на 24.04 с восстановлением базы из backup. Любой путь — только после успешного теста восстановления, чтобы было откуда возвращаться.</p>
+</div>
+
+<h3 id="admin-install">Установка с нуля по шагам</h3>
+
+<h4>Шаг 1. Получить токен бота через MAX для бизнеса</h4>
+
+<p>Боты в MAX регистрируются через корпоративный портал, а не через <code class="kbd">@MasterBot</code> (он для MAX не работает):</p>
+
+<ol class="steps">
+<li><strong>Откройте</strong> <code class="kbd">https://max.ru/business</code>, войдите под учётной записью администратора организации. Юридическое лицо должно быть верифицировано (это заранее закрывает ИТ-отдел Администрации).</li>
+<li><strong>Раздел «Боты»</strong> → «Создать бота» (или откройте уже заведённого).</li>
+<li><strong>Заполните</strong> имя, описание, аватар.</li>
+<li><strong>Скопируйте Bot API token</strong> — длинную строку. Это значение для переменной <code class="kbd">BOT_TOKEN</code>. Префикс «Bearer» добавлять не нужно.</li>
+</ol>
+
+<div class="note note--danger">
+<p class="note__label">Опасно</p>
+<p>Токен — это полный доступ к боту. Храните его в защищённом месте (менеджер паролей либо файл <code class="kbd">.env</code> с правами 600 на сервере). В git не коммитьте. Если токен утёк или уволился человек, у которого был доступ к серверу, — выпустите новый токен на той же странице, старый сразу отзовите.</p>
+</div>
+
+<h4>Шаг 2. Подготовить систему и поставить Docker</h4>
+
+<p>Создаём отдельного пользователя для бота, ставим базовые пакеты, включаем брандмауэр (firewall — межсетевой экран, фильтр сетевых соединений):</p>
+
+<pre><code># Пользователь для бота, добавляем в группу docker
+sudo adduser --disabled-password --gecos "" aemr
+sudo usermod -aG docker aemr
+
+# Базовые пакеты и firewall: открыт только SSH, всё остальное закрыто
+sudo apt update &amp;&amp; sudo apt upgrade -y
+sudo apt install -y ca-certificates curl gnupg git ufw
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+# SSH — единственный вход. Ограничьте его доверенной сетью администратора,
+# а не «с любого адреса»: подставьте реальную подсеть/адрес вместо примера.
+sudo ufw allow from 10.0.0.0/8 to any port 22 proto tcp
+sudo ufw enable</code></pre>
+
+<div class="note note--caution">
+<p class="note__label">SSH — закалить до сдачи в эксплуатацию (требование модели угроз)</p>
+<p>SSH остаётся единственным входящим доступом к серверу, поэтому именно он — главная поверхность атаки. Правило <code class="kbd">ufw allow 22/tcp</code> «с любого адреса» для гос-ИСПДн не годится: ограничьте источник доверенной сетью администрации (пример выше — замените подсеть на свою; если фиксированного адреса нет, рассмотрите VPN до сервера). Дополнительно в <code class="kbd">/etc/ssh/sshd_config</code> обязательно: <code class="kbd">PermitRootLogin no</code> (root по SSH не входит), <code class="kbd">PasswordAuthentication no</code> (только по ключу — пароль перебирают, ключ нет), <code class="kbd">PubkeyAuthentication yes</code>. После правки — <code class="kbd">sudo systemctl restart ssh</code>. Это прямо закрывает пункт «SSH открыт с любого адреса» из модели угроз: без ограничения источника и отключения пароля довод о неактуальности сетевых угроз к серверу не держится.</p>
+</div>
+
+<div class="note">
+<p class="note__label">Порт 8080 закрыт наружу; установка Docker</p>
+<p>Порт бота (8080) слушает только внутри сервера (<code class="kbd">127.0.0.1</code>) и наружу не публикуется — отдельное правило firewall для него заводить не нужно. Установка Docker Engine и плагина Compose — по официальной инструкции Docker (на старых Ubuntu в стандартных репозиториях лежит устаревший пакет без подкоманды <code class="kbd">docker compose</code>: подключают официальный репозиторий Docker, ставят <code class="kbd">docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin</code>). Чтобы не писать <code class="kbd">sudo</code> перед каждой командой Docker — добавьте пользователя в группу <code class="kbd">docker</code> (<code class="kbd">sudo usermod -aG docker $USER &amp;&amp; newgrp docker</code>). После установки проверьте: <code class="kbd">docker --version</code> (27.x) и <code class="kbd">docker compose version</code> (v2.x).</p>
+</div>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно: членство в группе docker = root</p>
+<p>Любой, кто состоит в группе <code class="kbd">docker</code>, фактически имеет права <code class="kbd">root</code> на хосте (через монтирование файловой системы в контейнер). Поэтому в эту группу добавляют только владельца бота. Если на той же машине заведётся другой сервис со своим обслуживающим пользователем — его в группу <code class="kbd">docker</code> к боту не сажают.</p>
+</div>
+
+<h4>Шаг 3. Склонировать репозиторий и подготовить настройки</h4>
+
+<pre><code>sudo -u aemr -i
+git clone https://github.com/gaben1488/aemr-bot.git
+cd aemr-bot
+
+# Скопировать образец настроек и закрыть права (только владелец читает)
+cp infra/.env.example infra/.env
+chmod 600 infra/.env</code></pre>
+
+<p>Откройте <code class="kbd">infra/.env</code> и заполните как минимум обязательные поля (полный справочник — ниже в разделе <a href="#admin-env" data-go="admin-env">«Файл настроек .env»</a>). На первом запуске <code class="kbd">ADMIN_GROUP_ID</code> оставьте пустым — его узнаем на шаге 5.</p>
+
+<h4>Шаг 4. Первый запуск</h4>
+
+<pre><code>cd /home/aemr/aemr-bot/infra
+docker compose pull
+docker compose up -d --build
+docker compose ps</code></pre>
+
+<p>Через 30–60 секунд у обоих контейнеров в колонке STATUS должно быть <code class="kbd">Up (healthy)</code>. В логах бота (<code class="kbd">docker compose logs -f bot</code>) появится строка о старте в режиме long polling. Бот уже отвечает жителям в личке. На сообщения в группе он пока не реагирует — <code class="kbd">ADMIN_GROUP_ID</code> ещё не задан.</p>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно</p>
+<p>После первого запуска полезен <strong>один лишний рестарт базы</strong>, чтобы заработала статистика медленных запросов: расширение <code class="kbd">pg_stat_statements</code> создаётся миграцией 0010, но реально начинает собирать данные только когда модуль подгружен из <code class="kbd">shared_preload_libraries</code> ещё до старта PostgreSQL. Поэтому: <code class="kbd">docker compose restart db</code>. После этого top-N медленных запросов виден через <code class="kbd">select * from pg_stat_statements</code>.</p>
+</div>
+
+<h4>Шаг 5. Создать служебную группу и узнать её chat_id</h4>
+
+<ol class="steps">
+<li><strong>Создайте группу в MAX</strong> (например, «АДМИНКА / ЧАТ-БОТ»). Добавьте туда бота и операторов. В группы добавляются только верифицированные боты — если ошибка, проверьте, что юрлицо подтверждено.</li>
+<li><strong>Напишите в группе</strong> <code class="kbd">/whoami</code>. Бот ответит вашим <code class="kbd">max_user_id</code>, именем и <code class="kbd">chat_id</code> группы. <code class="kbd">chat_id</code> группы — это отрицательное число вида <code class="kbd">-74181728103785</code>. Сохраните его и свой <code class="kbd">max_user_id</code>.</li>
+</ol>
+
+<div class="note">
+<p class="note__label">/whoami отвечает только в служебной группе</p>
+<p>В личке у жителя команда <code class="kbd">/whoami</code> тихо игнорируется — это сделано намеренно, чтобы обычные жители не видели служебных команд. Пусть каждый будущий оператор напишет <code class="kbd">/whoami</code> в группе (его сначала нужно туда добавить) — соберёте их <code class="kbd">max_user_id</code> в табличку для массовой регистрации.</p>
+</div>
+
+<h4>Шаг 6. Прописать ADMIN_GROUP_ID и перезапустить</h4>
+
+<pre><code>nano /home/aemr/aemr-bot/infra/.env
+# вписать: ADMIN_GROUP_ID=-74181728103785
+docker compose up -d --force-recreate bot</code></pre>
+
+<p>Перезапуск обязателен — файл <code class="kbd">.env</code> читается только при старте контейнера. С этого момента сообщения в группе с этим <code class="kbd">chat_id</code> обрабатываются как операторские.</p>
+
+<h4>Шаг 7. Создать первого ИТ-оператора</h4>
+
+<p>Команда регистрации операторов доступна только роли <code class="kbd">it</code>, а при первом запуске в базе нет ни одного <code class="kbd">it</code>. Получается «петля»: чтобы зарегистрировать ИТ, нужно быть ИТ. Чтобы её развязать, бот умеет создать первого ИТ из переменных окружения. Впишите в <code class="kbd">.env</code> свой <code class="kbd">max_user_id</code> и ФИО:</p>
+
+<pre><code>BOOTSTRAP_IT_MAX_USER_ID=&lt;ваш_max_user_id&gt;
+BOOTSTRAP_IT_FULL_NAME=Ваше ФИО
+docker compose up -d --force-recreate bot</code></pre>
+
+<p>При старте, если в таблице <code class="kbd">operators</code> нет ни одной активной записи с ролью <code class="kbd">it</code>, бот вставит её из этих переменных. На повторных запусках — ничего не делает (no-op, безопасно), переменные можно оставить навсегда. Запасной путь, если автоинициализация не сработала, — напрямую через <code class="kbd">psql</code> (консоль PostgreSQL):</p>
+
+<pre><code>docker compose exec db psql -U aemr -d aemr -c \
+  "INSERT INTO operators (max_user_id, full_name, role, is_active) \
+   VALUES (&lt;ваш_max_user_id&gt;, 'Ваше ФИО', 'it', true);"</code></pre>
+
+<p>Дальше всех остальных операторов удобнее заводить кнопочным мастером «👥 Операторы» в меню <code class="kbd">/op_help</code> или командой <code class="kbd">/add_operators</code> — это уже работа оператора, описана в разделе <a href="#operator" data-go="operator">«Оператору»</a>. Роли бота — <code class="kbd">it</code>, <code class="kbd">coordinator</code> (Куратор ЦУР), <code class="kbd">aemr</code> (специалист АЕМО), <code class="kbd">egp</code> (специалист по территории г. Елизово; историческое имя — по упразднённому Елизовскому городскому поселению). Роль <code class="kbd">it</code> подразумевает все права координатора: если один человек одновременно ИТ-специалист и координатор, заводите ему одну запись с <code class="kbd">role=it</code>, две не нужны.</p>
+
+<h4>Шаг 8. Установить страховочные службы (один раз)</h4>
+
+<p>Эти службы запускаются от <code class="kbd">root</code> и держат бота живым между перезапусками сервера и при зависаниях:</p>
+
+<pre><code>exit   # выйти из-под пользователя aemr обратно в root
+
+# Авто-деплой: каждые 10 минут тянет новый код из main и пересобирает
+sudo bash /home/aemr/aemr-bot/scripts/install-auto-deploy.sh
+# выдаст публичный ключ — добавьте его в GitHub: Settings → Deploy keys (read-only)
+
+# Watchdog (сторож): каждые 5 минут проверяет, что бот жив
+sudo bash /home/aemr/aemr-bot/scripts/install-healthwatch.sh
+
+# Автозапуск контейнеров после перезагрузки сервера
+sudo bash /home/aemr/aemr-bot/scripts/install-systemd-autostart.sh</code></pre>
+
+<p>Подробнее про каждую службу — в разделах <a href="#admin-deploy" data-go="admin-deploy">«Выкладка и откат»</a> и <a href="#admin-watchdog" data-go="admin-watchdog">«Сторожевые механизмы»</a> ниже.</p>
+
+<h4>Шаг 9. Проверочный прогон</h4>
+
+<p>Финальная быстрая проверка, что всё работает (полный сценарий со стороны жителя и оператора — в разделе <a href="#admin-checklist" data-go="admin-checklist">«Чек-лист первого боевого запуска»</a> в конце):</p>
+
+<pre><code>docker compose ps                              # оба контейнера healthy
+docker compose logs --tail 50 bot             # последние строки без ERROR
+curl -fsS http://127.0.0.1:8080/livez &amp;&amp; echo  # 200
+curl -fsS http://127.0.0.1:8080/readyz &amp;&amp; echo  # 200</code></pre>
+
+<h3 id="admin-env">Файл настроек <code class="kbd">infra/.env</code></h3>
+
+<p>Это главный файл конфигурации. Читается только при старте контейнера — после любой правки нужен <code class="kbd">docker compose up -d --force-recreate bot</code>. Полный справочник всех полей с комментариями лежит в образце <code class="kbd">infra/.env.example</code>. Ниже — что обязательно и где подводные камни. Алфавитный реестр всех переменных с типами — в разделе <a href="#spravochnik" data-go="spravochnik">«Справочник»</a>.</p>
+
+<h4>Обязательные поля</h4>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Переменная</th><th>По умолчанию</th><th>Что это</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">BOT_TOKEN</code></td><td>—</td><td>Токен бота с max.ru/business. Без префикса «Bearer». Если токен неверный, бот логирует ошибку и специально выходит, а не крутится в петле перезапусков.</td></tr>
+<tr><td><code class="kbd">POSTGRES_PASSWORD</code></td><td>—</td><td>Пароль базы, минимум 24 символа случайно: <code class="kbd">python3 -c "import secrets; print(secrets.token_urlsafe(32))"</code>. Compose откажется стартовать с пустым значением — выдаст ошибку «Set POSTGRES_PASSWORD in infra/.env» ещё до запуска контейнеров. В образце стоит небезопасный дефолт <code class="kbd">change-me-strong</code> — его обязательно заменить.</td></tr>
+<tr><td><code class="kbd">DATABASE_URL</code></td><td>—</td><td><code class="kbd">postgresql+asyncpg://aemr:&lt;тот же пароль&gt;@db:5432/aemr</code>. Compose сам собирает эту строку из переменных <code class="kbd">POSTGRES_*</code> и подставляет в контейнер бота, поэтому рассинхрон пароля между базой и ботом невозможен по построению. Хост базы — <code class="kbd">db</code> (имя сервиса во внутренней сети Docker), порт 5432.</td></tr>
+<tr><td><code class="kbd">POSTGRES_DB</code> / <code class="kbd">POSTGRES_USER</code></td><td><code class="kbd">aemr</code> / <code class="kbd">aemr</code></td><td>Имя базы и пользователя PostgreSQL.</td></tr>
+<tr><td><code class="kbd">ADMIN_GROUP_ID</code></td><td>—</td><td>chat_id служебной группы (отрицательное число). Узнаётся через <code class="kbd">/whoami</code> в группе. Без него операторская часть не работает.</td></tr>
+<tr><td><code class="kbd">BOOTSTRAP_IT_MAX_USER_ID</code></td><td>—</td><td>max_user_id первого ИТ-оператора (холодный старт без psql).</td></tr>
+<tr><td><code class="kbd">BOOTSTRAP_IT_FULL_NAME</code></td><td><code class="kbd">ИТ-специалист</code></td><td>ФИО первого ИТ-оператора.</td></tr>
+<tr><td><code class="kbd">TZ</code></td><td><code class="kbd">Asia/Kamchatka</code></td><td>Часовой пояс. По нему считаются SLA, расписания и все cron-задачи.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>Очень рекомендуется (резервные копии и аудит)</h4>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Переменная</th><th>По умолчанию</th><th>Что это</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">BACKUP_GPG_PASSPHRASE</code></td><td>пусто</td><td>Парольная фраза для шифрования backup. Жёсткий порог в коде — <strong>минимум 12 символов</strong>; рекомендуется 32+. <strong>В production обязательна</strong>: без неё backup отказывается выполняться (требование 152-ФЗ, см. ниже).</td></tr>
+<tr><td><code class="kbd">BACKUP_ALLOW_UNENCRYPTED</code></td><td><code class="kbd">false</code></td><td><code class="kbd">1</code> разрешает незашифрованный <code class="kbd">.sql</code> без фразы. <strong>Только для dev/локальной машины.</strong></td></tr>
+<tr><td><code class="kbd">HEALTHCHECK_URL</code></td><td>пусто</td><td>URL внешнего пинг-сервиса (Healthchecks.io, Uptime Kuma). Если задан — бот раз в 5 минут «стучится» туда. Если пусто — внешний мониторинг отключён (задача-пинг даже не добавляется в расписание).</td></tr>
+<tr><td><code class="kbd">AUDIT_LOG_RETENTION_DAYS</code></td><td><code class="kbd">365</code></td><td>Сколько дней хранить журнал действий операторов (диапазон 30–3650). Чистится cron-задачей <code class="kbd">audit-log-retention</code>. Подробнее о выборе срока — в разделе «Сроки хранения данных».</td></tr>
+<tr><td><code class="kbd">AUDIT_ERASURE_RETENTION_DAYS</code></td><td><code class="kbd">1095</code></td><td>Отдельный срок для записей, подтверждающих уничтожение ПДн (диапазон 365–3650, то есть не короче общего). Ими доказывается, что данные жителя удалены в срок после отзыва согласия, — поэтому они переживают обычные записи журнала.</td></tr>
+<tr><td><code class="kbd">FOLLOWUP_MAX_PER_HOUR_PER_APPEAL</code></td><td><code class="kbd">5</code></td><td>Лимит дополнений жителя по одному обращению в час (защита от флуда).</td></tr>
+<tr><td><code class="kbd">FOLLOWUP_MIN_INTERVAL_SECONDS</code></td><td><code class="kbd">30</code></td><td>Минимум секунд между двумя дополнениями жителя.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>Расписание и хранение backup</h4>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Переменная</th><th>По умолчанию</th><th>Что это</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">BACKUP_DAY_OF_WEEK</code></td><td><code class="kbd">sun</code></td><td>День недели для backup (crontab-стиль: <code class="kbd">sun</code>, <code class="kbd">mon</code>… или <code class="kbd">*</code>).</td></tr>
+<tr><td><code class="kbd">BACKUP_HOUR</code> / <code class="kbd">BACKUP_MINUTE</code></td><td><code class="kbd">3</code> / <code class="kbd">0</code></td><td>Час и минута backup (по часовому поясу бота). По умолчанию воскресенье 03:00.</td></tr>
+<tr><td><code class="kbd">BACKUP_LOCAL_DIR</code></td><td><code class="kbd">/backups</code></td><td>Каталог внутри контейнера (смонтирован в Docker-том <code class="kbd">backups</code>). Если пусто — локальные backup не сохраняются.</td></tr>
+<tr><td><code class="kbd">BACKUP_KEEP_COUNT</code></td><td><code class="kbd">8</code></td><td>Сколько последних файлов хранить (8 еженедельных ≈ 2 месяца). Старые удаляются по дате изменения.</td></tr>
+<tr><td><code class="kbd">BACKUP_S3_ENDPOINT</code> / <code class="kbd">_BUCKET</code> / <code class="kbd">_ACCESS_KEY</code> / <code class="kbd">_SECRET_KEY</code></td><td>пусто</td><td>Опциональная копия в S3-совместимое хранилище (любой провайдер, не привязано к конкретному облаку). Если все четыре пустые — только локальные backup.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>Webhook-режим (по умолчанию НЕ используется)</h4>
+
+<p>Боевая сборка работает в режиме long polling. Webhook (вебхук — обратный вызов, когда MAX сам шлёт событие на ваш URL) оставлен в коде на случай будущего перехода, но для него нужен публичный домен с TLS-сертификатом, которого у проекта сейчас нет. Если всё же включаете (<code class="kbd">BOT_MODE=webhook</code>), нужны:</p>
+
+<pre><code>BOT_MODE=webhook
+WEBHOOK_URL=https://&lt;ваш-домен&gt;/max/webhook
+WEBHOOK_SECRET=&lt;≥16 символов: python -c 'import secrets; print(secrets.token_urlsafe(32))'&gt;</code></pre>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно</p>
+<p>Без <code class="kbd">WEBHOOK_URL</code> и <code class="kbd">WEBHOOK_SECRET</code> длиной ≥16 символов процесс бота просто не стартует в webhook-режиме (валидатор в <code class="kbd">config.py</code> остановит запуск). В режиме polling эти поля не нужны вовсе. Домен <code class="kbd">feedback.elizovomr.ru</code> в старых черновиках — <strong>плейсхолдер с тестового стенда</strong>, не боевой адрес. Под профилем <code class="kbd">webhook</code> compose дополнительно поднимает nginx (TLS-терминация, порты 80/443) и certbot (выпуск и продление сертификатов) — в боевой polling-сборке оба контейнера не запускаются.</p>
+</div>
+
+<h4>Repo-sync — синхронизация настроек в репозиторий (опционально)</h4>
+
+<p>Фича для роли <code class="kbd">it</code>: из меню «⚙️ Настройки бота» одной кнопкой создать Pull Request (запрос на слияние) с обновлённым файлом конфигурации <code class="kbd">seed/runtime_config.json</code>. Замысел такой: всё, что меняется в базе через UI бота, попадает в репозиторий как коммит, проходит ревью и мерж, а после мержа авто-деплой подхватывает на сервер. Если фича не нужна — оставьте переменные пустыми, кнопка покажет «не настроено», бот не падает.</p>
+
+<pre><code>GITHUB_PAT=&lt;fine-grained токен: Contents Read/Write + Pull requests Read/Write&gt;
+GITHUB_REPO=Gaben1488/aemr-bot
+GITHUB_PR_BASE_BRANCH=main
+COMMIT_AUTHOR_NAME=&lt;имя автора коммитов&gt;
+COMMIT_AUTHOR_EMAIL=&lt;email&gt;</code></pre>
+
+<p>Токен передаётся только в HTTP-заголовке <code class="kbd">Authorization: Bearer …</code> к GitHub REST API, не логируется и не появляется в текстах PR или в журнале действий. Каждое нажатие создаёт <strong>отдельную ветку</strong> <code class="kbd">bot-config-sync-YYYYMMDD-HHMMSS</code> (по UTC) и <strong>отдельный PR</strong>; в <code class="kbd">main</code> напрямую бот никогда не пишет и force-push не делает. Содержимое сериализуется с сортировкой ключей и финальным переводом строки — diff детерминированный. При ошибке GitHub API (токен истёк, потерял права — 401/403/404/422) бот возвращает понятную причину (<code class="kbd">no_token</code> / <code class="kbd">no_base_branch</code> / <code class="kbd">branch_failed</code> / <code class="kbd">write_failed</code> / <code class="kbd">pr_failed</code>) и сообщает в UI; процесс не падает. Срок жизни токена ставьте 90 дней и заводите напоминание о ротации. Переменные <code class="kbd">GITHUB_*</code> и <code class="kbd">PHISHTANK_APP_KEY</code> читаются напрямую из окружения, а не через основной класс настроек.</p>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно: мёртвые переменные</p>
+<p>В старых production-файлах <code class="kbd">.env</code> встречаются переменные <code class="kbd">COORDINATOR_MAX_USER_ID</code> и <code class="kbd">BACKUP_TMP_DIR</code> — остатки ранних версий, бот их не читает. Конфиг построен на pydantic-settings с режимом «игнорировать лишнее», поэтому любая переменная вне схемы (в том числе опечатка в имени) молча пропускается. <code class="kbd">COORDINATOR_MAX_USER_ID</code> — реликт эпохи, когда координатор был один и зашит в конфиг; сейчас роли живут в таблице <code class="kbd">operators</code> и назначаются через <code class="kbd">/add_operators</code>. <code class="kbd">BACKUP_TMP_DIR</code> — реликт ранней схемы backup; сейчас дамп пишется сразу в <code class="kbd">BACKUP_LOCAL_DIR</code>. Обе строки можно и нужно удалить, чтобы не путать того, кто откроет файл через год. Риск нулевой; перед удалением убедитесь, что их не подхватывает сторонний shell-скрипт на хосте (в репозитории — не подхватывает).</p>
+</div>
+
+<h3 id="admin-ports">Порты и проверки здоровья</h3>
+
+<p>Бот слушает порт <strong>8080</strong>, но только на петлевом адресе <code class="kbd">127.0.0.1</code> — то есть он доступен только внутри сервера, из интернета его не видно. PostgreSQL на хост вообще не пробрасывается — доступен только боту по внутренней сети Docker. Если нужен <code class="kbd">psql</code> с хоста — заходите через контейнер: <code class="kbd">docker compose exec db psql -U aemr aemr</code>.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Сервис</th><th>Привязка</th><th>Кому виден</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td>bot, порт 8080</td><td><code class="kbd">127.0.0.1:8080</code></td><td>только localhost сервера</td><td>проверки здоровья (<code class="kbd">/livez</code>, <code class="kbd">/readyz</code>, <code class="kbd">/healthz</code>); приёмник webhook, если включён</td></tr>
+<tr><td>db, порт 5432</td><td>внутри сети Docker</td><td>только бот (по имени <code class="kbd">db</code>)</td><td>PostgreSQL</td></tr>
+<tr><td>nginx, порты 80/443</td><td><code class="kbd">0.0.0.0</code></td><td>публично</td><td>только под профилем <code class="kbd">webhook</code>, в боевой сборке не используется</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Три точки проверки здоровья (health endpoints — служебные адреса, отвечающие «жив ли я») различаются по смыслу:</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Адрес</th><th>Что проверяет</th><th>Кто использует</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">/livez</code></td><td>жив ли главный цикл бота. Базу <strong>не трогает</strong>. Проверяет <strong>два независимых сигнала живости</strong> и краснеет (503), если протух любой. Первый — внутренний «пульс» (heartbeat): обновлялся ли он за последние <code class="kbd">HEALTHCHECK_STALE_SECONDS</code> (120 сек). Второй — свежесть опроса MAX: таймстемп последнего успешного <code class="kbd">get_updates</code> (<code class="kbd">last_poll</code>) обновляется на каждом круге long polling; если poll-цикл встал (завис handler, замёрзший event-loop, мёртвая сетевая сессия), таймстемп протухает и <code class="kbd">/livez</code> краснеет, даже когда heartbeat ещё бьётся. Порог протухания опроса — <code class="kbd">LIVEZ_POLL_STALE_FACTOR × POLLING_TIMEOUT_SECONDS</code> (по умолчанию 3×). В webhook-режиме опроса нет, поэтому второй сигнал просто игнорируется (fail-open).</td><td>Docker healthcheck, watchdog, авто-деплой</td></tr>
+<tr><td><code class="kbd">/readyz</code></td><td>готов ли бот работать с данными. Делает <code class="kbd">SELECT 1</code> к PostgreSQL (результат кэшируется 10 сек, чтобы серия проверок не порождала шквал коннектов). Падение при живом <code class="kbd">/livez</code> = «процесс жив, но база лежит или зависла».</td><td>ручная диагностика</td></tr>
+<tr><td><code class="kbd">/healthz</code></td><td>то же, что <code class="kbd">/readyz</code> (оставлен для совместимости со старыми инструкциями).</td><td>ручная диагностика</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p class="note__label">Почему сторож смотрит /livez, а не /readyz</p>
+<p>Docker и watchdog проверяют именно <code class="kbd">/livez</code>, а не <code class="kbd">/readyz</code>. Это сделано специально: кратковременная проблема с базой не должна перезапускать живой процесс — иначе теряется возможность спокойно разобраться в причине. С локального адреса (<code class="kbd">127.0.0.1</code>, <code class="kbd">localhost</code>, <code class="kbd">::1</code>) бот отдаёт полную диагностику — свежесть пульса, возраст последнего удара в секундах, статус базы; внешним запросам — только короткое <code class="kbd">{"ok": …}</code>, чтобы не раскрывать внутреннее состояние.</p>
+</div>
+
+<div class="note">
+<p class="note__label">Почему у <code class="kbd">/livez</code> два сигнала живости</p>
+<p>Одного «пульса» мало. Heartbeat-таск только спит и периодически «бьёт», поэтому если завис не он, а обработчик события или backup (а события бот разбирает параллельными задачами), пульс продолжал бы идти и <code class="kbd">/livez</code> оставался бы ложно-зелёным — авто-рестарт не сработал бы. Поэтому добавлен второй, независимый сигнал: свежесть опроса MAX. Пока бот реально опрашивает серверы MAX, таймстемп последнего успешного <code class="kbd">get_updates</code> обновляется; стоит poll-циклу встать — этот таймстемп протухает за <code class="kbd">LIVEZ_POLL_STALE_FACTOR × POLLING_TIMEOUT_SECONDS</code> (3× по умолчанию: запас на один потерянный long-poll плюс сетевой джиттер, чтобы не поднимать ложную тревогу на здоровом простаивающем боте), и <code class="kbd">/livez</code> краснеет. Тогда watchdog перезапустит зависший контейнер. Это защита по принципу «в глубину» (defense-in-depth): два разных датчика ловят разные классы зависаний. В webhook-режиме опроса нет, и второй сигнал не учитывается.</p>
+</div>
+
+<h3 id="admin-stack">Технологический стек и образы</h3>
+
+<p>Базовые Docker-образы закреплены и тегом, и цифровым отпечатком (digest — хэш содержимого), чтобы <code class="kbd">docker compose pull</code> не утянул втихую новый минорный выпуск с поломанными скриптами. <strong>Актуальные digest всегда смотрите в <code class="kbd">infra/docker-compose.yml</code></strong>, не по памяти и не из этой документации: значения меняются, и хардкодить их в вики смысла нет.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Образ</th><th>Тег</th><th>Зачем</th></tr></thead>
+<tbody>
+<tr><td>python (для бота)</td><td><code class="kbd">3.12-slim</code></td><td>среда исполнения бота</td></tr>
+<tr><td>postgres</td><td><code class="kbd">16-alpine</code></td><td>база данных</td></tr>
+<tr><td>nginx</td><td><code class="kbd">1.27-alpine</code></td><td>только профиль <code class="kbd">webhook</code>, TLS-терминация</td></tr>
+<tr><td>certbot</td><td><code class="kbd">latest</code></td><td>только профиль <code class="kbd">webhook</code>, выпуск сертификатов</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Чтобы обновить digest вручную: <code class="kbd">docker pull postgres:16-alpine</code>, затем скопировать значение из строки «Digest: sha256:…» в <code class="kbd">docker-compose.yml</code>. Автообновление выключено намеренно — сломанный или скомпрометированный минор не должен попасть в production молча.</p>
+
+<p>Внутри образа бота дополнительно ставятся apt-пакеты: <code class="kbd">postgresql-client</code> (для <code class="kbd">pg_dump</code>), <code class="kbd">gnupg</code> (шифрование backup), <code class="kbd">ca-certificates</code>, <code class="kbd">curl</code>, <code class="kbd">tzdata</code>, <code class="kbd">unzip</code>, <code class="kbd">rclone</code> (для S3-выгрузки). Rclone берётся из debian-репозитория, а не через <code class="kbd">curl … | bash</code> — чтобы не исполнять сетевой инсталлятор под root: любой будущий компромет домена rclone.org иначе выполнялся бы прямо в образе.</p>
+
+<div class="note">
+<p class="note__label">Контейнер бота закалён (hardening)</p>
+<p>Бот работает под непривилегированным пользователем <code class="kbd">botuser</code> (фиксированные UID/GID 1000, чтобы named-том <code class="kbd">backups</code> держал одинакового владельца между пересборками). Корневая файловая система контейнера смонтирована <strong>только для чтения</strong> (<code class="kbd">read_only: true</code>); всё, что нужно писать, идёт через <code class="kbd">tmpfs /tmp</code> (128 МБ) или named-тома. Сброшены все Linux-capabilities (<code class="kbd">cap_drop: ALL</code>), включён <code class="kbd">no-new-privileges</code> (запрет setuid-эскалаций), ограничено число процессов (<code class="kbd">pids_limit: 200</code> — защита от fork-бомб в pg_dump/gpg/rclone) и память (<code class="kbd">mem_limit</code> и <code class="kbd">memswap_limit</code> по 512 МБ). Контейнер базы тоже закалён: сброшены все capabilities, оставлены только нужные Postgres для chown data-каталога, включён <code class="kbd">no-new-privileges</code>.</p>
+</div>
+
+<p>Python-зависимости в <code class="kbd">bot/pyproject.toml</code> в основном фиксируются через <code class="kbd">~=</code> (совместимые выпуски: патчи разрешены, скачки минорных версий — нет); критичный клиент <code class="kbd">maxapi</code> закреплён точной версией. Ключевые из них:</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Пакет</th><th>Версия</th><th>Роль</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">maxapi</code></td><td><code class="kbd">==1.2.1</code></td><td>клиент MAX Bot API. В отличие от остальных, закреплён <strong>точной</strong> версией (не диапазоном): критичная зависимость под ручным контролем, её обновление — осознанная правка.</td></tr>
+<tr><td><code class="kbd">fastapi</code></td><td><code class="kbd">&gt;=0.118,&lt;0.137</code></td><td>веб-каркас для webhook-режима и health-эндпоинтов</td></tr>
+<tr><td><code class="kbd">uvicorn[standard]</code></td><td><code class="kbd">~=0.32</code></td><td>ASGI-сервер</td></tr>
+<tr><td><code class="kbd">sqlalchemy</code> / <code class="kbd">asyncpg</code></td><td><code class="kbd">~=2.0</code> / <code class="kbd">~=0.30</code></td><td>асинхронная работа с PostgreSQL</td></tr>
+<tr><td><code class="kbd">alembic</code></td><td><code class="kbd">~=1.14</code></td><td>миграции базы (версионные изменения схемы)</td></tr>
+<tr><td><code class="kbd">apscheduler</code></td><td><code class="kbd">~=3.10</code></td><td>cron-задачи внутри процесса</td></tr>
+<tr><td><code class="kbd">pydantic</code> / <code class="kbd">pydantic-settings</code></td><td><code class="kbd">~=2.9</code> / <code class="kbd">~=2.6</code></td><td>валидация конфигурации</td></tr>
+<tr><td><code class="kbd">openpyxl</code></td><td><code class="kbd">~=3.1</code></td><td>выгрузка статистики в XLSX</td></tr>
+<tr><td><code class="kbd">shapely</code></td><td><code class="kbd">~=2.0</code></td><td>геопривязка по поселениям (локально, без внешних API)</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p class="note__label">Как собираются зависимости: hash-enforced сборка из <code class="kbd">uv.lock</code></p>
+<p>Диапазоны <code class="kbd">~=</code> выше — это то, что <em>разрешено</em> в <code class="kbd">pyproject.toml</code>. А <em>ставится</em> в образ ровно то, что закреплено в закоммиченном <code class="kbd">bot/uv.lock</code> (точные версии всех пакетов, включая транзитивные, плюс SHA256-хэш каждого wheel). <code class="kbd">infra/Dockerfile</code> читает именно lock: на этапе сборки <code class="kbd">uv export --frozen --no-emit-project --no-dev</code> разворачивает lock в <code class="kbd">requirements.txt</code> с хэшем на каждый пакет, а <code class="kbd">pip install --require-hashes</code> отказывается ставить что-либо, чей скачанный артефакт не совпал с зафиксированным хэшем. Сам пакет бота добавляется отдельным шагом editable и без зависимостей (<code class="kbd">pip install -e /app --no-deps</code>) — дерево зависимостей уже установлено и хэш-проверено.</p>
+<p>Что это даёт. Во-первых, <strong>детерминизм</strong>: в прод приезжают ровно те версии, что в lock-файле, без пересборки на момент сборки. Это закрывает реальный дрейф «у меня работает, на проде падает», который однажды уже положил бота (разошлись версии <code class="kbd">maxapi</code> между локальной средой и Docker). Для авто-деплоя, пересобирающего образ каждые 10 минут, это критично: без закрепления образ молча менялся бы без единой строки в git diff, подтянув новый патч транзитивной зависимости. Во-вторых, <strong>проверка целостности (supply-chain)</strong>: <code class="kbd">--require-hashes</code> работает по принципу fail-closed — один несовпавший хэш останавливает сборку, поэтому подмена пакета на зеркале или MITM при скачивании не пройдут незаметно. uv тянется в образ пиннутым по digest бинарём через <code class="kbd">COPY --from</code>, без <code class="kbd">curl … | bash</code> (тот же принцип, что для rclone), и в финальный рантайм не попадает. Совместимо с read-only рантаймом: всё ставится в build-time, готовое дерево пакетов в рантайме неизменно.</p>
+<p>Тонкость про CI: hash-enforced живёт именно в сборке Docker-образа. Job'ы стиля и тестов в <code class="kbd">.github/workflows/ci.yml</code> ставят dev-окружение по диапазонам (<code class="kbd">pip install -e .[dev]</code>) — это сознательно, тестам нужны и dev-инструменты, а супла-чейн-гарантию даёт отдельный шаг сборки образа плюс <code class="kbd">pip-audit</code>. Развёрнутое обоснование и полный дифф Dockerfile — в <code class="kbd">docs/DEPS.md</code> (раздел «Зависимости»).</p>
+</div>
+
+<h3 id="admin-cron">Фоновые задачи (cron внутри бота)</h3>
+
+<p>Внутри процесса бота крутится планировщик APScheduler — это «cron» (запуск по расписанию), но не системный, а встроенный в приложение. Все расписания — в часовом поясе <code class="kbd">Asia/Kamchatka</code>. Источник истины — функция построения планировщика в <code class="kbd">bot/aemr_bot/services/cron.py</code>. Ниже все 22 задачи с точными идентификаторами и реальным расписанием.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>id задачи</th><th>Когда запускается</th><th>Что делает</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">db-backup</code></td><td>каждое вс в <code class="kbd">BACKUP_HOUR</code>:<code class="kbd">BACKUP_MINUTE</code> (по умолчанию 03:00)</td><td>еженедельный pg_dump → GPG → Docker-том, ротация старых файлов, categorized-алёрт при провале</td></tr>
+<tr><td><code class="kbd">db-backup-verify</code></td><td>1-го числа месяца в 04:30 (<code class="kbd">BACKUP_VERIFY_*</code>)</td><td>проверка пригодности бэкапа: свежайшая копия расшифровывается потоком (на диск ничего не пишется, база не трогается) и сверяется сигнатура <code class="kbd">pg_dump</code>. Ловит потерю парольной фразы и обрезанный файл <em>до</em> аварии; успех — тихо в лог, провал — critical-алёрт. Выключается <code class="kbd">BACKUP_VERIFY_ENABLED=0</code></td></tr>
+<tr><td><code class="kbd">events-retention</code></td><td>ежедневно 04:00</td><td>удаляет служебные события старше 30 дней (ключи защиты от повторов — idempotency)</td></tr>
+<tr><td><code class="kbd">audit-log-retention</code></td><td>ежедневно 04:15</td><td>удаляет журнал действий старше <code class="kbd">AUDIT_LOG_RETENTION_DAYS</code> (по умолчанию 365 дней); записи об уничтожении ПДн — отдельным окном по <code class="kbd">AUDIT_ERASURE_RETENTION_DAYS</code> (3 года)</td></tr>
+<tr><td><code class="kbd">stale-operators-cleanup</code></td><td>ежедневно 04:20</td><td>помечает операторов, покинувших служебную группу MAX, как неактивных</td></tr>
+<tr><td><code class="kbd">pdn-retention</code></td><td>ежедневно 04:30</td><td>Очистка в рабочей базе с 29-го дня после отзыва и предупреждение о приближении срока; открытые обращения закрываются. Другие основания и копии проверяются отдельно.</td></tr>
+<tr><td><code class="kbd">pdn-retention-hourly</code></td><td>ежечасно в :20</td><td>Дополнительный запуск очистки без повторного ежедневного предупреждения.</td></tr>
+<tr><td><code class="kbd">appeals-5y-retention</code></td><td>ежедневно 04:45</td><td>обнуляет текст обращений старше 5 лет (метаданные — id, дата, статус, тема, поселение — остаются)</td></tr>
+<tr><td><code class="kbd">events-retention-catchup</code></td><td>+30 сек после старта процесса (разово)</td><td>догоняющий прогон <code class="kbd">events-retention</code>, если суточный тик в 04:00 был пропущен из-за простоя дольше окна misfire (120 сек); идемпотентен, безопасен на каждый рестарт</td></tr>
+<tr><td><code class="kbd">audit-log-retention-catchup</code></td><td>+30 сек после старта процесса (разово)</td><td>догоняющий прогон <code class="kbd">audit-log-retention</code>, тот же принцип</td></tr>
+<tr><td><code class="kbd">pdn-retention-catchup</code></td><td>+30 сек после старта процесса (разово)</td><td>догоняющий прогон <code class="kbd">pdn-retention</code>, тот же принцип (152-ФЗ ст. 21)</td></tr>
+<tr><td><code class="kbd">appeals-5y-retention-catchup</code></td><td>+30 сек после старта процесса (разово)</td><td>догоняющий прогон <code class="kbd">appeals-5y-retention</code>, тот же принцип</td></tr>
+<tr><td><code class="kbd">initial-card-recovery</code></td><td>при старте и каждые 60 секунд</td><td>восстановление первой карточки; неопределённая доставка требует проверки оператором</td><td><code class="kbd">recover_unpublished_appeals</code></td></tr>
+      <tr><td><code class="kbd">funnel-watchdog</code></td><td>ежечасно в :15</td><td>сбрасывает зависшие анкеты (житель начал заполнять и ушёл, &gt;24 ч); при ≥5 за час шлёт алёрт</td></tr>
+<tr><td><code class="kbd">threat-intel-refresh</code></td><td>ежечасно в :17</td><td>обновляет локальный список вредоносных хостов (URLhaus + ThreatFox + опц. PhishTank), critical-алёрт при устаревании &gt;6 ч</td></tr>
+<tr><td><code class="kbd">broadcast-draft-reaper</code></td><td>ежечасно в :37</td><td>зависшие черновики рассылок (DRAFT старше 30 минут) переводит в FAILED</td></tr>
+<tr><td><code class="kbd">pulse-hourly</code></td><td>каждый час 24/7 в :05</td><td>базовый «пульс» в служебную группу: «🟢 Пульс: бот работает. Время проверки: HH:MM»</td></tr>
+<tr><td><code class="kbd">pulse-workhours-extra</code></td><td>пн–пт 09:35–17:35 (час 9–17, минута :35)</td><td>дополнительный «пульс» в рабочее время (вместе с базовым ≈ раз в 30 минут)</td></tr>
+<tr><td><code class="kbd">startup-pulse</code></td><td>один раз через 5 сек после старта</td><td>сообщение «🔄 Рестарт: процесс бота запущен заново. Время запуска: HH:MM»</td></tr>
+<tr><td><code class="kbd">health-selfcheck</code></td><td>каждые <code class="kbd">HEALTHCHECK_INTERVAL_MIN</code> мин (5 по умолчанию)</td><td>следит за зависанием цикла; шлёт алёрт при смене «жив ↔ завис»</td></tr>
+<tr><td><code class="kbd">monthly-stats</code></td><td>1 числа в 09:00</td><td>XLSX-отчёт за прошлый месяц в служебную группу</td></tr>
+<tr><td><code class="kbd">open-reminder-workhours</code></td><td>каждый час в :10; проверка текущего рабочего расписания</td><td>напоминание оператору об открытых обращениях</td></tr>
+<tr><td><code class="kbd">overdue-reminder-workhours</code></td><td>каждый час в :40; проверка текущего рабочего расписания</td><td>напоминание о просроченных по SLA</td></tr>
+<tr><td><code class="kbd">healthcheck-ping</code></td><td>каждые <code class="kbd">HEALTHCHECK_INTERVAL_MIN</code> мин — <strong>только если задан</strong> <code class="kbd">HEALTHCHECK_URL</code></td><td>внешний пинг на <code class="kbd">HEALTHCHECK_URL</code> (Healthchecks.io / Uptime Kuma)</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p class="note__label">Тонкости расписания cron</p>
+<p>Оба триггера очереди запускаются каждый час; перед обновлением загружается действующее рабочее расписание и проверяются тихий режим и тумблеры уведомлений. Это одна сохраняемая редактируемая панель. Изменение расписания в IT-настройках не меняет исторические снимки периодов SLA.</p>
+</div>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно</p>
+<p>Планировщик хранит расписание в памяти. Если сервер был выключен ровно в момент еженедельного backup — этот запуск не наверстается (в отличие от тиков, пропущенных на короткую пересборку: их покрывает окно прощения). На следующее воскресенье цикл продолжится. Перед опасными операциями (миграции, выкладка) делайте <code class="kbd">/backup</code> руками.</p>
+</div>
+
+<h3 id="admin-notify-toggles">Уведомления в служебный чат: тихий режим и модульные тумблеры</h3>
+
+<p>Служебный чат можно приглушить двумя независимыми способами — они решают разные задачи и не подменяют друг друга.</p>
+
+<div class="note">
+<p class="note__label">🌙 Тихий режим (по времени суток)</p>
+<p>Меню «⚙️ Настройки бота» → «🌙 Тихий режим в админ-чате» подавляет в выбранные часы пульс, регулярные напоминания об открытых и просроченных обращениях, уведомления о согласии и подписках. По умолчанию окно — 18:00–09:00 по Камчатке; его можно изменить. Подавленные уведомления не отправляются после окончания окна. Новые обращения и дополнения, ответы на действия операторов и критические предупреждения режим не блокирует. Доставка зависит от доступности MAX и настроек соответствующего события. Другие прямые отправки, например отчёты, могут обходить режим. См. <code class="kbd">admin_quiet_hours_enabled/start/end</code> в <a href="#spravochnik" data-go="spravochnik">«Справочнике»</a>.</p>
+</div>
+
+<div class="note">
+<p class="note__label">🔔 Уведомления (по виду события, круглосуточно)</p>
+<p>Меню «⚙️ Настройки бота» → «🔔 Уведомления» отключает КОНКРЕТНЫЙ вид уведомления независимо от времени суток — в отличие от тихого режима, действует и днём, и ночью. Шесть тумблеров, каждый — отдельная кнопка ✅/⛔, тап переключает:</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Тумблер</th><th>Что отключает</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">admin_notify_pulse</code></td><td>«пульс» (<code class="kbd">pulse-hourly</code> + <code class="kbd">pulse-workhours-extra</code>). <code class="kbd">startup-pulse</code> (сообщение при рестарте процесса) этому тумблеру не подчиняется — разовая диагностика, не рутинный heartbeat.</td></tr>
+<tr><td><code class="kbd">admin_notify_consent</code></td><td>уведомление «житель дал согласие на обработку ПДн».</td></tr>
+<tr><td><code class="kbd">admin_notify_subscriptions</code></td><td>уведомления о подписке/отписке от муниципальных уведомлений.</td></tr>
+<tr><td><code class="kbd">admin_notify_open_reminder</code></td><td>почасовую напоминалку «открытые обращения» (<code class="kbd">open-reminder-workhours</code>).</td></tr>
+<tr><td><code class="kbd">admin_notify_overdue_reminder</code></td><td>почасовую напоминалку «просрочено по SLA» (<code class="kbd">overdue-reminder-workhours</code>).</td></tr>
+<tr><td><code class="kbd">admin_notify_monthly_stats</code></td><td>месячный XLSX-отчёт (<code class="kbd">monthly-stats</code>).</td></tr>
+</tbody>
+</table>
+</div>
+<p>Все шесть — <code class="kbd">True</code> по умолчанию (поведение «из коробки» не меняется). Роль-гейт тот же, что у остального меню настроек — только <code class="kbd">it</code>.</p>
+</div>
+
+<div class="note note--caution">
+<p class="note__label">Отзыв согласия и удаление данных</p>
+<p>Уведомления об отзыве согласия и удалении данных из рабочей базы не подавляются этими переключателями и тихим режимом. Это решение позволяет оператору своевременно увидеть изменение состояния открытых обращений; успешная доставка зависит от доступности MAX. Правовые основания и сроки обработки определяются отдельно для конкретной цели.</p>
+</div>
+
+<h3 id="admin-overload">Защита от перегрузки и анти-флуд</h3>
+
+<p>Бот сам себя бережёт от двух разных видов перегрузки: чтобы не превысить лимит частоты запросов на стороне MAX (и не получить отказ <code class="kbd">429 Too Many Requests</code>), и чтобы один шумный отправитель не завалил процесс. Админу это знать полезно: благодаря этим механизмам всплеск активности не роняет бота, а сглаживается.</p>
+
+<h4>Глобальный лимитер исходящих (темп к MAX)</h4>
+
+<p>У MAX есть потолок частоты исходящих (порядка 2 запросов в секунду). Чтобы в него не упереться, в боте стоит <strong>один на весь процесс</strong> ограничитель темпа (token-bucket — «корзина токенов»): через него проходит <strong>каждое</strong> исходящее сообщение бота — ответ оператора жителю, новая карточка обращения в служебную группу, «пульс» и алёрты, и особенно массовая рассылка. Все эти источники делят <strong>общий</strong> бюджет около 1,5 сообщения в секунду (с небольшим запасом до потолка MAX), плюс небольшой задел на короткий всплеск подряд (несколько сообщений сглаживаются без задержки). Поэтому рассылка и обычная работа бота не складываются в превышение лимита: лимитер выстраивает отправки в очередь и разносит их во времени.</p>
+
+<p>Важная деталь для понимания логов: лимитер работает по принципу <strong>fail-open</strong> — он может слегка притормозить отправку, но <strong>никогда</strong> её не блокирует. Если внутри него что-то пойдёт не так, сообщение всё равно уйдёт: для гос-бота доступность (например, успеть отправить оповещение о ЧС) важнее идеально ровного темпа. Отдельная настройка <code class="kbd">BROADCAST_RATE_LIMIT_PER_SEC</code> (по умолчанию 1) задаёт темп <em>внутри</em> рассылки, но даже он проходит поверх общего лимитера — то есть рассылка ограничена дважды и точно не пробьёт общий бюджет.</p>
+
+<h4>Анти-флуд на входе (троттл жителя и окно параллельности)</h4>
+
+<p>На входящей стороне есть два рубежа, которые срабатывают <strong>раньше</strong>, чем событие дойдёт до базы или до вызова MAX, — поэтому машинный флуд гасится дёшево, не нагружая базу и не тратя бюджет исходящих:</p>
+
+<ul>
+<li><strong>Персональный троттл жителя.</strong> На каждого отправителя (по его <code class="kbd">max_user_id</code>) заведена своя «корзина токенов»: ёмкость 20, пополнение 5 токенов в секунду. Этого с запасом хватает живому человеку, который быстро проходит анкету (десяток нажатий подряд), но machine-spam (десятки событий в секунду от одного отправителя) упирается в пустую корзину, и лишние события тихо отбрасываются ещё до открытия сессии БД и до похода в MAX (у callback-кнопки при этом гасится «крутилка», чтобы у жителя не висел спиннер). Операторов и служебные события без <code class="kbd">user_id</code> троттл <strong>не</strong> трогает — операторов ограничивать нельзя.</li>
+<li><strong>Окно параллельности обработчиков.</strong> На пути опроса (polling) число одновременно работающих обработчиков событий ограничено сверху (семафор на 32). Без этого окна шквал апдейтов мог бы породить тысячи параллельных задач, каждая из которых берёт соединение из пула БД — пул исчерпывается, память растёт под лимитом контейнера 512 МБ, и плохо становится всем. Ограниченное окно держит число параллельных обработок в узде (тот же приём, что и для входящих webhook-запросов).</li>
+</ul>
+
+<p>Итог: персональный троттл режет всплеск конкретного отправителя на самом входе, окно параллельности страхует процесс целиком от перегрузки задачами, а глобальный лимитер не даёт превысить темп уже на исходящей стороне. Подробный разбор модели угроз перегрузки (DoS) — в разделе <a href="#security" data-go="security">«Безопасность»</a>.</p>
+
+<h3 id="admin-backup">Резервное копирование и восстановление</h3>
+
+<h4>Что и как бэкапится</h4>
+
+<p>Каждое воскресенье в 03:00 по Камчатке бот делает <code class="kbd">pg_dump</code> всей базы, шифрует его GPG (алгоритм AES-256, парольная фраза подаётся через канал <code class="kbd">os.pipe</code>, а не через аргументы командной строки, чтобы не светиться в списке процессов) и кладёт файл в Docker-том <code class="kbd">backups</code>. Внутри контейнера путь — <code class="kbd">/backups/aemr-YYYYMMDD_HHMMSS.sql.gpg</code> (дата без дефисов, со временем по часовому поясу бота; права файла после записи ужесточаются до <code class="kbd">0600</code>). Хранятся последние 8 файлов (≈2 месяца), старые удаляются по дате изменения. Опционально — дополнительная копия в S3.</p>
+
+<div class="cmd"><code>aemr-20260601_030000.sql.gpg</code><span class="cmd__what">пример имени файла бэкапа (дата + время по часовому поясу бота)</span></div>
+
+<div class="note note--danger">
+<p class="note__label">Опасно: без GPG-фразы backup не создаётся</p>
+<p>Без <code class="kbd">BACKUP_GPG_PASSPHRASE</code> (или с фразой короче <strong>12 символов</strong>) backup <strong>отказывается выполняться</strong> и шлёт categorized-алёрт в служебную группу (категория провала <code class="kbd">config</code>). Это требование закона 152-ФЗ: дамп содержит телефоны жителей, имена и тексты обращений — это персональные данные (ПДн), хранить их на диске или в S3 в открытом виде нельзя. Для dev-машины открыть незашифрованный режим можно явным <code class="kbd">BACKUP_ALLOW_UNENCRYPTED=1</code>, но в production это запрещено. Если фраза от 1 до 11 символов — она сбрасывается в пустую с логом-ошибкой, и backup идёт уже под проверкой «разрешён ли незашифрованный», то есть в проде всё равно откажет. Сама функция backup никогда не бросает исключение: она возвращает категорию провала (<code class="kbd">config</code> / <code class="kbd">pg_dump</code> / <code class="kbd">gpg</code> / <code class="kbd">unknown</code>), а cron-обёртка читает её и шлёт точечный critical-алёрт.</p>
+</div>
+
+<div class="note">
+<p class="note__label">Зависший backup не молчит: таймауты дочерних процессов</p>
+<p>Backup запускает внешние процессы — <code class="kbd">pg_dump</code> (снять дамп), <code class="kbd">gpg</code> (зашифровать), <code class="kbd">rclone</code> (выгрузить в S3). Каждый из них ограничен по времени: <code class="kbd">pg_dump</code> и <code class="kbd">gpg</code> — щедрее (по умолчанию 600 секунд, большая база может дампиться минутами), сетевой <code class="kbd">rclone</code> — жёстче (300 секунд). Точные значения настраиваются и собраны в <a href="#spravochnik" data-go="spravochnik">«Справочнике»</a> (образец — в <code class="kbd">infra/.env.example</code>). Зачем это нужно: раньше повисший внешний ресурс (недоступный S3-эндпоинт, зависший Postgres, заблокированный диск) подвешивал задачу backup <strong>навсегда</strong> — и, что хуже, алёрт о провале тогда вообще не уходил, потому что cron-задача просто не возвращалась. Теперь по истечении таймаута процесс <strong>убивается и гарантированно «прибирается»</strong> (kill + reap — чтобы не осталось процесса-зомби и утечки файловых дескрипторов), backup возвращает категорию провала (<code class="kbd">fail_kind</code>), и в служебную группу штатно приходит critical-алёрт. Иными словами: backup может не получиться, но «тихо зависнуть без сигнала» он больше не может.</p>
+</div>
+
+<h4>Снять backup вручную и посмотреть список</h4>
+
+<div class="cmd"><code>/backup</code><span class="cmd__what">из служебной группы (только роль it) — внеплановый pg_dump прямо сейчас</span></div>
+
+<pre><code># Список файлов
+docker compose exec bot ls -lah /backups
+
+# Снять backup из shell (альтернатива кнопке)
+docker compose exec bot python -m aemr_bot.services.db_backup</code></pre>
+
+<h4>Восстановление из backup</h4>
+
+<div class="note note--danger">
+<p class="note__label">Опасно</p>
+<p>Никогда не восстанавливайте backup прямо в боевую базу <code class="kbd">aemr</code>. Всегда сначала в отдельную тестовую базу <code class="kbd">aemr_restore_test</code>, сверьте, и только потом принимайте решение. Восстановление — терминальный шаг: теряются данные, появившиеся между моментом backup и моментом сбоя.</p>
+</div>
+
+<ol class="steps">
+<li><strong>Найдите свежий файл</strong> на диске сервера: <code class="kbd">sudo ls -lah /var/lib/docker/volumes/aemr-bot_backups/_data/</code></li>
+<li><strong>Создайте тестовую базу:</strong>
+<pre><code>cd /home/aemr/aemr-bot/infra
+. ./.env
+docker compose exec -T db psql -U "$POSTGRES_USER" -d postgres -c 'DROP DATABASE IF EXISTS aemr_restore_test;'
+docker compose exec -T db psql -U "$POSTGRES_USER" -d postgres -c 'CREATE DATABASE aemr_restore_test;'</code></pre></li>
+<li><strong>Расшифруйте и залейте</strong> (для зашифрованного <code class="kbd">.sql.gpg</code>):
+<pre><code>BACKUP=/var/lib/docker/volumes/aemr-bot_backups/_data/aemr-YYYYMMDD_HHMMSS.sql.gpg
+sudo cat "$BACKUP" \
+  | gpg --batch --passphrase "$BACKUP_GPG_PASSPHRASE" --decrypt \
+  | docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test</code></pre>
+Для незашифрованного <code class="kbd">.sql</code> (только dev) — без шага с gpg, напрямую <code class="kbd">cat … | psql</code>.</li>
+<li><strong>Проверьте, что таблицы есть</strong> и счётчики правдоподобны, а версия миграций совпадает с последней в <code class="kbd">main</code>:
+<pre><code>docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test -c '\dt'
+docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test -c 'select count(*) from users;'
+docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test -c 'select count(*) from appeals;'
+docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test -c 'select * from alembic_version;'</code></pre></li>
+<li><strong>Удалите тестовую базу:</strong> <code class="kbd">docker compose exec -T db psql -U "$POSTGRES_USER" -d postgres -c 'DROP DATABASE IF EXISTS aemr_restore_test;'</code></li>
+</ol>
+
+<h4 id="admin-backup-drill">Раз в квартал: пройти восстановление целиком</h4>
+
+<p>Копия, которую ни разу не разворачивали, — это надежда, а не страховка. Раз в квартал пройдите шаги выше от начала до конца, спокойно, не под аварию. Заодно проверите себя: в реальном сбое порядок действий уже будет знаком. Отметьте в <a href="#admin-routine" data-go="admin-routine">эксплуатационном календаре</a> и запишите две вещи: сколько заняло восстановление (столько же продлится простой в реальной аварии) и совпала ли <code class="kbd">alembic_version</code> из копии с последней миграцией в <code class="kbd">main</code>.</p>
+
+<div class="note">
+<p class="note__label">Что проверяет бот сам, а что остаётся за человеком</p>
+<p>Ежемесячная задача <code class="kbd">db-backup-verify</code> (1-го числа в 04:30) берёт свежайшую копию и расшифровывает её потоком: на диск ничего не пишет, базу не трогает. Она отвечает на два вопроса — <strong>подходит ли парольная фраза</strong> и <strong>цел ли файл</strong>. Первое важнее, чем кажется: фраза лежит только в <code class="kbd">.env</code>, и если её перезапишут при переносе сервера, разом станут бесполезны все восемь копий, а выяснится это в тот момент, когда они понадобятся. Второе ловится само собой: у GPG есть контроль целостности, обрезанный файл даёт ошибку. Успех — тихо в журнал, провал — срочный алёрт в админ-чат.</p>
+<p>Чего задача не проверяет: что дамп реально заливается в PostgreSQL и что данные внутри осмысленны. Это и есть смысл квартальной проверки руками. Автоматизировать её в боте не стали намеренно: восстановление требует места под распаковку (в контейнере <code class="kbd">/tmp</code> — это tmpfs на 128 МБ, куда дамп может и не влезть) и создаёт лишнюю базу на том же диске, где живёт боевая. Дешёвый сторож плюс живая проверка надёжнее робота, который в нужный момент упрётся в место на диске.</p>
+</div>
+
+<div class="note note--danger">
+<p class="note__label">Опасно</p>
+<p>Если пароль <code class="kbd">BACKUP_GPG_PASSPHRASE</code> утерян — зашифрованный backup восстановить <strong>невозможно</strong>, тест восстановления провален. Поэтому фразу храните отдельно от сервера (в менеджере паролей). Полная процедура проверки восстановления — в шагах выше.</p>
+</div>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно: ПДн после восстановления</p>
+<p>После восстановления старого backup могут вернуться данные, уже удалённые в production после даты этого backup (по <code class="kbd">/erase</code> или авто-обезличиванию). Это нормальное свойство backup, но его надо учитывать регламентно: после восстановления боевой базы из копии старше факта удаления ПДн нужно повторно применить операции удаления по журналу заявок. Один только restore не завершает восстановление после инцидента.</p>
+</div>
+
+<h4>Тест восстановления (раз в квартал)</h4>
+
+<p>Backup, который ни разу не восстанавливали, официально считается непроверенным. Раз в квартал (в первый рабочий день января, апреля, июля, октября) проходите процедуру восстановления (шаги выше) в тестовую базу и записывайте результат в журнал эксплуатации (кто, когда, итог). Проверка занимает ~15 минут. Дополнительно — после каждой новой миграции схемы. Если квартальный тест пропущен — backup официально считаются непроверенными, и об этом должен знать владелец проекта.</p>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно: offsite-копии нет</p>
+<p>Локальный backup защищает от логической ошибки в базе, но не от потери самого сервера. Если сгорит диск — потеряются и база, и backup, лежащие на нём. Цель восстановления по времени при потере всего сервера (RPO — допустимая потеря данных) сейчас до 1 недели (backup раз в воскресенье); восстановление на новом хосте — 2–4 часа (новый сервер, восстановить <code class="kbd">.env</code> руками, восстановить базу из последнего backup). Чтобы это закрыть, либо включите <code class="kbd">BACKUP_S3_*</code>, либо настройте внешний <code class="kbd">rsync</code>/<code class="kbd">scp</code> по cron на отдельный хост. Сейчас offsite-копии нет — это документированный риск.</p>
+</div>
+
+<h4 id="admin-restore-prod">Восстановление на БОЕВУЮ базу (после реальной потери данных)</h4>
+
+<p>Всё, что выше, — отработка на тестовой базе <code class="kbd">aemr_restore_test</code>. Это та репетиция, которую вы проводите раз в квартал, чтобы быть уверенным, что копии живые. Но когда боевая база действительно испорчена или потеряна (битый том после сбоя диска, ошибочный массовый <code class="kbd">DELETE</code>, переезд на новый сервер), нужно залить backup уже в рабочую базу <code class="kbd">aemr</code>. Это другой, более опасный сценарий — и делать его надо строго по шагам.</p>
+
+<div class="note note--danger">
+<p class="note__label">Опасно: это терминальный шаг</p>
+<p>Восстановление на боевую базу <strong>стирает</strong> её текущее содержимое и заменяет состоянием на момент backup. Всё, что появилось между моментом backup и сейчас, теряется безвозвратно. Делайте это только когда боевые данные уже потеряны или заведомо испорчены — то есть терять нечего. Если база ещё жива и сомнения есть — сначала снимите свежий <code class="kbd">/backup</code> или хотя бы <code class="kbd">pg_dump</code> текущего состояния, и только потом перезаписывайте. Перед заливкой убедитесь, что тест восстановления этого же файла на <code class="kbd">aemr_restore_test</code> (процедура выше) прошёл — нельзя обнаружить, что backup битый, уже после <code class="kbd">DROP</code> боевой.</p>
+</div>
+
+<ol class="steps">
+<li><strong>Остановите только бота</strong>, базу оставьте поднятой (она нужна, чтобы выполнять <code class="kbd">psql</code>). Так в базу никто не пишет во время заливки:
+<pre><code>cd /home/aemr/aemr-bot/infra
+. ./.env
+docker compose stop bot</code></pre></li>
+<li><strong>Пересоздайте боевую базу</strong> <code class="kbd">aemr</code> начисто. Подключаемся к служебной базе <code class="kbd">postgres</code>, потому что нельзя удалить базу, к которой сам подключён:
+<pre><code>docker compose exec -T db psql -U "$POSTGRES_USER" -d postgres -c 'DROP DATABASE IF EXISTS aemr;'
+docker compose exec -T db psql -U "$POSTGRES_USER" -d postgres -c 'CREATE DATABASE aemr OWNER '"$POSTGRES_USER"';'</code></pre>
+Если <code class="kbd">DROP</code> ругается «database is being accessed by other users» — значит бот не до конца остановлен или открыта чужая сессия <code class="kbd">psql</code>; закройте их и повторите.</li>
+<li><strong>Расшифруйте и залейте</strong> выбранный backup в боевую базу (для зашифрованного <code class="kbd">.sql.gpg</code>):
+<pre><code>BACKUP=/var/lib/docker/volumes/aemr-bot_backups/_data/aemr-YYYYMMDD_HHMMSS.sql.gpg
+sudo cat "$BACKUP" \
+  | gpg --batch --passphrase "$BACKUP_GPG_PASSPHRASE" --decrypt \
+  | docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr</code></pre>
+Для незашифрованного <code class="kbd">.sql</code> (только dev) — без шага с gpg, напрямую <code class="kbd">cat … | psql … -d aemr</code>.</li>
+<li><strong>Проверьте, что данные на месте</strong> и версия миграций совпадает с последней в <code class="kbd">main</code> (число <code class="kbd">alembic_version</code> сверьте с разделом <a href="#spravochnik" data-go="spravochnik">«Справочник»</a> → миграции; на момент написания последняя — <code class="kbd">0018_users_trigram_search_indexes</code>):
+<pre><code>docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr -c '\dt'
+docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr -c 'select count(*) from users;'
+docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr -c 'select count(*) from appeals;'
+docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr -c 'select * from alembic_version;'</code></pre></li>
+<li><strong>Поднимите бота обратно.</strong> При старте он сам прогонит <code class="kbd">alembic upgrade head</code> — если backup был снят на чуть более старой схеме, чем текущий код, недостающие миграции доедут автоматически:
+<pre><code>docker compose up -d bot
+docker compose logs -f bot         # убедиться, что стартовал без ошибок
+curl -fsS http://127.0.0.1:8080/readyz &amp;&amp; echo   # 200 = база жива и подключена</code></pre></li>
+<li><strong>Если версия backup НОВЕЕ кода на сервере</strong> (восстанавливаете на откатившийся сервер) — <code class="kbd">alembic upgrade head</code> ничего не сделает, но бот может не знать о столбцах из будущего. Это редкий случай; сначала подтяните код до той же версии, на которой снимался backup (см. <a href="#admin-deploy" data-go="admin-deploy">«Выкладка»</a>), потом восстанавливайте.</li>
+</ol>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно: ПДн после восстановления боевой</p>
+<p>Та же оговорка, что и для тестового восстановления, но здесь она боевая: если backup старше факта удаления ПДн (житель просил <code class="kbd">/forget</code> или сработало авто-обезличивание <strong>после</strong> даты этого backup), восстановление вернёт уже удалённые данные. После заливки боевой базы из старой копии пройдитесь по журналу действий (<code class="kbd">audit_log</code>: записи <code class="kbd">erase</code> и <code class="kbd">self_erase</code> с датой позже backup) и <strong>повторно примените</strong> удаления командой <code class="kbd">/erase</code> по тем же жителям. Один restore не закрывает обязанность по 152-ФЗ — разбор правовой стороны в разделе <a href="#security-erasure" data-go="security">«Удаление ПДн»</a>.</p>
+</div>
+
+<h3 id="admin-deploy">Выкладка новой версии и откат</h3>
+
+<h4>Авто-деплой (auto-deploy)</h4>
+
+<p>Скрипт <code class="kbd">scripts/auto-deploy.sh</code> запускается из cron от <code class="kbd">root</code> каждые 10 минут. Логика:</p>
+
+<ol class="steps">
+<li><strong>Проверка обновлений.</strong> <code class="kbd">git fetch origin main</code>. Если новых коммитов нет — тихо выходит, контейнер не трогает.</li>
+<li><strong>Запоминает</strong> текущий коммит как «предыдущий рабочий» (для отката).</li>
+<li><strong>Обновляет и пересобирает.</strong> <code class="kbd">git reset --hard origin/main</code> и <code class="kbd">docker compose up -d --build</code>.</li>
+<li><strong>Health-gate.</strong> До 60 секунд опрашивает <code class="kbd">/livez</code> каждые 5 секунд.</li>
+<li><strong>Решение.</strong> Успех → запись в журнал «deploy ok». Провал → <strong>авто-откат</strong> на предыдущий коммит, пересборка, запись «DEPLOY FAILED: ROLLBACK».</li>
+</ol>
+
+<div class="note">
+<p class="note__label">Откат смотрит /livez; ветки PR не деплоятся</p>
+<p>Откат управляется только проверкой <code class="kbd">/livez</code>, а не <code class="kbd">/readyz</code> — кратковременная проблема с базой не должна откатывать корректный код. Авто-деплой тянет код только из ветки <code class="kbd">main</code>; ветки Pull Request на сервер не попадают. После мержа PR изменения доезжают на сервер в течение 10 минут. Логи деплоя: <code class="kbd">journalctl -t aemr-bot-deploy -n 80 --no-pager</code>. Имя compose-проекта (<code class="kbd">name: aemr-bot</code>) закреплено прямо в <code class="kbd">docker-compose.yml</code>, а не вставляется скриптом — иначе рабочее дерево после каждого <code class="kbd">git reset</code> числилось бы изменённым.</p>
+</div>
+
+<div class="note note--caution">
+<p class="note__label">Закрытый контур: выключить автодеплой (AUTODEPLOY_ENABLED=0)</p>
+<p>Автодеплой применим ТОЛЬКО там, где сервер имеет исходящий доступ к github. В <strong>закрытой гос-сети</strong> деплой ручной (см. «Ручная выкладка» ниже и офлайн-обновление образа), а cron с автодеплоем там вреден: <code class="kbd">git fetch</code> всё равно не проходит (нет доступа к github) и сыпет ошибками в журнал каждые 10 минут, а <code class="kbd">git reset --hard</code> способен затереть ручные правки на сервере. Поэтому в закрытом контуре автодеплой <strong>выключают целиком</strong>: выставляют <code class="kbd">AUTODEPLOY_ENABLED=0</code> в окружении cron-юнита (или <code class="kbd">/etc/default/aemr-bot</code>) — скрипт тихо выходит, ничего не трогая. Вотчдог (<code class="kbd">healthwatch</code>) при этом продолжает работать: он не тянет код из сети, только поднимает зависший процесс.</p>
+<p>Ещё два предохранителя (по умолчанию выключены, для тонкой настройки): <code class="kbd">REQUIRE_CANONICAL_MARKER=1</code> требует файл-маркер <code class="kbd">/etc/aemr-bot/canonical</code> — на хосте без него автодеплой не запустится (защита от случайного второго экземпляра на старом/тестовом сервере, см. <a href="#eksp-two-bots" data-go="eksp-two-bots">«Два бота на один токен»</a>). Перед <code class="kbd">git reset --hard</code> скрипт теперь предупреждает в журнал, если откат затрёт незакоммиченные правки в отслеживаемых файлах — сигнал, что кто-то правил прод в обход git.</p>
+</div>
+
+<div class="note">
+<p class="note__label">Необязательная проверка подписи коммита перед деплоем</p>
+<p>У авто-деплоя есть <strong>опциональный</strong> предохранитель: проверка криптоподписи входящего коммита. По умолчанию он <strong>выключен</strong> — поведение прежнее, ничего настраивать не нужно. Если его включить, то прежде чем тронуть рабочее дерево, скрипт сверяет подпись <code class="kbd">origin/main</code> (<code class="kbd">git verify-commit</code>) с доверием, заведённым на сервере. Коммит без подписи или с непроверяемой подписью <strong>не деплоится</strong> (fail-closed): рабочее дерево остаётся нетронутым, контейнер продолжает крутить прежний доверенный коммит, и непроверенный код на сервер не приезжает. Смысл — закрыть сценарий «в <code class="kbd">main</code> прилетел коммит не от доверенного автора» (например, при компрометации чьего-то доступа к репозиторию).</p>
+<p><strong>Как включить владельцу.</strong> Два шага, оба на сервере. (1) Завести <strong>доверие к ключу</strong>, которым подписываются коммиты: для GPG-подписей — импортировать открытый ключ в keyring пользователя, под которым идёт деплой; для SSH-подписей — указать ключ в файле <code class="kbd">gpg.ssh.allowedSignersFile</code> (<code class="kbd">git config gpg.ssh.allowedSignersFile …</code>). (2) Выставить переменную <code class="kbd">REQUIRE_SIGNED_COMMITS=1</code> в окружении cron-юнита авто-деплоя (или в <code class="kbd">/etc/default</code>). После этого все коммиты в <code class="kbd">main</code> должны быть подписаны доверенным ключом, иначе деплой остановится — поэтому включайте вместе с настройкой подписания у тех, кто пушит в <code class="kbd">main</code>. Та же мера упомянута со стороны ИБ в разделе <a href="#security" data-go="security">«Безопасность»</a>.</p>
+</div>
+
+<h4>Ручная выкладка</h4>
+
+<pre><code>sudo -u aemr -i
+cd aemr-bot
+git fetch origin main &amp;&amp; git checkout main &amp;&amp; git pull --ff-only
+cd infra
+docker compose up -d --build bot
+docker compose logs -f bot     # убедиться, что стартовал без ошибок</code></pre>
+
+<p>Миграции базы (alembic) применяются автоматически при старте контейнера (команда запуска — <code class="kbd">alembic upgrade head &amp;&amp; python -m aemr_bot.main</code>). Если миграция падает — контейнер уходит в перезапуск; смотрите <code class="kbd">docker compose logs --tail 200 bot | grep -A20 alembic</code>. После выкладки пройдите <a href="#admin-checklist" data-go="admin-checklist">чек-лист запуска</a> (сверить, что HEAD на сервере совпадает с <code class="kbd">main</code>, контейнеры <code class="kbd">Up</code>, все три health-эндпоинта отвечают, watchdog и deploy-журналы чисты, в служебной группе работают <code class="kbd">/op_help</code>, <code class="kbd">/diag</code>, <code class="kbd">/open_tickets</code>).</p>
+
+<h4>Откат при сбое (цель — за ≤10 минут)</h4>
+
+<p>Подробный разбор форс-мажоров — в разделе <a href="#eksp-forcemajor" data-go="eksp-forcemajor">«Эксплуатация»</a> и в шагах ниже. Главное: «бот health-down» НЕ значит «потеря данных» — база живёт независимо от приложения, откатываем только код. Цель — вернуть последнее работавшее состояние за ≤10 минут.</p>
+
+<ol class="steps">
+<li><strong>Сначала диагностика</strong>, 30 секунд логов: <code class="kbd">docker logs aemr-bot-bot-1 --tail 50</code>. Если ошибка временная (сеть, таймаут MAX), сначала проверьте внешние результаты и состояние процесса; сам по себе режим <code class="kbd">restart: unless-stopped</code>.</li>
+<li><strong>Откат кода на сервере</strong>: на коммит назад через <code class="kbd">git reset --hard HEAD~1</code>, затем <code class="kbd">chown -R aemr:aemr .</code> и <code class="kbd">docker compose up -d --build</code>.</li>
+<li><strong>Сразу сделайте revert-коммит</strong> в репозитории на машине разработчика (<code class="kbd">git revert HEAD --no-edit &amp;&amp; git push origin main</code>) — иначе через 10 минут авто-деплой снова подтянет сломанный <code class="kbd">main</code> и снова упадёт на той же ошибке.</li>
+<li><strong>Если виновата миграция</strong> и она обратима — <code class="kbd">docker exec aemr-bot-bot-1 alembic downgrade -1</code>. Но не каждая миграция обратима: проверьте, есть ли реальный код в функции <code class="kbd">downgrade()</code> или там заглушка. На проде даунгрейд миграций — крайняя мера, обычно проще восстановить из backup.</li>
+<li><strong>После восстановления</strong> убедитесь, что <code class="kbd">/livez</code> отвечает 200, и дождитесь «пульса» в служебной группе.</li>
+</ol>
+
+<h3 id="admin-migrate">Перенос бота на новый сервер</h3>
+
+<p>Рано или поздно сервер придётся менять: кончилось место, нужен сервер помощнее или с поддерживаемой ОС. Поскольку весь бот — это два контейнера, один файл настроек и одна база, переезд сводится к «поднять стек на новом сервере и залить туда backup». Никакой магии, но порядок важен, чтобы не потерять данные и не остаться с двумя живыми ботами на один токен.</p>
+
+<div class="note">
+<p class="note__label">Что именно нужно унести</p>
+<p>Из всего сервера переезжают ровно три вещи: <strong>(1)</strong> файл <code class="kbd">infra/.env</code> — все секреты и настройки развёртывания; <strong>(2)</strong> свежий зашифрованный <strong>backup базы</strong> из тома <code class="kbd">backups</code>; <strong>(3)</strong> знание <strong>парольной фразы</strong> <code class="kbd">BACKUP_GPG_PASSPHRASE</code>, иначе backup не расшифровать. Сам <strong>код тащить не нужно</strong> — он клонируется заново из репозитория. Тома Docker (<code class="kbd">db_data</code>, build-кэш) копировать тоже не нужно и не стоит: базу переносим через backup→restore, а не копированием сырого тома (копия тома между разными версиями PostgreSQL ненадёжна). Если включён S3-backup — пункт (2) уже лежит в облаке, достаточно фразы и доступа к bucket.</p>
+</div>
+
+<ol class="steps">
+<li><strong>На старом сервере</strong> снимите свежий backup прямо сейчас, чтобы переехать с минимальной потерей: <code class="kbd">/backup</code> из служебной группы (или <code class="kbd">docker compose exec bot python -m aemr_bot.services.db_backup</code>). Скопируйте на свою машину файл <code class="kbd">.env</code> и последний backup:
+<pre><code>scp aemr@OLD_SERVER:/home/aemr/aemr-bot/infra/.env ./env.backup
+scp aemr@OLD_SERVER:/var/lib/docker/volumes/aemr-bot_backups/_data/aemr-YYYYMMDD_HHMMSS.sql.gpg ./</code></pre></li>
+<li><strong>На новом сервере</strong> пройдите установку с нуля до конца шага 6 включительно (<a href="#admin-install" data-go="admin-install">«Установка по шагам»</a>): создать пользователя <code class="kbd">aemr</code>, поставить Docker, склонировать репозиторий. <strong>Вместо</strong> заполнения <code class="kbd">.env</code> с нуля — положите туда перенесённый файл (<code class="kbd">ADMIN_GROUP_ID</code>, токен, пароль базы и фраза уже в нём; новый <code class="kbd">/whoami</code> не нужен, группа та же).</li>
+<li><strong>Поднимите стек</strong> на новом сервере — база поднимется пустой, бот прогонит миграции до актуальной схемы:
+<pre><code>cd /home/aemr/aemr-bot/infra
+docker compose up -d --build
+docker compose ps                       # дождаться healthy у обоих</code></pre></li>
+<li><strong>Залейте backup в боевую базу</strong> нового сервера по процедуре <a href="#admin-restore-prod" data-go="admin-restore-prod">«Восстановление на боевую базу»</a> (остановить бота → <code class="kbd">DROP</code>/<code class="kbd">CREATE aemr</code> → расшифровать и залить → проверить счётчики и <code class="kbd">alembic_version</code> → поднять бота). Перенесённой фразы хватит для расшифровки.</li>
+<li><strong>Переключение «в один момент».</strong> Бот в режиме long polling: два процесса с одним <code class="kbd">BOT_TOKEN</code> начнут драться за обновления MAX (дубли сообщений, гонки). Поэтому <strong>сначала остановите старого</strong> (<code class="kbd">docker compose down</code> на старом сервере), и только потом дайте работать новому. Перекрытия быть не должно. Если есть сомнения — на минуту остановите обоих, это безопаснее, чем оба разом живые.</li>
+<li><strong>Поставьте страховочные службы заново</strong> на новом сервере (они привязаны к хосту, не переносятся): авто-деплой (новый deploy key в GitHub), watchdog, автозапуск systemd — шаг 8 установки. Старый deploy key из GitHub удалите.</li>
+<li><strong>Проверка</strong> по финальному <a href="#admin-checklist" data-go="admin-checklist">чек-листу запуска</a>: оба контейнера <code class="kbd">Up</code>, все три health-эндпоинта 200, в группе работают <code class="kbd">/op_help</code>, <code class="kbd">/diag</code>, пришёл «пульс».</li>
+<li><strong>Выведите старый сервер из строя</strong> только после суток уверенной работы нового. Перед уничтожением старого сервера не забудьте: на ней лежат старые backup с ПДн — диск надо затереть, а не просто «удалить инстанс». Правовая сторона уничтожения носителя — в разделе <a href="#security" data-go="security">«Безопасность»</a>.</li>
+</ol>
+
+<h4 id="admin-os-upgrade">Апгрейд ОС под живым ботом и дрейф времени (NTP)</h4>
+
+<p>Поскольку бот изолирован в контейнерах, операционная система хоста для него — это лишь Docker, cron и SSH. Поэтому обновлять ОС можно «под живым ботом», не трогая сам бот. Но два момента требуют внимания.</p>
+
+<ol class="steps">
+<li><strong>Обычные обновления безопасности</strong> (<code class="kbd">sudo apt update &amp;&amp; sudo apt upgrade -y</code>) бот переживает без остановки — обновляются пакеты хоста, контейнеры продолжают работать. Если в составе обновлений был Docker или ядро — после <code class="kbd">sudo reboot</code> контейнеры поднимутся сами (если установлен systemd-автозапуск, см. <a href="#admin-watchdog" data-go="admin-watchdog">ниже</a>). Перед перезагрузкой всё же снимите <code class="kbd">/backup</code> руками.</li>
+<li><strong>Крупный апгрейд релиза</strong> (<code class="kbd">do-release-upgrade</code>, 22.04 → 24.04) — это уже риск: перепрыгивать через релиз нельзя, а сам процесс может перезаписать конфиг Docker. Безопаснее <strong>не</strong> апгрейдить на месте, а поднять <strong>чистый новый сервер</strong> на свежей ОС и переехать по процедуре <a href="#admin-migrate" data-go="admin-migrate">«Перенос на новый сервер»</a> выше — это и есть способ «обновить ОС» без риска для боевой машины. Старый сервер остаётся рабочим откатом, пока новый не подтвердит сутки аптайма.</li>
+</ol>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно: дрейф времени ломает SLA и расписания</p>
+<p>Бот считает <strong>все</strong> сроки по часовому поясу <code class="kbd">Asia/Kamchatka</code>: SLA, окна «тихого режима», cron-расписание backup и напоминаний. Если системные часы хоста «уплывут» (типично после долгого аптайма, миграции виртуалки или севшей батарейки RTC), бот будет считать просрочки и слать «пульс» по неверному времени, а backup уйдёт не в 03:00. Поэтому на сервере <strong>обязательно</strong> должна работать синхронизация времени по NTP (Network Time Protocol — протокол сетевого времени). Проверка: <code class="kbd">timedatectl</code> — строки <code class="kbd">System clock synchronized: yes</code> и <code class="kbd">NTP service: active</code>. Если <code class="kbd">no</code> — включите: <code class="kbd">sudo timedatectl set-ntp true</code>. После переноса на новый сервер или апгрейда ОС эту проверку делайте обязательно. Часовой пояс самого хоста при этом не важен — бот живёт по <code class="kbd">TZ</code> из <code class="kbd">.env</code>; важна именно точность абсолютного времени (UTC), которую и держит NTP. Если включён исходящий whitelist по <code class="kbd">iptables</code> — порт 123 (NTP) должен быть разрешён, иначе синхронизация молча перестанет работать (см. <a href="#admin-network" data-go="admin-network">«Сетевая изоляция»</a>).</p>
+</div>
+
+<h3 id="admin-watchdog">Сторожевые механизмы и автозапуск</h3>
+
+<h4>Watchdog (внешний сторож)</h4>
+
+<p>Внутри контейнера уже есть Docker healthcheck и политика <code class="kbd">restart: unless-stopped</code> — если процесс упал, Docker сам поднимет контейнер. Но Docker не перезапускает контейнер, который «жив, но не отвечает» (висит, отдаёт unhealthy). Для этого случая есть скрипт <code class="kbd">scripts/healthwatch.sh</code> в cron от <code class="kbd">root</code> каждые 5 минут:</p>
+
+<ul>
+<li>успешный <code class="kbd">/livez</code> → счётчик провалов сбрасывается;</li>
+<li>3 провала подряд (≈15 минут) → <code class="kbd">docker compose restart bot</code>;</li>
+<li>8 провалов подряд (≈40 минут) → пишет алёрт прямо в служебную группу через MAX API (минуя бота — он же завис), отправляя POST на <code class="kbd">platform-api2.max.ru/messages</code> с заголовком <code class="kbd">Authorization</code>.</li>
+</ul>
+
+<div class="note">
+<p class="note__label">Watchdog и health-gate ловят разные сбои</p>
+<p>Health-gate ловит сломанный новый коммит сразу после выкладки. Watchdog ловит зависший живой контейнер в любой момент. Логи сторожа: <code class="kbd">journalctl -t aemr-bot-watchdog -n 80 --no-pager</code>. Тестовый запуск без ожидания cron: <code class="kbd">sudo /usr/local/bin/aemr-bot-healthwatch &amp;&amp; echo OK</code>.</p>
+</div>
+
+<h4>Автозапуск после перезагрузки сервера</h4>
+
+<p>Контейнеры с <code class="kbd">restart: unless-stopped</code> поднимаются вместе с Docker при штатной перезагрузке. Но если до reboot контейнеры были остановлены вручную (<code class="kbd">docker compose down</code>) или после неуспешного апгрейда — Docker сам их не вернёт. На этот случай есть systemd-юнит <code class="kbd">infra/aemr-bot.service</code>, который при старте системы делает <code class="kbd">docker compose up -d</code> в каталоге <code class="kbd">infra</code>. Операция идемпотентная (если уже подняты — ничего не меняет, если упали — поднимаются). Устанавливается один раз: <code class="kbd">sudo bash /home/aemr/aemr-bot/scripts/install-systemd-autostart.sh</code>. Проверка: <code class="kbd">sudo systemctl is-enabled aemr-bot.service</code> (должно быть <code class="kbd">enabled</code>), а после <code class="kbd">sudo reboot</code> — <code class="kbd">docker compose ps</code> показывает все контейнеры в <code class="kbd">Up</code>.</p>
+
+<h4>Прогрев геоданных при старте</h4>
+
+<p>Когда житель на шаге населённого пункта жмёт «📍 Поделиться геолокацией», бот определяет поселение и адрес <strong>локально</strong> — по картам поселений, улиц и домов (это ~2,6 МБ данных GeoJSON и расчёт «точка внутри многоугольника» через библиотеку shapely). Эти карты подгружаются и индексируются лениво — при первом обращении. Загрузка занимает сотни миллисекунд, а процесс у бота одно-петлевой (single event-loop): если бы она впервые случилась прямо внутри обработки первого жителя, на это время «подморозило» бы <strong>всех</strong> сразу.</p>
+
+<p>Чтобы первая геолокация не была медленной, бот на старте запускает <strong>фоновый прогрев</strong> геоиндексов: заранее, в отдельном потоке, подгружает карты и один раз прогоняет реальное определение адреса по центру Елизово — так прогревается весь путь «поселение → дом → улица». Дальше первый же запрос жителя попадает в уже тёплый кеш и отвечает быстро. Прогрев полностью необязателен (best-effort): если seed-файлов нет или они битые, бот просто пишет это в лог и работает дальше — индексы тогда прогреются лениво при первом запросе, а определение адреса в крайнем случае мягко деградирует, не роняя бота (fail-open).</p>
+
+<h3 id="admin-logs">Логи</h3>
+
+<p>Логи бота хранятся <strong>на диске сервера двумя независимыми слоями</strong>, и оба переживают удаление контейнера (<code class="kbd">docker compose down</code>, пересборку образа, <code class="kbd">podman rm</code>). Полное описание модели — в разделе «Эксплуатация», <a href="#eksp-logs" data-go="eksp-logs">«Логи: где лежат и почему переживают перезапуск»</a>; здесь — рабочие команды.</p>
+
+<p><strong>Файл приложения</strong> — главный человекочитаемый журнал, пишется самим ботом в примонтированный каталог <code class="kbd">/var/log/aemr-bot</code> с ротацией (по умолчанию 10 файлов по 10 МБ). Ловит всё Python-логирование, включая библиотеку <code class="kbd">maxapi</code>:</p>
+<pre><code>tail -f /var/log/aemr-bot/bot.log                          # следить в реальном времени
+grep -Ei 'error|exception|misfire|pulse' /var/log/aemr-bot/bot.log   # отфильтровать</code></pre>
+
+<p><strong>Системный журнал (journald)</strong> — драйвер логов контейнера переключён на <code class="kbd">journald</code>, поэтому весь вывод stdout/stderr уходит в журнал хоста. Этот слой ловит то, что до файлового логгера не доходит (вывод <code class="kbd">alembic</code> при старте, аварийные трейсбэки). Команда <code class="kbd">docker compose logs</code> продолжает работать — она читает journald:</p>
+<pre><code>journalctl CONTAINER_NAME=aemr-bot -n 300 --no-pager       # Docker
+journalctl -u aemr-bot.service -n 300 --no-pager           # Podman/Quadlet
+cd /home/aemr/aemr-bot/infra &amp;&amp; docker compose logs --tail 300 bot   # тоже работает</code></pre>
+
+<p>Сторож и авто-деплой пишут через системный <code class="kbd">logger</code> в journald:</p>
+
+<pre><code>journalctl -t aemr-bot-watchdog -n 100 --no-pager
+journalctl -t aemr-bot-deploy   -n 100 --no-pager</code></pre>
+
+<div class="note note--caution">
+<p class="note__label">Логи и 152-ФЗ: очистка псевдоидентификаторов после /erase</p>
+<p>В логах приложения и в journald попадают псевдоидентификаторы жителей (идентификатор пользователя MAX), а команда <code class="kbd">/erase</code> чистит только базу данных, не логи. После запроса жителя на удаление данных, помимо <code class="kbd">/erase</code>, очистите оба слоя логов.</p>
+<p><strong>Файл приложения</strong> — усечь <code class="kbd">bot.log</code> и его ротированные копии (файл открыт процессом, поэтому усекаем, а не удаляем):</p>
+<pre><code>sudo truncate -s 0 /var/log/aemr-bot/bot.log
+sudo sh -c 'for f in /var/log/aemr-bot/bot.log.*; do : &gt; "$f"; done'</code></pre>
+<p><strong>journald</strong> — старые записи убираются ротацией журнала (по имени контейнера/юнита логи точечно не удаляются — это свойство journald):</p>
+<pre><code>sudo journalctl --rotate &amp;&amp; sudo journalctl --vacuum-time=1s   # сбросить накопленное
+# либо ограничить объём журнала заранее: sudo journalctl --vacuum-size=200M</code></pre>
+<p>Прежняя инструкция про <code class="kbd">/var/lib/docker/containers/&lt;id&gt;/*-json.log</code> больше не применима: драйвер логов переключён на journald, файлов <code class="kbd">*-json.log</code> у контейнера нет. Для расследования инцидента нужен журнал действий в базе (хранится 365 дней), а не сырой stdout, поэтому дольше держать логи бессмысленно.</p>
+</div>
+
+<div class="note">
+<p class="note__label">Оценка объёма логов на диске</p>
+<p>Файл приложения: до ~110 МБ по умолчанию (<code class="kbd">LOG_FILE_MAX_BYTES</code>=10 МБ × <code class="kbd">LOG_FILE_BACKUPS</code>=10 + текущий), настраивается в <code class="kbd">infra/.env</code>. journald ограничивается системно (<code class="kbd">--vacuum-size</code> / <code class="kbd">SystemMaxUse</code> в <code class="kbd">journald.conf</code>). Каталог логов создаётся один раз с владельцем UID 1000 (для Podman это делает установщик; для Docker — вручную): <code class="kbd">sudo mkdir -p /var/log/aemr-bot &amp;&amp; sudo chown 1000:1000 /var/log/aemr-bot</code>.</p>
+</div>
+
+<div class="note">
+<p class="note__label">О наблюдаемости (observability)</p>
+<p>Внешнего сбора ошибок (Sentry) в коде нет — его откатили целиком (разбор — в разделе <a href="#koncept-prostota" data-go="koncept">«Как устроено»</a>). Единственный механизм внешнего мониторинга — пинг на <code class="kbd">HEALTHCHECK_URL</code>, по умолчанию выключенный (задача-пинг добавляется в расписание, только если URL задан). Вся остальная диагностика — персистентный <code class="kbd">bot.log</code> и journald плюс «пульс» и алёрты в служебную группу.</p>
+</div>
+
+<h3 id="admin-troubleshoot">Диагностика типичных сбоев</h3>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Симптом</th><th>Куда смотреть / что делать</th></tr></thead>
+<tbody>
+<tr><td>Бот молчит, в служебной группе тишина</td><td>Сначала <code class="kbd">curl http://127.0.0.1:8080/livez</code>. Если 200 — процесс жив, проблема в сессии MAX или сети. Если 5xx или таймаут — <code class="kbd">docker compose logs --tail 200 bot</code>. Контейнер упал → <code class="kbd">docker compose up -d bot</code>. Жив, но молчит → <code class="kbd">docker compose restart bot</code>. Когда восстановится, в группу автоматически придёт «✅ Бот восстановил отзывчивость».</td></tr>
+<tr><td>Бот в группе игнорирует сообщения</td><td>Проверьте, что <code class="kbd">ADMIN_GROUP_ID</code> в <code class="kbd">.env</code> совпадает с <code class="kbd">chat_id</code> из <code class="kbd">/whoami</code> в группе (минус на месте?). Бот после правки перезапущен через <code class="kbd">--force-recreate</code>? Бот не покинул группу, не исключён? Если <code class="kbd">/whoami</code> в группе ещё отвечает — бот видит группу, но chat_id не совпадает с переменной.</td></tr>
+<tr><td>Оператор пишет, а бот не доставляет</td><td>Ответ должен быть <strong>свайпом</strong> на карточку (иначе бот промолчит: «Не понял, к какому обращению ответ») и не длиннее лимита (по умолчанию 3000 символов). Оператор зарегистрирован в <code class="kbd">operators</code> с <code class="kbd">is_active=true</code>? Логи: <code class="kbd">docker compose logs bot --tail 100 | grep -i error</code> (частые причины: житель заблокировал бота, MAX рвёт TLS).</td></tr>
+<tr><td>«Пульс» не приходит</td><td>Окно прощения 120 сек уже учтено, значит либо <code class="kbd">BOT_TOKEN</code> истёк/отозван, либо MAX ограничил частоту запросов (rate-limit). <code class="kbd">/diag</code> в группе подскажет.</td></tr>
+<tr><td>В логах <code class="kbd">401</code>/<code class="kbd">403</code> от MAX, бот «онемел» целиком</td><td>HTTP 401 (Unauthorized) или 403 (Forbidden) от <code class="kbd">botapi.max.ru</code> / <code class="kbd">platform-api2.max.ru</code> означают, что MAX перестал принимать токен: <code class="kbd">BOT_TOKEN</code> отозван/протух, либо <strong>снята верификация юрлица</strong> на стороне MAX (тогда бот теряет право работать в группах и слать сообщения). При этом <code class="kbd">/livez</code> может отвечать 200 — процесс жив, но MAX его «не пускает». Сначала отличите от обычной сетевой ошибки: единичные таймауты — не 401/403. Если код именно 401/403 устойчив — это <strong>потенциальный инцидент</strong> (токен мог утечь и быть отозван не вами): проверьте на max.ru/business статус юрлица и токена, при подозрении на компрометацию идите по плейбуку <a href="#security" data-go="security">«Реагирование на инцидент»</a> (раздел «Безопасность»), а не просто молча перевыпускайте токен. Перевыпуск токена и рестарт — финальный шаг, но сперва зафиксируйте, кто и почему отозвал.</td></tr>
+<tr><td>Пришёл startup-пульс и тишина</td><td>Бот рестартанул, скорее всего авто-деплой. Проверьте <code class="kbd">journalctl -t aemr-bot-deploy -n 50</code>.</td></tr>
+<tr><td>«DEPLOY FAILED» в журнале</td><td>Авто-откат сработал, сейчас работает предыдущий коммит. Проверьте новый локально, найдите причину, запушьте фикс. Журнал: <code class="kbd">journalctl -t aemr-bot-deploy -n 50</code>.</td></tr>
+<tr><td>Контейнер в restart-loop</td><td><code class="kbd">docker compose ps</code> покажет <code class="kbd">Restarting</code>. <code class="kbd">docker compose logs --tail 500 bot</code> — почему. Частая причина — упавшая миграция или битый <code class="kbd">BOT_TOKEN</code> (бот логирует ошибку токена и выходит специально, чтобы не крутиться в петле). Если новый коммит — авто-откат должен был сработать; если нет — откат вручную.</td></tr>
+<tr><td>Backup не пришёл в служебную группу</td><td>Воскресенье 03:00, ждать до 03:05. Если в задаче была ошибка — алёрт всё равно придёт (категория провала в тексте). Проверьте <code class="kbd">BACKUP_GPG_PASSPHRASE</code> (≥12 символов).</td></tr>
+<tr><td>База растёт быстрее ожидаемого</td><td><code class="kbd">docker compose exec db psql -U aemr aemr -c "\dt+"</code> — размеры таблиц. Обычно самая большая <code class="kbd">events</code> (защита от повторов), её сдерживает retention 30 дней.</td></tr>
+<tr><td><code class="kbd">/readyz</code> падает, а <code class="kbd">/livez</code> ок</td><td>Процесс жив, но база лежит или зависла. Не рестартуйте бота — сначала <code class="kbd">docker compose logs --tail 100 db</code> и проверьте <code class="kbd">DATABASE_URL</code>. Если база вообще не стартует (контейнер <code class="kbd">db</code> в <code class="kbd">Restarting</code>) — см. отдельную врезку <a href="#admin-db-down" data-go="admin-db-down">«База не стартует»</a> ниже.</td></tr>
+<tr><td>Контейнер бота убит по OOM (нехватка памяти)</td><td>В <code class="kbd">docker compose ps</code> бот недавно перезапускался; подтвердить причину: <code class="kbd">docker inspect aemr-bot-bot-1 --format '{{.State.OOMKilled}} {{.State.ExitCode}}'</code> (<code class="kbd">true</code> или код <code class="kbd">137</code> = убит по памяти). На хосте: <code class="kbd">dmesg -T | grep -i -E 'killed process|oom'</code> покажет ядерный лог OOM-killer. Это штатная защита: контейнер бота ограничен 512 МБ (<code class="kbd">mem_limit</code>), при превышении его перезапускает Docker, не роняя хост и базу. Разовый OOM на пике backup — норма. Повторяющийся — мало RAM на сервере (добавьте до 4 ГБ) или утечка (зафиксируйте <code class="kbd">docker stats --no-stream</code> в динамике и в тикет).</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note note--caution" id="admin-db-down">
+<p class="note__label">База не стартует: порча данных или нехватка места</p>
+<p>Если контейнер <code class="kbd">db</code> висит в <code class="kbd">Restarting</code>, причину покажет <code class="kbd">docker compose logs --tail 200 db</code> — и развилка тут принципиальная, потому что лечится по-разному:</p>
+<ul>
+<li><strong>Нет места на диске.</strong> В логе — <code class="kbd">could not extend file</code>, <code class="kbd">No space left on device</code>, <code class="kbd">PANIC: could not write to file</code>. Это <strong>не</strong> порча, данные целы — PostgreSQL специально останавливается, чтобы не писать в обрезанные файлы. Освободите место (см. <a href="#admin-disk" data-go="admin-disk">«Диск кончился»</a> ниже) и поднимите базу обратно: <code class="kbd">docker compose up -d db</code>. Чаще всего этого достаточно.</li>
+<li><strong>Порча data-каталога.</strong> В логе — <code class="kbd">invalid page in block</code>, <code class="kbd">could not read block</code>, <code class="kbd">database files are incompatible</code>, <code class="kbd">PANIC: could not locate a valid checkpoint record</code>. Это повреждение тома <code class="kbd">db_data</code> (внезапное выключение питания, сбой диска). Чинить «руками» через <code class="kbd">pg_resetwal</code> на боевой базе — крайняя мера, легко добить данные. Правильный путь — <strong>восстановление из backup на боевую базу</strong> (см. <a href="#admin-restore-prod" data-go="admin-restore-prod">выше</a>): данные на испорченном томе всё равно ненадёжны.</li>
+</ul>
+<p>Как отличить быстро: если <code class="kbd">df -h /var/lib/docker</code> показывает 100% — это почти наверняка место, а не порча. Сначала проверяйте диск, потом подозревайте повреждение.</p>
+</div>
+
+<h3 id="admin-disk">Диск кончился: аварийное освобождение и регламент</h3>
+
+<p>Полный диск — едва ли не самый частый способ «уронить» self-host бота, и виновник почти всегда один: Docker копит образы при каждой пересборке. Если настроен альтернативный автодеплой, он может регулярно пересобирать контейнер командой <code class="kbd">docker compose up -d --build</code> — старый образ не удаляется, а становится «висячим» (dangling — образ без тега, на который никто не ссылается). За недели таких слоёв набегает на гигабайты. Когда диск заполняется под 100%, PostgreSQL переходит в режим «только чтение» (перестаёт принимать запись, чтобы не испортить файлы), бот не может писать обращения, и backup тоже падает.</p>
+
+<h4>Сначала понять, что съело диск</h4>
+
+<pre><code>df -h /                                  # сколько занято на корневом разделе
+sudo du -sh /var/lib/docker/* 2&gt;/dev/null | sort -rh | head   # что внутри docker крупнее всего
+docker system df                         # сводка: образы / контейнеры / тома / build-кэш</code></pre>
+
+<p>Почти всегда самым большим окажется <code class="kbd">/var/lib/docker/overlay2</code> (слои образов) и build-кэш — это и есть накопленные пересборки.</p>
+
+<h4>Аварийно освободить место</h4>
+
+<p>Безопасный порядок — от самого безобидного к более радикальному. <strong>Висячие образы и build-кэш удалять можно всегда</strong>, на работающий бот это не влияет:</p>
+
+<pre><code># 1) Удалить ТОЛЬКО висячие образы и build-кэш — самое безопасное, бьёт по главному виновнику
+docker image prune -f
+docker builder prune -f
+
+# 2) Если мало — почистить остановленные контейнеры и неиспользуемые сети
+docker container prune -f
+docker network prune -f
+
+# 3) Обрезать логи приложения и сбросить накопленное в journald
+sudo truncate -s 0 /var/log/aemr-bot/bot.log
+sudo journalctl --rotate &amp;&amp; sudo journalctl --vacuum-time=2d</code></pre>
+
+<div class="note note--danger">
+<p class="note__label">Опасно: не трогайте тома и не используйте <code class="kbd">prune -a --volumes</code></p>
+<p>Команда <code class="kbd">docker system prune -a --volumes</code> удаляет <strong>всё неиспользуемое, включая тома</strong> — а в томах живут и база (<code class="kbd">db_data</code>), и резервные копии (<code class="kbd">backups</code>). Если запустить её при остановленных контейнерах, можно стереть боевую базу. Для рутинной чистоты используйте <strong>только</strong> <code class="kbd">docker image prune -f</code> и <code class="kbd">docker builder prune -f</code> — они не трогают именованные тома. Флаг <code class="kbd">--volumes</code> на этом сервере не нужен никогда.</p>
+</div>
+
+<p>После чистки поднимите то, что упало, и проверьте, что PostgreSQL вышел из режима «только чтение»:</p>
+
+<pre><code>cd /home/aemr/aemr-bot/infra
+docker compose up -d                                # поднять всё, что не работало
+curl -fsS http://127.0.0.1:8080/readyz &amp;&amp; echo       # 200 = база снова принимает запись
+docker compose exec -T db psql -U aemr -d aemr -c 'select now();'   # запись/чтение восстановлены</code></pre>
+
+<h4>Чтобы не повторялось: профилактика и контроль</h4>
+
+<ol class="steps">
+<li><strong>Авто-уборка висячих образов.</strong> Скрипт авто-деплоя пересобирает образ постоянно, поэтому раз в сутки имеет смысл выметать висячие слои. Добавьте в cron от <code class="kbd">root</code> (например, рядом с прочими страховочными задачами): <code class="kbd">docker image prune -f &amp;&amp; docker builder prune -f --filter 'until=168h'</code> — это убирает безымянные образы и кэш старше недели, не задевая активный.</li>
+<li><strong>Следить за свободным местом.</strong> Раз в неделю (или в эксплуатационном календаре, см. <a href="#admin-routine" data-go="admin-routine">«Эксплуатационный календарь»</a>) смотрите <code class="kbd">df -h /</code>. Тревожный порог — заполнение выше 80%: пора чистить, не дожидаясь 100%. Если у вас подключён внешний пинг-мониторинг (<code class="kbd">HEALTHCHECK_URL</code>), помните: он ловит «бот завис», но <strong>не</strong> «диск кончается» — за местом следит человек по календарю.</li>
+<li><strong>Помнить про backup на том же диске.</strong> 8 еженедельных зашифрованных копий (≈400 МБ) и логи приложения (до ~110 МБ, плюс системный журнал) уже учтены в минимальных 20 ГБ из <a href="#admin-requirements" data-go="admin-requirements">«Требований к серверу»</a>. Если включили S3-выгрузку — локальные копии всё равно лежат на диске, их число задаёт <code class="kbd">BACKUP_KEEP_COUNT</code> (по умолчанию 8).</li>
+</ol>
+
+<div class="note">
+<p class="note__label">Почему это важно именно для авто-деплоя</p>
+<p>Без периодической уборки авто-деплой — медленная мина: он молча копит образы, пока в одно воскресенье backup не упадёт с «нет места», а следом база не встанет в read-only. Алёрт о провале backup придёт (категория <code class="kbd">pg_dump</code> или <code class="kbd">unknown</code>), но к тому моменту бот уже не принимает обращения. Дешевле выметать висячие образы по расписанию, чем разбирать аварию. Диагностика «база не стартует из-за места» — во врезке <a href="#admin-db-down" data-go="admin-db-down">«База не стартует»</a> выше.</p>
+</div>
+
+<h3 id="admin-audit">Аудит сервера одной командой</h3>
+
+<p>Скрипт собирает срез состояния сервера для передачи в чат или тикет:</p>
+
+<div class="cmd"><code>sudo bash /home/aemr/aemr-bot/scripts/audit_vps.sh</code><span class="cmd__what">выгрузка в /tmp/aemr_audit_&lt;timestamp&gt;.tar.gz</span></div>
+
+<p>Внутри: системные данные, состояние git, <code class="kbd">.env</code> с замаскированными секретами, <code class="kbd">docker compose ps</code>, проверки здоровья, последние логи бота и базы. Скрипт <strong>не</strong> выводит реальные значения <code class="kbd">BOT_TOKEN</code>, <code class="kbd">POSTGRES_PASSWORD</code>, <code class="kbd">BACKUP_GPG_PASSPHRASE</code>, <code class="kbd">WEBHOOK_SECRET</code>, ключей S3, заголовков <code class="kbd">Authorization</code> и параметров <code class="kbd">access_token</code> — все заменены на <code class="kbd">***HIDDEN***</code>, поэтому архив безопасно пересылать.</p>
+
+<h3 id="admin-secrets">Владение секретами и ротация</h3>
+
+<h4>Кто держит секреты и что будет, если этот человек уйдёт (bus-factor)</h4>
+
+<p>«Bus-factor» (фактор автобуса) — это вопрос «сколько человек должно одновременно выпасть, чтобы система стала неуправляемой». Для этого бота критическая точка — <strong>парольная фраза резервных копий</strong> <code class="kbd">BACKUP_GPG_PASSPHRASE</code>: если её знает один человек и он недоступен, все зашифрованные backup превращаются в нечитаемый мусор (восстановить их без фразы <strong>невозможно</strong> — это by design, см. <a href="#admin-backup" data-go="admin-backup">«Резервное копирование»</a>). Потеря фразы хуже потери самого backup: файлы есть, а толку ноль.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Секрет</th><th>Кто должен знать</th><th>Где хранится резервная копия</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">BACKUP_GPG_PASSPHRASE</code></td><td>ИТ-специалист + владелец проекта (минимум двое)</td><td>корпоративный менеджер паролей Администрации <strong>и</strong> запечатанный конверт у владельца — <strong>отдельно от сервера</strong></td></tr>
+<tr><td><code class="kbd">BOT_TOKEN</code></td><td>ИТ-специалист; перевыпускается на max.ru/business владельцем-администратором юрлица</td><td>менеджер паролей; перевыпуск всегда доступен через портал MAX</td></tr>
+<tr><td><code class="kbd">POSTGRES_PASSWORD</code></td><td>ИТ-специалист</td><td>менеджер паролей; восстановим через <code class="kbd">ALTER ROLE</code> при доступе к серверу</td></tr>
+<tr><td>SSH-доступ к серверу, <code class="kbd">infra/.env</code> целиком</td><td>ИТ-специалист (1–2 человека)</td><td>ключи — в менеджере паролей; список держателей — у владельца</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note note--danger">
+<p class="note__label">Опасно: один держатель GPG-фразы = одна точка отказа</p>
+<p>Если парольную фразу backup знает ровно один человек и только в своей голове или на своём ноутбуке — проект в одной аварии от безвозвратной потери данных. Канон: фразу знают <strong>минимум двое</strong> (ИТ и владелец), и она лежит в двух независимых местах, ни одно из которых — не сам сервер с ботом (иначе сгорит вместе с базой). Хранить фразу <strong>в</strong> <code class="kbd">infra/.env</code> на сервере — нормально для работы бота, но это <strong>не</strong> резервная копия фразы: при потере сервера теряется и она. Резервная копия фразы должна быть offsite.</p>
+</div>
+
+<h4>Передача секретов при увольнении или смене ИТ-специалиста</h4>
+
+<p>Когда человек с доступом к серверу уходит (увольнение, перевод, конец договора с подрядчиком), все секреты, которые он мог видеть, считаются <strong>потенциально скомпрометированными</strong> — даже если нет признаков утечки. Процедура передачи дел:</p>
+
+<ol class="steps">
+<li><strong>Отозвать доступы уходящего:</strong> удалить его SSH-ключ с сервера (<code class="kbd">~/.ssh/authorized_keys</code> пользователя <code class="kbd">aemr</code> и <code class="kbd">root</code>), снять его учётную запись из менеджера паролей, отозвать его доступ к репозиторию и к порталу max.ru/business.</li>
+<li><strong>Ротировать всё, что он знал</strong> — по таблице ротации ниже, но внепланово и сразу: <code class="kbd">BOT_TOKEN</code>, <code class="kbd">POSTGRES_PASSWORD</code>, <code class="kbd">BACKUP_GPG_PASSPHRASE</code>. Это та же работа, что строка «при увольнении» в таблице ротации.</li>
+<li><strong>Передать секреты преемнику</strong> через менеджер паролей (не в мессенджере, не по почте открытым текстом), убедиться, что преемник может: зайти по SSH, поднять стек, снять <code class="kbd">/backup</code> и расшифровать тестовый backup новой фразой.</li>
+<li><strong>Зафиксировать передачу</strong> в эксплуатационном журнале: кто сдал, кто принял, дата, какие секреты ротированы. Эта же запись закрывает вопрос «кто отвечает за бота сейчас».</li>
+</ol>
+
+<p>Орг-сторона преемственности (договор с подрядчиком, кто назначен ответственным, что делать при уходе единственного ИТ) разобрана в разделе <a href="#koncept" data-go="koncept">«Концепция»</a> — здесь только техническая передача секретов. ИБ-сторона смены ответственного (передача роли по безопасности) — в <a href="#security-routine" data-go="security">ИБ-календаре</a>.</p>
+
+<h4>Плановая ротация</h4>
+
+<p>Чтобы скомпрометированный секрет не жил годами, держите плановую ротацию. Заведите напоминание в календарь (январь/июль) и проходитесь по списку, фиксируя ротации в журнале.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Когда</th><th>Что ротировать</th><th>Как</th></tr></thead>
+<tbody>
+<tr><td>Январь, ежегодно</td><td><code class="kbd">BOT_TOKEN</code></td><td>Выпустить новый токен на max.ru/business, заменить в <code class="kbd">infra/.env</code>, <code class="kbd">docker compose restart bot</code>. Старый отозвать.</td></tr>
+<tr><td>Январь + июль, ежегодно</td><td>пароль PostgreSQL (в <code class="kbd">DATABASE_URL</code>)</td><td><code class="kbd">ALTER ROLE aemr PASSWORD '...'</code> в базе, обновить <code class="kbd">POSTGRES_PASSWORD</code> и <code class="kbd">DATABASE_URL</code>, рестарт бота.</td></tr>
+<tr><td>При компрометации</td><td><code class="kbd">BACKUP_GPG_PASSPHRASE</code></td><td>Новая фраза. Обязательно перешифровать существующие backup (расшифровать старой → зашифровать новой) или утилизировать старые: старая фраза теряет доступ к зашифрованным дампам.</td></tr>
+<tr><td>При увольнении ИТ-оператора с доступом к серверу</td><td><code class="kbd">BOT_TOKEN</code> + <code class="kbd">BACKUP_GPG_PASSPHRASE</code></td><td>Если у уходящего был доступ к <code class="kbd">infra/.env</code> — все секреты считаем потенциально скомпрометированными.</td></tr>
+<tr><td>При утечке журнала действий (<code class="kbd">audit_log</code>)</td><td><code class="kbd">BACKUP_GPG_PASSPHRASE</code></td><td>В журнале хранятся фрагменты метаданных; ротируем фразу, ограничиваем доступ к каталогу backup.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Опциональные секреты (<code class="kbd">HEALTHCHECK_URL</code>, <code class="kbd">PHISHTANK_APP_KEY</code>, <code class="kbd">BACKUP_S3_SECRET_KEY</code>, <code class="kbd">GITHUB_PAT</code>) — раз в полугодие или при компрометации. После любой ротации проверьте: бот стартовал (в логах есть загрузка настроек), <code class="kbd">/livez</code> и <code class="kbd">/readyz</code> отвечают 200, «пульс» в группе пришёл (или дёрните <code class="kbd">/diag</code>).</p>
+
+<h3 id="admin-network">Сетевая изоляция (опционально)</h3>
+
+<p>В боевой сборке бот делает исходящие запросы строго на ограниченный список доменов: MAX API (<code class="kbd">botapi.max.ru</code>, <code class="kbd">platform-api2.max.ru</code>), GitHub (для авто-деплоя — <code class="kbd">github.com</code>, <code class="kbd">api.github.com</code>, <code class="kbd">codeload.github.com</code>), пинг-сервис (если задан <code class="kbd">HEALTHCHECK_URL</code>) и источники угроз для антифишинга (<code class="kbd">urlhaus.abuse.ch</code>, <code class="kbd">threatfox.abuse.ch</code>, <code class="kbd">data.phishtank.com</code>). Всё остальное — потенциальная утечка ПДн или признак компрометации.</p>
+
+<p>Зачем это нужно. Если на сервер попадёт вредоносный код (например, закладка в сторонней библиотеке), ему нужен канал, чтобы вытащить данные наружу. Пока сервер может соединяться куда угодно, такой канал открыт. Ограничение исходящего трафика (egress) закрывает всё, кроме явно разрешённого, — и снимает в модели угроз целый класс угроз «утечка через исходящее соединение». Для уровня защищённости УЗ-4 это одна из значимых компенсирующих мер.</p>
+
+<p>Готовый скрипт: <code class="kbd">infra/egress-allowlist.sh</code>. Он написан так, чтобы <strong>не сломать бота</strong>: не трогает входящие соединения (ваш SSH цел), не рвёт уже открытые соединения, не включает блокировку с пустым списком адресов и откатывается одной командой. Порядок работы (от <code class="kbd">root</code> или через <code class="kbd">sudo</code>):</p>
+
+<pre><code># 1) Сначала посмотреть, что разрешится, НИЧЕГО не меняя:
+sudo ./infra/egress-allowlist.sh test
+
+# 2) Если список выглядит верно (там должны быть адреса MAX) — включить:
+sudo ./infra/egress-allowlist.sh enable
+
+# 3) СРАЗУ проверить, что бот жив:
+curl -fsS http://127.0.0.1:8080/livez &amp;&amp; echo OK
+#    и написать боту в MAX — должен ответить.
+
+# 4) Если что-то не так — мгновенный откат, вернёт как было:
+sudo ./infra/egress-allowlist.sh disable</code></pre>
+
+<p>Адреса MAX могут менять IP (это один кластер под несколькими именами), поэтому список наполняется по <em>именам</em> и его надо периодически обновлять. Добавьте в cron от <code class="kbd">root</code>:</p>
+
+<pre><code># обновлять список разрешённых адресов каждые 15 минут
+*/15 * * * * /home/aemr/aemr-bot/infra/egress-allowlist.sh refresh</code></pre>
+
+<div class="note note--caution">
+<p class="note__label">Что разрешено и как это менять</p>
+<p>По умолчанию скрипт разрешает: серверы MAX (<code class="kbd">platform-api2.max.ru</code> и старый <code class="kbd">platform-api.max.ru</code>), DNS (порт 53), сверку времени NTP (порт 123), ответы на исходящие соединения, локальную петлю и внутренние сети Docker (связь бота с базой). Всё остальное исходящее запрещается и пишется в журнал с меткой <code class="kbd">aemr-egress-drop</code>.</p>
+<p>Если используете <strong>автодеплой из GitHub</strong>, <strong>антифишинг-фиды</strong> или <strong>внешний пинг-мониторинг</strong> — раскомментируйте нужные домены в начале скрипта (список <code class="kbd">ALLOWED_DOMAINS</code>) и запустите <code class="kbd">enable</code> заново. В <strong>закрытом гос-контуре</strong> автодеплой и так выключен (<code class="kbd">AUTODEPLOY_ENABLED=0</code>), GitHub добавлять не нужно.</p>
+<p>Проверить состояние в любой момент: <code class="kbd">sudo ./infra/egress-allowlist.sh status</code>. Если в журнале (<code class="kbd">journalctl -k | grep aemr-egress-drop</code>) появляются заблокированные соединения к незнакомому адресу — это либо забытый нужный сервис (добавить в список), либо признак компрометации (разобраться).</p>
+</div>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно: соседний проект на том же хосте</p>
+<p>Если на той же машине, что и бот с персональными данными граждан, живёт другой проект (например, веб-витрина <code class="kbd">dash</code> с публичным caddy на <code class="kbd">0.0.0.0:80/443</code>) — учтите модель угроз. На уровне сети изоляция уже есть: бот и соседний проект — в разных Docker-сетях, Postgres бота не имеет host-привязки порта и недоступен снаружи и из соседних контейнеров, HTTP бота — только на <code class="kbd">127.0.0.1</code>. Остаточный риск узкий: общий хост и общий Docker-демон, то есть теоретический побег из скомпрометированного соседнего контейнера на хост, где лежат тома бота. Это высокий барьер, но не нулевой. Надёжнее всего — вынести соседний проект на отдельный сервер (решение владельца); как минимум — держать его под отдельным непривилегированным пользователем, не в группе <code class="kbd">docker</code> вместе с ботом, с <code class="kbd">cap_drop: ALL</code> и <code class="kbd">no-new-privileges</code>.</p>
+</div>
+
+<h3 id="admin-firewall">За корпоративным межсетевым экраном (UserGate, Континент и др.)</h3>
+
+<div class="note note--caution">
+<p class="note__label">Смена адреса API: platform-api → platform-api2 (июль 2026)</p>
+<p>MAX сменил адрес Bot API на <code class="kbd">platform-api2.max.ru</code>: японский УЦ GlobalSign отозвал SSL-сертификаты российских компаний, и на новом имени поднята цепочка национального УЦ (Минцифры). Дедлайн перехода — <strong>19 июля 2026</strong>. Для бота ничего настраивать не надо: maxapi 1.2.1 уже ходит на новый адрес и доверяет российской цепочке из коробки; токен передаётся заголовком <code class="kbd">Authorization</code> (передача в query-параметрах прекращена). Что проверить руками: (1) прод собран с maxapi&nbsp;1.2.1 или новее — старые сборки перестанут подключаться; (2) allowlist на межсетевике включает <code class="kbd">platform-api2.max.ru:443</code> (IP-адреса те же — это CNAME на тот же кластер, меняется только имя и сертификат); (3) внеполосный сторож healthwatch обновлён — он шлёт алёрт своим curl и должен доверять российскому корню (<code class="kbd">infra/certs/russian_trusted_root_ca.pem</code>, скрипт собирает объединённый CA-бандл сам).</p>
+</div>
+
+
+<p>Если бот разворачивается во внутренней сети организации за российским межсетевым экраном (UserGate, Континент 4, ALTELL NEO, Рубикон, ИКС, Ideco), наружу ему нужен <strong>ровно один адрес</strong> — <code class="kbd">platform-api2.max.ru:443</code> по исходящему TLS. Чтобы заработало <strong>с первого раза</strong>, нужно одно действие на стороне межсетевика: код не поможет, пока администратор не разрешит исходящее соединение.</p>
+
+<div class="note">
+<p class="note__label">Лучший и самый безопасный путь</p>
+<p>Попросите администратора межсетевика сделать две вещи: <strong>(1)</strong> добавить <code class="kbd">platform-api2.max.ru:443</code> в egress-allowlist по имени домена (FQDN); <strong>(2)</strong> исключить этот адрес из SSL-инспекции (decryption bypass). Тогда бот идёт напрямую обычным TLS, <code class="kbd">BOT_FIREWALL_MODE</code> можно даже не включать, а персональные данные жителей не расшифровываются на периметре — это снимает и юридический риск по 152-ФЗ и приказам ФСТЭК №17/№21.</p>
+</div>
+
+<p><strong>Четыре вопроса администратору ДО запуска</strong> — от ответов зависит, что прописать в <code class="kbd">.env</code>:</p>
+<ol class="steps">
+<li>Наружу пускают напрямую или <strong>только через прокси</strong>?</li>
+<li>Если через прокси — какая <strong>аутентификация</strong>: Basic, по IP (без пароля), NTLM или Kerberos?</li>
+<li>Включена ли <strong>SSL-инспекция</strong> (подмена сертификата)? Если да — понадобится корневой сертификат межсетевика.</li>
+<li>Если NTLM/Kerberos — заведут ли отдельный <strong>сервис-аккаунт</strong> для прокси-форвардера?</li>
+</ol>
+
+<p>Режим включается в <code class="kbd">infra/.env</code> (полное описание — в самом <code class="kbd">.env.example</code>, блок «FIREWALL MODE»):</p>
+<ul>
+<li><strong>прямой выход</strong> (allowlist) — включать ничего не надо;</li>
+<li><strong>прокси Basic / по IP</strong> — <code class="kbd">BOT_FIREWALL_MODE=1</code> и <code class="kbd">BOT_OUTBOUND_PROXY=http://proxy:3128</code> (пароль безопаснее держать в файле-секрете <code class="kbd">BOT_OUTBOUND_PROXY_FILE</code>, а не в открытом виде в окружении);</li>
+<li><strong>SSL-инспекция</strong> — <code class="kbd">BOT_EXTRA_CA_CERT=/certs/corp-ca.pem</code> (корневой сертификат межсетевика; объединяется с системными, проверяется на старте — битый файл даёт понятную ошибку сразу, а не позже на TLS).</li>
+</ul>
+
+<div class="note note--caution">
+<p class="note__label">Единственный случай, который не решается настройкой бота</p>
+<p>Прокси с <strong>доменной аутентификацией NTLM/Kerberos</strong>: библиотека бота умеет только Basic. Решение без правок логики бота — sidecar-форвардер <code class="kbd">cntlm</code> (для NTLM) или <code class="kbd">px</code> (для Kerberos): бот ходит на <code class="kbd">cntlm:3128</code> без пароля, а форвардер делает доменный handshake наружу. Готовый рецепт — <code class="kbd">infra/docker-compose.cntlm.yml</code> и <code class="kbd">infra/cntlm/cntlm.conf.example</code>; запускается оверлеем <code class="kbd">docker compose -f docker-compose.yml -f docker-compose.cntlm.yml up -d</code>. Альтернатива — попросить администратора сделать для IP-адреса бота исключение из доменной аутентификации (бот на отдельном сервере, в AD-домен не входит).</p>
+</div>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Межсетевой экран</th><th>SSL-инспекция</th><th>Нюанс для бота</th></tr></thead>
+<tbody>
+<tr><td><strong>UserGate</strong></td><td>выкл, пока нет правила; в госконтуре часто вкл</td><td>три режима (маршрутизатор / прозрачный / явный прокси); лучший путь — bypass инспекции по FQDN; явный прокси в AD-домене = NTLM/Kerberos → нужен <code class="kbd">cntlm</code></td></tr>
+<tr><td><strong>Континент 4</strong></td><td>только через список исключений</td><td>явный и прозрачный прокси; ГОСТ-шифрование — только в VPN между площадками, на обычный интернет не навешивается</td></tr>
+<tr><td><strong>ALTELL NEO</strong></td><td>уточнить у вендора: полная подмена сертификата или фильтр только по имени домена</td><td>фильтр по имени домена → сертификат не нужен; полная инспекция → <code class="kbd">BOT_EXTRA_CA_CERT</code></td></tr>
+<tr><td><strong>Рубикон</strong></td><td>классический — нет; «Рубикон Nova» — заявлена в планах</td><td>обычно HTTPS проходит насквозь; за «однонаправленным шлюзом» (data-diode) бота ставить нельзя — нужен обмен запрос-ответ</td></tr>
+<tr><td><strong>ИКС / Ideco</strong></td><td>характерна полная инспекция + вход по Kerberos (SSO)</td><td>для сервер-бота вне домена — исключение из Kerberos по IP + (при инспекции) корневой сертификат</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p class="note__label">ГОСТ-шифрование для max.ru не нужно</p>
+<p>Проверено: <code class="kbd">platform-api2.max.ru</code> отдаёт обычный сертификат Let's Encrypt (RSA-2048), стандартный TLS. ГОСТ-TLS — серверная и VPN-технология государственных сервисов, на исходящий трафик к MAX она не навешивается. Криптопровайдер с ГОСТ (КриптоПро и т.п.) ставить в бот не надо — это лишняя сложность и риск без пользы.</p>
+</div>
+
+<h3 id="admin-sbom">SBOM и CI</h3>
+
+<p>Если нужен отчёт о составе компонентов (SBOM — Software Bill of Materials, перечень всех библиотек), сгенерируйте его из контейнера:</p>
+
+<pre><code>docker compose exec bot pip-audit --format=cyclonedx-json &gt; sbom-$(date +%Y%m%d).json</code></pre>
+
+<p>Утилита <code class="kbd">pip-audit</code> уже в dev-зависимостях. SBOM публикуйте в защищённую зону репозитория, не в публичный README.</p>
+
+<p>На каждый push в <code class="kbd">main</code> и каждый Pull Request гоняется <code class="kbd">.github/workflows/ci.yml</code>: проверка стиля (<code class="kbd">ruff</code>, <code class="kbd">mypy</code>, <code class="kbd">bandit -ll</code> на medium+), аудит уязвимостей (<code class="kbd">pip-audit --strict</code> — жёсткое падение на любой CVE), <code class="kbd">shellcheck</code> на все скрипты; тесты с порогом покрытия <code class="kbd">--cov-fail-under=84</code>, проверка миграций (<code class="kbd">alembic upgrade head</code>, расхождение между моделями и миграциями, круговой прогон upgrade→downgrade→upgrade); смок-сборка образа без публикации. На сервер попадает только то, что прошло CI и смержено в <code class="kbd">main</code>; ветки PR не деплоятся.</p>
+
+<h3 id="admin-sla">SLA и приоритизация обращений</h3>
+
+<p>Срок реакции в боте настраивается и рассчитывается по рабочему времени. Правовой статус и применимость постановления № 2129 необходимо проверить по его действующему тексту. Внутренние сроки не заменяют законные.</p>
+
+<p>В коде задан один базовый срок: <code class="kbd">SLA_RESPONSE_HOURS = 4</code> (рабочих часа). По нему бот считает просрочку и шлёт напоминания операторам (<code class="kbd">overdue-reminder-workhours</code>). Просрочка считается по <strong>рабочему времени</strong> (модуль <code class="kbd">services/sla.py</code>): SLA-часы копятся только внутри рабочего окна <code class="kbd">SLA_WORK_START_HOUR</code>–<code class="kbd">SLA_WORK_END_HOUR</code> (9:00–18:00 по Камчатке по умолчанию) рабочих дней за вычетом обеденного перерыва <code class="kbd">SLA_LUNCH_START_HOUR</code>–<code class="kbd">SLA_LUNCH_END_HOUR</code> (12:00–13:00 по умолчанию), обращение вне рабочего времени начинает отсчёт со следующего рабочего окна — подробности в разделе <a href="#spr-sla" data-go="spravochnik">«SLA: код и регламент»</a> Справочника. Укороченные сроки Регламента (§62: 1/2/4 часа на возврат сведений профильным подразделением; §58: 30 минут на «не наша компетенция») в коде отдельно не отслеживаются — бот меряет всё по единому порогу 4 часа. Приоритизация по важности организационная: «высокую важность» назначает Куратор ЦУР вручную, поля важности у обращения в коде нет, по теме («вода/газ/отопление») бот срочность не повышает. Полный разбор, как 4 часа в коде сочетаются с 2 часами по важности, — в разделе <a href="#operator-sla" data-go="operator">для оператора</a>.</p>
+
+<div class="note">
+<p class="note__label">59-ФЗ и Стандарт качества</p>
+<p>Применимость 59-ФЗ зависит от конкретного сообщения, способа подачи и действующих норм. Если нужен официальный канал, предложите электронную приёмную или личный приём; не делайте категоричных выводов только по названию мессенджера. Подробнее — в разделе <a href="#pravovoe" data-go="pravovoe">«Правовое»</a>. Для ясного ответа используйте простой язык и отвечайте по существу. Лимит ответа определяется текущей конфигурацией и транспортным ограничением MAX.</p>
+</div>
+
+<h3 id="admin-retention">Сроки хранения данных</h3>
+
+<p>В системе три разных срока хранения, которые нельзя путать между собой — у них разные объекты и разные правовые основания:</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Что хранится</th><th>Срок</th><th>Чем чистится</th><th>Основание</th></tr></thead>
+<tbody>
+<tr><td>Журнал действий операторов (<code class="kbd">audit_log</code>)</td><td><strong>365 дней</strong> (диапазон 30–3650)</td><td>cron <code class="kbd">audit-log-retention</code>, ежедневно 04:15</td><td>срок установлен оператором как глубина расследования инцидента; журнал ведётся как мера защиты (152-ФЗ ст. 19), конкретного числа закон не задаёт</td></tr>
+<tr><td>Записи о <strong>уничтожении ПДн</strong> в журнале (отзыв согласия, <code class="kbd">/forget</code>, удаление оператором, авто-уничтожение по сроку)</td><td><strong>3 года</strong> (<code class="kbd">AUDIT_ERASURE_RETENTION_DAYS</code>, диапазон 365–3650)</td><td>тот же cron, но отдельным окном</td><td>это <em>доказательство</em> того, что данные удалены в срок после отзыва согласия (152-ФЗ ст. 21 ч. 5), а не просто след действия; требование к подтверждению уничтожения при автоматизированной обработке</td></tr>
+<tr><td>Тексты обращений (адрес, суть, переписка)</td><td><strong>5 лет</strong></td><td>cron <code class="kbd">appeals-5y-retention</code>, ежедневно 04:45</td><td>отдельный механизм; через 5 лет текст обнуляется, метаданные (id, дата, статус, тема, поселение) остаются</td></tr>
+<tr><td>ПДн жителя после отзыва согласия</td><td>Срок и условия определяются основанием обработки</td><td>В рабочей базе — <code class="kbd">pdn-retention</code> и <code class="kbd">pdn-retention-hourly</code>, начиная с 29-го дня</td><td>Статья 21 часть 5 152-ФЗ предусматривает условия и исключения; отсутствие оснований и удаление других копий проверяет ответственное лицо.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p class="note__label">Почему у журнала два разных срока</p>
+<p>Журнал действий хранит <strong>не сами обращения</strong>, а кто из операторов что сделал. Для обычных записей срок — <strong>год</strong>: это глубина расследования инцидента, установленная оператором. Закон конкретного числа здесь не задаёт: журнал ведётся как мера защиты (152-ФЗ ст. 19), а 5-летний срок относится к обращениям (<code class="kbd">appeals-5y-retention</code>) и к журналу отношения не имеет.</p>
+<p>Но часть записей — особые. Когда житель отзывает согласие и его данные уничтожаются, запись об этом становится <strong>доказательством</strong>, что оператор исполнил обязанность и уложился в 30 дней (152-ФЗ ст. 21 ч. 5). Стереть такое доказательство через год, когда предъявлять его нужно дольше, — значит в момент проверки остаться ни с чем. Поэтому подтверждения уничтожения живут <strong>три года</strong> отдельным окном (<code class="kbd">AUDIT_ERASURE_RETENTION_DAYS</code>). Правовой разбор — <a href="#pravovoe-audit-365" data-go="pravovoe">в Правовом разделе</a>.</p>
+</div>
+
+<h3 id="admin-storage-map">Что где меняется: <code class="kbd">.env</code>, база, seed</h3>
+
+<p>Чтобы не путаться, какой параметр где живёт и как его править:</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Параметр</th><th>Где лежит</th><th>Чем меняется</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">BOT_TOKEN</code>, <code class="kbd">DATABASE_URL</code>, <code class="kbd">ADMIN_GROUP_ID</code>, <code class="kbd">WEBHOOK_*</code>, <code class="kbd">BACKUP_*</code>, опц. <code class="kbd">GITHUB_PAT</code></td><td><code class="kbd">infra/.env</code></td><td>вручную, требует перезапуска контейнера (<code class="kbd">--force-recreate</code>)</td></tr>
+<tr><td>Тематики обращений, населённые пункты, тексты приветствия и согласия, контакты служб, ссылки, лимит картинок рассылки, тихие часы, модульные тумблеры уведомлений и др. — <strong>26 ключей</strong> схемы настроек</td><td>таблица <code class="kbd">settings</code></td><td><strong>рекомендуется</strong> — меню «⚙️ Настройки бота» в <code class="kbd">/op_help</code> (роль <code class="kbd">it</code>); <strong>быстрый путь</strong> — команда <code class="kbd">/setting &lt;ключ&gt; &lt;значение&gt;</code>. Без редеплоя.</td></tr>
+<tr><td>Список операторов</td><td>таблица <code class="kbd">operators</code></td><td><strong>рекомендуется</strong> — мастер «👥 Операторы» в <code class="kbd">/op_help</code>; <strong>быстрый путь</strong> — <code class="kbd">/add_operators</code> для массовой регистрации</td></tr>
+<tr><td>PRIVACY.pdf, стартовые тексты и контакты при первом запуске</td><td><code class="kbd">seed/*.json</code>, <code class="kbd">seed/PRIVACY.pdf</code></td><td>правите файлы в репозитории, перезапускаете контейнер. Первичное сидирование заполняет базу только для отсутствующих ключей.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Таблица настроек называется именно <code class="kbd">settings</code> (не <code class="kbd">app_settings</code>, как было в части старых черновиков). Редактируемых ключей ровно <strong>17</strong>: тексты приветствия и согласия, имя и email автора коммитов для repo-sync, ссылки (политика ПДн, электронная приёмная, два расписания УДТХ), текст приёма граждан, экстренные контакты, диспетчеры транспорта, тематики, лимит картинок в рассылке, три ключа «тихих часов» админ-уведомлений, населённые пункты. У каждого ключа в схеме задан тип и лимиты; редактор в боте проверяет их автоматически (URL-поле требует валидную ссылку, списки принимают CSV, объекты — заданный набор полей).</p>
+
+<div class="note">
+<p class="note__label">Подсказка про текст «Приём граждан»</p>
+<p>Значение по умолчанию для <code class="kbd">appointment_text</code> с 07.08.2026 содержит «Главы Елизовского муниципального <strong>округа</strong>» — до этого в дефолте намеренно стояло «района» (переходный seed, ADR-15 и дополнение к нему; история — в разделе <a href="#zhitel-rayon" data-go="zhitel">для жителя</a>). Практически для ИТ: дефолт из кода применяется только к новой пустой базе; на работающем боте значение живёт в базе и правится через настройки без редеплоя. На проде до обновления настройки остаётся старая формулировка «района» — её обновление обязательное отдельное действие владельца; формулировку и фамилию руководителя на текущий год сверьте с ним перед публикацией.</p>
+</div>
+
+<h3 id="admin-routine">Эксплуатационный календарь (что делать регулярно)</h3>
+
+<p>Бот спроектирован так, чтобы в штатном режиме не требовать вмешательства: страховочные службы перезапускают его при сбоях, ретеншн чистит данные, backup снимается сам. Но несколько вещей машина за вас не сделает — их держит человек по календарю. Это и есть регулярная эксплуатация. Заведите эти пункты в общий календарь Администрации (или в напоминания), чтобы они не забывались между сменами ИТ.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Как часто</th><th>Что сделать</th><th>Зачем / где подробнее</th></tr></thead>
+<tbody>
+<tr><td>Ежедневно (автоматически)</td><td>Снести висячие Docker-образы: <code class="kbd">docker image prune -f</code> + <code class="kbd">docker builder prune -f --filter 'until=168h'</code> в cron</td><td>авто-деплой копит образы каждые 10 минут; без уборки диск переполнится → <a href="#admin-disk" data-go="admin-disk">«Диск кончился»</a></td></tr>
+<tr><td>Еженедельно</td><td>Глянуть <code class="kbd">df -h /</code> (тревога выше 80%) и <code class="kbd">docker compose ps</code> (оба <code class="kbd">healthy</code>)</td><td>место и живость стека; пинг-мониторинг диск не сторожит</td></tr>
+<tr><td>Еженедельно / ежемесячно</td><td>Мониторинг PostgreSQL: размеры таблиц, dead-tuples, долгие запросы</td><td>готовые команды — в <a href="#spravochnik" data-go="spravochnik">«Справочнике» → «Мониторинг Postgres»</a> (раздел <code class="kbd">spr-shell</code>), не дублируем здесь</td></tr>
+<tr><td>Ежемесячно</td><td>Убедиться, что пришёл XLSX-отчёт за месяц (cron <code class="kbd">monthly-stats</code>, 1-го числа 09:00); просмотреть логи на повторяющиеся ошибки</td><td>контроль, что отчётность и логи в норме</td></tr>
+<tr><td>Ежеквартально (1-й рабочий день янв/апр/июл/окт)</td><td>Тест восстановления backup на тестовую базу, запись результата в журнал</td><td>непроверенный backup = ненадёжный → <a href="#admin-backup" data-go="admin-backup">«Тест восстановления»</a></td></tr>
+<tr><td>Дважды в год (январь, июль)</td><td>Плановая ротация секретов; проверить срок жизни <code class="kbd">GITHUB_PAT</code> (90 дней) и опциональных ключей</td><td>чтобы скомпрометированный секрет не жил годами → <a href="#admin-secrets" data-go="admin-secrets">«Владение секретами и ротация»</a></td></tr>
+<tr><td>Раз в год</td><td>Перевыпустить <code class="kbd">BOT_TOKEN</code>; проверить актуальность digest базовых образов; сверить текст «Приём граждан» и фамилию руководителя с владельцем</td><td>годовая гигиена; digest и образы → <a href="#admin-stack" data-go="admin-stack">«Технологический стек»</a></td></tr>
+<tr><td>По мере выхода обновлений</td><td>Обновления безопасности ОС (<code class="kbd">apt upgrade</code>); раз в пару лет — апгрейд релиза ОС переездом</td><td>→ <a href="#admin-os-upgrade" data-go="admin-os-upgrade">«Апгрейд ОС и дрейф времени»</a></td></tr>
+<tr><td>При событии</td><td>Тест восстановления — дополнительно после каждой новой миграции схемы; ротация секретов — внепланово при увольнении ИТ или подозрении на утечку</td><td>событийные триггеры поверх календаря</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p class="note__label">Это эксплуатация, а не безопасность</p>
+<p>Здесь — рутинная техническая эксплуатация бота. Отдельный <strong>ИБ-календарь</strong> (ревью журнала действий на аномалии, аудит доступов, учебная отработка реагирования на инцидент, передача роли ответственного по безопасности) живёт в разделе <a href="#security-routine" data-go="security">«Безопасность» → «ИБ-календарь»</a> — там свои сроки и свой ответственный. Общие пункты (ротация секретов, тест восстановления) не дублируются: за них отвечает этот календарь, ИБ-сторона лишь проверяет, что они выполнены. Ведите единый <strong>журнал эксплуатации</strong> (кто, когда, что сделал) — он же закрывает вопрос «кто отвечает за бота сейчас» и служит доказательством регулярного обслуживания при проверке.</p>
+</div>
+
+<h3 id="admin-checklist">Чек-лист первого боевого запуска</h3>
+
+<p>Пройдите перед публикацией бота жителям. Отметки сохраняются в браузере:</p>
+
+<ul class="check" id="admin-launch-check">
+<li><input type="checkbox"> <span><code class="kbd">docker compose ps</code> — оба контейнера <code class="kbd">Up (healthy)</code>.</span></li>
+<li><input type="checkbox"> <span><code class="kbd">curl http://127.0.0.1:8080/livez</code> и <code class="kbd">/readyz</code> — оба 200.</span></li>
+<li><input type="checkbox"> <span><code class="kbd">/start</code> в личке у тестового жителя — приходит приветствие и главное меню из <strong>7 кнопок</strong>.</span></li>
+<li><input type="checkbox"> <span>Полная анкета (согласие → контакт → имя → населённый пункт → адрес → тема → суть с фото) проходится без сбоев, бот отвечает «Обращение #N принято в работу».</span></li>
+<li><input type="checkbox"> <span>На шаге «Населённый пункт» есть кнопка «📍 Поделиться геолокацией» — житель не присылает геопозицию вложением, а жмёт штатную кнопку.</span></li>
+<li><input type="checkbox"> <span>В служебной группе появляется карточка #N с кнопками действий; фото жителя приходит ответом к карточке.</span></li>
+<li><input type="checkbox"> <span>Свайп-ответ на карточку и команда <code class="kbd">/reply 42 Тест</code> доставляют жителю письмо с шапкой Администрации.</span></li>
+<li><input type="checkbox"> <span><code class="kbd">/op_help</code> присылает панель из 4 / 7 / 11 элементов (3 / 6 / 10 действий + «Памятка оператора») в зависимости от роли вызвавшего.</span></li>
+<li><input type="checkbox"> <span>Под карточкой у роли <code class="kbd">it</code> видны «🚫 Заблокировать» и «🗑 Удалить ПДн»; у остальных ролей — нет.</span></li>
+<li><input type="checkbox"> <span><code class="kbd">/whoami</code> в группе возвращает данные, в личке у жителя — тихо игнорируется.</span></li>
+<li><input type="checkbox"> <span><code class="kbd">/stats today</code> отдаёт XLSX; <code class="kbd">/forget</code> от тестового жителя удаляет данные (в журнале запись <code class="kbd">self_erase</code>).</span></li>
+<li><input type="checkbox"> <span><code class="kbd">/backup</code> создаёт файл в <code class="kbd">/backups</code> (зашифрованный <code class="kbd">.sql.gpg</code>, если задана GPG-фраза).</span></li>
+<li><input type="checkbox"> <span><code class="kbd">/policy</code> доставляет PDF политики ПДн.</span></li>
+<li><input type="checkbox"> <span>«Пульс» приходит по расписанию; алёрт о просрочке — при искусственном создании просроченного обращения.</span></li>
+<li><input type="checkbox"> <span>Установлены и проверены страховочные службы: авто-деплой (deploy key в GitHub), watchdog (cron */5), автозапуск systemd (<code class="kbd">enabled</code>).</span></li>
+<li><input type="checkbox"> <span>Заведено напоминание о ротации секретов (январь/июль) и квартальном тесте восстановления backup.</span></li>
+<li><input type="checkbox"> <span>Безопасник Администрации согласовал уровень защищённости ИСПДн (УЗ-4) и модель угроз — матрица мер в <a href="#security" data-go="security">«Безопасности» (УЗ-4)</a>, правовое обоснование в <a href="#pravovoe" data-go="pravovoe">«Правовом»</a>.</span></li>
+</ul>
+
+<h3 id="admin-faq">Частые вопросы</h3>
+
+<h4>Чем менять настройки бота — файлом или через бота?</h4>
+<p>Зависит от того, что меняете. Технические параметры (токен, пароль базы, <code class="kbd">ADMIN_GROUP_ID</code>, расписание backup, webhook) — только в <code class="kbd">infra/.env</code>, с перезапуском контейнера. Содержательные настройки (тематики обращений, населённые пункты, тексты приветствия и согласия, контакты служб, ссылки) — в таблице <code class="kbd">settings</code>, через меню «⚙️ Настройки бота» в <code class="kbd">/op_help</code> (роль <code class="kbd">it</code>) или командой <code class="kbd">/setting</code>, без редеплоя. Этих редактируемых ключей <strong>17</strong>. Список операторов — в таблице <code class="kbd">operators</code> через мастер «👥 Операторы».</p>
+
+<h4>Нужно ли открывать порты в firewall?</h4>
+<p>Нет. В режиме long polling бот сам исходящими запросами опрашивает MAX, входящих соединений снаружи нет. Откройте только SSH (22). Порт 8080 слушает на <code class="kbd">127.0.0.1</code> и наружу не виден. Порты 80/443 нужны только в webhook-режиме, который в боевой сборке не используется.</p>
+
+<h4>Где физически лежат backup?</h4>
+<p>В Docker-томе <code class="kbd">backups</code>, на диске сервера по пути <code class="kbd">/var/lib/docker/volumes/aemr-bot_backups/_data/</code>. Том переживает пересборку контейнера. Уносить копии с сервера на отдельный хост — отдельная задача ИТ-отдела (S3 или внешний <code class="kbd">rsync</code>), без неё локальный backup не спасёт от потери всего сервера.</p>
+
+<h4>Бот ушёл в restart-loop после деплоя — что делать?</h4>
+<p>Если включён авто-деплой, он сам должен был откатиться по health-gate (ищите «DEPLOY FAILED: ROLLBACK» в <code class="kbd">journalctl -t aemr-bot-deploy</code>). Если не откатился — откатитесь вручную (см. <a href="#admin-deploy" data-go="admin-deploy">«Откат при сбое»</a>) и обязательно сделайте revert-коммит в репозитории, иначе авто-деплой через 10 минут снова подтянет сломанный код.</p>
+
+<h4>Какие команды бот показывает в меню «/» и почему не все?</h4>
+<p>При старте бот публикует в <code class="kbd">/</code>-меню ровно <strong>две</strong> команды — <code class="kbd">/start</code> и <code class="kbd">/menu</code> (прямым PATCH <code class="kbd">/me</code> в MAX с этим списком из двух пунктов). Специфичные жительские (<code class="kbd">/forget</code>, <code class="kbd">/subscribe</code> и пр.) и операторские (<code class="kbd">/op_help</code>, <code class="kbd">/reply</code> и пр.) команды в подсказку <strong>не</strong> выносятся. Причина — у MAX нет команд «по областям» (per-scope): один и тот же список виден и в личке жителя, и в служебной группе. Раньше, когда в подсказке светились жительские команды, операторы могли случайно тапнуть <code class="kbd">/forget</code> или <code class="kbd">/subscribe</code>; поэтому в меню оставлены только два безопасных универсальных входа. Все остальные команды по-прежнему работают, если набрать их руками: жители ведутся кнопочным меню, операторы — панелью <code class="kbd">/op_help</code>.</p>
+
+<h4>Можно ли восстановить backup, если потерян GPG-пароль?</h4>
+<p>Нет. Зашифрованный backup без пароля не расшифровать — это by design. Именно поэтому <code class="kbd">BACKUP_GPG_PASSPHRASE</code> храните отдельно от сервера (в менеджере паролей), а тест восстановления проводите раз в квартал, чтобы вовремя заметить проблему.</p>
+
+<h4>Чем восстановление на тестовую базу отличается от восстановления на боевую?</h4>
+<p>Это два разных сценария. <strong>Тест восстановления</strong> (раз в квартал) льёт backup в одноразовую базу <code class="kbd">aemr_restore_test</code>, боевую <code class="kbd">aemr</code> не трогает — это репетиция, чтобы убедиться, что копии живые. <strong>Восстановление на боевую</strong> делается только когда боевые данные реально потеряны или испорчены: оно <strong>стирает</strong> текущую базу и заменяет состоянием на момент backup. Порядок боевого восстановления (остановить бота, пересоздать базу, залить, проверить, поднять) — в разделе <a href="#admin-restore-prod" data-go="admin-restore-prod">«Восстановление на боевую базу»</a>. Никогда не льют на боевую, не проверив тот же файл на тестовой.</p>
+
+<h4>Как перенести бота на другой сервер, ничего не потеряв?</h4>
+<p>Унести нужно только три вещи: файл <code class="kbd">infra/.env</code>, свежий backup базы и знание GPG-фразы. Код клонируется заново из репозитория, тома Docker не копируются. На новом сервере проходите установку, кладёте перенесённый <code class="kbd">.env</code>, заливаете backup на боевую базу. Главное правило — <strong>не</strong> держать двух живых ботов на один токен: сначала остановить старого, потом запускать нового. Полная процедура — <a href="#admin-migrate" data-go="admin-migrate">«Перенос на новый сервер»</a>.</p>
+
+<h4>Что будет, если сервер выключится в момент еженедельного backup?</h4>
+<p>Этот запуск не наверстается — планировщик хранит расписание в памяти. На следующее воскресенье цикл продолжится. Перед опасными операциями делайте <code class="kbd">/backup</code> руками. Короткие пропуски (на пересборку контейнера 30–90 сек) при этом догоняются за счёт окна прощения опоздания (120 сек) — это касается частых задач вроде «пульса», но не еженедельного backup.</p>
+
+<h4>Чем <code class="kbd">/livez</code> отличается от <code class="kbd">/readyz</code> и почему сторож смотрит только на первый?</h4>
+<p><code class="kbd">/livez</code> отвечает «жив ли главный цикл бота» и базу не трогает. <code class="kbd">/readyz</code> вдобавок делает <code class="kbd">SELECT 1</code> к базе. Docker-healthcheck, watchdog и health-gate авто-деплоя смотрят именно <code class="kbd">/livez</code> — иначе кратковременная проблема с базой перезапускала бы вполне живой polling-процесс, и вы теряли бы возможность спокойно разобраться, что с базой. <code class="kbd">/readyz</code> — для ручной диагностики: если он падает, а <code class="kbd">/livez</code> в порядке, значит процесс жив, но база лежит или зависла — смотрите логи базы и <code class="kbd">DATABASE_URL</code>, не рестартуйте бота вслепую.</p>
+
+<div class="next">
+<p class="next__label">Следующие шаги</p>
+<ul>
+<li><a href="#admin-install" data-go="admin-install">Установка с нуля по шагам</a></li>
+<li><a href="#admin-backup" data-go="admin-backup">Резервное копирование и восстановление</a></li>
+<li><a href="#admin-routine" data-go="admin-routine">Эксплуатационный календарь: что делать регулярно</a></li>
+<li><a href="#admin-migrate" data-go="admin-migrate">Перенос бота на новый сервер</a></li>
+<li><a href="#admin-firewall" data-go="admin-firewall">За корпоративным межсетевым экраном (гос-контур)</a></li>
+<li><a href="#operator" data-go="operator">Оператору: ежедневная работа, команды, рассылки</a></li>
+<li><a href="#developer" data-go="developer">Разработчику: архитектура, миграции, зависимости</a></li>
+<li><a href="#security" data-go="security">Безопасность и антифишинг</a></li>
+<li><a href="#spravochnik" data-go="spravochnik">Справочник: все переменные и cron-задачи</a></li>
+</ul>
+</div>
+```
+
 ### `docs/site/_kb2/adr.html`
 
 Size: `99478` bytes  
@@ -119247,6 +133103,1819 @@ SHA-256: `f1c3ad1fd89d3d476541aaab7000a4d4e62353d059cf22a973fa98ef4e97ff6f`
 <span id="shemy-vyvody-vskryli"></span>
 ```
 
+### `docs/site/_kb2/spravochnik.html`
+
+Size: `217689` bytes  
+SHA-256: `079e910effa6383ff8a6037addcfa807952f6836049b7956e97c5d8c83e440ee`
+
+```html
+<h2 id="spravochnik">Справочник: переменные, схема БД, команды, расписание, секреты, карта репозитория, словарь</h2>
+
+<p class="lede">Оглавление и рабочая шпаргалка: где что лежит и куда идти за подробностями. По-колоночные таблицы переменных, схемы данных и расписания живут в одном месте — в разделе «Справочник (полный)»; здесь на них ссылки, а не вторые копии.</p>
+
+<p>Раздел устроен как указатель. По переменным окружения (env — настройки, которые читаются из файла <code class="kbd">infra/.env</code> при запуске контейнера), схеме базы, миграциям, ролям и расписанию фоновых задач здесь короткая сводка и ссылка на канон. Своё, не повторяющееся ни в каком другом разделе, — перечень команд жителя и оператора с точным поведением и записями в журнал, ключи настроек, реестр секретов, карта файлов репозитория, шпаргалка консольных команд, словарь терминов и дорожная карта. Правило одно и то же везде: истина — код, и если старый документ называет другое число, верить надо коду.</p>
+
+<div class="note">
+<p class="note__label">Главное правило двух механизмов настройки</p>
+<p>Env-переменные задаются один раз в файле <code class="kbd">infra/.env</code> и применяются при перезапуске бота (<code class="kbd">docker compose up -d --force-recreate bot</code>). А «настройки» (ссылки, тексты, контакты, тематики, населённые пункты) меняются прямо на ходу через меню «⚙️ Настройки бота» в служебной группе и хранятся в таблице <code class="kbd">settings</code> — перезапуск им не нужен. Это два разных места хранения, их нельзя путать: пароль базы лежит в <code class="kbd">.env</code> и без перезапуска не подхватится, а текст приветствия лежит в <code class="kbd">settings</code> и меняется мгновенно.</p>
+</div>
+
+<h3 id="spr-env">Переменные окружения: указатель по группам</h3>
+
+<p>Полный по-колоночный реестр переменных — с типами, границами допустимых значений и указанием, где именно в коде каждая читается, — живёт в разделе <a href="#ref-config" data-go="ref-config">«Справочник: конфигурация»</a>. Здесь только указатель: какая группа за что отвечает и куда идти за подробностями. Дублировать таблицу целиком мы намеренно не стали — две копии одних и тех же значений расходятся первыми.</p>
+
+<p>Общее правило одно. Переменные задаются в файле <code class="kbd">infra/.env</code> и подхватываются при перезапуске контейнера. Если переменная не задана или закомментирована знаком <code class="kbd">#</code>, бот берёт встроенное значение из класса <code class="kbd">Settings</code> (файл <code class="kbd">bot/aemr_bot/config.py</code>, библиотека Pydantic). Имя переменной в <code class="kbd">.env</code> и имя поля в коде иногда различаются: например, поле <code class="kbd">appeal_collect_timeout_seconds</code> читается из переменной <code class="kbd">APPEAL_TIMEOUT</code> — соответствие показано в каноне. Минимум для запуска — <code class="kbd">BOT_TOKEN</code>, <code class="kbd">DATABASE_URL</code> и <code class="kbd">ADMIN_GROUP_ID</code>; у остального есть рабочие значения по умолчанию.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Группа</th><th>Что настраивает</th><th>Канон</th></tr></thead>
+<tbody>
+<tr><td>Загрузка настроек</td><td>Откуда <code class="kbd">Settings</code> берёт значения, что чем перебивается, зачем нужен файл-образец <code class="kbd">.env.example</code>.</td><td><a href="#rc-load" data-go="rc-load">Как Settings загружает .env</a></td></tr>
+<tr><td>База и опознание «свой — чужой»</td><td>Строка подключения и учётные данные Postgres, идентификатор служебной группы, первый ИТ-оператор при пустой базе, папка стартовых данных.</td><td><a href="#rc-db" data-go="rc-db">База данных и идентификация</a></td></tr>
+<tr><td>Связь с мессенджером MAX</td><td>Токен бота, режим работы (опрос или webhook), адреса и секрет webhook, таймауты и повторы запросов к MAX.</td><td><a href="#rc-bot" data-go="rc-bot">MAX и режим бота</a></td></tr>
+<tr><td>Сроки и лимиты ввода</td><td>Срок ответа по SLA, окно сбора обращения в карточку, потолки длины имени, адреса, текста и ответа, число вложений, защита от потока дополнений.</td><td><a href="#rc-sla" data-go="rc-sla">SLA, лимиты обращения и ответов</a></td></tr>
+<tr><td>Рассылки</td><td>Длина сообщения рассылки, скорость отправки, частота обновления прогресса, срок жизни неоконченного черновика.</td><td><a href="#rc-broadcast" data-go="rc-broadcast">Рассылка</a></td></tr>
+<tr><td>Резервное копирование</td><td>День и час копии, папка и глубина хранения, парольная фраза GPG, таймауты шагов, выгрузка в S3-совместимое хранилище.</td><td><a href="#rc-backup" data-go="rc-backup">Бэкап</a></td></tr>
+<tr><td>Проверки живости</td><td>Внутренний пульс и порог «протухания», интервал самопроверки, внешний адрес мониторинга, чувствительность пробы <code class="kbd">/livez</code> к остановке опроса.</td><td><a href="#rc-healthcheck" data-go="rc-healthcheck">Healthcheck и тайминги живости</a></td></tr>
+<tr><td>Журнал, время, логи</td><td>Глубина хранения журнала действий, часовой пояс (по нему считаются рабочие часы и всё расписание), подробность логов.</td><td><a href="#rc-misc" data-go="rc-misc">Аудит, время и логирование</a></td></tr>
+</tbody>
+</table></div>
+
+<div class="note">
+<p class="note__label">Где задаётся число картинок в рассылке</p>
+<p>Количество картинок в одной рассылке — не переменная окружения. Оно живёт в меню «⚙️ Настройки бота» (ключ <code class="kbd">broadcast_max_images</code>) и меняется без перезапуска, см. <a href="#spr-settings" data-go="spr-settings">«Ключи настроек»</a> ниже. Это осознанное разделение: то, чем управляют оперативно, лежит в базе, а не в файле на сервере.</p>
+</div>
+
+<h4>Связь с GitHub (опционально, для синхронизации настроек)</h4>
+<p>Эти переменные читаются напрямую из окружения (в модуле <code class="kbd">services/repo_sync.py</code>), а не через общий класс настроек. Нужны, только если хотите, чтобы изменения настроек через меню бота автоматически создавали заявку (Pull Request — предложение изменения) на GitHub.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Переменная</th><th>По умолчанию</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">GITHUB_PAT</code></td><td>—</td><td>Личный токен доступа GitHub fine-grained (вид <code class="kbd">github_pat_…</code>, права Contents:RW + PullRequests:RW на репозиторий). Без него меню настроек работает, но кнопка «🔄 Синхронизировать с репо» вернёт «не настроено» (в коде <code class="kbd">SyncResult(ok=False, reason='no_token')</code>), бот при этом не падает.</td></tr>
+<tr><td><code class="kbd">GITHUB_REPO</code></td><td><code class="kbd">Gaben1488/aemr-bot</code></td><td>Репозиторий, в который бот создаёт заявки. Формат <code class="kbd">владелец/название</code>.</td></tr>
+<tr><td><code class="kbd">GITHUB_PR_BASE_BRANCH</code></td><td><code class="kbd">main</code></td><td>Ветка, в которую идут заявки на изменение. Бот никогда не пишет напрямую в <code class="kbd">main</code> и не делает force-push: каждое изменение проходит через PR-ревью.</td></tr>
+</tbody>
+</table></div>
+<div class="note">
+<p class="note__label">Две переменные, которых нет в образце</p>
+<p>Имя и почта автора коммитов берутся <strong>не</strong> из env, а из настроек в базе (ключи <code class="kbd">commit_author_name</code> / <code class="kbd">commit_author_email</code>, меню «Автор коммитов»). Есть ещё одна необязательная переменная окружения — <code class="kbd">PHISHTANK_APP_KEY</code>: если её задать, к источникам антифишинга добавится PhishTank. Её нет в файле-образце, потому что основные источники URLhaus и ThreatFox (оба от abuse.ch) работают без ключей.</p>
+</div>
+
+<h3 id="spr-db">Схема базы данных: указатель по таблицам</h3>
+
+<p>База — PostgreSQL, все таблицы описаны в файле <code class="kbd">bot/aemr_bot/db/models.py</code>. Разбор каждой колонки — тип, значение по умолчанию, ключи и индексы, — а также карта связей и разбор перечислений вынесены в <a href="#ref-schema" data-go="ref-schema">«Справочник: схема данных»</a>. Здесь только оглавление: какая таблица за что отвечает и куда идти за колонками.</p>
+
+<ul class="dot">
+<li><a href="#rs-users" data-go="rs-users"><code class="kbd">users</code></a> — житель: контакты, обе даты согласия, отзыв, признак блокировки и текущий шаг анкеты.</li>
+<li><a href="#rs-appeals" data-go="rs-appeals"><code class="kbd">appeals</code></a> — обращение с номером <code class="kbd">#N</code>: статус, населённый пункт, адрес, тема, текст, вложения, ссылки на карточки в служебной группе.</li>
+<li><a href="#rs-messages" data-go="rs-messages"><code class="kbd">messages</code></a> — переписка по обращению: направление (от жителя, от оператора, системное), текст, вложения, автор.</li>
+<li><a href="#rs-operators" data-go="rs-operators"><code class="kbd">operators</code></a> — сотрудники администрации: ФИО, роль, признак активности.</li>
+<li><a href="#rs-broadcasts" data-go="rs-broadcasts"><code class="kbd">broadcasts</code></a> — запущенные рассылки: текст, картинки, статус, счётчики доставок.</li>
+<li><a href="#rs-deliveries" data-go="rs-deliveries"><code class="kbd">broadcast_deliveries</code></a> — журнал доставок рассылки, по строке на получателя.</li>
+<li><a href="#rs-templates" data-go="rs-templates"><code class="kbd">broadcast_templates</code></a> — сохранённые типовые тексты рассылок со счётчиком применений и мягким архивом.</li>
+<li><a href="#rs-events" data-go="rs-events"><code class="kbd">events</code></a> — сырые события MAX с уникальным ключом: защита от повторной обработки одного и того же обновления.</li>
+<li><a href="#rs-audit" data-go="rs-audit"><code class="kbd">audit_log</code></a> — журнал действий операторов, только на дозапись, с ограниченным сроком хранения.</li>
+<li><a href="#rs-settings" data-go="rs-settings"><code class="kbd">settings</code></a> — настройки, редактируемые прямо в боте без перезапуска; перечень ключей — в разделе <a href="#spr-settings" data-go="spr-settings">«Ключи настроек»</a> ниже.</li>
+<li><a href="#rs-wizard" data-go="rs-wizard"><code class="kbd">wizard_state</code></a> — незаконченный мастер оператора, чтобы прогресс переживал перезапуск бота.</li>
+</ul>
+
+<p>Как таблицы связаны между собой, показывает <a href="#rs-er" data-go="rs-er">карта связей</a>; словарь состояний — статусы обращения, шаги анкеты жителя, роли, направления сообщений и статусы рассылки — собран в <a href="#rs-enums" data-go="rs-enums">разборе перечислений</a>.</p>
+
+<div class="note">
+<p class="note__label">Таблица настроек называется settings</p>
+<p>В части старых документов она фигурировала как <code class="kbd">app_settings</code>, а число таблиц называлось меньшим — это следы восстановленной по памяти схемы. Истина — <code class="kbd">models.py</code> и канон схемы по ссылкам выше; при расхождении верить надо коду.</p>
+</div>
+
+<h4>Коды действий в журнале (audit_log.action)</h4>
+<p>Таблица работает только на дозапись (append-only). Полный перечень кодов <code class="kbd">action</code>, которые пишет бот (сверено с кодом), сгруппирован по объектам:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Группа</th><th>Коды <code class="kbd">action</code></th></tr></thead>
+<tbody>
+<tr><td>По обращениям</td><td><code class="kbd">reply</code> (ответ свайпом), <code class="kbd">reply_via_command</code> (ответ командой <code class="kbd">/reply</code>), <code class="kbd">reopen</code>, <code class="kbd">close</code></td></tr>
+<tr><td>По жителям</td><td><code class="kbd">block</code>, <code class="kbd">unblock</code>, <code class="kbd">erase</code>, <code class="kbd">self_erase</code> (<code class="kbd">/forget</code> от жителя), <code class="kbd">self_consent_revoke</code>, <code class="kbd">self_subscribe_broadcast</code>, <code class="kbd">auto_erase_pdn_retention</code> (авто-обезличивание через 30 дней), <code class="kbd">resident_search_found</code>, <code class="kbd">resident_search_not_found</code></td></tr>
+<tr><td>По настройкам</td><td><code class="kbd">setting_update</code>, <code class="kbd">setting_list_add</code>, <code class="kbd">setting_list_del</code>, <code class="kbd">setting_obj_add</code>, <code class="kbd">setting_obj_del</code>, <code class="kbd">settings_pr_created</code></td></tr>
+<tr><td>По операторам</td><td><code class="kbd">operator_upsert</code>, <code class="kbd">operator_role_change</code>, <code class="kbd">operator_deactivate</code>, <code class="kbd">operator_reactivate</code>, <code class="kbd">operator_auto_deactivated_stale</code></td></tr>
+<tr><td>По рассылкам</td><td><code class="kbd">broadcast_send</code> (НЕ <code class="kbd">broadcast_started</code>), <code class="kbd">broadcast_stop</code>, <code class="kbd">broadcast_cancel_cooldown</code></td></tr>
+<tr><td>По шаблонам рассылок</td><td><code class="kbd">broadcast_template_create</code>, <code class="kbd">broadcast_template_rename</code>, <code class="kbd">broadcast_template_update</code>, <code class="kbd">broadcast_template_clone</code>, <code class="kbd">broadcast_template_delete</code></td></tr>
+</tbody>
+</table></div>
+<div class="note">
+<p class="note__label">Канонические имена действий</p>
+<p>В старых черновиках встречались <code class="kbd">broadcast_started</code> и <code class="kbd">setting_changed</code> — в коде их нет. Канонические имена: <code class="kbd">broadcast_send</code> (подтверждение рассылки) и <code class="kbd">setting_update</code> (изменение настройки и командой, и кнопочным мастером). Действия типа <code class="kbd">pdn_incident</code> в коде тоже нет — инциденты с ПДн отдельным типом записи не фиксируются (это организационная процедура, не автоматизирована).</p>
+</div>
+
+<h3 id="spr-migrations">Миграции базы (Alembic)</h3>
+
+<p>Миграция — это шаг изменения структуры базы. Файлы лежат в <code class="kbd">bot/aemr_bot/db/alembic/versions/</code> и применяются автоматически при старте контейнера. Цепочка линейная и без пропусков номеров: удалить любую ревизию нельзя, это порвёт цепочку на рабочем сервере. Летопись «какая миграция что добавила» — в разделе <a href="#rs-migrations" data-go="rs-migrations">«Миграции: летопись схемы»</a>.</p>
+
+<p>Полезные команды (выполняются внутри контейнера):</p>
+<div class="cmd"><code>docker compose exec bot alembic current</code><span class="cmd__what">текущая версия схемы в базе</span></div>
+<div class="cmd"><code>docker compose exec bot alembic history --verbose</code><span class="cmd__what">вся история миграций</span></div>
+<div class="cmd"><code>docker compose exec bot alembic upgrade head</code><span class="cmd__what">применить новые миграции</span></div>
+<div class="cmd"><code>docker compose exec bot alembic downgrade -1</code><span class="cmd__what">откатить одну ревизию назад</span></div>
+
+<h3 id="spr-citizen-cmd">Команды жителя в личке</h3>
+
+<p>Все команды доступны без входа в систему. Если житель отправит команду в служебную группу, бот её проигнорирует. Единственное исключение — <code class="kbd">/whoami</code>, которая в служебной группе отвечает, а в личке у жителя тихо игнорируется (намеренно, чтобы команда не «светилась» обычным жителям).</p>
+
+<div class="note">
+<p class="note__label">В /-меню MAX публикуются ровно две команды</p>
+<p>При старте бот публикует в подсказку команд клиента MAX ровно две универсальные команды — <code class="kbd">/start</code> и <code class="kbd">/menu</code>, осмысленные в любом чате. Делается это прямым запросом <code class="kbd">PATCH /me</code> с непустым списком <code class="kbd">commands</code>, а не вызовом <code class="kbd">set_my_commands()</code>: у того в библиотеке стоит предохранитель <code class="kbd">if self.commands:</code> (защита от случайной очистки), из-за которого пустой список просто игнорируется. Специфичные команды жителя (<code class="kbd">/forget</code>, <code class="kbd">/subscribe</code> и др.) и оператора в подсказку <strong>не</strong> выносятся: MAX API не умеет показывать команды только в одном чате (нет <code class="kbd">BotCommandScopeChat</code>), и иначе операторы в служебной группе видели бы жительские команды и могли тапнуть случайно. На набор это не влияет — все команды, включая <code class="kbd">/help</code>, при ручном вводе работают в своём чате как обычно; в подсказке их просто нет.</p>
+</div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Команда</th><th>Что делает</th><th>Журнал действий</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">/start</code></td><td>Присылает приветствие и главное меню жителя. Если жителя ещё нет в таблице <code class="kbd">users</code> — создаёт запись с <code class="kbd">dialog_state=idle</code>. Если житель уже общался — состояние и история не сбрасываются. Текст приветствия — из настройки <code class="kbd">welcome_text</code> (если пусто — из <code class="kbd">seed/welcome.md</code>). Нажатие «Старт» в карточке бота даёт тот же эффект.</td><td>не пишет</td></tr>
+<tr><td><code class="kbd">/menu</code></td><td>То же, что <code class="kbd">/start</code>: заново показывает главное меню. Полезно, если житель удалил кнопки.</td><td>не пишет</td></tr>
+<tr><td><code class="kbd">/help</code></td><td>Список доступных команд жителя с кратким описанием.</td><td>не пишет</td></tr>
+<tr><td><code class="kbd">/policy</code></td><td>Присылает PDF политики обработки ПДн (<code class="kbd">docs/PRIVACY.pdf</code>). Токен файла кешируется в <code class="kbd">policy_pdf_token</code>. Если кеш пуст — пробует загрузить заново; если и это не вышло — присылает прямую ссылку из <code class="kbd">policy_url</code>.</td><td>не пишет</td></tr>
+<tr><td><code class="kbd">/rules</code></td><td>Правила пользования ботом для жителей (текст <code class="kbd">RULES_TEXT</code>).</td><td>не пишет</td></tr>
+<tr><td><code class="kbd">/subscribe</code></td><td>Подписывает на рассылки: <code class="kbd">subscribed_broadcast=true</code>. Доставка работает только при <code class="kbd">is_blocked=false</code>. Альтернатива — кнопка подписки в главном меню.</td><td><code class="kbd">self_subscribe_broadcast</code></td></tr>
+<tr><td><code class="kbd">/unsubscribe</code></td><td>Отписывает: <code class="kbd">subscribed_broadcast=false</code>. Альтернатива — кнопка «🔕 Отписаться» под каждым сообщением рассылки.</td><td>—</td></tr>
+<tr><td><code class="kbd">/forget</code></td><td>Обезличивает данные жителя (право по статье 21 152-ФЗ). Равнозначно <code class="kbd">/erase</code> от ИТ на самого себя. Что меняется: <code class="kbd">first_name='Удалено'</code>, <code class="kbd">phone=NULL</code>, <code class="kbd">phone_normalized=NULL</code>, <code class="kbd">consent_pdn_at=NULL</code>, <code class="kbd">dialog_state='idle'</code>, <code class="kbd">dialog_data={}</code>, <code class="kbd">subscribed_broadcast=false</code>, <code class="kbd">is_blocked=true</code>. Тексты обращений и сообщений очищаются до NULL/пусто.</td><td><code class="kbd">self_erase</code></td></tr>
+<tr><td><code class="kbd">/export</code></td><td>Скрытая команда выгрузки собственных данных жителем (право на доступ, статья 14 152-ФЗ).</td><td>—</td></tr>
+<tr><td><code class="kbd">/cancel</code></td><td>Прерывает текущую анкету, возвращает в <code class="kbd">idle</code> и в главное меню. Работает на любом шаге.</td><td>не пишет</td></tr>
+<tr><td><code class="kbd">/whoami</code></td><td>В личке у жителя <strong>тихо игнорируется</strong>. (В служебной группе возвращает <code class="kbd">max_user_id</code>, <code class="kbd">first_name</code>, <code class="kbd">chat_id</code>.)</td><td>не пишет</td></tr>
+</tbody>
+</table></div>
+
+<h4>Главное меню жителя</h4>
+<p>Под приветствием житель видит inline-кнопки. По коду их семь рядов (по одной кнопке в ряду):</p>
+<ol class="steps">
+<li><strong>📝 Написать обращение</strong> (<code class="kbd">menu:new_appeal</code>) — запускает анкету. Сначала проверяется <code class="kbd">consent_pdn_at</code>; если согласия ещё нет — добавляется шаг с PDF политики.</li>
+<li><strong>📂 Мои обращения</strong> (<code class="kbd">menu:my_appeals</code>) — список обращений по 5 на страницу, с эмодзи статуса и датой.</li>
+<li><strong>Подписка/отписка от рассылки</strong> — кнопка динамическая: «🔕 Не хочу получать рассылку» (<code class="kbd">info:subscribe_off</code>) для подписанного, иначе «🔔 Подписаться на рассылку» (<code class="kbd">info:subscribe_on</code>).</li>
+<li><strong>🏛 Приём граждан</strong> (<code class="kbd">menu:appointment</code>) — текст из настройки <code class="kbd">appointment_text</code> (расписание приёма и телефон записи). Электронная приёмная открывается отсюда, если ссылка задана.</li>
+<li><strong>ℹ️ Полезная информация</strong> (<code class="kbd">menu:useful_info</code>) — открывает подменю (экстренные службы, маршруты, диспетчеры).</li>
+<li><strong>🛡️ Защита от мошенников</strong> (<code class="kbd">menu:security</code>) — антифишинговый раздел.</li>
+<li><strong>⚙️ Настройки и помощь</strong> (<code class="kbd">menu:settings</code>).</li>
+</ol>
+<div class="note">
+<p class="note__label">Семь кнопок, не шесть</p>
+<p>Часть старых документов и даже комментарий в коде говорят про «6 кнопок» и про переезд электронной приёмной в подменю. Фактически в текущем коде семь рядов: кнопка «🛡️ Защита от мошенников» добавлена отдельным пунктом сверх исходных шести. Верно — семь.</p>
+</div>
+
+<h4>Подменю «Полезная информация»</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Кнопка</th><th>Что делает</th></tr></thead>
+<tbody>
+<tr><td>☎️ Телефоны экстренных и аварийных служб</td><td>Сгруппированный список из настройки <code class="kbd">emergency_contacts</code> (массив объектов <code class="kbd">{name, phone}</code>).</td></tr>
+<tr><td>🚌 Муниципальные маршруты</td><td>Прямая ссылка на <code class="kbd">udth_schedule_url</code> (кнопка-ссылка).</td></tr>
+<tr><td>🚍 Межмуниципальные маршруты</td><td>Прямая ссылка на <code class="kbd">udth_schedule_intermunicipal_url</code>.</td></tr>
+<tr><td>📞 Диспетчерские автотранспорта</td><td>Список из <code class="kbd">transport_dispatcher_contacts</code> (массив объектов <code class="kbd">{routes, phone}</code>).</td></tr>
+<tr><td>🔔/🔕 Подписка</td><td>Переключает <code class="kbd">subscribed_broadcast</code> — то же, что <code class="kbd">/subscribe</code> / <code class="kbd">/unsubscribe</code>.</td></tr>
+</tbody>
+</table></div>
+
+<h3 id="spr-operator-cmd">Команды оператора в служебной группе</h3>
+
+<p>Эти команды работают, только когда оператор вызывает их из чата с идентификатором <code class="kbd">ADMIN_GROUP_ID</code>. Гард <code class="kbd">ensure_operator</code> пропускает любую активную роль; гард <code class="kbd">ensure_role(IT)</code> пропускает строго роль <code class="kbd">it</code> (координатор НЕ проходит).</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Команда</th><th>Доступ</th><th>Назначение и поведение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">/reply &lt;N&gt; &lt;текст&gt;</code></td><td>все операторы</td><td>Ответ жителю по обращению <code class="kbd">#N</code>. Проверяет лимит (≤3000 символов) и <code class="kbd">is_blocked</code>. Оборачивает текст в формальную шапку письма (<code class="kbd">CITIZEN_REPLY_TEMPLATE</code>): «✉️ ОТВЕТ АДМИНИСТРАЦИИ ЕЛИЗОВСКОГО МУНИЦИПАЛЬНОГО ОКРУГА», ниже строка «📌 Обращение #N от {дата}», тема и адрес, затем сам ответ. Доставляет жителю, ставит <code class="kbd">status='answered'</code>, <code class="kbd">answered_at=now()</code>. Можно приложить несколько картинок (лимит одного сообщения MAX — <code class="kbd">ATTACHMENTS_PER_RELAY_MESSAGE</code>, по умолчанию 10). Журнал: <code class="kbd">reply_via_command</code>.</td></tr>
+<tr><td><code class="kbd">/reopen &lt;N&gt;</code></td><td>все операторы</td><td>Возвращает закрытое/отвеченное обращение в работу. Четыре исхода: <em>reopened</em> (статус → <code class="kbd">in_progress</code>, сброс <code class="kbd">answered_at</code>/<code class="kbd">closed_at</code>, audit <code class="kbd">reopen</code>); <em>already_open</em> (уже в работе, ничего не меняем); <em>blocked_by_revoke</em> (закрыто из-за отзыва — возобновлять нельзя); <em>not_found</em>. Жителю при reopen ничего не уходит.</td></tr>
+<tr><td><code class="kbd">/close &lt;N&gt;</code></td><td>все операторы</td><td>Закрывает без ответа (спам, дубль, не по адресу). <code class="kbd">status='closed'</code>, <code class="kbd">closed_at=now()</code>, жителю ничего не уходит. Журнал: <code class="kbd">close</code>.</td></tr>
+<tr><td><code class="kbd">/stats [период]</code></td><td>все операторы</td><td>XLSX-выгрузка за период: <code class="kbd">today</code> (по умолчанию), <code class="kbd">week</code>, <code class="kbd">month</code>, <code class="kbd">quarter</code>, <code class="kbd">half_year</code>, <code class="kbd">year</code>, <code class="kbd">all</code>. 17 колонок: №, создано, имя, телефон, <code class="kbd">max_user_id</code>, населённый пункт, адрес, тематика, суть, статус, ответ оператора, время ответа в часах, «В SLA (4ч)» (да/нет), согласие на ПДн, согласие отозвано, подписан на рассылку, заблокирован. Операция чтения, в журнал не пишет.</td></tr>
+<tr><td><code class="kbd">/open_tickets</code></td><td>все операторы</td><td>Публикует заголовок «⏳ Найдено неотвеченных обращений: N» и затем по карточке на каждое открытое обращение. Свайп-ответ по этим карточкам работает (распознаётся по тексту «Обращение #N»). Операция чтения.</td></tr>
+<tr><td><code class="kbd">/find_resident &lt;phone&#124;max_user_id&gt;</code></td><td>все операторы</td><td>Карточка одного жителя без открытия обращения. Различает запрос: только цифры длиной 4–9 → <code class="kbd">max_user_id</code>; цифры ≥10 или с <code class="kbd">+</code> → телефон. Возвращает имя, <strong>маскированный</strong> телефон <code class="kbd">+7***1234</code>, статус согласия, подписку, блокировку, последнее обращение, общее число обращений. Запрос пишется в журнал: <code class="kbd">resident_search_found</code> / <code class="kbd">resident_search_not_found</code> (телефон в журнале маскируется).</td></tr>
+<tr><td><code class="kbd">/diag</code></td><td>все операторы</td><td>Текстовая сводка: пульс (последнее событие, всего), жители (всего/подписаны/заблокированы, новые за 24ч), обращения (всего/в работе, новые за 24ч, ответов за 24ч), рассылки (DONE/FAILED, запущено за 24ч, зависших SENDING, неуспешных доставок), конфигурация (режим, лимит ответа, SLA). Блок «Внимание» — только если есть аномалии.</td></tr>
+<tr><td><code class="kbd">/op_help</code></td><td>админ-чат</td><td>Закрепляемая панель быстрых действий (состав по роли, см. ниже).</td></tr>
+<tr><td><code class="kbd">/whoami</code></td><td>админ-чат</td><td>Возвращает <code class="kbd">max_user_id</code>, <code class="kbd">first_name</code>, <code class="kbd">chat_id</code> служебной группы.</td></tr>
+<tr><td><code class="kbd">/help</code>, <code class="kbd">/menu</code>, <code class="kbd">/start</code></td><td>админ-чат</td><td>Открывают меню оператора, но <strong>без закрепления</strong>. Закрепление включается только при <code class="kbd">/op_help</code>.</td></tr>
+<tr><td><code class="kbd">/broadcast [list]</code></td><td>coordinator, it</td><td>Мастер рассылки; <code class="kbd">list</code> — последние 10 рассылок со статусами и счётчиками.</td></tr>
+<tr><td><code class="kbd">/erase max_user_id=&#124;phone=</code></td><td>только it</td><td>Удаление ПДн жителя (статья 21 152-ФЗ). Журнал: <code class="kbd">erase</code>.</td></tr>
+<tr><td><code class="kbd">/setting [list&#124;&lt;key&gt; &lt;value&gt;]</code></td><td>только it</td><td>Управление настройками. Журнал: <code class="kbd">setting_update</code> (само значение не пишется).</td></tr>
+<tr><td><code class="kbd">/add_operators</code></td><td>только it</td><td>Массовая регистрация операторов (многострочно). Журнал: <code class="kbd">operator_upsert</code> на каждого.</td></tr>
+<tr><td><code class="kbd">/backup</code></td><td>только it</td><td>Внеплановый <code class="kbd">pg_dump</code> прямо сейчас.</td></tr>
+</tbody>
+</table></div>
+
+<div class="note">
+<p class="note__label">Команды жителя в служебной группе</p>
+<p>Если в служебной группе набрать команду жителя (<code class="kbd">/forget</code>, <code class="kbd">/cancel</code>, <code class="kbd">/export</code>, <code class="kbd">/policy</code>, <code class="kbd">/rules</code>, <code class="kbd">/subscribe</code>, <code class="kbd">/unsubscribe</code>), бот не открывает меню оператора, а отвечает подсказкой «Эта команда — для жителей в личке с ботом. В этом чате используйте /op_help».</p>
+</div>
+
+<h4>Панель «/op_help» по ролям</h4>
+<p>Состав панели зависит от роли вызвавшего оператора. Базовые действия есть у всех; добавки даются по флагам роли. Кнопка «📋 Памятка оператора» (полная инструкция отдельным экраном с разделом «Безопасность и антифишинг») доступна любой роли сверх перечисленных действий.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Группа кнопок</th><th>Кому видна</th><th>Кнопки</th></tr></thead>
+<tbody>
+<tr><td>Базовые действия</td><td>любая роль (aemr, egp, coordinator, it)</td><td>📋 Открытые обращения (со счётчиком), 📊 Статистика (подменю периодов), 🛠 Диагностика</td></tr>
+<tr><td>Добавка для рассылок</td><td>coordinator и it</td><td>📢 Сделать рассылку, 📜 История рассылок, 📋 Шаблоны рассылок</td></tr>
+<tr><td>Добавка для администрирования</td><td>только it</td><td>💾 Снять бэкап, 👥 Операторы, ⚙️ Настройки бота, 📊 Аудитория и согласия</td></tr>
+</tbody>
+</table></div>
+<p>Итог по ролям: <code class="kbd">aemr</code> и <code class="kbd">egp</code> — 3 действия, <code class="kbd">coordinator</code> — 6 действий, <code class="kbd">it</code> — 10 действий. Плюс кнопка «Памятка оператора» сверх для всех (то есть в массиве кнопок фактически 4 / 7 / 11 элементов). Старые числа «9 для всех» и «13 для ИТ» устарели.</p>
+
+<h4>Кнопки под карточкой обращения</h4>
+<p>Набор кнопок под карточкой зависит от роли и статуса обращения:</p>
+<ul class="dot">
+<li><strong>Статусы <code class="kbd">new</code> / <code class="kbd">in_progress</code>, всем ролям:</strong> «✉️ Ответить и закрыть», «💬 Ответить промежуточно (не закрывая)», «⛔ Закрыть без ответа».</li>
+<li><strong>Статусы <code class="kbd">answered</code> / <code class="kbd">closed</code> (если не закрыто из-за отзыва):</strong> «🔁 Возобновить».</li>
+<li><strong>Только роли <code class="kbd">it</code> (кнопки видны всем, но callback отбивается гардом):</strong> «🚫 Заблокировать» / «✅ Разблокировать», «🗑 Удалить ПДн».</li>
+<li><strong>Всегда внизу:</strong> «🏠 В админ-меню».</li>
+</ul>
+<p>Кнопки «🔄 В работу» нет — статус <code class="kbd">in_progress</code> присваивается логикой бота, а не явным действием оператора.</p>
+
+<h4>Подробности «details» в журнале действий</h4>
+<p>Что именно бот кладёт в поле <code class="kbd">details</code> при типовых действиях (только метаданные, без текстов):</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Действие</th><th><code class="kbd">action</code></th><th><code class="kbd">target</code></th><th><code class="kbd">details</code></th></tr></thead>
+<tbody>
+<tr><td>Ответ свайпом</td><td><code class="kbd">reply</code></td><td><code class="kbd">appeal #N</code></td><td><code class="kbd">{"chars": длина}</code></td></tr>
+<tr><td>Ответ командой <code class="kbd">/reply</code></td><td><code class="kbd">reply_via_command</code></td><td><code class="kbd">appeal #N</code></td><td><code class="kbd">{"chars": длина}</code></td></tr>
+<tr><td><code class="kbd">/reopen</code></td><td><code class="kbd">reopen</code></td><td><code class="kbd">appeal #N</code></td><td><code class="kbd">{}</code></td></tr>
+<tr><td><code class="kbd">/close</code></td><td><code class="kbd">close</code></td><td><code class="kbd">appeal #N</code></td><td><code class="kbd">{}</code></td></tr>
+<tr><td><code class="kbd">/erase</code></td><td><code class="kbd">erase</code></td><td><code class="kbd">user max_id=&lt;id&gt;</code></td><td><code class="kbd">{}</code></td></tr>
+<tr><td><code class="kbd">/forget</code> от жителя</td><td><code class="kbd">self_erase</code></td><td><code class="kbd">user max_id=&lt;id&gt;</code></td><td><code class="kbd">{}</code></td></tr>
+<tr><td><code class="kbd">/setting</code></td><td><code class="kbd">setting_update</code></td><td><code class="kbd">&lt;ключ&gt;</code></td><td><code class="kbd">{"kind": тип, "chars"/"items": …}</code></td></tr>
+<tr><td><code class="kbd">/add_operators</code> (на каждого)</td><td><code class="kbd">operator_upsert</code></td><td><code class="kbd">max_id=&lt;id&gt;</code></td><td><code class="kbd">{"role": роль, "full_name": ФИО}</code></td></tr>
+<tr><td>Подтверждение <code class="kbd">/broadcast</code></td><td><code class="kbd">broadcast_send</code></td><td><code class="kbd">broadcast #&lt;id&gt;</code></td><td><code class="kbd">{"chars": длина, "subscriber_count": N}</code></td></tr>
+</tbody>
+</table></div>
+
+<h3 id="spr-roles">Роли операторов</h3>
+
+<p>Бот различает четыре роли: <code class="kbd">coordinator</code>, <code class="kbd">aemr</code>, <code class="kbd">egp</code> и <code class="kbd">it</code>. Отвечают жителям и работают с обращениями все четверо одинаково — разница только в «опасных» админ-командах: настройки, удаление персональных данных, блокировка жителя и бэкап доступны роли <code class="kbd">it</code>, рассылка — координатору и ИТ. Между первыми тремя ролями набор команд в коде сейчас совпадает, различие организационное: аудит «кто что сделал» и разбивка статистики.</p>
+
+<p>Матрица «кто что может» по строкам действий — в разделе <a href="#operator-roli" data-go="operator-roli">«Роли и кто что может»</a> для оператора. Как это устроено в коде — перечисление ролей и два гарда, через которые проходит каждая команда, — в разделе <a href="#rc-tri-roli" data-go="rc-tri-roli">«Три роли и два гарда»</a>.</p>
+
+<p>Три правила, которые полезно помнить при выдаче ролей. Роль <code class="kbd">it</code> включает координатора целиком: если один человек и ИТ, и координатор, ему ставят <code class="kbd">role=it</code>, а не две записи. Самомодификация заблокирована — даже ИТ не может изменить роль самому себе через <code class="kbd">/add_operators</code> (проверка <code class="kbd">actor_id == target_id</code>), это защита и от случайного понижения, и от уговоров со стороны. И последнего активного ИТ бот деактивировать не даст: иначе система осталась бы без администратора.</p>
+
+<h3 id="spr-sla">SLA: как срок считается в коде</h3>
+
+<p>В коде реализован один базовый срок ответа: переменная <code class="kbd">SLA_RESPONSE_HOURS</code> (по умолчанию четыре часа). По его истечении бот пишет в служебную группу, что обращение просрочено. Считается срок по <strong>рабочему времени</strong>, а не по астрономическому: часы копятся только внутри окна <code class="kbd">SLA_WORK_START_HOUR</code>–<code class="kbd">SLA_WORK_END_HOUR</code> (по умолчанию 9:00–18:00 по Камчатке) рабочих дней — будни минус праздники РФ из файла <code class="kbd">seed/holidays.json</code> — и <strong>за вычетом обеденного перерыва</strong> <code class="kbd">SLA_LUNCH_START_HOUR</code>–<code class="kbd">SLA_LUNCH_END_HOUR</code> (по умолчанию 12:00–13:00). Обед вычитается потому, что в обед никто не работает: таймер на этот час останавливается синхронно с напоминалками, которые в обеденный час и так молчат.</p>
+
+<p>Практический смысл: обращение, поданное в пятницу вечером, не «горит» все выходные — отсчёт продолжается с открытия следующего рабочего окна. А показатель «висит N часов» в напоминалках — это календарный возраст обращения, отдельная метрика, с просрочкой её путать не надо.</p>
+
+<p>Расчёт живёт в модуле <code class="kbd">services/sla.py</code>: функция <code class="kbd">business_seconds_between</code> считает рабочие секунды между двумя моментами, <code class="kbd">is_overdue</code> сравнивает их с порогом. Отсюда им пользуются все места, где вообще возникает просрочка: выборка <code class="kbd">find_overdue_unanswered</code> в <code class="kbd">services/appeals.py</code>, напоминалка <code class="kbd">open-reminder-workhours</code> в <code class="kbd">services/cron.py</code> (она делит обращения на «в SLA» и «просрочено») и колонка «В SLA» в XLSX-выгрузке из <code class="kbd">services/stats.py</code>. Одна функция на весь проект — поэтому расхождений между отчётом и напоминанием быть не может.</p>
+
+<p>Поля важности или приоритета у обращения нет: в перечислении статусов только <code class="kbd">new</code>, <code class="kbd">in_progress</code>, <code class="kbd">answered</code> и <code class="kbd">closed</code>, и ни одного механизма маршрутизации по теме. Отдельные сроки для обращений высокой важности, переход промежуточного ответа в окончательное решение, возврат «не наша компетенция» — всё это нормы регламента, а не значения в коде; они разобраны в разделе <a href="#operator-sla" data-go="operator-sla">«Сроки ответа (SLA)»</a> для оператора. Требования к самому тексту ответа — тон под эмоцию жителя и чек-лист обязательных частей — в разделе <a href="#operator-ton" data-go="operator-ton">«Памятка по тону»</a>.</p>
+
+<h3 id="spr-cron">Расписание фоновых задач (cron)</h3>
+
+<p>cron здесь — это планировщик задач (APScheduler), который работает <strong>внутри</strong> процесса бота, а не в системном планировщике сервера. Отдельного контейнера у него нет: остановился бот — остановились и задачи. Все времена считаются по часовому поясу <code class="kbd">TZ</code>, по умолчанию <code class="kbd">Asia/Kamchatka</code>.</p>
+
+<p>Поимённый перечень задач — расписание, назначение и место регистрации каждой — в разделе <a href="#rcr-table" data-go="rcr-table">«Все задачи планировщика»</a>. Там же рядом лежат сутки <a href="#rcr-day" data-go="rcr-day">на одной шкале</a>: видно, что ночью процесс намеренно занят уборкой, а ежечасные задачи специально разнесены по разным минутам часа, чтобы не создавать всплеск нагрузки. Что именно замолкает в праздники, а что обязано работать всегда, разобрано в разделе <a href="#rcr-holidays" data-go="rcr-holidays">«Что замолкает в праздники, а что нет»</a>.</p>
+
+<p>Общие параметры одинаковы у всех задач и заданы один раз при сборке планировщика: <code class="kbd">max_instances=1</code> — второй экземпляр той же задачи не запустится, пока не закончил первый; <code class="kbd">coalesce=True</code> — пропущенные за время простоя срабатывания схлопываются в одно, а не выстреливают очередью; <code class="kbd">misfire_grace_time=120</code> секунд — насколько задача может опоздать и всё-таки выполниться. Подробнее — в разделе <a href="#rcr-shared" data-go="rcr-shared">«Что одинаково у всех задач»</a>.</p>
+
+<div class="note">
+<p class="note__label">Тихий режим и критические алёрты</p>
+<p>Сигнальные задачи (пульс, напоминания) и алёрты по-разному реагируют на тихий режим — настройку <code class="kbd">admin_quiet_hours_enabled</code>. Обычный пульс и не срочные уведомления в тихие часы молчат, а критические алёрты (упавший бэкап, ошибка очистки данных, авто-деактивация операторов, аномалия в воронке, устаревший threat-intel) пробивают тишину — про реальный инцидент оператор узнаёт сразу. Отдельно от тихого режима работают модульные тумблеры <code class="kbd">admin_notify_*</code> из меню «🔔 Уведомления»: они выключают конкретный вид уведомления круглосуточно, а не только ночью. Подробности — в <a href="#admin-notify-toggles" data-go="admin-notify-toggles">«Администратору»</a>.</p>
+</div>
+
+<h3 id="spr-settings">Ключи настроек (таблица settings)</h3>
+
+<p>Это значения, которые ИТ-оператор меняет прямо в боте через меню «⚙️ Настройки бота» или командой <code class="kbd">/setting</code>, без перезапуска. Бот хранит их в таблице <code class="kbd">settings</code> и проверяет по «белому списку» допустимых ключей (схема в <code class="kbd">services/settings_store.py</code>). Изменить ключ вне этого списка нельзя. Всего 26 ключей.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Ключ</th><th>Тип / правила</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">welcome_text</code></td><td>строка, 1..3800</td><td>Текст приветствия жителю. Перед отправкой очищается от опасной разметки и нежелательных ссылок.</td></tr>
+<tr><td><code class="kbd">consent_text</code></td><td>строка, 1..3800, обязана содержать <code class="kbd">{policy_url}</code></td><td>Текст запроса согласия. Placeholder <code class="kbd">{policy_url}</code> бот подставляет на ссылку политики.</td></tr>
+<tr><td><code class="kbd">commit_author_name</code></td><td>строка, 1..120</td><td>Имя автора коммитов от бота при создании заявки на GitHub.</td></tr>
+<tr><td><code class="kbd">commit_author_email</code></td><td>строка, 3..200</td><td>Почта автора коммитов.</td></tr>
+<tr><td><code class="kbd">policy_url</code></td><td>строка-URL, только гос-домены</td><td>Ссылка на политику обработки персональных данных.</td></tr>
+<tr><td><code class="kbd">electronic_reception_url</code></td><td>строка-URL, только гос-домены</td><td>Ссылка на электронную приёмную.</td></tr>
+<tr><td><code class="kbd">udth_schedule_url</code></td><td>строка-URL, только гос-домены</td><td>Расписание муниципальных автобусов УДТХ.</td></tr>
+<tr><td><code class="kbd">udth_schedule_intermunicipal_url</code></td><td>строка-URL, только гос-домены</td><td>Расписание межмуниципальных автобусов.</td></tr>
+<tr><td><code class="kbd">appointment_text</code></td><td>строка, 1..2000</td><td>Текст про запись на приём граждан.</td></tr>
+<tr><td><code class="kbd">emergency_contacts</code></td><td>список объектов, ключи <code class="kbd">name</code>+<code class="kbd">phone</code></td><td>Экстренные контакты (службы, электроэнергия, отопление, вода). Поле <code class="kbd">phone</code> проверяется на формат телефона.</td></tr>
+<tr><td><code class="kbd">transport_dispatcher_contacts</code></td><td>список объектов, ключи <code class="kbd">routes</code>+<code class="kbd">phone</code></td><td>Контакты транспортных диспетчеров. Поле <code class="kbd">phone</code> проверяется на формат.</td></tr>
+<tr><td><code class="kbd">topics</code></td><td>список строк, 1..30</td><td>Список тематик обращений для шага анкеты.</td></tr>
+<tr><td><code class="kbd">broadcast_max_images</code></td><td>число, 1..20</td><td>Лимит картинок в одной рассылке (по умолчанию 5).</td></tr>
+<tr><td><code class="kbd">admin_quiet_hours_enabled</code></td><td>да/нет</td><td>Включён ли тихий режим служебного чата (по умолчанию выключен).</td></tr>
+<tr><td><code class="kbd">admin_quiet_hours_start</code></td><td>число, 0..23</td><td>Час начала тихого окна (по умолчанию 18).</td></tr>
+<tr><td><code class="kbd">admin_quiet_hours_end</code></td><td>число, 0..23</td><td>Час конца тихого окна (по умолчанию 9). Окно может переходить через полночь.</td></tr>
+<tr><td><code class="kbd">admin_notify_pulse</code></td><td>да/нет, по умолчанию да</td><td>Модульный тумблер (меню «🔔 Уведомления»): отключает пульс (<code class="kbd">pulse-hourly</code> + <code class="kbd">pulse-workhours-extra</code>) круглосуточно, независимо от тихого режима. <code class="kbd">startup-pulse</code> ему не подчиняется.</td></tr>
+<tr><td><code class="kbd">admin_notify_consent</code></td><td>да/нет, по умолчанию да</td><td>Отключает уведомление «житель дал согласие на ПДн».</td></tr>
+<tr><td><code class="kbd">admin_notify_subscriptions</code></td><td>да/нет, по умолчанию да</td><td>Отключает уведомления о подписке/отписке от рассылки.</td></tr>
+<tr><td><code class="kbd">admin_notify_open_reminder</code></td><td>да/нет, по умолчанию да</td><td>Отключает почасовую напоминалку «открытые обращения» (<code class="kbd">open-reminder-workhours</code>).</td></tr>
+<tr><td><code class="kbd">admin_notify_overdue_reminder</code></td><td>да/нет, по умолчанию да</td><td>Отключает почасовую напоминалку «просрочено по SLA» (<code class="kbd">overdue-reminder-workhours</code>).</td></tr>
+<tr><td><code class="kbd">admin_notify_monthly_stats</code></td><td>да/нет, по умолчанию да</td><td>Отключает месячный XLSX-отчёт (<code class="kbd">monthly-stats</code>).</td></tr>
+<tr><td><code>sla_response_hours</code></td><td>целое, 1..168</td><td>Норматив первого ответа для новых/переоткрытых периодов; начатые сохраняют своё значение.</td></tr>
+<tr><td><code>sla_followup_hours</code></td><td>целое, 0..168</td><td>Текущий внутренний порог после промежуточного ответа; 0 отключает напоминание.</td></tr>
+<tr><td><code>sla_work_schedule</code></td><td>объект версии 1</td><td>Часовой пояс, часы работы и обеда, праздничные даты; редактирование через «🕘 Рабочее время», снимки для периодов.</td></tr>
+<tr><td><code class="kbd">localities</code></td><td>список строк, 1..30</td><td>Список населённых пунктов для шага выбора в анкете.</td></tr>
+</tbody>
+</table></div>
+<p>Уведомления «житель отозвал согласие на ПДн» и «данные удалены по /erase» ни одним из ключей <code class="kbd">admin_notify_*</code> не гейтятся и тихому режиму не подчиняются — юридически значимые события по 152-ФЗ, идут всегда через <code class="kbd">critical=True</code>. См. <a href="#admin-notify-toggles" data-go="admin-notify-toggles">«Уведомления в служебный чат»</a> в разделе «Администратору».</p>
+<p>Девять ключей выгружаются в репозиторий при синхронизации (через заявку-PR): <code class="kbd">policy_url</code>, <code class="kbd">electronic_reception_url</code>, <code class="kbd">udth_schedule_url</code>, <code class="kbd">udth_schedule_intermunicipal_url</code>, <code class="kbd">appointment_text</code>, <code class="kbd">emergency_contacts</code>, <code class="kbd">transport_dispatcher_contacts</code>, <code class="kbd">topics</code>, <code class="kbd">localities</code>. Тексты <code class="kbd">welcome_text</code> и <code class="kbd">consent_text</code> хранятся в репозитории отдельно (как markdown-файлы в <code class="kbd">seed/</code>), а <code class="kbd">commit_author_*</code> в репозиторий не выгружаются — это серверная мета-информация.</p>
+
+<h4>Стартовые значения (seed)</h4>
+<p>При первом запуске пустая база заполняется из seed-файлов и кода. Что заливается:</p>
+<ul class="dot">
+<li><strong>Тематики (<code class="kbd">topics</code>)</strong> — из <code class="kbd">seed/topics.json</code>, 9 штук по порядку: Дороги, Мусор, Свалки, Благоустройство, Управляющие компании, Транспорт, Образование, Культура и спорт, Другое. Это seed, а не хардкод-дефолт (дефолт в коде — пустой список), и список редактируется Администрацией. «Другое» удобно держать всегда.</li>
+<li><strong>Населённые пункты (<code class="kbd">localities</code>)</strong> — заданы в коде, 10 территорий (бывших городских и сельских поселений; названия сохранены в кнопках бота как исторические): Елизовское ГП, Вулканное ГП, Корякское СП, Начикинское СП, Николаевское СП, Новоавачинское СП, Новолесновское СП, Паратунское СП, Пионерское СП, Раздольненское СП.</li>
+<li><strong>Текст приёма граждан (<code class="kbd">appointment_text</code>)</strong> — дефолт по умолчанию: «Приём граждан временно исполняющим полномочия Главы Елизовского муниципального округа А.С. Гончаровым осуществляется два раза в месяц (1 и 3 среда каждого месяца) по предварительной записи. Запись на приём ведётся по номеру телефона 8 (415-31) 7-25-29.» До 07.08.2026 дефолт намеренно говорил «района» (переходный seed, ADR-15); слово «округа» появилось решением владельца после принятия устава округа (дополнение к ADR-15). Дефолт действует только для новых установок; на работающем боте реальный текст живёт в базе, и его редактирует Администрация через меню без редеплоя.</li>
+</ul>
+
+<h3 id="spr-secrets">Реестр секретов и доступов</h3>
+
+<p>Что нужно надёжно хранить и уметь заменять (ротировать), чтобы сопровождать проект. Плановая ротация — раз в полугодие по календарю ниже.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Секрет / доступ</th><th>Где хранится</th><th>Как заменить</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">BOT_TOKEN</code> мессенджера MAX</td><td><code class="kbd">infra/.env</code> на сервере</td><td>На <code class="kbd">max.ru/business</code> сгенерировать новый токен бота. Прежний сразу перестаёт работать. Обновить <code class="kbd">.env</code>, перезапустить бота.</td></tr>
+<tr><td><code class="kbd">POSTGRES_PASSWORD</code></td><td><code class="kbd">infra/.env</code></td><td>Внутри контейнера сменить пароль (<code class="kbd">ALTER USER aemr WITH PASSWORD '...'</code>), затем обновить <code class="kbd">.env</code> и часть <code class="kbd">DATABASE_URL</code>.</td></tr>
+<tr><td><code class="kbd">BACKUP_GPG_PASSPHRASE</code></td><td><code class="kbd">infra/.env</code> + менеджер паролей</td><td>Сгенерировать новую. Старые файлы <code class="kbd">.sql.gpg</code> прежней фразой не откроются — храните обе с пометкой «до/после даты». При компрометации обязательно перешифровать существующие бэкапы или утилизировать старые.</td></tr>
+<tr><td><code class="kbd">WEBHOOK_SECRET</code> (если webhook)</td><td><code class="kbd">infra/.env</code></td><td>Сгенерировать новый (минимум 16 символов), перезапустить бота.</td></tr>
+<tr><td><code class="kbd">GITHUB_PAT</code> (если включена синхронизация)</td><td><code class="kbd">infra/.env</code> + менеджер паролей</td><td>В настройках GitHub отозвать старый и создать новый fine-grained токен (права Contents + Pull requests на репозиторий), обновить <code class="kbd">.env</code>.</td></tr>
+<tr><td><code class="kbd">BACKUP_S3_*</code> (опционально)</td><td><code class="kbd">infra/.env</code></td><td>Через панель управления вашего S3-провайдера.</td></tr>
+<tr><td><code class="kbd">PHISHTANK_APP_KEY</code> (если активирован)</td><td><code class="kbd">infra/.env</code></td><td>По требованию провайдера PhishTank.</td></tr>
+<tr><td>SSH-доступ к серверу</td><td><code class="kbd">~/.ssh/authorized_keys</code></td><td>Добавить новый ключ, проверить вход, удалить старый.</td></tr>
+<tr><td>Учётка <code class="kbd">max.ru/business</code></td><td>У ответственного администратора организации</td><td>Через стандартный порядок портала MAX.</td></tr>
+</tbody>
+</table></div>
+<p>Календарь плановой ротации: <code class="kbd">BOT_TOKEN</code> — ежегодно в январе; пароль базы (<code class="kbd">DATABASE_URL</code>) — январь и июль; при увольнении ИТ-оператора с доступом к <code class="kbd">infra/.env</code> — считать <code class="kbd">BOT_TOKEN</code> и <code class="kbd">BACKUP_GPG_PASSPHRASE</code> скомпрометированными и ротировать; при возможной утечке <code class="kbd">audit_log</code> (там есть фрагменты переписки) — ротировать <code class="kbd">BACKUP_GPG_PASSPHRASE</code> и ограничить доступ к каталогу.</p>
+<div class="note note--danger">
+<p class="note__label">Файл .env в репозиторий не коммитится</p>
+<p>В систему контроля версий (git) попадает только файл-образец <code class="kbd">infra/.env.example</code> с пустыми значениями. Сам <code class="kbd">.env</code> с реальными паролями и токенами исключён через <code class="kbd">.gitignore</code>. На сервере у файла должны быть права <code class="kbd">chmod 600</code> (читает только владелец). Если токен или пароль утёк — немедленно замените его по таблице выше.</p>
+</div>
+
+<h3 id="spr-files">Карта файлов репозитория</h3>
+
+<p>Краткий путеводитель по структуре кода. Помогает быстро понять, где что лежит, при поддержке и доработках. Подробный реестр всех файлов со статусами — в <code class="kbd">docs/_meta/FILE_INVENTORY.md</code>.</p>
+
+<h4>Точки входа и инфраструктура процесса</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Файл</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">bot/aemr_bot/main.py</code></td><td>Запуск: бот + диспетчер, проверка токена, seed, восстановление мастеров, планировщик, цикл polling/webhook.</td></tr>
+<tr><td><code class="kbd">bot/aemr_bot/config.py</code></td><td>Класс настроек Pydantic: токен, строка базы, лимиты, бэкап, рассылки, ретенция.</td></tr>
+<tr><td><code class="kbd">bot/aemr_bot/health.py</code></td><td>HTTP-эндпоинты <code class="kbd">/livez</code> / <code class="kbd">/readyz</code> / <code class="kbd">/healthz</code> + внутренний пульс.</td></tr>
+<tr><td><code class="kbd">bot/aemr_bot/db/models.py</code></td><td>Все 11 ORM-моделей SQLAlchemy и перечисления (DialogState, AppealStatus, OperatorRole, MessageDirection, BroadcastStatus).</td></tr>
+<tr><td><code class="kbd">bot/aemr_bot/db/session.py</code></td><td>Движок базы и асинхронный контекст сессии.</td></tr>
+<tr><td><code class="kbd">bot/pyproject.toml</code></td><td>Метаданные пакета, зависимости (maxapi закреплён точной версией <code class="kbd">==1.2.1</code> — критичная зависимость под ручным контролем, диапазон не допускается; плюс остальные), конфиг ruff/mypy/pytest.</td></tr>
+<tr><td><code class="kbd">bot/uv.lock</code></td><td>Зафиксированные версии всех зависимостей (lock-файл). Коммитится намеренно для защиты от дрейфа версий.</td></tr>
+<tr><td><code class="kbd">bot/alembic.ini</code></td><td>Конфиг Alembic (миграции).</td></tr>
+</tbody>
+</table></div>
+
+<h4>Обработчики событий (handlers/)</h4>
+<p>Слой, который ловит сообщения и нажатия и решает, что делать. Ключевые файлы:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Файл</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">appeal.py</code></td><td>Главная точка входа: один обработчик нажатий и один обработчик сообщений (таблица состояний + админ-поток).</td></tr>
+<tr><td><code class="kbd">appeal_funnel.py</code></td><td>Шаги воронки (контакт → имя → населённый пункт → адрес → тема → суть) и дополнения.</td></tr>
+<tr><td><code class="kbd">appeal_geo.py</code></td><td>Распознавание адреса по геолокации.</td></tr>
+<tr><td><code class="kbd">appeal_runtime.py</code></td><td>Блокировки, восстановление застрявших анкет, публикация обращения.</td></tr>
+<tr><td><code class="kbd">start.py</code></td><td>Команды жителя: <code class="kbd">/start</code>, <code class="kbd">/menu</code>, <code class="kbd">/help</code>, <code class="kbd">/policy</code>, <code class="kbd">/rules</code>, <code class="kbd">/subscribe</code>, <code class="kbd">/unsubscribe</code>, <code class="kbd">/forget</code>, <code class="kbd">/cancel</code>, <code class="kbd">/export</code>, <code class="kbd">/whoami</code>.</td></tr>
+<tr><td><code class="kbd">menu.py</code></td><td>Главное меню жителя и контактные подменю.</td></tr>
+<tr><td><code class="kbd">operator_reply.py</code></td><td>Ответ свайпом и логика дополнений.</td></tr>
+<tr><td><code class="kbd">admin_commands.py</code></td><td>Точка входа операторских команд (регистрация 11 slash-команд).</td></tr>
+<tr><td><code class="kbd">admin_panel.py</code></td><td><code class="kbd">/op_help</code>, <code class="kbd">/open_tickets</code>, <code class="kbd">/diag</code>, <code class="kbd">/backup</code>, меню оператора.</td></tr>
+<tr><td><code class="kbd">admin_settings.py</code></td><td>Иерархическое меню «⚙️ Настройки бота» по ключам.</td></tr>
+<tr><td><code class="kbd">admin_operators.py</code></td><td>Мастер добавления оператора и управление ролями.</td></tr>
+<tr><td><code class="kbd">admin_stats.py</code></td><td><code class="kbd">/stats</code> — XLSX за период.</td></tr>
+<tr><td><code class="kbd">admin_resident_search.py</code></td><td><code class="kbd">/find_resident</code> — карточка жителя.</td></tr>
+<tr><td><code class="kbd">broadcast.py</code></td><td>Мастер рассылок и фоновая отправка с ограничением скорости.</td></tr>
+<tr><td><code class="kbd">broadcast_templates.py</code></td><td>Интерфейс шаблонов рассылок.</td></tr>
+<tr><td><code class="kbd">_auth.py</code></td><td>Помощники авторизации: <code class="kbd">get_operator</code>, <code class="kbd">ensure_operator</code>, <code class="kbd">ensure_role</code>.</td></tr>
+</tbody>
+</table></div>
+
+<h4>Маршрутизация нажатий (callback): три диспетчера</h4>
+
+<p>Когда житель или оператор жмёт кнопку под сообщением, MAX присылает событие <code class="kbd">message_callback</code> с короткой строкой-меткой — <em>payload</em> (например <code class="kbd">op:close:142</code> или <code class="kbd">menu:new_appeal</code>). Точка входа одна на весь бот: обработчик <code class="kbd">on_callback</code> в <code class="kbd">handlers/appeal.py:510</code> (единственный <code class="kbd">@dp.message_callback()</code>). Но дальше он не разбирает кнопки сам — он по очереди передаёт payload <strong>трём разным диспетчерам</strong>, и первый, кто «узнал» свою группу префиксов, обрабатывает и возвращает «готово», иначе payload проваливается к следующему (паттерн «цепочка с fallthrough»). Схема ниже показывает, кто какие префиксы ловит. Это важно понимать при доработках: добавляя новую кнопку, нужно знать, в какой из трёх диспетчеров класть её обработчик, иначе нажатие «провалится» в меню и тихо ничего не сделает.</p>
+
+<div class="diagram">
+<svg role="img" aria-label="Маршрутизация нажатий (callback): три диспетчера (диаграмма)" id="mmd10" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 1059.04296875px;" viewBox="0 0 1059.04296875 1765.40625"><title>Маршрутизация нажатий (callback): три диспетчера</title><style>#mmd10{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mmd10 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mmd10 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mmd10 .error-icon{fill:hsl(220.5882352941, 100%, 98.3333333333%);}#mmd10 .error-text{fill:rgb(8.5000000002, 5.7500000001, 0);stroke:rgb(8.5000000002, 5.7500000001, 0);}#mmd10 .edge-thickness-normal{stroke-width:1px;}#mmd10 .edge-thickness-thick{stroke-width:3.5px;}#mmd10 .edge-pattern-solid{stroke-dasharray:0;}#mmd10 .edge-thickness-invisible{stroke-width:0;fill:none;}#mmd10 .edge-pattern-dashed{stroke-dasharray:3;}#mmd10 .edge-pattern-dotted{stroke-dasharray:2;}#mmd10 .marker{fill:#0b0b0b;stroke:#0b0b0b;}#mmd10 .marker.cross{stroke:#0b0b0b;}#mmd10 svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mmd10 p{margin:0;}#mmd10 .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#mmd10 .cluster-label text{fill:rgb(8.5000000002, 5.7500000001, 0);}#mmd10 .cluster-label span{color:rgb(8.5000000002, 5.7500000001, 0);}#mmd10 .cluster-label span p{background-color:transparent;}#mmd10 .label text,#mmd10 span{fill:#333;color:#333;}#mmd10 .node rect,#mmd10 .node circle,#mmd10 .node ellipse,#mmd10 .node polygon,#mmd10 .node path{fill:#fff4dd;stroke:hsl(40.5882352941, 60%, 83.3333333333%);stroke-width:1px;}#mmd10 .rough-node .label text,#mmd10 .node .label text,#mmd10 .image-shape .label,#mmd10 .icon-shape .label{text-anchor:middle;}#mmd10 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#mmd10 .rough-node .label,#mmd10 .node .label,#mmd10 .image-shape .label,#mmd10 .icon-shape .label{text-align:center;}#mmd10 .node.clickable{cursor:pointer;}#mmd10 .root .anchor path{fill:#0b0b0b!important;stroke-width:0;stroke:#0b0b0b;}#mmd10 .arrowheadPath{fill:#0b0b0b;}#mmd10 .edgePath .path{stroke:#0b0b0b;stroke-width:1px;}#mmd10 .flowchart-link{stroke:#0b0b0b;fill:none;}#mmd10 .edgeLabel{background-color:hsl(-79.4117647059, 100%, 93.3333333333%);text-align:center;}#mmd10 .edgeLabel p{background-color:hsl(-79.4117647059, 100%, 93.3333333333%);}#mmd10 .edgeLabel rect{opacity:0.5;background-color:hsl(-79.4117647059, 100%, 93.3333333333%);fill:hsl(-79.4117647059, 100%, 93.3333333333%);}#mmd10 .labelBkg{background-color:rgba(243.9999999999, 220.9999999998, 255, 0.5);}#mmd10 .cluster rect{fill:hsl(220.5882352941, 100%, 98.3333333333%);stroke:hsl(220.5882352941, 60%, 88.3333333333%);stroke-width:1px;}#mmd10 .cluster text{fill:rgb(8.5000000002, 5.7500000001, 0);}#mmd10 .cluster span{color:rgb(8.5000000002, 5.7500000001, 0);}#mmd10 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(220.5882352941, 100%, 98.3333333333%);border:1px solid hsl(220.5882352941, 60%, 88.3333333333%);border-radius:2px;pointer-events:none;z-index:100;}#mmd10 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#mmd10 rect.text{fill:none;stroke-width:0;}#mmd10 .icon-shape,#mmd10 .image-shape{background-color:hsl(-79.4117647059, 100%, 93.3333333333%);text-align:center;}#mmd10 .icon-shape p,#mmd10 .image-shape p{background-color:hsl(-79.4117647059, 100%, 93.3333333333%);padding:2px;}#mmd10 .icon-shape .label rect,#mmd10 .image-shape .label rect{opacity:0.5;background-color:hsl(-79.4117647059, 100%, 93.3333333333%);fill:hsl(-79.4117647059, 100%, 93.3333333333%);}#mmd10 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#mmd10 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#mmd10 .node .neo-node{stroke:hsl(40.5882352941, 60%, 83.3333333333%);}#mmd10 [data-look="neo"].node rect,#mmd10 [data-look="neo"].cluster rect,#mmd10 [data-look="neo"].node polygon{stroke:url(#mmd10-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mmd10 [data-look="neo"].node path{stroke:url(#mmd10-gradient);stroke-width:1px;}#mmd10 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mmd10 [data-look="neo"].node .neo-line path{stroke:hsl(40.5882352941, 60%, 83.3333333333%);filter:none;}#mmd10 [data-look="neo"].node circle{stroke:url(#mmd10-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mmd10 [data-look="neo"].node circle .state-start{fill:#000000;}#mmd10 [data-look="neo"].icon-shape .icon{fill:url(#mmd10-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mmd10 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#mmd10-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mmd10 :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#mmd10 .ext rect{fill:rgb(252, 228, 236)!important;stroke:rgb(194, 24, 91)!important;color:rgb(136, 14, 79)!important;}#mmd10 .ext polygon{fill:rgb(252, 228, 236)!important;stroke:rgb(194, 24, 91)!important;color:rgb(136, 14, 79)!important;}#mmd10 .ext ellipse{fill:rgb(252, 228, 236)!important;stroke:rgb(194, 24, 91)!important;color:rgb(136, 14, 79)!important;}#mmd10 .ext circle{fill:rgb(252, 228, 236)!important;stroke:rgb(194, 24, 91)!important;color:rgb(136, 14, 79)!important;}#mmd10 .ext path{fill:rgb(252, 228, 236)!important;stroke:rgb(194, 24, 91)!important;color:rgb(136, 14, 79)!important;}#mmd10 .ext tspan{fill:rgb(136, 14, 79)!important;}#mmd10 .entry rect{fill:rgb(237, 231, 246)!important;stroke:rgb(94, 53, 177)!important;color:rgb(49, 27, 146)!important;}#mmd10 .entry polygon{fill:rgb(237, 231, 246)!important;stroke:rgb(94, 53, 177)!important;color:rgb(49, 27, 146)!important;}#mmd10 .entry ellipse{fill:rgb(237, 231, 246)!important;stroke:rgb(94, 53, 177)!important;color:rgb(49, 27, 146)!important;}#mmd10 .entry circle{fill:rgb(237, 231, 246)!important;stroke:rgb(94, 53, 177)!important;color:rgb(49, 27, 146)!important;}#mmd10 .entry path{fill:rgb(237, 231, 246)!important;stroke:rgb(94, 53, 177)!important;color:rgb(49, 27, 146)!important;}#mmd10 .entry tspan{fill:rgb(49, 27, 146)!important;}#mmd10 .guard rect{fill:rgb(255, 243, 224)!important;stroke:rgb(230, 81, 0)!important;color:rgb(191, 54, 12)!important;}#mmd10 .guard polygon{fill:rgb(255, 243, 224)!important;stroke:rgb(230, 81, 0)!important;color:rgb(191, 54, 12)!important;}#mmd10 .guard ellipse{fill:rgb(255, 243, 224)!important;stroke:rgb(230, 81, 0)!important;color:rgb(191, 54, 12)!important;}#mmd10 .guard circle{fill:rgb(255, 243, 224)!important;stroke:rgb(230, 81, 0)!important;color:rgb(191, 54, 12)!important;}#mmd10 .guard path{fill:rgb(255, 243, 224)!important;stroke:rgb(230, 81, 0)!important;color:rgb(191, 54, 12)!important;}#mmd10 .guard tspan{fill:rgb(191, 54, 12)!important;}#mmd10 .stop rect{fill:rgb(255, 235, 238)!important;stroke:rgb(198, 40, 40)!important;color:rgb(183, 28, 28)!important;}#mmd10 .stop polygon{fill:rgb(255, 235, 238)!important;stroke:rgb(198, 40, 40)!important;color:rgb(183, 28, 28)!important;}#mmd10 .stop ellipse{fill:rgb(255, 235, 238)!important;stroke:rgb(198, 40, 40)!important;color:rgb(183, 28, 28)!important;}#mmd10 .stop circle{fill:rgb(255, 235, 238)!important;stroke:rgb(198, 40, 40)!important;color:rgb(183, 28, 28)!important;}#mmd10 .stop path{fill:rgb(255, 235, 238)!important;stroke:rgb(198, 40, 40)!important;color:rgb(183, 28, 28)!important;}#mmd10 .stop tspan{fill:rgb(183, 28, 28)!important;}#mmd10 .cit rect{fill:rgb(255, 248, 225)!important;stroke:rgb(255, 143, 0)!important;color:rgb(230, 81, 0)!important;}#mmd10 .cit polygon{fill:rgb(255, 248, 225)!important;stroke:rgb(255, 143, 0)!important;color:rgb(230, 81, 0)!important;}#mmd10 .cit ellipse{fill:rgb(255, 248, 225)!important;stroke:rgb(255, 143, 0)!important;color:rgb(230, 81, 0)!important;}#mmd10 .cit circle{fill:rgb(255, 248, 225)!important;stroke:rgb(255, 143, 0)!important;color:rgb(230, 81, 0)!important;}#mmd10 .cit path{fill:rgb(255, 248, 225)!important;stroke:rgb(255, 143, 0)!important;color:rgb(230, 81, 0)!important;}#mmd10 .cit tspan{fill:rgb(230, 81, 0)!important;}#mmd10 .adm rect{fill:rgb(225, 245, 255)!important;stroke:rgb(2, 136, 209)!important;color:rgb(1, 87, 155)!important;}#mmd10 .adm polygon{fill:rgb(225, 245, 255)!important;stroke:rgb(2, 136, 209)!important;color:rgb(1, 87, 155)!important;}#mmd10 .adm ellipse{fill:rgb(225, 245, 255)!important;stroke:rgb(2, 136, 209)!important;color:rgb(1, 87, 155)!important;}#mmd10 .adm circle{fill:rgb(225, 245, 255)!important;stroke:rgb(2, 136, 209)!important;color:rgb(1, 87, 155)!important;}#mmd10 .adm path{fill:rgb(225, 245, 255)!important;stroke:rgb(2, 136, 209)!important;color:rgb(1, 87, 155)!important;}#mmd10 .adm tspan{fill:rgb(1, 87, 155)!important;}#mmd10 .menu rect{fill:rgb(224, 242, 241)!important;stroke:rgb(0, 105, 92)!important;color:rgb(0, 77, 64)!important;}#mmd10 .menu polygon{fill:rgb(224, 242, 241)!important;stroke:rgb(0, 105, 92)!important;color:rgb(0, 77, 64)!important;}#mmd10 .menu ellipse{fill:rgb(224, 242, 241)!important;stroke:rgb(0, 105, 92)!important;color:rgb(0, 77, 64)!important;}#mmd10 .menu circle{fill:rgb(224, 242, 241)!important;stroke:rgb(0, 105, 92)!important;color:rgb(0, 77, 64)!important;}#mmd10 .menu path{fill:rgb(224, 242, 241)!important;stroke:rgb(0, 105, 92)!important;color:rgb(0, 77, 64)!important;}#mmd10 .menu tspan{fill:rgb(0, 77, 64)!important;}#mmd10 .okcit rect{fill:rgb(255, 253, 231)!important;stroke:rgb(251, 192, 45)!important;color:rgb(245, 127, 23)!important;}#mmd10 .okcit polygon{fill:rgb(255, 253, 231)!important;stroke:rgb(251, 192, 45)!important;color:rgb(245, 127, 23)!important;}#mmd10 .okcit ellipse{fill:rgb(255, 253, 231)!important;stroke:rgb(251, 192, 45)!important;color:rgb(245, 127, 23)!important;}#mmd10 .okcit circle{fill:rgb(255, 253, 231)!important;stroke:rgb(251, 192, 45)!important;color:rgb(245, 127, 23)!important;}#mmd10 .okcit path{fill:rgb(255, 253, 231)!important;stroke:rgb(251, 192, 45)!important;color:rgb(245, 127, 23)!important;}#mmd10 .okcit tspan{fill:rgb(245, 127, 23)!important;}#mmd10 .okadm rect{fill:rgb(227, 242, 253)!important;stroke:rgb(25, 118, 210)!important;color:rgb(13, 71, 161)!important;}#mmd10 .okadm polygon{fill:rgb(227, 242, 253)!important;stroke:rgb(25, 118, 210)!important;color:rgb(13, 71, 161)!important;}#mmd10 .okadm ellipse{fill:rgb(227, 242, 253)!important;stroke:rgb(25, 118, 210)!important;color:rgb(13, 71, 161)!important;}#mmd10 .okadm circle{fill:rgb(227, 242, 253)!important;stroke:rgb(25, 118, 210)!important;color:rgb(13, 71, 161)!important;}#mmd10 .okadm path{fill:rgb(227, 242, 253)!important;stroke:rgb(25, 118, 210)!important;color:rgb(13, 71, 161)!important;}#mmd10 .okadm tspan{fill:rgb(13, 71, 161)!important;}#mmd10 .okmenu rect{fill:rgb(232, 245, 233)!important;stroke:rgb(56, 142, 60)!important;color:rgb(27, 94, 32)!important;}#mmd10 .okmenu polygon{fill:rgb(232, 245, 233)!important;stroke:rgb(56, 142, 60)!important;color:rgb(27, 94, 32)!important;}#mmd10 .okmenu ellipse{fill:rgb(232, 245, 233)!important;stroke:rgb(56, 142, 60)!important;color:rgb(27, 94, 32)!important;}#mmd10 .okmenu circle{fill:rgb(232, 245, 233)!important;stroke:rgb(56, 142, 60)!important;color:rgb(27, 94, 32)!important;}#mmd10 .okmenu path{fill:rgb(232, 245, 233)!important;stroke:rgb(56, 142, 60)!important;color:rgb(27, 94, 32)!important;}#mmd10 .okmenu tspan{fill:rgb(27, 94, 32)!important;}#mmd10 .reg rect{fill:rgb(243, 229, 245)!important;stroke:rgb(142, 36, 170)!important;color:rgb(74, 20, 140)!important;}#mmd10 .reg polygon{fill:rgb(243, 229, 245)!important;stroke:rgb(142, 36, 170)!important;color:rgb(74, 20, 140)!important;}#mmd10 .reg ellipse{fill:rgb(243, 229, 245)!important;stroke:rgb(142, 36, 170)!important;color:rgb(74, 20, 140)!important;}#mmd10 .reg circle{fill:rgb(243, 229, 245)!important;stroke:rgb(142, 36, 170)!important;color:rgb(74, 20, 140)!important;}#mmd10 .reg path{fill:rgb(243, 229, 245)!important;stroke:rgb(142, 36, 170)!important;color:rgb(74, 20, 140)!important;}#mmd10 .reg tspan{fill:rgb(74, 20, 140)!important;}</style><g><marker id="mmd10_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="mmd10_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="mmd10_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="mmd10_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="mmd10_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="mmd10_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="mmd10_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="mmd10_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="mmd10_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="mmd10_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="mmd10_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="mmd10_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M156.324,71.5L156.241,75.583C156.158,79.667,155.991,87.833,155.908,96.167C155.824,104.5,155.824,113,155.824,117.25L155.824,121.5" id="mmd10-L_MAX_ENTRY_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_MAX_ENTRY_0" data-points="W3sieCI6MTU2LjMyNDIxODc1LCJ5Ijo3MS40OTk5OTk5OTk5OTk5OX0seyJ4IjoxNTUuODI0MjE4NzUsInkiOjk2fSx7IngiOjE1NS44MjQyMTg3NSwieSI6MTI1LjV9XQ==" data-look="classic" marker-end="url(#mmd10_flowchart-v2-pointEnd)"></path><path d="M155.824,251.5L155.824,259.8C155.824,268.1,155.824,284.7,160.295,305.035C164.766,325.37,173.708,349.44,178.18,361.475L182.651,373.51" id="mmd10-L_ENTRY_GUARD_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_ENTRY_GUARD_0" data-points="W3sieCI6MTU1LjgyNDIxODc1LCJ5IjoyNTEuNX0seyJ4IjoxNTUuODI0MjE4NzUsInkiOjMwMS4yOTk5OTkyMzcwNjA1NX0seyJ4IjoxODQuMDQzNTc0ODkwNDEwNTMsInkiOjM3Ny4yNTk1NDg1ODM3MTA1N31d" data-look="classic" marker-end="url(#mmd10_flowchart-v2-pointEnd)"></path><path d="M174.853,533.125L167.939,545.85C161.025,558.575,147.196,584.025,140.282,616.249C133.367,648.472,133.367,687.47,133.367,706.968L133.367,726.467" id="mmd10-L_GUARD_ACK_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_GUARD_ACK_0" data-points="W3sieCI6MTc0Ljg1MzQzOTA3NDYwMDEyLCJ5Ijo1MzMuMTI1MzEyNTQ4NzIxMn0seyJ4IjoxMzMuMzY3MTg3NSwieSI6NjA5LjQ3NDk5ODQ3NDEyMTF9LHsieCI6MTMzLjM2NzE4NzUsInkiOjczMC40NjcxODU5NzQxMjExfV0=" data-look="classic" marker-end="url(#mmd10_flowchart-v2-pointEnd)"></path><path d="M272.362,515.316L288.657,531.009C304.952,546.702,337.543,578.089,359.124,606.052C380.705,634.016,391.277,658.556,396.563,670.826L401.849,683.097" id="mmd10-L_GUARD_D1_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_GUARD_D1_0" data-points="W3sieCI6MjcyLjM2MTk0NzQ5MzkxODgsInkiOjUxNS4zMTYxNzU5ODAyMDIzfSx7IngiOjM3MC4xMzI4MTI1LCJ5Ijo2MDkuNDc0OTk4NDc0MTIxMX0seyJ4Ijo0MDMuNDMxMzY1NjI4NjcwNzMsInkiOjY4Ni43NzAxOTUzNDU0NTA0fV0=" data-look="classic" marker-end="url(#mmd10_flowchart-v2-pointEnd)"></path><path d="M405.827,878.56L398.57,896.91C391.312,915.26,376.798,951.96,369.54,996.597C362.283,1041.234,362.283,1093.808,362.283,1120.096L362.283,1146.383" id="mmd10-L_D1_C_OK_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_D1_C_OK_0" data-points="W3sieCI6NDA1LjgyNjk3NzU4NzI1MDU1LCJ5Ijo4NzguNTU5Nzg4NTYxMzcxNn0seyJ4IjozNjIuMjgzMjAzMTI1LCJ5Ijo5ODguNjU5Mzc0MjM3MDYwNX0seyJ4IjozNjIuMjgzMjAzMTI1LCJ5IjoxMTUwLjM4MjgxMjV9XQ==" data-look="classic" marker-end="url(#mmd10_flowchart-v2-pointEnd)"></path><path d="M503.372,857.814L520.267,879.621C537.161,901.429,570.95,945.044,595.079,984.907C619.209,1024.77,633.68,1060.881,640.916,1078.936L648.151,1096.992" id="mmd10-L_D1_D2_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_D1_D2_0" data-points="W3sieCI6NTAzLjM3MjIwNTE3MDczOTgsInkiOjg1Ny44MTM3MzA4MDMzODEzfSx7IngiOjYwNC43MzgyODEyNSwieSI6OTg4LjY1OTM3NDIzNzA2MDV9LHsieCI6NjQ5LjYzODk4NDMzOTIxODUsInkiOjExMDAuNzA0NzY1NjYwNzgxNX1d" data-look="classic" marker-end="url(#mmd10_flowchart-v2-pointEnd)"></path><path d="M645.181,1297.602L635.456,1318.486C625.732,1339.37,606.283,1381.138,596.558,1414.772C586.834,1448.406,586.834,1473.906,586.834,1486.656L586.834,1499.406" id="mmd10-L_D2_A_OK_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_D2_A_OK_0" data-points="W3sieCI6NjQ1LjE4MDU3MDY3MzAxNjIsInkiOjEyOTcuNjAyNDQ1NjczMDE2M30seyJ4Ijo1ODYuODMzOTg0Mzc1LCJ5IjoxNDIyLjkwNjI1fSx7IngiOjU4Ni44MzM5ODQzNzUsInkiOjE1MDMuNDA2MjV9XQ==" data-look="classic" marker-end="url(#mmd10_flowchart-v2-pointEnd)"></path><path d="M745.838,1286.553L760.741,1309.278C775.645,1332.004,805.451,1377.455,828.963,1413.043C852.475,1448.632,869.693,1474.357,878.302,1487.219L886.911,1500.082" id="mmd10-L_D2_D3_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_D2_D3_0" data-points="W3sieCI6NzQ1LjgzODA2NjU5MzQ1MDQsInkiOjEyODYuNTUyNTU4NDA2NTQ5NX0seyJ4Ijo4MzUuMjU3ODEyNSwieSI6MTQyMi45MDYyNX0seyJ4Ijo4ODkuMTM1NzA4NzY5MDExNCwieSI6MTUwMy40MDYyNX1d" data-look="classic" marker-end="url(#mmd10_flowchart-v2-pointEnd)"></path><path d="M923.27,1605.406L923.27,1609.573C923.27,1613.74,923.27,1622.073,923.27,1629.74C923.27,1637.406,923.27,1644.406,923.27,1647.906L923.27,1651.406" id="mmd10-L_D3_M_OK_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_D3_M_OK_0" data-points="W3sieCI6OTIzLjI2OTUzMTI1LCJ5IjoxNjA1LjQwNjI1fSx7IngiOjkyMy4yNjk1MzEyNSwieSI6MTYzMC40MDYyNX0seyJ4Ijo5MjMuMjY5NTMxMjUsInkiOjE2NTUuNDA2MjV9XQ==" data-look="classic" marker-end="url(#mmd10_flowchart-v2-pointEnd)"></path><path d="M785.355,241.672L763.297,251.61C741.238,261.548,697.121,281.424,616.494,312.54C535.867,343.656,418.73,386.012,360.162,407.19L301.593,428.368" id="mmd10-L_REG_GUARD_0" class=" edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_REG_GUARD_0" data-points="W3sieCI6Nzg1LjM1NTQ2ODc1LCJ5IjoyNDEuNjcxNTg5Mjk2NjMzMn0seyJ4Ijo2NTMuMDAzOTA2MjUsInkiOjMwMS4yOTk5OTkyMzcwNjA1NX0seyJ4IjoyOTcuODMxNzE3MzMzMDIyNiwieSI6NDI5LjcyODU5MDgwNzE0Mzd9XQ==" data-look="classic" marker-end="url(#mmd10_flowchart-v2-pointEnd)"></path><path d="M832.411,256.5L824.672,263.967C816.933,271.433,801.455,286.367,793.716,320.248C785.977,354.129,785.977,406.958,785.977,458.321C785.977,509.683,785.977,559.579,744.636,605.333C703.295,651.086,620.613,692.697,579.272,713.503L537.931,734.309" id="mmd10-L_REG_D1_0" class=" edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_REG_D1_0" data-points="W3sieCI6ODMyLjQxMDY0NDA2ODMxMzMsInkiOjI1Ni41fSx7IngiOjc4NS45NzY1NjI1LCJ5IjozMDEuMjk5OTk5MjM3MDYwNTV9LHsieCI6Nzg1Ljk3NjU2MjUsInkiOjQ1OS43ODc0OTg0NzQxMjExfSx7IngiOjc4NS45NzY1NjI1LCJ5Ijo2MDkuNDc0OTk4NDc0MTIxMX0seyJ4Ijo1MzQuMzU4MjU5MzAxOTU4NywieSI6NzM2LjEwNjY5NTI3NjA3OTh9XQ==" data-look="classic" marker-end="url(#mmd10_flowchart-v2-pointEnd)"></path><path d="M889.406,256.5L888.042,263.967C886.678,271.433,883.951,286.367,882.587,320.248C881.223,354.129,881.223,406.958,881.223,458.321C881.223,509.683,881.223,559.579,881.223,613.192C881.223,666.806,881.223,724.136,881.223,787.334C881.223,850.531,881.223,919.595,860.922,976.708C840.622,1033.822,800.021,1078.984,779.72,1101.565L759.42,1124.146" id="mmd10-L_REG_D2_0" class=" edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_REG_D2_0" data-points="W3sieCI6ODg5LjQwNjMxMjI1NjMzODUsInkiOjI1Ni41fSx7IngiOjg4MS4yMjI2NTYyNSwieSI6MzAxLjI5OTk5OTIzNzA2MDU1fSx7IngiOjg4MS4yMjI2NTYyNSwieSI6NDU5Ljc4NzQ5ODQ3NDEyMTF9LHsieCI6ODgxLjIyMjY1NjI1LCJ5Ijo2MDkuNDc0OTk4NDc0MTIxMX0seyJ4Ijo4ODEuMjIyNjU2MjUsInkiOjc4MS40NjcxODU5NzQxMjExfSx7IngiOjg4MS4yMjI2NTYyNSwieSI6OTg4LjY1OTM3NDIzNzA2MDV9LHsieCI6NzU2Ljc0NTg0ODkyMzc3NiwieSI6MTEyNy4xMjA4NDg5MjM3NzU4fV0=" data-look="classic" marker-end="url(#mmd10_flowchart-v2-pointEnd)"></path><path d="M948.057,256.5L953.253,263.967C958.449,271.433,968.842,286.367,974.038,320.248C979.234,354.129,979.234,406.958,979.234,458.321C979.234,509.683,979.234,559.579,979.234,613.192C979.234,666.806,979.234,724.136,979.234,787.334C979.234,850.531,979.234,919.595,979.234,989.581C979.234,1059.567,979.234,1130.475,979.234,1202.849C979.234,1275.224,979.234,1349.065,973.785,1398.789C968.337,1448.513,957.439,1474.119,951.99,1486.922L946.541,1499.726" id="mmd10-L_REG_D3_0" class=" edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_REG_D3_0" data-points="W3sieCI6OTQ4LjA1Njk0MjIyNDE3NDMsInkiOjI1Ni41fSx7IngiOjk3OS4yMzQzNzUsInkiOjMwMS4yOTk5OTkyMzcwNjA1NX0seyJ4Ijo5NzkuMjM0Mzc1LCJ5Ijo0NTkuNzg3NDk4NDc0MTIxMX0seyJ4Ijo5NzkuMjM0Mzc1LCJ5Ijo2MDkuNDc0OTk4NDc0MTIxMX0seyJ4Ijo5NzkuMjM0Mzc1LCJ5Ijo3ODEuNDY3MTg1OTc0MTIxMX0seyJ4Ijo5NzkuMjM0Mzc1LCJ5Ijo5ODguNjU5Mzc0MjM3MDYwNX0seyJ4Ijo5NzkuMjM0Mzc1LCJ5IjoxMjAxLjM4MjgxMjV9LHsieCI6OTc5LjIzNDM3NSwieSI6MTQyMi45MDYyNX0seyJ4Ijo5NDQuOTc0NTI3Njg1MzYxMiwieSI6MTUwMy40MDYyNX1d" data-look="classic" marker-end="url(#mmd10_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_MAX_ENTRY_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_ENTRY_GUARD_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel" transform="translate(133.3671875, 609.4749984741211)"><g class="label" data-id="L_GUARD_ACK_0" transform="translate(-0.390625, -10.5)"><g><rect class="background" style="" x="-10.734375" y="-1" width="22.25" height="23"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">да</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(351.55798, 591.58639)"><g class="label" data-id="L_GUARD_D1_0" transform="translate(-0.37109375, -10.5)"><g><rect class="background" style="" x="-14.4765625" y="-1" width="29.6953125" height="23"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">нет</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(362.283203125, 988.6593742370605)"><g class="label" data-id="L_D1_C_OK_0" transform="translate(0, -45.70000076293945)"><g><rect class="background" style="" x="-100.34375" y="-1" width="200.6875" height="93.4000015258789"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">menu:*</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> consent:*</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> cancel</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">addr:*</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> locality:</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> topic:</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="2.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">geo:*</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> appeal:submit/show/</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="3.2em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">followup/repeat/atts</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="4.300000000000001em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">appeals:page</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(591.01721, 970.94791)"><g class="label" data-id="L_D1_D2_0" transform="translate(-0.39453125, -10.5)"><g><rect class="background" style="" x="-43.1484375" y="-1" width="87.0859375" height="23"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">не</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> воронка</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(586.833984375, 1422.90625)"><g class="label" data-id="L_D2_A_OK_0" transform="translate(-0.46484375, -54.5)"><g><rect class="background" style="" x="-93.90625" y="-1" width="188.7421875" height="111"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">op:*</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> broadcast:*</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">open_tickets</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> stats</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> close</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="2.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">reopen</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="3.2em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">reply</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> replyint</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> erase</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> block</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="4.300000000000001em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">operators</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> set:</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> tmpl:</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> aud:</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="5.4em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">bc:</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(817.10815, 1395.23033)"><g class="label" data-id="L_D2_D3_0" transform="translate(0, -19.299999237060547)"><g><rect class="background" style="" x="-91.9296875" y="-1" width="183.859375" height="40.599998474121094"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">не</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> admin</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> /</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> неизвестный</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">хвост</tspan></tspan></text></g></g></g><g class="edgeLabel"><g class="label" data-id="L_D3_M_OK_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel" transform="translate(543.67436, 340.83305)"><g class="label" data-id="L_REG_GUARD_0" transform="translate(-0.390625, -19.299999237060547)"><g><rect class="background" style="" x="-97.3671875" y="-1" width="195.515625" height="40.599998474121094"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">таксономия</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> префиксов</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">и</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> проверка</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> чат-контекста</tspan></tspan></text></g></g></g><g class="edgeLabel"><g class="label" data-id="L_REG_D1_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_REG_D2_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_REG_D3_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g></g><g class="nodes"><g class="node default ext " id="mmd10-flowchart-MAX-0" data-look="classic" transform="translate(155.82421875, 39.5)"><g class="basic label-container outer-path"><path d="M-80.8203125 -31.5 C-29.319980840480866 -31.5, 22.180350819038267 -31.5, 80.8203125 -31.5 C80.8203125 -31.5, 80.8203125 -31.5, 80.8203125 -31.5 C81.34079609170782 -31.483309104273783, 81.86127968341563 -31.466618208547565, 82.83852442939245 -31.435279871635593 C83.32403092142094 -31.38844364425659, 83.80953741344942 -31.34160741687759, 84.84844309306193 -31.241385435432253 C85.57433649451173 -31.124028619673254, 86.30022989596152 -31.006671803914255, 86.84180930409322 -30.91911344521856 C87.27330862970047 -30.820626539944953, 87.70480795530773 -30.722139634671347, 88.81043189314947 -30.469788185729428 C89.56366542181988 -30.24623242822353, 90.31689895049027 -30.02267667071763, 90.74622136774406 -29.895256030836062 C91.36829804103961 -29.666326064649567, 91.99037471433518 -29.43739609846307, 92.64122315370028 -29.197877856399685 C93.09529846207238 -28.9968721870488, 93.54937377044448 -28.795866517697917, 94.48765028220308 -28.380519338926202 C95.06122953087387 -28.081283412289686, 95.63480877954468 -27.782047485653173, 96.27791538812403 -27.44653917988677 C96.64230320476398 -27.225645144059133, 97.00669102140392 -27.004751108231495, 98.00466188813228 -26.399775304092984 C98.40527743399694 -26.12032324166526, 98.80589297986161 -25.840871179237535, 99.6607942104733 -25.244529088840633 C100.11930760923448 -24.87887685488256, 100.57782100799567 -24.51322462092449, 101.23950695219533 -23.985547688627737 C101.54593190386026 -23.70726065508558, 101.8523568555252 -23.428973621543424, 102.73431284400982 -22.62800452807842 C103.02517910355088 -22.327661234538255, 103.31604536309193 -22.02731794099809, 104.13906940787243 -21.177478043231485 C104.64156722658835 -20.587215512431875, 105.14406504530427 -19.996952981632266, 105.44800419774293 -19.63992875855011 C105.7317539932312 -19.25972988273399, 106.01550378871947 -18.879531006917873, 106.6557385198041 -18.02167479384835 C106.99062614802263 -17.507197466985136, 107.32551377624117 -16.99272014012192, 107.7573095346684 -16.329365901781543 C108.04035871789664 -15.82678341512202, 108.32340790112488 -15.324200928462497, 108.7481906507495 -14.56995614258631 C109.03048258285874 -13.983770905481737, 109.31277451496797 -13.397585668377165, 109.62431012499809 -12.750675308355413 C109.81209271141026 -12.286848689388016, 109.99987529782244 -11.823022070420619, 110.38206779456745 -10.878999214271206 C110.51360386441752 -10.482833529309447, 110.64513993426759 -10.08666784434769, 111.01834987065482 -8.962618978877531 C111.16994826101295 -8.384508613283957, 111.32154665137108 -7.8063982476903835, 111.53054173372745 -7.009409419623907 C111.63423820059427 -6.476949978518796, 111.73793466746109 -5.944490537413684, 111.91653867755518 -5.027396693551458 C111.98996291320677 -4.457932821093013, 112.06338714885837 -3.8884689486345674, 112.17475455789975 -3.024725316091981 C112.20076844645706 -2.6195380037790015, 112.22678233501436 -2.2143506914660223, 112.30412831032167 -1.0096246935071378 C112.30412831032167 -0.26964493496190034, 112.30412831032167 0.4703348235833371, 112.30412831032167 1.00962469350713 C112.2669547688894 1.5886326072573604, 112.22978122745712 2.167640521007591, 112.17475455789975 3.02472531609196 C112.09452743771729 3.6469510175902435, 112.01430031753485 4.269176719088527, 111.91653867755518 5.027396693551435 C111.76801554356932 5.790031596193334, 111.61949240958347 6.552666498835233, 111.53054173372745 7.0094094196239 C111.33817664231758 7.742980884727738, 111.14581155090771 8.476552349831577, 111.01834987065482 8.96261897887751 C110.77270412270198 9.70246483337661, 110.52705837474915 10.44231068787571, 110.38206779456746 10.878999214271184 C110.19862131806407 11.332115557930914, 110.01517484156066 11.785231901590645, 109.62431012499809 12.750675308355405 C109.3378517929855 13.345512164005967, 109.05139346097292 13.94034901965653, 108.7481906507495 14.569956142586303 C108.47664814840445 15.052107352159961, 108.20510564605938 15.53425856173362, 107.75730953466841 16.329365901781536 C107.485588310786 16.746802669029933, 107.21386708690358 17.164239436278326, 106.65573851980412 18.021674793848334 C106.25954951683187 18.55253196427047, 105.8633605138596 19.083389134692613, 105.44800419774295 19.639928758550102 C105.15210729235137 19.98750610063394, 104.85621038695979 20.335083442717778, 104.13906940787246 21.177478043231467 C103.7264732945299 21.603517405028548, 103.31387718118734 22.029556766825632, 102.73431284400982 22.628004528078414 C102.28901811386423 23.0324094201437, 101.84372338371865 23.436814312208988, 101.23950695219536 23.985547688627715 C100.61948860534297 24.47999582086136, 99.99947025849056 24.97444395309501, 99.66079421047331 25.24452908884063 C99.04563411970342 25.673638138310572, 98.43047402893352 26.10274718778052, 98.00466188813229 26.399775304092973 C97.59772421901472 26.646463310543236, 97.19078654989714 26.893151316993496, 96.27791538812404 27.446539179886766 C95.7344206180864 27.730080053290386, 95.19092584804876 28.01362092669401, 94.48765028220309 28.3805193389262 C93.78626017395955 28.69100393384729, 93.084870065716 29.001488528768387, 92.6412231537003 29.197877856399682 C92.24516709191187 29.343630148239924, 91.84911103012344 29.48938244008017, 90.74622136774407 29.895256030836055 C90.15408736024271 30.070998296087627, 89.56195335274137 30.246740561339198, 88.81043189314951 30.46978818572942 C88.22290926778822 30.6038863910247, 87.63538664242695 30.737984596319983, 86.84180930409323 30.919113445218557 C86.19206373369845 31.024159270187834, 85.54231816330365 31.129205095157108, 84.84844309306196 31.24138543543225 C84.12647822263781 31.311032518192274, 83.40451335221367 31.3806796009523, 82.83852442939245 31.435279871635593 C82.07411288212461 31.459793062119658, 81.30970133485677 31.484306252603723, 80.8203125 31.5 C80.8203125 31.5, 80.8203125 31.5, 80.8203125 31.5 C16.83434843668811 31.5, -47.15161562662378 31.5, -80.8203125 31.5 C-81.35845302775847 31.482742880701778, -81.89659355551694 31.46548576140356, -82.83852442939244 31.435279871635593 C-83.52817526521422 31.368750084930348, -84.217826101036 31.302220298225098, -84.84844309306195 31.24138543543225 C-85.56864372406793 31.124948982650512, -86.28884435507389 31.008512529868778, -86.84180930409323 30.919113445218557 C-87.42475095571147 30.786060817286476, -88.00769260732972 30.6530081893544, -88.81043189314947 30.469788185729428 C-89.36234338047962 30.305983753332356, -89.91425486780977 30.14217932093528, -90.74622136774403 29.89525603083607 C-91.20389489551273 29.72682794192947, -91.66156842328145 29.558399853022873, -92.64122315370028 29.197877856399685 C-93.06755902091277 29.009151614788877, -93.49389488812527 28.820425373178065, -94.48765028220308 28.380519338926206 C-94.93196010153729 28.148723190773573, -95.37626992087148 27.91692704262094, -96.27791538812403 27.446539179886773 C-96.642632890766 27.225445286467266, -97.00735039340795 27.00435139304776, -98.00466188813226 26.399775304092994 C-98.52729040127551 26.03521227754796, -99.04991891441877 25.67064925100292, -99.6607942104733 25.244529088840636 C-100.00786743905896 24.967747425050078, -100.35494066764461 24.690965761259516, -101.23950695219533 23.98554768862774 C-101.78453021984951 23.490571977469646, -102.3295534875037 22.995596266311555, -102.7343128440098 22.628004528078435 C-103.10955908738603 22.24053197350295, -103.48480533076224 21.85305941892747, -104.13906940787244 21.177478043231478 C-104.5421112048352 20.704042214791087, -104.94515300179796 20.230606386350697, -105.44800419774293 19.639928758550113 C-105.82745534800375 19.13149878591155, -106.20690649826457 18.623068813272987, -106.6557385198041 18.021674793848355 C-106.93363643874936 17.594748964308568, -107.21153435769462 17.16782313476878, -107.7573095346684 16.329365901781557 C-108.11411226902817 15.695826516731112, -108.47091500338793 15.062287131680666, -108.7481906507495 14.569956142586314 C-109.01395073544023 14.018099640371139, -109.27971082013096 13.466243138155964, -109.62431012499809 12.750675308355417 C-109.81497015337814 12.2797413520958, -110.0056301817582 11.80880739583618, -110.38206779456745 10.878999214271209 C-110.52448134347412 10.450072295481915, -110.66689489238078 10.021145376692623, -111.01834987065482 8.962618978877522 C-111.1957776229037 8.286010061878255, -111.37320537515258 7.609401144878987, -111.53054173372743 7.009409419623911 C-111.63396229658558 6.478366687291056, -111.73738285944373 5.947323954958202, -111.91653867755518 5.027396693551461 C-111.9985815348782 4.391088493348767, -112.08062439220123 3.754780293146072, -112.17475455789975 3.024725316091999 C-112.21184942538922 2.4469428125054007, -112.24894429287869 1.8691603089188022, -112.30412831032167 1.0096246935071416 C-112.30412831032167 0.5425932436746421, -112.30412831032167 0.07556179384214268, -112.30412831032167 -1.0096246935071262 C-112.25649263836223 -1.7515887350978216, -112.20885696640278 -2.4935527766885173, -112.17475455789975 -3.024725316091956 C-112.11314322560492 -3.5025706428369627, -112.05153189331008 -3.9804159695819696, -111.91653867755518 -5.027396693551446 C-111.80636327613892 -5.59312409424457, -111.69618787472268 -6.158851494937694, -111.53054173372745 -7.009409419623896 C-111.37763499089671 -7.592509100239029, -111.22472824806599 -8.175608780854162, -111.01834987065482 -8.962618978877506 C-110.82716409430012 -9.538440075941129, -110.63597831794542 -10.11426117300475, -110.38206779456746 -10.878999214271168 C-110.2190800568523 -11.281582077581145, -110.05609231913715 -11.684164940891122, -109.62431012499809 -12.750675308355401 C-109.29991176074039 -13.424295452749602, -108.97551339648267 -14.097915597143803, -108.7481906507495 -14.5699561425863 C-108.52931010952135 -14.958600707595071, -108.3104295682932 -15.34724527260384, -107.7573095346684 -16.329365901781546 C-107.50131597215046 -16.72264075770568, -107.24532240963254 -17.115915613629813, -106.65573851980412 -18.021674793848344 C-106.23934311491686 -18.5796067019955, -105.82294771002961 -19.137538610142652, -105.44800419774295 -19.639928758550102 C-104.9356655399598 -20.241750898877676, -104.42332688217667 -20.84357303920525, -104.13906940787246 -21.177478043231467 C-103.58013943839934 -21.754619125716363, -103.02120946892623 -22.331760208201263, -102.73431284400984 -22.628004528078403 C-102.20707813746921 -23.1068251386927, -101.67984343092857 -23.58564574930699, -101.23950695219536 -23.98554768862771 C-100.88940707527318 -24.264743023924147, -100.53930719835103 -24.543938359220583, -99.66079421047331 -25.244529088840626 C-99.2729189206481 -25.515094100172025, -98.88504363082288 -25.785659111503424, -98.0046618881323 -26.39977530409297 C-97.57921414641771 -26.657684225328804, -97.15376640470312 -26.91559314656464, -96.27791538812404 -27.446539179886763 C-95.78161352499426 -27.70545954398506, -95.28531166186445 -27.96437990808336, -94.48765028220309 -28.3805193389262 C-93.96134969984124 -28.61349699458572, -93.43504911747937 -28.846474650245238, -92.6412231537003 -29.19787785639968 C-91.95710907596195 -29.4496381608886, -91.27299499822361 -29.701398465377526, -90.74622136774407 -29.895256030836055 C-90.10813272458398 -30.084637390730332, -89.47004408142391 -30.27401875062461, -88.81043189314951 -30.469788185729417 C-88.10908885399598 -30.629865157725167, -87.40774581484246 -30.789942129720913, -86.84180930409325 -30.919113445218553 C-86.14075362606108 -31.03245469047481, -85.43969794802892 -31.145795935731073, -84.84844309306196 -31.24138543543225 C-84.09515303597449 -31.31405442127564, -83.34186297888702 -31.386723407119025, -82.83852442939246 -31.435279871635593 C-82.2445500234914 -31.454327474731794, -81.65057561759035 -31.473375077828, -80.82031250000001 -31.5 C-80.82031250000001 -31.5, -80.8203125 -31.5, -80.8203125 -31.5" stroke="none" stroke-width="0" fill="#fce4ec" style="fill:#fce4ec !important;stroke:#c2185b !important"></path><path d="M-80.8203125 -31.5 C-28.599019979125593 -31.5, 23.622272541748814 -31.5, 80.8203125 -31.5 M-80.8203125 -31.5 C-22.144341652549997 -31.5, 36.531629194900006 -31.5, 80.8203125 -31.5 M80.8203125 -31.5 C80.8203125 -31.5, 80.8203125 -31.5, 80.8203125 -31.5 M80.8203125 -31.5 C80.8203125 -31.5, 80.8203125 -31.5, 80.8203125 -31.5 M80.8203125 -31.5 C81.4903944893993 -31.478511774835432, 82.16047647879861 -31.457023549670865, 82.83852442939245 -31.435279871635593 M80.8203125 -31.5 C81.30486618169743 -31.48446130655449, 81.78941986339485 -31.468922613108976, 82.83852442939245 -31.435279871635593 M82.83852442939245 -31.435279871635593 C83.4549786742296 -31.37581127203085, 84.07143291906675 -31.316342672426114, 84.84844309306193 -31.241385435432253 M82.83852442939245 -31.435279871635593 C83.49191413979463 -31.372248152089192, 84.14530385019681 -31.309216432542787, 84.84844309306193 -31.241385435432253 M84.84844309306193 -31.241385435432253 C85.59314177336091 -31.120988328026034, 86.33784045365991 -31.00059122061981, 86.84180930409322 -30.91911344521856 M84.84844309306193 -31.241385435432253 C85.53923342809388 -31.129703811223344, 86.23002376312583 -31.018022187014438, 86.84180930409322 -30.91911344521856 M86.84180930409322 -30.91911344521856 C87.38651717782727 -30.794787427589828, 87.93122505156133 -30.670461409961096, 88.81043189314947 -30.469788185729428 M86.84180930409322 -30.91911344521856 C87.35459680855531 -30.802073043576275, 87.86738431301741 -30.685032641933994, 88.81043189314947 -30.469788185729428 M88.81043189314947 -30.469788185729428 C89.21927661674198 -30.34844521783692, 89.62812134033449 -30.227102249944412, 90.74622136774406 -29.895256030836062 M88.81043189314947 -30.469788185729428 C89.38922982886051 -30.298003996582754, 89.96802776457156 -30.12621980743608, 90.74622136774406 -29.895256030836062 M90.74622136774406 -29.895256030836062 C91.38377435279328 -29.66063063886276, 92.02132733784251 -29.426005246889456, 92.64122315370028 -29.197877856399685 M90.74622136774406 -29.895256030836062 C91.28473015666161 -29.69707981859373, 91.82323894557915 -29.49890360635139, 92.64122315370028 -29.197877856399685 M92.64122315370028 -29.197877856399685 C93.11574814426781 -28.987819719359152, 93.59027313483534 -28.77776158231862, 94.48765028220308 -28.380519338926202 M92.64122315370028 -29.197877856399685 C93.28479586702844 -28.912987307115554, 93.92836858035658 -28.628096757831422, 94.48765028220308 -28.380519338926202 M94.48765028220308 -28.380519338926202 C94.86798388014057 -28.182099544497504, 95.24831747807808 -27.98367975006881, 96.27791538812403 -27.44653917988677 M94.48765028220308 -28.380519338926202 C95.01638688579145 -28.104677791506106, 95.54512348937982 -27.82883624408601, 96.27791538812403 -27.44653917988677 M96.27791538812403 -27.44653917988677 C96.90964806646647 -27.063579117802284, 97.54138074480892 -26.6806190557178, 98.00466188813228 -26.399775304092984 M96.27791538812403 -27.44653917988677 C96.89279975464946 -27.07379266343743, 97.50768412117488 -26.701046146988094, 98.00466188813228 -26.399775304092984 M98.00466188813228 -26.399775304092984 C98.4117253763339 -26.11582543621792, 98.81878886453553 -25.831875568342863, 99.6607942104733 -25.244529088840633 M98.00466188813228 -26.399775304092984 C98.54976167187888 -26.019537291940672, 99.09486145562549 -25.63929927978836, 99.6607942104733 -25.244529088840633 M99.6607942104733 -25.244529088840633 C99.98464708416981 -24.986265040154567, 100.30849995786633 -24.7280009914685, 101.23950695219533 -23.985547688627737 M99.6607942104733 -25.244529088840633 C100.22564394197647 -24.794076459249478, 100.79049367347965 -24.343623829658327, 101.23950695219533 -23.985547688627737 M101.23950695219533 -23.985547688627737 C101.78398506944959 -23.49106706863898, 102.32846318670383 -22.996586448650223, 102.73431284400982 -22.62800452807842 M101.23950695219533 -23.985547688627737 C101.56578492332625 -23.689230668088683, 101.89206289445717 -23.392913647549634, 102.73431284400982 -22.62800452807842 M102.73431284400982 -22.62800452807842 C103.14730394466237 -22.20155730945471, 103.56029504531492 -21.775110090830996, 104.13906940787243 -21.177478043231485 M102.73431284400982 -22.62800452807842 C103.17742100872043 -22.170458968157824, 103.62052917343102 -21.712913408237227, 104.13906940787243 -21.177478043231485 M104.13906940787243 -21.177478043231485 C104.46526145587413 -20.794314302795346, 104.79145350387583 -20.411150562359207, 105.44800419774293 -19.63992875855011 M104.13906940787243 -21.177478043231485 C104.64726421164285 -20.580523509619226, 105.15545901541327 -19.98356897600697, 105.44800419774293 -19.63992875855011 M105.44800419774293 -19.63992875855011 C105.90319056949988 -19.03002048872734, 106.35837694125684 -18.420112218904574, 106.6557385198041 -18.02167479384835 M105.44800419774293 -19.63992875855011 C105.805058263053 -19.16150883932914, 106.16211232836307 -18.68308892010817, 106.6557385198041 -18.02167479384835 M106.6557385198041 -18.02167479384835 C107.01921448042948 -17.463278111366083, 107.38269044105485 -16.90488142888381, 107.7573095346684 -16.329365901781543 M106.6557385198041 -18.02167479384835 C106.9745155078919 -17.531947736538555, 107.2932924959797 -17.04222067922876, 107.7573095346684 -16.329365901781543 M107.7573095346684 -16.329365901781543 C107.97667484298273 -15.93986058372327, 108.19604015129705 -15.550355265664999, 108.7481906507495 -14.56995614258631 M107.7573095346684 -16.329365901781543 C108.07069412989993 -15.772919819316595, 108.38407872513149 -15.216473736851647, 108.7481906507495 -14.56995614258631 M108.7481906507495 -14.56995614258631 C109.06836720086312 -13.905102685594683, 109.38854375097672 -13.240249228603055, 109.62431012499809 -12.750675308355413 M108.7481906507495 -14.56995614258631 C108.95323454198716 -14.144178115194876, 109.15827843322481 -13.718400087803442, 109.62431012499809 -12.750675308355413 M109.62431012499809 -12.750675308355413 C109.8850620037809 -12.106613126467245, 110.14581388256371 -11.462550944579078, 110.38206779456745 -10.878999214271206 M109.62431012499809 -12.750675308355413 C109.83496871016489 -12.230344530186768, 110.04562729533167 -11.710013752018122, 110.38206779456745 -10.878999214271206 M110.38206779456745 -10.878999214271206 C110.58455974330836 -10.269125727374249, 110.78705169204927 -9.659252240477294, 111.01834987065482 -8.962618978877531 M110.38206779456745 -10.878999214271206 C110.5203134392502 -10.462625358938972, 110.65855908393297 -10.046251503606738, 111.01834987065482 -8.962618978877531 M111.01834987065482 -8.962618978877531 C111.20849577523776 -8.237510234946416, 111.3986416798207 -7.5124014910153, 111.53054173372745 -7.009409419623907 M111.01834987065482 -8.962618978877531 C111.2207692522284 -8.19070614782253, 111.42318863380198 -7.418793316767529, 111.53054173372745 -7.009409419623907 M111.53054173372745 -7.009409419623907 C111.67926871027166 -6.245727828526978, 111.82799568681588 -5.48204623743005, 111.91653867755518 -5.027396693551458 M111.53054173372745 -7.009409419623907 C111.63140109480334 -6.491517917132703, 111.73226045587923 -5.973626414641499, 111.91653867755518 -5.027396693551458 M111.91653867755518 -5.027396693551458 C112.00569580329741 -4.335911632360574, 112.09485292903965 -3.6444265711696895, 112.17475455789975 -3.024725316091981 M111.91653867755518 -5.027396693551458 C112.00024509734567 -4.378186231358603, 112.08395151713617 -3.728975769165748, 112.17475455789975 -3.024725316091981 M112.17475455789975 -3.024725316091981 C112.21659469315621 -2.3730314367233034, 112.25843482841267 -1.721337557354626, 112.30412831032167 -1.0096246935071378 M112.17475455789975 -3.024725316091981 C112.22216406914424 -2.286283910190276, 112.26957358038874 -1.547842504288571, 112.30412831032167 -1.0096246935071378 M112.30412831032167 -1.0096246935071378 C112.30412831032167 -0.20487243903264585, 112.30412831032167 0.5998798154418461, 112.30412831032167 1.00962469350713 M112.30412831032167 -1.0096246935071378 C112.30412831032167 -0.45014402123362096, 112.30412831032167 0.10933665103989587, 112.30412831032167 1.00962469350713 M112.30412831032167 1.00962469350713 C112.2731989247434 1.4913748396395337, 112.24226953916511 1.9731249857719373, 112.17475455789975 3.02472531609196 M112.30412831032167 1.00962469350713 C112.27715705885731 1.4297237058668024, 112.25018580739297 1.849822718226475, 112.17475455789975 3.02472531609196 M112.17475455789975 3.02472531609196 C112.09320794823799 3.657184717429071, 112.01166133857623 4.289644118766182, 111.91653867755518 5.027396693551435 M112.17475455789975 3.02472531609196 C112.07767900712389 3.777624118173767, 111.98060345634804 4.530522920255574, 111.91653867755518 5.027396693551435 M111.91653867755518 5.027396693551435 C111.8204656283252 5.520711496301265, 111.72439257909521 6.014026299051096, 111.53054173372745 7.0094094196239 M111.91653867755518 5.027396693551435 C111.83850675158443 5.428074141357871, 111.76047482561367 5.828751589164307, 111.53054173372745 7.0094094196239 M111.53054173372745 7.0094094196239 C111.41127878087167 7.464210747753704, 111.29201582801589 7.919012075883507, 111.01834987065482 8.96261897887751 M111.53054173372745 7.0094094196239 C111.40569329514936 7.4855106255776835, 111.28084485657128 7.961611831531467, 111.01834987065482 8.96261897887751 M111.01834987065482 8.96261897887751 C110.86630815852219 9.420544391263915, 110.71426644638956 9.87846980365032, 110.38206779456746 10.878999214271184 M111.01834987065482 8.96261897887751 C110.83590491549435 9.512114115164819, 110.65345996033389 10.06160925145213, 110.38206779456746 10.878999214271184 M110.38206779456746 10.878999214271184 C110.18065514392367 11.376492355410035, 109.97924249327988 11.873985496548885, 109.62431012499809 12.750675308355405 M110.38206779456746 10.878999214271184 C110.09510516507841 11.587802457154153, 109.80814253558935 12.29660570003712, 109.62431012499809 12.750675308355405 M109.62431012499809 12.750675308355405 C109.3452872867786 13.330072202050527, 109.0662644485591 13.90946909574565, 108.7481906507495 14.569956142586303 M109.62431012499809 12.750675308355405 C109.39964660627037 13.217193912022754, 109.17498308754264 13.683712515690106, 108.7481906507495 14.569956142586303 M108.7481906507495 14.569956142586303 C108.48041672539038 15.045415862111621, 108.21264280003126 15.52087558163694, 107.75730953466841 16.329365901781536 M108.7481906507495 14.569956142586303 C108.44320920730121 15.111481578148721, 108.1382277638529 15.65300701371114, 107.75730953466841 16.329365901781536 M107.75730953466841 16.329365901781536 C107.44075140582041 16.81568419545187, 107.1241932769724 17.3020024891222, 106.65573851980412 18.021674793848334 M107.75730953466841 16.329365901781536 C107.51492797154053 16.70172907130891, 107.27254640841265 17.074092240836286, 106.65573851980412 18.021674793848334 M106.65573851980412 18.021674793848334 C106.39270920689978 18.374110110676778, 106.12967989399546 18.726545427505222, 105.44800419774295 19.639928758550102 M106.65573851980412 18.021674793848334 C106.27942087978774 18.52590614822801, 105.90310323977135 19.03013750260769, 105.44800419774295 19.639928758550102 M105.44800419774295 19.639928758550102 C105.0203503873538 20.142275258424355, 104.59269657696467 20.644621758298605, 104.13906940787246 21.177478043231467 M105.44800419774295 19.639928758550102 C105.15970367268321 19.978582960049874, 104.87140314762347 20.317237161549645, 104.13906940787246 21.177478043231467 M104.13906940787246 21.177478043231467 C103.7633378175833 21.565451758342274, 103.38760622729416 21.95342547345308, 102.73431284400982 22.628004528078414 M104.13906940787246 21.177478043231467 C103.62965419788769 21.703491071307294, 103.12023898790291 22.22950409938312, 102.73431284400982 22.628004528078414 M102.73431284400982 22.628004528078414 C102.26932844703435 23.05029105459856, 101.8043440500589 23.47257758111871, 101.23950695219536 23.985547688627715 M102.73431284400982 22.628004528078414 C102.2306117907563 23.085452497443704, 101.72691073750278 23.54290046680899, 101.23950695219536 23.985547688627715 M101.23950695219536 23.985547688627715 C100.65991482602004 24.447756985658305, 100.08032269984471 24.9099662826889, 99.66079421047331 25.24452908884063 M101.23950695219536 23.985547688627715 C100.80315656382973 24.3335255115778, 100.36680617546412 24.681503334527882, 99.66079421047331 25.24452908884063 M99.66079421047331 25.24452908884063 C99.24416763553899 25.535149752041068, 98.82754106060466 25.825770415241504, 98.00466188813229 26.399775304092973 M99.66079421047331 25.24452908884063 C99.07740378106415 25.6514769978318, 98.494013351655 26.05842490682297, 98.00466188813229 26.399775304092973 M98.00466188813229 26.399775304092973 C97.37657467930667 26.780525461133205, 96.74848747048104 27.16127561817344, 96.27791538812404 27.446539179886766 M98.00466188813229 26.399775304092973 C97.33689068986001 26.804582128744777, 96.66911949158774 27.209388953396576, 96.27791538812404 27.446539179886766 M96.27791538812404 27.446539179886766 C95.69774610510267 27.74921312322286, 95.11757682208128 28.051887066558955, 94.48765028220309 28.3805193389262 M96.27791538812404 27.446539179886766 C95.8518677716445 27.668807948507617, 95.42582015516498 27.891076717128463, 94.48765028220309 28.3805193389262 M94.48765028220309 28.3805193389262 C93.76474647267206 28.70052741122599, 93.04184266314101 29.020535483525787, 92.6412231537003 29.197877856399682 M94.48765028220309 28.3805193389262 C94.10046568133049 28.551914476309392, 93.71328108045789 28.72330961369258, 92.6412231537003 29.197877856399682 M92.6412231537003 29.197877856399682 C91.89360802676266 29.473007133991207, 91.14599289982503 29.74813641158273, 90.74622136774407 29.895256030836055 M92.6412231537003 29.197877856399682 C92.11537328073504 29.391395470553835, 91.58952340776979 29.58491308470799, 90.74622136774407 29.895256030836055 M90.74622136774407 29.895256030836055 C90.03874873415215 30.105230194886502, 89.33127610056023 30.315204358936953, 88.81043189314951 30.46978818572942 M90.74622136774407 29.895256030836055 C90.14137014626807 30.074772698441283, 89.53651892479209 30.254289366046507, 88.81043189314951 30.46978818572942 M88.81043189314951 30.46978818572942 C88.03305809180735 30.647218683047637, 87.25568429046517 30.82464918036585, 86.84180930409323 30.919113445218557 M88.81043189314951 30.46978818572942 C88.0979822385202 30.632400170230078, 87.38553258389088 30.795012154730735, 86.84180930409323 30.919113445218557 M86.84180930409323 30.919113445218557 C86.31432394303265 31.004393187684762, 85.78683858197206 31.089672930150968, 84.84844309306196 31.24138543543225 M86.84180930409323 30.919113445218557 C86.25914314799192 31.01331439069349, 85.6764769918906 31.107515336168426, 84.84844309306196 31.24138543543225 M84.84844309306196 31.24138543543225 C84.44178016505117 31.280615719013724, 84.03511723704037 31.3198460025952, 82.83852442939245 31.435279871635593 M84.84844309306196 31.24138543543225 C84.35987433747364 31.28851707569396, 83.87130558188532 31.335648715955667, 82.83852442939245 31.435279871635593 M82.83852442939245 31.435279871635593 C82.4191653379265 31.448727901465954, 81.99980624646055 31.46217593129631, 80.8203125 31.5 M82.83852442939245 31.435279871635593 C82.27901501530636 31.453222249526327, 81.71950560122026 31.47116462741706, 80.8203125 31.5 M80.8203125 31.5 C80.8203125 31.5, 80.8203125 31.5, 80.8203125 31.5 M80.8203125 31.5 C80.8203125 31.5, 80.8203125 31.5, 80.8203125 31.5 M80.8203125 31.5 C16.379128674601873 31.5, -48.062055150796255 31.5, -80.8203125 31.5 M80.8203125 31.5 C40.6270466924758 31.5, 0.4337808849516023 31.5, -80.8203125 31.5 M-80.8203125 31.5 C-81.50563146798791 31.478023154589078, -82.19095043597581 31.456046309178152, -82.83852442939244 31.435279871635593 M-80.8203125 31.5 C-81.45403055557779 31.479677895414987, -82.08774861115558 31.45935579082997, -82.83852442939244 31.435279871635593 M-82.83852442939244 31.435279871635593 C-83.45016892473116 31.376275262780396, -84.06181342006987 31.3172706539252, -84.84844309306195 31.24138543543225 M-82.83852442939244 31.435279871635593 C-83.35157549688383 31.38578645218888, -83.86462656437521 31.336293032742173, -84.84844309306195 31.24138543543225 M-84.84844309306195 31.24138543543225 C-85.44915089866956 31.14426765598022, -86.04985870427717 31.047149876528188, -86.84180930409323 30.919113445218557 M-84.84844309306195 31.24138543543225 C-85.2518952240446 31.17615842371298, -85.65534735502725 31.110931411993707, -86.84180930409323 30.919113445218557 M-86.84180930409323 30.919113445218557 C-87.57079817477512 30.752726492582372, -88.29978704545701 30.586339539946184, -88.81043189314947 30.469788185729428 M-86.84180930409323 30.919113445218557 C-87.4642449982434 30.777046559801278, -88.08668069239357 30.634979674384, -88.81043189314947 30.469788185729428 M-88.81043189314947 30.469788185729428 C-89.40585040081758 30.29307109806906, -90.00126890848568 30.116354010408692, -90.74622136774403 29.89525603083607 M-88.81043189314947 30.469788185729428 C-89.5777586056453 30.242049645240773, -90.34508531814113 30.014311104752117, -90.74622136774403 29.89525603083607 M-90.74622136774403 29.89525603083607 C-91.23163685903722 29.71661864290856, -91.7170523503304 29.537981254981055, -92.64122315370028 29.197877856399685 M-90.74622136774403 29.89525603083607 C-91.25477002578798 29.708105423703632, -91.76331868383194 29.520954816571194, -92.64122315370028 29.197877856399685 M-92.64122315370028 29.197877856399685 C-93.1099468700271 28.990387771376835, -93.57867058635391 28.78289768635398, -94.48765028220308 28.380519338926206 M-92.64122315370028 29.197877856399685 C-93.06499396269601 29.01028708997169, -93.48876477169172 28.8226963235437, -94.48765028220308 28.380519338926206 M-94.48765028220308 28.380519338926206 C-95.05408200114302 28.085012273972072, -95.62051372008295 27.78950520901794, -96.27791538812403 27.446539179886773 M-94.48765028220308 28.380519338926206 C-95.05836257618839 28.082779100712738, -95.62907487017371 27.78503886249927, -96.27791538812403 27.446539179886773 M-96.27791538812403 27.446539179886773 C-96.9016400166919 27.06843364463616, -97.52536464525977 26.69032810938554, -98.00466188813226 26.399775304092994 M-96.27791538812403 27.446539179886773 C-96.87676014313263 27.083515970198157, -97.47560489814123 26.72049276050954, -98.00466188813226 26.399775304092994 M-98.00466188813226 26.399775304092994 C-98.52899463440555 26.034023478291513, -99.05332738067882 25.668271652490027, -99.6607942104733 25.244529088840636 M-98.00466188813226 26.399775304092994 C-98.54365057500885 26.023800128572088, -99.08263926188545 25.647824953051177, -99.6607942104733 25.244529088840636 M-99.6607942104733 25.244529088840636 C-100.17178209999267 24.837029844907757, -100.68276998951204 24.429530600974882, -101.23950695219533 23.98554768862774 M-99.6607942104733 25.244529088840636 C-100.20408077384425 24.811272512014924, -100.74736733721521 24.37801593518921, -101.23950695219533 23.98554768862774 M-101.23950695219533 23.98554768862774 C-101.55225972884674 23.701513891857942, -101.86501250549816 23.41748009508815, -102.7343128440098 22.628004528078435 M-101.23950695219533 23.98554768862774 C-101.58390462865678 23.672774831128635, -101.92830230511822 23.36000197362953, -102.7343128440098 22.628004528078435 M-102.7343128440098 22.628004528078435 C-103.03418529103983 22.318361606534165, -103.33405773806986 22.008718684989894, -104.13906940787244 21.177478043231478 M-102.7343128440098 22.628004528078435 C-103.15714552862902 22.191395066000076, -103.57997821324824 21.754785603921714, -104.13906940787244 21.177478043231478 M-104.13906940787244 21.177478043231478 C-104.46105299965184 20.799257794942005, -104.78303659143123 20.42103754665253, -105.44800419774293 19.639928758550113 M-104.13906940787244 21.177478043231478 C-104.49862008794042 20.755129355410347, -104.8581707680084 20.332780667589216, -105.44800419774293 19.639928758550113 M-105.44800419774293 19.639928758550113 C-105.83275372208927 19.12439944732878, -106.21750324643558 18.60887013610745, -106.6557385198041 18.021674793848355 M-105.44800419774293 19.639928758550113 C-105.89250685274817 19.04433569586802, -106.33700950775342 18.448742633185926, -106.6557385198041 18.021674793848355 M-106.6557385198041 18.021674793848355 C-106.8921065904043 17.65854996369235, -107.12847466100447 17.29542513353635, -107.7573095346684 16.329365901781557 M-106.6557385198041 18.021674793848355 C-107.08161489823785 17.367414312754082, -107.50749127667157 16.713153831659806, -107.7573095346684 16.329365901781557 M-107.7573095346684 16.329365901781557 C-108.08552513806464 15.746585862517753, -108.41374074146088 15.163805823253947, -108.7481906507495 14.569956142586314 M-107.7573095346684 16.329365901781557 C-108.14904522726847 15.633799512029853, -108.54078091986854 14.938233122278149, -108.7481906507495 14.569956142586314 M-108.7481906507495 14.569956142586314 C-109.07750351592692 13.88613093187888, -109.40681638110432 13.202305721171445, -109.62431012499809 12.750675308355417 M-108.7481906507495 14.569956142586314 C-109.0510653955323 13.94103025456343, -109.35394014031512 13.312104366540547, -109.62431012499809 12.750675308355417 M-109.62431012499809 12.750675308355417 C-109.92070750594104 12.018568046972797, -110.217104886884 11.28646078559018, -110.38206779456745 10.878999214271209 M-109.62431012499809 12.750675308355417 C-109.82981269721428 12.243079981859486, -110.03531526943047 11.735484655363555, -110.38206779456745 10.878999214271209 M-110.38206779456745 10.878999214271209 C-110.55408315975862 10.360916341241893, -110.7260985249498 9.842833468212577, -111.01834987065482 8.962618978877522 M-110.38206779456745 10.878999214271209 C-110.58186124108646 10.277253186118688, -110.78165468760547 9.675507157966168, -111.01834987065482 8.962618978877522 M-111.01834987065482 8.962618978877522 C-111.21379481254174 8.217302709089024, -111.40923975442865 7.471986439300526, -111.53054173372743 7.009409419623911 M-111.01834987065482 8.962618978877522 C-111.12744817110091 8.546579875774036, -111.236546471547 8.13054077267055, -111.53054173372743 7.009409419623911 M-111.53054173372743 7.009409419623911 C-111.65540570592358 6.368259312406558, -111.78026967811974 5.727109205189203, -111.91653867755518 5.027396693551461 M-111.53054173372743 7.009409419623911 C-111.66789310905142 6.304139136558689, -111.80524448437542 5.598868853493467, -111.91653867755518 5.027396693551461 M-111.91653867755518 5.027396693551461 C-111.9961640733345 4.409837847699907, -112.07578946911383 3.792279001848354, -112.17475455789975 3.024725316091999 M-111.91653867755518 5.027396693551461 C-111.97800036940488 4.550711948548988, -112.0394620612546 4.074027203546516, -112.17475455789975 3.024725316091999 M-112.17475455789975 3.024725316091999 C-112.22232911599136 2.283713172322994, -112.26990367408298 1.5427010285539895, -112.30412831032167 1.0096246935071416 M-112.17475455789975 3.024725316091999 C-112.20888741138744 2.4930785714777635, -112.24302026487513 1.9614318268635282, -112.30412831032167 1.0096246935071416 M-112.30412831032167 1.0096246935071416 C-112.30412831032167 0.26436680731930384, -112.30412831032167 -0.4808910788685339, -112.30412831032167 -1.0096246935071262 M-112.30412831032167 1.0096246935071416 C-112.30412831032167 0.40659033904606634, -112.30412831032167 -0.1964440154150089, -112.30412831032167 -1.0096246935071262 M-112.30412831032167 -1.0096246935071262 C-112.25945677369502 -1.7054199346825496, -112.21478523706837 -2.4012151758579727, -112.17475455789975 -3.024725316091956 M-112.30412831032167 -1.0096246935071262 C-112.27431426223612 -1.474002557905995, -112.24450021415058 -1.9383804223048637, -112.17475455789975 -3.024725316091956 M-112.17475455789975 -3.024725316091956 C-112.10430571302206 -3.57111264526534, -112.03385686814438 -4.117499974438725, -111.91653867755518 -5.027396693551446 M-112.17475455789975 -3.024725316091956 C-112.10823289335836 -3.5406542100864486, -112.04171122881698 -4.056583104080942, -111.91653867755518 -5.027396693551446 M-111.91653867755518 -5.027396693551446 C-111.82256892292489 -5.509911523063364, -111.72859916829458 -5.992426352575282, -111.53054173372745 -7.009409419623896 M-111.91653867755518 -5.027396693551446 C-111.83926860573203 -5.424162181327849, -111.76199853390888 -5.820927669104251, -111.53054173372745 -7.009409419623896 M-111.53054173372745 -7.009409419623896 C-111.32637202563208 -7.787997004302756, -111.12220231753672 -8.566584588981616, -111.01834987065482 -8.962618978877506 M-111.53054173372745 -7.009409419623896 C-111.34122608352244 -7.731352043777373, -111.15191043331745 -8.45329466793085, -111.01834987065482 -8.962618978877506 M-111.01834987065482 -8.962618978877506 C-110.85031313740261 -9.468718846415545, -110.68227640415041 -9.974818713953583, -110.38206779456746 -10.878999214271168 M-111.01834987065482 -8.962618978877506 C-110.82853423518387 -9.53431342990157, -110.63871859971292 -10.106007880925633, -110.38206779456746 -10.878999214271168 M-110.38206779456746 -10.878999214271168 C-110.1015798635183 -11.571809826827849, -109.82109193246912 -12.264620439384531, -109.62431012499809 -12.750675308355401 M-110.38206779456746 -10.878999214271168 C-110.1348218849968 -11.489701391085186, -109.88757597542613 -12.100403567899203, -109.62431012499809 -12.750675308355401 M-109.62431012499809 -12.750675308355401 C-109.3185350670532 -13.385623758716111, -109.01276000910832 -14.020572209076821, -108.7481906507495 -14.5699561425863 M-109.62431012499809 -12.750675308355401 C-109.43373160950702 -13.14641567349961, -109.24315309401594 -13.542156038643817, -108.7481906507495 -14.5699561425863 M-108.7481906507495 -14.5699561425863 C-108.41785326795726 -15.156503616021174, -108.087515885165 -15.74305108945605, -107.7573095346684 -16.329365901781546 M-108.7481906507495 -14.5699561425863 C-108.47585754178633 -15.053511154268023, -108.20352443282314 -15.537066165949744, -107.7573095346684 -16.329365901781546 M-107.7573095346684 -16.329365901781546 C-107.32925773837331 -16.98696840889235, -106.90120594207822 -17.64457091600315, -106.65573851980412 -18.021674793848344 M-107.7573095346684 -16.329365901781546 C-107.46142008595953 -16.783931552440432, -107.16553063725067 -17.238497203099314, -106.65573851980412 -18.021674793848344 M-106.65573851980412 -18.021674793848344 C-106.3663820016814 -18.409386167211686, -106.07702548355869 -18.797097540575024, -105.44800419774295 -19.639928758550102 M-106.65573851980412 -18.021674793848344 C-106.3116121695789 -18.4827727525947, -105.96748581935367 -18.94387071134105, -105.44800419774295 -19.639928758550102 M-105.44800419774295 -19.639928758550102 C-104.92937737281 -20.24913733781869, -104.41075054787704 -20.85834591708728, -104.13906940787246 -21.177478043231467 M-105.44800419774295 -19.639928758550102 C-105.09797496278834 -20.051093015155473, -104.74794572783375 -20.462257271760848, -104.13906940787246 -21.177478043231467 M-104.13906940787246 -21.177478043231467 C-103.84631895910975 -21.47976691683779, -103.55356851034706 -21.782055790444115, -102.73431284400984 -22.628004528078403 M-104.13906940787246 -21.177478043231467 C-103.84163590096485 -21.484602558858636, -103.54420239405724 -21.791727074485802, -102.73431284400984 -22.628004528078403 M-102.73431284400984 -22.628004528078403 C-102.31113868344765 -23.01232010412624, -101.88796452288548 -23.396635680174075, -101.23950695219536 -23.98554768862771 M-102.73431284400984 -22.628004528078403 C-102.32344214447602 -23.001146426352022, -101.91257144494219 -23.374288324625645, -101.23950695219536 -23.98554768862771 M-101.23950695219536 -23.98554768862771 C-100.89983804043008 -24.256424606791168, -100.5601691286648 -24.527301524954623, -99.66079421047331 -25.244529088840626 M-101.23950695219536 -23.98554768862771 C-100.78030289654524 -24.351750703075556, -100.32109884089512 -24.7179537175234, -99.66079421047331 -25.244529088840626 M-99.66079421047331 -25.244529088840626 C-99.27400618418821 -25.514335672193326, -98.88721815790309 -25.784142255546023, -98.0046618881323 -26.39977530409297 M-99.66079421047331 -25.244529088840626 C-99.03531788062553 -25.680834300108522, -98.40984155077774 -26.117139511376415, -98.0046618881323 -26.39977530409297 M-98.0046618881323 -26.39977530409297 C-97.55447698603452 -26.67268003732479, -97.10429208393673 -26.945584770556604, -96.27791538812404 -27.446539179886763 M-98.0046618881323 -26.39977530409297 C-97.57977727001207 -26.657342856496623, -97.15489265189184 -26.914910408900273, -96.27791538812404 -27.446539179886763 M-96.27791538812404 -27.446539179886763 C-95.75617553054087 -27.718730529397575, -95.2344356729577 -27.990921878908388, -94.48765028220309 -28.3805193389262 M-96.27791538812404 -27.446539179886763 C-95.85159359992805 -27.66895098371647, -95.42527181173207 -27.891362787546182, -94.48765028220309 -28.3805193389262 M-94.48765028220309 -28.3805193389262 C-93.90233988642993 -28.639618888518978, -93.31702949065678 -28.898718438111757, -92.6412231537003 -29.19787785639968 M-94.48765028220309 -28.3805193389262 C-93.79873237924325 -28.68548285854302, -93.10981447628342 -28.990446378159838, -92.6412231537003 -29.19787785639968 M-92.6412231537003 -29.19787785639968 C-92.16816500205117 -29.371967629108173, -91.69510685040206 -29.546057401816668, -90.74622136774407 -29.895256030836055 M-92.6412231537003 -29.19787785639968 C-91.9572174362851 -29.449598283288008, -91.27321171886992 -29.70131871017634, -90.74622136774407 -29.895256030836055 M-90.74622136774407 -29.895256030836055 C-90.2521475577514 -30.04189454419553, -89.75807374775874 -30.188533057555, -88.81043189314951 -30.469788185729417 M-90.74622136774407 -29.895256030836055 C-90.0045883987899 -30.11536880311076, -89.26295542983574 -30.33548157538546, -88.81043189314951 -30.469788185729417 M-88.81043189314951 -30.469788185729417 C-88.30697193751621 -30.584699635219472, -87.8035119818829 -30.69961108470953, -86.84180930409325 -30.919113445218553 M-88.81043189314951 -30.469788185729417 C-88.20025095130991 -30.60905800390154, -87.59007000947031 -30.748327822073666, -86.84180930409325 -30.919113445218553 M-86.84180930409325 -30.919113445218553 C-86.05404398843413 -31.046473232243056, -85.26627867277502 -31.17383301926756, -84.84844309306196 -31.24138543543225 M-86.84180930409325 -30.919113445218553 C-86.370081799283 -30.99537868989484, -85.89835429447274 -31.071643934571124, -84.84844309306196 -31.24138543543225 M-84.84844309306196 -31.24138543543225 C-84.38639820930007 -31.285958349678488, -83.92435332553818 -31.330531263924723, -82.83852442939246 -31.435279871635593 M-84.84844309306196 -31.24138543543225 C-84.40303763643777 -31.28435316415435, -83.95763217981359 -31.327320892876454, -82.83852442939246 -31.435279871635593 M-82.83852442939246 -31.435279871635593 C-82.03730177838857 -31.460973522568008, -81.23607912738468 -31.48666717350042, -80.82031250000001 -31.5 M-82.83852442939246 -31.435279871635593 C-82.08612375438308 -31.459407896824075, -81.3337230793737 -31.483535922012557, -80.82031250000001 -31.5 M-80.82031250000001 -31.5 C-80.82031250000001 -31.5, -80.8203125 -31.5, -80.8203125 -31.5 M-80.82031250000001 -31.5 C-80.82031250000001 -31.5, -80.8203125 -31.5, -80.8203125 -31.5" stroke="#c2185b" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style="fill:#fce4ec !important;stroke:#c2185b !important"></path></g><g class="label" style="color:#880e4f !important" transform="translate(-96.9453125, -24)"><rect></rect><foreignObject width="193.890625" height="48"><div style="color: rgb(136, 14, 79) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#880e4f !important" class="nodeLabel "><p>MAX platform-api<br/>событие message_callback</p></span></div></foreignObject></g></g><g class="node default entry " id="mmd10-flowchart-ENTRY-1" data-look="classic" transform="translate(155.82421875, 188.5)"><rect class="basic label-container" style="fill:#ede7f6 !important;stroke:#5e35b1 !important" x="-130" y="-63" width="260" height="126"></rect><g class="label" style="color:#311b92 !important" transform="translate(-100, -48)"><rect></rect><foreignObject width="200" height="96"><div style="color: rgb(49, 27, 146) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#311b92 !important" class="nodeLabel "><p>appeal.on_callback<br/>handlers/appeal.py:510<br/>единственный @dp.message_callback</p></span></div></foreignObject></g></g><g class="node default guard " id="mmd10-flowchart-GUARD-2" data-look="classic" transform="translate(214.703125, 459.7874984741211)"><polygon points="113.1875,0 226.375,-113.1875 113.1875,-226.375 0,-113.1875" class="label-container" transform="translate(-112.6875, 113.1875)" style="fill:#fff3e0 !important;stroke:#e65100 !important"></polygon><g class="label" style="color:#bf360c !important" transform="translate(-74.1875, -24)"><rect></rect><foreignObject width="148.375" height="48"><div style="color: rgb(191, 54, 12) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#bf360c !important" class="nodeLabel "><p>чат = админ-группа<br/>и payload НЕ admin?</p></span></div></foreignObject></g></g><g class="node default stop " id="mmd10-flowchart-ACK-3" data-look="classic" transform="translate(133.3671875, 781.4671859741211)"><rect class="basic label-container" style="fill:#ffebee !important;stroke:#c62828 !important" x="-125.3671875" y="-51" width="250.734375" height="102"></rect><g class="label" style="color:#b71c1c !important" transform="translate(-95.3671875, -36)"><rect></rect><foreignObject width="190.734375" height="72"><div style="color: rgb(183, 28, 28) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#b71c1c !important" class="nodeLabel "><p>ack + стоп<br/>пользовательские кнопки<br/>в группе не работают</p></span></div></foreignObject></g></g><g class="node default cit " id="mmd10-flowchart-D1-4" data-look="classic" transform="translate(444.2265625, 781.4671859741211)"><polygon points="135.4921875,0 270.984375,-135.4921875 135.4921875,-270.984375 0,-135.4921875" class="label-container" transform="translate(-134.9921875, 135.4921875)" style="fill:#fff8e1 !important;stroke:#ff8f00 !important"></polygon><g class="label" style="color:#e65100 !important" transform="translate(-96.4921875, -24)"><rect></rect><foreignObject width="192.984375" height="48"><div style="color: rgb(230, 81, 0) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#e65100 !important" class="nodeLabel "><p>1. воронка жителя?<br/>_dispatch_citizen_callback</p></span></div></foreignObject></g></g><g class="node default adm " id="mmd10-flowchart-D2-5" data-look="classic" transform="translate(689.984375, 1201.3828125)"><polygon points="141.0234375,0 282.046875,-141.0234375 141.0234375,-282.046875 0,-141.0234375" class="label-container" transform="translate(-140.5234375, 141.0234375)" style="fill:#e1f5ff !important;stroke:#0288d1 !important"></polygon><g class="label" style="color:#01579b !important" transform="translate(-90.0234375, -36)"><rect></rect><foreignObject width="180.046875" height="72"><div style="color: rgb(1, 87, 155) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#01579b !important" class="nodeLabel "><p>2. оператор/рассылка?<br/>admin_callback_dispatch<br/>:337</p></span></div></foreignObject></g></g><g class="node default menu " id="mmd10-flowchart-D3-6" data-look="classic" transform="translate(923.26953125, 1554.40625)"><rect class="basic label-container" style="fill:#e0f2f1 !important;stroke:#00695c !important" x="-110.546875" y="-51" width="221.09375" height="102"></rect><g class="label" style="color:#004d40 !important" transform="translate(-80.546875, -36)"><rect></rect><foreignObject width="161.09375" height="72"><div style="color: rgb(0, 77, 64) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#004d40 !important" class="nodeLabel "><p>3. иначе → меню<br/>menu.handle_callback<br/>:1077</p></span></div></foreignObject></g></g><g class="node default reg " id="mmd10-flowchart-REG-7" data-look="classic" transform="translate(900.35546875, 188.5)"><polygon points="0,0 215,0 215,-135 0,-135 0,0 -8,0 223,0 223,-135 -8,-135 -8,0" class="label-container" transform="translate(-107.5,67.5)" style="fill:#f3e5f5 !important;stroke:#8e24aa !important"></polygon><g class="label" style="color:#4a148c !important" transform="translate(-100, -60)"><rect></rect><foreignObject width="200" height="120"><div style="color: rgb(74, 20, 140) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#4a148c !important" class="nodeLabel "><p>callback_router.py<br/>EXACT_ROUTES + PREFIX_ROUTES<br/>один реестр групп + admin_allowed</p></span></div></foreignObject></g></g><g class="node default okcit " id="mmd10-flowchart-C_OK-17" data-look="classic" transform="translate(362.283203125, 1201.3828125)"><rect class="basic label-container" style="fill:#fffde7 !important;stroke:#fbc02d !important" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="color:#f57f17 !important" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div style="color: rgb(245, 127, 23) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#f57f17 !important" class="nodeLabel "><p>обработано<br/>(шаги анкеты, карточки жителя)</p></span></div></foreignObject></g></g><g class="node default okadm " id="mmd10-flowchart-A_OK-21" data-look="classic" transform="translate(586.833984375, 1554.40625)"><rect class="basic label-container" style="fill:#e3f2fd !important;stroke:#1976d2 !important" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="color:#0d47a1 !important" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div style="color: rgb(13, 71, 161) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#0d47a1 !important" class="nodeLabel "><p>обработано<br/>(действия оператора, рассылки)</p></span></div></foreignObject></g></g><g class="node default okmenu " id="mmd10-flowchart-M_OK-25" data-look="classic" transform="translate(923.26953125, 1706.40625)"><rect class="basic label-container" style="fill:#e8f5e9 !important;stroke:#388e3c !important" x="-127.7734375" y="-51" width="255.546875" height="102"></rect><g class="label" style="color:#1b5e20 !important" transform="translate(-97.7734375, -36)"><rect></rect><foreignObject width="195.546875" height="72"><div style="color: rgb(27, 94, 32) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#1b5e20 !important" class="nodeLabel "><p>меню и подменю жителя<br/>info:* settings:* goodbye:*<br/>+ fallback для незнакомых</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="mmd10-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="mmd10-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="mmd10-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(40.5882352941, 60%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(-79.4117647059, 60%, 83.3333333333%)" stop-opacity="1"></stop></linearGradient></svg>
+<pre class="mermaid" hidden>flowchart TD
+    MAX([MAX platform-api<br/>событие message_callback]):::ext
+    ENTRY["appeal.on_callback<br/>handlers/appeal.py:510<br/>единственный @dp.message_callback"]:::entry
+    GUARD{"чат = админ-группа<br/>и payload НЕ admin?"}:::guard
+    ACK["ack + стоп<br/>пользовательские кнопки<br/>в группе не работают"]:::stop
+
+    D1{"1. воронка жителя?<br/>_dispatch_citizen_callback"}:::cit
+    D2{"2. оператор/рассылка?<br/>admin_callback_dispatch<br/>:337"}:::adm
+    D3["3. иначе → меню<br/>menu.handle_callback<br/>:1077"]:::menu
+
+    REG[["callback_router.py<br/>EXACT_ROUTES + PREFIX_ROUTES<br/>один реестр групп + admin_allowed"]]:::reg
+
+    MAX --> ENTRY
+    ENTRY --> GUARD
+    GUARD -->|да| ACK
+    GUARD -->|нет| D1
+    D1 -->|"menu:* consent:* cancel<br/>addr:* locality: topic:<br/>geo:* appeal:submit/show/<br/>followup/repeat/atts appeals:page"| C_OK["обработано<br/>(шаги анкеты, карточки жителя)"]:::okcit
+    D1 -->|"не воронка"| D2
+    D2 -->|"op:* broadcast:*<br/>open_tickets stats close reopen<br/>reply replyint erase block<br/>operators set: tmpl: aud: bc:"| A_OK["обработано<br/>(действия оператора, рассылки)"]:::okadm
+    D2 -->|"не admin / неизвестный хвост"| D3
+    D3 --> M_OK["меню и подменю жителя<br/>info:* settings:* goodbye:*<br/>+ fallback для незнакомых"]:::okmenu
+
+    REG -.->|"таксономия префиксов<br/>и проверка чат-контекста"| GUARD
+    REG -.-> D1
+    REG -.-> D2
+    REG -.-> D3
+
+    classDef ext fill:#fce4ec,stroke:#c2185b,color:#880e4f
+    classDef entry fill:#ede7f6,stroke:#5e35b1,color:#311b92
+    classDef guard fill:#fff3e0,stroke:#e65100,color:#bf360c
+    classDef stop fill:#ffebee,stroke:#c62828,color:#b71c1c
+    classDef cit fill:#fff8e1,stroke:#ff8f00,color:#e65100
+    classDef adm fill:#e1f5ff,stroke:#0288d1,color:#01579b
+    classDef menu fill:#e0f2f1,stroke:#00695c,color:#004d40
+    classDef okcit fill:#fffde7,stroke:#fbc02d,color:#f57f17
+    classDef okadm fill:#e3f2fd,stroke:#1976d2,color:#0d47a1
+    classDef okmenu fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
+    classDef reg fill:#f3e5f5,stroke:#8e24aa,color:#4a148c</pre>
+</div>
+
+<p>Почему это кандидат на упрощение. Таксономия префиксов уже <strong>централизована</strong> в одном месте — <code class="kbd">callback_router.py</code> (реестр <code class="kbd">EXACT_ROUTES</code> + <code class="kbd">PREFIX_ROUTES</code>, на схеме фиолетовый узел): там для каждой группы кнопок прописано, к какому домену она относится и можно ли её жать в админ-группе (<code class="kbd">admin_allowed</code>). Но сам <strong>разбор</strong> по-прежнему размазан по трём функциям в трёх файлах: <code class="kbd">_dispatch_citizen_callback</code> (внутри <code class="kbd">appeal.py</code>), <code class="kbd">dispatch_admin_callback</code> (в <code class="kbd">admin_callback_dispatch.py</code>) и <code class="kbd">handle_callback</code> (в <code class="kbd">menu.py</code>). Получается раздвоение: реестр говорит «вот группа <code class="kbd">op:close:</code>, она операторская», но чтобы понять, <em>что именно</em> делает кнопка, надо открывать отдельный диспетчер. Связка «реестр знает группу → диспетчер знает действие» держится на договорённости, а не на коде: если завести новую кнопку в реестре и забыть про обработчик, payload молча провалится в меню (это поведение даже специально сохранено как инвариант в докстринге диспетчера). Логичный следующий шаг — собрать все три разбора в одну таблицу <code class="kbd">payload → handler</code>, привязанную прямо к <code class="kbd">callback_router</code>, чтобы реестр и обработчик нельзя было рассинхронизировать. Это та же идея типизированного <code class="kbd">CallbackPayload</code>-разбора, что висит в бэклоге MAXAPI (P1.2): сделать маршрут кнопок единым и проверяемым на этапе сборки, а не «по цепочке if».</p>
+
+<h4>Бизнес-логика (services/)</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Файл</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">cron.py</code></td><td>Сборка планировщика (все cron-задачи: пульс, отчёты, бэкап, SLA, ретенция).</td></tr>
+<tr><td><code class="kbd">cron_registry.py</code></td><td>Машинно-читаемый список имён задач для anti-drift теста синхронизации с документацией.</td></tr>
+<tr><td><code class="kbd">db_backup.py</code></td><td>pg_dump + GPG + локальный том + опциональный S3.</td></tr>
+<tr><td><code class="kbd">calendar_ru.py</code></td><td>Производственный календарь РФ из <code class="kbd">seed/holidays.json</code> (подавление напоминаний в праздники).</td></tr>
+<tr><td><code class="kbd">appeals.py</code></td><td>CRUD по обращениям, поиск, статусы, история.</td></tr>
+<tr><td><code class="kbd">users.py</code></td><td>CRUD по жителям, нормализация телефона, удаление ПДн, аудит.</td></tr>
+<tr><td><code class="kbd">operators.py</code></td><td>CRUD по операторам, первичная инициализация ИТ из env.</td></tr>
+<tr><td><code class="kbd">broadcasts.py</code></td><td>Подписки и отправка рассылок, подбор «осиротевших» SENDING.</td></tr>
+<tr><td><code class="kbd">settings_store.py</code></td><td>Дефолты и схема настроек (26 ключей) + get/set с белым списком URL.</td></tr>
+<tr><td><code class="kbd">stats.py</code></td><td>XLSX-отчёт за период (openpyxl).</td></tr>
+<tr><td><code class="kbd">card_format.py</code> / <code class="kbd">admin_card.py</code></td><td>Сборка карточек обращения (лента: суть → ответ → дополнение) и правило свежести (новая карточка vs редактирование).</td></tr>
+<tr><td><code class="kbd">geo.py</code></td><td>Локальное распознавание адреса по геоданным (shapely).</td></tr>
+<tr><td><code class="kbd">threat_intel.py</code></td><td>Локальный кэш вредоносных URL-хостов (URLhaus + ThreatFox + опц. PhishTank).</td></tr>
+<tr><td><code class="kbd">idempotency.py</code></td><td>Защита от повторной обработки события MAX.</td></tr>
+<tr><td><code class="kbd">policy.py</code></td><td>Загрузка PDF политики и кеширование токена.</td></tr>
+<tr><td><code class="kbd">repo_sync.py</code></td><td>Создание PR с актуальными настройками через GitHub API.</td></tr>
+<tr><td><code class="kbd">progress.py</code></td><td>Прогресс-карта воронки.</td></tr>
+</tbody>
+</table></div>
+
+<h4>Инфраструктура и скрипты</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Файл</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code class="kbd">infra/Dockerfile</code></td><td>Образ на <code class="kbd">python:3.12-slim</code> (запинен по digest), non-root пользователь <code class="kbd">botuser</code> (UID/GID 1000), запуск <code class="kbd">alembic upgrade head && python -m aemr_bot.main</code>.</td></tr>
+<tr><td><code class="kbd">infra/docker-compose.yml</code></td><td>Штатная конфигурация: db (postgres:16-alpine + pg_stat_statements) и bot (read-only rootfs, cap_drop, mem_limit). Webhook-стек (nginx + certbot) вынесен в отдельный <code class="kbd">docker-compose.webhook.yml</code> — в обычной эксплуатации не участвует.</td></tr>
+<tr><td><code class="kbd">infra/.env.example</code></td><td>Шаблон всех переменных с подробными комментариями.</td></tr>
+<tr><td><code class="kbd">infra/aemr-bot.service</code></td><td>systemd-юнит для автозапуска бота после перезагрузки сервера.</td></tr>
+<tr><td><code class="kbd">scripts/auto-deploy.sh</code></td><td>cron на сервере: pull → build → проверка здоровья с откатом (каждые 10 минут).</td></tr>
+<tr><td><code class="kbd">scripts/healthwatch.sh</code></td><td>Внешний watchdog: N подряд провалов <code class="kbd">/livez</code> → рестарт → сообщение в служебную группу.</td></tr>
+<tr><td><code class="kbd">scripts/audit_vps.sh</code></td><td>Технический отчёт по серверу без вывода секретов.</td></tr>
+<tr><td><code class="kbd">scripts/build_geo_database.py</code></td><td>Сборка геоданных 10 поселений из OpenStreetMap.</td></tr>
+<tr><td><code class="kbd">scripts/generate_privacy_pdf.py</code></td><td><code class="kbd">docs/Политика.md</code> → <code class="kbd">docs/PRIVACY.pdf</code> через reportlab.</td></tr>
+</tbody>
+</table></div>
+
+<h4>Стартовые данные (seed/)</h4>
+<p><code class="kbd">welcome.md</code> (приветствие), <code class="kbd">consent.md</code> (текст согласия), <code class="kbd">contacts.json</code> (экстренные службы), <code class="kbd">topics.json</code> (тематики), <code class="kbd">transport_dispatchers.json</code> (диспетчеры), <code class="kbd">holidays.json</code> (календарь РФ 2026–2027), и три geojson-файла в <code class="kbd">geo/</code> (здания, полигоны 10 поселений, улицы).</p>
+
+<h3 id="spr-shell">Шпаргалка консольных команд</h3>
+
+<p>Готовые команды для эксплуатации на сервере. Все <code class="kbd">docker compose</code> запускаются из каталога <code class="kbd">~/aemr-bot/infra/</code>. <code class="kbd">aemr</code> — имя базы и пользователя (значения <code class="kbd">POSTGRES_USER</code> и <code class="kbd">POSTGRES_DB</code>).</p>
+
+<h4>Запуск, остановка, обновление</h4>
+<div class="cmd"><code>docker compose up -d</code><span class="cmd__what">поднять весь стек</span></div>
+<div class="cmd"><code>docker compose up -d --force-recreate bot</code><span class="cmd__what">перезапустить бота после правки .env</span></div>
+<div class="cmd"><code>git pull && docker compose up -d --build bot</code><span class="cmd__what">применить новый код</span></div>
+<div class="cmd"><code>docker compose ps</code><span class="cmd__what">статус контейнеров (ждём «running (healthy)»)</span></div>
+
+<h4>Логи и диагностика</h4>
+<pre><code>docker compose logs -f --tail=200 bot           # хвост логов бота в реальном времени
+docker compose logs --since 24h bot | grep -iE "error|exception|warning"   # ошибки за сутки
+docker compose logs --tail=200 db               # логи Postgres
+docker stats --no-stream                        # потребление ресурсов
+curl -fsS http://127.0.0.1:8080/healthz | python3 -m json.tool   # проба здоровья</code></pre>
+<p>Проба здоровья должна вернуть HTTP 200 и JSON с <code class="kbd">"ok": true</code>, <code class="kbd">"db_ok": true</code>. Три эндпоинта: <code class="kbd">/livez</code> (жив ли процесс, базу не трогает — для авто-рестарта и health-gate деплоя), <code class="kbd">/readyz</code> (пульс + <code class="kbd">SELECT 1</code> к базе — для диагностики), <code class="kbd">/healthz</code> (то же, что <code class="kbd">/readyz</code>, оставлен для совместимости).</p>
+
+<h4>Резервное копирование вручную</h4>
+<div class="cmd"><code>docker compose exec bot ls -lh /backups/</code><span class="cmd__what">список существующих бэкапов</span></div>
+<pre><code># Снять бэкап вручную (та же функция, что по расписанию)
+docker compose exec bot python -m aemr_bot.services.db_backup
+
+# Скопировать конкретный бэкап на хост для оффлайн-хранения
+docker compose cp bot:/backups/aemr-20260601_030000.sql.gpg ~/backups/</code></pre>
+<p>Формат имени файла бэкапа: <code class="kbd">aemr-ГГГГММДД_ЧЧММСС.sql.gpg</code> (время по часовому поясу бота; без шифрования — <code class="kbd">.sql</code>). После записи права файла ужесточаются до <code class="kbd">0600</code>.</p>
+
+<h4>Восстановление из бэкапа (учебная отработка на тестовой базе)</h4>
+<pre><code># 1. Расшифровать GPG-копию во временный файл
+docker compose exec -e GPG_PASSPHRASE="$(grep ^BACKUP_GPG_PASSPHRASE= .env | cut -d= -f2-)" \
+  bot sh -c 'gpg --batch --passphrase "$GPG_PASSPHRASE" \
+    --decrypt /backups/aemr-20260601_030000.sql.gpg > /tmp/aemr-restore.sql'
+
+# 2. Создать одноразовую тестовую базу (боевую aemr не трогаем)
+docker compose exec db createdb -U aemr aemr_restore_test
+
+# 3. Залить дамп
+docker compose exec bot sh -c 'cat /tmp/aemr-restore.sql | psql -h db -U aemr -d aemr_restore_test'
+
+# 4. Проверка вменяемости
+docker compose exec db psql -U aemr -d aemr_restore_test -c \
+  "SELECT count(*) AS users FROM users; SELECT count(*) AS appeals FROM appeals;"
+
+# 5. Прибраться (тестовая база и расшифрованный дамп с ПДн в открытом виде)
+docker compose exec db dropdb -U aemr aemr_restore_test
+docker compose exec bot rm /tmp/aemr-restore.sql</code></pre>
+
+<h4>Мониторинг Postgres (раз в неделю или месяц)</h4>
+<pre><code># Размер таблиц с индексами (топ-10)
+docker compose exec db psql -U aemr -d aemr -c "
+SELECT schemaname||'.'||relname AS table,
+       pg_size_pretty(pg_total_relation_size(relid)) AS total
+FROM pg_catalog.pg_statio_user_tables
+ORDER BY pg_total_relation_size(relid) DESC LIMIT 10;"
+
+# Раздувание таблиц и устаревшие строки (dead tuples)
+docker compose exec db psql -U aemr -d aemr -c "
+SELECT relname, n_live_tup, n_dead_tup,
+       round(100.0*n_dead_tup/NULLIF(n_live_tup,0),1) AS dead_pct, last_autovacuum
+FROM pg_stat_user_tables ORDER BY n_dead_tup DESC LIMIT 10;"
+
+# Долгие активные запросы (больше 5 секунд)
+docker compose exec db psql -U aemr -d aemr -c "
+SELECT pid, now()-query_start AS dur, left(query,120)
+FROM pg_stat_activity
+WHERE state='active' AND now()-query_start > interval '5 seconds';"</code></pre>
+
+<h4>Управление операторами через psql (резервный путь)</h4>
+<pre><code># Посмотреть всех операторов
+docker compose exec db psql -U aemr -d aemr -c \
+  "SELECT id, max_user_id, role, full_name, is_active FROM operators ORDER BY id;"
+
+# Аварийно вписать первого ИТ, если автоинициализация не сработала
+docker compose exec db psql -U aemr -d aemr -c \
+  "INSERT INTO operators (max_user_id, full_name, role, is_active)
+   VALUES (<id>, 'Иванов И.И.', 'it', true);"
+
+# Сменить роль (бот этого не умеет — защита от самоповышения)
+docker compose exec db psql -U aemr -d aemr -c \
+  "UPDATE operators SET role='it' WHERE max_user_id=<их_id>;"</code></pre>
+
+<div class="note note--caution">
+<p class="note__label">Ошибка «password authentication failed for user aemr»</p>
+<p>Контейнер базы инициализирует пароль из <code class="kbd">POSTGRES_PASSWORD</code> только при первом запуске, пока том <code class="kbd">db_data</code> пуст. На последующих запусках значение игнорируется. Если поменять пароль в <code class="kbd">.env</code> после первого запуска — бот будет ломиться с новым паролем, а база хранит старый. На тесте можно снести данные (<code class="kbd">docker compose down -v</code>, всё пропадёт). На проде — поднять только базу со старым паролем, выполнить <code class="kbd">ALTER USER aemr WITH PASSWORD '...'</code>, затем синхронно обновить <code class="kbd">.env</code> и пароль внутри <code class="kbd">DATABASE_URL</code> и перезапустить бота.</p>
+</div>
+
+<h3 id="spr-glossary">Словарь терминов</h3>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Термин</th><th>Значение</th></tr></thead>
+<tbody>
+<tr><td>АЕМО</td><td>Администрация Елизовского муниципального округа (текущее официальное название).</td></tr>
+<tr><td>АЕМР</td><td>Старое название (Елизовский муниципальный район). В коде осталось как технический идентификатор — отсюда имя <code class="kbd">aemr-bot</code> и роль <code class="kbd">aemr</code>.</td></tr>
+<tr><td>ЕГП</td><td>Елизовское городское поселение. Упразднено при преобразовании района и поселений в Елизовский муниципальный округ (закон края от 03.06.2025 № 474); его администрация — правопредшественник органов округа. В боте осталось как имя роли оператора <code class="kbd">egp</code> (историческое); в перспективе роль может соответствовать территориальному подразделению Администрации округа по г. Елизово, если оно будет создано.</td></tr>
+<tr><td>МЦУ / ЦУР</td><td>Муниципальный центр управления / Центр управления регионом — региональная система работы с обращениями. Бот работает не «по» ней, а по внутреннему регламенту оператора, построенному по модели Постановления № 2129 (оно взято за образец). Куратор ЦУР вручную назначает важность обращения.</td></tr>
+<tr><td>MAX</td><td>Российский мессенджер. Бот общается с жителями через его API (программный интерфейс). Токен бота выдаётся на <code class="kbd">max.ru/business</code>.</td></tr>
+<tr><td>long polling (опросный режим)</td><td>Бот сам периодически спрашивает у MAX, есть ли новые события. Не требует открытых наружу портов — режим по умолчанию.</td></tr>
+<tr><td>webhook (серверный режим)</td><td>MAX сам приходит на публичный HTTPS-адрес бота и приносит события. Требует домен, сертификат, Nginx и открытые порты.</td></tr>
+<tr><td>ПДн</td><td>Персональные данные (имя, телефон, тексты обращений).</td></tr>
+<tr><td>152-ФЗ</td><td>Федеральный закон «О персональных данных». Регулирует согласия, сроки хранения и удаление ПДн.</td></tr>
+<tr><td>59-ФЗ</td><td>Федеральный закон «О порядке рассмотрения обращений граждан». Применимость к конкретному сообщению требует оценки его содержания, реквизитов и порядка подачи. См. раздел «Правовое».</td></tr>
+<tr><td>SLA</td><td>Service Level Agreement — целевой срок ответа оператора (переменная <code class="kbd">SLA_RESPONSE_HOURS</code>, базовый срок 4 часа; считается по рабочему времени — <code class="kbd">services/sla.py</code>, окно 9:00–18:00 по Камчатке за вычетом обеда 12:00–13:00, пн–пт, без праздников).</td></tr>
+<tr><td>воронка (FSM)</td><td>Пошаговая анкета подачи обращения. FSM (Finite State Machine, конечный автомат) — набор состояний <code class="kbd">awaiting_*</code> из поля <code class="kbd">dialog_state</code>.</td></tr>
+<tr><td>idempotency / идемпотентность</td><td>Свойство «повтор не вредит». Ключ <code class="kbd">idempotency_key</code> в таблице events позволяет тихо отбросить повторно присланное событие MAX.</td></tr>
+<tr><td>heartbeat (внутренний пульс)</td><td>Метка «я жив», которую бот обновляет каждые <code class="kbd">HEALTHCHECK_PULSE_SECONDS</code>. По ней проверяют, не завис ли процесс.</td></tr>
+<tr><td>cron / планировщик</td><td>Механизм запуска задач по расписанию. У бота он встроен в процесс (библиотека APScheduler).</td></tr>
+<tr><td>backup (резервная копия)</td><td>Полная выгрузка базы утилитой pg_dump. Делается еженедельно, шифруется GPG (AES-256), хранится N последних файлов.</td></tr>
+<tr><td>migration (миграция)</td><td>Шаг изменения структуры базы (Alembic). Применяется автоматически при старте контейнера.</td></tr>
+<tr><td>named volume (именованный том)</td><td>Хранилище Docker, которое переживает пересоздание контейнера. Туда складываются бэкапы.</td></tr>
+<tr><td>quiet hours (тихий режим)</td><td>Окно времени, когда не-срочные сообщения бота в служебный чат подавляются. Критические алёрты его пробивают.</td></tr>
+<tr><td>notify toggles (модульные тумблеры уведомлений)</td><td>Шесть независимых переключателей <code class="kbd">admin_notify_*</code> (меню «🔔 Уведомления»): каждый отключает свой вид уведомления круглосуточно, в отличие от тихого режима, который глушит всё скопом только ночью.</td></tr>
+<tr><td>PR (Pull Request, заявка на изменение)</td><td>Предложение изменения на GitHub. Бот может создавать PR с обновлёнными настройками, если задан <code class="kbd">GITHUB_PAT</code>.</td></tr>
+<tr><td>seed (стартовые данные)</td><td>Файлы из папки <code class="kbd">SEED_DIR</code> (тексты, контакты, тематики, геоданные), которыми бот заполняет настройки при первом запуске.</td></tr>
+<tr><td>anonymous-запись</td><td>Техническая запись жителя с <code class="kbd">max_user_id = -1</code>, на которую переподвешиваются обращения после полного удаления персональных данных.</td></tr>
+<tr><td>reply-связь</td><td>Связь сообщения-ответа и исходной карточки в служебных полях MAX (<code class="kbd">link.type=REPLY</code>, <code class="kbd">link.message.mid</code>). По ней бот находит обращение, на которое отвечает оператор свайпом.</td></tr>
+<tr><td>auto-deploy</td><td>Скрипт на сервере, который каждые 10 минут забирает новый код, пересобирает образ и проверяет здоровье; при неудаче откатывается на предыдущий коммит.</td></tr>
+</tbody>
+</table></div>
+
+<h3 id="spr-roadmap">Дорожная карта развития</h3>
+
+<p>Этот подраздел — про «куда дальше». Здесь нет ничего, что уже работает (всё рабочее описано в разделах выше), и здесь нет обещаний сроков. Это набор продуманных, но <strong>ещё не принятых</strong> идей: каждая ждёт явного решения владельца «делаем / не делаем». Цель — чтобы при разговоре «а можно вот так?» был один список с честной оценкой пользы и стоимости, а не импровизация. Идеи сгруппированы по горизонту: что реально близко, что в боте-меню, что на год вперёд, и какой визуальный стандарт всё это должно соблюдать.</p>
+
+<h4>Ближний горизонт: аналитика и веб-дашборд</h4>
+
+<p>Сейчас вся статистика — это текст и таблицы: команда <code class="kbd">/stats</code> отдаёт XLSX-отчёт за период, ежемесячная задача <code class="kbd">monthly-stats</code> кладёт такой же отчёт в служебную группу 1-го числа, а <code class="kbd">/diag</code> показывает мгновенный снимок. Чего не хватает — это <strong>тренда во времени и наглядного графика</strong>. Первый кандидат на доработку (в черновиках он проходит как спецификация <code class="kbd">telegram_analytics</code>) — компактный веб-дашборд для администрации: отдельная HTML-страница, где видно число обращений по неделям, разбивку по тематикам и адресам, среднее время ответа и процент просрочки SLA. Технически это ложится на уже имеющийся стек без новых тяжёлых зависимостей: веб-сервер <code class="kbd">FastAPI</code> в проекте уже есть (на нём держатся пробы здоровья), графики рисует <code class="kbd">Chart.js</code>, доступ закрывается простой авторизацией по списку ИТ-операторов. Польза прикладная: глава администрации заходит раз в неделю и видит, например, «по тематике „Дороги“ обращений втрое больше обычного — почему?», не выгружая и не открывая Excel.</p>
+
+<p>У той же идеи есть «лёгкая» версия прямо в боте, без отдельной веб-страницы — <strong>ASCII-тренд в чате</strong>: оператор жмёт кнопку «📈 Тренды» рядом со «📊 Статистикой», и бот рисует столбики прямо текстом (<code class="kbd">5 ▮▮▮▮▮</code>, <code class="kbd">12 ▮▮▮▮▮▮▮▮▮▮▮▮</code>) по дням за две недели — обращения, подписки, ответы, и внизу процент укладывания в SLA за месяц. Это дешевле полноценного дашборда и не требует ни авторизации, ни отдельного хостинга. Веб-дашборд и ASCII-тренд не исключают друг друга: тренд в чате — быстрый ежедневный взгляд, веб-страница — еженедельный разбор для руководства.</p>
+
+<h4>Что можно усилить прямо в меню оператора</h4>
+
+<p>Отдельный пласт идей не требует новых внешних сервисов — это доработки самого админ-меню «⚙️ Настройки бота» и операторской панели. Большая ревизия меню уже была проведена (иерархические подменю тексты/ссылки/списки/объекты, мастер добавления оператора, тихий режим), и почти все ключи настроек теперь правятся кнопками без команд. Но точечные удобства остаются как опции на будущее, и они хорошо окупаются по соотношению «польза к трудозатратам»:</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Идея (опция меню)</th><th>Что решает</th><th>Грубая оценка</th></tr></thead>
+<tbody>
+<tr><td>«🔍 Поиск обращения / жителя»</td><td>Оператор не помнит номер, но житель назвал телефон или фамилию. Сейчас поиск по жителю есть командой <code class="kbd">/find_resident</code>, но кнопки в меню и поиска по тексту обращения нет — только прокрутка списка открытых.</td><td>низкая (backend поиска по телефону/ID уже готов)</td></tr>
+<tr><td>«📋 Шаблоны быстрых ответов оператора»</td><td>Операторы каждый раз вручную набирают одни и те же фразы («передано в отдел ЖКХ», «работа начата, ответ в течение …»). Отдельная таблица шаблонов по образцу шаблонов рассылок, кнопка в карточке обращения, выбор → правка → отправка как обычный ответ. Бонус — статистика «топ-10 частых ответов» подскажет, что вынести в FAQ.</td><td>средняя</td></tr>
+<tr><td>Кнопки «✏️ изменить» и «⬆️ ⬇️ переставить» в списках</td><td>Сейчас в тематиках и населённых пунктах есть только «добавить» и «удалить». Исправить опечатку или поднять пункт выше можно только удалив и введя заново — теряется порядок (а он определяет порядок кнопок у жителя) и копятся лишние записи в журнале.</td><td>низкая</td></tr>
+<tr><td>«🧪 Тестовая рассылка себе»</td><td>Координатор боится отправлять рассылку «вслепую». Третья кнопка в подтверждении рассылки шлёт её только самому оператору на проверку, прежде чем разослать всем. Отправка уже параметризована списком получателей — нужно лишь перенаправить на одного.</td><td>очень низкая</td></tr>
+<tr><td>Двойное подтверждение опасных действий</td><td>Удаление ПДн и блокировка жителя сейчас срабатывают в одно нажатие без переспроса. Единый экран-подтверждение «✅ Да / ❌ Отмена» для всех необратимых действий (как уже сделано для деактивации оператора) снимает риск случайного тапа в проде.</td><td>низкая</td></tr>
+</tbody>
+</table></div>
+
+<p>Граница ответственности меню: <strong>инфраструктурные</strong> параметры из <code class="kbd">infra/.env</code> (токен, строка базы, <code class="kbd">SLA_RESPONSE_HOURS</code>, расписание бэкапа, часовой пояс) через меню править <strong>нельзя и не нужно</strong> — они влияют на запуск процесса и меняются только редеплоем. Это сознательное разделение: содержательное (тексты, ссылки, тематики) — кнопками на ходу, техническое — через файл и перезапуск, чтобы оператор не «выстрелил себе в ногу» одним тапом.</p>
+
+<h4>Дальний горизонт: внешние интеграции и ИИ</h4>
+
+<p>Идеи «на годы», требующие либо бюрократии, либо апгрейда сервера, либо накопленных данных. Перечислены, чтобы при росте проекта было от чего отталкиваться, а не для немедленного внедрения:</p>
+<ul class="dot">
+<li><strong>FAQ-автоответы (retrieval).</strong> База типовых вопросов → поиск по смыслу → бот предлагает готовый ответ <em>до</em> создания обращения. Снимает 30–50% повторных вопросов. Влезает в текущий сервер (4 ГБ), кандидат на ближайшее внедрение из «тяжёлых» — но всё равно после дашборда.</li>
+<li><strong>Голосовые обращения.</strong> Пожилые жители чаще наговаривают, чем печатают. Локальная транскрипция (Whisper-tiny) на русском без передачи данных вовне — это важно для 152-ФЗ, внешние облачные распознавалки за рубежом не подходят.</li>
+<li><strong>ML-классификация тем и приоритизация очереди.</strong> Сейчас тему выбирает сам житель, а очередь у оператора отсортирована по дате. Со временем (>500 обращений) можно подсказывать тему по тексту и поднимать аварийные (потоп, пожар, газ) выше. На холодном старте размеченных данных нет — поэтому это «через год». Правило-based вариант (по ключевым словам) дешевле и может появиться раньше.</li>
+<li><strong>ЕСИА и «Платформа обратной связи» (ПОС).</strong> Проброс через Госуслуги дал бы подтверждённые ФИО/телефон (закрывает требование достоверности ПДн), а интеграция с ПОС — официальный регистрационный номер и автоматическое соблюдение 59-ФЗ. Минус — регистрация информсистемы, договор с Минцифрой, подключение через СМЭВ: для округа это месяцы согласований. Горизонт — год и больше, в связке друг с другом.</li>
+<li><strong>Дополнительные каналы (SMS / email).</strong> Если житель удалил MAX, ответ не дойдёт. Запасной канал решил бы это, но добавляет новый вектор ПДн (нужно хранить номер/почту с отдельным согласием на канал). Пока MAX покрывает потребность — не приоритет.</li>
+</ul>
+
+<div class="note">
+<p class="note__label">Геолокация — уже не идея, а рабочая функция</p>
+<p>В ранних набросках «дорожной карты» отдельным пунктом стояла геолокация перед вводом адреса (чтобы житель не печатал улицу вручную, а бот определял её по координатам). <strong>Это уже реализовано</strong> и описано выше в разделе про воронку: на шаге выбора населённого пункта стоит штатная кнопка «📍 Поделиться геолокацией», бот распознаёт адрес по локальным геоданным (модуль <code class="kbd">services/geo.py</code>) и просит подтвердить. Причём распознавание идёт по <strong>офлайн-полигонам</strong> десяти поселений, без обращения к внешним геокодерам (Яндекс / OSM из черновика не понадобились) — это и дешевле, и не зависит от стороннего API. На дорожной карте остаётся только производный пункт: «слой обращений на карте Елизово» — отдельный внутренний инструмент для координатора, который читал бы обезличенные точки (без ФИО и телефона, адрес обрезан до улицы) из API бота. Он осмыслен именно потому, что у обращений теперь есть настоящие координаты.</p>
+</div>
+
+<h4>Визуальный стандарт для всего нового</h4>
+
+<p>Любая новая карточка, кнопка или экран из идей выше должны говорить на одном визуальном языке, иначе бот станет «лоскутным». Этот язык уже сформулирован и наполовину внедрён; для новых доработок он обязателен. Кратко принцип звучит как <strong>«тихий канцелярский протокол с эмодзи-якорями»</strong>: бот пишет как аккуратный делопроизводитель администрации — короткая формальная шапка, на каждой смысловой строке слева один эмодзи-«якорь» (📍 для места, 📞 для телефона, 🏷 для темы, 📝 для текста), без декоративных гирлянд и без капса в теле. Эмодзи здесь — не украшение, а <strong>навигационный маяк для глаза</strong>, особенно для пожилого читателя, который не сканирует текст быстро: карточка строится как бумажная справка из МФЦ, а эту модель пенсионер уже знает по «талону» и «уведомлению».</p>
+
+<p>Из этого вытекают конкретные правила, которые экономят споры и переделки. <strong>Канонический набор эмодзи</strong> ограничен (📍 🏠 🏷 👤 📞 🆔 📊 🗓 📝 ✅ ⛔ ⚠️ 🛡️ и ещё несколько) — новые вводить только с обоснованием; «праздничные» 🎉 ✨ 💪 🚀 запрещены, потому что подрывают доверие к гос-каналу, особенно рядом с антифишинговыми предупреждениями. <strong>Никаких псевдо-таблиц с выравниванием по пробелам</strong> (<code class="kbd">ID:      123</code>): на узком экране MAX они ломаются, а скринридер (NVDA) читает выравнивающие пробелы как «id двоеточие пять пробелов сто двадцать три». Одна кнопка — одна строка (длинные русские подписи в две колонки обрезаются в «…»). Двоеточие после метки оставляем — оно даёт скринридеру естественную паузу. Эти решения опираются на доступность для пожилых: длина строки до 60 символов помещается без переноса, эмодзи в начале строки NVDA озвучивает осмысленно («булавка», «дом», «телефон»), а иерархия в карточке держится в пределах трёх уровней, чтобы не перегружать.</p>
+
+<p>Сверх текста есть три готовые возможности библиотеки MAX, которые пока не используются и дали бы заметный прирост удобства без нового функционала: <strong>индикатор «бот печатает»</strong> (<code class="kbd">TYPING_ON</code>) на долгих операциях вроде загрузки списка обращений — чтобы житель и оператор видели, что бот «живой» и не завис; <strong>упрощённый запрос геолокации</strong> (<code class="kbd">quick=True</code>) там, где она обязательна, — на один тап меньше для пенсионера; и <strong>пересылка (forward) дополнений</strong> жителя оператору вместо копии — чтобы сохранялась оригинальная плашка «переслано от …». Это мелкие, но честные улучшения, которые ложатся в тот же бренд и не ломают ни схему базы, ни API.</p>
+
+<h3 id="spr-faq">Частые вопросы</h3>
+
+<h4>Где задать пароль базы — в одном месте или в двух?</h4>
+<p>Пароль придумывается один раз и попадает в <code class="kbd">POSTGRES_PASSWORD</code>. Эту же строку нужно вписать внутрь <code class="kbd">DATABASE_URL</code> (часть <code class="kbd">USER:PASS@db:5432/DB</code>). То есть пароль фигурирует в файле дважды и должен совпадать, иначе бот не зайдёт в базу. Compose подставляет один и тот же <code class="kbd">${POSTGRES_PASSWORD}</code> и в контейнер базы, и в строку бота — рассинхрон возможен только если вписать пароль внутрь <code class="kbd">DATABASE_URL</code> руками и ошибиться.</p>
+
+<h4>Чем «переменная окружения» отличается от «настройки»?</h4>
+<p>Переменная окружения (env) — техническая настройка из файла <code class="kbd">infra/.env</code>: токен, пароль, лимиты, расписание бэкапа. Меняется редко и требует перезапуска бота. «Настройка» (таблица settings) — содержательные значения: ссылки, тексты, контакты, тематики. Меняется на ходу через меню бота, перезапуск не нужен.</p>
+
+<h4>Почему бэкап иногда «не создаётся»?</h4>
+<p>По умолчанию бот отказывается делать незашифрованную копию, потому что в дампе лежат персональные данные. Чтобы бэкап заработал, задайте парольную фразу <code class="kbd">BACKUP_GPG_PASSPHRASE</code> (рабочий вариант, минимум 12 символов) либо явно разрешите незашифрованную копию через <code class="kbd">BACKUP_ALLOW_UNENCRYPTED=1</code> (только на машине разработчика). При отказе бот пишет понятное сообщение в служебную группу с упоминанием 152-ФЗ.</p>
+
+<h4>Почему в коде осталось «AEMR», хотя теперь округ?</h4>
+<p>«АЕМР» — прежнее название (район). Оно зашито как технический идентификатор: имя проекта <code class="kbd">aemr-bot</code>, роль оператора <code class="kbd">aemr</code>, переменные. Переименовывать это в коде рискованно, поэтому в интерфейсе для жителей используется актуальное «округ» (АЕМО), а внутри техники остаётся «aemr». В дефолте текста приёма граждан слово «района» оставлено намеренно на переходный период.</p>
+
+<h4>Сколько хранятся данные?</h4>
+<p>События MAX (таблица events) — 30 дней. Журнал действий (audit_log) — по умолчанию 365 дней (<code class="kbd">AUDIT_LOG_RETENTION_DAYS</code>). Персональные данные жителя после отзыва согласия обезличиваются через 30 дней. Тексты обращений старше 5 лет обнуляются, но метаданные (даты, статусы, номера) сохраняются для статистики. Резервных копий хранится последние <code class="kbd">BACKUP_KEEP_COUNT</code> штук (по умолчанию 8 ≈ два месяца).</p>
+
+<h4>Есть ли в боте приоритет «вода/газ/отопление»?</h4>
+<p>Нет. В коде нет приоритезации обращений по теме — у обращения вообще нет поля важности. Бот считает один базовый срок ответа: 4 рабочих часа (окно 9:00–18:00 по Камчатке за вычетом обеда 12:00–13:00, пн–пт, без праздников — см. <a href="#spr-sla" data-go="spravochnik">«SLA: код и регламент»</a>). Если регламент требует ускоренного ответа для обращения высокой важности, эту важность назначает Куратор ЦУР вручную; бот к такой маршрутизации не привязан.</p>
+
+<div class="next">
+<p class="next__label">Следующие шаги</p>
+<ul>
+<li><a href="#spr-cron" data-go="spravochnik">Тайм-линия cron — все фоновые задачи на 24-часовой шкале</a></li>
+<li><a href="#spr-roadmap" data-go="spravochnik">Дорожная карта развития — аналитика, доработки меню, бренд-стандарт</a></li>
+<li><a href="#zhitel" data-go="zhitel">Раздел «Для жителя» — как выглядит воронка и меню изнутри</a></li>
+<li><a href="#operator" data-go="operator">Раздел «Для оператора» — как отвечать, закрывать, делать рассылку</a></li>
+<li><a href="#admin" data-go="admin">Раздел «Администратор/инфраструктура» — установка, деплой, бэкап на сервере</a></li>
+<li><a href="#pravovoe" data-go="pravovoe">Раздел «Правовое» — 152-ФЗ, Постановление № 2129, Политика ПДн</a></li>
+</ul>
+</div>
+```
+
+### `docs/site/_kb2/voprosy.html`
+
+Size: `281480` bytes  
+SHA-256: `5005882ea2e514b9e259078a0d099350310a52ef3adc2dfe8091e1f47ac95801`
+
+```html
+<h2 id="voprosy">Частые вопросы и сложности</h2>
+<p class="lede">Что обычно непонятно или идёт не так — через призму каждой роли: житель, оператор и координатор, администратор, разработчик, безопасник, юрист, руководитель. Ответы выверены по коду и канону, без догадок. Поиск по всем вопросам — Ctrl/Cmd+K.</p>
+
+
+<!-- ============================================================ -->
+<!-- БЛОК: Сложности и частые вопросы (роль «Житель»)              -->
+<!-- Готов к вставке во фрагмент _kb2/zhitel.html. Без <html>/<head>. -->
+<!-- Все числа и поведение сверены по коду bot/aemr_bot и _LEDGER.  -->
+<!-- ============================================================ -->
+
+<h2 id="zhitel-slozhnosti">Сложности и частые вопросы</h2>
+
+<p>До сих пор мы разбирали, как всё работает, когда идёт гладко. Здесь — про
+места, где люди спотыкаются: бот ведёт себя не так, как ждёшь, или ответ
+расходится с тем, что написано в справке. Ничего страшного в этих ситуациях
+нет, почти все они решаются в одно-два нажатия. Открывайте тот вопрос, который
+сейчас мешает, — читать подряд не нужно.</p>
+
+<h3 id="zhitel-sl-podacha">Когда подаёшь обращение</h3>
+
+<h4>Я написал боту в чат, а к обращению ничего не приклеилось. Почему?</h4>
+
+<p>Это самая частая путаница, поэтому начнём с неё. Когда обращение уже подано
+и у вас открытая переписка, кажется логичным просто дописать боту в чат: «да, и
+ещё забыл сказать…». Но обычное сообщение в чат к обращению <strong>не
+прикрепляется</strong>. Бот в этот момент не знает, к какому именно из ваших
+обращений относится текст, и отвечает так:</p>
+
+<pre><code>Не понял сообщение. Если хотите дополнить уже поданное обращение —
+откройте «📂 Мои обращения» и нажмите «📎 Дополнить» в карточке
+нужного обращения.</code></pre>
+
+<p>То есть бот не «глупит» и не теряет ваше сообщение — он намеренно просит
+указать, к чему его пришить. Единственный способ дослать что-то к конкретному
+обращению — кнопка <strong>«📎 Дополнить»</strong> в его карточке. Подробный
+рецепт — в разделе <a href="#zhitel-dopolnit" data-go="zhitel-dopolnit">«Дополняю
+обращение»</a>. Раньше у бота был «магический» режим, когда любое сообщение
+цеплялось к последнему обращению, но от него отказались: слишком часто текст
+улетал не туда.</p>
+
+<h4>Я хотел описать проблему в несколько сообщений, а бот сразу всё отправил.</h4>
+
+<p>На последнем шаге («Суть») бот ждёт <strong>одно</strong> сообщение. Как
+только вы прислали первое непустое описание — с фото или без — обращение тут же
+оформляется и уходит оператору. Дописать вторым сообщением «до отправки» нельзя:
+отправки как отдельной кнопки не существует, момент присылки сути <em>и есть</em>
+отправка. Поэтому соберите мысль и напишите всё сразу. Если уже отправили и
+что-то забыли — не переподавайте заново, а дошлите кнопкой «📎 Дополнить» к тому
+же обращению.</p>
+
+<h4>Бот не принял мой телефон, хотя я написал его цифрами.</h4>
+
+<p>Так и задумано. Номер, набранный текстом, бот отклоняет и просит нажать
+кнопку <strong>«📲 Поделиться контактом»</strong>. Причина простая: через кнопку
+номер приходит проверенным из вашего профиля MAX, без опечаток и без риска, что
+вы случайно укажете чужой. Текстовая строка такой гарантии не даёт. Если кнопки
+не видно — значит, вы не на шаге телефона; наберите <code class="kbd">/start</code>
+и начните подачу заново. А вот для подписки на рассылку телефон не нужен вообще.</p>
+
+<h4>Моего посёлка нет в списке из десяти. Что делать?</h4>
+
+<p>В списке ровно <strong>десять поселений</strong> округа, и кнопки «нет моего»
+там нет. Это не значит, что вам некуда обратиться. Выберите ближайшее к вам
+поселение, а точное место — отдалённый посёлок, СНТ, километр трассы, конкретный
+дом — обязательно опишите словами на шаге «Суть». Оператор поймёт по адресу и
+тексту. Если же вопрос юридически значимый (а не «яма на дороге»), надёжнее
+подать его через электронную приёмную на сайте Администрации — ссылка в разделе
+«🏛 Приём граждан».</p>
+
+<div class="note">
+  <p class="note__label">Почему счётчик «N / 5» иногда стартует с двойки</p>
+  <p>Если бот уже знает ваше имя из профиля MAX, первый шаг («Имя») он проходит
+  за вас, и карточка прогресса открывается сразу с «2 / 5». Знаменатель всегда
+  «/ 5» — это пять основных шагов (имя, населённый пункт, адрес, тема, суть).
+  Согласие и телефон идут <strong>до</strong> счётчика и в эту пятёрку не входят,
+  поэтому короткий путь — признак того, что часть данных уже подставлена, а не
+  сбой.</p>
+</div>
+
+<h3 id="zhitel-sl-geo">Когда делишься геолокацией</h3>
+
+<h4>Бот написал «вне округа», хотя я стою у себя во дворе.</h4>
+
+<p>Координаты на телефоне иногда «уплывают» на сотни метров — особенно в
+помещении, у сопок или при слабом сигнале. Бот сверяет точку с границами
+Елизовского округа по карте прямо на сервере; если точка вышла за границу, он
+честно предупреждает и просит выбрать населённый пункт из списка вручную. Два
+выхода: отправить геолокацию ещё раз (часто со второй попытки точка встаёт на
+место) или просто нажать свой посёлок кнопкой и вписать адрес руками.
+Геолокация — это удобство, а не обязанность.</p>
+
+<h4>Уйдут ли мои координаты в Google, Яндекс или «куда-то в интернет»?</h4>
+
+<p>Нет. Определение посёлка и адреса по координатам происходит
+<strong>локально, на сервере бота</strong>, по заранее загруженной карте округа.
+Бот не обращается к внешним картографическим сервисам и никуда ваши координаты
+не пересылает. Это сознательное решение: меньше зависимостей — меньше мест, где
+данные могли бы «утечь».</p>
+
+<h3 id="zhitel-sl-sroki">Когда ждёшь ответа</h3>
+
+<h4>Сколько на самом деле ждать? И почему сроки в разных местах разные?</h4>
+
+<p>Когда обращение принято, бот пишет дословно: «Ответ обычно приходит в течение
+одного рабочего дня». Это <strong>ориентир-цель внутри бота</strong>, а не
+обещание и не срок по закону. Реальное время зависит от сложности вопроса и
+определяется внутренним Регламентом Администрации. Если где-то в справке или в
+разговоре звучит другая цифра (например, «несколько часов») — верьте тому, что
+бот написал вам при приёме конкретного обращения. «Рабочий день» считается по
+будням: выходные и праздники в него не идут, поэтому вопрос, поданный в пятницу
+вечером, по календарю может «ждать» до понедельника, хотя рабочего времени
+прошло немного.</p>
+
+<div class="note note--caution">
+  <p class="note__label">«Срочные» темы не отвечают быстрее — это важно понимать</p>
+  <p>Внутри бота <strong>нет</strong> приоритета по теме: обращение про прорыв
+  трубы и обращение про лавочку попадают к операторам в общий поток, без
+  автоматического «вне очереди». Поэтому при реальной аварии или угрозе жизни не
+  ждите ответа в боте — сразу звоните в аварийную службу или по номеру
+  <strong>112</strong>. Бот — это про рабочие вопросы округа, а не про
+  экстренное реагирование.</p>
+</div>
+
+<h4>Ответа долго нет. Это сбой или меня «потеряли»?</h4>
+
+<p>Скорее всего, ни то ни другое. Обращение попадает к сотрудникам сразу после
+отправки и никуда не девается — его видно в «📂 Мои обращения» со статусом
+«🆕 Новое» или «🔄 В работе». Тишина дольше обычного бывает по живым причинам:
+вопрос сложный, выходные, большая нагрузка. Если оператор взял вопрос в работу,
+он может сначала задать уточнение — тогда обращение какое-то время висит
+«🔄 В работе», а окончательный ответ переведёт его в «✅ Завершено». Когда ответ
+действительно не приходит непривычно долго, проверьте статус в карточке: он
+подскажет, на каком этапе вопрос.</p>
+
+<h3 id="zhitel-sl-status">Когда смотришь статусы</h3>
+
+<h4>Обращение стало «⛔ Закрыто без ответа». Меня проигнорировали?</h4>
+
+<p>Нет, это не «отписка молчанием». Такой статус ставится в двух понятных
+случаях: либо это был <strong>повтор</strong> уже отвеченного вопроса (тогда
+ответ есть в исходном обращении), либо <strong>вы сами попросили удалить свои
+данные</strong> — и бот закрыл открытые обращения, потому что отвечать стало
+некому. Если ни то ни другое к вам не подходит и вопрос остался живым, подайте
+его заново: в карточке закрытого обращения есть кнопка
+<strong>«🔁 Подать похожее»</strong> — она перенесёт прежний адрес и тему, вам
+останется описать ситуацию.</p>
+
+<h4>Хочу дополнить завершённое обращение, а кнопки «Дополнить» нет.</h4>
+
+<p>Кнопка «📎 Дополнить» живёт только у обращений в статусе «🆕 Новое» или
+«🔄 В работе». Завершённое («✅») или закрытое («⛔») обращение дополнением не
+«оживает» — это сделано нарочно, чтобы старые вопросы не возвращались в работу
+случайным сообщением. Если ситуация повторилась, для этого и есть
+<strong>«🔁 Подать похожее»</strong>: бот заведёт новое обращение и сам отметит,
+что это обратная связь по уже закрытому вопросу.</p>
+
+<div class="note note--caution">
+  <p class="note__label">Бот просит подождать перед дополнением</p>
+  <p>По одному обращению можно дослать не больше <strong>5 дополнений в час</strong>
+  и не чаще, чем раз в <strong>30 секунд</strong>. Если нажать слишком часто, бот
+  вежливо попросит подождать — это защита от десятка одинаковых сообщений, а не
+  блокировка. Нужно сказать больше — дождитесь ответа оператора: он видит всю
+  историю обращения целиком.</p>
+</div>
+
+<h3 id="zhitel-sl-soglasie">Когда отзываешь согласие или забираешь данные</h3>
+
+<h4>Я нажал «Дополнить», а потом отозвал согласие — дополнение ушло?</h4>
+
+<p>Нет. Если между нажатием «📎 Дополнить» и присылкой текста вы успели отозвать
+согласие на обработку данных (через «👋 Уйти из бота»), бот дополнение
+<strong>не передаст</strong> и честно скажет:</p>
+
+<pre><code>Согласие на обработку отозвано — дополнение не отправлено.
+Чтобы продолжить, откройте /start и дайте согласие заново.</code></pre>
+
+<p>Это требование закона, а не каприз бота: после отзыва согласия обработка
+персональных данных прекращается, в том числе входящих сообщений (статья 21
+закона № 152-ФЗ). Чтобы снова писать, наберите <code class="kbd">/start</code> и
+дайте согласие заново — это одно нажатие.</p>
+
+<h4>В каком виде придёт «копия моих данных» по команде /export?</h4>
+
+<p>Команда <code>/export</code> в личном диалоге формирует читаемый файл «Мои данные из чат-бота.txt»: профиль, сведения о согласиях и обращения с перепиской. Если загрузка недоступна до отправки, возможен текстовый запасной путь. Неопределённая доставка файла не повторяется автоматически. Сами файлы MAX не встраиваются в TXT. Кнопка экспорта может быть скрыта, команда сохранена.</p>
+
+<h4>Я запутался: «отписаться», «отозвать согласие», «удалить данные» — что выбрать?</h4>
+
+<p>Эти три действия легко перепутать, а последствия у них разные. Коротко, какое
+для чего:</p>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>Что хочу</th><th>Что выбрать</th><th>Что станет с обращениями</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Надоели оповещения, но писать обращения хочу</td>
+        <td>🔕 Не хочу получать рассылку</td>
+        <td>Не трогаются. Подавать новые можно по-прежнему.</td>
+      </tr>
+      <tr>
+        <td>Хочу уйти, но дождаться ответа по открытому вопросу</td>
+        <td>👋 Хочу попрощаться (отзыв согласия)</td>
+        <td>По открытым оператор успеет ответить, потом они закроются. Через 30 дней без активности данные обезличатся.</td>
+      </tr>
+      <tr>
+        <td>Хочу, чтобы бот забыл меня прямо сейчас</td>
+        <td>🗑 Стереть данные обо мне</td>
+        <td>Закрываются без ответа сразу. Имя и телефон стираются немедленно.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>Главное правило: <strong>если ждёте ответ по открытому обращению — выбирайте
+отзыв («👋 Хочу попрощаться»), а не немедленное удаление.</strong> При удалении
+открытые обращения закрываются без ответа, и оператор уже не сможет вам написать.
+Перед отзывом или удалением бот ещё раз спросит подтверждение и перечислит, какие
+обращения закроются, — случайно их не потерять. Подробно три варианта разобраны
+в разделе <a href="#zhitel-uyti" data-go="zhitel-uyti">«Ухожу из бота»</a>.</p>
+
+<h3 id="zhitel-sl-rassylka">Когда что-то странное с рассылкой</h3>
+
+<h4>Оповещения вдруг перестали приходить, хотя я не отписывался.</h4>
+
+<p>Самая вероятная причина — кнопка «Остановить бота» в самом мессенджере MAX.
+Это <strong>не</strong> отписка от рассылки, а сигнал «больше ничего мне не
+шлите». Когда вы её нажимаете, бот считает, что вы не хотите от него сообщений, и
+<strong>сам снимает вас с рассылки</strong> — иначе он слал бы оповещения, которые
+до вас всё равно не доходят. Ваши обращения и согласие при этом не трогаются.
+Чтобы снова получать оповещения, откройте бота, наберите
+<code class="kbd">/start</code> и подпишитесь заново кнопкой «🔔 Подписаться на
+рассылку».</p>
+
+<h4>Точно ли по рассылке не будет рекламы и новостного спама?</h4>
+
+<p>Не будет. По рассылке приходят только муниципальные оповещения: чрезвычайные
+ситуации, отключения коммунальных служб, важные работы. Рекламы и обычных
+«новостей округа» там нет. У каждого настоящего сообщения рассылки сверху стоит
+подпись «Объявление Администрации Елизовского муниципального округа» — по ней же
+отличают подделку. Отписаться можно в один тап в любой момент, и обращения от
+этого никуда не денутся.</p>
+
+<h3 id="zhitel-sl-sboi">Когда что-то пошло не так</h3>
+
+<h4>Бот завис посреди подачи и не реагирует на кнопки.</h4>
+
+<p>Наберите <code class="kbd">/start</code> (или <code class="kbd">/menu</code>).
+Бот заметит, что вы посреди незаконченной подачи, сам сбросит её и откроет чистое
+главное меню — можно начинать сначала. Незаконченное обращение при этом никуда не
+уходит и нигде не сохраняется. Это тот же сброс, что и кнопка «❌ Отмена».</p>
+
+<h4>Бот совсем молчит — это поломка?</h4>
+
+<p>Сначала попробуйте <code class="kbd">/start</code>: чаще всего меню просто
+скрылось, и бот ждёт нажатия кнопки. Если он не реагирует вообще — бывают
+временные сбои связи или технические работы, это проходит само, подождите немного
+и попробуйте снова. Доставка сообщений зависит от мессенджера MAX, интернета и
+состояния сервера — то есть не всегда от самого бота. По срочным и юридически
+значимым вопросам в это время лучше воспользоваться официальным каналом
+Администрации: электронной приёмной или телефоном.</p>
+
+<h4>Бот прислал «Не понял сообщение». Я что-то сломал?</h4>
+
+<p>Нет, ничего страшного. Эту фразу бот говорит, когда не понимает, чего вы
+хотите, — например, вы написали текст там, где он ждёт нажатия кнопки. Просто
+откройте меню кнопкой под сообщением или наберите <code class="kbd">/start</code>
+и продолжайте кнопками. Если у вас есть открытое обращение, к той же фразе бот
+добавит подсказку про «📎 Дополнить» (см. первый вопрос этого раздела).</p>
+
+<h3 id="zhitel-sl-prava">Когда речь о правах и приватности</h3>
+
+<h4>Кто внутри Администрации видит моё обращение и телефон?</h4>
+
+<p>Карточку обращения видят сотрудники Администрации, которые работают с
+обратной связью (операторы и координатор). Они видят ваше имя, телефон для
+перезвона, адрес и текст — это нужно, чтобы ответить и при необходимости
+перезвонить. Посторонним ваши данные не показывают. Подробно о том, кто и на
+каком основании обрабатывает данные, — в разделе
+<a href="#pravovoe" data-go="pravovoe">«Правовое»</a>.</p>
+
+<h4>Сколько хранятся мои обращения и куда жаловаться, если что-то не так?</h4>
+
+<p>Текст обращений хранится <strong>до 5 лет</strong>, после чего обезличивается.
+Если вы отозвали согласие и больше не возвращаетесь, бот обезличит ваши данные
+<strong>через 30 дней</strong> без активности. Считаете, что с вашими
+персональными данными обошлись неправильно? Вы вправе пожаловаться в
+<strong>Роскомнадзор</strong> — это орган, который следит за защитой персональных
+данных. Эти сроки и права закреплены законом и подробно разобраны в разделе
+<a href="#pravovoe-prava" data-go="pravovoe-prava">«Правовое» — права жителя</a>.</p>
+
+<h4>Может ли пользоваться ботом подросток? А подать за ребёнка?</h4>
+
+<p>Бот рассчитан на взрослых жителей. За несовершеннолетнего обращение подаёт его
+законный представитель — родитель или опекун — от своего имени. Это правовой
+вопрос, и тонкости (возраст, согласие за ребёнка) разобраны в разделе
+<a href="#pravovoe-prava" data-go="pravovoe-prava">«Правовое»</a>, а не решаются
+настройками бота.</p>
+
+<div class="note">
+  <p class="note__label">Если короткого ответа здесь не хватило</p>
+  <p>Этот блок — про затруднения «на ходу». Если нужен пошаговый рецепт, он почти
+  наверняка уже есть выше: <a href="#zhitel-dopolnit" data-go="zhitel-dopolnit">как
+  дополнить</a>, <a href="#zhitel-geo" data-go="zhitel-geo">как поделиться
+  геолокацией</a>, <a href="#zhitel-soglasie" data-go="zhitel-soglasie">как отозвать
+  согласие или удалить данные</a>, <a href="#zhitel-moshenniki" data-go="zhitel-moshenniki">как
+  распознать мошенника</a>. А если столкнулись с тем, чего нет ни здесь, ни в
+  рецептах, — напишите об этом через «📝 Написать обращение» с темой «Другое»:
+  так в справку попадёт ещё один разобранный случай.</p>
+</div>
+
+<h3 id="operator-slozhnosti">Сложности и частые вопросы</h3>
+
+<p>Ниже собрано то, обо что новый оператор спотыкается на первых сменах: ситуации, где кажется, что бот сломался, а на самом деле он работает как задумано, и наоборот — где интуиция подводит и легко наделать дел. Механику ответа, рассылки и команд подробно разбирают разделы выше; здесь — разбор затыков «на пальцах», без повторения того, что уже сказано. Если коротко: почти всё «странное» поведение бота — это защита от случайной отправки не туда, и почти всё лечится одним из двух действий — нажать «Ответить» под нужной карточкой ещё раз или набрать <code class="kbd">/reply N</code> с явным номером.</p>
+
+<h4>Я только что написал в группу, а житель молчит. Бот сломался?</h4>
+
+<p>Нет, это самая частая «не-проблема». Бот отправляет жителю <strong>только</strong> то, что вы явно привязали к обращению: ответ свайпом по карточке, нажатие «Ответить» под ней или команда <code class="kbd">/reply N текст</code>. Просто текст в служебной группе — это для вас и коллег, бот его никому не пересылает. Сделано нарочно: вы обсуждаете обращения теми же словами («по сто седьмому ответил?»), и любая фраза в группе, улетающая жителю, была бы опасна. Если ждёте, что текст ушёл, а его нет — почти наверняка вы не сделали привязку. Проверьте себя по врезке <a href="#operator-knopka-otvetit" data-go="operator-knopka-otvetit">«Тонкости кнопки „Ответить“»</a>.</p>
+
+<h4>Нажал «Ответить», отошёл, вернулся, написал — а жителю не дошло</h4>
+
+<p>У нажатия «Ответить» есть срок жизни — около <strong>пяти минут</strong> (в коде ровно 300 секунд). Если вы написали текст позже, намерение уже сгорело, и бот промолчал: он не отправляет в личку случайное сообщение из группы спустя час после клика. Это не баг, а та же защита от «текста в пустоту». Лечение простое: нажмите «Ответить» под карточкой заново и напишите ответ сразу. Та же история, если в эти секунды бот успел перезапуститься (обновление, перезагрузка сервера) — намерение живёт в оперативной памяти, не в базе, и после рестарта его нет. Уже <em>доставленный</em> ответ при этом никуда не денется, теряется только незаконченное «собираюсь ответить».</p>
+
+<h4>Готовил ответ на одно обращение, потом тапнул другое — куда ушёл мой текст?</h4>
+
+<p>Никуда не ушёл, и это важно понять, чтобы не паниковать. Намерение ответить всегда одно и целится в ту карточку, под которой вы нажали «Ответить» <strong>последней</strong>. Если вы открыли ответ под #X, не написали, а потом нажали «Ответить» под #Y, бот прямо предупредит в группе: «⚠️ Подготовка ответа на обращение #X отменена — вы только что переключились на ответ по обращению #Y». Прочитайте это сообщение, прежде чем печатать — оно говорит, кому реально уйдёт ваш следующий текст. Захотели вернуться на #X — просто нажмите «Ответить» под его карточкой ещё раз. Заготовку не тому жителю так отправить нельзя.</p>
+
+<h4>Боюсь, что моя служебная команда улетит жителю как ответ</h4>
+
+<p>Не улетит. После нажатия «Ответить» бот перехватывает только <strong>обычный текст</strong>. Если вы наберёте slash-команду (<code class="kbd">/open_tickets</code>, <code class="kbd">/diag</code>, <code class="kbd">/close</code>, <code class="kbd">/reopen</code> и любую другую со слешем), бот её просто выполнит, а жителю ничего не пошлёт. Намерение ответа при этом останется висеть до вашего следующего обычного сообщения или до конца пятиминутного окна. Так сделано специально: служебная команда никогда не должна случайно уйти жителю «письмом». Если передумали отвечать — нажмите «❌ Отменить ответ» под подсказкой ввода.</p>
+
+<h4>Свайпнул по карточке и на всякий случай продублировал через /reply — житель получит две копии?</h4>
+
+<p>Нет. У бота есть короткая защита от дублей: одинаковый текст по одному и тому же обращению в окне примерно <strong>десять секунд</strong> уходит жителю один раз, плюс отдельно бот не обрабатывает дважды одно и то же событие. Так что «свайп + та же фраза командой» не задвоится. И обратная, более важная сторона: если первая попытка <em>не дошла</em> из-за технического сбоя, повтор <strong>не</strong> блокируется — можно смело отправить ещё раз, защита от дублей вам не помешает.</p>
+
+<h4>Был в середине рассылки, нажал «Ответить» под карточкой — а черновик рассылки пропал</h4>
+
+<p>Черновик ответа привязан к конкретному оператору и обращению. Он сохраняется при навигации; продолжайте его через предпросмотр либо явно отмените. Другой оператор не должен менять его текст или адресата. Устаревшие кнопки проверяются по версии.</p>
+
+<h4>Нажимаю «Ответить» под закрытым обращением, а бот не даёт писать</h4>
+
+<p>Это страховка, а не поломка. Если обращение в статусе «Закрыто», бот не откроет ввод ответа, а попросит: «Обращение #N закрыто. Сначала верните его в работу кнопкой „🔁 Возобновить“ под карточкой». Логика такая: вы могли по инерции отвечать по делу, которое уже завершено или закрыто как спам. Порядок правильный — сначала <code class="kbd">/reopen N</code> или кнопка «🔁 Возобновить» (обращение вернётся в работу), потом ответ. То же ограничение сработает, если житель заблокирован: бот предупредит, что ответ не дойдёт, пока ИТ не снимет блокировку.</p>
+
+<h4>Случайно нажал «Возобновить» дважды подряд — сбил даты и счётчики?</h4>
+
+<p>Нет, повторный клик безопасен. Если обращение уже «Новое» или «В работе», бот ответит «Обращение #N уже в работе — статус не меняется» и ничего не трогает: ни даты, ни время первого ответа. Возобновление переписывает статус только при реальной смене (из «Завершено» или «Закрыто» в «В работе»), и только тогда в журнал попадает запись <code class="kbd">reopen</code>. Так что бояться лишнего нажатия не нужно — хуже не сделаете.</p>
+
+<h4>Отправил ответ с ошибкой (или вообще не тому жителю). Как отозвать или переписать?</h4>
+
+<p>Отозвать или отредактировать уже доставленный ответ <strong>нельзя</strong> — это официальное письмо в личке у жителя, и бот не умеет «забрать» его обратно, ровно как обычное отправленное сообщение в мессенджере не вынешь из чужого телефона. Кнопки «изменить» не ищите, её нет. Правильный путь — <strong>корректирующий ответ</strong>:</p>
+<ul>
+  <li>обращение ещё в работе — отправьте новый ответ с уточнением: «В предыдущем сообщении была неточность, верный срок — …»;</li>
+  <li>обращение уже закрылось финальным ответом — сначала <code class="kbd">/reopen N</code> или кнопка «🔁 Возобновить», затем дошлите исправление.</li>
+</ul>
+<p>А вот если ответ ушёл <strong>не тому жителю</strong> — это уже инцидент с персональными данными. Не пытайтесь ничего «удалять» сами и не заметайте следы: немедленно сообщите ИТ-специалисту в служебной группе. На будущее почти все такие промахи снимает одна привычка — отвечать строго свайпом по нужной карточке или с явным номером в <code class="kbd">/reply N</code>, а не «по последней открытой».</p>
+
+<h4>Вечером и ночью бот перестал слать уведомления о новых обращениях. Он умер?</h4>
+
+<p>Скорее всего, нет — это <strong>тихий режим</strong> (quiet hours), который мог включить ИТ-специалист. По умолчанию он выключен, но если включён, то в окне (по умолчанию <strong>с 18:00 до 09:00</strong> по Камчатке, то есть всю ночь) бот придерживает <em>несрочные</em> сообщения, чтобы служебный чат не пиликал. Подавляются сигнал «бот работает» (pulse), уведомления о новых обращениях и дополнениях, сообщения о подписках и отписках, строки прогресса рассылки. Утром всё это придёт. Главное, что нужно знать для смены: тихий режим — про шум, а не про сокрытие проблем. Чтобы убедиться, что бот жив прямо сейчас, наберите <code class="kbd">/diag</code> — он ответит в любое время. Подробная таблица «что молчит, а что разбудит всегда» — во врезке <a href="#operator-sla" data-go="operator-sla">«Тихий режим»</a> в разделе про сроки.</p>
+
+<h4>А если я отвечаю жителю ночью, в тихий режим — ответ уйдёт?</h4>
+
+<p>Да, уйдёт сразу, и подтверждение в группу придёт без задержки. Прямой ответ оператора жителю и встречное сообщение жителя оператору — это живая работа, бот считает её критической и тихим режимом <strong>не</strong> придерживает. Так что отвечать в нерабочее время можно как обычно; молчат только фоновые уведомления. Если на каком-то этапе подтверждение всё же не пришло, дело не в тихом режиме — смотрите вопросы про намерение ответа выше (возможно, сгорело пятиминутное окно) и блок «Бот не отвечает или завис».</p>
+
+<h4>Два координатора случайно запустили рассылку одновременно. Что будет?</h4>
+
+<p>Уйдут <strong>две разные рассылки</strong>, и жители получат оба сообщения — бот не объединяет их и не спрашивает «вы точно вдвоём?». Каждый мастер рассылки ведётся отдельно для своего оператора, технического запрета на параллель в коде нет. Поэтому правило чисто организационное: прежде чем жать «Разослать», договоритесь в служебной группе, кто отправляет. Отдельный случай — если бот <strong>перезагрузился в течение пятиминутной паузы</strong> (cooldown), пока рассылка ещё не пошла: запланированная отправка живёт в памяти процесса, после рестарта сама не возобновится, а «черновик» позже пометит неуспешным фоновый сборщик. Если после паузы рассылка так и не ушла — запустите заново через «📝 Создать на основе» в истории. Уже отправленные сообщения при этом не задвоятся.</p>
+
+<h4>По телефону жителя поиск говорит «не найдено», хотя житель точно есть</h4>
+
+<p>Так бывает, когда на один номер заведено несколько жителей (например, супруги пользуются одной симкой). В этом случае <code class="kbd">/find_resident</code> по телефону намеренно отвечает «не найдено» и предлагает искать по внутреннему номеру (max_user_id) — это страховка от того, чтобы случайно показать карточку не того человека. Возьмите внутренний номер из карточки обращения и найдите по нему. И помните: каждый запрос <code class="kbd">/find_resident</code> пишется в журнал с вашим именем, поиск «из любопытства» — нарушение закона о персональных данных, это видно при аудите.</p>
+
+<h4>Где «высокий приоритет» для воды, газа, отопления? Почему бот не торопит?</h4>
+
+<p>Потому что в боте <strong>нет</strong> тематической приоритизации — ни поля «важность», ни укороченного срока по теме. Срок один: 4 рабочих часа на первый ответ жителю, по нему бот и считает просрочку, независимо от того, про дорогу обращение или про отопление. Сроки 1/2/4 часа из Регламента — это про другое: за сколько <em>профильное подразделение</em> вернёт вам сведения, а не таймер ответа жителю. «Высокую важность» конкретной ситуации назначает Куратор ЦУР вручную, человеком. Если вы где-то слышали, что «вода/газ — высокий приоритет с особым SLA», — это устаревшее представление, в коде такого механизма нет.</p>
+
+<h4>Меня только что завели оператором, а бот «не видит» — ответы не уходят</h4>
+
+<p>Несколько типичных причин, проверьте по порядку:</p>
+<ol class="steps">
+  <li><strong>Вы не в служебной группе.</strong> Отвечать можно только из служебной группы (той самой, где появляются карточки). Из лички бота или другого чата свайп и <code class="kbd">/reply</code> не сработают.</li>
+  <li><strong>ИТ ещё не завершил добавление.</strong> Регистрация оператора — действие ИТ, оно не мгновенное. Пока ИТ не внёс ваш внутренний номер и роль, бот считает вас обычным участником группы. Сообщите свой <code class="kbd">/whoami</code> и дождитесь подтверждения, что вас добавили.</li>
+  <li><strong>Вас деактивировали.</strong> Бот сам снимает роль с того, кто <em>покинул</em> служебную группу MAX; ИТ мог деактивировать вручную при смене обязанностей. Бот в таком случае прямо пишет, что роль деактивирована. Попросите ИТ реактивировать вас через мастер «Операторы».</li>
+</ol>
+
+<h4>Кто-то в чате или в личке срочно просит переслать данные обращения или перевести деньги</h4>
+
+<p>Остановитесь — это классическая социальная инженерия или признак взломанного аккаунта. Бот тут не помощник: сообщение «срочно переведите 5000 на этот счёт» формально без ссылки, и технических стопов на него нет — решение за вами. Проверьте, что это действительно коллега (позвоните, увидьтесь лично), а не его захваченный аккаунт. Персональные данные по личке без подтверждения не пересылайте, деньги по чужой просьбе не переводите. Если подозреваете, что скомпрометирован <em>ваш</em> аккаунт (потеряли телефон, кто-то знает пароль) — немедленно сообщите ИТ через другой канал (звонок, личный визит), он деактивирует вашу учётную запись оператора. Кнопка «⛔ Экстренно остановить» рассылку, кстати, доступна любому оператору именно на случай скомпрометированного аккаунта.</p>
+
+<h4>Житель не отвечает на мой промежуточный ответ. Сколько ждать и когда закрывать?</h4>
+
+<div class="note note--caution">
+  <p class="note__label">Тут код вам не подскажет — нужна организационная норма</p>
+  <p>Бот <strong>не</strong> закрывает зависшие диалоги сам и не считает по ним отдельный таймер: счётчик SLA меряет только <em>первый</em> ответ жителю, а дальше обращение может висеть «в работе» сколько угодно. Жёсткого «закрыть через N дней молчания» в правилах пока нет — это открытый вопрос, который закрывает координатор организационным решением, а не бот. На практике: дождитесь разумного срока, при необходимости дошлите ещё один промежуточный с уточнением, и если житель не выходит на связь — закройте финальным ответом по существу того, что уже сделано. Закрытие «без ответа» для этого <strong>не</strong> годится: оно для спама и дублей, а не для завершения нормального, пусть и затихшего, диалога.</p>
+</div>
+
+<h4>Житель пишет угрозы или оскорбления лично мне. Что делать?</h4>
+
+<div class="note note--caution">
+  <p class="note__label">Частично организационный вопрос</p>
+  <p>Здесь надо разделить два случая. <strong>Угроза жизни и здоровью</strong> (неважно, кому) — действуйте по кризисному протоколу: немедленно доведите до экстренных служб по контактам из настройки <code class="kbd">emergency_contacts</code> и до координатора, публично в группе это не обсуждается. <strong>Оскорбления и хамство</strong> в ваш адрес — основание поставить вопрос о блокировке жителя, но не в одиночку: блокировку ставит только ИТ и лишь после обсуждения в служебной группе. Важная граница: критика работы должностных лиц и служб <strong>не</strong> является основанием для блокировки, как бы резко она ни звучала. А вот отдельного регламента «что делать оператору при прямой угрозе в свой адрес» (помимо кризисного канала и блокировки) сейчас нет — если ситуация серьёзная, это вопрос к руководству и, возможно, к правоохранителям, а не к настройкам бота.</p>
+</div>
+
+<h4>Я ухожу в отпуск или на больничный — обращения копятся, кто отвечает?</h4>
+
+<p>В боте нет «передачи дел» как кнопки, это организационная процедура. Главный риск маленького штата: единственный отвечающий специалист выбыл — и SLA срывается тихо, потому что бот никого не назначает автоматически. Что сделать заранее: координатор закрепляет, кто отвечает за зону выбывшего, и объявляет это в служебной группе; замещающий уже должен быть заведён оператором (добавление новой учётной записи делает ИТ и не мгновенно). Доступ передавать не нужно — карточки всех обращений и так видны всем в одной группе, нужно лишь договориться, кто берёт. Замещающий начинает смену с <code class="kbd">/open_tickets</code>, чтобы пройтись по всему, что зависло. Подробнее — во врезке <a href="#operator-peredacha" data-go="operator-peredacha">«Замещение оператора»</a>.</p>
+
+<h4>Под каждым моим ответом появляется новая карточка, старая не обновляется. Это нормально?</h4>
+
+<p>Да, так и задумано. Бот ведёт <em>ленту событий</em> по обращению: каждое ваше действие публикует свежую карточку внизу чата с пометкой, что отправлено (финальный или промежуточный) и каким стал статус, а прежние карточки остаются выше как история. Он намеренно не переписывает одно сообщение — иначе вы потеряли бы хронологию, кто и когда что сделал. Если житель после финального ответа пришлёт дополнение, придёт новая карточка-дополнение, а его свежий текст ляжет в блок «История переписки» внутри карточки. Так что «развелись карточки» — это не дубли и не баг, это журнал у вас перед глазами.</p>
+
+<h4>Бот не отвечает или «завис». Мои действия?</h4>
+
+<p>Сначала наберите <code class="kbd">/diag</code> — он работает даже когда фоновые уведомления молчат (в том числе в тихий режим), и покажет блок Pulse и блок «Внимание» с конкретными предупреждениями. Если там аномалии или бот реально не реагирует — сообщите ИТ-специалисту в служебной группе. Перезапускать сервер самим не нужно: бот сам себя проверяет, при сбое внешний сторож (watchdog) через некоторое время его перезапускает, а когда поднимется — напишет в группу. Ваша задача — зафиксировать проблему и передать ИТ, а не чинить инфраструктуру.</p>
+
+<div class="note">
+  <p class="note__label">Общее правило на все «странности»</p>
+  <p>Если бот молчит там, где вы ждали реакции — в девяти случаях из десяти это не поломка, а защита от случайной отправки: текст без привязки к обращению, сгоревшее пятиминутное окно «Ответить», тихий режим ночью или ответ на закрытое обращение. Прежде чем звать ИТ, перечитайте подходящий вопрос выше. Настоящие сбои (бот не отвечает на <code class="kbd">/diag</code>, зависла рассылка, лавина неуспешных доставок) видны в блоке «Внимание» — вот с ними и идите к ИТ.</p>
+</div>
+
+<h3 id="admin-difficulties">Сложности и частые вопросы</h3>
+
+<p>Ниже — не повтор инструкций выше, а ответы на то, на чём реально спотыкается человек, который держит этот сервер: «бот ведёт себя странно — это поломка или норма?», «я в середине аварии, за какую верёвку дёргать?», «почему сделано именно так, а не как я привык». Если ищете пошаговую процедуру (установка, восстановление, перенос) — она в разделах выше; здесь — разбор затыков и развилок «на пальцах». Числа и поведение сверены с кодом.</p>
+
+<h4>«Бот живой или мёртвый?» — у меня три эндпоинта и две страховочные службы, я путаюсь</h4>
+
+<p>Это самая частая путаница, и она снимается одной мыслью: всё крутится вокруг <strong>одного</strong> сигнала — <code class="kbd">/livez</code>. Его опрашивают сразу трое, но с разной реакцией, и это нарочно:</p>
+
+<ul>
+<li><strong>Docker healthcheck</strong> — встроен в контейнер, бьёт <code class="kbd">/livez</code> каждые 5 секунд. Если процесс упал совсем, Docker по политике <code class="kbd">restart: unless-stopped</code> поднимет контейнер сам. Это спасает от «процесс умер».</li>
+<li><strong>Watchdog</strong> (cron от <code class="kbd">root</code>, каждые 5 минут) — спасает от другого: «процесс жив, но висит и не отвечает». Docker такой контейнер не трогает (он же не упал), а watchdog после 3 провалов <code class="kbd">/livez</code> подряд (≈15 минут) делает <code class="kbd">restart bot</code>, после 8 (≈40 минут) — кричит в служебную группу напрямую через MAX API, минуя зависшего бота.</li>
+<li><strong>Health-gate авто-деплоя</strong> — смотрит <code class="kbd">/livez</code> только в момент выкладки: не поднялся за 60 секунд → откат на прошлый коммит.</li>
+</ul>
+
+<p>Почему все трое смотрят <code class="kbd">/livez</code>, а не <code class="kbd">/readyz</code>? Потому что <code class="kbd">/readyz</code> вдобавок дёргает базу (<code class="kbd">SELECT 1</code>), и если бы по нему рестартили, то любая трёхсекундная икота базы перезапускала бы совершенно здоровый процесс — и вы бы теряли возможность спокойно посмотреть, что с базой. <code class="kbd">/readyz</code> оставлен <strong>вам</strong> для диагностики руками. Практическое правило: <strong>чините по <code class="kbd">/readyz</code>, а перезапускаете — глядя на <code class="kbd">/livez</code></strong>. Если <code class="kbd">/livez</code>=200, а <code class="kbd">/readyz</code>=503 — процесс жив, проблема в базе, бота не трогайте, идите в логи <code class="kbd">db</code>.</p>
+
+<div class="note">
+<p class="note__label">Тонкость, на которой легко запутаться: у <code class="kbd">/livez</code> внутри ДВА датчика</p>
+<p><code class="kbd">/livez</code> покраснеет (503), если протух любой из двух независимых сигналов. Первый — внутренний «пульс» (heartbeat), порог свежести <code class="kbd">HEALTHCHECK_STALE_SECONDS</code> = 120 секунд. Второй — свежесть опроса MAX: таймстемп последнего успешного <code class="kbd">get_updates</code>, порог <code class="kbd">LIVEZ_POLL_STALE_FACTOR × POLLING_TIMEOUT_SECONDS</code> = 3 × 20 ≈ 60 секунд. Зачем второй: heartbeat-задача только спит и «бьёт», поэтому если завис не она, а обработчик события, пульс шёл бы дальше и <code class="kbd">/livez</code> оставался бы ложно-зелёным. Второй датчик ловит именно такие зависания — пока бот реально опрашивает MAX, опрос свежий; встал poll-цикл — <code class="kbd">/livez</code> краснеет, и watchdog перезапустит. Вам это знать нужно ради одного: <strong>не пугайтесь короткой красноты</strong> на пике нагрузки — две минуты на heartbeat и минута на опрос заложены как раз чтобы не дёргать здорового бота попусту.</p>
+</div>
+
+<h4>«Пульсов целая пачка, и какие-то с другим текстом» — это нормально?</h4>
+
+<p>Да, и вот как отличить норму от тревоги по тексту сообщения:</p>
+
+<ul>
+<li><strong>«🟢 Пульс: бот работает…»</strong> — базовый сигнал жизни, приходит каждый час круглосуточно (в :05), плюс в будни 09:35–17:35 ещё один заход — то есть днём примерно раз в полчаса. Это норма, пугаться нечему. По выходным и праздникам пульс тоже идёт — он технический, госпраздники в нём <strong>не</strong> учитываются (в отличие от напоминаний операторам).</li>
+<li><strong>«🔄 Рестарт: процесс бота запущен заново…»</strong> — бот только что перезапустился и сообщает об этом один раз через 5 секунд после старта. Если вы рестарт не делали — почти наверняка сработал авто-деплой (прилетел новый коммит в <code class="kbd">main</code>) или watchdog перезапустил зависший контейнер. Проверьте <code class="kbd">journalctl -t aemr-bot-deploy -n 50</code> и <code class="kbd">-t aemr-bot-watchdog</code>. Один такой рестарт в день после мержа — норма; серия рестартов подряд — повод смотреть логи.</li>
+<li><strong>«✅ Бот восстановил отзывчивость»</strong> — бот был «онемел», а теперь снова отвечает. Хорошая новость, но загляните, что было до неё.</li>
+</ul>
+
+<p>Пульс и health-эндпоинты показывают отдельные технические сигналы. Они не доказывают доставку каждого сообщения, права бота в группе, корректность черновика или завершение удаления. При неизвестном внешнем результате сверяют реальный MAX.</p>
+
+<h4>Бот «онемел» целиком, а <code class="kbd">/livez</code> отвечает 200 — как такое и что это значит?</h4>
+
+<p>Это важный и неочевидный случай: процесс <strong>жив</strong> (поэтому <code class="kbd">/livez</code> зелёный), но MAX перестал его «пускать». В логах ищите <code class="kbd">401</code> (Unauthorized) или <code class="kbd">403</code> (Forbidden) от <code class="kbd">botapi.max.ru</code> / <code class="kbd">platform-api2.max.ru</code>. Два корня:</p>
+
+<ul>
+<li><code class="kbd">BOT_TOKEN</code> отозван или протух;</li>
+<li><strong>снята верификация юрлица</strong> на стороне MAX — тогда бот теряет право работать в группах и слать сообщения, даже с формально валидным токеном.</li>
+</ul>
+
+<p>Здесь главное — <strong>не бросаться сразу перевыпускать токен</strong>. Сначала отличите от обычной сети: единичные таймауты — это не 401/403. Если код именно 401/403 и устойчив — это <strong>потенциальный инцидент безопасности</strong>: токен мог утечь, и отозвал его не обязательно кто-то из ваших. Зайдите на <code class="kbd">max.ru/business</code>, посмотрите статус юрлица и токена, и если есть подозрение на компрометацию — идите по плейбуку реагирования в разделе «Безопасность», а не молча выпускайте новый ключ. Перевыпуск и рестарт — финальный шаг, но сперва зафиксируйте, кто и почему отозвал старый. Кстати, при неверном токене на старте бот ведёт себя предсказуемо: логирует ошибку и <strong>специально завершается</strong>, а не крутится в петле перезапусков — так что «контейнер в restart-loop + ошибка токена в логах» означает именно «токен битый», а не «бот сломался».</p>
+
+<h4>MAX «ограничил частоту» — это поломка? и есть ли у бота защита от 429?</h4>
+
+<p>Не поломка, и бот к этому готов. У MAX потолок исходящих около 2 запросов в секунду; при превышении он отвечает <code class="kbd">429 Too Many Requests</code>. Что есть в коде против этого, чтобы вы понимали логи и не лечили несуществующую болезнь:</p>
+
+<ul>
+<li><strong>Один общий ограничитель темпа</strong> на весь процесс (token-bucket, «корзина токенов»): через него проходит каждое исходящее — ответ жителю, карточка в группу, пульс, рассылка. Все делят общий бюджет (~1,5 сообщения/сек с запасом до потолка MAX). Поэтому рассылка и обычная работа не складываются в превышение — лимитер выстраивает очередь и разносит отправки во времени.</li>
+<li><strong>Ретрай с нарастающей паузой</strong> при доставке: если отправка всё же упёрлась, доставка карточки повторяется с экспоненциальным backoff (база 0,5 секунды, дальше удвоение). Рассылка вдобавок пытается прочитать заголовок <code class="kbd">Retry-After</code> из ответа MAX и ждёт ровно столько, сколько просят; если заголовка нет — тот же экспоненциальный backoff.</li>
+<li><strong>Лимитер работает fail-open:</strong> он может притормозить, но <strong>никогда</strong> не блокирует отправку насовсем. Для гос-бота важнее доставить (например, оповещение о ЧС), чем держать идеально ровный темп.</li>
+</ul>
+
+<p>Что делать вам при 429-шторме: как правило — <strong>ничего</strong>, переждать. Пульс на эти минуты может пропасть (он тоже идёт через лимитер и уступает место рабочим сообщениям) — это нормально, не инцидент. Если 429 идёт постоянно и не сам по себе во время большой рассылки — это уже повод смотреть, не дублируется ли бот (см. следующий вопрос).</p>
+
+<h4>Можно ли запустить второй экземпляр бота «для надёжности» или на время переезда?</h4>
+
+<p>Нет, и это не вкусовщина, а свойство режима long polling. Два процесса с одним <code class="kbd">BOT_TOKEN</code> начнут <strong>драться</strong> за обновления MAX: одно и то же событие то одному достанется, то другому — отсюда дубли карточек, гонки, странности и те самые 429-штормы. Поэтому правило при любом переезде или ребилде: <strong>сначала погасить старого, потом поднять нового</strong>, перекрытия быть не должно. Если сомневаетесь — на минуту остановите обоих, пустота безопаснее, чем два живых. По той же причине «горячий резерв» из второго всегда-включённого бота на этом токене сделать нельзя — отказоустойчивость здесь даёт быстрый restore на новом хосте, а не дублирование процесса.</p>
+
+<h4>Контейнер бота перезапустился сам, в <code class="kbd">docker compose ps</code> свежий аптайм — это утечка памяти?</h4>
+
+<p>Сначала проверьте, не OOM ли это (нехватка памяти): <code class="kbd">docker inspect aemr-bot-bot-1 --format '{{.State.OOMKilled}} {{.State.ExitCode}}'</code> — <code class="kbd">true</code> или код <code class="kbd">137</code> означают «убит по памяти». Контейнер бота нарочно ограничен 512 МБ (<code class="kbd">mem_limit</code>); при превышении Docker перезапускает <strong>только его</strong>, не роняя хост и базу — это штатная защита, а не сбой. <strong>Разовый</strong> OOM на пике (например, во время backup) — норма, забудьте. <strong>Повторяющийся</strong> — две версии: либо просто мало RAM на сервере (поднимите до 4 ГБ — минимум 2 указан как нижняя граница, не как комфорт), либо реальная утечка; в последнем случае снимите <code class="kbd">docker stats --no-stream</code> несколько раз с интервалом и приложите динамику к тикету. Память «ползёт вверх и не отдаётся» — признак утечки; «прыгнула на backup и вернулась» — норма.</p>
+
+<h4>База не поднимается — это «битая база» или просто кончилось место? как не добить данные</h4>
+
+<p>Эта развилка стоит того, чтобы знать её заранее, потому что лечится противоположно. Если контейнер <code class="kbd">db</code> висит в <code class="kbd">Restarting</code> — первым делом <code class="kbd">df -h /var/lib/docker</code>. Дальше по логам <code class="kbd">docker compose logs --tail 200 db</code>:</p>
+
+<ul>
+<li><strong>Кончилось место</strong> (<code class="kbd">No space left on device</code>, <code class="kbd">could not extend file</code>, <code class="kbd">PANIC: could not write</code>) — данные <strong>целы</strong>. PostgreSQL сам остановился, чтобы не писать в обрезанные файлы. Освобождаете диск (см. «Диск кончился» выше) и поднимаете базу обратно — почти всегда этого хватает. Восстановление из backup тут НЕ нужно и было бы ошибкой.</li>
+<li><strong>Порча data-каталога</strong> (<code class="kbd">invalid page in block</code>, <code class="kbd">could not locate a valid checkpoint record</code>) — повреждён сам том после сбоя питания/диска. Вот тут — восстановление из backup на боевую базу, а не «ремонт руками» через <code class="kbd">pg_resetwal</code> (им легко добить остатки данных).</li>
+</ul>
+
+<p>Поэтому порядок жёсткий: <strong>сначала смотрите диск, и только если он не виноват — подозревайте повреждение</strong>. 100% на разделе почти всегда означает «место», а не «порча».</p>
+
+<h4>Почему диск вообще заканчивается, если бот маленький? и что чистить можно без страха</h4>
+
+<p>Виновник почти всегда один и неочевидный: <strong>авто-деплой</strong>. При установленном альтернативном сценарии он пересобирает контейнер командой <code class="kbd">docker compose up -d --build</code>, и старый образ не удаляется — становится «висячим» (dangling, образ без тега). За недели таких слоёв набегает на гигабайты, а когда диск под 100% — PostgreSQL уходит в read-only, бот не пишет обращения, backup падает. То есть авто-деплой — это «медленная мина», если за местом никто не следит.</p>
+
+<p>Что чистить можно <strong>всегда</strong> и безопасно, даже на работающем боте — это висячие образы и build-кэш:</p>
+
+<div class="cmd"><code>docker image prune -f &amp;&amp; docker builder prune -f</code><span class="cmd__what">бьёт ровно по главному виновнику, тома и активный образ не трогает</span></div>
+
+<div class="note note--danger">
+<p class="note__label">Опасно: одна команда, которой здесь нельзя</p>
+<p><code class="kbd">docker system prune -a --volumes</code> удаляет всё неиспользуемое <strong>вместе с томами</strong> — а в томах живут и база (<code class="kbd">db_data</code>), и резервные копии (<code class="kbd">backups</code>). На остановленных контейнерах эта команда сотрёт боевую базу. Флаг <code class="kbd">--volumes</code> на этом сервере не нужен <strong>никогда</strong>. Для рутинной чистки — только <code class="kbd">image prune</code> и <code class="kbd">builder prune</code>.</p>
+</div>
+
+<p>Профилактика: повесьте в cron от <code class="kbd">root</code> ежедневную уборку <code class="kbd">docker image prune -f &amp;&amp; docker builder prune -f --filter 'until=168h'</code> (сносит безымянное старше недели, активное не трогает) и раз в неделю поглядывайте <code class="kbd">df -h /</code> — тревога уже на 80%, не ждите 100%. И помните про слепое пятно: пинг-мониторинг (<code class="kbd">HEALTHCHECK_URL</code>) ловит «бот завис», но <strong>не</strong> «диск кончается» — за местом следит человек по календарю, машина сама не предупредит.</p>
+
+<h4>Я поправил <code class="kbd">.env</code>, а ничего не изменилось — почему?</h4>
+
+<p>Потому что <code class="kbd">infra/.env</code> читается <strong>только при старте контейнера</strong>. Просто сохранить файл мало — нужен <code class="kbd">docker compose up -d --force-recreate bot</code> (именно <code class="kbd">--force-recreate</code>, обычный <code class="kbd">up -d</code> без изменений в compose контейнер не пересоздаст). И ещё одна ловушка, которая съедает часы: конфиг построен так, что <strong>опечатка в имени переменной проходит молча</strong>. Написали <code class="kbd">ADMIN_GROUP_ÌD</code> с лишним символом или <code class="kbd">BAKCUP_GPG_PASSPHRASE</code> — бот не выругается, просто проигнорирует строку и возьмёт значение по умолчанию (для лишних переменных стоит режим «игнорировать неизвестное»). Поэтому если правка «не подействовала» — первым делом сверьте имя переменной по образцу <code class="kbd">infra/.env.example</code> символ в символ. Это же объясняет, почему в старых файлах безвредно лежат мёртвые <code class="kbd">COORDINATOR_MAX_USER_ID</code> и <code class="kbd">BACKUP_TMP_DIR</code> — бот их просто не видит.</p>
+
+<h4>Мне нужно сменить тему обращений / контакты / текст приветствия — это <code class="kbd">.env</code>, база или код?</h4>
+
+<p>Здесь три разных места, и их регулярно путают. Короткое правило: <strong>«техническое — в файле, содержательное — через бота, стартовое — в репозитории»</strong>.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Что меняете</th><th>Где живёт</th><th>Чем править</th></tr></thead>
+<tbody>
+<tr><td>Токен, пароль базы, <code class="kbd">ADMIN_GROUP_ID</code>, расписание backup, webhook</td><td><code class="kbd">infra/.env</code></td><td>руками + <code class="kbd">--force-recreate</code></td></tr>
+<tr><td>Темы, населённые пункты, тексты приветствия/согласия, контакты служб, ссылки, тихие часы, тумблеры уведомлений — <strong>26 ключей</strong> схемы</td><td>таблица <code class="kbd">settings</code></td><td>меню «⚙️ Настройки бота» в <code class="kbd">/op_help</code> (роль <code class="kbd">it</code>) или <code class="kbd">/setting</code>, <strong>без редеплоя</strong></td></tr>
+<tr><td>Список операторов</td><td>таблица <code class="kbd">operators</code></td><td>мастер «👥 Операторы» или <code class="kbd">/add_operators</code></td></tr>
+<tr><td>Стартовые значения при первом запуске, PRIVACY.pdf</td><td><code class="kbd">seed/*.json</code></td><td>правка файлов + рестарт; сидирование заполняет только <strong>пустые</strong> ключи, ваши правки в базе не перетирает</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Важный нюанс про seed: первичное сидирование (<code class="kbd">seed_if_empty</code>) заполняет в базе <strong>только отсутствующие</strong> ключи. То есть однажды поправив тему через бота, вы не потеряете правку при следующем рестарте — seed её не тронет, потому что ключ уже не пустой. Таблица называется именно <code class="kbd">settings</code> (не <code class="kbd">app_settings</code>, как в части старых черновиков), и редактируемых ключей ровно <strong>17</strong>.</p>
+
+<div class="note note--caution">
+<p class="note__label">Осторожно: в «Приёме граждан» может встретиться «района», а не «округа»</p>
+<p>Если заметили, что в тексте приёма граждан стоит «Главы Елизовского муниципального <strong>района</strong>» — это не баг кода. До 07.08.2026 так намеренно выглядел стартовый дефолт (переходный seed, ADR-15); после принятия устава округа дефолт в коде исправлен на «округа». Но работающий бот показывает значение из базы, а не дефолт из кода, поэтому старая формулировка живёт на проде, пока её не обновят через настройки бота — без редеплоя. Перед публикацией жителям сверьте формулировку и фамилию руководителя на текущий год с владельцем — это его зона ответственности, не ваша.</p>
+</div>
+
+<h4>Почему у бота в меню «/» только две команды? операторы жалуются, что не видят <code class="kbd">/op_help</code></h4>
+
+<p>Так задумано. При старте бот публикует в выпадающем «/»-меню ровно <strong>две</strong> команды — <code class="kbd">/start</code> и <code class="kbd">/menu</code>. Причина техническая: у MAX нет команд «по областям» (per-scope) — один и тот же список виден и в личке жителя, и в служебной группе. Когда там светились жительские команды, операторы случайно тапали <code class="kbd">/forget</code> (удалить свои данные) или <code class="kbd">/subscribe</code>; поэтому в меню оставили только два безопасных входа. Всё остальное работает, если набрать руками: жителя ведёт кнопочное меню, оператора — панель <code class="kbd">/op_help</code>. Так что «оператор не видит <code class="kbd">/op_help</code> в подсказке» — это норма, пусть просто наберёт команду; она на месте.</p>
+
+<h4>Оператор отвечает жителю, а тому ничего не приходит — где копать?</h4>
+
+<p>Самая частая причина — формат ответа, а не сбой. Ответ должен быть <strong>свайпом</strong> (reply) на карточку обращения или командой <code class="kbd">/reply &lt;id&gt; текст</code>; если оператор просто пишет в группу новое сообщение, бот не понимает, к какому обращению это относится, и молчит («Не понял, к какому обращению ответ»). Дальше по списку:</p>
+
+<ul>
+<li>ответ длиннее лимита — по умолчанию <strong>3000 символов</strong> (<code class="kbd">ANSWER_MAX_CHARS</code>); бот просит сократить, жителю при этом ничего не уходит;</li>
+<li>оператор не зарегистрирован или деактивирован (<code class="kbd">is_active=false</code> в <code class="kbd">operators</code>) — в том числе мог быть авто-деактивирован, если покинул служебную группу (это делает ночная задача);</li>
+<li>сам житель заблокировал бота у себя — тогда доставка не пройдёт по причине на стороне MAX;</li>
+<li>в логах — <code class="kbd">docker compose logs bot --tail 100 | grep -i error</code> (частое: житель закрыл бота, MAX рвёт TLS).</li>
+</ul>
+
+<p>Проверьте адресата, сохранённый черновик, длину текста и итогового письма, вложения, роль и состояние доставки. Если MAX не подтвердил результат, сначала сверьте чат; повторное нажатие не должно автоматически отправлять ответ снова.</p>
+
+<h4>База растёт быстрее, чем я ожидал по «+50 МБ в год» — это утечка?</h4>
+
+<p>Скорее всего нет. Самая объёмная таблица — обычно <code class="kbd">events</code> (служебные ключи защиты от повторной обработки одного и того же апдейта), и её сдерживает ежедневная чистка: всё старше <strong>30 дней</strong> удаляется (задача <code class="kbd">events-retention</code>, ежедневно 04:00). Посмотрите размеры: <code class="kbd">docker compose exec db psql -U aemr aemr -c "\dt+"</code>. Если разрослась именно <code class="kbd">events</code> и не уменьшается после 04:00 — проверьте, что retention-задача отрабатывает (логи на 04:00, нет ли там ошибок). «+50 МБ в год» — это про осмысленные данные (обращения, сообщения), а не про служебный мусор, который и так подметается. Тексты обращений живут 5 лет, потом обнуляются (метаданные остаются), ПДн после отзыва согласия — 30 дней; это разные сроки, их легко перепутать (полная таблица — в «Сроках хранения»).</p>
+
+<h4>Я собрался обновить образ / ОС / закрыть исходящий трафик — что нельзя задеть?</h4>
+
+<p>Три грабли, на которые наступают чаще всего:</p>
+
+<ul>
+<li><strong>GitHub блокировать нельзя.</strong> Авто-деплой ходит на <code class="kbd">github.com</code> каждые 10 минут. Если включаете жёсткий исходящий whitelist через <code class="kbd">iptables</code>/<code class="kbd">nftables</code> и забудете про GitHub — деплои встанут молча. В whitelist нужны MAX (<code class="kbd">botapi.max.ru</code>, <code class="kbd">platform-api2.max.ru</code>), GitHub (<code class="kbd">github.com</code>, <code class="kbd">api.github.com</code>, <code class="kbd">codeload.github.com</code>), источники антифишинга (<code class="kbd">urlhaus.abuse.ch</code>, <code class="kbd">threatfox.abuse.ch</code>), и обязательно <strong>NTP (порт 123)</strong>.</li>
+<li><strong>Без NTP «поедут» все сроки.</strong> Бот считает SLA, тихие часы, расписание backup и напоминаний по поясу <code class="kbd">Asia/Kamchatka</code>. Если системные часы хоста уплывут (долгий аптайм, миграция виртуалки, севшая батарейка) — просрочки считаются неверно, backup уйдёт не в 03:00. Проверка: <code class="kbd">timedatectl</code> → строки <code class="kbd">System clock synchronized: yes</code> и <code class="kbd">NTP service: active</code>. После любого переезда или апгрейда ОС — проверяйте это обязательно. Часовой пояс самого хоста при этом не важен (бот живёт по <code class="kbd">TZ</code> из <code class="kbd">.env</code>) — важна точность абсолютного времени, её и держит NTP.</li>
+<li><strong>Образы не обновляются автоматически — это нарочно.</strong> Базовые образы закреплены не только тегом, но и цифровым отпечатком (digest), чтобы <code class="kbd">docker compose pull</code> не утянул втихую сломанный или скомпрометированный минорный выпуск. Актуальные digest смотрите <strong>только</strong> в <code class="kbd">infra/docker-compose.yml</code>, не по памяти и не из этой вики (они меняются). Обновлять — руками: <code class="kbd">docker pull postgres:16-alpine</code>, скопировать строку «Digest: sha256:…» в compose.</li>
+</ul>
+
+<h4>Сервер выключился в воскресенье ночью — backup не сделался. это критично?</h4>
+
+<p>Разовый пропуск — да, наверстать его нельзя: расписание живёт в памяти процесса, и пропущенный еженедельный backup на следующее воскресенье <strong>не</strong> «догонится» (это не то же самое, что короткий пропуск пульса на 30–90 секунд при пересборке — те покрывает окно прощения 120 секунд). Поэтому железное правило: <strong>перед любой опасной операцией</strong> (миграция, выкладка, апгрейд, перезагрузка) снимайте <code class="kbd">/backup</code> руками из служебной группы, не надейтесь на воскресный автоматический. И помните про более крупный риск: backup лежит <strong>на том же диске</strong>, что и база. Сгорит сервер — потеряете и базу, и копии разом. Сейчас offsite-копии нет (это документированный риск): закрывается включением <code class="kbd">BACKUP_S3_*</code> или внешним <code class="kbd">rsync</code>/<code class="kbd">scp</code> по cron на отдельный хост.</p>
+
+<h4>Потерял GPG-фразу от backup. как восстановить?</h4>
+
+<p>Никак. Зашифрованный backup без парольной фразы не расшифровать — это by design (так и задумано для защиты ПДн). Файлы есть, а толку ноль. Отсюда два следствия, которые лучше принять заранее, чем выучить на аварии:</p>
+
+<ul>
+<li><strong>Фразу должны знать минимум двое</strong> (ИТ-специалист и владелец), и лежать она должна в двух независимых местах, ни одно из которых — не сам сервер. Хранить её <em>в</em> <code class="kbd">infra/.env</code> на сервере нормально для работы бота, но это <strong>не</strong> резервная копия фразы: потеряете сервер — потеряете и её. Резервная копия фразы обязана быть offsite (менеджер паролей + конверт у владельца).</li>
+<li><strong>Тест восстановления — раз в квартал.</strong> Backup, который ни разу не разворачивали, официально считается непроверенным. Квартальный тест (плюс после каждой новой миграции схемы) ловит проблему — битый файл, забытую фразу — заранее, а не в момент, когда база уже потеряна. Пропустили тест — считайте копии ненадёжными и сообщите владельцу.</li>
+</ul>
+
+<h4>Восстановил старый backup — а в базе всплыли данные жителей, которых уже удаляли. это нарушение?</h4>
+
+<p>Да, и это та ловушка 152-ФЗ, про которую забывают. Любой restore возвращает состояние на момент backup — включая ПДн, которые удалили (по <code class="kbd">/forget</code> жителя или авто-обезличиванием) <strong>после</strong> даты этого backup. Один restore обязанность по удалению не закрывает. Поэтому после восстановления боевой базы из копии старше факта удаления нужно <strong>повторно применить удаления</strong>: пройдитесь по журналу действий (в <code class="kbd">audit_log</code> записи <code class="kbd">erase</code> и <code class="kbd">self_erase</code> с датой позже backup) и выполните <code class="kbd">/erase</code> по тем же жителям. Это касается и восстановления после аварии, и переезда на новый сервер. Правовой разбор — в разделе «Безопасность», но техническое действие именно такое.</p>
+
+<h4>Координатору не хватает прав на <code class="kbd">/erase</code> или <code class="kbd">/backup</code> — это баг? я думал, координатор главный</h4>
+
+<p>Не баг. Четыре команды — <code class="kbd">/erase</code>, <code class="kbd">/setting</code>, <code class="kbd">/backup</code>, <code class="kbd">/add_operators</code> — пропускают <strong>строго роль <code class="kbd">it</code></strong>; даже координатор их не пройдёт, проверка идёт по точному совпадению роли. Остальное (ответить, закрыть, статистика, диагностика, поиск жителя) доступно любому активному оператору, а рассылка — ещё и координатору. Логика такая: <code class="kbd">it</code> — это администрирование самого бота (удаление данных, настройки, копии, заведение людей), а координатор — старший по <em>работе с обращениями</em>, но не сисадмин. Кстати, если один человек совмещает обе функции — заводите ему <strong>одну</strong> запись с <code class="kbd">role=it</code>: роль <code class="kbd">it</code> уже включает все права координатора, две записи делать не нужно.</p>
+
+<h4>Что вообще «унести» с сервера, чтобы пережить его полную потерю?</h4>
+
+<p>Ровно три вещи — и это стоит проверить <strong>до</strong> того, как сервер понадобится восстанавливать:</p>
+
+<ol class="steps">
+<li><strong>Файл <code class="kbd">infra/.env</code></strong> — в нём все секреты и параметры развёртывания. Без него бот не поднять, а пароль базы из backup не достать.</li>
+<li><strong>Свежий зашифрованный backup</strong> базы (или доступ к S3, если включена выгрузка).</li>
+<li><strong>Знание GPG-фразы</strong> — иначе backup из пункта 2 не расшифровать.</li>
+</ol>
+
+<p>Код тащить <strong>не</strong> нужно — он клонируется заново из репозитория. Тома Docker (<code class="kbd">db_data</code>, build-кэш) копировать тоже не нужно и даже вредно: базу переносят через backup→restore, а не копированием сырого тома (копия тома между разными версиями PostgreSQL ненадёжна). Полная процедура переезда — в «Переносе на новый сервер»; здесь главное — понимать, что «полный бэкап сервера» вам не нужен, нужны эти три вещи, и за их сохранность offsite отвечаете лично вы.</p>
+
+<h4>Где централизованные логи / алертинг по ошибкам? я привык к Sentry</h4>
+
+<p>Их нет, и это сознательно. Внешнего сбора ошибок (Sentry) в коде <strong>нет</strong> — его пробовали и откатили целиком. Вся наблюдаемость — это:</p>
+
+<ul>
+<li><strong>логи бота</strong> — файл приложения <code class="kbd">/var/log/aemr-bot/bot.log</code> (ротация ~110 МБ) плюс системный журнал хоста <code class="kbd">journald</code>, куда уходит <code class="kbd">stdout/stderr</code> контейнеров; <code class="kbd">docker compose logs</code> продолжает работать, читая journald, — бесконечного роста не будет);</li>
+<li><strong>journald</strong> для страховочных служб (<code class="kbd">journalctl -t aemr-bot-deploy</code> и <code class="kbd">-watchdog</code>);</li>
+<li><strong>«пульс» и алёрты в служебную группу</strong> — именно туда бот сам пишет о провалах backup, устаревании списков угроз, зависших анкетах;</li>
+<li><strong>опционально</strong> — пинг на <code class="kbd">HEALTHCHECK_URL</code> (Healthchecks.io / Uptime Kuma), по умолчанию выключен (задача-пинг добавляется в расписание, только если URL задан).</li>
+</ul>
+
+<p>Практический вывод: ваш «дашборд» — это служебная группа MAX плюс <code class="kbd">docker compose logs</code> и <code class="kbd">journalctl</code>. Если хотите внешний сигнал «бот жив» на свой телефон — поднимите Healthchecks.io или Uptime Kuma и пропишите <code class="kbd">HEALTHCHECK_URL</code>. Но помните ограничение: этот пинг говорит только «процесс отвечает», он <strong>не</strong> следит за диском, памятью и базой — за ними вы по эксплуатационному календарю.</p>
+
+<h4>За что мне как сисадмину НЕ нужно отвечать (а кажется, что нужно)?</h4>
+
+<p>Полезно очертить границу, чтобы не делать чужую работу и не пропустить свою:</p>
+
+<ul>
+<li><strong>Содержание ответов жителям</strong> — это операторы, бот никогда не отвечает по существу сам. Ваша зона — чтобы инфраструктура жила.</li>
+<li><strong>Тексты, фамилии, контакты, перечень тем</strong> — согласовывает владелец; вы только технически вносите согласованное (через настройки бота).</li>
+<li><strong>Уровень защищённости ИСПДн (УЗ-4) и модель угроз</strong> — оформляет безопасник Администрации, не вы. От вас — техническая реализация мер (изоляция, шифрование backup, ротация), но решение об УЗ и бумаги — его.</li>
+<li><strong>Приоритизация обращений по важности</strong> — её назначает Куратор ЦУР вручную; в коде поля важности нет, по теме («вода/газ/отопление») бот срочность не повышает, и это не вам «чинить» — так устроено.</li>
+<li><strong>Юридическая сторона удаления ПДн, сроков, применимости 59-ФЗ</strong> — это раздел «Правовое» и юрист; ваша часть — нажать <code class="kbd">/erase</code> и затереть носитель при выводе сервера.</li>
+</ul>
+
+<p>А вот что <strong>точно ваше</strong> и машина за вас не сделает: уборка висячих образов, контроль диска и памяти, квартальный тест восстановления, ротация секретов (январь/июль), апгрейд ОС, проверка offsite-копии и NTP. Это и есть эксплуатационный календарь — заведите его в напоминания, иначе между сменами ИТ эти пункты теряются.</p>
+
+<div class="note">
+<p class="note__label">Если вопрос остаётся открытым</p>
+<p>Несколько вещей честно <strong>не</strong> решаются на стороне сисадмина и требуют владельца или юриста: какой уровень защищённости ИСПДн присвоить и кто подписывает модель угроз (безопасник + владелец); кто именно назначен ответственным за бота и что делать при уходе единственного ИТ-специалиста (орг-вопрос владельца, техническую передачу секретов см. в «Владении секретами»); нужно ли и когда включать offsite-копию и жёсткий сетевой whitelist (решение владельца по бюджету и модели угроз). По этим пунктам ваша роль — подготовить техническую сторону и поставить вопрос ребром, а не решить его молча за всех.</p>
+</div>
+
+<h3 id="dev-pitfalls">Сложности и частые вопросы</h3>
+
+<p>Отдельно от рецептов «как добавить X» собраны затруднения, на которых разработчик спотыкается не из-за незнания процедуры, а из-за неочевидных стыков: где код расходится с документацией, что переживает рестарт, а что нет, почему бот молчит, какие числа нельзя набирать по памяти. Если ниже что-то противоречит другому документу — верьте коду ветки <code class="kbd">main</code>, он первоисточник.</p>
+
+<h4>Я открыл «банк болей разработчика» (или старый аудит) — там написано, что половина вещей не сделана. Кому верить?</h4>
+
+<p>Коду и этому разделу вики. Аудиты и черновики — это снимок на определённую дату, и вики с тех пор обогнала их. Самый частый пример: старый аудит уверяет, что типизированного слоя callback-payload «ещё нет, его сделали бы в будущем», что образ ставит зависимости «мимо <code class="kbd">uv.lock</code> через <code class="kbd">pip install -e</code>», что рецептов «добавить статус / роль / поле в карточку» нет. На деле всё это уже в коде и уже описано выше: контракт <code class="kbd">callback_payloads.py</code> + <code class="kbd">callback_router.py</code> (<a href="#dev-recipe-button" data-go="developer">рецепт кнопки</a>), hash-verified сборка из lock (<a href="#dev-deps" data-go="developer">«uv.lock — закон»</a>), все четыре рецепта расширения. Так что прежде чем «доделывать недостающее», проверьте грепом — велик шанс, что оно давно на месте.</p>
+
+<h4>Почему «выверенный реестр» (_LEDGER) говорит про Dockerfile одно, а сам Dockerfile — другое?</h4>
+
+<p>Это реальное, известное расхождение, и разрешается оно в пользу кода. В <code class="kbd">infra/Dockerfile</code> зависимости ставятся из <code class="kbd">uv.lock</code> с проверкой SHA256 каждого пакета (<code class="kbd">uv export --frozen --no-emit-project --no-dev</code> → <code class="kbd">pip install --require-hashes --no-deps</code>), а сам <code class="kbd">aemr-bot</code> доустанавливается отдельным editable-шагом без зависимостей. Старая строчка в реестре про «<code class="kbd">pip install -e /app</code> по диапазонам, <code class="kbd">uv.lock</code> не копируется» относится к прежней ревизии образа и устарела. Правило проекта прямое: <strong>код — истина №1</strong>. Когда документ и код спорят, чините документ под код, а не наоборот.</p>
+
+<div class="note note--caution">
+<p class="note__label">Где ещё докстринг отстал от своего же кода</p>
+<p>Расхождение «комментарий устарел, поведение верное» встречается и в мелочах — не пугайтесь, это не баги, а недочищенные подписи. Три живых примера: докстринг <code class="kbd">main_menu</code> в <code class="kbd">ui/citizen_keyboards.py</code> говорит «6 кнопок», а рядов реально <strong>семь</strong> (добавили «🛡️ Защита от мошенников» сверх исходных шести); комментарий у пина <code class="kbd">fastapi</code> в <code class="kbd">pyproject.toml</code> поминает версию 0.136.3, тогда как сам пин — <code class="kbd">&lt;0.137</code>; докстринг reminder-задачи в <code class="kbd">services/cron.py</code> пишет «пн–сб», а фактический триггер обеих напоминалок — <code class="kbd">day_of_week="mon-fri"</code> (субботу отсекает сам триггер). Поведение во всех трёх случаях задаёт код, подпись врёт. Увидели такое в файле, который и так правите, — поправьте заодно; гоняться за всеми специально не нужно.</p>
+</div>
+
+<h4>Что переживает рестарт бота, а что испаряется? Я запутался, где состояние.</h4>
+
+<p>Это, пожалуй, главный источник «магии» в проекте, потому что состояние живёт на трёх разных горизонтах живучести, и спутать их легко. Разложим по полочкам.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Что</th><th>Где лежит</th><th>Переживёт рестарт?</th></tr></thead>
+<tbody>
+<tr><td>Шаг и данные анкеты жителя (<code class="kbd">dialog_state</code>, <code class="kbd">dialog_data</code>)</td><td>таблица <code class="kbd">users</code> в Postgres</td><td><strong>Да.</strong> На старте <code class="kbd">recover_stuck_funnels</code> добивает зависших в <code class="kbd">AWAITING_SUMMARY</code>, пустые сбрасывает в <code class="kbd">IDLE</code> (см. <a href="#dev-debug" data-go="developer">грабли</a>)</td></tr>
+<tr><td>Черновик рассылки и мастер «Операторы» (wizard-состояние)</td><td>in-memory кэш <code class="kbd">wizard_registry</code> + durable-копия в таблице <code class="kbd">wizard_state</code> (миграция 0011)</td><td><strong>Да, обычно.</strong> На старте <code class="kbd">hydrate_into_registry</code> поднимает активные записи из БД обратно в память. Окно потери — если рестарт совпал с сетевым сбоем БД-записи ровно в этот момент</td></tr>
+<tr><td>Намерение «следующее сообщение оператора уйдёт жителю» и трекер свежести меню</td><td>только оперативная память процесса (<code class="kbd">menu_tracker</code>, локи)</td><td><strong>Нет.</strong> Рестарт стирает — оператор просто нажмёт «Ответить» заново. Это осознанно: намерение живёт минуты, незачем тащить в БД</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Отсюда вопрос, который реально задают: «почему мой недоотправленный черновик рассылки уцелел после перезагрузки сервера, а набранный ответ жителю — нет?» Потому что черновик рассылки — это wizard-состояние с durable-копией в Postgres (его поднимает <code class="kbd">hydrate_into_registry</code>), а «намерение ответить» осознанно держится только в памяти. У операторских мастеров ещё и TTL: op-wizard живёт 5 минут, черновик рассылки — 30 минут (в коде <code class="kbd">wizard_persist.py</code>), дольше им в админ-чате висеть незачем. Уже <em>доставленный</em> жителю ответ, разумеется, в БД и никуда не денется — теряется только незавершённое.</p>
+
+<h4>Бот вообще не реагирует на моё сообщение — куда смотреть?</h4>
+
+<p>Тишина почти всегда означает, что событие до обработчика дошло, но дальше отвалилось по одной из штатных причин — не «бот сломался». Чеклист по убыванию частоты:</p>
+
+<ol class="steps">
+<li><strong>Порядок регистрации.</strong> Если вы добавили команду или callback, но зарегистрировали её <em>после</em> универсального маршрутизатора анкеты, диспетчер MAX отдаст событие первому совпавшему — то есть catch-all — и ваша команда «утонет». Команды и callback регистрируются раньше, анкета — последней (<code class="kbd">handlers/__init__.py::register_handlers</code>). Это первое, что надо проверять.</li>
+<li><strong>Вы пишете в служебной группе, а ждёте «жительской» реакции (или наоборот).</strong> Поток жителя обёрнут в <code class="kbd">if is_admin_chat(event): return</code>, поток оператора — в обратную проверку. <code class="kbd">/start</code> в группе бот намеренно проглотит, чтобы оператор не свалился в анкету. Проверьте, из какого чата шлёте.</li>
+<li><strong>Состояние жителя не то, что вы думаете.</strong> Маршрутизатор анкеты зовёт обработчик <em>текущего</em> <code class="kbd">dialog_state</code>. Если житель завис в <code class="kbd">AWAITING_CONSENT</code>, обычный текст в шаг сути не попадёт. Загляните в <code class="kbd">users.dialog_state</code> прямым SQL (см. <a href="#dev-db" data-go="developer">«Подключение к живой базе»</a>).</li>
+<li><strong>Это callback по «протухшей» кнопке.</strong> Если кнопка старая, а её payload разобрался в <code class="kbd">None</code> через <code class="kbd">parse_int_tail</code>, штатный путь — сделать <code class="kbd">ack</code> и тихо выйти. Снаружи это выглядит как «бот не отреагировал», хотя он отреагировал корректно.</li>
+<li><strong>Включите <code class="kbd">LOG_LEVEL=DEBUG</code>.</strong> Диспетчер начнёт писать полный pydantic-дамп события — видно, дошло ли оно и каким распозналось. Но <strong>не</strong> оставляйте DEBUG в боевых логах и не дампите <code class="kbd">event.message</code> в прод: туда утекут персональные данные жителя.</li>
+</ol>
+
+<h4>Я добавил кнопку строкой <code class="kbd">f"op:foo:{id}"</code> прямо в клавиатуре — почему её нажатие проваливается?</h4>
+
+<p>Потому что сырая f-строка проходит мимо контракта. Маршрут кнопки объявляется в реестре <code class="kbd">callback_router.py</code>, и если payload собран не через билдер из <code class="kbd">callback_payloads.py</code>, контракт-тест <code class="kbd">test_callback_coverage_contract</code> увидит «кнопку с незарегистрированным payload» и покраснеет, а в рантайме нажатие тихо уйдёт в fallback. Лечение — <a href="#dev-recipe-button" data-go="developer">рецепт кнопки</a>: билдер на сборку, маршрут с группой и <code class="kbd">admin_allowed=True</code>, разбор через <code class="kbd">parse_int_tail</code>. Кстати, <code class="kbd">admin_allowed=True</code> забывают чаще всего — без него операторская кнопка просто не сработает в служебной группе, хотя выглядит правильно.</p>
+
+<h4>Мой новый <code class="kbd">bot.send_message</code> в служебную группу «съел» чужое меню — оно теперь редактируется не туда. Почему?</h4>
+
+<p>Вы отправили в группу мимо шины <code class="kbd">admin_bus.send</code>, и трекер свежести меню (<code class="kbd">menu_tracker</code>) отстал от реального состояния чата — следующий экран перерисовался поверх не того сообщения. Любое <em>новое</em> сообщение в группу (уведомление, алёрт, подтверждение) шлите через <code class="kbd">admin_bus.send</code>, редактируемые экраны — через freshness-aware пути. Полный разбор с двумя отметками трекера (<code class="kbd">physical_mid</code> против <code class="kbd">editable_mid</code>) — в <a href="#dev-recipe-adminbus" data-go="developer">рецепте «отправить что-то в служебную группу»</a>. Прямые отправки подстрахованы общим hook'ом, но осознанно полагаться на него не стоит — это страховка, а не контракт.</p>
+
+<h4>Завёл middleware, и в админ-чате «поехало» меню при тапе по кнопке. Что я сделал не так?</h4>
+
+<p>Скорее всего пропустили проверку типа события. Если слой реагирует на входящие сообщения, он обязан начинаться с <code class="kbd">isinstance(event_object, MessageCreated)</code>. Без неё слой ловит <em>все</em> события с полем <code class="kbd">event.message</code>, включая нажатие кнопки (<code class="kbd">MessageCallback</code>) — а там <code class="kbd">event.message</code> это <strong>старая карточка, на которой нажали</strong>, не новое сообщение. Трекер съезжает на старую карточку, и следующий экран перерисовывается поверх неё. Ровно эту жалобу («меню редактируется при тапе на не-последнем сообщении») уже ловили; разбор и порядок слоёв (idempotency первым, активность вторым) — в <a href="#dev-recipe-middleware" data-go="developer">рецепте middleware</a>.</p>
+
+<h4>Тесты с фикстурой <code class="kbd">session</code> зелёные, но миграция всё равно сломана. Как так?</h4>
+
+<p>Потому что фикстура <code class="kbd">session</code> (в <code class="kbd">tests/conftest.py</code>) строит схему <strong>из моделей</strong>, а не из миграций: на реальной БД она делает <code class="kbd">Base.metadata.drop_all</code> + <code class="kbd">create_all</code>, то есть Alembic вообще не трогает. Значит сломанный <code class="kbd">upgrade</code>/<code class="kbd">downgrade</code> или забытая ревизия в этих тестах не всплывут — у них чистая схема прямо из <code class="kbd">models.py</code>. Ловят миграции <em>отдельные</em> шаги CI-джоба «Pytest»: <code class="kbd">upgrade head</code> на чистой БД, <code class="kbd">alembic check</code> (модель против последней миграции) и round-trip <code class="kbd">upgrade→downgrade→upgrade</code> (см. <a href="#dev-ci" data-go="developer">«Что проверяет CI»</a>). Вывод: «зелёные юнит-тесты» не равно «миграция корректна» — это разные рубежи. И ещё нюанс той же фикстуры: без <code class="kbd">DATABASE_URL</code> с <code class="kbd">postgresql://</code> она делает <code class="kbd">pytest.skip</code> (модели используют JSONB, SQLite не годится) — отсюда и закономерно низкое покрытие в «лёгком» локальном режиме, это норма, а не поломка.</p>
+
+<h4>Какие числа и идентификаторы нельзя набирать по памяти?</h4>
+
+<p>Любые, у которых есть единственный источник в коде. Набитое «по памяти» значение тихо устаревает и расходится с реальностью — а в этом проекте за расхождения números бьют контракт-тесты. Сверяйте грепом или командой, не доверяйте голове и старым докам:</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Величина</th><th>Где истина</th><th>Грабли памяти</th></tr></thead>
+<tbody>
+<tr><td>Порог покрытия в CI</td><td><code class="kbd">--cov-fail-under</code> в <code class="kbd">.github/workflows/ci.yml</code> (сейчас 84)</td><td>в старых текстах гуляет 67 и 80 — оба устарели, порог поднимали дважды</td></tr>
+<tr><td>Число таблиц / миграций</td><td><code class="kbd">db/models.py</code> (17 таблиц) и каталог <code class="kbd">db/alembic/versions/</code> (миграции 0001..)</td><td>«9 таблиц», «5 миграций», «17 миграций» — все из разных эпох, доверять коду</td></tr>
+<tr><td>Лимит ответа оператора</td><td><code class="kbd">ANSWER_MAX_CHARS</code> в <code class="kbd">config.py</code> (и §46 Регламента — то же число)</td><td>набьёте «по памяти» — разойдётесь и с кодом, и с регламентом</td></tr>
+<tr><td>Список cron-задач и расписания</td><td>имена — <code class="kbd">cron_registry.py</code>, точные минуты/дни — <code class="kbd">CronTrigger</code> в <code class="kbd">cron.py</code></td><td>реестр человекочитаемый и местами отстаёт от триггера; для расписания истина — триггер</td></tr>
+<tr><td>Версия зависимости</td><td><code class="kbd">bot/uv.lock</code> (pyproject задаёт лишь диапазон)</td><td>«у меня 1.1.0» — проверьте <code class="kbd">git diff uv.lock</code>, а не память</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>То же правило шире касается всего, что выглядит как точный артефакт: commit-хеш, номер PR/issue, digest образа, отпечаток TLS, SHA256 wheel'а. Такие вещи не пишутся по памяти — они берутся lookup'ом (<code class="kbd">git rev-parse</code>, <code class="kbd">docker pull</code>, <code class="kbd">gh api</code>, <code class="kbd">uv export</code>). Один выдуманный hash в доке живёт месяцами и сбивает следующего разработчика.</p>
+
+<h4>Лимит «не больше трёх обращений в час» — где он и можно ли его обойти случайно?</h4>
+
+<p>Лимит зашит прямо в финализацию: внутри блокировки на пользователя <code class="kbd">persist_and_dispatch_appeal</code> считает обращения жителя за последний час и при <code class="kbd">recent &gt;= 3</code> сбрасывает состояние и возвращает <code class="kbd">PERSIST_RATE_LIMITED</code>, обращение не создаётся (<code class="kbd">handlers/appeal_runtime.py</code>). Важная тонкость для того, кто правит воронку: проверка стоит <em>внутри</em> того же <code class="kbd">asyncio.Lock</code>, что и защита от двойной финализации, — это сознательно закрывает TOCTOU-окно (раньше лимит проверялся только на старте анкеты, а финализация шла без повторной проверки, и быстрый дубль мог проскочить). Если будете переносить или «оптимизировать» эту логику — не выносите re-check за пределы лока, иначе вернёте дыру.</p>
+
+<h4>Почему slash-команды видны/работают в служебной группе, хотя в подсказке их нет — это баг меню?</h4>
+
+<p>Нет, это ограничение платформы. У MAX нет раздельных списков команд для лички и группы (нет per-scope команд): одно /-меню публикуется сразу на оба чата. Поэтому на старте бот прямым <code class="kbd">PATCH /me</code> выкладывает в подсказку ровно две универсальные команды — <code class="kbd">/start</code> и <code class="kbd">/menu</code>, — а специфичные жительские и операторские (<code class="kbd">/forget</code>, <code class="kbd">/reply</code>, <code class="kbd">/erase</code> и пр.) намеренно не выносит, чтобы <code class="kbd">/forget</code> не мозолил глаза операторам. Сами команды при этом остаются рабочими как запасной путь. Если кажется, что «команда пропала» — она просто не в подсказке, наберите вручную.</p>
+
+<h4>Что в проекте остаётся открытым и требует не разработчика, а владельца или юриста?</h4>
+
+<p>Честно: часть вопросов кодом не закрывается, и притворяться, что закрывается, вредно. Они не блокируют разработку, но и не решаются грепом.</p>
+
+<ul>
+<li><strong>Доступ к приватному репозиторию и владение секретами.</strong> Кого добавить коллаборатором, кто физически держит <code class="kbd">BOT_TOKEN</code>, пароль Postgres и GPG-фразу бэкапов, где их резерв и как передаются дела при увольнении — это решение владельца, не настройка в коде. Инженерная часть (fork-flow, deploy key, что <code class="kbd">.env</code> не коммитится) описана в <a href="#dev-deploy" data-go="developer">«Доступ к репозиторию и секретам»</a>; организационная — в разделе «Администратору».</li>
+<li><strong>Дифференциация сроков по важности обращения.</strong> В коде один базовый SLA первого ответа (<code class="kbd">SLA_RESPONSE_HOURS = 4</code>) и <strong>нет</strong> поля «важность» или «приоритет» у обращения — бот не определяет «воду/газ/отопление» как срочные. Дифференциацию ведёт Куратор ЦУР вручную. Чтобы ввести разные сроки технически, сперва нужно решение владельца о модели важности, и лишь потом поле в схеме и маршрутизация — это не «дописать функцию», а продуктовое решение.</li>
+<li><strong>Сроки хранения и правовые формулировки.</strong> Почему <code class="kbd">audit_log</code> хранится 365 дней, а обращения — отдельным пятилетним ретеншном, какие тексты согласия и Политики юридически достаточны — это зона юриста и внутреннего регламента оператора, а не разработчика. Код лишь исполняет уже принятые числа; менять их «потому что так чище» нельзя.</li>
+</ul>
+
+<div class="note">
+<p class="note__label">Короткое правило на все случаи</p>
+<p>Если затруднение про «как код себя ведёт» — ответ в коде и грепе, и сомнение разрешается в пользу кода. Если про «как <em>должно</em> быть по закону, по деньгам, по доступам» — это не к разработчику, и честный ответ «нужен владелец/юрист» лучше выдуманной уверенности. Граница между этими двумя — самый ценный навигатор по проекту.</p>
+</div>
+
+<h3 id="security-slozhnosti">Сложности и частые вопросы</h3>
+
+<p>Этот блок — для ответственного за информационную безопасность: того, кто принимает систему в эксплуатацию, переживёт проверку и должен будет действовать, если что-то пойдёт не так. Механику защиты (маскирование, удаление, бэкап, антифишинг, плейбуки инцидентов, ИБ-календарь) подробно разбирают разделы выше — здесь не повтор, а разбор затыков, которые всплывают именно у этой роли: где формальное требование не совпадает с тем, что реально умеет код, где «защита есть» означает «есть до определённой границы», и где честный ответ — «это решает владелец или юрист, а не бот». Числа и поведение ниже сверены с кодом; там, где вопрос открыт, так и написано.</p>
+
+<div class="note">
+  <p class="note__label">Одно правило, которое экономит много споров</p>
+  <p>Бот защищает <strong>данные внутри себя</strong> — свою базу, свои секреты, свой канал в MAX. Он не управляет тем, что лежит на серверах мессенджера, в логах Docker и в копиях, сделанных раньше. Половина «странностей» в вопросах ниже — это именно граница ответственности бота: внутри он делает физический <code class="kbd">DELETE</code> и шифрует копии, а за своим периметром повлиять не может. Где проходит эта граница — главное, что нужно держать в голове при разговоре с проверяющим.</p>
+</div>
+
+<h4>Где формализованная модель угроз ИСПДн? В вики есть карта классов, но это ведь не документ</h4>
+
+<p>Верно, и это надо понимать честно. То, что описано в разделе <a href="#security-model" data-go="security">«Что мы защищаем и от кого»</a> — это инвентарь точек ввода и карта классов угроз: рабочий инженерный материал, по нему видно, от чего закрывались. Но утверждённого документа «Модель угроз ИСПДн» с актом классификации по методике ФСТЭК вики не заменяет — её и не задумывали как такой документ. Статус прямо зафиксирован в подразделе <a href="#security-threat-model" data-go="security">«Модель угроз ИСПДн: статус документа»</a>. Практический вывод: для уровня защищённости УЗ-4 аттестация ФСТЭК и сертифицированные средства криптозащиты <strong>не</strong> требуются (достаточно типового набора мер), но сам акт классификации и модель угроз как бумагу оформляет связка владелец-плюс-безопасник — это организационная работа, которую код за вас не сделает. Материал вики — основа для этой бумаги, а не замена ей.</p>
+
+<h4>«Достаточно типового набора мер» — а где сам перечень? Мне нужно показать проверяющему «мера → как закрыта»</h4>
+
+<p>Этот перечень собран — смотрите матрицу <a href="#security-uz4-measures" data-go="security">«Матрица мер защиты для УЗ-4 (ФСТЭК №21)»</a>. Она разложена по группам мер (идентификация и аутентификация, управление доступом, регистрация событий безопасности, антивирусная защита, защита среды и так далее) и для каждой говорит, чем закрыто: кодом бота, инфраструктурой или организационной процедурой. Это и есть документ приёмки в формате «мера — реализация». Важная честность, которую стоит проговорить сразу: часть мер закрыта <strong>организационно</strong>, а не кодом (например, физическая защита относится к зоне дата-центра хостера, а не бота), и матрица это не прячет. Если проверяющий просит «где у вас антивирус» — ответ не «его нет», а «вектор закрыт иначе: бот не исполняет загруженные файлы, контейнер read-only, образы пиннуются по хэшу» — и это записано в строке матрицы.</p>
+
+<h4>Удаление по заявлению жителя — это реально стирает данные или просто метка «удалён»?</h4>
+
+<p>Команда /erase удаляет строку жителя и очищает предусмотренные поля обращений в рабочей базе. Для копий в MAX, файлов, журналов и резервных копий требуется отдельная проверяемая процедура. Нельзя считать оставшиеся сведения анонимными без оценки идентифицируемости.</p>
+
+<h4>Если удаление физическое, почему говорят, что данные всё равно где-то остаются?</h4>
+
+<p>Потому что <code class="kbd">DELETE</code> в базе бота не достаёт до трёх мест за его периметром, и это надо называть вслух, а не прятать:</p>
+<ul>
+  <li><strong>Сообщения в самом MAX.</strong> Переписка жителя с ботом лежит на серверах мессенджера. Бот не может удалить сообщения из чужого чата — он удаляет только свою базу. Жителю это объясняется отдельной корректной формулировкой (см. врезку в разделе <a href="#security-erasure" data-go="security">«Удаление»</a>).</li>
+  <li><strong>Логи Docker.</strong> Удаление <strong>не</strong> чистит логи контейнера. Прямых персональных данных там стараются не писать, но косвенные идентификаторы (внутренний номер жителя, идентификатор чата) в логах переживают <code class="kbd">/erase</code>. Снижение — ротация логов и дисциплина «не логировать горячие ПДн», а не «логи тоже стёрлись».</li>
+  <li><strong>Бэкапы, сделанные раньше удаления.</strong> Копия, снятая до <code class="kbd">/erase</code>, содержит данные жителя — это физика резервного копирования, иначе бэкап не бэкап. Что с этим делать — отдельный вопрос ниже про «разрыв бэкап-удаление».</li>
+</ul>
+<p>Юридическая сторона «что считается выполненным удалением, если данные остались в логах и в MAX» — это <strong>открытый вопрос для юриста</strong>, а не дефект кода. Он честно вынесен как формальный зазор по 152-ФЗ; бот сделал максимум на своей стороне (физический <code class="kbd">DELETE</code>), а квалификация остатка — правовая.</p>
+
+<h4>Чем удаление данных отличается от блокировки жителя? Их часто путают</h4>
+
+<p>Это два разных механизма, и путать их при аудите опасно. <strong>Удаление</strong> (<code class="kbd">/erase</code>) — это исполнение права субъекта на стирание ПДн: строка жителя уходит из базы. <strong>Блокировка</strong> (<code class="kbd">is_blocked</code>) — это санкция ИТ за злоупотребление (флуд, оскорбления), она ставится отдельной командой и жителя из базы не убирает. Ключевой нюанс, который проверяют умные аудиторы: когда житель <strong>отзывает согласие</strong>, бот блокировку <em>не</em> ставит — намеренно, потому что человек может передумать и вернуться. Отзыв согласия запускает обезличивание по сроку (об этом ниже), но не «банит» жителя. Так что «отозвал согласие» и «заблокирован» — это разные состояния с разными последствиями.</p>
+
+<h4>Через сколько после отзыва согласия данные реально обезличиваются? И работает ли это в выходные?</h4>
+
+<p>Планировщик ищет данные для очистки в рабочей базе начиная с <strong>29-го дня</strong> после отзыва: ежедневно и каждый час, включая выходные и праздники. Это запас до применимого предельного срока, а не гарантия работы при сбое. Резервные копии, MAX и другие хранилища требуют отдельных действий и контроля. Условия прекращения обработки и иные законные основания проверяет ответственное лицо. Подробности — в разделе <a href="#security-retention" data-go="security">«Сроки хранения данных»</a>.</p>
+
+<h4>Почему журнал хранится год, а не пять лет, как в старом черновике? Регулятор не придерётся?</h4>
+
+<p>Для журнала действий в коде предусмотрен настраиваемый срок. Его значение на сервере и обоснование для конкретной цели необходимо проверить; не следует считать год или пять лет автоматически правильным для любой организации.</p>
+
+<h4>Может ли ИТ с доступом к базе незаметно подправить или стереть запись в журнале?</h4>
+
+<p>Технически — да, и это честно признано, а не замолчано. Таблица <code class="kbd">audit_log</code> — обычная таблица Postgres: ни цепочки контрольных сумм (hash-chain), ни режима «только дозапись» (WORM) у неё нет. Тот, у кого есть пароль базы или root на сервере, может обойти приложение и сделать <code class="kbd">UPDATE</code>/<code class="kbd">DELETE</code> по строке журнала. Сам бот строки только добавляет и читает — кода, который их правит по одной, в приложении нет. Это <strong>осознанный остаточный риск</strong> уровня УЗ-4, подробно разобранный в подразделе <a href="#security-audit-integrity" data-go="security">«Можно ли подделать журнал и как это заметить»</a>. Что реально снижает риск без доработки кода: круг людей с root узкий и зафиксирован; журнал попадает в еженедельный зашифрованный бэкап, и расхождение «живая база ≠ позавчерашняя копия» — это сигнал подделки (практический суррогат WORM); часть действий оставляет параллельный след вне журнала (рассылки видны в MAX, правки настроек уходят отдельным коммитом в GitHub с неизменяемой историей). Если владельцу нужна <em>юридически значимая</em> неизменяемость — это отдельное продуктовое решение (выгрузка на дозапись-хост, либо hash-chain), и его выбирает безопасник вместе с владельцем; для текущего УЗ-4 оно не обязательно.</p>
+
+<h4>Журнал есть, но кто его читает? Он же лежит мёртвым грузом до первого скандала</h4>
+
+<p>Это справедливая претензия, и ответ на неё — не «бот сам следит», а ваша процедура. Журнал пассивен по определению: он фиксирует, но не сигналит. Поэтому раз в месяц ответственный за ИБ должен сам в него заглянуть — это пункт <a href="#security-routine" data-go="security">ИБ-календаря</a>. На что смотреть и какими SQL-запросами — расписано в подразделе <a href="#security-anomaly" data-go="security">«Как читать журнал на признаки злоупотребления»</a> с готовыми командами. Коротко, что должно насторожить: всплеск поисков жителя (<code class="kbd">resident_search_found</code>) от одного оператора — возможен «пробив» базы из любопытства; серия ручных <code class="kbd">erase</code> (не автоматических) — возможно заметание следов; любое <code class="kbd">operator_role_change</code>, особенно повышение до роли <code class="kbd">it</code>, которое не совпадает с реальным кадровым решением; чувствительные действия в нерабочее время. «Аномалия» — это не одно плохое действие, а отклонение от обычного фона. И сам факт, что вы посмотрели журнал, записывайте в журнал эксплуатации (дата, кто смотрел, «без аномалий» или что нашли) — чтобы у проверяющего не было вопроса «а вы вообще его читаете?».</p>
+
+<h4>Как именно журнал докажет невиновность оператора в споре? Что в нём вообще достаточно?</h4>
+
+<p>На практике спор выглядит так: житель утверждает, что оператор слил его телефон или удалил обращение «по знакомству». Журнал отвечает на это конкретикой — кто (внутренний номер оператора), что (действие: <code class="kbd">resident_search_found</code>, <code class="kbd">erase</code>, <code class="kbd">close</code>), над кем или чем (<code class="kbd">target</code>, например <code class="kbd">appeal #45</code>), когда (точная метка времени), и служебные детали в поле <code class="kbd">details</code>. Если оператор действие <em>не</em> совершал — в журнале его нет, и это и есть защита. Если совершал законно — видно, что в рамках своей роли и в рабочее время. Граница честности: журнал доказывает <strong>факт и авторство действия</strong>, но не его <em>мотив</em> — «искал по работе» против «искал из любопытства» журнал не различает, это устанавливается разбором (был ли по этому жителю реальный тикет в тот момент). Полный список реальных имён действий — в разделе <a href="#security-audit" data-go="security">«Журнал действий»</a>; имена взяты из кода, старые черновые (<code class="kbd">setting_changed</code> и подобные) в коде не используются — при разборе спора это важно, чтобы искать по верным именам.</p>
+
+<h4>Какая минимальная длина ключевой фразы бэкапа — где порог, ниже которого бот откажется?</h4>
+
+<p>Порог — ровно <strong>12 символов</strong>. Не путайте с рекомендацией: «32+ символа» — это совет по генерации надёжной фразы, а 12 — жёсткая граница отказа в коде. Если фраза короче 12 символов (или пустая), бот <strong>отказывается делать незашифрованный дамп</strong>: он не свалится в «ну ладно, сохраню без шифрования», а вернёт отказ категории «конфигурация» с прямой ссылкой на 152-ФЗ. Единственный способ всё-таки получить незашифрованную копию — явно выставить переменную <code class="kbd">BACKUP_ALLOW_UNENCRYPTED=1</code>, и это только для локальной разработки; в проде фраза обязательна. То есть «бэкап с персональными данными в открытом виде» в боевой конфигурации сделать нельзя случайно — нужно сознательно снять защиту переменной. Разбор — в разделе <a href="#security-backups" data-go="security">«Резервные копии и GPG-шифрование»</a>.</p>
+
+<h4>Не светится ли ключевая фраза в списке процессов, и где она вообще хранится?</h4>
+
+<p>В списке процессов (<code class="kbd">ps</code>) и в командной строке — не светится: фраза передаётся в GPG через канал (pipe), а не аргументом, поэтому в <code class="kbd">ps</code>, в истории образа и в метках контейнера её нет. Это закрыто на уровне кода. А вот <em>где хранится сама фраза и кто ею владеет</em> — это уже организационный вопрос, и тут код не поможет: фраза живёт в файле окружения <code class="kbd">infra/.env</code> (права 600, в git не попадает, только пример) и должна быть продублирована в менеджере паролей или сейфе. Governance вокруг неё — кто держатель, что делать при его увольнении, есть ли резервная копия самой фразы — это зона безопасника и владельца. Реестр секретов и кто чем владеет — в разделах <a href="#security-secrets" data-go="security">«Реестр секретов»</a> и <a href="#admin-secrets" data-go="admin-secrets">«Владение секретами»</a>. Передача держателя фразы при смене ИБ-ответственного — отдельная боль, см. вопрос ниже про передачу дел.</p>
+
+<h4>Бэкап до удаления содержит данные жителя. Восстановили старую копию — и удалённое вернулось?</h4>
+
+<p>Да, и это реальный разрыв, который надо держать в голове. Резервная копия, снятая <em>до</em> <code class="kbd">/erase</code>, содержит данные жителя — иначе и быть не может. Если восстановить дамп старше суток, в базу вернётся то, что житель просил стереть. Решение не техническое, а процедурное и описано в разделе <a href="#security-risks" data-go="security">«Известные риски»</a> (пункт про «разрыв бэкап-удаление»): после восстановления копии старше суток нужно <strong>прогнать ретеншн вручную</strong>, чтобы заявки на удаление, поданные после снятия копии, повторно сработали. Это не «баг бэкапа» — это нормальная физика резервного копирования, с которой работают процедурой «restore → повторный ретеншн», а не надеждой, что «оно само».</p>
+
+<h4>Что делать прямо сейчас, если я подозреваю, что конкретный секрет утёк?</h4>
+
+<p>Не ограничиваться «надо бы ротировать». Для компрометации секрета есть плейбук в разделе <a href="#security-incident" data-go="security">«Реагирование на инцидент»</a>, и порядок там не «поменяй фразу», а последовательность: ротировать утёкший секрет → проверить журнал на чужие действия за период возможной компрометации → оценить ущерб (что нарушитель мог сделать с этим секретом) → при необходимости эскалировать. Триггеры внеплановой ротации (уволился человек с доступом, потерян ноутбук, секрет засветился в чате или логе) перечислены во врезке про гигиену секретов в разделе <a href="#security-secrets" data-go="security">«Реестр секретов»</a>; пошаговая ротация каждого секрета (токен бота, пароль базы, GPG-фраза, прочие) — там же. Ключевое отличие инцидента от плановой гигиены: при компрометации ротация — это <em>первый</em> шаг, а не единственный; за ней обязательна проверка «что уже успели сделать утёкшим секретом».</p>
+
+<h4>Сервер скомпрометирован целиком. С чего начать и в каком порядке?</h4>
+
+<p>Для этого есть отдельный плейбук в разделе <a href="#security-incident" data-go="security">«Реагирование на инцидент»</a> — именно как инцидент, а не как «восстановление из бэкапа». Порядок принципиально такой: изолировать сервер → ротировать <strong>все</strong> секреты разом (не выборочно — при полной компрометации скомпрометированы все) → пересобрать окружение с нуля из репозитория и проверенного образа → оценить, какие персональные данные могли утечь → при подтверждённой утечке войти в плейбук уведомления (см. следующий вопрос). Восстановление базы из последнего чистого бэкапа — это <em>часть</em> процедуры, а не вся она: вернуть данные мало, надо ещё закрыть канал, через который вошли, и оценить утечку. Не пытайтесь «полечить» скомпрометированный сервер на месте — при полной компрометации доверять ему уже нельзя, пересборка с нуля надёжнее.</p>
+
+<h4>Подозрение на утечку персональных данных. Закон требует уведомить Роскомнадзор за 24/72 часа — что делать?</h4>
+
+<div class="note note--caution">
+  <p class="note__label">Технические шаги — в плейбуке, правовые сроки — за юристом</p>
+  <p>Плейбук инцидента «утечка ПДн» есть в разделе <a href="#security-incident" data-go="security">«Реагирование на инцидент»</a>: зафиксировать факт → оценить объём (сколько субъектов затронуто) → определить, кто и как уведомляет регулятора → уведомить субъектов → внести запись в журнал эксплуатации. Сроки уведомления Роскомнадзора (порядка 24 часов на первичное уведомление и 72 на результаты внутреннего расследования) названы, но с обязательной оговоркой: <strong>точные сроки и формулировки сверяет юрист по актуальной редакции статьи 21 закона 152-ФЗ на дату инцидента</strong> — нормы менялись, и писать их «по памяти» нельзя. Бот тут не автоматизирует ничего: отдельного типа записи <code class="kbd">pdn_incident</code> в журнале <strong>нет</strong>, уведомление регулятора — ручная организационная процедура. Это сознательное состояние, а не пробел реализации: владельцу и юристу предстоит решить, оставить её ручной с явной пометкой или ставить задачу на автоматизацию. Правовая сторона — в разделе <a href="#pravovoe-incidenty" data-go="pravovoe-incidenty">«Правовое» → «Уведомление об инцидентах»</a>.</p>
+</div>
+
+<h4>Кого уведомлять и в каком порядке при инциденте? Нужна цепочка эскалации</h4>
+
+<p>Цепочка эскалации ИБ-инцидента описана в плейбуках раздела <a href="#security-incident" data-go="security">«Реагирование на инцидент»</a>: оператор (заметил) → ИТ (технически реагирует) → владелец (принимает решения и несёт ответственность как оператор ПДн) → юрист (правовая квалификация и сроки) → Роскомнадзор (при подтверждённой утечке). Важно, что это <strong>роли, а не конкретные фамилии</strong> — персоналии подставляет владелец в своём экземпляре, потому что люди меняются, а роли нет. И ещё: эскалация ИБ-инцидента (что-то с системой) — это не то же самое, что эскалация в скам-ситуации (житель попался мошенникам); для второго есть свой порядок в операторском разделе. Не смешивайте их: «у жителя увели деньги через клон-бота» и «у нас утёк дамп базы» идут по разным цепочкам.</p>
+
+<h4>Скомпрометированный ИТ запустил массовое удаление или поменял настройки. Журнал покажет — а как откатить?</h4>
+
+<p>Сценарий отката разобран в подразделе <a href="#security-it-recovery" data-go="security">«Откат вреда от скомпрометированного ИТ»</a>. Логика честная: журнал покажет, <em>что</em> именно сделал злоумышленник (массовый <code class="kbd">erase</code>, серия <code class="kbd">setting_update</code>), но удалённые персональные данные сами не вернутся — их источник восстановления только бэкап. Поэтому откат — это связка: восстановить базу из последнего чистого дампа (до вредоносных действий) → по журналу выявить, какие удаления и правки между этим дампом и инцидентом были <em>законными</em> → повторно применить именно их, чтобы не откатить заодно нормальную работу. Это ручная аккуратная процедура, не «кнопка undo». И профилактика, которая дешевле лечения: роль <code class="kbd">it</code> защищена от само-блокировки (нельзя остаться без активного ИТ), но не от злого умысла действующего ИТ — поэтому ИТ-операторов должно быть мало, их действия должны быть видны в журнале, и при первом подозрении ИТ деактивируется <em>другим</em> ИТ.</p>
+
+<h4>Какой периодический регламент держать? Мне нужен «календарь ИБ», а не разрозненные советы</h4>
+
+<p>Он собран в один список — раздел <a href="#security-routine" data-go="security">«ИБ-календарь и передача роли ответственного»</a>. Срез именно под роль ИБ, не пересказываю целиком, но костяк такой: <strong>ежемесячно</strong> — просмотр журнала на аномалии (см. выше); <strong>ежеквартально</strong> — проверка восстановления из бэкапа (не только что копия создаётся, а что она реально разворачивается) и сверка списка активных операторов с реальностью (кто уволился, у кого лишняя роль); <strong>раз в полгода</strong> (январь/июль) — плановая ротация секретов; <strong>ежегодно</strong> — пересмотр модели угроз; <strong>по событию</strong> — внеплановая ротация при компрометации, реакция на устаревший список опасных ссылок. Смысл календаря в том, что без него каждая из этих работ «когда-нибудь потом» не делается никогда, а на приёмке проверяют именно их регулярность.</p>
+
+<h4>Тестировалось ли восстановление из бэкапа, или мы только умеем его создавать?</h4>
+
+<p>Честный ответ: создание бэкапа закрыто кодом и работает (воскресенье 03:00, шифрование GPG AES256, ротация — хранится 8 еженедельных копий, это примерно два месяца), а вот <em>восстановление</em> — это процедура, которую надо репетировать руками, и она вынесена в ИБ-календарь как ежеквартальная проверка. В разделе <a href="#security-risks" data-go="security">«Известные риски»</a> прямо сказано, что план аварийного восстановления (DR) описан, но «учение» по нему — рекомендация, а не свершившийся факт. Для роли ИБ это важная разница: «у нас есть бэкапы» и «мы проверили, что из них поднимемся» — не одно и то же, и на проверке спросят второе. Поэтому раз в квартал — реальный разворот копии на тестовой базе, а не «галочка, что файл .gpg лежит».</p>
+
+<h4>Как безопасно вывести бота из эксплуатации, когда он больше не нужен?</h4>
+
+<p>Технический регламент гашения есть в разделе <a href="#security-decommission" data-go="security">«Вывод бота из эксплуатации»</a>. Порядок: финальный экспорт (если юрист решит, что он нужен) → уничтожение базы → уничтожение <strong>всех</strong> резервных копий с актом → отзыв токена бота в MAX → удаление секретов с сервера. Тонкость, которую легко упустить: «всех копий» — это и локальные на сервере, и выгруженные в S3; копия, забытая в облачном хранилище, сводит на нет уничтожение базы. И сам <em>порядок уничтожения копий с персональными данными при закрытии</em> юридически фиксирует юрист (это пункт его чек-листа) — техника гасит, а правовое основание и акт оформляет он. Decommission без акта об уничтожении копий — это незакрытый хвост по 152-ФЗ.</p>
+
+<h4>Что проверить при приёмке системы именно с точки зрения ИБ?</h4>
+
+<p>Чтобы не собирать это по крупицам из разных разделов, есть отдельный <a href="#security-acceptance" data-go="security">«Чек-лист ИБ-приёмки»</a> — он не пересказывает эксплуатационный чек-лист администратора, а смотрит под углом безопасности: бэкап шифруется и восстановление проверено; секреты с правами 600 и есть реестр держателей; входящих портов нет; журнал пишется и защищён бэкапом; уровень УЗ-4 согласован и оформлен; список опасных ссылок (threat-intel) свежий. Пройти его до боевого запуска — и есть та точка, после которой можно сказать «ИБ принял».</p>
+
+<h4>Что передать преемнику, если я сдаю роль ответственного за ИБ?</h4>
+
+<p>Это реальная боль при ротации кадров, и она вынесена в раздел <a href="#security-routine" data-go="security">«ИБ-календарь и передача роли»</a>. Передать нужно не «доступы», а <strong>знание устройства</strong>: где лежит GPG-фраза и кто держатели остальных секретов; реестр согласованных решений (почему УЗ-4, почему нет двухфакторной аутентификации у операторов, почему не делается закрепление сертификата к MAX — это осознанные компромиссы, а не недосмотр, и преемник должен понимать <em>почему</em>); ссылки на плейбуки и runbook'и; статус открытых юридических вопросов. Без этой передачи новый ответственный начинает с нуля и легко принимает уже принятое решение за «дыру». Самое опасное при передаче — потерять единственного держателя GPG-фразы: если копии фразы нет ни у кого, кроме уходящего, старые зашифрованные бэкапы станут нечитаемы. Поэтому governance фразы (дубль в сейфе, известный преемнику) — первый пункт передачи.</p>
+
+<h4>Реальный тип файла бот проверяет, или верит расширению? Боюсь evil.jpg.exe</h4>
+
+<p>Честно: бот проверяет <strong>заявленный</strong> тип вложения по белому списку и ограничивает их число, но повторной валидации настоящего типа файла по сигнатуре (magic bytes через libmagic) пока нет — это в backlog. Вектор «файл с двойным расширением / подменённым типом» назван открыто в разделе <a href="#security-sec-history" data-go="security">«Закрытые уязвимости»</a> среди дельта-аудитов. Но тут важно снизить градус тревоги правильным контекстом: бот <strong>не исполняет</strong> загруженные файлы — он их пересылает оператору и хранит. Контейнер запущен read-only, под непривилегированным пользователем, без новых привилегий; даже исполняемый файл внутри этого периметра запустить нечему и негде. То есть отсутствие проверки сигнатуры — это вопрос «оператор может получить файл не того типа, чем заявлено», а не «через вложение исполнят код на сервере». Реальная защита оператора от вредоносных вложений — организационная (сканеры на его рабочем месте) плюс defang ссылок во входящих.</p>
+
+<h4>Правда ли, что у вебхука MAX нет нормальной подписи? Это же дыра</h4>
+
+<p>Правда, что подписи в смысле HMAC у вебхука MAX нет — но в боевом режиме это почти не важно, и вот почему. Единственная аутентификация вебхука — статическое сравнение секретного заголовка <code class="kbd">X-Max-Secret</code>, причём через стойкое к timing-атаке сравнение (<code class="kbd">hmac.compare_digest</code>), а сам секрет берётся из заголовка, не из адреса. Главное же: в обычной эксплуатации бот работает в режиме <strong>длинного опроса</strong> (long polling) — он сам ходит к MAX за событиями, входящих портов нет вообще (см. раздел <a href="#security-no-ports" data-go="security">«Сеть: входящих портов нет»</a>), и атаковать вебхук снаружи попросту нечего. Вебхук-режим в коде есть, но в проде не используется. Так что «слабая аутентификация вебхука» — это про режим, который не включён; в активной конфигурации поверхность атаки здесь нулевая. Полный разбор угроз платформы — в разделе <a href="#security-max-threats" data-go="security">«Угрозы платформы MAX»</a>.</p>
+
+<h4>Уязвимость вложений MAX (доступ к файлу без авторизации) — что с ней делать?</h4>
+
+<p>Со стороны бота — ничего, и это надо понимать трезво. Подтверждённый отчёт о том, что вложения в MAX могут быть доступны по предсказуемой ссылке без авторизации, разобран во врезке раздела <a href="#security-max-threats" data-go="security">«Угрозы платформы MAX»</a>. Это уязвимость <em>платформы</em>, не бота: бот не контролирует, как мессенджер хранит и отдаёт файлы. Снижение — только организационное: жителя прямо просят не присылать сканы паспортов и документов. Связка с удалением, которую стоит проговорить: <code class="kbd">/erase</code> чистит вложения в базе бота, но <em>не</em> достаёт до файла, уже утёкшего по такой ссылке на стороне MAX — это логически следует из границы «бот удаляет только своё». Для аудита это ещё один аргумент в пользу «не загружайте в гос-бот документы с ПДн»: даже корректное удаление не отменяет утечки на уровне мессенджера.</p>
+
+<h4>Есть ли двухфакторная аутентификация у операторов? Если нет — это не провал приёмки?</h4>
+
+<p>Двухфакторной аутентификации у операторов <strong>нет</strong>, и это осознанный компромисс, а не упущение — он зафиксирован в <a href="#security-risks" data-go="security">«Известных рисках»</a>. Причина в архитектуре: оператор аутентифицируется самим фактом присутствия в служебной группе MAX плюс своей ролью в базе; отдельного входа с паролем у бота нет, поэтому и «второй фактор» вешать не на что — это не веб-кабинет. Если аккаунт оператора в MAX угнали, бот честно не отличит самозванца от хозяина. Страховка тут компенсирующая, а не превентивная: все действия в журнале (видно, что натворили), быстрая деактивация другим ИТ, и обязанность оператора сообщить о краже аккаунта по другому каналу. Для УЗ-4 двухфакторная аутентификация в базовом наборе мер не обязательна, так что приёмку это не валит — но проговорить компенсирующие меры на ней нужно, иначе вопрос повиснет.</p>
+
+<h4>Делается ли закрепление сертификата (cert-pinning) к MAX? Защита от перехвата трафика?</h4>
+
+<p>Нет, и тоже сознательно. TLS при обращении к MAX включён, проверка сертификата не отключается — то есть базовая защита канала есть. А вот жёсткое закрепление конкретного сертификата (pinning) не делается, потому что это операционный риск: когда MAX штатно сменит сертификат, закрепление сломает связь с ботом на ровном месте, и это перевесит выигрыш. Решение зафиксировано в <a href="#security-risks" data-go="security">«Известных рисках»</a>. Отдельно про внутренний канал бот-база: трафик между ними внутри Docker-сети не шифруется — перехватить его можно только при root-доступе к самому серверу (то есть когда уже всё потеряно), поэтому это тоже принятый остаточный риск, а повышение (Postgres SSL) описано как опция, не как обязанность для УЗ-4.</p>
+
+<h4>Как часто обновляется база опасных ссылок и что будет, если она «протухнет»?</h4>
+
+<p>Список опасных доменов (threat intelligence — из источников URLhaus, ThreatFox и опционально PhishTank) обновляется <strong>ежечасно</strong>. Если обновление почему-то не проходит и данные становятся старше <strong>6 часов</strong>, бот шлёт <strong>критический алёрт</strong>, который пробивает тихий режим — то есть вы узнаете об устаревании даже ночью. При этом антифишинг не выключается: бот продолжает работать на последнем известном списке, просто предупреждает, что список староват. Для роли ИБ тут два следствия: во-первых, «протухший threat-intel» — это сигнал в ИБ-календаре, на который надо реагировать (проверить, почему не качается); во-вторых, важно понимать, что белый список <em>гос-доменов</em> для исходящих ссылок (раздел <a href="#security-antiphishing" data-go="security">«Антифишинг»</a>) от этого не зависит — он зашит в коде и работает всегда, threat-intel лишь дополняет его для входящих ссылок от жителей.</p>
+
+<h4>Откуда берётся первый ИТ-оператор и надо ли потом что-то убирать?</h4>
+
+<p>Первый ИТ заводится через переменную <code class="kbd">BOOTSTRAP_IT_MAX_USER_ID</code> при самом первом запуске — это разовая «затравка», чтобы было кому управлять остальными. После того как первый ИТ создан и работает, эту переменную из файла окружения <strong>нужно убрать</strong>: оставлять её — значит держать в конфиге лишний путь назначения привилегий. Это пункт ИБ-гигиены при приёмке. Дальше операторы заводятся уже изнутри, мастером «Операторы», и каждое такое действие пишется в журнал (<code class="kbd">operator_upsert</code>, <code class="kbd">operator_role_change</code>) — то есть после bootstrap появление любого нового ИТ должно совпадать с реальным кадровым решением и быть видно при аудите доступов.</p>
+
+<h4>Нужна ли регистрация в реестре операторов ПДн Роскомнадзора и кто это делает?</h4>
+
+<div class="note">
+  <p class="note__label">Это зона владельца и юриста, не кода</p>
+  <p>Регистрация в реестре операторов персональных данных, оформление реквизитов оператора ПДн, подтверждение, что дата-центр в России, основание для передачи данных третьим лицам (если она предполагается) — всё это перечислено как задачи владельца и юриста в разделе <a href="#security-legal-todo" data-go="security">«Что заполняет юрист и владелец»</a>. Бот к этому отношения не имеет: ни одной из этих бумаг код не порождает и порождать не может. Для роли ИБ важно одно — проследить, что эти пункты <em>закрыты до</em> или <em>в момент</em> приёмки, а не «когда-нибудь», потому что отсутствие регистрации в реестре РКН — это претензия не к технике, а к организации, и спросят за неё владельца. Подписанного юристом чек-листа соответствия 152-ФЗ в репозитории сейчас нет — это честно отмечено в <a href="#security-risks" data-go="security">«Известных рисках»</a> как зона ответственности владельца.</p>
+</div>
+
+<h4>Что если число жителей перевалит за 100 000 — уровень защищённости меняется?</h4>
+
+<p>Да, и это надо отслеживать. Текущий уровень УЗ-4 обоснован в том числе тем, что обрабатываются «иные» категории персональных данных граждан-заявителей в количестве <strong>менее 100 000</strong> субъектов. Если порог в 100 000 будет превышен, уровень защищённости поднимется выше УЗ-4, и набор обязательных мер придётся пересматривать — то, что сейчас «не требуется» (например, более строгие меры контроля), может стать обязательным. Это не гипотетика для роли ИБ, а параметр, который стоит держать на радаре: рост базы жителей — это не только нагрузка, но и возможная смена класса ИСПДн со всеми вытекающими. Обоснование текущего уровня — в разделе <a href="#security-model" data-go="security">«Что мы защищаем и от кого»</a>.</p>
+
+<div class="note">
+  <p class="note__label">Что из этого реально открыто и ждёт не вас</p>
+  <p>Большинство вопросов выше закрыты кодом и каноническими разделами — на них есть твёрдый ответ. Но несколько пунктов честно остаются <strong>за владельцем и юристом</strong>, и их полезно держать списком, чтобы не выдавать за «дыры бота»: правовая квалификация остатка данных в логах и MAX после удаления; решение, автоматизировать ли тип записи <code class="kbd">pdn_incident</code> и точные сроки уведомления РКН по актуальной редакции 152-ФЗ; оформление акта классификации и модели угроз как документов; регистрация в реестре операторов ПДн и подписанный чек-лист соответствия; нужна ли юридически значимая неизменяемость журнала сверх текущего УЗ-4. Это не недоделки реализации, а решения, которые по своей природе принимает не разработчик. Роль ИБ здесь — не закрыть их самому, а не дать им потеряться и довести до владельца с юристом.</p>
+</div>
+
+<h3 id="jurist-slozhnosti">Сложности и частые вопросы</h3>
+
+<p>Раздел выше уже даёт правовую карту: на чём держится канал, какие данные собираются, сколько хранятся, какие права у жителя. Здесь — другое: реальные затыки, с которыми юрист Администрации сталкивается, когда садится готовить документы к утверждению или когда напротив сидит проверяющий из Роскомнадзора либо прокуратуры. Многие из этих вопросов в самой Политике не закрыты, и честнее сказать прямо: часть ответов — это «как оно есть в коде», а часть — «это пока решает владелец и юрист, готового ответа в проекте нет». Где так — об этом написано открытым текстом, без имитации определённости. Числа и поведение ниже сверены с реальным кодом бота и с реестром фактов проекта (<code class="kbd">_LEDGER.md</code>), а не взяты из черновиков Политики, которые местами от кода отстали.</p>
+
+<div class="note">
+<p class="note__label">Главное, что стоит держать в голове</p>
+<p>Бот — это <strong>технический канал</strong>, а не вся система защиты персональных данных. Закон 152-ФЗ требует от оператора пакет организационных документов (приказы, политика, модель угроз, перечень допущенных лиц) и процедур (уведомление Роскомнадзора, реакция на запросы субъектов и надзора, акты уничтожения), которых <em>в коде нет и быть не может</em>. Код исполняет сроки хранения и ведёт журнал; всё остальное — бумажная и процедурная работа Администрации. Поэтому большинство вопросов ниже — не «допилить бот», а «дописать и утвердить документы».</p>
+</div>
+
+<h4 id="jurist-2129-otmena">А если Постановление № 2129 отменят или перепишут — на чём тогда держится канал?</h4>
+
+<p>Применимость и действующую редакцию постановления № 2129 нужно подтвердить по официальному тексту; сам текст пока недоступен для проверки. Проект внутреннего регламента требует рассмотрения и утверждения.</p>
+
+<h4 id="jurist-mestnyy-akt">Нужен ли отдельный муниципальный акт о вводе бота в эксплуатацию, сверх № 2129?</h4>
+
+<p>Потребность в отдельном муниципальном акте и соотношение с постановлением № 2129 необходимо определить после изучения действующих документов администрации.</p>
+
+<h4 id="jurist-soglasie-pervichno">Какое основание обработки для обращения, а какое — для рассылки? И что, если житель откажет в согласии?</h4>
+
+<p>Тут важно не смешивать два потока обработки — у них разные основания. <strong>Приём и отработка обращения жителя</strong> опираются на <strong>согласие субъекта</strong> — статья 9 закона 152-ФЗ: житель сам инициирует переписку, передаёт свои данные и нажимает «Согласен» перед подачей. <strong>Рассылка муниципальных оповещений</strong> (о чрезвычайных ситуациях и о работе коммунальных систем) стоит на другом основании — это функция органа местного самоуправления, <strong>пункт 2 части 1 статьи 6</strong> закона 152-ФЗ: обработка необходима для осуществления возложенных на Администрацию функций (информирование населения о ЧС — статья 11 закона № 68-ФЗ; вопросы местного значения — ЖКХ, предупреждение ЧС и оповещение — в переходный период статья 16 закона № 131-ФЗ, далее Федеральный закон от 20.03.2025 № 33-ФЗ и устав округа; статьи сверяет юрист). Вдобавок на подписку в самом боте берётся <strong>отдельное согласие</strong> — как перестраховка и как честный интерфейс: житель видит, на что подписывается. Так что кнопка «Согласен» — не формальность: для обращения согласие и есть основание, а для рассылки оно дополняет основание-функцию.</p>
+
+<p><strong>Что происходит, если житель не нажмёт «Согласен»:</strong> в коде без согласия воронка подачи обращения просто не стартует — на первом шаге бот требует согласие (<code class="kbd">handlers/appeal_funnel.py:95</code> проверяет <code class="kbd">consent_pdn_at</code>, и если оно пустое, ведёт жителя на экран согласия). То есть технически «отказался — не подал обращение через бот». Это не лишает жителя права обратиться иначе — через электронную приёмную или личный приём, где действуют свои основания и порядок. Для рассылки всё симметрично: без отдельного согласия на подписку оповещения не приходят, но обязанность органа информировать население о ЧС от этого не исчезает — она реализуется другими каналами оповещения. Развёрнутой правовой позиции «как объяснять этот стык проверяющему» в Политике пока нет — это место стоит дописать.</p>
+
+<h4 id="jurist-otkrytyy-istochnik">Можно ли считать переписку жителя с ботом «сообщением из открытого источника»?</h4>
+
+<p>Нет — и это важно проговорить, потому что путаница здесь частая. Переписку жителя с ботом видят только двое: сам житель и оператор. Это <strong>не</strong> открытый источник и не публичная лента: житель не публикует пост, а в приватном диалоге передаёт Администрации свои данные (имя, телефон, адрес, суть). Поэтому квалификация «сообщение из открытого источника», уместная для мониторинга соцсетей, к каналу бота не применяется. А раз это приватная передача персональных данных — она защищается по 152-ФЗ на общих основаниях, и модель «согласие на обращение (статья 9) плюс полномочия органа и отдельное согласие на рассылку» здесь совершенно уместна, никакого противоречия нет. Мостик, который стоит закрепить в Политике прямо: как только житель вступил в личный диалог с ботом и оставил контактные данные, это обработка ПДн по 152-ФЗ, а не «сбор из открытого источника».</p>
+
+<h4 id="jurist-klik-soglasie">Клик «Согласен» — это вообще согласие в смысле закона? РКН любит про «форму, позволяющую подтвердить факт получения»</h4>
+
+<p>Вопрос правильный, потому что часть 1 статьи 9 требует, чтобы согласие было «конкретным, предметным, информированным, сознательным», а для отдельных случаев закон хочет форму, позволяющую подтвердить факт получения согласия. Что есть в коде в пользу действительности клик-согласия: согласие даётся <strong>отдельно</strong> на обращение и отдельно на рассылку (нельзя одним тапом подписать на всё — это прямое следствие требования конкретности; в коде подписка проставляет свой <code class="kbd">consent_broadcast_at</code> отдельно от <code class="kbd">consent_pdn_at</code>, см. <code class="kbd">handlers/start.py:187-191</code>); текст согласия показывается жителю перед кликом и содержит ссылку на Политику (настройка <code class="kbd">consent_text</code> обязана содержать подстановку <code class="kbd">{policy_url}</code>, иначе бот не примет настройку — <code class="kbd">services/settings_store.py:463</code>); сам факт и точная дата согласия фиксируются в записи жителя и в журнале действий.</p>
+
+<p>Где слабое место — смотрите следующий вопрос про версию текста. Само по себе нажатие кнопки в интерфейсе как способ выразить согласие закон не запрещает; для уровня защищённости и категории данных этого бота (не специальные, не биометрия) отдельной усиленной формы согласия закон не требует. Но «информированность» держится на том, какой именно текст житель видел в момент клика, а вот это бот сейчас не сохраняет.</p>
+
+<div class="note note--caution">
+<p class="note__label">Реальный пробел: бот хранит дату согласия, но не текст версии, под которой житель согласился</p>
+<p>Это надо знать точно, чтобы не пообещать лишнего. В модели жителя есть <strong>отметки времени</strong> — <code class="kbd">consent_pdn_at</code> (когда согласился на обработку) и <code class="kbd">consent_broadcast_at</code> (когда подписался), — но <strong>нет</strong> поля с версией или текстом согласия. Я проверил грепом по коду: полей <code class="kbd">consent_version</code> или <code class="kbd">policy_version</code> в модели не существует, а сам текст согласия живёт в одной редактируемой настройке <code class="kbd">consent_text</code>, которую ИТ-специалист может поменять прямо из бота. Значит, если текст согласия или Политику со временем изменят, по записи жителя нельзя будет доказать, <em>под какой именно формулировкой</em> он когда-то нажал «Согласен» — есть только дата. На вопрос субъекта или РКН «на что конкретно я соглашался такого-то числа» точного машинного ответа у Администрации не будет.</p>
+<p><strong>Что с этим делать.</strong> Это выбор владельца, готового решения в проекте нет. Варианты: вести версионирование текста согласия и Политики вне бота (архив датированных редакций, чтобы по дате согласия поднять действовавший текст) — это организационная мера и её всё равно надо завести для архива версий Политики; либо поставить разработчику задачу сохранять версию/хеш текста согласия в записи жителя на момент клика. До тех пор честная формулировка для проверяющего: «фиксируется дата и факт согласия; действовавшая на эту дату редакция текста согласия и Политики хранится в архиве версий у ответственного за обработку».</p>
+</div>
+
+<h4 id="jurist-specdannye">А если житель сам пришлёт спецданные или биометрию — в тексте или на фото?</h4>
+
+<p>Обоснование 4-го уровня защищённости и всей правовой конструкции стоит на том, что бот обрабатывает «иные» категории данных — не специальные (здоровье, политические и религиозные взгляды, судимость) и не биометрию. Но бот <strong>технически принимает любой текст и любые вложения</strong> и не вычищает из них чувствительное: житель может в жалобе описать своё заболевание, приложить фото с лицами или скан документа. Предохранителя на этот случай в коде нет — нет ни фильтра, ни предупреждения оператору «во вложении возможны чувствительные данные». Есть только профилактика на входе: Политика (пункт 6.7) рекомендует жителю не присылать через бот паспорт, СНИЛС, банковские данные, и эта же мысль есть в антифишинговой памятке. Но это рекомендация жителю, а не режим обработки.</p>
+
+<p>Правовая позиция, которую стоит закрепить: если житель <em>по своей инициативе</em> сообщил спецданные в рамках обращения, их обработка для рассмотрения этого обращения допустима в силу полномочий органа и того, что субъект сам их раскрыл, — но действует жёсткая минимизация: не тиражировать, не выносить в публичный ответ, удалять вместе с обращением по общему сроку. Биометрия (узнаваемое лицо на фото, обрабатываемое <em>с целью установить личность</em>) — отдельная и более строгая история; в боте фото не используется для идентификации, оно просто иллюстрация к проблеме, и это стоит прямо написать, чтобы снять подозрение в биометрической обработке. Готового пункта-предохранителя в Политике нет — его надо добавить.</p>
+
+<h4 id="jurist-nesovershennoletnie">Бот публичный — а если обращение подаёт ребёнок и присылает свои данные?</h4>
+
+<p>Это настоящий пробел, и важный. Я проверил код: <strong>никакого возрастного барьера и никакой обработки согласия законного представителя в боте нет</strong> — греп по коду не находит ни проверки возраста, ни понятия несовершеннолетнего, ни ветки для законного представителя. Бот не спрашивает возраст и не может его узнать. То есть несовершеннолетний физически может пройти воронку, дать клик-согласие и прислать свои персональные данные ровно как взрослый. Закон 152-ФЗ вопрос возраста согласия прямо не регулирует единой нормой (в отличие, например, от законодательства о согласии в сделках), и единого «возраста цифрового согласия» в РФ нет, но проблема обработки данных детей реальна и проверяющими поднимается.</p>
+
+<p>Готового решения проект не предлагает — это к юристу и владельцу. Возможные позиции: либо признать, что канал рассчитан на взрослых жителей, и отразить это в Политике с оговоркой про данные несовершеннолетних и роль законного представителя; либо принять, что данные ребёнка, переданные при обращении в орган власти, обрабатываются для рассмотрения этого обращения на основании полномочий ОМСУ, опять же с минимизацией. Технического барьера по возрасту в боте нет и в ближайшей версии не предвидится, поэтому защита тут будет документарная, а не программная. <strong>Честный статус: пробел, требует позиции юриста.</strong></p>
+
+<h4 id="jurist-tretyi-lica">Житель почти всегда называет в обращении других людей — на каком основании мы обрабатываем их данные?</h4>
+
+<p>Этот вопрос в правовом разделе уже разобран — посмотрите врезку «Когда житель пишет о других людях» в основном тексте Политики (пункт 8.1). Коротко: обработка данных третьих лиц без их отдельного согласия законна в силу полномочий органа (рассмотреть жалобу на соседа или на бездействие чиновника объективно невозможно, не обработав их имя и обстоятельства) и для защиты прав и общественно значимых целей, при соблюдении минимизации. Главное практическое правило — в публичном ответе оператор <strong>не раскрывает</strong> ФИО, адреса и телефоны упомянутых граждан. Сюда же относится и то, что распространения этих данных по статье 10.1 канал не делает: ответы операторов проходят жёсткий лимит и дисциплину Стандарта качества, а персональные данные третьих лиц в публичную ленту не выносятся (хотя авто-маскирования в коде нет — это операторская дисциплина, см. вопрос ниже про публичные ответы).</p>
+
+<h4 id="jurist-rasprostranenie">Ответы операторов бывают публичными — это «распространение ПДн», нужна ли форма согласия по статье 10.1?</h4>
+
+<p>Разводим два слоя. Сам бот доставляет ответ оператора <strong>в личную переписку</strong> жителю — это не распространение, а адресный ответ субъекту, и никакой «публикации в открытом источнике» тут нет. Публичность — это отдельный контур: работа МЦУ с лентами соцсетей (комментарии под постами), где ответ виден всем; но это уже не канал бота, а другой режим, к которому и относится логика «открытых источников». В самом же боте по отношению к <em>третьим лицам</em>, упомянутым в переписке, действует запрет раскрывать их в публичном ответе (пункт 14 Стандарта качества). Отдельная форма согласия на распространение (статья 10.1, та самая, что с 2021 года оформляется отдельно) для адресных ответов в личке не нужна. Вопрос статьи 10.1 встаёт лишь тогда, когда Администрация публикует в открытой ленте что-то с персональными данными жителя сверх того, что он сам обнародовал, — но это уже про публичные ленты МЦУ, а не про личный ответ бота, и проект этот случай не закрывает. <strong>Решает юрист</strong>; для чисто ботового, личного ответа согласие на распространение не требуется.</p>
+
+<h4 id="jurist-srok-5-let">Откуда взялись 5 лет для обращений?</h4>
+
+<p>Для очистки содержательной части старых обращений предусмотрен пятилетний операционный ориентир. Начало отсчёта учитывает дату ответа, закрытия и последней переписки; работа задачи и соблюдение исключений должны быть проверены на действующей установке.</p>
+
+<p>Пять лет — это <strong>решение оператора</strong>, а не требование закона. 152-ФЗ ст. 18.1 ч. 1 п. 2 прямо отдаёт способы и сроки хранения локальному акту оператора, а ст. 5 ч. 7 задаёт только верхнюю границу: не дольше, чем этого требует цель обработки. Самого числа «пять лет» в 152-ФЗ нет.</p>
+
+<p>Пять лет выбраны владельцем как операционный ориентир работы над проблемами жителей. Необходимо документально обосновать срок применительно к цели обработки и проверить законные исключения; считать его автоматически архивным сроком нельзя.</p>
+
+<p><strong>Что делать:</strong> закрепить этот срок и оба довода в локальном акте оператора и продублировать формулировку в Политике рядом со сроком. Писать «требование 152-ФЗ» или ссылаться на приказ Минкультуры о номенклатуре дел здесь нельзя: приказ № 558 утратил силу 18.02.2020, а закон числа не называет.</p>
+
+<h4 id="jurist-audit-god">А журнал действий — год или пять лет? В черновике встречается «5 лет»</h4>
+
+<p>По коду — <strong>365 дней (один год)</strong> по умолчанию, параметр <code class="kbd">AUDIT_LOG_RETENTION_DAYS</code> (диапазон настройки 30–3650), исполняет задача <code class="kbd">audit-log-retention</code> ежедневно в 04:15. Это решённый вопрос, и решён он в пользу года. Пятилетний срок из старого черновика Политики отклонён сознательно: журнал действий операторов и обращения граждан — разные сущности с разными основаниями, и привязка журнала к пятилетке обращений юридически ложная. Закон 152-ФЗ (часть 7 статьи 5, часть 4 статьи 21) требует хранить персональные данные не дольше цели; приказ ФСТЭК № 21 (мера РСБ.1) обязывает оператора определить сроки хранения; методический ориентир «не менее трёх месяцев» — из методического документа ФСТЭК 2014 года; Постановление № 1119 сроков журналов не задаёт вовсе. Год — вчетверо больше этого ориентира и при этом не избыточно. Полная аргументация — в основном тексте правового раздела. <strong>Практический вывод для юриста:</strong> в Политике формулировку про «5 лет по журналу» заменить на «1 год», и не сообщать жителю или проверяющему «5 лет», пока значение на сервере фактически не выставлено в 5 лет (по умолчанию там 365 дней).</p>
+
+<h4 id="jurist-bekapy">Erase удаляет данные из базы — а резервная копия ещё два месяца хранит уже удалённые ПДн. Как это согласуется с правом на удаление?</h4>
+
+<p>В резервной копии, созданной до удаления, данные могут оставаться. Сроки и фактический состав копий зависят от настройки и эксплуатации. При восстановлении необходимо не допустить возвращения удалённых данных в работу; порядок описан в docs/ПОРЯДОК_УДАЛЕНИЯ_ДАННЫХ.md.</p>
+
+<p>Само наличие ротации не подтверждает соблюдение права на удаление. Нужно обеспечить проверяемую процедуру для рабочих данных, файлов, служебного чата и резервных копий, включая восстановление, и оценить сроки по применимым нормам. Порядок и ограничения — в docs/ПОРЯДОК_УДАЛЕНИЯ_ДАННЫХ.md.</p>
+
+<h4 id="jurist-akt-unichtozheniya">Чем подтверждается факт уничтожения ПДн? РКН любит «акт уничтожения»</h4>
+
+<p>В коде каждое удаление оставляет запись в журнале действий: самостоятельное удаление жителем — <code class="kbd">self_erase</code>, автоматическое обезличивание по сроку — <code class="kbd">auto_erase_pdn_retention</code>, удаление ИТ-специалистом — <code class="kbd">erase</code>. То есть машинная фиксация «когда и над кем выполнено уничтожение» есть. Чего нет — это формального <strong>акта (подтверждения) уничтожения персональных данных</strong> в том виде, в каком его описывают требования Роскомнадзора к подтверждению уничтожения (отдельный документ либо выгрузка из журнала с реквизитами, заверенная ответственным). Записи в журнале — хорошая доказательная основа, но сами по себе они не оформлены как акт. <strong>Что делать:</strong> юристу определить форму подтверждения уничтожения (можно строить её на выгрузке этих самых записей журнала за период плюс реквизиты ответственного) и закрепить процедуру её формирования. Это организационная мера поверх существующей машинной фиксации; в проекте она пока не описана.</p>
+
+<h4 id="jurist-prava-sroki">За сколько дней надо ответить на запрос субъекта о его данных? В таблице где-то мелькает «30 дней»</h4>
+
+<p>Для разных запросов субъекта действуют разные сроки. Запрос сведений об обработке: десять рабочих дней, с возможным продлением на пять при мотивированном уведомлении (статья 20 152-ФЗ). Исправление и уничтожение оценивают отдельно по статье 21 и обстоятельствам запроса.</p>
+
+<h4 id="jurist-otvet-st14">Пришёл письменный запрос «предоставьте сведения об обработке по статье 14» — что обязательно включить в ответ?</h4>
+
+<p>Скрытая команда /export формирует читаемую выгрузку имеющихся данных. Она сама по себе не заменяет рассмотрение запроса субъекта и предоставление всех сведений, предусмотренных статьёй 14 152-ФЗ. Состав ответа и сроки проверяют по закону и обстоятельствам запроса.</p>
+
+<h4 id="jurist-otvetstvennyy">Кто такой «ответственный за организацию обработки», нужен ли приказ и что он обязан делать?</h4>
+
+<p>В проекте сказано, что ответственный <em>назначается приказом Главы Администрации</em>, и его реквизиты вынесены в чек-лист реквизитов Политики (ФИО, должность, телефон, e-mail). Чего в документах нет — это развёртки его статуса по <strong>статье 22.1</strong> закона 152-ФЗ: что приказ о назначении обязателен, что у ответственного есть закреплённый круг обязанностей (организовывать внутренний контроль соответствия обработки закону, доводить требования закона до сотрудников, принимать и разбирать обращения субъектов), и что он подчиняется и отчитывается руководителю оператора. <strong>Вывод:</strong> приказ о назначении ответственного по статье 22.1 нужен, его наличие — это требование закона, а не просто строчка реквизитов. Юристу стоит и сам приказ подготовить, и в Политике/Регламенте описать обязанности ответственного со ссылкой на статью 22.1. Сейчас этого нет.</p>
+
+<h4 id="jurist-lna-paket">Какой вообще пакет внутренних документов оператора обязателен? Вики покрывает только Политику и Регламент</h4>
+
+<p>Это ключевой пробел для подготовки к проверке: вики хорошо описывает <em>Политику</em> (обращена к жителю и РКН) и <em>Регламент</em> (внутренний порядок для операторов), но обязательный комплект локальных нормативных актов оператора по 152-ФЗ и постановлению Правительства № 1119 как единый чек-лист не сведён. По смыслу закона у оператора-муниципалитета должны быть минимум: политика в отношении обработки персональных данных (есть); положение/правила обработки и защиты ПДн (внутреннее, частично закрывается Регламентом); приказ о назначении ответственного за организацию обработки (статья 22.1 — см. выше); перечень обрабатываемых персональных данных и целей; перечень ИСПДн; список лиц, допущенных к обработке (в боте есть роли операторов, но формального утверждённого списка допущенных лиц как документа нет); модель угроз безопасности ПДн (см. следующий вопрос); правила реагирования на запросы субъектов и на инциденты. <strong>Что делать:</strong> юристу собрать этот комплект как чек-лист и завести недостающие документы. В коде роли и доступы есть, но <em>документов</em>, оформляющих их по закону, проект не содержит — это бумажная работа Администрации.</p>
+
+<h4 id="jurist-model-ugroz">Нужна ли модель угроз, аттестация ИСПДн, и кто это делает?</h4>
+
+<p>Бот декларирует <strong>4-й (низший) уровень защищённости</strong>: обрабатываются «иные» категории данных, актуальны угрозы 3-го типа, субъектов менее 100 000. Технические меры под этот уровень реализованы (изоляция базы, шифрование копий, журналирование, ограничение прав контейнеров — раздел «Меры защиты»). Но формальная <strong>модель угроз безопасности персональных данных</strong> по методике ФСТЭК (методический документ 2021 года) как документ в проекте не составлена — названы только тип угроз и уровень. Обязанность её составить лежит на операторе; делает её ИТ-специалист или привлечённый специалист по защите информации, утверждает Администрация. Про <strong>аттестацию ИСПДн</strong> для 4-го уровня: для негосударственных систем аттестация обычно не обязательна, но для муниципального оператора есть нюанс, и проект честно выносит это в чек-лист ИБ как «оценить необходимость», без однозначного ответа. <strong>Статус:</strong> модель угроз нужна и её надо сделать; необходимость аттестации — оценивает специалист по ИБ, готового вердикта в проекте нет.</p>
+
+<h4 id="jurist-uvedomlenie-rkn">Надо ли подавать в Роскомнадзор уведомление об обработке? Слышал, что исключения убрали</h4>
+
+<p>Короткий ответ: да, муниципалитету как оператору уведомление подавать нужно, и старая логика «можно не подавать, потому что подпадаем под исключение» сейчас почти не работает. После изменений 2025 года перечень оснований не уведомлять Роскомнадзор резко сузился (фактически большинство операторов обязаны уведомлять о намерении обрабатывать ПДн), а муниципальный орган, обрабатывающий данные граждан в информационной системе, под старые исключения и так не очень подходил. В проекте это сформулировано слабо: чек-лист говорит лишь «подать уведомление, если ранее не подавалось», без разъяснения, что исключения по большей части отменены, и без формы и сроков. <strong>Что делать юристу:</strong> исходить из того, что уведомление обязательно; проверить, не подавалось ли оно ранее Администрацией (возможно, она уже в реестре операторов по другим своим системам — тогда нужно актуализировать сведения, добавив этот канал), и привести подачу в порядок. Точную действующую форму, перечень исключений и сроки надо сверять на дату подачи — нормы свежие и менялись; конкретные цифры и редакции в этом тексте намеренно не приводятся, чтобы не подсунуть устаревшее.</p>
+
+<h4 id="jurist-incident-sostav">Если случилась утечка — за сколько уведомить РКН, что писать и как оценить «вред»?</h4>
+
+<p>Каркас в Политике есть: при инциденте оператор уведомляет Роскомнадзор в течение <strong>24 часов</strong> о факте, предполагаемых причинах, предполагаемом вреде и принятых мерах, и в течение <strong>72 часов</strong> — о результатах внутреннего расследования и выявленных лицах; субъекта информируют через бот и/или сайт в течение 24 часов. Важная честная оговорка про реализацию: специального типа действия <code class="kbd">pdn_incident</code> в журнале <strong>нет</strong> (греп по коду не находит ни одного использования), то есть фиксация инцидента сегодня — <em>ручная</em> организационная процедура, не автоматизированная ботом. По этому есть развилка для владельца: оставить ручную фиксацию (и так написать в Политике) либо поставить задачу добавить тип записи в журнал.</p>
+
+<p>Чего проект не даёт детально: <strong>обязательного состава уведомления по форме Роскомнадзора</strong> (он расписан в Политике общими словами) и <strong>методики оценки «предполагаемого вреда субъектам»</strong> — термин используется, но критериев, как этот вред оценивать, нет, а это часть обязательного уведомления. Сроки 24/72 часа сам документ помечает как требующие сверки с актуальной редакцией статьи 21 — нормы менялись, поэтому юрист сверяет их на дату подписания. <strong>Статус:</strong> процедуру реакции на инцидент (кто уведомляет, по какой форме, как оценивает вред, как и в каком разделе сайта извещает субъектов) надо дописать; в коде она не живёт.</p>
+
+<h4 id="jurist-hoster">Кто обрабатывает данные на уровне инфраструктуры — нужен ли договор поручения?</h4>
+
+<p>Ответ зависит от того, где физически стоит сервер, и здесь конфигурация проекта снимает главный риск self-host на чужом железе. Бот развёрнут на <strong>собственном физическом сервере в серверной Администрации</strong>, база PostgreSQL лежит там же — то есть внешнего дата-центра, который «предоставляет инфраструктуру и потому становится обработчиком по поручению», в текущей схеме нет. Значит и <strong>договор поручения</strong> по части 3 статьи 6 закона 152-ФЗ с хостинг-провайдером здесь не требуется: некому поручать обработку, инфраструктура своя. Это важно понимать как преимущество, а не пробел. Где норма всё же оживает: <strong>если</strong> Администрация когда-нибудь перенесёт бот на арендованный VPS или в облако, тот провайдер станет обработчиком по поручению, и тогда договор по части 3 статьи 6 (перечень действий, цели, обязанность соблюдать конфиденциальность и требования к безопасности, ответственность) станет обязательным. <strong>Что проверить юристу сейчас:</strong> зафиксировать в документах, что сервер собственный и данные физически в РФ, и заложить в чек-лист правило «при переходе на аренду — оформить договор поручения до переноса». Пока инфраструктура своя — это закрытая, а не открытая позиция.</p>
+
+<h4 id="jurist-max-obrabotchik">А сама платформа MAX? Бот шлёт ей персональные данные через API — кто она по 152-ФЗ?</h4>
+
+<p>Честный пробел. Бот отправляет сообщения жителям через API мессенджера MAX, и это значит, что персональные данные (как минимум содержимое переписки и вложения) проходят через инфраструктуру платформы. Юридический статус MAX по отношению к этим данным — обработчик? самостоятельный оператор? оператор связи? — в проекте не разобран, как и наличие правоотношений Администрации с платформой. Отдельно стоит уже описанный в Политике технический риск: вложения в MAX доступны по прямым URL ещё какое-то время <strong>даже после удаления из чата</strong>, повлиять на это Администрация не может (отсюда рекомендация не слать через бот чувствительные документы). Но это про поведение вложений, а не про правовой статус MAX как лица, обрабатывающего данные. <strong>Статус:</strong> вопрос «кто такой MAX по 152-ФЗ и нужны ли с ним отношения» проект не закрывает — это к юристу; для трансграничности см. следующий вопрос.</p>
+
+<h4 id="jurist-transgranich">Точно ли нет трансграничной передачи, если инфраструктура MAX может быть за рубежом?</h4>
+
+<p>По собственной инфраструктуре бота — данных за рубеж нет: база и сервер в РФ, это в проекте утверждается прямо, и пункт 9 ответа на запрос субъекта честно говорит «трансграничной передачи нет». Слабое место — ровно то, что в предыдущем вопросе: вложения и сообщения проходят через платформу MAX, и если какая-то часть её инфраструктуры или CDN обслуживается вне РФ, формально может возникнуть вопрос трансграничной передачи. Проект эту сторону не оценивал — врезка про URL вложений описывает технический риск, но молчит про трансграничность юридически. MAX позиционируется как национальный мессенджер с инфраструктурой в России, что работает в пользу «передачи за рубеж нет», но <strong>документального подтверждения этого в проекте нет</strong>. Вывод: для данных самого бота трансграничной передачи нет и так и надо писать; по части платформы MAX — это открытый вопрос, который стоит закрыть подтверждением от платформы о размещении в РФ.</p>
+
+<h4 id="jurist-prokuratura">Пришёл запрос прокуратуры (или суда, полиции) по конкретному жителю — каков порядок?</h4>
+
+<p>Передача данных по таким запросам — это законное исключение из правила «не передаём третьим лицам» (раздел 8 Политики называет «запросы правоохранительных органов, судебные акты»). Но <strong>процедуры</strong> — кто отвечает, как проверяется законность и полнота запроса, что именно выгружается, как фиксируется факт выдачи — в проекте нет. Технически собрать данные по жителю есть чем: команда <code class="kbd">/export</code> отдаёт его профиль и обращения, а история действий по нему лежит в журнале (поиск жителя оператором — <code class="kbd">/find_resident</code> по телефону или MAX id, с маскированием телефона в выдаче). Но «достать данные» и «правильно ответить надзору» — разные вещи. Что надо от юриста: описать порядок ответа на запрос — проверять, что запрос оформлен надлежаще и в пределах полномочий органа, выдавать строго запрошенный объём (минимизация), и <strong>фиксировать сам факт выдачи</strong> (кому, что, по какому запросу, когда), потому что отдельного журнала запросов надзорных органов и субъектов в боте нет — есть только общий журнал действий. <strong>Статус:</strong> порядок ответа надзору — организационный пробел, его надо дописать; данные технически доступны через <code class="kbd">/export</code> и журнал.</p>
+
+<h4 id="jurist-reestr-zaprosov">Ведётся ли отдельный реестр запросов субъектов и надзорных органов?</h4>
+
+<p>Отдельного журнала — нет. Все действия фиксируются в общем журнале <code class="kbd">audit_log</code> (отзыв согласия, удаление, поиск жителя, изменения настроек и так далее), но выделенного реестра «обращения субъектов по их правам» и «запросы Роскомнадзора/прокуратуры/суда» с реквизитами и сроками ответа в системе не предусмотрено. Для контроля сроков (10 рабочих дней на сведения, 7 на исправление) и для доказательства, что Администрация на запросы реагировала вовремя, такой реестр практически нужен. <strong>Что делать:</strong> завести его как организационный документ (хотя бы таблицу у ответственного за обработку): дата запроса, заявитель, суть, срок, дата и содержание ответа. В коде этого нет и в ближайшей версии не появится — это ручной учёт.</p>
+
+<h4 id="jurist-otvetstvennost">Какая ответственность грозит Администрации за нарушения 152-ФЗ? Хочу видеть цену риска</h4>
+
+<p>В правовом разделе вики цена риска практически не показана — это пробел, потому что без неё не приоритизировать устранение остальных. Назову <strong>состав инструментов</strong>, не выдумывая конкретных сумм (они менялись и их надо брать в действующей редакции на дату оценки):</p>
+
+<ul>
+<li><strong>Административная ответственность по статье 13.11 КоАП</strong> — основной массив составов за нарушения работы с персональными данными: обработка без правового основания, без согласия там, где оно нужно, несоблюдение прав субъекта, неуведомление Роскомнадзора и прочее. Для органа/юрлица штрафы заметные; конкретные вилки — в действующей редакции КоАП.</li>
+<li><strong>Оборотные штрафы за утечку персональных данных</strong> — это новелла, введённая поправками 2025 года (изменения в КоАП): за сам факт утечки и за неуведомление о ней предусмотрены крупные, в том числе оборотные при повторности, штрафы. Это самый дорогой риск, и именно он делает критичными вопросы про инциденты, бэкапы и договор с хостером выше.</li>
+<li><strong>Уголовная ответственность по статье 272.1 УК</strong> — за незаконные использование, передачу, сбор и хранение персональных данных (в том числе при утечке) для виновных физических лиц. Это про конкретных сотрудников, не про юрлицо, но забывать о ней нельзя.</li>
+</ul>
+
+<p>Точные суммы, пороги и редакции <strong>намеренно не привожу</strong> — память тут плохой советчик, цифры свежие и обязаны браться из действующих КоАП/УК на момент оценки. Это прямая работа юриста: расписать в правовом разделе цену каждого риска по актуальной редакции. Здесь же важно увидеть конструкцию: 152-ФЗ — это не «бумажная формальность», нарушения наказуемы вплоть до оборотных штрафов и уголовной статьи, и именно поэтому пробелы выше (уведомление РКН, инциденты, договор с хостером, права субъекта) стоит закрывать в первую очередь.</p>
+
+<h4 id="jurist-proverka-rkn">Как проходит проверка Роскомнадзора и к чему готовиться?</h4>
+
+<p>Сценария проверки в вики нет, и это стоит восполнить, но общая логика такая: проверяющий запросит документы (Политику и доказательство её публикации, приказ о назначении ответственного, согласия и доказательство их получения, перечень обрабатываемых данных и ИСПДн, модель угроз, договоры поручения, журнал учёта запросов субъектов), сверит фактическую обработку с заявленной, проверит сроки реакции на запросы субъектов и наличие/своевременность уведомлений. К большинству из этого у проекта <strong>есть техническая фактура, но нет оформленных документов</strong> — отсюда все «дописать» выше. Один практический момент, который проверяющие любят: «докажите, что заявленные сроки хранения реально соблюдаются на сервере, а не только на бумаге». Ретенция в боте действительно работает фоновыми задачами (<code class="kbd">pdn-retention</code>, <code class="kbd">appeals-5y-retention</code>, <code class="kbd">audit-log-retention</code>, <code class="kbd">events-retention</code> с точным расписанием), но <em>предъявить</em> это проверяющему — отдельная задача: понадобятся логи запусков задач или выгрузка, показывающая, что старые данные действительно вычищены. Способа «вот доказательство работы ретенции» в готовом виде проект не даёт — это к ИТ-специалисту. <strong>Статус:</strong> чек-лист подготовки к проверке РКН надо собрать; фактура есть, оформление и предъявляемые доказательства — нет.</p>
+
+<div class="note">
+<p class="note__label">Если совсем коротко: что из этого «починить в боте», а что «дописать на бумаге»</p>
+<p>Достаточность технических и организационных мер нельзя утверждать без проверки действующей инфраструктуры. Требуются проверка удаления во всех местах хранения, восстановления резервной копии, журналов, сроков и юридическое согласование документов.</p>
+</div>
+
+<div class="next">
+<p class="next__label">Куда дальше</p>
+<ul>
+<li><a href="#pravovoe" data-go="pravovoe">Правовое и комплаенс: основания, Политика, сроки, чек-листы</a></li>
+<li><a href="#admin" data-go="admin">Администратору: бэкапы, ретенция, меры защиты на сервере</a></li>
+<li><a href="#operator" data-go="operator">Оператору: Стандарт качества ответов и тон</a></li>
+<li><a href="#zhitel" data-go="zhitel">Жителю: как распорядиться своими данными в боте</a></li>
+</ul>
+</div>
+
+<h3 id="manager-slozhnosti">Сложности и частые вопросы</h3>
+
+<p>Этот раздел — для того, кто отвечает за канал перед Главой и жителями, но сам кнопок не нажимает: руководителя отдела, координатора, нового человека, которому бот «достался в наследство». Вопросы здесь не «как ответить жителю» (это в разделе <a href="#operator" data-go="operator">для оператора</a>), а «зачем это так, чего ждать, где подвох, что показать наверх». Устройство и ценность канала подробно разобраны в <a href="#koncept" data-go="koncept">Концепции</a> — сюда вынесено то, обо что управленец спотыкается на практике, с короткими ответами и ссылками вглубь, где нужна детализация. Где ответ упирается в решение владельца или юриста, так и написано — без выдуманной определённости.</p>
+
+<h4>Если мне кажется, что «не хватает функции» — это пробел или так задумано?</h4>
+
+<p>Девять раз из десяти — задумано, и это первое, что стоит усвоить. У проекта есть осознанный «анти-список»: чего бот сознательно не делает и почему (отдельный разбор — <a href="#koncept-chem-ne-yavlyaetsya" data-go="koncept">«Чего бот сознательно НЕ делает»</a>). Туда входит ИИ-ответ жителю, автоклассификация тем, мини-приложение, облако, дифференцированный приоритет по теме. Это не «не успели», а «взвесили и отложили до реальной причины». Практический вывод для вас: прежде чем заводить задачу «добавьте вот это», проверьте по анти-списку — возможно, функцию убрали намеренно, и вернуть её — значит сломать принцип, на котором держится простота. Настоящие же пробелы (то, что спроектировано, но ещё не в коде) честно помечены статусом «спроектирована» — например, в таблице метрик ниже.</p>
+
+<h4>Какие цифры в боте реальные, а какие — план? Боюсь принять красивую таблицу за работающий экран</h4>
+
+<p>Это правильное опасение, и ответ короткий. <strong>Реально работает сейчас</strong> ровно одно средство аналитики — выгрузка статистики в Excel за период (кнопка «📊 Статистика» в служебной группе, плюс автоматический ежемесячный отчёт 1-го числа). В этой выгрузке у каждого отвеченного обращения есть отметка «уложились в срок или нет». <strong>Всё остальное</strong> — медианы, проценты, пики по часам, светофор, разрез по операторам, веб-дашборд — <strong>спроектировано, но в код не внедрено</strong>. Полный целевой набор метрик с пометкой «что уже есть / что план» собран в разделе <a href="#koncept-effektivnost" data-go="koncept">«Как мерить эффективность»</a>. Когда будете готовить отчёт или ставить задачу — сверяйтесь с колонкой статуса там: это спасает от обещания Главе того, чего пока нет на экране.</p>
+
+<h4>Почему отчёт показывает просрочки, которых не было? Операторы жалуются на несправедливость</h4>
+
+<p>Раньше это была реальная проблема: Excel-выгрузка и напоминалки считали срок ответа по календарю — астрономическое время от подачи до ответа, без вычета ночей, выходных и праздников. Обращение, поданное в пятницу в 17:50 и отвеченное в понедельник в 9:10, выглядело как «просрочено на 63 часа», хотя по рабочим часам это примерно полтора часа — в срок. С переходом на расчёт по рабочему времени (модуль <code class="kbd">services/sla.py</code>) это исправлено: просрочка считается только по часам внутри рабочего окна (9:00–18:00 по Камчатке за вычетом обеда 12:00–13:00, пн–пт, без праздников), обращение вне рабочего времени начинает отсчёт со следующего рабочего окна. И живой алёрт «просрочено», и XLSX-колонка «В SLA» используют один и тот же расчёт — расхождений между напоминалкой и отчётом больше нет.</p>
+
+<h4>Откуда вообще взялся срок «4 часа» и можно ли его поменять?</h4>
+
+<p>Четыре часа — это <code class="kbd">SLA_RESPONSE_HOURS=4</code> в настройках запуска. Срок установлен внутренним регламентом оператора, который написан по модели Постановления Администрации № 2129 — оттуда заимствована и структура сроков (в таблице сроков образца обычному обращению отведено до 4 рабочих часов). В самой модели сроки дифференцированы: обычное — до 4 рабочих часов, высокой важности — до 2 часов, после промежуточного ответа — до 8 рабочих дней, «не наша компетенция» — вернуть куратору и уведомить за 30 минут. <strong>В коде же порог один — 4 часа на всё</strong>, отдельного ускоренного 2-часового срока для важных обращений бот не считает; за такие случаи следит Куратор ЦУР организационно. Поменять цифру можно, но это техническая переменная из файла <code class="kbd">infra/.env</code> — она меняется редеплоем, не кнопкой в меню (почему именно так — врезка про границу ответственности меню в <a href="#spr-roadmap" data-go="spravochnik">Справочнике</a>).</p>
+
+<h4>Бот сам поднимает аварийные обращения (вода, газ, отопление) наверх очереди?</h4>
+
+<p>Нет, и это важно для планирования. В коде нет приоритезации обращений по теме — у обращения вообще нет поля важности. Очередь у оператора отсортирована по дате и статусу, а не по «опасности» темы. Если регламент требует ускорить аварийное обращение, высокую важность ему назначает <strong>человек</strong> — Куратор ЦУР вручную, бот к такой маршрутизации не привязан. Сделано осознанно: машина не решает, чей вопрос важнее, — за это отвечает должностное лицо. Поэтому не закладывайте в процесс «бот сам разрулит потоп вперёд жалобы на лавочку»: разруливает дежурный по карточкам.</p>
+
+<h4>Как мне за пять секунд понять, что бот вообще жив прямо сейчас?</h4>
+
+<p>Самый нетехнический признак — пульс (heartbeat) в служебной группе: бот сам пишет туда короткое «я работаю» каждый час (в :05), а в рабочее время пн–пт чаще. Если такие отметки идут — канал жив. Если в служебной группе тишина дольше часа и при этом обращения не обрабатываются — повод позвать ИТ. Технические пробы <code class="kbd">/livez</code> и <code class="kbd">/readyz</code> и автоперезапуск с откатом — это уже для ИТ (раздел <a href="#admin" data-go="admin">для администратора</a>); вам как руководителю достаточно правила «идёт пульс в группе — всё в порядке».</p>
+
+<h4>Что показать Главе по каналу за месяц — что вообще есть под рукой?</h4>
+
+<p>Готовый артефакт уже формируется сам: 1-го числа каждого месяца бот кладёт в служебную группу XLSX-отчёт за прошлый месяц (задача <code class="kbd">monthly-stats</code>, 09:00). Это и есть основа для разговора наверх. Из него честно вытаскиваются: сколько обращений поступило, сколько отвечено, разбивка по темам и адресам, отметка укладывания в срок по каждому (с поправкой на календарный расчёт из вопроса выше). Структурированной «управленческой витрины» с медианами и графиком пока нет — она спроектирована, но не внедрена, поэтому отчёт наверх сейчас собирается из Excel вручную. Если нужен тренд во времени и наглядный график для еженедельного разбора — это первый кандидат на доработку (веб-дашборд и «ASCII-тренд» в чате описаны в дорожной карте <a href="#spr-roadmap" data-go="spravochnik">Справочника</a>), решение о запуске — за владельцем.</p>
+
+<h4>Где жители «отваливаются» в воронке и можно ли это увидеть?</h4>
+
+<p>Данные для этого в базе есть: бот хранит текущий шаг диалога каждого жителя (<code class="kbd">dialog_state</code>) и отдельно помечает анкеты, застрявшие дольше суток. То есть в принципе видно, на каком шаге (контакт, имя, адрес, тема, суть) люди бросают подачу. Но <strong>управленческого среза «конверсия по шагам» на экране пока нет</strong> — он в списке спроектированных метрик, не во внедрённых. Косвенно за «брошенными» следит фоновая задача <code class="kbd">funnel-watchdog</code>: раз в час она сбрасывает анкеты старше 24 часов и шлёт в служебную группу сигнал, если за час застряло пять и больше. Так что всплеск «бросаний» вы заметите по алёрту, а вот красивую воронку «N начали → M дошли» придётся ждать вместе с аналитической панелью.</p>
+
+<h4>Есть ли оценка удовлетворённости жителя — помог ли ему ответ?</h4>
+
+<p>Нет, и это честно проговаривается как сознательная пауза, а не забывчивость. Бот не спрашивает жителя «ответ помог?» и не считает лайки-дизлайки; прямой метрики удовлетворённости (CSAT) в продукте нет. Причина: опрос после каждого ответа в госканале легко скатывается в навязчивость, а при небольшом потоке обращений цифра будет статистически шумной. Возможных путей два — либо добавить лёгкую необязательную оценку «👍/👎» отдельной функцией, либо опереться на косвенный признак «повторные обращения» (не написал по той же теме снова — скорее всего, устроило). Что выбрать — <strong>решение Администрации</strong>; по умолчанию CSAT отложен. Подробнее — врезка <a href="#koncept-csat" data-go="koncept">про CSAT и контроль качества</a>.</p>
+
+<h4>Кто следит, что операторы пишут по Стандарту качества? Бот поправит казённый ответ?</h4>
+
+<p>Сейчас — никто автоматически, и это надо учитывать. Стандарт качества (Приложение 2 к Постановлению № 2129: действительный залог, запрет канцеляризмов, аббревиатур, многоточий, восклицаний) описан как требование к текстам, но <strong>автоматического контроля — линтера ответа, который предупреждал бы оператора о канцелярите, — в коде нет</strong>. Он спроектирован (лёгкая проверка по словарю штампов, как мягкое замечание после отправки, не блокируя её), но не внедрён. Бот сегодня контролирует у ответа только формальное: длину (исходный технический лимит 3000 символов) и запрет ссылок на сторонние сайты. За тон и соответствие Стандарту пока отвечает человеческая вычитка, не машина. Если контроль качества для вас критичен — это осознанная зона, которую стоит закрыть либо доработкой линтера, либо регламентной выборочной проверкой ответов по журналу.</p>
+
+<h4>Может ли оператор тихо слить данные жителей? Как я это отслежу?</h4>
+
+<p>Каждое чувствительное действие оператора пишется в журнал — таблицу <code class="kbd">audit_log</code>: кто, что сделал, над каким обращением или жителем и когда. В журнал попадают ответы, закрытия, возобновления, блокировки, удаления, изменения настроек и в том числе <strong>каждый поиск жителя</strong> командой <code class="kbd">/find_resident</code> (телефон в журнале при этом маскируется). Так что «по-тихому посмотреть данные постороннего» не выйдет — останется след. Дополнительные рубежи: блокировка и удаление данных доступны только роли ИТ, а не рядовому оператору и не координатору; даже массовая регистрация операторов не позволяет назначить себе роль ИТ. Журнал хранится 365 дней. Чего журнал сам не делает — не бьёт тревогу при подозрительной активности: это <strong>инструмент для разбора постфактум</strong>, а не сигнализация. Регулярный просмотр журнала и реакция на жалобу — организационная задача, разбор дисциплинарной ответственности оператора опирается на этот журнал и на нормы из раздела <a href="#pravovoe" data-go="pravovoe">«Правовое»</a>.</p>
+
+<h4>Может ли житель завалить нас спамом?</h4>
+
+<p>Заметно — нет, на это есть встроенные ограничения. Один житель может создать <strong>не больше трёх новых обращений за час</strong> (превысил — бот вежливо просит подождать и показывает уже открытое обращение). Дополнения к уже поданному обращению тоже ограничены — не больше пяти в час по одному обращению, с паузой между ними. Плюс на входе стоит общий лимит частоты сообщений, чтобы поток событий от одного пользователя не положил обработку. Так что «робот, шлющий тысячу обращений в минуту» упрётся в эти пороги. От организованного флуда с множества аккаунтов это, конечно, не панацея — но для обычного злоупотребления одним человеком защита достаточная.</p>
+
+<h4>Закрытое обращение можно «переоткрыть»? Что с повторными жалобами по той же теме?</h4>
+
+<p>Здесь две разные механики, их легко перепутать. <strong>Оператор</strong> может возобновить («🔁 Возобновить») обращение, которое ещё в работе или ждёт — это возврат в активную очередь. А вот <strong>отвеченные и закрытые обращения заново не открываются</strong>: житель по ним нажимает «🔁 Подать похожее», и бот создаёт <em>новое</em> обращение, связанное с тем же адресом и темой, — не переоткрывает старое. Сделано, чтобы история не переписывалась задним числом: каждый «заход» с проблемой — отдельная карточка с собственными сроками. Для аналитики это удобно: всплеск «подать похожее» по одной теме за пару дней — честный сигнал, что прошлый ответ проблему не решил (это и есть метрика «повторные обращения», порог тревоги — выше 5%, см. <a href="#koncept-effektivnost" data-go="koncept">метрики</a>).</p>
+
+<h4>Если уволится единственный ИТ-специалист, который всё настраивал, — мы встанем?</h4>
+
+<p>Это реальный риск, и его надо закрывать заранее, а не по факту. Технически проект к передаче готов: код в репозитории, развёртывание одной командой, авто-деплой с откатом, конфигурация бота сама выгружается обратно в репозиторий отдельным запросом на слияние — то есть «что в проде» и «что в коде» не расходятся. Но <strong>организационная преемственность — на вас</strong>: где лежат секреты (токен бота, пароль базы, парольная фраза бэкапа), кто второй человек с ролью ИТ, кому переходят доступы. Бот первого ИТ заводит автоматически при первом запуске, но «второго ИТ на случай отпуска/увольнения» за вас никто не назначит. Управленческий разбор bus-factor и зависимости от подрядчика — в разделе <a href="#koncept-ustoichivost" data-go="koncept">«Устойчивость проекта»</a>; где именно хранятся секреты — в <a href="#admin" data-go="admin">разделе для администратора</a>.</p>
+
+<h4>Мы завязаны на один мессенджер MAX — что если площадка изменит правила?</h4>
+
+<p>Да, это базовая зависимость, и её честно держат в уме: бот живёт на чужой площадке (MAX, платформа VK), и токен, и доставка сообщений — её. Если площадка изменит Bot API, требования к токену или правила — канал придётся подстраивать, а в худшем сценарии часть истории доставки может прерваться. Снижают этот риск тем, что данные жителей лежат не в MAX, а на сервере Администрации (своя база), и логика бота — свой код, не привязанный к проприетарной платформе намертво. Запасной канал (SMS/почта) на случай «житель удалил MAX» обсуждается, но добавляет новый вектор персональных данных и пока не приоритет. Стратегический разбор платформенного риска — врезка в <a href="#koncept-ustoichivost" data-go="koncept">«Устойчивости проекта»</a>.</p>
+
+<h4>Сколько людей нужно в смену и сколько стоит содержание канала?</h4>
+
+<p>Прямого норматива «N операторов на M обращений» в боте нет — это организационное решение, которое зависит от вашего реального потока. Ориентиры по штату, сменности и оценке стоимости владения (аренда сервера плюс время ИТ на сопровождение) вынесены в управленческие подразделы <a href="#koncept-shtat" data-go="koncept">«Штат и сменность»</a> и <a href="#koncept-tco" data-go="koncept">«Стоимость владения»</a> Концепции. Что важно понимать про нагрузку: канал технически рассчитан с большим запасом — для округа населением порядка 70 тысяч и десятков одновременных диалогов в час пик простой архитектуры хватает; пересматривать её имеет смысл только при устойчивом превышении пятисот одновременных воронок подачи, что для такой территории практически «никогда». То есть упор не в железо, а в людей: сколько операторов держать на дежурстве, чтобы укладываться в 4 часа, — считается от вашего потока, а не задаётся ботом.</p>
+
+<h4>У нас роли распределены иначе (есть выделенный куратор, начальник смены) — как это ляжет на роли бота?</h4>
+
+<p>В боте всего четыре технические роли: <code class="kbd">coordinator</code>, <code class="kbd">aemr</code>, <code class="kbd">egp</code>, <code class="kbd">it</code> — и они не обязаны один-в-один совпадать с вашими должностями. Рядовые специалисты по ответам (в том числе из территориальных управлений) заводятся как <code class="kbd">aemr</code> или <code class="kbd">egp</code>; различие между ними сейчас формальное — для журнала и будущей маршрутизации по адресу. Координатор — это тот, кому дополнительно нужны рассылки. ИТ — тот, кто настраивает и удаляет данные. Как наложить вашу реальную оргструктуру (кого назначать координатором, нужен ли отдельный человек-куратор) — разбирается в подразделе <a href="#koncept-orgmapping" data-go="koncept">«Как четыре роли ложатся на оргструктуру»</a>; матрица прав по ролям — в разделе <a href="#operator-roli" data-go="operator">для оператора</a>.</p>
+
+<h4>Что мне нужно сделать как руководителю, чтобы запустить канал?</h4>
+
+<p>Запуск — это не только «включить бота», за вами организационная часть, и её удобно держать чек-листом. Коротко: согласовать с безопасником уровень защищённости персональных данных (УЗ-4) и подписать правовые документы (политику обработки ПДн), утвердить тексты для жителей, назначить операторов и хотя бы двух ИТ, объявить жителям о канале. Собранный по шагам чек-лист «руководитель перед запуском» со ссылками на правовую часть и установку — в разделе <a href="#koncept-chek-list-zapuska" data-go="koncept">«Чек-лист запуска для руководителя»</a>; полный список документов к подписанию — в <a href="#pravovoe" data-go="pravovoe">«Правовом»</a> (это зона юриста и безопасника, не ИТ). Техническая установка самого бота — в <a href="#admin" data-go="admin">разделе для администратора</a>.</p>
+
+<div class="note">
+  <p class="note__label">Короткое резюме для руководителя</p>
+  <p>Три вещи, которые снимают большинство управленческих недоразумений. Первое: многие «недостающие функции» убраны намеренно — сверяйтесь с анти-списком, прежде чем требовать доработку. Второе: из аналитики реально работает только Excel-выгрузка, и срок в ней считается по календарю — не наказывайте операторов за «просрочки» через выходные. Третье: бот доставляет и ведёт учёт, а решения (важность обращения, тон ответа, удаление данных) принимает человек — за результат канала отвечаете вы и операторы, не алгоритм.</p>
+</div>
+```
+
 ### `docs/site/_kb2/zhitel.html`
 
 Size: `80813` bytes  
@@ -120820,6 +136489,554 @@ SHA-256: `a66b2ce7231239b227fd2a739ab707f219df08942de15336bb910a592abdd19c`
 Инструкция не подтверждает, что необходимые права, инвентаризация копий,
 соглашения с поставщиками и процесс очистки резервных копий уже существуют в
 конкретном развертывании; это проверяется до ввода системы в эксплуатацию.
+```
+
+### `docs/Регламент_AEMR-bot_MAX_v8.md`
+
+Size: `177798` bytes  
+SHA-256: `4d4c6711313d1866aa5273a2fa0634969f9e4df03e34db36094a942d861b6fc2`
+
+```markdown
+Приложение к распоряжению  
+Администрации Елизовского  
+муниципального округа  
+от «\_\_\_\_» \_\_\_\_\_\_\_\_\_\_\_ 2026 года  
+№ \_\_\_\_\_\_
+
+**Регламент**  
+**работы с чат-ботом**  
+**«ЧАТ-БОТ / АДМИНИСТРАЦИЯ ЕМО»**  
+**в мессенджере MAX**
+
+# 1\. Общие положения
+
+1\. Настоящий Регламент устанавливает порядок организации работы с чат-ботом «ЧАТ-БОТ / АДМИНИСТРАЦИЯ ЕМО» в мессенджере MAX (далее — Чат-бот), включая порядок приема сообщений от жителей, подготовку и направление ответов, взаимодействие с профильными подразделениями Администрации и подведомственными муниципальными учреждениями при подготовке ответов, ведение информационных рассылок, обработку персональных данных, обеспечение информационной безопасности и контроль качества работы операторов.  
+2\. Чат-бот размещен по адресу @aemo\_chat\_bot (идентификатор 274913354\) и зарегистрирован на платформе MAX для бизнеса от имени Администрации Елизовского муниципального округа (далее — Администрация, АЕМО).  
+3\. Регламент разработан с учетом Федерального закона от 02.05.2006 № 59-ФЗ «О порядке рассмотрения обращений граждан Российской Федерации» (далее — Федеральный закон № 59-ФЗ), в соответствии с Федеральным законом от 27.07.2006 № 152-ФЗ «О персональных данных» (далее — Федеральный закон № 152-ФЗ), Федеральным законом от 21.12.1994 № 68-ФЗ «О защите населения и территорий от чрезвычайных ситуаций природного и техногенного характера» (далее — Федеральный закон № 68-ФЗ), Уставом Елизовского муниципального округа Камчатского края, Федеральным законом от 20.03.2025 № 33-ФЗ «Об общих принципах организации местного самоуправления в единой системе публичной власти» (далее — Федеральный закон № 33-ФЗ; точное наименование сверяется юристом по официальному тексту), Федеральным законом от 06.10.2003 № 131-ФЗ «Об общих принципах организации местного самоуправления в Российской Федерации» (далее — Федеральный закон № 131-ФЗ; применяется в переходный период в части, не противоречащей Федеральному закону № 33-ФЗ), Федеральным законом от 09.02.2009 № 8-ФЗ «Об обеспечении доступа к информации о деятельности государственных органов и органов местного самоуправления», постановлением Правительства Российской Федерации от 01.11.2012 № 1119 «Об утверждении требований к защите персональных данных при их обработке в информационных системах персональных данных», приказом Федеральной службы по техническому и экспортному контролю от 18.02.2013 № 21 «Об утверждении состава и содержания организационных и технических мер по обеспечению безопасности персональных данных при их обработке в информационных системах персональных данных», постановлением Правительства Российской Федерации от 16.11.2020 № 1844 «Об утверждении Правил предоставления субсидии из федерального бюджета автономной некоммерческой организации по развитию цифровых проектов в сфере общественных связей и коммуникаций «Диалог Регионы» на создание и обеспечение функционирования в субъектах Российской Федерации центров управления регионов и Правил создания и функционирования в субъектах Российской Федерации центров управления регионов», распоряжением Губернатора Камчатского края от 02.06.2020 № 540-Р (в редакции распоряжения от 10.06.2024 № 321-Р), регулирующим оперативное реагирование на сообщения из открытых источников и оценку качества ответов исполнителей, а также по модели постановления Администрации Елизовского муниципального района от 19.12.2025 № 2129 «О создании и функционировании в Елизовском муниципальном районе муниципального центра управления» (далее — Постановление № 2129; указанное постановление регулирует деятельность муниципального центра управления и порядок отработки сообщений в социальных сетях и мессенджерах, взято за методическую основу настоящего Регламента и нормативным правовым актом, учреждающим Чат-бот, не является, и применяется в качестве методической основы в части, не противоречащей Уставу Елизовского муниципального округа Камчатского края), включая Порядок работы с сообщениями из открытых источников (далее — Порядок работы с сообщениями) и Стандарт качества ответов на сообщения из открытых источников (далее — Стандарт качества ответов), являющиеся приложениями к указанному постановлению, нормативными правовыми актами уполномоченных федеральных органов исполнительной власти в области информационной безопасности, муниципальными правовыми актами Администрации.  
+4\. Регламент обязателен для применения координаторами отдела по работе с обращениями граждан Администрации, специалистами Администрации и ее территориальных управлений, ответственными за работу с обращениями, а также работниками отдела цифрового развития Администрации, обеспечивающими функционирование Чат-бота. Под отделом цифрового развития в настоящем Регламенте понимается отдел цифрового развития Администрации либо иное структурное подразделение Администрации, уполномоченное на администрирование и обеспечение функционирования Чат-бота правовым актом Администрации или поручением ее руководителя (далее — отдел цифрового развития). Под отделом по работе с обращениями граждан в настоящем Регламенте понимается отдел по работе с обращениями граждан Администрации либо иное структурное подразделение Администрации, уполномоченное на организацию работы с сообщениями жителей, поступающими через Чат-бот. Обозначение «ЕГП» в программном комплексе и в настоящем Регламенте сохранено исторически (Администрация Елизовского городского поселения упразднена при преобразовании муниципального района в муниципальный округ) и соответствует роли специалиста территориального управления Администрации (далее — ЕГП (ТУ)).
+
+# 2\. Правовая природа канала связи
+
+5\. Чат-бот является дополнительным электронным каналом обратной связи между гражданами и Администрацией. Сообщения, полученные через Чат-бот, рассматриваются в порядке, установленном настоящим Регламентом.  
+6\. Сообщение, направленное пользователем в личный диалог с Чат-ботом, не следует автоматически считать сообщением из общедоступного открытого источника. Применимость Федерального закона № 59-ФЗ определяется с учетом содержания сообщения, способа поступления и требований законодательства; одно название мессенджера или отсутствие отдельных реквизитов не заменяет правовую оценку. При необходимости оператор разъясняет доступные официальные каналы и передает вопрос на рассмотрение уполномоченному должностному лицу. Применимость Постановления № 2129 определяется после проверки его текста и действующей редакции.  
+7\. Для приема сообщения и добровольной подписки на оповещения используются раздельные согласия субъекта персональных данных (пункт 1 части 1 статьи 6, статья 9 Федерального закона № 152-ФЗ). Обработка для выполнения конкретной законной функции Администрации без согласия допускается только при отдельно установленном применимом основании и необходимом объеме; общая ссылка на полномочия или наличие карточки не подтверждает его для каждого случая. Квалификация сообщения по Федеральному закону № 59-ФЗ и основание обработки персональных данных определяются отдельно; ни автоматическое применение, ни безусловное исключение этого закона настоящим Регламентом не устанавливаются. Самостоятельное основание продолжать автоматическую отправку ответов после отзыва в Чат-боте не настроено и не подтверждено.
+8\. Если поступившее через Чат-бот сообщение по своему содержанию является обращением в значении статьи 4 Федерального закона № 59-ФЗ, оператор информирует заявителя о порядке подачи официального обращения через электронную приемную Администрации, через платформу обратной связи «Госуслуги. Решаем вместе», иные официальные каналы либо в письменной форме. Администрация обеспечивает доведение до заявителя надлежащего маршрута и не оставляет сообщение без реакции.  
+9\. Чат-бот не заменяет работу с обращениями через платформу обратной связи «Госуслуги. Решаем вместе» и систему инцидент-менеджмента Центра управления регионом. Сообщения, поступившие через указанные каналы, рассматриваются в соответствии с регламентами этих каналов.
+
+# 3\. Технические компоненты
+
+10\. Чат-бот реализован как программный комплекс, включающий:  
+1\) программный сервис Bot API мессенджера MAX, размещенный на сервере Администрации;  
+2\) реляционную базу данных PostgreSQL, размещенную на территории Российской Федерации на том же сервере (часть 5 статьи 18 Федерального закона № 152-ФЗ);  
+3\) служебную групповую переписку в мессенджере MAX (АДМИНКА / ЧАТ-БОТ) (далее — служебная группа), в которой работают операторы;  
+4\) подсистему резервного копирования базы данных с хранением зашифрованных копий в локальном томе; выгрузка копий в облачные (объектные) хранилища отключена.  
+11\. Идентификатор служебной группы в мессенджере MAX задается в параметре ADMIN\_GROUP\_ID. Программный сервис различает события из служебной группы и события в личной переписке с жителями по этому идентификатору.  
+12\. Связь программного сервиса с серверами мессенджера MAX осуществляется в режиме длинного опроса (long polling) без предоставления входящего публичного сетевого доступа.  
+13\. Резервные копии базы данных формируются автоматически еженедельно, по умолчанию в воскресенье в 03 часа 00 минут по времени UTC +12 (GMT +12). Подробный перечень фоновых задач приведен в Таблице 3 настоящего Регламента.
+
+# 4\. Роли и полномочия операторов
+
+14\. В Чат-боте реализованы четыре роли операторов:  
+1\) координатор АЕМО (coordinator);  
+2\) специалист АЕМО (aemr);  
+3\) специалист ЕГП, в дальнейшем — специалист Территориального управления (далее — ТУ) (egp);  
+4\) специалист отдела цифрового развития (it).  
+15\. В программном коде Чат-бота роль идентифицируется значением egp и отображается оператору как «специалист ЕГП (территориальное управление)». Наименование «Территориальное управление (ТУ)» является организационно-перспективным; в программном коде оно не закреплено и при переименовании структурного подразделения не требует изменения кода.  
+16\. Координатор АЕМО (coordinator) — муниципальный служащий, ответственный за прием и распределение сообщений в служебной группе, направление ответов жителям, отслеживание сроков ответа, взаимодействие с профильными подразделениями Администрации и подведомственными муниципальными учреждениями в порядке раздела 8 настоящего Регламента, а также специалист отдела информационного обеспечения деятельности Администрации либо иной профильный специалист пресс-службы, ответственный за подготовку информационных рассылок.  
+17\. Специалисты АЕМО (aemr) и ЕГП (egp) — муниципальные служащие, обеспечивающие подготовку ответов на сообщения в пределах своей компетенции. Специалисты Территориальных управлений Администрации, ответственные за работу с обращениями, регистрируются в Чат-боте в роли специалиста АЕМО (aemr) либо специалиста ЕГП (egp) по решению специалиста отдела цифрового развития; отдельная роль для Территориальных управлений в Чат-боте не предусмотрена.  
+18\. Специалист отдела цифрового развития (it) — работник отдела цифрового развития, ответственный за бесперебойное функционирование Чат-бота, ведение списка операторов, удаление персональных данных по запросам субъектов персональных данных, изменение настроек Чат-бота и снятие резервных копий базы данных.  
+19\. Назначение и прекращение полномочий операторов осуществляется специалистом отдела цифрового развития на основании письменного поручения руководителя соответствующего структурного подразделения одним из следующих способов:  
+1\) через кнопочный мастер «Операторы» в панели быстрых действий /op\_help, обеспечивающий выбор будущего оператора из участников служебной группы без необходимости копирования идентификатора max\_user\_id, назначение роли, изменение роли, мягкую деактивацию с сохранением записи в базе данных и записи в журнале действий, последующую реактивацию;  
+2\) через команду /add\_operators в служебной группе, обеспечивающую массовую регистрацию операторов по многострочному списку формата «\<идентификатор max\_user\_id\> \<роль\> \<фамилия, имя, отчество\>».  
+20\. Оба способа эквивалентны по правовым последствиям и фиксируются в журнале действий. Деактивация единственного активного оператора с ролью «it» программно заблокирована. Замена единственного активного оператора с ролью «it» производится последовательностью: назначение нового оператора с ролью «it», затем деактивация предшествующего.  
+21\. Первоначальная регистрация первого специалиста с ролью «it» при установке Чат-бота на серверном оборудовании выполняется через переменные окружения серверной части: BOOTSTRAP\_IT\_MAX\_USER\_ID (идентификатор max\_user\_id будущего специалиста с ролью «it») и BOOTSTRAP\_IT\_FULL\_NAME (фамилия, имя, отчество). При первом запуске Чат-бота на пустом списке операторов соответствующая запись создается автоматически. После первого запуска указанные переменные могут быть удалены из конфигурации. Все последующие операторы регистрируются в порядке, установленном настоящим разделом.  
+22\. Запросы операторов с ролями «coordinator», «aemr», «egp» в адрес специалиста с ролью «it» по любому из следующих оснований: необходимость блокировки или разблокировки жителя; необходимость удаления персональных данных конкретного жителя; необходимость добавления, изменения роли или деактивации оператора; необходимость изменения настраиваемого параметра Чат-бота; необходимость восстановления базы данных из резервной копии; необходимость ротации секретов или реакции на инцидент информационной безопасности — направляются в служебную группу с упоминанием специалиста с ролью «it» (@username) либо служебной запиской руководителю отдела цифрового развития. Специалист с ролью «it» подтверждает прием запроса в служебной группе в течение одного рабочего часа, выполняет запрос в порядке, установленном настоящим Регламентом, и фиксирует факт исполнения сообщением в служебной группе с цитированием запроса. Все действия, совершенные специалистом с ролью «it» по такому запросу, фиксируются в журнале действий в порядке раздела 13 настоящего Регламента.  
+23\. Заявка на получение роли оператора оформляется руководителем подразделения служебной запиской в адрес отдела цифрового развития. Служебная записка содержит: фамилию, имя, отчество и должность будущего оператора; идентификатор max\_user\_id (получаемый в порядке, установленном разделом 15 настоящего Регламента); запрашиваемую роль (coordinator, aemr, egp, it); служебное основание; подпись руководителя. На основании служебной записки специалист с ролью «it» добавляет будущего оператора в служебную группу мессенджера MAX и регистрирует роль через кнопочный мастер «Операторы». Прекращение полномочий оформляется в аналогичном порядке: служебная записка, затем мягкая деактивация через мастер «Операторы» в панели быстрых действий /op\_help.  
+24\. Матрица полномочий операторов приведена в Таблице 1\.
+
+Таблица 1
+
+| № п/п | Действие | coordinator | aemr | egp (ТУ) | it |
+| :---: | ----- | :---: | :---: | :---: | :---: |
+| 1 | 2 | 3 | 4 | 5 | 6 |
+| 1\. | Просмотр карточек обращений в служебной группе | да | да | да | да |
+| 2\. | Открытые обращения (/open\_tickets), статистика (/stats), диагностика (/diag) | да | да | да | да |
+| 3\. | Ответ жителю (свайп, /reply, кнопка «Ответить», промежуточный ответ) | да | да | да | да |
+| 4\. | Возобновление и закрытие обращения | да | да | да | да |
+| 5\. | Поиск жителя (/find\_resident) | да | да | да | да |
+| 6\. | Экстренная остановка рассылки | да | да | да | да |
+| 7\. | Подготовка и направление информационных рассылок (/broadcast), шаблоны рассылок | да | нет | нет | да |
+| 8\. | Блокировка и разблокировка жителя | нет | нет | нет | да |
+| 9\. | Удаление персональных данных жителя (/erase, кнопка «Удалить ПДн») | нет | нет | нет | да |
+| 10\. | Снятие резервной копии (/backup) | нет | нет | нет | да |
+| 11\. | Изменение настроек Чат-бота (/setting, меню «Настройки бота») | нет | нет | нет | да |
+| 12\. | Управление операторами (/add\_operators, мастер «Операторы») | нет | нет | нет | да |
+| 13\. | Раздел «Аудитория и согласия» | нет | нет | нет | да |
+
+**Примечание.** Право блокировки жителя и удаления его персональных данных непосредственно из карточки обращения предоставлено только специалисту отдела цифрового развития. Координатор АЕМО и специалисты АЕМО, ЕГП (ТУ) эскалируют необходимость блокировки или удаления персональных данных к специалисту отдела цифрового развития служебной запиской или сообщением в служебной группе в порядке, установленном разделом 4 настоящего Регламента.
+
+# 5\. Прием сообщения от жителя
+
+25\. Житель открывает Чат-бот в мессенджере MAX и нажимает кнопку «Написать обращение» в главном меню. Дальнейшее взаимодействие осуществляется через интерактивные кнопки.  
+26\. Главное меню жителя содержит семь позиций:  
+1\) «Написать обращение»;  
+2\) «Мои обращения»;  
+3\) «Подписаться на рассылку» либо «Не хочу получать рассылку» — в зависимости от текущего состояния подписки;  
+4\) «Прием граждан»;  
+5\) «Полезная информация»;  
+6\) «Защита от мошенников»;  
+7\) «Настройки и помощь».  
+27\. Чат-бот собирает сведения от жителя последовательно, по этапам конечного автомата диалога. Поддерживается десять состояний диалога: idle, awaiting\_consent, awaiting\_contact, awaiting\_name, awaiting\_locality, awaiting\_address, awaiting\_topic, awaiting\_summary, awaiting\_followup\_text (этап дополнения уже открытого обращения), awaiting\_geo\_confirm (этап подтверждения адреса, определенного по геолокации).  
+28\. На отдельном шаге до анкеты жителю показывается текст согласия и предоставляется политика данных бота отдельным файлом. При подтверждении сохраняются дата и время, показанный текст, контрольная сумма редакции и связь с сообщением запроса согласия. Сам по себе хеш без доступного исходного текста не доказывает содержание согласия. Для старой записи с отсутствующим текстом содержание не восстанавливается догадкой по текущей редакции. Настройка consent\_text содержит временную справочную ссылку policy\_url на прежнюю политику администрации муниципального района; она не подтверждает утверждение политики округа. Согласие на оповещения оформляется отдельно и не требуется для подачи сообщения.
+29\. На последующих этапах Чат-бот запрашивает: телефонный номер посредством нативной кнопки мессенджера MAX, имя жителя, населенный пункт (выбором из перечня либо передачей геолокации), адрес проблемы, тематику обращения (выбором из перечня), суть обращения с возможностью приложения файлов. Прогресс прохождения анкеты отображается счетчиком вида «N / 5» начиная с этапа ввода имени; этап получения согласия и этап передачи телефонного номера в счетчик не входят.  
+30\. На этапе выбора населенного пункта жителю доступна нативная кнопка мессенджера MAX «Поделиться геолокацией». При передаче жителем геолокации Чат-бот определяет населенный пункт и адрес по локальной базе данных географических объектов и запрашивает у жителя подтверждение определенного адреса (состояние awaiting\_geo\_confirm). Передача геолокации добровольна; житель вправе выбрать населенный пункт из перечня.  
+31\. Сообщение жителя считается принятым с момента поступления текста сути обращения. Чат-бот направляет жителю подтверждение «Обращение \#N принято».  
+32\. Один житель может направить через Чат-бот не более 3 (трех) новых обращений в течение одного часа. Указанное ограничение реализовано непосредственно в программном коде Чат-бота и не настраивается через параметры окружения.  
+33\. При превышении ограничения, установленного частью 27 настоящего Регламента, при наличии у жителя неотвеченного обращения Чат-бот предлагает дополнить открытое обращение через кнопку «Дополнить» в карточке обращения. При отсутствии неотвеченных обращений житель получает информацию о необходимости дождаться сброса лимита.  
+34\. По одному открытому обращению житель может направить не более 5 (пяти) дополнений в течение одного часа, при этом интервал между двумя дополнениями не должен быть менее 30 (тридцати) секунд. Указанные ограничения реализованы в программном коде Чат-бота и настраиваются параметрами FOLLOWUP\_MAX\_PER\_HOUR\_PER\_APPEAL (диапазон от 1 до 100\) и FOLLOWUP\_MIN\_INTERVAL\_SECONDS (диапазон от 0 до 3600). При превышении ограничения дополнение не принимается; житель получает уведомление с указанием времени до следующего разрешенного дополнения.  
+35\. Ограничения объема одного обращения:  
+1\) максимальное число вложений — 20 (двадцать);  
+2\) максимальный суммарный размер текста обращения или дополнения — 20 000 (двадцать тысяч) символов; текст можно отправлять несколькими сообщениями и подтвердить отправку после подготовки черновика;
+3\) максимальная длина имени — 120 (сто двадцать) символов;  
+4\) максимальная длина адреса — 500 (пятьсот) символов.  
+36\. После приема сообщения Чат-бот направляет в служебную группу карточку с номером, сведениями о жителе, адресом, темой и кратким представлением содержания. Полный сохраненный текст и переписка открываются постранично. Фотографии, видеозаписи и файлы направляются отдельными совместимыми сообщениями; координаты используются для определения адреса. При отсутствии подтверждения отправки вложений специалист проверяет карточку и служебный чат до повторной отправки.  
+37\. При дополнении, ответе и изменении состояния создается запись события; ранее направленные карточки не переписываются. Оперативная карточка просмотра и списки могут обновляться без создания новой записи события. Полнота переписки доступна через историю; экранный обзор ограничен размером сообщения MAX. Ответ по изменяемой карточке запускается кнопкой, связанной с конкретным номером обращения.  
+38\. Под карточкой обращения отображаются интерактивные кнопки действий, состав которых зависит от статуса обращения и роли вызывающего оператора:  
+1\) для статусов «новое» и «в работе» всем ролям отображаются кнопки «Ответить» и «Закрыть без ответа»;  
+2\) для статусов «отвечено» (answered) и «закрыто» (closed) — за исключением случаев закрытия в связи с отзывом согласия жителем — отображается кнопка «Возобновить»;  
+3\) для специалиста с ролью «it» дополнительно отображаются кнопки «Заблокировать» (или «Разблокировать» — в зависимости от текущего состояния блокировки) и «Удалить ПДн»;  
+4\) при наличии у обращения вложений отображается кнопка «Вложения (N)», нажатие которой переотправляет вложения в служебную группу;  
+5\) независимо от статуса и роли отображается кнопка «В админ-меню» для возврата к панели быстрых действий.  
+39\. Промежуточный статус «в работе» (in\_progress) присваивается Чат-ботом автоматически при выполнении оператором действий, предполагающих принятие обращения в работу. Отдельная интерактивная кнопка переключения в указанный статус в карточке обращения не предусмотрена.  
+40\. Обращение может находиться в одном из четырех статусов. Внутренний код-идентификатор статуса и его отображение для жителя в разделе «Мои обращения» соотносятся следующим образом: new — «Новое»; in\_progress — «В работе»; answered — «Завершено»; closed — «Закрыто без ответа». В тексте настоящего Регламента статус answered обозначается также словом «отвечено» (как он отображается оператору в подтверждении доставки). Оператор видит статус «Отвечено», житель — «Завершено».
+
+# 6\. Целостность служебного канала
+
+41\. Служебная группа используется для событий и совместной работы. Сообщения о событиях обращения сохраняются как отдельные записи; оперативные меню, списки и экраны просмотра могут редактироваться. Перед действием Чат-бот проверяет актуальное состояние обращения и полномочия оператора. Неопределенный результат доставки требует проверки до повторной отправки.
+
+# 7\. Порядок работы оператора с сообщением
+
+42\. Поступившая в служебную группу карточка обращения распределяется координатором АЕМО между специалистами АЕМО, ЕГП (ТУ) в соответствии с компетенцией. Распределение производится в служебной группе путем упоминания (@username) ответственного специалиста.  
+43\. Принятие обращения в работу не требует отдельного действия оператора. Статус обращения изменяется на «в работе» автоматически при первом операторском действии — открытии ответа кнопкой «Ответить» или иной значимой операции, фиксируемой Чат-ботом.  
+44\. Кнопка «Ответить» открывает сохраняемый черновик оператора, связанный с конкретным обращением и типом ответа. В активном черновике текст и файлы накапливаются из последовательных сообщений, повтор события не добавляет часть повторно; отправка выполняется явной кнопкой «Отправить». Доступны пауза и продолжение из меню, замена текста, удаление вложений и отмена. Старые кнопки другого черновика не меняют текущий состав. Совместимые способы ответа цитированием карточки и командой /reply с номером и текстом сохраняются: вне активного черновика они могут перейти непосредственно к доставке с теми же проверками адресата, прав и согласия; отдельное подтверждение черновика нельзя предполагать для любого способа.
+45\. К черновику ответа можно приложить несколько поддерживаемых файлов, включая фотографии, видео и документы, в пределах общего лимита 20 вложений. Состав и число вложений отображаются в экране черновика. Несколько документов доставляются отдельными частями с сохранением их состояния. Неподдерживаемый файл или превышение лимита не должны молча исключать уже принятые части; оператор получает сообщение о причине отказа.
+46\. Общий текст черновика ограничивается параметром ANSWER\_MAX\_CHARS (по умолчанию 3000 символов), количество накопленных событий — 100. До отправки выполняется проверка формата и допустимого размера итогового сообщения MAX. При неудачной замене текста прежний состав сохраняется. Ограничения платформы и поддерживаемость вложений проверяются при выпуске; неизвестный исход отправки не дает основания автоматически отправлять ту же часть повторно.
+47\. Перед вызовом MAX сохраняются состав ответа и попытка доставки. Подтвержденные части фиксируются отдельно; неизвестный результат останавливает отправку. При подтвержденной доставке и несохраненной истории восстановление должно записать результат без повторной доставки. Разбор неопределенного исхода доступен уполномоченному специалисту через диагностику с просмотром исходного текста и вложений; ручное подтверждение не подставляет выдуманный идентификатор или время MAX.
+48\. Окончательный ответ после подтвержденной доставки и записи переводит обращение в статус «Отвечено» (answered); жителю завершение показывается в истории. Промежуточный ответ сохраняется с отдельным типом и оставляет обращение открытым. Для старых ответов без сохраненного типа он остается неизвестным. Событийные записи не переписываются изменением текущего экрана; последующее дополнение может начать новый период работы. Закрытие без итогового ответа выполняется отдельно и не объявляется доставленным ответом.
+49\. Для автоматического контроля установлен внутренний ориентир первого ответа, настраиваемый специалистом с ролью «it». Он не является законным сроком окончательного рассмотрения и не подтверждает применение постановления № 2129. Параметры контроля приведены в Таблице 2.
+
+Таблица 2
+
+| № п/п | Контролируемый этап | Правило |
+| :---: | ----- | ----- |
+| 1 | 2 | 3 |
+| 1\. | Первый ответ в новом периоде | sla\_response\_hours; по умолчанию 4 рабочих часа. При создании периода сохраняются его начало, норматив и снимок рабочего расписания. |
+| 2\. | Дальнейшее действие после промежуточного ответа | sla\_followup\_hours; по умолчанию 8 рабочих часов, 0 отключает сигнал. Текущее значение применяется к оперативной очереди; это не восемь рабочих дней и не срок окончательного ответа. |
+| 3\. | Исторический период без сохраненного норматива или расписания | Для оперативной работы используется отмеченный резервный ориентир; историческая оценка не объявляется достоверной и не восстанавливается по текущей настройке. |
+
+50\. Рабочее расписание изменяется в «Настройки бота» → «Рабочее время» с проверкой версии настройки; конкурирующее изменение не должно молча перезаписать новое значение. По умолчанию учитываются понедельник — пятница, 09:00–18:00 по времени Камчатки, перерыв 12:00–13:00 и сохраненные праздничные даты. В снимок нового периода входят часовой пояс, рабочие часы, перерыв и календарь. Изменение расписания не пересчитывает сохраненный период по новым правилам; для старых данных фиксируется отдельная оперативная база, которая не доказывает прежний фактический календарь.
+51\. Обе задачи напоминаний обновляют одну сохраняемую панель очереди, показывающую обращения без первого ответа, просроченные по первому ответу, работу после ответа и обращения, требующие дальнейшего действия. Тики выполняются каждый час в 10 и 40 минут; перед обновлением загружается действующее расписание, проверяются рабочее окно, тихие часы и соответствующий переключатель. Неизменная сводка не порождает новое сообщение. При ошибке или неизвестном результате создания либо изменения панели обновления останавливаются до явной сверки MAX специалистом с ролью «it». Автоматически создавать замену после такого сбоя нельзя.
+52\. Качество ответа определяется его соответствием существу вопроса, понятностью, достоверностью и требованиями настоящего Регламента. Стандарт постановления № 2129 может использоваться как методический материал после проверки первичного текста и применимости; ссылка на неподтвержденный акт не заменяет правовую оценку. Координатор организационно определяет повышенную важность и необходимое действие, поскольку отдельная автоматизированная шкала приоритетов не реализована.
+53\. Ответ оператора жителю должен:  
+1\) начинаться с приветствия с указанием имени автора сообщения;  
+2\) содержать информацию по существу заданного вопроса (жалобы), быть понятным и информативным;  
+3\) излагаться в позитивном тоне с использованием действительного залога.  
+54\. В тексте ответа оператора жителю не допускается:  
+1\) изложение истории вопроса до ответа по существу;  
+2\) использование канцелярского стиля и страдательного залога;  
+3\) использование шаблонных слов и выражений «сообщаем, что», «поясняем, что», «информируем, что», «отметим, что» и аналогичных;  
+4\) использование аббревиатур;  
+5\) наличие орфографических и пунктуационных ошибок;  
+6\) употребление многоточий;  
+7\) использование поучений или саркастических замечаний, ироничного, снисходительного, шутливого или фамильярного отношения к жителю;  
+8\) вступление в дискуссии с автором сообщения;  
+9\) разглашение персональных данных в нарушение требований Федерального закона № 152-ФЗ.
+
+# 8\. Порядок взаимодействия оператора с профильными подразделениями Администрации и подведомственными муниципальными учреждениями при подготовке ответов
+
+55\. Настоящий раздел устанавливает порядок действий оператора при поступлении сообщений жителей, содержательный ответ на которые требует фактических сведений профильных подразделений Администрации либо подведомственных муниципальных учреждений, не участвующих в работе служебной группы (далее — профильные подразделения). Порядок применяется с учетом подпункта «а» пункта 2.4 Соглашения об информационном взаимодействии при работе с сообщениями граждан, размещенными в социальных сетях, заключенного 23.12.2025 между Центром управления регионом в Камчатском крае и Администрацией Елизовского муниципального округа, предусматривающего ежедневные совместные консультации с целью поиска вариантов решения и подготовки качественных ответов. Маршрутизация сообщений по профильным подразделениям, сроки направления фактических сведений и эскалация координатору в программном коде Чат-бота не автоматизированы и обеспечиваются операторами организационно.  
+56\. Оператор Чат-бота не несет ответственности за фактическое содержание ответа жителю по вопросам, выходящим за пределы зоны его служебной компетенции. Оператор обеспечивает прием сообщения, классификацию вопроса, направление запроса фактических сведений в адрес профильного подразделения, контроль соблюдения внутренних сроков, подготовку и направление ответа жителю в соответствии с разделом 7 настоящего Регламента. Профильное подразделение, к компетенции которого относится поставленный в сообщении вопрос, несет ответственность за достоверность, полноту, своевременность и пригодность для использования в ответе жителю направленных оператору фактических сведений.  
+57\. К зоне служебной компетенции оператора, в пределах которой оператор подготавливает и направляет ответ жителю самостоятельно, относятся вопросы:  
+1\) о работе Чат-бота, способах подачи сообщения, статусе ранее поданного сообщения, использовании сценариев главного меню Чат-бота;  
+2\) справочного характера, ответы на которые включены в значения настраиваемых параметров Чат-бота;  
+3\) относящиеся к функциям Администрации и ее Территориальных управлений (в том числе функциям, ранее осуществлявшимся Администрацией Елизовского городского поселения), ответы на которые могут быть подготовлены специалистами отдела по работе с обращениями граждан на основании имеющихся у них сведений;  
+4\) включенные во внутренний справочный материал, формируемый координатором АЕМО.  
+58\. При определении, что для подготовки ответа на сообщение жителя требуется направление запроса фактических сведений в адрес профильного подразделения, оператор:  
+1\) направляет жителю промежуточный ответ в личной переписке с Чат-ботом — в срок не более 30 (тридцати) минут с момента определения вопроса вне зоны служебной компетенции оператора. Промежуточный ответ содержит сведения о принятии сообщения в работу, о направлении запроса профильным специалистам и об ориентировочном сроке направления ответа;  
+2\) формирует запрос фактических сведений по форме, установленной Приложением 3 к настоящему Регламенту, и направляет указанный запрос в адрес профильного подразделения — в срок не более 30 (тридцати) минут с момента направления жителю промежуточного ответа;  
+3\) фиксирует факт направления запроса и реквизиты адресата в служебной группе сообщением с цитированием карточки обращения.  
+59\. Направление жителю промежуточного ответа с формулировками «не относится к нашей компетенции», «не занимаемся данным вопросом», «обращайтесь в другой орган» без указания компетентного подразделения либо органа и без обеспечения дальнейшей передачи запроса не допускается.  
+60\. Запрос фактических сведений, направляемый оператором в адрес профильного подразделения, передается одним из следующих способов:  
+1\) через служебную групповую переписку в мессенджере MAX (при наличии в служебной группе представителя профильного подразделения);  
+2\) посредством служебного телефонного обращения к специалисту профильного подразделения с фиксацией факта обращения в служебной группе с указанием фамилии, инициалов специалиста профильного подразделения, даты, времени и существа переданного запроса;  
+3\) посредством служебной электронной почты Администрации с приложением формы запроса фактических сведений, установленной Приложением 3 к настоящему Регламенту.  
+61\. Направление запросов через мессенджеры, не относящиеся к национальному мессенджеру MAX, и через иные незащищенные каналы связи не допускается. Включение в запрос персональных данных третьих лиц, не относящихся непосредственно к существу поставленного жителем вопроса, не допускается.  
+62\. Сроки направления фактических сведений профильным подразделением в адрес оператора устанавливаются с учетом целевых сроков ответа жителю, установленных Таблицей 2 настоящего Регламента, и составляют:  
+1\) для сообщений категории высокой важности — не более 1 (одного) рабочего часа с момента получения запроса от оператора;  
+2\) для сообщений со стандартной категорией важности — не более 2 (двух) рабочих часов с момента получения запроса от оператора;  
+3\) для сообщений, требующих проведения проверочных действий, выезда на объект или иных организационных мероприятий, — в срок, согласованный с оператором при направлении запроса, с обязательным направлением промежуточных фактических сведений в течение 4 (четырех) рабочих часов с момента получения запроса.  
+63\. Срок направления фактических сведений профильным подразделением составляет не более половины целевого срока ответа жителю, что обеспечивает оператору необходимое время на оформление ответа в соответствии со Стандартом качества ответов.  
+64\. Фактические сведения, направляемые профильным подразделением оператору, представляются в форме, пригодной для использования в ответе жителю, и содержат:  
+1\) подтверждение либо мотивированное отрицание отнесения вопроса к компетенции профильного подразделения. В случае отрицания указывается орган либо организация, к компетенции которой вопрос относится, с обоснованием;  
+2\) описание фактической ситуации на дату подготовки сведений;  
+3\) сведения о принятых либо планируемых мерах с указанием конкретных сроков и ответственных исполнителей;  
+4\) указание на необходимость подачи жителем официального обращения через каналы, предусмотренные разделом 2 настоящего Регламента, в случае если поставленный вопрос требует рассмотрения в порядке, установленном Федеральным законом № 59-ФЗ;  
+5\) перечень сведений, составляющих персональные данные третьих лиц и не подлежащих включению в ответ жителю.  
+65\. Направление профильным подразделением оператору сведений с формулировкой «вопрос не относится к нашей компетенции» без указания компетентного органа или организации и без передачи имеющихся фактических сведений в части собственной компетенции не допускается.  
+66\. При получении от профильного подразделения фактических сведений оператор подготавливает ответ жителю на основании полученных сведений в соответствии со Стандартом качества ответов, и направляет ответ жителю одним из способов, установленных разделом 7 настоящего Регламента, в пределах целевого срока, установленного Таблицей 2 настоящего Регламента. Оператор не вправе изменять фактическое содержание сведений, полученных от профильного подразделения, и вправе приводить формулировки в соответствие с требованиями Стандарта качества ответов без изменения фактического содержания.  
+67\. При нарушении профильным подразделением срока направления фактических сведений оператор:  
+1\) не позднее чем за 30 (тридцать) минут до истечения срока направляет в адрес профильного подразделения уведомление о приближающемся истечении срока тем же способом, которым был направлен исходный запрос;  
+2\) при истечении срока без получения фактических сведений направляет жителю в личной переписке с Чат-ботом уточняющее сообщение о продлении срока подготовки ответа с указанием нового предполагаемого срока;  
+3\) информирует координатора АЕМО о факте нарушения профильным подразделением срока сообщением в служебной группе с цитированием карточки обращения.  
+68\. Координатор АЕМО при систематических нарушениях профильным подразделением сроков (более 3 (трех) случаев в течение одного календарного месяца) уведомляет руководителя соответствующего структурного подразделения Администрации либо подведомственного муниципального учреждения для принятия мер.  
+69\. Если поставленный в сообщении вопрос относится к компетенции иного органа местного самоуправления, исполнительного органа Камчатского края либо федерального органа государственной власти, оператор направляет жителю в личной переписке с Чат-ботом ответ с указанием органа, к компетенции которого относится вопрос, способов обращения в указанный орган и (при наличии) ссылок на соответствующие официальные ресурсы. Если поставленный вопрос отвечает признакам обращения, установленным статьей 4 Федерального закона № 59-ФЗ, оператор дополнительно информирует жителя о необходимости подачи официального обращения через каналы, предусмотренные разделом 2 настоящего Регламента. Положения статьи 8 Федерального закона № 59-ФЗ об обязательной переадресации обращения в компетентный орган и статьи 9 указанного Федерального закона об обязательности принятия обращения к рассмотрению при работе через Чат-бот не применяются на основании раздела 2 настоящего Регламента.  
+70\. При относимости сообщения жителя одновременно к компетенции нескольких профильных подразделений оператор направляет запросы фактических сведений в каждое из соответствующих подразделений с указанием в запросе перечня одновременных получателей. Сводный ответ жителю подготавливается оператором на основании сведений всех получателей запроса.  
+71\. Фактические сведения, полученные от профильных подразделений в порядке настоящего раздела и обезличенные путем исключения персональных данных и сведений, не подлежащих публичному распространению, обобщаются координатором АЕМО в форме внутреннего справочного материала, предназначенного для использования операторами при подготовке ответов на типовые сообщения. Внутренний справочный материал включает три уровня сведений: ссылки на нормативные правовые акты и установленные ими правила; описание типовых ситуаций; готовые формулировки ответов на часто поступающие вопросы.  
+72\. Внутренний справочный материал подлежит актуализации координатором АЕМО при наступлении любого из следующих оснований:  
+1\) изменение законодательства Российской Федерации, нормативных правовых актов Камчатского края или муниципальных правовых актов Администрации, затрагивающее содержание справочного материала, — в срок не более 1 (одного) рабочего дня со дня, когда координатору АЕМО стало известно об изменении;  
+2\) поступление от операторов сведений о неточности или неполноте справочного материала;  
+3\) выявление сообщений, на которые операторы не смогли подготовить ответ на основании имеющегося справочного материала;  
+4\) выявление по результатам анализа поступающих сообщений новой часто встречающейся тематики.  
+73\. При повторном поступлении сообщения по тематике, отраженной во внутреннем справочном материале, в неизменных фактических обстоятельствах оператор направляет ответ жителю на основании указанного справочного материала без направления повторного запроса в профильное подразделение, за исключением случаев, требующих актуализации сведений. Распределение тематик сообщений между профильными подразделениями Администрации и подведомственными муниципальными учреждениями устанавливается отдельным правовым актом Администрации.
+
+# 9\. Информационные рассылки
+
+74\. Чат-бот обеспечивает возможность направления подписавшимся жителям информационных сообщений муниципального характера: о чрезвычайных ситуациях, отключениях коммунальных служб и проводимых работах.  
+75\. Подписка жителя на рассылку оформляется добровольно через интерактивную кнопку в главном меню Чат-бота либо командой /subscribe. При оформлении подписки житель дает отдельное согласие на обработку персональных данных в целях направления информационных сообщений. Согласие фиксируется в реквизите consent\_broadcast\_at записи жителя. Указанное согласие является самостоятельным по отношению к согласию на обработку персональных данных в целях работы с обращением: отдельное согласие на каждую самостоятельную цель обработки обеспечивает конкретность и предметность согласия и его оформление отдельно от иных информации и документов (часть 1 статьи 9 Федерального закона № 152-ФЗ).  
+76\. Отказ от подписки оформляется одной из следующих операций: нажатие кнопки «Отписаться от рассылки» под любым сообщением рассылки, использование переключателя в главном меню Чат-бота, направление команды /unsubscribe.  
+77\. Подготовка и направление информационной рассылки осуществляется координатором АЕМО либо специалистом с ролью «it» через мастер /broadcast. Мастер предусматривает: ввод текста рассылки (не более 1000 (одной тысячи) символов), отображение предпросмотра с указанием числа получателей, подтверждение оператором, отправку сообщений с ограничением скорости (по умолчанию 1 (одно) сообщение в секунду, параметр BROADCAST\_RATE\_LIMIT\_PER\_SEC).  
+78\. Оператор вправе приложить к рассылке фотографии в количестве от 1 (одной) до значения настраиваемого параметра broadcast\_max\_images (по умолчанию 5 (пять), допустимый диапазон от 1 до 20). Приложенные фотографии направляются каждому подписчику в составе исходной рассылки. Карточка предпросмотра шага подтверждения мастера отображает количество приложенных фотографий и сами фотографии. При превышении установленного лимита Чат-бот выводит оператору предупреждение с указанием числа приложенных и числа направляемых фотографий; излишние фотографии не направляются.  
+79\. Между моментом подтверждения отправки рассылки оператором и моментом начала фактической отправки жителям Чат-бот выдерживает паузу 5 (пять) минут для возможности отмены при обнаружении ошибки. Для рассылок неотложного характера, помеченных в тексте маркером \[ЧС\] (в начале текста либо после пробела, без учета регистра), пауза сокращается до 30 (тридцати) секунд. Указанные значения паузы зафиксированы в программном коде Чат-бота и не настраиваются через параметры окружения. Использование маркера \[ЧС\] без действительной чрезвычайной ситуации не допускается — это снижает доверие жителей к маркеру и в перспективе приводит к игнорированию рассылок о реальных чрезвычайных ситуациях.  
+80\. В период паузы и в период выполнения рассылки в служебной группе доступна кнопка «Экстренно остановить». Указанная кнопка доступна оператору с любой ролью и предназначена для экстренного прекращения рассылки в случае выявления ошибки.  
+81\. Координатор АЕМО либо специалист с ролью «it» может сохранять часто используемые тексты информационных рассылок в качестве шаблонов через мастер «Шаблоны рассылок» в панели /op\_help. Шаблон содержит заголовок (для идентификации в перечне) и текст рассылки. При запуске мастера /broadcast доступна функция применения шаблона — выбор шаблона подставляет его текст в качестве черновика, дальнейшая отправка происходит в порядке, установленном настоящим разделом.  
+82\. Рассылка направляется исключительно жителям, имеющим действующее согласие на обработку персональных данных в целях направления информационных сообщений и не заблокированным в Чат-боте.  
+83\. Сведения о направленных рассылках сохраняются в журнале действий с указанием количества доставленных и недоставленных сообщений.
+
+# 10\. Защита персональных данных
+
+84\. В Чат-боте обрабатываются идентификатор аккаунта MAX (max\_user\_id), имя, телефон, населенный пункт, адрес проблемы, текст, вложения и переписка, сведения о согласии, диалоге и доставке. Идентификатор MAX остается персональными данными, пока позволяет связать запись с человеком; отсутствие имени и телефона само по себе не означает обезличивания. При добровольной передаче геолокации координаты используются для определения адреса и могут временно сохраняться в техническом событии. Специальные категории данных и биометрические данные для установления личности не запрашиваются; обычная фотография проблемы не считается автоматически биометрией. При непреднамеренном поступлении чувствительных сведений оператор прекращает их дальнейшую пересылку, ограничивает доступ и сообщает ответственному за ПДн и специалисту с ролью «it». Они проверяют основание обработки, организуют блокирование, прекращение обработки и уничтожение при отсутствии основания, включая подконтрольные копии, по внутренней инструкции. Предупреждение пользователю не является техническим запретом на поступление таких данных; прямое редактирование рабочей базы без согласованной процедуры не применяется.
+85\. Факт и время согласия, отзыва и подписки сохраняются в базе. Для нового согласия на обработку сообщения сохраняются фактически показанный текст, дата и время, хеш редакции и связь с запросом согласия. История доступна уполномоченным сотрудникам через карточку обращения и аудиторию. Если исторический текст не сохранен, интерфейс должен сообщать об отсутствии данных; подставлять текущую редакцию запрещается.
+86\. Применимый уровень защищенности определяет Оператор по результатам оценки состава данных, актуальных угроз и фактической системы в соответствии с постановлением Правительства Российской Федерации от 01.11.2012 № 1119. Репозиторий и предупреждение не направлять чувствительные сведения не подтверждают автоматически четвертый уровень. До утверждения регламента ответственное лицо оформляет оценку и необходимые меры защиты.
+87\. Программно-технические меры защиты персональных данных оцениваются в составе необходимого набора мер с учетом приказа Федеральной службы по техническому и экспортному контролю от 18.02.2013 № 21 (в том числе меры групп идентификации и аутентификации субъектов доступа, управления доступом, регистрации событий безопасности). Требования к учету машинных носителей, ведению (хранению) журналов событий безопасности и иные организационные меры обеспечиваются Администрацией в соответствии с применимыми требованиями уполномоченных федеральных органов исполнительной власти в области информационной безопасности. Перечень реализованных в программном коде защитных механизмов приведен в разделе 11 настоящего Регламента.
+88\. Право субъекта персональных данных на доступ к своим персональным данным и сведениям об их обработке (статья 14 Федерального закона № 152-ФЗ) реализуется через возможность жителя получить командой /export выгрузку своих персональных данных, обращений, переписки и сведений о вложениях в машиночитаемом виде (при большом объеме выгрузка направляется несколькими сообщениями) и просмотреть свои обращения в разделе «Мои обращения» Чат-бота. Дополнительно сведения об операторе и о порядке обработки персональных данных доводятся до жителя через политику данных бота, предоставляемую отдельным файлом. Параметр policy\_url содержит временную справочную ссылку на ранее опубликованную районную политику; его нельзя выдавать за подтверждение утверждения политики округа.
+89\. Право на отзыв согласия (часть 2 статьи 9 Федерального закона № 152-ФЗ) реализуется через интерактивный сценарий «Уйти из бота» в подменю «Настройки и помощь», предусматривающий три варианта действий жителя:  
+1\) отключение получения рассылки с сохранением согласия на обработку персональных данных и истории обращений;  
+2\) отзыв согласия на обработку персональных данных с прекращением автоматических ответов через Чат-бот и отдельной оценкой дальнейшей работы по уже поданным сообщениям;
+3\) немедленное удаление персональных данных в рабочей базе данных Чат-бота.  
+90\. Обязанность Администрации как оператора прекратить обработку и уничтожить персональные данные жителя в случае отзыва согласия, если их хранение более не требуется для целей обработки (часть 5 статьи 21 Федерального закона № 152-ФЗ — в срок не более 30 (тридцати) дней с даты поступления отзыва), реализуется двумя способами:  
+1\) самостоятельно жителем — командой /forget в личной переписке с Чат-ботом либо нажатием соответствующей кнопки в сценарии «Уйти из бота»;  
+2\) по запросу субъекта персональных данных, направленному в Администрацию, — специалистом с ролью «it» командой /erase max\_user\_id=\<идентификатор\> или /erase phone=\<номер\>, либо нажатием кнопки «Удалить ПДн» в карточке обращения. Оба формата команды выполняются одним обработчиком.  
+91\. Отзыв согласия выполняется жителем в меню «Настройки и помощь» → «Уйти из бота» → «Отозвать согласие». Новые сообщения без нового согласия не принимаются, подписка отключается, текущий диалог и черновик анкеты очищаются. Автоматическая отправка ответов через Чат-бот после отзыва блокируется. Ранее поданные открытые сообщения сохраняются до правовой оценки и очистки. Самостоятельное законное основание продолжения не настроено и не доказано самим наличием карточки; уполномоченное лицо оценивает конкретный случай и при наличии основания организует дальнейшую работу через официальный канал вне Чат-бота. Кнопка «Удалить данные» в том же меню и служебная операция /erase запускают немедленную очистку рабочей базы: закрывают открытые обращения, удаляют запись жителя, содержимое, адреса, вложения, черновики и попытки ответов; оставшиеся записи обращений связываются с общей технической записью. Для известных учтенных сообщений MAX подготавливается очередь удаления, неопределенные исходы сверяются вручную. Незавершенная очистка известных резервных копий блокирует новые снимки. Исторические копии без идентификатора, скачанные файлы, версии внешних объектов и снимки проверяются отдельно по внутренней инструкции. Отзыв или удаление не являются блокировкой за злоупотребления.
+92\. Поиск данных для плановой очистки после отзыва начинается с 29-го дня и выполняется ежечасно, с резервом до предельных 30 дней при отсутствии самостоятельного основания продолжать обработку. Перед удалением согласие перепроверяется под блокировкой записи. Незакрытые обращения закрываются; заранее направляется предупреждение о приближении срока. Недоступность процесса не продлевает законный срок: специалист с ролью «it» контролирует выполнение и иные копии. Если уничтожение в применимый срок невозможно, ответственный оформляет основание, блокирование и предельный срок по части 6 статьи 21 Федерального закона № 152-ФЗ; это не автоматическая отсрочка для всех резервных копий.
+93\. Пять лет — операционный горизонт для работы с сообщениями и оценки принятых мер, а не автоматически применимый архивный срок дела. Нижняя граница очистки определяется по самой поздней из дат: закрытия (при его отсутствии — ответа, иначе — подачи), начала текущего периода при возобновлении и последнего принятия нового обращения в работу. Более поздняя переписка также сдвигает очистку. Принятие нового обращения в работу сохраняется отдельной отметкой и не переносит начало срока первого ответа. Поэтому обращение, поданное шесть лет назад и возобновленное сегодня, не очищается по старой дате подачи. Задача очищает текст, адрес и сведения о вложениях, сохраняя часть метаданных, и запрашивает очистку известных копий через инвентарь удаления и процедуру резервных копий. Известные сообщения MAX ставятся в очередь; подтвержденный результат и незавершенные действия различаются. Неизвестные исторические идентификаторы, скачанные файлы, хранение платформой MAX, версии S3, внешние снимки и журналы хоста требуют отдельной проверки. Возможность повторной идентификации по остаткам оценивается отдельно. Достижение цели, отзыв и другие основания могут требовать более раннего удаления. Архивный срок и номенклатура определяются по фактическому виду документа и применимому перечню; одной аналогии с обращениями по Федеральному закону № 59-ФЗ недостаточно.
+94\. При выявлении инцидента, связанного с нарушением безопасности персональных данных и повлекшего неправомерную или случайную передачу (предоставление, распространение, доступ) персональных данных, Администрация уведомляет уполномоченный орган по защите прав субъектов персональных данных (Федеральную службу по надзору в сфере связи, информационных технологий и массовых коммуникаций) в порядке и сроки, установленные частью 3.1 статьи 21 Федерального закона № 152-ФЗ (введена Федеральным законом от 14.07.2022 № 266-ФЗ): в течение 24 (двадцати четырех) часов — о факте инцидента, его предполагаемых причинах, предполагаемом вреде правам субъектов персональных данных и принятых мерах по устранению последствий; в течение 72 (семидесяти двух) часов — о результатах внутреннего расследования и о лицах, действия которых стали причиной инцидента (при их установлении). Автоматическая фиксация такого инцидента в журнале действий Чат-бота не предусмотрена; уведомление готовится ответственными должностными лицами Администрации.
+
+# 11\. Защитные механизмы информационной безопасности
+
+95\. В Чат-боте реализованы следующие программно-технические меры защиты, подлежащие оценке в составе мер защиты информационной системы:
+1\) защита от снятия блокировки жителем через устаревшие интерактивные кнопки согласия — повторное нажатие старой кнопки «Согласен» в истории чата не снимает признак блокировки жителя; разблокировка возможна только через операцию специалиста с ролью «it»;  
+2\) обязательное шифрование резервных копий базы данных алгоритмом GPG (AES-256) — резервные копии, не прошедшие шифрование, на сервере не сохраняются (создание незашифрованной копии допускается только при явной конфигурации BACKUP\_ALLOW\_UNENCRYPTED для целей разработки); при сбое на стадии шифрования незашифрованный файл автоматически удаляется;  
+3\) защита от подмены адресата операторского ответа через подделку маркера обращения — маркер обращения принимается Чат-ботом только из сообщений, отправленных самим Чат-ботом;  
+4\) ограничение значений настраиваемых параметров-ссылок официальными доменами — параметры policy\_url, electronic\_reception\_url, udth\_schedule\_url, udth\_schedule\_intermunicipal\_url принимаются только при принадлежности к доменам elizovomr.ru, kamgov.ru, gosuslugi.ru, kamchatka.gov.ru (включая поддомены); перечень доменов изменяется только правкой программного кода Чат-бота и не настраивается через интерфейс; проверка распространяется в том числе на ссылки, вложенные в параметры запроса разрешенной ссылки, и на ссылки с использованием визуально неотличимых символов из других алфавитов;  
+5\) ограничение скорости дополнений к обращению одним жителем — не более 5 (пяти) дополнений в час на одно обращение, не чаще одного раза в 30 (тридцать) секунд;  
+6\) проверка активности роли оператора непосредственно перед доставкой каждого ответа жителю — деактивированный оператор не может направить ответ, даже если до момента деактивации он успел инициировать формирование ответа;  
+7\) отказ от обработки события при невозможности зафиксировать ключ идемпотентности — любая ошибка записи ключа идемпотентности приводит к отбрасыванию события, что исключает повторное срабатывание изменяющей данные операции через искусственное замедление базы данных;  
+8\) маскирование персональных данных в служебных уведомлениях — номера телефонов в служебных уведомлениях маскируются (полный номер виден только при адресном запросе через команду /find\_resident);  
+9\) двухслойная проверка полномочий оператора при команде /reply — проверка роли и принадлежности к перечню активных операторов выполняется независимо от способа подачи команды;  
+10\) защита от параллельного двойного запуска программного сервиса — вторая копия сервиса при запуске обнаруживает работающую первую и завершается, что исключает дублирование ответов и рассылок;  
+11\) режим ограничения исходящих сетевых соединений сервера перечнем разрешенных адресатов (серверов платформы MAX) — обеспечивается служебным сценарием на уровне операционной системы сервера и вводится в постоянную эксплуатацию отделом цифрового развития.  
+96\. Чат-бот применяет автоматическую сверку входящих ссылок с открытыми источниками сведений о вредоносных и фишинговых ресурсах: URLhaus, ThreatFox и (при наличии заданного ключа PHISHTANK\_APP\_KEY) PhishTank. Иные источники сведений о вредоносных ресурсах в программном коде не используются. Сведения обновляются ежечасно; при устаревании указанных сведений более чем на 6 (шесть) часов специалисту с ролью «it» направляется критическое уведомление, пробивающее тихие часы. В карточках обращений ссылки, поступившие от жителей, обезвреживаются (процедура «defang»): между протоколом и доменом вставляется разделитель, в результате чего мессенджер MAX не определяет такой текст как переходящую ссылку. При проверке ссылок применяется нормализация по стандарту Unicode (NFKC) для выявления адресов с использованием совместимых и полноширинных символов.  
+97\. Чат-бот предоставляет три эндпоинта проверки работоспособности на локальном сетевом порте 8080: /livez (проверка «жив» — только внутренний сигнал работы, без обращения к базе данных; используется проверкой Docker, внешним контролем работоспособности и процедурой автоматического развертывания); /readyz (проверка готовности — сигнал работы и контрольный запрос к базе данных); /healthz (для обратной совместимости равнозначен /readyz). Указанные эндпоинты доступны только с самого сервера (локальный интерфейс 127.0.0.1) и наружу не публикуются, что согласуется с положением раздела 3 настоящего Регламента о работе Чат-бота без предоставления входящего публичного сетевого доступа. Полная диагностическая информация отдается только локальным запросам; внешним — лишь признак работоспособности.  
+98\. Контроль состояния защитных механизмов осуществляется специалистом с ролью «it» в соответствии с внутренней технической документацией отдела цифрового развития. Изменения в перечне защитных механизмов вносятся в порядке, установленном разделом 17 настоящего Регламента.
+
+# 12\. Блокировка жителя
+
+99\. Блокировка жителя в Чат-боте применяется как техническая мера защиты от злоупотреблений: массовых однотипных сообщений, угроз, оскорблений оператора, мошенничества, распространения незаконных материалов, действий, направленных на нарушение работы Чат-бота или служебной группы.  
+100\. Критика работы должностных лиц и муниципальных служб не является основанием для блокировки.  
+101\. Право блокировки и разблокировки жителя предоставлено исключительно специалисту с ролью «it». Указанное право реализуется нажатием кнопки «Заблокировать» или «Разблокировать» в карточке обращения жителя либо в разделе «Аудитория и согласия» панели быстрых действий /op\_help.  
+102\. Применению блокировки предшествует обсуждение в служебной группе с участием координатора АЕМО. Координатор АЕМО и иные операторы доводят основания для блокировки до специалиста с ролью «it» сообщением в служебной группе в порядке, установленном разделом 4 настоящего Регламента.  
+103\. Заблокированный житель не может направлять в Чат-бот новые сообщения, получать ответы операторов через Чат-бот и получать информационные рассылки. Открытые обращения такого жителя закрываются автоматически.  
+104\. Блокировка в Чат-боте не ограничивает право жителя обратиться в Администрацию по иным официальным каналам связи.  
+105\. Все действия по блокировке и разблокировке жителей фиксируются в журнале действий.
+
+# 13\. Журнал действий операторов
+
+106\. Чат-бот ведет автоматизированный журнал значимых действий операторов и системных событий безопасности (таблица audit\_log). В журнал фиксируются: идентификатор инициатора действия, тип действия, целевой объект, дата и время.  
+107\. Перечень типов действий, фиксируемых в журнале:  
+1\) reply — ответ жителю цитированием (свайп-ответ);  
+2\) reply\_via\_command — ответ жителю командой /reply;  
+3\) reopen — возобновление обращения;  
+4\) close — закрытие обращения без ответа;  
+5\) erase — удаление персональных данных жителя специалистом с ролью «it»;  
+6\) self\_erase — удаление персональных данных по инициативе жителя;  
+7\) self\_consent\_revoke — отзыв жителем согласия на обработку персональных данных в сценарии «Уйти из бота»;  
+8\) self\_subscribe\_broadcast — оформление жителем подписки на рассылку;  
+9\) block — блокировка жителя;  
+10\) unblock — разблокировка жителя;  
+11\) broadcast\_send — направление информационной рассылки;  
+12\) broadcast\_stop — экстренная остановка рассылки;  
+13\) broadcast\_cancel\_cooldown — отмена рассылки в период паузы перед отправкой;  
+14\) broadcast\_template\_create, broadcast\_template\_update, broadcast\_template\_rename, broadcast\_template\_clone, broadcast\_template\_delete — создание, изменение, переименование, копирование и удаление шаблона рассылки;  
+15\) operator\_upsert — регистрация или обновление сведений об операторе;  
+16\) operator\_role\_change — изменение роли оператора;  
+17\) operator\_deactivate — мягкая деактивация оператора;  
+18\) operator\_reactivate — реактивация ранее деактивированного оператора;  
+19\) operator\_auto\_deactivated\_stale — автоматическая деактивация оператора, покинувшего служебную группу;  
+20\) setting\_update — изменение значения настройки Чат-бота;  
+21\) setting\_list\_add, setting\_list\_del — добавление и удаление отдельного элемента списочного настраиваемого параметра (topics, localities);  
+22\) setting\_obj\_add, setting\_obj\_del — добавление и удаление отдельного элемента объектного настраиваемого параметра (emergency\_contacts, transport\_dispatcher\_contacts);  
+23\) settings\_pr\_created — создание запроса на включение изменений (pull request) для синхронизации настроек с репозиторием Чат-бота;  
+24\) resident\_search\_found, resident\_search\_not\_found — результат поиска жителя командой /find\_resident (с маскированием телефона в журнале);  
+25\) auto\_erase\_pdn\_retention — очистка данных в рабочей базе после отзыва согласия.
+108\. Тексты сообщений жителей, ответов операторов, рассылок и значения измененных настроек в журнале действий не сохраняются. Указанные сведения хранятся в основных таблицах базы данных и подлежат раскрытию исключительно в установленном законодательством порядке.  
+109\. Записи журнала действий хранятся 1 (один) год (365 дней) с момента события, после чего автоматически уничтожаются (параметр AUDIT\_LOG\_RETENTION\_DAYS, диапазон 30—3650 дней). Срок предусмотрен типовой конфигурацией и подлежит утверждению Оператором в соответствии с принципом ограничения хранения персональных данных (часть 7 статьи 5 Федерального закона № 152-ФЗ — хранение не дольше, чем требуют цели обработки) и обеспечивает возможность обнаружения, идентификации и анализа инцидентов информационной безопасности на протяжении достаточного периода. Записи журнала, подтверждающие уничтожение (обезличивание) персональных данных, хранятся 3 (три) года (1095 дней, параметр AUDIT\_ERASURE\_RETENTION\_DAYS) — в течение периода, когда подтверждение исполнения части 5 статьи 21 Федерального закона № 152-ФЗ может быть истребовано уполномоченным органом. Указанная задача выполняется по расписанию ежедневно в 04 часа 15 минут.
+
+# 14\. Резервное копирование и фоновые задачи
+
+110\. Планировщик регистрирует 23 обязательные задачи и одну дополнительную при наличии HEALTHCHECK\_URL, всего до 24. Ниже указаны идентификаторы исходного кода и фактические условия запуска. Время календарных триггеров задается TIMEZONE (по умолчанию Asia/Kamchatka); рабочие ограничения сверяются с сохраненным расписанием. Повторные тики объединяются, одновременные экземпляры одной задачи ограничены; это не обеспечивает однократность внешнего MAX API. Ежемесячный XLSX формируется за предыдущий календарный месяц отдельно от ручной команды /stats.
+
+Таблица 3
+
+| № п/п | Идентификатор задачи | Запуск | Назначение |
+| :---: | ----- | ----- | ----- |
+| 1 | 2 | 3 | 4 |
+| 1\. | initial-card-recovery | при старте и каждые 60 секунд | восстановление не начатых публикаций и истории подтвержденных ответов; неопределенные исходы без автоматической повторной отправки |
+| 2\. | pulse-hourly | каждый час 24/7 в :05 | проверка возможности отправить включённый пульс не чаще раза в день |
+| 3\. | pulse-workhours-extra | пн–пт 09:00–17:59 в :35 | дополнительная попытка пульса, если сегодня ещё не отправлялся |
+| 4\. | startup-pulse | +5 секунд после старта (DateTrigger, одноразово) | подтверждение, что процесс поднялся |
+| 5\. | health-selfcheck | каждые HEALTHCHECK_INTERVAL_MIN мин (5 по умолчанию) | мониторит heartbeat, шлёт алёрт при healthy↔unhealthy |
+| 6\. | healthcheck-ping | интервал HEALTHCHECK_INTERVAL_MIN; только при заданном HEALTHCHECK_URL | внешний сигнал мониторинга |
+| 7\. | funnel-watchdog | ежечасно в :15 | сброс зависших анкет воронки приёма обращения |
+| 8\. | open-reminder-workhours | ежечасно в :10; действующее рабочее окно, тихие часы и переключатель | обновление единой панели очереди |
+| 9\. | overdue-reminder-workhours | ежечасно в :40; действующее рабочее окно, тихие часы и переключатель | обновление той же панели очереди |
+| 10\. | monthly-stats | 1 числа в 09:00 | автоматический отчёт за прошлый месяц |
+| 11\. | events-retention | ежедневно 04:00 | удаление событий старше 30 дней (idempotency cleanup) |
+| 12\. | pdn-retention | ежедневно в 04:30 | проверка очистки с 29-го дня после отзыва и предупреждение о приближении срока |
+| 13\. | pdn-retention-hourly | ежечасно в :20 | дополнительная проверка очистки после отзыва без повторного предупреждения |
+| 14\. | appeals-5y-retention | ежедневно в 04:45 | очистка содержимого по операционному пятилетнему правилу |
+| 15\. | audit-log-retention | ежедневно 04:15 | удаление audit_log старше AUDIT_LOG_RETENTION_DAYS (default 365), 152-ФЗ |
+| 16\. | events-retention-catchup | +30 секунд после старта (DateTrigger, одноразово) | догоняющий прогон events-retention, если суточный тик был пропущен простоем |
+| 17\. | pdn-retention-catchup | +30 секунд после старта (DateTrigger, одноразово) | догоняющий прогон pdn-retention, если суточный тик был пропущен простоем |
+| 18\. | appeals-5y-retention-catchup | +30 секунд после старта (DateTrigger, одноразово) | догоняющий прогон appeals-5y-retention, если суточный тик был пропущен простоем |
+| 19\. | audit-log-retention-catchup | +30 секунд после старта (DateTrigger, одноразово) | догоняющий прогон audit-log-retention, если суточный тик был пропущен простоем |
+| 20\. | stale-operators-cleanup | ежедневно 04:20 | пометить покинувших служебную группу операторов как неактивных |
+| 21\. | threat-intel-refresh | ежечасно в :17 | обновление локального кэша URL-хостов (URLhaus + ThreatFox + PhishTank) |
+| 22\. | broadcast-draft-reaper | ежечасно в :37 | DRAFT-рассылки старше 30 минут → FAILED |
+| 23\. | db-backup | BACKUP_DAY_OF_WEEK, BACKUP_HOUR, BACKUP_MINUTE; по умолчанию воскресенье 03:00 | необязательный бэкап при заданном локальном каталоге и отсутствии незавершенной очистки копий |
+| 24\. | db-backup-verify | 1-го числа каждого месяца в 04:30 (BACKUP_VERIFY_*) | проверка пригодности бэкапа: свежайший дамп расшифровывается потоком (без диска и БД), сверяется сигнатура pg_dump; ловит потерю GPG-фразы и обрезанный файл |
+
+111\. Обе проверки пульса используют общую суточную отметку: при включенном пульсе и вне тихих часов допускается не более одного рутинного уведомления в день; тики :05 и :35 не означают одно или два сообщения каждый час. Сигнал запуска и критические сигналы здоровья учитываются отдельно. Задачи очистки работают независимо от выходных; при старте через 30 секунд выполняются четыре догоняющие проверки ретенции, но бэкап автоматически в них не включен.
+112\. Расчет рабочего времени исключает субботу, воскресенье, обед и праздничные даты из снимка периода; текущие напоминания используют действующее расписание. При отсутствии или повреждении seed/holidays.json исходная загрузка возвращает пустой список праздников с предупреждением: выходными остаются суббота и воскресенье, а не только воскресенье. Некорректная сохраненная настройка не должна молча подменяться другим календарем. Администратор проверяет покрытие календаря и обновляет его до использования новых периодов.
+113\. Дополнительно на уровне операционной системы сервера выполняется внешний контроль (watchdog) состояния Чат-бота посредством служебного сценария, запускаемого средствами планировщика хостовой операционной системы: проверка эндпоинтов /livez и /readyz; при двух последовательных сбоях — попытка перезапуска контейнера Чат-бота; при безуспешности — запись в системный журнал и (при наличии) внешнее уведомление.  
+114\. Локальная ротация резервных копий сохраняет последние BACKUP\_KEEP\_COUNT файлов по времени изменения (по умолчанию восемь). При еженедельном успешном копировании это приблизительно два месяца истории, но не гарантированный максимальный возраст копии: при простое старые копии остаются. Выгрузка во внешнее объектное хранилище выполняет копирование; удаление и версии объектов регулируются отдельной политикой хранения. Внеплановая копия создается специалистом с ролью «it» через /backup. Отсутствие BACKUP\_LOCAL\_DIR означает отключенное резервное копирование.
+115\. При возникновении сбоя еженедельного резервного копирования Чат-бот направляет в служебную группу уведомление с указанием стадии сбоя (снятие дампа базы данных, шифрование, доставка во внешнее хранилище). В случае сбоя на стадии шифрования незашифрованный файл резервной копии, оставшийся на сервере, автоматически удаляется в целях недопущения хранения персональных данных в незашифрованном виде.  
+116\. Проверка пригодности резервных копий выполняется автоматически: ежемесячно, 1-го числа, последняя резервная копия расшифровывается (что подтверждает правильность парольной фразы и целостность файла) и проверяется на соответствие формату выгрузки базы данных; о результате проверки Чат-бот направляет уведомление в служебную группу (Таблица 3). Пробное восстановление копии в отдельную базу данных в автоматическую проверку не входит и проводится в составе квартальной организационной проверки. Дополнительно не реже одного раза в квартал специалист с ролью «it» проводит организационную проверку полной процедуры восстановления в соответствии с внутренней технической документацией отдела цифрового развития.  
+117\. Восстановление выполняет специалист с ролью «it» по внутренней инструкции обработки и удаления данных. Бот останавливается, данные восстанавливаются в изолированную базу без подключения к MAX. До возобновления приема необходимо применить все удаления, отзывы и отключения подписки, произошедшие после даты копии, по независимому защищенному реестру, проверить сроки хранения, очистить персональные данные в восстановленных событиях, черновиках, попытках ответов и иных копиях. Программа подготавливает независимые HMAC-метки удаления и ограничения отзывов/подписки в ERASURE_STATE_DIR и служебный сценарий replay_erasure_tombstones.py; при восстановлении требуются актуальный каталог вместе с исходным subject.key и явно проверенный DATABASE_URL изолированной базы. Охват всех путей, исторические пробелы и состояния отзывов/подписки проверяются дополнительно; старый дамп и метки удаления сами по себе их полноту не подтверждают. Без достоверных сведений нельзя утверждать, что удаленные данные не восстановились; выпуск восстановленной базы откладывается до сверки ответственным лицом либо выбирается чистая база. Неизвестные исходы отправки не повторяются вслепую. О технических работах и результате сообщают операторам; потерянные между копией и сбоем события не считаются обработанными.
+118\. Плановая ротация секретов Чат-бота (токен бота, пароль базы данных, парольная фраза шифрования резервных копий, при наличии — секрет веб\-перехватчика, реквизиты объектного хранилища, токены доступа к репозиторию, ключи для автоматического развертывания) выполняется специалистом с ролью «it» не реже одного раза в шесть календарных месяцев. Каждый факт ротации фиксируется в журнале эксплуатации отдела цифрового развития. Внеплановая ротация выполняется немедленно при наличии оснований полагать компрометацию (увольнение сотрудника, имевшего доступ к секретам; обнаружение секрета в постороннем канале; компрометация рабочего устройства специалиста с ролью «it»). При ротации парольной фразы шифрования резервных копий прежняя парольная фраза сохраняется в защищенном хранилище паролей до полного выпадения из ротации всех резервных копий, зашифрованных прежней фразой (срок определяется по фактическому наличию копий во всех хранилищах; восемь файлов не гарантируют двухмесячный возраст).
+
+# 15\. Изменение настроек и регистрация операторов
+
+119\. Изменение настраиваемых параметров Чат-бота осуществляется специалистом с ролью «it» одним из следующих способов:  
+1\) через раздел «Настройки бота» панели быстрых действий /op\_help, обеспечивающий иерархическое меню по группам параметров (тексты для жителей, внешние ссылки, контакты, контент-каталоги, метаданные синхронизации) с подсветкой ключей, измененных в базе данных, но не синхронизированных с репозиторием Чат-бота;  
+2\) командой /setting в служебной группе.  
+120\. Запрос на изменение настраиваемого параметра Чат-бота (например, ссылки на электронную приемную при изменении адреса приемной; графика приема граждан при изменении графика; перечня тематик обращений при пересмотре отраслевого распределения; контактов экстренных служб при изменении номеров) направляется заинтересованным оператором в служебную группу с указанием изменяемого ключа и нового значения. Специалист с ролью «it» в течение одного рабочего часа выполняет изменение через меню «Настройки бота» или командой /setting, проверяет результат и подтверждает в служебной группе. При необходимости параллельно синхронизирует изменение с репозиторием через действие синхронизации.  
+121\. Перечень настраиваемых параметров Чат-бота включает 14 (четырнадцать) содержательных ключей, изменяемых операторами:  
+1\) welcome\_text — приветственное сообщение, отправляемое жителю при первом обращении к Чат-боту;  
+2\) consent\_text — текст согласия на обработку персональных данных, отображаемый жителю перед началом работы с Чат-ботом;  
+3\) commit\_author\_name — фамилия, имя, отчество, указываемые в качестве автора при синхронизации настраиваемых параметров с репозиторием Чат-бота;  
+4\) commit\_author\_email — адрес электронной почты, указываемый в качестве адреса автора при синхронизации настраиваемых параметров с репозиторием Чат-бота;  
+5\) policy\_url — ссылка на политику обработки персональных данных (только в пределах официальных доменов);  
+6\) electronic\_reception\_url — ссылка на электронную приемную (только в пределах официальных доменов);  
+7\) udth\_schedule\_url — ссылка на расписание муниципальных автобусов (только в пределах официальных доменов);  
+8\) udth\_schedule\_intermunicipal\_url — ссылка на расписание межмуниципальных маршрутов (только в пределах официальных доменов);  
+9\) appointment\_text — текст о приеме граждан главой муниципального образования;  
+10\) emergency\_contacts — контакты экстренных служб (каждый элемент содержит наименование службы и номер телефона; не менее одного элемента);  
+11\) transport\_dispatcher\_contacts — контакты диспетчерских автотранспорта (каждый элемент содержит перечень маршрутов и номер телефона; не менее одного элемента);  
+12\) topics — перечень тематик обращений, не менее 1 (одной) и не более 30 (тридцати), ограничение программное;  
+13\) broadcast\_max\_images — максимальное количество фотографий, прилагаемых оператором к одной рассылке, в диапазоне от 1 (одной) до 20 (двадцати), по умолчанию — 5 (пять);  
+14\) localities — перечень населенных пунктов Елизовского муниципального округа, не менее 1 (одного) и не более 30 (тридцати), ограничение программное.  
+122\. Дополнительно в Чат-боте предусмотрены 3 (три) служебных параметра управления тихими часами служебных уведомлений (admin\_quiet\_hours\_enabled, admin\_quiet\_hours\_start, admin\_quiet\_hours\_end), настраиваемых специалистом с ролью «it» и не входящих в перечень содержательных ключей, изменяемых операторами.  
+123\. Все изменения настроек фиксируются в журнале действий с указанием специалиста и измененного ключа. Значение настройки в журнал действий не записывается.  
+124\. Изменения значений настраиваемых параметров, определяющих содержательную часть Чат-бота (ссылок, текстов о приеме граждан, контактных сведений, перечней тематик и населенных пунктов), могут быть синхронизированы с репозиторием Чат-бота посредством создания запроса на включение изменений (pull request) через раздел «Настройки бота» панели быстрых действий /op\_help. Синхронизация обеспечивает фиксацию текущих значений настраиваемых параметров в исходных файлах Чат-бота для последующих автоматических развертываний. Параметры commit\_author\_name, commit\_author\_email, welcome\_text, consent\_text, broadcast\_max\_images и служебные параметры тихих часов не синхронизируются с репозиторием. Создание запроса на включение изменений фиксируется в журнале действий с типом действия settings\_pr\_created.  
+125\. Регистрация операторов производится в порядке, установленном разделом 4 настоящего Регламента. Алгоритм регистрации операторов командой /add\_operators предусматривает:  
+1\) добавление будущего оператора в служебную группу;  
+2\) направление будущим оператором в служебную группу команды /whoami для получения идентификатора max\_user\_id;  
+3\) формирование специалистом с ролью «it» многострочного списка операторов с указанием идентификатора max\_user\_id, роли, фамилии, имени, отчества;  
+4\) направление специалистом с ролью «it» в служебную группу команды /add\_operators со сформированным списком.  
+126\. В личной переписке с жителями команда /whoami не выполняется. Указанное ограничение реализовано в программном коде в целях исключения отображения идентификатора жителю.  
+127\. Самостоятельное повышение роли через команду /add\_operators либо через кнопочный мастер «Операторы» программно заблокировано. Изменение роли действующего оператора осуществляется специалистом с ролью «it» через карточку оператора в кнопочном мастере либо через прямой доступ к базе данных на основании письменного поручения руководителя структурного подразделения.
+
+# 16\. Ответственность
+
+128\. Координатор АЕМО и специалисты АЕМО, ЕГП (ТУ) несут ответственность за качество и сроки ответов жителям в порядке, установленном законодательством Российской Федерации, муниципальными правовыми актами Администрации, трудовым законодательством.  
+129\. Профильные подразделения Администрации и подведомственные муниципальные учреждения несут ответственность за достоверность, полноту, своевременность и пригодность для использования в ответе жителю фактических сведений, направленных оператору в порядке раздела 8 настоящего Регламента.  
+130\. Специалист отдела цифрового развития несет ответственность за: бесперебойное функционирование Чат-бота, своевременное снятие резервных копий, исполнение запросов на удаление персональных данных, конфиденциальность сведений, к которым он имеет доступ в силу своих служебных обязанностей.  
+131\. Специалист с ролью «it» не реже одного раза в квартал выполняет аудит серверной конфигурации с использованием служебного сценария, проверяющего соблюдение карты сетевых портов и привязок, права доступа к файлам конфигурации и резервным копиям, отсутствие секретов в открытом виде в журналах, размер и срок хранения резервных копий, статус автоматических обновлений операционной системы. Выявленные отклонения фиксируются в журнале эксплуатации и устраняются в течение пяти рабочих дней. Специалист с ролью «it» обеспечивает автоматический запуск Чат-бота при перезагрузке серверного оборудования посредством установки в операционной системе сервера юнита автозапуска. Служебные сценарии аудита, контроля работоспособности и юнит автозапуска являются средствами уровня операционной системы сервера; их запуск настраивается планировщиком хостовой операционной системы и в программном коде самого Чат-бота не управляется.  
+132\. При обнаружении одним оператором фактов нарушения другим оператором требований раздела 7 настоящего Регламента (тон, содержание, сроки) либо требований Стандарта качества ответов оператор уведомляет об этом непосредственного руководителя нарушителя служебной запиской. Специалист с ролью «it» по запросу руководителя выгружает из журнала действий выписку действий конкретного оператора за заданный период.  
+133\. Об инцидентах информационной безопасности (компрометация секретов; утечка персональных данных в журналах либо во внешних каналах; попытка несанкционированного доступа к Чат-боту; сбой работы Чат-бота длительностью более одного часа в рабочее время; отказ резервного копирования; обнаружение признаков фишинга в настраиваемых параметрах-ссылках) операторы и специалисты с ролью «it» сообщают в служебную группу с упоминанием специалиста с ролью «it» и параллельно — руководителю отдела цифрового развития служебной запиской. Специалист с ролью «it» в течение одного рабочего часа подтверждает прием сообщения, оценивает категорию инцидента (критический либо стандартный) и инициирует реагирование. По итогам реагирования готовится рапорт руководителю Администрации с описанием инцидента, мер реагирования, последствий и рекомендаций по предотвращению повторения. При инциденте, затрагивающем безопасность персональных данных, дополнительно исполняется обязанность уведомления уполномоченного органа в порядке раздела 10 настоящего Регламента.  
+134\. Разглашение третьим лицам сведений, ставших известными оператору в связи с работой в служебной группе, влечет ответственность, предусмотренную законодательством Российской Федерации и трудовым законодательством.
+
+# 17\. Изменение Регламента и обновление программного кода
+
+135\. Изменения и дополнения в настоящий Регламент вносятся распоряжением Администрации Елизовского муниципального округа.  
+136\. Проект изменений готовится начальником отдела по работе с обращениями граждан Администрации совместно со специалистом отдела цифрового развития.  
+137\. Изменения программного кода Чат-бота, прошедшие проверку кода и включенные в основную ветку канонического репозитория, автоматически применяются на серверном оборудовании Чат-бота в течение 10 (десяти) минут после включения. Применение выполняется автоматизированной процедурой с предварительной фиксацией текущей версии, пересборкой компонентов и проверкой работоспособности (эндпоинт /livez). При сбое проверки работоспособности происходит автоматический откат на предыдущую версию с уведомлением в системный журнал. Специалист с ролью «it» контролирует факт успешного применения изменений (сигнал жизни в служебной группе).  
+138\. Обновление внешних программных зависимостей Чат-бота (в первую очередь — клиента Bot API мессенджера MAX, прочих библиотек) выполняется специалистом с ролью «it» в плановом порядке (не реже одного раза в квартал — проверка наличия новых версий и уведомлений о безопасности) и во внеплановом порядке при выпуске критического обновления безопасности. Процедура включает сверку версии в локальной среде с версией в контейнере, находящемся в эксплуатации, изучение перечня изменений обновляемой библиотеки, подготовку запроса на включение изменений с минимальной дельтой, прохождение всех проверок непрерывной интеграции, ручную проверку критических сценариев и мониторинг работы Чат-бота в течение 24—48 часов после применения. При обнаружении регрессии выполняется откат в порядке, установленном настоящим разделом.  
+139\. Настоящий Регламент пересматривается не реже одного раза в год, а также при существенном изменении программного кода Чат-бота, изменении законодательства Российской Федерации в области персональных данных или обращений граждан, изменении организационной структуры Администрации.
+
+# 18\. Антифишинговая бдительность оператора и защита жителя от мошенничества
+
+140\. Оператор (вне зависимости от роли) обязан исходить из того, что любая ссылка, поступившая от жителя в обращении или в дополнении к обращению, является потенциально опасной до тех пор, пока обратное не подтверждено визуальной проверкой адреса в адресной строке браузера. Техническое обезвреживание ссылок в карточках обращений не отменяет обязанности оператора лично сверять адрес перед открытием.  
+141\. Оператор обязан довести до сведения жителя — в ответе на обращение либо при получении подозрительного дополнения — перечень действий, которые Администрация через Чат-бот никогда не запрашивает у жителя:  
+1\) запрос данных паспорта, страхового номера индивидуального лицевого счета, номеров банковских карт, кодов из SMS-сообщений;  
+2\) запрос оплаты государственных пошлин, штрафов, «срочной обработки» обращений;  
+3\) предложение установить стороннее мобильное приложение для «отслеживания обращения» или «получения дополнительных услуг»;  
+4\) предложение перейти по ссылке для «авторизации через портал государственных услуг» в целях «подтверждения личности»;  
+5\) звонок «от Администрации» с просьбой продиктовать SMS-код для подтверждения какого-либо действия;  
+6\) уведомление о «блокировке аккаунта жителя в мессенджере MAX» с предложением «восстановить доступ» через ссылку.  
+142\. Указанный перечень доводится до жителя через раздел «Защита от мошенников» главного меню Чат-бота, а также воспроизводится оператором в ответе на обращение либо при получении подозрительного дополнения. Техническое требование об обязательном включении перечня в приветственное сообщение в программном коде не реализовано: содержание приветственного сообщения проверяется только по длине и наличию текста, поэтому полнота антифишингового перечня обеспечивается организационно — через отдельный раздел меню «Защита от мошенников» и через настоящий Регламент.  
+143\. При получении в обращении или дополнении сведений о том, что житель стал жертвой мошенничества от лица Администрации, оператор:  
+1\) подтверждает жителю, что обращение от лица Администрации возможно исключительно через данный Чат-бот; звонки, сообщения в других мессенджерах и через сторонние интернет-страницы Администрацией не направляются;  
+2\) уведомляет жителя, что денежные средства, переведенные мошенникам добровольно, как правило, не возвращаются;  
+3\) направляет жителя для подачи заявления в органы внутренних дел Российской Федерации (лично в отделение полиции по месту жительства; единый номер экстренных служб — 112);  
+4\) фиксирует факт мошенничества в качестве дополнения к обращению жителя;  
+5\) уведомляет специалиста с ролью «it» через служебную группу — для оценки необходимости предупреждения остальных жителей через информационную рассылку либо уточнения текста приветственного сообщения.  
+144\. Оператор несет ответственность за защиту собственной учетной записи в мессенджере MAX: использование сложного пароля, биометрии, недопущение передачи устройства третьим лицам. При подозрении на компрометацию (потеря телефона, неизвестные сессии, странные сообщения от собственного имени) оператор обязан незамедлительно сообщить специалисту с ролью «it» через альтернативный канал связи (телефон, личный визит). Специалист с ролью «it» производит мягкую деактивацию учетной записи оператора в Чат-боте через мастер «Операторы» с записью действия в журнале действий.  
+145\. Расширенная инструкция оператору по информационной безопасности, антифишингу, реагированию на инциденты и соблюдению Федерального закона № 152-ФЗ ведется отделом цифрового развития в виде отдельного документа. Документ обязателен к прочтению до начала исполнения обязанностей оператора Чат-бота и при каждом существенном обновлении указанного документа.
+
+Приложение 1  
+к Регламенту работы с чат-ботом  
+«ЧАТ-БОТ / АДМИНИСТРАЦИЯ ЕМО»  
+   
+в мессенджере MAX
+
+**Перечень**  
+**команд Чат-бота и их доступность по ролям**
+
+1\. Допустимые периоды команды /stats: today (за сегодня — значение по умолчанию), week (за неделю), month (за месяц), quarter (за квартал), half\_year (за полгода), year (за год), all (за все время).  
+2\. Команды операторов, доступные в служебной группе, приведены в таблице:
+
+| № п/п | Команда | Назначение | Доступность по ролям |
+| :---: | ----- | ----- | ----- |
+| 1 | 2 | 3 | 4 |
+| 1\. | /open\_tickets | перечень открытых обращений | все роли |
+| 2\. | /stats \[период\] | выгрузка статистики в формате XLSX | все роли |
+| 3\. | /reply \<номер\> \<текст\> | ответ жителю командой | все роли |
+| 4\. | /reopen \<номер\> | возобновление обращения | все роли |
+| 5\. | /close \<номер\> | закрытие обращения без ответа | все роли |
+| 6\. | /diag | сводка о состоянии Чат-бота | все роли |
+| 7\. | /find\_resident \<телефон либо max\_user\_id\> | поиск жителя (телефон в результате маскируется) | все роли |
+| 8\. | /op\_help | панель быстрых действий (состав кнопок зависит от роли) | любой участник служебной группы |
+| 9\. | /broadcast \[list\] | мастер информационной рассылки | coordinator, it |
+| 10\. | /erase max\_user\_id= либо /erase phone= | удаление персональных данных жителя | только it |
+| 11\. | /setting \[list либо \<ключ\> \<значение\>\] | изменение настройки | только it |
+| 12\. | /backup | внеплановое снятие резервной копии | только it |
+| 13\. | /add\_operators | массовая регистрация операторов | только it |
+
+3\. Панель быстрых действий /op\_help содержит набор кнопок в зависимости от роли вызывающего оператора (помимо кнопок действий во всех ролях доступна кнопка «Памятка оператора»):  
+1\) для специалистов АЕМО и ЕГП (ТУ) — 3 (три) кнопки действий: «Открытые обращения» (со счетчиком), «Статистика», «Диагностика»;  
+2\) для координатора АЕМО — 6 (шесть) кнопок действий: дополнительно «Сделать рассылку», «История рассылок», «Шаблоны рассылок»;  
+3\) для специалиста с ролью «it» — 10 (десять) кнопок действий: дополнительно «Снять бэкап», «Операторы», «Настройки бота», «Аудитория и согласия».  
+4\. Команды Чат-бота, доступные жителю в личной переписке с Чат-ботом: /start, /help, /menu, /forget, /cancel, /export, /policy, /rules, /subscribe, /unsubscribe, /whoami. Команды направляются жителем текстовым сообщением и исполняются Чат-ботом независимо от текущего состояния диалога. Указанные команды не отображаются в служебном перечне команд мессенджера MAX; основное взаимодействие жителя с Чат-ботом осуществляется через интерактивное главное меню.
+
+**Примечание 1\.** Команда /export не публикуется в служебном перечне команд мессенджера MAX и применяется при индивидуальном обращении жителя к должностному лицу Администрации с целью реализации права субъекта персональных данных на доступ к своим персональным данным.  
+**Примечание 2\.** Команда /whoami в личной переписке с жителями не выполняется. Указанное ограничение реализовано в программном коде Чат-бота в целях недопущения отображения служебного идентификатора max\_user\_id жителю.  
+**Примечание 3\.** Основным способом взаимодействия жителя с Чат-ботом является интерактивное главное меню, направляемое Чат-ботом по команде /start либо /menu. Перечисленные команды сохраняют работоспособность в целях обеспечения совместимости с ранее распространенными ссылками на команды Чат-бота и для жителей, предпочитающих работу через ввод команд.  
+Приложение 2  
+к Регламенту работы с чат-ботом  
+«ЧАТ-БОТ / АДМИНИСТРАЦИЯ ЕМО»  
+   
+в мессенджере MAX
+
+**Контрольный перечень**  
+**проверки готовности Чат-бота к эксплуатации**
+
+1\. Контрольный перечень используется специалистом отдела цифрового развития для подтверждения готовности Чат-бота после установки, обновления или восстановления после сбоя.  
+2\. После создания служебной группы, настройки секретов и регистрации операторов подлежат проверке следующие позиции:  
+1\) открыть Чат-бот в личной переписке от имени тестового жителя; убедиться в получении приветственного сообщения и главного меню из 7 (семи) кнопок;  
+2\) пройти полный цикл подачи обращения от получения согласия на обработку персональных данных до получения подтверждения «Обращение \#N принято»; контрольное время — не более 2 (двух) минут;  
+3\) убедиться, что в служебной группе появилась карточка обращения и что под карточкой отображены кнопки «Ответить», «Закрыть без ответа», «В админ-меню»; для специалиста с ролью «it» дополнительно отображены кнопки «Заблокировать» и «Удалить ПДн»;  
+4\) направить ответ нажатием кнопки «Ответить» либо иным способом, предусмотренным разделом 7 настоящего Регламента, при необходимости с приложением одной фотографии, и проверить доставку формального письма с фотографией жителю;  
+5\) выполнить команду выдачи статистики за сегодня /stats today и убедиться в получении выгрузки, открываемой в формате XLSX;  
+6\) выполнить команду /op\_help под учетной записью специалиста с ролью «it» и убедиться в отображении 10 (десяти) кнопок панели быстрых действий, а также в закреплении сообщения в служебной группе;  
+7\) выполнить команду /op\_help под учетной записью координатора АЕМО и убедиться в отображении 6 (шести) кнопок (без разделов «Операторы», «Настройки бота», «Аудитория и согласия», «Снять бэкап»);  
+8\) выполнить команду выдачи диагностики /diag и убедиться в получении сводки о состоянии Чат-бота;  
+9\) выполнить команду снятия резервной копии /backup и убедиться в создании файла резервной копии;  
+10\) оформить тестовую подписку на рассылку и выполнить мастер /broadcast с тестовым сообщением (при необходимости — с приложением фотографий в пределах значения параметра broadcast\_max\_images); убедиться в доставке подписавшимся жителям;  
+11\) оформить тестовый отзыв согласия командой /forget и убедиться в активации процессов обезличивания персональных данных в базе данных, а также в фиксации записи self\_erase в журнале действий;  
+12\) убедиться в получении сигналов жизни от Чат-бота по расписанию;  
+13\) открыть мастер «Операторы» в /op\_help под учетной записью специалиста с ролью «it»; убедиться, что отображается список активных операторов и доступны действия «Добавить», «Сменить роль», «Деактивировать», «Реактивировать»;  
+14\) открыть меню «Настройки бота» в /op\_help под учетной записью специалиста с ролью «it»; убедиться, что отображаются настраиваемые ключи и доступно действие синхронизации с репозиторием;  
+15\) открыть мастер «Шаблоны рассылок» в /op\_help под учетной записью координатора либо специалиста с ролью «it»; убедиться, что доступны сохранение и применение шаблонов;  
+16\) выполнить проверку автозапуска Чат-бота при перезагрузке серверного оборудования;  
+17\) выполнить проверку наличия записи планировщика хостовой операционной системы для регулярного контроля работоспособности.
+
+Дата выполнения проверки: «\_\_\_\_» \_\_\_\_\_\_\_\_\_\_\_ 2026 года
+
+Начальник отдела цифрового развития:
+
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_  /  \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_  
+       (подпись)                 (фамилия, имя, отчество)
+
+Приложение 3  
+к Регламенту работы с чат-ботом  
+«ЧАТ-БОТ / АДМИНИСТРАЦИЯ ЕМО»  
+   
+в мессенджере MAX
+
+**Форма**  
+**запроса фактических сведений, направляемого оператором Чат-бота в адрес профильного подразделения**
+
+1\. Форма запроса фактических сведений применяется оператором Чат-бота при необходимости получения от профильного подразделения Администрации либо подведомственного муниципального учреждения сведений, необходимых для подготовки ответа жителю в порядке, установленном разделом 8 настоящего Регламента.  
+2\. Форма запроса заполняется оператором и направляется в адрес профильного подразделения посредством служебной групповой переписки в мессенджере MAX, посредством служебного телефонного обращения либо посредством служебной электронной почты Администрации (с приложением заполненной формы запроса).
+
+| № п/п | Элемент запроса | Содержание |
+| :---: | ----- | ----- |
+| 1 | 2 | 3 |
+| 1\. | Номер обращения | \#N (из карточки обращения) |
+| 2\. | Дата и время направления запроса |  |
+| 3\. | Оператор (инициатор запроса) | фамилия, инициалы, роль |
+| 4\. | Профильное подразделение (получатель) | наименование; при нескольких получателях — перечень |
+| 5\. | Тематика обращения | из карточки обращения |
+| 6\. | Существо вопроса | формулировка запрашиваемых фактических сведений |
+| 7\. | Целевой срок направления сведений | в соответствии с разделом 8 настоящего Регламента |
+| 8\. | Персональные данные жителя (в необходимом объеме) | только относящиеся к существу вопроса |
+| 9\. | Категория важности | высокая либо стандартная (назначается координатором АЕМО) |
+| 10\. | Способ направления ответа оператору | служебная группа, телефон либо служебная электронная почта |
+
+3\. Запрос, не содержащий обязательных элементов, перечисленных в строках 1—7, 9 и 10 настоящей формы, может быть возвращен профильным подразделением оператору с указанием отсутствующих элементов и подлежит повторному направлению оператором после устранения отмеченных недостатков.  
+4\. Включение в запрос персональных данных третьих лиц, не относящихся непосредственно к существу поставленного жителем вопроса, не допускается. Передача персональных данных жителя в составе запроса осуществляется в объеме, необходимом для подготовки ответа на поставленный жителем вопрос.
+
+Приложение 4  
+к Регламенту работы с чат-ботом  
+«ЧАТ-БОТ / АДМИНИСТРАЦИЯ ЕМО»  
+   
+в мессенджере MAX
+
+**Лист**  
+**ознакомления с Регламентом**
+
+1\. Лист ознакомления подтверждает доведение настоящего Регламента до сведения лиц, указанных в части 4 настоящего Регламента, до начала исполнения ими обязанностей, связанных с работой Чат-бота, а также при каждом внесении в настоящий Регламент изменений и дополнений.  
+2\. Ознакомление удостоверяется собственноручной подписью лица с указанием даты ознакомления:
+
+| № п/п | Фамилия, имя, отчество | Должность | Дата ознакомления | Подпись |
+| :---: | ----- | ----- | ----- | ----- |
+| 1 | 2 | 3 | 4 | 5 |
+| 1\. |  |  |  |  |
+| 2\. |  |  |  |  |
+| 3\. |  |  |  |  |
+| 4\. |  |  |  |  |
+| 5\. |  |  |  |  |
+| 6\. |  |  |  |  |
+| 7\. |  |  |  |  |
+| 8\. |  |  |  |  |
+| 9\. |  |  |  |  |
+| 10\. |  |  |  |  |
+| 11\. |  |  |  |  |
+| 12\. |  |  |  |  |
+
+
+<!-- Служебная сверка первичных источников и ограничений: docs/audits/LEGAL_RECONCILIATION_2026-10.md. Внутренний порядок: docs/Инструкция_ПДн_удаление_восстановление.md. Документ остается проектом до утверждения. -->
 ```
 
 ### `docs/ЧЕКЛИСТ_ПРАВОПРЕЕМСТВА.md`
