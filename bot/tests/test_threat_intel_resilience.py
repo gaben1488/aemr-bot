@@ -67,7 +67,34 @@ def test_normalization_idn_trailing_dot_and_bad_ipv6():
     assert ti._normalize_host("https://[broken/a") == ""
 
 
-async def test_outage_alert_once_until_recovered(monkeypatch):
+def test_ipv6_feed_and_lookup_use_same_canonical_host():
+    hosts = ti._parse_threatfox_csv('1,date,[2001:0db8:0:0:0:0:0:1]:443,ip:port,c2\n')
+    assert hosts == {"2001:db8::1"}
+    store = ti.ThreatIntelStore(hosts=hosts)
+    assert store.is_malicious("https://[2001:db8::1]/login")[0]
+    assert store.is_malicious("https://[2001:0DB8:0:0:0:0:0:1]/login")[0]
+
+
+def test_canonical_ipv6_snapshot_survives_cache_restart(monkeypatch):
+    store = ti.get_store()
+    store.source_hosts = {"threatfox": ti._parse_threatfox_csv(
+        '1,date,[2001:0db8:0:0:0:0:0:1]:443,ip:port,c2\n')}
+    store.source_updated_at = {"threatfox": time.time()}
+    store.rebuild()
+    ti.save_cache(store)
+    monkeypatch.setattr(ti, "_STORE", None)
+    assert ti.get_store().is_malicious("https://[2001:db8::1]/") == (True, "threatfox")
+
+
+def test_feed_reputation_is_exact_host_without_apex_or_subdomain_inheritance():
+    store = ti.ThreatIntelStore(hosts={"login.evil.test"})
+    assert store.is_malicious("https://LOGIN.EVIL.TEST./x")[0]
+    for candidate in ("https://evil.test/", "https://other.evil.test/",
+                      "https://child.login.evil.test/", "https://login.evil.test.attacker.test/"):
+        assert store.is_malicious(candidate) == (False, None)
+
+
+async def test_outage_alert_once_until_recovered(monkeypatch, session):
     store = ti.get_store()
     store.last_refresh_at = time.monotonic() - 7 * 3600
     monkeypatch.setattr(ti, "refresh_all", AsyncMock(return_value={}))
@@ -150,19 +177,29 @@ async def test_fetch_zip_limits_redirects_and_secret_redaction(monkeypatch, capl
         await runner.cleanup()
 
 
-async def test_notification_survives_restart_and_send_failure_retries(monkeypatch):
+async def test_unknown_notification_is_not_retried_after_restart(monkeypatch, session):
+    from aemr_bot.services import alert_state
+
     store = ti.get_store()
     store.started_at -= 7 * 3600
     monkeypatch.setattr(ti, 'refresh_all', AsyncMock(return_value={}))
-    monkeypatch.setattr(cron.asyncio, 'sleep', AsyncMock())
     failing = AsyncMock(side_effect=RuntimeError('MAX unavailable'))
     await cron._job_threat_intel_refresh(failing)
     assert not store.outage_notified
+    assert await alert_state.get(session, "threat_intel") == "unknown"
     working = AsyncMock()
     await cron._job_threat_intel_refresh(working)
-    assert store.outage_notified
+    working.assert_not_awaited()
     monkeypatch.setattr(ti, '_STORE', None)
     assert ti.get_store().is_stale()
+    await cron._job_threat_intel_refresh(working)
+    working.assert_not_awaited()
+    failing.assert_awaited_once()
+    # Recovery clears the durable episode; a subsequent outage can alert.
+    ti.get_store().started_at = time.monotonic()
+    await cron._job_threat_intel_refresh(working)
+    assert await alert_state.get(session, "threat_intel") is None
+    ti.get_store().started_at -= 7 * 3600
     await cron._job_threat_intel_refresh(working)
     working.assert_awaited_once()
 

@@ -167,6 +167,12 @@ def _normalize_host(url_or_host: str) -> str:
             pass
         parsed = urlparse(value if "://" in value else f"http://{value}")
         host = (parsed.hostname or "").lower().rstrip(".")
+        # URL authorities may spell the same IPv6 address in expanded form;
+        # use the same representation as bare indicators and cache validation.
+        try:
+            return ipaddress.ip_address(host).compressed
+        except ValueError:
+            pass
         return host.encode("idna").decode("ascii")
     except (ValueError, AttributeError, UnicodeError):
         return ""

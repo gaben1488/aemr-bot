@@ -210,9 +210,9 @@ class TestBoundedScanSource:
         giant = "нет ссылок " * (cf._URL_SCAN_MAX_CHARS // 5)
         appeal = _appeal(summary="Во дворе яма.", messages=[_msg(giant)])
         result = cf.admin_card(appeal, _user())
-        # URL нет → ни ⛔ ни ⚠️. Главное — не виснет на мегабайтах.
+        # SLA may independently show ⚠️; only the URL warning is absent.
         assert "⛔" not in result
-        assert "⚠️" not in result
+        assert "Текст содержит ссылку" not in result
 
 
 # --------------------------------------------------------------------------
@@ -279,7 +279,7 @@ class TestBareDomainThreatIntel:
         result = cf.admin_card(appeal, _user())
 
         assert "⛔" not in result
-        assert "⚠️" not in result
+        assert "Текст содержит ссылку" not in result
 
     def test_maybe_url_warning_bare_host_direct(
         self, monkeypatch: pytest.MonkeyPatch

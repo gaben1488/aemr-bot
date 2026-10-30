@@ -560,7 +560,8 @@ class TestAdminCardThreatWarningScansFollowups:
         )
         result = cf.admin_card(appeal, _user())
         assert "⛔" not in result
-        assert "⚠️" not in result
+        # The SLA header can warn independently of the URL classification.
+        assert "Текст содержит ссылку" not in result
 
 
 def test_long_admin_card_preserves_latest_update_in_compact_preview():
