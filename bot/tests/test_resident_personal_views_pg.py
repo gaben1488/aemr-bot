@@ -11,7 +11,7 @@ from aemr_bot.db.models import Appeal, Message, ResidentDataCopy, User
 from aemr_bot.handlers import menu
 from aemr_bot.services import appeals, data_erasure, privacy_epoch
 from aemr_bot.utils.resident_lifecycle import guard
-from tests._helpers import make_event
+from tests._helpers import make_callback_event, make_event
 
 
 async def _old_appeal(session):
@@ -92,3 +92,51 @@ async def test_retention_waits_from_resident_view_read_through_tracked_send(sess
     assert copy.subjects == [data_erasure.subject_digest(42)]
     await session.refresh(await session.get(Appeal, appeal_id))
     assert (await session.get(Appeal, appeal_id)).summary is None
+
+
+@pytest.mark.asyncio
+async def test_menu_after_erasure_offers_public_onboarding_without_recreating_resident(session, monkeypatch):
+    from aemr_bot.handlers import appeal
+    from aemr_bot.services import settings_store
+    from tests.test_appeal_dispatcher import _CapturingDispatcher
+
+    appeal_id = await _old_appeal(session)
+    event = make_event(chat_id=42, user_id=42)
+    raw_send = AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid="erase-confirmed")))
+    event.bot.send_message = raw_send
+    data_erasure.install_outgoing_hook(event.bot)
+    monkeypatch.setattr(menu.admin_events, "notify_data_erased", AsyncMock())
+    await menu.do_forget(event, 42)
+    raw_send.return_value = SimpleNamespace(body=SimpleNamespace(mid="public-menu"))
+    back = make_callback_event(chat_id=42, user_id=42, payload="menu:main")
+    back.message.body.mid = "erase-confirmed"
+    back.bot = event.bot
+    failure = None
+    async with guard(42):
+        try:
+            await menu.handle_callback(back, "menu:main", 42)
+        except RuntimeError as exc:
+            failure = str(exc)
+    assert failure is None, f"An erased resident cannot return to the public menu: {failure}"
+    assert raw_send.await_count == 2
+    assert "menu:new_appeal" in str(raw_send.await_args.kwargs["attachments"])
+    assert "Частный адрес" not in raw_send.await_args.kwargs["text"]
+    assert await session.scalar(select(User).where(User.max_user_id == 42)) is None
+    assert (await session.get(Appeal, appeal_id)).summary is None
+
+    # Clicking the public menu starts a fresh consent flow, not an old profile.
+    await settings_store.set_value(session, "policy_url", "https://www.gosuslugi.ru/")
+    await settings_store.set_value(session, "consent_text", "Новое согласие на обработку данных. Политика: {policy_url}")
+    await session.commit()
+    dispatcher = _CapturingDispatcher()
+    appeal.register(dispatcher)
+    callback = make_callback_event(chat_id=42, user_id=42, payload="menu:new_appeal")
+    callback.message.body.mid = "public-menu"
+    callback.bot = event.bot
+    raw_send.return_value = SimpleNamespace(body=SimpleNamespace(mid="new-consent"))
+    async with guard(42):
+        await dispatcher.callback_handler(callback)
+    new_user = await session.scalar(select(User).where(User.max_user_id == 42))
+    assert new_user is not None and new_user.dialog_state == "awaiting_consent"
+    assert new_user.first_name is None and new_user.phone is None and new_user.consent_pdn_at is None
+    assert "Новое согласие" in raw_send.await_args.kwargs["text"]

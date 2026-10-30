@@ -142,8 +142,23 @@ async def _send_or_edit_menu(
     return extract_message_id(sent)
 
 
+async def _send_public_resident_screen(event, *, text: str, attachments: list) -> None:
+    """A source-free screen remains usable after erasure without creating a profile."""
+    uid, chat_id = get_user_id(event), get_chat_id(event)
+    if uid is None and chat_id is None:
+        return
+    sent = await data_erasure.tracked_send(
+        event.bot, kind="public_menu", max_user_ids=[uid] if uid is not None else [],
+        allow_erased_recipient=True, chat_id=chat_id, user_id=uid if chat_id is None else None,
+        text=text, attachments=attachments,
+    )
+    mid = extract_message_id(sent)
+    if mid and chat_id is not None:
+        menu_tracker.note_editable_send(chat_id, mid, kind="menu")
+
+
 async def _unavailable_personal_view(event) -> None:
-    await _send_or_edit_menu(
+    await _send_public_resident_screen(
         event, text="Сохранённые данные недоступны. Откройте меню и проверьте актуальное состояние.",
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -286,7 +301,10 @@ async def open_main_menu(event):
                 attachments=[keyboards.main_menu(subscribed=subscribed, has_draft=has_draft)],
             )
     except data_erasure.PersonalDataErasedError:
-        await _unavailable_personal_view(event)
+        await _send_public_resident_screen(
+            event, text=texts.WELCOME,
+            attachments=[keyboards.main_menu(subscribed=False, has_draft=False)],
+        )
 
 
 MY_APPEALS_PAGE_SIZE = 5
