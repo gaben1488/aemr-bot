@@ -509,7 +509,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/services/stats.py:1` — `3bcfa54e5dab07b30a2a13a36b4a6d5ebfe8dbfea554e4f8c1a054229adab789`
 - `bot/aemr_bot/services/threat_intel.py:1` — `0495ec5d951639ec74f785f0ad07ac8ed38969471e110bf22146fc3586085ccf`
 - `bot/aemr_bot/services/uploads.py:1` — `7532fedc2eaffebb13668770c3bf4d4ccadd0c462be83a7de7766dcdfa083881`
-- `bot/aemr_bot/services/users.py:1` — `bcf964dab978499420b0555bbf27cfe29a155cade25ab2c9783fdac02f54235a`
+- `bot/aemr_bot/services/users.py:1` — `f0111f9a4a55ee595da9e68169ca6462552acebf7173b036b0d6e945de77aeee`
 - `bot/aemr_bot/services/wizard_persist.py:1` — `8c5a43e226bd7d0de545ce41c8e1920389d0d341944f7a5bdef14313f832c231`
 - `bot/aemr_bot/services/wizard_registry.py:1` — `f9c46634552c9703e4b46fb06917e4e79ed8f8eb1cbaa7d013dc5f8ed09ceab5`
 - `bot/aemr_bot/services/work_schedule.py:1` — `b21600bd6ba4c35aaed5b345af6e702cbd0f5f1d13fa3c489d53f489b1a4b9ad`
