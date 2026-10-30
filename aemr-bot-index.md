@@ -1,8 +1,8 @@
 # aemr-bot repository index
 
-Generated at: `2026-10-30 05:31:10 UTC`
+Generated at: `2026-10-30 08:23:37 UTC`
 Root: `/home/runner/work/aemr-bot/aemr-bot`
-Indexed files: `516`
+Indexed files: `532`
 Max file size: `300 KB`
 
 ## Safety policy
@@ -13,22 +13,25 @@ The committed template `.env.example` is allowed because it should not contain l
 ## File tree
 
 - `.agents/context/DESIGN.md` (8392 bytes)
-- `.agents/context/PRODUCT.md` (5953 bytes)
+- `.agents/context/PRODUCT.md` (6160 bytes)
+- `.agents/staged-size-baseline.json` (7562 bytes)
 - `.dockerignore` (539 bytes)
 - `.github/dependabot.yml` (4984 bytes)
-- `.github/workflows/ci.yml` (10436 bytes)
+- `.github/workflows/ci.yml` (10654 bytes)
 - `.github/workflows/release.yml` (1372 bytes)
 - `.github/workflows/repo-index.yml` (1211 bytes)
 - `.gitignore` (3187 bytes)
-- `.pre-commit-config.yaml` (3378 bytes)
-- `AGENTS.md` (6742 bytes)
+- `.pre-commit-config.yaml` (3758 bytes)
+- `AGENTS.md` (2533 bytes)
 - `bot/aemr_bot/__init__.py` (22 bytes)
-- `bot/aemr_bot/config.py` (23669 bytes)
+- `bot/aemr_bot/config.py` (23635 bytes)
 - `bot/aemr_bot/copy/__init__.py` (1142 bytes)
 - `bot/aemr_bot/copy/admin_texts.py` (13100 bytes)
 - `bot/aemr_bot/copy/broadcast_texts.py` (18057 bytes)
-- `bot/aemr_bot/copy/citizen_funnel.py` (28466 bytes)
+- `bot/aemr_bot/copy/citizen_funnel.py` (14990 bytes)
+- `bot/aemr_bot/copy/draft_preview.py` (1332 bytes)
 - `bot/aemr_bot/copy/errors_texts.py` (1999 bytes)
+- `bot/aemr_bot/copy/privacy.py` (13652 bytes)
 - `bot/aemr_bot/copy/security_texts.py` (14386 bytes)
 - `bot/aemr_bot/data/__init__.py` (69 bytes)
 - `bot/aemr_bot/data/given_names_v1.txt` (175737 bytes)
@@ -88,7 +91,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_audience.py` (21373 bytes)
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py` (38211 bytes)
 - `bot/aemr_bot/handlers/admin_commands.py` (19014 bytes)
-- `bot/aemr_bot/handlers/admin_data_erasure.py` (1894 bytes)
+- `bot/aemr_bot/handlers/admin_data_erasure.py` (1741 bytes)
 - `bot/aemr_bot/handlers/admin_operators.py` (7916 bytes)
 - `bot/aemr_bot/handlers/admin_operators_list.py` (4572 bytes)
 - `bot/aemr_bot/handlers/admin_operators_roles.py` (11128 bytes)
@@ -108,7 +111,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/admin_settings_text.py` (9396 bytes)
 - `bot/aemr_bot/handlers/admin_stats.py` (6178 bytes)
 - `bot/aemr_bot/handlers/appeal.py` (46347 bytes)
-- `bot/aemr_bot/handlers/appeal_funnel.py` (49616 bytes)
+- `bot/aemr_bot/handlers/appeal_funnel.py` (49228 bytes)
 - `bot/aemr_bot/handlers/appeal_geo.py` (8443 bytes)
 - `bot/aemr_bot/handlers/appeal_runtime.py` (21527 bytes)
 - `bot/aemr_bot/handlers/broadcast.py` (44019 bytes)
@@ -120,7 +123,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/handlers/broadcast_wizard.py` (28627 bytes)
 - `bot/aemr_bot/handlers/callback_payloads.py` (18910 bytes)
 - `bot/aemr_bot/handlers/callback_router.py` (15224 bytes)
-- `bot/aemr_bot/handlers/menu.py` (69620 bytes)
+- `bot/aemr_bot/handlers/menu.py` (68429 bytes)
 - `bot/aemr_bot/handlers/operator_draft.py` (11729 bytes)
 - `bot/aemr_bot/handlers/operator_reply.py` (47705 bytes)
 - `bot/aemr_bot/handlers/resident_name_gate.py` (11610 bytes)
@@ -128,8 +131,8 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/health.py` (10643 bytes)
 - `bot/aemr_bot/keyboards.py` (1161 bytes)
 - `bot/aemr_bot/logging_setup.py` (4912 bytes)
-- `bot/aemr_bot/main.py` (51227 bytes)
-- `bot/aemr_bot/network.py` (8756 bytes)
+- `bot/aemr_bot/main.py` (51197 bytes)
+- `bot/aemr_bot/network.py` (8748 bytes)
 - `bot/aemr_bot/services/__init__.py` (0 bytes)
 - `bot/aemr_bot/services/admin_bus.py` (19448 bytes)
 - `bot/aemr_bot/services/admin_card.py` (15817 bytes)
@@ -151,12 +154,15 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/content_status.py` (368 bytes)
 - `bot/aemr_bot/services/cron.py` (82040 bytes)
 - `bot/aemr_bot/services/cron_registry.py` (10311 bytes)
-- `bot/aemr_bot/services/data_erasure.py` (40778 bytes)
-- `bot/aemr_bot/services/db_backup.py` (28298 bytes)
+- `bot/aemr_bot/services/data_erasure.py` (15688 bytes)
+- `bot/aemr_bot/services/data_erasure_delivery.py` (9176 bytes)
+- `bot/aemr_bot/services/data_erasure_journal.py` (6052 bytes)
+- `bot/aemr_bot/services/data_erasure_restore.py` (8387 bytes)
+- `bot/aemr_bot/services/db_backup.py` (23710 bytes)
 - `bot/aemr_bot/services/followup_delivery.py` (5960 bytes)
 - `bot/aemr_bot/services/geo.py` (12262 bytes)
 - `bot/aemr_bot/services/idempotency.py` (7887 bytes)
-- `bot/aemr_bot/services/inbox.py` (10640 bytes)
+- `bot/aemr_bot/services/inbox.py` (9786 bytes)
 - `bot/aemr_bot/services/message_labels.py` (816 bytes)
 - `bot/aemr_bot/services/notify_toggles.py` (5731 bytes)
 - `bot/aemr_bot/services/operator_drafts.py` (4571 bytes)
@@ -174,7 +180,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/services/stats.py` (17078 bytes)
 - `bot/aemr_bot/services/threat_intel.py` (13471 bytes)
 - `bot/aemr_bot/services/uploads.py` (4747 bytes)
-- `bot/aemr_bot/services/users.py` (49694 bytes)
+- `bot/aemr_bot/services/users.py` (49097 bytes)
 - `bot/aemr_bot/services/wizard_persist.py` (7134 bytes)
 - `bot/aemr_bot/services/wizard_registry.py` (13312 bytes)
 - `bot/aemr_bot/services/work_schedule.py` (4430 bytes)
@@ -182,7 +188,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/aemr_bot/transport.py` (3442 bytes)
 - `bot/aemr_bot/ui/__init__.py` (1477 bytes)
 - `bot/aemr_bot/ui/broadcast_keyboards.py` (13468 bytes)
-- `bot/aemr_bot/ui/citizen_keyboards.py` (29799 bytes)
+- `bot/aemr_bot/ui/citizen_keyboards.py` (28008 bytes)
 - `bot/aemr_bot/ui/operator_keyboards.py` (23586 bytes)
 - `bot/aemr_bot/ui/settings_keyboards.py` (15900 bytes)
 - `bot/aemr_bot/ui/wizard_keyboards.py` (12728 bytes)
@@ -202,6 +208,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/alembic.ini` (619 bytes)
 - `bot/pyproject.toml` (7152 bytes)
 - `bot/tests/__init__.py` (0 bytes)
+- `bot/tests/_erasure_helpers.py` (2703 bytes)
 - `bot/tests/_helpers.py` (6102 bytes)
 - `bot/tests/_personal_view_helpers.py` (1065 bytes)
 - `bot/tests/_reply_delivery_helpers.py` (314 bytes)
@@ -221,7 +228,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_admin_ops_cluster_coverage.py` (63201 bytes)
 - `bot/tests/test_admin_outgoing_hook.py` (7452 bytes)
 - `bot/tests/test_admin_panel.py` (16104 bytes)
-- `bot/tests/test_admin_personal_copy_inventory.py` (11971 bytes)
+- `bot/tests/test_admin_personal_copy_inventory.py` (11969 bytes)
 - `bot/tests/test_admin_resident_search.py` (18314 bytes)
 - `bot/tests/test_admin_settings_audit.py` (1916 bytes)
 - `bot/tests/test_admin_settings_cluster_coverage.py` (22377 bytes)
@@ -275,15 +282,18 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_critical_mutation.py` (32383 bytes)
 - `bot/tests/test_cron_docs_sync.py` (7411 bytes)
 - `bot/tests/test_cron_jobs.py` (32780 bytes)
-- `bot/tests/test_data_erasure.py` (37474 bytes)
+- `bot/tests/test_data_erasure.py` (34454 bytes)
 - `bot/tests/test_db_backup.py` (5223 bytes)
-- `bot/tests/test_db_backup_extra.py` (17040 bytes)
+- `bot/tests/test_db_backup_extra.py` (13688 bytes)
 - `bot/tests/test_degraded_inputs.py` (7681 bytes)
 - `bot/tests/test_deps_environment.py` (9088 bytes)
 - `bot/tests/test_diag_extended.py` (6756 bytes)
+- `bot/tests/test_draft_preview_context.py` (2202 bytes)
 - `bot/tests/test_erased_content_views.py` (1445 bytes)
 - `bot/tests/test_erased_followup_transfer.py` (2162 bytes)
+- `bot/tests/test_erasure_manual_copies.py` (4621 bytes)
 - `bot/tests/test_erasure_restore_cli.py` (1654 bytes)
+- `bot/tests/test_erasure_status_copy.py` (1275 bytes)
 - `bot/tests/test_event_helpers.py` (10479 bytes)
 - `bot/tests/test_event_helpers_cov2.py` (7021 bytes)
 - `bot/tests/test_extract_location.py` (5053 bytes)
@@ -298,7 +308,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_handlers_common.py` (3558 bytes)
 - `bot/tests/test_handlers_funnel.py` (8891 bytes)
 - `bot/tests/test_handlers_menu.py` (33828 bytes)
-- `bot/tests/test_handlers_menu_extra.py` (24068 bytes)
+- `bot/tests/test_handlers_menu_extra.py` (23881 bytes)
 - `bot/tests/test_handlers_operator_reply.py` (39642 bytes)
 - `bot/tests/test_handlers_start.py` (26902 bytes)
 - `bot/tests/test_health.py` (4062 bytes)
@@ -308,7 +318,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_image_attachments.py` (7471 bytes)
 - `bot/tests/test_image_pins_in_sync.py` (1919 bytes)
 - `bot/tests/test_inbox_pg.py` (1110 bytes)
-- `bot/tests/test_inbox_recovery.py` (12170 bytes)
+- `bot/tests/test_inbox_recovery.py` (12168 bytes)
 - `bot/tests/test_inbox_transport.py` (2881 bytes)
 - `bot/tests/test_keyboards.py` (5459 bytes)
 - `bot/tests/test_keyboards_admin_behaviour.py` (10181 bytes)
@@ -344,9 +354,10 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_perf_geo.py` (10657 bytes)
 - `bot/tests/test_perf_latency.py` (28302 bytes)
 - `bot/tests/test_perf_limiter.py` (20152 bytes)
-- `bot/tests/test_perf_resilience.py` (27031 bytes)
+- `bot/tests/test_perf_resilience.py` (26673 bytes)
 - `bot/tests/test_privacy_epoch.py` (377 bytes)
 - `bot/tests/test_privacy_epoch_reentrancy.py` (4071 bytes)
+- `bot/tests/test_privacy_policy_copy.py` (882 bytes)
 - `bot/tests/test_progress.py` (11401 bytes)
 - `bot/tests/test_pure_functions.py` (10412 bytes)
 - `bot/tests/test_queue_panel.py` (15175 bytes)
@@ -359,7 +370,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_resident_draft_limits.py` (2818 bytes)
 - `bot/tests/test_resident_name_resume.py` (24115 bytes)
 - `bot/tests/test_resident_names_policy.py` (6157 bytes)
-- `bot/tests/test_resident_personal_views_pg.py` (6954 bytes)
+- `bot/tests/test_resident_personal_views_pg.py` (6953 bytes)
 - `bot/tests/test_resident_privacy_confirmations_pg.py` (11502 bytes)
 - `bot/tests/test_response_kind_history.py` (2338 bytes)
 - `bot/tests/test_retention_pre_warning.py` (857 bytes)
@@ -386,6 +397,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_sla.py` (12272 bytes)
 - `bot/tests/test_sla_queue_first_reply.py` (4753 bytes)
 - `bot/tests/test_sla_setting_snapshot_pg.py` (1650 bytes)
+- `bot/tests/test_staged_size.py` (7755 bytes)
 - `bot/tests/test_stale_operators_cleanup.py` (5187 bytes)
 - `bot/tests/test_stats_first_response.py` (3427 bytes)
 - `bot/tests/test_system_boundaries.py` (1966 bytes)
@@ -407,6 +419,7 @@ The committed template `.env.example` is allowed because it should not contain l
 - `bot/tests/test_wizard_registry_persist.py` (10305 bytes)
 - `bot/tests/test_work_schedule.py` (1772 bytes)
 - `bot/tests/test_work_schedule_pg.py` (5224 bytes)
+- `CODING_STANDARDS.md` (10387 bytes)
 - `docs/archive/LEDGER_2026-06_snapshot.md` (115148 bytes)
 - `docs/archive/versions/consent_152fz_draft@4dda831-2026-06-01.md` (21236 bytes)
 - `docs/archive/versions/PRIVACY@151c39b-2026-04-29.md` (6279 bytes)
@@ -440,9 +453,10 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/archive/versions/Регламент_v8_draft@e8d96b0-2026-05-26.md` (50284 bytes)
 - `docs/audits/ANTIPHISHING_FINAL_2026-10.md` (14655 bytes)
 - `docs/audits/CONSENT_CAPTURE_2026-10.md` (6212 bytes)
+- `docs/audits/COURSES_AND_AGENT_WORKFLOW_2026-10.md` (19683 bytes)
 - `docs/audits/FLOW_AUDIT_2026-10-26.md` (26974 bytes)
 - `docs/audits/flow_audit_probes_20261026.py` (11079 bytes)
-- `docs/audits/IMPLEMENTATION_INVENTORY_2026-10.md` (61089 bytes)
+- `docs/audits/IMPLEMENTATION_INVENTORY_2026-10.md` (61596 bytes)
 - `docs/audits/LEGAL_RECONCILIATION_2026-10.md` (24882 bytes)
 - `docs/audits/MAX_TRANSPORT_LIMITS_2026-10.md` (8641 bytes)
 - `docs/audits/MODULE_MAP_0.2.4.json` (43448 bytes)
@@ -451,8 +465,9 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/audits/SYSTEM_AUDIT_2026-10-26.md` (15227 bytes)
 - `docs/audits/SYSTEM_REVIEW_0.2.4.md` (21984 bytes)
 - `docs/audits/ПРАВОВЫЕ_ВОПРОСЫ_ЧАТ-БОТА.md` (9107 bytes)
-- `docs/DATA_ERASURE_OPERATIONS.md` (15646 bytes)
+- `docs/DATA_ERASURE_OPERATIONS.md` (17183 bytes)
 - `docs/DEPS.md` (17302 bytes)
+- `docs/implementation-notes.md` (11494 bytes)
 - `docs/MAXAPI_REVIEW_2026-10-26.md` (13698 bytes)
 - `docs/README.md` (6274 bytes)
 - `docs/RELEASE_0.2.0.md` (15181 bytes)
@@ -485,44 +500,45 @@ The committed template `.env.example` is allowed because it should not contain l
 - `docs/site/_kb/_sources/reglament_v7.txt` (94258 bytes)
 - `docs/site/_kb/_sources/reserch.txt` (117351 bytes)
 - `docs/site/_kb/_STATUS.md` (7870 bytes)
-- `docs/site/_kb2/admin.html` (217483 bytes)
+- `docs/site/_kb2/admin.html` (214691 bytes)
 - `docs/site/_kb2/adr.html` (99478 bytes)
-- `docs/site/_kb2/ekspluataciya.html` (42501 bytes)
+- `docs/site/_kb2/ekspluataciya.html` (42464 bytes)
 - `docs/site/_kb2/obzor.html` (44667 bytes)
-- `docs/site/_kb2/operator.html` (147319 bytes)
-- `docs/site/_kb2/pravovoe.html` (21622 bytes)
-- `docs/site/_kb2/shemy.html` (12290 bytes)
-- `docs/site/_kb2/spravochnik.html` (217689 bytes)
-- `docs/site/_kb2/voprosy.html` (281480 bytes)
-- `docs/site/_kb2/zhitel.html` (80813 bytes)
+- `docs/site/_kb2/operator.html` (147240 bytes)
+- `docs/site/_kb2/pravovoe.html` (21426 bytes)
+- `docs/site/_kb2/shemy.html` (12675 bytes)
+- `docs/site/_kb2/spravochnik.html` (217520 bytes)
+- `docs/site/_kb2/voprosy.html` (280528 bytes)
+- `docs/site/_kb2/zhitel.html` (80777 bytes)
 - `docs/superpowers/plans/2026-10-26-reliability-release.md` (6513 bytes)
 - `docs/THREAT_INTEL_AUDIT_2026-10-26.md` (13635 bytes)
-- `docs/Инструкция_ПДн_удаление_восстановление.md` (21255 bytes)
-- `docs/Политика_конфиденциальности_ИС_Чат-бот_MAX.md` (48805 bytes)
-- `docs/ПОРЯДОК_УДАЛЕНИЯ_ДАННЫХ.md` (6692 bytes)
-- `docs/Регламент_AEMR-bot_MAX_v8.md` (177798 bytes)
+- `docs/Инструкция_ПДн_удаление_восстановление.md` (21190 bytes)
+- `docs/Политика_конфиденциальности_ИС_Чат-бот_MAX.md` (48789 bytes)
+- `docs/ПОРЯДОК_УДАЛЕНИЯ_ДАННЫХ.md` (7151 bytes)
+- `docs/Регламент_AEMR-bot_MAX_v8.md` (177793 bytes)
 - `docs/ЧЕКЛИСТ_ПРАВОПРЕЕМСТВА.md` (22958 bytes)
-- `infra/.env.example` (70545 bytes)
+- `infra/.env.example` (67920 bytes)
 - `infra/cntlm/cntlm.conf.example` (1796 bytes)
 - `infra/docker-compose.cntlm.yml` (1945 bytes)
 - `infra/docker-compose.webhook.yml` (2391 bytes)
-- `infra/docker-compose.yml` (7920 bytes)
-- `infra/Dockerfile` (4992 bytes)
+- `infra/docker-compose.yml` (7912 bytes)
+- `infra/Dockerfile` (4577 bytes)
 - `infra/nginx/feedback.conf` (976 bytes)
-- `README.md` (48563 bytes)
+- `README.md` (48562 bytes)
 - `REPO_INDEX.md` (3983 bytes)
 - `scripts/build_geo_database.py` (9300 bytes)
 - `scripts/build_regulation.py` (5093 bytes)
+- `scripts/check_staged_size.py` (5089 bytes)
 - `scripts/cross_verify_geo.py` (12519 bytes)
 - `scripts/extract_reglament.py` (5717 bytes)
 - `scripts/generate_privacy_pdf.py` (7927 bytes)
-- `scripts/inventory_implementation.py` (8496 bytes)
+- `scripts/inventory_implementation.py` (8504 bytes)
 - `scripts/make_repo_index.py` (8521 bytes)
-- `scripts/reconcile_erasure.py` (1664 bytes)
+- `scripts/reconcile_erasure.py` (1654 bytes)
 - `scripts/replay_erasure_tombstones.py` (1644 bytes)
 - `scripts/reset_test_data.sql` (2213 bytes)
 - `scripts/verify_geo.py` (9397 bytes)
-- `seed/consent.md` (6684 bytes)
+- `seed/consent.md` (6841 bytes)
 - `seed/contacts.json` (1292 bytes)
 - `seed/holidays.json` (1270 bytes)
 - `seed/topics.json` (242 bytes)
@@ -745,8 +761,8 @@ SHA-256: `bc50b95b6abce7d6d4e171c0412c6626bb767c0189b2bd04ba3b4c8c012b2321`
 
 ### `.agents/context/PRODUCT.md`
 
-Size: `5953` bytes  
-SHA-256: `fe9c1f2798457323745cc3a987101c6edbadfc6a165d66e6f1f04b52189f8456`
+Size: `6160` bytes  
+SHA-256: `f5c70af2c1ecc188f43ed25d651b7f9d8997c91867d51f9efb73312ee8daf4d1`
 
 ```markdown
 # PRODUCT.md — aemr-bot, документация-как-продукт
@@ -818,10 +834,156 @@ SHA-256: `fe9c1f2798457323745cc3a987101c6edbadfc6a165d66e6f1f04b52189f8456`
   маскируются, удаляются по запросу. Это видно и в документации.
 - **Антифишинг.** Бот учит жителя не вестись на мошенников. Тема
   безопасности — заметная, но не пугающая.
-- **Честность.** Документация отражает реальный код построчно, без
-  выдумок. Если чего-то нет — так и написано.
+- **Честность.** Документация описывает проверенное поведение, без
+  выдумок. Полнота инвентаризации не означает проверку каждой строки.
+  Новые требования владельца определяют целевое поведение, расхождения исправляются.
 - **Доступность.** Крупный шрифт, высокий контраст, читается с телефона
   и со старого монитора, работает без интернета (офлайн-страницы).
+```
+
+### `.agents/staged-size-baseline.json`
+
+Size: `7562` bytes  
+SHA-256: `0638ebdc05fe15915a8c0dd5e35e5118b5b8507e0e756d2003765abc35f0b04f`
+
+```json
+{
+  "README.md": 48563,
+  "bot/aemr_bot/config.py": 23669,
+  "bot/aemr_bot/data/given_names_v1.txt": 175737,
+  "bot/aemr_bot/db/models.py": 32607,
+  "bot/aemr_bot/handlers/admin_audience.py": 21373,
+  "bot/aemr_bot/handlers/admin_callback_dispatch.py": 38211,
+  "bot/aemr_bot/handlers/admin_operators_wizard.py": 21010,
+  "bot/aemr_bot/handlers/admin_panel.py": 35659,
+  "bot/aemr_bot/handlers/admin_settings.py": 20591,
+  "bot/aemr_bot/handlers/appeal.py": 46347,
+  "bot/aemr_bot/handlers/appeal_funnel.py": 49616,
+  "bot/aemr_bot/handlers/appeal_runtime.py": 21527,
+  "bot/aemr_bot/handlers/broadcast.py": 44019,
+  "bot/aemr_bot/handlers/broadcast_templates_wizard.py": 20434,
+  "bot/aemr_bot/handlers/broadcast_wizard.py": 28627,
+  "bot/aemr_bot/handlers/menu.py": 69620,
+  "bot/aemr_bot/handlers/operator_reply.py": 47705,
+  "bot/aemr_bot/handlers/start.py": 39987,
+  "bot/aemr_bot/main.py": 51227,
+  "bot/aemr_bot/services/appeals.py": 45162,
+  "bot/aemr_bot/services/broadcasts.py": 22465,
+  "bot/aemr_bot/services/card_format.py": 31701,
+  "bot/aemr_bot/services/cron.py": 82040,
+  "bot/aemr_bot/services/db_backup.py": 28298,
+  "bot/aemr_bot/services/settings_store.py": 70775,
+  "bot/aemr_bot/services/users.py": 49694,
+  "bot/aemr_bot/ui/citizen_keyboards.py": 29799,
+  "bot/aemr_bot/ui/operator_keyboards.py": 23586,
+  "bot/aemr_bot/utils/attachments.py": 24705,
+  "bot/tests/test_admin_appeal_ops.py": 27422,
+  "bot/tests/test_admin_handlers_small.py": 28699,
+  "bot/tests/test_admin_operators.py": 21795,
+  "bot/tests/test_admin_operators_coverage.py": 30207,
+  "bot/tests/test_admin_ops_cluster_coverage.py": 63201,
+  "bot/tests/test_admin_settings_cluster_coverage.py": 22377,
+  "bot/tests/test_admin_settings_handlers.py": 51231,
+  "bot/tests/test_appeal_dispatcher.py": 36910,
+  "bot/tests/test_appeal_funnel_cluster_coverage.py": 70458,
+  "bot/tests/test_broadcast_handlers.py": 45094,
+  "bot/tests/test_broadcast_operators_coverage.py": 42561,
+  "bot/tests/test_broadcast_templates_coverage.py": 49665,
+  "bot/tests/test_broadcast_with_image.py": 24391,
+  "bot/tests/test_broadcast_wizard_fsm.py": 26452,
+  "bot/tests/test_callback_coverage_contract.py": 24072,
+  "bot/tests/test_card_format_extra.py": 23330,
+  "bot/tests/test_critical_mutation.py": 32383,
+  "bot/tests/test_cron_jobs.py": 32780,
+  "bot/tests/test_data_erasure.py": 37474,
+  "bot/tests/test_freshness_full_coverage.py": 36324,
+  "bot/tests/test_handlers_appeal_funnel.py": 28870,
+  "bot/tests/test_handlers_menu.py": 33828,
+  "bot/tests/test_handlers_menu_extra.py": 24068,
+  "bot/tests/test_handlers_operator_reply.py": 39642,
+  "bot/tests/test_handlers_start.py": 26902,
+  "bot/tests/test_perf_db.py": 26940,
+  "bot/tests/test_perf_latency.py": 28302,
+  "bot/tests/test_perf_limiter.py": 20152,
+  "bot/tests/test_perf_resilience.py": 27031,
+  "bot/tests/test_repo_sync.py": 23685,
+  "bot/tests/test_resident_name_resume.py": 24115,
+  "bot/tests/test_settings_store_validation.py": 21806,
+  "bot/tests/test_uploads_policy_admin_relay.py": 21908,
+  "bot/tests/test_users_service_pg.py": 28934,
+  "docs/ROADMAP.md": 24960,
+  "docs/archive/LEDGER_2026-06_snapshot.md": 115148,
+  "docs/archive/versions/PRIVACY_DRAFT@1c4a51f-2026-05-10.md": 24017,
+  "docs/archive/versions/PRIVACY_DRAFT@6462228-2026-05-13.md": 24293,
+  "docs/archive/versions/PRIVACY_DRAFT@6ea4063-2026-05-09.md": 21530,
+  "docs/archive/versions/PRIVACY_DRAFT@a0680d0-2026-05-09.md": 21473,
+  "docs/archive/versions/REGLAMENT_v5_FULL@1ca7ad6-2026-05-25.md": 79160,
+  "docs/archive/versions/REGLAMENT_v7_FULL@8407d5b-2026-05-25.md": 79745,
+  "docs/archive/versions/consent_152fz_draft@4dda831-2026-06-01.md": 21236,
+  "docs/archive/versions/Политика_v2@1c4a51f-2026-05-10.md": 28517,
+  "docs/archive/versions/Политика_v2@510d864-2026-06-04.md": 33189,
+  "docs/archive/versions/Политика_v2@6462228-2026-05-13.md": 28793,
+  "docs/archive/versions/Политика_v2@8407d5b-2026-05-25.md": 29390,
+  "docs/archive/versions/Политика_v2@efff2e4-2026-05-26.md": 30510,
+  "docs/archive/versions/Политика_конфиденциальности_ИС_Чат-бот_MAX@7a0beb2-2026-07-09.md": 34478,
+  "docs/archive/versions/Политика_мое_ревью@worktree-2026-07-15.md": 32849,
+  "docs/archive/versions/Регламент_AEMR-bot_MAX_v8@510d864-2026-06-04.md": 166743,
+  "docs/archive/versions/Регламент_ULTIMATE@4dda831-2026-06-01.md": 150660,
+  "docs/archive/versions/Регламент_ULTIMATE@d445646-2026-06-02.md": 167501,
+  "docs/archive/versions/Регламент_ULTIMATE@f4e68d8-2026-06-02.md": 160356,
+  "docs/archive/versions/Регламент_v6_draft@882e8fd-2026-05-21.md": 21119,
+  "docs/archive/versions/Регламент_v8_draft@0a68d86-2026-05-27.md": 50188,
+  "docs/archive/versions/Регламент_v8_draft@8407d5b-2026-05-25.md": 39909,
+  "docs/archive/versions/Регламент_v8_draft@8cf28cf-2026-05-27.md": 50220,
+  "docs/archive/versions/Регламент_v8_draft@9efa2d3-2026-05-29.md": 50173,
+  "docs/archive/versions/Регламент_v8_draft@e8d96b0-2026-05-26.md": 50284,
+  "docs/audits/FLOW_AUDIT_2026-10-26.md": 26974,
+  "docs/audits/LEGAL_RECONCILIATION_2026-10.md": 24882,
+  "docs/audits/MODULE_MAP_0.2.4.json": 43448,
+  "docs/audits/MODULE_MAP_2026-10-26.json": 27663,
+  "docs/audits/PROJECT_SCOPE_STATUS.md": 21668,
+  "docs/audits/SYSTEM_REVIEW_0.2.4.md": 21984,
+  "docs/site/_kb/_archive/_COMPLETION_PLAN.md": 33581,
+  "docs/site/_kb/_archive/_INSIGHTS.md": 21885,
+  "docs/site/_kb/_archive/_QUESTIONS.md": 56314,
+  "docs/site/_kb/_archive/_REVIEW.md": 39229,
+  "docs/site/_kb/_archive/_audit/администратор-сисадмин.md": 42221,
+  "docs/site/_kb/_archive/_audit/безопасник-ИБ.md": 53534,
+  "docs/site/_kb/_archive/_audit/житель.md": 34405,
+  "docs/site/_kb/_archive/_audit/оператор-и-координатор.md": 46019,
+  "docs/site/_kb/_archive/_audit/разработчик.md": 46539,
+  "docs/site/_kb/_archive/_audit/руководитель-аналитик.md": 57792,
+  "docs/site/_kb/_archive/_audit/юрист-комплаенс.md": 36188,
+  "docs/site/_kb/_archive/pravovoe_before_2026-10-29.html": 126372,
+  "docs/site/_kb/_audit/_PLAN.md": 59119,
+  "docs/site/_kb/_shell.html": 75363,
+  "docs/site/_kb/_sources/_reglament_changelog.md": 33133,
+  "docs/site/_kb/_sources/reglament_owner_edited.txt": 92353,
+  "docs/site/_kb/_sources/reglament_v7.txt": 94258,
+  "docs/site/_kb/_sources/reserch.txt": 117351,
+  "docs/site/_kb2/admin.html": 217483,
+  "docs/site/_kb2/adr.html": 99478,
+  "docs/site/_kb2/codemap.html": 494816,
+  "docs/site/_kb2/developer.html": 647267,
+  "docs/site/_kb2/ekspluataciya.html": 42501,
+  "docs/site/_kb2/koncept.html": 462159,
+  "docs/site/_kb2/obzor.html": 44667,
+  "docs/site/_kb2/operator.html": 147319,
+  "docs/site/_kb2/pravovoe.html": 21622,
+  "docs/site/_kb2/security.html": 558054,
+  "docs/site/_kb2/spravochnik.html": 217689,
+  "docs/site/_kb2/spravref.html": 949025,
+  "docs/site/_kb2/voprosy.html": 281480,
+  "docs/site/_kb2/zhitel.html": 80813,
+  "docs/Инструкция_ПДн_удаление_восстановление.md": 21255,
+  "docs/Политика_конфиденциальности_ИС_Чат-бот_MAX.md": 48805,
+  "docs/Регламент_AEMR-bot_MAX_v8.md": 177798,
+  "docs/ЧЕКЛИСТ_ПРАВОПРЕЕМСТВА.md": 22958,
+  "infra/.env.example": 70545,
+  "seed/geo/buildings.geojson": 1013600,
+  "seed/geo/localities.geojson": 252636,
+  "seed/geo/streets.geojson": 1213807
+}
 ```
 
 ### `.dockerignore`
@@ -979,8 +1141,8 @@ updates:
 
 ### `.github/workflows/ci.yml`
 
-Size: `10436` bytes  
-SHA-256: `ec34a89a6c8b8d6e6cc27a0d88322c4d3755e8705c62232dbb55d1e61839b21f`
+Size: `10654` bytes  
+SHA-256: `9fdcde85ba276cb4290916e0cb1d63565ec938a3b194b28c25115c8e63ec8877`
 
 ```yaml
 name: CI
@@ -1004,9 +1166,14 @@ jobs:
         working-directory: ./bot
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 2
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
+      - name: Changed text size policy
+        working-directory: .
+        run: python scripts/check_staged_size.py --base-ref HEAD^ --baseline .agents/staged-size-baseline.json
       # Ставим ПО LOCK, а не по диапазонам pyproject. Иначе свежий релиз
       # любого dev-инструмента приезжает в CI сам: ruff 0.16 однажды дал
       # 285 замечаний по неизменившемуся коду, mypy 2.3 — ошибку, которую
@@ -1405,15 +1572,16 @@ docs/*.odt
 
 ### `.pre-commit-config.yaml`
 
-Size: `3378` bytes  
-SHA-256: `99f0b891b357f62da19474740b94eab33243c3025f6347281b4f29c99c19c348`
+Size: `3758` bytes  
+SHA-256: `1da3b7b484b30f87183c894cfe7e83b09087635fc269a4168b7bb9e38a45ac10`
 
 ```yaml
 # pre-commit hooks для aemr-bot.
 #
 # Установка: `pip install pre-commit && pre-commit install`.
 # Запуск вручную: `pre-commit run --all-files`.
-# Все hook'и зеркалят CI lint job — что упало здесь, упадёт и в CI.
+# Локальные форматтеры и изолированный mypy могут отличаться от CI.
+# Источник итоговых проверок — CI с зависимостями из bot/uv.lock.
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -1458,6 +1626,12 @@ repos:
 
   - repo: local
     hooks:
+      - id: staged-text-size
+        name: check staged text blobs (20000 bytes)
+        entry: python scripts/check_staged_size.py --baseline .agents/staged-size-baseline.json
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: assemble-wiki
         # Вика index.html СОБИРАЕТСЯ из фрагментов docs/site/_kb2/* — руками
         # не правится. Любая правка фрагмента (или каркаса/сборщика) триггерит
@@ -1480,34 +1654,36 @@ repos:
 
 ### `AGENTS.md`
 
-Size: `6742` bytes  
-SHA-256: `878465c054a989f40eee795bb85b82b3edd274fbbd47ff3e2fe6b523c69c94f8`
+Size: `2533` bytes  
+SHA-256: `4aeb3e4727dd2e2c2e97d746739121dda025c10280c20a4745dc8c4a98722900`
 
 ```markdown
 # Работа с aemr-bot
 
-Если документация репозитория противоречит существующему коду, следуй соглашениям, принятым в самом коде, а в финальном ответе укажи каждое найденное несоответствие между документацией и кодом.
+Текущие требования владельца определяют целевое поведение; воспроизведённый
+дефект не является соглашением, которое нужно сохранять.
+Если документация репозитория противоречит существующему коду, следуй соглашениям,
+принятым в самом коде, а в финальном ответе укажи каждое найденное несоответствие
+между документацией и кодом.
 
-Это правило не требует сохранять воспроизведённые дефекты: исправляй их по требованиям пользователя и регрессионным тестам. Исторические аудиты описывают указанный в них commit, а не состояние текущего выпуска.
+- Сообщения MAX и ранее выданные выгрузки бот автоматически не удаляет.
+  Внешние копии вручную обрабатывают сотрудники. S3 в рабочем контуре не используется.
+- VPS обновляют вручную. GitHub merge не является развёртыванием; включение
+  существующего альтернативного автодеплоя требует указания владельца.
+- Перед усложнением ради предполагаемой редкой гонки или угрозы объясни
+  конкретное последствие, вероятность и стоимость, получи согласие владельца.
+  Исправление воспроизведённого дефекта в согласованном объёме выполняй до проверки.
 
-- Рабочий контур владельца закрытый; обновление и запуск выполняются вручную. Наличие scripts/auto-deploy.sh не означает, что он установлен или используется. Сохраняй автодеплой рабочим альтернативным вариантом, но не включай его на сервере без указания владельца. Не объявляй GitHub-публикацию развёртыванием на сервере.
-- Python-код: bot/aemr_bot; тесты: bot/tests; миграции: bot/aemr_bot/db/alembic/versions; образ: infra/Dockerfile; Docker Compose: infra/docker-compose.yml. Проверяй фактические пути перед изменением.
-- Зависимости устанавливаются из bot/uv.lock. maxapi закреплён точно; при обновлении проверяй реальные модели, методы, обработку ошибок и повторы запросов.
-- Проверки из bot/: uv sync --locked --all-extras; TZ=Asia/Kamchatka uv run pytest; uv run ruff check aemr_bot/; uv run mypy aemr_bot/. Полные PostgreSQL-тесты выполняются в CI с Postgres 16.
-- Не удаляй код только по отсутствию текстовых ссылок: проверь регистрацию обработчиков/cron, динамические вызовы, экспортируемые API, миграции, эксплуатационные сценарии и историю git. Сохраняй аварийные выключатели и резервные пути. Для каждого удаления фиксируй доказательство ненужности и проверку поведения.
-- Не обещай exactly-once для внешнего MAX API; неизвестный результат отправки должен оставаться видимым. Не повторяй изменяющий запрос вслепую после тайм-аута.
-- Бэкап необязателен: отсутствие BACKUP_LOCAL_DIR должно оставаться тихим отключением. Сбой баз угроз — один сигнал на эпизод, без остановки приёма обращений.
-- Не выдавай предположения об ускорении или размере образа за измерения. Итог должен содержать выполненные проверки и оставшиеся ограничения.
+Контекст по задаче:
 
-Основания: https://developers.openai.com/blog/maintaining-software-with-the-gpt-6-family и https://arxiv.org/abs/2610.30571.
+- Код, тесты, зависимости и удаление реализации → [CODING_STANDARDS.md](CODING_STANDARDS.md).
+- Вывод ПДн, доставка, очередь или восстановление → соответствующий раздел
+  стандартов; операции удаления/restore → также [техническая инструкция](docs/DATA_ERASURE_OPERATIONS.md).
+- Читательская документация → [.agents/context/PRODUCT.md](.agents/context/PRODUCT.md);
+  её оформление → также [DESIGN.md](.agents/context/DESIGN.md).
 
-- Активная документация: README, docs/site/_kb2/*.html, docs/site/_kb/_LEDGER.md; датированные аудиты и docs/archive описывают свой снимок. Generated docs/site/index.html и aemr-bot-index.md пересобирай после окончательных правок источников. Статический перечень — scripts/inventory_implementation.py; хеши не доказывают семантическую проверку каждой строки.
-- Лимиты исходной конфигурации: черновик обращения/дополнения 20000 символов и 20 вложений, ответ оператора 3000. Сохраняй явные предпросмотр/подтверждение, отдельную общую очередь, исторические карточки и экспертные команды. После неопределённого изменения очереди автоматические изменения прекращаются до явной сверки MAX.
-- Удаление/restore: ERASURE_STATE_DIR и subject.key должны переживать дампы; перед трафиком восстановленной базы применять scripts/replay_erasure_tombstones.py. Не объявлять удалёнными неизвестные сообщения MAX, S3-версии, journald и внешние копии без подтверждения.
-
-- Личные экраны и файлы: `data_erasure.personal_view` должен начинаться ДО чтения ПДн и длиться до завершения вывода/загрузки; точные источники задаются `appeal_id`/`max_user_ids`, списки — `aggregate=True`. Копии и правки экранов регистрирует установленный hook. Не выполнять erase/revoke внутри shared-view.
-- Порядок блокировок: lifecycle guard жителя → privacy barrier → строки/обращение. Вложенные shared-lease того же asyncio task используют живую внешнюю транзакцию; child tasks получают собственный lock. Не ожидать параллельные выводы дочерних tasks внутри удерживаемого view при возможном exclusive erasure.
-- Подтверждение удаления/отзыва в личке связывать с новым MID и текущей редакцией согласия, не выполнять мутацию по старому статическому payload. Переходы и новый текст отменяют только подтверждение, не содержимое черновика. После erase не публиковать MAX ID заново; только явное не содержащее ПДн подтверждение может использовать `allow_erased_recipient=True`.
+Ищи по исходникам. Генерируемые индекс репозитория и сайт — публикационные
+артефакты, не обязательный входной контекст каждой задачи.
 ```
 
 ### `bot/aemr_bot/__init__.py`
@@ -1521,8 +1697,8 @@ __version__ = "0.2.4"
 
 ### `bot/aemr_bot/config.py`
 
-Size: `23669` bytes  
-SHA-256: `0e23b0955504149d0f9f4a50df096e368c8ab68686383861a29672f1444944b1`
+Size: `23635` bytes  
+SHA-256: `70ec0aadbd38e244586f4fc53078e309cce5425f0ce359ea8ba1f75c70714a07`
 
 ```python
 from pathlib import Path
@@ -1705,13 +1881,13 @@ class Settings(BaseSettings):
     )
 
     # Таймауты дочерних процессов бэкапа (perf-resilience finding d). Без них
-    # pg_dump/gpg/rclone ждут голым `await proc.wait()` бесконечно: повисший
-    # S3-эндпоинт или зависший Postgres → backup-job висит вечно, точка
+    # pg_dump/gpg ждут голым `await proc.wait()` бесконечно: повисший
+    # Зависший Postgres → backup-job висит вечно, точка
     # восстановления не создаётся, а категоризированный admin-алёрт никогда
     # не отправляется (cron-job не возвращается). По таймауту процесс
     # убивается (kill + reap), backup_db возвращает BackupResult(fail_kind=…)
     # → штатный алёрт уходит. pg_dump/gpg щедрее (большая БД может дампиться
-    # минуты); rclone — сетевой шаг, режем агрессивнее.
+    # минуты). Устаревший rclone-таймаут принимается для совместимости .env.
     backup_pg_dump_timeout_seconds: float = Field(
         600.0, alias="BACKUP_PG_DUMP_TIMEOUT_SECONDS", gt=0.0, le=7200.0
     )
@@ -1747,9 +1923,8 @@ class Settings(BaseSettings):
         600.0, alias="BACKUP_VERIFY_TIMEOUT_SECONDS", gt=0.0, le=7200.0
     )
 
-    # S3 опционально: если задан endpoint+bucket+keys, доп. заливаем в облако.
-    # Пусто — храним только локально. Для self-hosted без облачного хранилища
-    # оставить пустыми.
+    # Устаревшие S3-поля принимаются для совместимости старых .env.
+    # Бот хранит бэкапы только локально; эти значения не включают S3-доступ.
     backup_s3_endpoint: str | None = Field(None, alias="BACKUP_S3_ENDPOINT")
     backup_s3_bucket: str | None = Field(None, alias="BACKUP_S3_BUCKET")
     backup_s3_access_key: str | None = Field(None, alias="BACKUP_S3_ACCESS_KEY")
@@ -2548,8 +2723,8 @@ __all__ = [
 
 ### `bot/aemr_bot/copy/citizen_funnel.py`
 
-Size: `28466` bytes  
-SHA-256: `16a48fb9b56586b75e7f0128ede225d6940237e3983f29bfa33b254aca6af623`
+Size: `14990` bytes  
+SHA-256: `31d2b7c9e58b29f677b54535448c2a76d996ad48c74a87779d35bc165a06049b`
 
 ```python
 """Тексты, которые видит житель в личке с ботом.
@@ -2558,6 +2733,20 @@ SHA-256: `16a48fb9b56586b75e7f0128ede225d6940237e3983f29bfa33b254aca6af623`
 адрес), согласие на ПДн, «Мои обращения», «Уйти из бота» (goodbye),
 useful info, help, рассылки-подтверждения, политика данных.
 """
+
+from aemr_bot.copy.privacy import (
+    CONSENT_ACCEPTED,
+    CONSENT_DECLINED,
+    CONSENT_REQUEST,
+    CONSENT_REVOKE_CONFIRM,
+    CONSENT_REVOKED_OK,
+    CONSENT_STATUS_ACTIVE,
+    CONSENT_STATUS_NEVER,
+    CONSENT_STATUS_REVOKED,
+    ERASE_CONFIRM,
+    ERASE_REQUESTED,
+    GOODBYE_PROMPT,
+)
 
 WELCOME = (
     "Здравствуйте.\n\n"
@@ -2572,56 +2761,6 @@ WELCOME = (
 # полностью в отдельную кнопку «🛡️ Защита от мошенников» главного
 # меню (`SECURITY_INFO_TEXT`, handler menu:security). C1 SCHEMA-
 # valdate снят (см. settings_store.SCHEMA[welcome_text]).
-
-# Запасной текст согласия. Показывается, только если настройка
-# consent_text в БД пуста (боевой текст оператор задаёт через админ-UI —
-# см. seed/consent.md). Даже как запасной он не должен врать
-# жителю: раньше здесь стояло «Отзыв — /forget», но /forget — это
-# немедленное СТИРАНИЕ данных, а не отзыв согласия (реальный отзыв — в
-# меню «Уйти из бота»). Держим фактически верным и полным по ч. 1 ст. 9.
-CONSENT_REQUEST = (
-    'СОГЛАСИЕ НА ОБРАБОТКУ ПЕРСОНАЛЬНЫХ ДАННЫХ\n'
-    '\n'
-    'Свободно, своей волей и в своем интересе я даю Администрации Елизовского муниципального округа согласие на обработку моих персональных данных для приема и рассмотрения сообщения, подготовки ответа, учета обращений и оценки принятых мер.\n'
-    '\n'
-    'Оператор: Администрация Елизовского муниципального округа; 684000, Камчатский край, г. Елизово, ул. Ленина, д. 10.\n'
-    '\n'
-    'Какие данные\n'
-    '\n'
-    'Имя, телефон, идентификатор аккаунта MAX, населенный пункт и адрес проблемы, тема и текст сообщения, приложенные файлы, уточнения и ответы по обращению. Также сохраняются дата и время согласия и показанный мне текст. Если я добровольно поделюсь геолокацией, координаты используются для определения адреса и могут временно сохраняться в техническом событии при обработке сообщения.\n'
-    '\n'
-    'Что делают с данными\n'
-    '\n'
-    'Сбор, запись, систематизация, накопление, хранение, уточнение, извлечение, использование, предоставление уполномоченным специалистам администрации, в том числе территориальных управлений, блокирование, удаление и уничтожение. Обработка автоматизированная; сообщения и файлы передаются через Интернет с использованием MAX. Его оператор обрабатывает данные также по своим правилам.\n'
-    '\n'
-    'Не отправляйте сведения о здоровье, национальности, политических взглядах, вероисповедании, интимной жизни и документы с чувствительными сведениями. Не сообщайте данные других людей без необходимого основания. Обычные фотографии проблемы допустимы; бот не использует их для установления личности по биометрическим признакам.\n'
-    '\n'
-    'Сроки и отзыв\n'
-    '\n'
-    'Согласие действует до отзыва или достижения целей обработки. Для учета обращений и оценки принятых мер предусмотрен рабочий горизонт пять лет: от закрытия обращения, при отсутствии закрытия — от ответа, а при отсутствии обоих — от подачи. Позднейшее возобновление обращения, принятие нового обращения в работу или переписка сдвигают начало этого горизонта. Это не обязательный архивный срок: при утрате необходимости или отсутствии законного основания данные должны быть удалены раньше.\n'
-    '\n'
-    'Отзыв: «Настройки и помощь» → «Уйти из бота» → «Отозвать согласие». Новые обращения без нового согласия не принимаются, оповещения отключаются. Ответы через бот после отзыва не отправляются. Дальнейшую работу по уже поданному обращению администрация оценивает отдельно; при наличии другого законного основания использует официальный канал вне бота. Если нет самостоятельного законного основания для продолжения обработки, она прекращается, а данные удаляются не позднее 30 дней после отзыва. Открытые обращения при очистке закрываются.\n'
-    '\n'
-    '«Удалить данные» в том же меню запускает очистку рабочей базы сразу и закрывает открытые обращения. Известные копии сообщений в MAX ставятся в очередь удаления с проверкой результата; запускается очистка распознанных резервных копий. Скачанные файлы, неизвестные старые сообщения, хранение платформой MAX, версии внешних копий и сторонние журналы требуют отдельной проверки. Одно нажатие не подтверждает уничтожение всех копий.\n'
-    '\n'
-    'Отозвать согласие, запросить сведения о своих данных, их исправление, блокирование или уничтожение можно также письмом по адресу Оператора. Действия Оператора можно обжаловать в Роскомнадзор или суд.\n'
-    '\n'
-    'Оповещения подключаются по отдельному согласию; подписка не обязательна для подачи обращения.\n'
-    '\n'
-    'Политика данных бота предоставляется отдельным файлом и доступна в «Настройки и помощь» → «Политика данных». Временная справочная ссылка на ранее опубликованную политику администрации муниципального района: {policy_url} — этот документ не является подтверждением утверждения политики округа.\n'
-    '\n'
-    'Нажимая «Согласен», я даю согласие на указанных условиях.'
-)
-
-CONSENT_DECLINED = (
-    "Без согласия принять обращение не получится. Полезная информация "
-    "и контакты экстренных служб остаются доступны в меню."
-)
-
-CONSENT_ACCEPTED = (
-    "Согласие принято. Поделитесь номером — он нужен оператору, "
-    "чтобы перезвонить по обращению."
-)
 
 CONTACT_REQUEST = (
     "Поделитесь номером телефона — нажмите кнопку ниже.\n\n"
@@ -2737,85 +2876,9 @@ USEFUL_INFO_TITLE = "Полезная информация — выберите 
 SETTINGS_MENU_TITLE = (
     "Настройки и помощь.\n\n"
     "Здесь — список команд, правила пользования ботом, политика обработки "
-    "данных и кнопка «Уйти из бота», если рассылка надоела или хотите попрощаться."
+    "данных, управление подпиской, отзыв согласия и удаление данных из базы."
 )
 
-GOODBYE_PROMPT = (
-    "Выберите действие:\n\n"
-    "🔕 Отписаться — отключить рассылку, обращения останутся доступны.\n\n"
-    "👋 Отозвать согласие — новые обращения и рассылка будут недоступны. "
-    "Специалист сможет ответить на ранее поданное обращение до очистки данных.\n\n"
-    "🗑 Удалить данные — данные в рабочей базе будут очищены, "
-    "открытые обращения закроются без ответа. Действия с копиями "
-    "выполняются отдельно."
-)
-
-# Согласие на ПДн -------------------------------------------------------------
-
-CONSENT_STATUS_ACTIVE = (
-    "Согласие на обработку персональных данных дано {given_at}.\n\n"
-    "Вы можете в любой момент отозвать согласие или удалить все свои "
-    "данные. Политика обработки доступна по кнопке ниже."
-)
-
-CONSENT_STATUS_REVOKED = (
-    "Согласие на обработку персональных данных отозвано {revoked_at}.\n\n"
-    "Новые обращения и рассылка недоступны. Если на момент отзыва у вас "
-    "были открытые обращения, специалист может ответить до очистки данных. "
-    "Очистка рабочей базы запланирована начиная с 29-го дня после отзыва, "
-    "если вы не дадите согласие снова.\n\n"
-    "Чтобы снова подавать обращения, нужно дать согласие заново — "
-    "бот предложит его при подаче обращения."
-)
-
-CONSENT_STATUS_NEVER = (
-    "Согласие на обработку персональных данных пока не дано. Оно нужно "
-    "только при подаче обращения — бот спросит на первом шаге."
-)
-
-CONSENT_REVOKE_CONFIRM = (
-    "Завершить общение с ботом?\n\n"
-    "Что произойдёт:\n"
-    "• Согласие на обработку ваших данных будет отозвано.\n"
-    "• По открытым обращениям специалист может ответить до очистки данных.\n"
-    "• Подписка на рассылку отключится.\n"
-    "• Очистка рабочей базы запланирована начиная с 29-го дня после отзыва; "
-    "другие копии обрабатываются отдельно.\n\n"
-    "Это не лишает вас права обратиться в Администрацию через официальные "
-    "каналы. Передумаете — откройте /start и снова дайте согласие до "
-    "автоудаления."
-)
-
-CONSENT_REVOKED_OK = (
-    "Согласие отозвано. Подписка на рассылку отключена.\n\n"
-    "Если у вас есть открытые обращения, специалист может ответить до очистки "
-    "данных. Новые обращения без нового согласия не принимаются.\n\n"
-    "Это не лишает вас права обратиться в Администрацию через официальные "
-    "каналы.\n\n"
-    "Очистка рабочей базы запланирована начиная с 29-го дня после отзыва; "
-    "другие копии обрабатываются отдельно.\n\n"
-    "Передумаете — откройте /start и снова дайте согласие до автоудаления."
-)
-
-ERASE_CONFIRM = (
-    "Удалить ваши данные из базы бота?\n\n"
-    "Что произойдёт:\n"
-    "• Имя и телефон будут стёрты.\n"
-    "• Согласие на обработку отзывается, рассылка отключается.\n"
-    "• Открытые обращения закрываются — оператор не успеет ответить.\n"
-    "• Прошлая история обращений в боте больше не покажется.\n"
-    "• Сообщения и файлы, уже отправленные в MAX, останутся в чатах.\n"
-    "• Бот вас не узнает при следующем заходе — при необходимости "
-    "придётся пройти регистрацию заново."
-)
-
-ERASE_REQUESTED = (
-    "Ваши данные удалены из рабочей базы бота: профиль, тексты обращений и сохранённые вложения.\n\n"
-    "Известные копии в MAX и резервных хранилищах переданы на очистку. Её результат проверяется отдельно. "
-    "Уже скачанные другими людьми файлы бот удалить не может.\n\n"
-    "Если захотите написать снова — откройте /start, бот пройдёт "
-    "с вами всё с чистого листа."
-)
 
 HELP_USER = (
     "Что умеет бот:\n\n"
@@ -2952,6 +3015,39 @@ __all__ = [
 ]
 ```
 
+### `bot/aemr_bot/copy/draft_preview.py`
+
+Size: `1332` bytes  
+SHA-256: `61755837b5a7422dd721a620aa72073beae19d5ae299e42d8503923c48c8681b`
+
+```python
+"""Compact resident preview; the full draft remains available separately."""
+
+from collections.abc import Mapping
+from typing import Any
+
+
+def render(data: Mapping[str, Any], *, followup: bool,
+           max_chars: int, max_attachments: int) -> str:
+    chunks = data.get("summary_chunks") or []
+    files = data.get("attachments") or []
+    full = "\n".join(chunks)
+    preview = full[:400] + ("…" if len(full) > 400 else "")
+    title = f"Черновик дополнения к № {data.get('appeal_id')}" if followup else "Черновик обращения"
+    context = ""
+    if not followup:
+        context = "\n".join(
+            f"{label}: {data.get(key) or 'не указано'}"
+            for key, label in (("locality", "Населённый пункт"),
+                               ("address", "Адрес проблемы"), ("topic", "Тема"))
+        ) + "\n\n"
+    return (f"📝 {title}\n\n{context}Частей текста: {len(chunks)} · "
+            f"Символов: {len(full)} из {max_chars}\n"
+            f"Вложений: {len(files)} из {max_attachments}\n\n"
+            + (f"{preview}\n\n" if preview else "")
+            + "Можно прислать ещё текст или файлы. Когда всё готово, нажмите кнопку отправки.")
+```
+
 ### `bot/aemr_bot/copy/errors_texts.py`
 
 Size: `1999` bytes  
@@ -2998,6 +3094,152 @@ __all__ = [
     "CITIZEN_COMMAND_IN_ADMIN_CHAT",
     "UNKNOWN_INPUT",
 ]
+```
+
+### `bot/aemr_bot/copy/privacy.py`
+
+Size: `13652` bytes  
+SHA-256: `6eca01f72bc99500bbd1096f17e07a5e0305c6ceec7126cfd9f461db8e0b46e9`
+
+```python
+"""Согласие, отзыв и границы удаления: текст для решений жителя.
+
+CONSENT_REQUEST — запасная редакция; пользовательское значение в БД
+не заменяется при импорте или обновлении seed.
+"""
+
+CONSENT_REQUEST = (
+    'СОГЛАСИЕ НА ОБРАБОТКУ ПЕРСОНАЛЬНЫХ ДАННЫХ\n'
+    '\n'
+    'Свободно, своей волей и в своем интересе я даю Администрации Елизовского муниципального округа согласие на обработку моих персональных данных для приема и рассмотрения сообщения, подготовки ответа, учета обращений и оценки принятых мер.\n'
+    '\n'
+    'Оператор: Администрация Елизовского муниципального округа; 684000, Камчатский край, г. Елизово, ул. Ленина, д. 10.\n'
+    '\n'
+    'Какие данные\n'
+    '\n'
+    'Имя, телефон, идентификатор аккаунта MAX, населенный пункт и адрес проблемы, тема и текст сообщения, приложенные файлы, уточнения и ответы по обращению. Также сохраняются дата и время согласия и показанный мне текст. Если я добровольно поделюсь геолокацией, координаты используются для определения адреса и могут временно сохраняться в техническом событии при обработке сообщения.\n'
+    '\n'
+    'Что делают с данными\n'
+    '\n'
+    'Сбор, запись, систематизация, накопление, хранение, уточнение, извлечение, использование, предоставление уполномоченным специалистам администрации, в том числе территориальных управлений, блокирование, удаление и уничтожение. Обработка автоматизированная; сообщения и файлы передаются через Интернет с использованием MAX. Его оператор обрабатывает данные также по своим правилам.\n'
+    '\n'
+    'Не отправляйте сведения о здоровье, национальности, политических взглядах, вероисповедании, интимной жизни и документы с чувствительными сведениями. Не сообщайте данные других людей без необходимого основания. Обычные фотографии проблемы допустимы; бот не использует их для установления личности по биометрическим признакам.\n'
+    '\n'
+    'Сроки и отзыв\n'
+    '\n'
+    'Согласие действует до отзыва или достижения целей обработки. Для учета обращений и оценки принятых мер предусмотрен рабочий горизонт пять лет: от закрытия обращения, при отсутствии закрытия — от ответа, а при отсутствии обоих — от подачи. Позднейшее возобновление обращения, принятие нового обращения в работу или переписка сдвигают начало этого горизонта. Это не обязательный архивный срок: при утрате необходимости или отсутствии законного основания данные должны быть удалены раньше.\n'
+    '\n'
+    'Отзыв: «Настройки и помощь» → «Уйти из бота» → «Отозвать согласие». Новые обращения без нового согласия не принимаются, оповещения отключаются. Ответы через бот после отзыва не отправляются. Дальнейшую работу по уже поданному обращению администрация оценивает отдельно; при наличии другого законного основания использует официальный канал вне бота. Если нет самостоятельного законного основания для продолжения обработки, она прекращается, а данные удаляются не позднее 30 дней после отзыва. Открытые обращения при очистке закрываются.\n'
+    '\n'
+    '«Удалить данные» в том же меню запускает очистку рабочей базы сразу и закрывает открытые обращения. Бот не удаляет автоматически сообщения в MAX и ранее выданные выгрузки. Уполномоченные сотрудники вручную проверяют и очищают внешние копии, включая сообщения, скачанные файлы и копии в подразделениях, с учетом законных оснований хранения. Запускается очистка распознанных локальных резервных копий; сторонние журналы и копии платформы проверяются отдельно. Одно нажатие не подтверждает уничтожение всех копий.\n'
+    '\n'
+    'Отозвать согласие, запросить сведения о своих данных, их исправление, блокирование или уничтожение можно также письмом по адресу Оператора. Действия Оператора можно обжаловать в Роскомнадзор или суд.\n'
+    '\n'
+    'Оповещения подключаются по отдельному согласию; подписка не обязательна для подачи обращения.\n'
+    '\n'
+    'Политика данных бота предоставляется отдельным файлом и доступна в «Настройки и помощь» → «Политика данных». Временная справочная ссылка на ранее опубликованную политику администрации муниципального района: {policy_url} — этот документ не является подтверждением утверждения политики округа.\n'
+    '\n'
+    'Нажимая «Согласен», я даю согласие на указанных условиях.'
+)
+
+
+CONSENT_DECLINED = (
+    "Без согласия принять обращение не получится. Полезная информация "
+    "и контакты экстренных служб остаются доступны в меню."
+)
+
+
+CONSENT_ACCEPTED = (
+    "Согласие принято. Поделитесь номером — он нужен оператору, "
+    "чтобы перезвонить по обращению."
+)
+
+
+GOODBYE_PROMPT = (
+    "Выберите действие:\n\n"
+    "🔕 Отписаться — отключить рассылку, обращения останутся доступны.\n\n"
+    "👋 Отозвать согласие — новые обращения и рассылка будут недоступны. "
+    "Ответы через бот после отзыва не отправляются. Для дальнейшей работы "
+    "используйте официальные каналы Администрации.\n\n"
+    "🗑 Удалить данные — данные в рабочей базе будут очищены, "
+    "открытые обращения закроются без ответа. Действия с копиями "
+    "выполняются отдельно."
+)
+
+
+CONSENT_STATUS_ACTIVE = (
+    "Согласие на обработку персональных данных дано {given_at}.\n\n"
+    "Вы можете в любой момент отозвать согласие или удалить свои "
+    "данные. Политика обработки доступна по кнопке ниже."
+)
+
+
+CONSENT_STATUS_REVOKED = (
+    "Согласие на обработку персональных данных отозвано {revoked_at}.\n\n"
+    "Новые обращения и рассылка недоступны. "
+    "Ответы через бот после отзыва не отправляются. Для дальнейшей работы "
+    "используйте официальные каналы Администрации. "
+    "Очистка рабочей базы запланирована начиная с 29-го дня после отзыва, "
+    "если вы не дадите согласие снова.\n\n"
+    "Чтобы снова подавать обращения, нужно дать согласие заново — "
+    "бот предложит его при подаче обращения."
+)
+
+
+CONSENT_STATUS_NEVER = (
+    "Согласие на обработку персональных данных пока не дано. Оно нужно "
+    "только при подаче обращения — бот спросит на первом шаге."
+)
+
+
+CONSENT_REVOKE_CONFIRM = (
+    "Завершить общение с ботом?\n\n"
+    "Что произойдёт:\n"
+    "• Согласие на обработку ваших данных будет отозвано.\n"
+    "• Ответы через бот после отзыва не отправляются.\n"
+    "• Подписка на рассылку отключится.\n"
+    "• Очистка рабочей базы запланирована начиная с 29-го дня после отзыва; "
+    "другие копии обрабатываются отдельно.\n\n"
+    "Это не лишает вас права обратиться в Администрацию через официальные "
+    "каналы. Передумаете — откройте /start и снова дайте согласие до "
+    "автоудаления."
+)
+
+
+CONSENT_REVOKED_OK = (
+    "Согласие отозвано. Подписка на рассылку отключена.\n\n"
+    "Ответы через бот после отзыва не отправляются. "
+    "Новые обращения без нового согласия не принимаются.\n\n"
+    "Это не лишает вас права обратиться в Администрацию через официальные "
+    "каналы.\n\n"
+    "Очистка рабочей базы запланирована начиная с 29-го дня после отзыва; "
+    "другие копии обрабатываются отдельно.\n\n"
+    "Передумаете — откройте /start и снова дайте согласие до автоудаления."
+)
+
+
+ERASE_CONFIRM = (
+    "Удалить ваши данные из базы бота?\n\n"
+    "Что произойдёт:\n"
+    "• Имя и телефон будут стёрты.\n"
+    "• Согласие на обработку отзывается, рассылка отключается.\n"
+    "• Открытые обращения закрываются — оператор не успеет ответить.\n"
+    "• Прошлая история обращений в боте больше не покажется.\n"
+    "• Сообщения MAX и ранее выданные выгрузки бот автоматически не удаляет. "
+    "За их очистку отвечают сотрудники Администрации.\n"
+    "• Бот вас не узнает при следующем заходе — при необходимости "
+    "придётся пройти регистрацию заново."
+)
+
+
+ERASE_REQUESTED = (
+    "Ваши данные удалены из рабочей базы бота: профиль, тексты обращений и сохранённые вложения.\n\n"
+    "Сообщения MAX и ранее выданные выгрузки бот автоматически не удаляет. "
+    "За их очистку отвечают сотрудники Администрации. "
+    "По вопросу очистки внешних копий обратитесь в Администрацию.\n\n"
+    "Если захотите написать снова — откройте /start, бот пройдёт "
+    "с вами всё с чистого листа."
+)
 ```
 
 ### `bot/aemr_bot/copy/security_texts.py`
@@ -21274,11 +21516,11 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/admin_data_erasure.py`
 
-Size: `1894` bytes  
-SHA-256: `2bb5acaf31c9e58cb3a35f6cf06ad9cf97557dc5a18988167954f3232132f7ba`
+Size: `1741` bytes  
+SHA-256: `2430682e563f881da34bf9f1907bc88be0e1cc18c856e3d081d01c50680bbfe2`
 
 ```python
-"""IT-only reconciliation view; no automatic retry of unknown MAX mutations."""
+"""IT diagnostics for local cleanup and manual external-copy handling."""
 from __future__ import annotations
 
 from aemr_bot.db.models import OperatorRole
@@ -21291,15 +21533,16 @@ async def show_status(event) -> None:
     if not await ensure_role(event, OperatorRole.IT):
         return
     status = await data_erasure.diagnostics()
-    lines = ["🧹 Удаление данных: учтённые копии",
-             "Неучтённые старые сообщения, внешние выгрузки и версии хранилищ сверяются отдельно.",
-             f"В очереди: {status.get('pending', 0)}",
-             f"Удаление начато, результат неизвестен: {status.get('deleting', 0)}",
-             f"Нужна проверка в MAX: {status.get('uncertain', 0) + status.get('reserved', 0)}",
-             f"Удаление подтверждено: {status.get('deleted', 0)}",
-             f"Резервные копии требуют проверки: {status.get('backups_unresolved', 0)}",
-             ("Неизвестный результат не повторяется автоматически. "
-             "Специалист ИТ проверяет историю MAX, версии S3 и журнал хоста по регламенту удаления.")]
+    manual = sum(status.get(key, 0) for key in ("manual", "pending", "deleting", "uncertain", "reserved"))
+    lines = [
+        "🧹 Удаление из рабочей базы и локальных копий",
+        ("Сообщения MAX и ранее выданные выгрузки автоматически не удаляются. "
+         "Внешние копии сотрудники обрабатывают вручную."),
+        f"Ручная проверка учтённых копий: {manual}",
+        f"Локальные резервные копии требуют проверки: {status.get('backups_unresolved', 0)}",
+        ("Метаданные ниже ограничивают новый вывод удалённых данных; "
+         "они не подтверждают очистку внешних копий."),
+    ]
     for item in await data_erasure.unresolved_copies(limit=10):
         lines.append(f"Копия {item['id']}: {item['kind']} / {item['state']}; MAX mid={item['message_id'] or 'неизвестен'}")
     for item in await data_erasure.unresolved_backups(limit=5):
@@ -26558,8 +26801,8 @@ def register(dp: Dispatcher) -> None:
 
 ### `bot/aemr_bot/handlers/appeal_funnel.py`
 
-Size: `49616` bytes  
-SHA-256: `02163703b604a92d37a5e45823f8990f1f4a84381d83ecd62de3dadc9c0001b7`
+Size: `49228` bytes  
+SHA-256: `df7ed6776b9f5a31bdbb1346d0de655b2aca9a8b968314b8aa272a4c2323d37e`
 
 ```python
 """FSM-воронка приёма обращения и явного дополнения.
@@ -26589,6 +26832,7 @@ from datetime import UTC, datetime, timedelta
 
 from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
+from aemr_bot.copy.draft_preview import render as render_draft_preview
 from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import resident_name_gate
@@ -27265,14 +27509,11 @@ async def show_summary_draft(event, max_user_id: int) -> None:
     chunks = data.get("summary_chunks") or []
     files = data.get("attachments") or []
     full = "\n".join(chunks)
-    preview = full[:400] + ("…" if len(full) > 400 else "")
-    title = f"Черновик дополнения к № {data.get('appeal_id')}" if followup else "Черновик обращения"
     await send_or_edit_screen(
-        event, text=(f"📝 {title}\n\nЧастей текста: {len(chunks)} · "
-                     f"Символов: {len(full)} из {cfg.summary_max_chars}\n"
-                     f"Вложений: {len(files)} из {cfg.attachments_max_per_appeal}\n\n"
-                     + (f"{preview}\n\n" if preview else "")
-                     + "Можно прислать ещё текст или файлы. Когда всё готово, нажмите кнопку отправки."),
+        event, text=render_draft_preview(
+            data, followup=followup, max_chars=cfg.summary_max_chars,
+            max_attachments=cfg.attachments_max_per_appeal,
+        ),
         attachments=[keyboards.appeal_draft_keyboard(token, has_content=bool(full.strip() or files), followup=followup)],
     )
 
@@ -27285,7 +27526,7 @@ async def on_awaiting_topic(event, body, text_body, max_user_id):
         async with session_scope() as session:
             await users_service.reset_state(session, max_user_id)
         await event.message.answer(
-            "Список тем сейчас пуст — сообщили координатору. Попробуйте позже.",
+            "Сейчас не удаётся выбрать тему. Попробуйте позже или воспользуйтесь электронной приёмной в меню.",
             attachments=[keyboards.back_to_menu_keyboard()],
         )
         return
@@ -31757,8 +31998,8 @@ def parse_int_tail(payload: str, prefix: str) -> int | None:
 
 ### `bot/aemr_bot/handlers/menu.py`
 
-Size: `69620` bytes  
-SHA-256: `93616aee4ae113ef76e89528f8dbc705c90aa1596fb6b31bc3461576612251f8`
+Size: `68429` bytes  
+SHA-256: `5b5f3bdbb49456e2faa33c1e1103c989ebb910572b9f2218653a292cc4237dcc`
 
 ```python
 import logging
@@ -32561,14 +32802,7 @@ async def open_goodbye(event):
 
 
 async def ask_goodbye_revoke_confirm(event):
-    """Подтверждение «прощального» отзыва согласия из A4-экрана.
-
-    Текст подтверждения тот же, что в `ask_consent_revoke_confirm`
-    (CONSENT_REVOKE_CONFIRM) — он описывает финальный ответ по уже
-    открытым обращениям и автоудаление через 30 дней без активности.
-    Меняется только клавиатура — возврат на отказ ведёт обратно в
-    A4-экран, а не в карточку «Согласие на ПДн» (которой больше нет).
-    """
+    """Отзыв с возвратом на экран «Уйти из бота» при отмене."""
     await _send_privacy_confirmation(
         event, action="revoke",
         text=texts.CONSENT_REVOKE_CONFIRM,
@@ -32720,16 +32954,7 @@ async def ask_consent_revoke_confirm(event):
 
 
 async def do_consent_revoke(event, max_user_id: int):
-    """Отзыв согласия через кнопку.
-
-    Подписка отключается, новые обращения требуют нового согласия.
-    Открытые на момент отзыва обращения остаются в работе: оператор
-    отправляет по ним финальный ответ через бот, после чего стандартный
-    механизм ответа закрывает обращение.
-
-    В служебную группу отправляем уведомление и повторяем карточки
-    открытых обращений, чтобы сотрудник не искал их в истории чата.
-    """
+    """Отключить подписку и новые ответы; сообщить сотрудникам об отзыве."""
 
     async with current_user(max_user_id) as (session, user):
         # SACRED #5: list_unanswered_for_user догружает messages
@@ -35779,8 +36004,8 @@ def setup_logging(s: Settings | None = None) -> None:
 
 ### `bot/aemr_bot/main.py`
 
-Size: `51227` bytes  
-SHA-256: `1da0a3aa1b6c6adca74c1a0ac14c7a220bd3a45095e83b4d83aebe2a8e66fbd6`
+Size: `51197` bytes  
+SHA-256: `ac6b0bd49951dc94fcec254cc68b8532f85428f9c4043af49ec9ebede15c473a`
 
 ```python
 from __future__ import annotations
@@ -36636,17 +36861,16 @@ async def main() -> None:
             _report_abandoned_broadcasts(), name="report_abandoned_broadcasts"
         )
 
-        async def _erasure_worker():
+        async def _local_backup_cleanup_worker():
             from aemr_bot.services import db_backup
             while True:
                 try:
-                    await data_erasure.recover_deletions(bot)
                     await db_backup.cleanup_erased_backups()
                 except Exception as exc:
-                    log.error("Data-copy cleanup needs attention (%s)", type(exc).__name__)
+                    log.error("Local backup cleanup needs attention (%s)", type(exc).__name__)
                 await asyncio.sleep(30)
 
-        service_tasks.append(asyncio.create_task(_erasure_worker(), name="data_copy_cleanup"))
+        service_tasks.append(asyncio.create_task(_local_backup_cleanup_worker(), name="local_backup_cleanup"))
 
         # Polling and webhook share health endpoints and heartbeat.
         health_runner = await health.start(
@@ -36713,8 +36937,8 @@ if __name__ == "__main__":
 
 ### `bot/aemr_bot/network.py`
 
-Size: `8756` bytes  
-SHA-256: `b59c00c66deb6b456c8f3cb420021df02371ab8b1fcfe4ab013386f7e27c9a59`
+Size: `8748` bytes  
+SHA-256: `35bc7413b8f9fae04464b112f7e671ba81e00bf2e1eb4d74fa321cd4bf26a679`
 
 ```python
 """Firewall/proxy mode: единый рычаг для работы за ЛЮБЫМ межсетевым экраном.
@@ -36734,7 +36958,7 @@ platform-api2.max.ru (до 19.07.2026 — platform-api.max.ru; MAX сменил 
 Два механизма:
 - `apply_firewall_env()` — вызывается ОДИН раз на старте, ДО любых HTTP-клиентов:
   (1) пробрасывает BOT_OUTBOUND_PROXY в стандартные HTTP(S)_PROXY env — их читает
-  aiohttp при trust_env=True, а также дочерние процессы (curl в healthwatch, rclone,
+  aiohttp при trust_env=True, а также дочерние процессы (curl в healthwatch,
   git); (2) собирает объединённый CA-бандл (системные CA + корпоративный) и указывает
   на него SSL_CERT_FILE/REQUESTS_CA_BUNDLE — это видит stdlib ssl, aiohttp и requests.
 - `session_kwargs()` — kwargs для aiohttp.ClientSession (`trust_env=True`), чтобы прокси
@@ -43279,204 +43503,80 @@ def lookup(job_id: str) -> dict[str, str] | None:
 
 ### `bot/aemr_bot/services/data_erasure.py`
 
-Size: `40778` bytes  
-SHA-256: `224a7452c2fc4c611fbe710d5decd5f084dced93cf657765c62bb92ca1ffe4e5`
+Size: `15688` bytes  
+SHA-256: `094c65b72d6ea8d676236196e6715c5606b3a30fde1966cdcd7545baf8071a5b`
 
 ```python
-"""Inventory MAX copies, perform one-shot deletion and prevent restore resurrection.
+"""Erase bot-owned data and prevent restored or stale sources emitting personal data.
 
-No payloads or raw MAX user identifiers are written to the external journal.
-Unknown MAX outcomes require reconciliation, never an automatic mutation retry.
+MAX messages and issued exports remain staff-managed external copies.
+The independent journal contains privacy restrictions, never deletion jobs.
 """
 from __future__ import annotations
 
 import hashlib
 import hmac
-import json
-import os
-from contextlib import asynccontextmanager
 from contextvars import ContextVar
-from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from pathlib import Path
-from types import SimpleNamespace
 
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from aemr_bot.config import settings
-from aemr_bot.db.models import Appeal, ErasureTombstone, Message, ResidentDataCopy, User
+from aemr_bot.db.models import Appeal, ErasureTombstone, ResidentDataCopy, User
 from aemr_bot.db.session import session_scope
+from aemr_bot.services.data_erasure_delivery import (
+    PersonalDataErasedError,
+    PersonalView,
+    _outgoing_depth,
+    install_outgoing_hook,
+    personal_view,
+)
+from aemr_bot.services.data_erasure_journal import (
+    _journal_dir,
+    _key,
+    _mirror_copy,
+    _write_instruction,
+    _write_tombstone,
+    journal_restriction,
+    scrub_local_logs,
+    subject_digest,
+)
+from aemr_bot.services.data_erasure_restore import replay_restore_tombstones
 from aemr_bot.utils.event import extract_message_id
 
-_outgoing_depth: ContextVar[int] = ContextVar("erasure_outgoing_depth", default=0)
+__all__ = [
+    "PersonalDataErasedError",
+    "PersonalView",
+    "confirm_backup_cleanup",
+    "diagnostics",
+    "finish_copy",
+    "initialize_journal",
+    "install_outgoing_hook",
+    "journal_restriction",
+    "personal_view",
+    "prepare_startup",
+    "reconcile_copy",
+    "recover_deletions",
+    "replay_restore_tombstones",
+    "request_appeal_cleanup",
+    "request_erasure",
+    "reserve_copy",
+    "scrub_local_logs",
+    "settings",
+    "subject_digest",
+    "tracked_send",
+    "unresolved_backups",
+    "unresolved_copies",
+]
 
 _restore_cutoff: ContextVar[datetime | None] = ContextVar("erasure_restore_cutoff", default=None)
-
-class PersonalDataErasedError(RuntimeError):
-    """A protected read/send no longer has an eligible resident source."""
-
-
-@dataclass
-class PersonalView:
-    session: AsyncSession
-    appeal_id: int | None = None
-    aggregate: bool = False
-    max_user_ids: list[int] = field(default_factory=list)
-    active: bool = True
-
-    async def include(self, *, max_user_ids: list[int] | None = None, appeal_id: int | None = None) -> None:
-        if not self.active:
-            raise PersonalDataErasedError("Personal view is no longer active")
-        supplied_ids = list(max_user_ids or [])
-        if appeal_id is not None:
-            source = await self.session.get(Appeal, appeal_id, populate_existing=True)
-            owner = await self.session.get(User, source.user_id) if source is not None else None
-            if source is None or source.content_erased_at is not None or owner is None or owner.max_user_id <= 0:
-                raise PersonalDataErasedError("Appeal source is no longer available")
-            if supplied_ids and set(supplied_ids) != {owner.max_user_id}:
-                raise PersonalDataErasedError("Appeal does not belong to the selected resident")
-            if self.appeal_id is not None and self.appeal_id != appeal_id:
-                raise ValueError("Use a user-scoped or aggregate view for multiple appeals")
-            self.appeal_id = appeal_id
-            supplied_ids = [owner.max_user_id]
-        ids = {uid for uid in supplied_ids if isinstance(uid, int) and uid > 0}
-        if not ids:
-            return
-        users = list((await self.session.scalars(select(User).where(User.max_user_id.in_(ids)))).all())
-        if {user.max_user_id for user in users} != ids:
-            raise PersonalDataErasedError("Resident source no longer exists")
-        if self.appeal_id is not None:
-            source = await self.session.get(Appeal, self.appeal_id, populate_existing=True)
-            owner = await self.session.get(User, source.user_id) if source is not None else None
-            if (source is None or source.content_erased_at is not None or owner is None
-                    or owner.max_user_id <= 0 or ids != {owner.max_user_id}):
-                raise PersonalDataErasedError("Appeal source no longer belongs to this resident")
-        self.max_user_ids = sorted(set(self.max_user_ids) | ids)
-
-
-_personal_view: ContextVar[PersonalView | None] = ContextVar("erasure_personal_view", default=None)
-
-
-@asynccontextmanager
-async def personal_view(*, appeal_id: int | None = None, max_user_ids: list[int] | None = None,
-                        aggregate: bool = False):
-    """Hold BEFORE reading PD through rendering/upload/send/edit.
-
-    Aggregate is reserved for actual multi-resident lists whose ids are unknown
-    before the query. Exact dynamic lists may call ``await view.include(...)``.
-    The outgoing hook consumes this context for both private and admin targets.
-    """
-    from aemr_bot.services import privacy_epoch
-    async with session_scope() as session:
-        await privacy_epoch.hold_delivery(session)
-        view = PersonalView(session=session, appeal_id=appeal_id, aggregate=aggregate)
-        ids = list(max_user_ids or [])
-        if appeal_id is not None:
-            source = await session.get(Appeal, appeal_id)
-            owner = await session.get(User, source.user_id) if source is not None else None
-            if (source is None or source.content_erased_at is not None or owner is None
-                    or owner.max_user_id <= 0):
-                raise PersonalDataErasedError("Appeal source is no longer available")
-            if ids and set(ids) != {owner.max_user_id}:
-                raise PersonalDataErasedError("Appeal does not belong to the selected resident")
-            ids = [owner.max_user_id]
-        await view.include(max_user_ids=ids)
-        token = _personal_view.set(view)
-        try:
-            yield view
-        finally:
-            view.active = False
-            _personal_view.reset(token)
-
-
-
-def _journal_dir() -> Path:
-    path = Path(settings.erasure_state_dir)
-    path.mkdir(mode=0o700, parents=True, exist_ok=True)
-    return path
-
-
-def _key() -> bytes:
-    directory = _journal_dir()
-    path = directory / "subject.key"
-    if not path.exists():
-        temporary = directory / f".key.{os.urandom(8).hex()}"
-        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(fd, "wb") as output:
-            output.write(os.urandom(32))
-            output.flush()
-            os.fsync(output.fileno())
-        try:
-            os.link(temporary, path)
-        except FileExistsError:
-            pass
-        finally:
-            temporary.unlink()
-    key = path.read_bytes()
-    if len(key) != 32:
-        raise RuntimeError("Invalid independent erasure journal key")
-    return key
-
-
-def subject_digest(max_user_id: int) -> str:
-    return hmac.new(_key(), str(max_user_id).encode(), hashlib.sha256).hexdigest()
-
-
-def _write_instruction(filename: str, entry: dict) -> None:
-    directory = _journal_dir()
-    temporary = directory / f".write.{os.urandom(8).hex()}"
-    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    with os.fdopen(fd, "w") as output:
-        json.dump(entry, output)
-        output.flush()
-        os.fsync(output.fileno())
-    os.replace(temporary, directory / filename)
-    directory_fd = os.open(directory, os.O_RDONLY)
-    try:
-        os.fsync(directory_fd)
-    finally:
-        os.close(directory_fd)
-
-
-def _mirror_copy(copy) -> None:
-    _write_instruction(f"{copy.external_key}.copy.json", {
-        "external_key": copy.external_key, "subjects": list(copy.subjects or []),
-        "appeal_id": copy.appeal_id, "kind": copy.kind, "message_id": copy.message_id,
-        "state": copy.state, "erase_requested": bool(copy.erase_requested),
-        "last_error": copy.last_error, "created_at": copy.created_at.isoformat(),
-    })
 
 
 async def _mirror_matching(session, criterion) -> None:
     await session.flush()
     for copy in (await session.scalars(select(ResidentDataCopy).where(criterion))).all():
         _mirror_copy(copy)
-
-
-def _write_tombstone(digest: str, cutoff: datetime) -> None:
-    # Atomic replacement makes concurrent readers see a complete instruction.
-    directory = _journal_dir()
-    destination = directory / f"{digest}.json"
-    previous = json.loads(destination.read_text()) if destination.exists() else None
-    if previous is None or datetime.fromisoformat(previous["erased_before"]) < cutoff:
-        _write_instruction(f"{digest}.backup.json", {
-            "subject_digest": digest, "erased_before": cutoff.isoformat(),
-            "state": "pending", "error": None,
-        })
-    temporary = directory / f".{digest}.{os.urandom(8).hex()}.tmp"
-    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    with os.fdopen(fd, "w") as output:
-        json.dump({"subject_digest": digest, "erased_before": cutoff.isoformat()}, output)
-        output.flush()
-        os.fsync(output.fileno())
-    os.replace(temporary, destination)
-    directory_fd = os.open(directory, os.O_RDONLY)
-    try:
-        os.fsync(directory_fd)
-    finally:
-        os.close(directory_fd)
 
 
 async def reserve_copy(session, *, kind: str, appeal_id: int | None = None,
@@ -43517,7 +43617,7 @@ async def finish_copy(copy_id: int, sent=None, *, error: str | None = None) -> N
             return
         mid = extract_message_id(sent)
         copy.message_id = mid
-        copy.state = ("pending" if copy.erase_requested else "retained") if mid else "uncertain"
+        copy.state = ("manual" if copy.erase_requested else "retained") if mid else "uncertain"
         copy.last_error = error if not mid else None
         _mirror_copy(copy)
 
@@ -43562,63 +43662,544 @@ async def request_erasure(session, max_user_id: int, user_id: int) -> None:
     ).on_conflict_do_update(index_elements=[ErasureTombstone.subject_digest], set_={
         "erased_before": cutoff, "backups_state": "pending", "last_error": None,
     }))
-    # Seed all identifiers retained by older releases before redaction removes them.
-    appeals = (await session.scalars(select(Appeal).where(Appeal.user_id == user_id))).all()
-    mids = {mid for item in appeals for mid in (item.admin_message_id, item.last_admin_card_mid) if mid}
-    appeal_ids = [item.id for item in appeals]
+    appeal_ids = list((await session.scalars(select(Appeal.id).where(Appeal.user_id == user_id))).all())
     if appeal_ids:
         await request_appeal_cleanup(session, appeal_ids)
-        mids.update(mid for mid in (await session.scalars(select(Message.max_message_id)
-                    .where(Message.appeal_id.in_(appeal_ids)))).all() if mid)
-    existing = set((await session.scalars(select(ResidentDataCopy.message_id)
-                                          .where(ResidentDataCopy.message_id.in_(mids)))).all()) if mids else set()
-    for mid in mids - existing:
-        session.add(ResidentDataCopy(subjects=[digest], kind="legacy_known", message_id=mid,
-                                    state="pending", erase_requested=True))
     await session.execute(update(ResidentDataCopy).where(((ResidentDataCopy.subjects.contains([digest])) | (ResidentDataCopy.kind.in_(["bulk_export", "bulk_view"]))),
         ResidentDataCopy.state != "deleted").values(erase_requested=True))
     await session.execute(update(ResidentDataCopy).where(((ResidentDataCopy.subjects.contains([digest])) | (ResidentDataCopy.kind.in_(["bulk_export", "bulk_view"]))),
-        ResidentDataCopy.state == "retained").values(state="pending"))
+        ResidentDataCopy.state.in_(["retained", "pending", "deleting"])).values(state="manual"))
     await _mirror_matching(session, (ResidentDataCopy.subjects.contains([digest])) | (ResidentDataCopy.kind.in_(["bulk_export", "bulk_view"])))
 
 
-async def recover_deletions(bot, *, limit: int = 100) -> int:
-    """Claim before MAX. Crash/timeout never replays a started deletion."""
+async def recover_deletions(bot=None, *, limit: int = 100) -> int:
+    """Retire legacy automatic deletion jobs into manual external-copy status.
+
+    Kept for older maintenance callers. MAX messages and issued exports are
+    staff-managed copies; this operation only updates local privacy metadata.
+    """
     async with session_scope() as session:
-        # A previous worker may have died after sending; keep that visible.
-        # Do not reset 'deleting': concurrent workers may still be processing it.
-        ids = list((await session.scalars(select(ResidentDataCopy.id)
-            .where(ResidentDataCopy.state == "pending", ResidentDataCopy.erase_requested.is_(True))
-            .order_by(ResidentDataCopy.id).limit(limit))).all())
-    count = 0
-    for copy_id in ids:
-        async with session_scope() as session:
-            claimed = await session.execute(update(ResidentDataCopy).where(
-                ResidentDataCopy.id == copy_id, ResidentDataCopy.state == "pending")
-                .values(state="deleting").returning(ResidentDataCopy.message_id))
-            mid = claimed.scalar_one_or_none()
-            if mid:
-                copy = await session.get(ResidentDataCopy, copy_id)
-                _mirror_copy(copy)
-        if not mid:
-            continue
-        try:
-            result = await bot.delete_message(message_id=mid)
-            confirmed = getattr(result, "success", None) is True
-            state, error = ("deleted", None) if confirmed else ("uncertain", "unconfirmed_delete")
-        except Exception as exc:
-            state, error = "uncertain", type(exc).__name__
-        async with session_scope() as session:
-            await session.execute(update(ResidentDataCopy).where(ResidentDataCopy.id == copy_id)
-                .values(state=state, last_error=error))
-            copy = await session.get(ResidentDataCopy, copy_id)
+        copies = (await session.scalars(select(ResidentDataCopy).where(
+            ResidentDataCopy.erase_requested.is_(True),
+            ResidentDataCopy.state.in_(["pending", "deleting"]),
+        ).order_by(ResidentDataCopy.id).limit(limit).with_for_update())).all()
+        for copy in copies:
+            copy.state = "manual"
+            copy.last_error = "external_copy_requires_manual_cleanup"
             _mirror_copy(copy)
-        count += state == "deleted"
-    return count
+    return 0
+
+
+
+
+async def diagnostics() -> dict[str, int]:
+    from sqlalchemy import func
+    async with session_scope() as session:
+        rows = (await session.execute(select(ResidentDataCopy.state, func.count())
+            .where(ResidentDataCopy.erase_requested.is_(True)).group_by(ResidentDataCopy.state))).all()
+        result = {state: count for state, count in rows}
+        result["backups_unresolved"] = int(await session.scalar(select(func.count())
+            .select_from(ErasureTombstone).where(ErasureTombstone.backups_state != "done")) or 0)
+        return result
+
+
+async def reconcile_copy(copy_id: int, *, confirmed_absent: bool = False,
+                         recovered_message_id: str | None = None) -> bool:
+    """IT supplies a checked message id or confirms absence after inspecting MAX.
+
+    This explicit operation never repeats a mutation with an unknown outcome.
+    Recovered ids remain manual; only a checked absence marks them deleted.
+    """
+    async with session_scope() as session:
+        copy = await session.get(ResidentDataCopy, copy_id, with_for_update=True)
+        if copy is None or not copy.erase_requested or copy.state == "deleted":
+            return False
+        if confirmed_absent:
+            copy.state = "deleted"
+            copy.last_error = "operator_confirmed_absent"
+            _mirror_copy(copy)
+            return True
+        if recovered_message_id and not copy.message_id and copy.state in {"reserved", "uncertain"}:
+            copy.message_id = recovered_message_id
+            copy.state = "manual"
+            copy.last_error = None
+            _mirror_copy(copy)
+            return True
+        return False
+
+
+async def request_appeal_cleanup(session, appeal_ids: list[int]) -> None:
+    """Retention removes only eligible appeals, never other appeals of their owner."""
+    for appeal_id in appeal_ids:
+        digest = hmac.new(_key(), f"appeal:{appeal_id}".encode(), hashlib.sha256).hexdigest()
+        cutoff = _restore_cutoff.get() or datetime.now(UTC)
+        path = _journal_dir() / f"{digest}.retention.json"
+        if not path.exists():
+            # Individual identifiers describe records, without names or MAX ids.
+            _write_instruction(path.name, {"appeal_id": appeal_id, "erased_before": cutoff.isoformat()})
+        await session.execute(insert(ErasureTombstone).values(subject_digest=digest,
+            erased_before=cutoff, backups_state="pending").on_conflict_do_nothing())
+    if not appeal_ids:
+        return
+    await session.execute(update(Appeal).where(Appeal.id.in_(appeal_ids), Appeal.content_erased_at.is_(None))
+                          .values(content_erased_at=_restore_cutoff.get() or datetime.now(UTC)))
+    appeals = (await session.scalars(select(Appeal).where(Appeal.id.in_(appeal_ids)))).all()
+    mids = {mid for item in appeals for mid in (item.admin_message_id, item.last_admin_card_mid) if mid}
+    existing = set((await session.scalars(select(ResidentDataCopy.message_id)
+        .where(ResidentDataCopy.message_id.in_(mids)))).all()) if mids else set()
+    for mid in mids - existing:
+        session.add(ResidentDataCopy(subjects=[], kind="legacy_retention", message_id=mid,
+                                    state="manual", erase_requested=True))
+    belongs_to_generation = select(Appeal.id).where(
+        Appeal.id == ResidentDataCopy.appeal_id,
+        Appeal.created_at <= ResidentDataCopy.created_at,
+    ).exists()
+    owner_ids = list((await session.scalars(select(User.max_user_id).join(Appeal, Appeal.user_id == User.id)
+                                           .where(Appeal.id.in_(appeal_ids), User.max_user_id > 0))).all())
+    from sqlalchemy import or_
+    owner_views = or_(*(ResidentDataCopy.subjects.contains([subject_digest(uid)]) for uid in owner_ids)) if owner_ids else False
+    unscoped_views = (ResidentDataCopy.appeal_id.is_(None)) & (ResidentDataCopy.kind.in_(["personal_view", "citizen_screen"])) & owner_views
+    criterion = (((ResidentDataCopy.appeal_id.in_(appeal_ids)) & belongs_to_generation)
+                 | unscoped_views | (ResidentDataCopy.kind.in_(["bulk_export", "bulk_view"])))
+    await session.execute(update(ResidentDataCopy).where(criterion, ResidentDataCopy.state != "deleted")
+                          .values(erase_requested=True))
+    await session.execute(update(ResidentDataCopy).where(criterion, ResidentDataCopy.state.in_(["retained", "pending", "deleting"]))
+                          .values(state="manual"))
+    await _mirror_matching(session, criterion | ResidentDataCopy.message_id.in_(mids))
+
+
+async def confirm_backup_cleanup(digest: str, *, expected_erased_before: str | None = None) -> bool:
+    """Compatibility entrypoint: complete LOCAL cleanup, never certify external copies."""
+    if expected_erased_before is None:
+        return False
+    expected = datetime.fromisoformat(expected_erased_before)
+    async with session_scope() as session:
+        item = await session.get(ErasureTombstone, digest)
+        if item is None or item.erased_before != expected:
+            return False
+    from aemr_bot.services.db_backup import cleanup_erased_backups
+    await cleanup_erased_backups()
+    async with session_scope() as session:
+        item = await session.get(ErasureTombstone, digest)
+        return bool(item is not None and item.erased_before == expected and item.backups_state == "done")
+
+
+async def unresolved_copies(*, limit: int = 20) -> list[dict]:
+    async with session_scope() as session:
+        copies = (await session.scalars(select(ResidentDataCopy).where(
+            ResidentDataCopy.erase_requested.is_(True), ResidentDataCopy.state != "deleted")
+            .order_by(ResidentDataCopy.id).limit(limit))).all()
+        return [{"id": item.id, "kind": item.kind, "state": item.state,
+                 "message_id": item.message_id, "last_error": item.last_error} for item in copies]
+
+
+async def initialize_journal(*, allow_existing_database: bool = False) -> None:
+    """Explicit install/upgrade step. Never initialize over existing journal records.
+
+    A new empty DB may initialize automatically. An existing DB requires the
+    owner's deliberate install step; a restored DB must supply its original key.
+    """
+    directory = _journal_dir()
+    if (directory / "subject.key").exists():
+        _key()
+        return
+    if list(directory.glob("*.json")):
+        raise RuntimeError("Erasure records exist but their original key is missing")
+    async with session_scope() as session:
+        residents = await session.scalar(select(User.id).where(User.max_user_id > 0).limit(1))
+        instructions = await session.scalar(select(ErasureTombstone.subject_digest).limit(1))
+    if instructions is not None or (residents is not None and not allow_existing_database):
+        raise RuntimeError("Existing DB requires its independent journal or explicit first-install initialization")
+    _key()
+
+
+async def prepare_startup() -> int:
+    """Before accepting traffic: validate independent ledger and replay restrictions."""
+    await initialize_journal()
+    async with session_scope() as session:
+        return await replay_restore_tombstones(session)
+
+
+async def unresolved_backups(*, limit: int = 5) -> list[dict]:
+    async with session_scope() as session:
+        items = (await session.scalars(select(ErasureTombstone)
+            .where(ErasureTombstone.backups_state != "done").limit(limit))).all()
+        return [{"digest": item.subject_digest, "erased_before": item.erased_before.isoformat(),
+                 "state": item.backups_state, "error": item.last_error} for item in items]
+```
+
+### `bot/aemr_bot/services/data_erasure_delivery.py`
+
+Size: `9176` bytes  
+SHA-256: `8b7b856b71fc9b6f819c3908c1b73be82346b748674a05455d40e691a7d700fa`
+
+```python
+"""Hold privacy barriers from personal reads through MAX sends and edits."""
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from contextvars import ContextVar
+from dataclasses import dataclass, field
+from types import SimpleNamespace
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from aemr_bot.config import settings
+from aemr_bot.db.models import Appeal, ResidentDataCopy, User
+
+_outgoing_depth: ContextVar[int] = ContextVar("erasure_outgoing_depth", default=0)
+
+
+class PersonalDataErasedError(RuntimeError):
+    """A protected read/send no longer has an eligible resident source."""
+
+
+
+@dataclass
+class PersonalView:
+    session: AsyncSession
+    appeal_id: int | None = None
+    aggregate: bool = False
+    max_user_ids: list[int] = field(default_factory=list)
+    active: bool = True
+
+    async def include(self, *, max_user_ids: list[int] | None = None, appeal_id: int | None = None) -> None:
+        if not self.active:
+            raise PersonalDataErasedError("Personal view is no longer active")
+        supplied_ids = list(max_user_ids or [])
+        if appeal_id is not None:
+            source = await self.session.get(Appeal, appeal_id, populate_existing=True)
+            owner = await self.session.get(User, source.user_id) if source is not None else None
+            if source is None or source.content_erased_at is not None or owner is None or owner.max_user_id <= 0:
+                raise PersonalDataErasedError("Appeal source is no longer available")
+            if supplied_ids and set(supplied_ids) != {owner.max_user_id}:
+                raise PersonalDataErasedError("Appeal does not belong to the selected resident")
+            if self.appeal_id is not None and self.appeal_id != appeal_id:
+                raise ValueError("Use a user-scoped or aggregate view for multiple appeals")
+            self.appeal_id = appeal_id
+            supplied_ids = [owner.max_user_id]
+        ids = {uid for uid in supplied_ids if isinstance(uid, int) and uid > 0}
+        if not ids:
+            return
+        users = list((await self.session.scalars(select(User).where(User.max_user_id.in_(ids)))).all())
+        if {user.max_user_id for user in users} != ids:
+            raise PersonalDataErasedError("Resident source no longer exists")
+        if self.appeal_id is not None:
+            source = await self.session.get(Appeal, self.appeal_id, populate_existing=True)
+            owner = await self.session.get(User, source.user_id) if source is not None else None
+            if (source is None or source.content_erased_at is not None or owner is None
+                    or owner.max_user_id <= 0 or ids != {owner.max_user_id}):
+                raise PersonalDataErasedError("Appeal source no longer belongs to this resident")
+        self.max_user_ids = sorted(set(self.max_user_ids) | ids)
+
+
+
+_personal_view: ContextVar[PersonalView | None] = ContextVar("erasure_personal_view", default=None)
+
+
+@asynccontextmanager
+async def personal_view(*, appeal_id: int | None = None, max_user_ids: list[int] | None = None,
+                        aggregate: bool = False):
+    """Hold BEFORE reading PD through rendering/upload/send/edit.
+
+    Aggregate is reserved for actual multi-resident lists whose ids are unknown
+    before the query. Exact dynamic lists may call ``await view.include(...)``.
+    The outgoing hook consumes this context for both private and admin targets.
+    """
+    from aemr_bot.services import data_erasure as erasure
+    from aemr_bot.services import privacy_epoch
+    async with erasure.session_scope() as session:
+        await privacy_epoch.hold_delivery(session)
+        view = PersonalView(session=session, appeal_id=appeal_id, aggregate=aggregate)
+        ids = list(max_user_ids or [])
+        if appeal_id is not None:
+            source = await session.get(Appeal, appeal_id)
+            owner = await session.get(User, source.user_id) if source is not None else None
+            if (source is None or source.content_erased_at is not None or owner is None
+                    or owner.max_user_id <= 0):
+                raise PersonalDataErasedError("Appeal source is no longer available")
+            if ids and set(ids) != {owner.max_user_id}:
+                raise PersonalDataErasedError("Appeal does not belong to the selected resident")
+            ids = [owner.max_user_id]
+        await view.include(max_user_ids=ids)
+        token = _personal_view.set(view)
+        try:
+            yield view
+        finally:
+            view.active = False
+            _personal_view.reset(token)
+
+
+
+def install_outgoing_hook(bot) -> None:
+    """Install after the admin notification hook; explicit inventory is never doubled."""
+    from aemr_bot.services import data_erasure as erasure
+    if getattr(bot, "_erasure_outgoing_installed", False) is True:
+        return
+    original_send = bot.send_message
+    original_edit = getattr(bot, "edit_message", None)
+
+    async def send_message(*args, **kwargs):
+        if _outgoing_depth.get():
+            return await original_send(*args, **kwargs)
+        view = _personal_view.get()
+        if view is not None:
+            if not view.active:
+                raise PersonalDataErasedError("Personal view expired before output")
+            if view.aggregate or view.max_user_ids:
+                return await erasure.tracked_send(SimpleNamespace(send_message=original_send),
+                    kind="bulk_view" if view.aggregate else "personal_view",
+                    appeal_id=view.appeal_id, max_user_ids=view.max_user_ids,
+                    send_args=args, **kwargs)
+        # Pinned SDK order is chat_id, user_id. Preserve original positional
+        # arguments through generic admin_bus wrappers without signature binding.
+        uid = kwargs.get("user_id", args[1] if len(args) > 1 else None)
+        chat_id = kwargs.get("chat_id", args[0] if args else None)
+        if uid is None and chat_id != settings.admin_group_id:
+            from aemr_bot.utils.resident_lifecycle import current_subject
+            uid = current_subject.get()
+        if not isinstance(uid, int) or uid <= 0:
+            return await original_send(*args, **kwargs)
+        return await erasure.tracked_send(SimpleNamespace(send_message=original_send), kind="citizen_screen",
+                                  max_user_ids=[uid], send_args=args, **kwargs)
+
+    async def edit_message(*args, **kwargs):
+        from aemr_bot.services import privacy_epoch
+        mid = kwargs.get("message_id") or (args[0] if args else None)
+        if _outgoing_depth.get() or not mid:
+            return await original_edit(*args, **kwargs)
+        async with erasure.session_scope() as session:
+            await privacy_epoch.hold_delivery(session)
+            erased = await session.scalar(select(ResidentDataCopy.id).where(
+                ResidentDataCopy.message_id == mid, ResidentDataCopy.erase_requested.is_(True)).limit(1))
+            if erased is not None:
+                raise PersonalDataErasedError("Edit blocked: resident source was erased")
+            view = _personal_view.get()
+            if view is not None:
+                if not view.active:
+                    raise PersonalDataErasedError("Personal view expired before edit")
+                if view.aggregate or view.max_user_ids:
+                    # Commit union BEFORE MAX: a lost edit result may have left
+                    # either the previous or the proposed personal content.
+                    async with erasure.session_scope() as inventory:
+                        copy = await inventory.scalar(select(ResidentDataCopy).where(
+                            ResidentDataCopy.message_id == mid).with_for_update())
+                        if copy is not None and copy.erase_requested:
+                            raise PersonalDataErasedError("Personal copy belongs to an erased source")
+                        subjects = {erasure.subject_digest(uid) for uid in view.max_user_ids}
+                        if copy is None:
+                            copy = ResidentDataCopy(kind="bulk_view" if view.aggregate else "personal_view",
+                                appeal_id=view.appeal_id, subjects=sorted(subjects), message_id=mid,
+                                state="retained", erase_requested=False)
+                            inventory.add(copy)
+                            await inventory.flush()
+                        else:
+                            copy.subjects = sorted(set(copy.subjects or []) | subjects)
+                            if copy.appeal_id != view.appeal_id:
+                                copy.appeal_id = None
+                            if view.aggregate or copy.kind == "bulk_view":
+                                copy.kind = "bulk_view"
+                            elif copy.appeal_id is None:
+                                copy.kind = "personal_view"
+                        erasure._mirror_copy(copy)
+            return await original_edit(*args, **kwargs)
+
+    bot.send_message = send_message
+    if original_edit is not None:
+        bot.edit_message = edit_message
+    bot._erasure_outgoing_installed = True
+```
+
+### `bot/aemr_bot/services/data_erasure_journal.py`
+
+Size: `6052` bytes  
+SHA-256: `2b57bdbbe7423ce46c583f134357b5ef06654bf443cc7d0810822ab927ece9e2`
+
+```python
+"""Independent restore/privacy restrictions and configured local-log redaction.
+
+Message ids are retained only to prevent stale edits after restoring an older
+working database. The journal never schedules deletion of external copies.
+"""
+from __future__ import annotations
+
+import hashlib
+import hmac
+import json
+import os
+from datetime import UTC, datetime
+from pathlib import Path
+
+from aemr_bot.config import settings
+
+
+def _journal_dir() -> Path:
+    path = Path(settings.erasure_state_dir)
+    path.mkdir(mode=0o700, parents=True, exist_ok=True)
+    return path
+
+
+
+def _key() -> bytes:
+    directory = _journal_dir()
+    path = directory / "subject.key"
+    if not path.exists():
+        temporary = directory / f".key.{os.urandom(8).hex()}"
+        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, "wb") as output:
+            output.write(os.urandom(32))
+            output.flush()
+            os.fsync(output.fileno())
+        try:
+            os.link(temporary, path)
+        except FileExistsError:
+            pass
+        finally:
+            temporary.unlink()
+    key = path.read_bytes()
+    if len(key) != 32:
+        raise RuntimeError("Invalid independent erasure journal key")
+    return key
+
+
+
+def subject_digest(max_user_id: int) -> str:
+    return hmac.new(_key(), str(max_user_id).encode(), hashlib.sha256).hexdigest()
+
+
+
+def _write_instruction(filename: str, entry: dict) -> None:
+    directory = _journal_dir()
+    temporary = directory / f".write.{os.urandom(8).hex()}"
+    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w") as output:
+        json.dump(entry, output)
+        output.flush()
+        os.fsync(output.fileno())
+    os.replace(temporary, directory / filename)
+    directory_fd = os.open(directory, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
+
+def _mirror_copy(copy) -> None:
+    _write_instruction(f"{copy.external_key}.copy.json", {
+        "external_key": copy.external_key, "subjects": list(copy.subjects or []),
+        "appeal_id": copy.appeal_id, "kind": copy.kind, "message_id": copy.message_id,
+        "state": copy.state, "erase_requested": bool(copy.erase_requested),
+        "last_error": copy.last_error, "created_at": copy.created_at.isoformat(),
+    })
+
+
+
+def _write_tombstone(digest: str, cutoff: datetime) -> None:
+    # Atomic replacement makes concurrent readers see a complete instruction.
+    directory = _journal_dir()
+    destination = directory / f"{digest}.json"
+    previous = json.loads(destination.read_text()) if destination.exists() else None
+    if previous is None or datetime.fromisoformat(previous["erased_before"]) < cutoff:
+        _write_instruction(f"{digest}.backup.json", {
+            "subject_digest": digest, "erased_before": cutoff.isoformat(),
+            "state": "pending", "error": None,
+        })
+    temporary = directory / f".{digest}.{os.urandom(8).hex()}.tmp"
+    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w") as output:
+        json.dump({"subject_digest": digest, "erased_before": cutoff.isoformat()}, output)
+        output.flush()
+        os.fsync(output.fileno())
+    os.replace(temporary, destination)
+    directory_fd = os.open(directory, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
+
+def scrub_local_logs(max_user_id: int, *, first_name: str | None = None, phone: str | None = None) -> None:
+    """Redact known identifier tokens in application log files; preserve other lines.
+
+    Host journald and third-party log stores are outside this process's control.
+    No identity values are retained in the cleanup journal.
+    """
+    import logging
+    import re
+    if not settings.log_dir:
+        return
+    identity = re.compile(
+        rf"((?:max_user_id|max_id|user_id|resident|uid|пользователя|пользователь)"
+        rf"[\s=:]+){max_user_id}(?!\d)", re.IGNORECASE,
+    )
+    name = re.compile(r"(?<!\w)" + re.escape(first_name) + r"(?!\w)") if first_name else None
+    phone_pattern = re.compile(re.escape(phone)) if phone and len(phone) >= 3 else None
+    handlers = [handler for handler in logging.getLogger().handlers
+                if isinstance(handler, logging.FileHandler)]
+    for handler in handlers:
+        handler.acquire()
+    try:
+        for path in Path(settings.log_dir).glob("bot.log*"):
+            if path.is_file() and not path.is_symlink():
+                # In-place rewrite preserves the active FileHandler's inode.
+                with path.open("r+", encoding="utf-8", errors="replace") as output:
+                    content = output.read()
+                    lines = []
+                    for line in content.splitlines(keepends=True):
+                        if identity.search(line):
+                            line = identity.sub(r"\1[erased]", line)
+                            if name is not None:
+                                line = name.sub("[erased]", line)
+                        if phone_pattern is not None:
+                            line = phone_pattern.sub("[erased]", line)
+                        lines.append(line)
+                    content = "".join(lines)
+                    output.seek(0)
+                    output.write(content)
+                    output.truncate()
+                    output.flush()
+                    os.fsync(output.fileno())
+    finally:
+        for handler in reversed(handlers):
+            handler.release()
+
+
+
+def journal_restriction(max_user_id: int, action: str) -> None:
+    """Keep withdrawals/unsubscribe effective after restoring an older dump."""
+    if action not in {"revoke", "unsubscribe"}:
+        raise ValueError("Unknown restriction")
+    digest = subject_digest(max_user_id)
+    cutoff = datetime.now(UTC)
+    _write_instruction(f"{digest}.{action}.restriction.json",
+                       {"subject_digest": digest, "action": action, "at": cutoff.isoformat()})
+```
+
+### `bot/aemr_bot/services/data_erasure_restore.py`
+
+Size: `8387` bytes  
+SHA-256: `f02d1ff285efd7e6f8b3e0ff15df8fc3136612c8b38403a6a92cd520e8287212`
+
+```python
+"""Replay independent erasure and consent restrictions before restored DB traffic."""
+from __future__ import annotations
+
+import json
+from datetime import UTC, datetime
+
+from sqlalchemy import select, update
+from sqlalchemy.dialects.postgresql import insert
+
+from aemr_bot.db.models import Appeal, ErasureTombstone, Message, ResidentDataCopy, User
+from aemr_bot.services.data_erasure_journal import _journal_dir, subject_digest
 
 
 async def replay_restore_tombstones(session) -> int:
     """Must run offline after restore and before polling/exports/backups resume."""
+    from aemr_bot.services import data_erasure as erasure
     from aemr_bot.services import users
     directory = _journal_dir()
     if not (directory / "subject.key").exists():
@@ -43628,6 +44209,8 @@ async def replay_restore_tombstones(session) -> int:
     for path in directory.glob("*.copy.json"):
         entry = json.loads(path.read_text())
         entry["created_at"] = datetime.fromisoformat(entry["created_at"])
+        if entry.get("erase_requested") and entry["state"] in {"pending", "deleting"}:
+            entry["state"] = "manual"
         if entry.get("appeal_id") is not None:
             source = await session.get(Appeal, entry["appeal_id"])
             if source is not None:
@@ -43641,15 +44224,18 @@ async def replay_restore_tombstones(session) -> int:
             }))
     tombstones = {item["subject_digest"]: datetime.fromisoformat(item["erased_before"])
                   for path in directory.glob("*.json") if not path.name.endswith((".retention.json", ".restriction.json", ".copy.json", ".backup.json")) for item in [json.loads(path.read_text())]}
+    await session.execute(update(ResidentDataCopy).where(
+        ResidentDataCopy.erase_requested.is_(True), ResidentDataCopy.state.in_(["pending", "deleting"])
+    ).values(state="manual"))
     for digest, cutoff in tombstones.items():
         await session.execute(insert(ErasureTombstone).values(subject_digest=digest,
             erased_before=cutoff, backups_state="pending").on_conflict_do_nothing())
         criterion = ((ResidentDataCopy.subjects.contains([digest])) | (ResidentDataCopy.kind.in_(["bulk_export", "bulk_view"]))) & (ResidentDataCopy.created_at <= cutoff)
         await session.execute(update(ResidentDataCopy).where(criterion, ResidentDataCopy.state != "deleted")
                               .values(erase_requested=True))
-        await session.execute(update(ResidentDataCopy).where(criterion, ResidentDataCopy.state == "retained")
-                              .values(state="pending"))
-        await _mirror_matching(session, criterion)
+        await session.execute(update(ResidentDataCopy).where(criterion, ResidentDataCopy.state.in_(["retained", "pending", "deleting"]))
+                              .values(state="manual"))
+        await erasure._mirror_matching(session, criterion)
     for path in directory.glob("*.backup.json"):
         entry = json.loads(path.read_text())
         if entry.get("erased_before"):
@@ -43681,7 +44267,7 @@ async def replay_restore_tombstones(session) -> int:
             .where(OperatorReplyAttempt.appeal_id == appeal_id).limit(1)))
         if not has_payload:
             continue
-        await request_appeal_cleanup(session, [appeal_id])
+        await erasure.request_appeal_cleanup(session, [appeal_id])
         await session.execute(delete(OperatorReplyAttempt).where(OperatorReplyAttempt.appeal_id == appeal_id))
         await session.execute(delete(OperatorReplyDraft).where(OperatorReplyDraft.appeal_id == appeal_id))
         await session.execute(update(Appeal).where(Appeal.id == appeal_id)
@@ -43732,332 +44318,23 @@ async def replay_restore_tombstones(session) -> int:
         if created.tzinfo is None:
             created = created.replace(tzinfo=UTC)
         if resident_cutoff is not None and created <= resident_cutoff:
-            token = _restore_cutoff.set(resident_cutoff)
+            token = erasure._restore_cutoff.set(resident_cutoff)
             try:
                 await users.erase_pdn_detailed(session, user.max_user_id)
             finally:
-                _restore_cutoff.reset(token)
+                erasure._restore_cutoff.reset(token)
             erased += 1
     return erased
-
-
-async def diagnostics() -> dict[str, int]:
-    from sqlalchemy import func
-    async with session_scope() as session:
-        rows = (await session.execute(select(ResidentDataCopy.state, func.count())
-            .where(ResidentDataCopy.erase_requested.is_(True)).group_by(ResidentDataCopy.state))).all()
-        result = {state: count for state, count in rows}
-        result["backups_unresolved"] = int(await session.scalar(select(func.count())
-            .select_from(ErasureTombstone).where(ErasureTombstone.backups_state != "done")) or 0)
-        return result
-
-
-async def reconcile_copy(copy_id: int, *, confirmed_absent: bool = False,
-                         recovered_message_id: str | None = None) -> bool:
-    """IT supplies a checked message id or confirms absence after inspecting MAX.
-
-    This explicit operation never repeats a mutation with an unknown outcome.
-    Recovered ids only queue their first deletion; an uncertain deletion is
-    closed by confirmed absence, not reset to pending blindly.
-    """
-    async with session_scope() as session:
-        copy = await session.get(ResidentDataCopy, copy_id, with_for_update=True)
-        if copy is None or not copy.erase_requested or copy.state == "deleted":
-            return False
-        if confirmed_absent:
-            copy.state = "deleted"
-            copy.last_error = "operator_confirmed_absent"
-            _mirror_copy(copy)
-            return True
-        if recovered_message_id and not copy.message_id and copy.state in {"reserved", "uncertain"}:
-            copy.message_id = recovered_message_id
-            copy.state = "pending"
-            copy.last_error = None
-            _mirror_copy(copy)
-            return True
-        return False
-
-
-def scrub_local_logs(max_user_id: int, *, first_name: str | None = None, phone: str | None = None) -> None:
-    """Redact known identifier tokens in application log files; preserve other lines.
-
-    Host journald and third-party log stores are outside this process's control.
-    No identity values are retained in the cleanup journal.
-    """
-    import logging
-    import re
-    if not settings.log_dir:
-        return
-    identity = re.compile(
-        rf"((?:max_user_id|max_id|user_id|resident|uid|пользователя|пользователь)"
-        rf"[\s=:]+){max_user_id}(?!\d)", re.IGNORECASE,
-    )
-    name = re.compile(r"(?<!\w)" + re.escape(first_name) + r"(?!\w)") if first_name else None
-    phone_pattern = re.compile(re.escape(phone)) if phone and len(phone) >= 3 else None
-    handlers = [handler for handler in logging.getLogger().handlers
-                if isinstance(handler, logging.FileHandler)]
-    for handler in handlers:
-        handler.acquire()
-    try:
-        for path in Path(settings.log_dir).glob("bot.log*"):
-            if path.is_file() and not path.is_symlink():
-                # In-place rewrite preserves the active FileHandler's inode.
-                with path.open("r+", encoding="utf-8", errors="replace") as output:
-                    content = output.read()
-                    lines = []
-                    for line in content.splitlines(keepends=True):
-                        if identity.search(line):
-                            line = identity.sub(r"\1[erased]", line)
-                            if name is not None:
-                                line = name.sub("[erased]", line)
-                        if phone_pattern is not None:
-                            line = phone_pattern.sub("[erased]", line)
-                        lines.append(line)
-                    content = "".join(lines)
-                    output.seek(0)
-                    output.write(content)
-                    output.truncate()
-                    output.flush()
-                    os.fsync(output.fileno())
-    finally:
-        for handler in reversed(handlers):
-            handler.release()
-
-
-async def request_appeal_cleanup(session, appeal_ids: list[int]) -> None:
-    """Retention removes only eligible appeals, never other appeals of their owner."""
-    from aemr_bot.db.models import OperatorReplyAttempt
-    for appeal_id in appeal_ids:
-        digest = hmac.new(_key(), f"appeal:{appeal_id}".encode(), hashlib.sha256).hexdigest()
-        cutoff = _restore_cutoff.get() or datetime.now(UTC)
-        path = _journal_dir() / f"{digest}.retention.json"
-        if not path.exists():
-            # Individual identifiers describe records, without names or MAX ids.
-            _write_instruction(path.name, {"appeal_id": appeal_id, "erased_before": cutoff.isoformat()})
-        await session.execute(insert(ErasureTombstone).values(subject_digest=digest,
-            erased_before=cutoff, backups_state="pending").on_conflict_do_nothing())
-    if not appeal_ids:
-        return
-    await session.execute(update(Appeal).where(Appeal.id.in_(appeal_ids), Appeal.content_erased_at.is_(None))
-                          .values(content_erased_at=_restore_cutoff.get() or datetime.now(UTC)))
-    appeals = (await session.scalars(select(Appeal).where(Appeal.id.in_(appeal_ids)))).all()
-    mids = {mid for item in appeals for mid in (item.admin_message_id, item.last_admin_card_mid) if mid}
-    mids.update(mid for mid in (await session.scalars(select(Message.max_message_id)
-                .where(Message.appeal_id.in_(appeal_ids)))).all() if mid)
-    attempts = (await session.scalars(select(OperatorReplyAttempt)
-                                     .where(OperatorReplyAttempt.appeal_id.in_(appeal_ids)))).all()
-    mids.update(item.max_message_id for item in attempts if item.max_message_id)
-    for item in attempts:
-        mids.update(part["mid"] for part in item.delivery_parts if isinstance(part, dict) and part.get("mid"))
-    existing = set((await session.scalars(select(ResidentDataCopy.message_id)
-        .where(ResidentDataCopy.message_id.in_(mids)))).all()) if mids else set()
-    for mid in mids - existing:
-        session.add(ResidentDataCopy(subjects=[], kind="legacy_retention", message_id=mid,
-                                    state="pending", erase_requested=True))
-    belongs_to_generation = select(Appeal.id).where(
-        Appeal.id == ResidentDataCopy.appeal_id,
-        Appeal.created_at <= ResidentDataCopy.created_at,
-    ).exists()
-    owner_ids = list((await session.scalars(select(User.max_user_id).join(Appeal, Appeal.user_id == User.id)
-                                           .where(Appeal.id.in_(appeal_ids), User.max_user_id > 0))).all())
-    from sqlalchemy import or_
-    owner_views = or_(*(ResidentDataCopy.subjects.contains([subject_digest(uid)]) for uid in owner_ids)) if owner_ids else False
-    unscoped_views = (ResidentDataCopy.appeal_id.is_(None)) & (ResidentDataCopy.kind.in_(["personal_view", "citizen_screen"])) & owner_views
-    criterion = (((ResidentDataCopy.appeal_id.in_(appeal_ids)) & belongs_to_generation)
-                 | unscoped_views | (ResidentDataCopy.kind.in_(["bulk_export", "bulk_view"])))
-    await session.execute(update(ResidentDataCopy).where(criterion, ResidentDataCopy.state != "deleted")
-                          .values(erase_requested=True))
-    await session.execute(update(ResidentDataCopy).where(criterion, ResidentDataCopy.state == "retained")
-                          .values(state="pending"))
-    await _mirror_matching(session, criterion | ResidentDataCopy.message_id.in_(mids))
-
-
-def journal_restriction(max_user_id: int, action: str) -> None:
-    """Keep withdrawals/unsubscribe effective after restoring an older dump."""
-    if action not in {"revoke", "unsubscribe"}:
-        raise ValueError("Unknown restriction")
-    digest = subject_digest(max_user_id)
-    cutoff = datetime.now(UTC)
-    _write_instruction(f"{digest}.{action}.restriction.json",
-                       {"subject_digest": digest, "action": action, "at": cutoff.isoformat()})
-
-
-async def confirm_backup_cleanup(digest: str, *, expected_erased_before: str | None = None) -> bool:
-    """IT confirms all external versions/locks/replicas were checked separately."""
-    async with session_scope() as session:
-        item = await session.get(ErasureTombstone, digest, with_for_update=True)
-        if (item is None or item.backups_state != "manual" or expected_erased_before is None
-                or item.erased_before != datetime.fromisoformat(expected_erased_before)):
-            return False
-        item.backups_state = "done"
-        item.last_error = None
-        _write_instruction(f"{digest}.backup.json", {
-            "subject_digest": digest, "erased_before": item.erased_before.isoformat(), "state": "done", "error": None,
-        })
-        return True
-
-
-async def unresolved_copies(*, limit: int = 20) -> list[dict]:
-    async with session_scope() as session:
-        copies = (await session.scalars(select(ResidentDataCopy).where(
-            ResidentDataCopy.erase_requested.is_(True), ResidentDataCopy.state != "deleted")
-            .order_by(ResidentDataCopy.id).limit(limit))).all()
-        return [{"id": item.id, "kind": item.kind, "state": item.state,
-                 "message_id": item.message_id, "last_error": item.last_error} for item in copies]
-
-
-async def record_known_copy(session, *, message_id: str, kind: str,
-                            max_user_ids: list[int] | None = None,
-                            appeal_id: int | None = None) -> None:
-    """Inventory incoming MAX messages atomically with their deduplicated receipt."""
-    ids = list(max_user_ids or [])
-    if appeal_id is not None:
-        owner = await session.scalar(select(User.max_user_id).join(Appeal, Appeal.user_id == User.id)
-                                     .where(Appeal.id == appeal_id))
-        if owner is not None and owner > 0:
-            ids.append(owner)
-    subjects = sorted({subject_digest(uid) for uid in ids if uid > 0})
-    await session.execute(insert(ResidentDataCopy).values(kind=kind, appeal_id=appeal_id,
-        subjects=subjects, message_id=message_id, state="retained", erase_requested=False)
-        .on_conflict_do_nothing(index_elements=[ResidentDataCopy.message_id]))
-    await _mirror_matching(session, ResidentDataCopy.message_id == message_id)
-
-
-def install_outgoing_hook(bot) -> None:
-    """Install after the admin notification hook; explicit inventory is never doubled."""
-    if getattr(bot, "_erasure_outgoing_installed", False) is True:
-        return
-    original_send = bot.send_message
-    original_edit = getattr(bot, "edit_message", None)
-
-    async def send_message(*args, **kwargs):
-        if _outgoing_depth.get():
-            return await original_send(*args, **kwargs)
-        view = _personal_view.get()
-        if view is not None:
-            if not view.active:
-                raise PersonalDataErasedError("Personal view expired before output")
-            if view.aggregate or view.max_user_ids:
-                return await tracked_send(SimpleNamespace(send_message=original_send),
-                    kind="bulk_view" if view.aggregate else "personal_view",
-                    appeal_id=view.appeal_id, max_user_ids=view.max_user_ids,
-                    send_args=args, **kwargs)
-        # Pinned SDK order is chat_id, user_id. Preserve original positional
-        # arguments through generic admin_bus wrappers without signature binding.
-        uid = kwargs.get("user_id", args[1] if len(args) > 1 else None)
-        chat_id = kwargs.get("chat_id", args[0] if args else None)
-        if uid is None and chat_id != settings.admin_group_id:
-            from aemr_bot.utils.resident_lifecycle import current_subject
-            uid = current_subject.get()
-        if not isinstance(uid, int) or uid <= 0:
-            return await original_send(*args, **kwargs)
-        return await tracked_send(SimpleNamespace(send_message=original_send), kind="citizen_screen",
-                                  max_user_ids=[uid], send_args=args, **kwargs)
-
-    async def edit_message(*args, **kwargs):
-        from aemr_bot.services import privacy_epoch
-        mid = kwargs.get("message_id") or (args[0] if args else None)
-        if _outgoing_depth.get() or not mid:
-            return await original_edit(*args, **kwargs)
-        async with session_scope() as session:
-            await privacy_epoch.hold_delivery(session)
-            erased = await session.scalar(select(ResidentDataCopy.id).where(
-                ResidentDataCopy.message_id == mid, ResidentDataCopy.erase_requested.is_(True)).limit(1))
-            if erased is not None:
-                raise PersonalDataErasedError("Edit blocked: resident copy is queued for erasure")
-            view = _personal_view.get()
-            if view is not None:
-                if not view.active:
-                    raise PersonalDataErasedError("Personal view expired before edit")
-                if view.aggregate or view.max_user_ids:
-                    # Commit union BEFORE MAX: a lost edit result may have left
-                    # either the previous or the proposed personal content.
-                    async with session_scope() as inventory:
-                        copy = await inventory.scalar(select(ResidentDataCopy).where(
-                            ResidentDataCopy.message_id == mid).with_for_update())
-                        if copy is not None and copy.erase_requested:
-                            raise PersonalDataErasedError("Personal copy is queued for erasure")
-                        subjects = {subject_digest(uid) for uid in view.max_user_ids}
-                        if copy is None:
-                            copy = ResidentDataCopy(kind="bulk_view" if view.aggregate else "personal_view",
-                                appeal_id=view.appeal_id, subjects=sorted(subjects), message_id=mid,
-                                state="retained", erase_requested=False)
-                            inventory.add(copy)
-                            await inventory.flush()
-                        else:
-                            copy.subjects = sorted(set(copy.subjects or []) | subjects)
-                            if copy.appeal_id != view.appeal_id:
-                                copy.appeal_id = None
-                            if view.aggregate or copy.kind == "bulk_view":
-                                copy.kind = "bulk_view"
-                            elif copy.appeal_id is None:
-                                copy.kind = "personal_view"
-                        _mirror_copy(copy)
-            return await original_edit(*args, **kwargs)
-
-    bot.send_message = send_message
-    if original_edit is not None:
-        bot.edit_message = edit_message
-    bot._erasure_outgoing_installed = True
-
-
-async def initialize_journal(*, allow_existing_database: bool = False) -> None:
-    """Explicit install/upgrade step. Never initialize over existing journal records.
-
-    A new empty DB may initialize automatically. An existing DB requires the
-    owner's deliberate install step; a restored DB must supply its original key.
-    """
-    directory = _journal_dir()
-    if (directory / "subject.key").exists():
-        _key()
-        return
-    if list(directory.glob("*.json")):
-        raise RuntimeError("Erasure records exist but their original key is missing")
-    async with session_scope() as session:
-        residents = await session.scalar(select(User.id).where(User.max_user_id > 0).limit(1))
-        instructions = await session.scalar(select(ErasureTombstone.subject_digest).limit(1))
-    if instructions is not None or (residents is not None and not allow_existing_database):
-        raise RuntimeError("Existing DB requires its independent journal or explicit first-install initialization")
-    _key()
-
-
-async def prepare_startup() -> int:
-    """Before accepting traffic: validate independent ledger and replay restrictions."""
-    await initialize_journal()
-    async with session_scope() as session:
-        return await replay_restore_tombstones(session)
-
-
-async def record_incoming_copies(session, messages: list[tuple[str, int]]) -> None:
-    """One bounded SQL insert per transport batch; no per-message database lookup."""
-    if not messages:
-        return
-    key = _key()
-    digests = {uid: hmac.new(key, str(uid).encode(), hashlib.sha256).hexdigest()
-               for _, uid in messages}
-    rows = [{"kind": "resident_input", "subjects": [digests[uid]], "message_id": mid,
-             "state": "retained", "erase_requested": False} for mid, uid in messages]
-    await session.execute(insert(ResidentDataCopy).values(rows)
-                          .on_conflict_do_nothing(index_elements=[ResidentDataCopy.message_id]))
-    await _mirror_matching(session, ResidentDataCopy.message_id.in_([mid for mid, _ in messages]))
-
-
-async def unresolved_backups(*, limit: int = 5) -> list[dict]:
-    async with session_scope() as session:
-        items = (await session.scalars(select(ErasureTombstone)
-            .where(ErasureTombstone.backups_state != "done").limit(limit))).all()
-        return [{"digest": item.subject_digest, "erased_before": item.erased_before.isoformat(),
-                 "state": item.backups_state, "error": item.last_error} for item in items]
 ```
 
 ### `bot/aemr_bot/services/db_backup.py`
 
-Size: `28298` bytes  
-SHA-256: `172cade772cc3c03534ae5e9ce10a1d1e2c8ce750a7f824cd999cf3cb8a65d29`
+Size: `23710` bytes  
+SHA-256: `1c89a88b3c9b988fc57052164ae71715a20811cd1d338fca80ad2000e3ebeacf`
 
 ```python
 """Резервное копирование Postgres БД: pg_dump → опционально gpg →
-локальный том → опционально S3.
+локальный том.
 
 Выделено из services/cron.py этапом 4 рефакторинга. cron.py импортирует
 из этого модуля `backup_db()` (возвращает BackupResult с фактом успеха
@@ -44068,7 +44345,6 @@ SHA-256: `172cade772cc3c03534ae5e9ce10a1d1e2c8ce750a7f824cd999cf3cb8a65d29`
 - _rotate_backups() — ротация старых файлов
 - _run_pg_dump() — простой pg_dump → файл (без шифрования)
 - _run_pg_dump_encrypted() — pg_dump | gpg --symmetric → файл
-- _upload_to_s3() — опциональная загрузка в S3 через rclone
 - backup_db() — главная функция; возвращает BackupResult
 
 Категоризированные исключения (BackupPgDumpError / BackupGpgError) дают
@@ -44110,9 +44386,9 @@ class BackupGpgError(BackupError):
 
 
 class BackupTimeoutError(BackupError):
-    """Дочерний процесс бэкапа (pg_dump / gpg / rclone) не завершился за
+    """Дочерний процесс бэкапа (pg_dump / gpg) не завершился за
     отведённый таймаут и был убит. Причина — обычно повисший внешний
-    ресурс: недоступный S3-эндпоинт, зависший Postgres, заблокированный
+    ресурс: зависший Postgres, заблокированный
     диск. Без таймаута `await proc.wait()` висел бы вечно, и cron-job
     никогда не вернул бы BackupResult — а значит, и admin-алёрт о провале
     бэкапа не ушёл бы."""
@@ -44125,7 +44401,7 @@ async def _wait_proc(
 
     Возвращает код возврата. При превышении `timeout` процесс убивается
     (kill), затем дожидается (reap — иначе остался бы зомби и FD-утечка),
-    и бросается BackupTimeoutError. Так зависший pg_dump/gpg/rclone не
+    и бросается BackupTimeoutError. Так зависший pg_dump/gpg не
     морозит backup-job навечно: вызывающий получит исключение, переведёт
     его в BackupResult(fail_kind=…) и отправит штатный admin-алёрт.
     """
@@ -44355,51 +44631,11 @@ async def _run_pg_dump_encrypted(
         raise BackupGpgError(f"gpg failed with code {gpg_rc}")
 
 
-async def _upload_to_s3(out_path: Path) -> None:
-    """Опциональная загрузка в S3 через rclone.
-
-    Учётные данные передаются через переменные окружения RCLONE_CONFIG_*,
-    а не argv. Форма с argv (`access_key=...`) утекает через `ps` и
-    `/proc/<pid>/cmdline` — это совсем не то место, где должны лежать
-    секреты. env-форма держит их внутри процесса rclone.
-    """
-    if not (
-        settings.backup_s3_bucket
-        and settings.backup_s3_endpoint
-        and settings.backup_s3_access_key
-        and settings.backup_s3_secret_key
-    ):
-        return
-    env = os.environ.copy()
-    env.update({
-        "RCLONE_CONFIG_BACKUPS3_TYPE": "s3",
-        "RCLONE_CONFIG_BACKUPS3_PROVIDER": "Other",
-        "RCLONE_CONFIG_BACKUPS3_ACCESS_KEY_ID": settings.backup_s3_access_key,
-        "RCLONE_CONFIG_BACKUPS3_SECRET_ACCESS_KEY": settings.backup_s3_secret_key,
-        "RCLONE_CONFIG_BACKUPS3_ENDPOINT": settings.backup_s3_endpoint,
-    })
-    rclone = await asyncio.create_subprocess_exec(
-        "rclone", "copy", str(out_path),
-        f"backups3:{settings.backup_s3_bucket}/",
-        env=env,
-    )
-    # Сетевой шаг: повисший/недоступный S3-эндпоинт без таймаута заставил
-    # бы rclone (и весь backup-job) ждать вечно. По таймауту убиваем+reap
-    # и бросаем BackupTimeoutError. Здесь это не валит результат целиком —
-    # backup_db ловит ошибку S3 отдельно (локальный файл уже на диске).
-    rc = await _wait_proc(
-        rclone, settings.backup_rclone_timeout_seconds, "rclone"
-    )
-    if rc != 0:
-        raise RuntimeError(f"rclone failed with code {rc}")
-    log.info("backup uploaded to s3: %s", out_path.name)
-
-
 async def _backup_db_impl() -> BackupResult:
-    """Еженедельный pg_dump → опционально gpg → локальный том → опционально S3.
+    """Еженедельный pg_dump → опционально gpg → локальный том.
 
     Сделано под self-hosted: по умолчанию сохраняет только в локальный
-    том (`/backups`) с ротацией. S3 и gpg включаются через переменные
+    том (`/backups`) с ротацией. gpg включается через переменные
     окружения. Возвращает `BackupResult`: при успехе `.ok=True`,
     `.path` указывает на файл; при сбое — `.fail_kind` категоризирует
     причину (`config` / `pg_dump` / `gpg` / `unknown`), `.fail_detail` —
@@ -44407,8 +44643,7 @@ async def _backup_db_impl() -> BackupResult:
 
     Никогда не выбрасывает исключений — вызывающий код в
     `cron._job_backup_with_alert` читает `.fail_kind` и шлёт точный
-    алёрт. S3-загрузка считается необязательной: её сбой не валит
-    весь результат (локальный файл по-прежнему есть).
+    алёрт. Внешние копии персонал обслуживает вручную.
     """
     local_dir = (
         Path(settings.backup_local_dir) if settings.backup_local_dir else None
@@ -44440,7 +44675,7 @@ async def _backup_db_impl() -> BackupResult:
     encrypt = bool(passphrase)
     # SEC #2: блокируем создание plain-text дампа без явного opt-in.
     # Дамп содержит phones / names / texts / operator audit-log — это
-    # PII по 152-ФЗ. Хранить на диске или заливать в S3 без шифрования
+    # PII по 152-ФЗ. Хранить на диске без шифрования
     # = breach. Для dev/local-only можно поставить
     # BACKUP_ALLOW_UNENCRYPTED=1, но в prod должен быть GPG passphrase.
     if not encrypt and not settings.backup_allow_unencrypted:
@@ -44517,20 +44752,15 @@ async def _backup_db_impl() -> BackupResult:
     except OSError:
         log.exception("backup rotation failed (local copy still intact)")
 
-    try:
-        await _upload_to_s3(out)
-    except Exception:
-        log.exception("backup s3 upload failed (local copy still intact)")
-
     return BackupResult(path=out)
 
 
 async def _cleanup_erased_backups_impl() -> int:
-    """Remove recognized dumps after erasure; retain non-backup files.
+    """Remove recognized LOCAL dumps after erasure; retain unrelated files.
 
-    Encrypted SQL cannot be surgically edited. All application dumps present
-    during cleanup are invalidated. S3 current objects are removed individually;
-    versioned/retained copies require the storage owner's confirmation.
+    Legacy manual/unknown S3 states describe external copies, which staff
+    manage separately. They cannot prevent cleaning local dumps or making a
+    fresh backup from the sanitized database. No remote storage is contacted.
     """
     from sqlalchemy import select
 
@@ -44539,7 +44769,7 @@ async def _cleanup_erased_backups_impl() -> int:
 
     async with session_scope() as session:
         pending = list((await session.scalars(select(ErasureTombstone)
-            .where(ErasureTombstone.backups_state == "pending"))).all())
+            .where(ErasureTombstone.backups_state != "done"))).all())
     if not pending:
         return 0
     try:
@@ -44550,40 +44780,9 @@ async def _cleanup_erased_backups_impl() -> int:
             for path in directory.glob("aemr-*"):
                 if path.is_file() and not path.is_symlink() and path.name.endswith((".sql", ".sql.gpg")):
                     path.unlink()
-        remote = bool(settings.backup_s3_bucket)
-        if remote:
-            from aemr_bot.services.data_erasure import _write_instruction
-            # Persist the attempt before external deletion. A crash/timeout
-            # requires review rather than repeating a possibly executed call.
-            async with session_scope() as claim_session:
-                for item in pending:
-                    current = await claim_session.get(ErasureTombstone, item.subject_digest, with_for_update=True)
-                    if current is not None:
-                        current.backups_state = "manual"
-                        current.last_error = "s3_cleanup_attempt_unknown"
-                    _write_instruction(f"{item.subject_digest}.backup.json", {
-                        "subject_digest": item.subject_digest, "erased_before": item.erased_before.isoformat(), "state": "manual",
-                        "error": "s3_cleanup_attempt_unknown",
-                    })
-            if not (settings.backup_s3_endpoint and settings.backup_s3_access_key and settings.backup_s3_secret_key):
-                raise BackupError("incomplete_s3_configuration")
-            env = os.environ.copy()
-            env.update({
-                "RCLONE_CONFIG_BACKUPS3_TYPE": "s3",
-                "RCLONE_CONFIG_BACKUPS3_PROVIDER": "Other",
-                "RCLONE_CONFIG_BACKUPS3_ACCESS_KEY_ID": settings.backup_s3_access_key,
-                "RCLONE_CONFIG_BACKUPS3_SECRET_ACCESS_KEY": settings.backup_s3_secret_key,
-                "RCLONE_CONFIG_BACKUPS3_ENDPOINT": settings.backup_s3_endpoint,
-            })
-            proc = await asyncio.create_subprocess_exec(
-                "rclone", "delete", f"backups3:{settings.backup_s3_bucket}/",
-                "--include", "/aemr-*.sql", "--include", "/aemr-*.sql.gpg", env=env,
-            )
-            if await _wait_proc(proc, settings.backup_rclone_timeout_seconds, "erasure-rclone") != 0:
-                raise BackupError("s3_delete_failed")
-        state, error = ("manual", "verify_s3_versions_and_retention") if remote else ("done", None)
+        state, error = "done", None
     except Exception as exc:
-        state, error = ("manual" if settings.backup_s3_bucket else "pending"), type(exc).__name__
+        state, error = "pending", type(exc).__name__
     async with session_scope() as session:
         for item in pending:
             current = await session.get(ErasureTombstone, item.subject_digest, with_for_update=True)
@@ -44608,7 +44807,7 @@ async def backup_db() -> BackupResult:
     from aemr_bot.db.session import session_scope
     from aemr_bot.services import privacy_epoch
     try:
-        # The same epoch barrier as exports covers dump + upload. An erasure
+        # The same epoch barrier as exports covers the local dump. An erasure
         # cannot commit while a pre-erasure dump is still being published.
         async with session_scope() as session:
             await privacy_epoch.hold_delivery(session)
@@ -44617,7 +44816,7 @@ async def backup_db() -> BackupResult:
             blocked = await session.scalar(select(ErasureTombstone.subject_digest)
                 .where(ErasureTombstone.backups_state != "done").limit(1))
             if blocked:
-                return BackupResult(path=None, fail_kind="erasure", fail_detail="Erasure backup cleanup requires reconciliation")
+                return BackupResult(path=None, fail_kind="erasure", fail_detail="Local backup cleanup has not completed")
             return await _backup_db_impl()
     except Exception as exc:
         return BackupResult(path=None, fail_kind="erasure", fail_detail=type(exc).__name__)
@@ -45254,8 +45453,8 @@ async def is_legacy_duplicate(event: Any) -> bool:
 
 ### `bot/aemr_bot/services/inbox.py`
 
-Size: `10640` bytes  
-SHA-256: `967604cf91afb068be964fa5a24d9be9141e1febf0439cc9adeab74ba561aaa6`
+Size: `9786` bytes  
+SHA-256: `b6c00f6caf0c10e4ee825dc55322f4e7eba7f9a2cadfc6cdeb00f3e5a720dff0`
 
 ```python
 """Durable transport receipts. Never replay an operation with unknown side effects.
@@ -45322,30 +45521,17 @@ async def accept(events: list[dict]) -> None:
     if not events:
         return
     async with session_scope() as session:
-        from aemr_bot.config import settings
-        from aemr_bot.services import data_erasure, privacy_epoch
+        from aemr_bot.services import privacy_epoch
         await privacy_epoch.hold_delivery(session)
         # Bound SQL parameter count while committing the entire transport batch
         # atomically. Deduplication remains in PostgreSQL, including same-batch IDs.
         for offset in range(0, len(events), _RECEIPT_BATCH_SIZE):
             rows = []
-            incoming = []
             for payload in events[offset:offset + _RECEIPT_BATCH_SIZE]:
                 key, user_id = _identity(payload)
-                message = payload.get("message")
-                message = message if isinstance(message, dict) else {}
-                body = message.get("body")
-                body = body if isinstance(body, dict) else {}
-                recipient = message.get("recipient")
-                recipient = recipient if isinstance(recipient, dict) else {}
-                if (payload.get("update_type") == "message_created" and isinstance(user_id, int)
-                        and user_id > 0 and body.get("mid")
-                        and (settings.admin_group_id is None or recipient.get("chat_id") != settings.admin_group_id)):
-                    incoming.append((str(body["mid"]), user_id))
                 rows.append({"event_key": key,
                              "update_type": str(payload.get("update_type", "unknown"))[:64],
                              "max_user_id": user_id, "payload": payload})
-            await data_erasure.record_incoming_copies(session, incoming)
             await session.execute(insert(InboxEvent).values(rows).on_conflict_do_nothing(
                 index_elements=[InboxEvent.event_key],
             ))
@@ -49707,8 +49893,8 @@ def file_attachment(token: str):
 
 ### `bot/aemr_bot/services/users.py`
 
-Size: `49694` bytes  
-SHA-256: `bcf964dab978499420b0555bbf27cfe29a155cade25ab2c9783fdac02f54235a`
+Size: `49097` bytes  
+SHA-256: `f0111f9a4a55ee595da9e68169ca6462552acebf7173b036b0d6e945de77aeee`
 
 ```python
 import hashlib
@@ -50257,24 +50443,13 @@ async def erase_pdn_detailed(
 
 
 async def revoke_consent(session: AsyncSession, max_user_id: int) -> bool:
-    """Отзыв согласия и выход из бота без немедленного стирания записи.
+    """Сбросить согласие, подписку и черновик без немедленного удаления профиля.
 
-    Имя и телефон остаются в рабочей БД до /erase или 30-дневного
-    retention-обезличивания. Новые обращения и рассылка прекращаются,
-    но уже принятые открытые обращения остаются в работе для финального
-    ответа оператора через бот.
-
-    Что делаем:
-    - consent_pdn_at = NULL, consent_revoked_at = now;
-    - subscribed_broadcast = false, consent_broadcast_at = NULL
-      (рассылка тоже off — текст «Подписка отключится» так обещает);
-    - dialog_state = IDLE (если житель отзывал посреди воронки);
-    - открытые NEW/IN_PROGRESS обращения не закрываются здесь: оператор
-      отправит финальный ответ, и стандартный путь ответа закроет
-      обращение.
-
-    is_blocked НЕ ставится: житель может передумать и дать согласие
-    заново через /start.
+    Карточки остаются до правовой оценки и очистки. Отправку ответов без
+    согласия запрещает guard operator_reply; дальнейшая законная работа
+    организуется отдельно вне бота. Профиль очищается по /erase или
+    retention-задачей после отзыва. Блокировка за злоупотребления не ставится:
+    житель может заново дать согласие.
     """
     from aemr_bot.services.data_erasure import journal_restriction
     journal_restriction(max_user_id, "revoke")
@@ -51847,8 +52022,8 @@ __all__ = [
 
 ### `bot/aemr_bot/ui/citizen_keyboards.py`
 
-Size: `29799` bytes  
-SHA-256: `9a026aefe21af17d75f9c0b76bcfd1f49d418fb131fe40f80d7947f44f152d5a`
+Size: `28008` bytes  
+SHA-256: `d712a517c94b9a06727c82882b8b4a4457c95bdf7484a2dc4021e11d2883ad77`
 
 ```python
 """Клавиатуры экранов жителя (citizen-facing).
@@ -52011,27 +52186,7 @@ def settings_menu_keyboard():
 
 
 def goodbye_keyboard():
-    """Экран «👋 Уйти из бота» — три утверждённые жизненные опции.
-
-    Формулировки взяты из утверждённой UX-сессии: каждая фраза описывает
-    ситуацию жителя, не технический термин. «Отозвать согласие» / «удалить
-    данные» — это IT-язык; «попрощаться, но дождаться ответа» — язык
-    человека, который пришёл сюда не из любви к 152-ФЗ.
-
-    Семантика опций:
-    - 🔕 «Не хочу получать рассылку» — subscribed_broadcast=false,
-      consent_pdn остаётся, обращения работают как и раньше.
-    - 👋 «Хочу попрощаться, но дождаться ответа на обращение» — revoke_consent:
-      consent_pdn=NULL, consent_revoked_at=now; рассылка off; новые
-      обращения нельзя; на уже поданные ДО отзыва оператор отвечает
-      «прощальным» ответом (см. _deliver_operator_reply); через 30 дней
-      без активности retention-cron автоматически обезличит данные.
-    - ❌ «Стереть данные обо мне прямо сейчас» — erase_pdn немедленно:
-      имя/телефон стираются, открытые обращения закрываются (закрытые
-      и анонимизированные через anonymous-user остаются для статистики),
-      запись жителя физически удаляется. Бот «забудет» жителя.
-    - ↩️ «Передумал, остаюсь» — назад в Настройки.
-    """
+    """Подписка, отзыв согласия и удаление из рабочей базы — разные действия."""
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="🔕 Отписаться", payload=cp.GOODBYE_UNSUB))
     kb.row(CallbackButton(text="👋 Отозвать согласие", payload=cp.GOODBYE_REVOKE_ASK))
@@ -55551,6 +55706,68 @@ SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
 ```python
 
+```
+
+### `bot/tests/_erasure_helpers.py`
+
+Size: `2703` bytes  
+SHA-256: `9c642b228646d2b38047d0b9e956771b138bca9ad1f1bab5361e72d1a6054253`
+
+```python
+"""Shared PostgreSQL fixture and delivery helper for erasure regressions."""
+import os
+from contextlib import asynccontextmanager
+from datetime import UTC, datetime
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
+
+from aemr_bot.db.models import Appeal, Base, Message, User
+from aemr_bot.services import data_erasure
+
+
+@pytest_asyncio.fixture(name="erasure_db")
+async def erasure_database(monkeypatch, tmp_path):
+    engine = create_async_engine(os.environ["DATABASE_URL"], poolclass=NullPool)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+
+    @asynccontextmanager
+    async def scope():
+        async with factory.begin() as session:
+            yield session
+
+    monkeypatch.setattr(data_erasure, "session_scope", scope)
+    monkeypatch.setattr("aemr_bot.db.session.session_scope", scope)
+    monkeypatch.setattr(data_erasure.settings, "erasure_state_dir", str(tmp_path / "journal"))
+    monkeypatch.setattr(data_erasure.settings, "log_dir", str(tmp_path / "logs"))
+    monkeypatch.setattr(data_erasure.settings, "backup_local_dir", str(tmp_path / "backups"))
+    monkeypatch.setattr(data_erasure.settings, "backup_s3_bucket", None)
+    (tmp_path / "backups").mkdir()
+    async with scope() as session:
+        resident = User(max_user_id=42, first_name="Иван", phone="+79123456789", consent_pdn_at=datetime.now(UTC))
+        other = User(max_user_id=43, first_name="Анна", consent_pdn_at=datetime.now(UTC))
+        session.add_all([resident, other])
+        await session.flush()
+        appeal = Appeal(user_id=resident.id, summary="Private", admin_message_id="first", last_admin_card_mid="last")
+        unrelated = Appeal(user_id=other.id, summary="Preserve")
+        session.add_all([appeal, unrelated])
+        await session.flush()
+        session.add(Message(appeal_id=appeal.id, direction="from_user", text="Private", max_message_id="incoming"))
+        appeal_id, unrelated_id = appeal.id, unrelated.id
+    yield SimpleNamespace(scope=scope, appeal_id=appeal_id, other_id=unrelated_id, path=tmp_path)
+    await engine.dispose()
+
+
+async def send_copy(db, *, mid="sent", kind="admin_card", appeal_id=None):
+    bot = SimpleNamespace(send_message=AsyncMock(return_value=SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid=mid)))))
+    await data_erasure.tracked_send(bot, kind=kind, appeal_id=appeal_id or db.appeal_id, text="Private")
+    return bot
 ```
 
 ### `bot/tests/_helpers.py`
@@ -62315,8 +62532,8 @@ class TestDoOpenTickets:
 
 ### `bot/tests/test_admin_personal_copy_inventory.py`
 
-Size: `11971` bytes  
-SHA-256: `b84e7eedb5cc2fee8f6528c7d7674a406765b24612aa1020880533b169822a74`
+Size: `11969` bytes  
+SHA-256: `63c11abc1dca0b7078130e0dc2f5b5b259e141e87042f574f89c8f9b90412812`
 
 ```python
 """Real PostgreSQL and the production hook cover personal operator views."""
@@ -62383,7 +62600,7 @@ async def test_personal_admin_navigation_is_inventoried_and_erased(source, route
         await users.erase_pdn_detailed(session, source.user_id)
     async with session_scope() as session:
         copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "personal-view"))
-        assert copy.erase_requested and copy.state == "pending"
+        assert copy.erase_requested and copy.state == "manual"
 
 
 async def test_personal_notification_is_inventoried_before_erasure(source):
@@ -62412,7 +62629,7 @@ async def test_multi_resident_views_are_inventoried_before_erasure(source, route
         await users.erase_pdn_detailed(session, source.user_id)
     async with session_scope() as session:
         copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "personal-view"))
-        assert copy.erase_requested and copy.state == "pending"
+        assert copy.erase_requested and copy.state == "manual"
 
 
 @pytest.mark.parametrize("existing_mid", [None, "existing-preview"])
@@ -80430,67 +80647,24 @@ async def test_queue_refresh_keeps_period_calendars_after_live_schedule_change(s
 
 ### `bot/tests/test_data_erasure.py`
 
-Size: `37474` bytes  
-SHA-256: `eef92d565914187b0f28f47d840ce880b0ee87f1acbe26859c9df164528ffec1`
+Size: `34454` bytes  
+SHA-256: `abf8bc7cb97f75b58209ae814072228bf0959bb9c1806c7f3d216f40d8f67c17`
 
 ```python
-"""Durable external copy cleanup and restore quarantine regressions."""
+"""Local erasure, manual external copies, and restore privacy regressions."""
 import asyncio
-import os
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-import pytest_asyncio
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.pool import NullPool
 
-from aemr_bot.db.models import Appeal, Base, ErasureTombstone, Message, ResidentDataCopy, User
+from aemr_bot.db.models import Appeal, ErasureTombstone, Message, ResidentDataCopy, User
 from aemr_bot.services import data_erasure, db_backup, users
-
-
-@pytest_asyncio.fixture
-async def erasure_db(monkeypatch, tmp_path):
-    engine = create_async_engine(os.environ["DATABASE_URL"], poolclass=NullPool)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
-    factory = async_sessionmaker(engine, expire_on_commit=False)
-
-    @asynccontextmanager
-    async def scope():
-        async with factory.begin() as session:
-            yield session
-
-    monkeypatch.setattr(data_erasure, "session_scope", scope)
-    monkeypatch.setattr("aemr_bot.db.session.session_scope", scope)
-    monkeypatch.setattr(data_erasure.settings, "erasure_state_dir", str(tmp_path / "journal"))
-    monkeypatch.setattr(data_erasure.settings, "log_dir", str(tmp_path / "logs"))
-    monkeypatch.setattr(data_erasure.settings, "backup_local_dir", str(tmp_path / "backups"))
-    monkeypatch.setattr(data_erasure.settings, "backup_s3_bucket", None)
-    (tmp_path / "backups").mkdir()
-    async with scope() as session:
-        resident = User(max_user_id=42, first_name="Иван", phone="+79123456789", consent_pdn_at=datetime.now(UTC))
-        other = User(max_user_id=43, first_name="Анна", consent_pdn_at=datetime.now(UTC))
-        session.add_all([resident, other])
-        await session.flush()
-        appeal = Appeal(user_id=resident.id, summary="Private", admin_message_id="first", last_admin_card_mid="last")
-        unrelated = Appeal(user_id=other.id, summary="Preserve")
-        session.add_all([appeal, unrelated])
-        await session.flush()
-        session.add(Message(appeal_id=appeal.id, direction="from_user", text="Private", max_message_id="incoming"))
-        appeal_id, unrelated_id = appeal.id, unrelated.id
-    yield SimpleNamespace(scope=scope, appeal_id=appeal_id, other_id=unrelated_id, path=tmp_path)
-    await engine.dispose()
-
-
-async def _send(db, *, mid="sent", kind="admin_card", appeal_id=None):
-    bot = SimpleNamespace(send_message=AsyncMock(return_value=SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid=mid)))))
-    await data_erasure.tracked_send(bot, kind=kind, appeal_id=appeal_id or db.appeal_id, text="Private")
-    return bot
+from tests._erasure_helpers import erasure_database  # noqa: F401
+from tests._erasure_helpers import send_copy as _send
 
 
 @pytest.mark.asyncio
@@ -80506,7 +80680,7 @@ async def test_erasure_inventories_known_history_and_preserves_unrelated_data(er
         assert (await session.get(Appeal, db.other_id)).summary == "Preserve"
         copies = list((await session.scalars(select(ResidentDataCopy))).all())
         requested = {copy.message_id for copy in copies if copy.erase_requested}
-        assert requested == {"sent", "first", "last", "incoming"}
+        assert requested == {"sent", "first", "last"}
         assert next(copy for copy in copies if copy.message_id == "unrelated").state == "retained"
     journal = list((db.path / "journal").glob("*.json"))
     assert journal
@@ -80514,7 +80688,7 @@ async def test_erasure_inventories_known_history_and_preserves_unrelated_data(er
 
 
 @pytest.mark.asyncio
-async def test_delete_claim_is_durable_and_unknown_outcome_never_retries(erasure_db):
+async def test_erasure_keeps_max_copies_manual_without_delete_attempts(erasure_db):
     db = erasure_db
     await _send(db)
     async with db.scope() as session:
@@ -80522,25 +80696,25 @@ async def test_delete_claim_is_durable_and_unknown_outcome_never_retries(erasure
     bot = SimpleNamespace(delete_message=AsyncMock(side_effect=TimeoutError("unknown")))
     assert await data_erasure.recover_deletions(bot) == 0
     attempts = bot.delete_message.await_count
-    assert attempts == 4
+    assert attempts == 0
     assert await data_erasure.recover_deletions(bot) == 0
     assert bot.delete_message.await_count == attempts
     status = await data_erasure.diagnostics()
-    assert status["uncertain"] == 4
+    assert status["manual"] == 3
 
 
 @pytest.mark.asyncio
-async def test_parallel_workers_delete_each_known_copy_once(erasure_db):
+async def test_legacy_workers_never_delete_known_copies(erasure_db):
     db = erasure_db
     async with db.scope() as session:
         await users.erase_pdn_detailed(session, 42)
     bot = SimpleNamespace(delete_message=AsyncMock(return_value=SimpleNamespace(success=True)))
-    assert sum(await asyncio.gather(data_erasure.recover_deletions(bot), data_erasure.recover_deletions(bot))) == 3
-    assert bot.delete_message.await_count == 3
+    assert sum(await asyncio.gather(data_erasure.recover_deletions(bot), data_erasure.recover_deletions(bot))) == 0
+    bot.delete_message.assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_unknown_send_is_visible_and_only_recovered_mid_can_be_queued(erasure_db):
+async def test_unknown_send_stays_visible_and_recovered_mid_stays_manual(erasure_db):
     db = erasure_db
     bot = SimpleNamespace(send_message=AsyncMock(side_effect=TimeoutError("unknown")))
     with pytest.raises(TimeoutError):
@@ -80582,7 +80756,7 @@ async def test_erase_waits_for_inflight_copy_inventory(erasure_db):
     await asyncio.gather(sending, erasing)
     async with db.scope() as session:
         copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "racing"))
-        assert copy.erase_requested and copy.state == "pending"
+        assert copy.erase_requested and copy.state == "manual"
 
 
 @pytest.mark.asyncio
@@ -80603,7 +80777,7 @@ async def test_restore_replays_independent_tombstone_without_erasing_new_identit
 
 
 @pytest.mark.asyncio
-async def test_backup_cleanup_preserves_non_dumps_and_surfaces_s3_version_limit(erasure_db, monkeypatch):
+async def test_local_backup_cleanup_preserves_non_dumps(erasure_db, monkeypatch):
     db = erasure_db
     directory = db.path / "backups"
     (directory / "aemr-20200101_010101.sql.gpg").write_text("encrypted")
@@ -80667,19 +80841,19 @@ async def test_restore_keeps_withdrawals_effective_and_preserves_newer_consent(e
 
 
 @pytest.mark.asyncio
-async def test_any_erasure_invalidates_aggregate_exports_without_deleting_other_sources(erasure_db):
+async def test_erasure_marks_issued_exports_manual_without_deleting_other_sources(erasure_db):
     db = erasure_db
     bot = SimpleNamespace(send_message=AsyncMock(return_value=SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid="export")))))
     await data_erasure.tracked_send(bot, kind="bulk_export", text="report")
     async with db.scope() as session:
         await users.erase_pdn_detailed(session, 42)
         exported = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.kind == "bulk_export"))
-        assert exported.erase_requested and exported.state == "pending"
+        assert exported.erase_requested and exported.state == "manual"
         assert (await session.get(Appeal, db.other_id)).summary == "Preserve"
 
 
 @pytest.mark.asyncio
-async def test_retention_queues_only_eligible_appeals_and_removes_reply_drafts(erasure_db):
+async def test_retention_restricts_only_eligible_appeals_and_removes_reply_drafts(erasure_db):
     from aemr_bot.db.models import Operator, OperatorReplyDraft
     from aemr_bot.services import appeals
     db = erasure_db
@@ -80700,7 +80874,7 @@ async def test_retention_queues_only_eligible_appeals_and_removes_reply_drafts(e
         assert await session.scalar(select(OperatorReplyDraft)) is None
         assert (await session.get(Appeal, db.other_id)).summary == "Preserve"
         copies = list((await session.scalars(select(ResidentDataCopy))).all())
-        assert {copy.message_id for copy in copies if copy.erase_requested} == {"first", "last", "incoming"}
+        assert {copy.message_id for copy in copies if copy.erase_requested} == {"first", "last"}
     # Restore an old pre-retention payload, then replay independent ledger.
     async with db.scope() as session:
         item = await session.get(Appeal, db.appeal_id)
@@ -80712,28 +80886,17 @@ async def test_retention_queues_only_eligible_appeals_and_removes_reply_drafts(e
 
 
 @pytest.mark.asyncio
-async def test_s3_cleanup_requires_explicit_version_confirmation_before_backup(erasure_db, monkeypatch):
+async def test_legacy_s3_configuration_never_contacts_remote_cleanup(erasure_db, monkeypatch):
     db = erasure_db
-    monkeypatch.setattr(data_erasure.settings, "backup_s3_bucket", "example")
-    monkeypatch.setattr(data_erasure.settings, "backup_s3_endpoint", "https://s3.example")
-    monkeypatch.setattr(data_erasure.settings, "backup_s3_access_key", "key")
-    monkeypatch.setattr(data_erasure.settings, "backup_s3_secret_key", "secret")
+    for key, value in {"bucket": "example", "endpoint": "https://s3.example", "access_key": "key", "secret_key": "secret"}.items():
+        monkeypatch.setattr(data_erasure.settings, f"backup_s3_{key}", value)
     async with db.scope() as session:
         await users.erase_pdn_detailed(session, 42)
-    process = SimpleNamespace(wait=AsyncMock(return_value=0))
-    spawn = AsyncMock(return_value=process)
+    spawn = AsyncMock(side_effect=AssertionError("remote storage is outside bot policy"))
     monkeypatch.setattr(db_backup.asyncio, "create_subprocess_exec", spawn)
-    assert await db_backup.cleanup_erased_backups() == 0
-    assert spawn.await_count == 1
-    result = await db_backup.backup_db()
-    assert result.path is None and result.fail_kind == "erasure"
-    # No second S3 mutation after a completed attempt whose history needs review.
-    assert spawn.await_count == 1
-    async with db.scope() as session:
-        instructions = (await session.execute(select(ErasureTombstone.subject_digest, ErasureTombstone.erased_before))).all()
-    for digest, cutoff in instructions:
-        assert not await data_erasure.confirm_backup_cleanup(digest, expected_erased_before=(cutoff - timedelta(seconds=1)).isoformat())
-        assert await data_erasure.confirm_backup_cleanup(digest, expected_erased_before=cutoff.isoformat())
+    assert await db_backup.cleanup_erased_backups() == 2
+    spawn.assert_not_awaited()
+    assert await data_erasure.unresolved_backups() == []
 
 
 @pytest.mark.asyncio
@@ -80752,13 +80915,13 @@ async def test_outgoing_hook_tracks_private_screens_without_double_tracking_expl
         copies = list((await session.scalars(select(ResidentDataCopy))).all())
         assert [(item.kind, item.message_id) for item in copies] == [("citizen_screen", "screen"), ("operator_part", "part")]
         await users.erase_pdn_detailed(session, 42)
-    with pytest.raises(RuntimeError, match="queued for erasure"):
+    with pytest.raises(RuntimeError, match="source was erased"):
         await bot.edit_message(message_id="screen", text="old profile")
     await bot.edit_message(message_id="unrelated-menu", text="public info")
 
 
 @pytest.mark.asyncio
-async def test_inbox_records_resident_source_mid_atomically_and_deduplicates(erasure_db, monkeypatch):
+async def test_inbox_deduplicates_without_creating_external_deletion_inventory(erasure_db, monkeypatch):
     from aemr_bot.db.models import InboxEvent
     from aemr_bot.services import inbox
     db = erasure_db
@@ -80772,10 +80935,11 @@ async def test_inbox_records_resident_source_mid_atomically_and_deduplicates(era
     async with db.scope() as session:
         copies = list((await session.scalars(select(ResidentDataCopy))).all())
         receipts = list((await session.scalars(select(InboxEvent))).all())
-        assert len(copies) == len(receipts) == 1
-        assert copies[0].kind == "resident_input" and copies[0].message_id == "inbound"
+        assert len(receipts) == 1
+        assert copies == []
         await users.erase_pdn_detailed(session, 42)
-        assert copies[0].erase_requested is True
+        assert await session.scalar(select(ResidentDataCopy.id).where(ResidentDataCopy.message_id == "inbound")) is None
+        assert receipts[0].payload == {}
 
 
 @pytest.mark.asyncio
@@ -80854,7 +81018,7 @@ async def test_independent_copy_inventory_survives_old_db_restore_without_reside
     async with db.scope() as session:
         assert await data_erasure.replay_restore_tombstones(session) == 0
         copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "post-dump-card"))
-        assert copy is not None and copy.erase_requested and copy.state == "uncertain"
+        assert copy is not None and copy.erase_requested and copy.state == "manual"
         assert await session.scalar(select(ErasureTombstone.subject_digest)) is not None
     before = bot.delete_message.await_count
     await data_erasure.recover_deletions(bot)
@@ -81019,7 +81183,7 @@ async def test_personal_view_holds_erasure_barrier_before_read_until_output(eras
     await erasing
     async with db.scope() as session:
         copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "racing-view"))
-        assert copy.erase_requested and copy.state == "pending"
+        assert copy.erase_requested and copy.state == "manual"
 
 
 @pytest.mark.asyncio
@@ -81042,7 +81206,7 @@ async def test_personal_edit_commits_union_before_unknown_external_result(erasur
     async with db.scope() as session:
         await users.erase_pdn_detailed(session, 42)
         copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "navigation"))
-        assert copy.erase_requested and copy.state == "pending"
+        assert copy.erase_requested and copy.state == "manual"
         assert (await session.get(Appeal, db.other_id)).summary == "Preserve"
 
 
@@ -81281,16 +81445,14 @@ def test_passphrase_length_decides_encryption(
 
 ### `bot/tests/test_db_backup_extra.py`
 
-Size: `17040` bytes  
-SHA-256: `897e7524d90f41cc0d5c43229199c6b2458844938797f1585c14e5decad45f56`
+Size: `13688` bytes  
+SHA-256: `f27bcc83fba44955d09182d47061296920cea628a4d45f10081a36eb29ca16cc`
 
 ```python
-"""Расширенные тесты services/db_backup — backup_db, _run_pg_dump,
-_upload_to_s3 через моки asyncio.subprocess.
+"""Async local backups, subprocess failures, and inert legacy S3 configuration.
 
-Существующий test_db_backup.py покрывает _build_pg_env и _rotate_backups.
-Здесь добавляем покрытие async-частей: запуск pg_dump, обёртка backup_db,
-условие пропуска S3 без credentials."""
+The companion test_db_backup.py covers environment parsing and rotation.
+"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -81368,65 +81530,6 @@ class TestRunPgDumpEncryptedLeakGuard:
                 )
         # pg_dump должен быть убит (не оставлен зомби).
         assert dump_proc.killed is True
-
-
-class TestUploadToS3:
-    @pytest.mark.asyncio
-    async def test_skips_when_credentials_missing(self, tmp_path: Path) -> None:
-        """Без access_key/secret_key/endpoint/bucket — тихо ничего не делает."""
-        out = tmp_path / "dump.sql"
-        out.write_bytes(b"data")
-        with patch.object(db_backup.settings, "backup_s3_bucket", ""), \
-             patch.object(db_backup.settings, "backup_s3_endpoint", ""), \
-             patch.object(db_backup.settings, "backup_s3_access_key", ""), \
-             patch.object(db_backup.settings, "backup_s3_secret_key", ""):
-            # Не должно бросить и не должно вызывать subprocess.
-            with patch("asyncio.create_subprocess_exec") as mock_proc:
-                await db_backup._upload_to_s3(out)
-            mock_proc.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_runs_rclone_when_creds_set(self, tmp_path: Path) -> None:
-        out = tmp_path / "dump.sql"
-        out.write_bytes(b"data")
-
-        called_with = {}
-
-        async def fake_create(*args, **kwargs):
-            called_with["args"] = args
-            called_with["env"] = kwargs.get("env")
-            return _FakeProc(returncode=0)
-
-        with patch.object(db_backup.settings, "backup_s3_bucket", "my-bucket"), \
-             patch.object(db_backup.settings, "backup_s3_endpoint", "https://s3.example"), \
-             patch.object(db_backup.settings, "backup_s3_access_key", "AKEY"), \
-             patch.object(db_backup.settings, "backup_s3_secret_key", "SECRET"):
-            with patch("asyncio.create_subprocess_exec", side_effect=fake_create):
-                await db_backup._upload_to_s3(out)
-
-        # Команда rclone, в env пробрасываются ключи.
-        assert "rclone" in called_with["args"]
-        env = called_with["env"]
-        assert env["RCLONE_CONFIG_BACKUPS3_ACCESS_KEY_ID"] == "AKEY"
-        assert env["RCLONE_CONFIG_BACKUPS3_SECRET_ACCESS_KEY"] == "SECRET"
-        # Секреты НЕ должны попадать в argv.
-        assert not any("SECRET" in str(a) for a in called_with["args"])
-
-    @pytest.mark.asyncio
-    async def test_raises_on_rclone_failure(self, tmp_path: Path) -> None:
-        out = tmp_path / "dump.sql"
-        out.write_bytes(b"data")
-
-        async def fake_create(*args, **kwargs):
-            return _FakeProc(returncode=1)
-
-        with patch.object(db_backup.settings, "backup_s3_bucket", "b"), \
-             patch.object(db_backup.settings, "backup_s3_endpoint", "https://s3"), \
-             patch.object(db_backup.settings, "backup_s3_access_key", "k"), \
-             patch.object(db_backup.settings, "backup_s3_secret_key", "s"):
-            with patch("asyncio.create_subprocess_exec", side_effect=fake_create):
-                with pytest.raises(RuntimeError, match="rclone failed"):
-                    await db_backup._upload_to_s3(out)
 
 
 class TestBackupDb:
@@ -81602,32 +81705,29 @@ class TestBackupDb:
         assert "OSError" in result.fail_detail or "disk full" in result.fail_detail
 
     @pytest.mark.asyncio
-    async def test_s3_upload_failure_does_not_break_local_copy(
+    async def test_stale_s3_configuration_never_uploads_local_copy(
         self, tmp_path: Path
     ) -> None:
-        """Если S3 upload упал, локальная копия должна остаться, и
-        backup_db должен вернуть путь к ней (а не None)."""
+        """Old S3 environment values must never enable a remote operation."""
         async def fake_dump(out_path, env):
             out_path.write_bytes(b"data")
-
-        async def fake_upload(out_path):
-            raise RuntimeError("rclone unreachable")
 
         with patch.object(db_backup.settings, "backup_local_dir", str(tmp_path)), \
              patch.object(db_backup.settings, "backup_gpg_passphrase", ""), \
              patch.object(db_backup.settings, "backup_allow_unencrypted", True), \
              patch.object(db_backup.settings, "backup_keep_count", 5), \
-             patch.object(db_backup.settings, "backup_s3_bucket", ""), \
-             patch.object(db_backup.settings, "backup_s3_endpoint", ""), \
-             patch.object(db_backup.settings, "backup_s3_access_key", ""), \
-             patch.object(db_backup.settings, "backup_s3_secret_key", ""):
+             patch.object(db_backup.settings, "backup_s3_bucket", "legacy"), \
+             patch.object(db_backup.settings, "backup_s3_endpoint", "https://s3.example"), \
+             patch.object(db_backup.settings, "backup_s3_access_key", "key"), \
+             patch.object(db_backup.settings, "backup_s3_secret_key", "secret"):
             with patch.object(db_backup, "_run_pg_dump", side_effect=fake_dump), \
-                 patch.object(db_backup, "_upload_to_s3", side_effect=fake_upload), \
+                 patch("asyncio.create_subprocess_exec") as spawn, \
                  patch.object(db_backup, "_build_pg_env", return_value={}):
                 result = await db_backup.backup_db()
         assert result.ok is True
         assert result.path is not None
         assert result.path.exists()
+        spawn.assert_not_called()
 ```
 
 ### `bot/tests/test_degraded_inputs.py`
@@ -82192,6 +82292,66 @@ async def test_diag_24h_counters_present(session) -> None:
     assert "за 24ч" in sent["text"].lower()
 ```
 
+### `bot/tests/test_draft_preview_context.py`
+
+Size: `2202` bytes  
+SHA-256: `ff50aac730772d7c34a3a62535420cb30a21c1aee876e0b2b4fbd0750e0c6d9f`
+
+```python
+"""The existing submit screen should let residents check the selected case."""
+
+from contextlib import asynccontextmanager
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
+
+from aemr_bot.db.models import DialogState
+from aemr_bot.handlers import appeal_funnel
+from tests._helpers import fake_session_scope, make_event
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("followup", [False, True])
+async def test_preview_shows_case_context_without_an_extra_step(monkeypatch, followup):
+    user = SimpleNamespace(
+        dialog_state=(DialogState.AWAITING_FOLLOWUP_TEXT if followup else DialogState.AWAITING_SUMMARY).value,
+        dialog_data={"draft_token": "draft", "appeal_id": 71,
+                     "locality": "Елизово", "address": "Ленина, 10", "topic": "Дороги",
+                     "summary_chunks": ["Яма во дворе"], "attachments": []},
+    )
+
+    @asynccontextmanager
+    async def current_user(_):
+        yield None, user
+
+    monkeypatch.setattr(appeal_funnel, "current_user", current_user)
+    screen = AsyncMock()
+    monkeypatch.setattr(appeal_funnel, "send_or_edit_screen", screen)
+    await appeal_funnel.show_summary_draft(make_event(), 42)
+    assert screen.await_count == 1
+    text = screen.await_args.kwargs["text"]
+    assert "Яма во дворе" in text
+    if followup:
+        assert "дополнения к № 71" in text
+    else:
+        for value in ("Елизово", "Ленина, 10", "Дороги"):
+            assert value in text
+
+
+@pytest.mark.asyncio
+async def test_empty_topics_does_not_claim_unperformed_notification(monkeypatch):
+    monkeypatch.setattr(appeal_funnel, "session_scope", fake_session_scope)
+    monkeypatch.setattr(appeal_funnel.settings_store, "get", AsyncMock(return_value=[]))
+    monkeypatch.setattr(appeal_funnel.users_service, "reset_state", AsyncMock())
+    event = make_event()
+    await appeal_funnel.on_awaiting_topic(event, None, "текст", 42)
+    text = event.message.answer.await_args.args[0]
+    assert "сообщили" not in text
+    assert "Попробуйте позже" in text
+    assert event.message.answer.await_args.kwargs["attachments"]
+```
+
 ### `bot/tests/test_erased_content_views.py`
 
 Size: `1445` bytes  
@@ -82287,6 +82447,114 @@ async def test_cleared_followup_becomes_new_draft_without_retyping_parts(session
     assert user.dialog_data == snapshot
 ```
 
+### `bot/tests/test_erasure_manual_copies.py`
+
+Size: `4621` bytes  
+SHA-256: `883be98e4d69ff8417d8dccfb10ddfcad6820c5932143727268f48929ec18e3c`
+
+```python
+"""Manual external copies, legacy restore restrictions, and local backup cleanup."""
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
+from sqlalchemy import select
+
+from aemr_bot.db.models import ErasureTombstone, ResidentDataCopy
+from aemr_bot.services import data_erasure, db_backup, users
+from tests._erasure_helpers import (
+    erasure_database,  # noqa: F401
+    send_copy,
+)
+
+
+@pytest.mark.asyncio
+async def test_legacy_pending_max_messages_are_manual_and_never_deleted(erasure_db):
+    db = erasure_db
+    async with db.scope() as session:
+        session.add_all([
+            ResidentDataCopy(kind=kind, message_id=f"old-{kind}", state="pending", erase_requested=True)
+            for kind in ("resident_input", "admin_card", "bulk_export")
+        ])
+    bot = SimpleNamespace(delete_message=AsyncMock(return_value=SimpleNamespace(success=True)))
+    assert await data_erasure.recover_deletions(bot) == 0
+    bot.delete_message.assert_not_awaited()
+    copies = await data_erasure.unresolved_copies()
+    assert {copy["state"] for copy in copies} == {"manual"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("legacy_state", ["manual", "uncertain", "deleting", "unknown_v1"])
+async def test_local_backup_continues_after_legacy_unknown_external_cleanup(erasure_db, monkeypatch, legacy_state):
+    db = erasure_db
+    async with db.scope() as session:
+        await users.erase_pdn_detailed(session, 42)
+        for item in (await session.scalars(select(ErasureTombstone))).all():
+            item.backups_state = legacy_state
+            item.last_error = "s3_cleanup_attempt_unknown"
+    directory = db.path / "backups"
+    old = directory / "aemr-20000101_010101.sql"
+    old.write_text("private old dump")
+    monkeypatch.setattr(data_erasure.settings, "backup_allow_unencrypted", True)
+    monkeypatch.setattr(data_erasure.settings, "backup_gpg_passphrase", None)
+    for key, value in {"bucket": "legacy", "endpoint": "https://s3.example", "access_key": "key", "secret_key": "secret"}.items():
+        monkeypatch.setattr(data_erasure.settings, f"backup_s3_{key}", value)
+    async def dump(path, env):
+        path.write_text("sanitized new dump")
+    monkeypatch.setattr(db_backup, "_run_pg_dump", dump)
+    spawn = AsyncMock(side_effect=AssertionError("S3 must never be contacted"))
+    monkeypatch.setattr(db_backup.asyncio, "create_subprocess_exec", spawn)
+    result = await db_backup.backup_db()
+    assert result.ok
+    assert result.path.read_text() == "sanitized new dump"
+    assert not old.exists()
+    spawn.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("old_state", ["pending", "deleting"])
+async def test_restore_retires_legacy_external_deletion_queue_without_max(erasure_db, old_state):
+    import json
+
+    from sqlalchemy import delete
+
+    db = erasure_db
+    await send_copy(db, mid="legacy-restore-card")
+    async with db.scope() as session:
+        await users.erase_pdn_detailed(session, 42)
+    for path in (db.path / "journal").glob("*.copy.json"):
+        entry = json.loads(path.read_text())
+        entry["state"] = old_state
+        path.write_text(json.dumps(entry))
+    async with db.scope() as session:
+        await session.execute(delete(ResidentDataCopy))
+        await data_erasure.replay_restore_tombstones(session)
+        copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "legacy-restore-card"))
+        assert copy.state == "manual" and copy.erase_requested
+    original_edit = AsyncMock()
+    bot = SimpleNamespace(send_message=AsyncMock(), edit_message=original_edit, delete_message=AsyncMock())
+    data_erasure.install_outgoing_hook(bot)
+    await data_erasure.recover_deletions(bot)
+    with pytest.raises(data_erasure.PersonalDataErasedError):
+        await bot.edit_message(message_id="legacy-restore-card", text="stale resident details")
+    original_edit.assert_not_awaited()
+    bot.delete_message.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_legacy_backup_confirmation_cannot_skip_local_cleanup(erasure_db):
+    db = erasure_db
+    old = db.path / "backups" / "aemr-20000101_010101.sql"
+    old.write_text("private before erasure")
+    async with db.scope() as session:
+        await users.erase_pdn_detailed(session, 42)
+        item = await session.get(ErasureTombstone, data_erasure.subject_digest(42))
+        item.backups_state = "manual"
+        digest, cutoff = item.subject_digest, item.erased_before.isoformat()
+    assert await data_erasure.confirm_backup_cleanup(digest, expected_erased_before=cutoff)
+    assert not old.exists()
+```
+
 ### `bot/tests/test_erasure_restore_cli.py`
 
 Size: `1654` bytes  
@@ -82331,6 +82599,41 @@ def test_restore_accepts_explicit_environment_target_without_putting_password_in
     monkeypatch.setenv("QUARANTINE_DB_URL", "postgresql+asyncpg://user:private@example.invalid/quarantine")
     args = _module().parse_args(["--database-env", "QUARANTINE_DB_URL", "--confirm-offline"])
     assert args.database_url.endswith("/quarantine")
+```
+
+### `bot/tests/test_erasure_status_copy.py`
+
+Size: `1275` bytes  
+SHA-256: `e8e77cc3cba6bf5232adac42f45fc4a31ab7cbcea7be3cee59763f55da3c92ce`
+
+```python
+"""IT diagnostics distinguish manual copies from automated local cleanup."""
+
+from unittest.mock import AsyncMock
+
+import pytest
+
+from aemr_bot.handlers import admin_data_erasure as handler
+from tests._helpers import make_event
+
+
+@pytest.mark.asyncio
+async def test_erasure_status_does_not_offer_automatic_max_or_s3_cleanup(monkeypatch):
+    monkeypatch.setattr(handler, "ensure_role", AsyncMock(return_value=True))
+    monkeypatch.setattr(handler.data_erasure, "diagnostics", AsyncMock(return_value={
+        "manual": 3, "pending": 2, "uncertain": 1, "backups_unresolved": 4,
+    }))
+    monkeypatch.setattr(handler.data_erasure, "unresolved_copies", AsyncMock(return_value=[]))
+    monkeypatch.setattr(handler.data_erasure, "unresolved_backups", AsyncMock(return_value=[]))
+    output = AsyncMock()
+    monkeypatch.setattr(handler, "op_screen", output)
+    await handler.show_status(make_event())
+    text = output.await_args.kwargs["text"]
+    assert "автоматически не удаляются" in text
+    assert "Ручная проверка учтённых копий: 6" in text
+    assert "Локальные резервные копии требуют проверки: 4" in text
+    assert "В очереди:" not in text
+    assert "S3" not in text
 ```
 
 ### `bot/tests/test_event_helpers.py`
@@ -86416,8 +86719,8 @@ async def test_menu_does_not_treat_rejected_edit_as_success():
 
 ### `bot/tests/test_handlers_menu_extra.py`
 
-Size: `24068` bytes  
-SHA-256: `2c3214fa3cb1d5964375d79d3053541986beaf0e840d10a6bd2f7c4fb4f07677`
+Size: `23881` bytes  
+SHA-256: `ab245e6f3edf81f12f7308dc09034baefdb3a282cc9119ca7dc6798fd6c1acd1`
 
 ```python
 """Расширенные тесты handlers/menu.py — экраны согласия, прощания,
@@ -86453,12 +86756,7 @@ def _make_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleNamespace:
 
 @pytest.mark.usefixtures("personal_view_boundary")
 class TestShowConsentStatus:
-    """show_consent_status зовёт keyboards.consent_status_keyboard
-    (keyboards.py:178, сигнатура `*, consent_active: bool`). Патчим её
-    на MagicMock, чтобы изолированно проверить логику ветвления text
-    по consent_pdn_at / consent_revoked_at — без create=True, чтобы
-    patch упал, если функцию переименуют.
-    """
+    """Проверяем показанный текст для каждого состояния согласия."""
     @pytest.mark.asyncio
     async def test_active_consent_shows_active_text(self) -> None:
         from aemr_bot import keyboards
@@ -86505,7 +86803,8 @@ class TestShowConsentStatus:
             "Согласие на обработку персональных данных отозвано"
         )
         assert "Новые обращения и рассылка недоступны" in text
-        assert "очистки данных" in text
+        assert "Очистка рабочей базы" in text
+        assert "Ответы через бот после отзыва не отправляются" in text
         assert "дать согласие заново" in text
         assert "оператор даст по ним финальный ответ" not in text
         assert text != texts.CONSENT_STATUS_NEVER
@@ -88990,8 +89289,8 @@ async def test_pg_receipt_dedup_recovery_and_erasure(session, monkeypatch):
 
 ### `bot/tests/test_inbox_recovery.py`
 
-Size: `12170` bytes  
-SHA-256: `a690433b612f5132ac47a446a0d9c35727126be384d2ccb51c6f464d7e1b80ab`
+Size: `12168` bytes  
+SHA-256: `2c803dd07b5380774f5d243de422d2529965049cf7698fc0767dbdb869bdf82d`
 
 ```python
 """Real SQL persistence and real SDK dispatch against synthetic events."""
@@ -89275,7 +89574,7 @@ async def test_bulk_receipts_preserve_order_dedup_and_bound_sql(receipt_db, monk
             yield session
     monkeypatch.setattr(inbox, "session_scope", counted_scope)
     await inbox.accept([payload(str(i)) for i in range(501)] + [payload("0")])
-    assert len(counts) == 9  # three bounded batches: inventory insert/read + receipt insert
+    assert len(counts) == 3  # one receipt insert per bounded batch; no deletion inventory
     rows = await stored(receipt_db)
     assert [r.payload["message"]["body"]["mid"] for r in rows] == [str(i) for i in range(501)]
 
@@ -96050,8 +96349,8 @@ class TestHookRoutesThroughLimiter:
 
 ### `bot/tests/test_perf_resilience.py`
 
-Size: `27031` bytes  
-SHA-256: `8620702594483144c107db08f0d553e6a59f24b4c5f4602dac3ca9fa257f7e2b`
+Size: `26673` bytes  
+SHA-256: `89fed40fc92ef4e4906f4497e673d94f02e5dd1e9525d53fc8dc77b10d771a3b`
 
 ```python
 """Perf-resilience кластер: warmup, /livez per-poll hang, long-poll
@@ -96616,23 +96915,17 @@ class TestBackupDbSurfacesTimeoutFailKind:
         assert hanging.killed is True
 
     @pytest.mark.asyncio
-    async def test_s3_upload_hang_does_not_kill_whole_backup(
+    async def test_legacy_s3_settings_do_not_start_remote_upload(
         self, tmp_path
     ) -> None:
-        """Повисший rclone убивается по таймауту, но локальный бэкап уже
-        записан — backup_db всё равно отдаёт .ok=True (S3 опционален)."""
+        """Старые S3-настройки не запускают сеть; локальный дамп создаётся."""
         from aemr_bot.services import db_backup
 
-        # pg_dump — мгновенный успех; rclone — висит.
         dump = _ImmediateProc(rc=0)
-        hanging_rclone = _HangingProc()
-        calls = {"n": 0}
+        commands = []
 
         async def fake_exec(*args, **kwargs):
-            calls["n"] += 1
-            prog = args[0] if args else ""
-            if prog == "rclone":
-                return hanging_rclone
+            commands.append(args[0])
             return dump
 
         with patch.object(db_backup, "settings") as st:
@@ -96656,12 +96949,11 @@ class TestBackupDbSurfacesTimeoutFailKind:
             ):
                 result = await db_backup.backup_db()
 
-        # Локальный бэкап успешен несмотря на повисший S3.
+        # Локальный бэкап успешен, удалённая операция не начинается.
         assert result.ok is True
         assert result.path is not None
         assert result.path.exists()
-        # rclone был убит по таймауту.
-        assert hanging_rclone.killed is True
+        assert commands == ["pg_dump"]
 ```
 
 ### `bot/tests/test_privacy_epoch.py`
@@ -96785,6 +97077,38 @@ async def test_completed_outer_transaction_cannot_supply_a_later_delivery_lock(s
             assert await later.scalar(text(
                 "SELECT EXISTS (SELECT 1 FROM pg_locks WHERE pid=pg_backend_pid() "
                 "AND locktype='advisory' AND mode='ShareLock' AND granted)"))
+```
+
+### `bot/tests/test_privacy_policy_copy.py`
+
+Size: `882` bytes  
+SHA-256: `e83ffb7693de3a589b4e46a4dab68ee2797d139154a62a27f8be4cc5f5670f2b`
+
+```python
+"""Resident decisions must describe the implemented consent and copy policy."""
+
+import pytest
+
+from aemr_bot.copy import citizen_funnel as texts
+
+
+@pytest.mark.parametrize("name", [
+    "GOODBYE_PROMPT", "CONSENT_STATUS_REVOKED",
+    "CONSENT_REVOKE_CONFIRM", "CONSENT_REVOKED_OK",
+])
+def test_revoke_screens_explain_that_bot_replies_stop(name):
+    text = getattr(texts, name)
+    assert "Ответы через бот после отзыва не отправляются" in text
+    assert "официальные каналы" in text
+
+
+@pytest.mark.parametrize("name", ["ERASE_CONFIRM", "ERASE_REQUESTED"])
+def test_erase_screens_explain_manual_external_cleanup(name):
+    text = getattr(texts, name)
+    assert "MAX" in text
+    assert "выгрузки" in text
+    assert "сотрудники" in text
+    assert "автоматически не удаляет" in text
 ```
 
 ### `bot/tests/test_progress.py`
@@ -99722,8 +100046,8 @@ def test_migration_clears_only_invalid_names_preserving_all_relationships():
 
 ### `bot/tests/test_resident_personal_views_pg.py`
 
-Size: `6954` bytes  
-SHA-256: `939906ed04718edfdfaf71ff79bcaf0e15763c63ea37bdf088ee6b87c8751c96`
+Size: `6953` bytes  
+SHA-256: `036a98613604e0b4968fbf4731a22ce30bc72ced83ebce4366c731ef0e314ba0`
 
 ```python
 """Resident read screens stay ordered with retention and retain copy ownership."""
@@ -99814,7 +100138,7 @@ async def test_retention_waits_from_resident_view_read_through_tracked_send(sess
         results = await asyncio.gather(reading, *([purging] if purging else []), return_exceptions=True)
     assert not any(isinstance(result, BaseException) for result in results), results
     copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "resident-view"))
-    assert copy is not None and copy.erase_requested and copy.state == "pending"
+    assert copy is not None and copy.erase_requested and copy.state == "manual"
     if screen != "list":
         assert copy.appeal_id == appeal_id
     assert copy.subjects == [data_erasure.subject_digest(42)]
@@ -104969,6 +105293,235 @@ async def test_followup_setting_zero_disables_and_other_values_are_read(session)
     assert await appeals.current_followup_hours(session) == 12
 ```
 
+### `bot/tests/test_staged_size.py`
+
+Size: `7755` bytes  
+SHA-256: `cd4a2ba330006f96b0f3833cf96b70627c1e00f2b61e42b55c5f394b22b542be`
+
+```python
+"""Exercise the commit gate against real Git index blobs, without touching this repo."""
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+CHECKER = Path(__file__).resolve().parents[2] / "scripts/check_staged_size.py"
+
+
+def git(repo, *args):
+    return subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True).stdout
+
+
+@pytest.fixture
+def repo(tmp_path):
+    git(tmp_path, "init", "-q")
+    git(tmp_path, "config", "user.email", "test@example.invalid")
+    git(tmp_path, "config", "user.name", "Test")
+    git(tmp_path, "commit", "--allow-empty", "-qm", "initial")
+    return tmp_path
+
+
+def stage(repo, name, content):
+    path = repo / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(content)
+    git(repo, "add", "--", name)
+
+
+def check(repo, *args):
+    return subprocess.run(
+        [sys.executable, str(CHECKER), *args], cwd=repo, capture_output=True, text=True, check=False
+    )
+
+
+@pytest.mark.parametrize(
+    "name", ["source.py", "a file.md", "line\nbreak.py", "docs/manual.md", "tests/case.py"]
+)
+def test_rejects_oversized_staged_text(repo, name):
+    stage(repo, name, b"x" * 20001)
+    result = check(repo)
+    assert result.returncode == 1, result.stderr
+    assert "20001" in result.stdout
+    assert repr(name) in result.stdout
+    assert "Split by responsibility" in result.stdout
+    assert "imports" in result.stdout and "tests" in result.stdout
+    assert "Stage the extraction" in result.stdout
+    assert "explicit exception" in result.stdout
+
+
+def test_inclusive_byte_threshold_and_utf8(repo):
+    stage(repo, "fine.md", "я".encode() * 10000)
+    assert check(repo).returncode == 0
+    stage(repo, "fine.md", "я".encode() * 10001)
+    result = check(repo)
+    assert result.returncode == 1
+    assert "20002" in result.stdout
+
+
+def test_checks_staged_blob_despite_unstaged_shrink(repo):
+    stage(repo, "partial.py", b"x" * 20001)
+    (repo / "partial.py").write_bytes(b"small")
+    assert check(repo).returncode == 1
+
+
+def test_does_not_check_unstaged_growth_or_untracked_files(repo):
+    stage(repo, "partial.py", b"small")
+    (repo / "partial.py").write_bytes(b"x" * 20001)
+    (repo / "untracked.py").write_bytes(b"x" * 20001)
+    assert check(repo).returncode == 0
+
+
+def test_rename_checks_destination_and_deletions_are_ignored(repo):
+    stage(repo, "old.py", b"x" * 20001)
+    git(repo, "commit", "-qm", "legacy")
+    git(repo, "mv", "old.py", "new name.py")
+    result = check(repo)
+    assert result.returncode == 1
+    assert "new name.py" in result.stdout
+    git(repo, "rm", "-f", "new name.py")
+    assert check(repo).returncode == 0
+
+
+@pytest.mark.parametrize(
+    "name,content",
+    [
+        ("aemr-bot-index.md", b"x" * 20001),
+        ("docs/site/index.html", b"x" * 20001),
+        ("bot/uv.lock", b"x" * 20001),
+        ("docs/audits/IMPLEMENTATION_INVENTORY_2026-10.md", b"x" * 20001),
+        ("docs/manual.pdf", b"x" * 20001),
+        ("assets/data.bin", b"\0" + b"x" * 20001),
+    ],
+    ids=["index", "wiki", "lock", "generated-inventory", "pdf", "nul-binary"],
+)
+def test_explicit_artifact_exemptions(repo, name, content):
+    stage(repo, name, content)
+    assert check(repo).returncode == 0
+    stage(repo, "actual-source.py", b"x" * 20001)
+    assert check(repo).returncode == 1
+
+
+def test_similarly_named_files_are_not_exempt(repo):
+    stage(repo, "other/uv.lock", b"x" * 20001)
+    assert check(repo).returncode == 1
+
+
+def baseline(repo, limits):
+    stage(repo, "size-baseline.json", json.dumps(limits).encode())
+
+
+def test_baseline_is_opt_in_and_read_from_index(repo):
+    stage(repo, "legacy.py", b"x" * 25000)
+    git(repo, "commit", "-qm", "legacy")
+    baseline(repo, {"legacy.py": 25000})
+    stage(repo, "legacy.py", b"y" * 24000)
+    assert check(repo).returncode == 1
+    (repo / "size-baseline.json").write_text("{}")
+    assert check(repo, "--baseline", "size-baseline.json").returncode == 0
+
+
+def test_baseline_cannot_hide_growth_or_new_files(repo):
+    stage(repo, "legacy.py", b"x" * 25000)
+    git(repo, "commit", "-qm", "legacy")
+    baseline(repo, {"legacy.py": 25000, "new.py": 30000})
+    stage(repo, "legacy.py", b"y" * 25001)
+    assert check(repo, "--baseline", "size-baseline.json").returncode == 1
+    git(repo, "restore", "--staged", "legacy.py")
+    stage(repo, "new.py", b"x" * 25000)
+    assert check(repo, "--baseline", "size-baseline.json").returncode == 1
+
+
+def test_renamed_legacy_needs_its_own_review(repo):
+    stage(repo, "old.py", b"x" * 25000)
+    git(repo, "commit", "-qm", "legacy")
+    baseline(repo, {"old.py": 25000})
+    git(repo, "mv", "old.py", "new.py")
+    assert check(repo, "--baseline", "size-baseline.json").returncode == 1
+
+
+@pytest.mark.parametrize("content", [b"invalid", b"[]", b'{"file.py": true}', b'{"file.py": -1}'])
+def test_invalid_baseline_fails_closed(repo, content):
+    stage(repo, "size-baseline.json", content)
+    result = check(repo, "--baseline", "size-baseline.json")
+    assert result.returncode == 2
+    assert "baseline" in result.stderr.lower()
+
+
+def test_missing_index_baseline_fails_even_if_worktree_copy_exists(repo):
+    (repo / "size-baseline.json").write_text("{}")
+    assert check(repo, "--baseline", "size-baseline.json").returncode == 2
+
+
+def test_ci_base_ref_reads_head_not_index_or_worktree(repo):
+    base = git(repo, "rev-parse", "HEAD").decode().strip()
+    stage(repo, "committed.py", b"x" * 20001)
+    git(repo, "commit", "-qm", "oversized")
+    stage(repo, "committed.py", b"small")
+    result = check(repo, "--base-ref", base)
+    assert result.returncode == 1
+    assert "20001" in result.stdout
+    assert "committed.py" in result.stdout
+
+
+def test_ci_baseline_reads_head_not_index(repo):
+    stage(repo, "legacy.py", b"x" * 25000)
+    baseline(repo, {"legacy.py": 25000})
+    git(repo, "commit", "-qm", "legacy")
+    base = git(repo, "rev-parse", "HEAD").decode().strip()
+    stage(repo, "legacy.py", b"y" * 24000)
+    git(repo, "commit", "-qm", "maintenance")
+    baseline(repo, {})
+    result = check(repo, "--base-ref", base, "--baseline", "size-baseline.json")
+    assert result.returncode == 0, result.stderr
+    assert check(repo, "--base-ref", base).returncode == 1
+
+
+def test_no_baseline_inflation_allows_legacy_growth(repo):
+    stage(repo, "legacy.py", b"x" * 25000)
+    git(repo, "commit", "-qm", "legacy")
+    baseline(repo, {"legacy.py": 100000})
+    stage(repo, "legacy.py", b"y" * 26000)
+    assert check(repo, "--baseline", "size-baseline.json").returncode == 1
+
+
+def test_unborn_repository_checks_new_files(tmp_path):
+    git(tmp_path, "init", "-q")
+    stage(tmp_path, "new.py", b"x" * 20001)
+    assert check(tmp_path).returncode == 1
+
+
+def test_ci_cannot_inflate_baseline_to_hide_committed_growth(repo):
+    stage(repo, "legacy.py", b"x" * 25000)
+    git(repo, "commit", "-qm", "legacy")
+    base = git(repo, "rev-parse", "HEAD").decode().strip()
+    baseline(repo, {"legacy.py": 100000})
+    stage(repo, "legacy.py", b"y" * 26000)
+    git(repo, "commit", "-qm", "growth")
+    result = check(repo, "--base-ref", base, "--baseline", "size-baseline.json")
+    assert result.returncode == 1
+    assert "25000 allowed bytes" in result.stdout
+
+
+def test_baseline_cannot_reactivate_after_file_fits(repo):
+    stage(repo, "former.py", b"small")
+    git(repo, "commit", "-qm", "reduced")
+    baseline(repo, {"former.py": 25000})
+    stage(repo, "former.py", b"x" * 21000)
+    assert check(repo, "--baseline", "size-baseline.json").returncode == 1
+
+
+def test_default_mode_works_from_repository_subdirectory(repo):
+    stage(repo, "source.py", b"x" * 20001)
+    nested = repo / "nested"
+    nested.mkdir()
+    result = check(nested)
+    assert result.returncode == 1
+    assert "source.py" in result.stdout
+```
+
 ### `bot/tests/test_stale_operators_cleanup.py`
 
 Size: `5187` bytes  
@@ -109133,6 +109686,122 @@ async def test_saved_target_without_saved_calendar_remains_historically_unknown(
     await session.refresh(appeal)
     assert appeal.sla_history[-1]["overdue"] is None
     assert appeal.sla_history[-1]["assessment"] == "at_reopen_legacy"
+```
+
+### `CODING_STANDARDS.md`
+
+Size: `10387` bytes  
+SHA-256: `5254162a74f7b9047802b170f9f967326199a5d5e3a44af961f435972210f400`
+
+```markdown
+# Изменения aemr-bot
+
+## Код и область изменения
+
+Проверяй фактический код и регистрации, а не только описание прошлого выпуска.
+Меняй минимальный достаточный участок. Для ошибки сначала добавь проверку
+наблюдаемого результата и увидь её ожидаемое падение; затем исправь причину.
+Проверка, остающаяся зелёной при пустой реализации, бесполезна. Не подменяй
+исправление подавлением исключения, отключением теста или mock, обходящим
+проверяемую ветку. Перед рефакторингом зафиксируй сохраняемое поведение.
+
+Перед удалением реализации проверь регистрацию handlers/cron, динамические
+вызовы, публичные импорты, миграции, эксплуатационные пути и историю Git.
+Для удаления нужны доказательство ненужности и проверка сохранённых сценариев.
+Аварийные выключатели и поддерживаемые резервные пути сохраняются, если
+владелец не изменил требование.
+
+Решения вне спецификации, причины и компромиссы отмечай в текущих
+implementation-notes задачи, вместо параллельных списков. Небольшая правка
+не требует нового плана или переобзора всей базы. Датированный аудит описывает
+свой commit. Прежде чем усложнять решение для предполагаемой редкой гонки,
+следуй границе согласования из AGENTS.md.
+
+## Зависимости и проверки
+
+Зависимости — `bot/uv.lock`; установка из `bot/`:
+`uv sync --locked --all-extras`. Пин MAX SDK задан в `pyproject.toml`.
+При его изменении проверь реальные модели, методы, исключения и повторы SDK.
+
+Полные команды CI — `.github/workflows/ci.yml`. Для локальной итерации из `bot/`:
+`TZ=Asia/Kamchatka uv run pytest -q tests/<файл>.py`,
+`uv run ruff check aemr_bot/`, `uv run mypy aemr_bot/`.
+После правки запускай затронутые проверки; перед merge — полный suite и CI gates.
+Повторяй широкий прогон при новом изменении кода, ошибке или незакрытом риске.
+Локальные тесты используют отдельную тестовую БД. Подготовленное окружение
+и исправления в пределах задачи не требуют подтверждения на каждом шаге.
+
+Схему проверяй на чистой и существующей БД, с сохранением данных и round-trip,
+когда downgrade поддержан. SQLite/mocks не заменяют PostgreSQL. Боевые MAX,
+VPS и внешние сервисы называй проверенными только при реальном доступе.
+Скорость, размер образа и покрытие указывай по измерению и с границами проверки.
+
+## Доставка, очередь и сценарии
+
+Неизвестный результат изменяющего запроса MAX сохраняется видимым. Timeout
+не делает повтор безопасным. Подтверждённые части истории восстанавливаются
+без повторной отправки. Неопределённая правка общей очереди останавливает
+автоматические изменения до сверки; подробное чтение не заменяет общую панель.
+
+Сохраняй явную отправку черновиков, историю, экспертные команды и права ролей.
+Лимиты принадлежат конфигурации и валидаторам, а не копии числа в инструкции.
+Изменяя меню/воронку, проверь возврат, отмену, продолжение черновика, старую
+кнопку и повторное действие. Тест должен проверять результат перехода или
+сохранённые данные, не дублировать реализацию.
+
+## ПДн, вывод и восстановление
+
+`data_erasure.personal_view` начинается **до чтения** ПДн и длится до завершения
+построения/загрузки/вывода. Для известного источника — `appeal_id`/`max_user_ids`;
+для динамических точных источников — `view.include()`. `aggregate=True` относится
+к действительной сводке с заранее неизвестным составом, а не всему служебному
+чату. Учитываются прежние и новые источники редактируемого MID. Эти метаданные
+ограничивают новый вывод после удаления, а не удаляют сообщения MAX.
+
+Порядок блокировок: lifecycle guard жителя → privacy barrier → строки/обращение.
+Erase/revoke не выполняются внутри shared-view. Вложенный shared-lease того же
+asyncio task использует живую внешнюю транзакцию; child task получает свой lock.
+Не ожидай дочерние выводы под удерживаемым view при возможном exclusive erase.
+
+Подтверждение erase/revoke связано с новым MID, действием и текущей редакцией
+профиля/согласия. Навигация и новый текст отменяют подтверждение, сохраняя черновик.
+После удаления MAX ID не публикуется; `allow_erased_recipient=True` допустим
+только для явного подтверждения или публичной навигации без ПДн.
+
+`ERASURE_STATE_DIR` и исходный `subject.key` независимы от SQL-дампов. До трафика
+восстановленной БД применяй `scripts/replay_erasure_tombstones.py` на явно заданной
+изолированной цели. Первое внедрение на существующей БД отличается от потери
+журнала после restore; утерянный ключ не заменяется новым. Процесс — в технической
+инструкции. Сохранение сообщений MAX/выгрузок не разрешает новую публикацию
+удалённых из рабочей БД данных; внешние копии обрабатывают сотрудники вручную.
+
+Пустой `BACKUP_LOCAL_DIR` тихо отключает локальные бэкапы. Деградация источника
+угроз не останавливает приём обращений и создаёт один сигнал на эпизод.
+
+## Документация и размер файлов
+
+Источники вики — `docs/site/_kb2/`, реестр фактов — `docs/site/_kb/_LEDGER.md`.
+Архивы и датированные аудиты описывают свой снимок. Меняй источники, пересобирай
+затронутые производные артефакты. Вики: `python docs/site/_kb/_assemble.py`;
+инвентаризация: `python scripts/inventory_implementation.py`. Генераторы юридических
+документов — `docs/README.md`; проверяй состав и вёрстку после пересборки.
+Генерация не является юридическим утверждением; хеши не доказывают смысловой
+проверки каждой строки.
+
+Индекс `aemr-bot-index.md` обновляется workflow на main. Для поиска используй `rg`
+и точечное чтение. Skills применяются по предметному условию, а не обязательной
+цепочкой для любой правки; чужие инструкции не копируются без проверки пользы.
+
+
+Размер: `python scripts/check_staged_size.py --baseline .agents/staged-size-baseline.json`
+проверяет только staged blobs. Локальная установка набора hooks: `pre-commit install`;
+настройка — `.pre-commit-config.yaml`. Переходный baseline содержит старые крупные
+тексты; новый файл >20 000 байт или рост старого отклоняется. После сокращения файла
+до лимита убери его из baseline. Генерируемые/lock/binary исключения явные в скрипте,
+handwritten docs и тесты проверяются. Сообщение отказа перечисляет пути, байты и
+порядок выделения обязанностей в меньшие файлы. В CI `--base-ref HEAD^` читает
+committed blobs: PR merge проверяется целиком относительно main; обычный push с
+несколькими commit проверяет последний. Не обходи проверку повышением потолков.
 ```
 
 ### `docs/archive/LEDGER_2026-06_snapshot.md`
@@ -118555,6 +119224,129 @@ https://elizovomr.ru/storage/attachments/2024/08/15/U9XfgiWRETCF0KKT.pdf
 по снимку нельзя достоверно установить, какой именно документ был приложен.
 ```
 
+### `docs/audits/COURSES_AND_AGENT_WORKFLOW_2026-10.md`
+
+Size: `19683` bytes  
+SHA-256: `48cfd5b8e5d6f60c3485eb432b57602bfc68ee283c0a68fa088bc578e415d75d`
+
+```markdown
+# Курсы и работа с кодом через ИИ: сверка 30.10.2026
+
+Основание: уточнение владельца после PR #304. Исходный main — `6fd2321`.
+Текущие решения и проверка — [implementation-notes](../implementation-notes.md).
+Это экспертная оценка исходников и предоставленных материалов, а не исследование
+реальных жителей, аттестация сервиса или измерение экономии времени.
+
+## Оригиналы курсов
+
+Оба PDF найдены в подключённом Drive и скачаны полностью; исходники не публикуются
+в Git-репозитории. Прочитан весь извлечённый текст, ключевые схемы дополнительно
+проверены визуально. Для курса №1 чтение распределено по непересекающимся диапазонам,
+обрезанный вывод перечитан; для курса №2 текст прочитан последовательно полностью.
+
+| Материал | Источник | Объём и границы |
+| --- | --- | --- |
+| №1 «Процессное управление» | [Drive](https://drive.google.com/file/d/1OK0hCkQKInxRlE8D218uv95zjX6-5VH1/view) | 487 страниц, 9 439 364 байта. Изучены все 10 тем и задания. Видео-заглушки на с.268/300/388, скрытые прокруткой части на с.27/445–447 и внешняя форма опроса не содержат доступного текста/видео в PDF. Не объявляются изученными. |
+| №2 «Клиентоцентричное мышление и ценности» | [Drive](https://drive.google.com/file/d/1kZW6to_FIPSO8KA8gi84pGVRA9InzFiD/view) | 436 страниц, 16 740 189 байт. Прочитан весь текст, включая стандарты для людей/бизнеса/внутреннего клиента, мониторинг, жизненные ситуации, лаборатории, вопросы и глоссарий. Встроенные видео без расшифровки не просмотрены. |
+
+Источник тоже проверяется критически: нумерация секторов PICK в тексте курса №1
+на с.362 расходится с рисунком на с.363; используются оси «эффект/усилие», а не
+номера. На с.430 курса №2 в самом изображении глоссария ошибочно определены BPMN
+и CJM. Эти определения не перенесены в проект. Пустые страницы 133/271/376 курса №1
+проверены как действительно пустые. Иллюстрация с.375 содержит условие пилота для
+масштабных/дорогих/труднообратимых изменений, а не требование пилота любой правки текста.
+
+## Применение к реальному процессу
+
+Карта по коду: потребность жителя → меню → согласие при необходимости →
+контакт/имя, если отсутствуют → место и адрес либо подтверждение прежнего → тема →
+накопление текста/файлов → предпросмотр и явная отправка → общая очередь →
+промежуточный/итоговый ответ → история и повторное обращение. Завершение подачи
+и отправка ответа не доказывают устранение проблемы; действия администрации вне
+бота входят в реальный процесс, но их результат нельзя вывести из статуса карточки.
+
+| Метод / страницы | Проверенное поведение и решение |
+| --- | --- |
+| Сквозной процесс, вход/выход/внутренний клиент: №1 с.10–47; №2 с.29–32 | Сохранены единая логическая запись, общий список операторов, читаемая история и выгрузки. Не добавляется новая платформа управления процессами. |
+| Потребность и проблема до решения: №1 с.129–164, 197–201 | Найдены конкретные противоречия в работающих ветках, затем выбрана малая правка. Нет основания удалять защиту данных или вводить новые поля только из-за общего пожелания «проще». |
+| Стандартизация и честные обещания: №1 с.397–404; №2 с.49–50, 94–101 | Четыре экрана обещали ответ после отзыва, хотя `operator_reply` его блокирует. Исправлены тексты и активные инструкции; запрет доставки сохранён. Отдельно убрано несуществующее «сообщили координатору» из ветки пустых тем. |
+| Контроль перед действием: №2 с.94–101, 339–344 | В существующий предпросмотр нового обращения добавлены место, адрес и тема. Дополнение сохраняет номер обращения. Нет дополнительного обязательного шага и новых запрашиваемых данных. Эффект на число ошибок адреса пока является гипотезой. |
+| Потери и ограничение детализации: №1 с.155, 178, 236–239; №2 с.170–186 | Убраны неиспользуемые удалённые операции S3 и входящий инвентарь для удаления MAX. Метаданные, запрещающие новый вывод после удаления/restore, сохранены: они решают другую задачу. |
+| Корневая причина, факты, приоритизация: №1 с.314–374 | Пустая настройка тем не порождает новую систему оповещений ради одной неверной фразы. Новая политика удаления отражена в коде, а не только в описании или флаге, позволяющем снова удалять MAX. |
+| Достоверные показатели: №2 с.239–309; №1 с.391–404 | Первый ответ и продолжение после промежуточного ответа измеряются существующими событиями. `answered` не называется «проблема решена», число сообщений — удовлетворённостью. Новые CSAT/NPS/FCR без наблюдений не объявляются. |
+| Проверка с человеком: №2 с.396–419 | Автотесты проверяют данные и переходы. Реальный прогон жителем и оператором остаётся отдельной проверкой; чтение исходников не называется UX-исследованием. |
+
+## Код, меню и инструкции для ИИ
+
+Три независимых разбора root-инструкций предложили консервативный, умеренный и
+радикальный варианты. Выбран консервативный по структуре: небольшой `AGENTS.md`
+и один `CODING_STANDARDS.md`, без набора новых обязательных справочников.
+Root уменьшен с 6742 до 2533 байт. Это измерение размера, не доказательство
+снижения стоимости запросов или роста качества модели; A/B-запуски не выполнялись.
+
+Технические ограничения приватности, блокировок, доставки и восстановления
+перенесены в тематические разделы, а не удалены. Исправлено слишком широкое
+правило «любой список = aggregate»: точные источники задаются явно, `aggregate`
+нужен сводке с заранее неизвестным составом. `.agents/context/PRODUCT.md` описывает
+читательскую документацию, а не контракт backend. Формулировка «проверено построчно»
+заменена проверкой поведения с честной границей инвентаризации.
+
+`data_erasure` разделён по обязанностям: локальная политика/совместимый facade,
+защищённый вывод, независимый журнал, восстановление. Все четыре модуля <20 000 байт.
+Тексты согласия и приватности выделены из `citizen_funnel` в `copy/privacy.py`
+с сохранением прежних импортов. Формирование предпросмотра — чистая функция
+`copy/draft_preview.py`; handler сохраняет управление состоянием и клавиатурой.
+Это улучшает локальность изменения без замены работающей FSM.
+
+Владелец выбрал переходный лимит файлов: новые текстовые staged blobs ≤20 000 байт
+(условные 5000 токенов при 4 байтах/токен), старые большие — без роста; по мере
+содержательных изменений сокращаются. Это не реальный tokenizer. Исходно 178
+крупных tracked файлов; после исключения бинарных/генерируемых/lock остаются 138
+текстовых путей исходного baseline. Разрешённый размер ограничен также предыдущей
+версией пути: поднятие числа в baseline не разрешает рост или новый большой файл.
+Проверяются index blobs, включая частичный staging, переименования и необычные
+имена; эквивалентный CI проверяет committed blobs. Публикационный индекс, собранный
+HTML, lock и бинарные документы имеют явные исключения. Тесты не исключаются.
+
+## Проверка рекомендаций из ссылок
+
+| Первичный материал | Оценка и применение |
+| --- | --- |
+| [OpenCode AGENTS](https://github.com/anomalyco/opencode/blob/dev/AGENTS.md) | Приняты проверка входа на границе, малые осмысленные функции и согласование усложнений ради предполагаемых редких случаев. Bun/Effect/Drizzle/TUI-правила чужого проекта в Python-бот не копируются. |
+| [unclebob/ub-mode](https://github.com/unclebob/ub-mode) | Установлен в пользовательскую папку skills, commit `57a8bdd28e45ed41900ace0bafa2ff76dd9ed70f`, `/ub-mode` применён до следующей правки кода. Сначала воспроизведение, затем минимальное исправление причины, проверяемые части, рабочие заметки. Crapper/dryer/mutator отсутствуют, их шаги пропущены по указанию владельца. |
+| [mattpocock/skills, writing-for-agents](https://github.com/mattpocock/skills/tree/main/skills/productivity/writing-for-agents) | Установлен commit `a496f5513d4a4cf889bc48e189e579f4b0bdf6aa`; применены условные указатели и разделение постоянного/предметного контекста. Набор остальных skills не установлен автоматически. |
+| [OpenAI: skills/prompts Astra](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra) | Короткие предметные triggers, один источник правила, отсутствие обязательного полного чтения перед каждой правкой. В локальных инструкциях не было доказанного цикла ненужных разрешений: его «исправление» не приписывается этой работе. |
+| [arXiv:2610.30571](https://arxiv.org/abs/2610.30571) | Прочитаны методы и ограничения: 40 маленьких Python-проектов, 320 запусков двух агентов, противоречащие соглашения. Правило сверки с кодом сохранено; числа исследования не являются гарантией для этого бота. Требования владельца и выявленные дефекты не отменяются приоритетом существующих соглашений. |
+| [Anthropic: sessions](https://claude.com/resources/articles/maximizing-the-value-of-your-claude-code-sessions) | Компактные заметки, ограниченный вывод, предметная делегация. `/clear`, `/context`, `/autocompact` — команды Claude Code; в текущем Codex не запускались, порог 400k не изменялся. Расход и кеш модели в этом проекте не измерены. |
+| [OpenAI: maintenance](https://developers.openai.com/blog/maintaining-software-with-the-gpt-6-family) | Удаление по доказанным вызовам/истории и требованиям, сохранение резервных путей, проверка результата. Удалены только S3-операции и специфическая MAX-очистка, противоречащие уточнению владельца. Чужие 48%/55% не переносятся на наш образ/CI. |
+| [diff-tour](https://github.com/init-co-jp/diff-tour) | Проверяет ссылки на diff, но не истинность объяснения; не заменяет PostgreSQL-проверки. Не установлен: для этой правки достаточно связанного с исходниками обзора и независимого review. Не добавлен внешний инсталлятор. |
+| [Open Ontologies](https://github.com/fabio-rovai/open-ontologies) | RDF/OWL и сертификаты вывода не решают задачи меню/FSM. Не установлен. Применено разделение факта, предположения и доказательства; автотесты не называются формальной верификацией. |
+| [Harness²](https://github.com/google-research/harness2) | Исследовательская оптимизация harness с отдельными benchmark/затратами; не ускорение этого бота. Не установлен, production-правила не передаются самоизменяемому циклу. Три мнения reviewers не объявляются сравнительным экспериментом. |
+| [be-ambitious](https://github.com/DannyMac180/skills/tree/main/be-ambitious) | Применена глубина в том же объёме: реальные обработчики/события/исходные курсы, критерий наблюдаемого результата и независимая проверка. Переписывание запроса и остановка уже порученной реализации здесь не требуются. |
+
+## Обнаруженные расхождения
+
+1. Автоудаление MAX/старых экспортов против нового требования владельца — удалена
+   реализация, старые задания не вызывают MAX. Сотрудникам явно отведён ручной процесс.
+2. S3 как активный резервный путь против неиспользуемого контура — удалены операции;
+   старые env-ключи принимаются совместимо, документация не обещает загрузку.
+3. Четыре экрана и несколько wiki-разделов обещали ответ после отзыва, guard его
+   запрещал — тексты и старые комментарии согласованы, guard сохранён.
+4. «Сообщили координатору» в пустой ветке тем без такого вызова — честная ошибка.
+5. Регламент обещал автоматический deploy, эксплуатация ручная — описание исправлено.
+6. Комментарий Docker обещал runtime uv, команда сборки его удаляла — комментарий
+   приведён к факту, служебные команды внутри образа используют Python.
+7. «8 копий ≈ два месяца» скрывало внеплановые копии/сбои — ротация описана по числу.
+8. Старый абзац инструкции блокировал локальные бэкапы до ручной внешней очистки —
+   процессы разделены; подтверждение CLI проверяет локальный результат, не внешнее отсутствие.
+9. Общее правило aggregate и «построчная» проверка в инструкциях — уточнены по коду.
+
+Результаты автоматических проверок и реальные ограничения публикуются в текущих
+рабочих заметках после их выполнения. Проверки MAX/VPS не подменяются тестовыми
+событиями. Объективное решение проблемы жителя и фактическая ручная очистка внешних
+копий требуют подтверждения сотрудников; код этого не доказывает.
+```
+
 ### `docs/audits/FLOW_AUDIT_2026-10-26.md`
 
 Size: `26974` bytes  
@@ -119011,8 +119803,8 @@ exit 42
 
 ### `docs/audits/IMPLEMENTATION_INVENTORY_2026-10.md`
 
-Size: `61089` bytes  
-SHA-256: `53240d58981dc3979dd10a43b8614b72026ede26360b36bca17daa9b792bd36c`
+Size: `61596` bytes  
+SHA-256: `6249a20d106914f3a3a5e08c12df88638f4c857ee61090dc26e26256d2d96e3f`
 
 ```markdown
 # Инвентаризация реализации — 30.10.2026
@@ -119036,7 +119828,7 @@ SHA-256: `53240d58981dc3979dd10a43b8614b72026ede26360b36bca17daa9b792bd36c`
 
 ## Границы доказательства
 
-AST не раскрывает все вычисляемые payload, getattr, monkey-patch, косвенную регистрацию или реальную последовательность событий. Команды ниже — литеральные вызовы фильтра; фактические доступы зависят от чата, активной роли, состояния и повторных проверок. Тесты контрактов маршрутов и сквозные PostgreSQL-тесты дополняют этот снимок. Получение/удаление сообщений реальным MAX, пользовательские клиентские ограничения, права группы, S3 history/locks, journald, неизвестные старые копии, восстановление резервной копии и закрытый рабочий сервер требуют ручной проверки. Нет заявления о 100% охвате или exactly-once внешних действий.
+AST не раскрывает все вычисляемые payload, getattr, monkey-patch, косвенную регистрацию или реальную последовательность событий. Команды ниже — литеральные вызовы фильтра; фактические доступы зависят от чата, активной роли, состояния и повторных проверок. Тесты контрактов маршрутов и сквозные PostgreSQL-тесты дополняют этот снимок. Получение/доставка сообщений реальным MAX, клиентские ограничения, права группы, ручная обработка внешних копий, journald, неизвестные старые копии, восстановление резервной копии и закрытый рабочий сервер требуют ручной проверки. Нет заявления о 100% охвате или exactly-once внешних действий.
 
 ## Команды и регистрация
 
@@ -119073,7 +119865,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `broadcast.register` — `bot/aemr_bot/handlers/__init__.py:157`
 - `dp.bot_started` — `bot/aemr_bot/handlers/start.py:667`
 - `dp.bot_stopped` — `bot/aemr_bot/handlers/start.py:673`
-- `dp.handle` — `bot/aemr_bot/services/inbox.py:194`
+- `dp.handle` — `bot/aemr_bot/services/inbox.py:181`
 - `dp.message_callback` — `bot/aemr_bot/handlers/appeal.py:764`
 - `dp.message_created` — `bot/aemr_bot/handlers/admin_commands.py:140`
 - `dp.message_created` — `bot/aemr_bot/handlers/admin_commands.py:153`
@@ -119100,8 +119892,8 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `dp.message_created` — `bot/aemr_bot/handlers/start.py:784`
 - `dp.message_created` — `bot/aemr_bot/handlers/start.py:791`
 - `dp.message_created` — `bot/aemr_bot/handlers/start.py:798`
-- `dp.start_polling` — `bot/aemr_bot/main.py:894`
-- `dp.startup` — `bot/aemr_bot/main.py:888`
+- `dp.start_polling` — `bot/aemr_bot/main.py:893`
+- `dp.startup` — `bot/aemr_bot/main.py:887`
 - `start.register` — `bot/aemr_bot/handlers/__init__.py:154`
 
 ## Маршруты callback
@@ -119303,51 +120095,51 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `OP_TMPL_CANCELLED` — `bot/aemr_bot/copy/broadcast_texts.py:295`
 - `OP_TMPL_NOT_FOUND` — `bot/aemr_bot/copy/broadcast_texts.py:296`
 - `OP_TMPL_NO_SUBSCRIBERS` — `bot/aemr_bot/copy/broadcast_texts.py:297`
-- `WELCOME` — `bot/aemr_bot/copy/citizen_funnel.py:8`
-- `CONSENT_REQUEST` — `bot/aemr_bot/copy/citizen_funnel.py:28`
-- `CONSENT_DECLINED` — `bot/aemr_bot/copy/citizen_funnel.py:62`
-- `CONSENT_ACCEPTED` — `bot/aemr_bot/copy/citizen_funnel.py:67`
-- `CONTACT_REQUEST` — `bot/aemr_bot/copy/citizen_funnel.py:72`
-- `CONTACT_RECEIVED` — `bot/aemr_bot/copy/citizen_funnel.py:78`
-- `LOCALITY_REQUEST` — `bot/aemr_bot/copy/citizen_funnel.py:80`
-- `GEO_DETECTED_FULL` — `bot/aemr_bot/copy/citizen_funnel.py:90`
-- `GEO_DETECTED_LOCALITY_ONLY` — `bot/aemr_bot/copy/citizen_funnel.py:97`
-- `GEO_OUTSIDE_EMO` — `bot/aemr_bot/copy/citizen_funnel.py:104`
-- `APPEAL_ACCEPTED` — `bot/aemr_bot/copy/citizen_funnel.py:111`
-- `APPEAL_LIST_EMPTY` — `bot/aemr_bot/copy/citizen_funnel.py:118`
-- `APPEAL_EMPTY_REJECTED` — `bot/aemr_bot/copy/citizen_funnel.py:123`
-- `NAME_EMPTY` — `bot/aemr_bot/copy/citizen_funnel.py:128`
-- `ADDRESS_EMPTY` — `bot/aemr_bot/copy/citizen_funnel.py:130`
-- `CONTACT_RETRY` — `bot/aemr_bot/copy/citizen_funnel.py:135`
-- `APPEAL_CARD_TEMPLATE` — `bot/aemr_bot/copy/citizen_funnel.py:153`
-- `CITIZEN_REPLY_TEMPLATE` — `bot/aemr_bot/copy/citizen_funnel.py:166`
-- `USEFUL_INFO_TITLE` — `bot/aemr_bot/copy/citizen_funnel.py:181`
-- `SETTINGS_MENU_TITLE` — `bot/aemr_bot/copy/citizen_funnel.py:183`
-- `GOODBYE_PROMPT` — `bot/aemr_bot/copy/citizen_funnel.py:189`
-- `CONSENT_STATUS_ACTIVE` — `bot/aemr_bot/copy/citizen_funnel.py:201`
-- `CONSENT_STATUS_REVOKED` — `bot/aemr_bot/copy/citizen_funnel.py:207`
-- `CONSENT_STATUS_NEVER` — `bot/aemr_bot/copy/citizen_funnel.py:217`
-- `CONSENT_REVOKE_CONFIRM` — `bot/aemr_bot/copy/citizen_funnel.py:222`
-- `CONSENT_REVOKED_OK` — `bot/aemr_bot/copy/citizen_funnel.py:235`
-- `ERASE_CONFIRM` — `bot/aemr_bot/copy/citizen_funnel.py:246`
-- `ERASE_REQUESTED` — `bot/aemr_bot/copy/citizen_funnel.py:258`
-- `HELP_USER` — `bot/aemr_bot/copy/citizen_funnel.py:266`
-- `SUBSCRIBE_CONFIRMED` — `bot/aemr_bot/copy/citizen_funnel.py:284`
-- `SUBSCRIBE_ALREADY_ON` — `bot/aemr_bot/copy/citizen_funnel.py:289`
-- `UNSUBSCRIBE_CONFIRMED` — `bot/aemr_bot/copy/citizen_funnel.py:292`
-- `UNSUBSCRIBE_ALREADY_OFF` — `bot/aemr_bot/copy/citizen_funnel.py:298`
-- `SUBSCRIBE_MINI_CONSENT` — `bot/aemr_bot/copy/citizen_funnel.py:302`
-- `APPEAL_TEXT_TRUNCATED` — `bot/aemr_bot/copy/citizen_funnel.py:318`
-- `FOLLOWUP_TEXT_TRUNCATED` — `bot/aemr_bot/copy/citizen_funnel.py:324`
-- `BROADCAST_HEADER` — `bot/aemr_bot/copy/citizen_funnel.py:330`
-- `POLICY_DELIVERED` — `bot/aemr_bot/copy/citizen_funnel.py:334`
-- `POLICY_FALLBACK_URL` — `bot/aemr_bot/copy/citizen_funnel.py:338`
-- `POLICY_UNAVAILABLE` — `bot/aemr_bot/copy/citizen_funnel.py:343`
-- `STATUS_LABELS` — `bot/aemr_bot/copy/citizen_funnel.py:348`
+- `WELCOME` — `bot/aemr_bot/copy/citizen_funnel.py:22`
+- `CONTACT_REQUEST` — `bot/aemr_bot/copy/citizen_funnel.py:36`
+- `CONTACT_RECEIVED` — `bot/aemr_bot/copy/citizen_funnel.py:42`
+- `LOCALITY_REQUEST` — `bot/aemr_bot/copy/citizen_funnel.py:44`
+- `GEO_DETECTED_FULL` — `bot/aemr_bot/copy/citizen_funnel.py:54`
+- `GEO_DETECTED_LOCALITY_ONLY` — `bot/aemr_bot/copy/citizen_funnel.py:61`
+- `GEO_OUTSIDE_EMO` — `bot/aemr_bot/copy/citizen_funnel.py:68`
+- `APPEAL_ACCEPTED` — `bot/aemr_bot/copy/citizen_funnel.py:75`
+- `APPEAL_LIST_EMPTY` — `bot/aemr_bot/copy/citizen_funnel.py:82`
+- `APPEAL_EMPTY_REJECTED` — `bot/aemr_bot/copy/citizen_funnel.py:87`
+- `NAME_EMPTY` — `bot/aemr_bot/copy/citizen_funnel.py:92`
+- `ADDRESS_EMPTY` — `bot/aemr_bot/copy/citizen_funnel.py:94`
+- `CONTACT_RETRY` — `bot/aemr_bot/copy/citizen_funnel.py:99`
+- `APPEAL_CARD_TEMPLATE` — `bot/aemr_bot/copy/citizen_funnel.py:117`
+- `CITIZEN_REPLY_TEMPLATE` — `bot/aemr_bot/copy/citizen_funnel.py:130`
+- `USEFUL_INFO_TITLE` — `bot/aemr_bot/copy/citizen_funnel.py:145`
+- `SETTINGS_MENU_TITLE` — `bot/aemr_bot/copy/citizen_funnel.py:147`
+- `HELP_USER` — `bot/aemr_bot/copy/citizen_funnel.py:154`
+- `SUBSCRIBE_CONFIRMED` — `bot/aemr_bot/copy/citizen_funnel.py:172`
+- `SUBSCRIBE_ALREADY_ON` — `bot/aemr_bot/copy/citizen_funnel.py:177`
+- `UNSUBSCRIBE_CONFIRMED` — `bot/aemr_bot/copy/citizen_funnel.py:180`
+- `UNSUBSCRIBE_ALREADY_OFF` — `bot/aemr_bot/copy/citizen_funnel.py:186`
+- `SUBSCRIBE_MINI_CONSENT` — `bot/aemr_bot/copy/citizen_funnel.py:190`
+- `APPEAL_TEXT_TRUNCATED` — `bot/aemr_bot/copy/citizen_funnel.py:206`
+- `FOLLOWUP_TEXT_TRUNCATED` — `bot/aemr_bot/copy/citizen_funnel.py:212`
+- `BROADCAST_HEADER` — `bot/aemr_bot/copy/citizen_funnel.py:218`
+- `POLICY_DELIVERED` — `bot/aemr_bot/copy/citizen_funnel.py:222`
+- `POLICY_FALLBACK_URL` — `bot/aemr_bot/copy/citizen_funnel.py:226`
+- `POLICY_UNAVAILABLE` — `bot/aemr_bot/copy/citizen_funnel.py:231`
+- `STATUS_LABELS` — `bot/aemr_bot/copy/citizen_funnel.py:236`
 - `CANCELLED` — `bot/aemr_bot/copy/errors_texts.py:6`
 - `CANCEL_ALREADY_DONE` — `bot/aemr_bot/copy/errors_texts.py:14`
 - `UNKNOWN_INPUT` — `bot/aemr_bot/copy/errors_texts.py:24`
 - `CITIZEN_COMMAND_IN_ADMIN_CHAT` — `bot/aemr_bot/copy/errors_texts.py:29`
+- `CONSENT_REQUEST` — `bot/aemr_bot/copy/privacy.py:7`
+- `CONSENT_DECLINED` — `bot/aemr_bot/copy/privacy.py:42`
+- `CONSENT_ACCEPTED` — `bot/aemr_bot/copy/privacy.py:48`
+- `GOODBYE_PROMPT` — `bot/aemr_bot/copy/privacy.py:54`
+- `CONSENT_STATUS_ACTIVE` — `bot/aemr_bot/copy/privacy.py:66`
+- `CONSENT_STATUS_REVOKED` — `bot/aemr_bot/copy/privacy.py:73`
+- `CONSENT_STATUS_NEVER` — `bot/aemr_bot/copy/privacy.py:85`
+- `CONSENT_REVOKE_CONFIRM` — `bot/aemr_bot/copy/privacy.py:91`
+- `CONSENT_REVOKED_OK` — `bot/aemr_bot/copy/privacy.py:105`
+- `ERASE_CONFIRM` — `bot/aemr_bot/copy/privacy.py:117`
+- `ERASE_REQUESTED` — `bot/aemr_bot/copy/privacy.py:131`
 - `SECURITY_INFO_TEXT` — `bot/aemr_bot/copy/security_texts.py:9`
 - `OP_HELP_SECURITY` — `bot/aemr_bot/copy/security_texts.py:64`
 - `RULES_TEXT` — `bot/aemr_bot/copy/security_texts.py:121`
@@ -119357,7 +120149,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 
 Имена и SHA256; бинарные материалы не анализируются как текст.
 
-- `seed/consent.md:1` — 6684 байт, SHA256 `58ed2951491db2d9f51979db0a0de3b6a1ea3eafb58bfb32f0f9d75e6a856a1b`
+- `seed/consent.md:1` — 6841 байт, SHA256 `1fdbe032bf819b35fe65cadfac8b335c4bcbe9a368f2821d747d3ceb1a3b115f`
 - `seed/contacts.json:1` — 1292 байт, SHA256 `92d6c2601db33e692b27f22ef80b624dab7b46feb4ddabd9ff2f44d6905b0842`
 - `seed/geo/buildings.geojson:1` — 1013600 байт, SHA256 `8dc0897e206801b640fc2fe236886d91fe33c5018383def461e4bfd807ac6b49`
 - `seed/geo/localities.geojson:1` — 252636 байт, SHA256 `058395634d49f5d9ad337f7f20990678e3f0f66e53d48bdf7f4ed08f2e3605b9`
@@ -119369,15 +120161,17 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 
 ## Прочитанные исходники приложения
 
-Всего 175 Python-файлов; SHA256 каждого исходника:
+Всего 180 Python-файлов; SHA256 каждого исходника:
 
 - `bot/aemr_bot/__init__.py:1` — `48197610f156fa5b4fbd0eef6d5588b7202ccf768a608a633bbbdc7ebf381a45`
-- `bot/aemr_bot/config.py:1` — `0e23b0955504149d0f9f4a50df096e368c8ab68686383861a29672f1444944b1`
+- `bot/aemr_bot/config.py:1` — `70ec0aadbd38e244586f4fc53078e309cce5425f0ce359ea8ba1f75c70714a07`
 - `bot/aemr_bot/copy/__init__.py:1` — `b7a23b3fde2e7853b5c0fb526f84ac53b2947c9b02542998c4be004529b62871`
 - `bot/aemr_bot/copy/admin_texts.py:1` — `45d5493055de949633433257de3d5e3f5004c33efe6c95b0e9679d3a57938e23`
 - `bot/aemr_bot/copy/broadcast_texts.py:1` — `1491ebe1102b0303d95978fdb632170202d61e5a91f3bad82ecfe5a2769e0736`
-- `bot/aemr_bot/copy/citizen_funnel.py:1` — `16a48fb9b56586b75e7f0128ede225d6940237e3983f29bfa33b254aca6af623`
+- `bot/aemr_bot/copy/citizen_funnel.py:1` — `31d2b7c9e58b29f677b54535448c2a76d996ad48c74a87779d35bc165a06049b`
+- `bot/aemr_bot/copy/draft_preview.py:1` — `61755837b5a7422dd721a620aa72073beae19d5ae299e42d8503923c48c8681b`
 - `bot/aemr_bot/copy/errors_texts.py:1` — `20f7b96e7edfb32c7663a686a03b825cfe4dd6149f0087670f6152c6bb8ca0a4`
+- `bot/aemr_bot/copy/privacy.py:1` — `6eca01f72bc99500bbd1096f17e07a5e0305c6ceec7126cfd9f461db8e0b46e9`
 - `bot/aemr_bot/copy/security_texts.py:1` — `0ef2d9f8efedc45babfa3b40ccbcfb3ce41dc53c4a5177a590d142efcdd0096d`
 - `bot/aemr_bot/data/__init__.py:1` — `af0a17d2526a3de2b104c77b4e8105c837ac78fed2b45ff16d408f2536dd95ee`
 - `bot/aemr_bot/data/resident_names_v1.py:1` — `c105adf9e5ed5287c2cfd612c0f91f8762b79305a78deb7aa333175a3decf1e3`
@@ -119435,7 +120229,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/handlers/admin_audience.py:1` — `af7826a664278d3f62a107cfcf9bda65005f65ef5b5a4daa4187daee0d8102dc`
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py:1` — `b64a1511e40fcacf862b231cec95530a2b659e1f86893fa31d1da8fda06cb395`
 - `bot/aemr_bot/handlers/admin_commands.py:1` — `338f04193dad1b1afe96f96898f3207b7dcd4abc673c1e527c8120d41a257216`
-- `bot/aemr_bot/handlers/admin_data_erasure.py:1` — `2bb5acaf31c9e58cb3a35f6cf06ad9cf97557dc5a18988167954f3232132f7ba`
+- `bot/aemr_bot/handlers/admin_data_erasure.py:1` — `2430682e563f881da34bf9f1907bc88be0e1cc18c856e3d081d01c50680bbfe2`
 - `bot/aemr_bot/handlers/admin_operators.py:1` — `e31cc9a07ba4374eaf14b157f9f980fb289ca6f2148d2ead23989566d3126007`
 - `bot/aemr_bot/handlers/admin_operators_list.py:1` — `4372a26e2de714ce2507805512d53e96396cddd23efa5e8997d509b333ae345d`
 - `bot/aemr_bot/handlers/admin_operators_roles.py:1` — `431e96a8bdadc9869cfca47dc94e439c4fe1291878da5031a8d1904df78a5e01`
@@ -119455,7 +120249,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/handlers/admin_settings_text.py:1` — `24088843a4955ace02645e4fc00483f82b9515255656d0e2ccb1bac89d5ebe61`
 - `bot/aemr_bot/handlers/admin_stats.py:1` — `dc5558ae7e88f71a30b398849f46ca9538f59d6f48208c2a1b406eafdaa20ff9`
 - `bot/aemr_bot/handlers/appeal.py:1` — `97a55f467404857b83d9fc7ac92ab00b5d11d04894f24ae209142a5de11db2a8`
-- `bot/aemr_bot/handlers/appeal_funnel.py:1` — `02163703b604a92d37a5e45823f8990f1f4a84381d83ecd62de3dadc9c0001b7`
+- `bot/aemr_bot/handlers/appeal_funnel.py:1` — `df7ed6776b9f5a31bdbb1346d0de655b2aca9a8b968314b8aa272a4c2323d37e`
 - `bot/aemr_bot/handlers/appeal_geo.py:1` — `98883857e4bb963b0a2297edbbea3e3cdf6d8d0524dc52d4157cb78c52bc5046`
 - `bot/aemr_bot/handlers/appeal_runtime.py:1` — `b751e6c30ee42885aaad6fd58b139c380047aff05f19ff6c0fe0de4811765122`
 - `bot/aemr_bot/handlers/broadcast.py:1` — `82161f0f6dd454fa6e18863e410c42f3471442981bb544c3926d49e53d9aff5f`
@@ -119467,7 +120261,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/handlers/broadcast_wizard.py:1` — `f1651a4f01d6b92dbe6f31d8deb680c76aed85f918c61b26a57ba4b1bebe7d62`
 - `bot/aemr_bot/handlers/callback_payloads.py:1` — `42daf5a8aa8815b45ddfac0c89fdbf42e03140c1804f1af44c5adff9f4c0fd06`
 - `bot/aemr_bot/handlers/callback_router.py:1` — `8df42126f3bd3d46249f91b01dfceae47b50af037bca50732009c95a39d9e1d7`
-- `bot/aemr_bot/handlers/menu.py:1` — `93616aee4ae113ef76e89528f8dbc705c90aa1596fb6b31bc3461576612251f8`
+- `bot/aemr_bot/handlers/menu.py:1` — `5b5f3bdbb49456e2faa33c1e1103c989ebb910572b9f2218653a292cc4237dcc`
 - `bot/aemr_bot/handlers/operator_draft.py:1` — `77ccb3d8de1c49ca72c30a3a298819218a07abe60fc7b33dd485cff3d324b174`
 - `bot/aemr_bot/handlers/operator_reply.py:1` — `f111a7110f7249bb7714738300a374dfb5e5c2561e5b232f2c5f46b88cac5a78`
 - `bot/aemr_bot/handlers/resident_name_gate.py:1` — `fd825ba5e981c0893c4dcaa979ad7c782105e2a5a524ca1e9c571f72c39c845e`
@@ -119475,8 +120269,8 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/health.py:1` — `2f95cf0cdecd3fe6c6cd34011f7fcdfe10f712874b3e06f285c1a68f791fab85`
 - `bot/aemr_bot/keyboards.py:1` — `db84ebdc392b48eed2557510bc288f5165b977259a80285cb5cb445e489a6a60`
 - `bot/aemr_bot/logging_setup.py:1` — `0137b44569e599ea2d3476b26070fba145e2eb3f92f86bae1bd494ac79c4798e`
-- `bot/aemr_bot/main.py:1` — `1da0a3aa1b6c6adca74c1a0ac14c7a220bd3a45095e83b4d83aebe2a8e66fbd6`
-- `bot/aemr_bot/network.py:1` — `b59c00c66deb6b456c8f3cb420021df02371ab8b1fcfe4ab013386f7e27c9a59`
+- `bot/aemr_bot/main.py:1` — `ac6b0bd49951dc94fcec254cc68b8532f85428f9c4043af49ec9ebede15c473a`
+- `bot/aemr_bot/network.py:1` — `35bc7413b8f9fae04464b112f7e671ba81e00bf2e1eb4d74fa321cd4bf26a679`
 - `bot/aemr_bot/services/__init__.py:1` — `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 - `bot/aemr_bot/services/admin_bus.py:1` — `3e000e9397ecb4d6558237d3de935e50692c3b6d151c0e3ab7884db369083c21`
 - `bot/aemr_bot/services/admin_card.py:1` — `9879c2bf89a66fdc3b6bdb7f97ffe9e53202387a251f98103b774e8e745337e7`
@@ -119498,12 +120292,15 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/services/content_status.py:1` — `368caf4743e7f132853890f6d3bf9c3ab5553a0d83caa2c31ad090c4ba8a9658`
 - `bot/aemr_bot/services/cron.py:1` — `e4fbe4b0524a2b090cd16c64f4a3e444ad4021df71690b98c39a9cf0c050e8ee`
 - `bot/aemr_bot/services/cron_registry.py:1` — `878ff066481e84c1fda8e2c563f037912f2e0db29e3b2c66d98b13547819252e`
-- `bot/aemr_bot/services/data_erasure.py:1` — `224a7452c2fc4c611fbe710d5decd5f084dced93cf657765c62bb92ca1ffe4e5`
-- `bot/aemr_bot/services/db_backup.py:1` — `172cade772cc3c03534ae5e9ce10a1d1e2c8ce750a7f824cd999cf3cb8a65d29`
+- `bot/aemr_bot/services/data_erasure.py:1` — `094c65b72d6ea8d676236196e6715c5606b3a30fde1966cdcd7545baf8071a5b`
+- `bot/aemr_bot/services/data_erasure_delivery.py:1` — `8b7b856b71fc9b6f819c3908c1b73be82346b748674a05455d40e691a7d700fa`
+- `bot/aemr_bot/services/data_erasure_journal.py:1` — `2b57bdbbe7423ce46c583f134357b5ef06654bf443cc7d0810822ab927ece9e2`
+- `bot/aemr_bot/services/data_erasure_restore.py:1` — `f02d1ff285efd7e6f8b3e0ff15df8fc3136612c8b38403a6a92cd520e8287212`
+- `bot/aemr_bot/services/db_backup.py:1` — `1c89a88b3c9b988fc57052164ae71715a20811cd1d338fca80ad2000e3ebeacf`
 - `bot/aemr_bot/services/followup_delivery.py:1` — `3e7444a44921f4052e5f62660f69028ef39e669458155d4b5d84acc9835792c8`
 - `bot/aemr_bot/services/geo.py:1` — `f975cc0fd72a42efdefd1e5ea349f2f51d7c725ad68cf4142dac5179451f17c8`
 - `bot/aemr_bot/services/idempotency.py:1` — `03ddbc5443b1a9cedf0e23b7504e6d6487cced3728dd41055909a38f1f7cef37`
-- `bot/aemr_bot/services/inbox.py:1` — `967604cf91afb068be964fa5a24d9be9141e1febf0439cc9adeab74ba561aaa6`
+- `bot/aemr_bot/services/inbox.py:1` — `b6c00f6caf0c10e4ee825dc55322f4e7eba7f9a2cadfc6cdeb00f3e5a720dff0`
 - `bot/aemr_bot/services/message_labels.py:1` — `a3a9c91d5e95ee90e8294517b79c294587b3a85e7979b6740a3770fa1cc61146`
 - `bot/aemr_bot/services/notify_toggles.py:1` — `9ef4f39df424734563027fb29777e43be51249d8fdccb11a92f8425f75f6581e`
 - `bot/aemr_bot/services/operator_drafts.py:1` — `bb9fbab034d2b1bf95c098e69f68b258fd1e3749bdffaa5b363c0ff6f018d038`
@@ -119521,7 +120318,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/services/stats.py:1` — `3bcfa54e5dab07b30a2a13a36b4a6d5ebfe8dbfea554e4f8c1a054229adab789`
 - `bot/aemr_bot/services/threat_intel.py:1` — `0495ec5d951639ec74f785f0ad07ac8ed38969471e110bf22146fc3586085ccf`
 - `bot/aemr_bot/services/uploads.py:1` — `7532fedc2eaffebb13668770c3bf4d4ccadd0c462be83a7de7766dcdfa083881`
-- `bot/aemr_bot/services/users.py:1` — `bcf964dab978499420b0555bbf27cfe29a155cade25ab2c9783fdac02f54235a`
+- `bot/aemr_bot/services/users.py:1` — `f0111f9a4a55ee595da9e68169ca6462552acebf7173b036b0d6e945de77aeee`
 - `bot/aemr_bot/services/wizard_persist.py:1` — `8c5a43e226bd7d0de545ce41c8e1920389d0d341944f7a5bdef14313f832c231`
 - `bot/aemr_bot/services/wizard_registry.py:1` — `f9c46634552c9703e4b46fb06917e4e79ed8f8eb1cbaa7d013dc5f8ed09ceab5`
 - `bot/aemr_bot/services/work_schedule.py:1` — `b21600bd6ba4c35aaed5b345af6e702cbd0f5f1d13fa3c489d53f489b1a4b9ad`
@@ -119529,7 +120326,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/transport.py:1` — `0245e6af7ccb231b47eb6c3b0b5288dbad7990e0354acf59ded9ecd96603ac30`
 - `bot/aemr_bot/ui/__init__.py:1` — `65e166158c8ec1c74a5b8e3677f1ef6d7d1b07caa0043e238011e4075871f14a`
 - `bot/aemr_bot/ui/broadcast_keyboards.py:1` — `386afd9084a3de9e223a3c488505c6c1eddaaf815e206c21ddf6ea585c135b99`
-- `bot/aemr_bot/ui/citizen_keyboards.py:1` — `9a026aefe21af17d75f9c0b76bcfd1f49d418fb131fe40f80d7947f44f152d5a`
+- `bot/aemr_bot/ui/citizen_keyboards.py:1` — `d712a517c94b9a06727c82882b8b4a4457c95bdf7484a2dc4021e11d2883ad77`
 - `bot/aemr_bot/ui/operator_keyboards.py:1` — `4a79880a0800b916a92d7fb118dcd6ae4e2543e5a95bb4f3cbd9854a526aebf1`
 - `bot/aemr_bot/ui/settings_keyboards.py:1` — `30379b246a8a526687672d2d06f03b823526e08f3cede0892bed53f1f45ecf02`
 - `bot/aemr_bot/ui/wizard_keyboards.py:1` — `4ac8fb03e5948fcd6f1441e45ab04329ba7342185b9ca69ee53c7292554d94ea`
@@ -122618,15 +123415,15 @@ SHA-256: `bf7487779543d63c07d394c2a05349682cacb1a3e7d92d2fbfdad005b1ef2d46`
 
 ### `docs/DATA_ERASURE_OPERATIONS.md`
 
-Size: `15646` bytes  
-SHA-256: `e5e275d95de731e057f0d7061a5eb6a99b16dd70093bb8dd7ae01b4495cf2ceb`
+Size: `17183` bytes  
+SHA-256: `7011d96a7ef97c1db9dc05eeda5ed633f3ca096e5c23ce2128b5200c6fa94d05`
 
 ```markdown
 # Удаление данных и восстановление после удаления
 
 Реализация: `bot/aemr_bot/services/data_erasure.py`, миграция `0041`,
 `services/users.py`, `services/appeals.py`, `services/db_backup.py`.
-Это эксплуатационная процедура; публикация кода не означает запуск на сервере.
+Это эксплуатационная процедура; публикация кода не означает запуск на сервере. Бот не удаляет автоматически сообщения MAX и ранее выданные выгрузки. Внешние копии проверяют и очищают уполномоченные сотрудники вручную; S3 в рабочем контуре не используется.
 
 ## Постоянный журнал вне SQL-дампа
 
@@ -122645,7 +123442,7 @@ SHA-256: `e5e275d95de731e057f0d7061a5eb6a99b16dd70093bb8dd7ae01b4495cf2ceb`
 восстановления завершается ошибкой. Не создавайте новый ключ вместо утраченного.
 Удалённые записи журнала не восстанавливаются из старого дампа.
 Файлы `*.copy.json` зеркалируют инвентарь MAX по устойчивому UUID, включая
-неизвестные результаты. Они восстанавливают очередь даже для копий, созданных
+неизвестные результаты. Они восстанавливают инвентарь для ручной сверки даже для копий, созданных
 после SQL-дампа, когда сам житель в старом дампе ещё отсутствует. `*.backup.json`
 сохраняют состояние внешней очистки с исходным временем инструкции.
 
@@ -122690,8 +123487,8 @@ docker compose -f infra/docker-compose.yml run --rm --no-deps bot sh -c 'alembic
 `tracked_send` резервирует запись до MAX и завершает её после ответа; общий барьер
 с удалением закрывает гонку отправки и очистки. Исторические карточки, вложения и
 ответы/экспорты должны проходить через этот helper в соответствующих местах кода.
-Массовый экспорт помечается `bulk_export`: любое удаление инвалидирует все такие
-экспорты, поскольку их содержимое может включать несколько жителей; исходные данные
+Массовый экспорт помечается `bulk_export`: любое удаление отмечает такие
+экспорты для ручной проверки, поскольку их содержимое может включать несколько жителей; исходные данные
 других жителей при этом сохраняются. При удалении также подхватываются старые mid,
 которые ещё известны по Appeal/Message/OperatorReplyAttempt.
 
@@ -122706,24 +123503,18 @@ docker compose -f infra/docker-compose.yml run --rm --no-deps bot sh -c 'alembic
 его жителя; экраны других жителей сохраняются. Повторная очистка уже очищенного
 обращения без новых payload не инвалидирует чистые отчёты, созданные позднее.
 
-`recover_deletions(bot)` обрабатывает ограниченную очередь. `pending` — запрос ещё
-не начат, `deleting` — попытка началась и могла завершиться до падения процесса,
-`uncertain` — результат неизвестен, `deleted` — удаление подтверждено MAX либо
-специалистом после проверки отсутствия. Состояния `deleting` и `uncertain` не
-повторяются автоматически. Отсутствие mid не является подтверждением удаления.
+Реестр внешних копий используется для ручной сверки, а не для автоматического удаления. Бот не вызывает удаление сообщений MAX и ранее выданных выгрузок при очистке рабочей базы, по сроку хранения или при восстановлении. Совместимый `recover_deletions` переводит прежние автоматические задания в статус `manual` без вызовов MAX API. Неизвестные результаты сохраняются как сведения для ручной проверки; они не запускают повторный запрос удаления. Отсутствие mid не подтверждает отсутствие копии.
 
-ИТ просматривает `admin_data_erasure.show_status` и инвентарь, проверяет точное
-сообщение в MAX. После проверки используется из каталога `bot/`:
+Ответственный сотрудник проверяет карточки, ответы, вложения, цитаты и выгрузки в MAX, скачанные файлы и копии в подразделениях. Если дальнейшее хранение не имеет законного основания, сотрудник вручную удаляет доступные копии средствами соответствующей системы, фиксирует результат и отдельно перечисляет нерешенные действия. Бот не очищает персональные данные внутри платформы MAX.
+
+ИТ просматривает `admin_data_erasure.show_status` и инвентарь. После ручной проверки из каталога `bot/` можно зафиксировать подтвержденное отсутствие либо найденный идентификатор:
 
 ```sh
 uv run python ../scripts/reconcile_erasure.py --confirm-copy-absent COPY_ID
 uv run python ../scripts/reconcile_erasure.py --recover-copy-mid COPY_ID MESSAGE_ID
 ```
 
-Первая команда допустима только после подтверждённого отсутствия. Вторая — только
-для ранее неизвестного mid, по которому удаление ещё не предпринималось. Она не
-сбрасывает неизвестную попытку удаления в автоматический повтор. Свидетельства
-проверки и акт удаления сохраняются оператором отдельно.
+Первая команда допустима только после подтвержденного отсутствия. Вторая уточняет инвентарь для ручной работы и не разрешает автоматическое удаление. Свидетельства проверки и акт уничтожения сохраняются сотрудником отдельно.
 
 В файлах `LOG_DIR/bot.log*` заменяются точные известные телефоны и коррелированные
 с идентификатором записи жителя поля. Другие строки сохраняются. Старые произвольные
@@ -122731,29 +123522,30 @@ payload/свободный текст без идентификатора нел
 Хостовый journald, пересланные логи и архивы вне LOG_DIR требуют отдельной проверки
 держателем доступа. Бот не имеет полномочий выборочно уничтожать их на хосте.
 
-## Локальные и S3 резервные копии
+## Локальные резервные копии и ручной вынос
 
 Зашифрованный SQL-дамп не редактируется выборочно. После удаления инвалидируются и
 удаляются известные файлы приложения `aemr-*.sql` и `aemr-*.sql.gpg` в
-`BACKUP_LOCAL_DIR`; посторонние файлы и symlink не удаляются. В S3 удаляются текущие
-объекты с такими именами. Отсутствие настройки backup остаётся тихим отключением.
-Новый backup удерживает барьер удаления на всё создание и загрузку и не создаётся,
+`BACKUP_LOCAL_DIR`; посторонние файлы и symlink не удаляются. S3 и автоматическая
+загрузка во внешнее объектное хранилище не используются. Отсутствие настройки backup остаётся тихим отключением.
+Новый backup удерживает барьер удаления на всё создание файла и не создаётся,
 пока очистка требует сверки.
 
-S3 versioning, delete markers, object lock, репликация и внешние копии не считаются
-уничтоженными после `rclone delete`. Их проверяет держатель S3-доступа: перечисляет
-все версии/реплики, удаляет доступные версии и подтверждает отсутствие/окончание
-блокировки. До проверки состояние `manual`, новые резервные копии блокируются.
-После подтверждённой проверки каждой инструкции:
+Сотрудник отдельно проверяет вынесенные дампы, снимки, реплики и другие внешние
+копии, организует очистку при отсутствии основания хранения и оформляет результат.
+Эта ручная работа не блокирует создание новых локальных бэкапов очищенной БД.
+Статус `backups_state` относится к автоматической локальной очистке; прежние
+`manual`/неизвестные статусы внешних операций не являются её постоянной блокировкой.
+
+Совместимая команда повторяет локальную очистку и сверяет дату инструкции:
 
 ```sh
 uv run python ../scripts/reconcile_erasure.py --confirm-backups-clean TOMBSTONE_DIGEST ERASED_BEFORE_ISO
 ```
 
-Время инструкции берётся из диагностики вместе с digest. Устаревшее подтверждение
-предыдущего удаления того же жителя отклоняется. Не подтверждать эту команду
-только на основании пустого списка текущих объектов.
-Инструкции с ошибками и неизвестными внешними результатами остаются видимыми.
+Digest и время берутся из диагностики. Устаревший cutoff отклоняется. Команда
+не удостоверяет отсутствие внешних копий и не заменяет акт ручной проверки.
+При ошибке локального удаления новый backup не создаётся до устранения ошибки.
 
 ## Восстановление
 
@@ -122768,7 +123560,7 @@ uv run python ../scripts/reconcile_erasure.py --confirm-backups-clean TOMBSTONE_
    ```
 
 5. Проверить удаления, очистку по срокам, отозванные согласия и отключённые подписки;
-   новый актуальный выбор после cutoff должен сохраняться. Проверить очередь копий,
+   новый актуальный выбор после cutoff должен сохраняться. Проверить реестр копий для ручной сверки,
    внешние хранилища и ограничения на резервные копии. Только затем открывать трафик.
 
 Простой `psql < dump` без этих шагов не является безопасным восстановлением.
@@ -122780,11 +123572,10 @@ uv run python ../scripts/reconcile_erasure.py --confirm-backups-clean TOMBSTONE_
 
 Нельзя восстановить mid давно утраченных карточек/вложений, обещать удаление файлов,
 которые пользователи ранее скачали/переслали, или уничтожение данных внутри MAX,
-которые платформа сохраняет по собственным основаниям. Отказ/ограничение срока
-удаления MAX отображается как нерешённая запись и требует действий оператора.
+которые платформа сохраняет по собственным основаниям. Неочищенные копии MAX остаются задачей ответственного сотрудника и не считаются удаленными по результату очистки рабочей базы.
 Физическое уничтожение свободных блоков БД, WAL, дисковых snapshots и архивных
 реплик не подтверждается SQL-redaction; их обслуживание выполняется держателем
-инфраструктуры. Реальные MAX/S3/host проверки требуют серверного доступа и не
+инфраструктуры. Реальные проверки MAX, внешних носителей и хоста требуют серверного доступа и не
 подменяются локальными тестами.
 ```
 
@@ -122989,6 +123780,110 @@ pip_audit --strict -r audit-requirements.thirdparty.txt $IGNORE_FLAGS
 - **Рутинные апдейты — через Dependabot**, ручной аудит — только для `maxapi` и мажоров sqlalchemy/pydantic.
 - **Обновление = отдельный PR** с проверкой каждого слоя (local sync → tests → docker build → prod smoke).
 - **Rollback стратегия** — если деплой положил бот, revert немедленно, разбираться потом.
+```
+
+### `docs/implementation-notes.md`
+
+Size: `11494` bytes  
+SHA-256: `9cb498c0064c40307e0a60b78a7fda94a255e98c4753cbd00ec7ae678276a75b`
+
+```markdown
+# Рабочие заметки: уточнение эксплуатации и удобство разработки
+
+Исходный main: `6fd2321` (PR #304 уже слит). Новое уточнение владельца от
+30.10.2026 имеет приоритет над механикой предыдущего выпуска. Один следующий PR,
+без развёртывания VPS. Это текущая запись решений; карта PR #304 описывает прежний
+выпуск, а не новые требования.
+
+## Цель и порядок
+
+1. Исправить границы удаления: рабочая БД и управляемые локальные копии;
+   сообщения MAX и ранее выданные выгрузки автоматически не удаляются.
+   Внешние копии вручную обрабатывают сотрудники. S3 не используется.
+2. Изучить скачанные оригиналы курсов №1 и №2, сопоставить методы с кодом,
+   найти конкретные неудобства, не выдавая предположения за пользовательское исследование.
+3. Проверить рекомендации из первоисточников, сократить постоянно загружаемые
+   инструкции, сохранить существенные ограничения за точными указателями.
+4. Добавить проверку размеров staged blobs, исправить подтверждённые
+   противоречия сценариев, синхронизировать документацию и выполнить проверки.
+
+## Решения и проверка
+
+| Работа | Состояние / основание |
+| --- | --- |
+| MAX и старые выгрузки | Исправлено в коде и целевых проверках. В предыдущем выпуске найден реальный вызов `delete_message`, новая политика требует убрать его, включая старые задания очереди. |
+| S3 | Не используется по подтверждению владельца. Это не сбой внешнего доступа; активная автоматизация S3 больше не нужна. |
+| Приватность нового вывода и restore | Сохраняются. Отказ от удаления уже отправленных сообщений не разрешает повторно публиковать удалённые данные или восстанавливать их из старого дампа. |
+| Курсы | Оригинальные PDF скачаны из Drive. Изучен весь текст 487/436 страниц, значимые рисунки проверены. Видео и скрытые LMS-элементы недоступны; [применение и первоисточники](audits/COURSES_AND_AGENT_WORKFLOW_2026-10.md). |
+| Инструкции | Выполнены три независимых разбора: консервативный, умеренный, радикальный. Выбран короткий root и один справочник стандартов; новые каталоги инструкций не нужны. |
+| Skills | `ub-mode` и `writing-for-agents` установлены в `/home/agent/.codex/skills/`, исходные commit: `57a8bdd` и `a496f55`. Crapper/dryer/mutator отсутствуют — шаги пропускаются по указанию владельца. |
+| Тексты отзыва | Воспроизведено: четыре экрана обещали ответ, хотя обработчик его блокирует. Шесть новых проверок текстов сначала завершились ожидаемым FAIL. |
+| Ограничение файлов | Обнаружены 178 существующих файлов >20 000 байт. Владелец явно выбрал запрет новых больших файлов и роста старых; сокращение при содержательной правке. |
+| Проверки | Выполняются по изменению; финальные результаты будут записаны после прогона, прежние 3281/83,72% не являются проверкой этой ветки. |
+
+## Границы
+
+`/autocompact 400k` относится к Claude Code. В этой сессии Codex такой команды
+нет; конфигурация сжатия не менялась. Ведутся компактные заметки и ограничивается
+вывод команд. Установка онтологического движка, нового harness или внешнего
+инсталлятора сама по себе не улучшает этого бота; решения принимаются после
+проверки применимости. Правило «код при расхождении с документацией» защищает
+существующие соглашения, но не отменяет новые требования и воспроизведённые дефекты.
+
+
+## Дополнительные решения и доказательства
+
+- В текущий предпросмотр нового обращения добавлены выбранные место/адрес/тема;
+  дополнительного шага нет. При пустом списке тем убрано несуществующее уведомление.
+  Две регрессии сначала упали на отсутствии контекста и ложном обещании; после
+  исправления прошли, ветка дополнения сохраняет номер исходного обращения.
+- Удалены только специфические MAX-delete/S3 операции и входящий инвентарь для
+  удаления. Приватность нового вывода, метаданные прежних экранов и replay журнала
+  остаются: они ограничивают повторное раскрытие, а не стирают историю MAX.
+- Найдено, что старое ручное подтверждение backups могло пометить очистку завершённой,
+  оставив локальный дамп. Новый тест воспроизвёл это; команда теперь выполняет
+  реальную локальную очистку и сверяет cutoff, не удостоверяет внешнее удаление.
+- Новый размерный gate: 30 тестов с реальными временными Git-репозиториями;
+  always-success мутация отклонена 29 проверками. Проверены частичный staging,
+  rename, необычные имена, граница, baseline и CI blobs. Это прицельная проверка
+  тестов, не выполнение отсутствующего mutator.
+- В первом полном прогоне 6 проверок ожидали прежнее `pending` вместо нового
+  `manual`; ожидания изменены по уточнённому требованию, проверки источников и
+  запрета нового вывода сохранены. Старый S3-timeout тест теперь проверяет, что
+  локальный дамп создан и запускается только pg_dump при старых S3-настройках.
+- Ruff/MyPy исходников успешны (180 Python-модулей). Docker собран; runtime импорт
+  выделенных модулей/CLI проверяется отдельно от реального MAX.
+- Размер двух локальных образов: прежний `pr304-final` 492 010 381 байт,
+  `product-followup` 433 640 031 байт (на 58 370 350 байт, около 11,9% меньше).
+  Убран rclone без оставшихся вызовов. Это размер этих сборок, не обещание экономии
+  RAM/CPU или измерение VPS. Тест 502 inbox receipts теперь ограничивает SQL-вызовы
+  тремя вместо прежних девяти после удаления ненужного входящего инвентаря.
+
+
+## Итог локальных проверок
+
+- Полный PostgreSQL 16: **3327 passed**, 193,63 с, branch coverage **83,81%**.
+- Ruff — чисто; MyPy — без ошибок (180 исходных модулей). Docker build и runtime
+  smoke импортов/CLI успешны, rclone отсутствует. Миграции не менялись; CI проверяет
+  чистую БД, совпадение моделей и round-trip действующей цепочки.
+- Размерный gate прошёл для фактически staged изменений и включён в локальный
+  `.git/hooks/pre-commit`; для других checkout установка через pre-commit по стандартам.
+  Baseline после сокращения двух модулей и точного исключения генерируемой
+  инвентаризации содержит 135 путей. Это не blanket-исключение старого кода.
+- Финальная сверка нашла старый абзац инструкции, связывавший внешнюю ручную очистку
+  с блокировкой локального backup. Он исправлен: блокирует только незавершённая
+  локальная очистка; внешние копии сотрудники документируют отдельно.
+- CI точного HEAD и независимое ревью отслеживаются в [PR #305](https://github.com/gaben1488/aemr-bot/pull/305).
+  До их успешного завершения merge не выполняется. VPS не обновлялся.
+
+- Независимое UX/instructions review HEAD `d1a250f`: P1/P2 не выявлены, 10
+  целевых тестов прошли. Найден старый docstring `users.revoke_consent`,
+  обещавший финальный ответ через бот: исправлен без изменения исполняемой логики.
+
+- Независимое backend review: P1/P2 не выявлены, 128 затронутых тестов прошли на
+  отдельной PostgreSQL БД. Проверены отсутствие MAX-delete/S3 операций, локальная
+  очистка, startup/restore, shared facade и публичные API. Документальное расхождение
+  ручной/локальной очистки исправлено. Повторный целевой прогон после сверки — 68 passed.
 ```
 
 ### `docs/MAXAPI_REVIEW_2026-10-26.md`
@@ -129930,8 +130825,8 @@ llms.txt (для офлайнового self-host неприменимо), ар�
 
 ### `docs/site/_kb2/admin.html`
 
-Size: `217483` bytes  
-SHA-256: `87f4cb2e7c658b8bf00c13c5906e69aae444743abeaaead957506202fc80ffb5`
+Size: `214691` bytes  
+SHA-256: `433202935ebfb9322e301be2b7e36cbdcce18ae3b91100ce6dd357f8cbf2acf5`
 
 ```html
 <h2 id="admin">Администратору: установка, настройка, обслуживание</h2>
@@ -129939,7 +130834,7 @@ SHA-256: `87f4cb2e7c658b8bf00c13c5906e69aae444743abeaaead957506202fc80ffb5`
 <h3 id="admin-current-data">Актуальные настройки и границы эксплуатации</h3>
 <p>Текущая схема: 41 миграция <code>0001..0041</code>, 17 ORM-таблиц, 26 ключей настроек. IT-меню «Настройки бота → 🕘 Рабочее время» меняет часы работы/обеда; четыре целых часа вводятся вместе, например <code>9 18 12 13</code>. Праздники можно явно обновить из файла. Конкурентно устаревшее изменение отклоняется. Новые и переоткрытые периоды сохраняют снимки календаря, часов и норматива; исходные обращения без снимка используют замороженную операционную базу, которая не доказывает историческое расписание.</p>
 <p>Пустой <code>BACKUP_LOCAL_DIR</code> тихо отключает копирование. При включении локальная ротация хранит число файлов, а не гарантированный возраст. Рабочий сервер владелец обновляет вручную; GitHub PR и наличие auto-deploy.sh не означают, что автодеплой включён.</p>
-<p>Удаление использует устойчивый <code>ERASURE_STATE_DIR</code> и независимый HMAC-журнал вне дампов, очередь известных сообщений MAX, распознанные локальные дампы и активные объекты S3. До включения восстановленной базы применяют <code>scripts/replay_erasure_tombstones.py</code> на изолированной базе с явно проверенным DATABASE_URL. Неизвестные отправки/удаления не повторяются вслепую; старые неучтённые копии, скачанные файлы, journald, S3-версии/locks и снимки требуют ручной сверки. Незавершённая очистка блокирует новые дампы. Подробный порядок и границы — в инструкции удаления/восстановления и правовой сверке.</p>
+<p>Очистка и восстановление: независимый журнал вне дампов, реестр внешних копий для ручной сверки и очистка распознанных локальных дампов. Бот очищает рабочую базу и распознанные локальные резервные копии. Сообщения MAX и ранее выданные выгрузки автоматически не удаляются. Уполномоченные сотрудники вручную проверяют и очищают внешние копии с учетом законных оснований хранения, фиксируют результат и оставшиеся действия. Очистка базы не подтверждает уничтожение всех копий. Перед приемом событий восстановленной базой применяется <code class="kbd">scripts/replay_erasure_tombstones.py --database-env RESTORE_DATABASE_URL --confirm-offline</code> с актуальным журналом и исходным ключом.</p>
 
 
 <p>Этот раздел — для ИТ-специалиста, который ставит бота на сервер и потом его обслуживает. Всё по шагам: от чистого сервера до работающего бота, что лежит в настройках, как делать резервные копии (backup — резервная копия базы) и восстанавливаться из них, как выкатывать новые версии и откатываться при сбое, куда смотреть, когда что-то сломалось. Команды можно копировать как есть.</p>
@@ -130178,7 +131073,7 @@ curl -fsS http://127.0.0.1:8080/readyz &amp;&amp; echo  # 200</code></pre>
 <tr><td><code class="kbd">BACKUP_HOUR</code> / <code class="kbd">BACKUP_MINUTE</code></td><td><code class="kbd">3</code> / <code class="kbd">0</code></td><td>Час и минута backup (по часовому поясу бота). По умолчанию воскресенье 03:00.</td></tr>
 <tr><td><code class="kbd">BACKUP_LOCAL_DIR</code></td><td><code class="kbd">/backups</code></td><td>Каталог внутри контейнера (смонтирован в Docker-том <code class="kbd">backups</code>). Если пусто — локальные backup не сохраняются.</td></tr>
 <tr><td><code class="kbd">BACKUP_KEEP_COUNT</code></td><td><code class="kbd">8</code></td><td>Сколько последних файлов хранить (8 еженедельных ≈ 2 месяца). Старые удаляются по дате изменения.</td></tr>
-<tr><td><code class="kbd">BACKUP_S3_ENDPOINT</code> / <code class="kbd">_BUCKET</code> / <code class="kbd">_ACCESS_KEY</code> / <code class="kbd">_SECRET_KEY</code></td><td>пусто</td><td>Опциональная копия в S3-совместимое хранилище (любой провайдер, не привязано к конкретному облаку). Если все четыре пустые — только локальные backup.</td></tr>
+
 </tbody>
 </table>
 </div>
@@ -130269,11 +131164,11 @@ COMMIT_AUTHOR_EMAIL=&lt;email&gt;</code></pre>
 
 <p>Чтобы обновить digest вручную: <code class="kbd">docker pull postgres:16-alpine</code>, затем скопировать значение из строки «Digest: sha256:…» в <code class="kbd">docker-compose.yml</code>. Автообновление выключено намеренно — сломанный или скомпрометированный минор не должен попасть в production молча.</p>
 
-<p>Внутри образа бота дополнительно ставятся apt-пакеты: <code class="kbd">postgresql-client</code> (для <code class="kbd">pg_dump</code>), <code class="kbd">gnupg</code> (шифрование backup), <code class="kbd">ca-certificates</code>, <code class="kbd">curl</code>, <code class="kbd">tzdata</code>, <code class="kbd">unzip</code>, <code class="kbd">rclone</code> (для S3-выгрузки). Rclone берётся из debian-репозитория, а не через <code class="kbd">curl … | bash</code> — чтобы не исполнять сетевой инсталлятор под root: любой будущий компромет домена rclone.org иначе выполнялся бы прямо в образе.</p>
+<p>В образе используются необходимые системные утилиты, в том числе <code class="kbd">pg_dump</code> и <code class="kbd">gpg</code> для локальных резервных копий. Автоматической загрузки в S3 нет. Точный состав сборки определяется текущим <code class="kbd">infra/Dockerfile</code>.</p>
 
 <div class="note">
 <p class="note__label">Контейнер бота закалён (hardening)</p>
-<p>Бот работает под непривилегированным пользователем <code class="kbd">botuser</code> (фиксированные UID/GID 1000, чтобы named-том <code class="kbd">backups</code> держал одинакового владельца между пересборками). Корневая файловая система контейнера смонтирована <strong>только для чтения</strong> (<code class="kbd">read_only: true</code>); всё, что нужно писать, идёт через <code class="kbd">tmpfs /tmp</code> (128 МБ) или named-тома. Сброшены все Linux-capabilities (<code class="kbd">cap_drop: ALL</code>), включён <code class="kbd">no-new-privileges</code> (запрет setuid-эскалаций), ограничено число процессов (<code class="kbd">pids_limit: 200</code> — защита от fork-бомб в pg_dump/gpg/rclone) и память (<code class="kbd">mem_limit</code> и <code class="kbd">memswap_limit</code> по 512 МБ). Контейнер базы тоже закалён: сброшены все capabilities, оставлены только нужные Postgres для chown data-каталога, включён <code class="kbd">no-new-privileges</code>.</p>
+<p>Бот работает под непривилегированным пользователем <code class="kbd">botuser</code> (фиксированные UID/GID 1000, чтобы named-том <code class="kbd">backups</code> держал одинакового владельца между пересборками). Корневая файловая система контейнера смонтирована <strong>только для чтения</strong> (<code class="kbd">read_only: true</code>); всё, что нужно писать, идёт через <code class="kbd">tmpfs /tmp</code> (128 МБ) или named-тома. Сброшены все Linux-capabilities (<code class="kbd">cap_drop: ALL</code>), включён <code class="kbd">no-new-privileges</code> (запрет setuid-эскалаций), ограничено число процессов (<code class="kbd">pids_limit: 200</code> — защита от fork-бомб в pg_dump/gpg) и память (<code class="kbd">mem_limit</code> и <code class="kbd">memswap_limit</code> по 512 МБ). Контейнер базы тоже закалён: сброшены все capabilities, оставлены только нужные Postgres для chown data-каталога, включён <code class="kbd">no-new-privileges</code>.</p>
 </div>
 
 <p>Python-зависимости в <code class="kbd">bot/pyproject.toml</code> в основном фиксируются через <code class="kbd">~=</code> (совместимые выпуски: патчи разрешены, скачки минорных версий — нет); критичный клиент <code class="kbd">maxapi</code> закреплён точной версией. Ключевые из них:</p>
@@ -130298,7 +131193,7 @@ COMMIT_AUTHOR_EMAIL=&lt;email&gt;</code></pre>
 <div class="note">
 <p class="note__label">Как собираются зависимости: hash-enforced сборка из <code class="kbd">uv.lock</code></p>
 <p>Диапазоны <code class="kbd">~=</code> выше — это то, что <em>разрешено</em> в <code class="kbd">pyproject.toml</code>. А <em>ставится</em> в образ ровно то, что закреплено в закоммиченном <code class="kbd">bot/uv.lock</code> (точные версии всех пакетов, включая транзитивные, плюс SHA256-хэш каждого wheel). <code class="kbd">infra/Dockerfile</code> читает именно lock: на этапе сборки <code class="kbd">uv export --frozen --no-emit-project --no-dev</code> разворачивает lock в <code class="kbd">requirements.txt</code> с хэшем на каждый пакет, а <code class="kbd">pip install --require-hashes</code> отказывается ставить что-либо, чей скачанный артефакт не совпал с зафиксированным хэшем. Сам пакет бота добавляется отдельным шагом editable и без зависимостей (<code class="kbd">pip install -e /app --no-deps</code>) — дерево зависимостей уже установлено и хэш-проверено.</p>
-<p>Что это даёт. Во-первых, <strong>детерминизм</strong>: в прод приезжают ровно те версии, что в lock-файле, без пересборки на момент сборки. Это закрывает реальный дрейф «у меня работает, на проде падает», который однажды уже положил бота (разошлись версии <code class="kbd">maxapi</code> между локальной средой и Docker). Для авто-деплоя, пересобирающего образ каждые 10 минут, это критично: без закрепления образ молча менялся бы без единой строки в git diff, подтянув новый патч транзитивной зависимости. Во-вторых, <strong>проверка целостности (supply-chain)</strong>: <code class="kbd">--require-hashes</code> работает по принципу fail-closed — один несовпавший хэш останавливает сборку, поэтому подмена пакета на зеркале или MITM при скачивании не пройдут незаметно. uv тянется в образ пиннутым по digest бинарём через <code class="kbd">COPY --from</code>, без <code class="kbd">curl … | bash</code> (тот же принцип, что для rclone), и в финальный рантайм не попадает. Совместимо с read-only рантаймом: всё ставится в build-time, готовое дерево пакетов в рантайме неизменно.</p>
+<p>Что это даёт. Во-первых, <strong>детерминизм</strong>: в прод приезжают ровно те версии, что в lock-файле, без пересборки на момент сборки. Это закрывает реальный дрейф «у меня работает, на проде падает», который однажды уже положил бота (разошлись версии <code class="kbd">maxapi</code> между локальной средой и Docker). Для авто-деплоя, пересобирающего образ каждые 10 минут, это критично: без закрепления образ молча менялся бы без единой строки в git diff, подтянув новый патч транзитивной зависимости. Во-вторых, <strong>проверка целостности (supply-chain)</strong>: <code class="kbd">--require-hashes</code> работает по принципу fail-closed — один несовпавший хэш останавливает сборку, поэтому подмена пакета на зеркале или MITM при скачивании не пройдут незаметно. uv тянется в образ пиннутым по digest бинарём через <code class="kbd">COPY --from</code>, без <code class="kbd">curl … | bash</code> , и в финальный рантайм не попадает. Совместимо с read-only рантаймом: всё ставится в build-time, готовое дерево пакетов в рантайме неизменно.</p>
 <p>Тонкость про CI: hash-enforced живёт именно в сборке Docker-образа. Job'ы стиля и тестов в <code class="kbd">.github/workflows/ci.yml</code> ставят dev-окружение по диапазонам (<code class="kbd">pip install -e .[dev]</code>) — это сознательно, тестам нужны и dev-инструменты, а супла-чейн-гарантию даёт отдельный шаг сборки образа плюс <code class="kbd">pip-audit</code>. Развёрнутое обоснование и полный дифф Dockerfile — в <code class="kbd">docs/DEPS.md</code> (раздел «Зависимости»).</p>
 </div>
 
@@ -130406,18 +131301,18 @@ COMMIT_AUTHOR_EMAIL=&lt;email&gt;</code></pre>
 
 <h4>Что и как бэкапится</h4>
 
-<p>Каждое воскресенье в 03:00 по Камчатке бот делает <code class="kbd">pg_dump</code> всей базы, шифрует его GPG (алгоритм AES-256, парольная фраза подаётся через канал <code class="kbd">os.pipe</code>, а не через аргументы командной строки, чтобы не светиться в списке процессов) и кладёт файл в Docker-том <code class="kbd">backups</code>. Внутри контейнера путь — <code class="kbd">/backups/aemr-YYYYMMDD_HHMMSS.sql.gpg</code> (дата без дефисов, со временем по часовому поясу бота; права файла после записи ужесточаются до <code class="kbd">0600</code>). Хранятся последние 8 файлов (≈2 месяца), старые удаляются по дате изменения. Опционально — дополнительная копия в S3.</p>
+<p>Каждое воскресенье в 03:00 по Камчатке бот делает <code class="kbd">pg_dump</code> всей базы, шифрует его GPG (алгоритм AES-256, парольная фраза подаётся через канал <code class="kbd">os.pipe</code>, а не через аргументы командной строки, чтобы не светиться в списке процессов) и кладёт файл в Docker-том <code class="kbd">backups</code>. Внутри контейнера путь — <code class="kbd">/backups/aemr-YYYYMMDD_HHMMSS.sql.gpg</code> (дата без дефисов, со временем по часовому поясу бота; права файла после записи ужесточаются до <code class="kbd">0600</code>). Хранятся последние 8 файлов по времени изменения. При еженедельных успешных копиях это примерно два месяца; простой не ограничивает возраст старых файлов. S3 не используется. Вынос зашифрованной копии на отдельный носитель выполняет сотрудник вручную.</p>
 
 <div class="cmd"><code>aemr-20260601_030000.sql.gpg</code><span class="cmd__what">пример имени файла бэкапа (дата + время по часовому поясу бота)</span></div>
 
 <div class="note note--danger">
 <p class="note__label">Опасно: без GPG-фразы backup не создаётся</p>
-<p>Без <code class="kbd">BACKUP_GPG_PASSPHRASE</code> (или с фразой короче <strong>12 символов</strong>) backup <strong>отказывается выполняться</strong> и шлёт categorized-алёрт в служебную группу (категория провала <code class="kbd">config</code>). Это требование закона 152-ФЗ: дамп содержит телефоны жителей, имена и тексты обращений — это персональные данные (ПДн), хранить их на диске или в S3 в открытом виде нельзя. Для dev-машины открыть незашифрованный режим можно явным <code class="kbd">BACKUP_ALLOW_UNENCRYPTED=1</code>, но в production это запрещено. Если фраза от 1 до 11 символов — она сбрасывается в пустую с логом-ошибкой, и backup идёт уже под проверкой «разрешён ли незашифрованный», то есть в проде всё равно откажет. Сама функция backup никогда не бросает исключение: она возвращает категорию провала (<code class="kbd">config</code> / <code class="kbd">pg_dump</code> / <code class="kbd">gpg</code> / <code class="kbd">unknown</code>), а cron-обёртка читает её и шлёт точечный critical-алёрт.</p>
+<p>Без <code class="kbd">BACKUP_GPG_PASSPHRASE</code> (или с фразой короче <strong>12 символов</strong>) backup <strong>отказывается выполняться</strong> и шлёт categorized-алёрт в служебную группу (категория провала <code class="kbd">config</code>). Это требование закона 152-ФЗ: дамп содержит телефоны жителей, имена и тексты обращений — это персональные данные (ПДн), хранить их на диске или внешнем носителе в открытом виде нельзя. Для dev-машины открыть незашифрованный режим можно явным <code class="kbd">BACKUP_ALLOW_UNENCRYPTED=1</code>, но в production это запрещено. Если фраза от 1 до 11 символов — она сбрасывается в пустую с логом-ошибкой, и backup идёт уже под проверкой «разрешён ли незашифрованный», то есть в проде всё равно откажет. Сама функция backup никогда не бросает исключение: она возвращает категорию провала (<code class="kbd">config</code> / <code class="kbd">pg_dump</code> / <code class="kbd">gpg</code> / <code class="kbd">unknown</code>), а cron-обёртка читает её и шлёт точечный critical-алёрт.</p>
 </div>
 
 <div class="note">
 <p class="note__label">Зависший backup не молчит: таймауты дочерних процессов</p>
-<p>Backup запускает внешние процессы — <code class="kbd">pg_dump</code> (снять дамп), <code class="kbd">gpg</code> (зашифровать), <code class="kbd">rclone</code> (выгрузить в S3). Каждый из них ограничен по времени: <code class="kbd">pg_dump</code> и <code class="kbd">gpg</code> — щедрее (по умолчанию 600 секунд, большая база может дампиться минутами), сетевой <code class="kbd">rclone</code> — жёстче (300 секунд). Точные значения настраиваются и собраны в <a href="#spravochnik" data-go="spravochnik">«Справочнике»</a> (образец — в <code class="kbd">infra/.env.example</code>). Зачем это нужно: раньше повисший внешний ресурс (недоступный S3-эндпоинт, зависший Postgres, заблокированный диск) подвешивал задачу backup <strong>навсегда</strong> — и, что хуже, алёрт о провале тогда вообще не уходил, потому что cron-задача просто не возвращалась. Теперь по истечении таймаута процесс <strong>убивается и гарантированно «прибирается»</strong> (kill + reap — чтобы не осталось процесса-зомби и утечки файловых дескрипторов), backup возвращает категорию провала (<code class="kbd">fail_kind</code>), и в служебную группу штатно приходит critical-алёрт. Иными словами: backup может не получиться, но «тихо зависнуть без сигнала» он больше не может.</p>
+<p>Создание локальной копии запускает <code class="kbd">pg_dump</code> и <code class="kbd">gpg</code>. Процессы ограничены по времени, при зависании завершаются; ошибка остается видимой ИТ. S3 и сетевой загрузчик в рабочем процессе не используются.</p>
 </div>
 
 <h4>Снять backup вручную и посмотреть список</h4>
@@ -130484,7 +131379,7 @@ docker compose exec -T db psql -U "$POSTGRES_USER" -d aemr_restore_test -c 'sele
 
 <div class="note note--caution">
 <p class="note__label">Осторожно: offsite-копии нет</p>
-<p>Локальный backup защищает от логической ошибки в базе, но не от потери самого сервера. Если сгорит диск — потеряются и база, и backup, лежащие на нём. Цель восстановления по времени при потере всего сервера (RPO — допустимая потеря данных) сейчас до 1 недели (backup раз в воскресенье); восстановление на новом хосте — 2–4 часа (новый сервер, восстановить <code class="kbd">.env</code> руками, восстановить базу из последнего backup). Чтобы это закрыть, либо включите <code class="kbd">BACKUP_S3_*</code>, либо настройте внешний <code class="kbd">rsync</code>/<code class="kbd">scp</code> по cron на отдельный хост. Сейчас offsite-копии нет — это документированный риск.</p>
+<p>Локальные копии не защищают от потери всего сервера. S3 не используется; сотрудник организует ручной вынос зашифрованного дампа на отдельный носитель и проверку восстановления. Парольная фраза хранится отдельно и защищенно.</p>
 </div>
 
 <h4 id="admin-restore-prod">Восстановление на БОЕВУЮ базу (после реальной потери данных)</h4>
@@ -130525,7 +131420,7 @@ curl -fsS http://127.0.0.1:8080/readyz &amp;&amp; echo   # 200 = база жив
 
 <div class="note note--caution">
 <p class="note__label">Осторожно: ПДн после восстановления боевой</p>
-<p>Та же оговорка, что и для тестового восстановления, но здесь она боевая: если backup старше факта удаления ПДн (житель просил <code class="kbd">/forget</code> или сработало авто-обезличивание <strong>после</strong> даты этого backup), восстановление вернёт уже удалённые данные. После заливки боевой базы из старой копии пройдитесь по журналу действий (<code class="kbd">audit_log</code>: записи <code class="kbd">erase</code> и <code class="kbd">self_erase</code> с датой позже backup) и <strong>повторно примените</strong> удаления командой <code class="kbd">/erase</code> по тем же жителям. Один restore не закрывает обязанность по 152-ФЗ — разбор правовой стороны в разделе <a href="#security-erasure" data-go="security">«Удаление ПДн»</a>.</p>
+<p>Та же оговорка, что и для тестового восстановления, но здесь она боевая: если backup старше факта удаления ПДн (житель просил <code class="kbd">/forget</code> или сработало авто-обезличивание <strong>после</strong> даты этого backup), восстановление вернёт уже удалённые данные. До приема событий примените независимый актуальный журнал с исходным ключом: <code class="kbd">scripts/replay_erasure_tombstones.py --database-env RESTORE_DATABASE_URL --confirm-offline</code>. Журнал внутри старого дампа не содержит последующих удалений и не заменяет эту проверку. Один restore не закрывает обязанность по 152-ФЗ — разбор правовой стороны в разделе <a href="#security-erasure" data-go="security">«Удаление ПДн»</a>.</p>
 </div>
 
 <h3 id="admin-deploy">Выкладка новой версии и откат</h3>
@@ -130588,7 +131483,7 @@ docker compose logs -f bot     # убедиться, что стартовал �
 
 <div class="note">
 <p class="note__label">Что именно нужно унести</p>
-<p>Из всего сервера переезжают ровно три вещи: <strong>(1)</strong> файл <code class="kbd">infra/.env</code> — все секреты и настройки развёртывания; <strong>(2)</strong> свежий зашифрованный <strong>backup базы</strong> из тома <code class="kbd">backups</code>; <strong>(3)</strong> знание <strong>парольной фразы</strong> <code class="kbd">BACKUP_GPG_PASSPHRASE</code>, иначе backup не расшифровать. Сам <strong>код тащить не нужно</strong> — он клонируется заново из репозитория. Тома Docker (<code class="kbd">db_data</code>, build-кэш) копировать тоже не нужно и не стоит: базу переносим через backup→restore, а не копированием сырого тома (копия тома между разными версиями PostgreSQL ненадёжна). Если включён S3-backup — пункт (2) уже лежит в облаке, достаточно фразы и доступа к bucket.</p>
+<p>Из всего сервера переезжают ровно три вещи: <strong>(1)</strong> файл <code class="kbd">infra/.env</code> — все секреты и настройки развёртывания; <strong>(2)</strong> свежий зашифрованный <strong>backup базы</strong> из тома <code class="kbd">backups</code>; <strong>(3)</strong> знание <strong>парольной фразы</strong> <code class="kbd">BACKUP_GPG_PASSPHRASE</code>, иначе backup не расшифровать. Сам <strong>код тащить не нужно</strong> — он клонируется заново из репозитория. Тома Docker (<code class="kbd">db_data</code>, build-кэш) копировать тоже не нужно и не стоит: базу переносим через backup→restore, а не копированием сырого тома (копия тома между разными версиями PostgreSQL ненадёжна). Для переноса нужен проверенный зашифрованный локальный дамп и парольная фраза.</p>
 </div>
 
 <ol class="steps">
@@ -130765,7 +131660,7 @@ docker compose exec -T db psql -U aemr -d aemr -c 'select now();'   # запис
 <ol class="steps">
 <li><strong>Авто-уборка висячих образов.</strong> Скрипт авто-деплоя пересобирает образ постоянно, поэтому раз в сутки имеет смысл выметать висячие слои. Добавьте в cron от <code class="kbd">root</code> (например, рядом с прочими страховочными задачами): <code class="kbd">docker image prune -f &amp;&amp; docker builder prune -f --filter 'until=168h'</code> — это убирает безымянные образы и кэш старше недели, не задевая активный.</li>
 <li><strong>Следить за свободным местом.</strong> Раз в неделю (или в эксплуатационном календаре, см. <a href="#admin-routine" data-go="admin-routine">«Эксплуатационный календарь»</a>) смотрите <code class="kbd">df -h /</code>. Тревожный порог — заполнение выше 80%: пора чистить, не дожидаясь 100%. Если у вас подключён внешний пинг-мониторинг (<code class="kbd">HEALTHCHECK_URL</code>), помните: он ловит «бот завис», но <strong>не</strong> «диск кончается» — за местом следит человек по календарю.</li>
-<li><strong>Помнить про backup на том же диске.</strong> 8 еженедельных зашифрованных копий (≈400 МБ) и логи приложения (до ~110 МБ, плюс системный журнал) уже учтены в минимальных 20 ГБ из <a href="#admin-requirements" data-go="admin-requirements">«Требований к серверу»</a>. Если включили S3-выгрузку — локальные копии всё равно лежат на диске, их число задаёт <code class="kbd">BACKUP_KEEP_COUNT</code> (по умолчанию 8).</li>
+<li><strong>Помнить про backup на том же диске.</strong> 8 еженедельных зашифрованных копий (≈400 МБ) и логи приложения (до ~110 МБ, плюс системный журнал) уже учтены в минимальных 20 ГБ из <a href="#admin-requirements" data-go="admin-requirements">«Требований к серверу»</a>. Число локальных файлов задает BACKUP_KEEP_COUNT; по умолчанию восемь.</li>
 </ol>
 
 <div class="note">
@@ -130779,7 +131674,7 @@ docker compose exec -T db psql -U aemr -d aemr -c 'select now();'   # запис
 
 <div class="cmd"><code>sudo bash /home/aemr/aemr-bot/scripts/audit_vps.sh</code><span class="cmd__what">выгрузка в /tmp/aemr_audit_&lt;timestamp&gt;.tar.gz</span></div>
 
-<p>Внутри: системные данные, состояние git, <code class="kbd">.env</code> с замаскированными секретами, <code class="kbd">docker compose ps</code>, проверки здоровья, последние логи бота и базы. Скрипт <strong>не</strong> выводит реальные значения <code class="kbd">BOT_TOKEN</code>, <code class="kbd">POSTGRES_PASSWORD</code>, <code class="kbd">BACKUP_GPG_PASSPHRASE</code>, <code class="kbd">WEBHOOK_SECRET</code>, ключей S3, заголовков <code class="kbd">Authorization</code> и параметров <code class="kbd">access_token</code> — все заменены на <code class="kbd">***HIDDEN***</code>, поэтому архив безопасно пересылать.</p>
+<p>Внутри: системные данные, состояние git, <code class="kbd">.env</code> с замаскированными секретами, <code class="kbd">docker compose ps</code>, проверки здоровья, последние логи бота и базы. Скрипт <strong>не</strong> выводит реальные значения <code class="kbd">BOT_TOKEN</code>, <code class="kbd">POSTGRES_PASSWORD</code>, <code class="kbd">BACKUP_GPG_PASSPHRASE</code>, <code class="kbd">WEBHOOK_SECRET</code>, заголовков <code class="kbd">Authorization</code> и параметров <code class="kbd">access_token</code> — все заменены на <code class="kbd">***HIDDEN***</code>, поэтому архив безопасно пересылать.</p>
 
 <h3 id="admin-secrets">Владение секретами и ротация</h3>
 
@@ -130834,7 +131729,7 @@ docker compose exec -T db psql -U aemr -d aemr -c 'select now();'   # запис
 </table>
 </div>
 
-<p>Опциональные секреты (<code class="kbd">HEALTHCHECK_URL</code>, <code class="kbd">PHISHTANK_APP_KEY</code>, <code class="kbd">BACKUP_S3_SECRET_KEY</code>, <code class="kbd">GITHUB_PAT</code>) — раз в полугодие или при компрометации. После любой ротации проверьте: бот стартовал (в логах есть загрузка настроек), <code class="kbd">/livez</code> и <code class="kbd">/readyz</code> отвечают 200, «пульс» в группе пришёл (или дёрните <code class="kbd">/diag</code>).</p>
+<p>Опциональные секреты (<code class="kbd">HEALTHCHECK_URL</code>, <code class="kbd">PHISHTANK_APP_KEY</code>, <code class="kbd"><code class="kbd">GITHUB_PAT</code>) — раз в полугодие или при компрометации. После любой ротации проверьте: бот стартовал (в логах есть загрузка настроек), <code class="kbd">/livez</code> и <code class="kbd">/readyz</code> отвечают 200, «пульс» в группе пришёл (или дёрните <code class="kbd">/diag</code>).</p>
 
 <h3 id="admin-network">Сетевая изоляция (опционально)</h3>
 
@@ -131052,7 +131947,7 @@ sudo ./infra/egress-allowlist.sh disable</code></pre>
 <p>Нет. В режиме long polling бот сам исходящими запросами опрашивает MAX, входящих соединений снаружи нет. Откройте только SSH (22). Порт 8080 слушает на <code class="kbd">127.0.0.1</code> и наружу не виден. Порты 80/443 нужны только в webhook-режиме, который в боевой сборке не используется.</p>
 
 <h4>Где физически лежат backup?</h4>
-<p>В Docker-томе <code class="kbd">backups</code>, на диске сервера по пути <code class="kbd">/var/lib/docker/volumes/aemr-bot_backups/_data/</code>. Том переживает пересборку контейнера. Уносить копии с сервера на отдельный хост — отдельная задача ИТ-отдела (S3 или внешний <code class="kbd">rsync</code>), без неё локальный backup не спасёт от потери всего сервера.</p>
+<p>В Docker-томе <code class="kbd">backups</code>, на диске сервера по пути <code class="kbd">/var/lib/docker/volumes/aemr-bot_backups/_data/</code>. Том переживает пересборку контейнера. Уносить копии с сервера на отдельный хост — отдельная задача ИТ-отдела (ручной вынос зашифрованного дампа на отдельный носитель), без неё локальный backup не спасёт от потери всего сервера.</p>
 
 <h4>Бот ушёл в restart-loop после деплоя — что делать?</h4>
 <p>Если включён авто-деплой, он сам должен был откатиться по health-gate (ищите «DEPLOY FAILED: ROLLBACK» в <code class="kbd">journalctl -t aemr-bot-deploy</code>). Если не откатился — откатитесь вручную (см. <a href="#admin-deploy" data-go="admin-deploy">«Откат при сбое»</a>) и обязательно сделайте revert-коммит в репозитории, иначе авто-деплой через 10 минут снова подтянет сломанный код.</p>
@@ -131505,8 +132400,8 @@ SHA-256: `77373f7b7108f50dceace12a8fef92af53be2d895689d7e68e81d3ef44a2e92c`
 
 ### `docs/site/_kb2/ekspluataciya.html`
 
-Size: `42501` bytes  
-SHA-256: `35c53ff11779f891c66eba481d303276298ad61f395b52ec4f2b4495a75a354c`
+Size: `42464` bytes  
+SHA-256: `f624a5217d10f9a7d8ea75371af712da1d3e48af2a340e153b102b55f795c3e8`
 
 ```html
 <h2 id="ekspluataciya">Эксплуатация: аварии, запуск по ОС, открытые риски</h2>
@@ -131697,7 +132592,7 @@ sudo systemctl enable --now aemr-bot-compose.service</code></pre>
 <p><strong>Высокий приоритет (важно для гос-данных):</strong></p>
 <ul>
 <li><strong>Пригодность копий не проверялась.</strong> Копия, которую ни разу не разворачивали, — это надежда, а не страховка. <em>Частично закрыто в июле 2026:</em> появилась ежемесячная задача <code class="kbd">db-backup-verify</code> — она расшифровывает свежайшую копию потоком и проверяет, что парольная фраза подходит, а файл цел (см. <a href="#admin-backup-drill" data-go="admin-backup-drill">«Раз в квартал: пройти восстановление целиком»</a>). Остаётся за человеком: хотя бы раз развернуть копию в тестовую базу до конца и записать, сколько это заняло — это и будет реальное время простоя при аварии.</li>
-<li><strong>Копии лежат на том же диске, что и база:</strong> потеря сервера уносит и базу, и все восемь копий. <em>Риск принят осознанно:</em> выгрузка в облако (S3) требует денег, которых у округа сейчас нет. Пока это не изменится, единственная защита — регламентный вынос зашифрованного дампа на отдельный носитель силами администратора. Файл уже зашифрован GPG, поэтому его можно выносить и хранить вне сервера без дополнительных мер.</li>
+<li><strong>Копии лежат на том же диске, что и база:</strong> потеря сервера уносит и базу, и все восемь копий. <em>Риск принят осознанно:</em> S3 в рабочем контуре не используется. Пока это не изменится, единственная защита — регламентный вынос зашифрованного дампа на отдельный носитель силами администратора. Файл зашифрован GPG; доступ к носителю, парольной фразе и сроки хранения все равно нужно контролировать.</li>
 <li><strong>Единственность экземпляра.</strong> <em>Закрыто в июле 2026:</em> на старте бот берёт в PostgreSQL advisory-lock по ключу от токена и при неудаче выходит с явной ошибкой — второй процесс на том же токене просто не поднимется (раньше два процесса молча делили апдейты, ломая воронки). Дополнительный предохранитель на стороне деплоя — маркер канонического хоста, см. <a href="#admin-deploy" data-go="admin-deploy">«Выкладка новой версии и откат»</a>.</li>
 <li><strong>Затяжное падение базы не поднимает тревогу:</strong> бот может сутками отвечать ошибками при зелёном <code class="kbd">/livez</code>, а оператор не узнает. Добавить в вотчдог отдельный сигнал по затяжному <code class="kbd">/readyz</code>.</li>
 <li><strong>Внешний «мёртвый человек» выключен</strong> (<code class="kbd">HEALTHCHECK_URL</code> пуст): полную смерть сервера или сети не заметит никто, кроме человека по тишине пульса. Поднять внутренний приёмник пингов на отдельном хосте.</li>
@@ -132032,8 +132927,8 @@ SHA-256: `dfeef491e15c0568184ffedcc57ea08a19f2c4506d49fa1d3eda6c3e79349023`
 
 ### `docs/site/_kb2/operator.html`
 
-Size: `147319` bytes  
-SHA-256: `b7311e2e4c55a9c34adfb15c08811902881040194c6926948bbff3d82da03130`
+Size: `147240` bytes  
+SHA-256: `4d7de20a4543c8a7b621f23ec7cb0ca162822a01030eb7363c0e2494e1d084d8`
 
 ```html
 <h2 id="operator">2. Оператору: как отвечать жителям</h2>
@@ -132689,7 +133584,7 @@ SHA-256: `b7311e2e4c55a9c34adfb15c08811902881040194c6926948bbff3d82da03130`
 
 <p><strong>Скорость и прогресс.</strong> Рассылка идёт со скоростью примерно одно сообщение в секунду. В служебной группе показывается прогресс, он обновляется примерно раз в 5 секунд. Под каждым сообщением жителю есть кнопка «Отписаться от рассылки». Если приложили картинки, они приходят каждому подписчику вместе с текстом.</p>
 
-<p><strong>Кому уходит рассылка.</strong> Только живым подписчикам: тем, у кого включена подписка, есть согласие на рассылку, нет блокировки и данные не удалены. Жители, отозвавшие согласие через <code class="kbd">/forget</code> или удалённые через <code class="kbd">/erase</code>, исключаются автоматически.</p>
+<p><strong>Кому уходит рассылка.</strong> Получателям с действующей подпиской и отдельным согласием на оповещения, без блокировки и удаления данных. Отписка, отзыв согласия и удаление исключают жителя из получателей. Команда <code class="kbd">/forget</code> удаляет данные, а согласие отзывается отдельно в меню «Уйти из бота».</p>
 
 <p><strong>История и восстановление.</strong> Команда <code class="kbd">/broadcast list</code> (или кнопка «История рассылок») показывает последние десять рассылок со статусами и числом доставленных. В карточке рассылки есть «📝 Создать на основе» (повторить с теми же текстом и картинками) и «👥 Не доставлено» (кому не дошло, если есть сбои). Если процесс бота упал в середине рассылки, при следующем запуске зависшие записи помечаются как неуспешные (это делает фоновая задача-«сборщик» зависших черновиков, она же закрывает рассылки в статусе «черновик» старше 30 минут), а рассылку при необходимости запускают заново вручную. Сам факт запуска пишется в журнал как <code class="kbd">broadcast_send</code> — только метаданные (длина текста, число подписчиков), текст рассылки в журнал не дублируется. Также есть мастер «📋 Шаблоны рассылок»: координатор или ИТ сохраняет часто используемые тексты как шаблоны (заголовок + текст), и при запуске <code class="kbd">/broadcast</code> можно подставить шаблон как черновик.</p>
 
@@ -132711,7 +133606,7 @@ SHA-256: `b7311e2e4c55a9c34adfb15c08811902881040194c6926948bbff3d82da03130`
 <div class="cmd"><code>/erase max_user_id=165729385</code><span class="cmd__what">удалить данные жителя по внутреннему номеру</span></div>
 <div class="cmd"><code>/erase phone=+79964240723</code><span class="cmd__what">удалить данные жителя по телефону</span></div>
 
-<p>Что происходит при удалении (упрощённо): свободный текст и вложения по обращениям этого жителя очищаются (адрес, суть, тексты сообщений, файлы), сами обращения переподвешиваются на техническую «анонимную» запись, а строка жителя физически удаляется из базы. Сохраняются только метаданные — номер, дата, статус, тема, поселение, чтобы статистика обращений не «поехала». Эти обезличенные обращения остаются как муниципальные документы. В журнал пишется запись <code class="kbd">erase</code>. То же самое житель может сделать сам командой <code class="kbd">/forget</code> в личке — тогда в журнал запишется <code class="kbd">self_erase</code>. Полный разбор процедуры удаления (что именно очищается, что остаётся, отличие от блокировки) — в разделах <a href="#admin" data-go="admin">«Администратору»</a> и <a href="#security" data-go="security">«Безопасность»</a>.</p>
+<p>При удалении очищаются данные профиля, тексты, адреса, сведения о вложениях, черновики и попытки ответа. Открытые обращения закрываются, оставшиеся записи связываются с технической записью. Остаточные метаданные не являются доказательством юридического обезличивания. Бот очищает рабочую базу и распознанные локальные резервные копии. Сообщения MAX и ранее выданные выгрузки автоматически не удаляются. Уполномоченные сотрудники вручную проверяют и очищают внешние копии с учетом законных оснований хранения, фиксируют результат и оставшиеся действия. Очистка базы не подтверждает уничтожение всех копий. Подробности — в разделах <a href="#admin" data-go="admin">«Администратору»</a> и <a href="#security" data-go="security">«Безопасность»</a>.</p>
 
 <div class="note">
   <p class="note__label">Удаление и блокировка — разные вещи</p>
@@ -132808,7 +133703,7 @@ SHA-256: `b7311e2e4c55a9c34adfb15c08811902881040194c6926948bbff3d82da03130`
 <p>Да. К ответу жителю можно приложить несколько картинок в одном сообщении — уходят все, пока их не больше лимита одного сообщения MAX (параметр <code class="kbd">ATTACHMENTS_PER_RELAY_MESSAGE</code>, по умолчанию 10). Если приложите больше, уйдут только первые из лимита, а бот предупредит, что остальные не ушли и предложит отправить их отдельным ответом на карточку обращения.</p>
 
 <h4>Житель отозвал согласие. Могу ли я ему ответить?</h4>
-<p>Зависит от того, когда подано обращение. Если оно подано <em>до</em> отзыва согласия, можно дать финальный ответ через бот — закон это разрешает, и бот специально присылает в группу повторные карточки таких обращений. Если согласия нет и обращение подано <em>после</em> отзыва, бот доставку запретит и предложит направить жителя в электронную приёмную. Отзыв согласия не делает жителя заблокированным — это разные вещи.</p>
+<p>После отзыва согласия новые обращения и рассылка недоступны; ответы через бот не отправляются, в том числе по обращениям, поданным до отзыва. Дальнейшую работу по старому обращению администрация оценивает отдельно и при наличии самостоятельного законного основания использует официальный канал вне бота. Отзыв не равен немедленному удалению данных и не является блокировкой за злоупотребления.</p>
 
 <h4>Какому обращению какой срок (SLA)? Где «высокий приоритет»?</h4>
 <p>В коде бота один срок — 4 рабочих часа на базовый первый ответ жителю, по нему бот и считает просрочку. Сроки 1/2/4 часа из Регламента (§62) — это срок, за который профильное подразделение возвращает оператору сведения, а не отдельный таймер ответа жителю. «Высокую важность» назначает Куратор ЦУР вручную, а не бот по теме. Никакой автоматической приоритизации «вода/газ/отопление» в боте нет.</p>
@@ -132872,8 +133767,8 @@ SHA-256: `b7311e2e4c55a9c34adfb15c08811902881040194c6926948bbff3d82da03130`
 
 ### `docs/site/_kb2/pravovoe.html`
 
-Size: `21622` bytes  
-SHA-256: `1b3b8166db173d706171add8bd806394a023df02f208676f21576bd7ef327c60`
+Size: `21426` bytes  
+SHA-256: `8cc6d7a4dffada5920bc733579ec868ca7c0c660928346764a37bf6961cda350`
 
 ```html
 <h2 id="pravovoe">Правовые вопросы и персональные данные</h2>
@@ -132891,9 +133786,9 @@ SHA-256: `1b3b8166db173d706171add8bd806394a023df02f208676f21576bd7ef327c60`
 <p>Плановая очистка после отзыва начинает поиск с 29-го дня и выполняется ежечасно, с резервом до предельных 30 дней при отсутствии самостоятельного основания продолжать обработку. Открытые обращения при очистке закрываются. Недоступность процесса не продлевает законный срок. «Удалить данные» и служебная операция <code>/erase</code> очищают рабочую базу сразу: запись жителя, историю согласий, тексты, адреса, сведения о вложениях, черновики и попытки ответов; остаются часть метаданных и аудита. Название технической записи <code>anonymous</code> не доказывает юридического обезличивания.</p>
 <p>Порядок исполнения прав не сводится к одному сроку. Сведения об обработке — десять рабочих дней, с мотивированным продлением максимум на пять; подтвержденные неточности исправляются за семь рабочих дней. Требование прекратить обработку — до десяти рабочих дней с предусмотренными исключениями и возможным мотивированным продлением до пяти. Это срок прекращения, а не универсальный срок уничтожения. При достижении цели и отзыве действуют условия и исключения тридцатидневного срока; неправомерная обработка требует прекращения до трех рабочих дней, а при невозможности обеспечить правомерность — уничтожения до десяти. Невозможность уничтожения в предусмотренных случаях требует блокирования и контроля предела до шести месяцев, а не обычной отсрочки для любого бэкапа (<a href="http://www.kremlin.ru/acts/bank/24154/page/6">статьи 20–21 152-ФЗ</a>).</p>
 <h3 id="pravovoe-kopii">Копии, журналы и восстановление</h3>
-<p>Очистка базы и удаление сообщения MAX — разные операции. Для учтенных отправок резервируется запись копии до вызова API; известные идентификаторы прежних карточек также включаются в очередь удаления. Начатая попытка с неизвестным исходом не повторяется автоматически: статусы <code>uncertain</code> и <code>deleting</code> требуют сверки. Успех удаления сообщения не подтверждает уничтожение скачанного файла, платформенного вложения, цитаты или неизвестной исторической карточки.</p>
+<p>Бот очищает рабочую базу и распознанные локальные резервные копии. Сообщения MAX и прежние выгрузки автоматически не удаляются: сотрудники вручную проверяют основания хранения, очищают внешние копии и фиксируют результат. Очистка базы не доказывает уничтожения всех копий. S3 не используется.</p>
 <p>Независимый журнал в <code>ERASURE_STATE_DIR</code> хранит ключ <code>subject.key</code>, HMAC-метки удаления, очистки содержимого по сроку и ограничения <code>revoke/unsubscribe</code>. Каталог должен быть постоянным и защищенным; метки не являются актом уничтожения. При восстановлении нужны актуальный журнал и исходный ключ вне старого дампа. До подключения MAX, экспорта и новых копий выполняют <code>scripts/replay_erasure_tombstones.py</code> на изолированной восстановленной базе с явно проверенным <code>DATABASE_URL</code>. Полнота истории до внедрения журнала проверяется отдельно; отсутствие достоверной сверки не позволяет выпускать восстановленную базу.</p>
-<p>Локальная ротация хранит число файлов по времени изменения: восемь успешных еженедельных копий — приблизительно два месяца, но при простое возраст не ограничивается этим сроком. Новый контур удаления очищает распознанные локальные дампы и текущие объекты активного S3; незавершенная очистка блокирует новые снимки. Версии объектов, блокировки хранения, прежние хранилища и снимки инфраструктуры требуют отдельной проверки. Пустой <code>BACKUP_LOCAL_DIR</code> означает штатно отключенное копирование.</p>
+<p>Локальная ротация хранит последние файлы по времени изменения; восемь файлов не гарантируют двухмесячный возраст при простое. Бот очищает рабочую базу и распознанные локальные резервные копии. Сообщения MAX и прежние выгрузки автоматически не удаляются: сотрудники вручную проверяют основания хранения, очищают внешние копии и фиксируют результат. Очистка базы не доказывает уничтожения всех копий. S3 не используется. Незавершенная очистка локальных дампов блокирует новые снимки. Пустой <code class="kbd">BACKUP_LOCAL_DIR</code> означает штатно отключенное копирование.</p>
 <p>Правила, ответственные и пределы описаны в <code>docs/Инструкция_ПДн_удаление_восстановление.md</code> и <code>docs/ПОРЯДОК_УДАЛЕНИЯ_ДАННЫХ.md</code>. Локальная очистка известных значений в <code>bot.log*</code> не очищает автоматически journald, внешние журналы и произвольные чувствительные фрагменты. Для автоматизированной обработки нужны акт и выгрузка журнала с обязательными реквизитами, хранящиеся три года; запись <code>erase</code> не заменяет комплект (<a href="https://pravo.gov.ru/proxy/ips/?docbody=&amp;nd=603552320">приказ РКН № 179</a>).</p>
 <h3 id="pravovoe-sroki-pyatiletie">Пятилетний горизонт и состав данных</h3>
 <p>Пять лет — выбранный владельцем рабочий горизонт учета и оценки мер. В коде отсчет идет от закрытия, при его отсутствии — от ответа, иначе — от подачи; позднейшее начало периода при возобновлении, принятие нового обращения в работу и переписка сдвигают очистку. Принятие в работу хранится отдельной отметкой и не переносит начало SLA первого ответа; старое шестилетнее обращение, возобновленное сегодня, не очищается по прежней дате подачи. Это не универсальный архивный срок дела и не основание хранить ненужные данные пять лет. Вид документа, номенклатура и специальный срок определяются отдельно; принцип — не дольше, чем требует цель (<a href="http://www.kremlin.ru/acts/bank/24154">статья 5 152-ФЗ</a>).</p>
@@ -132954,8 +133849,8 @@ SHA-256: `1b3b8166db173d706171add8bd806394a023df02f208676f21576bd7ef327c60`
 
 ### `docs/site/_kb2/shemy.html`
 
-Size: `12290` bytes  
-SHA-256: `f1c3ad1fd89d3d476541aaab7000a4d4e62353d059cf22a973fa98ef4e97ff6f`
+Size: `12675` bytes  
+SHA-256: `2aae45de9e6b4f01666d5cc19ea7ac5cc380b2f6de747e669565998808627a1a`
 
 ```html
 <h2 id="shemy">Схемы текущей реализации</h2>
@@ -133022,15 +133917,16 @@ SHA-256: `f1c3ad1fd89d3d476541aaab7000a4d4e62353d059cf22a973fa98ef4e97ff6f`
 <pre class="mermaid">flowchart TD
     A[Запрос удаления] --> B[Внешний HMAC-журнал вне дампа]
     B --> C[Очистка данных БД]
-    B --> D[Учёт известных копий: MAX, exports, dumps, logs]
-    D --> E{Исход удаления}
+    B --> D[Реестр внешних копий: MAX, выгрузки, носители]
+    D --> M[Сотрудник проверяет и очищает вручную]
+    M --> E{Подтвержденный результат}
     E -->|Подтверждён| F[Зафиксированный результат]
     E -->|Неизвестен или недоступен| G[Ручная сверка; нет слепого повтора]
     H[Восстановленная изолированная база] --> I[Повторить удаления и ограничения по внешнему журналу]
     I --> J[Проверка до MAX, exports и backups]
     J --> K[Решение IT об открытии трафика]
 </pre>
-<p>Старая копия БД содержит старые данные, поэтому epoch внутри дампа недостаточен. <code>ERASURE_STATE_DIR</code> и subject.key должны пережить restore. Применяется <code>scripts/replay_erasure_tombstones.py</code> с явно проверенной изолированной DATABASE_URL. Скачанные файлы, неучтённые старые сообщения, journald, версии и блокировки S3 требуют отдельной проверки. Неопределённое удаление не объявляется завершённым; незавершённая сверка распознанных дампов блокирует новые бэкапы.</p>
+<p>Старая копия БД содержит старые данные, поэтому epoch внутри дампа недостаточен. <code>ERASURE_STATE_DIR</code> и subject.key должны пережить restore. Применяется <code>scripts/replay_erasure_tombstones.py --database-env RESTORE_DATABASE_URL --confirm-offline</code> с явно выбранной изолированной базой. Бот не удаляет сообщения MAX и прежние выгрузки автоматически; внешние копии проверяет и очищает сотрудник вручную. Скачанные файлы, неучтённые старые сообщения, journald, внешние снимки и носители требуют отдельной проверки. Неопределённое удаление не объявляется завершённым; незавершённая сверка распознанных дампов блокирует новые бэкапы.</p>
 <h3 id="shemy-source-history">Источники и прежние модели</h3>
 <p>Актуальные факты сверяются по <code>services/queue_panel.py</code>, <code>services/operator_drafts.py</code>, <code>services/operator_reply_attempts.py</code>, <code>services/work_schedule.py</code>, <code>services/data_erasure.py</code>, <code>services/complete_stats.py</code>, регистрациям обработчиков и маршрутам callback. Полный статический инвентарь — <code>docs/audits/IMPLEMENTATION_INVENTORY_2026-10.md</code>.</p>
 <p>Прежние 28 схем и продуктовые выводы относились к состоянию до явных черновиков, общей очереди и нового удаления. Они доступны в <a href="https://github.com/gaben1488/aemr-bot/blob/0d82ef7/docs/site/_kb2/shemy.html">историческом исходнике</a>; утверждения «один пост сразу отправляется», «нет предпросмотра», «ответ 800» и «нет контроля конкурентных ответов» не являются описанием этой ветки. Старые навигационные якоря ниже сохранены для совместимости ссылок.</p>
@@ -133105,8 +134001,8 @@ SHA-256: `f1c3ad1fd89d3d476541aaab7000a4d4e62353d059cf22a973fa98ef4e97ff6f`
 
 ### `docs/site/_kb2/spravochnik.html`
 
-Size: `217689` bytes  
-SHA-256: `079e910effa6383ff8a6037addcfa807952f6836049b7956e97c5d8c83e440ee`
+Size: `217520` bytes  
+SHA-256: `89f2ea1ff8598c2bfc0cffb30fbcd9af45c1f82e0ddbd95035604d5e0f69195c`
 
 ```html
 <h2 id="spravochnik">Справочник: переменные, схема БД, команды, расписание, секреты, карта репозитория, словарь</h2>
@@ -133134,7 +134030,7 @@ SHA-256: `079e910effa6383ff8a6037addcfa807952f6836049b7956e97c5d8c83e440ee`
 <tr><td>Связь с мессенджером MAX</td><td>Токен бота, режим работы (опрос или webhook), адреса и секрет webhook, таймауты и повторы запросов к MAX.</td><td><a href="#rc-bot" data-go="rc-bot">MAX и режим бота</a></td></tr>
 <tr><td>Сроки и лимиты ввода</td><td>Срок ответа по SLA, окно сбора обращения в карточку, потолки длины имени, адреса, текста и ответа, число вложений, защита от потока дополнений.</td><td><a href="#rc-sla" data-go="rc-sla">SLA, лимиты обращения и ответов</a></td></tr>
 <tr><td>Рассылки</td><td>Длина сообщения рассылки, скорость отправки, частота обновления прогресса, срок жизни неоконченного черновика.</td><td><a href="#rc-broadcast" data-go="rc-broadcast">Рассылка</a></td></tr>
-<tr><td>Резервное копирование</td><td>День и час копии, папка и глубина хранения, парольная фраза GPG, таймауты шагов, выгрузка в S3-совместимое хранилище.</td><td><a href="#rc-backup" data-go="rc-backup">Бэкап</a></td></tr>
+<tr><td>Резервное копирование</td><td>День и час копии, папка и глубина хранения, парольная фраза GPG, таймауты шагов, ручной вынос на отдельный носитель.</td><td><a href="#rc-backup" data-go="rc-backup">Бэкап</a></td></tr>
 <tr><td>Проверки живости</td><td>Внутренний пульс и порог «протухания», интервал самопроверки, внешний адрес мониторинга, чувствительность пробы <code class="kbd">/livez</code> к остановке опроса.</td><td><a href="#rc-healthcheck" data-go="rc-healthcheck">Healthcheck и тайминги живости</a></td></tr>
 <tr><td>Журнал, время, логи</td><td>Глубина хранения журнала действий, часовой пояс (по нему считаются рабочие часы и всё расписание), подробность логов.</td><td><a href="#rc-misc" data-go="rc-misc">Аудит, время и логирование</a></td></tr>
 </tbody>
@@ -133423,7 +134319,7 @@ SHA-256: `079e910effa6383ff8a6037addcfa807952f6836049b7956e97c5d8c83e440ee`
 <tr><td><code class="kbd">BACKUP_GPG_PASSPHRASE</code></td><td><code class="kbd">infra/.env</code> + менеджер паролей</td><td>Сгенерировать новую. Старые файлы <code class="kbd">.sql.gpg</code> прежней фразой не откроются — храните обе с пометкой «до/после даты». При компрометации обязательно перешифровать существующие бэкапы или утилизировать старые.</td></tr>
 <tr><td><code class="kbd">WEBHOOK_SECRET</code> (если webhook)</td><td><code class="kbd">infra/.env</code></td><td>Сгенерировать новый (минимум 16 символов), перезапустить бота.</td></tr>
 <tr><td><code class="kbd">GITHUB_PAT</code> (если включена синхронизация)</td><td><code class="kbd">infra/.env</code> + менеджер паролей</td><td>В настройках GitHub отозвать старый и создать новый fine-grained токен (права Contents + Pull requests на репозиторий), обновить <code class="kbd">.env</code>.</td></tr>
-<tr><td><code class="kbd">BACKUP_S3_*</code> (опционально)</td><td><code class="kbd">infra/.env</code></td><td>Через панель управления вашего S3-провайдера.</td></tr>
+
 <tr><td><code class="kbd">PHISHTANK_APP_KEY</code> (если активирован)</td><td><code class="kbd">infra/.env</code></td><td>По требованию провайдера PhishTank.</td></tr>
 <tr><td>SSH-доступ к серверу</td><td><code class="kbd">~/.ssh/authorized_keys</code></td><td>Добавить новый ключ, проверить вход, удалить старый.</td></tr>
 <tr><td>Учётка <code class="kbd">max.ru/business</code></td><td>У ответственного администратора организации</td><td>Через стандартный порядок портала MAX.</td></tr>
@@ -133532,7 +134428,7 @@ SHA-256: `079e910effa6383ff8a6037addcfa807952f6836049b7956e97c5d8c83e440ee`
 <tbody>
 <tr><td><code class="kbd">cron.py</code></td><td>Сборка планировщика (все cron-задачи: пульс, отчёты, бэкап, SLA, ретенция).</td></tr>
 <tr><td><code class="kbd">cron_registry.py</code></td><td>Машинно-читаемый список имён задач для anti-drift теста синхронизации с документацией.</td></tr>
-<tr><td><code class="kbd">db_backup.py</code></td><td>pg_dump + GPG + локальный том + опциональный S3.</td></tr>
+<tr><td><code class="kbd">db_backup.py</code></td><td>pg_dump + GPG + локальный том; внешний носитель обслуживается вручную.</td></tr>
 <tr><td><code class="kbd">calendar_ru.py</code></td><td>Производственный календарь РФ из <code class="kbd">seed/holidays.json</code> (подавление напоминаний в праздники).</td></tr>
 <tr><td><code class="kbd">appeals.py</code></td><td>CRUD по обращениям, поиск, статусы, история.</td></tr>
 <tr><td><code class="kbd">users.py</code></td><td>CRUD по жителям, нормализация телефона, удаление ПДн, аудит.</td></tr>
@@ -133774,8 +134670,8 @@ docker compose exec db psql -U aemr -d aemr -c \
 
 ### `docs/site/_kb2/voprosy.html`
 
-Size: `281480` bytes  
-SHA-256: `5005882ea2e514b9e259078a0d099350310a52ef3adc2dfe8091e1f47ac95801`
+Size: `280528` bytes  
+SHA-256: `aac7cf44d5ae86ac436985a50d1d7c44c54c24cae691c8469b28090234b1ab7c`
 
 ```html
 <h2 id="voprosy">Частые вопросы и сложности</h2>
@@ -133979,11 +134875,7 @@ SHA-256: `5005882ea2e514b9e259078a0d099350310a52ef3adc2dfe8091e1f47ac95801`
         <td>🔕 Не хочу получать рассылку</td>
         <td>Не трогаются. Подавать новые можно по-прежнему.</td>
       </tr>
-      <tr>
-        <td>Хочу уйти, но дождаться ответа по открытому вопросу</td>
-        <td>👋 Хочу попрощаться (отзыв согласия)</td>
-        <td>По открытым оператор успеет ответить, потом они закроются. Через 30 дней без активности данные обезличатся.</td>
-      </tr>
+      <tr><td>Хочу прекратить обработку по согласию</td><td>«Отозвать согласие»</td><td>Новые обращения, рассылка и ответы через бот прекращаются. Дальнейшую работу по старому обращению администрация оценивает отдельно; при наличии основания использует официальный канал вне бота.</td></tr>
       <tr>
         <td>Хочу, чтобы бот забыл меня прямо сейчас</td>
         <td>🗑 Стереть данные обо мне</td>
@@ -134349,7 +135241,7 @@ SHA-256: `5005882ea2e514b9e259078a0d099350310a52ef3adc2dfe8091e1f47ac95801`
 
 <h4>Сервер выключился в воскресенье ночью — backup не сделался. это критично?</h4>
 
-<p>Разовый пропуск — да, наверстать его нельзя: расписание живёт в памяти процесса, и пропущенный еженедельный backup на следующее воскресенье <strong>не</strong> «догонится» (это не то же самое, что короткий пропуск пульса на 30–90 секунд при пересборке — те покрывает окно прощения 120 секунд). Поэтому железное правило: <strong>перед любой опасной операцией</strong> (миграция, выкладка, апгрейд, перезагрузка) снимайте <code class="kbd">/backup</code> руками из служебной группы, не надейтесь на воскресный автоматический. И помните про более крупный риск: backup лежит <strong>на том же диске</strong>, что и база. Сгорит сервер — потеряете и базу, и копии разом. Сейчас offsite-копии нет (это документированный риск): закрывается включением <code class="kbd">BACKUP_S3_*</code> или внешним <code class="kbd">rsync</code>/<code class="kbd">scp</code> по cron на отдельный хост.</p>
+<p>Локальные копии не защищают от потери всего сервера. S3 не используется; сотрудник организует ручной вынос зашифрованного дампа на отдельный носитель и проверку восстановления. Парольная фраза хранится отдельно и защищенно.</p>
 
 <h4>Потерял GPG-фразу от backup. как восстановить?</h4>
 
@@ -134374,7 +135266,7 @@ SHA-256: `5005882ea2e514b9e259078a0d099350310a52ef3adc2dfe8091e1f47ac95801`
 
 <ol class="steps">
 <li><strong>Файл <code class="kbd">infra/.env</code></strong> — в нём все секреты и параметры развёртывания. Без него бот не поднять, а пароль базы из backup не достать.</li>
-<li><strong>Свежий зашифрованный backup</strong> базы (или доступ к S3, если включена выгрузка).</li>
+<li><strong>Свежий зашифрованный backup</strong> базы.</li>
 <li><strong>Знание GPG-фразы</strong> — иначе backup из пункта 2 не расшифровать.</li>
 </ol>
 
@@ -134616,7 +135508,7 @@ SHA-256: `5005882ea2e514b9e259078a0d099350310a52ef3adc2dfe8091e1f47ac95801`
 
 <h4>Как безопасно вывести бота из эксплуатации, когда он больше не нужен?</h4>
 
-<p>Технический регламент гашения есть в разделе <a href="#security-decommission" data-go="security">«Вывод бота из эксплуатации»</a>. Порядок: финальный экспорт (если юрист решит, что он нужен) → уничтожение базы → уничтожение <strong>всех</strong> резервных копий с актом → отзыв токена бота в MAX → удаление секретов с сервера. Тонкость, которую легко упустить: «всех копий» — это и локальные на сервере, и выгруженные в S3; копия, забытая в облачном хранилище, сводит на нет уничтожение базы. И сам <em>порядок уничтожения копий с персональными данными при закрытии</em> юридически фиксирует юрист (это пункт его чек-листа) — техника гасит, а правовое основание и акт оформляет он. Decommission без акта об уничтожении копий — это незакрытый хвост по 152-ФЗ.</p>
+<p>Технический регламент гашения есть в разделе <a href="#security-decommission" data-go="security">«Вывод бота из эксплуатации»</a>. Порядок: финальный экспорт (если юрист решит, что он нужен) → уничтожение базы → уничтожение <strong>всех</strong> резервных копий с актом → отзыв токена бота в MAX → удаление секретов с сервера. Тонкость, которую легко упустить: «всех копий» — это и локальные на сервере, и вынесенные сотрудниками на отдельные носители; копия, забытая в облачном хранилище, сводит на нет уничтожение базы. И сам <em>порядок уничтожения копий с персональными данными при закрытии</em> юридически фиксирует юрист (это пункт его чек-листа) — техника гасит, а правовое основание и акт оформляет он. Decommission без акта об уничтожении копий — это незакрытый хвост по 152-ФЗ.</p>
 
 <h4>Что проверить при приёмке системы именно с точки зрения ИБ?</h4>
 
@@ -134918,8 +135810,8 @@ SHA-256: `5005882ea2e514b9e259078a0d099350310a52ef3adc2dfe8091e1f47ac95801`
 
 ### `docs/site/_kb2/zhitel.html`
 
-Size: `80813` bytes  
-SHA-256: `b7a9fa9c77f90348288acdde8e57e285d0adf914cc937b6708daae5a701ffdd9`
+Size: `80777` bytes  
+SHA-256: `61ce1ce170cdbfc2a0fbefd92520816bc0a972d033f4884302327c136cda689a`
 
 ```html
 <h2 id="zhitel">Жителю: как пользоваться ботом</h2>
@@ -135479,7 +136371,7 @@ SHA-256: `b7a9fa9c77f90348288acdde8e57e285d0adf914cc937b6708daae5a701ffdd9`
 
 <div class="note note--caution">
   <p class="note__label">Как удаляются копии</p>
-  <p>Команда очищает ваши данные в рабочей базе. Известные сообщения бота в MAX ставятся в очередь удаления с проверкой результата; запускается очистка распознанных резервных копий. Это не подтверждает мгновенное удаление всей переписки: ваши сообщения, скачанные файлы, неизвестные старые копии и хранение платформой требуют отдельной проверки. Администрация проверяет незавершенные действия и другие копии отдельно. Отзыв или удаление в боте не лишают вас права обратиться в Администрацию через официальные каналы.</p>
+  <p>Бот очищает рабочую базу и распознанные локальные резервные копии. Сообщения MAX и ранее выданные выгрузки автоматически не удаляются. Сотрудники вручную проверяют основания хранения, очищают внешние копии и фиксируют результат. Очистка базы не подтверждает уничтожение всех копий. Отзыв или удаление не лишают вас права обратиться в администрацию через официальные каналы.</p>
 </div>
 
 <div class="note">
@@ -135551,11 +136443,7 @@ SHA-256: `b7a9fa9c77f90348288acdde8e57e285d0adf914cc937b6708daae5a701ffdd9`
   <li><strong>🔕 Не хочу получать рассылку.</strong> Отключает только
     оповещения. Согласие на данные и история обращений остаются, подавать
     обращения вы по-прежнему сможете.</li>
-  <li><strong>👋 Хочу попрощаться, но дождаться ответа на обращение.</strong>
-    Отзывает согласие. Новые обращения после этого не принимаются. Если у вас
-    есть открытое обращение, оператор даст по нему финальный ответ через бот, и
-    после этого оно закроется. Через 30 дней без активности данные обезличатся
-    автоматически.</li>
+  <li><strong>«Отозвать согласие».</strong> После отзыва недоступны новые обращения, рассылка и ответы через бот, включая ранее поданные обращения. Работу по старому обращению администрация оценивает отдельно; при наличии законного основания использует официальный канал вне бота. Отзыв не равен немедленному удалению данных и не является блокировкой за злоупотребления.</li>
   <li><strong>🗑 Стереть данные обо мне прямо сейчас.</strong> Немедленно
     удаляет имя и телефон, открытые обращения закрываются без ответа, история
     перестаёт показываться. При следующем заходе бот вас не узнает, как нового
@@ -135782,12 +136670,7 @@ SHA-256: `b7a9fa9c77f90348288acdde8e57e285d0adf914cc937b6708daae5a701ffdd9`
 возможность писать новые остаются без изменений.</p>
 
 <h4>Чем отличается «отозвать согласие» от «удалить данные»?</h4>
-<p>Отзыв согласия (вариант «👋 Хочу попрощаться») — это вежливое прощание: новые
-обращения больше не принимаются, но по уже открытым оператор успеет ответить, и
-только через 30 дней без активности данные обезличатся. Удаление (вариант «🗑
-Стереть данные сейчас») — это немедленно: имя и телефон стираются сразу, открытые
-обращения закрываются без ответа. Если ждёте ответ по открытому вопросу,
-выбирайте отзыв, а не удаление.</p>
+<p>После отзыва недоступны новые обращения, рассылка и ответы через бот, включая ранее поданные обращения. Работу по старому обращению администрация оценивает отдельно; при наличии законного основания использует официальный канал вне бота. Отзыв не равен немедленному удалению данных и не является блокировкой за злоупотребления. «Удалить данные» запускает немедленную очистку рабочей базы и закрывает открытые обращения без ответа. Внешние копии сотрудники проверяют и очищают вручную.</p>
 
 <h4>Если я удалю данные, исчезнет ли переписка в MAX?</h4>
 <p>Нет. Удаляются ваши данные из базы бота. Сообщения, которые уже отправлены в
@@ -136122,8 +137005,8 @@ build; для обновлённого lock результат соответс�
 
 ### `docs/Инструкция_ПДн_удаление_восстановление.md`
 
-Size: `21255` bytes  
-SHA-256: `4f680a8868b4c67cdc66b4deb429f8b1e6efc1db7bb3808179badc18dc69a55e`
+Size: `21190` bytes  
+SHA-256: `bce64a51b630b2df835320916c8f36a26e090933d4cc268cf54c1d3d7c9d9cfe`
 
 ```markdown
 # Проект внутреннего порядка: сроки, удаление и восстановление
@@ -136161,14 +137044,14 @@ SHA-256: `4f680a8868b4c67cdc66b4deb429f8b1e6efc1db7bb3808179badc18dc69a55e`
 
 Исполнитель ведет перечень: рабочая PostgreSQL, технические события и ожидающие обработки события, состояния диалога, черновики, попытки доставки; служебная группа MAX и переписка, вложения на платформе; XLSX, Word, выгрузки жителя, временные файлы и скачанные сотрудниками копии; журналы; локальные дампы, внешние объекты, версии объектов и снимки инфраструктуры.
 
-При новых учтенных отправках программа резервирует запись ResidentDataCopy до вызова MAX и сохраняет подтвержденный идентификатор сообщения. При удалении известные идентификаторы прежних карточек также включаются в очередь. Worker однократно заявляет попытку удаления; неопределенный результат и состояние deleting после аварии требуют сверки, автоматический повтор изменения не выполняется. Учет не восстанавливает неизвестные исторические идентификаторы и не охватывает автоматически неинтегрированные пути. Очистка БД не отзывает уже скачанный файл; успешное удаление сообщения не доказывает уничтожения скачанной копии или платформенного файла. Исполнитель удаляет подконтрольные копии средствами соответствующей системы, дает поручения сотрудникам, запрашивает доступное удаление у поставщика и фиксирует результат или ограничение. При невозможности полного удаления нельзя выдавать акт о полном уничтожении всех копий. По внешнему оператору фиксируются его роль, условия и ответ, без обещания недоступной функции API.
+При новых учтенных отправках программа резервирует запись ResidentDataCopy до вызова MAX и сохраняет подтвержденный идентификатор сообщения. При удалении известные идентификаторы прежних карточек включаются в реестр ручной сверки. Бот не удаляет автоматически сообщения MAX и ранее выданные выгрузки. Сотрудники вручную проверяют и очищают внешние копии, сохраняя неизвестные результаты до проверки. Учет не восстанавливает неизвестные исторические идентификаторы и не охватывает автоматически неинтегрированные пути. Очистка БД не отзывает уже скачанный файл; успешное удаление сообщения не доказывает уничтожения скачанной копии или платформенного файла. Исполнитель удаляет подконтрольные копии средствами соответствующей системы, дает поручения сотрудникам, запрашивает доступное удаление у поставщика и фиксирует результат или ограничение. При невозможности полного удаления нельзя выдавать акт о полном уничтожении всех копий. По внешнему оператору фиксируются его роль, условия и ответ, без обещания недоступной функции API.
 
-`BACKUP_LOCAL_DIR` пуст — резервное копирование выключено. При включении проверить шифрование, доступ, действительное местонахождение, даты и полный перечень хранилищ. `BACKUP_KEEP_COUNT=8` — число локальных файлов по времени изменения; простои не уничтожают старые копии. `rclone copy` загружает объект, но не задает удаление, версии и максимальный возраст внешних объектов. Новый контур очистки после удаления удаляет распознанные локальные aemr-*.sql/.sql.gpg и текущие объекты активного S3; незавершенная очистка блокирует создание новых снимков. Это не доказательство удаления версий, объектов с блокировкой, прежних бакетов и внешних снимков: их отсутствие подтверждается отдельно; состояние manual не закрывать без проверки. Установить и проверить отдельные правила возраста и удаления во всех хранилищах. Резервная копия может содержать удаленные из рабочей БД сведения: ограничить использование, доступ и восстановление до очистки; одно шифрование не равно уничтожению.
+`BACKUP_LOCAL_DIR` пуст — резервное копирование выключено. При включении проверить шифрование, доступ, действительное местонахождение, даты и полный перечень хранилищ. `BACKUP_KEEP_COUNT=8` — число локальных файлов по времени изменения; простои не уничтожают старые копии. S3 и автоматическая выгрузка во внешнее объектное хранилище в рабочем контуре не используются. Очистка после удаления удаляет распознанные локальные aemr-*.sql/.sql.gpg; незавершенная очистка блокирует создание новых снимков. Вынесенные на отдельные носители копии и внешние снимки проверяет и очищает уполномоченный сотрудник вручную: результат фиксируется отдельно и не блокирует новый локальный backup. Установить и проверить отдельные правила возраста и удаления во всех хранилищах. Резервная копия может содержать удаленные из рабочей БД сведения: ограничить использование, доступ и восстановление до очистки; одно шифрование не равно уничтожению.
 
 ## 5. Восстановление без возврата удаленных данных
 
 1. Остановить бот и исходящие доставки. Не запускать его с базой, восстановленной из старого дампа, до сверки. Восстановить копию в изолированную базу без MAX и рассылок.
-2. Получить полную актуальную копию ERASURE_STATE_DIR вместе с исходным subject.key, а не каталог из старого снимка. На остановленном боте, после проверки DATABASE_URL, указывающего именно на изолированную восстановленную базу, выполнить из каталога bot: `uv run python ../scripts/replay_erasure_tombstones.py`. Скрипт использует настроенный DATABASE_URL, поэтому без его предварительной проверки запуск запрещен внутренней процедурой. Проверить применение меток удаления, очистки по сроку и ограничений revoke/unsubscribe; сопоставить их с независимым реестром действий после даты копии, особенно для событий до внедрения журнала; проверить также ожидающие события, тексты и вложения, согласия, черновики, попытки ответов и экспортные файлы. Реестр внутри самого старого дампа не доказывает полноту последующих удалений; одни метки удаления без файлов restriction не подтверждают учет отзывов и отключений подписки.
+2. Получить полную актуальную копию ERASURE_STATE_DIR вместе с исходным subject.key, а не каталог из старого снимка. На остановленном боте, после проверки URL изолированной восстановленной базы выполнить из каталога bot: `uv run python ../scripts/replay_erasure_tombstones.py --database-env RESTORE_DATABASE_URL --confirm-offline`. Переменная RESTORE_DATABASE_URL должна явно указывать на изолированную базу; обычный DATABASE_URL не выбирает цель восстановления. Проверить применение меток удаления, очистки по сроку и ограничений revoke/unsubscribe; сопоставить их с независимым реестром действий после даты копии, особенно для событий до внедрения журнала; проверить также ожидающие события, тексты и вложения, согласия, черновики, попытки ответов и экспортные файлы. Реестр внутри самого старого дампа не доказывает полноту последующих удалений; одни метки удаления без файлов restriction не подтверждают учет отзывов и отключений подписки.
 3. Сверить состав и счетчики, сохраненные метаданные, неактивные подписки и отсутствие удаленных текстов и идентификаторов. Устранить временные копии восстановленной базы и дампы после проверки. Проверка пригодности бэкапа в боте проверяет расшифровку и формат, а не весь этот сценарий.
 4. Не повторять отправки с неизвестным результатом: данные о фактической доставке могли не попасть в копию. Ответственный разбирает их отдельно; обращение без доказанной доставки не объявляется отвеченным.
 5. При отсутствии достоверного независимого реестра выпуск восстановленной базы отложить до сверки; при невозможности сверки использовать чистую базу. В проекте подготовлен механизм replay_restore_tombstones для меток удаления; его полнота зависит от сохранности ключа/каталога, охвата путей и применения до трафика. Он не заменяет проверку исторических пробелов и состояний согласия/подписки.
@@ -136183,8 +137066,8 @@ SHA-256: `4f680a8868b4c67cdc66b4deb429f8b1e6efc1db7bb3808179badc18dc69a55e`
 
 ### `docs/Политика_конфиденциальности_ИС_Чат-бот_MAX.md`
 
-Size: `48805` bytes  
-SHA-256: `782523b940e759e21d48350743b7b21fca3283ccc69db0c5465a7e8fe23e9b6e`
+Size: `48789` bytes  
+SHA-256: `06c23462ec7af9fd1cc64ef4f58d023e8ce3a73eec43fe14e8703864a86b3a6d`
 
 ```markdown
 <!-- МАСТЕР-ТЕКСТ. Из него собираются DOCX и PDF (scripts/build_policy.mjs).
@@ -136363,7 +137246,7 @@ SHA-256: `782523b940e759e21d48350743b7b21fca3283ccc69db0c5465a7e8fe23e9b6e`
 
 1) отзыв согласия – кнопкой «Отозвать согласие» в разделе «Уйти из бота» меню «Настройки и помощь»: направление оповещений прекращается, новые сообщения без нового согласия не принимаются. Ответы через Чат-бот после отзыва не отправляются. Уже поданные сообщения сохраняются до оценки ответственным лицом и очистки; при наличии самостоятельного основания дальнейшая работа организуется через официальный канал вне Чат-бота. Плановая очистка рабочей базы начинается с 29-го дня после отзыва и проверяется ежечасно; сбой сервиса не продлевает законный срок;
 
-2) запрос удаления данных – кнопкой «Удалить данные» в том же разделе: из рабочей базы удаляются запись пользователя, имя, телефон, содержимое сообщений, адреса и сохраненные сведения о вложениях, открытые сообщения закрываются. для известных копий сообщений MAX создается очередь удаления с проверкой результата, запускается очистка распознанных локальных резервных копий и текущих объектов активного внешнего хранилища. Неизвестные исторические идентификаторы, скачанные файлы, копии платформы, версии внешних объектов, снимки и сторонние журналы проверяются отдельно по внутренней инструкции;
+2) запрос удаления данных – кнопкой «Удалить данные» в том же разделе: из рабочей базы удаляются запись пользователя, имя, телефон, содержимое сообщений, адреса и сохраненные сведения о вложениях, открытые обращения закрываются. Бот не удаляет автоматически сообщения в MAX и ранее выданные выгрузки. Уполномоченные сотрудники вручную проверяют и очищают внешние копии с учетом применимых оснований и сроков хранения; результат фиксируется по инструкции. Запускается очистка распознанных локальных резервных копий. Копии платформы, внешние снимки и сторонние журналы проверяются отдельно;
 
 3) отказ от оповещений – кнопкой «Отписаться» в главном меню, под оповещением или в разделе «Уйти из бота»;
 
@@ -136431,8 +137314,8 @@ SHA-256: `782523b940e759e21d48350743b7b21fca3283ccc69db0c5465a7e8fe23e9b6e`
 
 ### `docs/ПОРЯДОК_УДАЛЕНИЯ_ДАННЫХ.md`
 
-Size: `6692` bytes  
-SHA-256: `a66b2ce7231239b227fd2a739ab707f219df08942de15336bb910a592abdd19c`
+Size: `7151` bytes  
+SHA-256: `01b31c9b1b7b451b18befd40d51de00f686992f840860a3349805504989c0905`
 
 ```markdown
 # Порядок исполнения запроса об удалении данных чат-бота
@@ -136440,7 +137323,7 @@ SHA-256: `a66b2ce7231239b227fd2a739ab707f219df08942de15336bb910a592abdd19c`
 Рабочая инструкция для ответственного за персональные данные и ИТ. Она
 описывает действия в разных системах; очистка рабочей базы сама по себе не
 подтверждает уничтожение всех копий. Применение, сроки и наличие самостоятельных
-оснований хранения по конкретному запросу проверяются ответственным лицом.
+оснований хранения по конкретному запросу проверяются ответственным лицом. Бот не удаляет автоматически сообщения в MAX и ранее выданные выгрузки; внешние копии проверяют и очищают уполномоченные сотрудники вручную. S3 в рабочем контуре не используется.
 
 1. Зарегистрировать запрос и время поступления в защищенном журнале запросов.
    Проверить полномочия заявителя доступными способами, не раскрывая данные
@@ -136456,7 +137339,7 @@ SHA-256: `a66b2ce7231239b227fd2a739ab707f219df08942de15336bb910a592abdd19c`
    рабочей базы. Зафиксировать результат, в том числе неудачу. Удаление записей
    пользователя и содержимого обращения не доказывает физическое удаление с
    носителей, из журнала СУБД или внешних систем.
-4. В служебной группе найти известные карточки и файлы по обращению и удалить
+4. Уполномоченному сотруднику вручную в служебной группе найти известные карточки и файлы по обращению и удалить
    содержащие данные сообщения с учетом правил доступа и сохранения иных
    обязанностей. Проверить связанные ответы, цитаты и выгруженные файлы.
    Идентификаторы старых сообщений могут быть неполными: при неполноте
@@ -136480,11 +137363,7 @@ SHA-256: `a66b2ce7231239b227fd2a739ab707f219df08942de15336bb910a592abdd19c`
    лицам еще не обработаны, указать их статус и ответственного; не отмечать
    удаление как полное по одному успеху команды в боте.
 
-При доступе к MAX удаление сообщений выполняется через `DELETE /messages` с
-подтверждением ответа API. Боту необходимы соответствующие права; в личном
-диалоге он может удалять только свои сообщения. Ограничение MAX — не более
-двух удалений в секунду в одном чате. Ответ с неопределенным исходом требует
-проверки до повторного действия. Источник: <https://dev.max.ru/docs-api/methods/DELETE/messages/>.
+Ручная очистка сообщений выполняется сотрудником с необходимыми правами средствами MAX. Неизвестный результат действия сначала проверяется в чате; отсутствие доступа или невозможность очистить копию фиксируются с ответственным и дальнейшим порядком. При необходимости сотрудник обращается к оператору платформы. Наличие технического API удаления не означает, что бот автоматически использует его.
 
 Инструкция не подтверждает, что необходимые права, инвентаризация копий,
 соглашения с поставщиками и процесс очистки резервных копий уже существуют в
@@ -136493,8 +137372,8 @@ SHA-256: `a66b2ce7231239b227fd2a739ab707f219df08942de15336bb910a592abdd19c`
 
 ### `docs/Регламент_AEMR-bot_MAX_v8.md`
 
-Size: `177798` bytes  
-SHA-256: `4d4c6711313d1866aa5273a2fa0634969f9e4df03e34db36094a942d861b6fc2`
+Size: `177793` bytes  
+SHA-256: `206b9ea613d0a8b1cd84b511d8a5600973ac750c9993a817cd8a197cd89009ca`
 
 ```markdown
 Приложение к распоряжению  
@@ -136726,9 +137605,9 @@ SHA-256: `4d4c6711313d1866aa5273a2fa0634969f9e4df03e34db36094a942d861b6fc2`
 90\. Обязанность Администрации как оператора прекратить обработку и уничтожить персональные данные жителя в случае отзыва согласия, если их хранение более не требуется для целей обработки (часть 5 статьи 21 Федерального закона № 152-ФЗ — в срок не более 30 (тридцати) дней с даты поступления отзыва), реализуется двумя способами:  
 1\) самостоятельно жителем — командой /forget в личной переписке с Чат-ботом либо нажатием соответствующей кнопки в сценарии «Уйти из бота»;  
 2\) по запросу субъекта персональных данных, направленному в Администрацию, — специалистом с ролью «it» командой /erase max\_user\_id=\<идентификатор\> или /erase phone=\<номер\>, либо нажатием кнопки «Удалить ПДн» в карточке обращения. Оба формата команды выполняются одним обработчиком.  
-91\. Отзыв согласия выполняется жителем в меню «Настройки и помощь» → «Уйти из бота» → «Отозвать согласие». Новые сообщения без нового согласия не принимаются, подписка отключается, текущий диалог и черновик анкеты очищаются. Автоматическая отправка ответов через Чат-бот после отзыва блокируется. Ранее поданные открытые сообщения сохраняются до правовой оценки и очистки. Самостоятельное законное основание продолжения не настроено и не доказано самим наличием карточки; уполномоченное лицо оценивает конкретный случай и при наличии основания организует дальнейшую работу через официальный канал вне Чат-бота. Кнопка «Удалить данные» в том же меню и служебная операция /erase запускают немедленную очистку рабочей базы: закрывают открытые обращения, удаляют запись жителя, содержимое, адреса, вложения, черновики и попытки ответов; оставшиеся записи обращений связываются с общей технической записью. Для известных учтенных сообщений MAX подготавливается очередь удаления, неопределенные исходы сверяются вручную. Незавершенная очистка известных резервных копий блокирует новые снимки. Исторические копии без идентификатора, скачанные файлы, версии внешних объектов и снимки проверяются отдельно по внутренней инструкции. Отзыв или удаление не являются блокировкой за злоупотребления.
+91\. Отзыв согласия выполняется жителем в меню «Настройки и помощь» → «Уйти из бота» → «Отозвать согласие». Новые сообщения без нового согласия не принимаются, подписка отключается, текущий диалог и черновик анкеты очищаются. Автоматическая отправка ответов через Чат-бот после отзыва блокируется. Ранее поданные открытые сообщения сохраняются до правовой оценки и очистки. Самостоятельное законное основание продолжения не настроено и не доказано самим наличием карточки; уполномоченное лицо оценивает конкретный случай и при наличии основания организует дальнейшую работу через официальный канал вне Чат-бота. Кнопка «Удалить данные» в том же меню и служебная операция /erase запускают немедленную очистку рабочей базы: закрывают открытые обращения, удаляют запись жителя, содержимое, адреса, вложения, черновики и попытки ответов; оставшиеся записи обращений связываются с общей технической записью. Бот не удаляет автоматически сообщения в MAX и ранее выданные выгрузки. Сотрудники вручную проверяют основания хранения, очищают внешние копии и фиксируют результат. Незавершенная очистка известных резервных копий блокирует новые снимки. Исторические копии без идентификатора, скачанные файлы, версии внешних объектов и снимки проверяются отдельно по внутренней инструкции. Отзыв или удаление не являются блокировкой за злоупотребления.
 92\. Поиск данных для плановой очистки после отзыва начинается с 29-го дня и выполняется ежечасно, с резервом до предельных 30 дней при отсутствии самостоятельного основания продолжать обработку. Перед удалением согласие перепроверяется под блокировкой записи. Незакрытые обращения закрываются; заранее направляется предупреждение о приближении срока. Недоступность процесса не продлевает законный срок: специалист с ролью «it» контролирует выполнение и иные копии. Если уничтожение в применимый срок невозможно, ответственный оформляет основание, блокирование и предельный срок по части 6 статьи 21 Федерального закона № 152-ФЗ; это не автоматическая отсрочка для всех резервных копий.
-93\. Пять лет — операционный горизонт для работы с сообщениями и оценки принятых мер, а не автоматически применимый архивный срок дела. Нижняя граница очистки определяется по самой поздней из дат: закрытия (при его отсутствии — ответа, иначе — подачи), начала текущего периода при возобновлении и последнего принятия нового обращения в работу. Более поздняя переписка также сдвигает очистку. Принятие нового обращения в работу сохраняется отдельной отметкой и не переносит начало срока первого ответа. Поэтому обращение, поданное шесть лет назад и возобновленное сегодня, не очищается по старой дате подачи. Задача очищает текст, адрес и сведения о вложениях, сохраняя часть метаданных, и запрашивает очистку известных копий через инвентарь удаления и процедуру резервных копий. Известные сообщения MAX ставятся в очередь; подтвержденный результат и незавершенные действия различаются. Неизвестные исторические идентификаторы, скачанные файлы, хранение платформой MAX, версии S3, внешние снимки и журналы хоста требуют отдельной проверки. Возможность повторной идентификации по остаткам оценивается отдельно. Достижение цели, отзыв и другие основания могут требовать более раннего удаления. Архивный срок и номенклатура определяются по фактическому виду документа и применимому перечню; одной аналогии с обращениями по Федеральному закону № 59-ФЗ недостаточно.
+93\. Пять лет — операционный горизонт для работы с сообщениями и оценки принятых мер, а не автоматически применимый архивный срок дела. Нижняя граница очистки определяется по самой поздней из дат: закрытия (при его отсутствии — ответа, иначе — подачи), начала текущего периода при возобновлении и последнего принятия нового обращения в работу. Более поздняя переписка также сдвигает очистку. Принятие нового обращения в работу сохраняется отдельной отметкой и не переносит начало срока первого ответа. Поэтому обращение, поданное шесть лет назад и возобновленное сегодня, не очищается по старой дате подачи. Задача очищает текст, адрес и сведения о вложениях, сохраняя часть метаданных, и запускает очистку распознанных локальных резервных копий. Сообщения MAX и ранее выданные выгрузки бот автоматически не удаляет. Внешние копии, скачанные файлы, хранение платформой MAX, внешние снимки и журналы хоста уполномоченные сотрудники проверяют и очищают вручную по внутренней инструкции; подтвержденный результат и незавершенные действия фиксируются отдельно. Возможность повторной идентификации по остаткам оценивается отдельно. Достижение цели, отзыв и другие основания могут требовать более раннего удаления. Архивный срок и номенклатура определяются по фактическому виду документа и применимому перечню; одной аналогии с обращениями по Федеральному закону № 59-ФЗ недостаточно.
 94\. При выявлении инцидента, связанного с нарушением безопасности персональных данных и повлекшего неправомерную или случайную передачу (предоставление, распространение, доступ) персональных данных, Администрация уведомляет уполномоченный орган по защите прав субъектов персональных данных (Федеральную службу по надзору в сфере связи, информационных технологий и массовых коммуникаций) в порядке и сроки, установленные частью 3.1 статьи 21 Федерального закона № 152-ФЗ (введена Федеральным законом от 14.07.2022 № 266-ФЗ): в течение 24 (двадцати четырех) часов — о факте инцидента, его предполагаемых причинах, предполагаемом вреде правам субъектов персональных данных и принятых мерах по устранению последствий; в течение 72 (семидесяти двух) часов — о результатах внутреннего расследования и о лицах, действия которых стали причиной инцидента (при их установлении). Автоматическая фиксация такого инцидента в журнале действий Чат-бота не предусмотрена; уведомление готовится ответственными должностными лицами Администрации.
 
 # 11\. Защитные механизмы информационной безопасности
@@ -136828,11 +137707,11 @@ SHA-256: `4d4c6711313d1866aa5273a2fa0634969f9e4df03e34db36094a942d861b6fc2`
 111\. Обе проверки пульса используют общую суточную отметку: при включенном пульсе и вне тихих часов допускается не более одного рутинного уведомления в день; тики :05 и :35 не означают одно или два сообщения каждый час. Сигнал запуска и критические сигналы здоровья учитываются отдельно. Задачи очистки работают независимо от выходных; при старте через 30 секунд выполняются четыре догоняющие проверки ретенции, но бэкап автоматически в них не включен.
 112\. Расчет рабочего времени исключает субботу, воскресенье, обед и праздничные даты из снимка периода; текущие напоминания используют действующее расписание. При отсутствии или повреждении seed/holidays.json исходная загрузка возвращает пустой список праздников с предупреждением: выходными остаются суббота и воскресенье, а не только воскресенье. Некорректная сохраненная настройка не должна молча подменяться другим календарем. Администратор проверяет покрытие календаря и обновляет его до использования новых периодов.
 113\. Дополнительно на уровне операционной системы сервера выполняется внешний контроль (watchdog) состояния Чат-бота посредством служебного сценария, запускаемого средствами планировщика хостовой операционной системы: проверка эндпоинтов /livez и /readyz; при двух последовательных сбоях — попытка перезапуска контейнера Чат-бота; при безуспешности — запись в системный журнал и (при наличии) внешнее уведомление.  
-114\. Локальная ротация резервных копий сохраняет последние BACKUP\_KEEP\_COUNT файлов по времени изменения (по умолчанию восемь). При еженедельном успешном копировании это приблизительно два месяца истории, но не гарантированный максимальный возраст копии: при простое старые копии остаются. Выгрузка во внешнее объектное хранилище выполняет копирование; удаление и версии объектов регулируются отдельной политикой хранения. Внеплановая копия создается специалистом с ролью «it» через /backup. Отсутствие BACKUP\_LOCAL\_DIR означает отключенное резервное копирование.
-115\. При возникновении сбоя еженедельного резервного копирования Чат-бот направляет в служебную группу уведомление с указанием стадии сбоя (снятие дампа базы данных, шифрование, доставка во внешнее хранилище). В случае сбоя на стадии шифрования незашифрованный файл резервной копии, оставшийся на сервере, автоматически удаляется в целях недопущения хранения персональных данных в незашифрованном виде.  
+114\. Локальная ротация резервных копий сохраняет последние BACKUP\_KEEP\_COUNT файлов по времени изменения (по умолчанию восемь). При еженедельном успешном копировании это приблизительно два месяца истории, но не гарантированный максимальный возраст копии: при простое старые копии остаются. S3 и автоматическая выгрузка во внешнее хранилище не используются. Зашифрованные копии сотрудник вручную выносит на отдельный носитель и очищает по установленным основаниям. Внеплановая копия создается специалистом с ролью «it» через /backup. Отсутствие BACKUP\_LOCAL\_DIR означает отключенное резервное копирование.
+115\. При возникновении сбоя еженедельного резервного копирования Чат-бот направляет в служебную группу уведомление с указанием стадии сбоя (снятие дампа базы данных, шифрование, сохранение локального файла). В случае сбоя на стадии шифрования незашифрованный файл резервной копии, оставшийся на сервере, автоматически удаляется в целях недопущения хранения персональных данных в незашифрованном виде.
 116\. Проверка пригодности резервных копий выполняется автоматически: ежемесячно, 1-го числа, последняя резервная копия расшифровывается (что подтверждает правильность парольной фразы и целостность файла) и проверяется на соответствие формату выгрузки базы данных; о результате проверки Чат-бот направляет уведомление в служебную группу (Таблица 3). Пробное восстановление копии в отдельную базу данных в автоматическую проверку не входит и проводится в составе квартальной организационной проверки. Дополнительно не реже одного раза в квартал специалист с ролью «it» проводит организационную проверку полной процедуры восстановления в соответствии с внутренней технической документацией отдела цифрового развития.  
 117\. Восстановление выполняет специалист с ролью «it» по внутренней инструкции обработки и удаления данных. Бот останавливается, данные восстанавливаются в изолированную базу без подключения к MAX. До возобновления приема необходимо применить все удаления, отзывы и отключения подписки, произошедшие после даты копии, по независимому защищенному реестру, проверить сроки хранения, очистить персональные данные в восстановленных событиях, черновиках, попытках ответов и иных копиях. Программа подготавливает независимые HMAC-метки удаления и ограничения отзывов/подписки в ERASURE_STATE_DIR и служебный сценарий replay_erasure_tombstones.py; при восстановлении требуются актуальный каталог вместе с исходным subject.key и явно проверенный DATABASE_URL изолированной базы. Охват всех путей, исторические пробелы и состояния отзывов/подписки проверяются дополнительно; старый дамп и метки удаления сами по себе их полноту не подтверждают. Без достоверных сведений нельзя утверждать, что удаленные данные не восстановились; выпуск восстановленной базы откладывается до сверки ответственным лицом либо выбирается чистая база. Неизвестные исходы отправки не повторяются вслепую. О технических работах и результате сообщают операторам; потерянные между копией и сбоем события не считаются обработанными.
-118\. Плановая ротация секретов Чат-бота (токен бота, пароль базы данных, парольная фраза шифрования резервных копий, при наличии — секрет веб\-перехватчика, реквизиты объектного хранилища, токены доступа к репозиторию, ключи для автоматического развертывания) выполняется специалистом с ролью «it» не реже одного раза в шесть календарных месяцев. Каждый факт ротации фиксируется в журнале эксплуатации отдела цифрового развития. Внеплановая ротация выполняется немедленно при наличии оснований полагать компрометацию (увольнение сотрудника, имевшего доступ к секретам; обнаружение секрета в постороннем канале; компрометация рабочего устройства специалиста с ролью «it»). При ротации парольной фразы шифрования резервных копий прежняя парольная фраза сохраняется в защищенном хранилище паролей до полного выпадения из ротации всех резервных копий, зашифрованных прежней фразой (срок определяется по фактическому наличию копий во всех хранилищах; восемь файлов не гарантируют двухмесячный возраст).
+118\. Плановая ротация секретов Чат-бота (токен бота, пароль базы данных, парольная фраза шифрования резервных копий, при наличии — секрет веб\-перехватчика, токены доступа к репозиторию, ключи для автоматического развертывания) выполняется специалистом с ролью «it» не реже одного раза в шесть календарных месяцев. Каждый факт ротации фиксируется в журнале эксплуатации отдела цифрового развития. Внеплановая ротация выполняется немедленно при наличии оснований полагать компрометацию (увольнение сотрудника, имевшего доступ к секретам; обнаружение секрета в постороннем канале; компрометация рабочего устройства специалиста с ролью «it»). При ротации парольной фразы шифрования резервных копий прежняя парольная фраза сохраняется в защищенном хранилище паролей до полного выпадения из ротации всех резервных копий, зашифрованных прежней фразой (срок определяется по фактическому наличию копий во всех хранилищах; восемь файлов не гарантируют двухмесячный возраст).
 
 # 15\. Изменение настроек и регистрация операторов
 
@@ -136857,7 +137736,7 @@ SHA-256: `4d4c6711313d1866aa5273a2fa0634969f9e4df03e34db36094a942d861b6fc2`
 14\) localities — перечень населенных пунктов Елизовского муниципального округа, не менее 1 (одного) и не более 30 (тридцати), ограничение программное.  
 122\. Дополнительно в Чат-боте предусмотрены 3 (три) служебных параметра управления тихими часами служебных уведомлений (admin\_quiet\_hours\_enabled, admin\_quiet\_hours\_start, admin\_quiet\_hours\_end), настраиваемых специалистом с ролью «it» и не входящих в перечень содержательных ключей, изменяемых операторами.  
 123\. Все изменения настроек фиксируются в журнале действий с указанием специалиста и измененного ключа. Значение настройки в журнал действий не записывается.  
-124\. Изменения значений настраиваемых параметров, определяющих содержательную часть Чат-бота (ссылок, текстов о приеме граждан, контактных сведений, перечней тематик и населенных пунктов), могут быть синхронизированы с репозиторием Чат-бота посредством создания запроса на включение изменений (pull request) через раздел «Настройки бота» панели быстрых действий /op\_help. Синхронизация обеспечивает фиксацию текущих значений настраиваемых параметров в исходных файлах Чат-бота для последующих автоматических развертываний. Параметры commit\_author\_name, commit\_author\_email, welcome\_text, consent\_text, broadcast\_max\_images и служебные параметры тихих часов не синхронизируются с репозиторием. Создание запроса на включение изменений фиксируется в журнале действий с типом действия settings\_pr\_created.  
+124\. Изменения значений настраиваемых параметров, определяющих содержательную часть Чат-бота (ссылок, текстов о приеме граждан, контактных сведений, перечней тематик и населенных пунктов), могут быть синхронизированы с репозиторием Чат-бота посредством создания запроса на включение изменений (pull request) через раздел «Настройки бота» панели быстрых действий /op\_help. Синхронизация обеспечивает фиксацию текущих значений настраиваемых параметров в исходных файлах Чат-бота для последующих обновлений, выполняемых специалистом вручную. Параметры commit\_author\_name, commit\_author\_email, welcome\_text, consent\_text, broadcast\_max\_images и служебные параметры тихих часов не синхронизируются с репозиторием. Создание запроса на включение изменений фиксируется в журнале действий с типом действия settings\_pr\_created.
 125\. Регистрация операторов производится в порядке, установленном разделом 4 настоящего Регламента. Алгоритм регистрации операторов командой /add\_operators предусматривает:  
 1\) добавление будущего оператора в служебную группу;  
 2\) направление будущим оператором в служебную группу команды /whoami для получения идентификатора max\_user\_id;  
@@ -136880,7 +137759,7 @@ SHA-256: `4d4c6711313d1866aa5273a2fa0634969f9e4df03e34db36094a942d861b6fc2`
 
 135\. Изменения и дополнения в настоящий Регламент вносятся распоряжением Администрации Елизовского муниципального округа.  
 136\. Проект изменений готовится начальником отдела по работе с обращениями граждан Администрации совместно со специалистом отдела цифрового развития.  
-137\. Изменения программного кода Чат-бота, прошедшие проверку кода и включенные в основную ветку канонического репозитория, автоматически применяются на серверном оборудовании Чат-бота в течение 10 (десяти) минут после включения. Применение выполняется автоматизированной процедурой с предварительной фиксацией текущей версии, пересборкой компонентов и проверкой работоспособности (эндпоинт /livez). При сбое проверки работоспособности происходит автоматический откат на предыдущую версию с уведомлением в системный журнал. Специалист с ролью «it» контролирует факт успешного применения изменений (сигнал жизни в служебной группе).  
+137\. Изменения программного кода Чат-бота, прошедшие проверку и включенные в основную ветку репозитория, применяет на сервере специалист с ролью «it» вручную. Публикация в репозитории не означает развертывание. До обновления фиксируется текущая версия; после запуска проверяются /livez, /readyz и критические сценарии. При сбое специалист восстанавливает предыдущую версию и фиксирует результат в журнале эксплуатации. Автоматизированный сценарий остается альтернативой по решению владельца; наличие в репозитории не подтверждает его установку.
 138\. Обновление внешних программных зависимостей Чат-бота (в первую очередь — клиента Bot API мессенджера MAX, прочих библиотек) выполняется специалистом с ролью «it» в плановом порядке (не реже одного раза в квартал — проверка наличия новых версий и уведомлений о безопасности) и во внеплановом порядке при выпуске критического обновления безопасности. Процедура включает сверку версии в локальной среде с версией в контейнере, находящемся в эксплуатации, изучение перечня изменений обновляемой библиотеки, подготовку запроса на включение изменений с минимальной дельтой, прохождение всех проверок непрерывной интеграции, ручную проверку критических сценариев и мониторинг работы Чат-бота в течение 24—48 часов после применения. При обнаружении регрессии выполняется откат в порядке, установленном настоящим разделом.  
 139\. Настоящий Регламент пересматривается не реже одного раза в год, а также при существенном изменении программного кода Чат-бота, изменении законодательства Российской Федерации в области персональных данных или обращений граждан, изменении организационной структуры Администрации.
 
@@ -137145,8 +138024,8 @@ SHA-256: `5f5e435cb2c4820b28745357ccc324d7f19f539d54f1568a9950bf3d0aba00ed`
 
 ### `infra/.env.example`
 
-Size: `70545` bytes  
-SHA-256: `50160937909e2d5c49a651e87632a80f12e589e7da3d4351dc9e9eeb85614684`
+Size: `67920` bytes  
+SHA-256: `0a9044678ee467f1dfcc135c380acc0ed0541f1107aa3b0dd8907393ddaf485f`
 
 ```text
 # =====================================================================
@@ -137838,8 +138717,8 @@ HEALTHCHECK_URL=
 #
 # Раз в неделю бот делает полную выгрузку базы PostgreSQL утилитой
 # pg_dump и сохраняет её на диск. Хранится последние N файлов с
-# автоматической ротацией (старые удаляются). Опционально: шифрование
-# и копия в хранилище формата S3 при явной настройке.
+# автоматической ротацией (старые удаляются). Копии шифруются GPG,
+# если явно не разрешено хранение без шифрования. S3 не используется.
 #
 # Расписание: каждое <BACKUP_DAY_OF_WEEK> в <BACKUP_HOUR>:<BACKUP_MINUTE>
 # по часовому поясу TZ (выше).
@@ -137872,33 +138751,22 @@ BACKUP_MINUTE=0
 #                    контейнера.
 #
 #   Пустое значение — штатное отключение встроенного бэкапа без предупреждений.
-#   Выгрузки в S3 при этом также не выполняются. Команда /backup остаётся доступна
+#   Команда /backup остаётся доступна
 #   и объяснит, что нужно настроить для создания копии.
 #
-# BACKUP_KEEP_COUNT — сколько последних файлов хранить. По умолчанию
-#                     8. Восемь еженедельных копий — это примерно
-#                     два месяца истории. Старые файлы удаляются
-#                     автоматически после успешного создания нового.
-#
-#   Когда менять:
-#     • увеличьте до 12–24 — если требования по хранению копий выше
-#       (квартал, полгода);
-#     • уменьшите до 4 — если место на диске ограничено и хватит
-#       месяца истории.
+# BACKUP_KEEP_COUNT — сколько последних файлов хранить, по умолчанию 8.
+# Ротация по количеству не гарантирует возраст: внеплановые копии и сбои
+# меняют интервал. Подбирайте количество по объёму диска и процедуре восстановления.
 
 BACKUP_LOCAL_DIR=
 BACKUP_KEEP_COUNT=8
 
-# BACKUP_PG_DUMP_TIMEOUT_SECONDS / BACKUP_GPG_TIMEOUT_SECONDS /
-# BACKUP_RCLONE_TIMEOUT_SECONDS — потолки времени на шаги бэкапа (дамп БД,
-# шифрование, выгрузка в S3). Если шаг зависает (например, S3-эндпоинт
-# «висит» без ответа), бот убивает процесс по таймауту и шлёт алёрт о
-# сбое — а не висит вечно без новой точки восстановления. По умолчанию:
-# pg_dump 600с, gpg 600с, rclone 300с. Менять обычно не нужно.
+# Потолки времени pg_dump и GPG: зависший процесс завершается по таймауту,
+# ошибка видна сотрудникам. Прежний RCLONE timeout принимается совместимо,
+# но не запускает удалённые операции.
 BACKUP_PG_DUMP_TIMEOUT_SECONDS=600
 BACKUP_GPG_TIMEOUT_SECONDS=600
 BACKUP_RCLONE_TIMEOUT_SECONDS=300
-
 
 # ---------------------------------------------------------------------
 #  Шифрование резервных копий (GPG)
@@ -137946,38 +138814,10 @@ BACKUP_ALLOW_UNENCRYPTED=
 
 
 # ---------------------------------------------------------------------
-#  Копия в облачное хранилище S3 (опционально)
+#  Устаревшие S3-поля
 # ---------------------------------------------------------------------
-#
-# Если заполнены ВСЕ четыре переменные ниже, каждая резервная копия
-# дополнительно загружается в облачное хранилище формата S3 (Amazon
-# S3, Yandex Object Storage, MinIO и подобные). Это страховка на
-# случай выхода из строя сервера, на котором стоит бот.
-#
-# Все четыре поля связаны: если хотя бы одно пустое — загрузка
-# в облако пропускается. Локальная копия при этом продолжает
-# создаваться (если задан BACKUP_LOCAL_DIR).
-#
-# BACKUP_S3_ENDPOINT  — адрес сервера хранилища.
-#                       Пример Yandex: https://storage.yandexcloud.net
-#                       Пример Amazon: https://s3.amazonaws.com
-#                       Пример MinIO:  https://minio.example.com
-#
-# BACKUP_S3_BUCKET    — имя «корзины» (контейнера в хранилище),
-#                       куда складывать файлы. Корзина должна быть
-#                       создана заранее в панели управления вашим
-#                       хранилищем.
-#
-# BACKUP_S3_ACCESS_KEY — публичная часть ключа доступа к хранилищу
-#                        (видна в панели управления).
-#
-# BACKUP_S3_SECRET_KEY — секретная часть ключа. Видна один раз
-#                        при создании ключа, потом — никогда.
-#                        Сохраните в менеджер паролей.
-#
-# Что произойдёт, если оставить пустыми: загрузка в облако не
-# делается. Хранятся только локальные копии. Для самостоятельного
-# сервера без облака это нормально.
+# Владелец не использует S3. Поля оставлены для чтения старого .env;
+# значения не включают загрузку или удаление объектов. Новые секреты сюда не нужны.
 
 BACKUP_S3_ENDPOINT=
 BACKUP_S3_BUCKET=
@@ -138315,8 +139155,8 @@ services:
 
 ### `infra/docker-compose.yml`
 
-Size: `7920` bytes  
-SHA-256: `48b279999930a253c0d08e5c034ccfb0fb4dbfe3784b228f6604d3047af4f630`
+Size: `7912` bytes  
+SHA-256: `630f458fed3dcd33406beb266e78a368870d4e56b2317002cca9e5e5a30958c5`
 
 ```yaml
 # Имя compose-проекта закреплено здесь, а не вставляется sed'ом в
@@ -138424,7 +139264,7 @@ services:
     # - tmpfs /tmp: runtime tempfiles only (gpg homedir for encrypted backups,
     #   transient files). Deps are hash-verified from uv.lock at build, not here.
     # - mem_limit: a runaway broadcast or pathological FSM can't OOM the host.
-    # - pids_limit: cap fork-bombs from any subprocess (pg_dump, gpg, rclone).
+    # - pids_limit: cap fork-bombs from any subprocess (pg_dump, gpg).
     # - cap_drop ALL + no-new-privileges: no need for any Linux capability.
     read_only: true
     tmpfs:
@@ -138463,8 +139303,8 @@ volumes:
 
 ### `infra/Dockerfile`
 
-Size: `4992` bytes  
-SHA-256: `28b574fa67b2949d8d53164a30ef1e5d7475ba59b8e6b06c1802d62a1180d780`
+Size: `4577` bytes  
+SHA-256: `d82533b2ef57ac0aaf2fc9ecccc389b2a9715d180b2b3e4eded0bbc96f051781`
 
 ```dockerfile
 FROM python:3.12-slim@sha256:4386a385d81dba9f72ed72a6fe4237755d7f5440c84b417650f38336bbc43117
@@ -138473,7 +139313,7 @@ FROM python:3.12-slim@sha256:4386a385d81dba9f72ed72a6fe4237755d7f5440c84b417650f
 # requirements.txt с SHA256-хешами. Берём пиннутый бинарь из официального
 # образа astral-sh/uv (digest, не мутабельный тег) вместо
 # `curl astral.sh/uv/install.sh | sh`: компромет домена иначе исполнялся бы
-# в build-контексте. Пиннутый uv доступен и для служебных команд в образе.
+# в build-контексте. После установки зависимостей uv удаляется из runtime.
 COPY --from=ghcr.io/astral-sh/uv:0.11.12@sha256:3a59a3cdd5f7c217faa36e32dbc7fddbb0412889c2a0a5229f6d790e5a019dd7 /uv /usr/local/bin/uv
 
 ENV PYTHONUNBUFFERED=1 \
@@ -138482,12 +139322,8 @@ ENV PYTHONUNBUFFERED=1 \
     TZ=Asia/Kamchatka
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        postgresql-client gnupg ca-certificates curl tzdata unzip rclone \
+        postgresql-client gnupg ca-certificates curl tzdata unzip \
     && rm -rf /var/lib/apt/lists/*
-# rclone берём из debian apt вместо `curl rclone.org/install.sh | bash`:
-# любой будущий компромет домена rclone.org исполнялся бы как root в
-# образе. Версия из apt чуть старше (1.60 на bookworm), но достаточна
-# для S3-аплоада бэкапов; функциональность не урезана.
 
 # Non-root user. Fixed UID/GID so the named volume `backups` keeps the
 # same ownership across rebuilds and on hosts where bind-mounts are used.
@@ -138599,8 +139435,8 @@ server {
 
 ### `README.md`
 
-Size: `48563` bytes  
-SHA-256: `eea9e1746f16ec83ba90c90ea2e2c9e31c9601f5c9eb6696864cebc69f021331`
+Size: `48562` bytes  
+SHA-256: `1e8b768b2ed08d66ceabbfdd63639dc95e9fe6df97b3d965d88138d535d418d3`
 
 ```markdown
 # Администрация ЕМО. Бот обратной связи
@@ -138792,7 +139628,7 @@ DATABASE_URL=postgresql+asyncpg://aemr:<пароль>@localhost:5432/aemr pytest
 
 **Рассылки:** `BROADCAST_MAX_CHARS=1000`, `BROADCAST_RATE_LIMIT_PER_SEC=1.0` (намеренно ниже заявленного сервером MAX потолка 2 req/s, чтобы рассылка не конкурировала с ответами), `BROADCAST_WIZARD_TTL_SEC=300`.
 
-**Резервные копии:** `BACKUP_DAY_OF_WEEK=sun`, `BACKUP_HOUR=3`, `BACKUP_KEEP_COUNT=8` (около двух месяцев), `BACKUP_GPG_PASSPHRASE` (минимум 12 символов — без него и без явного `BACKUP_ALLOW_UNENCRYPTED=1` копия не создаётся), опциональный набор `BACKUP_S3_*`.
+**Резервные копии:** `BACKUP_DAY_OF_WEEK=sun`, `BACKUP_HOUR=3`, `BACKUP_KEEP_COUNT=8` (ротация по количеству), `BACKUP_GPG_PASSPHRASE` (минимум 12 символов — без него и без явного `BACKUP_ALLOW_UNENCRYPTED=1` копия не создаётся). S3 не используется; прежние ключи `BACKUP_S3_*` принимаются совместимо, но не выполняют операций.
 
 **Журнал и опрос:** `AUDIT_LOG_RETENTION_DAYS=365` (диапазон 30–3650), `POLLING_TIMEOUT_SECONDS=20`, `MAX_API_TIMEOUT_SECONDS=30`, `MAX_API_RETRIES=0` (значения снижены относительно дефолтов maxapi, чтобы один зависший запрос не «вешал» бота на минуты).
 
@@ -138843,9 +139679,9 @@ CI (`.github/workflows/ci.yml`, все actions закреплены по commit-
 
 ## Резервное копирование и эксплуатация
 
-При заданном `BACKUP_LOCAL_DIR` раз в неделю (по умолчанию воскресенье, 03:00 по Камчатке) бот делает `pg_dump`, шифрует его GPG и складывает в named-volume `backups`; при заполнении всех `BACKUP_S3_*` копия дополнительно уходит в S3-совместимое хранилище. Локально хранятся последние 8 файлов с ротацией по количеству; это не гарантирует предельный возраст или удаление версий S3. Пустой `BACKUP_LOCAL_DIR` тихо отключает копирование. Каждый шаг ограничен таймаутом, при сбое в служебную группу уходит алёрт с указанием стадии. Внеплановую копию снимает ИТ-специалист командой `/backup`.
+При заданном `BACKUP_LOCAL_DIR` раз в неделю (по умолчанию воскресенье, 03:00 по Камчатке) бот делает `pg_dump`, шифрует его GPG и складывает в named-volume `backups`. Локально хранятся последние 8 файлов с ротацией по количеству; это не гарантирует предельный возраст копии. Пустой `BACKUP_LOCAL_DIR` тихо отключает копирование. Каждый шаг ограничен таймаутом, при сбое в служебную группу уходит алёрт с указанием стадии. Внеплановую копию снимает ИТ-специалист командой `/backup`.
 
-Удаление использует независимый `ERASURE_STATE_DIR` вне дампов, очередь известных сообщений MAX и очистку распознанных локальных дампов/активных объектов S3. Неизвестные исходы, старые неучтённые копии, journald, скачанные файлы и версии/блокировки S3 требуют ручной сверки; незавершённая очистка блокирует создание новых дампов. До возврата восстановленной базы в работу IT применяет `scripts/replay_erasure_tombstones.py` на изолированной базе. [Порядок удаления и восстановления](docs/Инструкция_ПДн_удаление_восстановление.md) описывает границы автоматизации.
+Удаление из рабочей базы использует независимый `ERASURE_STATE_DIR` вне дампов и очистку распознанных локальных дампов. Сообщения MAX и ранее выданные выгрузки бот автоматически не удаляет; внешние копии и журналы хоста обрабатывают сотрудники вручную. Незавершённая локальная очистка блокирует новые дампы; старые статусы внешних копий её не блокируют. До возврата восстановленной базы в работу ИТ применяет `scripts/replay_erasure_tombstones.py` на изолированной базе. [Порядок удаления и восстановления](docs/Инструкция_ПДн_удаление_восстановление.md) описывает границы автоматизации.
 
 Перед первым запуском этой версии на существующей базе ИТ выполняет [однократную инициализацию независимого журнала](docs/DATA_ERASURE_OPERATIONS.md). При потерянном журнале после восстановления создавать новый ключ нельзя: запуск закрывается до сверки. Оба служебных скрипта включены в образ в `/app/scripts/`. Это отдельный ручной шаг обновления VPS; merge PR его не выполняет.
 
@@ -139362,6 +140198,174 @@ def build() -> None:
 
 if __name__ == "__main__":
     build()
+```
+
+### `scripts/check_staged_size.py`
+
+Size: `5089` bytes  
+SHA-256: `7dca031724bc01d782d150c22f6ba9f2ca063478fd32ee5c607474b6457734a7`
+
+```python
+#!/usr/bin/env python3
+"""Check staged text blobs: 20,000 bytes approximates 5,000 tokens at 4 bytes/token.
+
+This is a byte policy, not a tokenizer. No working-tree file content is read.
+An optional reviewed JSON baseline maps existing legacy paths to byte ceilings.
+Run from any directory inside the repository; a missing/invalid baseline fails closed.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import PurePosixPath
+
+LIMIT = 20_000
+# Exact generated/lock outputs; hand-authored docs, tests and source remain checked.
+EXEMPT_PATHS = frozenset(
+    {
+        "aemr-bot-index.md",
+        "docs/site/index.html",
+        "bot/uv.lock",
+        # Generated by scripts/inventory_implementation.py; audit prose stays checked.
+        "docs/audits/IMPLEMENTATION_INVENTORY_2026-10.md",
+    }
+)
+BINARY_SUFFIXES = frozenset(
+    {
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".webp",
+        ".ico",
+        ".pdf",
+        ".docx",
+        ".xlsx",
+        ".zip",
+        ".gz",
+        ".bz2",
+        ".xz",
+        ".7z",
+        ".woff",
+        ".woff2",
+        ".ttf",
+        ".mp3",
+        ".mp4",
+        ".ogg",
+        ".wav",
+    }
+)
+
+
+def git(*args: str) -> bytes:
+    return subprocess.run(["git", *args], check=True, capture_output=True).stdout
+
+
+def read_baseline(path: str | None, tree: str = "") -> dict[str, int]:
+    if path is None:
+        return {}
+    try:
+        value = json.loads(git("show", f"{tree}:{path}"))
+    except (subprocess.CalledProcessError, ValueError) as exc:
+        raise ValueError(f"Cannot read staged baseline {path!r}") from exc
+    if not isinstance(value, dict) or any(
+        not isinstance(key, str) or type(size) is not int or size < 0
+        for key, size in value.items()
+    ):
+        raise ValueError(
+            "Baseline must be a JSON object mapping paths to nonnegative bytes"
+        )
+    return value
+
+
+def ceiling(path: str, baseline: dict[str, int], previous_ref: str) -> int:
+    allowed = baseline.get(path, LIMIT)
+    if allowed <= LIMIT:
+        return LIMIT
+    # New paths (including renamed destinations) never inherit a legacy exception.
+    try:
+        previous = int(git("cat-file", "-s", f"{previous_ref}:{path}"))
+    except subprocess.CalledProcessError:
+        return LIMIT
+    if previous <= LIMIT:
+        return LIMIT
+    return min(previous, allowed)
+
+
+def violations(baseline: dict[str, int], base_ref: str | None = None) -> list[str]:
+    comparison = (base_ref, "HEAD") if base_ref else ("--cached",)
+    tree = "HEAD" if base_ref else ""
+    paths = git(
+        "diff", *comparison, "--name-only", "--no-renames", "--diff-filter=ACMT", "-z"
+    ).split(b"\0")
+    failures = []
+    for raw_path in filter(None, paths):
+        path = os.fsdecode(raw_path)
+        if (
+            path in EXEMPT_PATHS
+            or PurePosixPath(path).suffix.lower() in BINARY_SUFFIXES
+        ):
+            continue
+        blob = git("show", f"{tree}:{path}")
+        if len(blob) <= LIMIT or b"\0" in blob:
+            continue
+        allowed = ceiling(path, baseline, base_ref or "HEAD")
+        if len(blob) > allowed:
+            failures.append(
+                f"{path!r}: {len(blob)} staged bytes > {allowed} allowed bytes"
+            )
+    return failures
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--baseline", help="repository-relative JSON path, read from Git index"
+    )
+    parser.add_argument(
+        "--base-ref", help="CI: compare this commit to HEAD and read HEAD blobs"
+    )
+    args = parser.parse_args()
+    try:
+        root = os.fsdecode(git("rev-parse", "--show-toplevel")).rstrip("\n")
+        os.chdir(root)
+        base_ref = None
+        if args.base_ref:
+            base_ref = (
+                git(
+                    "rev-parse",
+                    "--verify",
+                    "--end-of-options",
+                    args.base_ref + "^{commit}",
+                )
+                .decode()
+                .strip()
+            )
+        tree = "HEAD" if base_ref else ""
+        failures = violations(read_baseline(args.baseline, tree), base_ref)
+    except (subprocess.CalledProcessError, ValueError, OSError) as exc:
+        print(f"Staged-size check failed: {exc}", file=sys.stderr)
+        return 2
+    if failures:
+        print("Staged text exceeds the 20,000-byte policy (approx. 5,000 tokens):")
+        print("\n".join(failures))
+        print(
+            "Split by responsibility: move a cohesive helper/service into its own module "
+            "(or a document section into a linked file); preserve clear imports and "
+            "verify affected tests. Stage the extraction and rerun this check. "
+            "For a genuine generated/lock/binary artifact, review an explicit exception "
+            "with its reason in the checker manifest; keep source files under the limit."
+        )
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
 ```
 
 ### `scripts/cross_verify_geo.py`
@@ -140025,8 +141029,8 @@ if __name__ == "__main__":
 
 ### `scripts/inventory_implementation.py`
 
-Size: `8496` bytes  
-SHA-256: `c8c8a5740eb50412966dae0ef23b312223034452c33d38fea228903de2f77416`
+Size: `8504` bytes  
+SHA-256: `7486e27fc699c9bdc88ce033841aa672b8b62affeef559f48b68d22f433ca2b9`
 
 ```python
 """Build a reviewable static implementation inventory; never execute bot handlers."""
@@ -140099,7 +141103,7 @@ def main() -> None:
              ("AST не раскрывает все вычисляемые payload, getattr, monkey-patch, косвенную регистрацию или реальную последовательность событий. "
              "Команды ниже — литеральные вызовы фильтра; фактические доступы зависят от чата, активной роли, состояния и повторных проверок. "
              "Тесты контрактов маршрутов и сквозные PostgreSQL-тесты дополняют этот снимок. "
-             "Получение/удаление сообщений реальным MAX, пользовательские клиентские ограничения, права группы, S3 history/locks, journald, "
+             "Получение/доставка сообщений реальным MAX, клиентские ограничения, права группы, ручная обработка внешних копий, journald, "
              "неизвестные старые копии, восстановление резервной копии и закрытый рабочий сервер требуют ручной проверки. "
              "Нет заявления о 100% охвате или exactly-once внешних действий."), "",
              "## Команды и регистрация", ""]
@@ -140469,12 +141473,12 @@ if __name__ == "__main__":
 
 ### `scripts/reconcile_erasure.py`
 
-Size: `1664` bytes  
-SHA-256: `961d58e94a5e8cc6a473d1316d8132b1186d65bb5bbf6d28f6f2ac703b7600c6`
+Size: `1654` bytes  
+SHA-256: `3acf996d8f7f2df0545d7a188c3724656a8fe94b7ea2d6b264762f5cf912d247`
 
 ```python
 #!/usr/bin/env python3
-"""IT reconciliation after checking MAX/S3 externally; never blindly retry deletes."""
+"""IT records manual copy verification; the bot never deletes MAX messages."""
 import argparse
 import asyncio
 
@@ -140502,7 +141506,7 @@ async def main():
         result = await data_erasure.confirm_backup_cleanup(digest, expected_erased_before=cutoff)
     if not result:
         raise SystemExit("Reconciliation rejected: record is absent or state does not permit this transition")
-    print("Reconciliation recorded; retain the external verification evidence with the deletion act.")
+    print("Reconciliation recorded; retain the manual verification evidence with the deletion act.")
 
 
 if __name__ == "__main__":
@@ -140821,8 +141825,8 @@ if __name__ == "__main__":
 
 ### `seed/consent.md`
 
-Size: `6684` bytes  
-SHA-256: `58ed2951491db2d9f51979db0a0de3b6a1ea3eafb58bfb32f0f9d75e6a856a1b`
+Size: `6841` bytes  
+SHA-256: `1fdbe032bf819b35fe65cadfac8b335c4bcbe9a368f2821d747d3ceb1a3b115f`
 
 ```markdown
 СОГЛАСИЕ НА ОБРАБОТКУ ПЕРСОНАЛЬНЫХ ДАННЫХ
@@ -140847,7 +141851,7 @@ SHA-256: `58ed2951491db2d9f51979db0a0de3b6a1ea3eafb58bfb32f0f9d75e6a856a1b`
 
 Отзыв: «Настройки и помощь» → «Уйти из бота» → «Отозвать согласие». Новые обращения без нового согласия не принимаются, оповещения отключаются. Ответы через бот после отзыва не отправляются. Дальнейшую работу по уже поданному обращению администрация оценивает отдельно; при наличии другого законного основания использует официальный канал вне бота. Если нет самостоятельного законного основания для продолжения обработки, она прекращается, а данные удаляются не позднее 30 дней после отзыва. Открытые обращения при очистке закрываются.
 
-«Удалить данные» в том же меню запускает очистку рабочей базы сразу и закрывает открытые обращения. Известные копии сообщений в MAX ставятся в очередь удаления с проверкой результата; запускается очистка распознанных резервных копий. Скачанные файлы, неизвестные старые сообщения, хранение платформой MAX, версии внешних копий и сторонние журналы требуют отдельной проверки. Одно нажатие не подтверждает уничтожение всех копий.
+«Удалить данные» в том же меню запускает очистку рабочей базы сразу и закрывает открытые обращения. Бот не удаляет автоматически сообщения в MAX и ранее выданные выгрузки. Уполномоченные сотрудники вручную проверяют и очищают внешние копии, включая сообщения, скачанные файлы и копии в подразделениях, с учетом законных оснований хранения. Запускается очистка распознанных локальных резервных копий; сторонние журналы и копии платформы проверяются отдельно. Одно нажатие не подтверждает уничтожение всех копий.
 
 Отозвать согласие, запросить сведения о своих данных, их исправление, блокирование или уничтожение можно также письмом по адресу Оператора. Действия Оператора можно обжаловать в Роскомнадзор или суд.
 
