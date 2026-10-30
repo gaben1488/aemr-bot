@@ -113,3 +113,28 @@ async def test_late_reply_recovery_does_not_close_newer_followup(session):
     assert appeal.status == "in_progress"
     rows = list(await session.scalars(select(Message).where(Message.appeal_id == appeal.id)))
     assert {m.text for m in rows} == {"Старый итоговый ответ", "Новая информация"}
+
+
+@pytest.mark.asyncio
+async def test_failed_early_recovery_does_not_block_later_attempts(session, monkeypatch):
+    appeal, operator = await _rows(session, 82050)
+    ids = []
+    for index in range(2):
+        attempt_id = await operator_reply_attempts.reserve(
+            appeal_id=appeal.id, operator_id=operator.id, source_key=f"fair-recovery-{index}",
+            text=f"Ответ {index}", attachments=[], is_final=False,
+        )
+        await operator_reply_attempts.mark_confirmed(attempt_id, f"fair-mid-{index}")
+        ids.append(attempt_id)
+    monkeypatch.setattr(operator_reply_attempts, "_recovery_cursor", 0)
+    original = operator_reply_attempts.record_confirmed
+
+    async def fail_first(db_session, attempt_id, **kwargs):
+        if attempt_id == ids[0]:
+            raise RuntimeError("simulated local failure")
+        return await original(db_session, attempt_id, **kwargs)
+
+    monkeypatch.setattr(operator_reply_attempts, "record_confirmed", fail_first)
+    assert await operator_reply_attempts.recover_confirmed(limit=1) == 0
+    assert await operator_reply_attempts.recover_confirmed(limit=1) == 1
+    assert await session.scalar(select(Message.id).where(Message.max_message_id == "fair-mid-1"))

@@ -100,7 +100,10 @@ async def recover_unpublished_appeals(bot) -> int:
     from aemr_bot.services import admin_card as admin_card_service
 
     if not cfg.admin_group_id:
-        return 0
+        # Confirmed replies can be restored locally even if group delivery
+        # is disabled. Recovery does not make a new MAX request.
+        from aemr_bot.services import operator_reply_attempts
+        return await operator_reply_attempts.recover_confirmed()
     async with session_scope() as session:
         result = await session.scalars(
             select(Appeal.id)

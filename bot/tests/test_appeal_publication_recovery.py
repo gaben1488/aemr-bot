@@ -26,6 +26,16 @@ def _sqlite_jsonb(_type, _compiler, **_kw):
 
 
 @pytest.mark.asyncio
+async def test_reply_history_recovery_does_not_depend_on_admin_group(monkeypatch):
+    from aemr_bot.services import operator_reply_attempts
+    monkeypatch.setattr(appeal_runtime.cfg, "admin_group_id", None)
+    recover = AsyncMock(return_value=2)
+    monkeypatch.setattr(operator_reply_attempts, "recover_confirmed", recover)
+    assert await appeal_runtime.recover_unpublished_appeals(AsyncMock()) == 2
+    recover.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
 async def test_user_lock_survives_release_with_waiter_and_drop():
     lock = appeal_runtime.get_user_lock(987654)
     await lock.acquire()

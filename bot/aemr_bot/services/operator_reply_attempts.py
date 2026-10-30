@@ -11,6 +11,9 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.services import appeal_locks, appeals, operators, privacy_epoch
 
 log = logging.getLogger(__name__)
+# A permanently unrepairable early record must not starve later records.
+# This cursor affects only local history recovery, never external delivery.
+_recovery_cursor = 0
 
 
 async def reserve(*, appeal_id: int, operator_id: int, source_key: str | None,
@@ -91,9 +94,20 @@ async def record_confirmed(session, attempt_id: int, *, mid: str | None = None,
 
 async def recover_confirmed(*, limit: int = 100) -> int:
     """Repair local history only; no request to MAX is made here."""
+    global _recovery_cursor
+    if limit <= 0:
+        return 0
     async with session_scope() as session:
         rows = list((await session.execute(select(OperatorReplyAttempt.id, OperatorReplyAttempt.appeal_id).where(
-            OperatorReplyAttempt.state == "confirmed").order_by(OperatorReplyAttempt.id).limit(limit))).all())
+            OperatorReplyAttempt.state == "confirmed", OperatorReplyAttempt.id > _recovery_cursor
+        ).order_by(OperatorReplyAttempt.id).limit(limit))).all())
+        if not rows and _recovery_cursor:
+            _recovery_cursor = 0
+            rows = list((await session.execute(select(OperatorReplyAttempt.id, OperatorReplyAttempt.appeal_id).where(
+                OperatorReplyAttempt.state == "confirmed"
+            ).order_by(OperatorReplyAttempt.id).limit(limit))).all())
+    if rows:
+        _recovery_cursor = rows[-1][0]
     count = 0
     for attempt_id, appeal_id in rows:
         try:
