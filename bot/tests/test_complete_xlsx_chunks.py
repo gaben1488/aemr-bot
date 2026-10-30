@@ -1,5 +1,6 @@
 from aemr_bot.services.complete_stats import cell_chunks
 from io import BytesIO
+from datetime import datetime
 
 import pytest
 from openpyxl import load_workbook
@@ -41,3 +42,32 @@ async def test_report_includes_all_history_and_attachment_labels(session):
     attachment = list(workbook["Вложения"].values)[1]
     assert "Фото" in attachment[-1]
     assert "never-export-token" not in str(attachment)
+
+
+@pytest.mark.asyncio
+async def test_summary_distinguishes_appeals_from_response_messages(session):
+    from aemr_bot.db.models import Appeal, Message, User
+    from aemr_bot.services.complete_stats import build_xlsx
+
+    user = User(max_user_id=490102, first_name="Анна")
+    session.add(user)
+    await session.flush()
+    appeal = Appeal(user_id=user.id, topic="Дорога", summary="Текст")
+    session.add(appeal)
+    await session.flush()
+    session.add_all([
+        Message(appeal_id=appeal.id, direction="from_operator", text="Принято", response_kind="intermediate"),
+        Message(appeal_id=appeal.id, direction="from_operator", text="Готово", response_kind="final"),
+        Message(appeal_id=appeal.id, direction="from_operator", text="Старый ответ", response_kind=None),
+    ])
+    await session.flush()
+    content, _, _ = await build_xlsx(session, "all")
+    workbook = load_workbook(BytesIO(content), read_only=True, data_only=True)
+    summary = {row[0]: row[1] for row in list(workbook["Сводка"].values)[1:]}
+    assert summary["Обращений"] == 1
+    assert summary["Обращений с первым ответом в текущем периоде"] == 1
+    assert summary["Промежуточных ответов (сообщений)"] == 1
+    assert summary["Итоговых ответов (сообщений)"] == 1
+    assert summary["Ответов без сохранённого типа (сообщений)"] == 1
+    overview = list(workbook["Обращения"].values)
+    assert isinstance(overview[1][2], datetime)

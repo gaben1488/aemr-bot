@@ -38,12 +38,14 @@ def _cell(value):
     return "'" + value if value.startswith(("=", "+", "-", "@", "\t", "\r")) else value
 
 
-def _date(value) -> str:
+def _date(value) -> datetime | str:
     if value is None:
         return ""
     if value.tzinfo is None:
         value = value.replace(tzinfo=UTC)
-    return value.astimezone(stats.TZ).strftime("%d.%m.%Y %H:%M")
+    # Excel does not support timezone-aware datetimes. The displayed and
+    # sortable value is local Kamchatka time, as stated in the summary.
+    return value.astimezone(stats.TZ).replace(tzinfo=None)
 
 
 class _Sheet:
@@ -83,6 +85,8 @@ class _Sheet:
             for column in columns:
                 value = column[part] if part < len(column) else column[0] if len(column) == 1 else ""
                 cell = WriteOnlyCell(self.ws, value=_cell(value))
+                if isinstance(value, datetime):
+                    cell.number_format = "DD.MM.YYYY HH:MM"
                 cell.alignment = Alignment(vertical="top", wrap_text=True)
                 cells.append(cell)
             self.ws.append(cells)
@@ -116,6 +120,7 @@ async def build_xlsx_with_epoch(
     snapshot_epoch = await privacy_epoch.read(session)
     start, end, title = window if window is not None else stats.period_window(period)
     workbook = Workbook(write_only=True)
+    summary = _Sheet(workbook, "Сводка", ["Показатель", "Значение", "Пояснение"], [55, 25, 80])
     overview = _Sheet(workbook, "Обращения", ["№", "Связано с №", "Подано", "Житель", "Телефон", "Населённый пункт",
                         "Адрес", "Тема", "Статус", "Первый ответ периода", "Итоговый ответ", "Закрыто",
                         "Рабочих часов до первого ответа", "Внутренний срок, рабочих часов", "Первый ответ в срок", "Согласие дано",
@@ -138,6 +143,9 @@ async def build_xlsx_with_epoch(
             files.append([appeal_id, record_no, _date(date), _attachment_description(item)])
 
     count, after_id = 0, 0
+    first_answered = 0
+    response_counts = {"intermediate": 0, "final": 0, "unknown": 0}
+    status_counts: dict[str, int] = {}
     while True:
         query = (select(Appeal).options(selectinload(Appeal.user))
                  .where(Appeal.created_at < end, Appeal.id > after_id)
@@ -154,6 +162,10 @@ async def build_xlsx_with_epoch(
             elapsed = ""
             on_time = ""
             first_reply = first_replies.get(appeal.id)
+            if first_reply is not None:
+                first_answered += 1
+            status_label = stats._status_label(appeal.status)
+            status_counts[status_label] = status_counts.get(status_label, 0) + 1
             anchor = appeal.sla_anchor_at or appeal.created_at
             if first_reply and anchor:
                 elapsed = round(sla.business_seconds_between(anchor, first_reply) / 3600, 2)
@@ -181,7 +193,8 @@ async def build_xlsx_with_epoch(
                         return ""
                 periods.append([appeal.id, period_date("start"), period_date("first_response"),
                                 period_date("end"), period_record.get("sla_hours", ""),
-                                "да" if period_record.get("overdue") else "нет",
+                                "да" if period_record.get("overdue") is True else
+                                "нет" if period_record.get("overdue") is False else "Нет данных",
                                 "Оценка рассчитана при возобновлении; исходный норматив неизвестен"
                                 if period_record.get("assessment") == "at_reopen_legacy"
                                 else "Оценка рассчитана при возобновлении обращения"])
@@ -226,6 +239,8 @@ async def build_xlsx_with_epoch(
             if message.direction == "from_operator":
                 from aemr_bot.services.message_labels import response_label
                 author = response_label(message)
+                kind = message.response_kind if message.response_kind in ("intermediate", "final") else "unknown"
+                response_counts[kind] += 1
             add_entry(appeal.id, record_no, message.created_at, author, message.text, message.attachments)
         while index < len(appeals):
             appeal = appeals[index]
@@ -235,7 +250,24 @@ async def build_xlsx_with_epoch(
             record_no = 0
         count += len(appeals)
 
-    for sheet in (overview, history, files, consent, periods):
+    summary.append(["Период", title, "Обращения отбираются по дате поступления."])
+    summary.append(["Начало периода", _date(start) if start else "Без ограничения", "Включительно; время Камчатки."])
+    end_aware = end if end.tzinfo is not None else end.replace(tzinfo=UTC)
+    summary.append(["Конец периода", end_aware.astimezone(stats.TZ).isoformat(timespec="microseconds"),
+                    "Не включительно; время Камчатки."])
+    summary.append(["Обращений", count, "Количество выбранных обращений, а не сообщений."])
+    for label, total in sorted(status_counts.items()):
+        summary.append([f"Статус: {label}", total, "Текущее состояние выбранных обращений."])
+    summary.append(["Обращений с первым ответом в текущем периоде", first_answered,
+                    "Первый ответ после начала текущего периода работы обращения; не число ответов."])
+    summary.append(["Промежуточных ответов (сообщений)", response_counts["intermediate"],
+                    "Количество сохранённых сообщений этого типа за всю историю выбранных обращений."])
+    summary.append(["Итоговых ответов (сообщений)", response_counts["final"],
+                    "Количество сохранённых сообщений этого типа за всю историю выбранных обращений."])
+    summary.append(["Ответов без сохранённого типа (сообщений)", response_counts["unknown"],
+                    "Исторические ответы без достоверной классификации не отнесены к другим типам."])
+
+    for sheet in (summary, overview, history, files, consent, periods):
         sheet.finish()
     output = BytesIO()
     await asyncio.to_thread(workbook.save, output)
