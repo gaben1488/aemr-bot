@@ -36,13 +36,16 @@ def resident(monkeypatch):
     async def set_name(_s, _id, name):
         user.first_name = name
 
-    async def merge(_s, _id, patch):
+    async def merge(_s, _id, patch, *, expected_states=None):
+        if expected_states is not None:
+            assert user.dialog_state in expected_states
         user.dialog_data.update(patch(user.dialog_data) if callable(patch) else patch)
         return user.dialog_data
 
     for module in (resident_name_gate, appeal_funnel, appeal_runtime, start):
         monkeypatch.setattr(module, "current_user", current_user)
     monkeypatch.setattr(appeal_funnel, "session_scope", scope)
+    monkeypatch.setattr(resident_name_gate.users_service, "find_by_max_id", AsyncMock(return_value=user))
     monkeypatch.setattr(resident_name_gate.users_service, "set_state", AsyncMock(side_effect=set_state))
     monkeypatch.setattr(resident_name_gate.users_service, "set_first_name", AsyncMock(side_effect=set_name))
     monkeypatch.setattr(resident_name_gate.users_service, "update_dialog_data", AsyncMock(side_effect=merge))
@@ -104,7 +107,7 @@ async def test_summary_attachment_replay_once(resident, monkeypatch):
     await appeal_funnel.on_awaiting_name(event, None, "Иван", 42)
     assert resident.dialog_data["summary_chunks"] == ["Яма"]
     assert resident.dialog_data["attachments"] == [attachment]
-    finalize.assert_awaited_once()
+    finalize.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -136,19 +139,19 @@ def test_safe_exit_callbacks_are_not_gated(payload):
 @pytest.mark.asyncio
 async def test_recovery_preserves_ready_summary_until_name(resident, monkeypatch):
     resident.dialog_state = DialogState.AWAITING_SUMMARY.value
-    resident.dialog_data = {"summary_chunks": ["Яма"], "address": "Ленина 5", "attachments": []}
+    resident.dialog_data = {"draft_token": "draft-1", "summary_chunks": ["Яма"], "address": "Ленина 5", "attachments": []}
     original = dict(resident.dialog_data)
     create = AsyncMock()
     monkeypatch.setattr(appeal_runtime.appeals_service, "create_appeal", create)
     event = make_event(chat_id=100, user_id=42)
-    result = await appeal_runtime.persist_and_dispatch_appeal(event.bot, 42, reset_empty=True)
+    result = await appeal_runtime.persist_and_dispatch_appeal(event.bot, 42, reset_empty=True, draft_token="draft-1")
     assert result == appeal_runtime.PERSIST_NAME_REQUIRED
     assert resident.dialog_data[resident_name_gate.RESUME_KEY]["data"] == original
     create.assert_not_awaited()
     finalize = AsyncMock()
     monkeypatch.setattr(appeal_funnel, "finalize_appeal", finalize)
     await appeal_funnel.on_awaiting_name(event, None, "Иван", 42)
-    finalize.assert_awaited_once()
+    finalize.assert_not_awaited()
     assert resident.dialog_data == original
 
 
@@ -195,16 +198,16 @@ async def test_crash_after_summary_merge_does_not_duplicate_content(resident, mo
     resident.dialog_data = {"address": "Ленина 5"}
     event = make_event(chat_id=100, user_id=42)
     await resident_name_gate.require_name(event, 42, text="Яма", body=None)
-    finalize = AsyncMock(side_effect=RuntimeError("crash"))
-    monkeypatch.setattr(appeal_funnel, "finalize_appeal", finalize)
+    preview = AsyncMock(side_effect=RuntimeError("crash"))
+    monkeypatch.setattr(appeal_funnel, "show_summary_draft", preview)
     with pytest.raises(RuntimeError, match="crash"):
         await appeal_funnel.on_awaiting_name(event, None, "Иван", 42)
     assert resident.dialog_data[resident_name_gate.RESUME_KEY]["applied"]
     assert resident.dialog_data["summary_chunks"] == ["Яма"]
-    finalize.side_effect = None
+    preview.side_effect = None
     await resident_name_gate.require_name(event, 42)
     assert resident.dialog_data["summary_chunks"] == ["Яма"]
-    assert finalize.await_count == 2
+    assert preview.await_count == 2
 
 
 @pytest.mark.asyncio
@@ -312,25 +315,30 @@ async def test_rate_limited_followup_replay_keeps_text_and_attachment_until_retr
 
     reset_mock = AsyncMock(side_effect=reset)
     monkeypatch.setattr(appeal_funnel.users_service, "reset_state", reset_mock)
+    monkeypatch.setattr("aemr_bot.services.followup_delivery.deliver", AsyncMock(return_value=True))
+    save.return_value = SimpleNamespace(id=10)
     await appeal_funnel.on_awaiting_name(event, None, "Иван", 42)
     reset_mock.assert_not_awaited()
-    pending = resident.dialog_data[resident_name_gate.RESUME_KEY]
-    assert pending["text"] == original_text
-    assert pending["attachments"] == [attachment]
-    assert pending["ready"]
+    assert resident_name_gate.RESUME_KEY not in resident.dialog_data
+    assert resident.dialog_data["summary_chunks"] == [original_text]
+    assert resident.dialog_data["attachments"] == [attachment]
     save.assert_not_awaited()
-    assert "сохранено" in event.message.answer.await_args.args[0]
+    stats.assert_not_awaited()
+    token = resident.dialog_data["draft_token"]
 
-    # A retry during the same rate-limit interval must keep the draft too,
-    # and must not claim it has already been handled.
-    event.message.answer.reset_mock()
-    await resident_name_gate.require_name(event, 42, text="Повторить", body=None)
-    assert resident.dialog_data[resident_name_gate.RESUME_KEY] == pending
-    assert not any("диалог восстановлен" in call.args[0]
-                   for call in event.message.answer.await_args_list)
+    await appeal_funnel.submit_followup(
+        event, SimpleNamespace(attachments=[attachment]), original_text, 42, draft_token=token,
+    )
+    reset_mock.assert_not_awaited()
+    save.assert_not_awaited()
+    assert resident.dialog_data["summary_chunks"] == [original_text]
+    assert resident.dialog_data["attachments"] == [attachment]
+    assert "сохранён" in event.message.answer.await_args.args[0]
 
     stats.return_value = (0, None)
-    await resident_name_gate.require_name(event, 42, text="Повторить", body=None)
+    await appeal_funnel.submit_followup(
+        event, SimpleNamespace(attachments=[attachment]), original_text, 42, draft_token=token,
+    )
     save.assert_awaited_once()
     assert save.await_args.kwargs["text"] == original_text
     assert save.await_args.kwargs["attachments"] == [attachment]
