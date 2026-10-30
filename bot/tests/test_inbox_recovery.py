@@ -167,20 +167,32 @@ async def test_failed_completion_commit_is_quarantined_without_replay(receipt_db
 
 
 @pytest.mark.asyncio
-async def test_failure_notice_retries_only_until_successful_delivery(receipt_db, monkeypatch):
+@pytest.mark.parametrize("result", [None, "synthetic-mid"])
+async def test_failure_notice_is_claimed_once_even_when_delivery_is_unknown(
+    receipt_db, monkeypatch, caplog, result,
+):
     from aemr_bot.services import admin_bus
     await inbox.accept([payload()])
     await inbox.take_next()
     await inbox.recover_interrupted()
-    send = AsyncMock(return_value=None)
+    send = AsyncMock(return_value=result)
     monkeypatch.setattr(admin_bus, 'send', send)
     await inbox.maintenance(object())
-    assert not (await stored(receipt_db))[0].notified
-    send.return_value = 'synthetic-mid'
+    row = (await stored(receipt_db))[0]
+    # notified is a durable attempt claim, not a MAX delivery receipt.
+    assert row.notified
+    assert row.state == "failed"
+    assert row.reason == "interrupted_unknown_result"
+    assert row.payload == {}
+    text = send.call_args.kwargs["text"]
+    assert f"#{row.id}" in text
+    assert "sensitive synthetic text" not in text
+    assert send.call_args.kwargs["critical"] is True
+    if result is None:
+        assert "delivery of failed-event alert was not confirmed" in caplog.text
+    await inbox.recover_interrupted()
     await inbox.maintenance(object())
-    assert (await stored(receipt_db))[0].notified
-    await inbox.maintenance(object())
-    assert send.await_count == 2
+    send.assert_awaited_once()
 
 
 @pytest.mark.asyncio

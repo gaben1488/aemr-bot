@@ -34,9 +34,8 @@ def _make_event() -> SimpleNamespace:
 
 
 @pytest.mark.asyncio
-async def test_diag_pulse_warning_when_events_silent(session) -> None:
-    """Если последнее событие старше 15 мин — pulse-индикатор показывает
-    предупреждение в секции «Внимание»."""
+async def test_diag_silent_events_do_not_imply_service_failure(session) -> None:
+    """Возраст пользовательского события не доказывает сбой сервиса."""
     from aemr_bot.db.models import Event
     from aemr_bot.handlers import admin_panel
 
@@ -71,8 +70,10 @@ async def test_diag_pulse_warning_when_events_silent(session) -> None:
         await admin_panel._do_diag(_make_event())
 
     assert "Pulse" in sent["text"]
-    assert "Внимание" in sent["text"], sent["text"]
-    assert "молчит" in sent["text"].lower()
+    assert "2 ч" in sent["text"]
+    assert "это не показатель сбоя" in sent["text"]
+    assert "Pulse молчит" not in sent["text"]
+    assert "Аномалий не обнаружено" in sent["text"]
 
 
 @pytest.mark.asyncio

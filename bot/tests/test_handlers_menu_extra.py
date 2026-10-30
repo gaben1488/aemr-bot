@@ -77,7 +77,10 @@ class TestShowConsentStatus:
         assert text.startswith(
             "Согласие на обработку персональных данных отозвано"
         )
-        assert "оператор даст по ним финальный ответ" in text
+        assert "Новые обращения и рассылка недоступны" in text
+        assert "очистки данных" in text
+        assert "дать согласие заново" in text
+        assert "оператор даст по ним финальный ответ" not in text
         assert text != texts.CONSENT_STATUS_NEVER
 
     @pytest.mark.asyncio
