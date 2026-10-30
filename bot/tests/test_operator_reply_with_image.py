@@ -6,10 +6,6 @@ type=image), `bot.send_message` к жителю должен включать э
 в outbound `attachments` (рядом с inline-клавиатурой
 `keyboards.back_to_menu_keyboard`).
 
-Без image-relay этот тест должен падать на текущем коде: в
-`_send_reply_to_citizen:312` сейчас передаётся только клавиатура,
-картинки оператора игнорируются.
-
 Также regression-guard: текстовый ответ без картинки продолжает
 работать как раньше — никакого extra-вложения не добавляется.
 """
@@ -44,7 +40,7 @@ def _event_without_image(*, chat_id: int = 100, user_id: int = 7) -> SimpleNames
 
 def _fresh_appeal() -> SimpleNamespace:
     user = SimpleNamespace(
-        is_blocked=False,
+        id=420, is_blocked=False,
         first_name="Иван",
         consent_pdn_at=datetime(2026, 1, 1, tzinfo=UTC),
         consent_revoked_at=None,
@@ -64,6 +60,11 @@ def _patches_for_delivery():
     `_deliver_operator_reply` до точки доставки и записи."""
     live_op = SimpleNamespace(id=7, max_user_id=42, is_active=True)
     return [
+        patch("aemr_bot.services.operator_reply_attempts.reserve", AsyncMock(return_value=123)),
+        patch("aemr_bot.services.operator_reply_attempts.note_part", AsyncMock()),
+        patch("aemr_bot.services.operator_reply_attempts.mark_confirmed", AsyncMock()),
+        patch("aemr_bot.services.operator_reply_attempts.mark_unknown", AsyncMock()),
+        patch("aemr_bot.services.operator_reply_attempts.record_confirmed", AsyncMock(return_value=True)),
         patch.object(__import__("aemr_bot.handlers.operator_reply",
                                 fromlist=["cfg"]).cfg,
                      "answer_max_chars", 1000),
@@ -89,8 +90,7 @@ class TestImageRelay:
     @pytest.mark.asyncio
     async def test_operator_image_attached_to_citizen_message(self) -> None:
         """Контракт: картинка оператора пробрасывается жителю в
-        outbound `attachments`. Без relay тест падает (текущий код
-        передаёт только клавиатуру)."""
+        outbound `attachments` вместе с клавиатурой."""
         from aemr_bot.handlers import operator_reply as opr
 
         event = _event_with_image()
@@ -181,12 +181,14 @@ async def test_sent_images_are_saved_with_corresponding_reply():
 
     event = _event_with_image()
     event.bot.send_message = AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid='out-1')))
-    save = AsyncMock()
+    reserve = AsyncMock(return_value=123)
+    record = AsyncMock(return_value=True)
     stack = _patches_for_delivery()
     for p in stack:
         p.start()
     try:
-        with patch.object(opr.appeals_service, 'add_operator_message', save), \
+        with patch('aemr_bot.services.operator_reply_attempts.reserve', reserve), \
+             patch('aemr_bot.services.operator_reply_attempts.record_confirmed', record), \
              patch('aemr_bot.utils.image_attachments.deserialize_for_relay',
                    return_value=[SimpleNamespace(type='image')]):
             opr._recent_replies.clear()
@@ -196,14 +198,16 @@ async def test_sent_images_are_saved_with_corresponding_reply():
     finally:
         for p in stack:
             p.stop()
-    assert save.await_args.kwargs['attachments'] == event.message.body.attachments
+    assert reserve.await_args.kwargs['attachments'] == event.message.body.attachments
+    assert record.await_args.args[1] == 123
+    assert record.await_args.kwargs['mid'] == 'out-1'
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('attachments', [
-    [{'type': 'image', 'payload': {'url': 'https://cdn.max/img.jpg'}}] * 11,
+    [{'type': 'image', 'payload': {'url': 'https://cdn.max/img.jpg'}}] * 21,
     [{'type': 'file', 'payload': {'token': 'document'}},
-     {'type': 'image', 'payload': {'token': 'photo'}}],
+     {'type': 'audio', 'payload': {'token': 'audio'}}],
     [{'type': 'audio', 'payload': {'token': 'audio'}}],
 ])
 async def test_unsupported_or_too_many_operator_attachments_do_not_send_partial_answer(attachments):
@@ -241,7 +245,8 @@ async def test_reply_timeout_reports_unknown_delivery_without_false_failure():
     assert result == (False, None, [])
     notice = event.bot.send_message.await_args_list[1].kwargs['text']
     assert 'неизвестен' in notice
-    assert 'мог быть доставлен' in notice
+    assert 'Следующие части не отправлены' in notice
+    assert 'перед повторной отправкой' in notice
 
 
 @pytest.mark.asyncio

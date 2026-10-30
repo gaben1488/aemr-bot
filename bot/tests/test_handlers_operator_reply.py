@@ -235,7 +235,11 @@ def _autopatch_operators_get(request):
     with patch(
         "aemr_bot.handlers.operator_reply.operators_service.get",
         AsyncMock(return_value=live_op),
-    ):
+    ), patch("aemr_bot.services.operator_reply_attempts.reserve", AsyncMock(return_value=123)), \
+       patch("aemr_bot.services.operator_reply_attempts.note_part", AsyncMock()), \
+       patch("aemr_bot.services.operator_reply_attempts.mark_confirmed", AsyncMock()), \
+       patch("aemr_bot.services.operator_reply_attempts.mark_unknown", AsyncMock()), \
+       patch("aemr_bot.services.operator_reply_attempts.record_confirmed", AsyncMock(return_value=True)):
         yield
 
 
@@ -365,8 +369,8 @@ class TestDeliverOperatorReply:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
                    AsyncMock(return_value=fresh_appeal)), \
-             patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
-                   AsyncMock()) as add_message, \
+             patch("aemr_bot.services.operator_reply_attempts.record_confirmed",
+                   AsyncMock(return_value=True)) as record, \
              patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
                    AsyncMock()), \
              patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
@@ -380,7 +384,9 @@ class TestDeliverOperatorReply:
 
         assert handled is True
         assert event.bot.send_message.call_args_list[0].kwargs["user_id"] == 42
-        add_message.assert_called_once()
+        record.assert_awaited_once()
+        assert record.await_args.args[1] == 123
+        assert record.await_args.kwargs["mid"] == "out-1"
 
     @pytest.mark.asyncio
     async def test_appeal_vanished_in_db_returns_handled(self) -> None:
@@ -456,7 +462,7 @@ class TestDeliverOperatorReply:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
                    AsyncMock(side_effect=[fresh_appeal, fresh_appeal])), \
-             patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
+             patch("aemr_bot.services.operator_reply_attempts.record_confirmed",
                    AsyncMock(side_effect=RuntimeError("db write failed"))), \
              patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
                    AsyncMock()), \
@@ -495,8 +501,8 @@ class TestDeliverOperatorReply:
                    _fake_session_scope), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
                    AsyncMock(side_effect=[fresh_appeal, fresh_appeal])), \
-             patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
-                   AsyncMock()) as add_message, \
+             patch("aemr_bot.services.operator_reply_attempts.record_confirmed",
+                   AsyncMock(return_value=True)) as record, \
              patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
                    AsyncMock()) as write_audit, \
              patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
@@ -509,8 +515,11 @@ class TestDeliverOperatorReply:
             )
 
         assert handled is True
-        add_message.assert_called_once()
-        write_audit.assert_called_once()
+        record.assert_awaited_once()
+        assert record.await_args.args[1] == 123
+        assert record.await_args.kwargs["mid"] == "out-1"
+        write_audit.assert_not_awaited()
+        assert record.await_args.kwargs["audit_action"] == "reply"
         mark_success.assert_called_once()
         assert opr._is_duplicate_reply(operator.id, appeal.id, "ответ") is True
         # is_final по умолчанию True → нет отдельной confirm-карточки
@@ -682,7 +691,7 @@ class TestReplyRejectionBeforeDelivery:
         appeal = _fresh_appeal()
         appeal.status = "closed"
         msg = _reply_rejection_before_delivery(fresh_appeal=appeal, appeal_id=1)
-        assert msg is not None and "закрыто" in msg
+        assert msg is not None and "завершено" in msg
 
     def test_blocked_user_rejected(self) -> None:
         from aemr_bot.handlers.operator_reply import (

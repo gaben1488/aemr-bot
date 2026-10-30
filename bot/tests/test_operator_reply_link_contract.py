@@ -34,6 +34,7 @@ async def test_marker_fallback_requires_bot_authored_reply(shape, link_type):
         )
     appeal = SimpleNamespace(id=42)
     with (
+        patch("aemr_bot.handlers.operator_draft.collect", AsyncMock(return_value=False)),
         patch.object(operator_reply, "session_scope", fake_session_scope),
         patch.object(operator_reply.operators_service, "get", AsyncMock(return_value=SimpleNamespace(id=1))),
         patch.object(operator_reply.appeals_service, "get_by_admin_message_id", AsyncMock(return_value=None)),

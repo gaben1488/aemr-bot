@@ -42,7 +42,10 @@ async def test_confirmed_attempt_recovers_history_once_without_sending(session):
 
 
 @pytest.mark.asyncio
-async def test_uncertain_attempt_is_not_replayed_and_erasure_removes_content(session):
+async def test_uncertain_attempt_is_not_replayed_and_erasure_removes_content(session, monkeypatch, tmp_path):
+    from aemr_bot.services import data_erasure
+
+    monkeypatch.setattr(data_erasure.settings, "erasure_state_dir", str(tmp_path / "erasure"))
     appeal, operator = await _rows(session, 82010)
     attempt_id = await operator_reply_attempts.reserve(
         appeal_id=appeal.id, operator_id=operator.id, source_key="reply-event-2",
@@ -138,3 +141,52 @@ async def test_failed_early_recovery_does_not_block_later_attempts(session, monk
     assert await operator_reply_attempts.recover_confirmed(limit=1) == 0
     assert await operator_reply_attempts.recover_confirmed(limit=1) == 1
     assert await session.scalar(select(Message.id).where(Message.max_message_id == "fair-mid-1"))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("outcome", ["confirmed", "unknown"])
+async def test_handler_delivery_reserves_before_max_and_never_replays_same_event(
+    session, monkeypatch, outcome,
+):
+    from datetime import UTC, datetime
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+
+    from aemr_bot.handlers import operator_reply
+    from aemr_bot.services import appeals
+    from tests._helpers import make_event
+
+    appeal, operator = await _rows(session, 89300)
+    resident = await session.get(User, appeal.user_id)
+    resident.consent_pdn_at = datetime.now(UTC)
+    await session.commit()
+    appeal = await appeals.get_by_id(session, appeal.id)
+    event = make_event(chat_id=123, user_id=operator.max_user_id)
+    event.message.link = None
+    citizen_calls = []
+
+    async def send(**kwargs):
+        if kwargs.get("user_id") is not None:
+            # Durable reservation must already be committed before MAX starts.
+            async with operator_reply.session_scope() as check:
+                attempt = await check.scalar(select(OperatorReplyAttempt))
+                assert attempt is not None and attempt.state == "sending"
+                assert attempt.delivery_parts == [{"index": 0, "state": "sending", "mid": None}]
+            citizen_calls.append(kwargs)
+            if outcome == "unknown":
+                raise TimeoutError("MAX outcome unknown")
+        return SimpleNamespace(body=SimpleNamespace(mid="confirmed-mid"))
+
+    event.bot.send_message = AsyncMock(side_effect=send)
+    monkeypatch.setattr("aemr_bot.services.admin_card.render", AsyncMock())
+    operator_reply._recent_replies.clear()
+    for _ in range(2):
+        assert await operator_reply._deliver_operator_reply(
+            event, appeal=appeal, operator=operator, text="Официальный ответ",
+            audit_action="reply_via_command", is_final=False,
+        )
+    assert len(citizen_calls) == 1
+    attempt = await session.scalar(select(OperatorReplyAttempt))
+    assert attempt.state == ("recorded" if outcome == "confirmed" else "unknown")
+    messages = list(await session.scalars(select(Message).where(Message.appeal_id == appeal.id)))
+    assert len(messages) == (1 if outcome == "confirmed" else 0)
